@@ -2,7 +2,7 @@ certifi==2019.9.11
 cffi==1.13.1
 chardet==3.0.4
 cryptography==2.8
-Django==2.1.10
+Django==2.1.11
 django-debug-permissions==1.0.0
 django-extensions==2.2.5
 django-simple-history==2.7.3
