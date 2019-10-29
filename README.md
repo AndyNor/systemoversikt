@@ -5,7 +5,7 @@ Kodebasen til Oslo kommunes system- og behandlingsoversikt "Kartoteket".
 # reqirements
 Python3, Django2.1 and different modules in requirements.txt
 
-Login using OIDC (KeyCloak is configured).
+Login using OIDC (KeyCloak is configured and configured acording to Oslo kommunes AD-structure).
 
 SMTP-server for sending e-mail.
 
