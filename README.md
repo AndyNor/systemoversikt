@@ -20,3 +20,6 @@ In production, django is loaded as a module in httpd/redhat. Remember to configu
 
 In dev one can run with "python manage.py runserver <0.0.0.0:8000>" and static files are handled by the test-server.
 
+# nice to know
+The outer template folder is for customizing the django admin. The inner is used troughout the webapplication.
+
