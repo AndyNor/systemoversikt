@@ -23,6 +23,13 @@ In dev one can run with "python manage.py runserver <0.0.0.0:8000>" and static f
 # nice to know
 The outer template folder is for customizing the django admin. The inner is used troughout the webapplication.
 
+TODO: setting up python, virtualenv, 
+
 TODO: Setting up the database and a root-user
+
 TODO: setting up scheduled tasks
+
+# handy commands
+
+pip freeze > requirements.txt
 
