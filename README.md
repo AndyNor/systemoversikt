@@ -1,6 +1,6 @@
 # systemoversikt
 
-Kodebasen til Oslo kommunes system- og behandlingsoversikt "Kartoteket".
+The code for Oslo kommune "system- og behandlingsoversikt" / "Kartoteket".
 
 # reqirements
 Python3, Django2.1 and different modules in requirements.txt
