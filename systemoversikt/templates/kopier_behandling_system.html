@@ -1,0 +1,34 @@
+﻿{% extends "index.html" %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Kopier bruk knyttet til {{ system.systemnavn }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+{% url 'systemdetaljer' system.pk as url_system %}
+
+<p>Her kan du kopiere behandlinger knyttet til {{ system.systemnavn }} for til din virksomhet. Tilbake til <a href="{{ url_system }}">{{ system.systemnavn }}</a>.</p>
+
+<h6>Din virksomhets behandlinger for {{ system.systemnavn }}</h6>
+{% include 'alle_behandlinger_enkel_include.html' with behandlinger=dine_eksisterende_behandlinger %}
+
+<h6>Velg blant eksisterende behandlinger. Behandlinger som er merket som kopieringskandidat (fellesbehandling) har grønn bakgrunn.</h6>
+
+<form action="" method="post">{% csrf_token %}
+	{% for behandling in kandidatbehandlinger %}
+		<input id="{{ behandling.pk }}" type="checkbox" name="behandling" value="{{ behandling.pk }}">
+		<label {% if behandling.fellesbehandling %} style="background-color: #07800029;" {% endif %} for="{{ behandling.pk }}"><b>Av</b>: {{ behandling.behandlingsansvarlig.virksomhetsforkortelse }}, <b>behandling</b>: {{ behandling.behandlingen }}, <b>formål</b>: {{ behandling.formaal|truncatechars:60 }}</label>
+		<br>
+	{% endfor %}
+
+	<input type="submit" class="btn btn-primary btn-sm" value="Kopier valgte">
+</form>
+
+<hr>
+
+
+
+{% endblock %}

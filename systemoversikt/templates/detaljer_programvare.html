@@ -1,0 +1,186 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Programvaredetaljer for {{ programvare.programvarenavn }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<div class="card">
+	<div class="card-body">
+		<h6>{{ programvare.programvarebeskrivelse }}</h6>
+		{% if user.is_authenticated %}
+		<a target="_blank" href="/admin/systemoversikt/programvare/{{ programvare.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
+		{% endif %}
+	</div>
+</div>
+
+<br>
+
+
+<div class="row">
+	<div class="col-sm-6">
+
+		<table class="table table-sm table-striped">
+			<tr>
+				<td>{% get_verbose_field_name programvare "sist_oppdatert" %}</td>
+				<td style="width:90%">{{ programvare.sist_oppdatert|date:'Y-m-d' }} ({{ programvare.sist_oppdatert|naturaltime }})</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name programvare "programvarekategori" %}</td>
+				<td>{{ programvare.get_programvarekategori_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name programvare "programvaretyper" %}</td>
+				<td>
+					{% for programvaretype in programvare.programvaretyper.all %}
+						{{ programvaretype }}<br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name programvare "programvareleverandor" %}</td>
+				<td>
+					{% for lev in programvare.programvareleverandor.all %}
+						{% url "leverandor" lev.pk as url_leverandor %}
+						<a href="{{ url_leverandor }}">{{ lev }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name programvare "kategorier" %}</td>
+				<td>
+					{% for kategori in programvare.kategorier.all %}
+						{% url "systemkategori" kategori.pk as url_systemkategori %}
+						<a href="{{ url_systemkategori }}">{{ kategori }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+		</table>
+
+
+	</div>
+	<div class="col-sm-6">
+		<table class="table table-sm table-striped">
+			<tr>
+				<td>{% get_verbose_field_name programvare "strategisk_egnethet" %}</td>
+				<td>{{ programvare.get_strategisk_egnethet_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name programvare "funksjonell_egnethet" %}</td>
+				<td>{{ programvare.get_funksjonell_egnethet_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name programvare "teknisk_egnethet" %}</td>
+				<td>{{ programvare.get_teknisk_egnethet_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name programvare "kommentar" %}</td>
+				<td>{{ programvare.kommentar|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name programvare "selvbetjening" %}</td>
+				<td>{{ programvare.get_selvbetjening_display|default:"-" }}</td>
+			</tr>
+		</table>
+
+	</div>
+</div>
+
+<h5>Systemer som bruker programvaren</h5>
+<ul>
+	{% for system in programvare.system_programvarer.all %}
+		{% url "systemdetaljer" system.pk as url_system %}
+		<li><a href="{{ url_system }}">{{ system }}</a></li>
+	{% endfor %}
+</ul>
+
+<h5>Virksomheters bruk av programvaren |
+	{% if user.is_authenticated %}
+	<a target="_blank" href="/admin/systemoversikt/programvarebruk/add/?programvare={{ programvare.pk }}"">Legg til ny bruk</a>
+	{% endif %}
+</h5>
+<table class="table table-sm table-striped tablesorter">
+	<thead>
+		<tr>
+			{% if user.is_authenticated %}
+			<th></th>
+			{% endif %}
+			<th>Virksomhet</th>
+			<th>I bruk?</th>
+			<th>Brukere</th>
+			<th>Funksjonell</th>
+			<th>Strategisk</th>
+			<th>Teknisk</th>
+			{% if user.is_authenticated %}
+			<th></th>
+			{% endif %}
+		</tr>
+	</thead>
+	<tbody>
+		{% for bruk in programvarebruk %}
+		<tr>
+			{% if user.is_authenticated %}
+			<td><a target="_blank" href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+			{% endif %}
+			<td>{% url "programvarebruksdetaljer" bruk.pk as url_bruk %}
+			<a href="{{ url_bruk }}">{{ bruk.brukergruppe }}</a></td>
+			<td>{{ bruk.antall_brukere|default:"-" }} av {{ bruk.brukergruppe.ansatte }}</td>
+			<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
+			<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
+			<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
+			{% if user.is_authenticated %}
+			<td><a target="_blank" href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+			{% endif %}
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+<br>
+
+<h5>Behandlinger ved bruk av programvaren |
+	{% if user.is_authenticated %}
+	<a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/add/?programvarer={{ programvare.pk }}"">Legg til behandling</a>
+	{% endif %}
+</h5>
+{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+<table class="table table-sm table-striped tablesorter">
+	<thead>
+		<tr>
+			<th></th>
+			<th>Av virksomhet</th>
+			<th>Beskrivelse av behandling</th>
+			<th>Opplysninger om</th>
+			<th>Høy risiko</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for b in behandlinger %}
+		{% url "behandlingsdetaljer" b.pk as url_behandlingsdetaljer %}
+		{% url "virksomhet" b.behandlingsansvarlig.pk as url_virksomhet %}
+		<tr>
+			<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+			<td><a href="{{ url_virksomhet }}">{{ b.behandlingsansvarlig }}</a></td>
+			<td><a href="{{ url_behandlingsdetaljer }}">{{ b.behandlingen }}</a></td>
+			<td><ul>
+				{% for r in b.den_registrerte.all %}
+				<li>{{ r }}</li>
+				{% endfor %}
+			</ul></td>
+			<td>{{ b.hoy_personvernrisiko|yesno:"Ja,Nei" }}</td>
+			<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% else %}
+<p>Du mangler tilgang</p>
+{% endif %}
+
+
+{% endblock main_content %}

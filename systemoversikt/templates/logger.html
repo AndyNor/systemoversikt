@@ -1,0 +1,51 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	Logg over endringer i databasen
+	<h5><a href="/admin/admin/logentry/">Søk og filtrer i endringslogger</a></h5>
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+{% if perms.admin.view_logentry %}
+	<table class="table table-sm table-striped">
+	<thead>
+	<tr>
+		<th>Tidspunkt</th>
+		<th>Bruker</th>
+		<th>Aksjon</th>
+		<th>Objekt</th>
+		<th>Instans</th>
+		<th>Beskrivelse av endring</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for entry in recent_admin_loggs %}
+	<tr>
+		<td>{{ entry.action_time }}</td>
+		<td>{{ entry.user }} ({{ entry.user.first_name }} {{ entry.user.last_name }})</td>
+		<td>
+			{% if entry.action_flag == 1 %}Ny{% endif %}
+			{% if entry.action_flag == 2 %}Endret{% endif %}
+			{% if entry.action_flag == 3 %}Slettet{% endif %}
+		</td>
+		<td>{{ entry.content_type }}</td>
+		<td><a target="_blank" href="/admin/systemoversikt/{{ entry.content_type }}/{{ entry.object_id }}/change/">{{ entry.object_repr }}</a></td>
+		<td>{{ entry.change_message }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% else %}
+
+	<div id="div_message" class="alert alert-danger">
+		<a class="close" data-dismiss="alert" href="#">×</a>
+		<h5 class="alert-heading">Du mangler autorisasjon</h5>
+		Din rolle mangler rettigheter til å lese loggen.
+	</div>
+
+{% endif %}
+
+{% endblock main_content %}

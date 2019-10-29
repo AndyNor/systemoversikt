@@ -1,0 +1,116 @@
+{% load static %}
+
+<table id="behandlinger" class="table table-sm table-striped">
+	<thead>
+		<tr>
+			{% if user.is_authenticated %}
+			<th></th>
+			{% endif %}
+			<th>Felles</th>
+			<th>Registrert av</th>
+			<th>Intern avdeling</th>
+			<th>Funksjonsområde</th>
+			<th>Behandlingen</th>
+			<th>Formål</th>
+			<th>Den registrerte</th>
+			<th>Krav sikkerhetsnivå</th>
+			<th>Behov for DPIA?</th>
+			<th>Programvare(r)</th>
+			<th>System(er)</th>
+			<th>Databehandler(e)</th>
+			{% if user.is_authenticated %}
+			<th></th>
+			{% endif %}
+		</tr>
+	</thead>
+	<tbody>
+		{% for item in behandlinger %}
+		<tr>
+			{% if user.is_authenticated %}
+			<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+			{% endif %}
+
+			<td>{{ item.fellesbehandling|yesno:"Ja,Nei" }}</td>
+
+			{% url "virksomhet" item.behandlingsansvarlig.pk as url_virksomhet %}
+			<td><a href="{{ url_virksomhet }}">{{ item.behandlingsansvarlig.virksomhetsforkortelse }}</a></td>
+
+			<td>{{ item.internt_ansvarlig|default:"?" }}</td>
+			<td>{{ item.funksjonsomraade|default:"?" }}</td>
+
+			<td>
+			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+				{% if item.informasjon_kvalitetssikret is True %}
+				<img style="width: 11px;" src="{% static 'open-iconic/svg/circle-check.svg' %}" alt="Kvalitet verifisert">
+				{% else %}
+				<img style="width: 11px;" src="{% static 'open-iconic/svg/warning.svg' %}" alt="Kvalitet ikke verifisert">
+				{% endif %}
+			{% url "behandlingsdetaljer" item.pk as url_behandlingsdetaljer %}
+			<a href="{{ url_behandlingsdetaljer }}">{{ item.behandlingen }}</a>
+			{% else %}
+			***
+			{% endif %}
+			</td>
+
+			<td>
+			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+			{{ item.formaal }}
+			{% else %}
+			***
+			{% endif %}
+			</td>
+
+			<td>
+			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+				<ul>
+				{% for reg in item.den_registrerte.all %}
+					<li>{{ reg.kategorinavn }}</li>
+				{% endfor %}
+				</ul>
+			{% else %}
+			***
+			{% endif %}
+			</td>
+
+			<td>
+			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+				{{ item.get_krav_sikkerhetsnivaa_display|default:"-" }}
+			{% else %}
+			***
+			{% endif %}
+			</td>
+
+			<td>
+			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+			{{ item.hoy_personvernrisiko|yesno:"Ja,Nei" }}
+			{% else %}
+			***
+			{% endif %}
+			</td>
+
+			<td>
+				{% for program in item.programvarer.all %}
+				{% url "programvaredetaljer" program.pk as url_systemdetaljer %}
+				<a href="{{ url_systemdetaljer }}">{{ program }}</a><br>
+				{% endfor %}
+			</td>
+			<td>
+				{% for system in item.systemer.all %}
+				{% url "systemdetaljer" system.pk as url_programvaredetaljer %}
+				<a href="{{ url_programvaredetaljer }}">{{ system }}</a><br>
+				{% endfor %}
+			</td>
+			<td>
+				{% for databehandler in item.navn_databehandler.all %}
+					{% url "leverandor" databehandler.pk as url_leverandor %}
+					<a href="{{ url_leverandor }}">{{ databehandler }}</a><br>
+				{% endfor %}
+			</td>
+
+			{% if user.is_authenticated %}
+			<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+			{% endif %}
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>

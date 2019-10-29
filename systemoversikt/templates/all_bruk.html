@@ -1,0 +1,42 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	{{ virksomhet.virksomhetsforkortelse }}'s bruk av systemer i Oslo kommune (viser {{ all_bruk.count }})
+	<h5><a target="_blank" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer ny bruk av system</a> | <a target="_blank" href="/admin/systemoversikt/systembruk/">Søk og filtrer</a></h5>
+{% endblock underoverskrift %}
+
+{% block main_content %}
+	<table class="table table-sm table-striped">
+	<thead>
+	<tr>
+		<th></th>
+		<th>System</th>
+		<th>Bruksdetaljer</th>
+		<th>Antall brukere</th>
+		<th>Systemeierskapsmodell</th>
+		<th>Livsløpstatus</th>
+		<th>Teknisk</th>
+		<th>Strategisk</th>
+		<th>Funksjonell</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for bruk in all_bruk %}
+	<tr>
+		<td><a target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		{% url "systemdetaljer" bruk.system.pk as url_systemdetaljer %}
+		<td><a href="{{ url_systemdetaljer }}">{{ bruk.system }}</a></td>
+		{% url "bruksdetaljer" bruk.pk as url_bruksdetaljer %}
+		<td><a href="{{ url_bruksdetaljer }}">{{ bruk.system }} ({{ virksomhet.virksomhetsforkortelse }})</a></td>
+		<td>{{ bruk.antall_brukere|default:"" }}</td>
+		<td>{{ bruk.get_systemeierskapsmodell_display|default:"" }}</td>
+		<td>{{ bruk.get_livslop_status_display|default:"" }}</td>
+		<td>{{ bruk.get_teknisk_egnethet_display|default:"" }}</td>
+		<td>{{ bruk.get_strategisk_egnethet_display|default:"" }}</td>
+		<td>{{ bruk.get_funksjonell_egnethet_display|default:"" }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+{% endblock main_content %}

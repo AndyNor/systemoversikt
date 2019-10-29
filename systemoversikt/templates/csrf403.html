@@ -1,0 +1,17 @@
+{% extends "index.html" %}
+
+{% block underoverskrift %}
+	<div class="alert alert-info">
+		<strong>Teknisk feil</strong>
+	</div>
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<p>Du ser denne feilmeldingen fordi en teknisk sikkerhetssjekk feilet (CSRF)</p>
+
+	<ul>
+		<li>Dette skal normalt ikke skje og skyldes normalt feilkonfigurasjon, men kan i ytterste konsekvens være et forsøk på et angrep.</li>
+	</ul>
+
+{% endblock %}

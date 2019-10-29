@@ -1,0 +1,58 @@
+{% extends "index.html" %}
+{% load static %}
+
+
+{% block underoverskrift %}
+	Detaljer om pakking (for systemer)
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<p>Her listes alle systemer på felles IKT-plattform (FIP/FIKTP)</p>
+
+	<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th></th>
+		<th>nøkkel</th>
+		<th>type</th>
+		<th>Systemnavn</th>
+		<th>Sikkerhetsnivå</th>
+		<th>Systemkategorier</th>
+		<th>Leveransemodell</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for s in systemer %}
+	<tr>
+		<td><a target="_blank" href="/admin/systemoversikt/system/{{ s.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
+		<td>{{ s.pk }}</td>
+		<td>system</td>
+		<td>
+			{% url "systemdetaljer" s.pk as url_systemdetaljer %}
+			<a href="{{ url_systemdetaljer }}">{{ s }}</a>
+		</td>
+		<td>{{ s.sikkerhetsnivaa|default:"?" }} - {{ s.get_sikkerhetsnivaa_display|default:"" }}</td>
+		<td>{% for k in s.systemkategorier.all %} {{ k }},  {% endfor %}</td>
+		<td>{{ s.get_leveransemodell_fip_display|default:"?" }}</td>
+	</tr>
+	{% endfor %}
+	{% for p in programvarer %}
+	<tr>
+		<td><a target="_blank" href="/admin/systemoversikt/programvare/{{ p.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
+		<td>{{ p.pk }}</td>
+		<td>programvare</td>
+		<td>
+			{% url "programvaredetaljer" p.pk as url_programvaredetaljer %}
+			<a href="{{ url_programvaredetaljer }}">{{ p }}</a>
+		</td>
+		<td>{{ p.sikkerhetsnivaa|default:"?" }} - {{ p.get_sikkerhetsnivaa_display|default:"" }}</td>
+		<td>{% for k in p.kategorier.all %} {{ k }},  {% endfor %}</td>
+		<td>{{ p.get_leveransemodell_fip_display|default:"?" }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock main_content %}

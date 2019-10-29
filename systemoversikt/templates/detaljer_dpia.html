@@ -1,0 +1,47 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	{{ dpia }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+{% if perms.systemoversikt.view_dpia %}
+
+	<div class="row">
+		<div class="col-sm-6">
+			<table class="table table-sm table-striped">
+				<tr>
+					<td width="30%">{% get_verbose_field_name dpia "for_system" %}</td>
+					{% url 'systemdetaljer' pk=dpia.for_system.pk as url_system %}
+					<td><a href="{{ url_system }}#dpia">{{ dpia.for_system }}</a> (Følg denne linken for å se innholdet i vurderingen)</td>
+				</tr>
+				<tr>
+					<td>{% get_verbose_field_name dpia "sist_gjennomforing_dpia" %}</td>
+					<td>{{ dpia.sist_gjennomforing_dpia|date:'Y-m-d' }} ({{ dpia.sist_gjennomforing_dpia|naturaltime|default:"-" }})</td>
+				</tr>
+				<tr>
+					<td>{% get_verbose_field_name dpia "url_dpia" %}</td>
+					<td>{{ dpia.url_dpia|default:"-" }}</td>
+				</tr>
+				<tr>
+					<td>{% get_verbose_field_name dpia "kommentar" %}</td>
+					<td>{{ dpia.kommentar|default:"-"|linebreaks }}</td>
+				</tr>
+
+			</table>
+		</div>
+	</div>
+
+	<a target="_blank" href="/admin/systemoversikt/dpia/{{ dpia.pk }}/change/">
+		<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
+
+
+{% else %}
+	<p>Du mangler tilgang</p>
+{% endif %}
+
+{% endblock main_content %}

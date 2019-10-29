@@ -1,0 +1,62 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	{% url "virksomhet" bruksdetaljer.brukergruppe.pk as url_virksomhet %}
+	<a href="{{ url_virksomhet }}">{{ virksomhet.virksomhetsforkortelse }}</a>'s bruk av programvare i Oslo kommune (viser {{ all_bruk.count }})
+	{% if user.is_authenticated %}
+	<h6>
+		<a target="_blank" href="/admin/systemoversikt/programvarebruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer ny bruk av programvare</a> |
+		<a target="_blank" href="/admin/systemoversikt/programvarebruk/">Søk og filtrer</a>
+	</h6>
+	{% endif %}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+	<table class="table table-sm table-striped">
+	<thead>
+	<tr>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+		<th>Bruksdetaljer</th>
+		<th>Antall behandlinger (våre)</th>
+		<th>Programvarekategori</th>
+		<th>Programvare</th>
+		<th>Antall brukere</th>
+		<th>Systemeierskapsmodell</th>
+		<th>Livsløpstatus</th>
+		<th>Teknisk</th>
+		<th>Strategisk</th>
+		<th>Funksjonell</th>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+	</tr>
+	</thead>
+	<tbody>
+	{% for bruk in all_bruk %}
+	<tr>
+		{% if user.is_authenticated %}
+		<td><a target="_blank" href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		{% endif %}
+		{% url "programvarebruksdetaljer" bruk.pk as url_programvarebruksdetaljer %}
+		<td><a href="{{ url_programvarebruksdetaljer }}">{{ bruk.programvare }} ({{ virksomhet.virksomhetsforkortelse }})</a></td>
+		<td>{{ bruk.antall_behandlinger }}</td>
+		<td>{{ bruk.programvare.get_programvarekategori_display|default:"" }}</td>
+		{% url "programvaredetaljer" bruk.programvare.pk as url_programvaredetaljer %}
+		<td><b><a href="{{ url_programvaredetaljer }}">{{ bruk.programvare }}</a></b></td>
+		<td>{{ bruk.antall_brukere|default:"-" }}</td>
+		<td>{{ bruk.programvareeierskap|default:"-" }}</td>
+		<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
+		<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
+		<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
+		<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
+		{% if user.is_authenticated %}
+		<td><a target="_blank" href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+{% endblock main_content %}

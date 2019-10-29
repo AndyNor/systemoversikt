@@ -1,0 +1,65 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	Alle Hovedkategorier ({{ hovedkategorier.count }})
+	<h6>
+		{% if user.is_authenticated %}
+		<a target="_blank" href="/admin/systemoversikt/systemhovedkategori/add/">Legg til ny hovedkategori</a> |
+		{% endif %}
+		<a href="{%url 'alle_systemkategorier' %}">Alle subkategorier</a>
+	</h6>
+
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<table class="table table-sm table-striped tablesorter">
+	<thead>
+	<tr>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+		<th>Hovedkategori</th>
+		<th>Subkategorier</th>
+		<th>Antall systemer</th>
+		<th>Antall programvarer</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for hovedkat in hovedkategorier %}
+	<tr>
+		{% if user.is_authenticated %}
+		<td><a target="_blank" href="/admin/systemoversikt/systemhovedkategori/{{ hovedkat.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		{% endif %}
+		<td>{{ hovedkat }}</td>
+		<td>
+			{% for subkat in hovedkat.subkategorier.all %}
+				{% url 'systemkategori' pk=subkat.pk as url_subkat %}
+				<a href="{{ url_subkat }}">{{ subkat }}</a><br>
+			{% empty%}
+				ingen
+			{% endfor %}
+		</td>
+		<td>
+			{{ hovedkat.systemteller }}
+		</td>
+		<td>
+			{{ hovedkat.programteller }}
+		</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+<p>Subkategorier uten knytning til en hovedkategori:
+	<ul>
+	{% for s in subkategorier_uten_hovedkategori %}
+		<li>{{ s }}</li>
+	{% empty %}
+		<li>ingen</li>
+	{% endfor %}
+	</ul>
+</p>
+
+{% endblock main_content %}

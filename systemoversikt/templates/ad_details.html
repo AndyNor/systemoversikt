@@ -1,0 +1,87 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Detaljer fra Oslofelles Active Directory
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+{% for user in result.users %}
+
+	<div class="card card-body">
+		<h5>{{ user.attrs.displayName.0 }} ({{ user.attrs.cn.0 }})</h5>
+		<p>Canonical Name: <br>{{ user.cn }}</p>
+		<p>ObjectClass: <br>{% for item in user.attrs.objectClass %} {{ item }} | {% endfor %}</p>
+		<p>Brukernavn: {% for item in user.attrs.cn %} <br>{{ item }} {% endfor %}</p>
+		<p>Fornavn: {% for item in user.attrs.givenName %} <br>{{ item }} {% endfor %}</p>
+		<p>Etternavn: {% for item in user.attrs.sn %} <br>{{ item }} {% endfor %}</p>
+		<p>Visningsnavn: {% for item in user.attrs.displayName %} <br>{{ item }} {% endfor %}</p>
+		<p>Tittel: {% for item in user.attrs.title %} <br>{{ item }} {% endfor %}</p>
+		<p>Beskrivelse: {% for item in user.attrs.description %} <br>{{ item }} {% endfor %}</p>
+		<p>E-post: {% for item in user.attrs.mail %} <br>{{ item }} {% endfor %}</p>
+		<p>Telefon mobile: {% for item in user.attrs.mobile %} <br>{{ item }} {% endfor %}</p>
+		<p>Telefon other: {% for item in user.attrs.otherMobile %} <br>{{ item }} {% endfor %}</p>
+		<p>Antall pålogginger: {% for item in user.attrs.logonCount %} <br>{{ item }} {% endfor %}</p>
+		<p>Sist login: {% for item in user.attrs.lastLogonTimestamp %} <br>{{ item }} ({{ item|naturaltime }}) {% endfor %}</p>
+		<p>Brukerkontotype: {% for item in user.attrs.userAccountControl %} <br>{{ item }} {% endfor %}</p>
+		<button class="btn btn-primary btn-sm" type="button" data-toggle="collapse"
+			data-target="#usercollapse{{ forloop.counter0 }}"
+			aria-expanded="false"
+			aria-controls="usercollapse{{ forloop.counter0 }}">
+			Tilgangsgrupper
+		</button>
+		<div class="collapse" id="usercollapse{{ forloop.counter0 }}">
+			<br>
+			<ol>
+			{% for item in user.attrs.memberOf %}
+				<li>
+				{% url 'ad_details' name=item.group as url_details %}
+				<a target="_blank" href="{{ url_details }}">{{ item.group }}</a>:
+				({{ item.cn }})</li>
+			{% endfor %}
+			</ol>
+		</div>
+	</div>
+
+{% endfor %}
+
+
+{% for group in result.groups %}
+
+	<div class="card card-body">
+		<h5>{{ group.attrs.cn.0 }}</h5>
+		<p>Canonical Name: <br>{{ group.cn }}</p>
+		<p>ObjectClass: <br>{% for item in group.attrs.objectClass %} {{ item }} | {% endfor %}</p>
+		<p>Beskrivelse: {% for item in group.attrs.description %} <br>{{ item }} {% endfor %}</p>
+
+		<a style="width: 200px;" class="btn btn-primary btn-sm" href="{% url 'recursive_group_members' group=group.cn %}">Utfør rekursivt brukersøk</a>
+
+		<hr>
+
+		<button class="btn btn-primary btn-sm" type="button" data-toggle="collapse"
+			data-target="#groupcollapse{{ forloop.counter0 }}"
+			aria-expanded="true"
+			aria-controls="groupcollapse{{ forloop.counter0 }}">
+			Medlemmer i gruppen
+		</button>
+		<div class="" id="groupcollapse{{ forloop.counter0 }}">
+			<br>
+			<ol>
+			{% for item in group.attrs.member %}
+				<li>
+				{% url 'ad_details' name=item.username as url_details %}
+				<a target="_blank" href="{{ url_details }}">{{ item.username }}</a>:
+				{{ item.user|default:"" }}
+				({{ item.cn }})</li>
+			{% endfor %}
+			</ol>
+		</div>
+	</div>
+
+{% endfor %}
+
+
+{% endblock main_content %}

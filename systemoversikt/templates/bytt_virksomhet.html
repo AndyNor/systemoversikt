@@ -1,0 +1,37 @@
+﻿{% extends "index.html" %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Bytt virksomhet du representerer denne økten
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+<p>På denne siden vises underordnede virksomheter din bruker kan representere. Merk at det på den underliggende virksomheten må være krysset av for "kan representeres" for at du skal få lov til å representere den.</p>
+
+{% if dine_virksomheter != None %}
+
+<form action="" method="post">{% csrf_token %}
+
+	{% for virksomhet in dine_virksomheter %}
+	<div class="form-check">
+		<input class="form-check-input" type="radio" name="virksomhet" id="virksomhet{{virksomhet.pk}}" value="{{ virksomhet.pk }}" {% if brukers_virksomhet == virksomhet %}checked{% endif %}>
+		<label class="form-check-label" for="virksomhet{{virksomhet.pk}}">
+			{{ virksomhet }}
+		</label>
+	</div>
+	{% endfor %}
+	<br>
+	<input type="submit" class="btn btn-primary btn-sm" value="Bytt til valgte virksomhet">
+</form>
+
+{% else %}
+
+	<p>Du er ikke knyttet til en eksisterende virksomhet. Det er derfor ingen valg tilgjengelig.</p>
+
+{% endif %}
+
+<hr>
+
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Personvernvurderinger (DPIA) (viser {{ alle_dpia.count }})
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<table id="stickyheader" class="table table-sm table-striped tablesorter">
+	<thead>
+	<tr>
+		<th></th>
+		<th>DPIA</th>
+		<th></th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for item in alle_dpia %}
+	<tr {% if item.own_domain %} style="background-color: #fffee6;" {% endif %}>
+		<td><a target="_blank" href="/admin/systemoversikt/dpia/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		<td>
+			{% url 'detaljer_dpia' pk=item.pk as url_dpia %}
+			<a href="{{ url_dpia }}">{{ item }}</a>
+		</td>
+		<td><a target="_blank" href="/admin/systemoversikt/dpia/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% endblock main_content %}

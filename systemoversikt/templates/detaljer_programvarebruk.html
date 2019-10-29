@@ -1,0 +1,128 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	{% url "virksomhet" bruksdetaljer.brukergruppe.pk as url_virksomhet %}
+	{% url "programvaredetaljer" bruksdetaljer.programvare.pk as url_programvaredetaljer %}
+	<a href="{{ url_virksomhet }}">{{ bruksdetaljer.brukergruppe.virksomhetsforkortelse }}</a>'s bruk av <a href="{{ url_programvaredetaljer }}">{{ bruksdetaljer.programvare }}</a> (programvare)
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<div class="card">
+	<div class="card-body">
+		{% url "all_programvarebruk_for_virksomhet" bruksdetaljer.brukergruppe.pk as url_all_programvarebruk_for_virksomhet %}
+		<h6><a href="{{ url_all_programvarebruk_for_virksomhet }}">All programvarebruk knyttet til {{ bruksdetaljer.brukergruppe }}</a></h6><br>
+		{% if user.is_authenticated %}
+		<p><a target="_blank" href="/admin/systemoversikt/programvarebruk/{{ bruksdetaljer.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">(Rediger detaljer)</a></p>
+		{% endif %}
+	</div>
+</div>
+<br>
+<div class="row">
+	<div class="col-sm-6">
+
+		<h6>Generelt fra programvaren</h6>
+		<table class="table table-sm table-striped">
+
+			<tr>
+				<td>Programvareleverandører (fra programvaren)</td>
+				<td>
+					{% for lev in bruksdetaljer.programvare.programvareleverandor.all %}
+						{% url "leverandor" lev.pk as url_leverandor %}
+						<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>Programvarekategorier (fra programvaren)</td>
+				<td>
+					{% for kat in bruksdetaljer.programvare.kategorier.all %}
+						{% url "systemkategori" kat.pk as url_systemkategori %}
+						<li><a href="{{ url_systemkategori }}">{{ kat }}</a></li>
+					{% endfor %}
+				</td>
+			</tr>
+		</table>
+
+		<h6>Detaljer for denne bruken</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "sist_oppdatert" %}</td>
+				<td>{{ bruksdetaljer.sist_oppdatert|date:"Y-m-d" }} ({{ bruksdetaljer.sist_oppdatert|naturaltime }})</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "programvareleverandor" %}</td>
+				<td>
+					{% for leverandor in bruksdetaljer.programvareleverandor.all %}
+						{% url "leverandor" leverandor.pk as url_leverandor %}
+						<li><a href="{{ url_leverandor }}">{{ leverandor }}</a></li>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "antall_brukere" %}</td>
+				<td>{{ bruksdetaljer.antall_brukere|default:"-" }}</td>
+			</tr>
+
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "borger" %}</td>
+				<td>{{ bruksdetaljer.get_borger_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "kommentar" %}</td>
+				<td>{{ bruksdetaljer.kommentar|linebreaks|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "programvareeierskap" %}</td>
+				<td>{{ bruksdetaljer.programvareeierskap|default:"-" }}</td>
+			</tr>
+		</table>
+	</div>
+	<div class="col-sm-6">
+
+		<h6>Avtaledetaljer for bruk</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "kostnader" %}</td>
+				<td>{{ bruksdetaljer.kostnader|default:"-"|intcomma }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "avtale_kan_avropes" %}</td>
+				<td>{{ bruksdetaljer.avtale_kan_avropes|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "avtalestatus" %}</td>
+				<td>{{ bruksdetaljer.get_avtalestatus_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "avtaletype" %}</td>
+				<td>{{ bruksdetaljer.avtaletype|default:"-" }}</td>
+			</tr>
+		</table>
+
+		<h6>Tekniske vurdering for bruk</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "livslop_status" %}</td>
+				<td>{{ bruksdetaljer.get_livslop_status_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "teknisk_egnethet" %}</td>
+				<td>{{ bruksdetaljer.get_teknisk_egnethet_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "strategisk_egnethet" %}</td>
+				<td>{{ bruksdetaljer.get_strategisk_egnethet_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruksdetaljer "funksjonell_egnethet" %}</td>
+				<td>{{ bruksdetaljer.get_funksjonell_egnethet_display|default:"-" }}</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+{% endblock main_content %}

@@ -1,0 +1,20 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Oslo kommunes webtjenester (viser {{ web_urler.count }})
+	<h6>
+		{% if user.is_authenticated %}
+		<a target="_blank" href="/admin/systemoversikt/systemurl/add/">Legg til nytt domene</a> |
+		<a target="_blank" href="/admin/systemoversikt/sikkerhetstester/add/">Registrer sikkerhetstest</a>
+		{% endif %}
+	</h6>
+{% endblock underoverskrift %}
+
+{% block main_content %}
+<p>Domener utenfor oslo.kommune.no er merket med rød bakgrunn.</p>
+
+{% include "alle_urler_include.html" %}
+
+{% endblock main_content %}

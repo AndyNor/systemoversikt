@@ -1,0 +1,40 @@
+{% extends "index.html" %}
+
+{% block underoverskrift %}
+	Grupper og rettigheter
+{% endblock %}
+
+{% block main_content %}
+
+<p>I kartoteket er følgende grupper etablert (se under), og de speiler sikkerhetsgrupper i Active Directory slik opprettet av PRK. Via PRK legges brukeridenter (som f.eks. din bruker) inn i ulike AD-sikkerhetsgrupper. Inne i kartoteket finnes en mapping mellom sikkerhetsgrupper og ulike rettigheter.<br>
+Systemer, behandlinger, plattformer, avtaler osv (kalt "klasser", hvor et enkelt system er et objekt eller instans av klassen..) blir styrt med fire ulike rettigheter. Rettighet til å vise, lage ny, redigere og slette. Disse kontrolleres separat, basert på hva vi mener de ulike rollene skal kunne gjøre. F.eks. kan en virksomhetsadministrator endre på virksomhets-objekter, mens en systemforvalter kun kan se på virksomhetsobjekter.</p>
+
+<p>Det er ikke lagt opp til eierskap til de konkrete instansene som f.eks. et system eller en behandling, men både behandlinger og systemer er koblet til både virksomhet og enkeltpersoner. Dersom vi ønsker å begrense tilgang til virksomhet eller person, så kan dette løses ved å lage en regel som sjekkes ved endring eller sletting, men det må veies opp mot de ulemper det vil ha. Per nå er det en regel aktiv som hindrer virksomheter å endre/slette behandlinger som tilhører andre virksomheter.</p>
+
+<p>
+Veldig forenklet kan rollen <b>systemforvalter</b> endre på systemer. Rollen <b>behandlingsansvarlig</b> kan gjøre det en systemforvalter kan, men kan i tillegg endre på behandlinger i virksomhetens behandlingsprotokoll. Systemforvalter kan se behandinger registrert på sine systemer. En systemeier tildeles i praksis rollen som systemforvalter. For å kunne endre på systemkategorier og noen typer valgfelt som ønskes standardisert må du ha rollen <b>systemkategori</b>. For å kunne endre på virksomheter må du ha rollen <b>virksomhetsforvalter</b>, og for å kunne administrere driftsplattformer må du ha rollen <b>plattformforvalter</b>.
+</p>
+
+<ul>
+{% for g in groups %}
+	<li><a href="#{{g.name|slice:'1:'}}">{{ g.name|slice:"1:" }}</a></li>
+{% endfor %}
+</ul>
+
+<hr>
+
+<p>Dersom du har rettigheter kan du se oversikt over <a href="{% url 'permissions' %}">ansvarlige og deres gruppemedlemskap</a><br>
+Du kan også eksportere rettighetskoblingene som <a href="?export=json">JSON</a></p>
+
+<hr>
+
+{% for g in groups %}
+	{% url 'ad_group_details' group=g.name|slice:"1:" as url_group %}
+	<a id="{{ g.name|slice:'1:' }}" class="anchor"></a>
+	<h6><a target="_blank" href="{{ url_group }}">{{ g.name|slice:"1:" }}</a></h6>
+	{% for p in g.permissions.all %}
+		{{ p.name }} ({{ p.codename }})</br>
+	{% endfor %}
+	<br>
+{% endfor %}
+{% endblock %}

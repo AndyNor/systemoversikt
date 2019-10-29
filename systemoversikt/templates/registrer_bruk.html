@@ -1,0 +1,32 @@
+﻿{% extends "index.html" %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Registrer bruk for {{ system.systemnavn }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+<p>For hver av virksomhetene du velger her, vil det opprettes en "tom" systembruk (vurderinger må legges til i etterkant). Merk at det her kun vises virksomheter som mangler en registrert bruk av dette systemet. Det kan hende det allerede er registrert bruk, men at bruken er satt til "ikke i bruk". Da må du inn på virksomheten, velge den deaktiverte bruken og sette den aktiv igjen.</p>
+
+<h5><a href="{% url 'systemdetaljer' system.pk %}#bruk">Tilbake til systemet</a></h5>
+
+<hr>
+
+{% if virksomheter_uten_bruk|length > 0 %}
+	<form action="" method="post">{% csrf_token %}
+		{% for item in virksomheter_uten_bruk %}
+			<input id="{{ item.virksomhetsforkortelse }}" type="checkbox" name="virksomheter" value="{{ item.pk }}">
+			<label for="{{ item.virksomhetsforkortelse }}">{{ item.virksomhetsnavn }} ({{ item.virksomhetsforkortelse }})</label>
+			<br>
+		{% endfor %}
+
+		<input type="submit" class="btn btn-primary btn-sm" value="Registrer systembruk">
+	</form>
+
+{% else %}
+	<p>Alle virksomheter har registrert bruk ("i bruk" kan være satt til "nei", men vil i denne sammenheng vises som "har registrert bruk" fordi systembruk-objektet finnes)</p>
+{% endif %}
+
+{% endblock %}

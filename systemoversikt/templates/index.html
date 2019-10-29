@@ -1,0 +1,259 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="x-ua-compatible" content="ie=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<!-- FAVICON -->
+	<link rel="apple-touch-icon" sizes="57x57" href="{% static 'favicon/apple-icon-57x57.png' %}">
+	<link rel="apple-touch-icon" sizes="60x60" href="{% static 'favicon/apple-icon-60x60.png' %}">
+	<link rel="apple-touch-icon" sizes="72x72" href="{% static 'favicon/apple-icon-72x72.png' %}">
+	<link rel="apple-touch-icon" sizes="76x76" href="{% static 'favicon/apple-icon-76x76.png' %}">
+	<link rel="apple-touch-icon" sizes="114x114" href="{% static 'favicon/apple-icon-114x114.png' %}">
+	<link rel="apple-touch-icon" sizes="120x120" href="{% static 'favicon/apple-icon-120x120.png' %}">
+	<link rel="apple-touch-icon" sizes="144x144" href="{% static 'favicon/apple-icon-144x144.png' %}">
+	<link rel="apple-touch-icon" sizes="152x152" href="{% static 'favicon/apple-icon-152x152.png' %}">
+	<link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-icon-180x180.png' %}">
+	<link rel="icon" type="image/png" sizes="192x192"  href="{% static 'favicon/android-icon-192x192.png' %}">
+	<link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
+	<link rel="icon" type="image/png" sizes="96x96" href="{% static 'favicon/favicon-96x96.png' %}">
+	<link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
+	<link rel="manifest" href="{% static 'favicon/manifest.json' %}">
+	<meta name="msapplication-TileColor" content="#ffffff">
+	<meta name="msapplication-TileImage" content="{% static 'favicon/ms-icon-144x144.png' %}">
+	<meta name="theme-color" content="#ffffff">
+
+	<!-- CSS -->
+	<link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
+	<link rel="stylesheet" href="{% static 'chosen/chosen.min.css' %}">
+
+	<!-- JavaScript -->
+	<script src="{% static 'jquery/jquery-3.3.1.min.js' %}"></script>
+	<script src="{% static 'bootstrap/bootstrap.min.js' %}"></script>
+	<script src="{% static 'chosen/chosen.jquery.min.js' %}"></script>
+	<script src="{% static 'tablesorter/jquery.tablesorter.min.js' %}"></script>
+	<script src="{% static 'floatThead/jquery.floatThead.min.js' %}"></script>
+
+
+	{% block ekstrajavascript %}{% endblock ekstrajavascript %}
+
+	<script type="text/javascript">
+	$(document).ready(function(){
+		$("table").tablesorter({})
+		$("table").floatThead({top: 103});
+
+	});
+	</script>
+
+	<style>
+		@font-face {
+			font-family: "oslosans";
+			src: url("{% static 'fonts/OsloSans-Regular.woff' %}") format('woff');
+		}
+		body {
+			padding-top: 115px;
+			padding-bottom: 25px;
+			font-family: oslosans;
+			font-size: 10pt;
+		}
+		.nav-item:hover{
+			background-color: #fff;
+			border-color: #dee2e6 #dee2e6 #fff;
+		}
+		th {
+			cursor: pointer;
+		}
+		table.floatThead-table {
+			border-top: none;
+			border-bottom: none;
+			background-color: #fff;
+		}
+		.svarboks{
+			background-color: #dbdb0024;
+			padding: 8px 8px 8px 16px;
+			border-radius: 10px;
+			border: 1px solid #ffeb91;
+		}
+		a.anchor {
+			display: block;
+			position: relative;
+			top: -140px;
+			visibility: hidden;
+		}
+		.redigeringsinfo {
+			font-style: italic;
+			color: #007bff;
+		}
+	</style>
+	{% block ekstrastyle %}{% endblock %}
+
+	<title>Kartoteket (Oslo kommune)</title>
+
+</head>
+<body>
+
+<header>
+
+
+	<nav class="navbar navbar-light fixed-top" style="background-color: #F8F8F8; padding: 0;">
+
+		<div style="position: absolute; right: 8px; top: 8px;">
+			<form action="{% url 'alle_systemer' %}" autocomplete="off">
+				<div class="form-group form-inline">
+					<input type="search" value="{{ search_query }}" name="search"
+					placeholder="Navn på system" class="form-control form-control-sm">
+					<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+				</div>
+			</form>
+		</div>
+
+		<div style="width: 100%; padding-top: 5px; padding-bottom: 5px;">
+			<img src="{% static 'standard_oslo-logoi.png' %}" style="float: left; margin-top: 5px; margin-right: 10px; margin-left: 10px; height: 55px;">
+			<h4 style="margin-top: 5px; margin-bottom: 5px;">Oslo kommune <a href="/">Kartoteket</a></h4>
+
+			{% if user.is_authenticated %}
+				{% if TEST_ENV_NAME == 'test' %}
+					{% url "logout" as url_logout %}
+				{% else %}
+					{% url "oidc_logout" as url_logout %}
+				{% endif %}
+
+				{% url "min_virksomhet" as min_virksomhet_url %}
+				Logget inn som <a href="{% url 'minside' %}">{{ user.first_name|default:"Ukjent" }} {{ user.last_name }}</a> og representerer
+				<a href="{{ min_virksomhet_url }}">{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</a> (<a href="{% url 'bytt_virksomhet' %}">bytt</a>).
+				<span style="margin-left: 30px;">(<b><a href="{{ url_logout }}">Logg ut</a></b>)</span>
+
+			{% else %}
+				{% if TEST_ENV_NAME == 'test' %}
+					{% url "login" as url_login %}
+				{% else %}
+					{% url "oidc_authentication_init" as url_login %}
+				{% endif %}
+
+				Du er anonym med lesetilgang til åpen informasjon.
+				<span style="margin-left: 30px;">(<b><a href="{{ url_login }}?next={{ request.path }}">logg inn</a></b>)</span>
+			{% endif %}
+
+		</div>
+
+		<div style="font-size: 8pt; width: 100%; min-width: 1200px;">
+			<ul class="nav nav-tabs">
+
+				<li class="nav-item">
+					{% url "alle_virksomheter" as alle_virksomheter_url %}
+					<a href="{{ alle_virksomheter_url }}" class="nav-link {% if alle_virksomheter_url in request.path %} active {% endif %}">Virksomheter</a>
+				</li>
+				{% if user.is_authenticated %}
+				<li class="nav-item">
+					{% url "dashboard_all" virksomhet=user.profile.virksomhet.pk as dashboard_url %}
+					<a href="{{ dashboard_url }}" class="nav-link {% if dashboard_url in request.path %} active {% endif %}">Vårt dashboard</a>
+				</li>
+				<li class="nav-item">
+					{% url "mine_behandlinger" as mine_behandlinger_url %}
+					<a href="{{ mine_behandlinger_url }}" class="nav-link {% if mine_behandlinger_url in request.path %} active {% endif %}">Våre behandlinger</a>
+				</li>
+
+				<li class="nav-item">
+					{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
+					<a href="{{ alle_driftsmodeller_url }}" class="nav-link {% if alle_driftsmodeller_url in request.path %} active {% endif %}">Plattformer</a>
+				</li>
+				<li class="nav-item">
+					{% url "alle_cmdbref" as alle_cmdbref_url %}
+					<a href="{{ alle_cmdbref_url }}" class="nav-link {% if alle_cmdbref_url in request.path %} active {% endif %}">CMDB</a>
+				</li>
+				{% endif %}
+				<li class="nav-item">
+					{% url "alle_systemer" as alle_systemer_url %}
+					<a href="{{ alle_systemer_url }}" class="nav-link {% if alle_systemer_url in request.path %} active {% endif %}">Systemoversikt</a>
+				</li>
+				<li class="nav-item">
+					{% url "alle_programvarer" as alle_programvarer_url %}
+					<a href="{{ alle_programvarer_url }}" class="nav-link {% if alle_programvarer_url in request.path %} active {% endif %}">Programvarer</a>
+				</li>
+				<li class="nav-item">
+					{% url "alle_definisjoner" as alle_definisjoner_url %}
+					<a href="{{ alle_definisjoner_url }}" class="nav-link {% if alle_definisjoner_url in request.path %} active {% endif %}">Definisjoner</a>
+				</li>
+				<li class="nav-item">
+					{% url "alle_systemurler" as alle_systemurler_url %}
+					<a href="{{ alle_systemurler_url }}" class="nav-link {% if alle_systemurler_url in request.path %} active {% endif %}">URL-er</a>
+				</li>
+				<li class="nav-item">
+					<a href="/api/" class="nav-link">API</a>
+				</li>
+			</ul>
+		</div>
+	</nav>
+</header>
+
+<main role="main" class="container-fluid" style="font-size: 85%">
+	<div class="row">
+		<div class="col-sm-12">
+
+			{% if DEBUG %}
+			<div id="div_message" class="alert alert-danger">
+				<a class="close" data-dismiss="alert" href="#">×</a>
+				<h5 class="alert-heading">Du er på et Testmiljø!</h5>
+				Du er på en testinstans som heter <b>{{ TEST_ENV_NAME }}</b>.
+			</div>
+			{% endif %}
+
+			{% if messages %}
+				{% for message in messages %}
+				<div id="div_message" class="alert alert-{{ message.tags }}">
+					<a class="close" data-dismiss="alert" href="#">×</a>
+					<h5 class="alert-heading">{{ message.tags|capfirst }}</h5>
+					{{ message }}
+				</div>
+				{% endfor %}
+			{% endif %}
+
+			<h3>{% block underoverskrift %}{% endblock underoverskrift %}</h3>
+			{% block undermeny %}{% endblock undermeny %}
+			{% block main_content %}{% endblock main_content %}
+		</div>
+	</div>
+</main>
+
+<script type="text/javascript">
+	function msieversion(){
+		var ua = window.navigator.userAgent;
+		var msie = ua.indexOf("MSIE ");
+		if (sessionStorage['ie_warning'] != "yes") {
+			if (msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
+				alert("Denne løsningen er ikke testet med Internett Explorer. Vi anbefaler å benytte Firefox eller Chrome.");
+			}
+		}
+		sessionStorage['ie_warning'] = "yes";
+		return false;
+	}
+	msieversion();
+</script>
+
+<script src="{% static 'tableexport/xlsx.core.min.js' %}"></script>
+<script src="{% static 'tableexport/FileSaver.min.js' %}"></script>
+<script src="{% static 'tableexport/tableexport.js' %}"></script>
+
+<script type="text/javascript">
+TableExport.prototype.types.date.assert = function(value){return false;};
+$("table").tableExport({
+	headers: true,
+	footers: true,
+	formats: ['xlsx'],
+	filename: 'id',
+	bootstrap: false,
+	exportButtons: true,
+	position: 'bottom',
+	ignoreRows: null,
+	ignoreCols: null,
+	trimWhitespace: true,
+	RTL: false,
+	sheetname: 'id'
+});
+</script>
+
+</body>
+</html>

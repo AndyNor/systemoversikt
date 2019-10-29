@@ -1,0 +1,20 @@
+{% extends "index.html" %}
+
+
+{% block underoverskrift %}
+	Importfunksjonen
+{% endblock underoverskrift %}
+
+<p><b>Kjør alltid to ganger!</b></p>
+
+{% block main_content %}
+	<p>OK: {{ result.ok }}</p>
+	<p>Fail: {{ result.fail }}</p>
+	<p>Pass2: {{ result.pass2|default:"" }}</p>
+	<p>Errors:</p>
+	<ul>
+	{% for error in result.errors %}
+		<li>{{ error }}</li>
+	{% endfor %}
+	</ul>
+{% endblock main_content %}

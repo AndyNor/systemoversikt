@@ -1,0 +1,11 @@
+{% extends "index.html" %}
+
+{% block underoverskrift %}
+	{{ overskrift }} (totalt {{ systemer.count }})
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	{% include "alle_systemer_include.html" %}
+
+{% endblock main_content %}

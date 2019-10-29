@@ -1,0 +1,52 @@
+{% load static %}
+
+<table class="table table-sm table-striped tablesorter">
+<thead>
+<tr>
+	{% if user.is_authenticated %}
+	<th></th>
+	{% endif %}
+	<th>Programvare</th>
+	<th>Programvarebruk (inkl. "ikke i bruk")</th>
+	<th>Behandlinger</th>
+	<th>Beskrivelse</th>
+	<th>Programvareleverandør</th>
+	<th>Kategorier</th>
+	<th>Strategisk</th>
+	<th>Funksjonell</th>
+	<th>Teknisk</th>
+	{% if user.is_authenticated %}
+	<th></th>
+	{% endif %}
+</tr>
+</thead>
+<tbody>
+{% for prog in programvarer %}
+<tr>
+	{% if user.is_authenticated %}
+	<td><a target="_blank" href="/admin/systemoversikt/programvare/{{ prog.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+	{% endif %}
+	<td>{% url "programvaredetaljer" prog.pk as url_programvaredetaljer %}<a href="{{ url_programvaredetaljer }}">{{ prog.programvarenavn }}</a></td>
+	<td>{{ prog.programvarebruk_programvare.count }}</td>
+	<td>{{ prog.behandling_programvarer.count }}</td>
+	<td>{{ prog.programvarebeskrivelse }}</td>
+	<td>{% for lev in prog.programvareleverandor.all %}
+		{% url "leverandor" lev.pk as url_leverandor %}
+		<a href="{{ url_leverandor }}">{{ lev }}</a><br>
+	{% endfor %}</td>
+	<td>
+		{% for kategori in prog.kategorier.all %}
+			{% url "systemkategori" kategori.pk as url_systemkategori %}
+			<a href="{{ url_systemkategori }}">{{ kategori }}</a><br>
+		{% endfor %}
+	</td>
+	<td>{{ prog.get_strategisk_egnethet_display }}</td>
+	<td>{{ prog.get_funksjonell_egnethet_display }}</td>
+	<td>{{ prog.get_teknisk_egnethet_display }}</td>
+	{% if user.is_authenticated %}
+	<td><a target="_blank" href="/admin/systemoversikt/programvare/{{ prog.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+	{% endif %}
+</tr>
+{% endfor %}
+</tbody>
+</table>

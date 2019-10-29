@@ -1,0 +1,42 @@
+﻿{% extends "index.html" %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Introduksjon til Kartoteket: System- og behandlingsoversikt
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+{% if oidctoken and DEBUG %}
+<div class="alert alert-success" role="alert">
+	<h5>Du er logget inn med følgende OIDC-parametre (debugging):</h5>
+	<p>{{ oidctoken }}</p>
+</div>
+{% endif %}
+
+	<p>Denne portalen er opprettet for å samle, koble og dele metadata i Oslo kommune.</p>
+
+	<hr>
+
+	<h6>Dokumentasjon</h6>
+	<ul>
+		<li>
+			<a href="https://systemoversikt.oslo.kommune.no/systemer/detaljer/1344/">Dette systemet i oversikten</a>
+		</li>
+		<li>
+			<a href="https://confluence.oslo.kommune.no/x/j699Aw">Brukerdoumentasjon</a>
+		</li>
+		<li>
+			<a href="https://confluence.oslo.kommune.no/x/ga99Aw">Systemdokumentasjon</a>
+		</li>
+	</ul>
+
+	<h6>Introduksjonsvideoer</h6>
+	<ul>
+		<li>
+			<a href="{% url 'video' %}">Introduksjonsvideoer</a>
+		</li>
+	</ul>
+
+
+{% endblock %}

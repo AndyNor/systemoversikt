@@ -1,0 +1,68 @@
+{% extends "index.html" %}
+
+{% block underoverskrift %}
+	{{ overskrift }} (viser {{ systemer.start_index }} til {{ systemer.end_index }} av totalt {{ systemer.paginator.count }})
+{% endblock underoverskrift %}
+
+{% block main_content %}
+	<h6>
+	{% if user.is_authenticated %}
+		<a target="_blank" href="/admin/systemoversikt/system/add/">Legg til nytt system</a> |
+		<a target="_blank" href="/admin/systemoversikt/system/">Søk og filtrer</a> |
+
+		{% if request.user.profile.virksomhet %}
+			{% url 'all_bruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_systembruk %}
+			<a href="{{ url_systembruk }}">Vår bruk av systemer</a> |
+		{% endif %}
+
+		{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
+		<a href="{{ alle_driftsmodeller_url }}">Driftsmodeller</a> |
+		{% url "alle_cmdbref" as alle_cmdbref_url %}
+		<a href="{{ alle_cmdbref_url }}">CMDB</a> |
+	{% endif %}
+		<a href="{% url 'alle_systemkategorier' %}">Alle systemkategorier</a> |
+		<a href="{% url 'systemer_pakket' %}">Pakking for klienter (kun felles IKT-plattform)</a>
+	</h6>
+
+	<p>Her vises alle registrerte systemer i Oslo kommune.<br>
+
+	<p>Noen predefinerte filtre for å snevre inn på type system og hvor systemet er driftet:<br>
+
+	{% url "alle_systemer_sideref" utvalg="alle" items=perpage page=1 as url_alle %}
+	<a href="{{ url_alle }}" {% if url_alle in request.path %} style="font-weight: bold;" {% endif %}>Alle systemer</a> |
+
+	{% url "alle_systemer_sideref" utvalg="sektorfelles" items=perpage page=1 as url_sektor_og_fellessystemer %}
+	<a href="{{ url_sektor_og_fellessystemer }}" {% if url_sektor_og_fellessystemer in request.path %} style="font-weight: bold;" {% endif %}>Sektor- og fellessystemer</a> |
+
+	{% url "alle_systemer_sideref" utvalg="nyfellesiktplattform" items=perpage page=1 as url_nyfellesiktplattform %}
+	<a href="{{ url_nyfellesiktplattform }}" {% if url_nyfellesiktplattform in request.path %} style="font-weight: bold;" {% endif %}>På ny felles IKT-plattform</a> |
+
+	{% url "alle_systemer_sideref" utvalg="gammelfellesiktplattform" items=perpage page=1 as url_gammelfellesiktplattform %}
+	<a href="{{ url_gammelfellesiktplattform }}" {% if url_gammelfellesiktplattform in request.path %} style="font-weight: bold;" {% endif %}>På Oslo kommunes datasenter (Oslofelles)</a> |
+
+	{% url "alle_systemer_sideref" utvalg="saas" items=perpage page=1 as url_saas %}
+	<a href="{{ url_saas }}" {% if url_saas in request.path %} style="font-weight: bold;" {% endif %}>Driftes av ekstern leverandør</a> |
+
+	{% url "alle_systemer_sideref" utvalg="itas" items=perpage page=1 as url_alle_systemer_itas %}
+	<a href="{{ url_alle_systemer_itas }}" {% if url_alle_systemer_itas in request.path %} style="font-weight: bold;" {% endif %}>På ITAS-plattformen</a> |
+
+	{% url "alle_systemer_sideref" utvalg="utendriftsmodell" items=perpage page=1 as url_utendriftsmodell %}
+	<a href="{{ url_utendriftsmodell }}" {% if url_utendriftsmodell in request.path %} style="font-weight: bold;" {% endif %}>Ukjent driftsmodell</a> |
+
+	{% url "alle_systemer_sideref" utvalg="systemapplikasjoner" items=perpage page=1 as url_alle_applikasjoner %}
+	<a href="{{ url_alle_applikasjoner }}" {% if url_alle_applikasjoner in request.path %} style="font-weight: bold;" {% endif %}>Systemapplikasjoner</a>
+	</p>
+
+	Side {{ systemer.number }} av {{ systemer.paginator.num_pages }} ({{ perpage }} per side)
+
+	<nav aria-label="sidevalg">
+		<ul class="pagination">
+			{% for page in pages %}
+				{% url 'alle_systemer_sideref' utvalg perpage page as url %}
+				<li class="page-item {% if url in request.path %} active {% endif %}"><a class="page-link" href="{{ url }}">{{ page }}</a></li>
+			{% endfor %}
+		</ul>
+	</nav>
+
+	{% include "alle_systemer_include.html" %}
+{% endblock main_content %}

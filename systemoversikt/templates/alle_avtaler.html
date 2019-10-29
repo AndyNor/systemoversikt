@@ -1,0 +1,28 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Avtaler (viser {{ avtaler.count }})
+	<h6>
+		{% if user.is_authenticated %}
+		<a target="_blank" href="/admin/systemoversikt/avtale/add/">Legg til ny avtale</a>
+		{% endif %}
+	</h6>
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+{% for v in alle_virksomheter %}
+	<span>
+	{% if v.pk is virksomhet_pk %} <b> {% endif %}
+	<a href="{% url 'avtalervirksomhet' virksomhet=v.pk %}">{{ v.virksomhetsforkortelse }}</a>
+	{% if v.pk is virksomhet_pk %} </b> {% endif %}
+	</span>,
+{% endfor %}
+
+<p>{{ utdypende_beskrivelse }}</p>
+
+{% include 'alle_avtaler_include.html' %}
+
+{% endblock main_content %}

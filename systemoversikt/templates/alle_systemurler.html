@@ -1,0 +1,42 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Oslo kommunes webtjenester (viser {{ web_urler.count }})
+	<h5><a target="_blank" href="/admin/systemoversikt/systemurl/add/">Legg til nytt domene</a></h5>
+{% endblock underoverskrift %}
+
+{% block main_content %}
+	<table id="stickyheader" class="table table-sm table-striped tablesorter">
+	<thead>
+	<tr>
+		<th></th>
+		<th>Domene</th>
+		<th>Knyttet til system</th>
+		<th>Målgruppe</th>
+		<th>Sikker transport</th>
+		<th>Vurdering sikkerhetstest</th>
+		<th>Sikkerhetstestet</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for item in web_urler %}
+	<tr>
+		<td><a target="_blank" href="/admin/systemoversikt/systemurl/{{ item.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		<td><a href="{{ item.domene }}">{{ item.domene }}</a></td>
+		<td><ul>
+		{% for system in item.system_systemurl.all %}
+			{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
+			<li><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a></li>
+		{% endfor %}
+		</ul></td>
+		<td>{{ item.get_maalgruppe_display }}</td>
+		<td>{{ item.https|yesno:"Ja,Nei" }}</td>
+		<td>{{ item.get_vurdering_sikkerhetstest_display|default:"-" }}</td>
+		<td>{{ item.sist_sikkerhetstestet_dato|naturaltime|default:"Aldri" }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+{% endblock main_content %}

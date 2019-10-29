@@ -1,0 +1,14 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Blokkerte behandlinger for {{ virksomhet.virksomhetsforkortelse }} (viser {{ behandlinger.count }})
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<p>Denne siden viser behandlinger som virksomheten ikke ønsker å vise. Denne oversikten er ikke lenger i bruk noe sted etter overgang fra fellesbehandlinger til at alle virksomheter skal ha en egen kopi av en hver behandling de utfører.</p>
+
+	{% include "alle_behandlinger_include.html" %}
+{% endblock main_content %}

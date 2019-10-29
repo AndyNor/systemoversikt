@@ -1,0 +1,62 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	Eksport av aktive ansvarlige (for PRK-import)
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+<table class="table table-sm table-striped">
+	<thead>
+		<tr>
+			<th>Navn</th>
+			<th>username</th>
+			<th>user_permissions</th>
+			<th>groups</th>
+			<th>is_active</th>
+			<th>is_staff</th>
+			<th>is_superuser</th>
+			<th>last_login</th>
+		</tr>
+	</thead>
+	<tbody>
+{% for ansvarlig in ansvarlige %}
+
+	<tr>
+		<td>
+			{{ ansvarlig }}
+		</td>
+		<td>
+			{{ ansvarlig.brukernavn.username }}
+		</td>
+		<td>
+			{% for permission in ansvarlig.brukernavn.user_permissions.all %}
+				{{ permission }}<br>
+			{% endfor %}
+		</td>
+		<td>
+			{% for group in ansvarlig.brukernavn.groups.all %}
+				{{ group }}<br>
+			{% endfor %}
+		</td>
+		<td>
+			{{ ansvarlig.brukernavn.is_active }}
+		</td>
+		<td>
+			{{ ansvarlig.brukernavn.is_staff }}
+		</td>
+		<td>
+			{{ ansvarlig.brukernavn.is_superuser }}
+		</td>
+		<td>
+			{{ ansvarlig.brukernavn.last_login }}
+		</td>
+	</tr>
+
+{% endfor %}
+	</tbody>
+</table>
+
+{% endblock main_content %}

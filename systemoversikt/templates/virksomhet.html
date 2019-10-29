@@ -1,0 +1,64 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	{{ virksomhet.virksomhetsnavn }} ({{ virksomhet.virksomhetsforkortelse }})
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+
+<div class="card">
+	<div class="card-body">
+		<b>Antall ansatte:</b> {{ virksomhet.ansatte|default:'' }}<br>
+		<b>Plattform:</b> {{ virksomhet.get_resultatenhet_display }}<br>
+		<b>På intranett:</b> <a href="{{ virksomhet.intranett_url|default:'' }}">{{ virksomhet.intranett_url|default:'' }}</a><br>
+		<b>På oslo.kommune.no</b> <a href="{{ virksomhet.www_url|default:'' }}">{{ virksomhet.www_url|default:'' }}</a><br>
+
+		<hr>
+
+		<b>Bruk av systemer: </b>{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
+			<a href="{{ url_all_bruk_for_virksomhet }}">Vår systembruk</a><br>
+		<b>Behandling i virksomheten: </b>{% url 'alle_behandlinger_virksomhet' pk=virksomhet.pk as url_alle_behandlinger_virksomhet %}
+			<a href="{{ url_alle_behandlinger_virksomhet }}">Vår behandling</a>
+
+		<hr>
+
+		<b>UKE's KAM er:</b> {{ virksomhet.uke_kam_person|default_if_none:'' }} (felt skal utfases)<br>
+		<b>UKE's KAM er:</b> {% for person in virksomhet.uke_kam_referanse.all %}{{ person }} {% endfor %}<br>
+		<b>UKE's løsningssalgskontakt er:</b> {{ virksomhet.uke_losningssalg_person|default_if_none:'' }} (felt skal utfases)<br>
+		<b>UKE's løsningssalgskontakt er:</b> {% for person in virksomhet.uke_losningssalg_referanse.all %}{{ person }} {% endfor %}<br>
+		<b>UKE's stedfortreder løsningssalgskontakt er:</b> {{ virksomhet.uke_stedfortreder_person|default_if_none:'' }} (felt skal utfases)<br>
+		<b>UKE's stedfortreder løsningssalgskontakt er:</b> {% for person in virksomhet.uke_stedfortreder_referanse.all %}{{ person }} {% endfor %}<br>
+		<br>
+		<a target="_blank" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">
+			<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
+	</div>
+</div>
+
+<br>
+
+<div class="row">
+	<div class="col-sm-6">
+		<h4>Systemeier for:</h4>
+		<ul>
+		{% for item in systemeier_for %}
+			{% url 'systemdetaljer' pk=item.pk as url_systemdetaljer %}
+			<li><a href="{{ url_systemdetaljer }}">{{ item.systemnavn }}</a></li>
+		{% endfor %}
+		</ul>
+	</div>
+		<div class="col-sm-6">
+		<h4>Systemforvalter for:</h4>
+		<ul>
+		{% for item in systemforvalter_for %}
+			{% url 'systemdetaljer' pk=item.pk as url_systemdetaljer %}
+			<li><a href="{{ url_systemdetaljer }}">{{ item.systemnavn }}</a></li>
+		{% endfor %}
+		</ul>
+	</div>
+</div>
+
+
+{% endblock main_content %}

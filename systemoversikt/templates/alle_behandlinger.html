@@ -1,0 +1,38 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	{{ overskrift }} (Antall: {{ behandlinger.count }})
+{% endblock underoverskrift %}
+
+{% block main_content %}
+{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
+
+<p>I denne behandlingsprotokollen vises alle behandlinger {{ virksomhet }} har opprettet selv, samt behandlinger merket som "felles" for fellessystemer/sektorsystemer i tilfeller hvor virksomheten har krysset av for "Abonner på felles behandlinger i systemet" i sin registrering av systembruk mot systemet.<br>
+I tillegg til dette kan du bruke funksjonen "kopier behandling" på siden for systemdetaljer for systemer du benytter.
+
+	<h6>
+		{% if user.is_authenticated %}
+		<a href='/admin/systemoversikt/behandlingerpersonopplysninger/add/?behandlingsansvarlig={{ virksomhet.pk }}'>Registrer ny behandling</a> |
+		{% comment %}<a href="{% url 'behandlinger_filtrerte' virksomhet.pk %}">Blokkerte behandlinger</a> |{% endcomment %}
+		{% endif %}
+
+			{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
+		<a href="{{ url_all_bruk_for_virksomhet }}">Vår systembruk</a> |
+
+			{% url "databehandleravtaler_virksomhet" virksomhet.pk as databehandleravtaler_virksomhet_url %}
+		<a href="{{ databehandleravtaler_virksomhet_url }}">Våre databehandleravtaler</a> |
+			{% url "alle_behandlinger_virksomhet" pk=virksomhet.pk as url_alle_behandlinger %}
+		<a href="{{ url_alle_behandlinger }}">Alle behandlinger for {{ virksomhet.virksomhetsforkortelse }}</a>
+	</h6>
+
+	<p>Avdelinger:
+	{% for avdeling in interne_avdelinger %}
+		{% url 'behandlinger_virksomhet_ansvarlig' pk=virksomhet.pk internt_ansvarlig=avdeling.internt_ansvarlig as url_internt_valg %}
+		<a {% if internt_ansvarlig_valgt == avdeling.internt_ansvarlig %} style="font-weight: bold;"{% endif %} href="{{ url_internt_valg }}">{{ avdeling.internt_ansvarlig|default:"Ukjent" }}</a> {% if not forloop.last %} | {% endif %}
+	{% endfor %}
+	</p>
+
+	{% include 'alle_behandlinger_include.html' %}
+
+{% endblock main_content %}

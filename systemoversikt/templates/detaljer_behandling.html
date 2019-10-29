@@ -1,0 +1,375 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Behandlingsdetaljer
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+
+
+<div class="card">
+	<div class="card-body">
+		<a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
+	</div>
+</div>
+
+<br>
+
+
+<div class="row">
+	<div class="col-sm-6">
+
+		<h6>Organisatoriske detaljer</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">Sist oppdatert</td>
+				<td>{{ behandling.sist_oppdatert|date:'Y-m-d' }} ({{ behandling.sist_oppdatert|naturaltime }})</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "informasjon_kvalitetssikret" %}</td>
+				<td>
+
+				{% if behandling.informasjon_kvalitetssikret is False %}
+					<p style="text-align: center; background-color: #ffacac">Nei</p>
+				{% else %}
+					<p style="text-align: center; background-color: #9dd481">Ja</p>
+				{% endif %}
+
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "fellesbehandling" %}</td>
+				<td>{{ behandling.fellesbehandling|yesno:"Ja,Nei" }}</td>
+			</tr>
+			<tr>
+				<td>Registrert av</td>
+				{% url 'virksomhet' behandling.behandlingsansvarlig.pk as url_virksomhet %}
+				<td><a href="{{ url_virksomhet }}">{{ behandling.behandlingsansvarlig }}</a></td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "oppdateringsansvarlig" %}</td>
+				<td>
+					{% for ansvarlig in behandling.oppdateringsansvarlig.all %}
+						{% url 'ansvarlig' pk=ansvarlig.pk as url_ansvarlig %}
+						<a href="{{ url_ansvarlig }}">{{ ansvarlig }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "internt_ansvarlig" %}</td>
+				<td>{{ behandling.internt_ansvarlig|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "funksjonsomraade" %}</td>
+				<td>{{ behandling.funksjonsomraade|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "tilgang_opplysninger" %}</td>
+				<td>{{ behandling.tilgang_opplysninger|default:"-" }}</td>
+			</tr>
+		</table>
+
+		<h6>Formål og type opplysninger</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "behandlingen" %}</td>
+				<td>{{ behandling.behandlingen }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "formaal" %}</td>
+				<td>{{ behandling.formaal|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "dpia_effekt_enkelte" %}</td>
+				<td>{{ behandling.dpia_effekt_enkelte|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "dpia_effekt_samfunnet" %}</td>
+				<td>{{ behandling.dpia_effekt_samfunnet|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "kategorier_personopplysninger" %}</td>
+				<td>
+					{% for kategori in behandling.kategorier_personopplysninger.all %}
+						<li>{{ kategori }}</li>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "personopplysninger_utdyping" %}</td>
+				<td>{{ behandling.personopplysninger_utdyping|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "den_registrerte_sarbare_grupper" %}</td>
+				<td>{{ behandling.den_registrerte_sarbare_grupper|yesno:"Ja,Nei,Ukjent" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "den_registrerte" %}</td>
+				<td>
+					{% for registrert in behandling.den_registrerte.all %}
+						<li>{{ registrert }}</li>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "den_registrerte_hovedkateogi" %}</td>
+				<td>
+					{% for klassifikasjon in behandling.den_registrerte_hovedkateogi.all %}
+						<li>{{ klassifikasjon }}</li>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "den_registrerte_detaljer" %}</td>
+				<td>{{ behandling.den_registrerte_detaljer|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "antall_registrerte" %}</td>
+				<td>{{ behandling.antall_registrerte|default:"-" }}</td>
+			</tr>
+		</table>
+
+		<h6>Behandlingsgrunnlag </h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "behandlingsgrunnlag_valg" %}</td>
+				<td>
+					{% for g in behandling.behandlingsgrunnlag_valg.all %}
+						<li>{{ g }}</li>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "behandlingsgrunnlag_utdyping" %}</td>
+				<td>{{ behandling.behandlingsgrunnlag_utdyping|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "behandlingsgrunnlag_saerlige_kategorier" %}</td>
+				<td>{{ behandling.behandlingsgrunnlag_saerlige_kategorier|default:"-" }}</td>
+			</tr>
+		</table>
+
+		<h6>Innhenting, lagring og sletting av personopplysninger</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "opplysningskilde" %}</td>
+				<td>{{ behandling.opplysningskilde|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "antall_registrerte" %}</td>
+				<td>{{ behandling.get_antall_registrerte_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "valgfriget_registrerte" %}</td>
+				<td>{{ behandling.get_valgfriget_registrerte_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "relasjon_registrerte" %}</td>
+				<td>
+				{% for relasjon in behandling.relasjon_registrerte.all %}
+					{{ relasjon }}<br>
+				{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "frekvens_automatisert_innsamling" %}</td>
+				<td>{{ behandling.frekvens_automatisert_innsamling|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "frekvens_innsamling_manuelt" %}</td>
+				<td>{{ behandling.frekvens_innsamling_manuelt|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "forventet_bruk" %}</td>
+				<td>{{ behandling.forventet_bruk|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "systemer" %}</td>
+				<td>
+					{% for system in behandling.systemer.all %}
+						{% url "systemdetaljer" system.pk as url_systemdetaljer %}
+						<li>
+							<a href="{{ url_systemdetaljer }}">{{ system }}</a>
+								{% if system.DPIA_for_system %}
+									{% url 'detaljer_dpia' pk=system.DPIA_for_system.pk as url_dpia %}
+									: Har en <a href="{{ url_dpia }}">DPIA</a> (sist oppdatert {{ system.DPIA_for_system.sist_gjennomforing_dpia|date:'Y-m-d'|default:'-' }})
+								{% endif %}
+						</li>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "programvarer" %}</td>
+				<td>
+					{% for program in behandling.programvarer.all %}
+					{% url "programvaredetaljer" program.pk as url_programvaredetaljer %}
+					<li><a href="{{ url_programvaredetaljer }}">{{ program }}</a></li>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "sikre_dataminimalisering" %}</td>
+				<td>{{ behandling.sikre_dataminimalisering|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "oppbevaringsplikt" %}</td>
+				<td>{{ behandling.oppbevaringsplikt|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "krav_slettefrister" %}</td>
+				<td>{{ behandling.krav_slettefrister|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "planlagte_slettefrister" %}</td>
+				<td>{{ behandling.planlagte_slettefrister|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "begrensning_tilgang" %}</td>
+				<td>{{ behandling.begrensning_tilgang|default:"-" }}</td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="col-sm-6">
+		<h6>Import, eksport samt eksterne leverandører</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "navn_databehandler" %}</td>
+				<td>
+					{% for lev in behandling.navn_databehandler.all %}
+					{% url "leverandor" lev.pk as url_leverandor %}
+					<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "tjenesteleveranse_land" %}</td>
+				<td>{{ behandling.tjenesteleveranse_land|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "dpia_prosess_godkjenne_underleverandor" %}</td>
+				<td>{{ behandling.dpia_prosess_godkjenne_underleverandor|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "dpia_dba_ivaretakelse_sikkerhet" %}</td>
+				<td>{{ behandling.dpia_dba_ivaretakelse_sikkerhet|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "kommunens_maler" %}</td>
+				<td>{{ behandling.kommunens_maler|yesno:"Ja,Nei,Ukjent" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "kommunens_maler_hvis_nei" %}</td>
+				<td>{{ behandling.kommunens_maler_hvis_nei|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "databehandleravtale_status_boolean" %}</td>
+				<td><b>{{ behandling.databehandleravtale_status_boolean|yesno:"Ja,Nei" }}</b>, {{ behandling.databehandleravtale_status|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "utlevering_ekstern_myndighet" %}</td>
+				<td><b>{{ behandling.utlevering_ekstern_myndighet|yesno:"Ja,Nei" }}</b>, {{ behandling.utlevering_ekstern_myndighet_utdyping|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "innhenting_ekstern_myndighet" %}</td>
+				<td><b>{{ behandling.innhenting_ekstern_myndighet|yesno:"Ja,Nei" }}</b>, {{ behandling.innhenting_ekstern_myndighet_utdyping|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "utlevering_registrerte_samtykke" %}</td>
+				<td><b>{{ behandling.utlevering_registrerte_samtykke|yesno:"Ja,Nei" }}</b>, {{ behandling.utlevering_registrerte_samtykke_utdyping|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "utlevering_utenfor_EU" %}</td>
+				<td><b>{{ behandling.utlevering_utenfor_EU|yesno:"Ja,Nei" }}</b>, {{ behandling.garantier_overforing|default:"-" }}</td>
+			</tr>
+		</table>
+
+		<h6>For den registrerte</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "informering_til_registrerte" %}</td>
+				<td>{{ behandling.informering_til_registrerte|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "innsyn_egenkontroll" %}</td>
+				<td>{{ behandling.innsyn_egenkontroll|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "rette_opplysninger" %}</td>
+				<td>{{ behandling.rette_opplysninger|default:"-" }}</td>
+			</tr>
+		</table>
+
+		<h6>Vurdering av personvernkonsekvenser</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "hoy_personvernrisiko" %}</td>
+				<td>{{ behandling.hoy_personvernrisiko|yesno:"Ja,Nei" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "dpia_unnga_hoy_risiko" %}</td>
+				<td>{{ behandling.dpia_unnga_hoy_risiko|yesno:"Ja,Nei,Ukjent" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "dpia_dekker_formal" %}</td>
+				<td>{{ behandling.dpia_dekker_formal|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "dpia_proporsjonalitet_enkelte_samfunnet" %}</td>
+				<td>{{ behandling.dpia_proporsjonalitet_enkelte_samfunnet|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "ny_endret_prosess" %}</td>
+				<td>{{ behandling.ny_endret_prosess|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "dpia_tidligere_bekymringer_risikoer" %}</td>
+				<td>{{ behandling.dpia_tidligere_bekymringer_risikoer|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name behandling "dpia_tidligere_avdekket_sikkerhetsbrudd" %}</td>
+				<td>{{ behandling.dpia_tidligere_avdekket_sikkerhetsbrudd|default:"-" }}</td>
+			</tr>
+		</table>
+
+		<h6>Systemer: Sikkerhetstiltak</h6>
+		<p>Behandlingen krever nivå: <b>{{ behandling.get_krav_sikkerhetsnivaa_display|default:"-" }}</b></p>
+		<table class="table table-sm table-striped">
+			<thead>
+				<th>System</th>
+				<th>Systemtekniske sikkerhetstiltak</th>
+				<th>Sikkerhetsnivå</th>
+				<th>Dato sist RoS</th>
+			</thead>
+			<tbody>
+			{% for system in behandling.systemer.all %}
+			<tr>
+				<td>
+					{% url 'systemdetaljer' system.pk as system_url %}
+					<a href="{{ system_url }}">{{ system.systemnavn }}</a></td>
+				<td>{{ system.systemtekniske_sikkerhetstiltak|default:"-" }}</td>
+				<td>{{ system.get_sikkerhetsnivaa_display|default:"-" }}</td>
+				<td>{{ system.dato_sist_ros|date:'Y-m-d'|default:"-" }} ({{ system.dato_sist_ros|naturaltime|default:'aldri' }})</td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+
+		<h6>Organisatoriske sikkerhetstiltak</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name behandling "sikkerhetstiltak" %}</td>
+				<td>{{ behandling.sikkerhetstiltak|default:"-" }}</td>
+			</tr>
+		</table>
+
+	</div>
+</div>
+
+
+{% endblock main_content %}

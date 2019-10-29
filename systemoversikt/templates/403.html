@@ -1,0 +1,27 @@
+{% extends "index.html" %}
+
+{% block main_content %}
+
+	<h4><img style="width: 25px;" src="/static/open-iconic/svg/circle-x.svg" alt="Kvalitet verifisert"> Adgang nektet</h4>
+
+	<p>Noen typer informasjon krever ekstra tilganger.</p>
+
+	{% if groups %}
+		<p>Du er medlem i følgende grupper:
+			{% for group in groups.all %}
+				<br>{{ group }}
+			{% endfor %}
+		</p>
+	{% endif %}
+
+
+	{% if required_permissions %}
+		<p>Du mangler rettighetene:
+			<br>{{ required_permissions }}
+		</p>
+	{% endif %}
+
+	<p><i>Det er tilgangsstyring via Person og ressurskatalogen (PRK) via skjemaet "(F) System- og behandlingsoversikt".<br>
+	Dette er et felles PRK-skjema som kan tildeles av personer med "tildele sentrale tilganger til brukere"-rollen.</i></p>
+
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "index.html" %}
+{% load static %}
+
+
+{% block underoverskrift %}
+	Leverandøroversikt ({{ leverandorer.count }})
+	{% if user.is_authenticated %}
+	<h6>
+		<a target="_blank" href="/admin/systemoversikt/leverandor/add/">Legg til ny leverandør</a>
+	</h6>
+	{% endif %}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+	<table class="table table-sm table-striped tablesorter">
+	<thead>
+	<tr>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+		<th>Leverandør</th>
+		{# <th>Programvarer for</th> #}
+		{# <th>Systemer for</th> #}
+		{# <th>Systembruk for</th> #}
+		{# <th>Basisdrift for</th> #}
+		{# <th>Applikasjonsdrift for</th> #}
+		{# <th>Databehandler for</th> #}
+		<th>Kontaktpersoner</th>
+		<th>Org.nummer</th>
+		<th>Notater</th>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+	</tr>
+	</thead>
+	<tbody>
+	{% for item in leverandorer %}
+	<tr>
+		{% if user.is_authenticated %}
+		<td><a target="_blank" href="/admin/systemoversikt/leverandor/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		{% endif %}
+		{% url 'leverandor' pk=item.pk as url_leverandor %}
+		<td><a href="{{ url_leverandor }}">{{ item.leverandor_navn }}</a></td>
+		{# <td>{{ item.programvare_programvareleverandor.count }}</td> #}
+		{# <td>{{ item.system_systemleverandor.count }}</td> #}
+		{# <td>{{ item.systembruk_systemleverandor.count }}</td> #}
+		{# <td>{{ item.system_systemleverandor.count }}</td> #}
+		{# <td>{{ item.system_applikasjonsdriftleverandor.count }}</td> #}
+		{# <td>{{ item.behandling_navn_databehandler.count }}</td> #}
+		<td>{{ item.kontaktpersoner|default:'' }}</td>
+		<td>{{ item.orgnummer|default:'' }}</td>
+		<td>{{ item.notater|default:'' }}</td>
+		{% if user.is_authenticated %}
+		<td><a target="_blank" href="/admin/systemoversikt/leverandor/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+{% endblock main_content %}

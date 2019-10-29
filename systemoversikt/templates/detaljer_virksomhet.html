@@ -1,0 +1,169 @@
+{% extends "index.html" %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	{{ virksomhet.virksomhetsnavn }} ({{ virksomhet.virksomhetsforkortelse }})
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+	<h6>
+		{% url 'alle_virksomheter' as url_alle_virksomheter %}
+		<a href="{{ url_alle_virksomheter }}">Alle virksomheter</a>
+	</h6>
+
+<div class="card">
+	<div class="card-body">
+		<h6>
+		{% if user.is_authenticated %}
+		<a target="_blank" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">
+			<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+		{% endif %}
+		 Om virksomheten
+		</h6>
+
+		<b>{% get_verbose_field_name virksomhet "leder" %}:</b>
+			{% for leder in virksomhet.leder.all %}
+				{% url 'ansvarlig' leder.pk as url_leder %}
+				<a href="{{ url_leder }}"
+				{% if leder.brukernavn.is_active == False  %}
+					style="text-decoration: line-through;"
+				{% endif %}
+				>{{ leder }}</a>,
+			{% endfor %}<br>
+		<b>{% get_verbose_field_name virksomhet "overordnede_virksomheter" %}:</b>
+			{% for vir in virksomhet.overordnede_virksomheter.all %}
+				{% url 'virksomhet' vir.pk as url_vir %}
+				<a href="{{ url_vir }}">{{ vir }}</a>,
+			{% endfor %}<br>
+		<b>{% get_verbose_field_name virksomhet "kan_representeres" %}:</b> {{ virksomhet.kan_representeres|yesno:"Ja,Nei" }}<br>
+		<b>{% get_verbose_field_name virksomhet "orgnummer" %}:</b> {{ virksomhet.orgnummer|default:'-' }}<br>
+		<b>{% get_verbose_field_name virksomhet "ansatte" %}:</b> {{ virksomhet.ansatte|default:'-' }}<br>
+		<b>Aktive brukere i AD:</b> {{ antall_brukere }}<br>
+		<b>Aktive eksterne brukere i AD:</b> {{ antall_eksterne_brukere }}<br>
+		<b>{% get_verbose_field_name virksomhet "resultatenhet" %}:</b> {{ virksomhet.get_resultatenhet_display }}<br>
+
+		<hr>
+
+		<b>{% get_verbose_field_name virksomhet "ikt_kontakt" %}:</b>
+			{% for kontakt in virksomhet.ikt_kontakt.all %}
+				{% url 'ansvarlig' kontakt.pk as url_ansvarlig %}
+				<a href="{{ url_ansvarlig }}"
+				{% if kontakt.brukernavn.is_active == False  %}
+					style="text-decoration: line-through;"
+				{% endif %}
+				>{{ kontakt }}</a>,
+			{% endfor %}<br>
+
+		<b>{% get_verbose_field_name virksomhet "autoriserte_bestillere_tjenester" %}:</b>
+			{% for kontakt in virksomhet.autoriserte_bestillere_tjenester.all %}
+				{% url 'ansvarlig' kontakt.pk as url_ansvarlig %}
+				<a href="{{ url_ansvarlig }}"
+				{% if kontakt.brukernavn.is_active == False  %}
+					style="text-decoration: line-through;"
+				{% endif %}
+				>{{ kontakt }}</a>,
+			{% endfor %}<br>
+
+		<b>{% get_verbose_field_name virksomhet "autoriserte_bestillere_tjenester_uke" %}:</b>
+			{% for kontakt in virksomhet.autoriserte_bestillere_tjenester_uke.all %}
+				{% url 'ansvarlig' kontakt.pk as url_ansvarlig %}
+				<a href="{{ url_ansvarlig }}"
+				{% if kontakt.brukernavn.is_active == False  %}
+					style="text-decoration: line-through;"
+				{% endif %}
+				>{{ kontakt }}</a>,
+			{% endfor %}<br>
+
+		<b>{% get_verbose_field_name virksomhet "uke_kam_referanse" %}:</b>
+			{% for person in virksomhet.uke_kam_referanse.all %}
+				<a href="{% url 'ansvarlig' person.pk %}"
+				{% if kontakt.brukernavn.is_active == False  %}
+					style="text-decoration: line-through;"
+				{% endif %}
+				>{{ person }}</a>,
+			{% endfor %}<br>
+
+		<b>{% get_verbose_field_name virksomhet "personvernkoordinator" %}:</b>
+			{% for person in virksomhet.personvernkoordinator.all %}
+				<a href="{% url 'ansvarlig' person.pk %}"
+				{% if kontakt.brukernavn.is_active == False  %}
+					style="text-decoration: line-through;"
+				{% endif %}
+				>{{ person }}</a>,
+			{% endfor %}<br>
+
+		<b>{% get_verbose_field_name virksomhet "informasjonssikkerhetskoordinator" %}:</b>
+			{% for person in virksomhet.informasjonssikkerhetskoordinator.all %}
+				<a href="{% url 'ansvarlig' person.pk %}"
+				{% if kontakt.brukernavn.is_active == False  %}
+					style="text-decoration: line-through;"
+				{% endif %}
+				>{{ person }}</a>,
+			{% endfor %}<br>
+
+		<hr>
+
+	<h6>
+		{% url 'all_programvarebruk_for_virksomhet' pk=virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
+		<a href="{{ url_all_programvarebruk_for_virksomhet }}">Vår programvarebruk</a> |
+		{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
+		<a href="{{ url_all_bruk_for_virksomhet }}">Vår systembruk</a> |
+		{% url 'alle_behandlinger_virksomhet' pk=virksomhet.pk as url_alle_behandlinger_virksomhet %}
+		<a href="{{ url_alle_behandlinger_virksomhet }}">Våre behandlinger</a> |
+		{% url 'dashboard_all' virksomhet=virksomhet.pk as url_dashboard %}
+		<a href="{{ url_dashboard }}">Vårt dashboard (drifter, eier, forvalter, behandler i)</a>
+	</h6>
+
+		<hr>
+
+		<b>{% get_verbose_field_name virksomhet "intranett_url" %}:</b> <a href="{{ virksomhet.intranett_url|default:'' }}">{{ virksomhet.intranett_url|default:'-' }}</a><br>
+		<b>{% get_verbose_field_name virksomhet "www_url" %}:</b> <a href="{{ virksomhet.www_url|default:'' }}">{{ virksomhet.www_url|default:'-' }}</a>
+
+		<hr>
+
+		<h6>Organisatoriske personverntiltak</h6>
+		<b>{% get_verbose_field_name virksomhet "rutine_behandling_personopplysninger" %}:</b> {% if virksomhet.rutine_behandling_personopplysninger %}<a href="{{ virksomhet.rutine_behandling_personopplysninger|default:'' }}">Link</a>{% else %} Ikke oppgitt {% endif %}<br>
+		<b>{% get_verbose_field_name virksomhet "rutine_tilgangskontroll" %}:</b> {% if virksomhet.rutine_tilgangskontroll %}<a href="{{ virksomhet.rutine_tilgangskontroll|default:'' }}">Link</a>{% else %} Ikke oppgitt {% endif %}<br>
+		<b>{% get_verbose_field_name virksomhet "rutine_klage_behandling" %}:</b> {% if virksomhet.rutine_klage_behandling %}<a href="{{ virksomhet.rutine_klage_behandling|default:'' }}">Link</a>{% else %} Ikke oppgitt {% endif %}<br>
+	</div>
+</div>
+
+<br>
+
+<h5>Avtaler {{ virksomhet.virksomhetsforkortelse }} er part i</h5>
+{% include "alle_avtaler_include.html" with avtaler=avtaler %}
+
+
+<h5>Domener {{ virksomhet.virksomhetsforkortelse }} er ansvarlig for</h5>
+{% include "alle_urler_include.html" with web_urler=urleier_for %}
+
+<h5>Systemer {{ virksomhet.virksomhetsforkortelse }} er eier eller forvalter for (Antall: {{ systemer_ansvarlig_for.count }})</h5>
+{% include "alle_systemer_virksomhet_include.html" with systemer=systemer_ansvarlig_for %}
+
+<h5>Applikasjonshotell {{ virksomhet.virksomhetsforkortelse }} har instansforvaltning på</h5>
+{% if systembruk_forvalter_for %}
+<ul>
+{% for systembruk in systembruk_forvalter_for.all %}
+	{% url 'bruksdetaljer' systembruk.pk as url_systembruk %}
+	<li>
+		<a href="{{ url_systembruk }}">{{ systembruk.system.systemnavn }}</a> ved
+		{% for ansvarlig in systembruk.systemforvalter_kontaktpersoner_referanse.all %}
+		{% url 'ansvarlig' ansvarlig.pk as url_ansvarlig %}
+		<a href="{{ url_ansvarlig }}">{{ ansvarlig }}</a>,
+		{% endfor %}
+	</li>
+{% endfor %}
+</ul>
+{% else %}
+	<p>Ingen</p>
+{% endif %}
+
+{% comment %}
+<h5>Systemer {{ virksomhet.virksomhetsforkortelse }} har driftsansvar for (Antall: {{ systemer_vi_drifter.count }})</h5>
+{% include "alle_systemer_drifter_include.html" with systemer=systemer_vi_drifter %}
+{% endcomment %}
+
+{% endblock main_content %}

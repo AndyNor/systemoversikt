@@ -1,0 +1,18 @@
+{% extends "index.html" %}
+
+
+{% block underoverskrift %}
+	Kategorien {{ kategori.kategorinavn }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<h6><a href="{% url 'alle_systemkategorier' %}">Alle subkategorier</a></h6>
+
+<h5>Antall systemer: {{ systemer.count }}</h5>
+{% include "alle_systemer_include.html" %}
+
+<h5>Antall programvarer: {{ programvarer.count }}</h5>
+{% include "alle_programvarer_include.html" %}
+
+{% endblock main_content %}

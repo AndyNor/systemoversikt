@@ -1,0 +1,59 @@
+{% load humanize %}
+{% load static %}
+
+<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+		<th>Domene</th>
+		<th>Eier</th>
+		<th>Knyttet til system</th>
+		<th>Målgruppe</th>
+		<th>Sikker transport</th>
+		<th>Vurdering sikkerhetstest</th>
+		<th>Sikkerhetstestet</th>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+	</tr>
+	</thead>
+	<tbody>
+	{% for item in web_urler %}
+	<tr>
+		{% if user.is_authenticated %}
+		<td><a target="_blank" href="/admin/systemoversikt/systemurl/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		{% endif %}
+		<td>
+			<a href="{{ item.domene }}" target="_blank" {% if not item.own_domain %} style="color: #cb2929;" {% endif %}
+			>{{ item.domene }}</a>
+		</td>
+		<td>
+			{% url 'virksomhet' pk=item.eier.pk as url_eier %}
+			<a href="{{ url_eier }}">{{ item.eier.virksomhetsforkortelse|default:"-" }}</a>
+		</td>
+		<td>
+		{% for system in item.system_systemurl.all %}
+			{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
+			<a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a><br>
+		{% endfor %}
+		</td>
+		<td>{{ item.get_maalgruppe_display }}</td>
+		<td>{{ item.https|yesno:"Ja,Nei" }}</td>
+		<td>{{ item.get_vurdering_sikkerhetstest_display|default:"-" }}</td>
+		<td>
+			{% for system in item.system_systemurl.all %}
+				{% for test in system.sikkerhetstest_systemer.all %}
+					{{ test.dato_rapport|date:'Y-m-d' }} ({{ test.dato_rapport|naturaltime }}): {{ test.get_type_test_display }}<br>
+				{% endfor %}
+		{% endfor %}
+		&zwj;
+		</td>
+		{% if user.is_authenticated %}
+		<td><a target="_blank" href="/admin/systemoversikt/systemurl/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>

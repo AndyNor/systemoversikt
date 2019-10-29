@@ -1,0 +1,69 @@
+{% load static %}
+
+<table id="stickyheader" class="table table-sm table-striped tablesorter">
+	<thead>
+	<tr>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+		<th>Avtalenavn</th>
+		<th>Avtaletype</th>
+		<th>Avtalepart Oslo kommune</th>
+		<th>Avtaleforvalter</th>
+		<th>Internleverandør</th>
+		<th>Eksternleverandør</th>
+		<th>Avtalereferanse</th>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+	</tr>
+	</thead>
+	<tbody>
+	{% for item in avtaler %}
+	<tr {% if item.own_domain %} style="background-color: #fffee6;" {% endif %}>
+		{% if user.is_authenticated %}
+		<td>
+			<a target="_blank" href="/admin/systemoversikt/avtale/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+		</td>
+		{% endif %}
+		<td>
+			{% url 'avtaledetaljer' item.pk as url_avtaledetaljer %}
+			<a href="{{ url_avtaledetaljer }}">{{ item.kortnavn }}</a>
+		</td>
+		<td>
+			{{ item.get_avtaletype_display|default:"-" }}
+		</td>
+		<td>
+			{% url 'virksomhet' pk=item.virksomhet.pk as url_virksomhet %}
+			<a href="{{ url_virksomhet }}">{{ item.virksomhet.virksomhetsforkortelse }}</a>
+		</td>
+		<td>
+			{% for ansvarlig in item.avtaleansvarlig.all %}
+				{% url 'ansvarlig' pk=ansvarlig.pk as url_avtaleansvarlig %}
+				<a href="{{ url_avtaleansvarlig }}">{{ ansvarlig }}</a><br>
+			{% endfor %}
+		</td>
+		<td>
+			{% url 'virksomhet' pk=item.leverandor_intern.pk as url_leverandor_intern %}
+			<a href="{{ url_leverandor_intern }}">{{ item.leverandor_intern.virksomhetsforkortelse|default:"" }}</a>
+		</td>
+		<td>
+			{% url 'leverandor' pk=item.leverandor.pk as url_leverandor %}
+			<a href="{{ url_leverandor }}">{{ item.leverandor|default:"" }}</a>
+		</td>
+		<td>
+			{% if item.dokumenturl %}
+				<a href="{{ item.dokumenturl }}">{{ item.avtalereferanse|default:"-" }}</a>
+			{% else %}
+				{{ item.avtalereferanse|default:"-" }}
+			{% endif %}
+		</td>
+		{% if user.is_authenticated %}
+		<td>
+			<a target="_blank" href="/admin/systemoversikt/avtale/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
+		</td>
+		{% endif %}
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>

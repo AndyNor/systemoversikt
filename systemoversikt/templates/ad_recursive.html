@@ -1,0 +1,23 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Rekursivt søk
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+{% for user in result %}
+
+	{% for item in user.attrs.displayName %}{{ item }}{% endfor %}
+	({% for item in user.attrs.cn %}<a target="_blank" href="{% url 'ad_details' name=item %}">{{ item }}</a>{% endfor %})
+	- <i>{% for item in user.attrs.description %}{{ item }}{% endfor %}</i>
+	<br>
+
+
+{% endfor %}
+
+
+{% endblock main_content %}

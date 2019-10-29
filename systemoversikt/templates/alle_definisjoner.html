@@ -1,0 +1,54 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Definisjoner, forkortelser og begreper ({{ definisjoner.count }})
+	{% if perms.systemoversikt.add_definisjon %}
+	<h6>
+		<a target="_blank" href="/admin/systemoversikt/definisjon/add/">Legg til ny definisjon</a> |
+	</h6>
+	{% endif %}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+<p>En enkel modul for å definere begreper. Et begrep kan defineres flere ganger.</p>
+
+<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th width="15%">Begrep</th>
+		<th width="15%">Engelsk begrep</th>
+		<th width="5%">Kontekst</th>
+		<th width="5%">Status</th>
+		<th width="60%">Definisjon</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for item in definisjoner %}
+	<tr {% if item.status != 1 %} style="opacity: 0.3;" {% endif %}>
+		<td width="200">
+			{% if perms.systemoversikt.change_definisjon %}
+			<a target="_blank" href="/admin/systemoversikt/definisjon/{{ item.pk }}/change/">
+				<img style="width: 11px; margin: 3px;"
+				src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+			{% endif %}
+			{% url 'definisjon' begrep=item.begrep as url_detaljer_definisjon %}
+			<a href="{{ url_detaljer_definisjon }}">{{ item.begrep }}</a>
+		</td>
+		<td>{{ item.engelsk_begrep|default:"-" }}</td>
+		<td>{{ item.kontekst_ref|default:"-" }}</td>
+		<td>{{ item.get_status_display }}</td>
+		<td>
+			{% if perms.systemoversikt.delete_definisjon %}
+			<a target="_blank" href="/admin/systemoversikt/definisjon/{{ item.pk }}/delete/">
+				<img style="width: 8px; margin: 3px;"
+				src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
+			{% endif %}
+			{{ item.definisjon|default:"-" }}
+		</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% endblock main_content %}

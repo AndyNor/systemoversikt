@@ -1,0 +1,143 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Driftsmodell {{ driftsmodell.navn }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<div class="card">
+	<div class="card-body">
+		<h6>{{ driftsmodell.kommentar|linebreaks|default:"-" }}</h6>
+		<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ driftsmodell.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
+	</div>
+</div>
+
+<br>
+
+<div class="row">
+	<div class="col-sm-6">
+		<h6>Generelt</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name driftsmodell "leverandor" %}</td>
+				<td>
+					{% for leverandor in driftsmodell.leverandor.all %}
+						{% url 'leverandor' leverandor.pk as url_leverandor %}
+						<a href="{{ url_leverandor }}">{{ leverandor }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name driftsmodell "underleverandorer" %}</td>
+				<td>
+					{% for leverandor in driftsmodell.underleverandorer.all %}
+						{% url 'leverandor' leverandor.pk as url_leverandor %}
+						<a href="{{ url_leverandor }}">{{ leverandor }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "avtaler" %}</td>
+				<td>
+					{% for avtale in driftsmodell.avtaler.all %}
+						{% url 'avtaledetaljer' avtale.pk as avtale_url %}
+						<a href="{{ avtale_url }}">{{ avtale }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "databehandleravtale_notater" %}</td>
+				<td>{{ driftsmodell.databehandleravtale_notater|linebreaks|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "sikkerhetsnivaa" %}</td>
+				<td>{{ driftsmodell.get_sikkerhetsnivaa_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "risikovurdering" %}</td>
+				<td>{% if driftsmodell.risikovurdering %} <a href="{{ driftsmodell.risikovurdering }}">Link til risikovurdering</a>{% else %} - {% endif %}</td>
+			</tr>
+		</table>
+
+		<h6>Personvernsvurderinger</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name driftsmodell "lokasjon_lagring_valgmeny" %}</td>
+				<td>
+					{% for region in driftsmodell.lokasjon_lagring_valgmeny.all %}
+						{{ region }}<br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "lokasjon_lagring" %}</td>
+				<td>{{ driftsmodell.lokasjon_lagring|linebreaks|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "anbefalte_kategorier_personopplysninger" %}</td>
+				<td style="background-color: #ddffda;">
+					{% for kategori in driftsmodell.anbefalte_kategorier_personopplysninger.all %}
+						{{ kategori }}<br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>Frarådede kategorier personopplysninger</td>
+				<td style="background-color: #ffe2e2;">
+					{% for kategori in ikke_anbefalte_personoppl_kategorier %}
+						{{ kategori }}<br>
+					{% endfor %}
+				</td>
+			</tr>
+		</table>
+	</div>
+<div class="col-sm-6">
+		<h6>Designprinsipper sikkerhet</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name driftsmodell "Tilgangsstyring_driftspersonell" %}</td>
+				<td>{{ driftsmodell.Tilgangsstyring_driftspersonell|default:"-"|linebreaks }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "nettverk_segmentering" %}</td>
+				<td>{{ driftsmodell.nettverk_segmentering|default:"-"|linebreaks }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "nettverk_sammenkobling_fip" %}</td>
+				<td>{{ driftsmodell.nettverk_sammenkobling_fip|default:"-"|linebreaks }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "sikkerhet_patching" %}</td>
+				<td>{{ driftsmodell.sikkerhet_patching|default:"-"|linebreaks }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "sikkerhet_antiskadevare" %}</td>
+				<td>{{ driftsmodell.sikkerhet_antiskadevare|default:"-"|linebreaks }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "sikkerhet_backup" %}</td>
+				<td>{{ driftsmodell.sikkerhet_backup|default:"-"|linebreaks }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "sikkerhet_fysisk_sikring" %}</td>
+				<td>{{ driftsmodell.sikkerhet_fysisk_sikring|default:"-"|linebreaks }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name driftsmodell "sikkerhet_logging" %}</td>
+				<td>{{ driftsmodell.sikkerhet_logging|default:"-"|linebreaks }}</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<h6>Systemer registrert på driftsmodellen ({{ systemer.count }})</h6>
+{% include "alle_systemer_include.html" with systemer=systemer %}
+
+<h6>Systemer på isolert drift ({{ isolert_drift.count|default:0 }})</h6>
+{% include "alle_systemer_include.html" with systemer=isolert_drift %}
+
+{% endblock main_content %}

@@ -1,0 +1,48 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	CMDB-enheter under "{{ cmdbref }}"
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+{% if perms.systemoversikt.view_system %}
+<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th>comp_name</th>
+		<th>bs_u_service_portfolio</th>
+		<th>comp_disk_space</th>
+		<th>comp_cpu_speed</th>
+		<th>comp_ip_address</th>
+		<th>comp_os</th>
+		<th>comp_os_version</th>
+		<th>comp_os_service_pack</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for item in cmdbdevices.all %}
+	<tr {% if not item.active %} style="color: #d6d6d6;" {% endif %}>
+		<td>{{ item.comp_name|default:"-" }}</td>
+		<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
+		<td>{{ item.comp_disk_space|default:"-" }}</td>
+		<td>{{ item.comp_cpu_speed|default:"-" }}</td>
+		<td>{{ item.comp_ip_address|default:"-" }}</td>
+		<td>{{ item.comp_os }}</td>
+		<td>{{ item.comp_os_version|default:"-" }}</td>
+		<td>{{ item.comp_os_service_pack|default:"-" }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+	{% else %}
+		<p>Du mangler tilgangen view_system (Vise systemdetaljer).</p>
+	{% endif %}
+
+
+{% endblock main_content %}

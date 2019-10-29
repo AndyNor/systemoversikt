@@ -1,0 +1,99 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Avtaledetaljer for {{ avtale.kortnavn }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+<p>Oversikt over
+	{% url "alle_avtaler" as alle_avtaler_url %}
+	<a href="{{ alle_avtaler_url }}">alle avtaler</a>.
+</p>
+
+<div class="card">
+	<div class="card-body">
+		<h6>{{ avtale.beskrivelse|linebreaks|default:"-" }}</h6>
+		{% if user.is_authenticated %}
+		<a target="_blank" href="/admin/systemoversikt/avtale/{{ avtale.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
+		{% endif %}
+	</div>
+</div>
+
+<br>
+
+<div class="row">
+	<div class="col-sm-12">
+		<h6>Generelt</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "sist_oppdatert" %}</td>
+				<td>{{ avtale.sist_oppdatert|date:'Y-m-d' }} ({{ avtale.sist_oppdatert|naturaltime }})</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "avtalereferanse" %}</td>
+				<td>{{ avtale.avtalereferanse|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "dokumenturl" %}</td>
+				<td><a href="{{ avtale.dokumenturl }}">Link til dokument</a></td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "virksomhet" %}</td>
+				{% url "virksomhet" avtale.virksomhet.pk as url_virksomhet %}
+				<td><a href="{{ url_virksomhet }}">{{ avtale.virksomhet|default:"-" }}</a></td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "avtaleansvarlig" %}</td>
+				<td>
+				{% for ansvarlig in avtale.avtaleansvarlig.all %}
+					{% url "ansvarlig" ansvarlig.pk as url_ansvarlig %}
+					<a href="{{ url_ansvarlig }}">{{ ansvarlig|default:"-" }}</a><br>
+				{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "leverandor_intern" %}</td>
+				{% url "virksomhet" avtale.leverandor_intern.pk as url_leverandor_intern %}
+				<td><a href="{{ url_leverandor_intern }}">{{ avtale.leverandor_intern|default:"-" }}</a></td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "leverandor" %}</td>
+				{% url "leverandor" avtale.leverandor.pk as url_leverandor %}
+				<td><a href="{{ url_leverandor }}">{{ avtale.leverandor|default:"-" }}</a></td>
+			</tr>
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "for_system" %}</td>
+				<td>{% for system in avtale.for_system.all %}
+						{% url "systemdetaljer" system.pk as url_system %}
+						<a href="{{ url_system }}">{{ system|default:"-" }}</a><br>
+					{% empty %} - {% endfor %}</td>
+			</tr>
+			<tr>
+				<td>Gjelder for følgende driftsmiljøer</td>
+				<td>{% for driftsmodell in avtale.driftsmodell_avtaler.all %}
+						{% url "detaljer_driftsmodell" driftsmodell.pk as url_driftsmodell %}
+						<a href="{{ url_driftsmodell }}">{{ driftsmodell|default:"-" }}</a><br>
+				{% empty %} - {% endfor %}</td>
+			</tr>
+		</table>
+
+		<h6>Avtaleavhengigheter</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "intern_avtalereferanse" %}</td>
+				<td>
+					{% for avtale in avtale.intern_avtalereferanse.all %}
+					{% url "avtaledetaljer" avtale.pk as url_avtale %}
+					<a href="{{ url_avtale }}">{{ avtale|default:"-" }}</a><br>
+				{% endfor %}
+				</td>
+			</tr>
+		</table>
+
+	</div>
+</div>
+
+{% endblock main_content %}

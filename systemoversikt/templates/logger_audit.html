@@ -1,0 +1,40 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	Applikasjonslogg (feilsituasjoner)
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+{% if perms.systemoversikt.view_applicationlog %}
+	<table class="table table-sm table-striped">
+	<thead>
+	<tr>
+		<th>Tidspunkt</th>
+		<th>Event</th>
+		<th>Message</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for entry in recent_loggs %}
+	<tr>
+		<td width="200">{{ entry.opprettet }}</td>
+		<td width="150">{{ entry.event_type }}</td>
+		<td>{{ entry.message }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% else %}
+
+	<div id="div_message" class="alert alert-danger">
+		<a class="close" data-dismiss="alert" href="#">×</a>
+		<h5 class="alert-heading">Du mangler autorisasjon</h5>
+		Du mangler rettigheten "view_applicationlog".
+	</div>
+
+{% endif %}
+
+{% endblock main_content %}

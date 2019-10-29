@@ -1,0 +1,89 @@
+<table class="table table-sm table-striped">
+<thead>
+<tr>
+	<th>Sist oppdatert</th>
+	<th>Systemnavn</th>
+	<th>Tjenestenivå</th>
+	<th>Systembeskrivelse</th>
+	<th>Systemeier</th>
+	<th>Systemeier kontaktpersoner</th>
+	<th>Systemforvalter</th>
+	<th>Systemforvalter kontaktpersoner</th>
+	<th>Programvarekategori</th>
+	<th>Systemtype</th>
+	<th>Systemkategorier</th>
+	<th>Driftsmodell</th>
+	<th>Systemleverandør</th>
+	<th>Dokumentasjon (URL)</th>
+	<th>Merknad</th>
+	<th>Systemeierskapsmodell</th>
+	<th>Livsløpstatus</th>
+	<th>Strategisk egnethet</th>
+	<th>Funksjonell egnethet</th>
+	<th>Teknisk egnethet</th>
+	<th>Konfidensialitet</th>
+	<th>Integritet</th>
+	<th>Tilgjengelighet</th>
+	<th>Selvbetjening</th>
+	<th>ROS (URL)</th>
+	<th>Dato ROS</th>
+
+</tr>
+</thead>
+<tbody>
+{% for item in systemer %}
+<tr> 
+	<td>{{ item.sist_oppdatert|date:'Y-m-d' }}</td>
+	{% url "systemdetaljer" item.pk as url_systemdetaljer %}
+	<td><a href="{{ url_systemdetaljer }}">{{ item.systemnavn }}</a></td>
+	<td>{{ item.get_tjenestenivaa_display|default:'' }}</td>
+	<td>{{ item.systembeskrivelse }}</td>
+
+	{% url "virksomhet" item.systemeier.pk as url_systemeier %}
+	<td><a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"" }}</a></td>
+	<td>{{ item.systemeier_kontaktpersoner|default:'' }}</td>
+
+	{% url "virksomhet" item.systemforvalter.pk as url_systemforvalter %}
+	<td><a href="{{ url_systemforvalter }}">{{ item.systemforvalter|default:"" }}</a></td>
+	<td>{{ item.systemforvalter_kontaktpersoner|default:'' }}</td>
+	
+	<td>{{ item.get_programvarekategori_display|default:"" }}</td>
+	<td>{{ item.get_systemtype_display|default:"" }}</td>
+
+	<td><ul>{% for kategori in item.systemkategorier.all %}
+		{% url "systemkategori" kategori.pk as url_systemkategori %}
+		<li><a href="{{ url_systemkategori }}">{{ kategori }}</a></li>
+		{% endfor %}
+	</ul></td>
+
+	<td>{{ item.get_driftsmodell_display|default:"" }}</td>
+
+	<td><ul>
+	{% for syslev in item.systemleverandor.all %}
+		{% url "leverandor" syslev.pk as url_leverandor %}
+		<li><a href="{{ url_leverandor }}">{{ syslev }}</a></li>
+	{% endfor %}
+	</ul></td>
+
+	<td>{{ item.high_level_design_url|default:"" }}</td>
+	<td>{{ item.merknad|default:"" }}</td>
+	
+
+	<td>{{ item.get_systemeierskapsmodell_display|default:"" }}</td>
+	<td>{{ item.get_livslop_status_display|default:"" }}</td>
+	<td>{{ item.get_strategisk_egnethet_display|default:"" }}</td>
+	<td>{{ item.get_funksjonell_egnethet_display|default:"" }}</td>
+	<td>{{ item.get_teknisk_egnethet_display|default:"" }}</td>
+	<td>{{ item.get_konfidensialitetsvurdering_display|default:"" }}</td>
+	<td>{{ item.get_integritetsvurdering_display|default:"" }}</td>
+	<td>{{ item.get_tilgjengelighetsvurdering_display|default:"" }}</td>
+	<td>{{ item.get_selvbetjening_display|default:"" }}</td>
+
+	<td>{{ item.url_risikovurdering|default:"" }}</td>
+	<td>{{ item.dato_sist_ros|date:'Y-m-d' }}</td>
+
+
+</tr>	
+{% endfor %}
+</tbody>
+</table>

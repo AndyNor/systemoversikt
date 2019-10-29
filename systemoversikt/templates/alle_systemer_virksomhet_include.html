@@ -1,0 +1,67 @@
+{% load static %}
+{% load humanize %}
+
+<table id="systemer" class="table table-sm table-striped">
+<thead>
+<tr>
+	{% if perms.systemoversikt.change_system %}
+		<th></th>
+	{% endif %}
+	<th>ID</th>
+	<th>Systemnavn</th>
+	<th>Systemeierskapsmodell</th>
+	<th>Systemeier</th>
+	<th>Systemforvalter</th>
+	<th>Livsløp</th>
+	<th>Risikovurdering</th>
+	<th>Driftsmodell / plattform</th>
+
+</tr>
+</thead>
+<tbody>
+{% for item in systemer %}
+<tr {% if item.ibruk == False %} style="text-decoration: line-through;" {% endif %}>
+	{% if perms.systemoversikt.change_system %}
+		<td><a target="_blank" href="/admin/systemoversikt/system/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
+	{% endif %}
+
+	<td>{{ item.pk }}</td>
+
+	{% url "systemdetaljer" item.pk as url_systemdetaljer %}
+	<td>
+		{% if item.informasjon_kvalitetssikret is False %}
+		<img style="width: 14px;" src="{% static 'open-iconic/svg/warning.svg' %}" title="Kvalitet ikke verifisert">
+		{% endif %}
+
+		<a href="{{ url_systemdetaljer }}">{{ item.systemnavn }}</a>
+	</td>
+
+	<td>{{ item.get_systemeierskapsmodell_display|default:"-" }}</td>
+
+	<td>
+		{% url "virksomhet" item.systemeier.pk as url_systemeier %}
+		Virksomhet: <b><a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a></b><br>
+		{% for ansvarlig in item.systemeier_kontaktpersoner_referanse.all %}
+			<a href="{% url 'ansvarlig' ansvarlig.pk %}">{{ ansvarlig }}</a><br>
+		{% endfor %}
+		</td>
+
+	<td>
+		{% url "virksomhet" item.systemforvalter.pk as url_systemforvalter %}
+		Virksomhet: <b><a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"-" }}</a></b><br>
+		{% for ansvarlig in item.systemforvalter_kontaktpersoner_referanse.all %}
+			<a href="{% url 'ansvarlig' ansvarlig.pk %}">{{ ansvarlig }}</a><br>
+		{% endfor %}
+		</td>
+
+	<td>{{ item.get_livslop_status_display|default:"" }}</td>
+
+	<td>{{ item.dato_sist_ros|date:'Y-m-d'|default:"-" }} ({{ item.dato_sist_ros|naturaltime|default:"Aldri" }})</td>
+
+	{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}
+	<td><a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a></td>
+
+</tr>
+{% endfor %}
+</tbody>
+</table>

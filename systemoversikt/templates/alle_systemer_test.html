@@ -1,0 +1,48 @@
+{% extends "index.html" %}
+{% load static %}
+
+
+{% block underoverskrift %}
+	Detaljer om pakking (for systemer)
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<p>Her listes alle systemer på felles IKT-plattform (FIP/FIKTP)</p>
+
+	<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th></th>
+		<th>nøkkel</th>
+		<th>Systemnavn</th>
+		<th>Avhengigheter</th>
+		<th>I bruk</th>
+		<th>verdivurdering</th>
+		<th>Sikkerhetsnivå</th>
+		<th>database</th>
+		<th>dok 2S</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for s in systemer %}
+	<tr>
+		<td><a target="_blank" href="/admin/systemoversikt/system/{{ s.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
+		<td>{{ s.pk }}</td>
+		<td>
+			{% url "systemdetaljer" s.pk as url_systemdetaljer %}
+			<a href="{{ url_systemdetaljer }}">{{ s }}</a>
+		</td>
+		<td>{% for t in s.avhengigheter_referanser.all %} {{ t }},  {% endfor %}</td>
+		<td>{{ s.ibruk }}</td>
+		<td>{{ s.verdivurdering }}</td>
+		<td>{{ s.get_sikkerhetsnivaa_display }}</td>
+		<td>{{ s.get_database_display }}</td>
+		<td>{{ s.low_level_design_url }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock main_content %}

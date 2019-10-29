@@ -1,0 +1,148 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	{{ ansvarlig }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+<p>Oversikt over <a href="{% url 'alle_ansvarlige' %}">alle ansvarlige</a>.</p>
+
+<div class="card">
+	<div class="card-body">
+		<b>E-post:</b> {{ ansvarlig.brukernavn.email }}<br>
+		<b>Bruker aktiv:</b> {{ ansvarlig.brukernavn.is_active|yesno:"Aktiv,Deaktivert" }} i Kartoteket, {{ ansvarlig.brukernavn.profile.accountdisable|yesno:"Deaktivert,Aktiv" }} i Active Directory.<br>
+		<b>Beskrivelse:</b> {{ ansvarlig.kommentar|default:"Organisatorisk tilhørighet / rolle er ikke oppgitt"|linebreaks }}
+
+		<b>Data fra brukerkatalog:</b> <a href="{% url 'ad_details' name=ansvarlig.brukernavn.username %}"> Slå opp i Active Directory</a><br>
+
+		{% if user.is_authenticated %}
+		<br><a target="_blank" href="/admin/systemoversikt/ansvarlig/{{ ansvarlig.pk }}/change/">
+			<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
+		{% endif %}
+	</div>
+</div>
+
+<br>
+
+<div class="row">
+	<div class="col-sm-3">
+		<h4>Systemer</h4>
+
+		<h6>Systemeier for</h6>
+		<ul>
+		{% for system in systemeier_for %}
+			{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
+			<li><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a></li>
+		{% endfor %}
+		</ul>
+		<h6>Systemforvalter for</h6>
+		<ul>
+		{% for system in systemforvalter_for %}
+			{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
+			<li><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a></li>
+		{% endfor %}
+		</ul>
+
+		<h6>Systembrukforvalter for</h6>
+		<ul>
+		{% for systembruk in systemforvalter_bruk_for %}
+			{% url 'bruksdetaljer' pk=systembruk.pk as url_bruksdetaljer %}
+			<li><a href="{{ url_bruksdetaljer }}">{{ systembruk.system.systemnavn }}</a></li>
+		{% endfor %}
+		</ul>
+	</div>
+
+	<div class="col-sm-3">
+		<h4>Behandlinger</h4>
+
+		<h6>Oppdateringsansvarlig for</h6>
+		<ul>
+		{% for behandling in behandlinger_for %}
+			{% url 'behandlingsdetaljer' pk=behandling.pk as url_behandlingsdetaljer %}
+			<li><a href="{{ url_behandlingsdetaljer }}">{{ behandling.formaal|default:"mangler formål" }}</a> i
+			{% for system in behandling.systemer.all %}
+				{{ system }},
+			{% endfor %}
+			</li>
+		{% endfor %}
+		</ul>
+	</div>
+
+	<div class="col-sm-3">
+		<h4>Virksomhetspesifikt</h4>
+
+		<h6>Virksomhetsleder for</h6>
+		<ul>
+		{% for vir in virksomhetsleder_for %}
+			{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+			<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+		{% endfor %}
+		</ul>
+
+		<h6>IKT-virksomhetskontakt for</h6>
+		<ul>
+		{% for vir in ikt_kontakt_for %}
+			{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+			<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+		{% endfor %}
+		</ul>
+
+		<h6>Personvernkoordinator for</h6>
+		<ul>
+		{% for vir in personvernkoordinator_for %}
+			{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+			<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+		{% endfor %}
+		</ul>
+
+		<h6>Informasjonssikkerhetskoordinator for</h6>
+		<ul>
+		{% for vir in informasjonssikkerhetskoordinator_for %}
+			{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+			<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+		{% endfor %}
+		</ul>
+
+		<h6>Kundeansvarlig for (UKE-rolle)</h6>
+		<ul>
+		{% for vir in kam_for %}
+			{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+			<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+		{% endfor %}
+		</ul>
+
+		<h6>Autorisert bestiller for</h6>
+		<ul>
+		{% for vir in autorisert_bestiller_for %}
+			{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+			<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+		{% endfor %}
+		</ul>
+
+		<h6>Autorisert sertifikatbestiller for</h6>
+		<ul>
+		{% for vir in sertifikatbestiller_for %}
+			{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+			<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+		{% endfor %}
+		</ul>
+
+	</div>
+
+	<div class="col-sm-3">
+		<h4>Avtalerelatert</h4>
+		<h6>Avtaleansvarlig for</h6>
+		<ul>
+		{% for avtale in avtale_ansvarlig_for %}
+			{% url 'avtale' pk=avtale.pk as url_avtale %}
+			<li><a href="{{ url_avtale }}">{{ avtale }}</a></li>
+		{% endfor %}
+		</ul>
+	</div>
+
+
+</div>
+
+
+{% endblock main_content %}

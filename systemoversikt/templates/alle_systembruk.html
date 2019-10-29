@@ -1,0 +1,60 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+
+	{% url 'virksomhet' virksomhet.pk as url_virksomhet %}
+	<a href="{{ url_virksomhet }}">{{ virksomhet.virksomhetsforkortelse }}</a>'s bruk av systemer i Oslo kommune (viser {{ all_bruk.count }})
+	{% if user.is_authenticated %}
+	<h6>
+		<a target="_blank" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer ny bruk av system</a>
+	</h6>
+	{% endif %}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+<p>Systemer som er felles- eller sektorsystemer har her grønn bakgrunn. Merk at det som vises under systemeierskapsmodell her faktisk er det som er satt på bruken, og ikke systemet. Det er derfor ikke nødvendigivs samsvar. Linken under bruksdetaljer er linken til selve bruken av systemet. Klikk på link under system for å komme til systemets detaljeside.</p>
+	<table class="table table-sm table-striped">
+	<thead>
+	<tr>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+		<th>Bruksdetaljer</th>
+		<th>Antall behandlinger (våre)</th>
+		<th>System</th>
+		<th>Systemeierskapsmodell</th>
+		<th>Livsløpstatus</th>
+		<th>Teknisk</th>
+		<th>Strategisk</th>
+		<th>Funksjonell</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for bruk in all_bruk %}
+	<tr {% if bruk.ibruk == False %} style="text-decoration: line-through;" {% endif %}
+		{% if bruk.system.felles_sektorsystem %} style="background-color: #07800029;" {% endif %}
+		>
+		{% if user.is_authenticated %}
+		<td><a target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		{% endif %}
+
+		{% url "bruksdetaljer" bruk.pk as url_bruksdetaljer %}
+		<td><a href="{{ url_bruksdetaljer }}">{{ bruk.system }} ({{ virksomhet.virksomhetsforkortelse }})</a></td>
+
+		<td>{{ bruk.antall_behandlinger }}</td>
+
+		{% url "systemdetaljer" bruk.system.pk as url_systemdetaljer %}
+		<td><b><a href="{{ url_systemdetaljer }}">{{ bruk.system }}</a></b></td>
+
+		<td>{{ bruk.get_systemeierskapsmodell_display|default:"" }}</td>
+		<td>{{ bruk.get_livslop_status_display|default:"" }}</td>
+		<td>{{ bruk.get_teknisk_egnethet_display|default:"" }}</td>
+		<td>{{ bruk.get_strategisk_egnethet_display|default:"" }}</td>
+		<td>{{ bruk.get_funksjonell_egnethet_display|default:"" }}</td>
+		<td><a target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+{% endblock main_content %}

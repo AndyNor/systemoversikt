@@ -1,0 +1,145 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+
+{% block underoverskrift %}
+	{% url "virksomhet" bruk.brukergruppe.pk as url_virksomhet %}
+	{% url "systemdetaljer" bruk.system.pk as url_systemdetaljer %}
+	<a href="{{ url_virksomhet }}">{{ bruk.brukergruppe }}</a>'s bruk av <a href="{{ url_systemdetaljer }}">{{ bruk.system }}</a>
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<div class="card">
+	<div class="card-body">
+		{% url "all_bruk_for_virksomhet" bruk.brukergruppe.pk as url_all_bruk_for_virksomhet %}
+		<h6><a href="{{  url_all_bruk_for_virksomhet }}">All bruk knyttet til {{ bruk.brukergruppe }}</a></h6><br>
+		<p><a target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">[Rediger detaljer]</a></p>
+	</div>
+</div>
+<br>
+<div class="row">
+	<div class="col-sm-6">
+
+		<table class="table table-sm table-striped">
+			<tr>
+				<td>Sist oppdatert</td>
+				<td>{{ bruk.sist_oppdatert|date:"Y-m-d" }} ({{ bruk.sist_oppdatert|naturaltime }})</td>
+			</tr>
+			<tr>
+				<td>Leverandører (fra systemet)</td>
+				<td>
+					<ul>
+					{% for lev in bruk.system.systemleverandor.all %}
+						{% url "leverandor" lev.pk as url_leverandor %}
+						<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
+					{% endfor %}
+					</ul>
+				</td>
+			</tr>
+			<tr>
+				<td>Leverandører (for denne bruken)</td>
+				<td>
+					<ul>
+					{% for lev in bruk.systemleverandor.all %}
+						{% url "leverandor" lev.pk as url_leverandor %}
+						<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
+					{% endfor %}
+					</ul>
+				</td>
+			</tr>
+			<tr>
+				<td>Antall brukere</td>
+				<td>{{ bruk.antall_brukere|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Kostnader</td>
+				<td>{{ bruk.kostnadersystem|default:"-"|intcomma }}</td>
+			</tr>
+			<tr>
+				<td>For borger</td>
+				<td>{{ bruk.get_borger_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Kommentar</td>
+				<td>{{ bruk.kommentar|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Systemeierskapsmodell</td>
+				<td>{{ bruk.get_systemeierskapsmodell_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Systemkategori (fra systemet)</td>
+				<td>
+					<ul>
+					{% for kat in bruk.system.systemkategorier.all %}
+						{% url "systemkategori" kat.pk as url_systemkategori %}
+						<li><a href="{{ url_systemkategori }}">{{ kat }}</a></li>
+					{% endfor %}
+					</ul>
+				</td>
+			</tr>
+			<tr>
+				<td>Programvarekategori</td>
+				<td>{{ bruk.get_programvarekategori_display|default:"-" }}</td>
+			</tr>
+
+		</table>
+	</div>
+	<div class="col-sm-6">
+
+		<table class="table table-sm table-striped">
+			<tr>
+				<td>Avtale kan avropes av andre virksomheter?</td>
+				<td>{{ bruk.avtale_kan_avropes|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Avtalestatus</td>
+				<td>{{ bruk.get_avtalestatus_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Livsløpstatus</td>
+				<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Avtaletype</td>
+				<td>{{ bruk.avtaletype|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Systemeierskap</td>
+				<td>{{ bruk.systemeierskap|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Driftsmodell</td>
+				<td>{{ bruk.get_driftsmodell_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Teknisk egnethet</td>
+				<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Strategisk egnethet</td>
+				<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Funksjonell egnethet</td>
+				<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Konfidensialitet</td>
+				<td>{{ bruk.get_konfidensialitetsvurdering_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Integritet</td>
+				<td>{{ bruk.get_integritetsvurdering_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Tilgjengelighet</td>
+				<td>{{ bruk.get_tilgjengelighetsvurdering_display|default:"-" }}</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+{% endblock main_content %}

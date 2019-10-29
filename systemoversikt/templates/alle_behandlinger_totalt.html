@@ -1,0 +1,54 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	Viser alle behandlinger i Kartoteket ({{ behandlinger.count }} stykk)
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+{% load static %}
+
+<table id="behandlinger" class="table table-sm table-striped">
+	<thead>
+		<tr>
+			<th></th>
+			<th>Felles</th>
+			<th>Registrert av</th>
+			<th>Behandlingen</th>
+			<th>oppdateringsansvarlig</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for item in behandlinger %}
+		<tr>
+			<td width="5%"><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+
+			<td width="5%">{{ item.fellesbehandling|yesno:"Ja,Nei" }}</td>
+
+			{% url "virksomhet" item.behandlingsansvarlig.pk as url_virksomhet %}
+			<td width="10%"><a href="{{ url_virksomhet }}">{{ item.behandlingsansvarlig.virksomhetsforkortelse }}</a></td>
+
+			<td width="40%">
+				{% if item.informasjon_kvalitetssikret is True %}
+				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(100deg);" src="{% static 'open-iconic/svg/circle-check.svg' %}" alt="Kvalitet verifisert">
+				{% else %}
+				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/warning.svg' %}" alt="Kvalitet ikke verifisert">
+				{% endif %}
+
+				{% url "behandlingsdetaljer" item.pk as url_behandlingsdetaljer %}
+				<a href="{{ url_behandlingsdetaljer }}">{{ item.behandlingen }}</a>
+			</td>
+
+			<td>{% for ansvarlig in item.oppdateringsansvarlig.all %} {{ ansvarlig }} {% endfor %}</td>
+
+			<td width="5%"><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+
+
+{% endblock main_content %}

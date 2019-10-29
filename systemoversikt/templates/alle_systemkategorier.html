@@ -1,0 +1,49 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	Kategorier ({{ kategorier.count }})
+	<h6>
+		<a href="{% url 'alle_hovedkategorier' %}">Alle hovedkategorier</a> |
+		<a href="{%url 'uten_systemkategorier' %}">Systemer og programvarer uten subkategori</a>
+		{% if user.is_authenticated %}
+		<a target="_blank" href="/admin/systemoversikt/systemkategori/add/">Legg til ny subkategori</a> |
+		{% endif %}
+	</h6>
+
+<p>Dette er kategorier som forvaltes av UKE. De ble innført i forbindelse med systemkonsolideringsprosjektet. Alle systemer skal ha en eller flere kategorier.</p>
+
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<table class="table table-sm table-striped tablesorter">
+	<thead>
+	<tr>
+		{% if user.is_authenticated %}
+		<th></th>
+		{% endif %}
+		<th>Hovedkategori</th>
+		<th>Kategorinavn</th>
+		<th>Antall programvarer i kategori</th>
+		<th>Antall systemer i kategori</th>
+		<th>Definisjon</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for kat in kategorier %}
+	<tr>
+		{% if user.is_authenticated %}
+		<td><a target="_blank" href="/admin/systemoversikt/systemkategori/{{ kat.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		{% endif %}
+		<td>{% for hovedkat in kat.systemhovedkategori_systemkategorier.all %} {{ hovedkat.hovedkategorinavn }}<br> {% endfor %}</td>
+		{% url 'systemkategori' pk=kat.pk as url_systemkategori %}
+		<td><a href="{{ url_systemkategori }}">{{ kat.kategorinavn }}</a></td>
+		<td>{{ kat.programvare_systemkategorier.count }}</td>
+		<td>{{ kat.system_systemkategorier.count }}</td>
+		<td>{{ kat.definisjon|default:'' }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+{% endblock main_content %}

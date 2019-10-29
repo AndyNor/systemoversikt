@@ -1,0 +1,196 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+
+{% block underoverskrift %}
+	{% url "virksomhet" bruk.brukergruppe.pk as url_virksomhet %}
+	{% url "systemdetaljer" bruk.system.pk as url_systemdetaljer %}
+	<a href="{{ url_virksomhet }}">{{ bruk.brukergruppe.virksomhetsforkortelse }}</a>'s bruk av <a href="{{ url_systemdetaljer }}">{{ bruk.system }}</a> (system)
+
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<div class="card">
+	<div class="card-body">
+		{% url "all_bruk_for_virksomhet" bruk.brukergruppe.pk as url_all_bruk_for_virksomhet %}
+		<h6><a href="{{  url_all_bruk_for_virksomhet }}">All systembruk knyttet til {{ bruk.brukergruppe }}</a></h6><br>
+		{% if user.is_authenticated %}
+		<p><a target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a></p>
+		{% endif %}
+	</div>
+</div>
+<br>
+<div class="row">
+	<div class="col-sm-6">
+
+		<h6>Generelt fra systemet</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="40%">Systemkategori (fra systemet)</td>
+				<td>
+					{% for kat in bruk.system.systemkategorier.all %}
+						{% url "systemkategori" kat.pk as url_systemkategori %}
+						<a href="{{ url_systemkategori }}">{{ kat }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>Leverandører (fra systemet)</td>
+				<td>
+					{% for lev in bruk.system.systemleverandor.all %}
+						{% url "leverandor" lev.pk as url_leverandor %}
+						<a href="{{ url_leverandor }}">{{ lev }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>Driftsmodell (fra systemet)</td>
+				<td>{{ bruk.system.driftsmodell_foreignkey|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>Systemklassifisering (fra systemet)</td>
+				<td>{{ bruk.system.get_systemeierskapsmodell_display|default:"-" }}</td>
+			</tr>
+
+		</table>
+
+		<h6>Generelt for denne bruken</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="40%">Sist oppdatert</td>
+				<td>{{ bruk.sist_oppdatert|date:"Y-m-d" }} ({{ bruk.sist_oppdatert|naturaltime }})</td>
+			</tr>
+
+			<tr>
+				<td>{% get_verbose_field_name bruk "kommentar" %}</td>
+				<td>{{ bruk.kommentar|linebreaks|default:"-" }}</td>
+			</tr>
+
+			<tr>
+				<td>{% get_verbose_field_name bruk "systemeierskap" %}</td>
+				<td>{{ bruk.systemeierskap|default:"-" }}</td>
+			</tr>
+
+			<tr>
+				<td>{% get_verbose_field_name bruk "systemforvalter" %}</td>
+				{% url "virksomhet" bruk.systemforvalter.pk as url_eier %}
+				<td><a href="{{ url_eier }}">{{ bruk.systemforvalter|default:"-" }}</a></td>
+			</tr>
+
+			<tr>
+				<td>{% get_verbose_field_name bruk "systemforvalter_kontaktpersoner_referanse" %}</td>
+				<td>
+					{% for ansvarlig in bruk.systemforvalter_kontaktpersoner_referanse.all %}
+						{% url "ansvarlig" ansvarlig.pk as url_ansvarlig %}
+						<a href="{{ url_ansvarlig }}">{{ ansvarlig }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+
+			<tr>
+				<td>{% get_verbose_field_name bruk "avhengigheter_referanser" %}</td>
+				<td>
+					{% for system in bruk.avhengigheter_referanser.all %}
+						{% url "systemdetaljer" system.pk as url_system %}
+						<a href="{{ url_system }}">{{ system }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+
+			<tr>
+				<td>{% get_verbose_field_name bruk "avhengigheter" %}</td>
+				<td>{{ bruk.avhengigheter|linebreaks|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruk "driftsmodell_foreignkey" %}</td>
+				<td>{{ bruk.driftsmodell_foreignkey|default:"-" }}</td>
+			</tr>
+
+		</table>
+	</div>
+	<div class="col-sm-6">
+
+		<h6>Relatert til avtale</h6>
+		{% if perms.systemoversikt.view_systembruk %}
+			<table class="table table-sm table-striped">
+				<tr>
+					<td width="40%">{% get_verbose_field_name bruk "avtale_kan_avropes" %}</td>
+					<td>{{ bruk.avtale_kan_avropes|yesno:"Ja,Nei,Ukjent"|default:"-" }}</td>
+				</tr>
+				<tr>
+					<td>{% get_verbose_field_name bruk "avtalestatus" %}</td>
+					<td>{{ bruk.get_avtalestatus_display|default:"-" }}</td>
+				</tr>
+				<tr>
+					<td>{% get_verbose_field_name bruk "avtaletype" %}</td>
+					<td>{{ bruk.avtaletype|default:"-" }}</td>
+				</tr>
+				<tr>
+					<td>{% get_verbose_field_name bruk "kostnadersystem" %}</td>
+					<td>{{ bruk.kostnadersystem|default:"-"|intcomma }}</td>
+				</tr>
+			</table>
+		{% else %}
+			<p>Du har ikke rettigheter til å se dette</p>
+		{% endif %}
+
+		<h6>Lokale vurderinger</h6>
+		<table class="table table-sm table-striped">
+			<tr>
+				<td width="40%">{% get_verbose_field_name bruk "livslop_status" %}</td>
+				<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruk "teknisk_egnethet" %}</td>
+				<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruk "strategisk_egnethet" %}</td>
+				<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruk "funksjonell_egnethet" %}</td>
+				<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
+			</tr>
+		</table>
+
+		<h6>Lokale sikkerhetsvurderinger</h6>
+		{% if perms.systemoversikt.view_systembruk %}
+			<table class="table table-sm table-striped">
+				<tr>
+					<td width="40%">{% get_verbose_field_name bruk "konfidensialitetsvurdering" %}</td>
+					<td>{{ bruk.get_konfidensialitetsvurdering_display|default:"-" }}</td>
+				</tr>
+				<tr>
+					<td>{% get_verbose_field_name bruk "integritetsvurdering" %}</td>
+					<td>{{ bruk.get_integritetsvurdering_display|default:"-" }}</td>
+				</tr>
+				<tr>
+					<td>{% get_verbose_field_name bruk "tilgjengelighetsvurdering" %}</td>
+					<td>{{ bruk.get_tilgjengelighetsvurdering_display|default:"-" }}</td>
+				</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruk "risikovurdering_tekst" %}</td>
+				<td>{{ bruk.risikovurdering_tekst|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruk "url_risikovurdering" %}</td>
+				<td>{% if bruk.url_risikovurdering %}
+				<a href="{{ bruk.url_risikovurdering}}">Link til risikovurdering</a>
+				{% endif %}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name bruk "dato_sist_ros" %}</td>
+				<td>{{ bruk.dato_sist_ros|date:'Y-m-d'|default:'-' }} ({{ bruk.dato_sist_ros|naturaltime|default:'aldri' }})</td>
+			</tr>
+			</table>
+		{% else %}
+			<p>Du har ikke rettigheter til å se dette</p>
+		{% endif %}
+	</div>
+</div>
+
+{% endblock main_content %}

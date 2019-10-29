@@ -1,0 +1,85 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load templatetags %}
+{% load static %}
+
+{% block underoverskrift %}
+	Tjenestedetaljer for {{ tjeneste.tjenestenavn }}
+{% endblock underoverskrift %}
+{% load humanize %}
+
+{% block main_content %}
+
+<p>Hva slags informasjonsfelter trenger vi her?</p>
+
+<div class="card">
+	<div class="card-body">
+		<h6>{{ tjeneste.beskrivelse|default:"-" }}</h6>
+		{% if user.is_authenticated %}
+		<a target="_blank" href="/admin/systemoversikt/tjeneste/{{ tjeneste.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
+		{% endif %}
+	</div>
+</div>
+
+<br>
+
+
+<div class="row">
+	<div class="col-sm-6">
+
+		<table class="table table-sm table-striped">
+			<tr>
+				<td>Sist oppdatert</td>
+				<td style="width:90%">{{ tjeneste.sist_oppdatert|date:'Y-m-d' }} ({{ tjeneste.sist_oppdatert|naturaltime }})</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name tjeneste "tjenesteleverandor" %}</td>
+				{% url 'virksomhet' tjeneste.tjenesteleverandor.pk as url_virksomhet %}
+				<td><a href="{{ url_virksomhet }}">{{ tjeneste.tjenesteleverandor|default:"-" }}</a></td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name tjeneste "etablering" %}</td>
+				<td>{{ tjeneste.get_etablering_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name tjeneste "tjenesteleveranse" %}</td>
+				<td>{{ tjeneste.get_tjenesteleveranse_display|default:"-" }}</td>
+			</tr>
+		</table>
+
+
+	</div>
+	<div class="col-sm-6">
+		<table class="table table-sm table-striped">
+			<tr>
+				<td>{% get_verbose_field_name tjeneste "systemer" %}</td>
+				<td>
+					{% for system in tjeneste.systemer.all %}
+						{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
+						<a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name tjeneste "tjenesteleder" %}</td>
+				<td>
+					{% for person in tjeneste.tjenesteleder.all %} <a href="{% url 'ansvarlig' person.pk %}">{{ person }}</a><br> {% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name tjeneste "tjenesteforvalter" %}</td>
+				<td>
+					{% for person in tjeneste.tjenesteforvalter.all %} <a href="{% url 'ansvarlig' person.pk %}">{{ person }}</a><br> {% endfor %}
+				</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name tjeneste "faglig_ansvar" %}</td>
+				<td>{{ tjeneste.faglig_ansvar|default:"-" }}</td>
+			</tr>
+		</table>
+
+	</div>
+</div>
+
+
+{% endblock main_content %}
