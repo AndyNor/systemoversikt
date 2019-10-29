@@ -1,3 +1,9 @@
+# Secrets and database
+secrets.py
+secrets_dev.py
+secrets_test.py
+db.sqlite3
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
