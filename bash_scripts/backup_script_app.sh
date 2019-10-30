@@ -11,6 +11,3 @@ last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
         [[ $s = $last ]] && rm "$i";
     last=$s;
 done
-
-# remove files older than 21 days
-find /path/backup/app/ -mindepth 1 -mtime +21 -delete
