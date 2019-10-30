@@ -6,6 +6,7 @@ db.sqlite3
 
 # local
 dev.bat
+*.whl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
