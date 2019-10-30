@@ -3,7 +3,9 @@
 The code for Oslo kommune "system- og behandlingsoversikt" / "Kartoteket".
 
 # reqirements
-Python3, Django2.1 and different modules in requirements.txt
+Python3, Django2 and different modules in requirements.txt
+
+Note the module python-ldap might be difficult to install on windows. Precompiled at https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-ldap.
 
 Login using OIDC (KeyCloak is configured and configured acording to Oslo kommunes AD-structure).
 
