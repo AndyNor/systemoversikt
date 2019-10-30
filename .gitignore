@@ -3,6 +3,7 @@ secrets.py
 secrets_dev.py
 secrets_test.py
 db.sqlite3
+systemoversikt/import/
 
 # local
 dev.bat
