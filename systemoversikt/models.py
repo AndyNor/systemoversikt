@@ -827,7 +827,7 @@ class CMDBRef(models.Model):
 			help_text=u"Manuelt satt",
 			)
 	comments = models.TextField(
-			verbose_name="Kommentarer",
+			verbose_name="Brukes til",
 			blank=True, null=True,
 			help_text=u"Importert: Kommentarer",
 			)

@@ -121,12 +121,14 @@ def import_business_services(request):
 			alle_eksisterende_cmdbref = list(CMDBRef.objects.filter(operational_status=1))
 
 			# Importere enheter (andre data i importfil nummer 2)
+			antall_nye_bs = 0
 			for record in data["records"]:
 				try:
 					business_service = CMDBRef.objects.get(navn=record["name"])
 					if business_service in alle_eksisterende_cmdbref:
 						alle_eksisterende_cmdbref.remove(business_service)
 				except:
+					antall_nye_bs += 1
 					business_service = CMDBRef.objects.create(
 							navn=record["name"],
 					)
@@ -138,6 +140,10 @@ def import_business_services(request):
 				business_service.u_service_operation_factor = record["u_service_operation_factor"]
 				business_service.u_service_complexity = record["u_service_complexity"]
 				business_service.operational_status = convertToInt(record["operational_status"])
+				try:
+					business_service.comments = record["short_description"]
+				except:
+					continue
 
 				business_service.save()
 
@@ -145,7 +151,7 @@ def import_business_services(request):
 				cmdbref.operational_status = 0
 				cmdbref.save()
 
-			logg_entry_message = "Utdaterte business services: %s. Utført av %s" % (len(alle_eksisterende_cmdbref), request.user)
+			logg_entry_message = "Nye businessSerices: %s, utdaterte business services: %s. Utført av %s" % (antall_nye_bs, len(alle_eksisterende_cmdbref), request.user)
 			logg_entry = ApplicationLog.objects.create(
 					event_type='CMDB business service import',
 					message=logg_entry_message,
