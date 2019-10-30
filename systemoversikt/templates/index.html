@@ -124,7 +124,13 @@
 				{% url "min_virksomhet" as min_virksomhet_url %}
 				Logget inn som <a href="{% url 'minside' %}">{{ user.first_name|default:"Ukjent" }} {{ user.last_name }}</a> og representerer
 				<a href="{{ min_virksomhet_url }}">{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</a> (<a href="{% url 'bytt_virksomhet' %}">bytt</a>).
+				<!-- 
 				<span style="margin-left: 30px;">(<b><a href="{{ url_logout }}">Logg ut</a></b>)</span>
+				-->
+				<form method="post" action="{{ url_logout }}" style="display: inline; margin-left: 30px;">
+					{% csrf_token %}
+					<button type="submit">Logg ut</button>
+				</form>
 
 			{% else %}
 				{% if TEST_ENV_NAME == 'test' %}
@@ -134,7 +140,14 @@
 				{% endif %}
 
 				Du er anonym med lesetilgang til åpen informasjon.
+				<!-- 
 				<span style="margin-left: 30px;">(<b><a href="{{ url_login }}?next={{ request.path }}">logg inn</a></b>)</span>
+				-->
+				<form method="get" action="{{ url_login }}" style="display: inline; margin-left: 30px;">
+					{% csrf_token %}
+					<button type="submit">Logg inn</button>
+				</form>
+
 			{% endif %}
 
 		</div>
