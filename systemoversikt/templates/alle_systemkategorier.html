@@ -2,16 +2,17 @@
 {% load static %}
 
 {% block underoverskrift %}
-	Kategorier ({{ kategorier.count }})
+	Alle kategorier
 	<h6>
-		<a href="{% url 'alle_hovedkategorier' %}">Alle hovedkategorier</a> |
-		<a href="{%url 'uten_systemkategorier' %}">Systemer og programvarer uten subkategori</a>
 		{% if user.is_authenticated %}
-		<a target="_blank" href="/admin/systemoversikt/systemkategori/add/">Legg til ny subkategori</a> |
+		<a class="btn btn-sm btn-primary" style="position: -webkit-sticky; position: sticky; top: 115px; z-index: 9999;"
+			target="_blank" href="/admin/systemoversikt/systemkategori/add/">Legg til ny kategori</a>
 		{% endif %}
+		<a class="btn btn-sm btn-secondary" href="{% url 'alle_hovedkategorier' %}">Alle hovedkategorier</a>
+		<a class="btn btn-sm btn-secondary" href="{%url 'uten_systemkategorier' %}">Mangler subkategori</a>
 	</h6>
 
-<p>Dette er kategorier som forvaltes av UKE. De ble innført i forbindelse med systemkonsolideringsprosjektet. Alle systemer skal ha en eller flere kategorier.</p>
+<p>Dette er kategorier som forvaltes av UKE. De ble innført i forbindelse med systemkonsolideringsprosjektet. Alle systemer skal ha en eller flere kategorier. Viser {{ kategorier.count }} kategorier.</p>
 
 {% endblock underoverskrift %}
 

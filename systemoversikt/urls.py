@@ -40,7 +40,7 @@ urlpatterns = [
 	url(r'^oidc/', include('mozilla_django_oidc.urls')),
 	url(r'^login/$', admin.site.login, name='login'),
 	url(r'^logout/$', logout, {'next_page': settings.LOGOUT_REDIRECT_URL}, name='logout'),
-	
+
 	url(r'^sys/profil/', views.minside, name="minside"),
 	url(r'^sys/logger/database/$', views.logger, name='logger'),
 	url(r'^sys/logger/audit/$', views.logger_audit, name='logger_audit'),
@@ -92,7 +92,7 @@ urlpatterns = [
 	url(r'^hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
 
 	url(r'^systemurl/$', views.alle_systemurler, name='alle_systemurler'),
-	url(r'^systemurl/(?P<pk>\d{1,8})/$', views.systemurl, name='systemurl'),
+	#url(r'^systemurl/(?P<pk>\d{1,8})/$', views.systemurl, name='systemurl'),
 
 
 	url(r'^bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),

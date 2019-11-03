@@ -2,16 +2,16 @@
 {% load static %}
 
 {% block underoverskrift %}
-	Alt uten systemkategori
+	Mangler kategori
 {% endblock underoverskrift %}
 
 {% block main_content %}
 
 	<h6>
-		<a href="{%url 'alle_systemkategorier' %}">Alle subkategorier</a>
+		<a class="btn btn-sm btn-secondary" href="{%url 'alle_systemkategorier' %}">Alle kategorier</a>
 	</h6>
 
-	<h5>Systemer: {{ systemer.count }} av {{ antall_systemer }}</h5>
+	<h5>Systemer som mangler kategori ({{ systemer.count }})</h5>
 	<table class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>
@@ -32,7 +32,7 @@
 	</tbody>
 	</table>
 
-	<h5>Programvarer: {{ programvarer.count }} av {{ antall_programvarer }}</h5>
+	<h5>Programvarer som mangler kategori ({{ programvarer.count }})</h5>
 	<table class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>

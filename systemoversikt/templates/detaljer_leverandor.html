@@ -3,12 +3,16 @@
 {% load templatetags %}
 
 {% block underoverskrift %}
-	Leverandørdetaljer for {{ leverandor.leverandor_navn }}
+	Leverandør "{{ leverandor.leverandor_navn }}"
 {% endblock underoverskrift %}
 
 {% block main_content %}
 {% url "alle_leverandorer" as alle_leverandorer_url %}
-<p>Oversikt over <a href="{{ alle_leverandorer_url }}" >alle leverandører</a>.</p>
+
+<p>
+	<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/leverandor/{{ leverandor.pk }}/change/">Rediger detaljer</a>
+	<a class="btn btn-sm btn-secondary" href="{{ alle_leverandorer_url }}">Alle leverandører</a>
+</p>
 
 <div class="card">
 	<div class="card-body">
@@ -22,82 +26,87 @@
 				<li><a href="{{ url_avtaledetaljer }}">{{ avtale }}</a></li>
 			{% endfor %}
 			</ul>
-		{% if user.is_authenticated %}
-		<hr>
-		<a target="_blank" href="/admin/systemoversikt/leverandor/{{ leverandor.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
-		{% endif %}
 	</div>
 </div>
 
-<br>
 
-<div class="row">
-	<div class="col-sm-4">
-		<h6>Programvareleverandør for</h6>
-		<ul>
+<table class="table table-sm table-striped tablesorter">
+	<thead>
+		<tr>
+			<th width="15%">Leveranse</th>
+			<th>Leverer</th>
+		</tr>
+	</thead>
+
+	<tbody>
 		{% for item in programvareleverandor_for %}
-			{% url 'programvaredetaljer' pk=item.pk as url_programvaredetaljer %}
-			<li><a href="{{ url_programvaredetaljer }}">{{ item.programvarenavn }}</a></li>
+		<tr>
+			<td>Programvareleverandør</td>
+			<td>
+				{% url 'programvaredetaljer' pk=item.pk as url_programvaredetaljer %}
+				<a href="{{ url_programvaredetaljer }}">{{ item.programvarenavn }}</a>
+			</td>
+		</tr>
 		{% endfor %}
-		</ul>
-	</div>
 
-	<div class="col-sm-4">
-		<h6>Systemleverandør for</h6>
-		<b>Systemer</b>
-		<ul>
 		{% for item in systemleverandor_for %}
-			{% url 'systemdetaljer' pk=item.pk as url_systemdetaljer %}
-			<li><a href="{{ url_systemdetaljer }}">{{ item.systemnavn }}</a></li>
+		<tr>
+			<td>Systemleverandør</td>
+			<td>
+				{% url 'systemdetaljer' pk=item.pk as url_systemdetaljer %}
+				<a href="{{ url_systemdetaljer }}">{{ item.systemnavn }}</a>
+			</td>
+		</tr>
 		{% endfor %}
-		</ul>
 
-	</div>
-
-	<div class="col-sm-4">
-		<h6>Basisdriftleverandør for</h6>
-		<ul>
 		{% for item in basisdriftleverandor_for %}
-			{% url 'systemdetaljer' pk=item.pk as url_systemdetaljerdetaljer %}
-			<li><a href="{{ url_systemdetaljerdetaljer }}">{{ item.systemnavn }}</a></li>
+		<tr>
+			<td>
+				Basisdriftleverandør
+			</td>
+			<td>
+				{% url 'systemdetaljer' pk=item.pk as url_systemdetaljerdetaljer %}
+				<a href="{{ url_systemdetaljerdetaljer }}">{{ item.systemnavn }}</a>
+			</td>
+		</tr>
 		{% endfor %}
-		</ul>
-	</div>
-</div>
-<hr>
-<div class="row">
-	<div class="col-sm-4">
-		<h6>Applikasjonsdriftleverandør for</h6>
-		<ul>
+
 		{% for item in applikasjonsdriftleverandor_for %}
-			{% url 'systemdetaljer' pk=item.pk as url_systemdetaljerdetaljer %}
-			<li><a href="{{ url_systemdetaljerdetaljer }}">{{ item.systemnavn }}</a></li>
+		<tr>
+			<td>Applikasjonsdriftleverandør</td>
+			<td>
+				{% url 'systemdetaljer' pk=item.pk as url_systemdetaljerdetaljer %}
+				<a href="{{ url_systemdetaljerdetaljer }}">{{ item.systemnavn }}</a>
+			</td>
+		</tr>
 		{% endfor %}
-		</ul>
-	</div>
 
-	<div class="col-sm-4">
-		<h6>Databehandler for</h6>
-		{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
-		<ul>
 		{% for item in databehandler_for %}
-			{% url 'behandlingsdetaljer' pk=item.pk as url_behandlingsdetaljer %}
-			<li><a href="{{ url_behandlingsdetaljer }}">{{ item.behandlingen }} for {{ item.behandlingsansvarlig }}</a></li>
+		<tr>
+			<td>Databehandler</td>
+			<td>
+			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+				{% url 'behandlingsdetaljer' pk=item.pk as url_behandlingsdetaljer %}
+				<a href="{{ url_behandlingsdetaljer }}">{{ item.behandlingen }} for {{ item.behandlingsansvarlig }}</a>
+			{% else %}
+				<p>Du mangler tilgangen "view_behandlingerpersonopplysninger".</p>
+			{% endif %}
+			</td>
+		</tr>
 		{% endfor %}
-		{% else %}
-			<p>Du mangler tilgangen "view_behandlingerpersonopplysninger".</p>
-		{% endif %}
-		</ul>
-		<br>
-	</div>
 
-	<div class="col-sm-4">
-		<h6>Registrar (domene) for</h6>
 		{% for item in registrar_for %}
-			{% url 'systemurl' pk=item.pk as url_systemurl %}
-			<li><a href="{{ url_systemurl }}">{{ item.domene }}</a></li>
+		<tr>
+			<td>Domeneregistrar</td>
+			<td>
+				{% url 'systemurl' pk=item.pk as url_systemurl %}
+				<a href="{{ url_systemurl }}">{{ item.domene }}</a>
+			</td>
+		</tr>
 		{% endfor %}
-	</div>
-</div>
+
+	</tbody>
+</table>
+
 
 {% endblock main_content %}

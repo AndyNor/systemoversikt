@@ -4,22 +4,22 @@
 	<thead>
 		<tr>
 			{% if user.is_authenticated %}
-			<th></th>
+			<th>Rediger</th>
 			{% endif %}
-			<th>Felles</th>
-			<th>Registrert av</th>
-			<th>Intern avdeling</th>
+			<th>Virksomhet</th>
 			<th>Funksjonsområde</th>
+			<th>Avdeling</th>
 			<th>Behandlingen</th>
 			<th>Formål</th>
 			<th>Den registrerte</th>
+			<th>Opplysninger</th>
+			<th>Felles</th>
 			<th>Krav sikkerhetsnivå</th>
 			<th>Behov for DPIA?</th>
-			<th>Programvare(r)</th>
-			<th>System(er)</th>
-			<th>Databehandler(e)</th>
+			<th>Systemer og programvarer</th>
+			<th>Eksterne databehandlere</th>
 			{% if user.is_authenticated %}
-			<th></th>
+			<th>Slett</th>
 			{% endif %}
 		</tr>
 	</thead>
@@ -30,33 +30,30 @@
 			<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
 			{% endif %}
 
-			<td>{{ item.fellesbehandling|yesno:"Ja,Nei" }}</td>
-
 			{% url "virksomhet" item.behandlingsansvarlig.pk as url_virksomhet %}
 			<td><a href="{{ url_virksomhet }}">{{ item.behandlingsansvarlig.virksomhetsforkortelse }}</a></td>
 
-			<td>{{ item.internt_ansvarlig|default:"?" }}</td>
 			<td>{{ item.funksjonsomraade|default:"?" }}</td>
+
+			<td>{{ item.internt_ansvarlig|default:"?" }}</td>
 
 			<td>
 			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
-				{% if item.informasjon_kvalitetssikret is True %}
-				<img style="width: 11px;" src="{% static 'open-iconic/svg/circle-check.svg' %}" alt="Kvalitet verifisert">
-				{% else %}
-				<img style="width: 11px;" src="{% static 'open-iconic/svg/warning.svg' %}" alt="Kvalitet ikke verifisert">
+				{% if item.informasjon_kvalitetssikret is False %}
+				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/warning.svg' %}" alt="Kvalitet ikke verifisert">
 				{% endif %}
 			{% url "behandlingsdetaljer" item.pk as url_behandlingsdetaljer %}
 			<a href="{{ url_behandlingsdetaljer }}">{{ item.behandlingen }}</a>
 			{% else %}
-			***
+				***
 			{% endif %}
 			</td>
 
 			<td>
 			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
-			{{ item.formaal }}
+				{{ item.formaal }}
 			{% else %}
-			***
+				***
 			{% endif %}
 			</td>
 
@@ -68,36 +65,49 @@
 				{% endfor %}
 				</ul>
 			{% else %}
-			***
+				***
 			{% endif %}
 			</td>
+
+			<td>
+			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+				<ul>
+				{% for kat in item.kategorier_personopplysninger.all %}
+					<li>{{ kat.navn }}</li>
+				{% endfor %}
+				</ul>
+			{% else %}
+				***
+			{% endif %}
+			</td>
+
+			<td>{{ item.fellesbehandling|yesno:"Ja,Nei" }}</td>
 
 			<td>
 			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
 				{{ item.get_krav_sikkerhetsnivaa_display|default:"-" }}
 			{% else %}
-			***
+				***
 			{% endif %}
 			</td>
 
 			<td>
 			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
-			{{ item.hoy_personvernrisiko|yesno:"Ja,Nei" }}
+				{{ item.hoy_personvernrisiko|yesno:"Ja,Nei" }}
 			{% else %}
-			***
+				***
 			{% endif %}
 			</td>
 
 			<td>
-				{% for program in item.programvarer.all %}
-				{% url "programvaredetaljer" program.pk as url_systemdetaljer %}
-				<a href="{{ url_systemdetaljer }}">{{ program }}</a><br>
-				{% endfor %}
-			</td>
-			<td>
 				{% for system in item.systemer.all %}
-				{% url "systemdetaljer" system.pk as url_programvaredetaljer %}
-				<a href="{{ url_programvaredetaljer }}">{{ system }}</a><br>
+					{% url "systemdetaljer" system.pk as url_programvaredetaljer %}
+					<a href="{{ url_programvaredetaljer }}">{{ system }}</a><br>
+				{% endfor %}
+
+				{% for program in item.programvarer.all %}
+					{% url "programvaredetaljer" program.pk as url_systemdetaljer %}
+					<a href="{{ url_systemdetaljer }}">{{ program }}</a><br>
 				{% endfor %}
 			</td>
 			<td>

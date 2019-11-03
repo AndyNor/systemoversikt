@@ -63,7 +63,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
 		#user.last_login = timezone.now()
 		user.save()
-		messages.success(self.request, 'Du er nå logget på. Trykk på navnet ditt for å få opp mer administrativ informasjon. Ved siden av navnet ditt står det også hvilken virksomhet du nå representerer. Dette kan endre med "bytt"-knappen.')
+		messages.success(self.request, 'Du er nå logget på. Trykk på navnet ditt for å få opp mer administrativ informasjon. Ved siden av navnet ditt står det også hvilken virksomhet du nå representerer. Dette kan endres med "bytt"-knappen.')
 		return user
 
 	def create_user(self, claims):

@@ -4,13 +4,14 @@
 {% load templatetags %}
 
 {% block underoverskrift %}
-	CMDB-enheter under "{{ cmdbref }}"
+	Business (Sub) Service "{{ cmdbref }}"
 {% endblock underoverskrift %}
 
 {% block main_content %}
 
 
 {% if perms.systemoversikt.view_system %}
+<h6>Servere</h6>
 <table id="stickyheader" class="table table-sm tablesorter">
 	<thead>
 	<tr>
@@ -38,11 +39,13 @@
 	</tr>
 	{% endfor %}
 	</tbody>
-	</table>
+</table>
+<h6>Databaser</h6>
+<p>Kommer</p>
 
-	{% else %}
-		<p>Du mangler tilgangen view_system (Vise systemdetaljer).</p>
-	{% endif %}
+{% else %}
+	<p>Du mangler tilgangen view_system (Vise systemdetaljer).</p>
+{% endif %}
 
 
 {% endblock main_content %}

@@ -3,20 +3,22 @@
 
 
 {% block underoverskrift %}
-	Leverandøroversikt ({{ leverandorer.count }})
+	Alle leverandører
 	{% if user.is_authenticated %}
 	<h6>
-		<a target="_blank" href="/admin/systemoversikt/leverandor/add/">Legg til ny leverandør</a>
+		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/leverandor/add/">Legg til ny leverandør</a>
 	</h6>
 	{% endif %}
 {% endblock underoverskrift %}
 
+
 {% block main_content %}
+<p>Det er registrert {{ leverandorer.count }} leverandører.</p>
 	<table class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>
 		{% if user.is_authenticated %}
-		<th></th>
+		<th>Rediger</th>
 		{% endif %}
 		<th>Leverandør</th>
 		{# <th>Programvarer for</th> #}
@@ -29,7 +31,7 @@
 		<th>Org.nummer</th>
 		<th>Notater</th>
 		{% if user.is_authenticated %}
-		<th></th>
+		<th>Slett</th>
 		{% endif %}
 	</tr>
 	</thead>

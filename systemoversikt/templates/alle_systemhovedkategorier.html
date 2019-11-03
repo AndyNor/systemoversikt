@@ -2,13 +2,13 @@
 {% load static %}
 
 {% block underoverskrift %}
-	Alle Hovedkategorier ({{ hovedkategorier.count }})
-	<h6>
+	Alle Hovedkategorier
+	<p>
 		{% if user.is_authenticated %}
-		<a target="_blank" href="/admin/systemoversikt/systemhovedkategori/add/">Legg til ny hovedkategori</a> |
+			<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/systemhovedkategori/add/">Legg til ny hovedkategori</a>
 		{% endif %}
-		<a href="{%url 'alle_systemkategorier' %}">Alle subkategorier</a>
-	</h6>
+		<a class="btn btn-sm btn-secondary" href="{%url 'alle_systemkategorier' %}">Alle kategorier</a>
+	</p>
 
 {% endblock underoverskrift %}
 
@@ -18,7 +18,7 @@
 	<thead>
 	<tr>
 		{% if user.is_authenticated %}
-		<th></th>
+		<th>Rediger</th>
 		{% endif %}
 		<th>Hovedkategori</th>
 		<th>Subkategorier</th>
@@ -52,14 +52,15 @@
 	</tbody>
 	</table>
 
-<p>Subkategorier uten knytning til en hovedkategori:
-	<ul>
+{% if subkategorier_uten_hovedkategori %}
+<h5>Kategorier uten knytning til hovedkategori</h5>
+<ul>
 	{% for s in subkategorier_uten_hovedkategori %}
 		<li>{{ s }}</li>
 	{% empty %}
 		<li>ingen</li>
 	{% endfor %}
-	</ul>
-</p>
+</ul>
+{% endif %}
 
 {% endblock main_content %}

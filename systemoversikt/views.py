@@ -825,7 +825,10 @@ def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False, template=
 
 	# filter for å fjerne alt utenom en valgt avdeling
 	if internt_ansvarlig:
-		virksomhetens_behandlinger = virksomhetens_behandlinger.filter(internt_ansvarlig=internt_ansvarlig)
+		if internt_ansvarlig == "None": # denne kommer som en string
+			virksomhetens_behandlinger = virksomhetens_behandlinger.filter(internt_ansvarlig=None)
+		else:
+			virksomhetens_behandlinger = virksomhetens_behandlinger.filter(internt_ansvarlig=internt_ansvarlig)
 		delte_behandlinger = delte_behandlinger.filter(internt_ansvarlig=internt_ansvarlig)
 
 	# slå sammen felles og egne behandlinger til et sett
@@ -1246,7 +1249,7 @@ def system_til_programvare(request, system_id):
 
 
 def alle_cmdbref(request):
-	cmdbref = CMDBRef.objects.all().order_by(Lower("navn"))
+	cmdbref = CMDBRef.objects.all().order_by(Lower("navn")) #1 er operational (filter(operational_status=1))
 	for c in cmdbref:
 		ant_devices = CMDBdevice.objects.filter(sub_name=c.pk, active=True)
 		c.ant_devices = ant_devices.count()

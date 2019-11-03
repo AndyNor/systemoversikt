@@ -7,17 +7,20 @@
 
 {% block main_content %}
 
-{% load static %}
+<p>
+	{% url 'mine_behandlinger' as url_mine_behandlinger %}
+	<a class="btn btn-sm btn-success" href="{{ url_mine_behandlinger }}">Våre behandlinger</a>
+</p>
 
 <table id="behandlinger" class="table table-sm table-striped">
 	<thead>
 		<tr>
-			<th></th>
+			<th>Rediger</th>
 			<th>Felles</th>
 			<th>Registrert av</th>
 			<th>Behandlingen</th>
-			<th>oppdateringsansvarlig</th>
-			<th></th>
+			<th>Oppdateringsansvarlig</th>
+			<th>Slett</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -41,7 +44,7 @@
 				<a href="{{ url_behandlingsdetaljer }}">{{ item.behandlingen }}</a>
 			</td>
 
-			<td>{% for ansvarlig in item.oppdateringsansvarlig.all %} {{ ansvarlig }} {% endfor %}</td>
+			<td>{% for ansvarlig in item.oppdateringsansvarlig.all %} {{ ansvarlig }}<br> {% endfor %}</td>
 
 			<td width="5%"><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
 		</tr>

@@ -3,11 +3,11 @@
 {% load static %}
 
 {% block underoverskrift %}
-	CMDB-referanser (viser {{ cmdbref.count }})
+	CMDB Business Services (Felles IKT-plattform)
 {% endblock underoverskrift %}
 
 {% block main_content %}
-<p>CMDB står for "Configuration management database" og er i denne kontekst en import av (primært) servergrupper fra Sopra Steria. De samme dataene benyttes også i Kompass. Denne importen skjer manuelt og ca. én gang per måned.</p>
+<p>CMDB står for "Configuration management database" og er i denne kontekst en import av det Sopra Steria kaller "Business Services". Gruppene brukes for fakturering og er ofte knyttet til et system. Dette er de samme ategoriene som benyttes i Kompass ved bestillinger. Importen av data skjer manuelt typisk en gang per måned. Det er nå {{ cmdbref.count }} grupper.</p>
 
 	<table id="stickyheader" class="table table-sm tablesorter">
 	<thead>

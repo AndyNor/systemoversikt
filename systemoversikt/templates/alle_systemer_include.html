@@ -4,7 +4,7 @@
 <thead>
 <tr>
 	{% if perms.systemoversikt.change_system %}
-		<th></th>
+		<th>Rediger</th>
 	{% endif %}
 	<th>Systemnavn</th>
 	<th>Systembruk</th>
@@ -25,7 +25,6 @@
 	{% if perms.systemoversikt.change_system %}
 		<th>Sikkerhetsnivå</th>
 		<th>Livsløp</th>
-		<th></th>
 	{% endif %}
 
 </tr>
@@ -125,10 +124,6 @@
 	{% if perms.systemoversikt.change_system %}
 		<td>{{ item.get_sikkerhetsnivaa_display|default:"" }}</td>
 		<td>{{ item.get_livslop_status_display|default:"" }}</td>
-		<td>
-			<a target="_blank" href="/admin/systemoversikt/system/{{ item.pk }}/delete/">
-			<img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" title="slett"></a>
-		</td>
 	{% endif %}
 
 
