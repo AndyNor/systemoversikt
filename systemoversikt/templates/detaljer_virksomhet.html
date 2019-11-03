@@ -11,7 +11,7 @@
 
 	<h6>
 		{% url 'alle_virksomheter' as url_alle_virksomheter %}
-		<a href="{{ url_alle_virksomheter }}">Alle virksomheter</a>
+		<a href="{{ url_alle_virksomheter }}" class="btn btn-sm btn-secondary">Oversikt over alle virksomheter</a>
 	</h6>
 
 <div class="card">
@@ -107,14 +107,14 @@
 		<hr>
 
 	<h6>
-		{% url 'all_programvarebruk_for_virksomhet' pk=virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
-		<a href="{{ url_all_programvarebruk_for_virksomhet }}">Vår programvarebruk</a> |
-		{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
-		<a href="{{ url_all_bruk_for_virksomhet }}">Vår systembruk</a> |
-		{% url 'alle_behandlinger_virksomhet' pk=virksomhet.pk as url_alle_behandlinger_virksomhet %}
-		<a href="{{ url_alle_behandlinger_virksomhet }}">Våre behandlinger</a> |
 		{% url 'dashboard_all' virksomhet=virksomhet.pk as url_dashboard %}
-		<a href="{{ url_dashboard }}">Vårt dashboard (drifter, eier, forvalter, behandler i)</a>
+		<a href="{{ url_dashboard }}" class="btn btn-sm btn-success">Vårt dashboard</a>
+		{% url 'alle_behandlinger_virksomhet' pk=virksomhet.pk as url_alle_behandlinger_virksomhet %}
+		<a href="{{ url_alle_behandlinger_virksomhet }}" class="btn btn-sm btn-success">Våre behandlinger</a>
+		{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
+		<a href="{{ url_all_bruk_for_virksomhet }}" class="btn btn-sm btn-success">Vår bruk av systemer</a>
+		{% url 'all_programvarebruk_for_virksomhet' pk=virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
+		<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-success">Vår bruk av programvare</a>
 	</h6>
 
 		<hr>
@@ -140,7 +140,8 @@
 <h5>Domener {{ virksomhet.virksomhetsforkortelse }} er ansvarlig for</h5>
 {% include "alle_urler_include.html" with web_urler=urleier_for %}
 
-<h5>Systemer {{ virksomhet.virksomhetsforkortelse }} er eier eller forvalter for (Antall: {{ systemer_ansvarlig_for.count }})</h5>
+<h5>Systemer {{ virksomhet.virksomhetsforkortelse }} er eier eller forvalter for </h5>
+<p>Det er {{ systemer_ansvarlig_for.count }} registrert.</p>
 {% include "alle_systemer_virksomhet_include.html" with systemer=systemer_ansvarlig_for %}
 
 <h5>Applikasjonshotell {{ virksomhet.virksomhetsforkortelse }} har instansforvaltning på</h5>

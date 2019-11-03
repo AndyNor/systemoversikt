@@ -7,26 +7,14 @@
 
 {% block undermeny %}
 	<p>Virksomhet definert som organisatorisk enhet med unikt organisasjonsnummer.</p>
-	<h6>
+	<div>
 		{% if user.is_authenticated %}
-			<a href="{% url 'min_virksomhet' %}">Min virksomhet</a> |
-			<a href="{% url 'sertifikatmyndighet' %}">Vis sertifikatmyndigheter</a> |
+			<a target="_blank" class="btn btn-sm btn-primary" href="/admin/systemoversikt/virksomhet/add/">Legg til ny virksomhet</a>
+			<a href="{% url 'min_virksomhet' %}" class="btn btn-sm btn-success">Min virksomhet</a>
+			<a href="{% url 'sertifikatmyndighet' %}" class="btn btn-sm btn-secondary">Vis sertifikatmyndigheter</a>
 		{% endif %}
-
-		{% url "alle_avtaler" as alle_avtaler_url %}
-		<a href="{{ alle_avtaler_url }}">Alle avtaler</a> |
-
-		{% url "alle_ansvarlige" as alle_ansvarlige_url %}
-		<a href="{{ alle_ansvarlige_url }}">Alle ansvarlige</a> |
-
-		{% url "alle_leverandorer" as alle_leverandorer_url %}
-		<a href="{{ alle_leverandorer_url }}">Alle leverandører</a> |
-
-
-		{% if perms.systemoversikt.add_virksomhet %}
-			<a target="_blank" href="/admin/systemoversikt/virksomhet/add/">Legg til ny virksomhet</a>
-		{% endif %}
-	</h6>
+	</div>
+	<br><br>
 {% endblock undermeny %}
 
 

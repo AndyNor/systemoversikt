@@ -12,307 +12,307 @@
 
 {% block main_content %}
 
-<p>RoS regnes som ikke utført dersom dato ikke er satt. DPIA regnes ikke som utført dersom DPIA-objekt ikke er opprettet på systemet. Systemer der "i bruk" er satt til nei, vises ikke i statistikken.</p>
+<p>Disse dashboardene viser deg ulike indikasjoner på datakvalitet for systemer knyttet til valgt virksomhet. Når det gjelder risikovurdering så regnes en risiko som utført dersom det er satt en dato for sist gjennomføring. For personkonsekvensvurderinger (DPIA) tas det utgangspunkt i at en slik er utført dersom DPIA-objektet er opprettet på systemet. Systemer satt med deaktiv status (ikke i bruk) vises ikke i statistikken.</p>
 
+<p>
 {% for liste in systemlister %}
+	<button class="btn btn-sm btn-secondary" type="button" data-toggle="collapse" data-target="#collapse_{{ liste.id }}" aria-expanded="false" aria-controls="collapse_{{ liste.id }}">
+		{{ liste.tittel }}
+	</button>
+{% endfor %}
+</p>
 
 <hr>
-<h5>{{ liste.tittel}} ({{ liste.systemer.count }} stk)</h5>
-<p><i>{{ liste.beskrivelse }}</i></p>
 
-<div class="row">
-	<div class="col-sm-12">
-		<canvas height="80" id="chart_{{ liste.id }}_vir"></canvas>
+{% for liste in systemlister %}
+<div class="collapse accordion" id="collapse_{{ liste.id }}">
+
+	<h5>{{ liste.tittel}} ({{ liste.systemer.count }} stk)</h5>
+	<p><i>{{ liste.beskrivelse }}</i></p>
+
+	<div class="row">
+		<div class="col-sm-12">
+			<canvas height="80" id="chart_{{ liste.id }}_vir"></canvas>
+		</div>
 	</div>
+
+	<script type="text/javascript">
+	var ctx_{{ liste.id }}_vir = document.getElementById('chart_{{ liste.id }}_vir').getContext('2d');
+	var chart_{{ liste.id }}_vir = new Chart(ctx_{{ liste.id }}_vir, {
+		// The type of chart we want to create
+		type: 'bar',
+
+		// The data for our dataset
+		data: {
+			labels: [{% for virksomhet in alle_virksomheter %} '{{ virksomhet.virksomhetsforkortelse|default:virksomhet.virksomhetsnavn }}', {% endfor%} "Ukjent"],
+			datasets: [
+			{
+				label: 'Systemeier',
+				backgroundColor: 'rgb(135, 153, 186)',
+				data: {{ liste.systemeiere_per_virksomhet }},
+			},
+			{
+				label: 'Systemforvalter',
+				backgroundColor: 'rgb(83, 100, 133)',
+				data: {{ liste.systemforvaltere_per_virksomhet}},
+			},
+			]
+		},
+
+		// Configuration options go here
+		options: {}
+	});
+	</script>
+
+	<div class="row">
+		<div style="width: 400px;">
+			<p style="text-align: center; font-weight: bold; font-size: large;">Risikovurderinger</p>
+			<canvas id="chart_{{ liste.id }}_ros"></canvas>
+		</div>
+		<script type="text/javascript">
+		var ctx_{{ liste.id }}_ros = document.getElementById('chart_{{ liste.id }}_ros').getContext('2d');
+		var chart_{{ liste.id }}_ros = new Chart(ctx_{{ liste.id }}_ros, {
+			// The type of chart we want to create
+			type: 'doughnut',
+
+			// The data for our dataset
+			data: {
+				labels: ['6mnd', 'år', 'Utdatert', 'Ukjent',],
+				datasets: [
+				{
+					backgroundColor: [
+						'rgb(181, 226, 160)',
+						'rgb(218, 209, 119)',
+						'rgb(197, 106, 27)',
+						'rgb(103, 103, 103)',
+					],
+					data: {{ liste.status_ros }}
+				},
+				]
+			},
+
+			// Configuration options go here
+			options: {
+				circumference: Math.PI,
+				rotation: -Math.PI,
+			}
+		});
+		</script>
+
+		<div style="width: 400px;">
+			<p style="text-align: center; font-weight: bold; font-size: large;">Personvernvurdering</p>
+			<canvas id="chart_{{ liste.id }}_dpia"></canvas>
+		</div>
+		<script type="text/javascript">
+		var ctx_{{ liste.id }}_dpia = document.getElementById('chart_{{ liste.id }}_dpia').getContext('2d');
+		var chart_{{ liste.id }}_dpia = new Chart(ctx_{{ liste.id }}_dpia, {
+			// The type of chart we want to create
+			type: 'doughnut',
+
+			// The data for our dataset
+			data: {
+				labels: ['Utført', 'Ikke utført', 'Ikke behov',],
+				datasets: [
+				{
+					backgroundColor: [
+						'rgb(181, 226, 160)',
+						'rgb(206, 119, 107)',
+						'rgb(103, 103, 103)',
+					],
+					data: {{ liste.status_dpia }}
+				},
+				]
+			},
+
+			// Configuration options go here
+			options: {
+				circumference: Math.PI,
+				rotation: -Math.PI,
+			}
+		});
+		</script>
+
+
+		<div style="width: 400px;">
+			<p style="text-align: center; font-weight: bold; font-size: large;">Sikkerhetsnivå</p>
+			<canvas id="chart_{{ liste.id }}_sikkerhetsnivaa"></canvas>
+		</div>
+		<script type="text/javascript">
+		var ctx_{{ liste.id }}_sikkerhetsnivaa = document.getElementById('chart_{{ liste.id }}_sikkerhetsnivaa').getContext('2d');
+		var chart_{{ liste.id }}_sikkerhetsnivaa = new Chart(ctx_{{ liste.id }}_sikkerhetsnivaa, {
+			// The type of chart we want to create
+			type: 'doughnut',
+
+			// The data for our dataset
+			data: {
+				labels: ['Gradert', 'Sikret', 'Internt', 'Eksternt', 'Ukjent'],
+				datasets: [
+				{
+					backgroundColor: [
+						'rgb(146, 4, 18)',
+						'rgb(206, 119, 107)',
+						'rgb(218, 209, 119)',
+						'rgb(181, 226, 160)',
+						'rgb(103, 103, 103)',
+					],
+					data: {{ liste.status_sikkerhetsnivaa }}
+				},
+				]
+			},
+
+			// Configuration options go here
+			options: {
+				circumference: Math.PI,
+				rotation: -Math.PI,
+			}
+		});
+		</script>
+
+
+		<div style="width: 400px;">
+			<p style="text-align: center; font-weight: bold; font-size: large;">Tjenestenivå</p>
+			<canvas id="chart_{{ liste.id }}_tjenestenivaa"></canvas>
+		</div>
+		<script type="text/javascript">
+		var ctx_{{ liste.id }}_tjenestenivaa = document.getElementById('chart_{{ liste.id }}_tjenestenivaa').getContext('2d');
+		var chart_{{ liste.id }}_tjenestenivaa = new Chart(ctx_{{ liste.id }}_tjenestenivaa, {
+			// The type of chart we want to create
+			type: 'doughnut',
+
+			// The data for our dataset
+			data: {
+				labels: ['T1', 'T2', 'T3', 'T4', 'Ukjent'],
+				datasets: [
+				{
+					backgroundColor: [
+						'rgb(206, 119, 107)',
+						'rgb(218, 209, 119)',
+						'rgb(185, 218, 119)',
+						'rgb(157, 218, 128)',
+						'rgb(103, 103, 103)',
+					],
+					data: {{ liste.status_tjenestenivaa }}
+				},
+				]
+			},
+
+			// Configuration options go here
+			options: {
+				circumference: Math.PI,
+				rotation: -Math.PI,
+			}
+		});
+		</script>
+
+		<div style="width: 400px;">
+			<p style="text-align: center; font-weight: bold; font-size: large;">Kvalitetssikret</p>
+			<canvas id="chart_{{ liste.id }}_kvalitet"></canvas>
+		</div>
+		<script type="text/javascript">
+		var ctx_{{ liste.id }}_kvalitet = document.getElementById('chart_{{ liste.id }}_kvalitet').getContext('2d');
+		var chart_{{ liste.id }}_kvalitet = new Chart(ctx_{{ liste.id }}_kvalitet, {
+			// The type of chart we want to create
+			type: 'doughnut',
+
+			// The data for our dataset
+			data: {
+				labels: ['Ja', 'Nei'],
+				datasets: [
+				{
+					backgroundColor: [
+						'rgb(181, 226, 160)',
+						'rgb(206, 119, 107)',
+					],
+					data: {{ liste.status_kvalitetssikret }}
+				},
+				]
+			},
+
+			// Configuration options go here
+			options: {
+				circumference: Math.PI,
+				rotation: -Math.PI,
+			}
+		});
+		</script>
+
+		<div style="width: 400px;">
+			<p style="text-align: center; font-weight: bold; font-size: large;">Livsløp</p>
+			<canvas id="chart_{{ liste.id }}_livslop"></canvas>
+		</div>
+		<script type="text/javascript">
+		var ctx_{{ liste.id }}_livslop = document.getElementById('chart_{{ liste.id }}_livslop').getContext('2d');
+		var chart_{{ liste.id }}_livslop = new Chart(ctx_{{ liste.id }}_livslop, {
+			// The type of chart we want to create
+			type: 'doughnut',
+
+			// The data for our dataset
+			data: {
+				labels: ['Anskaffes', 'Nytt', 'Moderne', 'Modent', 'Bør byttes', 'Ukjent'],
+				datasets: [
+				{
+					backgroundColor: [
+						'rgb(206, 119, 107)',
+						'rgb(218, 209, 119)',
+						'rgb(185, 218, 119)',
+						'rgb(195, 218, 119)',
+						'rgb(206, 119, 107)',
+						'rgb(103, 103, 103)',
+					],
+					data: {{ liste.status_livslop }}
+				},
+				]
+			},
+
+			// Configuration options go here
+			options: {
+				circumference: Math.PI,
+				rotation: -Math.PI,
+			}
+		});
+		</script>
+
+	</div>
+
+	<br>
+
+	<div>
+		<table id="stickyheader" class="table table-sm table-striped tablesorter">
+			<thead>
+			<tr>
+				<th>ID</th>
+				<th>System</th>
+				<th>Eierskapsmodell</th>
+				<th>Driftsplattform</th>
+				<th>Eier</th>
+				<th>Forvalter</th>
+				<th>Behandlinger</th>
+				<th>RoS</th>
+				<th>DPIA</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for system in liste.systemer %}
+			<tr>
+				<td>{{ system.pk }}</td>
+				{% url 'systemdetaljer' pk=system.pk as url_system %}
+				<td><a target="_blank" href="{{ url_system }}">{{ system }}</a></td>
+				<td>{{ system.get_systemeierskapsmodell_display }}</td>
+				<td>{{ system.driftsmodell_foreignkey }}</td>
+				<td>{{ system.systemeier.virksomhetsforkortelse }}</td>
+				<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
+				<td>{{ system.behandling_systemer.all.count }}</td>
+				<td>{% if system.dato_sist_ros %} Ja {% else %} Nei {% endif %}<br>
+					{{ system.dato_sist_ros|timesince }}
+				</td>
+				<td>{% if system.DPIA_for_system %} Ja {% else %} Nei {% endif %}</td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+
 </div>
-
-<script type="text/javascript">
-var ctx_{{ liste.id }}_vir = document.getElementById('chart_{{ liste.id }}_vir').getContext('2d');
-var chart_{{ liste.id }}_vir = new Chart(ctx_{{ liste.id }}_vir, {
-	// The type of chart we want to create
-	type: 'bar',
-
-	// The data for our dataset
-	data: {
-		labels: [{% for virksomhet in alle_virksomheter %} '{{ virksomhet.virksomhetsforkortelse|default:virksomhet.virksomhetsnavn }}', {% endfor%} "Ukjent"],
-		datasets: [
-		{
-			label: 'Systemeier',
-			backgroundColor: 'rgb(135, 153, 186)',
-			data: {{ liste.systemeiere_per_virksomhet }},
-		},
-		{
-			label: 'Systemforvalter',
-			backgroundColor: 'rgb(83, 100, 133)',
-			data: {{ liste.systemforvaltere_per_virksomhet}},
-		},
-		]
-	},
-
-	// Configuration options go here
-	options: {}
-});
-</script>
-
-<div class="row">
-	<div style="width: 400px;">
-		<p style="text-align: center; font-weight: bold; font-size: large;">Risikovurderinger</p>
-		<canvas id="chart_{{ liste.id }}_ros"></canvas>
-	</div>
-	<script type="text/javascript">
-	var ctx_{{ liste.id }}_ros = document.getElementById('chart_{{ liste.id }}_ros').getContext('2d');
-	var chart_{{ liste.id }}_ros = new Chart(ctx_{{ liste.id }}_ros, {
-		// The type of chart we want to create
-		type: 'doughnut',
-
-		// The data for our dataset
-		data: {
-			labels: ['6mnd', 'år', 'Utdatert', 'Ukjent',],
-			datasets: [
-			{
-				backgroundColor: [
-					'rgb(181, 226, 160)',
-					'rgb(218, 209, 119)',
-					'rgb(197, 106, 27)',
-					'rgb(103, 103, 103)',
-				],
-				data: {{ liste.status_ros }}
-			},
-			]
-		},
-
-		// Configuration options go here
-		options: {
-			circumference: Math.PI,
-			rotation: -Math.PI,
-		}
-	});
-	</script>
-
-	<div style="width: 400px;">
-		<p style="text-align: center; font-weight: bold; font-size: large;">Personvernvurdering</p>
-		<canvas id="chart_{{ liste.id }}_dpia"></canvas>
-	</div>
-	<script type="text/javascript">
-	var ctx_{{ liste.id }}_dpia = document.getElementById('chart_{{ liste.id }}_dpia').getContext('2d');
-	var chart_{{ liste.id }}_dpia = new Chart(ctx_{{ liste.id }}_dpia, {
-		// The type of chart we want to create
-		type: 'doughnut',
-
-		// The data for our dataset
-		data: {
-			labels: ['Utført', 'Ikke utført', 'Ikke behov',],
-			datasets: [
-			{
-				backgroundColor: [
-					'rgb(181, 226, 160)',
-					'rgb(206, 119, 107)',
-					'rgb(103, 103, 103)',
-				],
-				data: {{ liste.status_dpia }}
-			},
-			]
-		},
-
-		// Configuration options go here
-		options: {
-			circumference: Math.PI,
-			rotation: -Math.PI,
-		}
-	});
-	</script>
-
-
-	<div style="width: 400px;">
-		<p style="text-align: center; font-weight: bold; font-size: large;">Sikkerhetsnivå</p>
-		<canvas id="chart_{{ liste.id }}_sikkerhetsnivaa"></canvas>
-	</div>
-	<script type="text/javascript">
-	var ctx_{{ liste.id }}_sikkerhetsnivaa = document.getElementById('chart_{{ liste.id }}_sikkerhetsnivaa').getContext('2d');
-	var chart_{{ liste.id }}_sikkerhetsnivaa = new Chart(ctx_{{ liste.id }}_sikkerhetsnivaa, {
-		// The type of chart we want to create
-		type: 'doughnut',
-
-		// The data for our dataset
-		data: {
-			labels: ['Gradert', 'Sikret', 'Internt', 'Eksternt', 'Ukjent'],
-			datasets: [
-			{
-				backgroundColor: [
-					'rgb(146, 4, 18)',
-					'rgb(206, 119, 107)',
-					'rgb(218, 209, 119)',
-					'rgb(181, 226, 160)',
-					'rgb(103, 103, 103)',
-				],
-				data: {{ liste.status_sikkerhetsnivaa }}
-			},
-			]
-		},
-
-		// Configuration options go here
-		options: {
-			circumference: Math.PI,
-			rotation: -Math.PI,
-		}
-	});
-	</script>
-
-
-	<div style="width: 400px;">
-		<p style="text-align: center; font-weight: bold; font-size: large;">Tjenestenivå</p>
-		<canvas id="chart_{{ liste.id }}_tjenestenivaa"></canvas>
-	</div>
-	<script type="text/javascript">
-	var ctx_{{ liste.id }}_tjenestenivaa = document.getElementById('chart_{{ liste.id }}_tjenestenivaa').getContext('2d');
-	var chart_{{ liste.id }}_tjenestenivaa = new Chart(ctx_{{ liste.id }}_tjenestenivaa, {
-		// The type of chart we want to create
-		type: 'doughnut',
-
-		// The data for our dataset
-		data: {
-			labels: ['T1', 'T2', 'T3', 'T4', 'Ukjent'],
-			datasets: [
-			{
-				backgroundColor: [
-					'rgb(206, 119, 107)',
-					'rgb(218, 209, 119)',
-					'rgb(185, 218, 119)',
-					'rgb(157, 218, 128)',
-					'rgb(103, 103, 103)',
-				],
-				data: {{ liste.status_tjenestenivaa }}
-			},
-			]
-		},
-
-		// Configuration options go here
-		options: {
-			circumference: Math.PI,
-			rotation: -Math.PI,
-		}
-	});
-	</script>
-
-	<div style="width: 400px;">
-		<p style="text-align: center; font-weight: bold; font-size: large;">Kvalitetssikret</p>
-		<canvas id="chart_{{ liste.id }}_kvalitet"></canvas>
-	</div>
-	<script type="text/javascript">
-	var ctx_{{ liste.id }}_kvalitet = document.getElementById('chart_{{ liste.id }}_kvalitet').getContext('2d');
-	var chart_{{ liste.id }}_kvalitet = new Chart(ctx_{{ liste.id }}_kvalitet, {
-		// The type of chart we want to create
-		type: 'doughnut',
-
-		// The data for our dataset
-		data: {
-			labels: ['Ja', 'Nei'],
-			datasets: [
-			{
-				backgroundColor: [
-					'rgb(181, 226, 160)',
-					'rgb(206, 119, 107)',
-				],
-				data: {{ liste.status_kvalitetssikret }}
-			},
-			]
-		},
-
-		// Configuration options go here
-		options: {
-			circumference: Math.PI,
-			rotation: -Math.PI,
-		}
-	});
-	</script>
-
-	<div style="width: 400px;">
-		<p style="text-align: center; font-weight: bold; font-size: large;">Livsløp</p>
-		<canvas id="chart_{{ liste.id }}_livslop"></canvas>
-	</div>
-	<script type="text/javascript">
-	var ctx_{{ liste.id }}_livslop = document.getElementById('chart_{{ liste.id }}_livslop').getContext('2d');
-	var chart_{{ liste.id }}_livslop = new Chart(ctx_{{ liste.id }}_livslop, {
-		// The type of chart we want to create
-		type: 'doughnut',
-
-		// The data for our dataset
-		data: {
-			labels: ['Anskaffes', 'Nytt', 'Moderne', 'Modent', 'Bør byttes', 'Ukjent'],
-			datasets: [
-			{
-				backgroundColor: [
-					'rgb(206, 119, 107)',
-					'rgb(218, 209, 119)',
-					'rgb(185, 218, 119)',
-					'rgb(195, 218, 119)',
-					'rgb(206, 119, 107)',
-					'rgb(103, 103, 103)',
-				],
-				data: {{ liste.status_livslop }}
-			},
-			]
-		},
-
-		// Configuration options go here
-		options: {
-			circumference: Math.PI,
-			rotation: -Math.PI,
-		}
-	});
-	</script>
-
-</div>
-
-<br>
-<p>
-	<button class="btn" type="button" data-toggle="collapse" data-target="#collapse_{{ liste.id }}" aria-expanded="false" aria-controls="collapse_{{ liste.id }}">
-	Vis tabell
-	</button>
-</p>
-<div class="collapse" id="collapse_{{ liste.id }}">
-	<div class="card card-body">
-
-	<table id="stickyheader" class="table table-sm table-striped tablesorter">
-		<thead>
-		<tr>
-			<th>ID</th>
-			<th>System</th>
-			<th>Eierskapsmodell</th>
-			<th>Driftsplattform</th>
-			<th>Eier</th>
-			<th>Forvalter</th>
-			<th>Behandlinger</th>
-			<th>RoS</th>
-			<th>DPIA</th>
-		</tr>
-		</thead>
-		<tbody>
-		{% for system in liste.systemer %}
-		<tr>
-			<td>{{ system.pk }}</td>
-			{% url 'systemdetaljer' pk=system.pk as url_system %}
-			<td><a target="_blank" href="{{ url_system }}">{{ system }}</a></td>
-			<td>{{ system.get_systemeierskapsmodell_display }}</td>
-			<td>{{ system.driftsmodell_foreignkey }}</td>
-			<td>{{ system.systemeier.virksomhetsforkortelse }}</td>
-			<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
-			<td>{{ system.behandling_systemer.all.count }}</td>
-			<td>{% if system.dato_sist_ros %} Ja {% else %} Nei {% endif %}<br>
-				{{ system.dato_sist_ros|timesince }}
-			</td>
-			<td>{% if system.DPIA_for_system %} Ja {% else %} Nei {% endif %}</td>
-		</tr>
-		{% endfor %}
-		</tbody>
-	</table>
-
-	</div>
-</div>
-
-
-
-
 {% endfor %}
 
 {% endblock main_content %}

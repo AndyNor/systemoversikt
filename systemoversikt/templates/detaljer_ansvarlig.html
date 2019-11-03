@@ -6,20 +6,25 @@
 {% endblock underoverskrift %}
 
 {% block main_content %}
-<p>Oversikt over <a href="{% url 'alle_ansvarlige' %}">alle ansvarlige</a>.</p>
+<div>
+	{% if user.is_authenticated %}
+	<a target="_blank" href="/admin/systemoversikt/ansvarlig/{{ ansvarlig.pk }}/change/" class="btn btn-sm btn-primary">
+		Rediger opplysningene</a>
+	{% endif %}
+	<a href="{% url 'alle_ansvarlige' %}" class="btn btn-sm btn-secondary">Se alle ansvarlige</a>
+</div>
+<br>
+
+<p>Dersom en knytning til f.eks. et system, en behandling eller en avtale er feil eller mangler, må du inn å redigere på det spesifikke systemet/behandlingen/avtalen.</p>
 
 <div class="card">
 	<div class="card-body">
 		<b>E-post:</b> {{ ansvarlig.brukernavn.email }}<br>
 		<b>Bruker aktiv:</b> {{ ansvarlig.brukernavn.is_active|yesno:"Aktiv,Deaktivert" }} i Kartoteket, {{ ansvarlig.brukernavn.profile.accountdisable|yesno:"Deaktivert,Aktiv" }} i Active Directory.<br>
-		<b>Beskrivelse:</b> {{ ansvarlig.kommentar|default:"Organisatorisk tilhørighet / rolle er ikke oppgitt"|linebreaks }}
-
 		<b>Data fra brukerkatalog:</b> <a href="{% url 'ad_details' name=ansvarlig.brukernavn.username %}"> Slå opp i Active Directory</a><br>
+		<b>Beskrivelse:</b> {{ ansvarlig.kommentar|default:"-" }}<br>
 
-		{% if user.is_authenticated %}
-		<br><a target="_blank" href="/admin/systemoversikt/ansvarlig/{{ ansvarlig.pk }}/change/">
-			<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
-		{% endif %}
+
 	</div>
 </div>
 

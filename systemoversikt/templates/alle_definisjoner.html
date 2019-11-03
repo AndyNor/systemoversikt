@@ -3,16 +3,17 @@
 {% load static %}
 
 {% block underoverskrift %}
-	Definisjoner, forkortelser og begreper ({{ definisjoner.count }})
+	Definisjoner, forkortelser og begreper
 	{% if perms.systemoversikt.add_definisjon %}
-	<h6>
-		<a target="_blank" href="/admin/systemoversikt/definisjon/add/">Legg til ny definisjon</a> |
-	</h6>
+	<div>
+		<a target="_blank" class="btn btn-sm btn-primary" href="/admin/systemoversikt/definisjon/add/">Legg til ny definisjon</a>
+		<a class="btn btn-sm btn-danger" href="{% url 'import_organisatorisk_forkortelser' %}">Synkroniser virksomhetforkortelser</a>
+	</div>
 	{% endif %}
 {% endblock underoverskrift %}
 
 {% block main_content %}
-<p>En enkel modul for å definere begreper. Et begrep kan defineres flere ganger.</p>
+<p>En enkel modul for å definere begreper. Et begrep kan defineres flere ganger med ulik definisjon. Det er {{ definisjoner.count }} begreper registrert.</p>
 
 <table id="stickyheader" class="table table-sm tablesorter">
 	<thead>

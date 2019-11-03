@@ -75,7 +75,7 @@ urlpatterns = [
 
 	url(r'^avtaler/$', views.alle_avtaler, name='alle_avtaler'),
 	url(r'^avtaler/detaljer/(?P<pk>\d{1,8})/$', views.avtaledetaljer, name='avtaledetaljer'),
-	url(r'^avtaler/virksomhet/(?P<virksomhet>\d{1,8})/$', views.alle_avtaler, name='avtalervirksomhet'),
+	url(r'^avtaler/(?P<virksomhet>\d{1,8})/$', views.alle_avtaler, name='avtalervirksomhet'),
 	url(r'^avtaler/databehandleravtale/virksomhet/(?P<pk>\d{1,8})/$', views.databehandleravtaler_virksomhet, name='databehandleravtaler_virksomhet'),
 
 	url(r'^virksomhet/$', views.alle_virksomheter, name='alle_virksomheter'),
@@ -107,9 +107,9 @@ urlpatterns = [
 	url(r'^programvare/virksomhet/(?P<pk>\d{1,8})/$', views.all_programvarebruk_for_virksomhet, name='all_programvarebruk_for_virksomhet'),
 	url(r'^programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
 
-	url(r'^virksomhet/ansvarlig/$', views.alle_ansvarlige, name='alle_ansvarlige'),
-	url(r'^virksomhet/ansvarlig/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),
-	url(r'^virksomhet/ansvarlig/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
+	url(r'^ansvarlig/$', views.alle_ansvarlige, name='alle_ansvarlige'),
+	url(r'^ansvarlig/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),
+	url(r'^ansvarlig/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
 
 	url(r'^cmdb/$', views.alle_cmdbref, name='alle_cmdbref'),
 	url(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),

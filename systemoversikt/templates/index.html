@@ -161,6 +161,14 @@
 				</li>
 				{% if user.is_authenticated %}
 				<li class="nav-item">
+					{% url "alle_ansvarlige" as alle_ansvarlige_url %}
+					<a href="{{ alle_ansvarlige_url }}" class="nav-link {% if alle_ansvarlige_url in request.path %} active {% endif %}">Ansvarlige</a>
+				</li>
+				<li class="nav-item">
+					{% url "alle_avtaler" as alle_avtaler_url %}
+					<a href="{{ alle_avtaler_url }}" class="nav-link {% if alle_avtaler_url in request.path %} active {% endif %}">Avtaler</a>
+				</li>
+				<li class="nav-item">
 					{% url "dashboard_all" virksomhet=user.profile.virksomhet.pk as dashboard_url %}
 					<a href="{{ dashboard_url }}" class="nav-link {% if dashboard_url in request.path %} active {% endif %}">Vårt dashboard</a>
 				</li>
@@ -180,7 +188,7 @@
 				{% endif %}
 				<li class="nav-item">
 					{% url "alle_systemer" as alle_systemer_url %}
-					<a href="{{ alle_systemer_url }}" class="nav-link {% if alle_systemer_url in request.path %} active {% endif %}">Systemoversikt</a>
+					<a href="{{ alle_systemer_url }}" class="nav-link {% if alle_systemer_url in request.path %} active {% endif %}">Systemer</a>
 				</li>
 				<li class="nav-item">
 					{% url "alle_programvarer" as alle_programvarer_url %}

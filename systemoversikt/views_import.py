@@ -10,7 +10,8 @@ from django.db.models import Count
 from django.db.models.functions import Lower
 from django.db.models import Q
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse, HttpResponseRedirect
+from django.urls import reverse
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
@@ -262,7 +263,7 @@ def import_organisatorisk_forkortelser(request):
 			virksomhetsnavn = v.virksomhetsnavn
 			try:
 				d = Definisjon.objects.get(begrep=v.virksomhetsforkortelse)
-				messages.info(request, "Forkortelsen %s eksisterer fra før av, går til neste" % v.virksomhetsforkortelse)
+				#messages.info(request, "Forkortelsen %s eksisterer fra før av, går til neste" % v.virksomhetsforkortelse)
 			except:
 				if v.virksomhetsforkortelse:
 					d = Definisjon.objects.create(
@@ -276,9 +277,8 @@ def import_organisatorisk_forkortelser(request):
 				else:
 					messages.warning(request, "Hopper over %s" % v.virksomhetsnavn)
 
-		return render(request, 'home.html', {
-			'request': request,
-		})
+		messages.success(request, "Alle virksomhetsforkortelser er nå lagt til")		
+		return HttpResponseRedirect(reverse('alle_definisjoner'))
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 

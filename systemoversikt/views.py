@@ -146,21 +146,6 @@ def dashboard_all(request, virksomhet=None):
 
 	systemlister = [
 		{
-			"id": "systemer_drifter",
-			"beskrivelse": "Systemer angitt med en driftsplattform forvaltet av valgt virksomhet. Merk at det er %s systemer uten angivelse av driftsplattform." % (antall_systemer_uten_driftsmodell),
-			"tittel": "Systemer %s drifter." % (virksomhet.virksomhetsforkortelse),
-			"systemer": systemer_drifter,
-			"systemeiere_per_virksomhet": systemeierPerVirksomhet(systemer_drifter),
-			"systemforvaltere_per_virksomhet": systemforvalterPerVirksomhet(systemer_drifter),
-			"status_ros": statusRoS(systemer_drifter),
-			"status_dpia": statusDPIA(systemer_drifter),
-			"status_sikkerhetsnivaa": statusSikkerhetsnivaa(systemer_drifter),
-			"status_tjenestenivaa": statusTjenestenivaa(systemer_drifter),
-			'status_kvalitetssikret': statusKvalitet(systemer_drifter),
-			'status_livslop': statusLivslop(systemer_drifter),
-
-		},
-		{
 			"id": "systemer_eier",
 			"beskrivelse": "Systemer angitt med valgt virksomhet som eier.",
 			"tittel": "Systemer %s eier" % virksomhet.virksomhetsforkortelse,
@@ -201,6 +186,21 @@ def dashboard_all(request, virksomhet=None):
 			"status_tjenestenivaa": statusTjenestenivaa(systemer_behandler_i),
 			'status_kvalitetssikret': statusKvalitet(systemer_behandler_i),
 			'status_livslop': statusLivslop(systemer_behandler_i),
+		},
+		{
+			"id": "systemer_drifter",
+			"beskrivelse": "Systemer angitt med en driftsplattform forvaltet av valgt virksomhet. Merk at det er %s systemer uten angivelse av driftsplattform." % (antall_systemer_uten_driftsmodell),
+			"tittel": "Systemer %s drifter" % (virksomhet.virksomhetsforkortelse),
+			"systemer": systemer_drifter,
+			"systemeiere_per_virksomhet": systemeierPerVirksomhet(systemer_drifter),
+			"systemforvaltere_per_virksomhet": systemforvalterPerVirksomhet(systemer_drifter),
+			"status_ros": statusRoS(systemer_drifter),
+			"status_dpia": statusDPIA(systemer_drifter),
+			"status_sikkerhetsnivaa": statusSikkerhetsnivaa(systemer_drifter),
+			"status_tjenestenivaa": statusTjenestenivaa(systemer_drifter),
+			'status_kvalitetssikret': statusKvalitet(systemer_drifter),
+			'status_livslop': statusLivslop(systemer_drifter),
+
 		},
 		{
 			"id": "systemer_felles",
@@ -949,6 +949,7 @@ def bytt_virksomhet(request):
 			if valgt_virksomhet in tillatte_bytter:
 				request.user.profile.virksomhet = valgt_virksomhet
 				request.user.save()
+				messages.success(request, 'Du representerer nå %s' % valgt_virksomhet)
 			else:
 				messages.warning(request, 'Forsøk på ulovlig bytte')
 		except:
