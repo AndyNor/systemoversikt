@@ -35,19 +35,18 @@ urlpatterns = [
 
 	re_path(r'^favicon\.ico$', favicon_view),
 
-	url(r'^profil/', views.minside, name="minside"),
-	url(r'^admin/', admin.site.urls, name="admin"),
-	url(r'^video/', views.video, name="video"),
-	url(r'^oidc/', include('mozilla_django_oidc.urls')),
-	url(r'^logout/$', logout, {'next_page': settings.LOGOUT_REDIRECT_URL}, name='logout'),
-	url(r'^login/$', admin.site.login, name='login'),
-	url(r'^logger/database/$', views.logger, name='logger'),
-	url(r'^logger/audit/$', views.logger_audit, name='logger_audit'),
-	url(r'^roller/$', views.roller, name='roller'),
-	#url(r'^$', views.home, name='home'),
 	url(r'^$', views.alle_hovedkategorier, name='home'),
+	url(r'^admin/', admin.site.urls, name="admin"),
+	url(r'^oidc/', include('mozilla_django_oidc.urls')),
+	url(r'^login/$', admin.site.login, name='login'),
+	url(r'^logout/$', logout, {'next_page': settings.LOGOUT_REDIRECT_URL}, name='logout'),
+	
+	url(r'^sys/profil/', views.minside, name="minside"),
+	url(r'^sys/logger/database/$', views.logger, name='logger'),
+	url(r'^sys/logger/audit/$', views.logger_audit, name='logger_audit'),
+	url(r'^sys/roller/$', views.roller, name='roller'),
+	url(r'^sys/rettigheter/$', views.permissions, name='permissions'),
 
-	url(r'^permissions/$', views.permissions, name='permissions'),
 
 	url(r'^systemer/$', views.alle_systemer, name='alle_systemer'),
 	url(r'^systemer/pakket/$', views.systemer_pakket, name='systemer_pakket'),

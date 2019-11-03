@@ -1058,7 +1058,7 @@ class Avtale(models.Model):
 	history = HistoricalRecords()
 
 	def __str__(self):
-		return u'%s med %s - %s' % (self.kortnavn, self.leverandor, self.get_avtaletype_display())
+		return u'%s med %s (%s)' % (self.kortnavn, self.leverandor, self.get_avtaletype_display())
 
 	class Meta:
 		verbose_name_plural = "Avtaler"

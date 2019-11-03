@@ -10,17 +10,16 @@
 
 
 	<h6>
+		{% if user.is_authenticated %}
+		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">Rediger detaljer</a>
+		{% endif %}
 		{% url 'alle_virksomheter' as url_alle_virksomheter %}
-		<a href="{{ url_alle_virksomheter }}" class="btn btn-sm btn-secondary">Oversikt over alle virksomheter</a>
+		<a class="btn btn-sm btn-secondary" href="{{ url_alle_virksomheter }}">Oversikt over alle virksomheter</a>
 	</h6>
 
 <div class="card">
 	<div class="card-body">
 		<h6>
-		{% if user.is_authenticated %}
-		<a target="_blank" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">
-			<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
-		{% endif %}
 		 Om virksomheten
 		</h6>
 

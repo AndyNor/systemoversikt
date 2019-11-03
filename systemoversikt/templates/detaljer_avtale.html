@@ -8,17 +8,17 @@
 {% endblock underoverskrift %}
 
 {% block main_content %}
-<p>Oversikt over
+<p>
+	{% if user.is_authenticated %}
+	<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/avtale/{{ avtale.pk }}/change/">Rediger detaljer</a>
+	{% endif %}
 	{% url "alle_avtaler" as alle_avtaler_url %}
-	<a href="{{ alle_avtaler_url }}">alle avtaler</a>.
+	<a class="btn btn-sm btn-secondary" href="{{ alle_avtaler_url }}">alle avtaler</a>
 </p>
 
 <div class="card">
 	<div class="card-body">
 		<h6>{{ avtale.beskrivelse|linebreaks|default:"-" }}</h6>
-		{% if user.is_authenticated %}
-		<a target="_blank" href="/admin/systemoversikt/avtale/{{ avtale.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
-		{% endif %}
 	</div>
 </div>
 
@@ -78,10 +78,6 @@
 						<a href="{{ url_driftsmodell }}">{{ driftsmodell|default:"-" }}</a><br>
 				{% empty %} - {% endfor %}</td>
 			</tr>
-		</table>
-
-		<h6>Avtaleavhengigheter</h6>
-		<table class="table table-sm table-striped">
 			<tr>
 				<td width="30%">{% get_verbose_field_name avtale "intern_avtalereferanse" %}</td>
 				<td>

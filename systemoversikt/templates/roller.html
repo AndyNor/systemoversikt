@@ -6,35 +6,50 @@
 
 {% block main_content %}
 
-<p>I kartoteket er følgende grupper etablert (se under), og de speiler sikkerhetsgrupper i Active Directory slik opprettet av PRK. Via PRK legges brukeridenter (som f.eks. din bruker) inn i ulike AD-sikkerhetsgrupper. Inne i kartoteket finnes en mapping mellom sikkerhetsgrupper og ulike rettigheter.<br>
-Systemer, behandlinger, plattformer, avtaler osv (kalt "klasser", hvor et enkelt system er et objekt eller instans av klassen..) blir styrt med fire ulike rettigheter. Rettighet til å vise, lage ny, redigere og slette. Disse kontrolleres separat, basert på hva vi mener de ulike rollene skal kunne gjøre. F.eks. kan en virksomhetsadministrator endre på virksomhets-objekter, mens en systemforvalter kun kan se på virksomhetsobjekter.</p>
+<div>
+	<a class="btn btn-sm btn-secondary" href="{% url 'permissions' %}">Se ansvarlige gruppemedlemskap</a>
+	<a class="btn btn-sm btn-danger" href="?export=json">Eksporter gruppe-rettighetskobling</a>
+</div>
+<br>
 
-<p>Det er ikke lagt opp til eierskap til de konkrete instansene som f.eks. et system eller en behandling, men både behandlinger og systemer er koblet til både virksomhet og enkeltpersoner. Dersom vi ønsker å begrense tilgang til virksomhet eller person, så kan dette løses ved å lage en regel som sjekkes ved endring eller sletting, men det må veies opp mot de ulemper det vil ha. Per nå er det en regel aktiv som hindrer virksomheter å endre/slette behandlinger som tilhører andre virksomheter.</p>
+<p>Via PRK legges brukeridenter (som f.eks. din bruker) inn i ulike AD-sikkerhetsgrupper. Disse sikkerhetsgruppene er speilet i dette systemet og tildelt ulike rettigheter. For eksempel å kunne opprette et system eller endre på en virksomhet. Rollen "virksomhetsadministrator" skal kunne endre på virksomheter, mens en systemforvalter skal kunne endre på systemer.</p>
 
-<p>
-Veldig forenklet kan rollen <b>systemforvalter</b> endre på systemer. Rollen <b>behandlingsansvarlig</b> kan gjøre det en systemforvalter kan, men kan i tillegg endre på behandlinger i virksomhetens behandlingsprotokoll. Systemforvalter kan se behandinger registrert på sine systemer. En systemeier tildeles i praksis rollen som systemforvalter. For å kunne endre på systemkategorier og noen typer valgfelt som ønskes standardisert må du ha rollen <b>systemkategori</b>. For å kunne endre på virksomheter må du ha rollen <b>virksomhetsforvalter</b>, og for å kunne administrere driftsplattformer må du ha rollen <b>plattformforvalter</b>.
+<p>Det er ikke lagt opp til eksplisitt eierskap til data (systemer, behandlinger), men eksempelvis behandlinger og systemer er assosiert med en eller flere virksomheter og enkeltpersoner. Det er mulig å begrense mulighet for å endre et enkelt objekt til en virksomhet eller person, men det må veies opp mot de ulemper slik begrensning vil ha. Det er etablert en regel som hindrer virksomheter å endre/slette behandlinger som tilhører andre virksomheter, men ut over dette er det ingen tekniske hindringer.</p>
+
+<p>Noe forenklet rollebeskrivelse
+<ul>
+	<li>Systemforvalter kan endre på systemer. Systemforvalter kan se behandinger registrert på sine systemer. En systemeier tildeles i praksis rollen som systemforvalter.</li>
+	<li>Behandlingsansvarlige kan gjøre det samme som systemforvalter, og i tillegg endre på behandlinger i virksomhetens behandlingsprotokoll.</li> 
+	<li>Systemkategori(forvalter) kan endre på systemkategorier og andre valgbare felt som ønskes standardisert.</li>
+	<li>Virksomhets(forvalter) kan endre på detaljer om virksomheter.</li>
+	<li>Plattformforvalter kan administrere driftsplattformer.</li>
+</ul>
 </p>
 
-<ul>
-{% for g in groups %}
-	<li><a href="#{{g.name|slice:'1:'}}">{{ g.name|slice:"1:" }}</a></li>
-{% endfor %}
-</ul>
-
 <hr>
 
-<p>Dersom du har rettigheter kan du se oversikt over <a href="{% url 'permissions' %}">ansvarlige og deres gruppemedlemskap</a><br>
-Du kan også eksportere rettighetskoblingene som <a href="?export=json">JSON</a></p>
-
-<hr>
-
+<div class="accordion" id="accordionExample">
 {% for g in groups %}
-	{% url 'ad_group_details' group=g.name|slice:"1:" as url_group %}
-	<a id="{{ g.name|slice:'1:' }}" class="anchor"></a>
-	<h6><a target="_blank" href="{{ url_group }}">{{ g.name|slice:"1:" }}</a></h6>
-	{% for p in g.permissions.all %}
-		{{ p.name }} ({{ p.codename }})</br>
-	{% endfor %}
-	<br>
+
+  <div class="card">
+    <div class="card-header" id="heading_{{ forloop.counter }}">
+      <h2 class="mb-0">
+        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse_{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse_{{ forloop.counter }}">
+          {{ g.name|slice:"1:" }}
+        </button>
+      </h2>
+    </div>
+
+    <div id="collapse_{{ forloop.counter }}" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+      <div class="card-body">
+		{% for p in g.permissions.all %}
+			{{ p.name }} ({{ p.codename }})</br>
+		{% endfor %}
+      </div>
+    </div>
+  </div>
+
 {% endfor %}
+</div>
+
 {% endblock %}

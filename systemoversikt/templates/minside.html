@@ -2,23 +2,24 @@
 
 {% block main_content %}
 
-<h4>Administrasjon og feilsøking</h4>
+<h4>Administrasjon</h4>
 
-<p>Hei {{ user.first_name }} {{ user.last_name }},</p>
+<div>
+	<a class="btn btn-sm btn-secondary" href="{{ OIDC_IDP_URL_BASE }}/auth/realms/{{ OIDC_IDP_REALM }}/account/">Administrer min pålogging</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'ansvarlig' pk=request.user.ansvarlig_brukernavn.pk %}">Ansvarlig for</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'logger' %}">Se endringslogg</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'logger_audit' %}">Se aktivitetslogg</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'roller' %}">Se grupper og roller</a>
+	<a class="btn btn-sm btn-primary" href="/admin/">Gå til admin</a>
+</div>
 
-<p>Du er logget inn via en av Oslo kommunes identitetstjenere. Du kan <a href="{{ OIDC_IDP_URL_BASE }}/auth/realms/{{ OIDC_IDP_REALM }}/account/">administrere din profil</a> med denne linken.<br>Ditt brukernavn er <b>{{ user.username|default:"Ukjent" }}</b>, og du er medlem i følgende grupper:<br>
+<br>
+
+<p>Hei {{ request.user.first_name }} {{ request.user.last_name }}. Du er logget inn via en av Oslo kommunes identitetstjenere. Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b>, og du er medlem i følgende grupper:<br>
 <ul>{% for group in user.groups.all %} <li>{{ group.name|slice:"19:"|lower|capfirst }}</li> {% endfor %}</ul>
-Disse gruppenavnene kan virke litt kryptiske, men de er forklart på <a href="{% url 'roller' %}">grupper og roller</a>.
+Disse gruppenavnene er forklart på under grupper og roller.
 </p>
 
-<p>Dersom du ønsker å redigere på innhold kan du enten gå direkte til <a href="/admin/">administrasjonssidene</a>, eller du kan følge <img style="width: 11px; margin: 3px;" src="/static/open-iconic/svg/pencil.svg" title="rediger"> symbolene rundt omkring på denne portalen. Redigeringssider åpes som standard i nytt vindu, som du kan lukke når du har redigert og lagret, slik at du kommer tilbake til siden du var på før du startet å redigere.</p>
-
-<p>Alle endringer utført via administrasjonssidene blir loggført. På systemer vises det hvem som har utført de siste endringene direkte på detaljesiden, og du kan <a href="{% url 'logger' %}">lese loggene</a> her om du ønsker endringer i kronologisk rekkefølge. For de fleste typer informasjon lages det en ny versjon av informasjonen for hver gang du lagrer, og disse kan gjenopprettes dersom du har nødvendige tilganger via knappen "Historikk" på den enkelte redigeringsside.</p>
-
-<p>Det er laget en side som heter <a href="{% url 'logger_audit' %}">logg</a> hvor andre typer administrative logger vises. Per nå logges det hver gang kartoteket synkroniserer mot Active Directory. Fremtidig vil det også logges når e-post sendes ut.</p>
-
-
-
-
+<p>Dersom du ønsker å redigere på innhold kan du enten gå direkte til admin-siden eller du kan følge <img style="width: 11px; margin: 3px;" src="/static/open-iconic/svg/pencil.svg" title="rediger"> symbolene rundt omkring på denne portalen. Redigeringssider åpes som standard i nytt vindu. På denne måten kan du lukke admin-siden når du har redigert og lagret og komme tilbake til siden du var på før du startet å redigere. Alle endringer utført via administrasjonssidene blir loggført. På systemer vises det hvem som har utført de siste endringene direkte på detaljesiden. For de fleste typer informasjon lages det en ny versjon av informasjonen for hver gang du lagrer. Gamle versjoner kan gjenopprettes dersom du har nødvendige tilganger via knappen "Historikk" på den enkelte redigeringsside.</p>
 
 {% endblock %}

@@ -797,7 +797,7 @@ def mine_behandlinger(request):
 		pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
 		return redirect('alle_behandlinger_virksomhet', pk)
 	except:
-		messages.warning(request, 'Din bruker er ikke knyttet til en virksomhet. Velg en virksomhet fra listen, og velg så "Vår behandling".')
+		messages.warning(request, 'Din bruker er ikke knyttet til en virksomhet. Velg en virksomhet fra listen, og velg så "Våre behandlinger".')
 		return redirect('alle_virksomheter')
 
 

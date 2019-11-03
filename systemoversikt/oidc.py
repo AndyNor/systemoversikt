@@ -11,9 +11,11 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 		"""Return all users matching the specified username."""
 		# vi tar vare på claims i tilfelle vi trenger den et annet sted senere.
 		self.request.session['oidc-token'] = claims
+		#messages.info(self.request, '%s' % claims)
 		username = claims.get('preferred_username').lower()
 		if not username:
 			return self.UserModel.objects.none()
+			messages.warning(self.request, 'Du ble logget på uten brukernavn. Innlogging feilet.')
 		return self.UserModel.objects.filter(username__iexact=username)
 
 	# https://docs.djangoproject.com/en/2.0/ref/contrib/auth/#django.contrib.auth.models.User.username
@@ -30,6 +32,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 		superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
 		if superuser_group in claim_groups:
 			user.is_superuser = True
+			messages.warning(self.request, 'Du ble logget på som systemadministrator')
 			claim_groups.remove(superuser_group)
 		else:
 			user.is_superuser = False
