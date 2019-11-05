@@ -1,0 +1,52 @@
+{% load static %}
+
+	<table class="table table-sm table-striped">
+	<thead>
+	<tr>
+		{% if user.is_authenticated %}
+		<th>Rediger</th>
+		{% endif %}
+		<th>Bruksdetaljer</th>
+		<th>Lokal forvalter</th>
+		{# <th>Antall behandlinger (våre)</th> #}
+		<th>System</th>
+		<th>Systemeierskapsmodell</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for bruk in all_bruk %}
+	<tr {% if bruk.ibruk == False %} style="text-decoration: line-through;" {% endif %}
+		>
+		{% if user.is_authenticated %}
+		<td>
+			<a target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
+			<img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+		</td>
+		{% endif %}
+
+		<td>
+			{% url "bruksdetaljer" bruk.pk as url_bruksdetaljer %}
+			<a href="{{ url_bruksdetaljer }}">{{ bruk.system }} ({{ virksomhet.virksomhetsforkortelse }})</a>
+		</td>
+
+		<td>
+			{% include "vis_ansvarlige.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}
+		</td>
+
+		{% comment %}<td>
+			{{ bruk.antall_behandlinger|default:"-" }}
+		</td>{% endcomment %}
+
+		<td>
+			{% url "systemdetaljer" bruk.system.pk as url_systemdetaljer %}
+			<a href="{{ url_systemdetaljer }}">{{ bruk.system }}</a>
+		</td>
+
+		<td>
+			{{ bruk.get_systemeierskapsmodell_display|default:"" }}
+		</td>
+
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>

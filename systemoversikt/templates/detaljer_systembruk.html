@@ -7,21 +7,26 @@
 {% block underoverskrift %}
 	{% url "virksomhet" bruk.brukergruppe.pk as url_virksomhet %}
 	{% url "systemdetaljer" bruk.system.pk as url_systemdetaljer %}
-	<a href="{{ url_virksomhet }}">{{ bruk.brukergruppe.virksomhetsforkortelse }}</a>'s bruk av <a href="{{ url_systemdetaljer }}">{{ bruk.system }}</a> (system)
+	<a href="{{ url_virksomhet }}">{{ bruk.brukergruppe }}</a> sin bruk av <a href="{{ url_systemdetaljer }}">{{ bruk.system }}</a>
 
 {% endblock underoverskrift %}
 
 {% block main_content %}
 
-<div class="card">
-	<div class="card-body">
-		{% url "all_bruk_for_virksomhet" bruk.brukergruppe.pk as url_all_bruk_for_virksomhet %}
-		<h6><a href="{{  url_all_bruk_for_virksomhet }}">All systembruk knyttet til {{ bruk.brukergruppe }}</a></h6><br>
-		{% if user.is_authenticated %}
-		<p><a target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a></p>
-		{% endif %}
-	</div>
-</div>
+<p>
+	{% if user.is_authenticated %}
+	<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
+	Rediger detaljer</a>
+	{% endif %}
+
+	{% url "all_bruk_for_virksomhet" bruk.brukergruppe.pk as url_all_bruk_for_virksomhet %}
+	<a class="btn btn-sm btn-secondary" href="{{  url_all_bruk_for_virksomhet }}">All systembruk for {{ bruk.brukergruppe }}</a>
+
+
+</p>
+
+
+
 <br>
 <div class="row">
 	<div class="col-sm-6">
@@ -83,10 +88,7 @@
 			<tr>
 				<td>{% get_verbose_field_name bruk "systemforvalter_kontaktpersoner_referanse" %}</td>
 				<td>
-					{% for ansvarlig in bruk.systemforvalter_kontaktpersoner_referanse.all %}
-						{% url "ansvarlig" ansvarlig.pk as url_ansvarlig %}
-						<a href="{{ url_ansvarlig }}">{{ ansvarlig }}</a><br>
-					{% endfor %}
+					{% include "vis_ansvarlige.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}
 				</td>
 			</tr>
 

@@ -1366,7 +1366,7 @@ def ldap_query(ldap_path, ldap_filter, ldap_properties, timeout):
 	ldapClient.unbind_s()
 	return result
 
-
+"""
 def ldap_get_user_details(username):
 	import re
 
@@ -1408,8 +1408,9 @@ def ldap_get_user_details(username):
 					"attrs": attrs_decoded,
 			})
 	return users
+"""
 
-
+"""
 def ldap_get_group_details(group):
 	import re
 
@@ -1449,7 +1450,7 @@ def ldap_get_group_details(group):
 					"attrs": attrs_decoded,
 			})
 	return groups
-
+"""
 
 def ldap_get_details(name):
 	import re
@@ -1532,7 +1533,7 @@ def ldap_get_details(name):
 	return ({"users": users, "groups": groups})
 
 
-
+"""
 def ad_user_details(request, username):
 	import time
 	required_permissions = 'auth.view_user'
@@ -1549,8 +1550,9 @@ def ad_user_details(request, username):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+"""
 
-
+"""
 def ad_group_details(request, group):
 	import time
 	required_permissions = 'auth.view_user'
@@ -1567,7 +1569,7 @@ def ad_group_details(request, group):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
+"""
 
 def ad_details(request, name):
 	import time

@@ -50,10 +50,7 @@
 			<tr>
 				<td>{% get_verbose_field_name behandling "oppdateringsansvarlig" %}</td>
 				<td>
-					{% for ansvarlig in behandling.oppdateringsansvarlig.all %}
-						{% url 'ansvarlig' pk=ansvarlig.pk as url_ansvarlig %}
-						<a href="{{ url_ansvarlig }}">{{ ansvarlig }}</a><br>
-					{% endfor %}
+					{% include "vis_ansvarlige.html" with ansvarlige=behandling.oppdateringsansvarlig.all %}
 				</td>
 			</tr>
 			<tr>

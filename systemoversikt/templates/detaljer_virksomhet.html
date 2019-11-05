@@ -139,27 +139,15 @@
 <h5>Domener {{ virksomhet.virksomhetsforkortelse }} er ansvarlig for</h5>
 {% include "alle_urler_include.html" with web_urler=urleier_for %}
 
-<h5>Systemer {{ virksomhet.virksomhetsforkortelse }} er eier eller forvalter for </h5>
-<p>Det er {{ systemer_ansvarlig_for.count }} registrert.</p>
+
+<h5>Systemer {{ virksomhet.virksomhetsforkortelse }} har lokal forvaltning av</h5>
+{% include "alle_systembruk_include.html" with all_bruk=systembruk_forvalter_for.all %}
+
+
+<h5>Systemer {{ virksomhet.virksomhetsforkortelse }} er eier av eller forvalter for </h5>
+<p>Det er {{ systemer_ansvarlig_for.count }} systemer registrert.</p>
 {% include "alle_systemer_virksomhet_include.html" with systemer=systemer_ansvarlig_for %}
 
-<h5>Applikasjonshotell {{ virksomhet.virksomhetsforkortelse }} har instansforvaltning på</h5>
-{% if systembruk_forvalter_for %}
-<ul>
-{% for systembruk in systembruk_forvalter_for.all %}
-	{% url 'bruksdetaljer' systembruk.pk as url_systembruk %}
-	<li>
-		<a href="{{ url_systembruk }}">{{ systembruk.system.systemnavn }}</a> ved
-		{% for ansvarlig in systembruk.systemforvalter_kontaktpersoner_referanse.all %}
-		{% url 'ansvarlig' ansvarlig.pk as url_ansvarlig %}
-		<a href="{{ url_ansvarlig }}">{{ ansvarlig }}</a>,
-		{% endfor %}
-	</li>
-{% endfor %}
-</ul>
-{% else %}
-	<p>Ingen</p>
-{% endif %}
 
 {% comment %}
 <h5>Systemer {{ virksomhet.virksomhetsforkortelse }} har driftsansvar for (Antall: {{ systemer_vi_drifter.count }})</h5>

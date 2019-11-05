@@ -2338,6 +2338,10 @@ class SystemBruk(models.Model):
 		unique_together = ('system', 'brukergruppe')
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+	#def antall_behandlinger_virksomhet(self):
+	# må generalisere denne fuksjonen..
+	#	return BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=self.virksomhet_pk).filter(systemer=bruk.system.pk).count()
+
 
 class RegistrertKlassifisering(models.Model):
 	navn = models.CharField(unique=True,

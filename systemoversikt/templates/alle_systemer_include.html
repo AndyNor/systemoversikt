@@ -92,18 +92,14 @@
 	<td>
 		{% url "virksomhet" item.systemeier.pk as url_systemeier %}
 		<b><a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"?" }}</a></b> ved
-		{% for ansvarlig in item.systemeier_kontaktpersoner_referanse.all %}
-			<a href="{% url 'ansvarlig' ansvarlig.pk %}">{{ ansvarlig }}</a>,
-		{% endfor %}
-		</td>
+		{% include "vis_ansvarlige.html" with ansvarlige=item.systemeier_kontaktpersoner_referanse.all %}
+	</td>
 
 	<td>
 		{% url "virksomhet" item.systemforvalter.pk as url_systemforvalter %}
 		<b><a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"?" }}</a></b> ved
-		{% for ansvarlig in item.systemforvalter_kontaktpersoner_referanse.all %}
-			<a href="{% url 'ansvarlig' ansvarlig.pk %}">{{ ansvarlig }}</a>,
-		{% endfor %}
-		</td>
+		{% include "vis_ansvarlige.html" with ansvarlige=item.systemforvalter_kontaktpersoner_referanse.all %}
+	</td>
 
 
 	<td>{{ item.superbrukere|default:"-" }}</td>

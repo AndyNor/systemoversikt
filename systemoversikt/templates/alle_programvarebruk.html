@@ -3,16 +3,22 @@
 
 {% block underoverskrift %}
 	{% url "virksomhet" bruksdetaljer.brukergruppe.pk as url_virksomhet %}
-	<a href="{{ url_virksomhet }}">{{ virksomhet.virksomhetsforkortelse }}</a>'s bruk av programvare i Oslo kommune (viser {{ all_bruk.count }})
+	<a href="{{ url_virksomhet }}">{{ virksomhet }}</a> sin programvarebruk
+
+	<p>
 	{% if user.is_authenticated %}
-	<h6>
-		<a target="_blank" href="/admin/systemoversikt/programvarebruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer ny bruk av programvare</a> |
-		<a target="_blank" href="/admin/systemoversikt/programvarebruk/">Søk og filtrer</a>
-	</h6>
+		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/programvarebruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer ny bruk av programvare</a>
+		<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/programvarebruk/">Avansert søk og filtrering</a>
 	{% endif %}
+	</p>
+
+
 {% endblock underoverskrift %}
 
 {% block main_content %}
+
+<p>Det er registret bruk av {{ all_bruk.count }} systemer.</p>
+
 	<table class="table table-sm table-striped">
 	<thead>
 	<tr>

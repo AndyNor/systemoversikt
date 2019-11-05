@@ -147,9 +147,9 @@ urlpatterns = [
 	#url(r'^import_bruk/$', views.import_bruk, name='import_bruk'),
 	#url(r'^system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
 
-	url(r'^ad/user/(?P<username>[a-zA-Z0-9]{2,15})/$', views.ad_user_details, name='ad_user_details'),
+	#url(r'^ad/user/(?P<username>[a-zA-Z0-9]{2,15})/$', views.ad_user_details, name='ad_user_details'),
 	#url(r'^ad/group/$', views.ad_group_details, name='ad_group_details'),
-	url(r'^ad/group/(?P<group>[-_a-zA-Z0-9\s]{2,100})/$', views.ad_group_details, name='ad_group_details'),
+	#url(r'^ad/group/(?P<group>[-_a-zA-Z0-9\s]{2,100})/$', views.ad_group_details, name='ad_group_details'),
 	url(r'^ad/$', views.ad, name='ad'),
 	url(r'^ad/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),
 	url(r'^ad/recursive/(?P<group>[-_=,a-zA-Z0-9\s]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),

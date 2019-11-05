@@ -359,13 +359,7 @@ cy.on('tap', 'node', function(){
 				{% explain_collapsed text %}
 				</td>
 				<td>
-					{% for ansvarlig in systemdetaljer.systemeier_kontaktpersoner_referanse.all %}
-					<a href="{% url 'ansvarlig' ansvarlig.pk %}"
-						{% if ansvarlig.brukernavn.is_active == False  %}
-							style="text-decoration: line-through;"
-						{% endif %}
-						>{{ ansvarlig }}</a><br>
-					{% endfor %}
+					{% include "vis_ansvarlige.html" with ansvarlige=systemdetaljer.systemeier_kontaktpersoner_referanse.all %}
 				</td>
 			</tr>
 			<tr>
@@ -382,13 +376,7 @@ cy.on('tap', 'node', function(){
 				{% explain_collapsed text %}
 				</td>
 				<td>
-					{% for ansvarlig in systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
-					<a href="{% url 'ansvarlig' ansvarlig.pk %}"
-						{% if ansvarlig.brukernavn.is_active == False  %}
-							style="text-decoration: line-through;"
-						{% endif %}
-						>{{ ansvarlig }}</a><br>
-					{% endfor %}
+					{% include "vis_ansvarlige.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
 				</td>
 			</tr>
 			<tr>
@@ -411,13 +399,7 @@ cy.on('tap', 'node', function(){
 				{% explain_collapsed text %}
 				</td>
 				<td>
-					{% for ansvarlig in systemdetaljer.kontaktperson_innsyn.all %}
-						<a href="{% url 'ansvarlig' ansvarlig.pk %}"
-							{% if ansvarlig.brukernavn.is_active == False  %}
-								style="text-decoration: line-through;"
-							{% endif %}
-							>{{ ansvarlig }}</a><br>
-					{% endfor %}
+					{% include "vis_ansvarlige.html" with ansvarlige=systemdetaljer.kontaktperson_innsyn.all %}
 				</td>
 			</tr>
 			<tr>

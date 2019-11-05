@@ -48,10 +48,7 @@
 			<tr>
 				<td width="30%">{% get_verbose_field_name avtale "avtaleansvarlig" %}</td>
 				<td>
-				{% for ansvarlig in avtale.avtaleansvarlig.all %}
-					{% url "ansvarlig" ansvarlig.pk as url_ansvarlig %}
-					<a href="{{ url_ansvarlig }}">{{ ansvarlig|default:"-" }}</a><br>
-				{% endfor %}
+					{% include "vis_ansvarlige.html" with ansvarlige=avtale.avtaleansvarlig.all %}
 				</td>
 			</tr>
 			<tr>
