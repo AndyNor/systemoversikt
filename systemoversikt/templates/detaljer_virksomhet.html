@@ -11,7 +11,8 @@
 
 	<h6>
 		{% if user.is_authenticated %}
-		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">Rediger detaljer</a>
+			<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">Rediger detaljer</a>
+			<a target="_blank" class="btn btn-sm btn-primary" href="/admin/systemoversikt/avtale/add/?virksomhet={{virksomhet.pk}}">Legg til ny avtale</a>
 		{% endif %}
 		{% url 'alle_virksomheter' as url_alle_virksomheter %}
 		<a class="btn btn-sm btn-secondary" href="{{ url_alle_virksomheter }}">Oversikt over alle virksomheter</a>
@@ -43,6 +44,51 @@
 		<b>Aktive brukere i AD:</b> {{ antall_brukere }}<br>
 		<b>Aktive eksterne brukere i AD:</b> {{ antall_eksterne_brukere }}<br>
 		<b>{% get_verbose_field_name virksomhet "resultatenhet" %}:</b> {{ virksomhet.get_resultatenhet_display }}<br>
+
+		<hr>
+
+<div class="container">
+	<div class="row">
+
+		<div class="col-sm">
+			<div class="card">
+				<div class="card-body">
+					<h2 class="card-title">{{ system_ikke_kvalitetssikret }}</h2>
+					<h6 class="card-subtitle mb-2 text-muted">Systemer som ikke er kvalitetssikret</h6>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-sm">
+			<div class="card">
+				<div class="card-body">
+					<h2 class="card-title">{{ deaktiverte_brukere }}</h2>
+					<h6 class="card-subtitle mb-2 text-muted">Ansvarlige som har deaktivert bruker</h6>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-sm">
+			<div class="card">
+				<div class="card-body">
+					<h2 class="card-title">{{ behandling_uten_ansvarlig }}</h2>
+					<h6 class="card-subtitle mb-2 text-muted">Behandlinger uten oppdateringsansvarlig</h6>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-sm">
+			<div class="card">
+				<div class="card-body">
+					<h2 class="card-title">{{ behandling_ikke_kvalitetssikret }}</h2>
+					<h6 class="card-subtitle mb-2 text-muted">Behandlinger som ikke er kvalitetssikret</h6>
+				</div>
+			</div>
+		</div>
+
+	</div>
+</div>
+
 
 		<hr>
 
@@ -135,6 +181,7 @@
 <h5>Avtaler {{ virksomhet.virksomhetsforkortelse }} er part i</h5>
 {% include "alle_avtaler_include.html" with avtaler=avtaler %}
 
+<hr>
 
 <h5>Domener {{ virksomhet.virksomhetsforkortelse }} er ansvarlig for</h5>
 {% include "alle_urler_include.html" with web_urler=urleier_for %}

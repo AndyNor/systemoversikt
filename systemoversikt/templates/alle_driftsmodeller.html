@@ -17,21 +17,25 @@
 <table id="stickyheader" class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>
+		{% if user.is_authenticated %}
 		<th>Rediger</th>
+		{% endif %}
 		<th>Driftsmodeller</th>
 		<th>Forvaltet av</th>
+		{% if user.is_authenticated %}
 		<th>Slett</th>
+		{% endif %}
 	</tr>
 	</thead>
 	<tbody>
 	{% for item in driftsmodeller %}
 	<tr {% if item.own_domain %} style="background-color: #fffee6;" {% endif %}>
 
+		{% if user.is_authenticated %}
 		<td>
-			{% if user.is_authenticated %}
-				<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
-			{% endif %}			
+			<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
 		</td>
+		{% endif %}
 		<td>
 			{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
 				<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
@@ -40,11 +44,11 @@
 			{% url 'virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
 				<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet|default:"-" }}</a>
 		</td>
+		{% if user.is_authenticated %}
 		<td>
-			{% if user.is_authenticated %}
-				<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
-			{% endif %}	
+			<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
 		</td>
+		{% endif %}
 
 	</tr>
 	{% endfor %}

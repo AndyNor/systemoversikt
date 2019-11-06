@@ -35,7 +35,7 @@ urlpatterns = [
 
 	re_path(r'^favicon\.ico$', favicon_view),
 
-	url(r'^$', views.alle_hovedkategorier, name='home'),
+	url(r'^$', views.home, name='home'),
 	url(r'^admin/', admin.site.urls, name="admin"),
 	url(r'^oidc/', include('mozilla_django_oidc.urls')),
 	url(r'^login/$', admin.site.login, name='login'),
@@ -120,7 +120,7 @@ urlpatterns = [
 	url(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
 
 	url(r'^definisjon/$', views.alle_definisjoner, name='alle_definisjoner'),
-	url(r'^definisjon/(?P<begrep>[\w\s]{1,150})/$', views.definisjon, name='definisjon'),
+	url(r'^definisjon/(?P<begrep>[-_a-zA-Z0-9\s]{1,150})/$', views.definisjon, name='definisjon'),
 
 	#url(r'^import/iktkontakt/$', views.import_iktkontakt, name='import_iktkontakt'),
 	#url(r'^import/users/$', views.import_ansvarlige_brukere, name='import_ansvarlige_brukere'),

@@ -105,7 +105,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'systemoversikt.wsgi.application'
+WSGI_APPLICATION = 'systemoversikt.wsgi-dev.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
@@ -162,7 +162,7 @@ OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/pro
 #OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
 LOGIN_URL = "/oidc/authenticate/"
 LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = SITE_URL + "/"
+LOGOUT_REDIRECT_URL = "/"
 CSRF_COOKIE_HTTPONLY = True
 SECURE_BROWSER_XSS_FILTER = True
 SESSION_COOKIE_AGE = 36000  # 10 time

@@ -8,21 +8,26 @@
 	<div>
 		{% if user.is_authenticated %}
 			<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/system/add/">Legg til nytt system</a>
-			
+
 			{% if request.user.profile.virksomhet %}
 				{% url 'all_bruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_systembruk %}
 				<a href="{{ url_systembruk }}" class="btn btn-sm btn-success">Vår bruk av systemer</a>
 			{% endif %}
 
 			<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/system/">Avansert søk og filtrering</a>
+		{% endif %}
+
+		{% if not user.is_authenticated %}
+			{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
+			<a class="btn btn-sm btn-secondary" href="{{ alle_driftsmodeller_url }}" class="nav-link {% if alle_driftsmodeller_url in request.path %} active {% endif %}">Alle plattformer</a>
 
 			{% url "alle_cmdbref" as alle_cmdbref_url %}
 			<a href="{{ alle_cmdbref_url }}" class="btn btn-sm btn-secondary">CMDB</a>
 		{% endif %}
-		<a href="{% url 'systemer_pakket' %}" class="btn btn-sm btn-secondary">Programvarepakking</a>
+
 		{% url "alle_leverandorer" as alle_leverandorer_url %}
 		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm btn-secondary">Alle leverandører</a>
-		<a href="{% url 'alle_systemkategorier' %}" class="btn btn-sm btn-secondary">Systemkategorier</a>
+		<a href="{% url 'alle_systemkategorier' %}" class="btn btn-sm btn-secondary">Alle systemkategorier</a>
 	</div>
 
 	<p>Her vises alle registrerte systemer i Oslo kommune.<br>

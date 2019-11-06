@@ -1494,7 +1494,7 @@ class System(models.Model):
 	systembeskrivelse = models.TextField(
 			verbose_name="Systembeskrivelse",
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Tekstlig beskrivelse av hva systemet gjør/brukes til",
 			)
 	systemeier = models.ForeignKey(Virksomhet, related_name='systemer_systemeier',
 			on_delete=models.SET_NULL,
@@ -1505,7 +1505,7 @@ class System(models.Model):
 	systemeier_kontaktpersoner_referanse = models.ManyToManyField(Ansvarlig, related_name='system_systemeier_kontaktpersoner',
 			verbose_name="Systemeier (personer)",
 			blank=True,
-			help_text=u"",
+			help_text=u"Person(er) med operativt systemeierskap",
 			)
 	systemforvalter = models.ForeignKey(Virksomhet, related_name='systemer_systemforvalter',
 			on_delete=models.SET_NULL,
@@ -1515,7 +1515,7 @@ class System(models.Model):
 	systemforvalter_kontaktpersoner_referanse = models.ManyToManyField(Ansvarlig, related_name='system_systemforvalter_kontaktpersoner',
 			verbose_name="Systemforvalter (personer)",
 			blank=True,
-			help_text=u"",
+			help_text=u"Person(er) med operativt forvalteransvar",
 			)
 	superbrukere = models.TextField(
 			verbose_name="Superbrukere",
@@ -1542,7 +1542,7 @@ class System(models.Model):
 			verbose_name="Tjenestenivå med UKE (gamle tjenesteavtaler)", choices=TJENESTENIVAA_VALG,
 			max_length=50,
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Gammelt nivå for oppetidsgaranti (gull, sølv og brosje)",
 			)
 	cmdbref_prod = models.ForeignKey(CMDBRef, related_name='system_cmdbref_prod',
 			on_delete=models.PROTECT,
@@ -1568,7 +1568,7 @@ class System(models.Model):
 	database = models.IntegerField(
 			verbose_name="Database", choices=DB_VALG,
 			blank=True, null=True,
-			help_text=u"Fylles ut der relevant",
+			help_text=u"Ikke fyll ut denne, legg heller databasen som en teknisk avhengighet",
 			)
 	avhengigheter = models.TextField(
 			verbose_name="Utlevering og avhengigheter (fritekst)",
@@ -1615,6 +1615,7 @@ class System(models.Model):
 			verbose_name="URL (dersom webtjeneste)",
 			blank=True,
 			default=None,
+			help_text=u"Adressen systemet nås på via nettleser",
 			)
 	systemleverandor = models.ManyToManyField(Leverandor, related_name='system_systemleverandor',
 			verbose_name="Tjeneste / systemleverandør",
@@ -1677,12 +1678,12 @@ class System(models.Model):
 			verbose_name="Brukerdokumentasjon (link)",
 			max_length=600,
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Link til brukerdokumentasjon",
 			)
 	kommentar = models.TextField(
 			verbose_name="Kommentar (fritekst) (fases ut)",
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Ikke bruk dette feltet",
 			)
 	selvbetjening = models.IntegerField(choices=SELVBETJENING_VALG,
 			verbose_name="Selvbetjening (fases ut)",
@@ -1692,22 +1693,22 @@ class System(models.Model):
 	livslop_status = models.IntegerField(choices=LIVSLOEP_VALG,
 			verbose_name="Livsløpstatus",
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Om systemet er nytt, moderne eller skal fases ut",
 			)
 	strategisk_egnethet = models.IntegerField(choices=VURDERINGER_STRATEGISK_VALG,
 			verbose_name="Strategisk egnethet (fases ut)",
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Hvor viktig systemet er opp mot virksomhetens oppdrag",
 			)
 	funksjonell_egnethet = models.IntegerField(choices=VURDERINGER_FUNKSJONELL_VALG,
 			verbose_name="Funksjonell egnethet",
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Hvor godt systemet løser behovet",
 			)
 	teknisk_egnethet = models.IntegerField(choices=VURDERINGER_TEKNISK_VALG,
 			verbose_name="Teknisk egnethet",
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Moderne teknologi eller masse teknisk gjeld?",
 			)
 	konfidensialitetsvurdering = models.IntegerField(choices=VURDERINGER_SIKKERHET_VALG,
 			verbose_name="Oppsummert konfidensialitetsvurdering",
@@ -1752,12 +1753,12 @@ class System(models.Model):
 	autentiseringsalternativer = models.ManyToManyField(Autentiseringsmetode,
 			verbose_name="Autentiseringsalternativer", related_name='system_autentiseringsalternativer',
 			blank=True,
-			help_text=u"",
+			help_text=u"Valg av måter bruker autentiserer seg på",
 			)
 	loggingalternativer = models.ManyToManyField(Loggkategori,
 			verbose_name="Etablerte logger i systemet", related_name='system_loggingalternativer',
 			blank=True,
-			help_text=u"",
+			help_text=u"Nivå av logging etablert i systemet",
 			)
 	autorisasjon_differensiering_beskrivelse = models.TextField(
 			verbose_name="Differensiering av tilganger med bakgrunn i roller/identitet",

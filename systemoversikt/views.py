@@ -295,9 +295,26 @@ def logger_audit(request):
 
 
 def home(request):
+
+	antall_systemer = System.objects.count()
+	nyeste_systemer = System.objects.all().order_by('-pk')[:5]
+
+	antall_programvarer = Programvare.objects.count()
+	nyeste_programvarer = Programvare.objects.all().order_by('-pk')[:5]
+
+	antall_behandlinger = BehandlingerPersonopplysninger.objects.count()
+
+	print(nyeste_systemer)
+	kategorier = SystemKategori.objects.all()
+
 	return render(request, 'home.html', {
 		'request': request,
-		'oidctoken': request.session.get('oidc-token', ''),
+		'kategorier': kategorier,
+		'antall_systemer': antall_systemer,
+		'nyeste_systemer': nyeste_systemer,
+		'antall_programvarer': antall_programvarer,
+		'nyeste_programvarer': nyeste_programvarer,
+		'antall_behandlinger': antall_behandlinger,
 	})
 
 
@@ -910,6 +927,11 @@ def virksomhet(request, pk):
 	antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
 	antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
 
+	system_ikke_kvalitetssikret = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).filter(informasjon_kvalitetssikret=False).count()
+	deaktiverte_brukere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).filter(brukernavn__profile__accountdisable=True).count()
+	behandling_uten_ansvarlig = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(oppdateringsansvarlig=None).count()
+	behandling_ikke_kvalitetssikret = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(informasjon_kvalitetssikret=False).count()
+
 	return render(request, 'detaljer_virksomhet.html', {
 		'request': request,
 		'virksomhet': virksomhet,
@@ -922,6 +944,10 @@ def virksomhet(request, pk):
 		'systemer_vi_drifter': systemer_vi_drifter,
 		'antall_brukere': antall_brukere,
 		'antall_eksterne_brukere': antall_eksterne_brukere,
+		'system_ikke_kvalitetssikret': system_ikke_kvalitetssikret,
+		'deaktiverte_brukere': deaktiverte_brukere,
+		'behandling_uten_ansvarlig': behandling_uten_ansvarlig,
+		'behandling_ikke_kvalitetssikret': behandling_ikke_kvalitetssikret,
 	})
 
 

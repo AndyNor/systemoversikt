@@ -198,11 +198,6 @@ cy.on('tap', 'node', function(){
 			</tr>
 
 			<tr>
-				<td>Inngår i tjenestene</td>
-				<td>(flyttet til UKEs tjenestekatalog)</td>
-			</tr>
-
-			<tr>
 				<td>{% get_verbose_field_name systemdetaljer "systemtyper" %}
 				{% get_help_text systemdetaljer "systemtyper" as text %}
 				{% explain_collapsed text %}
@@ -689,7 +684,8 @@ cy.on('tap', 'node', function(){
 			</tr>
 			<tr>
 				<td>{% get_verbose_field_name systemdetaljer "tjenestenivaa" %}
-				{% explain_collapsed "forklaring" %}
+				{% get_help_text systemdetaljer "tjenestenivaa" as text %}
+				{% explain_collapsed text %}
 				</td>
 				<td>{{ systemdetaljer.get_tjenestenivaa_display|default:"-" }}</td>
 			</tr>
@@ -718,11 +714,16 @@ cy.on('tap', 'node', function(){
 					{% endfor %}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer.driftsmodell_foreignkey "risikovurdering" %} (fra driftsmodell)</td>
+				<td>{% get_verbose_field_name systemdetaljer.driftsmodell_foreignkey "risikovurdering" %} (fra driftsmodell)
+				{% explain_collapsed "forklaring" %}
+				</td>
 				<td>{% if systemdetaljer.driftsmodell_foreignkey.risikovurdering %} <a href="{{ systemdetaljer.driftsmodell_foreignkey.risikovurdering }}">Link til risikovurdering</a>{% else %} - {% endif %}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "isolert_drift" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "isolert_drift" %}
+				{% get_help_text systemdetaljer "isolert_drift" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.isolert_drift|yesno:"Ja,Nei" }}</td>
 			</tr>
 			{% endif %}
@@ -735,15 +736,24 @@ cy.on('tap', 'node', function(){
 		<h6>Avhengigheter / integrasjoner</h6>
 		<table class="table table-sm table-striped">
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "database" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "database" %}
+				{% get_help_text systemdetaljer "database" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.get_database_display|default:"-" }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "avhengigheter" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "avhengigheter" %}
+				{% get_help_text systemdetaljer "avhengigheter" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.avhengigheter|default:"-"|linebreaks }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "avhengigheter_referanser" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "avhengigheter_referanser" %}
+				{% get_help_text systemdetaljer "avhengigheter_referanser" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>
 					{% for system in systemdetaljer.avhengigheter_referanser.all %}
 						{% url "systemdetaljer" system.pk as url_system %}
@@ -752,7 +762,9 @@ cy.on('tap', 'node', function(){
 				</td>
 			</tr>
 			<tr>
-				<td>Systemer registrert avhengig av dette systemet</td>
+				<td>Systemer registrert avhengig av dette systemet
+				{% explain_collapsed "Hentet fra andre systemer" %}
+				</td>
 				<td>
 				{% for system in avhengigheter_reverse_systemer.all %}
 					{% url "systemdetaljer" system.pk as url_system %}
@@ -765,7 +777,10 @@ cy.on('tap', 'node', function(){
 				</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "datautveksling_mottar_fra" %} (direkteregistrert)</td>
+				<td>{% get_verbose_field_name systemdetaljer "datautveksling_mottar_fra" %} (direkteregistrert)
+				{% get_help_text systemdetaljer "datautveksling_mottar_fra" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>
 					<ul>
 					{% for system in systemdetaljer.datautveksling_mottar_fra.all %}
@@ -789,7 +804,10 @@ cy.on('tap', 'node', function(){
 				</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "datautveksling_avleverer_til" %} (direkteregistrert)</td>
+				<td>{% get_verbose_field_name systemdetaljer "datautveksling_avleverer_til" %} (direkteregistrert)
+				{% get_help_text systemdetaljer "datautveksling_avleverer_til" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>
 					<ul>
 					{% for system in systemdetaljer.datautveksling_avleverer_til.all %}
@@ -863,11 +881,17 @@ cy.on('tap', 'node', function(){
 		{% if perms.systemoversikt.view_system %}
 		<table class="table table-sm table-striped">
 			<tr>
-				<td width="40%">{% get_verbose_field_name systemdetaljer "sikkerhetsnivaa" %}</td>
+				<td width="40%">{% get_verbose_field_name systemdetaljer "sikkerhetsnivaa" %}
+				{% get_help_text systemdetaljer "sikkerhetsnivaa" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.get_sikkerhetsnivaa_display|default:"-" }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "informasjonsklassifisering" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "informasjonsklassifisering" %}
+				{% get_help_text systemdetaljer "informasjonsklassifisering" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>
 					{% for klasse in systemdetaljer.informasjonsklassifisering.all %}
 						{{ klasse }}<br>
@@ -875,37 +899,60 @@ cy.on('tap', 'node', function(){
 				</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "konfidensialitetsvurdering" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "konfidensialitetsvurdering" %}
+				{% get_help_text systemdetaljer "konfidensialitetsvurdering" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.get_konfidensialitetsvurdering_display|default:"-" }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "integritetsvurdering" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "integritetsvurdering" %}
+				{% get_help_text systemdetaljer "integritetsvurdering" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.get_integritetsvurdering_display|default:"-" }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "tilgjengelighetsvurdering" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "tilgjengelighetsvurdering" %}
+				{% get_help_text systemdetaljer "tilgjengelighetsvurdering" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.get_tilgjengelighetsvurdering_display|default:"-" }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "tilgjengelighet_kritiske_perioder" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "tilgjengelighet_kritiske_perioder" %}
+				{% get_help_text systemdetaljer "tilgjengelighet_kritiske_perioder" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.tilgjengelighet_kritiske_perioder|default:"-"|linebreaks }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "risikovurdering_tekst" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "risikovurdering_tekst" %}
+				{% get_help_text systemdetaljer "risikovurdering_tekst" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.risikovurdering_tekst|default:"-" }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "url_risikovurdering" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "url_risikovurdering" %}
+				{% get_help_text systemdetaljer "url_risikovurdering" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{% if systemdetaljer.url_risikovurdering %}
 				<a href="{{ systemdetaljer.url_risikovurdering}}">Link til risikovurdering</a>
 				{% endif %}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "dato_sist_ros" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "dato_sist_ros" %}
+				{% get_help_text systemdetaljer "dato_sist_ros" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.dato_sist_ros|date:'Y-m-d'|default:'-' }} ({{ systemdetaljer.dato_sist_ros|naturaltime|default:'aldri' }})</td>
 			</tr>
 			<tr>
-				<td>Sikkerhetstester (<a href="/admin/systemoversikt/sikkerhetstester/add/">registrer</a>)</td>
+				<td>Sikkerhetstester (<a href="/admin/systemoversikt/sikkerhetstester/add/">registrer</a>)
+				{% explain_collapsed "Registrert som tester mot dette systemet" %}
+				</td>
 				<td>
 					{% for test in systemdetaljer.sikkerhetstest_systemer.all %}
 						<a target="_blank" href="/admin/systemoversikt/sikkerhetstester/{{ test.pk }}/change/">
@@ -926,47 +973,77 @@ cy.on('tap', 'node', function(){
 		{% if perms.systemoversikt.view_system %}
 		<table class="table table-sm table-striped">
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "systemtekniske_sikkerhetstiltak" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "systemtekniske_sikkerhetstiltak" %}
+				{% get_help_text systemdetaljer "systemtekniske_sikkerhetstiltak" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.systemtekniske_sikkerhetstiltak|default:"-" }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "autentiseringsalternativer" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "autentiseringsalternativer" %}
+				{% get_help_text systemdetaljer "autentiseringsalternativer" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{% for autentiseringsalternativ in systemdetaljer.autentiseringsalternativer.all %}
 					{{ autentiseringsalternativ.navn }}<br>
 				{% endfor %}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "loggingalternativer" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "loggingalternativer" %}
+				{% get_help_text systemdetaljer "loggingalternativer" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{% for loggingalternativ in systemdetaljer.loggingalternativer.all %}
 					{{ loggingalternativ.navn }}<br>
 				{% endfor %}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "autorisasjon_differensiering_beskrivelse" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "autorisasjon_differensiering_beskrivelse" %}
+				{% get_help_text systemdetaljer "autorisasjon_differensiering_beskrivelse" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.autorisasjon_differensiering_beskrivelse|default:"-"|linebreaks }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "autorisasjon_differensiering_saksalder" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "autorisasjon_differensiering_saksalder" %}
+				{% get_help_text systemdetaljer "autorisasjon_differensiering_saksalder" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.autorisasjon_differensiering_saksalder|default:"-"|linebreaks }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "dataminimalisering" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "dataminimalisering" %}
+				{% get_help_text systemdetaljer "dataminimalisering" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.dataminimalisering|default:"-"|linebreaks }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "sletting_av_personopplysninger" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "sletting_av_personopplysninger" %}
+				{% get_help_text systemdetaljer "sletting_av_personopplysninger" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.sletting_av_personopplysninger|default:"-"|linebreaks }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "funksjonalitet_kryptering" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "funksjonalitet_kryptering" %}
+				{% get_help_text systemdetaljer "funksjonalitet_kryptering" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.funksjonalitet_kryptering|default:"-"|linebreaks }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "anonymisering_pseudonymisering" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "anonymisering_pseudonymisering" %}
+				{% get_help_text systemdetaljer "anonymisering_pseudonymisering" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.anonymisering_pseudonymisering|default:"-"|linebreaks }}</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name systemdetaljer "sikkerhetsmessig_overvaaking" %}</td>
+				<td>{% get_verbose_field_name systemdetaljer "sikkerhetsmessig_overvaaking" %}
+				{% get_help_text systemdetaljer "sikkerhetsmessig_overvaaking" as text %}
+				{% explain_collapsed text %}
+				</td>
 				<td>{{ systemdetaljer.sikkerhetsmessig_overvaaking|default:"-"|linebreaks }}</td>
 			</tr>
 		</table>
