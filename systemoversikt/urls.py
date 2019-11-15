@@ -11,15 +11,18 @@ from systemoversikt.restapi import views as apiviews
 from django.views.generic.base import RedirectView
 
 router = routers.DefaultRouter()
-router.register(r'systemer', apiviews.SystemViewSet)
+router.register(r'systemer', apiviews.SystemViewSet, 'systemer')
+router.register(r'systemer_HEL', apiviews.HELSystemViewSet, 'systemer_HEL')
 router.register(r'virksomhet', apiviews.VirksomhetViewSet)
 router.register(r'driftsmodell', apiviews.DriftsmodellViewSet)
 router.register(r'ansvarlig', apiviews.AnsvarligViewSet)
-router.register(r'user', apiviews.UserViewSet)
+#router.register(r'user', apiviews.UserViewSet)
 router.register(r'avtale', apiviews.AvtaleViewSet)
 router.register(r'leverandor', apiviews.LeverandorViewSet)
 #router.register(r'systembruk', apiviews.SystemBrukViewSet)
 #router.register(r'systemkateogri', apiviews.SystemktegoriViewSet)
+router.register(r'behandling', apiviews.VirksomhetViewSet)
+
 
 import systemoversikt.views as views
 import systemoversikt.views_import as views_import

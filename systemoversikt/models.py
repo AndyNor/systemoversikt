@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 from django.db import models
 from django.contrib.auth.models import User
 from django.dispatch import receiver
@@ -2509,6 +2509,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			blank=True,
 			help_text=u"",
 			)
+	#burde vært rettet opp til valgfrihet
 	valgfriget_registrerte = models.IntegerField(choices=BEHANDLING_VALGFRIHET,
 			verbose_name="Hvor mye kontroll vil de registrerte ha på den behandlingen som foretas?",
 			blank=True, null=True,

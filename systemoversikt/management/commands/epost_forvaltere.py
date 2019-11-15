@@ -14,7 +14,7 @@ class Command(BaseCommand):
 		"""
 		La oss gå igjennom alle ansvarlige, se om de er eier eller forvalter for noe og så ende dem en varsel om dette per e-post
 		"""
-		alle_ansvarlige = Ansvarlig.objects.all()
+		alle_ansvarlige = Ansvarlig.objects.all() #.filter(brukernavn__profile__virksomhet__in=[163, 145])
 		for ansvarlig in alle_ansvarlige:
 			systemer_eier_for = System.objects.filter(systemeier_kontaktpersoner_referanse=ansvarlig.pk)
 			systemer_forvalter_for = System.objects.filter(systemforvalter_kontaktpersoner_referanse=ansvarlig.pk)
@@ -32,20 +32,36 @@ class Command(BaseCommand):
 				url = reverse("ansvarlig",args=[ansvarlig.pk])
 				fornavn = ansvarlig.brukernavn.first_name
 
-				subject = "Kartoteket: Automatisk påminnelse"
-				reply_to = "test@uke.oslo.kommune.no"
+				subject = "Invitasjon til forum for systemeiere i Oslo kommune"
+				reply_to = "thomas.rigvar@byr.oslo.kommune.no"
 				recipients = [ansvarlig.brukernavn.email]
+				#recipients = ["andre.nordbo@gmail.com"]
 				message = '''\
-Hei {fornavn},
-Dette er en automatisk e-postvarsel fra Kartoteket.
+Byrådsavdeling for finans ved Seksjon for informasjonssikkerhet og IKT inviterer alle virksomhetene til det første møte i «Forum for systemeiere i Oslo kommune (Systemeierforum)».
 
-Du er registrert som eier av følgende systemer:{systemer_eier}
+Formål med forumet er å bidra til større bevissthet om hvilke oppgaver som ligger under systemeierrollen og til deling av kunnskap og erfaringer om hvordan oppgavene kan løses.  Forumet skal også bidra til å identifisere og løfte felles behov for utvikling av Oslo kommunes styrende dokumenter på området, slik at disse utvikles i takt med kommunens behov.
 
-og forvalter av følgende systemer:{systemer_forvalter}
+Forumet ledes av Byrådsavdeling for finans og vil avholde møter 3-5 ganger per år.  Enkeltmøter kan ha innhold som er mer rettet om systemeiere av felles- eller sektorsystemer.  Det kan nedsettes egne, mindre arbeidsgrupper for å løse definerte oppgaver.
+
+Forumet er åpent for systemeiere og systemforvaltere i Oslo kommune. Invitasjoner til forumets møter sendes automatisk til alle som er registrert som systemeier eller forvalter i Oslo kommunes systemoversikt, og til virksomhetenes postmottak.
+
+Det første møte avholdes torsdag 12.desember 2019 kl. 09.00 – 11.30 i kurslokalene til Utdanningsetaten i Grensesvingen 6 på Helsfyr.
+
+Vi har 72 plasser så meld deg på innen 6. desember via:
+https://tjenester.oslo.kommune.no/ekstern/arrangement/bestilling/bestilling.aspx?Arrangement=033ff634-de2b-4cc2-8778-3d74b76edce8
+
+Se forøvrig innkallingen på https://kartoteket.oslo.kommune.no/static/filer/invitasjon%20til%20f%C3%B8rste%20m%C3%B8te%20i%20systemeierforum.pdf
+
+---
+
+Denne e-posten er sendt ut fra Kartoteket til alle som er registrert som eier eller forvalter av et system.
+Du er registrert som eier av følgende systemer:
+{systemer_eier}
+
+Du er registrert som forvalter av følgende systemer:
+{systemer_forvalter}
 
 Gå til https://kartoteket.oslo.kommune.no{url} for en komplett oversikt over dine ansvarsområder knyttet til systemer og behandling.
-
-Du kan logge inn for å gjøre endringer. Hvis du mangler rettigheter kan du svare tilbake på denne meldingen.
 
 '''.format(fornavn=fornavn, systemer_eier=systemer_eier, systemer_forvalter=systemer_forvalter, url=url)
 
@@ -56,7 +72,8 @@ Du kan logge inn for å gjøre endringer. Hvis du mangler rettigheter kan du sva
 							from_email=settings.DEFAULT_FROM_EMAIL,
 							to=recipients,
 							#bcc=['bcc@example.com'],
-							reply_to=['test@uke.oslo.kommune.no'],
+							reply_to=[reply_to],
 							#headers={'Message-ID': 'foo'},
 					)
+					print(email)
 					email.send()
