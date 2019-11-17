@@ -116,7 +116,8 @@ urlpatterns = [
 	url(r'^cmdb/$', views.alle_cmdbref, name='alle_cmdbref'),
 	url(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),
 
-	url(r'^server/$', views.alle_servere, name='alle_servere'),
+	url(r'^cmdb/servere/$', views.alle_servere, name='alle_servere'),
+	url(r'^cmdb/klienter/$', views.alle_klienter, name='alle_klienter'),
 
 	url(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	url(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),

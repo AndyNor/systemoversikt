@@ -122,11 +122,11 @@ def dashboard_all(request, virksomhet=None):
 		for s in systemer:
 			kritikalitet.append(s.fip_kritikalitet())
 
-		t_one = sum(x is 1 for x in kritikalitet)
-		t_two = sum(x is 2 for x in kritikalitet)
-		t_tree = sum(x is 3 for x in kritikalitet)
-		t_four = sum(x is 4 for x in kritikalitet)
-		t_unknown = sum(x is None for x in kritikalitet)
+		t_one = sum(x == 1 for x in kritikalitet)
+		t_two = sum(x == 2 for x in kritikalitet)
+		t_tree = sum(x == 3 for x in kritikalitet)
+		t_four = sum(x == 4 for x in kritikalitet)
+		t_unknown = sum(x == None for x in kritikalitet)
 
 		#['T1', 'T2', 'T3', 'T4','Ukjent']
 		return [t_one,t_two,t_tree,t_four,t_unknown]
@@ -667,7 +667,7 @@ def registrer_bruk(request, system):
 
 		system_instans = System.objects.get(pk=system)
 		virksomheter = request.POST.getlist("virksomheter", "")
-		if virksomheter is not "":
+		if virksomheter != "":
 			for str_virksomhet in virksomheter:
 				virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
 				try:
@@ -872,7 +872,7 @@ def behandling_kopier(request, system_pk):
 		valgte_behandlinger = request.POST.getlist("behandling", "")
 		#messages.success(request, 'Du valgte: %s' % valgte_behandlinger)
 
-		if valgte_behandlinger is not "":
+		if valgte_behandlinger != "":
 			for behandling_pk in valgte_behandlinger:
 				behandling = BehandlingerPersonopplysninger.objects.get(pk=int(behandling_pk))
 				behandling.behandlingsansvarlig = din_virksomhet
@@ -971,7 +971,7 @@ def bytt_virksomhet(request):
 		dine_virksomheter = None
 
 	representasjonsvalg_str = request.POST.get("virksomhet", "")
-	if representasjonsvalg_str is not "":
+	if representasjonsvalg_str != "":
 		valgt_virksomhet = Virksomhet.objects.get(pk=int(representasjonsvalg_str))
 		try:
 			tillatte_bytter = dine_virksomheter
@@ -1274,36 +1274,76 @@ def system_til_programvare(request, system_id):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-def alle_servere(request):
-	servere = CMDBdevice.objects.all()
+def cmdb_stats(maskiner):
+	maskiner_stats = []
+	os_major = maskiner.values('comp_os').distinct()
+	for os in os_major:
+		minor_versions = maskiner.filter(comp_os=os['comp_os']).values('comp_os_version').annotate(Count('comp_os_version'))
+		for minor in minor_versions:
+			maskiner_stats.append({'major': os['comp_os'], 'minor': minor['comp_os_version'], 'count': minor['comp_os_version__count']})
+	return maskiner_stats
 
-	return render(request, 'alle_servere.html', {
-		'request': request,
-		'servere': servere,
-	})
+
+def alle_servere(request):
+	required_permissions = 'systemoversikt.change_system'
+	if request.user.has_perm(required_permissions):
+		maskiner = CMDBdevice.objects.filter(~Q(bs_u_service_portfolio="Digital workplace") & Q(active=True)).order_by('comp_os')
+		maskiner_stats = cmdb_stats(maskiner)
+
+		return render(request, 'alle_maskiner.html', {
+			'request': request,
+			'maskiner': maskiner,
+			'maskiner_stats': maskiner_stats,
+			"type": "servere",
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+def alle_klienter(request):
+	required_permissions = 'systemoversikt.change_system'
+	if request.user.has_perm(required_permissions):
+		maskiner = CMDBdevice.objects.filter(Q(bs_u_service_portfolio="Digital workplace") & Q(active=True)).order_by('comp_os')
+		maskiner_stats = cmdb_stats(maskiner)
+
+		return render(request, 'alle_maskiner.html', {
+			'request': request,
+			'maskiner': maskiner,
+			'maskiner_stats': maskiner_stats,
+			"type": "klienter",
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def alle_cmdbref(request):
-	cmdbref = CMDBRef.objects.all().order_by("-operational_status", Lower("navn")) #1 er operational (filter(operational_status=1))
-	for c in cmdbref:
-		ant_devices = CMDBdevice.objects.filter(sub_name=c.pk, active=True)
-		c.ant_devices = ant_devices.count()
+	required_permissions = 'systemoversikt.change_system'
+	if request.user.has_perm(required_permissions):
+		cmdbref = CMDBRef.objects.all().order_by("-operational_status", Lower("navn")) #1 er operational (filter(operational_status=1))
+		for c in cmdbref:
+			ant_devices = CMDBdevice.objects.filter(sub_name=c.pk, active=True)
+			c.ant_devices = ant_devices.count()
 
-	return render(request, 'alle_cmdb.html', {
-		'request': request,
-		'cmdbref': cmdbref,
-	})
+		return render(request, 'alle_cmdb.html', {
+			'request': request,
+			'cmdbref': cmdbref,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def cmdbdevice(request, pk):
-	cmdbref = CMDBRef.objects.get(pk=pk)
-	cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref)
+	required_permissions = 'systemoversikt.change_system'
+	if request.user.has_perm(required_permissions):
+		cmdbref = CMDBRef.objects.get(pk=pk)
+		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref)
 
-	return render(request, 'detaljer_cmdbdevice.html', {
-		'request': request,
-		'cmdbref': cmdbref,
-		'cmdbdevices': cmdbdevices,
-	})
+		return render(request, 'detaljer_cmdbdevice.html', {
+			'request': request,
+			'cmdbref': cmdbref,
+			'cmdbdevices': cmdbdevices,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def alle_avtaler(request, virksomhet=None):

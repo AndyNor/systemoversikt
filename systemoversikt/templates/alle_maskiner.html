@@ -3,63 +3,63 @@
 {% load static %}
 
 {% block underoverskrift %}
-	CMDB Business Services (Felles IKT-plattform)
-	<div>
-		{% if user.is_authenticated %}
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_servere' %}">Alle servere</a>
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_klienter' %}">Alle klienter</a>
-		{% endif %}
-	</div>
+	CMDB {{ type }} (Felles IKT-plattform)
 {% endblock underoverskrift %}
 
 {% block main_content %}
+<p>Viser {{ maskiner.count }} maskiner.</p>
 
-
-
-<p>CMDB står for "Configuration management database" og er i denne kontekst en import av det Sopra Steria kaller "Business Services". Gruppene brukes for fakturering og er ofte knyttet til et system. Dette er de samme kategoriene som benyttes i Kompass ved bestillinger. Importen av data skjer manuelt typisk en gang per måned. Det er nå {{ cmdbref.count }} grupper.</p>
+<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+		<th>OS hovedversjon</th>
+		<th>OS versjonsnummer</th>
+		<th>Antall</th>
+	</thead>
+	<tbody>
+	{% for os in maskiner_stats %}
+		<tr>
+			<td>{{ os.major|default:"Ukjent" }}</td>
+			<td>{{ os.minor|default:"Ukjent" }}</td>
+			<td>{{ os.count }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
 
 	<table id="stickyheader" class="table table-sm tablesorter">
 	<thead>
 	<tr>
-		<th>Dato opprettet</th>
-		<th>Dato oppdatert</th>
-		<th>Business Service-navn</th>
-		<th>Antall servere</th>
-		<th>Tilknyttet system</th>
-		<th>I bruk</th>
-		{% comment %}<th>Kommentar</th>{% endcomment %}
-		<th>Miljø</th>
-		<th>Kritikalitet</th>
-		{% comment %}<th>Type</th>{% endcomment %}
+		<th>Maskinnavn</th>
 		<th>Portfolio</th>
-		<th>Availability</th>
-		<th>Operation factor</th>
-		<th>Complexity</th>
-		<th width="25%">Short description</th>
+		<th>Nettverk</th>
+		<th>Operativsystem</th>
 	</tr>
 	</thead>
 	<tbody>
-	{% for item in cmdbref %}
-	<tr {% if item.operational_status == 0 %} style="color: #d6d6d6;" {% endif %}>
-		<td>
+	{% for maskin in maskiner %}
+	<tr {% if not maskin.active %} style="color: #d6d6d6;" {% endif %}>
+		<td>{{ maskin.comp_name }}</td>
+		<td>{{ maskin.bs_u_service_portfolio }}</td>
+		<td>{{ maskin.comp_ip_address }}</td>
+		<td>{{ maskin.comp_os|default:"Ukjent" }} {{ maskin.comp_os_version }} {{ maskin.comp_os_service_pack }}</td>
+
+
 			{% comment %}
 			{% if user.is_authenticated %}
 			<a target="_blank" href="/admin/systemoversikt/cmdbref/{{ item.pk }}/delete/">
 				<img style="width: 8px; margin: 3px;"
 				src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
 			{% endif %}
-			{% endcomment %}
+
 			{{ item.opprettet|date:'Y-m-d' }}
 		</td>
 		<td>{{ item.sist_oppdatert|date:'Y-m-d' }}</td>
 		<td>
-			{% comment %}
 			{% if user.is_authenticated %}
 			<a target="_blank" href="/admin/systemoversikt/cmdbref/{{ item.pk }}/change/">
 				<img style="width: 11px; margin: 3px;"
 				src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
 			{% endif %}
-			{% endcomment %}
 			<a href="{% url 'cmdbdevice' pk=item.pk %}">{{ item.navn }}</a>
 		</td>
 		<td>{{ item.ant_devices }}</td>
@@ -74,15 +74,16 @@
 			{% endfor %}
 		</td>
 		<td>{{ item.get_operational_status_display|default:"-" }}</td>
-		{% comment %}<td>{{ item.comments|default:"-"|truncatewords:6 }}</td>{% endcomment %}
+		<td>{{ item.comments|default:"-"|truncatewords:6 }}</td>
 		<td>{{ item.get_environment_display|default:"-" }}</td>
-		<td>{{ item.get_kritikalitet_display|default:"X ukjent" }}</td>
-		{% comment %}<td>{{ item.get_cmdb_type_display }}</td>{% endcomment %}
+		<td>{{ item.get_kritikalitet_display|default:"-" }}</td>
+		<td>{{ item.get_cmdb_type_display }}</td>
 		<td>{{ item.u_service_portfolio|default:"-" }}</td>
-		<td>{{ item.u_service_availability|default:"Tx ukjent" }}</td>
-		<td>{{ item.u_service_operation_factor|default:"Dx ukjent" }}</td>
-		<td>{{ item.u_service_complexity|default:"Kx ukjent" }}</td>
+		<td>{{ item.u_service_availability|default:"-" }}</td>
+		<td>{{ item.u_service_operation_factor|default:"-" }}</td>
+		<td>{{ item.u_service_complexity|default:"-" }}</td>
 		<td>{{ item.comments|default:"-" }}</td>
+		{% endcomment %}
 	</tr>
 	{% endfor %}
 	</tbody>

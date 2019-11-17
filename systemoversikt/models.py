@@ -880,7 +880,53 @@ class CMDBRef(models.Model):
 			return False
 
 	class Meta:
-		verbose_name_plural = "CMDB-referanser"
+		verbose_name_plural = "CMDB Business services"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
+class CMDBdatabase(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	db_version = models.TextField(
+			verbose_name="db_version",
+			blank=True, null=True,
+			help_text=u"Importert: db_version",
+			)
+	db_u_datafilessizekb = models.TextField(
+			verbose_name="db_u_datafilessizekb",
+			blank=True, null=True,
+			help_text=u"Importert: db_u_datafilessizekb",
+			)
+	db_database = models.TextField(
+			verbose_name="db_database",
+			blank=True, null=True,
+			help_text=u"Importert: db_database",
+			)
+	db_used_for = models.TextField(
+			verbose_name="db_used_for",
+			blank=True, null=True,
+			help_text=u"Importert: db_used_for",
+			)
+	db_comments = models.TextField(
+			verbose_name="db_comments",
+			blank=True, null=True,
+			help_text=u"Importert: db_comments",
+			)
+	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
+
+	def __str__(self):
+		return u'%s' % (self.navn)
+
+	class Meta:
+		verbose_name_plural = "CMDB databaser"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -967,7 +1013,6 @@ class CMDBdevice(models.Model):
 	class Meta:
 		verbose_name_plural = "CMDB-enhet"
 		default_permissions = ('add', 'change', 'delete', 'view')
-
 
 
 
