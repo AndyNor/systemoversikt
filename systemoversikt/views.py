@@ -1274,8 +1274,17 @@ def system_til_programvare(request, system_id):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def alle_servere(request):
+	servere = CMDBdevice.objects.all()
+
+	return render(request, 'alle_servere.html', {
+		'request': request,
+		'servere': servere,
+	})
+
+
 def alle_cmdbref(request):
-	cmdbref = CMDBRef.objects.all().order_by(Lower("navn")) #1 er operational (filter(operational_status=1))
+	cmdbref = CMDBRef.objects.all().order_by("-operational_status", Lower("navn")) #1 er operational (filter(operational_status=1))
 	for c in cmdbref:
 		ant_devices = CMDBdevice.objects.filter(sub_name=c.pk, active=True)
 		c.ant_devices = ant_devices.count()

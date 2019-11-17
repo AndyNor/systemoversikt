@@ -799,7 +799,7 @@ class CMDBRef(models.Model):
 			auto_now=True,
 			)
 
-	#hva brukes denne til?
+	#hva brukes denne til? (ser ikke ut til å være i bruk lenger, til fordel for "operational_status")
 	aktiv = models.NullBooleanField(
 			verbose_name="Er dette CMDB-innslaget fortsatt gyldig?",
 			blank=True, null=True,

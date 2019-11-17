@@ -109,7 +109,7 @@ def import_business_services(request):
 
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
-		business_services_filename = "cmdb_bs.json"
+		business_services_filename = "cmdb_ci_service.json"
 
 		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/" + business_services_filename
 		messages.success(request, 'Lastet inn filen %s' % (filepath))
@@ -175,7 +175,7 @@ def import_cmdb_servers(request):
 
 		messages.success(request, 'Klargjør import av CMDB-fil')
 		import json, os
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/cmdb_servers.json"
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_computer_to_sub_to_bs.json"
 		with open(filepath, 'r', encoding='UTF-8') as json_file:
 			data = json.load(json_file)
 
@@ -277,7 +277,7 @@ def import_organisatorisk_forkortelser(request):
 				else:
 					messages.warning(request, "Hopper over %s" % v.virksomhetsnavn)
 
-		messages.success(request, "Alle virksomhetsforkortelser er nå lagt til")		
+		messages.success(request, "Alle virksomhetsforkortelser er nå lagt til")
 		return HttpResponseRedirect(reverse('alle_definisjoner'))
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
