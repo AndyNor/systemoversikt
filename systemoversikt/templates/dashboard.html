@@ -36,7 +36,7 @@
 		</div>
 	</div>
 
-	<script type="text/javascript">
+	<script type="text/javascript" nonce="{{request.csp_nonce}}">
 	var ctx_{{ liste.id }}_vir = document.getElementById('chart_{{ liste.id }}_vir').getContext('2d');
 	var chart_{{ liste.id }}_vir = new Chart(ctx_{{ liste.id }}_vir, {
 		// The type of chart we want to create
@@ -69,7 +69,7 @@
 			<p style="text-align: center; font-weight: bold; font-size: large;">Risikovurderinger</p>
 			<canvas id="chart_{{ liste.id }}_ros"></canvas>
 		</div>
-		<script type="text/javascript">
+		<script type="text/javascript" nonce="{{request.csp_nonce}}">
 		var ctx_{{ liste.id }}_ros = document.getElementById('chart_{{ liste.id }}_ros').getContext('2d');
 		var chart_{{ liste.id }}_ros = new Chart(ctx_{{ liste.id }}_ros, {
 			// The type of chart we want to create
@@ -103,7 +103,7 @@
 			<p style="text-align: center; font-weight: bold; font-size: large;">Personvernvurdering</p>
 			<canvas id="chart_{{ liste.id }}_dpia"></canvas>
 		</div>
-		<script type="text/javascript">
+		<script type="text/javascript" nonce="{{request.csp_nonce}}">
 		var ctx_{{ liste.id }}_dpia = document.getElementById('chart_{{ liste.id }}_dpia').getContext('2d');
 		var chart_{{ liste.id }}_dpia = new Chart(ctx_{{ liste.id }}_dpia, {
 			// The type of chart we want to create
@@ -137,7 +137,7 @@
 			<p style="text-align: center; font-weight: bold; font-size: large;">Sikkerhetsnivå</p>
 			<canvas id="chart_{{ liste.id }}_sikkerhetsnivaa"></canvas>
 		</div>
-		<script type="text/javascript">
+		<script type="text/javascript" nonce="{{request.csp_nonce}}">
 		var ctx_{{ liste.id }}_sikkerhetsnivaa = document.getElementById('chart_{{ liste.id }}_sikkerhetsnivaa').getContext('2d');
 		var chart_{{ liste.id }}_sikkerhetsnivaa = new Chart(ctx_{{ liste.id }}_sikkerhetsnivaa, {
 			// The type of chart we want to create
@@ -173,7 +173,7 @@
 			<p style="text-align: center; font-weight: bold; font-size: large;">Tjenestenivå</p>
 			<canvas id="chart_{{ liste.id }}_tjenestenivaa"></canvas>
 		</div>
-		<script type="text/javascript">
+		<script type="text/javascript" nonce="{{request.csp_nonce}}">
 		var ctx_{{ liste.id }}_tjenestenivaa = document.getElementById('chart_{{ liste.id }}_tjenestenivaa').getContext('2d');
 		var chart_{{ liste.id }}_tjenestenivaa = new Chart(ctx_{{ liste.id }}_tjenestenivaa, {
 			// The type of chart we want to create
@@ -208,7 +208,7 @@
 			<p style="text-align: center; font-weight: bold; font-size: large;">Kvalitetssikret</p>
 			<canvas id="chart_{{ liste.id }}_kvalitet"></canvas>
 		</div>
-		<script type="text/javascript">
+		<script type="text/javascript" nonce="{{request.csp_nonce}}">
 		var ctx_{{ liste.id }}_kvalitet = document.getElementById('chart_{{ liste.id }}_kvalitet').getContext('2d');
 		var chart_{{ liste.id }}_kvalitet = new Chart(ctx_{{ liste.id }}_kvalitet, {
 			// The type of chart we want to create
@@ -240,7 +240,7 @@
 			<p style="text-align: center; font-weight: bold; font-size: large;">Livsløp</p>
 			<canvas id="chart_{{ liste.id }}_livslop"></canvas>
 		</div>
-		<script type="text/javascript">
+		<script type="text/javascript" nonce="{{request.csp_nonce}}">
 		var ctx_{{ liste.id }}_livslop = document.getElementById('chart_{{ liste.id }}_livslop').getContext('2d');
 		var chart_{{ liste.id }}_livslop = new Chart(ctx_{{ liste.id }}_livslop, {
 			// The type of chart we want to create

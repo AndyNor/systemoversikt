@@ -77,7 +77,17 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'simple_history.middleware.HistoryRequestMiddleware',
+    'csp.middleware.CSPMiddleware',
 ]
+
+# Security headers
+# CSP reqires "CSPMiddleware"
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'",)
+CSP_FRAME_SRC = ("'self'",)
+CSP_STYLE_SRC = ("'unsafe-inline'", "'self'")
+CSP_INCLUDE_NONCE_IN = ['script-src']
+SECURE_CONTENT_TYPE_NOSNIFF = True  # requires "SecurityMiddleware"
 
 ROOT_URLCONF = 'systemoversikt.urls'
 

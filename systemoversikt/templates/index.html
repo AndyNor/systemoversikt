@@ -40,7 +40,7 @@
 
 	{% block ekstrajavascript %}{% endblock ekstrajavascript %}
 
-	<script type="text/javascript">
+	<script type="text/javascript" nonce="{{request.csp_nonce}}">
 	$(document).ready(function(){
 		$("table").tablesorter({})
 		$("table").floatThead({top: 103});
@@ -239,7 +239,7 @@
 	</div>
 </main>
 
-<script type="text/javascript">
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
 	function msieversion(){
 		var ua = window.navigator.userAgent;
 		var msie = ua.indexOf("MSIE ");
@@ -258,7 +258,7 @@
 <script src="{% static 'tableexport/FileSaver.min.js' %}"></script>
 <script src="{% static 'tableexport/tableexport.js' %}"></script>
 
-<script type="text/javascript">
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
 TableExport.prototype.types.date.assert = function(value){return false;};
 $("table").tableExport({
 	headers: true,
