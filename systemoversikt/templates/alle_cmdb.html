@@ -8,6 +8,7 @@
 		{% if user.is_authenticated %}
 			<a class="btn btn-sm btn-secondary" href="{% url 'alle_servere' %}">Alle servere</a>
 			<a class="btn btn-sm btn-secondary" href="{% url 'alle_klienter' %}">Alle klienter</a>
+			<a class="btn btn-sm btn-secondary" href="{% url 'alle_databaser' %}">Alle databaser</a>
 		{% endif %}
 	</div>
 {% endblock underoverskrift %}

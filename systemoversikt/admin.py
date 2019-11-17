@@ -608,6 +608,7 @@ admin.site.register(Loggkategori,LoggkategoriAdmin)
 admin.site.register(ApplicationLog)
 admin.site.register(Sikkerhetstester, SikkerhetstesterAdmin)
 admin.site.register(DefinisjonKontekster)
+admin.site.register(CMDBdatabase)
 
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)

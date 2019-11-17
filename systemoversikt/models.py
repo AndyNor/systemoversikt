@@ -895,14 +895,18 @@ class CMDBdatabase(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
+	db_operational_status = models.BooleanField(
+			verbose_name="db_operational_status",
+			default=True,
+			)
 	db_version = models.TextField(
 			verbose_name="db_version",
 			blank=True, null=True,
 			help_text=u"Importert: db_version",
 			)
-	db_u_datafilessizekb = models.TextField(
+	db_u_datafilessizekb = models.IntegerField(
 			verbose_name="db_u_datafilessizekb",
-			blank=True, null=True,
+			blank=True, null=False, default=0,
 			help_text=u"Importert: db_u_datafilessizekb",
 			)
 	db_database = models.TextField(
@@ -920,10 +924,15 @@ class CMDBdatabase(models.Model):
 			blank=True, null=True,
 			help_text=u"Importert: db_comments",
 			)
+	sub_name = models.ManyToManyField(CMDBRef, related_name='cmdbdatabase_sub_name',
+			verbose_name="Business Sub Service",
+			blank=True,
+			help_text=u"Slått opp basert på comment-felt",
+			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
 
 	def __str__(self):
-		return u'%s' % (self.navn)
+		return u'%s' % (self.db_database)
 
 	class Meta:
 		verbose_name_plural = "CMDB databaser"

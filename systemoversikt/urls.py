@@ -118,6 +118,7 @@ urlpatterns = [
 
 	url(r'^cmdb/servere/$', views.alle_servere, name='alle_servere'),
 	url(r'^cmdb/klienter/$', views.alle_klienter, name='alle_klienter'),
+	url(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 
 	url(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	url(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),
@@ -145,6 +146,7 @@ urlpatterns = [
 	url(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),
 	url(r'^import/cmdb/business_services/$', views_import.import_business_services, name='import_cmdb'),
 	url(r'^import/cmdb/servers/$', views_import.import_cmdb_servers, name='import_cmdb'),
+	url(r'^import/cmdb/databases/$', views_import.import_cmdb_databases, name='import_databases'),
 
 	url(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
 

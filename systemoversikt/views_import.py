@@ -31,7 +31,7 @@ def import_group_permissions(request):
 		with open(filepath, 'r', encoding='UTF-8') as json_file:
 			data = json.load(json_file)
 			for group in data:
-				print(group["group"])
+				#print(group["group"])
 				group_name = group["group"]
 				try:
 					g = Group.objects.get(name=group_name)
@@ -165,6 +165,83 @@ def import_business_services(request):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def import_cmdb_databases(request):
+	required_permissions = 'systemoversikt.change_cmdbref'
+	if request.user.has_perm(required_permissions):
+
+		messages.success(request, 'Klargjør import av databaser')
+		import json, os
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_service_to_db_2.json"
+		with open(filepath, 'r', encoding='UTF-8') as json_file:
+			data = json.load(json_file)
+
+			antall_records = len(data["records"])
+			messages.success(request, 'Fant %s elementer' % (antall_records))
+
+			all_existing_db = list(CMDBdatabase.objects.filter(db_operational_status=True))
+
+			for record in data["records"]:
+				# vi sjekker om enheten finnes fra før
+				try:
+					cmdb_db = CMDBdatabase.objects.get(db_database=record["db_database"])
+					# fjerner fra oversikt over alle vi hadde før vi startet
+					if cmdb_db in all_existing_db: # i tilfelle reintrodusert
+						all_existing_db.remove(cmdb_db)
+				except:
+					# lager en ny
+					cmdb_db = CMDBdatabase.objects.create(db_database=record["db_database"])
+
+				if record["db_operational_status"] == "1":
+					cmdb_db.db_operational_status = True
+				else:
+					cmdb_db.db_operational_status = False
+
+				cmdb_db.db_version = record["db_version"]
+
+				try:
+					filesize = int(record.get("db_u_datafilessizekb", 0)) * 1024 # convert to bytes
+				except:
+					filesize = 0
+				cmdb_db.db_u_datafilessizekb = filesize
+
+				cmdb_db.db_database = record["db_database"]
+				cmdb_db.db_used_for = record["db_used_for"]
+				cmdb_db.db_comments = record["db_comments"]
+
+				try:
+					hostname = record["db_comments"].split("@")[1]
+					print(hostname)
+					server = CMDBdevice.objects.get(comp_name=hostname)
+					cmdb_db.sub_name.clear() # reset old lookups
+					for item in server.sub_name.all():
+						cmdb_db.sub_name.add(item) # add this lookup
+				except:
+					pass
+
+				cmdb_db.save()
+
+		obsolete_devices = all_existing_db
+
+		for item in obsolete_devices:
+			item.db_operational_status = False
+			item.save()
+
+		logg_entry_message = 'Antall databaser som er inaktive: %s. Alle slike databaser er satt inaktive. Utført av %s.' % (len(obsolete_devices), request.user)
+		logg_entry = ApplicationLog.objects.create(
+				event_type='CMDB server import',
+				message=logg_entry_message,
+			)
+		logg_entry.save()
+		messages.success(request, logg_entry_message)
+
+		return render(request, 'home.html', {
+			'request': request,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 
 
 

@@ -75,5 +75,5 @@ Gå til https://kartoteket.oslo.kommune.no{url} for en komplett oversikt over di
 							reply_to=[reply_to],
 							#headers={'Message-ID': 'foo'},
 					)
-					print(email)
+					#print(email)
 					email.send()

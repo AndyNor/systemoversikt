@@ -75,7 +75,7 @@ def dashboard_all(request, virksomhet=None):
 	#per system, antall dpia og uten.
 
 	def systemeierPerVirksomhet(systemer):
-		print(type(systemer))
+		#print(type(systemer))
 		resultat = []
 		for virksomhet in alle_virksomheter:
 			resultat.append(systemer.filter(systemeier=virksomhet).count())
@@ -304,7 +304,7 @@ def home(request):
 
 	antall_behandlinger = BehandlingerPersonopplysninger.objects.count()
 
-	print(nyeste_systemer)
+	#print(nyeste_systemer)
 	kategorier = SystemKategori.objects.all()
 
 	return render(request, 'home.html', {
@@ -1315,6 +1315,17 @@ def alle_klienter(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def alle_databaser(request):
+	required_permissions = 'systemoversikt.change_system'
+	if request.user.has_perm(required_permissions):
+		databaser = CMDBdatabase.objects.all()
+		return render(request, 'alle_databaser.html', {
+			'request': request,
+			'databaser': databaser,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 def alle_cmdbref(request):
 	required_permissions = 'systemoversikt.change_system'
 	if request.user.has_perm(required_permissions):
@@ -1336,11 +1347,13 @@ def cmdbdevice(request, pk):
 	if request.user.has_perm(required_permissions):
 		cmdbref = CMDBRef.objects.get(pk=pk)
 		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref)
+		databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
 
 		return render(request, 'detaljer_cmdbdevice.html', {
 			'request': request,
 			'cmdbref': cmdbref,
 			'cmdbdevices': cmdbdevices,
+			'databaser': databaser,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -1352,7 +1365,7 @@ def alle_avtaler(request, virksomhet=None):
 	utdypende_beskrivelse = "Viser alle avtaler registrert i Kartoteket."
 	if virksomhet:
 		virksomhet = int(virksomhet)
-		print(type(virksomhet))
+		#print(type(virksomhet))
 		virksomhetsnavn = Virksomhet.objects.get(pk=virksomhet)
 		avtaler = avtaler.filter(Q(virksomhet=virksomhet) | Q(leverandor_intern=virksomhet))
 		utdypende_beskrivelse = "Viser alle avtaler der %s er avtalepart." % virksomhetsnavn
@@ -1665,7 +1678,7 @@ def ad_details(request, name):
 
 
 def ldap_get_recursive_group_members(group):
-	print(group)
+	#print(group)
 
 	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 	ldap_filter = ('(&(objectCategory=person)(objectClass=user)(memberOf:1.2.840.113556.1.4.1941:=%s))' % group)

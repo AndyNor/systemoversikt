@@ -40,8 +40,31 @@
 	{% endfor %}
 	</tbody>
 </table>
+
+
 <h6>Databaser</h6>
-<p>Kommer</p>
+<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th width="25%">db_database</th>
+		<th>db_used_for</th>
+		<th>db_version</th>
+		<th>db_u_datafilessizekb</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for db in databaser %}
+	<tr {% if not db.db_operational_status %} style="color: #d6d6d6;" {% endif %}>
+		<td>{{ db.db_database }}</td>
+		<td>{{ db.db_used_for }}</td>
+		<td>{{ db.db_version }}</td>
+		<td>{{ db.db_u_datafilessizekb }} ({{ db.db_u_datafilessizekb|filesizeformat }})</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>
+
+
 
 {% else %}
 	<p>Du mangler tilgangen view_system (Vise systemdetaljer).</p>
