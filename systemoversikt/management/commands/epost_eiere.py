@@ -16,13 +16,13 @@ class Command(BaseCommand):
 		"""
 		alle_ansvarlige = Ansvarlig.objects.all() #.filter(brukernavn__profile__virksomhet__in=[163, 145])
 		for ansvarlig in alle_ansvarlige:
-			systemer_forvalter_for = System.objects.filter(systemforvalter_kontaktpersoner_referanse=ansvarlig.pk)
+			systemer_eier_for = System.objects.filter(systemeier_kontaktpersoner_referanse=ansvarlig.pk)
 
-			if systemer_forvalter_for: #hvis begge er tomme dropper vi å sende mail
+			if systemer_eier_for: #hvis begge er tomme dropper vi å sende mail
 
-				systemer_forvalter = ""
-				for system in systemer_forvalter_for:
-					systemer_forvalter = "\n".join((systemer_forvalter, system.systemnavn))
+				systemer_eier = ""
+				for system in systemer_eier_for:
+					systemer_eier = "\n".join((systemer_eier, system.systemnavn))
 
 				url = reverse("ansvarlig",args=[ansvarlig.pk])
 				fornavn = ansvarlig.brukernavn.first_name
@@ -48,16 +48,13 @@ Se forøvrig innkallingen på https://kartoteket.oslo.kommune.no/static/filer/in
 
 ---
 
-Denne e-posten er sendt ut fra Kartoteket til alle som er registrert som forvalter av et system.
-
-Du er registrert som forvalter av følgende systemer:
-{systemer_forvalter}
-
-Dersom du også er eier av et system vil du motta en tilsvarende e-post snart. Du trenger bare melde deg på én gang.
+Denne e-posten er sendt ut fra Kartoteket til alle som er registrert som eier av et system.
+Du er registrert som eier av følgende systemer:
+{systemer_eier}
 
 Gå til https://kartoteket.oslo.kommune.no{url} for en komplett oversikt over dine ansvarsområder knyttet til systemer og behandling.
 
-'''.format(fornavn=fornavn, systemer_forvalter=systemer_forvalter, url=url)
+'''.format(fornavn=fornavn, systemer_eier=systemer_eier, url=url)
 
 				if recipients:
 					email = EmailMessage(
