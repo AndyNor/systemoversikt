@@ -98,8 +98,8 @@ urlpatterns = [
 	#url(r'^systemurl/(?P<pk>\d{1,8})/$', views.systemurl, name='systemurl'),
 
 
-	url(r'^/script/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
-	url(r'^/script/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
+	url(r'^script/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
+	url(r'^script/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
 
 	#url(r'^tjenester/$', views.alle_tjenester, name='alle_tjenester'),
 	#url(r'^tjenester/(?P<pk>\d{1,8})/$', views.tjenestedetaljer, name='tjenestedetaljer'),
