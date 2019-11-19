@@ -538,7 +538,14 @@ cy.on('tap', 'node', function(){
 			<td>{{ bruk.get_tilgjengelighetsvurdering_display|default:"-" }}</td>
 			{% endif %}
 
-			<td {% if bruk.del_behandlinger %}style="background-color: #a2cca2;"{% endif %}>{{ bruk.del_behandlinger|yesno:"Ja,Nei" }}</td>
+			<td>
+				{% if bruk.del_behandlinger %}
+				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				{% else %}
+				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				{% endif %}
+				{{ bruk.del_behandlinger|yesno:"Ja,Nei" }}
+			</td>
 			<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
 			<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
 			<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
@@ -572,13 +579,14 @@ cy.on('tap', 'node', function(){
 <table class="table table-sm table-striped tablesorter">
 	<thead>
 		<tr>
-			<th></th>
+			<th>Rediger</th>
+			<th>Fellesbehandling?</th>
 			<th>Beskrivelse av behandling</th>
 			<th>Av virksomhet</th>
 			<th>Opplysninger om</th>
 			<th>Krever sikkerhetsnivå</th>
 			<th>Krever DPIA</th>
-			<th></th>
+			<th>Slett</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -587,6 +595,14 @@ cy.on('tap', 'node', function(){
 		{% url "virksomhet" b.behandlingsansvarlig.pk as url_virksomhet %}
 		<tr>
 			<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+			<td>
+				{% if b.fellesbehandling %}
+				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				{% else %}
+				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				{% endif %}
+				{{ b.fellesbehandling|yesno:"Ja,Nei,Ukjent" }}
+			</td>
 			<td><a href="{{ url_behandlingsdetaljer }}">{{ b.behandlingen }}</a></td>
 			<td><a href="{{ url_virksomhet }}">{{ b.behandlingsansvarlig.virksomhetsforkortelse }}</a></td>
 			<td>
