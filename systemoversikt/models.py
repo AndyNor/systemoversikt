@@ -2446,50 +2446,62 @@ BEHANDLING_VALGFRIHET = (
 
 
 class BehandlingerPersonopplysninger(models.Model):
+	# Draftit - Records, kalles der en "behandllingsaktivitet"
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
 			auto_now_add=True,
 			null=True,
 			)
+			#draftit: metafelt, har dette
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
+			#draftit: metafelt, har dette
 	informasjon_kvalitetssikret = models.BooleanField(
 			verbose_name="Er informasjonen kvalitetssikret av behandlingsansvarlig?",
 			default=False,
 			help_text=u"Krysses av når denne behandlingen er klar i første versjon.",
 			)
+			#draftit: har ikke dette nå
 	oppdateringsansvarlig = models.ManyToManyField(Ansvarlig, related_name='behandling_kontaktperson',
 			verbose_name="Oppdateringsansvarlig",
 			blank=True,
 			help_text=u"Denne personen er ansvarlig for å holde denne behandlingen oppdatert.",
 			)
+			#draftit: ansvarlig (epost til den som redigerer)
 	fellesbehandling = models.BooleanField(
 			verbose_name="Fellesbehandling / kopieringskandidat",
 			default=False,
 			help_text="Sett denne dersom du mener denne behandlingen gjelder de fleste / alle virksomheter.",
 			)
+			#draftit: ingen tilsvarende
 	krav_sikkerhetsnivaa  = models.IntegerField(choices=SIKKERHETSNIVAA_VALG,
 			verbose_name="Krav til sikkerhetsnivå",
 			blank=True, null=True,
 			help_text=u'Sikkerhetsnivå for felles IKT-plattform i hht <a target="_blank" href="https://confluence.oslo.kommune.no/x/y8seAw">Informasjonstyper og behandlingskrav</a>',
 			)
+			#draftit: ingen tilsvarende
 	dpia_tidligere_bekymringer_risikoer = models.TextField(
 			verbose_name="Er det tidligere avdekket risikoer/bekymringer over denne typen behandling?",
 			blank=True, null=True,
 			help_text=u"",
 			)
+			#draftit: ingen tilsvarende #draftit: dpia-modul
 	dpia_tidligere_avdekket_sikkerhetsbrudd = models.TextField(
 			verbose_name="Er det tidligere avdekket sikkerhetsbrudd i fm. tilsvarende behandling?",
 			blank=True, null=True,
 			help_text=u"",
 			)
+			#draftit: avvik (ja/nei + forklaring av avvik) #draftit: dpia-modul
 	behandlingsansvarlig = models.ForeignKey(Virksomhet, related_name='behandling_behandlingsansvarlig',
 			verbose_name="Registrert av",
 			on_delete=models.PROTECT,
 			help_text=u"Den virksomhet som er ansvarlig for å holde denne behandlingen oppdatert.",
 			)
+			#draftit: behandlingsansvarlig.
+
+
 	#behandlingsansvarlig_representant = models.ForeignKey(Ansvarlig, related_name='behandling_behandlingsansvarlig_representant',
 	#		verbose_name="Ansvarlig person",
 	#		blank=True, null=True,
@@ -2497,67 +2509,81 @@ class BehandlingerPersonopplysninger(models.Model):
 	#		help_text=u"Den person som er ansvarlig for å holde denne behandlingen oppdatert.",
 	#		)
 	internt_ansvarlig = models.CharField(
-			verbose_name="Internt ansvarlig (avdeling/enhet)",
+			verbose_name="Ansvarlig avdeling/enhet",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Angi hvem som er internt ansvarlig (dataansvarlig) eller avdeling. Eksempler: Personaladministrasjon (HR), Skoleadministrasjon",
 			)
+			#draftit: enhet som en objektreferanse. 
 	funksjonsomraade = models.CharField(
 			verbose_name="Hovedoppgave / Hovedformål",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Hvilket overordnet funksjons-eller virksomhetsområde faller behandlingen under? Angi eventuell hovedoppgave eller hovedformål.Eksempler: HR-prosesser, Oppfølging av pasient, Regnskap",
 			)
+			#draftit: enhet er det som brukes her. Må finne en mapping.
+			#trenger vi to?
 	behandlingen = models.TextField(
 			verbose_name="Kort beskrivelse av behandlingen/prosessen.",
 			blank=False, null=False,
 			help_text=u"Beskriv kort hva som skjer i prosessen. Det skal kun være noen få ord som beskriver hva behandlingen av personopplysninger innebærer. Eksempler: Personaladministrasjon (HR), Besøksregistrering, Bakgrunnssjekk av ansatte, Saksbehandling, Oppfølging av sykefravær",
 			)
+			#dradtit: behandlingsaktivitet (tekst)
 	ny_endret_prosess = models.TextField(
 			verbose_name="Innebærer behandlingen på noen måte ny/endret prosess?",
 			blank=True, null=True,
 			help_text=u""
 			)
+			#draftit: dpia-modul
 	dpia_dekker_formal = models.TextField(
 			verbose_name="Dekker behandlingsprosessen det faktiske formålet, og er det andre måter å oppnå det samme resultatet?",
 			blank=True, null=True,
 			help_text=u"Noe tilsvarende dataminimering, ikke sant?",
 			)
+			#draftit: dpia-modul
 	formaal = models.TextField(
 			verbose_name="Hva er formålet med behandlingen?",
 			blank=True, null=True,
 			help_text=u"Angi hva som er formålet med behandlingen, inkludert hvorfor opplysningene blir samlet inn. Forklaringen skal være slik at alle berørte har en felles forståelse av hva opplysningene brukes til. Om behandlingen dekker flere formål kan det være nyttig å dele inn beskrivelsen i flere delområder slik at fokus settes på formålet med behandlingen. HR/personal vil for eksempel ha flere formål med å samle inn personopplysninger om ansatte; f.eks. utbetale lønn, personal-administrasjon, kompetanseoversikt mv. Hver behandling bør ha en egen rad i behandlingsoversikten. Eksempler: Rekruttere ansatte basert på riktig erfaring og utdanning, Utbetale lønn til de ansatte, Sikre identifisering før tilgang blir gitt.",
 			)
+			#draftit: "formål"
 	dpia_effekt_enkelte = models.TextField(
 			verbose_name="Effekt for de registrerte?",
 			blank=True, null=True,
 			help_text=u"Beskriv den påtenkte effekten - positiv og negativ - på enkeltpersoner som blir omfattet av behandlingen",
 			)
+			#draftit: dpia-modul
 	dpia_effekt_samfunnet = models.TextField(
 			verbose_name="Formål som realiseres for samfunnet?",
 			blank=True, null=True,
 			help_text=u"Beskriv hvilke positive effekter behandlingen har for samfunnet / Virksomheten og evt. hvilken ulempe det innebærer hvis behandlingen ikke kan gjennomføres",
 			)
+			#draftit: dpia-modul
 	dpia_proporsjonalitet_enkelte_samfunnet = models.TextField(
 			verbose_name="Beskriv vurderingen som er foretatt av proporsjonalitet mellom samfunnsgevinst ved behandlingen og potensiell risiko for de registrerte",
 			blank=True, null=True,
 			help_text=u"",
 			)
+			#draftit: dpia-modul
 	kategorier_personopplysninger = models.ManyToManyField(Personsonopplysningskategori, related_name='behandling_kategorier_personopplysninger',
 			verbose_name="Kategorier personopplysninger som behandles",
 			blank=True,
 			help_text=u"",
 			)
+			#draftit: to spørsmål: "identitetsopplysninger" og "kontaktopplysnigner" og "sensitive personopplysninger".
+			# mot kartoteket slår vi dem sammen og oppretter Personsonopplysningskategori ved behov.
 	personopplysninger_utdyping = models.TextField(
 			verbose_name="Utdyping av personopplysninger som behandles",
 			blank=True, null=True,
 			help_text=u"Kontaktopplysninger, Søknad/CV, skatt og arbeidsgiveravgift",
 			)
+			# draftit: ser ikke behovet. 
 	den_registrerte = models.ManyToManyField(Registrerte, related_name='behandling_den_registrerte',
 			verbose_name="Hvem er den registrerte? (grupper)",
 			blank=True,
 			help_text=u"",
 			)
+			#draftit: "kartegori registrerte", valgmeny
 	relasjon_registrerte = models.ManyToManyField(RelasjonRegistrert,
 			verbose_name="Hvilken relasjon har virksomheten til de registrerte?",
 			blank=True,
@@ -2569,126 +2595,159 @@ class BehandlingerPersonopplysninger(models.Model):
 			blank=True, null=True,
 			help_text=u''
 			)
+			#draftit: har ikke
+			# DPIA-relatert, Trenger vi dette feltet?
 	den_registrerte_sarbare_grupper = models.NullBooleanField(
 			verbose_name="Inkluderer behandlingen barn eller andre sårbare grupper (f.eks. uføre, eldre, syke)?",
 			blank=True, null=True,
 			help_text=u"",
 			)
+			# draftit: har spørsmålet under "registreres opplyninger om barn" - men ikke noe eget for eldre.
+			# dpia-relatert.
 	forventet_bruk = models.TextField(
 			verbose_name="Vil de registrerte forvente at personopplysninger om dem brukes på denne måten?",
 			blank=True, null=True,
 			help_text=u"",
 			)
+			# draftit: ikke noe tilsvarende
 	den_registrerte_hovedkateogi = models.ManyToManyField(RegistrertKlassifisering, related_name='behandling_den_registrerte_hovedkateogi',
 			verbose_name="Hvem er den registrerte? (klassifisering)",
 			blank=True,
 			help_text=u"",
 			)
+			# draftit: nei
+			# trenger vi denne?
 	den_registrerte_detaljer = models.TextField(
 			verbose_name="Ytdyping av de registrerte. F.eks. i hvilket geografisk område befinner de registrerte seg?",
 			blank=True, null=True,
 			help_text=u"Utdypning om hvem det behandles opplysninger om.",
 			)
+			# draftit: ikke noe felt om dette
+			# trenger vi denne?
 	antall_registrerte = models.TextField(
 			verbose_name="Antall registrerte i behandlingsprosessen.",
 			blank=True, null=True,
 			help_text=u"En tekstlig beskrivelse av omfanget av de registrerte. Gjerne begrenset til en aldersgruppe og geografisk område.",
 			)
+			# draftit: hvor mange er registrert i behandlingen (intervaller)
+			# dpia-relatert.
 	tilgang_opplysninger = models.TextField(
 			verbose_name="Brukergrupper med tilgang til personopplysningene i behandlingsprosessen",
 			blank=True, null=True,
 			help_text=u"Beskriv hvor mange / hvem som vil få tilgang til opplysnignene internt.",
 			)
+			#draftit: "hvilke enheter har tilgang til opplysningene" med valgmeny
 	behandlingsgrunnlag_valg = models.ManyToManyField(Behandlingsgrunnlag, related_name='behandling_behandlingsgrunnlag_valg',
 			verbose_name="Hva er grunnlaget (hjemmel) for denne behandlingsprosessen (behandlingen)?",
 			blank=True,
 			help_text=u"Her må hjemmel i så vel i personopplysnings-loven som i aktuelle særlov f.eks. barnevernloven beskrives",
 			)
+			#draftit: behandlingsgrunnlag
 	behandlingsgrunnlag_utdyping = models.TextField(
 			verbose_name="Utdyping av rettslig forpliktelse, berettighet interesse mv",
 			blank=True, null=True,
 			help_text=u"F.eks. Skattebetalingsloven, A-meldingsloven",
 			)
+			#draftit: "begrunn valgt behandlingsgrunnlag" (tekst) (vedlegg - trenger vi ikke)
 	behandlingsgrunnlag_saerlige_kategorier = models.TextField(
 			verbose_name="Utdyping av behandlingsgrunnlag dersom særskilte kategorier personopplysninger",
 			null=True, blank=True,
 			help_text=u"Behandlingsgrunnlag etter artikkel 9 eller 10, Med ev henvisning også til annen lovgivning dersom relevant",
 			)
+			#draftit: ikke eget felt for dette
+			#trenger vi denne? slå sammen.
 	opplysningskilde = models.TextField(
 			verbose_name="Hvor er opplysningene innsamlet fra?",
 			blank=True, null=True,
 			help_text=u"Den registrerte, egen virksomhet, adressemekler",
 			)
+			#draftit: informasjonsplikt: "kilder opplysningene hentes fra" (valg)
+			# burde det vært valg?
 	frekvens_automatisert_innsamling = models.TextField(
 			verbose_name="Hvor ofte foretas automatisert elektronisk innsamling?",
 			blank=True, null=True,
 			help_text=u"Hva trigger ny innhenting?",
 			)
+			# draftit: har ikke dette
 	frekvens_innsamling_manuelt = models.TextField(
 			verbose_name="Hvor ofte mottas personopplysninger som følge av aktive skritt fra de registrerte, ansatte eller tredjepart?",
 			blank=True, null=True,
 			help_text=u"",
 			)
+			# draftit: har ikke dette
 	systemer = models.ManyToManyField(System, related_name='behandling_systemer',
 			verbose_name="Systemer som benyttes i behandlingen",
 			blank=True,
 			help_text=u"",
 			)
+			# draftit: system: liste over systemer, må vi få synkronisert. 
 	programvarer = models.ManyToManyField(Programvare, related_name='behandling_programvarer',
 			verbose_name="Programvarer som benyttes i behandlingen",
 			blank=True,
 			help_text=u"Programvarer benyttet i behandlingen",
 			)
+			#draftit: ikke eget felt, bruker system.
 	oppbevaringsplikt = models.TextField(
 			verbose_name="Finnes det oppbevaringsplikt for behandlingen?",
 			blank=True, null=True,
 			help_text=u"Andre krav til lagring ut fra andre behandlingsgrunnlag f.eks. oppbevaringsplikt i bokføringsloven, behov for bevissikring, arkivplikt m.m. for behandlingen (hjemmel)",
 			)
+			#deraftit: har ikke noe konkret her
 	sikre_dataminimalisering = models.TextField(
 			verbose_name="Tiltak for dataminimalisering",
 			blank=True, null=True,
 			help_text=u"Beskriv tiltak som er gjennomført for å sikre dataminimalisering. Det å unngå å oppbevare informasjon som ikke er nødvendig.",
 			)
+			#draftit: ikke noe konkret felt.
 	krav_slettefrister = models.TextField(
 			verbose_name="Krav til sletting?",
 			blank=True, null=True,
 			help_text=u"Hva er krav til tidsfrister for sletting ut fra opprinnelig behandlingsgrunnlag?<br>Hva er krav til tidsfrister for sletting ut fra andre behandlingsgrunnlag f.eks. oppbevaringsplikt i bokføringsloven, behov for bevissikring, arkivplikt m.m. for behandlingen (lagringstid)?",
 			)
+			# draftit: "Hvilken tidsfrist finnes for sletting" (tekst)
 	planlagte_slettefrister = models.TextField(
 			verbose_name="Hva er gjeldende prosedyre for sletting?",
 			blank=True, null=True,
 			help_text=u"Dersom mulig. F.eks. x måneder/år etter hendelse/prosess",
 			)
+			#draftit: "finnes det skriftelige rutiner" (med vedlegg)
+			#slå sammen? valg?
 	begrensning_tilgang = models.TextField(
 			verbose_name="Begrensning av tilganger",
 			blank=True, null=True,
 			help_text=u"I henhold til Artikkel 18. Hvilken gruppe saksbehandlere skal ha tilgang etter avsluttet saksbehandling hvis det foreligger oppbevaringsplikt / tidsintervall p.r. gruppe? (Tilgangsbegrensning basert på hvem som har tjenstlig behov i hvilke tidsintervaller)",
 			)
+			# draftit: ikke noe felt på dette
 	navn_databehandler = models.ManyToManyField(Leverandor, related_name='behandling_navn_databehandler',
 			verbose_name="Eksterne databehandlere",
 			blank=True,
 			help_text=u"Ved bruk av databehandlere (ekstern leverandør), angi hvilke dette er. Underleverandører er også databehandlere.",
 			)
+			#draftit: "databehandler" () (men har også et valg: er det ekstern databehandler?)
 	dpia_prosess_godkjenne_underleverandor = models.TextField(
 			verbose_name="Hvilken prosess for godkjennelse av underleverandører er etablert (ved avtaleinngåelse og ved bruk av nye underleverandører i avtaleperioden)?",
 			blank=True, null=True,
 			help_text=u"",
 			)
+			#draftit: i dpia
 	databehandleravtale_status = models.TextField(
 			verbose_name="Er det inngått databehandleravtale med tredjepart(er)?",
 			blank=True, null=True,
 			help_text=u"Utdyp",
 			)
+			#draftit: "er det inngått skriftelig avtale" (boolean)
 	databehandleravtale_status_boolean = models.NullBooleanField(
 			verbose_name="Er det inngått databehandleravtale med alle?",
 			blank=True, null=True,
 			help_text=u"",
 			)
+			#draftit: ikke eget felt.
 	dpia_dba_ivaretakelse_sikkerhet = models.TextField(
 			verbose_name="Hvilke krav er stilt til leverandøren(e) til ivaretakelse av personvern og informasjonssikkerhet?",
 			blank=True, null=True,
 			help_text=u"",
 			)
+			#draftit: har noe tilsvarende i dpia-modulen.
 	kommunens_maler = models.NullBooleanField(
 			verbose_name="Er Oslo kommunes maler for databehandleravtaler benyttet i avtale(ne) med leverandøren(e)?",
 			blank=True, null=True,
@@ -2749,6 +2808,9 @@ class BehandlingerPersonopplysninger(models.Model):
 			blank=True, null=True,
 			help_text=u"Beskriv tiltak som er gjennomført for at de registrerte får vite hva opplysningene om dem brukes til (f.eks. personvernerklæring). Hvilke tiltak er iverksatt for å hjelpe den registrerte til å kunne gjøre bruk av sine rettigheter etter personopplysningsloven (f.eks. informasjonsskriv om rettigheter, etablering av portal som kan håndtere henvendelse m.m.)?",
 			)
+			#draftit: Informasjonsplikt --> "på hvilkemn måte.." (valg) og "hva har registrerte mottatt informasjon om" (valg)
+			#burde vi ha valg?
+			#hjelpeteksten bør forbedres.
 	innsyn_egenkontroll = models.TextField(
 			verbose_name="Registrertes mulighet for innsyn og kontroll?",
 			blank=True, null=True,
