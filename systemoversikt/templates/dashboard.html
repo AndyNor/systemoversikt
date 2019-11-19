@@ -66,7 +66,7 @@
 
 	<div class="row">
 		<div style="width: 400px;">
-			<p style="text-align: center; font-weight: bold; font-size: large;">Risikovurderinger</p>
+			<p style="text-align: center; font-weight: bold; font-size: large;">Risikovurderinger (Utført)</p>
 			<canvas id="chart_{{ liste.id }}_ros"></canvas>
 		</div>
 		<script type="text/javascript" nonce="{{request.csp_nonce}}">
@@ -77,14 +77,16 @@
 
 			// The data for our dataset
 			data: {
-				labels: ['6mnd', 'år', 'Utdatert', 'Ukjent',],
+				labels: ['Ikke behov', '6mnd', '1 år', 'Eldre', 'Ukjent (prioritert)', 'Ukjent (ikke prioritert)',],
 				datasets: [
 				{
 					backgroundColor: [
+						'rgb(222, 242, 212)',
 						'rgb(181, 226, 160)',
 						'rgb(218, 209, 119)',
 						'rgb(197, 106, 27)',
-						'rgb(103, 103, 103)',
+						'rgb(206, 119, 107)',
+						'rgb(124, 133, 143)',
 					],
 					data: {{ liste.status_ros }}
 				},

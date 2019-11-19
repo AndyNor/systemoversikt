@@ -1518,6 +1518,12 @@ DB_VALG = (
 	(8, 'Firebird'),
 )
 
+VALG_RISIKOVURDERING_BEHOVSVURDERING = (
+	(0, 'Ikke behov / inngår i annet systems risikovurdering'),
+	(1, 'Bør utføres, men ikke høyt prioritert'),
+	(2, 'Må utføres, prioritert'),
+)
+
 
 class System(models.Model):
 	opprettet = models.DateTimeField(
@@ -1783,6 +1789,11 @@ class System(models.Model):
 			verbose_name="Utdypning tilgjengelighet: Kritiske perioder",
 			blank=True, null=True,
 			help_text=u"Her legger du inn perioder av året hvor det er særskilt behov for at systemet er tilgjengelig. F.eks. knyttet til frister som eiendomsskatt, barnehageopptak eller lønnskjøring.",
+			)
+	risikovurdering_behovsvurdering = models.IntegerField(choices=VALG_RISIKOVURDERING_BEHOVSVURDERING,
+			verbose_name="Behov for risikovurdering?",
+			blank=False, null=False, default=2, # 2: Prioriteres
+			help_text=u"Brukes i grafisk fremvisning av RoS-status, samt ved utsending av varsel om utdatert risikovurdering.",
 			)
 	url_risikovurdering = models.URLField(
 			verbose_name="Risikovurdering (URL)",
@@ -2514,7 +2525,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			blank=True, null=True,
 			help_text=u"Angi hvem som er internt ansvarlig (dataansvarlig) eller avdeling. Eksempler: Personaladministrasjon (HR), Skoleadministrasjon",
 			)
-			#draftit: enhet som en objektreferanse. 
+			#draftit: enhet som en objektreferanse.
 	funksjonsomraade = models.CharField(
 			verbose_name="Hovedoppgave / Hovedformål",
 			max_length=600,
@@ -2577,7 +2588,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			blank=True, null=True,
 			help_text=u"Kontaktopplysninger, Søknad/CV, skatt og arbeidsgiveravgift",
 			)
-			# draftit: ser ikke behovet. 
+			# draftit: ser ikke behovet.
 	den_registrerte = models.ManyToManyField(Registrerte, related_name='behandling_den_registrerte',
 			verbose_name="Hvem er den registrerte? (grupper)",
 			blank=True,
@@ -2680,7 +2691,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			blank=True,
 			help_text=u"",
 			)
-			# draftit: system: liste over systemer, må vi få synkronisert. 
+			# draftit: system: liste over systemer, må vi få synkronisert.
 	programvarer = models.ManyToManyField(Programvare, related_name='behandling_programvarer',
 			verbose_name="Programvarer som benyttes i behandlingen",
 			blank=True,

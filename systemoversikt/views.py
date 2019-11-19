@@ -94,8 +94,10 @@ def dashboard_all(request, virksomhet=None):
 		ros_seks_mnd_siden = systemer.filter(dato_sist_ros__gt=minus_six_months).count()
 		ros_et_aar_siden = systemer.filter(dato_sist_ros__gt=minus_twelve_months).filter(dato_sist_ros__lte=minus_six_months).count()
 		ros_gammel = systemer.filter(dato_sist_ros__lte=minus_twelve_months).count()
-		ros_mangler = systemer.filter(dato_sist_ros=None).count()
-		return [ros_seks_mnd_siden,ros_et_aar_siden,ros_gammel,ros_mangler]
+		ros_mangler_prioritert = systemer.filter(Q(dato_sist_ros=None) & Q(risikovurdering_behovsvurdering=2)).count()
+		ros_mangler_ikke_prioritert = systemer.filter(Q(dato_sist_ros=None) & Q(risikovurdering_behovsvurdering=1)).count()
+		ros_ikke_behov = systemer.filter(risikovurdering_behovsvurdering=0).count()
+		return [ros_ikke_behov,ros_seks_mnd_siden,ros_et_aar_siden,ros_gammel,ros_mangler_prioritert,ros_mangler_ikke_prioritert]
 	def statusDPIA(systemer):
 		#['Utført', 'Ikke utført', 'Ikke behov',]
 		dpia_ok = systemer.filter(~Q(DPIA_for_system=None)).count()

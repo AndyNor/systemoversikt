@@ -58,8 +58,8 @@ urlpatterns = [
 	url(r'^systemer/detaljer/(?P<pk>\d{1,8})/$', views.systemdetaljer, name='systemdetaljer'),
 	url(r'^systemer/bruk/$', views.mine_systembruk, name='mine_systembruk'),
 	url(r'^systemer/bruk/(?P<pk>\d{1,8})/$', views.bruksdetaljer, name='bruksdetaljer'),
-	url(r'^systemer/virksomhet/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
 	url(r'^systemer/bruk/registrer_bruk/(?P<system>\d{1,8})/$', views.registrer_bruk, name='registrer_bruk'),
+	url(r'^systemer/virksomhet/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
 	url(r'^systemer/systemklassifisering/(?P<id>[A-Z-]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	url(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),
 	#url(r'^systemer/ITAS/$', views.alle_systemer_itas, name='alle_systemer_itas'),
@@ -94,12 +94,12 @@ urlpatterns = [
 	url(r'^hovedkategorier/subkategorier/uten_kategori/$', views.uten_systemkategori, name='uten_systemkategorier'),
 	url(r'^hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
 
-	url(r'^systemurl/$', views.alle_systemurler, name='alle_systemurler'),
+	url(r'^domener/$', views.alle_systemurler, name='alle_systemurler'),
 	#url(r'^systemurl/(?P<pk>\d{1,8})/$', views.systemurl, name='systemurl'),
 
 
-	url(r'^bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
-	url(r'^bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
+	url(r'^/script/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
+	url(r'^/script/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
 
 	#url(r'^tjenester/$', views.alle_tjenester, name='alle_tjenester'),
 	#url(r'^tjenester/(?P<pk>\d{1,8})/$', views.tjenestedetaljer, name='tjenestedetaljer'),
@@ -115,7 +115,6 @@ urlpatterns = [
 
 	url(r'^cmdb/$', views.alle_cmdbref, name='alle_cmdbref'),
 	url(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),
-
 	url(r'^cmdb/servere/$', views.alle_servere, name='alle_servere'),
 	url(r'^cmdb/klienter/$', views.alle_klienter, name='alle_klienter'),
 	url(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
@@ -147,7 +146,6 @@ urlpatterns = [
 	url(r'^import/cmdb/business_services/$', views_import.import_business_services, name='import_cmdb'),
 	url(r'^import/cmdb/servers/$', views_import.import_cmdb_servers, name='import_cmdb'),
 	url(r'^import/cmdb/databases/$', views_import.import_cmdb_databases, name='import_databases'),
-
 	url(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
 
 
