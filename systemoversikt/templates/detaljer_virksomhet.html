@@ -16,6 +16,8 @@
 		{% endif %}
 		{% url 'alle_virksomheter' as url_alle_virksomheter %}
 		<a class="btn btn-sm btn-secondary" href="{{ url_alle_virksomheter }}">Oversikt over alle virksomheter</a>
+		{% url 'systemkvalitet_virksomhet' pk=virksomhet.pk as url_systemkvalitet_virksomhet %}
+		<a class="btn btn-sm btn-secondary" href="{{ url_systemkvalitet_virksomhet }}">Datakvalitet systemer</a>
 	</h6>
 
 <div class="card">

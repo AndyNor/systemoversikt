@@ -1,0 +1,17 @@
+{% extends "index.html" %}
+{% load static %}
+
+
+{% block underoverskrift %}
+	Datakvalitet for systemer
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+{% url 'virksomhet' pk=virksomhet.pk as url_virksomhet %}
+<p>
+	<a class="btn btn-sm btn-secondary" href="{{ url_virksomhet }}">Tilbake til {{ virksomhet.virksomhetsforkortelse }}</a>
+</p>
+{% include "detaljer_system_hvamangler.html" with systemer=systemer %}
+
+{% endblock main_content %}

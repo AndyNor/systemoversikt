@@ -75,6 +75,7 @@ urlpatterns = [
 	url(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
 	url(r'^behandlinger/filtrerte/virksomhet/(?P<pk>\d{1,8})/$', views.behandlinger_filtrerte, name='behandlinger_filtrerte'),
 
+
 	url(r'^avtaler/$', views.alle_avtaler, name='alle_avtaler'),
 	url(r'^avtaler/detaljer/(?P<pk>\d{1,8})/$', views.avtaledetaljer, name='avtaledetaljer'),
 	url(r'^avtaler/(?P<virksomhet>\d{1,8})/$', views.alle_avtaler, name='avtalervirksomhet'),
@@ -85,6 +86,7 @@ urlpatterns = [
 	url(r'^virksomhet/min/$', views.min_virksomhet, name='min_virksomhet'),
 	url(r'^virksomhet/sertifikatmyndighet/$', views.sertifikatmyndighet, name='sertifikatmyndighet'),
 	url(r'^virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet, name='virksomhet'),
+	url(r'^virksomhet/systemkvalitet/(?P<pk>\d{1,8})/$', views.systemkvalitet_virksomhet, name='systemkvalitet_virksomhet'),
 
 	url(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
 	url(r'^leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),

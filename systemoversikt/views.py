@@ -342,8 +342,8 @@ def ansvarlig(request, pk):
 	if not ansvarlig.brukernavn.is_active:
 		messages.warning(request, 'Denne brukeren er deaktivert!')
 
-	systemeier_for = System.objects.filter(systemeier_kontaktpersoner_referanse=pk)
-	systemforvalter_for = System.objects.filter(systemforvalter_kontaktpersoner_referanse=pk)
+	systemeier_for = System.objects.filter(~Q(ibruk=False)).filter(systemeier_kontaktpersoner_referanse=pk)
+	systemforvalter_for = System.objects.filter(~Q(ibruk=False)).filter(systemforvalter_kontaktpersoner_referanse=pk)
 	systemforvalter_bruk_for = SystemBruk.objects.filter(systemforvalter_kontaktpersoner_referanse=pk)
 	kam_for = Virksomhet.objects.filter(uke_kam_referanse=pk)
 	#tjenesteleder_for = Tjeneste.objects.filter(tjenesteleder=pk)
@@ -396,6 +396,20 @@ def alle_ansvarlige_eksport(request):
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+
+def systemkvalitet_virksomhet(request, pk):
+	required_permissions = 'systemoversikt.change_system'
+	if request.user.has_perm(required_permissions):
+
+		virksomhet = Virksomhet.objects.get(pk=pk)
+		systemer_ansvarlig_for = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
+		return render(request, 'virksomhet_hvamangler.html', {
+			'request': request,
+			'virksomhet': virksomhet,
+			'systemer': systemer_ansvarlig_for,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 def systemdetaljer(request, pk):
 	system = System.objects.get(pk=pk)

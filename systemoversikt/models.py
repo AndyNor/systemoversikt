@@ -1907,6 +1907,34 @@ class System(models.Model):
 		else:
 			return None
 
+	def sist_endret_av(self):
+		from django.contrib.contenttypes.models import ContentType
+		from django.contrib.admin.models import LogEntry
+		system_content_type = ContentType.objects.get_for_model(self)
+		try:
+			return LogEntry.objects.filter(content_type=system_content_type).filter(object_id=self.pk).order_by('action_time')[0]
+		except:
+			return None
+
+	def databehandleravtaler_system(self):
+		from systemoversikt.models import Avtale
+		try:
+			return Avtale.objects.filter(for_system=self.pk).filter(avtaletype=1) #1=databehandleravtale
+		except:
+			return None
+
+	def databehandleravtaler_drift(self):
+		try:
+			avtaler = self.driftsmodell_foreignkey.avtaler.all()
+		except:
+			return None
+		databehandleravtaler = []
+		for avtale in avtaler:
+			if avtale.avtaletype == 1: #1=databehandleravtale
+				databehandleravtaler.append(avtale)
+		return databehandleravtaler
+
+
 	class Meta:
 		verbose_name_plural = "Systemer"
 		default_permissions = ('add', 'change', 'delete', 'view')
