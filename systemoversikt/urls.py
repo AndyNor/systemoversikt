@@ -86,6 +86,7 @@ urlpatterns = [
 	url(r'^virksomhet/min/$', views.min_virksomhet, name='min_virksomhet'),
 	url(r'^virksomhet/sertifikatmyndighet/$', views.sertifikatmyndighet, name='sertifikatmyndighet'),
 	url(r'^virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet, name='virksomhet'),
+	url(r'^virksomhet/innsyn/(?P<pk>\d{1,8})/$', views.innsyn_virksomhet, name='innsyn_virksomhet'),
 	url(r'^virksomhet/systemkvalitet/(?P<pk>\d{1,8})/$', views.systemkvalitet_virksomhet, name='systemkvalitet_virksomhet'),
 
 	url(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),

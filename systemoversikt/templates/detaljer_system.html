@@ -398,6 +398,14 @@ cy.on('tap', 'node', function(){
 				</td>
 			</tr>
 			<tr>
+				<td>{% get_verbose_field_name systemdetaljer "innsyn_innbygger" %}</td>
+				<td>{{ systemdetaljer.innsyn_innbygger|yesno:"Ja,Nei" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name systemdetaljer "innsyn_ansatt" %}</td>
+				<td>{{ systemdetaljer.innsyn_ansatt|yesno:"Ja,Nei" }}</td>
+			</tr>
+			<tr>
 				<td><a href="{% url 'alle_avtaler' %}">Avtaler</a> knyttet til driftsplattformen
 					{% explain_collapsed "Hvis det er angitt hvilken driftsmodell systemet kjører på, og driftsmodellen har angitt en avtale, vil avtalen vises her. Redigeres på driftsmodellobjektet." %}
 				</td>

@@ -108,13 +108,13 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'kildekode_url',
 				'superbrukere',
 				'nokkelpersonell',
-				'kontaktperson_innsyn',
 				'tjenestenivaa',
 			),
 		}),
 		('DPIA / personvern', {
 			'classes': ('collapse',),
 			'fields': (
+				('kontaktperson_innsyn', 'innsyn_innbygger', 'innsyn_ansatt'),
 				'autentiseringsalternativer',
 				'loggingalternativer',
 				'autorisasjon_differensiering_beskrivelse',

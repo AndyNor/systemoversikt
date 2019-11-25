@@ -35,6 +35,30 @@ def minside(request):
 	})
 
 
+def behandlingsprotokoll_egne(virksomhet):
+	# finne alle egne behandlinger
+	virksomhetens_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet)
+	return virksomhetens_behandlinger
+
+
+def behandlingsprotokoll_felles(virksomhet):
+	# finne systemer virksomheten abonnerer på behandlinger for
+	systembruk_virksomhet = []
+	virksomhetens_relevante_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet).filter(del_behandlinger=True)
+	for bruk in virksomhetens_relevante_bruk:
+		systembruk_virksomhet.append(bruk.system)
+	# finne alle behandlinger for identifiserte systemer merket fellesbehandling
+	delte_behandlinger = BehandlingerPersonopplysninger.objects.filter(systemer__in=systembruk_virksomhet).filter(fellesbehandling=True)
+	return delte_behandlinger
+
+def behandlingsprotokoll(virksomhet):
+	# slå sammen felles og egne behandlinger til et sett
+	virksomhetens_behandlinger = behandlingsprotokoll_egne(virksomhet)
+	delte_behandlinger = behandlingsprotokoll_felles(virksomhet)
+	alle_relevante_behandlinger = virksomhetens_behandlinger.union(delte_behandlinger).order_by('internt_ansvarlig')
+	return alle_relevante_behandlinger
+
+
 def dashboard_all(request, virksomhet=None):
 	try:
 		virksomhet = Virksomhet.objects.get(pk=virksomhet)
@@ -48,17 +72,8 @@ def dashboard_all(request, virksomhet=None):
 	systemer_forvalter = System.objects.filter(systemforvalter=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
 	systemer_felles = System.objects.filter(systemeierskapsmodell="FELLESSYSTEM").filter(~Q(ibruk=False)).order_by('systemnavn')
 
-	# finne systemer virksomheten abonnerer på behandlinger for
-	systembruk_virksomhet = []
-	virksomhetens_relevante_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet).filter(del_behandlinger=True)
-	for bruk in virksomhetens_relevante_bruk:
-		systembruk_virksomhet.append(bruk.system)
-	# finne alle egne behandlinger
-	virksomhetens_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet)
-	# finne alle behandlinger for identifiserte systemer merket fellesbehandling
-	delte_behandlinger = BehandlingerPersonopplysninger.objects.filter(systemer__in=systembruk_virksomhet).filter(fellesbehandling=True)
-	# slå sammen felles og egne behandlinger til et sett
-	alle_relevante_behandlinger = virksomhetens_behandlinger.union(delte_behandlinger).order_by('internt_ansvarlig')
+	alle_relevante_behandlinger = behandlingsprotokoll(virksomhet)
+
 	systemer_behandler_i = []
 	for behandling in alle_relevante_behandlinger:
 		for system in behandling.systemer.all():
@@ -834,20 +849,16 @@ def mine_behandlinger(request):
 		return redirect('alle_virksomheter')
 
 
+
 # internt_ansvarlig benyttes for å filtrere ut på underavdeling/seksjon/
 def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False, template='alle_behandlinger.html'):
 	vir = Virksomhet.objects.get(pk=pk)
 
-	# finne systemer virksomheten abonnerer på behandlinger for
-	systembruk_virksomhet = []
-	virksomhetens_relevante_bruk = SystemBruk.objects.filter(brukergruppe=pk).filter(del_behandlinger=True)
-	for bruk in virksomhetens_relevante_bruk:
-		systembruk_virksomhet.append(bruk.system)
+	# finne behandlinger virksomheten abonnerer på
+	delte_behandlinger = behandlingsprotokoll_felles(pk)
 
 	# finne alle egne behandlinger
-	virksomhetens_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=pk)
-	# finne alle behandlinger for identifiserte systemer merket fellesbehandling
-	delte_behandlinger = BehandlingerPersonopplysninger.objects.filter(systemer__in=systembruk_virksomhet).filter(fellesbehandling=True)#.filter(~Q(virksomhet_blacklist__in=[vir]))
+	virksomhetens_behandlinger = behandlingsprotokoll_egne(pk)
 
 	# generere en liste med unike avdelinger
 	virksomhetens_behandlinger_avdelinger = list(virksomhetens_behandlinger.values('internt_ansvarlig').distinct())
@@ -975,6 +986,27 @@ def min_virksomhet(request):
 	except:
 		messages.warning(request, 'Din bruker er ikke tilknyttet en virksomhet')
 		return redirect('alle_virksomheter')
+
+
+def innsyn_virksomhet(request, pk):
+	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
+	if request.user.has_perm(required_permissions):
+
+		virksomhet = Virksomhet.objects.get(pk=pk)
+		virksomhets_behandlingsprotokoll = behandlingsprotokoll(pk)
+		systemer = []
+		for behandling in virksomhets_behandlingsprotokoll:
+			for system in behandling.systemer.all():
+				if system not in systemer and (system.innsyn_innbygger or system.innsyn_ansatt):
+					systemer.append(system)
+
+		return render(request, 'detaljer_virksomhet_innsyn.html', {
+			'request': request,
+			'virksomhet': virksomhet,
+			'systemer': systemer,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def bytt_virksomhet(request):

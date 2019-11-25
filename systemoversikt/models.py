@@ -1865,6 +1865,16 @@ class System(models.Model):
 			blank=True,
 			help_text=u"Person som kan kontaktes for å undersøke om det er personopplysninger i systemet knyttet til en innsynsbegjæring.",
 			)
+	innsyn_innbygger = models.BooleanField(
+			verbose_name="Innsyn relevant for innbygger?",
+			default=True,
+			help_text=u"Krysses av dersom det er aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en innbygger.",
+			)
+	innsyn_ansatt = models.BooleanField(
+			verbose_name="Innsyn relevant for (tidligere) ansatt?",
+			default=True,
+			help_text=u"Krysses av dersom det er aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en ansatt",
+			)
 	kjente_mangler = models.TextField(
 			verbose_name="Kjente mangler i systemet",
 			blank=True, null=True,

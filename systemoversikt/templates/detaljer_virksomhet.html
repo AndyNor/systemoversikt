@@ -156,6 +156,8 @@
 	<h6>
 		{% url 'dashboard_all' virksomhet=virksomhet.pk as url_dashboard %}
 		<a href="{{ url_dashboard }}" class="btn btn-sm btn-success">Vårt dashboard</a>
+		{% url 'innsyn_virksomhet' pk=virksomhet.pk as url_innsyn_virksomhet %}
+		<a href="{{ url_innsyn_virksomhet }}" class="btn btn-sm btn-success">Vår innsynsmodul</a>
 		{% url 'alle_behandlinger_virksomhet' pk=virksomhet.pk as url_alle_behandlinger_virksomhet %}
 		<a href="{{ url_alle_behandlinger_virksomhet }}" class="btn btn-sm btn-success">Våre behandlinger</a>
 		{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}

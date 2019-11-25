@@ -1,0 +1,43 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Innsynsbegjæring for {{ virksomhet }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+<p>Her vises systemer vi behandler personopplysninger i. Det er {{ systemer|length }} systemer i listen.</p>
+
+<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th width="33%">System</th>
+		<th>Innbyggere?</th>
+		<th>Ansatte?</th>
+		<th>Ansvarlige for å utføre uthenting (innsynsansvarlige)</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for system in systemer %}
+	<tr>
+		<td>
+			<a target="_blank" href="/admin/systemoversikt/system/{{ system.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+			{% url "systemdetaljer" system.pk as url_system %}
+			<a href="{{ url_system }}">{{ system }}</a>
+		</td>
+		<td>
+			<span {% if system.innsyn_innbygger %} style="background-color: #a1e6b0;" {% endif %}>{{ system.innsyn_innbygger|yesno:"Ja,Nei" }}</span>
+		</td>
+		<td>
+			<span {% if system.innsyn_ansatt %} style="background-color: #a1e6b0;" {% endif %}>{{ system.innsyn_ansatt|yesno:"Ja,Nei" }}</span>
+		</td>
+		<td>
+			{% include "vis_ansvarlige.html" with ansvarlige=system.kontaktperson_innsyn.all %}
+		</td>
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
+
+{% endblock main_content %}
