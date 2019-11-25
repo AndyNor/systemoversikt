@@ -54,7 +54,7 @@ EMAIL_BACKEND = "mailer.backend.DbBackend"
 
 
 # django SMTP-settings
-EMAIL_HOST = "indre-relay.oslo.kommune.no"
+EMAIL_HOST = "localhost"
 EMAIL_PORT = 25
 EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
 EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
@@ -86,7 +86,7 @@ MIDDLEWARE = [
 # Security headers
 # CSP reqires "CSPMiddleware"
 CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-eval'") # numeric.js bruker desverre eval()
 CSP_FRAME_SRC = ("'self'",)
 CSP_STYLE_SRC = ("'unsafe-inline'", "'self'")
 CSP_INCLUDE_NONCE_IN = ['script-src']

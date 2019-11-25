@@ -85,7 +85,7 @@ MIDDLEWARE = [
 # Security headers
 # CSP reqires "CSPMiddleware"
 CSP_DEFAULT_SRC = ("'self'",)
-CSP_SCRIPT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-eval'") # numeric.js bruker desverre eval()
 CSP_FRAME_SRC = ("'self'",)
 CSP_STYLE_SRC = ("'unsafe-inline'", "'self'")
 CSP_INCLUDE_NONCE_IN = ['script-src']

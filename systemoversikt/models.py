@@ -1912,7 +1912,7 @@ class System(models.Model):
 		from django.contrib.admin.models import LogEntry
 		system_content_type = ContentType.objects.get_for_model(self)
 		try:
-			return LogEntry.objects.filter(content_type=system_content_type).filter(object_id=self.pk).order_by('action_time')[0]
+			return LogEntry.objects.filter(content_type=system_content_type).filter(object_id=self.pk).order_by('-action_time')[0]
 		except:
 			return None
 

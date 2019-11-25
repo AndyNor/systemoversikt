@@ -4,12 +4,12 @@
 {% load templatetags %}
 
 {% block ekstrajavascript %}
-	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}"></script>
-	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}"></script>
-	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}"></script>
-	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}"></script>
-	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}"></script>
-	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}"></script>
+	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
 {% endblock ekstrajavascript %}
 
 
