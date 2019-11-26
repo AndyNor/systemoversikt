@@ -6,26 +6,28 @@
 	<tr>
 		<th>Rediger</th>
 		<th>System</th>
+		<th>Bruk</th>
 		<th>Kvalitetssikret</th>
 		<th>Sist oppdatert</th>
 		<th>Sist oppdatert av</th>
-		<th>Systemeier</th>
-		<th>Ansvarlig systemeier</th>
-		<th>Forvalter</th>
-		<th>Ansvarlig forvalter</th>
-		<th>Systemkategori</th>
+		<th>Grensesnitt</th>
+		<th>Eier org</th>
+		<th>Eier navn</th>
+		<th>Forvalter org</th>
+		<th>Forvalter navn</th>
+		<th>Kategori</th>
 		<th>Eierskapsmodell</th>
 		<th>Driftsmodell</th>
 		<th>Systemleverandør</th>
 		<th>Risikovurdering dato</th>
 		<th>Risikovurdering link</th>
+		<th>Behandlinger</th>
 		<th>Databehandleravtale system | appdrift</th>
 		<th>Databehandleravtale drift</th>
 		<th>URL</th>
 		<th>Avhengigheter</th>
 		<th>Sikkerhetsnivå</th>
 		<th>Livsløpstatus</th>
-		<th>Strategisk egnethet</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -40,6 +42,9 @@
 				<a href="{{ url_systemdetaljer }}">{{ system }}</a>
 			</td>
 			<td>
+				{{ system.antall_bruk }}
+			</td>
+			<td>
 				{% if system.informasjon_kvalitetssikret %}
 				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
 				{% else %}
@@ -52,6 +57,11 @@
 			<td>
 				{{ system.sist_endret_av.user.get_full_name }}
 			</td>
+			<th>
+				{% for type in system.systemtyper.all %}
+					{{ type }}<br>
+				{% endfor %}
+			</th>
 			<td>
 				{% if system.systemeier %}
 				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
@@ -123,10 +133,17 @@
 				{% endif %}
 			</td>
 			<td>
-				{% if system.databehandleravtaler_system %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				{{ system.antall_behandlinger }}
+			</td>
+			<td>
+				{% if system.antall_behandlinger > 0 and system.applikasjonsdrift_behov_databehandleravtale %}
+					{% if system.databehandleravtaler_system %}
+					<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+					{% else %}
+					<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+					{% endif %}
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+					N/A
 				{% endif %}
 			</td>
 			<td>
@@ -137,18 +154,18 @@
 				{% endif %}
 			</td>
 			<td>
-				{% if system.systemurl.all %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				{% if system.forventet_url %}
+					{% if system.systemurl.all %}
+					<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+					{% else %}
+					<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+					{% endif %}
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+					N/A
 				{% endif %}
 			</td>
 			<td>
-				{% if system.datautveksling_mottar_fra.all or system.datautveksling_avleverer_til.all or system.avhengigheter_referanser.all %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
-				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
-				{% endif %}
+				{{ system.antall_avhengigheter }}
 			</td>
 			<td>
 				{% if system.sikkerhetsnivaa %}
@@ -159,13 +176,6 @@
 			</td>
 			<td>
 				{% if system.livslop_status %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
-				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
-				{% endif %}
-			</td>
-			<td>
-				{% if system.strategisk_egnethet %}
 				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
 				{% else %}
 				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">

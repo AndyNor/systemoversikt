@@ -285,6 +285,7 @@
 				<th>ID</th>
 				<th>System</th>
 				<th>Eierskapsmodell</th>
+				<th>Grensesnitt</th>
 				<th>Driftsplattform</th>
 				<th>Eier</th>
 				<th>Forvalter</th>
@@ -300,6 +301,11 @@
 				{% url 'systemdetaljer' pk=system.pk as url_system %}
 				<td><a target="_blank" href="{{ url_system }}">{{ system }}</a></td>
 				<td>{{ system.get_systemeierskapsmodell_display }}</td>
+				<th>
+					{% for type in system.systemtyper.all %}
+						{{ type }}<br>
+					{% endfor %}
+				</th>
 				<td>{{ system.driftsmodell_foreignkey }}</td>
 				<td>{{ system.systemeier.virksomhetsforkortelse }}</td>
 				<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>

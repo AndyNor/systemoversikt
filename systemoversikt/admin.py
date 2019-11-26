@@ -86,7 +86,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'fields': (
 				'systemleverandor',
 				'basisdriftleverandor',
-				'applikasjonsdriftleverandor',
+				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
 				'cmdbref_prod',
 				'cmdbref',
 				'brukerdokumentasjon_url',
@@ -434,9 +434,14 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 	filter_horizontal = ('programvareleverandor', 'kategorier')
 
 class UserAdmin(admin.ModelAdmin):
-	list_display = ('username', 'first_name', 'last_name', 'is_active', 'is_staff', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
+	list_display = ('username', 'first_name', 'last_name', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
 	search_fields = ('username', 'first_name', 'last_name')
 	list_filter = ('is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'profile__virksomhet', 'groups',)
+
+	def has_usable_password(self, obj):
+		return obj.has_usable_password()
+	has_usable_password.short_description = "Admin usable passord"
+	has_usable_password.boolean = True
 
 	def accountdisable(self, obj):
 		# her inverterer vi med vilje, og setter enabled i stedet for disabled

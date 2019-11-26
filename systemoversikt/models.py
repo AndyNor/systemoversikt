@@ -1136,6 +1136,11 @@ class Systemtype(models.Model):
 			blank=True, null=True,
 			help_text=u"Beskrivelse av kategori og noen eksempler.",
 			)
+	har_url = models.BooleanField(
+			verbose_name="Har slike systemer en URL?",
+			default=False,
+			help_text=u"Krysses av dersom det er forventet at systemer i denne kategorien har en URL.",
+			)
 	history = HistoricalRecords()
 
 	def __str__(self):
@@ -1692,6 +1697,11 @@ class System(models.Model):
 			blank=True,
 			help_text=u"Leverandør som sørger for at systemet fungerer som det skal. Kan f.eks. være en leverandør på en SSA-D (driftsavtale) eller SSA-B (bistandsavtale). Bør ikke fylles ut for systemer som kjøpes som en tjeneste av eksterne leverandører.",
 			)
+	applikasjonsdrift_behov_databehandleravtale = models.BooleanField(
+			verbose_name="Behov for (egen) DBA mot applikasjonsdriftsleverandør?",
+			default=True,
+			help_text=u"Krysses av dersom det er aktuelt å ha databehandleravtale med applikasjonsdriftsleverandør. Er f.eks. ikke nødvendig når det er samme leverandør som for basisdrift og det er etablert DBA mot denne.",
+			)
 	datamodell_url = models.URLField(
 			verbose_name="Datamodell (link)",
 			max_length=600,
@@ -1905,6 +1915,20 @@ class System(models.Model):
 		else:
 			return False
 
+	def forventet_url(self):
+		for systemtype in self.systemtyper.all():
+			if systemtype.har_url:
+				return True
+		return False
+
+	def antall_avhengigheter(self):
+		return len(self.datautveksling_mottar_fra.all()) + len(self.datautveksling_avleverer_til.all()) + len(self.avhengigheter_referanser.all())
+
+	def antall_bruk(self):
+		bruk = SystemBruk.objects.filter(system=self.pk)
+		return bruk.count()
+
+
 	def fip_kritikalitet(self):
 		if self.cmdbref_prod:
 			return self.cmdbref_prod.kritikalitet
@@ -1925,6 +1949,10 @@ class System(models.Model):
 			return LogEntry.objects.filter(content_type=system_content_type).filter(object_id=self.pk).order_by('-action_time')[0]
 		except:
 			return None
+
+	def antall_behandlinger(self):
+		behandlinger = BehandlingerPersonopplysninger.objects.filter(systemer=self.pk)
+		return behandlinger.count()
 
 	def databehandleravtaler_system(self):
 		from systemoversikt.models import Avtale
