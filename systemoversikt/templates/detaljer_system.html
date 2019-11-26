@@ -214,8 +214,7 @@ cy.on('tap', 'node', function(){
 				{% explain_collapsed text %}
 				</td>
 				<td>{% for url in systemdetaljer.systemurl.all %}
-					{% url "systemurl" url.pk as url_systemkategori %}
-					<a href="{{ url_systemkategori }}">{{ url.domene }}</a><br>
+					<a target="_blank" href="{{ url.domene }}">{{ url.domene }}</a><br>
 					{% endfor %}
 				</td>
 			</tr>
