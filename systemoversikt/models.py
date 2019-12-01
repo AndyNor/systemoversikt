@@ -1707,25 +1707,25 @@ class System(models.Model):
 			help_text=u"Krysses av dersom det er aktuelt å ha databehandleravtale med applikasjonsdriftsleverandør. Er f.eks. ikke nødvendig når det er samme leverandør som for basisdrift og det er etablert DBA mot denne.",
 			)
 	datamodell_url = models.URLField(
-			verbose_name="Datamodell (link)",
+			verbose_name="Datamodell",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Link til beskrivelse av datamodell",
 			)
 	datasett_url = models.URLField(
-			verbose_name="Datasett (link)",
+			verbose_name="Datasett",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Link til beskrivelse av datasett",
 			)
 	api_url = models.URLField(
-			verbose_name="API (link)",
+			verbose_name="API",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Link til beskrivelse av API",
 			)
 	kildekode_url = models.URLField(
-			verbose_name="Kildekode (link)",
+			verbose_name="Kildekode",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Link til kildekode",
@@ -1737,19 +1737,19 @@ class System(models.Model):
 			help_text=u"Link til gruppe på workplace eller f.eks. en intranettside.",
 			)
 	high_level_design_url = models.URLField(
-			verbose_name="Systemdokumentasjon (HighLevelDesign) (link)",
+			verbose_name="Systemdokumentasjon",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"High level design",
 			)
 	low_level_design_url = models.URLField(
-			verbose_name="Driftsdokumentasjon (LowLevelDesign) (link)",
+			verbose_name="Driftsdokumentasjon",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Low level design",
 			)
 	brukerdokumentasjon_url = models.URLField(
-			verbose_name="Brukerdokumentasjon (link)",
+			verbose_name="Brukerdokumentasjon",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Link til brukerdokumentasjon",

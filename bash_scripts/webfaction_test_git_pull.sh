@@ -13,5 +13,5 @@ python3.7 manage.py collectstatic --noinput
 # restart apache
 ~/webapps/kartoteket_test/apache2/bin/restart
 
-cd bash_scripts
+cd ~/webapps/kartoteket_test/myproject/systemoversikt/bash_scripts/
 chmod +x *
