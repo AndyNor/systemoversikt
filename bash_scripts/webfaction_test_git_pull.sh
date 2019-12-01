@@ -1,6 +1,6 @@
 #!/bin/sh
 # move to correct folder
-cd ~/webapps/kartoteket_test/systemoversikt/
+cd ~/webapps/kartoteket_test/myproject/systemoversikt/
 # update source code
 git fetch
 git reset --hard origin/master
