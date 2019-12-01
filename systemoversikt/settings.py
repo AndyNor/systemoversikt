@@ -58,7 +58,7 @@ if THIS_ENVIRONMENT == "TEST":
     SITE_DOMAIN = "systemoversikt-test.oslo.kommune.no"
     SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
     #SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
-    ALLOWED_HOSTS = ["localhost", SITE_DOMAIN, "kartoteket-test.oslo.kommune.no"]
+    ALLOWED_HOSTS = ["localhost", SITE_DOMAIN, "kartoteket-test.oslo.kommune.no", "kartoteket.andynor.net"]
 
 # Application definition
 INSTALLED_APPS = [
