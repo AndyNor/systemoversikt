@@ -7,8 +7,12 @@ https://docs.djangoproject.com/en/1.11/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
+import os
 
-THIS_ENVIRONMENT = "DEV" # "PROD" / "TEST" / "DEV"
+from this_env import this_env
+this_env()
+
+THIS_ENVIRONMENT = os.environ['THIS_ENV'] # "PROD" / "TEST" / "DEV"
 
 if THIS_ENVIRONMENT == "PROD":
     from secrets import load_secrets
@@ -18,7 +22,6 @@ if THIS_ENVIRONMENT == "TEST":
     from secrets_test import load_secrets
 load_secrets()
 
-import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
