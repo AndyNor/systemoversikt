@@ -530,6 +530,7 @@
 			<div class="card-body">
 
 
+		{% if systemdetaljer.driftsmodell_foreignkey %}
 				<table class="table table-sm table-striped">
 					<tr>
 						<td width="40%">{% get_verbose_field_name systemdetaljer "driftsmodell_foreignkey" %}
@@ -567,7 +568,8 @@
 						</td>
 						<td>{{ systemdetaljer.driftsmodell_foreignkey.kommentar|default:"-" }}</td>
 					</tr>
-			</table>
+				</table>
+		{% endif %}
 
 
 		{% if systemdetaljer.cmdbref_prod %}

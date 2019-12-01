@@ -8,11 +8,17 @@ register = template.Library()
 ''' https://stackoverflow.com/questions/14496978/fields-verbose-name-in-templates '''
 @register.simple_tag
 def get_verbose_field_name(instance, field_name):
-	return instance._meta.get_field(field_name).verbose_name
+	try:
+		return instance._meta.get_field(field_name).verbose_name
+	except:
+		return "Unknown"
 
 @register.simple_tag
 def get_help_text(instance, field_name):
-	return instance._meta.get_field(field_name).help_text
+	try:
+		return instance._meta.get_field(field_name).help_text
+	except:
+		return "Unknown"
 
 def id_generator(size=8, chars=string.ascii_uppercase):
 	return ''.join(random.choice(chars) for _ in range(size))
