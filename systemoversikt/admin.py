@@ -161,6 +161,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 				'fields': (
 					'virksomhetsnavn',
 					'virksomhetsforkortelse',
+					'ordinar_virksomhet',
 					'orgnummer',
 					'resultatenhet',
 					'ikt_kontakt',
@@ -268,54 +269,48 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 
 	fieldsets = (
 
-		('Initiell registrering', {
+		('Metadata', {
+			'classes': ('',),
 			'fields': (
-				'informasjon_kvalitetssikret',
-				'oppdateringsansvarlig',
-				'fellesbehandling',
 				'behandlingsansvarlig',
 				'internt_ansvarlig',
-				'behandlingen',
-				'funksjonsomraade',
-				'hoy_personvernrisiko',
-				'formaal',
-				('kategorier_personopplysninger', 'personopplysninger_utdyping'),
-				'krav_sikkerhetsnivaa',
-				'systemer',
-				'programvarer',
-				'navn_databehandler',
-				'tjenesteleveranse_land',
-				),
+				'oppdateringsansvarlig',
+				'informasjon_kvalitetssikret',
+				'fellesbehandling',
+			),
 		}),
-		('Utdypende opplysninger', {
-			'classes': ('collapse',),
+		('Obligatorisk registrering', {
+			'classes': ('',),
 			'fields': (
-				('den_registrerte', 'den_registrerte_hovedkateogi', 'den_registrerte_detaljer'),
-				'relasjon_registrerte',
-				('valgfriget_registrerte', 'den_registrerte_sarbare_grupper'),
-				('behandlingsgrunnlag_valg', 'behandlingsgrunnlag_utdyping', 'behandlingsgrunnlag_saerlige_kategorier'),
-				'forventet_bruk',
-				('opplysningskilde', 'frekvens_automatisert_innsamling', 'frekvens_innsamling_manuelt'),
+				'behandlingen',
+				'formaal',
+				('den_registrerte', 'den_registrerte_detaljer',),
+				('kategorier_personopplysninger', 'personopplysninger_utdyping'),
+				('utlevering_ekstern_myndighet', 'utlevering_ekstern_myndighet_utdyping'),
+				('utlevering_utenfor_EU', 'garantier_overforing'),
 				'oppbevaringsplikt',
 				('krav_slettefrister', 'planlagte_slettefrister'),
-				'begrensning_tilgang',
+				'hoy_personvernrisiko',
+				'systemer',
+			),
+		}),
+		('Anbefalte ekstraopplysninger', {
+			'classes': ('',),
+			'fields': (
+				'opplysningskilde',
+				('behandlingsgrunnlag_valg', 'behandlingsgrunnlag_utdyping', 'behandlingsgrunnlag_saerlige_kategorier'),
+				'navn_databehandler',
 				('databehandleravtale_status', 'databehandleravtale_status_boolean'),
-				('kommunens_maler', 'kommunens_maler_hvis_nei'),
+				'tjenesteleveranse_land',
+				'sikre_dataminimalisering',
+				'begrensning_tilgang',
 				'informering_til_registrerte',
 				'innsyn_egenkontroll',
 				'rette_opplysninger',
-				),
+				'programvarer',
+			),
 		}),
-		('Utlevering', {
-			'classes': ('collapse',),
-			'fields': (
-				('utlevering_ekstern_myndighet', 'utlevering_ekstern_myndighet_utdyping'),
-				('innhenting_ekstern_myndighet', 'innhenting_ekstern_myndighet_utdyping'),
-				('utlevering_registrerte_samtykke', 'utlevering_registrerte_samtykke_utdyping'),
-				('utlevering_utenfor_EU', 'garantier_overforing')
-				),
-		}),
-		('DPIA', {
+		('Ekstraopplysninger dersom DPIA er nødvendig', {
 			'classes': ('collapse',),
 			'fields': (
 				'dpia_unnga_hoy_risiko',
@@ -323,20 +318,32 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 				'dpia_effekt_enkelte',
 				'dpia_effekt_samfunnet',
 				'dpia_proporsjonalitet_enkelte_samfunnet',
+				'forventet_bruk',
 				'ny_endret_prosess',
 				'antall_registrerte',
 				'tilgang_opplysninger',
-				'sikre_dataminimalisering',
 				'dpia_dba_ivaretakelse_sikkerhet',
 				'dpia_prosess_godkjenne_underleverandor',
 				'dpia_tidligere_bekymringer_risikoer',
 				'dpia_tidligere_avdekket_sikkerhetsbrudd',
 				'sikkerhetstiltak'
-				),
+			),
 		}),
 		('Utfases', {
 			'classes': ('collapse',),
-			'fields': ('virksomhet_blacklist',),
+			'fields': (
+				'virksomhet_blacklist',
+				'krav_sikkerhetsnivaa',
+				('innhenting_ekstern_myndighet', 'innhenting_ekstern_myndighet_utdyping'),
+				('utlevering_registrerte_samtykke', 'utlevering_registrerte_samtykke_utdyping'),
+				'relasjon_registrerte',
+				('valgfriget_registrerte', 'den_registrerte_sarbare_grupper'),
+				'funksjonsomraade',
+				'den_registrerte_hovedkateogi',
+				('kommunens_maler', 'kommunens_maler_hvis_nei'),
+				'frekvens_automatisert_innsamling',
+				'frekvens_innsamling_manuelt',
+			),
 		}),
 	)
 

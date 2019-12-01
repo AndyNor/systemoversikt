@@ -129,6 +129,7 @@
 				-->
 				<form method="post" action="{{ url_logout }}" style="display: inline; margin-left: 30px;">
 					{% csrf_token %}
+					<input type="hidden" name="next" value="{{ request.path }}">
 					<button type="submit">Logg ut</button>
 				</form>
 
@@ -145,6 +146,7 @@
 				-->
 				<form method="get" action="{{ url_login }}" style="display: inline; margin-left: 30px;">
 					{% csrf_token %}
+					<input type="hidden" name="next" value="{{ request.path }}">
 					<button type="submit">Logg inn</button>
 				</form>
 
@@ -168,10 +170,12 @@
 					{% url "alle_avtaler" as alle_avtaler_url %}
 					<a href="{{ alle_avtaler_url }}" class="nav-link {% if alle_avtaler_url in request.path %} active {% endif %}">Avtaler</a>
 				</li>
+				{% if user.profile.virksomhet %}
 				<li class="nav-item">
 					{% url "dashboard_all" virksomhet=user.profile.virksomhet.pk as dashboard_url %}
 					<a href="{{ dashboard_url }}" class="nav-link {% if dashboard_url in request.path %} active {% endif %}">Vårt dashboard</a>
 				</li>
+				{% endif %}
 				<li class="nav-item">
 					{% url "mine_behandlinger" as mine_behandlinger_url %}
 					<a href="{{ mine_behandlinger_url }}" class="nav-link {% if mine_behandlinger_url in request.path %} active {% endif %}">Våre behandlinger</a>

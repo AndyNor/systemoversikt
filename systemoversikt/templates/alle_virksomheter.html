@@ -2,11 +2,11 @@
 {% load static %}
 
 {% block underoverskrift %}
-	Virksomheter i Oslo kommune ({{ virksomheter.count }} registrert)
+	Alle virksomheter
 {% endblock underoverskrift %}
 
 {% block undermeny %}
-	<p>Virksomhet definert som organisatorisk enhet med unikt organisasjonsnummer.</p>
+	<p>Virksomhet definert som organisatorisk enhet med unikt organisasjonsnummer. Det er registrert {{ virksomheter.count }} virksomheter.</p>
 	<div>
 		{% if user.is_authenticated %}
 			<a target="_blank" class="btn btn-sm btn-primary" href="/admin/systemoversikt/virksomhet/add/">Legg til ny virksomhet</a>
@@ -14,7 +14,7 @@
 			<a href="{% url 'sertifikatmyndighet' %}" class="btn btn-sm btn-secondary">Vis sertifikatmyndigheter</a>
 		{% endif %}
 	</div>
-	<br><br>
+	<br>
 {% endblock undermeny %}
 
 
@@ -22,23 +22,23 @@
 	<table id="virksomheter" class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>
-		<th>Virksomhetsnavn</th>
+		<th>Virksomhet</th>
 		<th>Forkortelse</th>
-		<th>Virksomhetsleder</th>
-		<th>Systemer i bruk</th>
+		<th>Leder</th>
+		<th>Antall systemer i bruk</th>
 		<th>Antall ansatte</th>
-		<th>Klientplattform</th>
-		<th>Aut.bestillere InfoTorg</th>
-		<th>Aut.bestillere mot UKE</th>
-		<th>Personvernkoord.</th>
-		<th>Info.sik.koord.</th>
+		<th>Drift av klientplattform</th>
+		<th>Autoriserte bestillere InfoTorget</th>
+		<th>Autoriserte bestillere mot intern tjenesteleverandør</th>
+		<th>Koordinator personvern</th>
+		<th>Koordinator informasjonssikkerhet</th>
 		<th>IKT-hovedkontakt</th>
-		<th>Kundeansvarlig fra UKE</th>
+		<th>Kundeansvarlig hos intern tjenesteleverandør</th>
 	</tr>
 	</thead>
 	<tbody>
 	{% for vir in virksomheter %}
-	<tr>
+	<tr {% if not vir.ordinar_virksomhet %} style="opacity: 0.33;" {% endif %}>
 		{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
 		<td>
 			{% if user.is_authenticated %}
@@ -60,8 +60,8 @@
 			{% endfor %}
 		</td>
 		<td>{{ vir.systembruk_brukergruppe.all.count }}</td>
-		<td>{{ vir.ansatte|default:"Ukjent" }}</td>
-		<td>{{ vir.get_resultatenhet_display }}</td>
+		<td>{{ vir.ansatte|default:"-" }}</td>
+		<td>{{ vir.get_resultatenhet_display|default:"-" }}</td>
 		<td>
 			{% for person in vir.autoriserte_bestillere_tjenester.all %}
 				<a href="{% url 'ansvarlig' person.pk %}"

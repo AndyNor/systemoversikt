@@ -239,6 +239,7 @@ def dashboard_all(request, virksomhet=None):
 		'request': request,
 		'systemlister': systemlister,
 		'alle_virksomheter': alle_virksomheter,
+		'virksomhet': virksomhet,
 	})
 
 
@@ -1052,7 +1053,7 @@ def sertifikatmyndighet(request):
 
 
 def alle_virksomheter(request):
-	virksomheter = Virksomhet.objects.order_by('virksomhetsnavn')
+	virksomheter = Virksomhet.objects.order_by('-ordinar_virksomhet', 'virksomhetsnavn')
 	return render(request, 'alle_virksomheter.html', {
 		'request': request,
 		'virksomheter': virksomheter,

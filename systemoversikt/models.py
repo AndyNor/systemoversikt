@@ -5,11 +5,6 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from simple_history.models import HistoricalRecords
 
-RESULTATENHET_VALG = (
-	('OF', 'Felles IKT-plattform'),
-	('Egen', 'Egen drift'),
-)
-
 
 # som standard vises bare "self.username". Vi ønsker også å vise fult navn.
 def new_display_name(self):
@@ -227,6 +222,10 @@ class AutorisertBestiller(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+RESULTATENHET_VALG = (
+	('OF', 'Felles IKT-plattform'),
+	('Egen', 'Egen drift'),
+)
 
 class Virksomhet(models.Model):
 	opprettet = models.DateTimeField(
@@ -238,60 +237,65 @@ class Virksomhet(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
+	ordinar_virksomhet = models.BooleanField(
+			verbose_name="Er dette en ordinær virksomhet?",
+			default=True,
+			help_text=u'Krysse av dersom det ikke ønskes at virksomheten vises i virksomhetsoversikten eller i statistikk. Brukes f.eks. for import av driftsbrukere.',
+			)
 	virksomhetsforkortelse = models.CharField(unique=True,
 			verbose_name="Virksomhetsforkortelse",
 			blank=True, null=True,
 			max_length=3,
-			help_text=u"",
+			help_text=u"Dette feltet brukes som standard visningsnavn.",
 			)
 	virksomhetsnavn = models.CharField(unique=True,
 			verbose_name="Virksomhetsnavn",
 			max_length=250,
-			help_text=u"",
+			help_text=u"Fult navn på virksomheten. En virksomhet er ment å modellere en entitet med eget organisasjonsnummer.",
 			)
 	overordnede_virksomheter = models.ManyToManyField("Virksomhet", related_name='virksomhet_overordnede_virksomheter',
 			verbose_name="Overordnede virksomheter",
 			blank=True,
-			help_text=u"Brukes for å kunne representere underordnede virksomheter",
+			help_text=u'Dersom aktuelt kan en annen virksomhet angis som overornet denne.',
 			)
 	kan_representeres = models.BooleanField(
 			verbose_name="Kan representeres",
 			default=False,
-			help_text=u"Settes dersom det skal være mulig for overordnet virksomhet å bytte rolle til underordnet virksomhet",
+			help_text=u'Den overordnede virksomheten kan representere ("bytte til") den underordnede dersom det krysses av her.',
 			)
 	resultatenhet = models.CharField(choices=RESULTATENHET_VALG,
-			verbose_name="Driftsmodell e-post, kalender og arbeidsflate",
+			verbose_name="Driftsmodell for klientflate",
 			max_length=30,
 			blank=True, null=True,
 			default='',
-			help_text=u"",
+			help_text=u"Dette feltet brukes for å angi om virksomheten er på sentral klientplattform, eller har lokal drift.",
 			)
 	uke_kam_referanse = models.ManyToManyField(Ansvarlig, related_name='virksomhet_uke_kam',
-			verbose_name='Kundeansvarlig hos UKE',
+			verbose_name='Kundeansvarlig fra intern tjenesteleverandør',
 			blank=True,
-			help_text=u"",
+			help_text=u"Dette feltet oppdateres av intern tjenesteleverandør.",
 			)
 	ansatte = models.IntegerField(
 			verbose_name="Antall ansatte",
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Her kan antall ansatte i virksomheten angis.",
 			)
 	intranett_url = models.URLField(
-			verbose_name="Link til intranett",
+			verbose_name="På intranett (internt)",
 			max_length=600,
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Her oppgir du link til virksomhetens interne intranettside.",
 			)
 	www_url = models.URLField(
-			verbose_name="Link til oslo.kommune.no",
+			verbose_name="Hjemmeområde web",
 			max_length=600,
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"Her oppgir du link til virksomhetens hjemmeområde på de åpne nettsidene.",
 			)
 	ikt_kontakt = models.ManyToManyField(Ansvarlig, related_name='virksomhet_ikt_kontakt',
-			verbose_name='IKT-hovedkontakt',
+			verbose_name='Vår IKT-hovedkontakt',
 			blank=True,
-			help_text=u"Koordineringsledd mellom UKE og virksomheten.",
+			help_text=u"Virksomhetens kontaktpunkt for IKT.",
 			)
 	autoriserte_bestillere_tjenester = models.ManyToManyField(Ansvarlig, related_name='virksomhet_autoriserte_bestillere_tjenester',
 			verbose_name='Autoriserte bestillere InfoTorg',
@@ -299,65 +303,65 @@ class Virksomhet(models.Model):
 			help_text=u"En autorisert bestiller InfoTorg er en person virksomheten har autorisert til å bestille brukere til data fra det sentrale folkeregistret.",
 			)
 	autoriserte_bestillere_tjenester_uke = models.ManyToManyField(Ansvarlig, related_name='virksomhet_autoriserte_bestillere_tjenester_uke',
-			verbose_name='Autoriserte bestillere tjenester UKE',
+			verbose_name='Autoriserte bestillere av tjenester fra intern tjenesteleverandør.',
 			blank=True,
-			help_text=u"En autorisert bestiller er en person virksomheten har autorisert til å bestille tjenester av UKE via den nye kundeportalen som snart kommer. Det kan angis flere i dette feltet.",
+			help_text=u"En autorisert bestiller er en person virksomheten har autorisert til å bestille tjenester via den selvbetjeningsportalen (kundeportalen).",
 			)
 	orgnummer = models.CharField(
-			verbose_name="Organisasjonsnummer",
+			verbose_name="Vårt organisasjonsnummer",
 			max_length=30,
 			blank=True, null=True,
-			help_text=u"",
+			help_text=u"9 siffer uten mellomrom.",
 			)
 	leder = models.ManyToManyField(Ansvarlig, related_name='virksomhet_leder',
-			verbose_name="Virksomhetsleder",
+			verbose_name="Vår virksomhetsleder",
 			blank=True,
-			help_text=u"",
+			help_text=u"Angi hvem som er virksomhetsleder.",
 			)
 	autoriserte_bestillere_sertifikater = models.ManyToManyField(AutorisertBestiller, related_name='virksomhet_autoriserte_bestillere_sertifikater',
-			verbose_name="Autoriserte bestillere (sertifikater)",
+			verbose_name="Autoriserte sertifikatbestillere",
 			blank=True,
 			help_text=u"Fylles ut dersom virksomhetsleder har avgitt fullmakt for ustedelse av websertifikater og/eller virksomhetssertifikater.",
 			)
 	sertifikatfullmakt_avgitt_web = models.NullBooleanField(
-			verbose_name="Gitt fullmakt websertifikater?",
+			verbose_name="Avgitt fullmakt for websertifikater?",
 			blank=True, null=True,
 			default=False,
-			help_text=u"Har avgitt fullmakt til driftsleverandør for utstedelse av websertifikater for sitt orgnummer.",
+			help_text=u"Krysses av dersom virksomhet har avgitt fullmakt til driftsleverandør for utstedelse av websertifikater for sitt org.nummer.",
 			)
 	sertifikatfullmakt_avgitt_virksomhet = models.NullBooleanField(
-			verbose_name="Gitt fullmakt virksomhetssertifikater?",
+			verbose_name="Avgitt fullmakt for virksomhetssertifikater?",
 			blank=True, null=True,
 			default=False,
-			help_text=u"Har avgitt fullmakt til driftsleverandør for utstedelse av virksomhetssertifikater for sitt orgnummer.",
+			help_text=u"Krysses av dersom virksomhet har avgitt fullmakt til driftsleverandør for utstedelse av virksomhetssertifikater for sitt org.nummer.",
 			)
 	rutine_tilgangskontroll = models.URLField(
-			verbose_name="Link til rutiner for tilgangskontroll",
+			verbose_name="Rutiner for tilgangskontroll",
 			max_length=600,
 			blank=True, null=True,
-			help_text=u"Link til dokument i virksomhetens styringssystem",
+			help_text=u"Link til dokument i virksomhetens styringssystem.",
 			)
 	rutine_behandling_personopplysninger = models.URLField(
-			verbose_name="Link til rutiner for behandling av personopplysninger",
+			verbose_name="Rutiner for behandling av personopplysninger",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Link til dokument i virksomhetens styringssystem",
 			)
 	rutine_klage_behandling = models.URLField(
-			verbose_name="Link til rutine for behandling av klage på behandling",
+			verbose_name="Rutine for behandling av klage på behandling",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Link til dokument i virksomhetens styringssystem",
 			)
 	personvernkoordinator = models.ManyToManyField(Ansvarlig, related_name='virksomhet_personvernkoordinator',
-			verbose_name='Personvernkoordinator',
+			verbose_name='Vår personvernkoordinator',
 			blank=True,
-			help_text=u"Personvernkoordinator.",
+			help_text=u"Person(er) i rollen som personvernkoordinator.",
 			)
 	informasjonssikkerhetskoordinator = models.ManyToManyField(Ansvarlig, related_name='virksomhet_informasjonssikkerhetskoordinator',
-			verbose_name='Informasjonssikkerhetskoordinator',
+			verbose_name='Vår informasjonssikkerhetskoordinator',
 			blank=True,
-			help_text=u"Informasjonssikkerhetskoordinator.",
+			help_text=u"Person(er) i rollen som informasjonssikkerhetskoordinator.",
 			)
 	history = HistoricalRecords()
 
@@ -2600,8 +2604,9 @@ class BehandlingerPersonopplysninger(models.Model):
 			)
 			#draftit: enhet er det som brukes her. Må finne en mapping.
 			#trenger vi to?
-	behandlingen = models.TextField(
+	behandlingen = models.CharField(
 			verbose_name="Kort beskrivelse av behandlingen/prosessen.",
+			max_length=80,
 			blank=False, null=False,
 			help_text=u"Beskriv kort hva som skjer i prosessen. Det skal kun være noen få ord som beskriver hva behandlingen av personopplysninger innebærer. Eksempler: Personaladministrasjon (HR), Besøksregistrering, Bakgrunnssjekk av ansatte, Saksbehandling, Oppfølging av sykefravær",
 			)

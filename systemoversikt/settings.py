@@ -42,7 +42,7 @@ if THIS_ENVIRONMENT == "PROD":
     SITE_SCHEME = "https"
     SITE_DOMAIN = "kartoteket.oslo.kommune.no"
     SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
-    SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
+    #SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
     ALLOWED_HOSTS = ["localhost", "kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "10.134.162.203"]
 if THIS_ENVIRONMENT == "DEV":
     SECURE_SSL_REDIRECT = False
@@ -50,14 +50,14 @@ if THIS_ENVIRONMENT == "DEV":
     SITE_SCHEME = "http"
     SITE_DOMAIN = "localhost"
     SITE_PORT_OVERRIDE = ":8000"  # start with ":", default empty ("")
-    SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
+    #SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
     ALLOWED_HOSTS = ["localhost", SITE_DOMAIN]
 if THIS_ENVIRONMENT == "TEST":
     TEST_ENV_NAME = "test"
     SITE_SCHEME = "https"
     SITE_DOMAIN = "systemoversikt-test.oslo.kommune.no"
     SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
-    SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
+    #SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
     ALLOWED_HOSTS = ["localhost", SITE_DOMAIN, "kartoteket-test.oslo.kommune.no"]
 
 # Application definition
@@ -227,7 +227,8 @@ if THIS_ENVIRONMENT == "PROD":
     OIDC_OP_TOKEN_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/token"
     OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/userinfo"
     OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
-    LOGOUT_REDIRECT_URL = SITE_URL + "/"
+    LOGOUT_REDIRECT_URL = "/"
+    #LOGOUT_REDIRECT_URL = SITE_URL + "/"
 if THIS_ENVIRONMENT == "DEV":
     OIDC_IDP_URL_BASE = "http://127.0.0.1:8080"
     OIDC_IDP_REALM = "behandlingsoversikt"
@@ -243,6 +244,8 @@ if THIS_ENVIRONMENT == "DEV":
     LOGOUT_REDIRECT_URL = "/"
 if THIS_ENVIRONMENT == "TEST":
     LOGOUT_REDIRECT_URL = "/"
+    OIDC_IDP_URL_BASE = None  # kreves av context_processors.py
+    OIDC_IDP_REALM = None  # kreves av context_processors.py
 
 
 #session security
