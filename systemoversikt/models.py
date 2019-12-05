@@ -245,7 +245,7 @@ class Virksomhet(models.Model):
 	virksomhetsforkortelse = models.CharField(unique=True,
 			verbose_name="Virksomhetsforkortelse",
 			blank=True, null=True,
-			max_length=3,
+			max_length=10,
 			help_text=u"Dette feltet brukes som standard visningsnavn.",
 			)
 	virksomhetsnavn = models.CharField(unique=True,
