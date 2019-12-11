@@ -2934,6 +2934,90 @@ class BehandlingerPersonopplysninger(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class BehovForDPIA(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	behandling = models.OneToOneField(BehandlingerPersonopplysninger, related_name="behandling_behovdpia",
+			on_delete=models.PROTECT,
+			blank=False, null=False,
+			help_text=u"Behandlingen denne vurderingen gjelder for.",
+			)
+	evaluering_profilering = models.BooleanField(
+			verbose_name="Evaluering eller poengsetting?",
+			default=True,
+			help_text=u'Innebærer behandlingen evaluering eller scoring / profilering i stor skala for å forutsi den registrertes antatte evner/egenskaper? (Inkludert profilering og forutsigelse, spesielt «aspekter som gjelder arbeidsprestasjoner, økonomisk situasjon, helse, personlige preferanser eller interesser, pålitelighet eller atferd, plassering eller bevegelser» (fortalepunkt 71 og 91).)',
+			)
+	automatiskbeslutning = models.BooleanField(
+			verbose_name="Automatiske beslutninger med rettslig eller tilsvarende betydelig virkning?",
+			default=True,
+			help_text=u'Behandling som har som formål å ta beslutninger om den registrerte som har «rettsvirkning for den fysiske personen» eller «på lignende måte i betydelig grad påvirker den fysiske personen» (artikkel 35 nr. 3 a).',
+			)
+	systematiskmonitorering = models.BooleanField(
+			verbose_name="Systematisk monitorering?",
+			default=True,
+			help_text=u'Behandlingsaktiviteter som brukes for å observere, overvåke eller kontrollere de registrerte, inkludert opplysninger som har blitt samlet inn gjennom nettverk eller «en systematisk overvåking i stor skala av et offentlig tilgjengelig område» (artikkel 35 nr. 3 c). ',
+			)
+	saerligekategorier = models.BooleanField(
+			verbose_name="Særlige kategorier av personopplysninger eller opplysninger av svært personlig karakter ?",
+			default=True,
+			help_text=u'Dette omfatter særlige kategorier av personopplysninger (tidligere kalt sensitive personopplysninger) som er definert i artikkel 9 (for eksempel informasjon om enkeltpersoners politiske meninger), samt personopplysninger vedrørende straffedommer og lovovertredelser som definert i artikkel 10. ',
+			)
+	storskala = models.BooleanField(
+			verbose_name="Personopplysninger behandles i stor skala?",
+			default=True,
+			help_text=u'Innebærer behandlingen evaluering eller scoring / profilering i stor skala for å forutsi den registrertes antatte evner/egenskaper?',
+			)
+	sammenstilling = models.BooleanField(
+			verbose_name="Matching eller sammenstilling av datasett?",
+			default=True,
+			help_text=u'Dette kan for eksempel stamme fra to eller flere databehandlingsoperasjoner som gjennomføres med ulike formål og/eller av ulike behandlingsansvarlige på en måte som overstiger den registrertes rimelige forventninger.',
+			)
+	saarbare_registrerte = models.BooleanField(
+			verbose_name="Personopplysninger om sårbare registrerte?",
+			default=True,
+			help_text=u'Behandling av denne typen av personopplysninger er et kriterium på grunn av den skjeve maktbalansen mellom de registrerte og den behandlingsansvarlige, som betyr at enkeltpersoner kan være ute av stand til, på en enkel måte, å gi sitt samtykke eller motsette seg behandlingen av sine personopplysninger eller utøve sine rettigheter. Sårbare registrerte kan omfatte barn (de kan anses å ikke være i stand til på en bevisst og gjennomtenkt måte å motsette seg eller gi samtykke til behandling av sine personopplysninger), arbeidstakere, mer sårbare befolkningsgrupper som behøver sosial beskyttelse (psykisk syke personer, asylsøkere, eldre personer, pasienter og så videre), samt i de situasjoner der det foreligger en ubalanse i forholdet mellom den registrerte og den behandlingsansvarlige.',
+			)
+	innovativ_anvendelse = models.BooleanField(
+			verbose_name="Innovativ bruk eller anvendelse av ny teknologisk eller organisatorisk løsning?",
+			default=True,
+			help_text=u'Dette kan være en kombinasjon av fingeravtrykk og ansiktsgjenkjenning for en forbedret fysisk adgangskontroll og så videre. Det går klart frem av forordningen (artikkel 35 nr. 1 og fortalepunkt 89 og 91) at bruk av ny teknologi som defineres «i samsvar med det oppnådde nivået av teknisk kunnskap» (fortalepunkt 91), kan medføre behov for å gjennomføre en vurdering av personvernkonsekvenser. Grunnen til dette er at anvendelse av ny teknologi kan medføre nye former for innsamling og bruk av personopplysninger, eventuelt med høy risiko for den enkeltes rettigheter og friheter. De personlige og sosiale konsekvensene ved anvendelsen av ny teknologi kan være ukjente. En vurdering av personvernkonsekvenser hjelper den behandlingsansvarlige å forstå og håndtere slike risikoer. For eksempel kan visse «tingenes internett»-applikasjoner få betydelige konsekvenser for den enkeltes dagligliv og privatliv, og kan derfor kreve en vurdering av personvernkonsekvenser.',
+			)
+	hinder = models.BooleanField(
+			verbose_name="Når behandlingen «hindrer de registrerte i å utøve en rettighet eller gjøre bruk av en tjeneste eller en avtale» (artikkel 22 og fortalepunkt 91)",
+			default=True,
+			help_text=u'Dette omfatter behandlinger som tar sikte på å tillate, endre eller nekte den registrerte tilgang til en tjeneste eller inngå en avtale. For eksempel når en bank kredittvurderer sine kunder mot en database for å avgjøre om de skal tilbys lån.',
+			)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return u'Vurdering for %s' % (self.behandling)
+
+	def behovforDPIA(self):
+		kriterier = [self.evaluering_profilering, self.automatiskbeslutning, self.systematiskmonitorering, self.saerligekategorier, self.storskala, self.sammenstilling, self.saarbare_registrerte, self.innovativ_anvendelse, self.hinder]
+		count = 0
+		for k in kriterier:
+			if k == True:
+				count+= 1
+		if count == 0:
+			return "Nei, ikke behov"
+		if count == 1:
+			return "Normalt ikke"
+		if count == 2:
+			return "Ja, med mindre DPIA for tilsvarende prosess er utført før"
+		if count > 2:
+			return "Ja, uten tvil"
+
+
+	class Meta:
+		verbose_name_plural = "DPIA-behovsvurderinger"
+		default_permissions = ('add', 'change', 'delete', 'view')
 
 """
 LIVSSYKLUS_VALG = (

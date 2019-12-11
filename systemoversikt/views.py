@@ -21,6 +21,36 @@ FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
 SYSTEMTYPE_PROGRAMMER = "Selvstendig klientapplikasjon"
 
 
+def user_clean_up(request):
+	"""
+	Denne funksjonen er laget for å slette/anonymisere data i testmiljøet.
+	"""
+	required_permissions = 'auth.view_ansvarlig'
+	if request.user.has_perm(required_permissions):
+		from django.conf import settings
+		if settings.DEBUG == True:  # Testmiljø
+			from django.contrib.auth.models import User
+			for user in User.objects.all():
+				try:
+					user.delete()
+				except:
+					print("Kan ikke slette bruker %s. Forsøker å anonymisere" % user)
+
+				anonymous_firstname = ("First-" + user.username[:3])
+				user.first_name = anonymous_firstname
+				anonymous_lastname = ("Last-" + user.username[3:])
+				user.last_name = anonymous_lastname
+				user.save()
+		else:
+			print("Du får ikke kjøre denne kommandoen i produksjon!")
+
+		return render(request, "home.html", {
+			'request': request,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def virksomhet_til_bruker(request):
 	try:
 		vir = request.user.profile.virksomhet.virksomhetsforkortelse

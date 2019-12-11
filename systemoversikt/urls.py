@@ -151,6 +151,8 @@ urlpatterns = [
 	url(r'^import/cmdb/databases/$', views_import.import_cmdb_databases, name='import_databases'),
 	url(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
 
+	url(r'^user_clean_up/$', views.user_clean_up, name='user_clean_up'),
+
 
 	#url(r'^import_sys_new/$', views.import_sys_new, name='import_sys_new'),
 	#url(r'^import_bruk/$', views.import_bruk, name='import_bruk'),

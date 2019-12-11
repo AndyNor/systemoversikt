@@ -38,7 +38,8 @@
 	<tbody>
 	{% for maskin in maskiner %}
 	<tr {% if not maskin.active %} style="color: #d6d6d6;" {% endif %}>
-		<td>{{ maskin.comp_name }}</td>
+		{% url 'ad_details' name=maskin.comp_name as url_ad %}
+		<td><a href="{{ url_ad }}">{{ maskin.comp_name }}</a></td>
 		<td>{{ maskin.bs_u_service_portfolio }}</td>
 		<td>{{ maskin.comp_ip_address }}</td>
 		<td>{{ maskin.comp_os|default:"Ukjent" }} {{ maskin.comp_os_version }} {{ maskin.comp_os_service_pack }}</td>
