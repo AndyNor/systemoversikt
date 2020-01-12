@@ -93,7 +93,8 @@
 
 			<td>
 			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
-				{{ item.hoy_personvernrisiko|yesno:"Ja,Nei" }}
+				Ny vurdering vises ikke enda.<br>
+				Gammel vurdering: {{ item.hoy_personvernrisiko|yesno:"Ja,Nei" }}
 			{% else %}
 				***
 			{% endif %}

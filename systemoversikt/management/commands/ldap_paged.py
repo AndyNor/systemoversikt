@@ -260,6 +260,8 @@ class Command(BaseCommand):
 						user.email = email
 						try:
 							virksomhet_tbf = username[0:3].upper()
+							if username[0:5].upper() == "DRIFT": # all usernames are 3 letters by default in Oslo kommune, except DRIFT
+								virksomhet_tbf = "DRIFT"
 							virksomhet_obj_ref = Virksomhet.objects.get(virksomhetsforkortelse=virksomhet_tbf)
 							user.profile.virksomhet = virksomhet_obj_ref
 						except:

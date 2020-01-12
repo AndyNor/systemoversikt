@@ -230,10 +230,10 @@ if THIS_ENVIRONMENT == "PROD":
     OIDC_OP_TOKEN_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/token"
     OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/userinfo"
     OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
-    LOGOUT_REDIRECT_URL = "/"
+    LOGOUT_REDIRECT_URL = "https://kartoteket.oslo.kommune.no"
     #LOGOUT_REDIRECT_URL = SITE_URL + "/"
 if THIS_ENVIRONMENT == "DEV":
-    OIDC_IDP_URL_BASE = "http://127.0.0.1:8080"
+    OIDC_IDP_URL_BASE = "http://localhost:8080"
     OIDC_IDP_REALM = "behandlingsoversikt"
     OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
     OIDC_RP_SIGN_ALGO = "RS256"
@@ -243,8 +243,8 @@ if THIS_ENVIRONMENT == "DEV":
     OIDC_OP_AUTHORIZATION_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/auth"
     OIDC_OP_TOKEN_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/token"
     OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/userinfo"
-    #OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
-    LOGOUT_REDIRECT_URL = "/"
+    OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
+    LOGOUT_REDIRECT_URL = "http://localhost:8000"
 if THIS_ENVIRONMENT == "TEST":
     LOGOUT_REDIRECT_URL = "/"
     OIDC_IDP_URL_BASE = None  # kreves av context_processors.py

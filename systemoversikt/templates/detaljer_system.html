@@ -25,9 +25,9 @@
 <h6>{{ systemdetaljer.systembeskrivelse|linebreaks }}</h6>
 
 {% if not systemdetaljer.informasjon_kvalitetssikret %}
-	<div id="div_message" class="alert alert-warning">
-		<a class="close" data-dismiss="alert" href="#">×</a>
-		<h6 class="alert-heading">Informasjonen er ikke kvalitetssikret!</h6>
+<div id="div_message" class="alert alert-warning">
+	<a class="close" data-dismiss="alert" href="#">×</a>
+	<h6 class="alert-heading">Informasjonen er ikke kvalitetssikret!</h6>
 </div>
 {% endif %}
 
@@ -917,15 +917,15 @@
 					<tr>
 						<th>Virksomhet</th>
 						{% if perms.systemoversikt.view_system %}
-						<th>Konfidensialitet</th>
-						<th>Integritet</th>
-						<th>Tilgjengelighet</th>
+						<th>Lokal konfidensialitetvurdering</th>
+						<th>Lokal integritetsvurdering</th>
+						<th>Lokal tilgjengelighetsvurdering</th>
 						{% endif %}
 						<th>Abonnerer på felles behandlinger?</th>
-						<th>Livsløp</th>
-						<th>Funksjonell</th>
-						<th>Strategisk</th>
-						<th>Teknisk</th>
+						<th>Lokal forvalter</th>
+						<th>Lokal funksjonell vurdering</th>
+						<th>Loakl Strategisk vurdering</th>
+						<th>Lokal Teknisk vurdering</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -960,7 +960,7 @@
 							{% endif %}
 							{{ bruk.del_behandlinger|yesno:"Ja,Nei" }}
 						</td>
-						<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
+						<td>{% include "vis_ansvarlige.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}</td>
 						<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
 						<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
 						<td>

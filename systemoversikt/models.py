@@ -1534,6 +1534,40 @@ VALG_RISIKOVURDERING_BEHOVSVURDERING = (
 )
 
 
+class Oppdatering(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	tidspunkt = models.DateTimeField(
+			verbose_name="Tidspunkt",
+			blank=True, null=True,
+			help_text=u"YYYY-MM-DD eksempel 2019-05-05 (tidspunkt er påkrevet - sett 'Nå')",
+			)
+	kommentar = models.CharField(
+			verbose_name="Kort kommentar",
+			max_length=200,
+			blank=False, null=False,
+			help_text=u""
+			)
+	user = models.OneToOneField(User,
+			on_delete=models.PROTECT,
+			)
+
+	def __str__(self):
+		return u'Oppdatering %s' % (self.pk)
+
+	class Meta:
+		verbose_name_plural = "Systemer"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
 class System(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -1548,6 +1582,12 @@ class System(models.Model):
 			verbose_name="Er systemet i bruk?",
 			blank=True, null=True,
 			help_text=u"Det kan være greit å beholde systemer i oversikten for å kunne søke dem opp. Alternativet er å slette systemet fra oversikten.",
+			)
+	kvalitetssikret = models.OneToOneField(Oppdatering, related_name='system_kvalitetssikret',
+			verbose_name="Kvalitetssikret",
+			blank=True, null=True,
+			on_delete=models.PROTECT,
+			help_text=u"Tidspunkt informasjonen er kvalitetssikret.",
 			)
 	informasjon_kvalitetssikret = models.BooleanField(
 			verbose_name="Er informasjonen kvalitetssikret av forvalter?",
@@ -2539,6 +2579,12 @@ class BehandlingerPersonopplysninger(models.Model):
 			auto_now=True,
 			)
 			#draftit: metafelt, har dette
+	kvalitetssikret = models.OneToOneField(Oppdatering, related_name='behandling_kvalitetssikret',
+			verbose_name="Kvalitetssikret",
+			blank=True, null=True,
+			on_delete=models.PROTECT,
+			help_text=u"Tidspunkt informasjonen er kvalitetssikret.",
+			)
 	informasjon_kvalitetssikret = models.BooleanField(
 			verbose_name="Er informasjonen kvalitetssikret av behandlingsansvarlig?",
 			default=False,
@@ -2904,9 +2950,9 @@ class BehandlingerPersonopplysninger(models.Model):
 			help_text=u"Beskriv tiltak som er gjennomført for at de registrerte kan rette sine opplysninger",
 			)
 	hoy_personvernrisiko = models.NullBooleanField(
-			verbose_name="Høy personvernrisiko? Er det behov for å vurdere personvernkonsekvenser (DPIA)?",
+			verbose_name="UTFASES! Høy personvernrisiko? Er det behov for å vurdere personvernkonsekvenser (DPIA)?",
 			default=None,
-			help_text="Se veiledningen <a target=\"_blank\" href=\"https://confluence.oslo.kommune.no/pages/viewpage.action?pageId=86934676\">Vurdering av om «høy risiko» foreligger</a>.",
+			help_text="UTFASES! Se veiledningen <a target=\"_blank\" href=\"https://confluence.oslo.kommune.no/pages/viewpage.action?pageId=86934676\">Vurdering av om «høy risiko» foreligger</a>.",
 			)
 	dpia_unnga_hoy_risiko = models.NullBooleanField(
 			verbose_name="Er det mulig å unngå 'høy risiko' for de registrerte?",
@@ -2934,6 +2980,13 @@ class BehandlingerPersonopplysninger(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+BEHOV_FOR_DPIA_VALG = (
+	(0, "Ikke vurdert"),
+	(1, "Ja"),
+	(2, "Nei"),
+)
+
+
 class BehovForDPIA(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -2949,49 +3002,49 @@ class BehovForDPIA(models.Model):
 			blank=False, null=False,
 			help_text=u"Behandlingen denne vurderingen gjelder for.",
 			)
-	evaluering_profilering = models.BooleanField(
+	evaluering_profilering = models.IntegerField(choices=BEHOV_FOR_DPIA_VALG,
+			default=0, null=False,
 			verbose_name="Evaluering eller poengsetting?",
-			default=True,
 			help_text=u'Innebærer behandlingen evaluering eller scoring / profilering i stor skala for å forutsi den registrertes antatte evner/egenskaper? (Inkludert profilering og forutsigelse, spesielt «aspekter som gjelder arbeidsprestasjoner, økonomisk situasjon, helse, personlige preferanser eller interesser, pålitelighet eller atferd, plassering eller bevegelser» (fortalepunkt 71 og 91).)',
 			)
-	automatiskbeslutning = models.BooleanField(
+	automatiskbeslutning = models.IntegerField(choices=BEHOV_FOR_DPIA_VALG,
+			default=0, null=False,
 			verbose_name="Automatiske beslutninger med rettslig eller tilsvarende betydelig virkning?",
-			default=True,
 			help_text=u'Behandling som har som formål å ta beslutninger om den registrerte som har «rettsvirkning for den fysiske personen» eller «på lignende måte i betydelig grad påvirker den fysiske personen» (artikkel 35 nr. 3 a).',
 			)
-	systematiskmonitorering = models.BooleanField(
+	systematiskmonitorering = models.IntegerField(choices=BEHOV_FOR_DPIA_VALG,
+			default=0, null=False,
 			verbose_name="Systematisk monitorering?",
-			default=True,
 			help_text=u'Behandlingsaktiviteter som brukes for å observere, overvåke eller kontrollere de registrerte, inkludert opplysninger som har blitt samlet inn gjennom nettverk eller «en systematisk overvåking i stor skala av et offentlig tilgjengelig område» (artikkel 35 nr. 3 c). ',
 			)
-	saerligekategorier = models.BooleanField(
+	saerligekategorier = models.IntegerField(choices=BEHOV_FOR_DPIA_VALG,
+			default=0, null=False,
 			verbose_name="Særlige kategorier av personopplysninger eller opplysninger av svært personlig karakter ?",
-			default=True,
 			help_text=u'Dette omfatter særlige kategorier av personopplysninger (tidligere kalt sensitive personopplysninger) som er definert i artikkel 9 (for eksempel informasjon om enkeltpersoners politiske meninger), samt personopplysninger vedrørende straffedommer og lovovertredelser som definert i artikkel 10. ',
 			)
-	storskala = models.BooleanField(
+	storskala = models.IntegerField(choices=BEHOV_FOR_DPIA_VALG,
+			default=0, null=False,
 			verbose_name="Personopplysninger behandles i stor skala?",
-			default=True,
 			help_text=u'Innebærer behandlingen evaluering eller scoring / profilering i stor skala for å forutsi den registrertes antatte evner/egenskaper?',
 			)
-	sammenstilling = models.BooleanField(
+	sammenstilling = models.IntegerField(choices=BEHOV_FOR_DPIA_VALG,
+			default=0, null=False,
 			verbose_name="Matching eller sammenstilling av datasett?",
-			default=True,
 			help_text=u'Dette kan for eksempel stamme fra to eller flere databehandlingsoperasjoner som gjennomføres med ulike formål og/eller av ulike behandlingsansvarlige på en måte som overstiger den registrertes rimelige forventninger.',
 			)
-	saarbare_registrerte = models.BooleanField(
+	saarbare_registrerte = models.IntegerField(choices=BEHOV_FOR_DPIA_VALG,
+			default=0, null=False,
 			verbose_name="Personopplysninger om sårbare registrerte?",
-			default=True,
 			help_text=u'Behandling av denne typen av personopplysninger er et kriterium på grunn av den skjeve maktbalansen mellom de registrerte og den behandlingsansvarlige, som betyr at enkeltpersoner kan være ute av stand til, på en enkel måte, å gi sitt samtykke eller motsette seg behandlingen av sine personopplysninger eller utøve sine rettigheter. Sårbare registrerte kan omfatte barn (de kan anses å ikke være i stand til på en bevisst og gjennomtenkt måte å motsette seg eller gi samtykke til behandling av sine personopplysninger), arbeidstakere, mer sårbare befolkningsgrupper som behøver sosial beskyttelse (psykisk syke personer, asylsøkere, eldre personer, pasienter og så videre), samt i de situasjoner der det foreligger en ubalanse i forholdet mellom den registrerte og den behandlingsansvarlige.',
 			)
-	innovativ_anvendelse = models.BooleanField(
+	innovativ_anvendelse = models.IntegerField(choices=BEHOV_FOR_DPIA_VALG,
+			default=0, null=False,
 			verbose_name="Innovativ bruk eller anvendelse av ny teknologisk eller organisatorisk løsning?",
-			default=True,
 			help_text=u'Dette kan være en kombinasjon av fingeravtrykk og ansiktsgjenkjenning for en forbedret fysisk adgangskontroll og så videre. Det går klart frem av forordningen (artikkel 35 nr. 1 og fortalepunkt 89 og 91) at bruk av ny teknologi som defineres «i samsvar med det oppnådde nivået av teknisk kunnskap» (fortalepunkt 91), kan medføre behov for å gjennomføre en vurdering av personvernkonsekvenser. Grunnen til dette er at anvendelse av ny teknologi kan medføre nye former for innsamling og bruk av personopplysninger, eventuelt med høy risiko for den enkeltes rettigheter og friheter. De personlige og sosiale konsekvensene ved anvendelsen av ny teknologi kan være ukjente. En vurdering av personvernkonsekvenser hjelper den behandlingsansvarlige å forstå og håndtere slike risikoer. For eksempel kan visse «tingenes internett»-applikasjoner få betydelige konsekvenser for den enkeltes dagligliv og privatliv, og kan derfor kreve en vurdering av personvernkonsekvenser.',
 			)
-	hinder = models.BooleanField(
+	hinder = models.IntegerField(choices=BEHOV_FOR_DPIA_VALG,
+			default=0, null=False,
 			verbose_name="Når behandlingen «hindrer de registrerte i å utøve en rettighet eller gjøre bruk av en tjeneste eller en avtale» (artikkel 22 og fortalepunkt 91)",
-			default=True,
 			help_text=u'Dette omfatter behandlinger som tar sikte på å tillate, endre eller nekte den registrerte tilgang til en tjeneste eller inngå en avtale. For eksempel når en bank kredittvurderer sine kunder mot en database for å avgjøre om de skal tilbys lån.',
 			)
 	history = HistoricalRecords()
@@ -3003,7 +3056,9 @@ class BehovForDPIA(models.Model):
 		kriterier = [self.evaluering_profilering, self.automatiskbeslutning, self.systematiskmonitorering, self.saerligekategorier, self.storskala, self.sammenstilling, self.saarbare_registrerte, self.innovativ_anvendelse, self.hinder]
 		count = 0
 		for k in kriterier:
-			if k == True:
+			if k == 0:  # 0 represent "not evaluated"
+				return "Vurdering er ikke fullført"
+			if k == 1:  # 1 represent "yes"
 				count+= 1
 		if count == 0:
 			return "Nei, ikke behov"

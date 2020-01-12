@@ -55,6 +55,9 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 		# prøve å sette virksomhetstilhørighet
 		try:
 			virksomhet_tbf = user.username[0:3].upper()
+			if user.username[0:5].upper() == "DRIFT": # all usernames are 3 letters by default in Oslo kommune, except DRIFT
+				virksomhet_tbf = "DRIFT"
+
 			virksomhet_obj_ref = Virksomhet.objects.get(virksomhetsforkortelse=virksomhet_tbf)
 			user.profile.virksomhet = virksomhet_obj_ref
 			user.profile.virksomhet_innlogget_som = virksomhet_obj_ref

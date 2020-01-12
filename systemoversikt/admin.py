@@ -586,6 +586,12 @@ class DefinisjonAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('ansvarlig',)
 
 
+class BehovForDPIAAdmin(SimpleHistoryAdmin):
+	from django.forms.widgets import NullBooleanSelect
+	formfield_overrides = {
+		models.NullBooleanField: {'widget': NullBooleanSelect},
+	}
+
 # Register your models here.
 admin.site.register(System, SystemAdmin)
 admin.site.register(Virksomhet, VirksomhetAdmin)
@@ -621,7 +627,7 @@ admin.site.register(ApplicationLog)
 admin.site.register(Sikkerhetstester, SikkerhetstesterAdmin)
 admin.site.register(DefinisjonKontekster)
 admin.site.register(CMDBdatabase)
-admin.site.register(BehovForDPIA)
+admin.site.register(BehovForDPIA, BehovForDPIAAdmin)
 
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
