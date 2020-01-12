@@ -291,6 +291,7 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 				'oppbevaringsplikt',
 				('krav_slettefrister', 'planlagte_slettefrister'),
 				'hoy_personvernrisiko',
+				'ekstern_DPIA_url',
 				'systemer',
 			),
 		}),

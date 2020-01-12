@@ -2970,6 +2970,12 @@ class BehandlingerPersonopplysninger(models.Model):
 			blank=True,
 			help_text="Behandlingen vises ikke i behandlingsoversikten for disse virksomhetene. Dette feltet er utfaset.",
 			)
+	ekstern_DPIA_url = models.URLField(
+			verbose_name="Link til ekstern DPIA-vurdering",
+			max_length=600,
+			blank=True, null=True,
+			help_text=u"Legg inn full URL.",
+			)
 	history = HistoricalRecords()
 
 	def __str__(self):

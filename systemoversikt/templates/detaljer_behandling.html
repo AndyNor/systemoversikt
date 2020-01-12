@@ -62,6 +62,12 @@
 					<td>Vurdering om DPIA må gjennomføres</td>
 					<td>{{ behandling.behandling_behovdpia.behovforDPIA }}</td>
 				</tr>
+				{% if behandling.ekstern_DPIA_url%}
+				<tr>
+					<td>{% get_verbose_field_name behandling "ekstern_DPIA_url" %}</td>
+					<td><a target="_blank" href="{{ behandling.ekstern_DPIA_url }}">{{ behandling.ekstern_DPIA_url }}</a></td>
+				</tr>
+				{% endif %}
 				<tr>
 					<td>{% get_verbose_field_name behandling "hoy_personvernrisiko" %}</td>
 					<td>{{ behandling.hoy_personvernrisiko|yesno:"Ja,Nei" }}</td>
