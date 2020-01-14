@@ -30,9 +30,15 @@
 	<thead>
 	<tr>
 		<th>Maskinnavn</th>
+		<th>Business service</th>
 		<th>Portfolio</th>
 		<th>Nettverk</th>
 		<th>Operativsystem</th>
+		<th>Tilhørende system</th>
+		<th>DNS</th>
+		<th>VLAN</th>
+		<th>NAT</th>
+		<th>VIP/BigIP</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -40,12 +46,23 @@
 	<tr {% if not maskin.active %} style="color: #d6d6d6;" {% endif %}>
 		{% url 'ad_details' name=maskin.comp_name as url_ad %}
 		<td><a href="{{ url_ad }}">{{ maskin.comp_name }}</a></td>
+		<td>
+			{% for cmdbref in maskin.sub_name.all %}
+				{{ cmdbref }}<br>
+			{% endfor %}
+		</td>
 		<td>{{ maskin.bs_u_service_portfolio }}</td>
 		<td>{{ maskin.comp_ip_address }}</td>
 		<td>{{ maskin.comp_os|default:"Ukjent" }} {{ maskin.comp_os_version }} {{ maskin.comp_os_service_pack }}</td>
+		<td>{{ maskin.sub_name.system_cmdbref_prod.all }}
+		{{ maskin.sub_name.system_cmdbref.all }}</td>
+		<td>{{ maskin.dns|default:"" }}</td>
+		<td>{{ maskin.vlan|default:"" }}</td>
+		<td>{{ maskin.nat|default:"" }}</td>
+		<td>{{ maskin.vip|default:"" }}</td>
 
 
-			{% comment %}
+	{% comment %}
 			{% if user.is_authenticated %}
 			<a target="_blank" href="/admin/systemoversikt/cmdbref/{{ item.pk }}/delete/">
 				<img style="width: 8px; margin: 3px;"
@@ -84,7 +101,7 @@
 		<td>{{ item.u_service_operation_factor|default:"-" }}</td>
 		<td>{{ item.u_service_complexity|default:"-" }}</td>
 		<td>{{ item.comments|default:"-" }}</td>
-		{% endcomment %}
+	{% endcomment %}
 	</tr>
 	{% endfor %}
 	</tbody>

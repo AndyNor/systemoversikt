@@ -150,6 +150,7 @@ urlpatterns = [
 	url(r'^import/cmdb/servers/$', views_import.import_cmdb_servers, name='import_cmdb'),
 	url(r'^import/cmdb/databases/$', views_import.import_cmdb_databases, name='import_databases'),
 	url(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
+	url(r'^import/cmdb/oslofelles/$', views_import.add_dns_vlan_vip, name='add_dns_vlan_vip'),
 
 	url(r'^user_clean_up/$', views.user_clean_up, name='user_clean_up'),
 

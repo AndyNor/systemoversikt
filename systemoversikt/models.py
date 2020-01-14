@@ -1018,6 +1018,30 @@ class CMDBdevice(models.Model):
 			blank=True, null=True,
 			help_text=u"",
 			)
+	dns = models.CharField(
+			verbose_name="DNS",
+			max_length=200,
+			blank=True, null=True,
+			help_text=u"",
+			)
+	vlan = models.CharField(
+			verbose_name="VLAN",
+			max_length=200,
+			blank=True, null=True,
+			help_text=u"",
+			)
+	nat = models.CharField(
+			verbose_name="NAT",
+			max_length=200,
+			blank=True, null=True,
+			help_text=u"",
+			)
+	vip = models.CharField(
+			verbose_name="VIP / BigIP",
+			max_length=200,
+			blank=True, null=True,
+			help_text=u"",
+			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
 	def __str__(self):
