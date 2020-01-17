@@ -2616,7 +2616,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			)
 			#draftit: har ikke dette nå
 	oppdateringsansvarlig = models.ManyToManyField(Ansvarlig, related_name='behandling_kontaktperson',
-			verbose_name="Oppdateringsansvarlig",
+			verbose_name="Dokumentasjonsansvarlig",
 			blank=True,
 			help_text=u"Denne personen er ansvarlig for å holde denne behandlingen oppdatert.",
 			)
@@ -2674,7 +2674,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			)
 			#draftit: enhet er det som brukes her. Må finne en mapping.
 			#trenger vi to?
-	behandlingen = models.CharField(
+	behandlingen = models.TextField(
 			verbose_name="Kort beskrivelse av behandlingen/prosessen.",
 			max_length=80,
 			blank=False, null=False,
@@ -2911,7 +2911,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			help_text=u"",
 			)
 	utlevering_ekstern_myndighet = models.NullBooleanField(
-			verbose_name="Utleveres opplysninger til andre tredjeparter?",
+			verbose_name="Utleveres opplysninger til eksterne aktører?",
 			blank=True, null=True,
 			help_text=u"F.eks. eksterne myndigheter eller liknende.",
 			)
@@ -2921,9 +2921,9 @@ class BehandlingerPersonopplysninger(models.Model):
 			help_text=u"Henvis til hjemmel i lov",
 			)
 	innhenting_ekstern_myndighet = models.NullBooleanField(
-			verbose_name="Innhentes opplysninger fra andre tredjeparter?",
+			verbose_name="Innhentes opplysninger fra eksterne aktører?",
 			blank=True, null=True,
-			help_text=u"F.eks. som eksterne myndigheter eller liknende.",
+			help_text=u"F.eks. eksterne myndigheter eller liknende.",
 			)
 	innhenting_ekstern_myndighet_utdyping = models.TextField(
 			verbose_name="Utdyp innhenting fra tredjeparter",
@@ -2999,6 +2999,11 @@ class BehandlingerPersonopplysninger(models.Model):
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Legg inn full URL.",
+			)
+	databehandleravtaler = models.ManyToManyField(Avtale, related_name='behandling_databehandleravtaler',
+			verbose_name="Databehandleravtaler knyttet til behandlingen",
+			blank=True,
+			help_text=u"Si noe om at normalt gjøres dette via kobling til system... TODO",
 			)
 	history = HistoricalRecords()
 
