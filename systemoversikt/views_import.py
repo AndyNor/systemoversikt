@@ -397,7 +397,7 @@ def add_dns_vlan_vip(request):
 
 		def load_vlan(filename):
 			vlan_data = []
-			with open(filename, 'r') as file:
+			with open(filename, 'r', encoding='latin-1') as file:
 				vlan_datastructure = list(csv.DictReader(file, delimiter="\t"))
 				for line in vlan_datastructure:
 					t = {
@@ -435,7 +435,7 @@ def add_dns_vlan_vip(request):
 
 		def load_nat(filename):
 			nat_datastructure = []
-			with open(filename, 'r') as file:
+			with open(filename, 'r', encoding='latin-1') as file:
 				nat_data = list(csv.DictReader(file, delimiter="\t"))
 				for line in nat_data:
 					t = {
@@ -473,7 +473,7 @@ def add_dns_vlan_vip(request):
 
 		def load_bigip(filename):
 			bigip_data = []
-			with open(filename, 'r') as file:
+			with open(filename, 'r', encoding='latin-1') as file:
 				bigip_datastructure = list(csv.DictReader(file, delimiter="\t"))
 				for line in bigip_datastructure:
 					t = {
@@ -494,11 +494,11 @@ def add_dns_vlan_vip(request):
 						return(item["url"] + " (" + item["vip"] + " --> " + item["pool"] + " " + item["port"] + ")")
 
 		domain = "oslo.kommune.no"
-		dns_ekstern = load_dns_sonefile("systemoversikt/import/oslofelles_dns_ekstern", domain)
-		dns_intern = load_dns_sonefile("systemoversikt/import/oslofelles_dns_intern", domain)
-		vlan_data = load_vlan("systemoversikt/import/oslofelles_vlan.tsv")
-		nat_data = load_nat("systemoversikt/import/oslofelles_nat.tsv")
-		bigip_data = load_bigip("systemoversikt/import/oslofelles_vip.tsv")
+		dns_ekstern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_ekstern", domain)
+		dns_intern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_intern", domain)
+		vlan_data = load_vlan(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vlan.tsv")
+		nat_data = load_nat(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_nat.tsv")
+		bigip_data = load_bigip(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vip.tsv")
 
 		cmdbdevices = CMDBdevice.objects.all()
 		for device in cmdbdevices:
