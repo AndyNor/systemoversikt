@@ -1408,14 +1408,22 @@ def alle_databaser(request):
 def alle_cmdbref(request):
 	required_permissions = 'systemoversikt.change_system'
 	if request.user.has_perm(required_permissions):
-		cmdbref = CMDBRef.objects.all().order_by("-operational_status", Lower("navn")) #1 er operational (filter(operational_status=1))
-		for c in cmdbref:
-			ant_devices = CMDBdevice.objects.filter(sub_name=c.pk, active=True)
-			c.ant_devices = ant_devices.count()
+
+		search_term = ""
+		search_term = request.GET.get('filter', "")
+
+		if search_term == "__all__":
+			cmdbref = CMDBRef.objects.all().order_by("-operational_status", Lower("navn")) #1 er operational
+		elif len(search_term) < 2: # if one or less, return nothing
+			cmdbref = CMDBRef.objects.none()
+		else:
+			cmdbref = CMDBRef.objects.filter(navn__icontains=search_term).order_by("-operational_status", Lower("navn")) #1 er operational
+
 
 		return render(request, 'alle_cmdb.html', {
 			'request': request,
 			'cmdbref': cmdbref,
+			'search_term': search_term,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -1430,7 +1438,7 @@ def cmdbdevice(request, pk):
 
 		return render(request, 'detaljer_cmdbdevice.html', {
 			'request': request,
-			'cmdbref': cmdbref,
+			'cmdbref': [cmdbref],
 			'cmdbdevices': cmdbdevices,
 			'databaser': databaser,
 		})

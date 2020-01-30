@@ -18,77 +18,18 @@
 
 {% block main_content %}
 
+	<p>CMDB står for "Configuration management database" og er i denne kontekst en import av det Sopra Steria kaller "Business Services". Gruppene brukes for fakturering og er ofte knyttet til et system. Dette er de samme kategoriene som benyttes i Kompass ved bestillinger. Importen av data skjer manuelt typisk en gang per måned. Det er nå {{ cmdbref.count }} grupper.</p>
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="filter"
+			placeholder="Business service inneholder.." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?filter=__all__">Vis alt</a>
+		</div>
+	</form>
 
 
-<p>CMDB står for "Configuration management database" og er i denne kontekst en import av det Sopra Steria kaller "Business Services". Gruppene brukes for fakturering og er ofte knyttet til et system. Dette er de samme kategoriene som benyttes i Kompass ved bestillinger. Importen av data skjer manuelt typisk en gang per måned. Det er nå {{ cmdbref.count }} grupper.</p>
+	{% include "alle_cmdb_include.html" with cmdbref=cmdbref %}
 
-	<table id="stickyheader" class="table table-sm tablesorter">
-	<thead>
-	<tr>
-		<th>Dato opprettet</th>
-		<th>Dato oppdatert</th>
-		<th>Business Service-navn</th>
-		<th>Antall servere</th>
-		<th>Tilknyttet system</th>
-		<th>I bruk</th>
-		{% comment %}<th>Kommentar</th>{% endcomment %}
-		<th>Miljø</th>
-		<th>Kritikalitet</th>
-		{% comment %}<th>Type</th>{% endcomment %}
-		<th>Portfolio</th>
-		<th>Availability</th>
-		<th>Operation factor</th>
-		<th>Complexity</th>
-		<th width="25%">Short description</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for item in cmdbref %}
-	<tr {% if item.operational_status == 0 %} style="color: #d6d6d6;" {% endif %}>
-		<td>
-			{% comment %}
-			{% if user.is_authenticated %}
-			<a target="_blank" href="/admin/systemoversikt/cmdbref/{{ item.pk }}/delete/">
-				<img style="width: 8px; margin: 3px;"
-				src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
-			{% endif %}
-			{% endcomment %}
-			{{ item.opprettet|date:'Y-m-d' }}
-		</td>
-		<td>{{ item.sist_oppdatert|date:'Y-m-d' }}</td>
-		<td>
-			{% comment %}
-			{% if user.is_authenticated %}
-			<a target="_blank" href="/admin/systemoversikt/cmdbref/{{ item.pk }}/change/">
-				<img style="width: 11px; margin: 3px;"
-				src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
-			{% endif %}
-			{% endcomment %}
-			<a href="{% url 'cmdbdevice' pk=item.pk %}">{{ item.navn }}</a>
-		</td>
-		<td>{{ item.ant_devices }}</td>
-		<td>
-			{% for system in item.system_cmdbref_prod.all %}
-				{% url 'systemdetaljer' pk=system.pk as url_system %}
-				<a href="{{ url_system }}">{{ system.systemnavn }}</a> (Produksjon)<br>
-			{% endfor %}
-			{% for system in item.system_cmdbref.all %}
-				{% url 'systemdetaljer' pk=system.pk as url_system %}
-				<a href="{{ url_system }}">{{ system.systemnavn }}</a> (Test)<br>
-			{% endfor %}
-		</td>
-		<td>{{ item.get_operational_status_display|default:"-" }}</td>
-		{% comment %}<td>{{ item.comments|default:"-"|truncatewords:6 }}</td>{% endcomment %}
-		<td>{{ item.get_environment_display|default:"-" }}</td>
-		<td>{{ item.get_kritikalitet_display|default:"X ukjent" }}</td>
-		{% comment %}<td>{{ item.get_cmdb_type_display }}</td>{% endcomment %}
-		<td>{{ item.u_service_portfolio|default:"-" }}</td>
-		<td>{{ item.u_service_availability|default:"Tx ukjent" }}</td>
-		<td>{{ item.u_service_operation_factor|default:"Dx ukjent" }}</td>
-		<td>{{ item.u_service_complexity|default:"Kx ukjent" }}</td>
-		<td>{{ item.comments|default:"-" }}</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-	</table>
 {% endblock main_content %}

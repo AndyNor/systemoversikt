@@ -104,6 +104,14 @@ def convertToInt(string):
 		return None
 
 
+def convertToBool(string):
+	if string.lower() == "yes":
+		return True
+	if string.lower() == "no":
+		return False
+	else:
+		return None
+
 
 def import_business_services(request):
 
@@ -141,6 +149,13 @@ def import_business_services(request):
 				business_service.u_service_operation_factor = record["u_service_operation_factor"]
 				business_service.u_service_complexity = record["u_service_complexity"]
 				business_service.operational_status = convertToInt(record["operational_status"])
+
+				billable = convertToBool(record["u_service_billable"])
+				if billable != None:
+					business_service.u_service_billable = billable
+
+				business_service.service_classification = record["service_classification"]
+
 				try:
 					business_service.comments = record["short_description"]
 				except:
