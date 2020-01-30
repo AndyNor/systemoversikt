@@ -46,7 +46,8 @@
 			<div class="card">
 				<div class="card-body">
 					<h2 class="card-title">{{ system_ikke_kvalitetssikret }}</h2>
-					<h6 class="card-subtitle mb-2 text-muted">Systemer som ikke er kvalitetssikret</h6>
+					<h6 class="card-subtitle mb-2 text-muted">Systemer som ikke er kvalitetssikret
+					{% explain_collapsed "Antall systemer vi eier eller forvalter der det ikke er huket av for om informasjonen om  systemet er kvalitetssikret." %}</h6>
 				</div>
 			</div>
 		</div>
@@ -55,7 +56,8 @@
 			<div class="card">
 				<div class="card-body">
 					<h2 class="card-title">{{ deaktiverte_brukere }}</h2>
-					<h6 class="card-subtitle mb-2 text-muted">Ansvarlige som har deaktivert bruker</h6>
+					<h6 class="card-subtitle mb-2 text-muted">Ansvarlige som har deaktivert bruker
+					{% explain_collapsed "Medarbeidere i vår virksomhet registrert som ansvarlig hvor brukerkonto er deaktivert. Indikerer behov for å omfordele ansvar." %}</h6>
 				</div>
 			</div>
 		</div>
@@ -64,7 +66,8 @@
 			<div class="card">
 				<div class="card-body">
 					<h2 class="card-title">{{ behandling_uten_ansvarlig }}</h2>
-					<h6 class="card-subtitle mb-2 text-muted">Behandlinger uten oppdateringsansvarlig</h6>
+					<h6 class="card-subtitle mb-2 text-muted">Behandlinger uten oppdateringsansvarlig
+					{% explain_collapsed "Gå til 'våre behandlinger' og sjekk at alle behandlinger av personopplysninger har en person person tildelt ansvar å holde informasjonen om behandlingen riktig." %}</h6>
 				</div>
 			</div>
 		</div>
@@ -105,7 +108,8 @@
 			<div class="card">
 				<div class="card-body">
 					<h2 class="card-title">{{ virksomhet.ansatte|default:'-' }}</h2>
-					<h6 class="card-subtitle mb-2 text-muted">{% get_verbose_field_name virksomhet "ansatte" %}</h6>
+					<h6 class="card-subtitle mb-2 text-muted">{% get_verbose_field_name virksomhet "ansatte" %}
+					{% explain_collapsed "Dette tallet er manuelt tastet inn via 'rediger detaljer'." %}</h6>
 				</div>
 			</div>
 		</div>
@@ -114,7 +118,8 @@
 			<div class="card">
 				<div class="card-body">
 					<h2 class="card-title">{{ antall_brukere }}</h2>
-					<h6 class="card-subtitle mb-2 text-muted">Aktive brukere i AD</h6>
+					<h6 class="card-subtitle mb-2 text-muted">Aktive brukere i AD
+					{% explain_collapsed "Antall aktive ordinære brukere i Oslofelles AD for denne virksomheten" %}</h6>
 				</div>
 			</div>
 		</div>
@@ -123,7 +128,9 @@
 			<div class="card">
 				<div class="card-body">
 					<h2 class="card-title">{{ antall_eksterne_brukere }}</h2>
-					<h6 class="card-subtitle mb-2 text-muted">Aktive eksterne brukere i AD</h6>
+					<h6 class="card-subtitle mb-2 text-muted">Aktive eksterne brukere i AD
+					{% explain_collapsed "Antall aktive driftbrukere i Oslofelles AD for denne virksomheten" %}
+					</h6>
 				</div>
 			</div>
 		</div>

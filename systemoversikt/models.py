@@ -240,7 +240,7 @@ class Virksomhet(models.Model):
 	ordinar_virksomhet = models.BooleanField(
 			verbose_name="Er dette en ordinær virksomhet?",
 			default=True,
-			help_text=u'Krysse av dersom det ikke ønskes at virksomheten vises i virksomhetsoversikten eller i statistikk. Brukes f.eks. for import av driftsbrukere.',
+			help_text=u'Hvis du tar bort dette valget, vises ikke virksomheten i virksomhetsoversikten eller i dashboard. Brukes i forbindelse med import av driftsbrukere og i forbindelse med forvaltning av sertifikater.',
 			)
 	virksomhetsforkortelse = models.CharField(unique=True,
 			verbose_name="Virksomhetsforkortelse",
@@ -860,6 +860,16 @@ class CMDBRef(models.Model):
 			blank=True, null=True,
 			help_text=u"Importert: Service complexity",
 			)
+	u_service_billable = models.TextField(
+			verbose_name="Billable?",
+			blank=True, null=True,
+			help_text=u"Importert: u_service_billable",
+			)
+	service_classification = models.TextField(
+			verbose_name="service classification",
+			blank=True, null=True,
+			help_text=u"Importert: service_classification",
+			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
 
 	def __str__(self):
@@ -882,6 +892,10 @@ class CMDBRef(models.Model):
 			return True
 		else:
 			return False
+
+
+	def ant_devices(self):
+		return CMDBdevice.objects.filter(sub_name=self.pk, active=True).count()
 
 	class Meta:
 		verbose_name_plural = "CMDB Business services"
