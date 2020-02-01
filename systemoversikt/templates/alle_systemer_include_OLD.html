@@ -7,10 +7,12 @@
 		<th>Rediger</th>
 	{% endif %}
 	<th>Systemnavn</th>
+	<th>Systembruk</th>
 	{% comment %}<th>Behandlinger</th>{% endcomment %}
 	<th>Systemkategori</th>
 	{% comment %}<th>Systemtype</th>{% endcomment %}
 	{% comment %}<th>Tjenestenivå UKE</th>{% endcomment %}
+	<th>Tjenestenivå 2S</th>
 	<th>Driftsdokumentasjon</th>
 	<th>Systemeier</th>
 	<th>Systemforvalter</th>
@@ -45,6 +47,7 @@
 		<a href="{{ url_systemdetaljer }}">{{ item }}</a>
 	</td>
 
+	<td>{{ item.systembruk_system.count }}</td>
 
 	{% comment %}
 	<td>{{ item.behandling_systemer.count }}</td>
@@ -66,6 +69,17 @@
 	</td>
 	{% endcomment %}
 
+	<td>
+		{% if item.cmdbref.all %}
+			{% for cmdbsubelement in item.cmdbref.all %}
+				{% if cmdbsubelement.environment == 1 %} {# 1 er produksjon #}
+					{{ cmdbsubelement.get_kritikalitet_display|default:'' }}
+				{% endif %}
+			{% endfor %}
+		{% else %}
+			Ikke koblet / utenfor felles IKT-plattform
+		{% endif %}
+	</td>
 
 	<td>
 		{% if item.low_level_design_url %}
@@ -75,12 +89,14 @@
 
 	<td>
 		{% url "virksomhet" item.systemeier.pk as url_systemeier %}
-		<b><a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"?" }}</a></b>
+		<b><a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"?" }}</a></b> ved
+		{% include "vis_ansvarlige.html" with ansvarlige=item.systemeier_kontaktpersoner_referanse.all %}
 	</td>
 
 	<td>
 		{% url "virksomhet" item.systemforvalter.pk as url_systemforvalter %}
-		<b><a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"?" }}</a></b>
+		<b><a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"?" }}</a></b> ved
+		{% include "vis_ansvarlige.html" with ansvarlige=item.systemforvalter_kontaktpersoner_referanse.all %}
 	</td>
 
 

@@ -572,7 +572,7 @@
 		{% endif %}
 
 
-		{% if systemdetaljer.cmdbref_prod %}
+		{% if systemdetaljer.cmdbref %}
 				<p>Koblede data mot Sopra Sterias <a href="{% url 'alle_cmdbref' %}">CMDB</a>. Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">beskrivelse av kritikalitet og tilgjengelighet</a>.</p>
 				<table class="table table-sm table-striped">
 					<thead>
@@ -584,13 +584,6 @@
 						</tr>
 					</thead>
 					<tbody>
-					<tr>
-						{% url 'cmdbdevice' pk=systemdetaljer.cmdbref_prod.pk as url_cmdb %}
-						<td><a style="font-weight: bold;" href="{{ url_cmdb }}">{{ systemdetaljer.cmdbref_prod.navn }}</a></td>
-						<td>{{ systemdetaljer.cmdbref_prod.u_service_portfolio|default:"-" }}</td>
-						<td>{{ systemdetaljer.cmdbref_prod.get_kritikalitet_display|default:"-" }}</td>
-						<td>{{ systemdetaljer.cmdbref_prod.get_u_service_availability_display|default:"-" }}</td>
-					</tr>
 					{% for cmdbref in systemdetaljer.cmdbref.all %}
 					<tr>
 						{% url 'cmdbdevice' pk=cmdbref.pk as url_cmdb %}

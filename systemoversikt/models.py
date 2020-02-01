@@ -1691,16 +1691,16 @@ class System(models.Model):
 			blank=True, null=True,
 			help_text=u"Gammelt nivå for oppetidsgaranti (gull, sølv og brosje)",
 			)
-	cmdbref_prod = models.ForeignKey(CMDBRef, related_name='system_cmdbref_prod',
-			on_delete=models.PROTECT,
-			verbose_name="Referanse til CMDB: Produksjon",
-			blank=True, null=True,
-			help_text=u"Kobling til Sopra Steria CMDB for Produksjon. Denne brukes for å vise tjenestenivå til systemet.",
-			)
+#	cmdbref_prod = models.ForeignKey(CMDBRef, related_name='system_cmdbref_prod',
+#			on_delete=models.PROTECT,
+#			verbose_name="Referanse til CMDB: Produksjon",
+#			blank=True, null=True,
+#			help_text=u"Kobling til Sopra Steria CMDB for Produksjon. Denne brukes for å vise tjenestenivå til systemet.",
+#			)
 	cmdbref = models.ManyToManyField(CMDBRef, related_name='system_cmdbref',
-			verbose_name="Referanse til CMDB: Test og annet",
+			verbose_name="Referanse til Sopra Steria CMDB",
 			blank=True,
-			help_text=u"Kobling til Sopra Steria CMDB for test, kurs osv",
+			help_text=u"Velg alle aktuelle, både produksjon, test og annet.",
 			)
 	sikkerhetsnivaa = models.IntegerField(choices=SIKKERHETSNIVAA_VALG,
 			verbose_name="Sikkerhetsnivå til systemet",
@@ -2011,15 +2011,31 @@ class System(models.Model):
 		return bruk.count()
 
 
+	# brukes bare av dashboard, flyttes dit? ("def statusTjenestenivaa(systemer)")
 	def fip_kritikalitet(self):
-		if self.cmdbref_prod:
-			return self.cmdbref_prod.kritikalitet
+		if self.cmdbref:
+			kritikalitet = []
+			for ref in self.cmdbref.all():
+				if ref.environment == 1: # 1 er produksjon
+					kritikalitet.append(ref.kritikalitet)
+
+			if len(kritikalitet) == 1:
+				return kritikalitet[0] # alt OK, bare én prod valgt
+			else:
+				return None
 		else:
 			return None
 
 	def fip_kritikalitet_text(self):
-		if self.cmdbref_prod:
-			return self.cmdbref_prod.get_kritikalitet_display()
+		if self.cmdbref:
+			prod_referanser = []
+			for ref in self.cmdbref.all():
+				if ref.environment == 1: # 1 er produksjon
+					prod_referanser.append(ref)
+			if len(prod_referanser) == 1:
+				return prod_referanser[0].get_kritikalitet_display()
+			else:
+				return("Uklart, flere PROD-koblinger")
 		else:
 			return None
 

@@ -54,8 +54,7 @@
 		<td>{{ maskin.bs_u_service_portfolio }}</td>
 		<td>{{ maskin.comp_ip_address }}</td>
 		<td>{{ maskin.comp_os|default:"Ukjent" }} {{ maskin.comp_os_version }} {{ maskin.comp_os_service_pack }}</td>
-		<td>{{ maskin.sub_name.system_cmdbref_prod.all }}
-		{{ maskin.sub_name.system_cmdbref.all }}</td>
+		<td>{{ maskin.sub_name.system_cmdbref.all }}</td>
 		<td>{{ maskin.dns|default:"" }}</td>
 		<td>{{ maskin.vlan|default:"" }}</td>
 		<td>{{ maskin.nat|default:"" }}</td>
@@ -82,13 +81,9 @@
 		</td>
 		<td>{{ item.ant_devices }}</td>
 		<td>
-			{% for system in item.system_cmdbref_prod.all %}
-				{% url 'systemdetaljer' pk=system.pk as url_system %}
-				<a href="{{ url_system }}">{{ system.systemnavn }}</a> (Produksjon)<br>
-			{% endfor %}
 			{% for system in item.system_cmdbref.all %}
 				{% url 'systemdetaljer' pk=system.pk as url_system %}
-				<a href="{{ url_system }}">{{ system.systemnavn }}</a> (Test)<br>
+				<a href="{{ url_system }}">{{ system.systemnavn }}</a><br>
 			{% endfor %}
 		</td>
 		<td>{{ item.get_operational_status_display|default:"-" }}</td>

@@ -590,7 +590,7 @@ def systemtype_detaljer(request, pk):
 
 
 def alle_systemer(request, utvalg="alle", items=200, page=1):
-	search_query = request.GET.get('search', '').strip()  # strip removes trailing and leading space
+	search_query = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 	if search_query != '':
 		# veldig enkelt søk. Kun case insensitivt og må ellers matche 100%
 		aktuelle_systemer = System.objects.filter(Q(systemnavn__icontains=search_query) | Q(systembeskrivelse__icontains=search_query))
@@ -641,15 +641,15 @@ def alle_systemer(request, utvalg="alle", items=200, page=1):
 
 	utvalg_systemer = utvalg_systemer.order_by(Lower('systemnavn'))
 
-	paginator = Paginator(utvalg_systemer, items)
-	paginerte_systemer = paginator.get_page(page)
+	#paginator = Paginator(utvalg_systemer, items)
+	#paginerte_systemer = paginator.get_page(page)
 
 	return render(request, 'alle_systemer.html', {
 		'request': request,
 		'overskrift': overskrift,
-		'systemer': paginerte_systemer,
-		'pages': paginator.page_range,
-		'perpage': items,
+		'systemer': utvalg_systemer,
+		#'pages': paginator.page_range,
+		#'perpage': items,
 		'utvalg': utvalg,
 		'search_query': search_query,
 	})
@@ -1410,7 +1410,7 @@ def alle_cmdbref(request):
 	if request.user.has_perm(required_permissions):
 
 		search_term = ""
-		search_term = request.GET.get('filter', "")
+		search_term = request.GET.get('filter', "").strip()
 
 		if search_term == "__all__":
 			cmdbref = CMDBRef.objects.all().order_by("-operational_status", Lower("navn")) #1 er operational
@@ -1817,3 +1817,24 @@ def ad(request):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+"""
+#@permission_required('polls.can_vote')
+def cmdb_combine(request):
+	required_permissions = 'auth.view_user'
+	if request.user.has_perm(required_permissions):
+
+#		for system in System.objects.all():
+#			if system.cmdbref_prod != None:
+#				print(system.cmdbref_prod)
+#				system.cmdbref.add(system.cmdbref_prod)
+#				system.cmdbref_prod = None
+#				system.save()
+
+		return render(request, 'index.html', {
+			'request': request,
+		})
+
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+"""

@@ -48,13 +48,9 @@
 	<td>{{ item.service_classification|default:"" }}</td>
 	<td>{{ item.ant_devices }}</td>
 	<td>
-		{% for system in item.system_cmdbref_prod.all %}
-			{% url 'systemdetaljer' pk=system.pk as url_system %}
-			<a href="{{ url_system }}">{{ system.systemnavn }}</a> (Produksjon)<br>
-		{% endfor %}
 		{% for system in item.system_cmdbref.all %}
 			{% url 'systemdetaljer' pk=system.pk as url_system %}
-			<a href="{{ url_system }}">{{ system.systemnavn }}</a> (Test)<br>
+			<a href="{{ url_system }}">{{ system.systemnavn }}</a><br>
 		{% endfor %}
 	</td>
 	<td>{{ item.get_operational_status_display|default:"-" }}</td>
