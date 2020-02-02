@@ -21,17 +21,17 @@
 	</thead>
 	<tbody>
 	{% for system in systemer %}
-	<tr>
+	<tr {% if system.ibruk == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 		<td>
 			<a target="_blank" href="/admin/systemoversikt/system/{{ system.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
 			{% url "systemdetaljer" system.pk as url_system %}
 			<a href="{{ url_system }}">{{ system }}</a>
 		</td>
-		<th>
+		<td>
 			{% for type in system.systemtyper.all %}
 				{{ type }}<br>
 			{% endfor %}
-		</th>
+		</td>
 		<td>
 			<span {% if system.innsyn_innbygger %} style="background-color: #a1e6b0;" {% endif %}>{{ system.innsyn_innbygger|yesno:"Ja,Nei" }}</span>
 		</td>

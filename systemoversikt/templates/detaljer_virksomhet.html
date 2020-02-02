@@ -179,10 +179,6 @@
 
 <hr>
 
-<h6>Domener {{ virksomhet.virksomhetsforkortelse }} er ansvarlig for</h6>
-{% include "alle_urler_include.html" with web_urler=urleier_for %}
-
-
 <h6>Systemer {{ virksomhet.virksomhetsforkortelse }} har lokal forvaltning av</h6>
 {% include "alle_systembruk_include.html" with all_bruk=systembruk_forvalter_for.all %}
 
@@ -191,6 +187,8 @@
 <p>Det er {{ systemer_ansvarlig_for.count }} systemer registrert.</p>
 {% include "alle_systemer_virksomhet_include.html" with systemer=systemer_ansvarlig_for %}
 
+<h6>Domener {{ virksomhet.virksomhetsforkortelse }} er ansvarlig for</h6>
+{% include "alle_urler_include.html" with web_urler=urleier_for %}
 
 {% comment %}
 <h6>Systemer {{ virksomhet.virksomhetsforkortelse }} har driftsansvar for (Antall: {{ systemer_vi_drifter.count }})</h6>

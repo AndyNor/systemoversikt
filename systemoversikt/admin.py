@@ -255,6 +255,11 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 		})
 	)
 
+admin.site.register(PRKvalg)
+admin.site.register(PRKgruppe)
+admin.site.register(PRKskjema)
+
+
 class LeverandorAdmin(SimpleHistoryAdmin):
 	list_display = ('leverandor_navn', 'kontaktpersoner', 'orgnummer')
 	search_fields = ('leverandor_navn', 'orgnummer', 'notater')

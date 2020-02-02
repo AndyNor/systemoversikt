@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from simple_history.models import HistoricalRecords
+import re
 
 
 # som standard vises bare "self.username". Vi ønsker også å vise fult navn.
@@ -1233,7 +1234,6 @@ SYSTEMEIERSKAPSMODELL_VALG = (
 	('SEKTORSYSTEM', 'Sektorsystem'),
 	('VIRKSOMHETSSYSTEM', 'Virksomhetssystem'),
 	('TVERRSEKTORIELT', 'Tverrsektorielt'),
-	('FELLESREGISTER', 'Fellesregister (ikke bruk)'),
 )
 
 # må lage et script som inverterer verdiene i databasen 5 til 1 og 4 til 2 samtidig som disse inverteres.
@@ -3149,6 +3149,140 @@ class BehovForDPIA(models.Model):
 
 	class Meta:
 		verbose_name_plural = "DPIA-behovsvurderinger"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
+
+class PRKvalg(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	valgnavn = models.CharField(
+			verbose_name="Navn på valg",
+			max_length=200,
+			blank=False, null=False,
+			help_text=u"Importert",
+			)
+	gruppenavn = models.CharField(unique=True,
+			verbose_name="Gruppenavn i AD",
+			max_length=300,
+			blank=False, null=False,
+			help_text=u"Importert",
+			)
+	beskrivelse = models.CharField(
+			verbose_name="Beskrivelse",
+			max_length=600,
+			blank=True, null=True,
+			help_text=u"Importert",
+			)
+	gruppering = models.ForeignKey("PRKgruppe", related_name='PRKvalg_gruppering',
+			verbose_name="PRK-gruppering",
+			on_delete=models.PROTECT,
+			help_text=u"Importert",
+			)
+	skjemanavn = models.ForeignKey("PRKskjema", related_name='PRKvalg_skjemanavn',
+			verbose_name="PRK-gruppering",
+			on_delete=models.PROTECT,
+			help_text=u"Importert",
+			)
+	#ikke behof for historikk
+
+	def __str__(self):
+		return u'PRK-valg %s' % (self.valgnavn)
+
+	def for_virksomhet(self):
+		if self.skjemanavn.er_lokalt() == True:
+			tbf = re.search("ou=([A-Z]{3}),ou=Tilgangsgrupper,ou=OK",self.gruppenavn).group(1)
+			try:
+				virksomhet = Virksomhet.objects.get(virksomhetsforkortelse=tbf)
+				return virksomhet
+			except:
+				return None
+		else:
+			return None
+
+	def gruppenavn_kort(self):
+		try:
+			return re.search("ou=(DS-[^,]+),ou",self.gruppenavn).group(1)
+		except:
+			return None
+
+	class Meta:
+		verbose_name_plural = "PRK-valg"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class PRKgruppe(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	feltnavn = models.CharField(unique=True,
+			verbose_name="Feltnavn (PRK-gruppering)",
+			max_length=200,
+			blank=False, null=False,
+			help_text=u"Importert",
+			)
+	#ikke behof for historikk
+
+	def __str__(self):
+		return u'PRK-gruppe %s' % (self.feltnavn)
+
+	class Meta:
+		verbose_name_plural = "PRK-grupper"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class PRKskjema(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	skjemanavn = models.CharField(
+			verbose_name="Skjemanavn",
+			max_length=200,
+			blank=False, null=False,
+			help_text=u"Importert",
+			)
+	skjematype = models.CharField(
+			verbose_name="Skjematype",
+			max_length=200,
+			blank=False, null=False,
+			help_text=u"Importert",
+			)
+	#ikke behof for historikk
+
+	unique_together = ('skjemanavn', 'skjematype')
+
+	def __str__(self):
+		return u'PRK-kjema %s (%s)' % (self.skjemanavn, self.skjematype)
+
+	def er_lokalt(self):
+		if self.skjematype == "LOKAL":
+			return True
+		if self.skjematype == "FELLES":
+			return False
+		return None
+
+	class Meta:
+		verbose_name_plural = "PRK-skjemaer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 """

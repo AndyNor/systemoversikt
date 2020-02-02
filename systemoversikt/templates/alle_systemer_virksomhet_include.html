@@ -20,7 +20,7 @@
 </thead>
 <tbody>
 {% for item in systemer %}
-<tr {% if item.ibruk == False %} style="text-decoration: line-through;" {% endif %}>
+<tr {% if item.ibruk == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 	{% if perms.systemoversikt.change_system %}
 		<td><a target="_blank" href="/admin/systemoversikt/system/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
 	{% endif %}

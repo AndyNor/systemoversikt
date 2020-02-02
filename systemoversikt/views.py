@@ -591,6 +591,8 @@ def systemtype_detaljer(request, pk=None):
 	else:
 		utvalg_systemer = System.objects.filter(systemtyper=None)
 		overskrift = "Systemer som mangler systemtype"
+
+	utvalg_systemer = utvalg_systemer.order_by('ibruk', Lower('systemnavn'))
 	return render(request, 'alle_systemer_uten_paginering.html', {
 		'request': request,
 		'overskrift': overskrift,
@@ -948,7 +950,7 @@ def virksomhet(request, pk):
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	#systemeier_for = System.objects.filter(systemeier=pk)
 	#systemforvalter_for = System.objects.filter(systemforvalter=pk)
-	systemer_ansvarlig_for = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
+	systemer_ansvarlig_for = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by('ibruk', Lower('systemnavn'))
 	systembruk_forvalter_for = SystemBruk.objects.filter(systemforvalter=pk)
 	urleier_for = SystemUrl.objects.filter(eier=pk)
 	avtaler = Avtale.objects.filter(Q(virksomhet=pk) | Q(leverandor_intern=pk))
@@ -1000,7 +1002,7 @@ def innsyn_virksomhet(request, pk):
 		systemer = []
 		for behandling in virksomhets_behandlingsprotokoll:
 			for system in behandling.systemer.all():
-				if system not in systemer and (system.innsyn_innbygger or system.innsyn_ansatt):
+				if (system not in systemer) and (system.innsyn_innbygger or system.innsyn_ansatt) and (system.ibruk != False):
 					systemer.append(system)
 
 		return render(request, 'detaljer_virksomhet_innsyn.html', {
@@ -1436,6 +1438,37 @@ def alle_ip(request):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def alle_prk(request):
+	required_permissions = 'systemoversikt.change_system'
+	if request.user.has_perm(required_permissions):
+
+		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+
+		if (search_term == "__all__"):
+			skjemavalg = PRKvalg.objects
+		elif len(search_term) < 2: # if one or less, return nothing
+			skjemavalg = PRKvalg.objects.none()
+		else:
+			skjemavalg = PRKvalg.objects.filter(
+					Q(valgnavn__icontains=search_term) |
+					Q(beskrivelse__icontains=search_term) |
+					Q(gruppering__feltnavn__icontains=search_term) |
+					Q(skjemanavn__skjemanavn__icontains=search_term)
+			)
+
+		skjemavalg = skjemavalg.order_by('skjemanavn__skjemanavn', 'gruppering__feltnavn')
+
+		return render(request, 'alle_prk.html', {
+			'request': request,
+			'search_term': search_term,
+			'skjemavalg': skjemavalg,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 
 
 def alle_maskiner(request):
