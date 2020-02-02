@@ -6,9 +6,10 @@
 	CMDB Business Services (Felles IKT-plattform)
 	<div>
 		{% if user.is_authenticated %}
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_servere' %}">Alle servere</a>
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_klienter' %}">Alle klienter</a>
+			<a class="btn btn-sm btn-secondary" href="{% url 'alle_maskiner' %}">Alle maskiner</a>
+			<a class="btn btn-sm btn-secondary" href="{% url 'alle_os' %}">Alle operativsystem</a>
 			<a class="btn btn-sm btn-secondary" href="{% url 'alle_databaser' %}">Alle databaser</a>
+			<a class="btn btn-sm btn-secondary" href="{% url 'alle_ip' %}">Søk på IP</a>
 			<a class="btn btn-sm btn-info" target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">CMDB nivåer</a>
 			<a class="btn btn-sm btn-info" target="_blank" href="https://confluence.oslo.kommune.no/x/R1KQBg">Om CMDB-dataene</a>
 
@@ -18,14 +19,14 @@
 
 {% block main_content %}
 
-	<p>CMDB står for "Configuration management database" og er i denne kontekst en import av det Sopra Steria kaller "Business Services". Gruppene brukes for fakturering og er ofte knyttet til et system. Dette er de samme kategoriene som benyttes i Kompass ved bestillinger. Importen av data skjer manuelt typisk en gang per måned. Det er nå {{ cmdbref.count }} grupper.</p>
+	<p>CMDB står for "Configuration management database" og er i denne kontekst en import av det Sopra Steria kaller "Business Services". Gruppene brukes for fakturering og er ofte knyttet til et system. Dette er de samme kategoriene som benyttes i Kompass ved bestillinger. Importen av data skjer manuelt typisk en gang per måned. Det vises nå {{ cmdbref.count }} grupper.</p>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
-			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="filter"
+			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
 			placeholder="Business service inneholder.." class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-			<a class="btn btn-sm" href="?filter=__all__">Vis alt</a>
+			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
 		</div>
 	</form>
 

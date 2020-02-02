@@ -14,6 +14,7 @@ class SikkerhetstesterAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('systemer', 'testet_av')
 
 
+@admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
 	list_display = ('systemnavn', 'systembeskrivelse')
 	search_fields = ('systemnavn', 'systembeskrivelse')
@@ -42,7 +43,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 	)
 
 	fieldsets = (
-
 		('Initiell registrering', {
 			'description': 'Dette er felter ansett som obligatoriske, og kreves utfylt for å kunne krysse av for at informasjonen er kvalitetssikret..',
 			'fields': (
@@ -139,6 +139,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 	)
 
 
+@admin.register(Virksomhet)
 class VirksomhetAdmin(SimpleHistoryAdmin):
 	list_display = ('virksomhetsforkortelse', 'virksomhetsnavn', 'ansatte')
 	search_fields = ('virksomhetsnavn', 'virksomhetsforkortelse')
@@ -409,8 +410,7 @@ class SystemtypeAdmin(SimpleHistoryAdmin):
 
 class SystemHovedKategoriAdmin(SimpleHistoryAdmin):
 	list_display = ('hovedkategorinavn', 'definisjon')
-	search_fields = ('hovedkategorinavn', 'definisjon')
-	filter_horizontal = ('subkategorier',)
+	search_fields = ('hovedkategorinavn', 'definisjon', 'subkategorier')
 
 class AnsvarligAdmin(SimpleHistoryAdmin):
 	list_display = ('brukernavn', 'kommentar')
@@ -493,6 +493,7 @@ class TjenesteAdmin(SimpleHistoryAdmin):
 class CMDBRefAdmin(admin.ModelAdmin):
 	search_fields = ('navn',)
 	list_display = ('navn', 'kritikalitet', 'cmdb_type')
+
 
 class AvtaleAdmin(SimpleHistoryAdmin):
 	list_display = ('kortnavn', 'avtaletype', 'virksomhet', 'leverandor', 'leverandor_intern', 'avtalereferanse', 'dokumenturl')
@@ -594,8 +595,6 @@ class BehovForDPIAAdmin(SimpleHistoryAdmin):
 	}
 
 # Register your models here.
-admin.site.register(System, SystemAdmin)
-admin.site.register(Virksomhet, VirksomhetAdmin)
 admin.site.register(Leverandor, LeverandorAdmin)
 admin.site.register(SystemBruk, SystemBrukAdmin)
 admin.site.register(BehandlingerPersonopplysninger, BehandlingerPersonopplysningerAdmin)

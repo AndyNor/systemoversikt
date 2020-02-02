@@ -23,7 +23,8 @@
 </thead>
 <tbody>
 {% for item in cmdbref %}
-<tr {% if item.operational_status == 0 %} style="color: #d6d6d6;" {% endif %}>
+<tr {% if item.operational_status == 0 %} style="text-decoration: line-through; opacity: 30%;" {% endif %}
+	{% if item.is_bss %} style="color: #d6d6d6;" {% endif %}>
 	<td>
 		{% comment %}
 		{% if user.is_authenticated %}
@@ -45,7 +46,9 @@
 		{% endcomment %}
 		<a href="{% url 'cmdbdevice' pk=item.pk %}">{{ item.navn }}</a>
 	</td>
-	<td>{{ item.service_classification|default:"" }}</td>
+	<td>
+		{{ item.service_classification|default:"" }}
+	</td>
 	<td>{{ item.ant_devices }}</td>
 	<td>
 		{% for system in item.system_cmdbref.all %}

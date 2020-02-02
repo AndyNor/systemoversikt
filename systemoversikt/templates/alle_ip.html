@@ -1,0 +1,63 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Operativsystem på Felles IKT-plattform
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Alle business services</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_maskiner' %}">Alle maskiner</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_databaser' %}">Alle databaser</a>
+
+	<hr>
+
+	<form action="{% url 'alle_ip' %}" method="POST" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group form-inline">
+			<textarea rows="3" cols="50" style="width: 500px; height: 150px;" name="search_term"
+			placeholder="Liste med IP-adresser, separert med space eller komma..." class="form-control form-control-sm">{{ search_term }}</textarea>
+			<input style="margin-left: 10px;" type="submit" value="Slå opp" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	<hr>
+
+	<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+		<th>IP</th>
+		<th>Host</th>
+		<th>DNS intern</th>
+		<th>DNS ekstern</th>
+		<th>VLAN</th>
+		<th>VIP</th>
+	</thead>
+	<tbody>
+	{% for ip in ip_lookup %}
+		<tr>
+			<td>{{ip.address}}</td>
+			<td>
+				{% if ip.comp_name %}
+					<a href="{% url 'alle_maskiner' %}?search_term={{ip.comp_name}}">{{ip.comp_name}}</a>
+				{% endif %}
+			</td>
+			<td>{{ip.dns_i|default:"Ingen treff"}}</td>
+			<td>{{ip.dns_e|default:"Ingen treff"}}</td>
+			<td>{{ip.vlan|default:"Ingen treff"}}</td>
+			<td>{{ip.vip|default:"Ingen treff"}}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% if not_ip_addresses %}
+	<p>Følgende ting er ikke IP-adresser:
+	{% for item in not_ip_addresses %}
+		<li>{{item}}</li>
+	{% endfor %}
+{% endif %}
+
+
+{% endblock main_content %}

@@ -1,0 +1,13 @@
+{% extends "index.html" %}
+
+{% block underoverskrift %}
+	Systemer uten tilknyttet driftsmodell
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<p>Viser {{ systemer.count }} systemer.</p>
+
+	{% include "alle_systemer_include.html" %}
+
+{% endblock main_content %}

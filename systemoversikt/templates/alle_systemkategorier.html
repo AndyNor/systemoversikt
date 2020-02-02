@@ -39,7 +39,7 @@
 		{% endif %}
 		<td>{% for hovedkat in kat.systemhovedkategori_systemkategorier.all %} {{ hovedkat.hovedkategorinavn }}<br> {% endfor %}</td>
 		{% url 'systemkategori' pk=kat.pk as url_systemkategori %}
-		<td><a href="{{ url_systemkategori }}">{{ kat.kategorinavn }}</a></td>
+		<td><a href="{{ url_systemkategori }}">{{ kat }}</a></td>
 		<td>{{ kat.programvare_systemkategorier.count }}</td>
 		<td>{{ kat.system_systemkategorier.count }}</td>
 		<td>{{ kat.definisjon|default:'' }}</td>

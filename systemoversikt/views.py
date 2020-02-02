@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.db.models import Count
 from django.db.models.functions import Lower
 from django.db.models import Q
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+#from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
@@ -571,7 +571,11 @@ def systemer_test(request):
 
 
 def systemklassifisering_detaljer(request, id):
-	utvalg_systemer = System.objects.filter(systemeierskapsmodell=id)
+	if id == "__NONE__":
+		utvalg_systemer = System.objects.filter(systemeierskapsmodell=None)
+	else:
+		utvalg_systemer = System.objects.filter(systemeierskapsmodell=id)
+
 	return render(request, 'alle_systemer_uten_paginering.html', {
 		'request': request,
 		'overskrift': ("Systemklassifisering: %s" % id.lower()),
@@ -579,79 +583,47 @@ def systemklassifisering_detaljer(request, id):
 	})
 
 
-def systemtype_detaljer(request, pk):
-	utvalg_systemer = System.objects.filter(systemtyper=pk)
-	systemtype_navn = Systemtype.objects.get(pk=pk).kategorinavn
+def systemtype_detaljer(request, pk=None):
+	if pk:
+		utvalg_systemer = System.objects.filter(systemtyper=pk)
+		systemtype_navn = Systemtype.objects.get(pk=pk).kategorinavn
+		overskrift = ("Systemer av typen %s" % systemtype_navn.lower())
+	else:
+		utvalg_systemer = System.objects.filter(systemtyper=None)
+		overskrift = "Systemer som mangler systemtype"
 	return render(request, 'alle_systemer_uten_paginering.html', {
 		'request': request,
-		'overskrift': ("Systemtype: %s" % systemtype_navn),
+		'overskrift': overskrift,
 		'systemer': utvalg_systemer,
 	})
 
 
-def alle_systemer(request, utvalg="alle", items=200, page=1):
-	search_query = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-	if search_query != '':
-		# veldig enkelt søk. Kun case insensitivt og må ellers matche 100%
-		aktuelle_systemer = System.objects.filter(Q(systemnavn__icontains=search_query) | Q(systembeskrivelse__icontains=search_query))
+def alle_systemer(request):
+	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+
+	if search_term == "__all__":
+		aktuelle_systemer = System.objects.all()
+		potensielle_systemer = System.objects.none()
+	elif len(search_term) < 2: # if one or less, return nothing
+		aktuelle_systemer = System.objects.none()
+		potensielle_systemer = System.objects.none()
 	else:
-		aktuelle_systemer = System.objects
+		aktuelle_systemer = System.objects.filter(systemnavn__icontains=search_term)
+		#Her ønsker vi å vise treff i beskrivelsesfeltet, men samtidig ikke vise systemer på nytt
+		potensielle_systemer = System.objects.filter(Q(systembeskrivelse__icontains=search_term) & ~Q(pk__in=aktuelle_systemer))
 
-	if utvalg != "alle":
+	aktuelle_systemer = aktuelle_systemer.order_by('ibruk', Lower('systemnavn'))
 
-		utvalg_systemer = System.objects.none()
-		overskrift = "Ugyldig valg"
-
-		if utvalg == "itas":
-			utvalg_systemer = aktuelle_systemer.filter(driftsmodell_foreignkey__in=[8,])
-			overskrift = "Funksjonalitet og rammeverk på ITAS"
-
-		if utvalg == "sektorfelles":
-			utvalg_systemer = aktuelle_systemer.filter(systemeierskapsmodell__in=FELLES_OG_SEKTORSYSTEMER)
-			overskrift = "Sektor- og fellessystemer"
-
-		if utvalg == "systemapplikasjoner":
-			utvalg_systemer = aktuelle_systemer.filter(systemtyper__kategorinavn=SYSTEMTYPE_PROGRAMMER)
-			overskrift = "Applikasjoner og enkeltstående programvarer"
-
-		if utvalg == "nyfellesiktplattform":
-			utvalg_systemer = aktuelle_systemer.filter(driftsmodell_foreignkey__in=[3,4,5,6,7])
-			overskrift = "Systemer på (ny) felles IKT-plattform"
-
-		if utvalg == "gammelfellesiktplattform":
-			utvalg_systemer = aktuelle_systemer.filter(driftsmodell_foreignkey__in=[9,8])
-			overskrift = "Systemer på Oslo kommunes datasenter (Oslofelles)"
-
-		if utvalg == "lokaldrift":
-			utvalg_systemer = aktuelle_systemer.filter(driftsmodell_foreignkey__in=[1,])
-			overskrift = "Lokalt driftede"
-
-		if utvalg == "saas":
-			utvalg_systemer = aktuelle_systemer.filter(driftsmodell_foreignkey__in=[2,])
-			overskrift = "Driftet av ekstern leverandør / kjøpt som skytjeneste"
-
-		if utvalg == "utendriftsmodell":
-			utvalg_systemer = aktuelle_systemer.filter(driftsmodell_foreignkey=None)
-			overskrift = "Ukjent driftsmodell"
-
-	else:  #utvalg er "alle"
-		#systemer = System.objects.filter(~Q(systemeierskapsmodell__in=FELLES_OG_SEKTORSYSTEMER)).filter(~Q(systemtyper__kategorinavn="Selvstendig klientapplikasjon")).order_by(Lower('systemnavn'))
-		utvalg_systemer = aktuelle_systemer.all().order_by(Lower('systemnavn'))
-		overskrift = "Systemoversikt"
-
-	utvalg_systemer = utvalg_systemer.order_by(Lower('systemnavn'))
-
-	#paginator = Paginator(utvalg_systemer, items)
-	#paginerte_systemer = paginator.get_page(page)
+	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
+	systemtyper = Systemtype.objects.all()
 
 	return render(request, 'alle_systemer.html', {
 		'request': request,
-		'overskrift': overskrift,
-		'systemer': utvalg_systemer,
-		#'pages': paginator.page_range,
-		#'perpage': items,
-		'utvalg': utvalg,
-		'search_query': search_query,
+		'systemer': aktuelle_systemer,
+		'potensielle_systemer': potensielle_systemer,
+		'search_term': search_term,
+		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
+		'systemtyper': systemtyper,
 	})
 
 
@@ -1083,7 +1055,15 @@ def sertifikatmyndighet(request):
 
 
 def alle_virksomheter(request):
-	virksomheter = Virksomhet.objects.order_by('-ordinar_virksomhet', 'virksomhetsnavn')
+
+	search_term = request.GET.get('search_term', "").strip()
+	if search_term in ("", "__all__"):
+		virksomheter = Virksomhet.objects.all()
+	else:
+		virksomheter = Virksomhet.objects.filter(Q(virksomhetsnavn__icontains=search_term) | Q(virksomhetsforkortelse__iexact=search_term))
+
+	virksomheter = virksomheter.order_by('-ordinar_virksomhet', 'virksomhetsnavn')
+
 	return render(request, 'alle_virksomheter.html', {
 		'request': request,
 		'virksomheter': virksomheter,
@@ -1112,7 +1092,18 @@ def leverandor(request, pk):
 
 def alle_leverandorer(request):
 	from django.db.models.functions import Lower
-	leverandorer = Leverandor.objects.order_by(Lower('leverandor_navn'))
+
+	search_term = request.GET.get('search_term', "").strip()
+
+	if search_term == "__all__":
+		leverandorer = Leverandor.objects.all()
+	elif len(search_term) < 2: # if one or less, return nothing
+		leverandorer = Leverandor.objects.none()
+	else:
+		leverandorer = Leverandor.objects.filter(leverandor_navn__icontains=search_term)
+
+	leverandorer = leverandorer.order_by(Lower('leverandor_navn'))
+
 	return render(request, 'alle_leverandorer.html', {
 		'request': request,
 		'leverandorer': leverandorer,
@@ -1120,7 +1111,7 @@ def alle_leverandorer(request):
 
 
 def alle_driftsmodeller(request):
-	driftsmodeller = Driftsmodell.objects.all()
+	driftsmodeller = Driftsmodell.objects.all().order_by('-ansvarlig_virksomhet')
 	return render(request, 'alle_driftsmodeller.html', {
 		'request': request,
 		'driftsmodeller': driftsmodeller,
@@ -1143,6 +1134,12 @@ def detaljer_driftsmodell(request, pk):
 		'isolert_drift': isolert_drift,
 		'ikke_anbefalte_personoppl_kategorier': ikke_anbefalte_personoppl_kategorier,
 	})
+
+def systemer_uten_driftsmodell(request):
+	mangler = System.objects.filter(driftsmodell_foreignkey=None)
+	return render(request, 'detaljer_driftsmodell_mangler.html', {
+		'systemer': mangler,
+})
 
 
 def systemkategori(request, pk):
@@ -1353,42 +1350,124 @@ def system_til_programvare(request, system_id):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-def cmdb_stats(maskiner):
-	maskiner_stats = []
-	os_major = maskiner.values('comp_os').distinct()
-	for os in os_major:
-		minor_versions = maskiner.filter(comp_os=os['comp_os']).values('comp_os_version').annotate(Count('comp_os_version'))
-		for minor in minor_versions:
-			maskiner_stats.append({'major': os['comp_os'], 'minor': minor['comp_os_version'], 'count': minor['comp_os_version__count']})
-	return maskiner_stats
-
-
-def alle_servere(request):
+def alle_os(request):
 	required_permissions = 'systemoversikt.change_system'
 	if request.user.has_perm(required_permissions):
-		maskiner = CMDBdevice.objects.filter(~Q(bs_u_service_portfolio="Digital workplace") & Q(active=True)).order_by('comp_os')
-		maskiner_stats = cmdb_stats(maskiner)
 
-		return render(request, 'alle_maskiner.html', {
-			'request': request,
-			'maskiner': maskiner,
+		def cmdb_os_stats(maskiner):
+			maskiner_stats = []
+			os_major = maskiner.values('comp_os').distinct()
+			for os in os_major:
+				minor_versions = maskiner.filter(comp_os=os['comp_os']).values('comp_os_version').annotate(Count('comp_os_version'))
+				for minor in minor_versions:
+					maskiner_stats.append({
+							'major': os['comp_os'],
+							'minor': minor['comp_os_version'],
+							'count': minor['comp_os_version__count']
+					})
+			return sorted(maskiner_stats, key=lambda os: os['major'], reverse=True)
+
+		maskiner = CMDBdevice.objects.filter(active=True)
+		maskiner_stats = cmdb_os_stats(maskiner)
+
+		return render(request, 'alle_os.html', {
 			'maskiner_stats': maskiner_stats,
-			"type": "servere",
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-def alle_klienter(request):
+
+def alle_ip(request):
 	required_permissions = 'systemoversikt.change_system'
 	if request.user.has_perm(required_permissions):
-		maskiner = CMDBdevice.objects.filter(Q(bs_u_service_portfolio="Digital workplace") & Q(active=True)).order_by('comp_os')
-		maskiner_stats = cmdb_stats(maskiner)
+
+		from systemoversikt.views_import import load_dns_sonefile, load_vlan, load_nat, load_bigip, find_ip_in_dns, find_vlan, find_ip_in_nat, find_bigip
+		import os
+
+		search_term = request.POST.get('search_term', '').strip()  # strip removes trailing and leading space
+
+		# må legge dette i en konfigurasjonsfil, da det nå ligger to steder.
+		domain = "oslo.kommune.no"
+		dns_ekstern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_ekstern", domain)
+		dns_intern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_intern", domain)
+		vlan_data = load_vlan(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vlan.tsv")
+		nat_data = load_nat(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_nat.tsv")
+		bigip_data = load_bigip(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vip.tsv")
+
+		import re
+		import ipaddress
+		search_ips = re.findall(r"([^,;\t\s\n\r]+)", search_term)
+
+		ip_lookup = []
+		not_ip_addresses = []
+		for item in search_ips:
+			try:
+				ip_address = ipaddress.ip_address(item)
+			except:
+				not_ip_addresses.append(item)
+				continue  # skip this item
+
+			dns_i = find_ip_in_dns(ip_address, dns_intern)
+			dns_e = find_ip_in_dns(ip_address, dns_ekstern)
+			vlan = find_vlan(ip_address, vlan_data)
+			nat = find_ip_in_nat(ip_address, nat_data)
+			vip = find_bigip(ip_address, bigip_data)
+
+			try:
+				comp_name = CMDBdevice.objects.get(comp_ip_address=item).comp_name
+			except:
+				comp_name = None
+
+			ip_lookup.append({
+					"address": ip_address,
+					"comp_name": comp_name,
+					"dns_i": dns_i,
+					"dns_e": dns_e,
+					"vlan": vlan,
+					"vip": vip,
+			})
+
+
+		return render(request, 'alle_ip.html', {
+			'request': request,
+			'ip_lookup': ip_lookup,
+			'search_term': search_term,
+			'not_ip_addresses': not_ip_addresses,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def alle_maskiner(request):
+	required_permissions = 'systemoversikt.change_system'
+	if request.user.has_perm(required_permissions):
+
+		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+		comp_os = request.GET.get('comp_os', '').strip()
+		comp_os_version = request.GET.get('comp_os_version', '').strip()
+
+		if (search_term == "__all__") or (comp_os != "") or (comp_os_version != ""):
+			maskiner = CMDBdevice.objects
+		elif len(search_term) < 2: # if one or less, return nothing
+			maskiner = CMDBdevice.objects.none()
+		else:
+			maskiner = CMDBdevice.objects.filter(comp_name__icontains=search_term)
+
+		if comp_os != "":
+			maskiner = maskiner.filter(comp_os__icontains=comp_os)
+
+		if comp_os != "":
+			maskiner = maskiner.filter(comp_os_version__icontains=comp_os_version)
+
+
+		maskiner = maskiner.order_by('comp_os')
 
 		return render(request, 'alle_maskiner.html', {
 			'request': request,
 			'maskiner': maskiner,
-			'maskiner_stats': maskiner_stats,
-			"type": "klienter",
+			'search_term': search_term,
+			'comp_os': comp_os,
+			'comp_os_version': comp_os_version,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -1397,10 +1476,30 @@ def alle_klienter(request):
 def alle_databaser(request):
 	required_permissions = 'systemoversikt.change_system'
 	if request.user.has_perm(required_permissions):
-		databaser = CMDBdatabase.objects.all()
+
+		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+
+		if search_term == "__all__":
+			databaser = CMDBdatabase.objects
+		elif len(search_term) < 2: # if one or less, return nothing
+			databaser = CMDBdatabase.objects.none()
+		else:
+			databaser = CMDBdatabase.objects.filter(Q(db_database__icontains=search_term) | Q(sub_name__navn__icontains=search_term))
+
+		databaser = databaser.order_by('db_database')
+
+		for d in databaser:
+			try:
+				server_str = d.db_comments.split("@")[1]
+			except:
+				server_str = None
+			d.server_str = server_str # dette legger bare til et felt. Vi skriver ingen ting her.
+
+
 		return render(request, 'alle_databaser.html', {
 			'request': request,
 			'databaser': databaser,
+			'search_term': search_term,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -1409,16 +1508,16 @@ def alle_cmdbref(request):
 	required_permissions = 'systemoversikt.change_system'
 	if request.user.has_perm(required_permissions):
 
-		search_term = ""
-		search_term = request.GET.get('filter', "").strip()
+		search_term = request.GET.get('search_term', "").strip()
 
 		if search_term == "__all__":
-			cmdbref = CMDBRef.objects.all().order_by("-operational_status", Lower("navn")) #1 er operational
+			cmdbref = CMDBRef.objects.all()
 		elif len(search_term) < 2: # if one or less, return nothing
 			cmdbref = CMDBRef.objects.none()
 		else:
-			cmdbref = CMDBRef.objects.filter(navn__icontains=search_term).order_by("-operational_status", Lower("navn")) #1 er operational
+			cmdbref = CMDBRef.objects.filter(navn__icontains=search_term)
 
+		cmdbref = cmdbref.order_by("-operational_status", "service_classification", Lower("navn"))
 
 		return render(request, 'alle_cmdb.html', {
 			'request': request,

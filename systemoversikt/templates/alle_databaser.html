@@ -3,10 +3,28 @@
 {% load static %}
 
 {% block underoverskrift %}
-	CMDB databaser (Felles IKT-plattform)
+	Databaser på Felles IKT-plattform
 {% endblock underoverskrift %}
 
 {% block main_content %}
+
+
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Alle business services</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_maskiner' %}">Alle maskiner</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_os' %}">Alle operativsystem</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_ip' %}">Søk på IP</a>
+
+	<hr>
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="databasenavn eller kategori inneholder.." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
+		</div>
+	</form>
+
 <p>Viser {{ databaser.count }} databaser</p>
 
 {% comment %}
@@ -50,7 +68,7 @@
 		</td>
 		<td>{{ db.db_used_for }}</td>
 		<td>{{ db.db_version }}</td>
-		<td>{{ db.db_comments }}</td>
+		<td><a href="{% url 'alle_maskiner' %}?search_term={{db.server_str}}">{{ db.db_comments }}</a></td>
 		<td>{{ db.db_u_datafilessizekb }} ({{ db.db_u_datafilessizekb|filesizeformat }})</td>
 	</tr>
 	{% endfor %}

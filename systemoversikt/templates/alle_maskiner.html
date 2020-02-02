@@ -3,28 +3,53 @@
 {% load static %}
 
 {% block underoverskrift %}
-	CMDB {{ type }} (Felles IKT-plattform)
+	Maskiner på Felles IKT-plattform
 {% endblock underoverskrift %}
 
 {% block main_content %}
-<p>Viser {{ maskiner.count }} maskiner.</p>
 
-<table id="stickyheader" class="table table-sm tablesorter">
-	<thead>
-		<th>OS hovedversjon</th>
-		<th>OS versjonsnummer</th>
-		<th>Antall</th>
-	</thead>
-	<tbody>
-	{% for os in maskiner_stats %}
-		<tr>
-			<td>{{ os.major|default:"Ukjent" }}</td>
-			<td>{{ os.minor|default:"Ukjent" }}</td>
-			<td>{{ os.count }}</td>
-		</tr>
-	{% endfor %}
-	</tbody>
-</table>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Alle business services</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_os' %}">Alle operativsystem</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_databaser' %}">Alle databaser</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_ip' %}">Søk på IP</a>
+
+	<hr>
+
+	<p>Hurtigsøk:
+		<a class="btn btn-sm" href="?search_term=ws8">Tykke og tynne klienter (mange)</a>
+		<a class="btn btn-sm" href="?search_term=xai">Terminalservere intern sone</a>
+		<a class="btn btn-sm" href="?search_term=xas">Terminalservere sikkers sone</a>
+		<a class="btn btn-sm" href="?search_term=wsvis">VDI intern sone</a>
+		<a class="btn btn-sm" href="?search_term=wsvss">VDI sikker sone</a>
+		<a class="btn btn-sm" href="?search_term=mgmt">Managementservere</a>
+		<a class="btn btn-sm" href="?search_term=web">Webservere</a>
+		<a class="btn btn-sm" href="?search_term=app">Appservere</a>
+		<a class="btn btn-sm" href="?search_term=fil">Filservere</a>
+		<a class="btn btn-sm" href="?search_term=infra">Infra-servere</a>
+		<a class="btn btn-sm" href="?search_term=print">Print-servere</a>
+	</p>
+
+
+	<hr>
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="hostnavn inneholder.." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
+		</div>
+	</form>
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 250px;" type="search" value="{{ comp_os }}" name="comp_os"
+			placeholder="Operativsystem er.." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	<p>Viser {{ maskiner.count }} maskiner.</p>
 
 	<table id="stickyheader" class="table table-sm tablesorter">
 	<thead>

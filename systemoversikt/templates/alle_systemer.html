@@ -1,7 +1,7 @@
 {% extends "index.html" %}
 
 {% block underoverskrift %}
-	{{ overskrift }} (viser {{ systemer.start_index }} til {{ systemer.end_index }} av totalt {{ systemer.paginator.count }})
+	Systemoversikt
 {% endblock underoverskrift %}
 
 {% block main_content %}
@@ -17,58 +17,57 @@
 			<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/system/">Avansert søk og filtrering</a>
 		{% endif %}
 
-		{% if not user.is_authenticated %}
-			{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
-			<a class="btn btn-sm btn-secondary" href="{{ alle_driftsmodeller_url }}" class="nav-link {% if alle_driftsmodeller_url in request.path %} active {% endif %}">Alle plattformer</a>
 
-			{% url "alle_cmdbref" as alle_cmdbref_url %}
-			<a href="{{ alle_cmdbref_url }}" class="btn btn-sm btn-secondary">CMDB</a>
-		{% endif %}
+		{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
+		<a class="btn btn-sm" href="{{ alle_driftsmodeller_url }}" class="nav-link {% if alle_driftsmodeller_url in request.path %} active {% endif %}">Alle plattformer</a>
+
 
 		{% url "alle_leverandorer" as alle_leverandorer_url %}
-		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm btn-secondary">Alle leverandører</a>
-		<a href="{% url 'alle_systemkategorier' %}" class="btn btn-sm btn-secondary">Alle systemkategorier</a>
+		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm">Alle leverandører</a>
+		<a href="{% url 'alle_systemkategorier' %}" class="btn btn-sm">Alle systemkategorier</a>
 	</div>
 
-	<p>Her vises alle registrerte systemer i Oslo kommune.<br>
+	<hr>
 
-	<p>Noen predefinerte filtre for å snevre inn på type system og hvor systemet er driftet:<br>
+	<div>
+	Systemklassifisering:
+	{% for klasse in kommuneklassifisering %}
+		<a class="btn btn-sm" href="{% url 'systemklassifisering_detaljer' id=klasse.0 %}">{{klasse.1}}</a>
+	{% endfor %}
+		<a class="btn btn-sm btn-warning" href="{% url 'systemklassifisering_detaljer' id='__NONE__' %}">Mangler</a>
+	</div>
 
-	{% url "alle_systemer_sideref" utvalg="alle" items=perpage page=1 as url_alle %}
-	<a href="{{ url_alle }}" {% if url_alle in request.path %} style="font-weight: bold;" {% endif %}>Alle systemer</a> |
+	<div>
+	Systemtype:
+	{% for type in systemtyper %}
+		<a class="btn btn-sm" href="{% url 'systemtype_detaljer' pk=type.pk %}">{{type}}</a>
+	{% endfor %}
+		<a class="btn btn-sm btn-warning" href="{% url 'systemtype_detaljer_mangler' %}">Mangler</a>
+	</div>
 
-	{% url "alle_systemer_sideref" utvalg="sektorfelles" items=perpage page=1 as url_sektor_og_fellessystemer %}
-	<a href="{{ url_sektor_og_fellessystemer }}" {% if url_sektor_og_fellessystemer in request.path %} style="font-weight: bold;" {% endif %}>Sektor- og fellessystemer</a> |
-
-	{% url "alle_systemer_sideref" utvalg="nyfellesiktplattform" items=perpage page=1 as url_nyfellesiktplattform %}
-	<a href="{{ url_nyfellesiktplattform }}" {% if url_nyfellesiktplattform in request.path %} style="font-weight: bold;" {% endif %}>På ny felles IKT-plattform</a> |
-
-	{% url "alle_systemer_sideref" utvalg="gammelfellesiktplattform" items=perpage page=1 as url_gammelfellesiktplattform %}
-	<a href="{{ url_gammelfellesiktplattform }}" {% if url_gammelfellesiktplattform in request.path %} style="font-weight: bold;" {% endif %}>På Oslo kommunes datasenter (Oslofelles)</a> |
-
-	{% url "alle_systemer_sideref" utvalg="saas" items=perpage page=1 as url_saas %}
-	<a href="{{ url_saas }}" {% if url_saas in request.path %} style="font-weight: bold;" {% endif %}>Driftes av ekstern leverandør</a> |
-
-	{% url "alle_systemer_sideref" utvalg="itas" items=perpage page=1 as url_alle_systemer_itas %}
-	<a href="{{ url_alle_systemer_itas }}" {% if url_alle_systemer_itas in request.path %} style="font-weight: bold;" {% endif %}>På ITAS-plattformen</a> |
-
-	{% url "alle_systemer_sideref" utvalg="utendriftsmodell" items=perpage page=1 as url_utendriftsmodell %}
-	<a href="{{ url_utendriftsmodell }}" {% if url_utendriftsmodell in request.path %} style="font-weight: bold;" {% endif %}>Ukjent driftsmodell</a> |
-
-	{% url "alle_systemer_sideref" utvalg="systemapplikasjoner" items=perpage page=1 as url_alle_applikasjoner %}
-	<a href="{{ url_alle_applikasjoner }}" {% if url_alle_applikasjoner in request.path %} style="font-weight: bold;" {% endif %}>Systemapplikasjoner</a>
-	</p>
+	<hr>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
 			placeholder="Systemnavn inneholder.." class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-			<a class="btn btn-sm" href="?filter=__all__">Vis alt</a>
+			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
 		</div>
 	</form>
 
+	<p>Viser {{ systemer.count }} systemer.</p>
+
 	{% include "alle_systemer_include.html" %}
 
+	{% if potensielle_systemer %}
+	<hr>
+	<p>Mente du? (basert på systembeskrivelser)</p>
+	<ul style="column-count:5;">
+	{% for system in potensielle_systemer %}
+		<li><a href="{% url 'systemdetaljer' pk=system.pk %}">{{system.systemnavn}}</a></li>
+	{% endfor %}
+	</ul>
+	{% endif %}
 
 {% endblock main_content %}

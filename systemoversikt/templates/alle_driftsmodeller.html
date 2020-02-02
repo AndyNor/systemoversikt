@@ -7,12 +7,15 @@
 	{% if user.is_authenticated %}
 	<div>
 		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/driftsmodell/add/">Legg til ny driftsmodell</a>
+		<a class="btn btn-sm" href="{% url 'systemer_uten_driftsmodell' %}">Systemer uten driftsmodell</a>
 	</div>
 	{% endif %}
 {% endblock underoverskrift %}
 
 {% block main_content %}
-<p>Oversikt over driftsmodeller / driftsplattformer. Systemer angis med en av disse driftsmodellene. En driftsmodell er også forvaltet av en virksomhet. Viser alle {{ driftsmodeller.count }}.</p>
+<p>Her ser du en oversikt over alle {{ driftsmodeller.count }} driftsplattformer. Alle driftsplattformer skal kobles til ansvarlig virksomhet i kommunen.<br>
+Alle systemer bør kobles mot en av disse driftsplattformene. Dersom systemet tilhører flere driftsmodeller, velges den mest fremtrendende.<br>
+Klikk på en driftsplattform for å se generell informasjon samt alle systemer som er tilknyttet.</p>
 
 <table id="stickyheader" class="table table-sm table-striped tablesorter">
 	<thead>

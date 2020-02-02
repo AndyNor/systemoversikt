@@ -10,11 +10,11 @@
 		{% if request.user.profile.virksomhet %}
 			{% url 'all_programvarebruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
 			<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-success">Vår programvarebruk</a>
-			<a href="{% url 'systemer_pakket' %}" class="btn btn-sm btn-secondary">Programvarepakking</a>
+			<a href="{% url 'systemer_pakket' %}" class="btn btn-sm">Programvarepakking</a>
 		{% endif %}
 		{% url "alle_leverandorer" as alle_leverandorer_url %}
-		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm btn-secondary">Alle leverandører</a>
-		<a href="{% url 'alle_systemkategorier' %}" class="btn btn-sm btn-secondary">Systemkategorier</a>
+		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm">Alle leverandører</a>
+		<a href="{% url 'alle_systemkategorier' %}" class="btn btn-sm">Systemkategorier</a>
 	</div>
 
 {% endblock underoverskrift %}

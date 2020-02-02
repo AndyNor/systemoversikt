@@ -9,7 +9,8 @@
 	<th>Systemnavn</th>
 	{% comment %}<th>Behandlinger</th>{% endcomment %}
 	<th>Systemkategori</th>
-	{% comment %}<th>Systemtype</th>{% endcomment %}
+	<th>Leverandører</th>
+	<th>Systemtype</th>
 	{% comment %}<th>Tjenestenivå UKE</th>{% endcomment %}
 	<th>Driftsdokumentasjon</th>
 	<th>Systemeier</th>
@@ -29,7 +30,7 @@
 </thead>
 <tbody>
 {% for item in systemer %}
-<tr {% if item.ibruk == False %} style="text-decoration: line-through;" {% endif %}
+<tr {% if item.ibruk == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}
 	{% comment %}{% if item.felles_sektorsystem %} style="background-color: #0779002b;" {% endif %}{% endcomment %}
 	>
 	{% if perms.systemoversikt.change_system %}
@@ -57,14 +58,27 @@
 		{% endfor %}
 	</td>
 
-	{% comment %}
+	<td>
+		{% for lev in item.systemleverandor.all %}
+			<a href="{% url 'leverandor' pk=lev.pk %}">{{ lev }}</a><br>
+		{% endfor %}
+
+		{% for lev in item.basisdriftleverandor.all %}
+			<a href="{% url 'leverandor' pk=lev.pk %}">{{ lev }}</a><br>
+		{% endfor %}
+
+		{% for lev in item.applikasjonsdriftleverandor.all %}
+			<a href="{% url 'leverandor' pk=lev.pk %}">{{ lev }}</a><br>
+		{% endfor %}
+	</td>
+
 	<td>
 		{% for systemtype in item.systemtyper.all %}
 			{% url 'systemtype_detaljer' systemtype.pk as url_systemtype %}
 			<a href="{{ url_systemtype }}">{{ systemtype }}</a><br>
 		{% endfor %}
 	</td>
-	{% endcomment %}
+
 
 
 	<td>

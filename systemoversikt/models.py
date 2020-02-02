@@ -536,7 +536,11 @@ class SystemKategori(models.Model):
 	history = HistoricalRecords()
 
 	def __str__(self):
-		return u'%s' % (self.kategorinavn)
+		if len(self.systemhovedkategori_systemkategorier.all()) > 0:
+			# hvis flere, tar vi den første. Det skal ikke være flere, men det er litt knotete å endre til foreignkey-relasjon
+			return u'%s: %s' % (self.systemhovedkategori_systemkategorier.all()[0].hovedkategorinavn, self.kategorinavn)
+		else:
+			return u'%s' % (self.kategorinavn)
 
 	class Meta:
 		verbose_name_plural = "Systemkategorier"
@@ -873,7 +877,10 @@ class CMDBRef(models.Model):
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
 
 	def __str__(self):
-		return u'%s' % (self.navn)
+		if self.is_bss():
+			return u'%s' % (self.navn)
+		else:
+			return u'%s (servergruppe)' % (self.navn)
 
 	def er_infrastruktur_tom_bs(self):
 		if self.cmdb_type in [3, 4, 6]:
@@ -893,9 +900,14 @@ class CMDBRef(models.Model):
 		else:
 			return False
 
-
 	def ant_devices(self):
 		return CMDBdevice.objects.filter(sub_name=self.pk, active=True).count()
+
+	def is_bss(self):
+		if self.service_classification == "Business Service":
+			return True
+		else:
+			return False
 
 	class Meta:
 		verbose_name_plural = "CMDB Business services"
@@ -1700,7 +1712,7 @@ class System(models.Model):
 	cmdbref = models.ManyToManyField(CMDBRef, related_name='system_cmdbref',
 			verbose_name="Referanse til Sopra Steria CMDB",
 			blank=True,
-			help_text=u"Velg alle aktuelle, både produksjon, test og annet.",
+			help_text=u"Velg alle aktuelle med '(servergruppe)' bak navnet. Produksjon, test og annet.",
 			)
 	sikkerhetsnivaa = models.IntegerField(choices=SIKKERHETSNIVAA_VALG,
 			verbose_name="Sikkerhetsnivå til systemet",

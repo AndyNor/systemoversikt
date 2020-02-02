@@ -6,7 +6,7 @@
 {% endblock underoverskrift %}
 
 {% block undermeny %}
-	<p>Virksomhet definert som organisatorisk enhet med unikt organisasjonsnummer. Det er registrert {{ virksomheter.count }} virksomheter.</p>
+	<p>Virksomhet definert som organisatorisk enhet med unikt organisasjonsnummer. Det vises {{ virksomheter.count }} virksomheter.</p>
 	<div>
 		{% if user.is_authenticated %}
 			<a target="_blank" class="btn btn-sm btn-primary" href="/admin/systemoversikt/virksomhet/add/">Legg til ny virksomhet</a>
@@ -19,6 +19,16 @@
 
 
 {% block main_content %}
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 140px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Virksomhet.." class="form-control form-control-sm">
+			<input type="submit" value="Filtrer" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
+		</div>
+	</form>
+
 	<table id="virksomheter" class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>

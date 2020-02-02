@@ -13,7 +13,18 @@
 
 
 {% block main_content %}
-<p>Det er registrert {{ leverandorer.count }} leverandører.</p>
+
+<p>Det vises {{ leverandorer.count }} leverandører.</p>
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Leverandørnavn inneholder.." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
+		</div>
+	</form>
+
 	<table class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>
