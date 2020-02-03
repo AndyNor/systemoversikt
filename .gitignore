@@ -4,6 +4,7 @@ secrets_dev.py
 secrets_test.py
 db.sqlite3
 systemoversikt/import/
+systemoversikt/management/commands/*.json
 
 # local
 dev.bat

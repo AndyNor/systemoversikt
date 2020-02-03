@@ -3199,7 +3199,10 @@ class PRKvalg(models.Model):
 
 	def for_virksomhet(self):
 		if self.skjemanavn.er_lokalt() == True:
-			tbf = re.search("ou=([A-Z]{3}),ou=Tilgangsgrupper,ou=OK",self.gruppenavn).group(1)
+			try:
+				tbf = re.search("ou=([A-Z]{3}),ou=Tilgangsgrupper,ou=OK",self.gruppenavn).group(1)
+			except:
+				return None
 			try:
 				virksomhet = Virksomhet.objects.get(virksomhetsforkortelse=tbf)
 				return virksomhet
@@ -3272,7 +3275,7 @@ class PRKskjema(models.Model):
 	unique_together = ('skjemanavn', 'skjematype')
 
 	def __str__(self):
-		return u'PRK-kjema %s (%s)' % (self.skjemanavn, self.skjematype)
+		return u'PRK-skjema %s (%s)' % (self.skjemanavn, self.skjematype)
 
 	def er_lokalt(self):
 		if self.skjematype == "LOKAL":
