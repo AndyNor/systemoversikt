@@ -6,13 +6,14 @@
 	CMDB Business Services (Felles IKT-plattform)
 	<div>
 		{% if user.is_authenticated %}
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_maskiner' %}">Alle maskiner</a>
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_os' %}">Alle operativsystem</a>
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_databaser' %}">Alle databaser</a>
+			<a class="btn btn-sm btn-secondary" href="{% url 'alle_maskiner' %}">Søk i maskiner</a>
+			<a class="btn btn-sm btn-secondary" href="{% url 'alle_os' %}">Vis operativsystem</a>
+			<a class="btn btn-sm btn-secondary" href="{% url 'alle_databaser' %}">Søk i databaser</a>
 			<a class="btn btn-sm btn-secondary" href="{% url 'alle_ip' %}">Søk på IP</a>
 			<a class="btn btn-sm btn-secondary" href="{% url 'alle_prk' %}">Søk i PRK-skjema</a>
-			<a class="btn btn-sm btn-info" target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">CMDB nivåer</a>
-			<a class="btn btn-sm btn-info" target="_blank" href="https://confluence.oslo.kommune.no/x/R1KQBg">Om CMDB-dataene</a>
+			<a class="btn btn-sm btn-secondary" href="{% url 'ad' %}">Søk i Active Directory</a>
+			<a class="btn btn-sm btn-info" target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">Nivådefinisjoner BS</a>
+			<a class="btn btn-sm btn-info" target="_blank" href="https://confluence.oslo.kommune.no/x/R1KQBg">Om manuell import</a>
 
 		{% endif %}
 	</div>
@@ -20,7 +21,8 @@
 
 {% block main_content %}
 
-	<p>CMDB står for "Configuration management database" og er i denne kontekst en import av det Sopra Steria kaller "Business Services". Gruppene brukes for fakturering og er ofte knyttet til et system. Dette er de samme kategoriene som benyttes i Kompass ved bestillinger. Importen av data skjer manuelt typisk en gang per måned. Det vises nå {{ cmdbref.count }} grupper.</p>
+	<p>CMDB står for "Configuration management database" og er i denne kontekst en import av det Sopra Steria kaller "Business Services", samt dedikerte integrasjoner mot PRK og AD. Business Services brukes for fakturering av 2S og er ofte knyttet til et system. Dette er de samme kategoriene som benyttes i Kompass ved bestillinger. Importen av Business Services skjer manuelt typisk en gang per måned eller ved behov.<br>
+	Det vises nå {{ cmdbref.count }} grupper.</p>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">

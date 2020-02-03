@@ -15,6 +15,10 @@
 	<th>Livsløp</th>
 	<th>Risikovurdering</th>
 	<th>Driftsmodell / plattform</th>
+	<th>Leverandør av system</th>
+	<th>Leverandør applikasjonsdrift</th>
+	<th>Leverandør basisdrift</th>
+	<th>Tilpasset drift</th>
 
 </tr>
 </thead>
@@ -56,6 +60,32 @@
 
 	{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}
 	<td><a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a></td>
+
+	<td>
+		{% for lev in item.systemleverandor.all %}
+			{% url "leverandor" lev.pk as url_leverandor %}
+			<a href="{{ url_leverandor }}">{{ lev }}</a>
+			<br>
+		{% endfor %}
+	</td>
+
+	<td>
+	{% for lev in item.applikasjonsdriftleverandor.all %}
+		{% url "leverandor" lev.pk as url_leverandor %}
+		<a href="{{ url_leverandor }}">{{ lev }}</a>
+		<br>
+	{% endfor %}
+	</td>
+
+	<td>
+		{% for lev in item.basisdriftleverandor.all %}
+			{% url "leverandor" lev.pk as url_leverandor %}
+			<a href="{{ url_leverandor }}">{{ lev }}</a>
+			<br>
+		{% endfor %}
+	</td>
+
+	<td>{{ item.isolert_drift|yesno:"Ja,Nei" }}</td>
 
 </tr>
 {% endfor %}

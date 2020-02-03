@@ -1,0 +1,23 @@
+{% extends "index.html" %}
+
+{% block underoverskrift %}
+	Systemer {{virksomhet.virksomhetsforkortelse}} drifter
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<p>Viser {{ systemer.count }} systemer.</p>
+
+	{% include "alle_systemer_virksomhet_include.html" %}
+
+	{% if potensielle_systemer %}
+	<hr>
+	<p>Mente du? (basert på systembeskrivelser)</p>
+	<ul style="column-count:5;">
+	{% for system in potensielle_systemer %}
+		<li><a href="{% url 'systemdetaljer' pk=system.pk %}">{{system.systemnavn}}</a></li>
+	{% endfor %}
+	</ul>
+	{% endif %}
+
+{% endblock main_content %}

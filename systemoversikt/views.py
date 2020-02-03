@@ -428,6 +428,7 @@ def alle_ansvarlige(request):
 	return render(request, 'alle_ansvarlige.html', {
 		'request': request,
 		'ansvarlige': ansvarlige,
+		'suboverskrift': "Hele kommunen",
 	})
 
 
@@ -812,9 +813,18 @@ def behandlingsdetaljer(request, pk):
 	if request.user.has_perm(required_permissions):
 
 		behandling = BehandlingerPersonopplysninger.objects.get(pk=pk)
+
+		siste_endringer_antall = 10
+		system_content_type = ContentType.objects.get_for_model(BehandlingerPersonopplysninger)
+		siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
+
+
+
 		return render(request, 'detaljer_behandling.html', {
 			'request': request,
 			'behandling': behandling,
+			'siste_endringer': siste_endringer,
+			'siste_endringer_antall': siste_endringer_antall,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -883,7 +893,7 @@ def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False, template=
 	# slå sammen felles og egne behandlinger til et sett
 	behandlinger = virksomhetens_behandlinger.union(delte_behandlinger).order_by('internt_ansvarlig')
 
-	overskrift = ("Behandlingsprotokoll for %s" % vir.virksomhetsforkortelse)
+	overskrift = ("%s's behandlingsprotokoll" % vir.virksomhetsforkortelse)
 	return render(request, template, {
 		'request': request,
 		'behandlinger': behandlinger,
@@ -946,10 +956,19 @@ def behandling_kopier(request, system_pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def virksomhet_ansvarlige(request, pk):
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	suboverskrift = "For " + virksomhet.virksomhetsnavn
+	ansvarlige = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).order_by('brukernavn__first_name')
+	return render(request, 'alle_ansvarlige.html', {
+		'request': request,
+		'ansvarlige': ansvarlige,
+		'suboverskrift': suboverskrift,
+	})
+
+
 def virksomhet(request, pk):
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	#systemeier_for = System.objects.filter(systemeier=pk)
-	#systemforvalter_for = System.objects.filter(systemforvalter=pk)
 	systemer_ansvarlig_for = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by('ibruk', Lower('systemnavn'))
 	systembruk_forvalter_for = SystemBruk.objects.filter(systemforvalter=pk)
 	urleier_for = SystemUrl.objects.filter(eier=pk)
@@ -967,8 +986,6 @@ def virksomhet(request, pk):
 	return render(request, 'detaljer_virksomhet.html', {
 		'request': request,
 		'virksomhet': virksomhet,
-		#'systemeier_for': systemeier_for,
-		#'systemforvalter_for': systemforvalter_for,
 		'systemer_ansvarlig_for': systemer_ansvarlig_for,
 		'systembruk_forvalter_for': systembruk_forvalter_for,
 		'urleier_for': urleier_for,
@@ -1117,6 +1134,16 @@ def alle_driftsmodeller(request):
 	return render(request, 'alle_driftsmodeller.html', {
 		'request': request,
 		'driftsmodeller': driftsmodeller,
+	})
+
+
+def driftsmodell_virksomhet(request, pk):
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
+	return render(request, 'alle_systemer_virksomhet_drifter.html', {
+		'virksomhet': virksomhet,
+		'request': request,
+		'systemer': systemer_drifter,
 	})
 
 
@@ -1385,6 +1412,8 @@ def alle_ip(request):
 
 		from systemoversikt.views_import import load_dns_sonefile, load_vlan, load_nat, load_bigip, find_ip_in_dns, find_vlan, find_ip_in_nat, find_bigip
 		import os
+		import socket
+		socket.setdefaulttimeout(1)
 
 		search_term = request.POST.get('search_term', '').strip()  # strip removes trailing and leading space
 
@@ -1398,6 +1427,7 @@ def alle_ip(request):
 
 		import re
 		import ipaddress
+		search_term = search_term.replace('\"','').replace('\'','').replace(':',' ')
 		search_ips = re.findall(r"([^,;\t\s\n\r]+)", search_term)
 
 		ip_lookup = []
@@ -1415,6 +1445,14 @@ def alle_ip(request):
 			nat = find_ip_in_nat(ip_address, nat_data)
 			vip = find_bigip(ip_address, bigip_data)
 
+			def dns_live(ip_address):
+				try:
+					return socket.gethostbyaddr(str(ip_address))[0]
+				except:
+					return None
+
+			dns_live = dns_live(ip_address)
+
 			try:
 				comp_name = CMDBdevice.objects.get(comp_ip_address=item).comp_name
 			except:
@@ -1425,6 +1463,7 @@ def alle_ip(request):
 					"comp_name": comp_name,
 					"dns_i": dns_i,
 					"dns_e": dns_e,
+					"dns_live": dns_live,
 					"vlan": vlan,
 					"vip": vip,
 			})
@@ -1658,6 +1697,7 @@ def ldap_query(ldap_path, ldap_filter, ldap_properties, timeout):
 	user = os.environ["KARTOTEKET_LDAPUSER"]
 	password = os.environ["KARTOTEKET_LDAPPASSWORD"]
 	ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)  # have to deactivate sertificate check
+	ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
 	ldapClient = ldap.initialize(server)
 	ldapClient.timeout = timeout
 	ldapClient.set_option(ldap.OPT_REFERRALS, 0)  # tells the server not to chase referrals
@@ -1809,7 +1849,7 @@ def ldap_get_details(name):
 			if b'group' in attrs["objectClass"]:
 				attrs_decoded = {}
 				for key in attrs:
-					if key in ['description', 'cn', 'member', 'objectClass']:
+					if key in ['description', 'cn', 'member', 'objectClass', 'memberOf']:
 						attrs_decoded[key] = []
 						if key == "member":
 							for element in attrs[key]:
@@ -1897,8 +1937,6 @@ def ad_details(request, name):
 
 
 def ldap_get_recursive_group_members(group):
-	#print(group)
-
 	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 	ldap_filter = ('(&(objectCategory=person)(objectClass=user)(memberOf:1.2.840.113556.1.4.1941:=%s))' % group)
 	ldap_properties = ['cn', 'displayName', 'description']
@@ -1922,6 +1960,33 @@ def ldap_get_recursive_group_members(group):
 	return users
 
 
+def ldap_exact(name):
+	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+	ldap_filter = ('(distinguishedName=%s)' % name)
+	ldap_properties = []
+
+	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=100)
+	prepare = []
+
+	for cn,attrs in result:
+		if cn:
+			attrs_decoded = {}
+			for key in attrs:
+				attrs_decoded[key] = []
+				for element in attrs[key]:
+					try:
+						attrs_decoded[key].append(element.decode())
+					except:
+						attrs_decoded[key].append(element)
+
+			prepare.append({
+					"cn": cn,
+					"attrs": attrs_decoded,
+			})
+
+	return {"raw": prepare}
+
+
 def recursive_group_members(request, group):
 	import time
 	required_permissions = 'auth.view_user'
@@ -1939,6 +2004,25 @@ def recursive_group_members(request, group):
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+
+def ad_exact(request, name):
+	import time
+	required_permissions = 'auth.view_user'
+	if request.user.has_perm(required_permissions):
+		runetime_t0 = time.time()
+
+		result = ldap_exact(name)
+
+		runetime_t1 = time.time()
+		logg_total_runtime = runetime_t1 - runetime_t0
+		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
+
+		return render(request, 'ad_details.html', {
+			'request': request,
+			'result': result,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 def ad(request):
 	required_permissions = 'auth.view_user'

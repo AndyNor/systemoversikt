@@ -44,7 +44,7 @@ Klikk på en driftsplattform for å se generell informasjon samt alle systemer s
 				<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
 		</td>
 		<td>
-			{% url 'virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
+			{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
 				<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet|default:"-" }}</a>
 		</td>
 		{% if user.is_authenticated %}

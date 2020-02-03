@@ -3213,9 +3213,14 @@ class PRKvalg(models.Model):
 
 	def gruppenavn_kort(self):
 		try:
-			return re.search("ou=(DS-[^,]+),ou",self.gruppenavn).group(1)
+			return re.search("\\A[a-zA-Z]{2}=(DS-[^,]+),",self.gruppenavn).group(1)
 		except:
 			return None
+
+	def gruppenavn_full(self):
+		mod_gruppenavn = "CN" + self.gruppenavn[2:]
+		full = mod_gruppenavn + ",DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+		return full
 
 	class Meta:
 		verbose_name_plural = "PRK-valg"

@@ -3,7 +3,7 @@
 
 {% block underoverskrift %}
 	{% url "virksomhet" bruksdetaljer.brukergruppe.pk as url_virksomhet %}
-	<a href="{{ url_virksomhet }}">{{ virksomhet }}</a> sin programvarebruk
+	<a href="{{ url_virksomhet }}">{{ virksomhet.virksomhetsforkortelse }}</a>'s programvarebruk
 
 	<p>
 	{% if user.is_authenticated %}

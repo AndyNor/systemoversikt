@@ -9,6 +9,9 @@
 
 {% block main_content %}
 
+<p>{{result.raw}}</p>
+
+
 {% for user in result.users %}
 
 	<div class="card card-body">
@@ -54,6 +57,11 @@
 	<div class="card card-body">
 		<h5>{{ group.attrs.cn.0 }}</h5>
 		<p>Canonical Name: <br>{{ group.cn }}</p>
+		<p>MemberOf: <br>
+		{% for item in group.attrs.memberOf %}
+			{% url 'ad_exact' name=item as url_details %}
+			<a target="_blank" href="{{ url_details }}">{{ item }}</a><br>
+		{% endfor %}
 		<p>ObjectClass: <br>{% for item in group.attrs.objectClass %} {{ item }} | {% endfor %}</p>
 		<p>Beskrivelse: {% for item in group.attrs.description %} <br>{{ item }} {% endfor %}</p>
 

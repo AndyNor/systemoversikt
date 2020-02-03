@@ -4,7 +4,7 @@
 {% block underoverskrift %}
 
 	{% url 'virksomhet' virksomhet.pk as url_virksomhet %}
-	<a href="{{ url_virksomhet }}">{{ virksomhet }}</a> sin bruk av systemer
+	<a href="{{ url_virksomhet }}">{{ virksomhet.virksomhetsforkortelse }}</a>'s bruk av systemer
 	{% if user.is_authenticated %}
 	<h6>
 		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer ny bruk av system</a>

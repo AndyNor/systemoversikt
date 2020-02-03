@@ -8,9 +8,7 @@
 
 {% block main_content %}
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Alle business services</a>
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_maskiner' %}">Alle maskiner</a>
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_databaser' %}">Alle databaser</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Tilbake</a>
 
 	<hr>
 
@@ -18,12 +16,13 @@
 		{% csrf_token %}
 		<div class="form-group form-inline">
 			<textarea rows="3" cols="50" style="width: 500px; height: 150px;" name="search_term"
-			placeholder="Liste med IP-adresser, separert med space eller komma..." class="form-control form-control-sm">{{ search_term }}</textarea>
+			placeholder="Liste med IP-adresser, separert med space eller, semikolon eller komma. Annen tekst ignoreres..." class="form-control form-control-sm">{{ search_term }}</textarea>
 			<input style="margin-left: 10px;" type="submit" value="Slå opp" class="btn btn-primary btn-sm">
 		</div>
 	</form>
 
 	<hr>
+	<p>Oppslag kan ta lang tid dersom mange IP-adresser legges inn.
 
 	<table id="stickyheader" class="table table-sm tablesorter">
 	<thead>
@@ -31,6 +30,7 @@
 		<th>Host</th>
 		<th>DNS intern</th>
 		<th>DNS ekstern</th>
+		<th>DNS oppslag (direkte)</th>
 		<th>VLAN</th>
 		<th>VIP</th>
 	</thead>
@@ -45,6 +45,7 @@
 			</td>
 			<td>{{ip.dns_i|default:"Ingen treff"}}</td>
 			<td>{{ip.dns_e|default:"Ingen treff"}}</td>
+			<td>{{ip.dns_live|default:"Ingen treff"}}</td>
 			<td>{{ip.vlan|default:"Ingen treff"}}</td>
 			<td>{{ip.vip|default:"Ingen treff"}}</td>
 		</tr>
@@ -54,9 +55,11 @@
 
 {% if not_ip_addresses %}
 	<p>Følgende ting er ikke IP-adresser:
+	<ul style="column-count:10;">
 	{% for item in not_ip_addresses %}
 		<li>{{item}}</li>
 	{% endfor %}
+	</ul>
 {% endif %}
 
 

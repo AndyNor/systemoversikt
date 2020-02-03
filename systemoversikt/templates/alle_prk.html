@@ -9,10 +9,7 @@
 {% block main_content %}
 
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Alle business services</a>
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_maskiner' %}">Alle maskiner</a>
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_os' %}">Alle operativsystem</a>
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_ip' %}">Søk på IP</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Tilbake</a>
 
 	<hr>
 
@@ -45,7 +42,7 @@
 				<td>{% if valg.for_virksomhet %} <a href="{% url 'virksomhet' valg.for_virksomhet.pk %}">{{valg.for_virksomhet.virksomhetsforkortelse}}</a> {% endif %}</td>
 				<td>{{valg.gruppering.feltnavn}}</td>
 				<td>{{valg.valgnavn}}</td>
-				<td><a href="{{valg.gruppenavn}}">{{valg.gruppenavn_kort}}</a></td>
+				<td><a href="{% url 'ad_exact' name=valg.gruppenavn_full %}">{{valg.gruppenavn_kort}}</a></td>
 				<td>{{valg.beskrivelse}}</td>
 			</tr>
 		{% endfor %}

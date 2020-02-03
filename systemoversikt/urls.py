@@ -83,10 +83,11 @@ urlpatterns = [
 	url(r'^avtaler/databehandleravtale/virksomhet/(?P<pk>\d{1,8})/$', views.databehandleravtaler_virksomhet, name='databehandleravtaler_virksomhet'),
 
 	url(r'^virksomhet/$', views.alle_virksomheter, name='alle_virksomheter'),
+	url(r'^virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet, name='virksomhet'),
+	url(r'^virksomhet/ansvarlige/(?P<pk>\d{1,8})/$', views.virksomhet_ansvarlige, name='virksomhet_ansvarlige'),
 	url(r'^virksomhet/bytt_virksomhet/$', views.bytt_virksomhet, name='bytt_virksomhet'),
 	url(r'^virksomhet/min/$', views.min_virksomhet, name='min_virksomhet'),
 	url(r'^virksomhet/sertifikatmyndighet/$', views.sertifikatmyndighet, name='sertifikatmyndighet'),
-	url(r'^virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet, name='virksomhet'),
 	url(r'^virksomhet/innsyn/(?P<pk>\d{1,8})/$', views.innsyn_virksomhet, name='innsyn_virksomhet'),
 	url(r'^virksomhet/systemkvalitet/(?P<pk>\d{1,8})/$', views.systemkvalitet_virksomhet, name='systemkvalitet_virksomhet'),
 
@@ -131,6 +132,7 @@ urlpatterns = [
 
 	url(r'^driftsmodell/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
 	url(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
+	url(r'^driftsmodell/virksomhet/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
 	url(r'^driftsmodell/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),
 
 	url(r'^definisjon/$', views.alle_definisjoner, name='alle_definisjoner'),
@@ -170,4 +172,5 @@ urlpatterns = [
 	url(r'^ad/$', views.ad, name='ad'),
 	url(r'^ad/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),
 	url(r'^ad/recursive/(?P<group>[-_=,a-zA-Z0-9\s]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
+	url(r'^ad/exact/(?P<name>[-_=,a-zA-Z0-9\s]{2,200})/$', views.ad_exact, name='ad_exact'),
 ]

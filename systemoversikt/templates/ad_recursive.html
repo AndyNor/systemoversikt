@@ -9,15 +9,36 @@
 
 {% block main_content %}
 
-{% for user in result %}
 
-	{% for item in user.attrs.displayName %}{{ item }}{% endfor %}
-	({% for item in user.attrs.cn %}<a target="_blank" href="{% url 'ad_details' name=item %}">{{ item }}</a>{% endfor %})
-	- <i>{% for item in user.attrs.description %}{{ item }}{% endfor %}</i>
-	<br>
-
-
-{% endfor %}
+<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+		<tr>
+			<th>Navn</th>
+			<th>Brukernavn</th>
+			<th>Kommentar</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for user in result %}
+		<tr>
+			<td>
+			{% for item in user.attrs.displayName %}
+				{{ item }}
+			{% endfor %}
+			</td>
+			<td>
+			{% for item in user.attrs.cn %}
+				<a target="_blank" href="{% url 'ad_details' name=item %}">{{ item }}</a>{% endfor %}
+			</td>
+			<td>
+			{% for item in user.attrs.description %}
+				{{ item }}
+			{% endfor %}
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
 
 
 {% endblock main_content %}
