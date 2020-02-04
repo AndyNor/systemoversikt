@@ -1495,6 +1495,20 @@ def alle_ip(request):
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+"""
+def ad_prk_sok(request):
+		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+		search_term = search_term.replace(",DC=oslofelles,DC=oslo,DC=kommune,DC=no","")
+
+
+		"CN=DS-BRE_OKNMI_BUDSJ_BUDSJFELL_IS,OU=BRE,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+		"ou=DS-BRE_OKNMI_BUDSJ_BUDSJFELL_IS,ou=BRE,ou=Tilgangsgrupper,ou=OK"
+
+		return render(request, 'ad_prk_sok.html', {
+			'request': request,
+			'search_term': search_term,
+		})
+"""
 
 def alle_prk(request):
 	required_permissions = 'systemoversikt.change_system'
@@ -1511,7 +1525,8 @@ def alle_prk(request):
 					Q(valgnavn__icontains=search_term) |
 					Q(beskrivelse__icontains=search_term) |
 					Q(gruppering__feltnavn__icontains=search_term) |
-					Q(skjemanavn__skjemanavn__icontains=search_term)
+					Q(skjemanavn__skjemanavn__icontains=search_term) |
+					Q(gruppenavn__icontains=search_term)
 			)
 
 		skjemavalg = skjemavalg.order_by('skjemanavn__skjemanavn', 'gruppering__feltnavn')
@@ -1820,18 +1835,67 @@ def ldap_get_group_details(group):
 	return groups
 """
 
-def ldap_get_details(name):
+def ldap_get_recursive_group_members(group):
+	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+	ldap_filter = ('(&(objectCategory=person)(objectClass=user)(memberOf:1.2.840.113556.1.4.1941:=%s))' % group)
+	ldap_properties = ['cn', 'displayName', 'description']
+
+	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=100)
+	users = []
+
+	for cn,attrs in result:
+		if cn:
+			attrs_decoded = {}
+			for key in attrs:
+				attrs_decoded[key] = []
+				for element in attrs[key]:
+					attrs_decoded[key].append(element.decode())
+
+			users.append({
+					"cn": cn,
+					"attrs": attrs_decoded,
+			})
+
+	return users
+
+
+def ldap_get_details(name, ldap_filter):
 	import re
+	import json
 
 	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-	ldap_filter = ('(cn=%s)' % name)
 	ldap_properties = []
 
 	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
+
 	groups = []
 	users = []
+	computers = []
+
 	for cn,attrs in result:
 		if cn:
+
+			if b'computer' in attrs["objectClass"]:
+				attrs_decoded = {}
+				for key in attrs:
+					if key in ['description', 'cn', 'objectClass', 'operatingSystem', 'operatingSystemVersion', 'dNSHostName']:
+						attrs_decoded[key] = []
+						for element in attrs[key]:
+							attrs_decoded[key].append(element.decode())
+					else:
+						continue
+
+				computers.append({
+						"cn": cn,
+						"attrs": attrs_decoded,
+				})
+
+				return ({
+						"computers": computers,
+						"raw": result,
+					})
+
+
 			if b'user' in attrs["objectClass"]:
 				attrs_decoded = {}
 				for key in attrs:
@@ -1866,6 +1930,11 @@ def ldap_get_details(name):
 						"cn": cn,
 						"attrs": attrs_decoded,
 				})
+				return ({
+						"users": users,
+						"raw": result,
+					})
+
 
 			if b'group' in attrs["objectClass"]:
 				attrs_decoded = {}
@@ -1897,90 +1966,13 @@ def ldap_get_details(name):
 						"cn": cn,
 						"attrs": attrs_decoded,
 				})
-
-	return ({"users": users, "groups": groups})
-
-
-"""
-def ad_user_details(request, username):
-	import time
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		runetime_t0 = time.time()
-		users = ldap_get_user_details(username)
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
-		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
-
-		return render(request, 'ad_bruker.html', {
-			'request': request,
-			'users': users,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-"""
+				return ({
+						"groups": groups,
+						"raw": result,
+					})
+	return None
 
 """
-def ad_group_details(request, group):
-	import time
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		runetime_t0 = time.time()
-		result = ldap_get_group_details(group)
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
-		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
-
-		return render(request, 'ad_gruppe.html', {
-			'request': request,
-			'groups': result,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-"""
-
-def ad_details(request, name):
-	import time
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		runetime_t0 = time.time()
-		result = ldap_get_details(name)
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
-		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
-
-		return render(request, 'ad_details.html', {
-			'request': request,
-			'result': result,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-
-def ldap_get_recursive_group_members(group):
-	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-	ldap_filter = ('(&(objectCategory=person)(objectClass=user)(memberOf:1.2.840.113556.1.4.1941:=%s))' % group)
-	ldap_properties = ['cn', 'displayName', 'description']
-
-	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=100)
-	users = []
-
-	for cn,attrs in result:
-		if cn:
-			attrs_decoded = {}
-			for key in attrs:
-				attrs_decoded[key] = []
-				for element in attrs[key]:
-					attrs_decoded[key].append(element.decode())
-
-			users.append({
-					"cn": cn,
-					"attrs": attrs_decoded,
-			})
-
-	return users
-
-
 def ldap_exact(name):
 	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 	ldap_filter = ('(distinguishedName=%s)' % name)
@@ -2006,6 +1998,56 @@ def ldap_exact(name):
 			})
 
 	return {"raw": prepare}
+"""
+
+
+def ad(request):
+	required_permissions = 'auth.view_user'
+	if request.user.has_perm(required_permissions):
+
+		return render(request, 'ad_index.html', {
+			'request': request,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def ad_details(request, name):
+	import time
+	required_permissions = 'auth.view_user'
+	if request.user.has_perm(required_permissions):
+		runetime_t0 = time.time()
+		ldap_filter = ('(cn=%s)' % name)
+		result = ldap_get_details(name, ldap_filter)
+		runetime_t1 = time.time()
+		logg_total_runtime = runetime_t1 - runetime_t0
+		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
+
+		return render(request, 'ad_details.html', {
+			'request': request,
+			'result': result,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def ad_exact(request, name):
+	import time
+	required_permissions = 'auth.view_user'
+	if request.user.has_perm(required_permissions):
+		runetime_t0 = time.time()
+		ldap_filter = ('(distinguishedName=%s)' % name)
+		result = ldap_get_details(name, ldap_filter)
+		runetime_t1 = time.time()
+		logg_total_runtime = runetime_t1 - runetime_t0
+		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
+
+		return render(request, 'ad_details.html', {
+			'request': request,
+			'result': result,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def recursive_group_members(request, group):
@@ -2025,53 +2067,3 @@ def recursive_group_members(request, group):
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-
-def ad_exact(request, name):
-	import time
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		runetime_t0 = time.time()
-
-		result = ldap_exact(name)
-
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
-		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
-
-		return render(request, 'ad_details.html', {
-			'request': request,
-			'result': result,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-def ad(request):
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-
-		return render(request, 'ad_index.html', {
-			'request': request,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-"""
-#@permission_required('polls.can_vote')
-def cmdb_combine(request):
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-
-#		for system in System.objects.all():
-#			if system.cmdbref_prod != None:
-#				print(system.cmdbref_prod)
-#				system.cmdbref.add(system.cmdbref_prod)
-#				system.cmdbref_prod = None
-#				system.save()
-
-		return render(request, 'index.html', {
-			'request': request,
-		})
-
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-"""

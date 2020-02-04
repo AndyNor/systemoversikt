@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block underoverskrift %}
-	PRK-tilgangsskjema på felles IKT-plattform
+	AD-gruppesøk etter tilhørende PRK-tilgangsskjema (felles IKT-plattform)
 {% endblock underoverskrift %}
 
 {% block main_content %}
@@ -15,10 +15,9 @@
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
-			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			<input size="30" style="width: 950px;" type="search" value="{{ search_term }}" name="search_term"
 			placeholder="Skjema inneholder.." class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
 		</div>
 	</form>
 

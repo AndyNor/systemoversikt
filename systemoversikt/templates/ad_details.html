@@ -9,12 +9,36 @@
 
 {% block main_content %}
 
-<p>{{result.raw}}</p>
+<button class="btn btn-sm col-sm-3" type="button" data-toggle="collapse"
+	data-target="#usercollapseTwo"
+	aria-expanded="false"
+	aria-controls="usercollapseTwo">
+	Rå respons
+</button>
+<div class="collapse" id="usercollapseTwo">
+	{{result.raw}}
+</div>
+<hr>
+
+
+{% for computer in result.computers %}
+	<div class="card card-body">
+		<h3>Computer</h3>
+		<h5>{{ computer.attrs.cn.0 }}</h5>
+		<p>Canonical Name: <br>{{ computer.cn }}</p>
+		<p>ObjectClass: <br>{% for item in computer.attrs.objectClass %} {{ item }} | {% endfor %}</p>
+		<p>Beskrivelse: {% for item in computer.attrs.description %} <br>{{ item }} {% endfor %}</p>
+		<p>Operating System:<br> {% for item in computer.attrs.operatingSystem %} {{ item }} {% endfor %}</p>
+		<p>Operating System Version:<br> {% for item in computer.attrs.operatingSystemVersion %} {{ item }} {% endfor %}</p>
+		<p>DNS Hostname:<br> {% for item in computer.attrs.dNSHostName %} {{ item }} {% endfor %}</p>
+
+	</div>
+{% endfor %}
 
 
 {% for user in result.users %}
-
 	<div class="card card-body">
+		<h3>Bruker</h3>
 		<h5>{{ user.attrs.displayName.0 }} ({{ user.attrs.cn.0 }})</h5>
 		<p>Canonical Name: <br>{{ user.cn }}</p>
 		<p>ObjectClass: <br>{% for item in user.attrs.objectClass %} {{ item }} | {% endfor %}</p>
@@ -30,13 +54,14 @@
 		<p>Antall pålogginger: {% for item in user.attrs.logonCount %} <br>{{ item }} {% endfor %}</p>
 		<p>Sist login: {% for item in user.attrs.lastLogonTimestamp %} <br>{{ item }} ({{ item|naturaltime }}) {% endfor %}</p>
 		<p>Brukerkontotype: {% for item in user.attrs.userAccountControl %} <br>{{ item }} {% endfor %}</p>
-		<button class="btn btn-primary btn-sm" type="button" data-toggle="collapse"
-			data-target="#usercollapse{{ forloop.counter0 }}"
+
+		<button class="btn btn-sm col-sm-4" type="button" data-toggle="collapse"
+			data-target="#usercollapse"
 			aria-expanded="false"
-			aria-controls="usercollapse{{ forloop.counter0 }}">
+			aria-controls="usercollapse">
 			Tilgangsgrupper
 		</button>
-		<div class="collapse" id="usercollapse{{ forloop.counter0 }}">
+		<div class="collapse" id="usercollapse">
 			<br>
 			<ol>
 			{% for item in user.attrs.memberOf %}
@@ -48,19 +73,20 @@
 			</ol>
 		</div>
 	</div>
-
 {% endfor %}
 
 
 {% for group in result.groups %}
-
 	<div class="card card-body">
+		<h3>Gruppe</h3>
 		<h5>{{ group.attrs.cn.0 }}</h5>
-		<p>Canonical Name: <br>{{ group.cn }}</p>
-		<p>MemberOf: <br>
+		<p>Canonical Name: (<a href="{% url 'alle_prk' %}?search_term={{group.attrs.cn.0}}">Søk i PRK</a>)<br>{{ group.cn }}</p>
+		<p>Member Of (parent group): <br>
 		{% for item in group.attrs.memberOf %}
 			{% url 'ad_exact' name=item as url_details %}
 			<a target="_blank" href="{{ url_details }}">{{ item }}</a><br>
+		{% empty%}
+		(ingen)
 		{% endfor %}
 		<p>ObjectClass: <br>{% for item in group.attrs.objectClass %} {{ item }} | {% endfor %}</p>
 		<p>Beskrivelse: {% for item in group.attrs.description %} <br>{{ item }} {% endfor %}</p>
@@ -69,13 +95,13 @@
 
 		<hr>
 
-		<button class="btn btn-primary btn-sm" type="button" data-toggle="collapse"
-			data-target="#groupcollapse{{ forloop.counter0 }}"
+		<button class="btn btn-sm col-sm-4" type="button" data-toggle="collapse"
+			data-target="#groupcollapse"
 			aria-expanded="true"
-			aria-controls="groupcollapse{{ forloop.counter0 }}">
+			aria-controls="groupcollapse">
 			Medlemmer i gruppen
 		</button>
-		<div class="" id="groupcollapse{{ forloop.counter0 }}">
+		<div class="" id="groupcollapse">
 			<br>
 			<ol>
 			{% for item in group.attrs.member %}
@@ -88,8 +114,6 @@
 			</ol>
 		</div>
 	</div>
-
 {% endfor %}
-
 
 {% endblock main_content %}
