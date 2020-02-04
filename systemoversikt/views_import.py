@@ -182,6 +182,80 @@ def import_business_services(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+# TODO to ganske like script for oracle og mssql. datakildene er ikke like..
+def import_cmdb_databases_oracle(request):
+	required_permissions = 'systemoversikt.change_cmdbref'
+	if request.user.has_perm(required_permissions):
+
+		messages.success(request, 'Klargjør import av databaser')
+		import json, os
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_bs_bss_db_oracle.json"
+		with open(filepath, 'r', encoding='UTF-8') as json_file:
+			data = json.load(json_file)
+
+			antall_records = len(data["records"])
+			messages.success(request, 'Fant %s elementer' % (antall_records))
+
+			all_existing_db = list(CMDBdatabase.objects.filter(Q(db_version__startswith="Oracle ") & Q(db_operational_status=True)))
+
+			for record in data["records"]:
+				# vi sjekker om enheten finnes fra før
+				try:
+					cmdb_db = CMDBdatabase.objects.get(db_database=record["db_name"])
+					# fjerner fra oversikt over alle vi hadde før vi startet
+					if cmdb_db in all_existing_db: # i tilfelle reintrodusert
+						all_existing_db.remove(cmdb_db)
+				except:
+					# lager en ny
+					cmdb_db = CMDBdatabase.objects.create(db_database=record["db_name"])
+
+				if record["db_operational_status"] == "1":
+					cmdb_db.db_operational_status = True
+				else:
+					cmdb_db.db_operational_status = False
+
+				cmdb_db.db_version = "Oracle " + record["db_version"]
+
+				try:
+					filesize = int(record.get("db_u_datafilessizekb", 0)) * 1024 # convert to bytes
+				except:
+					filesize = 0
+				cmdb_db.db_u_datafilessizekb = filesize
+
+				cmdb_db.db_used_for = record["db_used_for"]
+				cmdb_db.db_comments = record["db_comments"]
+
+				try:
+					business_service = CMDBRef.objects.get(navn=record["sub_name"])
+					cmdb_db.sub_name.clear() # reset old lookups
+					cmdb_db.sub_name.add(business_service) # add this lookup
+				except:
+					pass
+
+				cmdb_db.save()
+
+		obsolete_devices = all_existing_db
+
+		for item in obsolete_devices:
+			item.db_operational_status = False
+			item.save()
+
+		logg_entry_message = 'Antall databaser som er inaktive: %s. Alle slike databaser er satt inaktive. Utført av %s.' % (len(obsolete_devices), request.user)
+		logg_entry = ApplicationLog.objects.create(
+				event_type='CMDB database import (Oracle)',
+				message=logg_entry_message,
+			)
+		logg_entry.save()
+		messages.success(request, logg_entry_message)
+
+		return render(request, 'home.html', {
+			'request': request,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+#MSSQL-import
 def import_cmdb_databases(request):
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
@@ -195,7 +269,7 @@ def import_cmdb_databases(request):
 			antall_records = len(data["records"])
 			messages.success(request, 'Fant %s elementer' % (antall_records))
 
-			all_existing_db = list(CMDBdatabase.objects.filter(db_operational_status=True))
+			all_existing_db = list(CMDBdatabase.objects.filter(~Q(db_version__startswith="Oracle ") & Q(db_operational_status=True)))
 
 			for record in data["records"]:
 				# vi sjekker om enheten finnes fra før
@@ -221,7 +295,6 @@ def import_cmdb_databases(request):
 					filesize = 0
 				cmdb_db.db_u_datafilessizekb = filesize
 
-				cmdb_db.db_database = record["db_database"]
 				cmdb_db.db_used_for = record["db_used_for"]
 				cmdb_db.db_comments = record["db_comments"]
 
@@ -245,7 +318,7 @@ def import_cmdb_databases(request):
 
 		logg_entry_message = 'Antall databaser som er inaktive: %s. Alle slike databaser er satt inaktive. Utført av %s.' % (len(obsolete_devices), request.user)
 		logg_entry = ApplicationLog.objects.create(
-				event_type='CMDB server import',
+				event_type='CMDB database import',
 				message=logg_entry_message,
 			)
 		logg_entry.save()

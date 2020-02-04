@@ -156,6 +156,7 @@ urlpatterns = [
 	url(r'^import/cmdb/business_services/$', views_import.import_business_services, name='import_cmdb'),
 	url(r'^import/cmdb/servers/$', views_import.import_cmdb_servers, name='import_cmdb'),
 	url(r'^import/cmdb/databases/$', views_import.import_cmdb_databases, name='import_databases'),
+	url(r'^import/cmdb/databases/oracle/$', views_import.import_cmdb_databases_oracle, name='import_cmdb_databases_oracle'),
 	url(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
 	#url(r'^import/cmdb/oslofelles/$', views_import.add_dns_vlan_vip, name='add_dns_vlan_vip'),
 

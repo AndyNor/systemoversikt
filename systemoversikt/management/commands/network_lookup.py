@@ -53,7 +53,8 @@ class Command(BaseCommand):
 						print("Feilet IP-oppslag: %s" % (device))
 						continue  # nytter ikke å fortsette uten IP-adresse
 
-			#print("Har IP %s" % (device))
+			#ip-address must be set at this stage
+
 			dns = ""
 			dns += ("%s, " % find_ip_in_dns(device.comp_ip_address, dns_intern))
 			dns += find_ip_in_dns(device.comp_ip_address, dns_ekstern)

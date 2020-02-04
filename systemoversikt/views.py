@@ -1573,7 +1573,11 @@ def alle_databaser(request):
 		elif len(search_term) < 2: # if one or less, return nothing
 			databaser = CMDBdatabase.objects.none()
 		else:
-			databaser = CMDBdatabase.objects.filter(Q(db_database__icontains=search_term) | Q(sub_name__navn__icontains=search_term))
+			databaser = CMDBdatabase.objects.filter(
+					Q(db_database__icontains=search_term) |
+					Q(sub_name__navn__icontains=search_term) |
+					Q(db_version__icontains=search_term)
+				)
 
 		databaser = databaser.order_by('db_database')
 
