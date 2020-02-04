@@ -5,6 +5,8 @@ secrets_test.py
 db.sqlite3
 systemoversikt/import/
 systemoversikt/management/commands/*.json
+ldap_update_all_users
+prk_sync
 
 # local
 dev.bat

@@ -141,7 +141,7 @@ def dashboard_all(request, virksomhet=None):
 		ros_gammel = systemer.filter(dato_sist_ros__lte=minus_twelve_months).count()
 		ros_mangler_prioritert = systemer.filter(Q(dato_sist_ros=None) & Q(risikovurdering_behovsvurdering=2)).count()
 		ros_mangler_ikke_prioritert = systemer.filter(Q(dato_sist_ros=None) & Q(risikovurdering_behovsvurdering=1)).count()
-		ros_ikke_behov = systemer.filter(risikovurdering_behovsvurdering=0).count()
+		ros_ikke_behov = systemer.filter(Q(dato_sist_ros=None) & Q(risikovurdering_behovsvurdering=0)).count() # 0 er "Ikke behov / inngår i annet systems risikovurdering"
 		return [ros_ikke_behov,ros_seks_mnd_siden,ros_et_aar_siden,ros_gammel,ros_mangler_prioritert,ros_mangler_ikke_prioritert]
 	def statusDPIA(systemer):
 		#['Utført', 'Ikke utført', 'Ikke behov',]
@@ -367,10 +367,27 @@ def home(request):
 
 
 def alle_definisjoner(request):
-	definisjoner = Definisjon.objects.all().order_by('begrep')
+
+	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+
+	if (search_term == "__all__"):
+		definisjoner = Definisjon.objects.all()
+	elif len(search_term) < 2: # if one or less, return nothing
+		definisjoner = Definisjon.objects.none()
+	else:
+		definisjoner = Definisjon.objects.filter(
+				Q(begrep__icontains=search_term) |
+				Q(engelsk_begrep__icontains=search_term) |
+				Q(definisjon__icontains=search_term) |
+				Q(eksempel__icontains=search_term) |
+				Q(legaldefinisjon__icontains=search_term)
+		)
+	definisjoner.order_by('begrep')
+
 	return render(request, 'alle_definisjoner.html', {
 		'request': request,
 		'definisjoner': definisjoner,
+		'search_term': search_term,
 	})
 
 
@@ -969,12 +986,12 @@ def virksomhet_ansvarlige(request, pk):
 
 def virksomhet(request, pk):
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	systemer_ansvarlig_for = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by('ibruk', Lower('systemnavn'))
+	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
 	systembruk_forvalter_for = SystemBruk.objects.filter(systemforvalter=pk)
 	urleier_for = SystemUrl.objects.filter(eier=pk)
 	avtaler = Avtale.objects.filter(Q(virksomhet=pk) | Q(leverandor_intern=pk))
-	plattformer_vi_drifter = list(Driftsmodell.objects.filter(ansvarlig_virksomhet=pk))
-	systemer_vi_drifter = System.objects.filter(driftsmodell_foreignkey__in=plattformer_vi_drifter)
+	#plattformer_vi_drifter = list(Driftsmodell.objects.filter(ansvarlig_virksomhet=pk))
+	#systemer_vi_drifter = System.objects.filter(driftsmodell_foreignkey__in=plattformer_vi_drifter)
 	antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
 	antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
 
@@ -990,7 +1007,7 @@ def virksomhet(request, pk):
 		'systembruk_forvalter_for': systembruk_forvalter_for,
 		'urleier_for': urleier_for,
 		'avtaler': avtaler,
-		'systemer_vi_drifter': systemer_vi_drifter,
+		#'systemer_vi_drifter': systemer_vi_drifter,
 		'antall_brukere': antall_brukere,
 		'antall_eksterne_brukere': antall_eksterne_brukere,
 		'system_ikke_kvalitetssikret': system_ikke_kvalitetssikret,

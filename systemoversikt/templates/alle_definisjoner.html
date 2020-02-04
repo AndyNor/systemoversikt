@@ -13,7 +13,16 @@
 {% endblock underoverskrift %}
 
 {% block main_content %}
-<p>En enkel modul for å definere begreper. Et begrep kan defineres flere ganger med ulik definisjon. Det er {{ definisjoner.count }} begreper registrert.</p>
+<p>En enkel modul for å definere begreper. Et begrep kan defineres flere ganger med ulik definisjon. Viser {{ definisjoner.count }} begreper.</p>
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 300px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Begrep eller definisjon inneholder.." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
+		</div>
+	</form>
 
 <table id="stickyheader" class="table table-sm tablesorter">
 	<thead>

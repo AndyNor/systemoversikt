@@ -2442,9 +2442,9 @@ class SystemBruk(models.Model):
 			)
 	systemforvalter = models.ForeignKey(Virksomhet, related_name='systembruk_systemforvalter',
 			on_delete=models.SET_NULL,
-			verbose_name="Lokal forvalter (virksomhet)",
+			verbose_name="Lokal kontaktperson",
 			blank=True, null=True,
-			help_text=u"Fylles bare ut for fellesløsninger på applikasjonshotell der eierskapet er lokalt.",
+			help_text=u"Lokal kontaktperson for virksomhets bruk av systemet",
 			)
 	systemforvalter_kontaktpersoner_referanse = models.ManyToManyField(Ansvarlig, related_name='systembruk_systemforvalter_kontaktpersoner',
 			verbose_name="Lokal forvalter (person)",

@@ -200,7 +200,7 @@
 <p>Det er {{ systemer_ansvarlig_for.count }} systemer registrert.</p>
 {% include "alle_systemer_virksomhet_include.html" with systemer=systemer_ansvarlig_for %}
 
-<h6>{{ virksomhet.virksomhetsforkortelse }}'s lokale forvaltere</h6>
+<h6>Lokale kontaktpersoner for systemer {{ virksomhet.virksomhetsforkortelse }} bruker</h6>
 {% include "alle_systembruk_include.html" with all_bruk=systembruk_forvalter_for.all %}
 
 <h6>{{ virksomhet.virksomhetsforkortelse }}'s Domener</h6>

@@ -1,6 +1,7 @@
 {% load static %}
 {% load humanize %}
 
+
 <table id="systemer" class="table table-sm table-striped">
 <thead>
 <tr>
@@ -9,7 +10,10 @@
 	{% endif %}
 	<th>ID</th>
 	<th>Systemnavn</th>
+	<th style="width: 50px">I bruk?</th>
 	<th>Systemeierskapsmodell</th>
+	<th>Kategorisering</th>
+	<th>Systemtype</th>
 	<th>Systemeier</th>
 	<th>Systemforvalter</th>
 	<th>Livsløp</th>
@@ -40,7 +44,23 @@
 		<a href="{{ url_systemdetaljer }}">{{ item.systemnavn }}</a>
 	</td>
 
+	<td>{{ item.ibruk|yesno:"Ja,Nei,Ukjent" }}</td>
+
 	<td>{{ item.get_systemeierskapsmodell_display|default:"-" }}</td>
+
+	<td>
+		{% for kategori in item.systemkategorier.all %}
+			{% url 'systemkategori' kategori.pk as url_systemkategorier %}
+			<a href="{{ url_systemkategorier }}">{{ kategori }}</a><br>
+		{% endfor %}
+	</td>
+
+	<td>
+		{% for systemtype in item.systemtyper.all %}
+			{% url 'systemtype_detaljer' systemtype.pk as url_systemtype %}
+			<a href="{{ url_systemtype }}">{{ systemtype }}</a><br>
+		{% endfor %}
+	</td>
 
 	<td>
 		{% url "virksomhet" item.systemeier.pk as url_systemeier %}

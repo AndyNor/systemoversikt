@@ -508,56 +508,11 @@ def find_bigip(input_var, bigip_data):
 	return None
 
 
-
+"""
 def add_dns_vlan_vip(request):
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
 
-		import sys
-
-		# må legge dette i en konfigurasjonsfil, da det nå ligger to steder.
-		domain = "oslo.kommune.no"
-		dns_ekstern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_ekstern", domain)
-		dns_intern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_intern", domain)
-		vlan_data = load_vlan(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vlan.tsv")
-		nat_data = load_nat(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_nat.tsv")
-		bigip_data = load_bigip(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vip.tsv")
-
-		cmdbdevices = CMDBdevice.objects.all()
-		for device in cmdbdevices:
-
-			device_ip = device.comp_ip_address
-			if device_ip == "":
-				print(device_ip)
-
-			else:
-				dns = ""
-				dns += find_ip_in_dns(device_ip, dns_intern)
-				dns += ", "
-				dns += find_ip_in_dns(device_ip, dns_ekstern)
-				vlan = find_vlan(device_ip, vlan_data)
-				nat = find_ip_in_nat(device_ip, nat_data)
-				vip = find_bigip(device_ip, bigip_data)
-
-				save = False
-				if device.dns != dns:
-					device.dns = dns
-					save = True
-				if device.vlan != vlan:
-					device.vlan = vlan
-					save = True
-				if device.nat != nat:
-					device.nat = nat
-					save = True
-				if device.vip != vip:
-					device.vip = vip
-					save = True
-
-				if save:
-					device.save()
-
-			sys.stdout.write('.')
-			sys.stdout.flush()
 
 
 		messages.success(request, "Alt ok")
@@ -566,7 +521,7 @@ def add_dns_vlan_vip(request):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
+"""
 
 """
 def fixcmdb(request):

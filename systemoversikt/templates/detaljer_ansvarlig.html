@@ -96,7 +96,7 @@
 <table class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>
-		<th>Ansvarlig som</th>
+		<th style="width: 200px;">Ansvarlig som</th>
 		<th>Ansvarlig for</th>
 	</tr>
 	</thead>
@@ -124,14 +124,14 @@
 	{% endfor %}
 	{% for bruk in systemforvalter_bruk_for %}
 	<tr>
-		<td>Lokal systemforvalter</td>
-		{% url 'bruksdetaljer' pk=systembruk.pk as url_bruksdetaljer %}
+		<td>Kontaktperson systembruk</td>
+		{% url 'bruksdetaljer' pk=bruk.pk as url_bruksdetaljer %}
 		<td><a href="{{ url_bruksdetaljer }}">{{ bruk.system.systemnavn }}</a></td>
 	</tr>
 	{% endfor %}
 	{% for behandling in behandlinger_for %}
 	<tr>
-		<td>Oppdateringsansvarlig</td>
+		<td>Oppdateringsansvarlig behandlinger</td>
 		{% url 'behandlingsdetaljer' pk=behandling.pk as url_behandlingsdetaljer %}
 		<td><a href="{{ url_behandlingsdetaljer }}">{{ behandling.formaal|default:"mangler formål" }}</a> (knyttet til
 			{% for system in behandling.systemer.all %}

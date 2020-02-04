@@ -33,36 +33,42 @@
 				<td>{{ avtale.sist_oppdatert|date:'Y-m-d' }} ({{ avtale.sist_oppdatert|naturaltime }})</td>
 			</tr>
 			<tr>
-				<td width="30%">{% get_verbose_field_name avtale "avtalereferanse" %}</td>
+				<td>{% get_verbose_field_name avtale "avtalereferanse" %}</td>
 				<td>{{ avtale.avtalereferanse|default:"-" }}</td>
 			</tr>
 			<tr>
-				<td width="30%">{% get_verbose_field_name avtale "dokumenturl" %}</td>
-				<td><a href="{{ avtale.dokumenturl }}">Link til dokument</a></td>
+				<td>{% get_verbose_field_name avtale "dokumenturl" %}</td>
+				<td>
+				{% if avtale.dokumenturl %}
+				<a href="{{ avtale.dokumenturl }}">Link til dokument</a>
+				{% else %}
+				-
+				{% endif %}
+				</td>
 			</tr>
 			<tr>
-				<td width="30%">{% get_verbose_field_name avtale "virksomhet" %}</td>
+				<td>{% get_verbose_field_name avtale "virksomhet" %}</td>
 				{% url "virksomhet" avtale.virksomhet.pk as url_virksomhet %}
 				<td><a href="{{ url_virksomhet }}">{{ avtale.virksomhet|default:"-" }}</a></td>
 			</tr>
 			<tr>
-				<td width="30%">{% get_verbose_field_name avtale "avtaleansvarlig" %}</td>
+				<td>{% get_verbose_field_name avtale "avtaleansvarlig" %}</td>
 				<td>
 					{% include "vis_ansvarlige.html" with ansvarlige=avtale.avtaleansvarlig.all %}
 				</td>
 			</tr>
 			<tr>
-				<td width="30%">{% get_verbose_field_name avtale "leverandor_intern" %}</td>
+				<td>{% get_verbose_field_name avtale "leverandor_intern" %}</td>
 				{% url "virksomhet" avtale.leverandor_intern.pk as url_leverandor_intern %}
 				<td><a href="{{ url_leverandor_intern }}">{{ avtale.leverandor_intern|default:"-" }}</a></td>
 			</tr>
 			<tr>
-				<td width="30%">{% get_verbose_field_name avtale "leverandor" %}</td>
+				<td>{% get_verbose_field_name avtale "leverandor" %}</td>
 				{% url "leverandor" avtale.leverandor.pk as url_leverandor %}
 				<td><a href="{{ url_leverandor }}">{{ avtale.leverandor|default:"-" }}</a></td>
 			</tr>
 			<tr>
-				<td width="30%">{% get_verbose_field_name avtale "for_system" %}</td>
+				<td>{% get_verbose_field_name avtale "for_system" %}</td>
 				<td>{% for system in avtale.for_system.all %}
 						{% url "systemdetaljer" system.pk as url_system %}
 						<a href="{{ url_system }}">{{ system|default:"-" }}</a><br>
@@ -76,7 +82,7 @@
 				{% empty %} - {% endfor %}</td>
 			</tr>
 			<tr>
-				<td width="30%">{% get_verbose_field_name avtale "intern_avtalereferanse" %}</td>
+				<td>{% get_verbose_field_name avtale "intern_avtalereferanse" %}</td>
 				<td>
 					{% for avtale in avtale.intern_avtalereferanse.all %}
 					{% url "avtaledetaljer" avtale.pk as url_avtale %}
