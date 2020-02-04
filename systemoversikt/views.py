@@ -1433,57 +1433,61 @@ def alle_ip(request):
 		socket.setdefaulttimeout(1)
 
 		search_term = request.POST.get('search_term', '').strip()  # strip removes trailing and leading space
+		if search_term != "":
+			# må legge dette i en konfigurasjonsfil, da det nå ligger to steder.
+			domain = "oslo.kommune.no"
 
-		# må legge dette i en konfigurasjonsfil, da det nå ligger to steder.
-		domain = "oslo.kommune.no"
-		dns_ekstern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_ekstern", domain)
-		dns_intern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_intern", domain)
-		vlan_data = load_vlan(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vlan.tsv")
-		nat_data = load_nat(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_nat.tsv")
-		bigip_data = load_bigip(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vip.tsv")
+			import re
+			import ipaddress
+			search_term = search_term.replace('\"','').replace('\'','').replace(':',' ')
+			search_ips = re.findall(r"([^,;\t\s\n\r]+)", search_term)
 
-		import re
-		import ipaddress
-		search_term = search_term.replace('\"','').replace('\'','').replace(':',' ')
-		search_ips = re.findall(r"([^,;\t\s\n\r]+)", search_term)
-
-		ip_lookup = []
-		not_ip_addresses = []
-		for item in search_ips:
-			try:
-				ip_address = ipaddress.ip_address(item)
-			except:
-				not_ip_addresses.append(item)
-				continue  # skip this item
-
-			dns_i = find_ip_in_dns(ip_address, dns_intern)
-			dns_e = find_ip_in_dns(ip_address, dns_ekstern)
-			vlan = find_vlan(ip_address, vlan_data)
-			nat = find_ip_in_nat(ip_address, nat_data)
-			vip = find_bigip(ip_address, bigip_data)
-
-			def dns_live(ip_address):
+			ip_lookup = []
+			not_ip_addresses = []
+			for item in search_ips:
 				try:
-					return socket.gethostbyaddr(str(ip_address))[0]
+					ip_address = ipaddress.ip_address(item)
 				except:
-					return None
+					not_ip_addresses.append(item)
+					continue  # skip this item
 
-			dns_live = dns_live(ip_address)
+				dns_ekstern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_ekstern", domain)
+				dns_intern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_intern", domain)
+				vlan_data = load_vlan(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vlan.tsv")
+				nat_data = load_nat(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_nat.tsv")
+				bigip_data = load_bigip(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vip.tsv")
 
-			try:
-				comp_name = CMDBdevice.objects.get(comp_ip_address=item).comp_name
-			except:
-				comp_name = None
+				dns_i = find_ip_in_dns(ip_address, dns_intern)
+				dns_e = find_ip_in_dns(ip_address, dns_ekstern)
+				vlan = find_vlan(ip_address, vlan_data)
+				nat = find_ip_in_nat(ip_address, nat_data)
+				vip = find_bigip(ip_address, bigip_data)
 
-			ip_lookup.append({
-					"address": ip_address,
-					"comp_name": comp_name,
-					"dns_i": dns_i,
-					"dns_e": dns_e,
-					"dns_live": dns_live,
-					"vlan": vlan,
-					"vip": vip,
-			})
+				def dns_live(ip_address):
+					try:
+						return socket.gethostbyaddr(str(ip_address))[0]
+					except:
+						return None
+
+				dns_live = dns_live(ip_address)
+
+				try:
+					comp_name = CMDBdevice.objects.get(comp_ip_address=item).comp_name
+				except:
+					comp_name = None
+
+				ip_lookup.append({
+						"address": ip_address,
+						"comp_name": comp_name,
+						"dns_i": dns_i,
+						"dns_e": dns_e,
+						"dns_live": dns_live,
+						"vlan": vlan,
+						"vip": vip,
+				})
+		else:
+			ip_lookup = None
+			not_ip_addresses = None
 
 
 		return render(request, 'alle_ip.html', {
