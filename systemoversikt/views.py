@@ -20,59 +20,31 @@ from django.urls import reverse
 FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
 SYSTEMTYPE_PROGRAMMER = "Selvstendig klientapplikasjon"
 
-
-def user_clean_up(request):
-	"""
-	Denne funksjonen er laget for å slette/anonymisere data i testmiljøet.
-	"""
-	required_permissions = 'auth.view_ansvarlig'
-	if request.user.has_perm(required_permissions):
-		from django.conf import settings
-		if settings.DEBUG == True:  # Testmiljø
-			from django.contrib.auth.models import User
-			for user in User.objects.all():
-				try:
-					user.delete()
-				except:
-					print("Kan ikke slette bruker %s. Forsøker å anonymisere" % user)
-
-				anonymous_firstname = ("First-" + user.username[:3])
-				user.first_name = anonymous_firstname
-				anonymous_lastname = ("Last-" + user.username[3:])
-				user.last_name = anonymous_lastname
-				user.save()
-		else:
-			print("Du får ikke kjøre denne kommandoen i produksjon!")
-
-		return render(request, "home.html", {
-			'request': request,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-
+"""
+Støttefunksjoner start
+"""
 def virksomhet_til_bruker(request):
+	"""
+	Slå opp brukers virksomhet
+	TODO: flytte til en modell-metode
+	"""
 	try:
 		vir = request.user.profile.virksomhet.virksomhetsforkortelse
 	except:
 		vir = False
 	return vir
 
-
-def minside(request):
-	return render(request, 'minside.html', {
-		'request': request,
-	})
-
-
 def behandlingsprotokoll_egne(virksomhet):
-	# finne alle egne behandlinger
+	"""
+	finne alle egne behandlinger
+	"""
 	virksomhetens_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet)
 	return virksomhetens_behandlinger
 
-
 def behandlingsprotokoll_felles(virksomhet):
-	# finne systemer virksomheten abonnerer på behandlinger for
+	"""
+	finne systemer virksomheten abonnerer på behandlinger for
+	"""
 	systembruk_virksomhet = []
 	virksomhetens_relevante_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet).filter(del_behandlinger=True)
 	for bruk in virksomhetens_relevante_bruk:
@@ -82,14 +54,53 @@ def behandlingsprotokoll_felles(virksomhet):
 	return delte_behandlinger
 
 def behandlingsprotokoll(virksomhet):
-	# slå sammen felles og egne behandlinger til et sett
+	"""
+	slå sammen felles og egne behandlinger til et sett med behandlinger
+	"""
 	virksomhetens_behandlinger = behandlingsprotokoll_egne(virksomhet)
 	delte_behandlinger = behandlingsprotokoll_felles(virksomhet)
 	alle_relevante_behandlinger = virksomhetens_behandlinger.union(delte_behandlinger).order_by('internt_ansvarlig')
 	return alle_relevante_behandlinger
 
+def csrf403(request):
+	"""
+	Støttefunksjon for å vise feilmelding
+	"""
+	return render(request, 'csrf403.html', {
+		'request': request,
+	})
+
+def login(request):
+	"""
+	støttefunksjon for å logge inn
+	"""
+	return redirect("/admin/")
+"""
+Støttefunksjoner slutt
+"""
+
+
+
+"""
+Funksjoner som genererer innhold / eksponert via URL. Tilgangsstyres dersom nødvendig.
+"""
+def minside(request):
+	"""
+	Når innlogget, vise informasjon om innlogget bruker
+	"""
+	if request.user.is_authenticated:
+		return render(request, 'minside.html', {
+			'request': request,
+		})
+	else:
+		return redirect("/")
+
 
 def dashboard_all(request, virksomhet=None):
+	"""
+	Generere virksomhets dashboard med statistikk over systmemer
+	Tilgangsstyring: ÅPEN
+	"""
 	try:
 		virksomhet = Virksomhet.objects.get(pk=virksomhet)
 	except:
@@ -273,8 +284,43 @@ def dashboard_all(request, virksomhet=None):
 	})
 
 
+def user_clean_up(request):
+	"""
+	Denne funksjonen er laget for å slette/anonymisere data i testmiljøet.
+	Tilgangsstyring: STRENGT BESKYTTET
+	"""
+	required_permissions = 'auth.change_permission'
+	if request.user.has_perm(required_permissions):
+		from django.conf import settings
+		if settings.DEBUG == True:  # Testmiljø
+			from django.contrib.auth.models import User
+			for user in User.objects.all():
+				try:
+					user.delete()
+				except:
+					print("Kan ikke slette bruker %s. Forsøker å anonymisere" % user)
+
+				anonymous_firstname = ("First-" + user.username[:3])
+				user.first_name = anonymous_firstname
+				anonymous_lastname = ("Last-" + user.username[3:])
+				user.last_name = anonymous_lastname
+				user.save()
+		else:
+			print("Du får ikke kjøre denne kommandoen i produksjon!")
+
+		return render(request, "home.html", {
+			'request': request,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def permissions(request):
-	required_permissions = 'auth.view_ansvarlig'
+	"""
+	viser informasjon om alle ansvarliges aktive rettigheter
+	Tilgangsstyring: De som kan redigere ansvarlige
+	"""
+	required_permissions = 'auth.change_ansvarlig'
 	if request.user.has_perm(required_permissions):
 		ansvarlige = Ansvarlig.objects.all()
 		return render(request, 'permissions.html', {
@@ -285,6 +331,10 @@ def permissions(request):
 
 
 def roller(request):
+	"""
+	Viser informasjon om kobling rettighet og (AD)-grupper
+	Tilgangsstyring: De som kan se grupper
+	"""
 	from django.core import serializers
 	from django.contrib.auth.models import Group
 
@@ -309,41 +359,53 @@ def roller(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-
+"""
 def video(request):
 	return render(request, 'video.html', {
 		'request': request,
 	})
-
-
-def csrf403(request):
-	return render(request, 'csrf403.html', {
-		'request': request,
-	})
-
-
-def login(request):
-	return redirect("/admin/")
+"""
 
 
 def logger(request):
-	recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:300]
-	return render(request, 'logger.html', {
-		'request': request,
-		'recent_admin_loggs': recent_admin_loggs,
-	})
+	"""
+	viser alle endringer på objekter i løsningen
+	Tilgangsstyring: Se endringslogger
+	"""
+	required_permissions = 'auth.view_logentry'
+	if request.user.has_perm(required_permissions):
+
+		recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:300]
+		return render(request, 'logger.html', {
+			'request': request,
+			'recent_admin_loggs': recent_admin_loggs,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def logger_audit(request):
-	recent_loggs = ApplicationLog.objects.order_by('-opprettet')[:150]
-	return render(request, 'logger_audit.html', {
-		'request': request,
-		'recent_loggs': recent_loggs,
-	})
+	"""
+	viser alle endringer på objekter i løsningen
+	Tilgangsstyring: Se applikasjonslogger
+	"""
+	required_permissions = 'auth.view_applicationlog'
+	if request.user.has_perm(required_permissions):
+
+		recent_loggs = ApplicationLog.objects.order_by('-opprettet')[:150]
+		return render(request, 'logger_audit.html', {
+			'request': request,
+			'recent_loggs': recent_loggs,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def home(request):
-
+	"""
+	Startsiden med oversikt over systemer per kategori
+	Tilgangsstyring: ÅPEN
+	"""
 	antall_systemer = System.objects.count()
 	nyeste_systemer = System.objects.all().order_by('-pk')[:5]
 
@@ -367,7 +429,10 @@ def home(request):
 
 
 def alle_definisjoner(request):
-
+	"""
+	Viser definisjoner
+	Tilgangsstyring: ÅPEN
+	"""
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
 	if (search_term == "__all__"):
@@ -392,6 +457,10 @@ def alle_definisjoner(request):
 
 
 def definisjon(request, begrep):
+	"""
+	Viser en definisjon
+	Tilgangsstyring: ÅPEN
+	"""
 	passende_definisjoner = Definisjon.objects.filter(begrep=begrep)
 	return render(request, 'detaljer_definisjon.html', {
 		'request': request,
@@ -401,6 +470,10 @@ def definisjon(request, begrep):
 
 
 def ansvarlig(request, pk):
+	"""
+	Viser informasjon om en ansvarlig
+	Tilgangsstyring: ÅPEN
+	"""
 	ansvarlig = Ansvarlig.objects.get(pk=pk)
 	if not ansvarlig.brukernavn.is_active:
 		messages.warning(request, 'Denne brukeren er deaktivert!')
@@ -441,6 +514,10 @@ def ansvarlig(request, pk):
 
 
 def alle_ansvarlige(request):
+	"""
+	Viser informasjon om alle ansvarlige
+	Tilgangsstyring: ÅPEN
+	"""
 	ansvarlige = Ansvarlig.objects.all().order_by('brukernavn__first_name')
 	return render(request, 'alle_ansvarlige.html', {
 		'request': request,
@@ -450,7 +527,11 @@ def alle_ansvarlige(request):
 
 
 def alle_ansvarlige_eksport(request):
-	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
+	"""
+	Viser informasjon om alle ansvarlige
+	Tilgangsstyring: De som kan opprette/endre ansvarlige
+	"""
+	required_permissions = 'systemoversikt.change_ansvarlig'
 	if request.user.has_perm(required_permissions):
 		ansvarlige = Ansvarlig.objects.filter(brukernavn__is_active=True)
 		return render(request, 'alle_ansvarlige_eksport.html', {
@@ -462,7 +543,11 @@ def alle_ansvarlige_eksport(request):
 
 
 def systemkvalitet_virksomhet(request, pk):
-	required_permissions = 'systemoversikt.change_system'
+	"""
+	Viser informasjon om datakvalitet per system
+	Tilgangsstyring: De som kan se virksomheter
+	"""
+	required_permissions = 'systemoversikt.view_virksomhet'
 	if request.user.has_perm(required_permissions):
 
 		virksomhet = Virksomhet.objects.get(pk=pk)
@@ -475,9 +560,13 @@ def systemkvalitet_virksomhet(request, pk):
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-def systemdetaljer(request, pk):
-	system = System.objects.get(pk=pk)
 
+def systemdetaljer(request, pk):
+	"""
+	Viser detaljer om et system
+	Tilgangsstyring: ÅPENT (noen deler er begrenset i template)
+	"""
+	system = System.objects.get(pk=pk)
 
 	avhengigheter_graf = {"nodes": [], "edges": []}
 	observerte_driftsmodeller = set()
@@ -532,7 +621,6 @@ def systemdetaljer(request, pk):
 		#avtale drift?
 		#avtale system?
 
-
 	siste_endringer_antall = 10
 	system_content_type = ContentType.objects.get_for_model(system)
 	siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
@@ -571,6 +659,10 @@ def systemdetaljer(request, pk):
 
 
 def systemer_pakket(request):
+	"""
+	Uferdig: vising av hvordan applikasjoner er pakket
+	Tilgangsstyring: ÅPENT
+	"""
 	systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
 	programvarer = Programvare.objects.all()
 	return render(request, 'alle_systemer_pakket.html', {
@@ -580,15 +672,21 @@ def systemer_pakket(request):
 	})
 
 
+"""
 def systemer_test(request):
 	systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
 	return render(request, 'alle_systemer_test.html', {
 		'request': request,
 		'systemer': systemer,
 	})
+"""
 
 
 def systemklassifisering_detaljer(request, id):
+	"""
+	Vise systemer filtrert basert på systemeierskapsmodell (felles, sektor, virksomhet)
+	Tilgangsstyring: ÅPENT
+	"""
 	if id == "__NONE__":
 		utvalg_systemer = System.objects.filter(systemeierskapsmodell=None)
 	else:
@@ -602,6 +700,10 @@ def systemklassifisering_detaljer(request, id):
 
 
 def systemtype_detaljer(request, pk=None):
+	"""
+	Vise systemer filtrert basert på systemtype (web/app/infrastruktur osv.)
+	Tilgangsstyring: ÅPENT
+	"""
 	if pk:
 		utvalg_systemer = System.objects.filter(systemtyper=pk)
 		systemtype_navn = Systemtype.objects.get(pk=pk).kategorinavn
@@ -619,6 +721,10 @@ def systemtype_detaljer(request, pk=None):
 
 
 def alle_systemer(request):
+	"""
+	Vise alle systemer
+	Tilgangsstyring: ÅPENT
+	"""
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
 	if search_term == "__all__":
@@ -678,6 +784,10 @@ def sektor_og_fellessystemer(request):
 
 
 def bruksdetaljer(request, pk):
+	"""
+	Vise detaljer om systembruk
+	Tilgangsstyring: ÅPENT
+	"""
 	bruk = SystemBruk.objects.get(pk=pk)
 	return render(request, 'detaljer_systembruk.html', {
 		'request': request,
@@ -686,6 +796,10 @@ def bruksdetaljer(request, pk):
 
 
 def mine_systembruk(request):
+	"""
+	Vise detaljer om innlogget brukers virksomhets systembruk
+	Tilgangsstyring: ÅPENT
+	"""
 	try:
 		brukers_virksomhet = virksomhet_til_bruker(request)
 		pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
@@ -696,6 +810,10 @@ def mine_systembruk(request):
 
 
 def all_bruk_for_virksomhet(request, pk):
+	"""
+	Vise detaljer om en valgt virksomhets systembruk
+	Tilgangsstyring: ÅPENT
+	"""
 	virksomhet_pk = pk
 	all_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 
@@ -716,7 +834,11 @@ def all_bruk_for_virksomhet(request, pk):
 
 
 def registrer_bruk(request, system):
-	required_permissions = 'systemoversikt.change_systembruk'
+	"""
+	Forenklet metode for å legge til bruk av system ved avkryssing
+	Tilgangsstyring: Må kunne legge til systembruk
+	"""
+	required_permissions = 'systemoversikt.add_systembruk'
 	if request.user.has_perm(required_permissions):
 
 		system_instans = System.objects.get(pk=system)
@@ -747,6 +869,10 @@ def registrer_bruk(request, system):
 
 
 def programvaredetaljer(request, pk):
+	"""
+	Vise detaljer for programvare
+	Tilgangsstyring: ÅPEN
+	"""
 	programvare = Programvare.objects.get(pk=pk)
 	programvarebruk = ProgramvareBruk.objects.filter(programvare=pk).order_by("brukergruppe")
 	behandlinger = BehandlingerPersonopplysninger.objects.filter(programvarer=pk).order_by("funksjonsomraade")
@@ -759,6 +885,10 @@ def programvaredetaljer(request, pk):
 
 
 def alle_programvarer(request):
+	"""
+	Vise alle programvarer
+	Tilgangsstyring: ÅPEN
+	"""
 	programvarer = Programvare.objects.order_by(Lower('programvarenavn'))
 	template = 'alle_programvarer.html'
 
@@ -770,6 +900,10 @@ def alle_programvarer(request):
 
 
 def all_programvarebruk_for_virksomhet(request, pk):
+	"""
+	Vise all bruk av programvare for en virksomhet
+	Tilgangsstyring: ÅPEN
+	"""
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	virksomhet_pk = pk
 	all_bruk = ProgramvareBruk.objects.filter(brukergruppe=virksomhet_pk).order_by(Lower('programvare__programvarenavn'))
@@ -785,6 +919,10 @@ def all_programvarebruk_for_virksomhet(request, pk):
 
 
 def programvarebruksdetaljer(request, pk):
+	"""
+	Vise detaljer for bruk av programvare
+	Tilgangsstyring: ÅPEN
+	"""
 	bruksdetaljer = ProgramvareBruk.objects.get(pk=pk)
 	return render(request, "detaljer_programvarebruk.html", {
 		'request': request,
@@ -813,6 +951,10 @@ def tjenestedetaljer(request, pk):
 """
 
 def alle_behandlinger(request):
+	"""
+	Vise alle behandlinger (av personopplysninger) registrert for kommunen
+	Tilgangsstyring: Vise behandlinger
+	"""
 	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
 	if request.user.has_perm(required_permissions):
 
@@ -826,6 +968,10 @@ def alle_behandlinger(request):
 
 
 def behandlingsdetaljer(request, pk):
+	"""
+	Vise detaljer for en behandling av personopplysninger
+	Tilgangsstyring: Vise behandlinger
+	"""
 	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
 	if request.user.has_perm(required_permissions):
 
@@ -834,8 +980,6 @@ def behandlingsdetaljer(request, pk):
 		siste_endringer_antall = 10
 		system_content_type = ContentType.objects.get_for_model(BehandlingerPersonopplysninger)
 		siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
-
-
 
 		return render(request, 'detaljer_behandling.html', {
 			'request': request,
@@ -847,8 +991,11 @@ def behandlingsdetaljer(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+"""
 def behandlinger_filtrerte(request, pk):
-	required_permissions = 'systemoversikt.change_behandlingerpersonopplysninger'
+	# Vise filtrerte behandlinger av personopplysninger for en valgt virksomhet
+	# Tilgangsstyring: Vise behandlinger
+	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
 	if request.user.has_perm(required_permissions):
 		vir = Virksomhet.objects.get(pk=pk)
 		filtrerte_behandlinger = BehandlingerPersonopplysninger.objects.all().filter(virksomhet_blacklist__in=[vir])
@@ -860,8 +1007,10 @@ def behandlinger_filtrerte(request, pk):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+"""
 
 
+"""
 def alle_behandlinger_alle_detaljer(request, pk):
 	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
 	if request.user.has_perm(required_permissions):
@@ -869,9 +1018,14 @@ def alle_behandlinger_alle_detaljer(request, pk):
 		return alle_behandlinger_virksomhet(request, pk, template)
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+"""
 
 
 def mine_behandlinger(request):
+	"""
+	Vise alle behandling av personopplysninger for innlogget brukers virksomhet
+	Tilgangsstyring: Innlogget + tilgang på siden det sendes til.
+	"""
 	try:
 		brukers_virksomhet = virksomhet_til_bruker(request)
 		pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
@@ -882,8 +1036,12 @@ def mine_behandlinger(request):
 
 
 
-# internt_ansvarlig benyttes for å filtrere ut på underavdeling/seksjon/
 def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False, template='alle_behandlinger.html'):
+	"""
+	Vise alle behandling av personopplysninger for en valgt virksomhet
+	Tilgangsstyring: ÅPEN (noe informasjon er tilgangsstyrt i template)
+	"""
+	# internt_ansvarlig benyttes for å filtrere ut på underavdeling/seksjon/
 	vir = Virksomhet.objects.get(pk=pk)
 
 	# finne behandlinger virksomheten abonnerer på
@@ -922,6 +1080,10 @@ def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False, template=
 
 
 def behandling_kopier(request, system_pk):
+	"""
+	Funksjon for å kunne velge og kopiere en behandling til innlogget brukers virksomhet
+	Tilgangsstyring: Legge til behandling (begrenset til egen virksomhet i kode)
+	"""
 	required_permissions = 'systemoversikt.add_behandlingerpersonopplysninger'
 	if request.user.has_perm(required_permissions):
 
@@ -974,6 +1136,10 @@ def behandling_kopier(request, system_pk):
 
 
 def virksomhet_ansvarlige(request, pk):
+	"""
+	Vise alle ansvarlige knyttet til valgt virksomhet
+	Tilgangsstyring: ÅPEN
+	"""
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	suboverskrift = "For " + virksomhet.virksomhetsnavn
 	ansvarlige = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).order_by('brukernavn__first_name')
@@ -985,6 +1151,10 @@ def virksomhet_ansvarlige(request, pk):
 
 
 def virksomhet(request, pk):
+	"""
+	Vise detaljer om en valgt virksomhet
+	Tilgangsstyring: ÅPEN
+	"""
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
 	systembruk_forvalter_for = SystemBruk.objects.filter(systemforvalter=pk)
@@ -1018,6 +1188,10 @@ def virksomhet(request, pk):
 
 
 def min_virksomhet(request):
+	"""
+	Vise detaljer om en innlogget brukers virksomhet
+	Tilgangsstyring: redirect for innloggede brukere
+	"""
 	try:
 		brukers_virksomhet = virksomhet_til_bruker(request)
 		pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
@@ -1028,6 +1202,10 @@ def min_virksomhet(request):
 
 
 def innsyn_virksomhet(request, pk):
+	"""
+	Vise informasjon om kontaktpersoner for innsyn for en valgt virksomhet (for systemer virksomhet behandler personopplysninger i)
+	Tilgangsstyring: Vise behandlinger
+	"""
 	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
 	if request.user.has_perm(required_permissions):
 
@@ -1049,6 +1227,10 @@ def innsyn_virksomhet(request, pk):
 
 
 def bytt_virksomhet(request):
+	"""
+	Støttefunksjon for å bytte virksomhet innlogget bruker representerer
+	Tilgangsstyring: Innlogget og avhengig av virksomhet innlogget bruker er logget inn som
+	"""
 	#returnere en liste over virksomheter som gjeldende bruker kan representere
 	brukers_virksomhet_innlogget_som = request.user.profile.virksomhet_innlogget_som
 	if brukers_virksomhet_innlogget_som != None:
@@ -1074,7 +1256,6 @@ def bytt_virksomhet(request):
 	# denne må vi vente med i tilfelle den blir endret ved en POST-request
 	aktiv_representasjon = request.user.profile.virksomhet
 
-
 	return render(request, 'bytt_virksomhet.html', {
 		'request': request,
 		'brukers_virksomhet': aktiv_representasjon,
@@ -1083,15 +1264,28 @@ def bytt_virksomhet(request):
 
 
 def sertifikatmyndighet(request):
-	virksomheter = Virksomhet.objects.all()
-	return render(request, 'sertifikatmyndigheter.html', {
-		'request': request,
-		'virksomheter': virksomheter,
-	})
+	"""
+	Vise informasjon om delegeringer knyttet til sertifikater
+	Tilgangsstyring: ÅPEN
+	"""
+	required_permissions = 'systemoversikt.view_virksomhet'
+	if request.user.has_perm(required_permissions):
+
+		virksomheter = Virksomhet.objects.all()
+		return render(request, 'sertifikatmyndigheter.html', {
+			'request': request,
+			'virksomheter': virksomheter,
+		})
+
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def alle_virksomheter(request):
-
+	"""
+	Vise oversikt over alle virksomheter
+	Tilgangsstyring: ÅPEN
+	"""
 	search_term = request.GET.get('search_term', "").strip()
 	if search_term in ("", "__all__"):
 		virksomheter = Virksomhet.objects.all()
@@ -1107,6 +1301,10 @@ def alle_virksomheter(request):
 
 
 def leverandor(request, pk):
+	"""
+	Vise detaljer for en valgt leverandør
+	Tilgangsstyring: ÅPEN
+	"""
 	leverandor = Leverandor.objects.get(pk=pk)
 	systemleverandor_for = System.objects.filter(systemleverandor=pk)
 	databehandler_for = BehandlingerPersonopplysninger.objects.filter(navn_databehandler=pk)
@@ -1127,6 +1325,10 @@ def leverandor(request, pk):
 
 
 def alle_leverandorer(request):
+	"""
+	Vise liste over alle leverandører
+	Tilgangsstyring: ÅPEN
+	"""
 	from django.db.models.functions import Lower
 
 	search_term = request.GET.get('search_term', "").strip()
@@ -1147,6 +1349,10 @@ def alle_leverandorer(request):
 
 
 def alle_driftsmodeller(request):
+	"""
+	Vise liste over alle driftsmodeller
+	Tilgangsstyring: ÅPEN
+	"""
 	driftsmodeller = Driftsmodell.objects.all().order_by('-ansvarlig_virksomhet')
 	return render(request, 'alle_driftsmodeller.html', {
 		'request': request,
@@ -1155,6 +1361,10 @@ def alle_driftsmodeller(request):
 
 
 def driftsmodell_virksomhet(request, pk):
+	"""
+	Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
+	Tilgangsstyring: ÅPEN
+	"""
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
 	return render(request, 'alle_systemer_virksomhet_drifter.html', {
@@ -1165,11 +1375,15 @@ def driftsmodell_virksomhet(request, pk):
 
 
 def detaljer_driftsmodell(request, pk):
+	"""
+	Vise detaljer om en valgt driftsmodell (inkl. systemer tilknyttet)
+	Tilgangsstyring: ÅPEN
+	"""
 	driftsmodell = Driftsmodell.objects.get(pk=pk)
 	systemer = System.objects.filter(driftsmodell_foreignkey=pk)
 	isolert_drift = systemer.filter(isolert_drift=True)
 
-	# gjør et oppslag for å finne kategorier som ikke er anbefalt
+	# gjør et oppslag for å finne kategorier som er, og ikke er anbefalt
 	anbefalte_personoppl_kategorier = driftsmodell.anbefalte_kategorier_personopplysninger.all()
 	ikke_anbefalte_personoppl_kategorier = Personsonopplysningskategori.objects.filter(~Q(pk__in=anbefalte_personoppl_kategorier)).all()
 
@@ -1181,7 +1395,12 @@ def detaljer_driftsmodell(request, pk):
 		'ikke_anbefalte_personoppl_kategorier': ikke_anbefalte_personoppl_kategorier,
 	})
 
+
 def systemer_uten_driftsmodell(request):
+	"""
+	Vise liste over systemer der driftsmodell mangler
+	Tilgangsstyring: ÅPEN
+	"""
 	mangler = System.objects.filter(driftsmodell_foreignkey=None)
 	return render(request, 'detaljer_driftsmodell_mangler.html', {
 		'systemer': mangler,
@@ -1189,6 +1408,10 @@ def systemer_uten_driftsmodell(request):
 
 
 def systemkategori(request, pk):
+	"""
+	Vise detaljer om en kategori
+	Tilgangsstyring: ÅPEN
+	"""
 	kategori = SystemKategori.objects.get(pk=pk)
 	systemer = System.objects.filter(systemkategorier=pk).order_by(Lower('systemnavn'))
 	programvarer = Programvare.objects.filter(kategorier=pk).order_by(Lower('programvarenavn'))
@@ -1201,6 +1424,10 @@ def systemkategori(request, pk):
 
 
 def alle_hovedkategorier(request):
+	"""
+	Vise liste over alle hovedkategorier
+	Tilgangsstyring: ÅPEN
+	"""
 	hovedkategorier = SystemHovedKategori.objects.order_by('hovedkategorinavn')
 	for kategori in hovedkategorier:
 		systemteller = 0
@@ -1225,6 +1452,10 @@ def alle_hovedkategorier(request):
 
 
 def alle_systemkategorier(request):
+	"""
+	Vise liste over alle (under)kategorier
+	Tilgangsstyring: ÅPEN
+	"""
 	kategorier = SystemKategori.objects.order_by('kategorinavn')
 	return render(request, 'alle_systemkategorier.html', {
 		'request': request,
@@ -1233,6 +1464,10 @@ def alle_systemkategorier(request):
 
 
 def uten_systemkategori(request):
+	"""
+	Vise liste over alle systemer uten (under)kategori
+	Tilgangsstyring: ÅPEN
+	"""
 	antall_systemer = System.objects.all().count()
 	antall_programvarer = Programvare.objects.all().count()
 	systemer = System.objects.annotate(num_categories=Count('systemkategorier')).filter(num_categories=0)
@@ -1247,6 +1482,10 @@ def uten_systemkategori(request):
 
 
 def systemurl(request, pk):
+	"""
+	Vise detaljer om en URL
+	Tilgangsstyring: ÅPEN
+	"""
 	url = SystemUrl.objects.get(pk=pk)
 	systemer = System.objects.filter(systemurl=pk)
 	return render(request, 'detaljer_url.html', {
@@ -1257,6 +1496,10 @@ def systemurl(request, pk):
 
 
 def alle_systemurler(request):
+	"""
+	Vise liste over alle URLer
+	Tilgangsstyring: ÅPEN
+	"""
 	urler = SystemUrl.objects.order_by('domene')
 	return render(request, 'alle_urler.html', {
 		'request': request,
@@ -1265,6 +1508,10 @@ def alle_systemurler(request):
 
 
 def bytt_kategori(request, fra, til):
+	"""
+	Funksjon for å bytte all bruk av én kategori til en annen kategori
+	Tilgangsstyring: STRENG, krever tilgang til å endre systemkategorier.
+	"""
 	required_permissions = 'systemoversikt.change_systemkategori'
 	if request.user.has_perm(required_permissions):
 		try:
@@ -1297,7 +1544,11 @@ def bytt_kategori(request, fra, til):
 
 
 def bytt_leverandor(request, fra, til):
-	required_permissions = 'systemoversikt.change_systembruk'
+	"""
+	Funksjon for å bytte all bruk av én leverandør til en annen leverandør
+	Tilgangsstyring: krever tilgang til å endre systemer.
+	"""
+	required_permissions = 'systemoversikt.change_system'
 	if request.user.has_perm(required_permissions):
 		try:
 			leverandor_fra = Leverandor.objects.get(pk=fra)
@@ -1332,6 +1583,10 @@ def bytt_leverandor(request, fra, til):
 
 
 def system_til_programvare(request, system_id):
+	"""
+	Funksjon for å opprette en instans av programvare basert på system (systemet må slettes manuelt etterpå)
+	Tilgangsstyring: krever tilgang til å endre systemer.
+	"""
 	required_permissions = 'systemoversikt.change_system'
 	if request.user.has_perm(required_permissions):
 		try:
@@ -1397,7 +1652,11 @@ def system_til_programvare(request, system_id):
 
 
 def alle_os(request):
-	required_permissions = 'systemoversikt.change_system'
+	"""
+	Vise statistikk over operativsystemer for servere og klienter
+	Tilgangsstyring: må kunne vise cmdb-maskiner
+	"""
+	required_permissions = 'systemoversikt.view_cmdbdevice'
 	if request.user.has_perm(required_permissions):
 
 		def cmdb_os_stats(maskiner):
@@ -1424,7 +1683,11 @@ def alle_os(request):
 
 
 def alle_ip(request):
-	required_permissions = 'systemoversikt.change_system'
+	"""
+	Søke opp IP-adresser, både mot CMDB maskiner og via live dns-query
+	Tilgangsstyring: må kunne vise cmdb-maskiner
+	"""
+	required_permissions = 'systemoversikt.view_cmdbdevice'
 	if request.user.has_perm(required_permissions):
 
 		from systemoversikt.views_import import load_dns_sonefile, load_vlan, load_nat, load_bigip, find_ip_in_dns, find_vlan, find_ip_in_nat, find_bigip
@@ -1515,7 +1778,11 @@ def ad_prk_sok(request):
 """
 
 def alle_prk(request):
-	required_permissions = 'systemoversikt.change_system'
+	"""
+	Søke og vise PRK-skjemaer
+	Tilgangsstyring: må kunne vise prk-skjemaer
+	"""
+	required_permissions = 'systemoversikt.view_prkvalg'
 	if request.user.has_perm(required_permissions):
 
 		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
@@ -1547,7 +1814,11 @@ def alle_prk(request):
 
 
 def alle_maskiner(request):
-	required_permissions = 'systemoversikt.change_system'
+	"""
+	Søke og vise alle maskiner
+	Tilgangsstyring: må kunne vise cmdb-maskiner
+	"""
+	required_permissions = 'systemoversikt.view_cmdbdevice'
 	if request.user.has_perm(required_permissions):
 
 		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
@@ -1582,7 +1853,11 @@ def alle_maskiner(request):
 
 
 def alle_databaser(request):
-	required_permissions = 'systemoversikt.change_system'
+	"""
+	Søke og vise alle databaser
+	Tilgangsstyring: må kunne vise cmdb-databaser
+	"""
+	required_permissions = 'systemoversikt.view_cmdbdatabase'
 	if request.user.has_perm(required_permissions):
 
 		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
@@ -1617,7 +1892,11 @@ def alle_databaser(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 def alle_cmdbref(request):
-	required_permissions = 'systemoversikt.change_system'
+	"""
+	Søke og vise alle business services (bs)
+	Tilgangsstyring: må kunne vise cmdb-referanser (bs)
+	"""
+	required_permissions = 'systemoversikt.view_cmdbref'
 	if request.user.has_perm(required_permissions):
 
 		search_term = request.GET.get('search_term', "").strip()
@@ -1641,7 +1920,11 @@ def alle_cmdbref(request):
 
 
 def cmdbdevice(request, pk):
-	required_permissions = 'systemoversikt.change_system'
+	"""
+	Søke og vise maskiner og databaser tilknyttet en business service for et system
+	Tilgangsstyring: må kunne vise cmdb-referanser (bs)
+	"""
+	required_permissions = 'systemoversikt.view_cmdbref'
 	if request.user.has_perm(required_permissions):
 		cmdbref = CMDBRef.objects.get(pk=pk)
 		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref)
@@ -1658,6 +1941,10 @@ def cmdbdevice(request, pk):
 
 
 def alle_avtaler(request, virksomhet=None):
+	"""
+	Vise alle avtaler
+	Tilgangsstyring: ÅPEN
+	"""
 	alle_virksomheter = Virksomhet.objects.all()
 	avtaler = Avtale.objects.all()
 	utdypende_beskrivelse = "Viser alle avtaler registrert i Kartoteket."
@@ -1677,6 +1964,10 @@ def alle_avtaler(request, virksomhet=None):
 
 
 def avtaledetaljer(request, pk):
+	"""
+	Vise detaljer for en avtale
+	Tilgangsstyring: ÅPEN
+	"""
 	avtale = Avtale.objects.get(pk=pk)
 	return render(request, 'detaljer_avtale.html', {
 		'request': request,
@@ -1685,6 +1976,10 @@ def avtaledetaljer(request, pk):
 
 
 def databehandleravtaler_virksomhet(request, pk):
+	"""
+	Vise alle databehandleravtaler for en valgt virksomhet
+	Tilgangsstyring: ÅPEN
+	"""
 	virksomet = Virksomhet.objects.get(pk=pk)
 	utdypende_beskrivelse = ("Viser databehandleravtaler for %s" % virksomet)
 	avtaler = Avtale.objects.filter(virksomhet=pk).filter(avtaletype=1) # 1 er databehandleravtaler
@@ -1696,6 +1991,10 @@ def databehandleravtaler_virksomhet(request, pk):
 
 
 def alle_dpia(request):
+	"""
+	Under utvikling: Vise alle DPIA-vurderinger
+	Tilgangsstyring: ÅPEN
+	"""
 	alle_dpia = DPIA.objects.all()
 	return render(request, 'alle_dpia.html', {
 		'request': request,
@@ -1704,6 +2003,10 @@ def alle_dpia(request):
 
 
 def detaljer_dpia(request, pk):
+	"""
+	Under utvikling: Vise metadata om en DPIA-vurdering
+	Tilgangsstyring: ÅPEN
+	"""
 	dpia = DPIA.objects.get(pk=pk)
 	return render(request, 'detaljer_dpia.html', {
 		'request': request,
@@ -1711,6 +2014,7 @@ def detaljer_dpia(request, pk):
 	})
 
 
+# støttefunksjon for LDAP
 def decode_useraccountcontrol(code):
 	#https://support.microsoft.com/nb-no/help/305144/how-to-use-useraccountcontrol-to-manipulate-user-account-properties
 	active_codes = ""
@@ -1731,6 +2035,7 @@ def decode_useraccountcontrol(code):
 	return active_codes
 
 
+# støttefunksjon for LDAP
 def ldap_query(ldap_path, ldap_filter, ldap_properties, timeout):
 	import ldap, os
 	server = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
@@ -1839,6 +2144,7 @@ def ldap_get_group_details(group):
 	return groups
 """
 
+# støttefunksjon for LDAP
 def ldap_get_recursive_group_members(group):
 	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 	ldap_filter = ('(&(objectCategory=person)(objectClass=user)(memberOf:1.2.840.113556.1.4.1941:=%s))' % group)
@@ -1863,6 +2169,7 @@ def ldap_get_recursive_group_members(group):
 	return users
 
 
+# støttefunksjon for LDAP
 def ldap_get_details(name, ldap_filter):
 	import re
 	import json
@@ -2006,6 +2313,10 @@ def ldap_exact(name):
 
 
 def ad(request):
+	"""
+	Startside for LDAP/AD-spørringer
+	Tilgangsstyring: ÅPEN
+	"""
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
 
@@ -2017,6 +2328,10 @@ def ad(request):
 
 
 def ad_details(request, name):
+	"""
+	Søke opp en eksakt CN i AD
+	Tilgangsstyring: Må kunne vise informasjon om brukere
+	"""
 	import time
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
@@ -2036,6 +2351,10 @@ def ad_details(request, name):
 
 
 def ad_exact(request, name):
+	"""
+	Søke opp et eksakt DN i AD
+	Tilgangsstyring: Må kunne vise informasjon om brukere
+	"""
 	import time
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
@@ -2055,6 +2374,10 @@ def ad_exact(request, name):
 
 
 def recursive_group_members(request, group):
+	"""
+	Søke opp alle brukere rekursivt med tilgang til et DN i AD
+	Tilgangsstyring: Må kunne vise informasjon om brukere
+	"""
 	import time
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):

@@ -53,7 +53,7 @@ urlpatterns = [
 
 	url(r'^systemer/$', views.alle_systemer, name='alle_systemer'),
 	url(r'^systemer/pakket/$', views.systemer_pakket, name='systemer_pakket'),
-	url(r'^systemer/test/$', views.systemer_test, name='systemer_test'),
+	#url(r'^systemer/test/$', views.systemer_test, name='systemer_test'),
 	#url(r'^systemer/(?P<utvalg>\w{1,30})/(?P<items>\d{1,5})/(?P<page>\d{1,5})/$', views.alle_systemer, name='alle_systemer_sideref'),
 	url(r'^systemer/detaljer/(?P<pk>\d{1,8})/$', views.systemdetaljer, name='systemdetaljer'),
 	url(r'^systemer/bruk/$', views.mine_systembruk, name='mine_systembruk'),
@@ -70,11 +70,11 @@ urlpatterns = [
 	url(r'^behandlinger/$', views.mine_behandlinger, name='mine_behandlinger'),
 	url(r'^behandlinger/alle/$', views.alle_behandlinger, name='alle_behandlinger'),
 	url(r'^behandlinger/kopier/(?P<system_pk>\d{1,8})/$', views.behandling_kopier, name='behandling_kopier'),
-	url(r'^behandlinger/alle_detaljer/(?P<pk>\d{1,8})/$', views.alle_behandlinger_alle_detaljer, name='alle_behandlinger_alle_detaljer'),
+	#url(r'^behandlinger/alle_detaljer/(?P<pk>\d{1,8})/$', views.alle_behandlinger_alle_detaljer, name='alle_behandlinger_alle_detaljer'),
 	url(r'^behandlinger/vir/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
 	url(r'^behandlinger/vir/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
 	url(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
-	url(r'^behandlinger/filtrerte/virksomhet/(?P<pk>\d{1,8})/$', views.behandlinger_filtrerte, name='behandlinger_filtrerte'),
+	#url(r'^behandlinger/filtrerte/virksomhet/(?P<pk>\d{1,8})/$', views.behandlinger_filtrerte, name='behandlinger_filtrerte'),
 
 
 	url(r'^avtaler/$', views.alle_avtaler, name='alle_avtaler'),
@@ -174,5 +174,5 @@ urlpatterns = [
 	url(r'^ad/$', views.ad, name='ad'),
 	url(r'^ad/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),
 	url(r'^ad/recursive/(?P<group>[-_=,a-zA-Z0-9\s]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
-	url(r'^ad/exact/(?P<name>[-_=,a-zA-Z0-9\s]{2,200})/$', views.ad_exact, name='ad_exact'),
+	url(r'^ad/exact/(?P<name>[-_=,a-zæøåA-ZÆØÅ0-9\s]{2,200})/$', views.ad_exact, name='ad_exact'),
 ]

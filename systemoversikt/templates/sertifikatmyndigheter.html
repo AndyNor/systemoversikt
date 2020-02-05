@@ -7,7 +7,7 @@
 
 {% block main_content %}
 <p>Viser status på fullmakter gitt til UKE/2S for å utstede web- og virksomhetssertifikater.</p>
-{% if perms.systemoversikt.view_virksomhet %}
+
 	<table class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>
@@ -75,8 +75,5 @@
 	{% endfor %}
 	</tbody>
 	</table>
-{% else %}
-	<p>Du mangler rettigheten "view_virksomhet" (se alle detaljer om virksomheter)</p>
-{% endif %}
 
 {% endblock main_content %}

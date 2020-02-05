@@ -10,7 +10,6 @@
 
 {% block main_content %}
 
-{% if perms.admin.view_logentry %}
 	<table class="table table-sm table-striped">
 	<thead>
 	<tr>
@@ -39,15 +38,5 @@
 	{% endfor %}
 	</tbody>
 	</table>
-
-{% else %}
-
-	<div id="div_message" class="alert alert-danger">
-		<a class="close" data-dismiss="alert" href="#">×</a>
-		<h5 class="alert-heading">Du mangler autorisasjon</h5>
-		Din rolle mangler rettigheter til å lese loggen.
-	</div>
-
-{% endif %}
 
 {% endblock main_content %}

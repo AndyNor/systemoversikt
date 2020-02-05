@@ -39,10 +39,11 @@
 			<tr>
 				<td>{{valg.skjemanavn.skjemanavn}}</td>
 				<td>{{valg.skjemanavn.skjematype|lower}}</td>
-				<td>{% if valg.for_virksomhet %} <a href="{% url 'virksomhet' valg.for_virksomhet.pk %}">{{valg.for_virksomhet.virksomhetsforkortelse}}</a> {% endif %}</td>
+				<td>{% if valg.for_virksomhet %} <a href="{% url 'virksomhet' valg.for_virksomhet.pk %}" target="_blank" >{{valg.for_virksomhet.virksomhetsforkortelse}}</a> {% endif %}</td>
 				<td>{{valg.gruppering.feltnavn}}</td>
 				<td>{{valg.valgnavn}}</td>
-				<td><a href="{% url 'ad_exact' name=valg.gruppenavn_full %}" target="_blank">{{valg.gruppenavn_kort}}</a></td>
+				{% url 'ad_exact' name=valg.gruppenavn_full as url_ad %}
+				<td><a href="{{url_ad}}" target="_blank">{{valg.gruppenavn_kort}}</a></td>
 				<td>{{valg.beskrivelse}}</td>
 			</tr>
 		{% endfor %}

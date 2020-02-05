@@ -23,7 +23,7 @@
 
 <p>Hei {{ request.user.first_name }} {{ request.user.last_name }}. Du er logget inn via en av Oslo kommunes identitetstjenere. Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b>, og du er medlem i følgende grupper:<br>
 <ul>{% for group in user.groups.all %} <li>{{ group.name|slice:"19:"|lower|capfirst }}</li> {% endfor %}</ul>
-Disse gruppenavnene er forklart på under grupper og roller.
+Disse gruppenavnene er forklart på siden "grupper og roller".
 </p>
 
 <p>Dersom du ønsker å redigere på innhold kan du enten gå direkte til admin-siden eller du kan følge <img style="width: 11px; margin: 3px;" src="/static/open-iconic/svg/pencil.svg" title="rediger"> symbolene rundt omkring på denne portalen. Redigeringssider åpes som standard i nytt vindu. På denne måten kan du lukke admin-siden når du har redigert og lagret og komme tilbake til siden du var på før du startet å redigere. Alle endringer utført via administrasjonssidene blir loggført. På systemer vises det hvem som har utført de siste endringene direkte på detaljesiden. For de fleste typer informasjon lages det en ny versjon av informasjonen for hver gang du lagrer. Gamle versjoner kan gjenopprettes dersom du har nødvendige tilganger via knappen "Historikk" på den enkelte redigeringsside.</p>
