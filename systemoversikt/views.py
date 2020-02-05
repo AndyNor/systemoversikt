@@ -1896,8 +1896,8 @@ def alle_cmdbref(request):
 	Søke og vise alle business services (bs)
 	Tilgangsstyring: må kunne vise cmdb-referanser (bs)
 	"""
-	required_permissions = 'systemoversikt.view_cmdbref'
-	if request.user.has_perm(required_permissions):
+	required_permissions = ['systemoversikt.view_cmdbref', 'systemoversikt.view_user']
+	if lambda u: any(map(request.user.has_perm, required_permissions)):
 
 		search_term = request.GET.get('search_term', "").strip()
 
