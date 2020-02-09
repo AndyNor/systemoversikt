@@ -19,7 +19,7 @@
 <p>Noe forenklet rollebeskrivelse
 <ul>
 	<li>Systemforvalter kan endre på systemer. Systemforvalter kan se behandinger registrert på sine systemer. En systemeier tildeles i praksis rollen som systemforvalter.</li>
-	<li>Behandlingsansvarlige kan gjøre det samme som systemforvalter, og i tillegg endre på behandlinger i virksomhetens behandlingsprotokoll.</li> 
+	<li>Behandlingsansvarlige kan gjøre det samme som systemforvalter, og i tillegg endre på behandlinger i virksomhetens behandlingsprotokoll.</li>
 	<li>Systemkategori(forvalter) kan endre på systemkategorier og andre valgbare felt som ønskes standardisert.</li>
 	<li>Virksomhets(forvalter) kan endre på detaljer om virksomheter.</li>
 	<li>Plattformforvalter kan administrere driftsplattformer.</li>
@@ -31,23 +31,23 @@
 <div class="accordion" id="accordionExample">
 {% for g in groups %}
 
-  <div class="card">
-    <div class="card-header" id="heading_{{ forloop.counter }}">
-      <h2 class="mb-0">
-        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse_{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse_{{ forloop.counter }}">
-          {{ g.name|slice:"1:" }}
-        </button>
-      </h2>
-    </div>
+	<div class="card">
+		<div class="card-header" id="heading_{{ forloop.counter }}">
+			<h2 class="mb-0">
+				<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapse_{{ forloop.counter }}" aria-expanded="true" aria-controls="collapse_{{ forloop.counter }}">
+					{{ g.name|slice:"1:" }}
+				</button>
+			</h2>
+		</div>
 
-    <div id="collapse_{{ forloop.counter }}" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
-      <div class="card-body">
+		<div id="collapse_{{ forloop.counter }}" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
+			<div class="card-body">
 		{% for p in g.permissions.all %}
 			{{ p.name }} ({{ p.codename }})</br>
 		{% endfor %}
-      </div>
-    </div>
-  </div>
+			</div>
+		</div>
+	</div>
 
 {% endfor %}
 </div>

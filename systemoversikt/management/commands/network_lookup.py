@@ -17,6 +17,10 @@ import requests
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		import logging
+		log = logging.getLogger(__name__)
+		log.info("Starter oppslag av IP-adresser")
+
 		runetime_t0 = time.time()
 		socket.setdefaulttimeout(0.2)
 
@@ -36,22 +40,21 @@ class Command(BaseCommand):
 		device_count = len(cmdbdevices)
 		for idx, device in enumerate(cmdbdevices):
 			print("%s av %s" % (idx, device_count))
+			if re.match(r'ws[0-9].*', device.comp_name, re.I):
+				#print("Er klient %s" % (device))
+				continue # ikke noe poeng å slå opp IP på klienter. De bytter IP stadig vekk.
 
 			if device.comp_ip_address == "":
-				if re.match(r'ws[0-9].*', device.comp_name, re.I):
-					#print("Er klient %s" % (device))
-					continue # ikke noe poeng å slå opp IP på klienter. De bytter IP stadig vekk.
-				else:
-					#print("Do lookup %s" % (device))
-					try:
-						resolved_ip = socket.gethostbyname(device.comp_name)
-						device.comp_ip_address = resolved_ip
-						device.save()
-						stat_manglet_ip_resolved += 1
-					except:
-						stat_manglet_ip_resolve_fail += 1
-						print("Feilet IP-oppslag: %s" % (device))
-						continue  # nytter ikke å fortsette uten IP-adresse
+				#print("Do lookup %s" % (device))
+				try:
+					resolved_ip = socket.gethostbyname(device.comp_name)
+					device.comp_ip_address = resolved_ip
+					device.save()
+					stat_manglet_ip_resolved += 1
+				except:
+					stat_manglet_ip_resolve_fail += 1
+					print("Feilet IP-oppslag: %s" % (device))
+					continue  # nytter ikke å fortsette uten IP-adresse
 
 			#ip-address must be set at this stage
 

@@ -8,6 +8,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from .models import *
 from simple_history.admin import SimpleHistoryAdmin
+from django.db.models.functions import Lower
 
 class SikkerhetstesterAdmin(SimpleHistoryAdmin):
 	list_display = ('testet_av', 'dato_rapport', 'type_test', 'rapport',)
@@ -145,6 +146,10 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 	search_fields = ('virksomhetsnavn', 'virksomhetsforkortelse')
 	list_filter = ('resultatenhet',)
 	filter_horizontal = ('overordnede_virksomheter',)
+
+	def get_ordering(self, request):
+		return [Lower('virksomhetsnavn')]
+
 	autocomplete_fields = (
 		'leder',
 		'informasjonssikkerhetskoordinator',
@@ -564,11 +569,46 @@ class DPIAAdmin(SimpleHistoryAdmin):
 		}),
 	)
 
+@admin.register(Driftsmodell)
 class DriftsmodellAdmin(SimpleHistoryAdmin):
-	list_display = ('navn', 'sikkerhetsnivaa', 'kommentar', 'ansvarlig_virksomhet')
+	list_display = ('navn', 'sikkerhetsnivaa', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform')
 	search_fields = ('navn',)
-	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler', 'anbefalte_kategorier_personopplysninger')
+	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler', 'anbefalte_kategorier_personopplysninger', 'overordnet_plattform')
 	autocomplete_fields = ('ansvarlig_virksomhet',)
+	def get_ordering(self, request):
+		return [Lower('navn')]
+	fieldsets = (
+			('Initiell registrering', {
+				'fields': (
+					'navn',
+					'ansvarlig_virksomhet',
+					'type_plattform',
+					'overordnet_plattform',
+					'kommentar',
+					'leverandor',
+					'underleverandorer',
+					'avtaler'
+				),
+			}),
+			('Sikkerhetsegenskaper', {
+				'fields': (
+					'sikkerhetsnivaa',
+					'anbefalte_kategorier_personopplysninger',
+					'databehandleravtale_notater',
+					'lokasjon_lagring_valgmeny',
+					'lokasjon_lagring',
+					'Tilgangsstyring_driftspersonell',
+					'nettverk_segmentering',
+					'nettverk_sammenkobling_fip',
+					'sikkerhet_patching',
+					'sikkerhet_antiskadevare',
+					'sikkerhet_backup',
+					'sikkerhet_logging',
+					'sikkerhet_fysisk_sikring',
+				),
+			}),
+	)
+
 
 class AutorisertBestillerAdmin(SimpleHistoryAdmin):
 	list_display = ('person', 'dato_fullmakt')
@@ -618,7 +658,6 @@ admin.site.register(ProgramvareBruk, ProgramvareBrukAdmin)
 admin.site.register(CMDBRef, CMDBRefAdmin)
 admin.site.register(Avtale, AvtaleAdmin)
 admin.site.register(DPIA, DPIAAdmin)
-admin.site.register(Driftsmodell, DriftsmodellAdmin)
 admin.site.register(AutorisertBestiller, AutorisertBestillerAdmin)
 admin.site.register(Autentiseringsmetode,AutentiseringsmetodeAdmin)
 admin.site.register(Region)

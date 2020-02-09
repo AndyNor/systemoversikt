@@ -19,6 +19,7 @@
 	<th>Livsløp</th>
 	<th>Risikovurdering</th>
 	<th>Driftsmodell / plattform</th>
+	<th>2S CMDB</th>
 	<th>Leverandør av system</th>
 	<th>Leverandør applikasjonsdrift</th>
 	<th>Leverandør basisdrift</th>
@@ -80,6 +81,12 @@
 
 	{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}
 	<td><a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a></td>
+
+	<td>
+		{% for ref in item.cmdbref.all %}
+			<li>{{ ref.navn }}</li>
+		{% endfor %}
+	</td>
 
 	<td>
 		{% for lev in item.systemleverandor.all %}

@@ -1408,6 +1408,14 @@ class Programvare(models.Model):
 		verbose_name_plural = "Programvarer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+
+DRIFTSTYPE_VALG = (
+	(0, 'Ukjent'),
+	(1, 'Private cloud'),
+	(2, 'Public cloud'),
+)
+
+
 class Driftsmodell(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -1443,7 +1451,7 @@ class Driftsmodell(models.Model):
 			blank=True,
 			)
 	databehandleravtale_notater = models.TextField(
-			verbose_name="Status om databehandleravtale",
+			verbose_name="Status databehandleravtale",
 			blank=True, null=True,
 			help_text=u"Tilleggsinformasjon databehandleravtale, inkludert beskrivelse av eventuelle avvik fra Oslo kommunes standard databehandleravtale.",
 			)
@@ -1511,6 +1519,17 @@ class Driftsmodell(models.Model):
 			verbose_name="Kategorier personopplysninger egnet på plattformen",
 			blank=True,
 			help_text=u"",
+			)
+	type_plattform = models.IntegerField(choices=DRIFTSTYPE_VALG,
+			verbose_name="Type driftsmiljø",
+			default=0,
+			blank=False, null=False,
+			help_text=u'',
+			)
+	overordnet_plattform = models.ManyToManyField("Driftsmodell", related_name='driftsmodell_overordnet_plattform',
+			verbose_name="Overordnet plattform",
+			blank=True, null=True,
+			help_text=u'Dersom dette er en "plattform på en plattform" kan du her henvise til hvilken plattform denne kjører på.',
 			)
 	history = HistoricalRecords()
 
@@ -1727,7 +1746,7 @@ class System(models.Model):
 	database = models.IntegerField(
 			verbose_name="Database", choices=DB_VALG,
 			blank=True, null=True,
-			help_text=u"Ikke fyll ut denne, legg heller databasen som en teknisk avhengighet",
+			help_text=u"Dersom databasehotell, legg til databasehotellet som en teknisk avhengighet.",
 			)
 	avhengigheter = models.TextField(
 			verbose_name="Utlevering og avhengigheter (fritekst)",

@@ -320,7 +320,7 @@ def permissions(request):
 	viser informasjon om alle ansvarliges aktive rettigheter
 	Tilgangsstyring: De som kan redigere ansvarlige
 	"""
-	required_permissions = 'auth.change_ansvarlig'
+	required_permissions = 'systemoversikt.change_ansvarlig'
 	if request.user.has_perm(required_permissions):
 		ansvarlige = Ansvarlig.objects.all()
 		return render(request, 'permissions.html', {
@@ -372,7 +372,7 @@ def logger(request):
 	viser alle endringer på objekter i løsningen
 	Tilgangsstyring: Se endringslogger
 	"""
-	required_permissions = 'auth.view_logentry'
+	required_permissions = 'admin.view_logentry'
 	if request.user.has_perm(required_permissions):
 
 		recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:300]
@@ -389,7 +389,7 @@ def logger_audit(request):
 	viser alle endringer på objekter i løsningen
 	Tilgangsstyring: Se applikasjonslogger
 	"""
-	required_permissions = 'auth.view_applicationlog'
+	required_permissions = 'systemoversikt.view_applicationlog'
 	if request.user.has_perm(required_permissions):
 
 		recent_loggs = ApplicationLog.objects.order_by('-opprettet')[:150]
@@ -1353,7 +1353,7 @@ def alle_driftsmodeller(request):
 	Vise liste over alle driftsmodeller
 	Tilgangsstyring: ÅPEN
 	"""
-	driftsmodeller = Driftsmodell.objects.all().order_by('-ansvarlig_virksomhet')
+	driftsmodeller = Driftsmodell.objects.all().order_by('-ansvarlig_virksomhet', 'navn')
 	return render(request, 'alle_driftsmodeller.html', {
 		'request': request,
 		'driftsmodeller': driftsmodeller,
@@ -1366,11 +1366,13 @@ def driftsmodell_virksomhet(request, pk):
 	Tilgangsstyring: ÅPEN
 	"""
 	virksomhet = Virksomhet.objects.get(pk=pk)
+	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet).order_by("navn")
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
 	return render(request, 'alle_systemer_virksomhet_drifter.html', {
 		'virksomhet': virksomhet,
 		'request': request,
 		'systemer': systemer_drifter,
+		'driftsmodeller': driftsmodeller,
 	})
 
 

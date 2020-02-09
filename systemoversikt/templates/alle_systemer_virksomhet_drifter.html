@@ -6,6 +6,12 @@
 
 {% block main_content %}
 
+	Vi er ansvarlige for
+	{% for modell in driftsmodeller %}
+		<li><a href="{% url 'detaljer_driftsmodell' pk=modell.pk %}">{{modell}}</a></li>
+	{% endfor %}
+	<hr>
+
 	<p>Viser {{ systemer.count }} systemer.</p>
 
 	{% include "alle_systemer_virksomhet_include.html" %}
