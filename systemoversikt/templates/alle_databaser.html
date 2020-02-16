@@ -24,29 +24,12 @@
 
 <p>Viser {{ databaser.count }} databaser</p>
 
-{% comment %}
-<table id="stickyheader" class="table table-sm tablesorter">
-	<thead>
-		<th>OS hovedversjon</th>
-		<th>OS versjonsnummer</th>
-		<th>Antall</th>
-	</thead>
-	<tbody>
-	{% for os in maskiner_stats %}
-		<tr>
-			<td>{{ os.major|default:"Ukjent" }}</td>
-			<td>{{ os.minor|default:"Ukjent" }}</td>
-			<td>{{ os.count }}</td>
-		</tr>
-	{% endfor %}
-	</tbody>
-</table>
-{% endcomment %}
-
 	<table id="stickyheader" class="table table-sm tablesorter">
 	<thead>
 	<tr>
-		<th width="25%">db_database</th>
+		<th>pk</th>
+		<th>Opprettet</th>
+		<th>db_database</th>
 		<th>sub_name</th>
 		<th>db_used_for</th>
 		<th>db_version</th>
@@ -57,6 +40,10 @@
 	<tbody>
 	{% for db in databaser %}
 	<tr {% if not db.db_operational_status %} style="color: #d6d6d6;" {% endif %}>
+		<td>{{ db.pk}} </td>
+
+		<td>{{ db.opprettet|date:'Y-m-d'}} </td>
+
 		<td>{{ db.db_database }}</td>
 		<td>
 			{% for subservice in db.sub_name.all %}

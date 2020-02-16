@@ -41,7 +41,7 @@
 				<td>{% if valg.for_virksomhet %} <a href="{% url 'virksomhet' valg.for_virksomhet.pk %}">{{valg.for_virksomhet.virksomhetsforkortelse}}</a> {% endif %}</td>
 				<td>{{valg.gruppering.feltnavn}}</td>
 				<td>{{valg.valgnavn}}</td>
-				<td><a href="{% url 'ad_exact' name=valg.gruppenavn_full %}" target="_blank">{{valg.gruppenavn_kort}}</a></td>
+				<td><a href="{% url 'ad_exact' name=valg.gruppenavn_full %}" target="_blank">{{valg.gruppenavn}}</a></td>
 				<td>{{valg.beskrivelse}}</td>
 			</tr>
 		{% endfor %}

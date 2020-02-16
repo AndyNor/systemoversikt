@@ -49,9 +49,9 @@
 				<td>{{valg.valgnavn}}</td>
 				{% if skjemavalg|length < 400 %}
 					{% url 'ad_exact' name=valg.gruppenavn_full as url_ad %}
-					<td><a href="{{url_ad}}" target="_blank">{{valg.gruppenavn_kort}}</a></td>
+					<td><a href="{{url_ad}}" target="_blank">{{valg.gruppenavn_full}}</a></td>
 				{% else %}
-					<td>{{valg.gruppenavn_kort}}</td>
+					<td>{{valg.gruppenavn_full}}</td>
 				{% endif %}
 				<td>{{valg.beskrivelse}}</td>
 			</tr>

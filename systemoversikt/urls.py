@@ -57,6 +57,7 @@ urlpatterns = [
 	#url(r'^systemer/(?P<utvalg>\w{1,30})/(?P<items>\d{1,5})/(?P<page>\d{1,5})/$', views.alle_systemer, name='alle_systemer_sideref'),
 	url(r'^systemer/detaljer/(?P<pk>\d{1,8})/$', views.systemdetaljer, name='systemdetaljer'),
 	url(r'^systemer/bruk/$', views.mine_systembruk, name='mine_systembruk'),
+	url(r'^systemer/utfaset/$', views.systemer_utfaset, name='systemer_utfaset'),
 	url(r'^systemer/bruk/(?P<pk>\d{1,8})/$', views.bruksdetaljer, name='bruksdetaljer'),
 	url(r'^systemer/bruk/registrer_bruk/(?P<system>\d{1,8})/$', views.registrer_bruk, name='registrer_bruk'),
 	url(r'^systemer/virksomhet/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
@@ -122,6 +123,7 @@ urlpatterns = [
 	url(r'^cmdb/$', views.alle_cmdbref, name='alle_cmdbref'),
 	url(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),
 	url(r'^cmdb/servere/$', views.alle_maskiner, name='alle_maskiner'),
+	url(r'^cmdb/servere/utfaset/$', views.servere_utfaset, name='servere_utfaset'),
 	url(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 	url(r'^cmdb/os/$', views.alle_os, name='alle_os'),
 	url(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
@@ -134,6 +136,7 @@ urlpatterns = [
 	url(r'^driftsmodell/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
 	url(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
 	url(r'^driftsmodell/virksomhet/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
+	url(r'^driftsmodell/virksomhet/klassifisering/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet_klassifisering, name='driftsmodell_virksomhet_klassifisering'),
 	url(r'^driftsmodell/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),
 
 	url(r'^definisjon/$', views.alle_definisjoner, name='alle_definisjoner'),
@@ -166,7 +169,8 @@ urlpatterns = [
 
 	#url(r'^import_sys_new/$', views.import_sys_new, name='import_sys_new'),
 	#url(r'^import_bruk/$', views.import_bruk, name='import_bruk'),
-	#url(r'^system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
+	url(r'^system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
+	url(r'^system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
 
 	#url(r'^ad/user/(?P<username>[a-zA-Z0-9]{2,15})/$', views.ad_user_details, name='ad_user_details'),
 	#url(r'^ad/group/$', views.ad_group_details, name='ad_group_details'),

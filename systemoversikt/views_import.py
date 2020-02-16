@@ -272,6 +272,8 @@ def import_cmdb_databases(request):
 			all_existing_db = list(CMDBdatabase.objects.filter(~Q(db_version__startswith="Oracle ") & Q(db_operational_status=True)))
 
 			for record in data["records"]:
+				if record["db_database"] == "":
+					continue  # Det må være en verdi på denne
 				# vi sjekker om enheten finnes fra før
 				try:
 					cmdb_db = CMDBdatabase.objects.get(db_database=record["db_database"])

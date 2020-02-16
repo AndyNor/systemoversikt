@@ -942,7 +942,7 @@ class CMDBdatabase(models.Model):
 			)
 	db_database = models.TextField(
 			verbose_name="db_database",
-			blank=True, null=True,
+			blank=True, null=True,  # importscriptet vil ikke tillate dette, men datamodellen bryr seg ikke
 			help_text=u"Importert: db_database",
 			)
 	db_used_for = models.TextField(
@@ -1528,7 +1528,7 @@ class Driftsmodell(models.Model):
 			)
 	overordnet_plattform = models.ManyToManyField("Driftsmodell", related_name='driftsmodell_overordnet_plattform',
 			verbose_name="Overordnet plattform",
-			blank=True, null=True,
+			blank=True,
 			help_text=u'Dersom dette er en "plattform på en plattform" kan du her henvise til hvilken plattform denne kjører på.',
 			)
 	history = HistoricalRecords()
@@ -2499,7 +2499,7 @@ class SystemBruk(models.Model):
 	#		blank=True,
 	#		)
 	driftsmodell_foreignkey = models.ForeignKey(Driftsmodell, related_name='systembruk_driftsmodell',
-			on_delete=models.PROTECT,
+			on_delete=models.SET_NULL,
 			verbose_name="Driftsmodell / plattform (for denne bruken)",
 			blank=True, null=True,
 			help_text=u"Dette feltet blir faset ut. Dette er spesifisert på systemet.",

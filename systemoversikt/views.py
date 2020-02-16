@@ -1360,6 +1360,27 @@ def alle_driftsmodeller(request):
 	})
 
 
+def driftsmodell_virksomhet_klassifisering(request, pk):
+	"""
+	Vise informasjon om sikkerhethetsklassifisering for systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
+	Tilgangsstyring: For plattformforvaltere
+	"""
+	required_permissions = 'systemoversikt.change_systemkategori'
+	if request.user.has_perm(required_permissions):
+
+		virksomhet = Virksomhet.objects.get(pk=pk)
+		driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet)
+		systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('sikkerhetsnivaa')
+		return render(request, 'alle_systemer_virksomhet_drifter_klassifisering.html', {
+			'virksomhet': virksomhet,
+			'request': request,
+			'systemer': systemer_drifter,
+			'driftsmodeller': driftsmodeller,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def driftsmodell_virksomhet(request, pk):
 	"""
 	Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
@@ -1406,6 +1427,17 @@ def systemer_uten_driftsmodell(request):
 	mangler = System.objects.filter(driftsmodell_foreignkey=None)
 	return render(request, 'detaljer_driftsmodell_mangler.html', {
 		'systemer': mangler,
+})
+
+
+def systemer_utfaset(request):
+	"""
+	Vise liste over systemer satt til "ikke i bruk"
+	Tilgangsstyring: ÅPEN
+	"""
+	systemer = System.objects.filter(ibruk=False).order_by("-sist_oppdatert")
+	return render(request, 'alle_systemer_utfaset.html', {
+		'systemer': systemer,
 })
 
 
@@ -1584,70 +1616,74 @@ def bytt_leverandor(request, fra, til):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-def system_til_programvare(request, system_id):
+def system_til_programvare(request, system_id=None):
 	"""
 	Funksjon for å opprette en instans av programvare basert på system (systemet må slettes manuelt etterpå)
 	Tilgangsstyring: krever tilgang til å endre systemer.
 	"""
 	required_permissions = 'systemoversikt.change_system'
 	if request.user.has_perm(required_permissions):
-		try:
-			#finne systemet som skal konverteres
-			kildesystem = System.objects.get(pk=system_id)
 
-			#nytt programvareobjekt med kopierte verdier
-			ny_programvare = Programvare.objects.create(
-					programvarenavn=kildesystem.systemnavn,
-					programvarekategori=kildesystem.programvarekategori,
-					programvarebeskrivelse=kildesystem.systembeskrivelse,
-					kommentar=kildesystem.kommentar,
-					strategisk_egnethet=kildesystem.strategisk_egnethet,
-					funksjonell_egnethet=kildesystem.funksjonell_egnethet,
-					teknisk_egnethet=kildesystem.teknisk_egnethet,
-					selvbetjening=kildesystem.selvbetjening,
-					livslop_status=kildesystem.livslop_status,
-				)
-			for leverandor in kildesystem.systemleverandor.all():
-				ny_programvare.programvareleverandor.add(leverandor)
-			for kategori in kildesystem.systemkategorier.all():
-				ny_programvare.kategorier.add(kategori)
-			for programvaretype in kildesystem.systemtyper.all():
-				ny_programvare.programvaretyper.add(programvaretype)
-			ny_programvare.save()
+		if system_id:
+			try:
+				#finne systemet som skal konverteres
+				kildesystem = System.objects.get(pk=system_id)
 
-			#nye programvarebruk per systembruk
-			for systembruk in kildesystem.systembruk_system.all():
-				ny_programvarebruk = ProgramvareBruk.objects.create(
-						brukergruppe=systembruk.brukergruppe,
-						programvare=ny_programvare,
-						livslop_status=systembruk.livslop_status,
-						kommentar=systembruk.kommentar,
-						programvareeierskap=systembruk.systemeierskap,
-						antall_brukere=systembruk.antall_brukere,
-						avtaletype=systembruk.avtaletype,
-						avtalestatus=systembruk.avtalestatus,
-						avtale_kan_avropes=systembruk.avtale_kan_avropes,
-						borger=systembruk.borger,
-						kostnader=systembruk.kostnadersystem,
-						strategisk_egnethet=systembruk.strategisk_egnethet,
-						funksjonell_egnethet=systembruk.funksjonell_egnethet,
-						teknisk_egnethet=systembruk.teknisk_egnethet,
-					)
-				for leverandor in systembruk.systemleverandor.all():
-					ny_programvarebruk.programvareleverandor.add(leverandor)
-					ny_programvarebruk.save()
+				try:
+					Programvare.objects.get(programvarenavn=kildesystem.systemnavn)
+					messages.warning(request, 'Programvare med navn %s finnes allerede' % kildesystem.systemnavn)
+					resume = False
+				except:
+					resume = True
 
-			#registrere behandlinger på programvaren fra systemet
-			for behandling in kildesystem.behandling_systemer.all():
-				behandling.programvarer.add(ny_programvare)
-				behandling.save()
+				if resume:
+					#nytt programvareobjekt med kopierte verdier
+					ny_programvare = Programvare.objects.create(
+							programvarenavn=kildesystem.systemnavn,
+							programvarekategori=kildesystem.programvarekategori,
+							programvarebeskrivelse=kildesystem.systembeskrivelse,
+							kommentar=kildesystem.kommentar,
+							strategisk_egnethet=kildesystem.strategisk_egnethet,
+							funksjonell_egnethet=kildesystem.funksjonell_egnethet,
+							teknisk_egnethet=kildesystem.teknisk_egnethet,
+							selvbetjening=kildesystem.selvbetjening,
+							livslop_status=kildesystem.livslop_status,
+						)
+					for leverandor in kildesystem.systemleverandor.all():
+						ny_programvare.programvareleverandor.add(leverandor)
+					for kategori in kildesystem.systemkategorier.all():
+						ny_programvare.kategorier.add(kategori)
+					for programvaretype in kildesystem.systemtyper.all():
+						ny_programvare.programvaretyper.add(programvaretype)
+					ny_programvare.save()
 
-			messages.success(request, 'Konvertere system til programvare. Ny programvare med id: %s er opprettet' % ny_programvare.pk)
-		except Exception as e:
-			messages.warning(request, 'Konvertere system til programvare feilet med feilmelding %s' % e)
+					#nye programvarebruk per systembruk
+					for systembruk in kildesystem.systembruk_system.all():
+						ny_programvarebruk = ProgramvareBruk.objects.create(
+								brukergruppe=systembruk.brukergruppe,
+								programvare=ny_programvare,
+								livslop_status=systembruk.livslop_status,
+								kommentar=systembruk.kommentar,
+								strategisk_egnethet=systembruk.strategisk_egnethet,
+								funksjonell_egnethet=systembruk.funksjonell_egnethet,
+								teknisk_egnethet=systembruk.teknisk_egnethet,
+							)
 
-		return render(request, 'home.html', {
+					#registrere behandlinger på programvaren fra systemet
+					for behandling in kildesystem.behandling_systemer.all():
+						behandling.programvarer.add(ny_programvare)
+						behandling.save()
+
+					messages.success(request, 'Konvertere system til programvare. Ny programvare %s er opprettet' % ny_programvare.programvarenavn)
+
+			except Exception as e:
+				messages.warning(request, 'Konvertere system til programvare feilet med feilmelding %s' % e)
+
+		utvalg_systemer = System.objects.filter(systemtyper=1)
+
+		return render(request, 'system_til_programvare.html', {
 			'request': request,
+			'systemer': utvalg_systemer,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -1667,6 +1703,11 @@ def alle_os(request):
 			for os in os_major:
 				minor_versions = maskiner.filter(comp_os=os['comp_os']).values('comp_os_version').annotate(Count('comp_os_version'))
 				for minor in minor_versions:
+					if os['comp_os'] == "":
+						os['comp_os'] = "__empty__"
+					if minor['comp_os_version'] == "":
+						minor['comp_os_version'] = "__empty__"
+
 					maskiner_stats.append({
 							'major': os['comp_os'],
 							'minor': minor['comp_os_version'],
@@ -1823,23 +1864,43 @@ def alle_maskiner(request):
 	required_permissions = 'systemoversikt.view_cmdbdevice'
 	if request.user.has_perm(required_permissions):
 
+		def filter(input):
+
+			search_term = input["search_term"]
+			comp_os = input["comp_os"]
+			comp_os_version = input["comp_os_version"]
+
+			if search_term == "" and comp_os == "" and comp_os_version == "":
+				return CMDBdevice.objects.none()
+
+			if search_term == "__all__":
+				search_term = ""
+
+			devices = CMDBdevice.objects.filter(active=True).filter(comp_name__icontains=search_term)
+
+			if comp_os == "__empty__" and comp_os_version == "__empty__":
+				comp_os_and_version_none = CMDBdevice.objects.filter(active=True).filter(Q(comp_os="") & Q(comp_os_version=""))
+				return devices & comp_os_and_version_none  # snitt/intersection av to sett
+
+			if comp_os == "__empty__":
+				comp_os_none = CMDBdevice.objects.filter(active=True).filter(comp_os="").filter(comp_os_version__icontains=comp_os_version)
+				return devices & comp_os_none  # snitt/intersection av to sett
+
+			if comp_os_version == "__empty__":
+				comp_os_version_none = CMDBdevice.objects.filter(active=True).filter(comp_os_version="").filter(comp_os__icontains=comp_os)
+				return devices & comp_os_version_none  # snitt/intersection av to sett
+
+			return devices
+
 		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 		comp_os = request.GET.get('comp_os', '').strip()
 		comp_os_version = request.GET.get('comp_os_version', '').strip()
 
-		if (search_term == "__all__") or (comp_os != "") or (comp_os_version != ""):
-			maskiner = CMDBdevice.objects
-		elif len(search_term) < 2: # if one or less, return nothing
-			maskiner = CMDBdevice.objects.none()
-		else:
-			maskiner = CMDBdevice.objects.filter(comp_name__icontains=search_term)
-
-		if comp_os != "":
-			maskiner = maskiner.filter(comp_os__icontains=comp_os)
-
-		if comp_os != "":
-			maskiner = maskiner.filter(comp_os_version__icontains=comp_os_version)
-
+		maskiner = filter({
+				"search_term": search_term,
+				"comp_os": comp_os,
+				"comp_os_version": comp_os_version
+			})
 
 		maskiner = maskiner.order_by('comp_os')
 
@@ -1854,6 +1915,23 @@ def alle_maskiner(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def servere_utfaset(request):
+	"""
+	Vise alle avviklede maskiner
+	Tilgangsstyring: må kunne vise cmdb-maskiner
+	"""
+	required_permissions = 'systemoversikt.view_cmdbdevice'
+	if request.user.has_perm(required_permissions):
+
+		maskiner = CMDBdevice.objects.filter(active=False).order_by("-sist_oppdatert")
+		return render(request, 'alle_maskiner_utfaset.html', {
+			'request': request,
+			'maskiner': maskiner,
+		})
+
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 def alle_databaser(request):
 	"""
 	Søke og vise alle databaser
@@ -1865,11 +1943,11 @@ def alle_databaser(request):
 		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
 		if search_term == "__all__":
-			databaser = CMDBdatabase.objects
+			databaser = CMDBdatabase.objects.filter(db_operational_status=1)
 		elif len(search_term) < 2: # if one or less, return nothing
 			databaser = CMDBdatabase.objects.none()
 		else:
-			databaser = CMDBdatabase.objects.filter(
+			databaser = CMDBdatabase.objects.filter(db_operational_status=1).filter(
 					Q(db_database__icontains=search_term) |
 					Q(sub_name__navn__icontains=search_term) |
 					Q(db_version__icontains=search_term)

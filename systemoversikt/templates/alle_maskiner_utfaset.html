@@ -8,46 +8,14 @@
 
 {% block main_content %}
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_maskiner' %}">Tilbake</a>
-	<a class="btn btn-sm btn-warning" href="{% url 'servere_utfaset' %}">Utfasede servere</a>
-
-	<hr>
-
-	<p>Hurtigsøk:
-		<a class="btn btn-sm" href="?search_term=ws8">Tykke og tynne klienter (mange)</a>
-		<a class="btn btn-sm" href="?search_term=xai">Terminalservere intern sone</a>
-		<a class="btn btn-sm" href="?search_term=xas">Terminalservere sikkers sone</a>
-		<a class="btn btn-sm" href="?search_term=wsvis">VDI intern sone</a>
-		<a class="btn btn-sm" href="?search_term=wsvss">VDI sikker sone</a>
-		<a class="btn btn-sm" href="?search_term=mgmt">Managementservere</a>
-		<a class="btn btn-sm" href="?search_term=web">Webservere</a>
-		<a class="btn btn-sm" href="?search_term=app">Appservere</a>
-		<a class="btn btn-sm" href="?search_term=fil">Filservere</a>
-		<a class="btn btn-sm" href="?search_term=infra">Infra-servere</a>
-		<a class="btn btn-sm" href="?search_term=print">Print-servere</a>
-	</p>
-
-
-	<hr>
-
-	<form action="" autocomplete="off">
-		<div class="form-group form-inline">
-			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="hostnavn inneholder.." class="form-control form-control-sm">
-			<input size="30" style="width: 250px;" type="search" value="{{ comp_os }}" name="comp_os"
-			placeholder="Operativsystem er.." class="form-control form-control-sm">
-			<input size="30" style="width: 250px;" type="search" value="{{ comp_os_version }}" name="comp_os_version"
-			placeholder="Versjon er.." class="form-control form-control-sm">
-			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
-		</div>
-	</form>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Tilbake</a>
 
 	<p>Viser {{ maskiner.count }} maskiner.</p>
 
 	<table id="stickyheader" class="table table-sm tablesorter">
 	<thead>
 	<tr>
+		<th>Sist oppdatert</th>
 		<th>Maskinnavn</th>
 		<th>Business service</th>
 		<th>Portfolio</th>
@@ -64,6 +32,7 @@
 	{% for maskin in maskiner %}
 	<tr {% if not maskin.active %} style="color: #d6d6d6;" {% endif %}>
 		{% url 'ad_details' name=maskin.comp_name as url_ad %}
+		<td>{{ maskin.sist_oppdatert }}</td>
 		<td><a href="{{ url_ad }}">{{ maskin.comp_name }}</a></td>
 		<td>
 			{% for cmdbref in maskin.sub_name.all %}
