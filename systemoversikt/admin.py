@@ -609,6 +609,12 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 			}),
 	)
 
+@admin.register(ADgroup)
+class ADgroupAdmin(admin.ModelAdmin):
+	list_display = ('distinguishedname', 'member', 'membercount', 'memberof', 'memberofcount', 'description', 'sist_oppdatert')
+	search_fields = ('distinguishedname',)
+	list_filter = ('memberofcount', 'membercount',)
+
 
 class AutorisertBestillerAdmin(SimpleHistoryAdmin):
 	list_display = ('person', 'dato_fullmakt')

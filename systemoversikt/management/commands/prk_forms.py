@@ -13,6 +13,10 @@ import requests
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		#in case the need to reset all
+		#for v in PRKvalg.objects.all():
+		#	v.delete()
+
 		runetime_t0 = time.time()
 
 		url = os.environ["PRK_FORM_URL"]
@@ -68,8 +72,8 @@ class Command(BaseCommand):
 				gruppe = PRKgruppe.objects.create(feltnavn=feltnavn)
 
 
-			# alltid "DS-"? Har sett "GS-" i AD
-			helt_gruppenavn = "ou=DS-%s,%s" % (item["gruppenavn"],item["relpath"])
+			# PRK lager alltid et DS-prefiks. Det finnes GS-prefix i AD, men de skal vist ikke komme fra AD.
+			helt_gruppenavn = "CN=DS-%s,%s,%s" % (item["gruppenavn"],item["relpath"],"DC=oslofelles,DC=oslo,DC=kommune,DC=no")
 			if helt_gruppenavn in sjekk_alle_gruppenavn:
 				sjekk_alle_gruppenavn.remove(helt_gruppenavn)
 

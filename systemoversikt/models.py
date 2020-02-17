@@ -1079,6 +1079,47 @@ class CMDBdevice(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class ADgroup(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	distinguishedname = models.TextField(
+			verbose_name="Fully Distinguished Name",
+			blank=True, null=True,
+			)
+	member = models.TextField(
+			verbose_name="Medlemmer",
+			blank=True, null=True,
+			)
+	membercount = models.IntegerField(
+			verbose_name="Antall medlemmer",
+			blank=True, null=True,
+			)
+	memberof = models.TextField(
+			verbose_name="Er medlem av",
+			blank=True, null=True,
+			)
+	memberofcount = models.IntegerField(
+			verbose_name="Antall medlem av",
+			blank=True, null=True,
+			)
+	description = models.TextField(
+			verbose_name="Beskrivelse",
+			blank=True, null=True,
+			)
+	# med vilje er det ikke HistoricalRecords() på denne da den importeres
+
+	def __str__(self):
+		return u'%s' % (self.distinguishedname)
+
+	class Meta:
+		verbose_name_plural = "AD grupper"
+		default_permissions = ('add', 'change', 'delete', 'view')
 
 
 
@@ -1092,6 +1133,9 @@ AVTALETYPE_VALG = (
 	(7, 'Forvaltningsavtale'),
 	(8, 'Tjenesteavtale'),
 )
+
+
+
 
 class Avtale(models.Model):
 	opprettet = models.DateTimeField(
@@ -3185,13 +3229,13 @@ class PRKvalg(models.Model):
 			)
 	valgnavn = models.CharField(
 			verbose_name="Navn på valg",
-			max_length=200,
+			max_length=300,
 			blank=False, null=False,
 			help_text=u"Importert",
 			)
 	gruppenavn = models.CharField(unique=True,
 			verbose_name="Gruppenavn i AD",
-			max_length=300,
+			max_length=1000,
 			blank=False, null=False,
 			help_text=u"Importert",
 			)
@@ -3237,9 +3281,7 @@ class PRKvalg(models.Model):
 			return None
 
 	def gruppenavn_full(self):
-		mod_gruppenavn = "CN" + self.gruppenavn[2:]
-		full = mod_gruppenavn + ",DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-		return full
+		return self.gruppenavn
 
 	class Meta:
 		verbose_name_plural = "PRK-valg"
