@@ -53,13 +53,13 @@ On Windows
 * Download latest python from https://www.python.org/
 * Install - would recommend install for current user (C:/Users/<user>/AppData/Local/Programs/Python) and remeber to check the option to set environment variabels. If you forget, they can be added later. You need both root and the /Scrips/ folders.
 * open a command prompt window ("cmd")
-* run: python
+* run: ```python```
 * Make sure you get a python 3.x prompt. Exit with "quit()".
-* run: pip3 install virtualenv --> install virtual environment, for package separation
-* run: pip3 install virtualenvwrapper-win --> gives you a nice "workon" shortcut
-* run: cd %HOMEPATH% --> move to your home directory
-* run: virtualenv <name> --> e.g. kartoteket (check out https://medium.com/@jtpaasch/the-right-way-to-use-virtual-environments-1bc255a0cba7 for good practice regarding folder setup)
-* run: workon <name> --> you will see the prompt change to "(name).." (in most cases)
+* run: ```pip3 install virtualenv``` --> install virtual environment, for package separation
+* run: ```pip3 install virtualenvwrapper-win``` --> gives you a nice "workon" shortcut
+* run: ```cd %HOMEPATH%``` --> move to your home directory
+* run: ```virtualenv name``` --> e.g. kartoteket (check out https://medium.com/@jtpaasch/the-right-way-to-use-virtual-environments-1bc255a0cba7 for good practice regarding folder setup)
+* run: ```workon name``` --> you will see the prompt change to "(name).." (in most cases)
 * clone this repo (using git or git desktop) and move into the root of the "systemoversikt"-folder.
 * Make sure you rename secrets.example.py to secrets.py and set a value to "KARTOTEKET_SECRET_KEY". 
 * Also rename "this_env.example.py" to "this_env.py".
