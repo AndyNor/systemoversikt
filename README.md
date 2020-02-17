@@ -5,7 +5,7 @@ also known as "system- og behandlingsoversikt" or "Kartoteket".
 
 ## demo
 http://kartoteket.andynor.net/
-it it configured to autofetch changes one a day using the following procedures:
+it is configured to autofetch changes one a day using the following procedures:
 ```
 #!/bin/sh
 cd ~/webapps/kartoteket_test/myproject/systemoversikt/
