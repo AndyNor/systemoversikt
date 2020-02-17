@@ -1,19 +1,37 @@
-# systemoversikt
+# Kartoteket
 
-The code for Oslo kommune "system- og behandlingsoversikt" / "Kartoteket".
+Source code for Oslo kommune's register for information about systems
+also known as "system- og behandlingsoversikt" or "Kartoteket".
 
-## backend reqirements
+## demo
+http://kartoteket.andynor.net/
+it is configured to autofetch changes one a day using the following procedures:
+```
+#!/bin/sh
+cd ~/webapps/kartoteket_test/myproject/systemoversikt/
+git fetch
+git reset --hard origin/master
+python3.7 manage.py makemigrations
+python3.7 manage.py migrate
+python3.7 manage.py collectstatic --noinput
+~/webapps/kartoteket_test/apache2/bin/restart
+cd ~/webapps/kartoteket_test/myproject/systemoversikt/bash_scripts/
+chmod +x *
+```
+
+
+## Backend reqirements
 Python3, Django2 and different modules in requirements.txt
 
-Note the module python-ldap might be difficult to install on windows. Precompiled at https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-ldap.
+Note the module python-ldap might be difficult to install on windows. It will fail automatic install. Precompiled at https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-ldap.
 
-Login using OIDC (KeyCloak is configured and configured acording to Oslo kommunes AD-structure).
+Login in environment "dev" and "prod" is set up for OIDC asuming KeyCloak configured acording to Oslo kommunes AD-structure. The environment "test" is configured with django auth backend. Can be modified to suit needs.
 
-SMTP-server for sending e-mail.
+(optional) SMTP-server for sending e-mail.
 
-LDAP to active directory for user-import and queries.
+(optional) LDAP configuration to an active directory server for user-import and general queries.
 
-## frontend requirements
+## Frontend requirements (included)
 jQuery https://jquery.com/
 
 bootstrap https://getbootstrap.com/
@@ -30,28 +48,42 @@ open-iconic https://useiconic.com/open
 
 
 
-## getting started development
-manage.py must point to the correct systemoversikt/settings.py (_dev and _test if not production).
+## Getting started 101 - Test or development
+On Windows
+* Download latest python from https://www.python.org/
+* Install - would recommend install for current user (C:/Users/<user>/AppData/Local/Programs/Python) and remeber to check the option to set environment variabels. If you forget, they can be added later. You need both root and the /Scrips/ folders.
+* open a command prompt window ("cmd")
+* run: ```python```
+* Make sure you get a python 3.x prompt. Exit with "quit()".
+* run: ```pip3 install virtualenv``` --> install virtual environment, for package separation
+* run: ```pip3 install virtualenvwrapper-win``` --> gives you a nice "workon" shortcut
+* run: ```cd %HOMEPATH%``` --> move to your home directory
+* run: ```virtualenv name``` --> e.g. kartoteket (check out https://medium.com/@jtpaasch/the-right-way-to-use-virtual-environments-1bc255a0cba7 for good practice regarding folder setup)
+* run: ```workon name``` --> you will see the prompt change to "(name).." (in most cases)
+* clone this repo (using git or git desktop) and move into the root of the "systemoversikt"-folder.
+* Make sure you rename secrets.example.py to secrets.py and set a value to "KARTOTEKET_SECRET_KEY". 
+* Also rename "this_env.example.py" to "this_env.py".
+* run: ```pip3 install -r requirements.txt```
+* run: ```python manage.py makemigrations systemoversikt```
+* run: ```python manage.py migrate```
+* run: ```python manage.py createsuperuser``` --> enter username, no email and choose password
+* run: ```python manage.py runserver```
+* Open a browser and go to http://localhost:8000
+* Login at http://localhost:8000/admin/
+* Exit the virtual environment with ```deactivate``` (or close the terminal window)
 
-settings.py points to secrets.py (or _dev or _test) with passwords loaded as environment variable at runtime.
-
-In local development one can run with ```python manage.py runserver <0.0.0.0:8000>``` which will handle static files automatically.
+On Linux
+* Let's assume you know how to set up your environment if you're on a linux-variant.
 
 ## getting started production
-TODO
-In production, django is usually loaded as a module in httpd. Remember to configure static path and run ```python manage.py collectstatic```.
+In production, django is usually loaded as a module in httpd or webserver of choosing.
+Remember to configure static path and run ```python manage.py collectstatic```.
 
 
 ## nice to know
 The outer template folder is for customizing the django admin (part of the django installation). The inner is used troughout this webapplication.
 
-TODO: setting up python, virtualenv, 
-
-TODO: Setting up the database and a root-user
-python manage.py createsuperuser --username=root
-
-TODO: setting up scheduled tasks
-LDAP-user synchronization can be set up using a script
+LDAP-user synchronization can be set up using a script, and the script can be run regularly with e.g. cron
 
 ``` bash
 #!/bin/sh
