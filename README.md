@@ -10,9 +10,9 @@ Note the module python-ldap might be difficult to install on windows. It will fa
 
 Login in environment "dev" and "prod" is set up for OIDC asuming KeyCloak configured acording to Oslo kommunes AD-structure. The environment "test" is configured with django auth backend. Can be modified to suit needs.
 
-SMTP-server for sending e-mail.
+(optional) SMTP-server for sending e-mail.
 
-LDAP configuration to an active directory server for user-import and general queries.
+(optional) LDAP configuration to an active directory server for user-import and general queries.
 
 ## Frontend requirements (included)
 jQuery https://jquery.com/
