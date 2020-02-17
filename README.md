@@ -58,7 +58,7 @@ On Windows
 * run: pip3 install virtualenv --> install virtual environment, for package separation
 * run: pip3 install virtualenvwrapper-win --> gives you a nice "workon" shortcut
 * run: cd %HOMEPATH% --> move to your home directory
-* run: virtualenv <name> --> e.g. kartoteket
+* run: virtualenv <name> --> e.g. kartoteket (sidenote, check out https://medium.com/@jtpaasch/the-right-way-to-use-virtual-environments-1bc255a0cba7)
 * run: workon <name> --> you will see the prompt change to "(name).." (in most cases)
 * clone this repo (using git or git desktop) and move into the root of the "systemoversikt"-folder.
 * Make sure you rename secrets.example.py to secrets.py and set a value to "KARTOTEKET_SECRET_KEY". 
