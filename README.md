@@ -63,14 +63,14 @@ On Windows
 * clone this repo (using git or git desktop) and move into the root of the "systemoversikt"-folder.
 * Make sure you rename secrets.example.py to secrets.py and set a value to "KARTOTEKET_SECRET_KEY". 
 * Also rename "this_env.example.py" to "this_env.py".
-* run: pip3 install -r requirements.txt
-* run: python manage.py makemigrations systemoversikt
-* run: python manage.py migrate
-* run: python manage.py createsuperuser --> enter username, no email and choose password
-* run: python manage.py runserver
+* run: ```pip3 install -r requirements.txt```
+* run: ```python manage.py makemigrations systemoversikt```
+* run: ```python manage.py migrate```
+* run: ```python manage.py createsuperuser``` --> enter username, no email and choose password
+* run: ```python manage.py runserver```
 * Open a browser and go to http://localhost:8000
 * Login at http://localhost:8000/admin/
-* Exit the virtual environment with "deactivate" (or close the terminal window)
+* Exit the virtual environment with ```deactivate``` (or close the terminal window)
 
 On Linux
 * I assume you know how to set up your environment if you're on a linux-variant. 
