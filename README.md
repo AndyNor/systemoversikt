@@ -73,7 +73,7 @@ On Windows
 * Exit the virtual environment with ```deactivate``` (or close the terminal window)
 
 On Linux
-* I assume you know how to set up your environment if you're on a linux-variant. 
+* Let's assume you know how to set up your environment if you're on a linux-variant.
 
 ## getting started production
 In production, django is usually loaded as a module in httpd or webserver of choosing.
