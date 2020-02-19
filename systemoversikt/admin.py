@@ -315,7 +315,7 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 @admin.register(PRKvalg)
 class PRKvalgAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('skjemanavn', 'gruppering', 'valgnavn', 'gruppenavn', 'beskrivelse', 'sist_oppdatert')
+	list_display = ('skjemanavn', 'gruppering', 'valgnavn', 'in_active_directory', 'gruppenavn', 'beskrivelse', 'sist_oppdatert')
 	search_fields = ('skjemanavn', 'gruppenavn',)
 	list_filter = ('sist_oppdatert', 'in_active_directory')
 
@@ -710,9 +710,9 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 
 @admin.register(ADgroup)
 class ADgroupAdmin(admin.ModelAdmin):
-	list_display = ('distinguishedname', 'membercount', 'memberofcount', 'description', 'sist_oppdatert')
+	list_display = ('distinguishedname', 'from_prk', 'membercount', 'memberofcount', 'description', 'sist_oppdatert')
 	search_fields = ('distinguishedname',)
-	list_filter = ('membercount', 'memberofcount',)
+	list_filter = ('from_prk', 'membercount', 'memberofcount',)
 
 
 @admin.register(AutorisertBestiller)
