@@ -200,7 +200,7 @@ class Command(BaseCommand):
 
 
 		### runtime ###
-		basedn ='OU=UKE,OU=Distribusjonsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no'
+		basedn ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 		pagesize = 1000
 		attrlist = ['cn', 'description', 'memberOf', 'member']
 		searchfiler = '(objectclass=group)'
