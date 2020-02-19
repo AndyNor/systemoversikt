@@ -1,25 +1,75 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
 from django.contrib import admin
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db import models
 from django.contrib import messages
 from django.shortcuts import redirect
-from .models import *
 from simple_history.admin import SimpleHistoryAdmin
 from django.db.models.functions import Lower
+from django.utils.html import escape
+from django.urls import reverse, NoReverseMatch
+import csv
+from django.http import HttpResponse
+from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
+from django.contrib.auth.models import User
+from .models import *
 
+
+# https://gist.github.com/jeremyjbowers/e8d007446155c12033e6
+def export_as_csv_action(description="Export selected objects as CSV file", fields=None, exclude=None, header=True):
+	"""
+	This function returns an export csv action
+	'fields' and 'exclude' work like in django ModelForm
+	'header' is whether or not to output the column names as the first row
+	"""
+	def export_as_csv(modeladmin, request, queryset):
+		"""
+		Generic csv export admin action.
+		based on http://djangosnippets.org/snippets/1697/
+		"""
+		opts = modeladmin.model._meta
+		field_names = set([field.name for field in opts.fields])
+
+		if fields:
+			fieldset = set(fields)
+			field_names = field_names & fieldset
+
+		elif exclude:
+			excludeset = set(exclude)
+			field_names = field_names - excludeset
+
+		response = HttpResponse(content_type='text/csv')
+		response['Content-Disposition'] = 'attachment; filename=%s.csv' % str(opts).replace('.', '_')
+
+		writer = csv.writer(response)
+
+		if header:
+			writer.writerow(list(field_names))
+		for obj in queryset:
+			writer.writerow([str(getattr(obj, field)).encode("utf-8","replace") for field in field_names])
+
+		return response
+
+	export_as_csv.short_description = description
+	return export_as_csv
+
+
+@admin.register(Sikkerhetstester)
 class SikkerhetstesterAdmin(SimpleHistoryAdmin):
-	list_display = ('testet_av', 'dato_rapport', 'type_test', 'rapport',)
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('testet_av', 'dato_rapport', 'type_test', 'rapport', 'notater')
 	autocomplete_fields = ('systemer', 'testet_av')
+	list_filter = ('dato_rapport',)
 
 
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
-	list_display = ('systemnavn', 'systembeskrivelse')
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('ibruk', 'systemnavn', 'systemeierskapsmodell', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
 	search_fields = ('systemnavn', 'systembeskrivelse')
-	list_filter = ('sikkerhetsnivaa', 'systemtyper', 'livslop_status')
+	list_filter = ('ibruk', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
+
 	filter_horizontal = ('systemkategorier',)
 	autocomplete_fields = (
 		'systemeier',
@@ -42,7 +92,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'autentiseringsalternativer',
 		'informasjonsklassifisering',
 	)
-
 	fieldsets = (
 		('Initiell registrering', {
 			'description': 'Dette er felter ansett som obligatoriske, og kreves utfylt for å kunne krysse av for at informasjonen er kvalitetssikret..',
@@ -142,9 +191,11 @@ class SystemAdmin(SimpleHistoryAdmin):
 
 @admin.register(Virksomhet)
 class VirksomhetAdmin(SimpleHistoryAdmin):
-	list_display = ('virksomhetsforkortelse', 'virksomhetsnavn', 'ansatte')
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('virksomhetsforkortelse', 'virksomhetsnavn', 'resultatenhet', 'kan_representeres', 'ordinar_virksomhet', 'orgnummer')
 	search_fields = ('virksomhetsnavn', 'virksomhetsforkortelse')
-	list_filter = ('resultatenhet',)
+	list_filter = ('resultatenhet', 'ordinar_virksomhet')
+
 	filter_horizontal = ('overordnede_virksomheter',)
 
 	def get_ordering(self, request):
@@ -160,9 +211,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 		'autoriserte_bestillere_tjenester',
 		'autoriserte_bestillere_tjenester_uke',
 	)
-
 	fieldsets = (
-
 			('Initiell registrering', {
 				'fields': (
 					'virksomhetsnavn',
@@ -211,12 +260,14 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 			})
 		)
 
+
+@admin.register(SystemBruk)
 class SystemBrukAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('system', 'brukergruppe', 'kommentar', 'avtaletype', 'systemeierskap', 'kostnadersystem')
 	search_fields = ('system__systemnavn', 'system__systembeskrivelse', 'kommentar', 'systemforvalter')
 	list_filter = ('avtalestatus', 'avtale_kan_avropes', 'systemeierskapsmodell', 'brukergruppe')
 	autocomplete_fields = ('brukergruppe', 'system', 'systemforvalter', 'systemforvalter_kontaktpersoner_referanse', 'avhengigheter_referanser')
-
 	fieldsets = (
 		('Initiell registrering', {
 			'fields': (
@@ -260,26 +311,45 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 		})
 	)
 
-admin.site.register(PRKvalg)
-admin.site.register(PRKgruppe)
-admin.site.register(PRKskjema)
+
+@admin.register(PRKvalg)
+class PRKvalgAdmin(admin.ModelAdmin):
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('skjemanavn', 'gruppering', 'valgnavn', 'gruppenavn', 'beskrivelse', 'sist_oppdatert')
+	search_fields = ('skjemanavn', 'gruppenavn',)
+	list_filter = ('sist_oppdatert', 'in_active_directory')
 
 
+@admin.register(PRKgruppe)
+class PRKgruppeAdmin(admin.ModelAdmin):
+	list_display = ('feltnavn', 'sist_oppdatert', 'opprettet')
+	search_fields = ('feltnavn',)
+	list_filter = ('sist_oppdatert', 'opprettet')
+
+
+@admin.register(PRKskjema)
+class PRKskjemaAdmin(admin.ModelAdmin):
+	list_display = ('skjemanavn', 'skjematype', 'sist_oppdatert', 'opprettet')
+	search_fields = ('skjemanavn',)
+	list_filter = ('sist_oppdatert', 'opprettet')
+
+
+@admin.register(Leverandor)
 class LeverandorAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('leverandor_navn', 'kontaktpersoner', 'orgnummer')
 	search_fields = ('leverandor_navn', 'orgnummer', 'notater')
 
 
-
+@admin.register(BehandlingerPersonopplysninger)
 class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('behandlingsansvarlig', 'internt_ansvarlig', 'funksjonsomraade', 'behandlingen')
 	search_fields = ('behandlingen', 'internt_ansvarlig', 'funksjonsomraade',)
 	list_filter = ('behandlingsgrunnlag_valg', 'den_registrerte', 'kategorier_personopplysninger', 'behandlingsansvarlig')
 	filter_horizontal = ('relasjon_registrerte', 'den_registrerte_hovedkateogi', 'virksomhet_blacklist', 'programvarer', 'systemer', 'navn_databehandler', 'kategorier_personopplysninger', 'den_registrerte', 'behandlingsgrunnlag_valg')
 	autocomplete_fields = ('behandlingsansvarlig', 'oppdateringsansvarlig')
-
 	fieldsets = (
-
 		('Metadata', {
 			'classes': ('',),
 			'fields': (
@@ -388,47 +458,62 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 				return False
 
 
-
+@admin.register(Behandlingsgrunnlag)
 class BehandlingsgrunnlagAdmin(SimpleHistoryAdmin):
 	list_display = ('grunnlag', 'lovparagraf', 'lov')
 
+
+@admin.register(Personsonopplysningskategori)
 class PersonsonopplysningskategoriAdmin(SimpleHistoryAdmin):
 	list_display = ('navn', 'artikkel', 'hovedkategori', 'eksempler')
 
+
+@admin.register(Registrerte)
 class RegistrerteAdmin(SimpleHistoryAdmin):
 	list_display = ('kategorinavn', 'definisjon')
 
+
+@admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
 	list_display = ('user', 'virksomhet')
 	search_fields = ('user__username',)
 	autocomplete_fields = ('user',)
 
+
+@admin.register(SystemUrl)
 class SystemUrlAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('domene', 'eier', 'opprettet', 'https', 'vurdering_sikkerhetstest', 'maalgruppe', 'registrar')
 	search_fields = ('domene',)
-	list_display = ('domene', 'maalgruppe', 'registrar')
-	list_filter = ('https', 'maalgruppe')
+	list_filter = ('https', 'maalgruppe', 'opprettet', 'eier')
 	autocomplete_fields = ('registrar', 'eier')
 
+
+@admin.register(SystemKategori)
 class SystemKategoriAdmin(SimpleHistoryAdmin):
 	list_display = ('kategorinavn', 'definisjon')
 	search_fields = ('kategorinavn', 'definisjon')
 	list_filter = ('systemhovedkategori_systemkategorier',)
 
+
+@admin.register(Systemtype)
 class SystemtypeAdmin(SimpleHistoryAdmin):
 	search_fields = ('kategorinavn',)
 	list_display = ('kategorinavn', 'definisjon')
 
+
+@admin.register(SystemHovedKategori)
 class SystemHovedKategoriAdmin(SimpleHistoryAdmin):
 	list_display = ('hovedkategorinavn', 'definisjon')
 	search_fields = ('hovedkategorinavn', 'definisjon', 'subkategorier')
 
+
+@admin.register(Ansvarlig)
 class AnsvarligAdmin(SimpleHistoryAdmin):
 	list_display = ('brukernavn', 'kommentar')
 	search_fields = ('brukernavn__username', 'brukernavn__first_name', 'brukernavn__last_name')
 	autocomplete_fields = ('brukernavn',)
-
 	fieldsets = (
-
 		('Initiell registrering', {
 			'fields': (
 				'brukernavn',
@@ -446,11 +531,17 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 		),
 	)
 
+
+@admin.register(Programvare)
 class ProgramvareAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('programvarenavn', 'programvarebeskrivelse', 'kommentar')
 	search_fields = ('programvarenavn', 'programvarebeskrivelse', 'kommentar')
 	filter_horizontal = ('programvareleverandor', 'kategorier')
 
+
+admin.site.unregister(User)  # den er som standard registrert
+@admin.register(User)
 class UserAdmin(admin.ModelAdmin):
 	list_display = ('username', 'first_name', 'last_name', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
 	search_fields = ('username', 'first_name', 'last_name')
@@ -487,31 +578,36 @@ class UserAdmin(admin.ModelAdmin):
 	evigvarende_passord.boolean = True
 
 
+@admin.register(ProgramvareBruk)
 class ProgramvareBrukAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('brukergruppe', 'programvare', 'kommentar')
 	search_fields = ('programvare', 'kommentar')
 	autocomplete_fields = ('brukergruppe', 'programvare')
 	filter_horizontal = ('programvareleverandor',)
 
-"""
-class TjenesteAdmin(SimpleHistoryAdmin):
-	list_display = ('tjenestenavn', 'beskrivelse')
-	search_fields = ('tjenestenavn', 'beskrivelse')
-	filter_horizontal = ('systemer', 'tjenesteleder', 'tjenesteforvalter')
-"""
 
+@admin.register(CMDBRef)
 class CMDBRefAdmin(admin.ModelAdmin):
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('navn', 'environment', 'kritikalitet', 'operational_status', 'service_classification', 'opprettet')
 	search_fields = ('navn',)
-	list_display = ('navn', 'kritikalitet', 'cmdb_type')
+	list_filter = ('environment', 'kritikalitet', 'operational_status', 'service_classification', 'opprettet')
 
 
+
+@admin.register(Avtale)
 class AvtaleAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('kortnavn', 'avtaletype', 'virksomhet', 'leverandor', 'leverandor_intern', 'avtalereferanse', 'dokumenturl')
 	search_fields = ('kortnavn', 'beskrivelse', 'avtalereferanse')
 	autocomplete_fields = ('virksomhet', 'leverandor', 'intern_avtalereferanse', 'leverandor_intern')
 	filter_horizontal = ('avtaleansvarlig', 'for_system',)
 
+
+@admin.register(DPIA)
 class DPIAAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('for_system', 'sist_gjennomforing_dpia', 'url_dpia', 'kommentar',)
 	search_fields = ('for_system',)
 
@@ -569,8 +665,10 @@ class DPIAAdmin(SimpleHistoryAdmin):
 		}),
 	)
 
+
 @admin.register(Driftsmodell)
 class DriftsmodellAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('navn', 'sikkerhetsnivaa', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform')
 	search_fields = ('navn',)
 	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler', 'anbefalte_kategorier_personopplysninger', 'overordnet_plattform')
@@ -609,90 +707,89 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 			}),
 	)
 
+
 @admin.register(ADgroup)
 class ADgroupAdmin(admin.ModelAdmin):
-	list_display = ('distinguishedname', 'member', 'membercount', 'memberof', 'memberofcount', 'description', 'sist_oppdatert')
+	list_display = ('distinguishedname', 'membercount', 'memberofcount', 'description', 'sist_oppdatert')
 	search_fields = ('distinguishedname',)
-	list_filter = ('memberofcount', 'membercount',)
+	list_filter = ('membercount', 'memberofcount',)
 
 
+@admin.register(AutorisertBestiller)
 class AutorisertBestillerAdmin(SimpleHistoryAdmin):
 	list_display = ('person', 'dato_fullmakt')
 	autocomplete_fields = ('person',)
 	search_fields = ('person',)
 
+
+@admin.register(CMDBdevice)
 class CMDBdeviceAdmin(admin.ModelAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	search_fields = ('comp_name',)
 
+
+@admin.register(Loggkategori)
 class LoggkategoriAdmin(admin.ModelAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	search_fields = ('navn', 'definisjon')
 
+
+@admin.register(Autentiseringsmetode)
 class AutentiseringsmetodeAdmin(admin.ModelAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	search_fields = ('navn', 'definisjon')
 
+
+@admin.register(InformasjonsKlasse)
 class InformasjonsKlasseAdmin(admin.ModelAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	search_fields = ('navn', 'beskrivelse')
 
 
+@admin.register(Definisjon)
 class DefinisjonAdmin(SimpleHistoryAdmin):
 	list_display = ('begrep', 'status', 'ansvarlig',)
+	actions = [export_as_csv_action("CSV Export")]
 	autocomplete_fields = ('ansvarlig',)
 
 
+@admin.register(BehovForDPIA)
 class BehovForDPIAAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
 	from django.forms.widgets import NullBooleanSelect
 	formfield_overrides = {
 		models.NullBooleanField: {'widget': NullBooleanSelect},
 	}
 
-# Register your models here.
-admin.site.register(Leverandor, LeverandorAdmin)
-admin.site.register(SystemBruk, SystemBrukAdmin)
-admin.site.register(BehandlingerPersonopplysninger, BehandlingerPersonopplysningerAdmin)
-admin.site.register(SystemKategori, SystemKategoriAdmin)
-admin.site.register(SystemUrl, SystemUrlAdmin)
-admin.site.register(Personsonopplysningskategori, PersonsonopplysningskategoriAdmin)
-admin.site.register(Registrerte, RegistrerteAdmin)
-admin.site.register(Behandlingsgrunnlag, BehandlingsgrunnlagAdmin)
-admin.site.register(Profile, ProfileAdmin)
-admin.site.register(Systemtype, SystemtypeAdmin)
-admin.site.register(SystemHovedKategori, SystemHovedKategoriAdmin)
-admin.site.register(Ansvarlig, AnsvarligAdmin)
-admin.site.register(Programvare, ProgramvareAdmin)
-admin.site.register(ProgramvareBruk, ProgramvareBrukAdmin)
-#admin.site.register(Tjeneste, TjenesteAdmin)
-admin.site.register(CMDBRef, CMDBRefAdmin)
-admin.site.register(Avtale, AvtaleAdmin)
-admin.site.register(DPIA, DPIAAdmin)
-admin.site.register(AutorisertBestiller, AutorisertBestillerAdmin)
-admin.site.register(Autentiseringsmetode,AutentiseringsmetodeAdmin)
+
 admin.site.register(Region)
+
+
 admin.site.register(RegistrertKlassifisering)
-admin.site.register(Definisjon, DefinisjonAdmin)
+
+
 admin.site.register(RelasjonRegistrert)
-admin.site.register(CMDBdevice, CMDBdeviceAdmin)
-admin.site.register(InformasjonsKlasse, InformasjonsKlasseAdmin)
-admin.site.register(Loggkategori,LoggkategoriAdmin)
-admin.site.register(ApplicationLog)
-admin.site.register(Sikkerhetstester, SikkerhetstesterAdmin)
+
+
+@admin.register(ApplicationLog)
+class ApplicationLogAdmin(admin.ModelAdmin):
+	list_display = ('event_type', 'message', 'opprettet')
+	search_fields = ('event_type', 'message')
+	list_filter = ('opprettet',)
+
+
 admin.site.register(DefinisjonKontekster)
-admin.site.register(CMDBdatabase)
-admin.site.register(BehovForDPIA, BehovForDPIAAdmin)
-
-admin.site.unregister(User)
-admin.site.register(User, UserAdmin)
 
 
-'''
-Mulighet til å se alle logger i django adminpanelet
-https://djangosnippets.org/snippets/3009/
-'''
-from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
-from django.utils.html import escape
-#from django.core.urlresolvers import reverse, NoReverseMatch #  Har endret lokasjon
-from django.urls import reverse, NoReverseMatch
-from django.contrib.auth.models import User
+@admin.register(CMDBdatabase)
+class CMDBdatabaseAdmin(admin.ModelAdmin):
+	list_display = ('db_database', 'db_version', 'db_used_for', 'db_operational_status')
+	search_fields = ('db_database',)
+	list_filter = ('opprettet', 'db_operational_status', 'db_version')
 
+
+''' Visning av  logger i django adminpanelet
+https://djangosnippets.org/snippets/3009/ '''
 action_names = {
 	ADDITION: 'Ny',
 	CHANGE:   'Endret',
@@ -722,11 +819,13 @@ class UserFilter(FilterBase):
 				LogEntry.objects.values_list('user_id').distinct())
 		)
 
+
 class AdminFilter(UserFilter):
 	"""Use this filter to only show current Superusers."""
 	title = 'admin'
 	def lookups(self, request, model_admin):
 		return tuple((u.id, u.username) for u in User.objects.filter(is_superuser=True))
+
 
 class StaffFilter(UserFilter):
 	"""Use this filter to only show current Staff members."""
@@ -735,11 +834,9 @@ class StaffFilter(UserFilter):
 		return tuple((u.id, u.username) for u in User.objects.filter(is_staff=True))
 
 
+@admin.register(LogEntry)
 class LogEntryAdmin(admin.ModelAdmin):
-
 	date_hierarchy = 'action_time'
-
-
 	#readonly_fields = LogEntry._meta.get_all_field_names() virker ikke
 	readonly_fields = [f.name for f in LogEntry._meta.get_fields()]
 
@@ -795,6 +892,3 @@ class LogEntryAdmin(admin.ModelAdmin):
 	def action_description(self, obj):
 		return action_names[obj.action_flag]
 	action_description.short_description = 'Action'
-
-
-admin.site.register(LogEntry, LogEntryAdmin)
