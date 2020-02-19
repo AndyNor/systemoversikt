@@ -316,7 +316,7 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 class PRKvalgAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('skjemanavn', 'gruppering', 'valgnavn', 'in_active_directory', 'gruppenavn', 'beskrivelse', 'sist_oppdatert')
-	search_fields = ('skjemanavn', 'gruppenavn',)
+	search_fields = ('skjemanavn__skjemanavn', 'gruppenavn',)
 	list_filter = ('sist_oppdatert', 'in_active_directory')
 
 
