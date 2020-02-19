@@ -219,7 +219,7 @@ class AutorisertBestiller(models.Model):
 		return u'%s' % (self.person)
 
 	class Meta:
-		verbose_name_plural = "Antoriserte bestillere"
+		verbose_name_plural = "Ansvarlige Antoriserte bestillere"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -514,7 +514,7 @@ class InformasjonsKlasse(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Informasjonsklasser"
+		verbose_name_plural = "System Informasjonsklasser"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['navn']
 
@@ -659,7 +659,7 @@ class SystemUrl(models.Model):
 			return False
 
 	class Meta:
-		verbose_name_plural = "System-URL-er"
+		verbose_name_plural = "URLer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -698,7 +698,7 @@ class Personsonopplysningskategori(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Behandling: Personopplysningskategorier"
+		verbose_name_plural = "Behandling Personopplysningskategorier"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -725,7 +725,7 @@ class Registrerte(models.Model):
 		return u'%s' % (self.kategorinavn)
 
 	class Meta:
-		verbose_name_plural = "Behandling: Kategorier registrerte"
+		verbose_name_plural = "Behandling Kategorier registrerte"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -830,6 +830,8 @@ class CMDBRef(models.Model):
 			blank=True, null=True,
 			help_text=u"Importert: Kritikalitet",
 			)
+
+	# brukes denne til noe?
 	cmdb_type = models.IntegerField(choices=CMDB_TYPE_VALG,
 			verbose_name="CMDB-type",
 			blank=True, null=True,
@@ -1112,6 +1114,11 @@ class ADgroup(models.Model):
 			verbose_name="Beskrivelse",
 			blank=True, null=True,
 			)
+	from_prk = models.BooleanField(
+			verbose_name="Finnes i PRK?",
+			default=False,
+			help_text=u"Slås opp mot 'PRKvalg' automatisk",
+			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
 	def __str__(self):
@@ -1369,7 +1376,7 @@ class Region(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Regioner"
+		verbose_name_plural = "Behandling Regioner"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -1581,7 +1588,7 @@ class Driftsmodell(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Driftsmodeller"
+		verbose_name_plural = "System Driftsmodeller"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -1603,7 +1610,7 @@ class Autentiseringsmetode(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Autentiseringsmetoder"
+		verbose_name_plural = "System Autentiseringsmetoder"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -1676,7 +1683,7 @@ class Oppdatering(models.Model):
 		return u'Oppdatering %s' % (self.pk)
 
 	class Meta:
-		verbose_name_plural = "Systemer"
+		verbose_name_plural = "Oppdateringer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -2209,7 +2216,7 @@ class Sikkerhetstester(models.Model):
 		return u'%s: %s' % (self.testet_av, self.dato_rapport)
 
 	class Meta:
-		verbose_name_plural = "Sikkerhetstester"
+		verbose_name_plural = "URL Sikkerhetstester"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -2369,7 +2376,7 @@ class DPIA(models.Model):
 		return u'DPIA for %s' % (self.for_system)
 
 	class Meta:
-		verbose_name_plural = "DPIA"
+		verbose_name_plural = "Behandling DPIAer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -2666,7 +2673,7 @@ class RegistrertKlassifisering(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Klassifisering av registrerte"
+		verbose_name_plural = "Behandling Klassifisering av registrerte"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -2684,7 +2691,7 @@ class RelasjonRegistrert(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Relasjoner til den registrerte"
+		verbose_name_plural = "Behandling Relasjoner til den registrerte"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3211,7 +3218,7 @@ class BehovForDPIA(models.Model):
 
 
 	class Meta:
-		verbose_name_plural = "DPIA-behovsvurderinger"
+		verbose_name_plural = "DPIA behovsvurderinger"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3228,7 +3235,7 @@ class PRKvalg(models.Model):
 			auto_now=True,
 			)
 	valgnavn = models.CharField(
-			verbose_name="Navn på valg",
+			verbose_name="Valg",
 			max_length=300,
 			blank=False, null=False,
 			help_text=u"Importert",
@@ -3246,14 +3253,24 @@ class PRKvalg(models.Model):
 			help_text=u"Importert",
 			)
 	gruppering = models.ForeignKey("PRKgruppe", related_name='PRKvalg_gruppering',
-			verbose_name="PRK-gruppering",
+			verbose_name="Gruppering",
 			on_delete=models.PROTECT,
 			help_text=u"Importert",
 			)
 	skjemanavn = models.ForeignKey("PRKskjema", related_name='PRKvalg_skjemanavn',
-			verbose_name="PRK-gruppering",
+			verbose_name="Skjemanavn",
 			on_delete=models.PROTECT,
 			help_text=u"Importert",
+			)
+	ad_group_ref = models.ManyToManyField("ADgroup", related_name='PRKvalg_ad_group_ref',
+			verbose_name="Kobling PRK-valg mot AD gruppe",
+			blank=True,
+			help_text=u'Settes automatisk',
+			)
+	in_active_directory = models.BooleanField(
+			verbose_name="Finnes i AD?",
+			default=True, # per definisjon
+			help_text=u"Settes automatisk",
 			)
 	#ikke behof for historikk
 
@@ -3284,7 +3301,7 @@ class PRKvalg(models.Model):
 		return self.gruppenavn
 
 	class Meta:
-		verbose_name_plural = "PRK-valg"
+		verbose_name_plural = "PRK valg"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3307,10 +3324,10 @@ class PRKgruppe(models.Model):
 	#ikke behof for historikk
 
 	def __str__(self):
-		return u'PRK-gruppe %s' % (self.feltnavn)
+		return u'%s' % (self.feltnavn)
 
 	class Meta:
-		verbose_name_plural = "PRK-grupper"
+		verbose_name_plural = "PRK grupper"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3341,7 +3358,7 @@ class PRKskjema(models.Model):
 	unique_together = ('skjemanavn', 'skjematype')
 
 	def __str__(self):
-		return u'PRK-skjema %s (%s)' % (self.skjemanavn, self.skjematype)
+		return u'%s (%s)' % (self.skjemanavn, self.skjematype)
 
 	def er_lokalt(self):
 		if self.skjematype == "LOKAL":
@@ -3351,7 +3368,7 @@ class PRKskjema(models.Model):
 		return None
 
 	class Meta:
-		verbose_name_plural = "PRK-skjemaer"
+		verbose_name_plural = "PRK skjemaer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 """
