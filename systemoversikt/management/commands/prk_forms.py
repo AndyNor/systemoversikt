@@ -103,9 +103,14 @@ class Command(BaseCommand):
 						skjemanavn=skjema,
 					)
 
+		print("Rydder opp..")
 		#sjekke om det er eksisterende valg som må fjernes (skjema, grupper og valg)
 		for valg in sjekk_alle_gruppenavn:
 			valg = PRKvalg.objects.get(gruppenavn=valg)
+			related_ad_groups = valg.ad_group_ref.all() # many to many
+			for g in related_ad_groups:
+				g.from_prk = False  # hvis vi oppdager at valget er borte, merker vi AD-gruppen som "ikke fra AD"
+				g.save()
 			valg.delete()
 			ant_slettet += 1
 		for skjema in PRKskjema.objects.filter(PRKvalg_skjemanavn__isnull=True): # ingen flere referanser tilbake
