@@ -517,9 +517,18 @@ class SystemHovedKategoriAdmin(SimpleHistoryAdmin):
 
 @admin.register(Ansvarlig)
 class AnsvarligAdmin(SimpleHistoryAdmin):
-	list_display = ('brukernavn', 'kommentar')
+	list_display = ('brukernavn', 'brukers_brukernavn', 'kommentar')
 	search_fields = ('brukernavn__username', 'brukernavn__first_name', 'brukernavn__last_name')
 	autocomplete_fields = ('brukernavn',)
+
+	def brukers_brukernavn(self, obj):
+		return obj.brukernavn.username
+	brukers_brukernavn.short_description = "Brukernavn"
+
+	def brukers_navn(self, obj):
+		return obj.brukernavn
+	brukers_brukernavn.short_description = "Brukernavn"
+
 	fieldsets = (
 		('Initiell registrering', {
 			'fields': (
