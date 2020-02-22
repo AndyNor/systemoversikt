@@ -14,6 +14,7 @@
 	<div class="card card-body">
 		<h5>{{ user.attrs.displayName.0 }} ({{ user.attrs.cn.0 }})</h5>
 		<p>Canonical Name: <br>{{ user.cn }}</p>
+		<p>sAMAccountName:<br>{{ user.sAMAccountName}}</p>
 		<p>ObjectClass: <br>{% for item in user.attrs.objectClass %} {{ item }} | {% endfor %}</p>
 		<p>Brukernavn: {% for item in user.attrs.cn %} <br>{{ item }} {% endfor %}</p>
 		<p>Fornavn: {% for item in user.attrs.givenName %} <br>{{ item }} {% endfor %}</p>

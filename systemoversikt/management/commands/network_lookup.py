@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+"""
+Hensikten med denne koden er å gjennomgå alle servere med IP, slå opp VLAN, DNS-info, medlemskap i BigIP pools.
+"""
+
+
 from django.core.management.base import BaseCommand
 from django.conf import settings
 import os

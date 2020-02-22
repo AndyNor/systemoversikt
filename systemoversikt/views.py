@@ -2290,7 +2290,7 @@ def ldap_get_details(name, ldap_filter):
 			if b'user' in attrs["objectClass"]:
 				attrs_decoded = {}
 				for key in attrs:
-					if key in ['cn', 'mail', 'givenName', 'displayName', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass']:
+					if key in ['cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass']:
 						# if not, then we don't bother decoding the value for now
 						attrs_decoded[key] = []
 						if key == "lastLogonTimestamp":

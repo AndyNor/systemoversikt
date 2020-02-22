@@ -3331,6 +3331,37 @@ class PRKgruppe(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class PRKuser(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	username = models.CharField(
+			verbose_name="Brukernavn",
+			max_length=20,
+			unique=True,
+			help_text=u"Importert",
+			)
+	usertype = models.CharField(
+			verbose_name="Brukernavn",
+			max_length=20,
+			null=False, blank=False,
+			help_text=u"Importert",
+			)
+	#ikke behof for historikk
+	def __str__(self):
+		return u'%s (%s)' % (self.username, self.usertype)
+
+	class Meta:
+		verbose_name_plural = "PRK brukere"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
 class PRKskjema(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",

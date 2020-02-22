@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+
+"""
+Hensikten med denne koden er å laste inn alle orginære brukre koblet til en av kommunens vikrsomheter, slik at man i kartoteket kan tildele ansvar til en faktisk brukeridentitet. Her laster vi ikke inn manuelt opprettede brukere som ikke kommer fra PRK.
+Denne importen vil ikke kunne svare på forskjeller mellom AD og PRK. Det er andre jobber som identifiserer slike avvik.
+"""
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 import sys

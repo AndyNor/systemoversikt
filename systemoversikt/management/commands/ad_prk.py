@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+Hensikten med denne koden er å tagge alle AD-grupper med informasjon om de stammer fra PRK eller ikke.
+"""
+
 from django.core.management.base import BaseCommand
 from django.conf import settings
 import os

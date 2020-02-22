@@ -41,8 +41,8 @@
 		<h3>Bruker</h3>
 		<h5>{{ user.attrs.displayName.0 }} ({{ user.attrs.cn.0 }})</h5>
 		<p>Canonical Name: <br>{{ user.cn }}</p>
+		<p>Brukernavn / sAMAccountName:<br>{% for item in user.attrs.sAMAccountName %} {{ item }} {% endfor %}</p>
 		<p>ObjectClass: <br>{% for item in user.attrs.objectClass %} {{ item }} | {% endfor %}</p>
-		<p>Brukernavn: {% for item in user.attrs.cn %} <br>{{ item }} {% endfor %}</p>
 		<p>Fornavn: {% for item in user.attrs.givenName %} <br>{{ item }} {% endfor %}</p>
 		<p>Etternavn: {% for item in user.attrs.sn %} <br>{{ item }} {% endfor %}</p>
 		<p>Visningsnavn: {% for item in user.attrs.displayName %} <br>{{ item }} {% endfor %}</p>
