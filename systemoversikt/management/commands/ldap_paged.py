@@ -7,7 +7,9 @@ Denne importen vil ikke kunne svare på forskjeller mellom AD og PRK. Det er and
 
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 import sys
+import re
 
 logg_antall_nye_brukere = 0
 logg_antall_identer_funnet = 0
@@ -39,15 +41,34 @@ class Command(BaseCommand):
 		# Don't follow referrals
 		ldap.set_option(ldap.OPT_REFERRALS, 0)
 
+
+		# TODO finnes flere steder
 		def decode_useraccountcontrol(code):
 			#https://support.microsoft.com/nb-no/help/305144/how-to-use-useraccountcontrol-to-manipulate-user-account-properties
 			active_codes = []
 			status_codes = {
+					"SCRIPT": 0,
 					"ACCOUNTDISABLE": 1,
-					"LOCKOUT": 3,
+					"HOMEDIR_REQUIRED": 2,
+					"LOCKOUT": 4,
 					"PASSWD_NOTREQD": 5,
+					"PASSWD_CANT_CHANGE": 6,
+					"ENCRYPTED_TEXT_PWD_ALLOWED": 7,
+					"TEMP_DUPLICATE_ACCOUNT": 8,
+					"NORMAL_ACCOUNT": 9,
+					"INTERDOMAIN_TRUST_ACCOUNT": 11,
+					"WORKSTATION_TRUST_ACCOUNT": 12,
+					"SERVER_TRUST_ACCOUNT": 13,
 					"DONT_EXPIRE_PASSWORD": 16,
 					"PASSWORD_EXPIRED": 23,
+					"MNS_LOGON_ACCOUNT": 17,
+					"SMARTCARD_REQUIRED": 18,
+					"TRUSTED_FOR_DELEGATION": 19,
+					"NOT_DELEGATED": 20,
+					"USE_DES_KEY_ONLY": 21,
+					"DONT_REQ_PREAUTH": 22,
+					"TRUSTED_TO_AUTH_FOR_DELEGATION": 24,
+					"PARTIAL_SECRETS_ACCOUNT": 26,
 				}
 			for key in status_codes:
 				if int(code) >> status_codes[key] & 1:
@@ -148,6 +169,17 @@ class Command(BaseCommand):
 						# vi må ha et brukernavn
 						print("?", end="")
 						continue
+
+					# et gyldig brukernavn på en bruker er trebokstav (eller DRIFT) + 4-6 siffer
+					if not re.match(r"^[a-z]{3}[0-9]{4,6}$", username) and not re.match(r"^drift[0-9]{4,6}$", username):  # username er kun lowercase
+						try:
+							user = User.objects.get(username=username)
+							user.delete()
+						except:
+							pass
+
+						continue ## ugyldig brukernavn
+
 					try:
 						first_name = attrs["givenName"][0].decode()
 					except:
@@ -325,7 +357,7 @@ class Command(BaseCommand):
 		from django.db.models.functions import Upper
 		gyldige_virksomheter = list(Virksomhet.objects.values_list(Upper('virksomhetsforkortelse'), flat=True).distinct())
 
-		eksisterende_brukere = list(User.objects.values_list("username", flat=True))
+		eksisterende_brukere = list(User.objects.filter(is_superuser=False).values_list("username", flat=True))
 
 		virksomheter = OU_lookup()
 		print("Antall virksomheter: ", len(virksomheter))
@@ -334,14 +366,10 @@ class Command(BaseCommand):
 			virksomhet_uppercase = virksomhet.upper()
 			if virksomhet_uppercase in gyldige_virksomheter:
 				gyldige_virksomheter.remove(virksomhet_uppercase)
-				try:
-					print("Laster interne brukere...")
-					eksisterende_brukere = ldap_import(virksomhet, eksisterende_brukere, "Brukere")
-					print("Laster eksterne brukere...")
-					eksisterende_brukere = ldap_import(virksomhet, eksisterende_brukere, "Eksterne brukere")
-					#time.sleep(1)
-				except:
-					print("\n***\nKlarte ikke importere", virksomhet, "\n***\n")
+				print("Laster interne brukere...")
+				eksisterende_brukere = ldap_import(virksomhet, eksisterende_brukere, "Brukere")
+				print("Laster eksterne brukere...")
+				eksisterende_brukere = ldap_import(virksomhet, eksisterende_brukere, "Eksterne brukere")
 
 		print("\nVirksomheter det ikke var brukere for i AD: ", gyldige_virksomheter)
 		print("Brukere igjen i oversikt: ", len(eksisterende_brukere))
@@ -353,15 +381,18 @@ class Command(BaseCommand):
 		print("\nDeaktiverer brukere som ikke ble funnet")
 		#print("Brukere som ikke ble funnet igjen: ", eksisterende_brukere)
 		for manglende_bruker in eksisterende_brukere:
-			u = User.objects.get(username=manglende_bruker)
-			if u.is_active:
-				u.is_active = False
-				u.save()
-				print("r", end="")
-				logg_endrede_brukere += 1
+			try:
+				u = User.objects.get(username=manglende_bruker)
+				if u.is_active:
+					u.is_active = False
+					u.save()
+					print("r", end="")
+					logg_endrede_brukere += 1
+				else:
+					print("-", end="")
+			except ObjectDoesNotExist:
+				pass
 
-			else:
-				print("-", end="")
 			sys.stdout.flush()
 
 
