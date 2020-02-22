@@ -11,6 +11,7 @@ import time
 import sys
 import json
 import csv
+import requests
 from systemoversikt.models import ApplicationLog, PRKuser
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
@@ -28,12 +29,23 @@ class Command(BaseCommand):
 		logg_deleted = 0
 		logg_existing = 0
 
-		existing_users = list(PRKuser.objects.all())
 		print("Laster inn brukere...")
-		with open('C:\\Users\\andre\\Documents\\GitHub\\systemoversikt\\systemoversikt\\import\\usr.csv', 'r', encoding='latin-1') as file:
-			vlan_datastructure = list(csv.DictReader(file, delimiter=";"))
 
-		# endre dette til oppslag
+		url = os.environ["PRK_USERS_URL"]
+		#apikey = os.environ["PRK_FORM_APIKEY"]
+		headers = {}
+
+		r = requests.get(url, headers=headers)
+		print("Encoding: %s" % r.encoding)
+		r.encoding = 'latin-1'
+		print("Endrer til %s" % r.encoding)
+		print("Statuskode: %s" % r.status_code)
+		if r.status_code == 200:
+			vlan_datastructure = csv.DictReader(r.text.splitlines(), delimiter=";")
+		else:
+			sys.exit()
+
+		existing_users = list(PRKuser.objects.all())
 
 		@transaction.atomic
 		def perform_atomic_update():
@@ -43,17 +55,18 @@ class Command(BaseCommand):
 			nonlocal vlan_datastructure
 			nonlocal existing_users
 
-				for line in vlan_datastructure:
-					username = "%s%s" % (line["O"], line["EMPLOYEENUMBER"])
-					usertype = "%s" % (line["EMPLOYEETYPENAME"])
-					try:
-						u = PRKuser.objects.get(username=username)
-						logg_existing += 1
-						existing_users.remove(u)
-						continue
-					except ObjectDoesNotExist:
-						u = PRKuser.objects.create(username=username, usertype=usertype)
-						logg_new += 1
+			for line in vlan_datastructure:
+				username = "%s%s" % (line["O"], line["EMPLOYEENUMBER"])
+				usertype = "%s" % (line["EMPLOYEETYPENAME"])
+				try:
+					u = PRKuser.objects.get(username=username)
+					logg_existing += 1
+					existing_users.remove(u)
+					continue
+				except ObjectDoesNotExist:
+					u = PRKuser.objects.create(username=username, usertype=usertype)
+					logg_new += 1
+
 			for u in existing_users:
 				u.delete()
 				# fjerne "i PRK" fra users (en eller to?)

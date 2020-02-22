@@ -174,7 +174,7 @@ class Command(BaseCommand):
 					if not re.match(r"^[a-z]{3}[0-9]{4,6}$", username) and not re.match(r"^drift[0-9]{4,6}$", username):  # username er kun lowercase
 						try:
 							user = User.objects.get(username=username)
-							user.delete()
+							user.delete()  # TODO dette er kun for opprydding
 						except:
 							pass
 
