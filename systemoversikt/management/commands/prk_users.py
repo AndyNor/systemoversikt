@@ -16,6 +16,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.db import transaction
 
+
+# nå importert alle brukere
+
 class Command(BaseCommand):
 	def handle(self, **options):
 
@@ -26,6 +29,7 @@ class Command(BaseCommand):
 		logg_existing = 0
 
 		existing_users = list(PRKuser.objects.all())
+		print("Laster inn brukere...")
 		with open('C:\\Users\\andre\\Documents\\GitHub\\systemoversikt\\systemoversikt\\import\\usr.csv', 'r', encoding='latin-1') as file:
 			vlan_datastructure = list(csv.DictReader(file, delimiter=";"))
 

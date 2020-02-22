@@ -2295,6 +2295,7 @@ def ldap_get_details(name, ldap_filter):
 						attrs_decoded[key] = []
 						if key == "lastLogonTimestamp":
 							# always just one timestamp, hence item 0 hardcoded
+							## TODO flere steder
 							ms_timestamp = int(attrs[key][0][:-1].decode())  # removing one trailing digit converting 100ns to microsec.
 							converted_date = datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ms_timestamp)
 							attrs_decoded[key].append(converted_date)
