@@ -375,6 +375,64 @@ class Virksomhet(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class ADUser(models.Model):
+	sAMAccountName = models.CharField(
+			verbose_name="sAMAccountName",
+			max_length=100,
+			blank=True, null=True,
+			help_text=u"importert",
+			)
+	distinguishedname = models.TextField(
+			verbose_name="distinguishedname",
+			unique=True,
+			help_text=u"importert",
+			)
+	userAccountControl = models.TextField(
+			verbose_name="userAccountControl",
+			blank=True, null=True,
+			help_text=u"importert",
+			)
+	description = models.TextField(
+			verbose_name="description",
+			blank=True, null=True,
+			help_text=u"importert",
+			)
+	displayName = models.CharField(
+			verbose_name="displayName",
+			max_length=300,
+			blank=True, null=True,
+			help_text=u"importert",
+			)
+	etternavn = models.CharField(
+			verbose_name="etternavn",
+			max_length=100,
+			blank=True, null=True,
+			help_text=u"importert",
+			)
+	fornavn = models.CharField(
+			verbose_name="fornavn",
+			max_length=100,
+			blank=True, null=True,
+			help_text=u"importert",
+			)
+	lastLogonTimestamp = models.DateTimeField(
+			verbose_name="lastLogonTimestamp",
+			null=True, blank=True,
+			help_text=u"importert",
+			)
+	from_prk = models.BooleanField(
+			verbose_name="Bruker fra PRK?",
+			default=False,
+			help_text="Importeres",
+			)
+	# med vilje er det ikke HistoricalRecords() på denne
+
+	def __str__(self):
+		return u'%s' % (self.sAMAccountName)
+
+	class Meta:
+		verbose_name_plural = "AD brukere (utenfor PRK)"
+
 
 class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhørende virksomhet. Vurderer å fjerne denne.
 	#https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
@@ -392,34 +450,39 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			blank=True, null=True,
 			)
 	accountdisable = models.BooleanField(
-			verbose_name="AD: accountdisable",
+			verbose_name="Account disable (AD)",
 			default=False,
-			help_text="Importeres.",
+			help_text="Importeres fra AD",
 			)
 	lockout = models.BooleanField(
-			verbose_name="AD: lockout",
+			verbose_name="Lockout (AD)",
 			default=False,
-			help_text="Importeres.",
+			help_text="Importeres fra AD",
 			)
 	passwd_notreqd = models.BooleanField(
-			verbose_name="AD: passwd_notreqd",
+			verbose_name="Passwd notreqd (AD)",
 			default=False,
-			help_text="Importeres.",
+			help_text="Importeres fra AD",
 			)
 	dont_expire_password = models.BooleanField(
-			verbose_name="AD: dont_expire_password",
+			verbose_name="Dont expire password (AD)",
 			default=False,
-			help_text="Importeres.",
+			help_text="Importeres fra AD",
 			)
 	password_expired = models.BooleanField(
-			verbose_name="AD: password_expired",
+			verbose_name="Password expired (AD)",
 			default=False,
-			help_text="Importeres.",
+			help_text="Importeres fra AD",
 			)
 	ekstern_ressurs = models.BooleanField(
 			verbose_name="Ekstern ressurs",
 			default=False,
-			help_text="Settes dersom bruker ligger under OU=Eksterne brukere.",
+			help_text="Importeres. Settes dersom bruker ligger under OU=Eksterne brukere.",
+			)
+	from_prk = models.BooleanField(
+			verbose_name="Bruker fra PRK?",
+			default=False,
+			help_text="Importeres og sjekkes mot objekter i PRKuser",
 			)
 	# med vilje er det ikke HistoricalRecords() på denne
 
@@ -1081,6 +1144,42 @@ class CMDBdevice(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class ADOrgUnit(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	distinguishedname = models.TextField(
+			verbose_name="Fully Distinguished Name",
+			unique=True,
+			blank=True, null=True,
+			)
+	ou = models.CharField(
+			verbose_name="Name",
+			max_length=200,
+			blank=True, null=True,
+			help_text=u"",
+			)
+	when_created = models.CharField(
+			verbose_name="When created",
+			max_length=30,
+			blank=True, null=True,
+			help_text=u"",
+			)
+	# med vilje er det ikke HistoricalRecords() på denne da den importeres
+
+	def __str__(self):
+		return u'%s' % (self.distinguishedname)
+
+	class Meta:
+		verbose_name_plural = "AD Organizational Units"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
 class ADgroup(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -1118,6 +1217,12 @@ class ADgroup(models.Model):
 			verbose_name="Finnes i PRK?",
 			default=False,
 			help_text=u"Slås opp mot 'PRKvalg' automatisk",
+			)
+	parent = models.ForeignKey(ADOrgUnit, related_name='adgroup_parent',
+			on_delete=models.PROTECT,
+			verbose_name="Parent",
+			blank=True, null=True,
+			help_text=u"Mor-gruppe (importert)",
 			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
