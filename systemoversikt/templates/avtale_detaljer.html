@@ -54,7 +54,7 @@
 			<tr>
 				<td>{% get_verbose_field_name avtale "avtaleansvarlig" %}</td>
 				<td>
-					{% include "vis_ansvarlige.html" with ansvarlige=avtale.avtaleansvarlig.all %}
+					{% include "ansvarlig_include_vis.html" with ansvarlige=avtale.avtaleansvarlig.all %}
 				</td>
 			</tr>
 			<tr>

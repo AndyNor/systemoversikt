@@ -38,7 +38,7 @@
 			<a href="{{ url_virksomhet }}">{{ item.virksomhet.virksomhetsforkortelse }}</a>
 		</td>
 		<td>
-			{% include "vis_ansvarlige.html" with ansvarlige=item.avtaleansvarlig.all %}
+			{% include "ansvarlig_include_vis.html" with ansvarlige=item.avtaleansvarlig.all %}
 		</td>
 		<td>
 			{% url 'virksomhet' pk=item.leverandor_intern.pk as url_leverandor_intern %}

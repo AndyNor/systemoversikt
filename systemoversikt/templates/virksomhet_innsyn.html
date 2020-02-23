@@ -39,7 +39,7 @@
 			<span {% if system.innsyn_ansatt %} style="background-color: #a1e6b0;" {% endif %}>{{ system.innsyn_ansatt|yesno:"Ja,Nei" }}</span>
 		</td>
 		<td>
-			{% include "vis_ansvarlige.html" with ansvarlige=system.kontaktperson_innsyn.all %}
+			{% include "ansvarlig_include_vis.html" with ansvarlige=system.kontaktperson_innsyn.all %}
 		</td>
 	</tr>
 	{% endfor %}

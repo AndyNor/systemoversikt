@@ -51,7 +51,7 @@
 				<tr>
 					<td>{% get_verbose_field_name behandling "oppdateringsansvarlig" %}</td>
 					<td>
-						{% include "vis_ansvarlige.html" with ansvarlige=behandling.oppdateringsansvarlig.all %}
+						{% include "ansvarlig_include_vis.html" with ansvarlige=behandling.oppdateringsansvarlig.all %}
 					</td>
 				</tr>
 				<tr>

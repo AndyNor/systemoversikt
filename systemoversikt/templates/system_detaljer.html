@@ -214,7 +214,7 @@
 					{% explain_collapsed text %}
 					</td>
 					<td>
-						{% include "vis_ansvarlige.html" with ansvarlige=systemdetaljer.systemeier_kontaktpersoner_referanse.all %}
+						{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.systemeier_kontaktpersoner_referanse.all %}
 					</td>
 				</tr>
 				<tr>
@@ -231,7 +231,7 @@
 					{% explain_collapsed text %}
 					</td>
 					<td>
-						{% include "vis_ansvarlige.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
+						{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
 					</td>
 				</tr>
 
@@ -375,7 +375,7 @@
 					{% explain_collapsed text %}
 					</td>
 					<td>
-						{% include "vis_ansvarlige.html" with ansvarlige=systemdetaljer.kontaktperson_innsyn.all %}
+						{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.kontaktperson_innsyn.all %}
 					</td>
 				</tr>
 				<tr>
@@ -953,7 +953,7 @@
 							{% endif %}
 							{{ bruk.del_behandlinger|yesno:"Ja,Nei" }}
 						</td>
-						<td>{% include "vis_ansvarlige.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}</td>
+						<td>{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}</td>
 						<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
 						<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
 						<td>

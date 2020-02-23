@@ -45,7 +45,7 @@
 			</td>
 
 			<td>
-				{% include "vis_ansvarlige.html" with ansvarlige=item.oppdateringsansvarlig.all %}
+				{% include "ansvarlig_include_vis.html" with ansvarlige=item.oppdateringsansvarlig.all %}
 			</td>
 
 			<td width="5%"><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>

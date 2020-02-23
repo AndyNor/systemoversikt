@@ -449,7 +449,7 @@ def alle_definisjoner(request):
 		)
 	definisjoner.order_by('begrep')
 
-	return render(request, 'definisjoner_alle.html', {
+	return render(request, 'definisjon_alle.html', {
 		'request': request,
 		'definisjoner': definisjoner,
 		'search_term': search_term,
@@ -682,7 +682,7 @@ def systemklassifisering_detaljer(request, id):
 	else:
 		utvalg_systemer = System.objects.filter(systemeierskapsmodell=id)
 
-	return render(request, 'systemer_eierskapsvisning.html', {
+	return render(request, 'system_kategori_generisk.html', {
 		'request': request,
 		'overskrift': ("Systemklassifisering: %s" % id.lower()),
 		'systemer': utvalg_systemer,
@@ -703,7 +703,7 @@ def systemtype_detaljer(request, pk=None):
 		overskrift = "Systemer som mangler systemtype"
 
 	utvalg_systemer = utvalg_systemer.order_by('ibruk', Lower('systemnavn'))
-	return render(request, 'alle_systemer_uten_paginering.html', {
+	return render(request, 'system_kategori_generisk.html', {
 		'request': request,
 		'overskrift': overskrift,
 		'systemer': utvalg_systemer,
@@ -733,7 +733,7 @@ def alle_systemer(request):
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
 	systemtyper = Systemtype.objects.all()
 
-	return render(request, 'alle_systemer.html', {
+	return render(request, 'system_sok.html', {
 		'request': request,
 		'systemer': aktuelle_systemer,
 		'potensielle_systemer': potensielle_systemer,
@@ -741,36 +741,6 @@ def alle_systemer(request):
 		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
 		'systemtyper': systemtyper,
 	})
-
-
-"""
-def alle_applikasjoner(request):
-	systemer = System.objects.filter(systemtyper__kategorinavn=SYSTEMTYPE_PROGRAMMER).order_by(Lower('systemnavn'))
-	template = 'alle_systemer.html'
-	return render(request, template, {
-		'overskrift': "Applikasjoner og enkeltstående programvarer",
-		'request': request,
-		'systemer': systemer,
-	})
-
-def alle_systemer_itas(request):
-	systemer = System.objects.filter(driftsmodell=10).order_by(Lower('systemnavn'))
-	template = 'alle_systemer.html'
-
-	return render(request, template, {
-		'overskrift': "Tjenester/funksjoner på ITAS",
-		'request': request,
-		'systemer': systemer,
-	})
-
-def sektor_og_fellessystemer(request):
-	systemer = System.objects.filter(systemeierskapsmodell__in=FELLES_OG_SEKTORSYSTEMER).order_by(Lower('systemnavn'))
-	return render(request, 'alle_systemer.html', {
-		'request': request,
-		'systemer': systemer,
-		'overskrift': "Sektor- og fellessystemer",
-	})
-"""
 
 
 def bruksdetaljer(request, pk):
@@ -1397,7 +1367,7 @@ def systemer_utfaset(request):
 	Tilgangsstyring: ÅPEN
 	"""
 	systemer = System.objects.filter(ibruk=False).order_by("-sist_oppdatert")
-	return render(request, 'systemer_utfaset.html', {
+	return render(request, 'system_utfaset.html', {
 		'systemer': systemer,
 })
 

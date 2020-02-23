@@ -41,7 +41,7 @@
 			<br>
 			<b>{% get_verbose_field_name virksomhet "resultatenhet" %}:</b> {{ virksomhet.get_resultatenhet_display }}<br>
 			<b>{% get_verbose_field_name virksomhet "leder" %}:</b>
-			{% include "vis_ansvarlige.html" with ansvarlige=virksomhet.leder.all %}
+			{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.leder.all %}
 
 			<hr>
 
@@ -58,27 +58,27 @@
 
 			<h6>Kontaktpersoner</h6>
 			<b>{% get_verbose_field_name virksomhet "ikt_kontakt" %}:</b>
-			{% include "vis_ansvarlige.html" with ansvarlige=virksomhet.ikt_kontakt.all %}
+			{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.ikt_kontakt.all %}
 			<br>
 
 			<b>{% get_verbose_field_name virksomhet "autoriserte_bestillere_tjenester" %}:</b>
-			{% include "vis_ansvarlige.html" with ansvarlige=virksomhet.autoriserte_bestillere_tjenester.all %}
+			{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.autoriserte_bestillere_tjenester.all %}
 			<br>
 
 			<b>{% get_verbose_field_name virksomhet "autoriserte_bestillere_tjenester_uke" %}:</b>
-			{% include "vis_ansvarlige.html" with ansvarlige=virksomhet.autoriserte_bestillere_tjenester_uke.all %}
+			{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.autoriserte_bestillere_tjenester_uke.all %}
 			<br>
 
 			<b>{% get_verbose_field_name virksomhet "uke_kam_referanse" %}:</b>
-			{% include "vis_ansvarlige.html" with ansvarlige=virksomhet.uke_kam_referanse.all %}
+			{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.uke_kam_referanse.all %}
 			<br>
 
 			<b>{% get_verbose_field_name virksomhet "personvernkoordinator" %}:</b>
-			{% include "vis_ansvarlige.html" with ansvarlige=virksomhet.personvernkoordinator.all %}
+			{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.personvernkoordinator.all %}
 			<br>
 
 			<b>{% get_verbose_field_name virksomhet "informasjonssikkerhetskoordinator" %}:</b>
-			{% include "vis_ansvarlige.html" with ansvarlige=virksomhet.informasjonssikkerhetskoordinator.all %}
+			{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.informasjonssikkerhetskoordinator.all %}
 
 		</div>
 	</div>
