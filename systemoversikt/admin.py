@@ -487,6 +487,14 @@ class ProfileAdmin(admin.ModelAdmin):
 	autocomplete_fields = ('user',)
 
 
+@admin.register(ADUser)
+class ProfileAdmin(admin.ModelAdmin):
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('sAMAccountName', 'fornavn', 'etternavn', 'displayName', 'distinguishedname', 'userAccountControl', 'description')
+	search_fields = ('distinguishedname', 'sAMAccountName')
+	list_filter = ('lastLogonTimestamp', 'from_prk')
+
+
 @admin.register(SystemUrl)
 class SystemUrlAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
@@ -559,9 +567,9 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 admin.site.unregister(User)  # den er som standard registrert
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-	list_display = ('username', 'first_name', 'last_name', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
+	list_display = ('username', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
 	search_fields = ('username', 'first_name', 'last_name')
-	list_filter = ('is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'profile__virksomhet', 'groups',)
+	list_filter = ('profile__from_prk', 'is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'profile__virksomhet', 'groups',)
 
 	def has_usable_password(self, obj):
 		return obj.has_usable_password()
@@ -577,6 +585,11 @@ class UserAdmin(admin.ModelAdmin):
 	def virksomhet(self, obj):
 		return obj.profile.virksomhet
 	virksomhet.short_description = "Virksomhet"
+
+	def from_prk(self, obj):
+		return obj.profile.from_prk
+	from_prk.short_description = "Fra PRK?"
+	from_prk.boolean = True
 
 	def intern_person(self, obj):
 		return not obj.profile.ekstern_ressurs
@@ -724,11 +737,18 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 	)
 
 
+@admin.register(ADOrgUnit)
+class ADOrgUnitAdmin(admin.ModelAdmin):
+	list_display = ('ou', 'when_created', 'distinguishedname',)
+	search_fields = ('distinguishedname',)
+	#list_filter = ()
+
+
 @admin.register(ADgroup)
 class ADgroupAdmin(admin.ModelAdmin):
-	list_display = ('distinguishedname', 'from_prk', 'membercount', 'memberofcount', 'description', 'sist_oppdatert')
+	list_display = ('distinguishedname', 'from_prk', 'parent', 'membercount', 'memberofcount', 'description', 'sist_oppdatert')
 	search_fields = ('distinguishedname',)
-	list_filter = ('from_prk', 'membercount', 'memberofcount',)
+	list_filter = ('parent', 'from_prk', 'membercount', 'memberofcount',)
 
 
 @admin.register(AutorisertBestiller)
