@@ -2416,11 +2416,11 @@ def ad_details(request, name):
 	import time
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
-		runetime_t0 = time.time()
+		runtime_t0 = time.time()
 		ldap_filter = ('(cn=%s)' % name)
 		result = ldap_get_details(name, ldap_filter)
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
+		runtime_t1 = time.time()
+		logg_total_runtime = runtime_t1 - runtime_t0
 		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
 
 		return render(request, 'ad_details.html', {
@@ -2439,11 +2439,11 @@ def ad_exact(request, name):
 	import time
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
-		runetime_t0 = time.time()
+		runtime_t0 = time.time()
 		ldap_filter = ('(distinguishedName=%s)' % name)
 		result = ldap_get_details(name, ldap_filter)
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
+		runtime_t1 = time.time()
+		logg_total_runtime = runtime_t1 - runtime_t0
 		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
 
 		return render(request, 'ad_details.html', {
@@ -2462,10 +2462,10 @@ def recursive_group_members(request, group):
 	import time
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
-		runetime_t0 = time.time()
+		runtime_t0 = time.time()
 		result = ldap_get_recursive_group_members(group)
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
+		runtime_t1 = time.time()
+		logg_total_runtime = runtime_t1 - runtime_t0
 		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
 
 		return render(request, 'ad_recursive.html', {
