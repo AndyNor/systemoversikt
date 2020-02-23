@@ -17,7 +17,7 @@ import requests
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		runetime_t0 = time.time()
+		runtime_t0 = time.time()
 
 		count_hits = 0
 		count_misses = 0
@@ -42,8 +42,8 @@ class Command(BaseCommand):
 				valg.save()
 
 
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
+		runtime_t1 = time.time()
+		logg_total_runtime = runtime_t1 - runtime_t0
 		logg_entry_message = "Kjøretid: %s. Treff: %s. Bom: %s" % (
 				round(logg_total_runtime, 1),
 				count_hits,
