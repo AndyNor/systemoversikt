@@ -21,7 +21,7 @@ class Command(BaseCommand):
 		#for v in PRKvalg.objects.all():
 		#	v.delete()
 
-		runetime_t0 = time.time()
+		runtime_t0 = time.time()
 
 		url = os.environ["PRK_FORM_URL"]
 		apikey = os.environ["PRK_FORM_APIKEY"]
@@ -125,8 +125,8 @@ class Command(BaseCommand):
 		message = "Import av PRK-data: %s eksisterende, %s nye, derav %s oppdateringer. %s slettet." % (ant_eksisterende_valg, ant_nye_valg, ant_oppdateringer, ant_slettet)
 		print(message)
 
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
+		runtime_t1 = time.time()
+		logg_total_runtime = runtime_t1 - runtime_t0
 
 		logg_entry_message = "Kjøretid: %s: %s" % (
 				round(logg_total_runtime, 1),
