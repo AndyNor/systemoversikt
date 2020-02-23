@@ -23,7 +23,6 @@ router.register(r'leverandor', apiviews.LeverandorViewSet)
 #router.register(r'systemkateogri', apiviews.SystemktegoriViewSet)
 router.register(r'behandling', apiviews.VirksomhetViewSet)
 
-
 import systemoversikt.views as views
 import systemoversikt.views_import as views_import
 from django.conf.urls import include
@@ -50,7 +49,6 @@ urlpatterns = [
 	url(r'^sys/roller/$', views.roller, name='roller'),
 	url(r'^sys/rettigheter/$', views.permissions, name='permissions'),
 
-
 	url(r'^systemer/$', views.alle_systemer, name='alle_systemer'),
 	url(r'^systemer/pakket/$', views.systemer_pakket, name='systemer_pakket'),
 	#url(r'^systemer/test/$', views.systemer_test, name='systemer_test'),
@@ -76,7 +74,6 @@ urlpatterns = [
 	url(r'^behandlinger/vir/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
 	url(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
 	#url(r'^behandlinger/filtrerte/virksomhet/(?P<pk>\d{1,8})/$', views.behandlinger_filtrerte, name='behandlinger_filtrerte'),
-
 
 	url(r'^avtaler/$', views.alle_avtaler, name='alle_avtaler'),
 	url(r'^avtaler/detaljer/(?P<pk>\d{1,8})/$', views.avtaledetaljer, name='avtaledetaljer'),
@@ -165,7 +162,6 @@ urlpatterns = [
 	#url(r'^import/cmdb/oslofelles/$', views_import.add_dns_vlan_vip, name='add_dns_vlan_vip'),
 
 	url(r'^user_clean_up/$', views.user_clean_up, name='user_clean_up'),
-
 
 	#url(r'^import_sys_new/$', views.import_sys_new, name='import_sys_new'),
 	#url(r'^import_bruk/$', views.import_bruk, name='import_bruk'),
