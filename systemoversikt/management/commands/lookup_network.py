@@ -26,7 +26,7 @@ class Command(BaseCommand):
 		log = logging.getLogger(__name__)
 		log.info("Starter oppslag av IP-adresser")
 
-		runetime_t0 = time.time()
+		runtime_t0 = time.time()
 		socket.setdefaulttimeout(0.2)
 
 		# TODO bør legge dette i en konfigurasjonsfil, da dette nå ligger to/flere steder.
@@ -97,8 +97,8 @@ class Command(BaseCommand):
 				stat_manglet_ip_resolve_fail,
 				)
 
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
+		runtime_t1 = time.time()
+		logg_total_runtime = runtime_t1 - runtime_t0
 
 		logg_entry_message = "Kjøretid: %s: %s" % (
 				round(logg_total_runtime, 1),

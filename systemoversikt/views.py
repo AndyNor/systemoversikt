@@ -1689,6 +1689,19 @@ def system_til_programvare(request, system_id=None):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def alle_adgrupper(request):
+	"""
+	Vise informasjon om AD-grupper
+	Tilgangsstyring: må kunne vise informasjon om brukere
+	"""
+	required_permissions = 'systemoversikt.view_user'
+	if request.user.has_perm(required_permissions):
+		return render(request, 'alle_adgrupper.html', {
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def alle_os(request):
 	"""
 	Vise statistikk over operativsystemer for servere og klienter

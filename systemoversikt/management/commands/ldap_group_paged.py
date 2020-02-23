@@ -1,124 +1,43 @@
 # -*- coding: utf-8 -*-
-
 """
 Hensikten med denne koden er å oppdatere en lokal oversikt over alle AD-grupper, både for å kunne analysere medlemskap, f.eks. tomme grupper, kunne finne grupper som ikke stammer fra AD, kunne følge med på opprettelse av nye grupper.
 """
 
-from django.core.management.base import BaseCommand
-from ldap.controls import SimplePagedResultsControl
-from distutils.version import LooseVersion
-from systemoversikt.models import ADgroup, ApplicationLog
-import sys
-import time
-import ldap
-import os
-import json
+# TODO slette grupper som ikke ble funnet
 
-logg_antall_grupper = 0
-logg_antall_eksisterende_grupper = 0
+from django.core.management.base import BaseCommand
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
+from systemoversikt.utils import ldap_paged_search
+import ldap
+import sys
+
+
+from systemoversikt.models import ApplicationLog, ADOrgUnit, ADgroup
+import json
 
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		runetime_t0 = time.time()  # start time
+		# Configuration
+		BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
+		SEARCHFILTER = '(objectclass=group)'
+		LDAP_SCOPE = ldap.SCOPE_SUBTREE
+		ATTRLIST = ['cn', 'description', 'memberOf', 'member'] # if empty we get all attr we have access to
+		PAGESIZE = 1000
+		LOG_EVENT_TYPE = "AD group-import"
 
-		LDAPUSER = os.environ["KARTOTEKET_LDAPUSER"]
-		LDAPPASSWORD = os.environ["KARTOTEKET_LDAPPASSWORD"]
-		LDAPSERVER='ldaps://ldaps.oslofelles.oslo.kommune.no:636'
+		report_data = {
+			"created": 0,
+			"modified": 0,
+			"removed": 0,
+		}
 
-		# Ignore server side certificate errors (assumes using LDAPS and
-		# self-signed cert). Not necessary if not LDAPS or it's signed by
-		# a real CA.
-		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)
-		# Don't follow referrals
-		ldap.set_option(ldap.OPT_REFERRALS, 0)
-
-		def ldap_search(basedn, pagesize, attrlist, searchfiler):
-
-			# Check if we're using the Python "ldap" 2.4 or greater API
-			LDAP24API = LooseVersion(ldap.__version__) >= LooseVersion('2.4')
-			BASEDN = basedn
-			PAGESIZE = pagesize
-			ATTRLIST = attrlist
-			SEARCHFILTER = searchfiler
-
-			def create_controls(pagesize):
-				"""Create an LDAP control with a page size of "pagesize"."""
-				# Initialize the LDAP controls for paging. Note that we pass ''
-				# for the cookie because on first iteration, it starts out empty.
-				if LDAP24API:
-					return SimplePagedResultsControl(True, size=pagesize, cookie='')
-				else:
-					return SimplePagedResultsControl(ldap.LDAP_CONTROL_PAGE_OID, True, (pagesize,''))
-
-			def get_pctrls(serverctrls):
-				"""Lookup an LDAP paged control object from the returned controls."""
-				# Look through the returned controls and find the page controls.
-				# This will also have our returned cookie which we need to make
-				# the next search request.
-				if LDAP24API:
-					return [c for c in serverctrls
-							if c.controlType == SimplePagedResultsControl.controlType]
-				else:
-					return [c for c in serverctrls
-							if c.controlType == ldap.LDAP_CONTROL_PAGE_OID]
-
-			def set_cookie(lc_object, pctrls, pagesize):
-				"""Push latest cookie back into the page control."""
-				if LDAP24API:
-					cookie = pctrls[0].cookie
-					lc_object.cookie = cookie
-					return cookie
-				else:
-					est, cookie = pctrls[0].controlValue
-					lc_object.controlValue = (pagesize,cookie)
-					return cookie
-
-
-			l = ldap.initialize(LDAPSERVER)
-			l.protocol_version = 3          # Paged results only apply to LDAP v3
-			try:
-				l.simple_bind_s(LDAPUSER, LDAPPASSWORD)
-			except ldap.LDAPError as e:
-				exit('LDAP bind failed: %s' % e)
-
-			# Create the page control to work from
-			lc = create_controls(PAGESIZE)
-
-			# Do searches until we run out of "pages" to get from
-			# the LDAP server.
-			current_round = 0
-			objects_returned = 0
-			while True:
-				current_round += 1
-				# Send search request
-				try:
-					# If you leave out the ATTRLIST it'll return all attributes
-					# which you have permissions to access. You may want to adjust
-					# the scope level as well (perhaps "ldap.SCOPE_SUBTREE", but
-					# it can reduce performance if you don't need it).
-					msgid = l.search_ext(BASEDN, ldap.SCOPE_SUBTREE, SEARCHFILTER,
-										 ATTRLIST, serverctrls=[lc])
-				except ldap.LDAPError as e:
-					sys.exit('LDAP search failed: %s' % e)
-
-				# Pull the results from the search request
-				try:
-					rtype, rdata, rmsgid, serverctrls = l.result3(msgid)
-				except ldap.LDAPError as e:
-					sys.exit('Could not pull LDAP results: %s' % e)
-
-				# Each "rdata" is a tuple of the form (dn, attrs), where dn is
-				# a string containing the DN (distinguished name) of the entry,
-				# and attrs is a dictionary containing the attributes associated
-				# with the entry. The keys of attrs are strings, and the associated
-				# values are lists of strings.
-				objects_returned += len(rdata)
-				#print("Loaded items: ", len(rdata))
-				for dn, attrs in rdata:
+		@transaction.atomic  # for speeding up database performance
+		def result_handler(rdata, report_data, existing_objects=None):
+			for dn, attrs in rdata:
 
 					distinguishedname = dn
-					#print(distinguishedname)
 					if distinguishedname == None:
 						print(attrs)
 						continue
@@ -133,8 +52,6 @@ class Command(BaseCommand):
 						member = []
 						membercount = 0
 					member = json.dumps(member)
-					#print(member)
-					#print(membercount)
 
 					try:
 						memberof = []
@@ -146,9 +63,6 @@ class Command(BaseCommand):
 						memberof = []
 						memberofcount = 0
 					memberof = json.dumps(memberof)
-					#print(memberof)
-					#print(memberofcount)
-
 
 					description = ""
 					try:
@@ -157,7 +71,6 @@ class Command(BaseCommand):
 							description += d.decode()
 					except KeyError as e:
 						pass
-					#print(description)
 
 					try:
 						g = ADgroup.objects.get(distinguishedname=distinguishedname)
@@ -167,9 +80,7 @@ class Command(BaseCommand):
 						g.memberof = memberof
 						g.memberofcount = memberofcount
 						g.save()
-
-						global logg_antall_eksisterende_grupper
-						logg_antall_eksisterende_grupper += 1
+						report_data["modified"] += 1
 						print("u", end="")
 					except:
 						g = ADgroup.objects.create(
@@ -181,51 +92,24 @@ class Command(BaseCommand):
 								memberofcount=memberofcount,
 							)
 						print("n", end="")
-						global logg_antall_grupper
-						logg_antall_grupper += 1
+						report_data["created"] += 1
 
 					sys.stdout.flush()
 
 
-				# Get cookie for next request
-				pctrls = get_pctrls(serverctrls)
-				if not pctrls:
-					print >> sys.stderr, 'Warning: Server ignores RFC 2696 control.'
-					break
-
-				# Ok, we did find the page control, yank the cookie from it and
-				# insert it into the control for our next search. If however there
-				# is no cookie, we are done!
-				cookie = set_cookie(lc, pctrls, PAGESIZE)
-				if not cookie:
-					break
-
-			# Clean up
-			l.unbind()
+		def report(result):
+			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s endrede." % (
+					result["total_runtime"],
+					result["objects_returned"],
+					result["report_data"]["created"],
+					result["report_data"]["modified"],
+			)
+			log_entry = ApplicationLog.objects.create(
+					event_type=LOG_EVENT_TYPE,
+					message=log_entry_message,
+			)
+			print(log_entry_message)
 
 
-
-		### runtime ###
-		basedn ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
-		pagesize = 1000
-		attrlist = ['cn', 'description', 'memberOf', 'member']
-		searchfiler = '(objectclass=group)'
-		ldap_search(basedn, pagesize, attrlist, searchfiler)
-
-		runetime_t1 = time.time() # end time
-		logg_total_runtime = runetime_t1 - runetime_t0
-		global logg_antall_grupper
-
-		logg_entry_message = "Kjøretid: %s sekunder, importerte %s grupper. %s eksisterte" % (
-				round(logg_total_runtime, 1),
-				logg_antall_grupper,
-				logg_antall_eksisterende_grupper,
-		)
-		print("\n")
-		print(logg_entry_message)
-		logg_entry = ApplicationLog.objects.create(
-				event_type='LDAP group import',
-				message=logg_entry_message,
-		)
-		logg_entry.save()
-
+		result = ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data)
+		report(result)

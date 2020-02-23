@@ -1191,7 +1191,8 @@ class ADgroup(models.Model):
 			)
 	distinguishedname = models.TextField(
 			verbose_name="Fully Distinguished Name",
-			blank=True, null=True,
+			unique=True,
+			null=False,
 			)
 	member = models.TextField(
 			verbose_name="Medlemmer",

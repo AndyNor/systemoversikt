@@ -8,15 +8,16 @@ from django.core.management.base import BaseCommand
 from ldap.controls import SimplePagedResultsControl
 from distutils.version import LooseVersion
 from django.contrib.auth.models import User
-from systemoversikt.models import ADgroup, ApplicationLog
+from systemoversikt.models import ADUser, ApplicationLog, PRKuser
+from django.core.exceptions import ObjectDoesNotExist
+from django.utils.timezone import make_aware
 import sys
 import time
 import ldap
 import os
-import json
 import datetime
 
-logg_antall_kontoer = 0
+logg_antall_nye_kontoer = 0
 logg_antall_eksisterende_kontoer = 0
 
 ## TODO flere steder
@@ -24,7 +25,7 @@ def microsoft_date_decode(timestamp):
 	ms_timestamp = int(timestamp[:-1])  # removing one trailing digit: steps of 100ns to steps pf 1 micro second.
 	ms_epoch_start = datetime.datetime(1601,1,1)
 	timedelta = datetime.timedelta(microseconds=ms_timestamp)
-	return ms_epoch_start + timedelta
+	return make_aware(ms_epoch_start + timedelta)
 
 
 # TODO finnes flere steder
@@ -63,7 +64,7 @@ def decode_useraccountcontrol(code):
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		runetime_t0 = time.time()  # start time
+		runtime_t0 = time.time()  # start time
 
 		LDAPUSER = os.environ["KARTOTEKET_LDAPUSER"]
 		LDAPPASSWORD = os.environ["KARTOTEKET_LDAPPASSWORD"]
@@ -170,7 +171,6 @@ class Command(BaseCommand):
 					if len(User.objects.filter(username=sAMAccountName)) > 0:
 						continue  # it's already in the User database
 
-
 					userAccountControl = decode_useraccountcontrol(int(attrs["userAccountControl"][0].decode()))
 
 					try:
@@ -198,87 +198,46 @@ class Command(BaseCommand):
 					except KeyError:
 						lastLogonTimestamp = None
 
+					if len(PRKuser.objects.filter(username=sAMAccountName)) > 0:
+						from_prk = True
+					else:
+						from_prk = False
 
-					print(distinguishedname)
-					print(sAMAccountName)
-					print(description)
-					print(displayName)
-					print(lastLogonTimestamp)
-					print(userAccountControl)
-					print(fornavn)
-					print(etternavn)
-					print("\n")
-
-					#print("%s %s") % (distinguishedname, description)
-
-
-					#'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'userAccountControl'
-
-					"""
 
 					try:
-						member = []
-						binary_member = attrs["member"]
-						membercount = len(binary_member)
-						for m in binary_member:
-							member.append(m.decode())
-					except KeyError as e:
-						member = []
-						membercount = 0
-					member = json.dumps(member)
-					#print(member)
-					#print(membercount)
-
-					try:
-						memberof = []
-						binary_memberof = attrs["memberOf"]
-						memberofcount = len(binary_memberof)
-						for m in binary_memberof:
-							memberof.append(m.decode())
-					except KeyError as e:
-						memberof = []
-						memberofcount = 0
-					memberof = json.dumps(memberof)
-					#print(memberof)
-					#print(memberofcount)
-
-
-					description = ""
-					try:
-						binary_description = attrs["description"]
-						for d in binary_description:
-							description += d.decode()
-					except KeyError as e:
-						pass
-					#print(description)
-
-					try:
-						g = ADgroup.objects.get(distinguishedname=distinguishedname)
+						g = ADUser.objects.get(sAMAccountName=sAMAccountName)
+						g.distinguishedname = distinguishedname
+						g.userAccountControl = userAccountControl
 						g.description = description
-						g.member = member
-						g.membercount = membercount
-						g.memberof = memberof
-						g.memberofcount = memberofcount
+						g.displayName = displayName
+						g.etternavn = etternavn
+						g.fornavn = fornavn
+						g.lastLogonTimestamp = lastLogonTimestamp
+						g.from_prk = from_prk
 						g.save()
 
 						global logg_antall_eksisterende_kontoer
 						logg_antall_eksisterende_kontoer += 1
+						nonlocal existing_users
+						existing_users.remove(g)
 						print("u", end="")
-					except:
-						g = ADgroup.objects.create(
+					except ObjectDoesNotExist:
+						g = ADUser.objects.create(
 								distinguishedname=distinguishedname,
+								sAMAccountName=sAMAccountName,
+								userAccountControl=userAccountControl,
 								description=description,
-								member=member,
-								membercount=membercount,
-								memberof=memberof,
-								memberofcount=memberofcount,
+								displayName=displayName,
+								etternavn=etternavn,
+								fornavn=fornavn,
+								lastLogonTimestamp=lastLogonTimestamp,
+								from_prk=from_prk,
 							)
 						print("n", end="")
-						global logg_antall_kontoer
-						logg_antall_kontoer += 1
+						global logg_antall_nye_kontoer
+						logg_antall_nye_kontoer += 1
 
 					sys.stdout.flush()
-					"""
 
 
 				# Get cookie for next request
@@ -298,23 +257,31 @@ class Command(BaseCommand):
 			l.unbind()
 
 
-
 		### runtime ###
-		basedn ='OU=UKE,OU=Brukere,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no'
+		basedn ='OU=KAO,OU=Brukere,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 		pagesize = 1000
 		attrlist = ['description', 'sn', 'givenName', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'userAccountControl']
 		searchfiler = '(objectclass=user)'
 
+		existing_users = list(ADUser.objects.all())
+
 		ldap_search(basedn, pagesize, attrlist, searchfiler)
 
-		runetime_t1 = time.time() # end time
-		logg_total_runtime = runetime_t1 - runetime_t0
-		global logg_antall_kontoer
+		logg_antall_slettede_kontoer = 0
+		for u in existing_users:
+			u.delete()
+			# fjerne "i PRK" fra users (en eller to?)
+			logg_antall_slettede_kontoer += 1
 
-		logg_entry_message = "Kjøretid: %s sekunder, importerte %s kontoer. %s eksisterte." % (
+		runtime_t1 = time.time() # end time
+		logg_total_runtime = runtime_t1 - runtime_t0
+		global logg_antall_nye_kontoer
+
+		logg_entry_message = "Kjøretid: %s sekunder: importerte %s kontoer. %s eksisterte. %s gamle slettet" % (
 				round(logg_total_runtime, 1),
-				logg_antall_kontoer,
+				logg_antall_nye_kontoer,
 				logg_antall_eksisterende_kontoer,
+				logg_antall_slettede_kontoer
 		)
 		print("\n")
 		print(logg_entry_message)

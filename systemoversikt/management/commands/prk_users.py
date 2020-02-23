@@ -23,7 +23,7 @@ from django.db import transaction
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		runetime_t0 = time.time()
+		runtime_t0 = time.time()
 
 		logg_new = 0
 		logg_deleted = 0
@@ -35,6 +35,7 @@ class Command(BaseCommand):
 		#apikey = os.environ["PRK_FORM_APIKEY"]
 		headers = {}
 
+		print("Kobler til %s" % url)
 		r = requests.get(url, headers=headers)
 		print("Encoding: %s" % r.encoding)
 		r.encoding = 'latin-1'
@@ -74,10 +75,9 @@ class Command(BaseCommand):
 
 		perform_atomic_update()
 
-
-		runetime_t1 = time.time()
-		logg_total_runtime = runetime_t1 - runetime_t0
-		logg_entry_message = "Kjøretid: %s: %s som før, %s nye og %s slettede" % (
+		runtime_t1 = time.time()
+		logg_total_runtime = runtime_t1 - runtime_t0
+		logg_entry_message = "Kjøretid: %s sekunder: %s som før, %s nye og %s slettede" % (
 				round(logg_total_runtime, 1),
 				logg_existing,
 				logg_new,
@@ -88,4 +88,4 @@ class Command(BaseCommand):
 				event_type='PRK user import',
 				message=logg_entry_message,
 		)
-		#logg_entry.save()
+		logg_entry.save()

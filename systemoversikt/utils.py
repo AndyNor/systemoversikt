@@ -1,8 +1,56 @@
 # -*- coding: utf-8 -*-
 """ Her er funksjoner som gjenbrukes ofte og derfor er skilt ut """
 
+def ldap_OK_virksomheter():
+	l = ldap.initialize(os.environ["KARTOTEKET_LDAPSERVER"])
+	l.bind_s(os.environ["KARTOTEKET_LDAPUSER"], os.environ["KARTOTEKET_LDAPPASSWORD"])
+	virksomheter = []
+	query_result = l.search_s(
+			'OU=Brukere,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no',
+			ldap.SCOPE_ONELEVEL,
+			('objectCategory=organizationalUnit'),
+			['ou',]
+		)
+	for key in query_result:
+		virksomheter.append(key[1]["ou"][0].decode())
+	l.unbind_s()
+	return virksomheter
 
-def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data):
+
+def decode_useraccountcontrol(code):
+	#https://support.microsoft.com/nb-no/help/305144/how-to-use-useraccountcontrol-to-manipulate-user-account-properties
+	active_codes = []
+	status_codes = {
+			"SCRIPT": 0,
+			"ACCOUNTDISABLE": 1,
+			"HOMEDIR_REQUIRED": 2,
+			"LOCKOUT": 4,
+			"PASSWD_NOTREQD": 5,
+			"PASSWD_CANT_CHANGE": 6,
+			"ENCRYPTED_TEXT_PWD_ALLOWED": 7,
+			"TEMP_DUPLICATE_ACCOUNT": 8,
+			"NORMAL_ACCOUNT": 9,
+			"INTERDOMAIN_TRUST_ACCOUNT": 11,
+			"WORKSTATION_TRUST_ACCOUNT": 12,
+			"SERVER_TRUST_ACCOUNT": 13,
+			"DONT_EXPIRE_PASSWORD": 16,
+			"PASSWORD_EXPIRED": 23,
+			"MNS_LOGON_ACCOUNT": 17,
+			"SMARTCARD_REQUIRED": 18,
+			"TRUSTED_FOR_DELEGATION": 19,
+			"NOT_DELEGATED": 20,
+			"USE_DES_KEY_ONLY": 21,
+			"DONT_REQ_PREAUTH": 22,
+			"TRUSTED_TO_AUTH_FOR_DELEGATION": 24,
+			"PARTIAL_SECRETS_ACCOUNT": 26,
+		}
+	for key in status_codes:
+		if int(code) >> status_codes[key] & 1:
+			active_codes.append(key)
+	return active_codes
+
+
+def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data, existing_objects=None):
 
 	from ldap.controls import SimplePagedResultsControl
 	from distutils.version import LooseVersion
@@ -22,7 +70,7 @@ def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, resu
 	"""
 	LDAPUSER = os.environ["KARTOTEKET_LDAPUSER"]
 	LDAPPASSWORD = os.environ["KARTOTEKET_LDAPPASSWORD"]
-	LDAPSERVER='ldaps://ldaps.oslofelles.oslo.kommune.no:636'
+	LDAPSERVER = os.environ["KARTOTEKET_LDAPSERVER"]
 
 	ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)  # TODO this is unsafe
 	ldap.set_option(ldap.OPT_REFERRALS, 0)
@@ -92,7 +140,7 @@ def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, resu
 		print("\nINFO: New page %s (%s-%s)" % (current_round, objects_start, objects_returned))
 
 		# Do stuff with results
-		result_handler(rdata, report_data)
+		result_handler(rdata, report_data, existing_objects)
 
 		pctrls = get_pctrls(serverctrls)
 		if not pctrls:
@@ -107,4 +155,8 @@ def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, resu
 			break  # Done
 
 	l.unbind()
-	return((report_data, total_runtime))
+	return({
+		"report_data": report_data,
+		"total_runtime": total_runtime,
+		"objects_returned": objects_returned
+	})

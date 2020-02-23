@@ -54,4 +54,3 @@ class Command(BaseCommand):
 				event_type='AD-gruppe PRK-oppslag',
 				message=logg_entry_message,
 		)
-		logg_entry.save()

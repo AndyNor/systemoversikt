@@ -28,8 +28,6 @@ class Command(BaseCommand):
 					u.profile.from_prk = from_prk
 					u.save()
 
-					print("Endret %s" % u)
-
 		perform_atomic_update()
 
 		runtime_t1 = time.time()

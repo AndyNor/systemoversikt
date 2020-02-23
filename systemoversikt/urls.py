@@ -51,8 +51,6 @@ urlpatterns = [
 
 	url(r'^systemer/$', views.alle_systemer, name='alle_systemer'),
 	url(r'^systemer/pakket/$', views.systemer_pakket, name='systemer_pakket'),
-	#url(r'^systemer/test/$', views.systemer_test, name='systemer_test'),
-	#url(r'^systemer/(?P<utvalg>\w{1,30})/(?P<items>\d{1,5})/(?P<page>\d{1,5})/$', views.alle_systemer, name='alle_systemer_sideref'),
 	url(r'^systemer/detaljer/(?P<pk>\d{1,8})/$', views.systemdetaljer, name='systemdetaljer'),
 	url(r'^systemer/bruk/$', views.mine_systembruk, name='mine_systembruk'),
 	url(r'^systemer/utfaset/$', views.systemer_utfaset, name='systemer_utfaset'),
@@ -62,18 +60,15 @@ urlpatterns = [
 	url(r'^systemer/systemklassifisering/(?P<id>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	url(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),
 	url(r'^systemer/systemtype/$', views.systemtype_detaljer, name='systemtype_detaljer_mangler'),
-	#url(r'^systemer/ITAS/$', views.alle_systemer_itas, name='alle_systemer_itas'),
-	#url(r'^systemer/sektor_og_fellessystemer/$', views.sektor_og_fellessystemer, name='sektor_og_fellessystemer'),
-	#url(r'^systemer/systemapplikasjoner/$', views.alle_applikasjoner, name='alle_applikasjoner'),
+	url(r'^system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
+	url(r'^system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
 
 	url(r'^behandlinger/$', views.mine_behandlinger, name='mine_behandlinger'),
 	url(r'^behandlinger/alle/$', views.alle_behandlinger, name='alle_behandlinger'),
 	url(r'^behandlinger/kopier/(?P<system_pk>\d{1,8})/$', views.behandling_kopier, name='behandling_kopier'),
-	#url(r'^behandlinger/alle_detaljer/(?P<pk>\d{1,8})/$', views.alle_behandlinger_alle_detaljer, name='alle_behandlinger_alle_detaljer'),
 	url(r'^behandlinger/vir/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
 	url(r'^behandlinger/vir/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
 	url(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
-	#url(r'^behandlinger/filtrerte/virksomhet/(?P<pk>\d{1,8})/$', views.behandlinger_filtrerte, name='behandlinger_filtrerte'),
 
 	url(r'^avtaler/$', views.alle_avtaler, name='alle_avtaler'),
 	url(r'^avtaler/detaljer/(?P<pk>\d{1,8})/$', views.avtaledetaljer, name='avtaledetaljer'),
@@ -90,23 +85,16 @@ urlpatterns = [
 	url(r'^virksomhet/systemkvalitet/(?P<pk>\d{1,8})/$', views.systemkvalitet_virksomhet, name='systemkvalitet_virksomhet'),
 
 	url(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
+	url(r'^leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
 	url(r'^leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),
 
 	url(r'^hovedkategorier/$', views.alle_hovedkategorier, name='alle_hovedkategorier'),
 	url(r'^hovedkategorier/subkategorier/$', views.alle_systemkategorier, name='alle_systemkategorier'),
+	url(r'^hovedkategorier/subkategorier/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
 	url(r'^hovedkategorier/subkategorier/uten_kategori/$', views.uten_systemkategori, name='uten_systemkategorier'),
 	url(r'^hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
 
 	url(r'^domener/$', views.alle_systemurler, name='alle_systemurler'),
-	#url(r'^systemurl/(?P<pk>\d{1,8})/$', views.systemurl, name='systemurl'),
-
-
-	url(r'^script/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
-	url(r'^script/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
-	#url(r'^script/cmdb_combine/$', views.cmdb_combine, name='cmdb_combine'),
-
-	#url(r'^tjenester/$', views.alle_tjenester, name='alle_tjenester'),
-	#url(r'^tjenester/(?P<pk>\d{1,8})/$', views.tjenestedetaljer, name='tjenestedetaljer'),
 
 	url(r'^programvare/$', views.alle_programvarer, name='alle_programvarer'),
 	url(r'^programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
@@ -124,8 +112,14 @@ urlpatterns = [
 	url(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 	url(r'^cmdb/os/$', views.alle_os, name='alle_os'),
 	url(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
-	url(r'^cmdb/prk/$', views.alle_prk, name='alle_prk'),
-	#url(r'^cmdb/prk/ad_sok/$', views.ad_prk_sok, name='ad_prk_sok'),
+
+	url(r'^prk/$', views.alle_prk, name='alle_prk'),
+
+	url(r'^ad/$', views.ad, name='ad'),
+	url(r'^ad/adgrupper/$', views.alle_adgrupper, name='alle_adgrupper'),
+	url(r'^ad/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),  #denne må komme etter ad/adgrupper/
+	url(r'^ad/recursive/(?P<group>[-_=,a-zA-Z0-9\s]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
+	url(r'^ad/exact/(?P<name>[-_=,a-zæøåA-ZÆØÅ0-9\s]{2,200})/$', views.ad_exact, name='ad_exact'),
 
 	url(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	url(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),
@@ -139,40 +133,16 @@ urlpatterns = [
 	url(r'^definisjon/$', views.alle_definisjoner, name='alle_definisjoner'),
 	url(r'^definisjon/(?P<begrep>[-_a-zA-Z0-9\s]{1,150})/$', views.definisjon, name='definisjon'),
 
-	#url(r'^import/iktkontakt/$', views.import_iktkontakt, name='import_iktkontakt'),
-	#url(r'^import/users/$', views.import_ansvarlige_brukere, name='import_ansvarlige_brukere'),
-	#url(r'^automate/fixcmdb/$', views.fixcmdb, name='fixcmdb'),
-	#url(r'^automate/slettikkeibruk/$', views.slettBrukIkkeIBruk, name='slettBrukIkkeIBruk'),
-	#url(r'^automate/tommecreated/$', views.sett_created_til_sist_oppdatert, name='sett_created_til_sist_oppdatert'),
-	#url(r'^automate/ansvarlig_bruker/$', views.match_ansvarlig_brukerobjekt, name='match_ansvarlig_brukerobjekt'),
-
 	url(r'^dashboard/$', views.dashboard_all, name='dashboard_all'),
 	url(r'^dashboard/(?P<virksomhet>\d{1,8})/$', views.dashboard_all, name='dashboard_all'),
 
+
 	# import og konvertering
-	#url(r'^import_vir/$', views.import_vir, name='import_vir'),
-	#url(r'^import_lev/$', views.import_lev, name='import_lev'),
-	#url(r'^import_sys/$', views.import_sys, name='import_sys'),
 	url(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),
 	url(r'^import/cmdb/business_services/$', views_import.import_business_services, name='import_cmdb'),
 	url(r'^import/cmdb/servers/$', views_import.import_cmdb_servers, name='import_cmdb'),
 	url(r'^import/cmdb/databases/$', views_import.import_cmdb_databases, name='import_databases'),
 	url(r'^import/cmdb/databases/oracle/$', views_import.import_cmdb_databases_oracle, name='import_cmdb_databases_oracle'),
 	url(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
-	#url(r'^import/cmdb/oslofelles/$', views_import.add_dns_vlan_vip, name='add_dns_vlan_vip'),
-
 	url(r'^user_clean_up/$', views.user_clean_up, name='user_clean_up'),
-
-	#url(r'^import_sys_new/$', views.import_sys_new, name='import_sys_new'),
-	#url(r'^import_bruk/$', views.import_bruk, name='import_bruk'),
-	url(r'^system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
-	url(r'^system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
-
-	#url(r'^ad/user/(?P<username>[a-zA-Z0-9]{2,15})/$', views.ad_user_details, name='ad_user_details'),
-	#url(r'^ad/group/$', views.ad_group_details, name='ad_group_details'),
-	#url(r'^ad/group/(?P<group>[-_a-zA-Z0-9\s]{2,100})/$', views.ad_group_details, name='ad_group_details'),
-	url(r'^ad/$', views.ad, name='ad'),
-	url(r'^ad/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),
-	url(r'^ad/recursive/(?P<group>[-_=,a-zA-Z0-9\s]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
-	url(r'^ad/exact/(?P<name>[-_=,a-zæøåA-ZÆØÅ0-9\s]{2,200})/$', views.ad_exact, name='ad_exact'),
 ]

@@ -1,0 +1,15 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	CMDB: AD-grupper
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/adgroup/">Alle AD-grupper</a>
+	<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/adgroup/?membercount=0">AD-grupper med 0 medlemmer</a>
+	<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">AD-grupper medlem i 0 grupper</a>
+
+{% endblock main_content %}

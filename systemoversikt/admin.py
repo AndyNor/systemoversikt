@@ -746,9 +746,9 @@ class ADOrgUnitAdmin(admin.ModelAdmin):
 
 @admin.register(ADgroup)
 class ADgroupAdmin(admin.ModelAdmin):
-	list_display = ('distinguishedname', 'from_prk', 'parent', 'membercount', 'memberofcount', 'description', 'sist_oppdatert')
+	list_display = ('distinguishedname', 'from_prk', 'membercount', 'memberofcount', 'description', 'sist_oppdatert')
 	search_fields = ('distinguishedname',)
-	list_filter = ('parent', 'from_prk', 'membercount', 'memberofcount',)
+	list_filter = ('from_prk', 'opprettet', 'sist_oppdatert')
 
 
 @admin.register(AutorisertBestiller)
