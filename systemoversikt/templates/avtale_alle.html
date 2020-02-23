@@ -16,14 +16,14 @@
 
 <p>{{ utdypende_beskrivelse }} Det er {{ avtaler.count }} avtaler registrert.</p>
 
-<span>Vis bare avtaler knyttet til: 
+<span>Vis bare avtaler knyttet til:
 {% for v in alle_virksomheter %}
-	<a style="margin: 4px; {% if v.pk is virksomhet_pk %}color: white; background: #007bff;{% endif %}" 
+	<a style="margin: 4px; {% if v.pk is virksomhet_pk %}color: white; background: #007bff;{% endif %}"
 	href="{% url 'avtalervirksomhet' virksomhet=v.pk %}">{{ v.virksomhetsforkortelse }}</a>
 {% endfor %}
 </span>
 <br><br>
 
-{% include 'alle_avtaler_include.html' %}
+{% include 'avtale_include.html' %}
 
 {% endblock main_content %}

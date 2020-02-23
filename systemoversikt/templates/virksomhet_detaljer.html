@@ -191,20 +191,20 @@
 <hr>
 
 <h6>Avtaler {{ virksomhet.virksomhetsforkortelse }} er part i</h6>
-{% include "alle_avtaler_include.html" with avtaler=avtaler %}
+{% include "avtale_include.html" with avtaler=avtaler %}
 
 <hr>
 
 
 <h6>Systemer {{ virksomhet.virksomhetsforkortelse }} er eier av eller forvalter for </h6>
 <p>Det er {{ systemer_ansvarlig_for.count }} systemer registrert.</p>
-{% include "alle_systemer_virksomhet_include.html" with systemer=systemer_ansvarlig_for %}
+{% include "system_include_virksomhet.html" with systemer=systemer_ansvarlig_for %}
 
 <h6>Lokale kontaktpersoner for systemer {{ virksomhet.virksomhetsforkortelse }} bruker</h6>
-{% include "alle_systembruk_include.html" with all_bruk=systembruk_forvalter_for.all %}
+{% include "systembruk_include.html" with all_bruk=systembruk_forvalter_for.all %}
 
 <h6>{{ virksomhet.virksomhetsforkortelse }}'s Domener</h6>
-{% include "alle_urler_include.html" with web_urler=urleier_for %}
+{% include "urler_include.html" with web_urler=urleier_for %}
 
 {% comment %}
 <h6>Systemer {{ virksomhet.virksomhetsforkortelse }} har driftsansvar for (Antall: {{ systemer_vi_drifter.count }})</h6>

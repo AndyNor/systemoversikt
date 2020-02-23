@@ -1053,7 +1053,7 @@
 				{% else %}
 
 					{% if systemdetaljer.DPIA_for_system %}
-						{% include 'detaljer_system_dpia.html' %}
+						{% include 'system_dpia.html' %}
 					{% else %}
 						<p>Det er registrert behandlinger som krever DPIA</p>
 						<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/dpia/add/?for_system={{ systemdetaljer.pk }}">Opprett DPIA-dokument</a>

@@ -13,7 +13,7 @@
 <p>Her kan du kopiere behandlinger knyttet til {{ system.systemnavn }} for til din virksomhet. Tilbake til <a href="{{ url_system }}">{{ system.systemnavn }}</a>.</p>
 
 <h6>Din virksomhets behandlinger for {{ system.systemnavn }}</h6>
-{% include 'alle_behandlinger_enkel_include.html' with behandlinger=dine_eksisterende_behandlinger %}
+{% include 'behandling_include_enkel.html' with behandlinger=dine_eksisterende_behandlinger %}
 
 <h6>Velg blant eksisterende behandlinger. Behandlinger som er merket som kopieringskandidat (fellesbehandling) har grønn bakgrunn.</h6>
 

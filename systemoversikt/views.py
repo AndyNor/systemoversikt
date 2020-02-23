@@ -89,7 +89,7 @@ def minside(request):
 	Når innlogget, vise informasjon om innlogget bruker
 	"""
 	if request.user.is_authenticated:
-		return render(request, 'minside.html', {
+		return render(request, 'site_minside.html', {
 			'request': request,
 		})
 	else:
@@ -276,7 +276,7 @@ def dashboard_all(request, virksomhet=None):
 		},
 	]
 
-	return render(request, 'dashboard.html', {
+	return render(request, 'virksomhet_dashboard.html', {
 		'request': request,
 		'systemlister': systemlister,
 		'alle_virksomheter': alle_virksomheter,
@@ -308,7 +308,7 @@ def user_clean_up(request):
 		else:
 			print("Du får ikke kjøre denne kommandoen i produksjon!")
 
-		return render(request, "home.html", {
+		return render(request, "site_home.html", {
 			'request': request,
 		})
 	else:
@@ -323,7 +323,7 @@ def permissions(request):
 	required_permissions = 'systemoversikt.change_ansvarlig'
 	if request.user.has_perm(required_permissions):
 		ansvarlige = Ansvarlig.objects.all()
-		return render(request, 'permissions.html', {
+		return render(request, 'site_permissions.html', {
 			'ansvarlige': ansvarlige,
 		})
 	else:
@@ -351,7 +351,7 @@ def roller(request):
 
 			return JsonResponse(export, safe=False)
 		else:
-			return render(request, 'roller.html', {
+			return render(request, 'site_roller.html', {
 				'request': request,
 				'groups': groups,
 	})
@@ -376,7 +376,7 @@ def logger(request):
 	if request.user.has_perm(required_permissions):
 
 		recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:300]
-		return render(request, 'logger.html', {
+		return render(request, 'site_audit_logger.html', {
 			'request': request,
 			'recent_admin_loggs': recent_admin_loggs,
 		})
@@ -393,7 +393,7 @@ def logger_audit(request):
 	if request.user.has_perm(required_permissions):
 
 		recent_loggs = ApplicationLog.objects.order_by('-opprettet')[:150]
-		return render(request, 'logger_audit.html', {
+		return render(request, 'site_logger_audit.html', {
 			'request': request,
 			'recent_loggs': recent_loggs,
 		})
@@ -417,7 +417,7 @@ def home(request):
 	#print(nyeste_systemer)
 	kategorier = SystemKategori.objects.all()
 
-	return render(request, 'home.html', {
+	return render(request, 'site_home.html', {
 		'request': request,
 		'kategorier': kategorier,
 		'antall_systemer': antall_systemer,
@@ -449,7 +449,7 @@ def alle_definisjoner(request):
 		)
 	definisjoner.order_by('begrep')
 
-	return render(request, 'alle_definisjoner.html', {
+	return render(request, 'definisjoner_alle.html', {
 		'request': request,
 		'definisjoner': definisjoner,
 		'search_term': search_term,
@@ -462,7 +462,7 @@ def definisjon(request, begrep):
 	Tilgangsstyring: ÅPEN
 	"""
 	passende_definisjoner = Definisjon.objects.filter(begrep=begrep)
-	return render(request, 'detaljer_definisjon.html', {
+	return render(request, 'definisjon_detaljer.html', {
 		'request': request,
 		'begrep': begrep,
 		'definisjoner': passende_definisjoner,
@@ -493,7 +493,7 @@ def ansvarlig(request, pk):
 	informasjonssikkerhetskoordinator_for = Virksomhet.objects.filter(informasjonssikkerhetskoordinator=pk)
 	behandlinger_for = BehandlingerPersonopplysninger.objects.filter(oppdateringsansvarlig=pk)
 
-	return render(request, 'detaljer_ansvarlig.html', {
+	return render(request, 'ansvarlig_detaljer.html', {
 		'request': request,
 		'ansvarlig': ansvarlig,
 		'systemeier_for': systemeier_for,
@@ -519,7 +519,7 @@ def alle_ansvarlige(request):
 	Tilgangsstyring: ÅPEN
 	"""
 	ansvarlige = Ansvarlig.objects.all().order_by('brukernavn__first_name')
-	return render(request, 'alle_ansvarlige.html', {
+	return render(request, 'ansvarlig_alle.html', {
 		'request': request,
 		'ansvarlige': ansvarlige,
 		'suboverskrift': "Hele kommunen",
@@ -534,7 +534,7 @@ def alle_ansvarlige_eksport(request):
 	required_permissions = 'systemoversikt.change_ansvarlig'
 	if request.user.has_perm(required_permissions):
 		ansvarlige = Ansvarlig.objects.filter(brukernavn__is_active=True)
-		return render(request, 'alle_ansvarlige_eksport.html', {
+		return render(request, 'ansvarlig_eksport.html', {
 			'request': request,
 			'ansvarlige': ansvarlige,
 		})
@@ -641,7 +641,7 @@ def systemdetaljer(request, pk):
 	avhengigheter_reverse_systemer = System.objects.filter(avhengigheter_referanser=pk)
 	avhengigheter_reverse_systembruk = SystemBruk.objects.filter(avhengigheter_referanser=pk)
 
-	return render(request, 'detaljer_system.html', {
+	return render(request, 'system_detaljer.html', {
 		'request': request,
 		'systemdetaljer': system,
 		'systembruk': systembruk,
@@ -665,21 +665,11 @@ def systemer_pakket(request):
 	"""
 	systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
 	programvarer = Programvare.objects.all()
-	return render(request, 'alle_systemer_pakket.html', {
+	return render(request, 'system_hvordan_pakket.html', {
 		'request': request,
 		'systemer': systemer,
 		'programvarer': programvarer,
 	})
-
-
-"""
-def systemer_test(request):
-	systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
-	return render(request, 'alle_systemer_test.html', {
-		'request': request,
-		'systemer': systemer,
-	})
-"""
 
 
 def systemklassifisering_detaljer(request, id):
@@ -692,7 +682,7 @@ def systemklassifisering_detaljer(request, id):
 	else:
 		utvalg_systemer = System.objects.filter(systemeierskapsmodell=id)
 
-	return render(request, 'alle_systemer_uten_paginering.html', {
+	return render(request, 'systemer_eierskapsvisning.html', {
 		'request': request,
 		'overskrift': ("Systemklassifisering: %s" % id.lower()),
 		'systemer': utvalg_systemer,
@@ -789,7 +779,7 @@ def bruksdetaljer(request, pk):
 	Tilgangsstyring: ÅPENT
 	"""
 	bruk = SystemBruk.objects.get(pk=pk)
-	return render(request, 'detaljer_systembruk.html', {
+	return render(request, 'systembruk_detaljer.html', {
 		'request': request,
 		'bruk': bruk,
 	})
@@ -826,7 +816,7 @@ def all_bruk_for_virksomhet(request, pk):
 		virksomhet = Virksomhet.objects.get(pk=pk)
 	except:
 		messages.warning(request, 'Fant ingen virksomhet med denne ID-en.')
-	return render(request, 'alle_systembruk.html', {
+	return render(request, 'systembruk_alle.html', {
 		'request': request,
 		'all_bruk': all_bruk,
 		'virksomhet': virksomhet,
@@ -859,7 +849,7 @@ def registrer_bruk(request, system):
 		vmb = [bruk.brukergruppe.pk for bruk in virksomheter_med_bruk]
 		manglende_virksomheter = Virksomhet.objects.exclude(pk__in=vmb)
 
-		return render(request, 'registrer_bruk.html', {
+		return render(request, 'system_registrer_bruk.html', {
 			'request': request,
 			'system': system_instans,
 			'virksomheter_uten_bruk': manglende_virksomheter,
@@ -876,7 +866,7 @@ def programvaredetaljer(request, pk):
 	programvare = Programvare.objects.get(pk=pk)
 	programvarebruk = ProgramvareBruk.objects.filter(programvare=pk).order_by("brukergruppe")
 	behandlinger = BehandlingerPersonopplysninger.objects.filter(programvarer=pk).order_by("funksjonsomraade")
-	return render(request, "detaljer_programvare.html", {
+	return render(request, "programvare_detaljer.html", {
 		'request': request,
 		'programvare': programvare,
 		'programvarebruk': programvarebruk,
@@ -890,7 +880,7 @@ def alle_programvarer(request):
 	Tilgangsstyring: ÅPEN
 	"""
 	programvarer = Programvare.objects.order_by(Lower('programvarenavn'))
-	template = 'alle_programvarer.html'
+	template = 'programvare_alle.html'
 
 	return render(request, template, {
 		'overskrift': "Programvarer",
@@ -911,7 +901,7 @@ def all_programvarebruk_for_virksomhet(request, pk):
 		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(programvarer=bruk.programvare.pk).count()
 		bruk.antall_behandlinger = ant
 
-	return render(request, "alle_programvarebruk.html", {
+	return render(request, "programvarebruk_alle.html", {
 		'request': request,
 		'virksomhet': virksomhet,
 		'all_bruk': all_bruk,
@@ -924,7 +914,7 @@ def programvarebruksdetaljer(request, pk):
 	Tilgangsstyring: ÅPEN
 	"""
 	bruksdetaljer = ProgramvareBruk.objects.get(pk=pk)
-	return render(request, "detaljer_programvarebruk.html", {
+	return render(request, "programvarebruk_detaljer.html", {
 		'request': request,
 		'bruksdetaljer': bruksdetaljer,
 	})
@@ -959,7 +949,7 @@ def alle_behandlinger(request):
 	if request.user.has_perm(required_permissions):
 
 		behandlinger = BehandlingerPersonopplysninger.objects.all()
-		return render(request, 'alle_behandlinger_totalt.html', {
+		return render(request, 'behandling_alle.html', {
 			'request': request,
 			'behandlinger': behandlinger,
 		})
@@ -981,7 +971,7 @@ def behandlingsdetaljer(request, pk):
 		system_content_type = ContentType.objects.get_for_model(BehandlingerPersonopplysninger)
 		siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
 
-		return render(request, 'detaljer_behandling.html', {
+		return render(request, 'behandling_detaljer.html', {
 			'request': request,
 			'behandling': behandling,
 			'siste_endringer': siste_endringer,
@@ -990,35 +980,6 @@ def behandlingsdetaljer(request, pk):
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-
-"""
-def behandlinger_filtrerte(request, pk):
-	# Vise filtrerte behandlinger av personopplysninger for en valgt virksomhet
-	# Tilgangsstyring: Vise behandlinger
-	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
-	if request.user.has_perm(required_permissions):
-		vir = Virksomhet.objects.get(pk=pk)
-		filtrerte_behandlinger = BehandlingerPersonopplysninger.objects.all().filter(virksomhet_blacklist__in=[vir])
-
-		return render(request, 'detaljer_behandlinger_filtrert.html', {
-			'request': request,
-			'behandlinger': filtrerte_behandlinger,
-			'virksomhet': vir,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-"""
-
-
-"""
-def alle_behandlinger_alle_detaljer(request, pk):
-	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
-	if request.user.has_perm(required_permissions):
-		template = "alle_behandlinger_alle_detaljer.html"
-		return alle_behandlinger_virksomhet(request, pk, template)
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-"""
 
 
 def mine_behandlinger(request):
@@ -1036,7 +997,7 @@ def mine_behandlinger(request):
 
 
 
-def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False, template='alle_behandlinger.html'):
+def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False, template='behandling_alle_alternativ.html'):
 	"""
 	Vise alle behandling av personopplysninger for en valgt virksomhet
 	Tilgangsstyring: ÅPEN (noe informasjon er tilgangsstyrt i template)
@@ -1124,7 +1085,7 @@ def behandling_kopier(request, system_pk):
 		#TODO Denne mangler behandler virksomheten "abonnerer på". Må vurdere å lage en metode som returnerer virksomhetens aktive behandlinger og gjenbruke denne
 		dine_eksisterende_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=din_virksomhet).filter(systemer=dette_systemet)
 
-		return render(request, 'kopier_behandling_system.html', {
+		return render(request, 'system_kopier_behandling.html', {
 			'request': request,
 			'system': dette_systemet,
 			'dine_eksisterende_behandlinger': dine_eksisterende_behandlinger,
@@ -1143,7 +1104,7 @@ def virksomhet_ansvarlige(request, pk):
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	suboverskrift = "For " + virksomhet.virksomhetsnavn
 	ansvarlige = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).order_by('brukernavn__first_name')
-	return render(request, 'alle_ansvarlige.html', {
+	return render(request, 'ansvarlig_alle.html', {
 		'request': request,
 		'ansvarlige': ansvarlige,
 		'suboverskrift': suboverskrift,
@@ -1170,7 +1131,7 @@ def virksomhet(request, pk):
 	behandling_uten_ansvarlig = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(oppdateringsansvarlig=None).count()
 	behandling_ikke_kvalitetssikret = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(informasjon_kvalitetssikret=False).count()
 
-	return render(request, 'detaljer_virksomhet.html', {
+	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
 		'virksomhet': virksomhet,
 		'systemer_ansvarlig_for': systemer_ansvarlig_for,
@@ -1217,7 +1178,7 @@ def innsyn_virksomhet(request, pk):
 				if (system not in systemer) and (system.innsyn_innbygger or system.innsyn_ansatt) and (system.ibruk != False):
 					systemer.append(system)
 
-		return render(request, 'detaljer_virksomhet_innsyn.html', {
+		return render(request, 'virksomhet_innsyn.html', {
 			'request': request,
 			'virksomhet': virksomhet,
 			'systemer': systemer,
@@ -1256,7 +1217,7 @@ def bytt_virksomhet(request):
 	# denne må vi vente med i tilfelle den blir endret ved en POST-request
 	aktiv_representasjon = request.user.profile.virksomhet
 
-	return render(request, 'bytt_virksomhet.html', {
+	return render(request, 'site_bytt_virksomhet.html', {
 		'request': request,
 		'brukers_virksomhet': aktiv_representasjon,
 		'dine_virksomheter': dine_virksomheter,
@@ -1272,7 +1233,7 @@ def sertifikatmyndighet(request):
 	if request.user.has_perm(required_permissions):
 
 		virksomheter = Virksomhet.objects.all()
-		return render(request, 'sertifikatmyndigheter.html', {
+		return render(request, 'virksomhet_sertifikatmyndigheter.html', {
 			'request': request,
 			'virksomheter': virksomheter,
 		})
@@ -1294,7 +1255,7 @@ def alle_virksomheter(request):
 
 	virksomheter = virksomheter.order_by('-ordinar_virksomhet', 'virksomhetsnavn')
 
-	return render(request, 'alle_virksomheter.html', {
+	return render(request, 'virksomhet_alle.html', {
 		'request': request,
 		'virksomheter': virksomheter,
 	})
@@ -1312,7 +1273,7 @@ def leverandor(request, pk):
 	basisdriftleverandor_for = System.objects.filter(basisdriftleverandor=pk)
 	applikasjonsdriftleverandor_for = System.objects.filter(applikasjonsdriftleverandor=pk)
 	registrar_for = SystemUrl.objects.filter(registrar=pk)
-	return render(request, 'detaljer_leverandor.html', {
+	return render(request, 'leverandor_detaljer.html', {
 		'request': request,
 		'leverandor': leverandor,
 		'systemleverandor_for': systemleverandor_for,
@@ -1342,7 +1303,7 @@ def alle_leverandorer(request):
 
 	leverandorer = leverandorer.order_by(Lower('leverandor_navn'))
 
-	return render(request, 'alle_leverandorer.html', {
+	return render(request, 'leverandor_alle.html', {
 		'request': request,
 		'leverandorer': leverandorer,
 	})
@@ -1354,7 +1315,7 @@ def alle_driftsmodeller(request):
 	Tilgangsstyring: ÅPEN
 	"""
 	driftsmodeller = Driftsmodell.objects.all().order_by('-ansvarlig_virksomhet', 'navn')
-	return render(request, 'alle_driftsmodeller.html', {
+	return render(request, 'driftsmodell_alle.html', {
 		'request': request,
 		'driftsmodeller': driftsmodeller,
 	})
@@ -1389,7 +1350,7 @@ def driftsmodell_virksomhet(request, pk):
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet).order_by("navn")
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
-	return render(request, 'alle_systemer_virksomhet_drifter.html', {
+	return render(request, 'system_virksomhet_drifter.html', {
 		'virksomhet': virksomhet,
 		'request': request,
 		'systemer': systemer_drifter,
@@ -1410,7 +1371,7 @@ def detaljer_driftsmodell(request, pk):
 	anbefalte_personoppl_kategorier = driftsmodell.anbefalte_kategorier_personopplysninger.all()
 	ikke_anbefalte_personoppl_kategorier = Personsonopplysningskategori.objects.filter(~Q(pk__in=anbefalte_personoppl_kategorier)).all()
 
-	return render(request, 'detaljer_driftsmodell.html', {
+	return render(request, 'driftsmodell_detaljer.html', {
 		'request': request,
 		'driftsmodell': driftsmodell,
 		'systemer': systemer,
@@ -1425,7 +1386,7 @@ def systemer_uten_driftsmodell(request):
 	Tilgangsstyring: ÅPEN
 	"""
 	mangler = System.objects.filter(driftsmodell_foreignkey=None)
-	return render(request, 'detaljer_driftsmodell_mangler.html', {
+	return render(request, 'driftsmodell_mangler.html', {
 		'systemer': mangler,
 })
 
@@ -1436,7 +1397,7 @@ def systemer_utfaset(request):
 	Tilgangsstyring: ÅPEN
 	"""
 	systemer = System.objects.filter(ibruk=False).order_by("-sist_oppdatert")
-	return render(request, 'alle_systemer_utfaset.html', {
+	return render(request, 'systemer_utfaset.html', {
 		'systemer': systemer,
 })
 
@@ -1449,7 +1410,7 @@ def systemkategori(request, pk):
 	kategori = SystemKategori.objects.get(pk=pk)
 	systemer = System.objects.filter(systemkategorier=pk).order_by(Lower('systemnavn'))
 	programvarer = Programvare.objects.filter(kategorier=pk).order_by(Lower('programvarenavn'))
-	return render(request, 'detaljer_systemkategori.html', {
+	return render(request, 'kategori_detaljer.html', {
 		'request': request,
 		'systemer': systemer,
 		'kategori': kategori,
@@ -1478,7 +1439,7 @@ def alle_hovedkategorier(request):
 			subkategorier_uten_hovedkategori.append(subkategori)
 
 
-	return render(request, 'alle_systemhovedkategorier.html', {
+	return render(request, 'kategori_hoved_alle.html', {
 		'request': request,
 		'hovedkategorier': hovedkategorier,
 		'subkategorier_uten_hovedkategori': subkategorier_uten_hovedkategori,
@@ -1491,7 +1452,7 @@ def alle_systemkategorier(request):
 	Tilgangsstyring: ÅPEN
 	"""
 	kategorier = SystemKategori.objects.order_by('kategorinavn')
-	return render(request, 'alle_systemkategorier.html', {
+	return render(request, 'kategori_alle.html.html', {
 		'request': request,
 		'kategorier': kategorier,
 	})
@@ -1506,26 +1467,12 @@ def uten_systemkategori(request):
 	antall_programvarer = Programvare.objects.all().count()
 	systemer = System.objects.annotate(num_categories=Count('systemkategorier')).filter(num_categories=0)
 	programvarer = Programvare.objects.annotate(num_categories=Count('kategorier')).filter(num_categories=0)
-	return render(request, 'alle_systemkategorier_uten_systemkategorier.html', {
+	return render(request, 'kategori_system_uten.html', {
 		'request': request,
 		'systemer': systemer,
 		'programvarer': programvarer,
 		'antall_systemer': antall_systemer,
 		'antall_programvarer': antall_programvarer,
-	})
-
-
-def systemurl(request, pk):
-	"""
-	Vise detaljer om en URL
-	Tilgangsstyring: ÅPEN
-	"""
-	url = SystemUrl.objects.get(pk=pk)
-	systemer = System.objects.filter(systemurl=pk)
-	return render(request, 'detaljer_url.html', {
-		'request': request,
-		'web_url': url,
-		'systemer': systemer,
 	})
 
 
@@ -1535,7 +1482,7 @@ def alle_systemurler(request):
 	Tilgangsstyring: ÅPEN
 	"""
 	urler = SystemUrl.objects.order_by('domene')
-	return render(request, 'alle_urler.html', {
+	return render(request, 'urler_alle.html', {
 		'request': request,
 		'web_urler': urler,
 	})
@@ -1681,7 +1628,7 @@ def system_til_programvare(request, system_id=None):
 
 		utvalg_systemer = System.objects.filter(systemtyper=1)
 
-		return render(request, 'system_til_programvare.html', {
+		return render(request, 'system_tilprogramvare.html', {
 			'request': request,
 			'systemer': utvalg_systemer,
 		})
@@ -1696,7 +1643,7 @@ def alle_adgrupper(request):
 	"""
 	required_permissions = 'systemoversikt.view_user'
 	if request.user.has_perm(required_permissions):
-		return render(request, 'alle_adgrupper.html', {
+		return render(request, 'ad_adgrupper_sok.html', {
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -1731,7 +1678,7 @@ def alle_os(request):
 		maskiner = CMDBdevice.objects.filter(active=True)
 		maskiner_stats = cmdb_os_stats(maskiner)
 
-		return render(request, 'alle_os.html', {
+		return render(request, 'prk_alle_server_os.html', {
 			'maskiner_stats': maskiner_stats,
 		})
 	else:
@@ -1809,7 +1756,7 @@ def alle_ip(request):
 			not_ip_addresses = None
 
 
-		return render(request, 'alle_ip.html', {
+		return render(request, 'cmdb_ip_sok.html', {
 			'request': request,
 			'ip_lookup': ip_lookup,
 			'search_term': search_term,
@@ -1858,7 +1805,7 @@ def alle_prk(request):
 
 		skjemavalg = skjemavalg.order_by('skjemanavn__skjemanavn', 'gruppering__feltnavn')
 
-		return render(request, 'alle_prk.html', {
+		return render(request, 'prk_alle_bs.html', {
 			'request': request,
 			'search_term': search_term,
 			'skjemavalg': skjemavalg,
@@ -1917,7 +1864,7 @@ def alle_maskiner(request):
 
 		maskiner = maskiner.order_by('comp_os')
 
-		return render(request, 'alle_maskiner.html', {
+		return render(request, 'cmdb_maskiner_sok.html', {
 			'request': request,
 			'maskiner': maskiner,
 			'search_term': search_term,
@@ -1937,7 +1884,7 @@ def servere_utfaset(request):
 	if request.user.has_perm(required_permissions):
 
 		maskiner = CMDBdevice.objects.filter(active=False).order_by("-sist_oppdatert")
-		return render(request, 'alle_maskiner_utfaset.html', {
+		return render(request, 'cmdb_alle_maskiner_utfaset.html', {
 			'request': request,
 			'maskiner': maskiner,
 		})
@@ -1976,7 +1923,7 @@ def alle_databaser(request):
 			d.server_str = server_str # dette legger bare til et felt. Vi skriver ingen ting her.
 
 
-		return render(request, 'alle_databaser.html', {
+		return render(request, 'cmdb_databaser_sok.html', {
 			'request': request,
 			'databaser': databaser,
 			'search_term': search_term,
@@ -2003,7 +1950,7 @@ def alle_cmdbref(request):
 
 		cmdbref = cmdbref.order_by("-operational_status", "service_classification", Lower("navn"))
 
-		return render(request, 'alle_cmdb.html', {
+		return render(request, 'cmdb_bs_sok.html', {
 			'request': request,
 			'cmdbref': cmdbref,
 			'search_term': search_term,
@@ -2023,7 +1970,7 @@ def cmdbdevice(request, pk):
 		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref)
 		databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
 
-		return render(request, 'detaljer_cmdbdevice.html', {
+		return render(request, 'cmdb_maskiner_detaljer.html', {
 			'request': request,
 			'cmdbref': [cmdbref],
 			'cmdbdevices': cmdbdevices,
@@ -2047,7 +1994,7 @@ def alle_avtaler(request, virksomhet=None):
 		virksomhetsnavn = Virksomhet.objects.get(pk=virksomhet)
 		avtaler = avtaler.filter(Q(virksomhet=virksomhet) | Q(leverandor_intern=virksomhet))
 		utdypende_beskrivelse = "Viser alle avtaler der %s er avtalepart." % virksomhetsnavn
-	return render(request, 'alle_avtaler.html', {
+	return render(request, 'avtale_alle.html', {
 		'request': request,
 		'alle_virksomheter': alle_virksomheter,
 		'avtaler': avtaler,
@@ -2062,7 +2009,7 @@ def avtaledetaljer(request, pk):
 	Tilgangsstyring: ÅPEN
 	"""
 	avtale = Avtale.objects.get(pk=pk)
-	return render(request, 'detaljer_avtale.html', {
+	return render(request, 'avtale_detaljer.html', {
 		'request': request,
 		'avtale': avtale,
 	})
@@ -2076,7 +2023,7 @@ def databehandleravtaler_virksomhet(request, pk):
 	virksomet = Virksomhet.objects.get(pk=pk)
 	utdypende_beskrivelse = ("Viser databehandleravtaler for %s" % virksomet)
 	avtaler = Avtale.objects.filter(virksomhet=pk).filter(avtaletype=1) # 1 er databehandleravtaler
-	return render(request, 'alle_avtaler.html', {
+	return render(request, 'avtale_alle.html', {
 		'request': request,
 		'avtaler': avtaler,
 		'utdypende_beskrivelse': utdypende_beskrivelse,
@@ -2089,7 +2036,7 @@ def alle_dpia(request):
 	Tilgangsstyring: ÅPEN
 	"""
 	alle_dpia = DPIA.objects.all()
-	return render(request, 'alle_dpia.html', {
+	return render(request, 'dpia_alle.html', {
 		'request': request,
 		'alle_dpia': alle_dpia,
 	})
