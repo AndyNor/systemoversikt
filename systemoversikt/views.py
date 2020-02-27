@@ -1422,7 +1422,7 @@ def alle_systemkategorier(request):
 	Tilgangsstyring: ÅPEN
 	"""
 	kategorier = SystemKategori.objects.order_by('kategorinavn')
-	return render(request, 'kategori_alle.html.html', {
+	return render(request, 'kategori_alle.html', {
 		'request': request,
 		'kategorier': kategorier,
 	})

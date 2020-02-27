@@ -1156,7 +1156,6 @@ class ADOrgUnit(models.Model):
 	distinguishedname = models.TextField(
 			verbose_name="Fully Distinguished Name",
 			unique=True,
-			blank=True, null=True,
 			)
 	ou = models.CharField(
 			verbose_name="Name",
@@ -1192,7 +1191,6 @@ class ADgroup(models.Model):
 	distinguishedname = models.TextField(
 			verbose_name="Fully Distinguished Name",
 			unique=True,
-			null=False,
 			)
 	member = models.TextField(
 			verbose_name="Medlemmer",
