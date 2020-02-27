@@ -163,21 +163,26 @@ class Command(BaseCommand):
 		result = ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data, existing_objects)
 
 		print("Deaktiverer brukere som ikke ble funnet")
-		for b in existing_objects:
-			try:
-				u = User.objects.get(username=b)
-				if u.is_superuser:
-					continue # don't mess with super users
-				if u.is_active:
-					u.is_active = False
-					u.save()
-					print("r", end="")
-					result["report_data"]["modified"] += 1
-				else:
-					print("-", end="")
-			except ObjectDoesNotExist:
-				pass
-			sys.stdout.flush()
-		print("")
+
+		@transaction.atomic  # for speeding up database performance
+		def cleanup(existing_objects, result):
+			for b in existing_objects:
+				try:
+					u = User.objects.get(username=b)
+					if u.is_superuser:
+						continue # don't mess with super users
+					if u.is_active:
+						u.is_active = False
+						u.save()
+						print("r", end="")
+						result["report_data"]["modified"] += 1
+					else:
+						print("-", end="")
+				except ObjectDoesNotExist:
+					pass
+				sys.stdout.flush()
+			print("")
+
+		cleanup(existing_objects, result)
 
 		report(result)
