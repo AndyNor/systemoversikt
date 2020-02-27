@@ -1,6 +1,16 @@
 # -*- coding: utf-8 -*-
 """ Her er funksjoner som gjenbrukes ofte og derfor er skilt ut """
 
+def microsoft_date_decode(timestamp):
+	from django.utils.timezone import make_aware
+	import datetime
+
+	ms_timestamp = int(timestamp[:-1])  # removing one trailing digit: steps of 100ns to steps pf 1 micro second.
+	ms_epoch_start = datetime.datetime(1601,1,1)
+	timedelta = datetime.timedelta(microseconds=ms_timestamp)
+	return make_aware(ms_epoch_start + timedelta)
+
+
 def ldap_OK_virksomheter():
 	l = ldap.initialize(os.environ["KARTOTEKET_LDAPSERVER"])
 	l.bind_s(os.environ["KARTOTEKET_LDAPUSER"], os.environ["KARTOTEKET_LDAPPASSWORD"])
