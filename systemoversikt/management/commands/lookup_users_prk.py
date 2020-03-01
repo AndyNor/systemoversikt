@@ -40,4 +40,4 @@ class Command(BaseCommand):
 				event_type='Oppslag bruker mot PRK',
 				message=logg_entry_message,
 		)
-		logg_entry.save()
+

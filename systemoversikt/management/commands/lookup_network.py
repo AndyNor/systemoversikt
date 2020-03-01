@@ -109,6 +109,5 @@ class Command(BaseCommand):
 				event_type='Nettverksoppslag',
 				message=logg_entry_message,
 		)
-		logg_entry.save()
 
 		print(logg_entry_message)

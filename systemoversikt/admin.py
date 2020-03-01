@@ -73,7 +73,7 @@ class SikkerhetstesterAdmin(SimpleHistoryAdmin):
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('systemnavn', 'ibruk', 'systemeierskapsmodell', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
+	list_display = ('systemnavn', 'alias', 'ibruk', 'systemeierskapsmodell', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
 	search_fields = ('systemnavn', 'systembeskrivelse')
 	list_filter = ('ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
@@ -105,7 +105,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'fields': (
 				'ibruk',
 				'informasjon_kvalitetssikret',
-				'systemnavn',
+				('systemnavn', 'alias'),
 				'systembeskrivelse',
 				'systemtyper',
 				'systemeierskapsmodell',

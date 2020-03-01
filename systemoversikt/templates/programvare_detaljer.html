@@ -11,12 +11,19 @@
 
 <p>
 	{% if user.is_authenticated %}
-		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/programvare/{{ programvare.pk }}/change/">Rediger detaljer</a>
 		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/programvarebruk/add/?programvare={{ programvare.pk }}">Legg til bruk</a>
 		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/add/?programvarer={{ programvare.pk }}">Legg til behandling</a>
 	{% endif %}
 
 </p>
+
+{% if user.is_authenticated %}
+<div style="width: 140px; background-color: white; position: -webkit-sticky; position: sticky; top: 115px; z-index: 9999; margin-left: 10px; padding: 10px; border-radius: 25px; border: 2px solid #eeeeee;">
+<a target="_blank" href="/admin/systemoversikt/programvare/{{ programvare.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
+</div>
+{% endif %}
+
+<br>
 
 <div class="card">
 	<div class="card-body">
@@ -24,6 +31,9 @@
 
 	</div>
 </div>
+
+<br>
+
 
 <br>
 

@@ -53,7 +53,6 @@ def import_group_permissions(request):
 				event_type='Grupperettigheter import',
 				message=logg_entry_message,
 			)
-		logg_entry.save()
 		messages.success(request, logg_entry_message)
 
 		return render(request, 'site_home.html', {
@@ -172,7 +171,6 @@ def import_business_services(request):
 					event_type='CMDB business service import',
 					message=logg_entry_message,
 				)
-			logg_entry.save()
 			messages.success(request, logg_entry_message)
 
 		return render(request, 'site_home.html', {
@@ -245,7 +243,6 @@ def import_cmdb_databases_oracle(request):
 				event_type='CMDB database import (Oracle)',
 				message=logg_entry_message,
 			)
-		logg_entry.save()
 		messages.success(request, logg_entry_message)
 
 		return render(request, 'site_home.html', {
@@ -323,7 +320,6 @@ def import_cmdb_databases(request):
 				event_type='CMDB database import',
 				message=logg_entry_message,
 			)
-		logg_entry.save()
 		messages.success(request, logg_entry_message)
 
 		return render(request, 'site_home.html', {
@@ -402,7 +398,6 @@ def import_cmdb_servers(request):
 				event_type='CMDB server import',
 				message=logg_entry_message,
 			)
-		logg_entry.save()
 		messages.success(request, logg_entry_message)
 
 		return render(request, 'site_home.html', {

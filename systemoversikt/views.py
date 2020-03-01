@@ -482,8 +482,6 @@ def ansvarlig(request, pk):
 	systemforvalter_for = System.objects.filter(~Q(ibruk=False)).filter(systemforvalter_kontaktpersoner_referanse=pk)
 	systemforvalter_bruk_for = SystemBruk.objects.filter(systemforvalter_kontaktpersoner_referanse=pk)
 	kam_for = Virksomhet.objects.filter(uke_kam_referanse=pk)
-	#tjenesteleder_for = Tjeneste.objects.filter(tjenesteleder=pk)
-	#tjenesteforvalter_for = Tjeneste.objects.filter(tjenesteforvalter=pk)
 	avtale_ansvarlig_for = Avtale.objects.filter(avtaleansvarlig=pk)
 	ikt_kontakt_for = Virksomhet.objects.filter(ikt_kontakt=pk)
 	sertifikatbestiller_for = Virksomhet.objects.filter(autoriserte_bestillere_sertifikater__person=pk)
@@ -492,6 +490,11 @@ def ansvarlig(request, pk):
 	personvernkoordinator_for = Virksomhet.objects.filter(personvernkoordinator=pk)
 	informasjonssikkerhetskoordinator_for = Virksomhet.objects.filter(informasjonssikkerhetskoordinator=pk)
 	behandlinger_for = BehandlingerPersonopplysninger.objects.filter(oppdateringsansvarlig=pk)
+	definisjonsansvarlig_for = Definisjon.objects.filter(ansvarlig=pk)
+	system_innsynskontakt_for = System.objects.filter(kontaktperson_innsyn=pk)
+	autorisert_bestiller_uke_for = Virksomhet.objects.filter(autoriserte_bestillere_tjenester_uke=pk)
+
+
 
 	return render(request, 'ansvarlig_detaljer.html', {
 		'request': request,
@@ -500,8 +503,6 @@ def ansvarlig(request, pk):
 		'systemforvalter_for': systemforvalter_for,
 		'systemforvalter_bruk_for': systemforvalter_bruk_for,
 		'kam_for': kam_for,
-		#'tjenesteleder_for': tjenesteleder_for,
-		#'tjenesteforvalter_for': tjenesteforvalter_for,
 		'avtale_ansvarlig_for': avtale_ansvarlig_for,
 		'ikt_kontakt_for': ikt_kontakt_for,
 		'sertifikatbestiller_for': sertifikatbestiller_for,
@@ -510,6 +511,9 @@ def ansvarlig(request, pk):
 		'personvernkoordinator_for': personvernkoordinator_for,
 		'informasjonssikkerhetskoordinator_for': informasjonssikkerhetskoordinator_for,
 		'behandlinger_for': behandlinger_for,
+		'definisjonsansvarlig_for': definisjonsansvarlig_for,
+		'system_innsynskontakt_for': system_innsynskontakt_for,
+		'autorisert_bestiller_uke_for': autorisert_bestiller_uke_for,
 	})
 
 
@@ -720,15 +724,23 @@ def alle_systemer(request):
 	if search_term == "__all__":
 		aktuelle_systemer = System.objects.all()
 		potensielle_systemer = System.objects.none()
+		aktuelle_programvarer = Programvare.objects.none()
 	elif len(search_term) < 2: # if one or less, return nothing
 		aktuelle_systemer = System.objects.none()
 		potensielle_systemer = System.objects.none()
+		aktuelle_programvarer = Programvare.objects.none()
 	else:
-		aktuelle_systemer = System.objects.filter(systemnavn__icontains=search_term)
+		aktuelle_systemer = System.objects.filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
 		#Her ønsker vi å vise treff i beskrivelsesfeltet, men samtidig ikke vise systemer på nytt
 		potensielle_systemer = System.objects.filter(Q(systembeskrivelse__icontains=search_term) & ~Q(pk__in=aktuelle_systemer))
+		aktuelle_programvarer = Programvare.objects.filter(programvarenavn__icontains=search_term)
+
+	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0):  # bare ét systemtreff og ingen programvaretreff.
+		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
 
 	aktuelle_systemer = aktuelle_systemer.order_by('ibruk', Lower('systemnavn'))
+	potensielle_systemer = potensielle_systemer.order_by('ibruk', Lower('systemnavn'))
+	aktuelle_programvarer.order_by(Lower('programvarenavn'))
 
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
 	systemtyper = Systemtype.objects.all()
@@ -740,6 +752,7 @@ def alle_systemer(request):
 		'search_term': search_term,
 		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
 		'systemtyper': systemtyper,
+		'aktuelle_programvarer': aktuelle_programvarer,
 	})
 
 
@@ -849,13 +862,21 @@ def alle_programvarer(request):
 	Vise alle programvarer
 	Tilgangsstyring: ÅPEN
 	"""
-	programvarer = Programvare.objects.order_by(Lower('programvarenavn'))
-	template = 'programvare_alle.html'
+	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
-	return render(request, template, {
+	if search_term == "__all__":
+		aktuelle_programvarer = Programvare.objects.all()
+	elif len(search_term) < 2: # if one or less, return nothing
+		aktuelle_programvarer = Programvare.objects.none()
+	else:
+		aktuelle_programvarer = Programvare.objects.filter(programvarenavn__icontains=search_term)
+
+	aktuelle_programvarer = aktuelle_programvarer.order_by(Lower('programvarenavn'))
+
+	return render(request, 'programvare_alle.html', {
 		'overskrift': "Programvarer",
 		'request': request,
-		'programvarer': programvarer,
+		'programvarer': aktuelle_programvarer,
 	})
 
 
@@ -1355,7 +1376,7 @@ def systemer_uten_driftsmodell(request):
 	Vise liste over systemer der driftsmodell mangler
 	Tilgangsstyring: ÅPEN
 	"""
-	mangler = System.objects.filter(driftsmodell_foreignkey=None)
+	mangler = System.objects.filter(Q(driftsmodell_foreignkey=None) & ~Q(systemtyper=1))
 	return render(request, 'driftsmodell_mangler.html', {
 		'systemer': mangler,
 })
@@ -1771,8 +1792,14 @@ def prk_skjema(request, skjema_id):
 	required_permissions = 'systemoversikt.view_prkvalg'
 	if request.user.has_perm(required_permissions):
 
+		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+
 		skjema = PRKskjema.objects.get(pk=skjema_id)
-		valg = PRKvalg.objects.filter(skjemanavn=skjema).order_by("gruppering")
+
+		if search_term:
+			valg = PRKvalg.objects.filter(skjemanavn=skjema).filter(virksomhet__virksomhetsforkortelse=search_term).order_by("gruppering")
+		else:
+			valg = PRKvalg.objects.filter(skjemanavn=skjema).order_by("gruppering")
 
 		return render(request, 'prk_vis_skjema.html', {
 			'request': request,

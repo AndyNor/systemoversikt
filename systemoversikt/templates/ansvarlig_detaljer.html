@@ -73,6 +73,24 @@
 		<hr>
 		{% endif %}
 
+		{% if autorisert_bestiller_uke_for %}
+		{% for vir in autorisert_bestiller_uke_for %}
+			{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+			<b>Autorisert bestiller for (UKE): </b><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a>
+		{% endfor %}
+		<hr>
+		{% endif %}
+
+
+		{% if definisjonsansvarlig_for %}
+		<b>Definisjonsansvarlig for: </b>
+		{% for definisjon in definisjonsansvarlig_for %}
+			{% url 'definisjon' begrep=definisjon.begrep as url_definisjon %}
+			<li><a href="{{ url_definisjon }}">{{ definisjon }}</a></li>
+		{% endfor %}
+		<hr>
+		{% endif %}
+
 		{% if sertifikatbestiller_for %}
 		{% for vir in sertifikatbestiller_for %}
 			{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
@@ -92,7 +110,6 @@
 
 <br>
 
-
 <table class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>
@@ -108,6 +125,15 @@
 		<td><a href="{{ url_avtale }}">{{ avtale }}</a></td>
 	</tr>
 	{% endfor %}
+
+	{% for system in system_innsynskontakt_for %}
+	<tr>
+		<td>Innsynskontakt for</td>
+		{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
+		<td><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a></td>
+	</tr>
+	{% endfor %}
+
 	{% for system in systemeier_for %}
 	<tr>
 		<td>Systemeier</td>
@@ -115,6 +141,7 @@
 		<td><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a></td>
 	</tr>
 	{% endfor %}
+
 	{% for system in systemforvalter_for %}
 	<tr>
 		<td>Systemforvalter</td>
@@ -122,6 +149,7 @@
 		<td><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a></td>
 	</tr>
 	{% endfor %}
+
 	{% for bruk in systemforvalter_bruk_for %}
 	<tr>
 		<td>Kontaktperson systembruk</td>
@@ -129,6 +157,7 @@
 		<td><a href="{{ url_bruksdetaljer }}">{{ bruk.system.systemnavn }}</a></td>
 	</tr>
 	{% endfor %}
+
 	{% for behandling in behandlinger_for %}
 	<tr>
 		<td>Oppdateringsansvarlig behandlinger</td>

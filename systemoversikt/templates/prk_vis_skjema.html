@@ -9,9 +9,20 @@
 {% block main_content %}
 
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'prk_browse' %}">Tilbake</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
+	<a class="btn btn-sm" href="{% url 'alle_prk' %}">Søk i PRK-skjema</a>
+	<a class="btn btn-sm" href="{% url 'prk_browse' %}">Bla i PRK-skjema</a>
 
-	<br><br>
+	<hr>
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="For virksomhet (forkortelse).." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="">Vis alle valg</a>
+		</div>
+	</form>
 
 	<p>Viser {{ valg.count }} PRK-valg</p>
 

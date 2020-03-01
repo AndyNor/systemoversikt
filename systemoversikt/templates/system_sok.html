@@ -61,6 +61,16 @@
 
 	{% include "system_include_generisk.html" %}
 
+	{% if aktuelle_programvarer %}
+	<hr>
+	<p>Treff på programvare</p>
+	<ul style="column-count:5;">
+	{% for p in aktuelle_programvarer %}
+		<li><a href="{% url 'programvaredetaljer' pk=p.pk %}">{{p.programvarenavn}}</a></li>
+	{% endfor %}
+	</ul>
+	{% endif %}
+
 	{% if potensielle_systemer %}
 	<hr>
 	<p>Mente du? (basert på systembeskrivelser)</p>

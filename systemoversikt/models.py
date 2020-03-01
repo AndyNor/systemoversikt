@@ -1825,6 +1825,11 @@ class System(models.Model):
 			blank=False, null=False,
 			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Bruk feltet systemtype for å presisere kategori system. Det kan tidvis være vanskelig vite hvordan integrasjoner skal beskrives. Et eksempel er SvarUt. Det er et system levert av KS. Det er også integrasjoner på integrasjonsplattformen ITAS. Her gir det mening å registrere både SvarUt og SvarUt-integrasjon da de har forskjellige forvaltere. KS er en ekstern aktør og SvarUt-integrasjon er forvaltet av Oslo kommune. Det er egne felter her for å registrere systemintegrasjoner/informasjonsflyt inn og ut. F.eks. leverer folkeregistret data til infotoget, og infotorget leverer til DSF-integrasjon, og ulike systemer får data fra DSF-integrasjon.",
 			)
+	alias = models.TextField(
+			verbose_name="Alias (alternative navn)",
+			blank=True, null=True,
+			help_text=u"Alternative navn på systemet, for å avhjelpe søk. Du kan skrive inn flere alias, gjerne separert med komma eller på en ny linje.",
+			)
 	systembeskrivelse = models.TextField(
 			verbose_name="Systembeskrivelse",
 			blank=True, null=True,
@@ -2514,7 +2519,7 @@ class ProgramvareBruk(models.Model):
 			related_name='programvarebruk_brukergruppe',
 			)
 	programvare = models.ForeignKey(Programvare,
-			on_delete=models.CASCADE,  # slett ProgramvareBruken når Programvaren slettes
+			on_delete=models.PROTECT,  # slett ProgramvareBruken når Programvaren slettes
 			related_name='programvarebruk_programvare',
 			blank=False, null=False,
 			)
@@ -2608,7 +2613,7 @@ class SystemBruk(models.Model):
 	system = models.ForeignKey(System, related_name='systembruk_system',
 			verbose_name="System som brukes",
 			blank=False, null=False,
-			on_delete=models.CASCADE,  # slett SystemBruken når Systemet slettes
+			on_delete=models.PROTECT,  # slett SystemBruken når Systemet slettes
 			)
 	del_behandlinger = models.BooleanField(
 			verbose_name="Abonner på felles behandlinger i systemet",
@@ -3390,29 +3395,6 @@ class PRKvalg(models.Model):
 	def __str__(self):
 		return u'PRK-valg %s' % (self.valgnavn)
 
-	def for_virksomhet(self):
-		if self.skjemanavn.er_lokalt() == True:
-			try:
-				tbf = re.search("ou=([A-Z]{3}),ou=Tilgangsgrupper,ou=OK",self.gruppenavn).group(1)
-			except:
-				return None
-			try:
-				virksomhet = Virksomhet.objects.get(virksomhetsforkortelse=tbf)
-				return virksomhet
-			except:
-				return None
-		else:
-			return None
-
-	def gruppenavn_kort(self):
-		try:
-			return re.search("\\A[a-zA-Z]{2}=(DS-[^,]+),",self.gruppenavn).group(1)
-		except:
-			return None
-
-	def gruppenavn_full(self):
-		return self.gruppenavn
-
 	class Meta:
 		verbose_name_plural = "PRK valg"
 		default_permissions = ('add', 'change', 'delete', 'view')
@@ -3477,13 +3459,6 @@ class PRKskjema(models.Model):
 
 	def __str__(self):
 		return u'%s (%s)' % (self.skjemanavn, self.skjematype)
-
-	def er_lokalt(self):
-		if self.skjematype == "LOKAL":
-			return True
-		if self.skjematype == "FELLES":
-			return False
-		return None
 
 	class Meta:
 		verbose_name_plural = "PRK skjemaer"

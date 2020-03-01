@@ -4,17 +4,17 @@
 <thead>
 <tr>
 	{% if user.is_authenticated %}
-	<th></th>
+	<th>Rediger</th>
 	{% endif %}
 	<th>Programvare</th>
-	<th>Bruk</th>
-	<th>Behandlinger</th>
-	<th>Beskrivelse</th>
+	<th>Antall bruk registrert</th>
+	<th>Antall behandlinger registrert</th>
+	<th width="33%">Beskrivelse av programvaren</th>
 	<th>Programvareleverandør</th>
-	<th>Kategorier</th>
-	<th>Strategisk</th>
-	<th>Funksjonell</th>
-	<th>Teknisk</th>
+	<th>Kategori</th>
+	<th>Strategisk knytning</th>
+	<th>Funksjonell egnethet</th>
+	<th>Teknisk egnethet</th>
 	{% if user.is_authenticated %}
 	<th></th>
 	{% endif %}
