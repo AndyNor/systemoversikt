@@ -10,6 +10,7 @@ import os
 import time
 import sys
 import json
+from django.db import transaction
 from systemoversikt.models import ApplicationLog, PRKvalg, ADgroup
 from django.db.models import Q
 import requests
@@ -24,7 +25,7 @@ class Command(BaseCommand):
 		@transaction.atomic
 		def perform_atomic_update():
 			for valg in PRKvalg.objects.all():
-				if len(valg.ad_group_ref.all()) > 0:
+				if valg.ad_group_ref != None:
 					continue  # skip if reference already exist
 
 				print(valg.gruppenavn)
@@ -35,10 +36,12 @@ class Command(BaseCommand):
 					valg.ad_group_ref.add(ad_group)
 					valg.in_active_directory = True
 					valg.save()
+					nonlocal count_hits
 					count_hits += 1
 				except:
 					valg.in_active_directory = False
 					valg.save()
+					nonlocal count_misses
 					count_misses += 1
 
 		perform_atomic_update()
@@ -52,6 +55,6 @@ class Command(BaseCommand):
 		)
 		print(logg_entry_message)
 		logg_entry = ApplicationLog.objects.create(
-				event_type='AD-gruppe PRK-oppslag',
+				event_type='AD-bruker PRK-oppslag',
 				message=logg_entry_message,
 		)

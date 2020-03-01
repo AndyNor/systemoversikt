@@ -1156,6 +1156,7 @@ class ADOrgUnit(models.Model):
 	distinguishedname = models.TextField(
 			verbose_name="Fully Distinguished Name",
 			unique=True,
+			null=False
 			)
 	ou = models.CharField(
 			verbose_name="Name",
@@ -3356,6 +3357,12 @@ class PRKvalg(models.Model):
 			blank=True, null=True,
 			help_text=u"Importert",
 			)
+	virksomhet = models.ForeignKey(Virksomhet, related_name='prkvalg_virksomhet',
+			verbose_name="Virksomhetstilknytning",
+			null=True,
+			on_delete=models.PROTECT,
+			help_text=u"Importert",
+			)
 	gruppering = models.ForeignKey("PRKgruppe", related_name='PRKvalg_gruppering',
 			verbose_name="Gruppering",
 			on_delete=models.PROTECT,
@@ -3366,8 +3373,10 @@ class PRKvalg(models.Model):
 			on_delete=models.PROTECT,
 			help_text=u"Importert",
 			)
-	ad_group_ref = models.ManyToManyField("ADgroup", related_name='PRKvalg_ad_group_ref',
+	ad_group_ref = models.ForeignKey("ADgroup", related_name='PRKvalg_ad_group_ref',
 			verbose_name="Kobling PRK-valg mot AD gruppe",
+			on_delete=models.PROTECT,
+			null=True,
 			blank=True,
 			help_text=u'Settes automatisk',
 			)
@@ -3376,7 +3385,7 @@ class PRKvalg(models.Model):
 			default=True, # per definisjon
 			help_text=u"Settes automatisk",
 			)
-	#ikke behof for historikk
+	#ikke behov for historikk
 
 	def __str__(self):
 		return u'PRK-valg %s' % (self.valgnavn)
@@ -3425,44 +3434,13 @@ class PRKgruppe(models.Model):
 			blank=False, null=False,
 			help_text=u"Importert",
 			)
-	#ikke behof for historikk
+	#ikke behov for historikk
 
 	def __str__(self):
 		return u'%s' % (self.feltnavn)
 
 	class Meta:
 		verbose_name_plural = "PRK grupper"
-		default_permissions = ('add', 'change', 'delete', 'view')
-
-
-class PRKuser(models.Model):
-	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
-	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
-	username = models.CharField(
-			verbose_name="Brukernavn",
-			max_length=20,
-			unique=True,
-			help_text=u"Importert",
-			)
-	usertype = models.CharField(
-			verbose_name="Brukernavn",
-			max_length=20,
-			null=False, blank=False,
-			help_text=u"Importert",
-			)
-	#ikke behof for historikk
-	def __str__(self):
-		return u'%s (%s)' % (self.username, self.usertype)
-
-	class Meta:
-		verbose_name_plural = "PRK brukere"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3488,7 +3466,12 @@ class PRKskjema(models.Model):
 			blank=False, null=False,
 			help_text=u"Importert",
 			)
-	#ikke behof for historikk
+	er_lokalt = models.NullBooleanField(
+			verbose_name="Er feltet lokalt?",
+			default=None, null=True,
+			help_text=u"Importert",
+			)
+	#ikke behov for historikk
 
 	unique_together = ('skjemanavn', 'skjematype')
 
@@ -3506,6 +3489,36 @@ class PRKskjema(models.Model):
 		verbose_name_plural = "PRK skjemaer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+
+class PRKuser(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	username = models.CharField(
+			verbose_name="Brukernavn",
+			max_length=20,
+			unique=True,
+			help_text=u"Importert",
+			)
+	usertype = models.CharField(
+			verbose_name="Brukernavn",
+			max_length=20,
+			null=False, blank=False,
+			help_text=u"Importert",
+			)
+	#ikke behov for historikk
+	def __str__(self):
+		return u'%s (%s)' % (self.username, self.usertype)
+
+	class Meta:
+		verbose_name_plural = "PRK brukere"
+		default_permissions = ('add', 'change', 'delete', 'view')
 """
 LIVSSYKLUS_VALG = (
 	(1, '1 valg 1'),

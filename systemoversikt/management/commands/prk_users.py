@@ -38,7 +38,7 @@ class Command(BaseCommand):
 		print("Kobler til %s" % url)
 		r = requests.get(url, headers=headers)
 		print("Encoding: %s" % r.encoding)
-		r.encoding = 'latin-1'
+		#r.encoding = 'latin-1'
 		print("Endrer til %s" % r.encoding)
 		print("Statuskode: %s" % r.status_code)
 		if r.status_code == 200:

@@ -1,0 +1,30 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	PRK-tilgangsskjema på felles IKT-plattform
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+	<a class="btn btn-sm btn-primary" href="{% url 'prk_browse' %}">Bla i skjema</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Tilbake</a>
+
+	<hr>
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Skjema inneholder.." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
+		</div>
+	</form>
+
+	<p>Viser {{ skjemavalg.count }} PRK-valg</p>
+
+	{% include "prk_skjema_include.html" with valg=skjemavalg %}
+
+{% endblock main_content %}

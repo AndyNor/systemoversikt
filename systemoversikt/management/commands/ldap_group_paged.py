@@ -24,7 +24,7 @@ class Command(BaseCommand):
 		SEARCHFILTER = '(objectclass=group)'
 		LDAP_SCOPE = ldap.SCOPE_SUBTREE
 		ATTRLIST = ['cn', 'description', 'memberOf', 'member'] # if empty we get all attr we have access to
-		PAGESIZE = 1000
+		PAGESIZE = 5000
 		LOG_EVENT_TYPE = "AD group-import"
 
 		report_data = {
@@ -32,6 +32,17 @@ class Command(BaseCommand):
 			"modified": 0,
 			"removed": 0,
 		}
+
+		@transaction.atomic  # for speeding up database performance
+		def cleanup():
+			from django.db.models import Count
+			duplicates = ADgroup.objects.values("distinguishedname").annotate(count=Count("distinguishedname")).filter(count__gt=1)
+			for group in duplicates:
+				group = ADgroup.objects.filter(distinguishedname=group["distinguishedname"])
+				group.delete()
+
+		cleanup()
+
 
 		@transaction.atomic  # for speeding up database performance
 		def result_handler(rdata, report_data, existing_objects=None):

@@ -1,0 +1,66 @@
+{% load humanize %}
+{% load static %}
+
+{% block main_content %}
+
+	{% if valg.count > 350 %}
+	<p>Det er over 350 treff, viser ikke linker.</p>
+	{% endif %}
+
+	<table id="stickyheader" class="table table-sm tablesorter">
+		<thead>
+			<th>Skjema</th>
+			<th>Skjematype</th>
+			<th>Gruppering</th>
+			<th>For virksomhet</th>
+			<th>Valgnavn</th>
+			<th>Beskrivelse</th>
+			<th>Aktiv i AD?</th>
+			<th>Katalogtilknytning</th>
+		</thead>
+		<tbody>
+		{% for v in valg %}
+			<tr>
+				<td>
+				{% if valg.count > 350 %}
+					{{v.skjemanavn.skjemanavn}}
+				{% else %}
+					{% url 'prk_skjema' skjema_id=v.skjemanavn.pk as url_skjema %}
+					<a href="{{url_skjema}}">{{v.skjemanavn.skjemanavn}}</a>
+				{% endif %}
+				</td>
+
+				<td>{{ v.skjemanavn.skjematype }}</td>
+				<td>{{ v.gruppering }}</td>
+				<td>
+				{% if valg.count > 350 %}
+					{{v.virksomhet.virksomhetsforkortelse|default:"-"}}
+				{% else %}
+					{% url 'virksomhet' pk=v.virksomhet.pk as virksomhet_url %}
+					<a href="{{ virksomhet_url }}" target="_blank">
+					{{ v.virksomhet.virksomhetsforkortelse|default:"-" }}</a>
+				{% endif %}
+				</td>
+				<td>{{ v.valgnavn }}</td>
+				<td>{{ v.beskrivelse }}</td>
+				<td>{{ v.in_active_directory|yesno:"Ja,Nei,Vet ikke" }}</td>
+
+				<td>
+				{% if valg.count > 350 %}
+					{{ v.gruppenavn|slice:":-38" }}...
+				{% elif v.ad_group_ref %}
+					{% url 'adgruppe_detaljer' pk=v.ad_group_ref.pk as adgruppe_url %}
+					<a href="{{ adgruppe_url }}" target="_blank">
+					{{ v.gruppenavn|slice:":-38" }}...</a>
+				{% else %}
+					{{ v.gruppenavn|slice:":-38" }}...</a>
+				{% endif %}
+				</td>
+				{% comment %} 38 is the fixed part of oslofelles.oslo.kommune.no {% endcomment %}
+
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock main_content %}

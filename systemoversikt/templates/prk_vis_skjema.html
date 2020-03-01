@@ -1,0 +1,20 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	PRK-skjema: {{ skjema.skjemanavn }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+	<a class="btn btn-sm btn-secondary" href="{% url 'prk_browse' %}">Tilbake</a>
+
+	<br><br>
+
+	<p>Viser {{ valg.count }} PRK-valg</p>
+
+	{% include "prk_skjema_include.html" with valg=valg %}
+
+{% endblock main_content %}

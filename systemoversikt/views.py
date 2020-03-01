@@ -1606,6 +1606,19 @@ def system_til_programvare(request, system_id=None):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def adgruppe_detaljer(request, pk):
+	"""
+	Vise informasjon om en konkret AD-gruppe
+	Tilgangsstyring: må kunne vise informasjon om brukere
+	"""
+	required_permissions = 'systemoversikt.view_user'
+	if request.user.has_perm(required_permissions):
+		return render(request, 'ad_adgruppe_detaljer.html', {
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def alle_adgrupper(request):
 	"""
 	Vise informasjon om AD-grupper
@@ -1648,7 +1661,7 @@ def alle_os(request):
 		maskiner = CMDBdevice.objects.filter(active=True)
 		maskiner_stats = cmdb_os_stats(maskiner)
 
-		return render(request, 'prk_alle_server_os.html', {
+		return render(request, 'cmdb_alle_server_os.html', {
 			'maskiner_stats': maskiner_stats,
 		})
 	else:
@@ -1750,6 +1763,52 @@ def ad_prk_sok(request):
 		})
 """
 
+def prk_skjema(request, skjema_id):
+	"""
+	Bla i PRK-skjemaer, vise et konkret skjema
+	Tilgangsstyring: må kunne vise prk-skjemaer
+	"""
+	required_permissions = 'systemoversikt.view_prkvalg'
+	if request.user.has_perm(required_permissions):
+
+		skjema = PRKskjema.objects.get(pk=skjema_id)
+		valg = PRKvalg.objects.filter(skjemanavn=skjema).order_by("gruppering")
+
+		return render(request, 'prk_vis_skjema.html', {
+			'request': request,
+			'skjema': skjema,
+			'valg': valg,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def prk_browse(request):
+	"""
+	Bla i PRK-skjemaer
+	Tilgangsstyring: må kunne vise prk-skjemaer
+	"""
+	required_permissions = 'systemoversikt.view_prkvalg'
+	if request.user.has_perm(required_permissions):
+
+		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+
+		if search_term:
+			skjema = PRKskjema.objects.filter(skjemanavn__icontains=search_term)
+		else:
+			skjema = PRKskjema.objects.all()
+
+		skjema = skjema.order_by('skjematype', 'skjemanavn')
+
+		return render(request, 'prk_bla.html', {
+			'request': request,
+			'skjema': skjema,
+			'search_term': search_term,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def alle_prk(request):
 	"""
 	Søke og vise PRK-skjemaer
@@ -1775,7 +1834,7 @@ def alle_prk(request):
 
 		skjemavalg = skjemavalg.order_by('skjemanavn__skjemanavn', 'gruppering__feltnavn')
 
-		return render(request, 'prk_alle_bs.html', {
+		return render(request, 'prk_skjema_sok.html', {
 			'request': request,
 			'search_term': search_term,
 			'skjemavalg': skjemavalg,
@@ -1819,6 +1878,12 @@ def alle_maskiner(request):
 			if comp_os_version == "__empty__":
 				comp_os_version_none = CMDBdevice.objects.filter(active=True).filter(comp_os_version="").filter(comp_os__icontains=comp_os)
 				return devices & comp_os_version_none  # snitt/intersection av to sett
+
+			if comp_os != "":
+				devices = devices.filter(comp_os__icontains=comp_os)
+
+			if comp_os_version != "":
+				devices = devices.filter(comp_os_version__icontains=comp_os_version)
 
 			return devices
 

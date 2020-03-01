@@ -56,59 +56,86 @@ class Command(BaseCommand):
 		ant_oppdateringer = 0
 		ant_slettet = 0
 
+
 		#alle eksisterende valg, for å kunne oppdage om valg er tatt bort mellom synkronisering
 		sjekk_alle_gruppenavn = list(PRKvalg.objects.values_list('gruppenavn', flat=True))
 
 		@transaction.atomic  # for speeding up database performance
 		def atomic():
 			for item in data:
+
 				#sys.stdout.flush()
+				skjemanavn = item["skjemanavn"]
+				skjematype = item["skjematype"]
+
+
+				if skjematype == "LOKAL":
+					er_lokalt = True
+				if skjematype == "FELLES":
+					er_lokalt = False
+
 				try:
-					skjema = PRKskjema.objects.get(skjemanavn=item["skjemanavn"], skjematype=item["skjematype"])
+					skjema = PRKskjema.objects.get(skjemanavn=skjemanavn, skjematype=skjematype)
+					skjema.er_lokalt = er_lokalt
+					skjema.save()
 				except:
-					skjema = PRKskjema.objects.create(skjemanavn=item["skjemanavn"], skjematype=item["skjematype"])
+					skjema = PRKskjema.objects.create(skjemanavn=skjemanavn, skjematype=skjematype)
+					skjema.er_lokalt = er_lokalt
+					skjema.save()
 					# Mangler virksomhet (kan finne fra gruppe) - men trenger egentlig ikke
 
-				feltnavn = item["feltnavn"]
+				feltnavn = item["feltnavn"] # gruppering
 				if feltnavn == None:
-					feltnavn = "__mangler__"
-				try:
-					gruppe = PRKgruppe.objects.get(feltnavn=feltnavn)
-				except:
-					gruppe = PRKgruppe.objects.create(feltnavn=feltnavn)
+					# dataene her tilhører skjemaet
+					continue
+				else:
+					try:
+						gruppe = PRKgruppe.objects.get(feltnavn=feltnavn)
+					except:
+						gruppe = PRKgruppe.objects.create(feltnavn=feltnavn)
 
+				valgnavn = item["valgnavn"]
+				if valgnavn == None:
+					# betyr at dette er en "parent", bør ikke importeres og kan fjernes fra API-et.
+					continue
 
 				# PRK lager alltid et DS-prefiks. Det finnes GS-prefix i AD, men de skal vist ikke komme fra AD.
 				helt_gruppenavn = "CN=DS-%s,%s,%s" % (item["gruppenavn"],item["relpath"],"DC=oslofelles,DC=oslo,DC=kommune,DC=no")
 				if helt_gruppenavn in sjekk_alle_gruppenavn:
 					sjekk_alle_gruppenavn.remove(helt_gruppenavn)
 
-				valgnavn = item["valgnavn"]
-				if valgnavn == None:
-					valgnavn = "__mangler__"
-					# betyr at dette er en "parent", bør ikke importeres og kan fjernes fra API-et.
+
+
+				try:
+					tbf = re.search("ou=([A-Z]{3,5}),ou=Tilgangsgrupper,ou=OK", helt_gruppenavn).group(1)
+					virksomhet = Virksomhet.objects.get(virksomhetsforkortelse=tbf)
+				except:
+					virksomhet = None
 
 				try:
 					valg = PRKvalg.objects.get(gruppenavn=helt_gruppenavn)
-					#sjekke om behov for oppdatering
-					#print("u", end="")
 					nonlocal ant_eksisterende_valg
 					ant_eksisterende_valg += 1
-					if (valg.valgnavn != valgnavn) or (valg.beskrivelse != item["beskrivelse"]):
+
+					if (valg.valgnavn != valgnavn) or (valg.beskrivelse != item["beskrivelse"]) or (valg.virksomhet != virksomhet):
 						valg.valgnavn = valgnavn
 						valg.beskrivelse = item["beskrivelse"]
+						valg.virksomhet = virksomhet
 						valg.save()
+
+						nonlocal ant_oppdateringer
 						ant_oppdateringer += 1
-				except:
+				except:  # finnes ikke fra før av
 					nonlocal ant_nye_valg
 					ant_nye_valg += 1
-					#print("n", end="")
+
 					valg = PRKvalg.objects.create(
 							valgnavn=valgnavn,
 							gruppenavn=helt_gruppenavn,
 							beskrivelse=item["beskrivelse"],
 							gruppering=gruppe,
 							skjemanavn=skjema,
+							virksomhet=virksomhet,
 						)
 		atomic()
 
@@ -118,12 +145,14 @@ class Command(BaseCommand):
 			#sjekke om det er eksisterende valg som må fjernes (skjema, grupper og valg)
 			for valg in sjekk_alle_gruppenavn:
 				valg = PRKvalg.objects.get(gruppenavn=valg)
-				related_ad_groups = valg.ad_group_ref.all() # many to many
-				for g in related_ad_groups:
-					g.from_prk = False  # hvis vi oppdager at valget er borte, merker vi AD-gruppen som "ikke fra AD"
-					g.save()
+
+				ad_group = valg.ad_group_ref
+				ad_group.from_prk = False  # hvis vi oppdager at valget er borte, merker vi AD-gruppen som "ikke fra AD"
+				ad_group.save()
+
 				valg.delete()
 				print("x", end="")
+				nonlocal ant_slettet
 				ant_slettet += 1
 			for skjema in PRKskjema.objects.filter(PRKvalg_skjemanavn__isnull=True): # ingen flere referanser tilbake
 				skjema.delete()
@@ -132,7 +161,12 @@ class Command(BaseCommand):
 
 		opprydding()
 
-		message = "Import av PRK-data: %s eksisterende, %s nye, derav %s oppdateringer. %s slettet." % (ant_eksisterende_valg, ant_nye_valg, ant_oppdateringer, ant_slettet)
+		message = "Import av PRK-data: %s eksisterende, %s nye, derav %s oppdateringer. %s slettet." % (
+				ant_eksisterende_valg,
+				ant_nye_valg,
+				ant_oppdateringer,
+				ant_slettet
+			)
 		print(message)
 
 		runtime_t1 = time.time()

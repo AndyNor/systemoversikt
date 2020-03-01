@@ -1,0 +1,43 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	PRK-tilgangsskjema på felles IKT-plattform
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Tilbake</a>
+
+	<hr>
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Skjemanavn inneholder.." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="">Vis alt</a>
+		</div>
+	</form>
+
+	<table id="stickyheader" class="table table-sm tablesorter">
+		<thead>
+			<th>PRK-skjema</th>
+			<th>Skjematype</th>
+			<th>Antall valg (tilgangsgrupper)</th>
+		</thead>
+		<tbody>
+		{% for s in skjema %}
+		{% url 'prk_skjema' skjema_id=s.pk as skjemaurl %}
+			<tr>
+				<td><a href="{{ skjemaurl }}">{{ s.skjemanavn }}</a></td>
+				<td>{{ s.skjematype }}</td>
+				<td>{{ s.PRKvalg_skjemanavn.count }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock main_content %}

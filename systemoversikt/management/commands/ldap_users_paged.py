@@ -109,6 +109,10 @@ class Command(BaseCommand):
 					print("?", end="")
 					continue  # vi må ha et brukernavn
 
+				if not ("OU=Eksterne brukere" in dn or "OU=Brukere" in dn):
+					#TODO prøv å slette for å rydde opp
+					continue  # ikke en person
+
 				user_organization = dn.split(",")[1][3:]  # andre OU, fjerner "OU=" som er tegn 0-2.
 				if user_organization not in gyldige_virksomheter:
 					print("?", end="")

@@ -322,9 +322,10 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 @admin.register(PRKvalg)
 class PRKvalgAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('skjemanavn', 'gruppering', 'valgnavn', 'in_active_directory', 'gruppenavn', 'beskrivelse', 'sist_oppdatert')
+	list_display = ('skjemanavn', 'gruppering', 'valgnavn', 'virksomhet', 'in_active_directory', 'beskrivelse', 'sist_oppdatert')
 	search_fields = ('skjemanavn__skjemanavn', 'gruppenavn',)
 	list_filter = ('sist_oppdatert', 'in_active_directory')
+	autocomplete_fields = ('ad_group_ref',)
 
 
 @admin.register(PRKgruppe)

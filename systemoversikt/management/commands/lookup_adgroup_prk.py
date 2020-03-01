@@ -24,17 +24,20 @@ class Command(BaseCommand):
 		misses = []
 
 		for valg in PRKvalg.objects.all():
-			if len(valg.ad_group_ref.all()) > 0:
+			if valg.ad_group_ref != None:
 				continue  # skip and go to next
 
 			print(valg.gruppenavn)
+
 			try:
 				ad_group = ADgroup.objects.get(distinguishedname__iexact=valg.gruppenavn)
 				ad_group.from_prk = True   # AD-grupper har denne som default False, settes True hvis vi matcher
 				ad_group.save()
-				valg.ad_group_ref.add(ad_group)
+
+				valg.ad_group_ref = ad_group
 				valg.in_active_directory = True
 				valg.save()
+
 				count_hits += 1
 			except:
 				count_misses += 1

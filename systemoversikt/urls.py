@@ -114,9 +114,12 @@ urlpatterns = [
 	url(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
 
 	url(r'^prk/$', views.alle_prk, name='alle_prk'),
+	url(r'^prk/browse/$', views.prk_browse, name='prk_browse'),
+	url(r'^prk/browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
 
 	url(r'^ad/$', views.ad, name='ad'),
-	url(r'^ad/adgrupper/$', views.alle_adgrupper, name='alle_adgrupper'),
+	url(r'^ad/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
+	url(r'^ad/adgruppe/(?P<pk>\d{1,8})/$', views.adgruppe_detaljer, name='adgruppe_detaljer'),
 	url(r'^ad/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),  #denne må komme etter ad/adgrupper/
 	url(r'^ad/recursive/(?P<group>[-_=,a-zA-Z0-9\s]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
 	url(r'^ad/exact/(?P<name>[-_=,a-zæøåA-ZÆØÅ0-9\s]{2,200})/$', views.ad_exact, name='ad_exact'),
