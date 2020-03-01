@@ -1632,7 +1632,7 @@ def adgruppe_detaljer(request, pk):
 	Vise informasjon om en konkret AD-gruppe
 	Tilgangsstyring: må kunne vise informasjon om brukere
 	"""
-	required_permissions = 'systemoversikt.view_user'
+	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
 		return render(request, 'ad_adgruppe_detaljer.html', {
 		})
@@ -1645,7 +1645,7 @@ def alle_adgrupper(request):
 	Vise informasjon om AD-grupper
 	Tilgangsstyring: må kunne vise informasjon om brukere
 	"""
-	required_permissions = 'systemoversikt.view_user'
+	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
 		return render(request, 'ad_adgrupper_sok.html', {
 		})
@@ -1998,7 +1998,7 @@ def alle_cmdbref(request):
 	Søke og vise alle business services (bs)
 	Tilgangsstyring: må kunne vise cmdb-referanser (bs)
 	"""
-	required_permissions = ['systemoversikt.view_cmdbref', 'systemoversikt.view_user']
+	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
 	if lambda u: any(map(request.user.has_perm, required_permissions)):
 
 		search_term = request.GET.get('search_term', "").strip()
