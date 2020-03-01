@@ -285,6 +285,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 20480
 
 
+"""
 log_file = os.path.join(BASE_DIR, 'logs/kartoteket_django.log')
 
 LOGGING = {
@@ -314,4 +315,5 @@ LOGGING = {
         },
     },
 }
+"""
 
