@@ -120,9 +120,14 @@ urlpatterns = [
 	url(r'^ad/$', views.ad, name='ad'),
 	url(r'^ad/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
 	url(r'^ad/adgruppe/(?P<pk>\d{1,8})/$', views.adgruppe_detaljer, name='adgruppe_detaljer'),
+	url(r'^ad/adorgunit/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
+	url(r'^ad/adorgunit/(?P<pk>\d{1,8})/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
 	url(r'^ad/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),  #denne må komme etter ad/adgrupper/
-	url(r'^ad/recursive/(?P<group>[-_=,a-zA-Z0-9\s]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
-	url(r'^ad/exact/(?P<name>[-_=,a-zæøåA-ZÆØÅ0-9\s]{2,200})/$', views.ad_exact, name='ad_exact'),
+	# i AD er følgende tegn ulovlige: # + " \ < > ; (RFC 2253)
+	# komma tillates da det brukes for å skille elementer fra hverandre
+	# leading space eller #, samt trailing space er heller ikke tillatt, men vi gjør ikke noe med dem.
+	url(r'^ad/recursive/(?P<group>[^#\+\"\\\<\>\;]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
+	url(r'^ad/exact/(?P<name>[^#\+\"\\\<\>\;]{2,200})/$', views.ad_exact, name='ad_exact'),
 
 	url(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	url(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),

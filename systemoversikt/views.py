@@ -1627,14 +1627,87 @@ def system_til_programvare(request, system_id=None):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def adorgunit_detaljer(request, pk=None):
+	"""
+	Vise informasjon om en konkret AD-OU
+	Tilgangsstyring: må kunne vise informasjon om brukere
+	"""
+	import os
+
+	if pk == None:
+		root_str = os.environ["KARTOTEKET_LDAPROOT"]
+		ou = ADOrgUnit.objects.get(distinguishedname=root_str)
+		pk = ou.pk
+	else:
+		ou = ADOrgUnit.objects.get(pk=pk)
+
+	groups = ADgroup.objects.filter(parent=pk)
+	parent_str = ",".join(ou.distinguishedname.split(',')[1:])
+	try:
+		parent = ADOrgUnit.objects.get(distinguishedname=parent_str)
+	except:
+		parent = None
+	children = ADOrgUnit.objects.filter(parent=pk)
+
+	required_permissions = 'auth.view_user'
+	if request.user.has_perm(required_permissions):
+		return render(request, 'ad_adorgunit_detaljer.html', {
+				"ou": ou,
+				"groups": groups,
+				"parent": parent,
+				"children": children,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
 def adgruppe_detaljer(request, pk):
 	"""
 	Vise informasjon om en konkret AD-gruppe
 	Tilgangsstyring: må kunne vise informasjon om brukere
 	"""
+	import json
+
+	def human_readable_members(items):
+		groups = []
+		users = []
+		other_users = []
+		notfound = []
+		for item in items:
+			try:
+				g = ADgroup.objects.get(distinguishedname=item)
+				groups.append(g)
+				continue
+			except Exception as e:
+				#print("fant ikke gruppen med feilmelding %s" % (e))
+				pass
+			try:
+				regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0]
+				u = User.objects.get(username__iexact=regex_username)
+				users.append(u)
+				continue
+			except:
+				pass
+			try:
+				u = ADUser.objects.get(distinguishedname=item)
+				other_users.append(u)
+				continue
+			except:
+				notfound.append(item)  # vi fant ikke noe, returner det vi fikk
+		return {"groups": groups, "users": users, "other_users": other_users, "notfound": notfound}
+
+	gruppe = ADgroup.objects.get(pk=pk)
+
+	member = human_readable_members(json.loads(gruppe.member))
+	memberof = human_readable_members(json.loads(gruppe.memberof))
+
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
 		return render(request, 'ad_adgruppe_detaljer.html', {
+				"gruppe": gruppe,
+				"member": member,
+				"memberof": memberof,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -1709,7 +1782,7 @@ def alle_ip(request):
 
 			import re
 			import ipaddress
-			search_term = search_term.replace('\"','').replace('\'','').replace(':',' ')
+			search_term = search_term.replace('\"','').replace('\'','').replace(':',' ') # dette vil feile for IPv6, som kommer på formatet [xxxx:xxxx::xxxx]:port
 			search_ips = re.findall(r"([^,;\t\s\n\r]+)", search_term)
 
 			ip_lookup = []

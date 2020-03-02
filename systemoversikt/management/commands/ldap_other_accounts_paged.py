@@ -94,7 +94,8 @@ class Command(BaseCommand):
 
 					report_data["modified"] += 1
 
-					existing_objects.remove(g)
+					if g in existing_objects:
+						existing_objects.remove(g)
 					print("u", end="")
 				except ObjectDoesNotExist:
 					g = ADUser.objects.create(

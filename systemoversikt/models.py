@@ -484,6 +484,11 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			default=False,
 			help_text="Importeres og sjekkes mot objekter i PRKuser",
 			)
+	description = models.TextField(
+			verbose_name="Beskrivelse",
+			blank=True, null=True,
+			help_text=u"importert",
+			)
 	# med vilje er det ikke HistoricalRecords() på denne
 
 	def __str__(self):
@@ -1170,6 +1175,12 @@ class ADOrgUnit(models.Model):
 			blank=True, null=True,
 			help_text=u"",
 			)
+	parent = models.ForeignKey("ADOrgUnit", related_name='adorgunit_parent',
+			on_delete=models.CASCADE,
+			verbose_name="Parent",
+			blank=True, null=True,
+			help_text=u"Mor-gruppe (importert)",
+			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
 	def __str__(self):
@@ -1178,6 +1189,12 @@ class ADOrgUnit(models.Model):
 	class Meta:
 		verbose_name_plural = "AD Organizational Units"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+	def cn(self):
+		if len(self.distinguishedname) > 39:
+			return self.distinguishedname[0:-39]
+		else:
+			return self.distinguishedname
 
 
 class ADgroup(models.Model):
@@ -1219,7 +1236,7 @@ class ADgroup(models.Model):
 			help_text=u"Slås opp mot 'PRKvalg' automatisk",
 			)
 	parent = models.ForeignKey(ADOrgUnit, related_name='adgroup_parent',
-			on_delete=models.PROTECT,
+			on_delete=models.CASCADE,
 			verbose_name="Parent",
 			blank=True, null=True,
 			help_text=u"Mor-gruppe (importert)",
@@ -1232,6 +1249,12 @@ class ADgroup(models.Model):
 	class Meta:
 		verbose_name_plural = "AD grupper"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+	def cn(self):
+		if len(self.distinguishedname) > 39:
+			return self.distinguishedname[0:-39]
+		else:
+			return self.distinguishedname
 
 
 

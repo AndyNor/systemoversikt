@@ -9,14 +9,14 @@
 {% block main_content %}
 
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">Tilbake</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
 
 	<hr>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="databasenavn eller kategori inneholder.." class="form-control form-control-sm">
+			placeholder="databasenavn / bs / versjon inneholder.." class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
 		</div>

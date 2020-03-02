@@ -3,13 +3,111 @@
 {% load static %}
 
 {% block underoverskrift %}
-	CMDB: AD-grupper
+	AD-gruppedetaljer: {{ gruppe.cn }}
 {% endblock underoverskrift %}
 
 {% block main_content %}
 
-	<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/adgroup/">Alle AD-grupper</a>
-	<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/adgroup/?membercount=0">AD-grupper med 0 medlemmer</a>
-	<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">AD-grupper medlem i 0 grupper</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
+	<a class="btn btn-sm" href="{% url 'ad' %}">Søk i Active Directory</a>
+	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/">Admin: AD-grupper</a>
+	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?membercount=0">Admin: grupper 0 medlemmer</a>
+	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">Admin: medlem i 0 grupper</a>
+
+	<hr>
+	Sist oppdatert {{ gruppe.sist_oppdatert }} (<a target="_blank" href="{% url 'ad_exact' name=gruppe.distinguishedname %}">Live søk i AD</a>)
+
+	<hr>
+	<h6>Fully distinguished name</h6>
+	{{ gruppe.distinguishedname }}<br>
+
+	<hr>
+
+	{% if gruppe.from_prk is True %}
+		<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(100deg);" src="{% static 'open-iconic/svg/circle-check.svg' %}" alt="Kvalitet verifisert"> Stammer fra PRK
+	{% else %}
+		<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/warning.svg' %}" alt="Kvalitet ikke verifisert"> Opprettet utenfor PRK
+	{% endif %}
+
+	<hr>
+	<h6>Medlemer i gruppen</h6>
+
+	<p><b>Sikkerhetsgrupper</b></p>
+	{% for m in member.groups %}
+		<li><a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m.cn }}</a></li>
+	{% empty %}
+		<li>Ingen</li>
+	{% endfor %}
+
+	<br><p><b>Brukerkontoer</b></p>
+	<table class="table table-sm table-striped tablesorter">
+	<thead>
+		<tr>
+			<th>Type</th>
+			<th>Navn</th>
+			<th>Brukernavn</th>
+			<th>Virksomhet</th>
+			<th>Beskrivelse</th>
+			<th>Fra PRK?</th>
+		</tr>
+	</thead>
+	<tbodt>
+	{% for m in member.users %}
+		<tr>
+			<td>PRK-bruker</td>
+			<td>{{m.first_name}} {{m.last_name}}</td>
+			<td>{{m.username}}</td>
+			<td>{{m.profile.virksomhet}}</td>
+			<td>{{m.profile.description}}</td>
+			<td>{{m.profile.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
+		</tr>
+	{% endfor %}
+	{% for m in member.other_users %}
+		<tr>
+			<td>Annen AD-bruker</td>
+			<td>{{m.displayName}}</td>
+			<td>{{m.sAMAccountName}}</td>
+			<td></td>
+			<td>{{m.description}}</td>
+			<td>{{m.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
+		</tr>
+	{% endfor %}
+	</tbodt>
+	</table>
+
+	{% if member.notfound %}
+		<br><p><b>Annet / feil</b></p>
+		{% for n in member.notfound %}
+			<li>{{ n }}</li>
+		{% endfor %}
+	{% endif%}
+
+	<hr>
+	<h6>Beskrivelse</h6>
+	{{ gruppe.description }}
+
+	<hr>
+	<h6>Denne gruppen ligger under følgende OU</h6>
+	{% if gruppe.parent %}
+		<li><a href="{% url 'adorgunit_detaljer' pk=gruppe.parent.pk %}">{{ gruppe.parent }}</a></li>
+	{% else %}
+		<li>Ingen</li>
+	{% endif %}
+
+	<hr>
+	<h6>Denne gruppen er medlem av følgende andre grupper</h6>
+	{% if memberof.groups %}
+		{% for m in memberof.groups %}
+			<li><a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m.cn }}</a></li>
+		{% endfor %}
+	{% endif%}
+
+	{% if memberof.notfound %}
+		{% for n in memberof.notfound %}
+			<li>{{ n }}</li>
+		{% endfor %}
+	{% endif%}
+
+
 
 {% endblock main_content %}

@@ -1,0 +1,53 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	AD Organizational Unit {{ ou.cn }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
+	<a class="btn btn-sm" href="{% url 'ad' %}">Søk i Active Directory</a>
+	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/">Admin: AD-grupper</a>
+	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?membercount=0">Admin: grupper 0 medlemmer</a>
+	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">Admin: medlem i 0 grupper</a>
+
+	<hr>
+	Sist oppdatert {{ ou.sist_oppdatert }} (<a target="_blank" href="{% url 'ad_exact' name=ou.distinguishedname %}">Live søk i AD</a>)
+
+	<hr>
+	<h6>Fully distinguished name</h6>
+	{{ ou }}
+
+	<hr>
+	<h6>Parent OU</h6>
+	{% if parent %}
+		<li><a href="{% url 'adorgunit_detaljer' pk=parent.pk %}">{{ parent }}</a></li>
+	{% else %}
+		<li>Ingen</li>
+	{% endif %}
+
+	<hr>
+	<h6>OU-members</h6>
+	<ul style="column-count:3;">
+	{% for c in children %}
+		<li><a href="{% url 'adorgunit_detaljer' pk=c.pk %}">{{c.cn}}</a></li>
+	{% empty %}
+		<li>Ingen</li>
+	{% endfor %}
+	</ul>
+
+
+	<hr>
+	<h6>Security groups (# medlemmer) <span style="color: red">(Ikke fra PRK)</span></h6>
+	<ul style="column-count:3;">
+	{% for g in groups %}
+		<li><a {% if not g.from_prk %} style="color: red" {% endif %} href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.cn }}</a> ({{ g.membercount }})</li>
+	{% endfor %}
+	</ul>
+
+
+
+{% endblock main_content %}

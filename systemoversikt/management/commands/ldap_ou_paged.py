@@ -66,6 +66,20 @@ class Command(BaseCommand):
 
 				sys.stdout.flush()
 
+		@transaction.atomic  # for speeding up database performance
+		def map_child_mother():
+			print("Trying to find parents for all the children")
+			for ou in ADOrgUnit.objects.all():
+				parent_str = ",".join(ou.distinguishedname.split(',')[1:])
+				try:
+					parent = ADOrgUnit.objects.get(distinguishedname=parent_str)
+					ou.parent = parent
+					ou.save()
+				except:
+					pass
+			print("Done, preparing stats")
+
+
 		def report(result):
 			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s endrede og %s slettede elementer." % (
 					result["total_runtime"],
@@ -82,5 +96,6 @@ class Command(BaseCommand):
 
 
 		result = ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data)
+		map_child_mother()
 		report(result)
 

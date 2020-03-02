@@ -64,6 +64,12 @@ class Command(BaseCommand):
 				email = attrs["mail"][0].decode()
 			user.email = email
 
+			try:
+				description = attrs["description"][0].decode()
+			except KeyError:
+				description = ""
+			user.profile.description = description
+
 			userAccountControl_decoded = decode_useraccountcontrol(userAccountControl)
 			if "ACCOUNTDISABLE" in userAccountControl_decoded:
 				user.profile.accountdisable = True
