@@ -1718,9 +1718,20 @@ def alle_adgrupper(request):
 	Vise informasjon om AD-grupper
 	Tilgangsstyring: må kunne vise informasjon om brukere
 	"""
+	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+	if len(search_term) > 1:
+		term = "CN=" + search_term
+		print(term)
+		adgrupper = ADgroup.objects.filter(distinguishedname__istartswith=term)
+	else:
+		print(search_term)
+		adgrupper = ADgroup.objects.none()
+
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
 		return render(request, 'ad_adgrupper_sok.html', {
+				"adgrupper": adgrupper,
+				"search_term": search_term,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

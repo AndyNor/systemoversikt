@@ -3,13 +3,31 @@
 {% load static %}
 
 {% block underoverskrift %}
-	CMDB: AD-grupper
+	AD-gruppesøk
 {% endblock underoverskrift %}
 
 {% block main_content %}
 
-	<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/adgroup/">Alle AD-grupper</a>
-	<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/adgroup/?membercount=0">AD-grupper med 0 medlemmer</a>
-	<a class="btn btn-sm btn-secondary" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">AD-grupper medlem i 0 grupper</a>
+	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
+	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/">Admin: AD-grupper</a>
+	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?membercount=0">Admin: grupper 0 medlemmer</a>
+	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">Admin: medlem i 0 grupper</a>
+
+	<hr>
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="AD-gruppe starter med (ofte DS-gruppenavn)" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+
+	{% for g in adgrupper %}
+		<li><a href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.cn }}</a></li>
+	{% empty %}
+		<li>Ingen treff</li>
+	{% endfor %}
 
 {% endblock main_content %}

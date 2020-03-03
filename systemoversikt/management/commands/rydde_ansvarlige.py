@@ -80,6 +80,6 @@ class Command(BaseCommand):
 		)
 		print(logg_entry_message)
 		#logg_entry = ApplicationLog.objects.create(
-		#		event_type='PRK user import',
+		#		event_type='Rydde ansvarlige',
 		#		message=logg_entry_message,
 		#)

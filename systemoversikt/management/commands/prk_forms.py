@@ -147,8 +147,9 @@ class Command(BaseCommand):
 				valg = PRKvalg.objects.get(gruppenavn=valg)
 
 				ad_group = valg.ad_group_ref
-				ad_group.from_prk = False  # hvis vi oppdager at valget er borte, merker vi AD-gruppen som "ikke fra AD"
-				ad_group.save()
+				if ad_group != None:
+					ad_group.from_prk = False  # hvis vi oppdager at valget er borte, merker vi AD-gruppen som "ikke fra AD"
+					ad_group.save()
 
 				valg.delete()
 				print("x", end="")

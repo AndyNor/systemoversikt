@@ -15,6 +15,16 @@
 	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">Admin: medlem i 0 grupper</a>
 
 	<hr>
+
+	<form action="{% url 'alle_adgrupper' %}" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="AD-gruppe starter med (ofte DS-gruppenavn)" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	<hr>
 	Sist oppdatert {{ ou.sist_oppdatert }} (<a target="_blank" href="{% url 'ad_exact' name=ou.distinguishedname %}">Live søk i AD</a>)
 
 	<hr>
