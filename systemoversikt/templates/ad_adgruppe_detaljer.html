@@ -15,7 +15,9 @@
 	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">Admin: medlem i 0 grupper</a>
 
 	<hr>
-	Sist oppdatert {{ gruppe.sist_oppdatert }} (<a target="_blank" href="{% url 'ad_exact' name=gruppe.distinguishedname %}">Live søk i AD</a>)
+	Sist oppdatert {{ gruppe.sist_oppdatert }}
+		(<a target="_blank" href="{% url 'ad_exact' name=gruppe.distinguishedname %}">Live søk i AD</a>)
+		(<a target="_blank" href="{% url 'adgruppe_graf' pk=gruppe.pk %}">Graf opp nøstede grupper</a>)
 
 	<hr>
 	<h6>Fully distinguished name</h6>

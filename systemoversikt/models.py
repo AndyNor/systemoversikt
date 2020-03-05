@@ -1256,6 +1256,9 @@ class ADgroup(models.Model):
 		else:
 			return self.distinguishedname
 
+	def short(self):
+		return self.distinguishedname[3:].split(",")[0]  # fjerner cn= og alt etter komma
+
 
 
 AVTALETYPE_VALG = (

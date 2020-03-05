@@ -120,6 +120,7 @@ urlpatterns = [
 	url(r'^ad/$', views.ad, name='ad'),
 	url(r'^ad/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
 	url(r'^ad/adgruppe/(?P<pk>\d{1,8})/$', views.adgruppe_detaljer, name='adgruppe_detaljer'),
+	url(r'^ad/graf/(?P<pk>\d{1,8})/$', views.adgruppe_graf, name='adgruppe_graf'),
 	url(r'^ad/adorgunit/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
 	url(r'^ad/adorgunit/(?P<pk>\d{1,8})/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
 	url(r'^ad/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),  #denne må komme etter ad/adgrupper/

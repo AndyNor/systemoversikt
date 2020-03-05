@@ -1661,27 +1661,118 @@ def adorgunit_detaljer(request, pk=None):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-
-def adgruppe_detaljer(request, pk):
+def adgruppe_graf(request, pk):
 	"""
-	Vise informasjon om en konkret AD-gruppe
-	Tilgangsstyring: må kunne vise informasjon om brukere
+	Vise en graf over hvordan grupper er nøstet nedover fra en gitt gruppe
+	Tilgangsstyring: Må kunne vise informasjon om brukere
 	"""
 	import json
+	required_permissions = 'auth.view_user'
+	if request.user.has_perm(required_permissions):
 
-	def human_readable_members(items):
-		groups = []
-		users = []
-		other_users = []
-		notfound = []
-		for item in items:
-			try:
-				g = ADgroup.objects.get(distinguishedname=item)
-				groups.append(g)
-				continue
-			except Exception as e:
-				#print("fant ikke gruppen med feilmelding %s" % (e))
-				pass
+		import math
+		morgruppe = ADgroup.objects.get(pk=pk)
+
+		avhengigheter_graf = {"nodes": [], "edges": []}
+		nye_grupper = []
+		ferdige = []
+
+		maks_grense = int(request.GET.get('maks_grense', 50))  # strip removes trailing and leading space
+		grense = 0
+
+		def define_color(gruppe):
+			if gruppe.from_prk:
+				return "#3bc319"
+			else:
+				return "#da3747"
+
+		def define_size(gruppe):
+			minimum = 25
+			if gruppe.membercount > 0:
+				adjusted_member_count = minimum + (20 * math.log(gruppe.membercount, 10))
+				return ("%spx" % adjusted_member_count)
+			else:
+				return ("%spx" % minimum)
+
+		def registrere_gruppe(gruppe):
+			if gruppe not in ferdige:
+				size = define_size(gruppe)
+				avhengigheter_graf["nodes"].append(
+						{"data": {
+								"parent": '',
+								"id": gruppe.pk,
+								"name": gruppe.short(),
+								"shape": "triangle",
+								"size": size,
+								"color": "#202020"
+							},
+						})
+				ferdige.append(gruppe.pk)
+
+			members = human_readable_members(json.loads(gruppe.member), onlygroups=True)
+			for m in members["groups"]:
+				color = define_color(m)
+				size = define_size(m)
+				if m not in ferdige:
+					nonlocal grense
+					if grense < maks_grense:
+						nye_grupper.append(m)
+						grense += 1
+					#print("added %s" % m)
+
+					avhengigheter_graf["nodes"].append(
+							{"data": {
+								"parent": m.parent.pk,
+								"id": m.pk,
+								"name": m.short(),
+								"shape": "ellipse",
+								"color": color,
+								"size": size,
+								"href": reverse('adgruppe_detaljer', args=[m.pk])
+								}
+							})
+					avhengigheter_graf["edges"].append(
+							{"data": {
+								"source": gruppe.pk,
+								"target": m.pk,
+								"linestyle": "solid"
+								}
+							})
+					ferdige.append(m.pk)
+
+		registrere_gruppe(morgruppe)
+
+		while nye_grupper:
+			g = nye_grupper.pop()
+			#print("removed %s" % g)
+			registrere_gruppe(g)
+
+
+		return render(request, 'ad_graf.html', {
+			'request': request,
+			'avhengigheter_graf': avhengigheter_graf,
+			'morgruppe': morgruppe,
+			'maks_grense': maks_grense,
+			'grense': grense,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def human_readable_members(items, onlygroups=False):
+	groups = []
+	users = []
+	other_users = []
+	notfound = []
+	for item in items:
+		try:
+			g = ADgroup.objects.get(distinguishedname=item)
+			groups.append(g)
+			continue
+		except Exception as e:
+			#print("fant ikke gruppen med feilmelding %s" % (e))
+			pass
+		if onlygroups == False:
 			try:
 				regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0]
 				u = User.objects.get(username__iexact=regex_username)
@@ -1695,8 +1786,15 @@ def adgruppe_detaljer(request, pk):
 				continue
 			except:
 				notfound.append(item)  # vi fant ikke noe, returner det vi fikk
-		return {"groups": groups, "users": users, "other_users": other_users, "notfound": notfound}
+	return {"groups": groups, "users": users, "other_users": other_users, "notfound": notfound}
 
+
+def adgruppe_detaljer(request, pk):
+	"""
+	Vise informasjon om en konkret AD-gruppe
+	Tilgangsstyring: må kunne vise informasjon om brukere
+	"""
+	import json
 	gruppe = ADgroup.objects.get(pk=pk)
 
 	member = human_readable_members(json.loads(gruppe.member))
