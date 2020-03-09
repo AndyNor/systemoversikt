@@ -712,6 +712,7 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 					'ansvarlig_virksomhet',
 					'type_plattform',
 					'overordnet_plattform',
+					'risikovurdering',
 					'kommentar',
 					'leverandor',
 					'underleverandorer',
