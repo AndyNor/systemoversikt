@@ -510,7 +510,7 @@ def find_vlan(input_var, vlan_data):
 		network = (item["address"], item["address_v6"])
 		for n in network:
 			if ip_in_network(input_var, n):
-				result_text += (item["beskrivelse"] + " (" + item["vlan"] + ")" + " (" + item["sikkerhetsnivaa"] + ")")
+				result_text += (item["beskrivelse"] + "(" + item["address"] + ")" + " (VLAN " + item["vlan"] + ")" + " (" + item["sikkerhetsnivaa"] + ")")
 	return result_text
 
 

@@ -1891,7 +1891,7 @@ def alle_ip(request):
 
 			import re
 			import ipaddress
-			search_term = search_term.replace('\"','').replace('\'','').replace(':',' ') # dette vil feile for IPv6, som kommer på formatet [xxxx:xxxx::xxxx]:port
+			search_term = search_term.replace('\"','').replace('\'','').replace(':',' ').replace('/', ' ').replace('\\', ' ') # dette vil feile for IPv6, som kommer på formatet [xxxx:xxxx::xxxx]:port
 			search_ips = re.findall(r"([^,;\t\s\n\r]+)", search_term)
 
 			ip_lookup = []

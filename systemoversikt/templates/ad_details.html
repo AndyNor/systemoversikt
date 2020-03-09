@@ -79,7 +79,7 @@
 {% for group in result.groups %}
 	<div class="card card-body">
 		<h3>Gruppe</h3>
-		<h5>{{ group.attrs.cn.0 }}</h5>
+		<h5><a href="{% url 'alle_adgrupper' %}?search_term={{group.attrs.cn.0}}">{{ group.attrs.cn.0 }}</a></h5>
 		<p>Canonical Name: (<a href="{% url 'alle_prk' %}?search_term={{group.attrs.cn.0}}">Søk i PRK</a>)<br>{{ group.cn }}</p>
 		<p>Member Of (parent group): <br>
 		{% for item in group.attrs.memberOf %}
