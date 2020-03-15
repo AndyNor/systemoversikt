@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+##AVVIKLET
+
+
 #TODO teste
 
 """
@@ -114,6 +117,16 @@ class Command(BaseCommand):
 
 				sys.stdout.flush()
 
+		existing_users = list(ADUser.objects.all())
+		result = ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data, existing_users)
+
+		print("Sletter eksisterende brukere som ikke ble funnet denne kjøringen..")
+		print(len(existing_users))
+		for u in existing_users:
+			u.delete()
+			result["report_data"]["removed"] += 1
+			print("x", end="")
+
 		def report(result):
 			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s endrede og %s slettede elementer." % (
 					result["total_runtime"],
@@ -127,17 +140,5 @@ class Command(BaseCommand):
 					message=log_entry_message,
 			)
 			print(log_entry_message)
-
-
-
-		existing_users = list(ADUser.objects.all())
-		result = ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data, existing_users)
-
-		print("Sletter eksisterende brukere som ikke ble funnet denne kjøringen..")
-		print(len(existing_users))
-		for u in existing_users:
-			u.delete()
-			result["report_data"]["removed"] += 1
-			print("x", end="")
 
 		report(result)

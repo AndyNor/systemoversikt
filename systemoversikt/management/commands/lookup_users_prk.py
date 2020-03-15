@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+
+##AVVIKLET
+
 """
 Hensikten med denne koden er å fikse tilknytning virksomhet for DRIFT-brukere
 """
