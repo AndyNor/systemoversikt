@@ -1102,6 +1102,98 @@ def virksomhet_ansvarlige(request, pk):
 	})
 
 
+def virksomhet_enhetsok(request):
+	"""
+	Vise informasjon om organisatorisk struktur
+	Tilgjengelig for de som kan se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if lambda u: any(map(request.user.has_perm, required_permissions)):
+
+		search_term = request.GET.get('search_term', "").strip()
+		if len(search_term) > 1:
+			units = HRorg.objects.filter(ou__icontains=search_term).filter(active=True).order_by('virksomhet_mor')
+		else:
+			units = HRorg.objects.none()
+
+		return render(request, 'virksomhet_enhetsok.html', {
+			'request': request,
+			'units': units,
+			'search_term': search_term,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def virksomhet_enheter(request, pk):
+	"""
+	Vise informasjon om organisatorisk struktur
+	Tilgjengelig for de som kan se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if lambda u: any(map(request.user.has_perm, required_permissions)):
+
+		import math
+		avhengigheter_graf = {"nodes": [], "edges": []}
+
+		def color(unit):
+			palett = {
+				1: "black",
+				2: "#ff0000",
+				3: "#cc0033",
+				4: "#990066",
+				5: "#660099",
+				6: "#3300cc",
+				7: "#0000ff",
+			}
+			return palett[unit.level]
+
+		"""
+		def size(unit):
+			minimum = 25
+			if unit.num_members > 0:
+				adjusted_member_count = minimum + (20 * math.log(unit.num_members, 10))
+				return ("%spx" % adjusted_member_count)
+			else:
+				return ("%spx" % minimum)
+		"""
+
+		nodes = []
+		units = HRorg.objects.filter(virksomhet_mor=pk).filter(active=True).filter(level__gt=2)
+		for u in units:
+			members = User.objects.filter(profile__org_unit=u.pk)
+			if len(members) > 0:
+				u.num_members = len(members)
+				nodes.append(u)
+				nodes.append(u.direkte_mor)
+				avhengigheter_graf["edges"].append(
+						{"data": {
+							"source": u.direkte_mor.pk,
+							"target": u.pk,
+							"linestyle": "solid"
+							}
+						})
+		for u in nodes:
+			avhengigheter_graf["nodes"].append(
+					{"data": {
+						"id": u.pk,
+						"name": u.ou,
+						"shape": "ellipse",
+						"color": color(u),
+						#"size": size(u)
+						#"href": reverse('adgruppe_detaljer', args=[m.pk])
+						}
+					})
+
+		return render(request, 'virksomhet_enheter.html', {
+			'request': request,
+			'units': units,
+			'avhengigheter_graf': avhengigheter_graf,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def virksomhet(request, pk):
 	"""
 	Vise detaljer om en valgt virksomhet
@@ -1781,7 +1873,8 @@ def human_readable_members(items, onlygroups=False):
 			except:
 				pass
 			try:
-				u = ADUser.objects.get(distinguishedname=item)
+				# TODO-fix this as PRKuser is replaced with user.profile
+				u = User.objects.get(profile__distinguishedname=item)
 				other_users.append(u)
 				continue
 			except:
