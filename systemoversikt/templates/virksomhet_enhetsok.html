@@ -1,0 +1,45 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Organisatoriske enheter i Oslo kommune
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 140px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Virksomhet.." class="form-control form-control-sm">
+			<input type="submit" value="Filtrer" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+<p>Viser {{ units.count }} enheter</p>
+<hr>
+
+
+<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th width="20%">Navn</th>
+		<th>Virksomhet</th>
+		<th>Direkte underliggende</th>
+		<th>Nivå</th>
+		<th>Leder</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for u in units %}
+		<tr>
+			<td>{{ u.ou }}</td>
+			<td>{{ u.virksomhet_mor }}</td>
+			<td>{{ u.direkte_mor }}</td>
+			<td>{{ u.level }}</td>
+			<td>{{ u.leder|default:"-" }}</td>
+	{% endfor %}
+</tbody>
+</table>
+
+{% endblock main_content %}

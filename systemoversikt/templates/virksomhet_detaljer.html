@@ -17,6 +17,8 @@
 		{% url 'alle_virksomheter' as url_alle_virksomheter %}
 		{% if virksomhet.intranett_url %} <a class="btn btn-sm btn-info" href="{{ virksomhet.intranett_url }}" target="_blank">Vår intranettside</a> {% endif %}
 		{% if virksomhet.www_url %} <a class="btn btn-sm btn-info" href="{{ virksomhet.www_url }}" target="_blank">Vår nettside</a> {% endif %}
+		{% url 'virksomhet_enheter' pk=virksomhet.pk as url_virksomhet_enheter %}
+		<a target="_blank" class="btn btn-sm btn-warning" href="{{url_virksomhet_enheter}}">Intern organisering</a>
 		<a class="btn btn-sm btn-secondary" href="{{ url_alle_virksomheter }}">Oversikt over alle virksomheter</a>
 	</h6>
 
