@@ -7,7 +7,7 @@ Denne importen vil ikke kunne svare på forskjeller mellom AD og PRK. Det er and
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from systemoversikt.utils import ldap_paged_search, decode_useraccountcontrol, ldap_OK_virksomheter
+from systemoversikt.utils import ldap_paged_search, decode_useraccountcontrol, ldap_OK_virksomheter, microsoft_date_decode
 import ldap
 import sys
 
@@ -21,26 +21,56 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		# Configuration
-		BASEDN ='OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no'
-		SEARCHFILTER = '(objectclass=user)'
+		BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
+		SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
 		LDAP_SCOPE = ldap.SCOPE_SUBTREE
-		ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail'] # if empty we get all attr we have access to
-		PAGESIZE = 1000
+		ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp'] # if empty we get all attr we have access to
+		PAGESIZE = 2000
 		LOG_EVENT_TYPE = "AD user-import"
 
 		report_data = {
 			"created": 0,
 			"modified": 0,
 			"removed": 0,
+			"deaktivert": 0,
 		}
 
 		def update_user_status(user, dn, attrs, user_organization):
 
 			if "userAccountControl" in attrs:
-				userAccountControl = attrs["userAccountControl"][0].decode()
+				userAccountControl = int(attrs["userAccountControl"][0].decode())
 			else:
-				print("c", end="")
+				print("-uac-", end="")
 				return
+			userAccountControl_decoded = decode_useraccountcontrol(userAccountControl)
+			user.profile.userAccountControl = userAccountControl_decoded
+
+			if "ACCOUNTDISABLE" in userAccountControl_decoded:
+				user.profile.accountdisable = True
+				user.is_active = False
+			else:
+				user.profile.accountdisable = False
+				user.is_active = True
+			if "LOCKOUT" in userAccountControl_decoded:
+				user.profile.lockout = True
+			else:
+				user.profile.lockout = False
+			if "PASSWD_NOTREQD" in userAccountControl_decoded:
+				user.profile.passwd_notreqd = True
+			else:
+				user.profile.passwd_notreqd = False
+			if "DONT_EXPIRE_PASSWORD" in userAccountControl_decoded:
+				user.profile.dont_expire_password = True
+			else:
+				user.profile.dont_expire_password = False
+			if "PASSWORD_EXPIRED" in userAccountControl_decoded:
+				user.profile.password_expired = True
+			else:
+				user.profile.password_expired = False
+			if "OU=Eksterne brukere" in dn:
+				user.profile.ekstern_ressurs = True
+			if "OU=Brukere" in dn:
+				user.profile.ekstern_ressurs = False
 
 			try:
 				virksomhet_tbf = user_organization.upper()
@@ -70,33 +100,20 @@ class Command(BaseCommand):
 				description = ""
 			user.profile.description = description
 
-			userAccountControl_decoded = decode_useraccountcontrol(userAccountControl)
-			if "ACCOUNTDISABLE" in userAccountControl_decoded:
-				user.profile.accountdisable = True
-				user.is_active = False
-			else:
-				user.profile.accountdisable = False
-				user.is_active = True
-			if "LOCKOUT" in userAccountControl_decoded:
-				user.profile.lockout = True
-			else:
-				user.profile.lockout = False
-			if "PASSWD_NOTREQD" in userAccountControl_decoded:
-				user.profile.passwd_notreqd = True
-			else:
-				user.profile.passwd_notreqd = False
-			if "DONT_EXPIRE_PASSWORD" in userAccountControl_decoded:
-				user.profile.dont_expire_password = True
-			else:
-				user.profile.dont_expire_password = False
-			if "PASSWORD_EXPIRED" in userAccountControl_decoded:
-				user.profile.password_expired = True
-			else:
-				user.profile.password_expired = False
-			if "OU=Eksterne brukere" in dn:
-				user.profile.ekstern_ressurs = True
-			if "OU=Brukere" in dn:
-				user.profile.ekstern_ressurs = False
+			try:
+				lastLogonTimestamp = microsoft_date_decode(attrs["lastLogonTimestamp"][0].decode())
+			except KeyError:
+				lastLogonTimestamp = None
+			user.profile.lastLogonTimestamp = lastLogonTimestamp
+
+			user.profile.distinguishedname = dn
+
+			try:
+				displayName = attrs["displayName"][0].decode()
+			except KeyError:
+				displayName = ""
+			user.profile.displayName = displayName
+
 			user.save()
 			return user
 
@@ -110,62 +127,36 @@ class Command(BaseCommand):
 				sys.stdout.flush()
 
 				if "cn" in attrs:
-					username = attrs["cn"][0].decode().lower()
+					username = attrs["sAMAccountName"][0].decode().lower()
 				else:
 					print("?", end="")
 					continue  # vi må ha et brukernavn
 
-				if not ("OU=Eksterne brukere" in dn or "OU=Brukere" in dn):
-					#TODO prøv å slette for å rydde opp
-					continue  # ikke en person
+				#if not ("OU=Eksterne brukere" in dn or "OU=Brukere" in dn):
+				#	continue  # ikke en person
 
 				user_organization = dn.split(",")[1][3:]  # andre OU, fjerner "OU=" som er tegn 0-2.
-				if user_organization not in gyldige_virksomheter:
-					print("?", end="")
-					continue
+				#if user_organization not in gyldige_virksomheter:
+				#	print("?", end="")
+				#	continue
 
 				# et gyldig brukernavn på en bruker er trebokstav (eller DRIFT) + 4-6 siffer
-				if not re.match(r"^[a-z]{3}[0-9]{4,6}$", username) and not re.match(r"^drift[0-9]{4,6}$", username):  # username er kun lowercase
-					print("b", end="")
-					continue # ugyldig brukernavn
+				#if not re.match(r"^[a-z]{3}[0-9]{4,6}$", username) and not re.match(r"^drift[0-9]{4,6}$", username):  # username er kun lowercase
+				#	print("b", end="")
+				#	continue # ugyldig brukernavn
 
-				if username in existing_objects:
-					existing_objects.remove(username) # holde track på brukere som ikke lenger finnes
-
+				try:
 					user = User.objects.get(username=username)
 					user = update_user_status(user, dn, attrs, user_organization)
-
-					print("u", end="")
+					if username in existing_objects: # holde track på brukere som ikke lenger finnes
+						existing_objects.remove(username)
 					report_data["modified"] += 1
-
-				else: # bruker finnes ikke
-					try:
-						user = User.objects.create_user(username=username)
-					except:
-						print("\nKunne ikke opprette bruker med brukernavn '%s'" % username)
-						continue
-
+					print("u", end="")
+				except:
+					user = User.objects.create_user(username=username)
 					user = update_user_status(user, dn, attrs, user_organization)
-
-					print("n", end="")
 					report_data["created"] += 1
-
-
-		def report(result):
-			#print("\nVirksomheter det ikke var brukere for i AD: ", gyldige_virksomheter)
-			#print("\nVirksomheter som ikke er i kartoteket: ", ad_grupper_utenfor_kartoteket)
-			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s oppdatert." % (
-					result["total_runtime"],
-					result["objects_returned"],
-					result["report_data"]["created"],
-					result["report_data"]["modified"],
-			)
-			log_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=log_entry_message,
-			)
-			print(log_entry_message)
-
+					print("n", end="")
 
 		# Start søk og opprydding
 		existing_objects = list(User.objects.values_list("username", flat=True))
@@ -185,7 +176,7 @@ class Command(BaseCommand):
 						u.is_active = False
 						u.save()
 						print("r", end="")
-						result["report_data"]["modified"] += 1
+						result["report_data"]["deaktivert"] += 1
 					else:
 						print("-", end="")
 				except ObjectDoesNotExist:
@@ -194,5 +185,21 @@ class Command(BaseCommand):
 			print("")
 
 		cleanup(existing_objects, result)
+
+		def report(result):
+			#print("\nVirksomheter det ikke var brukere for i AD: ", gyldige_virksomheter)
+			#print("\nVirksomheter som ikke er i kartoteket: ", ad_grupper_utenfor_kartoteket)
+			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s oppdatert og %s deaktivert." % (
+					result["total_runtime"],
+					result["objects_returned"],
+					result["report_data"]["created"],
+					result["report_data"]["modified"],
+					result["report_data"]["deaktivert"],
+			)
+			log_entry = ApplicationLog.objects.create(
+					event_type=LOG_EVENT_TYPE,
+					message=log_entry_message,
+			)
+			print(log_entry_message)
 
 		report(result)

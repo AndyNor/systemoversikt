@@ -364,6 +364,11 @@ class Virksomhet(models.Model):
 			blank=True,
 			help_text=u"Person(er) i rollen som informasjonssikkerhetskoordinator.",
 			)
+	odepartmentnumber = models.IntegerField(
+			verbose_name="Organisasjonens department-nummer",
+			blank=True, null=True,
+			help_text=u"Settes automatisk fra PRK/HR-import",
+			)
 	history = HistoricalRecords()
 
 
@@ -374,7 +379,7 @@ class Virksomhet(models.Model):
 		verbose_name_plural = "Virksomheter"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
-
+"""
 class ADUser(models.Model):
 	sAMAccountName = models.CharField(
 			verbose_name="sAMAccountName",
@@ -432,12 +437,25 @@ class ADUser(models.Model):
 
 	class Meta:
 		verbose_name_plural = "AD brukere (utenfor PRK)"
-
+"""
 
 class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhørende virksomhet. Vurderer å fjerne denne.
 	#https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
 	user = models.OneToOneField(User,
 			on_delete=models.CASCADE,  # slett profilen når brukeren slettes
+			)
+	distinguishedname = models.TextField(
+			verbose_name="Distinguishedname (AD)",
+			blank=True, null=True,
+			)
+	displayName = models.CharField(
+			verbose_name="Visningsnavn (AD)",
+			max_length=300,
+			blank=True, null=True,
+			)
+	lastLogonTimestamp = models.DateTimeField(
+			verbose_name="Sist innlogget (AD)",
+			null=True, blank=True,
 			)
 	virksomhet = models.ForeignKey(Virksomhet, related_name='brukers_virksomhet',
 			on_delete=models.PROTECT,
@@ -449,6 +467,27 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			verbose_name="Virksomhet / Etat: Innlogget som",
 			blank=True, null=True,
 			)
+	from_prk = models.BooleanField(
+			verbose_name="Fra PRK?",
+			default=False,
+			)
+	ekstern_ressurs = models.NullBooleanField(
+			verbose_name="Ekstern ressurs? (AD)",
+			default=None,
+			)
+	usertype = models.CharField(
+			verbose_name="Brukertype (PRK)",
+			max_length=20,
+			null=True, blank=True,
+			)
+	description = models.TextField(
+			verbose_name="Beskrivelse (AD)",
+			blank=True, null=True,
+			)
+	userAccountControl = models.TextField(
+			verbose_name="User Account Control (AD)",
+			blank=True, null=True,
+			)
 	accountdisable = models.BooleanField(
 			verbose_name="Account disable (AD)",
 			default=False,
@@ -457,37 +496,28 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 	lockout = models.BooleanField(
 			verbose_name="Lockout (AD)",
 			default=False,
-			help_text="Importeres fra AD",
 			)
 	passwd_notreqd = models.BooleanField(
 			verbose_name="Passwd notreqd (AD)",
 			default=False,
-			help_text="Importeres fra AD",
 			)
 	dont_expire_password = models.BooleanField(
 			verbose_name="Dont expire password (AD)",
 			default=False,
-			help_text="Importeres fra AD",
 			)
 	password_expired = models.BooleanField(
 			verbose_name="Password expired (AD)",
 			default=False,
-			help_text="Importeres fra AD",
 			)
-	ekstern_ressurs = models.BooleanField(
-			verbose_name="Ekstern ressurs",
-			default=False,
-			help_text="Importeres. Settes dersom bruker ligger under OU=Eksterne brukere.",
+	org_unit = models.ForeignKey('HRorg',
+			related_name='profile_org_unit',
+			on_delete=models.PROTECT,
+			verbose_name='Organisatorisk tilhørighet (PRK)',
+			null=True, blank=True,
 			)
-	from_prk = models.BooleanField(
-			verbose_name="Bruker fra PRK?",
-			default=False,
-			help_text="Importeres og sjekkes mot objekter i PRKuser",
-			)
-	description = models.TextField(
-			verbose_name="Beskrivelse",
+	ansattnr = models.IntegerField(
+			verbose_name="Ansattnr (PRK)",
 			blank=True, null=True,
-			help_text=u"importert",
 			)
 	# med vilje er det ikke HistoricalRecords() på denne
 
@@ -3358,6 +3388,66 @@ class BehovForDPIA(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class HRorg(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	active = models.BooleanField(
+			verbose_name="Aktiv",
+			default=True, # per definisjon
+			help_text=u"Settes automatisk",
+			)
+	ouid = models.IntegerField(unique=True,
+			verbose_name="OUID",
+			null=False,
+			help_text=u"Importert",
+			)
+	level = models.IntegerField(
+			verbose_name="OULEVEL",
+			null=True,
+			help_text=u"Importert",
+			)
+	leder = models.ForeignKey(User,
+			on_delete=models.PROTECT,
+			related_name='hrorg_leder',
+			verbose_name="Leder",
+			null=True,
+			help_text=u"Importert",
+			)
+	ou = models.CharField(
+			verbose_name="OU",
+			max_length=200,
+			null=True,
+			help_text=u"Importert",
+			)
+	virksomhet_mor = models.ForeignKey("Virksomhet",
+			on_delete=models.PROTECT,
+			related_name='hrorg_virksomhet_mor',
+			verbose_name="Overordnet virksomhet",
+			null=True,
+			help_text=u"Importert",
+			)
+	direkte_mor = models.ForeignKey("HRorg",
+			on_delete=models.CASCADE,
+			related_name='hrorg_direkte_mor',
+			verbose_name="Overordnet enhet",
+			null=True,
+			help_text=u"Importert",
+			)
+	#ikke behov for historikk
+
+	def __str__(self):
+		return u'%s' % (self.ou)
+
+	class Meta:
+		verbose_name_plural = "HR organisasjoner"
+		default_permissions = ('add', 'change', 'delete', 'view')
 
 
 class PRKvalg(models.Model):
@@ -3490,7 +3580,7 @@ class PRKskjema(models.Model):
 		verbose_name_plural = "PRK skjemaer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
-
+"""
 class PRKuser(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -3520,6 +3610,8 @@ class PRKuser(models.Model):
 	class Meta:
 		verbose_name_plural = "PRK brukere"
 		default_permissions = ('add', 'change', 'delete', 'view')
+"""
+
 """
 LIVSSYKLUS_VALG = (
 	(1, '1 valg 1'),
