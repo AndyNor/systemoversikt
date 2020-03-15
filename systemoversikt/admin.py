@@ -55,12 +55,20 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 	return export_as_csv
 
 
+@admin.register(HRorg)
+class HRorg(SimpleHistoryAdmin):
+	list_display = ('ou', 'level', 'leder', 'virksomhet_mor', 'direkte_mor')
+	search_fields = ('ou',)
+	autocomplete_fields = ('leder', 'virksomhet_mor', 'direkte_mor')
+	list_filter = ('active', 'opprettet', 'virksomhet_mor')
+
+"""
 @admin.register(PRKuser)
 class PRKuserAdmin(SimpleHistoryAdmin):
 	list_display = ('username', 'usertype')
 	search_fields = ('usertype',)
 	list_filter = ('usertype', 'opprettet',)
-
+"""
 
 @admin.register(Sikkerhetstester)
 class SikkerhetstesterAdmin(SimpleHistoryAdmin):
@@ -203,6 +211,8 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 	search_fields = ('virksomhetsnavn', 'virksomhetsforkortelse')
 	list_filter = ('resultatenhet', 'ordinar_virksomhet')
 
+	readonly_fields = ["odepartmentnumber"]
+
 	filter_horizontal = ('overordnede_virksomheter',)
 
 	def get_ordering(self, request):
@@ -223,6 +233,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 				'fields': (
 					'virksomhetsnavn',
 					'virksomhetsforkortelse',
+					'odepartmentnumber',
 					'ordinar_virksomhet',
 					'orgnummer',
 					'resultatenhet',
@@ -487,14 +498,14 @@ class ProfileAdmin(admin.ModelAdmin):
 	search_fields = ('user__username',)
 	autocomplete_fields = ('user',)
 
-
+"""
 @admin.register(ADUser)
 class ProfileAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('sAMAccountName', 'fornavn', 'etternavn', 'displayName', 'distinguishedname', 'userAccountControl', 'description')
 	search_fields = ('distinguishedname', 'sAMAccountName')
 	list_filter = ('lastLogonTimestamp', 'from_prk')
-
+"""
 
 @admin.register(SystemUrl)
 class SystemUrlAdmin(SimpleHistoryAdmin):
@@ -568,8 +579,8 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 admin.site.unregister(User)  # den er som standard registrert
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-	list_display = ('username', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
-	search_fields = ('username', 'first_name', 'last_name')
+	list_display = ('username', 'last_login', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
+	search_fields = ('last_login', 'username', 'first_name', 'last_name')
 	list_filter = ('profile__from_prk', 'is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'profile__virksomhet', 'groups',)
 
 	def has_usable_password(self, obj):
