@@ -537,6 +537,59 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 		instance.profile.save()
 
 
+class Klientutstyr(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	maskinadm_wsnummer = models.CharField(
+			verbose_name="WS-nummer",
+			max_length=20,
+			blank=True, null=True,
+			)
+	maskinadm_virksomhet = models.ForeignKey("Virksomhet",
+			on_delete=models.PROTECT,
+			verbose_name="Tilhører virksomhet",
+			related_name='klientutstyr_virksomhet',
+			null=True, blank=True,
+			)
+	maskinadm_virksomhet_str = models.CharField(
+			verbose_name="Virksomhet (tekst)",
+			max_length=30,
+			blank=True, null=True,
+			)
+	maskinadm_klienttype = models.CharField(
+			verbose_name="Klienttype",
+			max_length=12,
+			blank=True, null=True,
+			)
+	maskinadm_sone = models.CharField(
+			verbose_name="Sikkerhetssone",
+			max_length=6,
+			blank=True, null=True,
+			)
+	maskinadm_servicenivaa = models.CharField(
+			verbose_name="Servicenivå",
+			max_length=2,
+			blank=True, null=True,
+			)
+	maskinadm_sist_oppdatert = models.DateTimeField(
+			verbose_name="Maskinadm: sist_oppdatert",
+			null=True,
+			)
+
+	def __str__(self):
+		return u'%s' % (self.leverandor_navn)
+
+	class Meta:
+		verbose_name_plural = "Klientutstyr"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
 
 class Leverandor(models.Model):
 	opprettet = models.DateTimeField(

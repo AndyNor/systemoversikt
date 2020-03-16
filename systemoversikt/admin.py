@@ -70,6 +70,14 @@ class PRKuserAdmin(SimpleHistoryAdmin):
 	list_filter = ('usertype', 'opprettet',)
 """
 
+
+@admin.register(Klientutstyr)
+class KlientutstyrAdmin(admin.ModelAdmin):
+	list_display = ('maskinadm_wsnummer', 'maskinadm_virksomhet', 'maskinadm_virksomhet_str', 'maskinadm_klienttype', 'maskinadm_sone', 'maskinadm_servicenivaa', 'maskinadm_sist_oppdatert')
+	search_fields = ('maskinadm_wsnummer',)
+	list_filter = ('maskinadm_servicenivaa', 'maskinadm_sone', 'maskinadm_klienttype', 'maskinadm_virksomhet', 'maskinadm_sist_oppdatert')
+
+
 @admin.register(Sikkerhetstester)
 class SikkerhetstesterAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
