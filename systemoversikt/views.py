@@ -84,6 +84,29 @@ Støttefunksjoner slutt
 """
 Funksjoner som genererer innhold / eksponert via URL. Tilgangsstyres dersom nødvendig.
 """
+def alle_klienter(request):
+	alle_maskinadm_klienter = set(list(Klientutstyr.objects.values_list('maskinadm_wsnummer', flat=True)))
+	alle_cmdb_klienter = set(list(CMDBdevice.objects.filter(active=True).filter(comp_name__istartswith="WS8").values_list('comp_name', flat=True)))
+
+	#for i in alle_maskinadm_klienter[0:10]:
+	#	print(i)
+	antall_maskinadm = len(alle_maskinadm_klienter)
+	antal_cmdb = len(alle_cmdb_klienter)
+
+	mangler_cmdb = alle_maskinadm_klienter - alle_cmdb_klienter
+	mangler_maskinadm = alle_cmdb_klienter - alle_maskinadm_klienter
+
+	return render(request, 'PRK_klienter.html', {
+		'request': request,
+		'antall_maskinadm': antall_maskinadm,
+		'antal_cmdb': antal_cmdb,
+		'mangler_cmdb': mangler_cmdb,
+		'mangler_maskinadm': mangler_maskinadm,
+		'alle_maskinadm_klienter': alle_maskinadm_klienter,
+		'alle_cmdb_klienter': alle_cmdb_klienter,
+	})
+
+
 def minside(request):
 	"""
 	Når innlogget, vise informasjon om innlogget bruker

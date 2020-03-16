@@ -75,6 +75,8 @@ urlpatterns = [
 	url(r'^avtaler/(?P<virksomhet>\d{1,8})/$', views.alle_avtaler, name='avtalervirksomhet'),
 	url(r'^avtaler/databehandleravtale/virksomhet/(?P<pk>\d{1,8})/$', views.databehandleravtaler_virksomhet, name='databehandleravtaler_virksomhet'),
 
+	url(r'^klient/$', views.alle_klienter, name='alle_klienter'),
+
 	url(r'^virksomhet/$', views.alle_virksomheter, name='alle_virksomheter'),
 	url(r'^virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet, name='virksomhet'),
 	url(r'^virksomhet/ansvarlige/(?P<pk>\d{1,8})/$', views.virksomhet_ansvarlige, name='virksomhet_ansvarlige'),

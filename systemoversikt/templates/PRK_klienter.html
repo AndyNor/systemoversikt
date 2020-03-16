@@ -1,0 +1,40 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	PRK Maskinadm: Klienter
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+antall_maskinadm:<br>
+{{ antall_maskinadm }}
+
+<hr>
+
+antal_cmdb:<br>
+{{ antal_cmdb }}
+
+<hr>
+
+
+mangler_maskinadm:<br>
+{{ mangler_maskinadm }}
+
+<hr>
+
+mangler_cmdb:<br>
+{{ mangler_cmdb }}
+
+<hr>
+
+alle_maskinadm_klienter:<br>
+{{ alle_maskinadm_klienter }}
+
+<hr>
+
+alle_cmdb_klienter:<br>
+{{ alle_cmdb_klienter }}
+
+{% endblock main_content %}
