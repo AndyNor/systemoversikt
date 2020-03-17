@@ -33,7 +33,7 @@
 	<tbody>
 	{% for u in units %}
 		<tr>
-			<td>{{ u.ou }}</td>
+			<td><a href="{% url 'enhet_detaljer' pk=u.pk %}">{{ u.ou }}</a></td>
 			<td>{{ u.virksomhet_mor }}</td>
 			<td>{{ u.direkte_mor }}</td>
 			<td>{{ u.level }}</td>

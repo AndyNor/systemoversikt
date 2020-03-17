@@ -47,10 +47,23 @@
 
 			<hr>
 
+			Avdelinger:
+			<ul style="column-count: 2;">
+			{% for u in enheter %}
+				{% url 'enhet_detaljer' pk=u.pk as url_enhet %}
+				<li><a href="{{url_enhet}}">{{ u }}</a></li>
+			{% empty %}
+				<li>Ingen</li>
+			{% endfor %}
+			</ul>
+
+			<hr>
+
 			<h6>Organisatoriske personverntiltak</h6>
 			<b>{% get_verbose_field_name virksomhet "rutine_behandling_personopplysninger" %}:</b> {% if virksomhet.rutine_behandling_personopplysninger %}<a href="{{ virksomhet.rutine_behandling_personopplysninger|default:'' }}">Link</a>{% else %} Ikke oppgitt {% endif %}<br>
 			<b>{% get_verbose_field_name virksomhet "rutine_tilgangskontroll" %}:</b> {% if virksomhet.rutine_tilgangskontroll %}<a href="{{ virksomhet.rutine_tilgangskontroll|default:'' }}">Link</a>{% else %} Ikke oppgitt {% endif %}<br>
 			<b>{% get_verbose_field_name virksomhet "rutine_klage_behandling" %}:</b> {% if virksomhet.rutine_klage_behandling %}<a href="{{ virksomhet.rutine_klage_behandling|default:'' }}">Link</a>{% else %} Ikke oppgitt {% endif %}<br>
+
 
 		</div>
 

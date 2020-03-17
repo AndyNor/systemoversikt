@@ -9,7 +9,10 @@ import re
 
 # som standard vises bare "self.username". Vi ønsker også å vise fult navn.
 def new_display_name(self):
-	return(self.first_name + " " + self.last_name + " (" + self.username + ")")
+	if self.profile.displayName:
+		return(self.profile.displayName + " (" + self.username + ")")
+	else:
+		return(self.first_name + " " + self.last_name + " (" + self.username + ")")
 User.add_to_class("__str__", new_display_name)
 
 
@@ -446,6 +449,11 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			)
 	distinguishedname = models.TextField(
 			verbose_name="Distinguishedname (AD)",
+			blank=True, null=True,
+			)
+	ou = models.ForeignKey("ADOrgUnit", related_name='profile_ou',
+			on_delete=models.PROTECT,
+			verbose_name="OU-parent",
 			blank=True, null=True,
 			)
 	displayName = models.CharField(

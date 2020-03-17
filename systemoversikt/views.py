@@ -81,9 +81,73 @@ Støttefunksjoner slutt
 
 
 
+
+
 """
 Funksjoner som genererer innhold / eksponert via URL. Tilgangsstyres dersom nødvendig.
 """
+def mal(request, pk):
+	"""
+	Hva denne funksjonen gjør
+	Tilgjengelig for hvem?
+	"""
+	required_permissions = ['auth.RETTIGHET']
+	if lambda u: any(map(request.user.has_perm, required_permissions)):
+
+		#logikk
+		search_term = request.GET.get('search_term', '').strip()
+
+		return render(request, 'NAVN.html', {
+			'request': request,
+			'search_term': search_term,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def bruker_sok(request):
+	"""
+	Denne funksjonen viser resultat av søk etter brukere
+	Tilgjengelig for de som har rettigheter til å se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if lambda u: any(map(request.user.has_perm, required_permissions)):
+
+		search_term = request.GET.get('search_term', '').strip()
+
+		if len(search_term) > 3:
+			users = User.objects.filter(Q(username__icontains=search_term) | Q(profile__displayName__icontains=search_term))
+		else:
+			users = User.objects.none()
+
+		return render(request, 'system_brukerdetaljer.html', {
+			'request': request,
+			'search_term': search_term,
+			'users': users,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
+def bruker_detaljer(request, pk):
+	"""
+	Denne funksjonen viser detaljer om en bruker lastet inn i kartoteket
+	Tilgjengelig for de som har rettigheter til å se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if lambda u: any(map(request.user.has_perm, required_permissions)):
+
+		user = User.objects.get(pk=pk)
+		return render(request, 'system_brukerdetaljer.html', {
+			'request': request,
+			'users': [user],
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
 def alle_klienter(request):
 	alle_maskinadm_klienter = set(list(Klientutstyr.objects.values_list('maskinadm_wsnummer', flat=True)))
 	alle_cmdb_klienter = set(list(CMDBdevice.objects.filter(active=True).filter(comp_name__istartswith="WS8").values_list('comp_name', flat=True)))
@@ -96,7 +160,7 @@ def alle_klienter(request):
 	mangler_cmdb = alle_maskinadm_klienter - alle_cmdb_klienter
 	mangler_maskinadm = alle_cmdb_klienter - alle_maskinadm_klienter
 
-	return render(request, 'PRK_klienter.html', {
+	return render(request, 'prk_klienter.html', {
 		'request': request,
 		'antall_maskinadm': antall_maskinadm,
 		'antal_cmdb': antal_cmdb,
@@ -1125,6 +1189,28 @@ def virksomhet_ansvarlige(request, pk):
 	})
 
 
+def enhet_detaljer(request, pk):
+	"""
+	Vise informasjon om en konkret organisatorisk enhet
+	Tilgjengelig for de som kan se brukerdetaljer
+	"""
+	required_permissions = ['auth.view_user']
+	if lambda u: any(map(request.user.has_perm, required_permissions)):
+
+		unit = HRorg.objects.get(pk=pk)
+		sideenheter = HRorg.objects.filter(direkte_mor=unit).order_by('ou')
+		personer = User.objects.filter(profile__org_unit=pk).order_by('profile__displayName')
+
+		return render(request, 'virksomhet_enhet_detaljer.html', {
+			'request': request,
+			'unit': unit,
+			'sideenheter': sideenheter,
+			'personer': personer,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def virksomhet_enhetsok(request):
 	"""
 	Vise informasjon om organisatorisk struktur
@@ -1237,6 +1323,8 @@ def virksomhet(request, pk):
 	behandling_uten_ansvarlig = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(oppdateringsansvarlig=None).count()
 	behandling_ikke_kvalitetssikret = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(informasjon_kvalitetssikret=False).count()
 
+	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=3)
+
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
 		'virksomhet': virksomhet,
@@ -1251,6 +1339,7 @@ def virksomhet(request, pk):
 		'deaktiverte_brukere': deaktiverte_brukere,
 		'behandling_uten_ansvarlig': behandling_uten_ansvarlig,
 		'behandling_ikke_kvalitetssikret': behandling_ikke_kvalitetssikret,
+		'enheter': enheter,
 	})
 
 
@@ -1764,6 +1853,8 @@ def adorgunit_detaljer(request, pk=None):
 		parent = None
 	children = ADOrgUnit.objects.filter(parent=pk)
 
+	users = User.objects.filter(profile__ou=pk)
+
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
 		return render(request, 'ad_adorgunit_detaljer.html', {
@@ -1771,6 +1862,7 @@ def adorgunit_detaljer(request, pk=None):
 				"groups": groups,
 				"parent": parent,
 				"children": children,
+				"users": users,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

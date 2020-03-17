@@ -12,7 +12,7 @@ import ldap
 import sys
 
 from django.contrib.auth.models import User
-from systemoversikt.models import Virksomhet, ApplicationLog
+from systemoversikt.models import Virksomhet, ApplicationLog, ADOrgUnit
 from django.db.models.functions import Upper
 import json
 import re
@@ -107,6 +107,14 @@ class Command(BaseCommand):
 			user.profile.lastLogonTimestamp = lastLogonTimestamp
 
 			user.profile.distinguishedname = dn
+
+			parent_ou_str = ",".join(ou.distinguishedname.split(',')[1:])
+			try:
+				parent_ou = ADOrgUnit.objects.get(distinguishedname=parent_ou_str)
+			except:
+				parent_ou = None
+
+			user.profile.ou = parent_ou
 
 			try:
 				displayName = attrs["displayName"][0].decode()

@@ -1,0 +1,56 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Detaljer organisatorisk enhet
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<form action="{% url 'virksomhet_enhetsok' %}" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="35" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Navn på enhet" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+<hr>
+
+<h4>{{ unit }}</h4>
+
+
+{% url 'bruker_detaljer' pk=unit.leder.pk as url_leder %}
+{% url 'enhet_detaljer' pk=unit.direkte_mor.pk as url_enhet %}
+
+Ledes av <a href="{{url_leder}}">{{ unit.leder.profile.displayName|default:"Ukjent" }}</a>, og er organisert under <a href="{{url_enhet}}">{{unit.direkte_mor|default:"Ukjent"}}</a>.
+
+<hr>
+
+Medarbeidere:
+<ul style="column-count:4;">
+{% for u in personer %}
+	{% url 'bruker_detaljer' pk=u.pk as url_person %}
+	<li><a href="{{url_person}}">{{ u }}</a></li>
+{% empty %}
+	<li>Ingen</li>
+{% endfor %}
+</ul>
+
+<hr>
+
+{% if sideenheter %}
+	Organisatoriske underliggende enheter:
+		<ul style="column-count:4;">
+	{% for sideenhet in sideenheter %}
+		{% url 'enhet_detaljer' pk=sideenhet.pk as url_enhet %}
+		<li><a href="{{url_enhet}}">{{ sideenhet }}</a></li>
+	{% empty %}
+		<li>Ingen</li>
+	{% endfor %}
+	</ul>
+{% endif %}
+
+
+{% endblock main_content %}

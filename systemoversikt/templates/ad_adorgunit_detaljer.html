@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block underoverskrift %}
-	AD Organizational Unit {{ ou.cn }}
+	Organisasjonsenheter i felles brukerkatalog (AD)
 {% endblock underoverskrift %}
 
 {% block main_content %}
@@ -19,28 +19,25 @@
 	<form action="{% url 'alle_adgrupper' %}" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="AD-gruppe starter med (ofte DS-gruppenavn)" class="form-control form-control-sm">
+			placeholder="AD-gruppe starter med (husk 'DS-')" class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 		</div>
 	</form>
 
 	<hr>
-	Sist oppdatert {{ ou.sist_oppdatert }} (<a target="_blank" href="{% url 'ad_exact' name=ou.distinguishedname %}">Live søk i AD</a>)
+	<h3>{{ ou.cn }}</h3>
+	Sist oppdatert {{ ou.sist_oppdatert }} (<a target="_blank" href="{% url 'ad_exact' name=ou.distinguishedname %}">Søk direkte i AD</a>)
 
 	<hr>
-	<h6>Fully distinguished name</h6>
-	{{ ou }}
-
-	<hr>
-	<h6>Parent OU</h6>
+	<h6>Overordnet organisasjonsenhet (OU)</h6>
 	{% if parent %}
-		<li><a href="{% url 'adorgunit_detaljer' pk=parent.pk %}">{{ parent }}</a></li>
+		<li><a href="{% url 'adorgunit_detaljer' pk=parent.pk %}">{{ parent.cn }}</a></li>
 	{% else %}
 		<li>Ingen</li>
 	{% endif %}
 
 	<hr>
-	<h6>OU-members</h6>
+	<h6>Underliggende organisasjonsenheter (OU)</h6>
 	<ul style="column-count:3;">
 	{% for c in children %}
 		<li><a href="{% url 'adorgunit_detaljer' pk=c.pk %}">{{c.cn}}</a></li>
@@ -51,10 +48,24 @@
 
 
 	<hr>
-	<h6>Security groups (# medlemmer) <span style="color: red">(Ikke fra PRK)</span></h6>
+	<h6>Brukere</h6>
+	<ul style="column-count:3;">
+	{% for u in users %}
+		<li><a {% if not u.profile.from_prk %} style="background-color: #fdd6d6" {% endif %}
+			href="{% url 'bruker_detaljer' pk=u.pk %}">{{ u }}</a></li>
+	{% empty %}
+		<li>Ingen</li>
+	{% endfor %}
+	</ul>
+
+	<hr>
+	<h6>Tilgangsgrupper (Security groups)</h6>
+	<p>Antall medlemmer i parentes. En medlem kan både være en person og en annen gruppe med flere personer i. Rød bakgrunn dersom gruppen ikke stammer fra PRK.
 	<ul style="column-count:3;">
 	{% for g in groups %}
-		<li><a {% if not g.from_prk %} style="color: red" {% endif %} href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.cn }}</a> ({{ g.membercount }})</li>
+		<li><a {% if not g.from_prk %} style="background-color: #fdd6d6" {% endif %} href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.short }}</a> ({{ g.membercount }})</li>
+	{% empty %}
+		<li>Ingen</li>
 	{% endfor %}
 	</ul>
 

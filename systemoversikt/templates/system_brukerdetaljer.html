@@ -1,0 +1,60 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Brukerdetaljer
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<form action="{% url 'bruker_sok' %}" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="55" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Brukernavn, fornavn, etternavn (minimum 4)" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+<hr>
+
+{% for user in users %}
+
+<h5><a href="{% url 'bruker_detaljer' pk=user.pk %}">{{user}}</a></h5>
+
+<li><em>{{ user.profile.description|default:"Ingen beskrivelse" }}</em></li>
+
+<li>
+{% url 'virksomhet' pk=user.profile.virksomhet.pk as url_virk %}
+{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
+Jobber i <a href="{{url_virk}}">{{user.profile.virksomhet|default:"Ukjent"}}</a>
+	under <a href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a> ({{ user.profile.usertype|default:"Ukjent brukertype" }})
+</li>
+
+<li>
+{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
+Nærmeste leder er <a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a>
+</li>
+
+{% if user.ansvarlig_brukernavn %}
+<li>
+	Vis <a href="{% url 'ansvarlig' pk=user.ansvarlig_brukernavn.pk %}">ansvarsområder</a> registrert i Kartoteket.
+</li>
+{% endif %}
+
+{% if user.hrorg_leder.count > 0 %}
+<li>Nærmeste leder for:<ul>
+{% for org in user.hrorg_leder.all %}
+	{% for org_user in org.profile_org_unit.all %}
+
+		<li><a href="{% url 'bruker_detaljer' pk=org_user.user.pk %}">{{org_user.user}}</a> ({{ org }})</li>
+
+	{% endfor %}
+{% endfor %}
+</ul>
+{% endif %}
+
+<hr>
+{% endfor %}
+
+{% endblock main_content %}
