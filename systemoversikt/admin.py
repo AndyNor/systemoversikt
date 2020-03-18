@@ -502,9 +502,10 @@ class RegistrerteAdmin(SimpleHistoryAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-	list_display = ('user', 'virksomhet')
+	list_display = ('user', 'virksomhet', 'usertype', 'from_prk')
 	search_fields = ('user__username',)
 	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som')
+	list_filter = ('usertype', 'from_prk')
 
 """
 @admin.register(ADUser)

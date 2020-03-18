@@ -135,17 +135,42 @@ def passwordexpire(request, pk):
 	Denne funksjonen viser alle personer som har passordutløp kommende periode
 	Tilgjengelig for de som har rettigheter til å se brukere
 	"""
+	from django.utils import timezone
 	required_permissions = ['auth.view_user']
 	if any(map(request.user.has_perm, required_permissions)):
 
-		periode = 14
+		periode = 14 ## dager
+		innaktiv = 182 ## dager
+		now = timezone.now()
 		virksomhet = Virksomhet.objects.get(pk=pk)
-		users = User.objects.filter(profile__virksomhet=pk).filter(profile__userPasswordExpiry__gte=datetime.date.today()).filter(profile__userPasswordExpiry__lte=datetime.date.today()+datetime.timedelta(days=periode)).order_by('profile__userPasswordExpiry')
+		
+		if request.GET.get('alt') == "ja":
+			users = User.objects.filter(profile__userPasswordExpiry__gte=now)
+		else:
+			users = User.objects.filter(profile__virksomhet=pk)
+
+		users = users.filter(profile__usertype__in=["Ansatt", "Ekstern"]).filter(profile__accountdisable=False).filter(profile__userPasswordExpiry__lte=now+datetime.timedelta(days=periode)).order_by('profile__userPasswordExpiry')
+
+		for u in users:
+			if u.profile.lastLogonTimestamp:
+				if u.profile.lastLogonTimestamp < (now - datetime.timedelta(days=innaktiv)):
+					u.inactive = True
+				else:
+					u.inactive = False
+			else:
+				u.inactive = False
+
+			if u.profile.userPasswordExpiry < now:
+				u.expired = True
+			else:
+				u.expired = False
+
 		return render(request, 'virksomhet_passwordexpire.html', {
 			'request': request,
 			'virksomhet': virksomhet,
 			'users': users,
 			'periode': periode,
+			'innaktiv': innaktiv,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
