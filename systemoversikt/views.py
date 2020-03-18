@@ -1344,10 +1344,6 @@ def virksomhet(request, pk):
 	behandling_ikke_kvalitetssikret = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(informasjon_kvalitetssikret=False).count()
 
 	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=3)
-	try:
-		leder = HRorg.objects.filter(virksomhet_mor=pk).filter(level=2)[0].leder
-	except:
-		leder = None
 
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
@@ -1364,7 +1360,6 @@ def virksomhet(request, pk):
 		'behandling_uten_ansvarlig': behandling_uten_ansvarlig,
 		'behandling_ikke_kvalitetssikret': behandling_ikke_kvalitetssikret,
 		'enheter': enheter,
-		'leder': leder,
 	})
 
 

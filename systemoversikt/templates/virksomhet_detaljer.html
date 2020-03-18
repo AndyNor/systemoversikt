@@ -43,8 +43,8 @@
 			<br>
 			<b>{% get_verbose_field_name virksomhet "resultatenhet" %}:</b> {{ virksomhet.get_resultatenhet_display }}<br>
 			<b>Vår virksomhetsleder:</b>
-			{% if leder %}
-				<li><a href="{% url 'bruker_detaljer' pk=leder.pk %}">{{leder.profile.displayName}}</a></li>
+			{% if virksomhet.leder_hr %}
+				<li><a href="{% url 'bruker_detaljer' pk=virksomhet.leder_hr.pk %}">{{virksomhet.leder_hr.profile.displayName}}</a></li>
 			{% else %}
 				{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.leder.all %}
 			{% endif %}

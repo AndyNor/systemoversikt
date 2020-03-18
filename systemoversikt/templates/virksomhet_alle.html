@@ -59,15 +59,13 @@
 			<a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn|truncatewords:6 }}</a>
 		</td>
 		<td>{{ vir.virksomhetsforkortelse }}</td>
+
 		<td>
-			{% for person in vir.leder.all %}
-				<a href="{% url 'ansvarlig' person.pk %}"
-				{% if person.brukernavn.is_active == False  %}
-					style="text-decoration: line-through;"
-				{% endif %}
-				>
-				{{ person }}</a><br>
-			{% endfor %}
+			{% if vir.leder_hr %}
+				<li><a href="{% url 'bruker_detaljer' pk=vir.leder_hr.pk %}">{{vir.leder_hr.profile.displayName}}</a></li>
+			{% else %}
+				{% include "ansvarlig_include_vis.html" with ansvarlige=vir.leder.all %}
+			{% endif %}
 		</td>
 		<td>{{ vir.systembruk_brukergruppe.all.count }}</td>
 		<td>{{ vir.ansatte|default:"-" }}</td>
