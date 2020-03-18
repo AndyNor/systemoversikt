@@ -320,7 +320,7 @@ class Virksomhet(models.Model):
 	leder = models.ManyToManyField(Ansvarlig, related_name='virksomhet_leder',
 			verbose_name="Vår virksomhetsleder",
 			blank=True,
-			help_text=u"Angi hvem som er virksomhetsleder.",
+			help_text=u"Angi hvem som er virksomhetsleder. Dette feltet benyttes bare dersom HR ikke har informasjon om leder.",
 			)
 	autoriserte_bestillere_sertifikater = models.ManyToManyField(AutorisertBestiller, related_name='virksomhet_autoriserte_bestillere_sertifikater',
 			verbose_name="Autoriserte sertifikatbestillere",
