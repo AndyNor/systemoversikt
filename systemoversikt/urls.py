@@ -90,7 +90,7 @@ urlpatterns = [
 	url(r'^virksomhet/systemkvalitet/(?P<pk>\d{1,8})/$', views.systemkvalitet_virksomhet, name='systemkvalitet_virksomhet'),
 	url(r'^virksomhet/enhet/$', views.virksomhet_enhetsok, name='virksomhet_enhetsok'),
 	url(r'^virksomhet/enhet/(?P<pk>\d{1,8})/$', views.enhet_detaljer, name='enhet_detaljer'),
-	url(r'^virksomhet/enhet/virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet_enheter, name='virksomhet_enheter'),
+	url(r'^virksomhet/enhet/graf/(?P<pk>\d{1,8})/$', views.virksomhet_enheter, name='virksomhet_enheter'),
 
 	url(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
 	url(r'^leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),

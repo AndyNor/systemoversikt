@@ -143,7 +143,7 @@ def passwordexpire(request, pk):
 		innaktiv = 182 ## dager
 		now = timezone.now()
 		virksomhet = Virksomhet.objects.get(pk=pk)
-		
+
 		if request.GET.get('alt') == "ja":
 			users = User.objects.filter(profile__userPasswordExpiry__gte=now)
 		else:
@@ -1288,6 +1288,8 @@ def virksomhet_enheter(request, pk):
 	if any(map(request.user.has_perm, required_permissions)):
 
 		import math
+		virksomhet = Virksomhet.objects.get(pk=pk)
+
 		avhengigheter_graf = {"nodes": [], "edges": []}
 
 		def color(unit):
@@ -1342,6 +1344,7 @@ def virksomhet_enheter(request, pk):
 		return render(request, 'virksomhet_enheter.html', {
 			'request': request,
 			'units': units,
+			'virksomhet': virksomhet,
 			'avhengigheter_graf': avhengigheter_graf,
 		})
 	else:
