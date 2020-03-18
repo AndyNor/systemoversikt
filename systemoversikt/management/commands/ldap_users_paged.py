@@ -24,7 +24,7 @@ class Command(BaseCommand):
 		BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 		SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
 		LDAP_SCOPE = ldap.SCOPE_SUBTREE
-		ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp'] # if empty we get all attr we have access to
+		ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp'] # if empty we get all attr we have access to
 		PAGESIZE = 2000
 		LOG_EVENT_TYPE = "AD user-import"
 
@@ -72,6 +72,13 @@ class Command(BaseCommand):
 			if "OU=Brukere" in dn:
 				user.profile.ekstern_ressurs = False
 
+			UserPasswordExpiry = attrs["msDS-UserPasswordExpiryTimeComputed"]
+			if len(UserPasswordExpiry) > 0:
+				try:
+					user.profile.userPasswordExpiry = microsoft_date_decode(UserPasswordExpiry[0])
+				except:
+					pass
+
 			try:
 				virksomhet_tbf = user_organization.upper()
 				virksomhet_obj_ref = Virksomhet.objects.get(virksomhetsforkortelse=virksomhet_tbf)
@@ -108,7 +115,7 @@ class Command(BaseCommand):
 
 			user.profile.distinguishedname = dn
 
-			parent_ou_str = ",".join(ou.distinguishedname.split(',')[1:])
+			parent_ou_str = ",".join(dn.split(',')[1:])
 			try:
 				parent_ou = ADOrgUnit.objects.get(distinguishedname=parent_ou_str)
 			except:
@@ -155,16 +162,16 @@ class Command(BaseCommand):
 
 				try:
 					user = User.objects.get(username=username)
-					user = update_user_status(user, dn, attrs, user_organization)
 					if username in existing_objects: # holde track på brukere som ikke lenger finnes
 						existing_objects.remove(username)
 					report_data["modified"] += 1
 					print("u", end="")
 				except:
 					user = User.objects.create_user(username=username)
-					user = update_user_status(user, dn, attrs, user_organization)
 					report_data["created"] += 1
 					print("n", end="")
+
+				user = update_user_status(user, dn, attrs, user_organization)
 
 		# Start søk og opprydding
 		existing_objects = list(User.objects.values_list("username", flat=True))

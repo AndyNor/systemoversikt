@@ -2,6 +2,9 @@
 """ Her er funksjoner som gjenbrukes ofte og derfor er skilt ut """
 
 def microsoft_date_decode(timestamp):
+	if timestamp == b'9223372036854775807' or timestamp == b'0':
+		return None # 
+
 	from django.utils.timezone import make_aware
 	import datetime
 

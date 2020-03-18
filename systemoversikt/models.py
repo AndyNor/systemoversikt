@@ -465,6 +465,10 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			verbose_name="Sist innlogget (AD)",
 			null=True, blank=True,
 			)
+	userPasswordExpiry = models.DateTimeField(
+			verbose_name="Dato neste passordbytte",
+			null=True, blank=True,
+			)
 	virksomhet = models.ForeignKey(Virksomhet, related_name='brukers_virksomhet',
 			on_delete=models.PROTECT,
 			verbose_name="Virksomhet / Etat: Representerer",
@@ -481,6 +485,7 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			)
 	ekstern_ressurs = models.NullBooleanField(
 			verbose_name="Ekstern ressurs? (AD)",
+			null=True, blank=True,
 			default=None,
 			)
 	usertype = models.CharField(

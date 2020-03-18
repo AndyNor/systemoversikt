@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Hensikten med denne koden er importere brukere i PRK for å kunne avdekke brukere som ikke burde være i AD.
+Hensikten med denne koden å
 """
 
 from django.core.management.base import BaseCommand

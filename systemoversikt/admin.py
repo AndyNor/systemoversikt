@@ -587,9 +587,9 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 admin.site.unregister(User)  # den er som standard registrert
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-	list_display = ('username', 'last_login', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
+	list_display = ('username', 'last_login', 'userPasswordExpiry', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
 	search_fields = ('last_login', 'username', 'first_name', 'last_name')
-	list_filter = ('profile__from_prk', 'is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'profile__virksomhet', 'groups',)
+	list_filter = ('profile__from_prk', 'profile__userPasswordExpiry', 'profile__virksomhet', 'is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'groups',)
 
 	def has_usable_password(self, obj):
 		return obj.has_usable_password()
@@ -601,6 +601,10 @@ class UserAdmin(admin.ModelAdmin):
 		return not obj.profile.accountdisable
 	accountdisable.short_description = "AD: Account enabled"
 	accountdisable.boolean = True
+
+	def userPasswordExpiry(self, obj):
+		return obj.profile.userPasswordExpiry
+	userPasswordExpiry.short_description = "Passord utløper"
 
 	def virksomhet(self, obj):
 		return obj.profile.virksomhet

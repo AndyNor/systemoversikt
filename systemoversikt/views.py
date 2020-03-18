@@ -92,7 +92,7 @@ def mal(request, pk):
 	Tilgjengelig for hvem?
 	"""
 	required_permissions = ['auth.RETTIGHET']
-	if lambda u: any(map(request.user.has_perm, required_permissions)):
+	if any(map(request.user.has_perm, required_permissions)):
 
 		#logikk
 		search_term = request.GET.get('search_term', '').strip()
@@ -111,7 +111,7 @@ def bruker_sok(request):
 	Tilgjengelig for de som har rettigheter til å se brukere
 	"""
 	required_permissions = ['auth.view_user']
-	if lambda u: any(map(request.user.has_perm, required_permissions)):
+	if any(map(request.user.has_perm, required_permissions)):
 
 		search_term = request.GET.get('search_term', '').strip()
 
@@ -130,13 +130,33 @@ def bruker_sok(request):
 
 
 
+def passwordexpire(request, pk):
+	"""
+	Denne funksjonen viser alle personer som har passordutløp kommende periode
+	Tilgjengelig for de som har rettigheter til å se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		periode = 14
+		virksomhet = Virksomhet.objects.get(pk=pk)
+		users = User.objects.filter(profile__virksomhet=pk).filter(profile__userPasswordExpiry__gte=datetime.date.today()).filter(profile__userPasswordExpiry__lte=datetime.date.today()+datetime.timedelta(days=periode)).order_by('profile__userPasswordExpiry')
+		return render(request, 'virksomhet_passwordexpire.html', {
+			'request': request,
+			'virksomhet': virksomhet,
+			'users': users,
+			'periode': periode,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 def bruker_detaljer(request, pk):
 	"""
 	Denne funksjonen viser detaljer om en bruker lastet inn i kartoteket
 	Tilgjengelig for de som har rettigheter til å se brukere
 	"""
 	required_permissions = ['auth.view_user']
-	if lambda u: any(map(request.user.has_perm, required_permissions)):
+	if any(map(request.user.has_perm, required_permissions)):
 
 		user = User.objects.get(pk=pk)
 		return render(request, 'system_brukerdetaljer.html', {
@@ -1195,7 +1215,7 @@ def enhet_detaljer(request, pk):
 	Tilgjengelig for de som kan se brukerdetaljer
 	"""
 	required_permissions = ['auth.view_user']
-	if lambda u: any(map(request.user.has_perm, required_permissions)):
+	if any(map(request.user.has_perm, required_permissions)):
 
 		unit = HRorg.objects.get(pk=pk)
 		sideenheter = HRorg.objects.filter(direkte_mor=unit).order_by('ou')
@@ -1217,7 +1237,7 @@ def virksomhet_enhetsok(request):
 	Tilgjengelig for de som kan se brukere
 	"""
 	required_permissions = ['auth.view_user']
-	if lambda u: any(map(request.user.has_perm, required_permissions)):
+	if any(map(request.user.has_perm, required_permissions)):
 
 		search_term = request.GET.get('search_term', "").strip()
 		if len(search_term) > 1:
@@ -1240,7 +1260,7 @@ def virksomhet_enheter(request, pk):
 	Tilgjengelig for de som kan se brukere
 	"""
 	required_permissions = ['auth.view_user']
-	if lambda u: any(map(request.user.has_perm, required_permissions)):
+	if any(map(request.user.has_perm, required_permissions)):
 
 		import math
 		avhengigheter_graf = {"nodes": [], "edges": []}
@@ -1324,6 +1344,10 @@ def virksomhet(request, pk):
 	behandling_ikke_kvalitetssikret = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(informasjon_kvalitetssikret=False).count()
 
 	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=3)
+	try:
+		leder = HRorg.objects.filter(virksomhet_mor=pk).filter(level=2)[0].leder
+	except:
+		leder = None
 
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
@@ -1340,6 +1364,7 @@ def virksomhet(request, pk):
 		'behandling_uten_ansvarlig': behandling_uten_ansvarlig,
 		'behandling_ikke_kvalitetssikret': behandling_ikke_kvalitetssikret,
 		'enheter': enheter,
+		'leder': leder,
 	})
 
 
@@ -2389,7 +2414,7 @@ def alle_cmdbref(request):
 	Tilgangsstyring: må kunne vise cmdb-referanser (bs)
 	"""
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
-	if lambda u: any(map(request.user.has_perm, required_permissions)):
+	if any(map(request.user.has_perm, required_permissions)):
 
 		search_term = request.GET.get('search_term', "").strip()
 

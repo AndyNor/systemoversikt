@@ -42,8 +42,12 @@
 				{% endfor %}
 			<br>
 			<b>{% get_verbose_field_name virksomhet "resultatenhet" %}:</b> {{ virksomhet.get_resultatenhet_display }}<br>
-			<b>{% get_verbose_field_name virksomhet "leder" %}:</b>
-			{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.leder.all %}
+			<b>Vår virksomhetsleder:</b>
+			{% if leder %}
+				<li><a href="{% url 'bruker_detaljer' pk=leder.pk %}">{{leder.profile.displayName}}</a></li>
+			{% else %}
+				{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.leder.all %}
+			{% endif %}
 
 			<hr>
 
