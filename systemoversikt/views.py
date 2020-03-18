@@ -194,26 +194,42 @@ def bruker_detaljer(request, pk):
 
 
 def alle_klienter(request):
-	alle_maskinadm_klienter = set(list(Klientutstyr.objects.values_list('maskinadm_wsnummer', flat=True)))
-	alle_cmdb_klienter = set(list(CMDBdevice.objects.filter(active=True).filter(comp_name__istartswith="WS8").values_list('comp_name', flat=True)))
 
-	#for i in alle_maskinadm_klienter[0:10]:
-	#	print(i)
-	antall_maskinadm = len(alle_maskinadm_klienter)
-	antal_cmdb = len(alle_cmdb_klienter)
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
 
-	mangler_cmdb = alle_maskinadm_klienter - alle_cmdb_klienter
-	mangler_maskinadm = alle_cmdb_klienter - alle_maskinadm_klienter
+		import os
+		import json
+		alle_maskinadm_klienter = set(list(Klientutstyr.objects.values_list('maskinadm_wsnummer', flat=True)))
+		alle_cmdb_klienter = set(list(CMDBdevice.objects.filter(active=True).filter(comp_name__istartswith="WS").values_list('comp_name', flat=True)))
 
-	return render(request, 'prk_klienter.html', {
-		'request': request,
-		'antall_maskinadm': antall_maskinadm,
-		'antal_cmdb': antal_cmdb,
-		'mangler_cmdb': mangler_cmdb,
-		'mangler_maskinadm': mangler_maskinadm,
-		'alle_maskinadm_klienter': alle_maskinadm_klienter,
-		'alle_cmdb_klienter': alle_cmdb_klienter,
-	})
+		#for i in alle_maskinadm_klienter[0:10]:
+		#	print(i)
+		antall_maskinadm = len(alle_maskinadm_klienter)
+		antal_cmdb = len(alle_cmdb_klienter)
+
+		mangler_cmdb = alle_maskinadm_klienter - alle_cmdb_klienter
+		mangler_maskinadm = alle_cmdb_klienter - alle_maskinadm_klienter
+
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/vpn_ws.json"
+		vpn_ws = set()
+		with open(filepath, 'r', encoding='UTF-8') as json_file:
+			for line in json_file.readlines():
+				j = json.loads(line)
+				vpn_ws.add(j["result"]["user"])
+
+		vpn_anomaly = sorted(vpn_ws - alle_maskinadm_klienter)
+
+		return render(request, 'prk_klienter.html', {
+			'request': request,
+			'antall_maskinadm': antall_maskinadm,
+			'antal_cmdb': antal_cmdb,
+			'mangler_cmdb': mangler_cmdb,
+			'mangler_maskinadm': mangler_maskinadm,
+			'vpn_anomaly': vpn_anomaly,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def minside(request):

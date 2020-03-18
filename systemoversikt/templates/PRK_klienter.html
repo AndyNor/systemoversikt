@@ -8,33 +8,29 @@
 
 {% block main_content %}
 
-antall_maskinadm:<br>
-{{ antall_maskinadm }}
+<a target="_blank" class="btn btn-sm btn-warning" href="/admin/systemoversikt/klientutstyr/">Detaljer</a>
 
 <hr>
 
-antal_cmdb:<br>
-{{ antal_cmdb }}
+Antall maskiner i MaskinAdm: <h4>{{ antall_maskinadm|intcomma }}</h4>
+Antall maskiner i CMDB (2S): <h4>{{ antal_cmdb|intcomma }}</h4>
+<hr>
+
+<ul style="column-count:5;">
+{% for ws in vpn_anomaly %}
+<li>{{ws}}</li>
+{% endfor %}
+</ul>
 
 <hr>
 
-
-mangler_maskinadm:<br>
-{{ mangler_maskinadm }}
-
-<hr>
-
-mangler_cmdb:<br>
+<h4>Enheter som mangler i CMDB (er i maskinadm):</h4>
 {{ mangler_cmdb }}
 
 <hr>
 
-alle_maskinadm_klienter:<br>
-{{ alle_maskinadm_klienter }}
+<h4>Enheter som mangler maskinadm (er i CMDB):</h4>
+{{ mangler_maskinadm }}
 
-<hr>
-
-alle_cmdb_klienter:<br>
-{{ alle_cmdb_klienter }}
 
 {% endblock main_content %}
