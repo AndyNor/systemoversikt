@@ -46,6 +46,7 @@ urlpatterns = [
 	url(r'^sys/profil/', views.minside, name="minside"),
 	url(r'^sys/logger/database/$', views.logger, name='logger'),
 	url(r'^sys/logger/audit/$', views.logger_audit, name='logger_audit'),
+	url(r'^sys/logger/users/$', views.logger_users, name='logger_users'),
 	url(r'^sys/roller/$', views.roller, name='roller'),
 	url(r'^sys/rettigheter/$', views.permissions, name='permissions'),
 

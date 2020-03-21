@@ -55,8 +55,15 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 	return export_as_csv
 
 
+@admin.register(UserChangeLog)
+class UserChangeLogAdmin(admin.ModelAdmin):
+	list_display = ('event_type', 'message', 'opprettet',)
+	search_fields = ('message',)
+	list_filter = ('opprettet',)
+
+
 @admin.register(HRorg)
-class HRorg(SimpleHistoryAdmin):
+class HRorgAdmin(admin.ModelAdmin):
 	list_display = ('ou', 'level', 'leder', 'virksomhet_mor', 'direkte_mor')
 	search_fields = ('ou',)
 	autocomplete_fields = ('leder', 'virksomhet_mor', 'direkte_mor')

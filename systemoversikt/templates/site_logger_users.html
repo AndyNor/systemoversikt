@@ -1,0 +1,32 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block underoverskrift %}
+	Logg over selektive bruker-endringer
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<p>Viser de siste {{ recent_loggs.count }} hendelsene.</p>
+
+	<table class="table table-sm table-striped">
+	<thead>
+	<tr>
+		<th>Tidspunkt</th>
+		<th>Event</th>
+		<th>Message</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for entry in recent_loggs %}
+	<tr>
+		<td width="200">{{ entry.opprettet }}</td>
+		<td width="150">{{ entry.event_type }}</td>
+		<td>{{ entry.message }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock main_content %}

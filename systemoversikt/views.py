@@ -549,6 +549,23 @@ def logger_audit(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def logger_users(request):
+	"""
+	viser selektive endringer på brukere/ansvarlige i løsningen
+	Tilgangsstyring: Se brukere
+	"""
+	required_permissions = 'auth.view_user'
+	if request.user.has_perm(required_permissions):
+
+		recent_loggs = UserChangeLog.objects.order_by('-opprettet')[:150]
+		return render(request, 'site_logger_users.html', {
+			'request': request,
+			'recent_loggs': recent_loggs,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def home(request):
 	"""
 	Startsiden med oversikt over systemer per kategori

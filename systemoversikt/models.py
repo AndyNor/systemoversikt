@@ -16,6 +16,31 @@ def new_display_name(self):
 User.add_to_class("__str__", new_display_name)
 
 
+class UserChangeLog(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	event_type = models.CharField(
+			verbose_name="event_type",
+			max_length=30,
+			blank=False, null=False,
+			help_text=u"event_type",
+			)
+	message = models.TextField(
+			verbose_name="message",
+			blank=False, null=False,
+			help_text=u"message",
+			)
+	def __str__(self):
+		return u'%s %s' % (self.event_type, self.message)
+
+	class Meta:
+		verbose_name_plural = "Brukerendringer"
+		default_permissions = ('view')
+
+
 class ApplicationLog(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
