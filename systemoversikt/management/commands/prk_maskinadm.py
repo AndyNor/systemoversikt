@@ -14,12 +14,15 @@ import csv
 from datetime import datetime
 from django.utils.timezone import make_aware
 import requests
-from systemoversikt.models import Klientutstyr, Virksomhet
+from systemoversikt.models import Klientutstyr, Virksomhet, ApplicationLog
 from django.core.exceptions import ObjectDoesNotExist
 
 
 class Command(BaseCommand):
 	def handle(self, **options):
+
+		LOG_EVENT_TYPE = 'PRK maskinadm-import'
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 		runtime_t0 = time.time()
 
@@ -92,4 +95,5 @@ class Command(BaseCommand):
 				teller_utmeldt,
 		)
 		print(logg_entry_message)
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 

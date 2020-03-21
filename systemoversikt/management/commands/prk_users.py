@@ -22,6 +22,9 @@ from django.db import transaction
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		LOG_EVENT_TYPE = 'PRK user import'
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
 		runtime_t0 = time.time()
 
 		logg_hits = 0
@@ -94,7 +97,7 @@ class Command(BaseCommand):
 		)
 		print(logg_entry_message)
 		logg_entry = ApplicationLog.objects.create(
-				event_type='PRK user import',
+				event_type=LOG_EVENT_TYPE,
 				message=logg_entry_message,
 		)
 

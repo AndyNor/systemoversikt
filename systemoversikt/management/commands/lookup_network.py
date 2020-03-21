@@ -22,6 +22,9 @@ import requests
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		LOG_EVENT_TYPE = 'Nettverksoppslag'
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
 		import logging
 		log = logging.getLogger(__name__)
 		log.info("Starter oppslag av IP-adresser")
@@ -106,7 +109,7 @@ class Command(BaseCommand):
 
 		)
 		logg_entry = ApplicationLog.objects.create(
-				event_type='Nettverksoppslag',
+				event_type=LOG_EVENT_TYPE,
 				message=logg_entry_message,
 		)
 

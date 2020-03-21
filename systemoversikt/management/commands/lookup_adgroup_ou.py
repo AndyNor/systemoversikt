@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Hensikten med denne koden er å fikse tilknytning virksomhet for DRIFT-brukere
+Hensikten med denne koden er
 """
 from django.core.management.base import BaseCommand
 from systemoversikt.models import ADgroup, ADOrgUnit, ApplicationLog
@@ -13,6 +13,8 @@ import time
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		LOG_EVENT_TYPE = 'Oppslag ADgrp-OU'
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 		runtime_t0 = time.time()
 		# built in group that are needed
@@ -64,6 +66,6 @@ class Command(BaseCommand):
 		)
 		print(logg_entry_message)
 		logg_entry = ApplicationLog.objects.create(
-				event_type='AD-gruppe OU-oppslag',
+				event_type=LOG_EVENT_TYPE,
 				message=logg_entry_message,
 		)

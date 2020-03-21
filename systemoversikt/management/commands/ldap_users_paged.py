@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Hensikten med denne koden er å laste inn alle orginære brukre koblet til en av kommunens vikrsomheter, slik at man i kartoteket kan tildele ansvar til en faktisk brukeridentitet. Her laster vi ikke inn manuelt opprettede brukere som ikke kommer fra PRK.
+Hensikten med denne koden er å laste inn alle ordinære brukere koblet til en av kommunens vikrsomheter, slik at man i kartoteket kan tildele ansvar til en faktisk brukeridentitet. Her laster vi ikke inn manuelt opprettede brukere som ikke kommer fra PRK.
 Denne importen vil ikke kunne svare på forskjeller mellom AD og PRK. Det er andre jobber som identifiserer slike avvik.
 """
 
@@ -12,7 +12,7 @@ import ldap
 import sys
 
 from django.contrib.auth.models import User
-from systemoversikt.models import Virksomhet, ApplicationLog, ADOrgUnit
+from systemoversikt.models import Virksomhet, ApplicationLog, ADOrgUnit, UserChangeLog
 from django.db.models.functions import Upper
 import json
 import re
@@ -20,13 +20,15 @@ import re
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		LOG_EVENT_TYPE = "AD user-import"
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
 		# Configuration
 		BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 		SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
 		LDAP_SCOPE = ldap.SCOPE_SUBTREE
 		ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp'] # if empty we get all attr we have access to
 		PAGESIZE = 2000
-		LOG_EVENT_TYPE = "AD user-import"
 
 		report_data = {
 			"created": 0,
@@ -59,10 +61,20 @@ class Command(BaseCommand):
 				user.profile.passwd_notreqd = True
 			else:
 				user.profile.passwd_notreqd = False
+
+			try:
+				old_dont_expire_password = user.profile.dont_expire_password  # den finnes fra før av
+			except:
+				old_dont_expire_password = None
 			if "DONT_EXPIRE_PASSWORD" in userAccountControl_decoded:
 				user.profile.dont_expire_password = True
 			else:
 				user.profile.dont_expire_password = False
+			if old_dont_expire_password != None:
+				if old_dont_expire_password != user.profile.dont_expire_password:
+					message = ("Status endret for %s (%s). Ny verdi: %s" % (user, user.username, user.profile.dont_expire_password))
+					UserChangeLog.objects.create(event_type='DONT_EXPIRE_PASSWORD', message=message)
+
 			if "PASSWORD_EXPIRED" in userAccountControl_decoded:
 				user.profile.password_expired = True
 			else:

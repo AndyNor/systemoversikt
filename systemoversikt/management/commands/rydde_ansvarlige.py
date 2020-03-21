@@ -12,7 +12,7 @@ import sys
 import json
 import csv
 import requests
-from systemoversikt.models import ApplicationLog, Ansvarlig
+from systemoversikt.models import ApplicationLog, Ansvarlig, UserChangeLog
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.db import transaction
@@ -25,6 +25,8 @@ class Command(BaseCommand):
 		"""
 		Her sjekker vi først klassen "ansvarlige" for alle felter og avhengig av relasjonstype identifiserer vi om det er aktive relasjoner til dem. Normalt benyttes mangetilmange-relasjoner mot ansvarlige, men det er noen få unntak med OneToOneFields.
 		"""
+		LOG_EVENT_TYPE = 'Rydde ansvarlige'
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 		runtime_t0 = time.time()
 		antall_slettet = 0
@@ -69,6 +71,8 @@ class Command(BaseCommand):
 				if ansvar_teller == 0:
 					print("* %s slettes" % ansvarlig)
 					ansvarlig.delete()
+					message = ("%s (%s) er ikke registrert med ansvar" % (ansvarlig, ansvarlig.brukernavn.username))
+					UserChangeLog.objects.create(event_type='Ansvarlig slettet', message=message)
 					nonlocal antall_slettet
 					antall_slettet += 1
 
@@ -83,6 +87,6 @@ class Command(BaseCommand):
 		)
 		print(logg_entry_message)
 		logg_entry = ApplicationLog.objects.create(
-				event_type='Rydde ansvarlige',
+				event_type=LOG_EVENT_TYPE,
 				message=logg_entry_message,
 		)

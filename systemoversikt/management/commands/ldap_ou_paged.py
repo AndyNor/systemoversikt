@@ -14,13 +14,15 @@ from systemoversikt.models import ApplicationLog, ADOrgUnit
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		LOG_EVENT_TYPE = "AD OU-import"
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
 		# Configuration
 		BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 		SEARCHFILTER = '(objectclass=organizationalUnit)'
 		LDAP_SCOPE = ldap.SCOPE_SUBTREE
 		ATTRLIST = ['ou', 'whenCreated']  # if empty we get all attr we have access to
 		PAGESIZE = 1000
-		LOG_EVENT_TYPE = "AD OU-import"
 
 		report_data = {
 			"created": 0,

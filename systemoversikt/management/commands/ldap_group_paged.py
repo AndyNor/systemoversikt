@@ -19,13 +19,15 @@ import json
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		LOG_EVENT_TYPE = "AD group-import"
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
 		# Configuration
 		BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 		SEARCHFILTER = '(objectclass=group)'
 		LDAP_SCOPE = ldap.SCOPE_SUBTREE
 		ATTRLIST = ['cn', 'description', 'memberOf', 'member'] # if empty we get all attr we have access to
 		PAGESIZE = 5000
-		LOG_EVENT_TYPE = "AD group-import"
 
 		report_data = {
 			"created": 0,

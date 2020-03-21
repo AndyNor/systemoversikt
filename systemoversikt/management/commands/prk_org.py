@@ -20,6 +20,9 @@ import csv
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		LOG_EVENT_TYPE = 'PRK org-import'
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
 		runtime_t0 = time.time()
 
 		ant_nye_valg = 0
@@ -132,9 +135,7 @@ class Command(BaseCommand):
 
 		)
 		print(logg_entry_message)
-		"""
 		logg_entry = ApplicationLog.objects.create(
-				event_type='PRK-organisasjonsimport',
+				event_type=LOG_EVENT_TYPE,
 				message=logg_entry_message,
 		)
-		"""
