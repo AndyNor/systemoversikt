@@ -71,7 +71,7 @@ class Command(BaseCommand):
 				if ansvar_teller == 0:
 					print("* %s slettes" % ansvarlig)
 					ansvarlig.delete()
-					message = ("%s (%s) er ikke registrert med ansvar" % (ansvarlig, ansvarlig.brukernavn.username))
+					message = ("%s (%s) er ikke registrert med ansvar. Slettet automatisk." % (ansvarlig, ansvarlig.brukernavn.username))
 					UserChangeLog.objects.create(event_type='Ansvarlig slettet', message=message)
 					nonlocal antall_slettet
 					antall_slettet += 1

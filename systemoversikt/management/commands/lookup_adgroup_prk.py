@@ -18,7 +18,7 @@ import requests
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		LOG_EVENT_TYPE = 'Oppslag AD-PRK-bruker'
+		LOG_EVENT_TYPE = 'Oppslag ADgrp-PRKgrp'
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 		runtime_t0 = time.time()

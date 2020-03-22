@@ -7,16 +7,17 @@
 {% url 'ansvarlig' pk=request.user.ansvarlig_brukernavn.pk as url_ansvarlig %}
 
 <div>
-	<a class="btn btn-sm btn-secondary" href="{{ OIDC_IDP_URL_BASE }}/auth/realms/{{ OIDC_IDP_REALM }}/account/">Administrer min pålogging</a>
+	<a class="btn btn-sm btn-warning" href="{{ OIDC_IDP_URL_BASE }}/auth/realms/{{ OIDC_IDP_REALM }}/account/">Administrer min pålogging</a>
 	{% if url_ansvarlig %}
 		<a class="btn btn-sm btn-secondary" href="{{ url_ansvarlig }}">Ansvarlig for</a>
 	{% else%}
 		<a class="btn btn-sm btn-primary" href="/admin/systemoversikt/ansvarlig/add/?brukernavn={{request.user.pk}}">Opprett som ansvarlig</a>
 	{% endif %}
-	<a class="btn btn-sm btn-secondary" href="{% url 'logger' %}">Se endringslogg</a>
-	<a class="btn btn-sm btn-secondary" href="{% url 'logger_audit' %}">Se aktivitetslogg</a>
-	<a class="btn btn-sm btn-secondary" href="{% url 'roller' %}">Se grupper og roller</a>
-	<a class="btn btn-sm btn-primary" href="/admin/">Gå til admin</a>
+	<a class="btn btn-sm" href="{% url 'logger' %}">Se endringslogg</a>
+	<a class="btn btn-sm" href="{% url 'logger_audit' %}">Se aktivitetslogg</a>
+	<a class="btn btn-sm" href="{% url 'logger_users' %}">Se endringer på brukere</a>
+	<a class="btn btn-sm" href="{% url 'roller' %}">Se grupper og roller</a>
+	<a class="btn btn-sm" href="/admin/">Adminpanelet</a>
 </div>
 
 <br>

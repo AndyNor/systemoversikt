@@ -129,6 +129,27 @@ def bruker_sok(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def passwdneverexpire(request, pk):
+	"""
+	Denne funksjonen viser alle personer som har satt passord utløper aldri
+	Tilgjengelig for de som har rettigheter til å se brukere
+	"""
+	from django.utils import timezone
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		virksomhet = Virksomhet.objects.get(pk=pk)
+
+		users = User.objects.filter(profile__virksomhet=virksomhet.pk).filter(profile__usertype__in=["Ansatt", "Ekstern"]).filter(profile__dont_expire_password=True).order_by('profile__displayName')
+
+		return render(request, 'virksomhet_passwordneverexpire.html', {
+			'request': request,
+			'virksomhet': virksomhet,
+			'users': users,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 
 def passwordexpire(request, pk):
 	"""

@@ -24,6 +24,10 @@
 
 <h6>{{ systemdetaljer.systembeskrivelse|linebreaks }}</h6>
 
+{% if systemdetaljer.alias %}
+<h6>Alias: {{ systemdetaljer.alias }}</h6>
+{% endif %}
+
 {% if not systemdetaljer.informasjon_kvalitetssikret %}
 <div id="div_message" class="alert alert-warning">
 	<a class="close" data-dismiss="alert" href="#">×</a>
@@ -261,6 +265,33 @@
 					<td>{{ systemdetaljer.risikovurdering_tekst|default:"-" }}</td>
 				</tr>
 			{% endif %}
+			<tr>
+				<td>{% get_verbose_field_name systemdetaljer "autentiseringsteknologi" %}
+				{% get_help_text systemdetaljer "autentiseringsteknologi" as text %}
+				{% explain_collapsed text %}
+				</td>
+				<td>{% for auth in systemdetaljer.autentiseringsteknologi.all %}
+					{{ auth.navn }}<br>
+				{% endfor %}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name systemdetaljer "autentiseringsalternativer" %}
+				{% get_help_text systemdetaljer "autentiseringsalternativer" as text %}
+				{% explain_collapsed text %}
+				</td>
+				<td>{% for autentiseringsalternativ in systemdetaljer.autentiseringsalternativer.all %}
+					{{ autentiseringsalternativ.navn }}<br>
+				{% endfor %}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name systemdetaljer "autorisasjonsalternativer" %}
+				{% get_help_text systemdetaljer "autorisasjonsalternativer" as text %}
+				{% explain_collapsed text %}
+				</td>
+				<td>{% for autorisasjonsalternativ in systemdetaljer.autorisasjonsalternativer.all %}
+					{{ autorisasjonsalternativ.navn }}<br>
+				{% endfor %}</td>
+			</tr>
 		{% else %}
 				<tr>
 					<td>Risikovurdering for systemet</td>
@@ -771,15 +802,6 @@
 						{% explain_collapsed text %}
 						</td>
 						<td>{{ systemdetaljer.systemtekniske_sikkerhetstiltak|default:"-" }}</td>
-					</tr>
-					<tr>
-						<td>{% get_verbose_field_name systemdetaljer "autentiseringsalternativer" %}
-						{% get_help_text systemdetaljer "autentiseringsalternativer" as text %}
-						{% explain_collapsed text %}
-						</td>
-						<td>{% for autentiseringsalternativ in systemdetaljer.autentiseringsalternativer.all %}
-							{{ autentiseringsalternativ.navn }}<br>
-						{% endfor %}</td>
 					</tr>
 					<tr>
 						<td>{% get_verbose_field_name systemdetaljer "loggingalternativer" %}

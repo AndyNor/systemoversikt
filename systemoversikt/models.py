@@ -1849,6 +1849,51 @@ class Driftsmodell(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class Autorisasjonsmetode(models.Model):
+	navn = models.CharField(
+			verbose_name="Navn på metode", unique=True,
+			max_length=100,
+			blank=False, null=False,
+			help_text=u"",
+			)
+	definisjon = models.TextField(
+			verbose_name="Definisjon",
+			blank=True, null=True,
+			help_text=u"",
+			)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return u'%s' % (self.navn)
+
+	class Meta:
+		verbose_name_plural = "System Autorisasjonsmetoder"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
+class Autentiseringsteknologi(models.Model):
+	navn = models.CharField(
+			verbose_name="Autentiseringsteknologi", unique=True,
+			max_length=100,
+			blank=False, null=False,
+			help_text=u"",
+			)
+	definisjon = models.TextField(
+			verbose_name="Definisjon",
+			blank=True, null=True,
+			help_text=u"",
+			)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return u'%s' % (self.navn)
+
+	class Meta:
+		verbose_name_plural = "System Autentiseringsteknologi"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
 class Autentiseringsmetode(models.Model):
 	navn = models.CharField(
 			verbose_name="Autentiseringsnivå", unique=True,
@@ -2252,9 +2297,19 @@ class System(models.Model):
 			help_text=u"fases ut til fordel for mer detaljerte spørsmål under.",
 			)
 	autentiseringsalternativer = models.ManyToManyField(Autentiseringsmetode,
-			verbose_name="Autentiseringsalternativer", related_name='system_autentiseringsalternativer',
+			verbose_name="Innloggingsstyrke", related_name='system_autentiseringsalternativer',
 			blank=True,
-			help_text=u"Valg av måter bruker autentiserer seg på",
+			help_text=u"Sikkerhetsnivå på innloggingen?",
+			)
+	autentiseringsteknologi = models.ManyToManyField(Autentiseringsteknologi,
+			verbose_name="Innloggingsteknologi", related_name='system_autentiseringsalternativer',
+			blank=True,
+			help_text=u"Hvordan logger bruker på? Husk også å legge til systemavhengighet dersom AD/LDAP/SAML/OIDC. (Henger sammen med hvordan brukere opprettes)",
+			)
+	autorisasjonsalternativer = models.ManyToManyField(Autorisasjonsmetode,
+			verbose_name="Tilgangsteknologi", related_name='system_autorisasjonsalternativer',
+			blank=True,
+			help_text=u"Hvordan får bruker tilgang til informasjon i systemet?",
 			)
 	loggingalternativer = models.ManyToManyField(Loggkategori,
 			verbose_name="Etablerte logger i systemet", related_name='system_loggingalternativer',

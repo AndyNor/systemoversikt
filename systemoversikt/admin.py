@@ -92,6 +92,12 @@ class SikkerhetstesterAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('systemer', 'testet_av')
 	list_filter = ('dato_rapport',)
 
+@admin.register(Autorisasjonsmetode)
+class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('navn', 'definisjon')
+	search_fields = ('navn',)
+
 
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
@@ -119,7 +125,9 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'cmdbref',
 		'systemtyper',
 		'loggingalternativer',
+		'autentiseringsteknologi',
 		'autentiseringsalternativer',
+		'autorisasjonsalternativer',
 		'informasjonsklassifisering',
 	)
 	fieldsets = (
@@ -132,10 +140,11 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'systembeskrivelse',
 				'systemtyper',
 				'systemeierskapsmodell',
-				'systemeier',
+				'systemeier', 
 				'systemeier_kontaktpersoner_referanse',
-				'systemforvalter',
-				'systemforvalter_kontaktpersoner_referanse',
+				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
+				('autentiseringsteknologi', 'autentiseringsalternativer'),
+				'autorisasjonsalternativer',
 				'driftsmodell_foreignkey',
 				'informasjonsklassifisering',
 				'sikkerhetsnivaa',
@@ -195,7 +204,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'classes': ('collapse',),
 			'fields': (
 				('kontaktperson_innsyn', 'innsyn_innbygger', 'innsyn_ansatt'),
-				'autentiseringsalternativer',
 				'loggingalternativer',
 				'autorisasjon_differensiering_beskrivelse',
 				'autorisasjon_differensiering_saksalder',
@@ -799,6 +807,13 @@ class CMDBdeviceAdmin(admin.ModelAdmin):
 
 @admin.register(Loggkategori)
 class LoggkategoriAdmin(admin.ModelAdmin):
+	actions = [export_as_csv_action("CSV Export")]
+	search_fields = ('navn', 'definisjon')
+
+
+
+@admin.register(Autentiseringsteknologi)
+class AutentiseringsteknologiAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	search_fields = ('navn', 'definisjon')
 

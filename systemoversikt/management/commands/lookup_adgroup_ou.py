@@ -13,7 +13,7 @@ import time
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		LOG_EVENT_TYPE = 'Oppslag ADgrp-OU'
+		LOG_EVENT_TYPE = 'Oppslag ADgrp-ADou'
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 		runtime_t0 = time.time()
