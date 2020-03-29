@@ -232,14 +232,22 @@ def alle_klienter(request):
 		mangler_cmdb = alle_maskinadm_klienter - alle_cmdb_klienter
 		mangler_maskinadm = alle_cmdb_klienter - alle_maskinadm_klienter
 
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/vpn_ws.json"
 		vpn_ws = set()
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/vpn_ws.json"
 		with open(filepath, 'r', encoding='UTF-8') as json_file:
 			for line in json_file.readlines():
 				j = json.loads(line)
 				vpn_ws.add(j["result"]["user"])
-
 		vpn_anomaly = sorted(vpn_ws - alle_maskinadm_klienter)
+
+		alle_aktive_brukere = set(list(User.objects.filter(profile__accountdisable=False).values_list('username', flat=True)))
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/vpn_users.json"
+		vpn_users = set()
+		with open(filepath, 'r', encoding='UTF-8') as json_file:
+			for line in json_file.readlines():
+				j = json.loads(line)
+				vpn_users.add(j["result"]["user"].lower())
+		vpn_anomaly_user = sorted(vpn_users - alle_aktive_brukere)
 
 		return render(request, 'prk_klienter.html', {
 			'request': request,
@@ -248,6 +256,7 @@ def alle_klienter(request):
 			'mangler_cmdb': mangler_cmdb,
 			'mangler_maskinadm': mangler_maskinadm,
 			'vpn_anomaly': vpn_anomaly,
+			'vpn_anomaly_user': vpn_anomaly_user,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

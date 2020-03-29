@@ -24,13 +24,20 @@ Antall maskiner i CMDB (2S): <h4>{{ antal_cmdb|intcomma }}</h4>
 
 <hr>
 
-<h4>Enheter som mangler i CMDB (er i maskinadm):</h4>
-{{ mangler_cmdb }}
+<ul style="column-count:5;">
+{% for user in vpn_anomaly_user %}
+<li>{{user}}</li>
+{% endfor %}
+</ul>
 
 <hr>
 
 <h4>Enheter som mangler maskinadm (er i CMDB):</h4>
 {{ mangler_maskinadm }}
 
+<hr>
+
+<h4>Enheter som mangler i CMDB (er i maskinadm):</h4>
+{{ mangler_cmdb }}
 
 {% endblock main_content %}
