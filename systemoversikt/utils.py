@@ -2,6 +2,7 @@
 """ Her er funksjoner som gjenbrukes ofte og derfor er skilt ut """
 
 def microsoft_date_decode(timestamp):
+	import pytz
 	if timestamp == b'9223372036854775807' or timestamp == b'0':
 		return None # 
 
@@ -14,7 +15,7 @@ def microsoft_date_decode(timestamp):
 	try:
 		return make_aware(ms_epoch_start + timedelta)
 	except (pytz.NonExistentTimeError, pytz.AmbiguousTimeError):
-		return make_aware(ms_epoch_start + timedelta + timedelta(hours=1))  # her velger vi bare å dytte tiden frem.
+		return make_aware(ms_epoch_start + timedelta + datetime.timedelta(hours=1))  # her velger vi bare å dytte tiden frem.
 
 
 
