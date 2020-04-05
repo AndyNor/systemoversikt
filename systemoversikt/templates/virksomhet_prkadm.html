@@ -1,0 +1,119 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	PRK-administratorer for {{virksomhet}}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<a class="btn btn-sm" href="{% url 'virksomhet' pk=virksomhet.pk %}">Tilbake</a>
+
+<hr>
+
+<table id="stickyheader" class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th>Bruker</th>
+		<th>Bruker aktiv?</th>
+		<th>Type bruker</th>
+		<th>Global administrasjon</th>
+		<th>Kodeverk</th>
+		<th>Lokale skjema</th>
+		<th>Sentrale skjema?</th>
+		<th>Import</th>
+		<th>Snagit-tilgang</th>
+		<th>KOKS-tilgang</th>
+		<th>NAV-tilgang</th>
+		<th>02180-tilgang</th>
+		<th>PRK-valg</th>
+	</tr>
+	</thead>
+	<tbody>
+		{% for bruker, grupper in prk_admins.items %}
+		<tr>
+			{% url 'bruker_detaljer' pk=bruker.pk as url_bruker %}
+			<td><a href="{{url_bruker}}">{{ bruker.profile.displayName }}</a></td>
+			<td>
+				{% if bruker.profile.accountdisable %} 
+					<span style="color: #cccccc;">Nei</span>
+				{% else %} 
+					Ja
+				{% endif %}
+			</td>
+			<td>
+				{% if "GKAT_BRGR_ADMIN" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/fork.svg' %}">Administrator<br> {% endif %}
+				{% if "GKAT_BRGR_BRUKER" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/person.svg' %}"> Bruker <br> {% endif %}
+				{% if "GKAT_BRGR_SYSADM" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Systemadministrator<br>  {% endif %}
+				{% if "GKAT_BRGR_TILLOKADM" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/globe.svg' %}"> Sentral Administrator (Kun UKE) <br> {% endif %}
+				{% if "GKAT_BRGR_SBRUKERADM" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/fork.svg' %}"> Lokal Administrator <br> {% endif %}
+			</td>
+			<td>
+				{% if "GKAT_MODULER_GLOBAL_ADMINISTRASJON" in grupper %} 
+					<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/globe.svg' %}">Ja  
+				{% else %} 
+					<span style="color: #cccccc;">Nei</span>
+				{% endif %}
+			</td>
+			<td>
+				{% if "GKAT_ADMKODEV_ALLE" in grupper %} 
+					<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Ja  
+				{% else %} 
+					<span style="color: #cccccc;">Nei</span>
+				{% endif %}
+			</td>
+			<td>
+				{% if "GKAT_ADMLOKALESKJEMA_ALLE" in grupper %} Tildele<br> {% endif %}
+				{% if "GKAT_ADMLOKALESKJEMA_APPLIKASJON" in grupper %} Tildele (applikasjoner)<br> {% endif %}
+				{% if "GKAT_ADMLOKALESKJEMA_NAV" in grupper %} Tildele (NAV)<br> {% endif %}
+				{% if "GKAT_DSGLOKALESKJEMA_ALLE" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Endre <br> {% endif %}
+				{% if "GKAT_DSGLOKALESKJEMA_INFOCARE" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Endre (Infocare)<br> {% endif %}
+				{% if "GKAT_DSGLOKALESKJEMA_OPPRETTE" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Opprette <br> {% endif %}
+			</td>
+			<td>
+				{% if "GKAT_ADMSENTRALESKJEMA_ALLE" in grupper %} Tildele<br> {% endif %}
+				{% if "GKAT_DSGSENTRALESKJEMA_ALLE" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Endre<br> {% endif %}
+				{% if "GKAT_DSGSENTRALESKJEMA_OPPRETTE" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Opprette<br> {% endif %}
+			</td>
+			<td>
+				{% if "GKAT_IMPSKJEMA_TIGIMP" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Tilganger<br> {% endif %}
+				{% if "GKAT_IMPSKJEMA_TSIMP" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Skjema<br> {% endif %}
+			</td>
+			<td>
+				{% if "GKAT_TILDELE_SNAGIT" in grupper %} 
+					<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/check.svg' %}">Ja  
+				{% else %} 
+					<span style="color: #cccccc;">Nei</span>
+				{% endif %}				
+			</td>
+			<td>
+				{% if "GKAT_ADMSENTRALESKJEMA_KOKS" in grupper %} 
+					<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/check.svg' %}">Ja  
+				{% else %} 
+					<span style="color: #cccccc;">Nei</span>
+				{% endif %}
+			<td>
+				{% if "GKAT_ADMLOKALESKJEMA_NAV" in grupper %} 
+					<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/check.svg' %}">Ja  
+				{% else %} 
+					<span style="color: #cccccc;">Nei</span>
+				{% endif %}
+			</td>
+			<td>
+				{% if "GKAT_BRAN_KONTAKTSENTER" in grupper %} Brukeransvarlig<br> {% endif %}
+				{% if "GKAT_ADMKODEV_02180" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Administrere kodeverk<br> {% endif %}
+			</td>
+			<td>
+			{% for g in grupper %}
+				{{ g }}<br>
+			{% endfor %}
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+
+
+{% endblock main_content %}

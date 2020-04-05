@@ -216,10 +216,10 @@ if THIS_ENVIRONMENT == "TEST":
         'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
     )
 
-LOGIN_URL = "/oidc/authenticate/"
-LOGIN_REDIRECT_URL = "/"
 OIDC_RP_CLIENT_SECRET = os.environ['KARTOTEKET_OIDC_RP_CLIENT_SECRET']
 if THIS_ENVIRONMENT == "PROD":
+    LOGIN_URL = "/oidc/authenticate/"
+    LOGIN_REDIRECT_URL = "/"
     OIDC_IDP_URL_BASE = "https://login.oslo.kommune.no"
     OIDC_IDP_REALM = "AD"
     OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
@@ -233,6 +233,8 @@ if THIS_ENVIRONMENT == "PROD":
     LOGOUT_REDIRECT_URL = "https://kartoteket.oslo.kommune.no"
     #LOGOUT_REDIRECT_URL = SITE_URL + "/"
 if THIS_ENVIRONMENT == "DEV":
+    LOGIN_URL = "/oidc/authenticate/"
+    LOGIN_REDIRECT_URL = "/"
     OIDC_IDP_URL_BASE = "http://localhost:8080"
     OIDC_IDP_REALM = "behandlingsoversikt"
     OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
@@ -246,6 +248,8 @@ if THIS_ENVIRONMENT == "DEV":
     OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
     LOGOUT_REDIRECT_URL = "http://localhost:8000"
 if THIS_ENVIRONMENT == "TEST":
+    LOGIN_URL = "/login/"
+    LOGIN_REDIRECT_URL = "/"
     LOGOUT_REDIRECT_URL = "/"
     OIDC_IDP_URL_BASE = None  # kreves av context_processors.py
     OIDC_IDP_REALM = None  # kreves av context_processors.py

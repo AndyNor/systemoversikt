@@ -17,6 +17,7 @@ from django.http import Http404
 import datetime
 from django.urls import reverse
 
+
 FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
 SYSTEMTYPE_PROGRAMMER = "Selvstendig klientapplikasjon"
 
@@ -601,6 +602,7 @@ def home(request):
 	Startsiden med oversikt over systemer per kategori
 	Tilgangsstyring: ÅPEN
 	"""
+
 	antall_systemer = System.objects.count()
 	nyeste_systemer = System.objects.all().order_by('-pk')[:5]
 
@@ -1414,6 +1416,65 @@ def virksomhet_enheter(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def virksomhet_prkadmin(request, pk):
+	"""
+	Vise alle PRK-administratorer for angitt virksomhet
+	Tilgangsstyring: må kunne vise informasjon om brukere
+	"""
+	import json
+	from functools import lru_cache
+
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+
+		@lru_cache(maxsize=2048)
+		def lookup_user(username):
+			try:
+				user = User.objects.get(username__iexact=username)
+				return user
+			except:
+				return username
+
+		try:
+			vir = Virksomhet.objects.get(pk=pk)
+		except:
+			vir = None
+
+		skjema_grupper = ADgroup.objects.filter(distinguishedname__icontains="gkat")
+
+		prk_admins = {}
+
+		for g in skjema_grupper:
+			group_name = g.distinguishedname[6:].split(",")[0]
+			if group_name == "GKAT":
+				continue
+
+			members = json.loads(g.member)
+			users = []
+			for m in members:
+				match = re.search(r'CN=(' + re.escape(vir.virksomhetsforkortelse) + '\d{2,8}),', m, re.IGNORECASE)
+				if match:
+					user = lookup_user(match[1])
+					users.append(user)
+				else:
+					pass
+			
+			prk_admins[group_name] = users
+
+		user_set = set(a for b in prk_admins.values() for a in b)
+		prk_admins_inverted = dict((new_key, [key for key,value in prk_admins.items() if new_key in value]) for new_key in user_set)
+
+
+		return render(request, 'virksomhet_prkadm.html', {
+			'request': request,
+			'virksomhet': vir,
+			'prk_admins': prk_admins_inverted,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def virksomhet(request, pk):
 	"""
 	Vise detaljer om en valgt virksomhet
@@ -1984,7 +2045,6 @@ def adgruppe_graf(request, pk):
 	Vise en graf over hvordan grupper er nøstet nedover fra en gitt gruppe
 	Tilgangsstyring: Må kunne vise informasjon om brukere
 	"""
-	import json
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
 

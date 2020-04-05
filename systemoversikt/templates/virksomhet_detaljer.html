@@ -21,6 +21,8 @@
 		<a target="_blank" class="btn btn-sm btn-warning" href="{{url_virksomhet_enheter}}">Intern organisering</a>
 		{% url 'passwordexpire' pk=virksomhet.pk as url_passwordexpire %}
 		<a target="_blank" class="btn btn-sm btn-warning" href="{{url_passwordexpire}}">Passordutløp</a>
+		{% url 'virksomhet_prkadmin' pk=virksomhet.pk as url_prkadmins %}
+		<a target="_blank" class="btn btn-sm btn-warning" href="{{url_prkadmins}}">PRK-admins</a>
 		<a class="btn btn-sm btn-secondary" href="{{ url_alle_virksomheter }}">Oversikt over alle virksomheter</a>
 	</h6>
 

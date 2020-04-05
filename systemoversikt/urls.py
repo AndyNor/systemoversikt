@@ -4,11 +4,16 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 """
 from django.conf.urls import url
 from django.contrib import admin
+from django.conf.urls import include
+from django.conf import settings
+from django.urls import include, path, re_path
+from django.views.generic.base import RedirectView
+
+import systemoversikt.views as views
+import systemoversikt.views_import as views_import
 
 from rest_framework import routers
-from django.urls import include, path, re_path
 from systemoversikt.restapi import views as apiviews
-from django.views.generic.base import RedirectView
 
 router = routers.DefaultRouter()
 router.register(r'systemer', apiviews.SystemViewSet, 'systemer')
@@ -23,12 +28,6 @@ router.register(r'leverandor', apiviews.LeverandorViewSet)
 #router.register(r'systemkateogri', apiviews.SystemktegoriViewSet)
 router.register(r'behandling', apiviews.VirksomhetViewSet)
 
-import systemoversikt.views as views
-import systemoversikt.views_import as views_import
-from django.conf.urls import include
-from django.conf import settings
-from django.contrib.auth import logout, login
-
 favicon_view = RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=True)
 
 urlpatterns = [
@@ -41,7 +40,7 @@ urlpatterns = [
 	url(r'^admin/', admin.site.urls, name="admin"),
 	url(r'^oidc/', include('mozilla_django_oidc.urls')),
 	url(r'^login/$', admin.site.login, name='login'),
-	url(r'^logout/$', logout, {'next_page': settings.LOGOUT_REDIRECT_URL}, name='logout'),
+	url(r'^logout/$', admin.site.logout, name='logout'),
 
 	url(r'^sys/profil/', views.minside, name="minside"),
 	url(r'^sys/logger/database/$', views.logger, name='logger'),
@@ -93,6 +92,7 @@ urlpatterns = [
 	url(r'^virksomhet/enhet/$', views.virksomhet_enhetsok, name='virksomhet_enhetsok'),
 	url(r'^virksomhet/enhet/(?P<pk>\d{1,8})/$', views.enhet_detaljer, name='enhet_detaljer'),
 	url(r'^virksomhet/enhet/graf/(?P<pk>\d{1,8})/$', views.virksomhet_enheter, name='virksomhet_enheter'),
+	url(r'^virksomhet/prkadmin/(?P<pk>\d{1,8})/$', views.virksomhet_prkadmin, name='virksomhet_prkadmin'),
 
 	url(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
 	url(r'^leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
