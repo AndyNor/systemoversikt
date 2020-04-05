@@ -11,7 +11,11 @@ def microsoft_date_decode(timestamp):
 	ms_timestamp = int(timestamp[:-1])  # removing one trailing digit: steps of 100ns to steps pf 1 micro second.
 	ms_epoch_start = datetime.datetime(1601,1,1)
 	timedelta = datetime.timedelta(microseconds=ms_timestamp)
-	return make_aware(ms_epoch_start + timedelta)
+	try:
+		return make_aware(ms_epoch_start + timedelta)
+	except (pytz.NonExistentTimeError, pytz.AmbiguousTimeError):
+		return make_aware(ms_epoch_start + timedelta + timedelta(hours=1))  # her velger vi bare å dytte tiden frem.
+
 
 
 def ldap_OK_virksomheter():
