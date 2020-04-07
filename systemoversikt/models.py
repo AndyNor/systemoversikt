@@ -2117,11 +2117,11 @@ class System(models.Model):
 			blank=True,
 			help_text=u"Programvarer benyttet i systemet",
 			)
-	database = models.IntegerField(
-			verbose_name="Database", choices=DB_VALG,
-			blank=True, null=True,
-			help_text=u"Dersom databasehotell, legg til databasehotellet som en teknisk avhengighet.",
-			)
+	#database = models.IntegerField(
+	#		verbose_name="Database (utfases, grunnet ny måte å registrere på)", choices=DB_VALG,
+	#		blank=True, null=True,
+	#		help_text=u"Dersom databasehotell, legg til databasehotellet som en teknisk avhengighet.",
+	#		)
 	avhengigheter = models.TextField(
 			verbose_name="Utlevering og avhengigheter (fritekst)",
 			blank=True, null=True,
@@ -2400,7 +2400,12 @@ class System(models.Model):
 	database_supported = models.ManyToManyField('Database', related_name='system_database_supported',
 			verbose_name="Støttede databaser",
 			blank=True,
-			help_text=u"Legg til alle typer databaser som støttes",
+			help_text=u"Legg til alle typer databaser som støttes av systemet.",
+			)
+	database_in_use = models.ManyToManyField('Database', related_name='system_database_in_use',
+			verbose_name="Databasetype i bruk",
+			blank=True,
+			help_text=u"Legg til alle typer databaser er i bruk for dette systemet.",
 			)
 	history = HistoricalRecords()
 

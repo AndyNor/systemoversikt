@@ -78,14 +78,6 @@ class HRorgAdmin(admin.ModelAdmin):
 	autocomplete_fields = ('leder', 'virksomhet_mor', 'direkte_mor')
 	list_filter = ('active', 'opprettet', 'virksomhet_mor')
 
-"""
-@admin.register(PRKuser)
-class PRKuserAdmin(SimpleHistoryAdmin):
-	list_display = ('username', 'usertype')
-	search_fields = ('usertype',)
-	list_filter = ('usertype', 'opprettet',)
-"""
-
 
 @admin.register(Klientutstyr)
 class KlientutstyrAdmin(admin.ModelAdmin):
@@ -116,7 +108,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('systemnavn', 'alias', 'ibruk', 'systemeierskapsmodell', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
 	search_fields = ('systemnavn', 'systembeskrivelse')
-	list_filter = ('ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
+	list_filter = ('database_in_use', 'database_supported', 'ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
 	def get_ordering(self, request):
 		return [Lower('systemnavn')]
@@ -136,7 +128,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'systemeier_kontaktpersoner_referanse',
 		'systemforvalter_kontaktpersoner_referanse',
 		'kontaktperson_innsyn',
-		#'cmdbref_prod',
 		'cmdbref',
 		'systemtyper',
 		'loggingalternativer',
@@ -145,6 +136,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'autorisasjonsalternativer',
 		'informasjonsklassifisering',
 		'database_supported',
+		'database_in_use',
 	)
 	fieldsets = (
 		('Initiell registrering', {
@@ -198,7 +190,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'high_level_design_url',
 				'low_level_design_url',
 				'programvarer',
-				'database',
+				'database_in_use',
 				'database_supported',
 				'isolert_drift',
 			),
@@ -551,14 +543,6 @@ class ProfileAdmin(admin.ModelAdmin):
 	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som')
 	list_filter = ('usertype', 'from_prk')
 
-"""
-@admin.register(ADUser)
-class ProfileAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('sAMAccountName', 'fornavn', 'etternavn', 'displayName', 'distinguishedname', 'userAccountControl', 'description')
-	search_fields = ('distinguishedname', 'sAMAccountName')
-	list_filter = ('lastLogonTimestamp', 'from_prk')
-"""
 
 @admin.register(SystemUrl)
 class SystemUrlAdmin(SimpleHistoryAdmin):
