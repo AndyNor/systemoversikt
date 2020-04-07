@@ -62,6 +62,15 @@ class UserChangeLogAdmin(admin.ModelAdmin):
 	list_filter = ('opprettet',)
 
 
+@admin.register(Database)
+class DatabaseAdmin(admin.ModelAdmin):
+	list_display = ('navn',)
+	search_fields = ('navn',)
+
+	def get_ordering(self, request):
+		return [Lower('navn')]
+
+
 @admin.register(HRorg)
 class HRorgAdmin(admin.ModelAdmin):
 	list_display = ('ou', 'level', 'leder', 'virksomhet_mor', 'direkte_mor')
@@ -98,6 +107,9 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 	list_display = ('navn', 'definisjon')
 	search_fields = ('navn',)
 
+	def get_ordering(self, request):
+		return [Lower('navn')]
+
 
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
@@ -105,6 +117,9 @@ class SystemAdmin(SimpleHistoryAdmin):
 	list_display = ('systemnavn', 'alias', 'ibruk', 'systemeierskapsmodell', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
 	search_fields = ('systemnavn', 'systembeskrivelse')
 	list_filter = ('ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
+
+	def get_ordering(self, request):
+		return [Lower('systemnavn')]
 
 	filter_horizontal = ('systemkategorier',)
 	autocomplete_fields = (
@@ -129,6 +144,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'autentiseringsalternativer',
 		'autorisasjonsalternativer',
 		'informasjonsklassifisering',
+		'database_supported',
 	)
 	fieldsets = (
 		('Initiell registrering', {
@@ -183,6 +199,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'low_level_design_url',
 				'programvarer',
 				'database',
+				'database_supported',
 				'isolert_drift',
 			),
 		}),
@@ -382,6 +399,9 @@ class LeverandorAdmin(SimpleHistoryAdmin):
 	list_display = ('leverandor_navn', 'kontaktpersoner', 'orgnummer')
 	search_fields = ('leverandor_navn', 'orgnummer', 'notater')
 
+	def get_ordering(self, request):
+		return [Lower('leverandor_navn')]
+
 
 @admin.register(BehandlingerPersonopplysninger)
 class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
@@ -504,15 +524,24 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 class BehandlingsgrunnlagAdmin(SimpleHistoryAdmin):
 	list_display = ('grunnlag', 'lovparagraf', 'lov')
 
+	def get_ordering(self, request):
+		return [Lower('grunnlag')]
+
 
 @admin.register(Personsonopplysningskategori)
 class PersonsonopplysningskategoriAdmin(SimpleHistoryAdmin):
 	list_display = ('navn', 'artikkel', 'hovedkategori', 'eksempler')
 
+	def get_ordering(self, request):
+		return [Lower('navn')]
+
 
 @admin.register(Registrerte)
 class RegistrerteAdmin(SimpleHistoryAdmin):
 	list_display = ('kategorinavn', 'definisjon')
+
+	def get_ordering(self, request):
+		return [Lower('kategorinavn')]
 
 
 @admin.register(Profile)
@@ -539,6 +568,9 @@ class SystemUrlAdmin(SimpleHistoryAdmin):
 	list_filter = ('https', 'maalgruppe', 'opprettet', 'eier')
 	autocomplete_fields = ('registrar', 'eier')
 
+	def get_ordering(self, request):
+		return [Lower('domene')]
+
 
 @admin.register(SystemKategori)
 class SystemKategoriAdmin(SimpleHistoryAdmin):
@@ -546,11 +578,17 @@ class SystemKategoriAdmin(SimpleHistoryAdmin):
 	search_fields = ('kategorinavn', 'definisjon')
 	list_filter = ('systemhovedkategori_systemkategorier',)
 
+	def get_ordering(self, request):
+		return [Lower('kategorinavn')]
+
 
 @admin.register(Systemtype)
 class SystemtypeAdmin(SimpleHistoryAdmin):
 	search_fields = ('kategorinavn',)
 	list_display = ('kategorinavn', 'definisjon')
+
+	def get_ordering(self, request):
+		return [Lower('kategorinavn')]
 
 
 @admin.register(SystemHovedKategori)
@@ -558,12 +596,18 @@ class SystemHovedKategoriAdmin(SimpleHistoryAdmin):
 	list_display = ('hovedkategorinavn', 'definisjon')
 	search_fields = ('hovedkategorinavn', 'definisjon', 'subkategorier')
 
+	def get_ordering(self, request):
+		return [Lower('hovedkategorinavn')]
+
 
 @admin.register(Ansvarlig)
 class AnsvarligAdmin(SimpleHistoryAdmin):
 	list_display = ('brukernavn', 'brukers_brukernavn', 'kommentar')
 	search_fields = ('brukernavn__username', 'brukernavn__first_name', 'brukernavn__last_name')
 	autocomplete_fields = ('brukernavn',)
+
+	def get_ordering(self, request):
+		return [Lower('brukernavn')]
 
 	def brukers_brukernavn(self, obj):
 		return obj.brukernavn.username
@@ -598,6 +642,9 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 	list_display = ('programvarenavn', 'programvarebeskrivelse', 'kommentar')
 	search_fields = ('programvarenavn', 'programvarebeskrivelse', 'kommentar')
 	filter_horizontal = ('programvareleverandor', 'kategorier')
+
+	def get_ordering(self, request):
+		return [Lower('programvarenavn')]
 
 
 admin.site.unregister(User)  # den er som standard registrert
@@ -663,6 +710,8 @@ class CMDBRefAdmin(admin.ModelAdmin):
 	search_fields = ('navn',)
 	list_filter = ('environment', 'kritikalitet', 'operational_status', 'service_classification', 'opprettet')
 
+	def get_ordering(self, request):
+		return [Lower('navn')]
 
 
 @admin.register(Avtale)
@@ -672,6 +721,9 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 	search_fields = ('kortnavn', 'beskrivelse', 'avtalereferanse')
 	autocomplete_fields = ('virksomhet', 'leverandor', 'intern_avtalereferanse', 'leverandor_intern')
 	filter_horizontal = ('avtaleansvarlig', 'for_system',)
+
+	def get_ordering(self, request):
+		return [Lower('kortnavn')]
 
 
 @admin.register(DPIA)
@@ -742,8 +794,10 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 	search_fields = ('navn',)
 	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler', 'anbefalte_kategorier_personopplysninger', 'overordnet_plattform')
 	autocomplete_fields = ('ansvarlig_virksomhet',)
+
 	def get_ordering(self, request):
 		return [Lower('navn')]
+
 	fieldsets = (
 			('Initiell registrering', {
 				'fields': (
@@ -817,11 +871,17 @@ class AutentiseringsteknologiAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	search_fields = ('navn', 'definisjon')
 
+	def get_ordering(self, request):
+		return [Lower('navn')]
+
 
 @admin.register(Autentiseringsmetode)
 class AutentiseringsmetodeAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	search_fields = ('navn', 'definisjon')
+
+	def get_ordering(self, request):
+		return [Lower('navn')]
 
 
 @admin.register(InformasjonsKlasse)
@@ -829,12 +889,18 @@ class InformasjonsKlasseAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	search_fields = ('navn', 'beskrivelse')
 
+	def get_ordering(self, request):
+		return [Lower('navn')]
+
 
 @admin.register(Definisjon)
 class DefinisjonAdmin(SimpleHistoryAdmin):
 	list_display = ('begrep', 'status', 'ansvarlig',)
 	actions = [export_as_csv_action("CSV Export")]
 	autocomplete_fields = ('ansvarlig',)
+
+	def get_ordering(self, request):
+		return [Lower('begrep')]
 
 
 @admin.register(BehovForDPIA)

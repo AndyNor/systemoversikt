@@ -751,6 +751,24 @@
 					</td>
 					<td>{{ systemdetaljer.driftsmodell_foreignkey.kommentar|default:"-" }}</td>
 				</tr>
+				<tr>
+					<td>{% get_verbose_field_name systemdetaljer "database" %}
+					{% get_help_text systemdetaljer "database" as text %}
+					{% explain_collapsed text %}
+					</td>
+					<td>{{ systemdetaljer.get_database_display|default:"-" }}</td>
+				</tr>
+				<tr>
+					<td>{% get_verbose_field_name systemdetaljer "database_supported" %}
+					{% get_help_text systemdetaljer "database_supported" as text %}
+					{% explain_collapsed text %}
+					</td>
+					<td>
+						{% for db in systemdetaljer.database_supported.all %}
+							{{ db }}<br>
+						{% endfor %}</td>
+					</td>
+				</tr>
 			</table>
 		{% endif %}
 
@@ -807,13 +825,6 @@
 							{{ endring.action_time|date:"Y-m-d" }} av {{ endring.user.get_full_name|default:endring.user }}<br>
 						{% endfor %}
 					</td>
-				</tr>
-				<tr>
-					<td>{% get_verbose_field_name systemdetaljer "database" %}
-					{% get_help_text systemdetaljer "database" as text %}
-					{% explain_collapsed text %}
-					</td>
-					<td>{{ systemdetaljer.get_database_display|default:"-" }}</td>
 				</tr>
 				<tr>
 					<td>{% get_verbose_field_name systemdetaljer "avhengigheter" %}

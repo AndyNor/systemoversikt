@@ -1989,6 +1989,22 @@ class Oppdatering(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class Database(models.Model):
+	navn = models.CharField(
+			verbose_name="Navn",
+			max_length=100,
+			blank=False, null=False,
+			help_text=u"Navn på databasetype"
+			)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return u'%s' % (self.navn)
+
+	class Meta:
+		verbose_name_plural = "Databasetyper"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
 
 class System(models.Model):
 	opprettet = models.DateTimeField(
@@ -2380,6 +2396,11 @@ class System(models.Model):
 			verbose_name="På Tilpasset drift (felles IKT-plattform)",
 			default=False,
 			help_text=u"Krysses av dersom systemet ikke kan oppgraderes og derfor er spesielt adskilt fra andre systemer på plattformen.",
+			)
+	database_supported = models.ManyToManyField('Database', related_name='system_database_supported',
+			verbose_name="Støttede databaser",
+			blank=True,
+			help_text=u"Legg til alle typer databaser som støttes",
 			)
 	history = HistoricalRecords()
 
