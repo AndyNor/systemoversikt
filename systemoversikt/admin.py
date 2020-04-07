@@ -323,30 +323,30 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 			'fields': (
 				'brukergruppe',
 				'system',
-				'del_behandlinger',
-				'kommentar',
 				'systemforvalter_kontaktpersoner_referanse',
-				'url_risikovurdering',
+				'del_behandlinger',
 				'dato_sist_ros',
+				'url_risikovurdering',
 				'risikovurdering_tekst',
-				'strategisk_egnethet',
-				'funksjonell_egnethet',
-				'teknisk_egnethet',
+				'kommentar',
+
 			),
 		}),
 		('Vurderinger', {
-			'classes': ('collapse',),
 			'fields': (
+				'strategisk_egnethet',
+				'funksjonell_egnethet',
+				'teknisk_egnethet',
 				'konfidensialitetsvurdering',
 				'integritetsvurdering',
 				'tilgjengelighetsvurdering',
-				'avtaletype',
-				'avtalestatus',
 			),
 		}),
 		('Avvikles', {
 			'classes': ('collapse',),
 			'fields': (
+				'avtaletype',
+				'avtalestatus',
 				'kostnadersystem',
 				'avtale_kan_avropes',
 				'systemeierskap',
@@ -683,8 +683,35 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('brukergruppe', 'programvare', 'kommentar')
 	search_fields = ('programvare', 'kommentar')
-	autocomplete_fields = ('brukergruppe', 'programvare')
-	filter_horizontal = ('programvareleverandor',)
+	autocomplete_fields = ('brukergruppe', 'programvare', 'programvareleverandor', 'lokal_kontakt')
+
+	fieldsets = (
+			('Initiell registrering', {
+				'fields': (
+					'brukergruppe',
+					'programvare',
+					'lokal_kontakt',
+					'kommentar',
+					'strategisk_egnethet',
+					'funksjonell_egnethet',
+					'teknisk_egnethet',
+				),
+			}),
+			('Diverse', {
+				'classes': ('collapse',),
+				'fields': (
+					'livslop_status',
+					'programvareeierskap',
+					'antall_brukere',
+					'avtaletype',
+					'avtalestatus',
+					'avtale_kan_avropes',
+					'borger',
+					'kostnader',
+					'programvareleverandor',
+				),
+			}),
+	)
 
 
 @admin.register(CMDBRef)

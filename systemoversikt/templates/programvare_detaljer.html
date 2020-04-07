@@ -120,12 +120,12 @@
 			{% if user.is_authenticated %}
 			<th></th>
 			{% endif %}
-			<th>Virksomhet</th>
-			<th>I bruk?</th>
-			<th>Brukere</th>
-			<th>Funksjonell</th>
-			<th>Strategisk</th>
-			<th>Teknisk</th>
+			<th>Bruksdetaljer</th>
+			<th>Lokal kontaktperson</th>
+			{%comment%}<th>Brukere</th>{%endcomment%}
+			<th>Funksjonell egnethet</th>
+			<th>Strategisk knytning</th>
+			<th>Teknisk egnethet</th>
 			{% if user.is_authenticated %}
 			<th></th>
 			{% endif %}
@@ -138,8 +138,11 @@
 			<td><a target="_blank" href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
 			{% endif %}
 			<td>{% url "programvarebruksdetaljer" bruk.pk as url_bruk %}
-			<a href="{{ url_bruk }}">{{ bruk.brukergruppe }}</a></td>
-			<td>{{ bruk.antall_brukere|default:"-" }} av {{ bruk.brukergruppe.ansatte }}</td>
+			<a href="{{ url_bruk }}">{{ programvare.programvarenavn }} for {{ bruk.brukergruppe.virksomhetsforkortelse }}</a></td>
+			{%comment%}<td>{{ bruk.antall_brukere|default:"-" }} av {{ bruk.brukergruppe.ansatte }}</td>{%endcomment%}
+			<td>
+				{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.lokal_kontakt.all %}
+			</td>
 			<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
 			<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
 			<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>

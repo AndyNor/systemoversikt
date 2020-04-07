@@ -11,6 +11,11 @@
 
 {% block main_content %}
 
+<div id="div_message" class="alert alert-info">
+	<a class="close" data-dismiss="alert" href="#">×</a>
+	<h6 class="alert-heading">Mange av informasjonselementene her skal avvikles da de er unødvendige. På side for redigering er disse skjult.</h6>
+</div>
+
 <div class="card">
 	<div class="card-body">
 		{% url "all_programvarebruk_for_virksomhet" bruksdetaljer.brukergruppe.pk as url_all_programvarebruk_for_virksomhet %}

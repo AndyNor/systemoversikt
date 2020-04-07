@@ -690,6 +690,7 @@ def ansvarlig(request, pk):
 	definisjonsansvarlig_for = Definisjon.objects.filter(ansvarlig=pk)
 	system_innsynskontakt_for = System.objects.filter(kontaktperson_innsyn=pk)
 	autorisert_bestiller_uke_for = Virksomhet.objects.filter(autoriserte_bestillere_tjenester_uke=pk)
+	programvarebruk_kontakt_for = ProgramvareBruk.objects.filter(lokal_kontakt=pk)
 
 
 
@@ -711,6 +712,7 @@ def ansvarlig(request, pk):
 		'definisjonsansvarlig_for': definisjonsansvarlig_for,
 		'system_innsynskontakt_for': system_innsynskontakt_for,
 		'autorisert_bestiller_uke_for': autorisert_bestiller_uke_for,
+		'programvarebruk_kontakt_for': programvarebruk_kontakt_for,
 	})
 
 

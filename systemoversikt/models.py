@@ -2821,6 +2821,11 @@ class ProgramvareBruk(models.Model):
 			verbose_name="Programvareleverandør",
 			blank=True,
 			)
+	lokal_kontakt = models.ManyToManyField(Ansvarlig, related_name='programvarebruk_lokal_kontakt',
+			verbose_name="Lokal kontakt",
+			blank=True,
+			help_text=u"Kontaktperson for virksomhetens bruk av programvaren",
+			)
 	history = HistoricalRecords()
 
 	def __str__(self):

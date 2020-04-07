@@ -17,7 +17,14 @@
 </div>
 <br>
 
-<p>Dersom en knytning til f.eks. et system, en behandling, virksomhetsrolle eller en avtale er feil eller mangler, må du inn å redigere på det spesifikke systemet/behandlingen/virksomheten/avtalen.</p>
+
+<div id="div_message" class="alert alert-info">
+	<a class="close" data-dismiss="alert" href="#">×</a>
+	<h6 class="alert-heading">En ansvarlig er en rolle som er knyttet til en person. Det er mulig å endre koblingen til en annen person.</h6>
+	<p>Dersom en knytning til f.eks. et system, en behandling, virksomhetsrolle eller en avtale er feil eller mangler, må du inn å redigere på det spesifikke systemet/behandlingen/virksomheten/avtalen.</p>
+</div>
+
+
 
 <div class="card">
 	<div class="card-body">
@@ -134,29 +141,24 @@
 	</tr>
 	{% endfor %}
 
-	{% for system in systemeier_for %}
-	<tr>
-		<td>Systemeier</td>
-		{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
-		<td><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a></td>
-	</tr>
-	{% endfor %}
-
-	{% for system in systemforvalter_for %}
-	<tr>
-		<td>Systemforvalter</td>
-		{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
-		<td><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a></td>
-	</tr>
-	{% endfor %}
-
 	{% for bruk in systemforvalter_bruk_for %}
 	<tr>
-		<td>Kontaktperson systembruk</td>
+		<td>Lokal systemkontakt for</td>
 		{% url 'bruksdetaljer' pk=bruk.pk as url_bruksdetaljer %}
 		<td><a href="{{ url_bruksdetaljer }}">{{ bruk.system.systemnavn }}</a></td>
 	</tr>
 	{% endfor %}
+
+	{% for programvarebruk in programvarebruk_kontakt_for %}
+	<tr>
+		<td>Lokal programvarekontakt for</td>
+		{% url 'programvarebruksdetaljer' pk=programvarebruk.pk as url_programvarebruk %}
+		<td>
+			<a href="{{url_programvarebruk}}">{{ programvarebruk }}</a>
+			{% if not forloop.last %}, {% endif %}
+		</td>
+	</tr>
+	{% endfor %}	
 
 	{% for behandling in behandlinger_for %}
 	<tr>
@@ -171,13 +173,15 @@
 		</td>
 	</tr>
 	{% endfor %}
+
+
 	</tbody>
 </table>
 
-<p>Hva mangler - Systemer jeg er eier av</p>
+<p>Systemer jeg er eier av</p>
 {% include "system_include_hvamangler.html" with systemer=systemeier_for %}
 
-<p>Hva mangler - Systemer jeg er forvalter av</p>
+<p>Systemer jeg er forvalter for</p>
 {% include "system_include_hvamangler.html" with systemer=systemforvalter_for %}
 
 {% endblock main_content %}
