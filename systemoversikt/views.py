@@ -3131,7 +3131,7 @@ def ubw_home(request):
 		except:
 			uploaded_file = None
 
-		fakturaer = UBWFaktura.objects.filter(owner=enhet)
+		fakturaer = UBWFaktura.objects.filter(owner=enhet).order_by('-ubw_voucher_date')
 
 
 		return render(request, 'ubw_home.html', {

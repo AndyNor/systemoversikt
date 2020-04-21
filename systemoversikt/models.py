@@ -3945,7 +3945,7 @@ class UBWFaktura(models.Model):
 		)
 
 	#history = HistoricalRecords()
-	unique_together = ('voucher_no', 'sequence_no')
+	unique_together = ('ubw_voucher_no', 'ubw_sequence_no')
 
 	def __str__(self):
 		return u'%s (%s)' % (self.account, self.amount)
