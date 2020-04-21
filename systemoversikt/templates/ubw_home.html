@@ -1,0 +1,51 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block underoverskrift %}
+	Økonomirapportering for {{ enhet }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+Tilgang for: <ul> {% for user in enhet.users.all %} <li>{{ user }}</li> {% endfor %}</ul>
+
+<form method="post" enctype="multipart/form-data">
+	{% csrf_token %}
+	<input type="file" name="fileupload">
+	<input type="submit" name="submit" value="Last opp">
+</form>
+
+<table class="table table-sm table-striped tablesorter">
+	<thead>
+		<tr>
+			<th>ubw_account</th>
+			<th>ubw_amount</th>
+			<th>ubw_xaccount</th>
+			<th>ubw_period</th>
+			<th>ubw_dim_1</th>
+			<th>ubw_dim_4</th>
+			<th>ubw_voucher_date</th>
+			<th>ubw_apar_id</th>
+			<th>ubw_description</th>
+		</tr>
+	</thead>
+	<tbody>
+{% for row in fakturaer %}
+	<tr>
+		<td>{{row.ubw_account}}</td>
+		<td>{{row.ubw_amount}}</td>
+		<td>{{row.ubw_xaccount}}</td>
+		<td>{{row.ubw_period}}</td>
+		<td>{{row.ubw_xdim_1}}</td>
+		<td>{{row.ubw_xdim_4}}</td>
+		<td>{{row.ubw_voucher_date}}</td>
+		<td>{{row.ubw_xapar_id}}</td>
+		<td>{{row.ubw_description}}</td>
+	</tr>
+{% endfor %}
+	</tbody>
+</table>
+
+
+{% endblock main_content %}

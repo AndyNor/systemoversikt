@@ -1053,3 +1053,35 @@ class LogEntryAdmin(admin.ModelAdmin):
 	def action_description(self, obj):
 		return action_names[obj.action_flag]
 	action_description.short_description = 'Action'
+
+
+@admin.register(UBWRapporteringsenhet)
+class UBWRapporteringsenhetAdmin(admin.ModelAdmin):
+	list_display = ('name',)
+	search_fields = ('name',)
+	#list_filter = ('users',)
+	autocomplete_fields = ('users',)
+
+@admin.register(UBWFakturaKategori)
+class UBWFakturaKategoriAdmin(admin.ModelAdmin):
+	list_display = ('name', 'owner',)
+	search_fields = ('name',)
+	list_filter = ('owner',)
+
+@admin.register(UBWMetode)
+class UBWMetodeAdmin(admin.ModelAdmin):
+	list_display = ('name', 'owner',)
+	search_fields = ('name',)
+	list_filter = ('owner',)
+
+@admin.register(UBWFaktura)
+class UBWFakturaAdmin(admin.ModelAdmin):
+	list_display = ('owner', 'ubw_amount', 'ubw_xaccount', 'ubw_period', 'ubw_xdim_1', 'ubw_xdim_4', 'ubw_voucher_date', 'ubw_xapar_id', 'ubw_description')
+	search_fields = ('event_type', 'message')
+	list_filter = ('ubw_account', 'ubw_dim_1', 'ubw_dim_4', 'ubw_apar_id')
+
+@admin.register(UBWManuelleTillegg)
+class UBWManuelleTilleggAdmin(admin.ModelAdmin):
+	list_display = ('owner', 'm_periode_paalopt', 'm_kvartal', 'm_year', 'm_type', 'm_metode', 'm_status')
+	#search_fields = ('',)
+	list_filter = ('owner',)

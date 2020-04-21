@@ -3060,3 +3060,86 @@ def recursive_group_members(request, group):
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+
+
+
+### UBW
+
+def ubw_home(request):
+	import csv
+	import datetime
+	from decimal import Decimal
+	enhet = UBWRapporteringsenhet.objects.get(pk=1)
+
+	def try_int(string):
+		try:
+			return int(string)
+		except:
+			return None
+
+	def import_function(data):
+		for row in data:
+			try:
+				obj, created = UBWFaktura.objects.get_or_create(
+					ubw_voucher_no=try_int(row["voucher_no"]),
+					ubw_sequence_no=try_int(row["sequence_no"]),
+					owner=enhet,
+					)
+				if created:
+					print("ny opprettet")
+				else:
+					print("eksisterte, oppdaterer")
+
+
+				#obj.owner = enhet #UBWRapporteringsenhet
+				obj.ubw_tab = row["tab"] #CharField
+				obj.ubw_account = try_int(row["account"]) #IntegerField
+				obj.ubw_xaccount = row["xaccount"] #CharField
+				obj.ubw_period = try_int(row["period"]) #IntegerField
+				obj.ubw_dim_1 = try_int(row["dim_1"]) #IntegerField
+				obj.ubw_xdim_1 = row["xdim_1"] #CharField
+				obj.ubw_dim_4 = try_int(row["dim_4"]) #IntegerField
+				obj.ubw_xdim_4 = row["xdim_4"] #CharField
+				obj.ubw_voucher_type = row["voucher_type"] #CharField
+				#obj.ubw_voucher_no = try_int(row[""]) #IntegerField
+				#obj.ubw_sequence_no = try_int(row[""]) #IntegerField
+				obj.ubw_voucher_date = datetime.datetime.strptime(row["voucher_date"], "%d.%m.%Y").date() #DateField
+				obj.ubw_order_id = try_int(row["order_id"]) #IntegerField
+				obj.ubw_apar_id = try_int(row["apar_id"]) #IntegerField
+				obj.ubw_xapar_id = row["xapar_id"] #CharField
+				obj.ubw_description = row["description"] #TextField
+				obj.ubw_amount = Decimal((row["amount"].replace(",","."))) #DecimalField
+				obj.ubw_apar_type = row["apar_type"] #CharField
+				obj.ubw_att_1_id = row["att_1_id"] #CharField
+				obj.ubw_att_4_id = row["att_4_id"] #CharField
+				obj.ubw_client = try_int(row["client"]) #IntegerField
+				obj.ubw_last_update = datetime.datetime.strptime(row["last_update"], "%d.%m.%Y").date() #DateField
+
+				obj.save()
+
+			except Exception as e:
+				print(e)
+
+	if request.user in enhet.users.all():
+
+		try:
+			file = request.FILES['fileupload'] # this is my file
+			uploaded_file = {"name": file.name, "size": file.size,}
+			decoded_file = file.read().decode('latin1').splitlines()
+			data = list(csv.DictReader(decoded_file, delimiter=";"))
+			import_function(data)
+		except:
+			uploaded_file = None
+
+		fakturaer = UBWFaktura.objects.filter(owner=enhet)
+
+
+		return render(request, 'ubw_home.html', {
+			'enhet': enhet,
+			'uploaded_file': uploaded_file,
+			'fakturaer': fakturaer,
+		})
+	else:
+		return None
+
+### UBW end

@@ -3762,6 +3762,246 @@ class PRKskjema(models.Model):
 		verbose_name_plural = "PRK skjemaer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+
+class UBWRapporteringsenhet(models.Model):
+	users = models.ManyToManyField(
+			to=User,
+			related_name='okonomi_rapporteringsenhet_users',
+			verbose_name="Tilgang for",
+			help_text=u"Personer med tilgang til å se alle data for enheten",
+			)
+	name = models.CharField(
+			verbose_name="Navn på enhet",
+			max_length=150,
+			blank=False, null=False,
+			help_text=u"",
+			)
+
+	def __str__(self):
+		return u'%s' % (self.name)
+
+	class Meta:
+		verbose_name_plural = "UBW Rapporteringsenheter"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class UBWFakturaKategori(models.Model):
+	name = models.CharField(
+		verbose_name="metode",
+		max_length=50,
+		blank=False, null=False,
+		help_text=u"",
+		)
+	owner = models.ForeignKey(
+		to="UBWRapporteringsenhet",
+		on_delete=models.CASCADE,
+		verbose_name="Tilhører",
+		null=False, blank=False,
+		)
+	def __str__(self):
+		return u'%s' % (self.name)
+	class Meta:
+		verbose_name_plural = "UBW Kategorier"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+class UBWMetode(models.Model):
+	name = models.CharField(
+		verbose_name="Navn på enhet",
+		max_length=150,
+		blank=False, null=False,
+		help_text=u"",
+		)
+	owner = models.ForeignKey(
+		to="UBWRapporteringsenhet",
+		on_delete=models.CASCADE,
+		verbose_name="Tilhører",
+		null=False, blank=False,
+		)
+	def __str__(self):
+		return u'%s' % (self.name)
+	class Meta:
+		verbose_name_plural = "UBW Metoder"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+UBW_KVARTAL_VALG = (
+	(1, 'Q1'),
+	(2, 'Q2'),
+	(3, 'Q3'),
+	(4, 'Q4'),
+)
+
+UBW_STATUS_VALG = (
+	(1, 'Postert'),
+	(2, 'Ikke bokført'),
+	(3, 'Prognose'),
+)
+
+class UBWFaktura(models.Model):
+	owner = models.ForeignKey(
+		to="UBWRapporteringsenhet",
+		on_delete=models.CASCADE,
+		verbose_name="Tilhører",
+		null=False, blank=False,
+		)
+	ubw_tab = models.CharField(
+		verbose_name="UBW tab",
+		null=True, blank=True,
+		max_length=100,
+		)
+	ubw_account = models.IntegerField(
+		verbose_name="UBW Kontonr",
+		null=True, blank=True,
+		)
+	ubw_xaccount = models.CharField(
+		verbose_name="UBW Kontonavn",
+		null=True, blank=True,
+		max_length=200,
+		)
+	ubw_period = models.IntegerField(
+		verbose_name="UBW-periode",
+		null=True, blank=True,
+		)
+	ubw_dim_1 = models.IntegerField(
+		verbose_name="UBW Koststednr",
+		null=True, blank=True,
+		)
+	ubw_xdim_1 = models.CharField(
+		verbose_name="Koststednavn",
+		null=True, blank=True,
+		max_length=300,
+		)
+	ubw_dim_4 = models.IntegerField(
+		verbose_name="UBW prosjektnr",
+		null=True, blank=True,
+		)
+	ubw_xdim_4 = models.CharField(
+		verbose_name="UBW prosjektnavn",
+		null=True, blank=True,
+		max_length=200,
+		)
+	ubw_voucher_type = models.CharField(
+		verbose_name="UBW voucher_type",
+		null=True, blank=True,
+		max_length=10,
+		)
+	ubw_voucher_no = models.IntegerField(
+		verbose_name="UBW voucher_no",
+		null=True, blank=True,
+		)
+	ubw_sequence_no	= models.IntegerField(
+		verbose_name="UBW sequence_no",
+		null=True, blank=True,
+		)
+	ubw_voucher_date = models.DateField(
+		verbose_name="UBW bilagsdato",
+		null=True, blank=True,
+		)
+	ubw_order_id = models.IntegerField(
+		verbose_name="UBW order_id",
+		null=True, blank=True,
+		)
+	ubw_apar_id	= models.IntegerField(
+		verbose_name="UBW leverandørnr",
+		null=True, blank=True,
+		)
+	ubw_xapar_id = models.CharField(
+		verbose_name="UBW leverandørnavn",
+		null=True, blank=True,
+		max_length=200,
+		)
+	ubw_description = models.TextField(
+		verbose_name="UBW beskrivelse",
+		null=True, blank=True,
+		)
+	ubw_amount = models.DecimalField(
+		verbose_name="UBW beløp",
+		max_digits=20, #10^(20-2), bør holde en stund..
+		decimal_places=2,
+		null=True, blank=True,
+		)
+	ubw_apar_type = models.CharField(
+		verbose_name="UBW apar_type",
+		null=True, blank=True,
+		max_length=10,
+		)
+	ubw_att_1_id = models.CharField(
+		verbose_name="UBW att_1_id",
+		null=True, blank=True,
+		max_length=10,
+		)
+	ubw_att_4_id = models.CharField(
+		verbose_name="UBW att_4_id",
+		null=True, blank=True,
+		max_length=10,
+		)
+	ubw_client = models.IntegerField(
+		verbose_name="UBW Virksomhets-ID",
+		null=True, blank=True,
+		)
+	ubw_last_update = models.DateField(
+		verbose_name="UBW sist oppdatert",
+		null=True, blank=True,
+		)
+
+	#history = HistoricalRecords()
+	unique_together = ('voucher_no', 'sequence_no')
+
+	def __str__(self):
+		return u'%s (%s)' % (self.account, self.amount)
+
+	class Meta:
+		verbose_name_plural = "UBW Faktura"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class UBWManuelleTillegg(models.Model):
+	owner = models.ForeignKey(
+		to="UBWRapporteringsenhet",
+		on_delete=models.CASCADE,
+		verbose_name="Tilhører",
+		null=False, blank=False,
+		)
+	m_periode_paalopt = models.IntegerField(
+		verbose_name="Manuell: Periode påløpt",
+		null=True, blank=True,
+		)
+	m_kvartal = models.IntegerField(
+		verbose_name="Manuell: Kvartal",
+		null=True, blank=True,
+		choices=UBW_KVARTAL_VALG,
+		)
+	m_year = models.IntegerField(
+		verbose_name="Manuell: År",
+		null=True, blank=True,
+		)
+	m_type = models.ForeignKey(
+		to="UBWFakturaKategori",
+		on_delete=models.PROTECT,
+		verbose_name="Manuell: Type / Kategori",
+		null=True, blank=True,
+		)
+	m_metode = models.ForeignKey(
+		to="UBWMetode",
+		on_delete=models.PROTECT,
+		verbose_name="Manuell: Metode / Kilde",
+		null=True, blank=True,
+		)
+	m_status = models.IntegerField(
+		verbose_name="Manuell: Status",
+		null=True, blank=True,
+		choices=UBW_STATUS_VALG,
+		)
+
+	#history = HistoricalRecords()
+
+	def __str__(self):
+		return u'%s' % (self.pk)
+
+	class Meta:
+		verbose_name_plural = "UBW Manuelle Tillegg"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
 """
 class PRKuser(models.Model):
 	opprettet = models.DateTimeField(

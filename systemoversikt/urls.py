@@ -155,6 +155,8 @@ urlpatterns = [
 	url(r'^dashboard/$', views.dashboard_all, name='dashboard_all'),
 	url(r'^dashboard/(?P<virksomhet>\d{1,8})/$', views.dashboard_all, name='dashboard_all'),
 
+	url(r'^ubw/$', views.ubw_home, name='ubw_home'),
+
 
 	# import og konvertering
 	url(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),
