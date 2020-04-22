@@ -1,0 +1,55 @@
+{% extends "index.html" %}
+{% load static %}
+
+{% block css_append %}
+	<link rel="stylesheet" href="{% static 'pickadate/themes/default.css' %}">
+	<link rel="stylesheet" href="{% static 'pickadate/themes/default.date.css' %}">
+{% endblock %}
+
+{% block script_prepend %}
+	<script src="{% static 'pickadate/picker.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'pickadate/picker.date.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'pickadate/translations/no_NO.js' %}" nonce="{{request.csp_nonce}}"></script>
+{% endblock %}
+
+{% block main_content %}
+
+{% if form.is_multipart %}
+	<form method="post" action="" enctype="multipart/form-data">
+{% else %}
+	<form method="post" action="">
+{% endif %}
+{% csrf_token %}
+	<fieldset>
+	{% for field in form %}
+	<div class="control-group {% if field.errors %} error {% endif %}">
+		{{ field.label_tag }}
+		<div class="controls">
+			{{ field }}
+			<span class="help-inline">
+			{% if field.errors %}
+				{% for error in field.errors %} {{ error }} {% endfor %}
+			{% else %} {{ field.help_text }} {% endif %}
+			</span>
+		</div>
+	</div>
+	{% endfor %}
+	<hr>
+	<div class="form-actions">
+		<button type="submit" class="btn btn-primary">Lagre</button>
+	</div>
+	</fieldset>
+</form>
+
+{% endblock %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	$('.datepicker').pickadate({
+		close: 'lukk',
+		format: 'yyyy-mm-01',
+		selectYears: true,
+		selectMonths: true,
+	})
+</script>
+{% endblock script_append %}

@@ -156,6 +156,11 @@ urlpatterns = [
 	url(r'^dashboard/(?P<virksomhet>\d{1,8})/$', views.dashboard_all, name='dashboard_all'),
 
 	url(r'^ubw/$', views.ubw_home, name='ubw_home'),
+	url(r'^ubw/(?P<pk>\d{1,8})/$', views.ubw_enhet, name='ubw_enhet'),
+	url(r'^ubw/api/(?P<pk>\d{1,8})/$', views.ubw_api, name='ubw_api'),
+	url(r'^ubw/ekstra/(?P<faktura_id>\d{1,8})/$', views.ubw_ekstra, name='ubw_ekstra_new'),
+	url(r'^ubw/ekstra/(?P<faktura_id>\d{1,8})/(?P<pk>\d{1,8})/$', views.ubw_ekstra, name='ubw_ekstra_edit'),
+	url(r'^ubw/kategori/(?P<belongs_to>\d{1,8})/$', views.ubw_kategori, name='ubw_kategori'),
 
 
 	# import og konvertering

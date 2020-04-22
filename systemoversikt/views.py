@@ -14,6 +14,8 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
+from django.http import HttpResponseRedirect, HttpResponse
+from django.conf import settings
 import datetime
 from django.urls import reverse
 
@@ -75,7 +77,10 @@ def login(request):
 	"""
 	støttefunksjon for å logge inn
 	"""
-	return redirect("/admin/")
+	if settings.THIS_ENVIRONMENT == "PROD":
+		return redirect(reverse('oidc_authentication_init'))
+	else:
+		return redirect("/admin/")
 """
 Støttefunksjoner slutt
 """
@@ -470,7 +475,6 @@ def user_clean_up(request):
 	"""
 	required_permissions = 'auth.change_permission'
 	if request.user.has_perm(required_permissions):
-		from django.conf import settings
 		if settings.DEBUG == True:  # Testmiljø
 			from django.contrib.auth.models import User
 			for user in User.objects.all():
@@ -3065,11 +3069,81 @@ def recursive_group_members(request, group):
 
 ### UBW
 
+"""
+Det viktigste med tilgangsstyringen her er integritet, slik at en eier av en enhet kan være sikker på at ingen andre har importert/endret på sine data.
+"""
+
+def kvartal(date):
+	try:
+		kvartal = (date.month - 1) // 3 + 1
+		if kvartal in [1, 2, 3, 4]:
+			return ("Q%s") % kvartal
+	except:
+		return "error"
+
+def ubw_api(request, pk):
+	enhet = UBWRapporteringsenhet.objects.get(pk=pk)
+	fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).order_by('-ubw_voucher_date')
+
+	faktura_eksport = []
+	for faktura in fakturaer:
+		eksportdata = {}
+
+		# noen felter er med vilje ikke tatt med
+		eksportdata["kilde"] = "UBW"
+		eksportdata["UBW tab"] = faktura.ubw_tab
+		eksportdata["UBW Kontonr"] = faktura.ubw_account
+		eksportdata["UBW Kontonavn"] = faktura.ubw_xaccount 
+		eksportdata["UBW-periode (YYYYMM)"] = faktura.ubw_period
+		eksportdata["UBW Koststednr"] = faktura.ubw_dim_1
+		eksportdata["UBW Koststednavn"] = faktura.ubw_xdim_1
+		eksportdata["UBW prosjektnr"] = faktura.ubw_dim_4
+		eksportdata["UBW prosjektnavn"] = faktura.ubw_xdim_4
+		eksportdata["UBW voucher_type"] = faktura.ubw_voucher_type
+		eksportdata["UBW voucher_no"] = faktura.ubw_voucher_no
+		eksportdata["UBW sequence_no"] = faktura.ubw_sequence_no
+		eksportdata["UBW bilagsdato"] = faktura.ubw_voucher_date
+		eksportdata["UBW leverandørnr"] = faktura.ubw_apar_id
+		eksportdata["UBW leverandørnavn"] = faktura.ubw_xapar_id
+		eksportdata["UBW beskrivelse"] = faktura.ubw_description
+		eksportdata["UBW beløp"] = faktura.ubw_amount
+		eksportdata["UBW Virksomhets-ID"] = faktura.ubw_client
+		eksportdata["UBW sist oppdatert"] = faktura.ubw_last_update
+
+		try:
+			eksportdata["Kategori"] = faktura.metadata_reference.kategori.name
+		except:
+			eksportdata["Kategori"] = ""
+
+		try:
+			eksportdata["Periode påløpt"] = faktura.metadata_reference.periode_paalopt
+			eksportdata["Periode påløpt år"] = faktura.metadata_reference.periode_paalopt.year
+			eksportdata["Periode påløpt kvartal"] = kvartal(faktura.metadata_reference.periode_paalopt)
+		except:
+			eksportdata["Periode påløpt"] = ""
+			eksportdata["Periode påløpt år"] = ""
+			eksportdata["Periode påløpt kvartal"] = ""
+
+
+		faktura_eksport.append(eksportdata)
+
+	return JsonResponse(faktura_eksport, safe=False)
+
+
 def ubw_home(request):
+	enheter = UBWRapporteringsenhet.objects.all()
+
+	return render(request, 'ubw_home.html', {
+				'enheter': enheter,
+			})
+
+def ubw_enhet(request, pk):
 	import csv
 	import datetime
 	from decimal import Decimal
-	enhet = UBWRapporteringsenhet.objects.get(pk=1)
+	enhet = UBWRapporteringsenhet.objects.get(pk=pk)
+
+	kategorier = UBWFakturaKategori.objects.filter(belongs_to=enhet)
 
 	def try_int(string):
 		try:
@@ -3083,7 +3157,7 @@ def ubw_home(request):
 				obj, created = UBWFaktura.objects.get_or_create(
 					ubw_voucher_no=try_int(row["voucher_no"]),
 					ubw_sequence_no=try_int(row["sequence_no"]),
-					owner=enhet,
+					belongs_to=enhet,
 					)
 				if created:
 					print("ny opprettet")
@@ -3091,7 +3165,7 @@ def ubw_home(request):
 					print("eksisterte, oppdaterer")
 
 
-				#obj.owner = enhet #UBWRapporteringsenhet
+				#obj.belongs_to = enhet #UBWRapporteringsenhet
 				obj.ubw_tab = row["tab"] #CharField
 				obj.ubw_account = try_int(row["account"]) #IntegerField
 				obj.ubw_xaccount = row["xaccount"] #CharField
@@ -3131,15 +3205,76 @@ def ubw_home(request):
 		except:
 			uploaded_file = None
 
-		fakturaer = UBWFaktura.objects.filter(owner=enhet).order_by('-ubw_voucher_date')
+		fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).order_by('-ubw_voucher_date')
 
+		model = UBWFaktura
+		domain = ("%s://%s") % (settings.SITE_SCHEME, settings.SITE_DOMAIN)
 
-		return render(request, 'ubw_home.html', {
+		return render(request, 'ubw_enhet.html', {
 			'enhet': enhet,
 			'uploaded_file': uploaded_file,
 			'fakturaer': fakturaer,
+			'model': model,
+			'kategorier': kategorier,
+			'domain': domain,
 		})
 	else:
-		return None
+		messages.warning(request, 'Du må logge inn først for å kunne nå UBW-modulen')
+		return HttpResponseRedirect(reverse('home'))
+
+def check_belongs_to(user, enhet_id):
+	try:
+		e = UBWRapporteringsenhet.objects.get(pk=enhet)
+		if user in e.users:
+			return True
+	except:
+		pass
+	return False
+
+
+def ubw_ekstra(request, faktura_id, pk=None):
+	faktura = UBWFaktura.objects.get(pk=faktura_id)
+	enhet = faktura.belongs_to
+	if request.user in enhet.users.all():
+
+		if pk:
+			instance = UBWMetadata.objects.get(pk=pk)
+			form = UBWMetadataForm(instance=instance)
+		else:
+			instance = None
+			form = UBWMetadataForm()
+
+		if request.method == 'POST':
+			form = UBWMetadataForm(data=request.POST, instance=instance)
+			if form.is_valid():
+				instance = form.save(commit=False)
+				instance.belongs_to = faktura
+				instance.save()
+				return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
+		
+
+		return render(request, 'ubw_ekstra.html', {
+				'form': form,
+		})
+
+def ubw_kategori(request, belongs_to):
+	from django.http import HttpResponseRedirect
+
+	enhet = UBWRapporteringsenhet.objects.get(pk=belongs_to)
+	if request.method == 'POST':
+		form = UBWFakturaKategoriForm(request.POST)
+		if form.is_valid() and form.cleaned_data:
+			if request.user in enhet.users.all():
+				kategori = form.save(commit=False)
+				kategori.belongs_to = enhet
+				kategori.save()
+				return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
+	else:
+		form = UBWFakturaKategoriForm()
+		
+	return render(request, 'ubw_ekstra.html', {
+			'form': form,
+	})
+
 
 ### UBW end

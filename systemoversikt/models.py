@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from simple_history.models import HistoricalRecords
+from django import forms
 import re
 
 
@@ -3787,12 +3788,12 @@ class UBWRapporteringsenhet(models.Model):
 
 class UBWFakturaKategori(models.Model):
 	name = models.CharField(
-		verbose_name="metode",
+		verbose_name="Kategorinavn",
 		max_length=50,
 		blank=False, null=False,
 		help_text=u"",
 		)
-	owner = models.ForeignKey(
+	belongs_to = models.ForeignKey(
 		to="UBWRapporteringsenhet",
 		on_delete=models.CASCADE,
 		verbose_name="Tilhører",
@@ -3804,6 +3805,13 @@ class UBWFakturaKategori(models.Model):
 		verbose_name_plural = "UBW Kategorier"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+
+class UBWFakturaKategoriForm(forms.ModelForm):
+	class Meta:
+		model = UBWFakturaKategori
+		exclude = ('belongs_to',)
+
+
 class UBWMetode(models.Model):
 	name = models.CharField(
 		verbose_name="Navn på enhet",
@@ -3811,7 +3819,7 @@ class UBWMetode(models.Model):
 		blank=False, null=False,
 		help_text=u"",
 		)
-	owner = models.ForeignKey(
+	belongs_to = models.ForeignKey(
 		to="UBWRapporteringsenhet",
 		on_delete=models.CASCADE,
 		verbose_name="Tilhører",
@@ -3824,21 +3832,8 @@ class UBWMetode(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-UBW_KVARTAL_VALG = (
-	(1, 'Q1'),
-	(2, 'Q2'),
-	(3, 'Q3'),
-	(4, 'Q4'),
-)
-
-UBW_STATUS_VALG = (
-	(1, 'Postert'),
-	(2, 'Ikke bokført'),
-	(3, 'Prognose'),
-)
-
 class UBWFaktura(models.Model):
-	owner = models.ForeignKey(
+	belongs_to = models.ForeignKey(
 		to="UBWRapporteringsenhet",
 		on_delete=models.CASCADE,
 		verbose_name="Tilhører",
@@ -3859,7 +3854,7 @@ class UBWFaktura(models.Model):
 		max_length=200,
 		)
 	ubw_period = models.IntegerField(
-		verbose_name="UBW-periode",
+		verbose_name="UBW-periode (YYYYMM)",
 		null=True, blank=True,
 		)
 	ubw_dim_1 = models.IntegerField(
@@ -3948,49 +3943,43 @@ class UBWFaktura(models.Model):
 	unique_together = ('ubw_voucher_no', 'ubw_sequence_no')
 
 	def __str__(self):
-		return u'%s (%s)' % (self.account, self.amount)
+		return u'%s (%s)' % (self.ubw_voucher_no, self.ubw_sequence_no)
 
 	class Meta:
 		verbose_name_plural = "UBW Faktura"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-class UBWManuelleTillegg(models.Model):
-	owner = models.ForeignKey(
-		to="UBWRapporteringsenhet",
+def modify_formfields(form):
+	formfield = form.formfield()
+	if isinstance(form, models.DateField):
+		formfield.widget.format = '%Y-%m-%d'
+		formfield.widget.attrs.update({'class': 'datepicker'})
+		
+
+	#if isinstance(form, models.ManyToManyField) or isinstance(form, models.ForeignKey):
+	#	formfield.widget.attrs.update({'class': 'chzn-select', 'data-placeholder': 'Select tags...'})
+
+	return formfield
+
+
+class UBWMetadata(models.Model):
+	belongs_to = models.OneToOneField(
+		to="UBWFaktura",
 		on_delete=models.CASCADE,
-		verbose_name="Tilhører",
+		related_name='metadata_reference',
+		verbose_name="Tilhører faktura",
 		null=False, blank=False,
 		)
-	m_periode_paalopt = models.IntegerField(
-		verbose_name="Manuell: Periode påløpt",
-		null=True, blank=True,
+	periode_paalopt = models.DateField(
+		verbose_name="Faktisk periode påløpt",
+		null=False, blank=False,
 		)
-	m_kvartal = models.IntegerField(
-		verbose_name="Manuell: Kvartal",
-		null=True, blank=True,
-		choices=UBW_KVARTAL_VALG,
-		)
-	m_year = models.IntegerField(
-		verbose_name="Manuell: År",
-		null=True, blank=True,
-		)
-	m_type = models.ForeignKey(
+	kategori = models.ForeignKey(
 		to="UBWFakturaKategori",
 		on_delete=models.PROTECT,
-		verbose_name="Manuell: Type / Kategori",
+		verbose_name="Type / kategori",
 		null=True, blank=True,
-		)
-	m_metode = models.ForeignKey(
-		to="UBWMetode",
-		on_delete=models.PROTECT,
-		verbose_name="Manuell: Metode / Kilde",
-		null=True, blank=True,
-		)
-	m_status = models.IntegerField(
-		verbose_name="Manuell: Status",
-		null=True, blank=True,
-		choices=UBW_STATUS_VALG,
 		)
 
 	#history = HistoricalRecords()
@@ -3999,8 +3988,19 @@ class UBWManuelleTillegg(models.Model):
 		return u'%s' % (self.pk)
 
 	class Meta:
-		verbose_name_plural = "UBW Manuelle Tillegg"
+		verbose_name_plural = "Fakturametadata"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class UBWMetadataForm(forms.ModelForm):
+
+	formfield_callback = modify_formfields
+	
+	class Meta:
+		model = UBWMetadata
+		exclude = ('belongs_to',)
+
+
 
 """
 class PRKuser(models.Model):

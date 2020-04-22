@@ -1,0 +1,72 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Økonomirapportering for {{ enhet }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+Tilgang for: <ul> {% for user in enhet.users.all %} <li>{{ user }}</li> {% endfor %}</ul>
+
+<p>API-URL (krever ikke innlogging per nå)<br>
+<a href="{{ domain }}{% url 'ubw_api' pk=enhet.pk %}">{{ domain }}{% url 'ubw_api' pk=enhet.pk %}</a></p>
+
+Våre kategorier:
+<ul>
+	{% for k in kategorier %}
+	<li>{{ k }}</li>
+	{% endfor %}
+	<li><a href="{% url 'ubw_kategori' belongs_to=enhet.pk %}">Legg til ny</a></li>
+</ul>
+
+<form method="post" enctype="multipart/form-data">
+	{% csrf_token %}
+	<input type="file" name="fileupload">
+	<input type="submit" name="submit" value="Last opp">
+</form>
+
+<br><br>
+
+<table class="table table-sm table-striped tablesorter">
+	<thead>
+		<tr>
+			<th>{% get_verbose_field_name model "ubw_voucher_date" %}</th>
+			<th>{% get_verbose_field_name model "ubw_period" %}</th>
+			<th>{% get_verbose_field_name model "ubw_account" %}</th>
+			<th>{% get_verbose_field_name model "ubw_dim_1" %}</th>
+			<th>{% get_verbose_field_name model "ubw_dim_4" %}</th>
+			<th>{% get_verbose_field_name model "ubw_xapar_id" %}</th>
+			<th>{% get_verbose_field_name model "ubw_amount" %}</th>
+			<th>{% get_verbose_field_name model "ubw_description" %}</th>
+			<th>Manuelle tillegg</th>
+		</tr>
+	</thead>
+	<tbody>
+{% for f in fakturaer %}
+	<tr>
+		<td>{{f.ubw_voucher_date|default:"Ikke oppgitt"}}</td>
+		<td>{{f.ubw_period|default:"Ikke oppgitt"}}</td>
+		<td>{{f.ubw_account|default:"Ikke oppgitt"}}<br>{{f.ubw_xaccount}}</td>
+		<td>{{f.ubw_xdim_1|default:"Ikke oppgitt"}}</td>
+		<td>{{f.ubw_xdim_4|default:"Ikke oppgitt"}}</td>
+		<td>{{f.ubw_xapar_id|default:"Ikke oppgitt"}}</td>
+		<td>{{f.ubw_amount|default:"Ikke oppgitt"}}</td>
+		<td>{{f.ubw_description|default:"Ikke oppgitt"}}</td>
+		<th>
+			{% if f.metadata_reference %}
+			{{ f.metadata_reference.periode_paalopt|date:"Y-M" }}<br>
+			{{ f.metadata_reference.kategori }}<br>
+			<a href="{% url 'ubw_ekstra_edit' faktura_id=f.pk pk=f.metadata_reference.pk %}">rediger</a>
+			{% else %}
+			<a href="{% url 'ubw_ekstra_new' faktura_id=f.pk %}">Manuelle justeringer</a>
+			{% endif %}
+		</th>
+	</tr>
+{% endfor %}
+	</tbody>
+</table>
+
+{% endblock main_content %}

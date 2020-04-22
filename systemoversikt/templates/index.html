@@ -29,6 +29,7 @@
 	<!-- CSS -->
 	<link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
 	<link rel="stylesheet" href="{% static 'chosen/chosen.min.css' %}">
+	{% block css_append %}{% endblock css_append %}
 
 	<!-- JavaScript -->
 	<script src="{% static 'jquery/jquery-3.3.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
@@ -36,8 +37,7 @@
 	<script src="{% static 'chosen/chosen.jquery.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'tablesorter/jquery.tablesorter.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'floatThead/jquery.floatThead.min.js' %}" nonce="{{request.csp_nonce}}"></script>
-
-
+	{% block script_prepend %}{% endblock script_prepend %}
 	{% block ekstrajavascript %}{% endblock ekstrajavascript %}
 
 	<script type="text/javascript" nonce="{{request.csp_nonce}}">
@@ -89,6 +89,9 @@
 		.redigeringsinfo {
 			font-style: italic;
 			color: #007bff;
+		}
+		.picker__select--month, .picker__select--year{
+			padding: 0px;
 		}
 	</style>
 	{% block ekstrastyle %}{% endblock %}
@@ -265,9 +268,11 @@
 <script src="{% static 'tableexport/FileSaver.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 <script src="{% static 'tableexport/tableexport.js' %}" nonce="{{request.csp_nonce}}"></script>
 
+{% block script_append %}{% endblock script_append %}
+
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 TableExport.prototype.types.date.assert = function(value){return false;};
-$("table").tableExport({
+$(".table").tableExport({
 	headers: true,
 	footers: true,
 	formats: ['xlsx'],

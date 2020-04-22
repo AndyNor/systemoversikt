@@ -1064,24 +1064,24 @@ class UBWRapporteringsenhetAdmin(admin.ModelAdmin):
 
 @admin.register(UBWFakturaKategori)
 class UBWFakturaKategoriAdmin(admin.ModelAdmin):
-	list_display = ('name', 'owner',)
+	list_display = ('name', 'belongs_to',)
 	search_fields = ('name',)
-	list_filter = ('owner',)
+	list_filter = ('belongs_to',)
 
 @admin.register(UBWMetode)
 class UBWMetodeAdmin(admin.ModelAdmin):
-	list_display = ('name', 'owner',)
+	list_display = ('name', 'belongs_to',)
 	search_fields = ('name',)
-	list_filter = ('owner',)
+	list_filter = ('belongs_to',)
 
 @admin.register(UBWFaktura)
 class UBWFakturaAdmin(admin.ModelAdmin):
-	list_display = ('owner', 'ubw_amount', 'ubw_xaccount', 'ubw_period', 'ubw_xdim_1', 'ubw_xdim_4', 'ubw_voucher_date', 'ubw_xapar_id', 'ubw_description')
+	list_display = ('belongs_to', 'ubw_amount', 'ubw_xaccount', 'ubw_period', 'ubw_xdim_1', 'ubw_xdim_4', 'ubw_voucher_date', 'ubw_xapar_id', 'ubw_description')
 	search_fields = ('event_type', 'message')
 	list_filter = ('ubw_account', 'ubw_dim_1', 'ubw_dim_4', 'ubw_apar_id')
 
-@admin.register(UBWManuelleTillegg)
-class UBWManuelleTilleggAdmin(admin.ModelAdmin):
-	list_display = ('owner', 'm_periode_paalopt', 'm_kvartal', 'm_year', 'm_type', 'm_metode', 'm_status')
+@admin.register(UBWMetadata)
+class UBWMetadataAdmin(admin.ModelAdmin):
+	list_display = ('belongs_to', 'periode_paalopt', 'kategori')
 	#search_fields = ('',)
-	list_filter = ('owner',)
+	#list_filter = ('',)
