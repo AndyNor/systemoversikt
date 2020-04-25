@@ -9,26 +9,40 @@
 
 {% block main_content %}
 
+<table width="100%">
+	<tr>
+		<td>
+
 <h6>Tilgangsstyring</h6>
 <ul> {% for user in enhet.users.all %} <li>{{ user }}</li> {% endfor %}</ul>
+
+		</td>
+		<td>
 
 <h6>API-URL</h6>
 Krever ikke innlogging per nå..<br>
 <a href="{{ domain }}{% url 'ubw_api' pk=enhet.pk %}">{{ domain }}{% url 'ubw_api' pk=enhet.pk %}</a></p>
 
+		</td>
+		<td>
+
 <h6>Våre kategorier</h6>
-<ul>
+<ul style="column-count:4;">
 	{% for k in kategorier %}
 	<li>{{ k }}</li>
 	{% endfor %}
 	<li><a href="{% url 'ubw_kategori' belongs_to=enhet.pk %}">Legg til ny</a></li>
 </ul>
+	
+		</td>
+	</tr>
+</table>
 
 <hr>
 <h6>Importer data fra økonomisystemet</h6>
 <form method="post" enctype="multipart/form-data">
 	{% csrf_token %}
-	<input class="" type="file" name="fileupload"><br><br>
+	<input class="" type="file" name="fileupload">
 	<input class="btn btn-sm btn-primary" type="submit" name="submit" value="Importer">
 </form>
 

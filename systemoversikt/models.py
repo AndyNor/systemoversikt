@@ -4012,17 +4012,42 @@ class UBWMetadataForm(forms.ModelForm):
 		exclude = ('belongs_to',)
 
 
-"""
-lage estimat objekt
-*kontonr
-*koststednr
-*prosjektnummer (trefff på søk hvis finnes)
-* beløp
-* koststednavn (hvis søk finner dette)
-* periode påløpt
-* kilde=prognosekategori (lage egne) (estimat | prognose)
-* aktiv = ja|nei
-"""
+class UBWEstimat(models.Model):
+	aktiv = models.BooleanField(
+		verbose_name="Aktiv?",
+		default=True,
+		)
+	prognose_kategori = models.CharField(
+		verbose_name="Prognosekategori",
+		max_length=50,
+		null=False, blank=False,
+		)
+	estimat_account = models.IntegerField(
+		verbose_name="Estimat Kontonr",
+		null=True, blank=True,
+		)
+	estimat_dim_1 = models.IntegerField(
+		verbose_name="Estimat Koststednr",
+		null=True, blank=True,
+		)
+	estimat_dim_4 = models.IntegerField(
+		verbose_name="Estimat Prosjektnr",
+		null=True, blank=True,
+		)
+	estimat_amount = models.DecimalField(
+		verbose_name="Estimat beløp",
+		max_digits=20, #10^(20-2), bør holde en stund..
+		decimal_places=2,
+		null=True, blank=True,
+		)
+	periode_paalopt = models.DateField(
+		verbose_name="Faktisk periode påløpt",
+		null=False, blank=False,
+		)
+
+
+
+
 
 
 """

@@ -3202,55 +3202,55 @@ def ubw_enhet(request, pk):
 	if request.user in enhet.users.all():
 
 		import pandas as pd
+		import numpy as np
 		import xlrd
-		try:
-			file = request.FILES['fileupload'] # this is my file
-			#print(file.name)
-			uploaded_file = {"name": file.name, "size": file.size,}
-			if ".csv" in file.name:
-				#print("CSV")
-				decoded_file = file.read().decode('latin1').splitlines()
-				data = list(csv.DictReader(decoded_file, delimiter=";"))
-				# need to convert date string to date and amount to Decimal
-				for line in data:
-					line["voucher_date"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
-					line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
-					line["amount"] = Decimal((line["amount"].replace(",",".")))
+
+		if request.method == "POST":
+			try:
+				file = request.FILES['fileupload'] # this is my file
+				#print(file.name)
+				uploaded_file = {"name": file.name, "size": file.size,}
+				if ".csv" in file.name:
+					#print("CSV")
+					decoded_file = file.read().decode('latin1').splitlines()
+					data = list(csv.DictReader(decoded_file, delimiter=";"))
+					# need to convert date string to date and amount to Decimal
+					for line in data:
+						line["voucher_date"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+						line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+						line["amount"] = Decimal((line["amount"].replace(",",".")))
 
 
-			if ".xlsx" in file.name:
-				#print("Excel")
-				dfRaw = pd.read_excel(io=file.read())
-				data = dfRaw.to_dict('records')
-				# need to replace "nan" (not a number) with ""
-				for line in data:
-					for row in line:
-						if line[row] == "nan":
-							line[row] = ""
-					line["amount"] = Decimal(line["amount"])
+				if ".xlsx" in file.name:
+					#print("Excel")
+					dfRaw = pd.read_excel(io=file.read())
+					dfRaw = dfRaw.replace(np.nan, '', regex=True)
+					data = dfRaw.to_dict('records')
+					for line in data:
+						line["amount"] = Decimal(line["amount"])
 
 
-				#dfRaw["dateTimes"].map(lambda x: xlrd.xldate_as_tuple(x, datemode))
-				#workbook = xlrd.open_workbook(file_contents=file.read())
-				#datemode = workbook.datemode
-				#sheet = workbook.sheet_by_index(0)
-				#data = [sheet.row_values(rowx) for rowx in range(sheet.nrows)]
-				#print(data)
+					#dfRaw["dateTimes"].map(lambda x: xlrd.xldate_as_tuple(x, datemode))
+					#workbook = xlrd.open_workbook(file_contents=file.read())
+					#datemode = workbook.datemode
+					#sheet = workbook.sheet_by_index(0)
+					#data = [sheet.row_values(rowx) for rowx in range(sheet.nrows)]
+					#print(data)
 
-				#data = list(csv.DictReader(decoded_file, delimiter=";"))
-			
-			print("\n%s\n" % data)
-			import_function(data)
+					#data = list(csv.DictReader(decoded_file, delimiter=";"))
+				
+				print("\n%s\n" % data)
+				import_function(data)
 
-		except Exception as e:
-			error_message = ("Kunne ikke lese fil: %s" % e)
-			messages.warning(request, error_message)
-			print(error_message)
-			uploaded_file = None
+			except Exception as e:
+				error_message = ("Kunne ikke lese fil: %s" % e)
+				messages.warning(request, error_message)
+				print(error_message)
 
+		uploaded_file = None
 		dager_gamle = 550
 		tidsgrense = datetime.date.today() - datetime.timedelta(days=dager_gamle)
-		fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_voucher_date__gte=tidsgrense).order_by('-ubw_voucher_date')
+		fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_voucher_date__gte=tidsgrense).order_by('metadata_reference', '-ubw_voucher_date')
 
 
 
