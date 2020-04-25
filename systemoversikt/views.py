@@ -3075,7 +3075,7 @@ Det viktigste med tilgangsstyringen her er integritet, slik at en eier av en enh
 
 def kvartal(date):
 	try:
-		kvartal = (date.month - 1) // 3 + 1
+		kvartal = (date.month - 1) // 3 + 1 # // is floor division
 		if kvartal in [1, 2, 3, 4]:
 			return ("Q%s") % kvartal
 	except:
@@ -3091,7 +3091,7 @@ def ubw_api(request, pk):
 
 		# noen felter er med vilje ikke tatt med
 		eksportdata["kilde"] = "UBW"
-		eksportdata["UBW tab"] = faktura.ubw_tab
+		eksportdata["UBW tab"] = str(faktura.ubw_tab_repr())
 		eksportdata["UBW Kontonr"] = faktura.ubw_account
 		eksportdata["UBW Kontonavn"] = faktura.ubw_xaccount 
 		eksportdata["UBW-periode (YYYYMM)"] = faktura.ubw_period
@@ -3106,7 +3106,7 @@ def ubw_api(request, pk):
 		eksportdata["UBW leverandørnr"] = faktura.ubw_apar_id
 		eksportdata["UBW leverandørnavn"] = faktura.ubw_xapar_id
 		eksportdata["UBW beskrivelse"] = faktura.ubw_description
-		eksportdata["UBW beløp"] = faktura.ubw_amount
+		eksportdata["UBW beløp"] = float(faktura.ubw_amount)
 		eksportdata["UBW Virksomhets-ID"] = faktura.ubw_client
 		eksportdata["UBW sist oppdatert"] = faktura.ubw_last_update
 
@@ -3116,12 +3116,12 @@ def ubw_api(request, pk):
 			eksportdata["Kategori"] = ""
 
 		try:
-			eksportdata["Periode påløpt"] = faktura.metadata_reference.periode_paalopt
 			eksportdata["Periode påløpt år"] = faktura.metadata_reference.periode_paalopt.year
+			eksportdata["Periode påløpt måned"] = faktura.metadata_reference.periode_paalopt.month
 			eksportdata["Periode påløpt kvartal"] = kvartal(faktura.metadata_reference.periode_paalopt)
 		except:
-			eksportdata["Periode påløpt"] = ""
 			eksportdata["Periode påløpt år"] = ""
+			eksportdata["Periode påløpt måned"] = ""
 			eksportdata["Periode påløpt kvartal"] = ""
 
 
@@ -3152,6 +3152,7 @@ def ubw_enhet(request, pk):
 			return None
 
 	def import_function(data):
+
 		for row in data:
 			try:
 				obj, created = UBWFaktura.objects.get_or_create(
@@ -3161,8 +3162,10 @@ def ubw_enhet(request, pk):
 					)
 				if created:
 					print("ny opprettet")
+					messages.success(request, "Opprettet ny")
 				else:
 					print("eksisterte, oppdaterer")
+					messages.success(request, "Oppdatert eksisterende")
 
 
 				#obj.belongs_to = enhet #UBWRapporteringsenhet
@@ -3177,35 +3180,79 @@ def ubw_enhet(request, pk):
 				obj.ubw_voucher_type = row["voucher_type"] #CharField
 				#obj.ubw_voucher_no = try_int(row[""]) #IntegerField
 				#obj.ubw_sequence_no = try_int(row[""]) #IntegerField
-				obj.ubw_voucher_date = datetime.datetime.strptime(row["voucher_date"], "%d.%m.%Y").date() #DateField
+				obj.ubw_voucher_date = line["last_update"]
 				obj.ubw_order_id = try_int(row["order_id"]) #IntegerField
 				obj.ubw_apar_id = try_int(row["apar_id"]) #IntegerField
 				obj.ubw_xapar_id = row["xapar_id"] #CharField
 				obj.ubw_description = row["description"] #TextField
-				obj.ubw_amount = Decimal((row["amount"].replace(",","."))) #DecimalField
+				obj.ubw_amount = row["amount"] #DecimalField
 				obj.ubw_apar_type = row["apar_type"] #CharField
 				obj.ubw_att_1_id = row["att_1_id"] #CharField
 				obj.ubw_att_4_id = row["att_4_id"] #CharField
 				obj.ubw_client = try_int(row["client"]) #IntegerField
-				obj.ubw_last_update = datetime.datetime.strptime(row["last_update"], "%d.%m.%Y").date() #DateField
+				obj.ubw_last_update = line["last_update"]
 
 				obj.save()
 
 			except Exception as e:
-				print(e)
+				error_message = ("Kunne ikke importere: %s" % e)
+				messages.warning(request, error_message)
+				print(error_message)
 
 	if request.user in enhet.users.all():
 
+		import pandas as pd
+		import xlrd
 		try:
 			file = request.FILES['fileupload'] # this is my file
+			#print(file.name)
 			uploaded_file = {"name": file.name, "size": file.size,}
-			decoded_file = file.read().decode('latin1').splitlines()
-			data = list(csv.DictReader(decoded_file, delimiter=";"))
+			if ".csv" in file.name:
+				#print("CSV")
+				decoded_file = file.read().decode('latin1').splitlines()
+				data = list(csv.DictReader(decoded_file, delimiter=";"))
+				# need to convert date string to date and amount to Decimal
+				for line in data:
+					line["voucher_date"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+					line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+					line["amount"] = Decimal((line["amount"].replace(",",".")))
+
+
+			if ".xlsx" in file.name:
+				#print("Excel")
+				dfRaw = pd.read_excel(io=file.read())
+				data = dfRaw.to_dict('records')
+				# need to replace "nan" (not a number) with ""
+				for line in data:
+					for row in line:
+						if line[row] == "nan":
+							line[row] = ""
+					line["amount"] = Decimal(line["amount"])
+
+
+				#dfRaw["dateTimes"].map(lambda x: xlrd.xldate_as_tuple(x, datemode))
+				#workbook = xlrd.open_workbook(file_contents=file.read())
+				#datemode = workbook.datemode
+				#sheet = workbook.sheet_by_index(0)
+				#data = [sheet.row_values(rowx) for rowx in range(sheet.nrows)]
+				#print(data)
+
+				#data = list(csv.DictReader(decoded_file, delimiter=";"))
+			
+			print("\n%s\n" % data)
 			import_function(data)
-		except:
+
+		except Exception as e:
+			error_message = ("Kunne ikke lese fil: %s" % e)
+			messages.warning(request, error_message)
+			print(error_message)
 			uploaded_file = None
 
-		fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).order_by('-ubw_voucher_date')
+		dager_gamle = 550
+		tidsgrense = datetime.date.today() - datetime.timedelta(days=dager_gamle)
+		fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_voucher_date__gte=tidsgrense).order_by('-ubw_voucher_date')
+
+
 
 		model = UBWFaktura
 		domain = ("%s://%s") % (settings.SITE_SCHEME, settings.SITE_DOMAIN)
@@ -3217,6 +3264,7 @@ def ubw_enhet(request, pk):
 			'model': model,
 			'kategorier': kategorier,
 			'domain': domain,
+			'dager_gamle': dager_gamle,
 		})
 	else:
 		messages.warning(request, 'Du må logge inn først for å kunne nå UBW-modulen')

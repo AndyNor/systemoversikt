@@ -3854,7 +3854,7 @@ class UBWFaktura(models.Model):
 		max_length=200,
 		)
 	ubw_period = models.IntegerField(
-		verbose_name="UBW-periode (YYYYMM)",
+		verbose_name="UBW-periode (YYYYmm)",
 		null=True, blank=True,
 		)
 	ubw_dim_1 = models.IntegerField(
@@ -3942,6 +3942,17 @@ class UBWFaktura(models.Model):
 	#history = HistoricalRecords()
 	unique_together = ('ubw_voucher_no', 'ubw_sequence_no')
 
+	def ubw_tab_repr(self):
+		oppslag = {
+			"A": "Ikke bokført",
+			"B": "Bokført",
+			"C": "Historisk hovedbok",
+		}
+		try: 
+			return oppslag[self.ubw_tab]
+		except:
+			return self.ubw_tab
+
 	def __str__(self):
 		return u'%s (%s)' % (self.ubw_voucher_no, self.ubw_sequence_no)
 
@@ -4000,6 +4011,18 @@ class UBWMetadataForm(forms.ModelForm):
 		model = UBWMetadata
 		exclude = ('belongs_to',)
 
+
+"""
+lage estimat objekt
+*kontonr
+*koststednr
+*prosjektnummer (trefff på søk hvis finnes)
+* beløp
+* koststednavn (hvis søk finner dette)
+* periode påløpt
+* kilde=prognosekategori (lage egne) (estimat | prognose)
+* aktiv = ja|nei
+"""
 
 
 """
