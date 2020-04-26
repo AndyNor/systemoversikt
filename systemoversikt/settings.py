@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'systemoversikt.restapi',
     'simple_history',
     'mailer',
+    'widget_tweaks'
 ]
 if THIS_ENVIRONMENT == "DEV":
     INSTALLED_APPS += [

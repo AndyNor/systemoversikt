@@ -4013,6 +4013,12 @@ class UBWMetadataForm(forms.ModelForm):
 
 
 class UBWEstimat(models.Model):
+	belongs_to = models.ForeignKey(
+		to="UBWRapporteringsenhet",
+		on_delete=models.CASCADE,
+		verbose_name="Tilhører",
+		null=False, blank=False,
+		)
 	aktiv = models.BooleanField(
 		verbose_name="Aktiv?",
 		default=True,
@@ -4044,9 +4050,24 @@ class UBWEstimat(models.Model):
 		verbose_name="Faktisk periode påløpt",
 		null=False, blank=False,
 		)
+	kategori = models.ForeignKey(
+		to="UBWFakturaKategori",
+		on_delete=models.PROTECT,
+		verbose_name="Type / kategori",
+		null=True, blank=True,
+		)
 
+	def __str__(self):
+		return u'%s' % (self.pk)
 
+	class Meta:
+		verbose_name_plural = "UBW Estimater"
+		default_permissions = ('add', 'change', 'delete', 'view')
 
+class UBWEstimatForm(forms.ModelForm):
+	class Meta:
+		model = UBWEstimat
+		exclude = ('belongs_to',)
 
 
 

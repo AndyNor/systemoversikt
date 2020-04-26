@@ -39,7 +39,7 @@ Krever ikke innlogging per nå..<br>
 </table>
 
 <hr>
-<h6>Importer data fra økonomisystemet</h6>
+<h6>Importer data fra økonomisystemet </h6>
 <form method="post" enctype="multipart/form-data">
 	{% csrf_token %}
 	<input class="" type="file" name="fileupload">
@@ -47,7 +47,10 @@ Krever ikke innlogging per nå..<br>
 </form>
 
 <hr>
-<h6>Importerte data fra økonomisystemet</h6>
+<h6>Importerte data fra økonomisystemet
+	<a class="btn btn-sm btn-primary" href="{% url 'ubw_estimat_list' belongs_to=enhet.pk %}">Mine estimater</a>
+</h6>
+
 Viset fakturaer som i UBW gjelder for de siste {{dager_gamle}} dager.
 <table class="table table-striped tablesorter">
 	<thead>

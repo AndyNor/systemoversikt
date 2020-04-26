@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.core import serializers
 from systemoversikt.models import *
@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test, per
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from django.db.models import Count
+from django.template.loader import render_to_string
 from django.db.models.functions import Lower
 from django.db.models import Q
 #from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -3083,9 +3084,10 @@ def kvartal(date):
 
 def ubw_api(request, pk):
 	enhet = UBWRapporteringsenhet.objects.get(pk=pk)
-	fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).order_by('-ubw_voucher_date')
 
 	faktura_eksport = []
+
+	fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).order_by('-ubw_voucher_date')
 	for faktura in fakturaer:
 		eksportdata = {}
 
@@ -3124,6 +3126,47 @@ def ubw_api(request, pk):
 			eksportdata["Periode påløpt måned"] = ""
 			eksportdata["Periode påløpt kvartal"] = ""
 
+
+		faktura_eksport.append(eksportdata)
+
+	estimat = UBWEstimat.objects.filter(belongs_to=enhet).filter(aktiv=True).order_by('-periode_paalopt')
+	for e in estimat:
+		eksportdata = {}
+
+		# noen felter er med vilje ikke tatt med
+		eksportdata["kilde"] = e.prognose_kategori
+		eksportdata["UBW Kontonr"] = e.estimat_account
+		eksportdata["UBW Koststednr"] = e.estimat_dim_1
+		eksportdata["UBW prosjektnr"] = e.estimat_dim_4
+		eksportdata["UBW beløp"] = float(e.estimat_amount)
+		"""
+		eksportdata["UBW Kontonavn"] = "" 
+		eksportdata["UBW-periode (YYYYMM)"] = ""
+		eksportdata["UBW Koststednavn"] = ""
+		eksportdata["UBW prosjektnavn"] = ""
+		eksportdata["UBW voucher_type"] = ""
+		eksportdata["UBW voucher_no"] = ""
+		eksportdata["UBW sequence_no"] = ""
+		eksportdata["UBW bilagsdato"] = ""
+		eksportdata["UBW leverandørnr"] = ""
+		eksportdata["UBW leverandørnavn"] = ""
+		eksportdata["UBW beskrivelse"] = ""
+		eksportdata["UBW Virksomhets-ID"] = ""
+		eksportdata["UBW sist oppdatert"] = ""
+		"""
+		try:
+			eksportdata["Kategori"] = e.kategori.name
+		except:
+			eksportdata["Kategori"] = ""
+
+		try:
+			eksportdata["Periode påløpt år"] = e.periode_paalopt.year
+			eksportdata["Periode påløpt måned"] = e.periode_paalopt.month
+			eksportdata["Periode påløpt kvartal"] = kvartal(e.periode_paalopt)
+		except:
+			eksportdata["Periode påløpt år"] = ""
+			eksportdata["Periode påløpt måned"] = ""
+			eksportdata["Periode påløpt kvartal"] = ""
 
 		faktura_eksport.append(eksportdata)
 
@@ -3267,9 +3310,10 @@ def ubw_enhet(request, pk):
 			'dager_gamle': dager_gamle,
 		})
 	else:
-		messages.warning(request, 'Du må logge inn først for å kunne nå UBW-modulen')
+		messages.warning(request, 'Du har ikke tilgang på denne UBW-modulen. Logget inn?')
 		return HttpResponseRedirect(reverse('home'))
 
+"""
 def check_belongs_to(user, enhet_id):
 	try:
 		e = UBWRapporteringsenhet.objects.get(pk=enhet)
@@ -3278,7 +3322,7 @@ def check_belongs_to(user, enhet_id):
 	except:
 		pass
 	return False
-
+"""
 
 def ubw_ekstra(request, faktura_id, pk=None):
 	faktura = UBWFaktura.objects.get(pk=faktura_id)
@@ -3323,6 +3367,83 @@ def ubw_kategori(request, belongs_to):
 	return render(request, 'ubw_ekstra.html', {
 			'form': form,
 	})
+
+
+def ubw_my_estimates(request, enhet):
+	if request.user in enhet.users.all():
+		return UBWEstimat.objects.filter(belongs_to=enhet).order_by('-periode_paalopt')
+	else:
+		return UBWEstimat.objects.none()	
+
+
+def ubw_estimat_list(request, belongs_to):
+	enhet = get_object_or_404(UBWRapporteringsenhet, pk=belongs_to)
+	estimat = ubw_my_estimates(request, enhet)
+	model = UBWEstimat
+	return render(request, 'ubw_estimat_list.html', {'estimat': estimat, 'model': model, 'enhet': enhet,})
+
+
+def save_ubw_estimat_form(request, belongs_to, form, template_name):
+	data = dict()
+	if request.method == 'POST':
+		if form.is_valid():
+			enhet = get_object_or_404(UBWRapporteringsenhet, pk=belongs_to)
+			if request.user in enhet.users.all():
+				i = form.save(commit=False)
+				i.belongs_to = enhet
+				i.save()
+			else:
+				messages.warning(request, 'Du har forsøkt å endre på noe du ikke har tilgang til!')
+
+			data['form_is_valid'] = True
+			estimat = ubw_my_estimates(request, enhet)
+			data['html_estimat_list'] = render_to_string('ubw_estimat_partial_list.html', {
+				'estimat': estimat,
+			})
+		else:
+			data['form_is_valid'] = False
+	context = {'form': form, 'belongs_to': belongs_to,}
+	data['html_form'] = render_to_string(template_name, context, request=request)
+	return JsonResponse(data)
+
+
+def ubw_estimat_create(request, belongs_to):
+	if request.method == 'POST':
+		form = UBWEstimatForm(request.POST)
+	else:
+		form = UBWEstimatForm()
+	return save_ubw_estimat_form(request, belongs_to, form, 'ubw_estimat_partial_create.html')
+
+
+def ubw_estimat_update(request, belongs_to, pk):
+	estimat = get_object_or_404(UBWEstimat, pk=pk)
+	if request.method == 'POST':
+		if request.user in estimat.belongs_to.users.all():
+			form = UBWEstimatForm(request.POST, instance=estimat)
+	else:
+		form = UBWEstimatForm(instance=estimat)
+	return save_ubw_estimat_form(request, belongs_to, form, 'ubw_estimat_partial_update.html')
+
+
+def ubw_estimat_delete(request, pk):
+	estimat = get_object_or_404(UBWEstimat, pk=pk)		
+	data = dict()
+	if request.method == 'POST':
+		if request.user in estimat.belongs_to.users.all():
+			estimat.delete()
+		else:
+			messages.warning(request, 'Du har forsøkt å slette noe du ikke har tilgang til!')
+
+		data['form_is_valid'] = True
+		enhet = estimat.belongs_to
+		estimat = ubw_my_estimates(request, enhet)
+		data['html_estimat_list'] = render_to_string('ubw_estimat_partial_list.html', {
+			'estimat': estimat
+		})
+	else:
+		context = {'estimat': estimat}
+		data['html_form'] = render_to_string('ubw_estimat_partial_delete.html', context, request=request)
+	return JsonResponse(data)
 
 
 ### UBW end

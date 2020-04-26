@@ -1085,3 +1085,8 @@ class UBWMetadataAdmin(admin.ModelAdmin):
 	list_display = ('belongs_to', 'periode_paalopt', 'kategori')
 	#search_fields = ('',)
 	#list_filter = ('',)
+
+@admin.register(UBWEstimat)
+class UBWEstimatAdmin(admin.ModelAdmin):
+	list_display = ('belongs_to', 'aktiv', 'prognose_kategori', 'estimat_account', 'estimat_dim_1', 'estimat_dim_4', 'estimat_amount', 'periode_paalopt')
+

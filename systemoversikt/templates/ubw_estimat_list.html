@@ -1,0 +1,48 @@
+{% extends 'index.html' %}
+
+{% load static %}
+{% load templatetags %}
+
+{% block script_append %}
+<script src="{% static 'js/estimat.js' %}" nonce="{{request.csp_nonce}}"></script>
+{% endblock %}
+
+{% block main_content %}
+  <h1 class="page-header">Estimater</h1>
+
+  <p>
+    <button type="button" class="btn btn-primary btn-sm js-create-estimat" data-url="{% url 'ubw_estimat_create' belongs_to=enhet.pk %}">
+      Nytt estimat
+    </button>
+    <a href="{% url 'ubw_enhet' pk=enhet.pk %}" class="btn btn-link btn-sm">
+      Mine fakturaer
+    </a>
+  </p>
+
+  <table class="table" id="estimat-table">
+    <thead>
+      <tr>
+        <th>{% get_verbose_field_name model "prognose_kategori" %}</th>
+        <th>{% get_verbose_field_name model "kategori" %}</th>
+        <th>{% get_verbose_field_name model "estimat_account" %}</th>
+        <th>{% get_verbose_field_name model "estimat_dim_1" %}</th>
+        <th>{% get_verbose_field_name model "estimat_dim_4" %}</th>
+        <th>{% get_verbose_field_name model "estimat_amount" %}</th>
+        <th>{% get_verbose_field_name model "periode_paalopt" %}</th>
+        <th>{% get_verbose_field_name model "aktiv" %}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% include 'ubw_estimat_partial_list.html' %}
+    </tbody>
+  </table>
+
+  <div class="modal fade" id="modal-estimat">
+    <div class="modal-dialog">
+      <div class="modal-content">
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
