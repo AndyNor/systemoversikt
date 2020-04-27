@@ -6,6 +6,8 @@ cd ~/webapps/kartoteket_test/myproject/systemoversikt/
 # update source code
 git fetch
 git reset --hard origin/master
+# update requirements
+python3.7 -m pip install -r requirements.txt
 # makemigrations (entironment is set up with python3.7)
 python3.7 manage.py makemigrations
 python3.7 manage.py migrate
