@@ -29,6 +29,7 @@
 	<!-- CSS -->
 	<link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
 	<link rel="stylesheet" href="{% static 'chosen/chosen.min.css' %}">
+	{% block css_append %}{% endblock css_append %}
 
 	<!-- JavaScript -->
 	<script src="{% static 'jquery/jquery-3.3.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
@@ -36,25 +37,38 @@
 	<script src="{% static 'chosen/chosen.jquery.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'tablesorter/jquery.tablesorter.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'floatThead/jquery.floatThead.min.js' %}" nonce="{{request.csp_nonce}}"></script>
-
-
+	{% block script_prepend %}{% endblock script_prepend %}
 	{% block ekstrajavascript %}{% endblock ekstrajavascript %}
 
 	<script type="text/javascript" nonce="{{request.csp_nonce}}">
 	$(document).ready(function(){
 		$("table").tablesorter({})
-		$("table").floatThead({top: 103});
+		$("table").floatThead({top: 116});
 
 	});
 	</script>
 
 	<style>
+		nav a {
+			color: #F9C66B;
+		}
+		nav a:hover {
+			color: #FF8274;
+			text-decoration: none;
+		}
+		nav {
+			color: #F8F0DD;
+		}
+		nav a.active {
+			color: #2A2859;
+			background-color: #F9C66B;
+		}
 		@font-face {
 			font-family: "oslosans";
 			src: url("{% static 'fonts/OsloSans-Regular.woff' %}") format('woff');
 		}
 		body {
-			padding-top: 115px;
+			padding-top: 135px;
 			padding-bottom: 25px;
 			font-family: oslosans;
 			font-size: 10pt;
@@ -90,10 +104,13 @@
 			font-style: italic;
 			color: #007bff;
 		}
+		.picker__select--month, .picker__select--year{
+			padding: 0px;
+		}
 	</style>
 	{% block ekstrastyle %}{% endblock %}
 
-	<title>Kartoteket (Oslo kommune)</title>
+	<title>Oslo kommune Kartoteket</title>
 
 </head>
 <body>
@@ -101,20 +118,19 @@
 <header>
 
 
-	<nav class="navbar navbar-light fixed-top" style="background-color: #F8F8F8; padding: 0;">
-
+	<nav class="navbar navbar-light fixed-top" style="background-color: #2A2859; padding: 0;">
 		<div style="position: absolute; right: 8px; top: 8px;">
 			<form action="{% url 'alle_systemer' %}" autocomplete="off">
 				<div class="form-group form-inline">
-					<input type="search" value="{{ search_term }}" name="search_term"
-					placeholder="Navn på system" class="form-control form-control-sm">
+					<input style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
+					placeholder="System eller programvare" class="form-control form-control-sm">
 					<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 				</div>
 			</form>
 		</div>
 
 		<div style="width: 100%; padding-top: 5px; padding-bottom: 5px;">
-			<img src="{% static 'standard_oslo-logoi.png' %}" style="float: left; margin-top: 5px; margin-right: 10px; margin-left: 10px; height: 55px;">
+			<img src="{% static 'standard_oslo-logoi.png' %}" style="float: left; margin-top: 5px; margin-right: 30px; margin-left: 15px; height: 70px;">
 			<h4 style="margin-top: 5px; margin-bottom: 5px;">Oslo kommune <a href="/">Kartoteket</a></h4>
 
 			{% if user.is_authenticated %}
@@ -124,16 +140,15 @@
 					{% url "oidc_logout" as url_logout %}
 				{% endif %}
 
-				{% url "min_virksomhet" as min_virksomhet_url %}
 				Logget inn som <a href="{% url 'minside' %}">{{ user.first_name|default:"Ukjent" }} {{ user.last_name }}</a> og representerer
-				<a href="{{ min_virksomhet_url }}">{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</a> (<a href="{% url 'bytt_virksomhet' %}">bytt</a>)
+				<a href="{% url 'bytt_virksomhet' %}">{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</a>
 				<!--
 				<span style="margin-left: 30px;">(<b><a href="{{ url_logout }}">Logg ut</a></b>)</span>
 				-->
 				<form method="post" action="{{ url_logout }}" style="display: inline; margin-left: 30px;">
 					{% csrf_token %}
 					<input type="hidden" name="next" value="{{ request.path }}">
-					<button type="submit">Logg ut</button>
+					<button type="submit" class="btn btn-sm btn-danger">Logg ut</button>
 				</form>
 
 			{% else %}
@@ -150,7 +165,7 @@
 				<form method="get" action="{{ url_login }}" style="display: inline; margin-left: 30px;">
 					{% csrf_token %}
 					<input type="hidden" name="next" value="{{ request.path }}">
-					<button type="submit">Logg inn</button>
+					<button type="submit" class="btn btn-sm btn-primary">Logg inn</button>
 				</form>
 
 			{% endif %}
@@ -158,58 +173,58 @@
 		</div>
 
 		<div style="font-size: 8pt; width: 100%; min-width: 1200px;">
-			<ul class="nav nav-tabs">
+			<ul class="nav">
 
-				<li class="nav-item">
+				<li class="">
 					{% url "alle_virksomheter" as alle_virksomheter_url %}
 					<a href="{{ alle_virksomheter_url }}" class="nav-link {% if alle_virksomheter_url in request.path %} active {% endif %}">Virksomheter</a>
 				</li>
 				{% if user.is_authenticated %}
-				<li class="nav-item">
+				<li class="">
 					{% url "alle_ansvarlige" as alle_ansvarlige_url %}
 					<a href="{{ alle_ansvarlige_url }}" class="nav-link {% if alle_ansvarlige_url in request.path %} active {% endif %}">Ansvarlige</a>
 				</li>
-				<li class="nav-item">
+				<li class="">
 					{% url "alle_avtaler" as alle_avtaler_url %}
 					<a href="{{ alle_avtaler_url }}" class="nav-link {% if alle_avtaler_url in request.path %} active {% endif %}">Avtaler</a>
 				</li>
 				{% if user.profile.virksomhet %}
-				<li class="nav-item">
+				<li class="">
 					{% url "dashboard_all" virksomhet=user.profile.virksomhet.pk as dashboard_url %}
 					<a href="{{ dashboard_url }}" class="nav-link {% if dashboard_url in request.path %} active {% endif %}">Vårt dashboard</a>
 				</li>
 				{% endif %}
-				<li class="nav-item">
+				<li class="">
 					{% url "mine_behandlinger" as mine_behandlinger_url %}
 					<a href="{{ mine_behandlinger_url }}" class="nav-link {% if mine_behandlinger_url in request.path %} active {% endif %}">Våre behandlinger</a>
 				</li>
 
-				<li class="nav-item">
+				<li class="">
 					{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
 					<a href="{{ alle_driftsmodeller_url }}" class="nav-link {% if alle_driftsmodeller_url in request.path %} active {% endif %}">Plattformer</a>
 				</li>
-				<li class="nav-item">
+				<li class="">
 					{% url "alle_cmdbref" as alle_cmdbref_url %}
 					<a href="{{ alle_cmdbref_url }}" class="nav-link {% if alle_cmdbref_url in request.path %} active {% endif %}">CMDB</a>
 				</li>
 				{% endif %}
-				<li class="nav-item">
+				<li class="">
 					{% url "alle_systemer" as alle_systemer_url %}
 					<a href="{{ alle_systemer_url }}" class="nav-link {% if alle_systemer_url in request.path %} active {% endif %}">Systemer</a>
 				</li>
-				<li class="nav-item">
+				<li class="">
 					{% url "alle_programvarer" as alle_programvarer_url %}
 					<a href="{{ alle_programvarer_url }}" class="nav-link {% if alle_programvarer_url in request.path %} active {% endif %}">Programvarer</a>
 				</li>
-				<li class="nav-item">
+				<li class="">
 					{% url "alle_definisjoner" as alle_definisjoner_url %}
 					<a href="{{ alle_definisjoner_url }}" class="nav-link {% if alle_definisjoner_url in request.path %} active {% endif %}">Definisjoner</a>
 				</li>
-				<li class="nav-item">
+				<li class="">
 					{% url "alle_systemurler" as alle_systemurler_url %}
 					<a href="{{ alle_systemurler_url }}" class="nav-link {% if alle_systemurler_url in request.path %} active {% endif %}">URL-er</a>
 				</li>
-				<li class="nav-item">
+				<li class="">
 					<a href="/api/" class="nav-link">API</a>
 				</li>
 			</ul>
@@ -265,9 +280,11 @@
 <script src="{% static 'tableexport/FileSaver.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 <script src="{% static 'tableexport/tableexport.js' %}" nonce="{{request.csp_nonce}}"></script>
 
+{% block script_append %}{% endblock script_append %}
+
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 TableExport.prototype.types.date.assert = function(value){return false;};
-$("table").tableExport({
+$(".table").tableExport({
 	headers: true,
 	footers: true,
 	formats: ['xlsx'],

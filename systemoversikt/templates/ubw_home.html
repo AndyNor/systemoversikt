@@ -1,0 +1,18 @@
+{% extends "index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Økonomirapportering for {{ enhet }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+<ul>
+{% for enhet in enheter %}
+<li><a href="{% url 'ubw_enhet' pk=enhet.pk %}">{{ enhet.name }}</a></li>
+{% endfor %}
+</ul>
+
+{% endblock main_content %}

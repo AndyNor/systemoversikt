@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist
 from django.core import serializers
 from systemoversikt.models import *
@@ -7,6 +7,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test, per
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from django.db.models import Count
+from django.template.loader import render_to_string
 from django.db.models.functions import Lower
 from django.db.models import Q
 #from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -14,6 +15,8 @@ from django.http import HttpResponseBadRequest, JsonResponse
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
+from django.http import HttpResponseRedirect, HttpResponse
+from django.conf import settings
 import datetime
 from django.urls import reverse
 
@@ -75,7 +78,10 @@ def login(request):
 	"""
 	støttefunksjon for å logge inn
 	"""
-	return redirect("/admin/")
+	if settings.THIS_ENVIRONMENT == "PROD":
+		return redirect(reverse('oidc_authentication_init'))
+	else:
+		return redirect("/admin/")
 """
 Støttefunksjoner slutt
 """
@@ -470,7 +476,6 @@ def user_clean_up(request):
 	"""
 	required_permissions = 'auth.change_permission'
 	if request.user.has_perm(required_permissions):
-		from django.conf import settings
 		if settings.DEBUG == True:  # Testmiljø
 			from django.contrib.auth.models import User
 			for user in User.objects.all():
@@ -3060,3 +3065,385 @@ def recursive_group_members(request, group):
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+
+
+
+### UBW
+
+"""
+Det viktigste med tilgangsstyringen her er integritet, slik at en eier av en enhet kan være sikker på at ingen andre har importert/endret på sine data.
+"""
+
+def kvartal(date):
+	try:
+		kvartal = (date.month - 1) // 3 + 1 # // is floor division
+		if kvartal in [1, 2, 3, 4]:
+			return ("Q%s") % kvartal
+	except:
+		return "error"
+
+def ubw_api(request, pk):
+	enhet = UBWRapporteringsenhet.objects.get(pk=pk)
+
+	faktura_eksport = []
+
+	fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).order_by('-ubw_voucher_date')
+	for faktura in fakturaer:
+		eksportdata = {}
+
+		# noen felter er med vilje ikke tatt med
+		eksportdata["kilde"] = "UBW"
+		eksportdata["UBW tab"] = str(faktura.ubw_tab_repr())
+		eksportdata["UBW Kontonr"] = faktura.ubw_account
+		eksportdata["UBW Kontonavn"] = faktura.ubw_xaccount 
+		eksportdata["UBW-periode (YYYYMM)"] = faktura.ubw_period
+		eksportdata["UBW Koststednr"] = faktura.ubw_dim_1
+		eksportdata["UBW Koststednavn"] = faktura.ubw_xdim_1
+		eksportdata["UBW prosjektnr"] = faktura.ubw_dim_4
+		eksportdata["UBW prosjektnavn"] = faktura.ubw_xdim_4
+		eksportdata["UBW voucher_type"] = faktura.ubw_voucher_type
+		eksportdata["UBW voucher_no"] = faktura.ubw_voucher_no
+		eksportdata["UBW sequence_no"] = faktura.ubw_sequence_no
+		eksportdata["UBW bilagsdato"] = faktura.ubw_voucher_date
+		eksportdata["UBW leverandørnr"] = faktura.ubw_apar_id
+		eksportdata["UBW leverandørnavn"] = faktura.ubw_xapar_id
+		eksportdata["UBW beskrivelse"] = faktura.ubw_description
+		eksportdata["UBW beløp"] = float(faktura.ubw_amount)
+		eksportdata["UBW Virksomhets-ID"] = faktura.ubw_client
+		eksportdata["UBW sist oppdatert"] = faktura.ubw_last_update
+
+		try:
+			eksportdata["Kategori"] = faktura.metadata_reference.kategori.name
+		except:
+			eksportdata["Kategori"] = ""
+
+		try:
+			eksportdata["Periode påløpt år"] = faktura.metadata_reference.periode_paalopt.year
+			eksportdata["Periode påløpt måned"] = faktura.metadata_reference.periode_paalopt.month
+			eksportdata["Periode påløpt kvartal"] = kvartal(faktura.metadata_reference.periode_paalopt)
+		except:
+			eksportdata["Periode påløpt år"] = ""
+			eksportdata["Periode påløpt måned"] = ""
+			eksportdata["Periode påløpt kvartal"] = ""
+
+
+		faktura_eksport.append(eksportdata)
+
+	estimat = UBWEstimat.objects.filter(belongs_to=enhet).filter(aktiv=True).order_by('-periode_paalopt')
+	for e in estimat:
+		eksportdata = {}
+
+		# noen felter er med vilje ikke tatt med
+		eksportdata["kilde"] = e.prognose_kategori
+		eksportdata["UBW Kontonr"] = e.estimat_account
+		eksportdata["UBW Koststednr"] = e.estimat_dim_1
+		eksportdata["UBW prosjektnr"] = e.estimat_dim_4
+		eksportdata["UBW beløp"] = float(e.estimat_amount)
+		"""
+		eksportdata["UBW Kontonavn"] = "" 
+		eksportdata["UBW-periode (YYYYMM)"] = ""
+		eksportdata["UBW Koststednavn"] = ""
+		eksportdata["UBW prosjektnavn"] = ""
+		eksportdata["UBW voucher_type"] = ""
+		eksportdata["UBW voucher_no"] = ""
+		eksportdata["UBW sequence_no"] = ""
+		eksportdata["UBW bilagsdato"] = ""
+		eksportdata["UBW leverandørnr"] = ""
+		eksportdata["UBW leverandørnavn"] = ""
+		eksportdata["UBW beskrivelse"] = ""
+		eksportdata["UBW Virksomhets-ID"] = ""
+		eksportdata["UBW sist oppdatert"] = ""
+		"""
+		try:
+			eksportdata["Kategori"] = e.kategori.name
+		except:
+			eksportdata["Kategori"] = ""
+
+		try:
+			eksportdata["Periode påløpt år"] = e.periode_paalopt.year
+			eksportdata["Periode påløpt måned"] = e.periode_paalopt.month
+			eksportdata["Periode påløpt kvartal"] = kvartal(e.periode_paalopt)
+		except:
+			eksportdata["Periode påløpt år"] = ""
+			eksportdata["Periode påløpt måned"] = ""
+			eksportdata["Periode påløpt kvartal"] = ""
+
+		faktura_eksport.append(eksportdata)
+
+	return JsonResponse(faktura_eksport, safe=False)
+
+
+def ubw_home(request):
+	enheter = UBWRapporteringsenhet.objects.all()
+
+	return render(request, 'ubw_home.html', {
+				'enheter': enheter,
+			})
+
+def ubw_enhet(request, pk):
+	import csv
+	import datetime
+	from decimal import Decimal
+	enhet = UBWRapporteringsenhet.objects.get(pk=pk)
+
+	kategorier = UBWFakturaKategori.objects.filter(belongs_to=enhet)
+
+	def try_int(string):
+		try:
+			return int(string)
+		except:
+			return None
+
+	def import_function(data):
+
+		for row in data:
+			try:
+				obj, created = UBWFaktura.objects.get_or_create(
+					ubw_voucher_no=try_int(row["voucher_no"]),
+					ubw_sequence_no=try_int(row["sequence_no"]),
+					belongs_to=enhet,
+					)
+				if created:
+					print("ny opprettet")
+					messages.success(request, "Opprettet ny")
+				else:
+					print("eksisterte, oppdaterer")
+					messages.success(request, "Oppdatert eksisterende")
+
+
+				#obj.belongs_to = enhet #UBWRapporteringsenhet
+				obj.ubw_tab = row["tab"] #CharField
+				obj.ubw_account = try_int(row["account"]) #IntegerField
+				obj.ubw_xaccount = row["xaccount"] #CharField
+				obj.ubw_period = try_int(row["period"]) #IntegerField
+				obj.ubw_dim_1 = try_int(row["dim_1"]) #IntegerField
+				obj.ubw_xdim_1 = row["xdim_1"] #CharField
+				obj.ubw_dim_4 = try_int(row["dim_4"]) #IntegerField
+				obj.ubw_xdim_4 = row["xdim_4"] #CharField
+				obj.ubw_voucher_type = row["voucher_type"] #CharField
+				#obj.ubw_voucher_no = try_int(row[""]) #IntegerField
+				#obj.ubw_sequence_no = try_int(row[""]) #IntegerField
+				obj.ubw_voucher_date = line["last_update"]
+				obj.ubw_order_id = try_int(row["order_id"]) #IntegerField
+				obj.ubw_apar_id = try_int(row["apar_id"]) #IntegerField
+				obj.ubw_xapar_id = row["xapar_id"] #CharField
+				obj.ubw_description = row["description"] #TextField
+				obj.ubw_amount = row["amount"] #DecimalField
+				obj.ubw_apar_type = row["apar_type"] #CharField
+				obj.ubw_att_1_id = row["att_1_id"] #CharField
+				obj.ubw_att_4_id = row["att_4_id"] #CharField
+				obj.ubw_client = try_int(row["client"]) #IntegerField
+				obj.ubw_last_update = line["last_update"]
+
+				obj.save()
+
+			except Exception as e:
+				error_message = ("Kunne ikke importere: %s" % e)
+				messages.warning(request, error_message)
+				print(error_message)
+
+	if request.user in enhet.users.all():
+
+		import pandas as pd
+		import numpy as np
+		import xlrd
+
+		if request.method == "POST":
+			try:
+				file = request.FILES['fileupload'] # this is my file
+				#print(file.name)
+				uploaded_file = {"name": file.name, "size": file.size,}
+				if ".csv" in file.name:
+					#print("CSV")
+					decoded_file = file.read().decode('latin1').splitlines()
+					data = list(csv.DictReader(decoded_file, delimiter=";"))
+					# need to convert date string to date and amount to Decimal
+					for line in data:
+						line["voucher_date"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+						line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+						line["amount"] = Decimal((line["amount"].replace(",",".")))
+
+
+				if ".xlsx" in file.name:
+					#print("Excel")
+					dfRaw = pd.read_excel(io=file.read())
+					dfRaw = dfRaw.replace(np.nan, '', regex=True)
+					data = dfRaw.to_dict('records')
+					for line in data:
+						line["amount"] = Decimal(line["amount"])
+
+
+					#dfRaw["dateTimes"].map(lambda x: xlrd.xldate_as_tuple(x, datemode))
+					#workbook = xlrd.open_workbook(file_contents=file.read())
+					#datemode = workbook.datemode
+					#sheet = workbook.sheet_by_index(0)
+					#data = [sheet.row_values(rowx) for rowx in range(sheet.nrows)]
+					#print(data)
+
+					#data = list(csv.DictReader(decoded_file, delimiter=";"))
+				
+				print("\n%s\n" % data)
+				import_function(data)
+
+			except Exception as e:
+				error_message = ("Kunne ikke lese fil: %s" % e)
+				messages.warning(request, error_message)
+				print(error_message)
+
+		uploaded_file = None
+		dager_gamle = 550
+		tidsgrense = datetime.date.today() - datetime.timedelta(days=dager_gamle)
+		fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_voucher_date__gte=tidsgrense).order_by('metadata_reference', '-ubw_voucher_date')
+
+
+
+		model = UBWFaktura
+		domain = ("%s://%s") % (settings.SITE_SCHEME, settings.SITE_DOMAIN)
+
+		return render(request, 'ubw_enhet.html', {
+			'enhet': enhet,
+			'uploaded_file': uploaded_file,
+			'fakturaer': fakturaer,
+			'model': model,
+			'kategorier': kategorier,
+			'domain': domain,
+			'dager_gamle': dager_gamle,
+		})
+	else:
+		messages.warning(request, 'Du har ikke tilgang på denne UBW-modulen. Logget inn?')
+		return HttpResponseRedirect(reverse('home'))
+
+"""
+def check_belongs_to(user, enhet_id):
+	try:
+		e = UBWRapporteringsenhet.objects.get(pk=enhet)
+		if user in e.users:
+			return True
+	except:
+		pass
+	return False
+"""
+
+def ubw_ekstra(request, faktura_id, pk=None):
+	faktura = UBWFaktura.objects.get(pk=faktura_id)
+	enhet = faktura.belongs_to
+	if request.user in enhet.users.all():
+
+		if pk:
+			instance = UBWMetadata.objects.get(pk=pk)
+			form = UBWMetadataForm(instance=instance)
+		else:
+			instance = None
+			form = UBWMetadataForm()
+
+		if request.method == 'POST':
+			form = UBWMetadataForm(data=request.POST, instance=instance)
+			if form.is_valid():
+				instance = form.save(commit=False)
+				instance.belongs_to = faktura
+				instance.save()
+				return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
+		
+
+		return render(request, 'ubw_ekstra.html', {
+				'form': form,
+		})
+
+def ubw_kategori(request, belongs_to):
+	from django.http import HttpResponseRedirect
+
+	enhet = UBWRapporteringsenhet.objects.get(pk=belongs_to)
+	if request.method == 'POST':
+		form = UBWFakturaKategoriForm(request.POST)
+		if form.is_valid() and form.cleaned_data:
+			if request.user in enhet.users.all():
+				kategori = form.save(commit=False)
+				kategori.belongs_to = enhet
+				kategori.save()
+				return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
+	else:
+		form = UBWFakturaKategoriForm()
+		
+	return render(request, 'ubw_ekstra.html', {
+			'form': form,
+	})
+
+
+def ubw_my_estimates(request, enhet):
+	if request.user in enhet.users.all():
+		return UBWEstimat.objects.filter(belongs_to=enhet).order_by('-periode_paalopt')
+	else:
+		return UBWEstimat.objects.none()	
+
+
+def ubw_estimat_list(request, belongs_to):
+	enhet = get_object_or_404(UBWRapporteringsenhet, pk=belongs_to)
+	estimat = ubw_my_estimates(request, enhet)
+	model = UBWEstimat
+	return render(request, 'ubw_estimat_list.html', {'estimat': estimat, 'model': model, 'enhet': enhet,})
+
+
+def save_ubw_estimat_form(request, belongs_to, form, template_name):
+	data = dict()
+	if request.method == 'POST':
+		if form.is_valid():
+			enhet = get_object_or_404(UBWRapporteringsenhet, pk=belongs_to)
+			if request.user in enhet.users.all():
+				i = form.save(commit=False)
+				i.belongs_to = enhet
+				i.save()
+			else:
+				messages.warning(request, 'Du har forsøkt å endre på noe du ikke har tilgang til!')
+
+			data['form_is_valid'] = True
+			estimat = ubw_my_estimates(request, enhet)
+			data['html_estimat_list'] = render_to_string('ubw_estimat_partial_list.html', {
+				'estimat': estimat,
+			})
+		else:
+			data['form_is_valid'] = False
+	context = {'form': form, 'belongs_to': belongs_to,}
+	data['html_form'] = render_to_string(template_name, context, request=request)
+	return JsonResponse(data)
+
+
+def ubw_estimat_create(request, belongs_to):
+	if request.method == 'POST':
+		form = UBWEstimatForm(request.POST)
+	else:
+		form = UBWEstimatForm()
+	return save_ubw_estimat_form(request, belongs_to, form, 'ubw_estimat_partial_create.html')
+
+
+def ubw_estimat_update(request, belongs_to, pk):
+	estimat = get_object_or_404(UBWEstimat, pk=pk)
+	if request.method == 'POST':
+		if request.user in estimat.belongs_to.users.all():
+			form = UBWEstimatForm(request.POST, instance=estimat)
+	else:
+		form = UBWEstimatForm(instance=estimat)
+	return save_ubw_estimat_form(request, belongs_to, form, 'ubw_estimat_partial_update.html')
+
+
+def ubw_estimat_delete(request, pk):
+	estimat = get_object_or_404(UBWEstimat, pk=pk)		
+	data = dict()
+	if request.method == 'POST':
+		if request.user in estimat.belongs_to.users.all():
+			estimat.delete()
+		else:
+			messages.warning(request, 'Du har forsøkt å slette noe du ikke har tilgang til!')
+
+		data['form_is_valid'] = True
+		enhet = estimat.belongs_to
+		estimat = ubw_my_estimates(request, enhet)
+		data['html_estimat_list'] = render_to_string('ubw_estimat_partial_list.html', {
+			'estimat': estimat
+		})
+	else:
+		context = {'estimat': estimat}
+		data['html_form'] = render_to_string('ubw_estimat_partial_delete.html', context, request=request)
+	return JsonResponse(data)
+
+
+### UBW end

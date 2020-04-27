@@ -153,7 +153,20 @@ urlpatterns = [
 	url(r'^definisjon/(?P<begrep>[-_a-zA-Z0-9\s]{1,150})/$', views.definisjon, name='definisjon'),
 
 	url(r'^dashboard/$', views.dashboard_all, name='dashboard_all'),
-	url(r'^dashboard/(?P<virksomhet>\d{1,8})/$', views.dashboard_all, name='dashboard_all'),
+	url(r'^dashboard/(?P<virksomhet>\d+)/$', views.dashboard_all, name='dashboard_all'),
+
+	# ubw
+	url(r'^ubw/$', views.ubw_home, name='ubw_home'),
+	url(r'^ubw/(?P<pk>\d+)/$', views.ubw_enhet, name='ubw_enhet'),
+	url(r'^ubw/api/(?P<pk>\d+)/$', views.ubw_api, name='ubw_api'),
+	url(r'^ubw/ekstra/(?P<faktura_id>\d+)/$', views.ubw_ekstra, name='ubw_ekstra_new'),
+	url(r'^ubw/ekstra/(?P<faktura_id>\d+)/(?P<pk>\d+)/$', views.ubw_ekstra, name='ubw_ekstra_edit'),
+	url(r'^ubw/kategori/(?P<belongs_to>\d+)/$', views.ubw_kategori, name='ubw_kategori'),
+
+	url(r'^ubw/(?P<belongs_to>\d+)/estimat/$', views.ubw_estimat_list, name='ubw_estimat_list'),
+	url(r'^ubw/(?P<belongs_to>\d+)/estimat/create/$', views.ubw_estimat_create, name='ubw_estimat_create'),
+	url(r'^ubw/(?P<belongs_to>\d+)/estimat/(?P<pk>\d+)/update/$', views.ubw_estimat_update, name='ubw_estimat_update'),
+	url(r'^ubw/estimat/(?P<pk>\d+)/delete/$', views.ubw_estimat_delete, name='ubw_estimat_delete'),
 
 
 	# import og konvertering

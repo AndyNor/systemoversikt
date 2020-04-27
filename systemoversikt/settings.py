@@ -57,8 +57,8 @@ if THIS_ENVIRONMENT == "DEV":
     ALLOWED_HOSTS = ["localhost", SITE_DOMAIN]
 if THIS_ENVIRONMENT == "TEST":
     TEST_ENV_NAME = "test"
-    SITE_SCHEME = "https"
-    SITE_DOMAIN = "systemoversikt-test.oslo.kommune.no"
+    SITE_SCHEME = "http"
+    SITE_DOMAIN = "localhost:8000"
     SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
     #SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
     ALLOWED_HOSTS = ["localhost", SITE_DOMAIN, "kartoteket-test.oslo.kommune.no", "kartoteket.andynor.net"]
@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'systemoversikt.restapi',
     'simple_history',
     'mailer',
+    'widget_tweaks'
 ]
 if THIS_ENVIRONMENT == "DEV":
     INSTALLED_APPS += [

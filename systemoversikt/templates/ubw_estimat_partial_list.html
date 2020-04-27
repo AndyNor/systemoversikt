@@ -1,0 +1,28 @@
+{% for e in estimat %}
+  <tr>
+    <td>{{ e.prognose_kategori }}</td>
+    <td>{{ e.kategori }}</td>
+    <td>{{ e.estimat_account }}</td>
+    <td>{{ e.estimat_dim_1 }}</td>
+    <td>{{ e.estimat_dim_4 }}</td>
+    <td>{{ e.estimat_amount }}</td>
+    <td>{{ e.periode_paalopt }}</td>
+    <td>{{ e.aktiv|yesno:"Ja,Nei" }}</td>
+    <td style="width: 150px">
+      <button type="button"
+              class="btn btn-warning btn-sm js-update-estimat"
+              data-url="{% url 'ubw_estimat_update' belongs_to=e.belongs_to.id pk=e.id %}">
+         Rediger
+      </button>
+      <button type="button"
+              class="btn btn-danger btn-sm js-delete-estimat"
+              data-url="{% url 'ubw_estimat_delete' e.id %}">
+         Slett
+      </button>
+    </td>
+  </tr>
+{% empty %}
+  <tr>
+    <td colspan="8" class="text-center">Det finnes ingen aktive estimat</td>
+  </tr>
+{% endfor %}
