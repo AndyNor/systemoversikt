@@ -4093,6 +4093,7 @@ class UBWEstimatForm(forms.ModelForm):
 		exclude = ('belongs_to',)
 		widgets = {
 			'ubw_description': forms.Textarea(attrs={'cols': 10, 'rows': 2}),
+			'estimat_amount': forms.TextInput(),
 		}
 
 	def __init__(self, *args, **kwargs):

@@ -14,6 +14,12 @@ $(function () {
       },
       success: function (data) {
         $("#modal-estimat .modal-content").html(data.html_form);
+        new AutoNumeric('#id_estimat_amount', { 
+            currencySymbol : '',
+            decimalPlacesRawValue: 2,
+            digitGroupSeparator: " ",
+            unformatOnSubmit: true,
+        });
       }
     });
   };
