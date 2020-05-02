@@ -1,11 +1,15 @@
 {% load widget_tweaks %}
 
 {% for field in form %}
-  <div class="form-group{% if field.errors %} has-error{% endif %}">
-    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-    {% render_field field class="form-control" %}
-    {% for error in field.errors %}
-      <p class="help-block">{{ error }}</p>
-    {% endfor %}
-  </div>
+	<div class="form-group{% if field.errors %} has-error{% endif %}">
+		<label for="{{ field.id_for_label }}">{{ field.label }}</label>
+		{% if field.field.widget.input_type == 'checkbox' %}
+			{{ field }}
+		{% else %}
+			{% render_field field class="form-control" %}
+		{% endif %}
+		{% for error in field.errors %}
+		  <p style="color: red;">{{ error }}</p>
+		{% endfor %}
+	</div>
 {% endfor %}

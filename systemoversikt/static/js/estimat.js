@@ -53,4 +53,8 @@ $(function () {
   $("#estimat-table").on("click", ".js-delete-estimat", loadForm);
   $("#modal-estimat").on("submit", ".js-estimat-delete-form", saveForm);
 
+  // Copy estimat
+  $("#estimat-table").on("click", ".js-copy-estimat", loadForm);
+  $("#modal-estimat").on("submit", ".js-estimat-copy-form", saveForm);
+
 });

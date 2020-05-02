@@ -3139,6 +3139,7 @@ def ubw_api(request, pk):
 		eksportdata["UBW Koststednr"] = e.estimat_dim_1
 		eksportdata["UBW prosjektnr"] = e.estimat_dim_4
 		eksportdata["UBW beløp"] = float(e.estimat_amount)
+		eksportdata["UBW beskrivelse"] = e.ubw_description
 		"""
 		eksportdata["UBW Kontonavn"] = "" 
 		eksportdata["UBW-periode (YYYYMM)"] = ""
@@ -3150,7 +3151,6 @@ def ubw_api(request, pk):
 		eksportdata["UBW bilagsdato"] = ""
 		eksportdata["UBW leverandørnr"] = ""
 		eksportdata["UBW leverandørnavn"] = ""
-		eksportdata["UBW beskrivelse"] = ""
 		eksportdata["UBW Virksomhets-ID"] = ""
 		eksportdata["UBW sist oppdatert"] = ""
 		"""
@@ -3373,7 +3373,7 @@ def ubw_my_estimates(request, enhet):
 	if request.user in enhet.users.all():
 		return UBWEstimat.objects.filter(belongs_to=enhet).order_by('-periode_paalopt')
 	else:
-		return UBWEstimat.objects.none()	
+		return UBWEstimat.objects.none()
 
 
 def ubw_estimat_list(request, belongs_to):
@@ -3407,11 +3407,29 @@ def save_ubw_estimat_form(request, belongs_to, form, template_name):
 	return JsonResponse(data)
 
 
+def ubw_generer_valg(belongs_to):
+	data = []
+
+	# trenger kategorien to ganger da den ene er verdi og den andre er visning. Like i dette tilfellet.
+	prognose_kategorier = list(UBWEstimat.objects.filter(belongs_to=belongs_to).values_list('prognose_kategori', 'prognose_kategori').distinct())
+	data.append({'field': 'prognose_kategori', 'choices': prognose_kategorier})
+
+	prognose_koststednummer = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_account', 'ubw_xaccount').distinct())
+	data.append({'field': 'estimat_account', 'choices': prognose_koststednummer})
+
+	prognose_koststednummer = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_dim_1', 'ubw_xdim_1').distinct())
+	data.append({'field': 'estimat_dim_1', 'choices': prognose_koststednummer})
+
+	prognose_prosjektnummer = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_dim_4', 'ubw_xdim_4').distinct())
+	data.append({'field': 'estimat_dim_4', 'choices': prognose_prosjektnummer})
+
+	return data
+
 def ubw_estimat_create(request, belongs_to):
 	if request.method == 'POST':
-		form = UBWEstimatForm(request.POST)
+		form = UBWEstimatForm(request.POST, data_list=ubw_generer_valg(belongs_to), belongs_to=belongs_to)
 	else:
-		form = UBWEstimatForm()
+		form = UBWEstimatForm(data_list=ubw_generer_valg(belongs_to), belongs_to=belongs_to)
 	return save_ubw_estimat_form(request, belongs_to, form, 'ubw_estimat_partial_create.html')
 
 
@@ -3419,9 +3437,9 @@ def ubw_estimat_update(request, belongs_to, pk):
 	estimat = get_object_or_404(UBWEstimat, pk=pk)
 	if request.method == 'POST':
 		if request.user in estimat.belongs_to.users.all():
-			form = UBWEstimatForm(request.POST, instance=estimat)
+			form = UBWEstimatForm(request.POST, instance=estimat, data_list=ubw_generer_valg(belongs_to), belongs_to=belongs_to)
 	else:
-		form = UBWEstimatForm(instance=estimat)
+		form = UBWEstimatForm(instance=estimat, data_list=ubw_generer_valg(belongs_to), belongs_to=belongs_to)
 	return save_ubw_estimat_form(request, belongs_to, form, 'ubw_estimat_partial_update.html')
 
 
@@ -3443,6 +3461,29 @@ def ubw_estimat_delete(request, pk):
 	else:
 		context = {'estimat': estimat}
 		data['html_form'] = render_to_string('ubw_estimat_partial_delete.html', context, request=request)
+	return JsonResponse(data)
+
+
+def ubw_estimat_copy(request, pk):
+	estimat = get_object_or_404(UBWEstimat, pk=pk)		
+	data = dict()
+	if request.method == 'POST':
+		if request.user in estimat.belongs_to.users.all():
+			# ved å sette primary key til tom og lagre, opprettes en ny lik instans.
+			estimat.pk = None
+			estimat.save()
+		else:
+			messages.warning(request, 'Du har forsøkt å kopiere noe du ikke har tilgang til!')
+
+		data['form_is_valid'] = True
+		enhet = estimat.belongs_to
+		estimat = ubw_my_estimates(request, enhet)
+		data['html_estimat_list'] = render_to_string('ubw_estimat_partial_list.html', {
+			'estimat': estimat
+		})
+	else:
+		context = {'estimat': estimat}
+		data['html_form'] = render_to_string('ubw_estimat_partial_copy.html', context, request=request)
 	return JsonResponse(data)
 
 

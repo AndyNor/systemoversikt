@@ -4028,6 +4028,10 @@ class UBWEstimat(models.Model):
 		max_length=50,
 		null=False, blank=False,
 		)
+	ubw_description = models.TextField(
+		verbose_name="UBW beskrivelse",
+		null=True, blank=True,
+		)
 	estimat_account = models.IntegerField(
 		verbose_name="Estimat Kontonr",
 		null=True, blank=True,
@@ -4064,13 +4068,42 @@ class UBWEstimat(models.Model):
 		verbose_name_plural = "UBW Estimater"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+
+#https://stackoverflow.com/questions/24783275/django-form-with-choices-but-also-with-freetext-option
+class ListTextWidget(forms.TextInput):
+	def __init__(self, data_list, name, *args, **kwargs):
+		super(ListTextWidget, self).__init__(*args, **kwargs)
+		self._name = name
+		self._list = data_list
+		self.attrs.update({'list':'list__%s' % self._name})
+
+	def render(self, name, value, attrs=None, renderer=None):
+		text_html = super(ListTextWidget, self).render(name, value, attrs=attrs)
+		data_list = '<datalist id="list__%s">' % self._name
+		for item in self._list:
+			data_list += '<option value="%s">%s</option>' % (item[0], item[1])
+		data_list += '</datalist>'
+
+		return (text_html + data_list)
+
+
 class UBWEstimatForm(forms.ModelForm):
 	class Meta:
 		model = UBWEstimat
 		exclude = ('belongs_to',)
+		widgets = {
+			'ubw_description': forms.Textarea(attrs={'cols': 10, 'rows': 2}),
+		}
 
+	def __init__(self, *args, **kwargs):
+		_data_list = kwargs.pop('data_list', None)
+		_belongs_to = kwargs.pop('belongs_to', None)
+		super(UBWEstimatForm, self).__init__(*args, **kwargs)
 
+		for dl in _data_list:
+			self.fields[dl['field']].widget = ListTextWidget(data_list=dl['choices'], name=dl['field'])
 
+		self.fields['kategori'].queryset = UBWFakturaKategori.objects.filter(belongs_to=_belongs_to)
 """
 class PRKuser(models.Model):
 	opprettet = models.DateTimeField(
