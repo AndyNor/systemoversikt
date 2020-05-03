@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# enable virtual environment
+source /home/drift23914/metadata/py36-venv/bin/activate
+
+# run batch job
+python /home/drift23914/metadata/djangoapp/manage.py rydde_ansvarlige

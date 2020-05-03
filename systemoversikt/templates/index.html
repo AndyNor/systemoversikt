@@ -120,6 +120,23 @@
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 	$(document).ready(function(){
 
+		// tableexport must be loaded before tablesorter
+		TableExport.prototype.types.date.assert = function(value){
+			return false;
+		};
+		$(".excel").tableExport({
+			headers: true,
+			footers: true,
+			formats: ['xlsx'],
+			filename: 'id',
+			bootstrap: false,
+			exportButtons: true,
+			ignoreRows: null,
+			ignoreCols: null,
+			trimWhitespace: true,
+		});
+
+
 		function msieversion(){
 			var ua = window.navigator.userAgent;
 			var msie = ua.indexOf("MSIE ");
@@ -135,24 +152,6 @@
 		msieversion();
 		$("table").tablesorter({})
 		$("table").floatThead({top: 116});
-
-		TableExport.prototype.types.date.assert = function(value){
-			return false;
-		};
-		$(".excel").tableExport({
-			headers: false,
-			footers: true,
-			formats: ['xlsx'],
-			filename: 'filename',
-			bootstrap: false,
-			exportButtons: true,
-			position: 'bottom',
-			ignoreRows: null,
-			ignoreCols: null,
-			trimWhitespace: true,
-			RTL: false,
-			sheetname: 'filename'
-		});
 
 	});
 </script>

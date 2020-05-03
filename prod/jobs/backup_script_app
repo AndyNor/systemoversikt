@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# make a compressed backup of the "systemoversikt"-folder
+tar -zcf /home/drift23914/metadata/backup/app/djangoapp_`date +%F_%H:%M:%S`.tar.gz /home/drift23914/metadata/djangoapp/systemoversikt
+
+# remove duplicates - keep one
+#md5sum /home/drift23914/metadata/backup/app/* |\
+#sort |\
+#awk 'BEGIN{lasthash = ""} $1 == lasthash {print $2} {lasthash = $1}' |\
+#xargs rm
+
+cd /home/drift23914/metadata/backup/app/
+last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
+    while read -d '' i; do
+        s=$(stat -c '%s' "$i");
+        [[ $s = $last ]] && rm "$i";
+    last=$s;
+done

@@ -1,0 +1,6 @@
+cd ~/metadata/djangoapp/
+source ~/metadata/py36-venv/bin/activate
+python manage.py makemigrations
+python manage.py migrate
+python manage.py collectstatic
+sudo service httpd restart

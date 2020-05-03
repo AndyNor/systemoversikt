@@ -18,6 +18,7 @@
 {% include 'index_css_header.html' %}
 <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
 <style>
+    /* make control bar with delete and save fixed at bottom */
     .submit-row {
         position: fixed;
         bottom: 20px;
@@ -31,6 +32,7 @@
     .submit-row a.deletelink{
         height: auto;
     }
+    /* not sure about this one */
     div.breadcrumbs {
         background-color: red;        
     }
@@ -50,6 +52,7 @@
     #content-related{
         background-color: #fff;
     }
+    /* jquery changes the default location, resetting */
     caption{
         caption-side: top;
     }
