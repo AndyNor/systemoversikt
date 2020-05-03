@@ -1,5 +1,8 @@
 {% extends "index.html" %}
 {% load static %}
+{% load widget_tweaks %}
+{% load humanize %}
+
 
 {% block css_append %}
 	<link rel="stylesheet" href="{% static 'pickadate/themes/default.css' %}">
@@ -14,6 +17,17 @@
 
 {% block main_content %}
 
+
+<h6>{{faktura.ubw_description}}</h6>
+Konto: {{faktura.ubw_xaccount}}<br>
+Periode: {{faktura.ubw_period}}<br>
+Koststed: {{faktura.ubw_xdim_1}}<br>
+Prosjekt: {{faktura.ubw_xdim_4}}<br>
+Leverandør: {{faktura.ubw_xapar_id|default:"-"}}<br>
+Beløp: {{faktura.ubw_amount|intcomma}}<br>
+
+<hr>
+
 {% if form.is_multipart %}
 	<form method="post" action="" enctype="multipart/form-data">
 {% else %}
@@ -22,18 +36,20 @@
 {% csrf_token %}
 	<fieldset>
 	{% for field in form %}
-	<div class="control-group {% if field.errors %} error {% endif %}">
-		{{ field.label_tag }}
+	<div class="form-group {% if field.errors %} error {% endif %}">
+		<label for="{{ field.id_for_label }}">{{ field.label }}</label>
 		<div class="controls">
-			{{ field }}
+			{% render_field field class+="form-control" %}	
 			<span class="help-inline">
 			{% if field.errors %}
-				{% for error in field.errors %} {{ error }} {% endfor %}
+				{% for error in field.errors %} <p style="color: red;">{{ error }}</p> {% endfor %}
 			{% else %} {{ field.help_text }} {% endif %}
 			</span>
 		</div>
 	</div>
 	{% endfor %}
+
+
 	<hr>
 	<div class="form-actions">
 		<button type="submit" class="btn btn-primary">Lagre</button>

@@ -3961,19 +3961,6 @@ class UBWFaktura(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-def modify_formfields(form):
-	formfield = form.formfield()
-	if isinstance(form, models.DateField):
-		formfield.widget.format = '%Y-%m-%d'
-		formfield.widget.attrs.update({'class': 'datepicker'})
-		
-
-	#if isinstance(form, models.ManyToManyField) or isinstance(form, models.ForeignKey):
-	#	formfield.widget.attrs.update({'class': 'chzn-select', 'data-placeholder': 'Select tags...'})
-
-	return formfield
-
-
 class UBWMetadata(models.Model):
 	belongs_to = models.OneToOneField(
 		to="UBWFaktura",
@@ -4003,13 +3990,28 @@ class UBWMetadata(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+
+def modify_formfields(form):
+	formfield = form.formfield()
+	if isinstance(form, models.DateField):
+		formfield.widget.format = '%Y-%m-%d'
+		formfield.widget.attrs.update({'class': 'datepicker'})
+
+	return formfield
+
 class UBWMetadataForm(forms.ModelForm):
+
+	def __init__(self, *args, **kwargs):
+		_belongs_to = kwargs.pop('belongs_to', None)
+		super(UBWMetadataForm, self).__init__(*args, **kwargs)
+		self.fields['kategori'].queryset = UBWFakturaKategori.objects.filter(belongs_to=_belongs_to)
 
 	formfield_callback = modify_formfields
 	
 	class Meta:
 		model = UBWMetadata
 		exclude = ('belongs_to',)
+
 
 
 class UBWEstimat(models.Model):

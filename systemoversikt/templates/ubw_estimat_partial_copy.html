@@ -1,3 +1,5 @@
+{% load humanize %}
+
 <form method="post" action="{% url 'ubw_estimat_copy' estimat.id %}" class="js-estimat-copy-form">
   {% csrf_token %}
   <div class="modal-header">
@@ -9,10 +11,18 @@
 
   </div>
   <div class="modal-body">
-    <p class="lead">Er du sikker på at du vil kopiere denne?</p>
+    <p class="lead">Er du sikker på at du vil kopiere?</p> 
+      Estimatkategori: {{estimat.prognose_kategori}}<br>
+      Kategori: {{estimat.kategori}}<br>
+      Periode: {{estimat.periode_paalopt}}<br>
+      Beløp: {{estimat.estimat_amount|intcomma}}<br>
+      Beskrivelse: {{estimat.ubw_description}}<br>
+      Konto: {{estimat.estimat_account}}<br>
+      Koststed: {{estimat.estimat_dim_1}}<br>
+      Prosjekt: {{estimat.estimat_dim_4}}<br>
   </div>
   <div class="modal-footer">
     <button type="button" class="btn btn-default" data-dismiss="modal">Lukk</button>
-    <button type="submit" class="btn btn-danger">Kopier</button>
+    <button type="submit" class="btn btn-info">Kopier</button>
   </div>
 </form>

@@ -3331,13 +3331,13 @@ def ubw_ekstra(request, faktura_id, pk=None):
 
 		if pk:
 			instance = UBWMetadata.objects.get(pk=pk)
-			form = UBWMetadataForm(instance=instance)
+			form = UBWMetadataForm(instance=instance, belongs_to=faktura.belongs_to)
 		else:
 			instance = None
-			form = UBWMetadataForm()
+			form = UBWMetadataForm(belongs_to=faktura.belongs_to)
 
 		if request.method == 'POST':
-			form = UBWMetadataForm(data=request.POST, instance=instance)
+			form = UBWMetadataForm(data=request.POST, instance=instance, belongs_to=faktura.belongs_to)
 			if form.is_valid():
 				instance = form.save(commit=False)
 				instance.belongs_to = faktura
@@ -3347,6 +3347,7 @@ def ubw_ekstra(request, faktura_id, pk=None):
 
 		return render(request, 'ubw_ekstra.html', {
 				'form': form,
+				'faktura': faktura,
 		})
 
 def ubw_kategori(request, belongs_to):

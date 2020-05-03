@@ -12,12 +12,12 @@
   <h1 class="page-header">Estimater</h1>
 
   <p>
-    <button type="button" class="btn btn-primary btn-sm js-create-estimat" data-url="{% url 'ubw_estimat_create' belongs_to=enhet.pk %}">
-      Nytt estimat
-    </button>
     <a href="{% url 'ubw_enhet' pk=enhet.pk %}" class="btn btn-link btn-sm">
-      Mine fakturaer
+      Tilbake til mine faktura
     </a>
+    <button type="button" class="btn btn-primary btn-sm js-create-estimat" data-url="{% url 'ubw_estimat_create' belongs_to=enhet.pk %}">
+      Opprett nytt estimat
+    </button>
   </p>
 
   <table class="table" id="estimat-table">
