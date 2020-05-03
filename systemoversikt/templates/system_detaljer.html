@@ -75,8 +75,8 @@
 
 
 {% if user.is_authenticated %}
-<div style="width: 140px; background-color: white; position: -webkit-sticky; position: sticky; top: 115px; z-index: 9999; margin-left: 10px; padding: 10px; border-radius: 25px; border: 2px solid #eeeeee;">
-<a target="_blank" href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
+<div class="redigeringsknapp">
+<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger detaljer</a>
 </div>
 {% endif %}
 

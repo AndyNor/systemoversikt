@@ -110,6 +110,16 @@ class SystemAdmin(SimpleHistoryAdmin):
 	search_fields = ('systemnavn', 'systembeskrivelse')
 	list_filter = ('database_in_use', 'database_supported', 'ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
+	def response_add(self, request, obj, post_url_continue=None):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.pk}))
+		return super().response_change(request, obj)
+
 	def get_ordering(self, request):
 		return [Lower('systemnavn')]
 

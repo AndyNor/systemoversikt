@@ -11,7 +11,7 @@
 
 <p>
 	{% if user.is_authenticated %}
-	<div style="position: -webkit-sticky; position: sticky; top: 115px; z-index: 9999;">
+	<div class="redigeringsknapp">
 	<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/">Rediger detaljer</a>
 	{% endif %}
 	{% if behandling.behandling_behovdpia %}

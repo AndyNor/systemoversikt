@@ -41,8 +41,8 @@
 </p>
 {% endif %}
 
-<p><b>Du kan ikke logge inn her!</b><br>
-Gå til <a href="/oidc/authenticate/">innloggingssiden</a> for å logge inn.</p>
+<h1>Her kan du bare logge inn dersom du er på et utviklingsmiljø!</h1>
+I produksjon, gå til <a href="/oidc/authenticate/">innloggingssiden</a> for å logge inn.</p>
 
 <form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
   <div class="form-row">

@@ -3293,8 +3293,9 @@ def ubw_enhet(request, pk):
 		uploaded_file = None
 		dager_gamle = 550
 		tidsgrense = datetime.date.today() - datetime.timedelta(days=dager_gamle)
-		fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_voucher_date__gte=tidsgrense).order_by('metadata_reference', '-ubw_voucher_date')
-
+		gyldige_fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_voucher_date__gte=tidsgrense)
+		nye_fakturaer = gyldige_fakturaer.filter(metadata_reference=None).order_by('-ubw_voucher_date')
+		behandlede_fakturaer = gyldige_fakturaer.filter(~Q(metadata_reference=None)).order_by('-ubw_voucher_date')
 
 
 		model = UBWFaktura
@@ -3303,7 +3304,8 @@ def ubw_enhet(request, pk):
 		return render(request, 'ubw_enhet.html', {
 			'enhet': enhet,
 			'uploaded_file': uploaded_file,
-			'fakturaer': fakturaer,
+			'nye_fakturaer': nye_fakturaer,
+			'behandlede_fakturaer': behandlede_fakturaer,
 			'model': model,
 			'kategorier': kategorier,
 			'domain': domain,

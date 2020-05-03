@@ -1,0 +1,49 @@
+{% load static %}
+
+	<!--
+		#F8F0DD lys gul/grå
+		#F9C66B gul
+		#FF8274 rød/rosa
+		#2A2859 lilla
+		#2a2859e3 litt lysere lilla
+
+	-->
+
+	<style>
+		body {
+			padding-top: 117px;
+			padding-bottom: 30px;
+			font-size: 10pt;
+			font-family: oslosans !important;
+		}
+		@font-face {
+			font-family: "oslosans"; 
+			src: url("{% static 'fonts/OsloSans-Regular.woff' %}") format('woff');
+		}
+		nav a:link, nav a:visited{
+			color: #F9C66B;
+		}
+		nav a:hover {
+			color: #FF8274;
+			text-decoration: none;
+		}
+		nav {
+			color: #F8F0DD;
+		}
+		nav a.active {
+			color: #2A2859;
+			background-color: #F9C66B;
+		}
+		.nav-item:hover{
+			background-color: #fff;
+			border-color: #dee2e6 #dee2e6 #fff;
+		}
+		li.hovedmeny{
+			font-size: 8pt;
+			list-style-type: none;
+			line-height: 1.5;
+		}
+		ul.hovedmeny, li.hovedmeny{
+			padding: 0;
+		}
+	</style>

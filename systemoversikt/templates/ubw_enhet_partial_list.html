@@ -1,0 +1,26 @@
+{% load humanize %}
+{% load templatetags %}
+
+{% for f in fakturaer %}
+	<tr>
+		<td>{{f.ubw_voucher_date|default:"-"}}</td>
+		<td title="{{f.ubw_xaccount}}">{{f.ubw_account|default:"-"}}</td>
+		<td title="{{f.ubw_xdim_1}}">{{f.ubw_dim_1|default:"-"}}</td>
+		<td title="{{f.ubw_xdim_4}}">{{f.ubw_dim_4|default:"-"}}</td>
+		<td>{{f.ubw_xapar_id|default:"-"}}</td>
+		<td title="{{f.ubw_description|default:'-'}}">{{f.ubw_description|truncatewords:5|default:"-"}}</td>
+		<td>{{f.ubw_amount|default:"-"|intcomma}}</td>
+		<td>{{f.ubw_period|default:"-"}}</td>
+	{% if f.metadata_reference %}
+		<td>{{ f.metadata_reference.periode_paalopt|date:"Ym" }}</td>
+		<td>{{ f.metadata_reference.kategori }}</td>
+		<td><a href="{% url 'ubw_ekstra_edit' faktura_id=f.pk pk=f.metadata_reference.pk %}" class="btn btn-sm btn-warning">Endre</a></td>
+	{% else %}
+		<td></td>
+		<td></td>
+		<td><a href="{% url 'ubw_ekstra_new' faktura_id=f.pk %}" class="btn btn-sm btn-primary">Opprett</a></td>
+	{% endif %}
+		</td>
+	</tr>
+{% endfor %}
+

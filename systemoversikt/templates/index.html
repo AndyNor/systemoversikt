@@ -7,76 +7,30 @@
 	<meta http-equiv="x-ua-compatible" content="ie=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-	<!-- FAVICON -->
-	<link rel="apple-touch-icon" sizes="57x57" href="{% static 'favicon/apple-icon-57x57.png' %}">
-	<link rel="apple-touch-icon" sizes="60x60" href="{% static 'favicon/apple-icon-60x60.png' %}">
-	<link rel="apple-touch-icon" sizes="72x72" href="{% static 'favicon/apple-icon-72x72.png' %}">
-	<link rel="apple-touch-icon" sizes="76x76" href="{% static 'favicon/apple-icon-76x76.png' %}">
-	<link rel="apple-touch-icon" sizes="114x114" href="{% static 'favicon/apple-icon-114x114.png' %}">
-	<link rel="apple-touch-icon" sizes="120x120" href="{% static 'favicon/apple-icon-120x120.png' %}">
-	<link rel="apple-touch-icon" sizes="144x144" href="{% static 'favicon/apple-icon-144x144.png' %}">
-	<link rel="apple-touch-icon" sizes="152x152" href="{% static 'favicon/apple-icon-152x152.png' %}">
-	<link rel="apple-touch-icon" sizes="180x180" href="{% static 'favicon/apple-icon-180x180.png' %}">
-	<link rel="icon" type="image/png" sizes="192x192"  href="{% static 'favicon/android-icon-192x192.png' %}">
-	<link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
-	<link rel="icon" type="image/png" sizes="96x96" href="{% static 'favicon/favicon-96x96.png' %}">
-	<link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
-	<link rel="manifest" href="{% static 'favicon/manifest.json' %}">
-	<meta name="msapplication-TileColor" content="#ffffff">
-	<meta name="msapplication-TileImage" content="{% static 'favicon/ms-icon-144x144.png' %}">
-	<meta name="theme-color" content="#ffffff">
+	{% include 'index_favicon.html' %}
 
-	<!-- CSS -->
+	<!-- CSS includes-->
 	<link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
-	<link rel="stylesheet" href="{% static 'chosen/chosen.min.css' %}">
+
+	<!-- CSS includes append -->
 	{% block css_append %}{% endblock css_append %}
 
-	<!-- JavaScript -->
+	<!-- JavaScript includes -->
 	<script src="{% static 'jquery/jquery-3.3.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'bootstrap/bootstrap.min.js' %}" nonce="{{request.csp_nonce}}"></script>
-	<script src="{% static 'chosen/chosen.jquery.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'tablesorter/jquery.tablesorter.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'floatThead/jquery.floatThead.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tableexport/xlsx.core.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tableexport/FileSaver.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tableexport/tableexport.js' %}" nonce="{{request.csp_nonce}}"></script>
+
+	<!-- JavaScript includes append -->
 	{% block script_prepend %}{% endblock script_prepend %}
 	{% block ekstrajavascript %}{% endblock ekstrajavascript %}
 
-	<script type="text/javascript" nonce="{{request.csp_nonce}}">
-	$(document).ready(function(){
-		$("table").tablesorter({})
-		$("table").floatThead({top: 116});
 
-	});
-	</script>
-
+	<!-- CSS manual -->
 	<style>
-		nav a {
-			color: #F9C66B;
-		}
-		nav a:hover {
-			color: #FF8274;
-			text-decoration: none;
-		}
-		nav {
-			color: #F8F0DD;
-		}
-		nav a.active {
-			color: #2A2859;
-			background-color: #F9C66B;
-		}
-		@font-face {
-			font-family: "oslosans";
-			src: url("{% static 'fonts/OsloSans-Regular.woff' %}") format('woff');
-		}
-		body {
-			padding-top: 135px;
-			padding-bottom: 25px;
-			font-family: oslosans;
-			font-size: 10pt;
-		}
-		.nav-item:hover{
-			background-color: #fff;
-			border-color: #dee2e6 #dee2e6 #fff;
-		}
 		th {
 			cursor: pointer;
 		}
@@ -107,7 +61,24 @@
 		.picker__select--month, .picker__select--year{
 			padding: 0px;
 		}
+		.redigeringsknapp{
+			position: -webkit-sticky;
+			position: sticky;
+			top: 125px;
+			z-index: 9999;
+			background-color: white;
+			margin-left: 10px;
+			margin-right: 10px; 
+			padding: 10px; 
+			border-radius: 15px; 
+			border: 2px solid #2A2859;
+		}
 	</style>
+
+	<!-- CSS manual header -->
+	{% include 'index_css_header.html' %}
+
+	<!-- CSS manual append -->
 	{% block ekstrastyle %}{% endblock %}
 
 	<title>Oslo kommune Kartoteket</title>
@@ -115,124 +86,9 @@
 </head>
 <body>
 
-<header>
+{% include 'index_header.html' %}
 
-
-	<nav class="navbar navbar-light fixed-top" style="background-color: #2A2859; padding: 0;">
-		<div style="position: absolute; right: 8px; top: 8px;">
-			<form action="{% url 'alle_systemer' %}" autocomplete="off">
-				<div class="form-group form-inline">
-					<input style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
-					placeholder="System eller programvare" class="form-control form-control-sm">
-					<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-				</div>
-			</form>
-		</div>
-
-		<div style="width: 100%; padding-top: 5px; padding-bottom: 5px;">
-			<img src="{% static 'standard_oslo-logoi.png' %}" style="float: left; margin-top: 5px; margin-right: 30px; margin-left: 15px; height: 70px;">
-			<h4 style="margin-top: 5px; margin-bottom: 5px;">Oslo kommune <a href="/">Kartoteket</a></h4>
-
-			{% if user.is_authenticated %}
-				{% if TEST_ENV_NAME == 'test' %}
-					{% url "logout" as url_logout %}
-				{% else %}
-					{% url "oidc_logout" as url_logout %}
-				{% endif %}
-
-				Logget inn som <a href="{% url 'minside' %}">{{ user.first_name|default:"Ukjent" }} {{ user.last_name }}</a> og representerer
-				<a href="{% url 'bytt_virksomhet' %}">{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</a>
-				<!--
-				<span style="margin-left: 30px;">(<b><a href="{{ url_logout }}">Logg ut</a></b>)</span>
-				-->
-				<form method="post" action="{{ url_logout }}" style="display: inline; margin-left: 30px;">
-					{% csrf_token %}
-					<input type="hidden" name="next" value="{{ request.path }}">
-					<button type="submit" class="btn btn-sm btn-danger">Logg ut</button>
-				</form>
-
-			{% else %}
-				{% if TEST_ENV_NAME == 'test' %}
-					{% url "login" as url_login %}
-				{% else %}
-					{% url "oidc_authentication_init" as url_login %}
-				{% endif %}
-
-				Du er anonym med lesetilgang til åpen informasjon
-				<!--
-				<span style="margin-left: 30px;">(<b><a href="{{ url_login }}?next={{ request.path }}">logg inn</a></b>)</span>
-				-->
-				<form method="get" action="{{ url_login }}" style="display: inline; margin-left: 30px;">
-					{% csrf_token %}
-					<input type="hidden" name="next" value="{{ request.path }}">
-					<button type="submit" class="btn btn-sm btn-primary">Logg inn</button>
-				</form>
-
-			{% endif %}
-
-		</div>
-
-		<div style="font-size: 8pt; width: 100%; min-width: 1200px;">
-			<ul class="nav">
-
-				<li class="">
-					{% url "alle_virksomheter" as alle_virksomheter_url %}
-					<a href="{{ alle_virksomheter_url }}" class="nav-link {% if alle_virksomheter_url in request.path %} active {% endif %}">Virksomheter</a>
-				</li>
-				{% if user.is_authenticated %}
-				<li class="">
-					{% url "alle_ansvarlige" as alle_ansvarlige_url %}
-					<a href="{{ alle_ansvarlige_url }}" class="nav-link {% if alle_ansvarlige_url in request.path %} active {% endif %}">Ansvarlige</a>
-				</li>
-				<li class="">
-					{% url "alle_avtaler" as alle_avtaler_url %}
-					<a href="{{ alle_avtaler_url }}" class="nav-link {% if alle_avtaler_url in request.path %} active {% endif %}">Avtaler</a>
-				</li>
-				{% if user.profile.virksomhet %}
-				<li class="">
-					{% url "dashboard_all" virksomhet=user.profile.virksomhet.pk as dashboard_url %}
-					<a href="{{ dashboard_url }}" class="nav-link {% if dashboard_url in request.path %} active {% endif %}">Vårt dashboard</a>
-				</li>
-				{% endif %}
-				<li class="">
-					{% url "mine_behandlinger" as mine_behandlinger_url %}
-					<a href="{{ mine_behandlinger_url }}" class="nav-link {% if mine_behandlinger_url in request.path %} active {% endif %}">Våre behandlinger</a>
-				</li>
-
-				<li class="">
-					{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
-					<a href="{{ alle_driftsmodeller_url }}" class="nav-link {% if alle_driftsmodeller_url in request.path %} active {% endif %}">Plattformer</a>
-				</li>
-				<li class="">
-					{% url "alle_cmdbref" as alle_cmdbref_url %}
-					<a href="{{ alle_cmdbref_url }}" class="nav-link {% if alle_cmdbref_url in request.path %} active {% endif %}">CMDB</a>
-				</li>
-				{% endif %}
-				<li class="">
-					{% url "alle_systemer" as alle_systemer_url %}
-					<a href="{{ alle_systemer_url }}" class="nav-link {% if alle_systemer_url in request.path %} active {% endif %}">Systemer</a>
-				</li>
-				<li class="">
-					{% url "alle_programvarer" as alle_programvarer_url %}
-					<a href="{{ alle_programvarer_url }}" class="nav-link {% if alle_programvarer_url in request.path %} active {% endif %}">Programvarer</a>
-				</li>
-				<li class="">
-					{% url "alle_definisjoner" as alle_definisjoner_url %}
-					<a href="{{ alle_definisjoner_url }}" class="nav-link {% if alle_definisjoner_url in request.path %} active {% endif %}">Definisjoner</a>
-				</li>
-				<li class="">
-					{% url "alle_systemurler" as alle_systemurler_url %}
-					<a href="{{ alle_systemurler_url }}" class="nav-link {% if alle_systemurler_url in request.path %} active {% endif %}">URL-er</a>
-				</li>
-				<li class="">
-					<a href="/api/" class="nav-link">API</a>
-				</li>
-			</ul>
-		</div>
-	</nav>
-</header>
-
-<main role="main" class="container-fluid" style="font-size: 85%">
+<main role="main" class="container-fluid" style="margin-top: 10px; font-size: 85%;">
 	<div class="row">
 		<div class="col-sm-12">
 
@@ -262,43 +118,46 @@
 </main>
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
-	function msieversion(){
-		var ua = window.navigator.userAgent;
-		var msie = ua.indexOf("MSIE ");
-		if (sessionStorage['ie_warning'] != "yes") {
-			if (msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
-				alert("Denne løsningen er ikke testet med Internett Explorer. Vi anbefaler å benytte Firefox eller Chrome.");
-			}
-		}
-		sessionStorage['ie_warning'] = "yes";
-		return false;
-	}
-	msieversion();
-</script>
+	$(document).ready(function(){
 
-<script src="{% static 'tableexport/xlsx.core.min.js' %}" nonce="{{request.csp_nonce}}"></script>
-<script src="{% static 'tableexport/FileSaver.min.js' %}" nonce="{{request.csp_nonce}}"></script>
-<script src="{% static 'tableexport/tableexport.js' %}" nonce="{{request.csp_nonce}}"></script>
+		function msieversion(){
+			var ua = window.navigator.userAgent;
+			var msie = ua.indexOf("MSIE ");
+			if (sessionStorage['ie_warning'] != "yes") {
+				if (msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
+					alert("Denne løsningen er ikke testet med Internett Explorer. Vi anbefaler å benytte Edge, Firefox eller Chrome.");
+				}
+			}
+			sessionStorage['ie_warning'] = "yes";
+			return false;
+		}
+
+		msieversion();
+		$("table").tablesorter({})
+		$("table").floatThead({top: 116});
+
+		TableExport.prototype.types.date.assert = function(value){
+			return false;
+		};
+		$(".excel").tableExport({
+			headers: false,
+			footers: true,
+			formats: ['xlsx'],
+			filename: 'filename',
+			bootstrap: false,
+			exportButtons: true,
+			position: 'bottom',
+			ignoreRows: null,
+			ignoreCols: null,
+			trimWhitespace: true,
+			RTL: false,
+			sheetname: 'filename'
+		});
+
+	});
+</script>
 
 {% block script_append %}{% endblock script_append %}
-
-<script type="text/javascript" nonce="{{request.csp_nonce}}">
-TableExport.prototype.types.date.assert = function(value){return false;};
-$(".table").tableExport({
-	headers: true,
-	footers: true,
-	formats: ['xlsx'],
-	filename: 'id',
-	bootstrap: false,
-	exportButtons: true,
-	position: 'bottom',
-	ignoreRows: null,
-	ignoreCols: null,
-	trimWhitespace: true,
-	RTL: false,
-	sheetname: 'id'
-});
-</script>
 
 </body>
 </html>
