@@ -443,9 +443,9 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 
 	def response_change(self, request, obj):
 		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
-			return redirect(reverse('behandlingsdetaljer', kwargs={'pk.': obj.brukergruppe.pk}))
+			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.brukergruppe.pk}))
 		return super().response_change(request, obj)
-	
+
 	fieldsets = (
 		('Metadata', {
 			'classes': ('',),
@@ -735,7 +735,7 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 
 	def response_change(self, request, obj):
 		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
-			return redirect(reverse('all_programvarebruk_for_virksomhet', kwargs={'pk.': obj.brukergruppe.pk}))
+			return redirect(reverse('all_programvarebruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
 		return super().response_change(request, obj)
 
 	fieldsets = (
@@ -786,8 +786,39 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('virksomhet', 'leverandor', 'intern_avtalereferanse', 'leverandor_intern')
 	filter_horizontal = ('avtaleansvarlig', 'for_system',)
 
+	def response_add(self, request, obj, post_url_continue=None):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('avtalervirksomhet', kwargs={'virksomhet': obj.virksomhet.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('avtalervirksomhet', kwargs={'virksomhet': obj.virksomhet.pk}))
+		return super().response_change(request, obj)
+
 	def get_ordering(self, request):
 		return [Lower('kortnavn')]
+
+	fieldsets = (
+				('Avtaleparter', {
+					'fields': (
+						'virksomhet',
+						('leverandor', 'leverandor_intern'),
+					),
+				}),
+				('Om avtalen', {
+					'fields': (
+						'avtaletype',
+						'kortnavn',
+						'beskrivelse',
+						'avtaleansvarlig',
+						'for_system',
+						'avtalereferanse',
+						'dokumenturl',
+						'intern_avtalereferanse',
+					),
+				}),
+		)
 
 
 @admin.register(DPIA)

@@ -12,8 +12,8 @@
 		<a href="/admin/systemoversikt/virksomhet/add/" class="btn btn-sm btn-link">Opprett ny virksomhet</a>
 		{% url 'sertifikatmyndighet' as url_sertifikatmyndighet%}
 		<a href="{{ url_sertifikatmyndighet }}" class="btn btn-sm btn-link {% if url_sertifikatmyndighet in request.path %}fremhev{% endif %}">Sertifikatmyndigheter</a>
-		<hr>
 	{% endif %}
+	<hr>
 	{% block ekstrameny %}{% endblock ekstrameny %}
 {% endblock sidemeny %}
 

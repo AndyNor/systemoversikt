@@ -2614,21 +2614,14 @@ def alle_avtaler(request, virksomhet=None):
 	Vise alle avtaler
 	Tilgangsstyring: ÅPEN
 	"""
-	alle_virksomheter = Virksomhet.objects.all()
 	avtaler = Avtale.objects.all()
-	utdypende_beskrivelse = "Viser alle avtaler registrert i Kartoteket."
 	if virksomhet:
-		virksomhet = int(virksomhet)
-		#print(type(virksomhet))
-		virksomhetsnavn = Virksomhet.objects.get(pk=virksomhet)
+		virksomhet = Virksomhet.objects.get(pk=virksomhet)
 		avtaler = avtaler.filter(Q(virksomhet=virksomhet) | Q(leverandor_intern=virksomhet))
-		utdypende_beskrivelse = "Viser alle avtaler der %s er avtalepart." % virksomhetsnavn
 	return render(request, 'avtale_alle.html', {
 		'request': request,
-		'alle_virksomheter': alle_virksomheter,
 		'avtaler': avtaler,
-		'utdypende_beskrivelse': utdypende_beskrivelse,
-		'virksomhet_pk': virksomhet,
+		'virksomhet': virksomhet,
 	})
 
 

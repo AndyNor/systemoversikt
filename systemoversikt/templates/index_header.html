@@ -108,6 +108,12 @@
 					{% url "alle_systemurler" as alle_systemurler_url %}
 					<a href="{{ alle_systemurler_url }}" class="nav-link {% if alle_systemurler_url in request.path %} active {% endif %}">URL-er</a>
 				</li>
+				{% if user.is_authenticated %}
+				<li class="hovedmeny">
+					{% url "ubw_home" as url_ubw_home %}
+					<a href="{{ url_ubw_home }}" class="nav-link {% if url_ubw_home in request.path %} active {% endif %}">UBW</a>
+				</li>
+				{% endif %}
 				<li class="hovedmeny">
 					<a href="/api/" class="nav-link">API</a>
 				</li>

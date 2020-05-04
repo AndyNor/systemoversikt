@@ -1,29 +1,32 @@
-{% extends "index.html" %}
+{% extends "virksomhet_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	Avtaleoversikt
-	<div>
-		{% if user.is_authenticated %}
-		<a target="_blank" class="btn btn-sm btn-primary" href="/admin/systemoversikt/avtale/add/">Legg til ny avtale</a>
-		{% endif %}
-		<a target="_blank" class="btn btn-sm btn-info" href="https://felles.intranett.oslo.kommune.no/anskaffelser/samkjopsavtaler/samkjopsavtaler-a-a/">Samkjøpsavtaler A-Å (intranett)</a>
-	</div>
-{% endblock underoverskrift %}
+{% block ekstrameny %}
 
-{% block main_content %}
+	{% if virksomhet %}
+		{% include 'virksomhet_detaljer_ekstrameny.html' %}
+	{% endif %}
 
-<p>{{ utdypende_beskrivelse }} Det er {{ avtaler.count }} avtaler registrert.</p>
+{% endblock ekstrameny %}
 
-<span>Vis bare avtaler knyttet til:
-{% for v in alle_virksomheter %}
-	<a style="margin: 4px; {% if v.pk is virksomhet_pk %}color: white; background: #007bff;{% endif %}"
-	href="{% url 'avtalervirksomhet' virksomhet=v.pk %}">{{ v.virksomhetsforkortelse }}</a>
-{% endfor %}
-</span>
-<br><br>
+{% block overskrift %}
+	Avtaleoversikt {% if virksomhet %} for {{virksomhet.virksomhetsforkortelse}} {% endif %}
+{% endblock overskrift %}
 
-{% include 'avtale_include.html' %}
 
-{% endblock main_content %}
+{% block hovedinnhold %}
+
+
+	<p>
+	Viser {{ avtaler.count }} avtaler.
+	</p>
+
+	{% if user.is_authenticated %}
+		<a href="/admin/systemoversikt/avtale/add/{%if virksomhet %}?virksomhet={{virksomhet.pk}}{%endif%}" class="btn btn-sm btn-link">Registrer ny avtale</a>
+	{% endif %}
+	<a href="https://felles.intranett.oslo.kommune.no/anskaffelser/samkjopsavtaler/samkjopsavtaler-a-a/" target="_blank" class="btn btn-sm btn-link">Samkjøpsavtaler A-Å (intranett)</a>
+
+	{% include 'avtale_include.html' %}
+
+{% endblock hovedinnhold %}

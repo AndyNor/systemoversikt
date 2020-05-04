@@ -56,7 +56,7 @@ urlpatterns = [
 	url(r'^systemer/utfaset/$', views.systemer_utfaset, name='systemer_utfaset'),
 	url(r'^systemer/bruk/(?P<pk>\d{1,8})/$', views.bruksdetaljer, name='bruksdetaljer'),
 	url(r'^systemer/bruk/registrer_bruk/(?P<system>\d{1,8})/$', views.registrer_bruk, name='registrer_bruk'),
-	url(r'^systemer/virksomhet/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
+	url(r'^virksomhet/systemer/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
 	url(r'^systemer/systemklassifisering/(?P<id>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	url(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),
 	url(r'^systemer/systemtype/$', views.systemtype_detaljer, name='systemtype_detaljer_mangler'),
@@ -66,8 +66,8 @@ urlpatterns = [
 	url(r'^behandlinger/$', views.mine_behandlinger, name='mine_behandlinger'),
 	url(r'^behandlinger/alle/$', views.alle_behandlinger, name='alle_behandlinger'),
 	url(r'^behandlinger/kopier/(?P<system_pk>\d{1,8})/$', views.behandling_kopier, name='behandling_kopier'),
-	url(r'^behandlinger/virksomhet/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
-	url(r'^behandlinger/virksomhet/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
+	url(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
+	url(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
 	url(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
 
 	url(r'^avtaler/$', views.alle_avtaler, name='alle_avtaler'),
@@ -109,7 +109,7 @@ urlpatterns = [
 
 	url(r'^programvare/$', views.alle_programvarer, name='alle_programvarer'),
 	url(r'^programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
-	url(r'^programvare/virksomhet/(?P<pk>\d{1,8})/$', views.all_programvarebruk_for_virksomhet, name='all_programvarebruk_for_virksomhet'),
+	url(r'^virksomhet/programvare/(?P<pk>\d{1,8})/$', views.all_programvarebruk_for_virksomhet, name='all_programvarebruk_for_virksomhet'),
 	url(r'^programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
 
 	url(r'^ansvarlige/$', views.alle_ansvarlige, name='alle_ansvarlige'),
@@ -146,8 +146,8 @@ urlpatterns = [
 
 	url(r'^driftsmodell/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
 	url(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
-	url(r'^driftsmodell/virksomhet/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
-	url(r'^driftsmodell/virksomhet/klassifisering/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet_klassifisering, name='driftsmodell_virksomhet_klassifisering'),
+	url(r'^virksomhet/driftsmodell/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
+	url(r'^virksomhet/driftsmodell/klassifisering/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet_klassifisering, name='driftsmodell_virksomhet_klassifisering'),
 	url(r'^driftsmodell/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),
 
 	url(r'^definisjon/$', views.alle_definisjoner, name='alle_definisjoner'),
