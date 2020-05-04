@@ -260,6 +260,16 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 	def get_ordering(self, request):
 		return [Lower('virksomhetsnavn')]
 
+	def response_add(self, request, obj, post_url_continue=None):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('virksomhet', kwargs={'pk': obj.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('virksomhet', kwargs={'pk': obj.pk}))
+		return super().response_change(request, obj)
+
 	autocomplete_fields = (
 		'leder',
 		'informasjonssikkerhetskoordinator',
@@ -328,6 +338,18 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 	search_fields = ('system__systemnavn', 'system__systembeskrivelse', 'kommentar', 'systemforvalter')
 	list_filter = ('avtalestatus', 'avtale_kan_avropes', 'systemeierskapsmodell', 'brukergruppe')
 	autocomplete_fields = ('brukergruppe', 'system', 'systemforvalter', 'systemforvalter_kontaktpersoner_referanse', 'avhengigheter_referanser')
+	
+	def response_add(self, request, obj, post_url_continue=None):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('all_bruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('all_bruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
+		return super().response_change(request, obj)
+
+
 	fieldsets = (
 		('Initiell registrering', {
 			'fields': (
@@ -413,6 +435,17 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 	list_filter = ('behandlingsgrunnlag_valg', 'den_registrerte', 'kategorier_personopplysninger', 'behandlingsansvarlig')
 	filter_horizontal = ('relasjon_registrerte', 'den_registrerte_hovedkateogi', 'virksomhet_blacklist', 'programvarer', 'systemer', 'navn_databehandler', 'kategorier_personopplysninger', 'den_registrerte', 'behandlingsgrunnlag_valg')
 	autocomplete_fields = ('behandlingsansvarlig', 'oppdateringsansvarlig')
+
+	def response_add(self, request, obj, post_url_continue=None):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.brukergruppe.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('behandlingsdetaljer', kwargs={'pk.': obj.brukergruppe.pk}))
+		return super().response_change(request, obj)
+	
 	fieldsets = (
 		('Metadata', {
 			'classes': ('',),
@@ -694,6 +727,16 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 	list_display = ('brukergruppe', 'programvare', 'kommentar')
 	search_fields = ('programvare', 'kommentar')
 	autocomplete_fields = ('brukergruppe', 'programvare', 'programvareleverandor', 'lokal_kontakt')
+
+	def response_add(self, request, obj, post_url_continue=None):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('all_programvarebruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('all_programvarebruk_for_virksomhet', kwargs={'pk.': obj.brukergruppe.pk}))
+		return super().response_change(request, obj)
 
 	fieldsets = (
 			('Initiell registrering', {

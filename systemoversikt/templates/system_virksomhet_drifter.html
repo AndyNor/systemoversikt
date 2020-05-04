@@ -1,12 +1,21 @@
-{% extends "index.html" %}
+{% extends "virksomhet_index.html" %}
+{% load static %}
 
-{% block underoverskrift %}
+{% block ekstrameny %}
+
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
 	Systemer {{virksomhet.virksomhetsforkortelse}} drifter
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
 
-	Vi er ansvarlige for
+{% block hovedinnhold %}
+
+	<p>For å endre på hva som dukker opp i denne listen, må du velge det systemet som er feil eller mangler, og endre på "Driftsmodell / plattform". <br>{{virksomhet.virksomhetsforkortelse}} er ansvarlige for drift på følgende plattformer.</p>
+
 	{% for modell in driftsmodeller %}
 		<li><a href="{% url 'detaljer_driftsmodell' pk=modell.pk %}">{{modell}}</a></li>
 	{% endfor %}
@@ -26,4 +35,4 @@
 	</ul>
 	{% endif %}
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

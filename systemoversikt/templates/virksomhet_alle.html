@@ -1,25 +1,16 @@
-{% extends "index.html" %}
+{% extends "virksomhet_index.html" %}
 {% load static %}
 
-{% block underoverskrift %}
+{% block ekstrameny %}{% endblock ekstrameny %}
+
+{% block overskrift %}
 	Alle virksomheter
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block undermeny %}
+{% block hovedinnhold %}
+
 	<p>Virksomhet definert som organisatorisk enhet med unikt organisasjonsnummer. Det vises {{ virksomheter.count }} virksomheter.</p>
-	<div>
-		{% if user.is_authenticated %}
-			<a target="_blank" class="btn btn-sm btn-primary" href="/admin/systemoversikt/virksomhet/add/">Legg til ny virksomhet</a>
-			<a href="{% url 'min_virksomhet' %}" class="btn btn-sm btn-success">Min virksomhet</a>
-			<a href="{% url 'sertifikatmyndighet' %}" class="btn btn-sm btn-secondary">Vis sertifikatmyndigheter</a>
-		{% endif %}
-	</div>
-	<br>
-{% endblock undermeny %}
-
-
-{% block main_content %}
-
+	
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 140px;" type="search" value="{{ search_term }}" name="search_term"
@@ -36,10 +27,10 @@
 		<th>Forkortelse</th>
 		<th>Leder</th>
 		<th>Antall systemer i bruk</th>
-		<th>Antall ansatte</th>
+		{% comment %}<th>Antall ansatte</th>{% endcomment %}
 		<th>Drift av klientplattform</th>
-		<th>Autoriserte bestillere InfoTorget</th>
-		<th>Autoriserte bestillere mot intern tjenesteleverandør</th>
+		{% comment %}<th>Autoriserte bestillere InfoTorget</th>{% endcomment %}
+		{% comment %}<th>Autoriserte bestillere mot intern tjenesteleverandør</th>{% endcomment %}
 		<th>Koordinator personvern</th>
 		<th>Koordinator informasjonssikkerhet</th>
 		<th>IKT-hovedkontakt</th>
@@ -68,9 +59,9 @@
 			{% endif %}
 		</td>
 		<td>{{ vir.systembruk_brukergruppe.all.count }}</td>
-		<td>{{ vir.ansatte|default:"-" }}</td>
+		{% comment %}<td>{{ vir.ansatte|default:"-" }}</td>{% endcomment %}
 		<td>{{ vir.get_resultatenhet_display|default:"-" }}</td>
-		<td>
+		{% comment %}<td>
 			{% for person in vir.autoriserte_bestillere_tjenester.all %}
 				<a href="{% url 'ansvarlig' person.pk %}"
 				{% if person.brukernavn.is_active == False %}
@@ -79,8 +70,8 @@
 				>
 				{{ person }}</a><br>
 			{% endfor %}
-		</td>
-		<td>
+		</td>{% endcomment %}
+		{% comment %}<td>
 			{% for person in vir.autoriserte_bestillere_tjenester_uke.all %}
 				<a href="{% url 'ansvarlig' person.pk %}"
 				{% if person.brukernavn.is_active == False %}
@@ -89,7 +80,7 @@
 				>
 				{{ person }}</a><br>
 			{% endfor %}
-		</td>
+		</td>{% endcomment %}
 		<td>
 			{% for person in vir.personvernkoordinator.all %}
 				<a href="{% url 'ansvarlig' person.pk %}"
@@ -134,4 +125,4 @@
 	{% endfor %}
 	</tbody>
 	</table>
-{% endblock main_content %}
+{% endblock hovedinnhold %}

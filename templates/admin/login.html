@@ -42,7 +42,7 @@
 {% endif %}
 
 <h1>Her kan du bare logge inn dersom du er på et utviklingsmiljø!</h1>
-I produksjon, gå til <a href="/oidc/authenticate/">innloggingssiden</a> for å logge inn.</p>
+I produksjon, gå til <a href="/oidc/authenticate/">innloggingssiden</a> for å logge inn.
 
 <form action="{{ app_path }}" method="post" id="login-form">{% csrf_token %}
   <div class="form-row">
@@ -60,8 +60,8 @@ I produksjon, gå til <a href="/oidc/authenticate/">innloggingssiden</a> for å 
     <a href="{{ password_reset_url }}">{% trans 'Forgotten your password or username?' %}</a>
   </div>
   {% endif %}
-  <div class="submit-row">
-    <label>&nbsp;</label><input type="submit" value="{% trans 'Log in' %}">
+  <div>
+    <label>&nbsp;</label><input style="margin-top: 20px;" type="submit" value="{% trans 'Log in' %}">
   </div>
 </form>
 

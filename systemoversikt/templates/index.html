@@ -29,7 +29,16 @@
 	{% block ekstrajavascript %}{% endblock ekstrajavascript %}
 
 
-	<!-- CSS manual -->
+	<!--
+		#F8F0DD lys gul/grå
+		#F9C66B gul
+		#FF8274 rød/rosa
+		#2A2859 lilla
+		#0300a5 lilla mørkere
+		#2a2859e3 litt lysere lilla
+	-->
+
+	<!-- CSS -->
 	<style>
 		th {
 			cursor: pointer;
@@ -54,6 +63,15 @@
 			top: -140px;
 			visibility: hidden;
 		}
+		a, .btn-link{
+			color: #0300a5;
+		}
+		.fremhev, .fremhev:hover{
+			border: 1px solid #0300a5;
+		}
+		a:hover, .btn-link:hover{
+			color: #FF8274;
+		}
 		.redigeringsinfo {
 			font-style: italic;
 			color: #007bff;
@@ -73,12 +91,25 @@
 			border-radius: 15px; 
 			border: 2px solid #2A2859;
 		}
+		#main_row{
+			font-size: 85%;
+			padding: 10px;
+		}
+		#main_menu {
+			width: 220px;
+			float: left;
+			padding: 10px;
+		}
+		#main_content{
+			margin-left: 220px;
+			padding: 10px;
+		}
 	</style>
 
-	<!-- CSS manual header -->
+	<!-- CSS header -->
 	{% include 'index_css_header.html' %}
 
-	<!-- CSS manual append -->
+	<!-- CSS append -->
 	{% block ekstrastyle %}{% endblock %}
 
 	<title>Oslo kommune Kartoteket</title>
@@ -88,33 +119,37 @@
 
 {% include 'index_header.html' %}
 
-<main role="main" class="container-fluid" style="margin-top: 10px; font-size: 85%;">
-	<div class="row">
-		<div class="col-sm-12">
+<main role="main" id="main_row">
 
-			{% if DEBUG %}
-			<div id="div_message" class="alert alert-danger">
-				<a class="close" data-dismiss="alert" href="#">×</a>
-				<h5 class="alert-heading">Du er på et Testmiljø!</h5>
-				Du er på en testinstans som heter <b>{{ TEST_ENV_NAME }}</b>.
-			</div>
-			{% endif %}
-
-			{% if messages %}
-				{% for message in messages %}
-				<div id="div_message" class="alert alert-{{ message.tags }}">
-					<a class="close" data-dismiss="alert" href="#">×</a>
-					<h5 class="alert-heading">{{ message.tags|capfirst }}</h5>
-					{{ message }}
-				</div>
-				{% endfor %}
-			{% endif %}
-
-			<h3>{% block underoverskrift %}{% endblock underoverskrift %}</h3>
-			{% block undermeny %}{% endblock undermeny %}
-			{% block main_content %}{% endblock main_content %}
-		</div>
+	{% if DEBUG %}
+	<div id="div_message" class="alert alert-info">
+		Du er på en testinstans som heter <b>{{ TEST_ENV_NAME }}</b>.
 	</div>
+	{% endif %}
+
+	<div id="main_menu">
+		
+	{% block sidemeny %}{% endblock sidemeny %}
+
+	</div>
+	<div id="main_content">
+
+
+		{% if messages %}
+			{% for message in messages %}
+			<div id="div_message" class="alert alert-{{ message.tags }}">
+				<a class="close" data-dismiss="alert" href="#">×</a>
+				<h5 class="alert-heading">{{ message.tags|capfirst }}</h5>
+				{{ message }}
+			</div>
+			{% endfor %}
+		{% endif %}
+
+		<h3>{% block underoverskrift %}{% endblock underoverskrift %}</h3>
+		{% block undermeny %}{% endblock undermeny %}
+		{% block main_content %}{% endblock main_content %}
+	</div>
+
 </main>
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">

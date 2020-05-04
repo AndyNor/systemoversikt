@@ -1,49 +1,57 @@
-{% extends "index.html" %}
+{% extends "virksomhet_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	Innsynsbegjæring for {{ virksomhet }}
-{% endblock underoverskrift %}
+{% block ekstrameny %}
 
-{% block main_content %}
-<p>Her vises systemer vi behandler personopplysninger i. Det er {{ systemer|length }} systemer i listen.</p>
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
 
-<table id="stickyheader" class="table table-sm tablesorter">
-	<thead>
-	<tr>
-		<th width="20%">System</th>
-		<th width="20%">Grensesnitt</th>
-		<th>Innbyggere?</th>
-		<th>Ansatte?</th>
-		<th>Ansvarlige for å utføre uthenting (innsynsansvarlige)</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for system in systemer %}
-	<tr {% if system.ibruk == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
-		<td>
-			<a target="_blank" href="/admin/systemoversikt/system/{{ system.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
-			{% url "systemdetaljer" system.pk as url_system %}
-			<a href="{{ url_system }}">{{ system }}</a>
-		</td>
-		<td>
-			{% for type in system.systemtyper.all %}
-				{{ type }}<br>
-			{% endfor %}
-		</td>
-		<td>
-			<span {% if system.innsyn_innbygger %} style="background-color: #a1e6b0;" {% endif %}>{{ system.innsyn_innbygger|yesno:"Ja,Nei" }}</span>
-		</td>
-		<td>
-			<span {% if system.innsyn_ansatt %} style="background-color: #a1e6b0;" {% endif %}>{{ system.innsyn_ansatt|yesno:"Ja,Nei" }}</span>
-		</td>
-		<td>
-			{% include "ansvarlig_include_vis.html" with ansvarlige=system.kontaktperson_innsyn.all %}
-		</td>
-	</tr>
-	{% endfor %}
-</tbody>
-</table>
+{% endblock ekstrameny %}
 
-{% endblock main_content %}
+{% block overskrift %}
+	Ansvarlige for å besvare innsynsbegjæring mot {{ virksomhet.virksomhetsforkortelse }}
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+	<p>Her vises systemer vi behandler personopplysninger i. Det er {{ systemer|length }} systemer i listen.</p>
+
+	<table id="stickyheader" class="table table-sm tablesorter">
+		<thead>
+		<tr>
+			<th width="20%">System</th>
+			<th width="20%">Grensesnitt</th>
+			<th>Innbyggere?</th>
+			<th>Ansatte?</th>
+			<th>Ansvarlige for å utføre uthenting (innsynsansvarlige)</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for system in systemer %}
+		<tr {% if system.ibruk == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
+			<td>
+				<a target="_blank" href="/admin/systemoversikt/system/{{ system.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+				{% url "systemdetaljer" system.pk as url_system %}
+				<a href="{{ url_system }}">{{ system }}</a>
+			</td>
+			<td>
+				{% for type in system.systemtyper.all %}
+					{{ type }}<br>
+				{% endfor %}
+			</td>
+			<td>
+				<span {% if system.innsyn_innbygger %} style="background-color: #a1e6b0;" {% endif %}>{{ system.innsyn_innbygger|yesno:"Ja,Nei" }}</span>
+			</td>
+			<td>
+				<span {% if system.innsyn_ansatt %} style="background-color: #a1e6b0;" {% endif %}>{{ system.innsyn_ansatt|yesno:"Ja,Nei" }}</span>
+			</td>
+			<td>
+				{% include "ansvarlig_include_vis.html" with ansvarlige=system.kontaktperson_innsyn.all %}
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

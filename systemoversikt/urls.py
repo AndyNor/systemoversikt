@@ -66,8 +66,8 @@ urlpatterns = [
 	url(r'^behandlinger/$', views.mine_behandlinger, name='mine_behandlinger'),
 	url(r'^behandlinger/alle/$', views.alle_behandlinger, name='alle_behandlinger'),
 	url(r'^behandlinger/kopier/(?P<system_pk>\d{1,8})/$', views.behandling_kopier, name='behandling_kopier'),
-	url(r'^behandlinger/vir/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
-	url(r'^behandlinger/vir/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
+	url(r'^behandlinger/virksomhet/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
+	url(r'^behandlinger/virksomhet/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
 	url(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
 
 	url(r'^avtaler/$', views.alle_avtaler, name='alle_avtaler'),
@@ -80,6 +80,7 @@ urlpatterns = [
 	url(r'^bruker/$', views.bruker_sok, name='bruker_sok'),
 
 	url(r'^virksomhet/$', views.alle_virksomheter, name='alle_virksomheter'),
+	url(r'^virksomhet/alle/$', views.alle_virksomheter, name='alle_virksomheter_sidemeny'),
 	url(r'^virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet, name='virksomhet'),
 	url(r'^virksomhet/passwdexpire/(?P<pk>\d{1,8})/$', views.passwordexpire, name='passwordexpire'),
 	url(r'^virksomhet/passwdneverexpire/(?P<pk>\d{1,8})/$', views.passwdneverexpire, name='passwdneverexpire'),
@@ -111,9 +112,9 @@ urlpatterns = [
 	url(r'^programvare/virksomhet/(?P<pk>\d{1,8})/$', views.all_programvarebruk_for_virksomhet, name='all_programvarebruk_for_virksomhet'),
 	url(r'^programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
 
-	url(r'^ansvarlig/$', views.alle_ansvarlige, name='alle_ansvarlige'),
-	url(r'^ansvarlig/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),
-	url(r'^ansvarlig/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
+	url(r'^ansvarlige/$', views.alle_ansvarlige, name='alle_ansvarlige'),
+	url(r'^ansvarlige/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),
+	url(r'^ansvarlige/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
 
 	url(r'^cmdb/$', views.alle_cmdbref, name='alle_cmdbref'),
 	url(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),

@@ -1003,6 +1003,8 @@ def all_bruk_for_virksomhet(request, pk):
 		virksomhet = Virksomhet.objects.get(pk=pk)
 	except:
 		messages.warning(request, 'Fant ingen virksomhet med denne ID-en.')
+		virksomhet = Virksomhet.objects.none()
+		
 	return render(request, 'systembruk_alle.html', {
 		'request': request,
 		'all_bruk': all_bruk,
@@ -1192,7 +1194,7 @@ def mine_behandlinger(request):
 
 
 
-def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False, template='behandling_alle_alternativ.html'):
+def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False):
 	"""
 	Vise alle behandling av personopplysninger for en valgt virksomhet
 	Tilgangsstyring: ÅPEN (noe informasjon er tilgangsstyrt i template)
@@ -1224,12 +1226,10 @@ def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False, template=
 	# slå sammen felles og egne behandlinger til et sett
 	behandlinger = virksomhetens_behandlinger.union(delte_behandlinger).order_by('internt_ansvarlig')
 
-	overskrift = ("%s's behandlingsprotokoll" % vir.virksomhetsforkortelse)
-	return render(request, template, {
+	return render(request, "behandling_alle_alternativ.html", {
 		'request': request,
 		'behandlinger': behandlinger,
 		'virksomhet': vir,
-		'overskrift': overskrift,
 		'interne_avdelinger': virksomhetens_behandlinger_avdelinger,
 		'internt_ansvarlig_valgt': internt_ansvarlig,
 	})
@@ -1297,12 +1297,11 @@ def virksomhet_ansvarlige(request, pk):
 	Tilgangsstyring: ÅPEN
 	"""
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	suboverskrift = "For " + virksomhet.virksomhetsnavn
 	ansvarlige = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).order_by('brukernavn__first_name')
 	return render(request, 'ansvarlig_alle.html', {
 		'request': request,
 		'ansvarlige': ansvarlige,
-		'suboverskrift': suboverskrift,
+		'virksomhet': virksomhet,
 	})
 
 

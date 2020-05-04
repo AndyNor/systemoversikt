@@ -6,15 +6,15 @@
 			{% if user.is_authenticated %}
 			<th>Rediger</th>
 			{% endif %}
-			<th>Virksomhet</th>
+			{% comment %}<th>Virksomhet</th>{% endcomment %}
 			<th>Hovedoppgave / Hovedformål</th>
 			<th>Avdeling</th>
 			<th>Behandlingen</th>
 			<th>Formål</th>
 			<th>Den registrerte</th>
 			<th>Opplysninger</th>
-			<th>Fellesbehandling?</th>
-			<th>Krav sikkerhetsnivå</th>
+			{% comment %}<th>Fellesbehandling?</th>{% endcomment %}
+			{% comment %}<th>Krav sikkerhetsnivå</th>{% endcomment %}
 			<th>Behov for DPIA?</th>
 			<th>Systemer og programvarer</th>
 			<th>Eksterne databehandlere</th>
@@ -30,8 +30,10 @@
 			<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
 			{% endif %}
 
+			{% comment %}
 			{% url "virksomhet" item.behandlingsansvarlig.pk as url_virksomhet %}
 			<td><a href="{{ url_virksomhet }}">{{ item.behandlingsansvarlig.virksomhetsforkortelse }}</a></td>
+			{% endcomment %}
 
 			<td>{{ item.funksjonsomraade|default:"?" }}</td>
 
@@ -81,8 +83,11 @@
 			{% endif %}
 			</td>
 
+			{% comment %}
 			<td>{{ item.fellesbehandling|yesno:"Ja,Nei" }}</td>
+			{% endcomment %}
 
+			{% comment %}
 			<td>
 			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
 				{{ item.get_krav_sikkerhetsnivaa_display|default:"-" }}
@@ -90,6 +95,7 @@
 				***
 			{% endif %}
 			</td>
+			{% endcomment %}
 
 			<td>
 			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}

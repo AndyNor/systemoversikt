@@ -1,18 +1,27 @@
-{% extends "index.html" %}
+{% extends "virksomhet_index.html" %}
 {% load static %}
 
-{% block underoverskrift %}
+{% block ekstrameny %}
+
+	{% if virksomhet %}
+		{% include 'virksomhet_detaljer_ekstrameny.html' %}
+	{% endif %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
 	Oversikt over ansvarlige
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
 
-<h6>{{ suboverskrift }}</h6>
+{% block hovedinnhold %}
 
-<p>Systemer har eier og forvaltere, avtaler har avtaleoppfølger og behandlinger har navngitte personer som er ansvarlige for å holde informasjonen oppdatert. En ansvarlig er her en form for rolle som er koblet mot en konkret person representert ved en bruker i Active Directory. Når brukeren koblet til rollen slutter eller av annne grunn får sin bruker deaktivert, vises navnet <span style="text-decoration: line-through;">gjennomstreket</span>. Status på brukere synkronieres hver natt. Dersom en annen person skal overta oppgavene kan man endre pekeren fra "ansvarlig" rollen over på en annen brukerID. {{ ansvarlige.count }} ansvarlige er opprettet.</p>
+	<h6>Ansvarlige for {{ virksomhet.virksomhetsforkortelse }}</h6>
 
-<ul style="column-count:5;">
-	{% include "ansvarlig_include_vis.html" with ansvarlige=ansvarlige %}
-</ul>
+	<p>Systemer har eier og forvaltere, avtaler har avtaleoppfølger og behandlinger har navngitte personer som er ansvarlige for å holde informasjonen oppdatert. En ansvarlig er her en form for rolle som er koblet mot en konkret person representert ved en bruker i Active Directory. Når brukeren koblet til rollen slutter eller av annne grunn får sin bruker deaktivert, vises navnet <span style="text-decoration: line-through;">gjennomstreket</span>. Status på brukere synkronieres hver natt. Dersom en annen person skal overta oppgavene kan man endre pekeren fra "ansvarlig" rollen over på en annen brukerID.<br>Viser {{ ansvarlige.count }} ansvarlige.</p>
 
-{% endblock main_content %}
+	<ul style="column-count:5;">
+		{% include "ansvarlig_include_vis.html" with ansvarlige=ansvarlige %}
+	</ul>
+
+{% endblock hovedinnhold %}

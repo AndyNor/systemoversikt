@@ -1,17 +1,19 @@
-{% extends "index.html" %}
+{% extends "virksomhet_index.html" %}
 {% load static %}
 
+{% block ekstrameny %}
 
-{% block underoverskrift %}
-	Datakvalitet for {{ virksomhet.virksomhetsforkortelse }}
-{% endblock underoverskrift %}
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
 
-{% block main_content %}
+{% endblock ekstrameny %}
 
-{% url 'virksomhet' pk=virksomhet.pk as url_virksomhet %}
-<p>
-	<a class="btn btn-sm btn-success" href="{{ url_virksomhet }}">Tilbake til {{ virksomhet.virksomhetsforkortelse }}</a>
-</p>
-{% include "system_include_hvamangler.html" with systemer=systemer %}
+{% block overskrift %}
+	Datakvalitet for systemer {{ virksomhet.virksomhetsforkortelse }} er ansvarlig for
+{% endblock overskrift %}
 
-{% endblock main_content %}
+
+{% block hovedinnhold %}
+
+	{% include "system_include_hvamangler.html" with systemer=systemer %}
+
+{% endblock hovedinnhold %}
