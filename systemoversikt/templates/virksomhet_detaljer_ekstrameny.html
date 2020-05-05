@@ -1,4 +1,5 @@
-	<h5>{{virksomhet.virksomhetsforkortelse}}</h5>
+	<hr>
+	<h6>{{virksomhet.virksomhetsforkortelse}}</h6>
 
 	{% url 'virksomhet' pk=virksomhet.pk as url_virksomhet %}
 		<a href="{{ url_virksomhet }}" class="btn btn-sm btn-link {% if url_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s forside</a>
@@ -36,6 +37,9 @@
 
 	{% url 'avtalervirksomhet' virksomhet=virksomhet.pk as url_avtalervirksomhet %}
 		<a href="{{ url_avtalervirksomhet }}" class="btn btn-sm btn-link {% if url_avtalervirksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s avtaler</a>
+
+	{% url 'virksomhet_urler' pk=virksomhet.pk as url_virksomhet_urler %}
+		<a href="{{ url_virksomhet_urler }}" class="btn btn-sm btn-link {% if url_virksomhet_urler in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s domener</a>
 
 	{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
 		<a href="{{ url_all_bruk_for_virksomhet }}" class="btn btn-sm btn-link {% if url_all_bruk_for_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s bruk av systemer</a>

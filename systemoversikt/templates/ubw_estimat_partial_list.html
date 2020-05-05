@@ -2,6 +2,7 @@
 
 {% for e in estimat %}
   <tr>
+    <td>{{ e.id }}</td>
     <td>{{ e.prognose_kategori }}</td>
     <td>{{ e.kategori }}</td>
     <td>{{ e.ubw_description|default:"-" }}</td>
@@ -13,7 +14,7 @@
     <td>{{ e.aktiv|yesno:"Ja,Nei" }}</td>
     <td style="width: 220px">
       <button type="button"
-              class="btn btn-warning btn-sm js-update-estimat"
+              class="btn btn-link btn-sm js-update-estimat"
               data-url="{% url 'ubw_estimat_update' belongs_to=e.belongs_to.id pk=e.id %}">
          Rediger
       </button>

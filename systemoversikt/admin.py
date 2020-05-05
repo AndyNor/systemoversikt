@@ -633,6 +633,16 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 	search_fields = ('brukernavn__username', 'brukernavn__first_name', 'brukernavn__last_name')
 	autocomplete_fields = ('brukernavn',)
 
+	def response_add(self, request, obj, post_url_continue=None):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('ansvarlig', kwargs={'pk': obj.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('ansvarlig', kwargs={'pk': obj.pk}))
+		return super().response_change(request, obj)
+
 	def get_ordering(self, request):
 		return [Lower('brukernavn')]
 
@@ -645,18 +655,25 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 	brukers_brukernavn.short_description = "Brukernavn"
 
 	fieldsets = (
-		('Initiell registrering', {
+		('Obligatorisk', {
 			'fields': (
 				'brukernavn',
-				'kommentar'
+				'vil_motta_epost_varsler',
 				)
 			}
 		),
-		('Sertifikatadministrasjon', {
+		('Fylles ut dersom rollen har fullmakt knyttet til sertifikatadministrasjon', {
 			'classes': ('collapse',),
 			'fields': (
 				'telefon',
-				'fdato'
+				'fdato',
+				)
+			}
+		),
+		('Utfases', {
+			'classes': ('collapse',),
+			'fields': (
+				'kommentar',
 				)
 			}
 		),

@@ -1,8 +1,7 @@
-{% extends "index.html" %}
+{% extends "ubw_index.html" %}
 {% load static %}
 {% load widget_tweaks %}
 {% load humanize %}
-
 
 {% block css_append %}
 	<link rel="stylesheet" href="{% static 'pickadate/themes/default.css' %}">
@@ -15,50 +14,6 @@
 	<script src="{% static 'pickadate/translations/no_NO.js' %}" nonce="{{request.csp_nonce}}"></script>
 {% endblock %}
 
-{% block main_content %}
-
-
-<h6>{{faktura.ubw_description}}</h6>
-Konto: {{faktura.ubw_xaccount}}<br>
-Periode: {{faktura.ubw_period}}<br>
-Koststed: {{faktura.ubw_xdim_1}}<br>
-Prosjekt: {{faktura.ubw_xdim_4}}<br>
-Leverandør: {{faktura.ubw_xapar_id|default:"-"}}<br>
-Beløp: {{faktura.ubw_amount|intcomma}}<br>
-
-<hr>
-
-{% if form.is_multipart %}
-	<form method="post" action="" enctype="multipart/form-data">
-{% else %}
-	<form method="post" action="">
-{% endif %}
-{% csrf_token %}
-	<fieldset>
-	{% for field in form %}
-	<div class="form-group {% if field.errors %} error {% endif %}">
-		<label for="{{ field.id_for_label }}">{{ field.label }}</label>
-		<div class="controls">
-			{% render_field field class+="form-control" %}	
-			<span class="help-inline">
-			{% if field.errors %}
-				{% for error in field.errors %} <p style="color: red;">{{ error }}</p> {% endfor %}
-			{% else %} {{ field.help_text }} {% endif %}
-			</span>
-		</div>
-	</div>
-	{% endfor %}
-
-
-	<hr>
-	<div class="form-actions">
-		<button type="submit" class="btn btn-primary">Lagre</button>
-	</div>
-	</fieldset>
-</form>
-
-{% endblock %}
-
 {% block script_append %}
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 	$('.datepicker').pickadate({
@@ -69,3 +24,62 @@ Beløp: {{faktura.ubw_amount|intcomma}}<br>
 	})
 </script>
 {% endblock script_append %}
+
+{% block ekstrameny %}
+	{% include 'ubw_ekstrameny.html' %}
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	{% if ekstra %}
+		Legg til ekstra informasjon
+	{% endif %}
+
+	{% if kategori %}
+		Legg til kategori
+	{% endif %}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	{% if ekstra %}
+		<h6>{{faktura.ubw_description}}</h6>
+		Konto: {{faktura.ubw_xaccount}}<br>
+		Periode: {{faktura.ubw_period}}<br>
+		Koststed: {{faktura.ubw_xdim_1}}<br>
+		Prosjekt: {{faktura.ubw_xdim_4}}<br>
+		Leverandør: {{faktura.ubw_xapar_id|default:"-"}}<br>
+		Beløp: {{faktura.ubw_amount|intcomma}}<br>
+	{% endif %}
+
+	<hr>
+
+	{% if form.is_multipart %}
+		<form method="post" action="" enctype="multipart/form-data">
+	{% else %}
+		<form method="post" action="">
+	{% endif %}
+	{% csrf_token %}
+		<fieldset>
+		{% for field in form %}
+		<div class="form-group {% if field.errors %} error {% endif %}">
+			<label for="{{ field.id_for_label }}">{{ field.label }}</label>
+			<div class="controls">
+				{% render_field field class+="form-control" %}	
+				<span class="help-inline">
+				{% if field.errors %}
+					{% for error in field.errors %} <p style="color: red;">{{ error }}</p> {% endfor %}
+				{% else %} {{ field.help_text }} {% endif %}
+				</span>
+			</div>
+		</div>
+		{% endfor %}
+
+
+		<hr>
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary">Lagre</button>
+		</div>
+		</fieldset>
+	</form>
+
+{% endblock hovedinnhold %}

@@ -201,12 +201,12 @@ class Ansvarlig(models.Model):
 			help_text=u"Dag, måned, år, f.eks. 100575 (10.mai 1975). Dette feltet fyller du bare ut dersom personen har en rolle innen sertifikatgodkjenning.",
 			)
 	kommentar = models.TextField(
-			verbose_name="Organisatorisk tilhørighet / rolle",
+			verbose_name="Organisatorisk tilhørighet / rolle (fases ut)",
 			blank=True, null=True,
 			help_text=u"Fritekst",
 			)
 	vil_motta_epost_varsler = models.BooleanField(
-			verbose_name="Ønsker å motta e-postvarsler?",
+			verbose_name="Ønsker du å motta e-postvarsler?",
 			default=False,
 			help_text=u"",
 			)
@@ -3948,7 +3948,7 @@ class UBWFaktura(models.Model):
 			"B": "Bokført",
 			"C": "Historisk hovedbok",
 		}
-		try: 
+		try:
 			return oppslag[self.ubw_tab]
 		except:
 			return self.ubw_tab
@@ -3979,6 +3979,11 @@ class UBWMetadata(models.Model):
 		verbose_name="Type / kategori",
 		null=True, blank=True,
 		)
+	leverandor = models.CharField(
+		verbose_name="Leverandør",
+		null=True, blank=True,
+		max_length=200,
+		)
 
 	#history = HistoricalRecords()
 
@@ -3999,19 +4004,43 @@ def modify_formfields(form):
 
 	return formfield
 
+
+#https://stackoverflow.com/questions/24783275/django-form-with-choices-but-also-with-freetext-option
+class ListTextWidget(forms.TextInput):
+	def __init__(self, data_list, name, *args, **kwargs):
+		super(ListTextWidget, self).__init__(*args, **kwargs)
+		self._name = name
+		self._list = data_list
+		self.attrs.update({'list':'list__%s' % self._name})
+
+	def render(self, name, value, attrs=None, renderer=None):
+		text_html = super(ListTextWidget, self).render(name, value, attrs=attrs)
+		data_list = '<datalist id="list__%s">' % self._name
+		for item in self._list:
+			if item[0]: # sjekk i tilfelle den er None
+				data_list += '<option value="%s">%s</option>' % (item[0], item[1])
+		data_list += '</datalist>'
+
+		return (text_html + data_list)
+
+
 class UBWMetadataForm(forms.ModelForm):
-
-	def __init__(self, *args, **kwargs):
-		_belongs_to = kwargs.pop('belongs_to', None)
-		super(UBWMetadataForm, self).__init__(*args, **kwargs)
-		self.fields['kategori'].queryset = UBWFakturaKategori.objects.filter(belongs_to=_belongs_to)
-
-	formfield_callback = modify_formfields
-	
 	class Meta:
 		model = UBWMetadata
 		exclude = ('belongs_to',)
 
+	#formfield_callback = modify_formfields
+
+	def __init__(self, *args, **kwargs):
+		_belongs_to = kwargs.pop('belongs_to', None)
+		_data_list = kwargs.pop('data_list', None)
+		super(UBWMetadataForm, self).__init__(*args, **kwargs)
+
+		if _data_list:
+			for dl in _data_list:
+				self.fields[dl['field']].widget = ListTextWidget(data_list=dl['choices'], name=dl['field'])
+
+		self.fields['kategori'].queryset = UBWFakturaKategori.objects.filter(belongs_to=_belongs_to)
 
 
 class UBWEstimat(models.Model):
@@ -4071,24 +4100,6 @@ class UBWEstimat(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-#https://stackoverflow.com/questions/24783275/django-form-with-choices-but-also-with-freetext-option
-class ListTextWidget(forms.TextInput):
-	def __init__(self, data_list, name, *args, **kwargs):
-		super(ListTextWidget, self).__init__(*args, **kwargs)
-		self._name = name
-		self._list = data_list
-		self.attrs.update({'list':'list__%s' % self._name})
-
-	def render(self, name, value, attrs=None, renderer=None):
-		text_html = super(ListTextWidget, self).render(name, value, attrs=attrs)
-		data_list = '<datalist id="list__%s">' % self._name
-		for item in self._list:
-			data_list += '<option value="%s">%s</option>' % (item[0], item[1])
-		data_list += '</datalist>'
-
-		return (text_html + data_list)
-
-
 class UBWEstimatForm(forms.ModelForm):
 	class Meta:
 		model = UBWEstimat
@@ -4103,8 +4114,9 @@ class UBWEstimatForm(forms.ModelForm):
 		_belongs_to = kwargs.pop('belongs_to', None)
 		super(UBWEstimatForm, self).__init__(*args, **kwargs)
 
-		for dl in _data_list:
-			self.fields[dl['field']].widget = ListTextWidget(data_list=dl['choices'], name=dl['field'])
+		if _data_list:
+			for dl in _data_list:
+				self.fields[dl['field']].widget = ListTextWidget(data_list=dl['choices'], name=dl['field'])
 
 		self.fields['kategori'].queryset = UBWFakturaKategori.objects.filter(belongs_to=_belongs_to)
 """

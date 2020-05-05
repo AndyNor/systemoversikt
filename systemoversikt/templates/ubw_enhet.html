@@ -1,78 +1,50 @@
-{% extends "index.html" %}
+{% extends "ubw_index.html" %}
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
 
-{% block underoverskrift %}
+{% block ekstrameny %}
+	{% include 'ubw_ekstrameny.html' %}
+{% endblock ekstrameny %}
+
+{% block overskrift %}
 	Økonomirapportering for {{ enhet }}
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
-<table width="100%">
-	<tr>
-		<td>
+	<h6>Importer data fra økonomisystemet</h6>
+	<form method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		<input class="" type="file" name="fileupload">
+		<input class="btn btn-sm btn-primary" type="submit" name="submit" value="Importer">
+	</form>
 
-<h6>Tilgangsstyring</h6>
-<ul> {% for user in enhet.users.all %} <li>{{ user }}</li> {% endfor %}</ul>
+	<hr>
+	<h6>Importerte data fra økonomisystemet</h6>
 
-		</td>
-		<td>
+	Viset fakturaer som i UBW gjelder for de siste {{dager_gamle}} dager.
+	<table class="table table-striped tablesorter">
+		<thead>
+			<tr>
+				<th>{% get_verbose_field_name model "ubw_voucher_date" %}</th>
+				<th>{% get_verbose_field_name model "ubw_account" %}</th>
+				<th>{% get_verbose_field_name model "ubw_dim_1" %}</th>
+				<th>{% get_verbose_field_name model "ubw_dim_4" %}</th>
+				<th>{% get_verbose_field_name model "ubw_xapar_id" %}</th>
+				<th>{% get_verbose_field_name model "ubw_description" %}</th>
+				<th>{% get_verbose_field_name model "ubw_amount" %}</th>
+				<th>{% get_verbose_field_name model "ubw_period" %}</th>
+				<th class="ubw_manuell">Periode Påløpt (YYYYmm)</th>
+				<th class="ubw_manuell">Kategori</th>
+				<th class="ubw_manuell">Leverandør</th>
+				<th class="filter-false">Tillegg</th>
+			</tr>
+		</thead>
+		<tbody>
+	{% include 'ubw_enhet_partial_list.html' with fakturaer=nye_fakturaer %}
+	{% include 'ubw_enhet_partial_list.html' with fakturaer=behandlede_fakturaer %}
+		</tbody>
+	</table>
 
-<h6>API-URL</h6>
-Krever ikke innlogging per nå..<br>
-<a href="{{ domain }}{% url 'ubw_api' pk=enhet.pk %}">{{ domain }}{% url 'ubw_api' pk=enhet.pk %}</a></p>
-
-		</td>
-		<td>
-
-<h6>Våre kategorier</h6>
-<ul style="column-count:4;">
-	{% for k in kategorier %}
-	<li>{{ k }}</li>
-	{% endfor %}
-	<li><a href="{% url 'ubw_kategori' belongs_to=enhet.pk %}">Legg til ny</a></li>
-</ul>
-	
-		</td>
-	</tr>
-</table>
-
-<hr>
-<h6>Importer data fra økonomisystemet </h6>
-<form method="post" enctype="multipart/form-data">
-	{% csrf_token %}
-	<input class="" type="file" name="fileupload">
-	<input class="btn btn-sm btn-primary" type="submit" name="submit" value="Importer">
-</form>
-
-<hr>
-<h6>Importerte data fra økonomisystemet
-	<a class="btn btn-sm btn-primary" href="{% url 'ubw_estimat_list' belongs_to=enhet.pk %}">Mine estimater</a>
-</h6>
-
-Viset fakturaer som i UBW gjelder for de siste {{dager_gamle}} dager.
-<table class="table table-striped tablesorter">
-	<thead>
-		<tr>
-			<th>{% get_verbose_field_name model "ubw_voucher_date" %}</th>
-			<th>{% get_verbose_field_name model "ubw_account" %}</th>
-			<th>{% get_verbose_field_name model "ubw_dim_1" %}</th>
-			<th>{% get_verbose_field_name model "ubw_dim_4" %}</th>
-			<th>{% get_verbose_field_name model "ubw_xapar_id" %}</th>
-			<th>{% get_verbose_field_name model "ubw_description" %}</th>
-			<th>{% get_verbose_field_name model "ubw_amount" %}</th>
-			<th>{% get_verbose_field_name model "ubw_period" %}</th>
-			<th>Periode Påløpt (YYYYmm)</th>
-			<th>Kategori</th>
-			<th></th>
-		</tr>
-	</thead>
-	<tbody>
-{% include 'ubw_enhet_partial_list.html' with fakturaer=nye_fakturaer %}
-{% include 'ubw_enhet_partial_list.html' with fakturaer=behandlede_fakturaer %}
-	</tbody>
-</table>
-
-
-{% endblock main_content %}
+{% endblock hovedinnhold %}

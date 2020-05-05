@@ -1004,7 +1004,7 @@ def all_bruk_for_virksomhet(request, pk):
 	except:
 		messages.warning(request, 'Fant ingen virksomhet med denne ID-en.')
 		virksomhet = Virksomhet.objects.none()
-		
+
 	return render(request, 'systembruk_alle.html', {
 		'request': request,
 		'all_bruk': all_bruk,
@@ -1465,7 +1465,7 @@ def virksomhet_prkadmin(request, pk):
 					users.append(user)
 				else:
 					pass
-			
+
 			prk_admins[group_name] = users
 
 		user_set = set(a for b in prk_admins.values() for a in b)
@@ -1858,6 +1858,19 @@ def alle_systemurler(request):
 	return render(request, 'urler_alle.html', {
 		'request': request,
 		'web_urler': urler,
+	})
+
+def virksomhet_urler(request, pk):
+	"""
+	Vise liste over alle URLer
+	Tilgangsstyring: ÅPEN
+	"""
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	urler = SystemUrl.objects.filter(eier=virksomhet.pk).order_by('domene')
+	return render(request, 'urler_alle.html', {
+		'request': request,
+		'web_urler': urler,
+		'virksomhet': virksomhet,
 	})
 
 
@@ -3087,7 +3100,7 @@ def ubw_api(request, pk):
 		eksportdata["kilde"] = "UBW"
 		eksportdata["UBW tab"] = str(faktura.ubw_tab_repr())
 		eksportdata["UBW Kontonr"] = faktura.ubw_account
-		eksportdata["UBW Kontonavn"] = faktura.ubw_xaccount 
+		eksportdata["UBW Kontonavn"] = faktura.ubw_xaccount
 		eksportdata["UBW-periode (YYYYMM)"] = faktura.ubw_period
 		eksportdata["UBW Koststednr"] = faktura.ubw_dim_1
 		eksportdata["UBW Koststednavn"] = faktura.ubw_xdim_1
@@ -3108,16 +3121,23 @@ def ubw_api(request, pk):
 			eksportdata["Kategori"] = faktura.metadata_reference.kategori.name
 		except:
 			eksportdata["Kategori"] = ""
-
 		try:
 			eksportdata["Periode påløpt år"] = faktura.metadata_reference.periode_paalopt.year
+		except:
+			eksportdata["Periode påløpt år"] = "_"
+		try:
 			eksportdata["Periode påløpt måned"] = faktura.metadata_reference.periode_paalopt.month
+		except:
+			eksportdata["Periode påløpt måned"] = ""
+		try:
 			eksportdata["Periode påløpt kvartal"] = kvartal(faktura.metadata_reference.periode_paalopt)
 		except:
-			eksportdata["Periode påløpt år"] = ""
-			eksportdata["Periode påløpt måned"] = ""
 			eksportdata["Periode påløpt kvartal"] = ""
 
+		if faktura.metadata_reference.leverandor != None:
+			eksportdata["Leverandør"] = faktura.metadata_reference.leverandor
+		else:
+			eksportdata["Leverandør"] = faktura.ubw_xapar_id
 
 		faktura_eksport.append(eksportdata)
 
@@ -3130,10 +3150,13 @@ def ubw_api(request, pk):
 		eksportdata["UBW Kontonr"] = e.estimat_account
 		eksportdata["UBW Koststednr"] = e.estimat_dim_1
 		eksportdata["UBW prosjektnr"] = e.estimat_dim_4
-		eksportdata["UBW beløp"] = float(e.estimat_amount)
+		try: # i tilfelle noen glemmer å fylle ut et estimat i estimatet..
+			eksportdata["UBW beløp"] = float(e.estimat_amount)
+		except:
+			eksportdata["UBW beløp"] = 0
 		eksportdata["UBW beskrivelse"] = e.ubw_description
 		"""
-		eksportdata["UBW Kontonavn"] = "" 
+		eksportdata["UBW Kontonavn"] = ""
 		eksportdata["UBW-periode (YYYYMM)"] = ""
 		eksportdata["UBW Koststednavn"] = ""
 		eksportdata["UBW prosjektnavn"] = ""
@@ -3273,7 +3296,7 @@ def ubw_enhet(request, pk):
 					#print(data)
 
 					#data = list(csv.DictReader(decoded_file, delimiter=";"))
-				
+
 				print("\n%s\n" % data)
 				import_function(data)
 
@@ -3318,36 +3341,63 @@ def check_belongs_to(user, enhet_id):
 	return False
 """
 
+def ubw_generer_ekstra_valg(belongs_to):
+	data = []
+
+	# trenger kategorien to ganger da den ene er verdi og den andre er visning. Like i dette tilfellet.
+	leverandor_kategorier = list(UBWMetadata.objects.filter(belongs_to__belongs_to=belongs_to).values_list('leverandor', 'leverandor').distinct())
+	data.append({'field': 'leverandor', 'choices': leverandor_kategorier})
+
+	return data
+
+
 def ubw_ekstra(request, faktura_id, pk=None):
 	faktura = UBWFaktura.objects.get(pk=faktura_id)
 	enhet = faktura.belongs_to
+	kategorier = UBWFakturaKategori.objects.filter(belongs_to=enhet)
 	if request.user in enhet.users.all():
 
 		if pk:
 			instance = UBWMetadata.objects.get(pk=pk)
-			form = UBWMetadataForm(instance=instance, belongs_to=faktura.belongs_to)
+			form = UBWMetadataForm(
+					instance=instance,
+					belongs_to=faktura.belongs_to,
+					data_list=ubw_generer_ekstra_valg(enhet.pk)
+			)
 		else:
 			instance = None
-			form = UBWMetadataForm(belongs_to=faktura.belongs_to)
+			form = UBWMetadataForm(
+					initial={'leverandor': faktura.ubw_xapar_id},
+					belongs_to=faktura.belongs_to,
+					data_list=ubw_generer_ekstra_valg(enhet.pk),
+			)
 
 		if request.method == 'POST':
-			form = UBWMetadataForm(data=request.POST, instance=instance, belongs_to=faktura.belongs_to)
+			form = UBWMetadataForm(
+					instance=instance,
+					data=request.POST,
+					belongs_to=faktura.belongs_to,
+			)
 			if form.is_valid():
 				instance = form.save(commit=False)
 				instance.belongs_to = faktura
 				instance.save()
 				return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
-		
+
 
 		return render(request, 'ubw_ekstra.html', {
 				'form': form,
 				'faktura': faktura,
+				'enhet': enhet,
+				'ekstra': True,
+				'kategorier': kategorier,
 		})
 
 def ubw_kategori(request, belongs_to):
 	from django.http import HttpResponseRedirect
 
 	enhet = UBWRapporteringsenhet.objects.get(pk=belongs_to)
+	kategorier = UBWFakturaKategori.objects.filter(belongs_to=enhet)
 	if request.method == 'POST':
 		form = UBWFakturaKategoriForm(request.POST)
 		if form.is_valid() and form.cleaned_data:
@@ -3358,9 +3408,13 @@ def ubw_kategori(request, belongs_to):
 				return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
 	else:
 		form = UBWFakturaKategoriForm()
-		
+
 	return render(request, 'ubw_ekstra.html', {
 			'form': form,
+			'enhet': enhet,
+			'kategori': True,
+			'kategorier': kategorier,
+
 	})
 
 
@@ -3373,9 +3427,15 @@ def ubw_my_estimates(request, enhet):
 
 def ubw_estimat_list(request, belongs_to):
 	enhet = get_object_or_404(UBWRapporteringsenhet, pk=belongs_to)
+	kategorier = UBWFakturaKategori.objects.filter(belongs_to=enhet)
 	estimat = ubw_my_estimates(request, enhet)
 	model = UBWEstimat
-	return render(request, 'ubw_estimat_list.html', {'estimat': estimat, 'model': model, 'enhet': enhet,})
+	return render(request, 'ubw_estimat_list.html', {
+		'estimat': estimat,
+		'model': model,
+		'enhet': enhet,
+		'kategorier': kategorier,
+	})
 
 
 def save_ubw_estimat_form(request, belongs_to, form, template_name):
@@ -3402,7 +3462,7 @@ def save_ubw_estimat_form(request, belongs_to, form, template_name):
 	return JsonResponse(data)
 
 
-def ubw_generer_valg(belongs_to):
+def ubw_generer_estimat_valg(belongs_to):
 	data = []
 
 	# trenger kategorien to ganger da den ene er verdi og den andre er visning. Like i dette tilfellet.
@@ -3422,9 +3482,13 @@ def ubw_generer_valg(belongs_to):
 
 def ubw_estimat_create(request, belongs_to):
 	if request.method == 'POST':
-		form = UBWEstimatForm(request.POST, data_list=ubw_generer_valg(belongs_to), belongs_to=belongs_to)
+		form = UBWEstimatForm(
+				request.POST,
+				data_list=ubw_generer_estimat_valg(belongs_to),
+				belongs_to=belongs_to
+		)
 	else:
-		form = UBWEstimatForm(data_list=ubw_generer_valg(belongs_to), belongs_to=belongs_to)
+		form = UBWEstimatForm(data_list=ubw_generer_estimat_valg(belongs_to), belongs_to=belongs_to)
 	return save_ubw_estimat_form(request, belongs_to, form, 'ubw_estimat_partial_create.html')
 
 
@@ -3432,14 +3496,22 @@ def ubw_estimat_update(request, belongs_to, pk):
 	estimat = get_object_or_404(UBWEstimat, pk=pk)
 	if request.method == 'POST':
 		if request.user in estimat.belongs_to.users.all():
-			form = UBWEstimatForm(request.POST, instance=estimat, data_list=ubw_generer_valg(belongs_to), belongs_to=belongs_to)
+			form = UBWEstimatForm(
+					request.POST, instance=estimat,
+					data_list=ubw_generer_estimat_valg(belongs_to),
+					belongs_to=belongs_to
+			)
 	else:
-		form = UBWEstimatForm(instance=estimat, data_list=ubw_generer_valg(belongs_to), belongs_to=belongs_to)
+		form = UBWEstimatForm(
+				instance=estimat,
+				data_list=ubw_generer_estimat_valg(belongs_to),
+				belongs_to=belongs_to
+		)
 	return save_ubw_estimat_form(request, belongs_to, form, 'ubw_estimat_partial_update.html')
 
 
 def ubw_estimat_delete(request, pk):
-	estimat = get_object_or_404(UBWEstimat, pk=pk)		
+	estimat = get_object_or_404(UBWEstimat, pk=pk)
 	data = dict()
 	if request.method == 'POST':
 		if request.user in estimat.belongs_to.users.all():
@@ -3460,7 +3532,7 @@ def ubw_estimat_delete(request, pk):
 
 
 def ubw_estimat_copy(request, pk):
-	estimat = get_object_or_404(UBWEstimat, pk=pk)		
+	estimat = get_object_or_404(UBWEstimat, pk=pk)
 	data = dict()
 	if request.method == 'POST':
 		if request.user in estimat.belongs_to.users.all():

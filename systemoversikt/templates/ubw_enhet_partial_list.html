@@ -12,12 +12,14 @@
 		<td>{{f.ubw_amount|default:"-"|intcomma}}</td>
 		<td>{{f.ubw_period|default:"-"}}</td>
 	{% if f.metadata_reference %}
-		<td>{{ f.metadata_reference.periode_paalopt|date:"Ym" }}</td>
-		<td>{{ f.metadata_reference.kategori }}</td>
+		<td class="ubw_manuell">{{ f.metadata_reference.periode_paalopt|date:"Ym" }}</td>
+		<td class="ubw_manuell">{{ f.metadata_reference.kategori }}</td>
+		<td class="ubw_manuell">{{ f.metadata_reference.leverandor|default:"-" }}</td>
 		<td><a href="{% url 'ubw_ekstra_edit' faktura_id=f.pk pk=f.metadata_reference.pk %}" class="btn btn-sm btn-warning">Endre</a></td>
 	{% else %}
-		<td></td>
-		<td></td>
+		<td class="ubw_manuell"></td>
+		<td class="ubw_manuell"></td>
+		<td class="ubw_manuell"></td>
 		<td><a href="{% url 'ubw_ekstra_new' faktura_id=f.pk %}" class="btn btn-sm btn-primary">Opprett</a></td>
 	{% endif %}
 		</td>

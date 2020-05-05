@@ -1,0 +1,52 @@
+{% extends "index.html" %}
+
+
+{% block ekstrastyle %}
+	<style>
+		.ubw_manuell{
+			background-color: #f5f5f5 !important;
+		}
+	</style>
+{% endblock %}
+
+
+{% block sidemeny %}
+	<h6>Økonomirapportering</h6>
+	{% url 'ubw_home' as url_ubw_home %}
+		<a href="{{url_ubw_home}}" class="btn btn-sm btn-link {% if url_ubw_home in request.path %}fremhev{% endif %}">Alle prosjekter</a>
+	<hr>
+	{% if enhet %}
+		{% url 'ubw_enhet' pk=enhet.pk as url_ubw_enhet %}
+			<a href="{{url_ubw_enhet}}" class="btn btn-sm btn-link {% if url_ubw_enhet in request.path %}fremhev{% endif %}">Våre faktura</a>
+
+		{% url 'ubw_estimat_list' belongs_to=enhet.pk as url_ubw_estimat_list %}
+			<a href="{{url_ubw_estimat_list}}" class="btn btn-sm btn-link {% if url_ubw_estimat_list in request.path %}fremhev{% endif %}">Våre estimater</a>
+
+	<hr>
+	<h6>Tilgangsstyring</h6>
+	{% for user in enhet.users.all %}
+		{{ user }}<br>
+	{% endfor %}
+
+	<hr>
+	<h6>Våre kategorier</h6>
+	<ul style="column-count:1;">
+		{% for k in kategorier %}
+		<li>{{ k }}</li>
+		{% endfor %}
+		<li><a href="{% url 'ubw_kategori' belongs_to=enhet.pk %}">Opprett ny</a></li>
+	</ul>
+
+	<hr>
+	<h6>API-URL</h6>
+	<a href="{{ domain }}{% url 'ubw_api' pk=enhet.pk %}">{% url 'ubw_api' pk=enhet.pk %}</a><br>
+	(Krever ikke innlogging per nå..)
+
+	{% endif %}
+	{% block ekstrameny %}{% endblock ekstrameny %}
+{% endblock sidemeny %}
+
+{% block main_content %}
+	<h3>{% block overskrift %}{% endblock overskrift %}</h3>
+	{% block hovedinnhold %}{% endblock hovedinnhold %}
+{% endblock main_content %}

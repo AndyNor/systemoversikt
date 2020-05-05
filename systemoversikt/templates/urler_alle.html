@@ -1,20 +1,40 @@
-{% extends "index.html" %}
+{% extends "virksomhet_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	Oslo kommunes webtjenester
-	<div>
+{% block ekstrameny %}
+
+	{% if not virksomhet %}
 		{% if user.is_authenticated %}
-		<a target="_blank" class="btn btn-sm btn-primary" href="/admin/systemoversikt/systemurl/add/">Legg til nytt domene</a>
-		<a target="_blank" class="btn btn-sm btn-primary" href="/admin/systemoversikt/sikkerhetstester/add/">Registrer utført sikkerhetstest</a>
+		<h6>Domener</h6>
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemurl/add/">Legg til nytt domene</a>
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/sikkerhetstester/add/">Registrer sikkerhetstest</a>
+			{% if request.user.profile.virksomhet %}
+				<a class="btn btn-sm btn-link" href="{% url 'virksomhet_urler' pk=request.user.profile.virksomhet.pk %}">Våre domener</a>
+			{% endif %}
+		<hr>
 		{% endif %}
+	{% endif %}
+
+	{% if virksomhet %}	
+		{% include 'virksomhet_detaljer_ekstrameny.html' %}
+	{% endif %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Oslo kommunes domener {% if virksomhet %}tilhørende {{virksomhet.virksomhetsforkortelse}}{% endif %}
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+	<div>
+
 	</div>
-{% endblock underoverskrift %}
 
-{% block main_content %}
-<p>Her vises domener (URL-er) til kommunens webtjenester. Det er {{ web_urler.count }} registrert i databasen. Domener utenfor oslo.kommune.no er merket med rød bakgrunnsfarge.</p>
+	<p>Her vises domener (URL-er) tilknyttet systemer. Viser {{ web_urler.count }} domener. Domener innenfor *.oslo.kommune.no er merket med en grønn hake.</p>
 
-{% include "urler_include.html" %}
+	{% include "urler_include.html" %}
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

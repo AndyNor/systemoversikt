@@ -1,18 +1,18 @@
-{% extends "index.html" %}
+{% extends "ubw_index.html" %}
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
 
-{% block underoverskrift %}
-	Økonomirapportering for {{ enhet }}
-{% endblock underoverskrift %}
+{% block ekstrameny %}
+	{% include 'ubw_ekstrameny.html' %}
+{% endblock ekstrameny %}
 
-{% block main_content %}
+{% block overskrift %}
+	Velg enhet
+{% endblock overskrift %}
 
-<ul>
-{% for enhet in enheter %}
-<li><a href="{% url 'ubw_enhet' pk=enhet.pk %}">{{ enhet.name }}</a></li>
-{% endfor %}
-</ul>
-
-{% endblock main_content %}
+{% block hovedinnhold %}
+	{% for enhet in enheter %}
+		<a href="{% url 'ubw_enhet' pk=enhet.pk %}" class="btn btn-sm btn-link">{{ enhet.name }}</a><br>
+	{% endfor %}
+{% endblock hovedinnhold %}

@@ -10,7 +10,7 @@
 {% block hovedinnhold %}
 
 	<p>Virksomhet definert som organisatorisk enhet med unikt organisasjonsnummer. Det vises {{ virksomheter.count }} virksomheter.</p>
-	
+
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 140px;" type="search" value="{{ search_term }}" name="search_term"
@@ -23,6 +23,9 @@
 	<table id="alle_virksomheter" class="table table-sm table-striped tablesorter excel">
 	<thead>
 	<tr>
+		{% if user.is_authenticated %}
+		<th class="filter-false"></th>
+		{% endif %}
 		<th>Virksomhet</th>
 		<th>Forkortelse</th>
 		<th>Leder</th>
@@ -40,13 +43,15 @@
 	<tbody>
 	{% for vir in virksomheter %}
 	<tr {% if not vir.ordinar_virksomhet %} style="opacity: 0.33;" {% endif %}>
-		{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+		{% if user.is_authenticated %}
 		<td>
-			{% if user.is_authenticated %}
 				<a target="_blank" href="/admin/systemoversikt/virksomhet/{{ vir.pk }}/change/">
 				<img style="width: 14px; margin: 3px;"
 				src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
-			{% endif %}
+		</td>
+		{% endif %}
+		{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+		<td>
 			<a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn|truncatewords:6 }}</a>
 		</td>
 		<td>{{ vir.virksomhetsforkortelse }}</td>

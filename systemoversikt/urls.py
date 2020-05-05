@@ -106,13 +106,14 @@ urlpatterns = [
 	url(r'^hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
 
 	url(r'^domener/$', views.alle_systemurler, name='alle_systemurler'),
+	url(r'^virksomhet/domener/(?P<pk>\d{1,8})/$', views.virksomhet_urler, name='virksomhet_urler'),
 
 	url(r'^programvare/$', views.alle_programvarer, name='alle_programvarer'),
 	url(r'^programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
 	url(r'^virksomhet/programvare/(?P<pk>\d{1,8})/$', views.all_programvarebruk_for_virksomhet, name='all_programvarebruk_for_virksomhet'),
 	url(r'^programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
 
-	url(r'^ansvarlige/$', views.alle_ansvarlige, name='alle_ansvarlige'),
+	url(r'^ansvarlige/alle/$', views.alle_ansvarlige, name='alle_ansvarlige'),
 	url(r'^ansvarlige/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),
 	url(r'^ansvarlige/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
 
@@ -157,8 +158,8 @@ urlpatterns = [
 	url(r'^dashboard/(?P<virksomhet>\d+)/$', views.dashboard_all, name='dashboard_all'),
 
 	# ubw
-	url(r'^ubw/$', views.ubw_home, name='ubw_home'),
-	url(r'^ubw/(?P<pk>\d+)/$', views.ubw_enhet, name='ubw_enhet'),
+	url(r'^ubw/alle/$', views.ubw_home, name='ubw_home'),
+	url(r'^ubw/faktura/(?P<pk>\d+)/$', views.ubw_enhet, name='ubw_enhet'),
 	url(r'^ubw/api/(?P<pk>\d+)/$', views.ubw_api, name='ubw_api'),
 	url(r'^ubw/ekstra/(?P<faktura_id>\d+)/$', views.ubw_ekstra, name='ubw_ekstra_new'),
 	url(r'^ubw/ekstra/(?P<faktura_id>\d+)/(?P<pk>\d+)/$', views.ubw_ekstra, name='ubw_ekstra_edit'),

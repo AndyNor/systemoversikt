@@ -1,51 +1,125 @@
-{% extends 'index.html' %}
-
+{% extends "ubw_index.html" %}
 {% load static %}
 {% load templatetags %}
 
+{% block ekstrameny %}
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Estimater for {{enhet}}
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+	<p>
+		<button type="button" class="btn btn-link btn-sm js-create-estimat" data-url="{% url 'ubw_estimat_create' belongs_to=enhet.pk %}">
+			Opprett nytt estimat
+		</button>
+	</p>
+
+	<table class="table" id="estimat-table">
+		<thead>
+			<tr>
+				<th class="filter-false">ID</th>
+				<th>{% get_verbose_field_name model "prognose_kategori" %}</th>
+				<th>{% get_verbose_field_name model "kategori" %}</th>
+				<th>{% get_verbose_field_name model "ubw_description" %}</th>
+				<th>{% get_verbose_field_name model "estimat_account" %}</th>
+				<th>{% get_verbose_field_name model "estimat_dim_1" %}</th>
+				<th>{% get_verbose_field_name model "estimat_dim_4" %}</th>
+				<th>{% get_verbose_field_name model "estimat_amount" %}</th>
+				<th>{% get_verbose_field_name model "periode_paalopt" %}</th>
+				<th>{% get_verbose_field_name model "aktiv" %}</th>
+				<th class="filter-false"></th>
+			</tr>
+		</thead>
+		<tbody>
+			{% include 'ubw_estimat_partial_list.html' %}
+		</tbody>
+	</table>
+
+	<div class="modal fade" id="modal-estimat">
+		<div class="modal-dialog">
+			<div class="modal-content">
+
+			</div>
+		</div>
+	</div>
+{% endblock hovedinnhold %}
+
+
 {% block script_prepend %}
-<script src="{% static 'js/estimat.js' %}" nonce="{{request.csp_nonce}}"></script>
-<script src="{% static 'autonumeric/autonumeric.min.js' %}" type="text/javascript"></script>
-{% endblock %}
+	<script nonce="{{request.csp_nonce}}">
 
-{% block main_content %}
-  <h1 class="page-header">Estimater</h1>
+		$(function () {
 
-  <p>
-    <a href="{% url 'ubw_enhet' pk=enhet.pk %}" class="btn btn-link btn-sm">
-      Tilbake til mine faktura
-    </a>
-    <button type="button" class="btn btn-primary btn-sm js-create-estimat" data-url="{% url 'ubw_estimat_create' belongs_to=enhet.pk %}">
-      Opprett nytt estimat
-    </button>
-  </p>
+			/* Functions */
 
-  <table class="table" id="estimat-table">
-    <thead>
-      <tr>
-        <th>{% get_verbose_field_name model "prognose_kategori" %}</th>
-        <th>{% get_verbose_field_name model "kategori" %}</th>
-        <th>{% get_verbose_field_name model "ubw_description" %}</th>
-        <th>{% get_verbose_field_name model "estimat_account" %}</th>
-        <th>{% get_verbose_field_name model "estimat_dim_1" %}</th>
-        <th>{% get_verbose_field_name model "estimat_dim_4" %}</th>
-        <th>{% get_verbose_field_name model "estimat_amount" %}</th>
-        <th>{% get_verbose_field_name model "periode_paalopt" %}</th>
-        <th>{% get_verbose_field_name model "aktiv" %}</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% include 'ubw_estimat_partial_list.html' %}
-    </tbody>
-  </table>
+			var loadForm = function () {
+				var btn = $(this);
+				$.ajax({
+					url: btn.attr("data-url"),
+					type: 'get',
+					dataType: 'json',
+					beforeSend: function () {
+						$("#modal-estimat .modal-content").html("");
+						$("#modal-estimat").modal("show");
+					},
+					success: function (data) {
+						$("#modal-estimat .modal-content").html(data.html_form);
+						new AutoNumeric('#id_estimat_amount', { 
+								currencySymbol : '',
+								decimalPlacesRawValue: 2,
+								digitGroupSeparator: " ",
+								unformatOnSubmit: true,
+						});
+					}
+				});
+			};
 
-  <div class="modal fade" id="modal-estimat">
-    <div class="modal-dialog">
-      <div class="modal-content">
+			var saveForm = function () {
+				var form = $(this);
+				$.ajax({
+					url: form.attr("action"),
+					data: form.serialize(),
+					type: form.attr("method"),
+					dataType: 'json',
+					success: function (data) {
+						if (data.form_is_valid) {
+							$("#estimat-table tbody").html(data.html_estimat_list);
+							//må oppdatere tablesorter-plugin
+							$('table').trigger('update');
 
-      </div>
-    </div>
-  </div>
+							$("#modal-estimat").modal("hide");
+						}
+						else {
+							$("#modal-estimat .modal-content").html(data.html_form);
+						}
+					}
+				});
+				return false;
+			};
 
+
+			/* Binding */
+
+			// Create estimat
+			$(".js-create-estimat").click(loadForm);
+			$("#modal-estimat").on("submit", ".js-estimat-create-form", saveForm);
+
+			// Update estimat
+			$("#estimat-table").on("click", ".js-update-estimat", loadForm);
+			$("#modal-estimat").on("submit", ".js-estimat-update-form", saveForm);
+
+			// Delete estimat
+			$("#estimat-table").on("click", ".js-delete-estimat", loadForm);
+			$("#modal-estimat").on("submit", ".js-estimat-delete-form", saveForm);
+
+			// Copy estimat
+			$("#estimat-table").on("click", ".js-copy-estimat", loadForm);
+			$("#modal-estimat").on("submit", ".js-estimat-copy-form", saveForm);
+
+		});
+	</script>
+	<script src="{% static 'autonumeric/autonumeric.min.js' %}" type="text/javascript"></script>
 {% endblock %}

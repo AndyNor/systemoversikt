@@ -8,8 +8,7 @@
 {% endblock ekstrameny %}
 
 {% block overskrift %}
-	{% url 'virksomhet' virksomhet.pk as url_virksomhet %}
-	<a href="{{ url_virksomhet }}">{{ virksomhet.virksomhetsforkortelse }}</a>'s bruk av systemer
+	{{ virksomhet.virksomhetsforkortelse }}'s bruk av systemer
 {% endblock overskrift %}
 
 

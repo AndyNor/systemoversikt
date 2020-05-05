@@ -1,7 +1,7 @@
 {% extends "index.html" %}
 
 {% block sidemeny %}
-	<h5>Generelt</h5>
+	<h6>Generelt</h6>
 	{% if user.is_authenticated %}
 	{% url 'min_virksomhet' as url_min_virksomhet %}
 		<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">Min virksomhet</a>

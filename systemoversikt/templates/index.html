@@ -11,6 +11,9 @@
 
 	<!-- CSS includes-->
 	<link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
+	<link rel="stylesheet" href="{% static 'tablesorter/theme.default.css' %}">
+	<link rel="stylesheet" href="{% static 'tablesorter/filter.formatter.css' %}">
+
 
 	<!-- CSS includes append -->
 	{% block css_append %}{% endblock css_append %}
@@ -18,7 +21,8 @@
 	<!-- JavaScript includes -->
 	<script src="{% static 'jquery/jquery-3.3.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'bootstrap/bootstrap.min.js' %}" nonce="{{request.csp_nonce}}"></script>
-	<script src="{% static 'tablesorter/jquery.tablesorter.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tablesorter/jquery.tablesorter.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tablesorter/jquery.tablesorter.widgets.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'floatThead/jquery.floatThead.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'tableexport/xlsx.core.min.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'tableexport/FileSaver.min.js' %}" nonce="{{request.csp_nonce}}"></script>
@@ -86,13 +90,13 @@
 			z-index: 9999;
 			background-color: white;
 			margin-left: 10px;
-			margin-right: 10px; 
-			padding: 10px; 
-			border-radius: 15px; 
+			margin-right: 10px;
+			padding: 10px;
+			border-radius: 15px;
 			border: 2px solid #2A2859;
 		}
 		#main_row{
-			font-size: 85%;
+			font-size: 90%;
 			padding: 10px;
 		}
 		#main_menu {
@@ -104,6 +108,7 @@
 			margin-left: 220px;
 			padding: 10px;
 		}
+		.tablesorter thead .disabled {display: none}
 	</style>
 
 	<!-- CSS header -->
@@ -128,7 +133,7 @@
 	{% endif %}
 
 	<div id="main_menu">
-		
+
 	{% block sidemeny %}{% endblock sidemeny %}
 
 	</div>
@@ -165,6 +170,7 @@
 			formats: ['xlsx'],
 			filename: 'id',
 			bootstrap: false,
+			position: "bottom",
 			exportButtons: true,
 			ignoreRows: null,
 			ignoreCols: null,
@@ -185,7 +191,20 @@
 		}
 
 		msieversion();
-		$("table").tablesorter({})
+		$("table").tablesorter({
+			theme: 'default',
+			widgets : ["filter", "stickyHeaders",],
+			widgetOptions : {
+			filter_liveSearch : true,
+			filter_searchFiltered: true,
+			filter_placeholder: { search : '' },
+			filter_columnFilters: true,
+			filter_ignoreCase : true,
+			filter_startsWith : false,
+			// sticky headers
+			//stickyHeaders_offset: 116,
+			}
+		})
 		$("table").floatThead({top: 116});
 
 	});

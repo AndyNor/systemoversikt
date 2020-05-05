@@ -48,7 +48,7 @@
 				{% if system.informasjon_kvalitetssikret %}
 				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
@@ -64,72 +64,72 @@
 			</th>
 			<td>
 				{% if system.systemeier %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.systemeier_kontaktpersoner_referanse.all %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.systemforvalter %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.systemforvalter_kontaktpersoner_referanse.all %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.systemkategorier.all %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.systemeierskapsmodell %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.driftsmodell_foreignkey %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.systemleverandor %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.dato_sist_ros or system.risikovurdering_behovsvurdering == 0 %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.url_risikovurdering or system.risikovurdering_tekst or system.risikovurdering_behovsvurdering == 0 %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
@@ -138,9 +138,9 @@
 			<td>
 				{% if system.antall_behandlinger > 0 and system.applikasjonsdrift_behov_databehandleravtale %}
 					{% if system.databehandleravtaler_system %}
-					<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+					<span style="color: green; font-size: 18px;">✓</span> Ja
 					{% else %}
-					<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+					<span style="color: red; font-size: 18px;">⨉</span> Nei
 					{% endif %}
 				{% else %}
 					N/A
@@ -148,17 +148,17 @@
 			</td>
 			<td>
 				{% if system.databehandleravtaler_drift %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.forventet_url %}
 					{% if system.systemurl.all %}
-					<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+					<span style="color: green; font-size: 18px;">✓</span> Ja
 					{% else %}
-					<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+					<span style="color: red; font-size: 18px;">⨉</span> Nei
 					{% endif %}
 				{% else %}
 					N/A
@@ -169,16 +169,16 @@
 			</td>
 			<td>
 				{% if system.sikkerhetsnivaa %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 			<td>
 				{% if system.livslop_status %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+				<span style="color: green; font-size: 18px;">✓</span> Ja
 				{% else %}
-				<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+				<span style="color: red; font-size: 18px;">⨉</span> Nei
 				{% endif %}
 			</td>
 		</tr>
