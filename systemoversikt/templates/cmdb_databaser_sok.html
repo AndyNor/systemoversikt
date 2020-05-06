@@ -1,17 +1,15 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
 	Databaser på Felles IKT-plattform
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
-
-
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
-
-	<hr>
+{% block hovedinnhold %}
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
@@ -22,7 +20,7 @@
 		</div>
 	</form>
 
-<p>Viser {{ databaser.count }} databaser</p>
+	<p>Viser {{ databaser.count }} databaser</p>
 
 	<table id="stickyheader" class="table table-sm tablesorter">
 	<thead>
@@ -58,4 +56,5 @@
 	{% endfor %}
 	</tbody>
 	</table>
-{% endblock main_content %}
+
+{% endblock hovedinnhold %}

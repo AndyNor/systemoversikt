@@ -1,16 +1,16 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	PRK-tilgangsskjema på felles IKT-plattform
-{% endblock underoverskrift %}
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
 
-{% block main_content %}
+{% block overskrift %}
+	Søk i PRK-tilgangsskjema
+{% endblock overskrift %}
 
+{% block hovedinnhold %}
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
-	<a class="btn btn-sm" href="{% url 'alle_prk' %}">Søk i PRK-skjema</a>
 	<a class="btn btn-sm" href="{% url 'prk_browse' %}">Bla i PRK-skjema</a>
 
 	<hr>
@@ -28,4 +28,4 @@
 
 	{% include "prk_skjema_include.html" with valg=skjemavalg %}
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

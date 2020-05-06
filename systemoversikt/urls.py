@@ -49,7 +49,7 @@ urlpatterns = [
 	url(r'^sys/roller/$', views.roller, name='roller'),
 	url(r'^sys/rettigheter/$', views.permissions, name='permissions'),
 
-	url(r'^systemer/$', views.alle_systemer, name='alle_systemer'),
+	url(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
 	url(r'^systemer/pakket/$', views.systemer_pakket, name='systemer_pakket'),
 	url(r'^systemer/detaljer/(?P<pk>\d{1,8})/$', views.systemdetaljer, name='systemdetaljer'),
 	url(r'^systemer/bruk/$', views.mine_systembruk, name='mine_systembruk'),
@@ -59,7 +59,7 @@ urlpatterns = [
 	url(r'^virksomhet/systemer/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
 	url(r'^systemer/systemklassifisering/(?P<id>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	url(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),
-	url(r'^systemer/systemtype/$', views.systemtype_detaljer, name='systemtype_detaljer_mangler'),
+	url(r'^systemer/systemtype/tom/$', views.systemtype_detaljer, name='systemtype_detaljer_mangler'),
 	url(r'^system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
 	url(r'^system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
 
@@ -94,13 +94,14 @@ urlpatterns = [
 	url(r'^virksomhet/enhet/(?P<pk>\d{1,8})/$', views.enhet_detaljer, name='enhet_detaljer'),
 	url(r'^virksomhet/enhet/graf/(?P<pk>\d{1,8})/$', views.virksomhet_enheter, name='virksomhet_enheter'),
 	url(r'^virksomhet/prkadmin/(?P<pk>\d{1,8})/$', views.virksomhet_prkadmin, name='virksomhet_prkadmin'),
+	url(r'^virksomhet/systemer/ansvarligfor/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
 
 	url(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
 	url(r'^leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
 	url(r'^leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),
 
-	url(r'^hovedkategorier/$', views.alle_hovedkategorier, name='alle_hovedkategorier'),
-	url(r'^hovedkategorier/subkategorier/$', views.alle_systemkategorier, name='alle_systemkategorier'),
+	url(r'^hovedkategorier/alle/$', views.alle_hovedkategorier, name='alle_hovedkategorier'),
+	url(r'^hovedkategorier/subkategorier/alle/$', views.alle_systemkategorier, name='alle_systemkategorier'),
 	url(r'^hovedkategorier/subkategorier/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
 	url(r'^hovedkategorier/subkategorier/uten_kategori/$', views.uten_systemkategori, name='uten_systemkategorier'),
 	url(r'^hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
@@ -117,9 +118,10 @@ urlpatterns = [
 	url(r'^ansvarlige/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),
 	url(r'^ansvarlige/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
 
-	url(r'^cmdb/$', views.alle_cmdbref, name='alle_cmdbref'),
+	url(r'^cmdb/$', views.alle_cmdbref, name='alle_cmdbref_main'),
+	url(r'^cmdb/alle/$', views.alle_cmdbref, name='alle_cmdbref'),
 	url(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),
-	url(r'^cmdb/servere/$', views.alle_maskiner, name='alle_maskiner'),
+	url(r'^cmdb/servere/sok/$', views.alle_maskiner, name='alle_maskiner'),
 	url(r'^cmdb/servere/utfaset/$', views.servere_utfaset, name='servere_utfaset'),
 	url(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 	url(r'^cmdb/os/$', views.alle_os, name='alle_os'),

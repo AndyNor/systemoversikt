@@ -1,20 +1,20 @@
-{% extends "index.html" %}
+{% extends "system_index.html" %}
 {% load static %}
 
-
-{% block underoverskrift %}
+{% block overskrift %}
 	Alle leverandører
+{% endblock overskrift %}
+
+{% block ekstrameny_leverandor %}
 	{% if user.is_authenticated %}
-	<h6>
-		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/leverandor/add/">Legg til ny leverandør</a>
-	</h6>
+		<a class="btn btn-sm btn-link" target="_blank" href="/admin/systemoversikt/leverandor/add/">Legg til ny leverandør</a>
 	{% endif %}
-{% endblock underoverskrift %}
+{% endblock ekstrameny_leverandor %}
 
 
-{% block main_content %}
+{% block hovedinnhold %}
 
-<p>Det vises {{ leverandorer.count }} leverandører.</p>
+	<p>Det vises {{ leverandorer.count }} leverandører.</p>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
@@ -70,4 +70,5 @@
 	{% endfor %}
 	</tbody>
 	</table>
-{% endblock main_content %}
+
+{% endblock hovedinnhold %}

@@ -14,37 +14,39 @@
 	<th>Miljø</th>
 	<th>Kritikalitet</th>
 	{% comment %}<th>Type</th>{% endcomment %}
-	<th>Portfolio</th>
+	{% comment %}<th>Portfolio</th>{% endcomment %}
 	<th>Availability</th>
 	<th>Operation factor</th>
 	<th>Complexity</th>
-	<th width="25%">Short description</th>
+	{% comment %}<th width="25%">Short description</th>{% endcomment %}
 </tr>
 </thead>
 <tbody>
 {% for item in cmdbref %}
-<tr {% if item.operational_status == 0 %} style="text-decoration: line-through; opacity: 30%;" {% endif %}
-	{% if item.is_bss %} style="color: #d6d6d6;" {% endif %}>
+<tr {% if item.operational_status == 0 %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 	<td>
 		{% comment %}
-		{% if user.is_authenticated %}
-		<a target="_blank" href="/admin/systemoversikt/cmdbref/{{ item.pk }}/delete/">
-			<img style="width: 8px; margin: 3px;"
-			src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
-		{% endif %}
+			{% if user.is_authenticated %}
+			<a target="_blank" href="/admin/systemoversikt/cmdbref/{{ item.pk }}/delete/">
+				<img style="width: 8px; margin: 3px;"
+				src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
+			{% endif %}
 		{% endcomment %}
 		{{ item.opprettet|date:'Y-m-d' }}
 	</td>
 	<td>{{ item.sist_oppdatert|date:'Y-m-d' }}</td>
 	<td>
 		{% comment %}
-		{% if user.is_authenticated %}
-		<a target="_blank" href="/admin/systemoversikt/cmdbref/{{ item.pk }}/change/">
-			<img style="width: 11px; margin: 3px;"
-			src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
-		{% endif %}
+			{% if user.is_authenticated %}
+			<a target="_blank" href="/admin/systemoversikt/cmdbref/{{ item.pk }}/change/">
+				<img style="width: 11px; margin: 3px;"
+				src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+			{% endif %}
 		{% endcomment %}
+
+
 		<a href="{% url 'cmdbdevice' pk=item.pk %}">{{ item.navn }}</a>
+		{% if item.is_bss %}<span> (gruppe)</span>{% endif %}
 	</td>
 	<td>
 		{{ item.service_classification|default:"" }}
@@ -62,7 +64,9 @@
 	<td>{{ item.get_environment_display|default:"-" }}</td>
 	<td>{{ item.get_kritikalitet_display|default:"X ukjent" }}</td>
 	{% comment %}<td>{{ item.get_cmdb_type_display }}</td>{% endcomment %}
-	<td>{{ item.u_service_portfolio|default:"-" }}</td>
+
+	{% comment %}<td>{{ item.u_service_portfolio|default:"-" }}</td>{% endcomment %}
+
 	<td {% if not item.u_service_availability %} style="color: red;" {% endif %}>
 		{{ item.u_service_availability|default:"T?" }}
 	</td>
@@ -72,7 +76,8 @@
 	<td {% if not item.u_service_complexity %} style="color: red;" {% endif %}>
 		{{ item.u_service_complexity|default:"K?" }}
 	</td>
-	<td>{{ item.comments|default:"-" }}</td>
+
+	{% comment %}<td>{{ item.comments|default:"-" }}</td>{% endcomment %}
 </tr>
 {% endfor %}
 </tbody>

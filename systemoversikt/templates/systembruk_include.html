@@ -4,7 +4,7 @@
 	<thead>
 	<tr>
 		{% if user.is_authenticated %}
-		<th>Rediger</th>
+		<th class="filter-false"></th>
 		{% endif %}
 		<th>Bruksdetaljer</th>
 		<th>Lokal forvalter</th>
@@ -38,26 +38,20 @@
 		</td>
 
 		<td>
-			{% if bruk.del_behandlinger %}
-			<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
-			{% else %}
-			<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
-			{% endif %}
-			{{ bruk.del_behandlinger|yesno:"Ja,Nei" }}
-			</td>
+			{% include 'system_janeivetikke.html' with boolean=bruk.del_behandlinger %}
+		</td>
 
 		{% comment %}<td>
 			{{ bruk.antall_behandlinger|default:"-" }}
 		</td>{% endcomment %}
 
 		<td>
-			{% url "systemdetaljer" bruk.system.pk as url_systemdetaljer %}
-			<a href="{{ url_systemdetaljer }}">{{ bruk.system }}</a>
+			{% include 'system_include_vis.html' with system=bruk.system %}
 		</td>
 
-		<td>{{ bruk.get_teknisk_egnethet_display }}</td>
-		<td>{{ bruk.get_strategisk_egnethet_display }}</td>
-		<td>{{ bruk.get_funksjonell_egnethet_display }}</td>
+		<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
+		<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
+		<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
 
 
 

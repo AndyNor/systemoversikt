@@ -1,12 +1,15 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	AD-gruppedetaljer: {{ gruppe.cn }}
-{% endblock underoverskrift %}
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
 
-{% block main_content %}
+{% block overskrift %}
+	AD-gruppedetaljer
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
 
 	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
 	<a class="btn btn-sm" href="{% url 'ad' %}">Søk i Active Directory</a>
@@ -15,33 +18,23 @@
 	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">Admin: medlem i 0 grupper</a>
 
 	<hr>
-	Sist oppdatert {{ gruppe.sist_oppdatert }}
-		(<a target="_blank" href="{% url 'ad_exact' name=gruppe.distinguishedname %}">Live søk i AD</a>)
-		(<a target="_blank" href="{% url 'adgruppe_graf' pk=gruppe.pk %}">Graf opp nøstede grupper</a>)
-
-	<hr>
 	<h6>Fully distinguished name</h6>
 	{{ gruppe.distinguishedname }}<br>
+	{% if gruppe.from_prk is True %}
+		<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(100deg);" src="{% static 'open-iconic/svg/circle-check.svg' %}" alt="Kvalitet verifisert"> Stammer fra PRK<br>
+	{% else %}
+		<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/warning.svg' %}" alt="Kvalitet ikke verifisert"> Opprettet utenfor PRK<br>
+	{% endif %}
+
+	Sist oppdatert {{ gruppe.sist_oppdatert }}<br>
+	<a target="_blank" href="{% url 'ad_exact' name=gruppe.distinguishedname %}">Live søk i AD</a> | <a target="_blank" href="{% url 'adgruppe_graf' pk=gruppe.pk %}">Graf opp nøstede grupper</a>
 
 	<hr>
-
-	{% if gruppe.from_prk is True %}
-		<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(100deg);" src="{% static 'open-iconic/svg/circle-check.svg' %}" alt="Kvalitet verifisert"> Stammer fra PRK
-	{% else %}
-		<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/warning.svg' %}" alt="Kvalitet ikke verifisert"> Opprettet utenfor PRK
-	{% endif %}
+	<h6>Beskrivelse</h6>
+	{{ gruppe.description }}
 
 	<hr>
 	<h6>Medlemer i gruppen</h6>
-
-	<p><b>Sikkerhetsgrupper</b></p>
-	{% for m in member.groups %}
-		<li><a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m.cn }}</a></li>
-	{% empty %}
-		<li>Ingen</li>
-	{% endfor %}
-
-	<br><p><b>Brukerkontoer</b></p>
 	<table class="table table-sm table-striped tablesorter">
 	<thead>
 		<tr>
@@ -49,24 +42,36 @@
 			<th>Navn</th>
 			<th>Brukernavn</th>
 			<th>Virksomhet</th>
-			<th>Beskrivelse</th>
+			<th width="35%">Beskrivelse</th>
 			<th>Fra PRK?</th>
 		</tr>
 	</thead>
 	<tbodt>
+	{% for m in member.groups %}
+		<tr>
+			<th>👥 Sikkerhetsgruppe</th>
+			<td><a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m.cn }}</a></td>
+			<th></th>
+			<th></th>
+			<th></th>
+			<th></th>
+		</tr>
+	{% endfor %}
+
 	{% for m in member.users %}
 		<tr>
-			<td>PRK-bruker</td>
+			<td>👤 PRK-bruker</td>
 			<td>{{m.first_name}} {{m.last_name}}</td>
 			<td>{{m.username}}</td>
-			<td>{{m.profile.virksomhet}}</td>
+			<td>{{m.profile.virksomhet.virksomhetsforkortelse}}</td>
 			<td>{{m.profile.description}}</td>
 			<td>{{m.profile.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
 		</tr>
 	{% endfor %}
+
 	{% for m in member.other_users %}
 		<tr>
-			<td>Annen AD-bruker</td>
+			<td>👤 Annen AD-bruker</td>
 			<td>{{m.displayName}}</td>
 			<td>{{m.sAMAccountName}}</td>
 			<td></td>
@@ -85,8 +90,7 @@
 	{% endif%}
 
 	<hr>
-	<h6>Beskrivelse</h6>
-	{{ gruppe.description }}
+
 
 	<hr>
 	<h6>Denne gruppen ligger under følgende OU</h6>
@@ -112,4 +116,4 @@
 
 
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

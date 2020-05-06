@@ -1,23 +1,26 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	Maskiner på Felles IKT-plattform
-{% endblock underoverskrift %}
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
 
-{% block main_content %}
+{% block overskrift %}
+	Søk i servere og klienter
+{% endblock overskrift %}
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
-	<a class="btn btn-sm" href="{% url 'alle_os' %}">Vis operativsystem</a>
-	<a class="btn btn-sm" href="{% url 'servere_utfaset' %}">Utfasede servere</a>
+{% block hovedinnhold %}
+
+	<p>Servere er en egen import fra Sopra Sterias CMDB. Den inneholder servere, terminalservere og tykke klienter. Tynne klienter er ikke med da de ikke er medlem i Oslofelles-domene. Du kan søke opp tynne klienter i PRK-maskinadmin.</p>
+
+	<p>Sopra Steria knytter servere til business sub services, og de har så langt auto-discovery virker informasjon om IP-adresse, operativsystem, disk, minne og cpu.</p>
 
 	<hr>
 
-	<p>Hurtigsøk:
-		<a class="btn btn-sm" href="?search_term=ws8">Tykke og tynne klienter (mange)</a>
+	<p>Noen søkeforslag:
+		<a class="btn btn-sm" href="?search_term=ws8">Tykke klienter (tar lang tid)</a>
 		<a class="btn btn-sm" href="?search_term=xai">Terminalservere intern sone</a>
-		<a class="btn btn-sm" href="?search_term=xas">Terminalservere sikkers sone</a>
+		<a class="btn btn-sm" href="?search_term=xas">Terminalservere sikker sone</a>
 		<a class="btn btn-sm" href="?search_term=wsvis">VDI intern sone</a>
 		<a class="btn btn-sm" href="?search_term=wsvss">VDI sikker sone</a>
 		<a class="btn btn-sm" href="?search_term=mgmt">Managementservere</a>
@@ -34,7 +37,7 @@
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="hostnavn inneholder.." class="form-control form-control-sm">
+			placeholder="hostnavn / bs inneholder.." class="form-control form-control-sm">
 			<input size="30" style="width: 250px;" type="search" value="{{ comp_os }}" name="comp_os"
 			placeholder="Operativsystem er.." class="form-control form-control-sm">
 			<input size="30" style="width: 250px;" type="search" value="{{ comp_os_version }}" name="comp_os_version"
@@ -121,4 +124,5 @@
 	{% endfor %}
 	</tbody>
 	</table>
-{% endblock main_content %}
+
+{% endblock hovedinnhold %}

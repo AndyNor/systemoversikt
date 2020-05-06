@@ -1,22 +1,25 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
 	Søk på IP-adresser på felles IKT-plattform
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
+	<p>Driftsleverandør ved Telenor vedlikeholder en oversikt over alle VLAN på felles IKT-plattform, samt en oversikt over alle VIP-er i BigIP, samt en oversikt over adresser som er direkte NAT-et ut på Internett. I tillegg importeres sonefil fra DNS intern og ekstern av og til inn i Kartoteket. Alt dette skjer manuelt, men informasjonen endres svært sjeldent. Her kan du søke etter en IP, og du vil få treff fra de ulike kildene.</p>
 
-	<hr>
+	<p>Du kan i praksis lime inn hva som helst her, og Kartoteket vil identifisere IP-adresser, slå dem opp, samt fortelle deg hva den mener ikke er IP-adresser.</p>
 
 	<form action="{% url 'alle_ip' %}" method="POST" autocomplete="off">
 		{% csrf_token %}
 		<div class="form-group form-inline">
 			<textarea rows="3" cols="50" style="width: 500px; height: 150px;" name="search_term"
-			placeholder="Liste med IP-adresser, separert med space eller, semikolon eller komma. Annen tekst ignoreres..." class="form-control form-control-sm">{{ search_term }}</textarea>
+			placeholder="Liste med IP-adresser, separert med space, semikolon eller komma. Annen tekst ignoreres..." class="form-control form-control-sm">{{ search_term }}</textarea>
 			<input style="margin-left: 10px;" type="submit" value="Slå opp" class="btn btn-primary btn-sm">
 		</div>
 	</form>
@@ -63,4 +66,4 @@
 {% endif %}
 
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

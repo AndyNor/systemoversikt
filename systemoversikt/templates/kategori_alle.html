@@ -1,28 +1,31 @@
-{% extends "index.html" %}
+{% extends "system_index.html" %}
 {% load static %}
 
-{% block underoverskrift %}
-	Alle kategorier
-	<h6>
-		{% if user.is_authenticated %}
-		<a class="btn btn-sm btn-primary" style="position: -webkit-sticky; position: sticky; top: 115px; z-index: 9999;"
-			target="_blank" href="/admin/systemoversikt/systemkategori/add/">Legg til ny kategori</a>
+{% block overskrift %}
+	Alle systemkategorier
+{% endblock overskrift %}
+
+{% block ekstrameny_kategori %}
+	{% url 'alle_hovedkategorier' as url_alle_hovedkategorier %}
+		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Alle hovedkategorier</a>
+	{% if user.is_authenticated %}
+		<a href="/admin/systemoversikt/systemkategori/add/" class="btn btn-sm btn-link">Registrer ny kategori</a>
+
+		{% url 'uten_systemkategorier' as url_uten_systemkategorier %}
+		<a href="{{url_uten_systemkategorier}}" class="btn btn-sm btn-link {% if url_uten_systemkategorier in request.path %}fremhev{% endif %}">Mangler subkategori</a>
 		{% endif %}
-		<a class="btn btn-sm btn-secondary" href="{% url 'alle_hovedkategorier' %}">Alle hovedkategorier</a>
-		<a class="btn btn-sm btn-secondary" href="{%url 'uten_systemkategorier' %}">Mangler subkategori</a>
-	</h6>
+{% endblock ekstrameny_kategori %}
 
-<p>Dette er kategorier som forvaltes av UKE. De ble innført i forbindelse med systemkonsolideringsprosjektet. Alle systemer skal ha en eller flere kategorier. Viser {{ kategorier.count }} kategorier.</p>
 
-{% endblock underoverskrift %}
+{% block hovedinnhold %}
 
-{% block main_content %}
+	<p>Dette er kategorier som forvaltes av UKE. De ble innført i forbindelse med systemkonsolideringsprosjektet. Alle systemer skal ha en eller flere kategorier. Viser {{ kategorier.count }} kategorier.</p>
 
 	<table class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>
 		{% if user.is_authenticated %}
-		<th></th>
+		<th class="filter-false"></th>
 		{% endif %}
 		<th>Hovedkategori</th>
 		<th>Kategorinavn</th>
@@ -47,4 +50,5 @@
 	{% endfor %}
 	</tbody>
 	</table>
-{% endblock main_content %}
+
+{% endblock hovedinnhold %}

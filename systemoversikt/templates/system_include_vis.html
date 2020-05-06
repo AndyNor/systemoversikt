@@ -1,0 +1,7 @@
+{% url "systemdetaljer" system.pk as url_systemdetaljer %}
+<a href="{{ url_systemdetaljer }}" style="{% if system.ibruk is False %}text-decoration: line-through;{% endif %}">
+	{% if system.informasjon_kvalitetssikret is False %}
+	<span alt="ikke kvalitetssikret" class="color: yellow;">⚠️</span>
+	{% endif %}
+	{{ system.systemnavn }}
+</a>

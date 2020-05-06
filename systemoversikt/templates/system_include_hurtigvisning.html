@@ -1,0 +1,50 @@
+{% load static %}
+
+<table id="systemoversikt" class="table table-sm table-striped">
+<thead>
+<tr>
+	<th>Systemnavn</th>
+	<th>Systemeier</th>
+	<th>Systemklassifisering</th>
+	<th>Driftsplattform</th>
+
+	{% if perms.systemoversikt.change_system %}
+		<th>Sikkerhetsnivå</th>
+		<th>Livsløp</th>
+	{% endif %}
+
+</tr>
+</thead>
+<tbody>
+{% for item in systemer %}
+<tr>
+
+	<td>
+		{% include 'system_include_vis.html' with system=item %}
+	</td>
+
+	<td>
+		{% url "virksomhet" item.systemeier.pk as url_systemeier %}
+		<b><a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a></b>
+	</td>
+
+	<td>
+		{% url 'systemklassifisering_detaljer' item.systemeierskapsmodell as url_systemeierskapsmodell %}
+		<a href="{{ url_systemeierskapsmodell }}">{{ item.get_systemeierskapsmodell_display|default:"-" }}</a>
+	</td>
+
+	<td>
+		{% url 'detaljer_driftsmodell' item.driftsmodell_foreignkey.pk as url_driftsmodell_foreignkey %}
+		<a href="{{ url_driftsmodell_foreignkey }}">{{ item.driftsmodell_foreignkey|default:"-" }}</a>
+	</td>
+
+	{% if perms.systemoversikt.change_system %}
+		<td>{{ item.get_sikkerhetsnivaa_display|default:"-" }}</td>
+		<td>{{ item.get_livslop_status_display|default:"-" }}</td>
+	{% endif %}
+
+
+</tr>
+{% endfor %}
+</tbody>
+</table>

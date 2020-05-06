@@ -1,86 +1,89 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
 
-{% block underoverskrift %}
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
 	Business (Sub) Service "{{ cmdbref.0 }}"
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
+	{% if perms.systemoversikt.view_system %}
+		<h6>Beskrivelse fra Sopra Steria</h6>
+		<p>{{cmdbref.0.comments|default:"-"}}</p>
 
-{% if perms.systemoversikt.view_system %}
+		{% include "cmdb_include.html" with cmdbref=cmdbref %}
 
-{% include "cmdb_include.html" with cmdbref=cmdbref %}
-
-<hr>
-<h6>Servere</h6>
-<table id="stickyheader" class="table table-sm tablesorter">
-	<thead>
-	<tr>
-		<th>Computer name / hostname</th>
-		<th>Service portfolio</th>
-		<th>Disk space</th>
-		<th>CPU speed</th>
-		<th>IP-address</th>
-		<th>VLAN</th>
-		<th>DNS</th>
-		<th>NAT</th>
-		<th>VIP</th>
-		<th>OS</th>
-		<th>OS version</th>
-		<th>OS service pack</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for item in cmdbdevices.all %}
-	<tr {% if not item.active %} style="color: #d6d6d6;" {% endif %}>
-		<td>{{ item.comp_name|default:"-" }}</td>
-		<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
-		<td>{{ item.comp_disk_space|default:"-" }}</td>
-		<td>{{ item.comp_cpu_speed|default:"-" }}</td>
-		<td>{{ item.comp_ip_address|default:"-" }}</td>
-		<td>{{ item.vlan|default:"" }}</td>
-		<td>{{ item.dns|default:"" }}</td>
-		<td>{{ item.nat|default:"" }}</td>
-		<td>{{ item.vip|default:"" }}</td>
-		<td>{{ item.comp_os }}</td>
-		<td>{{ item.comp_os_version|default:"-" }}</td>
-		<td>{{ item.comp_os_service_pack|default:"-" }}</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-</table>
-
-
-<h6>Databaser</h6>
-<table id="stickyheader" class="table table-sm tablesorter">
-	<thead>
-	<tr>
-		<th width="25%">Database</th>
-		<th>Used for</th>
-		<th>Version</th>
-		<th>File size (kb)</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for db in databaser %}
-	<tr {% if not db.db_operational_status %} style="color: #d6d6d6;" {% endif %}>
-		<td>{{ db.db_database }}</td>
-		<td>{{ db.db_used_for }}</td>
-		<td>{{ db.db_version }}</td>
-		<td>{{ db.db_u_datafilessizekb }} ({{ db.db_u_datafilessizekb|filesizeformat }})</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-</table>
+		<hr>
+		<h6>Servere</h6>
+		<table id="stickyheader" class="table table-sm tablesorter">
+			<thead>
+			<tr>
+				<th>Computer name / hostname</th>
+				<th>Service portfolio</th>
+				<th>Disk space</th>
+				<th>CPU speed</th>
+				<th>IP-address</th>
+				<th>VLAN</th>
+				<th>DNS</th>
+				<th>NAT</th>
+				<th>VIP</th>
+				<th>OS</th>
+				<th>OS version</th>
+				<th>OS service pack</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for item in cmdbdevices.all %}
+			<tr {% if not item.active %} style="color: #d6d6d6;" {% endif %}>
+				<td>{{ item.comp_name|default:"-" }}</td>
+				<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
+				<td>{{ item.comp_disk_space|default:"-" }}</td>
+				<td>{{ item.comp_cpu_speed|default:"-" }}</td>
+				<td>{{ item.comp_ip_address|default:"-" }}</td>
+				<td>{{ item.vlan|default:"" }}</td>
+				<td>{{ item.dns|default:"" }}</td>
+				<td>{{ item.nat|default:"" }}</td>
+				<td>{{ item.vip|default:"" }}</td>
+				<td>{{ item.comp_os }}</td>
+				<td>{{ item.comp_os_version|default:"-" }}</td>
+				<td>{{ item.comp_os_service_pack|default:"-" }}</td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
 
 
+		<h6>Databaser</h6>
+		<table id="stickyheader" class="table table-sm tablesorter">
+			<thead>
+			<tr>
+				<th width="25%">Database</th>
+				<th>Used for</th>
+				<th>Version</th>
+				<th>File size (kb)</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for db in databaser %}
+			<tr {% if not db.db_operational_status %} style="color: #d6d6d6;" {% endif %}>
+				<td>{{ db.db_database }}</td>
+				<td>{{ db.db_used_for }}</td>
+				<td>{{ db.db_version }}</td>
+				<td>{{ db.db_u_datafilessizekb }} ({{ db.db_u_datafilessizekb|filesizeformat }})</td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
 
-{% else %}
-	<p>Du mangler tilgangen view_system (Vise systemdetaljer).</p>
-{% endif %}
+	{% else %}
+		<p>Du mangler tilgangen view_system (Vise systemdetaljer).</p>
+
+	{% endif %}
 
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

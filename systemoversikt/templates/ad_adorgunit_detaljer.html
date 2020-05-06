@@ -1,18 +1,20 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	Organisasjonsenheter i felles brukerkatalog (AD)
-{% endblock underoverskrift %}
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
 
-{% block main_content %}
+{% block overskrift %}
+	Bla i Active Directory (Oslofelles)
+{% endblock overskrift %}
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
-	<a class="btn btn-sm" href="{% url 'ad' %}">Søk i Active Directory</a>
-	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/">Admin: AD-grupper</a>
-	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?membercount=0">Admin: grupper 0 medlemmer</a>
-	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">Admin: medlem i 0 grupper</a>
+{% block hovedinnhold %}
+
+
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/">Bla i AD-grupper</a>
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/?membercount=0">Gruppper med 0 medlemmer</a>
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/?memberofcount=0"> Grupper medlem av 0 andre grupper</a>
 
 	<hr>
 
@@ -25,50 +27,27 @@
 	</form>
 
 	<hr>
-	<h3>{{ ou.cn }}</h3>
-	Sist oppdatert {{ ou.sist_oppdatert }} (<a target="_blank" href="{% url 'ad_exact' name=ou.distinguishedname %}">Søk direkte i AD</a>)
-
-	<hr>
-	<h6>Overordnet organisasjonsenhet (OU)</h6>
+	<h5>{{ ou.cn }}</h5>
+	Sist oppdatert {{ ou.sist_oppdatert }}<br>
 	{% if parent %}
-		<li><a href="{% url 'adorgunit_detaljer' pk=parent.pk %}">{{ parent.cn }}</a></li>
-	{% else %}
-		<li>Ingen</li>
+	Mormappe: <a href="{% url 'adorgunit_detaljer' pk=parent.pk %}">📁 {{ parent.cn }}</a><br>
 	{% endif %}
+	<a href="{% url 'ad_exact' name=ou.distinguishedname %}">🔎 Utfør direktesøk i AD</a>
 
 	<hr>
-	<h6>Underliggende organisasjonsenheter (OU)</h6>
+	<h6>Underliggende objekter</h6>
+	<p><span style="color: #dc3545;">Rød</span> bakgrunn indikerer at gruppen eller brukeren ikke kommer fra PRK. Viser ikke maskinobjekter.</p>
 	<ul style="column-count:3;">
 	{% for c in children %}
-		<li><a href="{% url 'adorgunit_detaljer' pk=c.pk %}">{{c.cn}}</a></li>
-	{% empty %}
-		<li>Ingen</li>
+		<li><a href="{% url 'adorgunit_detaljer' pk=c.pk %}">📁 {{c.cn}}</a></li>
 	{% endfor %}
-	</ul>
-
-
-	<hr>
-	<h6>Brukere</h6>
-	<ul style="column-count:3;">
 	{% for u in users %}
 		<li><a {% if not u.profile.from_prk %} style="background-color: #fdd6d6" {% endif %}
-			href="{% url 'bruker_detaljer' pk=u.pk %}">{{ u }}</a></li>
-	{% empty %}
-		<li>Ingen</li>
+			href="{% url 'bruker_detaljer' pk=u.pk %}">👤 {{ u }}</a></li>
 	{% endfor %}
-	</ul>
-
-	<hr>
-	<h6>Tilgangsgrupper (Security groups)</h6>
-	<p>Antall medlemmer i parentes. En medlem kan både være en person og en annen gruppe med flere personer i. Rød bakgrunn dersom gruppen ikke stammer fra PRK.
-	<ul style="column-count:3;">
 	{% for g in groups %}
-		<li><a {% if not g.from_prk %} style="background-color: #fdd6d6" {% endif %} href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.short }}</a> ({{ g.membercount }})</li>
-	{% empty %}
-		<li>Ingen</li>
+		<li><a {% if not g.from_prk %} style="color: #dc3545;" {% endif %} href="{% url 'adgruppe_detaljer' pk=g.pk %}">👥 {{ g.short }}</a> ({{ g.membercount }})</li>
 	{% endfor %}
 	</ul>
 
-
-
-{% endblock main_content %}
+{% endblock hovedinnhold %}

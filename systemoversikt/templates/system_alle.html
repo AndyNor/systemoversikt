@@ -1,0 +1,67 @@
+{% extends "system_index.html" %}
+
+{% block overskrift %}
+	{{overskrift}}
+{% endblock overskrift %}
+
+{% block ekstrameny_system %}
+	{% if user.is_authenticated %}
+		<a href="/admin/systemoversikt/system/add/" class="btn btn-sm btn-link">Registrer nytt system</a>
+	{% endif %}
+
+		{% url 'systemer_utfaset' as url_systemer_utfaset %}
+		<a href="{{url_systemer_utfaset}}" class="btn btn-sm {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfasede systemer</a>
+
+	<hr>
+	<h6>Systemklassifisering</h6>
+	{% for klasse in kommuneklassifisering %}
+		{% url 'systemklassifisering_detaljer' id=klasse.0 as url_systemklassifisering_detaljer %}
+		<a href="{{url_systemklassifisering_detaljer}}" class="btn btn-sm btn-link {% if url_systemklassifisering_detaljer in request.path %}fremhev{% endif %}">{{klasse.1}}</a><br>
+
+	{% endfor %}
+		{% url 'systemklassifisering_detaljer' id='__NONE__' as url_systemklassifisering_detaljer %}
+		<a href="{{url_systemklassifisering_detaljer}}" class="btn btn-sm btn-link {% if url_systemklassifisering_detaljer in request.path %}fremhev{% endif %}">Tom</a>
+
+	<hr>
+	<h6>Grensesnitt</h6>
+	{% for type in systemtyper %}
+		{% url 'systemtype_detaljer' pk=type.pk as url_systemtype_detaljer %}
+		<a href="{{url_systemtype_detaljer}}" class="btn btn-sm btn-link {% if url_systemtype_detaljer in request.path %}fremhev{% endif %}">{{type}}</a><br>
+	{% endfor %}
+		{% url 'systemtype_detaljer_mangler' as url_systemtype_detaljer_mangler %}
+		<a href="{{url_systemtype_detaljer_mangler}}" class="btn btn-sm btn-link {% if url_systemtype_detaljer_mangler in request.path %}fremhev{% endif %}">Tom</a>
+{% endblock ekstrameny_system %}
+
+{% block hovedinnhold %}
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Systemnavn inneholder.." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
+		</div>
+	</form>
+
+	<p>Viser {{ systemer.count }} systemer.</p>
+
+	{% include "system_include_hurtigvisning.html" %}
+
+	{% if aktuelle_programvarer %}
+	<p>Treff på programvare</p>
+	<ul style="column-count:5;">
+	{% for p in aktuelle_programvarer %}
+		<li><a href="{% url 'programvaredetaljer' pk=p.pk %}">{{p.programvarenavn}}</a></li>
+	{% endfor %}
+	</ul>
+	{% endif %}
+
+	{% if potensielle_systemer %}
+	<p>Basert på systembeskrivelser, mente du?</p>
+	<ul style="column-count:5;">
+	{% for system in potensielle_systemer %}
+		<li>{% include 'system_include_vis.html' with system=system %}</li>
+	{% endfor %}
+	</ul>
+	{% endif %}
+
+{% endblock hovedinnhold %}

@@ -8,12 +8,12 @@
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">Rediger {{virksomhet.virksomhetsforkortelse}}</a>
 	{% endif %}
 
-	{% if virksomhet.intranett_url %} 
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.intranett_url }}" target="_blank">{{virksomhet.virksomhetsforkortelse}}s intranettside</a> 
+	{% if virksomhet.intranett_url %}
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.intranett_url }}" target="_blank">{{virksomhet.virksomhetsforkortelse}}s intranettside</a>
 	{% endif %}
 
-	{% if virksomhet.www_url %} 
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.www_url }}" target="_blank">{{virksomhet.virksomhetsforkortelse}}s nettside</a> 
+	{% if virksomhet.www_url %}
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.www_url }}" target="_blank">{{virksomhet.virksomhetsforkortelse}}s nettside</a>
 	{% endif %}
 
 	{% url 'virksomhet_ansvarlige' pk=virksomhet.pk as url_virksomhet_ansvarlige %}
@@ -38,14 +38,17 @@
 	{% url 'avtalervirksomhet' virksomhet=virksomhet.pk as url_avtalervirksomhet %}
 		<a href="{{ url_avtalervirksomhet }}" class="btn btn-sm btn-link {% if url_avtalervirksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s avtaler</a>
 
-	{% url 'virksomhet_urler' pk=virksomhet.pk as url_virksomhet_urler %}
-		<a href="{{ url_virksomhet_urler }}" class="btn btn-sm btn-link {% if url_virksomhet_urler in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s domener</a>
+	{% url 'systemer_virksomhet_ansvarlig_for' pk=virksomhet.pk as url_systemer_virksomhet_ansvarlig_for %}
+		<a href="{{ url_systemer_virksomhet_ansvarlig_for }}" class="btn btn-sm btn-link {% if url_systemer_virksomhet_ansvarlig_for in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s systemansvar</a>
 
 	{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
 		<a href="{{ url_all_bruk_for_virksomhet }}" class="btn btn-sm btn-link {% if url_all_bruk_for_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s bruk av systemer</a>
 
 	{% url 'all_programvarebruk_for_virksomhet' pk=virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
 		<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-link {% if url_all_programvarebruk_for_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s bruk av programvare</a>
+
+	{% url 'virksomhet_urler' pk=virksomhet.pk as url_virksomhet_urler %}
+		<a href="{{ url_virksomhet_urler }}" class="btn btn-sm btn-link {% if url_virksomhet_urler in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s domener</a>
 
 	{% url 'alle_behandlinger_virksomhet' pk=virksomhet.pk as url_alle_behandlinger_virksomhet %}
 		<a href="{{ url_alle_behandlinger_virksomhet }}" class="btn btn-sm btn-link {% if url_alle_behandlinger_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s behandlinger</a>

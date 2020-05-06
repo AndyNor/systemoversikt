@@ -1,60 +1,63 @@
-{% extends "index.html" %}
+{% extends "system_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	Driftsmodeller
+{% block ekstrameny_driftsmiljo %}
 	{% if user.is_authenticated %}
-	<div>
-		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/driftsmodell/add/">Legg til ny driftsmodell</a>
-		<a class="btn btn-sm" href="{% url 'systemer_uten_driftsmodell' %}">Systemer uten driftsmodell</a>
-	</div>
+	<a href="/admin/systemoversikt/driftsmodell/add/" class="btn btn-sm btn-link">Registrer nytt driftmiljø</a>
 	{% endif %}
-{% endblock underoverskrift %}
+	<a href="{% url 'systemer_uten_driftsmodell' %}" class="btn btn-sm btn-link">Driftmiljø mangler</a>
+{% endblock ekstrameny_driftsmiljo %}
 
-{% block main_content %}
-<p>Her ser du en oversikt over alle {{ driftsmodeller.count }} driftsplattformer. Alle driftsplattformer skal kobles til ansvarlig virksomhet i kommunen.<br>
-Alle systemer bør kobles mot en av disse driftsplattformene. Dersom systemet tilhører flere driftsmodeller, velges den mest fremtrendende.<br>
-Klikk på en driftsplattform for å se generell informasjon samt alle systemer som er tilknyttet.</p>
 
-<table id="stickyheader" class="table table-sm table-striped tablesorter">
-	<thead>
-	<tr>
-		{% if user.is_authenticated %}
-		<th>Rediger</th>
-		{% endif %}
-		<th>Driftsmodeller</th>
-		<th>Forvaltet av</th>
-		{% if user.is_authenticated %}
-		<th>Slett</th>
-		{% endif %}
-	</tr>
-	</thead>
-	<tbody>
-	{% for item in driftsmodeller %}
-	<tr {% if item.own_domain %} style="background-color: #fffee6;" {% endif %}>
+{% block overskrift %}
+	Driftsmodeller
+{% endblock overskrift %}
 
-		{% if user.is_authenticated %}
-		<td>
-			<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
-		</td>
-		{% endif %}
-		<td>
-			{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
-				<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
-		</td>
-		<td>
-			{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
-				<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet|default:"-" }}</a>
-		</td>
-		{% if user.is_authenticated %}
-		<td>
-			<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
-		</td>
-		{% endif %}
+{% block hovedinnhold %}
+	<p>Her ser du en oversikt over alle {{ driftsmodeller.count }} driftsplattformer. Alle driftsplattformer skal kobles til ansvarlig virksomhet i kommunen.<br>
+	Alle systemer bør kobles mot en av disse driftsplattformene. Dersom systemet tilhører flere driftsmodeller, velges den mest fremtrendende.<br>
+	Klikk på en driftsplattform for å se generell informasjon samt alle systemer som er tilknyttet.</p>
 
-	</tr>
-	{% endfor %}
-	</tbody>
-</table>
-{% endblock main_content %}
+	<table id="stickyheader" class="table table-sm table-striped tablesorter">
+		<thead>
+		<tr>
+			{% if user.is_authenticated %}
+			<th>Rediger</th>
+			{% endif %}
+			<th>Driftsmodeller</th>
+			<th>Forvaltet av</th>
+			{% if user.is_authenticated %}
+			<th>Slett</th>
+			{% endif %}
+		</tr>
+		</thead>
+		<tbody>
+		{% for item in driftsmodeller %}
+		<tr {% if item.own_domain %} style="background-color: #fffee6;" {% endif %}>
+
+			{% if user.is_authenticated %}
+			<td>
+				<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+			</td>
+			{% endif %}
+			<td>
+				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
+					<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
+			</td>
+			<td>
+				{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
+					<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet|default:"-" }}</a>
+			</td>
+			{% if user.is_authenticated %}
+			<td>
+				<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
+			</td>
+			{% endif %}
+
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

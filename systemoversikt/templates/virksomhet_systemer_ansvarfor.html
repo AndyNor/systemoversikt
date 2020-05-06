@@ -1,0 +1,114 @@
+{% extends "virksomhet_index.html" %}
+{% load static %}
+{% load templatetags %}
+{% load humanize %}
+
+
+{% block ekstrameny %}
+
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Systemer {{ virksomhet.virksomhetsforkortelse }} er eier av eller forvalter for
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>{{ virksomhet.virksomhetsforkortelse }} har ansvar for {{ systemer_ansvarlig_for.count }} systemer.</p>
+
+
+	<table id="systemer" class="table table-sm table-striped">
+		<thead>
+			<tr>
+				{% if perms.systemoversikt.change_system %}
+					<th></th>
+				{% endif %}
+				<th>Systemnavn</th>
+				<th>Kategorisering</th>
+				<th>Systemeier</th>
+				<th>Systemforvalter</th>
+				<th>Livsløp</th>
+				<th>Risikovurdering</th>
+				<th>Driftsmodell / plattform</th>
+				<th>Leverandør av system</th>
+				<th>Leverandør applikasjonsdrift</th>
+				<th>Leverandør basisdrift</th>
+				<th>Tilpasset drift</th>
+
+			</tr>
+		</thead>
+	<tbody>
+	{% for item in systemer_ansvarlig_for %}
+	<tr {% if item.ibruk == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
+		{% if perms.systemoversikt.change_system %}
+			<td><a target="_blank" href="/admin/systemoversikt/system/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
+		{% endif %}
+
+		{% url "systemdetaljer" item.pk as url_systemdetaljer %}
+		<td>
+			{% if item.informasjon_kvalitetssikret is False %}
+				<span class="color: yellow;">⚠️</span>
+			{% endif %}
+			<a href="{{ url_systemdetaljer }}">{{ item.systemnavn }}</a>
+		</td>
+
+		<td>
+			{% for kategori in item.systemkategorier.all %}
+				{% url 'systemkategori' kategori.pk as url_systemkategorier %}
+				<a href="{{ url_systemkategorier }}">{{ kategori }}</a><br>
+			{% endfor %}
+		</td>
+
+		<td>
+			{% url "virksomhet" item.systemeier.pk as url_systemeier %}
+			Virksomhet: <b><a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a></b><br>
+			{% include "ansvarlig_include_vis.html" with ansvarlige=item.systemeier_kontaktpersoner_referanse.all %}
+		</td>
+
+		<td>
+			{% url "virksomhet" item.systemforvalter.pk as url_systemforvalter %}
+			Virksomhet: <b><a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"-" }}</a></b><br>
+			{% include "ansvarlig_include_vis.html" with ansvarlige=item.systemforvalter_kontaktpersoner_referanse.all %}
+		</td>
+
+		<td>{{ item.get_livslop_status_display|default:"" }}</td>
+
+		<td>{{ item.dato_sist_ros|date:'Y-m-d'|default:"-" }} ({{ item.dato_sist_ros|naturaltime|default:"Aldri" }})</td>
+
+		{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}
+		<td><a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a></td>
+
+		<td>
+			{% for lev in item.systemleverandor.all %}
+				{% url "leverandor" lev.pk as url_leverandor %}
+				<a href="{{ url_leverandor }}">{{ lev }}</a>
+				<br>
+			{% endfor %}
+		</td>
+
+		<td>
+		{% for lev in item.applikasjonsdriftleverandor.all %}
+			{% url "leverandor" lev.pk as url_leverandor %}
+			<a href="{{ url_leverandor }}">{{ lev }}</a>
+			<br>
+		{% endfor %}
+		</td>
+
+		<td>
+			{% for lev in item.basisdriftleverandor.all %}
+				{% url "leverandor" lev.pk as url_leverandor %}
+				<a href="{{ url_leverandor }}">{{ lev }}</a>
+				<br>
+			{% endfor %}
+		</td>
+
+		<td>{{ item.isolert_drift|yesno:"Ja,Nei" }}</td>
+
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

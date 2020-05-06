@@ -1,28 +1,23 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	CMDB Business Services (Felles IKT-plattform)
-	<div>
-		{% if user.is_authenticated %}
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_maskiner' %}">Søk i maskiner</a>
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_klienter' %}">MaskinADM</a>
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_databaser' %}">Søk i databaser</a>
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_ip' %}">Søk på IP</a>
-			<a class="btn btn-sm btn-secondary" href="{% url 'alle_prk' %}">Søk i PRK-skjema</a>
-			<a class="btn btn-sm btn-secondary" href="{% url 'adorgunit_detaljer' %}">Bla i Active Directory</a>
-			<a class="btn btn-sm btn-info" target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">Nivådefinisjoner BS</a>
-			<a class="btn btn-sm btn-info" target="_blank" href="https://confluence.oslo.kommune.no/x/R1KQBg">Om manuell import</a>
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
 
-		{% endif %}
-	</div>
-{% endblock underoverskrift %}
+{% block overskrift %}
+	Business Services (CMDB)
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
-	<p>CMDB står for "Configuration management database" og er i denne kontekst en import av det Sopra Steria kaller "Business Services", samt dedikerte integrasjoner mot PRK og AD. Business Services brukes for fakturering av 2S og er ofte knyttet til et system. Dette er de samme kategoriene som benyttes i Kompass ved bestillinger. Importen av Business Services skjer manuelt typisk en gang per måned eller ved behov.<br>
-	Det vises nå {{ cmdbref.count }} grupper.</p>
+	<p>CMDB står for "Configuration management database" og er i praksis en eller flere databaser med informasjon om hva et driftsmiljø består av. Sopra Steria har organisert servere, databaser, nettverksutstyr med mer i "Business Services". En business service er en gruppe, og består igjen av business sub services, typisk per miljø (test, produksjon, kurs..). I Kartoteket knytter vi system mot én eller flere business sub services.</p>
+
+	<p>Det er knyttet tilgjengelighetskrav til business services, som igjen dikterer SLA krav knyttet til bestillinger og feilmeldinger på underliggende systemer. Ler mer om SLA-nivåene på <a href="https://confluence.oslo.kommune.no/x/34MWBg" target="_blank">Confluence</a>.</p>
+
+	<p>Importen av disse dataene skjer manuelt, normalt ved månedskifte eller ved behov. Ler mer om dette på <a href="https://confluence.oslo.kommune.no/x/R1KQBg" target="_blank">Confluence</a>
+
+	<hr>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
@@ -36,4 +31,4 @@
 
 	{% include "cmdb_include.html" with cmdbref=cmdbref %}
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

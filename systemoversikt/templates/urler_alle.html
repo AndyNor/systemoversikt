@@ -6,17 +6,20 @@
 
 	{% if not virksomhet %}
 		{% if user.is_authenticated %}
+		<hr>
 		<h6>Domener</h6>
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemurl/add/">Legg til nytt domene</a>
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/sikkerhetstester/add/">Registrer sikkerhetstest</a>
 			{% if request.user.profile.virksomhet %}
 				<a class="btn btn-sm btn-link" href="{% url 'virksomhet_urler' pk=request.user.profile.virksomhet.pk %}">Våre domener</a>
 			{% endif %}
+
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemurl/add/">Legg til nytt domene</a>
+
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/sikkerhetstester/add/">Registrer sikkerhetstest</a>
 		<hr>
 		{% endif %}
 	{% endif %}
 
-	{% if virksomhet %}	
+	{% if virksomhet %}
 		{% include 'virksomhet_detaljer_ekstrameny.html' %}
 	{% endif %}
 

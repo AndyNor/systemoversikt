@@ -1,43 +1,52 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	PRK Maskinadm: Klienter
-{% endblock underoverskrift %}
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
 
-{% block main_content %}
+{% block overskrift %}
+	PRK Maskinadn - Klienter på felles IKT-plattform
+{% endblock overskrift %}
 
-<a target="_blank" class="btn btn-sm btn-warning" href="/admin/systemoversikt/klientutstyr/">Detaljer</a>
+{% block hovedinnhold %}
 
-<hr>
+	<p>Dagens prosedyre ved anskaffelse av datautstyr som tykke og tynne klienter er registrering i PRK maskinadmin. Der legges et "WS-nummer" inn, samt detaljer om virksomhet, tjenestenivå og hvem utstyret er utlevert til. Det er manuell import til Kartoteket ved behov.</p>
 
-Antall maskiner i MaskinAdm: <h4>{{ antall_maskinadm|intcomma }}</h4>
-Antall maskiner i CMDB (2S): <h4>{{ antal_cmdb|intcomma }}</h4>
-<hr>
+	<p>Denne siden er kun laget for raskt å kunne sjekke differanse mellom Sopra Sterias CMDB og PRK-maskinadmin, samt for å kunne analysere logger fra ASA-boksene (VPN-forbindelser), da konkret sjekk av om WS-nummer som logger på er aktive i PRK-systemadm.</p>
 
-<ul style="column-count:5;">
-{% for ws in vpn_anomaly %}
-<li>{{ws}}</li>
-{% endfor %}
-</ul>
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/klientutstyr/">Bla i PRK-maskinadmin</a>
 
-<hr>
+	<hr>
 
-<ul style="column-count:5;">
-{% for user in vpn_anomaly_user %}
-<li>{{user}}</li>
-{% endfor %}
-</ul>
+	Antall maskiner i MaskinAdm: <h4>{{ antall_maskinadm|intcomma }}</h4>
+	Antall maskiner i CMDB (2S): <h4>{{ antal_cmdb|intcomma }}</h4>
+	<hr>
 
-<hr>
+	<h6>VPN: WS-nummer som ikke er aktive i PRK-maskinadm</h6>
+	<ul style="column-count:5;">
+	{% for ws in vpn_anomaly %}
+	<li>{{ws}}</li>
+	{% endfor %}
+	</ul>
 
-<h4>Enheter som mangler maskinadm (er i CMDB):</h4>
-{{ mangler_maskinadm }}
+	<hr>
 
-<hr>
+	<h6>VPN: Brukernavn som ikke finnes i AD</h6>
+	<ul style="column-count:5;">
+	{% for user in vpn_anomaly_user %}
+	<li>{{user}}</li>
+	{% endfor %}
+	</ul>
 
-<h4>Enheter som mangler i CMDB (er i maskinadm):</h4>
-{{ mangler_cmdb }}
+	<hr>
 
-{% endblock main_content %}
+	<h6>Enheter som mangler maskinadm (er i CMDB):</h6>
+	{{ mangler_maskinadm }}
+
+	<hr>
+
+	<h6>Enheter som mangler i CMDB (er i maskinadm):</h6>
+	{{ mangler_cmdb }}
+
+{% endblock hovedinnhold %}

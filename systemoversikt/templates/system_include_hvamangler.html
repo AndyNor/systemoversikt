@@ -45,11 +45,7 @@
 				{{ system.antall_bruk }}
 			</td>
 			<td>
-				{% if system.informasjon_kvalitetssikret %}
-				<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
-				{% else %}
-				<span style="color: red; font-size: 18px;">⨉</span> Nei
-				{% endif %}
+				{% include 'system_janeivetikke.html' with boolean=system.informasjon_kvalitetssikret %}
 			</td>
 			<td>
 				{{ system.sist_oppdatert|naturaltime }}
@@ -57,11 +53,11 @@
 			<td>
 				{{ system.sist_endret_av.user.get_full_name }}
 			</td>
-			<th>
+			<td>
 				{% for type in system.systemtyper.all %}
 					{{ type }}<br>
 				{% endfor %}
-			</th>
+			</td>
 			<td>
 				{% if system.systemeier %}
 				<span style="color: green; font-size: 18px;">✓</span> Ja

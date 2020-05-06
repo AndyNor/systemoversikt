@@ -1,38 +1,37 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
 	Utfasede maskiner på Felles IKT-plattform
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
-	<a class="btn btn-sm" href="{% url 'alle_maskiner' %}">Søk i maskiner</a>
-
-
-	<p>Viser {{ maskiner.count }} maskiner.</p>
+	<p>Når Kartotekets importfunksjon ikke finner en maskin som var med tidligere, markeres den som deaktivert. Viser {{ maskiner.count }} deaktiverte maskiner.</p>
 
 	<table id="stickyheader" class="table table-sm tablesorter">
 	<thead>
-	<tr>
-		<th>Sist oppdatert</th>
-		<th>Maskinnavn</th>
-		<th>Business service</th>
-		<th>Portfolio</th>
-		<th>Nettverk</th>
-		<th>Operativsystem</th>
-		<th>Tilhørende system</th>
-		<th>DNS</th>
-		<th>VLAN</th>
-		<th>NAT</th>
-		<th>VIP/BigIP</th>
-	</tr>
+		<tr>
+			<th>Sist oppdatert</th>
+			<th>Maskinnavn</th>
+			<th>Business service</th>
+			<th>Portfolio</th>
+			<th>Nettverk</th>
+			<th>Operativsystem</th>
+			<th>Tilhørende system</th>
+			<th>DNS</th>
+			<th>VLAN</th>
+			<th>NAT</th>
+			<th>VIP/BigIP</th>
+		</tr>
 	</thead>
 	<tbody>
 	{% for maskin in maskiner %}
-	<tr {% if not maskin.active %} style="color: #d6d6d6;" {% endif %}>
+	<tr>
 		{% url 'ad_details' name=maskin.comp_name as url_ad %}
 		<td>{{ maskin.sist_oppdatert }}</td>
 		<td><a href="{{ url_ad }}">{{ maskin.comp_name }}</a></td>
@@ -91,4 +90,5 @@
 	{% endfor %}
 	</tbody>
 	</table>
-{% endblock main_content %}
+
+{% endblock hovedinnhold %}

@@ -1,0 +1,42 @@
+{% extends "index.html" %}
+
+{% block sidemeny %}
+	<h6>Systemoversikt</h6>
+		{% url 'alle_systemer' as url_alle_systemer %}
+		<a href="{{url_alle_systemer}}" class="btn btn-sm btn-link {% if url_alle_systemer in request.path %}fremhev{% endif %}">Alle systemer</a>
+
+	{% if request.user.profile.virksomhet %}
+		{% url 'all_bruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_systembruk %}
+		<a href="{{ url_systembruk }}" class="btn btn-sm btn-link {% if url_systembruk in request.path %}fremhev{% endif %}">Vår bruk av systemer</a>
+	{% endif %}
+
+	{% block ekstrameny_system %}{% endblock ekstrameny_system %}
+
+	<hr>
+	<h6>Leverandører</h6>
+
+		{% url "alle_leverandorer" as alle_leverandorer_url %}
+		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Alle leverandører</a>
+	{% block ekstrameny_leverandor %}{% endblock ekstrameny_leverandor %}
+
+	<hr>
+	<h6>Kategorier</h6>
+		{% url 'alle_systemkategorier' as url_alle_systemkategorier %}
+		<a href="{{url_alle_systemkategorier}}" class="btn btn-sm {% if url_alle_systemkategorier in request.path %}fremhev{% endif %}">Alle systemkategorier</a>
+
+	{% block ekstrameny_kategori %}{% endblock ekstrameny_kategori %}
+
+	<hr>
+	<h6>Driftsmiljø</h6>
+		{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
+		<a href="{{ alle_driftsmodeller_url }}" class="btn btn-sm btn-link {% if alle_driftsmodeller_url in request.path %}fremhev{% endif %}" >Alle driftsmiljø</a>
+
+	{% block ekstrameny_driftsmiljo %}{% endblock ekstrameny_driftsmiljo %}
+
+
+{% endblock sidemeny %}
+
+{% block main_content %}
+	<h3>{% block overskrift %}{% endblock overskrift %}</h3>
+	{% block hovedinnhold %}{% endblock hovedinnhold %}
+{% endblock main_content %}

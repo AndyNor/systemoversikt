@@ -248,13 +248,18 @@ def alle_klienter(request):
 		vpn_anomaly = sorted(vpn_ws - alle_maskinadm_klienter)
 
 		alle_aktive_brukere = set(list(User.objects.filter(profile__accountdisable=False).values_list('username', flat=True)))
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/vpn_users.json"
-		vpn_users = set()
-		with open(filepath, 'r', encoding='UTF-8') as json_file:
-			for line in json_file.readlines():
-				j = json.loads(line)
-				vpn_users.add(j["result"]["user"].lower())
-		vpn_anomaly_user = sorted(vpn_users - alle_aktive_brukere)
+		try:
+			filepath = "/import/vpn_users.json"
+			filepath = os.path.dirname(os.path.abspath(__file__)) + filepath
+			vpn_users = set()
+			with open(filepath, 'r', encoding='UTF-8') as json_file:
+				for line in json_file.readlines():
+					j = json.loads(line)
+					vpn_users.add(j["result"]["user"].lower())
+			vpn_anomaly_user = sorted(vpn_users - alle_aktive_brukere)
+		except:
+			messages.warning(request, 'Filen %s finnes ikke!' % (filepath))
+			vpn_anomaly_user = []
 
 		return render(request, 'prk_klienter.html', {
 			'request': request,
@@ -890,10 +895,17 @@ def systemklassifisering_detaljer(request, id):
 	else:
 		utvalg_systemer = System.objects.filter(systemeierskapsmodell=id)
 
-	return render(request, 'system_kategori_generisk.html', {
+	id = "tom"
+
+	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
+	systemtyper = Systemtype.objects.all()
+
+	return render(request, 'system_alle.html', {
 		'request': request,
-		'overskrift': ("Systemklassifisering: %s" % id.lower()),
+		'overskrift': ("Systemer der systemklassifisering er %s" % id.lower()),
 		'systemer': utvalg_systemer,
+		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
+		'systemtyper': systemtyper,
 	})
 
 
@@ -910,11 +922,16 @@ def systemtype_detaljer(request, pk=None):
 		utvalg_systemer = System.objects.filter(systemtyper=None)
 		overskrift = "Systemer som mangler systemtype"
 
+	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
+	systemtyper = Systemtype.objects.all()
+
 	utvalg_systemer = utvalg_systemer.order_by('ibruk', Lower('systemnavn'))
-	return render(request, 'system_kategori_generisk.html', {
+	return render(request, 'system_alle.html', {
 		'request': request,
 		'overskrift': overskrift,
 		'systemer': utvalg_systemer,
+		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
+		'systemtyper': systemtyper,
 	})
 
 
@@ -925,19 +942,15 @@ def alle_systemer(request):
 	"""
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
-	if search_term == "__all__":
-		aktuelle_systemer = System.objects.all()
-		potensielle_systemer = System.objects.none()
-		aktuelle_programvarer = Programvare.objects.none()
-	elif len(search_term) < 2: # if one or less, return nothing
-		aktuelle_systemer = System.objects.none()
-		potensielle_systemer = System.objects.none()
-		aktuelle_programvarer = Programvare.objects.none()
-	else:
+	if search_term != '':
 		aktuelle_systemer = System.objects.filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
 		#Her ønsker vi å vise treff i beskrivelsesfeltet, men samtidig ikke vise systemer på nytt
 		potensielle_systemer = System.objects.filter(Q(systembeskrivelse__icontains=search_term) & ~Q(pk__in=aktuelle_systemer))
 		aktuelle_programvarer = Programvare.objects.filter(programvarenavn__icontains=search_term)
+	else:
+		aktuelle_systemer = System.objects.all()
+		potensielle_systemer = System.objects.none()
+		aktuelle_programvarer = Programvare.objects.none()
 
 	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0):  # bare ét systemtreff og ingen programvaretreff.
 		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
@@ -949,7 +962,7 @@ def alle_systemer(request):
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
 	systemtyper = Systemtype.objects.all()
 
-	return render(request, 'system_sok.html', {
+	return render(request, 'system_alle.html', {
 		'request': request,
 		'systemer': aktuelle_systemer,
 		'potensielle_systemer': potensielle_systemer,
@@ -957,6 +970,7 @@ def alle_systemer(request):
 		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
 		'systemtyper': systemtyper,
 		'aktuelle_programvarer': aktuelle_programvarer,
+		'overskrift': ("Alle systemer"),
 	})
 
 
@@ -1481,24 +1495,27 @@ def virksomhet_prkadmin(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def systemer_virksomhet_ansvarlig_for(request, pk):
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
+
+	return render(request, 'virksomhet_systemer_ansvarfor.html', {
+		'virksomhet': virksomhet,
+		'systemer_ansvarlig_for': systemer_ansvarlig_for,
+	})
+
+
 def virksomhet(request, pk):
 	"""
 	Vise detaljer om en valgt virksomhet
 	Tilgangsstyring: ÅPEN
 	"""
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
-	systembruk_forvalter_for = SystemBruk.objects.filter(systemforvalter=pk)
-	urleier_for = SystemUrl.objects.filter(eier=pk)
-	avtaler = Avtale.objects.filter(Q(virksomhet=pk) | Q(leverandor_intern=pk))
-	#plattformer_vi_drifter = list(Driftsmodell.objects.filter(ansvarlig_virksomhet=pk))
-	#systemer_vi_drifter = System.objects.filter(driftsmodell_foreignkey__in=plattformer_vi_drifter)
 	antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
 	antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
 
 	system_ikke_kvalitetssikret = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).filter(informasjon_kvalitetssikret=False).count()
 	deaktiverte_brukere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).filter(brukernavn__profile__accountdisable=True).count()
-	behandling_uten_ansvarlig = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(oppdateringsansvarlig=None).count()
 	behandling_ikke_kvalitetssikret = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(informasjon_kvalitetssikret=False).count()
 
 	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=3)
@@ -1506,16 +1523,10 @@ def virksomhet(request, pk):
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
 		'virksomhet': virksomhet,
-		'systemer_ansvarlig_for': systemer_ansvarlig_for,
-		'systembruk_forvalter_for': systembruk_forvalter_for,
-		'urleier_for': urleier_for,
-		'avtaler': avtaler,
-		#'systemer_vi_drifter': systemer_vi_drifter,
 		'antall_brukere': antall_brukere,
 		'antall_eksterne_brukere': antall_eksterne_brukere,
 		'system_ikke_kvalitetssikret': system_ikke_kvalitetssikret,
 		'deaktiverte_brukere': deaktiverte_brukere,
-		'behandling_uten_ansvarlig': behandling_uten_ansvarlig,
 		'behandling_ikke_kvalitetssikret': behandling_ikke_kvalitetssikret,
 		'enheter': enheter,
 	})
@@ -1667,10 +1678,8 @@ def alle_leverandorer(request):
 
 	search_term = request.GET.get('search_term', "").strip()
 
-	if search_term == "__all__":
+	if search_term == "":
 		leverandorer = Leverandor.objects.all()
-	elif len(search_term) < 2: # if one or less, return nothing
-		leverandorer = Leverandor.objects.none()
 	else:
 		leverandorer = Leverandor.objects.filter(leverandor_navn__icontains=search_term)
 
@@ -2472,7 +2481,7 @@ def alle_maskiner(request):
 			if search_term == "__all__":
 				search_term = ""
 
-			devices = CMDBdevice.objects.filter(active=True).filter(comp_name__icontains=search_term)
+			devices = CMDBdevice.objects.filter(active=True).filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term))
 
 			if comp_os == "__empty__" and comp_os_version == "__empty__":
 				comp_os_and_version_none = CMDBdevice.objects.filter(active=True).filter(Q(comp_os="") & Q(comp_os_version=""))
@@ -2585,7 +2594,7 @@ def alle_cmdbref(request):
 
 		if search_term == "__all__":
 			cmdbref = CMDBRef.objects.all()
-		elif len(search_term) < 2: # if one or less, return nothing
+		elif len(search_term) < 1: # if one or less, return nothing
 			cmdbref = CMDBRef.objects.none()
 		else:
 			cmdbref = CMDBRef.objects.filter(navn__icontains=search_term)
