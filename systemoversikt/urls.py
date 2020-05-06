@@ -75,9 +75,9 @@ urlpatterns = [
 	url(r'^avtaler/(?P<virksomhet>\d{1,8})/$', views.alle_avtaler, name='avtalervirksomhet'),
 	url(r'^avtaler/databehandleravtale/virksomhet/(?P<pk>\d{1,8})/$', views.databehandleravtaler_virksomhet, name='databehandleravtaler_virksomhet'),
 
-	url(r'^klient/$', views.alle_klienter, name='alle_klienter'),
-	url(r'^bruker/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
-	url(r'^bruker/$', views.bruker_sok, name='bruker_sok'),
+	url(r'^cmdb/klient/$', views.alle_klienter, name='alle_klienter'),
+	url(r'^cmdb/bruker/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
+	url(r'^cmdb/bruker/$', views.bruker_sok, name='bruker_sok'),
 
 	url(r'^virksomhet/$', views.alle_virksomheter, name='alle_virksomheter'),
 	url(r'^virksomhet/alle/$', views.alle_virksomheter, name='alle_virksomheter_sidemeny'),
@@ -127,22 +127,22 @@ urlpatterns = [
 	url(r'^cmdb/os/$', views.alle_os, name='alle_os'),
 	url(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
 
-	url(r'^prk/$', views.alle_prk, name='alle_prk'),
-	url(r'^prk/browse/$', views.prk_browse, name='prk_browse'),
-	url(r'^prk/browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
+	url(r'^cmdb/prk/$', views.alle_prk, name='alle_prk'),
+	url(r'^cmdb/prk/browse/$', views.prk_browse, name='prk_browse'),
+	url(r'^cmdb/prk/browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
 
-	url(r'^ad/$', views.ad, name='ad'),
-	url(r'^ad/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
-	url(r'^ad/adgruppe/(?P<pk>\d{1,8})/$', views.adgruppe_detaljer, name='adgruppe_detaljer'),
-	url(r'^ad/graf/(?P<pk>\d{1,8})/$', views.adgruppe_graf, name='adgruppe_graf'),
-	url(r'^ad/adorgunit/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
-	url(r'^ad/adorgunit/(?P<pk>\d{1,8})/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
-	url(r'^ad/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),  #denne må komme etter ad/adgrupper/
+	url(r'^cmdb/ad/lookup/$', views.ad, name='ad'),
+	url(r'^cmdb/ad/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
+	url(r'^cmdb/ad/adgruppe/(?P<pk>\d{1,8})/$', views.adgruppe_detaljer, name='adgruppe_detaljer'),
+	url(r'^cmdb/ad/graf/(?P<pk>\d{1,8})/$', views.adgruppe_graf, name='adgruppe_graf'),
+	url(r'^cmdb/ad/adorgunit/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
+	url(r'^cmdb/ad/adorgunit/(?P<pk>\d{1,8})/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
+	url(r'^cmdb/ad/lookup/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),  #denne må komme etter ad/adgrupper/
 	# i AD er følgende tegn ulovlige: # + " \ < > ; (RFC 2253)
 	# komma tillates da det brukes for å skille elementer fra hverandre
 	# leading space eller #, samt trailing space er heller ikke tillatt, men vi gjør ikke noe med dem.
-	url(r'^ad/recursive/(?P<group>[^#\+\"\\\<\>\;]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
-	url(r'^ad/exact/(?P<name>[^#\+\"\\\<\>\;]{2,200})/$', views.ad_exact, name='ad_exact'),
+	url(r'^cmdb/ad/lookup/recursive/(?P<group>[^#\+\"\\\<\>\;]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
+	url(r'^cmdb/ad/lookup/exact/(?P<name>[^#\+\"\\\<\>\;]{2,200})/$', views.ad_exact, name='ad_exact'),
 
 	url(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	url(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),

@@ -1,19 +1,19 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	AD-gruppesøk
-{% endblock underoverskrift %}
-
-{% block main_content %}
-
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
-	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/">Admin: AD-grupper</a>
-	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?membercount=0">Admin: grupper 0 medlemmer</a>
-	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">Admin: medlem i 0 grupper</a>
-
+{% block ekstrameny_ad %}
 	<hr>
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/">/admin bla</a>
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/?membercount=0">/admin member=0</a>
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/?memberofcount=0">/admin memberof=0</a>
+{% endblock ekstrameny_ad %}
+
+{% block overskrift %}
+	Søk i AD-grupper
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
@@ -30,4 +30,4 @@
 		<li>Ingen treff</li>
 	{% endfor %}
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

@@ -11,27 +11,25 @@
 
 {% block hovedinnhold %}
 
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
-	<a class="btn btn-sm" href="{% url 'ad' %}">Søk i Active Directory</a>
-	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/">Admin: AD-grupper</a>
-	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?membercount=0">Admin: grupper 0 medlemmer</a>
-	<a class="btn btn-sm btn-info" target="_blank" href="/admin/systemoversikt/adgroup/?memberofcount=0">Admin: medlem i 0 grupper</a>
-
-	<hr>
-	<h6>Fully distinguished name</h6>
-	{{ gruppe.distinguishedname }}<br>
-	{% if gruppe.from_prk is True %}
-		<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(100deg);" src="{% static 'open-iconic/svg/circle-check.svg' %}" alt="Kvalitet verifisert"> Stammer fra PRK<br>
-	{% else %}
-		<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/warning.svg' %}" alt="Kvalitet ikke verifisert"> Opprettet utenfor PRK<br>
-	{% endif %}
-
+	<h6>{{ gruppe.distinguishedname }}</h6>
 	Sist oppdatert {{ gruppe.sist_oppdatert }}<br>
-	<a target="_blank" href="{% url 'ad_exact' name=gruppe.distinguishedname %}">Live søk i AD</a> | <a target="_blank" href="{% url 'adgruppe_graf' pk=gruppe.pk %}">Graf opp nøstede grupper</a>
+	<b>Fra PRK?</b>: {% include 'system_janeivetikke.html' with boolean=gruppe.from_prk %}<br>
+
+	<a href="{% url 'ad_exact' name=gruppe.distinguishedname %}">🔎 Live søk i AD</a>
 
 	<hr>
-	<h6>Beskrivelse</h6>
-	{{ gruppe.description }}
+	<h6>Om tilgangsgruppen</h6>
+	{% if gruppe.parent %}
+		Mor: <a href="{% url 'adorgunit_detaljer' pk=gruppe.parent.pk %}">📁 {{ gruppe.parent }}</a><br>
+	{% endif %}
+	{% if memberof.groups %}
+		{% for m in memberof.groups %}
+		Er nøstet inn i: <a href="{% url 'adgruppe_detaljer' pk=m.pk %}">👥 {{ m.cn }}</a><br>
+		{% endfor %}
+	{% endif%}
+	<a href="{% url 'adgruppe_graf' pk=gruppe.pk %}">📈 Graf opp alle underliggende nøstede grupper</a><br>
+	<b>Beskrivelse</b>: {{ gruppe.description }}
+
 
 	<hr>
 	<h6>Medlemer i gruppen</h6>
@@ -49,7 +47,7 @@
 	<tbodt>
 	{% for m in member.groups %}
 		<tr>
-			<th>👥 Sikkerhetsgruppe</th>
+			<th>👥 Tilgangsgruppe</th>
 			<td><a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m.cn }}</a></td>
 			<th></th>
 			<th></th>
@@ -79,41 +77,30 @@
 			<td>{{m.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
 		</tr>
 	{% endfor %}
+
+	{% for n in memberof.notfound %}
+		<tr>
+			<td>--feil memberof--</td>
+			<td>{{ n }}</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+	{% endfor %}
+
+	{% for n in member.notfound %}
+		<tr>
+			<td>--feil member--</td>
+			<td>{{ n }}</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+		</tr>
+	{% endfor %}
+
 	</tbodt>
 	</table>
-
-	{% if member.notfound %}
-		<br><p><b>Annet / feil</b></p>
-		{% for n in member.notfound %}
-			<li>{{ n }}</li>
-		{% endfor %}
-	{% endif%}
-
-	<hr>
-
-
-	<hr>
-	<h6>Denne gruppen ligger under følgende OU</h6>
-	{% if gruppe.parent %}
-		<li><a href="{% url 'adorgunit_detaljer' pk=gruppe.parent.pk %}">{{ gruppe.parent }}</a></li>
-	{% else %}
-		<li>Ingen</li>
-	{% endif %}
-
-	<hr>
-	<h6>Denne gruppen er medlem av følgende andre grupper</h6>
-	{% if memberof.groups %}
-		{% for m in memberof.groups %}
-			<li><a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m.cn }}</a></li>
-		{% endfor %}
-	{% endif%}
-
-	{% if memberof.notfound %}
-		{% for n in memberof.notfound %}
-			<li>{{ n }}</li>
-		{% endfor %}
-	{% endif%}
-
-
 
 {% endblock hovedinnhold %}

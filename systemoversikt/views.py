@@ -19,6 +19,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.conf import settings
 import datetime
 from django.urls import reverse
+import json
 
 
 FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")

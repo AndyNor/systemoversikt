@@ -25,12 +25,17 @@
 	{% url 'bruker_sok' as url_bruker_sok %}
 	<a href="{{ url_bruker_sok }}" class="btn btn-sm btn-link {% if url_bruker_sok in request.path %}fremhev{% endif %}" >Søk i AD-brukere</a>
 
+	{% url 'alle_adgrupper' as url_alle_adgrupper %}
+	<a href="{{ url_alle_adgrupper }}" class="btn btn-sm btn-link {% if url_alle_adgrupper in request.path %}fremhev{% endif %}" >Søk i AD-grupper</a>
+
 	{% url 'adorgunit_detaljer' as url_adorgunit_detaljer %}
 	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}" >Bla i AD</a>
 
-	<a class="btn btn-sm" href="{% url 'ad' %}">Direkteoppslag i AD</a>
 
-	{% block ekstrameny_prkad %}{% endblock ekstrameny_prkad %}
+	{% url 'ad' as url_ad %}
+	<a href="{{url_ad}}" class="btn btn-sm {% if url_ad in request.path %}fremhev{% endif %}">Direkteoppslag i AD</a>
+
+	{% block ekstrameny_ad %}{% endblock ekstrameny_ad %}
 
 	<hr>
 	<h6>PRK</h6>
@@ -39,6 +44,8 @@
 
 	{% url 'alle_klienter' as url_alle_klienter %}
 	<a href="{{ url_alle_klienter }}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}" >PRK maskinadmin</a>
+
+	{% block ekstrameny_prk %}{% endblock ekstrameny_prk %}
 
 	<hr>
 	<h6>Nettverk</h6>

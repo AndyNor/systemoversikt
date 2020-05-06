@@ -2,21 +2,15 @@
 {% load humanize %}
 {% load static %}
 
-{% block ekstrameny_business_service %}
-{% endblock ekstrameny_business_service %}
+{% block ekstrameny_ad %}
+
+{% endblock ekstrameny_ad %}
 
 {% block overskrift %}
 	Bla i Active Directory (Oslofelles)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
-
-
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/">Bla i AD-grupper</a>
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/?membercount=0">Gruppper med 0 medlemmer</a>
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/?memberofcount=0"> Grupper medlem av 0 andre grupper</a>
-
-	<hr>
 
 	<form action="{% url 'alle_adgrupper' %}" autocomplete="off">
 		<div class="form-group form-inline">

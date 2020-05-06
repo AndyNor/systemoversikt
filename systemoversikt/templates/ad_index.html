@@ -1,73 +1,79 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 
-{% block main_content %}
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
 
-<h4>Oslofelles Active Directory</h4>
+{% block overskrift %}
+	CMDB Business Services (Felles IKT-plattform)
+{% endblock overskrift %}
 
-<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
-<a class="btn btn-sm" href="{% url 'adorgunit_detaljer' %}">Bla i Active Directory</a>
+{% block hovedinnhold %}
 
-<hr>
+	<h4>Søk direkte mot Oslofelles Active Directory</h4>
 
-<p>Her kan du søke opp brukere og grupper på tvers av Oslofelles.</p>
+	<p>Her kan du søke opp brukere og grupper på tvers av Oslofelles.</p>
 
-<p>Søk ved å skrive inn følgende i adressefeltet etter domenet: "/ad/BRUKERNAVN/" eller "/ad/GRUPPENAVN"</p>
+	<p>Søk ved å skrive inn følgende i adressefeltet etter domenet:
+	<ul>
+		<li>/ad/lookup/BRUKERNAVN/</li>
+		<li>/ad/lookup/GRUPPENAVN</li>
+		<li>/ad/lookup/exact/OU-PATH</li>
+	</ul>
 
-<p>Her er de viktigste sikkerhetsgruppene som er innebyggede i AD</p>
-<ul>
-	<li><a href="{% url 'ad_details' name='Access Control Assistance Operators' %}">Access Control Assistance Operators</a></li>
-	<li><a href="{% url 'ad_details' name='Account Operators' %}">Access Control Assistance Operators</a></li>
-	<li><a href="{% url 'ad_details' name='Administrators' %}">Administrators</a></li>
-	<li><a href="{% url 'ad_details' name='Allowed RODC Password Replication Group' %}">Allowed RODC Password Replication Group</a></li>
-	<li><a href="{% url 'ad_details' name='Backup Operators' %}">Backup Operators</a></li>
-	<li><a href="{% url 'ad_details' name='Certificate Service DCOM Access' %}">Certificate Service DCOM Access</a></li>
-	<li><a href="{% url 'ad_details' name='Cert Publishers' %}">Cert Publishers</a></li>
-	<li><a href="{% url 'ad_details' name='Cloneable Domain Controllers' %}">Cloneable Domain Controllers</a></li>
-	<li><a href="{% url 'ad_details' name='Cryptographic Operators' %}">Cryptographic Operators</a></li>
-	<li><a href="{% url 'ad_details' name='Denied RODC Password Replication Group' %}">Denied RODC Password Replication Group</a></li>
-	<li><a href="{% url 'ad_details' name='Device Owners' %}">Device Owners</a></li>
-	<li><a href="{% url 'ad_details' name='Distributed COM Users' %}">Distributed COM Users</a></li>
-	<li><a href="{% url 'ad_details' name='DnsUpdateProxy' %}">DnsUpdateProxy</a></li>
-	<li><a href="{% url 'ad_details' name='DnsAdmins' %}">DnsAdmins</a></li>
-	<li><a href="{% url 'ad_details' name='Domain Admins' %}">Domain Admins</a></li>
-	<li><a href="{% url 'ad_details' name='Domain Computers' %}">Domain Computers</a></li>
-	<li><a href="{% url 'ad_details' name='Domain Controllers' %}">Domain Controllers</a></li>
-	<li><a href="{% url 'ad_details' name='Domain Guests' %}">Domain Guests</a></li>
-	<li><a href="{% url 'ad_details' name='Domain Users' %}">Domain Users</a></li>
-	<li><a href="{% url 'ad_details' name='Enterprise Admins' %}">Enterprise Admins</a></li>
-	<li><a href="{% url 'ad_details' name='Enterprise Key Admins' %}">Enterprise Key Admins</a></li>
-	<li><a href="{% url 'ad_details' name='Enterprise Read-only Domain Controllers' %}">Enterprise Read-only Domain Controllers</a></li>
-	<li><a href="{% url 'ad_details' name='Event Log Readers' %}">Event Log Readers</a></li>
-	<li><a href="{% url 'ad_details' name='Group Policy Creator Owners' %}">Group Policy Creator Owners</a></li>
-	<li><a href="{% url 'ad_details' name='Guests' %}">Guests</a></li>
-	<li><a href="{% url 'ad_details' name='Hyper-V Administrators' %}">Hyper-V Administrators</a></li>
-	<li><a href="{% url 'ad_details' name='IIS_IUSRS' %}">IIS_IUSRS</a></li>
-	<li><a href="{% url 'ad_details' name='Incoming Forest Trust Builders' %}">Incoming Forest Trust Builders</a></li>
-	<li><a href="{% url 'ad_details' name='Key Admins' %}">Key Admins</a></li>
-	<li><a href="{% url 'ad_details' name='Network Configuration Operators' %}">Network Configuration Operators</a></li>
-	<li><a href="{% url 'ad_details' name='Performance Log Users' %}">Performance Log Users</a></li>
-	<li><a href="{% url 'ad_details' name='Performance Monitor Users' %}">Performance Monitor Users</a></li>
-	<li><a href="{% url 'ad_details' name='Pre-Windows 2000 Compatible Access' %}">Pre–Windows 2000 Compatible Access</a></li>
-	<li><a href="{% url 'ad_details' name='Print Operators' %}">Print Operators</a></li>
-	<li><a href="{% url 'ad_details' name='Protected Users' %}">Protected Users</a></li>
-	<li><a href="{% url 'ad_details' name='RAS and IAS Servers' %}">RAS and IAS Servers</a></li>
-	<li><a href="{% url 'ad_details' name='RDS Endpoint Servers' %}">RDS Endpoint Servers</a></li>
-	<li><a href="{% url 'ad_details' name='RDS Management Servers' %}">RDS Management Servers</a></li>
-	<li><a href="{% url 'ad_details' name='RDS Remote Access Servers' %}">RDS Remote Access Servers</a></li>
-	<li><a href="{% url 'ad_details' name='Read-only Domain Controllers' %}">Read-only Domain Controllers</a></li>
-	<li><a href="{% url 'ad_details' name='Remote Desktop Users' %}">Remote Desktop Users</a></li>
-	<li><a href="{% url 'ad_details' name='Remote Management Users' %}">Remote Management Users</a></li>
-	<li><a href="{% url 'ad_details' name='Replicator' %}">Replicator</a></li>
-	<li><a href="{% url 'ad_details' name='Schema Admins' %}">Schema Admins</a></li>
-	<li><a href="{% url 'ad_details' name='Server Operators' %}">Server Operators</a></li>
-	<li><a href="{% url 'ad_details' name='Storage Replica Administrators' %}">Storage Replica Administrators</a></li>
-	<li><a href="{% url 'ad_details' name='System Managed Accounts Group' %}">System Managed Accounts Group</a></li>
-	<li><a href="{% url 'ad_details' name='Terminal Server License Servers' %}">Terminal Server License Servers</a></li>
-	<li><a href="{% url 'ad_details' name='Users' %}">Users</a></li>
-	<li><a href="{% url 'ad_details' name='Windows Authorization Access Group' %}">Windows Authorization Access Group</a></li>
-	<li><a href="{% url 'ad_details' name='WinRMRemoteWMIUsers_' %}">WinRMRemoteWMIUsers_</a></li>
+	<p>Her er de viktigste sikkerhetsgruppene som er innebyggede i AD</p>
+	<ul>
+		<li><a href="{% url 'ad_details' name='Access Control Assistance Operators' %}">Access Control Assistance Operators</a></li>
+		<li><a href="{% url 'ad_details' name='Account Operators' %}">Access Control Assistance Operators</a></li>
+		<li><a href="{% url 'ad_details' name='Administrators' %}">Administrators</a></li>
+		<li><a href="{% url 'ad_details' name='Allowed RODC Password Replication Group' %}">Allowed RODC Password Replication Group</a></li>
+		<li><a href="{% url 'ad_details' name='Backup Operators' %}">Backup Operators</a></li>
+		<li><a href="{% url 'ad_details' name='Certificate Service DCOM Access' %}">Certificate Service DCOM Access</a></li>
+		<li><a href="{% url 'ad_details' name='Cert Publishers' %}">Cert Publishers</a></li>
+		<li><a href="{% url 'ad_details' name='Cloneable Domain Controllers' %}">Cloneable Domain Controllers</a></li>
+		<li><a href="{% url 'ad_details' name='Cryptographic Operators' %}">Cryptographic Operators</a></li>
+		<li><a href="{% url 'ad_details' name='Denied RODC Password Replication Group' %}">Denied RODC Password Replication Group</a></li>
+		<li><a href="{% url 'ad_details' name='Device Owners' %}">Device Owners</a></li>
+		<li><a href="{% url 'ad_details' name='Distributed COM Users' %}">Distributed COM Users</a></li>
+		<li><a href="{% url 'ad_details' name='DnsUpdateProxy' %}">DnsUpdateProxy</a></li>
+		<li><a href="{% url 'ad_details' name='DnsAdmins' %}">DnsAdmins</a></li>
+		<li><a href="{% url 'ad_details' name='Domain Admins' %}">Domain Admins</a></li>
+		<li><a href="{% url 'ad_details' name='Domain Computers' %}">Domain Computers</a></li>
+		<li><a href="{% url 'ad_details' name='Domain Controllers' %}">Domain Controllers</a></li>
+		<li><a href="{% url 'ad_details' name='Domain Guests' %}">Domain Guests</a></li>
+		<li><a href="{% url 'ad_details' name='Domain Users' %}">Domain Users</a></li>
+		<li><a href="{% url 'ad_details' name='Enterprise Admins' %}">Enterprise Admins</a></li>
+		<li><a href="{% url 'ad_details' name='Enterprise Key Admins' %}">Enterprise Key Admins</a></li>
+		<li><a href="{% url 'ad_details' name='Enterprise Read-only Domain Controllers' %}">Enterprise Read-only Domain Controllers</a></li>
+		<li><a href="{% url 'ad_details' name='Event Log Readers' %}">Event Log Readers</a></li>
+		<li><a href="{% url 'ad_details' name='Group Policy Creator Owners' %}">Group Policy Creator Owners</a></li>
+		<li><a href="{% url 'ad_details' name='Guests' %}">Guests</a></li>
+		<li><a href="{% url 'ad_details' name='Hyper-V Administrators' %}">Hyper-V Administrators</a></li>
+		<li><a href="{% url 'ad_details' name='IIS_IUSRS' %}">IIS_IUSRS</a></li>
+		<li><a href="{% url 'ad_details' name='Incoming Forest Trust Builders' %}">Incoming Forest Trust Builders</a></li>
+		<li><a href="{% url 'ad_details' name='Key Admins' %}">Key Admins</a></li>
+		<li><a href="{% url 'ad_details' name='Network Configuration Operators' %}">Network Configuration Operators</a></li>
+		<li><a href="{% url 'ad_details' name='Performance Log Users' %}">Performance Log Users</a></li>
+		<li><a href="{% url 'ad_details' name='Performance Monitor Users' %}">Performance Monitor Users</a></li>
+		<li><a href="{% url 'ad_details' name='Pre-Windows 2000 Compatible Access' %}">Pre–Windows 2000 Compatible Access</a></li>
+		<li><a href="{% url 'ad_details' name='Print Operators' %}">Print Operators</a></li>
+		<li><a href="{% url 'ad_details' name='Protected Users' %}">Protected Users</a></li>
+		<li><a href="{% url 'ad_details' name='RAS and IAS Servers' %}">RAS and IAS Servers</a></li>
+		<li><a href="{% url 'ad_details' name='RDS Endpoint Servers' %}">RDS Endpoint Servers</a></li>
+		<li><a href="{% url 'ad_details' name='RDS Management Servers' %}">RDS Management Servers</a></li>
+		<li><a href="{% url 'ad_details' name='RDS Remote Access Servers' %}">RDS Remote Access Servers</a></li>
+		<li><a href="{% url 'ad_details' name='Read-only Domain Controllers' %}">Read-only Domain Controllers</a></li>
+		<li><a href="{% url 'ad_details' name='Remote Desktop Users' %}">Remote Desktop Users</a></li>
+		<li><a href="{% url 'ad_details' name='Remote Management Users' %}">Remote Management Users</a></li>
+		<li><a href="{% url 'ad_details' name='Replicator' %}">Replicator</a></li>
+		<li><a href="{% url 'ad_details' name='Schema Admins' %}">Schema Admins</a></li>
+		<li><a href="{% url 'ad_details' name='Server Operators' %}">Server Operators</a></li>
+		<li><a href="{% url 'ad_details' name='Storage Replica Administrators' %}">Storage Replica Administrators</a></li>
+		<li><a href="{% url 'ad_details' name='System Managed Accounts Group' %}">System Managed Accounts Group</a></li>
+		<li><a href="{% url 'ad_details' name='Terminal Server License Servers' %}">Terminal Server License Servers</a></li>
+		<li><a href="{% url 'ad_details' name='Users' %}">Users</a></li>
+		<li><a href="{% url 'ad_details' name='Windows Authorization Access Group' %}">Windows Authorization Access Group</a></li>
+		<li><a href="{% url 'ad_details' name='WinRMRemoteWMIUsers_' %}">WinRMRemoteWMIUsers_</a></li>
 
-</ul>
+	</ul>
 
-
-{% endblock %}
+{% endblock hovedinnhold %}
