@@ -12,6 +12,14 @@
 
 	{% block ekstrameny_system %}{% endblock ekstrameny_system %}
 
+
+	<hr>
+	<h6>Programvarer</h6>
+		{% url 'alle_programvarer' as url_alle_programvarer %}
+			<a href="{{url_alle_programvarer}}" class="btn btn-sm {% if url_alle_programvarer in request.path %}fremhev{% endif %}">Alle programvarer</a>
+
+	{% block ekstrameny_programvare %}{% endblock ekstrameny_programvare %}
+
 	<hr>
 	<h6>Leverandører</h6>
 

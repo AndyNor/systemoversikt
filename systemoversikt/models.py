@@ -398,6 +398,12 @@ class Virksomhet(models.Model):
 			blank=True, null=True,
 			help_text=u"Settes automatisk fra PRK/HR-import",
 			)
+	styringssystem = models.URLField(
+			verbose_name="Styringssystem (URL)",
+			max_length=600,
+			blank=True, null=True,
+			help_text=u"Her oppgir du link til virksomhetens styringssystem.",
+			)
 	history = HistoricalRecords()
 
 	def leder_hr(self):
@@ -741,6 +747,7 @@ class SystemKategori(models.Model):
 	class Meta:
 		verbose_name_plural = "Systemkategorier"
 		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['kategorinavn']
 
 
 
@@ -774,6 +781,7 @@ class SystemHovedKategori(models.Model):
 	class Meta:
 		verbose_name_plural = "Systemhovedkategorier"
 		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['hovedkategorinavn']
 
 
 
@@ -856,6 +864,7 @@ class SystemUrl(models.Model):
 	class Meta:
 		verbose_name_plural = "URLer"
 		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['domene']
 
 
 
@@ -895,6 +904,7 @@ class Personsonopplysningskategori(models.Model):
 	class Meta:
 		verbose_name_plural = "Behandling Personopplysningskategorier"
 		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['navn']
 
 
 
@@ -922,6 +932,7 @@ class Registrerte(models.Model):
 	class Meta:
 		verbose_name_plural = "Behandling Kategorier registrerte"
 		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['kategorinavn']
 
 
 
@@ -956,6 +967,7 @@ class Behandlingsgrunnlag(models.Model):
 	class Meta:
 		verbose_name_plural = "Behandlingsgrunnlag"
 		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['grunnlag']
 
 
 
@@ -1504,6 +1516,11 @@ class Systemtype(models.Model):
 			verbose_name="Har slike systemer en URL?",
 			default=False,
 			help_text=u"Krysses av dersom det er forventet at systemer i denne kategorien har en URL.",
+			)
+	er_infrastruktur = models.BooleanField(
+			verbose_name="Er denne kategorien infrastruktur?",
+			default=False,
+			help_text=u"Brukes for å skjule systemet i visninger der infrastruktur ikke er relevant.",
 			)
 	history = HistoricalRecords()
 
@@ -2215,7 +2232,7 @@ class System(models.Model):
 			help_text=u"Link til kildekode",
 			)
 	kontaktgruppe_url = models.URLField(
-			verbose_name="Kontaktgruppe / Workplace",
+			verbose_name="Brukerstøttegruppe",
 			max_length=600,
 			blank=True, null=True,
 			help_text=u"Link til gruppe på workplace eller f.eks. en intranettside.",
@@ -2420,6 +2437,13 @@ class System(models.Model):
 	def felles_sektorsystem(self):
 		if self.systemeierskapsmodell in ("FELLESSYSTEM", "SEKTORSYSTEM", "TVERRSEKTORIELT"):
 			return True
+		else:
+			return False
+
+	def er_infrastruktur(self):
+		for stype in self.systemtyper.all():
+			if stype.er_infrastruktur:
+				return True
 		else:
 			return False
 

@@ -25,10 +25,6 @@
 </script>
 {% endblock script_append %}
 
-{% block ekstrameny %}
-	{% include 'ubw_ekstrameny.html' %}
-{% endblock ekstrameny %}
-
 {% block overskrift %}
 	{% if ekstra %}
 		Legg til ekstra informasjon
@@ -64,7 +60,7 @@
 		<div class="form-group {% if field.errors %} error {% endif %}">
 			<label for="{{ field.id_for_label }}">{{ field.label }}</label>
 			<div class="controls">
-				{% render_field field class+="form-control" %}	
+				{% render_field field class+="form-control" %}
 				<span class="help-inline">
 				{% if field.errors %}
 					{% for error in field.errors %} <p style="color: red;">{{ error }}</p> {% endfor %}

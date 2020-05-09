@@ -1,38 +1,40 @@
-{% extends "index.html" %}
+{% extends "behandling_index.html" %}
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
 
-{% block underoverskrift %}
-	Behandlingsdetaljer
-{% endblock underoverskrift %}
+{% block ekstrameny_behandling %}
 
-{% block main_content %}
+{% endblock ekstrameny_behandling %}
 
-<p>
+{% block overskrift %}
+	Behandlingsdetaljer: {{ behandling.behandlingen }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
 	{% if user.is_authenticated %}
-	<div class="redigeringsknapp">
-	<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/">Rediger detaljer</a>
+		<a class="redigeringsknapp btn btn-sm btn-link" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/">Rediger detaljer</a>
 	{% endif %}
+
 	{% if behandling.behandling_behovdpia %}
-		<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/behovfordpia/{{ behandling.behandling_behovdpia.pk }}/change/">Se DPIA-behovsvurdering</a>
+		<a class="redigeringsknapp btn btn-sm btn-link" target="_blank" href="/admin/systemoversikt/behovfordpia/{{ behandling.behandling_behovdpia.pk }}/change/">Se DPIA-behovsvurdering</a>
+
 	{% else %}
-		<a class="btn btn-sm btn-danger" target="_blank" href="/admin/systemoversikt/behovfordpia/add/?behandling={{ behandling.pk }}">Utfør DPIA-behovsvurdering</a>
+		<a class="redigeringsknapp btn btn-sm btn-link" target="_blank" href="/admin/systemoversikt/behovfordpia/add/?behandling={{ behandling.pk }}">Utfør DPIA-behovsvurdering</a>
 	{% endif %}
+
+
+	{% if behandling.informasjon_kvalitetssikret == False %}
+	<hr>
+	<div id="div_message" class="alert alert-warning">
+		<a class="close" data-dismiss="alert" href="#">×</a>
+		<h6 class="alert-heading">Denne behandlingen er ikke kvalitetssikret!</h6>
 	</div>
-</p>
+	{% endif %}
 
-
-{% if behandling.informasjon_kvalitetssikret == False %}
-<div id="div_message" class="alert alert-warning">
-	<a class="close" data-dismiss="alert" href="#">×</a>
-	<h6 class="alert-heading">Denne behandlingen er ikke kvalitetssikret!</h6>
-</div>
-{% endif %}
-
-
-<div class="accordion" id="accordionSystem">
-
+	<hr>
+	<div class="accordion" id="accordionSystem">
 	<div class="card">
 		<div class="card-header" id="headingOrg">
 			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOrg" aria-expanded="true" aria-controls="collapseOne">
@@ -105,29 +107,34 @@
 
 
 	<div class="card">
-		<div class="card-header" id="headingUtvidet">
-			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseUtvidet" aria-expanded="true" aria-controls="collapseOne">
-				Utvidet informasjon
+		<div class="card-header" id="headingSystem">
+			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseSystem" aria-expanded="true" aria-controls="collapseOne">
+				Systemer: Sikkerhetstiltak
 			</button>
 		</div>
-		<div id="collapseUtvidet" class="collapse show" aria-labelledby="headingUtvidet" data-parent="#accordionSystem">
+		<div id="collapseSystem" class="collapse show" aria-labelledby="headingSystem" data-parent="#accordionSystem">
 			<div class="card-body">
 
+			<p>Behandlingen krever nivå: <b>{{ behandling.get_krav_sikkerhetsnivaa_display|default:"-" }}</b></p>
 			<table class="table table-sm table-striped">
+				<thead>
+					<th>System</th>
+					<th>Systemtekniske sikkerhetstiltak</th>
+					<th>Sikkerhetsnivå</th>
+					<th>Dato sist RoS</th>
+				</thead>
+				<tbody>
+				{% for system in behandling.systemer.all %}
 				<tr>
-					<td width="40%">Sist oppdatert</td>
-					<td>{{ behandling.sist_oppdatert|date:'Y-m-d' }} ({{ behandling.sist_oppdatert|naturaltime }})</td>
-				</tr>
-				<tr>
-					<td>Endringslogg (siste {{ siste_endringer_antall }})
-					{% explain_collapsed "Endringsloggen ligger lagret uavhengig av denne systeminstansen og kan derfor ikke redigeres direkte." %}
-					</td>
 					<td>
-						{% for endring in siste_endringer %}
-							{{ endring.action_time|date:"Y-m-d" }} av {{ endring.user.get_full_name|default:endring.user }}<br>
-						{% endfor %}
-					</td>
+						{% url 'systemdetaljer' system.pk as system_url %}
+						<a href="{{ system_url }}">{{ system.systemnavn }}</a></td>
+					<td>{{ system.systemtekniske_sikkerhetstiltak|default:"-" }}</td>
+					<td>{{ system.get_sikkerhetsnivaa_display|default:"-" }}</td>
+					<td>{{ system.dato_sist_ros|date:'Y-m-d'|default:"-" }} ({{ system.dato_sist_ros|naturaltime|default:'aldri' }})</td>
 				</tr>
+				{% endfor %}
+				</tbody>
 			</table>
 
 			</div>
@@ -441,41 +448,6 @@
 	</div>
 
 
-	<div class="card">
-		<div class="card-header" id="headingSystem">
-			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseSystem" aria-expanded="true" aria-controls="collapseOne">
-				Systemer: Sikkerhetstiltak
-			</button>
-		</div>
-		<div id="collapseSystem" class="collapse show" aria-labelledby="headingSystem" data-parent="#accordionSystem">
-			<div class="card-body">
-
-			<p>Behandlingen krever nivå: <b>{{ behandling.get_krav_sikkerhetsnivaa_display|default:"-" }}</b></p>
-			<table class="table table-sm table-striped">
-				<thead>
-					<th>System</th>
-					<th>Systemtekniske sikkerhetstiltak</th>
-					<th>Sikkerhetsnivå</th>
-					<th>Dato sist RoS</th>
-				</thead>
-				<tbody>
-				{% for system in behandling.systemer.all %}
-				<tr>
-					<td>
-						{% url 'systemdetaljer' system.pk as system_url %}
-						<a href="{{ system_url }}">{{ system.systemnavn }}</a></td>
-					<td>{{ system.systemtekniske_sikkerhetstiltak|default:"-" }}</td>
-					<td>{{ system.get_sikkerhetsnivaa_display|default:"-" }}</td>
-					<td>{{ system.dato_sist_ros|date:'Y-m-d'|default:"-" }} ({{ system.dato_sist_ros|naturaltime|default:'aldri' }})</td>
-				</tr>
-				{% endfor %}
-				</tbody>
-			</table>
-
-			</div>
-		</div>
-	</div>
-
 
 	<div class="card">
 		<div class="card-header" id="headingOrgSik">
@@ -497,7 +469,39 @@
 		</div>
 	</div>
 
-</div>
+
+	<div class="card">
+		<div class="card-header" id="headingUtvidet">
+			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseUtvidet" aria-expanded="true" aria-controls="collapseOne">
+				Utvidet informasjon
+			</button>
+		</div>
+		<div id="collapseUtvidet" class="collapse show" aria-labelledby="headingUtvidet" data-parent="#accordionSystem">
+			<div class="card-body">
+
+			<table class="table table-sm table-striped">
+				<tr>
+					<td width="40%">Sist oppdatert</td>
+					<td>{{ behandling.sist_oppdatert|date:'Y-m-d' }} ({{ behandling.sist_oppdatert|naturaltime }})</td>
+				</tr>
+				<tr>
+					<td>Endringslogg (siste {{ siste_endringer_antall }})
+					{% explain_collapsed "Endringsloggen ligger lagret uavhengig av denne systeminstansen og kan derfor ikke redigeres direkte." %}
+					</td>
+					<td>
+						{% for endring in siste_endringer %}
+							{{ endring.action_time|date:"Y-m-d" }} av {{ endring.user.get_full_name|default:endring.user }}<br>
+						{% endfor %}
+					</td>
+				</tr>
+			</table>
+
+			</div>
+		</div>
+	</div>
 
 
-{% endblock main_content %}
+	</div>
+
+
+{% endblock hovedinnhold %}

@@ -26,6 +26,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 		user.first_name = claims.get('given_name', '')
 		user.last_name = claims.get('family_name', '')
 		user.email = claims.get('email', '')
+		user.is_staff = True
 
 		# sjekke om bruker skal være superbruker
 		claim_groups = claims.get('groups', '')

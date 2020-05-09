@@ -29,7 +29,7 @@
 	<thead>
 	<tr>
 		{% if user.is_authenticated %}
-		<th>Rediger</th>
+		<th class="filter-false">Rediger</th>
 		{% endif %}
 		<th>Leverandør</th>
 		{# <th>Programvarer for</th> #}
@@ -42,7 +42,7 @@
 		<th>Org.nummer</th>
 		<th>Notater</th>
 		{% if user.is_authenticated %}
-		<th>Slett</th>
+		<th class="filter-false">Slett</th>
 		{% endif %}
 	</tr>
 	</thead>

@@ -25,7 +25,7 @@
 	<thead>
 	<tr>
 		{% if user.is_authenticated %}
-		<th></th>
+		<th class="filter-false"></th>
 		{% endif %}
 		<th>Bruksdetaljer</th>
 		<th>Antall behandlinger (våre)</th>
@@ -38,7 +38,7 @@
 		<th>Strategisk</th>
 		<th>Funksjonell</th>
 		{% if user.is_authenticated %}
-		<th></th>
+		<th class="filter-false"></th>
 		{% endif %}
 	</tr>
 	</thead>

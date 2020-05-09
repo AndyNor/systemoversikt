@@ -140,9 +140,9 @@
 </div>
 
 <h6>Systemer registrert på driftsmodellen ({{ systemer.count }})</h6>
-{% include "system_include_generisk.html" with systemer=systemer %}
+{% include "site_include_generisk.html" with systemer=systemer %}
 
 <h6>Systemer på isolert drift ({{ isolert_drift.count|default:0 }})</h6>
-{% include "system_include_generisk.html" with systemer=isolert_drift %}
+{% include "site_include_generisk.html" with systemer=isolert_drift %}
 
 {% endblock main_content %}

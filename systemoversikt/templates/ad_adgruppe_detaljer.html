@@ -13,7 +13,7 @@
 
 	<h6>{{ gruppe.distinguishedname }}</h6>
 	Sist oppdatert {{ gruppe.sist_oppdatert }}<br>
-	<b>Fra PRK?</b>: {% include 'system_janeivetikke.html' with boolean=gruppe.from_prk %}<br>
+	<b>Fra PRK?</b>: {% include 'site_janeivetikke.html' with boolean=gruppe.from_prk %}<br>
 
 	<a href="{% url 'ad_exact' name=gruppe.distinguishedname %}">🔎 Live søk i AD</a>
 

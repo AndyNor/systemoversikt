@@ -23,26 +23,22 @@
 
 	{% for user in users %}
 
-	<h5><a href="{% url 'bruker_detaljer' pk=user.pk %}">{{user}}</a></h5>
+	<h6>{{user}}</h6>
 
-	<li><em>{{ user.profile.description|default:"Ingen beskrivelse" }}</em></li>
+	<p><a href="{% url 'ad_exact' user.profile.distinguishedname %}">Søk i AD</a> | <a href="{% url 'bruker_detaljer' pk=user.pk %}">direktelink</a></p>
 
-	<li>
+	<p><em>{{ user.profile.description|default:"Ingen beskrivelse" }}</em></p>
+
 	{% url 'virksomhet' pk=user.profile.virksomhet.pk as url_virk %}
 	{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
-	Jobber i <a href="{{url_virk}}">{{user.profile.virksomhet|default:"Ukjent"}}</a>
-		under <a href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a> ({{ user.profile.usertype|default:"Ukjent brukertype" }})
-	</li>
+	<p>Jobber i <a href="{{url_virk}}">{{user.profile.virksomhet|default:"Ukjent"}}</a>
+		under <a href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a> ({{ user.profile.usertype|default:"Ukjent brukertype" }})</p>
 
-	<li>
 	{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
 	Nærmeste leder er <a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a>
-	</li>
 
 	{% if user.ansvarlig_brukernavn %}
-	<li>
-		Vis <a href="{% url 'ansvarlig' pk=user.ansvarlig_brukernavn.pk %}">ansvarsområder</a> registrert i Kartoteket.
-	</li>
+	<p>Vis <a href="{% url 'ansvarlig' pk=user.ansvarlig_brukernavn.pk %}">ansvarsområder</a> registrert i Kartoteket.</p>
 	{% endif %}
 
 	{% if user.hrorg_leder.count > 0 %}

@@ -109,7 +109,7 @@
 
 <h5>Systemer som bruker programvaren</h5>
 
-{% include "system_include_generisk.html" with systemer=programvare.system_programvarer.all %}
+{% include "site_include_generisk.html" with systemer=programvare.system_programvarer.all %}
 
 
 <h5>Virksomheters bruk av {{ programvare.programvarenavn }}
@@ -118,7 +118,7 @@
 	<thead>
 		<tr>
 			{% if user.is_authenticated %}
-			<th></th>
+			<th class="filter-false"></th>
 			{% endif %}
 			<th>Bruksdetaljer</th>
 			<th>Lokal kontaktperson</th>
@@ -127,7 +127,7 @@
 			<th>Strategisk knytning</th>
 			<th>Teknisk egnethet</th>
 			{% if user.is_authenticated %}
-			<th></th>
+			<th class="filter-false"></th>
 			{% endif %}
 		</tr>
 	</thead>
@@ -162,12 +162,12 @@
 <table class="table table-sm table-striped tablesorter">
 	<thead>
 		<tr>
-			<th></th>
+			<th class="filter-false"></th>
 			<th>Av virksomhet</th>
 			<th>Beskrivelse av behandling</th>
 			<th>Opplysninger om</th>
 			<th>Høy risiko</th>
-			<th></th>
+			<th class="filter-false"></th>
 		</tr>
 	</thead>
 	<tbody>

@@ -12,7 +12,7 @@
 	{% endif %}
 
 	{% if user.is_authenticated %}
-		<a href="/admin/systemoversikt/virksomhet/add/" class="btn btn-sm btn-link">Opprett ny virksomhet</a>
+		<a href="/admin/systemoversikt/virksomhet/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %}Opprett ny virksomhet</a>
 		{% url 'sertifikatmyndighet' as url_sertifikatmyndighet%}
 		<a href="{{ url_sertifikatmyndighet }}" class="btn btn-sm btn-link {% if url_sertifikatmyndighet in request.path %}fremhev{% endif %}">Sertifikatmyndigheter</a>
 	{% endif %}

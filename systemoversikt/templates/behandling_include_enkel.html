@@ -4,7 +4,7 @@
 	<thead>
 		<tr>
 			{% if user.is_authenticated %}
-			<th></th>
+			<th class="filter-false"></th>
 			{% endif %}
 			<th>Registrert av</th>
 			<th>Intern avdeling</th>
@@ -12,7 +12,7 @@
 			<th>Behandlingen</th>
 			<th>Formål</th>
 			{% if user.is_authenticated %}
-			<th></th>
+			<th class="filter-false"></th>
 			{% endif %}
 		</tr>
 	</thead>

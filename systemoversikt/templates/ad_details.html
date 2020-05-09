@@ -44,6 +44,10 @@
 			<h3>Bruker</h3>
 			<h5>{{ user.attrs.displayName.0 }} ({{ user.attrs.cn.0 }})</h5>
 			<p>Canonical Name: <br>{{ user.cn }}</p>
+			{% if user.attrs.thumbnailPhoto.0 %}
+			<p>thumbnailPhoto-bilde:<br>
+			<img style="width: 96px; height: 96px; margin: 5px; border: 1px solid grey;" src="data:image/jpeg;base64,{{user.attrs.thumbnailPhoto.0}}"/></p>
+			{% endif %}
 			<p>Brukernavn / sAMAccountName:<br>{% for item in user.attrs.sAMAccountName %} {{ item }} {% endfor %}</p>
 			<p>ObjectClass: <br>{% for item in user.attrs.objectClass %} {{ item }} | {% endfor %}</p>
 			<p>Fornavn: {% for item in user.attrs.givenName %} <br>{{ item }} {% endfor %}</p>

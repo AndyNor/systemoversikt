@@ -4,7 +4,7 @@
 	<thead>
 		<tr>
 			{% if user.is_authenticated %}
-			<th>Rediger</th>
+			<th class="filter-false">Rediger</th>
 			{% endif %}
 			{% comment %}<th>Virksomhet</th>{% endcomment %}
 			<th>Hovedoppgave / Hovedformål</th>
@@ -19,7 +19,7 @@
 			<th>Systemer og programvarer</th>
 			<th>Eksterne databehandlere</th>
 			{% if user.is_authenticated %}
-			<th>Slett</th>
+			<th class="filter-false">Slett</th>
 			{% endif %}
 		</tr>
 	</thead>

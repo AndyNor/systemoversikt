@@ -643,7 +643,7 @@ def alle_definisjoner(request):
 	"""
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
-	if (search_term == "__all__"):
+	if (search_term == ""):
 		definisjoner = Definisjon.objects.all()
 	elif len(search_term) < 2: # if one or less, return nothing
 		definisjoner = Definisjon.objects.none()
@@ -792,33 +792,39 @@ def systemdetaljer(request, pk):
 			return "Ukjent"
 
 	# registrere dette systemet som en node
-	avhengigheter_graf["nodes"].append({"data": { "parent": parent(system), "id": system.pk, "name": system.systemnavn, "shape": "ellipse", "color": "#4f90d6" }},)
+	avhengigheter_graf["nodes"].append({"data": { "parent": parent(system), "id": system.pk, "name": system.systemnavn, "shape": "ellipse", "color": "black" }},)
 	observerte_driftsmodeller.add(system.driftsmodell_foreignkey)
 
+	def systemfarge(self):
+		if self.er_infrastruktur():
+			return "gray"
+		else:
+			return "#dca85a"
+
 	for s in system.datautveksling_mottar_fra.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": "#dca85a", "href": reverse('systemdetaljer', args=[s.pk]) }},)
+		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
 		avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": system.pk, "linestyle": "solid" }},)
 		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
 	for s in system.system_datautveksling_avleverer_til.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": "#dca85a", "href": reverse('systemdetaljer', args=[s.pk]) }},)
+		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
 		avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": system.pk, "linestyle": "solid" }},)
 		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
 
 	for s in system.datautveksling_avleverer_til.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": "#dca85a", "href": reverse('systemdetaljer', args=[s.pk]) }},)
+		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
 		avhengigheter_graf["edges"].append({"data": { "source": system.pk, "target": s.pk, "linestyle": "solid" }},)
 		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
 	for s in system.system_datautveksling_mottar_fra.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": "#dca85a", "href": reverse('systemdetaljer', args=[s.pk]) }},)
+		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
 		avhengigheter_graf["edges"].append({"data": { "source": system.pk, "target": s.pk, "linestyle": "solid" }},)
 		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
 
 	for s in system.avhengigheter_referanser.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": "#9c9c9c", "href": reverse('systemdetaljer', args=[s.pk]) }},)
+		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
 		avhengigheter_graf["edges"].append({"data": { "source": system.pk, "target": s.pk, "linestyle": "dashed" }},)
 		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
 	for s in system.system_avhengigheter_referanser.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": "#9c9c9c", "href": reverse('systemdetaljer', args=[s.pk]) }},)
+		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
 		avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": system.pk, "linestyle": "dashed" }},)
 		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
 
@@ -893,10 +899,9 @@ def systemklassifisering_detaljer(request, id):
 	"""
 	if id == "__NONE__":
 		utvalg_systemer = System.objects.filter(systemeierskapsmodell=None)
+		id = "tom"
 	else:
 		utvalg_systemer = System.objects.filter(systemeierskapsmodell=id)
-
-	id = "tom"
 
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
 	systemtyper = Systemtype.objects.all()
@@ -1036,18 +1041,21 @@ def registrer_bruk(request, system):
 	if request.user.has_perm(required_permissions):
 
 		system_instans = System.objects.get(pk=system)
-		virksomheter = request.POST.getlist("virksomheter", "")
-		if virksomheter != "":
-			for str_virksomhet in virksomheter:
-				virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
-				try:
-					bruk = SystemBruk.objects.create(
-						brukergruppe=virksomhet,
-						system=system_instans,
-					)
-					bruk.save()
-				except:
-					messages.warning(request, 'Kunne ikke opprette bruk for %s' % virksomhet)
+
+		if request.POST:
+			virksomheter = request.POST.getlist("virksomheter", "")
+			if virksomheter != "":
+				for str_virksomhet in virksomheter:
+					virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
+					try:
+						bruk = SystemBruk.objects.create(
+							brukergruppe=virksomhet,
+							system=system_instans,
+						)
+						bruk.save()
+					except:
+						messages.warning(request, 'Kunne ikke opprette bruk for %s' % virksomhet)
+			return redirect('systemdetaljer', system_instans.pk)
 
 		virksomheter_med_bruk = SystemBruk.objects.filter(system=system_instans)
 		vmb = [bruk.brukergruppe.pk for bruk in virksomheter_med_bruk]
@@ -2874,7 +2882,7 @@ def ldap_get_details(name, ldap_filter):
 			if b'computer' in attrs["objectClass"]:
 				attrs_decoded = {}
 				for key in attrs:
-					if key in ['description', 'cn', 'objectClass', 'operatingSystem', 'operatingSystemVersion', 'dNSHostName']:
+					if key in ['description', 'cn', 'objectClass', 'operatingSystem', 'operatingSystemVersion', 'dNSHostName',]:
 						attrs_decoded[key] = []
 						for element in attrs[key]:
 							attrs_decoded[key].append(element.decode())
@@ -2893,9 +2901,10 @@ def ldap_get_details(name, ldap_filter):
 
 
 			if b'user' in attrs["objectClass"]:
+				import codecs
 				attrs_decoded = {}
 				for key in attrs:
-					if key in ['cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass']:
+					if key in ['cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass', 'thumbnailPhoto']:
 						# if not, then we don't bother decoding the value for now
 						attrs_decoded[key] = []
 						if key == "lastLogonTimestamp":
@@ -2907,6 +2916,8 @@ def ldap_get_details(name, ldap_filter):
 						elif key == "userAccountControl":
 							accountControl = decode_useraccountcontrol(int(attrs[key][0].decode()))
 							attrs_decoded[key].append(accountControl)
+						elif key == "thumbnailPhoto":
+							attrs_decoded[key].append(codecs.encode(attrs[key][0], 'base64').decode('utf-8'))
 						elif key == "memberOf":
 							for element in attrs[key]:
 								e = element.decode()

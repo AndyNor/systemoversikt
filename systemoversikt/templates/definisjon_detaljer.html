@@ -1,35 +1,51 @@
 {% extends "index.html" %}
 {% load humanize %}
 {% load static %}
-{% load templatetags %}
 
-{% block underoverskrift %}
-	{{ begrep }}
-{% endblock underoverskrift %}
+{% block sidemeny %}
+	<h6>Alle definisjoner</h6>
+	{% if perms.systemoversikt.add_definisjon %}
+	<div>
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/definisjon/add/">Registrer definisjon</a>
+		<a class="btn btn-sm btn-link" href="{% url 'import_organisatorisk_forkortelser' %}">Sync virksomheter</a>
+	</div>
+	{% endif %}
+{% endblock sidemeny %}
 
 {% block main_content %}
+	<h3>
+	{% block overskrift %}
 
-{% for d in definisjoner %}
-<hr>
-{% if perms.systemoversikt.change_definisjon %}
-<a target="_blank" href="/admin/systemoversikt/definisjon/{{ d.pk }}/change/">
-<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">rediger</a> |
-{% endif %}
-Kontekst: <span class="badge badge-pill badge-light" style="font-size: 90%;">{{ d.kontekst_ref|default:"kontekst mangler" }}</span> |
-Engelsk begrep: <span class="badge badge-pill badge-light" style="font-size: 90%;">{{ d.engelsk_begrep|default:"ikke oppgitt" }}</span> |
-Kilde: <span class="badge badge-pill badge-light" style="font-size: 90%;"><a target="_blank" href="{{ d.kilde }}">{{ d.kilde }}</a></span> |
-Ansvarlig: <span class="badge badge-pill badge-light" style="font-size: 90%;">{{ d.ansvarlig|default:"ikke oppgitt" }}</span> |
+		{{ begrep }}
 
-<div {% if d.status != 1 %} style="opacity: 0.3;" {% endif %}>
-	<h5 style="margin: 20px;">“{{ d.definisjon }}”</h5>
-	<p><b>Eksemplifisert</b>: {{ d.eksempel|default:"ikke oppgitt" }}<br>
-	<b>Legaldefinisjon</b>: {{ d.legaldefinisjon|default:"ikke oppgitt" }}</p>
-</div>
+	{% endblock overskrift %}
+	</h3>
 
-{% empty %}
+	{% block hovedinnhold %}
 
-<p>Fant ingen definisjoner som passer søket.</p>
+	{% for d in definisjoner %}
+		<hr>
+		{% if perms.systemoversikt.change_definisjon %}
+		<a target="_blank" href="/admin/systemoversikt/definisjon/{{ d.pk }}/change/">
+		<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">rediger</a> |
+		{% endif %}
 
-{% endfor %}
+		Kontekst: <span class="badge badge-pill badge-light" style="font-size: 90%;">{{ d.kontekst_ref|default:"kontekst mangler" }}</span> |
+		Engelsk begrep: <span class="badge badge-pill badge-light" style="font-size: 90%;">{{ d.engelsk_begrep|default:"ikke oppgitt" }}</span> |
+		Kilde: <span class="badge badge-pill badge-light" style="font-size: 90%;"><a target="_blank" href="{{ d.kilde }}">{{ d.kilde }}</a></span> |
+		Ansvarlig: <span class="badge badge-pill badge-light" style="font-size: 90%;">{{ d.ansvarlig|default:"ikke oppgitt" }}</span> |
 
+		<div {% if d.status != 1 %} style="opacity: 0.3;" {% endif %}>
+			<h5 style="margin: 20px;">“{{ d.definisjon }}”</h5>
+			<p><b>Eksemplifisert</b>: {{ d.eksempel|default:"ikke oppgitt" }}<br>
+			<b>Legaldefinisjon</b>: {{ d.legaldefinisjon|default:"ikke oppgitt" }}</p>
+		</div>
+
+	{% empty %}
+
+		<p>Fant ingen definisjoner som passer søket.</p>
+
+	{% endfor %}
+
+	{% endblock hovedinnhold %}
 {% endblock main_content %}

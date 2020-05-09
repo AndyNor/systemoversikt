@@ -18,7 +18,6 @@
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-sm-12">
-
 				<b>{% get_verbose_field_name virksomhet "orgnummer" %}:</b> {{ virksomhet.orgnummer|default:'-' }}<br>
 				<b>{% get_verbose_field_name virksomhet "kan_representeres" %}:</b> {{ virksomhet.kan_representeres|yesno:"Ja,Nei" }}<br>
 				<b>{% get_verbose_field_name virksomhet "overordnede_virksomheter" %}:</b>
@@ -28,8 +27,6 @@
 					{% endfor %}
 				<br>
 				<b>{% get_verbose_field_name virksomhet "resultatenhet" %}:</b> {{ virksomhet.get_resultatenhet_display }}<br>
-
-
 			</div>
 		</div>
 
@@ -37,7 +34,6 @@
 		<h6>Avdelinger</h6>
 		<div class="row">
 			<div class="col-sm-12">
-
 				<ul style="column-count: 3;">
 				{% for u in enheter %}
 					{% url 'enhet_detaljer' pk=u.pk as url_enhet %}
@@ -46,8 +42,6 @@
 					<li>Ingen</li>
 				{% endfor %}
 				</ul>
-
-
 			</div>
 		</div>
 
@@ -90,7 +84,7 @@
 			</div>
 		</div>
 
-
+		{% comment %}
 		<hr>
 		<h6>Organisatoriske personverntiltak</h6>
 		<div class="row">
@@ -100,6 +94,7 @@
 				<b>{% get_verbose_field_name virksomhet "rutine_klage_behandling" %}:</b> {% if virksomhet.rutine_klage_behandling %}<a href="{{ virksomhet.rutine_klage_behandling|default:'' }}">Link</a>{% else %} Ikke oppgitt {% endif %}<br>
 			</div>
 		</div>
+		{% endcomment %}
 
 		<hr>
 		<h6>Statistikk</h6>

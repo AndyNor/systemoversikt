@@ -29,21 +29,24 @@
 	<a href="{{ url_alle_adgrupper }}" class="btn btn-sm btn-link {% if url_alle_adgrupper in request.path %}fremhev{% endif %}" >Søk i AD-grupper</a>
 
 	{% url 'adorgunit_detaljer' as url_adorgunit_detaljer %}
-	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}" >Bla i AD</a>
+	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}" >Bla i OU-grupper</a>
 
 
 	{% url 'ad' as url_ad %}
-	<a href="{{url_ad}}" class="btn btn-sm {% if url_ad in request.path %}fremhev{% endif %}">Direkteoppslag i AD</a>
+	<a href="{{url_ad}}" class="btn btn-sm {% if url_ad in request.path %}fremhev{% endif %}">Søk AD/LDAP</a>
 
 	{% block ekstrameny_ad %}{% endblock ekstrameny_ad %}
 
 	<hr>
 	<h6>PRK</h6>
 	{% url 'alle_prk' as url_alle_prk %}
-	<a href="{{ url_alle_prk }}"class="btn btn-sm btn-link {% if url_alle_prk in request.path %}fremhev{% endif %}" >Søk i PRK-skjema</a>
+	<a href="{{ url_alle_prk }}"class="btn btn-sm btn-link {% if url_alle_prk in request.path %}fremhev{% endif %}">Søk i PRK-skjema</a>
 
 	{% url 'alle_klienter' as url_alle_klienter %}
-	<a href="{{ url_alle_klienter }}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}" >PRK maskinadmin</a>
+	<a href="{{ url_alle_klienter }}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}">PRK maskinadmin</a>
+
+	{% url 'virksomhet_enhetsok' as url_virksomhet_enhetsok %}
+	<a href="{{ url_virksomhet_enhetsok }}" class="btn btn-sm btn-link {% if url_virksomhet_enhetsok in request.path %}fremhev{% endif %}">Søk i PRK organisasjon</a>
 
 	{% block ekstrameny_prk %}{% endblock ekstrameny_prk %}
 

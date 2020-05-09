@@ -2,63 +2,77 @@
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
-	Definisjoner, forkortelser og begreper
+{% block sidemeny %}
+	<h6>Alle definisjoner</h6>
 	{% if perms.systemoversikt.add_definisjon %}
 	<div>
-		<a target="_blank" class="btn btn-sm btn-primary" href="/admin/systemoversikt/definisjon/add/">Legg til ny definisjon</a>
-		<a class="btn btn-sm btn-danger" href="{% url 'import_organisatorisk_forkortelser' %}">Synkroniser virksomhetforkortelser</a>
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/definisjon/add/">Registrer definisjon</a>
+		<a class="btn btn-sm btn-link" href="{% url 'import_organisatorisk_forkortelser' %}">Sync virksomheter</a>
 	</div>
 	{% endif %}
-{% endblock underoverskrift %}
+{% endblock sidemeny %}
 
 {% block main_content %}
-<p>En enkel modul for å definere begreper. Et begrep kan defineres flere ganger med ulik definisjon. Viser {{ definisjoner.count }} begreper.</p>
+	<h3>
+	{% block overskrift %}
 
-	<form action="" autocomplete="off">
-		<div class="form-group form-inline">
-			<input size="30" style="width: 300px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="Begrep eller definisjon inneholder.." class="form-control form-control-sm">
-			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
-		</div>
-	</form>
+		Definisjoner, forkortelser og begreper
 
-<table id="stickyheader" class="table table-sm tablesorter">
-	<thead>
-	<tr>
-		<th width="15%">Begrep</th>
-		<th width="15%">Engelsk begrep</th>
-		<th width="5%">Kontekst</th>
-		<th width="5%">Status</th>
-		<th width="60%">Definisjon</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for item in definisjoner %}
-	<tr {% if item.status != 1 %} style="opacity: 0.3;" {% endif %}>
-		<td width="200">
-			{% if perms.systemoversikt.change_definisjon %}
-			<a target="_blank" href="/admin/systemoversikt/definisjon/{{ item.pk }}/change/">
-				<img style="width: 11px; margin: 3px;"
-				src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
-			{% endif %}
-			{% url 'definisjon' begrep=item.begrep as url_detaljer_definisjon %}
-			<a href="{{ url_detaljer_definisjon }}">{{ item.begrep }}</a>
-		</td>
-		<td>{{ item.engelsk_begrep|default:"-" }}</td>
-		<td>{{ item.kontekst_ref|default:"-" }}</td>
-		<td>{{ item.get_status_display }}</td>
-		<td>
-			{% if perms.systemoversikt.delete_definisjon %}
-			<a target="_blank" href="/admin/systemoversikt/definisjon/{{ item.pk }}/delete/">
-				<img style="width: 8px; margin: 3px;"
-				src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
-			{% endif %}
-			{{ item.definisjon|default:"-" }}
-		</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-</table>
+	{% endblock overskrift %}
+	</h3>
+
+	{% block hovedinnhold %}
+
+	<p>En enkel modul for å definere begreper. Et begrep kan defineres flere ganger med ulik definisjon. Viser {{ definisjoner.count }} begreper.</p>
+
+		<form action="" autocomplete="off">
+			<div class="form-group form-inline">
+				<input size="30" style="width: 300px;" type="search" value="{{ search_term }}" name="search_term"
+				placeholder="Begrep eller definisjon inneholder.." class="form-control form-control-sm">
+				<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+				<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
+			</div>
+		</form>
+
+	<table id="stickyheader" class="table table-sm tablesorter">
+		<thead>
+		<tr>
+			<th class="filter-false"></th>
+			<th width="15%">Begrep</th>
+			<th width="15%">Engelsk begrep</th>
+			<th width="5%">Kontekst</th>
+			<th width="5%">Status</th>
+			<th width="60%">Definisjon</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for item in definisjoner %}
+		<tr {% if item.status != 1 %} style="opacity: 0.3;" {% endif %}>
+			<td>{% if perms.systemoversikt.change_definisjon %}
+				<a href="/admin/systemoversikt/definisjon/{{ item.pk }}/change/">
+					{% include 'site_edit_button.html' %}</a>
+				{% endif %}
+			</td>
+			<td width="200">
+				{% url 'definisjon' begrep=item.begrep as url_detaljer_definisjon %}
+				<a href="{{ url_detaljer_definisjon }}">{{ item.begrep }}</a>
+			</td>
+			<td>{{ item.engelsk_begrep|default:"-" }}</td>
+			<td>{{ item.kontekst_ref|default:"-" }}</td>
+			<td>{{ item.get_status_display }}</td>
+			<td>
+				{% if perms.systemoversikt.delete_definisjon %}
+				<a target="_blank" href="/admin/systemoversikt/definisjon/{{ item.pk }}/delete/">
+					<img style="width: 8px; margin: 3px;"
+					src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
+				{% endif %}
+				{{ item.definisjon|default:"-" }}
+			</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	{% endblock hovedinnhold %}
 {% endblock main_content %}
+

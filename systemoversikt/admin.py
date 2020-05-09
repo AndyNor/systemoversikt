@@ -148,6 +148,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'database_supported',
 		'database_in_use',
 	)
+
 	fieldsets = (
 		('Initiell registrering', {
 			'description': 'Dette er felter ansett som obligatoriske, og kreves utfylt for å kunne krysse av for at informasjonen er kvalitetssikret..',
@@ -158,8 +159,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'systembeskrivelse',
 				'systemtyper',
 				'systemeierskapsmodell',
-				'systemeier', 
-				'systemeier_kontaktpersoner_referanse',
+				('systemeier', 'systemeier_kontaktpersoner_referanse'),
 				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
 				('autentiseringsteknologi', 'autentiseringsalternativer'),
 				'autorisasjonsalternativer',
@@ -300,6 +300,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 				'fields': (
 					'personvernkoordinator',
 					'informasjonssikkerhetskoordinator',
+					'styringssystem',
 					'rutine_tilgangskontroll',
 					'rutine_behandling_personopplysninger',
 					'rutine_klage_behandling',
@@ -338,7 +339,7 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 	search_fields = ('system__systemnavn', 'system__systembeskrivelse', 'kommentar', 'systemforvalter')
 	list_filter = ('avtalestatus', 'avtale_kan_avropes', 'systemeierskapsmodell', 'brukergruppe')
 	autocomplete_fields = ('brukergruppe', 'system', 'systemforvalter', 'systemforvalter_kontaktpersoner_referanse', 'avhengigheter_referanser')
-	
+
 	def response_add(self, request, obj, post_url_continue=None):
 		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
 			return redirect(reverse('all_bruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
@@ -438,12 +439,12 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
-			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.brukergruppe.pk}))
+			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
 		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
-			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.brukergruppe.pk}))
+			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.pk}))
 		return super().response_change(request, obj)
 
 	fieldsets = (
@@ -611,8 +612,8 @@ class SystemKategoriAdmin(SimpleHistoryAdmin):
 
 @admin.register(Systemtype)
 class SystemtypeAdmin(SimpleHistoryAdmin):
+	list_display = ('kategorinavn', 'definisjon', 'har_url', 'er_infrastruktur')
 	search_fields = ('kategorinavn',)
-	list_display = ('kategorinavn', 'definisjon')
 
 	def get_ordering(self, request):
 		return [Lower('kategorinavn')]

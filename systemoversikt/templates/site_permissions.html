@@ -1,35 +1,35 @@
-{% extends "index.html" %}
+{% extends "admin_index.html" %}
+{% load static %}
 
-{% block underoverskrift %}
+{% block overskrift %}
 	Ansvarlige og rettigheter
-{% endblock %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
-<p>Her vises personer som er opprettet som "ansvarlige", samt deres tilgangsgrupper og sist pålogget dato. Merk at tilgang bare leses inn hver gang en bruker logger på. Dersom personen ikke har logget inn siden personen fikk tilgang i PRK, vil det ikke vises her.</p>
+	<p>Her vises personer som er opprettet som "ansvarlige", samt deres tilgangsgrupper og sist pålogget dato. Merk at tilgang bare leses inn hver gang en bruker logger på. Dersom personen ikke har logget inn siden personen fikk tilgang i PRK, vil det ikke vises her.</p>
 
-<table id="ansvarlige" class="table table-sm table-striped">
-<thead>
-<tr>
-	<th>Ansvarlig</th>
-	<th>Grupper</th>
-	<th>Sist pålogget</th>
-</tr>
-</thead>
-<tbody>
-{% for a in ansvarlige %}
+	<table id="ansvarlige" class="table table-sm table-striped">
+	<thead>
 	<tr>
-		<td>{{ a }}</td>
-		<td>
-		{% for g in a.brukernavn.groups.all %}
-			{{ g }}<br>
-		{% endfor %}
-		</td>
-		<td>{{ a.brukernavn.last_login|date:"Y-m-d" }}</td>
+		<th>Ansvarlig</th>
+		<th>Grupper</th>
+		<th>Sist pålogget</th>
 	</tr>
-{% endfor %}
-</tbody>
-</table>
+	</thead>
+	<tbody>
+	{% for a in ansvarlige %}
+		<tr>
+			<td>{{ a }}</td>
+			<td>
+			{% for g in a.brukernavn.groups.all %}
+				{{ g }}<br>
+			{% endfor %}
+			</td>
+			<td>{{ a.brukernavn.last_login|date:"Y-m-d" }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
 
-
-{% endblock %}
+{% endblock hovedinnhold %}

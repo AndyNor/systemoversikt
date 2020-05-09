@@ -6,6 +6,15 @@
 
 	{% if virksomhet %}
 		{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+	{% else %}
+		<hr>
+		<h6>Avtaler</h6>
+		{% if request.user.profile.virksomhet %}
+			{% url 'avtalervirksomhet' virksomhet=request.user.profile.virksomhet.pk as url_avtalervirksomhet %}
+			<a class="btn btn-sm btn-link" href="{{ url_avtalervirksomhet }}">Våre avtaler</a>
+		{% endif %}
+
 	{% endif %}
 
 {% endblock ekstrameny %}

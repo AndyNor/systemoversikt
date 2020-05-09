@@ -1,14 +1,11 @@
-{% extends "index.html" %}
+{% extends "admin_index.html" %}
 {% load static %}
 
-{% block underoverskrift %}
+{% block overskrift %}
 	Logg over endringer i databasen
-	<div>
-		<a class="btn btn-sm btn-primary" href="/admin/admin/logentry/">Avansert søk og filtrering</a>
-	</div>
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
 	<table class="table table-sm table-striped">
 	<thead>
@@ -39,4 +36,4 @@
 	</tbody>
 	</table>
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

@@ -3,6 +3,10 @@
 <table id="systemoversikt" class="table table-sm table-striped">
 <thead>
 <tr>
+	{% if perms.systemoversikt.change_system %}
+	<th class="filter-false"></th>
+	{% endif %}
+
 	<th>Systemnavn</th>
 	<th>Systemeier</th>
 	<th>Systemklassifisering</th>
@@ -18,6 +22,12 @@
 <tbody>
 {% for item in systemer %}
 <tr>
+
+	{% if user.is_authenticated %}
+	<td>
+		<a href="/admin/systemoversikt/system/{{ system.pk }}/change/">{% include 'site_edit_button.html' %}</a>
+	</td>
+	{% endif %}
 
 	<td>
 		{% include 'system_include_vis.html' with system=item %}

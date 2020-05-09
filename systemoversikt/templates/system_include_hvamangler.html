@@ -4,7 +4,7 @@
 <table class="table table-sm table-striped tablesorter">
 	<thead>
 	<tr>
-		<th>Rediger</th>
+		<th class="filter-false">Rediger</th>
 		<th>System</th>
 		<th>Bruk</th>
 		<th>Kvalitetssikret</th>
@@ -45,7 +45,7 @@
 				{{ system.antall_bruk }}
 			</td>
 			<td>
-				{% include 'system_janeivetikke.html' with boolean=system.informasjon_kvalitetssikret %}
+				{% include 'site_janeivetikke.html' with boolean=system.informasjon_kvalitetssikret %}
 			</td>
 			<td>
 				{{ system.sist_oppdatert|naturaltime }}

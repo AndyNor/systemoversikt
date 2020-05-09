@@ -1,26 +1,29 @@
-{% extends "index.html" %}
+{% extends "behandling_index.html" %}
+{% load humanize %}
 {% load static %}
+{% load templatetags %}
 
-{% block underoverskrift %}
-	Viser alle behandlinger i Kartoteket ({{ behandlinger.count }} stykk)
-{% endblock underoverskrift %}
+{% block ekstrameny_behandling %}
 
-{% block main_content %}
+{% endblock ekstrameny_behandling %}
 
-<p>
-	{% url 'mine_behandlinger' as url_mine_behandlinger %}
-	<a class="btn btn-sm btn-success" href="{{ url_mine_behandlinger }}">Våre behandlinger</a>
-</p>
+{% block overskrift %}
+	Alle behandlinger
+{% endblock overskrift %}
 
-<table id="behandlinger" class="table table-sm table-striped">
+{% block hovedinnhold %}
+
+	<p>Viser ({{ behandlinger.count }} behandlinger</p>
+
+	<table id="behandlinger" class="table table-sm table-striped">
 	<thead>
 		<tr>
-			<th>Rediger</th>
+			<th class="filter-false">Rediger</th>
 			<th>Felles</th>
 			<th>Registrert av</th>
 			<th>Behandlingen</th>
 			<th>Oppdateringsansvarlig</th>
-			<th>Slett</th>
+			<th class="filter-false">Slett</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -52,8 +55,6 @@
 		</tr>
 		{% endfor %}
 	</tbody>
-</table>
+	</table>
 
-
-
-{% endblock main_content %}
+{% endblock hovedinnhold %}

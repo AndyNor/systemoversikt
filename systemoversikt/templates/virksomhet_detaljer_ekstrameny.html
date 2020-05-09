@@ -5,15 +5,19 @@
 		<a href="{{ url_virksomhet }}" class="btn btn-sm btn-link {% if url_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s forside</a>
 
 	{% if user.is_authenticated %}
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">Rediger {{virksomhet.virksomhetsforkortelse}}</a>
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">{% include 'site_edit_button.html' %} Rediger {{virksomhet.virksomhetsforkortelse}}</a>
 	{% endif %}
 
 	{% if virksomhet.intranett_url %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.intranett_url }}" target="_blank">{{virksomhet.virksomhetsforkortelse}}s intranettside</a>
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.intranett_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s intranettside</a>
 	{% endif %}
 
 	{% if virksomhet.www_url %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.www_url }}" target="_blank">{{virksomhet.virksomhetsforkortelse}}s nettside</a>
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.www_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s nettside</a>
+	{% endif %}
+
+	{% if virksomhet.styringssystem %}
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.styringssystem }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s styringssystem</a>
 	{% endif %}
 
 	{% url 'virksomhet_ansvarlige' pk=virksomhet.pk as url_virksomhet_ansvarlige %}
