@@ -66,8 +66,8 @@ urlpatterns = [
 	url(r'^behandlinger/user/$', views.mine_behandlinger, name='mine_behandlinger'),
 	url(r'^behandlinger/alle/$', views.alle_behandlinger, name='alle_behandlinger'),
 	url(r'^behandlinger/kopier/(?P<system_pk>\d{1,8})/$', views.behandling_kopier, name='behandling_kopier'),
-	url(r'^behandlinger/virksomhet/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
-	url(r'^behandlinger/virksomhet/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
+	url(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
+	url(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
 	url(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
 
 	url(r'^avtaler/$', views.alle_avtaler, name='alle_avtaler'),
@@ -101,12 +101,12 @@ urlpatterns = [
 	url(r'^leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),
 
 	url(r'^hovedkategorier/alle/$', views.alle_hovedkategorier, name='alle_hovedkategorier'),
-	url(r'^hovedkategorier/subkategorier/alle/$', views.alle_systemkategorier, name='alle_systemkategorier'),
+	url(r'^hovedkategorier/subkategorier/$', views.alle_systemkategorier, name='alle_systemkategorier'),
 	url(r'^hovedkategorier/subkategorier/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
 	url(r'^hovedkategorier/subkategorier/uten_kategori/$', views.uten_systemkategori, name='uten_systemkategorier'),
 	url(r'^hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
 
-	url(r'^domener/$', views.alle_systemurler, name='alle_systemurler'),
+	url(r'^domener/alle/$', views.alle_systemurler, name='alle_systemurler'),
 	url(r'^virksomhet/domener/(?P<pk>\d{1,8})/$', views.virksomhet_urler, name='virksomhet_urler'),
 
 	url(r'^programvare/alle/$', views.alle_programvarer, name='alle_programvarer'),
@@ -127,7 +127,7 @@ urlpatterns = [
 	url(r'^cmdb/os/$', views.alle_os, name='alle_os'),
 	url(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
 
-	url(r'^cmdb/prk/$', views.alle_prk, name='alle_prk'),
+	url(r'^cmdb/prk/alle/$', views.alle_prk, name='alle_prk'),
 	url(r'^cmdb/prk/browse/$', views.prk_browse, name='prk_browse'),
 	url(r'^cmdb/prk/browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
 
@@ -147,13 +147,13 @@ urlpatterns = [
 	url(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	url(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),
 
-	url(r'^driftsmodell/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
+	url(r'^driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
 	url(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
 	url(r'^virksomhet/driftsmodell/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
 	url(r'^virksomhet/driftsmodell/klassifisering/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet_klassifisering, name='driftsmodell_virksomhet_klassifisering'),
 	url(r'^driftsmodell/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),
 
-	url(r'^definisjon/$', views.alle_definisjoner, name='alle_definisjoner'),
+	url(r'^definisjon/alle/$', views.alle_definisjoner, name='alle_definisjoner'),
 	url(r'^definisjon/(?P<begrep>[-_a-zA-Z0-9\s]{1,150})/$', views.definisjon, name='definisjon'),
 
 	url(r'^dashboard/$', views.dashboard_all, name='dashboard_all'),

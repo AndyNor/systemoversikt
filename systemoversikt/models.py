@@ -749,7 +749,7 @@ class SystemKategori(models.Model):
 	def __str__(self):
 		if len(self.systemhovedkategori_systemkategorier.all()) > 0:
 			# hvis flere, tar vi den første. Det skal ikke være flere, men det er litt knotete å endre til foreignkey-relasjon
-			return u'%s: %s' % (self.systemhovedkategori_systemkategorier.all()[0].hovedkategorinavn, self.kategorinavn)
+			return u'%s (%s)' % (self.kategorinavn, self.systemhovedkategori_systemkategorier.all()[0].hovedkategorinavn)
 		else:
 			return u'%s' % (self.kategorinavn)
 

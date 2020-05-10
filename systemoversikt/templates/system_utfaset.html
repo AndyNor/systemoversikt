@@ -1,14 +1,14 @@
-{% extends "index.html" %}
+{% extends "system_index.html" %}
 
-{% block underoverskrift %}
+{% block overskrift %}
 	Utfasede systemer
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
 	<p>Viser {{ systemer.count }} utfasede systemer. Sortert etter oppdateringsdato.</p>
 
-	{% include "system_include_generisk.html" %}
+	{% include "system_include_hurtigvisning.html" %}
 
 	{% if potensielle_systemer %}
 	<hr>
@@ -20,4 +20,4 @@
 	</ul>
 	{% endif %}
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

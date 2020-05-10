@@ -25,7 +25,13 @@
 
 	<h6>{{user}}</h6>
 
-	<p><a href="{% url 'ad_exact' user.profile.distinguishedname %}">Søk i AD</a> | <a href="{% url 'bruker_detaljer' pk=user.pk %}">direktelink</a></p>
+	<p>
+	{% if user.ansvarlig_brukernavn %}
+		<a href="{% url 'ansvarlig' pk=user.ansvarlig_brukernavn.pk %}">Ansvarsområder</a> |
+	{% endif %}
+	<a href="{% url 'ad_exact' user.profile.distinguishedname %}">Søk i AD</a> | <a href="{% url 'bruker_detaljer' pk=user.pk %}">direktelink</a>
+
+	</p>
 
 	<p><em>{{ user.profile.description|default:"Ingen beskrivelse" }}</em></p>
 
@@ -36,10 +42,6 @@
 
 	{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
 	Nærmeste leder er <a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a>
-
-	{% if user.ansvarlig_brukernavn %}
-	<p>Vis <a href="{% url 'ansvarlig' pk=user.ansvarlig_brukernavn.pk %}">ansvarsområder</a> registrert i Kartoteket.</p>
-	{% endif %}
 
 	{% if user.hrorg_leder.count > 0 %}
 	<li>Nærmeste leder for:<ul>

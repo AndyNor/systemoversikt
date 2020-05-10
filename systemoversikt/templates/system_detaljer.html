@@ -14,35 +14,35 @@
 	<p style="color: grey;">{{systemdetaljer.systemnavn}}</p>
 
 	{% if systemdetaljer.kontaktgruppe_url %}
-		<a class="btn btn-sm btn-link" href="{{ systemdetaljer.kontaktgruppe_url }}">🌍 {% get_verbose_field_name systemdetaljer "kontaktgruppe_url" %}</a>
+		<a target="_blank" class="btn btn-sm btn-link" href="{{ systemdetaljer.kontaktgruppe_url }}">🌍 {% get_verbose_field_name systemdetaljer "kontaktgruppe_url" %}</a>
 	{% endif %}
 
 	{% if systemdetaljer.brukerdokumentasjon_url %}
-		<a class="btn btn-sm btn-link" href="{{ systemdetaljer.brukerdokumentasjon_url }}">🌍 {% get_verbose_field_name systemdetaljer "brukerdokumentasjon_url" %}</a>
+		<a target="_blank" class="btn btn-sm btn-link" href="{{ systemdetaljer.brukerdokumentasjon_url }}">🌍 {% get_verbose_field_name systemdetaljer "brukerdokumentasjon_url" %}</a>
 	{% endif %}
 
 	{% if systemdetaljer.high_level_design_url %}
-	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.high_level_design_url }}">🌍 {% get_verbose_field_name systemdetaljer "high_level_design_url" %}</a>
+		<a target="_blank" class="btn btn-sm btn-link" href="{{ systemdetaljer.high_level_design_url }}">🌍 {% get_verbose_field_name systemdetaljer "high_level_design_url" %}</a>
 	{% endif %}
 
 	{% if systemdetaljer.low_level_design_url %}
-	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.low_level_design_url }}">🌍 {% get_verbose_field_name systemdetaljer "low_level_design_url" %}</a>
+		<a target="_blank" class="btn btn-sm btn-link" href="{{ systemdetaljer.low_level_design_url }}">🌍 {% get_verbose_field_name systemdetaljer "low_level_design_url" %}</a>
 	{% endif %}
 
 	{% if systemdetaljer.datamodell_url %}
-	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.datamodell_url }}">🌍 {% get_verbose_field_name systemdetaljer "datamodell_url" %}</a><br>
+		<a target="_blank" class="btn btn-sm btn-link" href="{{ systemdetaljer.datamodell_url }}">🌍 {% get_verbose_field_name systemdetaljer "datamodell_url" %}</a><br>
 	{% endif %}
 
 	{% if systemdetaljer.datasett_url %}
-	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.datasett_url }}">🌍 {% get_verbose_field_name systemdetaljer "datasett_url" %}</a><br>
+		<a target="_blank" class="btn btn-sm btn-link" href="{{ systemdetaljer.datasett_url }}">🌍 {% get_verbose_field_name systemdetaljer "datasett_url" %}</a><br>
 	{% endif %}
 
 	{% if systemdetaljer.api_url %}
-	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.api_url }}">🌍 {% get_verbose_field_name systemdetaljer "api_url" %}</a><br>
+		<a target="_blank" class="btn btn-sm btn-link" href="{{ systemdetaljer.api_url }}">🌍 {% get_verbose_field_name systemdetaljer "api_url" %}</a><br>
 	{% endif %}
 
 	{% if systemdetaljer.kildekode_url %}
-	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.kildekode_url }}">🌍 {% get_verbose_field_name systemdetaljer "kildekode_url" %}</a>
+		<a target="_blank" class="btn btn-sm btn-link" href="{{ systemdetaljer.kildekode_url }}">🌍 {% get_verbose_field_name systemdetaljer "kildekode_url" %}</a>
 	{% endif %}
 
 {% endblock ekstrameny_system %}
@@ -302,7 +302,7 @@
 		<div id="collapseBruk" class="collapse show" aria-labelledby="headingBruk" data-parent="#accordionSystem">
 			<div class="card-body">
 			{% if user.is_authenticated %}
-				<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Legg til bruk</a></p>
+				<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer bruk</a></p>
 			{% endif %}
 			<table class="table table-sm">
 				<thead>
@@ -378,7 +378,7 @@
 
 			{% if user.is_authenticated %}
 			<p>
-				<a class="btn btn-sm btn-link" href="/admin/systemoversikt/behandlingerpersonopplysninger/add/?systemer={{ systemdetaljer.pk }}">Legg til behandling</a>
+				<a class="btn btn-sm btn-link" href="/admin/systemoversikt/behandlingerpersonopplysninger/add/?systemer={{ systemdetaljer.pk }}">Registrer behandling</a>
 				{% url 'behandling_kopier' systemdetaljer.pk as url_behandling_kopier %}
 
 				{% if behandlinger|length > 0 %}

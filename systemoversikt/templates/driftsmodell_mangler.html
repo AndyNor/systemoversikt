@@ -1,13 +1,21 @@
-{% extends "index.html" %}
+{% extends "system_index.html" %}
 
-{% block underoverskrift %}
+{% block ekstrameny_driftsmiljo %}
+	{% if user.is_authenticated %}
+	<a href="/admin/systemoversikt/driftsmodell/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer nytt driftmiljø</a>
+	{% endif %}
+	{% url 'systemer_uten_driftsmodell' as url_systemer_uten_driftsmodell %}
+	<a href="{{ url_systemer_uten_driftsmodell }}" class="btn btn-sm btn-link {% if url_systemer_uten_driftsmodell in request.path %}fremhev{% endif %}">Driftmiljø mangler</a>
+{% endblock ekstrameny_driftsmiljo %}
+
+{% block overskrift %}
 	Systemer uten tilknyttet driftsmodell
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
 	<p>Viser {{ systemer.count }} systemer.</p>
 
 	{% include "system_include_mangler_driftsplattform.html" %}
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

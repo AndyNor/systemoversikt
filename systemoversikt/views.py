@@ -614,11 +614,11 @@ def home(request):
 	Tilgangsstyring: ÅPEN
 	"""
 
-	antall_systemer = System.objects.count()
-	nyeste_systemer = System.objects.all().order_by('-pk')[:5]
+	antall_systemer = System.objects.filter(~Q(ibruk=True)).count()
+	nyeste_systemer = System.objects.filter(~Q(ibruk=True)).order_by('-pk')[:5]
 
 	antall_programvarer = Programvare.objects.count()
-	nyeste_programvarer = Programvare.objects.all().order_by('-pk')[:5]
+	nyeste_programvarer = Programvare.objects.order_by('-pk')[:5]
 
 	antall_behandlinger = BehandlingerPersonopplysninger.objects.count()
 
@@ -1287,8 +1287,8 @@ def behandling_kopier(request, system_pk):
 				opprinnelig_programvarer = behandling.programvarer.all()
 				opprinnelig_navn_databehandler = behandling.navn_databehandler.all()
 
-				behandling.pk = None
-				behandling.save()  # dette er nå en ny instans av objektet, og den gamle er uberørt
+				behandling.pk = None  # dette er nå en ny instans av objektet, og den gamle er uberørt
+				behandling.save()
 
 				behandling.kategorier_personopplysninger.set(opprinnelig_kategorier_personopplysninger)
 				behandling.den_registrerte.set(opprinnelig_den_registrerte)

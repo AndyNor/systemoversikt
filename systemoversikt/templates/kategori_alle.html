@@ -2,17 +2,15 @@
 {% load static %}
 
 {% block overskrift %}
-	Alle systemkategorier
+	Alle kategorier
 {% endblock overskrift %}
 
 {% block ekstrameny_kategori %}
-	{% url 'alle_hovedkategorier' as url_alle_hovedkategorier %}
-		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Alle hovedkategorier</a>
 	{% if user.is_authenticated %}
 		<a href="/admin/systemoversikt/systemkategori/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer ny kategori</a>
 
 		{% url 'uten_systemkategorier' as url_uten_systemkategorier %}
-		<a href="{{url_uten_systemkategorier}}" class="btn btn-sm btn-link {% if url_uten_systemkategorier in request.path %}fremhev{% endif %}">Mangler subkategori</a>
+		<a href="{{url_uten_systemkategorier}}" class="btn btn-sm btn-link {% if url_uten_systemkategorier in request.path %}fremhev{% endif %}">Systemer uten kategori</a>
 		{% endif %}
 {% endblock ekstrameny_kategori %}
 

@@ -1,19 +1,12 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
+{% block overskrift %}
 	PRK-skjema: {{ skjema.skjemanavn }}
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
-
-
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_cmdbref' %}">CMDB-oversikt</a>
-	<a class="btn btn-sm" href="{% url 'alle_prk' %}">Søk i PRK-skjema</a>
-	<a class="btn btn-sm" href="{% url 'prk_browse' %}">Bla i PRK-skjema</a>
-
-	<hr>
+{% block hovedinnhold %}
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
@@ -28,4 +21,4 @@
 
 	{% include "prk_skjema_include.html" with valg=valg %}
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

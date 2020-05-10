@@ -10,6 +10,14 @@
 		<a href="{{ url_systembruk }}" class="btn btn-sm btn-link {% if url_systembruk in request.path %}fremhev{% endif %}">Vår bruk av systemer</a>
 	{% endif %}
 
+	{% if user.is_authenticated %}
+		{% url 'systemer_utfaset' as url_systemer_utfaset %}
+		<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfasede systemer</a>
+
+		{% url 'system_til_programvare_indeks' as url_system_til_programvare_indeks %}
+		<a href="{{url_system_til_programvare_indeks}}" class="btn btn-sm btn-link {% if url_system_til_programvare_indeks in request.path %}fremhev{% endif %}">Konverter til programvare</a>
+	{% endif %}
+
 	{% block ekstrameny_system %}{% endblock ekstrameny_system %}
 
 
@@ -30,7 +38,10 @@
 	<hr>
 	<h6>Kategorier</h6>
 		{% url 'alle_systemkategorier' as url_alle_systemkategorier %}
-		<a href="{{url_alle_systemkategorier}}" class="btn btn-sm {% if url_alle_systemkategorier in request.path %}fremhev{% endif %}">Alle systemkategorier</a>
+		<a href="{{url_alle_systemkategorier}}" class="btn btn-sm {% if url_alle_systemkategorier in request.path %}fremhev{% endif %}">Alle kategorier</a>
+
+		{% url 'alle_hovedkategorier' as url_alle_hovedkategorier %}
+		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Alle hovedkategorier</a>
 
 	{% block ekstrameny_kategori %}{% endblock ekstrameny_kategori %}
 

@@ -1,34 +1,38 @@
-﻿{% extends "index.html" %}
+﻿{% extends "system_index.html" %}
 {% load templatetags %}
 
-{% block underoverskrift %}
+
+{% block overskrift %}
 	Kopier bruk knyttet til {{ system.systemnavn }}
-{% endblock underoverskrift %}
-
-{% block main_content %}
+{% endblock overskrift %}
 
 
-{% url 'systemdetaljer' system.pk as url_system %}
+{% block hovedinnhold %}
 
-<p>Her kan du kopiere behandlinger knyttet til {{ system.systemnavn }} for til din virksomhet. Tilbake til <a href="{{ url_system }}">{{ system.systemnavn }}</a>.</p>
+	{% url 'systemdetaljer' system.pk as url_system %}
 
-<h6>Din virksomhets behandlinger for {{ system.systemnavn }}</h6>
-{% include 'behandling_include_enkel.html' with behandlinger=dine_eksisterende_behandlinger %}
+	<p>Her kan du kopiere behandlinger knyttet til {{ system.systemnavn }} for til din virksomhet.</p>
 
-<h6>Velg blant eksisterende behandlinger. Behandlinger som er merket som kopieringskandidat (fellesbehandling) har grønn bakgrunn.</h6>
+	<a href="{{ url_system }}" class="btn btn-sm btn-link">Tilbake til {{ system.systemnavn }}</a>
 
-<form action="" method="post">{% csrf_token %}
-	{% for behandling in kandidatbehandlinger %}
-		<input id="{{ behandling.pk }}" type="checkbox" name="behandling" value="{{ behandling.pk }}">
-		<label {% if behandling.fellesbehandling %} style="background-color: #07800029;" {% endif %} for="{{ behandling.pk }}"><b>Av</b>: {{ behandling.behandlingsansvarlig.virksomhetsforkortelse }}, <b>behandling</b>: {{ behandling.behandlingen }}, <b>formål</b>: {{ behandling.formaal|truncatechars:60 }}</label>
-		<br>
-	{% endfor %}
+	<hr>
 
-	<input type="submit" class="btn btn-primary btn-sm" value="Kopier valgte">
-</form>
+	<h6>Din virksomhets behandlinger for {{ system.systemnavn }}</h6>
+	{% include 'behandling_include_enkel.html' with behandlinger=dine_eksisterende_behandlinger %}
 
-<hr>
+	<hr>
 
+	<h6>Velg blant eksisterende behandlinger.</h6>
+	<p>Når du kopierer en behandlig, endres virksomhet på den nye kopien til den virksomhet du er logget inn som. </p>
 
+	<form action="" method="post">{% csrf_token %}
+		{% for behandling in kandidatbehandlinger %}
+			<input id="{{ behandling.pk }}" type="checkbox" name="behandling" value="{{ behandling.pk }}">
+			<label {% if behandling.fellesbehandling %} style="background-color: #07800029;" {% endif %} for="{{ behandling.pk }}"><b>Av</b>: {{ behandling.behandlingsansvarlig.virksomhetsforkortelse }}, <b>behandling</b>: {{ behandling.behandlingen }}, <b>formål</b>: {{ behandling.formaal|truncatechars:60 }}</label>
+			<br>
+		{% endfor %}
 
-{% endblock %}
+		<input type="submit" class="btn btn-primary btn-sm" value="Kopier valgte">
+	</form>
+
+{% endblock hovedinnhold %}

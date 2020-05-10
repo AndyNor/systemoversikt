@@ -26,38 +26,45 @@ def import_group_permissions(request):
 	required_permissions = 'auth.change_group'
 	if request.user.has_perm(required_permissions):
 
+		if request.POST:
+			filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/group_permissions.json"
+			try:
+				with open(filepath, 'r', encoding='UTF-8') as json_file:
+					data = json.load(json_file)
+					for group in data:
+						#print(group["group"])
+						group_name = group["group"]
+						try:
+							g = Group.objects.get(name=group_name)
+						except:
+							messages.warning(request, 'Gruppen %s finnes ikke' % group_name)
+							continue
+						g.permissions.clear()
+						for new_perm in group["permissions"]:
+							#print(new_perm)
+							try:
+								p = Permission.objects.get(Q(codename=new_perm["codename"]) & Q(content_type__app_label=new_perm["content_type__app_label"]))
+								g.permissions.add(p)
+							except:
+								messages.warning(request, 'Rettigheten %s finnes ikke' % new_perm["codename"])
+								continue
 
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/group_permissions.json"
-		with open(filepath, 'r', encoding='UTF-8') as json_file:
-			data = json.load(json_file)
-			for group in data:
-				#print(group["group"])
-				group_name = group["group"]
-				try:
-					g = Group.objects.get(name=group_name)
-				except:
-					messages.warning(request, 'Gruppen %s finnes ikke' % group_name)
-					continue
-				g.permissions.clear()
-				for new_perm in group["permissions"]:
-					#print(new_perm)
-					try:
-						p = Permission.objects.get(Q(codename=new_perm["codename"]) & Q(content_type__app_label=new_perm["content_type__app_label"]))
-						g.permissions.add(p)
-					except:
-						messages.warning(request, 'Rettigheten %s finnes ikke' % new_perm["codename"])
-						continue
+				logg_entry_message = ("Det er utført en import fra fil av %s" % request.user)
+				logg_entry = ApplicationLog.objects.create(
+						event_type='Grupperettigheter import',
+						message=logg_entry_message,
+					)
+				messages.success(request, logg_entry_message)
 
-		logg_entry_message = ("Det er utført en import fra fil av %s" % request.user)
-		logg_entry = ApplicationLog.objects.create(
-				event_type='Grupperettigheter import',
-				message=logg_entry_message,
-			)
-		messages.success(request, logg_entry_message)
+				return render(request, 'site_home.html', {
+					'request': request,
+				})
+			except:
+				messages.warning(request, 'Filen %s finnes ikke' % (filepath))
+				return render(request, 'admin_import.html', {'request': request,})
 
-		return render(request, 'site_home.html', {
-			'request': request,
-		})
+		else:
+			return render(request, 'admin_import.html', {'request': request,})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 

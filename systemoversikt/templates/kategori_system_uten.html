@@ -1,55 +1,18 @@
-{% extends "index.html" %}
+{% extends "system_index.html" %}
 {% load static %}
 
-{% block underoverskrift %}
-	Mangler kategori
-{% endblock underoverskrift %}
+{% block overskrift %}
+	Systemer og programvare som mangler kategori
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
-	<h6>
-		<a class="btn btn-sm btn-secondary" href="{%url 'alle_systemkategorier' %}">Alle kategorier</a>
-	</h6>
+	<p>Det er {{ systemer.count }} systemer som mangler kategori</p>
+	<hr>
+	{% include 'system_include_hurtigvisning.html' with systemer=systemer %}
 
-	<h5>Systemer som mangler kategori ({{ systemer.count }})</h5>
-	<table class="tablesorter">
-	<thead>
-	<tr>
-		<th class="filter-false"></th>
-		<th>Systemnavn</th>
-		<th>Kategori</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for item in systemer %}
-	<tr>
-		<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
-		{% url 'systemdetaljer' pk=item.pk as url_systemdetaljer %}
-		<td><a href="{{ url_systemdetaljer }}">{{ item.systemnavn }}</a></td>
-		<td><ul>{% for kat in item.systemkategorier.all %} <li>{{ kat }}</li> {% endfor %}</ul></td>
-	</tr>
-	{% endfor %}
-	</tbody>
-	</table>
+	<p>Det er {{ programvarer.count }} programvarer som mangler kategori</p>
+	<hr>
+	{% include 'programvare_include.html' with programvarer=programvarer %}
 
-	<h5>Programvarer som mangler kategori ({{ programvarer.count }})</h5>
-	<table class="tablesorter">
-	<thead>
-	<tr>
-		<th class="filter-false"></th>
-		<th>Programvarenavn</th>
-		<th>Kategori</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for item in programvarer %}
-	<tr>
-		<td><a href="/admin/systemoversikt/programvare/{{ item.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
-		{% url 'programvaredetaljer' pk=item.pk as url_programvaredetaljer %}
-		<td><a href="{{ url_programvaredetaljer }}">{{ item.programvarenavn }}</a></td>
-		<td><ul>{% for kat in item.kategorier.all %} <li>{{ kat }}</li> {% endfor %}</ul></td>
-	</tr>
-	{% endfor %}
-	</tbody>
-	</table>
-{% endblock main_content %}
+{% endblock hovedinnhold %}

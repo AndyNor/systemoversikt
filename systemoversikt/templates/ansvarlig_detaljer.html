@@ -6,7 +6,7 @@
 {% endblock ekstrameny %}
 
 {% block overskrift %}
-	{{ ansvarlig }}
+	{{ ansvarlig }} (ansvarlig-profil)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -22,6 +22,10 @@
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/ansvarlig/{{ ansvarlig.pk }}/change/">
 			{% include 'site_edit_button.html' %} Rediger</a>
 		<a class="btn btn-sm btn-link" href="{% url 'ad_details' name=ansvarlig.brukernavn.username %}">🔎 Slå opp i AD</a>
+
+		{% url 'bruker_detaljer' pk=ansvarlig.brukernavn.pk as url_bruker_detaljer %}
+		<a class="btn btn-sm btn-link" href="{{ url_bruker_detaljer }}">
+			Brukerprofil</a>
 	<hr>
 	{% endif %}
 

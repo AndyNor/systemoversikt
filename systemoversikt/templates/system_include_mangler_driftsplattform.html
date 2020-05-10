@@ -8,11 +8,8 @@
 	{% endif %}
 	<th>Systemnavn</th>
 	<th>Brukes av</th>
-	<th>Systemkategori</th>
-	<th>Systemtype</th>
 	<th>Systemeier</th>
 	<th>Systemforvalter</th>
-	<th>Systemklassifisering</th>
 </tr>
 </thead>
 <tbody>
@@ -24,34 +21,20 @@
 		<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
 	{% endif %}
 
-	{% url "systemdetaljer" item.pk as url_systemdetaljer %}
 	<td>
-		{% if item.informasjon_kvalitetssikret is False %}
-		<img style="width: 14px;" src="{% static 'open-iconic/svg/warning.svg' %}" title="Kvalitet ikke verifisert">
+		{% include 'system_include_vis.html' with system=item %}
+	</td>
+
+	<td>
+		{% if item.systembruk_system.all|length < 1 %}
+			Ingen
+		{% elif item.systembruk_system.all|length < 5 %}
+			{% for b in item.systembruk_system.all %}
+				{{ b.brukergruppe.virksomhetsforkortelse }}
+			{% endfor %}
+		{% else %}
+			Flere enn 5
 		{% endif %}
-
-		<a href="{{ url_systemdetaljer }}">{{ item }}</a>
-	</td>
-
-
-	<td>
-		{% for b in item.systembruk_system.all %}
-			{{ b.brukergruppe.virksomhetsforkortelse }}
-		{% endfor %}
-	</td>
-
-	<td>
-		{% for kategori in item.systemkategorier.all %}
-			{% url 'systemkategori' kategori.pk as url_systemkategorier %}
-			<a href="{{ url_systemkategorier }}">{{ kategori }}</a><br>
-		{% endfor %}
-	</td>
-
-	<td>
-		{% for systemtype in item.systemtyper.all %}
-			{% url 'systemtype_detaljer' systemtype.pk as url_systemtype %}
-			<a href="{{ url_systemtype }}">{{ systemtype }}</a><br>
-		{% endfor %}
 	</td>
 
 	<td>
@@ -62,11 +45,6 @@
 	<td>
 		{% url "virksomhet" item.systemforvalter.pk as url_systemforvalter %}
 		<b><a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"?" }}</a></b>
-	</td>
-
-	<td>
-		{% url 'systemklassifisering_detaljer' item.systemeierskapsmodell as url_systemeierskapsmodell %}
-		<a href="{{ url_systemeierskapsmodell }}">{{ item.get_systemeierskapsmodell_display|default:"" }}</a>
 	</td>
 
 </tr>

@@ -1,22 +1,28 @@
-{% extends "index.html" %}
+{% extends "system_index.html" %}
 
+{% block ekstrameny_kategori %}
+	{% if user.is_authenticated %}
+		<a href="/admin/systemoversikt/systemkategori/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer ny kategori</a>
 
-{% block underoverskrift %}
-	Systemer under kategorien "{{ kategori.kategorinavn }}"
-{% endblock underoverskrift %}
+		{% url 'uten_systemkategorier' as url_uten_systemkategorier %}
+		<a href="{{url_uten_systemkategorier}}" class="btn btn-sm btn-link {% if url_uten_systemkategorier in request.path %}fremhev{% endif %}">Systemer uten kategori</a>
+		{% endif %}
+{% endblock ekstrameny_kategori %}
 
-{% block main_content %}
+{% block overskrift %}
+	{{ kategori.kategorinavn }} (Kategori)
+{% endblock overskrift %}
 
-<p>
-	<a class="btn btn-sm btn-secondary" href="{% url 'alle_systemkategorier' %}">Alle subkategorier</a>
-</h6>
+{% block hovedinnhold %}
 
-<p>For å legge til et system i denne kategorien må du velge kategorien fra systemets redigeringsside.</p>
+	<p>For å legge til et system i denne kategorien må du velge kategorien fra systemets redigeringsside.</p>
 
-<h5>Følgende {{ systemer.count }} systemer er registrert</h5>
-{% include "system_include_generisk.html" %}
+	<h6>Følgende {{ systemer.count }} systemer er registrert</h6>
+	{% include "system_include_hurtigvisning.html" %}
 
-<h5>Følgende {{ programvarer.count }} programvarer er registrert</h5>
-{% include "programvare_include.html" %}
+	<hr>
 
-{% endblock main_content %}
+	<h6>Følgende {{ programvarer.count }} programvarer er registrert</h6>
+	{% include "programvare_include.html" %}
+
+{% endblock hovedinnhold %}

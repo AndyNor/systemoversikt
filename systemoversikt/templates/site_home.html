@@ -1,78 +1,86 @@
-﻿{% extends "index.html" %}
+﻿{% extends "system_index.html" %}
 {% load templatetags %}
 
-{% block underoverskrift %}
+{% block overskrift %}
 	Kartoteket: Oslo kommunes system- og behandlingsoversikt
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
-{% if oidctoken and DEBUG %}
-<div class="alert alert-success" role="alert">
-	<h5>Du er logget inn med følgende OIDC-parametre (debugging):</h5>
-	<p>{{ oidctoken }}</p>
-</div>
-{% endif %}
-
-<div class="container">
-<div class="row">
-
-<div class="col-sm">
-<div class="card">
-	<div class="card-body">
-		<h2 class="card-title">{{ antall_systemer }}</h2>
-		<h6 class="card-subtitle mb-2 text-muted">Antall systemer i Kartoteket</h6>
-		<p class="card-text">Her er de {{nyeste_systemer.count}} nyeste</p>
-		<ul>
-		{% for system in nyeste_systemer %}
-			{% url "systemdetaljer" system.pk as url_systemdetaljer %}
-			<li><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a> ({{ system.systemeier }})</li>
-		{% endfor %}
-		</ul>
+	{% if oidctoken and DEBUG %}
+	<div class="alert alert-success" role="alert">
+		<h5>Du er logget inn med følgende OIDC-parametre (debugging):</h5>
+		<p>{{ oidctoken }}</p>
 	</div>
-</div>
-</div>
+	{% endif %}
 
-<div class="col-sm">
-<div class="card">
-	<div class="card-body">
-		<h2 class="card-title">{{ antall_programvarer }}</h2>
-		<h6 class="card-subtitle mb-2 text-muted">Antall programvarer i Kartoteket</h6>
-		<p class="card-text">Her er de {{nyeste_programvarer.count}} nyeste</p>
-		<ul>
-		{% for programvare in nyeste_programvarer %}
-			{% url "systemdetaljer" programvare.pk as url_systemdetaljer %}
-			<li><a href="{{ url_systemdetaljer }}">{{ programvare.programvarenavn }}</a></li>
-		{% endfor %}
-		</ul>
+	<form action="{% url 'alle_systemer' %}" autocomplete="off">
+		<div class="form-group form-inline">
+			<input style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="System eller programvare" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	<div class="container">
+	<div class="row">
+
+	<div class="col-sm">
+	<div class="card">
+		<div class="card-body">
+			<h2 class="card-title">{{ antall_systemer }}</h2>
+			<h6 class="card-subtitle mb-2 text-muted">Antall systemer i Kartoteket</h6>
+			<p class="card-text">Her er de {{nyeste_systemer.count}} nyeste</p>
+			<ul>
+			{% for system in nyeste_systemer %}
+				{% url "systemdetaljer" system.pk as url_systemdetaljer %}
+				<li><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a> ({{ system.systemeier }})</li>
+			{% endfor %}
+			</ul>
+		</div>
 	</div>
-</div>
-</div>
-
-<div class="col-sm">
-<div class="card">
-	<div class="card-body">
-		<h2 class="card-title">{{ antall_behandlinger }}</h2>
-		<h6 class="card-subtitle mb-2 text-muted">Antall behandlinger i Kartoteket</h6>
 	</div>
-</div>
-</div>
 
-</div>
-</div>
+	<div class="col-sm">
+	<div class="card">
+		<div class="card-body">
+			<h2 class="card-title">{{ antall_programvarer }}</h2>
+			<h6 class="card-subtitle mb-2 text-muted">Antall programvarer i Kartoteket</h6>
+			<p class="card-text">Her er de {{nyeste_programvarer.count}} nyeste</p>
+			<ul>
+			{% for programvare in nyeste_programvarer %}
+				{% url "systemdetaljer" programvare.pk as url_systemdetaljer %}
+				<li><a href="{{ url_systemdetaljer }}">{{ programvare.programvarenavn }}</a></li>
+			{% endfor %}
+			</ul>
+		</div>
+	</div>
+	</div>
 
-<hr>
+	<div class="col-sm">
+	<div class="card">
+		<div class="card-body">
+			<h2 class="card-title">{{ antall_behandlinger }}</h2>
+			<h6 class="card-subtitle mb-2 text-muted">Antall behandlinger i Kartoteket</h6>
+		</div>
+	</div>
+	</div>
 
-<h5>Finn system eller programvare basert på kategori</h5>
-<ul style="column-count:5;">
-	{% for kategori in kategorier %}
-		{% url 'systemkategori' pk=kategori.pk as url_systemkategori %}
-		<li><a href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a><br>
-		{% for hovedkategori in kategori.systemhovedkategori_systemkategorier.all %}
-			{{hovedkategori}}
+	</div>
+	</div>
+
+	<hr>
+
+	<h5>Finn system eller programvare basert på kategori</h5>
+	<ul style="column-count:3;">
+		{% for kategori in kategorier %}
+			{% url 'systemkategori' pk=kategori.pk as url_systemkategori %}
+			<li><a href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a>
+			{% for hovedkategori in kategori.systemhovedkategori_systemkategorier.all %}
+				({{hovedkategori}})
+			{% endfor %}
+			</li>
 		{% endfor %}
-		</li>
-	{% endfor %}
-</ul>
+	</ul>
 
-{% endblock %}
+{% endblock hovedinnhold %}

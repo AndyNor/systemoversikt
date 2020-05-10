@@ -1,0 +1,20 @@
+{% extends "admin_index.html" %}
+
+
+{% block overskrift %}
+	Importering av rolletilknytninger
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+<p>Her kan du importere eksportere rolletilknytninger. Per nå må du ha tilgang til serveren og laste opp filen i riktig mappe.</p>
+
+
+<form method="post" action="">
+	{% csrf_token %}
+	<button type="button" style="margin-left: 30px;"class="btn btn-sm btn-link">Tilbake</button>
+	<button type="submit" style="margin-left: 150px;" class="btn btn-sm btn-danger">Importer fil</button>
+</form>
+
+{% endblock hovedinnhold %}
