@@ -30,7 +30,7 @@
 	<div class="col-sm-6">
 
 		<h6>Generelt fra programvaren</h6>
-		<table class="table table-sm table-striped">
+		<table class="tablesorter">
 
 			<tr>
 				<td>Programvareleverandører (fra programvaren)</td>
@@ -53,7 +53,7 @@
 		</table>
 
 		<h6>Detaljer for denne bruken</h6>
-		<table class="table table-sm table-striped">
+		<table class="tablesorter">
 			<tr>
 				<td>{% get_verbose_field_name bruksdetaljer "sist_oppdatert" %}</td>
 				<td>{{ bruksdetaljer.sist_oppdatert|date:"Y-m-d" }} ({{ bruksdetaljer.sist_oppdatert|naturaltime }})</td>
@@ -89,7 +89,7 @@
 	<div class="col-sm-6">
 
 		<h6>Avtaledetaljer for bruk</h6>
-		<table class="table table-sm table-striped">
+		<table class="tablesorter">
 			<tr>
 				<td>{% get_verbose_field_name bruksdetaljer "kostnader" %}</td>
 				<td>{{ bruksdetaljer.kostnader|default:"-"|intcomma }}</td>
@@ -109,7 +109,7 @@
 		</table>
 
 		<h6>Tekniske vurdering for bruk</h6>
-		<table class="table table-sm table-striped">
+		<table class="tablesorter">
 			<tr>
 				<td>{% get_verbose_field_name bruksdetaljer "livslop_status" %}</td>
 				<td>{{ bruksdetaljer.get_livslop_status_display|default:"-" }}</td>

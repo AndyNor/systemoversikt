@@ -111,7 +111,7 @@
 		</div>
 		<div id="collapseOm" class="collapse show" aria-labelledby="headingOm" data-parent="#accordionSystem">
 			<div class="card-body">
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 
 				<tr>
 					<td width="50%">{% get_verbose_field_name systemdetaljer "systemeierskapsmodell" %}
@@ -304,7 +304,7 @@
 			{% if user.is_authenticated %}
 				<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Legg til bruk</a></p>
 			{% endif %}
-			<table class="table table-sm table-striped tablesorter">
+			<table class="tablesorter">
 				<thead>
 					<tr>
 						<th>Virksomhet</th>
@@ -388,7 +388,7 @@
 			{% endif %}
 
 			{% if perms.systemoversikt.view_system %}
-			<table class="table table-sm table-striped tablesorter">
+			<table class="tablesorter">
 				<thead>
 					<tr>
 						<th class="filter-false">Rediger</th>
@@ -446,7 +446,7 @@
 		</div>
 		<div id="collapseSikkerhet" class="collapse show" aria-labelledby="headingSikkerhet" data-parent="#accordionSystem">
 			<div class="card-body">
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 			{% if perms.systemoversikt.view_system %}
 				<tr>
 					<td>{% get_verbose_field_name systemdetaljer "informasjonsklassifisering" %}
@@ -602,7 +602,7 @@
 		<div id="collapseFelles" class="collapse show" aria-labelledby="headingFelles" data-parent="#accordionSystem">
 			<div class="card-body">
 		{% if systemdetaljer.driftsmodell_foreignkey %}
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td>Tjenestenivå med UKE på felles IKT-plattform
 					{% explain_collapsed "forklaring" %}
@@ -682,7 +682,7 @@
 
 		{% if systemdetaljer.cmdbref %}
 			<p>Koblede data mot Sopra Sterias <a href="{% url 'alle_cmdbref' %}">CMDB</a>. Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">beskrivelse av kritikalitet og tilgjengelighet</a>.</p>
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<thead>
 					<tr>
 						<th>Business Service</th>
@@ -717,7 +717,7 @@
 		</div>
 		<div id="collapseSekundar" class="collapse" aria-labelledby="headingSekundar" data-parent="#accordionSystem">
 			<div class="card-body">
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td width="50%">{% get_verbose_field_name systemdetaljer "sist_oppdatert" %}
 					{% explain_collapsed "Oppdateres automatisk hver gang noen lagrer en endring på systemets direkte attributter." %}

@@ -27,7 +27,7 @@
 <div class="row">
 	<div class="col-sm-12">
 		<h6>Generelt</h6>
-		<table class="table table-sm table-striped">
+		<table class="tablesorter">
 			<tr>
 				<td width="30%">{% get_verbose_field_name avtale "sist_oppdatert" %}</td>
 				<td>{{ avtale.sist_oppdatert|date:'Y-m-d' }} ({{ avtale.sist_oppdatert|naturaltime }})</td>

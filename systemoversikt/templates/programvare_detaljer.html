@@ -32,7 +32,7 @@
 	<div class="row">
 		<div class="col-sm-6">
 
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td>{% get_verbose_field_name programvare "sist_oppdatert" %}</td>
 					<td style="width:90%">{{ programvare.sist_oppdatert|date:'Y-m-d' }} ({{ programvare.sist_oppdatert|naturaltime }})</td>
@@ -72,7 +72,7 @@
 
 		</div>
 		<div class="col-sm-6">
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td>{% get_verbose_field_name programvare "strategisk_egnethet" %}</td>
 					<td>{{ programvare.get_strategisk_egnethet_display|default:"-" }}</td>
@@ -108,7 +108,7 @@
 	{% if programvarebruk %}
 		<h5>Virksomheters bruk av {{ programvare.programvarenavn }}
 		</h5>
-		<table class="table table-sm table-striped tablesorter">
+		<table class="tablesorter">
 			<thead>
 				<tr>
 					{% if user.is_authenticated %}
@@ -155,7 +155,7 @@
 		<h5>Behandlinger ved bruk av {{ programvare.programvarenavn }}
 		</h5>
 		{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
-		<table class="table table-sm table-striped tablesorter">
+		<table class="tablesorter">
 			<thead>
 				<tr>
 					<th class="filter-false"></th>

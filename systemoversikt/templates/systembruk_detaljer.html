@@ -32,7 +32,7 @@
 	<div class="col-sm-6">
 
 		<h6>Generelt fra systemet</h6>
-		<table class="table table-sm table-striped">
+		<table class="tablesorter">
 			<tr>
 				<td width="40%">Systemkategori (fra systemet)</td>
 				<td>
@@ -63,7 +63,7 @@
 		</table>
 
 		<h6>Generelt for denne bruken</h6>
-		<table class="table table-sm table-striped">
+		<table class="tablesorter">
 			<tr>
 				<td width="40%">Sist oppdatert</td>
 				<td>{{ bruk.sist_oppdatert|date:"Y-m-d" }} ({{ bruk.sist_oppdatert|naturaltime }})</td>
@@ -117,7 +117,7 @@
 
 		<h6>Relatert til avtale</h6>
 		{% if perms.systemoversikt.view_systembruk %}
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td width="40%">{% get_verbose_field_name bruk "avtale_kan_avropes" %}</td>
 					<td>{{ bruk.avtale_kan_avropes|yesno:"Ja,Nei,Ukjent"|default:"-" }}</td>
@@ -140,7 +140,7 @@
 		{% endif %}
 
 		<h6>Lokale vurderinger</h6>
-		<table class="table table-sm table-striped">
+		<table class="tablesorter">
 			<tr>
 				<td width="40%">{% get_verbose_field_name bruk "livslop_status" %}</td>
 				<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
@@ -161,7 +161,7 @@
 
 		<h6>Lokale sikkerhetsvurderinger</h6>
 		{% if perms.systemoversikt.view_systembruk %}
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td width="40%">{% get_verbose_field_name bruk "konfidensialitetsvurdering" %}</td>
 					<td>{{ bruk.get_konfidensialitetsvurdering_display|default:"-" }}</td>

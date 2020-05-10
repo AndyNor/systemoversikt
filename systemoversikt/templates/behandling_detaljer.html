@@ -44,7 +44,7 @@
 		<div id="collapseOrg" class="collapse show" aria-labelledby="headingOrg" data-parent="#accordionSystem">
 			<div class="card-body">
 
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td width="50%">Registrert av</td>
 					{% url 'virksomhet' behandling.behandlingsansvarlig.pk as url_virksomhet %}
@@ -116,7 +116,7 @@
 			<div class="card-body">
 
 			<p>Behandlingen krever nivå: <b>{{ behandling.get_krav_sikkerhetsnivaa_display|default:"-" }}</b></p>
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<thead>
 					<th>System</th>
 					<th>Systemtekniske sikkerhetstiltak</th>
@@ -151,7 +151,7 @@
 		<div id="collapseFormaal" class="collapse show" aria-labelledby="headingGrunnlag" data-parent="#accordionSystem">
 			<div class="card-body">
 
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td width="40%">{% get_verbose_field_name behandling "behandlingen" %}</td>
 					<td>{{ behandling.behandlingen }}</td>
@@ -224,7 +224,7 @@
 		<div id="collapseGrunnlag" class="collapse show" aria-labelledby="headingGrunnlag" data-parent="#accordionSystem">
 			<div class="card-body">
 
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td>{% get_verbose_field_name behandling "behandlingsgrunnlag_valg" %}</td>
 					<td>
@@ -257,7 +257,7 @@
 		<div id="collapseLagring" class="collapse show" aria-labelledby="headingLagring" data-parent="#accordionSystem">
 			<div class="card-body">
 
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td width="40%">{% get_verbose_field_name behandling "opplysningskilde" %}</td>
 					<td>{{ behandling.opplysningskilde|default:"-" }}</td>
@@ -350,7 +350,7 @@
 		<div id="collapseLev" class="collapse show" aria-labelledby="headingLev" data-parent="#accordionSystem">
 			<div class="card-body">
 
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td width="30%">{% get_verbose_field_name behandling "navn_databehandler" %}</td>
 					<td>
@@ -416,7 +416,7 @@
 		<div id="collapseDPIA" class="collapse show" aria-labelledby="headingDPIA" data-parent="#accordionSystem">
 			<div class="card-body">
 
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td>{% get_verbose_field_name behandling "dpia_unnga_hoy_risiko" %}</td>
 					<td>{{ behandling.dpia_unnga_hoy_risiko|yesno:"Ja,Nei,Ukjent" }}</td>
@@ -458,7 +458,7 @@
 		<div id="collapseOrgSik" class="collapse show" aria-labelledby="headingOrgSik" data-parent="#accordionSystem">
 			<div class="card-body">
 
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td width="30%">{% get_verbose_field_name behandling "sikkerhetstiltak" %}</td>
 					<td>{{ behandling.sikkerhetstiltak|default:"-" }}</td>
@@ -479,7 +479,7 @@
 		<div id="collapseUtvidet" class="collapse show" aria-labelledby="headingUtvidet" data-parent="#accordionSystem">
 			<div class="card-body">
 
-			<table class="table table-sm table-striped">
+			<table class="tablesorter">
 				<tr>
 					<td width="40%">Sist oppdatert</td>
 					<td>{{ behandling.sist_oppdatert|date:'Y-m-d' }} ({{ behandling.sist_oppdatert|naturaltime }})</td>
