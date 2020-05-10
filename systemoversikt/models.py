@@ -724,11 +724,20 @@ class SystemKategori(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-	kategorinavn = models.CharField(unique=True,
+	kategorinavn = models.CharField(
+			unique=True,
 			verbose_name="Kategorinavn",
 			max_length=100,
 			blank=False, null=False,
 			help_text=u"",
+			)
+	hovedkategori = models.ForeignKey(
+			to="SystemHovedKategori",
+			related_name='systemkategori_hovedkategori',
+			on_delete=models.PROTECT,
+			verbose_name="Hovedkategori",
+			null=True, blank=True,
+			help_text=u'Velg en hovedkategori denne kategorien skal tilhøre.',
 			)
 	definisjon = models.TextField(
 			verbose_name="Definisjon",
@@ -756,7 +765,8 @@ class SystemHovedKategori(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-	hovedkategorinavn = models.CharField(unique=True,
+	hovedkategorinavn = models.CharField(
+			unique=True,
 			verbose_name="Kategorinavn",
 			max_length=30,
 			blank=False, null=False,
@@ -769,9 +779,12 @@ class SystemHovedKategori(models.Model):
 			null=True,
 			help_text=u"Slik at andre kan vurdere passende kategorier",
 			)
-	subkategorier = models.ManyToManyField(SystemKategori, related_name='systemhovedkategori_systemkategorier',
+	subkategorier = models.ManyToManyField(
+			to=SystemKategori,
+			related_name='systemhovedkategori_systemkategorier',
 			verbose_name="Subkategorier",
-			blank=True, help_text=u"",
+			blank=True,
+			help_text=u"",
 			)
 	history = HistoricalRecords()
 
@@ -830,7 +843,9 @@ class SystemUrl(models.Model):
 			blank=True, null=True,
 			help_text=u'Hvor aktuelt er det å sikkerhetsteste denne tjenesten?',
 			)
-	registrar = models.ForeignKey(Leverandor, related_name='systemurl_registrar',
+	registrar = models.ForeignKey(
+			to=Leverandor,
+			related_name='systemurl_registrar',
 			on_delete=models.PROTECT,
 			verbose_name="Domeneregistrar",
 			null=True, blank=True,
@@ -1619,7 +1634,8 @@ SELVBETJENING_VALG = (
 SIKKERHETSNIVAA_VALG = (
 	(1, 'Åpent'),
 	(2, 'Internt'),
-	(3, 'Sikret'),
+	(5, 'Fortrolig'),
+	(3, 'Strengt fortrolig'),
 	(4, 'Gradert')
 )
 
@@ -2549,11 +2565,11 @@ class Sikkerhetstester(models.Model):
 			)
 	systemer = models.ManyToManyField(System, related_name='sikkerhetstest_systemer',
 			verbose_name="Systemer testet",
-			blank=True,
+			blank=False,
 			)
 	type_test = models.IntegerField(choices=TYPE_SIKKERHETSTEST,
 			verbose_name="Type sikkerhetstest",
-			blank=True, null=True,
+			blank=False, null=True,
 			help_text=u"Velg mest aktuelle som definert på <a href='https://confluence.oslo.kommune.no/x/eww4B'>Confluence</a>",
 			)
 	rapport = models.URLField(
@@ -2564,7 +2580,7 @@ class Sikkerhetstester(models.Model):
 			)
 	dato_rapport = models.DateTimeField(
 			verbose_name="Dato for sluttføring av rapport",
-			blank=True, null=True,
+			blank=False, null=True,
 			help_text=u"(tidspunkt er påkrevet - sett 'Nå')"
 			)
 	testet_av = models.ForeignKey(Leverandor, related_name='sikkerhetstest_testet_av',

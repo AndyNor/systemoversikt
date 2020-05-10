@@ -86,12 +86,40 @@ class KlientutstyrAdmin(admin.ModelAdmin):
 	list_filter = ('maskinadm_servicenivaa', 'maskinadm_sone', 'maskinadm_klienttype', 'maskinadm_virksomhet', 'maskinadm_sist_oppdatert')
 
 
+from django.contrib.admin import SimpleListFilter
+from django.db.models import Q
+class SystemList(SimpleListFilter):
+	title = "System"
+	parameter_name = "systemer"
+	def lookups(self, request, model_admin):
+		return ((system.id, system.systemnavn) for system in System.objects.filter(~Q(sikkerhetstest_systemer=None)))
+
+	def queryset(self, request, queryset):
+		return queryset.filter(systemer=self.value()) if self.value() else queryset
+
 @admin.register(Sikkerhetstester)
 class SikkerhetstesterAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('testet_av', 'dato_rapport', 'type_test', 'rapport', 'notater')
+	list_display = ('dato_rapport', 'vis_systemer', 'type_test', 'testet_av', 'rapport', 'notater')
+	list_filter = ('dato_rapport', SystemList)
 	autocomplete_fields = ('systemer', 'testet_av')
-	list_filter = ('dato_rapport',)
+
+
+	def vis_systemer(self, obj):
+		return ", ".join([s.systemnavn for s in obj.systemer.all()[0:5]])
+	vis_systemer.short_description = "Systemer testet (5 første)"
+
+	def response_add(self, request, obj, post_url_continue=None):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.systemer.all()[0].pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.systemer.all()[0].pk}))
+		return super().response_change(request, obj)
+
+
 
 @admin.register(Autorisasjonsmetode)
 class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
@@ -123,7 +151,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 	def get_ordering(self, request):
 		return [Lower('systemnavn')]
 
-	filter_horizontal = ('systemkategorier',)
+	filter_horizontal = ('systemkategorier', 'informasjonsklassifisering',)
 	autocomplete_fields = (
 		'systemeier',
 		'systemforvalter',
@@ -144,7 +172,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'autentiseringsteknologi',
 		'autentiseringsalternativer',
 		'autorisasjonsalternativer',
-		'informasjonsklassifisering',
 		'database_supported',
 		'database_in_use',
 	)

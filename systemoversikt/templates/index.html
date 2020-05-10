@@ -114,6 +114,10 @@
 			padding: 10px;
 		}
 		.tablesorter thead .disabled {display: none}
+		.edit_button{
+			font-size: 18px;
+			color: black;
+		}
 	</style>
 
 	<!-- CSS header -->
@@ -198,7 +202,7 @@
 		msieversion();
 		$("table").tablesorter({
 			theme: 'default',
-			widgets : ["filter", "stickyHeaders",],
+			widgets : ["filter",],
 			widgetOptions : {
 			filter_liveSearch : true,
 			filter_searchFiltered: true,
