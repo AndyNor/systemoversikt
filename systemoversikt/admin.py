@@ -1113,6 +1113,7 @@ admin.site.register(RegistrertKlassifisering)
 admin.site.register(RelasjonRegistrert)
 
 
+
 @admin.register(ApplicationLog)
 class ApplicationLogAdmin(admin.ModelAdmin):
 	list_display = ('event_type', 'message', 'opprettet')

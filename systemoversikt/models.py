@@ -1570,11 +1570,10 @@ TJENESTENIVAA_VALG = (
 )
 
 SYSTEMEIERSKAPSMODELL_VALG = (
-	('FELLESSYSTEM', 'Fellessystem'),
-	('FELLESSYSTEM-KANDIDAT', 'Fellessystemkandidat'),
-	('SEKTORSYSTEM', 'Sektorsystem'),
 	('VIRKSOMHETSSYSTEM', 'Virksomhetssystem'),
+	('SEKTORSYSTEM', 'Sektorsystem'),
 	('TVERRSEKTORIELT', 'Tverrsektorielt'),
+	('FELLESSYSTEM', 'Fellessystem'),
 )
 
 # må lage et script som inverterer verdiene i databasen 5 til 1 og 4 til 2 samtidig som disse inverteres.
@@ -4031,7 +4030,7 @@ class UBWMetadata(models.Model):
 		return u'%s' % (self.pk)
 
 	class Meta:
-		verbose_name_plural = "Fakturametadata"
+		verbose_name_plural = "UBW Fakturametadata"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

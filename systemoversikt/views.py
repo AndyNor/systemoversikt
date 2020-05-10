@@ -898,10 +898,10 @@ def systemklassifisering_detaljer(request, id):
 	Tilgangsstyring: ÅPENT
 	"""
 	if id == "__NONE__":
-		utvalg_systemer = System.objects.filter(systemeierskapsmodell=None)
+		utvalg_systemer = System.objects.filter(~Q(ibruk=False)).filter(systemeierskapsmodell=None)
 		id = "tom"
 	else:
-		utvalg_systemer = System.objects.filter(systemeierskapsmodell=id)
+		utvalg_systemer = System.objects.filter(~Q(ibruk=False)).filter(systemeierskapsmodell=id)
 
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
 	systemtyper = Systemtype.objects.all()
@@ -3155,9 +3155,13 @@ def ubw_api(request, pk):
 		except:
 			eksportdata["Periode påløpt kvartal"] = ""
 
-		if faktura.metadata_reference.leverandor != None:
-			eksportdata["Leverandør"] = faktura.metadata_reference.leverandor
-		else:
+		try:
+			leverandor = faktura.metadata_reference.leverandor
+			if leverandor != None:
+				eksportdata["Leverandør"] = leverandor
+			else:
+				eksportdata["Leverandør"] = faktura.ubw_xapar_id
+		except:
 			eksportdata["Leverandør"] = faktura.ubw_xapar_id
 
 		faktura_eksport.append(eksportdata)
