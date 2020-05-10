@@ -117,6 +117,9 @@
 					<a target="_blank" href="{{ url_details }}">{{ item.username }}</a>:
 					{{ item.user|default:"" }}
 					({{ item.cn }})</li>
+				{% empty %}
+					Enten er gruppen tom, eller så er det veldig mange medlemmer.
+					Sjekk "Rå respons" etter "member;range=0-4999".
 				{% endfor %}
 				</ol>
 			</div>

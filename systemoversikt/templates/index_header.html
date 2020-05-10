@@ -63,7 +63,7 @@
 					{% url "alle_virksomheter" as alle_virksomheter_url %}
 					<a href="{{ alle_virksomheter_url }}" class="nav-link {% if alle_virksomheter_url in request.path %} active {% endif %}">Virksomheter</a>
 				</li>
-				{% if user.is_authenticated %}
+		{% if user.is_authenticated %}
 				<li class="hovedmeny">
 					{% url "alle_ansvarlige" as alle_ansvarlige_url %}
 					<a href="{{ alle_ansvarlige_url }}" class="nav-link {% if alle_ansvarlige_url in request.path %} active {% endif %}">Ansvarlige</a>
@@ -72,12 +72,12 @@
 					{% url "alle_avtaler" as alle_avtaler_url %}
 					<a href="{{ alle_avtaler_url }}" class="nav-link {% if alle_avtaler_url in request.path %} active {% endif %}">Avtaler</a>
 				</li>
-				{% if user.profile.virksomhet %}
+			{% if user.profile.virksomhet %}
 				<li class="hovedmeny">
 					{% url "dashboard_all" virksomhet=user.profile.virksomhet.pk as dashboard_url %}
 					<a href="{{ dashboard_url }}" class="nav-link {% if dashboard_url in request.path %} active {% endif %}">Vårt dashboard</a>
 				</li>
-				{% endif %}
+			{% endif %}
 				<li class="hovedmeny">
 					{% url "mine_behandlinger" as mine_behandlinger_url %}
 					<a href="{{ mine_behandlinger_url }}" class="nav-link {% if mine_behandlinger_url in request.path %} active {% endif %}">Våre behandlinger</a>
@@ -91,7 +91,7 @@
 					{% url "alle_cmdbref_main" as alle_cmdbref_url %}
 					<a href="{{ alle_cmdbref_url }}" class="nav-link {% if alle_cmdbref_url in request.path %} active {% endif %}">CMDB</a>
 				</li>
-				{% endif %}
+		{% endif %}
 				<li class="hovedmeny">
 					{% url "alle_systemer" as alle_systemer_url %}
 					<a href="{{ alle_systemer_url }}" class="nav-link {% if alle_systemer_url in request.path %} active {% endif %}">Systemer</a>
@@ -108,20 +108,20 @@
 					{% url "alle_systemurler" as alle_systemurler_url %}
 					<a href="{{ alle_systemurler_url }}" class="nav-link {% if alle_systemurler_url in request.path %} active {% endif %}">URL-er</a>
 				</li>
-				{% if user.is_authenticated %}
+		{% if user.is_authenticated %}
 				<li class="hovedmeny">
 					{% url "ubw_home" as url_ubw_home %}
 					<a href="{{ url_ubw_home }}" class="nav-link {% if url_ubw_home in request.path %} active {% endif %}">UBW</a>
 				</li>
-				{% endif %}
+		{% endif %}
 				<li class="hovedmeny">
 					<a href="/api/" class="nav-link">API</a>
 				</li>
-				{% if user.is_authenticated %}
+		{% if user.is_authenticated %}
 				<li class="hovedmeny">
 					<a href="/admin/" class="nav-link {% if '/admin/' in request.path %} active {% endif %}">Admin</a>
 				</li>
-				{% endif %}
+		{% endif %}
 			</ul>
 		</div>
 	</nav>

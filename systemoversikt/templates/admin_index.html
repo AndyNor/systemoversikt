@@ -45,6 +45,10 @@
 
 	<a href="{{ url_roller }}?export=json" class="btn btn-sm btn-link {% if url_alle_systemer in request.path %}fremhev{% endif %}" >Eksporter rolleknytning</a>
 
+	<hr>
+	<h6>Import</h6>
+	{% url 'import_group_permissions' as url_import_group_permissions %}
+	<a href="{{ url_import_group_permissions }}" class="btn btn-sm btn-link {% if url_import_group_permissions in request.path %}fremhev{% endif %}" >Importer gruppetilgang</a>
 
 {% endblock sidemeny %}
 

@@ -1,12 +1,12 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block underoverskrift %}
+{% block overskrift %}
 	Organisatoriske enheter i Oslo kommune
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
@@ -16,30 +16,30 @@
 		</div>
 	</form>
 
-<p>Viser {{ units.count }} enheter</p>
-<hr>
+	<p>Viser {{ units.count }} enheter</p>
+	<hr>
 
 
-<table id="stickyheader" class="table table-sm tablesorter">
-	<thead>
-	<tr>
-		<th width="20%">Navn</th>
-		<th>Virksomhet</th>
-		<th>Direkte underliggende</th>
-		<th>Nivå</th>
-		<th>Leder</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for u in units %}
-		<tr>
-			<td><a href="{% url 'enhet_detaljer' pk=u.pk %}">{{ u.ou }}</a></td>
-			<td>{{ u.virksomhet_mor }}</td>
-			<td>{{ u.direkte_mor }}</td>
-			<td>{{ u.level }}</td>
-			<td>{{ u.leder|default:"-" }}</td>
-	{% endfor %}
-</tbody>
-</table>
+	<table id="stickyheader" class="table table-sm tablesorter">
+		<thead>
+			<tr>
+				<th width="20%">Navn</th>
+				<th>Virksomhet</th>
+				<th>Direkte underliggende</th>
+				<th>Nivå</th>
+				<th>Leder</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for u in units %}
+			<tr>
+				<td><a href="{% url 'enhet_detaljer' pk=u.pk %}">{{ u.ou }}</a></td>
+				<td>{{ u.virksomhet_mor }}</td>
+				<td>{{ u.direkte_mor }}</td>
+				<td>{{ u.level }}</td>
+				<td>{{ u.leder|default:"-" }}</td>
+		{% endfor %}
+		</tbody>
+	</table>
 
-{% endblock main_content %}
+{% endblock hovedinnhold %}

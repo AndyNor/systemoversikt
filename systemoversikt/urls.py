@@ -109,7 +109,7 @@ urlpatterns = [
 	url(r'^domener/$', views.alle_systemurler, name='alle_systemurler'),
 	url(r'^virksomhet/domener/(?P<pk>\d{1,8})/$', views.virksomhet_urler, name='virksomhet_urler'),
 
-	url(r'^programvare/$', views.alle_programvarer, name='alle_programvarer'),
+	url(r'^programvare/alle/$', views.alle_programvarer, name='alle_programvarer'),
 	url(r'^programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
 	url(r'^virksomhet/programvare/(?P<pk>\d{1,8})/$', views.all_programvarebruk_for_virksomhet, name='all_programvarebruk_for_virksomhet'),
 	url(r'^programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
@@ -134,7 +134,7 @@ urlpatterns = [
 	url(r'^cmdb/ad/lookup/$', views.ad, name='ad'),
 	url(r'^cmdb/ad/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
 	url(r'^cmdb/ad/adgruppe/(?P<pk>\d{1,8})/$', views.adgruppe_detaljer, name='adgruppe_detaljer'),
-	url(r'^cmdb/ad/graf/(?P<pk>\d{1,8})/$', views.adgruppe_graf, name='adgruppe_graf'),
+	url(r'^cmdb/ad/adgruppe/graf/(?P<pk>\d{1,8})/$', views.adgruppe_graf, name='adgruppe_graf'),
 	url(r'^cmdb/ad/adorgunit/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
 	url(r'^cmdb/ad/adorgunit/(?P<pk>\d{1,8})/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
 	url(r'^cmdb/ad/lookup/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),  #denne må komme etter ad/adgrupper/
@@ -181,5 +181,7 @@ urlpatterns = [
 	url(r'^import/cmdb/databases/$', views_import.import_cmdb_databases, name='import_databases'),
 	url(r'^import/cmdb/databases/oracle/$', views_import.import_cmdb_databases_oracle, name='import_cmdb_databases_oracle'),
 	url(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
+
+	# Er denne i bruk?
 	url(r'^user_clean_up/$', views.user_clean_up, name='user_clean_up'),
 ]

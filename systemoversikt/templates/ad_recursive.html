@@ -1,44 +1,43 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
 
-{% block underoverskrift %}
+{% block overskrift %}
 	Rekursivt søk
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
-
-
-<table id="stickyheader" class="table table-sm tablesorter">
-	<thead>
-		<tr>
-			<th>Navn</th>
-			<th>Brukernavn</th>
-			<th>Kommentar</th>
-		</tr>
-	</thead>
-	<tbody>
-	{% for user in result %}
-		<tr>
-			<td>
-			{% for item in user.attrs.displayName %}
-				{{ item }}
-			{% endfor %}
-			</td>
-			<td>
-			{% for item in user.attrs.cn %}
-				<a target="_blank" href="{% url 'ad_details' name=item %}">{{ item }}</a>{% endfor %}
-			</td>
-			<td>
-			{% for item in user.attrs.description %}
-				{{ item }}
-			{% endfor %}
-			</td>
-		</tr>
-	{% endfor %}
-	</tbody>
-</table>
+{% block hovedinnhold %}
 
 
-{% endblock main_content %}
+	<table id="stickyheader" class="table table-sm tablesorter">
+		<thead>
+			<tr>
+				<th>Navn</th>
+				<th>Brukernavn</th>
+				<th>Kommentar</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for user in result %}
+			<tr>
+				<td>
+				{% for item in user.attrs.displayName %}
+					{{ item }}
+				{% endfor %}
+				</td>
+				<td>
+				{% for item in user.attrs.cn %}
+					<a target="_blank" href="{% url 'ad_details' name=item %}">{{ item }}</a>{% endfor %}
+				</td>
+				<td>
+				{% for item in user.attrs.description %}
+					{{ item }}
+				{% endfor %}
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

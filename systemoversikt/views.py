@@ -1093,7 +1093,7 @@ def alle_programvarer(request):
 	"""
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
-	if search_term == "__all__":
+	if search_term == "":
 		aktuelle_programvarer = Programvare.objects.all()
 	elif len(search_term) < 2: # if one or less, return nothing
 		aktuelle_programvarer = Programvare.objects.none()

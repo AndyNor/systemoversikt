@@ -1,4 +1,4 @@
-{% extends "index.html" %}
+{% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
@@ -12,104 +12,102 @@
 	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
 {% endblock ekstrajavascript %}
 
-{% block underoverskrift %}
+{% block overskrift %}
 	Graf for: {{ morgruppe.short }}
-{% endblock underoverskrift %}
+{% endblock overskrift %}
 
-{% block main_content %}
+{% block hovedinnhold %}
 
-<form action="" autocomplete="off">
-	<div class="form-group form-inline">
-		<input size="10" style="width: 250px;" type="search" value="{{ maks_grense }}" name="maks_grense"
-		placeholder="Antall steg" class="form-control form-control-sm">
-		<input type="submit" value="Endre" class="btn btn-primary btn-sm">
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="10" style="width: 250px;" type="search" value="{{ maks_grense }}" name="maks_grense"
+			placeholder="Antall steg" class="form-control form-control-sm">
+			<input type="submit" value="Endre" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	{% if grense >= maks_grense %}
+		For mange grupper å følge..
+	{% else %}
+		Stoppet etter {{ grense }} ledd
+	{% endif %}
+
+	<div>
+		<div id="cy" style="width: 100%; height: 800px"></div>
+		<p>Grønt er PRK-kontrollerte grupper. Røde er manuelle.
 	</div>
-</form>
 
-{% if grense >= maks_grense %}
-	For mange grupper å følge..
-{% else %}
-	Stoppet etter {{ grense }} ledd
-{% endif %}
-
-<div>
-	<div id="cy" style="width: 100%; height: 800px"></div>
-	<p>Grønt er PRK-kontrollerte grupper. Røde er manuelle.
-</div>
-
-<script type="text/javascript" nonce="{{request.csp_nonce}}">
-var cy = cytoscape({
-	zoomingEnabled: true,
-	panningEnabled: true,
-	wheelSensitivity: 0.25,
-	container: document.getElementById('cy'),
-	elements: {
-		nodes: [
-			{% for node in avhengigheter_graf.nodes %} {{ node|safe }},
-			{% endfor %}
+	<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	var cy = cytoscape({
+		zoomingEnabled: true,
+		panningEnabled: true,
+		wheelSensitivity: 0.25,
+		container: document.getElementById('cy'),
+		elements: {
+			nodes: [
+				{% for node in avhengigheter_graf.nodes %} {{ node|safe }},
+				{% endfor %}
+			],
+			edges: [
+				{% for edge in avhengigheter_graf.edges %} {{ edge|safe }},
+				{% endfor %}
+			],
+		},
+		style: [
+			{
+				selector: 'node',
+				style: {
+					'shape': 'data(shape)',
+					'background-color': 'data(color)',
+					'label': 'data(name)',
+					'font-size': '12px',
+					'width': 'data(size)',
+					'height': 'data(size)',
+				},
+			},
+			{
+				selector: 'node:selected',
+				style: {
+				},
+			},
+			{
+				selector: 'edge',
+				style: {
+					'target-arrow-shape': 'triangle',
+					'curve-style': 'bezier',
+					'line-style': 'data(linestyle)',
+				},
+			},
+			{
+				selector: 'edge:selected',
+				style: {
+				},
+			},
+			{
+				selector: ':parent',
+				style: {
+					'label': 'data(id)',
+					'line-style': "solid",
+					'background-color': '#ffffff',
+				}
+			},
 		],
-		edges: [
-			{% for edge in avhengigheter_graf.edges %} {{ edge|safe }},
-			{% endfor %}
-		],
-	},
-	style: [
-		{
-			selector: 'node',
-			style: {
-				'shape': 'data(shape)',
-				'background-color': 'data(color)',
-				'label': 'data(name)',
-				'font-size': '12px',
-				'width': 'data(size)',
-				'height': 'data(size)',
-			},
+		layout: {
+			name: 'breadthfirst',
+			animationDuration: 2000, //ms
 		},
-		{
-			selector: 'node:selected',
-			style: {
-			},
-		},
-		{
-			selector: 'edge',
-			style: {
-				'target-arrow-shape': 'triangle',
-				'curve-style': 'bezier',
-				'line-style': 'data(linestyle)',
-			},
-		},
-		{
-			selector: 'edge:selected',
-			style: {
-			},
-		},
-		{
-			selector: ':parent',
-			style: {
-				'label': 'data(id)',
-				'line-style': "solid",
-				'background-color': '#ffffff',
+	});
+	cy.on('tap', 'node', function(){
+		if (this.data('href')) {
+			try { // your browser may block popups
+				window.open( this.data('href'), "_self" );
+			} catch(e){ // fall back on url change
+				window.location.href = this.data('href');
 			}
-		},
-	],
-	layout: {
-		name: 'breadthfirst',
-		animationDuration: 2000, //ms
-	},
-});
-cy.on('tap', 'node', function(){
-	if (this.data('href')) {
-		try { // your browser may block popups
-			window.open( this.data('href'), "_self" );
-		} catch(e){ // fall back on url change
-			window.location.href = this.data('href');
 		}
-	}
-});
-</script>
+	});
+	</script>
 
-</div>
+	</div>
 
-
-
-{% endblock main_content %}
+{% endblock hovedinnhold %}

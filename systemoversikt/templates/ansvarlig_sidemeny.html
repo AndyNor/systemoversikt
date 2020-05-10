@@ -6,6 +6,11 @@
 	{% if request.user.profile.virksomhet %}
 		<a class="btn btn-sm btn-link" href="{% url 'virksomhet_ansvarlige' pk=request.user.profile.virksomhet.pk %}">Våre ansvarlige</a>
 	{% endif %}
+
+		{% url 'alle_ansvarlige_eksport' as url_alle_ansvarlige_eksport %}
+		<a class="btn btn-sm btn-link {% if url_alle_ansvarlige_eksport in request.path %}fremhev{% endif %}" href="{{ url_alle_ansvarlige_eksport }}">Eksporter</a>
+
+
 {% endif %}
 
 {% if virksomhet %}
