@@ -26,13 +26,13 @@
 	{% for d in definisjoner %}
 		<hr>
 		{% if perms.systemoversikt.change_definisjon %}
-		<a target="_blank" href="/admin/systemoversikt/definisjon/{{ d.pk }}/change/">
+		<a href="/admin/systemoversikt/definisjon/{{ d.pk }}/change/">
 		<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">rediger</a> |
 		{% endif %}
 
 		Kontekst: <span class="badge badge-pill badge-light" style="font-size: 90%;">{{ d.kontekst_ref|default:"kontekst mangler" }}</span> |
 		Engelsk begrep: <span class="badge badge-pill badge-light" style="font-size: 90%;">{{ d.engelsk_begrep|default:"ikke oppgitt" }}</span> |
-		Kilde: <span class="badge badge-pill badge-light" style="font-size: 90%;"><a target="_blank" href="{{ d.kilde }}">{{ d.kilde }}</a></span> |
+		Kilde: <span class="badge badge-pill badge-light" style="font-size: 90%;"><a href="{{ d.kilde }}">{{ d.kilde }}</a></span> |
 		Ansvarlig: <span class="badge badge-pill badge-light" style="font-size: 90%;">{{ d.ansvarlig|default:"ikke oppgitt" }}</span> |
 
 		<div {% if d.status != 1 %} style="opacity: 0.3;" {% endif %}>

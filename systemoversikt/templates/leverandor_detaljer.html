@@ -10,7 +10,7 @@
 {% url "alle_leverandorer" as alle_leverandorer_url %}
 
 <p>
-	<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/leverandor/{{ leverandor.pk }}/change/">Rediger detaljer</a>
+	<a class="btn btn-sm btn-primary" href="/admin/systemoversikt/leverandor/{{ leverandor.pk }}/change/">Rediger detaljer</a>
 	<a class="btn btn-sm btn-secondary" href="{{ alle_leverandorer_url }}">Alle leverandører</a>
 </p>
 

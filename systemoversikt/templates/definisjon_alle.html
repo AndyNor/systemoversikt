@@ -6,7 +6,7 @@
 	<h6>Alle definisjoner</h6>
 	{% if perms.systemoversikt.add_definisjon %}
 	<div>
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/definisjon/add/">Registrer definisjon</a>
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/definisjon/add/">{% include 'site_edit_button.html' %} Registrer definisjon</a>
 		<a class="btn btn-sm btn-link" href="{% url 'import_organisatorisk_forkortelser' %}">Sync virksomheter</a>
 	</div>
 	{% endif %}
@@ -62,7 +62,7 @@
 			<td>{{ item.get_status_display }}</td>
 			<td>
 				{% if perms.systemoversikt.delete_definisjon %}
-				<a target="_blank" href="/admin/systemoversikt/definisjon/{{ item.pk }}/delete/">
+				<a href="/admin/systemoversikt/definisjon/{{ item.pk }}/delete/">
 					<img style="width: 8px; margin: 3px;"
 					src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
 				{% endif %}

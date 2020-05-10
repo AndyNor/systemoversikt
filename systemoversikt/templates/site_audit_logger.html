@@ -29,7 +29,7 @@
 			{% if entry.action_flag == 3 %}Slettet{% endif %}
 		</td>
 		<td>{{ entry.content_type }}</td>
-		<td><a target="_blank" href="/admin/{{ entry.content_type.app_label }}/{{ entry.content_type.model }}/{{ entry.object_id }}/change/">{{ entry.object_repr }}</a></td>
+		<td><a href="/admin/{{ entry.content_type.app_label }}/{{ entry.content_type.model }}/{{ entry.object_id }}/change/">{{ entry.object_repr }}</a></td>
 		<td>{{ entry.change_message }}</td>
 	</tr>
 	{% endfor %}

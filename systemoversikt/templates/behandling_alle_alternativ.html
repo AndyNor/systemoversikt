@@ -18,7 +18,7 @@
 	<p>
 		{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
 		{% if user.is_authenticated %}
-			<a href="/admin/systemoversikt/behandlingerpersonopplysninger/add/?behandlingsansvarlig={{ virksomhet.pk }}" class="btn btn-sm btn-link">Registrer ny behandling</a>
+			<a href="/admin/systemoversikt/behandlingerpersonopplysninger/add/?behandlingsansvarlig={{ virksomhet.pk }}" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer ny behandling</a>
 		{% endif %}
 
 		{% url "databehandleravtaler_virksomhet" virksomhet.pk as databehandleravtaler_virksomhet_url %}

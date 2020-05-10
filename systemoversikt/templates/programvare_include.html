@@ -24,7 +24,7 @@
 {% for prog in programvarer %}
 <tr>
 	{% if user.is_authenticated %}
-	<td><a target="_blank" href="/admin/systemoversikt/programvare/{{ prog.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+	<td><a href="/admin/systemoversikt/programvare/{{ prog.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 	{% endif %}
 	<td>{% url "programvaredetaljer" prog.pk as url_programvaredetaljer %}<a href="{{ url_programvaredetaljer }}">{{ prog.programvarenavn }}</a></td>
 	<td>{{ prog.programvarebruk_programvare.count }}</td>
@@ -44,7 +44,7 @@
 	<td>{{ prog.get_funksjonell_egnethet_display|default:"-" }}</td>
 	<td>{{ prog.get_teknisk_egnethet_display|default:"-" }}</td>
 	{% if user.is_authenticated %}
-	<td><a target="_blank" href="/admin/systemoversikt/programvare/{{ prog.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+	<td><a href="/admin/systemoversikt/programvare/{{ prog.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
 	{% endif %}
 </tr>
 {% endfor %}

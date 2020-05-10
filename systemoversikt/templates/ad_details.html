@@ -74,7 +74,7 @@
 				{% for item in user.attrs.memberOf %}
 					<li>
 					{% url 'ad_details' name=item.group as url_details %}
-					<a target="_blank" href="{{ url_details }}">{{ item.group }}</a>:
+					<a href="{{ url_details }}">{{ item.group }}</a>:
 					({{ item.cn }})</li>
 				{% endfor %}
 				</ol>
@@ -91,7 +91,7 @@
 			<p>Member Of (parent group): <br>
 			{% for item in group.attrs.memberOf %}
 				{% url 'ad_exact' name=item as url_details %}
-				<a target="_blank" href="{{ url_details }}">{{ item }}</a><br>
+				<a href="{{ url_details }}">{{ item }}</a><br>
 			{% empty%}
 			(ingen)
 			{% endfor %}
@@ -114,7 +114,7 @@
 				{% for item in group.attrs.member %}
 					<li>
 					{% url 'ad_details' name=item.username as url_details %}
-					<a target="_blank" href="{{ url_details }}">{{ item.username }}</a>:
+					<a href="{{ url_details }}">{{ item.username }}</a>:
 					{{ item.user|default:"" }}
 					({{ item.cn }})</li>
 				{% empty %}

@@ -1858,7 +1858,7 @@ class Driftsmodell(models.Model):
 			help_text=u"Beskyttelse mot innbrudd, brann, oversvømmelse..",
 			)
 	anbefalte_kategorier_personopplysninger = models.ManyToManyField(Personsonopplysningskategori, related_name='driftsmodell_anbefalte_kategorier_personopplysninger',
-			verbose_name="Kategorier personopplysninger egnet på plattformen",
+			verbose_name="Kategorier personopplysninger tillat på plattformen",
 			blank=True,
 			help_text=u"",
 			)

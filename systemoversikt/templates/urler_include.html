@@ -23,10 +23,10 @@
 	{% for item in web_urler %}
 	<tr>
 		{% if user.is_authenticated %}
-		<td><a target="_blank" href="/admin/systemoversikt/systemurl/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/systemurl/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 		{% endif %}
 		<td>
-			<a href="{{ item.domene }}" target="_blank">{% if item.own_domain %}<span style="color: green; font-size: 18px;">✓</span>{% endif %} {{ item.domene }}</a>
+			<a href="{{ item.domene }}">{% if item.own_domain %}<span style="color: green; font-size: 18px;">✓</span>{% endif %} {{ item.domene }}</a>
 		</td>
 		<td>
 			{% url 'virksomhet' pk=item.eier.pk as url_eier %}
@@ -56,7 +56,7 @@
 		&zwj;
 		</td>
 		{% if user.is_authenticated %}
-		<td><a target="_blank" href="/admin/systemoversikt/systemurl/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+		<td><a href="/admin/systemoversikt/systemurl/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
 		{% endif %}
 	</tr>
 	{% endfor %}

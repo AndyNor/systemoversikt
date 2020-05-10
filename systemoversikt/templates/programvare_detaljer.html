@@ -129,7 +129,7 @@
 				{% for bruk in programvarebruk %}
 				<tr>
 					{% if user.is_authenticated %}
-					<td><a target="_blank" href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+					<td><a href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
 					{% endif %}
 					<td>{% url "programvarebruksdetaljer" bruk.pk as url_bruk %}
 					<a href="{{ url_bruk }}">{{ programvare.programvarenavn }} for {{ bruk.brukergruppe.virksomhetsforkortelse }}</a></td>
@@ -141,7 +141,7 @@
 					<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
 					<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
 					{% if user.is_authenticated %}
-					<td><a target="_blank" href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+					<td><a href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
 					{% endif %}
 				</tr>
 				{% endfor %}
@@ -171,7 +171,7 @@
 				{% url "behandlingsdetaljer" b.pk as url_behandlingsdetaljer %}
 				{% url "virksomhet" b.behandlingsansvarlig.pk as url_virksomhet %}
 				<tr>
-					<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+					<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
 					<td><a href="{{ url_virksomhet }}">{{ b.behandlingsansvarlig }}</a></td>
 					<td><a href="{{ url_behandlingsdetaljer }}">{{ b.behandlingen }}</a></td>
 					<td><ul>
@@ -180,7 +180,7 @@
 						{% endfor %}
 					</ul></td>
 					<td>{{ b.hoy_personvernrisiko|yesno:"Ja,Nei" }}</td>
-					<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+					<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
 				</tr>
 				{% endfor %}
 			</tbody>

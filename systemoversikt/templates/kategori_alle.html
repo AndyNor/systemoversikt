@@ -9,7 +9,7 @@
 	{% url 'alle_hovedkategorier' as url_alle_hovedkategorier %}
 		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Alle hovedkategorier</a>
 	{% if user.is_authenticated %}
-		<a href="/admin/systemoversikt/systemkategori/add/" class="btn btn-sm btn-link">Registrer ny kategori</a>
+		<a href="/admin/systemoversikt/systemkategori/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer ny kategori</a>
 
 		{% url 'uten_systemkategorier' as url_uten_systemkategorier %}
 		<a href="{{url_uten_systemkategorier}}" class="btn btn-sm btn-link {% if url_uten_systemkategorier in request.path %}fremhev{% endif %}">Mangler subkategori</a>
@@ -38,7 +38,7 @@
 	{% for kat in kategorier %}
 	<tr>
 		{% if user.is_authenticated %}
-		<td><a target="_blank" href="/admin/systemoversikt/systemkategori/{{ kat.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/systemkategori/{{ kat.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
 		{% endif %}
 		<td>{% for hovedkat in kat.systemhovedkategori_systemkategorier.all %} {{ hovedkat.hovedkategorinavn }}<br> {% endfor %}</td>
 		{% url 'systemkategori' pk=kat.pk as url_systemkategori %}

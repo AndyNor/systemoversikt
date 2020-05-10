@@ -3,7 +3,7 @@
 {% load templatetags %}
 
 <h5>Vurdering av personvernkonsekvenser (DPIA)</h5>
-<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger DPIA-malen</a>
+<a class="btn btn-sm btn-primary" href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger DPIA-malen</a>
 
 <hr>
 {% if not systemdetaljer.DPIA_for_system.informasjon_kvalitetssikret %}
@@ -31,7 +31,7 @@
 	<tbody>
 {% for behandling in hoy_risiko %}
 	<tr>
-		<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+		<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 		<td>{{ behandling.formaal }}</td>
 		<td>{{ behandling.dpia_effekt_enkelte|default:"-"|linebreaks }}</td>
 		<td>{{ behandling.dpia_effekt_samfunnet|default:"-"|linebreaks }}</td>
@@ -61,7 +61,7 @@
 	<tbody>
 	{% for behandling in hoy_risiko %}
 		<tr>
-			<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+			<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 			<td>{{ behandling.opplysningskilde|default:"-" }}</td>
 			<td>{{ behandling.begrensning_tilgang|default:"-" }}</td>
 			<td>{{ behandling.oppbevaringsplikt|default:"-" }}</td>
@@ -110,7 +110,7 @@
 
 
 <p>Kan informasjonen på noen måte knyttes til identifiserbare personer (enten direkte eller via personnummer eller andre identifikatorer)?</p>
-<a target="_blank" href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.<br>
+<a href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.<br>
 <div class="svarboks">{{ systemdetaljer.DPIA_for_system.knyttning_identifiserbare_personer }}</div>
 
 
@@ -130,7 +130,7 @@
 	<tbody>
 {% for behandling in hoy_risiko %}
 	<tr>
-		<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+		<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 		<td>
 			{% for leverandor in behandling.navn_databehandler.all %}
 				<li>{{ leverandor }}</li>
@@ -163,7 +163,7 @@
 	<tbody>
 {% for behandling in hoy_risiko %}
 	<tr>
-		<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+		<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 		<td>{{ behandling.utlevering_utenfor_EU|yesno:"Ja,Nei,Ukjent" }}</td>
 		<td>{{ behandling.garantier_overforing|default:"-" }}</td>
 	</tr>
@@ -187,7 +187,7 @@
 	<tbody>
 {% for behandling in hoy_risiko %}
 	<tr>
-		<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+		<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 		<td>{{ behandling.get_antall_registrerte_display }}</td>
 		<td>{{ behandling.frekvens_automatisert_innsamling|default:"-" }}</td>
 		<td>{{ behandling.frekvens_innsamling_manuelt|default:"-" }}</td>
@@ -219,7 +219,7 @@
 	<tbody>
 {% for behandling in hoy_risiko %}
 	<tr>
-		<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+		<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 		<td>{{ behandling.ny_endret_prosess|default:"-" }}</td>
 		<td>{{ behandling.dpia_tidligere_bekymringer_risikoer|default:"-" }}</td>
 		<td>{{ behandling.dpia_tidligere_avdekket_sikkerhetsbrudd|default:"-" }}</td>
@@ -230,7 +230,7 @@
 
 
 
-<a target="_blank" href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.
+<a href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.
 <p>{% get_verbose_field_name systemdetaljer.DPIA_for_system "innhentet_dpia" %}<br>
 <div class="svarboks">{{ systemdetaljer.DPIA_for_system.innhentet_dpia|default:"-" }}</div></p>
 
@@ -257,7 +257,7 @@
 		<tr>
 			<td>Systemleverandør</td>
 			<td>
-				<a target="_blank" href="/admin/systemoversikt/leverandor/{{ leverandor.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ leverandor }}</a>
+				<a href="/admin/systemoversikt/leverandor/{{ leverandor.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ leverandor }}</a>
 			</td>
 			<td>{{ leverandor.godkjent_opptaks_sertifiseringsordning|default:"-" }}</td>
 		</tr>
@@ -266,7 +266,7 @@
 		<tr>
 			<td>Basisdriftleverandør</td>
 			<td>
-				<a target="_blank" href="/admin/systemoversikt/leverandor/{{ leverandor.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ leverandor }}</a>
+				<a href="/admin/systemoversikt/leverandor/{{ leverandor.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ leverandor }}</a>
 			</td>
 			<td>{{ leverandor.godkjent_opptaks_sertifiseringsordning|default:"-" }}</td>
 		</tr>
@@ -275,7 +275,7 @@
 		<tr>
 			<td>Applikasjonsdriftleverandør</td>
 			<td>
-				<a target="_blank" href="/admin/systemoversikt/leverandor/{{ leverandor.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ leverandor }}</a>
+				<a href="/admin/systemoversikt/leverandor/{{ leverandor.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ leverandor }}</a>
 			</td>
 			<td>{{ leverandor.godkjent_opptaks_sertifiseringsordning|default:"-" }}</td>
 		</tr>
@@ -286,7 +286,7 @@
 
 <hr>
 <h6>Trinn 3: Beskrive konsultasjonsprosessen</h6>
-<p><a target="_blank" href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.</p>
+<p><a href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.</p>
 
 <p>{% get_verbose_field_name systemdetaljer.DPIA_for_system "konsultasjon_registrerte" %}<br>
 <div class="svarboks">{{ systemdetaljer.DPIA_for_system.konsultasjon_registrerte|default:"-" }}</div></p>
@@ -320,7 +320,7 @@
 <p><i>Her beskrives nærmere de vurderinger som er foretatt i forhold til nødvendighet av behandlingen og proporsjonaliteten mellom behovet for/nødvendigheten av behandlingen og de ulemper/den risiko den kan innebære for de registrerte. Så vel nytteverdi for de registrerte, for virksomheten og for samfunnet som helhet vurderes.Beskrivelsen skjer gjennom å svare på spørsmålene nedenfor. Der det skal svares JA / NEI, må svaret utdypes i notatfeltet. Her må også compliance med personvernregelverket dokumenteres</i></p>
 
 <p>Hvem er hoveddatabehandler?<br>
-<a target="_blank" href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.
+<a href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.
 <div class="svarboks">{{ systemdetaljer.DPIA_for_system.hoveddatabehandler|default:"-" }}</div></p>
 
 <p>Hva er det lovlige grunnlaget for behandlingen? (bestemmelser i personopplysningsloven og bestemmelse i særlovgivning).<br>
@@ -336,7 +336,7 @@
 		<tbody>
 		{% for behandling in hoy_risiko %}
 			<tr>
-				<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+				<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 				<td>{% for grunnlag in behandling.behandlingsgrunnlag_valg.all %}
 					{{ grunnlag }}<br>
 				{% endfor %}</td>
@@ -361,7 +361,7 @@
 		<tbody>
 		{% for behandling in hoy_risiko %}
 			<tr>
-				<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+				<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 				<td>{{ behandling.sikre_dataminimalisering|default:"-" }}</td>
 				<td>{{ behandling.dpia_dekker_formal|default:"-" }}</td>
 				<td>{{ behandling.informering_til_registrerte|default:"-" }}</td>
@@ -384,7 +384,7 @@
 		<tbody>
 		{% for behandling in hoy_risiko %}
 			<tr>
-				<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+				<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 				<td>{% for leverandor in behandling.navn_databehandler.all %}
 					{{ leverandor }}<br>
 				{% endfor %}</td>
@@ -411,7 +411,7 @@
 		<tbody>
 		{% for behandling in hoy_risiko %}
 			<tr>
-				<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+				<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 				<td>{{ behandling.kommunens_maler|yesno:"Ja,Nei,Ukjent" }}</td>
 				<td>{{ behandling.kommunens_maler_hvis_nei|default:"-" }}</td>
 				<td>{{ behandling.dpia_prosess_godkjenne_underleverandor|default:"-" }}</td>
@@ -435,7 +435,7 @@
 		<tbody>
 		{% for behandling in hoy_risiko %}
 			<tr>
-				<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+				<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 				<td>{{ behandling.utlevering_utenfor_EU|yesno:"Ja,Nei,Ukjent" }}</td>
 				<td>{{ behandling.garantier_overforing|default:"-" }}</td>
 			</tr>
@@ -456,7 +456,7 @@
 		<tbody>
 		{% for behandling in hoy_risiko %}
 			<tr>
-				<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
+				<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">{{ behandling.behandlingen }}</a></td>
 				<td>{{ behandling.dpia_proporsjonalitet_enkelte_samfunnet|default:"-" }}</td>
 			</tr>
 		{% endfor %}
@@ -479,21 +479,21 @@
 		<li>Inngrep i de(n) registrertes privatliv.</li>
 	</ul></i>
 	<p>{% get_verbose_field_name systemdetaljer.DPIA_for_system "personvern_i_risikovurdering" %}<br>
-	<a target="_blank" href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.
+	<a href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.
 	<div class="svarboks">{{ systemdetaljer.DPIA_for_system.personvern_i_risikovurdering|default:"-" }}</div></p>
 
 {% else %}
 	<div id="div_message" class="alert alert-danger">
 		<a class="close" data-dismiss="alert" href="#">×</a>
 		Det er ikke referert til risikovurdering for dette systemet. Start med å få dette på plass.
-		<br><a target="_blank" href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger systemdetaljene</a>.
+		<br><a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">Rediger systemdetaljene</a>.
 	</div>
 {% endif %}
 
 
 <hr>
 <h6>Trinn 6 Identifisering av risikoreduserende tiltak og klassifisering av restrisiko</h6>
-<a target="_blank" href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.
+<a href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.
 <p>{% get_verbose_field_name systemdetaljer.DPIA_for_system "tiltak_innledende_ros" %}<br>
 <div class="svarboks">{{ systemdetaljer.DPIA_for_system.tiltak_innledende_ros|default:"-" }}</div></p>
 
@@ -506,7 +506,7 @@
 
 <hr>
 <h6>Trinn 7 Godkjenning / signering</h6>
-<a target="_blank" href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.
+<a href="/admin/systemoversikt/dpia/{{ systemdetaljer.DPIA_for_system.pk }}/change/">Rediger</a> informasjonen.
 
 <p>{% get_verbose_field_name systemdetaljer.DPIA_for_system "godkjenning_personvernombudets_raad" %}<br>
 <div class="svarboks">{{ systemdetaljer.DPIA_for_system.godkjenning_personvernombudets_raad|default:"-" }}</div></p>

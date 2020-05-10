@@ -46,7 +46,7 @@
 	{% for bruk in all_bruk %}
 	<tr>
 		{% if user.is_authenticated %}
-		<td><a target="_blank" href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 		{% endif %}
 		{% url "programvarebruksdetaljer" bruk.pk as url_programvarebruksdetaljer %}
 		<td><a href="{{ url_programvarebruksdetaljer }}">{{ bruk.programvare }} ({{ virksomhet.virksomhetsforkortelse }})</a></td>
@@ -61,7 +61,7 @@
 		<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
 		<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
 		{% if user.is_authenticated %}
-		<td><a target="_blank" href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+		<td><a href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
 		{% endif %}
 	</tr>
 	{% endfor %}

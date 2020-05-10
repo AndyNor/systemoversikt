@@ -20,7 +20,7 @@
 	{% if url_ansvarlig %}
 		<a href="{{ url_ansvarlig }}" class="btn btn-sm btn-link" >Mine ansvarsområder</a>
 	{% else%}
-		<a href="/admin/systemoversikt/ansvarlig/add/?brukernavn={{request.user.pk}}" class="btn btn-sm btn-link" >Opprett som ansvarlig</a>
+		<a href="/admin/systemoversikt/ansvarlig/add/?brukernavn={{request.user.pk}}" class="btn btn-sm btn-link" >{% include 'site_edit_button.html' %} Opprett som ansvarlig</a>
 	{% endif %}
 
 	<hr>

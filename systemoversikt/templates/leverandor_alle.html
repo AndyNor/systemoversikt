@@ -7,7 +7,7 @@
 
 {% block ekstrameny_leverandor %}
 	{% if user.is_authenticated %}
-		<a class="btn btn-sm btn-link" target="_blank" href="/admin/systemoversikt/leverandor/add/">Legg til ny leverandør</a>
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/leverandor/add/">Legg til ny leverandør</a>
 	{% endif %}
 {% endblock ekstrameny_leverandor %}
 
@@ -50,7 +50,7 @@
 	{% for item in leverandorer %}
 	<tr>
 		{% if user.is_authenticated %}
-		<td><a target="_blank" href="/admin/systemoversikt/leverandor/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/leverandor/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 		{% endif %}
 		{% url 'leverandor' pk=item.pk as url_leverandor %}
 		<td><a href="{{ url_leverandor }}">{{ item.leverandor_navn }}</a></td>
@@ -64,7 +64,7 @@
 		<td>{{ item.orgnummer|default:'' }}</td>
 		<td>{{ item.notater|default:'' }}</td>
 		{% if user.is_authenticated %}
-		<td><a target="_blank" href="/admin/systemoversikt/leverandor/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+		<td><a href="/admin/systemoversikt/leverandor/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
 		{% endif %}
 	</tr>
 	{% endfor %}

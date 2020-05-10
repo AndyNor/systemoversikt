@@ -19,7 +19,7 @@
 	<p>{{ virksomhet.virksomhetsforkortelse }} har ansvar for {{ systemer_ansvarlig_for.count }} systemer.</p>
 
 	{% if user.is_authenticated %}
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">Registrer nytt system</a>
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Registrer nytt system</a>
 	{% endif %}
 
 	<table id="systemer" class="tablesorter">
@@ -46,7 +46,7 @@
 	{% for item in systemer_ansvarlig_for %}
 	<tr {% if item.ibruk == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 		{% if perms.systemoversikt.change_system %}
-			<td><a target="_blank" href="/admin/systemoversikt/system/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
+			<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
 		{% endif %}
 
 		{% url "systemdetaljer" item.pk as url_systemdetaljer %}

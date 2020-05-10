@@ -18,10 +18,10 @@
 	{% endif %}
 
 	{% if behandling.behandling_behovdpia %}
-		<a class="redigeringsknapp btn btn-sm btn-link" target="_blank" href="/admin/systemoversikt/behovfordpia/{{ behandling.behandling_behovdpia.pk }}/change/">Se DPIA-behovsvurdering</a>
+		<a class="redigeringsknapp btn btn-sm btn-link" href="/admin/systemoversikt/behovfordpia/{{ behandling.behandling_behovdpia.pk }}/change/">Se DPIA-behovsvurdering</a>
 
 	{% else %}
-		<a class="redigeringsknapp btn btn-sm btn-link" target="_blank" href="/admin/systemoversikt/behovfordpia/add/?behandling={{ behandling.pk }}">Utfør DPIA-behovsvurdering</a>
+		<a class="redigeringsknapp btn btn-sm btn-link" href="/admin/systemoversikt/behovfordpia/add/?behandling={{ behandling.pk }}">Utfør DPIA-behovsvurdering</a>
 	{% endif %}
 
 
@@ -67,7 +67,7 @@
 				{% if behandling.ekstern_DPIA_url%}
 				<tr>
 					<td>{% get_verbose_field_name behandling "ekstern_DPIA_url" %}</td>
-					<td><a target="_blank" href="{{ behandling.ekstern_DPIA_url }}">{{ behandling.ekstern_DPIA_url }}</a></td>
+					<td><a href="{{ behandling.ekstern_DPIA_url }}">{{ behandling.ekstern_DPIA_url }}</a></td>
 				</tr>
 				{% endif %}
 				<tr>

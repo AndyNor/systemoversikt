@@ -14,35 +14,35 @@
 	<p style="color: grey;">{{systemdetaljer.systemnavn}}</p>
 
 	{% if systemdetaljer.kontaktgruppe_url %}
-		<a class="btn btn-sm btn-link" target="_blank" href="{{ systemdetaljer.kontaktgruppe_url }}">🌍 {% get_verbose_field_name systemdetaljer "kontaktgruppe_url" %}</a>
+		<a class="btn btn-sm btn-link" href="{{ systemdetaljer.kontaktgruppe_url }}">🌍 {% get_verbose_field_name systemdetaljer "kontaktgruppe_url" %}</a>
 	{% endif %}
 
 	{% if systemdetaljer.brukerdokumentasjon_url %}
-		<a class="btn btn-sm btn-link" target="_blank" href="{{ systemdetaljer.brukerdokumentasjon_url }}">🌍 {% get_verbose_field_name systemdetaljer "brukerdokumentasjon_url" %}</a>
+		<a class="btn btn-sm btn-link" href="{{ systemdetaljer.brukerdokumentasjon_url }}">🌍 {% get_verbose_field_name systemdetaljer "brukerdokumentasjon_url" %}</a>
 	{% endif %}
 
 	{% if systemdetaljer.high_level_design_url %}
-	<a class="btn btn-sm btn-link" target="_blank" href="{{ systemdetaljer.high_level_design_url }}">🌍 {% get_verbose_field_name systemdetaljer "high_level_design_url" %}</a>
+	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.high_level_design_url }}">🌍 {% get_verbose_field_name systemdetaljer "high_level_design_url" %}</a>
 	{% endif %}
 
 	{% if systemdetaljer.low_level_design_url %}
-	<a class="btn btn-sm btn-link" target="_blank" href="{{ systemdetaljer.low_level_design_url }}">🌍 {% get_verbose_field_name systemdetaljer "low_level_design_url" %}</a>
+	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.low_level_design_url }}">🌍 {% get_verbose_field_name systemdetaljer "low_level_design_url" %}</a>
 	{% endif %}
 
 	{% if systemdetaljer.datamodell_url %}
-	<a class="btn btn-sm btn-link" target="_blank" href="{{ systemdetaljer.datamodell_url }}">🌍 {% get_verbose_field_name systemdetaljer "datamodell_url" %}</a><br>
+	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.datamodell_url }}">🌍 {% get_verbose_field_name systemdetaljer "datamodell_url" %}</a><br>
 	{% endif %}
 
 	{% if systemdetaljer.datasett_url %}
-	<a class="btn btn-sm btn-link" target="_blank" href="{{ systemdetaljer.datasett_url }}">🌍 {% get_verbose_field_name systemdetaljer "datasett_url" %}</a><br>
+	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.datasett_url }}">🌍 {% get_verbose_field_name systemdetaljer "datasett_url" %}</a><br>
 	{% endif %}
 
 	{% if systemdetaljer.api_url %}
-	<a class="btn btn-sm btn-link" target="_blank" href="{{ systemdetaljer.api_url }}">🌍 {% get_verbose_field_name systemdetaljer "api_url" %}</a><br>
+	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.api_url }}">🌍 {% get_verbose_field_name systemdetaljer "api_url" %}</a><br>
 	{% endif %}
 
 	{% if systemdetaljer.kildekode_url %}
-	<a class="btn btn-sm btn-link" target="_blank" href="{{ systemdetaljer.kildekode_url }}">🌍 {% get_verbose_field_name systemdetaljer "kildekode_url" %}</a>
+	<a class="btn btn-sm btn-link" href="{{ systemdetaljer.kildekode_url }}">🌍 {% get_verbose_field_name systemdetaljer "kildekode_url" %}</a>
 	{% endif %}
 
 {% endblock ekstrameny_system %}
@@ -111,7 +111,7 @@
 		</div>
 		<div id="collapseOm" class="collapse show" aria-labelledby="headingOm" data-parent="#accordionSystem">
 			<div class="card-body">
-			<table class="tablesorter">
+			<table class="table table-sm">
 
 				<tr>
 					<td width="50%">{% get_verbose_field_name systemdetaljer "systemeierskapsmodell" %}
@@ -172,7 +172,7 @@
 					{% explain_collapsed text %}
 					</td>
 					<td>{% for url in systemdetaljer.systemurl.all %}
-						<a target="_blank" href="{{ url.domene }}">{{ url.domene }}</a><br>
+						<a href="{{ url.domene }}">{{ url.domene }}</a><br>
 						{% endfor %}
 					</td>
 				</tr>
@@ -242,7 +242,7 @@
 				<tr>
 					<td>Avtaler knyttet til dette systemet
 					{% if user.is_authenticated %}
-						(<a href="/admin/systemoversikt/avtale/add/?for_system={{ systemdetaljer.pk }}">Registrer ny</a>)
+						(<a href="/admin/systemoversikt/avtale/add/?for_system={{ systemdetaljer.pk }}">{% include 'site_edit_button.html' %} Registrer ny</a>)
 					{% endif %}
 						{% explain_collapsed "Her vises avtaler som peker tilbake på dette konkrete systemet. Redigeres på avtaleobjektet." %}
 					</td>
@@ -304,7 +304,7 @@
 			{% if user.is_authenticated %}
 				<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Legg til bruk</a></p>
 			{% endif %}
-			<table class="tablesorter">
+			<table class="table table-sm">
 				<thead>
 					<tr>
 						<th>Virksomhet</th>
@@ -325,14 +325,14 @@
 					<tr>
 						<td style="width: 20%;">
 							{% if user.is_authenticated %}
-								<a target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
+								<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
 								<img style="width: 11px; margin: 3px;"
 								src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
 							{% endif %}
 							{% url "bruksdetaljer" bruk.pk as url_bruk %}
 							<a href="{{ url_bruk }}">{{ bruk.brukergruppe }}</a>
 							{% if user.is_authenticated %}
-								<a target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/delete/">
+								<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/delete/">
 								<img style="width: 8px; margin: 3px;"
 								src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
 							{% endif %}
@@ -388,7 +388,7 @@
 			{% endif %}
 
 			{% if perms.systemoversikt.view_system %}
-			<table class="tablesorter">
+			<table class="table table-sm">
 				<thead>
 					<tr>
 						<th class="filter-false">Rediger</th>
@@ -406,7 +406,7 @@
 					{% url "behandlingsdetaljer" b.pk as url_behandlingsdetaljer %}
 					{% url "virksomhet" b.behandlingsansvarlig.pk as url_virksomhet %}
 					<tr>
-						<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+						<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
 						<td>
 							{% if b.fellesbehandling %}
 							<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
@@ -424,7 +424,7 @@
 						</td>
 						<td>{{ b.get_krav_sikkerhetsnivaa_display|default:"-" }}</a></td>
 						<td>{{ b.hoy_personvernrisiko|yesno:"Ja,Nei,Ukjent" }}</td>
-						<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+						<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
 					</tr>
 					{% endfor %}
 				</tbody>
@@ -446,7 +446,7 @@
 		</div>
 		<div id="collapseSikkerhet" class="collapse show" aria-labelledby="headingSikkerhet" data-parent="#accordionSystem">
 			<div class="card-body">
-			<table class="tablesorter">
+			<table class="table table-sm">
 			{% if perms.systemoversikt.view_system %}
 				<tr>
 					<td>{% get_verbose_field_name systemdetaljer "informasjonsklassifisering" %}
@@ -555,13 +555,13 @@
 				<tr>
 					<td>Sikkerhetstester
 					{% if user.is_authenticated %}
-						(<a target="_blank" href="/admin/systemoversikt/sikkerhetstester/add/?systemer={{ systemdetaljer.pk }}">Registrer ny</a>)
+						(<a href="/admin/systemoversikt/sikkerhetstester/add/?systemer={{ systemdetaljer.pk }}">{% include 'site_edit_button.html' %} Registrer ny</a>)
 					{% endif %}
 					{% explain_collapsed "Registrert som tester mot dette systemet" %}
 					</td>
 					<td>
 						{% for test in systemdetaljer.sikkerhetstest_systemer.all %}
-							<a target="_blank" href="/admin/systemoversikt/sikkerhetstester/{{ test.pk }}/change/">
+							<a href="/admin/systemoversikt/sikkerhetstester/{{ test.pk }}/change/">
 								<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
 							{{ test.dato_rapport|date:'Y-m-d' }} ({{ test.dato_rapport|naturaltime }}): {{ test.get_type_test_display }}<br>
 						{% endfor %}
@@ -602,7 +602,7 @@
 		<div id="collapseFelles" class="collapse show" aria-labelledby="headingFelles" data-parent="#accordionSystem">
 			<div class="card-body">
 		{% if systemdetaljer.driftsmodell_foreignkey %}
-			<table class="tablesorter">
+			<table class="table table-sm">
 				<tr>
 					<td>Tjenestenivå med UKE på felles IKT-plattform
 					{% explain_collapsed "forklaring" %}
@@ -682,7 +682,7 @@
 
 		{% if systemdetaljer.cmdbref %}
 			<p>Koblede data mot Sopra Sterias <a href="{% url 'alle_cmdbref' %}">CMDB</a>. Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">beskrivelse av kritikalitet og tilgjengelighet</a>.</p>
-			<table class="tablesorter">
+			<table class="table table-sm">
 				<thead>
 					<tr>
 						<th>Business Service</th>
@@ -717,7 +717,7 @@
 		</div>
 		<div id="collapseSekundar" class="collapse" aria-labelledby="headingSekundar" data-parent="#accordionSystem">
 			<div class="card-body">
-			<table class="tablesorter">
+			<table class="table table-sm">
 				<tr>
 					<td width="50%">{% get_verbose_field_name systemdetaljer "sist_oppdatert" %}
 					{% explain_collapsed "Oppdateres automatisk hver gang noen lagrer en endring på systemets direkte attributter." %}
@@ -947,7 +947,7 @@
 						{% include 'system_dpia.html' %}
 					{% else %}
 						<p>Det er registrert behandlinger som krever DPIA</p>
-						<a class="btn btn-sm btn-primary" target="_blank" href="/admin/systemoversikt/dpia/add/?for_system={{ systemdetaljer.pk }}">Opprett DPIA-dokument</a>
+						<a class="btn btn-sm btn-primary" href="/admin/systemoversikt/dpia/add/?for_system={{ systemdetaljer.pk }}">Opprett DPIA-dokument</a>
 					{% endif %}
 
 				{% endif %}

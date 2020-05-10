@@ -4,7 +4,7 @@
 
 {% block ekstrameny_driftsmiljo %}
 	{% if user.is_authenticated %}
-	<a href="/admin/systemoversikt/driftsmodell/add/" class="btn btn-sm btn-link">Registrer nytt driftmiljø</a>
+	<a href="/admin/systemoversikt/driftsmodell/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer nytt driftmiljø</a>
 	{% endif %}
 	<a href="{% url 'systemer_uten_driftsmodell' %}" class="btn btn-sm btn-link">Driftmiljø mangler</a>
 {% endblock ekstrameny_driftsmiljo %}
@@ -38,7 +38,7 @@
 
 			{% if user.is_authenticated %}
 			<td>
-				<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
 			</td>
 			{% endif %}
 			<td>
@@ -51,7 +51,7 @@
 			</td>
 			{% if user.is_authenticated %}
 			<td>
-				<a target="_blank" href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
+				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
 			</td>
 			{% endif %}
 

@@ -110,12 +110,12 @@ class SikkerhetstesterAdmin(SimpleHistoryAdmin):
 	vis_systemer.short_description = "Systemer testet (5 første)"
 
 	def response_add(self, request, obj, post_url_continue=None):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.systemer.all()[0].pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.systemer.all()[0].pk}))
 		return super().response_change(request, obj)
 
@@ -139,12 +139,12 @@ class SystemAdmin(SimpleHistoryAdmin):
 	list_filter = ('database_in_use', 'database_supported', 'ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
 	def response_add(self, request, obj, post_url_continue=None):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.pk}))
 		return super().response_change(request, obj)
 
@@ -288,12 +288,12 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 		return [Lower('virksomhetsnavn')]
 
 	def response_add(self, request, obj, post_url_continue=None):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('virksomhet', kwargs={'pk': obj.pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('virksomhet', kwargs={'pk': obj.pk}))
 		return super().response_change(request, obj)
 
@@ -368,12 +368,12 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('brukergruppe', 'system', 'systemforvalter', 'systemforvalter_kontaktpersoner_referanse', 'avhengigheter_referanser')
 
 	def response_add(self, request, obj, post_url_continue=None):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('all_bruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('all_bruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
 		return super().response_change(request, obj)
 
@@ -451,6 +451,17 @@ class LeverandorAdmin(SimpleHistoryAdmin):
 	list_display = ('leverandor_navn', 'kontaktpersoner', 'orgnummer')
 	search_fields = ('leverandor_navn', 'orgnummer', 'notater')
 
+
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('leverandor', kwargs={'pk': obj.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('leverandor', kwargs={'pk': obj.pk}))
+		return super().response_change(request, obj)
+
 	def get_ordering(self, request):
 		return [Lower('leverandor_navn')]
 
@@ -465,12 +476,12 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('behandlingsansvarlig', 'oppdateringsansvarlig')
 
 	def response_add(self, request, obj, post_url_continue=None):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.pk}))
 		return super().response_change(request, obj)
 
@@ -623,6 +634,16 @@ class SystemUrlAdmin(SimpleHistoryAdmin):
 	list_filter = ('https', 'maalgruppe', 'opprettet', 'eier')
 	autocomplete_fields = ('registrar', 'eier')
 
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('alle_systemurler'))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('alle_systemurler'))
+		return super().response_change(request, obj)
+
 	def get_ordering(self, request):
 		return [Lower('domene')]
 
@@ -662,12 +683,12 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('brukernavn',)
 
 	def response_add(self, request, obj, post_url_continue=None):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('ansvarlig', kwargs={'pk': obj.pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('ansvarlig', kwargs={'pk': obj.pk}))
 		return super().response_change(request, obj)
 
@@ -774,12 +795,12 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('brukergruppe', 'programvare', 'programvareleverandor', 'lokal_kontakt')
 
 	def response_add(self, request, obj, post_url_continue=None):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('all_programvarebruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('all_programvarebruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
 		return super().response_change(request, obj)
 
@@ -832,12 +853,12 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 	filter_horizontal = ('avtaleansvarlig', 'for_system',)
 
 	def response_add(self, request, obj, post_url_continue=None):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('avtalervirksomhet', kwargs={'virksomhet': obj.virksomhet.pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
-		if ('_addanother' not in request.POST) and ('_continue' not in request.POST):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('avtalervirksomhet', kwargs={'virksomhet': obj.virksomhet.pk}))
 		return super().response_change(request, obj)
 
@@ -935,16 +956,26 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler', 'anbefalte_kategorier_personopplysninger', 'overordnet_plattform')
 	autocomplete_fields = ('ansvarlig_virksomhet',)
 
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('detaljer_driftsmodell', kwargs={'pk': obj.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('detaljer_driftsmodell', kwargs={'pk': obj.pk}))
+		return super().response_change(request, obj)
+
 	def get_ordering(self, request):
 		return [Lower('navn')]
 
 	fieldsets = (
-			('Initiell registrering', {
+			('Obligatorisk informasjon', {
 				'fields': (
 					'navn',
 					'ansvarlig_virksomhet',
 					'type_plattform',
-					'overordnet_plattform',
+					'anbefalte_kategorier_personopplysninger',
 					'risikovurdering',
 					'kommentar',
 					'leverandor',
@@ -952,10 +983,10 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 					'avtaler'
 				),
 			}),
-			('Sikkerhetsegenskaper', {
+			('Tilleggsinformasjon', {
+				'classes': ('collapse',),
 				'fields': (
 					'sikkerhetsnivaa',
-					'anbefalte_kategorier_personopplysninger',
 					'databehandleravtale_notater',
 					'lokasjon_lagring_valgmeny',
 					'lokasjon_lagring',
@@ -967,6 +998,7 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 					'sikkerhet_backup',
 					'sikkerhet_logging',
 					'sikkerhet_fysisk_sikring',
+					'overordnet_plattform',
 				),
 			}),
 	)
@@ -1039,6 +1071,16 @@ class DefinisjonAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	autocomplete_fields = ('ansvarlig',)
 
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('alle_definisjoner'))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('alle_definisjoner'))
+		return super().response_change(request, obj)
+
 	def get_ordering(self, request):
 		return [Lower('begrep')]
 
@@ -1050,6 +1092,16 @@ class BehovForDPIAAdmin(SimpleHistoryAdmin):
 	formfield_overrides = {
 		models.NullBooleanField: {'widget': NullBooleanSelect},
 	}
+
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.behandling.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.behandling.pk}))
+		return super().response_change(request, obj)
 
 
 admin.site.register(Region)

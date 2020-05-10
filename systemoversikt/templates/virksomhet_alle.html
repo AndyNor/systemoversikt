@@ -45,7 +45,7 @@
 	<tr {% if not vir.ordinar_virksomhet %} style="opacity: 0.33;" {% endif %}>
 		{% if user.is_authenticated %}
 		<td>
-				<a target="_blank" href="/admin/systemoversikt/virksomhet/{{ vir.pk }}/change/">
+				<a href="/admin/systemoversikt/virksomhet/{{ vir.pk }}/change/">
 				{% include 'site_edit_button.html' %}</a>
 		</td>
 		{% endif %}

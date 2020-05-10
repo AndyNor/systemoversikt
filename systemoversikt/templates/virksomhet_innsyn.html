@@ -31,7 +31,7 @@
 		{% for system in systemer %}
 		<tr {% if system.ibruk == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 			<td>
-				<a target="_blank" href="/admin/systemoversikt/system/{{ system.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+				<a href="/admin/systemoversikt/system/{{ system.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
 				{% url "systemdetaljer" system.pk as url_system %}
 				<a href="{{ url_system }}">{{ system }}</a>
 			</td>

@@ -23,7 +23,7 @@
 	<tr {% if item.own_domain %} style="background-color: #fffee6;" {% endif %}>
 		{% if user.is_authenticated %}
 		<td>
-			<a target="_blank" href="/admin/systemoversikt/avtale/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+			<a href="/admin/systemoversikt/avtale/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
 		</td>
 		{% endif %}
 		<td>
@@ -57,7 +57,7 @@
 		</td>
 		{% if user.is_authenticated %}
 		<td>
-			<a target="_blank" href="/admin/systemoversikt/avtale/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
+			<a href="/admin/systemoversikt/avtale/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
 		</td>
 		{% endif %}
 	</tr>

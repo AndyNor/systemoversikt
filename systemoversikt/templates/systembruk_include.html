@@ -23,8 +23,8 @@
 		>
 		{% if user.is_authenticated %}
 		<td>
-			<a target="_blank" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
-			<img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+			<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
+			{% include 'site_edit_button.html' %}</a>
 		</td>
 		{% endif %}
 

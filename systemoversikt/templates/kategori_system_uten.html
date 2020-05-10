@@ -23,7 +23,7 @@
 	<tbody>
 	{% for item in systemer %}
 	<tr>
-		<td><a target="_blank" href="/admin/systemoversikt/system/{{ item.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
 		{% url 'systemdetaljer' pk=item.pk as url_systemdetaljer %}
 		<td><a href="{{ url_systemdetaljer }}">{{ item.systemnavn }}</a></td>
 		<td><ul>{% for kat in item.systemkategorier.all %} <li>{{ kat }}</li> {% endfor %}</ul></td>
@@ -44,7 +44,7 @@
 	<tbody>
 	{% for item in programvarer %}
 	<tr>
-		<td><a target="_blank" href="/admin/systemoversikt/programvare/{{ item.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/programvare/{{ item.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
 		{% url 'programvaredetaljer' pk=item.pk as url_programvaredetaljer %}
 		<td><a href="{{ url_programvaredetaljer }}">{{ item.programvarenavn }}</a></td>
 		<td><ul>{% for kat in item.kategorier.all %} <li>{{ kat }}</li> {% endfor %}</ul></td>

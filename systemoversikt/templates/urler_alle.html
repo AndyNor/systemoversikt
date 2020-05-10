@@ -12,9 +12,9 @@
 				<a class="btn btn-sm btn-link" href="{% url 'virksomhet_urler' pk=request.user.profile.virksomhet.pk %}">Våre domener</a>
 			{% endif %}
 
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemurl/add/">Legg til nytt domene</a>
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemurl/add/">{% include 'site_edit_button.html' %} Registrer nytt domene</a>
 
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/sikkerhetstester/add/">Registrer sikkerhetstest</a>
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/sikkerhetstester/add/">{% include 'site_edit_button.html' %} Registrer sikkerhetstest</a>
 		<hr>
 		{% endif %}
 	{% endif %}
@@ -35,7 +35,7 @@
 	<p>Her vises domener (URL-er) tilknyttet systemer. Viser {{ web_urler.count }} domener. Domener innenfor *.oslo.kommune.no er merket med en grønn hake.</p>
 
 	{% if request.user.profile.virksomhet %}
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemurl/add/">Legg til nytt domene</a>
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemurl/add/">{% include 'site_edit_button.html' %} Legg til nytt domene</a>
 	{% endif %}
 
 	{% include "urler_include.html" %}

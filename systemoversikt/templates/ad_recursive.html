@@ -28,7 +28,7 @@
 				</td>
 				<td>
 				{% for item in user.attrs.cn %}
-					<a target="_blank" href="{% url 'ad_details' name=item %}">{{ item }}</a>{% endfor %}
+					<a href="{% url 'ad_details' name=item %}">{{ item }}</a>{% endfor %}
 				</td>
 				<td>
 				{% for item in user.attrs.description %}

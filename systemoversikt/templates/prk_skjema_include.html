@@ -26,7 +26,7 @@
 				<td>{{ v.gruppering }}</td>
 				<td>
 					{% url 'virksomhet' pk=v.virksomhet.pk as virksomhet_url %}
-					<a href="{{ virksomhet_url }}" target="_blank">
+					<a href="{{ virksomhet_url }}">
 					{{ v.virksomhet.virksomhetsforkortelse|default:"-" }}</a>
 				</td>
 				<td>{{ v.valgnavn }}</td>
@@ -36,7 +36,7 @@
 				<td>
 				{% if v.ad_group_ref %}
 					{% url 'adgruppe_detaljer' pk=v.ad_group_ref.pk as adgruppe_url %}
-					<a href="{{ adgruppe_url }}" target="_blank">
+					<a href="{{ adgruppe_url }}">
 					{{ v.gruppenavn|slice:":-38" }}...</a>
 				{% else %}
 					{{ v.gruppenavn|slice:":-38" }}...</a>

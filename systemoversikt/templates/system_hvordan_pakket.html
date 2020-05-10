@@ -25,7 +25,7 @@
 	<tbody>
 	{% for s in systemer %}
 	<tr>
-		<td><a target="_blank" href="/admin/systemoversikt/system/{{ s.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/system/{{ s.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
 		<td>{{ s.pk }}</td>
 		<td>system</td>
 		<td>
@@ -39,7 +39,7 @@
 	{% endfor %}
 	{% for p in programvarer %}
 	<tr>
-		<td><a target="_blank" href="/admin/systemoversikt/programvare/{{ p.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/programvare/{{ p.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
 		<td>{{ p.pk }}</td>
 		<td>programvare</td>
 		<td>

@@ -308,12 +308,12 @@
 							{% for system in liste.systemer %}
 							<tr {% if item.ibruk == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 								{% if user.is_authenticated %}
-									<td><a target="_blank" href="/admin/systemoversikt/system/{{ system.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger">{{system.pk}}</a></td>
+									<td><a href="/admin/systemoversikt/system/{{ system.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger">{{system.pk}}</a></td>
 								{% else %}
 									<td>{{ system.pk }}</td>
 								{% endif %}
 								{% url 'systemdetaljer' pk=system.pk as url_system %}
-								<td><a target="_blank" href="{{ url_system }}">{{ system }}</a></td>
+								<td><a href="{{ url_system }}">{{ system }}</a></td>
 								<td>{{ system.get_systemeierskapsmodell_display|default:"-" }}</td>
 								<th>
 									{% for type in system.systemtyper.all %}
