@@ -21,7 +21,7 @@
 				<ol style="column-count: 2;">
 				{% for system in nyeste_systemer %}
 					{% url "systemdetaljer" system.pk as url_systemdetaljer %}
-					<li><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a> ({{ system.systemeier }})</li>
+					<li><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a> ({{ system.systemeier.virksomhetsforkortelse }})</li>
 				{% endfor %}
 				</ol>
 

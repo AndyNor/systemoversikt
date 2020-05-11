@@ -67,26 +67,35 @@
 				{% endif %}
 			</td>
 
-			<td>{{ behandling.planlagte_slettefrister|default:"-" }}</td>
+			<td>
+				{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+					{{ behandling.planlagte_slettefrister|default:"-" }}
+				{% else %}
+					***
+				{% endif %}
+			</td>
 
 			<td>
-			Utlevering generelt:
-			{% if behandling.utlevering_ekstern_myndighet %}
-				<br><b><span style="color: red;">✓ Ja</span></b><br>
-				{{ behandling.utlevering_ekstern_myndighet_utdyping|default:"-" }}
-			{% else %}
-				<br><b><span style="color: green;">⨉ Nei</span></b><br>
-			{% endif %}
+			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+				Utlevering generelt:
+				{% if behandling.utlevering_ekstern_myndighet %}
+					<br><b><span style="color: red;">✓ Ja</span></b><br>
+					{{ behandling.utlevering_ekstern_myndighet_utdyping|default:"-" }}
+				{% else %}
+					<br><b><span style="color: green;">⨉ Nei</span></b><br>
+				{% endif %}
 
-			<br><br>
-			Utlevering utenfor EU:
-			{% if behandling.utlevering_utenfor_EU %}
-				<br><b><span style="color: red;">✓ Ja</span></b><br>
-				{{ behandling.garantier_overforing|default:"-" }}
+				<br><br>
+				Utlevering utenfor EU:
+				{% if behandling.utlevering_utenfor_EU %}
+					<br><b><span style="color: red;">✓ Ja</span></b><br>
+					{{ behandling.garantier_overforing|default:"-" }}
+				{% else %}
+					<br><b><span style="color: green;">⨉ Nei</span></b><br>
+				{% endif %}
 			{% else %}
-				<br><b><span style="color: green;">⨉ Nei</span></b><br>
+				***
 			{% endif %}
-
 			</td>
 
 			<td>

@@ -67,7 +67,7 @@ urlpatterns = [
 	url(r'^behandlinger/alle/$', views.alle_behandlinger, name='alle_behandlinger'),
 	url(r'^behandlinger/kopier/(?P<system_pk>\d{1,8})/$', views.behandling_kopier, name='behandling_kopier'),
 	url(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
-	url(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
+	#url(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
 	url(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
 
 	url(r'^avtaler/$', views.alle_avtaler, name='alle_avtaler'),

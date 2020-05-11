@@ -38,7 +38,7 @@
 				{% include 'site_janeivetikke.html' with boolean=item.fellesbehandling %}
 			</td>
 
-			{% url "virksomhet" item.behandlingsansvarlig.pk as url_virksomhet %}
+			{% url "alle_behandlinger_virksomhet" item.behandlingsansvarlig.pk as url_virksomhet %}
 			<td><a href="{{ url_virksomhet }}">{{ item.behandlingsansvarlig.virksomhetsforkortelse }}</a></td>
 
 			<td>
