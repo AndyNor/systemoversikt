@@ -212,6 +212,26 @@ class Ansvarlig(models.Model):
 			)
 	history = HistoricalRecords()
 
+
+	def org_tilhorighet(self):
+		try:
+			enhet = self.brukernavn.profile.org_unit
+			enhet_str = "%s" % (enhet)
+			current_level = enhet.level
+			while current_level > 3:  # level 2 er virksomheter, så vi ønsket et nivå ned (en verdi opp).
+				mor_enhet = enhet.direkte_mor
+				enhet_str = "%s - %s" % (mor_enhet, enhet_str)
+				mor_level = mor_enhet.level
+				if current_level > mor_level:
+					enhet = mor_enhet
+					current_level = mor_level
+				else:
+					break
+			return enhet_str
+		except:
+			return "Ukjent tilhørighet"
+
+
 	def __str__(self):
 		if self.brukernavn:
 			if self.brukernavn.profile.virksomhet:
@@ -248,7 +268,7 @@ class AutorisertBestiller(models.Model):
 		return u'%s' % (self.person)
 
 	class Meta:
-		verbose_name_plural = "Ansvarlige Antoriserte bestillere"
+		verbose_name_plural = "Ansvarlige Autoriserte bestillere"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -1364,6 +1384,10 @@ class ADgroup(models.Model):
 			verbose_name="Fully Distinguished Name",
 			unique=True,
 			)
+	common_name = models.TextField(
+			verbose_name="Common Name",
+			null=True,
+			)
 	member = models.TextField(
 			verbose_name="Medlemmer",
 			blank=True, null=True,
@@ -1585,28 +1609,30 @@ VURDERINGER_SIKKERHET_VALG = (
 	(5, '1 Ubetydelig'),
 )
 
+#☹ 😕 😐 🙂 😃
+
 VURDERINGER_TEKNISK_VALG = (
-	(1, '1 Ingen'),
-	(2, '2 Delvis'),
-	(3, '3 Akseptabel'),
-	(4, '4 God'),
-	(5, '5 Meget god'),
+	(1, '1 💔 Ingen'),
+	(2, '2 🧡 Delvis'),
+	(3, '3 💛 Akseptabel'),
+	(4, '4 💚 God'),
+	(5, '5 💙 Meget god'),
 )
 
 VURDERINGER_STRATEGISK_VALG = (
-	(1, '1 Ingen'),
-	(2, '2 Delvis'),
-	(3, '3 God knytning'),
-	(4, '4 Tydelig knytning'),
-	(5, '5 Sterk knytning'),
+	(1, '1 💔 Ingen'),
+	(2, '2 🧡 Delvis'),
+	(3, '3 💛 God knytning'),
+	(4, '4 💚 Tydelig knytning'),
+	(5, '5 💙 Sterk knytning'),
 )
 
 VURDERINGER_FUNKSJONELL_VALG = (
-	(1, '1 Ikke akseptabel'),
-	(2, '2 Store mangler'),
-	(3, '3 Akseptabelt'),
-	(4, '4 Godt egnet'),
-	(5, '5 Meget godt egnet'),
+	(1, '1 💔 Ikke akseptabel'),
+	(2, '2 🧡 Store mangler'),
+	(3, '3 💛 Akseptabelt'),
+	(4, '4 💚 Godt egnet'),
+	(5, '5 💙 Meget godt egnet'),
 )
 
 PROGRAMVAREKATEGORI_VALG = (
@@ -1617,11 +1643,11 @@ PROGRAMVAREKATEGORI_VALG = (
 )
 
 LIVSLOEP_VALG = (
-	(1, '1 Under anskaffelse/utvikling'),
-	(2, '2 Nytt og moderne, men fortsatt litt umodent'),
-	(3, '3 Moderne og modent'),
-	(4, '4 Modent, men ikke lengre moderne'),
-	(5, '5 Bør/skal byttes ut'),
+	(1, '1 💡 Under anskaffelse/utvikling'),
+	(2, '2 🤞 Nytt og moderne, men fortsatt litt umodent'),
+	(3, '3 👌 Moderne og modent'),
+	(4, '4 👍 Modent, men ikke lengre moderne'),
+	(5, '5 ☢️ Bør/skal byttes ut'),
 )
 
 SELVBETJENING_VALG = (
@@ -3116,15 +3142,15 @@ class BehandlingerPersonopplysninger(models.Model):
 			)
 			#draftit: har ikke dette nå
 	oppdateringsansvarlig = models.ManyToManyField(Ansvarlig, related_name='behandling_kontaktperson',
-			verbose_name="Dokumentasjonsansvarlig",
-			blank=True,
-			help_text=u"Denne personen er ansvarlig for å holde denne behandlingen oppdatert.",
+			verbose_name="Oppdateringsansvarlig",
+			blank=False,
+			help_text=u"Denne personen er ansvarlig for å holde denne behandlingen oppdatert. Dersom du ikke finner personen du leter etter i listen kan du opprette en ny ansvarlig ved å trykke på +-tegnet til høyre for boksen.",
 			)
 			#draftit: ansvarlig (epost til den som redigerer)
 	fellesbehandling = models.BooleanField(
-			verbose_name="Fellesbehandling / kopieringskandidat",
+			verbose_name="Fellesbehandling?",
 			default=False,
-			help_text="Sett denne dersom du mener denne behandlingen gjelder de fleste / alle virksomheter.",
+			help_text="Dersom denne behandlingen gjelder et system mange virksomheter bruker kan du krysse av for denne. Virksomheter som velger å abonnere på delte behandlinger (under sin systembruk) vil da få opp denne i sin behandlingsprotokoll.",
 			)
 			#draftit: ingen tilsvarende
 	krav_sikkerhetsnivaa  = models.IntegerField(choices=SIKKERHETSNIVAA_VALG,
@@ -3148,7 +3174,7 @@ class BehandlingerPersonopplysninger(models.Model):
 	behandlingsansvarlig = models.ForeignKey(Virksomhet, related_name='behandling_behandlingsansvarlig',
 			verbose_name="Registrert av",
 			on_delete=models.PROTECT,
-			help_text=u"Den virksomhet som er ansvarlig for å holde denne behandlingen oppdatert.",
+			help_text=u"Den virksomhet som eier denne behandlingen. Må ikke forveksles med behandlingsansvarlig.",
 			)
 			#draftit: behandlingsansvarlig.
 
@@ -3175,10 +3201,10 @@ class BehandlingerPersonopplysninger(models.Model):
 			#draftit: enhet er det som brukes her. Må finne en mapping.
 			#trenger vi to?
 	behandlingen = models.TextField(
-			verbose_name="Kort beskrivelse av behandlingen/prosessen.",
+			verbose_name="Kort setning som oppsummerer behandlingen.",
 			max_length=80,
 			blank=False, null=False,
-			help_text=u"Beskriv kort hva som skjer i prosessen. Det skal kun være noen få ord som beskriver hva behandlingen av personopplysninger innebærer. Eksempler: Personaladministrasjon (HR), Besøksregistrering, Bakgrunnssjekk av ansatte, Saksbehandling, Oppfølging av sykefravær",
+			help_text=u"Beskriv kort hva som skjer i prosessen. Denne brukes for hurtigvisning. Det skal kun være noen få ord som beskriver hva behandlingen av personopplysninger innebærer. Eksempler: Personaladministrasjon (HR), Besøksregistrering, Bakgrunnssjekk av ansatte, Saksbehandling, Oppfølging av sykefravær",
 			)
 			#dradtit: behandlingsaktivitet (tekst)
 	ny_endret_prosess = models.TextField(
@@ -3194,9 +3220,9 @@ class BehandlingerPersonopplysninger(models.Model):
 			)
 			#draftit: dpia-modul
 	formaal = models.TextField(
-			verbose_name="Hva er formålet med behandlingen?",
-			blank=True, null=True,
-			help_text=u"Angi hva som er formålet med behandlingen, inkludert hvorfor opplysningene blir samlet inn. Forklaringen skal være slik at alle berørte har en felles forståelse av hva opplysningene brukes til. Om behandlingen dekker flere formål kan det være nyttig å dele inn beskrivelsen i flere delområder slik at fokus settes på formålet med behandlingen. HR/personal vil for eksempel ha flere formål med å samle inn personopplysninger om ansatte; f.eks. utbetale lønn, personal-administrasjon, kompetanseoversikt mv. Hver behandling bør ha en egen rad i behandlingsoversikten. Eksempler: Rekruttere ansatte basert på riktig erfaring og utdanning, Utbetale lønn til de ansatte, Sikre identifisering før tilgang blir gitt.",
+			verbose_name="Hva er formålene med behandlingen?",
+			blank=False, null=True,
+			help_text=u"Angi hva som er formålene med behandlingen, inkludert hvorfor opplysningene blir samlet inn. Forklaringen skal være slik at alle berørte har en felles forståelse av hva opplysningene brukes til. Om behandlingen dekker flere formål kan det være nyttig å dele inn beskrivelsen i flere delområder slik at fokus settes på formålet med behandlingen. HR/personal vil for eksempel ha flere formål med å samle inn personopplysninger om ansatte; f.eks. utbetale lønn, personal-administrasjon, kompetanseoversikt mv. Eksempler: Rekruttere ansatte basert på riktig erfaring og utdanning, Utbetale lønn til de ansatte, Sikre identifisering før tilgang blir gitt.",
 			)
 			#draftit: "formål"
 	dpia_effekt_enkelte = models.TextField(
@@ -3219,7 +3245,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			#draftit: dpia-modul
 	kategorier_personopplysninger = models.ManyToManyField(Personsonopplysningskategori, related_name='behandling_kategorier_personopplysninger',
 			verbose_name="Kategorier personopplysninger som behandles",
-			blank=True,
+			blank=False,
 			help_text=u"",
 			)
 			#draftit: to spørsmål: "identitetsopplysninger" og "kontaktopplysnigner" og "sensitive personopplysninger".
@@ -3232,7 +3258,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			# draftit: ser ikke behovet.
 	den_registrerte = models.ManyToManyField(Registrerte, related_name='behandling_den_registrerte',
 			verbose_name="Hvem er den registrerte? (grupper)",
-			blank=True,
+			blank=False,
 			help_text=u"",
 			)
 			#draftit: "kartegori registrerte", valgmeny
@@ -3329,8 +3355,8 @@ class BehandlingerPersonopplysninger(models.Model):
 			# draftit: har ikke dette
 	systemer = models.ManyToManyField(System, related_name='behandling_systemer',
 			verbose_name="Systemer som benyttes i behandlingen",
-			blank=True,
-			help_text=u"",
+			blank=False,
+			help_text=u"For fellessystemer anbefales det splitte opp behandlinger per system, slik at det i praksis bare er ét system i denne listen.",
 			)
 			# draftit: system: liste over systemer, må vi få synkronisert.
 	programvarer = models.ManyToManyField(Programvare, related_name='behandling_programvarer',
@@ -3360,7 +3386,7 @@ class BehandlingerPersonopplysninger(models.Model):
 	planlagte_slettefrister = models.TextField(
 			verbose_name="Hva er gjeldende prosedyre for sletting?",
 			blank=True, null=True,
-			help_text=u"Dersom mulig. F.eks. x måneder/år etter hendelse/prosess",
+			help_text=u"Et viktig prinsipp er at personopplysninger skal slettes når det ikke lenger er saklig behov for dem. Fylles ut dersom mulig. F.eks. x måneder/år etter hendelse/prosess",
 			)
 			#draftit: "finnes det skriftelige rutiner" (med vedlegg)
 			#slå sammen? valg?
@@ -3495,10 +3521,10 @@ class BehandlingerPersonopplysninger(models.Model):
 			help_text="Behandlingen vises ikke i behandlingsoversikten for disse virksomhetene. Dette feltet er utfaset.",
 			)
 	ekstern_DPIA_url = models.URLField(
-			verbose_name="Link til ekstern DPIA-vurdering",
+			verbose_name="Link til DPIA-vurdering",
 			max_length=600,
 			blank=True, null=True,
-			help_text=u"Legg inn full URL.",
+			help_text=u"Dersom det er behov for DPIA, kan du legge inn full URL til dokumentet her.",
 			)
 	databehandleravtaler = models.ManyToManyField(Avtale, related_name='behandling_databehandleravtaler',
 			verbose_name="Databehandleravtaler knyttet til behandlingen",
@@ -3592,17 +3618,17 @@ class BehovForDPIA(models.Model):
 		count = 0
 		for k in kriterier:
 			if k == 0:  # 0 represent "not evaluated"
-				return "Vurdering er ikke fullført"
+				return "Ufullstendig utfylt"
 			if k == 1:  # 1 represent "yes"
 				count+= 1
 		if count == 0:
-			return "Nei, ikke behov"
+			return "Nei"
 		if count == 1:
-			return "Normalt ikke"
+			return "Kanskje"
 		if count == 2:
-			return "Ja, med mindre DPIA for tilsvarende prosess er utført før"
+			return "Trolig"
 		if count > 2:
-			return "Ja, uten tvil"
+			return "Ja"
 
 
 	class Meta:

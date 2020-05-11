@@ -3,6 +3,8 @@
 {% block sidemeny %}
 	<h6>Behandlinger</h6>
 
+	<a href="/admin/systemoversikt/behandlingerpersonopplysninger/add/" class="btn btn-sm btn-link" >{% include 'site_edit_button.html' %} Registrer behandling</a>
+
 	{% url 'alle_behandlinger' as url_alle_behandlinger %}
 		<a href="{{url_alle_behandlinger}}" class="btn btn-sm btn-link {% if url_alle_behandlinger in request.path %}fremhev{% endif %}">Alle behandlinger</a>
 
@@ -11,6 +13,13 @@
 
 
 	{% block ekstrameny_behandling %}{% endblock ekstrameny_behandling %}
+
+	<hr>
+	<h6>Fellesvalg</h6>
+	<a href="/admin/systemoversikt/registrerte/" class="btn btn-sm btn-link" >Den registrerte</a>
+	<a href="/admin/systemoversikt/personsonopplysningskategori/" class="btn btn-sm btn-link" >Kategorier personoppl.</a>
+	<a href="/admin/systemoversikt/relasjonregistrert/" class="btn btn-sm btn-link" >Relasjoner</a>
+	<a href="/admin/systemoversikt/behandlingsgrunnlag/" class="btn btn-sm btn-link" >Hjemmesgrunnlag</a>
 
 {% endblock sidemeny %}
 

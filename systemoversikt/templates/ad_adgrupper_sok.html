@@ -15,19 +15,35 @@
 
 {% block hovedinnhold %}
 
+	<p>Merk at det er et tak på 5000 medlemmer vist i en gruppe.</p>
+
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="AD-gruppe starter med (husk 'DS-')" class="form-control form-control-sm">
+			placeholder="AD-gruppenavn inneholder" class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 		</div>
 	</form>
 
 
+	<table class="tablesorter">
+		<thead>
+			<tr>
+				<th>Fult gruppenavn</th>
+				<th>Antall direkte medlemmer</th>
+			</tr>
+		</thead>
+		<tbody>
 	{% for g in adgrupper %}
-		<li><a href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.cn }}</a></li>
+		<tr>
+			<td><a href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.distinguishedname }}</a></td>
+			<td>{{g.member_count}}</td>
+		</tr>
 	{% empty %}
 		<li>Ingen treff</li>
 	{% endfor %}
+		</tbody>
+	</table>
+
 
 {% endblock hovedinnhold %}

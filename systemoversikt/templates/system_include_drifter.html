@@ -1,0 +1,102 @@
+{% load static %}
+{% load humanize %}
+
+
+<table id="systemer" class="tablesorter">
+	<thead>
+		<tr>
+			{% if perms.systemoversikt.change_system %}
+				<th class="filter-false"></th>
+			{% endif %}
+			<th>ID</th>
+			<th>Systemnavn</th>
+			<th>I bruk?</th>
+			<th>Kategorisering</th>
+			<th>Systemeier</th>
+			<th>Systemforvalter</th>
+			<th>Livsløp</th>
+			<th>Driftsmodell / plattform</th>
+			<th>2S CMDB</th>
+			<th>Leverandører</th>
+			<th>Tilpasset drift</th>
+
+		</tr>
+	</thead>
+	<tbody>
+	{% for item in systemer %}
+		<tr>
+		{% if perms.systemoversikt.change_system %}
+			<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</td>
+		{% endif %}
+
+			<td>{{ item.pk }}</td>
+
+			<td>
+				{% include 'system_include_vis.html' with system=item %}<br>
+				{{ item.get_systemeierskapsmodell_display|default:"-" }}
+			</td>
+
+			<td>
+				{% include 'site_janeivetikke.html' with boolean=item.ibruk %}
+			</td>
+
+			<td>
+				{% for kategori in item.systemkategorier.all %}
+					{% url 'systemkategori' kategori.pk as url_systemkategorier %}
+					<a href="{{ url_systemkategorier }}">{{ kategori }}</a><br>
+				{% endfor %}
+			</td>
+
+			<td>
+				{% url "virksomhet" item.systemeier.pk as url_systemeier %}
+				<a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a><br>
+				{% include "ansvarlig_include_vis.html" with ansvarlige=item.systemeier_kontaktpersoner_referanse.all %}
+			</td>
+
+			<td>
+				{% url "virksomhet" item.systemforvalter.pk as url_systemforvalter %}
+				<a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"-" }}</a><br>
+				{% include "ansvarlig_include_vis.html" with ansvarlige=item.systemforvalter_kontaktpersoner_referanse.all %}
+			</td>
+
+			<td>{{ item.get_livslop_status_display|default:"" }}</td>
+
+			{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}
+			<td><a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a></td>
+
+			<td>
+				{% for ref in item.cmdbref.all %}
+				<li>{{ ref.navn }}</li>
+				{% endfor %}
+			</td>
+
+			<td>
+				{% for lev in item.systemleverandor.all %}
+					{% url "leverandor" lev.pk as url_leverandor %}
+					<a href="{{ url_leverandor }}">{{ lev }}</a> (system)
+					<br>
+				{% endfor %}
+
+				{% for lev in item.applikasjonsdriftleverandor.all %}
+					{% url "leverandor" lev.pk as url_leverandor %}
+					<a href="{{ url_leverandor }}">{{ lev }}</a> (appdrift)
+					<br>
+				{% endfor %}
+				{% for lev in item.basisdriftleverandor.all %}
+					{% url "leverandor" lev.pk as url_leverandor %}
+					<a href="{{ url_leverandor }}">{{ lev }}</a> (basis)
+					<br>
+				{% endfor %}
+			</td>
+
+			<td>
+			{% if item.isolert_drift %}
+				🕹️ Ja
+			{% else %}
+				-
+			{% endif %}
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>

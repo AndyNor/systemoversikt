@@ -1,0 +1,12 @@
+{% if behandling.fellesbehandling %}
+	<span alt="Fellesbehandling">🤝</span>
+{% endif %}
+
+{% url "behandlingsdetaljer" behandling.pk as url_behandlingsdetaljer %}
+<a href="{{ url_behandlingsdetaljer }}">
+	{{ behandling.behandlingen }}
+</a>
+
+{% if behandling.informasjon_kvalitetssikret is False %}
+	<span alt="ikke kvalitetssikret" class="color: yellow;">⚠️</span>
+{% endif %}

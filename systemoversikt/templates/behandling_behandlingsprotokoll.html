@@ -15,6 +15,15 @@
 {% block hovedinnhold %}
 	<p>I denne behandlingsprotokollen vises alle behandlinger {{ virksomhet.virksomhetsforkortelse }} har opprettet selv, samt behandlinger {{ virksomhet.virksomhetsforkortelse }} abonnerer på. For å abonnere på en behandling må du registrere "bruk" av et system og krysse av for "Abonner på felles behandlinger i systemet". Da vil alle behandlinger merket med "felles" for det aktuelle systemet vises her. Det er også mulig å bruke funksjonen "kopier behandling". Denne finner du på siden for systemdetaljer for systemer du benytter. Ved kopiering vil din virksomhet stå som eier av behandlingen.<br>Det vises {{ behandlinger.count }} behandlinger.</p>
 
+	<h6>Vår behandlingsansvarlige</h6>
+
+
+	<h6>Vårt personvernombud</h6>
+	{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.personvernkoordinator.all %}
+
+
+	<hr>
+
 	<p>
 		{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
 		{% if user.is_authenticated %}
@@ -38,6 +47,6 @@
 	</p>
 	{% endcomment %}
 
-	{% include 'behandling_include.html' %}
+	{% include 'behandling_behandlingsprotokoll_include.html' %}
 
 {% endblock hovedinnhold %}

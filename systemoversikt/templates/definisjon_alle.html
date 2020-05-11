@@ -7,7 +7,13 @@
 	{% if perms.systemoversikt.add_definisjon %}
 	<div>
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/definisjon/add/">{% include 'site_edit_button.html' %} Registrer definisjon</a>
-		<a class="btn btn-sm btn-link" href="{% url 'import_organisatorisk_forkortelser' %}">Sync virksomheter</a>
+
+		<hr>
+
+		<a class="btn btn-sm btn-link" href="{% url 'import_organisatorisk_forkortelser' %}">⚙️ Sync virksomheter</a>
+
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/definisjonkontekster/">{% include 'site_edit_button.html' %} Definisjonstyper</a>
+
 	</div>
 	{% endif %}
 {% endblock sidemeny %}

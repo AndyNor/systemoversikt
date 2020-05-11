@@ -14,7 +14,7 @@
 
 {% block hovedinnhold %}
 
-	<p>For å endre på hva som dukker opp i denne listen, må du velge det systemet som er feil eller mangler, og endre på "Driftsmodell / plattform". <br>{{virksomhet.virksomhetsforkortelse}} er ansvarlige for drift på følgende plattformer.</p>
+	<p>For å endre på hva som dukker opp i denne listen må du velge det systemet som er feil (eller mangler) og endre på "Driftsmodell / plattform". <br>{{virksomhet.virksomhetsforkortelse}} er ansvarlige for drift på følgende plattformer:</p>
 
 	{% for modell in driftsmodeller %}
 		<li><a href="{% url 'detaljer_driftsmodell' pk=modell.pk %}">{{modell}}</a></li>
@@ -23,7 +23,7 @@
 
 	<p>Viser {{ systemer.count }} systemer.</p>
 
-	{% include "system_include_virksomhet.html" %}
+	{% include "system_include_drifter.html" with systemer=systemer %}
 
 	{% if potensielle_systemer %}
 	<hr>

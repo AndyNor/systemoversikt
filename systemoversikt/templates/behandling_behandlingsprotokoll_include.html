@@ -1,0 +1,114 @@
+{% load static %}
+
+<table id="behandlinger" class="tablesorter">
+	<thead>
+		<tr>
+		{% if user.is_authenticated %}
+			<th class="filter-false">Rediger</th>
+		{% endif %}
+			<th>Kort beskrivelse</th>
+			<th>Registrerte og opplysninger</th>
+			<th>Formål med behandlingen</th>
+			<th>Planlagte slettefrister</th>
+			<th>Utleveringer av opplysninger</th>
+			<th>Benyttede systemer og programvarer</th>
+			<th>Behov for DPIA?</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for behandling in behandlinger %}
+		<tr>
+
+
+			{% if user.is_authenticated %}
+			<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ behandling.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
+			{% endif %}
+
+			<td>
+				{% include 'behandling_include_vis.html' with behandling=behandling %}<br><br>
+				<b>Ansvarlig</b> {% include 'ansvarlig_include_vis.html' with ansvarlig=behandling.oppdateringsansvarlig.all %}
+
+				<br><br><b>Avdeling / seksjon</b><br>
+				{% if behandling.oppdateringsansvarlig.all %}
+					{{ behandling.oppdateringsansvarlig.all.0.org_tilhorighet }}
+
+				{% endif %}
+
+
+			</td>
+
+			<td>
+				{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+
+					<b>De registrerte</b><br>
+					{% for reg in behandling.den_registrerte.all %}
+						<li>{{ reg.kategorinavn }}</li>
+					{% endfor %}
+
+					<br><br><b>Opplysninger</b>
+					{% for kat in behandling.kategorier_personopplysninger.all %}
+						<li>{{ kat.navn }}</li>
+					{% endfor %}
+
+					<br>
+					<b>Detaljer</b><br>
+					{{ behandling.personopplysninger_utdyping|default:"-" }}
+				{% else %}
+					***
+				{% endif %}
+			</td>
+
+			<td>
+				{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
+					{{ behandling.formaal|default:"-" }}
+
+				{% else %}
+					***
+				{% endif %}
+			</td>
+
+			<td>{{ behandling.planlagte_slettefrister|default:"-" }}</td>
+
+			<td>
+			Utlevering generelt:
+			{% if behandling.utlevering_ekstern_myndighet %}
+				<br><b><span style="color: red;">✓ Ja</span></b><br>
+				{{ behandling.utlevering_ekstern_myndighet_utdyping|default:"-" }}
+			{% else %}
+				<br><b><span style="color: green;">⨉ Nei</span></b><br>
+			{% endif %}
+
+			<br><br>
+			Utlevering utenfor EU:
+			{% if behandling.utlevering_utenfor_EU %}
+				<br><b><span style="color: red;">✓ Ja</span></b><br>
+				{{ behandling.garantier_overforing|default:"-" }}
+			{% else %}
+				<br><b><span style="color: green;">⨉ Nei</span></b><br>
+			{% endif %}
+
+			</td>
+
+			<td>
+				<b>Systemer</b><br>
+				{% for system in behandling.systemer.all %}
+					<li>{% include 'system_include_vis.html' with systemer=system %}</li>
+				{% endfor %}
+
+				<br><br>
+
+				<b>Programvarer</b><br>
+				{% for program in behandling.programvarer.all %}
+					<li>{% url "programvaredetaljer" program.pk as url_systemdetaljer %}
+					<a href="{{ url_systemdetaljer }}">{{ program }}</a></li>
+				{% endfor %}
+			</td>
+
+			<td>
+				{{ behandling.behandling_behovdpia.behovforDPIA|default:"Vet ikke" }}
+			</td>
+
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>

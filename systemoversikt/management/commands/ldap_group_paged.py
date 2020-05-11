@@ -59,6 +59,13 @@ class Command(BaseCommand):
 						member = []
 						binary_member = attrs["member"]
 						membercount = len(binary_member)
+						if membercount == 0:
+							try:
+								#https://bgstack15.wordpress.com/tag/ldap/
+								binary_member = attrs["member;range=0-4999"]
+								membercount = len(binary_member)
+							except:
+								pass  # do nothing
 						for m in binary_member:
 							member.append(m.decode())
 					except KeyError as e:
@@ -85,8 +92,15 @@ class Command(BaseCommand):
 					except KeyError as e:
 						pass
 
+
+					# dette er ikke så lurt, om noe skulle feile av annen grunn enn object.get..
 					try:
 						g = ADgroup.objects.get(distinguishedname=distinguishedname)
+						try:
+							g.common_name = distinguishedname[3:].split(",")[0]
+						except:
+							g.common_name = None
+
 						g.description = description
 						g.member = member
 						g.membercount = membercount

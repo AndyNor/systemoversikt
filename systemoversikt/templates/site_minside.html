@@ -14,4 +14,9 @@
 
 	<p>Alle endringer utført via administrasjonssidene blir loggført. På systemer vises det hvem som har utført de siste endringene direkte på detaljesiden. For de fleste typer informasjon lages det en ny versjon av informasjonen for hver gang du lagrer. Gamle versjoner kan gjenopprettes dersom du har nødvendige tilganger via knappen "Historikk" på den enkelte redigeringsside.</p>
 
+	{% if oidctoken %}
+	<h6>Debug OIDC-token</h6>
+		<p>{{ oidctoken }}</p>
+	{% endif %}
+
 {% endblock hovedinnhold %}

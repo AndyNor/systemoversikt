@@ -486,39 +486,44 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 	fieldsets = (
-		('Metadata', {
+		('Organisatorisk', {
 			'classes': ('',),
 			'fields': (
 				'behandlingsansvarlig',
-				'internt_ansvarlig',
 				'oppdateringsansvarlig',
-				'informasjon_kvalitetssikret',
+				'behandlingen',
 				'fellesbehandling',
+				'informasjon_kvalitetssikret',
+				'ekstern_DPIA_url',
 			),
 		}),
 		('Obligatorisk registrering', {
 			'classes': ('',),
 			'fields': (
-				'behandlingen',
+				'systemer',
+				'den_registrerte',
+				'kategorier_personopplysninger',
+				'personopplysninger_utdyping',
 				'formaal',
-				('den_registrerte', 'den_registrerte_detaljer',),
-				('kategorier_personopplysninger', 'personopplysninger_utdyping'),
+				'planlagte_slettefrister',
 				('utlevering_ekstern_myndighet', 'utlevering_ekstern_myndighet_utdyping'),
 				('utlevering_utenfor_EU', 'garantier_overforing'),
-				'oppbevaringsplikt',
-				('krav_slettefrister', 'planlagte_slettefrister'),
-				'hoy_personvernrisiko',
-				'ekstern_DPIA_url',
-				'systemer',
+				# Dersom det er mulig, en generell beskrivelse av de tekniske og organisatoriske sikkerhetstiltakene nevnt i artikkel 32 nr. 1.
 			),
 		}),
-		('Anbefalte ekstraopplysninger', {
-			'classes': ('',),
+		('Ekstraopplysninger', {
+			'classes': ('collapse',),
 			'fields': (
+				'krav_slettefrister',
+				'den_registrerte_detaljer',
+				'oppbevaringsplikt',
 				'opplysningskilde',
-				('behandlingsgrunnlag_valg', 'behandlingsgrunnlag_utdyping', 'behandlingsgrunnlag_saerlige_kategorier'),
+				'behandlingsgrunnlag_valg',
+				'behandlingsgrunnlag_utdyping',
+				'behandlingsgrunnlag_saerlige_kategorier',
 				'navn_databehandler',
-				('databehandleravtale_status', 'databehandleravtale_status_boolean'),
+				'databehandleravtale_status',
+				'databehandleravtale_status_boolean',
 				'tjenesteleveranse_land',
 				'sikre_dataminimalisering',
 				'begrensning_tilgang',
@@ -550,6 +555,8 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 		('Utfases', {
 			'classes': ('collapse',),
 			'fields': (
+				'internt_ansvarlig',
+				'hoy_personvernrisiko',
 				'virksomhet_blacklist',
 				'krav_sikkerhetsnivaa',
 				('innhenting_ekstern_myndighet', 'innhenting_ekstern_myndighet_utdyping'),

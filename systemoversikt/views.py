@@ -279,9 +279,13 @@ def minside(request):
 	"""
 	Når innlogget, vise informasjon om innlogget bruker
 	"""
+
+	oidctoken = request.session['oidc-token']
+
 	if request.user.is_authenticated:
 		return render(request, 'site_minside.html', {
 			'request': request,
+			'oidctoken': oidctoken,
 		})
 	else:
 		return redirect("/")
@@ -614,11 +618,11 @@ def home(request):
 	Tilgangsstyring: ÅPEN
 	"""
 
-	antall_systemer = System.objects.filter(~Q(ibruk=True)).count()
-	nyeste_systemer = System.objects.filter(~Q(ibruk=True)).order_by('-pk')[:5]
+	antall_systemer = System.objects.filter(~Q(ibruk=False)).count()
+	nyeste_systemer = System.objects.filter(~Q(ibruk=False)).order_by('-pk')[:10]
 
 	antall_programvarer = Programvare.objects.count()
-	nyeste_programvarer = Programvare.objects.order_by('-pk')[:5]
+	nyeste_programvarer = Programvare.objects.order_by('-pk')[:10]
 
 	antall_behandlinger = BehandlingerPersonopplysninger.objects.count()
 
@@ -1249,7 +1253,7 @@ def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False):
 	# slå sammen felles og egne behandlinger til et sett
 	behandlinger = virksomhetens_behandlinger.union(delte_behandlinger).order_by('internt_ansvarlig')
 
-	return render(request, "behandling_alle_alternativ.html", {
+	return render(request, "behandling_behandlingsprotokoll.html", {
 		'request': request,
 		'behandlinger': behandlinger,
 		'virksomhet': vir,
@@ -2234,11 +2238,14 @@ def alle_adgrupper(request):
 	"""
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 	if len(search_term) > 1:
-		term = "CN=" + search_term
-		print(term)
-		adgrupper = ADgroup.objects.filter(distinguishedname__istartswith=term)
+		if search_term[0:3] == "CN=":
+			search_term = search_term[3:]
+		search_term = search_term.split(",")[0]
+		adgrupper = ADgroup.objects.filter(common_name__contains=search_term)
+		for g in adgrupper:
+			members = json.loads(g.member)
+			g.member_count = len(members)
 	else:
-		print(search_term)
 		adgrupper = ADgroup.objects.none()
 
 	required_permissions = 'auth.view_user'
@@ -3134,7 +3141,11 @@ def ubw_api(request, pk):
 		eksportdata["UBW leverandørnr"] = faktura.ubw_apar_id
 		eksportdata["UBW leverandørnavn"] = faktura.ubw_xapar_id
 		eksportdata["UBW beskrivelse"] = faktura.ubw_description
-		eksportdata["UBW beløp"] = float(faktura.ubw_amount)
+		try:
+			eksportdata["UBW beløp"] = float(faktura.ubw_amount)
+		except:
+			eksportdata["UBW beløp"] = 0
+
 		eksportdata["UBW Virksomhets-ID"] = faktura.ubw_client
 		eksportdata["UBW sist oppdatert"] = faktura.ubw_last_update
 
@@ -3237,51 +3248,65 @@ def ubw_enhet(request, pk):
 
 	def import_function(data):
 
+		count_new = 0
+		count_updated = 0
 		for row in data:
-			try:
-				obj, created = UBWFaktura.objects.get_or_create(
-					ubw_voucher_no=try_int(row["voucher_no"]),
-					ubw_sequence_no=try_int(row["sequence_no"]),
-					belongs_to=enhet,
-					)
-				if created:
-					print("ny opprettet")
-					messages.success(request, "Opprettet ny")
-				else:
-					print("eksisterte, oppdaterer")
-					messages.success(request, "Oppdatert eksisterende")
+			if row["account"] != None:
+				try:
+					obj, created = UBWFaktura.objects.get_or_create(
+						ubw_voucher_no=try_int(row["voucher_no"]),
+						ubw_sequence_no=try_int(row["sequence_no"]),
+						belongs_to=enhet,
+						)
+					if created:
+						#print("ny opprettet")
+						#messages.success(request, "Fant en ny rad..")
+						er_ny = True
+					else:
+						#print("eksisterte, oppdaterer")
+						#messages.success(request, "Prøver å oppdatere eksisterende..")
+						er_ny = False
 
 
-				#obj.belongs_to = enhet #UBWRapporteringsenhet
-				obj.ubw_tab = row["tab"] #CharField
-				obj.ubw_account = try_int(row["account"]) #IntegerField
-				obj.ubw_xaccount = row["xaccount"] #CharField
-				obj.ubw_period = try_int(row["period"]) #IntegerField
-				obj.ubw_dim_1 = try_int(row["dim_1"]) #IntegerField
-				obj.ubw_xdim_1 = row["xdim_1"] #CharField
-				obj.ubw_dim_4 = try_int(row["dim_4"]) #IntegerField
-				obj.ubw_xdim_4 = row["xdim_4"] #CharField
-				obj.ubw_voucher_type = row["voucher_type"] #CharField
-				#obj.ubw_voucher_no = try_int(row[""]) #IntegerField
-				#obj.ubw_sequence_no = try_int(row[""]) #IntegerField
-				obj.ubw_voucher_date = line["last_update"]
-				obj.ubw_order_id = try_int(row["order_id"]) #IntegerField
-				obj.ubw_apar_id = try_int(row["apar_id"]) #IntegerField
-				obj.ubw_xapar_id = row["xapar_id"] #CharField
-				obj.ubw_description = row["description"] #TextField
-				obj.ubw_amount = row["amount"] #DecimalField
-				obj.ubw_apar_type = row["apar_type"] #CharField
-				obj.ubw_att_1_id = row["att_1_id"] #CharField
-				obj.ubw_att_4_id = row["att_4_id"] #CharField
-				obj.ubw_client = try_int(row["client"]) #IntegerField
-				obj.ubw_last_update = line["last_update"]
+					#obj.belongs_to = enhet #UBWRapporteringsenhet
+					obj.ubw_tab = row["tab"] #CharField
+					obj.ubw_account = try_int(row["account"]) #IntegerField
+					obj.ubw_xaccount = row["xaccount"] #CharField
+					obj.ubw_period = try_int(row["period"]) #IntegerField
+					obj.ubw_dim_1 = try_int(row["dim_1"]) #IntegerField
+					obj.ubw_xdim_1 = row["xdim_1"] #CharField
+					obj.ubw_dim_4 = try_int(row["dim_4"]) #IntegerField
+					obj.ubw_xdim_4 = row["xdim_4"] #CharField
+					obj.ubw_voucher_type = row["voucher_type"] #CharField
+					#obj.ubw_voucher_no = try_int(row[""]) #IntegerField
+					#obj.ubw_sequence_no = try_int(row[""]) #IntegerField
+					obj.ubw_voucher_date = line["voucher_date"]
+					obj.ubw_order_id = try_int(row["order_id"]) #IntegerField
+					obj.ubw_apar_id = try_int(row["apar_id"]) #IntegerField
+					obj.ubw_xapar_id = row["xapar_id"] #CharField
+					obj.ubw_description = row["description"] #TextField
+					obj.ubw_amount = row["amount"] #DecimalField
+					obj.ubw_apar_type = row["apar_type"] #CharField
+					obj.ubw_att_1_id = row["att_1_id"] #CharField
+					obj.ubw_att_4_id = row["att_4_id"] #CharField
+					obj.ubw_client = try_int(row["client"]) #IntegerField
+					obj.ubw_last_update = line["last_update"]
 
-				obj.save()
+					obj.save()
+					if er_ny:
+						count_new += 1
+					else:
+						count_updated += 1
 
-			except Exception as e:
-				error_message = ("Kunne ikke importere: %s" % e)
-				messages.warning(request, error_message)
-				print(error_message)
+				except Exception as e:
+					error_message = ("Kunne ikke importere: %s" % e)
+					messages.warning(request, error_message)
+					print(error_message)
+			else:
+				messages.warning(request, "Raden manglet beløp, ignorert")
+
+		ferdig_melding = ("Importerte %s nye. Oppdaterte %s som eksisterte fra før." % (count_new, count_updated))
+		messages.success(request, ferdig_melding)
 
 	if request.user in enhet.users.all():
 

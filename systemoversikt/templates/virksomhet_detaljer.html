@@ -15,6 +15,10 @@
 
 {% block hovedinnhold %}
 
+	{% if user.is_authenticated %}
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">{% include 'site_edit_button.html' %} Rediger virksomhetsdetaljer for {{virksomhet.virksomhetsforkortelse}}</a>
+	{% endif %}
+
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-sm-12">
