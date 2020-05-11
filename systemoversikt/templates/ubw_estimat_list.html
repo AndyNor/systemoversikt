@@ -17,19 +17,20 @@
 		</button>
 	</p>
 
-	<table class="table" id="estimat-table">
+	<table class="table tablesorter" id="estimat-table">
 		<thead>
 			<tr>
 				<th class="filter-false">ID</th>
+				<th>{% get_verbose_field_name model "aktiv" %}</th>
 				<th>{% get_verbose_field_name model "prognose_kategori" %}</th>
-				<th>{% get_verbose_field_name model "kategori" %}</th>
 				<th>{% get_verbose_field_name model "ubw_description" %}</th>
 				<th>{% get_verbose_field_name model "estimat_account" %}</th>
 				<th>{% get_verbose_field_name model "estimat_dim_1" %}</th>
 				<th>{% get_verbose_field_name model "estimat_dim_4" %}</th>
 				<th>{% get_verbose_field_name model "estimat_amount" %}</th>
 				<th>{% get_verbose_field_name model "periode_paalopt" %}</th>
-				<th>{% get_verbose_field_name model "aktiv" %}</th>
+				<th>{% get_verbose_field_name model "kategori" %}</th>
+				<th>{% get_verbose_field_name model "leverandor" %}</th>
 				<th class="filter-false"></th>
 			</tr>
 		</thead>
@@ -67,7 +68,7 @@
 					},
 					success: function (data) {
 						$("#modal-estimat .modal-content").html(data.html_form);
-						new AutoNumeric('#id_estimat_amount', { 
+						new AutoNumeric('#id_estimat_amount', {
 								currencySymbol : '',
 								decimalPlacesRawValue: 2,
 								digitGroupSeparator: " ",

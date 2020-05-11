@@ -3180,6 +3180,7 @@ def ubw_api(request, pk):
 		except:
 			eksportdata["UBW beløp"] = 0
 		eksportdata["UBW beskrivelse"] = e.ubw_description
+		eksportdata["Leverandør"] = e.leverandor
 		"""
 		eksportdata["UBW Kontonavn"] = ""
 		eksportdata["UBW-periode (YYYYMM)"] = ""
@@ -3370,7 +3371,7 @@ def ubw_generer_ekstra_valg(belongs_to):
 	data = []
 
 	# trenger kategorien to ganger da den ene er verdi og den andre er visning. Like i dette tilfellet.
-	leverandor_kategorier = list(UBWMetadata.objects.filter(belongs_to__belongs_to=belongs_to).values_list('leverandor', 'leverandor').distinct())
+	leverandor_kategorier = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_xapar_id', 'ubw_xapar_id').distinct())
 	data.append({'field': 'leverandor', 'choices': leverandor_kategorier})
 
 	return data
@@ -3502,6 +3503,9 @@ def ubw_generer_estimat_valg(belongs_to):
 
 	prognose_prosjektnummer = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_dim_4', 'ubw_xdim_4').distinct())
 	data.append({'field': 'estimat_dim_4', 'choices': prognose_prosjektnummer})
+
+	prognose_leverandor = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_xapar_id', 'ubw_xapar_id').distinct())
+	data.append({'field': 'leverandor', 'choices': prognose_leverandor})
 
 	return data
 

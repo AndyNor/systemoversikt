@@ -4130,6 +4130,11 @@ class UBWEstimat(models.Model):
 		verbose_name="Type / kategori",
 		null=True, blank=True,
 		)
+	leverandor = models.CharField(
+		verbose_name="Leverandør",
+		null=True, blank=True,
+		max_length=200,
+		)
 
 	def __str__(self):
 		return u'%s' % (self.pk)
