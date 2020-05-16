@@ -135,7 +135,7 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 class SystemAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('systemnavn', 'alias', 'ibruk', 'systemeierskapsmodell', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
-	search_fields = ('systemnavn', 'systembeskrivelse')
+	search_fields = ('systemnavn', 'alias')
 	list_filter = ('database_in_use', 'database_supported', 'ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
 	def response_add(self, request, obj, post_url_continue=None):

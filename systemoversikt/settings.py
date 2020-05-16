@@ -233,6 +233,7 @@ if THIS_ENVIRONMENT == "PROD":
 	OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/userinfo"
 	OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
 	LOGOUT_REDIRECT_URL = "https://kartoteket.oslo.kommune.no"
+	SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # fordi det er HTTP mellom BigIP og Kartoteket (slik at redirect_uri mot KeyCloak blir https)
 	#LOGOUT_REDIRECT_URL = SITE_URL + "/"
 if THIS_ENVIRONMENT == "DEV":
 	LOGIN_URL = "/oidc/authenticate/"
@@ -256,9 +257,6 @@ if THIS_ENVIRONMENT == "TEST":
 	OIDC_IDP_URL_BASE = None  # kreves av context_processors.py
 	OIDC_IDP_REALM = None  # kreves av context_processors.py
 
-# https proxy i produksjon
-#USE_X_FORWARDED_HOST = True
-#SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 #session security
 CSRF_COOKIE_HTTPONLY = True

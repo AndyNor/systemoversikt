@@ -3124,7 +3124,7 @@ def ubw_api(request, pk):
 	for faktura in fakturaer:
 		eksportdata = {}
 
-		# noen felter er med vilje ikke tatt med
+		# noen felter er med vilje ikke tatt med. Rekkefølgen må være lik mellom faktura og estimat
 		eksportdata["kilde"] = "UBW"
 		eksportdata["UBW tab"] = str(faktura.ubw_tab_repr())
 		eksportdata["UBW Kontonr"] = faktura.ubw_account
@@ -3145,10 +3145,8 @@ def ubw_api(request, pk):
 			eksportdata["UBW beløp"] = float(faktura.ubw_amount)
 		except:
 			eksportdata["UBW beløp"] = 0
-
 		eksportdata["UBW Virksomhets-ID"] = faktura.ubw_client
 		eksportdata["UBW sist oppdatert"] = faktura.ubw_last_update
-
 		try:
 			eksportdata["Kategori"] = faktura.metadata_reference.kategori.name
 		except:
@@ -3165,7 +3163,6 @@ def ubw_api(request, pk):
 			eksportdata["Periode påløpt kvartal"] = kvartal(faktura.metadata_reference.periode_paalopt)
 		except:
 			eksportdata["Periode påløpt kvartal"] = ""
-
 		try:
 			leverandor = faktura.metadata_reference.leverandor
 			if leverandor != None:
@@ -3174,52 +3171,67 @@ def ubw_api(request, pk):
 				eksportdata["Leverandør"] = faktura.ubw_xapar_id
 		except:
 			eksportdata["Leverandør"] = faktura.ubw_xapar_id
+		try:
+			eksportdata["Kommentar"] = faktura.metadata_reference.kommentar
+		except:
+			eksportdata["Kommentar"] = ""
 
+		# ta vare på dette.
 		faktura_eksport.append(eksportdata)
+
 
 	estimat = UBWEstimat.objects.filter(belongs_to=enhet).filter(aktiv=True).order_by('-periode_paalopt')
 	for e in estimat:
 		eksportdata = {}
 
-		# noen felter er med vilje ikke tatt med
+		# alle felter må være med for at PocketQuery (Confluence) skal forstå dataene og plassere dem i riktig rad.
 		eksportdata["kilde"] = e.prognose_kategori
+		eksportdata["UBW tab"] = ""
 		eksportdata["UBW Kontonr"] = e.estimat_account
-		eksportdata["UBW Koststednr"] = e.estimat_dim_1
-		eksportdata["UBW prosjektnr"] = e.estimat_dim_4
-		try: # i tilfelle noen glemmer å fylle ut et estimat i estimatet..
-			eksportdata["UBW beløp"] = float(e.estimat_amount)
-		except:
-			eksportdata["UBW beløp"] = 0
-		eksportdata["UBW beskrivelse"] = e.ubw_description
-		eksportdata["Leverandør"] = e.leverandor
-		"""
 		eksportdata["UBW Kontonavn"] = ""
 		eksportdata["UBW-periode (YYYYMM)"] = ""
+		eksportdata["UBW Koststednr"] = e.estimat_dim_1
 		eksportdata["UBW Koststednavn"] = ""
-		eksportdata["UBW prosjektnavn"] = ""
+		eksportdata["UBW prosjektnr"] = e.estimat_dim_4
+
+		prosjektnavn = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_dim_4=e.estimat_dim_4).values_list('ubw_xdim_4').distinct()
+		try:
+			eksportdata["UBW prosjektnavn"] = prosjektnavn[0][0]
+		except:
+			eksportdata["UBW prosjektnavn"] = ""
 		eksportdata["UBW voucher_type"] = ""
 		eksportdata["UBW voucher_no"] = ""
 		eksportdata["UBW sequence_no"] = ""
 		eksportdata["UBW bilagsdato"] = ""
 		eksportdata["UBW leverandørnr"] = ""
 		eksportdata["UBW leverandørnavn"] = ""
+		eksportdata["UBW beskrivelse"] = e.ubw_description
+		try: # i tilfelle noen glemmer å fylle ut et beløp i estimatet
+			eksportdata["UBW beløp"] = float(e.estimat_amount)
+		except:
+			eksportdata["UBW beløp"] = 0
 		eksportdata["UBW Virksomhets-ID"] = ""
 		eksportdata["UBW sist oppdatert"] = ""
-		"""
 		try:
 			eksportdata["Kategori"] = e.kategori.name
 		except:
 			eksportdata["Kategori"] = ""
-
 		try:
 			eksportdata["Periode påløpt år"] = e.periode_paalopt.year
-			eksportdata["Periode påløpt måned"] = e.periode_paalopt.month
-			eksportdata["Periode påløpt kvartal"] = kvartal(e.periode_paalopt)
 		except:
 			eksportdata["Periode påløpt år"] = ""
+		try:
+			eksportdata["Periode påløpt måned"] = e.periode_paalopt.month
+		except:
 			eksportdata["Periode påløpt måned"] = ""
+		try:
+			eksportdata["Periode påløpt kvartal"] = kvartal(e.periode_paalopt)
+		except:
 			eksportdata["Periode påløpt kvartal"] = ""
+		eksportdata["Leverandør"] = e.leverandor
+		eksportdata["Kommentar"] = e.kommentar
 
+		# ta vare på dette.
 		faktura_eksport.append(eksportdata)
 
 	return JsonResponse(faktura_eksport, safe=False)

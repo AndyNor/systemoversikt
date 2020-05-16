@@ -4083,6 +4083,11 @@ class UBWMetadata(models.Model):
 		null=True, blank=True,
 		max_length=200,
 		)
+	kommentar = models.CharField(
+		verbose_name="Kommentar",
+		null=True, blank=True,
+		max_length=256,
+		)
 
 	#history = HistoricalRecords()
 
@@ -4194,6 +4199,11 @@ class UBWEstimat(models.Model):
 		verbose_name="Leverandør",
 		null=True, blank=True,
 		max_length=200,
+		)
+	kommentar = models.CharField(
+		verbose_name="Kommentar",
+		null=True, blank=True,
+		max_length=256,
 		)
 
 	def __str__(self):
