@@ -959,6 +959,14 @@ class Registrerte(models.Model):
 			blank=True, null=True,
 			help_text=u"Beskrivelse av kategori og noen eksempler.",
 			)
+	saarbar_gruppe = models.BooleanField(
+			verbose_name="Sårbar gruppe?",
+			default=False,
+			blank=True,
+			null=True,
+			help_text=u"",
+			)
+
 	history = HistoricalRecords()
 
 	def __str__(self):
@@ -3068,6 +3076,26 @@ class SystemBruk(models.Model):
 	# må generalisere denne fuksjonen..
 	#	return BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=self.virksomhet_pk).filter(systemer=bruk.system.pk).count()
 
+class BehandlingInformering(models.Model):
+	navn = models.CharField(unique=True,
+			verbose_name="Informeringsnavn",
+			max_length=100,
+			blank=False, null=False,
+			help_text=u"Tekst til valgmeny",
+			)
+	beskrivelse = models.TextField(
+			verbose_name="Beskrivelse",
+			blank=True, null=True,
+			help_text=u"",
+			)
+
+	def __str__(self):
+		return u'%s' % (self.navn)
+
+	class Meta:
+		verbose_name_plural = "Behandling Informeringsvalg"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
 
 class RegistrertKlassifisering(models.Model):
 	navn = models.CharField(unique=True,
@@ -3531,6 +3559,12 @@ class BehandlingerPersonopplysninger(models.Model):
 			blank=True,
 			help_text=u"Si noe om at normalt gjøres dette via kobling til system... TODO",
 			)
+	informering_til_registrerte_valg = models.ManyToManyField(
+		to=BehandlingInformering,
+		verbose_name="Informering til den registrerte",
+		help_text=u"Åpenhet om behandling er et viktig personvernsprinsipp. Hvordan informeres den registrete om hva som behandles, og hvilke rettigheter den registrerte har?",
+		)
+
 	history = HistoricalRecords()
 
 	def __str__(self):

@@ -26,7 +26,7 @@
 
 			<td>
 				{% include 'behandling_include_vis.html' with behandling=behandling %}<br><br>
-				<b>Ansvarlig</b> {% include 'ansvarlig_include_vis.html' with ansvarlig=behandling.oppdateringsansvarlig.all %}
+				<b>Ansvarlig</b> {% include 'ansvarlig_include_vis.html' with ansvarlige=behandling.oppdateringsansvarlig.all %}
 
 				<br><br><b>Avdeling / seksjon</b><br>
 				{% if behandling.oppdateringsansvarlig.all %}

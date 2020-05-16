@@ -466,13 +466,21 @@ class LeverandorAdmin(SimpleHistoryAdmin):
 		return [Lower('leverandor_navn')]
 
 
+@admin.register(BehandlingInformering)
+class BehandlingInformeringAdmin(admin.ModelAdmin):
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('navn', 'beskrivelse')
+	search_fields = ('navn', 'beskrivelse')
+
+
+
 @admin.register(BehandlingerPersonopplysninger)
 class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('behandlingsansvarlig', 'internt_ansvarlig', 'funksjonsomraade', 'behandlingen')
 	search_fields = ('behandlingen', 'internt_ansvarlig', 'funksjonsomraade',)
 	list_filter = ('behandlingsgrunnlag_valg', 'den_registrerte', 'kategorier_personopplysninger', 'behandlingsansvarlig')
-	filter_horizontal = ('relasjon_registrerte', 'den_registrerte_hovedkateogi', 'virksomhet_blacklist', 'programvarer', 'systemer', 'navn_databehandler', 'kategorier_personopplysninger', 'den_registrerte', 'behandlingsgrunnlag_valg')
+	filter_horizontal = ('informering_til_registrerte_valg', 'relasjon_registrerte', 'den_registrerte_hovedkateogi', 'virksomhet_blacklist', 'programvarer', 'systemer', 'navn_databehandler', 'kategorier_personopplysninger', 'den_registrerte', 'behandlingsgrunnlag_valg')
 	autocomplete_fields = ('behandlingsansvarlig', 'oppdateringsansvarlig')
 
 	def response_add(self, request, obj, post_url_continue=None):
@@ -514,6 +522,7 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 		('Ekstraopplysninger', {
 			'classes': ('collapse',),
 			'fields': (
+				'informering_til_registrerte_valg',
 				'krav_slettefrister',
 				'den_registrerte_detaljer',
 				'oppbevaringsplikt',
@@ -619,7 +628,7 @@ class PersonsonopplysningskategoriAdmin(SimpleHistoryAdmin):
 
 @admin.register(Registrerte)
 class RegistrerteAdmin(SimpleHistoryAdmin):
-	list_display = ('kategorinavn', 'definisjon')
+	list_display = ('kategorinavn', 'definisjon', 'saarbar_gruppe')
 
 	def get_ordering(self, request):
 		return [Lower('kategorinavn')]
