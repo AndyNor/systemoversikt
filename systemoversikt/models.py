@@ -42,6 +42,43 @@ class UserChangeLog(models.Model):
 		default_permissions = ('view')
 
 
+
+
+class APIKeys(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	key = models.CharField(
+			verbose_name="Nøkkel / passord",
+			max_length=256,
+			blank=False,
+			null=False,
+			unique=True,
+			)
+	navn = models.CharField(
+			verbose_name="Navn på nøkkel",
+			blank=False,
+			max_length=64,
+			null=False,
+			unique=True,
+			)
+	kommentar = models.TextField(
+			verbose_name="Kommentar",
+			blank=True,
+			null=True,
+			)
+	def __str__(self):
+		return u'%s (%s)' % (self.navn, self.kommentar)
+
+	class Meta:
+		verbose_name_plural = "API-nøkler"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
+
+
 class ApplicationLog(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",

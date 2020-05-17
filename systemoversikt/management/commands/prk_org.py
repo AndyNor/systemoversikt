@@ -29,9 +29,6 @@ class Command(BaseCommand):
 		ant_oppdateringer = 0
 		ant_deaktivert = 0
 
-		url = os.environ["PRK_FORM_URL"]
-		#apikey = os.environ["PRK_FORM_APIKEY"]
-		#headers = {"apikey": apikey}
 		LOCAL_DEBUG = False
 		debug_file = os.path.dirname(os.path.abspath(__file__)) + "/org.csv"
 
@@ -41,10 +38,13 @@ class Command(BaseCommand):
 			headers = {}
 			print("Kobler til %s" % url)
 			r = requests.get(url, headers=headers)
-			print("Encoding: %s" % r.encoding)
+			print("Original encoding: %s" % r.encoding)
 			r.encoding = "latin-1" # need to override
+			print("New encoding: %s" % r.encoding)
 			print("Statuskode: %s" % r.status_code)
 			if r.status_code == 200:
+				with open('/home/drift23914/metadata/djangoapp/systemoversikt/prk/grp.csv', 'w') as file_handle:
+					file_handle.write(r.text)
 				csv_data = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
 			else:
 				sys.exit()

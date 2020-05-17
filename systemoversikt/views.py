@@ -586,7 +586,7 @@ def logger_audit(request):
 	required_permissions = 'systemoversikt.view_applicationlog'
 	if request.user.has_perm(required_permissions):
 
-		recent_loggs = ApplicationLog.objects.order_by('-opprettet')[:150]
+		recent_loggs = ApplicationLog.objects.order_by('-opprettet')[:1500]
 		return render(request, 'site_logger_audit.html', {
 			'request': request,
 			'recent_loggs': recent_loggs,
@@ -3621,3 +3621,46 @@ def ubw_estimat_copy(request, pk):
 
 
 ### UBW end
+
+
+def prk_api(filename):
+	path = "/home/drift23914/metadata/djangoapp/systemoversikt/prk/" + filename
+	with open(path, 'rt', encoding='utf-8') as file:
+		response = HttpResponse(file, content_type='text/csv; charset=utf-8')
+		response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response
+
+def prk_api_usr(request):
+	if request.method == "GET":
+
+		key = request.headers.get("key", None)
+		if key == None:
+			key = request.GET.get("key", None)
+
+		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
+		if key in list(allowed_keys):
+			owner = APIKeys.objects.get(key=key).navn
+			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
+			return prk_api("usr.csv")
+
+		else:
+			from django.http import HttpResponseForbidden
+			return HttpResponseForbidden()
+
+
+def prk_api_grp(request):
+	if request.method == "GET":
+
+		key = request.headers.get("key", None)
+		if key == None:
+			key = request.GET.get("key", None)
+
+		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
+		if key in list(allowed_keys):
+			owner = APIKeys.objects.get(key=key).navn
+			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
+			return prk_api("grp.csv")
+
+		else:
+			from django.http import HttpResponseForbidden
+			return HttpResponseForbidden()

@@ -173,10 +173,13 @@ urlpatterns = [
 	url(r'^ubw/estimat/(?P<pk>\d+)/delete/$', views.ubw_estimat_delete, name='ubw_estimat_delete'),
 	url(r'^ubw/estimat/(?P<pk>\d+)/copy/$', views.ubw_estimat_copy, name='ubw_estimat_copy'),
 
+	url(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),
+	url(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),
+
 
 	# import og konvertering
 	url(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),
-	url(r'^import/cmdb/business_services/$', views_import.import_business_services, name='import_cmdb'),
+	url(r'^import/cmdb/business_services/$', views_import.import_business_services, name='import_bsbss'),
 	url(r'^import/cmdb/servers/$', views_import.import_cmdb_servers, name='import_cmdb'),
 	url(r'^import/cmdb/databases/$', views_import.import_cmdb_databases, name='import_databases'),
 	url(r'^import/cmdb/databases/oracle/$', views_import.import_cmdb_databases_oracle, name='import_cmdb_databases_oracle'),

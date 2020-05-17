@@ -860,6 +860,11 @@ class CMDBRefAdmin(admin.ModelAdmin):
 		return [Lower('navn')]
 
 
+@admin.register(APIKeys)
+class APIKeysAdmin(admin.ModelAdmin):
+	list_display = ('navn', 'kommentar', 'key', 'sist_oppdatert')
+
+
 @admin.register(Avtale)
 class AvtaleAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]

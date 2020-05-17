@@ -17,7 +17,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
 import datetime
 import json, os
-
+from django.db import transaction
 
 
 def import_group_permissions(request):
@@ -119,6 +119,7 @@ def convertToBool(string):
 		return None
 
 
+@transaction.atomic
 def import_business_services(request):
 
 	required_permissions = 'systemoversikt.change_cmdbref'
@@ -180,7 +181,7 @@ def import_business_services(request):
 				)
 			messages.success(request, logg_entry_message)
 
-		return render(request, 'site_home.html', {
+		return render(request, 'cmdb_index.html', {
 			'request': request,
 		})
 	else:
@@ -188,6 +189,7 @@ def import_business_services(request):
 
 
 # TODO to ganske like script for oracle og mssql. datakildene er ikke like..
+@transaction.atomic
 def import_cmdb_databases_oracle(request):
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
@@ -252,7 +254,7 @@ def import_cmdb_databases_oracle(request):
 			)
 		messages.success(request, logg_entry_message)
 
-		return render(request, 'site_home.html', {
+		return render(request, 'cmdb_index.html', {
 			'request': request,
 		})
 	else:
@@ -260,6 +262,7 @@ def import_cmdb_databases_oracle(request):
 
 
 #MSSQL-import
+@transaction.atomic
 def import_cmdb_databases(request):
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
@@ -329,7 +332,7 @@ def import_cmdb_databases(request):
 			)
 		messages.success(request, logg_entry_message)
 
-		return render(request, 'site_home.html', {
+		return render(request, 'cmdb_index.html', {
 			'request': request,
 		})
 	else:
@@ -338,7 +341,7 @@ def import_cmdb_databases(request):
 
 
 
-
+@transaction.atomic
 def import_cmdb_servers(request):
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
@@ -407,7 +410,7 @@ def import_cmdb_servers(request):
 			)
 		messages.success(request, logg_entry_message)
 
-		return render(request, 'site_home.html', {
+		return render(request, 'cmdb_index.html', {
 			'request': request,
 		})
 	else:
