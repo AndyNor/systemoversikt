@@ -15,7 +15,7 @@
 
 {% block hovedinnhold %}
 
-	<table id="stickyheader" class="table table-sm tablesorter">
+	<table class="table table-sm tablesorter">
 		<thead>
 		<tr>
 			<th>Bruker</th>
@@ -39,9 +39,9 @@
 				{% url 'bruker_detaljer' pk=bruker.pk as url_bruker %}
 				<td><a href="{{url_bruker}}">{{ bruker.profile.displayName }}</a></td>
 				<td>
-					{% if bruker.profile.accountdisable %} 
+					{% if bruker.profile.accountdisable %}
 						<span style="color: #cccccc;">Nei</span>
-					{% else %} 
+					{% else %}
 						Ja
 					{% endif %}
 				</td>
@@ -53,16 +53,16 @@
 					{% if "GKAT_BRGR_SBRUKERADM" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/fork.svg' %}"> Lokal Administrator <br> {% endif %}
 				</td>
 				<td>
-					{% if "GKAT_MODULER_GLOBAL_ADMINISTRASJON" in grupper %} 
-						<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/globe.svg' %}">Ja  
-					{% else %} 
+					{% if "GKAT_MODULER_GLOBAL_ADMINISTRASJON" in grupper %}
+						<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/globe.svg' %}">Ja
+					{% else %}
 						<span style="color: #cccccc;">Nei</span>
 					{% endif %}
 				</td>
 				<td>
-					{% if "GKAT_ADMKODEV_ALLE" in grupper %} 
-						<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Ja  
-					{% else %} 
+					{% if "GKAT_ADMKODEV_ALLE" in grupper %}
+						<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Ja
+					{% else %}
 						<span style="color: #cccccc;">Nei</span>
 					{% endif %}
 				</td>
@@ -84,22 +84,22 @@
 					{% if "GKAT_IMPSKJEMA_TSIMP" in grupper %} <img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/wrench.svg' %}">Skjema<br> {% endif %}
 				</td>
 				<td>
-					{% if "GKAT_TILDELE_SNAGIT" in grupper %} 
-						<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/check.svg' %}">Ja  
-					{% else %} 
+					{% if "GKAT_TILDELE_SNAGIT" in grupper %}
+						<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/check.svg' %}">Ja
+					{% else %}
 						<span style="color: #cccccc;">Nei</span>
-					{% endif %}				
+					{% endif %}
 				</td>
 				<td>
-					{% if "GKAT_ADMSENTRALESKJEMA_KOKS" in grupper %} 
-						<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/check.svg' %}">Ja  
-					{% else %} 
+					{% if "GKAT_ADMSENTRALESKJEMA_KOKS" in grupper %}
+						<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/check.svg' %}">Ja
+					{% else %}
 						<span style="color: #cccccc;">Nei</span>
 					{% endif %}
 				<td>
-					{% if "GKAT_ADMLOKALESKJEMA_NAV" in grupper %} 
-						<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/check.svg' %}">Ja  
-					{% else %} 
+					{% if "GKAT_ADMLOKALESKJEMA_NAV" in grupper %}
+						<img style="width: 12px; margin-right: 5px;" src="{% static 'open-iconic/svg/check.svg' %}">Ja
+					{% else %}
 						<span style="color: #cccccc;">Nei</span>
 					{% endif %}
 				</td>

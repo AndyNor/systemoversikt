@@ -3599,6 +3599,7 @@ class BehandlingerPersonopplysninger(models.Model):
 	informering_til_registrerte_valg = models.ManyToManyField(
 		to=BehandlingInformering,
 		verbose_name="Informering til den registrerte",
+		blank=True,
 		help_text=u"Åpenhet om behandling er et viktig personvernsprinsipp. Hvordan informeres den registrete om hva som behandles, og hvilke rettigheter den registrerte har?",
 		)
 
