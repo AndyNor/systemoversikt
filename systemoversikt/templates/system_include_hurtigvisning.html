@@ -1,6 +1,6 @@
 {% load static %}
 
-<table id="systemoversikt" class="tablesorter">
+<table id="systemoversikt" class="tablesorter excel">
 <thead>
 <tr>
 	{% if perms.systemoversikt.change_system %}
@@ -11,6 +11,8 @@
 	<th>Systemeier</th>
 	<th>Systemklassifisering</th>
 	<th>Driftsplattform</th>
+	<th>Forvaltere</th>
+
 
 	{% if perms.systemoversikt.change_system %}
 		<th>Sikkerhetsnivå</th>
@@ -46,6 +48,10 @@
 	<td>
 		{% url 'detaljer_driftsmodell' item.driftsmodell_foreignkey.pk as url_driftsmodell_foreignkey %}
 		<a href="{{ url_driftsmodell_foreignkey }}">{{ item.driftsmodell_foreignkey|default:"-" }}</a>
+	</td>
+
+	<td>
+		{% include "ansvarlig_include_vis.html" with ansvarlige=item.systemforvalter_kontaktpersoner_referanse.all %}
 	</td>
 
 	{% if perms.systemoversikt.change_system %}

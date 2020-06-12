@@ -155,6 +155,16 @@
 				</tr>
 
 				<tr>
+					<td>{% get_verbose_field_name systemdetaljer "godkjente_bestillere" %}
+					{% get_help_text systemdetaljer "godkjente_bestillere" as text %}
+					{% explain_collapsed text %}
+					</td>
+					<td>
+					{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.godkjente_bestillere.all %}
+					</td>
+				</tr>
+
+				<tr>
 					<td>{% get_verbose_field_name systemdetaljer "systemkategorier" %}
 					{% get_help_text systemdetaljer "systemkategorier" as text %}
 					{% explain_collapsed text %}

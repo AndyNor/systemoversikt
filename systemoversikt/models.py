@@ -441,12 +441,12 @@ class Virksomhet(models.Model):
 			help_text=u"Link til dokument i virksomhetens styringssystem",
 			)
 	personvernkoordinator = models.ManyToManyField(Ansvarlig, related_name='virksomhet_personvernkoordinator',
-			verbose_name='Vår personvernkoordinator',
+			verbose_name='Personvernkoordinator (PKO)',
 			blank=True,
 			help_text=u"Person(er) i rollen som personvernkoordinator.",
 			)
 	informasjonssikkerhetskoordinator = models.ManyToManyField(Ansvarlig, related_name='virksomhet_informasjonssikkerhetskoordinator',
-			verbose_name='Vår informasjonssikkerhetskoordinator',
+			verbose_name='Informasjonssikkerhetskoordinator (ISK)',
 			blank=True,
 			help_text=u"Person(er) i rollen som informasjonssikkerhetskoordinator.",
 			)
@@ -2510,6 +2510,11 @@ class System(models.Model):
 			verbose_name="Databasetype i bruk",
 			blank=True,
 			help_text=u"Legg til alle typer databaser er i bruk for dette systemet.",
+			)
+	godkjente_bestillere = models.ManyToManyField(Ansvarlig, related_name='system_godkjente_bestillere',
+			verbose_name="Godkjente bestillere (Kompass)",
+			blank=True,
+			help_text=u"Disse personene er autorisert for å bestille endringer på systemet. Kan være andre enn forvaltere.",
 			)
 	history = HistoricalRecords()
 

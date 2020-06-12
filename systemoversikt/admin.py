@@ -174,6 +174,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'autorisasjonsalternativer',
 		'database_supported',
 		'database_in_use',
+		'godkjente_bestillere',
 	)
 
 	fieldsets = (
@@ -188,6 +189,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'systemeierskapsmodell',
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
 				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
+				'godkjente_bestillere',
 				('autentiseringsteknologi', 'autentiseringsalternativer'),
 				'autorisasjonsalternativer',
 				'driftsmodell_foreignkey',
