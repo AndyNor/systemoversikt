@@ -1193,6 +1193,9 @@ class CMDBRef(models.Model):
 	def ant_devices(self):
 		return CMDBdevice.objects.filter(sub_name=self.pk, active=True).count()
 
+	def ant_databaser(self):
+		return CMDBdatabase.objects.filter(sub_name=self.pk, db_operational_status=True).count()
+
 	def is_bss(self):
 		if self.service_classification == "Business Service":
 			return True

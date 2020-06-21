@@ -14,8 +14,8 @@ from django.db.models import Q
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
-from django.http import Http404
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.core.exceptions import PermissionDenied
 from django.conf import settings
 import datetime
 from django.urls import reverse
@@ -679,6 +679,63 @@ def definisjon(request, begrep):
 		'begrep': begrep,
 		'definisjoner': passende_definisjoner,
 	})
+
+
+def forvalter_api(request):
+	"""
+	Dette er et API for å hente ut alle systemforvaltere.
+	Brukere:
+		Tjenestekatalogen til UKE
+	"""
+	if request.method == "GET":
+
+		key = request.headers.get("key", None)
+		allowed_keys = APIKeys.objects.filter(navn="itas_tjenestekatalog").values_list("key", flat=True)
+		if key in list(allowed_keys):
+			owner = APIKeys.objects.get(key=key).navn
+			ApplicationLog.objects.create(event_type="Forvalter-API", message="Brukt av %s" %(owner))
+
+			forvaltere_eksport = []
+			for ansvarlig in Ansvarlig.objects.all():
+
+				forvalter_for = []
+				for system in ansvarlig.system_systemforvalter_kontaktpersoner.all():
+					if system.ibruk:
+						forvalter_for.append({
+								"system_id": system.pk,
+								"system_navn": system.systemnavn,
+								"system_alias": system.alias,
+								"system_eier_virksomhet_kort": system.systemeier.virksomhetsforkortelse if system.systemeier else None,
+								"system_eier_virksomhet": system.systemeier.virksomhetsnavn if system.systemeier else None,
+								"system_forvalter_virksomhet_kort": system.systemforvalter.virksomhetsforkortelse if system.systemforvalter else None,
+								"system_forvalter_virksomhet": system.systemforvalter.virksomhetsnavn if system.systemforvalter else None,
+							})
+				if len(forvalter_for) < 1:
+					continue  # skip this person
+
+				forvaltere_eksport.append({
+					"brukernavn": ansvarlig.brukernavn.username,
+					"fornavn": ansvarlig.brukernavn.first_name,
+					"etternavn": ansvarlig.brukernavn.last_name,
+					"epost": ansvarlig.brukernavn.email,
+					#profil opprettes automatisk, så dette er trygt
+					"visningsnavn": ansvarlig.brukernavn.profile.displayName,
+					"prkid": ansvarlig.brukernavn.profile.ansattnr,
+					"virksomhet_kort": ansvarlig.brukernavn.profile.virksomhet.virksomhetsforkortelse if ansvarlig.brukernavn.profile.virksomhet else None,
+					"virksomhet": ansvarlig.brukernavn.profile.virksomhet.virksomhetsnavn if ansvarlig.brukernavn.profile.virksomhet else None,
+					"orgenhet": ansvarlig.brukernavn.profile.org_unit.ou if ansvarlig.brukernavn.profile.org_unit else None,
+					"forvalter_for": forvalter_for,
+					"eier_av": [{"melding": "kan legges til ved behov"}],
+					})
+
+			data = {"message": "OK", "data": forvaltere_eksport}
+			return JsonResponse(data, safe=False)
+
+		else:
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+	else:
+		raise Http404
+
 
 
 def ansvarlig(request, pk):
@@ -3099,6 +3156,39 @@ def recursive_group_members(request, group):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def cmdb_api(request):
+
+	data = []
+	query = CMDBRef.objects.filter(~Q(service_classification="Business Service")).filter(operational_status=True)  # alt aktivt utenom "Business Service"
+	for bss in query:
+		line = {}
+		line["business_subservice_navn"] = bss.navn
+		line["environment"] = bss.get_environment_display()
+		line["kritikalitet"] = bss.kritikalitet
+		line["service_availability"] = bss.u_service_availability
+		line["service_operation_factor"] = bss.u_service_operation_factor
+		line["service_complexity"] = bss.u_service_complexity
+		line["antall_tilknyttede_systemer"] = len(bss.system_cmdbref.all())
+		if len(bss.system_cmdbref.all()) == 1:
+			line["tilknyttet_system"] = bss.system_cmdbref.all()[0].systemnavn
+			system = bss.system_cmdbref.all()[0]
+			if system.systemeier:
+				line["systemeier"] = system.systemeier.virksomhetsforkortelse
+			if system.systemforvalter:
+				line["systemforvalter"] = system.systemforvalter.virksomhetsforkortelse
+			if system.driftsmodell_foreignkey:
+				line["plattform"] = system.driftsmodell_foreignkey.navn
+		if len(bss.system_cmdbref.all()) > 1:
+			line["tilknyttet_system"] = "Det er flere systemer som peker mot denne gruppen"
+		if len(bss.system_cmdbref.all()) == 0:
+			line["tilknyttet_system"] = "Ingen"
+		line["antall_servere"] = bss.ant_devices()
+		line["antall_databaser"] = bss.ant_databaser()
+
+		data.append(line)
+
+		resultat = {"antall bss": len(query), "data": data}
+	return JsonResponse(resultat, safe=False)
 
 
 ### UBW

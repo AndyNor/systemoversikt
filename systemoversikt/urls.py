@@ -176,6 +176,10 @@ urlpatterns = [
 	url(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),
 	url(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),
 
+	url(r'^forvaltere/api/$', views.forvalter_api, name='forvalter_api'),
+	url(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'),
+
+
 
 	# import og konvertering
 	url(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),
