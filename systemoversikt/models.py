@@ -1337,6 +1337,33 @@ class CMDBdevice(models.Model):
 			blank=True, null=True,
 			help_text=u"",
 			)
+	comp_cpu_core_count = models.IntegerField(
+			verbose_name="CPU core count",
+			blank=True, null=True,
+			help_text=u"",
+			)
+	comp_cpu_count = models.IntegerField(
+			verbose_name="CPU count",
+			blank=True, null=True,
+			help_text=u"",
+			)
+	comp_cpu_name = models.CharField(
+			verbose_name="CPU name",
+			max_length=200,
+			blank=True, null=True,
+			help_text=u"",
+			)
+	comp_u_cpu_total = models.IntegerField(
+			verbose_name="CPU total",
+			blank=True, null=True,
+			help_text=u"",
+			)
+	comp_ram = models.IntegerField(
+			verbose_name="RAM",
+			blank=True, null=True,
+			help_text=u"",
+			)
+
 	dns = models.CharField(
 			verbose_name="DNS",
 			max_length=200,

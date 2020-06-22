@@ -385,6 +385,13 @@ def import_cmdb_servers(request):
 				cmdbdevice.comp_os_version = record["comp_os_version"]
 				cmdbdevice.comp_os_service_pack = record["comp_os_service_pack"]
 
+				# nye 22.06.2020
+				cmdbdevice.comp_cpu_core_count = convertToInt(record["comp_cpu_core_count"])
+				cmdbdevice.comp_cpu_count = convertToInt(record["comp_cpu_count"])
+				cmdbdevice.comp_cpu_name = record["comp_cpu_name"]
+				cmdbdevice.comp_u_cpu_total = convertToInt(record["comp_u_cpu_total"])
+				cmdbdevice.comp_ram = convertToInt(record["comp_ram"])
+
 				try:
 					sub_name = CMDBRef.objects.get(navn=record["sub_name"])
 				except:
