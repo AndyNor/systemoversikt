@@ -1089,7 +1089,7 @@ def all_bruk_for_virksomhet(request, pk):
 	virksomhet_pk = pk
 	all_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 
-	# dette er litt databasegalskap, men ok..
+	# ser ut til at excel 2016+ støtter dette..
 	for bruk in all_bruk:
 		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(systemer=bruk.system.pk).count()
 		bruk.antall_behandlinger = ant
@@ -3174,6 +3174,7 @@ def cmdb_api(request):
 
 	data = []
 	query = CMDBRef.objects.filter(~Q(service_classification="Business Service")).filter(operational_status=True)  # alt aktivt utenom "Business Service"
+	#dette er total galskap, men det er det behovshaver ønsker..
 	for bss in query:
 		line = {}
 		line["business_subservice_navn"] = bss.navn
@@ -3186,6 +3187,17 @@ def cmdb_api(request):
 		if len(bss.system_cmdbref.all()) == 1:
 			line["tilknyttet_system"] = bss.system_cmdbref.all()[0].systemnavn
 			system = bss.system_cmdbref.all()[0]
+
+			kategoriliste = []
+			for kategori in system.systemkategorier.all():
+				kategoriliste.append(kategori.kategorinavn)
+			line["systemkategorier"] = kategoriliste
+
+			bruksliste = []
+			for bruk in system.systembruk_system.all():
+				bruksliste.append(bruk.brukergruppe.virksomhetsnavn)
+			line["system_brukes_av"] = bruksliste
+
 			if system.systemeier:
 				line["systemeier"] = system.systemeier.virksomhetsforkortelse
 			if system.systemforvalter:
@@ -3198,6 +3210,27 @@ def cmdb_api(request):
 			line["tilknyttet_system"] = "Ingen"
 		line["antall_servere"] = bss.ant_devices()
 		line["antall_databaser"] = bss.ant_databaser()
+
+		serverliste = []
+		for server in bss.cmdbdevice_sub_name.all():
+			s = dict()
+			s["server_navn"] = server.comp_name
+			s["server_aktiv"] = server.active
+			s["server_os"] = server.comp_os
+			s["server_ram"] = server.comp_ram
+			if server.comp_disk_space:
+				s["server_disk"] = server.comp_disk_space * 1024  # ønsker oppgitt i megabyte
+			else:
+				s["server_disk"] = None
+			s["server_cpu_name"] = server.comp_cpu_name
+			s["server_cpu_speed"] = server.comp_cpu_speed
+			s["server_cpu_core_count"] = server.comp_cpu_core_count
+			s["server_cpu_count"] = server.comp_cpu_count
+			s["server_cpu_total"] = server.comp_u_cpu_total
+			serverliste.append(s)
+
+		line["servere"] = serverliste
+
 
 		data.append(line)
 
