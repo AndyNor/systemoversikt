@@ -710,8 +710,22 @@ def forvalter_api(request):
 								"system_forvalter_virksomhet_kort": system.systemforvalter.virksomhetsforkortelse if system.systemforvalter else None,
 								"system_forvalter_virksomhet": system.systemforvalter.virksomhetsnavn if system.systemforvalter else None,
 							})
-				if len(forvalter_for) < 1:
-					continue  # skip this person
+
+				eier_av = []
+				for system in ansvarlig.system_systemeier_kontaktpersoner.all():
+					if system.ibruk:
+						eier_av.append({
+								"system_id": system.pk,
+								"system_navn": system.systemnavn,
+								"system_alias": system.alias,
+								"system_eier_virksomhet_kort": system.systemeier.virksomhetsforkortelse if system.systemeier else None,
+								"system_eier_virksomhet": system.systemeier.virksomhetsnavn if system.systemeier else None,
+								"system_forvalter_virksomhet_kort": system.systemforvalter.virksomhetsforkortelse if system.systemforvalter else None,
+								"system_forvalter_virksomhet": system.systemforvalter.virksomhetsnavn if system.systemforvalter else None,
+							})
+
+				if len(forvalter_for) < 1 and len(eier_av) < 1:  # begge er tomme
+					continue  # hopp til neste person
 
 				forvaltere_eksport.append({
 					"brukernavn": ansvarlig.brukernavn.username,
@@ -725,7 +739,7 @@ def forvalter_api(request):
 					"virksomhet": ansvarlig.brukernavn.profile.virksomhet.virksomhetsnavn if ansvarlig.brukernavn.profile.virksomhet else None,
 					"orgenhet": ansvarlig.brukernavn.profile.org_unit.ou if ansvarlig.brukernavn.profile.org_unit else None,
 					"forvalter_for": forvalter_for,
-					"eier_av": [{"melding": "kan legges til ved behov"}],
+					"eier_av": eier_av,
 					})
 
 			data = {"message": "OK", "data": forvaltere_eksport}
