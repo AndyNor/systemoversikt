@@ -526,45 +526,44 @@ def permissions(request):
 
 def roller(request):
 	"""
-	Viser informasjon om kobling rettighet og (AD)-grupper
-	Tilgangsstyring: De som kan se grupper
+	Tilgangsstyring: Alle
 	"""
 	from django.core import serializers
 	from django.contrib.auth.models import Group
 
-	required_permissions = 'auth.view_group'
-	if request.user.has_perm(required_permissions):
-		groups = Group.objects.all()
-		if request.GET.get('export') == "json":
-			export = []
-			for g in groups:
-				unique_permissions = []
-				for p in g.permissions.all():
-					unique_permissions.append({"content_type__app_label": p.content_type.app_label, "codename": p.codename})
-				export.append({"group": g.name, "permissions": unique_permissions})
+	#required_permissions = 'auth.view_group'
+	#if request.user.has_perm(required_permissions):
+	groups = Group.objects.all()
+	if request.GET.get('export') == "json":
+		export = []
+		for g in groups:
+			unique_permissions = []
+			for p in g.permissions.all():
+				unique_permissions.append({"content_type__app_label": p.content_type.app_label, "codename": p.codename})
+			export.append({"group": g.name, "permissions": unique_permissions})
 
-			return JsonResponse(export, safe=False)
-		else:
-			header = []
-			grupper_med_rettigheter = {}
-			for g in groups:
-				header.append(g.name.split("_")[2])
-				grupper_med_rettigheter[g.name] = [p.codename for p in g.permissions.all()]
-
-			unique_permissions = list(set([ x for y in grupper_med_rettigheter.values() for x in y]))
-			unique_permissions = sorted(unique_permissions)
-
-			matrise = {}
-			for key in unique_permissions:
-				matrise[key] = [ True if key in rettigheter else False for gruppe, rettigheter in grupper_med_rettigheter.items() ]
-
-			return render(request, 'site_roller.html', {
-				'request': request,
-				'header': header,
-				'matrise': matrise,
-	})
+		return JsonResponse(export, safe=False)
 	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		header = []
+		grupper_med_rettigheter = {}
+		for g in groups:
+			header.append(g.name.split("_")[2])
+			grupper_med_rettigheter[g.name] = [p.codename for p in g.permissions.all()]
+
+		unique_permissions = list(set([ x for y in grupper_med_rettigheter.values() for x in y]))
+		unique_permissions = sorted(unique_permissions)
+
+		matrise = {}
+		for key in unique_permissions:
+			matrise[key] = [ True if key in rettigheter else False for gruppe, rettigheter in grupper_med_rettigheter.items() ]
+
+		return render(request, 'site_roller.html', {
+			'request': request,
+			'header': header,
+			'matrise': matrise,
+	})
+	#else:
+	#	return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 """
