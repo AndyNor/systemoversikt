@@ -27,6 +27,7 @@
 				<th>Service portfolio</th>
 				<th>Disk space</th>
 				<th>CPU speed</th>
+				<th>RAM</th>
 				<th>IP-address</th>
 				<th>VLAN</th>
 				<th>DNS</th>
@@ -44,6 +45,7 @@
 				<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
 				<td>{{ item.comp_disk_space|default:"-" }}</td>
 				<td>{{ item.comp_cpu_speed|default:"-" }}</td>
+				<td>{{ item.comp_ram|default:"-" }}</td>
 				<td>{{ item.comp_ip_address|default:"-" }}</td>
 				<td>{{ item.vlan|default:"" }}</td>
 				<td>{{ item.dns|default:"" }}</td>
