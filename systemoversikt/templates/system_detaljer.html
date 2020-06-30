@@ -433,7 +433,7 @@
 							{% endfor %}
 						</td>
 						<td>{{ b.get_krav_sikkerhetsnivaa_display|default:"-" }}</a></td>
-						<td>{{ b.hoy_personvernrisiko|yesno:"Ja,Nei,Ukjent" }}</td>
+						<td>{{ b.behandling_behovdpia.behovforDPIA|default:"Vet ikke" }}</td>
 						<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
 					</tr>
 					{% endfor %}

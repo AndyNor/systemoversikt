@@ -1113,7 +1113,7 @@ class CMDBRef(models.Model):
 			help_text=u"Importert: environment",
 			)
 	kritikalitet = models.IntegerField(choices=CMDB_KRITIKALITET_VALG,
-			verbose_name="Kritikaltiet / SLA",
+			verbose_name="Busines criticality (SLA)",
 			blank=True, null=True,
 			help_text=u"Importert: Kritikalitet",
 			)

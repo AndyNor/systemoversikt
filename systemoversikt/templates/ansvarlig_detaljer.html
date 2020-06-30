@@ -109,6 +109,7 @@
 	{% endif %}
 
 
+
 	<table class="tablesorter">
 		<thead>
 		<tr>
@@ -165,6 +166,19 @@
 			</td>
 		</tr>
 		{% endfor %}
+
+
+		{% for system in kompass_godkjent_bestiller_for %}
+		<tr>
+			<td>Godkjent bestiller i Kompass for</td>
+			{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
+			<td>
+				<a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a>
+			</td>
+		</tr>
+		{% endfor %}
+
+
 		</tbody>
 	</table>
 

@@ -545,9 +545,23 @@ def roller(request):
 
 			return JsonResponse(export, safe=False)
 		else:
+			header = []
+			grupper_med_rettigheter = {}
+			for g in groups:
+				header.append(g.name.split("_")[2])
+				grupper_med_rettigheter[g.name] = [p.codename for p in g.permissions.all()]
+
+			unique_permissions = list(set([ x for y in grupper_med_rettigheter.values() for x in y]))
+			unique_permissions = sorted(unique_permissions)
+
+			matrise = {}
+			for key in unique_permissions:
+				matrise[key] = [ True if key in rettigheter else False for gruppe, rettigheter in grupper_med_rettigheter.items() ]
+
 			return render(request, 'site_roller.html', {
 				'request': request,
-				'groups': groups,
+				'header': header,
+				'matrise': matrise,
 	})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -777,6 +791,7 @@ def ansvarlig(request, pk):
 	system_innsynskontakt_for = System.objects.filter(kontaktperson_innsyn=pk)
 	autorisert_bestiller_uke_for = Virksomhet.objects.filter(autoriserte_bestillere_tjenester_uke=pk)
 	programvarebruk_kontakt_for = ProgramvareBruk.objects.filter(lokal_kontakt=pk)
+	kompass_godkjent_bestiller_for = System.objects.filter(godkjente_bestillere=pk)
 
 
 
@@ -799,6 +814,7 @@ def ansvarlig(request, pk):
 		'system_innsynskontakt_for': system_innsynskontakt_for,
 		'autorisert_bestiller_uke_for': autorisert_bestiller_uke_for,
 		'programvarebruk_kontakt_for': programvarebruk_kontakt_for,
+		'kompass_godkjent_bestiller_for': kompass_godkjent_bestiller_for,
 	})
 
 
@@ -3170,16 +3186,51 @@ def recursive_group_members(request, group):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-def cmdb_api(request):
+def systemer_api(request):
+	data = []
+	query = System.objects.filter(~Q(ibruk=False))
+	for system in query:
+		line = {}
 
+		line["systemanvn"] = system.systemnavn
+		line["alias"] = system.alias
+		line["system_id"] = system.pk
+		line["systemeierskapsmodell"] = system.get_systemeierskapsmodell_display()
+
+		if system.systemeier:
+			line["systemeier"] = system.systemeier.virksomhetsforkortelse
+		if system.systemforvalter:
+			line["systemforvalter"] = system.systemforvalter.virksomhetsforkortelse
+		if system.driftsmodell_foreignkey:
+			line["plattform"] = system.driftsmodell_foreignkey.navn
+
+		kategoriliste = []
+		for kategori in system.systemkategorier.all():
+			kategoriliste.append(kategori.kategorinavn)
+		line["systemkategorier"] = kategoriliste
+
+		bruksliste = []
+		for bruk in system.systembruk_system.all():
+			bruksliste.append(bruk.brukergruppe.virksomhetsnavn)
+		line["system_brukes_av"] = bruksliste
+
+		data.append(line)
+
+	resultat = {"antall systemer": len(query), "data": data}
+	return JsonResponse(resultat, safe=False)
+
+
+def cmdb_api(request):
 	data = []
 	query = CMDBRef.objects.filter(~Q(service_classification="Business Service")).filter(operational_status=True)  # alt aktivt utenom "Business Service"
 	#dette er total galskap, men det er det behovshaver ønsker..
 	for bss in query:
 		line = {}
 		line["business_subservice_navn"] = bss.navn
+		line["sist_oppdatert"] = bss.sist_oppdatert
+		line["opprettet"] = bss.opprettet
 		line["environment"] = bss.get_environment_display()
-		line["kritikalitet"] = bss.kritikalitet
+		line["busines_criticality"] = bss.kritikalitet
 		line["service_availability"] = bss.u_service_availability
 		line["service_operation_factor"] = bss.u_service_operation_factor
 		line["service_complexity"] = bss.u_service_complexity
@@ -3187,17 +3238,6 @@ def cmdb_api(request):
 		if len(bss.system_cmdbref.all()) == 1:
 			line["tilknyttet_system"] = bss.system_cmdbref.all()[0].systemnavn
 			system = bss.system_cmdbref.all()[0]
-
-			kategoriliste = []
-			for kategori in system.systemkategorier.all():
-				kategoriliste.append(kategori.kategorinavn)
-			line["systemkategorier"] = kategoriliste
-
-			bruksliste = []
-			for bruk in system.systembruk_system.all():
-				bruksliste.append(bruk.brukergruppe.virksomhetsnavn)
-			line["system_brukes_av"] = bruksliste
-
 			if system.systemeier:
 				line["systemeier"] = system.systemeier.virksomhetsforkortelse
 			if system.systemforvalter:

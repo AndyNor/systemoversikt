@@ -178,7 +178,7 @@ urlpatterns = [
 
 	url(r'^forvaltere/api/$', views.forvalter_api, name='forvalter_api'),
 	url(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'),
-
+	url(r'^systemer/api/$', views.systemer_api, name='systemer_api'),
 
 
 	# import og konvertering
