@@ -11,15 +11,18 @@
 
 	<p>Det er ikke lagt opp til eksplisitt eierskap til data (systemer, behandlinger), men eksempelvis behandlinger og systemer er assosiert med en eller flere virksomheter og enkeltpersoner. Det er mulig å begrense mulighet for å endre et enkelt objekt til en virksomhet eller person, men det må veies opp mot de ulemper slik begrensning vil ha. Det er etablert en regel som hindrer virksomheter å endre/slette behandlinger som tilhører andre virksomheter, men ut over dette er det ingen tekniske hindringer.</p>
 
-	<p>Noe forenklet rollebeskrivelse
+	<p>Noe forenklet rollebeskrivelse.
 	<ul>
+		<li>Behandlingsansvarlig: Kan både redigere systemer og behandlinger, men ikke plattformer eller valgmenyer</li>
+		<li>Systemforvalter: Kan redigere på systemer, men bare se behandinger registrert på systemer.</li>
+		<li>Virksomhetsforvalter (virksomheter): Kan endre på detaljer om virksomhete.</li>
+		<li>Systemkategoriforvalter (systemkategori): Kan endre på valgmenyer. Krever godkjenning fra UKE før tildelign.</li>
 		<li>Administrator: Kan se og endre det meste. Noen unntak knyttet til behandlinger og systemer.</li>
-		<li>Leverandør: </li>
-		<li>Systemforvalter kan endre på systemer. Systemforvalter kan se behandinger registrert på sine systemer. En systemeier tildeles i praksis rollen som systemforvalter.</li>
-		<li>Behandlingsansvarlige kan gjøre det samme som systemforvalter, og i tillegg endre på behandlinger i virksomhetens behandlingsprotokoll.</li>
-		<li>Systemkategori(forvalter) kan endre på systemkategorier og andre valgbare felt som ønskes standardisert.</li>
-		<li>Virksomhets(forvalter) kan endre på detaljer om virksomheter.</li>
-		<li>Plattformforvalter kan administrere driftsplattformer.</li>
+		<li>Plattformforvalter: kan legge til og lette driftsplattformer.</li>
+		<li>Leverandør: Kan se CMDB-data i tillegg til alt som er åpent. (skal fases ut)</li>
+		<li>Brukertilgang: Kan se/søke i data fra PRK/AD.</li>
+		<li>CMDB: Kan se CMDB-data</li>
+		<li>Netcompany: Egen gruppe for utviklere på ITAS, tilsvarende som for "CMDB" (men med egen AD-gruppe)</li>
 	</ul>
 	</p>
 
