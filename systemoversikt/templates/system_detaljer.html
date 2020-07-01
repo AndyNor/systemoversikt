@@ -91,6 +91,10 @@
 			</button>
 		</div>
 		<div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionSystem">
+			<p>
+				<a class="btn btn-sm" href="?follow_count=1">+1 nivå</a>
+				<a class="btn btn-sm" href="?follow_count=2">+2 nivå</a>
+			</p>
 			<div class="card-body">
 				{% if avhengigheter_graf.nodes|length < 2 %}
 					<p>Ingen avhengigheter registrert</p>
@@ -998,7 +1002,7 @@
 					'shape': 'data(shape)',
 					'background-color': 'data(color)',
 					'label': 'data(name)',
-					'font-size': '14px',
+					'font-size': '15px',
 				},
 			},
 			{

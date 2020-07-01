@@ -874,6 +874,10 @@ def systemdetaljer(request, pk):
 
 	avhengigheter_graf = {"nodes": [], "edges": []}
 	observerte_driftsmodeller = set()
+	follow_count = int(request.GET.get("follow_count", 0))
+	observerte_systemer = set()
+	aktivt_nivaa_systemer = set()
+	neste_nivaa = set()
 
 	def parent(system):
 		if system.driftsmodell_foreignkey is not None:
@@ -881,55 +885,87 @@ def systemdetaljer(request, pk):
 		else:
 			return "Ukjent"
 
-	# registrere dette systemet som en node
-	avhengigheter_graf["nodes"].append({"data": { "parent": parent(system), "id": system.pk, "name": system.systemnavn, "shape": "ellipse", "color": "black" }},)
-	observerte_driftsmodeller.add(system.driftsmodell_foreignkey)
-
 	def systemfarge(self):
 		if self.er_infrastruktur():
 			return "gray"
 		else:
 			return "#dca85a"
 
-	for s in system.datautveksling_mottar_fra.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-		avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": system.pk, "linestyle": "solid" }},)
-		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
-	for s in system.system_datautveksling_avleverer_til.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-		avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": system.pk, "linestyle": "solid" }},)
-		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+	# initielt oppsett, registrere dette systemet som en node
+	aktivt_nivaa_systemer.add(system)
+	observerte_systemer.add(system)
 
-	for s in system.datautveksling_avleverer_til.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-		avhengigheter_graf["edges"].append({"data": { "source": system.pk, "target": s.pk, "linestyle": "solid" }},)
-		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
-	for s in system.system_datautveksling_mottar_fra.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-		avhengigheter_graf["edges"].append({"data": { "source": system.pk, "target": s.pk, "linestyle": "solid" }},)
-		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+	def avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa):
+		for aktuelt_system in aktivt_nivaa_systemer:
 
-	for s in system.avhengigheter_referanser.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-		avhengigheter_graf["edges"].append({"data": { "source": system.pk, "target": s.pk, "linestyle": "dashed" }},)
-		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
-	for s in system.system_avhengigheter_referanser.all():
-		avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-		avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": system.pk, "linestyle": "dashed" }},)
-		observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+			avhengigheter_graf["nodes"].append({"data": { "parent": parent(aktuelt_system), "id": aktuelt_system.pk, "name": aktuelt_system.systemnavn, "shape": "ellipse", "color": "black" }},)
+			observerte_driftsmodeller.add(aktuelt_system.driftsmodell_foreignkey)
 
-	for p in system.programvarer.all():
-		avhengigheter_graf["nodes"].append({"data": { "id": ("p%s" % p.pk), "name": p.programvarenavn, "shape": "ellipse", "color": "#64c14c", "href": reverse('programvaredetaljer', args=[p.pk]) }},)
-		avhengigheter_graf["edges"].append({"data": { "source": system.pk, "target": ("p%s" % p.pk), "linestyle": "dashed" }},)
+			mottar_fra = set()  # et set har kun unike verdier
+			for s in aktuelt_system.datautveksling_mottar_fra.all():
+				mottar_fra.add(s)
+			for s in aktuelt_system.system_datautveksling_avleverer_til.all():
+				mottar_fra.add(s)
+			for s in mottar_fra:
+				if s not in observerte_systemer:
+					neste_nivaa.add(s)
+				observerte_systemer.add(s)
+				avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
+				avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": aktuelt_system.pk, "linestyle": "solid" }},)
+				observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+
+			avleverer_til = set()  # et set har kun unike verdier
+			for s in aktuelt_system.datautveksling_avleverer_til.all():
+				avleverer_til.add(s)
+			for s in aktuelt_system.system_datautveksling_mottar_fra.all():
+				avleverer_til.add(s)
+			for s in avleverer_til:
+				if s not in observerte_systemer:
+					neste_nivaa.add(s)
+				observerte_systemer.add(s)
+				avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
+				avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, "target": s.pk, "linestyle": "solid" }},)
+				observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+
+			for s in aktuelt_system.avhengigheter_referanser.all():
+				if s not in observerte_systemer:
+					neste_nivaa.add(s)
+				observerte_systemer.add(s)
+				avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
+				avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, "target": s.pk, "linestyle": "dashed" }},)
+				observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+
+			for s in aktuelt_system.system_avhengigheter_referanser.all():
+				if s not in observerte_systemer:
+					neste_nivaa.add(s)
+				observerte_systemer.add(s)
+				avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
+				avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": aktuelt_system.pk, "linestyle": "dashed" }},)
+				observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+
+			for p in aktuelt_system.programvarer.all():
+				avhengigheter_graf["nodes"].append({"data": { "id": ("p%s" % p.pk), "name": p.programvarenavn, "shape": "ellipse", "color": "#64c14c", "href": reverse('programvaredetaljer', args=[p.pk]) }},)
+				avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, "target": ("p%s" % p.pk), "linestyle": "dashed" }},)
+
+			# legger neste nivås systemer inn i gjendende nivå, klar for neste runde
+			aktivt_nivaa_systemer = neste_nivaa
+			neste_nivaa = set()
+
+			return aktivt_nivaa_systemer, neste_nivaa
+
+	aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
+	while follow_count > 0 and aktivt_nivaa_systemer: # det må være noen systemer å gå igjennom..
+		aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
+		follow_count-=1
+
 
 	# legge til alle driftsmodeller som ble funnet
 	for driftsmodell in observerte_driftsmodeller:
 		if driftsmodell is not None:
 			avhengigheter_graf["nodes"].append({"data": { "id": driftsmodell.navn }},)
 
-		#url?
-		#avtale drift?
-		#avtale system?
+
+
 
 	siste_endringer_antall = 10
 	system_content_type = ContentType.objects.get_for_model(system)

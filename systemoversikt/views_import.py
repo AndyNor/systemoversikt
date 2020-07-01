@@ -390,7 +390,7 @@ def import_cmdb_servers(request):
 				cmdbdevice.comp_cpu_count = convertToInt(record["comp_cpu_count"])
 				cmdbdevice.comp_cpu_name = record["comp_cpu_name"]
 				cmdbdevice.comp_u_cpu_total = convertToInt(record["comp_u_cpu_total"])
-				cmdbdevice.comp_ram = convertToInt(record["comp_ram"])
+				#cmdbdevice.comp_ram = convertToInt(record["comp_ram"])
 
 				try:
 					sub_name = CMDBRef.objects.get(navn=record["sub_name"])
