@@ -99,7 +99,11 @@
 				{% if avhengigheter_graf.nodes|length < 2 %}
 					<p>Ingen avhengigheter registrert</p>
 				{% else %}
-					<div id="cy" style="width: 100%; height: 400px;"></div>
+					{% if follow_count > 0 %}
+						<div id="cy" style="width: 100%; height: 1000px;"></div>
+					{% else %}
+						<div id="cy" style="width: 100%; height: 400px;"></div>
+					{% endif %}
 					<p>Gule er vanlige systemer. Grå er infrastruktur. Grønn er programvare. Hele piler er utlevering av informasjon i pilens retning. Stiplede er systemavhengigheter. Du kan trykke på en runding for å gå til valgte systemdetaljer.</p>
 				{% endif %}
 			</div>

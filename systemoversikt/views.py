@@ -875,6 +875,7 @@ def systemdetaljer(request, pk):
 	avhengigheter_graf = {"nodes": [], "edges": []}
 	observerte_driftsmodeller = set()
 	follow_count = int(request.GET.get("follow_count", 0))
+	original_follow_count = follow_count
 	observerte_systemer = set()
 	aktivt_nivaa_systemer = set()
 	neste_nivaa = set()
@@ -1001,6 +1002,7 @@ def systemdetaljer(request, pk):
 		'siste_endringer': siste_endringer,
 		'siste_endringer_antall': siste_endringer_antall,
 		'avhengigheter_graf': avhengigheter_graf,
+		'follow_count': original_follow_count,
 	})
 
 
