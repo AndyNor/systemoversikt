@@ -18,6 +18,10 @@
 		<a href="{{url_system_til_programvare_indeks}}" class="btn btn-sm btn-link {% if url_system_til_programvare_indeks in request.path %}fremhev{% endif %}">Konverter til programvare</a>
 	{% endif %}
 
+	{% if user.is_authenticated %}
+		<a href="/admin/systemoversikt/system/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer nytt system</a>
+	{% endif %}
+
 	{% block ekstrameny_system %}{% endblock ekstrameny_system %}
 
 

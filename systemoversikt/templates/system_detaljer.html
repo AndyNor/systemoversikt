@@ -988,6 +988,7 @@
 	var cy = cytoscape({
 		zoomingEnabled: true,
 		panningEnabled: true,
+		wheelSensitivity: 0.2,
 		container: document.getElementById('cy'),
 		elements: {
 			nodes: [
@@ -1052,6 +1053,6 @@
 			}
 		}
 	});
-	cy.zoomingEnabled = false;
+
 </script>
 {% endblock script_append %}
