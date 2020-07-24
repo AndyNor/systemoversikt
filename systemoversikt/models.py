@@ -643,6 +643,24 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 	def save_user_profile(sender, instance, **kwargs):
 		instance.profile.save()
 
+	def org_tilhorighet(self):
+		try:
+			enhet = self.org_unit
+			enhet_str = "%s" % (enhet)
+			current_level = enhet.level
+			while current_level > 3:  # level 2 er virksomheter, så vi ønsket et nivå ned (en verdi opp).
+				mor_enhet = enhet.direkte_mor
+				enhet_str = "%s - %s" % (mor_enhet, enhet_str)
+				mor_level = mor_enhet.level
+				if current_level > mor_level:
+					enhet = mor_enhet
+					current_level = mor_level
+				else:
+					break
+			return enhet_str
+		except:
+			return "Ukjent tilhørighet"
+
 
 class Klientutstyr(models.Model):
 	opprettet = models.DateTimeField(

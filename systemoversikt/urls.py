@@ -143,6 +143,7 @@ urlpatterns = [
 	# leading space eller #, samt trailing space er heller ikke tillatt, men vi gjør ikke noe med dem.
 	url(r'^cmdb/ad/lookup/recursive/(?P<group>[^#\+\"\\\<\>\;]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
 	url(r'^cmdb/ad/lookup/exact/(?P<name>[^#\+\"\\\<\>\;]{2,200})/$', views.ad_exact, name='ad_exact'),
+	url(r'^cmdb/prk/userlookup/$', views.prk_userlookup, name='prk_userlookup'),
 
 	url(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	url(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),

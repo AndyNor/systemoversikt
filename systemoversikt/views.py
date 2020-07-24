@@ -1580,6 +1580,43 @@ def virksomhet_enheter(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def prk_userlookup(request):
+	"""
+	Vise informasjon om vilkårlige brukere
+	Tilgjengelig for de som kan se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+		if request.POST:
+			import re
+			query = request.POST.get('query', '').strip()
+			users = re.findall(r"([^,;\t\s\n\r]+)", query)
+			users_result = []
+			for item in users:
+				try:
+					u = User.objects.get(username__iexact=item)
+					users_result.append({
+						"username": u.username,
+						"organization": u.profile.org_tilhorighet,
+						"accountdisable": u.profile.accountdisable,
+						"name": u.profile.displayName,
+						})
+				except:
+					messages.warning(request, 'Fant ikke info på "%s"' % (item))
+					continue
+
+		else:
+			users_result = []
+			query = ""
+
+		return render(request, 'prk_userlookup.html', {
+			"query": query,
+			"users": users_result,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def virksomhet_prkadmin(request, pk):
 	"""
 	Vise alle PRK-administratorer for angitt virksomhet

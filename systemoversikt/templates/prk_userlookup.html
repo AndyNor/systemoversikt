@@ -1,0 +1,49 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Søk opp detaljer på brukernavn
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<form action="{% url 'prk_userlookup' %}" method="POST" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group form-inline">
+			<textarea rows="3" cols="50" style="width: 500px; height: 150px;" name="query"
+			placeholder="Liste med brukernavn, separert med space, semikolon eller komma." class="form-control form-control-sm">{{ query }}</textarea>
+			<input style="margin-left: 10px;" type="submit" value="Slå opp" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	<hr>
+	<p>Oppslag kan ta lang tid dersom mange brukernavn legges inn.
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Brukernavn</th>
+		<th>Navn</th>
+		<th>Aktiv bruker?</th>
+		<th>PRK-tilhørighet</th>
+	</thead>
+	<tbody>
+	{% for u in users %}
+		<tr>
+			<td>{{u.username}}</td>
+			<td>{{u.name}}</td>
+			<td>{{u.accountdisable|yesno:"Nei,Ja,Ukjent"}}</td>
+			<td>{{u.organization}}</td>
+		</tr>
+	{% empty %}
+		<tr>
+			<td colspan="3">Ingen ting å vise</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}
