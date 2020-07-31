@@ -104,14 +104,14 @@
 		<h6>Statistikk</h6>
 		<div class="row">
 			<div class="col-sm-12">
-				<li>X systemer i bruk</li>
-				<li>X systemer vi eier. {{ system_ikke_kvalitetssikret }} er ikke kvalitetssikret.</li>
-				<li>X systemer forvalter</li>
-				<li>X behandlinger. {{ behandling_ikke_kvalitetssikret }} er ikke kvalitetssikret</li>
-				<li>X systemer drifter (delt opp i ordinære og infrastruktur)</li>
+				<li>{{ant_systemer_bruk}} systemer i bruk</li>
+				<li>{{ant_systemer_eier}} systemer vi er systemeier for ({{ systemeier_ikke_kvalitetssikret }} er ikke kvalitetssikret).</li>
+				<li>{{ant_systemer_forvalter}} systemer vi er systemforvalter for ({{ systemforvalter_ikke_kvalitetssikret }} er ikke kvalitetssikret).</li>
+				<li>{{ant_behandlinger}} egne behandlinger ({{ behandling_ikke_kvalitetssikret }} er ikke kvalitetssikret). Delte behandlinger telles ikke med.</li>
+				<li>{{systemer_drifter}} systemer vi drifter</li>
 				<li>{{ deaktiverte_brukere }} ansvarlige som har deaktivert bruker</li>
-				<li>{{ antall_brukere }} aktive interne brukere i AD</li>
-				<li>{{ antall_eksterne_brukere }} aktive eksterne brukere i AD</li>
+				<li>{{ antall_brukere }} aktive interne brukere i brukerkatalogen</li>
+				<li>{{ antall_eksterne_brukere }} aktive eksterne brukere i brukerkatalogen</li>
 			</div>
 		</div>
 

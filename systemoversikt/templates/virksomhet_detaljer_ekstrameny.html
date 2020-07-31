@@ -34,6 +34,8 @@
 
 
 	<hr>
+	{% url 'virksomhet_arkivplan' pk=virksomhet.pk as url_arkivplan %}
+		<a href="{{ url_arkivplan }}" class="btn btn-sm btn-link {% if url_arkivplan in request.path %}fremhev{% endif %}">🌼 {{virksomhet.virksomhetsforkortelse}}s arkivplan</a>
 
 	{% url 'avtalervirksomhet' virksomhet=virksomhet.pk as url_avtalervirksomhet %}
 		<a href="{{ url_avtalervirksomhet }}" class="btn btn-sm btn-link {% if url_avtalervirksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s avtaler</a>
@@ -70,4 +72,6 @@
 	{% url 'innsyn_virksomhet' pk=virksomhet.pk as url_innsyn_virksomhet %}
 		<a href="{{ url_innsyn_virksomhet }}" class="btn btn-sm btn-link {% if url_innsyn_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s innsynsmodul</a>
 	{% endif %}
+
+	<br><br>
 

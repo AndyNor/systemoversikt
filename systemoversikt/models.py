@@ -2564,6 +2564,11 @@ class System(models.Model):
 			blank=True,
 			help_text=u"Disse personene er autorisert for å bestille endringer på systemet. Kan være andre enn forvaltere.",
 			)
+	er_arkiv = models.BooleanField(
+			verbose_name="Er systemet et arkiv?",
+			default=False,
+			help_text=u"Krysses av dersom systemet er et arkivsystem i henhold til arkivlovverk.",
+			)
 	history = HistoricalRecords()
 
 	def __str__(self):

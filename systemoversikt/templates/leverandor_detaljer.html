@@ -17,13 +17,30 @@
 <div class="card">
 	<div class="card-body">
 		<h6>{{ leverandor.notater|default:'Ingen notater' }}</h6>
-		<b>{% get_verbose_field_name leverandor "orgnummer" %}:</b> {{ leverandor.orgnummer|default:'Ukjent' }}<br>
-		<b>{% get_verbose_field_name leverandor "kontaktpersoner" %}:</b> {{ leverandor.kontaktpersoner|default:'Ukjent' }}<br>
+		<b>{% get_verbose_field_name leverandor "orgnummer" %}:</b> {{ leverandor.orgnummer|default:'Ukjent' }}<br><br>
+		<b>{% get_verbose_field_name leverandor "kontaktpersoner" %}:</b> {{ leverandor.kontaktpersoner|default:'Ukjent' }}<br><br>
 		<b>Avtaler med leverandøren</b>
 			<ul>
 			{% for avtale in leverandor.databehandleravtale_leverandor.all %}
 				{% url 'avtaledetaljer' avtale.pk as url_avtaledetaljer %}
 				<li><a href="{{ url_avtaledetaljer }}">{{ avtale }}</a></li>
+			{% endfor %}
+			</ul>
+		<b>Sikkerhetstester utført av leverandøren</b>
+			<ul>
+			{% for test in sikkerhetstester %}
+				<li><a href="/admin/systemoversikt/sikkerhetstester/{{test.pk}}/change/">{{ test }}</a></li>
+			{% endfor %}
+			</ul>
+		<b>Plattformer driftet av leverandøren</b>
+			<ul>
+			{% for plattform in plattformer %}
+				{% url 'detaljer_driftsmodell' plattform.pk as url_plattform %}
+				<li><a href="{{ url_plattform }}">{{ plattform }}</a></li>
+			{% endfor %}
+			{% for plattform in plattformer_underleverandor %}
+				{% url 'detaljer_driftsmodell' plattform.pk as url_plattform %}
+				<li><a href="{{ url_plattform }}">{{ plattform }} (underleverandør)</a></li>
 			{% endfor %}
 			</ul>
 	</div>

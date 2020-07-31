@@ -1695,21 +1695,35 @@ def virksomhet(request, pk):
 	antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
 	antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
 
-	system_ikke_kvalitetssikret = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).filter(informasjon_kvalitetssikret=False).count()
+	systemforvalter_ikke_kvalitetssikret = System.objects.filter(systemforvalter=pk).filter(informasjon_kvalitetssikret=False).count()
+	systemeier_ikke_kvalitetssikret = System.objects.filter(systemeier=pk).filter(informasjon_kvalitetssikret=False).count()
+
 	deaktiverte_brukere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).filter(brukernavn__profile__accountdisable=True).count()
+	ant_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).count()
 	behandling_ikke_kvalitetssikret = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(informasjon_kvalitetssikret=False).count()
 
+	ant_systemer_bruk = SystemBruk.objects.filter(brukergruppe=pk).count()
+	ant_systemer_eier = System.objects.filter(systemeier=pk).count()
+	ant_systemer_forvalter = System.objects.filter(systemforvalter=pk).count()
 	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=3)
+
+	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk).filter(~Q(ibruk=False)).count()
 
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
 		'virksomhet': virksomhet,
 		'antall_brukere': antall_brukere,
 		'antall_eksterne_brukere': antall_eksterne_brukere,
-		'system_ikke_kvalitetssikret': system_ikke_kvalitetssikret,
+		'systemforvalter_ikke_kvalitetssikret': systemforvalter_ikke_kvalitetssikret,
+		'systemeier_ikke_kvalitetssikret': systemeier_ikke_kvalitetssikret,
 		'deaktiverte_brukere': deaktiverte_brukere,
+		'ant_behandlinger': ant_behandlinger,
 		'behandling_ikke_kvalitetssikret': behandling_ikke_kvalitetssikret,
 		'enheter': enheter,
+		'ant_systemer_bruk': ant_systemer_bruk,
+		'ant_systemer_eier': ant_systemer_eier,
+		'ant_systemer_forvalter': ant_systemer_forvalter,
+		'systemer_drifter': systemer_drifter,
 	})
 
 
@@ -1826,6 +1840,18 @@ def alle_virksomheter(request):
 	})
 
 
+def virksomhet_arkivplan(request, pk):
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+
+	systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet).filter(system__er_arkiv=True)
+
+	return render(request, 'virksomhet_arkivplan.html', {
+		'request': request,
+		'virksomhet': virksomhet,
+		'systembruk': systembruk,
+	})
+
 def leverandor(request, pk):
 	"""
 	Vise detaljer for en valgt leverandør
@@ -1838,6 +1864,9 @@ def leverandor(request, pk):
 	basisdriftleverandor_for = System.objects.filter(basisdriftleverandor=pk)
 	applikasjonsdriftleverandor_for = System.objects.filter(applikasjonsdriftleverandor=pk)
 	registrar_for = SystemUrl.objects.filter(registrar=pk)
+	sikkerhetstester = Sikkerhetstester.objects.filter(testet_av=pk)
+	plattformer = Driftsmodell.objects.filter(leverandor=pk)
+	plattformer_underleverandor = Driftsmodell.objects.filter(underleverandorer=pk)
 	return render(request, 'leverandor_detaljer.html', {
 		'request': request,
 		'leverandor': leverandor,
@@ -1847,6 +1876,9 @@ def leverandor(request, pk):
 		'basisdriftleverandor_for': basisdriftleverandor_for,
 		'applikasjonsdriftleverandor_for': applikasjonsdriftleverandor_for,
 		'registrar_for': registrar_for,
+		'sikkerhetstester': sikkerhetstester,
+		'plattformer': plattformer,
+		'plattformer_underleverandor': plattformer_underleverandor,
 	})
 
 

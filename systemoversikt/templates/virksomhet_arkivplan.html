@@ -1,0 +1,72 @@
+{% extends "virksomhet_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny %}
+
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Arkivplan for {{ virksomhet.virksomhetsforkortelse }}
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+	<p>Her vises systemer vi har arkivverdig informasjon i.</p>
+
+
+	<table class="tablesorter excel">
+		<thead>
+		<tr>
+			<th>Systemnavn</th>
+			<th>Tatt i bruk </th>
+			<th>Avsluttet</th>
+			<th>Funksjonsområde</th>
+			<th>Arkivserier</th>
+			<th>Innhold</th>
+			<th>Lisensinnehaver</th>
+			<th>Brukergrupper</th>
+			<th>Systemansvarlig</th>
+			<th>Driftsansvarlig</th>
+			<th>Relasjon til andre elektroniske system</th>
+			<th>Leverandør</th>
+			<th>Databaseplattform</th>
+			<th>Produksjonsformat</th>
+			<th>Arkivformat</th>
+			<th>Kassasjon</th>
+			<th>Hjemmel for kassasjon</th>
+			<th>Uttrekk/langtidsbevaring</th>
+			<th>Overføring</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for bruk in systembruk %}
+			<tr>
+				<td>{{bruk.system}}</td>
+				<td>Dato for når det elektroniske systemet ble tatt i bruk (DD.MM.ÅÅÅÅ)</td>
+				<td>Dato for når det elektroniske systemet ble avsluttet/stengt for registrering (DD.MM.ÅÅÅÅ)</td>
+				<td>Hvilke funksjoner eller prosesser i virksomheten systemet brukes til.</td>
+				<td>Hvilke arkivserier produseres i systemet? En arkivserie er en del av et arkiv som er ordnet etter ett og samme prinsipp, for eksempel sak-/arkiv eller objektarkiv</td>
+				<td>Hvilken type informasjon inneholder det elektroniske systemet? Inneholder det for eksempel saksdokumenter som er journalføringspliktige etter arkivforskriften § 9? Inneholder det for eksempel registerinformasjon, klientinformasjon, informasjon fra elektronisk journal eller et elektronisk system for kart- og tegninger? Er det strukturert eller ustrukturert informasjon? Arkiveres det i systemet, i en integrert Noark-arkivkjerne eller på papir?</td>
+				<td>Navn (som regel navn på organ, for eksempel kommune eller statlig virksomhet). Har systemet hatt tidligere lisensinnehavere?</td>
+				<td>Hvem er brukere av det elektroniske systemet?</td>
+				<td>{{bruk.system.systemeier}} ved {{bruk.system.systemeier_kontaktpersoner_referanse.all.0}}</td>
+				<td>{{bruk.system.driftsmodell_foreignkey.ansvarlig_virksomhet|default:"Ukjent"}}</td>
+				<td>Har det elektroniske systemet relasjon til andre systemer? Er det for eksempel koblinger/integrasjoner mot det sentrale sak-/arkivsystemet eller en ekstern Noark-kjerne? Er det for eksempel koblinger eller overføring av informasjon fra andre organ til det elektroniske systemet?</td>
+				<td>{{bruk.system.systemleverandor.all.0}}</td>
+				<td>{{bruk.system.database_in_use.all.0|default:"Ukjent"}}</td>
+				<td>Navn på produksjonsformatet. Et produksjonsformat er et format som et elektronisk dokument er produsert i. Det kan være filformat som for eksempel MS Word (*.doc/*.docx), Excel(*.xls/*.xlsl), Text (*.txt), Rich Text (*.rtf) eller andre tekstbehandlingsformater som ikke er PDF/PDF-A.</td>
+				<td>Navn på arkivformat dersom systemet konverterer til arkivformat, for eksempel PDF-A. Et arkivformat er et standardisert format for elektronisk arkivering og langtidslagring av dokumenter. Riksarkivarens forskrift gir nærmere beskrivelser av godkjente arkivformater.</td>
+				<td>Med kassasjon menes å destruere eller på annen måte tilintetgjøre innholdet i et system. Skal systemet eller enkeltdokumenter i systemet kasseres? Ja/nei.</td>
+				<td>Hvis Ja for kassasjon, hvilken hjemmel? Riksarkivarens forskrift gir nærmere retningslinjer av hva som skal langtidsbevares, i tillegg til fastsettelse av kassasjonsfrister.</td>
+				<td>Hvordan skal arkivverdig informasjon hentes ut av systemet for langtidsbevaring? Hvilken metode for arkivuttrekk skal benyttes? Skal det for eksempel foretas Noark-uttrekk eller tabell-uttrekk ? Dersom innholdet i systemet skal langtidslagres gjennom papirutskrifter, skal dette stå her.</td>
+				<td>Beskriv hvilket arkivdepot som skal langtidsbevare arkivmaterialet. Når skal overføring til arkivdepot skje?</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock hovedinnhold %}
