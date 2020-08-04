@@ -32,10 +32,15 @@ class Command(BaseCommand):
 				url = reverse("ansvarlig",args=[ansvarlig.pk])
 				fornavn = ansvarlig.brukernavn.first_name
 
-				subject = "Systemeierforum 16.04: Hvordan skaper man løsninger med god brukskvalitet?"
+				subject = "Systemeierforum 19.08: Datasentermigrering og ny erstatter for PRK"
 				reply_to = "thomas.rigvar@byr.oslo.kommune.no"
 				recipients = [ansvarlig.brukernavn.email]
 				message = '''\
+
+Neste møte i Systemeierforum blir 19.august kl 9-11. På programmet har vi to viktige prosesser som vil berøre de fleste systemeiere:
+1.	Vi flytter til SopraSterias driftsplattform. Lær mer om hva du som systemeier trenger å forberede
+2.	Oslo kommune bytter ut PRK med en ny, selvbetjent løsning for styring av tilganger.
+Hold av tiden i kalenderen allerede nå!
 
 ---
 
