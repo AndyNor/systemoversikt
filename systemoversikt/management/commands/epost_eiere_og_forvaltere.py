@@ -41,9 +41,9 @@ Kommende Systemeierforum 19.august holdes kl 9-11. På programmet har vi to vikt
 1.	Vi flytter til SopraSterias driftsplattform. Lær mer om hva du som systemeier trenger å forberede
 2.	Oslo kommune bytter ut PRK med en ny, selvbetjent løsning for styring av tilganger.
 
-Link til møte på Teams: <https://teams.microsoft.com/l/meetup-join/19%3ameeting_ODgyNTUxOTgtYzBiMy00OWE2LTkzOWEtNjk5NzQ2MTUwN2Zi%40thread.v2/0?context=%7b%22Tid%22%3a%22e6795081-6391-442e-9ab4-5e9ef74f18ea%22%2c%22Oid%22%3a%2240bc54f7-2595-4beb-80f3-64b7621107fa%22%7d
+Link til møte på Teams: https://teams.microsoft.com/l/meetup-join/19%3ameeting_ODgyNTUxOTgtYzBiMy00OWE2LTkzOWEtNjk5NzQ2MTUwN2Zi%40thread.v2/0?context=%7b%22Tid%22%3a%22e6795081-6391-442e-9ab4-5e9ef74f18ea%22%2c%22Oid%22%3a%2240bc54f7-2595-4beb-80f3-64b7621107fa%22%7d
 
-Se forøvrig innlegg på Workplace: https://oslo.workplace.com/groups/systemeierforum/permalink/619634115636107/
+Se for øvrig innlegg på Workplace: https://oslo.workplace.com/groups/systemeierforum/permalink/619634115636107/
 
 ---
 
