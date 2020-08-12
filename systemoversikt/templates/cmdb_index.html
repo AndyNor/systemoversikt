@@ -17,12 +17,15 @@
 		{% url 'servere_utfaset' as url_servere_utfaset %}
 		<a href="{{url_servere_utfaset}}" class="btn btn-sm btn-link {% if url_servere_utfaset in request.path %}fremhev{% endif %}" >Utfasede servere</a>
 
+		{% if perms.systemoversikt.change_cmdbref %}
 		<hr>
 		<p style="color: grey;">Import</p>
 		<a href="{% url 'import_bsbss' %}" class="btn btn-sm btn-link" >⚙️ Importer bs/bss</a>
 		<a href="{% url 'import_servers' %}" class="btn btn-sm btn-link" >⚙️ Importer maskiner</a>
+		<a href="{% url 'import_cmdb_disk' %}" class="btn btn-sm btn-link" >⚙️ Importer disker</a>
 		<a href="{% url 'import_databases' %}" class="btn btn-sm btn-link" >⚙️ Importer mssql</a>
 		<a href="{% url 'import_cmdb_databases_oracle' %}" class="btn btn-sm btn-link" >⚙️ Importer oracle</a>
+		{% endif %}
 
 
 	{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}

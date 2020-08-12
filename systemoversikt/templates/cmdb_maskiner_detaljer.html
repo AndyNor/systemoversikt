@@ -24,8 +24,9 @@
 			<thead>
 			<tr>
 				<th>Computer name / hostname</th>
+				<th>Aktiv?</th>
 				<th>Service portfolio</th>
-				<th>Disk space</th>
+				<th width="25%">Disk space</th>
 				<th>CPU speed</th>
 				<th>RAM (MB)</th>
 				<th>IP-address</th>
@@ -42,8 +43,19 @@
 			{% for item in cmdbdevices.all %}
 			<tr {% if not item.active %} style="color: #d6d6d6;" {% endif %}>
 				<td>{{ item.comp_name|default:"-" }}</td>
+				<td>{% include 'site_janeivetikke.html' with boolean=item.active %}</td>
 				<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
-				<td>{{ item.comp_disk_space|default:"-" }}</td>
+				<td>
+					{{ item.comp_disk_space|default:"-" }} GB (total?)
+					<br><br>
+					{% for disk in item.cmdbdisk_computer.all %}
+						{% if disk.operational_status %}
+							<li>
+							{{ disk.file_system}} {{disk.free_space_bytes|filesizeformat}} of {{disk.size_bytes|filesizeformat}} ({{ disk.mount_point|truncatechars:35 }})</li>
+						{% endif %}
+					{% endfor %}
+
+				</td>
 				<td>{{ item.comp_cpu_speed|default:"-" }}</td>
 				<td>{{ item.comp_ram|default:"-" }}</td>
 				<td>{{ item.comp_ip_address|default:"-" }}</td>

@@ -1052,7 +1052,16 @@ class AutorisertBestillerAdmin(SimpleHistoryAdmin):
 @admin.register(CMDBdevice)
 class CMDBdeviceAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
-	search_fields = ('comp_name',)
+	list_display = ('comp_name', 'comp_sys_id', 'comp_location', 'active',)
+	search_fields = ('comp_name', 'comp_sys_id')
+	list_filter = ('comp_location', 'active',)
+
+
+@admin.register(CMDBDisk)
+class UserChangeLogAdmin(admin.ModelAdmin):
+	list_display = ('mount_point', 'operational_status', 'file_system', 'size_bytes', 'free_space_bytes', 'computer_ref', 'computer' )
+	search_fields = ('computer',)
+	list_filter = ('file_system', 'operational_status', )
 
 
 @admin.register(Loggkategori)

@@ -1114,16 +1114,21 @@ class CMDBRef(models.Model):
 			)
 
 	#hva brukes denne til? (ser ikke ut til å være i bruk lenger, til fordel for "operational_status")
-	aktiv = models.NullBooleanField(
-			verbose_name="Er dette CMDB-innslaget fortsatt gyldig?",
-			blank=True, null=True,
-			help_text=u"Ja eller nei",
-			)
+	#aktiv = models.NullBooleanField(
+	#		verbose_name="Er dette CMDB-innslaget fortsatt gyldig?",
+	#		blank=True, null=True,
+	#		help_text=u"Ja eller nei",
+	#		)
 	navn = models.CharField(unique=True,
 			verbose_name="CMDB-navn",
 			max_length=600,
 			blank=False, null=False,
 			help_text=u"Navn i CMDB. Maks 300 tegn. Må være unik.",
+			)
+	parent = models.TextField(
+			verbose_name="Parent",
+			blank=True, null=True,
+			help_text=u"Importert: biz_name",
 			)
 	environment = models.IntegerField(choices=CMDB_ENV_VALG,
 			verbose_name="Miljø",
@@ -1315,12 +1320,12 @@ class CMDBdevice(models.Model):
 			blank=True, null=True,
 			help_text=u"",
 			)
-	bs_u_service_portfolio = models.CharField(  # samme som "sub_u_service_portfolio"
-			verbose_name="Business portfolio",
-			max_length=600,
-			blank=True, null=True,
-			help_text=u"",
-			)
+	#bs_u_service_portfolio = models.CharField(  # samme som "sub_u_service_portfolio"
+	#		verbose_name="Business portfolio",
+	#		max_length=600,
+	#		blank=True, null=True,
+	#		help_text=u"",
+	#		)
 	sub_name = models.ManyToManyField(CMDBRef, related_name='cmdbdevice_sub_name',
 			verbose_name="Business Sub Service",
 			blank=True,
@@ -1381,7 +1386,18 @@ class CMDBdevice(models.Model):
 			blank=True, null=True,
 			help_text=u"",
 			)
-
+	comp_location = models.CharField(
+			verbose_name="Datasenter",
+			max_length=200,
+			blank=True, null=True,
+			help_text=u"",
+			)
+	comp_sys_id = models.CharField(
+			verbose_name="Computer ID",
+			max_length=200,
+			blank=True, null=True,
+			help_text=u"",
+			)
 	dns = models.CharField(
 			verbose_name="DNS",
 			max_length=200,
@@ -1414,6 +1430,69 @@ class CMDBdevice(models.Model):
 	class Meta:
 		verbose_name_plural = "CMDB-enhet"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class CMDBDisk(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	operational_status = models.BooleanField(
+			verbose_name="operational_status",
+			default=False,
+			)
+	size_bytes = models.IntegerField(
+			verbose_name="Size in bytes",
+			blank=True, null=True,
+			)
+	#capacity = models.IntegerField(
+	#		verbose_name="capacity",
+	#		blank=True, null=True,
+	#		)
+	mount_point = models.TextField(
+			verbose_name="mount_point",
+			unique=False,
+			null=True
+			)
+	#available_space = models.IntegerField(
+	#		verbose_name="available_space",
+	#		blank=True, null=True,
+	#		)
+	file_system = models.TextField(
+			verbose_name="file_system",
+			unique=False,
+			null=True
+			)
+	free_space_bytes = models.IntegerField(
+			verbose_name="free_space_bytes",
+			blank=True, null=True,
+			)
+	computer = models.CharField(
+			verbose_name="Computer ID",
+			max_length=200,
+			blank=True, null=True,
+			help_text=u"",
+			)
+	computer_ref = models.ForeignKey("CMDBdevice", related_name='cmdbdisk_computer',
+			on_delete=models.CASCADE,
+			verbose_name="Computer ref",
+			blank=True, null=True,
+			help_text=u"Mor-gruppe (importert)",
+			)
+	unique_together = ('computer', 'mount_point')
+	# med vilje er det ikke HistoricalRecords() på denne da den importeres
+
+	def __str__(self):
+		return u'%s' % (self.size_bytes)
+
+	class Meta:
+		verbose_name_plural = "CMDB-disk"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
 
 
 class ADOrgUnit(models.Model):

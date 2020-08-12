@@ -2834,7 +2834,7 @@ def cmdbdevice(request, pk):
 	required_permissions = 'systemoversikt.view_cmdbref'
 	if request.user.has_perm(required_permissions):
 		cmdbref = CMDBRef.objects.get(pk=pk)
-		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref)
+		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref).order_by("-active")
 		databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
 
 		return render(request, 'cmdb_maskiner_detaljer.html', {

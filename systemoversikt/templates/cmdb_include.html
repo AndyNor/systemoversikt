@@ -4,12 +4,14 @@
 <tr>
 	<th>Dato opprettet</th>
 	<th>Dato oppdatert</th>
-	<th>Business Service-navn</th>
+	<th>Aktiv?</th>
+	<th>Business Service</th>
+	<th>Business Sub Service</th>
 	<th>Service classification</th>
 	<th>Antall servere</th>
 	<th>Tilknyttet system</th>
 	<th>I bruk</th>
-	<th>B</th>
+	{% comment %}<th>B</th>{% endcomment %}
 	{% comment %}<th>Kommentar</th>{% endcomment %}
 	<th>Miljø</th>
 	<th>Kritikalitet</th>
@@ -35,6 +37,8 @@
 		{{ item.opprettet|date:'Y-m-d' }}
 	</td>
 	<td>{{ item.sist_oppdatert|date:'Y-m-d' }}</td>
+	<td>{% include 'site_janeivetikke.html' with boolean=item.operational_status %}</td>
+	<td>{{ item.parent|default:'?' }}</td>
 	<td>
 		{% comment %}
 			{% if user.is_authenticated %}
@@ -59,7 +63,7 @@
 		{% endfor %}
 	</td>
 	<td>{{ item.get_operational_status_display|default:"-" }}</td>
-	<td>{{ item.u_service_billable|yesno:"Ja,Nei,Ukjent" }}</td>
+	{% comment %}<td>{{ item.u_service_billable|yesno:"Ja,Nei,Ukjent" }}</td>{% endcomment %}
 	{% comment %}<td>{{ item.comments|default:"-"|truncatewords:6 }}</td>{% endcomment %}
 	<td>{{ item.get_environment_display|default:"-" }}</td>
 	<td>{{ item.get_kritikalitet_display|default:"X ukjent" }}</td>
