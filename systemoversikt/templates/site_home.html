@@ -34,8 +34,8 @@
 				<p>De {{nyeste_programvarer.count}} nyeste:</p>
 				<ol style="column-count: 2;">
 				{% for programvare in nyeste_programvarer %}
-					{% url "systemdetaljer" programvare.pk as url_systemdetaljer %}
-					<li><a href="{{ url_systemdetaljer }}">{{ programvare.programvarenavn }}</a></li>
+					{% url "programvaredetaljer" programvare.pk as url_programvaredetaljer %}
+					<li><a href="{{ url_programvaredetaljer }}">{{ programvare.programvarenavn }}</a></li>
 				{% endfor %}
 				</ol>
 

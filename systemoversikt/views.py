@@ -3365,7 +3365,7 @@ def cmdb_api(request):
 		line["antall_databaser"] = bss.ant_databaser()
 
 		serverliste = []
-		for server in bss.cmdbdevice_sub_name.all():
+		for server in bss.cmdbdevice_sub_name.filter(active=True):
 			s = dict()
 			s["server_navn"] = server.comp_name
 			s["server_aktiv"] = server.active
