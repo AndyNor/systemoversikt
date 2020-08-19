@@ -9,6 +9,7 @@
 	<th>Business Sub Service</th>
 	<th>Service classification</th>
 	<th>Antall servere</th>
+	<th>Antall databaser</th>
 	<th>Tilknyttet system</th>
 	<th>I bruk</th>
 	{% comment %}<th>B</th>{% endcomment %}
@@ -56,6 +57,7 @@
 		{{ item.service_classification|default:"" }}
 	</td>
 	<td>{{ item.ant_devices }}</td>
+	<td>{{ item.ant_databaser }}</td>
 	<td>
 		{% for system in item.system_cmdbref.all %}
 			{% url 'systemdetaljer' pk=system.pk as url_system %}

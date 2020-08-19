@@ -11,4 +11,7 @@
 	{% for enhet in enheter %}
 		<a href="{% url 'ubw_enhet' pk=enhet.pk %}" class="btn btn-sm btn-link">{{ enhet.name }}</a><br>
 	{% endfor %}
+
+	<hr>
+	<a href="/admin/systemoversikt/ubwrapporteringsenhet/add/" class="btn btn-sm btn-link">Opprett ny</a><br>
 {% endblock hovedinnhold %}

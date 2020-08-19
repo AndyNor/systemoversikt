@@ -3335,11 +3335,11 @@ def systemer_api(request):
 
 def cmdb_api(request):
 	data = []
-	query = CMDBRef.objects.filter(~Q(service_classification="Business Service")).filter(operational_status=True)  # alt aktivt utenom "Business Service"
-	#dette er total galskap, men det er det behovshaver ønsker..
+	query = CMDBRef.objects.filter(operational_status=True)
 	for bss in query:
 		line = {}
 		line["business_subservice_navn"] = bss.navn
+		line["business_service"] = bss.parent
 		line["sist_oppdatert"] = bss.sist_oppdatert
 		line["opprettet"] = bss.opprettet
 		line["environment"] = bss.get_environment_display()
@@ -3372,7 +3372,7 @@ def cmdb_api(request):
 			s["server_os"] = server.comp_os
 			s["server_ram"] = server.comp_ram
 			if server.comp_disk_space:
-				s["server_disk"] = server.comp_disk_space * 1024  # ønsker oppgitt i megabyte
+				s["server_disk"] = server.comp_disk_space * 1024  # ønskes oppgitt i megabyte
 			else:
 				s["server_disk"] = None
 			s["server_cpu_name"] = server.comp_cpu_name
@@ -3383,6 +3383,15 @@ def cmdb_api(request):
 			serverliste.append(s)
 
 		line["servere"] = serverliste
+
+		databaseliste = []
+		for database in bss.cmdbdatabase_sub_name.filter(db_operational_status=True):
+			s = dict()
+			s["version"] = database.db_version
+			s["datafilessizekb"] = database.db_u_datafilessizekb
+			serverliste.append(s)
+
+		line["databaser"] = databaseliste
 
 
 		data.append(line)
