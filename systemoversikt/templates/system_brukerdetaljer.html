@@ -29,7 +29,10 @@
 	{% if user.ansvarlig_brukernavn %}
 		<a href="{% url 'ansvarlig' pk=user.ansvarlig_brukernavn.pk %}">Ansvarsområder</a> |
 	{% endif %}
-	<a href="{% url 'ad_exact' user.profile.distinguishedname %}">Søk i AD</a> | <a href="{% url 'bruker_detaljer' pk=user.pk %}">direktelink</a>
+	{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
+	{% url 'bruker_detaljer' pk=user.pk as url_bruker_detaljer %}
+
+	<a href="{{ url_ad_exact }}">Søk i AD</a> | <a href="{{url_bruker_detaljer}}">direktelink</a>
 
 	</p>
 

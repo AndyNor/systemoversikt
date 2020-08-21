@@ -123,7 +123,7 @@ def bruker_sok(request):
 
 		search_term = request.GET.get('search_term', '').strip()
 
-		if len(search_term) > 3:
+		if len(search_term) > 2:
 			users = User.objects.filter(Q(username__icontains=search_term) | Q(profile__displayName__icontains=search_term))
 		else:
 			users = User.objects.none()

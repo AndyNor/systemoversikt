@@ -1,6 +1,6 @@
 import unicodedata
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
-from .models import Virksomhet
+from .models import Virksomhet, ApplicationLog
 from django.contrib.auth.models import Group
 from django.conf import settings
 from django.contrib import messages
@@ -10,17 +10,34 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 	def filter_users_by_claims(self, claims):
 		"""Return all users matching the specified username."""
 		# vi tar vare på claims i tilfelle vi trenger den et annet sted senere.
+		messages.info(self.request, 'Prøver å logge inn')
 		self.request.session['oidc-token'] = claims
 		#messages.info(self.request, '%s' % claims)
 		username = claims.get('preferred_username').lower()
+		message = "Prøver å logge inn %s" % username
+		ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 		if not username:
 			return self.UserModel.objects.none()
 			messages.warning(self.request, 'Du ble logget på uten brukernavn. Innlogging feilet.')
 		return self.UserModel.objects.filter(username__iexact=username)
 
+	""" Origos nye ooo-brukere kunne ikke logge på. Grunnen var at de ikke har e-postadresse som denne originalkoden
+	til verify_claims() sjekket etter. Den blir derfor her overskrevet til å bare sjekke brukernavn.
+	"""
+	def verify_claims(self, claims):
+		"""Verify the provided claims to decide if authentication should be allowed."""
+		messages.info(self.request, 'Verifiserer claims')
+		# Verify claims required by default configuration
+		scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
+		if 'preferred_username' in scopes.split():
+			return 'preferred_username' in claims
+
+		return True
+
 	# https://docs.djangoproject.com/en/2.0/ref/contrib/auth/#django.contrib.auth.models.User.username
 	# https://mozilla-django-oidc.readthedocs.io/en/stable/installation.html#additional-optional-configuration
 	def update_user(self, user, claims):
+		messages.info(self.request, 'Oppdaterer bruker')
 		user.is_active = True
 
 		user.first_name = claims.get('given_name', '')
@@ -76,6 +93,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 		In case of error "Multiple users returned" caused by two user objects, one with upper and one
 		with lower, make sure all import of usernames is in lowercase!
 		"""
+		messages.info(self.request, 'Ny bruker opprettes')
 		username = claims.get('preferred_username', '').lower()
 		if username is '':
 			return None
@@ -91,7 +109,7 @@ def provider_logout(request):
 	Kalles av mozilla_django_oidc.OIDCLogoutView via ettings.OIDC_OP_LOGOUT_URL_METHOD som peker hit for å generere en identity provider logout URL.
 	OIDCLogoutView godtar både post og get, men har bare definert metoden post for utlogging. Ved å sette denne til get fungerer utlogging. Bug?
 	"""
-
+	messages.info(request, 'Starter å logge ut')
 	redirect_url = settings.OIDC_IDP_URL_BASE + '/auth/realms/'+ settings.OIDC_IDP_REALM +'/protocol/openid-connect/logout?redirect_uri='  + settings.LOGOUT_REDIRECT_URL
 	return redirect_url
 
