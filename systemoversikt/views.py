@@ -3335,7 +3335,8 @@ def systemer_api(request):
 
 def cmdb_api(request):
 	data = []
-	query = CMDBRef.objects.filter(operational_status=True)
+	# tar ikke med tykke klienter da disse 11k per nå bare vil støye ned
+	query = CMDBRef.objects.filter(operational_status=True).filter(~Q(navn="OK-Tykklient"))
 	for bss in query:
 		line = {}
 		line["business_subservice_navn"] = bss.navn
@@ -3361,8 +3362,8 @@ def cmdb_api(request):
 			line["tilknyttet_system"] = "Det er flere systemer som peker mot denne gruppen"
 		if len(bss.system_cmdbref.all()) == 0:
 			line["tilknyttet_system"] = "Ingen"
+
 		line["antall_servere"] = bss.ant_devices()
-		line["antall_databaser"] = bss.ant_databaser()
 
 		serverliste = []
 		for server in bss.cmdbdevice_sub_name.filter(active=True):
@@ -3384,12 +3385,16 @@ def cmdb_api(request):
 
 		line["servere"] = serverliste
 
+		line["antall_databaser"] = bss.ant_databaser()
+
 		databaseliste = []
 		for database in bss.cmdbdatabase_sub_name.filter(db_operational_status=True):
 			s = dict()
+			s["navn"] = database.db_database
 			s["version"] = database.db_version
 			s["datafilessizekb"] = database.db_u_datafilessizekb
-			serverliste.append(s)
+			s["db_comments"] = database.db_comments
+			databaseliste.append(s)
 
 		line["databaser"] = databaseliste
 
