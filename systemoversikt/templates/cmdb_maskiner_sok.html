@@ -77,15 +77,7 @@
 			{% endfor %}
 		</td>
 		<td>
-			{{ maskin.comp_disk_space|default:"-" }} GB (total?)
-			<br><br>
-			{% for disk in maskin.cmdbdisk_computer.all %}
-				{% if disk.operational_status %}
-					<li>
-					{{ disk.file_system}} {{disk.free_space_bytes|filesizeformat}} of {{disk.size_bytes|filesizeformat}} ({{ disk.mount_point|truncatechars:35 }})</li>
-				{% endif %}
-			{% endfor %}
-
+			{{ maskin.comp_disk_space|default:"-" }} GB
 		</td>
 		<td>{{ maskin.comp_u_cpu_total|default:"-" }}</td>
 		<td>{{ maskin.comp_ram|default:"-" }}</td>
