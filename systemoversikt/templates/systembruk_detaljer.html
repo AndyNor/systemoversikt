@@ -103,6 +103,16 @@
 			</tr>
 
 			<tr>
+				<td>{% get_verbose_field_name bruk "antall_brukere" %}</td>
+				<td>{{ bruk.antall_brukere|default:"-" }}
+				{% if bruk.system.antall_brukere %}
+					({{ bruk.system.antall_brukere|default:"-" }} totalt)
+				{% endif %}
+
+				</td>
+			</tr>
+
+			<tr>
 				<td>{% get_verbose_field_name bruk "avhengigheter" %}</td>
 				<td>{{ bruk.avhengigheter|linebreaks|default:"-" }}</td>
 			</tr>

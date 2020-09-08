@@ -1070,10 +1070,10 @@ class Behandlingsgrunnlag(models.Model):
 
 
 CMDB_KRITIKALITET_VALG = (
-	(1, '1 most critical'),
-	(2, '2 somewhat critical'),
-	(3, '3 less critical'),
-	(4, '4 not critical'),
+	(1, '1 most critical (24/7/365)'),
+	(2, '2 somewhat critical (07-20 alle dager)'),
+	(3, '3 less critical (07-16 virkedager)'),
+	(4, '4 not critical (best effort)'),
 )
 
 CMDB_TYPE_VALG = (
@@ -1194,6 +1194,52 @@ class CMDBRef(models.Model):
 			return u'%s' % (self.navn)
 		else:
 			return u'%s (servergruppe)' % (self.navn)
+
+
+	def u_service_availability_text(self):
+		lookup = {
+			"T1": "T1: 24/7/365, 99.9%",
+			"T2": "T2: 07-20 alle dager, 99.5%",
+			"T3": "T3: 07-16 virkedager, 99%",
+			"T4": "T4: Best effort",
+		}
+		try:
+			return lookup[self.u_service_availability]
+		except:
+			return self.u_service_availability
+
+
+	def u_service_operation_factor_text(self):
+		lookup = {
+			"D1": "D1: Liv og helse",
+			"D2": "D2: Virksomhetskritisk",
+			"D3": "D3: Kritisk",
+			"D4": "D4: Periodisk kritisk",
+			"D5": "D5: Ikke kritisk",
+		}
+		try:
+			return lookup[self.u_service_operation_factor]
+		except:
+			return self.u_service_operation_factor
+
+
+	def u_service_complexity_text(self):
+		lookup = {
+			"K1": "K1: 0-100 brukere, enkelt omfang",
+			"K2": "K2: 0-100 brukere, middels omfang",
+			"K3": "K3: 0-100 brukere, høyt omfang",
+			"K4": "K4: 100-1000 brukere, enkelt omfang",
+			"K5": "K5: 100-1000 brukere, middels omfang",
+			"K6": "K6: 100-1000 brukere, høyt omfang",
+			"K7": "K7: 1000+ brukere, enkelt omfang",
+			"K8": "K8: 1000+ brukere, middels omfang",
+			"K9": "K9: 1000+ brukere, høyt omfang",
+		}
+		try:
+			return lookup[self.u_service_complexity]
+		except:
+			return self.u_service_complexity
+
 
 	def er_infrastruktur_tom_bs(self):
 		if self.cmdb_type in [3, 4, 6]:
@@ -2514,7 +2560,7 @@ class System(models.Model):
 			help_text=u"Oppsummert: Hvor kritisk er det om systemet ikke virker?",
 			)
 	tilgjengelighet_kritiske_perioder = models.TextField(
-			verbose_name="Utdypning tilgjengelighet: Kritiske perioder",
+			verbose_name="Utdypning tilgjengelighet: Kritiske perioder og konsekvenser ved nedetid",
 			blank=True, null=True,
 			help_text=u"Her legger du inn perioder av året hvor det er særskilt behov for at systemet er tilgjengelig. F.eks. knyttet til frister som eiendomsskatt, barnehageopptak eller lønnskjøring.",
 			)
@@ -2647,6 +2693,11 @@ class System(models.Model):
 			verbose_name="Er systemet et arkiv?",
 			default=False,
 			help_text=u"Krysses av dersom systemet er et arkivsystem i henhold til arkivlovverk.",
+			)
+	antall_brukere = models.IntegerField(
+			verbose_name="Antall brukere",
+			blank=True, null=True,
+			help_text=u"Ca hvor mange bruker systemet totalt?",
 			)
 	history = HistoricalRecords()
 
@@ -3022,7 +3073,7 @@ class ProgramvareBruk(models.Model):
 	antall_brukere = models.IntegerField(
 			verbose_name="Antall brukere",
 			blank=True, null=True,
-			help_text=u"Hvor mange bruker programvaren?",
+			help_text=u"Hvor mange bruker programvaren hos dere? (fylles ut dersom relevant)",
 			)
 	avtaletype = models.CharField(
 			verbose_name="Avtaletype",
@@ -3151,11 +3202,11 @@ class SystemBruk(models.Model):
 			blank=True, null=True,
 			help_text=u"Dette feltet blir faset ut. Dette er spesifisert på systemet.",
 			)
-	#antall_brukere = models.IntegerField(
-	#		verbose_name="Antall brukere",
-	#		blank=True, null=True,
-	#		help_text=u"Hvor mange brukere har dere av systemet?",
-	#		)
+	antall_brukere = models.IntegerField(  #reintrodusert 31.08.2020
+			verbose_name="Antall brukere?",
+			blank=True, null=True,
+			help_text=u"Ca hvor mange bruker systemet hos dere? (fylles ut dersom relevant)",
+			)
 	konfidensialitetsvurdering = models.IntegerField(choices=VURDERINGER_SIKKERHET_VALG,
 			verbose_name="Konfidensialitetsvurdering",
 			blank=True, null=True,

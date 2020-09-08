@@ -1,0 +1,21 @@
+{% extends "virksomhet_index.html" %}
+{% load static %}
+
+{% block ekstrameny %}
+
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	{{virksomhet.virksomhetsforkortelse}}s beredskaps/kontinuitetsplan: Prioriteringer
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+	<p>Viser {{ systemer.count }} systemer.</p>
+
+	{% include "system_include_tilgjengelighet.html" with systemer=systemer %}
+
+{% endblock hovedinnhold %}

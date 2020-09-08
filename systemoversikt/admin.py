@@ -238,6 +238,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		('Utdypende opplysninger om systemet', {
 			'classes': ('collapse',),
 			'fields': (
+				'antall_brukere',
 				'leveransemodell_fip',
 				'kontaktgruppe_url',
 				'datamodell_url',
@@ -386,6 +387,7 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 			'fields': (
 				'brukergruppe',
 				'system',
+				'antall_brukere', #reintrodusert 31.08.2020
 				'systemforvalter_kontaktpersoner_referanse',
 				'del_behandlinger',
 				'dato_sist_ros',

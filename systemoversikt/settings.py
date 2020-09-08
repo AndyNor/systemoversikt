@@ -291,7 +291,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 20480
 
-
+"""
 log_file = os.path.join(BASE_DIR, 'django.log')
 LOGGING = {
 	'version': 1,
@@ -315,3 +315,4 @@ LOGGING = {
 		},
 	},
 }
+"""

@@ -58,6 +58,9 @@
 	{% url 'driftsmodell_virksomhet' pk=virksomhet.pk as url_detaljer_virksomhet %}
 		<a href="{{ url_detaljer_virksomhet }}" class="btn btn-sm btn-link {% if url_detaljer_virksomhet in request.path %}fremhev{% endif %}">Systemer {{virksomhet.virksomhetsforkortelse}} drifter</a>
 
+	{% url 'drift_beredskap' pk=virksomhet.pk as url_drift_beredskap %}
+		<a href="{{ url_drift_beredskap }}" class="btn btn-sm btn-link {% if url_drift_beredskap in request.path %}fremhev{% endif %}">🌼 {{virksomhet.virksomhetsforkortelse}}s systemprioritering</a>
+
 
 	<hr>
 	{% if user.is_authenticated %}

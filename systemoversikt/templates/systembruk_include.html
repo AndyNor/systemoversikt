@@ -7,6 +7,7 @@
 		<th class="filter-false"></th>
 		{% endif %}
 		<th>Bruksdetaljer</th>
+		<th>Ca antall brukere</th>
 		<th>Lokal forvalter</th>
 		<th>Abonnerer på felles behandlinger?</th>
 		{# <th>Antall behandlinger (våre)</th> #}
@@ -31,6 +32,13 @@
 		<td>
 			{% url "bruksdetaljer" bruk.pk as url_bruksdetaljer %}
 			<a href="{{ url_bruksdetaljer }}">{{ virksomhet.virksomhetsforkortelse }} bruk av {{ bruk.system }}</a>
+		</td>
+
+		<td>{{ bruk.antall_brukere|default:"-" }}
+			{% if bruk.system.antall_brukere %}
+				({{ bruk.system.antall_brukere|default:"-" }})
+			{% endif %}
+
 		</td>
 
 		<td>

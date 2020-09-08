@@ -151,6 +151,7 @@ urlpatterns = [
 
 	url(r'^driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
 	url(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
+	url(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/$', views.drift_beredskap, name='drift_beredskap'),
 	url(r'^virksomhet/driftsmodell/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
 	url(r'^virksomhet/driftsmodell/klassifisering/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet_klassifisering, name='driftsmodell_virksomhet_klassifisering'),
 	url(r'^driftsmodell/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),
@@ -164,7 +165,7 @@ urlpatterns = [
 	# ubw
 	url(r'^ubw/alle/$', views.ubw_home, name='ubw_home'),
 	url(r'^ubw/faktura/(?P<pk>\d+)/$', views.ubw_enhet, name='ubw_enhet'),
-	url(r'^ubw/api/(?P<pk>\d+)/$', views.ubw_api, name='ubw_api'),
+	url(r'^ubw/api/(?P<pk>\d+)/$', views.ubw_api, name='ubw_api'), # brukes av UKE/POS
 	url(r'^ubw/ekstra/(?P<faktura_id>\d+)/$', views.ubw_ekstra, name='ubw_ekstra_new'),
 	url(r'^ubw/ekstra/(?P<faktura_id>\d+)/(?P<pk>\d+)/$', views.ubw_ekstra, name='ubw_ekstra_edit'),
 	url(r'^ubw/kategori/(?P<belongs_to>\d+)/$', views.ubw_kategori, name='ubw_kategori'),
@@ -178,9 +179,9 @@ urlpatterns = [
 	url(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),
 	url(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),
 
-	url(r'^forvaltere/api/$', views.forvalter_api, name='forvalter_api'),
-	url(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'),
-	url(r'^systemer/api/$', views.systemer_api, name='systemer_api'),
+	url(r'^forvaltere/api/$', views.forvalter_api, name='forvalter_api'), # brukes av UKE/tjenestekatalogen
+	url(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'), # åpent api (innført logging?)
+	url(r'^systemer/api/$', views.systemer_api, name='systemer_api'), # åpent API (innført logging?)
 
 
 	# import og konvertering
