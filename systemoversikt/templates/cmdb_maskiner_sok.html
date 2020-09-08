@@ -54,9 +54,9 @@
 	<tr>
 		<th>Maskinnavn</th>
 		<th>Business service</th>
-		<th width="25%">Disk space</th>
+		<th>Disk</th>
 		<th>Antall CPU</th>
-		<th>RAM (MB)</th>
+		<th>Minne (MB)</th>
 		<th>Nettverk</th>
 		<th>Operativsystem</th>
 		<th>Tilhørende system</th>
@@ -83,7 +83,13 @@
 		<td>{{ maskin.comp_ram|default:"-" }}</td>
 		<td>{{ maskin.comp_ip_address }}</td>
 		<td>{{ maskin.comp_os|default:"Ukjent" }} {{ maskin.comp_os_version }} {{ maskin.comp_os_service_pack }}</td>
-		<td>{{ maskin.sub_name.system_cmdbref.all }}</td>
+		<td>
+			{% for bss in maskin.sub_name.all %}
+				{% for system in bss.system_cmdbref.all %}
+					{{ system }}<br>
+				{% endfor %}
+			{% endfor %}
+		</td>
 		<td>{{ maskin.dns|default:"" }}</td>
 		<td>{{ maskin.vlan|default:"" }}</td>
 		<td>{{ maskin.nat|default:"" }}</td>
