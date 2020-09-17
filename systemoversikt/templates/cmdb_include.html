@@ -11,6 +11,7 @@
 	<th>Antall servere</th>
 	<th>Antall databaser</th>
 	<th>Tilknyttet system</th>
+	<th>Antall systemer</th>
 	<th>I bruk</th>
 	{% comment %}<th>B</th>{% endcomment %}
 	{% comment %}<th>Kommentar</th>{% endcomment %}
@@ -64,6 +65,7 @@
 			<a href="{{ url_system }}">{{ system.systemnavn }}</a><br>
 		{% endfor %}
 	</td>
+	<td>{{item.system_cmdbref.all|length}}</td>
 	<td>{{ item.get_operational_status_display|default:"-" }}</td>
 	{% comment %}<td>{{ item.u_service_billable|yesno:"Ja,Nei,Ukjent" }}</td>{% endcomment %}
 	{% comment %}<td>{{ item.comments|default:"-"|truncatewords:6 }}</td>{% endcomment %}

@@ -3387,6 +3387,13 @@ def cmdb_api(request):
 				line["systemforvalter"] = system.systemforvalter.virksomhetsforkortelse
 			if system.driftsmodell_foreignkey:
 				line["plattform"] = system.driftsmodell_foreignkey.navn
+
+
+			#systemtyper = []
+			#for systemtype in system.systemtyper.all():
+			#	systemtyper.append(systemtype)
+			#line["systemtyper"] = systemtyper
+
 		if len(bss.system_cmdbref.all()) > 1:
 			line["tilknyttet_system"] = "Det er flere systemer som peker mot denne gruppen"
 		if len(bss.system_cmdbref.all()) == 0:
@@ -3449,6 +3456,7 @@ def kvartal(date):
 		return "error"
 
 def ubw_api(request, pk):
+	import calendar
 	enhet = UBWRapporteringsenhet.objects.get(pk=pk)
 
 	faktura_eksport = []
@@ -3496,6 +3504,13 @@ def ubw_api(request, pk):
 			eksportdata["Periode påløpt kvartal"] = kvartal(faktura.metadata_reference.periode_paalopt)
 		except:
 			eksportdata["Periode påløpt kvartal"] = ""
+
+		try:
+			last_day_month = calendar.monthrange(faktura.metadata_reference.periode_paalopt.year,faktura.metadata_reference.periode_paalopt.month)[1] # returnerer f.eks. (1, 31), derfor [1] for å få den siste.
+			eksportdata["Periode påløpt siste dag"] = "%s-%s-%s" % (faktura.metadata_reference.periode_paalopt.year, faktura.metadata_reference.periode_paalopt.month, last_day_month)
+		except:
+			eksportdata["Periode påløpt siste dag"] = ""
+
 		try:
 			leverandor = faktura.metadata_reference.leverandor
 			if leverandor != None:
@@ -3561,6 +3576,12 @@ def ubw_api(request, pk):
 			eksportdata["Periode påløpt kvartal"] = kvartal(e.periode_paalopt)
 		except:
 			eksportdata["Periode påløpt kvartal"] = ""
+		try:
+			last_day_month = calendar.monthrange(e.periode_paalopt.year,e.periode_paalopt.month)[1] # returnerer f.eks. (1, 31), derfor [1] for å få den siste.
+			eksportdata["Periode påløpt siste dag"] = "%s-%s-%s" % (e.periode_paalopt.year, e.periode_paalopt.month, last_day_month)
+		except:
+			eksportdata["Periode påløpt siste dag"] = ""
+
 		eksportdata["Leverandør"] = e.leverandor
 		eksportdata["Kommentar"] = e.kommentar
 
