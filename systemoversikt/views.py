@@ -3441,6 +3441,81 @@ def cmdb_api(request):
 	return JsonResponse(resultat, safe=False)
 
 
+def cmdb_api_new(request):
+	data = []
+	# tar ikke med tykke klienter da disse 11k per nå bare vil støye ned
+	query = CMDBRef.objects.filter(operational_status=True).filter(~Q(navn="OK-Tykklient"))
+	for bss in query:
+		line = {}
+		line["business_subservice_navn"] = bss.navn
+		line["business_service"] = bss.parent
+		line["sist_oppdatert"] = bss.sist_oppdatert
+		line["opprettet"] = bss.opprettet
+		line["environment"] = bss.get_environment_display()
+		line["busines_criticality"] = bss.kritikalitet
+		line["service_availability"] = bss.u_service_availability
+		line["service_operation_factor"] = bss.u_service_operation_factor
+		line["service_complexity"] = bss.u_service_complexity
+		line["antall_tilknyttede_systemer"] = len(bss.system_cmdbref.all())
+
+		systemer = []
+		for s in bss.system_cmdbref.all():
+
+
+			systemeier = s.systemeier.virksomhetsforkortelse if s.systemeier else "ukjent"
+			systemforvalter = s.systemforvalter.virksomhetsforkortelse if s.systemforvalter else "ukjent"
+			plattform = s.driftsmodell_foreignkey.navn if s.driftsmodell_foreignkey else "ukjent"
+
+			systemer.append({
+				"systemnavn": s.systemnavn,
+				"systemeier": systemeier,
+				"systemforvalter": systemforvalter,
+				"plattform": plattform,
+				"er_infrastruktur": s.er_infrastruktur(),
+			})
+
+		line["tilknyttede_systemer"] = systemer
+		line["antall_servere"] = bss.ant_devices()
+
+		serverliste = []
+		for server in bss.cmdbdevice_sub_name.filter(active=True):
+			s = dict()
+			s["server_navn"] = server.comp_name
+			s["server_aktiv"] = server.active
+			s["server_os"] = server.comp_os
+			s["server_ram"] = server.comp_ram
+			if server.comp_disk_space:
+				s["server_disk"] = server.comp_disk_space * 1024  # ønskes oppgitt i megabyte
+			else:
+				s["server_disk"] = None
+			s["server_cpu_name"] = server.comp_cpu_name
+			s["server_cpu_speed"] = server.comp_cpu_speed
+			s["server_cpu_core_count"] = server.comp_cpu_core_count
+			s["server_cpu_count"] = server.comp_cpu_count
+			s["server_cpu_total"] = server.comp_u_cpu_total
+			serverliste.append(s)
+
+		line["servere"] = serverliste
+
+		line["antall_databaser"] = bss.ant_databaser()
+
+		databaseliste = []
+		for database in bss.cmdbdatabase_sub_name.filter(db_operational_status=True):
+			s = dict()
+			s["navn"] = database.db_database
+			s["version"] = database.db_version
+			s["datafilessizekb"] = database.db_u_datafilessizekb
+			s["db_comments"] = database.db_comments
+			databaseliste.append(s)
+
+		line["databaser"] = databaseliste
+
+
+		data.append(line)
+
+		resultat = {"antall bss": len(query), "data": data}
+	return JsonResponse(resultat, safe=False)
+
 ### UBW
 
 """
@@ -3507,7 +3582,7 @@ def ubw_api(request, pk):
 
 		try:
 			last_day_month = calendar.monthrange(faktura.metadata_reference.periode_paalopt.year,faktura.metadata_reference.periode_paalopt.month)[1] # returnerer f.eks. (1, 31), derfor [1] for å få den siste.
-			eksportdata["Periode påløpt siste dag"] = "%s-%s-%s" % (faktura.metadata_reference.periode_paalopt.year, faktura.metadata_reference.periode_paalopt.month, last_day_month)
+			eksportdata["Periode påløpt siste dag"] = "%s-%s-%s" % (faktura.metadata_reference.periode_paalopt.year, '{:02d}'.format(faktura.metadata_reference.periode_paalopt.month), last_day_month)
 		except:
 			eksportdata["Periode påløpt siste dag"] = ""
 
@@ -3578,7 +3653,7 @@ def ubw_api(request, pk):
 			eksportdata["Periode påløpt kvartal"] = ""
 		try:
 			last_day_month = calendar.monthrange(e.periode_paalopt.year,e.periode_paalopt.month)[1] # returnerer f.eks. (1, 31), derfor [1] for å få den siste.
-			eksportdata["Periode påløpt siste dag"] = "%s-%s-%s" % (e.periode_paalopt.year, e.periode_paalopt.month, last_day_month)
+			eksportdata["Periode påløpt siste dag"] = "%s-%s-%s" % (e.periode_paalopt.year, '{:02d}'.format(e.periode_paalopt.month), last_day_month)
 		except:
 			eksportdata["Periode påløpt siste dag"] = ""
 

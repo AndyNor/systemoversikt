@@ -181,6 +181,7 @@ urlpatterns = [
 
 	url(r'^forvaltere/api/$', views.forvalter_api, name='forvalter_api'), # brukes av UKE/tjenestekatalogen
 	url(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'), # åpent api (innført logging?)
+	url(r'^cmdb/api/test/$', views.cmdb_api_new, name='cmdb_api_new'), # åpent api (innført logging?)
 	url(r'^systemer/api/$', views.systemer_api, name='systemer_api'), # åpent API (innført logging?)
 
 
