@@ -224,6 +224,7 @@ if THIS_ENVIRONMENT == "PROD":
 	LOGIN_REDIRECT_URL = "/"
 	OIDC_IDP_URL_BASE = "https://login.oslo.kommune.no"
 	OIDC_IDP_REALM = "AD"
+	OIDC_RP_SCOPES = "openid email"
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
 	OIDC_OP_JWKS_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/certs"
