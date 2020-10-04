@@ -124,69 +124,125 @@ def import_business_services(request):
 
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
-		business_services_filename = "u_cmdb_service_subservice.json"
+
+		#business_services_filename = "u_cmdb_service_subservice.json"
+		business_services_filename = "u_cmdb_service_subservice.xlsx"
 
 		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/" + business_services_filename
-		messages.success(request, 'Lastet inn filen %s' % (filepath))
+		#messages.success(request, 'Lastet inn filen %s' % (filepath))
+
+		"""
 		with open(filepath, 'r', encoding='UTF-8') as json_file:
 			data = json.load(json_file)
 			antall_records = len(data["records"])
 			messages.success(request, 'Fant %s elementer' % (antall_records))
+		"""
 
-			# Gå igjennom alle eksisterende business services, dersom ikke i ny fil, merk med "utgått"
-			alle_eksisterende_cmdbref = list(CMDBRef.objects.all())
+		import pandas as pd
+		import numpy as np
+		dfRaw = pd.read_excel(filepath)
+		dfRaw = dfRaw.replace(np.nan, '', regex=True)
+		data = dfRaw.to_dict('records')
 
-			# Importere enheter (andre data i importfil nummer 2)
-			antall_nye_bs = 0
-			for record in data["records"]:
 
-				name = record["sub_name"]
-				if name == "":
-					messages.error(request, "Business service mangler navn")
-					continue  # Det må være en verdi på denne
+		# Gå igjennom alle eksisterende business services, dersom ikke i ny fil, merk med "utgått"
+		alle_eksisterende_cmdbref = list(CMDBRef.objects.all()) #bss
+		alle_eksisterende_cmdbbs = list(CMDBbs.objects.all()) #bs
 
-				try:
-					business_service = CMDBRef.objects.get(navn=name)
-					if business_service in alle_eksisterende_cmdbref:
-						alle_eksisterende_cmdbref.remove(business_service)
-				except:
-					antall_nye_bs += 1
-					business_service = CMDBRef.objects.create(
-							navn=name,
-					)
+		# Importere enheter (andre data i importfil nummer 2)
+		antall_nye_bs = 0
+		antall_deaktiverte_bs = 0
+		antall_nye_bss = 0
+		antall_slettede_bss = 0
 
-				business_service.environment=konverter_environment(record["sub_used_for"])
-				business_service.kritikalitet=konverter_kritikalitet(record["sub_busines_criticality"])
-				business_service.u_service_portfolio=record["sub_u_service_portfolio"]
-				business_service.u_service_availability=record["sub_u_service_availability"]
-				business_service.u_service_operation_factor = record["sub_u_service_operation_factor"]
-				business_service.u_service_complexity = record["sub_u_service_complexity"]
-				business_service.operational_status = convertToInt(record["sub_operational_status"])
-				business_service.parent = record["biz_name"]
+		antall_records = len(data)
 
-				billable = convertToBool(record["sub_u_service_billable"])
-				if billable != None:
-					business_service.u_service_billable = billable
+		for record in data:
+			"""
+			print(record)
+			{'Name': 'OK-Citrix Netscaler',
+			'Name.1': 'OK-Citrix (Infrastruktur)',
+			'Business criticality': '1 - most critical',
+			'Environment': 'Production',
+			'Value': 'Citrix',
+			'Value.1': 'Citrix',
+			'Service Billable': 'Yes',
+			'Service Availability': 'T2',
+			'Service Complexity': 'K8',
+			'Service Operation Factor': 'D2',
+			'Operational status': 'Operational',
+			'Description': '',
+			'Service classification': 'Application Service'}
+			"""
 
-				business_service.service_classification = record["sub_service_classification"]
+			bss_dropped = 0
+			bss_name = record["Name"]
+			bs_name = record["Name.1"]
 
-				try:
-					business_service.comments = record["sub_short_description"]
-				except:
-					continue
+			if bs_name == "" or bss_name == "":
+				messages.error(request, "Business service navn eller BSS-anvn mangler")
+				bss_dropped += 1
+				continue  # Det må være en verdi på denne
 
-				business_service.save()
-
-			for cmdbref in alle_eksisterende_cmdbref:
-				cmdbref.operational_status = 0
-				cmdbref.save()
-
-			logg_entry_message = "Nye businessSerices: %s, utdaterte business services: %s. Utført av %s" % (antall_nye_bs, len(alle_eksisterende_cmdbref), request.user)
-			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB business service import',
-					message=logg_entry_message,
+			# sjekke om bs finnes fra før, om ikke opprette
+			try:
+				business_service = CMDBbs.objects.get(navn=bs_name)
+				if business_service in alle_eksisterende_cmdbbs:
+					alle_eksisterende_cmdbbs.remove(business_service)
+			except:
+				antall_nye_bs += 1
+				business_service = CMDBbs.objects.create(
+						navn=bs_name,
 				)
-			messages.success(request, logg_entry_message)
+
+			# sjekke om bss finnes fra før, om ikke opprette
+			try:
+				business_sub_service = CMDBRef.objects.get(navn=bss_name)
+				if business_sub_service in alle_eksisterende_cmdbref:
+					alle_eksisterende_cmdbref.remove(business_sub_service)
+			except:
+				antall_nye_bs += 1
+				business_sub_service = CMDBRef.objects.create(
+						navn=bss_name,
+				)
+
+			business_sub_service.environment=konverter_environment(record["Environment"])
+			business_sub_service.kritikalitet=konverter_kritikalitet(record["Business criticality"])
+			#business_sub_service.u_service_portfolio=record["sub_u_service_portfolio"]
+			business_sub_service.u_service_availability=record["Service Availability"]
+			business_sub_service.u_service_operation_factor = record["Service Operation Factor"]
+			business_sub_service.u_service_complexity = record["Service Complexity"]
+			business_sub_service.operational_status = True if record["Operational status"] == "Operational" else False
+			business_sub_service.u_service_billable = True if record["Service Billable"] == "Yes" else False
+			business_sub_service.parent = business_service
+			business_sub_service.service_classification = record["Service classification"]
+			business_sub_service.comments = record["Description"]
+
+			business_sub_service.save()
+
+		# deaktiverer alle bs og sletter alle bss som er igjen
+		for cmdbbs in alle_eksisterende_cmdbbs:
+			cmdbbs.operational_status = False
+			antall_deaktiverte_bs += 1
+			cmdbbs.save()
+
+		for cmdbref in alle_eksisterende_cmdbref:
+			antall_slettede_bss += 1
+			cmdbref.delete()
+
+		logg_entry_message = "Antall BSS: %s. Nye BS: %s (%s satt inaktiv), nye BSS: %s (%s slettede). Utført av %s" % (
+					antall_records,
+					antall_nye_bs,
+					antall_deaktiverte_bs,
+					antall_nye_bss,
+					antall_slettede_bss,
+					request.user
+				)
+		logg_entry = ApplicationLog.objects.create(
+				event_type='CMDB business service import',
+				message=logg_entry_message,
+			)
+		messages.success(request, logg_entry_message)
 
 		return render(request, 'cmdb_index.html', {
 			'request': request,
@@ -201,24 +257,111 @@ def import_cmdb_databases_oracle(request):
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
 
-		messages.success(request, 'Klargjør import av databaser')
 		import json, os
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_bs_bss_db_oracle.json"
-		with open(filepath, 'r', encoding='UTF-8') as json_file:
-			data = json.load(json_file)
+		import pandas as pd
+		import numpy as np
+		#import xlrd
 
-			antall_records = len(data["records"])
-			messages.success(request, 'Fant %s elementer' % (antall_records))
+		db_dropped = 0
 
-			all_existing_db = list(CMDBdatabase.objects.filter(Q(db_version__startswith="Oracle ") & Q(db_operational_status=True)))
+		#temporary file with oracle disk size
+		filepath_size = os.path.dirname(os.path.abspath(__file__)) + "/import/oracle_disksize.xlsx"
+		dfRaw = pd.read_excel(filepath_size)
+		dfRaw = dfRaw.replace(np.nan, '', regex=True)
+		size_data = dfRaw.to_dict('records')
+		size_data = {"%s@%s" % (item["SID"], item["Server Name"]):item["Bytes Used (GB)"] for item in size_data}
+		#print(size_data)
 
-			for record in data["records"]:
 
-				db_name = record["db_name"]
+		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_bs_bss_db_oracle.json"
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_bs_bss_db_oracle.xlsx"
+
+		if ".xlsx" in filepath:
+			dfRaw = pd.read_excel(filepath)
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			data = dfRaw.to_dict('records')
+
+		if ".json" in filepath:
+			with open(filepath, 'r', encoding='UTF-8') as json_file:
+				data = json.load(json_file)["records"]
+
+		if data == None:
+			return
+
+		antall_records = len(data)
+
+		all_existing_db = list(CMDBdatabase.objects.filter(Q(db_version__startswith="Oracle ") & Q(db_operational_status=True)))
+
+		for record in data:
+			#print(record)
+
+			if ".xlsx" in filepath:
+				try:
+					db_fullname = record["Name"] # det er to felt som heter "name" og dette er det første...
+					db_name = record["Name"].split("@")[0] # første del er databasenavnet
+					db_server = record["Name"].split("@")[1] # andre del etter @ er servernavn.
+				except:
+					db_dropped += 1
+					continue # hvis dette ikke går er navnet feilformattert.
+				#print(db_name)
 				if db_name == "":
 					messages.error(request, "Database mangler navn")
+					db_dropped += 1
 					continue  # Det må være en verdi på denne
 
+				# vi sjekker om enheten finnes fra før
+				try:
+					cmdb_db = CMDBdatabase.objects.get(db_database=db_name)
+					# fjerner fra oversikt over alle vi hadde før vi startet
+					if cmdb_db in all_existing_db: # i tilfelle reintrodusert
+						all_existing_db.remove(cmdb_db)
+				except:
+					# lager en ny
+					cmdb_db = CMDBdatabase.objects.create(db_database=db_name)
+
+				cmdb_db.db_server = db_server
+
+				if record["Operational status"] == "Operational":
+					cmdb_db.db_operational_status = True
+				else:
+					cmdb_db.db_operational_status = False
+
+				cmdb_db.db_version = "Oracle " + record["Version"]
+
+				#try:
+				#	filesize = int(record.get("db_u_datafilessizekb", 0)) * 1024 # convert to bytes
+				#except:
+				#	filesize = 0
+
+				try:
+					size_bytes = int(size_data[db_fullname]) * 1024 * 1024 * 1024  # kommer som string i GB.
+					cmdb_db.db_u_datafilessizekb = size_bytes
+					#print(size_bytes)
+				except:
+					#print("failed")
+					cmdb_db.db_u_datafilessizekb = 0
+
+
+				cmdb_db.db_used_for = record["Used for"]
+				cmdb_db.db_comments = record["Comments"]
+
+				cmdb_db.sub_name = None  # reset old lookups
+				try:
+					business_service = CMDBRef.objects.get(navn=record["Name.1"]) # dette er det andre "name"-feltet
+					cmdb_db.sub_name = business_service # add this lookup
+				except:
+					pass
+				cmdb_db.save()
+
+
+			"""
+			if ".json" in filepath:
+				db_name = record["db_name"]
+				print(db_name)
+				if db_name == "":
+					messages.error(request, "Database mangler navn")
+					db_dropped += 1
+					continue  # Det må være en verdi på denne
 				# vi sjekker om enheten finnes fra før
 				try:
 					cmdb_db = CMDBdatabase.objects.get(db_database=db_name)
@@ -237,10 +380,13 @@ def import_cmdb_databases_oracle(request):
 				cmdb_db.db_version = "Oracle " + record["db_version"]
 
 				try:
-					filesize = int(record.get("db_u_datafilessizekb", 0)) * 1024 # convert to bytes
+					match = size_data[db_name]
+					size_bytes = int(size_data[db_name]) * 1024 * 1024 * 1024  # kommer som string i GB.
+					cmdb_db.db_u_datafilessizekb = size_bytes
+					#print(size_bytes)
 				except:
-					filesize = 0
-				cmdb_db.db_u_datafilessizekb = filesize
+					#print("failed")
+					cmdb_db.db_u_datafilessizekb = 0
 
 				cmdb_db.db_used_for = record["db_used_for"]
 				cmdb_db.db_comments = record["db_comments"]
@@ -251,16 +397,18 @@ def import_cmdb_databases_oracle(request):
 					cmdb_db.sub_name.add(business_service) # add this lookup
 				except:
 					pass
-
 				cmdb_db.save()
+			"""
 
+
+
+		# cleanup
 		obsolete_devices = all_existing_db
 
 		for item in obsolete_devices:
-			item.db_operational_status = False
-			item.save()
+			item.delete()
 
-		logg_entry_message = 'Antall databaser som er inaktive: %s. Alle slike databaser er satt inaktive. Utført av %s.' % (len(obsolete_devices), request.user)
+		logg_entry_message = 'Fant %s databaser. %s manglet navn. Slettet %s inaktive databaser. Utført av %s.' % (antall_records, db_dropped, len(obsolete_devices), request.user)
 		logg_entry = ApplicationLog.objects.create(
 				event_type='CMDB database import (Oracle)',
 				message=logg_entry_message,
@@ -280,33 +428,63 @@ def import_cmdb_databases(request):
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
 
-		messages.success(request, 'Klargjør import av databaser')
+		#messages.success(request, 'Klargjør import av databaser')
 		import json, os
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_service_to_db_2.json"
-		with open(filepath, 'r', encoding='UTF-8') as json_file:
-			data = json.load(json_file)
+		import pandas as pd
+		import numpy as np
 
-			antall_records = len(data["records"])
-			messages.success(request, 'Fant %s elementer' % (antall_records))
+		db_dropped = 0
 
-			all_existing_db = list(CMDBdatabase.objects.filter(~Q(db_version__startswith="Oracle ") & Q(db_operational_status=True)))
+		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_service_to_db_2.json"
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_service_to_db_2.xlsx"
 
-			for record in data["records"]:
+		if ".xlsx" in filepath:
+			dfRaw = pd.read_excel(filepath)
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			data = dfRaw.to_dict('records')
+
+		if ".json" in filepath:
+			with open(filepath, 'r', encoding='UTF-8') as json_file:
+				data = json.load(json_file)["records"]
+
+		if data == None:
+			return
 
 
-				db_name = record["db_name"]
+		antall_records = len(data)
+		#messages.success(request, 'Fant %s elementer' % (antall_records))
+
+		all_existing_db = list(CMDBdatabase.objects.filter(~Q(db_version__startswith="Oracle ") & Q(db_operational_status=True)))
+
+
+		for record in data:
+
+			"""
+			print(record)
+			{'Name': 'Samporta1_SITE',
+			'Operational status': 'Operational',
+			'Version': 'SQL server 2000',
+			'DataFilesSizeKB': '',
+			'Used for': 'Production',
+			'Comments': '',
+			'Name.1': 'OK-Samportal prod'}
+			"""
+
+			if ".xlsx" in filepath:
+				db_name = record["Name"]
 				if db_name == "":
 					messages.error(request, "Database mangler navn")
+					db_dropped += 1
 					continue  # Det må være en verdi på denne
 
 				try:
-					hostname = record["db_comments"].split("@")[1]
+					hostname = record["Comments"].split("@")[1]
 				except:
 					messages.error(request, "Database mangler informasjon om host (%s)" % (db_name))
-					continue
+					hostname = ""
 
 				db_id = "%s@%s" % (db_name, hostname)
-				# vi sjekker om enheten finnes fra før
+				# vi sjekker om databasen finnes fra før
 				try:
 					cmdb_db = CMDBdatabase.objects.get(db_database=db_id)
 					# fjerner fra oversikt over alle vi hadde før vi startet denne oppdateringen
@@ -316,29 +494,26 @@ def import_cmdb_databases(request):
 					# lager en ny
 					cmdb_db = CMDBdatabase.objects.create(db_database=db_id)
 
-				if record["db_operational_status"] == "1":
+				if record["Operational status"] == "Operational":
 					cmdb_db.db_operational_status = True
 				else:
 					cmdb_db.db_operational_status = False
 
-				cmdb_db.db_version = record["db_version"]
+				cmdb_db.db_version = record["Version"]
 
 				try:
-					filesize = int(record.get("db_u_datafilessizekb", 0)) * 1024 # convert to bytes
+					filesize = int(record.get("DataFilesSizeKB", 0)) * 1024 # convert to bytes
 				except:
 					filesize = 0
 				cmdb_db.db_u_datafilessizekb = filesize
 
-				cmdb_db.db_used_for = record["db_used_for"]
-				cmdb_db.db_comments = record["db_comments"]
+				cmdb_db.db_used_for = record["Used for"]
+				cmdb_db.db_comments = record["Comments"]
 
-				cmdb_db.sub_name.clear() # reset old lookups
+				cmdb_db.sub_name = None  # reset old lookups
 				try:
-					hostname = record["db_comments"].split("@")[1]
-					#print(hostname)
-					server = CMDBdevice.objects.get(comp_name=hostname)
-					for item in server.sub_name.all():
-						cmdb_db.sub_name.add(item) # add this lookup
+					business_service = CMDBRef.objects.get(navn=record["Name.1"]) # dette er det andre "name"-feltet
+					cmdb_db.sub_name = business_service # add this lookup
 				except:
 					pass
 
@@ -347,10 +522,14 @@ def import_cmdb_databases(request):
 		obsolete_devices = all_existing_db
 
 		for item in obsolete_devices:
-			item.db_operational_status = False
-			item.save()
+			item.delete()
 
-		logg_entry_message = 'Antall databaser som er inaktive: %s. Alle slike databaser er satt inaktive. Utført av %s.' % (len(obsolete_devices), request.user)
+		logg_entry_message = 'Fant %s databaser. %s manglet navn. Slettet %s inaktive databaser. Utført av %s.' % (
+				antall_records,
+				db_dropped,
+				len(obsolete_devices),
+				request.user
+			)
 		logg_entry = ApplicationLog.objects.create(
 				event_type='CMDB database import',
 				message=logg_entry_message,
@@ -371,81 +550,109 @@ def import_cmdb_servers(request):
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
 
-		messages.success(request, 'Klargjør import av CMDB-fil')
 		import json, os
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_computer_to_sub_to_bs.json"
-		with open(filepath, 'r', encoding='UTF-8') as json_file:
-			data = json.load(json_file)
+		import pandas as pd
+		import numpy as np
 
-			antall_records = len(data["records"])
-			messages.success(request, 'Fant %s elementer' % (antall_records))
+		server_dropped = 0
 
-			all_existing_devices = list(CMDBdevice.objects.all())
-			def convertToInt(string):
-				try:
-					return int(string)
-				except:
-					return None
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_computer_to_sub_to_bs.xlsx"
 
-			for record in data["records"]:
+		if ".xlsx" in filepath:
+			dfRaw = pd.read_excel(filepath)
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			data = dfRaw.to_dict('records')
 
-				comp_name = record["comp_name"]
-				if comp_name == "":
-					messages.error(request, "Maskin mangler navn")
-					continue  # Det må være en verdi på denne
+		if data == None:
+			return
 
-				# vi sjekker om enheten finnes fra før
-				try:
-					cmdbdevice = CMDBdevice.objects.get(comp_name=comp_name)
-					# fjerner fra oversikt over alle vi hadde før vi startet
-					if cmdbdevice in all_existing_devices: # i tilfelle reintrodusert
-						all_existing_devices.remove(cmdbdevice)
-				except:
-					# lager en ny
-					cmdbdevice = CMDBdevice.objects.create(comp_name=comp_name)
+		antall_records = len(data)
+		all_existing_devices = list(CMDBdevice.objects.all())
 
-				cmdbdevice.active = True
-				cmdbdevice.comp_disk_space = convertToInt(record["comp_disk_space"])
-				#cmdbdevice.bs_u_service_portfolio = record["bs_u_service_portfolio"]
-				cmdbdevice.comp_u_cpu_total = convertToInt(record["comp_u_cpu_total"])
-				cmdbdevice.comp_ram = convertToInt(record["comp_ram"])
-				cmdbdevice.comp_ip_address = record["comp_ip_address"]
-				cmdbdevice.comp_cpu_speed = convertToInt(record["comp_cpu_speed"])
-				cmdbdevice.comp_os = record["comp_os"]
-				cmdbdevice.comp_os_version = record["comp_os_version"]
-				cmdbdevice.comp_os_service_pack = record["comp_os_service_pack"]
+		def convertToInt(string, multiplier=1):
+			try:
+				number = int(string)
+			except:
+				return None
 
-				# nye 22.06.2020
-				cmdbdevice.comp_cpu_core_count = convertToInt(record["comp_cpu_core_count"])
-				cmdbdevice.comp_cpu_count = convertToInt(record["comp_cpu_count"])
-				#cmdbdevice.comp_cpu_name = record["comp_cpu_name"]
-				cmdbdevice.comp_u_cpu_total = convertToInt(record["comp_u_cpu_total"])
-				cmdbdevice.comp_ram = convertToInt(record["comp_ram"])
-				cmdbdevice.comp_location = record["comp_location"]
+			return number * multiplier
 
-				# nye 11.08.2020
-				cmdbdevice.comp_sys_id = record["comp_sys_id"]
 
-				try:
-					sub_name = CMDBRef.objects.get(navn=record["sub_name"])
-					cmdbdevice.sub_name.clear() # reset old lookups
-					cmdbdevice.sub_name.add(sub_name)
-				except:
-					messages.error(request, 'Business sub service %s for %s finnes ikke' % (record["sub_name"], comp_name))
-					#sub_name = CMDBRef.objects.create(
-					#		navn=record["sub_name"],
-					#		operational_status=1,
-					#	)
+		for record in data:
+			"""
+			{'Name': 'p-oradb17',
+			'Disk space (GB)': 16938.0,
+			'CPU total': 24.0,
+			'CPU speed (MHz)': 2400.0,
+			'RAM (MB)': 258285.0,
+			'IP Address': '10.134.183.11',
+			'Operating System': 'Linux Red Hat',
+			'OS Version': '6.10',
+			'OS Service Pack': '',
+			'Name.1': 'DB - Oracle - prod', #bss
+			'Location': ''}
 
-				cmdbdevice.save()
+			"""
+			#print(record)
+
+			comp_name = record["Name"]
+			if comp_name == "":
+				messages.error(request, "Maskinen mangler navn")
+				server_dropped += 1
+				continue  # Det må være en verdi på denne
+
+			# vi sjekker om enheten finnes fra før
+			try:
+				cmdbdevice = CMDBdevice.objects.get(comp_name=comp_name)
+				# fjerner fra oversikt over alle vi hadde før vi startet
+				if cmdbdevice in all_existing_devices: # i tilfelle reintrodusert
+					all_existing_devices.remove(cmdbdevice)
+			except:
+				# lager en ny
+				cmdbdevice = CMDBdevice.objects.create(comp_name=comp_name)
+
+			cmdbdevice.active = True
+			cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])
+			cmdbdevice.comp_cpu_core_count = convertToInt(record["CPU total"])
+			cmdbdevice.comp_ram = convertToInt(record["RAM (MB)"])
+			cmdbdevice.comp_ip_address = record["IP Address"]
+			cmdbdevice.comp_cpu_speed = convertToInt(record["CPU speed (MHz)"])
+			cmdbdevice.comp_os = record["Operating System"]
+			cmdbdevice.comp_os_version = record["OS Version"]
+			cmdbdevice.comp_os_service_pack = record["OS Service Pack"]
+			cmdbdevice.comp_location = record["Location"]
+			#cmdbdevice.comp_cpu_core_count = convertToInt(record["comp_cpu_core_count"])
+			#cmdbdevice.comp_cpu_count = convertToInt(record["comp_cpu_count"])
+			#cmdbdevice.comp_cpu_name = record["comp_cpu_name"]
+			#cmdbdevice.comp_u_cpu_total = convertToInt(record["comp_u_cpu_total"])
+			#cmdbdevice.comp_ram = convertToInt(record["comp_ram"])
+			#cmdbdevice.comp_sys_id = record["comp_sys_id"]
+
+			try:
+				sub_name = CMDBRef.objects.get(navn=record["Name.1"])
+				cmdbdevice.sub_name = sub_name
+			except:
+				messages.error(request, 'Business sub service %s for %s finnes ikke' % (record["sub_name"], comp_name))
+				server_dropped += 1
+				continue
+
+			cmdbdevice.save()
 
 		obsolete_devices = all_existing_devices
+		devices_set_inactive = 0
 
 		for item in obsolete_devices:
-			item.active = False
-			item.save()
+			if item.active == True:
+				item.active = False
+				devices_set_inactive += 1
+				item.save()
 
-		logg_entry_message = 'Antall servere som er inaktive: %s. Alle slike servere er satt inaktive. Utført av %s.' % (len(obsolete_devices), request.user)
+		logg_entry_message = 'Fant %s maskiner. %s manglet navn eller tilhørighet. Satte %s servere inaktiv. Utført av %s.' % (
+				antall_records,
+				server_dropped,
+				devices_set_inactive,
+				request.user
+			)
 		logg_entry = ApplicationLog.objects.create(
 				event_type='CMDB server import',
 				message=logg_entry_message,
@@ -464,62 +671,91 @@ def import_cmdb_disk(request):
 	required_permissions = 'systemoversikt.change_cmdbref'
 	if request.user.has_perm(required_permissions):
 
-		messages.success(request, 'Klargjør import av CMDB-diskfil')
 		import json, os
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/cmdb_ci_file_system.json"
-		with open(filepath, 'r', encoding='UTF-8') as json_file:
-			data = json.load(json_file)
+		import pandas as pd
+		import numpy as np
 
-			antall_records = len(data["records"])
-			messages.success(request, 'Fant %s elementer' % (antall_records))
+		disk_dropped = 0
 
-			all_existing_devices = list(CMDBDisk.objects.all())
-			def convertToInt(string):
-				try:
-					return int(string)
-				except:
-					return None
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/cmdb_ci_file_system.xlsx"
 
-			ikke_koblet = 0
-			for record in data["records"]:
+		if ".xlsx" in filepath:
+			dfRaw = pd.read_excel(filepath)
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			data = dfRaw.to_dict('records')
 
-				mount_point = record["mount_point"]
-				# vi sjekker om disken finnes fra før
-				try:
-					cmdb_disk = CMDBDisk.objects.get(Q(computer=record["computer"]) & Q(mount_point=mount_point))
-					# fjerner fra oversikt over alle vi hadde før vi startet
-					if cmdb_disk in all_existing_devices: # i tilfelle reintrodusert
-						all_existing_devices.remove(cmdb_disk)
-				except:
-					# lager en ny
-					cmdb_disk = CMDBDisk.objects.create(computer=record["computer"], mount_point=mount_point)
+		if data == None:
+			return
 
-				if record["operational_status"] == "1":
-					cmdb_disk.operational_status = True
-				else:
-					cmdb_disk.operational_status = False
+		antall_records = len(data)
 
-				cmdb_disk.size_bytes = convertToInt(record["size_bytes"])
-				cmdb_disk.free_space_bytes = convertToInt(record["free_space_bytes"])
-				cmdb_disk.file_system = record["file_system"]
-				#cmdb_disk.capacity = record["capacity"]
-				#cmdb_disk.available_space = record["available_space"]
+		all_existing_devices = list(CMDBDisk.objects.all())
+
+		def convertToInt(string, multiplier=1):
+			try:
+				number = int(string)
+			except:
+				return None
+
+			return number * multiplier
+
+		ikke_koblet = 0
+
+		for record in data:
+
+			"""
+			{'Name': '',
+			'Mount point': '',
+			'Size': '467.0 MB',
+			'Free space': '80.4 MB',
+			'Computer': 'wsvisw10003'}
+			"""
+
+			disk_name = record["Name"]
+			mount_point = record["Mount point"]
+
+			if mount_point == "" and disk_name != "":
+				mount_point = disk_name
+
+			if mount_point == "":
+				disk_dropped += 1
+				messages.warning(request, 'Disk manglet mount point')
+				continue
+
+			# vi sjekker om disken finnes fra før
+			try:
+				cmdb_disk = CMDBDisk.objects.get(Q(computer=record["Computer"]) & Q(mount_point=mount_point))
+				# fjerner fra oversikt over alle vi hadde før vi startet
+				if cmdb_disk in all_existing_devices: # i tilfelle reintrodusert
+					all_existing_devices.remove(cmdb_disk)
+			except:
+				# lager en ny
+				cmdb_disk = CMDBDisk.objects.create(computer=record["Computer"], mount_point=mount_point)
 
 
-				try:
-					computer_ref = CMDBdevice.objects.get(comp_sys_id=record["computer"])
-					cmdb_disk.computer_ref = computer_ref
-					#messages.success(request, 'Maskin med ID %s koblet' % (record["computer"]))
-				except:
-					cmdb_disk.computer_ref = None
-					ikke_koblet += 1
-					#messages.error(request, 'Maskin med ID %s finnes ikke' % (record["computer"]))
-					#sub_name = CMDBRef.objects.create(
-					#		navn=record["sub_name"],
-					#		operational_status=1,
-					#	)
+			cmdb_disk.operational_status = True
+			cmdb_disk.name = disk_name
+			cmdb_disk.size_bytes = convertToInt(record["Size"], 1048576)
+			cmdb_disk.free_space_bytes = convertToInt(record["Free space"], 1048576)
+			#cmdb_disk.file_system = record["file_system"]
+			#cmdb_disk.capacity = record["capacity"]
+			#cmdb_disk.available_space = record["available_space"]
 
-				cmdb_disk.save()
+
+			try:
+				computer_ref = CMDBdevice.objects.get(comp_name=record["Computer"])
+				cmdb_disk.computer_ref = computer_ref
+				#messages.success(request, 'Maskin med ID %s koblet' % (record["computer"]))
+			except:
+				disk_dropped += 1
+				continue
+				#messages.error(request, 'Maskin med ID %s finnes ikke' % (record["computer"]))
+				#sub_name = CMDBRef.objects.create(
+				#		navn=record["sub_name"],
+				#		operational_status=1,
+				#	)
+
+			cmdb_disk.save()
 
 		obsolete_devices = all_existing_devices
 
@@ -527,7 +763,12 @@ def import_cmdb_disk(request):
 			item.delete()
 
 
-		logg_entry_message = '%s disker funnet. %s gamle slettet. %s uten kobling til maskin. Utført av %s.' % (antall_records, len(obsolete_devices), ikke_koblet, request.user)
+		logg_entry_message = '%s disker funnet. %s manglet vesentlig informasjon. %s gamle slettet. Utført av %s.' % (
+				antall_records,
+				disk_dropped,
+				len(obsolete_devices),
+				request.user
+			)
 		logg_entry = ApplicationLog.objects.create(
 				event_type='CMDB disk import',
 				message=logg_entry_message,

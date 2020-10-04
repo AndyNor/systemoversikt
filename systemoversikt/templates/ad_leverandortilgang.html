@@ -1,0 +1,59 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Leverandørtilgang på Felles IKT-plattform
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+{% for k in usergroups %}
+
+	<h6>{{k.kilde.beskrivelse}}: Medlemer i {{k.kilde.gruppe}}</h6>
+	<table class="tablesorter">
+	<thead>
+		<tr>
+			<th>Navn</th>
+			<th>Brukernavn</th>
+			<th>Virksomhet</th>
+			<th>Fra PRK?</th>
+			<th>Tilgang til</th>
+			<th>Sist pålogget</th>
+			<th>Passordstatus</th>
+			<td>Passordutløp</td>
+			<th>Beskrivelse</th>
+		</tr>
+	</thead>
+	<tbodt>
+	{% for m in k.kildemedlemmer %}
+		<tr {% if m.profile.accountdisable %}style="text-decoration: line-through;"{% endif %}>
+			<td>{{ m.first_name }} {{ m.last_name }}</td>
+			<td>{{ m.username }}</td>
+			<td>{{ m.profile.virksomhet.virksomhetsforkortelse }}</td>
+			<td>{{ m.profile.from_prk|yesno:"OK,Opprettet manuelt,Vet ikke" }}</td>
+			<td>{{ m.levtilgang }}</td>
+			<td>{{ m.profile.lastLogonTimestamp|timesince }}</td>
+			<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,OK,Vet ikke" }}</td>
+			<td>{{ m.profile.dont_expire_password|yesno:"Passord utløper aldri,OK,Vet ikke" }}</td>
+			<td>{{ m.profile.description }}</td>
+		</tr>
+	{% endfor %}
+	</tbodt>
+	</table>
+
+{% endfor %}
+
+<hr>
+{% if feilede_oppslag%}
+	Brukere som ikke ble funnet
+	{% for u in feilede_oppslag %}
+		<li>{{ u }}</li>
+	{% endfor %}
+{% endif %}
+
+
+{% endblock hovedinnhold %}

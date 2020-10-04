@@ -46,6 +46,9 @@
 	{% url 'ad' as url_ad %}
 	<a href="{{url_ad}}" class="btn btn-sm {% if url_ad in request.path %}fremhev{% endif %}">Søk AD/LDAP</a>
 
+	{% url 'leverandortilgang' as url_leverandortilgang %}
+	<a href="{{ url_leverandortilgang }}" class="btn btn-sm btn-link {% if url_leverandortilgang in request.path %}fremhev{% endif %}" >🌼 Leverandørtilgang FIP</a>
+
 	{% block ekstrameny_ad %}{% endblock ekstrameny_ad %}
 
 	<hr>

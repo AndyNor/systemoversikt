@@ -11,6 +11,12 @@
 
 {% block hovedinnhold %}
 
+<p>Her vises databaser fra Sopra Steria CMDB. Vi har data om Oracle og MSSQL.<p>
+
+<p>Oracle: Det følger ikke med informasjon om størrelse på database fra CMDB om Oracle. Det er informasjon om databasenavn, server og tilknyttet BSS.</p>
+
+<p>MSSQL: </p>
+
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
@@ -20,19 +26,21 @@
 		</div>
 	</form>
 
-	<p>Viser {{ databaser.count }} databaser</p>
+	<p>Viser {{ databaser.count }} databaser (tar ikke hensyn til filter-funksjonen under)</p>
 
-	<table class="table table-sm tablesorter">
+	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
-		<th>pk</th>
+		<th>PK</th>
 		<th>Opprettet</th>
-		<th>db_database</th>
-		<th>sub_name</th>
-		<th>db_used_for</th>
-		<th>db_version</th>
-		<th>db_comments</th>
-		<th>db_u_datafilessizekb</th>
+		<th>Databasenavn</th>
+		<th>Server</th>
+		<th>Kobling BSS</th>
+		<th>Miljø</th>
+		<th>Type + versjon</th>
+		<th>Kommentar</th>
+		<th>Størrelse (bytes)</th>
+		<th>Størrelse (lesbar)</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -43,6 +51,7 @@
 		<td>{{ db.opprettet|date:'Y-m-d'}} </td>
 
 		<td>{{ db.db_database }}</td>
+		<td><a href="{% url 'alle_maskiner' %}?search_term={{ db.db_server }}">{{ db.db_server }}</a></td>
 		<td>
 			{% for subservice in db.sub_name.all %}
 			<a href="{% url 'cmdbdevice' pk=subservice.pk %}">{{ subservice }}</a><br>
@@ -51,7 +60,8 @@
 		<td>{{ db.db_used_for }}</td>
 		<td>{{ db.db_version }}</td>
 		<td><a href="{% url 'alle_maskiner' %}?search_term={{db.server_str}}">{{ db.db_comments }}</a></td>
-		<td>{{ db.db_u_datafilessizekb }} ({{ db.db_u_datafilessizekb|filesizeformat }})</td>
+		<td>{{ db.db_u_datafilessizekb }}</td>
+		<td>{{ db.db_u_datafilessizekb|filesizeformat }}</td>
 	</tr>
 	{% endfor %}
 	</tbody>

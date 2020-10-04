@@ -857,9 +857,20 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 @admin.register(CMDBRef)
 class CMDBRefAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('navn', 'environment', 'kritikalitet', 'operational_status', 'service_classification', 'opprettet')
+	list_display = ('navn', 'parent', 'environment', 'kritikalitet', 'operational_status', 'service_classification', 'opprettet')
 	search_fields = ('navn',)
 	list_filter = ('environment', 'kritikalitet', 'operational_status', 'service_classification', 'opprettet')
+
+	def get_ordering(self, request):
+		return [Lower('navn')]
+
+
+
+@admin.register(CMDBbs)
+class CMDBRefAdmin(admin.ModelAdmin):
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('navn', 'systemreferanse', 'ant_bss', 'ant_devices', 'ant_databaser', 'opprettet')
+	search_fields = ('navn',)
 
 	def get_ordering(self, request):
 		return [Lower('navn')]
@@ -1054,14 +1065,14 @@ class AutorisertBestillerAdmin(SimpleHistoryAdmin):
 @admin.register(CMDBdevice)
 class CMDBdeviceAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('comp_name', 'comp_sys_id', 'comp_location', 'active',)
-	search_fields = ('comp_name', 'comp_sys_id')
-	list_filter = ('comp_location', 'active',)
+	list_display = ('comp_name', 'active', 'comp_location', 'sub_name', 'comp_ip_address', 'comp_os', 'comp_os_version', 'comp_disk_space', 'comp_cpu_core_count', 'comp_ram', 'dns', 'vlan')
+	search_fields = ('comp_name', 'sub_name__navn')
+	list_filter = ('active', 'comp_location',)
 
 
 @admin.register(CMDBDisk)
 class UserChangeLogAdmin(admin.ModelAdmin):
-	list_display = ('mount_point', 'operational_status', 'file_system', 'size_bytes', 'free_space_bytes', 'computer_ref', 'computer' )
+	list_display = ('name', 'mount_point', 'operational_status', 'file_system', 'size_bytes', 'free_space_bytes', 'computer_ref' )
 	search_fields = ('computer',)
 	list_filter = ('file_system', 'operational_status', )
 
@@ -1161,9 +1172,12 @@ admin.site.register(DefinisjonKontekster)
 
 @admin.register(CMDBdatabase)
 class CMDBdatabaseAdmin(admin.ModelAdmin):
-	list_display = ('db_database', 'db_version', 'db_used_for', 'db_operational_status')
-	search_fields = ('db_database',)
+	actions = [export_as_csv_action("CSV Export")]
+	list_display = ('db_database', 'sub_name', 'db_version', 'db_u_datafilessizekb', 'db_used_for', 'db_operational_status', 'db_comments', )
+	search_fields = ('db_database', 'sub_name__navn', 'db_comments')
 	list_filter = ('opprettet', 'db_operational_status', 'db_version')
+
+
 
 
 ''' Visning av  logger i django adminpanelet

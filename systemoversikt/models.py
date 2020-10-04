@@ -1102,6 +1102,56 @@ CMDB_OPERATIONAL_STATUS = (
 	(0, 'Not operational'),
 )
 
+# dette er nye business service. Kobles mot System
+class CMDBbs(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	navn = models.CharField(unique=True,
+			verbose_name="CMDB-navn",
+			max_length=600,
+			blank=False, null=False,
+			help_text=u"Importert",
+			)
+	systemreferanse = models.ForeignKey("System", related_name="bs_system_referanse",
+			verbose_name="Tilhørende system",
+			blank=True, null=True,
+			on_delete=models.PROTECT,
+			help_text=u"Settes av UKE/OSP",
+			)
+	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
+
+	def __str__(self):
+		return u'%s' % (self.navn)
+
+	def ant_bss(self):
+		return self.cmdb_bss_to_bs.all().count()
+
+	def ant_devices(self):
+		counter = 0
+		for bss in self.cmdb_bss_to_bs.all():
+			counter += bss.ant_devices()
+		return counter
+
+	def ant_databaser(self):
+		counter = 0
+		for bss in self.cmdb_bss_to_bs.all():
+			counter += bss.ant_databaser()
+		return counter
+
+	class Meta:
+		verbose_name_plural = "CMDB: Business services"
+		verbose_name = "business service"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+# dette er business sub services. Kobles mot servere og databaser (endrer ikke navn nå)
 class CMDBRef(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -1120,72 +1170,65 @@ class CMDBRef(models.Model):
 	#		help_text=u"Ja eller nei",
 	#		)
 	navn = models.CharField(unique=True,
-			verbose_name="CMDB-navn",
+			verbose_name="Sub service navn",
 			max_length=600,
 			blank=False, null=False,
-			help_text=u"Navn i CMDB. Maks 300 tegn. Må være unik.",
-			)
-	parent = models.TextField(
-			verbose_name="Parent",
-			blank=True, null=True,
-			help_text=u"Importert: biz_name",
-			)
-	environment = models.IntegerField(choices=CMDB_ENV_VALG,
-			verbose_name="Miljø",
-			blank=True, null=True,
-			help_text=u"Importert: environment",
-			)
-	kritikalitet = models.IntegerField(choices=CMDB_KRITIKALITET_VALG,
-			verbose_name="Busines criticality (SLA)",
-			blank=True, null=True,
-			help_text=u"Importert: Kritikalitet",
-			)
-
-	# brukes denne til noe?
-	cmdb_type = models.IntegerField(choices=CMDB_TYPE_VALG,
-			verbose_name="CMDB-type",
-			blank=True, null=True,
-			help_text=u"Manuelt satt",
-			)
-	comments = models.TextField(
-			verbose_name="Brukes til",
-			blank=True, null=True,
-			help_text=u"Importert: Kommentarer",
+			help_text=u"Importert",
 			)
 	operational_status = models.IntegerField(choices=CMDB_OPERATIONAL_STATUS,
 			verbose_name="Operational status",
 			blank=True, null=True,
-			help_text=u"Importert: Operational status",
+			help_text=u"Importert",
 			)
-	u_service_portfolio = models.TextField(
-			verbose_name="Portfolio",
+	parent = models.ForeignKey(CMDBbs, related_name='cmdb_bss_to_bs',
+			on_delete=models.CASCADE,
 			blank=True, null=True,
-			help_text=u"Importert: Service portfolio",
+			verbose_name="Tilhørerende Business service",
+			help_text=u"Importert",
 			)
-	u_service_availability = models.TextField(
+	environment = models.IntegerField(choices=CMDB_ENV_VALG,
+			verbose_name="Miljø",
+			blank=True, null=True,
+			help_text=u"Importert",
+			)
+	kritikalitet = models.IntegerField(choices=CMDB_KRITIKALITET_VALG,
+			verbose_name="Busines criticality (SLA)",
+			blank=True, null=True,
+			help_text=u"Importert",
+			)
+	u_service_availability = models.CharField(
+			max_length=50,
 			verbose_name="Availability",
 			blank=True, null=True,
-			help_text=u"Importert: Service availability",
+			help_text=u"Importert",
 			)
-	u_service_operation_factor = models.TextField(
+	u_service_operation_factor = models.CharField(
+			max_length=50,
 			verbose_name="operation factor",
 			blank=True, null=True,
-			help_text=u"Importert: Service operation factor",
+			help_text=u"Importert",
 			)
-	u_service_complexity = models.TextField(
+	u_service_complexity = models.CharField(
+			max_length=50,
 			verbose_name="Complexity",
 			blank=True, null=True,
-			help_text=u"Importert: Service complexity",
+			help_text=u"Importert",
 			)
-	u_service_billable = models.TextField(
+	u_service_billable = models.BooleanField(
 			verbose_name="Billable?",
 			blank=True, null=True,
-			help_text=u"Importert: u_service_billable",
+			help_text=u"Importert",
 			)
-	service_classification = models.TextField(
+	service_classification = models.CharField(
+			max_length=150,
 			verbose_name="service classification",
 			blank=True, null=True,
-			help_text=u"Importert: service_classification",
+			help_text=u"Importert",
+			)
+	comments = models.TextField(
+			verbose_name="Kommentar",
+			blank=True, null=True,
+			help_text=u"Importert",
 			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
 
@@ -1272,7 +1315,8 @@ class CMDBRef(models.Model):
 			return False
 
 	class Meta:
-		verbose_name_plural = "CMDB Business services"
+		verbose_name_plural = "CMDB: Business sub services"
+		verbose_name = "sub service"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -1306,6 +1350,11 @@ class CMDBdatabase(models.Model):
 			blank=True, null=True,  # importscriptet vil ikke tillate dette, men datamodellen bryr seg ikke
 			help_text=u"Importert: db_database",
 			)
+	db_server = models.TextField(
+			verbose_name="db_server",
+			blank=True, null=True,  # importscriptet vil ikke tillate dette, men datamodellen bryr seg ikke
+			help_text=u"Importert: db_server",
+			)
 	db_used_for = models.TextField(
 			verbose_name="db_used_for",
 			blank=True, null=True,
@@ -1316,9 +1365,10 @@ class CMDBdatabase(models.Model):
 			blank=True, null=True,
 			help_text=u"Importert: db_comments",
 			)
-	sub_name = models.ManyToManyField(CMDBRef, related_name='cmdbdatabase_sub_name',
+	sub_name = models.ForeignKey(CMDBRef, related_name='cmdbdatabase_sub_name',
 			verbose_name="Business Sub Service",
-			blank=True,
+			on_delete=models.CASCADE,
+			blank=True, null=True,
 			help_text=u"Slått opp basert på comment-felt",
 			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
@@ -1327,7 +1377,8 @@ class CMDBdatabase(models.Model):
 		return u'%s' % (self.db_database)
 
 	class Meta:
-		verbose_name_plural = "CMDB databaser"
+		verbose_name_plural = "CMDB: Databaser"
+		verbose_name = "database"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -1343,7 +1394,7 @@ class CMDBdevice(models.Model):
 			auto_now=True,
 			)
 	active = models.BooleanField(
-			verbose_name="Er enheten aktiv i 2S CMDB?",
+			verbose_name="Aktiv?",
 			default=True,
 			help_text=u"",
 			)
@@ -1362,7 +1413,7 @@ class CMDBdevice(models.Model):
 			)
 	"""
 	comp_disk_space = models.IntegerField(
-			verbose_name="Lagring (GB?)",
+			verbose_name="Lagring",
 			blank=True, null=True,
 			help_text=u"",
 			)
@@ -1372,9 +1423,10 @@ class CMDBdevice(models.Model):
 	#		blank=True, null=True,
 	#		help_text=u"",
 	#		)
-	sub_name = models.ManyToManyField(CMDBRef, related_name='cmdbdevice_sub_name',
+	sub_name = models.ForeignKey(CMDBRef, related_name='cmdbdevice_sub_name',
 			verbose_name="Business Sub Service",
-			blank=True,
+			on_delete=models.CASCADE,
+			blank=True, null=True,
 			help_text=u"",
 			)
 	comp_ip_address = models.CharField(
@@ -1474,7 +1526,8 @@ class CMDBdevice(models.Model):
 		return u'%s' % (self.comp_name)
 
 	class Meta:
-		verbose_name_plural = "CMDB-enhet"
+		verbose_name_plural = "CMDB: Maskiner"
+		verbose_name = "maskin"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -1499,6 +1552,11 @@ class CMDBDisk(models.Model):
 	#		verbose_name="capacity",
 	#		blank=True, null=True,
 	#		)
+	name = models.TextField(
+			verbose_name="Name",
+			unique=False,
+			null=True
+			)
 	mount_point = models.TextField(
 			verbose_name="mount_point",
 			unique=False,
@@ -1526,17 +1584,18 @@ class CMDBDisk(models.Model):
 	computer_ref = models.ForeignKey("CMDBdevice", related_name='cmdbdisk_computer',
 			on_delete=models.CASCADE,
 			verbose_name="Computer ref",
-			blank=True, null=True,
+			blank=False, null=True,
 			help_text=u"Mor-gruppe (importert)",
 			)
-	unique_together = ('computer', 'mount_point')
+	unique_together = ('computer_ref', 'mount_point')
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
 	def __str__(self):
 		return u'%s' % (self.size_bytes)
 
 	class Meta:
-		verbose_name_plural = "CMDB-disk"
+		verbose_name_plural = "CMDB: Disker"
+		verbose_name = "disk"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

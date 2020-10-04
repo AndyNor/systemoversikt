@@ -1589,6 +1589,76 @@ def virksomhet_enheter(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+
+def leverandortilgang(request):
+	"""
+	Vise informasjon brukere som har leverandørtilgang
+	Tilgjengelig for de som kan se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		# Windows Terminal Service (WTS)
+		#	TASK-OF2-LevtilgangWTS-IS
+		#	TASK-OF2-LevtilgangWTS-SS
+		#	TASK-OF2-DRIFTWTS-IS
+		#	TASK-OF2-DRIFTWTS-SS
+		#	TASK-OF2-LevtilgangWTS-IS
+		#	TASK-OF2-LevtilgangWTS-SS
+
+
+		# Leverandørtilgang WTS
+
+		# Tredjepartsdrift
+
+		# Tilganger Driftspersonell
+
+		# AzureAD/Intune
+
+		# AppleBM
+
+		usergroups = []
+		feilede_oppslag = []
+
+		leverandor_kilder = [
+			{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_KARDEX", "beskrivelse": "Kardex hos DEB"},
+			{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_DEB", "beskrivelse": "Creston hos DEB"},
+			{"gruppe": "DS-KEM_RPA", "beskrivelse": "RPA hos KEM"},
+			{"gruppe": "DS-DRIFT_TREDJEPARTDRIFT", "beskrivelse": "Økonomi / Evry"},
+			{"gruppe": "DS-UVALEVTILGANG", "beskrivelse": "ITAS/UVA"},
+		]
+
+		for kilde in leverandor_kilder:
+			kildemedlemmer = []
+			if kilde["gruppe"] != None:
+				members = json.loads(ADgroup.objects.get(common_name=kilde["gruppe"]).member)
+			else:
+				members = []
+			for m in members:
+				regex_username = re.search(r'cn=([^\,]*)', m, re.I).groups()[0]
+				try:
+					u = User.objects.get(username__iexact=regex_username)
+					u.levtilgang = kilde["beskrivelse"]  # merk at dette ikke lagres til brukerobjektet. Dette er kun en kopi.
+					#if u.profile.accountdisable == False:
+					kildemedlemmer.append(u)
+					#else:
+						#print("bruker er deaktivert: %s" % u)
+				except:
+					feilede_oppslag.append(regex_username)
+
+			usergroups.append({
+				"kilde": kilde,
+				"kildemedlemmer": kildemedlemmer,
+			})
+
+		return render(request, 'ad_leverandortilgang.html', {
+			"usergroups": usergroups,
+			"feilede_oppslag": feilede_oppslag,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def prk_userlookup(request):
 	"""
 	Vise informasjon om vilkårlige brukere
