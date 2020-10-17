@@ -2914,7 +2914,7 @@ def alle_cmdbref(request):
 		else:
 			cmdbref = CMDBRef.objects.filter(navn__icontains=search_term)
 
-		cmdbref = cmdbref.order_by("-operational_status", "service_classification", Lower("navn"))
+		cmdbref = cmdbref.order_by("-operational_status", "parent_ref__navn", Lower("navn"))
 
 		return render(request, 'cmdb_bs_sok.html', {
 			'request': request,
@@ -3439,7 +3439,7 @@ def cmdb_api(request):
 	for bss in query:
 		line = {}
 		line["business_subservice_navn"] = bss.navn
-		line["business_service"] = bss.parent
+		line["business_service"] = bss.parent_ref.navn
 		line["sist_oppdatert"] = bss.sist_oppdatert
 		line["opprettet"] = bss.opprettet
 		line["environment"] = bss.get_environment_display()
@@ -3447,27 +3447,23 @@ def cmdb_api(request):
 		line["service_availability"] = bss.u_service_availability
 		line["service_operation_factor"] = bss.u_service_operation_factor
 		line["service_complexity"] = bss.u_service_complexity
-		line["antall_tilknyttede_systemer"] = len(bss.system_cmdbref.all())
-		if len(bss.system_cmdbref.all()) == 1:
-			line["tilknyttet_system"] = bss.system_cmdbref.all()[0].systemnavn
-			system = bss.system_cmdbref.all()[0]
-			if system.systemeier:
-				line["systemeier"] = system.systemeier.virksomhetsforkortelse
-			if system.systemforvalter:
-				line["systemforvalter"] = system.systemforvalter.virksomhetsforkortelse
-			if system.driftsmodell_foreignkey:
-				line["plattform"] = system.driftsmodell_foreignkey.navn
+		if bss.parent_ref:
+			if bss.parent_ref.systemreferanse:
+				system = bss.parent_ref.systemreferanse
+				line["tilknyttet_system"] = system.systemnavn if system else "Ikke koblet"
+				line["systemeier"] = system.systemeier.virksomhetsforkortelse if system.systemeier else "Ikke oppgitt"
+				line["systemforvalter"] = system.systemforvalter.virksomhetsforkortelse if system.systemforvalter else "Ikke oppgitt"
+				line["plattform"] = system.driftsmodell_foreignkey.navn if system.driftsmodell_foreignkey else "Ikke oppgitt"
+				line["er_infrastruktur"] = system.er_infrastruktur()
+			else:
+				line["tilknyttet_system"] = "Ikke koblet"
+				line["systemeier"] = "Ukjent grunnet manglende systemkobling"
+				line["systemforvalter"] = "Ukjent grunnet manglende systemkobling"
+				line["plattform"] = "Ukjent grunnet manglende systemkobling"
+				line["er_infrastruktur"] = "Ukjent grunnet manglende systemkobling"
+		else:
+			return("error")
 
-
-			#systemtyper = []
-			#for systemtype in system.systemtyper.all():
-			#	systemtyper.append(systemtype)
-			#line["systemtyper"] = systemtyper
-
-		if len(bss.system_cmdbref.all()) > 1:
-			line["tilknyttet_system"] = "Det er flere systemer som peker mot denne gruppen"
-		if len(bss.system_cmdbref.all()) == 0:
-			line["tilknyttet_system"] = "Ingen"
 
 		line["antall_servere"] = bss.ant_devices()
 
@@ -3482,11 +3478,11 @@ def cmdb_api(request):
 				s["server_disk"] = server.comp_disk_space * 1024  # ønskes oppgitt i megabyte
 			else:
 				s["server_disk"] = None
-			s["server_cpu_name"] = server.comp_cpu_name
-			s["server_cpu_speed"] = server.comp_cpu_speed
+			#s["server_cpu_name"] = server.comp_cpu_name
+			#s["server_cpu_speed"] = server.comp_cpu_speed
 			s["server_cpu_core_count"] = server.comp_cpu_core_count
-			s["server_cpu_count"] = server.comp_cpu_count
-			s["server_cpu_total"] = server.comp_u_cpu_total
+			#s["server_cpu_count"] = server.comp_cpu_count
+			#s["server_cpu_total"] = server.comp_u_cpu_total
 			serverliste.append(s)
 
 		line["servere"] = serverliste

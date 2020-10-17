@@ -225,7 +225,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'basisdriftleverandor',
 				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
 				#'cmdbref_prod',
-				'cmdbref',
 				'brukerdokumentasjon_url',
 				'high_level_design_url',
 				'low_level_design_url',
@@ -267,6 +266,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		('Utfases', {
 			'classes': ('collapse',),
 			'fields': (
+				'cmdbref',
 				'systemtekniske_sikkerhetstiltak',
 				'programvarekategori',
 				'strategisk_egnethet',
@@ -857,7 +857,7 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 @admin.register(CMDBRef)
 class CMDBRefAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('navn', 'parent', 'environment', 'kritikalitet', 'operational_status', 'service_classification', 'opprettet')
+	list_display = ('navn', 'parent_ref', 'environment', 'kritikalitet', 'operational_status', 'service_classification', 'bss_external_ref', 'opprettet')
 	search_fields = ('navn',)
 	list_filter = ('environment', 'kritikalitet', 'operational_status', 'service_classification', 'opprettet')
 
@@ -869,8 +869,21 @@ class CMDBRefAdmin(admin.ModelAdmin):
 @admin.register(CMDBbs)
 class CMDBRefAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('navn', 'systemreferanse', 'ant_bss', 'ant_devices', 'ant_databaser', 'opprettet')
+	list_display = ('navn', 'operational_statuss', 'systemreferanse', 'ant_bss', 'ant_devices', 'ant_databaser', 'bs_external_ref', 'opprettet')
 	search_fields = ('navn',)
+	readonly_fields = ('navn',)
+	autocomplete_fields = ('systemreferanse',)
+
+
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('alle_cmdbref'))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('alle_cmdbref'))
+		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
 		return [Lower('navn')]

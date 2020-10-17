@@ -1113,17 +1113,27 @@ class CMDBbs(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-	navn = models.CharField(unique=True,
+	navn = models.CharField(
 			verbose_name="CMDB-navn",
 			max_length=600,
 			blank=False, null=False,
 			help_text=u"Importert",
 			)
-	systemreferanse = models.ForeignKey("System", related_name="bs_system_referanse",
+	systemreferanse = models.OneToOneField("System", related_name="bs_system_referanse",
 			verbose_name="Tilhørende system",
 			blank=True, null=True,
-			on_delete=models.PROTECT,
+			on_delete=models.SET_NULL,
 			help_text=u"Settes av UKE/OSP",
+			)
+	bs_external_ref = models.CharField(unique=True,
+			verbose_name="Foreignkey mot ServiceNow",
+			max_length=64,
+			blank=False, null=True,
+			help_text=u"Importert",
+			)
+	operational_status = models.BooleanField(
+			verbose_name="I bruk?",
+			default=True,
 			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
 
@@ -1180,7 +1190,7 @@ class CMDBRef(models.Model):
 			blank=True, null=True,
 			help_text=u"Importert",
 			)
-	parent = models.ForeignKey(CMDBbs, related_name='cmdb_bss_to_bs',
+	parent_ref = models.ForeignKey(CMDBbs, related_name='cmdb_bss_to_bs',
 			on_delete=models.CASCADE,
 			blank=True, null=True,
 			verbose_name="Tilhørerende Business service",
@@ -1228,6 +1238,12 @@ class CMDBRef(models.Model):
 	comments = models.TextField(
 			verbose_name="Kommentar",
 			blank=True, null=True,
+			help_text=u"Importert",
+			)
+	bss_external_ref = models.CharField(unique=True,
+			verbose_name="Foreignkey mot ServiceNow",
+			max_length=64,
+			blank=False, null=True,
 			help_text=u"Importert",
 			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig

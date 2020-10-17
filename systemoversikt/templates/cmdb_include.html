@@ -11,6 +11,7 @@
 	<th>Antall servere</th>
 	<th>Antall databaser</th>
 	<th>Tilknyttet system</th>
+	<th>Tilknyttet system (fases ut)</th>
 	<th>Antall systemer</th>
 	<th>I bruk</th>
 	{% comment %}<th>B</th>{% endcomment %}
@@ -40,7 +41,7 @@
 	</td>
 	<td>{{ item.sist_oppdatert|date:'Y-m-d' }}</td>
 	<td>{% include 'site_janeivetikke.html' with boolean=item.operational_status %}</td>
-	<td>{{ item.parent|default:'?' }}</td>
+	<td>{{ item.parent_ref.navn|default:'?' }}</td>
 	<td>
 		{% comment %}
 			{% if user.is_authenticated %}
@@ -59,6 +60,14 @@
 	</td>
 	<td>{{ item.ant_devices }}</td>
 	<td>{{ item.ant_databaser }}</td>
+	<td>
+		{% if item.parent_ref.systemreferanse %}
+			{% url 'systemdetaljer' pk=item.parent_ref.systemreferanse.pk as url_system %}
+			<a href="{{ url_system }}">{{ item.parent_ref.systemreferanse.systemnavn }}</a>
+		{% else %}
+			<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ koble?</a>
+		{% endif %}
+	</td>
 	<td>
 		{% for system in item.system_cmdbref.all %}
 			{% url 'systemdetaljer' pk=system.pk as url_system %}

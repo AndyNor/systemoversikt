@@ -158,54 +158,61 @@ def import_business_services(request):
 		antall_records = len(data)
 
 		for record in data:
-			"""
-			print(record)
-			{'Name': 'OK-Citrix Netscaler',
-			'Name.1': 'OK-Citrix (Infrastruktur)',
-			'Business criticality': '1 - most critical',
-			'Environment': 'Production',
-			'Value': 'Citrix',
-			'Value.1': 'Citrix',
-			'Service Billable': 'Yes',
-			'Service Availability': 'T2',
-			'Service Complexity': 'K8',
-			'Service Operation Factor': 'D2',
-			'Operational status': 'Operational',
-			'Description': '',
-			'Service classification': 'Application Service'}
-			"""
 
 			bss_dropped = 0
+			bs_dropped = 0
 			bss_name = record["Name"]
 			bs_name = record["Name.1"]
+			bss_id = record["Sys ID.1"]
+			bs_id = record["Sys ID"]
 
 			if bs_name == "" or bss_name == "":
-				messages.error(request, "Business service navn eller BSS-anvn mangler")
+				messages.error(request, "Business service navn eller BSS-navn mangler")
 				bss_dropped += 1
 				continue  # Det må være en verdi på denne
 
 			# sjekke om bs finnes fra før, om ikke opprette
+			if len(bs_id) < 32:
+				messages.error(request, "Business service %s manglet unik ID" % bs_name)
+				bs_dropped += 1
+				continue
+
 			try:
-				business_service = CMDBbs.objects.get(navn=bs_name)
+				business_service = CMDBbs.objects.get(bs_external_ref=bs_id)
 				if business_service in alle_eksisterende_cmdbbs:
 					alle_eksisterende_cmdbbs.remove(business_service)
 			except:
 				antall_nye_bs += 1
 				business_service = CMDBbs.objects.create(
-						navn=bs_name,
+						bs_external_ref=bs_id,
 				)
 
+			if business_service.navn != bs_name:
+				messages.error(request, "Nytt og gammelt navn stemmer ikke overens for %s og %s" % (business_service.navn, bs_name))
+			business_service.navn = bs_name
+			#business_service.bs_external_ref = record["Sys ID"]
+			business_service.save()
+
 			# sjekke om bss finnes fra før, om ikke opprette
+			if len(bss_id) < 32:
+				messages.error(request, "Business sub service %s manglet unik ID" % bss_name)
+				bss_dropped += 1
+				continue
+
 			try:
-				business_sub_service = CMDBRef.objects.get(navn=bss_name)
+				business_sub_service = CMDBRef.objects.get(bss_external_ref=bss_id)
 				if business_sub_service in alle_eksisterende_cmdbref:
 					alle_eksisterende_cmdbref.remove(business_sub_service)
 			except:
 				antall_nye_bs += 1
 				business_sub_service = CMDBRef.objects.create(
-						navn=bss_name,
+						bss_external_ref=bss_id,
 				)
 
+			if business_sub_service.navn != bss_name:
+				messages.error(request, "Nytt og gammelt navn stemmer ikke overens for %s og %s" % (business_sub_service.navn, bss_name))
+			business_sub_service.navn = bss_name
+			#business_sub_service.bss_external_ref = record["Sys ID.1"]
 			business_sub_service.environment=konverter_environment(record["Environment"])
 			business_sub_service.kritikalitet=konverter_kritikalitet(record["Business criticality"])
 			#business_sub_service.u_service_portfolio=record["sub_u_service_portfolio"]
@@ -214,7 +221,7 @@ def import_business_services(request):
 			business_sub_service.u_service_complexity = record["Service Complexity"]
 			business_sub_service.operational_status = True if record["Operational status"] == "Operational" else False
 			business_sub_service.u_service_billable = True if record["Service Billable"] == "Yes" else False
-			business_sub_service.parent = business_service
+			business_sub_service.parent_ref = business_service
 			business_sub_service.service_classification = record["Service classification"]
 			business_sub_service.comments = record["Description"]
 
@@ -222,20 +229,23 @@ def import_business_services(request):
 
 		# deaktiverer alle bs og sletter alle bss som er igjen
 		for cmdbbs in alle_eksisterende_cmdbbs:
-			cmdbbs.operational_status = False
-			antall_deaktiverte_bs += 1
-			cmdbbs.save()
+			if cmdbbs.operational_status == True:
+				cmdbbs.operational_status = False
+				antall_deaktiverte_bs += 1
+				cmdbbs.save()
 
 		for cmdbref in alle_eksisterende_cmdbref:
 			antall_slettede_bss += 1
 			cmdbref.delete()
 
-		logg_entry_message = "Antall BSS: %s. Nye BS: %s (%s satt inaktiv), nye BSS: %s (%s slettede). Utført av %s" % (
+		logg_entry_message = "Antall BSS: %s. Nye BS: %s (%s satt inaktiv), nye BSS: %s (%s slettede). %s BS og %s BSS feilet. Utført av %s" % (
 					antall_records,
 					antall_nye_bs,
 					antall_deaktiverte_bs,
 					antall_nye_bss,
 					antall_slettede_bss,
+					bs_dropped,
+					bss_dropped,
 					request.user
 				)
 		logg_entry = ApplicationLog.objects.create(
@@ -458,17 +468,7 @@ def import_cmdb_databases(request):
 
 
 		for record in data:
-
-			"""
-			print(record)
-			{'Name': 'Samporta1_SITE',
-			'Operational status': 'Operational',
-			'Version': 'SQL server 2000',
-			'DataFilesSizeKB': '',
-			'Used for': 'Production',
-			'Comments': '',
-			'Name.1': 'OK-Samportal prod'}
-			"""
+			#print(record)
 
 			if ".xlsx" in filepath:
 				db_name = record["Name"]
@@ -499,7 +499,10 @@ def import_cmdb_databases(request):
 				else:
 					cmdb_db.db_operational_status = False
 
-				cmdb_db.db_version = record["Version"]
+				if record["Version"] != "":
+					cmdb_db.db_version = record["Version"]
+				else:
+					cmdb_db.db_version = "MSSQL"
 
 				try:
 					filesize = int(record.get("DataFilesSizeKB", 0)) * 1024 # convert to bytes
@@ -579,20 +582,6 @@ def import_cmdb_servers(request):
 
 
 		for record in data:
-			"""
-			{'Name': 'p-oradb17',
-			'Disk space (GB)': 16938.0,
-			'CPU total': 24.0,
-			'CPU speed (MHz)': 2400.0,
-			'RAM (MB)': 258285.0,
-			'IP Address': '10.134.183.11',
-			'Operating System': 'Linux Red Hat',
-			'OS Version': '6.10',
-			'OS Service Pack': '',
-			'Name.1': 'DB - Oracle - prod', #bss
-			'Location': ''}
-
-			"""
 			#print(record)
 
 			comp_name = record["Name"]
@@ -703,14 +692,6 @@ def import_cmdb_disk(request):
 
 		for record in data:
 
-			"""
-			{'Name': '',
-			'Mount point': '',
-			'Size': '467.0 MB',
-			'Free space': '80.4 MB',
-			'Computer': 'wsvisw10003'}
-			"""
-
 			disk_name = record["Name"]
 			mount_point = record["Mount point"]
 
@@ -735,9 +716,9 @@ def import_cmdb_disk(request):
 
 			cmdb_disk.operational_status = True
 			cmdb_disk.name = disk_name
-			cmdb_disk.size_bytes = convertToInt(record["Size"], 1048576)
-			cmdb_disk.free_space_bytes = convertToInt(record["Free space"], 1048576)
-			#cmdb_disk.file_system = record["file_system"]
+			cmdb_disk.size_bytes = convertToInt(record["Size bytes"], 1)
+			cmdb_disk.free_space_bytes = convertToInt(record["Free space bytes"], 1)
+			cmdb_disk.file_system = record["File system"]
 			#cmdb_disk.capacity = record["capacity"]
 			#cmdb_disk.available_space = record["available_space"]
 
@@ -748,6 +729,7 @@ def import_cmdb_disk(request):
 				#messages.success(request, 'Maskin med ID %s koblet' % (record["computer"]))
 			except:
 				disk_dropped += 1
+				cmdb_disk.delete()
 				continue
 				#messages.error(request, 'Maskin med ID %s finnes ikke' % (record["computer"]))
 				#sub_name = CMDBRef.objects.create(
@@ -758,12 +740,11 @@ def import_cmdb_disk(request):
 			cmdb_disk.save()
 
 		obsolete_devices = all_existing_devices
-
 		for item in obsolete_devices:
 			item.delete()
 
 
-		logg_entry_message = '%s disker funnet. %s manglet vesentlig informasjon. %s gamle slettet. Utført av %s.' % (
+		logg_entry_message = '%s disker funnet. %s manglet vesentlig informasjon og ble ikke importert. %s gamle slettet. Utført av %s.' % (
 				antall_records,
 				disk_dropped,
 				len(obsolete_devices),
