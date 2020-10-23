@@ -3627,6 +3627,12 @@ def ubw_api(request, pk):
 			eksportdata["UBW beløp"] = float(faktura.ubw_amount)
 		except:
 			eksportdata["UBW beløp"] = 0
+
+		try:
+			eksportdata["UBW estimat"] = faktura.metadata_reference.budsjett_amount
+		except:
+			eksportdata["UBW estimat"] = 0
+
 		eksportdata["UBW Virksomhets-ID"] = faktura.ubw_client
 		eksportdata["UBW sist oppdatert"] = faktura.ubw_last_update
 		try:
@@ -3669,6 +3675,24 @@ def ubw_api(request, pk):
 		faktura_eksport.append(eksportdata)
 
 
+	# resten her handler om estimater. Vi trener først noen tabeller å slå opp i der data faktisk ikke er registret på estimatet.
+
+	# for å kunne fylle ut UBW Kontonavn
+	ubw_kontonavn_oppslag = list(UBWFaktura.objects.filter(belongs_to=enhet).values_list('ubw_account', 'ubw_xaccount').distinct())
+	#print(ubw_kontonavn_oppslag)
+
+	# for å kunne fylle ut UBW Kontonavn
+	ubw_koststednavn_oppslag = list(UBWFaktura.objects.filter(belongs_to=enhet).values_list('ubw_dim_1', 'ubw_xdim_1').distinct())
+	#print(ubw_kontonavn_oppslag)
+
+	def oppslag(verdi, oppslagsliste):
+		for item in oppslagsliste:
+			if item[0] == verdi:
+				#print(item[1])
+				return item[1]
+		return "ukjent"
+
+
 	estimat = UBWEstimat.objects.filter(belongs_to=enhet).filter(aktiv=True).order_by('-periode_paalopt')
 	for e in estimat:
 		eksportdata = {}
@@ -3677,10 +3701,10 @@ def ubw_api(request, pk):
 		eksportdata["kilde"] = e.prognose_kategori
 		eksportdata["UBW tab"] = ""
 		eksportdata["UBW Kontonr"] = e.estimat_account
-		eksportdata["UBW Kontonavn"] = ""
+		eksportdata["UBW Kontonavn"] = oppslag(e.estimat_account, ubw_kontonavn_oppslag)
 		eksportdata["UBW-periode (YYYYMM)"] = ""
 		eksportdata["UBW Koststednr"] = e.estimat_dim_1
-		eksportdata["UBW Koststednavn"] = ""
+		eksportdata["UBW Koststednavn"] = oppslag(e.estimat_dim_1, ubw_koststednavn_oppslag)
 		eksportdata["UBW prosjektnr"] = e.estimat_dim_4
 
 		prosjektnavn = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_dim_4=e.estimat_dim_4).values_list('ubw_xdim_4').distinct()
@@ -3699,6 +3723,11 @@ def ubw_api(request, pk):
 			eksportdata["UBW beløp"] = float(e.estimat_amount)
 		except:
 			eksportdata["UBW beløp"] = 0
+		try: # i tilfelle noen glemmer å fylle ut et beløp i estimatet
+			eksportdata["UBW estimat"] = float(e.budsjett_amount)
+		except:
+			eksportdata["UBW estimat"] = 0
+
 		eksportdata["UBW Virksomhets-ID"] = ""
 		eksportdata["UBW sist oppdatert"] = ""
 		try:
@@ -4027,11 +4056,11 @@ def ubw_generer_estimat_valg(belongs_to):
 	prognose_kategorier = list(UBWEstimat.objects.filter(belongs_to=belongs_to).values_list('prognose_kategori', 'prognose_kategori').distinct())
 	data.append({'field': 'prognose_kategori', 'choices': prognose_kategorier})
 
-	prognose_koststednummer = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_account', 'ubw_xaccount').distinct())
-	data.append({'field': 'estimat_account', 'choices': prognose_koststednummer})
+	prognose_estimat_account = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_account', 'ubw_xaccount').distinct())
+	data.append({'field': 'estimat_account', 'choices': prognose_estimat_account})
 
-	prognose_koststednummer = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_dim_1', 'ubw_xdim_1').distinct())
-	data.append({'field': 'estimat_dim_1', 'choices': prognose_koststednummer})
+	prognose_estimat_dim_1 = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_dim_1', 'ubw_xdim_1').distinct())
+	data.append({'field': 'estimat_dim_1', 'choices': prognose_estimat_dim_1})
 
 	prognose_prosjektnummer = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_dim_4', 'ubw_xdim_4').distinct())
 	data.append({'field': 'estimat_dim_4', 'choices': prognose_prosjektnummer})

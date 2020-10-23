@@ -4373,6 +4373,12 @@ class UBWMetadata(models.Model):
 		verbose_name="Faktisk periode påløpt",
 		null=False, blank=False,
 		)
+	budsjett_amount = models.DecimalField(
+		verbose_name="Budsjettert beløp",
+		max_digits=20, #10^(20-2), bør holde en stund..
+		decimal_places=2,
+		null=True, blank=True,
+		)
 	kategori = models.ForeignKey(
 		to="UBWFakturaKategori",
 		on_delete=models.PROTECT,
@@ -4486,6 +4492,12 @@ class UBWEstimat(models.Model):
 		decimal_places=2,
 		null=True, blank=True,
 		)
+	budsjett_amount = models.DecimalField(
+		verbose_name="Budsjettert beløp",
+		max_digits=20, #10^(20-2), bør holde en stund..
+		decimal_places=2,
+		null=True, blank=True,
+		)
 	periode_paalopt = models.DateField(
 		verbose_name="Faktisk periode påløpt",
 		null=False, blank=False,
@@ -4522,6 +4534,7 @@ class UBWEstimatForm(forms.ModelForm):
 		widgets = {
 			'ubw_description': forms.Textarea(attrs={'cols': 10, 'rows': 2}),
 			'estimat_amount': forms.TextInput(),
+			'budsjett_amount': forms.TextInput(),
 		}
 
 	def __init__(self, *args, **kwargs):

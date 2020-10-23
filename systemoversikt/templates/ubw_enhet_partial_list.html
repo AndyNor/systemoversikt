@@ -13,11 +13,13 @@
 		<td>{{f.ubw_period|default:"-"}}</td>
 	{% if f.metadata_reference %}
 		<td class="ubw_manuell">{{ f.metadata_reference.periode_paalopt|date:"Ym" }}</td>
+		<td class="ubw_manuell">{{ f.metadata_reference.budsjett_amount|default:"-"|intcomma }}</td>
 		<td class="ubw_manuell">{{ f.metadata_reference.kategori }}</td>
 		<td class="ubw_manuell">{{ f.metadata_reference.leverandor|default:"-" }}</td>
 		<td class="ubw_manuell">{{ f.metadata_reference.kommentar|default:"-" }}</td>
 		<td><a href="{% url 'ubw_ekstra_edit' faktura_id=f.pk pk=f.metadata_reference.pk %}" class="btn btn-sm btn-info">Endre</a></td>
 	{% else %}
+		<td class="ubw_manuell"></td>
 		<td class="ubw_manuell"></td>
 		<td class="ubw_manuell"></td>
 		<td class="ubw_manuell"></td>

@@ -28,6 +28,7 @@
 				<th>{% get_verbose_field_name model "estimat_dim_1" %}</th>
 				<th>{% get_verbose_field_name model "estimat_dim_4" %}</th>
 				<th>{% get_verbose_field_name model "estimat_amount" %}</th>
+				<th>{% get_verbose_field_name model "budsjett_amount" %}</th>
 				<th>{% get_verbose_field_name model "periode_paalopt" %}</th>
 				<th>{% get_verbose_field_name model "kategori" %}</th>
 				<th>{% get_verbose_field_name model "leverandor" %}</th>
@@ -70,6 +71,12 @@
 					success: function (data) {
 						$("#modal-estimat .modal-content").html(data.html_form);
 						new AutoNumeric('#id_estimat_amount', {
+								currencySymbol : '',
+								decimalPlacesRawValue: 2,
+								digitGroupSeparator: " ",
+								unformatOnSubmit: true,
+						});
+						new AutoNumeric('#id_budsjett_amount', {
 								currencySymbol : '',
 								decimalPlacesRawValue: 2,
 								digitGroupSeparator: " ",
