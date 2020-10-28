@@ -1,6 +1,7 @@
 {% load static %}
 {% load humanize %}
 
+<p>Koblinger mellom system og business service (2S CMDB) gjøres av plattformforvaltete. Se <a target="_new" href="https://confluence.oslo.kommune.no/pages/viewpage.action?pageId=102138847">definisjoner</a> av tjenestenivå, kritikalitet og kompleksitet på Confluence</p>
 
 <table id="systemer" class="tablesorter">
 	<thead>
@@ -9,9 +10,12 @@
 				<th class="filter-false"></th>
 			{% endif %}
 			<th>Systemnavn</th>
+			<th>Systemeier</th>
 			<th>Kategorisering</th>
 			<th>Driftsmodell / plattform</th>
-			<th>2S CMDB (<a target="_new" href="https://confluence.oslo.kommune.no/pages/viewpage.action?pageId=102138847">definisjoner</a>)</th>
+			<th>Kobling CMDB: Tjenestenivå</th>
+			<th>Kobling CMDB: Kritikalitet</th>
+			<th>Kobling CMDB: Kompleksitet</th>
 			<th>Tilgjengelighetsvurdering</th>
 
 		</tr>
@@ -29,6 +33,10 @@
 			</td>
 
 			<td>
+				{{ item.systemeier.virksomhetsforkortelse|default:"-" }}
+			</td>
+
+			<td>
 				{% for kategori in item.systemkategorier.all %}
 					{% url 'systemkategori' kategori.pk as url_systemkategorier %}
 					<a href="{{ url_systemkategorier }}">{{ kategori }}</a><br>
@@ -39,17 +47,42 @@
 			<td><a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a></td>
 
 			<td>
-				{% for ref in item.cmdbref.all %}
-					{% if ref.operational_status == 1 %}
-						{% if ref.environment == 1 %}
-							{{ ref.navn }}<br>
-							<li>Tjenestenivå: {{ ref.u_service_availability_text }}</li>
-							<li>Kritikalitet: {{ ref.u_service_operation_factor_text }}</li>
-							<li>Kompleksitet: {{ ref.u_service_complexity_text }}</li>
-						<br>
-						{% endif %}
+			{% for bss in item.bs_system_referanse.cmdb_bss_to_bs.all %}
+				{% if bss.operational_status == 1 %}
+					{% if bss.environment == 1 %}
+						<li>
+						{{ bss.navn }}:<br>
+						{{ bss.u_service_availability_text }}
+						</li>
 					{% endif %}
-				{% endfor %}
+				{% endif %}
+			{% endfor %}
+			</td>
+
+			<td>
+			{% for bss in item.bs_system_referanse.cmdb_bss_to_bs.all %}
+				{% if bss.operational_status == 1 %}
+					{% if bss.environment == 1 %}
+						<li>
+						{{ bss.navn }}:<br>
+						{{ bss.u_service_operation_factor_text }}
+						</li>
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+			</td>
+
+			<td>
+			{% for bss in item.bs_system_referanse.cmdb_bss_to_bs.all %}
+				{% if bss.operational_status == 1 %}
+					{% if bss.environment == 1 %}
+						<li>
+						{{ bss.navn }}:<br>
+						{{ bss.u_service_complexity_text }}
+						</li>
+					{% endif %}
+				{% endif %}
+			{% endfor %}
 			</td>
 
 			<td>

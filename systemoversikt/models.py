@@ -2774,6 +2774,11 @@ class System(models.Model):
 			blank=True, null=True,
 			help_text=u"Ca hvor mange bruker systemet totalt?",
 			)
+	tilgangsgrupper_ad = models.ManyToManyField(ADgroup, related_name='system_referanse',
+			verbose_name="Tilhørende tilgangsgrupper (AD)",
+			blank=True,
+			help_text=u'Velg en eller flere sikkerhetsgrupper i AD tilhørende systemet.',
+			)
 	history = HistoricalRecords()
 
 	def __str__(self):

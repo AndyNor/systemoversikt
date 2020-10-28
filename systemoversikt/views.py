@@ -3629,9 +3629,9 @@ def ubw_api(request, pk):
 			eksportdata["UBW beløp"] = 0
 
 		try:
-			eksportdata["UBW estimat"] = faktura.metadata_reference.budsjett_amount
+			eksportdata["UBW budsjett"] = faktura.metadata_reference.budsjett_amount if faktura.metadata_reference else 0
 		except:
-			eksportdata["UBW estimat"] = 0
+			eksportdata["UBW budsjett"] = 0
 
 		eksportdata["UBW Virksomhets-ID"] = faktura.ubw_client
 		eksportdata["UBW sist oppdatert"] = faktura.ubw_last_update
@@ -3724,9 +3724,9 @@ def ubw_api(request, pk):
 		except:
 			eksportdata["UBW beløp"] = 0
 		try: # i tilfelle noen glemmer å fylle ut et beløp i estimatet
-			eksportdata["UBW estimat"] = float(e.budsjett_amount)
+			eksportdata["UBW budsjett"] = float(e.budsjett_amount)
 		except:
-			eksportdata["UBW estimat"] = 0
+			eksportdata["UBW budsjett"] = 0
 
 		eksportdata["UBW Virksomhets-ID"] = ""
 		eksportdata["UBW sist oppdatert"] = ""

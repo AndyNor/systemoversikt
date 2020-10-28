@@ -175,6 +175,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'database_supported',
 		'database_in_use',
 		'godkjente_bestillere',
+		'tilgangsgrupper_ad',
 	)
 
 	fieldsets = (
@@ -235,8 +236,9 @@ class SystemAdmin(SimpleHistoryAdmin):
 			),
 		}),
 		('Utdypende opplysninger om systemet', {
-			'classes': ('collapse',),
+			#'classes': ('collapse',),
 			'fields': (
+				'tilgangsgrupper_ad',
 				'antall_brukere',
 				'leveransemodell_fip',
 				'kontaktgruppe_url',
