@@ -30,6 +30,7 @@
 		<th>Forkortelse</th>
 		<th>Leder</th>
 		<th>Antall systemer i bruk</th>
+		<th>Systemprioritering</th>
 		{% comment %}<th>Antall ansatte</th>{% endcomment %}
 		<th>Drift av klientplattform</th>
 		{% comment %}<th>Autoriserte bestillere InfoTorget</th>{% endcomment %}
@@ -62,7 +63,12 @@
 				{% include "ansvarlig_include_vis.html" with ansvarlige=vir.leder.all %}
 			{% endif %}
 		</td>
+
 		<td>{{ vir.systembruk_brukergruppe.all.count }}</td>
+
+		{% url 'drift_beredskap_for_eier' 163 vir.pk as url_beredskap_for_eier %}
+		<td><a href="{{ url_beredskap_for_eier }}">Hos UKE for {{vir.virksomhetsforkortelse}}</a></td>
+
 		{% comment %}<td>{{ vir.ansatte|default:"-" }}</td>{% endcomment %}
 		<td>{{ vir.get_resultatenhet_display|default:"-" }}</td>
 		{% comment %}<td>

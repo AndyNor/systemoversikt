@@ -154,6 +154,7 @@ urlpatterns = [
 	url(r'^driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
 	url(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
 	url(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/$', views.drift_beredskap, name='drift_beredskap'),
+	url(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/(?P<eier>\d{1,8})$', views.drift_beredskap, name='drift_beredskap_for_eier'),
 	url(r'^virksomhet/driftsmodell/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
 	url(r'^virksomhet/driftsmodell/klassifisering/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet_klassifisering, name='driftsmodell_virksomhet_klassifisering'),
 	url(r'^driftsmodell/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),

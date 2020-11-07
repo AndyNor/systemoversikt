@@ -2016,7 +2016,7 @@ def driftsmodell_virksomhet_klassifisering(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-def drift_beredskap(request, pk):
+def drift_beredskap(request, pk, eier=None):
 	"""
 	Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
 	Tilgangsstyring: ÅPEN
@@ -2025,11 +2025,23 @@ def drift_beredskap(request, pk):
 	if request.user.has_perm(required_permissions):
 
 		virksomhet = Virksomhet.objects.get(pk=pk)
-		systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('tilgjengelighetsvurdering')
+		systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False))
+		if eier:
+			eier = Virksomhet.objects.get(pk=eier)
+			systemer_drifter = systemer_drifter.filter(systemeier=eier)
+		systemer_drifter = systemer_drifter.order_by('tilgjengelighetsvurdering')
+
+		if eier:
+			ikke_infra = []
+			for s in systemer_drifter:
+				if not s.er_infrastruktur():
+					ikke_infra.append(s)
+			systemer_drifter = ikke_infra
 		return render(request, 'systemer_drifter_prioritering.html', {
 			'virksomhet': virksomhet,
 			'request': request,
 			'systemer': systemer_drifter,
+			'eier': eier,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

@@ -12,6 +12,7 @@
 			<th>Systemnavn</th>
 			<th>Systemeier</th>
 			<th>Kategorisering</th>
+			<th>Infrastruktur?</th>
 			<th>Driftsmodell / plattform</th>
 			<th>Kobling CMDB: Tjenestenivå</th>
 			<th>Kobling CMDB: Kritikalitet</th>
@@ -33,7 +34,8 @@
 			</td>
 
 			<td>
-				{{ item.systemeier.virksomhetsforkortelse|default:"-" }}
+				{% url 'drift_beredskap_for_eier' 163 item.systemeier.pk as url_beredskap_for_eier %}
+				<a href="{{ url_beredskap_for_eier }}">{{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a>
 			</td>
 
 			<td>
@@ -41,6 +43,10 @@
 					{% url 'systemkategori' kategori.pk as url_systemkategorier %}
 					<a href="{{ url_systemkategorier }}">{{ kategori }}</a><br>
 				{% endfor %}
+			</td>
+
+			<td>
+				{% include 'site_janeivetikke.html' with boolean=item.er_infrastruktur %}
 			</td>
 
 			{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}

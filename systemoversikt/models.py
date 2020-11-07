@@ -564,7 +564,7 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			null=True, blank=True,
 			)
 	virksomhet = models.ForeignKey(Virksomhet, related_name='brukers_virksomhet',
-			on_delete=models.PROTECT,
+			on_delete=models.SET_NULL,
 			verbose_name="Virksomhet / Etat: Representerer",
 			blank=True, null=True,
 			)
