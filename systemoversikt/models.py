@@ -569,7 +569,7 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			blank=True, null=True,
 			)
 	virksomhet_innlogget_som = models.ForeignKey(Virksomhet, related_name='brukers_virksomhet_innlogget_som',
-			on_delete=models.PROTECT,
+			on_delete=models.SET_NULL,
 			verbose_name="Virksomhet / Etat: Innlogget som",
 			blank=True, null=True,
 			)
@@ -678,7 +678,7 @@ class Klientutstyr(models.Model):
 			blank=True, null=True,
 			)
 	maskinadm_virksomhet = models.ForeignKey("Virksomhet",
-			on_delete=models.PROTECT,
+			on_delete=models.SET_NULL,
 			verbose_name="Tilhører virksomhet",
 			related_name='klientutstyr_virksomhet',
 			null=True, blank=True,
@@ -4015,7 +4015,7 @@ class HRorg(models.Model):
 			help_text=u"Importert",
 			)
 	virksomhet_mor = models.ForeignKey("Virksomhet",
-			on_delete=models.PROTECT,
+			on_delete=models.SET_NULL,
 			related_name='hrorg_virksomhet_mor',
 			verbose_name="Overordnet virksomhet",
 			null=True,
@@ -4035,6 +4035,7 @@ class HRorg(models.Model):
 
 	class Meta:
 		verbose_name_plural = "HR organisasjoner"
+		verbose_name  = "HR-organization"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -4069,7 +4070,7 @@ class PRKvalg(models.Model):
 	virksomhet = models.ForeignKey(Virksomhet, related_name='prkvalg_virksomhet',
 			verbose_name="Virksomhetstilknytning",
 			null=True,
-			on_delete=models.PROTECT,
+			on_delete=models.SET_NULL,
 			help_text=u"Importert",
 			)
 	gruppering = models.ForeignKey("PRKgruppe", related_name='PRKvalg_gruppering',
@@ -4100,7 +4101,8 @@ class PRKvalg(models.Model):
 		return u'PRK-valg %s' % (self.valgnavn)
 
 	class Meta:
-		verbose_name_plural = "PRK valg"
+		verbose_name_plural = "PRK-valg"
+		verbose_name = "PRK-valg"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

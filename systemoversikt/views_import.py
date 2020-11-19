@@ -126,7 +126,8 @@ def import_business_services(request):
 	if request.user.has_perm(required_permissions):
 
 		#business_services_filename = "u_cmdb_service_subservice.json"
-		business_services_filename = "u_cmdb_service_subservice.xlsx"
+		#business_services_filename = "u_cmdb_service_subservice.xlsx"
+		business_services_filename = "OK - Kartoketet Business Services.xlsx"
 
 		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/" + business_services_filename
 		#messages.success(request, 'Lastet inn filen %s' % (filepath))
@@ -181,14 +182,13 @@ def import_business_services(request):
 				business_service = CMDBbs.objects.get(bs_external_ref=bs_id)
 				if business_service in alle_eksisterende_cmdbbs:
 					alle_eksisterende_cmdbbs.remove(business_service)
+				if business_service.navn != bs_name:
+					messages.info(request, "Nytt og gammelt navn stemmer ikke overens for %s og %s" % (business_service.navn, bs_name))
 			except:
 				antall_nye_bs += 1
 				business_service = CMDBbs.objects.create(
 						bs_external_ref=bs_id,
 				)
-
-			if business_service.navn != bs_name:
-				messages.error(request, "Nytt og gammelt navn stemmer ikke overens for %s og %s" % (business_service.navn, bs_name))
 			business_service.navn = bs_name
 			#business_service.bs_external_ref = record["Sys ID"]
 			business_service.save()
@@ -284,7 +284,8 @@ def import_cmdb_databases_oracle(request):
 
 
 		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_bs_bss_db_oracle.json"
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_bs_bss_db_oracle.xlsx"
+		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_bs_bss_db_oracle.xlsx"
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/OK - CMDB - BS - BSS - DB_Oracle.xlsx"
 
 		if ".xlsx" in filepath:
 			dfRaw = pd.read_excel(filepath)
@@ -559,7 +560,8 @@ def import_cmdb_servers(request):
 
 		server_dropped = 0
 
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_computer_to_sub_to_bs.xlsx"
+		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_computer_to_sub_to_bs.xlsx"
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/Oslo Kommune - CMDB - Computer with BS and BSS - Ken Persen NY.xlsx"
 
 		if ".xlsx" in filepath:
 			dfRaw = pd.read_excel(filepath)
@@ -666,7 +668,8 @@ def import_cmdb_disk(request):
 
 		disk_dropped = 0
 
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/cmdb_ci_file_system.xlsx"
+		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/cmdb_ci_file_system.xlsx"
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/OK - Kartoteket - Disk Information.xlsx"
 
 		if ".xlsx" in filepath:
 			dfRaw = pd.read_excel(filepath)

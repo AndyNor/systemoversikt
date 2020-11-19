@@ -10,7 +10,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 	def filter_users_by_claims(self, claims):
 		"""Return all users matching the specified username."""
 		# vi tar vare på claims i tilfelle vi trenger den et annet sted senere.
-		messages.info(self.request, 'Prøver å logge inn')
+		#messages.info(self.request, 'Prøver å logge inn')
 		self.request.session['oidc-token'] = claims
 		#messages.info(self.request, '%s' % claims)
 		username = claims.get('preferred_username').lower()
@@ -26,7 +26,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 	"""
 	def verify_claims(self, claims):
 		"""Verify the provided claims to decide if authentication should be allowed."""
-		messages.info(self.request, 'Verifiserer claims')
+		#messages.info(self.request, 'Verifiserer claims')
 		# Verify claims required by default configuration
 		scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
 		if 'preferred_username' in scopes.split():
@@ -37,7 +37,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 	# https://docs.djangoproject.com/en/2.0/ref/contrib/auth/#django.contrib.auth.models.User.username
 	# https://mozilla-django-oidc.readthedocs.io/en/stable/installation.html#additional-optional-configuration
 	def update_user(self, user, claims):
-		messages.info(self.request, 'Oppdaterer bruker')
+		#messages.info(self.request, 'Oppdaterer bruker')
 		user.is_active = True
 
 		user.first_name = claims.get('given_name', '')
