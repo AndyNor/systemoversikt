@@ -3799,57 +3799,57 @@ def ubw_enhet(request, pk):
 		count_new = 0
 		count_updated = 0
 		for row in data:
-			if row["account"] != None:
-				try:
-					obj, created = UBWFaktura.objects.get_or_create(
-						ubw_voucher_no=try_int(row["voucher_no"]),
-						ubw_sequence_no=try_int(row["sequence_no"]),
-						belongs_to=enhet,
-						)
-					if created:
-						#print("ny opprettet")
-						#messages.success(request, "Fant en ny rad..")
-						er_ny = True
-					else:
-						#print("eksisterte, oppdaterer")
-						#messages.success(request, "Prøver å oppdatere eksisterende..")
-						er_ny = False
+			if row["Konto"] != None:
+				#try:
+				obj, created = UBWFaktura.objects.get_or_create(
+					ubw_voucher_no=try_int(row["Bilagsnr"]),
+					ubw_sequence_no=try_int(row["#"]),
+					belongs_to=enhet,
+					)
+				if created:
+					#print("ny opprettet")
+					#messages.success(request, "Fant en ny rad..")
+					er_ny = True
+				else:
+					#print("eksisterte, oppdaterer")
+					#messages.success(request, "Prøver å oppdatere eksisterende..")
+					er_ny = False
 
 
-					#obj.belongs_to = enhet #UBWRapporteringsenhet
-					obj.ubw_tab = row["tab"] #CharField
-					obj.ubw_account = try_int(row["account"]) #IntegerField
-					obj.ubw_xaccount = row["xaccount"] #CharField
-					obj.ubw_period = try_int(row["period"]) #IntegerField
-					obj.ubw_dim_1 = try_int(row["dim_1"]) #IntegerField
-					obj.ubw_xdim_1 = row["xdim_1"] #CharField
-					obj.ubw_dim_4 = try_int(row["dim_4"]) #IntegerField
-					obj.ubw_xdim_4 = row["xdim_4"] #CharField
-					obj.ubw_voucher_type = row["voucher_type"] #CharField
-					#obj.ubw_voucher_no = try_int(row[""]) #IntegerField
-					#obj.ubw_sequence_no = try_int(row[""]) #IntegerField
-					obj.ubw_voucher_date = line["voucher_date"]
-					obj.ubw_order_id = try_int(row["order_id"]) #IntegerField
-					obj.ubw_apar_id = try_int(row["apar_id"]) #IntegerField
-					obj.ubw_xapar_id = row["xapar_id"] #CharField
-					obj.ubw_description = row["description"] #TextField
-					obj.ubw_amount = row["amount"] #DecimalField
-					obj.ubw_apar_type = row["apar_type"] #CharField
-					obj.ubw_att_1_id = row["att_1_id"] #CharField
-					obj.ubw_att_4_id = row["att_4_id"] #CharField
-					obj.ubw_client = try_int(row["client"]) #IntegerField
-					obj.ubw_last_update = line["last_update"]
+				#obj.belongs_to = enhet #UBWRapporteringsenhet
+				obj.ubw_tab = row["T"] #CharField
+				obj.ubw_account = try_int(row["Konto"]) #IntegerField
+				obj.ubw_xaccount = row["Konto (T)"] #CharField
+				obj.ubw_period = try_int(row["Periode"]) #IntegerField
+				obj.ubw_dim_1 = try_int(row["Dim1"]) #IntegerField
+				obj.ubw_xdim_1 = row["Dim1 (T)"] #CharField
+				obj.ubw_dim_4 = try_int(row["Dim4"]) #IntegerField
+				obj.ubw_xdim_4 = row["Dim4 (T)"] #CharField
+				obj.ubw_voucher_type = row["BA"] #CharField
+				#obj.ubw_voucher_no = try_int(row[""]) #IntegerField
+				#obj.ubw_sequence_no = try_int(row[""]) #IntegerField
+				obj.ubw_voucher_date = line["Bilagsdato"]
+				obj.ubw_order_id = try_int(row["Linjenr"]) #IntegerField
+				obj.ubw_apar_id = try_int(row["Resk.nr"]) #IntegerField
+				obj.ubw_xapar_id = row["Resk.nr (T)"] #CharField
+				obj.ubw_description = row["Tekst"] #TextField
+				obj.ubw_amount = row["Beløp"] #DecimalField
+				obj.ubw_apar_type = row["R"] #CharField
+				obj.ubw_att_1_id = row["DM1"] #CharField
+				obj.ubw_att_4_id = row["DM4"] #CharField
+				obj.ubw_client = try_int(row["Firma"]) #IntegerField
+				obj.ubw_last_update = line["Oppdatert"]
 
-					obj.save()
-					if er_ny:
-						count_new += 1
-					else:
-						count_updated += 1
+				obj.save()
+				if er_ny:
+					count_new += 1
+				else:
+					count_updated += 1
 
-				except Exception as e:
-					error_message = ("Kunne ikke importere: %s" % e)
-					messages.warning(request, error_message)
-					print(error_message)
+				#except Exception as e:
+				#	error_message = ("Kunne ikke importere: %s" % e)
+				#	messages.warning(request, error_message)
+				#	print(error_message)
 			else:
 				messages.warning(request, "Raden manglet beløp, ignorert")
 
@@ -3863,46 +3863,47 @@ def ubw_enhet(request, pk):
 		import xlrd
 
 		if request.method == "POST":
-			try:
-				file = request.FILES['fileupload'] # this is my file
-				#print(file.name)
-				uploaded_file = {"name": file.name, "size": file.size,}
-				if ".csv" in file.name:
-					#print("CSV")
-					decoded_file = file.read().decode('latin1').splitlines()
-					data = list(csv.DictReader(decoded_file, delimiter=";"))
-					# need to convert date string to date and amount to Decimal
-					for line in data:
-						line["voucher_date"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
-						line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
-						line["amount"] = Decimal((line["amount"].replace(",",".")))
+			#try:
+			file = request.FILES['fileupload'] # this is my file
+			#print(file.name)
+			uploaded_file = {"name": file.name, "size": file.size,}
+			if ".csv" in file.name:
+				#print("CSV")
+				decoded_file = file.read().decode('latin1').splitlines()
+				data = list(csv.DictReader(decoded_file, delimiter=";"))
+				# need to convert date string to date and amount to Decimal
+				for line in data:
+					line["voucher_date"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+					line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+					line["amount"] = Decimal((line["amount"].replace(",",".")))
 
 
-				if ".xlsx" in file.name:
-					#print("Excel")
-					dfRaw = pd.read_excel(io=file.read())
-					dfRaw = dfRaw.replace(np.nan, '', regex=True)
-					data = dfRaw.to_dict('records')
-					for line in data:
-						line["amount"] = Decimal(line["amount"])
+			if ".xlsx" in file.name:
+				#print("Excel")
+				dfRaw = pd.read_excel(io=file.read(), sheet_name=1)
+				dfRaw = dfRaw.replace(np.nan, '', regex=True)
+				print(dfRaw)
+				data = dfRaw.to_dict('records')
+				for line in data:
+					line["Beløp"] = Decimal(line["Beløp"])
 
 
-					#dfRaw["dateTimes"].map(lambda x: xlrd.xldate_as_tuple(x, datemode))
-					#workbook = xlrd.open_workbook(file_contents=file.read())
-					#datemode = workbook.datemode
-					#sheet = workbook.sheet_by_index(0)
-					#data = [sheet.row_values(rowx) for rowx in range(sheet.nrows)]
-					#print(data)
+				#dfRaw["dateTimes"].map(lambda x: xlrd.xldate_as_tuple(x, datemode))
+				#workbook = xlrd.open_workbook(file_contents=file.read())
+				#datemode = workbook.datemode
+				#sheet = workbook.sheet_by_index(0)
+				#data = [sheet.row_values(rowx) for rowx in range(sheet.nrows)]
+				#print(data)
 
-					#data = list(csv.DictReader(decoded_file, delimiter=";"))
+				#data = list(csv.DictReader(decoded_file, delimiter=";"))
 
-				print("\n%s\n" % data)
-				import_function(data)
+			print("\n%s\n" % data)
+			import_function(data)
 
-			except Exception as e:
-				error_message = ("Kunne ikke lese fil: %s" % e)
-				messages.warning(request, error_message)
-				print(error_message)
+			#except Exception as e:
+			#	error_message = ("Kunne ikke lese fil: %s" % e)
+			#	messages.warning(request, error_message)
+			#	print(error_message)
 
 		uploaded_file = None
 		dager_gamle = 550

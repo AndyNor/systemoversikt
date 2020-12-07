@@ -203,14 +203,14 @@ def import_business_services(request):
 				business_sub_service = CMDBRef.objects.get(bss_external_ref=bss_id)
 				if business_sub_service in alle_eksisterende_cmdbref:
 					alle_eksisterende_cmdbref.remove(business_sub_service)
+				if business_sub_service.navn != bss_name:
+					messages.info(request, "Nytt og gammelt navn stemmer ikke overens for %s og %s" % (business_sub_service.navn, bss_name))
 			except:
 				antall_nye_bs += 1
 				business_sub_service = CMDBRef.objects.create(
 						bss_external_ref=bss_id,
 				)
 
-			if business_sub_service.navn != bss_name:
-				messages.error(request, "Nytt og gammelt navn stemmer ikke overens for %s og %s" % (business_sub_service.navn, bss_name))
 			business_sub_service.navn = bss_name
 			#business_sub_service.bss_external_ref = record["Sys ID.1"]
 			business_sub_service.environment=konverter_environment(record["Environment"])
