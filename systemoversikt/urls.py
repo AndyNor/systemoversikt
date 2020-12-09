@@ -126,6 +126,7 @@ urlpatterns = [
 	url(r'^cmdb/servere/utfaset/$', views.servere_utfaset, name='servere_utfaset'),
 	url(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 	url(r'^cmdb/os/$', views.alle_os, name='alle_os'),
+	url(r'^cmdb/db/$', views.statistikk_databaser, name='statistikk_databaser'),
 	url(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
 
 	url(r'^cmdb/prk/alle/$', views.alle_prk, name='alle_prk'),

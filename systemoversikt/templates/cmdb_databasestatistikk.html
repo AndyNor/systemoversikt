@@ -1,0 +1,31 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Databaseversjoner på Felles IKT-plattform
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Fant {{ antall_databaser }} databaser</p>
+
+	<table class="table table-sm tablesorter">
+	<thead>
+		<th>Databaseversjon</th>
+		<th>Antall</th>
+	</thead>
+	<tbody>
+	{% for db_versjon in databasestatistikk %}
+		<tr>
+			<td>{{ db_versjon.versjon }}</td>
+			<td>{{ db_versjon.antall }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

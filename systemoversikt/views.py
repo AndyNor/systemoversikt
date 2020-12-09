@@ -2569,6 +2569,42 @@ def alle_adgrupper(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def statistikk_databaser(request):
+	"""
+	Vise statistikk over databaser på felles IKT-plattform
+	Tilgangsstyring: må kunne vise cmdb-maskiner
+	"""
+	required_permissions = 'systemoversikt.view_cmdbdevice'
+	if request.user.has_perm(required_permissions):
+
+		def cmdb_os_stats(maskiner):
+			maskiner_stats = []
+			for os in os_major:
+				maskiner_stats.append({
+					'major': os['db_version'],
+					'count': os['db_version__count']
+				})
+			return sorted(maskiner_stats, key=lambda os: os['db_version'], reverse=True)
+
+		databaseversjoner = CMDBdatabase.objects.all().values('db_version').distinct().annotate(Count('db_version'))
+		databasestatistikk = []
+		for versjon in databaseversjoner:
+			if versjon["db_version"] == "":
+				versjon["db_version"] = "ukjent"
+			databasestatistikk.append({
+					'versjon': versjon["db_version"],
+					'antall': versjon["db_version__count"]
+				})
+		databasestatistikk = sorted(databasestatistikk, key=lambda v: v['versjon'], reverse=True)
+
+		return render(request, 'cmdb_databasestatistikk.html', {
+			'antall_databaser': CMDBdatabase.objects.all().count(),
+			'databasestatistikk': databasestatistikk,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def alle_os(request):
 	"""
 	Vise statistikk over operativsystemer for servere og klienter

@@ -8,6 +8,9 @@
 		{% url 'alle_os' as url_alle_os%}
 		<a href="{{url_alle_os}}" class="btn btn-sm btn-link {% if url_alle_os in request.path %}fremhev{% endif %}" >Statistikk operativsystem</a>
 
+		{% url 'statistikk_databaser' as url_statistikk_databaser %}
+		<a href="{{url_statistikk_databaser}}" class="btn btn-sm btn-link {% if url_statistikk_databaser in request.path %}fremhev{% endif %}" >Statistikk databaser</a>
+
 		{% url 'alle_maskiner' as url_alle_maskiner %}
 		<a href="{{url_alle_maskiner}}" class="btn btn-sm btn-link {% if url_alle_maskiner in request.path %}fremhev{% endif %}">Søk i maskiner</a>
 
