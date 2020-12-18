@@ -2552,7 +2552,7 @@ def alle_adgrupper(request):
 		if search_term[0:3] == "CN=":
 			search_term = search_term[3:]
 		search_term = search_term.split(",")[0]
-		adgrupper = ADgroup.objects.filter(common_name__contains=search_term)
+		adgrupper = ADgroup.objects.filter(Q(common_name__contains=search_term) | Q(display_name__contains=search_term))
 		for g in adgrupper:
 			members = json.loads(g.member)
 			g.member_count = len(members)
@@ -3719,6 +3719,27 @@ def ubw_api(request, pk):
 		except:
 			eksportdata["Kommentar"] = ""
 
+		try:
+			eksportdata["UBW artsgr2"] = faktura.ubw_artsgr2
+		except:
+			eksportdata["UBW artsgr2"] = ""
+
+		try:
+			eksportdata["UBW artsgr2 Teskt"] = faktura.ubw_artsgr2_text
+		except:
+			eksportdata["UBW artsgr2 Teskt"] = ""
+
+		try:
+			eksportdata["UBW kategori"] = faktura.ubw_kategori
+		except:
+			eksportdata["UBW kategori"] = ""
+
+		try:
+			eksportdata["UBW kategori Teskt"] = faktura.ubw_kategori_text
+		except:
+			eksportdata["UBW kategori Teskt"] = ""
+
+
 		# ta vare på dette.
 		faktura_eksport.append(eksportdata)
 
@@ -3732,6 +3753,15 @@ def ubw_api(request, pk):
 	# for å kunne fylle ut UBW Kontonavn
 	ubw_koststednavn_oppslag = list(UBWFaktura.objects.filter(belongs_to=enhet).values_list('ubw_dim_1', 'ubw_xdim_1').distinct())
 	#print(ubw_kontonavn_oppslag)
+
+	# for å kunne fylle ut UBW Artsgr2
+	ubw_artsgr2navn_oppslag = list(UBWFaktura.objects.filter(belongs_to=enhet).values_list('ubw_artsgr2', 'ubw_artsgr2_text').distinct())
+	#print(ubw_artsgr2navn_oppslag)
+
+	# for å kunne fylle ut UBW Kontonavn
+	ubw_kategorinavn_oppslag = list(UBWFaktura.objects.filter(belongs_to=enhet).values_list('ubw_kategori', 'ubw_kategori_text').distinct())
+	#print(ubw_kategorinavn_oppslag)
+
 
 	def oppslag(verdi, oppslagsliste):
 		for item in oppslagsliste:
@@ -3803,6 +3833,20 @@ def ubw_api(request, pk):
 		eksportdata["Leverandør"] = e.leverandor
 		eksportdata["Kommentar"] = e.kommentar
 
+		try:
+			eksportdata["UBW artsgr2"] = e.ubw_artsgr2
+		except:
+			eksportdata["UBW artsgr2"] = ""
+
+		eksportdata["UBW artsgr2 Tekst"] = oppslag(e.ubw_artsgr2, ubw_artsgr2navn_oppslag)
+
+		try:
+			eksportdata["UBW kategori"] = e.ubw_kategori
+		except:
+			eksportdata["UBW kategori"] = ""
+
+		eksportdata["UBW kategori Tekst"] = oppslag(e.ubw_kategori, ubw_kategorinavn_oppslag)
+
 		# ta vare på dette.
 		faktura_eksport.append(eksportdata)
 
@@ -3831,7 +3875,6 @@ def ubw_enhet(request, pk):
 			return None
 
 	def import_function(data):
-
 		count_new = 0
 		count_updated = 0
 		for row in data:
@@ -3864,17 +3907,21 @@ def ubw_enhet(request, pk):
 				obj.ubw_voucher_type = row["BA"] #CharField
 				#obj.ubw_voucher_no = try_int(row[""]) #IntegerField
 				#obj.ubw_sequence_no = try_int(row[""]) #IntegerField
-				obj.ubw_voucher_date = line["Bilagsdato"]
+				obj.ubw_voucher_date = row["Bilagsdato"]
 				obj.ubw_order_id = try_int(row["Linjenr"]) #IntegerField
 				obj.ubw_apar_id = try_int(row["Resk.nr"]) #IntegerField
 				obj.ubw_xapar_id = row["Resk.nr (T)"] #CharField
 				obj.ubw_description = row["Tekst"] #TextField
-				obj.ubw_amount = row["Beløp"] #DecimalField
+				obj.ubw_amount = Decimal(row["Beløp"]) #DecimalField
 				obj.ubw_apar_type = row["R"] #CharField
 				obj.ubw_att_1_id = row["DM1"] #CharField
 				obj.ubw_att_4_id = row["DM4"] #CharField
 				obj.ubw_client = try_int(row["Firma"]) #IntegerField
-				obj.ubw_last_update = line["Oppdatert"]
+				obj.ubw_last_update = row["Oppdatert"]
+				obj.ubw_artsgr2 = row["Artsgr2"] #CharField
+				obj.ubw_artsgr2_text = row["Artsgr2 (T)"] #CharField
+				obj.ubw_kategori = try_int(row["Kategori"]) #IntegerField
+				obj.ubw_kategori_text = row["Kategori (T)"] #CharField
 
 				obj.save()
 				if er_ny:
@@ -3903,26 +3950,23 @@ def ubw_enhet(request, pk):
 			file = request.FILES['fileupload'] # this is my file
 			#print(file.name)
 			uploaded_file = {"name": file.name, "size": file.size,}
-			if ".csv" in file.name:
-				#print("CSV")
-				decoded_file = file.read().decode('latin1').splitlines()
-				data = list(csv.DictReader(decoded_file, delimiter=";"))
-				# need to convert date string to date and amount to Decimal
-				for line in data:
-					line["voucher_date"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
-					line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
-					line["amount"] = Decimal((line["amount"].replace(",",".")))
+			#if ".csv" in file.name:
+			#	#print("CSV")
+			#	decoded_file = file.read().decode('latin1').splitlines()
+			#	data = list(csv.DictReader(decoded_file, delimiter=";"))
+			#	# need to convert date string to date and amount to Decimal
+			#	for line in data:
+			#		line["voucher_date"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+			#		line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+			#		line["amount"] = Decimal((line["amount"].replace(",",".")))
 
 
 			if ".xlsx" in file.name:
-				#print("Excel")
+				print("Excel-import påstartet")
 				dfRaw = pd.read_excel(io=file.read(), sheet_name=1)
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
-				print(dfRaw)
+				#print(dfRaw)
 				data = dfRaw.to_dict('records')
-				for line in data:
-					line["Beløp"] = Decimal(line["Beløp"])
-
 
 				#dfRaw["dateTimes"].map(lambda x: xlrd.xldate_as_tuple(x, datemode))
 				#workbook = xlrd.open_workbook(file_contents=file.read())
@@ -3933,7 +3977,7 @@ def ubw_enhet(request, pk):
 
 				#data = list(csv.DictReader(decoded_file, delimiter=";"))
 
-			print("\n%s\n" % data)
+			#print("\n%s\n" % data)
 			import_function(data)
 
 			#except Exception as e:
@@ -4116,6 +4160,13 @@ def ubw_generer_estimat_valg(belongs_to):
 
 	prognose_leverandor = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_xapar_id', 'ubw_xapar_id').distinct())
 	data.append({'field': 'leverandor', 'choices': prognose_leverandor})
+
+	prognose_ubw_artsgr2 = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_artsgr2', 'ubw_artsgr2_text').distinct())
+	data.append({'field': 'ubw_artsgr2', 'choices': prognose_ubw_artsgr2})
+
+	prognose_ubwkategori = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_kategori', 'ubw_kategori_text').distinct())
+	data.append({'field': 'ubw_kategori', 'choices': prognose_ubwkategori})
+
 
 	return data
 

@@ -11,6 +11,10 @@
 		<td title="{{f.ubw_description|default:'-'}}">{{f.ubw_description|default:"-"}}</td>
 		<td>{{f.ubw_amount|default:"-"|intcomma}}</td>
 		<td>{{f.ubw_period|default:"-"}}</td>
+		<td>{{f.ubw_artsgr2_text|default:"-"}}</td>
+		<td>{{f.ubw_kategori_text|default:"-"}}</td>
+
+
 	{% if f.metadata_reference %}
 		<td class="ubw_manuell">{{ f.metadata_reference.periode_paalopt|date:"Ym" }}</td>
 		<td class="ubw_manuell">{{ f.metadata_reference.budsjett_amount|default:"-"|intcomma }}</td>

@@ -1677,6 +1677,11 @@ class ADgroup(models.Model):
 			verbose_name="Fully Distinguished Name",
 			unique=True,
 			)
+	display_name = models.TextField(
+			verbose_name="Display Name",
+			unique=False,
+			null=True,
+			)
 	common_name = models.TextField(
 			verbose_name="Common Name",
 			null=True,
@@ -4345,6 +4350,26 @@ class UBWFaktura(models.Model):
 		verbose_name="UBW sist oppdatert",
 		null=True, blank=True,
 		)
+	ubw_artsgr2 = models.CharField(
+		verbose_name="UWB Kategori",
+		null=True, blank=True,
+		max_length=5,
+		)
+	ubw_artsgr2_text = models.CharField(
+		verbose_name="UWB Artsgr2 (T)",
+		null=True, blank=True,
+		max_length=300,
+		)
+	ubw_kategori = models.IntegerField(
+		verbose_name="UWB Kategori",
+		null=True, blank=True,
+		)
+	ubw_kategori_text = models.CharField(
+		verbose_name="UWB Kategori (T)",
+		null=True, blank=True,
+		max_length=300,
+		)
+
 
 	#history = HistoricalRecords()
 	unique_together = ('ubw_voucher_no', 'ubw_sequence_no')
@@ -4525,6 +4550,21 @@ class UBWEstimat(models.Model):
 		null=True, blank=True,
 		max_length=256,
 		)
+	ubw_artsgr2 = models.CharField(
+		verbose_name="UWB Artsgr2",
+		null=True, blank=True,
+		max_length=5,
+		)
+	ubw_kategori = models.IntegerField(
+		verbose_name="UBW Kategori",
+		null=True, blank=True,
+		)
+
+	def ubw_artsgr2_display(self):
+		return UBWFaktura.objects.filter(belongs_to=self.belongs_to).filter(ubw_artsgr2=self.ubw_artsgr2)[:1].get().ubw_artsgr2_text
+
+	def ubw_kategori_display(self):
+		return UBWFaktura.objects.filter(belongs_to=self.belongs_to).filter(ubw_kategori=self.ubw_kategori)[:1].get().ubw_kategori_text
 
 	def __str__(self):
 		return u'%s' % (self.pk)

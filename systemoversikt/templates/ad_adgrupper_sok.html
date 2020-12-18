@@ -29,6 +29,7 @@
 	<table class="tablesorter">
 		<thead>
 			<tr>
+				<th>Display name</th>
 				<th>Fullt gruppenavn</th>
 				<th>Antall direkte medlemmer</th>
 			</tr>
@@ -36,6 +37,7 @@
 		<tbody>
 	{% for g in adgrupper %}
 		<tr>
+			<td>{{g.display_name|default:""}}</td>
 			<td><a href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.distinguishedname }}</a></td>
 			<td>{{g.member_count}}</td>
 		</tr>

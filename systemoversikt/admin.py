@@ -1064,8 +1064,8 @@ class ADOrgUnitAdmin(admin.ModelAdmin):
 
 @admin.register(ADgroup)
 class ADgroupAdmin(admin.ModelAdmin):
-	list_display = ('distinguishedname', 'from_prk', 'membercount', 'memberofcount', 'description', 'sist_oppdatert')
-	search_fields = ('distinguishedname',)
+	list_display = ('distinguishedname', 'display_name', 'from_prk', 'membercount', 'memberofcount', 'description', 'sist_oppdatert')
+	search_fields = ('distinguishedname', 'display_name',)
 	list_filter = ('from_prk', 'opprettet', 'sist_oppdatert')
 
 
@@ -1321,7 +1321,7 @@ class UBWMetodeAdmin(admin.ModelAdmin):
 
 @admin.register(UBWFaktura)
 class UBWFakturaAdmin(admin.ModelAdmin):
-	list_display = ('belongs_to', 'ubw_amount', 'ubw_xaccount', 'ubw_period', 'ubw_xdim_1', 'ubw_xdim_4', 'ubw_voucher_date', 'ubw_xapar_id', 'ubw_description')
+	list_display = ('belongs_to', 'ubw_amount', 'ubw_xaccount', 'ubw_period', 'ubw_xdim_1', 'ubw_xdim_4', 'ubw_voucher_date', 'ubw_xapar_id', 'ubw_description', 'ubw_artsgr2', 'ubw_artsgr2_text', 'ubw_kategori', 'ubw_kategori_text')
 	search_fields = ('event_type', 'message')
 	list_filter = ('ubw_account', 'ubw_dim_1', 'ubw_dim_4', 'ubw_apar_id')
 

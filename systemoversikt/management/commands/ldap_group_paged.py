@@ -26,7 +26,7 @@ class Command(BaseCommand):
 		BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 		SEARCHFILTER = '(objectclass=group)'
 		LDAP_SCOPE = ldap.SCOPE_SUBTREE
-		ATTRLIST = ['cn', 'description', 'memberOf', 'member'] # if empty we get all attr we have access to
+		ATTRLIST = ['cn', 'description', 'memberOf', 'member', 'displayName'] # if empty we get all attr we have access to
 		PAGESIZE = 5000
 
 		report_data = {
@@ -93,7 +93,12 @@ class Command(BaseCommand):
 						pass
 
 
-					# dette er ikke så lurt, om noe skulle feile av annen grunn enn object.get..
+					displayname = ""
+					try:
+						displayname = attrs["displayName"][0].decode()
+					except KeyError as e:
+						pass
+
 					try:
 						g = ADgroup.objects.get(distinguishedname=distinguishedname)
 						try:
@@ -106,6 +111,7 @@ class Command(BaseCommand):
 						g.membercount = membercount
 						g.memberof = memberof
 						g.memberofcount = memberofcount
+						g.display_name = displayname
 						g.save()
 						report_data["modified"] += 1
 						print("u", end="")
@@ -117,6 +123,7 @@ class Command(BaseCommand):
 								membercount=membercount,
 								memberof=memberof,
 								memberofcount=memberofcount,
+								display_name=displayname,
 							)
 						print("n", end="")
 						report_data["created"] += 1
