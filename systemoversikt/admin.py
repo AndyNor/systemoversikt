@@ -166,7 +166,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'systemeier_kontaktpersoner_referanse',
 		'systemforvalter_kontaktpersoner_referanse',
 		'kontaktperson_innsyn',
-		'cmdbref',
 		'systemtyper',
 		'loggingalternativer',
 		'autentiseringsteknologi',
@@ -267,7 +266,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		('Utfases', {
 			'classes': ('collapse',),
 			'fields': (
-				'cmdbref',
+				#'cmdbref',
 				'systemtekniske_sikkerhetstiltak',
 				'programvarekategori',
 				'strategisk_egnethet',

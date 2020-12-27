@@ -280,7 +280,11 @@ def minside(request):
 	Når innlogget, vise informasjon om innlogget bruker
 	"""
 
-	oidctoken = request.session['oidc-token']
+	try:
+		oidctoken = request.session['oidc-token']
+
+	except:
+		oidctoken = "OIDC er ikke i bruk"
 
 	if request.user.is_authenticated:
 		return render(request, 'site_minside.html', {
@@ -1639,9 +1643,10 @@ def leverandortilgang(request):
 				try:
 					u = User.objects.get(username__iexact=regex_username)
 					u.levtilgang = kilde["beskrivelse"]  # merk at dette ikke lagres til brukerobjektet. Dette er kun en kopi.
-					#if u.profile.accountdisable == False:
-					kildemedlemmer.append(u)
-					#else:
+					if u.profile.accountdisable == False:
+						kildemedlemmer.append(u)
+					else:
+						pass
 						#print("bruker er deaktivert: %s" % u)
 				except:
 					feilede_oppslag.append(regex_username)
@@ -3986,7 +3991,7 @@ def ubw_enhet(request, pk):
 			#	print(error_message)
 
 		uploaded_file = None
-		dager_gamle = 550
+		dager_gamle = 750
 		tidsgrense = datetime.date.today() - datetime.timedelta(days=dager_gamle)
 		gyldige_fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_voucher_date__gte=tidsgrense)
 		nye_fakturaer = gyldige_fakturaer.filter(metadata_reference=None).order_by('-ubw_voucher_date')

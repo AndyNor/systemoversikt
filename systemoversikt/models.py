@@ -2459,11 +2459,11 @@ class System(models.Model):
 #			blank=True, null=True,
 #			help_text=u"Kobling til Sopra Steria CMDB for Produksjon. Denne brukes for å vise tjenestenivå til systemet.",
 #			)
-	cmdbref = models.ManyToManyField(CMDBRef, related_name='system_cmdbref',
-			verbose_name="Referanse til Sopra Steria CMDB",
-			blank=True,
-			help_text=u"Velg alle aktuelle med '(servergruppe)' bak navnet. Produksjon, test og annet.",
-			)
+#	cmdbref = models.ManyToManyField(CMDBRef, related_name='system_cmdbref',
+#			verbose_name="Referanse til Sopra Steria CMDB",
+#			blank=True,
+#			help_text=u"Velg alle aktuelle med '(servergruppe)' bak navnet. Produksjon, test og annet.",
+#			)
 	sikkerhetsnivaa = models.IntegerField(choices=SIKKERHETSNIVAA_VALG,
 			verbose_name="Sikkerhetsnivå til systemet",
 			blank=True, null=True,
@@ -2822,9 +2822,9 @@ class System(models.Model):
 
 	# brukes bare av dashboard, flyttes dit? ("def statusTjenestenivaa(systemer)")
 	def fip_kritikalitet(self):
-		if self.cmdbref:
+		if hasattr(self, 'bs_system_referanse'):
 			kritikalitet = []
-			for ref in self.cmdbref.all():
+			for ref in self.bs_system_referanse.cmdb_bss_to_bs.all():
 				if ref.environment == 1: # 1 er produksjon
 					kritikalitet.append(ref.kritikalitet)
 
@@ -2836,9 +2836,9 @@ class System(models.Model):
 			return None
 
 	def fip_kritikalitet_text(self):
-		if self.cmdbref:
+		if hasattr(self, 'bs_system_referanse'):
 			prod_referanser = []
-			for ref in self.cmdbref.all():
+			for ref in self.bs_system_referanse.cmdb_bss_to_bs.all():
 				if ref.environment == 1: # 1 er produksjon
 					prod_referanser.append(ref)
 			if len(prod_referanser) == 1:
@@ -4351,12 +4351,12 @@ class UBWFaktura(models.Model):
 		null=True, blank=True,
 		)
 	ubw_artsgr2 = models.CharField(
-		verbose_name="UWB Kategori",
+		verbose_name="UWB Artsgruppe",
 		null=True, blank=True,
 		max_length=5,
 		)
 	ubw_artsgr2_text = models.CharField(
-		verbose_name="UWB Artsgr2 (T)",
+		verbose_name="UWB Artsgruppe (tekst)",
 		null=True, blank=True,
 		max_length=300,
 		)
@@ -4365,7 +4365,7 @@ class UBWFaktura(models.Model):
 		null=True, blank=True,
 		)
 	ubw_kategori_text = models.CharField(
-		verbose_name="UWB Kategori (T)",
+		verbose_name="UWB Kategori (tekst)",
 		null=True, blank=True,
 		max_length=300,
 		)
@@ -4551,7 +4551,7 @@ class UBWEstimat(models.Model):
 		max_length=256,
 		)
 	ubw_artsgr2 = models.CharField(
-		verbose_name="UWB Artsgr2",
+		verbose_name="UWB Artsgruppe",
 		null=True, blank=True,
 		max_length=5,
 		)

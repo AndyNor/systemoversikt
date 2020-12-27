@@ -386,6 +386,35 @@
 
 
 	<div class="card">
+		<div class="card-header" id="headingTilgang">
+			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseTilgang" aria-expanded="true" aria-controls="collapseTilgang">
+				Tilgang til systemet
+			</button>
+		</div>
+		<div id="collapseTilgang" class="collapse show" aria-labelledby="headingTilgang" data-parent="#accordionSystem">
+			<div class="card-body">
+			<table class="table table-sm">
+				<thead>
+					<tr>
+						<th>Tilgangsgruppe</th>
+						<th>Antall medlemmer</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for g in systemdetaljer.tilgangsgrupper_ad.all %}
+					<tr>
+						<td><a href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.display_name }}</a></td>
+						<td>{{ g.membercount }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+			</div>
+		</div>
+	</div>
+
+
+	<div class="card">
 		<div class="card-header" id="headingBehandlinger">
 			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseBehandlinger" aria-expanded="true" aria-controls="collapseBehandlinger">
 				Behandlinger i systemet
@@ -698,23 +727,21 @@
 			</table>
 		{% endif %}
 
-		{% if systemdetaljer.cmdbref %}
+		{% if systemdetaljer.bs_system_referanse %}
 			<p>Koblede data mot Sopra Sterias <a href="{% url 'alle_cmdbref' %}">CMDB</a>. Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">beskrivelse av kritikalitet og tilgjengelighet</a>.</p>
 			<table class="table table-sm">
 				<thead>
 					<tr>
 						<th>Business Service</th>
-						<th>Portfolio</th>
 						<th>Criticality</th>
 						<th>Availability</th>
 					</tr>
 				</thead>
 				<tbody>
-				{% for cmdbref in systemdetaljer.cmdbref.all %}
+				{% for cmdbref in systemdetaljer.bs_system_referanse.cmdb_bss_to_bs.all %}
 				<tr>
 					{% url 'cmdbdevice' pk=cmdbref.pk as url_cmdb %}
 					<td><a href="{{ url_cmdb }}">{{ cmdbref.navn }}</a></td>
-					<td>{{ cmdbref.u_service_portfolio|default:"-" }}</td>
 					<td>{{ cmdbref.get_kritikalitet_display|default:"-" }}</td>
 					<td>{{ cmdbref.get_u_service_availability_display|default:"-" }}</td>
 				</tr>
