@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand
-
 import os
 
 from office365.runtime.auth.authentication_context import AuthenticationContext
@@ -18,19 +17,20 @@ class Command(BaseCommand):
 			"OK - Kartoketet Business Services.xlsx",
 		]
 
-
-		tenant_url = "https://steria.sharepoint.com"
-		folder = "/:x:/r/sites/Sc_kundeportal_ekstern/637269587014341894/Rapporter/CMDB/"
+		username = os.environ["AZUREAD_USER"]
+		password = os.environ["AZUREAD_PASSWORD"]
+		tenant_url = os.environ["2S_PORTAL_URL"]
+		folder = os.environ["2S_PORTAL_PATH"]
 
 		def download(tenant_url, folder, file):
 			file_path = "%s%s" % (folder, file)
-			print(file_path)
 			ctx_auth = AuthenticationContext(tenant_url)
-			ctx_auth.acquire_token_for_user("username", "passord")
-			#ctx_auth.acquire_token_for_app("client_id", "client_secret") # client credentials for
+			ctx_auth.acquire_token_for_user(username, password)
+			# ctx_auth.with_client_certificate(tenant, client_id, thumbprint, cert_path)
+			# ctx_auth.acquire_token_for_app(client_id, client_secret)
+
 			ctx = ClientContext(tenant_url, ctx_auth)
 			target = "%s%s%s" % (os.path.dirname(os.path.abspath(__file__)), "/import/", file)
-			print(target)
 			response = File.open_binary(ctx, file_path)
 			with open(target, "wb") as local_file:
 				local_file.write(response.content)
