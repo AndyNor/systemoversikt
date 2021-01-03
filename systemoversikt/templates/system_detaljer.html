@@ -445,7 +445,8 @@
 						<th class="filter-false">Rediger</th>
 						<th>Fellesbehandling?</th>
 						<th>Beskrivelse av behandling</th>
-						<th>Av virksomhet</th>						<th>Opplysninger om</th>
+						<th>Av virksomhet</th>
+						<th>Opplysninger om</th>
 						<th>Krever sikkerhetsnivå</th>
 						<th>Krever DPIA</th>
 						<th class="filter-false">Slett</th>
@@ -746,7 +747,7 @@
 					{% url 'cmdbdevice' pk=cmdbref.pk as url_cmdb %}
 					<td><a href="{{ url_cmdb }}">{{ cmdbref.navn }}</a></td>
 					<td>{{ cmdbref.get_kritikalitet_display|default:"-" }}</td>
-					<td>{{ cmdbref.get_u_service_availability_display|default:"-" }}</td>
+					<td>{{ cmdbref.u_service_availability|default:"-" }}</td>
 				</tr>
 				{% endfor %}
 				</tbody>
