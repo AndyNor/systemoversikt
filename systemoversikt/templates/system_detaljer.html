@@ -739,6 +739,7 @@
 						<th>Business Service</th>
 						<th>Criticality</th>
 						<th>Availability</th>
+						<th>Kompleksitet</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -747,7 +748,8 @@
 					{% url 'cmdbdevice' pk=cmdbref.pk as url_cmdb %}
 					<td><a href="{{ url_cmdb }}">{{ cmdbref.navn }}</a></td>
 					<td>{{ cmdbref.get_kritikalitet_display|default:"-" }}</td>
-					<td>{{ cmdbref.u_service_availability|default:"-" }}</td>
+					<td>{{ cmdbref.u_service_availability_text }}</td>
+					<td>{{ cmdbref.u_service_complexity_text }}</td>
 				</tr>
 				{% endfor %}
 				</tbody>
