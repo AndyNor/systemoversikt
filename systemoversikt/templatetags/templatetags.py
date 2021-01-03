@@ -12,7 +12,7 @@ def get_verbose_field_name(instance, field_name):
 		return instance._meta.get_field(field_name).verbose_name
 	except:
 		return "Unknown"
-		
+
 
 @register.simple_tag
 def get_help_text(instance, field_name):
@@ -39,4 +39,7 @@ def explain_collapsed(text):
 	)
 	return html
 
+@register.simple_tag
+def get_aduser_count_for(adgruppe, virksomhet):
+	return adgruppe.brukere_for_virksomhet(virksomhet)
 

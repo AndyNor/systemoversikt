@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from simple_history.models import HistoricalRecords
 from django import forms
+import json
 import re
 
 
@@ -1734,6 +1735,19 @@ class ADgroup(models.Model):
 
 	def short(self):
 		return self.distinguishedname[3:].split(",")[0]  # fjerner cn= og alt etter komma
+
+
+	def brukere_for_virksomhet(self, virksomhet):
+		try:
+			alle_brukere = json.loads(self.member)
+			matchede_brukere = []
+			for bruker in alle_brukere:
+				brukernavn = re.search(r'cn=([^\,]*)', bruker, re.I).groups()[0]
+				if brukernavn.startswith(virksomhet.virksomhetsforkortelse):
+					matchede_brukere.append(brukernavn)
+			return len(matchede_brukere)
+		except:
+			return "error"
 
 
 
