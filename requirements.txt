@@ -1,8 +1,9 @@
+asgiref==3.3.1
 certifi==2019.9.11
 cffi==1.13.1
 chardet==3.0.4
-cryptography==2.8
-Django==2.2.10
+cryptography==3.2
+Django==2.2.17
 django-csp==3.5
 django-debug-permissions==1.0.0
 django-extensions==2.2.5
@@ -16,11 +17,14 @@ josepy==1.2.0
 lockfile==0.12.2
 mailer==0.8.1
 mozilla-django-oidc==1.2.2
+msal==1.6.0
 numpy==1.18.3
+Office365-REST-Python-Client==2.3.0.1
 pandas==1.0.3
 pyasn1==0.4.7
 pyasn1-modules==0.2.7
 pycparser==2.19
+PyJWT==1.7.1
 pyOpenSSL==19.0.0
 python-dateutil==2.8.1
 python-ldap==3.2.0

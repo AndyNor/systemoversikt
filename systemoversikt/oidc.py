@@ -95,7 +95,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 		"""
 		messages.info(self.request, 'Ny bruker opprettes')
 		username = claims.get('preferred_username', '').lower()
-		if username is '':
+		if username == '':
 			return None
 		user = self.UserModel.objects.create_user(username, is_staff=True) # må være staff for å kunne bruker adminpanel
 		user = self.update_user(user, claims)
