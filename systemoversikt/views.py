@@ -1605,26 +1605,15 @@ def leverandortilgang(request):
 		# Windows Terminal Service (WTS)
 		#	TASK-OF2-LevtilgangWTS-IS
 		#	TASK-OF2-LevtilgangWTS-SS
-		#	TASK-OF2-DRIFTWTS-IS
-		#	TASK-OF2-DRIFTWTS-SS
-		#	TASK-OF2-LevtilgangWTS-IS
-		#	TASK-OF2-LevtilgangWTS-SS
-
-
-		# Leverandørtilgang WTS
-
-		# Tredjepartsdrift
-
-		# Tilganger Driftspersonell
-
-		# AzureAD/Intune
-
-		# AppleBM
 
 		usergroups = []
 		feilede_oppslag = []
 
 		leverandor_kilder = [
+			#{"gruppe": "DS-DRIFT_DML", "beskrivelse": "Ekstern leverandørtilgang (DML)"}, # se under dml_grupper under.
+			{"gruppe": "DS-DRIFT_TREDJEPARTDRIFT", "beskrivelse": "UBW-relatert (økonomi og HR)"},
+			{"gruppe": "TASK-OF2-DRIFTWTS-IS", "beskrivelse": "Full driftstilgang intern sone"},
+			{"gruppe": "TASK-OF2-DRIFTWTS-SS", "beskrivelse": "Full driftstilgang sikker sone"},
 			{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_KARDEX", "beskrivelse": "Kardex hos DEB"},
 			{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_DEB", "beskrivelse": "Creston hos DEB"},
 			{"gruppe": "DS-KEM_RPA", "beskrivelse": "RPA hos KEM"},
@@ -1632,8 +1621,23 @@ def leverandortilgang(request):
 			{"gruppe": "DS-UVALEVTILGANG", "beskrivelse": "ITAS/UVA"},
 		]
 
+		unwanted_objects = [
+			"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANG,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+			"CN=DS-DRIFT_DML_2SDRIFTLEV_2SDRIFTLEV,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+			"CN=DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGIS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+			"CN=DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGSS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+			"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANG,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+			"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANGSS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+		]
+		dml_grupper = ADgroup.objects.filter(distinguishedname__icontains='DS-DRIFT_DML_').exclude(distinguishedname__in=[o for o in unwanted_objects])
+		for g in dml_grupper:
+			leverandor_kilder.append(
+					{"gruppe": g.common_name, "beskrivelse": "DML %s" % g.common_name}
+				)
+
 		for kilde in leverandor_kilder:
 			kildemedlemmer = []
+			nestede_grupper = []
 			if kilde["gruppe"] != None:
 				members = json.loads(ADgroup.objects.get(common_name=kilde["gruppe"]).member)
 			else:
@@ -1649,11 +1653,15 @@ def leverandortilgang(request):
 						pass
 						#print("bruker er deaktivert: %s" % u)
 				except:
-					feilede_oppslag.append(regex_username)
+					try:
+						nestede_grupper.append(ADgroup.objects.get(distinguishedname=m))
+					except:
+						feilede_oppslag.append(regex_username)
 
 			usergroups.append({
 				"kilde": kilde,
 				"kildemedlemmer": kildemedlemmer,
+				"nestede_grupper": nestede_grupper,
 			})
 
 		return render(request, 'ad_leverandortilgang.html', {
@@ -2374,7 +2382,7 @@ def adorgunit_detaljer(request, pk=None):
 	else:
 		ou = ADOrgUnit.objects.get(pk=pk)
 
-	groups = ADgroup.objects.filter(parent=pk)
+	groups = ADgroup.objects.filter(parent=pk).order_by('distinguishedname')
 	parent_str = ",".join(ou.distinguishedname.split(',')[1:])
 	try:
 		parent = ADOrgUnit.objects.get(distinguishedname=parent_str)
@@ -2497,15 +2505,13 @@ def adgruppe_graf(request, pk):
 def human_readable_members(items, onlygroups=False):
 	groups = []
 	users = []
-	other_users = []
 	notfound = []
 	for item in items:
 		try:
 			g = ADgroup.objects.get(distinguishedname=item)
 			groups.append(g)
 			continue
-		except Exception as e:
-			#print("fant ikke gruppen med feilmelding %s" % (e))
+		except:
 			pass
 		if onlygroups == False:
 			try:
@@ -2514,15 +2520,8 @@ def human_readable_members(items, onlygroups=False):
 				users.append(u)
 				continue
 			except:
-				pass
-			try:
-				# TODO-fix this as PRKuser is replaced with user.profile
-				u = User.objects.get(profile__distinguishedname=item)
-				other_users.append(u)
-				continue
-			except:
 				notfound.append(item)  # vi fant ikke noe, returner det vi fikk
-	return {"groups": groups, "users": users, "other_users": other_users, "notfound": notfound}
+	return {"groups": groups, "users": users, "notfound": notfound}
 
 
 def adgruppe_detaljer(request, pk):

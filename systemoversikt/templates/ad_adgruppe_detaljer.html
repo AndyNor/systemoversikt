@@ -47,18 +47,18 @@
 	<tbodt>
 	{% for m in member.groups %}
 		<tr>
-			<th>👥 Tilgangsgruppe</th>
+			<td>👥 Tilgangsgruppe</td>
 			<td><a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m.cn }}</a></td>
-			<th></th>
-			<th></th>
-			<th></th>
-			<th></th>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
 		</tr>
 	{% endfor %}
 
 	{% for m in member.users %}
 		<tr>
-			<td>👤 PRK-bruker</td>
+			<td>👤 Bruker</td>
 			<td>{{m.first_name}} {{m.last_name}}</td>
 			<td>{{m.username}}</td>
 			<td>{{m.profile.virksomhet.virksomhetsforkortelse}}</td>
@@ -67,20 +67,9 @@
 		</tr>
 	{% endfor %}
 
-	{% for m in member.other_users %}
-		<tr>
-			<td>👤 Annen AD-bruker</td>
-			<td>{{m.displayName}}</td>
-			<td>{{m.sAMAccountName}}</td>
-			<td></td>
-			<td>{{m.description}}</td>
-			<td>{{m.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
-		</tr>
-	{% endfor %}
-
 	{% for n in memberof.notfound %}
 		<tr>
-			<td>--feil memberof--</td>
+			<td>Ukjent medlem av</td>
 			<td>{{ n }}</td>
 			<td></td>
 			<td></td>
@@ -91,7 +80,7 @@
 
 	{% for n in member.notfound %}
 		<tr>
-			<td>--feil member--</td>
+			<td>Ukjent medlem</td>
 			<td>{{ n }}</td>
 			<td></td>
 			<td></td>
