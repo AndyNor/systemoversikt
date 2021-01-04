@@ -406,7 +406,10 @@
 						<td><a href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">{{ adgroup.display_name }}</a> ({{ adgroup.membercount }} members)</td>
 						<td>
 							{% for bruk in systembruk %}
-								{{ bruk.brukergruppe.virksomhetsforkortelse }}: {% get_aduser_count_for adgroup bruk.brukergruppe %}<br>
+							{% get_aduser_count_for adgroup bruk.brukergruppe as antall_brukere_for_virksomhet %}
+								{% if antall_brukere_for_virksomhet != 0 %}
+									{{ bruk.brukergruppe.virksomhetsforkortelse }}: {{antall_brukere_for_virksomhet}}<br>
+								{% endif %}
 							{% endfor %}
 						</td>
 					</tr>

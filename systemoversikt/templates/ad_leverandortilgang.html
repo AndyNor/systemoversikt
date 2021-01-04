@@ -44,7 +44,7 @@
 			<td>{{ m.profile.virksomhet.virksomhetsforkortelse }}</td>
 			<td>{{ m.profile.from_prk|yesno:"OK,Opprettet manuelt,Vet ikke" }}</td>
 			<td>{{ m.levtilgang }}</td>
-			<td>{{ m.profile.lastLogonTimestamp|timesince }}</td>
+			<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
 			<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,OK,Vet ikke" }}</td>
 			<td>{{ m.profile.dont_expire_password|yesno:"Passord utløper aldri,OK,Vet ikke" }}</td>
 			<td>{{ m.profile.org_unit }}</td>
