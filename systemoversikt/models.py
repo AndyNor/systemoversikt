@@ -1969,10 +1969,10 @@ SELVBETJENING_VALG = (
 )
 
 SIKKERHETSNIVAA_VALG = (
-	(1, 'Åpent'),
-	(2, 'Internt'),
-	(5, 'Fortrolig'),
-	(3, 'Strengt fortrolig'),
+	(1, 'Åpen'),
+	(2, 'Lav'),
+	(5, 'Middels'),
+	(3, 'Høy'),
 	(4, 'Gradert')
 )
 
