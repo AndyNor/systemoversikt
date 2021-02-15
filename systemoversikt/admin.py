@@ -136,7 +136,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('systemnavn', 'alias', 'ibruk', 'systemeierskapsmodell', 'er_arkiv', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
 	search_fields = ('systemnavn', 'alias')
-	list_filter = ('database_in_use', 'database_supported', 'ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
+	list_filter = ('autentiseringsteknologi', 'autentiseringsalternativer', 'database_in_use', 'database_supported', 'ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
@@ -170,7 +170,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'loggingalternativer',
 		'autentiseringsteknologi',
 		'autentiseringsalternativer',
-		'autorisasjonsalternativer',
+		#'autorisasjonsalternativer',
 		'database_supported',
 		'database_in_use',
 		'godkjente_bestillere',
@@ -184,7 +184,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('ibruk', 'informasjon_kvalitetssikret'),
 				('systemnavn', 'alias'),
 				'systembeskrivelse',
-				'systemtyper',
 				'er_arkiv',
 				'systemeierskapsmodell',
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
@@ -192,30 +191,34 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'godkjente_bestillere',
 				'driftsmodell_foreignkey',
 				'systemkategorier',
-				'systemurl',
-				'avhengigheter_referanser',
-				'avhengigheter',
 			),
 		}),
-		('Tekniske og sikkerhetsmessige vurderinger', {
+		('Sikkerhetsmessige vurderinger', {
 			'description': 'Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/ywUfBg">definisjoner på Confluence</a>.',
 			'fields': (
 				'informasjonsklassifisering',
 				'sikkerhetsnivaa',
 				('tilgjengelighetsvurdering','tilgjengelighet_kritiske_perioder'),
-				'konfidensialitetsvurdering',
 				'integritetsvurdering',
+				('autentiseringsteknologi', 'autentiseringsalternativer'),
+				#'autorisasjonsalternativer',
+				'datautveksling_mottar_fra',
+				'datautveksling_avleverer_til',
+				('risikovurdering_behovsvurdering', 'dato_sist_ros'),
+				'url_risikovurdering',
+				'risikovurdering_tekst',
+			)
+		}),
+		('Tekniske vurderinger', {
+			'fields': (
+				'systemtyper',
+				'systemurl',
 				'livslop_status',
 				'funksjonell_egnethet',
 				'teknisk_egnethet',
 				'kjente_mangler',
-				('risikovurdering_behovsvurdering', 'dato_sist_ros'),
-				'url_risikovurdering',
-				'risikovurdering_tekst',
-				('autentiseringsteknologi', 'autentiseringsalternativer'),
-				'autorisasjonsalternativer',
-				'datautveksling_mottar_fra',
-				'datautveksling_avleverer_til',
+				'avhengigheter_referanser',
+				'avhengigheter',
 			)
 		}),
 		('Dokumentasjon og drift', {
@@ -272,6 +275,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'strategisk_egnethet',
 				'selvbetjening',
 				'kommentar',
+				'konfidensialitetsvurdering',
 			),
 		}),
 	)

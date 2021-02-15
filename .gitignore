@@ -8,6 +8,7 @@ systemoversikt/management/commands/*.json
 ldap_update_all_users
 prk_sync
 bash_scripts/*
+*.bat
 
 # local
 dev.bat

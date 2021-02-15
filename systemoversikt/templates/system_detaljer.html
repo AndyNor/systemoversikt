@@ -568,6 +568,7 @@
 						{{ autentiseringsalternativ.navn }}<br>
 					{% endfor %}</td>
 				</tr>
+				{% comment %}
 				<tr>
 					<td>{% get_verbose_field_name systemdetaljer "autorisasjonsalternativer" %}
 					{% get_help_text systemdetaljer "autorisasjonsalternativer" as text %}
@@ -577,6 +578,7 @@
 						{{ autorisasjonsalternativ.navn }}<br>
 					{% endfor %}</td>
 				</tr>
+				{% endcomment %}
 				<tr>
 					<td>{% get_verbose_field_name systemdetaljer "konfidensialitetsvurdering" %}
 					{% get_help_text systemdetaljer "konfidensialitetsvurdering" as text %}

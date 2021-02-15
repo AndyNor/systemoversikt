@@ -2404,7 +2404,7 @@ class System(models.Model):
 			help_text=u"Krysses av når ansvarlig har kontrollert at opplysningene oppgitt for dette systemet stemmer. Obligatoriske felter er de som automatisk er ekspandert.",
 			)
 	systemnavn = models.CharField(
-			verbose_name="Systemnavn", unique=True,
+			verbose_name="Navn på system / applikasjon", unique=True,
 			max_length=100,
 			blank=False, null=False,
 			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Bruk feltet systemtype for å presisere kategori system. Det kan tidvis være vanskelig vite hvordan integrasjoner skal beskrives. Et eksempel er SvarUt. Det er et system levert av KS. Det er også integrasjoner på integrasjonsplattformen ITAS. Her gir det mening å registrere både SvarUt og SvarUt-integrasjon da de har forskjellige forvaltere. KS er en ekstern aktør og SvarUt-integrasjon er forvaltet av Oslo kommune. Det er egne felter her for å registrere systemintegrasjoner/informasjonsflyt inn og ut. F.eks. leverer folkeregistret data til infotoget, og infotorget leverer til DSF-integrasjon, og ulike systemer får data fra DSF-integrasjon.",
@@ -2479,7 +2479,7 @@ class System(models.Model):
 #			help_text=u"Velg alle aktuelle med '(servergruppe)' bak navnet. Produksjon, test og annet.",
 #			)
 	sikkerhetsnivaa = models.IntegerField(choices=SIKKERHETSNIVAA_VALG,
-			verbose_name="Sikkerhetsnivå til systemet",
+			verbose_name="Konfidensialitetsnivå til systemet",
 			blank=True, null=True,
 			help_text=u'Sikkerhetsnivå for felles IKT-plattform i hht <a target="_blank" href="https://confluence.oslo.kommune.no/x/y8seAw">Informasjonstyper og behandlingskrav</a>',
 			)
@@ -2639,7 +2639,7 @@ class System(models.Model):
 			help_text=u"Moderne teknologi eller masse teknisk gjeld?",
 			)
 	konfidensialitetsvurdering = models.IntegerField(choices=VURDERINGER_SIKKERHET_VALG,
-			verbose_name="Oppsummert konfidensialitetsvurdering",
+			verbose_name="Oppsummert konfidensialitetsvurdering (utfases)",
 			blank=True, null=True,
 			help_text=u"Oppsummert: Hvor sensitive er opplysningene?",
 			)
@@ -2684,20 +2684,20 @@ class System(models.Model):
 			help_text=u"fases ut til fordel for mer detaljerte spørsmål under.",
 			)
 	autentiseringsalternativer = models.ManyToManyField(Autentiseringsmetode,
-			verbose_name="Innloggingsstyrke", related_name='system_autentiseringsalternativer',
+			verbose_name="Identifiseringsnivå", related_name='system_autentiseringsalternativer',
 			blank=True,
 			help_text=u"Sikkerhetsnivå på innloggingen?",
 			)
 	autentiseringsteknologi = models.ManyToManyField(Autentiseringsteknologi,
-			verbose_name="Innloggingsteknologi", related_name='system_autentiseringsalternativer',
+			verbose_name="Påloggingstjeneste", related_name='system_autentiseringsalternativer',
 			blank=True,
 			help_text=u"Hvordan logger bruker på? Husk også å legge til systemavhengighet dersom AD/LDAP/SAML/OIDC. (Henger sammen med hvordan brukere opprettes)",
 			)
-	autorisasjonsalternativer = models.ManyToManyField(Autorisasjonsmetode,
-			verbose_name="Tilgangsteknologi", related_name='system_autorisasjonsalternativer',
-			blank=True,
-			help_text=u"Hvordan får bruker tilgang til informasjon i systemet?",
-			)
+	#autorisasjonsalternativer = models.ManyToManyField(Autorisasjonsmetode,
+	#		verbose_name="Tilgangsteknologi", related_name='system_autorisasjonsalternativer',
+	#		blank=True,
+	#		help_text=u"Hvordan får bruker tilgang til informasjon i systemet?",
+	#		)
 	loggingalternativer = models.ManyToManyField(Loggkategori,
 			verbose_name="Etablerte logger i systemet", related_name='system_loggingalternativer',
 			blank=True,
