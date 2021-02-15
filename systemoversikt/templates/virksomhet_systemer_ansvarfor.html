@@ -30,6 +30,7 @@
 			{% endif %}
 				<th>Systemnavn</th>
 				<th>Kategorisering</th>
+				<th>Pålogging</th>
 				<th>Systemeier</th>
 				<th>Systemforvalter</th>
 				<th>Livsløp</th>
@@ -57,6 +58,12 @@
 			{% for kategori in item.systemkategorier.all %}
 				{% url 'systemkategori' kategori.pk as url_systemkategorier %}
 				<a href="{{ url_systemkategorier }}">{{ kategori }}</a><br>
+			{% endfor %}
+		</td>
+
+		<td>
+			{% for metode in item.autentiseringsteknologi.all %}
+				{{ metode }}<br>
 			{% endfor %}
 		</td>
 

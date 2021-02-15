@@ -1109,7 +1109,7 @@ def alle_systemer(request):
 	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0):  # bare ét systemtreff og ingen programvaretreff.
 		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
 
-	aktuelle_systemer = aktuelle_systemer.order_by('ibruk', Lower('systemnavn'))
+	aktuelle_systemer = aktuelle_systemer.order_by(Lower('systemnavn'))
 	potensielle_systemer = potensielle_systemer.order_by('ibruk', Lower('systemnavn'))
 	aktuelle_programvarer.order_by(Lower('programvarenavn'))
 
