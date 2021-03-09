@@ -2,7 +2,7 @@
 
 <ul style="column-count:4;">
 {% for system in systemer %}
-	<li>
+	<li {% if system.systemeier_kontaktpersoner_referanse.all.count > 1 %}style="background-color: yellow;"{% endif %}>
 		{% include 'system_include_vis.html' with system=system %}
 	</li>
 {% endfor %}
