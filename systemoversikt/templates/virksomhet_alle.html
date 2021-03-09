@@ -34,6 +34,7 @@
 		<th>Systemprioritering</th>
 		{% comment %}<th>Antall ansatte</th>{% endcomment %}
 		<th>Drift av klientplattform</th>
+		<th>Kontorstøtte</th>
 		{% comment %}<th>Autoriserte bestillere InfoTorget</th>{% endcomment %}
 		{% comment %}<th>Autoriserte bestillere mot intern tjenesteleverandør</th>{% endcomment %}
 		<th>Personvernkoordinator (PKO)</th>
@@ -73,6 +74,7 @@
 
 		{% comment %}<td>{{ vir.ansatte|default:"-" }}</td>{% endcomment %}
 		<td>{{ vir.get_resultatenhet_display|default:"-" }}</td>
+		<td>{{ vir.get_office365_display|default:"-" }}</td>
 		{% comment %}<td>
 			{% for person in vir.autoriserte_bestillere_tjenester.all %}
 				<a href="{% url 'ansvarlig' person.pk %}"

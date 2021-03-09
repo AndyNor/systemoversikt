@@ -315,6 +315,13 @@ RESULTATENHET_VALG = (
 	('Egen', 'Egen drift'),
 )
 
+OFFICE365_VALG = (
+	(1, 'Felles tenant'),
+	(2, 'Felles tenant med egen klientdrift'),
+	(3, 'Egen tenant'),
+)
+
+
 class Virksomhet(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -466,6 +473,12 @@ class Virksomhet(models.Model):
 			verbose_name='Arkitekturkontakter i vår virksomhet',
 			blank=True,
 			help_text=u"Personer som jobber med overordnet arkitektur knyttet til virksomhetens ibruktakelse av IKT",
+			)
+	office365 = models.IntegerField(choices=OFFICE365_VALG,
+			verbose_name="Modell for kontorstøtte",
+			blank=True, null=True,
+			default=1,
+			help_text=u"Dette feltet brukes for å angi virksomhetens valg knyttet til office365",
 			)
 	history = HistoricalRecords()
 
