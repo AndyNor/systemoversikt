@@ -2382,15 +2382,15 @@ def adorgunit_detaljer(request, pk=None):
 	else:
 		ou = ADOrgUnit.objects.get(pk=pk)
 
-	groups = ADgroup.objects.filter(parent=pk).order_by('distinguishedname')
+	groups = ADgroup.objects.filter(parent=pk).order_by(Lower('distinguishedname'))
 	parent_str = ",".join(ou.distinguishedname.split(',')[1:])
 	try:
 		parent = ADOrgUnit.objects.get(distinguishedname=parent_str)
 	except:
 		parent = None
-	children = ADOrgUnit.objects.filter(parent=pk)
+	children = ADOrgUnit.objects.filter(parent=pk).order_by(Lower('distinguishedname'))
 
-	users = User.objects.filter(profile__ou=pk)
+	users = User.objects.filter(profile__ou=pk).order_by(Lower('first_name'))
 
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
