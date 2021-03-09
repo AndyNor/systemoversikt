@@ -462,6 +462,11 @@ class Virksomhet(models.Model):
 			blank=True, null=True,
 			help_text=u"Her oppgir du link til virksomhetens styringssystem.",
 			)
+	arkitekturkontakter = models.ManyToManyField(Ansvarlig, related_name='virksomhet_arkitekturkontakter',
+			verbose_name='Arkitekturkontakter i vår virksomhet',
+			blank=True,
+			help_text=u"Personer som jobber med overordnet arkitektur knyttet til virksomhetens ibruktakelse av IKT",
+			)
 	history = HistoricalRecords()
 
 	def leder_hr(self):
@@ -1970,9 +1975,9 @@ SELVBETJENING_VALG = (
 
 SIKKERHETSNIVAA_VALG = (
 	(1, 'Åpen'),
-	(2, 'Lav'),
-	(5, 'Middels'),
-	(3, 'Høy'),
+	(2, 'Intern'),
+	(5, 'Beskyttet'),
+	(3, 'Strengt beskyttet'),
 	(4, 'Gradert')
 )
 

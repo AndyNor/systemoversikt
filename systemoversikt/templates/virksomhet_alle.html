@@ -20,6 +20,7 @@
 		</div>
 	</form>
 
+
 	<table id="alle_virksomheter" class="tablesorter excel">
 	<thead>
 	<tr>
@@ -38,6 +39,7 @@
 		<th>Personvernkoordinator (PKO)</th>
 		<th>Informasjonssikkerhetskoordinator (ISK)</th>
 		<th>IKT-hovedkontakt</th>
+		<th>Arkitekturkontakter</th>
 		<th>Kundeansvarlig hos intern tjenesteleverandør</th>
 	</tr>
 	</thead>
@@ -113,6 +115,16 @@
 		</td>
 		<td>
 			{% for person in vir.ikt_kontakt.all %}
+				<a href="{% url 'ansvarlig' person.pk %}"
+				{% if person.brukernavn.is_active == False  %}
+					style="text-decoration: line-through;"
+				{% endif %}
+				>
+				{{ person }}</a><br>
+			{% endfor %}
+		</td>
+		<td>
+			{% for person in vir.arkitekturkontakter.all %}
 				<a href="{% url 'ansvarlig' person.pk %}"
 				{% if person.brukernavn.is_active == False  %}
 					style="text-decoration: line-through;"

@@ -309,6 +309,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 		'leder',
 		'informasjonssikkerhetskoordinator',
 		'personvernkoordinator',
+		'arkitekturkontakter',
 		'ikt_kontakt',
 		'uke_kam_referanse',
 		'autoriserte_bestillere_sertifikater',
@@ -328,6 +329,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 					'leder',
 					'autoriserte_bestillere_tjenester',
 					'autoriserte_bestillere_tjenester_uke',
+					'arkitekturkontakter',
 				),
 			}),
 			('GDPR / sikkerhet', {

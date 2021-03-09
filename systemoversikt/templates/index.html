@@ -229,22 +229,23 @@
 			sessionStorage['ie_warning'] = "yes";
 			return false;
 		}
-
 		msieversion();
+
 		$(".tablesorter").tablesorter({
 			theme: 'default',
 			widgets : ["filter",],
 			widgetOptions : {
-			filter_liveSearch : true,
-			filter_searchFiltered: true,
-			filter_placeholder: { search : '' },
-			filter_columnFilters: true,
-			filter_ignoreCase : true,
-			filter_startsWith : false,
-			// sticky headers
-			//stickyHeaders_offset: 116,
+				filter_liveSearch : true,
+				filter_searchFiltered: true,
+				filter_placeholder: { search : '' },
+				filter_columnFilters: true,
+				filter_ignoreCase : true,
+				filter_startsWith : false,
+				// sticky headers
+				//stickyHeaders_offset: 116,
 			}
 		})
+
 		$("table").floatThead({top: 116});
 
 	});
