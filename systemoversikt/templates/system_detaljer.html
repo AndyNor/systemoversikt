@@ -607,7 +607,15 @@
 					</td>
 					<td>{{ systemdetaljer.tilgjengelighet_kritiske_perioder|default:"-"|linebreaks }}</td>
 				</tr>
-
+				<tr>
+					<td>Vurdering sikkerhetstest (Settes på URL)
+					</td>
+					<td>
+						{% for url in systemdetaljer.systemurl.all %}
+							<a href="/admin/systemoversikt/systemurl/{{url.pk}}/change/">{{ url.get_vurdering_sikkerhetstest_display|default:"Ingen vurdering satt" }}</a> for {{ url }}<br>
+						{% endfor %}
+					</td>
+				</tr>
 				<tr>
 					<td>Sikkerhetstester
 					{% if user.is_authenticated %}
