@@ -1,0 +1,65 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Søk på hostnavn på felles IKT-plattform
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<form action="{% url 'maskin_sok' %}" method="POST" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group form-inline">
+			<textarea rows="3" cols="50" style="width: 500px; height: 250px;" name="search_term"
+			placeholder="Liste med server, en per linje" class="form-control form-control-sm">{{ query }}</textarea>
+			<input style="margin-left: 10px;" type="submit" value="Slå opp" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	<hr>
+
+	<table class="table table-sm tablesorter">
+	<thead>
+		<th>Hostnavn</th>
+		<th>Business Service</th>
+		<th>Business Sub Service</th>
+		<th>Miljø</th>
+		<th>System og eiere</th>
+		<th>VLAN</th>
+	</thead>
+	<tbody>
+	{% for server in hits %}
+		<tr {% if server.active == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
+			<td>{{server.comp_name}}</td>
+			<td>{{server.sub_name.parent_ref}}</td>
+			<td>{{server.sub_name}}</td>
+			<td>{{server.sub_name.get_environment_display}}</td>
+			<td>
+				{% if server.sub_name.parent_ref.systemreferanse %}
+					<b>{{server.sub_name.parent_ref.systemreferanse}}</b><br>
+					{{server.sub_name.parent_ref.systemreferanse.systemeier_kontaktpersoner_referanse.all.0}}
+				{% else %}
+					-
+				{% endif %}
+			</td>
+			<td>{{server.vlan|default:"-"}}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% if misses %}
+	<p>Fant ikke disse serverne:
+	<ul>
+	{% for miss in misses %}
+		<li>{{miss}}</li>
+	{% endfor %}
+	</ul>
+{% endif %}
+
+
+{% endblock hovedinnhold %}

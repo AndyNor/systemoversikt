@@ -122,12 +122,15 @@ urlpatterns = [
 	url(r'^cmdb/$', views.alle_cmdbref, name='alle_cmdbref_main'),
 	url(r'^cmdb/alle/$', views.alle_cmdbref, name='alle_cmdbref'),
 	url(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),
-	url(r'^cmdb/servere/sok/$', views.alle_maskiner, name='alle_maskiner'),
+	url(r'^cmdb/servere/$', views.alle_maskiner, name='alle_maskiner'),
 	url(r'^cmdb/servere/utfaset/$', views.servere_utfaset, name='servere_utfaset'),
 	url(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 	url(r'^cmdb/os/$', views.alle_os, name='alle_os'),
 	url(r'^cmdb/db/$', views.statistikk_databaser, name='statistikk_databaser'),
 	url(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
+	url(r'^cmdb/servere/sok/$', views.maskin_sok, name='maskin_sok'),
+
+
 
 	url(r'^cmdb/prk/alle/$', views.alle_prk, name='alle_prk'),
 	url(r'^cmdb/prk/browse/$', views.prk_browse, name='prk_browse'),

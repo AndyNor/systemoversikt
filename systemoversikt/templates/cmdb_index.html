@@ -12,7 +12,10 @@
 		<a href="{{url_statistikk_databaser}}" class="btn btn-sm btn-link {% if url_statistikk_databaser in request.path %}fremhev{% endif %}" >Statistikk databaser</a>
 
 		{% url 'alle_maskiner' as url_alle_maskiner %}
-		<a href="{{url_alle_maskiner}}" class="btn btn-sm btn-link {% if url_alle_maskiner in request.path %}fremhev{% endif %}">Søk i maskiner</a>
+		<a href="{{url_alle_maskiner}}" class="btn btn-sm btn-link {% if url_alle_maskiner in request.path %}fremhev{% endif %}">Alle maskiner</a>
+
+		{% url 'maskin_sok' as url_maskin_sok %}
+		<a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Søk etter maskiner</a>
 
 		{% url 'alle_databaser' as url_alle_databaser %}
 		<a href="{{url_alle_databaser}}" class="btn btn-sm btn-link {% if url_alle_databaser in request.path %}fremhev{% endif %}">Søk i databaser</a>

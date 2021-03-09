@@ -2446,7 +2446,7 @@ class System(models.Model):
 	systemeier_kontaktpersoner_referanse = models.ManyToManyField(Ansvarlig, related_name='system_systemeier_kontaktpersoner',
 			verbose_name="Systemeier (personer)",
 			blank=True,
-			help_text=u"Person(er) med operativt systemeierskap",
+			help_text=u"Person(er) med operativt systemeierskap.",
 			)
 	systemforvalter = models.ForeignKey(Virksomhet, related_name='systemer_systemforvalter',
 			on_delete=models.SET_NULL,

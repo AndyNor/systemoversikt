@@ -2645,6 +2645,39 @@ def alle_os(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def maskin_sok(request):
+	"""
+	Søke opp hostnavn
+	Tilgangsstyring: må kunne vise cmdb-maskiner
+	"""
+	required_permissions = 'systemoversikt.view_cmdbdevice'
+	if request.user.has_perm(required_permissions):
+
+		hits = []
+		misses = []
+		query = request.POST.get('search_term', '').strip()
+		if query != "":
+			#servers = re.findall(r'\w+',search_term)
+			servers = query.split("\n")
+			for server in servers:
+				try:
+					match = CMDBdevice.objects.get(comp_name__iexact=server.strip())
+					hits.append(match)
+				except:
+					misses.append(server.strip())
+
+
+
+		return render(request, 'cmdb_maskin_sok.html', {
+			'request': request,
+			'query': query,
+			'hits': hits,
+			'misses': misses,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def alle_ip(request):
 	"""
 	Søke opp IP-adresser, både mot CMDB maskiner og via live dns-query
