@@ -30,7 +30,8 @@
 		<thead>
 			<tr>
 				<th>Display name</th>
-				<th>Fullt gruppenavn</th>
+				<th>Gruppenavn</th>
+				<th>E-mail</th>
 				<th>Antall direkte medlemmer</th>
 			</tr>
 		</thead>
@@ -38,7 +39,8 @@
 	{% for g in adgrupper %}
 		<tr>
 			<td>{{g.display_name|default:""}}</td>
-			<td><a href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.distinguishedname }}</a></td>
+			<td><a href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.short }}</a></td>
+			<td>{{g.mail|default:"-"}}</td>
 			<td>{{g.member_count}}</td>
 		</tr>
 	{% empty %}

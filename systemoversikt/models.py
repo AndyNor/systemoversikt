@@ -1730,6 +1730,10 @@ class ADgroup(models.Model):
 			default=False,
 			help_text=u"Slås opp mot 'PRKvalg' automatisk",
 			)
+	mail = models.TextField(
+			verbose_name="Mail",
+			blank=True, null=True,
+			)
 	parent = models.ForeignKey(ADOrgUnit, related_name='adgroup_parent',
 			on_delete=models.CASCADE,
 			verbose_name="Parent",
@@ -1739,7 +1743,9 @@ class ADgroup(models.Model):
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
 	def __str__(self):
-		return u'%s' % (self.distinguishedname)
+		if self.display_name == "" or self.display_name == None:
+			return u'%s' % (self.common_name)
+		return u'%s' % (self.display_name)
 
 	class Meta:
 		verbose_name_plural = "AD grupper"

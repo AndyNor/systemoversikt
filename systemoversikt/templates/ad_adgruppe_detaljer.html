@@ -11,6 +11,7 @@
 
 {% block hovedinnhold %}
 
+	<h5>{{ gruppe.display_name }}</h5>
 	<h6>{{ gruppe.distinguishedname }}</h6>
 	Sist oppdatert {{ gruppe.sist_oppdatert }}<br>
 	<b>Fra PRK?</b>: {% include 'site_janeivetikke.html' with boolean=gruppe.from_prk %}<br>
@@ -24,7 +25,7 @@
 	{% endif %}
 	{% if memberof.groups %}
 		{% for m in memberof.groups %}
-		Er nøstet inn i: <a href="{% url 'adgruppe_detaljer' pk=m.pk %}">👥 {{ m.cn }}</a><br>
+		Er nøstet inn i: <a href="{% url 'adgruppe_detaljer' pk=m.pk %}">👥 {{ m }}</a><br>
 		{% endfor %}
 	{% endif%}
 	<a href="{% url 'adgruppe_graf' pk=gruppe.pk %}">📈 Graf opp alle underliggende nøstede grupper</a><br>
@@ -48,7 +49,7 @@
 	{% for m in member.groups %}
 		<tr>
 			<td>👥 Tilgangsgruppe</td>
-			<td><a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m.cn }}</a></td>
+			<td><a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m }}</a></td>
 			<td></td>
 			<td></td>
 			<td></td>

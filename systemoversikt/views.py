@@ -2456,7 +2456,7 @@ def adgruppe_graf(request, pk):
 			for m in members["groups"]:
 				color = define_color(m)
 				size = define_size(m)
-				if m not in ferdige:
+				if m not in ferdige and m.parent != None:
 					nonlocal grense
 					if grense < maks_grense:
 						nye_grupper.append(m)
@@ -2467,7 +2467,7 @@ def adgruppe_graf(request, pk):
 							{"data": {
 								"parent": m.parent.pk,
 								"id": m.pk,
-								"name": m.short(),
+								"name": m.display_name,
 								"shape": "ellipse",
 								"color": color,
 								"size": size,

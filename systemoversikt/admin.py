@@ -1070,9 +1070,12 @@ class ADOrgUnitAdmin(admin.ModelAdmin):
 
 @admin.register(ADgroup)
 class ADgroupAdmin(admin.ModelAdmin):
-	list_display = ('distinguishedname', 'display_name', 'from_prk', 'membercount', 'memberofcount', 'description', 'sist_oppdatert')
-	search_fields = ('distinguishedname', 'display_name',)
+	list_display = ('common_name', 'display_name', 'mail', 'from_prk', 'membercount', 'memberofcount', 'description', 'sist_oppdatert', 'distinguishedname',)
+	search_fields = ('distinguishedname', 'display_name', 'mail')
 	list_filter = ('from_prk', 'opprettet', 'sist_oppdatert')
+	autocomplete_fields = ('parent',)
+
+
 
 
 @admin.register(AutorisertBestiller)
