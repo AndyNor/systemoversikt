@@ -298,8 +298,11 @@ def minside(request):
 def dashboard_all(request, virksomhet=None):
 	"""
 	Generere virksomhets dashboard med statistikk over systmemer
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	try:
 		virksomhet = Virksomhet.objects.get(pk=virksomhet)
 	except:
@@ -530,8 +533,11 @@ def permissions(request):
 
 def roller(request):
 	"""
-	Tilgangsstyring: Alle
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	from django.core import serializers
 	from django.contrib.auth.models import Group
 
@@ -772,8 +778,11 @@ def forvalter_api(request):
 def ansvarlig(request, pk):
 	"""
 	Viser informasjon om en ansvarlig
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	ansvarlig = Ansvarlig.objects.get(pk=pk)
 	if not ansvarlig.brukernavn.is_active:
 		messages.warning(request, 'Denne brukeren er deaktivert!')
@@ -824,8 +833,11 @@ def ansvarlig(request, pk):
 def alle_ansvarlige(request):
 	"""
 	Viser informasjon om alle ansvarlige
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	ansvarlige = Ansvarlig.objects.all().order_by('brukernavn__first_name')
 	return render(request, 'ansvarlig_alle.html', {
 		'request': request,
@@ -872,8 +884,12 @@ def systemkvalitet_virksomhet(request, pk):
 def systemdetaljer(request, pk):
 	"""
 	Viser detaljer om et system
-	Tilgangsstyring: ÅPENT (noen deler er begrenset i template)
+	Tilgangsstyring: Merk at noen informasjonselementer er begrenset i template
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	system = System.objects.get(pk=pk)
 
 	avhengigheter_graf = {"nodes": [], "edges": []}
@@ -1029,8 +1045,11 @@ def systemdetaljer(request, pk):
 def systemer_pakket(request):
 	"""
 	Uferdig: vising av hvordan applikasjoner er pakket
-	Tilgangsstyring: ÅPENT
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
 	programvarer = Programvare.objects.all()
 	return render(request, 'system_hvordan_pakket.html', {
@@ -1043,8 +1062,11 @@ def systemer_pakket(request):
 def systemklassifisering_detaljer(request, id):
 	"""
 	Vise systemer filtrert basert på systemeierskapsmodell (felles, sektor, virksomhet)
-	Tilgangsstyring: ÅPENT
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	if id == "__NONE__":
 		utvalg_systemer = System.objects.filter(~Q(ibruk=False)).filter(systemeierskapsmodell=None)
 		id = "tom"
@@ -1066,8 +1088,11 @@ def systemklassifisering_detaljer(request, id):
 def systemtype_detaljer(request, pk=None):
 	"""
 	Vise systemer filtrert basert på systemtype (web/app/infrastruktur osv.)
-	Tilgangsstyring: ÅPENT
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	if pk:
 		utvalg_systemer = System.objects.filter(systemtyper=pk)
 		systemtype_navn = Systemtype.objects.get(pk=pk).kategorinavn
@@ -1092,8 +1117,11 @@ def systemtype_detaljer(request, pk=None):
 def alle_systemer(request):
 	"""
 	Vise alle systemer
-	Tilgangsstyring: ÅPENT
 	"""
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
 	if search_term != '':
@@ -1131,8 +1159,11 @@ def alle_systemer(request):
 def bruksdetaljer(request, pk):
 	"""
 	Vise detaljer om systembruk
-	Tilgangsstyring: ÅPENT
 	"""
+	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	bruk = SystemBruk.objects.get(pk=pk)
 	return render(request, 'systembruk_detaljer.html', {
 		'request': request,
@@ -1143,8 +1174,11 @@ def bruksdetaljer(request, pk):
 def mine_systembruk(request):
 	"""
 	Vise detaljer om innlogget brukers virksomhets systembruk
-	Tilgangsstyring: ÅPENT
 	"""
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	try:
 		brukers_virksomhet = virksomhet_til_bruker(request)
 		pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
@@ -1157,8 +1191,11 @@ def mine_systembruk(request):
 def all_bruk_for_virksomhet(request, pk):
 	"""
 	Vise detaljer om en valgt virksomhets systembruk
-	Tilgangsstyring: ÅPENT
 	"""
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	virksomhet_pk = pk
 	all_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 
@@ -1221,8 +1258,11 @@ def registrer_bruk(request, system):
 def programvaredetaljer(request, pk):
 	"""
 	Vise detaljer for programvare
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	programvare = Programvare.objects.get(pk=pk)
 	programvarebruk = ProgramvareBruk.objects.filter(programvare=pk).order_by("brukergruppe")
 	behandlinger = BehandlingerPersonopplysninger.objects.filter(programvarer=pk).order_by("funksjonsomraade")
@@ -1237,8 +1277,11 @@ def programvaredetaljer(request, pk):
 def alle_programvarer(request):
 	"""
 	Vise alle programvarer
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
 	if search_term == "":
@@ -1260,8 +1303,11 @@ def alle_programvarer(request):
 def all_programvarebruk_for_virksomhet(request, pk):
 	"""
 	Vise all bruk av programvare for en virksomhet
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	virksomhet_pk = pk
 	all_bruk = ProgramvareBruk.objects.filter(brukergruppe=virksomhet_pk).order_by(Lower('programvare__programvarenavn'))
@@ -1279,8 +1325,11 @@ def all_programvarebruk_for_virksomhet(request, pk):
 def programvarebruksdetaljer(request, pk):
 	"""
 	Vise detaljer for bruk av programvare
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	bruksdetaljer = ProgramvareBruk.objects.get(pk=pk)
 	return render(request, "programvarebruk_detaljer.html", {
 		'request': request,
@@ -1368,8 +1417,13 @@ def mine_behandlinger(request):
 def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False):
 	"""
 	Vise alle behandling av personopplysninger for en valgt virksomhet
-	Tilgangsstyring: ÅPEN (noe informasjon er tilgangsstyrt i template)
+	Tilgangsstyring: Merk at noe informasjon i tillegg er tilgangsstyrt i template
 	"""
+	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 	# internt_ansvarlig benyttes for å filtrere ut på underavdeling/seksjon/
 	vir = Virksomhet.objects.get(pk=pk)
 
@@ -1465,8 +1519,12 @@ def behandling_kopier(request, system_pk):
 def virksomhet_ansvarlige(request, pk):
 	"""
 	Vise alle ansvarlige knyttet til valgt virksomhet
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_ansvarlig']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	ansvarlige = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).order_by('brukernavn__first_name')
 	return render(request, 'ansvarlig_alle.html', {
@@ -1898,7 +1956,6 @@ def bytt_virksomhet(request):
 def sertifikatmyndighet(request):
 	"""
 	Vise informasjon om delegeringer knyttet til sertifikater
-	Tilgangsstyring: ÅPEN
 	"""
 	required_permissions = 'systemoversikt.view_virksomhet'
 	if request.user.has_perm(required_permissions):
@@ -1934,8 +1991,11 @@ def alle_virksomheter(request):
 
 def virksomhet_arkivplan(request, pk):
 
-	virksomhet = Virksomhet.objects.get(pk=pk)
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	virksomhet = Virksomhet.objects.get(pk=pk)
 	systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet).filter(system__er_arkiv=True)
 
 	return render(request, 'virksomhet_arkivplan.html', {
@@ -1947,8 +2007,11 @@ def virksomhet_arkivplan(request, pk):
 def leverandor(request, pk):
 	"""
 	Vise detaljer for en valgt leverandør
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	leverandor = Leverandor.objects.get(pk=pk)
 	systemleverandor_for = System.objects.filter(systemleverandor=pk)
 	databehandler_for = BehandlingerPersonopplysninger.objects.filter(navn_databehandler=pk)
@@ -1977,8 +2040,11 @@ def leverandor(request, pk):
 def alle_leverandorer(request):
 	"""
 	Vise liste over alle leverandører
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	from django.db.models.functions import Lower
 
 	search_term = request.GET.get('search_term', "").strip()
@@ -1999,8 +2065,11 @@ def alle_leverandorer(request):
 def alle_driftsmodeller(request):
 	"""
 	Vise liste over alle driftsmodeller
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	driftsmodeller = Driftsmodell.objects.all().order_by('-ansvarlig_virksomhet', 'navn')
 	return render(request, 'driftsmodell_alle.html', {
 		'request': request,
@@ -2032,8 +2101,11 @@ def driftsmodell_virksomhet_klassifisering(request, pk):
 def drift_beredskap(request, pk, eier=None):
 	"""
 	Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	required_permissions = 'systemoversikt.view_system'
 	if request.user.has_perm(required_permissions):
 
@@ -2064,8 +2136,11 @@ def drift_beredskap(request, pk, eier=None):
 def driftsmodell_virksomhet(request, pk):
 	"""
 	Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet).order_by("navn")
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
@@ -2080,8 +2155,11 @@ def driftsmodell_virksomhet(request, pk):
 def detaljer_driftsmodell(request, pk):
 	"""
 	Vise detaljer om en valgt driftsmodell (inkl. systemer tilknyttet)
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	driftsmodell = Driftsmodell.objects.get(pk=pk)
 	systemer = System.objects.filter(driftsmodell_foreignkey=pk)
 	isolert_drift = systemer.filter(isolert_drift=True)
@@ -2102,8 +2180,11 @@ def detaljer_driftsmodell(request, pk):
 def systemer_uten_driftsmodell(request):
 	"""
 	Vise liste over systemer der driftsmodell mangler
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	mangler = System.objects.filter(Q(driftsmodell_foreignkey=None) & ~Q(systemtyper=1))
 	return render(request, 'driftsmodell_mangler.html', {
 		'systemer': mangler,
@@ -2113,8 +2194,11 @@ def systemer_uten_driftsmodell(request):
 def systemer_utfaset(request):
 	"""
 	Vise liste over systemer satt til "ikke i bruk"
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	systemer = System.objects.filter(ibruk=False).order_by("-sist_oppdatert")
 	return render(request, 'system_utfaset.html', {
 		'systemer': systemer,
@@ -2124,8 +2208,11 @@ def systemer_utfaset(request):
 def systemkategori(request, pk):
 	"""
 	Vise detaljer om en kategori
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	kategori = SystemKategori.objects.get(pk=pk)
 	systemer = System.objects.filter(systemkategorier=pk).order_by(Lower('systemnavn'))
 	programvarer = Programvare.objects.filter(kategorier=pk).order_by(Lower('programvarenavn'))
@@ -2140,8 +2227,11 @@ def systemkategori(request, pk):
 def alle_hovedkategorier(request):
 	"""
 	Vise liste over alle hovedkategorier
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	hovedkategorier = SystemHovedKategori.objects.order_by('hovedkategorinavn')
 	for kategori in hovedkategorier:
 		systemteller = 0
@@ -2168,8 +2258,11 @@ def alle_hovedkategorier(request):
 def alle_systemkategorier(request):
 	"""
 	Vise liste over alle (under)kategorier
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	kategorier = SystemKategori.objects.order_by('kategorinavn')
 	return render(request, 'kategori_alle.html', {
 		'request': request,
@@ -2180,8 +2273,11 @@ def alle_systemkategorier(request):
 def uten_systemkategori(request):
 	"""
 	Vise liste over alle systemer uten (under)kategori
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	antall_systemer = System.objects.all().count()
 	antall_programvarer = Programvare.objects.all().count()
 	systemer = System.objects.annotate(num_categories=Count('systemkategorier')).filter(num_categories=0)
@@ -2198,8 +2294,11 @@ def uten_systemkategori(request):
 def alle_systemurler(request):
 	"""
 	Vise liste over alle URLer
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	urler = SystemUrl.objects.order_by('domene')
 	return render(request, 'urler_alle.html', {
 		'request': request,
@@ -2209,16 +2308,24 @@ def alle_systemurler(request):
 def virksomhet_urler(request, pk):
 	"""
 	Vise liste over alle URLer
-	Tilgangsstyring: ÅPEN
 	"""
-	virksomhet = Virksomhet.objects.get(pk=pk)
-	urler = SystemUrl.objects.filter(eier=virksomhet.pk).order_by('domene')
-	return render(request, 'urler_alle.html', {
-		'request': request,
-		'web_urler': urler,
-		'virksomhet': virksomhet,
-	})
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	required_permissions = 'systemoversikt.view_system'
+	if request.user.has_perm(required_permissions):
+
+		virksomhet = Virksomhet.objects.get(pk=pk)
+		urler = SystemUrl.objects.filter(eier=virksomhet.pk).order_by('domene')
+		return render(request, 'urler_alle.html', {
+			'request': request,
+			'web_urler': urler,
+			'virksomhet': virksomhet,
+		})
+
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 def bytt_kategori(request, fra, til):
 	"""
@@ -3034,8 +3141,11 @@ def cmdbdevice(request, pk):
 def alle_avtaler(request, virksomhet=None):
 	"""
 	Vise alle avtaler
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	avtaler = Avtale.objects.all()
 	if virksomhet:
 		virksomhet = Virksomhet.objects.get(pk=virksomhet)
@@ -3050,8 +3160,11 @@ def alle_avtaler(request, virksomhet=None):
 def avtaledetaljer(request, pk):
 	"""
 	Vise detaljer for en avtale
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	avtale = Avtale.objects.get(pk=pk)
 	return render(request, 'avtale_detaljer.html', {
 		'request': request,
@@ -3062,8 +3175,11 @@ def avtaledetaljer(request, pk):
 def databehandleravtaler_virksomhet(request, pk):
 	"""
 	Vise alle databehandleravtaler for en valgt virksomhet
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	virksomet = Virksomhet.objects.get(pk=pk)
 	utdypende_beskrivelse = ("Viser databehandleravtaler for %s" % virksomet)
 	avtaler = Avtale.objects.filter(virksomhet=pk).filter(avtaletype=1) # 1 er databehandleravtaler
@@ -3077,8 +3193,11 @@ def databehandleravtaler_virksomhet(request, pk):
 def alle_dpia(request):
 	"""
 	Under utvikling: Vise alle DPIA-vurderinger
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	alle_dpia = DPIA.objects.all()
 	return render(request, 'dpia_alle.html', {
 		'request': request,
@@ -3089,8 +3208,11 @@ def alle_dpia(request):
 def detaljer_dpia(request, pk):
 	"""
 	Under utvikling: Vise metadata om en DPIA-vurdering
-	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	dpia = DPIA.objects.get(pk=pk)
 	return render(request, 'detaljer_dpia.html', {
 		'request': request,
@@ -3403,7 +3525,6 @@ def ldap_exact(name):
 def ad(request):
 	"""
 	Startside for LDAP/AD-spørringer
-	Tilgangsstyring: ÅPEN
 	"""
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):

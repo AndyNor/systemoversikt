@@ -2,26 +2,36 @@
 
 {% block main_content %}
 
-	<h4><img style="width: 25px;" src="/static/open-iconic/svg/circle-x.svg" alt="Kvalitet verifisert"> Adgang nektet</h4>
+	<h4><img style="width: 25px;" src="/static/open-iconic/svg/circle-x.svg" alt="Kvalitet verifisert"> Denne informasjonen er beskyttet</h4>
 
-	<p>Noen typer informasjon krever ekstra tilganger.</p>
+	{% if not request.user.is_authenticated %}
+		<p>Du er ikke logget inn. Fint om du logger på, så skal vi se om du har tilgang til dette!</p>
 
-	{% if groups %}
-		<p>Du er medlem i følgende grupper:
-			{% for group in groups.all %}
-				<br>{{ group }}
-			{% endfor %}
-		</p>
+	{% else %}
+
+		{% if required_permissions %}
+			<p>Du mangler følgende rettigheter for å se denne siden:
+				<br>{{ required_permissions }}
+			</p>
+		{% endif %}
+
+		{% if groups %}
+			<p>Dette er de tilgangene du har:
+				{% for group in groups.all %}
+					<br>{{ group }}
+				{% empty %}
+					<br>Ingen
+				{% endfor %}
+			</p>
+		{% endif %}
+
+
+		<p><i>Det er tilgangsstyring via Person og ressurskatalogen (PRK) via skjemaet "(F) System- og behandlingsoversikt".<br>
+		Ta kontakt med din nærmeste PRK-administrator for tildeling av tilgang</i></p>
+
 	{% endif %}
 
 
-	{% if required_permissions %}
-		<p>Du mangler rettighetene:
-			<br>{{ required_permissions }}
-		</p>
-	{% endif %}
 
-	<p><i>Det er tilgangsstyring via Person og ressurskatalogen (PRK) via skjemaet "(F) System- og behandlingsoversikt".<br>
-	Dette er et felles PRK-skjema som kan tildeles av personer med "tildele sentrale tilganger til brukere"-rollen.</i></p>
 
 {% endblock %}
