@@ -186,10 +186,10 @@ urlpatterns = [
 	url(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),
 	url(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),
 
-	url(r'^forvaltere/api/$', views.forvalter_api, name='forvalter_api'), # brukes av UKE/tjenestekatalogen
-	url(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'), # åpent api (innført logging?)
-	url(r'^cmdb/api/test/$', views.cmdb_api_new, name='cmdb_api_new'), # åpent api (innført logging?)
-	url(r'^systemer/api/$', views.systemer_api, name='systemer_api'), # åpent API (innført logging?)
+	url(r'^forvaltere/api/$', views.forvalter_api, name='forvalter_api'), # brukes av UKE/tjenestekatalogen. Bruker API-nøkkel.
+	url(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'), # (det er innført behov for API-key)
+	url(r'^cmdb/api/test/$', views.cmdb_api_new, name='cmdb_api_new'), # (det er innført behov for API-key)
+	url(r'^systemer/api/$', views.systemer_api, name='systemer_api'), # (det er innført behov for API-key)
 
 
 	# import og konvertering

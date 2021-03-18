@@ -715,6 +715,7 @@ def forvalter_api(request):
 		key = request.headers.get("key", None)
 		allowed_keys = APIKeys.objects.filter(navn="itas_tjenestekatalog").values_list("key", flat=True)
 		if key in list(allowed_keys):
+
 			owner = APIKeys.objects.get(key=key).navn
 			ApplicationLog.objects.create(event_type="Forvalter-API", message="Brukt av %s" %(owner))
 
@@ -3605,6 +3606,15 @@ def recursive_group_members(request, group):
 
 
 def systemer_api(request):
+
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="api_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
 	data = []
 	query = System.objects.filter(~Q(ibruk=False))
 	for system in query:
@@ -3639,6 +3649,15 @@ def systemer_api(request):
 
 
 def cmdb_api(request):
+
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="api_cmdb").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
 	data = []
 	# tar ikke med tykke klienter da disse 11k per nå bare vil støye ned
 	query = CMDBRef.objects.filter(operational_status=True).filter(~Q(navn="OK-Tykklient"))
@@ -3714,6 +3733,15 @@ def cmdb_api(request):
 
 
 def cmdb_api_new(request):
+
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="api_cmdb_v2").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
 	data = []
 	# tar ikke med tykke klienter da disse 11k per nå bare vil støye ned
 	query = CMDBRef.objects.filter(operational_status=True).filter(~Q(navn="OK-Tykklient"))
