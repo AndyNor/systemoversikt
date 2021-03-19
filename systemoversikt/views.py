@@ -3738,7 +3738,7 @@ def cmdb_api_new(request):
 		raise Http404
 
 	key = request.headers.get("key", None)
-	allowed_keys = APIKeys.objects.filter(navn="api_cmdb_v2").values_list("key", flat=True)
+	allowed_keys = APIKeys.objects.filter(navn="api_cmdb").values_list("key", flat=True)
 	if not key in list(allowed_keys):
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 
