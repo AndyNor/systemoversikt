@@ -3731,7 +3731,7 @@ def cmdb_api(request):
 		resultat = {"antall bss": len(query), "data": data}
 	return JsonResponse(resultat, safe=False)
 
-
+"""
 def cmdb_api_new(request):
 
 	if not request.method == "GET":
@@ -3748,7 +3748,7 @@ def cmdb_api_new(request):
 	for bss in query:
 		line = {}
 		line["business_subservice_navn"] = bss.navn
-		line["business_service"] = bss.parent
+		line["business_service"] = bss.parent_ref.navn
 		line["sist_oppdatert"] = bss.sist_oppdatert
 		line["opprettet"] = bss.opprettet
 		line["environment"] = bss.get_environment_display()
@@ -3756,22 +3756,22 @@ def cmdb_api_new(request):
 		line["service_availability"] = bss.u_service_availability
 		line["service_operation_factor"] = bss.u_service_operation_factor
 		line["service_complexity"] = bss.u_service_complexity
-		line["antall_tilknyttede_systemer"] = len(bss.system_cmdbref.all())
+		#line["antall_tilknyttede_systemer"] = len(bss.parent_ref.all())
 
 		systemer = []
-		for s in bss.system_cmdbref.all():
+		for s in [bss.parent_ref]:
 
 
-			systemeier = s.systemeier.virksomhetsforkortelse if s.systemeier else "ukjent"
-			systemforvalter = s.systemforvalter.virksomhetsforkortelse if s.systemforvalter else "ukjent"
-			plattform = s.driftsmodell_foreignkey.navn if s.driftsmodell_foreignkey else "ukjent"
+			systemeier = s.systemreferanse.systemeier.virksomhetsforkortelse if s.systemeier else "ukjent"
+			systemforvalter = s.systemreferanse.ystemforvalter.virksomhetsforkortelse if s.systemforvalter else "ukjent"
+			plattform = s.systemreferanse.driftsmodell_foreignkey.navn if s.driftsmodell_foreignkey else "ukjent"
 
 			systemer.append({
-				"systemnavn": s.systemnavn,
+				"systemnavn": s.systemreferanse.systemnavn,
 				"systemeier": systemeier,
 				"systemforvalter": systemforvalter,
 				"plattform": plattform,
-				"er_infrastruktur": s.er_infrastruktur(),
+				"er_infrastruktur": s.systemreferanse.er_infrastruktur(),
 			})
 
 		line["tilknyttede_systemer"] = systemer
@@ -3815,6 +3815,8 @@ def cmdb_api_new(request):
 
 		resultat = {"antall bss": len(query), "data": data}
 	return JsonResponse(resultat, safe=False)
+"""
+
 
 ### UBW
 
