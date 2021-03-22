@@ -791,15 +791,15 @@ def tjenestekatalogen_systemer_api(request):
 			ApplicationLog.objects.create(event_type="Forvalter-API", message="Brukt av %s" %(owner))
 
 			systemer_eksport = []
-			for system in Systemer.object.all():
+			for system in System.objects.all():
 
 				systemeiere = []
 				for eier in system.systemeier_kontaktpersoner_referanse.all():
 					systemeiere.append({
 							"pk": eier.pk,
-							"full_name": eier.brukernavn.profile.displayName,
+							"full_name": eier.brukernavn.profile.displayName if eier.brukernavn.profile else None,
 							"email": eier.brukernavn.email,
-							"virksomhet": eier.brukernavn.profile.virksomhet.virksomhetsnavn,
+							"virksomhet": eier.brukernavn.profile.virksomhet.virksomhetsnavn if eier.brukernavn.profile.virksomhet else None,
 						})
 				systemer_eksport.append({
 						"pk": system.pk,
