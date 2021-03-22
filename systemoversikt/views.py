@@ -704,7 +704,7 @@ def definisjon(request, begrep):
 	})
 
 
-def forvalter_api(request):
+def tjenestekatalogen_forvalter_api(request):
 	"""
 	Dette er et API for å hente ut alle systemforvaltere.
 	Brukere:
@@ -774,6 +774,48 @@ def forvalter_api(request):
 	else:
 		raise Http404
 
+
+def tjenestekatalogen_systemer_api(request):
+	"""
+	Dette er et API for å hente ut alle systemforvaltere.
+	Brukere:
+		Tjenestekatalogen til UKE
+	"""
+	if request.method == "GET":
+
+		key = request.headers.get("key", None)
+		allowed_keys = APIKeys.objects.filter(navn="itas_tjenestekatalog").values_list("key", flat=True)
+		if key in list(allowed_keys):
+
+			owner = APIKeys.objects.get(key=key).navn
+			ApplicationLog.objects.create(event_type="Forvalter-API", message="Brukt av %s" %(owner))
+
+			systemer_eksport = []
+			for system in Systemer.object.all():
+
+				systemeiere = []
+				for eier in system.systemeier_kontaktpersoner_referanse.all():
+					systemeiere.append({
+							"pk": eier.pk,
+							"full_name": eier.brukernavn.profile.displayName,
+							"email": eier.brukernavn.email,
+							"virksomhet": eier.brukernavn.profile.virksomhet.virksomhetsnavn,
+						})
+				systemer_eksport.append({
+						"pk": system.pk,
+						"systemnavn": system.systemnavn,
+						"ibruk": system.ibruk,
+						"systembeskrivelse": system.systembeskrivelse,
+						"systemeier_kontaktpersoner_referanse": systemeiere,
+					})
+
+			data = {"message": "OK", "data": systemer_eksport}
+			return JsonResponse(data, safe=False)
+
+		else:
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+	else:
+		raise Http404
 
 
 def ansvarlig(request, pk):
