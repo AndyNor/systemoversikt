@@ -1870,6 +1870,11 @@ def virksomhet_prkadmin(request, pk):
 
 
 def systemer_virksomhet_ansvarlig_for(request, pk):
+
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
 
