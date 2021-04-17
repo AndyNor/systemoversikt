@@ -22,7 +22,7 @@
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Registrer nytt system</a>
 	{% endif %}
 
-	<table id="systemer" class="tablesorter">
+	<table id="systemer" class="tablesorter excel">
 		<thead>
 			<tr>
 			{% if perms.systemoversikt.change_system %}

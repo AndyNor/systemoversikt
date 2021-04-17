@@ -1934,6 +1934,7 @@ SYSTEMEIERSKAPSMODELL_VALG = (
 	('SEKTORSYSTEM', 'Sektorsystem'),
 	('TVERRSEKTORIELT', 'Tverrsektorielt'),
 	('FELLESSYSTEM', 'Fellessystem'),
+	('STOTTE', 'IKT-støttesystem'),
 )
 
 # må lage et script som inverterer verdiene i databasen 5 til 1 og 4 til 2 samtidig som disse inverteres.
@@ -2572,12 +2573,12 @@ class System(models.Model):
 	basisdriftleverandor = models.ManyToManyField(Leverandor, related_name='system_driftsleverandor',
 			verbose_name="Leverandør av basisdrift",
 			blank=True,
-			help_text=u"Leverandør som drifter maskinparken systmet kjører på. Tilsvarer typisk SSA-D. Trengs ikke fylles ut for systmer som kjøpes som en tjeneste av eksterne leverandører.",
+			help_text=u"Leverandør som drifter maskinparken systmet kjører på. Tilsvarer typisk SSA-D. Trengs ikke fylles ut for systmer som kjøpes som en tjeneste av eksterne leverandører, eller der virksomheten har lokal drift av hele systemet.",
 			)
 	applikasjonsdriftleverandor = models.ManyToManyField(Leverandor,
 			verbose_name="Leverandør av applikasjonsdrift", related_name='system_applikasjonsdriftleverandor',
 			blank=True,
-			help_text=u"Leverandør som sørger for at systemet fungerer som det skal. Kan f.eks. være en leverandør på en SSA-D (driftsavtale) eller SSA-B (bistandsavtale). Bør ikke fylles ut for systemer som kjøpes som en tjeneste av eksterne leverandører.",
+			help_text=u"Leverandør som sørger for at systemet fungerer som det skal. Kan f.eks. være en leverandør på en SSA-D (driftsavtale) eller SSA-B (bistandsavtale). Bør ikke fylles ut for systemer som kjøpes som en tjeneste av eksterne leverandører. Trenger ikke fylles ut dersom det er lokal drift av hele systemet.",
 			)
 	applikasjonsdrift_behov_databehandleravtale = models.BooleanField(
 			verbose_name="Behov for (egen) DBA mot applikasjonsdriftsleverandør?",

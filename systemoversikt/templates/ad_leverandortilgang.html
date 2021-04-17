@@ -14,7 +14,7 @@
 {% for k in usergroups %}
 
 	<h6>{{k.kilde.beskrivelse}}: Medlemer i <a href="{% url 'ad_details' k.kilde.gruppe %}">{{k.kilde.gruppe}}</a></h6>
-	<table class="tablesorter">
+	<table class="tablesorter excel">
 	<thead>
 		<tr>
 			<th>Navn</th>
