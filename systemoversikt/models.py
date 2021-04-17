@@ -1555,6 +1555,16 @@ class CMDBdevice(models.Model):
 			blank=True, null=True,
 			help_text=u"",
 			)
+	comments = models.TextField(
+			verbose_name="Comments",
+			unique=False,
+			null=True
+			)
+	description = models.TextField(
+			verbose_name="Description",
+			unique=False,
+			null=True
+			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
 	def __str__(self):

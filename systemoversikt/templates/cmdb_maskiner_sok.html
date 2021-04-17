@@ -54,6 +54,8 @@
 	<tr>
 		<th>Maskinnavn</th>
 		<th>Business service</th>
+		<th>Comments</th>
+		<th>Description</th>
 		<th>Disk</th>
 		<th>Antall CPU</th>
 		<th>Minne (MB)</th>
@@ -76,6 +78,8 @@
 				{{ cmdbref }}<br>
 			{% endfor %}
 		</td>
+		<td>{{ maskin.comments|default:"-" }}</td>
+		<td>{{ maskin.description|default:"-" }}</td>
 		<td>
 			{{ maskin.comp_disk_space|default:"-" }} GB
 		</td>

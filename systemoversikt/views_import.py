@@ -612,6 +612,8 @@ def import_cmdb_servers(request):
 			cmdbdevice.comp_os_version = record["OS Version"]
 			cmdbdevice.comp_os_service_pack = record["OS Service Pack"]
 			cmdbdevice.comp_location = record["Location"]
+			cmdbdevice.comments = record["Comments"]
+			cmdbdevice.description = record["Description"]
 			#cmdbdevice.comp_cpu_core_count = convertToInt(record["comp_cpu_core_count"])
 			#cmdbdevice.comp_cpu_count = convertToInt(record["comp_cpu_count"])
 			#cmdbdevice.comp_cpu_name = record["comp_cpu_name"]
