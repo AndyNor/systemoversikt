@@ -8,12 +8,12 @@
 {% endblock ekstrameny %}
 
 {% block overskrift %}
-	{{ virksomhet.virksomhetsforkortelse }}'s bruk av systemer
+	Systemer {{ virksomhet.virksomhetsforkortelse }} bruker
 {% endblock overskrift %}
 
 
 {% block hovedinnhold %}
-	<p>Systemer som er felles- eller sektorsystemer har her grønn bakgrunn. Merk at det som vises under systemeierskapsmodell her faktisk er det som er satt på bruken, og ikke systemet. Det er derfor ikke nødvendigivs samsvar. Linken under bruksdetaljer er linken til selve bruken av systemet. Klikk på link under system for å komme til systemets detaljeside.<br>
+	<p>Merk at det som vises under systemeierskapsmodell her faktisk er det som er satt på bruken, og ikke systemet. Det er derfor ikke nødvendigivs samsvar. Linken under bruksdetaljer er linken til selve bruken av systemet. Klikk på link under system for å komme til systemets detaljeside.<br>
 	Det vises {{ all_bruk.count }} systemer i bruk.</p>
 
 	{% if user.is_authenticated %}

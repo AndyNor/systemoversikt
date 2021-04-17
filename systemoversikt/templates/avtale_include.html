@@ -8,6 +8,7 @@
 		{% endif %}
 		<th>Avtalenavn</th>
 		<th>Avtaletype</th>
+		<th>Fornying</th>
 		<th>Avtalepart Oslo kommune</th>
 		<th>Avtaleforvalter</th>
 		<th>Internleverandør</th>
@@ -33,6 +34,7 @@
 		<td>
 			{{ item.get_avtaletype_display|default:"-" }}
 		</td>
+		<td>{{ item.fornying_dato|default:"-" }} {% if item.fornying_dato %} ({{ item.fornying_dato|timeuntil }}) {% endif %}</td>
 		<td>
 			{% url 'virksomhet' pk=item.virksomhet.pk as url_virksomhet %}
 			<a href="{{ url_virksomhet }}">{{ item.virksomhet.virksomhetsforkortelse }}</a>

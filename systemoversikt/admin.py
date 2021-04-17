@@ -906,7 +906,7 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
 	list_display = ('kortnavn', 'avtaletype', 'virksomhet', 'leverandor', 'leverandor_intern', 'avtalereferanse', 'dokumenturl')
 	search_fields = ('kortnavn', 'beskrivelse', 'avtalereferanse')
-	autocomplete_fields = ('virksomhet', 'leverandor', 'intern_avtalereferanse', 'leverandor_intern')
+	autocomplete_fields = ('virksomhet', 'leverandor', 'intern_avtalereferanse', 'leverandor_intern', 'fornying_ekstra_varsling', 'for_system')
 	filter_horizontal = ('avtaleansvarlig', 'for_system',)
 
 	def response_add(self, request, obj, post_url_continue=None):
@@ -927,6 +927,12 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 					'fields': (
 						'virksomhet',
 						('leverandor', 'leverandor_intern'),
+					),
+				}),
+				('Avtalefornying', {
+					'fields': (
+						('fornying_dato', 'fornying_varling_valg'),
+						'fornying_ekstra_varsling',
 					),
 				}),
 				('Om avtalen', {

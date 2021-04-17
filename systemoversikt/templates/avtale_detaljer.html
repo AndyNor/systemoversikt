@@ -26,11 +26,57 @@
 
 <div class="row">
 	<div class="col-sm-12">
-		<h6>Generelt</h6>
-		<table class="tablesorter">
+		<h6>Avtaleparter</h6>
+		<table class="table">
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "virksomhet" %}</td>
+				{% url "virksomhet" avtale.virksomhet.pk as url_virksomhet %}
+				<td><a href="{{ url_virksomhet }}">{{ avtale.virksomhet|default:"-" }}</a></td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name avtale "leverandor_intern" %}</td>
+				{% url "virksomhet" avtale.leverandor_intern.pk as url_leverandor_intern %}
+				<td><a href="{{ url_leverandor_intern }}">{{ avtale.leverandor_intern|default:"-" }}</a></td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name avtale "leverandor" %}</td>
+				{% url "leverandor" avtale.leverandor.pk as url_leverandor %}
+				<td><a href="{{ url_leverandor }}">{{ avtale.leverandor|default:"-" }}</a></td>
+			</tr>
+		</table>
+
+		<h6>Fornying</h6>
+		<table class="table">
+			<tr>
+				<td width="30%">{% get_verbose_field_name avtale "fornying_dato" %}</td>
+				<td>{{ avtale.fornying_dato|date:'Y-m-d' }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name avtale "fornying_varling_valg" %}</td>
+				<td>{{ avtale.fornying_varling_valg|yesno:"Ja, Nei" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name avtale "fornying_ekstra_varsling" %}</td>
+				<td>{% include "ansvarlig_include_vis.html" with ansvarlige=avtale.fornying_ekstra_varsling.all %}
+				</td>
+			</tr>
+		</table>
+
+		<h6>Om avtalen</h6>
+		<table class="table">
 			<tr>
 				<td width="30%">{% get_verbose_field_name avtale "sist_oppdatert" %}</td>
 				<td>{{ avtale.sist_oppdatert|date:'Y-m-d' }} ({{ avtale.sist_oppdatert|naturaltime }})</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name avtale "avtaletype" %}</td>
+				<td>{{ avtale.get_avtaletype_display|default:"-" }}</td>
+			</tr>
+			<tr>
+				<td>{% get_verbose_field_name avtale "avtaleansvarlig" %}</td>
+				<td>
+					{% include "ansvarlig_include_vis.html" with ansvarlige=avtale.avtaleansvarlig.all %}
+				</td>
 			</tr>
 			<tr>
 				<td>{% get_verbose_field_name avtale "avtalereferanse" %}</td>
@@ -45,27 +91,6 @@
 				-
 				{% endif %}
 				</td>
-			</tr>
-			<tr>
-				<td>{% get_verbose_field_name avtale "virksomhet" %}</td>
-				{% url "virksomhet" avtale.virksomhet.pk as url_virksomhet %}
-				<td><a href="{{ url_virksomhet }}">{{ avtale.virksomhet|default:"-" }}</a></td>
-			</tr>
-			<tr>
-				<td>{% get_verbose_field_name avtale "avtaleansvarlig" %}</td>
-				<td>
-					{% include "ansvarlig_include_vis.html" with ansvarlige=avtale.avtaleansvarlig.all %}
-				</td>
-			</tr>
-			<tr>
-				<td>{% get_verbose_field_name avtale "leverandor_intern" %}</td>
-				{% url "virksomhet" avtale.leverandor_intern.pk as url_leverandor_intern %}
-				<td><a href="{{ url_leverandor_intern }}">{{ avtale.leverandor_intern|default:"-" }}</a></td>
-			</tr>
-			<tr>
-				<td>{% get_verbose_field_name avtale "leverandor" %}</td>
-				{% url "leverandor" avtale.leverandor.pk as url_leverandor %}
-				<td><a href="{{ url_leverandor }}">{{ avtale.leverandor|default:"-" }}</a></td>
 			</tr>
 			<tr>
 				<td>{% get_verbose_field_name avtale "for_system" %}</td>
@@ -91,6 +116,8 @@
 				</td>
 			</tr>
 		</table>
+
+
 
 	</div>
 </div>
