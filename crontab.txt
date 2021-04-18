@@ -1,0 +1,20 @@
+10 6,11,13,17 * * * ~/metadata/backup/backup_script_db
+0 6 * * * ~/metadata/backup/backup_script_app
+
+0 1 * * * ~/metadata/djangoapp/jobs/ldap_users_paged
+20 1 * * * ~/metadata/djangoapp/jobs/ldap_group_paged
+40 1 * * * ~/metadata/djangoapp/jobs/ldap_ou_paged
+
+0 0 * * * ~/metadata/djangoapp/jobs/prk_forms
+15 0 * * * ~/metadata/djangoapp/jobs/prk_users
+30 0 * * * ~/metadata/djangoapp/jobs/prk_maskinadm
+45 0 * * * ~/metadata/djangoapp/jobs/prk_org
+
+0 2 * * * ~/metadata/djangoapp/jobs/lookup_adgroup_ou
+20 2 * * * ~/metadata/djangoapp/jobs/lookup_adgroup_prk
+
+40 2 * * * ~/metadata/djangoapp/jobs/rydde_ansvarlige
+
+0 3 * * * ~/metadata/djangoapp/jobs/email_avtalevarsel
+
+30 7 * * * ~/metadata/djangoapp/jobs/email_send
