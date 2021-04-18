@@ -1874,16 +1874,15 @@ class Avtale(models.Model):
 			verbose_name="Dato for fornying",
 			null=True, blank=True,
 			)
-	fornying_varling_valg = models.BooleanField(
+	fornying_varsling_valg = models.BooleanField(
 			verbose_name="Aktiver varsling",
 			default=False,
 			help_text=u"Denne varslingen går til avtaleforvaltger. Du kan angi flere mottakere under.",
 			)
-	fornying_ekstra_varsling = models.ForeignKey(Ansvarlig, related_name='avtale_ekstra_varsling_utlop',
-			on_delete=models.PROTECT,
+	fornying_ekstra_varsling = models.ManyToManyField(Ansvarlig, related_name='avtale_ekstra_varsling_utlop',
 			verbose_name="Andre som skal varsles før utløp",
-			blank=True, null=True,
 			help_text=u"",
+			blank=True,
 			)
 	history = HistoricalRecords()
 

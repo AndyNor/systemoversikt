@@ -931,7 +931,7 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 				}),
 				('Avtalefornying', {
 					'fields': (
-						('fornying_dato', 'fornying_varling_valg'),
+						('fornying_dato', 'fornying_varsling_valg'),
 						'fornying_ekstra_varsling',
 					),
 				}),
