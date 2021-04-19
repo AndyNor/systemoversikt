@@ -1877,7 +1877,7 @@ class Avtale(models.Model):
 	fornying_varsling_valg = models.BooleanField(
 			verbose_name="Aktiver varsling",
 			default=False,
-			help_text=u"Denne varslingen går til avtaleforvaltger. Du kan angi flere mottakere under.",
+			help_text=u"Denne varslingen går til avtaleforvalter. Du kan angi flere mottakere under.",
 			)
 	fornying_ekstra_varsling = models.ManyToManyField(Ansvarlig, related_name='avtale_ekstra_varsling_utlop',
 			verbose_name="Andre som skal varsles før utløp",

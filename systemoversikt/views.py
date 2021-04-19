@@ -3695,13 +3695,71 @@ def systemer_api(request):
 	return JsonResponse(resultat, safe=False)
 
 
+
+def system_excel_api(request, virksomhet_pk=None):
+
+	if not request.method == "GET":
+		raise Http404
+
+	if not virksomhet_pk:
+		return JsonResponse({"status": "Ingen virksomhet valgt", "data": None}, safe=False)
+
+	virksomhet = Virksomhet.objects.get(pk=virksomhet_pk)
+
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="virksomhet_").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
+
+	relevante_systemer = []
+
+	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=virksomhet_pk) | Q(systemforvalter=virksomhet_pk))
+	for system in systemer_ansvarlig_for:
+		system.__midlertidig_type = "Eier eller forvalter"
+		relevante_systemer.append(system)
+
+	virksomhets_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk)
+	for bruk in virksomhets_bruk:
+		system = bruk.system
+		if system not in relevante_systemer:
+			system.__midlertidig_type = "Kun bruk"
+			relevante_systemer.append(system)
+
+
+	data = []
+	for system in relevante_systemer:
+		line = {}
+		line["systemnavn"] = system.systemnavn
+		line["alias"] = system.alias
+		line["systembeskrivelse"] = system.systembeskrivelse
+		line["type"] = system.__midlertidig_type
+		line["systemeier"] = system.systemeier.virksomhetsforkortelse  if system.systemeier else "Ukjent"
+		line["systemforvalter"] = system.systemforvalter.virksomhetsforkortelse if system.systemforvalter else "Ukjent"
+		line["livslop"] = system.get_livslop_status_display()
+		line["driftsmodell"] = system.driftsmodell_foreignkey.navn if system.driftsmodell_foreignkey else "Ukjent"
+		line["leverandor_system"] = [leverandor.leverandor_navn for leverandor in system.systemleverandor.all()]
+		line["leverandor_appdrift"] = [leverandor.leverandor_navn for leverandor in system.applikasjonsdriftleverandor.all()]
+		line["leverandor_basisdrift"] = [leverandor.leverandor_navn for leverandor in system.basisdriftleverandor.all()]
+		line["teknisk_egnethet"] = system.get_teknisk_egnethet_display()
+		line["strategisk_egnethet"] = system.get_strategisk_egnethet_display()
+		line["funksjonell_egnethet"] = system.get_funksjonell_egnethet_display()
+		data.append(line)
+
+	status = "OK. Data for %s." % virksomhet.virksomhetsforkortelse
+	resultat = {"status": status, "data": data}
+	return JsonResponse(resultat, safe=False)
+
+
+
 def cmdb_api(request):
 
 	if not request.method == "GET":
 		raise Http404
 
 	key = request.headers.get("key", None)
-	allowed_keys = APIKeys.objects.filter(navn="api_cmdb").values_list("key", flat=True) # legge til støtte for flere..
+	allowed_keys = APIKeys.objects.filter(navn__startswith="api_cmdb").values_list("key", flat=True)
 	if not key in list(allowed_keys):
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 

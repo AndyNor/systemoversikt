@@ -191,6 +191,7 @@ urlpatterns = [
 	url(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'), # (det er innført behov for API-key)
 	#url(r'^cmdb/api/test/$', views.cmdb_api_new, name='cmdb_api_new'), # (det er innført behov for API-key)
 	url(r'^systemer/api/$', views.systemer_api, name='systemer_api'), # (det er innført behov for API-key)
+	url(r'^virksomhet/(?P<virksomhet_pk>\d+)/excelapi/$', views.system_excel_api, name='system_excel_api'), # det må brukes API-key
 
 
 	# import og konvertering
