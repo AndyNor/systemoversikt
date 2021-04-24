@@ -3036,7 +3036,7 @@ def alle_maskiner(request):
 			if search_term == "__all__":
 				search_term = ""
 
-			devices = CMDBdevice.objects.filter(active=True).filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term))
+			devices = CMDBdevice.objects.filter(active=True).filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term) | Q(comments__icontains=search_term) | Q(description__icontains=search_term))
 
 			if comp_os == "__empty__" and comp_os_version == "__empty__":
 				comp_os_and_version_none = CMDBdevice.objects.filter(active=True).filter(Q(comp_os="") & Q(comp_os_version=""))
