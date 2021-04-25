@@ -15,38 +15,13 @@
 
 	<p>Denne siden er kun laget for raskt å kunne sjekke differanse mellom Sopra Sterias CMDB og PRK-maskinadmin, samt for å kunne analysere logger fra ASA-boksene (VPN-forbindelser), da konkret sjekk av om WS-nummer som logger på er aktive i PRK-systemadm.</p>
 
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/klientutstyr/">Bla i PRK-maskinadmin</a>
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/cmdbdevice/?kilde_prk__exact=1">Bla i PRK-maskinadmin</a>
 
 	<hr>
 
-	Antall maskiner i MaskinAdm: <h4>{{ antall_maskinadm|intcomma }}</h4>
+	Antall maskiner i MaskinAdm (innmeldt): <h4>{{ antall_maskinadm|intcomma }}</h4>
 	Antall maskiner i CMDB (2S): <h4>{{ antal_cmdb|intcomma }}</h4>
 	<hr>
 
-	<h6>VPN: WS-nummer som ikke er aktive i PRK-maskinadm</h6>
-	<ul style="column-count:5;">
-	{% for ws in vpn_anomaly %}
-	<li>{{ws}}</li>
-	{% endfor %}
-	</ul>
-
-	<hr>
-
-	<h6>VPN: Brukernavn som ikke finnes i AD</h6>
-	<ul style="column-count:5;">
-	{% for user in vpn_anomaly_user %}
-	<li>{{user}}</li>
-	{% endfor %}
-	</ul>
-
-	<hr>
-
-	<h6>Enheter som mangler maskinadm (er i CMDB):</h6>
-	{{ mangler_maskinadm }}
-
-	<hr>
-
-	<h6>Enheter som mangler i CMDB (er i maskinadm):</h6>
-	{{ mangler_cmdb }}
 
 {% endblock hovedinnhold %}

@@ -15,6 +15,7 @@ from datetime import datetime
 from django.utils.timezone import make_aware
 import requests
 from systemoversikt.models import CMDBdevice, Virksomhet, ApplicationLog
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 
 
@@ -23,78 +24,72 @@ class Command(BaseCommand):
 
 		# *** Merk at det ikke er noe logikk her for å rydde opp. Dette er fordi eksporten inneholder ALT (også deaktivert og slettet).
 
-		LOG_EVENT_TYPE = 'PRK maskinadm-import'
+		LOG_EVENT_TYPE = 'LANdesk-import'
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 		runtime_t0 = time.time()
 
-		teller_innmeldt = 0
-		teller_slettet = 0
-		teller_utmeldt = 0
+		teller = 0
 
-		file = settings.BASE_DIR + "/systemoversikt/import/prk-klienter.csv"
-		with open(file, 'r', encoding='latin-1') as file:
+		file = settings.BASE_DIR + "/systemoversikt/import/landesk_intern_sone.csv"
+		with open(file, 'r', encoding='utf-8-sig') as file:
 			csv_data = list(csv.DictReader(file, delimiter=","))
 		print("Det er %s linjer i filen" % len(csv_data))
 
 		@transaction.atomic
 		def perform_atomic_update():
 
-			date_format = "%Y-%m-%dT%H:%M:%S"
+			date_format = "%d.%m.%Y %H:%M:%S"
+			# eksempel 21.04.2021 15:04:51
 
 			def str_to_date(str):
-				return make_aware(datetime.strptime(str, date_format))
-
-			def str_to_virk(str):
 				try:
-					return Virksomhet.objects.get(virksomhetsforkortelse=str)
+					return make_aware(datetime.strptime(str, date_format))
 				except:
 					return None
 
+			def str_to_user(username_string):
+				try:
+					username = username_string.lower()
+					return User.objects.get(username__iexact=username)
+					print("fant bruker")
+				except:
+					print("Fant ikke", username_string)
+					return None
+
 			def update(ws, line):
-				ws.kilde_prk = True
-				ws.maskinadm_virksomhet = str_to_virk(line["virksomhet"])
-				ws.maskinadm_virksomhet_str = line["virksomhet"]
-				ws.maskinadm_klienttype = line["klienttype"]
-				ws.maskinadm_sone = line["sone"]
-				ws.maskinadm_lokasjon = line["lokasjon_kortnavn"]
-				ws.maskinadm_sist_oppdatert = str_to_date(line["sist_oppdatert"])
-				ws.maskinadm_status = line["status"]
+				ws.kilde_landesk = True
+				ws.landesk_nic = line["NIC Address"]
+				ws.landesk_manufacturer = line["Manufacturer"]
+				ws.landesk_os_release = line["Release ID"]
+				ws.landesk_sist_sett = str_to_date(line["Last Policy Sync Date"])
+				ws.landesk_os = line["OS Name"]
+				ws.landesk_login = str_to_user(line["Login Name"])
 
 				ws.save()
 				return
 
 			for line in csv_data:
-				wsnummer = line["wsnummer"]
+				nonlocal teller
+				teller += 1
 
-				status = line["status"]
-				nonlocal teller_innmeldt
-				nonlocal teller_slettet
-				nonlocal teller_utmeldt
-				if status == "INNMELDT":
-					teller_innmeldt += 1
-				if status == "SLETTET":
-					teller_slettet += 1
-				if status == "UTMELDT":
-					teller_utmeldt += 1
-
+				wsnummer = line["Device name"]
 				try:
 					ws = CMDBdevice.objects.get(comp_name=wsnummer)
-					update(ws, line)
 				except Exception as e:
 					ws = CMDBdevice.objects.create(comp_name=wsnummer)
-					update(ws, line)
+					ws.landesk_opprettet_av_landesk = True
+				update(ws, line)
+
 
 
 		perform_atomic_update()
 
 		runtime_t1 = time.time()
 		logg_total_runtime = runtime_t1 - runtime_t0
-		logg_entry_message = "Kjøretid: %s sekunder.\nDet er %s innmeldt, %s utmeldt og %s slettet." % (
+		logg_entry_message = "Kjøretid: %s sekunder.\nDet er %s klienter" % (
 				round(logg_total_runtime, 1),
-				teller_innmeldt,
-				teller_slettet,
-				teller_utmeldt,
+				teller
 		)
 		print(logg_entry_message)
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)

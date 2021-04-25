@@ -1,21 +1,21 @@
 {% extends "index.html" %}
 
 {% block sidemeny %}
-	<h6>Virksomheter</h6>
+	<h6>Virksomhetsmeny</h6>
 
 	{% url 'alle_virksomheter_sidemeny' as url_alle_virksomheter %}
 	<a href="{{url_alle_virksomheter}}" class="btn btn-sm btn-link {% if url_alle_virksomheter in request.path %}fremhev{% endif %}">Alle virksomheter</a>
+
+	{% if user.is_authenticated %}
+		{% url 'sertifikatmyndighet' as url_sertifikatmyndighet%}
+		<a href="{{ url_sertifikatmyndighet }}" class="btn btn-sm btn-link {% if url_sertifikatmyndighet in request.path %}fremhev{% endif %}">Sertifikatmyndigheter</a>
+	{% endif %}
 
 	{% if user.is_authenticated %}
 	{% url 'min_virksomhet' as url_min_virksomhet %}
 		<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">Min virksomhet</a>
 	{% endif %}
 
-	{% if user.is_authenticated %}
-		<a href="/admin/systemoversikt/virksomhet/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %}Opprett ny virksomhet</a>
-		{% url 'sertifikatmyndighet' as url_sertifikatmyndighet%}
-		<a href="{{ url_sertifikatmyndighet }}" class="btn btn-sm btn-link {% if url_sertifikatmyndighet in request.path %}fremhev{% endif %}">Sertifikatmyndigheter</a>
-	{% endif %}
 
 	{% block ekstrameny %}{% endblock ekstrameny %}
 {% endblock sidemeny %}

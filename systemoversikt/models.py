@@ -1591,7 +1591,7 @@ class CMDBdevice(models.Model):
 			auto_now=True,
 			)
 	active = models.BooleanField(
-			verbose_name="Aktiv?",
+			verbose_name="Aktiv i 2S CMDB?",
 			default=True,
 			help_text=u"",
 			)
@@ -1666,31 +1666,31 @@ class CMDBdevice(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	comp_cpu_core_count = models.IntegerField(
-			verbose_name="CPU core count",
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	comp_cpu_count = models.IntegerField(
-			verbose_name="CPU count",
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	comp_cpu_name = models.CharField(
-			verbose_name="CPU name",
-			max_length=200,
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	comp_u_cpu_total = models.IntegerField(
-			verbose_name="CPU total",
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
+	#comp_cpu_core_count = models.IntegerField(
+	#		verbose_name="CPU core count",
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
+	#comp_cpu_count = models.IntegerField(
+	#		verbose_name="CPU count",
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
+	#comp_cpu_name = models.CharField(
+	#		verbose_name="CPU name",
+	#		max_length=200,
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
+	#comp_u_cpu_total = models.IntegerField(
+	#		verbose_name="CPU total",
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
 	comp_ram = models.IntegerField(
 			verbose_name="RAM",
 			blank=True,
@@ -1704,13 +1704,13 @@ class CMDBdevice(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	comp_sys_id = models.CharField(
-			verbose_name="Computer ID",
-			max_length=200,
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
+	#comp_sys_id = models.CharField(
+	#		verbose_name="Computer ID",
+	#		max_length=200,
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
 	dns = models.CharField(
 			verbose_name="DNS",
 			max_length=200,
@@ -1742,13 +1742,114 @@ class CMDBdevice(models.Model):
 	comments = models.TextField(
 			verbose_name="Comments",
 			unique=False,
-			null=True
+			null=True,
+			blank=True,
 			)
 	description = models.TextField(
 			verbose_name="Description",
 			unique=False,
-			null=True
+			null=True,
+			blank=True,
 			)
+	kilde_cmdb = models.BooleanField(
+			verbose_name="Kommer fra CMDB",
+			default=False,
+			)
+	kilde_prk = models.BooleanField(
+			verbose_name="Kommer fra PRK-maskinadm",
+			default=False,
+			)
+	kilde_landesk = models.BooleanField(
+			verbose_name="Kommer fra LanDesk",
+			default=False,
+			)
+	maskinadm_virksomhet = models.ForeignKey(
+			to="Virksomhet",
+			on_delete=models.SET_NULL,
+			verbose_name="Maskinadm: Tilhører virksomhet",
+			related_name='cmdbdevice_virksomhet',
+			null=True,
+			blank=True,
+			)
+	maskinadm_virksomhet_str = models.CharField(
+			verbose_name="Maskinadm: Virksomhet (tekst)",
+			max_length=300,
+			blank=True,
+			null=True,
+			)
+	maskinadm_lokasjon = models.CharField(
+			verbose_name="Maskinadm: Lokasjon",
+			max_length=300,
+			blank=True,
+			null=True,
+			)
+	maskinadm_klienttype = models.CharField(
+			verbose_name="Maskinadm: Klienttype",
+			max_length=200,
+			blank=True,
+			null=True,
+			)
+	maskinadm_status = models.CharField(
+			verbose_name="Maskinadm: Status",
+			max_length=200,
+			blank=True,
+			null=True,
+			)
+	maskinadm_sone = models.CharField(
+			verbose_name="Maskinadm: Sikkerhetssone",
+			max_length=200,
+			blank=True,
+			null=True,
+			)
+	maskinadm_sist_oppdatert = models.DateTimeField(
+			verbose_name="Maskinadm: Sist oppdatert",
+			null=True,
+			blank=True,
+			)
+
+	landesk_nic = models.CharField(
+			verbose_name="Landesk: NIC",
+			max_length=24,
+			blank=True,
+			null=True,
+			)
+	landesk_manufacturer = models.CharField(
+			verbose_name="Landesk: Produsent",
+			max_length=300,
+			blank=True,
+			null=True,
+			)
+	landesk_os_release = models.CharField(
+			verbose_name="Landesk: OS release",
+			max_length=100,
+			blank=True,
+			null=True,
+			)
+	landesk_sist_sett = models.DateTimeField(
+			verbose_name="Landesk: Sist sett",
+			null=True,
+			blank=True,
+			)
+	landesk_os = models.CharField(
+			verbose_name="Landesk: OS",
+			max_length=300,
+			blank=True,
+			null=True,
+			)
+	landesk_login = models.ForeignKey(
+			to=User,
+			on_delete=models.SET_NULL,
+			related_name='landesk_login',
+			verbose_name="Landesk: Login name",
+			null=True,
+			blank=True,
+			)
+	landesk_opprettet_av_landesk = models.BooleanField(
+			verbose_name="Opprettet fra LanDesk-data",
+			default=False,
+			)
+
+
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
 	def __str__(self):
@@ -2697,7 +2798,8 @@ class Oppdatering(models.Model):
 			blank=False, null=False,
 			help_text=u""
 			)
-	user = models.OneToOneField(User,
+	user = models.OneToOneField(
+			to=User,
 			on_delete=models.PROTECT,
 			)
 
@@ -2705,7 +2807,7 @@ class Oppdatering(models.Model):
 		return u'Oppdatering %s' % (self.pk)
 
 	class Meta:
-		verbose_name_plural = "???: Oppdateringer"
+		verbose_name_plural = "System: dataoppdateringer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

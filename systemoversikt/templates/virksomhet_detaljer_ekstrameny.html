@@ -2,79 +2,63 @@
 	<h6>{{virksomhet.virksomhetsforkortelse}}</h6>
 
 	{% url 'virksomhet' pk=virksomhet.pk as url_virksomhet %}
-		<a href="{{ url_virksomhet }}" class="btn btn-sm btn-link {% if url_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s forside</a>
+		<a href="{{ url_virksomhet }}" class="btn btn-sm btn-link {% if url_virksomhet in request.path %}fremhev{% endif %}">Hovedside</a>
 
-	{% if virksomhet.intranett_url %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.intranett_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s intranettside</a>
-	{% endif %}
-
-	{% if virksomhet.www_url %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.www_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s nettside</a>
-	{% endif %}
-
-	{% if virksomhet.styringssystem %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.styringssystem }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s styringssystem</a>
-	{% endif %}
-
-	{% url 'virksomhet_ansvarlige' pk=virksomhet.pk as url_virksomhet_ansvarlige %}
-		<a href="{{ url_virksomhet_ansvarlige }}" class="btn btn-sm btn-link {% if url_virksomhet_ansvarlige in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s ansvarlige</a>
-
-	{% if user.is_authenticated %}
 	{% url 'virksomhet_enheter' pk=virksomhet.pk as url_virksomhet_enheter %}
-		<a class="btn btn-sm btn-link {% if url_virksomhet_enheter in request.path %}fremhev{% endif %}" href="{{url_virksomhet_enheter}}">{{virksomhet.virksomhetsforkortelse}}s organisering</a>
-	{% endif %}
-
-	{% url 'dashboard_all' virksomhet=virksomhet.pk as url_dashboard %}
-		<a href="{{ url_dashboard }}" class="btn btn-sm btn-link {% if url_dashboard in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s dashboard</a>
-
-	{% if user.is_authenticated %}
-	{% url 'systemkvalitet_virksomhet' pk=virksomhet.pk as url_systemkvalitet_virksomhet %}
-		<a href="{{ url_systemkvalitet_virksomhet }}" class="btn btn-sm btn-link {% if url_systemkvalitet_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s datakvalitet</a>
-	{% endif %}
-
-
-	<hr>
-	{% url 'virksomhet_arkivplan' pk=virksomhet.pk as url_arkivplan %}
-		<a href="{{ url_arkivplan }}" class="btn btn-sm btn-link {% if url_arkivplan in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s arkivplan</a>
+		<a class="btn btn-sm btn-link {% if url_virksomhet_enheter in request.path %}fremhev{% endif %}" href="{{url_virksomhet_enheter}}">Organisering</a>
 
 	{% url 'avtalervirksomhet' virksomhet=virksomhet.pk as url_avtalervirksomhet %}
-		<a href="{{ url_avtalervirksomhet }}" class="btn btn-sm btn-link {% if url_avtalervirksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s avtaler</a>
+		<a href="{{ url_avtalervirksomhet }}" class="btn btn-sm btn-link {% if url_avtalervirksomhet in request.path %}fremhev{% endif %}">Avtaler</a>
 
-	{% url 'systemer_virksomhet_ansvarlig_for' pk=virksomhet.pk as url_systemer_virksomhet_ansvarlig_for %}
-		<a href="{{ url_systemer_virksomhet_ansvarlig_for }}" class="btn btn-sm btn-link {% if url_systemer_virksomhet_ansvarlig_for in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s systemansvar</a>
+	{% url 'virksomhet_ansvarlige' pk=virksomhet.pk as url_virksomhet_ansvarlige %}
+		<a href="{{ url_virksomhet_ansvarlige }}" class="btn btn-sm btn-link {% if url_virksomhet_ansvarlige in request.path %}fremhev{% endif %}">Ansvarlige</a>
+
+
+	<hr><p style="color: grey;">Brukertilgang</p>
+	{% url 'virksomhet_prkadmin' pk=virksomhet.pk as url_prkadmins %}
+		<a class="btn btn-sm btn-link {% if url_prkadmins in request.path %}fremhev{% endif %}" href="{{url_prkadmins}}">PRK-administratorer</a>
+
+	{% url 'passwordexpire' pk=virksomhet.pk as url_passwordexpire %}
+		<a class="btn btn-sm btn-link {% if url_passwordexpire in request.path %}fremhev{% endif %}" href="{{url_passwordexpire}}">Passordutløp</a>
+
+
+	<hr><p style="color: grey;">Systemrelatert</p>
 
 	{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
-		<a href="{{ url_all_bruk_for_virksomhet }}" class="btn btn-sm btn-link {% if url_all_bruk_for_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s bruk av systemer</a>
+		<a href="{{ url_all_bruk_for_virksomhet }}" class="btn btn-sm btn-link {% if url_all_bruk_for_virksomhet in request.path %}fremhev{% endif %}">Systemer vi bruker</a>
 
-	{% url 'all_programvarebruk_for_virksomhet' pk=virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
-		<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-link {% if url_all_programvarebruk_for_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s bruk av programvare</a>
-
-	{% url 'virksomhet_urler' pk=virksomhet.pk as url_virksomhet_urler %}
-		<a href="{{ url_virksomhet_urler }}" class="btn btn-sm btn-link {% if url_virksomhet_urler in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s domener</a>
-
-	{% url 'alle_behandlinger_virksomhet' pk=virksomhet.pk as url_alle_behandlinger_virksomhet %}
-		<a href="{{ url_alle_behandlinger_virksomhet }}" class="btn btn-sm btn-link {% if url_alle_behandlinger_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s behandlinger</a>
+	{% url 'systemer_virksomhet_ansvarlig_for' pk=virksomhet.pk as url_systemer_virksomhet_ansvarlig_for %}
+		<a href="{{ url_systemer_virksomhet_ansvarlig_for }}" class="btn btn-sm btn-link {% if url_systemer_virksomhet_ansvarlig_for in request.path %}fremhev{% endif %}">Systemer vi eier/forvalter</a>
 
 	{% url 'driftsmodell_virksomhet' pk=virksomhet.pk as url_detaljer_virksomhet %}
-		<a href="{{ url_detaljer_virksomhet }}" class="btn btn-sm btn-link {% if url_detaljer_virksomhet in request.path %}fremhev{% endif %}">Systemer {{virksomhet.virksomhetsforkortelse}} drifter</a>
+		<a href="{{ url_detaljer_virksomhet }}" class="btn btn-sm btn-link {% if url_detaljer_virksomhet in request.path %}fremhev{% endif %}">Systemer vi drifter</a>
 
 	{% url 'drift_beredskap' pk=virksomhet.pk as url_drift_beredskap %}
-		<a href="{{ url_drift_beredskap }}" class="btn btn-sm btn-link {% if url_drift_beredskap in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s systemprioritering</a>
+		<a href="{{ url_drift_beredskap }}" class="btn btn-sm btn-link {% if url_drift_beredskap in request.path %}fremhev{% endif %}">Systemprioriteringer</a>
+
+	{% url 'virksomhet_urler' pk=virksomhet.pk as url_virksomhet_urler %}
+		<a href="{{ url_virksomhet_urler }}" class="btn btn-sm btn-link {% if url_virksomhet_urler in request.path %}fremhev{% endif %}">Domener (URL)</a>
 
 
-	<hr>
-	{% if user.is_authenticated %}
-	{% url 'passwordexpire' pk=virksomhet.pk as url_passwordexpire %}
-		<a class="btn btn-sm btn-link {% if url_passwordexpire in request.path %}fremhev{% endif %}" href="{{url_passwordexpire}}">{{virksomhet.virksomhetsforkortelse}}s Passordutløp</a>
+	<hr><p style="color: grey;">Personvern</p>
 
-	{% url 'virksomhet_prkadmin' pk=virksomhet.pk as url_prkadmins %}
-		<a class="btn btn-sm btn-link {% if url_prkadmins in request.path %}fremhev{% endif %}" href="{{url_prkadmins}}">{{virksomhet.virksomhetsforkortelse}}s PRK-admin</a>
-	{% endif %}
+	{% url 'alle_behandlinger_virksomhet' pk=virksomhet.pk as url_alle_behandlinger_virksomhet %}
+		<a href="{{ url_alle_behandlinger_virksomhet }}" class="btn btn-sm btn-link {% if url_alle_behandlinger_virksomhet in request.path %}fremhev{% endif %}">Behandlingsprotokoll</a>
 
-	{% if user.is_authenticated %}
 	{% url 'innsyn_virksomhet' pk=virksomhet.pk as url_innsyn_virksomhet %}
-		<a href="{{ url_innsyn_virksomhet }}" class="btn btn-sm btn-link {% if url_innsyn_virksomhet in request.path %}fremhev{% endif %}">{{virksomhet.virksomhetsforkortelse}}s innsynsmodul</a>
-	{% endif %}
+		<a href="{{ url_innsyn_virksomhet }}" class="btn btn-sm btn-link {% if url_innsyn_virksomhet in request.path %}fremhev{% endif %}">Innsyn</a>
 
-	<br><br>
 
+	<hr><p style="color: grey;">Prototyping</p>
+
+	{% url 'virksomhet_arkivplan' pk=virksomhet.pk as url_arkivplan %}
+		<a href="{{ url_arkivplan }}" class="btn btn-sm btn-link {% if url_arkivplan in request.path %}fremhev{% endif %}">Arkivplan</a>
+
+	{% url 'dashboard_all' virksomhet=virksomhet.pk as url_dashboard %}
+		<a href="{{ url_dashboard }}" class="btn btn-sm btn-link {% if url_dashboard in request.path %}fremhev{% endif %}">Dashboard</a>
+
+	{% url 'systemkvalitet_virksomhet' pk=virksomhet.pk as url_systemkvalitet_virksomhet %}
+		<a href="{{ url_systemkvalitet_virksomhet }}" class="btn btn-sm btn-link {% if url_systemkvalitet_virksomhet in request.path %}fremhev{% endif %}">Datakvalitet</a>
+
+	{% url 'all_programvarebruk_for_virksomhet' pk=virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
+		<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-link {% if url_all_programvarebruk_for_virksomhet in request.path %}fremhev{% endif %}">Programvarebruk</a>

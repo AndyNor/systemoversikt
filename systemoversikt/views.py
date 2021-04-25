@@ -229,7 +229,7 @@ def alle_klienter(request):
 
 		import os
 		import json
-		alle_maskinadm_klienter = set(list(Klientutstyr.objects.values_list('maskinadm_wsnummer', flat=True)))
+		alle_maskinadm_klienter = set(list(CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(kilde_prk=True).values_list('comp_name', flat=True)))
 		alle_cmdb_klienter = set(list(CMDBdevice.objects.filter(active=True).filter(comp_name__istartswith="WS").values_list('comp_name', flat=True)))
 
 		#for i in alle_maskinadm_klienter[0:10]:
@@ -237,9 +237,10 @@ def alle_klienter(request):
 		antall_maskinadm = len(alle_maskinadm_klienter)
 		antal_cmdb = len(alle_cmdb_klienter)
 
-		mangler_cmdb = alle_maskinadm_klienter - alle_cmdb_klienter
-		mangler_maskinadm = alle_cmdb_klienter - alle_maskinadm_klienter
+		#mangler_cmdb = alle_maskinadm_klienter - alle_cmdb_klienter
+		#mangler_maskinadm = alle_cmdb_klienter - alle_maskinadm_klienter
 
+		"""
 		vpn_ws = set()
 		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/vpn_ws.json"
 		with open(filepath, 'r', encoding='UTF-8') as json_file:
@@ -261,15 +262,16 @@ def alle_klienter(request):
 		except:
 			messages.warning(request, 'Filen %s finnes ikke!' % (filepath))
 			vpn_anomaly_user = []
+		"""
 
 		return render(request, 'prk_klienter.html', {
 			'request': request,
 			'antall_maskinadm': antall_maskinadm,
 			'antal_cmdb': antal_cmdb,
-			'mangler_cmdb': mangler_cmdb,
-			'mangler_maskinadm': mangler_maskinadm,
-			'vpn_anomaly': vpn_anomaly,
-			'vpn_anomaly_user': vpn_anomaly_user,
+			#'mangler_cmdb': mangler_cmdb,
+			#'mangler_maskinadm': mangler_maskinadm,
+			#'vpn_anomaly': vpn_anomaly,
+			#'vpn_anomaly_user': vpn_anomaly_user,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

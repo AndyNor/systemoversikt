@@ -603,6 +603,7 @@ def import_cmdb_servers(request):
 				cmdbdevice = CMDBdevice.objects.create(comp_name=comp_name)
 
 			cmdbdevice.active = True
+			cmdbdevice.kilde_cmdb = True
 			cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])
 			cmdbdevice.comp_cpu_core_count = convertToInt(record["CPU total"])
 			cmdbdevice.comp_ram = convertToInt(record["RAM (MB)"])

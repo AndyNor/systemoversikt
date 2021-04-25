@@ -457,6 +457,13 @@ class PRKskjemaAdmin(admin.ModelAdmin):
 	list_filter = ('sist_oppdatert', 'opprettet')
 
 
+@admin.register(Oppdatering)
+class OppdateringAdmin(admin.ModelAdmin):
+	list_display = ('opprettet', 'sist_oppdatert', 'tidspunkt', 'kommentar', 'user')
+	search_fields = ('kommentar',)
+	autocomplete_fields = ('user',)
+
+
 @admin.register(Leverandor)
 class LeverandorAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Export")]
@@ -1094,9 +1101,9 @@ class AutorisertBestillerAdmin(SimpleHistoryAdmin):
 @admin.register(CMDBdevice)
 class CMDBdeviceAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('comp_name', 'active', 'comp_location', 'sub_name', 'comp_ip_address', 'comp_os', 'comp_os_version', 'comp_disk_space', 'comp_cpu_core_count', 'comp_ram', 'dns', 'vlan')
-	search_fields = ('comp_name', 'sub_name__navn')
-	list_filter = ('active', 'comp_location',)
+	list_display = ('comp_name', 'active', 'kilde_cmdb', 'kilde_prk', 'kilde_landesk', 'landesk_manufacturer', 'landesk_os_release', 'landesk_sist_sett', 'landesk_os', 'landesk_login', 'maskinadm_virksomhet', 'maskinadm_virksomhet_str', 'maskinadm_lokasjon', 'sub_name', 'maskinadm_sone', 'maskinadm_status', 'comp_ip_address', 'comp_os', 'comp_ram', 'dns', 'vlan')
+	search_fields = ('comp_name', 'sub_name__navn', 'comments', 'description')
+	list_filter = ('active', 'kilde_prk', 'maskinadm_sone', 'maskinadm_status', 'maskinadm_klienttype', 'kilde_landesk', 'landesk_manufacturer', 'landesk_os_release', 'landesk_os', 'maskinadm_virksomhet',)
 
 
 @admin.register(CMDBDisk)

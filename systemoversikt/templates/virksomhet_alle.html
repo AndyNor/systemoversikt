@@ -9,13 +9,15 @@
 
 {% block hovedinnhold %}
 
-	<p>Virksomhet definert som organisatorisk enhet med unikt organisasjonsnummer. Det vises {{ virksomheter.count }} virksomheter.</p>
+
+	<a href="/admin/systemoversikt/virksomhet/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Ny virksomhet</a>
+	<p>Virksomheter er her definert som organisatoriske enheter fra AD, og kan derfor ha noen flere registreringer enn offisielle organisasjonskart. Det er {{ virksomheter.count }} virksomheter registrert.</p>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
-			<input size="30" style="width: 140px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="Virksomhet.." class="form-control form-control-sm">
-			<input type="submit" value="Filtrer" class="btn btn-primary btn-sm">
+			<input style="width: 340px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Søk på virksomhetsnavn eller forkortelse" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
 		</div>
 	</form>
@@ -31,7 +33,6 @@
 		<th>Forkortelse</th>
 		<th>Leder</th>
 		<th>Antall systemer i bruk</th>
-		<th>Systemprioritering</th>
 		{% comment %}<th>Antall ansatte</th>{% endcomment %}
 		<th>Drift av klientplattform</th>
 		<th>Kontorstøtte</th>
@@ -68,9 +69,6 @@
 		</td>
 
 		<td>{{ vir.systembruk_brukergruppe.all.count }}</td>
-
-		{% url 'drift_beredskap_for_eier' 163 vir.pk as url_beredskap_for_eier %}
-		<td><a href="{{ url_beredskap_for_eier }}">Hos UKE for {{vir.virksomhetsforkortelse}}</a></td>
 
 		{% comment %}<td>{{ vir.ansatte|default:"-" }}</td>{% endcomment %}
 		<td>{{ vir.get_resultatenhet_display|default:"-" }}</td>
