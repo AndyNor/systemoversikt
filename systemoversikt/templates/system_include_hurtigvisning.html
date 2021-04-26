@@ -1,5 +1,7 @@
 {% load static %}
 
+<p>Forklaring: Lys skrift betyr at systemer ikke er merket som kvalitetssikret. Gjennomstreking betyr at systemer er markert som ikke i bruk. Gul bakgrunn varsler når det er angitt mer enn én systemeier.</p>
+
 <ul style="column-count:4;">
 {% for system in systemer %}
 	<li {% if system.systemeier_kontaktpersoner_referanse.all.count > 1 %}style="background-color: yellow;"{% endif %}>

@@ -52,9 +52,8 @@ class Command(BaseCommand):
 				try:
 					username = username_string.lower()
 					return User.objects.get(username__iexact=username)
-					print("fant bruker")
 				except:
-					print("Fant ikke", username_string)
+					#print("Fant ikke", username_string)
 					return None
 
 			def update(ws, line):

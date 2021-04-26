@@ -10,6 +10,10 @@
 	<ul>{% for group in user.groups.all %} <li>{{ group.name|slice:"19:"|lower|capfirst }}</li> {% endfor %}</ul>
 	</p>
 
+	{% url 'bruker_detaljer' pk=request.user.pk as url_user_details %}
+	<a href="{{url_user_details}}" class="btn btn-sm btn-link">Informasjon om din bruker</a>
+
+
 	<p>Dersom du ønsker å redigere på innhold kan du enten gå direkte til admin-siden eller du kan følge {% include 'site_edit_button.html' %} symbolene rundt omkring på denne portalen.</p>
 
 	<p>Alle endringer utført via administrasjonssidene blir loggført. På systemer vises det hvem som har utført de siste endringene direkte på detaljesiden. For de fleste typer informasjon lages det en ny versjon av informasjonen for hver gang du lagrer. Gamle versjoner kan gjenopprettes dersom du har nødvendige tilganger via knappen "Historikk" på den enkelte redigeringsside.</p>

@@ -33,11 +33,12 @@ class Command(BaseCommand):
 		report_data = {
 			"created": 0,
 			"modified": 0,
-			"removed": 0,
 			"deaktivert": 0,
+			"reaktivert": 0,
+			"removed": 0,
 		}
 
-		def update_user_status(user, dn, attrs, user_organization):
+		def update_user_status(user, dn, attrs, user_organization, report_data):
 
 			if "userAccountControl" in attrs:
 				userAccountControl = int(attrs["userAccountControl"][0].decode())
@@ -48,9 +49,23 @@ class Command(BaseCommand):
 			user.profile.userAccountControl = userAccountControl_decoded
 
 			if "ACCOUNTDISABLE" in userAccountControl_decoded:
+				if user.profile.accountdisable == False:
+					report_data["deaktivert"] += 1
+					message = ("Endret status for %s (%s)" % (user, user.username))
+					UserChangeLog.objects.create(event_type='ACCOUNT DISABLE', message=message)
+				else:
+					report_data["modified"] += 1
+
 				user.profile.accountdisable = True
 				user.is_active = False
 			else:
+				if user.profile.accountdisable == True:
+					report_data["reaktivert"] += 1
+					message = ("Endret status for %s (%s)" % (user, user.username))
+					UserChangeLog.objects.create(event_type='ACCOUNT ENABLE', message=message)
+				else:
+					report_data["modified"] += 1
+
 				user.profile.accountdisable = False
 				user.is_active = True
 			if "LOCKOUT" in userAccountControl_decoded:
@@ -142,7 +157,7 @@ class Command(BaseCommand):
 			user.profile.displayName = displayName
 
 			user.save()
-			return user
+			return
 
 
 		@transaction.atomic  # for speeding up database performance
@@ -176,14 +191,13 @@ class Command(BaseCommand):
 					user = User.objects.get(username=username)
 					if username in existing_objects: # holde track på brukere som ikke lenger finnes
 						existing_objects.remove(username)
-					report_data["modified"] += 1
 					print("u", end="")
 				except:
 					user = User.objects.create_user(username=username)
 					report_data["created"] += 1
 					print("n", end="")
 
-				user = update_user_status(user, dn, attrs, user_organization)
+				update_user_status(user, dn, attrs, user_organization, report_data)
 
 		# Start søk og opprydding
 		existing_objects = list(User.objects.values_list("username", flat=True))
@@ -203,7 +217,7 @@ class Command(BaseCommand):
 						u.is_active = False
 						u.save()
 						print("r", end="")
-						result["report_data"]["deaktivert"] += 1
+						result["report_data"]["removed"] += 1
 					else:
 						print("-", end="")
 				except ObjectDoesNotExist:
@@ -216,12 +230,14 @@ class Command(BaseCommand):
 		def report(result):
 			#print("\nVirksomheter det ikke var brukere for i AD: ", gyldige_virksomheter)
 			#print("\nVirksomheter som ikke er i kartoteket: ", ad_grupper_utenfor_kartoteket)
-			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s oppdatert og %s deaktivert." % (
+			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s oppdatert, %s deaktivert, %s reaktivert og %s slettet." % (
 					result["total_runtime"],
 					result["objects_returned"],
 					result["report_data"]["created"],
 					result["report_data"]["modified"],
 					result["report_data"]["deaktivert"],
+					result["report_data"]["reaktivert"],
+					result["report_data"]["removed"],
 			)
 			log_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,

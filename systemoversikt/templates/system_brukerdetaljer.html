@@ -22,41 +22,34 @@
 	<hr>
 
 	{% for user in users %}
-
-	<h6>{{user}}</h6>
-
-	<p>
-	{% if user.ansvarlig_brukernavn %}
-		<a href="{% url 'ansvarlig' pk=user.ansvarlig_brukernavn.pk %}">Ansvarsområder</a> |
-	{% endif %}
+	{% url 'virksomhet' pk=user.profile.virksomhet.pk as url_virk %}
+	{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
+	{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
 	{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
 	{% url 'bruker_detaljer' pk=user.pk as url_bruker_detaljer %}
 
-	<a href="{{ url_ad_exact }}">Søk i AD</a> | <a href="{{url_bruker_detaljer}}">direktelink</a>
-
-	</p>
-
-	<p><em>{{ user.profile.description|default:"Ingen beskrivelse" }}</em></p>
-
-	{% url 'virksomhet' pk=user.profile.virksomhet.pk as url_virk %}
-	{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
-	<p>Jobber i <a href="{{url_virk}}">{{user.profile.virksomhet|default:"Ukjent"}}</a>
-		under <a href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a> ({{ user.profile.usertype|default:"Ukjent brukertype" }})</p>
-
-	{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
-	Nærmeste leder er <a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a>
-
+	<h6><a href="{{url_bruker_detaljer}}">{{user}}</a></h6>
+	<em>{{ user.profile.description|default:"Ingen beskrivelse" }}</em><br>
+	Jobber i <a href="{{url_virk}}">{{user.profile.virksomhet|default:"Ukjent"}}</a> under <a href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a> ({{ user.profile.usertype|default:"Ukjent brukertype" }})<br>
+	Nærmeste leder er <a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a><br>
 	{% if user.hrorg_leder.count > 0 %}
-	<li>Nærmeste leder for:<ul>
-	{% for org in user.hrorg_leder.all %}
-		{% for org_user in org.profile_org_unit.all %}
-
-			<li><a href="{% url 'bruker_detaljer' pk=org_user.user.pk %}">{{org_user.user}}</a> ({{ org }})</li>
-
+		Nærmeste leder for:
+		{% for org in user.hrorg_leder.all %}
+			{% for org_user in org.profile_org_unit.all %}
+				<li><a href="{% url 'bruker_detaljer' pk=org_user.user.pk %}">{{org_user.user}}</a> ({{ org }})</li>
+			{% endfor %}
 		{% endfor %}
-	{% endfor %}
-	</ul>
 	{% endif %}
+	{% if user.landesk_login.count > 0 %}
+		<br>Klientenheter:
+		{% for enhet in user.landesk_login.all %}
+			<li><a href="/admin/systemoversikt/cmdbdevice/?q={{enhet.comp_name}}">{{enhet}}</li>
+		{% endfor %}
+	{% endif %}
+	{% if user.ansvarlig_brukernavn %}
+		<br><a href="{% url 'ansvarlig' pk=user.ansvarlig_brukernavn.pk %}">Ansvarsområder i Kartoteket</a>
+	{% endif %}
+	<br><a href="{{ url_ad_exact }}">Søk etter brukerident i Active Directory</a>
 
 	<hr>
 	{% endfor %}
