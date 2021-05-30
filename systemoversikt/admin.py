@@ -15,7 +15,6 @@ from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.auth.models import User
 from .models import *
 
-
 # https://gist.github.com/jeremyjbowers/e8d007446155c12033e6
 def export_as_csv_action(description="Export selected objects as CSV file", fields=None, exclude=None, header=True):
 	"""
@@ -41,13 +40,20 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 
 		response = HttpResponse(content_type='text/csv')
 		response['Content-Disposition'] = 'attachment; filename=%s.csv' % str(opts).replace('.', '_')
+		response.write(u'\ufeff'.encode('utf8'))
 
-		writer = csv.writer(response)
+		writer = csv.writer(response, quoting=csv.QUOTE_ALL)
 
 		if header:
 			writer.writerow(list(field_names))
 		for obj in queryset:
-			writer.writerow([str(getattr(obj, field)) for field in field_names])
+			data = [str(getattr(obj, field)) for field in field_names]
+			cleaned_data = []
+			for value in data:
+				if type(value) == str:
+					value = value.replace("\r\n", " ").replace("\n", " ")
+				cleaned_data.append(value)
+			writer.writerow(cleaned_data)
 
 		return response
 
@@ -99,7 +105,7 @@ class SystemList(SimpleListFilter):
 
 @admin.register(Sikkerhetstester)
 class SikkerhetstesterAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('dato_rapport', 'vis_systemer', 'type_test', 'testet_av', 'rapport', 'notater')
 	list_filter = ('dato_rapport', SystemList)
 	autocomplete_fields = ('systemer', 'testet_av')
@@ -123,7 +129,7 @@ class SikkerhetstesterAdmin(SimpleHistoryAdmin):
 
 @admin.register(Autorisasjonsmetode)
 class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('navn', 'definisjon')
 	search_fields = ('navn',)
 
@@ -133,8 +139,8 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('systemnavn', 'alias', 'ibruk', 'systemeierskapsmodell', 'er_arkiv', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
+	actions = [export_as_csv_action("CSV Eksport")]
+	list_display = ('systemnavn', 'alias', 'ibruk', 'kvalitetssikret', 'systemeierskapsmodell', 'er_arkiv', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
 	search_fields = ('systemnavn', 'alias')
 	list_filter = ('autentiseringsteknologi', 'autentiseringsalternativer', 'database_in_use', 'database_supported', 'ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
@@ -283,7 +289,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 
 @admin.register(Virksomhet)
 class VirksomhetAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('virksomhetsforkortelse', 'virksomhetsnavn', 'resultatenhet', 'kan_representeres', 'ordinar_virksomhet', 'orgnummer')
 	search_fields = ('virksomhetsnavn', 'virksomhetsforkortelse')
 	list_filter = ('resultatenhet', 'ordinar_virksomhet')
@@ -372,7 +378,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 
 @admin.register(SystemBruk)
 class SystemBrukAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('system', 'brukergruppe', 'kommentar', 'avtaletype', 'systemeierskap', 'kostnadersystem')
 	search_fields = ('system__systemnavn', 'system__systembeskrivelse', 'kommentar', 'systemforvalter')
 	list_filter = ('avtalestatus', 'avtale_kan_avropes', 'systemeierskapsmodell', 'brukergruppe')
@@ -436,7 +442,7 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 
 @admin.register(PRKvalg)
 class PRKvalgAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('skjemanavn', 'gruppering', 'valgnavn', 'virksomhet', 'in_active_directory', 'beskrivelse', 'sist_oppdatert')
 	search_fields = ('skjemanavn__skjemanavn', 'gruppenavn',)
 	list_filter = ('sist_oppdatert', 'in_active_directory')
@@ -466,7 +472,7 @@ class OppdateringAdmin(admin.ModelAdmin):
 
 @admin.register(Leverandor)
 class LeverandorAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('leverandor_navn', 'kontaktpersoner', 'orgnummer')
 	search_fields = ('leverandor_navn', 'orgnummer', 'notater')
 
@@ -487,7 +493,7 @@ class LeverandorAdmin(SimpleHistoryAdmin):
 
 @admin.register(BehandlingInformering)
 class BehandlingInformeringAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('navn', 'beskrivelse')
 	search_fields = ('navn', 'beskrivelse')
 
@@ -495,7 +501,7 @@ class BehandlingInformeringAdmin(admin.ModelAdmin):
 
 @admin.register(BehandlingerPersonopplysninger)
 class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('behandlingsansvarlig', 'internt_ansvarlig', 'funksjonsomraade', 'behandlingen')
 	search_fields = ('behandlingen', 'internt_ansvarlig', 'funksjonsomraade',)
 	list_filter = ('behandlingsgrunnlag_valg', 'den_registrerte', 'kategorier_personopplysninger', 'behandlingsansvarlig')
@@ -663,7 +669,7 @@ class ProfileAdmin(admin.ModelAdmin):
 
 @admin.register(SystemUrl)
 class SystemUrlAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('domene', 'eier', 'opprettet', 'https', 'vurdering_sikkerhetstest', 'maalgruppe', 'registrar')
 	search_fields = ('domene',)
 	list_filter = ('https', 'maalgruppe', 'opprettet', 'eier')
@@ -766,7 +772,7 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 
 @admin.register(Programvare)
 class ProgramvareAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('programvarenavn', 'programvarebeskrivelse', 'kommentar')
 	search_fields = ('programvarenavn', 'programvarebeskrivelse', 'kommentar')
 	filter_horizontal = ('programvareleverandor', 'kategorier')
@@ -824,7 +830,7 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(ProgramvareBruk)
 class ProgramvareBrukAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('brukergruppe', 'programvare', 'kommentar')
 	search_fields = ('programvare', 'kommentar')
 	autocomplete_fields = ('brukergruppe', 'programvare', 'programvareleverandor', 'lokal_kontakt')
@@ -870,7 +876,7 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 
 @admin.register(CMDBRef)
 class CMDBRefAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('navn', 'parent_ref', 'environment', 'kritikalitet', 'operational_status', 'service_classification', 'bss_external_ref', 'opprettet')
 	search_fields = ('navn',)
 	list_filter = ('environment', 'kritikalitet', 'operational_status', 'service_classification', 'opprettet')
@@ -882,7 +888,7 @@ class CMDBRefAdmin(admin.ModelAdmin):
 
 @admin.register(CMDBbs)
 class CMDBRefAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('navn', 'operational_status', 'systemreferanse', 'ant_bss', 'ant_devices', 'ant_databaser', 'bs_external_ref', 'opprettet')
 	search_fields = ('navn',)
 	readonly_fields = ('navn',)
@@ -910,7 +916,7 @@ class APIKeysAdmin(admin.ModelAdmin):
 
 @admin.register(Avtale)
 class AvtaleAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('kortnavn', 'avtaletype', 'virksomhet', 'leverandor', 'leverandor_intern', 'avtalereferanse', 'dokumenturl')
 	search_fields = ('kortnavn', 'beskrivelse', 'avtalereferanse')
 	autocomplete_fields = ('virksomhet', 'leverandor', 'intern_avtalereferanse', 'leverandor_intern', 'fornying_ekstra_varsling', 'for_system')
@@ -959,7 +965,7 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 
 @admin.register(DPIA)
 class DPIAAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('for_system', 'sist_gjennomforing_dpia', 'url_dpia', 'kommentar',)
 	search_fields = ('for_system',)
 
@@ -1020,7 +1026,7 @@ class DPIAAdmin(SimpleHistoryAdmin):
 
 @admin.register(Driftsmodell)
 class DriftsmodellAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('navn', 'sikkerhetsnivaa', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform')
 	search_fields = ('navn',)
 	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler', 'anbefalte_kategorier_personopplysninger', 'overordnet_plattform')
@@ -1100,10 +1106,10 @@ class AutorisertBestillerAdmin(SimpleHistoryAdmin):
 
 @admin.register(CMDBdevice)
 class CMDBdeviceAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
-	list_display = ('comp_name', 'active', 'kilde_cmdb', 'kilde_prk', 'kilde_landesk', 'landesk_manufacturer', 'landesk_os_release', 'landesk_sist_sett', 'landesk_os', 'landesk_login', 'maskinadm_virksomhet', 'maskinadm_virksomhet_str', 'maskinadm_lokasjon', 'sub_name', 'maskinadm_sone', 'maskinadm_status', 'comp_ip_address', 'comp_os', 'comp_ram', 'dns', 'vlan')
+	actions = [export_as_csv_action("CSV Eksport")]
+	list_display = ('comp_name', 'active', 'kilde_cmdb', 'kilde_prk', 'kilde_landesk', 'landesk_opprettet_av_landesk', 'landesk_manufacturer', 'landesk_os_release', 'landesk_sist_sett', 'landesk_os', 'landesk_login', 'maskinadm_virksomhet', 'maskinadm_virksomhet_str', 'maskinadm_lokasjon', 'sub_name', 'maskinadm_sone', 'maskinadm_status', 'comp_ip_address', 'comp_os', 'comp_ram', 'dns', 'vlan')
 	search_fields = ('comp_name', 'sub_name__navn', 'comments', 'description')
-	list_filter = ('active', 'kilde_prk', 'maskinadm_sone', 'maskinadm_status', 'maskinadm_klienttype', 'kilde_landesk', 'landesk_manufacturer', 'landesk_os_release', 'landesk_os', 'maskinadm_virksomhet',)
+	list_filter = ('active', 'kilde_prk', 'maskinadm_sone', 'maskinadm_status', 'maskinadm_klienttype', 'kilde_landesk', 'landesk_opprettet_av_landesk', 'landesk_manufacturer', 'landesk_os_release', 'landesk_os', 'maskinadm_virksomhet',)
 
 
 @admin.register(CMDBDisk)
@@ -1115,14 +1121,14 @@ class UserChangeLogAdmin(admin.ModelAdmin):
 
 @admin.register(Loggkategori)
 class LoggkategoriAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	search_fields = ('navn', 'definisjon')
 
 
 
 @admin.register(Autentiseringsteknologi)
 class AutentiseringsteknologiAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	search_fields = ('navn', 'definisjon')
 
 	def get_ordering(self, request):
@@ -1131,7 +1137,7 @@ class AutentiseringsteknologiAdmin(admin.ModelAdmin):
 
 @admin.register(Autentiseringsmetode)
 class AutentiseringsmetodeAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	search_fields = ('navn', 'definisjon')
 
 	def get_ordering(self, request):
@@ -1140,7 +1146,7 @@ class AutentiseringsmetodeAdmin(admin.ModelAdmin):
 
 @admin.register(InformasjonsKlasse)
 class InformasjonsKlasseAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	search_fields = ('navn', 'beskrivelse')
 
 	def get_ordering(self, request):
@@ -1150,7 +1156,7 @@ class InformasjonsKlasseAdmin(admin.ModelAdmin):
 @admin.register(Definisjon)
 class DefinisjonAdmin(SimpleHistoryAdmin):
 	list_display = ('begrep', 'status', 'ansvarlig',)
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	autocomplete_fields = ('ansvarlig',)
 
 	def response_add(self, request, obj, post_url_continue=None):
@@ -1169,7 +1175,7 @@ class DefinisjonAdmin(SimpleHistoryAdmin):
 
 @admin.register(BehovForDPIA)
 class BehovForDPIAAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	from django.forms.widgets import NullBooleanSelect
 	formfield_overrides = {
 		models.NullBooleanField: {'widget': NullBooleanSelect},
@@ -1208,7 +1214,7 @@ admin.site.register(DefinisjonKontekster)
 
 @admin.register(CMDBdatabase)
 class CMDBdatabaseAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Export")]
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('db_database', 'sub_name', 'db_version', 'db_u_datafilessizekb', 'db_used_for', 'db_operational_status', 'db_comments', )
 	search_fields = ('db_database', 'sub_name__navn', 'db_comments')
 	list_filter = ('opprettet', 'db_operational_status', 'db_version')

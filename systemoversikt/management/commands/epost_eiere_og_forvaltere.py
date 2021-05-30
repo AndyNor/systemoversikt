@@ -16,6 +16,8 @@ class Command(BaseCommand):
 		"""
 		alle_ansvarlige = Ansvarlig.objects.all() #.filter(brukernavn__profile__virksomhet__in=[163, 145])
 		for ansvarlig in alle_ansvarlige:
+			#if not ansvarlig.pk == 204:
+			#	continue
 			systemer_eier_for = System.objects.filter(systemeier_kontaktpersoner_referanse=ansvarlig.pk).filter(~Q(ibruk=False))
 			systemer_forvalter_for = System.objects.filter(systemforvalter_kontaktpersoner_referanse=ansvarlig.pk).filter(~Q(ibruk=False))
 
@@ -32,18 +34,28 @@ class Command(BaseCommand):
 				url = reverse("ansvarlig",args=[ansvarlig.pk])
 				fornavn = ansvarlig.brukernavn.first_name
 
-				subject = "Systemeierforum 19.08: Datasentermigrering og ny erstatter for PRK"
+				subject = "Invitasjon til systemeierforum 26.5"
 				reply_to = "thomas.rigvar@byr.oslo.kommune.no"
 				recipients = [ansvarlig.brukernavn.email]
 				message = '''\
 
-Kommende Systemeierforum 19.august holdes kl 9-11. På programmet har vi to viktige prosesser som vil berøre de fleste systemeiere:
-1.	Vi flytter til SopraSterias driftsplattform. Lær mer om hva du som systemeier trenger å forberede
-2.	Oslo kommune bytter ut PRK med en ny, selvbetjent løsning for styring av tilganger.
+STED: Teams
+TID: 26.5, 09:00-11:00
+PÅMELDING: https://response.questback.com/oslokommunebyrdsavd/gfl6vqajdu
 
-Link til møte på Teams: https://teams.microsoft.com/l/meetup-join/19%3ameeting_ODgyNTUxOTgtYzBiMy00OWE2LTkzOWEtNjk5NzQ2MTUwN2Zi%40thread.v2/0?context=%7b%22Tid%22%3a%22e6795081-6391-442e-9ab4-5e9ef74f18ea%22%2c%22Oid%22%3a%2240bc54f7-2595-4beb-80f3-64b7621107fa%22%7d
+PROGRAM:
+1. Informasjon fra FIN/ISI
+2. Nytt Folkeregister
+3. Innføring av Office365
 
-Se for øvrig innlegg på Workplace: https://oslo.workplace.com/groups/systemeierforum/permalink/619634115636107/
+Nytt Folkeregister:
+Samtlige virksomheter i Oslo kommune benytter opplysninger fra det Det sentrale Folkeregisteret (DSF). Skatteetaten er ferdig med å utvikle nytt modernisert Folkeregister (FREG) og dagens folkeregisterløsning stenges ned ved årsskiftet. I presentasjonen gis det nærmere informasjon om hva kommunen nå foretar seg sentralt og hva den enkelte virksomhet må foreta seg for å sikre fremtidig tilgang til Folkeregisteret etter 31.12.21.
+
+Innføring av Office365:
+Kommunen innførte raskt Teams i forbindelse med Covid situasjonen og nå skal resten av Office365 innføres i kommunen. UKEs prosjekt for innføring av Office365 kommer for å presentere prosjektet og innføringsplanene.
+
+Skulle det være spørsmål til programmet kan du kontakte Thomas Julius Rigvår
+
 
 ---
 

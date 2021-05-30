@@ -30,6 +30,8 @@ class Command(BaseCommand):
 		runtime_t0 = time.time()
 
 		teller = 0
+		teller_ukjente_brukernavn = 0
+		teller_opprettet = 0
 
 		file = settings.BASE_DIR + "/systemoversikt/import/landesk_intern_sone.csv"
 		with open(file, 'r', encoding='utf-8-sig') as file:
@@ -50,10 +52,13 @@ class Command(BaseCommand):
 
 			def str_to_user(username_string):
 				try:
-					username = username_string.lower()
+					username = username_string.strip("OSLOFELLES\\").lower()
+					#print("***", username, "***")
 					return User.objects.get(username__iexact=username)
+
 				except:
-					#print("Fant ikke", username_string)
+					nonlocal teller_ukjente_brukernavn
+					teller_ukjente_brukernavn += 1
 					return None
 
 			def update(ws, line):
@@ -74,7 +79,9 @@ class Command(BaseCommand):
 
 				wsnummer = line["Device name"]
 				try:
-					ws = CMDBdevice.objects.get(comp_name=wsnummer)
+					ws = CMDBdevice.objects.get(comp_name__iexact=wsnummer)
+					nonlocal teller_opprettet
+					teller_opprettet += 1
 				except Exception as e:
 					ws = CMDBdevice.objects.create(comp_name=wsnummer)
 					ws.landesk_opprettet_av_landesk = True
@@ -86,9 +93,11 @@ class Command(BaseCommand):
 
 		runtime_t1 = time.time()
 		logg_total_runtime = runtime_t1 - runtime_t0
-		logg_entry_message = "Kjøretid: %s sekunder.\nDet er %s klienter" % (
+		logg_entry_message = "Kjøretid: %s sekunder.\nDet er %s klienter. %s nye opprettet. %s brukernavn var ukjente." % (
 				round(logg_total_runtime, 1),
-				teller
+				teller,
+				teller_opprettet,
+				teller_ukjente_brukernavn,
 		)
 		print(logg_entry_message)
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
