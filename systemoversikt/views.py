@@ -221,6 +221,23 @@ def bruker_detaljer(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def klienter_hos_virksomhet(request, pk):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		virksomhet = Virksomhet.objects.get(pk=pk)
+
+		alle_klienter_hos_virksomhet = CMDBdevice.objects.filter(maskinadm_virksomhet=virksomhet).filter(~(Q(maskinadm_status__in=["UTMELDT", "SLETTET"]) and Q(landesk_login=None)))
+
+		return render(request, 'virksomhet_klientoversikt.html', {
+			'request': request,
+			'virksomhet': virksomhet,
+			'alle_klienter_hos_virksomhet': alle_klienter_hos_virksomhet,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 
 def alle_klienter(request):
 

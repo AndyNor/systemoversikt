@@ -1,0 +1,52 @@
+{% extends "virksomhet_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block ekstrameny %}
+
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Klienter hos {{ virksomhet }}
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+<p>Mottok {{ alle_klienter_hos_virksomhet.all.count }} klienter fra databasen</p>
+
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Maskinnavn</th>
+	<th>Type</th>
+	<th>Sikkerhetssone</th>
+	<th>Lokasjon (maskinadm)</th>
+	<th>Sist innlogget (landesk)</th>
+	<th>Sist sett (landesk)</th>
+	<th>Status (maskinadm)</th>
+	<th>Windows-versjon</th>
+</thead>
+<tbody>
+{% for klient in alle_klienter_hos_virksomhet %}
+	<tr>
+		<td>{{ klient.comp_name }}</td>
+		<td>{{ klient.landesk_manufacturer }}</td>
+		<td>{{ klient.maskinadm_sone }}</td>
+		<td>{{ klient.maskinadm_lokasjon }}</td>
+		<td>{{ klient.landesk_login|default:"-" }}</td>
+		<td>{{ klient.landesk_sist_sett|date:'Y-m-d'|default:"-" }}</td>
+		<th>{{ klient.maskinadm_status|default:"" }}</td>
+		<th {% if klient.utdatert %} style="background-color: #ff9292" {% endif %}>{{ klient.landesk_os_release }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+Klienter avmeldt som er aktive på nettverket.
+Klienter som er innmeldt, men som ikke er aktive.
+
+{% endblock hovedinnhold %}

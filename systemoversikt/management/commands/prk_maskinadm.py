@@ -65,7 +65,7 @@ class Command(BaseCommand):
 				return
 
 			for line in csv_data:
-				wsnummer = line["wsnummer"]
+				wsnummer = line["wsnummer"].lower()
 
 				status = line["status"]
 				nonlocal teller_innmeldt

@@ -22,6 +22,29 @@ from django.core.exceptions import ObjectDoesNotExist
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		"""
+		#opprydding av store og små bokstaver
+		alle_maskinobjekter = CMDBdevice.objects.all()
+		for maskin in alle_maskinobjekter:
+			lowercase_maskinnavn = maskin.comp_name.lower()
+			if maskin.comp_name != lowercase_maskinnavn:
+				maskin.comp_name = lowercase_maskinnavn
+				try:
+					maskin.save()
+					print("konvertert til lowercase")
+				except:
+					maskin.delete()
+					print("sletter")
+			else:
+				print("Ingen handling")
+
+			if maskin.active == False and "ws" in maskin.comp_name:
+				maskin.delete()
+				print("Sletter unødig deaktivert klient")
+		"""
+
+
+
 		# *** Merk at det ikke er noe logikk her for å rydde opp. Dette er fordi eksporten inneholder ALT (også deaktivert og slettet).
 
 		LOG_EVENT_TYPE = 'LANdesk-import'
@@ -38,6 +61,7 @@ class Command(BaseCommand):
 			csv_data = list(csv.DictReader(file, delimiter=","))
 		print("Det er %s linjer i filen" % len(csv_data))
 
+
 		@transaction.atomic
 		def perform_atomic_update():
 
@@ -50,15 +74,23 @@ class Command(BaseCommand):
 				except:
 					return None
 
+			def remove_prefix(text, prefix):
+				if text.startswith(prefix):
+					return text[len(prefix):]
+				return text
+
 			def str_to_user(username_string):
+				#print(username_string)
+				username = remove_prefix(username_string, "OSLOFELLES\\").lower()
 				try:
-					username = username_string.strip("OSLOFELLES\\").lower()
 					#print("***", username, "***")
 					return User.objects.get(username__iexact=username)
 
 				except:
-					nonlocal teller_ukjente_brukernavn
-					teller_ukjente_brukernavn += 1
+					if not username in ["administrator", ".\\icdeploy", "deploy", "", ".\\ictest"]:
+						print("Fant ikke bruker %s" % (username))
+						nonlocal teller_ukjente_brukernavn
+						teller_ukjente_brukernavn += 1
 					return None
 
 			def update(ws, line):
@@ -68,7 +100,15 @@ class Command(BaseCommand):
 				ws.landesk_os_release = line["Release ID"]
 				ws.landesk_sist_sett = str_to_date(line["Last Policy Sync Date"])
 				ws.landesk_os = line["OS Name"]
-				ws.landesk_login = str_to_user(line["Login Name"])
+				landesk_username = str_to_user(line["Login Name"])
+				ws.landesk_login = landesk_username
+
+				if ws.maskinadm_virksomhet == None and landesk_username:
+					try:
+						virksomhet = landesk_username.profile.virksomhet
+						ws.maskinadm_virksomhet = virksomhet
+					except:
+						print("Kunne ikke finne virksomhetstilhørighet til %s" % (landesk_username))
 
 				ws.save()
 				return
@@ -77,7 +117,8 @@ class Command(BaseCommand):
 				nonlocal teller
 				teller += 1
 
-				wsnummer = line["Device name"]
+				wsnummer = line["Device name"].lower()
+				#print(wsnummer)
 				try:
 					ws = CMDBdevice.objects.get(comp_name__iexact=wsnummer)
 					nonlocal teller_opprettet
@@ -86,7 +127,6 @@ class Command(BaseCommand):
 					ws = CMDBdevice.objects.create(comp_name=wsnummer)
 					ws.landesk_opprettet_av_landesk = True
 				update(ws, line)
-
 
 
 		perform_atomic_update()

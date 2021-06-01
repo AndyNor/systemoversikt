@@ -223,7 +223,7 @@ def import_business_services(request):
 			business_sub_service.u_service_billable = True if record["Service Billable"] == "Yes" else False
 			business_sub_service.parent_ref = business_service
 			business_sub_service.service_classification = record["Service classification"]
-			business_sub_service.comments = record["Description"]
+			business_sub_service.comments = record["Short Description"]
 
 			business_sub_service.save()
 
@@ -586,7 +586,7 @@ def import_cmdb_servers(request):
 		for record in data:
 			#print(record)
 
-			comp_name = record["Name"]
+			comp_name = record["Name"].lower()
 			if comp_name == "":
 				messages.error(request, "Maskinen mangler navn")
 				server_dropped += 1

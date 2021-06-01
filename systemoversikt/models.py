@@ -765,7 +765,7 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 		except:
 			return "Ukjent tilhørighet"
 
-
+"""
 class Klientutstyr(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -820,12 +820,12 @@ class Klientutstyr(models.Model):
 			)
 
 	def __str__(self):
-		return u'%s' % (self.leverandor_navn)
+		return u'%s' % (self.maskinadm_wsnummer)
 
 	class Meta:
 		verbose_name_plural = "PRK: klientutstyr"
 		default_permissions = ('add', 'change', 'delete', 'view')
-
+"""
 
 class Leverandor(models.Model):
 	opprettet = models.DateTimeField(
@@ -1854,6 +1854,12 @@ class CMDBdevice(models.Model):
 
 	def __str__(self):
 		return u'%s' % (self.comp_name)
+
+	def utdatert(self):
+		versjon = int(self.landesk_os_release) if self.landesk_os_release else 0
+		if versjon < 1909:
+			return True
+		return False
 
 	class Meta:
 		verbose_name_plural = "CMDB: maskiner"

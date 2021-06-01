@@ -96,6 +96,8 @@ urlpatterns = [
 	url(r'^virksomhet/prkadmin/(?P<pk>\d{1,8})/$', views.virksomhet_prkadmin, name='virksomhet_prkadmin'),
 	url(r'^virksomhet/systemer/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
 	url(r'^virksomhet/systemer/ansvarligfor/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
+	url(r'^virksomhet/klienter/(?P<pk>\d{1,8})/$', views.klienter_hos_virksomhet, name='klienter_hos_virksomhet'),
+
 
 	url(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
 	url(r'^leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
