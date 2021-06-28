@@ -239,6 +239,117 @@ def klienter_hos_virksomhet(request, pk):
 
 
 
+def virksomhet_sikkerhetsavvik(request, pk):
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		virksomhet = Virksomhet.objects.get(pk=pk)
+		logg = ""
+
+		def hent_brukere(grupper, logg):
+			brukerliste = set()
+			for g in grupper:
+				try:
+					gruppe = ADgroup.objects.get(common_name=g)
+					members = json.loads(gruppe.member)
+					for m in members:
+						username = m.split(",")[0].split("=")[1]
+						if virksomhet.virksomhetsforkortelse in username:
+							logg += "la til %s " % (username)
+							brukerliste.add(username)
+				except:
+					logg += "feilet for %s " % (g)
+
+			brukerliste = [b.lower() for b in brukerliste]
+			brukerobjekter = User.objects.filter(username__in=brukerliste)
+
+			return (brukerobjekter, logg)
+
+		#Grupper for å gi EM+S E5-lisens
+		grupper_med_emse5 = [
+			"DS-OFFICE365_OPSJON_E5SECURITY",
+			"DS-OFFICE365E3_OPSJON_E5SECURITY",
+		]
+		brukere_med_emse5, logg = hent_brukere(grupper_med_emse5, logg)
+
+		#Grupper for å unnta fra krav om kjent enhet
+		grupper_ikke_administrert = [
+			"DS-OFFICE365_OPSJON_IKKEADMINISTRERT",
+			"DS-OFFICE365E3_OPSJON_IKKEADMINISTRERT",
+			"DS-OFFICE365SVC_UNNTAK_KJENTENHET"
+		]
+		brukere_ikke_administrert, logg = hent_brukere(grupper_ikke_administrert, logg)
+
+		#unntak MFA
+		grupper_unntak_mfa = [
+			"DS-OFFICE365SVC_UNNTAK_MFA",
+		]
+		brukere_unntak_mfa, logg = hent_brukere(grupper_unntak_mfa, logg)
+
+		#unntak innenfor EU
+		grupper_utenfor_eu = [
+			"DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",
+			"DS-OFFICE365SPES_UNNTAK_EUROPEISKIP",
+		]
+		brukere_utenfor_eu, logg = hent_brukere(grupper_utenfor_eu, logg)
+
+		grupper_hoyrisikoland = [
+			"DS-OFFICE365SPES_UNNTAK_HOYRISIKO",
+		]
+		brukere_hoyrisikoland, logg = hent_brukere(grupper_hoyrisikoland, logg)
+
+
+		#opptak
+		grupper_med_opptak = [
+			"DS-OFFICE365SPES_OPPTAK_OPPTAK",
+		]
+		brukere_med_opptak, logg = hent_brukere(grupper_med_opptak, logg)
+
+		grupper_med_liveevent = [
+			"DS-OFFICE365SPES_LIVEEVENT_LIVEEVENT",
+		]
+		brukere_med_liveevent, logg = hent_brukere(grupper_med_liveevent, logg)
+
+
+		#spesialroller
+		grupper_omraadeadm = [
+			"DS-OFFICE365SPES_OMRAADEADM_OMRAADEADM",
+		]
+		brukere_omraadeadm, logg = hent_brukere(grupper_omraadeadm, logg)
+
+		grupper_gjestegodk = [
+			"DS-OFFICE365SPES_OMRAADEADM_GJESTEGODK",
+		]
+		brukere_gjestegodk, logg = hent_brukere(grupper_gjestegodk, logg)
+
+		grupper_gruppeadm = [
+			"DS-OFFICE365SPES_OMRAADEADM_GRUPPEOPPRETTER",
+		]
+		brukere_gruppeadm, logg = hent_brukere(grupper_gruppeadm, logg)
+
+
+
+		return render(request, 'virksomhet_sikkerhetsavvik.html', {
+			'request': request,
+			'virksomhet': virksomhet,
+			'brukere_med_emse5': brukere_med_emse5,
+			'brukere_uten_administrert_klient': brukere_ikke_administrert,
+			'brukere_unntak_mfa': brukere_unntak_mfa,
+			'brukere_utenfor_eu': brukere_utenfor_eu,
+			'brukere_hoyrisikoland': brukere_hoyrisikoland,
+			'brukere_med_opptak': brukere_med_opptak,
+			'brukere_med_liveevent': brukere_med_liveevent,
+			'brukere_omraadeadm': brukere_omraadeadm,
+			'brukere_gjestegodk': brukere_gjestegodk,
+			'brukere_gruppeadm': brukere_gruppeadm,
+			'logging': logg,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
+
 def alle_klienter(request):
 
 	required_permissions = ['auth.view_user']
@@ -2056,6 +2167,23 @@ def alle_virksomheter(request):
 	})
 
 
+def alle_virksomheter_kontaktinfo(request):
+	"""
+	Vise oversikt over alle virksomheter
+	Tilgangsstyring: LUKKET
+	"""
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomheter = Virksomhet.objects.all().order_by('-ordinar_virksomhet', 'virksomhetsnavn')
+
+	return render(request, 'virksomhet_alle_kontaktinfo.html', {
+		'request': request,
+		'virksomheter': virksomheter,
+	})
+
+
 def virksomhet_arkivplan(request, pk):
 
 	required_permissions = ['systemoversikt.view_system']
@@ -2802,9 +2930,12 @@ def alle_os(request):
 					if minor['comp_os_version'] == "":
 						minor['comp_os_version'] = "__empty__"
 
+					os_major = os['comp_os'] if os['comp_os'] != None else ""
+					os_minor = minor['comp_os_version'] if minor['comp_os_version'] != None else ""
+
 					maskiner_stats.append({
-							'major': os['comp_os'],
-							'minor': minor['comp_os_version'],
+							'major': os_major,
+							'minor': os_minor,
 							'count': minor['comp_os_version__count']
 					})
 			return sorted(maskiner_stats, key=lambda os: os['major'], reverse=True)

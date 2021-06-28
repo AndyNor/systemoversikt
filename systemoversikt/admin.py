@@ -142,7 +142,7 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 class SystemAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('systemnavn', 'alias', 'ibruk', 'kvalitetssikret', 'systemeierskapsmodell', 'er_arkiv', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
-	search_fields = ('systemnavn', 'alias')
+	search_fields = ('systemnavn', 'alias',)
 	list_filter = ('autentiseringsteknologi', 'autentiseringsalternativer', 'database_in_use', 'database_supported', 'ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
 	def response_add(self, request, obj, post_url_continue=None):
@@ -162,6 +162,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = (
 		'systemeier',
 		'systemforvalter',
+		'systemforvalter_avdeling_referanse',
 		'programvarer',
 		'datautveksling_avleverer_til',
 		'datautveksling_mottar_fra',
@@ -195,6 +196,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'systemeierskapsmodell',
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
 				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
+				'systemforvalter_avdeling_referanse',
 				'godkjente_bestillere',
 				'driftsmodell_foreignkey',
 				'systemkategorier',
@@ -328,37 +330,31 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 				'fields': (
 					'virksomhetsnavn',
 					'virksomhetsforkortelse',
-					'odepartmentnumber',
+					('odepartmentnumber', 'leder',),
 					'ordinar_virksomhet',
 					'orgnummer',
 					('resultatenhet',
 					'office365'),
+				),
+			}),
+			('Organisatorisk', {
+				'fields': (
+					'overordnede_virksomheter',
+					'kan_representeres',
 					'ikt_kontakt',
-					'leder',
-					'autoriserte_bestillere_tjenester',
-					'autoriserte_bestillere_tjenester_uke',
 					'arkitekturkontakter',
+					'personvernkoordinator',
+					'informasjonssikkerhetskoordinator',
+					'intranett_url',
+					'www_url',
 				),
 			}),
 			('GDPR / sikkerhet', {
-				'classes': ('collapse',),
 				'fields': (
-					'personvernkoordinator',
-					'informasjonssikkerhetskoordinator',
 					'styringssystem',
 					'rutine_tilgangskontroll',
 					'rutine_behandling_personopplysninger',
 					'rutine_klage_behandling',
-				),
-			}),
-			('Organisatorisk', {
-				'classes': ('collapse',),
-				'fields': (
-					'overordnede_virksomheter',
-					'kan_representeres',
-					'ansatte',
-					'intranett_url',
-					'www_url',
 				),
 			}),
 			('Sertifikatadministrasjon', {
@@ -372,6 +368,14 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 				'classes': ('collapse',),
 				'fields': (
 					'uke_kam_referanse',
+					'autoriserte_bestillere_tjenester',
+					'autoriserte_bestillere_tjenester_uke',
+				),
+			}),
+			('Utfaset', {
+				'classes': ('collapse',),
+				'fields': (
+					'ansatte',
 				),
 			})
 		)
@@ -721,7 +725,7 @@ class SystemHovedKategoriAdmin(SimpleHistoryAdmin):
 @admin.register(Ansvarlig)
 class AnsvarligAdmin(SimpleHistoryAdmin):
 	list_display = ('brukernavn', 'brukers_brukernavn', 'kommentar')
-	search_fields = ('brukernavn__username', 'brukernavn__first_name', 'brukernavn__last_name')
+	search_fields = ('brukernavn__username', 'brukernavn__first_name', 'brukernavn__last_name', 'brukernavn__email')
 	autocomplete_fields = ('brukernavn',)
 
 	def response_add(self, request, obj, post_url_continue=None):
@@ -786,7 +790,7 @@ admin.site.unregister(User)  # den er som standard registrert
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
 	list_display = ('username', 'last_login', 'userPasswordExpiry', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
-	search_fields = ('last_login', 'username', 'first_name', 'last_name')
+	search_fields = ('last_login', 'username', 'first_name', 'last_name', 'email')
 	list_filter = ('profile__from_prk', 'profile__userPasswordExpiry', 'profile__virksomhet', 'is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'groups',)
 
 	def has_usable_password(self, obj):

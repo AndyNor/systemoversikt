@@ -24,6 +24,9 @@
 	{% url 'passwordexpire' pk=virksomhet.pk as url_passwordexpire %}
 		<a class="btn btn-sm btn-link {% if url_passwordexpire in request.path %}fremhev{% endif %}" href="{{url_passwordexpire}}">Passordutløp</a>
 
+	{% url 'virksomhet_sikkerhetsavvik' pk=virksomhet.pk as url_virksomhet_sikkerhetsavvik %}
+		<a class="btn btn-sm btn-link {% if url_virksomhet_sikkerhetsavvik in request.path %}fremhev{% endif %}" href="{{url_virksomhet_sikkerhetsavvik}}">Avvik fra sikkerhetsmodell</a>
+
 
 	<hr><p style="color: grey;">Systemrelatert</p>
 

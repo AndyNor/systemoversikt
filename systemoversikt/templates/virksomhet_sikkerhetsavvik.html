@@ -1,0 +1,253 @@
+{% extends "virksomhet_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block ekstrameny %}
+
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Sikkerhetsrelaterte brukerinnstillinger i PRK for {{ virksomhet }}
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+
+<p>I PRK er det mange skjemavalg som kan benyttes for å unnta enkeltpersoner fra standard sikkerhetskrav. Valg av disse resulterer i at personen blir lagt inn i tilhørende AD-gruppe. Informasjonen på denne siden oppdateres hver natt.</p>
+<hr>
+
+<h5>Brukere med USB/minnepinne aktivert</h5>
+<p>Følg linken og finn skjema tilhørende din virksomhet. Trykk så videre på "Katalogtilknytning". Merk at flere av disse sidene vil ta lang tid å laste da de ikke er optimaliserte.<br>
+<a href="/cmdb/prk/alle/?search_term=Tykk+klient+Minnepinne+tillat">På tykk klient</a><br>
+<a href="/cmdb/prk/alle/?search_term=tynn+klient+Minnepinne+tillat">På tynn klient</a></p>
+
+<h5>Brukere med tilgang lokal printer</h5>
+<p><a href="/cmdb/prk/alle/?search_term=skrivere+tillat">Skrivere tillat</a></p>
+
+<hr>
+
+<h5>Brukere uten krav til administrert enhet</h5>
+Fant {{ brukere_uten_administrert_klient.all.count }} brukere med unntak.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="50%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_uten_administrert_klient %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h5>Brukere uten krav til multifaktor autentisering</h5>
+Fant {{ brukere_unntak_mfa.all.count }} brukere med unntak.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="40%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_unntak_mfa %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h5>Brukere som kan koble til utenfor EU</h5>
+Fant {{ brukere_utenfor_eu.all.count }} brukere med unntak.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="40%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_utenfor_eu %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h5>Brukere som kan koble til fra høyrisikoland</h5>
+Fant {{ brukere_hoyrisikoland.all.count }} brukere med unntak.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="40%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_hoyrisikoland %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h5>Brukere med opptak i Teams</h5>
+Fant {{ brukere_med_opptak.all.count }} brukere med unntak.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="40%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_med_opptak %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h5>Brukere med tilgang til Live Events</h5>
+Fant {{ brukere_med_liveevent.all.count }} brukere.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="40%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_med_liveevent %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+
+<h5>Brukere med utvidet sikkerhet (EM+S E5)</h5>
+Fant {{ brukere_med_emse5.all.count }} brukere.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="40%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_med_emse5 %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h5>Områdeadministratorer</h5>
+Fant {{ brukere_omraadeadm.all.count }} brukere.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="40%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_omraadeadm %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h5>Gjestegodkjennere</h5>
+Fant {{ brukere_gjestegodk.all.count }} brukere.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="40%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_gjestegodk %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h5>Brukere som kan opprette O365-grupper</h5>
+Fant {{ brukere_gruppeadm.all.count }} brukere.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="40%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_gruppeadm %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock hovedinnhold %}

@@ -79,6 +79,7 @@ urlpatterns = [
 	url(r'^cmdb/bruker/$', views.bruker_sok, name='bruker_sok'),
 
 	url(r'^virksomhet/$', views.alle_virksomheter, name='alle_virksomheter'),
+	url(r'^virksomhet/kontaktinfo/$', views.alle_virksomheter_kontaktinfo, name='alle_virksomheter_kontaktinfo'),
 	url(r'^virksomhet/alle/$', views.alle_virksomheter, name='alle_virksomheter_sidemeny'),
 	url(r'^virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet, name='virksomhet'),
 	url(r'^virksomhet/passwdexpire/(?P<pk>\d{1,8})/$', views.passwordexpire, name='passwordexpire'),
@@ -97,6 +98,7 @@ urlpatterns = [
 	url(r'^virksomhet/systemer/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
 	url(r'^virksomhet/systemer/ansvarligfor/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
 	url(r'^virksomhet/klienter/(?P<pk>\d{1,8})/$', views.klienter_hos_virksomhet, name='klienter_hos_virksomhet'),
+	url(r'^virksomhet/sikkerhetsavvik/(?P<pk>\d{1,8})/$', views.virksomhet_sikkerhetsavvik, name='virksomhet_sikkerhetsavvik'),
 
 
 	url(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),

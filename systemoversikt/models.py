@@ -2908,6 +2908,7 @@ class System(models.Model):
 			verbose_name="Organisatorisk systemforvalter",
 			blank=True,
 			null=True,
+			help_text=u"Den virksomhet som har ansvar for forvaltning av systemet. Normalt en etat underlagt byrådsavdeling som har systemeierskapet",
 			)
 	systemforvalter_kontaktpersoner_referanse = models.ManyToManyField(
 			to=Ansvarlig,
@@ -2915,6 +2916,15 @@ class System(models.Model):
 			verbose_name="Systemforvalter (personer)",
 			blank=True,
 			help_text=u"Person(er) med operativt forvalteransvar",
+			)
+	systemforvalter_avdeling_referanse = models.OneToOneField(
+			to='HRorg',
+			related_name='system_systemforvalter_avdeling_referanse',
+			verbose_name="Systemforvalter (avdeling)",
+			blank=True,
+			null=True,
+			on_delete=models.SET_NULL,
+			help_text=u"Dette feltet er under implementering. Kan være nyttig å angi seksjon i tillegg til personer.",
 			)
 	superbrukere = models.TextField(
 			verbose_name="Superbrukere",
@@ -4834,7 +4844,10 @@ class HRorg(models.Model):
 	#ikke behov for historikk
 
 	def __str__(self):
-		return u'%s' % (self.ou)
+		if self.virksomhet_mor:
+			return u'%s (%s)' % (self.ou, self.virksomhet_mor.virksomhetsforkortelse)
+		else:
+			return u'%s (ukjent)' % (self.ou)
 
 	class Meta:
 		verbose_name_plural = "PRK: HR-organisasjoner"

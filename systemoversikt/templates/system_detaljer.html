@@ -166,7 +166,10 @@
 					{% explain_collapsed text %}
 					</td>
 					{% url "virksomhet" systemdetaljer.systemforvalter.pk as url_systemforvalter %}
-					<td><a href="{{ url_systemforvalter }}">{{ systemdetaljer.systemforvalter|default:"-" }}</a>
+					<td><a href="{{ url_systemforvalter }}">{{ systemdetaljer.systemforvalter|default:"-" }}</a><br>
+						{% if systemdetaljer.systemforvalter_avdeling_referanse %}
+						<b>Seksjon</b>: <a href="">{{ systemdetaljer.systemforvalter_avdeling_referanse }}</a><br>
+						{% endif %}
 					{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
 					</td>
 				</tr>
