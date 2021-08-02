@@ -69,9 +69,7 @@ def behandlingsprotokoll(virksomhet):
 
 """
 def csrf403(request):
-	"""
-	Støttefunksjon for å vise feilmelding
-	"""
+	#Støttefunksjon for å vise feilmelding
 	return render(request, 'csrf403.html', {
 		'request': request,
 	})
