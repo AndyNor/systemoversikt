@@ -17,3 +17,6 @@ python3.7 manage.py collectstatic --noinput
 
 cd ~/webapps/kartoteket_test/myproject/systemoversikt/bash_scripts/
 chmod +x *
+
+cd /home/andynor/webapps/kartoteket_test/myproject/systemoversikt/webfaction
+chmod +x *
