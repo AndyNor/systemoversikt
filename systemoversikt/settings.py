@@ -54,7 +54,7 @@ if THIS_ENVIRONMENT == "DEV":
 	SITE_DOMAIN = "localhost"
 	SITE_PORT_OVERRIDE = ":8000"  # start with ":", default empty ("")
 	#SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
-	ALLOWED_HOSTS = ["localhost", SITE_DOMAIN]
+	ALLOWED_HOSTS = ["localhost", SITE_DOMAIN, "kartoteket.andynor.net"]
 if THIS_ENVIRONMENT == "TEST":
 	TEST_ENV_NAME = "test"
 	SITE_SCHEME = "http"
