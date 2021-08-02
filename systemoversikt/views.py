@@ -67,6 +67,7 @@ def behandlingsprotokoll(virksomhet):
 	alle_relevante_behandlinger = virksomhetens_behandlinger.union(delte_behandlinger).order_by('internt_ansvarlig')
 	return alle_relevante_behandlinger
 
+"""
 def csrf403(request):
 	"""
 	Støttefunksjon for å vise feilmelding
@@ -74,6 +75,7 @@ def csrf403(request):
 	return render(request, 'csrf403.html', {
 		'request': request,
 	})
+"""
 
 def login(request):
 	"""
