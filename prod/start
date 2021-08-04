@@ -1,0 +1,4 @@
+#!/bin/sh
+source ~/metadata/py36-venv/bin/activate
+cd metadata/djangoapp/
+
