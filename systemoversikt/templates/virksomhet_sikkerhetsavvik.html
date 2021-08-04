@@ -250,4 +250,27 @@ Fant {{ brukere_gruppeadm.all.count }} brukere.
 </tbody>
 </table>
 
+
+<h5>Brukere med tilgang til å koble opp BYOD-enheter over VPN mot Oslo kommunes datasenter</h5>
+Fant {{ brukere_byod_vpn.all.count }} brukere.
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="40%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_byod_vpn %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
 {% endblock hovedinnhold %}

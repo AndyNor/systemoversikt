@@ -327,6 +327,10 @@ def virksomhet_sikkerhetsavvik(request, pk):
 		]
 		brukere_gruppeadm, logg = hent_brukere(grupper_gruppeadm, logg)
 
+		grupper_byod_vpn = [
+			"DS-FJARB_OF20_SA_LISENS",
+		]
+		brukere_byod_vpn, logg = hent_brukere(grupper_byod_vpn, logg)
 
 
 		return render(request, 'virksomhet_sikkerhetsavvik.html', {
@@ -342,6 +346,7 @@ def virksomhet_sikkerhetsavvik(request, pk):
 			'brukere_omraadeadm': brukere_omraadeadm,
 			'brukere_gjestegodk': brukere_gjestegodk,
 			'brukere_gruppeadm': brukere_gruppeadm,
+			'brukere_byod_vpn': brukere_byod_vpn,
 			'logging': logg,
 		})
 	else:
