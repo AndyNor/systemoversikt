@@ -31,7 +31,6 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
-		<th>PK</th>
 		<th>Opprettet</th>
 		<th>Databasenavn</th>
 		<th>Server</th>
@@ -46,22 +45,33 @@
 	<tbody>
 	{% for db in databaser %}
 	<tr {% if not db.db_operational_status %} style="color: #d6d6d6;" {% endif %}>
-		<td>{{ db.pk}} </td>
-
-		<td>{{ db.opprettet|date:'Y-m-d'}} </td>
-
-		<td>{{ db.db_database }}</td>
-		<td><a href="{% url 'alle_maskiner' %}?search_term={{ db.db_server }}">{{ db.db_server }}</a></td>
 		<td>
-			{% for subservice in db.sub_name.all %}
-			<a href="{% url 'cmdbdevice' pk=subservice.pk %}">{{ subservice }}</a><br>
-			{% endfor %}
+			{{ db.opprettet|date:'Y-m-d'}}
 		</td>
-		<td>{{ db.db_used_for }}</td>
-		<td>{{ db.db_version }}</td>
-		<td><a href="{% url 'alle_maskiner' %}?search_term={{db.server_str}}">{{ db.db_comments }}</a></td>
-		<td>{{ db.db_u_datafilessizekb }}</td>
-		<td>{{ db.db_u_datafilessizekb|filesizeformat }}</td>
+		<td>
+			{{ db.db_database }}
+		</td>
+		<td>
+			<a href="{% url 'alle_maskiner' %}?search_term={{ db.db_server }}">{{ db.db_server }}</a>
+		</td>
+		<td>
+			{% url 'cmdbdevice' pk=db.sub_name.pk as url_bss %}
+			<a href="{{ url_bss }}">{{ db.sub_name.navn }}</a>
+		</td>
+		<td>
+			{{ db.db_used_for }}
+		</td>
+		<td>
+			{{ db.db_version }}
+		</td>
+		<td>
+			<a href="{% url 'alle_maskiner' %}?search_term={{db.server_str}}">{{ db.db_comments }}</a></td>
+		<td>
+			{{ db.db_u_datafilessizekb }}
+		</td>
+		<td>
+			{{ db.db_u_datafilessizekb|filesizeformat }}
+		</td>
 	</tr>
 	{% endfor %}
 	</tbody>

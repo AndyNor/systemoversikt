@@ -26,25 +26,24 @@
 	<thead>
 		<th>Hostnavn</th>
 		<th>Business Service</th>
-		<th>Business Sub Service</th>
-		<th>Miljø</th>
-		<th>System og eiere</th>
+		<th>System / Eierskap</th>
 		<th>VLAN</th>
 	</thead>
 	<tbody>
 	{% for server in hits %}
 		<tr {% if server.active == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 			<td>{{server.comp_name}}</td>
-			<td>{{server.sub_name.parent_ref}}</td>
-			<td>{{server.sub_name}}</td>
-			<td>{{server.sub_name.get_environment_display}}</td>
+			<td>{{server.sub_name.parent_ref}} <br> {{server.sub_name}} <br> {{server.sub_name.get_environment_display}}</td>
 			<td>
 				{% if server.sub_name.parent_ref.systemreferanse %}
 					<b>{{server.sub_name.parent_ref.systemreferanse}}</b><br>
 					{{server.sub_name.parent_ref.systemreferanse.systemeier_kontaktpersoner_referanse.all.0}}
-				{% else %}
-					-
 				{% endif %}
+
+				{% if server.landesk_login %}
+					{{ server.landesk_login }}<br>{{server.maskinadm_status}}
+				{% endif %}
+
 			</td>
 			<td>{{server.vlan|default:"-"}}</td>
 		</tr>

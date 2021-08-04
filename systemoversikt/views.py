@@ -3244,7 +3244,7 @@ def servere_utfaset(request):
 	required_permissions = 'systemoversikt.view_cmdbdevice'
 	if request.user.has_perm(required_permissions):
 
-		maskiner = CMDBdevice.objects.filter(active=False).order_by("-sist_oppdatert")
+		maskiner = CMDBdevice.objects.filter(active=False).order_by("-sist_oppdatert")[:300]
 		return render(request, 'cmdb_alle_maskiner_utfaset.html', {
 			'request': request,
 			'maskiner': maskiner,

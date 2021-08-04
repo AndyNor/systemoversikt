@@ -11,7 +11,8 @@
 
 {% block hovedinnhold %}
 
-	<p>Når Kartotekets importfunksjon ikke finner en maskin som var med tidligere, markeres den som deaktivert. Viser {{ maskiner.count }} deaktiverte maskiner.</p>
+	<p>Når Kartotekets importfunksjon ikke finner en maskin som var med tidligere, markeres den som deaktivert. <br>
+	Viser de {{ maskiner.count }} siste deaktiverte maskinene.</p>
 
 	<table class="table table-sm tablesorter">
 	<thead>
@@ -33,59 +34,42 @@
 	{% for maskin in maskiner %}
 	<tr>
 		{% url 'ad_details' name=maskin.comp_name as url_ad %}
-		<td>{{ maskin.sist_oppdatert }}</td>
-		<td><a href="{{ url_ad }}">{{ maskin.comp_name }}</a></td>
 		<td>
-			{% for cmdbref in maskin.sub_name.all %}
-				{{ cmdbref }}<br>
-			{% endfor %}
+			{{ maskin.sist_oppdatert }}
 		</td>
-		<td>{{ maskin.bs_u_service_portfolio }}</td>
-		<td>{{ maskin.comp_ip_address }}</td>
-		<td>{{ maskin.comp_os|default:"Ukjent" }} {{ maskin.comp_os_version }} {{ maskin.comp_os_service_pack }}</td>
-		<td>{{ maskin.sub_name.system_cmdbref.all }}</td>
-		<td>{{ maskin.dns|default:"" }}</td>
-		<td>{{ maskin.vlan|default:"" }}</td>
-		<td>{{ maskin.nat|default:"" }}</td>
-		<td>{{ maskin.vip|default:"" }}</td>
-
-
-	{% comment %}
-			{% if user.is_authenticated %}
-			<a href="/admin/systemoversikt/cmdbref/{{ item.pk }}/delete/">
-				<img style="width: 8px; margin: 3px;"
-				src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
-			{% endif %}
-
-			{{ item.opprettet|date:'Y-m-d' }}
-		</td>
-		<td>{{ item.sist_oppdatert|date:'Y-m-d' }}</td>
 		<td>
-			{% if user.is_authenticated %}
-			<a href="/admin/systemoversikt/cmdbref/{{ item.pk }}/change/">
-				<img style="width: 11px; margin: 3px;"
-				src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
-			{% endif %}
-			<a href="{% url 'cmdbdevice' pk=item.pk %}">{{ item.navn }}</a>
+			<a href="{{ url_ad }}">{{ maskin.comp_name }}</a>
 		</td>
-		<td>{{ item.ant_devices }}</td>
 		<td>
-			{% for system in item.system_cmdbref.all %}
-				{% url 'systemdetaljer' pk=system.pk as url_system %}
-				<a href="{{ url_system }}">{{ system.systemnavn }}</a><br>
-			{% endfor %}
+			{{ maskin.sub_name }}
 		</td>
-		<td>{{ item.get_operational_status_display|default:"-" }}</td>
-		<td>{{ item.comments|default:"-"|truncatewords:6 }}</td>
-		<td>{{ item.get_environment_display|default:"-" }}</td>
-		<td>{{ item.get_kritikalitet_display|default:"-" }}</td>
-		<td>{{ item.get_cmdb_type_display }}</td>
-		<td>{{ item.u_service_portfolio|default:"-" }}</td>
-		<td>{{ item.u_service_availability|default:"-" }}</td>
-		<td>{{ item.u_service_operation_factor|default:"-" }}</td>
-		<td>{{ item.u_service_complexity|default:"-" }}</td>
-		<td>{{ item.comments|default:"-" }}</td>
-	{% endcomment %}
+		<td>
+			{{ maskin.bs_u_service_portfolio }}
+		</td>
+		<td>
+			{{ maskin.comp_ip_address }}
+		</td>
+		<td>
+			{{ maskin.comp_os|default:"Ukjent" }}
+			{{ maskin.comp_os_version }}
+			{{ maskin.comp_os_service_pack }}
+		</td>
+		<td>
+			{{ maskin.sub_name.parent_ref.systemreferanse|default:"-" }}
+		</td>
+		<td>
+			{{ maskin.dns|default:"" }}
+		</td>
+		<td>
+			{{ maskin.vlan|default:"" }}
+		</td>
+		<td>
+			{{ maskin.nat|default:"" }}
+		</td>
+		<td>
+			{{ maskin.vip|default:"" }}
+		</td>
+
 	</tr>
 	{% endfor %}
 	</tbody>
