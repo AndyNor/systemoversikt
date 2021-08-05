@@ -27,7 +27,7 @@
 		<th>Hostnavn</th>
 		<th>Business Service</th>
 		<th>System / Eierskap</th>
-		<th>VLAN</th>
+		<th>Nettverk</th>
 	</thead>
 	<tbody>
 	{% for server in hits %}
@@ -45,7 +45,10 @@
 				{% endif %}
 
 			</td>
-			<td>{{server.vlan|default:"-"}}</td>
+			<td>
+				{{ server.comp_ip_address|default:"-" }<br>
+				{{ server.vlan|default:"-" }}
+			</td>
 		</tr>
 	{% endfor %}
 	</tbody>

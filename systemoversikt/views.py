@@ -20,6 +20,7 @@ from django.conf import settings
 import datetime
 from django.urls import reverse
 import json
+from django.db import transaction
 
 
 FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
@@ -761,7 +762,7 @@ def logger_users(request):
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
 
-		recent_loggs = UserChangeLog.objects.order_by('-opprettet')[:150]
+		recent_loggs = UserChangeLog.objects.order_by('-opprettet')[:800]
 		return render(request, 'site_logger_users.html', {
 			'request': request,
 			'recent_loggs': recent_loggs,
@@ -2813,21 +2814,25 @@ def human_readable_members(items, onlygroups=False):
 	groups = []
 	users = []
 	notfound = []
-	for item in items:
-		try:
-			g = ADgroup.objects.get(distinguishedname=item)
-			groups.append(g)
-			continue
-		except:
-			pass
-		if onlygroups == False:
+
+	@transaction.atomic
+	def action():
+		for item in items:
 			try:
-				regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0]
-				u = User.objects.get(username__iexact=regex_username)
-				users.append(u)
+				g = ADgroup.objects.get(distinguishedname=item)
+				groups.append(g)
 				continue
 			except:
-				notfound.append(item)  # vi fant ikke noe, returner det vi fikk
+				pass
+			if onlygroups == False:
+				regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0]
+				try:
+					u = User.objects.get(username__iexact=regex_username)
+				except:
+					notfound.append(item)  # vi fant ikke noe, returner det vi fikk
+					continue
+				users.append(u)
+	action()
 	return {"groups": groups, "users": users, "notfound": notfound}
 
 

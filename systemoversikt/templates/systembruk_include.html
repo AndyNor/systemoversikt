@@ -8,6 +8,7 @@
 		{% endif %}
 		<th>Bruksdetaljer</th>
 		<th>Ca antall brukere</th>
+		<th>Systemtype</th>
 		<th>Lokal forvalter</th>
 		<th>Abonnerer på felles behandlinger?</th>
 		{# <th>Antall behandlinger (våre)</th> #}
@@ -38,7 +39,10 @@
 			{% if bruk.system.antall_brukere %}
 				({{ bruk.system.antall_brukere|default:"-" }})
 			{% endif %}
+		</td>
 
+		<td>
+			{{ bruk.system.systemeierskapsmodell }}
 		</td>
 
 		<td>

@@ -1602,6 +1602,7 @@ class CMDBdevice(models.Model):
 			blank=False,
 			null=False,
 			help_text=u"",
+			db_index=True,
 			)
 	""" vi importerer bare sub service-nivået.
 	bs_name = models.CharField( # foreign key
@@ -2007,6 +2008,7 @@ class ADgroup(models.Model):
 	distinguishedname = models.TextField(
 			verbose_name="Fully Distinguished Name",
 			unique=True,
+			db_index=True,
 			)
 	display_name = models.TextField(
 			verbose_name="Display Name",

@@ -40,7 +40,6 @@
 			<th>Type</th>
 			<th>Navn</th>
 			<th>Brukernavn</th>
-			<th>Virksomhet</th>
 			<th width="35%">Beskrivelse</th>
 			<th>Fra PRK?</th>
 		</tr>
@@ -53,7 +52,6 @@
 			<td></td>
 			<td></td>
 			<td></td>
-			<td></td>
 		</tr>
 	{% endfor %}
 
@@ -62,7 +60,6 @@
 			<td>👤 Bruker</td>
 			<td>{{m.first_name}} {{m.last_name}}</td>
 			<td>{{m.username}}</td>
-			<td>{{m.profile.virksomhet.virksomhetsforkortelse}}</td>
 			<td>{{m.profile.description}}</td>
 			<td>{{m.profile.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
 		</tr>
@@ -75,7 +72,6 @@
 			<td></td>
 			<td></td>
 			<td></td>
-			<td></td>
 		</tr>
 	{% endfor %}
 
@@ -83,7 +79,6 @@
 		<tr>
 			<td>Ukjent medlem</td>
 			<td>{{ n }}</td>
-			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
