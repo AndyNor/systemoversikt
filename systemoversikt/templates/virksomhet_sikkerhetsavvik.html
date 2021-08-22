@@ -30,6 +30,12 @@
 
 <hr>
 
+<h5>Brukere med utvidet tilgang til hjemme- og fellesområder</h5>
+{% url 'alle_adgrupper' as url_filomraader %}
+<p><a href="{{ url_filomraader }}?search_term=alle-{{ virksomhet.virksomhetsforkortelse }}">Relevante grupper</a></p>
+
+<hr>
+
 <h5>Office365: Brukere uten krav til administrert enhet</h5>
 Fant {{ brukere_uten_administrert_klient.all.count }} brukere med unntak.
 <table class="table table-sm tablesorter excel">

@@ -141,6 +141,7 @@ urlpatterns = [
 	url(r'^cmdb/prk/browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
 
 	url(r'^cmdb/ad/leverandortilgang/$', views.leverandortilgang, name='leverandortilgang'),
+	url(r'^cmdb/ad/leverandortilgang/(?P<valgt_gruppe>[-._a-zA-Z0-9\s]{2,100})/$', views.leverandortilgang, name='leverandortilgang_detaljer'),
 
 	url(r'^cmdb/ad/lookup/$', views.ad, name='ad'),
 	url(r'^cmdb/ad/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),

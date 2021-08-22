@@ -11,9 +11,19 @@
 
 {% block hovedinnhold %}
 
+Valgt gruppe: {{valgt_gruppe}}<hr>
+
+<ul style="column-count:3;">
+{% for kilde in leverandor_kilder %}
+	{% url 'leverandortilgang' as base_url %}
+	<li {%if kilde.gruppe == valgt_gruppe %} style="font-weight: 800; color: black;{%endif%}><a href="{{ base_url }}{{ kilde.gruppe }}/">{{ kilde.beskrivelse }}</a></li>
+{% endfor %}
+</ul>
+
+<hr>
+
 {% for k in usergroups %}
 
-	<h6>{{k.kilde.beskrivelse}}: Medlemer i <a href="{% url 'ad_details' k.kilde.gruppe %}">{{k.kilde.gruppe}}</a></h6>
 	<table class="tablesorter excel">
 	<thead>
 		<tr>
@@ -21,7 +31,6 @@
 			<th>Brukernavn</th>
 			<th>Virksomhet</th>
 			<th>Fra PRK?</th>
-			<th>Tilgang til</th>
 			<th>Sist pålogget</th>
 			<th>Passordstatus</th>
 			<td>Passordutløp</td>
@@ -43,11 +52,10 @@
 			<td>{{ m.username }}</td>
 			<td>{{ m.profile.virksomhet.virksomhetsforkortelse }}</td>
 			<td>{{ m.profile.from_prk|yesno:"OK,Opprettet manuelt,Vet ikke" }}</td>
-			<td>{{ m.levtilgang }}</td>
 			<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
 			<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,OK,Vet ikke" }}</td>
 			<td>{{ m.profile.dont_expire_password|yesno:"Passord utløper aldri,OK,Vet ikke" }}</td>
-			<td>{{ m.profile.org_unit }}</td>
+			<td>{{ m.profile.org_tilhorighet }}</td>
 			<td>{{ m.profile.description }}</td>
 		</tr>
 	{% endfor %}
@@ -55,6 +63,7 @@
 	</table>
 
 {% endfor %}
+
 
 <hr>
 {% if feilede_oppslag%}

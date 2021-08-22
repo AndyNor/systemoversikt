@@ -1831,7 +1831,7 @@ def virksomhet_enheter(request, pk):
 
 
 
-def leverandortilgang(request):
+def leverandortilgang(request, valgt_gruppe=None):
 	"""
 	Vise informasjon brukere som har leverandørtilgang
 	Tilgjengelig for de som kan se brukere
@@ -1854,7 +1854,6 @@ def leverandortilgang(request):
 			{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_KARDEX", "beskrivelse": "Kardex hos DEB"},
 			{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_DEB", "beskrivelse": "Creston hos DEB"},
 			{"gruppe": "DS-KEM_RPA", "beskrivelse": "RPA hos KEM"},
-			{"gruppe": "DS-DRIFT_TREDJEPARTDRIFT", "beskrivelse": "Økonomi / Evry"},
 			{"gruppe": "DS-UVALEVTILGANG", "beskrivelse": "ITAS/UVA"},
 		]
 
@@ -1868,22 +1867,21 @@ def leverandortilgang(request):
 		]
 		dml_grupper = ADgroup.objects.filter(distinguishedname__icontains='DS-DRIFT_DML_').exclude(distinguishedname__in=[o for o in unwanted_objects])
 		for g in dml_grupper:
-			leverandor_kilder.append(
-					{"gruppe": g.common_name, "beskrivelse": "DML %s" % g.common_name}
-				)
+			if g.common_name != None:
+				leverandor_kilder.append(
+						{"gruppe": g.common_name, "beskrivelse": "DML %s" % g.common_name}
+					)
 
-		for kilde in leverandor_kilder:
+		if valgt_gruppe != None:
+
 			kildemedlemmer = []
 			nestede_grupper = []
-			if kilde["gruppe"] != None:
-				members = json.loads(ADgroup.objects.get(common_name=kilde["gruppe"]).member)
-			else:
-				members = []
+			members = json.loads(ADgroup.objects.get(common_name=valgt_gruppe).member)
+
 			for m in members:
 				regex_username = re.search(r'cn=([^\,]*)', m, re.I).groups()[0]
 				try:
 					u = User.objects.get(username__iexact=regex_username)
-					u.levtilgang = kilde["beskrivelse"]  # merk at dette ikke lagres til brukerobjektet. Dette er kun en kopi.
 					if u.profile.accountdisable == False:
 						kildemedlemmer.append(u)
 					else:
@@ -1896,7 +1894,7 @@ def leverandortilgang(request):
 						feilede_oppslag.append(regex_username)
 
 			usergroups.append({
-				"kilde": kilde,
+				"kilde": valgt_gruppe,
 				"kildemedlemmer": kildemedlemmer,
 				"nestede_grupper": nestede_grupper,
 			})
@@ -1904,6 +1902,8 @@ def leverandortilgang(request):
 		return render(request, 'ad_leverandortilgang.html', {
 			"usergroups": usergroups,
 			"feilede_oppslag": feilede_oppslag,
+			"leverandor_kilder": leverandor_kilder,
+			"valgt_gruppe": valgt_gruppe,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
