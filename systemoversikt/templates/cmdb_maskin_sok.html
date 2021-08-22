@@ -28,6 +28,7 @@
 		<th>Business Service</th>
 		<th>System / Eierskap</th>
 		<th>Nettverk</th>
+		<th>Beskrivelse</th>
 	</thead>
 	<tbody>
 	{% for server in hits %}
@@ -41,13 +42,19 @@
 				{% endif %}
 
 				{% if server.landesk_login %}
-					{{ server.landesk_login }}<br>{{server.maskinadm_status}}
+					{{ server.landesk_login }}<br>
+					{{ server.maskinadm_status }}<br>
+					{{ server.landesk_os }} {{ server.landesk_os_release }}
 				{% endif %}
 
 			</td>
 			<td>
-				{{ server.comp_ip_address|default:"-" }<br>
+				{{ server.comp_ip_address|default:"-" }}<br>
 				{{ server.vlan|default:"-" }}
+			</td>
+			<td>
+				{{ server.description|default:"-" }} <br>
+				{{ server.comments|default:"-" }}
 			</td>
 		</tr>
 	{% endfor %}

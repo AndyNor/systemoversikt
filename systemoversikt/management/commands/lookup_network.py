@@ -34,11 +34,11 @@ class Command(BaseCommand):
 
 		# TODO bør legge dette i en konfigurasjonsfil, da dette nå ligger to/flere steder.
 		domain = "oslo.kommune.no"
-		dns_ekstern = load_dns_sonefile(os.getcwd() + "/../systemoversikt/import/oslofelles_dns_ekstern", domain)
-		dns_intern = load_dns_sonefile(os.getcwd() + "/../systemoversikt/import/oslofelles_dns_intern", domain)
-		vlan_data = load_vlan(os.getcwd() + "/../systemoversikt/import/oslofelles_vlan.tsv")
-		nat_data = load_nat(os.getcwd() + "/../systemoversikt/import/oslofelles_nat.tsv")
-		bigip_data = load_bigip(os.getcwd() + "/../systemoversikt/import/oslofelles_vip.tsv")
+		dns_ekstern = load_dns_sonefile(os.getcwd() + "/systemoversikt/import/oslofelles_dns_ekstern", domain)
+		dns_intern = load_dns_sonefile(os.getcwd() + "/systemoversikt/import/oslofelles_dns_intern", domain)
+		vlan_data = load_vlan(os.getcwd() + "/systemoversikt/import/oslofelles_vlan.tsv")
+		nat_data = load_nat(os.getcwd() + "/systemoversikt/import/oslofelles_nat.tsv")
+		bigip_data = load_bigip(os.getcwd() + "/systemoversikt/import/oslofelles_vip.tsv")
 
 		stat_oppdatert = 0
 		stat_manglet_ip_resolved = 0
@@ -52,7 +52,7 @@ class Command(BaseCommand):
 				#print("Er klient %s" % (device))
 				continue # ikke noe poeng å slå opp IP på klienter. De bytter IP stadig vekk.
 
-			if device.comp_ip_address == "":
+			if device.comp_ip_address == "" or device.comp_ip_address == None:
 				#print("Do lookup %s" % (device))
 				try:
 					resolved_ip = socket.gethostbyname(device.comp_name)

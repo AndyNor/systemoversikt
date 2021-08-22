@@ -1667,12 +1667,12 @@ class CMDBdevice(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	#comp_cpu_core_count = models.IntegerField(
-	#		verbose_name="CPU core count",
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
+	comp_cpu_core_count = models.IntegerField(
+			verbose_name="CPU core count",
+			blank=True,
+			null=True,
+			help_text=u"",
+			)
 	#comp_cpu_count = models.IntegerField(
 	#		verbose_name="CPU count",
 	#		blank=True,

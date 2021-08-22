@@ -123,3 +123,9 @@ venv.bak/
 .mypy_cache/
 *.csv
 db.sqlite3.old
+db.sqlite3.test
+new_report
+sqldiff.exe
+sqlite3.exe
+sqlite3_analyzer.exe
+sqlite_report.txt
