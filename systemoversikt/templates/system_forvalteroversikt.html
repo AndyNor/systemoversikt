@@ -13,6 +13,7 @@
 	<tr>
 		<th>Systemnavn</th>
 		<th>Driftsplattform</th>
+		<td>BS/BSS</td>
 		<th>Organisatorisk systemeier</th>
 		<th>Organisatorisk forvalter</th>
 		<th>Systemeiere</th>
@@ -23,9 +24,10 @@
 	{% for s in systemer %}
 	<tr>
 		<td>{{ s.systemnavn }}</td>
-		<td>{{ s.driftsmodell_foreignkey }}</td>
-		<td>{{ s.systemeier }}</td>
-		<td>{{ s.systemforvalter }}</td>
+		<td>{{ s.driftsmodell_foreignkey|default:"Ukjent" }}</td>
+		<td>{{ s.bs_system_referanse|default:"Ikke koblet" }}</td>
+		<td>{{ s.systemeier|default:"Ukjent" }}</td>
+		<td>{{ s.systemforvalter|default:"Ukjent" }}</td>
 		<td>{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}{{ ansvarlig}}<br>{% endfor%}</td>
 		<td>{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}{{ ansvarlig}}<br>{% endfor%}</td>
 	</tr>
