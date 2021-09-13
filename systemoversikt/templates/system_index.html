@@ -10,6 +10,10 @@
 		<a href="{{ url_systembruk }}" class="btn btn-sm btn-link {% if url_systembruk in request.path %}fremhev{% endif %}">Vår bruk av systemer</a>
 	{% endif %}
 
+
+	{% url 'alle_systemer_forvaltere' as url_systemforvaltere %}
+		<a href="{{ url_systemforvaltere }}" class="btn btn-sm btn-link {% if url_systemforvaltere in request.path %}fremhev{% endif %}">Systemeierskap</a>
+
 	{% if user.is_authenticated %}
 		{% url 'systemer_utfaset' as url_systemer_utfaset %}
 		<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfasede systemer</a>

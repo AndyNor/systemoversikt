@@ -1292,6 +1292,18 @@ def systemtype_detaljer(request, pk=None):
 		'systemtyper': systemtyper,
 	})
 
+def alle_systemer_forvaltere(request):
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	systemer = System.objects.all()
+
+	return render(request, 'system_forvalteroversikt.html', {
+		'request': request,
+		'systemer': systemer,
+	})
+
 
 def alle_systemer(request):
 	"""
@@ -3196,7 +3208,7 @@ def alle_maskiner(request):
 			if search_term == "__all__":
 				search_term = ""
 
-			devices = CMDBdevice.objects.filter(active=True).filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term) | Q(comments__icontains=search_term) | Q(description__icontains=search_term))
+			devices = CMDBdevice.objects.filter(active=True).exclude(comp_name__startswith="ws").filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term) | Q(comments__icontains=search_term) | Q(description__icontains=search_term))
 
 			if comp_os == "__empty__" and comp_os_version == "__empty__":
 				comp_os_and_version_none = CMDBdevice.objects.filter(active=True).filter(Q(comp_os="") & Q(comp_os_version=""))

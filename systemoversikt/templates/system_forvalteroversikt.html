@@ -1,0 +1,37 @@
+{% extends "index.html" %}
+{% load static %}
+
+
+{% block underoverskrift %}
+	Detaljer om systemers eier og forvalter
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Systemnavn</th>
+		<th>Driftsplattform</th>
+		<th>Organisatorisk systemeier</th>
+		<th>Organisatorisk forvalter</th>
+		<th>Systemeiere</th>
+		<th>Forvaltere</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for s in systemer %}
+	<tr>
+		<td>{{ s.systemnavn }}</td>
+		<td>{{ s.driftsmodell_foreignkey }}</td>
+		<td>{{ s.systemeier }}</td>
+		<td>{{ s.systemforvalter }}</td>
+		<td>{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}{{ ansvarlig}}<br>{% endfor%}</td>
+		<td>{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}{{ ansvarlig}}<br>{% endfor%}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock main_content %}
