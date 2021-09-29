@@ -52,6 +52,7 @@ urlpatterns = [
 	url(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
 	url(r'^systemer/forvalteroversikt/$', views.alle_systemer_forvaltere, name='alle_systemer_forvaltere'),
 	url(r'^systemer/pakket/$', views.systemer_pakket, name='systemer_pakket'),
+	url(r'^systemer/vurderinger/$', views.systemer_vurderinger, name='systemer_vurderinger'),
 	url(r'^systemer/detaljer/(?P<pk>\d{1,8})/$', views.systemdetaljer, name='systemdetaljer'),
 	url(r'^systemer/bruk/$', views.mine_systembruk, name='mine_systembruk'),
 	url(r'^systemer/utfaset/$', views.systemer_utfaset, name='systemer_utfaset'),

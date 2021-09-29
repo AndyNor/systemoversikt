@@ -9,9 +9,10 @@
 	<th>Programvare</th>
 	<th>Antall bruk registrert</th>
 	<th>Antall behandlinger registrert</th>
-	<th width="33%">Beskrivelse av programvaren</th>
+	<th width="15%">Beskrivelse av programvaren</th>
 	<th>Programvareleverandør</th>
 	<th>Kategori</th>
+	<th>Livsløpstatus</th>
 	<th>Strategisk knytning</th>
 	<th>Funksjonell egnethet</th>
 	<th>Teknisk egnethet</th>
@@ -40,6 +41,7 @@
 			<a href="{{ url_systemkategori }}">{{ kategori }}</a><br>
 		{% endfor %}
 	</td>
+	<td>{{ prog.get_livslop_status_display|default:"-" }}</td>
 	<td>{{ prog.get_strategisk_egnethet_display|default:"-" }}</td>
 	<td>{{ prog.get_funksjonell_egnethet_display|default:"-" }}</td>
 	<td>{{ prog.get_teknisk_egnethet_display|default:"-" }}</td>

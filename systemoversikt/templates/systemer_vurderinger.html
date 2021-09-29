@@ -1,0 +1,72 @@
+{% extends "system_index.html" %}
+{% load static %}
+
+{% block ekstrameny_programvare %}
+
+	{% if request.user.profile.virksomhet %}
+		{% url 'all_programvarebruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
+			<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-link">Vår bruk av programvare</a>
+	{% endif %}
+
+	{% if user.is_authenticated %}
+		<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer programvare</a>
+
+		{% url 'systemer_pakket' as url_systemer_pakket %}
+			<a href="{{url_systemer_pakket}}" class="btn btn-sm {% if url_systemer_pakket in request.path %}fremhev{% endif %}">Programvarepakking</a>
+	{% endif %}
+
+
+{% endblock ekstrameny_programvare %}
+
+
+{% block overskrift %}
+	{{ overskrift }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Det er {{ systemer.count }} systemer.</p>
+
+
+<table class="tablesorter excel">
+<thead>
+<tr>
+	<th>System</th>
+	<th>I bruk?</th>
+	<th>Kvalitetssikret?</th>
+	<th>Antall bruk registrert</th>
+	<th>Antall behandlinger registrert</th>
+	<th width="15%">Systembeskrivelse</th>
+	<th>Livsløpstatus</th>
+	<th>Strategisk knytning</th>
+	<th>Funksjonell egnethet</th>
+	<th>Teknisk egnethet</th>
+	{% if user.is_authenticated %}
+	<th class="filter-false"></th>
+	{% endif %}
+</tr>
+</thead>
+<tbody>
+{% for system in systemer %}
+<tr>
+	<td>{% include 'system_include_vis.html' with system=system %}</td>
+	<td>{% if system.ibruk == False %} Nei {% else %} Ja {% endif %}</td>
+	<td>{% if system.informasjon_kvalitetssikret %} Ja {% else %} Nei {% endif %}</td>
+	<td>{{ system.systembruk_system.count }}</td>
+	<td>{{ system.behandling_systemer.count }}</td>
+	<td>{{ system.systembeskrivelse }}</td>
+	<td>{{ system.get_livslop_status_display|default:"-" }}</td>
+	<td>{{ system.get_strategisk_egnethet_display|default:"-" }}</td>
+	<td>{{ system.get_funksjonell_egnethet_display|default:"-" }}</td>
+	<td>{{ system.get_teknisk_egnethet_display|default:"-" }}</td>
+	{% if user.is_authenticated %}
+	<td><a href="/admin/systemoversikt/programvare/{{ system.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+	{% endif %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+
+{% endblock hovedinnhold %}

@@ -1332,7 +1332,7 @@ class CMDBRef(models.Model):
 	#		help_text=u"Ja eller nei",
 	#		)
 	navn = models.CharField(
-			unique=True,
+			unique=False, # eksporter fra cmdb er ikke konsistente desverre..
 			verbose_name="Sub service navn",
 			max_length=600,
 			blank=False,
