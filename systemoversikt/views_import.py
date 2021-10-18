@@ -127,7 +127,8 @@ def import_business_services(request):
 
 		#business_services_filename = "u_cmdb_service_subservice.json"
 		#business_services_filename = "u_cmdb_service_subservice.xlsx"
-		business_services_filename = "OK - Kartoketet Business Services.xlsx"
+		#business_services_filename = "OK - Kartoketet Business Services.xlsx"
+		business_services_filename = "OK_business_services.xlsx"
 
 		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/" + business_services_filename
 		#messages.success(request, 'Lastet inn filen %s' % (filepath))
@@ -285,7 +286,8 @@ def import_cmdb_databases_oracle(request):
 
 		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_bs_bss_db_oracle.json"
 		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_bs_bss_db_oracle.xlsx"
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/OK - CMDB - BS - BSS - DB_Oracle.xlsx"
+		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/OK - CMDB - BS - BSS - DB_Oracle.xlsx"
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/OK_db_oracle.xlsx"
 
 		if ".xlsx" in filepath:
 			dfRaw = pd.read_excel(filepath)
@@ -447,7 +449,8 @@ def import_cmdb_databases(request):
 		db_dropped = 0
 
 		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_service_to_db_2.json"
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_service_to_db_2.xlsx"
+		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_service_to_db_2.xlsx"
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/OK_db_sql.xlsx"
 
 		if ".xlsx" in filepath:
 			dfRaw = pd.read_excel(filepath)
@@ -561,7 +564,8 @@ def import_cmdb_servers(request):
 		server_dropped = 0
 
 		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/u_cmdb_computer_to_sub_to_bs.xlsx"
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/Oslo Kommune - CMDB - Computer with BS and BSS - Ken Persen NY.xlsx"
+		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/Oslo Kommune - CMDB - Computer with BS and BSS - Ken Persen NY.xlsx"
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/OK_computers_bss.xlsx"
 
 		if ".xlsx" in filepath:
 			dfRaw = pd.read_excel(filepath)
@@ -672,7 +676,8 @@ def import_cmdb_disk(request):
 		disk_dropped = 0
 
 		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/cmdb_ci_file_system.xlsx"
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/OK - Kartoteket - Disk Information.xlsx"
+		#filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/OK - Kartoteket - Disk Information.xlsx"
+		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/OK_disk_information.xlsx"
 
 		if ".xlsx" in filepath:
 			dfRaw = pd.read_excel(filepath)
