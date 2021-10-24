@@ -203,11 +203,6 @@ urlpatterns = [
 
 	# import og konvertering
 	url(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),
-	url(r'^import/cmdb/business_services/$', views_import.import_business_services, name='import_bsbss'),
-	url(r'^import/cmdb/servers/$', views_import.import_cmdb_servers, name='import_servers'),
-	url(r'^import/cmdb/disker/$', views_import.import_cmdb_disk, name='import_cmdb_disk'),
-	url(r'^import/cmdb/databases/$', views_import.import_cmdb_databases, name='import_databases'),
-	url(r'^import/cmdb/databases/oracle/$', views_import.import_cmdb_databases_oracle, name='import_cmdb_databases_oracle'),
 	url(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
 
 	# Er denne i bruk?

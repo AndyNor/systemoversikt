@@ -1338,6 +1338,7 @@ class CMDBRef(models.Model):
 			blank=False,
 			null=False,
 			help_text=u"Importert",
+			db_index=True,
 			)
 	operational_status = models.IntegerField(
 			choices=CMDB_OPERATIONAL_STATUS,

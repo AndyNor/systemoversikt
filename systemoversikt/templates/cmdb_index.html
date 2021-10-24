@@ -71,16 +71,6 @@
 	{% url 'alle_ip' as url_alle_ip %}
 	<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">Søk på IP</a>
 
-	{% if perms.systemoversikt.change_cmdbref %}
-	<hr><p style="color: grey;">CMDB-import</p>
-		<a href="{% url 'import_bsbss' %}" class="btn btn-sm" >⚙️ Importer bs/bss</a>
-		<a href="{% url 'import_servers' %}" class="btn btn-sm" >⚙️ Importer maskiner</a>
-		<a href="{% url 'import_cmdb_disk' %}" class="btn btn-sm" >⚙️ Importer disker</a>
-		<a href="{% url 'import_databases' %}" class="btn btn-sm" >⚙️ Importer mssql</a>
-		<a href="{% url 'import_cmdb_databases_oracle' %}" class="btn btn-sm" >⚙️ Importer oracle</a>
-	{% endif %}
-
-
 	{% block ekstrameny_nettverk %}{% endblock ekstrameny_nettverk %}
 {% endblock sidemeny %}
 
