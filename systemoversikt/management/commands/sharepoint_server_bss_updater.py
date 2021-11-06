@@ -3,9 +3,12 @@ from py_topping.data_connection.sharepoint import da_tran_SP365
 from systemoversikt.models import *
 from django.db import transaction
 import os
+import time
 
 class Command(BaseCommand):
 	def handle(self, **options):
+
+		runtime_t0 = time.time()
 
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
@@ -114,16 +117,21 @@ class Command(BaseCommand):
 					devices_set_inactive += 1
 					item.save()
 
-			logg_entry_message = 'Fant %s maskiner. %s manglet navn eller tilhørighet. Satte %s servere inaktiv.' % (
+			runtime_t1 = time.time()
+			total_runtime = round(runtime_t1 - runtime_t0, 1)
+
+			logg_entry_message = 'Fant %s maskiner. %s manglet navn eller tilhørighet. Satte %s servere inaktiv. Tok %s sekunder' % (
 					antall_records,
 					server_dropped,
 					devices_set_inactive,
+					total_runtime,
 				)
 			logg_entry = ApplicationLog.objects.create(
 					event_type='CMDB server import',
 					message=logg_entry_message,
 				)
 			print(logg_entry_message)
+
 
 		# eksekver
 		import_cmdb_servers()

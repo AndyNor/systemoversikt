@@ -3943,6 +3943,7 @@ def system_excel_api(request, virksomhet_pk=None):
 
 
 def cmdb_api(request):
+	# brukes for å samle inn faktureringsgrunnlag (koble servere til systemeier)
 
 	if not request.method == "GET":
 		raise Http404
@@ -3958,6 +3959,7 @@ def cmdb_api(request):
 	for bss in query:
 		line = {}
 		line["business_subservice_navn"] = bss.navn
+		line["business_subservice_billable"] = bss.u_service_billable
 		line["business_service"] = bss.parent_ref.navn
 		line["sist_oppdatert"] = bss.sist_oppdatert
 		line["opprettet"] = bss.opprettet

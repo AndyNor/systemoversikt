@@ -57,7 +57,7 @@ class APIKeys(models.Model):
 			max_length=256,
 			blank=False,
 			null=False,
-			unique=True,
+			unique=False,
 			)
 	navn = models.CharField(
 			verbose_name="Navn på nøkkel",

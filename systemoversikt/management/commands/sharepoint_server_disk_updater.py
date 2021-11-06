@@ -3,9 +3,12 @@ from py_topping.data_connection.sharepoint import da_tran_SP365
 from systemoversikt.models import *
 from django.db import transaction
 import os
+import time
 
 class Command(BaseCommand):
 	def handle(self, **options):
+
+		runtime_t0 = time.time()
 
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
@@ -99,11 +102,14 @@ class Command(BaseCommand):
 			for item in obsolete_devices:
 				item.delete()
 
+			runtime_t1 = time.time()
+			total_runtime = round(runtime_t1 - runtime_t0, 1)
 
-			logg_entry_message = '%s disker funnet. %s manglet vesentlig informasjon og ble ikke importert. %s gamle slettet.' % (
+			logg_entry_message = '%s disker funnet. %s manglet vesentlig informasjon og ble ikke importert. %s gamle slettet. Tok %s sekunder' % (
 					antall_records,
 					disk_dropped,
 					len(obsolete_devices),
+					total_runtime,
 				)
 			logg_entry = ApplicationLog.objects.create(
 					event_type='CMDB disk import',
