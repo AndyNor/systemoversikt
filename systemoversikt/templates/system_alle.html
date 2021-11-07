@@ -40,9 +40,19 @@
 		</div>
 	</form>
 
-	<p>Viser {{ systemer.count }} systemer.</p>
+	<p>Søket gav {{ systemer.count }} treff på systemer.</p>
 
 	{% include "system_include_hurtigvisning.html" %}
+
+	{% if potensielle_systemer %}
+	<p>Basert på beskrivelser av systemer, kan du ha ment:
+	<ul style="column-count:5;">
+	{% for system in potensielle_systemer %}
+		<li>{% include 'system_include_vis.html' with system=system %}</li>
+	{% endfor %}
+	</ul>
+	{% endif %}
+	</p>
 
 	{% if aktuelle_programvarer %}
 	<p>Treff på programvare</p>
@@ -53,13 +63,6 @@
 	</ul>
 	{% endif %}
 
-	{% if potensielle_systemer %}
-	<p>Basert på systembeskrivelser, mente du?</p>
-	<ul style="column-count:5;">
-	{% for system in potensielle_systemer %}
-		<li>{% include 'system_include_vis.html' with system=system %}</li>
-	{% endfor %}
-	</ul>
-	{% endif %}
+
 
 {% endblock hovedinnhold %}

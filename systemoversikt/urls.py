@@ -100,6 +100,7 @@ urlpatterns = [
 	url(r'^virksomhet/systemer/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
 	url(r'^virksomhet/systemer/ansvarligfor/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
 	url(r'^virksomhet/klienter/(?P<pk>\d{1,8})/$', views.klienter_hos_virksomhet, name='klienter_hos_virksomhet'),
+	url(r'^virksomhet/sikkerhetsavvik/$', views.virksomhet_sikkerhetsavvik, name='virksomhet_sikkerhetsavvik'),
 	url(r'^virksomhet/sikkerhetsavvik/(?P<pk>\d{1,8})/$', views.virksomhet_sikkerhetsavvik, name='virksomhet_sikkerhetsavvik'),
 
 

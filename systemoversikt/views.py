@@ -240,12 +240,19 @@ def klienter_hos_virksomhet(request, pk):
 
 
 
-def virksomhet_sikkerhetsavvik(request, pk):
+def virksomhet_sikkerhetsavvik(request, pk=None):
 	required_permissions = ['auth.view_user']
 	if any(map(request.user.has_perm, required_permissions)):
 
+		if pk == None:
+			try:
+				pk = request.user.profile.virksomhet.pk
+			except:
+				pass
+
 		virksomhet = Virksomhet.objects.get(pk=pk)
 		logg = ""
+
 
 		def hent_brukere(grupper, logg):
 			brukerliste = set()
@@ -317,6 +324,11 @@ def virksomhet_sikkerhetsavvik(request, pk):
 			"DS-OFFICE365SPES_OMRAADEADM_OMRAADEADM",
 		]
 		brukere_omraadeadm, logg = hent_brukere(grupper_omraadeadm, logg)
+		for user in brukere_omraadeadm:
+			if user in brukere_ikke_administrert:
+				user.avvik_kjent_enhet = True
+			else:
+				user.avvik_kjent_enhet = False
 
 		grupper_gjestegodk = [
 			"DS-OFFICE365SPES_OMRAADEADM_GJESTEGODK",
@@ -1345,7 +1357,7 @@ def alle_systemer(request):
 	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0):  # bare ét systemtreff og ingen programvaretreff.
 		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
 
-	aktuelle_systemer = aktuelle_systemer.order_by(Lower('systemnavn'))
+	aktuelle_systemer = aktuelle_systemer.order_by('-ibruk', Lower('systemnavn'))
 	potensielle_systemer = potensielle_systemer.order_by('ibruk', Lower('systemnavn'))
 	aktuelle_programvarer.order_by(Lower('programvarenavn'))
 

@@ -190,7 +190,6 @@ Fant {{ brukere_med_emse5.all.count }} brukere.
 </tbody>
 </table>
 
-
 <h5>Office365: Områdeadministratorer</h5>
 Fant {{ brukere_omraadeadm.all.count }} brukere.
 <table class="table table-sm tablesorter excel">
@@ -198,14 +197,16 @@ Fant {{ brukere_omraadeadm.all.count }} brukere.
 	<th>Bruker</th>
 	<th>Brukertype</th>
 	<th width="40%">Beskrivelse</th>
+	<th>Avvik administrert enhet?</th>
 	<th>Organisatorisk tilhørighet</th>
 </thead>
 <tbody>
 {% for bruker in brukere_omraadeadm %}
-	<tr>
+	<tr {% if bruker.avvik_kjent_enhet %} style="color: #ff0000;" {% endif %}>
 		<td>{{ bruker }}</td>
 		<td>{{ bruker.profile.usertype }}</td>
 		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.avvik_kjent_enhet|yesno:"Nei,Ja,Ukjent" }}</td>
 		<td>{{ bruker.profile.org_unit }}</td>
 	</tr>
 {% endfor %}

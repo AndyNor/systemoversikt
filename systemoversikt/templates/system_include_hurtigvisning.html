@@ -1,11 +1,28 @@
 {% load static %}
 
-<p>Forklaring: Lys skrift betyr at systemer ikke er merket som kvalitetssikret. Gjennomstreking betyr at systemer er markert som ikke i bruk. Gul bakgrunn varsler når det er angitt mer enn én systemeier.</p>
+<p>Forklaring til oversikten: Lys skrift betyr at systemet ikke er merket som kvalitetssikret. Gjennomstreking betyr at systemet er markert som "ikke i bruk". Gul bakgrunn varsler når det er angitt mer enn én systemeier. 🔧 indikerer at systemet er infrastruktur.</p>
 
-<ul style="column-count:4;">
-{% for system in systemer %}
-	<li {% if system.systemeier_kontaktpersoner_referanse.all.count > 1 %}style="background-color: yellow;"{% endif %}>
-		{% include 'system_include_vis.html' with system=system %}
-	</li>
-{% endfor %}
-</ul>
+
+
+<table class="tablesorter excel">
+	<thead>
+		<tr>
+			<th>Systemnavn</th>
+			<th>Systemet er i bruk?</th>
+			<th>Kvalitetssikret</th>
+			<th>Sist oppdatering (dato)</th>
+			<th>Sist oppdatering (tid siden)</th>
+		</tr>
+	</thead>
+		<tbody>
+		{% for system in systemer %}
+		<tr {% if system.systemeier_kontaktpersoner_referanse.all.count > 1 %}style="background-color: yellow;"{% endif %}>
+			<td>{% include 'system_include_vis.html' with system=system %}</td>
+			<td>{{system.ibruk|yesno:'Ja, Nei, Vet ikke'}}</td>
+			<td>{{system.informasjon_kvalitetssikret|yesno:'Ja, Nei, Vet ikke'}}</td>
+			<td>{{system.sist_oppdatert|date:"Y-m-d"}}</td>
+			<td>{{system.sist_oppdatert|timesince}}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
