@@ -1529,6 +1529,10 @@ class CMDBdatabase(models.Model):
 			null=True,
 			help_text=u"Importert: db_version",
 			)
+	billable = models.BooleanField(
+			verbose_name="Billable",
+			default=False,
+			)
 	db_u_datafilessizekb = models.IntegerField(
 			verbose_name="db_u_datafilessizekb",
 			blank=True,
@@ -1595,6 +1599,10 @@ class CMDBdevice(models.Model):
 			verbose_name="Aktiv i 2S CMDB?",
 			default=True,
 			help_text=u"",
+			)
+	billable = models.BooleanField(
+			verbose_name="Billable",
+			default=False,
 			)
 	comp_name = models.CharField(
 			unique=True,

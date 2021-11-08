@@ -97,6 +97,7 @@ class Command(BaseCommand):
 				cmdbdevice.comp_location = record["Location"]
 				cmdbdevice.comments = record["Comments"]
 				cmdbdevice.description = record["Description"]
+				cmdbdevice.billable = True if record["Billable"] == "SANN" else False
 
 				sub_name = bss_cache(record["Name.1"])
 				if sub_name != None:

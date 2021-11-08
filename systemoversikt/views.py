@@ -4004,6 +4004,7 @@ def cmdb_api(request):
 		for server in bss.cmdbdevice_sub_name.filter(active=True):
 			s = dict()
 			s["server_navn"] = server.comp_name
+			s["billable"] = server.billable
 			s["server_aktiv"] = server.active
 			s["server_os"] = server.comp_os
 			s["server_ram"] = server.comp_ram
@@ -4027,6 +4028,7 @@ def cmdb_api(request):
 			s = dict()
 			s["navn"] = database.db_database
 			s["version"] = database.db_version
+			s["billable"] = database.billable
 			s["datafilessizekb"] = database.db_u_datafilessizekb
 			s["db_comments"] = database.db_comments
 			databaseliste.append(s)

@@ -89,6 +89,7 @@ class Command(BaseCommand):
 
 				cmdb_db.db_used_for = record["Used for"]
 				cmdb_db.db_comments = record["Comments"]
+				cmdb_db.billable = True if record["Billable"] == "SANN" else False
 
 				cmdb_db.sub_name = None  # reset old lookups
 				try:
