@@ -99,6 +99,7 @@ class Command(BaseCommand):
 
 				cmdb_db.db_used_for = record["Used for"]
 				cmdb_db.db_comments = record["Comments"]
+				cmdb_db.billable = record["Billable"]
 
 				cmdb_db.sub_name = None  # reset old lookups
 				try:

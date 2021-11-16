@@ -208,6 +208,11 @@
 				</tr>
 
 				<tr>
+					<td>Vedlikeholdsavtale med systemleverandør?</td>
+					<td>{{ systemdetaljer.systemleverandor_vedlikeholdsavtale|yesno:"Ja, Nei, Vet ikke" }}</td>
+				</tr>
+
+				<tr>
 					<td>Leverandører</td>
 					<td>
 						{% for lev in systemdetaljer.systemleverandor.all %}

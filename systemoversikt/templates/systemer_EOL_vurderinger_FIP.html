@@ -1,0 +1,110 @@
+{% extends "system_index.html" %}
+{% load static %}
+
+{% block ekstrameny_programvare %}
+
+	{% if request.user.profile.virksomhet %}
+		{% url 'all_programvarebruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
+			<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-link">Vår bruk av programvare</a>
+	{% endif %}
+
+	{% if user.is_authenticated %}
+		<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer programvare</a>
+
+		{% url 'systemer_pakket' as url_systemer_pakket %}
+			<a href="{{url_systemer_pakket}}" class="btn btn-sm {% if url_systemer_pakket in request.path %}fremhev{% endif %}">Programvarepakking</a>
+	{% endif %}
+
+
+{% endblock ekstrameny_programvare %}
+
+
+{% block overskrift %}
+	End of life for Felles IKT-plattform
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Det er {{ systemer.count }} systemer i databasen som matcher søkekriteriene.</p>
+
+
+<h4>Systemer</h4>
+<table class="tablesorter excel">
+<thead>
+<tr>
+	<th>Systemnavn</th>
+	<th>Plattform</th>
+	<th>Systemeier</th>
+	<th>Forvalter</th>
+	<th width="20%">Systembeskrivelse</th>
+	<th>Livsløpstatus</th>
+	<td>CMDB-referanse</td>
+	<th>Database</th>
+	<th>Serverplattform</th>
+	<th>Strategisk knytning</th>
+	<th>Funksjonell egnethet</th>
+	<th>Teknisk egnethet</th>
+</tr>
+</thead>
+<tbody>
+{% for system in systemer %}
+<tr>
+	<td>{% include 'system_include_vis.html' with system=system %}</td>
+	<td>{{ system.driftsmodell_foreignkey }}</td>
+	<td>{{ system.systemeier.virksomhetsforkortelse }}</td>
+	<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
+	<td>{{ system.systembeskrivelse }}</td>
+	<td>{{ system.get_livslop_status_display|default:"-" }}</td>
+	<td>{{ system.bs_system_referanse }}</td>
+	<td>{{ system.databaseplattform }}</td>
+	<td>{{ system.serverplattform }}</td>
+	<td>{{ system.get_strategisk_egnethet_display|default:"-" }}</td>
+	<td>{{ system.get_funksjonell_egnethet_display|default:"-" }}</td>
+	<td>{{ system.get_teknisk_egnethet_display|default:"-" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h4>Infrastruktur</h4>
+<table class="tablesorter excel">
+<thead>
+<tr>
+	<th>Infrastrukturkomponent</th>
+	<th>Plattform</th>
+	<th>Systemeier</th>
+	<th>Forvalter</th>
+	<th width="20%">Systembeskrivelse</th>
+	<th>Livsløpstatus</th>
+	<td>CMDB-referanse</td>
+	<th>Database</th>
+	<th>Serverplattform</th>
+	<th>Strategisk knytning</th>
+	<th>Funksjonell egnethet</th>
+	<th>Teknisk egnethet</th>
+</tr>
+</thead>
+<tbody>
+{% for system in infrastruktur %}
+<tr>
+	<td>{% include 'system_include_vis.html' with system=system %}</td>
+	<td>{{ system.driftsmodell_foreignkey }}</td>
+	<td>{{ system.systemeier.virksomhetsforkortelse }}</td>
+	<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
+	<td>{{ system.systembeskrivelse }}</td>
+	<td>{{ system.get_livslop_status_display|default:"-" }}</td>
+	<td>{{ system.bs_system_referanse }}</td>
+	<td>{{ system.databaseplattform }}</td>
+	<td>{{ system.serverplattform }}</td>
+	<td>{{ system.get_strategisk_egnethet_display|default:"-" }}</td>
+	<td>{{ system.get_funksjonell_egnethet_display|default:"-" }}</td>
+	<td>{{ system.get_teknisk_egnethet_display|default:"-" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+
+{% endblock hovedinnhold %}

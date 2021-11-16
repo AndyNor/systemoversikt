@@ -1089,6 +1089,35 @@ def systemer_vurderinger(request):
 	})
 
 
+def systemer_EOL(request):
+	"""
+	EOS-visning for felles IKT-plattform
+	"""
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=163)
+	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet)
+	alle_systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).filter(livslop_status__in=[5,6])
+
+	systemer = []
+	infrastruktur = []
+
+	for s in alle_systemer:
+		if s.er_infrastruktur() == True:
+			infrastruktur.append(s)
+		else:
+			systemer.append(s)
+
+
+	return render(request, 'systemer_EOL_vurderinger_FIP.html', {
+		'request': request,
+		'systemer': systemer,
+		'infrastruktur': infrastruktur,
+	})
+
+
 def systemdetaljer(request, pk):
 	"""
 	Viser detaljer om et system

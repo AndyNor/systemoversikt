@@ -2357,6 +2357,8 @@ LIVSLOEP_VALG = (
 	(3, '3 👌 Moderne og modent'),
 	(4, '4 👍 Modent, men ikke lengre moderne'),
 	(5, '5 ☢️ Bør/skal byttes ut'),
+	(6, '6 💾 Ute av bruk, men tilgjengelig'),
+	(7, '7 ❌ Fullstendig avviklet'),
 )
 
 SELVBETJENING_VALG = (
@@ -3067,6 +3069,12 @@ class System(models.Model):
 			default=None,
 			help_text=u"Adressen systemet nås på via nettleser",
 			)
+	systemleverandor_vedlikeholdsavtale = models.NullBooleanField(
+			verbose_name="Aktiv vedlikeholdsavtale med systemleverandør?",
+			default=None,
+			null=True,
+			help_text=u"Kan settes til ja, nei eller ukjent. Standard er ukjent.",
+			)
 	systemleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_systemleverandor',
@@ -3403,6 +3411,28 @@ class System(models.Model):
 			return True
 		else:
 			return False
+
+	def databaseplattform(self):
+		databaser = []
+		alle_bss = self.bs_system_referanse.cmdb_bss_to_bs.all()
+		for bss in alle_bss:
+			alle_db = CMDBdatabase.objects.filter(sub_name=bss)
+			for db in alle_db:
+				databaser.append("%s" % (db.db_version))
+		if len(databaser) > 0:
+			return ', '.join([db for db in set(databaser)])
+		#fallback to manual field
+		return ', '.join([db.navn for db in self.database_in_use.all()])
+
+
+	def serverplattform(self):
+		serveros = []
+		alle_bss = self.bs_system_referanse.cmdb_bss_to_bs.all()
+		for bss in alle_bss:
+			servere = CMDBdevice.objects.filter(sub_name=bss)
+			for s in servere:
+				serveros.append("%s %s" % (s.comp_os, s.comp_os_version))
+		return ', '.join([os for os in set(serveros)])
 
 	def er_infrastruktur(self):
 		for stype in self.systemtyper.all():

@@ -232,7 +232,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		}),
 		('Dokumentasjon og drift', {
 			'fields': (
-				'systemleverandor',
+				('systemleverandor_vedlikeholdsavtale', 'systemleverandor'),
 				'basisdriftleverandor',
 				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
 				#'cmdbref_prod',
