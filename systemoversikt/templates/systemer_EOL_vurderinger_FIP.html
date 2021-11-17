@@ -27,6 +27,16 @@
 
 	<p>Det er {{ systemer.count }} systemer i databasen som matcher søkekriteriene.</p>
 
+Kriterier for å være på denne listen: (Merk at det ikke er sikkert alle systemene er fullstendig kartlagt på tvers av disse. Det er en kontinuerlig prosess.)
+<ul>
+	<li>Systemer kjører på/mot databaser eller servere som er ute av support, og krever derfor isolert drift eller oppgradering (gitt av CMDB-koblingen)</li>
+	<li>Det mangler vedlikeholdsavtale med systemleverandør (angis under "Aktiv vedlikeholdsavtale med systemleverandør").</li>
+	<li>Har en klientprogramvare som må kommuniksere direkte med filområder/direkte til databaser og er derfor avhengig av citrix eller VPN (ikke implementert som felt enda).</li>
+	<li>Det er vurdert at systemet ikke er teknisk eller funksjonelt egnet og derfor bør byttes ut (se "Funksjonell egnethet" og "Teknisk egnethet").</li>
+	<li>Systemet må sjekke mot lisensserver on-prem (som også krever VPN) (ikke implementert felt for enda).</li>
+	<li>Systmet støtter ikke SAML/OIDC (moderne autentisering) - f.eks. at den krever NTLM eller kerberos-autentisering som krever VPN (ikke implementert felt for enda).</li>
+</ul>
+
 
 <h4>Systemer</h4>
 <table class="tablesorter excel">
@@ -55,7 +65,7 @@
 	<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
 	<td>{{ system.systembeskrivelse }}</td>
 	<td>{{ system.get_livslop_status_display|default:"-" }}</td>
-	<td>{{ system.bs_system_referanse }}</td>
+	<td>{% include 'bs_include_vis.html' with bs=system.bs_system_referanse %}
 	<td>{{ system.databaseplattform }}</td>
 	<td>{{ system.serverplattform }}</td>
 	<td>{{ system.get_strategisk_egnethet_display|default:"-" }}</td>
@@ -105,6 +115,7 @@
 </tbody>
 </table>
 
-
+<h4>Programvarer</h4>
+Ikke kartlagt enda.
 
 {% endblock hovedinnhold %}

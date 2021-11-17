@@ -1478,11 +1478,11 @@ class CMDBRef(models.Model):
 		else:
 			return False
 
-	def system_mangler(self):
-		if self.cmdb_type == 1 and self.system_cmdbref.count() < 1:
-			return True
-		else:
-			return False
+	#def system_mangler(self):
+	#	if self.cmdb_type == 1 and self.system_cmdbref.count() < 1:
+	#		return True
+	#	else:
+	#		return False
 
 	def er_ukjent(self):
 		if self.cmdb_type == 2:

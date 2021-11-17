@@ -11,7 +11,6 @@
 	<th>Antall servere</th>
 	<th>Antall databaser</th>
 	<th>Tilknyttet system</th>
-	<th>Tilknyttet system (fases ut)</th>
 	<th>Antall systemer</th>
 	<th>I bruk</th>
 	{% comment %}<th>B</th>{% endcomment %}
@@ -67,12 +66,6 @@
 		{% else %}
 			<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ koble?</a>
 		{% endif %}
-	</td>
-	<td>
-		{% for system in item.system_cmdbref.all %}
-			{% url 'systemdetaljer' pk=system.pk as url_system %}
-			<a href="{{ url_system }}">{{ system.systemnavn }}</a><br>
-		{% endfor %}
 	</td>
 	<td>{{item.system_cmdbref.all|length}}</td>
 	<td>{{ item.get_operational_status_display|default:"-" }}</td>
