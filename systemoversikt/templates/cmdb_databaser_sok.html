@@ -40,6 +40,8 @@
 		<th>Kommentar</th>
 		<th>Størrelse (bytes)</th>
 		<th>Størrelse (lesbar)</th>
+		<th>Billable</th>
+		<th>Status</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -71,6 +73,12 @@
 		</td>
 		<td>
 			{{ db.db_u_datafilessizekb|filesizeformat }}
+		</td>
+		<td>
+			{{ db.billable|yesno:"Ja, Nei, Vet ikke" }}
+		</td>
+		<td>
+			{{ db.db_status }}
 		</td>
 	</tr>
 	{% endfor %}

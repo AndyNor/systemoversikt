@@ -25,17 +25,22 @@
 
 {% block hovedinnhold %}
 
-	<p>Det er {{ systemer.count }} systemer i databasen som matcher søkekriteriene.</p>
 
-Kriterier for å være på denne listen: (Merk at det ikke er sikkert alle systemene er fullstendig kartlagt på tvers av disse. Det er en kontinuerlig prosess.)
+<p>Kriteriene for å vises et system på denne siden er at systemet 1) er på en plattform UKE er forvalter av, og 2) at livsløpstatus er satt til en av følgende status: "Bør/skal byttes ut" og "Ute av bruk, men tilgjengelig". Merk at det her vil vises systemer som er markert som "ikke i bruk". Riktig måte å registrere når et system er helt ute av drift er livsløpstatus "Fullstendig avviklet".</p>
+
+
+<p>Kriterier for å sette slik livssløpsstatus er én eller flere av disse kriteriene:</p>
+
 <ul>
 	<li>Systemer kjører på/mot databaser eller servere som er ute av support, og krever derfor isolert drift eller oppgradering (gitt av CMDB-koblingen)</li>
 	<li>Det mangler vedlikeholdsavtale med systemleverandør (angis under "Aktiv vedlikeholdsavtale med systemleverandør").</li>
-	<li>Har en klientprogramvare som må kommuniksere direkte med filområder/direkte til databaser og er derfor avhengig av citrix eller VPN (ikke implementert som felt enda).</li>
+	<li>Har en klientprogramvare som må kommunisere direkte med filområder/direkte til databaser og er derfor avhengig av citrix eller VPN.</li>
 	<li>Det er vurdert at systemet ikke er teknisk eller funksjonelt egnet og derfor bør byttes ut (se "Funksjonell egnethet" og "Teknisk egnethet").</li>
-	<li>Systemet må sjekke mot lisensserver on-prem (som også krever VPN) (ikke implementert felt for enda).</li>
-	<li>Systmet støtter ikke SAML/OIDC (moderne autentisering) - f.eks. at den krever NTLM eller kerberos-autentisering som krever VPN (ikke implementert felt for enda).</li>
+	<li>Systemet må sjekke mot lisensserver on-prem (som også krever VPN).</li>
+	<li>Systemet støtter ikke SAML/OIDC (moderne autentisering) - f.eks. at den krever NTLM eller kerberos-autentisering som krever VPN.</li>
 </ul>
+
+<p>Merk at det ikke er sikkert alle systemene er fullstendig kartlagt på tvers av disse kriteriene. Dette er en kontinuerlig prosess. <p>Per nå er det {{ systemer|length }} systemer som er markert som "end of life". Disse er splittet mellom ordinære systemer og infrastruktur-systemer.</p>
 
 
 <h4>Systemer</h4>
@@ -44,6 +49,7 @@ Kriterier for å være på denne listen: (Merk at det ikke er sikkert alle syste
 <tr>
 	<th>Systemnavn</th>
 	<th>Plattform</th>
+	<th>Vedlikeholdsavtale?</th>
 	<th>Systemeier</th>
 	<th>Forvalter</th>
 	<th width="20%">Systembeskrivelse</th>
@@ -54,6 +60,10 @@ Kriterier for å være på denne listen: (Merk at det ikke er sikkert alle syste
 	<th>Strategisk knytning</th>
 	<th>Funksjonell egnethet</th>
 	<th>Teknisk egnethet</th>
+	<th>Krever SMB</th>
+	<th>Direkte dB</th>
+	<th>On-prem lisensserver</th>
+	<th>Legacy autentisering</th>
 </tr>
 </thead>
 <tbody>
@@ -61,6 +71,7 @@ Kriterier for å være på denne listen: (Merk at det ikke er sikkert alle syste
 <tr>
 	<td>{% include 'system_include_vis.html' with system=system %}</td>
 	<td>{{ system.driftsmodell_foreignkey }}</td>
+	<td>{{ system.systemleverandor_vedlikeholdsavtale|yesno:"Ja, Nei, Vet ikke" }}</td>
 	<td>{{ system.systemeier.virksomhetsforkortelse }}</td>
 	<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
 	<td>{{ system.systembeskrivelse }}</td>
@@ -71,6 +82,10 @@ Kriterier for å være på denne listen: (Merk at det ikke er sikkert alle syste
 	<td>{{ system.get_strategisk_egnethet_display|default:"-" }}</td>
 	<td>{{ system.get_funksjonell_egnethet_display|default:"-" }}</td>
 	<td>{{ system.get_teknisk_egnethet_display|default:"-" }}</td>
+	<td>{{ system.legacy_klient_krever_smb|yesno:"Ja, Nei, Vet ikke" }}</td>
+	<td>{{ system.legacy_klient_krever_direkte_db|yesno:"Ja, Nei, Vet ikke" }}</td>
+	<td>{{ system.legacy_klient_krever_onprem_lisensserver|yesno:"Ja, Nei, Vet ikke" }}</td>
+	<td>{{ system.legacy_klient_autentisering|yesno:"Ja, Nei, Vet ikke" }}</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -116,6 +131,6 @@ Kriterier for å være på denne listen: (Merk at det ikke er sikkert alle syste
 </table>
 
 <h4>Programvarer</h4>
-Ikke kartlagt enda.
+Ikke implementert enda.
 
 {% endblock hovedinnhold %}

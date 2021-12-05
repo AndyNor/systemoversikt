@@ -97,6 +97,10 @@
 				{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.autoriserte_bestillere_tjenester.all %}
 				<br>
 
+				<b>{% get_verbose_field_name virksomhet "ks_fiks_admin_ref" %}</b>
+				{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.ks_fiks_admin_ref.all %}
+				<br>
+
 				<b>{% get_verbose_field_name virksomhet "autoriserte_bestillere_tjenester_uke" %}</b>
 				{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.autoriserte_bestillere_tjenester_uke.all %}
 				<br>

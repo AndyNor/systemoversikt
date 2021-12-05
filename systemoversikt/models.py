@@ -544,6 +544,13 @@ class Virksomhet(models.Model):
 			default=1,
 			help_text=u"Dette feltet brukes for å angi virksomhetens valg knyttet til office365",
 			)
+	ks_fiks_admin_ref = models.ManyToManyField(
+			to=Ansvarlig,
+			related_name='virksomhet_ks_fiks_ansvarlig',
+			verbose_name='Administrator for søk i KS Fiks folkeregister portal',
+			blank=True,
+			help_text=u"KS Fiks folkeregister er valgt som ny standard tjeneste for modernisert folkeregister, og KS har en webportal for søk i folkeregisteret (forvaltning.fiks.ks.no). Her kan du føre opp hvem som er lokale administratorer.",
+			)
 	history = HistoricalRecords()
 
 	def leder_hr(self):
@@ -1533,12 +1540,12 @@ class CMDBdatabase(models.Model):
 			verbose_name="Billable",
 			default=False,
 			)
-	db_u_datafilessizekb = models.IntegerField(
+	db_u_datafilessizekb = models.IntegerField( ### Det er faktisk bytes som skrives til denne. Gammelt navn fra CMDB-rapport.
 			verbose_name="db_u_datafilessizekb",
 			blank=True,
 			null=False,
 			default=0,
-			help_text=u"Importert: db_u_datafilessizekb",
+			help_text=u"Størrelse på database i Bytes",
 			)
 	db_database = models.TextField(
 			verbose_name="db_database",
@@ -1552,6 +1559,15 @@ class CMDBdatabase(models.Model):
 			null=True,  # importscriptet vil ikke tillate dette, men datamodellen bryr seg ikke
 			help_text=u"Importert: db_server",
 			)
+	db_server_modelref = models.ForeignKey(
+			to="CMDBdevice",
+			related_name='database_server',
+			verbose_name="Referanse til server",
+			on_delete=models.CASCADE,
+			blank=True,
+			null=True,
+			help_text=u"Slått opp basert på kommentarfelt med maskinnavn",
+			)
 	db_used_for = models.TextField(
 			verbose_name="db_used_for",
 			blank=True,
@@ -1564,6 +1580,12 @@ class CMDBdatabase(models.Model):
 			null=True,
 			help_text=u"Importert: db_comments",
 			)
+	db_status = models.TextField(
+			verbose_name="db_status",
+			blank=True,
+			null=True,
+			help_text=u"Importert: db_status",
+			)
 	sub_name = models.ForeignKey(
 			to=CMDBRef,
 			related_name='cmdbdatabase_sub_name',
@@ -1573,6 +1595,7 @@ class CMDBdatabase(models.Model):
 			null=True,
 			help_text=u"Slått opp basert på comment-felt",
 			)
+	unique_together = ('db_database', 'db_server')
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
 
 	def __str__(self):
@@ -2862,7 +2885,7 @@ class System(models.Model):
 			verbose_name="Er systemet i bruk?",
 			blank=True,
 			null=True,
-			help_text=u"Det kan være greit å beholde systemer i oversikten for å kunne søke dem opp. Alternativet er å slette systemet fra oversikten.",
+			help_text=u"Settes denne til 'nei' vil systemet skjules på en del visninger. Merk at du må sette 'livssløpsstatus' for å angi når et system er fullstendig avviklet. Det kan være greit å beholde systemer i oversikten for å kunne søke dem opp i etterkant. Dersom systemet er feilregistrert kan du kontakte forvaltningen av Kartoteket for å få det slettet.",
 			)
 	kvalitetssikret = models.OneToOneField(
 			to=Oppdatering,
@@ -2876,7 +2899,7 @@ class System(models.Model):
 	informasjon_kvalitetssikret = models.BooleanField(
 			verbose_name="Er informasjonen kvalitetssikret av forvalter?",
 			default=False,
-			help_text=u"Krysses av når ansvarlig har kontrollert at opplysningene oppgitt for dette systemet stemmer. Obligatoriske felter er de som automatisk er ekspandert.",
+			help_text=u"Krysses av når ansvarlig har kontrollert at opplysningene oppgitt for dette systemet stemmer. Obligatoriske felter er de som automatisk er ekspandert. Det er foreslått at denne verdien settes tilbake til 'nei' etter en viss tid, men per nå er ikke dette implementert.",
 			)
 	systemnavn = models.CharField(
 			verbose_name="Navn på system / applikasjon",
@@ -2884,13 +2907,13 @@ class System(models.Model):
 			max_length=100,
 			blank=False,
 			null=False,
-			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Bruk feltet systemtype for å presisere kategori system. Det kan tidvis være vanskelig vite hvordan integrasjoner skal beskrives. Et eksempel er SvarUt. Det er et system levert av KS. Det er også integrasjoner på integrasjonsplattformen ITAS. Her gir det mening å registrere både SvarUt og SvarUt-integrasjon da de har forskjellige forvaltere. KS er en ekstern aktør og SvarUt-integrasjon er forvaltet av Oslo kommune. Det er egne felter her for å registrere systemintegrasjoner/informasjonsflyt inn og ut. F.eks. leverer folkeregistret data til infotoget, og infotorget leverer til DSF-integrasjon, og ulike systemer får data fra DSF-integrasjon.",
+			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Fint om du søker etter systemer du skal registrere før du lager et nytt. Det kan hende det allerede er registrert. Noe av formålet med denne oversikten er å kunne forstå avhengigheter mellom systemer. Bruk derfor litt tid på å vurdere riktig nivå på det du registrerer.",
 			)
 	alias = models.TextField(
 			verbose_name="Alias (alternative navn)",
 			blank=True,
 			null=True,
-			help_text=u"Alternative navn på systemet, for å avhjelpe søk. Du kan skrive inn flere alias, gjerne separert med komma eller på en ny linje.",
+			help_text=u"Alternative navn på systemet for å avhjelpe søk. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje.",
 			)
 	systembeskrivelse = models.TextField(
 			verbose_name="Systembeskrivelse",
@@ -2958,14 +2981,14 @@ class System(models.Model):
 			verbose_name="Driftsmodell / plattform",
 			blank=True,
 			null=True,
-			help_text=u"Angivelse av driftsplattform systemet kjører på. Ved kjøp som tjeneste bruk SaaS.",
+			help_text=u"Angivelse av driftsplattform systemet kjører på. Ved kjøp som tjeneste fra en leverandør utenfor kommunen velger du 'Ekstern leverandør (Software as a Service)'.",
 			)
 	leveransemodell_fip = models.IntegerField(
 			choices=LEVERANSEMODELL_VALG,
 			verbose_name="Leveransemodell (for felles IKT-plattform)",
 			blank=True,
 			null=True,
-			help_text=u'Brukes ifm migreringsprosjektet',
+			help_text=u'Brukes ifm migreringsprosjektet. Dette datafeltet bør splittes og brukes ned mot programvare.',
 			)
 	tjenestenivaa = models.CharField(
 			verbose_name="Tjenestenivå med UKE (gamle tjenesteavtaler)",
@@ -3175,7 +3198,7 @@ class System(models.Model):
 			verbose_name="Livsløpstatus",
 			blank=True,
 			null=True,
-			help_text=u"Om systemet er nytt, moderne eller skal fases ut",
+			help_text=u"Om systemet er nytt, moderne eller skal fases ut. Setter du status 5 eller 6 vil systemet havne på 'End of life (EOL)'-listen.",
 			)
 	strategisk_egnethet = models.IntegerField(
 			choices=VURDERINGER_STRATEGISK_VALG,
@@ -3377,7 +3400,7 @@ class System(models.Model):
 			related_name='system_godkjente_bestillere',
 			verbose_name="Godkjente bestillere (Kompass)",
 			blank=True,
-			help_text=u"Disse personene er autorisert for å bestille endringer på systemet. Kan være andre enn forvaltere.",
+			help_text=u"Disse personene er autorisert for å bestille endringer på systemet. Kan være andre enn forvaltere, og derfor et eget felt her.",
 			)
 	er_arkiv = models.BooleanField(
 			verbose_name="Er systemet et arkiv?",
@@ -3396,6 +3419,30 @@ class System(models.Model):
 			verbose_name="Tilhørende tilgangsgrupper (AD)",
 			blank=True,
 			help_text=u'Velg en eller flere sikkerhetsgrupper i AD tilhørende systemet.',
+			)
+	legacy_klient_krever_smb = models.NullBooleanField(
+			verbose_name="Direkte kommunikasjon med filområde.",
+			blank=True,
+			null=True,
+			help_text=u"Settes dersom systemets klient må kommunisere direkte med on-prem filområder. OneDrive er ikke on-prem og er derfor ikke en grunnlag for å sette 'ja' på denne. Settes til 'ja' dersom minst ét av grensesnittene krever on-prem filområdetilgang.",
+			)
+	legacy_klient_krever_direkte_db = models.NullBooleanField(
+			verbose_name="Direkte kommunikasjon med databaseserver fra klient.",
+			blank=True,
+			null=True,
+			help_text=u"Settes dersom systemets klient må kommunisere direkte med databaser. Settes til 'ja' dersom minst ét av grensesnittene krever dette.",
+			)
+	legacy_klient_krever_onprem_lisensserver = models.NullBooleanField(
+			verbose_name="Legacy: Krever on-prem lisensserver?",
+			blank=True,
+			null=True,
+			help_text=u"Settes dersom systemet krever at klient har direktekontakt med on-prem lisensserver.",
+			)
+	legacy_klient_autentisering = models.NullBooleanField(
+			verbose_name="Legacy klientautentisering?",
+			blank=True,
+			null=True,
+			help_text=u"Settes dersom systemet ikke støtter moderne autentisering (SAML/OIDC)",
 			)
 	history = HistoricalRecords()
 

@@ -40,7 +40,7 @@ class Command(BaseCommand):
 				return
 
 			antall_records = len(data)
-			all_existing_db = list(CMDBdatabase.objects.filter(~Q(db_version__startswith="Oracle ") & Q(db_operational_status=True)))
+			all_existing_db = list(CMDBdatabase.objects.filter(~Q(db_version__startswith="Oracle"))) #alt som ikke er oracle og aktivt
 
 			print("Alt lastet, oppdaterer databasen:")
 			for idx, record in enumerate(data):
@@ -50,7 +50,7 @@ class Command(BaseCommand):
 
 				db_name = record["Name"]
 				if db_name == "":
-					messages.error(request, "Database mangler navn")
+					print("Database mangler navn")
 					db_dropped += 1
 					continue  # Det må være en verdi på denne
 
@@ -60,16 +60,22 @@ class Command(BaseCommand):
 					print("Database mangler informasjon om host (%s)" % (db_name))
 					hostname = ""
 
+
 				db_id = "%s@%s" % (db_name, hostname)
 				# vi sjekker om databasen finnes fra før
 				try:
-					cmdb_db = CMDBdatabase.objects.get(db_database=db_id)
+					cmdb_db = CMDBdatabase.objects.get(Q(db_database=db_name) & Q(db_server=hostname))
 					# fjerner fra oversikt over alle vi hadde før vi startet denne oppdateringen
 					if cmdb_db in all_existing_db: # i tilfelle reintrodusert
 						all_existing_db.remove(cmdb_db)
 				except:
 					# lager en ny
-					cmdb_db = CMDBdatabase.objects.create(db_database=db_id)
+					cmdb_db = CMDBdatabase.objects.create(db_database=db_name, db_server=hostname)
+
+
+				if hostname != "":
+					cmdbdevice = CMDBdevice.objects.get(comp_name=hostname)
+					cmdb_db.db_server_modelref = cmdbdevice
 
 				if record["Operational status"] == "Operational":
 					cmdb_db.db_operational_status = True
@@ -90,6 +96,7 @@ class Command(BaseCommand):
 				cmdb_db.db_used_for = record["Used for"]
 				cmdb_db.db_comments = record["Comments"]
 				cmdb_db.billable = record["Billable"]
+				cmdb_db.db_status = record["Status"]
 
 				cmdb_db.sub_name = None  # reset old lookups
 				try:

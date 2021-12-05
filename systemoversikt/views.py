@@ -1099,7 +1099,7 @@ def systemer_EOL(request):
 
 	virksomhet = Virksomhet.objects.get(pk=163)
 	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet)
-	alle_systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).filter(livslop_status__in=[5,6])
+	alle_systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(livslop_status__in=[5,6])
 
 	systemer = []
 	infrastruktur = []
@@ -4059,9 +4059,11 @@ def cmdb_api(request):
 		for database in bss.cmdbdatabase_sub_name.filter(db_operational_status=True):
 			s = dict()
 			s["navn"] = database.db_database
+			s["server"] = database.db_server
 			s["version"] = database.db_version
 			s["billable"] = database.billable
-			s["datafilessizekb"] = database.db_u_datafilessizekb
+			s["status"] = database.db_status
+			s["datafilessizekb"] = database.db_u_datafilessizekb # Merk at dette faktisk er bytes!
 			s["db_comments"] = database.db_comments
 			databaseliste.append(s)
 

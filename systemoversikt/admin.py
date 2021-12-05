@@ -187,10 +187,13 @@ class SystemAdmin(SimpleHistoryAdmin):
 
 	fieldsets = (
 		('Initiell registrering', {
-			'description': 'Dette er felter ansett som obligatoriske, og kreves utfylt for å kunne krysse av for at informasjonen er kvalitetssikret..',
+			'description': 'Dette er informasjon som alle systemer må ha fylt ut.',
 			'fields': (
-				('ibruk', 'informasjon_kvalitetssikret'),
 				('systemnavn', 'alias'),
+				'driftsmodell_foreignkey',
+				'systemkategorier',
+				'livslop_status',
+				('ibruk', 'informasjon_kvalitetssikret'),
 				'systembeskrivelse',
 				'er_arkiv',
 				'systemeierskapsmodell',
@@ -198,11 +201,9 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
 				'systemforvalter_avdeling_referanse',
 				'godkjente_bestillere',
-				'driftsmodell_foreignkey',
-				'systemkategorier',
 			),
 		}),
-		('Sikkerhetsmessige vurderinger', {
+		('Sikkerhetsmessige vurderinger og behandling av personopplysninger', {
 			'description': 'Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/ywUfBg">definisjoner på Confluence</a>.',
 			'fields': (
 				'informasjonsklassifisering',
@@ -210,7 +211,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('tilgjengelighetsvurdering','tilgjengelighet_kritiske_perioder'),
 				'integritetsvurdering',
 				('autentiseringsteknologi', 'autentiseringsalternativer'),
-				#'autorisasjonsalternativer',
 				'datautveksling_mottar_fra',
 				'datautveksling_avleverer_til',
 				('risikovurdering_behovsvurdering', 'dato_sist_ros'),
@@ -218,31 +218,31 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'risikovurdering_tekst',
 			)
 		}),
-		('Tekniske vurderinger', {
+		('Integrasjoner og tekniske vurderinger', {
 			'fields': (
 				'systemtyper',
 				'systemurl',
-				'livslop_status',
 				'funksjonell_egnethet',
 				'teknisk_egnethet',
 				'kjente_mangler',
 				'avhengigheter_referanser',
 				'avhengigheter',
+				('legacy_klient_krever_smb', 'legacy_klient_krever_direkte_db'),
+				('legacy_klient_krever_onprem_lisensserver', 'legacy_klient_autentisering'),
+				'isolert_drift',
 			)
 		}),
-		('Dokumentasjon og drift', {
+		('Leverandører, avtaler, dokumentasjon og drift', {
 			'fields': (
 				('systemleverandor_vedlikeholdsavtale', 'systemleverandor'),
 				'basisdriftleverandor',
 				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
-				#'cmdbref_prod',
 				'brukerdokumentasjon_url',
 				'high_level_design_url',
 				'low_level_design_url',
 				'programvarer',
 				'database_in_use',
 				'database_supported',
-				'isolert_drift',
 			),
 		}),
 		('Utdypende opplysninger om systemet', {
@@ -324,6 +324,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 		'autoriserte_bestillere_sertifikater',
 		'autoriserte_bestillere_tjenester',
 		'autoriserte_bestillere_tjenester_uke',
+		'ks_fiks_admin_ref',
 	)
 	fieldsets = (
 			('Initiell registrering', {
@@ -345,6 +346,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 					'arkitekturkontakter',
 					'personvernkoordinator',
 					'informasjonssikkerhetskoordinator',
+					'ks_fiks_admin_ref',
 					'intranett_url',
 					'www_url',
 				),
@@ -1221,8 +1223,9 @@ admin.site.register(DefinisjonKontekster)
 class CMDBdatabaseAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('db_database', 'sub_name', 'db_version', 'db_u_datafilessizekb', 'db_used_for', 'db_operational_status', 'db_comments', )
-	search_fields = ('db_database', 'sub_name__navn', 'db_comments')
-	list_filter = ('opprettet', 'db_operational_status', 'db_version')
+	search_fields = ('db_database', 'sub_name__navn', 'db_comments',)
+	list_filter = ('opprettet', 'db_operational_status', 'db_version',)
+	autocomplete_fields = ('db_server_modelref',)
 
 
 

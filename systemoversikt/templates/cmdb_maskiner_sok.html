@@ -54,6 +54,7 @@
 	<tr>
 		<th>Maskinnavn</th>
 		<th>Business service</th>
+		<th>Databaser på server</th>
 		<th>Description</th>
 		<th>Spesifikasjoner</th>
 		<th>Nettverk</th>
@@ -73,6 +74,11 @@
 			BS: {{ maskin.sub_name.parent_ref }} <br>
 			{% url 'cmdbdevice' pk=maskin.sub_name.pk as url_bss %}
 			BSS: <a href="{{ url_bss }}">{{ maskin.sub_name }}</a>
+		</td>
+		<td>
+			{% for db in maskin.database_server.all %}
+				<li>{{ db.db_database }}</li>
+			{% endfor %}
 		</td>
 		<td>
 			{{ maskin.description|default:"-" }} <br>

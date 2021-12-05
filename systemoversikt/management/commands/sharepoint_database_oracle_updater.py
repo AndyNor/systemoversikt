@@ -44,12 +44,12 @@ class Command(BaseCommand):
 				data = dfRaw.to_dict('records')
 
 			if data == None:
-				print("Problemer med innlasting av  manuell fil med databasestørrelser")
+				print("Problemer med innlasting av manuell fil med databasestørrelser")
 				return
 
 			print("OK")
 			antall_records = len(data)
-			all_existing_db = list(CMDBdatabase.objects.filter(Q(db_version__startswith="Oracle ") & Q(db_operational_status=True)))
+			all_existing_db = list(CMDBdatabase.objects.filter(Q(db_version__startswith="Oracle")))
 
 			print("Alt lastet, oppdaterer databasen:")
 			for idx, record in enumerate(data):
@@ -72,13 +72,13 @@ class Command(BaseCommand):
 
 				# vi sjekker om enheten finnes fra før
 				try:
-					cmdb_db = CMDBdatabase.objects.get(db_database=db_name)
+					cmdb_db = CMDBdatabase.objects.get(Q(db_database=db_name) & Q(db_server=db_server))
 					# fjerner fra oversikt over alle vi hadde før vi startet
 					if cmdb_db in all_existing_db: # i tilfelle reintrodusert
 						all_existing_db.remove(cmdb_db)
 				except:
 					# lager en ny
-					cmdb_db = CMDBdatabase.objects.create(db_database=db_name)
+					cmdb_db = CMDBdatabase.objects.create(db_database=db_name, db_server=db_server)
 
 				cmdb_db.db_server = db_server
 
@@ -97,9 +97,15 @@ class Command(BaseCommand):
 					#print("failed")
 					cmdb_db.db_u_datafilessizekb = 0
 
+
+				if db_server != "":
+					cmdbdevice = CMDBdevice.objects.get(comp_name=db_server)
+					cmdb_db.db_server_modelref = cmdbdevice
+
 				cmdb_db.db_used_for = record["Used for"]
 				cmdb_db.db_comments = record["Comments"]
 				cmdb_db.billable = record["Billable"]
+				cmdb_db.db_status = record["Status"]
 
 				cmdb_db.sub_name = None  # reset old lookups
 				try:
