@@ -198,6 +198,7 @@ urlpatterns = [
 	url(r'^tjenestekatalogen/forvaltere/$', views.tjenestekatalogen_forvalter_api, name='tjenestekatalogen_forvalter_api'), # brukes av UKE/tjenestekatalogen. Bruker API-nøkkel.
 	url(r'^tjenestekatalogen/systemer/$', views.tjenestekatalogen_systemer_api, name='tjenestekatalogen_systemer_api'), # brukes av UKE/tjenestekatalogen. Bruker API-nøkkel.
 	url(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'), # (det er innført behov for API-key)
+	url(r'^cmdb/api/kompass/$', views.cmdb_api_kompass, name='cmdb_api_kompass'), # (det er innført behov for API-key)
 	#url(r'^cmdb/api/test/$', views.cmdb_api_new, name='cmdb_api_new'), # (det er innført behov for API-key)
 	url(r'^systemer/api/$', views.systemer_api, name='systemer_api'), # (det er innført behov for API-key)
 	url(r'^virksomhet/(?P<virksomhet_pk>\d+)/excelapi/$', views.system_excel_api, name='system_excel_api'), # det må brukes API-key

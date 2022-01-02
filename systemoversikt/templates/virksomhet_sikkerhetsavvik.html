@@ -20,24 +20,77 @@
 <p>I PRK er det mange skjemavalg som kan benyttes for å unnta enkeltpersoner fra standard sikkerhetskrav. Valg av disse resulterer i at personen blir lagt inn i tilhørende AD-gruppe. Informasjonen på denne siden oppdateres hver natt.</p>
 <hr>
 
-<h5>Brukere med USB/minnepinne aktivert</h5>
-<p>Følg linken og finn skjema tilhørende din virksomhet. Trykk så videre på "Katalogtilknytning". Merk at flere av disse sidene vil ta lang tid å laste da de ikke er optimaliserte.<br>
-<a href="/cmdb/prk/alle/?search_term=Tykk+klient+Minnepinne+tillat">På tykk klient</a><br>
-<a href="/cmdb/prk/alle/?search_term=tynn+klient+Minnepinne+tillat">På tynn klient</a></p>
-
-<h5>Brukere med tilgang å benytte lokal printer</h5>
-<p><a href="/cmdb/prk/alle/?search_term=skrivere+tillat">Skrivere tillat</a></p>
-
-<hr>
 
 <h5>Brukere med utvidet tilgang til hjemme- og fellesområder</h5>
-{% url 'alle_adgrupper' as url_filomraader %}
-<p><a href="{{ url_filomraader }}?search_term=alle-{{ virksomhet.virksomhetsforkortelse }}">Relevante grupper</a></p>
+<p>Definert som {{ grupper_filefullcontrol_applomr }}, {{ grupper_filefullcontrol_fellesomr }} og {{ grupper_filefullcontrol_hjemmeomr }}.</p>
+<p>Fant {{ brukere_filefullcontrol_applomr.all.count}} + {{brukere_filefullcontrol_fellesomr.all.count}} + {{ brukere_filefullcontrol_hjemmeomr.all.count }} brukere med unntak.</p>
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Tilgang</th>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="50%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_filefullcontrol_applomr %}
+	<tr>
+		<td>Applikasjonsområder</td>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+{% for bruker in brukere_filefullcontrol_fellesomr %}
+	<tr>
+		<td>Fellesområde (F:)</td>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+{% for bruker in brukere_filefullcontrol_hjemmeomr %}
+	<tr>
+		<td>Hjemmeområder (H:)</td>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<hr>
+<h5>Brukere med tilgang til å bli lokal administrator på egen klient</h5>
+<p>Definert som {{ grupper_lokal_administrator }}.</p>
+<p>Fant {{ brukere_lokal_administrator.all.count }} brukere med unntak.</p>
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="50%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_lokal_administrator %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
 
 <hr>
 
 <h5>Office365: Brukere uten krav til administrert enhet</h5>
-Fant {{ brukere_uten_administrert_klient.all.count }} brukere med unntak.
+<p>Definert som {{ grupper_uten_administrert_klient }}.</p>
+<p>Fant {{ brukere_uten_administrert_klient.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -59,7 +112,8 @@ Fant {{ brukere_uten_administrert_klient.all.count }} brukere med unntak.
 
 
 <h5>Office365: Brukere uten krav til multifaktor autentisering</h5>
-Fant {{ brukere_unntak_mfa.all.count }} brukere med unntak.
+<p>Definert som {{ grupper_unntak_mfa }}.</p>
+<p>Fant {{ brukere_unntak_mfa.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -81,7 +135,8 @@ Fant {{ brukere_unntak_mfa.all.count }} brukere med unntak.
 
 
 <h5>Office365: Brukere som kan koble til utenfor EU</h5>
-Fant {{ brukere_utenfor_eu.all.count }} brukere med unntak.
+<p>Definert som {{ grupper_utenfor_eu }}.</p>
+<p>Fant {{ brukere_utenfor_eu.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -103,7 +158,8 @@ Fant {{ brukere_utenfor_eu.all.count }} brukere med unntak.
 
 
 <h5>Office365: Brukere som kan koble til fra høyrisikoland</h5>
-Fant {{ brukere_hoyrisikoland.all.count }} brukere med unntak.
+<p>Definert som {{ grupper_hoyrisikoland }}.</p>
+<p>Fant {{ brukere_hoyrisikoland.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -125,7 +181,8 @@ Fant {{ brukere_hoyrisikoland.all.count }} brukere med unntak.
 
 
 <h5>Brukere med opptak i Teams</h5>
-Fant {{ brukere_med_opptak.all.count }} brukere med unntak.
+<p>Definert som {{ grupper_med_opptak }}.</p>
+<p>Fant {{ brukere_med_opptak.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -147,7 +204,8 @@ Fant {{ brukere_med_opptak.all.count }} brukere med unntak.
 
 
 <h5>Brukere med tilgang til Live Events</h5>
-Fant {{ brukere_med_liveevent.all.count }} brukere.
+<p>Definert som {{ grupper_med_liveevent }}.</p>
+<p>Fant {{ brukere_med_liveevent.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -170,7 +228,8 @@ Fant {{ brukere_med_liveevent.all.count }} brukere.
 
 
 <h5>Office365: Brukere med utvidet sikkerhet (EM+S E5)</h5>
-Fant {{ brukere_med_emse5.all.count }} brukere.
+<p>Definert som {{ grupper_med_emse5 }}.</p>
+<p>Fant {{ brukere_med_emse5.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -191,7 +250,9 @@ Fant {{ brukere_med_emse5.all.count }} brukere.
 </table>
 
 <h5>Office365: Områdeadministratorer</h5>
-Fant {{ brukere_omraadeadm.all.count }} brukere.
+<p>Se <a href="https://oslokommune.sharepoint.com">oversikt</a> i kommunens tenant for oversikt over sharepoint-områder. Under fanen "Områder i min virksomhet".</p>
+<p>Definert som {{ grupper_omraadeadm }}.</p>
+<p>Fant {{ brukere_omraadeadm.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -215,7 +276,9 @@ Fant {{ brukere_omraadeadm.all.count }} brukere.
 
 
 <h5>Office365: Gjestegodkjennere</h5>
-Fant {{ brukere_gjestegodk.all.count }} brukere.
+<p>Se <a href="https://oslokommune.sharepoint.com">oversikt</a> i kommunens tenant for oversikt over gjester under fanen "Gjestebrukere".</p>
+<p>Definert som {{ grupper_gjestegodk }}.</p>
+<p>Fant {{ brukere_gjestegodk.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -237,7 +300,8 @@ Fant {{ brukere_gjestegodk.all.count }} brukere.
 
 
 <h5>Office365: Brukere som kan opprette O365-grupper</h5>
-Fant {{ brukere_gruppeadm.all.count }} brukere.
+<p>Definert som {{ grupper_gruppeadm }}.</p>
+<p>Fant {{ brukere_gruppeadm.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -259,7 +323,8 @@ Fant {{ brukere_gruppeadm.all.count }} brukere.
 
 
 <h5>Brukere med tilgang til å koble opp BYOD-enheter over VPN mot Oslo kommunes datasenter</h5>
-Fant {{ brukere_byod_vpn.all.count }} brukere.
+<p>Definert som {{ grupper_byod_vpn }}.</p>
+<p>Fant {{ brukere_byod_vpn.all.count }} brukere med unntak.</p>
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Bruker</th>
@@ -279,5 +344,75 @@ Fant {{ brukere_byod_vpn.all.count }} brukere.
 </tbody>
 </table>
 
+<hr>
+
+
+<h5>Brukere med USB/minnepinne aktivert</h5>
+<p>Definert som {{ grupper_usb_tykklient }} og {{grupper_usb_tynnklient}}.</p>
+<p>Fant {{ brukere_usb_tykklient.all.count }} + {{ brukere_usb_tynnklient.all.count}} brukere med unntak.</p>
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Type klient</th>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="50%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_usb_tykklient %}
+	<tr>
+		<td>Tykk klient</td>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+{% for bruker in brukere_usb_tynnklient %}
+	<tr>
+		<td>Tynn klient</td>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<hr>
+
+<h5>Brukere med tilgang å benytte lokal printer</h5>
+<p>Definert som {{ grupper_lokalskriver_is }} og {{grupper_lokalskriver_ss}}.</p>
+<p>Fant {{ brukere_lokalskriver_is.all.count }} + {{brukere_lokalskriver_ss.all.count}} brukere med unntak.</p>
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Sone</th>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="50%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_lokalskriver_is %}
+	<tr>
+		<td>Intern Sone</td>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+{% for bruker in brukere_lokalskriver_ss %}
+	<tr>
+		<td>Ekstern Sone</td>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
 
 {% endblock hovedinnhold %}

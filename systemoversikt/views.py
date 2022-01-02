@@ -267,6 +267,7 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 							brukerliste.add(username)
 				except:
 					logg += "feilet for %s " % (g)
+					print("fant ikke gruppen %s" % g)
 
 			brukerliste = [b.lower() for b in brukerliste]
 			brukerobjekter = User.objects.filter(username__in=brukerliste)
@@ -346,20 +347,95 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 		brukere_byod_vpn, logg = hent_brukere(grupper_byod_vpn, logg)
 
 
+		grupper_filefullcontrol_applomr = [
+			"DS-File-FullControl-Alle-%s-ApplOmr" % (virksomhet.virksomhetsforkortelse),
+		]
+		brukere_filefullcontrol_applomr, logg = hent_brukere(grupper_filefullcontrol_applomr, logg)
+
+		grupper_filefullcontrol_fellesomr = [
+			"DS-File-FullControl-Alle-%s-FellesOmr" % (virksomhet.virksomhetsforkortelse),
+		]
+		brukere_filefullcontrol_fellesomr, logg = hent_brukere(grupper_filefullcontrol_fellesomr, logg)
+
+		grupper_filefullcontrol_hjemmeomr = [
+			"DS-File-FullControl-Alle-%s-HomeFolders" % (virksomhet.virksomhetsforkortelse),
+		]
+		brukere_filefullcontrol_hjemmeomr, logg = hent_brukere(grupper_filefullcontrol_hjemmeomr, logg)
+
+
+		grupper_lokalskriver_is = [
+			"DS-%s_APP_KLIENT_LOCALPRINT" % (virksomhet.virksomhetsforkortelse),
+		]
+		brukere_lokalskriver_is, logg = hent_brukere(grupper_lokalskriver_is, logg)
+
+		grupper_lokalskriver_ss = [
+			"DS-%s_APP_KLIENT_LOCALPRINTSS" % (virksomhet.virksomhetsforkortelse),
+		]
+		brukere_lokalskriver_ss, logg = hent_brukere(grupper_lokalskriver_ss, logg)
+
+
+		grupper_usb_tykklient = [
+			"DS-%s_APP_KLIENT_USBAKSESSTYKK" % (virksomhet.virksomhetsforkortelse),
+		]
+		brukere_usb_tykklient, logg = hent_brukere(grupper_usb_tykklient, logg)
+
+		grupper_usb_tynnklient = [
+			"DS-%s_APP_KLIENT_USBACCESSTYNN" % (virksomhet.virksomhetsforkortelse),
+		]
+		brukere_usb_tynnklient, logg = hent_brukere(grupper_usb_tynnklient, logg)
+
+
+		grupper_lokal_administrator = [
+			"DS-%s_APP_SUPPORT_LOKAL_ADMINISTRATOR" % (virksomhet.virksomhetsforkortelse),
+		]
+		brukere_lokal_administrator, logg = hent_brukere(grupper_lokal_administrator, logg)
+
+
 		return render(request, 'virksomhet_sikkerhetsavvik.html', {
 			'request': request,
 			'virksomhet': virksomhet,
+			'grupper_med_emse5': grupper_med_emse5,
 			'brukere_med_emse5': brukere_med_emse5,
+			'grupper_uten_administrert_klient': grupper_ikke_administrert,
 			'brukere_uten_administrert_klient': brukere_ikke_administrert,
+			'grupper_unntak_mfa': grupper_unntak_mfa,
 			'brukere_unntak_mfa': brukere_unntak_mfa,
+			'grupper_utenfor_eu': grupper_utenfor_eu,
 			'brukere_utenfor_eu': brukere_utenfor_eu,
+			'grupper_hoyrisikoland': grupper_hoyrisikoland,
 			'brukere_hoyrisikoland': brukere_hoyrisikoland,
+			'grupper_med_opptak': grupper_med_opptak,
 			'brukere_med_opptak': brukere_med_opptak,
+			'grupper_med_liveevent': grupper_med_liveevent,
 			'brukere_med_liveevent': brukere_med_liveevent,
+			'grupper_omraadeadm': grupper_omraadeadm,
 			'brukere_omraadeadm': brukere_omraadeadm,
+			'grupper_gjestegodk': grupper_gjestegodk,
 			'brukere_gjestegodk': brukere_gjestegodk,
+			'grupper_gruppeadm': grupper_gruppeadm,
 			'brukere_gruppeadm': brukere_gruppeadm,
+			'grupper_byod_vpn': grupper_byod_vpn,
 			'brukere_byod_vpn': brukere_byod_vpn,
+			'grupper_filefullcontrol_applomr': grupper_filefullcontrol_applomr,
+			'brukere_filefullcontrol_applomr': brukere_filefullcontrol_applomr,
+			'grupper_filefullcontrol_fellesomr': grupper_filefullcontrol_fellesomr,
+			'brukere_filefullcontrol_fellesomr': brukere_filefullcontrol_fellesomr,
+			'grupper_filefullcontrol_hjemmeomr': grupper_filefullcontrol_hjemmeomr,
+			'brukere_filefullcontrol_hjemmeomr': brukere_filefullcontrol_hjemmeomr,
+			'grupper_lokalskriver_is': grupper_lokalskriver_is,
+			'brukere_lokalskriver_is': brukere_lokalskriver_is,
+			'grupper_lokalskriver_ss': grupper_lokalskriver_ss,
+			'brukere_lokalskriver_ss': brukere_lokalskriver_ss,
+			'grupper_usb_tykklient': grupper_usb_tykklient,
+			'brukere_usb_tykklient': brukere_usb_tykklient,
+			'grupper_usb_tynnklient': grupper_usb_tynnklient,
+			'brukere_usb_tynnklient': brukere_usb_tynnklient,
+			'grupper_lokal_administrator': grupper_lokal_administrator,
+			'brukere_lokal_administrator': brukere_lokal_administrator,
+
+
+
+
 			'logging': logg,
 		})
 	else:
@@ -4074,6 +4150,56 @@ def cmdb_api(request):
 
 		resultat = {"antall bss": len(query), "data": data}
 	return JsonResponse(resultat, safe=False)
+
+
+def cmdb_api_kompass(request):
+	# brukes for å oppdatere Kompass med informasjon om drift (bss, systemer, maskiner osv.)
+
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="api_cmdb_kompass").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
+	data = []
+	query = CMDBbs.objects.filter(operational_status=True)#.filter(~Q(navn="OK-Tykklient"))
+	for bs in query:
+		line = {}
+		line["business_service_operational_status"] = bool(bs.operational_status)
+		line["business_service_name"] = bs.navn
+		line["business_service_internal_ref"] = bs.pk
+		line["business_service_external_ref"] = bs.bs_external_ref
+		line["business_service_systemknytning_navn"] = bs.systemreferanse.systemnavn if bs.systemreferanse else None
+		line["business_service_systemknytning_pk"] = bs.systemreferanse.pk if bs.systemreferanse else None
+
+		bss_liste = []
+		for bss in bs.cmdb_bss_to_bs.all():
+			b = {}
+			b["business_subservice_operational_status"] = bool(bss.operational_status)
+			b["business_subservice_name"] = bss.navn
+			b["business_subservice_environment"] = bss.get_environment_display()
+			b["business_subservice_internal_ref"] = bss.pk
+			b["business_subservice_external_ref"] = bss.bss_external_ref
+			b["business_subservice_billable"] = bss.u_service_billable
+			b["business_subservice_classification"] = bss.service_classification
+			b["business_subservice_complexity"] = bss.u_service_complexity
+			b["business_subservice_operation_factor"] = bss.u_service_operation_factor
+			b["business_subservice_availability"] = bss.u_service_availability
+			b["business_subservice_business_criticality"] = bss.kritikalitet
+			b["business_subservice_business_criticality_str"] = bss.get_kritikalitet_display()
+			b["business_subservice_comments"] = bss.comments
+			bss_liste.append(b)
+
+		line["Business_subservices"] = bss_liste
+
+		data.append(line)
+
+	resultat = {"antall business services": len(query), "data": data}
+	return JsonResponse(resultat, safe=False)
+
+
 
 """
 def cmdb_api_new(request):
