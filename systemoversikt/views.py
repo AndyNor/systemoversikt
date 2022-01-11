@@ -265,8 +265,11 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 						if virksomhet.virksomhetsforkortelse in username:
 							logg += "la til %s " % (username)
 							brukerliste.add(username)
+					if len(brukerliste) > 500:
+						print("For mange brukere")
+						return (["Over 500 personer"], "")
 				except:
-					logg += "feilet for %s " % (g)
+					logg = "" # deaktivert # += "feilet for %s " % (g)
 					print("fant ikke gruppen %s" % g)
 
 			brukerliste = [b.lower() for b in brukerliste]
@@ -376,10 +379,13 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 
 		grupper_usb_tykklient = [
 			"DS-%s_APP_KLIENT_USBAKSESSTYKK" % (virksomhet.virksomhetsforkortelse),
+			"DS-%s_APP_KLIENT_USBACCESSTYKK" % (virksomhet.virksomhetsforkortelse),
+
 		]
 		brukere_usb_tykklient, logg = hent_brukere(grupper_usb_tykklient, logg)
 
 		grupper_usb_tynnklient = [
+			"DS-%s_APP_KLIENT_USBAKSESSTYNN" % (virksomhet.virksomhetsforkortelse),
 			"DS-%s_APP_KLIENT_USBACCESSTYNN" % (virksomhet.virksomhetsforkortelse),
 		]
 		brukere_usb_tynnklient, logg = hent_brukere(grupper_usb_tynnklient, logg)
@@ -432,10 +438,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 			'brukere_usb_tynnklient': brukere_usb_tynnklient,
 			'grupper_lokal_administrator': grupper_lokal_administrator,
 			'brukere_lokal_administrator': brukere_lokal_administrator,
-
-
-
-
 			'logging': logg,
 		})
 	else:

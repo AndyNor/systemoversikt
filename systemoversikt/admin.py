@@ -61,6 +61,21 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 	return export_as_csv
 
 
+
+@admin.register(AzureApplication)
+class AzureApplicationAdmin(admin.ModelAdmin):
+	list_display = ('displayName', 'createdDateTime', 'appId', 'sist_oppdatert',)
+	search_fields = ('displayName', 'appId',)
+	autocomplete_fields = ('requiredResourceAccess',)
+
+
+@admin.register(AzurePublishedPermissionScopes)
+class AzurePublishedPermissionScopesAdmin(admin.ModelAdmin):
+	list_display = ('value', 'permission_type', 'resourceAppStr', 'isEnabled', 'sist_oppdatert', 'grant_type', 'adminConsentDisplayName', 'scope_id')
+	search_fields = ('value', 'scope_id', 'resourceAppId', 'resourceAppStr')
+	list_filter = ('grant_type', 'isEnabled',)
+
+
 @admin.register(UserChangeLog)
 class UserChangeLogAdmin(admin.ModelAdmin):
 	list_display = ('event_type', 'message', 'opprettet',)

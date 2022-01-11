@@ -5089,6 +5089,107 @@ class PRKskjema(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class AzureApplication(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	appId = models.CharField(
+		# Delegated or Application permission
+		max_length=40,
+		null=False,
+		unique=True,
+		)
+	createdDateTime = models.DateTimeField(
+		null=True,
+		)
+	displayName = models.CharField(
+		# Delegated or Application permission
+		max_length=200,
+		null=True,
+		)
+	requiredResourceAccess = models.ManyToManyField(
+		to="AzurePublishedPermissionScopes",
+		related_name='azure_applications',
+		verbose_name="Rettigheter",
+		)
+
+	def __str__(self):
+		return u'%s' % (self.displayName)
+
+	class Meta:
+		verbose_name_plural = "Azure applications"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class AzurePublishedPermissionScopes(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	permission_type = models.CharField(
+		# Delegated or Application permission
+		max_length=20,
+		null=True,
+		)
+	scope_id = models.CharField(
+		max_length=40,
+		null=False,
+		unique=True,
+		)
+	isEnabled = models.NullBooleanField(
+		)
+	value = models.CharField(
+		max_length=200,
+		null=False,
+		)
+	grant_type = models.TextField(
+		# ment å holde en liste (array)
+		# for å oppbevare permissionScope["type"] eller role["allowedMemberTypes"]
+		null=False,
+		)
+	adminConsentDescription = models.TextField(
+		null=True,
+		)
+	adminConsentDisplayName = models.TextField(
+		null=True,
+		)
+	userConsentDescription = models.TextField(
+		null=True,
+		)
+	userConsentDisplayName = models.TextField(
+		null=True,
+		)
+	resourceAppId = models.CharField(
+		max_length=40,
+		null=True,
+		)
+	resourceAppStr = models.CharField(
+		max_length=200,
+		null=True,
+		)
+
+	def __str__(self):
+		return u'%s' % (self.value)
+
+	class Meta:
+		verbose_name_plural = "Azure permission scopes"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
+
+
 class UBWRapporteringsenhet(models.Model):
 	users = models.ManyToManyField(
 			to=User,
@@ -5158,6 +5259,7 @@ class UBWMetode(models.Model):
 	class Meta:
 		verbose_name_plural = "UBW: metoder"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
 
 
 class UBWFaktura(models.Model):
@@ -5312,8 +5414,6 @@ class UBWFaktura(models.Model):
 		blank=True,
 		max_length=300,
 		)
-
-
 	#history = HistoricalRecords()
 	unique_together = ('ubw_voucher_no', 'ubw_sequence_no')
 
