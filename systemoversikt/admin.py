@@ -64,10 +64,21 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 
 @admin.register(AzureApplication)
 class AzureApplicationAdmin(admin.ModelAdmin):
-	list_display = ('displayName', 'createdDateTime', 'appId', 'sist_oppdatert',)
+	list_display = ('displayName', 'risikonivaa', 'createdDateTime', 'appId', 'sist_oppdatert',)
 	search_fields = ('displayName', 'appId',)
+	list_filter = ('risikonivaa',)
 	autocomplete_fields = ('requiredResourceAccess',)
+	readonly_fields = ["appId",]
 
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('azure_applications', kwargs={}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('azure_applications', kwargs={}))
+		return super().response_change(request, obj)
 
 @admin.register(AzurePublishedPermissionScopes)
 class AzurePublishedPermissionScopesAdmin(admin.ModelAdmin):

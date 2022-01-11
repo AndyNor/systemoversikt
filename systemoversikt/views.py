@@ -4948,3 +4948,18 @@ def prk_api_grp(request):
 		else:
 			from django.http import HttpResponseForbidden
 			return HttpResponseForbidden()
+
+def azure_applications(request):
+	"""
+	Vise liste over alle Azure enterprise applications med rettigheter de har fått tildelt
+	Tilgangsstyring: Samme som for å se CMDB-data
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	applikasjoner = AzureApplication.objects.order_by('-createdDateTime')
+	return render(request, 'cmdb_azure_applications.html', {
+		'request': request,
+		'applikasjoner': applikasjoner,
+	})

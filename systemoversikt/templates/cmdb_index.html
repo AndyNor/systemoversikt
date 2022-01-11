@@ -32,8 +32,15 @@
 
 	{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}
 
+
 	<hr>
-	<h6>Active Directory</h6>
+	<h6>Microsoft 365</h6>
+	{% url 'azure_applications' as url_azure_applications %}
+	<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}" >Enterprise applications</a>
+
+
+	<hr>
+	<h6>Active Directory On-prem</h6>
 
 	{% url 'bruker_sok' as url_bruker_sok %}
 	<a href="{{ url_bruker_sok }}" class="btn btn-sm btn-link {% if url_bruker_sok in request.path %}fremhev{% endif %}" >Brukeridenter</a>

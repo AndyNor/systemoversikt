@@ -5089,6 +5089,13 @@ class PRKskjema(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+RISIKO_VALG = (
+	(0, '0 Ikke vurdert'),
+	(1, '1 Lav'),
+	(2, '2 Middels'),
+	(3, '3 Høy'),
+)
+
 class AzureApplication(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -5107,20 +5114,39 @@ class AzureApplication(models.Model):
 		)
 	createdDateTime = models.DateTimeField(
 		null=True,
+		blank=True,
 		)
 	displayName = models.CharField(
 		# Delegated or Application permission
 		max_length=200,
 		null=True,
+		blank=True,
 		)
 	requiredResourceAccess = models.ManyToManyField(
 		to="AzurePublishedPermissionScopes",
 		related_name='azure_applications',
 		verbose_name="Rettigheter",
+		blank=True,
 		)
+	vurdering = models.TextField(
+		verbose_name="Tekstlig vurdering",
+		null=True,
+		blank=True,
+		help_text=u"Beholdes ved synkronisering mot Azure som skjer hver natt",
+		)
+	risikonivaa = models.IntegerField(choices=RISIKO_VALG,
+			verbose_name="Vurdering av risiko",
+			default=0,
+			blank=False,
+			null=False,
+			help_text=u"Beholdes ved synkronisering mot Azure som skjer hver natt",
+			)
 
 	def __str__(self):
 		return u'%s' % (self.displayName)
+
+	def antall_application_permissions(self):
+		return AzurePublishedPermissionScopes.objects.filter(azure_applications=self.id).filter(permission_type="Application").count()
 
 	class Meta:
 		verbose_name_plural = "Azure applications"
@@ -5181,6 +5207,38 @@ class AzurePublishedPermissionScopes(models.Model):
 
 	def __str__(self):
 		return u'%s' % (self.value)
+
+	def application_rights(self):
+		if self.permission_type == "Application":
+			return True
+		return False
+
+
+	def warning_permission(self):
+		if self.permission_type == "Application":
+			return True
+		if "full access" in self.adminConsentDisplayName:
+			return True
+		if "ReadWrite.All" in self.value:
+			return True
+		if "Mail.ReadWrite" in self.value:
+			return True
+		return False # default
+
+	def safe_permission(self):
+		if "Sign in" in self.adminConsentDisplayName:
+			return True
+		if "View users' email" in self.adminConsentDisplayName:
+			return True
+		if "basic profiles" in self.adminConsentDisplayName:
+			return True
+		if "openid" in self.value:
+			return True
+		if "profile" in self.value:
+			return True
+		if "Group.Read.All" in self.value:
+			return True
+		return False
 
 	class Meta:
 		verbose_name_plural = "Azure permission scopes"

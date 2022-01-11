@@ -64,6 +64,13 @@ class Command(BaseCommand):
 				s.save()
 				print("Added role %s" % role["value"])
 
+			logg_message = "servicePrincipalsLookup() har lastet rettigheter fra %s" % (load_appdata["value"][0]["appDisplayName"])
+			logg_entry = ApplicationLog.objects.create(
+					event_type='Azure Enterprise Applications',
+					message=logg_message,
+				)
+			#print(logg_message)
+
 
 
 		def permissionScopeLookup(resourceAppId, scope_id):
@@ -114,7 +121,6 @@ class Command(BaseCommand):
 						a = AzureApplication.objects.create(appId=app['appId'])
 
 					a.createdDateTime = parser.parse(app['createdDateTime']) # 2021-12-15T13:10:38Z
-					print(parser.parse(app['createdDateTime']))
 					a.displayName = app['displayName']
 					print(app['displayName'])
 					for rra in app['requiredResourceAccess']:
@@ -138,7 +144,12 @@ class Command(BaseCommand):
 				if safety <= 0:
 					break
 
-			print("Fant %s applikasjoner. Maksgrense er satt til %s" % (APPLICATIONS_FOUND, maximum_results))
+			logg_message = "Fant %s applikasjoner. Maksgrense er satt til %s" % (APPLICATIONS_FOUND, maximum_results)
+			logg_entry = ApplicationLog.objects.create(
+					event_type='Azure Enterprise Applications',
+					message=logg_message,
+				)
+			print(logg_message)
 
 
 		load_azure_apps()

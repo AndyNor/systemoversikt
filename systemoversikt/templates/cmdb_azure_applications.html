@@ -1,0 +1,54 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Microsoft 365 "oslokommune" Enterprise applications
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Det er {{applikasjoner.count}} applikasjoner i databasen</p>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Applikasjonsnavn</th>
+		<th>Risikonivå</th>
+		<th>Dato opprettet</th>
+		<th>Applikasjons ID</th>
+		<th>Gitte rettigheter</th>
+		<th>Antall "application" -rettigheter</th>
+	</thead>
+	<tbody>
+	{% for a in applikasjoner %}
+		<tr>
+			<td><a href="/admin/systemoversikt/azureapplication/{{a.id}}/change/">{{a.displayName|truncatechars:35}}</a></td>
+			<td>{{a.get_risikonivaa_display}}</td>
+			<td>{{a.createdDateTime}}
+			<td>{{a.appId}}</td>
+			<td>
+				{% for r in a.requiredResourceAccess.all %}
+
+				<li>
+					<span
+						{% if r.application_rights %} style="color: red;" {% else %} style="color: green;" {% endif %}>
+						{{ r.permission_type }}</span>
+					<span>{{ r.resourceAppStr }}</span>
+					<span
+						{% if r.warning_permission %} style="color: red;" {% endif %}
+						{% if r.safe_permission %} style="color: green;" {% endif %}>
+						{{ r.adminConsentDisplayName }} ({{ r }})</span>
+				</li>
+
+				{% endfor %}
+			</td>
+			<td>{{ a.antall_application_permissions }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

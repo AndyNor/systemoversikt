@@ -137,6 +137,7 @@ urlpatterns = [
 	url(r'^cmdb/db/$', views.statistikk_databaser, name='statistikk_databaser'),
 	url(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
 	url(r'^cmdb/servere/sok/$', views.maskin_sok, name='maskin_sok'),
+	url(r'^cmdb/azure/applications/$', views.azure_applications, name='azure_applications'),
 
 
 
