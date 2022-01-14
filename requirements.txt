@@ -83,7 +83,7 @@ python-ldap == 3.4.0
 pytz==2019.2
 pywin32==303
 PyYAML==5.4.1
-requests==2.19.1
+requests==2.20.0
 requests-oauthlib==1.3.0
 simplejson==3.17.6
 six==1.14.0
