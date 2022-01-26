@@ -267,7 +267,7 @@
 		<td>{{ bruker }}</td>
 		<td>{{ bruker.profile.usertype }}</td>
 		<td>{{ bruker.profile.description }}</td>
-		<td>{{ bruker.avvik_kjent_enhet|yesno:"Nei,Ja,Ukjent" }}</td>
+		<td>{{ bruker.avvik_kjent_enhet|yesno:"Ja,Nei,Ukjent" }}</td>
 		<td>{{ bruker.profile.org_unit }}</td>
 	</tr>
 {% endfor %}
