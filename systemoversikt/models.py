@@ -2953,7 +2953,7 @@ class System(models.Model):
 			blank=True,
 			help_text=u"Person(er) med operativt forvalteransvar",
 			)
-	systemforvalter_avdeling_referanse = models.OneToOneField(
+	systemforvalter_avdeling_referanse = models.ForeignKey(
 			to='HRorg',
 			related_name='system_systemforvalter_avdeling_referanse',
 			verbose_name="Systemforvalter (avdeling)",

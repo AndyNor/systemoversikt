@@ -18,7 +18,7 @@ class Command(BaseCommand):
 				client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
 		)
 
-
+		# det antas i denne implementeringen at det ikke skjer endringer på en permissionscope ID
 		def servicePrincipalsLookup(resourceAppId):
 			# for en enkel forklaring på feltene, les https://joonasw.net/view/defining-permissions-and-roles-in-aad
 			client = GraphClient(credential=client_credential, api_version='beta')
@@ -123,6 +123,8 @@ class Command(BaseCommand):
 					a.createdDateTime = parser.parse(app['createdDateTime']) # 2021-12-15T13:10:38Z
 					a.displayName = app['displayName']
 					print(app['displayName'])
+					#slett tidligere koblinger:
+					a.requiredResourceAccess.clear()
 					for rra in app['requiredResourceAccess']:
 						resourceAppId = rra["resourceAppId"]
 						for ra in rra["resourceAccess"]:
