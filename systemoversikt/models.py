@@ -81,7 +81,6 @@ class APIKeys(models.Model):
 
 
 
-
 class ApplicationLog(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -4997,9 +4996,9 @@ class PRKvalg(models.Model):
 			)
 	ad_group_ref = models.ForeignKey(
 			to="ADgroup",
+			on_delete=models.CASCADE,
 			related_name='PRKvalg_ad_group_ref',
 			verbose_name="Kobling PRK-valg mot AD gruppe",
-			on_delete=models.PROTECT,
 			null=True,
 			blank=True,
 			help_text=u'Settes automatisk',

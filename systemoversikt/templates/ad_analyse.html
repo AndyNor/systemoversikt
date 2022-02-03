@@ -1,0 +1,45 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_ad %}
+
+{% endblock ekstrameny_ad %}
+
+{% block overskrift %}
+	Analyse av AD-grupper
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Det er {{antall_alle_grupper}} grupper</p>
+
+	<h5>Grupper med {{ maks }} eller færre medlemmer</h5>
+
+	<table id="grupper_tomme" class="tablesorter excel">
+	<thead>
+	<tr>
+		<th>distinguishedname</th>
+		<th>display_name</th>
+		<th>membercount</th>
+		<th>description</th>
+		<th>from_prk</th>
+		<th>mail</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for g in adgrupper_tomme %}
+	<tr>
+		<td>{{ g.distinguishedname }}</td>
+		<td>{{ g.display_name }}</td>
+		<td>{{ g.membercount }}</td>
+		<td>{{ g.description }}</td>
+		<td>{{ g.from_prk }}</td>
+		<td>{{ g.mail }}</td>
+
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

@@ -3006,6 +3006,27 @@ def adgruppe_detaljer(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def ad_analyse(request):
+	"""
+	Vise informasjon om tomme ADgrupper, AD-grupper ikke fra PRK osv.
+	Tilgangsstyring: må kunne vise informasjon om brukere
+	"""
+
+	antall_alle_grupper = ADgroup.objects.all().count()
+	maks = int(request.GET.get('antall', 0))
+	adgrupper_tomme = ADgroup.objects.filter(membercount__lte=maks)
+
+	required_permissions = 'auth.view_user'
+	if request.user.has_perm(required_permissions):
+		return render(request, 'ad_analyse.html', {
+				"adgrupper_tomme": adgrupper_tomme,
+				"maks": maks,
+				"antall_alle_grupper": antall_alle_grupper,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def alle_adgrupper(request):
 	"""
 	Vise informasjon om AD-grupper

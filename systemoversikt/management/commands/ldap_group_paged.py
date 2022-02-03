@@ -9,6 +9,8 @@ from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from systemoversikt.utils import ldap_paged_search
+from datetime import timedelta
+from django.utils import timezone
 import ldap
 import sys
 
@@ -35,16 +37,18 @@ class Command(BaseCommand):
 			"removed": 0,
 		}
 
-		@transaction.atomic  # for speeding up database performance
-		def cleanup():
-			from django.db.models import Count
-			duplicates = ADgroup.objects.values("distinguishedname").annotate(count=Count("distinguishedname")).filter(count__gt=1)
-			for group in duplicates:
-				group = ADgroup.objects.filter(distinguishedname=group["distinguishedname"])
-				group.delete()
-
-		cleanup()
-
+		@transaction.atomic
+		def remove_unseen_groups():
+			old_groups = ADgroup.objects.filter(sist_oppdatert__lte=timezone.now()-timedelta(hours=12)) # det vil aldri gå mer enn noen få minutter, men for å være sikker..
+			print("sletter %s utgåtte grupper" % len(old_groups))
+			for g in old_groups:
+				g.delete()
+			log_entry_message = ', '.join([str(g.common_name) for g in old_groups])
+			log_entry = ApplicationLog.objects.create(
+					event_type="AD-grupper slettet",
+					message=log_entry_message,
+			)
+			print(log_entry_message)
 
 		@transaction.atomic  # for speeding up database performance
 		def result_handler(rdata, report_data, existing_objects=None):
@@ -100,6 +104,10 @@ class Command(BaseCommand):
 					except KeyError as e:
 						pass
 
+					try:
+						common_name = distinguishedname[3:].split(",")[0]
+					except:
+						common_name = None
 
 					displayname = ""
 					try:
@@ -109,36 +117,25 @@ class Command(BaseCommand):
 
 					try:
 						g = ADgroup.objects.get(distinguishedname=distinguishedname)
-						try:
-							g.common_name = distinguishedname[3:].split(",")[0]
-						except:
-							g.common_name = None
-
-						g.description = description
-						g.member = member
-						g.membercount = membercount
-						g.memberof = memberof
-						g.memberofcount = memberofcount
-						g.display_name = displayname
-						g.mail = mail
-						g.save()
-						report_data["modified"] += 1
 						print("u", end="")
+						report_data["modified"] += 1
 					except:
-						g = ADgroup.objects.create(
-								distinguishedname=distinguishedname,
-								description=description,
-								member=member,
-								membercount=membercount,
-								memberof=memberof,
-								memberofcount=memberofcount,
-								display_name=displayname,
-								mail=mail,
-							)
+						g = ADgroup.objects.create(distinguishedname=distinguishedname) # lager den om den ikke finnes
 						print("n", end="")
 						report_data["created"] += 1
 
+					g.common_name = common_name
+					g.description = description
+					g.member = member
+					g.membercount = membercount
+					g.memberof = memberof
+					g.memberofcount = memberofcount
+					g.display_name = displayname
+					g.mail = mail
+					g.save()
+
 					sys.stdout.flush()
+
 
 
 		def report(result):
@@ -155,5 +152,19 @@ class Command(BaseCommand):
 			print(log_entry_message)
 
 
+		# her kjører selve synkroniseringen
 		result = ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data)
 		report(result)
+		remove_unseen_groups()
+
+
+		@transaction.atomic  # uklart om det er behov for denne lenger. trolig noe som gikk galt første kjøringer av scripetet..
+		def cleanup():
+			from django.db.models import Count
+			duplicates = ADgroup.objects.values("distinguishedname").annotate(count=Count("distinguishedname")).filter(count__gt=1)
+			for group in duplicates:
+				group = ADgroup.objects.filter(distinguishedname=group["distinguishedname"])
+				print("rydder opp %s" % (group["distinguishedname"]))
+				group.delete()
+
+		cleanup()

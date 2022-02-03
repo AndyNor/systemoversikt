@@ -46,7 +46,11 @@
 	<a href="{{ url_bruker_sok }}" class="btn btn-sm btn-link {% if url_bruker_sok in request.path %}fremhev{% endif %}" >Brukeridenter</a>
 
 	{% url 'alle_adgrupper' as url_alle_adgrupper %}
-	<a href="{{ url_alle_adgrupper }}" class="btn btn-sm btn-link {% if url_alle_adgrupper in request.path %}fremhev{% endif %}" >Sikkerhetsgrupper</a>
+	<a href="{{ url_alle_adgrupper }}" class="btn btn-sm btn-link {% if url_alle_adgrupper in request.path %}fremhev{% endif %}" >AD-grupper</a>
+
+	{% url 'ad_analyse' as url_ad_analyse %}
+	<a href="{{ url_ad_analyse }}?antall=0" class="btn btn-sm btn-link {% if url_ad_analyse in request.path %}fremhev{% endif %}" >AD-gruppeanalyse</a>
+
 
 	{% url 'adorgunit_detaljer' as url_adorgunit_detaljer %}
 	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}" >OU-strukturen</a>
