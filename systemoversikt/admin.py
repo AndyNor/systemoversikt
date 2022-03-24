@@ -61,6 +61,15 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 	return export_as_csv
 
 
+@admin.register(AzureApplicationKeys)
+class AzureApplicationKeysAdmin(admin.ModelAdmin):
+	list_display = ('applcaion_ref', 'key_id', 'display_name', 'key_type', 'key_usage', 'end_date_time')
+	search_fields = ('key_id', 'display_name',)
+	list_filter = ('key_type', 'key_usage', 'applcaion_ref')
+	autocomplete_fields = ('applcaion_ref',)
+	readonly_fields = ["key_id",]
+
+
 
 @admin.register(AzureApplication)
 class AzureApplicationAdmin(admin.ModelAdmin):

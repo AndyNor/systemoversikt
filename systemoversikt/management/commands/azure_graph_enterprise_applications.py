@@ -112,6 +112,7 @@ class Command(BaseCommand):
 					return False
 
 			def extract_and_store(json_text):
+
 				for app in json_text["value"]:
 					nonlocal APPLICATIONS_FOUND
 					APPLICATIONS_FOUND += 1
@@ -125,7 +126,7 @@ class Command(BaseCommand):
 					print(app['displayName'])
 					#slett tidligere koblinger:
 					a.requiredResourceAccess.clear()
-					for rra in app['requiredResourceAccess']:
+					for rra in app['requiredResourceAccess']: #publishedPermissionScopes hvis serviceprincipal
 						resourceAppId = rra["resourceAppId"]
 						for ra in rra["resourceAccess"]:
 							scope_id = ra["id"]
@@ -133,10 +134,39 @@ class Command(BaseCommand):
 
 					a.save()
 
+					# legger til alle nøkler som identifiseres og kobler dem til riktig app
+					# det antas at tabellen med nøkler tømmes ved hver kjøring, se #1
+
+					for keycredential in app['keyCredentials']:
+						key_end_date = parser.parse(keycredential["endDateTime"])
+						k = AzureApplicationKeys.objects.create(
+								applcaion_ref=a, # a i the application we are looping through
+								key_id=keycredential["keyId"],
+								display_name=keycredential["displayName"],
+								key_type=keycredential["type"],
+								key_usage=keycredential["usage"],
+								end_date_time=key_end_date,
+								)
+
+					for passwordcredential in app['passwordCredentials']:
+						key_end_date = parser.parse(passwordcredential["endDateTime"])
+						k = AzureApplicationKeys.objects.create(
+								applcaion_ref=a, # a i the application we are looping through
+								key_id=passwordcredential["keyId"],
+								display_name=passwordcredential["displayName"],
+								key_type="Client Secret",
+								key_usage="",
+								end_date_time=key_end_date,
+								hint=passwordcredential["hint"]
+								)
+
 
 			safety = 10 # må justeres om det blir veldig mange apper.
 			results_per_page = 100
 			maximum_results = (safety + 1) * results_per_page
+
+			# fjerner alle registrerte nøkler (keys) (#1)
+			AzureApplicationKeys.objects.all().delete()
 
 			initial_query = '/applications?$top=%s' % results_per_page
 			next_page = load_next_response(initial_query)

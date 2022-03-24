@@ -4984,3 +4984,18 @@ def azure_applications(request):
 		'request': request,
 		'applikasjoner': applikasjoner,
 	})
+
+def azure_application_keys(request):
+	"""
+	Vise liste over alle Azure enterprise application keys etter utløpsdato
+	Tilgangsstyring: Samme som for å se CMDB-data
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	keys = AzureApplicationKeys.objects.order_by('end_date_time')
+	return render(request, 'cmdb_azure_application_keys.html', {
+		'request': request,
+		'keys': keys,
+	})

@@ -17,6 +17,7 @@
 	<thead>
 		<th>Applikasjonsnavn</th>
 		<th>Risikonivå</th>
+		<th>Vurdering</th>
 		<th>Dato opprettet</th>
 		<th>Applikasjons ID</th>
 		<th>Gitte rettigheter</th>
@@ -27,7 +28,8 @@
 		<tr>
 			<td><a href="/admin/systemoversikt/azureapplication/{{a.id}}/change/">{{a.displayName|truncatechars:35}}</a></td>
 			<td>{{a.get_risikonivaa_display}}</td>
-			<td>{{a.createdDateTime}}
+			<td>{% if a.vurdering %} {{ a.sist_oppdatert|date:"Y-m-d"}}<br>{{ a.vurdering }} {% else %} -mangler- {% endif %}</td>
+			<td>{{a.createdDateTime|date:"Y-m-d"}}
 			<td>{{a.appId}}</td>
 			<td>
 				{% for r in a.requiredResourceAccess.all %}

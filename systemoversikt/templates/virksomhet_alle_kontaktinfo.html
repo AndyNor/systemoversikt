@@ -32,6 +32,8 @@
 		<th>PKO e-post</th>
 		<th>Informasjonssikkerhetskoordinator (ISK)</th>
 		<th>ISK e-post</th>
+		<th>IKT-hovedkontakt</th>
+		<th>Hovedkontakt e-post</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -102,6 +104,21 @@
 		</td>
 		<td>
 			{% for person in vir.informasjonssikkerhetskoordinator.all %}
+				{{ person.brukernavn.email }}</a><br>
+			{% endfor %}
+		</td>
+		<td>
+			{% for person in vir.ikt_kontakt.all %}
+				<a href="{% url 'ansvarlig' person.pk %}"
+				{% if person.brukernavn.is_active == False  %}
+					style="text-decoration: line-through;"
+				{% endif %}
+				>
+				{{ person }}</a><br>
+			{% endfor %}
+		</td>
+		<td>
+			{% for person in vir.ikt_kontakt.all %}
 				{{ person.brukernavn.email }}</a><br>
 			{% endfor %}
 		</td>

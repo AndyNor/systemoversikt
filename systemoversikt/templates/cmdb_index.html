@@ -38,6 +38,9 @@
 	{% url 'azure_applications' as url_azure_applications %}
 	<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}" >Enterprise applications</a>
 
+	{% url 'azure_application_keys' as url_azure_application_keys %}
+	<a href="{{ url_azure_application_keys }}" class="btn btn-sm btn-link {% if url_azure_application_keys in request.path %}fremhev{% endif %}" >Nøkler og sertifikater</a>
+
 
 	<hr>
 	<h6>Active Directory On-prem</h6>

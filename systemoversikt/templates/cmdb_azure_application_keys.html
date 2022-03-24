@@ -1,0 +1,43 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Microsoft 365 "oslokommune" Enterprise application keys
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Det er {{keys.count}} nøkler/sertifikater i databasen</p>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Visningsnavn</th>
+		<th>Dato for utløp</th>
+		<th>Nøkkel ID</th>
+		<th>Applikasjonsnavn</th>
+		<th>Nøkkeltype</th>
+		<th>Bruksområde</th>
+		<th>Hint</th>
+	</thead>
+	<tbody>
+	{% for k in keys %}
+		<tr>
+			<td>{{ k.display_name }}</td>
+			<td {% if k.expire %} style="background-color: #ed8080;" {% endif %}
+				{% if k.expire_soon %} style="background-color: #f9b774;" {% endif %}>
+				{{ k.end_date_time|date:"Y-m-d" }}</td>
+			<td>{{ k.key_id }}</td>
+			<td>{{ k.applcaion_ref }}<br>{{ k.applcaion_ref.appId }}</td>
+			<td>{{ k.key_type }}</td>
+			<td>{{ k.key_usage }}</td>
+			<td>{{ k.hint|default:"-" }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

@@ -5095,16 +5095,72 @@ RISIKO_VALG = (
 	(3, '3 Høy'),
 )
 
+class AzureApplicationKeys(models.Model):
+	applcaion_ref = models.ForeignKey(
+			to="AzureApplication",
+			on_delete=models.CASCADE,
+			null=False, blank=False,
+			)
+	key_id = models.CharField(
+			max_length=200,
+			null=False,
+			blank=False,
+			unique=True,
+			)
+	display_name = models.CharField(
+			max_length=400,
+			null=True,
+			blank=True,
+			)
+	key_type = models.CharField(
+			max_length=200,
+			null=True,
+			blank=True,
+			)
+	key_usage = models.CharField(
+			max_length=200,
+			null=True,
+			blank=True,
+			)
+	end_date_time = models.DateTimeField(
+			null=False,
+			blank=True,
+			)
+	hint = models.CharField(
+			max_length=30,
+			null=True,
+			blank=True,
+			)
+
+	def __str__(self):
+		return u'%s' % (self.display_name)
+
+	class Meta:
+		verbose_name_plural = "Azure application keys"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+	def expire(self):
+		from django.utils import timezone
+		return timezone.now() > self.end_date_time
+
+	def expire_soon(self):
+		if self.expire():
+			return False
+		from django.utils import timezone
+		from datetime import timedelta
+		return (timezone.now() + timedelta(45)) > self.end_date_time
+
+
 class AzureApplication(models.Model):
 	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+		)
 	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+		)
 	appId = models.CharField(
 		# Delegated or Application permission
 		max_length=40,
@@ -5134,12 +5190,12 @@ class AzureApplication(models.Model):
 		help_text=u"Beholdes ved synkronisering mot Azure som skjer hver natt",
 		)
 	risikonivaa = models.IntegerField(choices=RISIKO_VALG,
-			verbose_name="Vurdering av risiko",
-			default=0,
-			blank=False,
-			null=False,
-			help_text=u"Beholdes ved synkronisering mot Azure som skjer hver natt",
-			)
+		verbose_name="Vurdering av risiko",
+		default=0,
+		blank=False,
+		null=False,
+		help_text=u"Beholdes ved synkronisering mot Azure som skjer hver natt",
+		)
 
 	def __str__(self):
 		return u'%s' % (self.displayName)
@@ -5154,14 +5210,14 @@ class AzureApplication(models.Model):
 
 class AzurePublishedPermissionScopes(models.Model):
 	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+		)
 	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+		)
 	permission_type = models.CharField(
 		# Delegated or Application permission
 		max_length=20,
@@ -5249,18 +5305,18 @@ class AzurePublishedPermissionScopes(models.Model):
 
 class UBWRapporteringsenhet(models.Model):
 	users = models.ManyToManyField(
-			to=User,
-			related_name='okonomi_rapporteringsenhet_users',
-			verbose_name="Tilgang for",
-			help_text=u"Personer med tilgang til å se alle data for enheten",
-			)
+		to=User,
+		related_name='okonomi_rapporteringsenhet_users',
+		verbose_name="Tilgang for",
+		help_text=u"Personer med tilgang til å se alle data for enheten",
+		)
 	name = models.CharField(
-			verbose_name="Navn på enhet",
-			max_length=150,
-			blank=False,
-			null=False,
-			help_text=u"",
-			)
+		verbose_name="Navn på enhet",
+		max_length=150,
+		blank=False,
+		null=False,
+		help_text=u"",
+		)
 
 	def __str__(self):
 		return u'%s' % (self.name)

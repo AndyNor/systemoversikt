@@ -138,6 +138,8 @@ urlpatterns = [
 	url(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
 	url(r'^cmdb/servere/sok/$', views.maskin_sok, name='maskin_sok'),
 	url(r'^cmdb/azure/applications/$', views.azure_applications, name='azure_applications'),
+	url(r'^cmdb/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
+
 
 
 
