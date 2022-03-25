@@ -4979,7 +4979,7 @@ def azure_applications(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	applikasjoner = AzureApplication.objects.order_by('-createdDateTime')
+	applikasjoner = AzureApplication.objects.filter(active=True).order_by('-createdDateTime')
 	return render(request, 'cmdb_azure_applications.html', {
 		'request': request,
 		'applikasjoner': applikasjoner,

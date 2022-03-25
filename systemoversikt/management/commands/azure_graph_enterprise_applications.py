@@ -123,6 +123,7 @@ class Command(BaseCommand):
 
 					a.createdDateTime = parser.parse(app['createdDateTime']) # 2021-12-15T13:10:38Z
 					a.displayName = app['displayName']
+					a.active = True
 					print(app['displayName'])
 					#slett tidligere koblinger:
 					a.requiredResourceAccess.clear()
@@ -176,6 +177,17 @@ class Command(BaseCommand):
 				if safety <= 0:
 					break
 
+			#sette applikasjoner som ikke har vært sett til deaktivt
+			from django.utils import timezone
+			from datetime import timedelta
+			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+			deaktive_apper = AzureApplication.objects.filter(sist_oppdatert__lte=tidligere)
+			for a in deaktive_apper:
+				a.active = False
+				a.save()
+				print("%s satt deaktiv" % a)
+
+			#logg dersom vellykket
 			logg_message = "Fant %s applikasjoner. Maksgrense er satt til %s" % (APPLICATIONS_FOUND, maximum_results)
 			logg_entry = ApplicationLog.objects.create(
 					event_type='Azure Enterprise Applications',

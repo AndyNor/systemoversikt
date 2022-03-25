@@ -5157,6 +5157,9 @@ class AzureApplication(models.Model):
 		auto_now_add=True,
 		null=True,
 		)
+	active = models.BooleanField(
+		default=True,
+		)
 	sist_oppdatert = models.DateTimeField(
 		verbose_name="Sist oppdatert",
 		auto_now=True,
