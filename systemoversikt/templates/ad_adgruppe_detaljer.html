@@ -58,7 +58,7 @@
 	{% for m in member.users %}
 		<tr>
 			<td>👤 Bruker</td>
-			<td>{{m.first_name}} {{m.last_name}}</td>
+			<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>{{m.first_name}} {{m.last_name}}</td>
 			<td>{{m.username}}</td>
 			<td>{{m.profile.description}}</td>
 			<td>{{m.profile.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>

@@ -143,7 +143,7 @@ urlpatterns = [
 
 
 
-	url(r'^cmdb/prk/alle/$', views.alle_prk, name='alle_prk'),
+	url(r'^cmdb/prk/$', views.alle_prk, name='alle_prk'),
 	url(r'^cmdb/prk/browse/$', views.prk_browse, name='prk_browse'),
 	url(r'^cmdb/prk/browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
 

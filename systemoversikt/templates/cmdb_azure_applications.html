@@ -16,6 +16,7 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>Applikasjonsnavn</th>
+		<th>Eier</th>
 		<th>Risikonivå</th>
 		<th>Vurdering</th>
 		<th>Dato opprettet</th>
@@ -27,6 +28,7 @@
 	{% for a in applikasjoner %}
 		<tr>
 			<td><a href="/admin/systemoversikt/azureapplication/{{a.id}}/change/">{{a.displayName|truncatechars:35}}</a></td>
+			<td>{% for system in a.systemreferanse.all %}{{ system.systemeier.virksomhetsforkortelse }} {% include 'system_include_vis.html' with systemer=system %}{% endfor %}</td>
 			<td>{{a.get_risikonivaa_display}}</td>
 			<td>{% if a.vurdering %} {{ a.sist_oppdatert|date:"Y-m-d"}}<br>{{ a.vurdering }} {% else %} -mangler- {% endif %}</td>
 			<td>{{a.createdDateTime|date:"Y-m-d"}}

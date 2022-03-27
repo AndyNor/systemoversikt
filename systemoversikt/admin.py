@@ -218,6 +218,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'database_in_use',
 		'godkjente_bestillere',
 		'tilgangsgrupper_ad',
+		'enterprise_applicatons',
 	)
 
 	fieldsets = (
@@ -262,6 +263,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'kjente_mangler',
 				'avhengigheter_referanser',
 				'avhengigheter',
+				'enterprise_applicatons',
 				('legacy_klient_krever_smb', 'legacy_klient_krever_direkte_db'),
 				('legacy_klient_krever_onprem_lisensserver', 'legacy_klient_autentisering'),
 				'isolert_drift',

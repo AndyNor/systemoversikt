@@ -1,39 +1,7 @@
 {% extends "index.html" %}
 
 {% block sidemeny %}
-	<h6>Sopra Steria CMDB</h6>
-		{% url 'alle_cmdbref' as url_alle_cmdbref %}
-		<a href="{{url_alle_cmdbref}}" class="btn btn-sm btn-link {% if url_alle_cmdbref in request.path %}fremhev{% endif %}">Business services</a>
 
-		<hr><p style="color: grey;">Servere og klienter</p>
-
-		{% url 'alle_maskiner' as url_alle_maskiner %}
-		<a href="{{url_alle_maskiner}}" class="btn btn-sm btn-link {% if url_alle_maskiner in request.path %}fremhev{% endif %}">Maskiner</a>
-
-		{% url 'maskin_sok' as url_maskin_sok %}
-		<a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Listesøk</a>
-
-		{% url 'alle_os' as url_alle_os%}
-		<a href="{{url_alle_os}}" class="btn btn-sm btn-link {% if url_alle_os in request.path %}fremhev{% endif %}" >Operativsystemstatistikk</a>
-
-		{% url 'servere_utfaset' as url_servere_utfaset %}
-		<a href="{{url_servere_utfaset}}" class="btn btn-sm btn-link {% if url_servere_utfaset in request.path %}fremhev{% endif %}" >Utfasede servere</a>
-
-		<hr><p style="color: grey;">Databaser</p>
-
-		{% url 'alle_databaser' as url_alle_databaser %}
-		<a href="{{url_alle_databaser}}" class="btn btn-sm btn-link {% if url_alle_databaser in request.path %}fremhev{% endif %}">Databaser</a>
-
-		{% url 'statistikk_databaser' as url_statistikk_databaser %}
-		<a href="{{url_statistikk_databaser}}" class="btn btn-sm btn-link {% if url_statistikk_databaser in request.path %}fremhev{% endif %}" >Databasestatistikk</a>
-
-
-
-
-	{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}
-
-
-	<hr>
 	<h6>Microsoft 365</h6>
 	{% url 'azure_applications' as url_azure_applications %}
 	<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}" >Enterprise applications</a>
@@ -43,47 +11,58 @@
 
 
 	<hr>
-	<h6>Active Directory On-prem</h6>
+	<h6>Brukere og tilgangsgrupper</h6>
+
+	{% url 'virksomhet_enhetsok' as url_virksomhet_enhetsok %}
+	<a href="{{ url_virksomhet_enhetsok }}" class="btn btn-sm btn-link {% if url_virksomhet_enhetsok in request.path %}fremhev{% endif %}">Organisasjon</a>
 
 	{% url 'bruker_sok' as url_bruker_sok %}
-	<a href="{{ url_bruker_sok }}" class="btn btn-sm btn-link {% if url_bruker_sok in request.path %}fremhev{% endif %}" >Brukeridenter</a>
+	<a href="{{ url_bruker_sok }}" class="btn btn-sm btn-link {% if url_bruker_sok in request.path %}fremhev{% endif %}">Brukeridenter</a>
 
-	{% url 'alle_adgrupper' as url_alle_adgrupper %}
-	<a href="{{ url_alle_adgrupper }}" class="btn btn-sm btn-link {% if url_alle_adgrupper in request.path %}fremhev{% endif %}" >AD-grupper</a>
-
-	{% url 'ad_analyse' as url_ad_analyse %}
-	<a href="{{ url_ad_analyse }}?antall=0" class="btn btn-sm btn-link {% if url_ad_analyse in request.path %}fremhev{% endif %}" >AD-gruppeanalyse</a>
-
-
-	{% url 'adorgunit_detaljer' as url_adorgunit_detaljer %}
-	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}" >OU-strukturen</a>
-
-	{% url 'leverandortilgang' as url_leverandortilgang %}
-	<a href="{{ url_leverandortilgang }}" class="btn btn-sm btn-link {% if url_leverandortilgang in request.path %}fremhev{% endif %}" >Leverandørtilgang</a>
-
-	{% url 'ad' as url_ad %}
-	<a href="{{url_ad}}" class="btn btn-sm {% if url_ad in request.path %}fremhev{% endif %}">Direktesøk</a>
-
-	{% block ekstrameny_ad %}{% endblock ekstrameny_ad %}
-
-	<hr>
-	<h6>PRK</h6>
 	{% url 'alle_prk' as url_alle_prk %}
 	<a href="{{ url_alle_prk }}"class="btn btn-sm btn-link {% if url_alle_prk in request.path %}fremhev{% endif %}">PRK-skjema</a>
 
-	{% url 'alle_klienter' as url_alle_klienter %}
-	<a href="{{ url_alle_klienter }}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}">PRK maskinadmin</a>
+	{% url 'alle_adgrupper' as url_alle_adgrupper %}
+	<a href="{{ url_alle_adgrupper }}" class="btn btn-sm btn-link {% if url_alle_adgrupper in request.path %}fremhev{% endif %}">Tilgangsgrupper</a>
 
-	{% url 'virksomhet_enhetsok' as url_virksomhet_enhetsok %}
-	<a href="{{ url_virksomhet_enhetsok }}" class="btn btn-sm btn-link {% if url_virksomhet_enhetsok in request.path %}fremhev{% endif %}">Søk i PRK organisasjon</a>
+	{% url 'leverandortilgang' as url_leverandortilgang %}
+	<a href="{{ url_leverandortilgang }}" class="btn btn-sm btn-link {% if url_leverandortilgang in request.path %}fremhev{% endif %}">Leverandørtilgang</a>
 
+	{% url 'adorgunit_detaljer' as url_adorgunit_detaljer %}
+	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}">OU-strukturen</a>
+
+	{% block ekstrameny_ad %}{% endblock ekstrameny_ad %}
 	{% block ekstrameny_prk %}{% endblock ekstrameny_prk %}
 
 	<hr>
-	<h6>Nettverk</h6>
 
-	{% url 'alle_ip' as url_alle_ip %}
-	<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">Søk på IP</a>
+	<h6>Applikasjon- og basisdrift</h6>
+		{% url 'alle_cmdbref' as url_alle_cmdbref %}
+		<a href="{{url_alle_cmdbref}}" class="btn btn-sm btn-link {% if url_alle_cmdbref in request.path %}fremhev{% endif %}">Business services</a>
+
+		{% url 'alle_maskiner' as url_alle_maskiner %}
+		<a href="{{url_alle_maskiner}}" class="btn btn-sm btn-link {% if url_alle_maskiner in request.path %}fremhev{% endif %}">Serveroversikt</a>
+
+
+		{% url 'alle_maskiner' as url_alle_maskiner %}
+		<a href="{{url_alle_maskiner}}" class="btn btn-sm btn-link {% if url_alle_maskiner in request.path %}fremhev{% endif %}">Tykke og tynne klienter</a>
+
+
+		{% url 'alle_os' as url_alle_os%}
+		<a href="{{url_alle_os}}" class="btn btn-sm btn-link {% if url_alle_os in request.path %}fremhev{% endif %}" >Operativsystemer</a>
+
+		{% url 'alle_ip' as url_alle_ip %}
+		<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">Nettverkssøk</a>
+
+		{% url 'alle_databaser' as url_alle_databaser %}
+		<a href="{{url_alle_databaser}}" class="btn btn-sm btn-link {% if url_alle_databaser in request.path %}fremhev{% endif %}">Databaseoversikt</a>
+
+		{% url 'statistikk_databaser' as url_statistikk_databaser %}
+		<a href="{{url_statistikk_databaser}}" class="btn btn-sm btn-link {% if url_statistikk_databaser in request.path %}fremhev{% endif %}" >Databasestatistikk</a>
+
+
+		{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}
+
 
 	{% block ekstrameny_nettverk %}{% endblock ekstrameny_nettverk %}
 {% endblock sidemeny %}

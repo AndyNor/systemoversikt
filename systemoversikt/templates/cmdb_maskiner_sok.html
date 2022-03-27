@@ -11,6 +11,17 @@
 
 {% block hovedinnhold %}
 
+	{% url 'alle_klienter' as url_alle_klienter %}
+	<a href="{{ url_alle_klienter }}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}">PRK maskinadmin</a>
+
+	{% url 'servere_utfaset' as url_servere_utfaset %}
+	<a href="{{url_servere_utfaset}}" class="btn btn-sm btn-link {% if url_servere_utfaset in request.path %}fremhev{% endif %}">Utfasede servere</a>
+
+	{% url 'maskin_sok' as url_maskin_sok %}
+	<a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Listesøk</a>
+
+	<hr>
+
 	<p>Servere er en egen import fra Sopra Sterias CMDB. Den inneholder servere, terminalservere og tykke klienter. Tynne klienter er ikke med da de ikke er medlem i Oslofelles-domene. Du kan søke opp tynne klienter i PRK-maskinadmin.</p>
 
 	<p>Sopra Steria knytter servere til business sub services, og de har så langt auto-discovery virker informasjon om IP-adresse, operativsystem, disk, minne og cpu.</p>

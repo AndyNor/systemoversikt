@@ -66,13 +66,6 @@
 
 			{% if user.is_authenticated %}
 				<li class="hovedmeny">
-					{% url "alle_ansvarlige" as alle_ansvarlige_url %}
-					<a href="{{ alle_ansvarlige_url }}" class="nav-link {% if alle_ansvarlige_url in request.path %} active {% endif %}">Ansvarlige</a>
-				</li>
-			{% endif %}
-
-			{% if user.is_authenticated %}
-				<li class="hovedmeny">
 					{% url "alle_avtaler" as alle_avtaler_url %}
 					<a href="{{ alle_avtaler_url }}" class="nav-link {% if alle_avtaler_url in request.path %} active {% endif %}">Avtaler</a>
 				</li>
@@ -95,7 +88,7 @@
 			{% if user.is_authenticated %}
 				<li class="hovedmeny">
 					{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
-					<a href="{{ alle_driftsmodeller_url }}" class="nav-link {% if alle_driftsmodeller_url in request.path %} active {% endif %}">Plattformer</a>
+					<a href="{{ alle_driftsmodeller_url }}" class="nav-link {% if alle_driftsmodeller_url in request.path %} active {% endif %}">Driftsplattformer</a>
 				</li>
 			{% endif %}
 
@@ -111,12 +104,12 @@
 
 				<li class="hovedmeny">
 					{% url "alle_systemurler" as alle_systemurler_url %}
-					<a href="{{ alle_systemurler_url }}" class="nav-link {% if alle_systemurler_url in request.path %} active {% endif %}">URL-er</a>
+					<a href="{{ alle_systemurler_url }}" class="nav-link {% if alle_systemurler_url in request.path %} active {% endif %}">URLer</a>
 				</li>
 
 				<li class="hovedmeny">
 					{% url "alle_definisjoner" as alle_definisjoner_url %}
-					<a href="{{ alle_definisjoner_url }}" class="nav-link {% if alle_definisjoner_url in request.path %} active {% endif %}">Definisjoner</a>
+					<a href="{{ alle_definisjoner_url }}" class="nav-link {% if alle_definisjoner_url in request.path %} active {% endif %}">Begreper</a>
 				</li>
 
 			{% if user.is_authenticated %}
@@ -132,10 +125,6 @@
 					<a href="{{ url_ubw_home }}" class="nav-link {% if url_ubw_home in request.path %} active {% endif %}">UBW</a>
 				</li>
 			{% endif %}
-
-				<li class="hovedmeny">
-					<a href="/api/" class="nav-link">API</a>
-				</li>
 
 			{% if user.is_authenticated %}
 				<li class="hovedmeny">

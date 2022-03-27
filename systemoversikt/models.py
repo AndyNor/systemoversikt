@@ -3443,6 +3443,12 @@ class System(models.Model):
 			null=True,
 			help_text=u"Settes dersom systemet ikke støtter moderne autentisering (SAML/OIDC)",
 			)
+	enterprise_applicatons = models.ManyToManyField(
+			to="AzureApplication",
+			related_name='systemreferanse',
+			verbose_name="Tilhørende Microsoft enterprise application",
+			blank=True,
+			)
 	history = HistoricalRecords()
 
 	def __str__(self):
@@ -5098,6 +5104,7 @@ RISIKO_VALG = (
 class AzureApplicationKeys(models.Model):
 	applcaion_ref = models.ForeignKey(
 			to="AzureApplication",
+			related_name='keys',
 			on_delete=models.CASCADE,
 			null=False, blank=False,
 			)

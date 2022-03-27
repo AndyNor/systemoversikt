@@ -11,6 +11,14 @@
 
 {% block hovedinnhold %}
 
+	{% url 'ad' as url_ad %}
+	<a href="{{url_ad}}" class="btn btn-sm {% if url_ad in request.path %}fremhev{% endif %}">Direktesøk</a>
+
+	{% url 'logger_users' as url_logger_users %}
+	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}" >Endringslogg</a>
+
+	<hr>
+
 	<form action="{% url 'bruker_sok' %}" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="55" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
@@ -49,7 +57,7 @@
 	{% if user.ansvarlig_brukernavn %}
 		<br><a href="{% url 'ansvarlig' pk=user.ansvarlig_brukernavn.pk %}">Ansvarsområder i Kartoteket</a>
 	{% endif %}
-	<br><a href="{{ url_ad_exact }}">Søk etter brukerident i Active Directory</a>
+	<br><a href="{{ url_ad_exact }}">Direktesøk mot AD</a>
 
 	<hr>
 	{% endfor %}

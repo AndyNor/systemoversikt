@@ -2,18 +2,16 @@
 {% load humanize %}
 {% load static %}
 
-{% block ekstrameny_ad %}
-	<hr>
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/">/admin bla</a>
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/?membercount=0">/admin member=0</a>
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/adgroup/?memberofcount=0">/admin memberof=0</a>
-{% endblock ekstrameny_ad %}
-
 {% block overskrift %}
-	Søk i AD-grupper
+	Søk i AD etter tilgangsgrupper
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
+
+	{% url 'ad_analyse' as url_ad_analyse %}
+	<a href="{{ url_ad_analyse }}?antall=0" class="btn btn-sm btn-link {% if url_ad_analyse in request.path %}fremhev{% endif %}">Tomme sikkerhetsgrupper</a>
+
+	<hr>
 
 	<p>Merk at det er et tak på 5000 medlemmer vist i en gruppe.</p>
 

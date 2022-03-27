@@ -439,6 +439,50 @@
 
 
 	<div class="card">
+		<div class="card-header" id="headingTilgang">
+			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseTilgang" aria-expanded="true" aria-controls="collapseTilgang">
+				Office 365 integrasjoner
+			</button>
+		</div>
+		<div id="collapseTilgang" class="collapse show" aria-labelledby="headingTilgang" data-parent="#accordionSystem">
+			<div class="card-body">
+
+<table class="table table-sm">
+				<thead>
+					<tr>
+						<th>Applikasjonsnavn (Enterprise application)</th>
+						<th>Rettigheter</th>
+						<th>Nøkler</th>
+					</tr>
+				</thead>
+				<tbody>
+
+			{% for ea in systemdetaljer.enterprise_applicatons.all %}
+				<tr>
+					<td>{{ ea.displayName }}</td>
+					<td>
+
+						{% for perm in ea.requiredResourceAccess.all %}
+							{{ perm.adminConsentDisplayName }}<br>
+						{%  endfor %}
+					</td>
+					<td>
+
+						{% for key in ea.keys.all %}
+							{{ key }} utløper {{ key.end_date_time }}<br>
+						{%  endfor %}
+					</td>
+				</tr>
+			{% endfor %}
+
+				</tbody>
+			</table>
+
+			</div>
+		</div>
+	</div>
+
+	<div class="card">
 		<div class="card-header" id="headingBehandlinger">
 			<button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseBehandlinger" aria-expanded="true" aria-controls="collapseBehandlinger">
 				Behandlinger i systemet
