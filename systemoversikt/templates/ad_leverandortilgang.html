@@ -11,67 +11,12 @@
 
 {% block hovedinnhold %}
 
-Valgt gruppe: {{valgt_gruppe}}<hr>
-
 <ul style="column-count:3;">
 {% for kilde in leverandor_kilder %}
 	{% url 'leverandortilgang' as base_url %}
-	<li {%if kilde.gruppe == valgt_gruppe %} style="font-weight: 800; color: black";{%endif%}><a href="{{ base_url }}{{ kilde.gruppe }}/">{{ kilde.beskrivelse }} ({{ kilde.medlemmer }})</a></li>
+	<li {%if kilde.gruppe == valgt_gruppe %} style="font-weight: 800; color: black";{%endif%}><a target="_blank" href="{{ base_url }}{{ kilde.gruppe }}/">{{ kilde.beskrivelse }} ({{ kilde.medlemmer }})</a></li>
 {% endfor %}
 </ul>
-
-<hr>
-
-{% for k in usergroups %}
-
-	<table class="tablesorter excel">
-	<thead>
-		<tr>
-			<th>Navn</th>
-			<th>Brukernavn</th>
-			<th>Virksomhet</th>
-			<th>Fra PRK?</th>
-			<th>Sist pålogget</th>
-			<th>Passordstatus</th>
-			<td>Passordutløp</td>
-			<td>Tilhørighet</td>
-			<th>Beskrivelse</th>
-		</tr>
-	</thead>
-	<tbodt>
-
-	{% for n in k.nestede_grupper %}
-		<tr>
-			<td colspan="10">⚠️ Nøstet gruppe: {{n.common_name}}</td>
-		</tr>
-	{% endfor %}
-
-	{% for m in k.kildemedlemmer %}
-		<tr>
-			<td>{{ m.first_name }} {{ m.last_name }}</td>
-			<td>{{ m.username }}</td>
-			<td>{{ m.profile.virksomhet.virksomhetsforkortelse }}</td>
-			<td>{{ m.profile.from_prk|yesno:"OK,Opprettet manuelt,Vet ikke" }}</td>
-			<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
-			<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,OK,Vet ikke" }}</td>
-			<td>{{ m.profile.dont_expire_password|yesno:"Passord utløper aldri,OK,Vet ikke" }}</td>
-			<td>{{ m.profile.org_tilhorighet }}</td>
-			<td>{{ m.profile.description }}</td>
-		</tr>
-	{% endfor %}
-	</tbodt>
-	</table>
-
-{% endfor %}
-
-
-<hr>
-{% if feilede_oppslag%}
-	Brukere som ikke ble funnet
-	{% for u in feilede_oppslag %}
-		<li>{{ u }}</li>
-	{% endfor %}
-{% endif %}
 
 
 {% endblock hovedinnhold %}

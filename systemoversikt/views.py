@@ -1987,45 +1987,51 @@ def leverandortilgang(request, valgt_gruppe=None):
 	required_permissions = ['auth.view_user']
 	if any(map(request.user.has_perm, required_permissions)):
 
-		# Windows Terminal Service (WTS)
-		#	TASK-OF2-LevtilgangWTS-IS
-		#	TASK-OF2-LevtilgangWTS-SS
+		if valgt_gruppe == None:
+			# Windows Terminal Service (WTS)
+			#	TASK-OF2-LevtilgangWTS-IS
+			#	TASK-OF2-LevtilgangWTS-SS
 
-		usergroups = []
-		feilede_oppslag = []
+			leverandor_kilder = [
+				#{"gruppe": "DS-DRIFT_DML", "beskrivelse": "Ekstern leverandørtilgang (DML)"}, # se under dml_grupper under.
+				{"gruppe": "DS-DRIFT_TREDJEPARTDRIFT", "beskrivelse": "UBW-relatert (økonomi og HR)"},
+				{"gruppe": "TASK-OF2-DRIFTWTS-IS", "beskrivelse": "Full driftstilgang intern sone"},
+				{"gruppe": "TASK-OF2-DRIFTWTS-SS", "beskrivelse": "Full driftstilgang sikker sone"},
+				{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_KARDEX", "beskrivelse": "Kardex hos DEB"},
+				{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_DEB", "beskrivelse": "Creston hos DEB"},
+				{"gruppe": "DS-KEM_RPA", "beskrivelse": "RPA hos KEM"},
+				{"gruppe": "DS-UVALEVTILGANG", "beskrivelse": "ITAS/UVA"},
+			]
 
-		leverandor_kilder = [
-			#{"gruppe": "DS-DRIFT_DML", "beskrivelse": "Ekstern leverandørtilgang (DML)"}, # se under dml_grupper under.
-			{"gruppe": "DS-DRIFT_TREDJEPARTDRIFT", "beskrivelse": "UBW-relatert (økonomi og HR)"},
-			{"gruppe": "TASK-OF2-DRIFTWTS-IS", "beskrivelse": "Full driftstilgang intern sone"},
-			{"gruppe": "TASK-OF2-DRIFTWTS-SS", "beskrivelse": "Full driftstilgang sikker sone"},
-			{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_KARDEX", "beskrivelse": "Kardex hos DEB"},
-			{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_DEB", "beskrivelse": "Creston hos DEB"},
-			{"gruppe": "DS-KEM_RPA", "beskrivelse": "RPA hos KEM"},
-			{"gruppe": "DS-UVALEVTILGANG", "beskrivelse": "ITAS/UVA"},
-		]
+			unwanted_objects = [
+				"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANG,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+				"CN=DS-DRIFT_DML_2SDRIFTLEV_2SDRIFTLEV,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+				"CN=DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGIS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+				"CN=DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGSS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+				"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANG,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+				"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANGSS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+			]
+			dml_grupper = ADgroup.objects.filter(distinguishedname__icontains='DS-DRIFT_DML_').exclude(distinguishedname__in=[o for o in unwanted_objects])
+			for g in dml_grupper:
+				if g.common_name != None:
+					leverandor_kilder.append(
+							{"gruppe": g.common_name, "beskrivelse": "DML %s" % g.common_name}
+						)
 
-		unwanted_objects = [
-			"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANG,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-			"CN=DS-DRIFT_DML_2SDRIFTLEV_2SDRIFTLEV,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-			"CN=DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGIS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-			"CN=DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGSS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-			"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANG,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-			"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANGSS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-		]
-		dml_grupper = ADgroup.objects.filter(distinguishedname__icontains='DS-DRIFT_DML_').exclude(distinguishedname__in=[o for o in unwanted_objects])
-		for g in dml_grupper:
-			if g.common_name != None:
-				leverandor_kilder.append(
-						{"gruppe": g.common_name, "beskrivelse": "DML %s" % g.common_name}
-					)
+			# legge til antall direkte medlemmer per gruppe
+			for kilde in leverandor_kilder:
+				kilde["medlemmer"] = ADgroup.objects.filter(common_name=kilde["gruppe"]).get().membercount
 
-		# legge til antall direkte medlemmer per gruppe
-		for kilde in leverandor_kilder:
-			kilde["medlemmer"] = ADgroup.objects.filter(common_name=kilde["gruppe"]).get().membercount
+
+			return render(request, 'ad_leverandortilgang.html', {
+					"leverandor_kilder": leverandor_kilder,
+			})
 
 
 		if valgt_gruppe != None:
+
+			usergroups = []
+			feilede_oppslag = []
 
 			kildemedlemmer = []
 			nestede_grupper = []
@@ -2052,12 +2058,12 @@ def leverandortilgang(request, valgt_gruppe=None):
 				"nestede_grupper": nestede_grupper,
 			})
 
-		return render(request, 'ad_leverandortilgang.html', {
-			"usergroups": usergroups,
-			"feilede_oppslag": feilede_oppslag,
-			"leverandor_kilder": leverandor_kilder,
-			"valgt_gruppe": valgt_gruppe,
-		})
+			return render(request, 'ad_leverandortilgang_detaljer.html', {
+				"usergroups": usergroups,
+				"feilede_oppslag": feilede_oppslag,
+				"valgt_gruppe": valgt_gruppe,
+			})
+
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
