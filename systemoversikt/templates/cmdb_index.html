@@ -28,6 +28,9 @@
 	{% url 'leverandortilgang' as url_leverandortilgang %}
 	<a href="{{ url_leverandortilgang }}" class="btn btn-sm btn-link {% if url_leverandortilgang in request.path %}fremhev{% endif %}">Leverandørtilgang</a>
 
+	{% url 'drifttilgang' as url_drifttilgang %}
+	<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Drifttilgang</a>
+
 	{% url 'adorgunit_detaljer' as url_adorgunit_detaljer %}
 	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}">OU-strukturen</a>
 

@@ -1,0 +1,65 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Driftstilgang mot Felles IKT-plattform
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Sopra Steria sine driftsoperatører må først logge inn lokalt hos Sopra Steria mot en "Secure Operator Access (SOA)"-løsning som krever multifaktor, daglig aktivering av roller og så slipper operatør inn på terminalservere hvor det igjen er åpnet til Oslo kommune via statiske VPN-linjer.</p>
+
+<p>Leverandør på nettverk (Telenor) har egen løsning for tilgang. Denne er ikke kartlagt her enda.</p>
+
+<hr>
+
+<p>Fant {{ steria_users.count }} brukere.</p>
+
+<ul style="column-count:3;">
+{% for kilde in leverandor_kilder %}
+	{% url 'leverandortilgang' as base_url %}
+	<li {%if kilde.gruppe == valgt_gruppe %} style="font-weight: 800; color: black";{%endif%}><a href="{{ base_url }}{{ kilde.gruppe }}/">{{ kilde.beskrivelse }} ({{ kilde.medlemmer }})</a></li>
+{% endfor %}
+</ul>
+
+<hr>
+
+<table class="tablesorter excel">
+<thead>
+	<tr>
+		<th>Navn</th>
+		<th>Brukernavn</th>
+		<th>Virksomhet</th>
+		<th>Fra PRK?</th>
+		<th>Sist pålogget</th>
+		<th>Passordstatus</th>
+		<td>Passordutløp</td>
+		<td>Tilhørighet</td>
+		<th>Beskrivelse</th>
+	</tr>
+</thead>
+<tbodt>
+
+{% for m in steria_users %}
+	<tr>
+		<td>{{ m.first_name }} {{ m.last_name }}</td>
+		<td>{{ m.username }}</td>
+		<td>{{ m.profile.virksomhet.virksomhetsforkortelse }}</td>
+		<td>{{ m.profile.from_prk|yesno:"OK,Opprettet manuelt,Vet ikke" }}</td>
+		<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
+		<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,OK,Vet ikke" }}</td>
+		<td>{{ m.profile.dont_expire_password|yesno:"Passord utløper aldri,OK,Vet ikke" }}</td>
+		<td>{{ m.profile.org_tilhorighet }}</td>
+		<td>{{ m.profile.description }}</td>
+	</tr>
+{% endfor %}
+</tbodt>
+</table>
+
+{{ feilede_oppslag }}
+
+{% endblock hovedinnhold %}

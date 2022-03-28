@@ -2020,6 +2020,11 @@ def leverandortilgang(request, valgt_gruppe=None):
 						{"gruppe": g.common_name, "beskrivelse": "DML %s" % g.common_name}
 					)
 
+		# legge til antall direkte medlemmer per gruppe
+		for kilde in leverandor_kilder:
+			kilde["medlemmer"] = ADgroup.objects.filter(common_name=kilde["gruppe"]).get().membercount
+
+
 		if valgt_gruppe != None:
 
 			kildemedlemmer = []
@@ -2052,6 +2057,40 @@ def leverandortilgang(request, valgt_gruppe=None):
 			"feilede_oppslag": feilede_oppslag,
 			"leverandor_kilder": leverandor_kilder,
 			"valgt_gruppe": valgt_gruppe,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def drifttilgang(request):
+	"""
+	Vise informasjon brukere som har drifttilgang
+	Tilgjengelig for de som kan se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		# 2S definerer driftsbrukere som bruker som starter med DRIFT og har ("Sopra" eller "2S") i beskrivelsesfelt.
+		# Vi sjekker brukere som ikke er fra PRK først
+
+		# "GS-OpsRole-Ergogroup-ADminAlleMemberServere"
+		# "domain admins"
+		# "GS-OpsRole-Ergogroup-ServerAdmins"
+		# "Task-OF2-ServerAdmin-AllMemberServers"
+		# "Role-OF2-Admin-Citrix Services"
+		# "DRIFT_DRIFTSPERSONELL_SERVERMGMT_SERVERADMIN"
+
+		steria_users = User.objects.filter(profile__accountdisable=False).filter(Q(profile__description__icontains="Sopra") | Q(profile__description__icontains="2S"))
+
+		# for hver bruker looper igjennom grupper og markerer om gruppe eksisterer.
+		## databaseadministrator
+		## citrix administrator
+		## server administrator
+		## backup administrator
+		## AD / domain administrator
+
+		return render(request, 'ad_drifttilgang.html', {
+			"steria_users": steria_users,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

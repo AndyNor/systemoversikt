@@ -149,6 +149,7 @@ urlpatterns = [
 
 	url(r'^cmdb/ad/leverandortilgang/$', views.leverandortilgang, name='leverandortilgang'),
 	url(r'^cmdb/ad/leverandortilgang/(?P<valgt_gruppe>[-._a-zA-Z0-9\s]{2,100})/$', views.leverandortilgang, name='leverandortilgang_detaljer'),
+	url(r'^cmdb/ad/drifttilgang/$', views.drifttilgang, name='drifttilgang'),
 
 	url(r'^cmdb/ad/lookup/$', views.ad, name='ad'),
 	url(r'^cmdb/ad/analyse/$', views.ad_analyse, name='ad_analyse'),

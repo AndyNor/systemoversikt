@@ -57,7 +57,6 @@ class Command(BaseCommand):
 					report_data["modified"] += 1
 
 				user.profile.accountdisable = True
-				user.is_active = False
 			else:
 				if user.profile.accountdisable == True:
 					report_data["reaktivert"] += 1
@@ -67,7 +66,7 @@ class Command(BaseCommand):
 					report_data["modified"] += 1
 
 				user.profile.accountdisable = False
-				user.is_active = True
+
 			if "LOCKOUT" in userAccountControl_decoded:
 				user.profile.lockout = True
 			else:
@@ -156,6 +155,7 @@ class Command(BaseCommand):
 				displayName = ""
 			user.profile.displayName = displayName
 
+			user.is_active = True
 			user.save()
 			return
 
@@ -163,7 +163,8 @@ class Command(BaseCommand):
 		@transaction.atomic  # for speeding up database performance
 		def result_handler(rdata, report_data, existing_objects=None):
 
-			gyldige_virksomheter = list(Virksomhet.objects.values_list(Upper('virksomhetsforkortelse'), flat=True).distinct())
+			#deaktivert da vi ikke lenger begrenser import til eksisterende virksomheter.
+			#gyldige_virksomheter = list(Virksomhet.objects.values_list(Upper('virksomhetsforkortelse'), flat=True).distinct())
 
 			for dn, attrs in rdata:
 				sys.stdout.flush()
