@@ -13,7 +13,7 @@ import json
 import csv
 import requests
 from django.contrib.auth.models import User
-from systemoversikt.models import ApplicationLog, HRorg
+from systemoversikt.models import ApplicationLog, HRorg, Profile
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.db import transaction
@@ -62,42 +62,47 @@ class Command(BaseCommand):
 		@transaction.atomic
 		def perform_atomic_update():
 			nonlocal logg_hits
-			nonlocal logg_misses
 			nonlocal datastructure
 
+			print("Resetting profiles")
+			Profile.objects.all().update(usertype=None)
+			Profile.objects.all().update(org_unit=None)
+			Profile.objects.all().update(ansattnr=None)
+			Profile.objects.all().update(from_prk=False)
+
 			for line in datastructure:
-				username = "%s%s" % (line["O"], line["EMPLOYEENUMBER"])
+				print(line["EMPLOYEENUMBER"])
 				usertype = "%s" % (line["EMPLOYEETYPENAME"])
-
-
+				ansattnr = int(line["EMPLOYEENUMBER"])
 				try:
 					org_unit = HRorg.objects.get(ouid=line["OUID"])
 				except:
 					org_unit = None
 
-				ansattnr = int(line["EMPLOYEENUMBER"])
-				try:
-					u = User.objects.get(username=username)
-					logg_hits += 1
+				usernames_str = ["%s%s" % (line["O"], line["EMPLOYEENUMBER"]),	"%s%s" % ("DRIFT", line["EMPLOYEENUMBER"])]
+				usernames = []
+				for u in usernames_str:
+					try:
+						usernames.append(User.objects.get(username__iexact=u))
+					except:
+						pass
 
-				except ObjectDoesNotExist:
-					continue
-					logg_misses += 1
+				logg_hits += 1
+				for u in usernames:
 
-				u.profile.usertype = usertype
-				u.profile.org_unit = org_unit
-				u.profile.ansattnr = ansattnr
-				u.profile.from_prk = True
-				u.save()
+					u.profile.usertype = usertype
+					u.profile.org_unit = org_unit
+					u.profile.ansattnr = ansattnr
+					u.profile.from_prk = True
+					u.save()
 
 		perform_atomic_update()
 
 		runtime_t1 = time.time()
 		logg_total_runtime = runtime_t1 - runtime_t0
-		logg_entry_message = "Kjøretid: %s sekunder: %s treff, %s bom." % (
+		logg_entry_message = "Kjøretid: %s sekunder: %s treff" % (
 				round(logg_total_runtime, 1),
 				logg_hits,
-				logg_misses,
 		)
 		print(logg_entry_message)
 		logg_entry = ApplicationLog.objects.create(

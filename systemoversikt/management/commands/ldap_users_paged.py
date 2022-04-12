@@ -36,6 +36,7 @@ class Command(BaseCommand):
 			"deaktivert": 0,
 			"reaktivert": 0,
 			"removed": 0,
+			"user_not_deleted": [],
 		}
 
 		def update_user_status(user, dn, attrs, user_organization, report_data):
@@ -228,10 +229,21 @@ class Command(BaseCommand):
 
 		cleanup(existing_objects, result)
 
+		@transaction.atomic
+		def slett_ikkeaktive_brukere():
+			for user in User.objects.filter(is_active=False):
+				try:
+					user.delete()
+					print("Bruker %s slettet" % user.username)
+				except:
+					#print("kan ikke slette bruker %s (%s)" % (user.username, sys.exc_info()[0]))
+					result["report_data"]["user_not_deleted"].append(user.username)
+		slett_ikkeaktive_brukere()
+
 		def report(result):
 			#print("\nVirksomheter det ikke var brukere for i AD: ", gyldige_virksomheter)
 			#print("\nVirksomheter som ikke er i kartoteket: ", ad_grupper_utenfor_kartoteket)
-			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s oppdatert, %s deaktivert, %s reaktivert og %s slettet." % (
+			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s oppdatert, %s deaktivert, %s reaktivert og %s slettet. Følgende brukere kunne ikke slettes: %s" % (
 					result["total_runtime"],
 					result["objects_returned"],
 					result["report_data"]["created"],
@@ -239,6 +251,7 @@ class Command(BaseCommand):
 					result["report_data"]["deaktivert"],
 					result["report_data"]["reaktivert"],
 					result["report_data"]["removed"],
+					result["report_data"]["user_not_deleted"],
 			)
 			log_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
