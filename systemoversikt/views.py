@@ -712,6 +712,90 @@ def dashboard_all(request, virksomhet=None):
 	})
 
 
+def ansvarlig_bytte(request):
+	required_permissions = 'systemoversikt.change_ansvarlig'
+	if request.user.has_perm(required_permissions):
+
+		str_ansvarlig_fra = request.POST.get('ansvarlig_fra', '')
+		str_ansvarlig_til = request.POST.get('ansvarlig_til', '')
+
+
+		try:
+			bruker_fra = User.objects.get(username=str_ansvarlig_fra)
+			ansvarlig_fra = Ansvarlig.objects.get(brukernavn=bruker_fra)
+		except:
+			ansvarlig_fra = None
+
+		try:
+			bruker_til = User.objects.get(username=str_ansvarlig_til)
+			try:
+				ansvarlig_til = Ansvarlig.objects.get(brukernavn=bruker_til)
+			except:
+				# det kan hende personen ikke allerede er opprettet som ansvarlig, så da gjør vi det her
+				ansvarlig_til = Ansvarlig.objects.create(brukernavn=bruker_til)
+		except:
+			ansvarlig_til = None
+
+		if ansvarlig_fra == None or ansvarlig_til == None:
+			feilmelding = "Et eller begge feltene inneholder et ugyldig brukernavn"
+		else:
+			feilmelding = ""
+
+		if ansvarlig_fra != None and ansvarlig_til != None and ansvarlig_fra != ansvarlig_til:
+
+			# her lister vi først ut alle felter på Ansvarlig-klassen som er av typen mange-til-mange eller fremmednøkkel.
+			m2m_relations = []
+			fk_relations = []
+			for f in Ansvarlig._meta.get_fields(include_hidden=False):
+				if f.get_internal_type() in ["ManyToManyField"]:
+					m2m_relations.append(f)
+				if f.get_internal_type() in ["ForeignKey"]:
+					fk_relations.append(f)
+
+				#field
+				#model
+				#related_name
+				#related_model
+
+			for i in m2m_relations:
+				print(i.field)
+				print(i.model)
+				print(i.related_name)
+				print(i.related_model)
+				print("")
+
+			# så leter vi igjennom ansvarlig fra-objektet etter m2m/fremmednøklene vi fant i stad
+			#referanser_for_endring = []
+			#for m2m in m2m_relations:
+			#	for i in getattr(ansvarlig_fra, m2m.name).all():
+			#		referanser_for_endring.append(i)
+
+			#for fk in fk_relations:
+			#	model = fk.related_model
+			#	fieldname =  fk.field.name
+			#	for i in model.objects.filter(**{ fieldname: ansvarlig_fra.pk}):
+			#		referanser_for_endring.append(i)
+
+			#for i in referanser_for_endring:
+			#	print(i)
+
+
+
+
+			melding = "Flyttet alt ansvar fra %s til %s. Handlingen er loggført" % (ansvarlig_fra, ansvarlig_til)
+		else:
+			melding = "Skriv inn brukernavn på person du ønser å bytte fra og person du ønsker å bytte til. Handlingen blir loggført."
+
+
+		return render(request, "ansvarlig_bytte.html", {
+			'ansvarlig_fra': str_ansvarlig_fra,
+			'ansvarlig_til': str_ansvarlig_til,
+			'melding': melding,
+			'feilmelding': feilmelding,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 def user_clean_up(request):
 	"""
 	Denne funksjonen er laget for å slette/anonymisere data i testmiljøet.

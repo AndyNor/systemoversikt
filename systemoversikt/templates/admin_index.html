@@ -12,6 +12,9 @@
 
 	<a href="/admin/" class="btn btn-sm btn-link" >Adminpanelet</a>
 
+	{% url 'ansvarlig_bytte' as url_ansvarlig_bytte %}
+	<a href="{{ url_ansvarlig_bytte }}" class="btn btn-sm btn-link {% if url_ansvarlig_bytte in request.path %}fremhev{% endif %}" >Flytt ansvar</a>
+
 	<br><a href="/api/" class="btn btn-sm btn-link">API</a>
 
 	<hr>

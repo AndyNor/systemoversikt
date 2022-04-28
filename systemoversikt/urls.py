@@ -48,6 +48,7 @@ urlpatterns = [
 	url(r'^admin/logger/users/$', views.logger_users, name='logger_users'),
 	url(r'^admin/roller/$', views.roller, name='roller'),
 	url(r'^admin/rettigheter/$', views.permissions, name='permissions'),
+	url(r'^admin/erstattansvarlig/$', views.ansvarlig_bytte, name='ansvarlig_bytte'),
 
 	url(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
 	url(r'^systemer/forvalteroversikt/$', views.alle_systemer_forvaltere, name='alle_systemer_forvaltere'),

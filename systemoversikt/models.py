@@ -185,6 +185,7 @@ class Definisjon(models.Model):
 			)
 	ansvarlig = models.ForeignKey(
 			to="Ansvarlig",
+			related_name='definisjon_ansvarlig',
 			null=True,
 			blank=True,
 			on_delete=models.PROTECT,
