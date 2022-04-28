@@ -4,4 +4,4 @@
 source /home/drift23914/metadata/py36-venv/bin/activate
 
 # run batch job
-python /home/drift23914/metadata/djangoapp/manage.py lookup_network
+python /home/drift23914/metadata/djangoapp/manage.py epost_avtaleutlop

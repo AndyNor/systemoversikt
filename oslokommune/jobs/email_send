@@ -4,4 +4,4 @@
 source /home/drift23914/metadata/py36-venv/bin/activate
 
 # run batch job
-python /home/drift23914/metadata/djangoapp/manage.py ldap_users_paged
+python /home/drift23914/metadata/djangoapp/manage.py send_mail
