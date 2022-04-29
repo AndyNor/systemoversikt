@@ -18,6 +18,7 @@ from systemoversikt.views_import import load_dns_sonefile, load_vlan, load_nat, 
 from systemoversikt.views_import import find_ip_in_dns, find_vlan, find_ip_in_nat, find_bigip
 from django.db.models import Q
 import requests
+import logging
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -25,7 +26,6 @@ class Command(BaseCommand):
 		LOG_EVENT_TYPE = 'Nettverksoppslag'
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
-		import logging
 		log = logging.getLogger(__name__)
 		log.info("Starter oppslag av IP-adresser")
 

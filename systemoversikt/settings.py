@@ -79,7 +79,6 @@ INSTALLED_APPS = [
 	'simple_history',
 	'mailer',
 	'widget_tweaks',
-	'django_extensions',
 ]
 if THIS_ENVIRONMENT == "DEV":
 	INSTALLED_APPS += [
