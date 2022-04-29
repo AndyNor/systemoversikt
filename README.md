@@ -3,23 +3,6 @@
 Source code for Oslo kommune's register for information about systems
 also known as "system- og behandlingsoversikt" or "Kartoteket".
 
-## demo
-http://kartoteket.andynor.net/
-it is configured to autofetch changes one a day using the following procedures:
-```
-#!/bin/sh
-cd ~/webapps/kartoteket_test/myproject/systemoversikt/
-git fetch
-git reset --hard origin/master
-python3.7 manage.py makemigrations
-python3.7 manage.py migrate
-python3.7 manage.py collectstatic --noinput
-~/webapps/kartoteket_test/apache2/bin/restart
-cd ~/webapps/kartoteket_test/myproject/systemoversikt/bash_scripts/
-chmod +x *
-```
-
-
 ## Backend reqirements
 Python3, Django2 and different modules in requirements.txt
 
