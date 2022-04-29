@@ -12,8 +12,8 @@ import sys
 import json
 from django.db import transaction
 from systemoversikt.models import ApplicationLog, PRKvalg, ADgroup
-from django.db.models import Q
-import requests
+from django.db.models import Q # TODO trengs denne?
+import requests # TODO trengs denne?
 
 class Command(BaseCommand):
 	def handle(self, **options):

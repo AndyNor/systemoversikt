@@ -3,6 +3,10 @@ from py_topping.data_connection.sharepoint import da_tran_SP365
 from systemoversikt.models import *
 from django.db import transaction
 import os
+import json, os
+import pandas as pd
+import numpy as np
+from django.db.models import Q
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -22,12 +26,6 @@ class Command(BaseCommand):
 
 		@transaction.atomic
 		def import_cmdb_databases():
-
-			import json, os
-			import pandas as pd
-			import numpy as np
-
-			from django.db.models import Q
 
 			db_dropped = 0
 

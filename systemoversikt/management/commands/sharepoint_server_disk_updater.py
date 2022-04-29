@@ -4,6 +4,9 @@ from systemoversikt.models import *
 from django.db import transaction
 import os
 import time
+import json, os
+import pandas as pd
+import numpy as np
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -26,9 +29,6 @@ class Command(BaseCommand):
 
 		@transaction.atomic
 		def import_cmdb_disk():
-			import json, os
-			import pandas as pd
-			import numpy as np
 
 			disk_dropped = 0
 

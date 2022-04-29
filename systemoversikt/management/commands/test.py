@@ -11,8 +11,6 @@ from django.db import transaction
 from systemoversikt.utils import ldap_paged_search
 import ldap
 import sys
-
-
 from systemoversikt.models import ApplicationLog, ADOrgUnit, ADgroup, CMDBbs, System
 import json
 

@@ -4,6 +4,11 @@ from systemoversikt.models import *
 from django.db import transaction
 import os
 import time
+from functools import lru_cache
+import json, os
+import pandas as pd
+import numpy as np
+
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -24,12 +29,6 @@ class Command(BaseCommand):
 
 		@transaction.atomic
 		def import_cmdb_servers():
-
-			from functools import lru_cache
-
-			import json, os
-			import pandas as pd
-			import numpy as np
 
 			server_dropped = 0
 
