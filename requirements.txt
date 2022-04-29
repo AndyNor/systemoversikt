@@ -70,7 +70,7 @@ odfpy==1.4.1
 Office365-REST-Python-Client==2.2.1
 openpyxl==3.0.7
 pandas==1.0.3
-pip==22.0.4
+pip==21.3.1
 portalocker==2.3.2
 py-topping==0.3.9
 pyasn1==0.4.5
