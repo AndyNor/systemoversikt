@@ -61,7 +61,7 @@ On Windows
 * run: ```virtualenv name``` --> e.g. kartoteket (check out https://medium.com/@jtpaasch/the-right-way-to-use-virtual-environments-1bc255a0cba7 for good practice regarding folder setup)
 * run: ```workon name``` --> you will see the prompt change to "(name).." (in most cases)
 * clone this repo (using git or git desktop) and move into the root of the "systemoversikt"-folder.
-* Make sure you rename secrets.example.py to secrets.py and set a value to "KARTOTEKET_SECRET_KEY". 
+* Make sure you rename secrets.example.py to secrets.py and set a value to "KARTOTEKET_SECRET_KEY".
 * Also rename "this_env.example.py" to "this_env.py".
 * run: ```pip3 install -r requirements.txt```
 * run: ```python manage.py makemigrations systemoversikt```
@@ -95,7 +95,7 @@ python /<path>/manage.py ldap_paged
 
 ## handy commands
 ```
-pip freeze > requirements.txt
+pip list --format=freeze > requirements.txt
 python manage.py makemigrations
 python manage.py migrate
 python manage.py get_all_permissions
