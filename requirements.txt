@@ -17,7 +17,7 @@ mozilla-django-oidc==1.2.2
 msal==1.17.0
 msal-extensions==0.3.1
 msgraph-core==0.2.2
-numpy==1.21.0
+numpy==1.19.5
 pandas==1.0.3
 portalocker==2.4.0
 py-topping==0.3.9
