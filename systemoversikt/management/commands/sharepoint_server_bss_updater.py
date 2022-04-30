@@ -102,7 +102,7 @@ class Command(BaseCommand):
 				if sub_name != None:
 					cmdbdevice.sub_name = sub_name
 				else:
-					print('Business sub service %s for %s finnes ikke' % (record["sub_name"], comp_name))
+					print('Business sub service %s for %s finnes ikke' % (record["Name.1"], comp_name))
 					server_dropped += 1
 					continue
 
