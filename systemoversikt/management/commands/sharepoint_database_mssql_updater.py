@@ -71,9 +71,12 @@ class Command(BaseCommand):
 					cmdb_db = CMDBdatabase.objects.create(db_database=db_name, db_server=hostname)
 
 
-				if hostname != "":
-					cmdbdevice = CMDBdevice.objects.get(comp_name=hostname)
-					cmdb_db.db_server_modelref = cmdbdevice
+				try:
+					if hostname != "":
+						cmdbdevice = CMDBdevice.objects.get(comp_name=hostname)
+						cmdb_db.db_server_modelref = cmdbdevice
+				except:
+					cmdb_db.db_server_modelref = None
 
 				if record["Operational status"] == "Operational":
 					cmdb_db.db_operational_status = True
