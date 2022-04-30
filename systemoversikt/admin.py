@@ -217,8 +217,8 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'database_supported',
 		'database_in_use',
 		'godkjente_bestillere',
-		'tilgangsgrupper_ad',
 		'enterprise_applicatons',
+		'tilgangsgrupper_ad',
 	)
 
 	fieldsets = (
@@ -265,10 +265,10 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('tilgjengelighetsvurdering','tilgjengelighet_kritiske_perioder'),
 				'informasjonsklassifisering',
 				('datautveksling_mottar_fra', 'datautveksling_avleverer_til'),
-				('kontaktperson_innsyn', 'innsyn_innbygger', 'innsyn_ansatt'),
+				('innsyn_innbygger', 'innsyn_ansatt'),
+				'kontaktperson_innsyn',
 				('risikovurdering_behovsvurdering', 'dato_sist_ros'),
-				'url_risikovurdering',
-				'risikovurdering_tekst',
+				('url_risikovurdering', 'risikovurdering_tekst'),
 			)
 		}),
 		('Tekniske vurderinger og integrasjoner', {
@@ -276,8 +276,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'tilgangsgrupper_ad',
 				'enterprise_applicatons',
 				'programvarer',
-				'avhengigheter_referanser',
-				'avhengigheter',
+				('avhengigheter_referanser','avhengigheter'),
 				('autentiseringsteknologi', 'autentiseringsalternativer'),
 				('legacy_klient_krever_smb', 'legacy_klient_krever_direkte_db'),
 				('legacy_klient_krever_onprem_lisensserver', 'legacy_klient_autentisering'),

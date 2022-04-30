@@ -467,14 +467,14 @@ class Virksomhet(models.Model):
 			blank=True,
 			help_text=u"Fylles ut dersom virksomhetsleder har avgitt fullmakt for ustedelse av websertifikater og/eller virksomhetssertifikater.",
 			)
-	sertifikatfullmakt_avgitt_web = models.NullBooleanField(
+	sertifikatfullmakt_avgitt_web = models.BooleanField(
 			verbose_name="Avgitt fullmakt for websertifikater?",
 			blank=True,
 			null=True,
 			default=False,
 			help_text=u"Krysses av dersom virksomhet har avgitt fullmakt til driftsleverandør for utstedelse av websertifikater for sitt org.nummer.",
 			)
-	sertifikatfullmakt_avgitt_virksomhet = models.NullBooleanField(
+	sertifikatfullmakt_avgitt_virksomhet = models.BooleanField(
 			verbose_name="Avgitt fullmakt for virksomhetssertifikater?",
 			blank=True,
 			null=True,
@@ -681,7 +681,7 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			verbose_name="Fra PRK?",
 			default=False,
 			)
-	ekstern_ressurs = models.NullBooleanField(
+	ekstern_ressurs = models.BooleanField(
 			verbose_name="Ekstern ressurs? (AD)",
 			null=True,
 			blank=True,
@@ -1033,7 +1033,7 @@ class SystemUrl(models.Model):
 			null=False,
 			help_text=u"",
 			)
-	https = models.NullBooleanField(
+	https = models.BooleanField(
 			verbose_name="Sikret med https?",
 			blank=True,
 			null=True,
@@ -2698,6 +2698,7 @@ class Driftsmodell(models.Model):
 	class Meta:
 		verbose_name_plural = "Systemoversikt: driftsmodeller"
 		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['navn']
 
 
 class Autorisasjonsmetode(models.Model):
@@ -2881,11 +2882,11 @@ class System(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-	ibruk = models.NullBooleanField(
+	ibruk = models.BooleanField(
 			verbose_name="Er systemet i bruk?",
 			blank=True,
 			null=True,
-			help_text=u"Settes denne til 'nei' vil systemet skjules på en del visninger. Merk at du må sette 'livssløpsstatus' for å angi når et system er fullstendig avviklet. Det kan være greit å beholde systemer i oversikten for å kunne søke dem opp i etterkant. Dersom systemet er feilregistrert kan du kontakte forvaltningen av Kartoteket for å få det slettet.",
+			help_text=u"Til informasjon. Ble tidligere benyttet for å skjule system fra noen visninger.",
 			)
 	kvalitetssikret = models.OneToOneField(
 			to=Oppdatering,
@@ -2902,15 +2903,15 @@ class System(models.Model):
 			help_text=u"Krysses av når ansvarlig har kontrollert at opplysningene oppgitt for dette systemet stemmer. Obligatoriske felter er de som automatisk er ekspandert. Det er foreslått at denne verdien settes tilbake til 'nei' etter en viss tid, men per nå er ikke dette implementert.",
 			)
 	systemnavn = models.CharField(
-			verbose_name="Navn på system / applikasjon",
+			verbose_name="Systemnavn",
 			unique=True,
 			max_length=100,
 			blank=False,
 			null=False,
-			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Fint om du søker etter systemer du skal registrere før du lager et nytt. Det kan hende det allerede er registrert. Noe av formålet med denne oversikten er å kunne forstå avhengigheter mellom systemer. Bruk derfor litt tid på å vurdere riktig nivå på det du registrerer.",
+			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Undersøk om systemet er registrert før du eventuelt registrerer et nytt. Bruk \"(Felles)\" for fellessystemer, alternativt \"(<virksomhet>)\" for virksomhetsspesifikke systemer.",
 			)
 	alias = models.TextField(
-			verbose_name="Alias (alternative navn)",
+			verbose_name="Alternative søkenavn (alias)",
 			blank=True,
 			null=True,
 			help_text=u"Alternative navn på systemet for å avhjelpe søk. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje.",
@@ -2960,7 +2961,7 @@ class System(models.Model):
 			blank=True,
 			null=True,
 			on_delete=models.SET_NULL,
-			help_text=u"Dette feltet er under implementering. Kan være nyttig å angi seksjon i tillegg til personer.",
+			help_text=u"Seksjon forvaltning er plassert til.",
 			)
 	superbrukere = models.TextField(
 			verbose_name="Superbrukere",
@@ -2978,10 +2979,10 @@ class System(models.Model):
 			to=Driftsmodell,
 			related_name='system_driftsmodell',
 			on_delete=models.PROTECT,
-			verbose_name="Driftsmodell / plattform",
+			verbose_name="Driftsplattform",
 			blank=True,
 			null=True,
-			help_text=u"Angivelse av driftsplattform systemet kjører på. Ved kjøp som tjeneste fra en leverandør utenfor kommunen velger du 'Ekstern leverandør (Software as a Service)'.",
+			help_text=u"Driftsplattform systemet kjører på. Merk at kommunen kan ha flere instanser av samme system driftet ulike steder.",
 			)
 	leveransemodell_fip = models.IntegerField(
 			choices=LEVERANSEMODELL_VALG,
@@ -3087,12 +3088,12 @@ class System(models.Model):
 	systemurl = models.ManyToManyField(
 			to=SystemUrl,
 			related_name='system_systemurl',
-			verbose_name="URL (dersom webtjeneste)",
+			verbose_name="URL (dersom webapplikasjon)",
 			blank=True,
 			default=None,
 			help_text=u"Adressen systemet nås på via nettleser",
 			)
-	systemleverandor_vedlikeholdsavtale = models.NullBooleanField(
+	systemleverandor_vedlikeholdsavtale = models.BooleanField(
 			verbose_name="Aktiv vedlikeholdsavtale med systemleverandør?",
 			default=None,
 			null=True,
@@ -3101,23 +3102,23 @@ class System(models.Model):
 	systemleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_systemleverandor',
-			verbose_name="Tjeneste / systemleverandør",
+			verbose_name="Systemleverandør (tjenesteleverandør)",
 			blank=True,
-			help_text=u"Fylles ut når tjenesten kjøpes av en leverandør (SaaS). Tilsvarer typisk SSA-L (løpende tjenestekjøp). For systemer lagt inn tidlig i denne databasen er dette feltet benyttet tilsvarende \"programvareleverandør\". Programvareleverandør kan nå knyttes til systemet indirekte ved å registrere programvaren til systemet.",
+			help_text=u"Her fyller du ut leverandør som har utviklet systemet. I noen situasjoner kjøpes systemet som en tjeneste (SaaS), og i andre tilfeller er serverkapasitet og applikasjonsdrift utført av en tredjepartsleverandør. Fyll da inn feltene under.",
 			)
 	basisdriftleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_driftsleverandor',
 			verbose_name="Leverandør av basisdrift",
 			blank=True,
-			help_text=u"Leverandør som drifter maskinparken systmet kjører på. Tilsvarer typisk SSA-D. Trengs ikke fylles ut for systmer som kjøpes som en tjeneste av eksterne leverandører, eller der virksomheten har lokal drift av hele systemet.",
+			help_text=u"Leverandør som drifter maskinparken systmet kjører på.",
 			)
 	applikasjonsdriftleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_applikasjonsdriftleverandor',
 			verbose_name="Leverandør av applikasjonsdrift",
 			blank=True,
-			help_text=u"Leverandør som sørger for at systemet fungerer som det skal. Kan f.eks. være en leverandør på en SSA-D (driftsavtale) eller SSA-B (bistandsavtale). Bør ikke fylles ut for systemer som kjøpes som en tjeneste av eksterne leverandører. Trenger ikke fylles ut dersom det er lokal drift av hele systemet.",
+			help_text=u"Leverandør som sørger for at systemet fungerer som det skal.",
 			)
 	applikasjonsdrift_behov_databehandleravtale = models.BooleanField(
 			verbose_name="Behov for (egen) DBA mot applikasjonsdriftsleverandør?",
@@ -3398,9 +3399,9 @@ class System(models.Model):
 	godkjente_bestillere = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='system_godkjente_bestillere',
-			verbose_name="Godkjente bestillere (Kompass)",
+			verbose_name="Andre godkjente bestillere (Kompass)",
 			blank=True,
-			help_text=u"Disse personene er autorisert for å bestille endringer på systemet. Kan være andre enn forvaltere, og derfor et eget felt her.",
+			help_text=u"Forvaltere er autorisert til å bestille endringer på systemet i Kompass. Disse personene er også autorisert for å bestille endringer.",
 			)
 	er_arkiv = models.BooleanField(
 			verbose_name="Er systemet et arkiv?",
@@ -3420,25 +3421,25 @@ class System(models.Model):
 			blank=True,
 			help_text=u'Velg en eller flere sikkerhetsgrupper i AD tilhørende systemet.',
 			)
-	legacy_klient_krever_smb = models.NullBooleanField(
+	legacy_klient_krever_smb = models.BooleanField(
 			verbose_name="Direkte kommunikasjon med filområde.",
 			blank=True,
 			null=True,
 			help_text=u"Settes dersom systemets klient må kommunisere direkte med on-prem filområder. OneDrive er ikke on-prem og er derfor ikke en grunnlag for å sette 'ja' på denne. Settes til 'ja' dersom minst ét av grensesnittene krever on-prem filområdetilgang.",
 			)
-	legacy_klient_krever_direkte_db = models.NullBooleanField(
+	legacy_klient_krever_direkte_db = models.BooleanField(
 			verbose_name="Direkte kommunikasjon med databaseserver fra klient.",
 			blank=True,
 			null=True,
 			help_text=u"Settes dersom systemets klient må kommunisere direkte med databaser. Settes til 'ja' dersom minst ét av grensesnittene krever dette.",
 			)
-	legacy_klient_krever_onprem_lisensserver = models.NullBooleanField(
+	legacy_klient_krever_onprem_lisensserver = models.BooleanField(
 			verbose_name="Legacy: Krever on-prem lisensserver?",
 			blank=True,
 			null=True,
 			help_text=u"Settes dersom systemet krever at klient har direktekontakt med on-prem lisensserver.",
 			)
-	legacy_klient_autentisering = models.NullBooleanField(
+	legacy_klient_autentisering = models.BooleanField(
 			verbose_name="Legacy klientautentisering?",
 			blank=True,
 			null=True,
@@ -3905,7 +3906,7 @@ class ProgramvareBruk(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	avtale_kan_avropes = models.NullBooleanField(
+	avtale_kan_avropes = models.BooleanField(
 			verbose_name="Avtale kan avropes av andre virksomheter",
 			blank=True,
 			null=True,
@@ -4097,7 +4098,7 @@ class SystemBruk(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	avtale_kan_avropes = models.NullBooleanField(
+	avtale_kan_avropes = models.BooleanField(
 			verbose_name="Avtale kan avropes av andre virksomheter",
 			blank=True,
 			null=True,
@@ -4442,7 +4443,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			)
 			#draftit: har ikke
 			# DPIA-relatert, Trenger vi dette feltet?
-	den_registrerte_sarbare_grupper = models.NullBooleanField(
+	den_registrerte_sarbare_grupper = models.BooleanField(
 			verbose_name="Inkluderer behandlingen barn eller andre sårbare grupper (f.eks. uføre, eldre, syke)?",
 			blank=True,
 			null=True,
@@ -4608,7 +4609,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			help_text=u"Utdyp",
 			)
 			#draftit: "er det inngått skriftelig avtale" (boolean)
-	databehandleravtale_status_boolean = models.NullBooleanField(
+	databehandleravtale_status_boolean = models.BooleanField(
 			verbose_name="Er det inngått databehandleravtale med alle?",
 			blank=True,
 			null=True,
@@ -4622,7 +4623,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			help_text=u"",
 			)
 			#draftit: har noe tilsvarende i dpia-modulen.
-	kommunens_maler = models.NullBooleanField(
+	kommunens_maler = models.BooleanField(
 			verbose_name="Er Oslo kommunes maler for databehandleravtaler benyttet i avtale(ne) med leverandøren(e)?",
 			blank=True,
 			null=True,
@@ -4634,7 +4635,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	utlevering_ekstern_myndighet = models.NullBooleanField(
+	utlevering_ekstern_myndighet = models.BooleanField(
 			verbose_name="Utleveres opplysninger til eksterne aktører?",
 			blank=True,
 			null=True,
@@ -4646,7 +4647,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			null=True,
 			help_text=u"Henvis til hjemmel i lov",
 			)
-	innhenting_ekstern_myndighet = models.NullBooleanField(
+	innhenting_ekstern_myndighet = models.BooleanField(
 			verbose_name="Innhentes opplysninger fra eksterne aktører?",
 			blank=True,
 			null=True,
@@ -4658,7 +4659,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			null=True,
 			help_text=u"Henvis til hjemmel i lov",
 			)
-	utlevering_registrerte_samtykke = models.NullBooleanField(
+	utlevering_registrerte_samtykke = models.BooleanField(
 			verbose_name="Utleveres opplysningene til pårørende e.l. ved bruk av samtykke?",
 			blank=False,
 			null=True,
@@ -4676,7 +4677,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	utlevering_utenfor_EU = models.NullBooleanField(
+	utlevering_utenfor_EU = models.BooleanField(
 			verbose_name="Skjer det en overføring av opplysninger til land utenfor EU/EØS?",
 			blank=False,
 			null=True,
@@ -4709,14 +4710,16 @@ class BehandlingerPersonopplysninger(models.Model):
 			null=True,
 			help_text=u"Beskriv tiltak som er gjennomført for at de registrerte kan rette sine opplysninger",
 			)
-	hoy_personvernrisiko = models.NullBooleanField(
+	hoy_personvernrisiko = models.BooleanField(
 			verbose_name="UTFASES! Høy personvernrisiko? Er det behov for å vurdere personvernkonsekvenser (DPIA)?",
 			default=None,
+			null=True,
 			help_text="UTFASES! Se veiledningen <a target=\"_blank\" href=\"https://confluence.oslo.kommune.no/pages/viewpage.action?pageId=86934676\">Vurdering av om «høy risiko» foreligger</a>.",
 			)
-	dpia_unnga_hoy_risiko = models.NullBooleanField(
+	dpia_unnga_hoy_risiko = models.BooleanField(
 			verbose_name="Er det mulig å unngå 'høy risiko' for de registrerte?",
 			default=None,
+			null=True,
 			help_text="",
 			)
 	sikkerhetstiltak = models.TextField(
@@ -5077,7 +5080,7 @@ class PRKskjema(models.Model):
 			null=False,
 			help_text=u"Importert",
 			)
-	er_lokalt = models.NullBooleanField(
+	er_lokalt = models.BooleanField(
 			verbose_name="Er feltet lokalt?",
 			default=None,
 			null=True,
@@ -5239,7 +5242,8 @@ class AzurePublishedPermissionScopes(models.Model):
 		null=False,
 		unique=True,
 		)
-	isEnabled = models.NullBooleanField(
+	isEnabled = models.BooleanField(
+		null=True,
 		)
 	value = models.CharField(
 		max_length=200,
