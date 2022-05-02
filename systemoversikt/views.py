@@ -4213,6 +4213,31 @@ def system_excel_api(request, virksomhet_pk=None):
 	return JsonResponse(resultat, safe=False)
 
 
+def csirt_api(request):
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="csirt").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
+	data = []
+	for s in System.objects.all():
+		systeminfo = {}
+		systeminfo["systemnavn"] = s.systemnavn
+		systeminfo["systemalias"] = s.alias
+
+		systeminfo["applikasjoner"] = [a.programvarenavn for a in s.programvarer.all()]
+
+		systeminfo["id"] = s.id
+		systeminfo["systemeier"] = s.systemeier.virksomhetsforkortelse if s.systemeier else None
+		systeminfo["systemforvalter"] = s.systemforvalter.virksomhetsforkortelse if s.systemforvalter else None
+		data.append(systeminfo)
+
+	return JsonResponse(data, safe=False)
+
+
 
 def cmdb_api(request):
 	# brukes for å samle inn faktureringsgrunnlag (koble servere til systemeier)
