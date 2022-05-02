@@ -62,7 +62,8 @@
 	<td>
 		{% if item.parent_ref.systemreferanse %}
 			{% url 'systemdetaljer' pk=item.parent_ref.systemreferanse.pk as url_system %}
-			<a href="{{ url_system }}">{{ item.parent_ref.systemreferanse.systemnavn }}</a>
+			<a href="{{ url_system }}">{{ item.parent_ref.systemreferanse.systemnavn }}</a><br>
+			<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ endre?</a>
 		{% else %}
 			<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ koble?</a>
 		{% endif %}
