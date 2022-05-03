@@ -47,7 +47,9 @@
 			{% endfor %}
 			{% if feilede_oppslag %}
 				<hr><h5>Feilede oppslag</h5>
-				{{feilede_oppslag}}
+				{% for f in feilede_oppslag %}
+					{{f}}<br>
+				{% endfor %}
 			{% endif %}
 			</td>
 		</tr>

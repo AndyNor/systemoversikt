@@ -3016,10 +3016,11 @@ def ad_gruppeanalyse(request):
 		sikkerhetsgrupper_oppsplittet = re.findall(r"([^,;\n\r]+)", sikkerhetsgrupper_str) # alt mellom tegn som typisk brukes for å splitte unike ting.
 
 		for gr in sikkerhetsgrupper_oppsplittet:
+			stripped_gr = gr.stip()
 			try:
-				sikkerhetsgrupper.append(ADgroup.objects.get(common_name=gr))
+				sikkerhetsgrupper.append(ADgroup.objects.get(common_name=stripped_gr))
 			except:
-				feilede_oppslag.append(gr)
+				feilede_oppslag.append(stripped_gr)
 
 		def identifiser_underliggende_grupper(gr):
 			child_groups = []
