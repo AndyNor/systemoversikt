@@ -3054,9 +3054,12 @@ def ad_gruppeanalyse(request):
 		for gr in sikkerhetsgrupper:
 			utnostede_grupper += utnost(gr)
 
-		set_brukers_grupper = set(brukers_unike_grupper)
-		set_sikkerhetsgruppeutnosting = [g.common_name for g in utnostede_grupper]
-		sammenfallende = set_brukers_grupper.intersection(set_sikkerhetsgruppeutnosting)
+		if brukers_unike_grupper and utnostede_grupper:
+			set_brukers_grupper = set(brukers_unike_grupper)
+			set_sikkerhetsgruppeutnosting = [g.common_name for g in utnostede_grupper]
+			sammenfallende = set_brukers_grupper.intersection(set_sikkerhetsgruppeutnosting)
+		else:
+			sammenfallende = None
 
 		context = {
 			'form_brukernavn': brukernavn_str,
