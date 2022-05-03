@@ -1280,7 +1280,7 @@ class CMDBbs(models.Model):
 			blank=True,
 			null=True,
 			on_delete=models.SET_NULL,
-			help_text=u"Settes av UKE/OSP",
+			help_text=u"Settes av UKE IKT-plattformforvaltning",
 			)
 	bs_external_ref = models.CharField(
 			unique=True,
