@@ -1,0 +1,59 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block ekstrajavascript %}
+
+{% endblock ekstrajavascript %}
+
+{% block overskrift %}
+	AD gruppetilhørighetsanalyse
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<form action="" method="POST" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group form-inline">
+			<input type="text" value="{{ form_brukernavn }}" name="brukernavn"
+			placeholder="Brukernavn" class="form-control form-control-sm">
+		</div>
+		<p>List opp grupper her du ønsker å finne ut om bruker er medlem i</p>
+		<textarea rows="3" cols="50" style="width: 500px; height: 150px;" name="sikkerhetsgrupper" placeholder="Liste med sikkerhetsgrupper" class="form-control form-control-sm">{{form_sikkerhetsgrupper}}</textarea>
+		<br>
+		<input type="submit" value="Analyser" class="btn btn-primary btn-sm">
+	</form>
+
+	{% if brukers_unike_grupper %}
+
+	<hr>
+	<h5>Det er følgende overlapp mellom bruker og nevnte grupper (med nøsting)</h5>
+	{% for s in sammenfallende %}
+		<li>{{s}}</li>
+	{% endfor %}
+
+	<br>
+	<table class="table">
+		<tr>
+			<td>
+			<h5>Bruker har følgende gruppemedlemskap</h5>
+			{% for g in brukers_unike_grupper %}
+				{{ g }}<br>
+			{% endfor %}
+			</td>
+			<td>
+			<h5>Liste med grupper har følgende utnøsting</h5>
+			{% for g in unike_utnostede_grupper %}
+				{{ g.common_name }}<br>
+			{% endfor %}
+			{% if feilede_oppslag %}
+				<hr><h5>Feilede oppslag</h5>
+				{{feilede_oppslag}}
+			{% endif %}
+			</td>
+		</tr>
+	</table>
+	{% endif %}
+
+{% endblock hovedinnhold %}

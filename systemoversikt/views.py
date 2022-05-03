@@ -2990,6 +2990,91 @@ def adorgunit_detaljer(request, pk=None):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+
+def ad_gruppeanalyse(request):
+	required_permissions = 'auth.view_user'
+	if request.user.has_perm(required_permissions):
+		import re
+
+		def convert_distinguishedname_cn(liste):
+			return [re.search(r'cn=([^\,]*)', g, re.I).groups()[0] for g in liste]
+
+		brukernavn_str = request.POST.get('brukernavn', "").strip().lower()
+
+		try:
+			bruker = User.objects.get(username=brukernavn_str)
+			brukers_grupper = ldap_users_securitygroups(bruker.username)
+			brukers_unike_grupper = sorted(convert_distinguishedname_cn(brukers_grupper))
+		except:
+			print("ad_gruppeanalyse: Brukernavn finnes ikke")
+			brukers_unike_grupper = None
+
+
+		sikkerhetsgrupper_str = request.POST.get('sikkerhetsgrupper', "")
+		sikkerhetsgrupper = []
+		feilede_oppslag = []
+		sikkerhetsgrupper_oppsplittet = re.findall(r"([^,;\n\r]+)", sikkerhetsgrupper_str) # alt mellom tegn som typisk brukes for å splitte unike ting.
+
+		for gr in sikkerhetsgrupper_oppsplittet:
+			try:
+				sikkerhetsgrupper.append(ADgroup.objects.get(common_name=gr))
+			except:
+				feilede_oppslag.append(gr)
+
+		def identifiser_underliggende_grupper(gr):
+			child_groups = []
+			for element in json.loads(gr.member):
+				try: # fra LDAP-svaret vet vi ikke om en member er en gruppe eller en brukerident. Vi må derfor slå opp.
+					g = ADgroup.objects.get(distinguishedname=element)
+					child_groups.append(g)
+				except:
+					pass # må være noe annet enn en gruppe, gitt at kartotekets database er synkronisert med AD
+			return child_groups
+
+		def utnost(gr):
+			hierarki = []
+			hierarki.append(gr)
+
+			stack = []
+			stack += identifiser_underliggende_grupper(gr)
+
+			while stack:
+				denne_gruppen = stack.pop()
+				print(denne_gruppen)
+				hierarki.append(denne_gruppen)
+				nye_undergrupper = identifiser_underliggende_grupper(denne_gruppen)
+				for ug in nye_undergrupper:
+					if ug not in hierarki:
+						stack.append(ug)
+
+			return hierarki
+
+
+		utnostede_grupper = []
+		for gr in sikkerhetsgrupper:
+			utnostede_grupper += utnost(gr)
+
+		set_brukers_grupper = set(brukers_unike_grupper)
+		set_sikkerhetsgruppeutnosting = [g.common_name for g in utnostede_grupper]
+		sammenfallende = set_brukers_grupper.intersection(set_sikkerhetsgruppeutnosting)
+
+		context = {
+			'form_brukernavn': brukernavn_str,
+			'form_sikkerhetsgrupper': sikkerhetsgrupper_str,
+			'brukers_unike_grupper': brukers_unike_grupper,
+			'feilede_oppslag': feilede_oppslag,
+			'unike_utnostede_grupper': utnostede_grupper,
+			'sammenfallende': sammenfallende,
+		}
+		return render(request, 'ad_gruppeanalyse.html', context)
+	else:
+		context = {
+			'required_permissions': required_permissions,
+			'groups': request.user.groups
+		}
+		return render(request, '403.html', context)
+
+
 def adgruppe_graf(request, pk):
 	"""
 	Vise en graf over hvordan grupper er nøstet nedover fra en gitt gruppe
@@ -3884,7 +3969,16 @@ def ldap_get_recursive_group_members(group):
 	return users
 
 
+
 # støttefunksjon for LDAP
+
+def ldap_users_securitygroups(user):
+	ldap_filter = ('(cn=%s)' % user)
+	result = ldap_query(ldap_path="DC=oslofelles,DC=oslo,DC=kommune,DC=no", ldap_filter=ldap_filter, ldap_properties=[], timeout=5)
+	memberof = result[0][1]['memberOf']
+	return([g.decode() for g in memberof])
+
+
 def ldap_get_details(name, ldap_filter):
 	import re
 	import json

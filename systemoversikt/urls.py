@@ -165,6 +165,7 @@ urlpatterns = [
 	re_path(r'^cmdb/ad/lookup/recursive/(?P<group>[^#\+\"\\\<\>\;]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
 	re_path(r'^cmdb/ad/lookup/exact/(?P<name>[^#\+\"\\\<\>\;]{2,200})/$', views.ad_exact, name='ad_exact'),
 	re_path(r'^cmdb/prk/userlookup/$', views.prk_userlookup, name='prk_userlookup'),
+	re_path(r'^cmdb/ad/gruppeanalyse/$', views.ad_gruppeanalyse, name='ad_gruppeanalyse'),
 
 	re_path(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	re_path(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),
@@ -216,4 +217,5 @@ urlpatterns = [
 
 	# Er denne i bruk?
 	re_path(r'^user_clean_up/$', views.user_clean_up, name='user_clean_up'),
+
 ]
