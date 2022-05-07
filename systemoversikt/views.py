@@ -3055,6 +3055,11 @@ def ad_gruppeanalyse(request):
 		for gr in sikkerhetsgrupper:
 			utnostede_grupper += utnost(gr)
 
+		utnostede_grupper_ant_medlemmer = 0
+		for gr in utnostede_grupper:
+			utnostede_grupper_ant_medlemmer += gr.membercount
+
+
 		if brukers_unike_grupper and utnostede_grupper:
 			set_brukers_grupper = set(brukers_unike_grupper)
 			set_sikkerhetsgruppeutnosting = [g.common_name for g in utnostede_grupper]
@@ -3069,6 +3074,7 @@ def ad_gruppeanalyse(request):
 			'feilede_oppslag': feilede_oppslag,
 			'unike_utnostede_grupper': utnostede_grupper,
 			'sammenfallende': sammenfallende,
+			'utnostede_grupper_ant_medlemmer': utnostede_grupper_ant_medlemmer,
 		}
 		return render(request, 'ad_gruppeanalyse.html', context)
 	else:

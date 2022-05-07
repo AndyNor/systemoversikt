@@ -3508,6 +3508,15 @@ class System(models.Model):
 		bruk = SystemBruk.objects.filter(system=self.pk)
 		return bruk.count()
 
+	def brukes(self):
+		if self.livslop_status == None:
+			return True
+		if self.livslop_status >= 6:
+			return False
+		return True
+
+
+
 
 	# brukes bare av dashboard, flyttes dit? ("def statusTjenestenivaa(systemer)")
 	def fip_kritikalitet(self):

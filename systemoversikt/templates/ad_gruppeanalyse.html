@@ -13,6 +13,8 @@
 
 {% block hovedinnhold %}
 
+<p>Formålet med denne er å finne ut hvorfor en bruker har tilgang til en ressurs, f.eks. et filområde. Skriv inn et brukernavn, samt ét eller flere (sikkerhets)gruppenavn. Denne funksjonen vil finne frem alle grupper personen er tilgang i, samt nøste ut alle undergrupper av gruppene du skriver inn. Du vil så få en oversikt over overlappet. Merk at dataene som benyttes ble synkronisert med AD sist natt, slik at endringer som har skjedd siden da ikke vil fremkomme her.</p>
+
 	<form action="" method="POST" autocomplete="off">
 		{% csrf_token %}
 		<div class="form-group form-inline">
@@ -45,10 +47,11 @@
 			{% for g in unike_utnostede_grupper %}
 				{{ g.common_name }}<br>
 			{% endfor %}
+			<hr><p>Ca. antall medlemmer: {{ utnostede_grupper_ant_medlemmer }}</p><hr>
 			{% if feilede_oppslag %}
-				<hr><h5>Feilede oppslag</h5>
+				<p>Feilede oppslag:</p>
 				{% for f in feilede_oppslag %}
-					{{f}}<br>
+					<li>{{f}}</li>
 				{% endfor %}
 			{% endif %}
 			</td>

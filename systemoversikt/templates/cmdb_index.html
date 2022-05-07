@@ -25,11 +25,15 @@
 	{% url 'alle_adgrupper' as url_alle_adgrupper %}
 	<a href="{{ url_alle_adgrupper }}" class="btn btn-sm btn-link {% if url_alle_adgrupper in request.path %}fremhev{% endif %}">Tilgangsgrupper</a>
 
+	{% url 'ad_gruppeanalyse' as url_ad_gruppeanalyse %}
+	<a href="{{ url_ad_gruppeanalyse }}" class="btn btn-sm btn-link {% if url_ad_gruppeanalyse in request.path %}fremhev{% endif %}">Gruppeanalyse</a>
+
+
 	{% url 'leverandortilgang' as url_leverandortilgang %}
 	<a href="{{ url_leverandortilgang }}" class="btn btn-sm btn-link {% if url_leverandortilgang in request.path %}fremhev{% endif %}">Leverandørtilgang</a>
 
 	{% url 'drifttilgang' as url_drifttilgang %}
-	<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Drifttilgang</a>
+	<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Drift-brukere</a>
 
 	{% url 'adorgunit_detaljer' as url_adorgunit_detaljer %}
 	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}">OU-strukturen</a>
