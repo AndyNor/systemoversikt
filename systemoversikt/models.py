@@ -2028,6 +2028,58 @@ class ADOrgUnit(models.Model):
 			return self.distinguishedname
 
 
+class Leverandortilgang(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	navn = models.CharField(
+			verbose_name="Visningsnavn",
+			blank=False,
+			null=False,
+			unique=True,
+			max_length=100,
+			)
+	systemer = models.ManyToManyField(
+			to='System',
+			related_name='leverandortilgang',
+			verbose_name="Systemtilknytning",
+			blank=False,
+			help_text=u"Brukes for tilgang til følgende systemer",
+			)
+	adgruppe = models.ForeignKey(
+			to="ADgroup",
+			related_name='leverandortilgang',
+			verbose_name="AD-gruppeknytning",
+			blank=False,
+			null=True,
+			help_text=u"Gis tilgang via følgende AD-gruppe",
+			on_delete=models.SET_NULL,
+			)
+	kommentar = models.TextField(
+			verbose_name="Kommentar",
+			help_text=u"Utdypende detaljer",
+			)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return u'%s' % (self.navn)
+
+	def systemer_vis(self):
+		return ", ".join([
+			system.systemnavn for system in self.systemer.all()
+		])
+		systemer_vis.short_description = "Systemer"
+
+	class Meta:
+		verbose_name_plural = "Leverandørtilganger"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
 class ADgroup(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",

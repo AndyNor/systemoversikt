@@ -173,6 +173,20 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 		return [Lower('navn')]
 
 
+@admin.register(Leverandortilgang)
+class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
+	list_display = ('navn', 'systemer_vis', 'adgruppe', 'kommentar', 'opprettet')
+	search_fields = ('navn',)
+
+	filter_horizontal = ('systemer',)
+	autocomplete_fields = (
+		'adgruppe',
+	)
+
+	def get_ordering(self, request):
+		return [Lower('navn')]
+
+
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]

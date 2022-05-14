@@ -122,10 +122,28 @@ def bruker_sok(request):
 	required_permissions = ['auth.view_user']
 	if any(map(request.user.has_perm, required_permissions)):
 
+
 		search_term = request.GET.get('search_term', '').strip()
 
+		from functools import reduce
+		from operator import or_
+
+
+		fields = (
+			'username__icontains',
+			'profile__displayName__icontains',
+		)
+		parts = []
+		terms = ["Bruce", "Wayne"]  # produce this from your search input field
+		for term in terms:
+			for field in fields:
+				parts.append(Q(**{field: term}))
+
+		query = reduce(or_, parts)
+
 		if len(search_term) > 2:
-			users = User.objects.filter(Q(username__icontains=search_term) | Q(profile__displayName__icontains=search_term))
+			users = User.objects.filter(query).distinct()
+
 		else:
 			users = User.objects.none()
 
