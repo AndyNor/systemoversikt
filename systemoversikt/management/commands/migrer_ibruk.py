@@ -26,7 +26,5 @@ class Command(BaseCommand):
 					s.save()
 
 		for s in System.objects.all():
-			if s.ibruk == False and s.livslop_status == None:
-				#s.livslop_status = 4
-				#s.save()
-				print("%s er %s" % (s.systemnavn, s.livslop_status))
+			if s.livslop_status == None:
+				print("%s" % (s.systemnavn))
