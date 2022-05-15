@@ -24,3 +24,7 @@ class Command(BaseCommand):
 					print("endrer status på %s fra %s til %s" % (s.systemnavn, s.livslop_status, 7))
 					s.livslop_status = 7
 					s.save()
+
+		for s in System.objects.all():
+			if s.ibruk == True and s.livslop_status == None:
+				print("%s" % (s.systemnavn))
