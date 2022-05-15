@@ -15,12 +15,12 @@ class Command(BaseCommand):
 		for s in System.objects.all():
 			if s.ibruk == False:
 				if s.livslop_status == 1:
-					pass
+					continue
 				if s.livslop_status == 6:
-					pass
+					continue
 				if s.livslop_status == 7:
-					pass
+					continue
 				else:
 					print("endrer status på %s fra %s til %s" % (s.systemnavn, s.livslop_status, 7))
 					s.livslop_status = 7
-					#s.save()
+					s.save()
