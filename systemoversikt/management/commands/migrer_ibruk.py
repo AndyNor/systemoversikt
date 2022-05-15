@@ -16,6 +16,10 @@ class Command(BaseCommand):
 			if s.ibruk == False:
 				if s.livslop_status == 1:
 					pass
+				if s.livslop_status == 6:
+					pass
+				if s.livslop_status == 7:
+					pass
 				else:
 					print("endrer status på %s fra %s til %s" % (s.systemnavn, s.livslop_status, 7))
 					s.livslop_status = 7
