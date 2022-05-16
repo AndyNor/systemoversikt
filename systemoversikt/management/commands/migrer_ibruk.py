@@ -6,7 +6,7 @@ Hensikten med denne koden er å oppdatere en lokal oversikt over alle AD-grupper
 # TODO slette grupper som ikke ble funnet
 
 from django.core.management.base import BaseCommand
-from systemoversikt.models import ApplicationLog, ADOrgUnit, ADgroup, CMDBbs, System
+from systemoversikt.models import ApplicationLog, ADOrgUnit, ADgroup, CMDBbs, System, Driftsmodell
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -15,6 +15,7 @@ class Command(BaseCommand):
 		for s in System.objects.all():
 			if s.driftsmodell_foreignkey != None:
 				if s.driftsmodell_foreignkey.pk == 9:
-					s.driftsmodell_foreignkey.pk = 3
+					target = Driftsmodell.objects.get(pk=3)
+					s.driftsmodell_foreignkey = target
 					print("endrer modell for %s" % (s))
 					s.save()
