@@ -27,6 +27,8 @@
 			{% endif %}
 			<th>Forvaltet av</th>
 			<th>Driftsmodeller</th>
+			<th>Antall systemer</th>
+			<th>Kommentar</th>
 			{% if user.is_authenticated %}
 			<th class="filter-false">Slett</th>
 			{% endif %}
@@ -49,6 +51,13 @@
 				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
 					<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
 			</td>
+			<td>
+				{{ item.antall_systemer }}
+			</td>
+			<td>
+				{{ item.kommentar }}
+			</td>
+
 			{% if user.is_authenticated %}
 			<td>
 				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>

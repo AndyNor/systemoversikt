@@ -2753,6 +2753,9 @@ class Driftsmodell(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['navn']
 
+	def antall_systemer(self):
+		return self.systemer.all().count()
+
 
 class Autorisasjonsmetode(models.Model):
 	navn = models.CharField(
@@ -3031,7 +3034,7 @@ class System(models.Model):
 			)
 	driftsmodell_foreignkey = models.ForeignKey(
 			to=Driftsmodell,
-			related_name='system_driftsmodell',
+			related_name='systemer',
 			on_delete=models.PROTECT,
 			verbose_name="Driftsplattform",
 			blank=True,
