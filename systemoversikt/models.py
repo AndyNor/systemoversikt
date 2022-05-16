@@ -2434,6 +2434,7 @@ LIVSLOEP_VALG = (
 	(5, '5 ☢️ Bør/skal byttes ut'),
 	(6, '6 💾 Ute av bruk, men tilgjengelig'),
 	(7, '7 ❌ Fullstendig avviklet'),
+	(8, '8 ❓ Ukjent'),
 )
 
 SELVBETJENING_VALG = (
@@ -3511,6 +3512,9 @@ class System(models.Model):
 		else:
 			return u'%s' % (self.systemnavn)
 
+	def save(self, *args, **kwargs):
+		self.ibruk = self.er_ibruk()
+		super(System, self).save(*args, **kwargs)
 
 	def felles_sektorsystem(self):
 		if self.systemeierskapsmodell in ("FELLESSYSTEM", "SEKTORSYSTEM", "TVERRSEKTORIELT"):
@@ -3560,10 +3564,8 @@ class System(models.Model):
 		bruk = SystemBruk.objects.filter(system=self.pk)
 		return bruk.count()
 
-	def brukes(self):
-		if self.livslop_status == None:
-			return True
-		if self.livslop_status >= 6:
+	def er_ibruk(self):
+		if self.livslop_status in [1,6,7]:
 			return False
 		return True
 

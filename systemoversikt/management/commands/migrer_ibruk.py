@@ -27,4 +27,5 @@ class Command(BaseCommand):
 
 		for s in System.objects.all():
 			if s.livslop_status == None:
-				print("%s %s" % (s.systemnavn, s.ibruk))
+				s.livslop_status = 8
+				s.save()

@@ -190,9 +190,9 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('systemnavn', 'alias', 'ibruk', 'kvalitetssikret', 'systemeierskapsmodell', 'er_arkiv', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
+	list_display = ('systemnavn', 'alias', 'kvalitetssikret', 'systemeierskapsmodell', 'er_arkiv', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
 	search_fields = ('systemnavn', 'alias',)
-	list_filter = ('autentiseringsteknologi', 'autentiseringsalternativer', 'database_in_use', 'database_supported', 'ibruk', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
+	list_filter = ('autentiseringsteknologi', 'autentiseringsalternativer', 'database_in_use', 'database_supported', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
@@ -307,7 +307,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'classes': ('collapse',),
 			'fields': (
 				#'cmdbref',
-				'ibruk',
+				#'ibruk',
 				'systemtekniske_sikkerhetstiltak',
 				'programvarekategori',
 				'strategisk_egnethet',
