@@ -16,4 +16,5 @@ class Command(BaseCommand):
 			if s.driftsmodell_foreignkey != None:
 				if s.driftsmodell_foreignkey.pk == 9:
 					s.driftsmodell_foreignkey.pk = 3
+					print("endrer modell for %s" % (s))
 					s.save()
