@@ -7,19 +7,25 @@
 
 {% block hovedinnhold %}
 
-<p>{{ melding }}</p>
+<p>Skriv inn brukernavn på person du ønser å bytte fra og person du ønsker å bytte til.</p>
 
 <p>{{ feilmelding }}</p>
 
 	<form action="" method="POST" autocomplete="off">
 		{% csrf_token %}
 		<div class="form-group form-inline">
-			<input type="text" value="{{ ansvarlig_fra }}" name="ansvarlig_fra"
+			<input type="text" value="{{ str_ansvarlig_fra }}" name="ansvarlig_fra"
 			placeholder="Brukernavn (nå)" class="form-control form-control-sm">
-			<input type="text" value="{{ ansvarlig_til }}" name="ansvarlig_til"
+			<input type="text" value="{{ str_ansvarlig_til }}" name="ansvarlig_til"
 			placeholder="Brukernavn (bytt til)" class="form-control form-control-sm">
 			<input type="submit" value="Erstatt" class="btn btn-primary btn-sm">
 		</div>
 	</form>
+
+{% if resultat %}
+	{% for r in resultat %}
+		<li>{{ r }}</li>
+	{% endfor %}
+{% endif %}
 
 {% endblock hovedinnhold %}

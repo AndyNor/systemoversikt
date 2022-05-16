@@ -128,9 +128,9 @@ def bruker_sok(request):
 		from functools import reduce
 		from operator import or_, and_
 
-
+		# vi ønsker her å søke med AND-operatør mellom alle ord mot displayname, men OR-et med første ordet mot username.
 		fields = (
-			'username__icontains',
+			'profile__displayName__icontains',
 		)
 		parts = []
 		terms = search_term.split(" ")
@@ -138,9 +138,10 @@ def bruker_sok(request):
 			for field in fields:
 				parts.append(Q(**{field: term}))
 
-		query = reduce(and_, parts)
-		query.append("(OR:('profile__displayName__icontains', %s))" %())
-		print(query)
+		query_display = reduce(and_, parts)
+		username_query = Q(**{'username__icontains': terms[0]})
+		query = reduce(or_, [query_display, username_query])
+		#print(query)
 
 		if len(search_term) > 2:
 			users = User.objects.filter(query).distinct()
@@ -755,62 +756,66 @@ def ansvarlig_bytte(request):
 		except:
 			ansvarlig_til = None
 
+
 		if ansvarlig_fra == None or ansvarlig_til == None:
 			feilmelding = "Et eller begge feltene inneholder et ugyldig brukernavn"
 		else:
 			feilmelding = ""
+
+		resultat = []
 
 		if ansvarlig_fra != None and ansvarlig_til != None and ansvarlig_fra != ansvarlig_til:
 
 			# her lister vi først ut alle felter på Ansvarlig-klassen som er av typen mange-til-mange eller fremmednøkkel.
 			m2m_relations = []
 			fk_relations = []
+			detaljert_logg = ""
+
 			for f in Ansvarlig._meta.get_fields(include_hidden=False):
 				if f.get_internal_type() in ["ManyToManyField"]:
 					m2m_relations.append(f)
 				if f.get_internal_type() in ["ForeignKey"]:
 					fk_relations.append(f)
 
-				#field
-				#model
-				#related_name
-				#related_model
+			#field
+			#model
+			#related_name
+			#related_model
 
-			for i in m2m_relations:
-				print(i.field)
-				print(i.model)
-				print(i.related_name)
-				print(i.related_model)
-				print("")
+			for m2mr in m2m_relations:
+				for obj in getattr(ansvarlig_fra, m2mr.name).all():
+					object_field = getattr(obj, m2mr.field.name)
+					object_field.remove(ansvarlig_fra)
+					object_field.add(ansvarlig_til)
+					melding = ("Fjernet %s og la til %s på %s %s" % (ansvarlig_fra, ansvarlig_til, obj.__class__.__name__, obj))
+					detaljert_logg += ("%s %s, " % (obj.__class__.__name__, obj))
+					resultat.append(melding)
 
-			# så leter vi igjennom ansvarlig fra-objektet etter m2m/fremmednøklene vi fant i stad
-			#referanser_for_endring = []
-			#for m2m in m2m_relations:
-			#	for i in getattr(ansvarlig_fra, m2m.name).all():
-			#		referanser_for_endring.append(i)
+			for fkr in fk_relations:
+				for obj in getattr(ansvarlig_fra, fkr.name).all():
+					setattr(obj, fkr.field.name, ansvarlig_til)
+					obj.save()
+					melding = ("Fjernet %s og la til %s på %s %s" % (ansvarlig_fra, ansvarlig_til, obj.__class__.__name__, obj))
+					detaljert_logg += ("%s %s, " % (obj.__class__.__name__, obj))
+					resultat.append(melding)
 
-			#for fk in fk_relations:
-			#	model = fk.related_model
-			#	fieldname =  fk.field.name
-			#	for i in model.objects.filter(**{ fieldname: ansvarlig_fra.pk}):
-			#		referanser_for_endring.append(i)
+			logg_entry_message = "%s har overført alt ansvar fra %s til %s for %s" % (request.user, ansvarlig_fra, ansvarlig_til, detaljert_logg)
 
-			#for i in referanser_for_endring:
-			#	print(i)
+			ApplicationLog.objects.create(
+					event_type='Overføring av ansvar',
+					message=logg_entry_message,
+				)
 
-
-
-
-			melding = "Flyttet alt ansvar fra %s til %s. Handlingen er loggført" % (ansvarlig_fra, ansvarlig_til)
 		else:
-			melding = "Skriv inn brukernavn på person du ønser å bytte fra og person du ønsker å bytte til. Handlingen blir loggført."
+			resultat = None
 
 
 		return render(request, "ansvarlig_bytte.html", {
-			'ansvarlig_fra': str_ansvarlig_fra,
-			'ansvarlig_til': str_ansvarlig_til,
-			'melding': melding,
-			'feilmelding': feilmelding,
+			'str_ansvarlig_fra': str_ansvarlig_fra,
+			'str_ansvarlig_til': str_ansvarlig_til,
+			'ansvarlig_fra': ansvarlig_fra,
+			'ansvarlig_til': ansvarlig_til,
+			'resultat': resultat,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
