@@ -3516,6 +3516,9 @@ class System(models.Model):
 		else:
 			return u'%s' % (self.systemnavn)
 
+	def unike_servere(self):
+		return "Windows"
+
 	def save(self, *args, **kwargs):
 		self.ibruk = self.er_ibruk()
 		super(System, self).save(*args, **kwargs)
