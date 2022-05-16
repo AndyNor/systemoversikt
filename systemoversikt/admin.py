@@ -242,7 +242,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('systemnavn', 'livslop_status'),
 				('systemtyper', 'systemurl'),
 				('driftsmodell_foreignkey', 'systemeierskapsmodell'),
-				'alias',
+				('alias','programvarer'),
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
 				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
 				('systemforvalter_avdeling_referanse', 'godkjente_bestillere'),
@@ -289,7 +289,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'fields': (
 				'tilgangsgrupper_ad',
 				'enterprise_applicatons',
-				'programvarer',
 				('avhengigheter_referanser','avhengigheter'),
 				('autentiseringsteknologi', 'autentiseringsalternativer'),
 				('legacy_klient_krever_smb', 'legacy_klient_krever_direkte_db'),
