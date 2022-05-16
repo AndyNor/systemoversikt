@@ -1,6 +1,6 @@
 {% load static %}
 
-<p>Forklaring til oversikten: Lys skrift betyr at systemet ikke er merket som kvalitetssikret. Gjennomstreking betyr at systemet er markert som "ikke i bruk". Gul bakgrunn varsler når det er angitt mer enn én systemeier. 🔧 indikerer at systemet er infrastruktur.</p>
+<p>Forklaring til oversikten: Lys skrift betyr at systemet ikke er merket som kvalitetssikret. Gjennomstreking betyr at systemet er markert som "ikke i bruk". 🔧 indikerer at systemet er infrastruktur.</p>
 
 
 
@@ -17,7 +17,7 @@
 	</thead>
 		<tbody>
 		{% for system in systemer %}
-		<tr {% if system.systemeier_kontaktpersoner_referanse.all.count > 1 %}style="background-color: yellow;"{% endif %}>
+		<tr>
 			<td>{% include 'system_include_vis.html' with system=system %}</td>
 			<td>{{system.ibruk|yesno:'Ja, Nei, Vet ikke'}}</td>
 			<td>{{system.get_livslop_status_display }}</td>
