@@ -2939,6 +2939,7 @@ class System(models.Model):
 			verbose_name="Er systemet i bruk?",
 			blank=True,
 			null=False,
+			default=True,
 			help_text=u"Til informasjon. Ble tidligere benyttet for å skjule system fra noen visninger.",
 			)
 	kvalitetssikret = models.OneToOneField(
