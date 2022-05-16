@@ -126,20 +126,21 @@ def bruker_sok(request):
 		search_term = request.GET.get('search_term', '').strip()
 
 		from functools import reduce
-		from operator import or_
+		from operator import or_, and_
 
 
 		fields = (
 			'username__icontains',
-			'profile__displayName__icontains',
 		)
 		parts = []
-		terms = ["Bruce", "Wayne"]  # produce this from your search input field
+		terms = search_term.split(" ")
 		for term in terms:
 			for field in fields:
 				parts.append(Q(**{field: term}))
 
-		query = reduce(or_, parts)
+		query = reduce(and_, parts)
+		query.append("(OR:('profile__displayName__icontains', %s))" %())
+		print(query)
 
 		if len(search_term) > 2:
 			users = User.objects.filter(query).distinct()
@@ -4349,6 +4350,7 @@ def csirt_api(request):
 		systeminfo = {}
 		systeminfo["systemnavn"] = s.systemnavn
 		systeminfo["systemalias"] = s.alias
+		systeminfo["OS"] = s.unike_servere
 
 		systeminfo["applikasjoner"] = [a.programvarenavn for a in s.programvarer.all()]
 
