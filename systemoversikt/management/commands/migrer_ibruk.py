@@ -27,4 +27,4 @@ class Command(BaseCommand):
 
 		for s in System.objects.all():
 			if s.livslop_status == None:
-				print("%s" % (s.systemnavn))
+				print("%s %s" % (s.systemnavn, s.ibruk))
