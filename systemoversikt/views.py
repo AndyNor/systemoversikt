@@ -4350,7 +4350,8 @@ def csirt_api(request):
 		systeminfo = {}
 		systeminfo["systemnavn"] = s.systemnavn
 		systeminfo["systemalias"] = s.alias
-		systeminfo["OS"] = s.unike_servere
+
+		systeminfo["os"] = s.unike_server_os()
 
 		systeminfo["applikasjoner"] = [a.programvarenavn for a in s.programvarer.all()]
 

@@ -3516,8 +3516,15 @@ class System(models.Model):
 		else:
 			return u'%s' % (self.systemnavn)
 
-	def unike_servere(self):
-		return "Windows"
+	def unike_server_os(self):
+		server_os = []
+		try:
+			for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
+				for server in bss.cmdbdevice_sub_name.all():
+						server_os.append("%s %s" % (server.comp_os, server.comp_os_version))
+		except:
+			pass
+		return list(set(server_os))
 
 	def save(self, *args, **kwargs):
 		self.ibruk = self.er_ibruk()
