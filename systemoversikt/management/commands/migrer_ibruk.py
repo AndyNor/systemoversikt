@@ -13,19 +13,5 @@ class Command(BaseCommand):
 
 
 		for s in System.objects.all():
-			if s.ibruk == False:
-				if s.livslop_status == 1:
-					continue
-				if s.livslop_status == 6:
-					continue
-				if s.livslop_status == 7:
-					continue
-				else:
-					print("endrer status på %s fra %s til %s" % (s.systemnavn, s.livslop_status, 7))
-					s.livslop_status = 7
-					s.save()
-
-		for s in System.objects.all():
-			if s.livslop_status == None:
-				s.livslop_status = 8
+			if s.ibruk == None:
 				s.save()
