@@ -25,8 +25,8 @@
 			{% if user.is_authenticated %}
 			<th class="filter-false">Rediger</th>
 			{% endif %}
-			<th>Driftsmodeller</th>
 			<th>Forvaltet av</th>
+			<th>Driftsmodeller</th>
 			{% if user.is_authenticated %}
 			<th class="filter-false">Slett</th>
 			{% endif %}
@@ -42,12 +42,12 @@
 			</td>
 			{% endif %}
 			<td>
-				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
-					<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
-			</td>
-			<td>
 				{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
 					<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet|default:"-" }}</a>
+			</td>
+			<td>
+				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
+					<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
 			</td>
 			{% if user.is_authenticated %}
 			<td>
