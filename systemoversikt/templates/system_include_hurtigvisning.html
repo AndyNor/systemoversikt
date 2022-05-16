@@ -9,6 +9,7 @@
 		<tr>
 			<th>Systemnavn</th>
 			<th>Systemet er i bruk?</th>
+			<th>Livsløpstatus</th>
 			<th>Kvalitetssikret</th>
 			<th>Sist oppdatering (dato)</th>
 			<th>Sist oppdatering (tid siden)</th>
@@ -19,6 +20,7 @@
 		<tr {% if system.systemeier_kontaktpersoner_referanse.all.count > 1 %}style="background-color: yellow;"{% endif %}>
 			<td>{% include 'system_include_vis.html' with system=system %}</td>
 			<td>{{system.ibruk|yesno:'Ja, Nei, Vet ikke'}}</td>
+			<td>{{system.get_livslop_status_display }}</td>
 			<td>{{system.informasjon_kvalitetssikret|yesno:'Ja, Nei, Vet ikke'}}</td>
 			<td>{{system.sist_oppdatert|date:"Y-m-d"}}</td>
 			<td>{{system.sist_oppdatert|timesince}}</td>
