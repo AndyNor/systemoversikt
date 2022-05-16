@@ -1,8 +1,8 @@
 
 {% url "systemdetaljer" system.pk as url_systemdetaljer %}
 <a href="{{ url_systemdetaljer }}" style="
-	{% if system.ibruk is False %}text-decoration: line-through;{% endif %}
-	{% if system.informasjon_kvalitetssikret is False %}opacity: 1.0;{% endif %}
+	{% if system.livslop_status == 6 %}text-decoration: line-through;{% endif %}
+	{% if system.livslop_status == 7 %}text-decoration: line-through;{% endif %}
 	">{{ system.systemnavn }}</a>
 
 {% if system.er_infrastruktur %}
