@@ -2938,7 +2938,7 @@ class System(models.Model):
 	ibruk = models.BooleanField(
 			verbose_name="Er systemet i bruk?",
 			blank=True,
-			null=True,
+			null=False,
 			help_text=u"Til informasjon. Ble tidligere benyttet for å skjule system fra noen visninger.",
 			)
 	kvalitetssikret = models.OneToOneField(
