@@ -13,5 +13,6 @@ class Command(BaseCommand):
 
 
 		for s in System.objects.all():
-			if s.ibruk == None:
+			if s.driftsmodell_foreignkey == 9:
+				s.driftsmodell_foreignkey = 3
 				s.save()
