@@ -9,18 +9,19 @@
 	-->
 
 	<style>
+		@font-face {
+			font-family: "oslosans";
+			src: url("{% static 'fonts/OsloSans-Regular.woff' %}") format('woff');
+		}
 		body {
-			padding-top: 117px;
+			padding-top: 130px;
 			padding-bottom: 30px;
 			font-size: 10pt;
 			font-family: oslosans !important;
 		}
-		@font-face {
-			font-family: "oslosans"; 
-			src: url("{% static 'fonts/OsloSans-Regular.woff' %}") format('woff');
-		}
 		nav a:link, nav a:visited{
-			color: #F9C66B;
+			color: #000;
+			font-weight: bold;
 		}
 		nav a:hover {
 			color: #FF8274;
@@ -38,7 +39,7 @@
 			border-color: #dee2e6 #dee2e6 #fff;
 		}
 		li.hovedmeny{
-			font-size: 8pt;
+			font-size: 9pt;
 			list-style-type: none;
 			line-height: 1.5;
 		}

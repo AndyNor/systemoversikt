@@ -1,63 +1,49 @@
 {% load static %}
 
 <header>
-	<nav class="navbar navbar-light fixed-top" style="background-color: #2A2859; padding: 0;">
-		<div style="position: absolute; right: 8px; top: 8px;">
-			<form action="{% url 'alle_systemer' %}" autocomplete="off">
-				<div class="form-group form-inline">
-					<input style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
-					placeholder="System eller programvare" class="form-control form-control-sm">
-					<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-				</div>
-			</form>
-		</div>
+	<nav class="navbar navbar-light fixed-top" style="background-color: #fff; padding: 0;">
+
 
 		<div style="width: 100%; padding-top: 5px; padding-bottom: 5px;">
-			<a href="/"><img src="{% static 'standard_oslo-logoi.png' %}" style="float: left; margin-top: 5px; margin-right: 30px; margin-left: 15px; height: 70px;"></a>
-			<h4 style="margin-top: 5px; margin-bottom: 5px; padding-bottom: 0px;">Oslo kommune <a href="/">Kartoteket</a></h4>
+
+			<a href="/"><img src="{% static 'Oslo-logo-morkeblaa-RGB.c2e496c6.svg' %}" style="float: left; margin: 10px 30px 10px 65px; height: 70px;"></a>
+
+			<div>
+				<form action="{% url 'alle_systemer' %}" autocomplete="off">
+					<div class="form-group form-inline">
+						<div style="margin-top: 30px;">
+							<input style="width: 200px;" type="search" value="{{ search_term }}" name="search_term"
+							placeholder="System eller programvare" class="form-control form-control-sm">
+							<input type="submit" value="Søk" class="btn btn-sm">
+						</div>
+					</div>
+				</form>
+			</div>
 
 			{% if user.is_authenticated %}
-				{% if TEST_ENV_NAME == 'test' %}
-					{% url "logout" as url_logout %}
-				{% else %}
-					{% url "oidc_logout" as url_logout %}
-				{% endif %}
-
-			<span style="font-size: 10pt;">
-				Logget inn som <a href="{% url 'minside' %}">{{ user.first_name|default:"Ukjent" }} {{ user.last_name }}</a> og representerer
-				<a href="{% url 'bytt_virksomhet' %}">{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</a>
-				<!--
-				<span style="margin-left: 30px;">(<b><a href="{{ url_logout }}">Logg ut</a></b>)</span>
-				-->
-				<form method="post" action="{{ url_logout }}" style="display: inline; margin-left: 30px;">
+				<form method="post" action="{% url 'minside' %}" style="position: absolute; right: 5px; top: 25px;">
 					{% csrf_token %}
 					<input type="hidden" name="next" value="{{ request.path }}">
-					<button type="submit" class="btn btn-sm btn-danger">Logg ut</button>
+					<button id="login_button" type="submit" class="btn btn-sm btn-link">{{ request.user.first_name }} {{ request.user.last_name }}</button>
 				</form>
-			</span>
-
 			{% else %}
 				{% if TEST_ENV_NAME == 'test' %}
 					{% url "login" as url_login %}
 				{% else %}
 					{% url "oidc_authentication_init" as url_login %}
 				{% endif %}
-
-				Du er anonym med lesetilgang til åpen informasjon
-				<!--
-				<span style="margin-left: 30px;">(<b><a href="{{ url_login }}?next={{ request.path }}">logg inn</a></b>)</span>
-				-->
-				<form method="get" action="{{ url_login }}" style="display: inline; margin-left: 30px;">
+				<form method="get" action="{{ url_login }}" style="position: absolute; right: 5px; top: 25px;">
 					{% csrf_token %}
 					<input type="hidden" name="next" value="{{ request.path }}">
-					<button type="submit" class="btn btn-sm btn-primary">Logg inn</button>
+					<button id="login_button" type="submit" class="btn btn-sm btn-link">Logg inn</button>
 				</form>
-
 			{% endif %}
+
+
 
 		</div>
 
-		<div style="width: 100%; min-width: 1200px;">
+		<div style="width: 100%; min-width: 1100px; border: 1px solid;">
 			<ul class="nav">
 				<li class="hovedmeny">
 					{% url "alle_virksomheter" as alle_virksomheter_url %}

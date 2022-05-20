@@ -6,13 +6,27 @@
 
 {% block hovedinnhold %}
 
-	<p>Du er logget inn som {{ request.user.first_name }} {{ request.user.last_name }} via en av Oslo kommunes identitetstjenere. Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b>, og du er medlem i følgende grupper:<br>
+	{% if TEST_ENV_NAME == 'test' %}
+		{% url "logout" as url_logout %}
+	{% else %}
+		{% url "oidc_logout" as url_logout %}
+	{% endif %}
+
+
+	<p>Du er logget inn som {{ request.user.first_name }} {{ request.user.last_name }} via en av Oslo kommunes identitetstjenere.</p>
+
+	<p>Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b></p>
+
+	<p>Du representerer <b>{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</b></p>
+
+	<p>Du er medlem i følgende grupper:<br>
 	<ul>{% for group in user.groups.all %} <li>{{ group.name|slice:"19:"|lower|capfirst }}</li> {% endfor %}</ul>
 	</p>
 
 	{% url 'bruker_detaljer' pk=request.user.pk as url_user_details %}
-	<a href="{{url_user_details}}" class="btn btn-sm btn-link">Informasjon om din bruker</a>
-
+	<a href="{{url_user_details}}" class="btn btn-sm btn-link">Informasjon om din bruker</a><br>
+	<a href="{% url 'bytt_virksomhet' %}" class="btn btn-sm btn-link">Bytt virksomhet jeg representerer</a><br>
+	<a href="{{ url_logout }}" class="btn btn-sm btn-link">Logg ut</a><br>
 
 	<p>Dersom du ønsker å redigere på innhold kan du enten gå direkte til admin-siden eller du kan følge {% include 'site_edit_button.html' %} symbolene rundt omkring på denne portalen.</p>
 
