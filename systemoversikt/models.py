@@ -2101,6 +2101,7 @@ class ADgroup(models.Model):
 			)
 	common_name = models.TextField(
 			verbose_name="Common Name",
+			db_index=True,
 			null=True,
 			)
 	member = models.TextField(

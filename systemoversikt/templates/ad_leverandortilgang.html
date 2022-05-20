@@ -14,7 +14,7 @@
 <ul style="column-count:3;">
 {% for kilde in leverandor_kilder %}
 	{% url 'leverandortilgang' as base_url %}
-	<li {%if kilde.gruppe == valgt_gruppe %} style="font-weight: 800; color: black";{%endif%}><a target="_blank" href="{{ base_url }}{{ kilde.gruppe }}/">{{ kilde.beskrivelse }} ({{ kilde.medlemmer }})</a></li>
+	<li {%if kilde.gruppe == valgt_gruppe %} style="font-weight: 800; color: black";{%endif%}><a href="{{ base_url }}{{ kilde.gruppe }}/">{{ kilde.beskrivelse }} ({{ kilde.medlemmer }})</a></li>
 {% endfor %}
 </ul>
 

@@ -2119,6 +2119,7 @@ def leverandortilgang(request, valgt_gruppe=None):
 				"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANG,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
 				"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANGSS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
 			]
+
 			dml_grupper = ADgroup.objects.filter(distinguishedname__icontains='DS-DRIFT_DML_').exclude(distinguishedname__in=[o for o in unwanted_objects])
 			for g in dml_grupper:
 				if g.common_name != None:
@@ -3460,13 +3461,14 @@ def alle_ip(request):
 					except:
 						return None
 
-				dns_live = dns_live(ip_address)
+				#dns_live = dns_live(ip_address)
 
 				try:
 					comp_name = CMDBdevice.objects.get(comp_ip_address=item).comp_name
 				except:
 					comp_name = None
 
+				print(ip_address)
 				ip_lookup.append({
 						"address": ip_address,
 						"comp_name": comp_name,
