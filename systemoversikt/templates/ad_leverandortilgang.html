@@ -11,10 +11,54 @@
 
 {% block hovedinnhold %}
 
-<ul style="column-count:3;">
-{% for kilde in leverandor_kilder %}
-	{% url 'leverandortilgang' as base_url %}
-	<li {%if kilde.gruppe == valgt_gruppe %} style="font-weight: 800; color: black";{%endif%}><a href="{{ base_url }}{{ kilde.gruppe }}/">{{ kilde.beskrivelse }} ({{ kilde.medlemmer }})</a></li>
+<a class="btn btn-sm btn-link" href="/admin/systemoversikt/leverandortilgang/add/">{% include 'site_edit_button.html' %} Legg til ny</a>
+
+<p>Leverandørtilgang er å gi leverandører begrenset driftstilgang, og er her hovedsakelig ment å gjelde andre enn driftsleverandør. Slik tilgang gis via PRK-skjemaer. Her registrerer vi de ulike profilene mot system. Det er systemets forvalter som listes ut under eiere. Det tillates å koble samme profil til flere systemer da det er observert en praksis rundt at profiler opprettes for leverandør og ikke spesifikt for system.</p>
+
+<table id="leverandortilgang" class="tablesorter excel">
+	<thead>
+		<tr>
+			<th>Navn</th>
+			<th>Tilkoblede systemer</th>
+			<th>Antall personer</th>
+			<th>Eiere</th>
+			<th>Kommentar</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for lev in leverandortilganger %}
+		<tr>
+			<td>
+				<a href="/admin/systemoversikt/leverandortilgang/{{lev.pk}}/change/">{% include 'site_edit_button.html' %}</a>
+				{% url 'adgruppe_detaljer' pk=lev.adgruppe.pk as url_adgruppe_detaljer %}
+				<a href="{{ url_adgruppe_detaljer }}">{{ lev.navn }}</a>
+			</td>
+			<td>
+				{% for s in lev.systemer.all %}
+					{{ s.systemnavn }}<br>
+				{% endfor %}
+			</td>
+			<td>
+				{{ lev.adgruppe.antall_underliggende_medlemmer }}
+			</td>
+			<td>
+				{% for s in lev.systemer.all %}
+					{{ s.systemforvalter.virksomhetsforkortelse }}<br>
+				{% endfor %}
+			</td>
+			<td>{{ lev.kommentar }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+
+<h4>Profiler som trolig mangler</h4>
+
+<ul style="column-count:2; font-size:9pt;">
+{% for gruppe in manglende_grupper %}
+	{% url 'adgruppe_detaljer' gruppe.pk as url_adgruppe_detaljer %}
+	<li><a href="{{ url_adgruppe_detaljer }}">{{ gruppe.common_name }} ({{ gruppe.membercount }})</a></li>
 {% endfor %}
 </ul>
 

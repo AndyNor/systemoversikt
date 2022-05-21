@@ -6,30 +6,38 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	AD-gruppedetaljer
+	AD-gruppe: {{ gruppe.display_name }}
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-	<h5>{{ gruppe.display_name }}</h5>
-	<h6>{{ gruppe.distinguishedname }}</h6>
-	Sist oppdatert {{ gruppe.sist_oppdatert }}<br>
-	<b>Fra PRK?</b>: {% include 'site_janeivetikke.html' with boolean=gruppe.from_prk %}<br>
+	<form action="{% url 'alle_adgrupper' %}" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="AD-gruppenavn inneholder" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
 
-	<a href="{% url 'ad_exact' name=gruppe.distinguishedname %}">🔎 Live søk i AD</a>
-
-	<hr>
-	<h6>Om tilgangsgruppen</h6>
-	{% if gruppe.parent %}
-		Mor: <a href="{% url 'adorgunit_detaljer' pk=gruppe.parent.pk %}">📁 {{ gruppe.parent }}</a><br>
+	<p>
+		🆔 {{ gruppe.distinguishedname }}<br>
+		{% if gruppe.parent %}
+		📁<a href="{% url 'adorgunit_detaljer' pk=gruppe.parent.pk %}"> {{ gruppe.parent }}</a><br>
 	{% endif %}
+		<i>"{{ gruppe.description }}"</i> (Fra PRK {% include 'site_janeivetikke.html' with boolean=gruppe.from_prk %})
+	</p>
+	<hr>
+	Sist synkronisert {{ gruppe.sist_oppdatert }}
+		<a href="{% url 'ad_exact' name=gruppe.distinguishedname %}">🔎 slå opp direkte</a><br>
+
+
 	{% if memberof.groups %}
 		{% for m in memberof.groups %}
 		Er nøstet inn i: <a href="{% url 'adgruppe_detaljer' pk=m.pk %}">👥 {{ m }}</a><br>
 		{% endfor %}
 	{% endif%}
 	<a href="{% url 'adgruppe_graf' pk=gruppe.pk %}">📈 Graf opp alle underliggende nøstede grupper</a><br>
-	<b>Beskrivelse</b>: {{ gruppe.description }}
+
 
 
 	<hr>
@@ -37,18 +45,22 @@
 	<table class="tablesorter">
 	<thead>
 		<tr>
-			<th>Type</th>
 			<th>Navn</th>
 			<th>Brukernavn</th>
-			<th width="35%">Beskrivelse</th>
 			<th>Fra PRK?</th>
+			<th>Sist pålogget</th>
+			<th>Passord utløpt?</th>
+			<td>Passordutløp</td>
+			<th width="35%">Beskrivelse</th>
 		</tr>
 	</thead>
 	<tbodt>
 	{% for m in member.groups %}
 		<tr>
-			<td>👥 Tilgangsgruppe</td>
-			<td><a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m }}</a></td>
+			<td>👥 <a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m }}</a></td>
+			<td></td>
+			<td></td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
@@ -57,18 +69,22 @@
 
 	{% for m in member.users %}
 		<tr>
-			<td>👤 Bruker</td>
-			<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>{{m.first_name}} {{m.last_name}}</td>
+			<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>👤 {{m.first_name}} {{m.last_name}}</td>
 			<td>{{m.username}}</td>
-			<td>{{m.profile.description}}</td>
 			<td>{{m.profile.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
+			<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
+			<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,Nei,Vet ikke" }}</td>
+			<td>{{ m.profile.dont_expire_password|yesno:"Utløper aldri,Utløper,Vet ikke" }}</td>
+			<td>{{m.profile.description}}</td>
 		</tr>
 	{% endfor %}
 
 	{% for n in memberof.notfound %}
 		<tr>
-			<td>Ukjent medlem av</td>
-			<td>{{ n }}</td>
+			<td>❓ {{ n }}</td>
+			<td></td>
+			<td></td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>
@@ -77,8 +93,10 @@
 
 	{% for n in member.notfound %}
 		<tr>
-			<td>Ukjent medlem</td>
-			<td>{{ n }}</td>
+			<td>❓ {{ n }}</td>
+			<td></td>
+			<td></td>
+			<td></td>
 			<td></td>
 			<td></td>
 			<td></td>

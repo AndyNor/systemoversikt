@@ -21,11 +21,11 @@
     /* make control bar with delete and save fixed at bottom */
     .submit-row {
         position: fixed;
-        bottom: 20px;
+        bottom: 5px;
         width: 100%;
         border: 0px;
         left: 0px;
-        background-color: #fddf9940;
+        background-color: #00000010;
         border: 1px solid #00000015;
         margin: 0px;
     }
@@ -41,21 +41,21 @@
         background-color: red;
     }
     .module h2, fieldset.collapsed h2{
-        background: #2a2859e3;
-        color: #fff;
+        background: #e3e3e3;
+        color: #000;
     }
     a.collapse-toggle{
-        color: #F9C66B !important;
+        color: #000 !important;
     }
     a.collapse-toggle:hover{
-        color: #F9C66B95 !important;
+        color: #000 !important;
     }
     .selector-chosen h2 {
-        background: #dc3545;
+        background: #f9c66b;
     }
     .module caption {
-        background-color: #2A2859;
-        color: #F9C66B;
+        background-color: #e3e3e3;
+        color: #000;
     }
     a.calendarnav-previous, a.calendarnav-next{
         filter: invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
@@ -79,7 +79,7 @@
         caption-side: top;
     }
     a.section:link, a.section:visited{
-        color: #F9C66B;
+        color: #000;
     }
     /* jquery insists on setting display none on all collapse where .show is not set */
     .collapse{
@@ -111,7 +111,7 @@
   data-admin-utc-offset="{% now "Z" %}">
 
 <!-- Container -->
-<div id="container">
+<div id="container" style="margin-top: 20px;">
 
     {% if not is_popup %}
     <!-- Header -->

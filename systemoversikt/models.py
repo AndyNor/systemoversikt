@@ -737,6 +737,19 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			blank=True,
 			null=True,
 			)
+	adgrupper = models.ManyToManyField(
+			to="ADgroup",
+			related_name='user',
+			verbose_name="Medlemskap i grupper (AD)",
+			blank=True,
+			help_text=u'Settes via automatiske jobber',
+			)
+	adgrupper_antall = models.IntegerField(
+			verbose_name="Antall gruppemedlemskap",
+			blank=True,
+			null=True,
+			help_text=u'Settes via automatiske jobber',
+			)
 	# med vilje er det ikke HistoricalRecords() på denne
 
 	def __str__(self):
@@ -2063,6 +2076,8 @@ class Leverandortilgang(models.Model):
 	kommentar = models.TextField(
 			verbose_name="Kommentar",
 			help_text=u"Utdypende detaljer",
+			blank=True,
+			null=True,
 			)
 	history = HistoricalRecords()
 
@@ -2180,6 +2195,14 @@ class ADgroup(models.Model):
 			return len(matchede_brukere)
 		except:
 			return "error"
+
+	def antall_underliggende_medlemmer(self):
+		from systemoversikt.views import adgruppe_utnosting
+		underliggende_grupper = adgruppe_utnosting(self)
+		antall = 0
+		for g in underliggende_grupper:
+			antall += g.membercount
+		return antall - (len(underliggende_grupper) - 1) # det er alltid én gruppe om det ikke er undergrupper
 
 
 AVTALETYPE_VALG = (

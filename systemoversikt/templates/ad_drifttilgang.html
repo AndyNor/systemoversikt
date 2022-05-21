@@ -13,7 +13,7 @@
 
 <p>Sopra Steria sine driftsoperatører må først logge inn lokalt hos Sopra Steria mot en "Secure Operator Access (SOA)"-løsning som krever multifaktor, daglig aktivering av roller og så slipper operatør inn på terminalservere hvor det igjen er åpnet til Oslo kommune via statiske VPN-linjer.</p>
 
-<p>Leverandør på nettverk (Telenor) har egen løsning for tilgang. Denne er ikke kartlagt her enda.</p>
+<p>Leverandør på nettverk (Telenor) har egen løsning for tilgang. Den styres via et eget isolert AD, og kan derfor ikke vises her.</p>
 
 <hr>
 
@@ -28,17 +28,48 @@
 
 <hr>
 
+<h3>Driftbrukere generelt</h3>
 <table class="tablesorter excel">
 <thead>
 	<tr>
 		<th>Navn</th>
 		<th>Brukernavn</th>
-		<th>Virksomhet</th>
 		<th>Fra PRK?</th>
 		<th>Sist pålogget</th>
-		<th>Passordstatus</th>
+		<th>Passord utløpt?</th>
 		<td>Passordutløp</td>
-		<td>Tilhørighet</td>
+		<th>Beskrivelse</th>
+	</tr>
+</thead>
+<tbodt>
+
+{% for m in driftbrukere %}
+	<tr>
+		<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>
+			👤 {{ m.first_name }} {{ m.last_name }}</td>
+		<td>{{ m.username }}</td>
+		<td>{{ m.profile.from_prk|yesno:"Ja,Opprettet manuelt,Vet ikke" }}</td>
+		<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
+		<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,Nei,Vet ikke" }}</td>
+		<td>{{ m.profile.dont_expire_password|yesno:"Utløper aldri,Utløper,Vet ikke" }}</td>
+		<td>{{ m.profile.description }}</td>
+	</tr>
+{% endfor %}
+</tbodt>
+</table>
+
+<hr>
+
+<h3>Sopra Steria</h3>
+<table class="tablesorter excel">
+<thead>
+	<tr>
+		<th>Navn</th>
+		<th>Brukernavn</th>
+		<th>Fra PRK?</th>
+		<th>Sist pålogget</th>
+		<th>Passord utløpt?</th>
+		<td>Passordutløp</td>
 		<th>Beskrivelse</th>
 	</tr>
 </thead>
@@ -46,19 +77,20 @@
 
 {% for m in steria_users %}
 	<tr>
-		<td>{{ m.first_name }} {{ m.last_name }}</td>
+		<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>
+			👤 {{ m.first_name }} {{ m.last_name }}</td>
 		<td>{{ m.username }}</td>
-		<td>{{ m.profile.virksomhet.virksomhetsforkortelse }}</td>
-		<td>{{ m.profile.from_prk|yesno:"OK,Opprettet manuelt,Vet ikke" }}</td>
+		<td>{{ m.profile.from_prk|yesno:"Ja,Opprettet manuelt,Vet ikke" }}</td>
 		<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
-		<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,OK,Vet ikke" }}</td>
-		<td>{{ m.profile.dont_expire_password|yesno:"Passord utløper aldri,OK,Vet ikke" }}</td>
-		<td>{{ m.profile.org_tilhorighet }}</td>
+		<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,Nei,Vet ikke" }}</td>
+		<td>{{ m.profile.dont_expire_password|yesno:"Utløper aldri,Utløper,Vet ikke" }}</td>
 		<td>{{ m.profile.description }}</td>
 	</tr>
 {% endfor %}
 </tbodt>
 </table>
+
+
 
 {{ feilede_oppslag }}
 

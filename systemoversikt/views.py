@@ -1559,6 +1559,20 @@ def alle_systemer(request):
 
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
+	try:
+		v = Virksomhet.objects.get(virksomhetsforkortelse__iexact=search_term)
+		return redirect('virksomhet', v.pk)
+	except:
+		pass
+
+
+	try:
+		u = User.objects.get(username__iexact=search_term)
+		return redirect('bruker_detaljer', u.pk)
+	except:
+		pass
+
+
 	if search_term != '':
 		aktuelle_systemer = System.objects.filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
 		#Her ønsker vi å vise treff i beskrivelsesfeltet, men samtidig ikke vise systemer på nytt
@@ -2096,81 +2110,24 @@ def leverandortilgang(request, valgt_gruppe=None):
 	if any(map(request.user.has_perm, required_permissions)):
 
 		if valgt_gruppe == None:
-			# Windows Terminal Service (WTS)
-			#	TASK-OF2-LevtilgangWTS-IS
-			#	TASK-OF2-LevtilgangWTS-SS
 
-			leverandor_kilder = [
-				#{"gruppe": "DS-DRIFT_DML", "beskrivelse": "Ekstern leverandørtilgang (DML)"}, # se under dml_grupper under.
-				{"gruppe": "DS-DRIFT_TREDJEPARTDRIFT", "beskrivelse": "UBW-relatert (økonomi og HR)"},
-				{"gruppe": "TASK-OF2-DRIFTWTS-IS", "beskrivelse": "Full driftstilgang intern sone"},
-				{"gruppe": "TASK-OF2-DRIFTWTS-SS", "beskrivelse": "Full driftstilgang sikker sone"},
-				{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_KARDEX", "beskrivelse": "Kardex hos DEB"},
-				{"gruppe": "DS-LEV_TREDJEPARTSDRIFT_DEB", "beskrivelse": "Creston hos DEB"},
-				{"gruppe": "DS-KEM_RPA", "beskrivelse": "RPA hos KEM"},
-				{"gruppe": "DS-UVALEVTILGANG", "beskrivelse": "ITAS/UVA"},
-			]
+			leverandortilganger = Leverandortilgang.objects.all()
+			unwanted_objects = [lt.adgruppe.distinguishedname for lt in leverandortilganger]
 
-			unwanted_objects = [
-				"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANG,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-				"CN=DS-DRIFT_DML_2SDRIFTLEV_2SDRIFTLEV,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-				"CN=DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGIS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-				"CN=DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGSS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-				"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANG,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-				"CN=DS-DRIFT_DML_LEVTILGANG_LEVTILGANGSS,OU=DRIFT,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
-			]
+			manglende_grupper = []
+			kjente_potensielle_mangler = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS']
 
-			dml_grupper = ADgroup.objects.filter(distinguishedname__icontains='DS-DRIFT_DML_').exclude(distinguishedname__in=[o for o in unwanted_objects])
-			for g in dml_grupper:
-				if g.common_name != None:
-					leverandor_kilder.append(
-							{"gruppe": g.common_name, "beskrivelse": "DML %s" % g.common_name}
-						)
+			for mangel in kjente_potensielle_mangler:
+				dml_grupper = ADgroup.objects.filter(distinguishedname__icontains=mangel).exclude(distinguishedname__in=[o for o in unwanted_objects])
+				for g in dml_grupper:
+					if g.common_name != None:
+						manglende_grupper.append(g)
 
-			# legge til antall direkte medlemmer per gruppe
-			for kilde in leverandor_kilder:
-				kilde["medlemmer"] = ADgroup.objects.filter(common_name=kilde["gruppe"]).get().membercount
-
+			manglende_grupper.sort(key=lambda g : g.common_name)
 
 			return render(request, 'ad_leverandortilgang.html', {
-					"leverandor_kilder": leverandor_kilder,
-			})
-
-
-		if valgt_gruppe != None:
-
-			usergroups = []
-			feilede_oppslag = []
-
-			kildemedlemmer = []
-			nestede_grupper = []
-			members = json.loads(ADgroup.objects.get(common_name=valgt_gruppe).member)
-
-			for m in members:
-				regex_username = re.search(r'cn=([^\,]*)', m, re.I).groups()[0]
-				try:
-					u = User.objects.get(username__iexact=regex_username)
-					if u.profile.accountdisable == False:
-						kildemedlemmer.append(u)
-					else:
-						pass
-						#print("bruker er deaktivert: %s" % u)
-				except:
-					try:
-						nestede_grupper.append(ADgroup.objects.get(distinguishedname=m))
-					except:
-						feilede_oppslag.append(regex_username)
-
-			usergroups.append({
-				"kilde": valgt_gruppe,
-				"kildemedlemmer": kildemedlemmer,
-				"nestede_grupper": nestede_grupper,
-			})
-
-			return render(request, 'ad_leverandortilgang_detaljer.html', {
-				"usergroups": usergroups,
-				"feilede_oppslag": feilede_oppslag,
-				"valgt_gruppe": valgt_gruppe,
+					"manglende_grupper": manglende_grupper,
+					"leverandortilganger": leverandortilganger,
 			})
 
 	else:
@@ -2195,7 +2152,53 @@ def drifttilgang(request):
 		# "Role-OF2-Admin-Citrix Services"
 		# "DRIFT_DRIFTSPERSONELL_SERVERMGMT_SERVERADMIN"
 
+
+		"""
+DRIFT_DRIFTSPERSONELL_SERVERMGMT_SERVERADMIN
+DS-MemberServer-Admin-AlleManagementServere
+GS-OpsRole-Ergogroup-ServerAdmins
+Task-OF2-ServerAdmin-AllMemberServers
+Role-OF2-AdminAlleMemberServere
+
+		"""
+
+		"""
+		driftbrukerex = User.objects.filter(profile__virksomhet=170)
+		print("DRIFT-koblede brukere")
+		print(len(driftbrukerex))
+
+		driftbrukere = User.objects.filter(username__istartswith="DRIFT")
+		print("DRIFT-brukere")
+		print(len(driftbrukere))
+
+		driftbrukere4 = User.objects.filter(username__istartswith="T-DRIFT")
+		print("T-DRIFT-brukere")
+		print(len(driftbrukere4))
+
+
+		for u in list(set(driftbrukerex) - (set(driftbrukere))):
+			print(u.username)
+
+
+		driftbrukere2 = User.objects.filter(username__istartswith="t-")
+		print("T- brukere")
+		print(len(driftbrukere2))
+
+		driftbrukerey = User.objects.filter(username__istartswith="a-")
+		print("A- brukere")
+		print(len(driftbrukerey))
+
+		driftbrukere3 = User.objects.filter(profile__virksomhet=None)
+		print("Ikke koblet til en virksomhet")
+		print(len(driftbrukere3))
+		"""
+
+
+		driftbrukere = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
+		print("driftbrukere %s" % len(driftbrukere))
+
 		steria_users = User.objects.filter(profile__accountdisable=False).filter(Q(profile__description__icontains="Sopra") | Q(profile__description__icontains="2S"))
+		print("2S brukere %s" % len(steria_users))
 
 		# for hver bruker looper igjennom grupper og markerer om gruppe eksisterer.
 		## databaseadministrator
@@ -2206,6 +2209,7 @@ def drifttilgang(request):
 
 		return render(request, 'ad_drifttilgang.html', {
 			"steria_users": steria_users,
+			"driftbrukere": driftbrukere,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -3016,6 +3020,34 @@ def adorgunit_detaljer(request, pk=None):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def adgruppe_utnosting(gr):
+	hierarki = []
+	hierarki.append(gr)
+
+	def identifiser_underliggende_grupper(gr):
+		child_groups = []
+		for element in json.loads(gr.member):
+			try: # fra LDAP-svaret vet vi ikke om en member er en gruppe eller en brukerident. Vi må derfor slå opp.
+				g = ADgroup.objects.get(distinguishedname=element)
+				child_groups.append(g)
+			except:
+				pass # må være noe annet enn en gruppe, gitt at kartotekets database er synkronisert med AD
+		return child_groups
+
+	stack = []
+	stack += identifiser_underliggende_grupper(gr)
+
+	while stack:
+		denne_gruppen = stack.pop()
+		#print(denne_gruppen)
+		hierarki.append(denne_gruppen)
+		nye_undergrupper = identifiser_underliggende_grupper(denne_gruppen)
+		for ug in nye_undergrupper:
+			if ug not in hierarki:
+				stack.append(ug)
+
+	return hierarki
+
 
 def ad_gruppeanalyse(request):
 	required_permissions = 'auth.view_user'
@@ -3048,38 +3080,9 @@ def ad_gruppeanalyse(request):
 			except:
 				feilede_oppslag.append(stripped_gr)
 
-		def identifiser_underliggende_grupper(gr):
-			child_groups = []
-			for element in json.loads(gr.member):
-				try: # fra LDAP-svaret vet vi ikke om en member er en gruppe eller en brukerident. Vi må derfor slå opp.
-					g = ADgroup.objects.get(distinguishedname=element)
-					child_groups.append(g)
-				except:
-					pass # må være noe annet enn en gruppe, gitt at kartotekets database er synkronisert med AD
-			return child_groups
-
-		def utnost(gr):
-			hierarki = []
-			hierarki.append(gr)
-
-			stack = []
-			stack += identifiser_underliggende_grupper(gr)
-
-			while stack:
-				denne_gruppen = stack.pop()
-				print(denne_gruppen)
-				hierarki.append(denne_gruppen)
-				nye_undergrupper = identifiser_underliggende_grupper(denne_gruppen)
-				for ug in nye_undergrupper:
-					if ug not in hierarki:
-						stack.append(ug)
-
-			return hierarki
-
-
 		utnostede_grupper = []
 		for gr in sikkerhetsgrupper:
-			utnostede_grupper += utnost(gr)
+			utnostede_grupper += adgruppe_utnosting(gr)
 
 		utnostede_grupper_ant_medlemmer = 0
 		for gr in utnostede_grupper:
@@ -4025,8 +4028,12 @@ def ldap_get_recursive_group_members(group):
 def ldap_users_securitygroups(user):
 	ldap_filter = ('(cn=%s)' % user)
 	result = ldap_query(ldap_path="DC=oslofelles,DC=oslo,DC=kommune,DC=no", ldap_filter=ldap_filter, ldap_properties=[], timeout=5)
-	memberof = result[0][1]['memberOf']
-	return([g.decode() for g in memberof])
+	try:
+		memberof = result[0][1]['memberOf']
+		return([g.decode() for g in memberof])
+	except:
+		print("error ldap_users_securitygroups(): %s" %(result))
+		return []
 
 
 def ldap_get_details(name, ldap_filter):

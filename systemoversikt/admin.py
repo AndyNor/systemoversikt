@@ -186,6 +186,16 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 	def get_ordering(self, request):
 		return [Lower('navn')]
 
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('leverandortilgang'))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('leverandortilgang'))
+		return super().response_change(request, obj)
+
 
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
@@ -709,7 +719,7 @@ class RegistrerteAdmin(SimpleHistoryAdmin):
 class ProfileAdmin(admin.ModelAdmin):
 	list_display = ('user', 'virksomhet', 'usertype', 'from_prk')
 	search_fields = ('user__username',)
-	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som')
+	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som', 'adgrupper', 'org_unit',)
 	list_filter = ('usertype', 'from_prk')
 
 
