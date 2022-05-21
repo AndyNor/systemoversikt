@@ -3433,6 +3433,7 @@ def alle_ip(request):
 			import ipaddress
 			search_term = search_term.replace('\"','').replace('\'','').replace(':',' ').replace('/', ' ').replace('\\', ' ') # dette vil feile for IPv6, som kommer på formatet [xxxx:xxxx::xxxx]:port
 			search_ips = re.findall(r"([^,;\t\s\n\r]+)", search_term)
+			search_ips = set(search_ips)
 
 			ip_lookup = []
 			not_ip_addresses = []
@@ -3443,14 +3444,15 @@ def alle_ip(request):
 					not_ip_addresses.append(item)
 					continue  # skip this item
 
-				dns_ekstern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_ekstern", domain)
-				dns_intern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_intern", domain)
+
+				#dns_ekstern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_ekstern", domain)
+				#dns_intern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_intern", domain)
 				vlan_data = load_vlan(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vlan.tsv")
 				nat_data = load_nat(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_nat.tsv")
 				bigip_data = load_bigip(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vip.tsv")
 
-				dns_i = find_ip_in_dns(ip_address, dns_intern)
-				dns_e = find_ip_in_dns(ip_address, dns_ekstern)
+				#dns_i = find_ip_in_dns(ip_address, dns_intern)
+				#dns_e = find_ip_in_dns(ip_address, dns_ekstern)
 				vlan = find_vlan(ip_address, vlan_data)
 				nat = find_ip_in_nat(ip_address, nat_data)
 				vip = find_bigip(ip_address, bigip_data)
@@ -3468,13 +3470,13 @@ def alle_ip(request):
 				except:
 					comp_name = None
 
-				print(ip_address)
+
 				ip_lookup.append({
 						"address": ip_address,
 						"comp_name": comp_name,
-						"dns_i": dns_i,
-						"dns_e": dns_e,
-						"dns_live": dns_live,
+						#"dns_i": dns_i,
+						#"dns_e": dns_e,
+						#"dns_live": dns_live,
 						"vlan": vlan,
 						"vip": vip,
 				})
