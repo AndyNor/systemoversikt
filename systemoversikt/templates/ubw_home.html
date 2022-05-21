@@ -4,12 +4,17 @@
 {% load templatetags %}
 
 {% block overskrift %}
-	Velg enhet
+	UBW-støtteverktøy
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
+
+<p>Verktøy for å importere fakturaer fra UBW, tagge og etterfylle informasjon samt eksportere via API mot f.eks. Excel.</p>
+
+<p><b>Velg enhet:</b></p>
+
 	{% for enhet in enheter %}
-		<a href="{% url 'ubw_enhet' pk=enhet.pk %}" class="btn btn-sm btn-link">{{ enhet.name }}</a><br>
+		<li><a href="{% url 'ubw_enhet' pk=enhet.pk %}" class="btn btn-sm btn-link">{{ enhet.name }}</a></li>
 	{% endfor %}
 
 	<hr>

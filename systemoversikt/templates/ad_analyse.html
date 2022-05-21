@@ -12,19 +12,17 @@
 
 {% block hovedinnhold %}
 
-	<p>Det er {{antall_alle_grupper}} grupper</p>
-
-	<h5>Grupper med {{ maks }} eller færre medlemmer</h5>
+	<p>Det er <b>{{antall_alle_grupper}}</b> grupper totalt i AD. <b>{{antall_tomme}}</b> av disse har {{ maks }} eller færre medlemmer. Du kan endre på kriterie ved å endre på ?antall= i adressefeltet. Det vil ta litt tid for nettleseren din å laste alle data.</p>
 
 	<table id="grupper_tomme" class="tablesorter excel">
 	<thead>
 	<tr>
-		<th>distinguishedname</th>
-		<th>display_name</th>
-		<th>membercount</th>
-		<th>description</th>
-		<th>from_prk</th>
-		<th>mail</th>
+		<th>Distinguishedname</th>
+		<th>Display name</th>
+		<th>Member count</th>
+		<th>Description</th>
+		<th>Fra PRK?</th>
+		<th>Mail-adresse</th>
 	</tr>
 	</thead>
 	<tbody>

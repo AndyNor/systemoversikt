@@ -1,0 +1,22 @@
+{% extends "admin_index.html" %}
+{% load static %}
+
+{% block overskrift %}
+	Valgbare kategorier ved registrering
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Disse linkene tar deg til administrasjonssidene hvor du kan endre på ulike valgbare kategorier benyttet ved registrering av behandlinger og systemer.</p>
+
+	<a href="/admin/systemoversikt/registrerte/" class="btn btn-sm btn-link" >Den registrerte</a><br>
+	<a href="/admin/systemoversikt/personsonopplysningskategori/" class="btn btn-sm btn-link" >Kategorier personoppl.</a><br>
+	<a href="/admin/systemoversikt/relasjonregistrert/" class="btn btn-sm btn-link" >Relasjoner</a><br>
+	<a href="/admin/systemoversikt/behandlingsgrunnlag/" class="btn btn-sm btn-link" >Hjemmesgrunnlag</a><br>
+	<a href="/admin/systemoversikt/database/" class="btn btn-sm btn-link" >Databasetyper</a><br>
+	<a href="/admin/systemoversikt/autentiseringsteknologi/" class="btn btn-sm btn-link" >Påloggingstjenester</a><br>
+	<a href="/admin/systemoversikt/autentiseringsmetode/" class="btn btn-sm btn-link" >Identifiseringsnivåer</a><br>
+	<a href="/admin/systemoversikt/informasjonsklasse/" class="btn btn-sm btn-link" >Informasjonsklasser</a><br>
+	<a href="/admin/systemoversikt/systemtype/" class="btn btn-sm btn-link" >Systemtyper</a><br>
+
+{% endblock hovedinnhold %}

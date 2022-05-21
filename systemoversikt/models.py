@@ -5045,6 +5045,7 @@ class PRKvalg(models.Model):
 			max_length=300,
 			blank=False, null=False,
 			help_text=u"Importert",
+			db_index=True,
 			)
 	gruppenavn = models.CharField(
 			unique=True,
@@ -5052,6 +5053,7 @@ class PRKvalg(models.Model):
 			max_length=1000,
 			blank=False, null=False,
 			help_text=u"Importert",
+			db_index=True,
 			)
 	beskrivelse = models.CharField(
 			verbose_name="Beskrivelse",
@@ -5081,6 +5083,7 @@ class PRKvalg(models.Model):
 			verbose_name="Skjemanavn",
 			on_delete=models.PROTECT,
 			help_text=u"Importert",
+			db_index=True,
 			)
 	ad_group_ref = models.ForeignKey(
 			to="ADgroup",

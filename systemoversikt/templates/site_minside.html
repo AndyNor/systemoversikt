@@ -13,20 +13,31 @@
 	{% endif %}
 
 
-	<p>Du er logget inn som {{ request.user.first_name }} {{ request.user.last_name }} via en av Oslo kommunes identitetstjenere.</p>
+	<p>Du er logget inn som <b>{{ request.user.first_name }} {{ request.user.last_name }}</b> via en av Oslo kommunes identitetstjenere.<br><a class="btn btn-sm btn-link" href="{{ OIDC_IDP_URL_BASE }}/auth/realms/{{ OIDC_IDP_REALM }}/account/">🌍 Administrer pålogging</a></p>
 
-	<p>Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b></p>
+	<a href="{{ url_logout }}" class="btn btn-sm btn-danger" style="position: absolute; right:65px;">Logg ut</a>
 
-	<p>Du representerer <b>{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</b></p>
+	<p>Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b>
+	{% url 'bruker_detaljer' pk=request.user.pk as url_user_details %}
+	<a href="{{url_user_details}}" class="btn btn-sm btn-link">Informasjon om din bruker</a></p>
+
+
+	<p>Du representerer <b>{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</b>
+	<a href="{% url 'bytt_virksomhet' %}" class="btn btn-sm btn-link">Bytt virksomhet jeg representerer</a></p>
+
 
 	<p>Du er medlem i følgende grupper:<br>
 	<ul>{% for group in user.groups.all %} <li>{{ group.name|slice:"19:"|lower|capfirst }}</li> {% endfor %}</ul>
 	</p>
 
-	{% url 'bruker_detaljer' pk=request.user.pk as url_user_details %}
-	<a href="{{url_user_details}}" class="btn btn-sm btn-link">Informasjon om din bruker</a><br>
-	<a href="{% url 'bytt_virksomhet' %}" class="btn btn-sm btn-link">Bytt virksomhet jeg representerer</a><br>
-	<a href="{{ url_logout }}" class="btn btn-sm btn-link">Logg ut</a><br>
+
+	{% url 'ansvarlig' pk=request.user.ansvarlig_brukernavn.pk as url_ansvarlig %}
+	{% if url_ansvarlig %}
+		<a href="{{ url_ansvarlig }}" class="btn btn-sm btn-link" >Mine ansvarsområder</a>
+	{% else%}
+		<a href="/admin/systemoversikt/ansvarlig/add/?brukernavn={{request.user.pk}}" class="btn btn-sm btn-link" >{% include 'site_edit_button.html' %} Opprett som ansvarlig</a>
+	{% endif %}
+
 
 	<p>Dersom du ønsker å redigere på innhold kan du enten gå direkte til admin-siden eller du kan følge {% include 'site_edit_button.html' %} symbolene rundt omkring på denne portalen.</p>
 

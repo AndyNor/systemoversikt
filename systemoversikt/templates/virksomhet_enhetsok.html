@@ -8,10 +8,12 @@
 
 {% block hovedinnhold %}
 
+<p>Data om organisatoriske enheter synkroniseres hver natt mot PRK.</p>
+
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
-			<input size="30" style="width: 140px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="Virksomhet.." class="form-control form-control-sm">
+			<input size="30" style="width: 340px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Søk etter seksjoner, avdelinger, team.." class="form-control form-control-sm">
 			<input type="submit" value="Filtrer" class="btn btn-primary btn-sm">
 		</div>
 	</form>

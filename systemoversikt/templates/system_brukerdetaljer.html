@@ -11,18 +11,15 @@
 
 {% block hovedinnhold %}
 
-	{% url 'ad' as url_ad %}
-	<a href="{{url_ad}}" class="btn btn-sm {% if url_ad in request.path %}fremhev{% endif %}">Direktesøk</a>
-
 	{% url 'logger_users' as url_logger_users %}
-	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}" >Endringslogg</a>
+	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}">Logg over brukerendringer</a>
 
 	<hr>
 
 	<form action="{% url 'bruker_sok' %}" autocomplete="off">
 		<div class="form-group form-inline">
-			<input size="55" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="Brukernavn, fornavn, etternavn (minimum 4)" class="form-control form-control-sm">
+			<input size="55" style="width: 450px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Søk i brukernavn eller navn (minimum 2 tegn)" class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 		</div>
 	</form>

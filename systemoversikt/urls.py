@@ -43,10 +43,12 @@ urlpatterns = [
 	re_path(r'^admin/profil/', views.minside, name="minside"),
 	re_path(r'^admin/logger/database/$', views.logger, name='logger'),
 	re_path(r'^admin/logger/audit/$', views.logger_audit, name='logger_audit'),
-	re_path(r'^admin/logger/users/$', views.logger_users, name='logger_users'),
 	re_path(r'^admin/roller/$', views.roller, name='roller'),
 	re_path(r'^admin/rettigheter/$', views.permissions, name='permissions'),
 	re_path(r'^admin/erstattansvarlig/$', views.ansvarlig_bytte, name='ansvarlig_bytte'),
+	re_path(r'^admin/valgbarekategorier/$', views.valgbarekategorier, name='valgbarekategorier'),
+	re_path(r'^admin/bytt_virksomhet/$', views.bytt_virksomhet, name='bytt_virksomhet'),
+
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
@@ -88,7 +90,6 @@ urlpatterns = [
 	re_path(r'^virksomhet/passwdexpire/(?P<pk>\d{1,8})/$', views.passwordexpire, name='passwordexpire'),
 	re_path(r'^virksomhet/passwdneverexpire/(?P<pk>\d{1,8})/$', views.passwdneverexpire, name='passwdneverexpire'),
 	re_path(r'^virksomhet/ansvarlige/(?P<pk>\d{1,8})/$', views.virksomhet_ansvarlige, name='virksomhet_ansvarlige'),
-	re_path(r'^virksomhet/bytt_virksomhet/$', views.bytt_virksomhet, name='bytt_virksomhet'),
 	re_path(r'^virksomhet/min/$', views.min_virksomhet, name='min_virksomhet'),
 	re_path(r'^virksomhet/arkivplan/(?P<pk>\d{1,8})/$', views.virksomhet_arkivplan, name='virksomhet_arkivplan'),
 	re_path(r'^virksomhet/sertifikatmyndighet/$', views.sertifikatmyndighet, name='sertifikatmyndighet'),
@@ -150,6 +151,7 @@ urlpatterns = [
 	re_path(r'^cmdb/ad/leverandortilgang/$', views.leverandortilgang, name='leverandortilgang'),
 	re_path(r'^cmdb/ad/leverandortilgang/(?P<valgt_gruppe>[-._a-zA-Z0-9\s]{2,100})/$', views.leverandortilgang, name='leverandortilgang_detaljer'),
 	re_path(r'^cmdb/ad/drifttilgang/$', views.drifttilgang, name='drifttilgang'),
+	re_path(r'^cmdb/bruker/logger/$', views.logger_users, name='logger_users'),
 
 	re_path(r'^cmdb/ad/lookup/$', views.ad, name='ad'),
 	re_path(r'^cmdb/ad/analyse/$', views.ad_analyse, name='ad_analyse'),

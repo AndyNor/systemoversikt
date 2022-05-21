@@ -2424,6 +2424,7 @@ def bytt_virksomhet(request):
 				request.user.profile.virksomhet = valgt_virksomhet
 				request.user.save()
 				messages.success(request, 'Du representerer nå %s' % valgt_virksomhet)
+				return redirect(reverse('minside'))
 			else:
 				messages.warning(request, 'Forsøk på ulovlig bytte')
 		except:
@@ -3264,6 +3265,7 @@ def ad_analyse(request):
 	antall_alle_grupper = ADgroup.objects.all().count()
 	maks = int(request.GET.get('antall', 0))
 	adgrupper_tomme = ADgroup.objects.filter(membercount__lte=maks)
+	antall_tomme = len(adgrupper_tomme)
 
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
@@ -3271,6 +3273,7 @@ def ad_analyse(request):
 				"adgrupper_tomme": adgrupper_tomme,
 				"maks": maks,
 				"antall_alle_grupper": antall_alle_grupper,
+				"antall_tomme": antall_tomme,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -3660,6 +3663,15 @@ def alle_maskiner(request):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def valgbarekategorier(request):
+	"""
+	Vise noen linker knyttet til admin-panel. Valgfelt brukt i skjema.
+	"""
+	return render(request, 'cmdb_valgbarekategorier.html', {
+		'request': request,
+	})
 
 
 def servere_utfaset(request):
