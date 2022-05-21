@@ -2142,74 +2142,155 @@ def drifttilgang(request):
 	required_permissions = ['auth.view_user']
 	if any(map(request.user.has_perm, required_permissions)):
 
-		# 2S definerer driftsbrukere som bruker som starter med DRIFT og har ("Sopra" eller "2S") i beskrivelsesfelt.
-		# Vi sjekker brukere som ikke er fra PRK først
+		def adgruppe_oppslag(liste):
+			oppslag = []
+			for cn in liste:
+				try:
+					oppslag.append(ADgroup.objects.get(common_name=cn))
+				except:
+					print("error adgruppe_oppslag() %s" % (cn))
+			return oppslag
 
-		# "GS-OpsRole-Ergogroup-ADminAlleMemberServere"
-		# "domain admins"
-		# "GS-OpsRole-Ergogroup-ServerAdmins"
-		# "Task-OF2-ServerAdmin-AllMemberServers"
-		# "Role-OF2-Admin-Citrix Services"
-		# "DRIFT_DRIFTSPERSONELL_SERVERMGMT_SERVERADMIN"
+		serveradmins = [
+			"GS-OpsRole-ErgoGroup-AdminAlleMemberServere",
+			"GS-OpsRole-Ergogroup-ServerAdmins",
+			"Task-OF2-ServerAdmin-AllMemberServers",
+			"Role-OF2-Admin-Citrix Services",
+			"DS-MemberServer-Admin-AlleManagementServere",
+			"DS-MemberServer-Admin-AlleManagementServere",
+			"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_SERVERADMIN",
+			"Role-OF2-AdminAlleMemberServere",
+		]
+		serveradmins = adgruppe_oppslag(serveradmins)
 
+		domainadmins = [
+			"Domain Admins",
+			"Enterprise Admins",
+			"Role-Domain-Admins-UVA",
+			"On-Prem Domain Admins (009378fe-ecdf-4f49-bd65-d82411703915)",
+		]
+		domainadmins = adgruppe_oppslag(domainadmins)
+
+		prkadmin = [
+			"DS-GKAT_BRGR_SYSADM",
+			"DS-GKAT_ADMSENTRALESKJEMA_ALLE",
+			"DS-GKAT_ADMSENTRALESKJEMA_KOKS",
+			"DS-GKAT_IMPSKJEMA_TIGIMP",
+			"DS-GKAT_IMPSKJEMA_TSIMP",
+			"DS-GKAT_MODULER_GLOBAL_ADMINISTRASJON",
+			"DS-GKAT_DSGLOKALESKJEMA_ALLE",
+			"DS-GKAT_DSGLOKALESKJEMA_INFOCARE",
+			"DS-GKAT_DSGLOKALESKJEMA_OPPRETTE",
+			"DS-GKAT_DSGSENTRALESKJEMA_ALLE",
+			"DS-GKAT_DSGSENTRALESKJEMA_OPPRETTE",
+			"DS-GKAT_ADMLOKALESKJEMA_ALLE",
+			"DS-GKAT_ADMLOKALESKJEMA_APPLIKASJON",
+		]
+		prkadmin = adgruppe_oppslag(prkadmin)
+
+
+		sqladmins = [
+			"GS-UKE-MSSQL-DBA",
+			"DS-OF2-SQL-SYSADMIN",
+			"DS-DRIFT_DRIFTSPERSONELL_DATABASE_SQL",
+			"GS-Role-MSSQL-DBA",
+			"GS-UKE-MSSQL-DBA",
+			"DS-Role-MSSQL-DBA",
+			"DS-DRIFT_DRIFTSPERSONELL_DATABASE_ORACLE",
+			"DS-OF2-TASK-SQLCluster",
+		]
+		sqladmins = adgruppe_oppslag(sqladmins)
+
+		citrixadmin = [
+			"Task-OF2-Admin-Citrix XenApp",
+			"DS-DRIFT_DRIFTSPERSONELL_REMOTE_CITRIXDIRECTOR",
+			"DS-DRIFT_DRIFTSPERSONELL_CITRIX_APPV_ADMIN",
+			"DS-DRIFT_DRIFTSPERSONELL_CITRIX_CITRIX_NETSCALER_ADM",
+			"DS-DRIFT_DRIFTSPERSONELL_CITRIX_ADMINISTRATOR",
+			"DS-DRIFT_DRIFTSPERSONELL_CITRIX_DRIFT",
+		]
+		citrixadmin = adgruppe_oppslag(citrixadmin)
+
+		sccmadmin = [
+			"Task-SCCM-Application-Administrator",
+			"Task-SCCM-Application-Author",
+			"Task-SCCM-Application-Deployment-Manager",
+			"Task-SCCM-Asset-Manager",
+			"Task-SCCM-Compliance-Settings-Manager",
+			"Task-SCCM-Endpoint-Protection-Manager",
+			"Task-SCCM-Operations-Administrator",
+			"Task-SCCM-OSD-Manager",
+			"Task-SCCM-Infrastructure-Administrator",
+			"Task-SCCM-Remote-Tools-Operator",
+			"Task-SCCM-Security-Administrator",
+			"Task-SCCM-Software-Update-Manager",
+			"Task-SCCM-Full-Administrator",
+			"Task-SCCM-SRV-Admin",
+			"Task-SCCM-ClientInstall_SikkerSone_MP",
+			"Task-SCCM-ClientInstall_InternSone_MP",
+			"Task-SCCM-ClientInstall",
+			"TASK-SCCM-CLIENT-INSTALL-EXCLUDE",
+			"Task-SCCM-RemoteDesktop",
+			"Task-SCCM-SQL-Admin",
+			"DS-DRIFT_DRIFTSPERSONELL_SCCM_SCCMFULLADM",
+			"DA-SCCM-SQL-SysAdmin-F",
+		]
+		sccmadmin = adgruppe_oppslag(sccmadmin)
+
+		levtilgang = [
+			"DS-DRIFT_DML_LEVTILGANG_LEVTILGANGSS",
+			"DS-DRIFT_DML_LEVTILGANG_LEVTILGANG",
+			"DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGIS",
+			"DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGSS",
+		]
+		levtilgang = adgruppe_oppslag(levtilgang)
+
+		dcadmin = [
+			"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_ADMINDC",
+		]
+		dcadmin = adgruppe_oppslag(dcadmin)
+
+		exchangeadmin = [
+			"DS-DRIFT_DRIFTSPERSONELL_MAIL_EXH_FULL_ADMINISTRATOR",
+		]
+		exchangeadmin = adgruppe_oppslag(exchangeadmin)
+
+		filsensitivt = [
+			"DS-DRIFT_DRIFTSPERSONELL_ACCESSMGMT_OVERGREPSMOTTAKET",
+		]
+		filsensitivt = adgruppe_oppslag(filsensitivt)
+
+		brukere = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
+		#brukere = User.objects.filter(profile__accountdisable=False).filter(Q(profile__description__icontains="Sopra") | Q(profile__description__icontains="2S"))
 
 		"""
-DRIFT_DRIFTSPERSONELL_SERVERMGMT_SERVERADMIN
-DS-MemberServer-Admin-AlleManagementServere
-GS-OpsRole-Ergogroup-ServerAdmins
-Task-OF2-ServerAdmin-AllMemberServers
-Role-OF2-AdminAlleMemberServere
-
-		"""
-
-		"""
-		driftbrukerex = User.objects.filter(profile__virksomhet=170)
-		print("DRIFT-koblede brukere")
-		print(len(driftbrukerex))
-
-		driftbrukere = User.objects.filter(username__istartswith="DRIFT")
-		print("DRIFT-brukere")
-		print(len(driftbrukere))
-
 		driftbrukere4 = User.objects.filter(username__istartswith="T-DRIFT")
-		print("T-DRIFT-brukere")
-		print(len(driftbrukere4))
-
-
 		for u in list(set(driftbrukerex) - (set(driftbrukere))):
 			print(u.username)
-
-
 		driftbrukere2 = User.objects.filter(username__istartswith="t-")
-		print("T- brukere")
-		print(len(driftbrukere2))
-
 		driftbrukerey = User.objects.filter(username__istartswith="a-")
-		print("A- brukere")
-		print(len(driftbrukerey))
-
 		driftbrukere3 = User.objects.filter(profile__virksomhet=None)
-		print("Ikke koblet til en virksomhet")
-		print(len(driftbrukere3))
+
 		"""
 
+		#adg_filter = set(serveradmins).union(set(domainadmins)).union(set(prkadmin)).union(set(sqladmins)).union(set(citrixadmin)).union(set(sccmadmin)).union(set(levtilgang)).union(set(dcadmin)).union(set(exchangeadmin)).union(set(filsensitivt))
+		#b.reduserte_adgrupper = set(b.profile.adgrupper.all()).difference(adg_filter)
 
-		driftbrukere = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
-		print("driftbrukere %s" % len(driftbrukere))
+		for b in brukere:
+			b.serveradmin = set(serveradmins).intersection(set(b.profile.adgrupper.all()))
+			b.domainadmin = set(domainadmins).intersection(set(b.profile.adgrupper.all()))
+			b.prkadmin = set(prkadmin).intersection(set(b.profile.adgrupper.all()))
+			b.sqladmin = set(sqladmins).intersection(set(b.profile.adgrupper.all()))
+			b.citrixadmin = set(citrixadmin).intersection(set(b.profile.adgrupper.all()))
+			b.sccmadmin = set(sccmadmin).intersection(set(b.profile.adgrupper.all()))
+			b.levtilgang = set(levtilgang).intersection(set(b.profile.adgrupper.all()))
+			b.dcadmin = set(dcadmin).intersection(set(b.profile.adgrupper.all()))
+			b.exchangeadmin = set(exchangeadmin).intersection(set(b.profile.adgrupper.all()))
+			b.filsensitivt = set(filsensitivt).intersection(set(b.profile.adgrupper.all()))
 
-		steria_users = User.objects.filter(profile__accountdisable=False).filter(Q(profile__description__icontains="Sopra") | Q(profile__description__icontains="2S"))
-		print("2S brukere %s" % len(steria_users))
-
-		# for hver bruker looper igjennom grupper og markerer om gruppe eksisterer.
-		## databaseadministrator
-		## citrix administrator
-		## server administrator
-		## backup administrator
-		## AD / domain administrator
 
 		return render(request, 'ad_drifttilgang.html', {
-			"steria_users": steria_users,
-			"driftbrukere": driftbrukere,
+			"brukere": brukere,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

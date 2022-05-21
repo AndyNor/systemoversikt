@@ -17,7 +17,7 @@
 
 <hr>
 
-<p>Fant {{ steria_users.count }} brukere.</p>
+<p>Fant {{ brukere.count }} brukere.</p>
 
 <ul style="column-count:3;">
 {% for kilde in leverandor_kilder %}
@@ -27,13 +27,13 @@
 </ul>
 
 <hr>
-
-<h3>Driftbrukere generelt</h3>
 <table class="tablesorter excel">
 <thead>
 	<tr>
 		<th>Navn</th>
 		<th>Brukernavn</th>
+		<th>Grupper</th>
+		<th>Antall grupper</th>
 		<th>Fra PRK?</th>
 		<th>Sist pålogget</th>
 		<th>Passord utløpt?</th>
@@ -42,44 +42,30 @@
 	</tr>
 </thead>
 <tbodt>
-
-{% for m in driftbrukere %}
+{% for m in brukere %}
 	<tr>
 		<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>
 			👤 {{ m.first_name }} {{ m.last_name }}</td>
 		<td>{{ m.username }}</td>
-		<td>{{ m.profile.from_prk|yesno:"Ja,Opprettet manuelt,Vet ikke" }}</td>
-		<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
-		<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,Nei,Vet ikke" }}</td>
-		<td>{{ m.profile.dont_expire_password|yesno:"Utløper aldri,Utløper,Vet ikke" }}</td>
-		<td>{{ m.profile.description }}</td>
-	</tr>
-{% endfor %}
-</tbodt>
-</table>
+		<td>
+			{% if m.serveradmin %} 💻 Server-admin<br> {% endif %}
+			{% if m.domainadmin %} ⚠️ Domain-admin<br> {% endif %}
+			{% if m.prkadmin %} ⚠️ PRK-admin<br> {% endif %}
+			{% if m.sqladmin %} 📚 SQL-admin<br> {% endif %}
+			{% if m.citrixadmin %} 📸 Citrix-admin<br> {% endif %}
+			{% if m.sccmadmin %} 🐛 SCCM-admin<br> {% endif %}
+			{% if m.levtilgang %} ☎ Leverandørtilgang<br> {% endif %}
+			{% if m.dcadmin %} ⚠️ DC-admin<br> {% endif %}
+			{% if m.exchangeadmin %} ☕ Exchange-admin<br> {% endif %}
+			{% if m.filsensitivt %} ⚠️ Sensitive filområder<br> {% endif %}
 
-<hr>
-
-<h3>Sopra Steria</h3>
-<table class="tablesorter excel">
-<thead>
-	<tr>
-		<th>Navn</th>
-		<th>Brukernavn</th>
-		<th>Fra PRK?</th>
-		<th>Sist pålogget</th>
-		<th>Passord utløpt?</th>
-		<td>Passordutløp</td>
-		<th>Beskrivelse</th>
-	</tr>
-</thead>
-<tbodt>
-
-{% for m in steria_users %}
-	<tr>
-		<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>
-			👤 {{ m.first_name }} {{ m.last_name }}</td>
-		<td>{{ m.username }}</td>
+			{% comment %}
+			{% for gruppe in m.reduserte_adgrupper %}
+				{{ gruppe }}<br>
+			{% endfor %}
+			{% endcomment %}
+		</td>
+		<td>{{ m.profile.adgrupper_antall }}</td>
 		<td>{{ m.profile.from_prk|yesno:"Ja,Opprettet manuelt,Vet ikke" }}</td>
 		<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
 		<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,Nei,Vet ikke" }}</td>

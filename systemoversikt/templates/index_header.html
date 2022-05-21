@@ -50,13 +50,6 @@
 					<a href="{{ alle_virksomheter_url }}" class="nav-link {% if alle_virksomheter_url in request.path %} active {% endif %}">Virksomheter</a>
 				</li>
 
-			{% if user.is_authenticated %}
-				<li class="hovedmeny">
-					{% url "alle_avtaler" as alle_avtaler_url %}
-					<a href="{{ alle_avtaler_url }}" class="nav-link {% if alle_avtaler_url in request.path %} active {% endif %}">Avtaler</a>
-				</li>
-			{% endif %}
-
 			{% if user.profile.virksomhet %}
 				<li class="hovedmeny">
 					{% url "dashboard_all" virksomhet=user.profile.virksomhet.pk as dashboard_url %}

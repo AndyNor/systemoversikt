@@ -74,7 +74,7 @@ urlpatterns = [
 	#re_path(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
 	re_path(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
 
-	re_path(r'^avtaler/$', views.alle_avtaler, name='alle_avtaler'),
+	re_path(r'^virksomhet/alle_avtaler/$', views.alle_avtaler, name='alle_avtaler'),
 	re_path(r'^avtaler/detaljer/(?P<pk>\d{1,8})/$', views.avtaledetaljer, name='avtaledetaljer'),
 	re_path(r'^virksomhet/avtaler/(?P<virksomhet>\d{1,8})/$', views.alle_avtaler, name='avtalervirksomhet'),
 	re_path(r'^avtaler/databehandleravtale/virksomhet/(?P<pk>\d{1,8})/$', views.databehandleravtaler_virksomhet, name='databehandleravtaler_virksomhet'),
