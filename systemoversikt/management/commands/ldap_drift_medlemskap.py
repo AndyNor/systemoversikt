@@ -18,16 +18,15 @@ class Command(BaseCommand):
 
 		driftbrukere = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
 		for bruker in driftbrukere:
-			if bruker.profile.adgrupper_antall == None:
-				print("slår opp %s" % (bruker))
-				grupper = ldap_users_securitygroups(bruker.username)
-				for g in grupper:
-					try:
-						adg = ADgroup.objects.get(distinguishedname=g)
-						bruker.profile.adgrupper.add(adg)
-						bruker.profile.adgrupper_antall = len(grupper)
-						bruker.save()
-					except:
-						print("Error, fant ikke %s" % (g))
+			print("slår opp %s" % (bruker))
+			grupper = ldap_users_securitygroups(bruker.username)
+			for g in grupper:
+				try:
+					adg = ADgroup.objects.get(distinguishedname=g)
+					bruker.profile.adgrupper.add(adg)
+					bruker.profile.adgrupper_antall = len(grupper)
+					bruker.save()
+				except:
+					print("Error, fant ikke %s" % (g))
 
 
