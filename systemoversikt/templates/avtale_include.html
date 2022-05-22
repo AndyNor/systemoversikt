@@ -8,6 +8,7 @@
 		{% endif %}
 		<th>Avtalenavn</th>
 		<th>Avtaletype</th>
+		<th>Systemknytning?</th>
 		<th>Fornying</th>
 		<th>Avtalepart Oslo kommune</th>
 		<th>Avtaleforvalter</th>
@@ -33,6 +34,11 @@
 		</td>
 		<td>
 			{{ item.get_avtaletype_display|default:"-" }}
+		</td>
+		<td>
+			{% for s in item.for_system.all %}
+				{{ s }}<br>
+			{% endfor %}
 		</td>
 		<td>{{ item.fornying_dato|default:"-" }} {% if item.fornying_dato %} ({{ item.fornying_dato|timeuntil }}) {% endif %}</td>
 		<td>
