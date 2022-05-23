@@ -1631,10 +1631,36 @@ class CMDBdevice(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-	active = models.BooleanField(
-			verbose_name="Aktiv i 2S CMDB?",
+	device_type = models.CharField(
+			max_length=50,
+			blank=False,
+			null=True,
+			verbose_name="Enhetstype",
+			help_text="Settes automatisk ved import",
+			)
+	device_active = models.BooleanField(
+			verbose_name="Aktiv",
 			default=True,
 			help_text=u"",
+			)
+	model_id = models.CharField(
+			verbose_name="Klientmodell",
+			max_length=200,
+			blank=True,
+			null=True,
+			)
+	sist_sett = models.DateTimeField(
+			verbose_name="Sist sett",
+			null=True,
+			blank=True,
+			)
+	last_loggedin_user = models.ForeignKey(
+			to=User,
+			on_delete=models.SET_NULL,
+			related_name='client',
+			verbose_name="Sist innloggede bruker",
+			null=True,
+			blank=True,
 			)
 	billable = models.BooleanField(
 			verbose_name="Billable",
@@ -1798,27 +1824,27 @@ class CMDBdevice(models.Model):
 			blank=True,
 			)
 	kilde_cmdb = models.BooleanField(
-			verbose_name="Kommer fra CMDB",
+			verbose_name="Kilde CMDB",
 			default=False,
 			)
 	kilde_prk = models.BooleanField(
-			verbose_name="Kommer fra PRK-maskinadm",
+			verbose_name="Kilde PRK",
 			default=False,
 			)
 	kilde_landesk = models.BooleanField(
-			verbose_name="Kommer fra LanDesk",
+			verbose_name="Kilde LanDesk",
 			default=False,
 			)
 	maskinadm_virksomhet = models.ForeignKey(
 			to="Virksomhet",
 			on_delete=models.SET_NULL,
-			verbose_name="Maskinadm: Tilhører virksomhet",
+			verbose_name="PRK Virksomhet",
 			related_name='cmdbdevice_virksomhet',
 			null=True,
 			blank=True,
 			)
 	maskinadm_virksomhet_str = models.CharField(
-			verbose_name="Maskinadm: Virksomhet (tekst)",
+			verbose_name="PRK Virksomhet",
 			max_length=300,
 			blank=True,
 			null=True,
@@ -1836,7 +1862,7 @@ class CMDBdevice(models.Model):
 			null=True,
 			)
 	maskinadm_status = models.CharField(
-			verbose_name="Maskinadm: Status",
+			verbose_name="PRK status",
 			max_length=200,
 			blank=True,
 			null=True,
@@ -1852,7 +1878,6 @@ class CMDBdevice(models.Model):
 			null=True,
 			blank=True,
 			)
-
 	landesk_nic = models.CharField(
 			verbose_name="Landesk: NIC",
 			max_length=24,
@@ -1890,11 +1915,6 @@ class CMDBdevice(models.Model):
 			null=True,
 			blank=True,
 			)
-	landesk_opprettet_av_landesk = models.BooleanField(
-			verbose_name="Opprettet fra LanDesk-data",
-			default=False,
-			)
-
 
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 

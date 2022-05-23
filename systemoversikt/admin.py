@@ -1163,9 +1163,9 @@ class AutorisertBestillerAdmin(SimpleHistoryAdmin):
 @admin.register(CMDBdevice)
 class CMDBdeviceAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('comp_name', 'active', 'kilde_cmdb', 'kilde_prk', 'kilde_landesk', 'landesk_opprettet_av_landesk', 'landesk_manufacturer', 'landesk_os_release', 'landesk_sist_sett', 'landesk_os', 'landesk_login', 'maskinadm_virksomhet', 'maskinadm_virksomhet_str', 'maskinadm_lokasjon', 'sub_name', 'maskinadm_sone', 'maskinadm_status', 'comp_ip_address', 'comp_os', 'comp_ram', 'dns', 'vlan')
+	list_display = ('comp_name', 'device_type', 'model_id', 'sist_sett', 'last_loggedin_user', 'device_active', 'kilde_cmdb', 'kilde_prk', 'kilde_landesk', 'maskinadm_status', 'maskinadm_virksomhet_str', 'sub_name', 'comp_ip_address', 'comp_os', 'comp_ram', 'dns', 'vlan')
 	search_fields = ('comp_name', 'sub_name__navn', 'comments', 'description')
-	list_filter = ('active', 'kilde_prk', 'maskinadm_sone', 'maskinadm_status', 'maskinadm_klienttype', 'kilde_landesk', 'landesk_opprettet_av_landesk', 'landesk_manufacturer', 'landesk_os_release', 'landesk_os', 'maskinadm_virksomhet',)
+	list_filter = ('device_active', 'device_type', 'model_id', 'sist_sett', 'kilde_cmdb', 'kilde_prk', 'kilde_landesk', 'maskinadm_status', 'maskinadm_klienttype', 'landesk_manufacturer', 'landesk_os_release', 'landesk_os', 'maskinadm_virksomhet',)
 
 
 @admin.register(CMDBDisk)

@@ -41,9 +41,9 @@
 			</thead>
 			<tbody>
 			{% for item in cmdbdevices.all %}
-			<tr {% if not item.active %} style="color: #d6d6d6;" {% endif %}>
+			<tr {% if not item.device_active %} style="color: #d6d6d6;" {% endif %}>
 				<td>{{ item.comp_name|default:"-" }}</td>
-				<td>{% include 'site_janeivetikke.html' with boolean=item.active %}</td>
+				<td>{% include 'site_janeivetikke.html' with boolean=item.device_active %}</td>
 				<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
 				<td>
 					{{ item.comp_disk_space|default:"-" }} GB

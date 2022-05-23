@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from py_topping.data_connection.sharepoint import da_tran_SP365
 from systemoversikt.models import *
+from django.contrib.auth.models import User
 from django.db import transaction
 import os
 import time
@@ -8,7 +9,8 @@ from functools import lru_cache
 import json, os
 import pandas as pd
 import numpy as np
-
+from datetime import datetime
+from django.utils.timezone import make_aware
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -21,16 +23,33 @@ class Command(BaseCommand):
 
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers_bss.xlsx"
+		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers.xlsx"
 		source_file = sp.create_link(source_filepath)
-		destination_file = 'systemoversikt/import/OK_computers_bss.xlsx'
+		destination_file = 'systemoversikt/import/OK_computers.xlsx'
 
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
 
-		@transaction.atomic
+
+		date_format = "%Y-%m-%d %H:%M:%S"
+		# eksempel 22.05.2022  17:48:10
+		def str_to_date(datotidspunkt):
+			if datotidspunkt == "NaT":
+				return None
+			return make_aware(datetime.strptime(datotidspunkt, date_format))
+
+		def str_to_user(str):
+			if len(str) == 0:
+				return None
+			name = str.replace("OSLOFELLES\\", "")
+			try:
+				return User.objects.get(username__iexact=name)
+			except:
+				return None
+
+		#@transaction.atomic
 		def import_cmdb_servers():
 
-			server_dropped = 0
+			client_dropped = 0
 
 			if ".xlsx" in destination_file:
 				dfRaw = pd.read_excel(destination_file)
@@ -41,25 +60,7 @@ class Command(BaseCommand):
 				return
 
 			antall_records = len(data)
-			all_existing_devices = list(CMDBdevice.objects.all())
-
-
-			@lru_cache(maxsize=512)
-			def bss_cache(bss_name):
-				try:
-					sub_name = CMDBRef.objects.get(navn=record["Name.1"])
-					return sub_name
-				except:
-					return None
-
-			def convertToInt(string, multiplier=1):
-				try:
-					number = int(string)
-				except:
-					return None
-
-				return number * multiplier
-
+			all_existing_devices = list(CMDBdevice.objects.filter(device_type="KLIENT")) # denne filen inneholder bare klienter. Tykke, støtte og VDI er allerede i OK_computers_bss.xlsx
 
 			print("Alt lastet, oppdaterer databasen:")
 			for idx, record in enumerate(data):
@@ -69,8 +70,8 @@ class Command(BaseCommand):
 
 				comp_name = record["Name"].lower()
 				if comp_name == "":
-					print("Maskinen mangler navn")
-					server_dropped += 1
+					print("Klienten mangler navn")
+					client_dropped += 1
 					continue  # Det må være en verdi på denne
 
 				# vi sjekker om enheten finnes fra før
@@ -85,31 +86,18 @@ class Command(BaseCommand):
 
 				cmdbdevice.device_active = True
 				cmdbdevice.kilde_cmdb = True
-				cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])
-				cmdbdevice.comp_cpu_core_count = convertToInt(record["CPU total"])
-				cmdbdevice.comp_ram = convertToInt(record["RAM (MB)"])
-				cmdbdevice.comp_ip_address = record["IP Address"]
-				cmdbdevice.comp_cpu_speed = convertToInt(record["CPU speed (MHz)"])
 				cmdbdevice.comp_os = record["Operating System"]
-				cmdbdevice.comp_os_version = record["OS Version"]
-				cmdbdevice.comp_os_service_pack = record["OS Service Pack"]
-				cmdbdevice.comp_location = record["Location"]
-				cmdbdevice.comments = record["Comments"]
-				cmdbdevice.description = record["Description"]
-				#cmdbdevice.billable = record["Billable"] #finnes ikke lenger i denne rapporten
+				cmdbdevice.model_id = record["Model ID"]
+				cmdbdevice.sist_sett = str_to_date(str(record["Most recent discovery"]))
+				cmdbdevice.last_loggedin_user = str_to_user(record["Owner"])
 
-				if record["Name.1"] in ["OK-Tykklient", "OK-Støttemaskin", "OK-Tynnklient"]:
+				# fjernes siden
+				cmdbdevice.maskinadm_virksomhet = cmdbdevice.last_loggedin_user.profile.virksomhet if cmdbdevice.last_loggedin_user else None
+				cmdbdevice.maskinadm_sist_oppdatert = cmdbdevice.sist_sett
+				cmdbdevice.landesk_login = cmdbdevice.last_loggedin_user
+
+				if record["Type"] == "TYNNKLIENT": #TYKK, STØTTE OG VDI er allerede merket fra OK_computers_bss.xlsx
 					cmdbdevice.device_type = "KLIENT"
-				else:
-					cmdbdevice.device_type = "SERVER"
-
-				sub_name = bss_cache(record["Name.1"])
-				if sub_name != None:
-					cmdbdevice.sub_name = sub_name
-				else:
-					print('Business sub service %s for %s finnes ikke' % (record["Name.1"], comp_name))
-					server_dropped += 1
-					continue
 
 				cmdbdevice.save()
 
@@ -125,14 +113,14 @@ class Command(BaseCommand):
 			runtime_t1 = time.time()
 			total_runtime = round(runtime_t1 - runtime_t0, 1)
 
-			logg_entry_message = 'Fant %s maskiner. %s manglet navn eller tilhørighet. Satte %s servere inaktiv. Tok %s sekunder' % (
+			logg_entry_message = 'Fant %s klienter. %s manglet navn. Satte %s tynne klienter inaktive. Import tok %s sekunder' % (
 					antall_records,
-					server_dropped,
+					client_dropped,
 					devices_set_inactive,
 					total_runtime,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB server import',
+					event_type='CMDB klient import',
 					message=logg_entry_message,
 				)
 			print(logg_entry_message)

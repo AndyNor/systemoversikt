@@ -125,7 +125,6 @@ class Command(BaseCommand):
 					teller_opprettet += 1
 				except Exception as e:
 					ws = CMDBdevice.objects.create(comp_name=wsnummer)
-					ws.landesk_opprettet_av_landesk = True
 				update(ws, line)
 
 

@@ -76,7 +76,7 @@
 	</thead>
 	<tbody>
 	{% for maskin in maskiner %}
-	<tr {% if not maskin.active %} style="color: #d6d6d6;" {% endif %}>
+	<tr {% if not maskin.device_active %} style="color: #d6d6d6;" {% endif %}>
 		<td>
 			{% url 'ad_details' name=maskin.comp_name as url_ad %}
 			<a href="{{ url_ad }}">{{ maskin.comp_name }}</a>

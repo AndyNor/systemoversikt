@@ -474,7 +474,7 @@ def alle_klienter(request):
 		import os
 		import json
 		alle_maskinadm_klienter = set(list(CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(kilde_prk=True).values_list('comp_name', flat=True)))
-		alle_cmdb_klienter = set(list(CMDBdevice.objects.filter(active=True).filter(comp_name__istartswith="WS").values_list('comp_name', flat=True)))
+		alle_cmdb_klienter = set(list(CMDBdevice.objects.filter(device_active=True).filter(comp_name__istartswith="WS").values_list('comp_name', flat=True)))
 
 		#for i in alle_maskinadm_klienter[0:10]:
 		#	print(i)
@@ -3455,7 +3455,7 @@ def alle_os(request):
 					})
 			return sorted(maskiner_stats, key=lambda os: os['major'], reverse=True)
 
-		maskiner = CMDBdevice.objects.filter(active=True)
+		maskiner = CMDBdevice.objects.filter(device_active=True)
 		maskiner_stats = cmdb_os_stats(maskiner)
 
 		return render(request, 'cmdb_alle_server_os.html', {
@@ -3704,18 +3704,18 @@ def alle_maskiner(request):
 			if search_term == "__all__":
 				search_term = ""
 
-			devices = CMDBdevice.objects.filter(active=True).exclude(comp_name__startswith="ws").filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term) | Q(comments__icontains=search_term) | Q(description__icontains=search_term))
+			devices = CMDBdevice.objects.filter(device_active=True).exclude(comp_name__startswith="ws").filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term) | Q(comments__icontains=search_term) | Q(description__icontains=search_term))
 
 			if comp_os == "__empty__" and comp_os_version == "__empty__":
-				comp_os_and_version_none = CMDBdevice.objects.filter(active=True).filter(Q(comp_os="") & Q(comp_os_version=""))
+				comp_os_and_version_none = CMDBdevice.objects.filter(device_active=True).filter(Q(comp_os="") & Q(comp_os_version=""))
 				return devices & comp_os_and_version_none  # snitt/intersection av to sett
 
 			if comp_os == "__empty__":
-				comp_os_none = CMDBdevice.objects.filter(active=True).filter(comp_os="").filter(comp_os_version__icontains=comp_os_version)
+				comp_os_none = CMDBdevice.objects.filter(device_active=True).filter(comp_os="").filter(comp_os_version__icontains=comp_os_version)
 				return devices & comp_os_none  # snitt/intersection av to sett
 
 			if comp_os_version == "__empty__":
-				comp_os_version_none = CMDBdevice.objects.filter(active=True).filter(comp_os_version="").filter(comp_os__icontains=comp_os)
+				comp_os_version_none = CMDBdevice.objects.filter(device_active=True).filter(comp_os_version="").filter(comp_os__icontains=comp_os)
 				return devices & comp_os_version_none  # snitt/intersection av to sett
 
 			if comp_os != "":
@@ -3766,7 +3766,7 @@ def servere_utfaset(request):
 	required_permissions = 'systemoversikt.view_cmdbdevice'
 	if request.user.has_perm(required_permissions):
 
-		maskiner = CMDBdevice.objects.filter(active=False).order_by("-sist_oppdatert")[:300]
+		maskiner = CMDBdevice.objects.filter(device_active=False).order_by("-sist_oppdatert")[:300]
 		return render(request, 'cmdb_alle_maskiner_utfaset.html', {
 			'request': request,
 			'maskiner': maskiner,
@@ -3853,7 +3853,7 @@ def cmdbdevice(request, pk):
 	required_permissions = 'systemoversikt.view_cmdbref'
 	if request.user.has_perm(required_permissions):
 		cmdbref = CMDBRef.objects.get(pk=pk)
-		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref).order_by("-active")
+		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref).order_by("-device_active")
 		databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
 
 		return render(request, 'cmdb_maskiner_detaljer.html', {
@@ -4520,11 +4520,11 @@ def cmdb_api(request):
 		line["antall_servere"] = bss.ant_devices()
 
 		serverliste = []
-		for server in bss.cmdbdevice_sub_name.filter(active=True):
+		for server in bss.cmdbdevice_sub_name.filter(device_active=True):
 			s = dict()
 			s["server_navn"] = server.comp_name
 			s["billable"] = server.billable
-			s["server_aktiv"] = server.active
+			s["server_aktiv"] = server.device_active
 			s["server_os"] = server.comp_os
 			s["server_ram"] = server.comp_ram
 			if server.comp_disk_space:
