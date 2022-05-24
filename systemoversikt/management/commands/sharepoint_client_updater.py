@@ -35,7 +35,10 @@ class Command(BaseCommand):
 		def str_to_date(datotidspunkt):
 			if datotidspunkt == "NaT":
 				return None
-			return make_aware(datetime.strptime(datotidspunkt, date_format))
+			try:
+				return make_aware(datetime.strptime(datotidspunkt, date_format))
+			except:
+				return None
 
 		def str_to_user(str):
 			if len(str) == 0:
