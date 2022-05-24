@@ -3687,7 +3687,7 @@ def alle_klienter_sok(request):
 		innmeldt_prk_inaktiv_snow = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(device_active=False).count()
 
 		#klienter utmeldt/slettet i PRK men aktive i 2S CMDB
-		utmeldtslettet_prk_aktiv_snow = CMDBdevice.objects.filter(~Q(maskinadm_status="INNMELDT")).filter(device_active=True).count()
+		utmeldtslettet_prk_aktiv_snow = CMDBdevice.objects.filter(~Q(maskinadm_status="INNMELDT")).filter(device_type="KLIENT").filter(device_active=True).count()
 
 		return render(request, 'cmdb_maskiner_klienter.html', {
 			'request': request,
