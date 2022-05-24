@@ -43,7 +43,7 @@
 			<td>{{ip.address}}</td>
 			<td>
 				{% if ip.comp_name %}
-					<a href="{% url 'alle_maskiner' %}?search_term={{ip.comp_name}}">{{ip.comp_name}}</a>
+					<a href="{% url 'alle_servere' %}?search_term={{ip.comp_name}}">{{ip.comp_name}}</a>
 				{% endif %}
 			</td>
 			<td>{{ip.dns_i|default:"Ingen treff"}}</td>

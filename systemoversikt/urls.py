@@ -79,7 +79,6 @@ urlpatterns = [
 	re_path(r'^virksomhet/avtaler/(?P<virksomhet>\d{1,8})/$', views.alle_avtaler, name='avtalervirksomhet'),
 	re_path(r'^avtaler/databehandleravtale/virksomhet/(?P<pk>\d{1,8})/$', views.databehandleravtaler_virksomhet, name='databehandleravtaler_virksomhet'),
 
-	re_path(r'^cmdb/klient/$', views.alle_klienter, name='alle_klienter'),
 	re_path(r'^cmdb/bruker/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
 	re_path(r'^cmdb/bruker/$', views.bruker_sok, name='bruker_sok'),
 
@@ -131,7 +130,8 @@ urlpatterns = [
 	re_path(r'^cmdb/$', views.alle_cmdbref, name='alle_cmdbref_main'),
 	re_path(r'^cmdb/alle/$', views.alle_cmdbref, name='alle_cmdbref'),
 	re_path(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),
-	re_path(r'^cmdb/servere/alle/$', views.alle_maskiner, name='alle_maskiner'),
+	re_path(r'^cmdb/servere/alle/$', views.alle_servere, name='alle_servere'),
+	re_path(r'^cmdb/klienter/alle/$', views.alle_klienter_sok, name='alle_klienter_sok'),
 	re_path(r'^cmdb/servere/utfaset/$', views.servere_utfaset, name='servere_utfaset'),
 	re_path(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 	re_path(r'^cmdb/os/$', views.alle_os, name='alle_os'),

@@ -21,6 +21,7 @@ import datetime
 from django.urls import reverse
 import json
 from django.db import transaction
+import re
 
 
 FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
@@ -459,63 +460,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 			'grupper_lokal_administrator': grupper_lokal_administrator,
 			'brukere_lokal_administrator': brukere_lokal_administrator,
 			'logging': logg,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-
-
-
-def alle_klienter(request):
-
-	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		import os
-		import json
-		alle_maskinadm_klienter = set(list(CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(kilde_prk=True).values_list('comp_name', flat=True)))
-		alle_cmdb_klienter = set(list(CMDBdevice.objects.filter(device_active=True).filter(comp_name__istartswith="WS").values_list('comp_name', flat=True)))
-
-		#for i in alle_maskinadm_klienter[0:10]:
-		#	print(i)
-		antall_maskinadm = len(alle_maskinadm_klienter)
-		antal_cmdb = len(alle_cmdb_klienter)
-
-		#mangler_cmdb = alle_maskinadm_klienter - alle_cmdb_klienter
-		#mangler_maskinadm = alle_cmdb_klienter - alle_maskinadm_klienter
-
-		"""
-		vpn_ws = set()
-		filepath = os.path.dirname(os.path.abspath(__file__)) + "/import/vpn_ws.json"
-		with open(filepath, 'r', encoding='UTF-8') as json_file:
-			for line in json_file.readlines():
-				j = json.loads(line)
-				vpn_ws.add(j["result"]["user"])
-		vpn_anomaly = sorted(vpn_ws - alle_maskinadm_klienter)
-
-		alle_aktive_brukere = set(list(User.objects.filter(profile__accountdisable=False).values_list('username', flat=True)))
-		try:
-			filepath = "/import/vpn_users.json"
-			filepath = os.path.dirname(os.path.abspath(__file__)) + filepath
-			vpn_users = set()
-			with open(filepath, 'r', encoding='UTF-8') as json_file:
-				for line in json_file.readlines():
-					j = json.loads(line)
-					vpn_users.add(j["result"]["user"].lower())
-			vpn_anomaly_user = sorted(vpn_users - alle_aktive_brukere)
-		except:
-			messages.warning(request, 'Filen %s finnes ikke!' % (filepath))
-			vpn_anomaly_user = []
-		"""
-
-		return render(request, 'prk_klienter.html', {
-			'request': request,
-			'antall_maskinadm': antall_maskinadm,
-			'antal_cmdb': antal_cmdb,
-			#'mangler_cmdb': mangler_cmdb,
-			#'mangler_maskinadm': mangler_maskinadm,
-			#'vpn_anomaly': vpn_anomaly,
-			#'vpn_anomaly_user': vpn_anomaly_user,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -2304,7 +2248,6 @@ def prk_userlookup(request):
 	required_permissions = ['auth.view_user']
 	if any(map(request.user.has_perm, required_permissions)):
 		if request.POST:
-			import re
 			query = request.POST.get('query', '').strip()
 			users = re.findall(r"([^,;\t\s\n\r]+)", query)
 			users_result = []
@@ -3682,11 +3625,9 @@ def alle_prk(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-
-
-def alle_maskiner(request):
+def alle_klienter_sok(request):
 	"""
-	Søke og vise alle maskiner
+	Søke og vise alle klienter
 	Tilgangsstyring: må kunne vise cmdb-maskiner
 	"""
 	required_permissions = 'systemoversikt.view_cmdbdevice'
@@ -3704,7 +3645,7 @@ def alle_maskiner(request):
 			if search_term == "__all__":
 				search_term = ""
 
-			devices = CMDBdevice.objects.filter(device_active=True).exclude(comp_name__startswith="ws").filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term) | Q(comments__icontains=search_term) | Q(description__icontains=search_term))
+			devices = CMDBdevice.objects.filter(device_active=True).filter(device_type="KLIENT").filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term) | Q(comments__icontains=search_term) | Q(description__icontains=search_term))
 
 			if comp_os == "__empty__" and comp_os_version == "__empty__":
 				comp_os_and_version_none = CMDBdevice.objects.filter(device_active=True).filter(Q(comp_os="") & Q(comp_os_version=""))
@@ -3726,7 +3667,87 @@ def alle_maskiner(request):
 
 			return devices
 
-		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+		search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
+		comp_os = request.GET.get('comp_os', '').strip()
+		comp_os_version = request.GET.get('comp_os_version', '').strip()
+
+		maskiner = filter({
+				"search_term": search_term,
+				"comp_os": comp_os,
+				"comp_os_version": comp_os_version
+			})
+
+		maskiner = maskiner.order_by('comp_os')
+
+
+		alle_maskinadm_klienter = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(kilde_prk=True).count()
+		alle_cmdb_klienter = CMDBdevice.objects.filter(device_active=True).filter(device_type="KLIENT").count()
+
+		#klienter innmeldt i PRK som ikke er aktive i 2S CMDB
+		innmeldt_prk_inaktiv_snow = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(device_active=False).count()
+
+		#klienter utmeldt/slettet i PRK men aktive i 2S CMDB
+		utmeldtslettet_prk_aktiv_snow = CMDBdevice.objects.filter(~Q(maskinadm_status="INNMELDT")).filter(device_active=True).count()
+
+		return render(request, 'cmdb_maskiner_klienter.html', {
+			'request': request,
+			'maskiner': maskiner,
+			'device_search_term': search_term,
+			'comp_os': comp_os,
+			'comp_os_version': comp_os_version,
+			'alle_maskinadm_klienter': alle_maskinadm_klienter,
+			'alle_cmdb_klienter': alle_cmdb_klienter,
+			'innmeldt_prk_inaktiv_snow': innmeldt_prk_inaktiv_snow,
+			'utmeldtslettet_prk_aktiv_snow': utmeldtslettet_prk_aktiv_snow,
+
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def alle_servere(request):
+	"""
+	Søke og vise alle maskiner
+	Tilgangsstyring: må kunne vise cmdb-maskiner
+	"""
+	required_permissions = 'systemoversikt.view_cmdbdevice'
+	if request.user.has_perm(required_permissions):
+
+		def filter(input):
+
+			search_term = input["search_term"]
+			comp_os = input["comp_os"]
+			comp_os_version = input["comp_os_version"]
+
+			if search_term == "" and comp_os == "" and comp_os_version == "":
+				return CMDBdevice.objects.none()
+
+			if search_term == "__all__":
+				search_term = ""
+
+			devices = CMDBdevice.objects.filter(device_active=True).filter(device_type="SERVER").filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term) | Q(comments__icontains=search_term) | Q(description__icontains=search_term))
+
+			if comp_os == "__empty__" and comp_os_version == "__empty__":
+				comp_os_and_version_none = CMDBdevice.objects.filter(device_active=True).filter(Q(comp_os="") & Q(comp_os_version=""))
+				return devices & comp_os_and_version_none  # snitt/intersection av to sett
+
+			if comp_os == "__empty__":
+				comp_os_none = CMDBdevice.objects.filter(device_active=True).filter(comp_os="").filter(comp_os_version__icontains=comp_os_version)
+				return devices & comp_os_none  # snitt/intersection av to sett
+
+			if comp_os_version == "__empty__":
+				comp_os_version_none = CMDBdevice.objects.filter(device_active=True).filter(comp_os_version="").filter(comp_os__icontains=comp_os)
+				return devices & comp_os_version_none  # snitt/intersection av to sett
+
+			if comp_os != "":
+				devices = devices.filter(comp_os__icontains=comp_os)
+
+			if comp_os_version != "":
+				devices = devices.filter(comp_os_version__icontains=comp_os_version)
+
+			return devices
+
+		search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
 		comp_os = request.GET.get('comp_os', '').strip()
 		comp_os_version = request.GET.get('comp_os_version', '').strip()
 
@@ -3741,7 +3762,7 @@ def alle_maskiner(request):
 		return render(request, 'cmdb_maskiner_sok.html', {
 			'request': request,
 			'maskiner': maskiner,
-			'search_term': search_term,
+			'device_search_term': search_term,
 			'comp_os': comp_os,
 			'comp_os_version': comp_os_version,
 		})

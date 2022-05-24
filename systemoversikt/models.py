@@ -1511,7 +1511,7 @@ class CMDBRef(models.Model):
 			return False
 
 	def ant_devices(self):
-		return CMDBdevice.objects.filter(sub_name=self.pk, active=True).count()
+		return CMDBdevice.objects.filter(sub_name=self.pk, device_active=True).count()
 
 	def ant_databaser(self):
 		return CMDBdatabase.objects.filter(sub_name=self.pk, db_operational_status=True).count()
@@ -1726,6 +1726,13 @@ class CMDBdevice(models.Model):
 			)
 	comp_os_version = models.CharField(
 			verbose_name="OS versjon",
+			max_length=200,
+			blank=True,
+			null=True,
+			help_text=u"",
+			)
+	comp_os_readable = models.CharField(
+			verbose_name="OS readable",
 			max_length=200,
 			blank=True,
 			null=True,

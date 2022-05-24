@@ -8,6 +8,7 @@ from functools import lru_cache
 import json, os
 import pandas as pd
 import numpy as np
+import re
 
 
 class Command(BaseCommand):
@@ -27,7 +28,7 @@ class Command(BaseCommand):
 
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
 
-		@transaction.atomic
+		#@transaction.atomic
 		def import_cmdb_servers():
 
 			server_dropped = 0
@@ -83,6 +84,23 @@ class Command(BaseCommand):
 					# lager en ny
 					cmdbdevice = CMDBdevice.objects.create(comp_name=comp_name)
 
+				os = record["Operating System"]
+				os_version = record["OS Version"]
+				os_sp = record["OS Service Pack"]
+
+				if "Windows" in os:
+					os_readable = os.replace("64-bit", "").replace("32-bit", "").replace(",","").strip()
+				elif "Linux" in os:
+					version_match = re.search(r'(\d).\d', os_version)
+					if version_match:
+						os_readable = "%s %s" % (os, version_match[1])
+					else:
+						os_readable = os
+				else:
+					os_readable = os
+
+				print(os_readable)
+
 				cmdbdevice.device_active = True
 				cmdbdevice.kilde_cmdb = True
 				cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])
@@ -90,9 +108,10 @@ class Command(BaseCommand):
 				cmdbdevice.comp_ram = convertToInt(record["RAM (MB)"])
 				cmdbdevice.comp_ip_address = record["IP Address"]
 				cmdbdevice.comp_cpu_speed = convertToInt(record["CPU speed (MHz)"])
-				cmdbdevice.comp_os = record["Operating System"]
-				cmdbdevice.comp_os_version = record["OS Version"]
-				cmdbdevice.comp_os_service_pack = record["OS Service Pack"]
+				cmdbdevice.comp_os = os
+				cmdbdevice.comp_os_version = os_version
+				cmdbdevice.comp_os_service_pack = os_sp
+				cmdbdevice.comp_os_readable = os_readable
 				cmdbdevice.comp_location = record["Location"]
 				cmdbdevice.comments = record["Comments"]
 				cmdbdevice.description = record["Description"]

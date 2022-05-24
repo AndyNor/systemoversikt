@@ -22,7 +22,7 @@
 		<tr>
 			<td>{{ os.major|default:"Ukjent" }}</td>
 			<td>{{ os.minor|default:"Ukjent" }}</td>
-			<td><a href="{% url 'alle_maskiner' %}?comp_os={{os.major}}&comp_os_version={{os.minor}}">{{ os.count }}</a></td>
+			<td><a href="{% url 'alle_servere' %}?comp_os={{os.major}}&comp_os_version={{os.minor}}">{{ os.count }}</a></td>
 		</tr>
 	{% endfor %}
 	</tbody>

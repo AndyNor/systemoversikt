@@ -54,7 +54,7 @@
 			{{ db.db_database }}
 		</td>
 		<td>
-			<a href="{% url 'alle_maskiner' %}?search_term={{ db.db_server }}">{{ db.db_server }}</a>
+			<a href="{% url 'alle_servere' %}?search_term={{ db.db_server }}">{{ db.db_server }}</a>
 		</td>
 		<td>
 			{% url 'cmdbdevice' pk=db.sub_name.pk as url_bss %}
@@ -67,7 +67,7 @@
 			{{ db.db_version }}
 		</td>
 		<td>
-			<a href="{% url 'alle_maskiner' %}?search_term={{db.server_str}}">{{ db.db_comments }}</a></td>
+			<a href="{% url 'alle_servere' %}?search_term={{db.server_str}}">{{ db.db_comments }}</a></td>
 		<td>
 			{{ db.db_u_datafilessizekb }}
 		</td>
