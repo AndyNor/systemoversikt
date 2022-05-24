@@ -7,11 +7,13 @@ cd /home/drift23914/metadata/djangoapp/
 
 
 export http_proxy="http://user:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
-export https_proxy="http://pass:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
+export https_proxy="http://user:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
 
 # run batch job
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_bss_updater
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_server_bss_updater
+python /home/drift23914/metadata/djangoapp/manage.py sharepoint_client_updater
+python /home/drift23914/metadata/djangoapp/manage.py prk_maskinadm
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_database_mssql_updater
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_database_oracle_updater
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_server_disk_updater

@@ -28,7 +28,7 @@ class Command(BaseCommand):
 
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
 
-		#@transaction.atomic
+		@transaction.atomic
 		def import_cmdb_servers():
 
 			server_dropped = 0
@@ -42,7 +42,7 @@ class Command(BaseCommand):
 				return
 
 			antall_records = len(data)
-			all_existing_devices = list(CMDBdevice.objects.all())
+			all_existing_devices = list(CMDBdevice.objects.filter(device_type="SERVER"))
 
 
 			@lru_cache(maxsize=512)
@@ -99,7 +99,7 @@ class Command(BaseCommand):
 				else:
 					os_readable = os
 
-				print(os_readable)
+				#print(os_readable)
 
 				cmdbdevice.device_active = True
 				cmdbdevice.kilde_cmdb = True
