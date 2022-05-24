@@ -42,7 +42,7 @@ class Command(BaseCommand):
 				return
 
 			antall_records = len(data)
-			all_existing_devices = list(CMDBdevice.objects.filter(device_type="SERVER"))
+			all_existing_devices = list(CMDBdevice.objects.all())#filter(device_type="SERVER"))
 
 
 			@lru_cache(maxsize=512)
