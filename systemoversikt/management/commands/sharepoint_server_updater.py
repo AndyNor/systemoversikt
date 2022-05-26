@@ -98,6 +98,7 @@ class Command(BaseCommand):
 						os_readable = os
 				else:
 					os_readable = os
+				os_readable = os_readable.strip()
 
 				if os_readable == '':
 					os_readable = 'Ukjent'

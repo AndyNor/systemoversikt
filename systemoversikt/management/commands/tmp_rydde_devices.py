@@ -11,7 +11,7 @@ from django.db import transaction
 from systemoversikt.utils import ldap_paged_search
 import ldap
 import sys
-from systemoversikt.models import ApplicationLog, ADOrgUnit, ADgroup, CMDBbs, System
+from systemoversikt.models import *
 import json
 
 class Command(BaseCommand):
@@ -39,27 +39,11 @@ class Command(BaseCommand):
 		result = ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data)
 		"""
 
-		for s in System.objects.all():
-			try:
-				bs = s.bs_system_referanse
-				if s.tilgjengelighetsvurdering == None:
-					production_availability = []
-					for bss in bs.cmdb_bss_to_bs.all():
-						if bss.operational_status == 1 and bss.environment == 1:
-							production_availability.append(bss.u_service_availability)
-					print("%s mangler tilgjengelighetsvurdering. Mulige valg er %s" % (s, production_availability))
-					if len(production_availability) > 0:
-						chosen_production_availability = production_availability[0] # vi tar bare den tilfeldig første
-						if chosen_production_availability == 'T1':
-							s.tilgjengelighetsvurdering = 2 # Alvorlig
-						if chosen_production_availability == 'T2':
-							s.tilgjengelighetsvurdering = 3 # Moderat
-						if chosen_production_availability == 'T3':
-							s.tilgjengelighetsvurdering = 3 # Moderat
-						if chosen_production_availability == 'T4':
-							s.tilgjengelighetsvurdering = 4 # Lav
-						print("endret %s til %s" % (s, s.tilgjengelighetsvurdering))
-						s.save()
+		@transaction.atomic
+		def fjern_uten_device_type():
+			for s in CMDBdevice.objects.filter(device_type=None):
+				s.delete()
 
-			except CMDBbs.DoesNotExist:
-				pass
+
+		fjern_uten_device_type()
+
