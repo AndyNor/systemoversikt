@@ -40,10 +40,11 @@ class Command(BaseCommand):
 		"""
 
 		@transaction.atomic
-		def fjern_uten_device_type():
-			for s in CMDBdevice.objects.filter(device_type=None):
-				s.delete()
+		def run_job():
+			for s in CMDBdevice.objects.filter(device_active=True):
+				s.device_active = False
+				s.save()
 
 
-		fjern_uten_device_type()
+		run_job()
 
