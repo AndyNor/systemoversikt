@@ -3586,7 +3586,7 @@ def alle_prk(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-def alle_klienter_sok(request):
+def alle_klienter(request):
 	"""
 	Søke og vise alle klienter
 	Tilgangsstyring: må kunne vise cmdb-maskiner
@@ -3650,16 +3650,18 @@ def alle_klienter_sok(request):
 		#klienter utmeldt/slettet i PRK men aktive i 2S CMDB
 		utmeldtslettet_prk_aktiv_snow = CMDBdevice.objects.filter(~Q(maskinadm_status="INNMELDT")).filter(device_type="KLIENT").filter(device_active=True).count()
 
+		maskiner_stats = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
+		maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
+
 		return render(request, 'cmdb_maskiner_klienter.html', {
 			'request': request,
 			'maskiner': maskiner,
 			'device_search_term': search_term,
-			'comp_os': comp_os,
-			'comp_os_version': comp_os_version,
 			'alle_maskinadm_klienter': alle_maskinadm_klienter,
 			'alle_cmdb_klienter': alle_cmdb_klienter,
 			'innmeldt_prk_inaktiv_snow': innmeldt_prk_inaktiv_snow,
 			'utmeldtslettet_prk_aktiv_snow': utmeldtslettet_prk_aktiv_snow,
+			'maskiner_stats': maskiner_stats,
 
 		})
 	else:

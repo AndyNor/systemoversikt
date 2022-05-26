@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from django.utils.timezone import make_aware
+import re
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -87,10 +88,17 @@ class Command(BaseCommand):
 					# lager en ny
 					cmdbdevice = CMDBdevice.objects.create(comp_name=comp_name)
 
+				os_readable = record["Operating System"]
+				os_readable = re.sub(os_readable, 'microsoft', flags=re.IGNORECASE)
+				os_readable = re.sub(os_readable, 'edition', flags=re.IGNORECASE)
+				os_readable.strip()
+				if os_readable == '':
+					os_readable = 'Ukjent'
+
 				cmdbdevice.device_active = True
 				cmdbdevice.kilde_cmdb = True
 				cmdbdevice.comp_os = record["Operating System"]
-				cmdbdevice.comp_os_readable = record["Operating System"] if record["Operating System"] != "" else 'Ukjent'
+				cmdbdevice.comp_os_readable = os_readable
 				cmdbdevice.model_id = record["Model ID"]
 				cmdbdevice.sist_sett = str_to_date(str(record["Most recent discovery"]))
 				cmdbdevice.last_loggedin_user = str_to_user(record["Owner"])
