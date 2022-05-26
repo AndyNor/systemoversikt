@@ -3594,52 +3594,14 @@ def alle_klienter(request):
 	required_permissions = 'systemoversikt.view_cmdbdevice'
 	if request.user.has_perm(required_permissions):
 
-		def filter(input):
-
-			search_term = input["search_term"]
-			comp_os = input["comp_os"]
-			comp_os_version = input["comp_os_version"]
-
-			if search_term == "" and comp_os == "" and comp_os_version == "":
-				return CMDBdevice.objects.none()
-
-			if search_term == "__all__":
-				search_term = ""
-
-			devices = CMDBdevice.objects.filter(device_active=True).filter(device_type="KLIENT").filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term) | Q(comments__icontains=search_term) | Q(description__icontains=search_term))
-
-			if comp_os == "__empty__" and comp_os_version == "__empty__":
-				comp_os_and_version_none = CMDBdevice.objects.filter(device_active=True).filter(Q(comp_os="") & Q(comp_os_version=""))
-				return devices & comp_os_and_version_none  # snitt/intersection av to sett
-
-			if comp_os == "__empty__":
-				comp_os_none = CMDBdevice.objects.filter(device_active=True).filter(comp_os="").filter(comp_os_version__icontains=comp_os_version)
-				return devices & comp_os_none  # snitt/intersection av to sett
-
-			if comp_os_version == "__empty__":
-				comp_os_version_none = CMDBdevice.objects.filter(device_active=True).filter(comp_os_version="").filter(comp_os__icontains=comp_os)
-				return devices & comp_os_version_none  # snitt/intersection av to sett
-
-			if comp_os != "":
-				devices = devices.filter(comp_os__icontains=comp_os)
-
-			if comp_os_version != "":
-				devices = devices.filter(comp_os_version__icontains=comp_os_version)
-
-			return devices
-
 		search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
-		comp_os = request.GET.get('comp_os', '').strip()
-		comp_os_version = request.GET.get('comp_os_version', '').strip()
 
-		maskiner = filter({
-				"search_term": search_term,
-				"comp_os": comp_os,
-				"comp_os_version": comp_os_version
-			})
-
-		maskiner = maskiner.order_by('comp_os')
-
+		if search_term == '':
+			maskiner = None
+		elif search_term == '__all__':
+			maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True)
+		else:
+			maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(sub_name__navn__icontains=search_term)).order_by('comp_name')
 
 		alle_maskinadm_klienter = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(kilde_prk=True).count()
 		alle_cmdb_klienter = CMDBdevice.objects.filter(device_active=True).filter(device_type="KLIENT").count()
@@ -3683,7 +3645,7 @@ def alle_servere(request):
 		elif search_term == '__all__':
 			maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True)
 		else:
-			maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__icontains=search_term) | Q(sub_name__navn__icontains=search_term)).order_by('comp_name')
+			maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(sub_name__navn__icontains=search_term)).order_by('comp_name')
 
 		maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
 		maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)

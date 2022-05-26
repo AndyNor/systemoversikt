@@ -50,8 +50,8 @@
 		{% url 'alle_servere' as url_alle_servere %}
 		<a href="{{url_alle_servere}}" class="btn btn-sm btn-link {% if url_alle_servere in request.path %}fremhev{% endif %}">Servere</a><br>
 
-		{% url 'alle_klienter_sok' as url_alle_klienter_sok %}
-		<a href="{{url_alle_klienter_sok}}" class="btn btn-sm btn-link {% if url_alle_klienter_sok in request.path %}fremhev{% endif %}">Klienter</a><br>
+		{% url 'alle_klienter' as url_alle_klienter %}
+		<a href="{{url_alle_klienter}}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}">Klienter</a><br>
 
 		{% url 'alle_ip' as url_alle_ip %}
 		<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP / Nettverk</a><br>

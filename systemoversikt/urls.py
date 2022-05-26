@@ -136,7 +136,7 @@ urlpatterns = [
 	re_path(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 	re_path(r'^cmdb/db/$', views.statistikk_databaser, name='statistikk_databaser'),
 	re_path(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
-	re_path(r'^cmdb/servere/sok/$', views.maskin_sok, name='maskin_sok'),
+	re_path(r'^cmdb/device/sok/$', views.maskin_sok, name='maskin_sok'),
 	re_path(r'^cmdb/azure/applications/$', views.azure_applications, name='azure_applications'),
 	re_path(r'^cmdb/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
 
