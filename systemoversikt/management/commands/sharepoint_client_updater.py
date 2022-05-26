@@ -89,8 +89,8 @@ class Command(BaseCommand):
 					cmdbdevice = CMDBdevice.objects.create(comp_name=comp_name)
 
 				os_readable = record["Operating System"]
-				os_readable = re.sub(os_readable, 'microsoft', flags=re.IGNORECASE)
-				os_readable = re.sub(os_readable, 'edition', flags=re.IGNORECASE)
+				os_readable = re.sub('microsoft', '', os_readable, flags=re.IGNORECASE)
+				os_readable = re.sub('edition', '', os_readable, flags=re.IGNORECASE)
 				os_readable.strip()
 				if os_readable == '':
 					os_readable = 'Ukjent'
