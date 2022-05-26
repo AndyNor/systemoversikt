@@ -4,20 +4,22 @@
 	<h6>Virksomhetsmeny</h6>
 
 	{% url 'alle_virksomheter_sidemeny' as url_alle_virksomheter %}
-	<a href="{{url_alle_virksomheter}}" class="btn btn-sm btn-link {% if url_alle_virksomheter in request.path %}fremhev{% endif %}">Alle virksomheter</a>
+	<a href="{{url_alle_virksomheter}}" class="btn btn-sm btn-link {% if url_alle_virksomheter in request.path %}fremhev{% endif %}">Vis alle virksomheter</a>
 
 	{% if user.is_authenticated %}
 		{% url 'sertifikatmyndighet' as url_sertifikatmyndighet%}
-		<a href="{{ url_sertifikatmyndighet }}" class="btn btn-sm btn-link {% if url_sertifikatmyndighet in request.path %}fremhev{% endif %}">Sertifikatmyndigheter</a>
+		<a href="{{ url_sertifikatmyndighet }}" class="btn btn-sm btn-link {% if url_sertifikatmyndighet in request.path %}fremhev{% endif %}">Sertifikatfullmakter</a>
 	{% endif %}
+	<hr>
+
 
 	{% if user.is_authenticated %}
 	{% url 'min_virksomhet' as url_min_virksomhet %}
-		<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">Min virksomhet</a>
+		<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 Min virksomhet</a>
 	{% endif %}
 
 	{% if request.user.profile.virksomhet %}
-		<a class="btn btn-sm btn-link" href="{% url 'virksomhet_urler' pk=request.user.profile.virksomhet.pk %}">Våre domener</a>
+		<a class="btn btn-sm btn-link" href="{% url 'virksomhet_urler' pk=request.user.profile.virksomhet.pk %}">👥 Våre domener</a>
 	{% endif %}
 
 

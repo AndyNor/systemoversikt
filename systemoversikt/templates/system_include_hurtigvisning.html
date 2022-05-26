@@ -1,29 +1,23 @@
 {% load static %}
 
-<p>Forklaring til oversikten: Lys skrift betyr at systemet ikke er merket som kvalitetssikret. Gjennomstreking betyr at systemet er markert som "ikke i bruk". 🔧 indikerer at systemet er infrastruktur.</p>
-
-
-
 <table class="tablesorter excel">
 	<thead>
 		<tr>
 			<th>Systemnavn</th>
+			<th>Systemforvalter</th>
 			<th>Systemet er i bruk?</th>
 			<th>Livsløpstatus</th>
-			<th>Kvalitetssikret</th>
-			<th>Sist oppdatering (dato)</th>
-			<th>Sist oppdatering (tid siden)</th>
+			<th>Sist oppdatering</th>
 		</tr>
 	</thead>
 		<tbody>
 		{% for system in systemer %}
 		<tr>
 			<td>{% include 'system_include_vis.html' with system=system %}</td>
-			<td>{{system.ibruk|yesno:'Ja, Nei, Vet ikke'}}</td>
-			<td>{{system.get_livslop_status_display }}</td>
-			<td>{{system.informasjon_kvalitetssikret|yesno:'Ja, Nei, Vet ikke'}}</td>
-			<td>{{system.sist_oppdatert|date:"Y-m-d"}}</td>
-			<td>{{system.sist_oppdatert|timesince}}</td>
+			<td>{{system.systemforvalter|default:""}}</td>
+			<td>{{system.er_ibruk|yesno:'Ja, Nei'}}</td>
+			<td>{{system.get_livslop_status_display|default:"" }}</td>
+			<td>{{system.sist_oppdatert|date:"Y-m-d"}}<br>{{system.sist_oppdatert|timesince}}</td>
 		</tr>
 		{% endfor %}
 	</tbody>

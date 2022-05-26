@@ -3,16 +3,14 @@
 {% load static %}
 
 {% block sidemeny %}
-	<h6>Alle definisjoner</h6>
+	<h6>Begreper</h6>
 	{% if perms.systemoversikt.add_definisjon %}
 	<div>
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/definisjon/add/">{% include 'site_edit_button.html' %} Registrer definisjon</a>
 
 		<hr>
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/definisjonkontekster/">{% include 'site_edit_button.html' %} Legg til definisjonstype</a>
+		<a class="btn btn-sm btn-link" href="{% url 'import_organisatorisk_forkortelser' %}">⚙️ Synkroniser virksomheter</a>
 
-		<a class="btn btn-sm btn-link" href="{% url 'import_organisatorisk_forkortelser' %}">⚙️ Sync virksomheter</a>
-
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/definisjonkontekster/">{% include 'site_edit_button.html' %} Definisjonstyper</a>
 
 	</div>
 	{% endif %}
@@ -29,7 +27,9 @@
 
 	{% block hovedinnhold %}
 
-	<p>En enkel modul for å definere begreper. Et begrep kan defineres flere ganger med ulik definisjon. Viser {{ definisjoner.count }} begreper.</p>
+	<p>Database over begreper. Et begrep kan defineres flere ganger med ulik definisjon. Viser {{ definisjoner.count }} begreper.</p>
+
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/definisjon/add/">{% include 'site_edit_button.html' %} Registrer definisjon</a>
 
 		<form action="" autocomplete="off">
 			<div class="form-group form-inline">

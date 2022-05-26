@@ -4,7 +4,7 @@
 <a href="{{url_alle_ansvarlige}}" class="btn btn-sm btn-link {% if url_alle_ansvarlige in request.path %}fremhev{% endif %}">Alle ansvarlige</a>
 {% if not virksomhet %}
 	{% if request.user.profile.virksomhet %}
-		<a class="btn btn-sm btn-link" href="{% url 'virksomhet_ansvarlige' pk=request.user.profile.virksomhet.pk %}">Våre ansvarlige</a>
+		<a class="btn btn-sm btn-link" href="{% url 'virksomhet_ansvarlige' pk=request.user.profile.virksomhet.pk %}">👥 Våre ansvarlige</a>
 	{% endif %}
 
 		{% url 'alle_ansvarlige_eksport' as url_alle_ansvarlige_eksport %}

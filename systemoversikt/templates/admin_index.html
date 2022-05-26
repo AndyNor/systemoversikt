@@ -5,29 +5,32 @@
 	<h6>Admin</h6>
 
 	{% url 'logger' as url_logger %}
-	<a href="{{ url_logger }}" class="btn btn-sm btn-link {% if url_logger in request.path %}fremhev{% endif %}" >Redigeringslogg</a><br>
+	<a href="{{ url_logger }}" class="btn btn-sm btn-link {% if url_logger in request.path %}fremhev{% endif %}">📖 Redigeringslogg</a><br>
 
 	{% url 'logger_audit' as url_logger_audit %}
-	<a href="{{ url_logger_audit }}" class="btn btn-sm btn-link {% if url_logger_audit in request.path %}fremhev{% endif %}" >Systemlogg</a><br>
+	<a href="{{ url_logger_audit }}" class="btn btn-sm btn-link {% if url_logger_audit in request.path %}fremhev{% endif %}">📖 Systemlogg</a><br>
 
 	{% url 'logger_users' as url_logger_users %}
-	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}" >Brukerlogg</a><br>
+	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}">📖 Brukerlogg</a><br>
 
 	<a href="/admin/" class="btn btn-sm btn-link" >Adminpanelet</a><br>
 
 	<a href="{% url 'valgbarekategorier' %}" class="btn btn-sm btn-link">Valgbare kategorier</a><br>
 
 	{% url 'minside' as url_minside %}
-	<a href="{{ url_minside }}" class="btn btn-sm btn-link {% if url_minside in request.path %}fremhev{% endif %}">Min pålogging</a><br>
+	<a href="{{ url_minside }}" class="btn btn-sm btn-link {% if url_minside in request.path %}fremhev{% endif %}">👤 Min pålogging</a><br>
 
 	{% url 'roller' as url_roller %}
 	<a href="{{ url_roller }}" class="btn btn-sm btn-link {% if url_roller in request.path %}fremhev{% endif %}">Kartotekets tilgangsstyring</a>
 
 	{% url 'permissions' as url_permissions %}
-	<a href="{{ url_permissions }}" class="btn btn-sm btn-link {% if url_permissions in request.path %}fremhev{% endif %}" >Kartotekbrukere</a>
+	<a href="{{ url_permissions }}" class="btn btn-sm btn-link {% if url_permissions in request.path %}fremhev{% endif %}">Kartotekbrukere</a>
 
 	{% url 'ansvarlig_bytte' as url_ansvarlig_bytte %}
-	<a href="{{ url_ansvarlig_bytte }}" class="btn btn-sm btn-link {% if url_ansvarlig_bytte in request.path %}fremhev{% endif %}" >Flytt ansvar</a><br>
+	<a href="{{ url_ansvarlig_bytte }}" class="btn btn-sm btn-link {% if url_ansvarlig_bytte in request.path %}fremhev{% endif %}">⚙️ Flytt ansvar</a><br>
+
+	{% url 'system_til_programvare_indeks' as url_system_til_programvare_indeks %}
+	<a href="{{url_system_til_programvare_indeks}}" class="btn btn-sm btn-link {% if url_system_til_programvare_indeks in request.path %}fremhev{% endif %}">⚙️ System til programvare</a>
 
 	<a href="/api/" class="btn btn-sm btn-link">Kartotekets API</a><br>
 

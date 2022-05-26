@@ -9,7 +9,7 @@
 		<a href="{{url_alle_behandlinger}}" class="btn btn-sm btn-link {% if url_alle_behandlinger in request.path %}fremhev{% endif %}">Alle behandlinger</a>
 
 	{% url 'mine_behandlinger' as url_mine_behandlinger %}
-		<a href="{{ url_mine_behandlinger }}" class="btn btn-sm btn-link {% if url_mine_behandlinger in request.path %}fremhev{% endif %}" >Våre behandlinger</a>
+		<a href="{{ url_mine_behandlinger }}" class="btn btn-sm btn-link {% if url_mine_behandlinger in request.path %}fremhev{% endif %}" >👥 Våre behandlinger</a>
 
 
 	{% block ekstrameny_behandling %}{% endblock ekstrameny_behandling %}

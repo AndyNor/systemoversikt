@@ -1687,7 +1687,7 @@ def alle_programvarer(request):
 	aktuelle_programvarer = aktuelle_programvarer.order_by(Lower('programvarenavn'))
 
 	return render(request, 'programvare_alle.html', {
-		'overskrift': "Programvarer",
+		'overskrift': "Programvarer og applikasjoner",
 		'request': request,
 		'programvarer': aktuelle_programvarer,
 	})
@@ -3333,42 +3333,6 @@ def alle_adgrupper(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-def statistikk_databaser(request):
-	"""
-	Vise statistikk over databaser på felles IKT-plattform
-	Tilgangsstyring: må kunne vise cmdb-maskiner
-	"""
-	required_permissions = 'systemoversikt.view_cmdbdevice'
-	if request.user.has_perm(required_permissions):
-
-		def cmdb_os_stats(maskiner):
-			maskiner_stats = []
-			for os in os_major:
-				maskiner_stats.append({
-					'major': os['db_version'],
-					'count': os['db_version__count']
-				})
-			return sorted(maskiner_stats, key=lambda os: os['db_version'], reverse=True)
-
-		databaseversjoner = CMDBdatabase.objects.all().values('db_version').distinct().annotate(Count('db_version'))
-		databasestatistikk = []
-		for versjon in databaseversjoner:
-			if versjon["db_version"] == "":
-				versjon["db_version"] = "ukjent"
-			databasestatistikk.append({
-					'versjon': versjon["db_version"],
-					'antall': versjon["db_version__count"]
-				})
-		databasestatistikk = sorted(databasestatistikk, key=lambda v: v['versjon'], reverse=True)
-
-		return render(request, 'cmdb_databasestatistikk.html', {
-			'antall_databaser': CMDBdatabase.objects.all().count(),
-			'databasestatistikk': databasestatistikk,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-
 def maskin_sok(request):
 	"""
 	Søke opp hostnavn
@@ -3717,10 +3681,31 @@ def alle_databaser(request):
 			d.server_str = server_str # dette legger bare til et felt. Vi skriver ingen ting her.
 
 
+		def cmdb_os_stats(maskiner):
+			maskiner_stats = []
+			for os in os_major:
+				maskiner_stats.append({
+					'major': os['db_version'],
+					'count': os['db_version__count']
+				})
+			return sorted(maskiner_stats, key=lambda os: os['db_version'], reverse=True)
+
+		databaseversjoner = CMDBdatabase.objects.all().values('db_version').distinct().annotate(Count('db_version'))
+		databasestatistikk = []
+		for versjon in databaseversjoner:
+			if versjon["db_version"] == "":
+				versjon["db_version"] = "ukjent"
+			databasestatistikk.append({
+					'versjon': versjon["db_version"],
+					'antall': versjon["db_version__count"]
+				})
+		databasestatistikk = sorted(databasestatistikk, key=lambda v: v['antall'], reverse=True)
+
 		return render(request, 'cmdb_databaser_sok.html', {
 			'request': request,
 			'databaser': databaser,
 			'search_term': search_term,
+			'databasestatistikk': databasestatistikk,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

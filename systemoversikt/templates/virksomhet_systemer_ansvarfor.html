@@ -18,9 +18,7 @@
 
 	<p>{{ virksomhet.virksomhetsforkortelse }} har ansvar for {{ systemer_ansvarlig_for.count }} systemer.</p>
 
-	{% if user.is_authenticated %}
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Registrer nytt system</a>
-	{% endif %}
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Registrer nytt system</a>
 
 	<table id="systemer" class="tablesorter excel">
 		<thead>

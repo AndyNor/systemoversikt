@@ -2,20 +2,6 @@
 {% load static %}
 
 {% block ekstrameny_programvare %}
-
-	{% if request.user.profile.virksomhet %}
-		{% url 'all_programvarebruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
-			<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-link">Vår bruk av programvare</a>
-	{% endif %}
-
-	{% if user.is_authenticated %}
-		<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer programvare</a>
-
-		{% url 'systemer_pakket' as url_systemer_pakket %}
-			<a href="{{url_systemer_pakket}}" class="btn btn-sm {% if url_systemer_pakket in request.path %}fremhev{% endif %}">Programvarepakking</a>
-	{% endif %}
-
-
 {% endblock ekstrameny_programvare %}
 
 
@@ -24,6 +10,18 @@
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
+
+	<p>"Programvare" i Kartoteket brukes for å registrere det offisielle navnet til programkode og skrivebordsapplikasjoner. Dette i kontrast med "systemer" som er programvare satt opp på servere og  databaser.<br>Det er viktig at du registrerer programvare riktig mot system, da UKE CSIRT bruker oversikten over programvare for å undersøke om kommunen er truffet av sårbarheter i programvare. UKE CSIRT har også andre kilder.</p>
+
+	<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Legg til programvare</a>
+
+	{% if request.user.profile.virksomhet %}
+		{% url 'all_programvarebruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
+		<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-link">👥 Vår bruk av programvare</a>
+	{% endif %}
+
+	{% url 'systemer_pakket' as url_systemer_pakket %}
+	<a href="{{url_systemer_pakket}}" class="btn btn-sm {% if url_systemer_pakket in request.path %}fremhev{% endif %}">Programvarepakking</a>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">

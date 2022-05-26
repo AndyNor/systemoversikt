@@ -6,10 +6,12 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Søk i AD etter brukere
+	Brukere i Active Directory (on-prem)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
+
+	<p>Alle brukere synkroniseres hver natt mot AD.</p>
 
 	{% url 'logger_users' as url_logger_users %}
 	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}">Logg over brukerendringer</a>

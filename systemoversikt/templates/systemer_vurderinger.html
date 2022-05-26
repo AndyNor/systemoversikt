@@ -20,7 +20,7 @@
 
 
 {% block overskrift %}
-	{{ overskrift }}
+	Systemvurderinger samlet
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -32,10 +32,6 @@
 <thead>
 <tr>
 	<th>System</th>
-	<th>I bruk?</th>
-	<th>Kvalitetssikret?</th>
-	<th>Antall bruk registrert</th>
-	<th>Antall behandlinger registrert</th>
 	<th width="15%">Systembeskrivelse</th>
 	<th>Livsløpstatus</th>
 	<th>Strategisk knytning</th>
@@ -50,10 +46,6 @@
 {% for system in systemer %}
 <tr>
 	<td>{% include 'system_include_vis.html' with system=system %}</td>
-	<td>{% if system.ibruk == False %} Nei {% else %} Ja {% endif %}</td>
-	<td>{% if system.informasjon_kvalitetssikret %} Ja {% else %} Nei {% endif %}</td>
-	<td>{{ system.systembruk_system.count }}</td>
-	<td>{{ system.behandling_systemer.count }}</td>
 	<td>{{ system.systembeskrivelse }}</td>
 	<td>{{ system.get_livslop_status_display|default:"-" }}</td>
 	<td>{{ system.get_strategisk_egnethet_display|default:"-" }}</td>

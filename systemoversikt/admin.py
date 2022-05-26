@@ -768,6 +768,7 @@ class SystemtypeAdmin(SimpleHistoryAdmin):
 class SystemHovedKategoriAdmin(SimpleHistoryAdmin):
 	list_display = ('hovedkategorinavn', 'definisjon')
 	search_fields = ('hovedkategorinavn', 'definisjon', 'subkategorier')
+	filter_horizontal = ('subkategorier',)
 
 	def get_ordering(self, request):
 		return [Lower('hovedkategorinavn')]

@@ -83,12 +83,7 @@
 
 				<li class="hovedmeny">
 					{% url "alle_systemurler" as alle_systemurler_url %}
-					<a href="{{ alle_systemurler_url }}" class="nav-link {% if alle_systemurler_url in request.path %} active {% endif %}">URLer</a>
-				</li>
-
-				<li class="hovedmeny">
-					{% url "alle_definisjoner" as alle_definisjoner_url %}
-					<a href="{{ alle_definisjoner_url }}" class="nav-link {% if alle_definisjoner_url in request.path %} active {% endif %}">Begreper</a>
+					<a href="{{ alle_systemurler_url }}" class="nav-link {% if alle_systemurler_url in request.path %} active {% endif %}">Domener</a>
 				</li>
 
 			{% if user.is_authenticated %}
@@ -97,6 +92,12 @@
 					<a href="{{ alle_cmdbref_url }}" class="nav-link {% if alle_cmdbref_url in request.path %} active {% endif %}">CMDB</a>
 				</li>
 			{% endif %}
+
+				<li class="hovedmeny">
+					{% url "alle_definisjoner" as alle_definisjoner_url %}
+					<a href="{{ alle_definisjoner_url }}" class="nav-link {% if alle_definisjoner_url in request.path %} active {% endif %}">Begreper</a>
+				</li>
+
 
 			{% if user.is_authenticated %}
 				<li class="hovedmeny">

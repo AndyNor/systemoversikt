@@ -35,7 +35,7 @@
 	<a href="{{ url_leverandortilgang }}" class="btn btn-sm btn-link {% if url_leverandortilgang in request.path %}fremhev{% endif %}">Leverandørtilgang</a>
 
 	{% url 'drifttilgang' as url_drifttilgang %}
-	<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Drift-brukere</a>
+	<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Driftbrukere (tar tid)</a>
 
 
 	{% block ekstrameny_ad %}{% endblock ekstrameny_ad %}
@@ -44,7 +44,7 @@
 	<hr>
 
 	<h6>Applikasjon- og basisdrift</h6>
-		{% url 'alle_cmdbref' as url_alle_cmdbref %}
+		{% url 'alle_cmdbref_sok' as url_alle_cmdbref %}
 		<a href="{{url_alle_cmdbref}}" class="btn btn-sm btn-link {% if url_alle_cmdbref in request.path %}fremhev{% endif %}">Business services</a><br>
 
 		{% url 'alle_servere' as url_alle_servere %}
@@ -58,10 +58,6 @@
 
 		{% url 'alle_databaser' as url_alle_databaser %}
 		<a href="{{url_alle_databaser}}" class="btn btn-sm btn-link {% if url_alle_databaser in request.path %}fremhev{% endif %}">Databaser</a><br>
-
-		{% url 'statistikk_databaser' as url_statistikk_databaser %}
-		<a href="{{url_statistikk_databaser}}" class="btn btn-sm btn-link {% if url_statistikk_databaser in request.path %}fremhev{% endif %}" >Databasestatistikk</a><br>
-
 
 		{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}
 

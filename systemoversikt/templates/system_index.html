@@ -1,73 +1,23 @@
 {% extends "index.html" %}
 
 {% block sidemeny %}
-	<h6>Systemoversikt</h6>
+	<h6>Systemer og programvare</h6>
 		{% url 'alle_systemer' as url_alle_systemer %}
-		<a href="{{url_alle_systemer}}" class="btn btn-sm btn-link {% if url_alle_systemer in request.path %}fremhev{% endif %}">Alle systemer</a>
-
-
-		{% url 'systemer_vurderinger' as url_systemer_vurderinger %}
-		<a href="{{ url_systemer_vurderinger }}" class="btn btn-sm btn-link {% if url_systemer_vurderinger in request.path %}fremhev{% endif %}">Systemvurderinger</a>
-
-	{% if request.user.profile.virksomhet %}
-		{% url 'all_bruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_systembruk %}
-		<a href="{{ url_systembruk }}" class="btn btn-sm btn-link {% if url_systembruk in request.path %}fremhev{% endif %}">Vår bruk av systemer</a>
-	{% endif %}
-
-
-	{% url 'alle_systemer_forvaltere' as url_systemforvaltere %}
-		<a href="{{ url_systemforvaltere }}" class="btn btn-sm btn-link {% if url_systemforvaltere in request.path %}fremhev{% endif %}">Systemeierskap</a>
-
-	{% url 'systemer_EOL' as url_systemer_EOL %}
-		<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if url_systemer_EOL in request.path %}fremhev{% endif %}">End of life (Felles)</a>
-
-	{% if user.is_authenticated %}
-		{% url 'systemer_utfaset' as url_systemer_utfaset %}
-		<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfasede systemer</a>
-
-		{% url 'system_til_programvare_indeks' as url_system_til_programvare_indeks %}
-		<a href="{{url_system_til_programvare_indeks}}" class="btn btn-sm btn-link {% if url_system_til_programvare_indeks in request.path %}fremhev{% endif %}">Konverter til programvare</a>
-	{% endif %}
-
-	{% if user.is_authenticated %}
-		<a href="/admin/systemoversikt/system/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer nytt system</a>
-	{% endif %}
-
-	{% block ekstrameny_system %}{% endblock ekstrameny_system %}
-
-
-	<hr>
-	<h6>Programvarer</h6>
-		{% url 'alle_programvarer' as url_alle_programvarer %}
-			<a href="{{url_alle_programvarer}}" class="btn btn-sm {% if url_alle_programvarer in request.path %}fremhev{% endif %}">Alle programvarer</a>
-
-	{% block ekstrameny_programvare %}{% endblock ekstrameny_programvare %}
-
-	<hr>
-	<h6>Leverandører</h6>
-
-		{% url "alle_leverandorer" as alle_leverandorer_url %}
-		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Alle leverandører</a>
-	{% block ekstrameny_leverandor %}{% endblock ekstrameny_leverandor %}
-
-	<hr>
-	<h6>Kategorier</h6>
-		{% url 'alle_systemkategorier' as url_alle_systemkategorier %}
-		<a href="{{url_alle_systemkategorier}}" class="btn btn-sm {% if url_alle_systemkategorier in request.path %}fremhev{% endif %}">Alle kategorier</a>
+		<a href="{{url_alle_systemer}}" class="btn btn-sm btn-link {% if url_alle_systemer in request.path %}fremhev{% endif %}">Systemoversikt</a>
 
 		{% url 'alle_hovedkategorier' as url_alle_hovedkategorier %}
-		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Alle hovedkategorier</a>
+		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Systemkategorier</a>
 
-	{% block ekstrameny_kategori %}{% endblock ekstrameny_kategori %}
+		{% url 'alle_leverandorer' as alle_leverandorer_url %}
+		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Leverandører</a>
 
-	<hr>
-	<h6>Driftsmiljø</h6>
-		{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
-		<a href="{{ alle_driftsmodeller_url }}" class="btn btn-sm btn-link {% if alle_driftsmodeller_url in request.path %}fremhev{% endif %}" >Alle driftsmiljø</a>
 
+		{% url 'systemer_EOL' as url_systemer_EOL %}
+		<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if url_systemer_EOL in request.path %}fremhev{% endif %}">💾 End of life (Felles)</a>
+
+	{% block ekstrameny_system %}{% endblock ekstrameny_system %}
+	{% block ekstrameny_leverandor %}{% endblock ekstrameny_leverandor %}
 	{% block ekstrameny_driftsmiljo %}{% endblock ekstrameny_driftsmiljo %}
-
-
 
 {% endblock sidemeny %}
 

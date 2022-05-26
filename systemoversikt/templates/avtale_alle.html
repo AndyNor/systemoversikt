@@ -31,7 +31,7 @@
 
 	{% if request.user.profile.virksomhet %}
 		{% url 'avtalervirksomhet' virksomhet=request.user.profile.virksomhet.pk as url_avtalervirksomhet %}
-		<a class="btn btn-sm btn-link" href="{{ url_avtalervirksomhet }}">Våre avtaler</a>
+		<a class="btn btn-sm btn-link" href="{{ url_avtalervirksomhet }}">👥 Våre avtaler</a>
 	{% endif %}
 
 	{% url "alle_avtaler" as alle_avtaler_url %}

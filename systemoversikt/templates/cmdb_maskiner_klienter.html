@@ -14,7 +14,7 @@
 	{% url 'maskin_sok' as url_maskin_sok %}
 	<a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Listesøk</a>
 
-	<p>Servere importeres fra Sopra Sterias CMDB. Sopra Steria knytter servere til business sub services. Servere oppdages og oppdateres med auto-discovery som samler inn IP-adresse, operativsystem, samt informasjon om disk, minne og cpu.</p>
+	<p>Klienter importeres fra Sopra Sterias CMDB hver natt.<br>Data fra PRK maskinadmin lastes inn ved behov, og utfyller dataene fra Sopra Steria med status på om klienten er innmeldt.<br>Ved behov for å få Maskinadm-data oppdatert kan du ta kontakt med UKE.</p>
 
 	<b>{{ alle_maskinadm_klienter }}</b> aktive klienter i PRK.<br>
 	<b>{{ alle_cmdb_klienter }}</b> aktive klienter i 2S CMDB.<br>

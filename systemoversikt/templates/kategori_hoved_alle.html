@@ -1,19 +1,13 @@
 {% extends "system_index.html" %}
 {% load static %}
 
-{% block ekstrameny_kategori %}
-	<p>
-		{% if user.is_authenticated %}
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemhovedkategori/add/">{% include 'site_edit_button.html' %} Registrer ny hovedkategori</a>
-		{% endif %}
-	</p>
-{% endblock ekstrameny_kategori %}
-
 {% block overskrift %}
-	Alle Hovedkategorier
+	Systemkategorier
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
+
+<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemhovedkategori/add/">{% include 'site_edit_button.html' %} Registrer ny hovedkategori</a>
 
 	<table class="tablesorter excel">
 	<thead>
