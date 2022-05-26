@@ -127,11 +127,10 @@ urlpatterns = [
 	re_path(r'^ansvarlige/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),
 	re_path(r'^ansvarlige/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
 
-	re_path(r'^cmdb/$', views.alle_cmdbref, name='alle_cmdbref_main'),
-	re_path(r'^cmdb/alle/$', views.alle_cmdbref, name='alle_cmdbref'),
-	re_path(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),
-	re_path(r'^cmdb/servere/alle/$', views.alle_servere, name='alle_servere'),
-	re_path(r'^cmdb/klienter/alle/$', views.alle_klienter, name='alle_klienter'),
+	re_path(r'^cmdb/business_services/$', views.alle_cmdbref, name='alle_cmdbref'),
+	re_path(r'^cmdb/business_sub_service/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),
+	re_path(r'^cmdb/servere/$', views.alle_servere, name='alle_servere'),
+	re_path(r'^cmdb/klienter/$', views.alle_klienter, name='alle_klienter'),
 	re_path(r'^cmdb/servere/utfaset/$', views.servere_utfaset, name='servere_utfaset'),
 	re_path(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 	re_path(r'^cmdb/db/$', views.statistikk_databaser, name='statistikk_databaser'),
@@ -139,8 +138,6 @@ urlpatterns = [
 	re_path(r'^cmdb/device/sok/$', views.maskin_sok, name='maskin_sok'),
 	re_path(r'^cmdb/azure/applications/$', views.azure_applications, name='azure_applications'),
 	re_path(r'^cmdb/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
-
-
 
 
 	re_path(r'^cmdb/prk/$', views.alle_prk, name='alle_prk'),

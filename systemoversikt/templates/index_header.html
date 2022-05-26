@@ -93,7 +93,7 @@
 
 			{% if user.is_authenticated %}
 				<li class="hovedmeny">
-					{% url "alle_cmdbref_main" as alle_cmdbref_url %}
+					{% url "alle_cmdbref" as alle_cmdbref_url %}
 					<a href="{{ alle_cmdbref_url }}" class="nav-link {% if alle_cmdbref_url in request.path %} active {% endif %}">CMDB</a>
 				</li>
 			{% endif %}
