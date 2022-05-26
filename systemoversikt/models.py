@@ -1640,7 +1640,7 @@ class CMDBdevice(models.Model):
 			)
 	device_active = models.BooleanField(
 			verbose_name="Aktiv",
-			default=True,
+			default=False, # dersom PRK-import oppretter enheter, skal de likevel ikke anses som aktive. Bare ekstra informasjon. Må eksplisitt settes til True
 			help_text=u"",
 			)
 	model_id = models.CharField(
