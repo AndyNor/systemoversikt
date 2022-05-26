@@ -19,20 +19,22 @@
 
 	<hr>
 
-	<p>Servere importeres fra Sopra Sterias CMDB. Sopra Steria knytter servere til business sub services. Servere oppdages og oppdateres med auto-discovery som samler inn IP-adresse, operativsystem, samt informasjon om disk, minne og cpu.</p>
+	<p>Servere importeres fra Sopra Sterias CMDB automatisk hver natt. Sopra Steria knytter servere til business sub services. Servere oppdages og oppdateres med auto-discovery som samler inn IP-adresse, operativsystem, samt informasjon om disk, minne og cpu.</p>
 
 	<hr>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
-			<input size="30" style="width: 350px;" type="search" value="{{ device_search_term }}" name="device_search_term"
-			placeholder="Hostnavn eller business service" class="form-control form-control-sm">
+			<input size="30" style="width: 450px;" type="search" value="{{ device_search_term }}" name="device_search_term"
+			placeholder="Hostnavn, operativsystem eller business service" class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 			<a class="btn btn-sm" href="?device_search_term=__all__">Vis alt</a>
 		</div>
 	</form>
 
-	<p>Viser {{ maskiner.count }} maskiner.</p>
+	{% if maskiner %}
+		<p>Fant {{ maskiner.count }} maskiner.</p>
+	{% endif %}
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
@@ -56,9 +58,8 @@
 			<a href="{{ url_ad }}">{{ maskin.comp_name }}</a>
 		</td>
 		<td>
-			BS: {{ maskin.sub_name.parent_ref }} <br>
 			{% url 'cmdbdevice' pk=maskin.sub_name.pk as url_bss %}
-			BSS: <a href="{{ url_bss }}">{{ maskin.sub_name }}</a>
+			<a href="{{ url_bss }}">{{ maskin.sub_name.navn }}</a>
 		</td>
 		<td>
 			{% for db in maskin.database_server.all %}
@@ -70,9 +71,14 @@
 			{{ maskin.comments|default:"-" }}
 		</td>
 		<td>
-			Disk: {{ maskin.comp_disk_space|default:"-" }} GB <br>
 			CPU: {{ maskin.comp_u_cpu_total|default:"-" }} Cores<br>
 			RAM: {{ maskin.comp_ram|default:"-" }} MB<br>
+			Disk: {{ maskin.comp_disk_space|default:"-" }} GB <br>
+			{% for disk in maskin.cmdbdisk_computer.all %}
+				{% if disk.operational_status %}
+					<li>{{ disk.file_system}} {{disk.free_space_bytes|filesizeformat}} of {{disk.size_bytes|filesizeformat}} ({{ disk.mount_point|truncatechars:35 }})</li>
+				{% endif %}
+			{% endfor %}
 		</td>
 		<td>
 			IP: {{ maskin.comp_ip_address }} <br>
@@ -96,13 +102,24 @@
 			{% if maskin.sub_name.parent_ref.systemreferanse %}
 				{{maskin.sub_name.parent_ref.systemreferanse.systemeier_kontaktpersoner_referanse.all.0}}
 			{% endif %}
-
-			{% if maskin.landesk_login %}
-				{{ maskin.landesk_login }}<br>{{maskin.maskinadm_status}}
-			{% endif %}
 		</td>
 
 	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+	<table class="table table-sm tablesorter">
+	<thead>
+		<th>OS</th>
+		<th>Antall</th>
+	</thead>
+	<tbody>
+	{% for os in maskiner_stats %}
+		<tr>
+			<td><a href="{% url 'alle_servere' %}?device_search_term={{os.comp_os_readable}}">{{ os.comp_os_readable|default:"Ukjent" }}</a></td>
+			<td>{{ os.comp_os_readable__count }}</td>
+		</tr>
 	{% endfor %}
 	</tbody>
 	</table>

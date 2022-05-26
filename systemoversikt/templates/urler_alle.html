@@ -3,26 +3,6 @@
 {% load static %}
 
 {% block ekstrameny %}
-
-	{% if not virksomhet %}
-		{% if user.is_authenticated %}
-		<hr>
-		<h6>Domener</h6>
-			{% if request.user.profile.virksomhet %}
-				<a class="btn btn-sm btn-link" href="{% url 'virksomhet_urler' pk=request.user.profile.virksomhet.pk %}">Våre domener</a>
-			{% endif %}
-
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemurl/add/">{% include 'site_edit_button.html' %} Registrer nytt domene</a>
-
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/sikkerhetstester/add/">{% include 'site_edit_button.html' %} Registrer sikkerhetstest</a>
-		<hr>
-		{% endif %}
-	{% endif %}
-
-	{% if virksomhet %}
-		{% include 'virksomhet_detaljer_ekstrameny.html' %}
-	{% endif %}
-
 {% endblock ekstrameny %}
 
 {% block overskrift %}
@@ -37,6 +17,8 @@
 	{% if request.user.profile.virksomhet %}
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemurl/add/">{% include 'site_edit_button.html' %} Legg til nytt domene</a>
 	{% endif %}
+
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/sikkerhetstester/add/">{% include 'site_edit_button.html' %} Registrer sikkerhetstest</a>
 
 	{% include "urler_include.html" %}
 

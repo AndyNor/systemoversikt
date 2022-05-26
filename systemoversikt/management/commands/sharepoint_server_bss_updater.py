@@ -99,6 +99,9 @@ class Command(BaseCommand):
 				else:
 					os_readable = os
 
+				if os_readable == '':
+					os_readable = 'Ukjent'
+
 				#print(os_readable)
 
 				cmdbdevice.device_active = True

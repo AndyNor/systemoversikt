@@ -90,4 +90,20 @@
 	</tbody>
 	</table>
 
+
+	<table class="table table-sm tablesorter">
+	<thead>
+		<th>Operativsystem</th>
+		<th>Antall</th>
+	</thead>
+	<tbody>
+	{% for os in maskiner_stats %}
+		<tr>
+			<td><a href="{% url 'alle_klienter' %}?device_search_term={{os.comp_os_readable}}">{{ os.comp_os_readable|default:"Ukjent" }}</a></td>
+			<td>{{ os.comp_os_readable__count }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
 {% endblock hovedinnhold %}

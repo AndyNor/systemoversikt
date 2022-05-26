@@ -53,9 +53,6 @@
 		{% url 'alle_klienter_sok' as url_alle_klienter_sok %}
 		<a href="{{url_alle_klienter_sok}}" class="btn btn-sm btn-link {% if url_alle_klienter_sok in request.path %}fremhev{% endif %}">Klienter</a><br>
 
-		{% url 'alle_os' as url_alle_os%}
-		<a href="{{url_alle_os}}" class="btn btn-sm btn-link {% if url_alle_os in request.path %}fremhev{% endif %}" >Operativsystemer</a><br>
-
 		{% url 'alle_ip' as url_alle_ip %}
 		<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP / Nettverk</a><br>
 

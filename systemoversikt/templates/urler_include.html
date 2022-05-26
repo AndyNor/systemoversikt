@@ -15,9 +15,6 @@
 		<th class="filter-select">Vurdering sikkerhetstest</th>
 		<th>Sikkerhetstestet</th>
 		<th>Registrert</th>
-		{% if user.is_authenticated %}
-		<th class="filter-false"></th>
-		{% endif %}
 	</tr>
 	</thead>
 	<tbody>
@@ -57,9 +54,6 @@
 		&zwj;
 		</td>
 		<td>{{ item.sist_oppdatert|date:'Y-m-d' }}</td>
-		{% if user.is_authenticated %}
-		<td><a href="/admin/systemoversikt/systemurl/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
-		{% endif %}
 	</tr>
 	{% endfor %}
 	</tbody>

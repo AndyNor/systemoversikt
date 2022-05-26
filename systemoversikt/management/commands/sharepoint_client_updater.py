@@ -90,7 +90,7 @@ class Command(BaseCommand):
 				cmdbdevice.device_active = True
 				cmdbdevice.kilde_cmdb = True
 				cmdbdevice.comp_os = record["Operating System"]
-				cmdbdevice.comp_os_readable = record["Operating System"]
+				cmdbdevice.comp_os_readable = record["Operating System"] if record["Operating System"] != "" else 'Ukjent'
 				cmdbdevice.model_id = record["Model ID"]
 				cmdbdevice.sist_sett = str_to_date(str(record["Most recent discovery"]))
 				cmdbdevice.last_loggedin_user = str_to_user(record["Owner"])

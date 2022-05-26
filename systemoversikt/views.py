@@ -3369,45 +3369,6 @@ def statistikk_databaser(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-def alle_os(request):
-	"""
-	Vise statistikk over operativsystemer for servere og klienter
-	Tilgangsstyring: må kunne vise cmdb-maskiner
-	"""
-	required_permissions = 'systemoversikt.view_cmdbdevice'
-	if request.user.has_perm(required_permissions):
-
-		def cmdb_os_stats(maskiner):
-			maskiner_stats = []
-			os_major = maskiner.values('comp_os').distinct()
-			for os in os_major:
-				minor_versions = maskiner.filter(comp_os=os['comp_os']).values('comp_os_version').annotate(Count('comp_os_version'))
-				for minor in minor_versions:
-					if os['comp_os'] == "":
-						os['comp_os'] = "__empty__"
-					if minor['comp_os_version'] == "":
-						minor['comp_os_version'] = "__empty__"
-
-					os_major = os['comp_os'] if os['comp_os'] != None else ""
-					os_minor = minor['comp_os_version'] if minor['comp_os_version'] != None else ""
-
-					maskiner_stats.append({
-							'major': os_major,
-							'minor': os_minor,
-							'count': minor['comp_os_version__count']
-					})
-			return sorted(maskiner_stats, key=lambda os: os['major'], reverse=True)
-
-		maskiner = CMDBdevice.objects.filter(device_active=True)
-		maskiner_stats = cmdb_os_stats(maskiner)
-
-		return render(request, 'cmdb_alle_server_os.html', {
-			'maskiner_stats': maskiner_stats,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-
 def maskin_sok(request):
 	"""
 	Søke opp hostnavn
@@ -3713,58 +3674,23 @@ def alle_servere(request):
 	required_permissions = 'systemoversikt.view_cmdbdevice'
 	if request.user.has_perm(required_permissions):
 
-		def filter(input):
-
-			search_term = input["search_term"]
-			comp_os = input["comp_os"]
-			comp_os_version = input["comp_os_version"]
-
-			if search_term == "" and comp_os == "" and comp_os_version == "":
-				return CMDBdevice.objects.none()
-
-			if search_term == "__all__":
-				search_term = ""
-
-			devices = CMDBdevice.objects.filter(device_active=True).filter(device_type="SERVER").filter(Q(comp_name__icontains=search_term) | Q(sub_name__navn__icontains=search_term) | Q(dns__icontains=search_term) | Q(comments__icontains=search_term) | Q(description__icontains=search_term))
-
-			if comp_os == "__empty__" and comp_os_version == "__empty__":
-				comp_os_and_version_none = CMDBdevice.objects.filter(device_active=True).filter(Q(comp_os="") & Q(comp_os_version=""))
-				return devices & comp_os_and_version_none  # snitt/intersection av to sett
-
-			if comp_os == "__empty__":
-				comp_os_none = CMDBdevice.objects.filter(device_active=True).filter(comp_os="").filter(comp_os_version__icontains=comp_os_version)
-				return devices & comp_os_none  # snitt/intersection av to sett
-
-			if comp_os_version == "__empty__":
-				comp_os_version_none = CMDBdevice.objects.filter(device_active=True).filter(comp_os_version="").filter(comp_os__icontains=comp_os)
-				return devices & comp_os_version_none  # snitt/intersection av to sett
-
-			if comp_os != "":
-				devices = devices.filter(comp_os__icontains=comp_os)
-
-			if comp_os_version != "":
-				devices = devices.filter(comp_os_version__icontains=comp_os_version)
-
-			return devices
-
 		search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
-		comp_os = request.GET.get('comp_os', '').strip()
-		comp_os_version = request.GET.get('comp_os_version', '').strip()
 
-		maskiner = filter({
-				"search_term": search_term,
-				"comp_os": comp_os,
-				"comp_os_version": comp_os_version
-			})
+		if search_term == '':
+			maskiner = None
+		elif search_term == '__all__':
+			maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True)
+		else:
+			maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__icontains=search_term) | Q(sub_name__navn__icontains=search_term)).order_by('comp_name')
 
-		maskiner = maskiner.order_by('comp_os')
+		maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
+		maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
 
-		return render(request, 'cmdb_maskiner_sok.html', {
+		return render(request, 'cmdb_maskiner_servere.html', {
 			'request': request,
 			'maskiner': maskiner,
 			'device_search_term': search_term,
-			'comp_os': comp_os,
-			'comp_os_version': comp_os_version,
+			'maskiner_stats': maskiner_stats,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

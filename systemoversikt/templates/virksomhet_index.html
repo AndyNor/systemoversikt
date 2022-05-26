@@ -16,6 +16,10 @@
 		<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">Min virksomhet</a>
 	{% endif %}
 
+	{% if request.user.profile.virksomhet %}
+		<a class="btn btn-sm btn-link" href="{% url 'virksomhet_urler' pk=request.user.profile.virksomhet.pk %}">Våre domener</a>
+	{% endif %}
+
 
 	{% block ekstrameny %}{% endblock ekstrameny %}
 {% endblock sidemeny %}
