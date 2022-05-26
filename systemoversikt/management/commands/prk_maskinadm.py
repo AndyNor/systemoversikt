@@ -53,6 +53,7 @@ class Command(BaseCommand):
 
 			def update(ws, line):
 				ws.kilde_prk = True
+				cmdbdevice.device_type = "KLIENT"
 				ws.maskinadm_virksomhet = str_to_virk(line["virksomhet"])
 				ws.maskinadm_virksomhet_str = line["virksomhet"]
 				ws.maskinadm_klienttype = line["klienttype"]
