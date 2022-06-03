@@ -34,7 +34,7 @@
 		<td>👤 {{ u.first_name }} {{ u.last_name }}</td>
 		<td>{{ u.profile.kopiav|default:"Ukjent" }}</td>
 		<td>{{ u.profile.virksomhet|default:"Ukjent" }}</td>
-		<td>{{ u.date_joined }}</td>
+		<td>{{ u.date_joined|date:"Y-m-d"|default:"Ukjent" }}</td>
 	</tr>
 {% endfor %}
 </tbodt>
