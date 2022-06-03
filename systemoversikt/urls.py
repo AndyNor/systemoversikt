@@ -147,6 +147,7 @@ urlpatterns = [
 	re_path(r'^cmdb/ad/leverandortilgang/$', views.leverandortilgang, name='leverandortilgang'),
 	re_path(r'^cmdb/ad/leverandortilgang/(?P<valgt_gruppe>[-._a-zA-Z0-9\s]{2,100})/$', views.leverandortilgang, name='leverandortilgang_detaljer'),
 	re_path(r'^cmdb/ad/drifttilgang/$', views.drifttilgang, name='drifttilgang'),
+	re_path(r'^cmdb/ad/tbrukere/$', views.tbrukere, name='tbrukere'),
 	re_path(r'^cmdb/bruker/logger/$', views.logger_users, name='logger_users'),
 
 	re_path(r'^cmdb/ad/lookup/$', views.ad, name='ad'),

@@ -34,13 +34,13 @@
 		<th>Opprettet</th>
 		<th>Databasenavn</th>
 		<th>Server</th>
-		<th>Kobling BSS</th>
+		<th>Business sub service</th>
 		<th>Miljø</th>
 		<th>Type + versjon</th>
 		<th>Kommentar</th>
 		<th>Størrelse (bytes)</th>
 		<th>Størrelse (lesbar)</th>
-		<th>Billable</th>
+		<th>Fakturerbar</th>
 		<th>Status</th>
 	</tr>
 	</thead>
@@ -54,7 +54,7 @@
 			{{ db.db_database }}
 		</td>
 		<td>
-			<a href="{% url 'alle_servere' %}?search_term={{ db.db_server }}">{{ db.db_server }}</a>
+			<a href="{% url 'alle_servere' %}?device_search_term={{ db.db_server }}&details=show">{{ db.db_server }}</a>
 		</td>
 		<td>
 			{% url 'cmdbdevice' pk=db.sub_name.pk as url_bss %}
@@ -67,7 +67,7 @@
 			{{ db.db_version }}
 		</td>
 		<td>
-			<a href="{% url 'alle_servere' %}?search_term={{db.server_str}}">{{ db.db_comments }}</a></td>
+			{{ db.db_comments }}</td>
 		<td>
 			{{ db.db_u_datafilessizekb }}
 		</td>

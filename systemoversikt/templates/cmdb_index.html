@@ -37,6 +37,9 @@
 	{% url 'drifttilgang' as url_drifttilgang %}
 	<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Driftbrukere (tar tid)</a>
 
+	{% url 'tbrukere' as url_tbrukere %}
+	<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a>
+
 
 	{% block ekstrameny_ad %}{% endblock ekstrameny_ad %}
 	{% block ekstrameny_prk %}{% endblock ekstrameny_prk %}

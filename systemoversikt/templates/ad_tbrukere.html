@@ -1,0 +1,44 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Kopibrukere / testbrukere i AD
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Beskrivelse</p>
+
+<hr>
+
+<p>Fant {{ brukere.count }} brukere.</p>
+
+<table class="tablesorter excel">
+<thead>
+	<tr>
+		<th>Brukernavn</th>
+		<th>Fornavn og etternavn</th>
+		<th>Kopi av</th>
+		<th>Virksomhet</th>
+		<th>Opprettet (sett fra Kartoteket)</th>
+	</tr>
+</thead>
+<tbodt>
+{% for u in brukere %}
+	<tr>
+		<td>{{ u.username }}</td>
+		<td>👤 {{ u.first_name }} {{ u.last_name }}</td>
+		<td>{{ u.profile.kopiav|default:"Ukjent" }}</td>
+		<td>{{ u.profile.virksomhet|default:"Ukjent" }}</td>
+		<td>{{ u.date_joined }}</td>
+	</tr>
+{% endfor %}
+</tbodt>
+</table>
+
+
+{% endblock %}

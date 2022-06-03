@@ -767,6 +767,15 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 	def save_user_profile(sender, instance, **kwargs):
 		instance.profile.save()
 
+	def kopiav(self):
+		if self.user.username.startswith("t-"):
+			try:
+				username = self.user.username.replace("t-","")
+				return User.objects.get(username=username)
+			except:
+				pass
+		return "Ukjent"
+
 	def org_tilhorighet(self):
 		try:
 			enhet = self.org_unit

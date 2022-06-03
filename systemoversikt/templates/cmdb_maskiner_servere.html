@@ -29,6 +29,9 @@
 			placeholder="Hostnavn, operativsystem eller business service" class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 			<a class="btn btn-sm" href="?device_search_term=__all__">Vis alt</a>
+			{% if not vis_detaljer %}
+			<a class="btn btn-sm" href="{{ request.get_full_path }}&details=show">Vis databaser og disker</a>
+			{% endif %}
 		</div>
 	</form>
 
@@ -41,7 +44,10 @@
 	<tr>
 		<th>Maskinnavn</th>
 		<th>Business service</th>
+		{% if vis_detaljer %}
 		<th>Databaser på server</th>
+		<th>Antall databaser</th>
+		{% endif %}
 		<th>Description</th>
 		<th>Spesifikasjoner</th>
 		<th>Nettverk</th>
@@ -54,18 +60,22 @@
 	{% for maskin in maskiner %}
 	<tr {% if not maskin.device_active %} style="color: #d6d6d6;" {% endif %}>
 		<td>
+			{{ maskin.comp_name }}
 			{% url 'ad_details' name=maskin.comp_name as url_ad %}
-			<a href="{{ url_ad }}">{{ maskin.comp_name }}</a>
+			<a href="{{ url_ad }}">(søk AD)</a>
 		</td>
 		<td>
 			{% url 'cmdbdevice' pk=maskin.sub_name.pk as url_bss %}
 			<a href="{{ url_bss }}">{{ maskin.sub_name.navn }}</a>
 		</td>
+		{% if vis_detaljer %}
 		<td>
 			{% for db in maskin.database_server.all %}
-				<li>{{ db.db_database }}</li>
+				<li><a href="{% url 'alle_databaser' %}?search_term={{ db.db_database }}">{{ db.db_database }}</a></li>
 			{% endfor %}
 		</td>
+		<td>{{ maskin.database_server.all.count }}</td>
+		{% endif %}
 		<td>
 			{{ maskin.description|default:"-" }} <br>
 			{{ maskin.comments|default:"-" }}
@@ -74,11 +84,13 @@
 			CPU: {{ maskin.comp_u_cpu_total|default:"-" }} Cores<br>
 			RAM: {{ maskin.comp_ram|default:"-" }} MB<br>
 			Disk: {{ maskin.comp_disk_space|default:"-" }} GB <br>
+			{% if vis_detaljer %}
 			{% for disk in maskin.cmdbdisk_computer.all %}
 				{% if disk.operational_status %}
 					<li>{{ disk.file_system}} {{disk.free_space_bytes|filesizeformat}} of {{disk.size_bytes|filesizeformat}} ({{ disk.mount_point|truncatechars:35 }})</li>
 				{% endif %}
 			{% endfor %}
+			{% endif %}
 		</td>
 		<td>
 			IP: {{ maskin.comp_ip_address }} <br>

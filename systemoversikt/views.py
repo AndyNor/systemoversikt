@@ -2078,6 +2078,22 @@ def leverandortilgang(request, valgt_gruppe=None):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def tbrukere(request):
+	"""
+	Vise informasjon brukere som er opprettet for å teste noe (og ikke har blitt slettet i etterkant)
+	Tilgjengelig for de som kan se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		brukere = User.objects.filter(username__istartswith="t-").filter(profile__accountdisable=False).order_by("username")
+
+		return render(request, 'ad_tbrukere.html', {
+			"brukere": brukere,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 def drifttilgang(request):
 	"""
 	Vise informasjon brukere som har drifttilgang
@@ -3614,11 +3630,14 @@ def alle_servere(request):
 		maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
 		maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
 
+		vis_detaljer = True if request.GET.get('details') == "show" else False
+
 		return render(request, 'cmdb_maskiner_servere.html', {
 			'request': request,
 			'maskiner': maskiner,
 			'device_search_term': search_term,
 			'maskiner_stats': maskiner_stats,
+			'vis_detaljer': vis_detaljer,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
