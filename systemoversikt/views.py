@@ -4360,6 +4360,35 @@ def system_excel_api(request, virksomhet_pk=None):
 	return JsonResponse(resultat, safe=False)
 
 
+def iga_api(request):
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="iga").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
+	data = []
+	for s in System.objects.all():
+		systeminfo = {}
+		systeminfo["navn"] = s.systemnavn
+		systeminfo["pk"] = s.id
+		systeminfo["ibruk"] = s.er_ibruk()
+		systeminfo["status_id"] = s.livslop_status
+		systeminfo["status_tekst"] = s.get_livslop_status_display()
+		systeminfo["sist_oppdatert"] = s.sist_oppdatert
+		systeminfo["beskrivelse"] = s.systembeskrivelse
+		systeminfo["systemeier"] = s.systemeier.virksomhetsforkortelse if s.systemeier else None
+		systeminfo["systemeier_personer"] = [ansvarlig.brukernavn.email for ansvarlig in s.systemeier_kontaktpersoner_referanse.all()]
+		systeminfo["systemforvalter"] = s.systemforvalter.virksomhetsforkortelse if s.systemforvalter else None
+		systeminfo["systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all()]
+		data.append(systeminfo)
+
+	return JsonResponse(data, safe=False)
+
+
+
 def csirt_api(request):
 	if not request.method == "GET":
 		raise Http404
