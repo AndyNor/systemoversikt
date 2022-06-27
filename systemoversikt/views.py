@@ -4393,11 +4393,6 @@ def behandlingsoversikt_api(request):
 	if not request.method == "GET":
 		raise Http404
 
-
-	"""
-stian.karlsen@drift.oslo.kommune.no
-	"""
-
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="behandlingsoversikt").values_list("key", flat=True)
 	if not key in list(allowed_keys):
