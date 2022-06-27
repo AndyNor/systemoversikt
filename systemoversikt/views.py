@@ -4389,6 +4389,39 @@ def iga_api(request):
 
 
 
+def behandlingsoversikt_api(request):
+	if not request.method == "GET":
+		raise Http404
+
+
+	"""
+stian.karlsen@drift.oslo.kommune.no
+	"""
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="behandlingsoversikt").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
+	data = []
+	for s in System.objects.all():
+		systeminfo = {}
+		systeminfo["system_navn"] = s.systemnavn
+		systeminfo["system_id"] = s.id
+		systeminfo["ibruk"] = s.er_ibruk()
+		systeminfo["system_klassifisering"] = s.systemeierskapsmodell
+		systeminfo["sist_oppdatert"] = s.sist_oppdatert
+		#systeminfo["beskrivelse"] = s.systembeskrivelse
+		systeminfo["systemeier"] = s.systemeier.virksomhetsforkortelse if s.systemeier else None
+		systeminfo["systemeier_personer"] = [ansvarlig.brukernavn.email for ansvarlig in s.systemeier_kontaktpersoner_referanse.all()]
+		systeminfo["systemforvalter"] = s.systemforvalter.virksomhetsforkortelse if s.systemforvalter else None
+		systeminfo["systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all()]
+		data.append(systeminfo)
+
+	return JsonResponse(data, safe=False)
+
+
+
 def csirt_api(request):
 	if not request.method == "GET":
 		raise Http404
