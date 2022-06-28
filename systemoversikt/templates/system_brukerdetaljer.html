@@ -28,37 +28,53 @@
 
 	<hr>
 
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Navn</th>
+		<th>Brukernavn</th>
+		<th>Passordbytte aktiv?</th>
+		<th>Rolle</th>
+		<th>Opprettet</th>
+		<td>Virksomhet</td>
+		<th>Avdeling</th>
+		<th>Nærmeste leder</th>
+		<th>Enheter</th>
+	</tr>
+	</thead>
+	<tbody>
 	{% for user in users %}
-	{% url 'virksomhet' pk=user.profile.virksomhet.pk as url_virk %}
-	{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
-	{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
-	{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
-	{% url 'bruker_detaljer' pk=user.pk as url_bruker_detaljer %}
 
-	<h6><a href="{{url_bruker_detaljer}}">{{user}}</a></h6>
-	<em>{{ user.profile.description|default:"Ingen beskrivelse" }}</em><br>
-	Jobber i <a href="{{url_virk}}">{{user.profile.virksomhet|default:"Ukjent"}}</a> under <a href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a> ({{ user.profile.usertype|default:"Ukjent brukertype" }})<br>
-	Nærmeste leder er <a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a><br>
-	{% if user.hrorg_leder.count > 0 %}
-		Nærmeste leder for:
-		{% for org in user.hrorg_leder.all %}
-			{% for org_user in org.profile_org_unit.all %}
-				<li><a href="{% url 'bruker_detaljer' pk=org_user.user.pk %}">{{org_user.user}}</a> ({{ org }})</li>
+	<tr>
+		{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
+		<td>{{user.first_name}} {{user.last_name}}</td>
+		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
+		<td>{{ m.profile.dont_expire_password|yesno:"Aldri,Ja,Vet ikke" }}</td>
+		<td>{{ user.profile.description|default:"Ingen beskrivelse" }}</td>
+		<td>{{ user.profile.whenCreated|timesince }}</td>
+		<td>{{user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent"}}</td>
+		<td>
+			{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
+			{{ user.profile.usertype|default:"" }}
+			{% if url_enhet %}
+			<a href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a>
+			{% endif %}
+		</td>
+		<td>
+			{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
+			{% if url_leder%}
+			<a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a>
+			{% endif %}
+		</td>
+		<td>
+			{% for enhet in user.landesk_login.all %}
+				<a href="/admin/systemoversikt/cmdbdevice/?q={{enhet.comp_name}}">{{enhet}}<br>
 			{% endfor %}
-		{% endfor %}
-	{% endif %}
-	{% if user.landesk_login.count > 0 %}
-		<br>Klientenheter:
-		{% for enhet in user.landesk_login.all %}
-			<li><a href="/admin/systemoversikt/cmdbdevice/?q={{enhet.comp_name}}">{{enhet}}</li>
-		{% endfor %}
-	{% endif %}
-	{% if user.ansvarlig_brukernavn %}
-		<br><a href="{% url 'ansvarlig' pk=user.ansvarlig_brukernavn.pk %}">Ansvarsområder i Kartoteket</a>
-	{% endif %}
-	<br><a href="{{ url_ad_exact }}">Direktesøk mot AD</a>
-
-	<hr>
+		</td>
+	</tr>
 	{% endfor %}
+	</tbody>
+	</table>
+
 
 {% endblock hovedinnhold %}

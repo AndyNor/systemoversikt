@@ -55,6 +55,9 @@
 			<p>Visningsnavn: {% for item in user.attrs.displayName %} <br>{{ item }} {% endfor %}</p>
 			<p>Tittel: {% for item in user.attrs.title %} <br>{{ item }} {% endfor %}</p>
 			<p>Beskrivelse: {% for item in user.attrs.description %} <br>{{ item }} {% endfor %}</p>
+
+			<p>Opprettet: {% for item in user.attrs.whenCreated %} <br>{{ item }} ({{ item|naturaltime }}) {% endfor %}</p>
+
 			<p>E-post: {% for item in user.attrs.mail %} <br>{{ item }} {% endfor %}</p>
 			<p>Telefon mobile: {% for item in user.attrs.mobile %} <br>{{ item }} {% endfor %}</p>
 			<p>Telefon other: {% for item in user.attrs.otherMobile %} <br>{{ item }} {% endfor %}</p>

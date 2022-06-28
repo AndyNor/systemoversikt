@@ -10,6 +10,7 @@ from django.db import transaction
 from systemoversikt.utils import ldap_paged_search, decode_useraccountcontrol, ldap_OK_virksomheter, microsoft_date_decode
 import ldap
 import sys
+import datetime
 
 from django.contrib.auth.models import User
 from systemoversikt.models import Virksomhet, ApplicationLog, ADOrgUnit, UserChangeLog
@@ -27,7 +28,7 @@ class Command(BaseCommand):
 		BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 		SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
 		LDAP_SCOPE = ldap.SCOPE_SUBTREE
-		ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp'] # if empty we get all attr we have access to
+		ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated'] # if empty we get all attr we have access to
 		PAGESIZE = 2000
 
 		report_data = {
@@ -127,6 +128,13 @@ class Command(BaseCommand):
 			if "mail" in attrs:
 				email = attrs["mail"][0].decode()
 			user.email = email
+
+			try:
+				time_str = attrs["whenCreated"][0].decode().split('.')[0]
+				whenCreated = datetime.datetime.strptime(time_str, "%Y%m%d%H%M%S")
+			except KeyError:
+				whenCreated = None
+			user.profile.whenCreated = whenCreated
 
 			try:
 				description = attrs["description"][0].decode()

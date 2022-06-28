@@ -661,6 +661,11 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			null=True,
 			blank=True,
 			)
+	whenCreated = models.DateTimeField(
+			verbose_name="Bruker opprettet",
+			null=True,
+			blank=True,
+			)
 	virksomhet = models.ForeignKey(
 			to=Virksomhet,
 			related_name='brukers_virksomhet',

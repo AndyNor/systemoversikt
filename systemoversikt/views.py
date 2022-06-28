@@ -4073,7 +4073,7 @@ def ldap_get_details(name, ldap_filter):
 				import codecs
 				attrs_decoded = {}
 				for key in attrs:
-					if key in ['cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass', 'thumbnailPhoto']:
+					if key in ['cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'whenCreated', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass', 'thumbnailPhoto']:
 						# if not, then we don't bother decoding the value for now
 						attrs_decoded[key] = []
 						if key == "lastLogonTimestamp":
@@ -4081,6 +4081,10 @@ def ldap_get_details(name, ldap_filter):
 							## TODO flere steder
 							ms_timestamp = int(attrs[key][0][:-1].decode())  # removing one trailing digit converting 100ns to microsec.
 							converted_date = datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ms_timestamp)
+							attrs_decoded[key].append(converted_date)
+						elif key == "whenCreated":
+							value = attrs[key][0].decode().split('.')[0]
+							converted_date = datetime.datetime.strptime(value, "%Y%m%d%H%M%S")
 							attrs_decoded[key].append(converted_date)
 						elif key == "userAccountControl":
 							accountControl = decode_useraccountcontrol(int(attrs[key][0].decode()))
@@ -4406,7 +4410,6 @@ def behandlingsoversikt_api(request):
 		systeminfo["ibruk"] = s.er_ibruk()
 		systeminfo["system_klassifisering"] = s.systemeierskapsmodell
 		systeminfo["sist_oppdatert"] = s.sist_oppdatert
-		#systeminfo["beskrivelse"] = s.systembeskrivelse
 		systeminfo["systemeier"] = s.systemeier.virksomhetsforkortelse if s.systemeier else None
 		systeminfo["systemeier_personer"] = [ansvarlig.brukernavn.email for ansvarlig in s.systemeier_kontaktpersoner_referanse.all()]
 		systeminfo["systemforvalter"] = s.systemforvalter.virksomhetsforkortelse if s.systemforvalter else None
