@@ -51,7 +51,7 @@
 		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
 		<td>{{ m.profile.dont_expire_password|yesno:"Aldri,Ja,Vet ikke" }}</td>
 		<td>{{ user.profile.description|default:"Ingen beskrivelse" }}</td>
-		<td>{{ user.profile.whenCreated|timesince }}</td>
+		<td>{{ user.profile.whenCreated }} ({{ user.profile.whenCreated|timesince }})</td>
 		<td>{{user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent"}}</td>
 		<td>
 			{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
