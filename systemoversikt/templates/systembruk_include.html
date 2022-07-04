@@ -3,16 +3,12 @@
 	<table class="tablesorter excel">
 	<thead>
 	<tr>
-		{% if user.is_authenticated %}
-		<th class="filter-false"></th>
-		{% endif %}
 		<th>Bruksdetaljer</th>
+		<th>System</th>
 		<th>Ca antall brukere</th>
-		<th>Systemtype</th>
+		<th>Driftsmodell</th>
 		<th>Lokal forvalter</th>
 		<th>Abonnerer på felles behandlinger?</th>
-		{# <th>Antall behandlinger (våre)</th> #}
-		<th>System</th>
 		<th>Teknisk egnethet</th>
 		<th>Strategisk verdi</th>
 		<th>Funksjonell egnethet</th>
@@ -21,18 +17,18 @@
 	</thead>
 	<tbody>
 	{% for bruk in all_bruk %}
-	<tr {% if bruk.ibruk == False %} style="text-decoration: line-through;" {% endif %}
-		>
-		{% if user.is_authenticated %}
+	<tr {% if bruk.ibruk == False %} style="text-decoration: line-through;" {% endif %}>
+
 		<td>
 			<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
 			{% include 'site_edit_button.html' %}</a>
-		</td>
-		{% endif %}
-
-		<td>
 			{% url "bruksdetaljer" bruk.pk as url_bruksdetaljer %}
 			<a href="{{ url_bruksdetaljer }}">{{ virksomhet.virksomhetsforkortelse }} bruk av {{ bruk.system }}</a>
+		</td>
+
+		<td>
+			{% include 'system_include_vis.html' with system=bruk.system %}<br>
+			({{ bruk.system.systemeierskapsmodell }})
 		</td>
 
 		<td>{{ bruk.antall_brukere|default:"-" }}
@@ -42,7 +38,7 @@
 		</td>
 
 		<td>
-			{{ bruk.system.systemeierskapsmodell }}
+			{{ bruk.system.driftsmodell_foreignkey|default:"-" }}
 		</td>
 
 		<td>
@@ -53,13 +49,6 @@
 			{% include 'site_janeivetikke.html' with boolean=bruk.del_behandlinger %}
 		</td>
 
-		{% comment %}<td>
-			{{ bruk.antall_behandlinger|default:"-" }}
-		</td>{% endcomment %}
-
-		<td>
-			{% include 'system_include_vis.html' with system=bruk.system %}
-		</td>
 
 		<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
 		<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
