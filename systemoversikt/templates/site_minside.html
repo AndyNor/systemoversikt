@@ -15,7 +15,12 @@
 
 	<p>Du er logget inn som <b>{{ request.user.first_name }} {{ request.user.last_name }}</b> via en av Oslo kommunes identitetstjenere.<br><a class="btn btn-sm btn-link" href="{{ OIDC_IDP_URL_BASE }}/auth/realms/{{ OIDC_IDP_REALM }}/account/">🌍 Administrer pålogging</a></p>
 
-	<a href="{{ url_logout }}" class="btn btn-sm btn-danger" style="position: absolute; right:65px;">Logg ut</a>
+	<div style="width: 100px; text-align: center;">
+		<form action="{{ url_logout }}" method="post" style="border: 2px solid #2a2859;">
+			{% csrf_token %}
+			<input class="btn btn-sm btn-link" type="submit" name="Logg av" value="Logg av" />
+		</form>
+	</div>
 
 	<p>Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b>
 	{% url 'bruker_detaljer' pk=request.user.pk as url_user_details %}
