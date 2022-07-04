@@ -40,7 +40,7 @@
 	<hr>
 	<h6>API-URL</h6>
 	<a href="{{ domain }}{% url 'ubw_api' pk=enhet.pk %}">{% url 'ubw_api' pk=enhet.pk %}</a><br>
-	(Krever ikke innlogging per nå..)
+	API-nøkkel: <a href="{% url 'ubw_endreenhet' belongs_to=enhet.pk %}">Se og endre</a>
 
 	{% endif %}
 	{% block ekstrameny %}{% endblock ekstrameny %}

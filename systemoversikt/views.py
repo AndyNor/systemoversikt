@@ -4692,6 +4692,29 @@ def kvartal(date):
 	except:
 		return "error"
 
+
+def ubw_endreenhet(request, belongs_to):
+	from django.http import HttpResponseRedirect
+
+	enhet = UBWRapporteringsenhet.objects.get(pk=belongs_to)
+	if request.method == 'POST':
+		form = UBWEnhetForm(data=request.POST, instance=enhet)
+		if form.is_valid() and form.cleaned_data:
+			if request.user in enhet.users.all(): # bare personer som allede er medlemmer kan endre nøkkel (og navn)
+				e = form.save(commit=False)
+				for user in enhet.users.all(): # vi endrer ikke på tilgangsstyring her, så vi kopierer den bare
+					e.users.add(user)
+				e.save()
+				return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
+	else:
+		form = UBWEnhetForm(instance=enhet)
+
+	return render(request, 'ubw_ekstra.html', {
+			'form': form,
+			'enhet': enhet,
+	})
+
+
 def ubw_api(request, pk):
 	supplied_key = request.headers.get("key", None)
 	unit_key = UBWRapporteringsenhet.objects.get(pk=pk).api_key

@@ -5512,6 +5512,12 @@ class UBWFakturaKategori(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class UBWEnhetForm(forms.ModelForm):
+	class Meta:
+		model = UBWRapporteringsenhet
+		exclude = ('users',)
+
+
 class UBWFakturaKategoriForm(forms.ModelForm):
 	class Meta:
 		model = UBWFakturaKategori
