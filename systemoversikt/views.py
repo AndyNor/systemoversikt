@@ -1590,7 +1590,7 @@ def all_bruk_for_virksomhet(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet_pk = pk
-	all_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).exlude(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
+	all_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).exclude(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 
 	# ser ut til at excel 2016+ støtter dette..
 	for bruk in all_bruk:
