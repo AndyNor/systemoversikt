@@ -20,6 +20,10 @@
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer bruk av system</a>
 	{% endif %}
 
-	{% include "systembruk_include.html" %}
+	<h4>Aktive systemer</h4>
+	{% include "systembruk_include.html" with all_bruk=all_bruk %}
+
+	<h4>Systemer som er avviklet</h4>
+	{% include "systembruk_include.html" with all_bruk=ikke_i_bruk %}
 
 {% endblock hovedinnhold %}

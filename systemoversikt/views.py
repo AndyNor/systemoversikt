@@ -1592,6 +1592,9 @@ def all_bruk_for_virksomhet(request, pk):
 	virksomhet_pk = pk
 	all_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).exclude(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 
+	ikke_i_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).filter(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
+
+
 	# ser ut til at excel 2016+ støtter dette..
 	for bruk in all_bruk:
 		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(systemer=bruk.system.pk).count()
@@ -1606,6 +1609,7 @@ def all_bruk_for_virksomhet(request, pk):
 	return render(request, 'systembruk_alle.html', {
 		'request': request,
 		'all_bruk': all_bruk,
+		'ikke_i_bruk': ikke_i_bruk,
 		'virksomhet': virksomhet,
 	})
 
