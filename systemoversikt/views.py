@@ -4693,6 +4693,12 @@ def kvartal(date):
 		return "error"
 
 def ubw_api(request, pk):
+	supplied_key = request.headers.get("key", None)
+	unit_key = UBWRapporteringsenhet.objects.get(pk=pk).api_key
+
+	if unit_key != None and (not supplied_key == unit_key): # hvis ingen nøkkel er satt, er API åpent
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
 	import calendar
 	enhet = UBWRapporteringsenhet.objects.get(pk=pk)
 

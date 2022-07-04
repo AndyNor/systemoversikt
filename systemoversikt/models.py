@@ -5477,6 +5477,12 @@ class UBWRapporteringsenhet(models.Model):
 		null=False,
 		help_text=u"",
 		)
+	api_key = models.CharField(
+		verbose_name="Nøkkel / passord",
+		max_length=256,
+		blank=True,
+		null=True,
+		)
 
 	def __str__(self):
 		return u'%s' % (self.name)
