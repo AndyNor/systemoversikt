@@ -4715,6 +4715,13 @@ def ubw_endreenhet(request, belongs_to):
 	})
 
 
+def ubw_multiselect(request):
+	valgte = request.POST.getlist('selected_items', None)
+	return render(request, 'ubw_multiselect.html', {
+		'valgte': valgte,
+	})
+
+
 def ubw_api(request, pk):
 	supplied_key = request.headers.get("key", None)
 	unit_key = UBWRapporteringsenhet.objects.get(pk=pk).api_key

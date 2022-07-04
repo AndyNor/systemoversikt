@@ -3,8 +3,10 @@
 
 {% for f in fakturaer %}
 	<tr>
+		<td><input type="checkbox" name="selected_items" value="{{f.pk}}"></td>
 		<td>{{f.ubw_voucher_date|default:"-"}}</td>
-		<td>{{f.ubw_voucher_no|default:"-"}}-{{f.ubw_sequence_no|default:"-"}}</td>
+		<td><a href="/admin/systemoversikt/ubwfaktura/{{f.pk}}/delete/">❌</a>
+			{{f.ubw_voucher_no|default:"-"}}-{{f.ubw_sequence_no|default:"-"}}</td>
 		<td title="{{f.ubw_xaccount}}">{{f.ubw_account|default:"-"}}</td>
 		<td title="{{f.ubw_xdim_1}}">{{f.ubw_dim_1|default:"-"}}</td>
 		<td title="{{f.ubw_xdim_4}}">{{f.ubw_dim_4|default:"-"}}</td>

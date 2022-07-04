@@ -197,6 +197,7 @@ urlpatterns = [
 	re_path(r'^ubw/(?P<belongs_to>\d+)/estimat/(?P<pk>\d+)/update/$', views.ubw_estimat_update, name='ubw_estimat_update'),
 	re_path(r'^ubw/estimat/(?P<pk>\d+)/delete/$', views.ubw_estimat_delete, name='ubw_estimat_delete'),
 	re_path(r'^ubw/estimat/(?P<pk>\d+)/copy/$', views.ubw_estimat_copy, name='ubw_estimat_copy'),
+	re_path(r'^ubw/multiselect/$', views.ubw_multiselect, name='ubw_multiselect'),
 
 	re_path(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),
 	re_path(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),

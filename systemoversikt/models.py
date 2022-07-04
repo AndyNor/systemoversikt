@@ -5714,7 +5714,7 @@ class UBWFaktura(models.Model):
 			return self.ubw_tab
 
 	def __str__(self):
-		return u'%s (%s)' % (self.ubw_voucher_no, self.ubw_sequence_no)
+		return u'%s-%s (%s %s)' % (self.ubw_voucher_no, self.ubw_sequence_no, self.ubw_amount, self.ubw_description)
 
 	class Meta:
 		verbose_name_plural = "UBW: faktura"

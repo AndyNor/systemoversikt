@@ -20,32 +20,42 @@
 	<h6>Importerte data fra økonomisystemet</h6>
 
 	Viset fakturaer som i UBW gjelder for de siste {{dager_gamle}} dager.
-	<table class="table table-striped tablesorter">
-		<thead>
-			<tr>
-				<th>{% get_verbose_field_name model "ubw_voucher_date" %}</th>
-				<th>Bilagsnummer</th>
-				<th>{% get_verbose_field_name model "ubw_account" %}</th>
-				<th>{% get_verbose_field_name model "ubw_dim_1" %}</th>
-				<th>{% get_verbose_field_name model "ubw_dim_4" %}</th>
-				<th>{% get_verbose_field_name model "ubw_xapar_id" %}</th>
-				<th>{% get_verbose_field_name model "ubw_description" %}</th>
-				<th>{% get_verbose_field_name model "ubw_amount" %}</th>
-				<th>{% get_verbose_field_name model "ubw_period" %}</th>
-				<th>{% get_verbose_field_name model "ubw_artsgr2" %}</th>
-				<th>{% get_verbose_field_name model "ubw_kategori" %}</th>
-				<th class="ubw_manuell">Periode Påløpt (YYYYmm)</th>
-				<th class="ubw_manuell">Budsjettert</th>
-				<th class="ubw_manuell">Kategori</th>
-				<th class="ubw_manuell">Leverandør</th>
-				<th class="ubw_manuell">Kommentar</th>
-				<th class="filter-false">Tillegg</th>
-			</tr>
-		</thead>
-		<tbody>
-	{% include 'ubw_enhet_partial_list.html' with fakturaer=nye_fakturaer %}
-	{% include 'ubw_enhet_partial_list.html' with fakturaer=behandlede_fakturaer %}
-		</tbody>
-	</table>
+
+	<hr>
+	<form action="{% url 'ubw_multiselect' %}" id="ubw_multiselect" method="post">
+		{% csrf_token %}
+		<button type="submit" class="btn btn-sm">Håndter markerte</button>
+
+
+		<table class="table table-striped tablesorter">
+			<thead>
+				<tr>
+					<th class="sorter-false"></th>
+					<th>{% get_verbose_field_name model "ubw_voucher_date" %}</th>
+					<th>Bilagsnummer</th>
+					<th>{% get_verbose_field_name model "ubw_account" %}</th>
+					<th>{% get_verbose_field_name model "ubw_dim_1" %}</th>
+					<th>{% get_verbose_field_name model "ubw_dim_4" %}</th>
+					<th>{% get_verbose_field_name model "ubw_xapar_id" %}</th>
+					<th>{% get_verbose_field_name model "ubw_description" %}</th>
+					<th>{% get_verbose_field_name model "ubw_amount" %}</th>
+					<th>{% get_verbose_field_name model "ubw_period" %}</th>
+					<th>{% get_verbose_field_name model "ubw_artsgr2" %}</th>
+					<th>{% get_verbose_field_name model "ubw_kategori" %}</th>
+					<th class="ubw_manuell">Periode Påløpt (YYYYmm)</th>
+					<th class="ubw_manuell">Budsjettert</th>
+					<th class="ubw_manuell">Kategori</th>
+					<th class="ubw_manuell">Leverandør</th>
+					<th class="ubw_manuell">Kommentar</th>
+					<th class="filter-false">Tillegg</th>
+				</tr>
+			</thead>
+			<tbody>
+		{% include 'ubw_enhet_partial_list.html' with fakturaer=nye_fakturaer %}
+		{% include 'ubw_enhet_partial_list.html' with fakturaer=behandlede_fakturaer %}
+			</tbody>
+		</table>
+
+	</form>
 
 {% endblock hovedinnhold %}

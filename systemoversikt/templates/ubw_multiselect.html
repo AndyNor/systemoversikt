@@ -1,0 +1,17 @@
+{% extends "ubw_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block overskrift %}
+	Økonomirapportering for {{ enhet }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+
+<p>Multiselect</p>
+
+ {{valgte}}
+
+{% endblock hovedinnhold %}
