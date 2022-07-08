@@ -120,6 +120,14 @@ class HRorgAdmin(admin.ModelAdmin):
 	list_filter = ('active', 'opprettet', 'virksomhet_mor')
 
 
+@admin.register(LOS)
+class LOSAdmin(admin.ModelAdmin):
+	list_display = ('verdi', 'unik_id', 'kategori_ref', 'active',)
+	search_fields = ('verdi', 'parent_id__verdi',)
+	autocomplete_fields = ('kategori_ref', 'parent_id')
+	list_filter = ('active', 'parent_id')
+
+
 """
 @admin.register(Klientutstyr)
 class KlientutstyrAdmin(admin.ModelAdmin):
@@ -221,6 +229,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = (
 		'systemeier',
 		'systemforvalter',
+		'LOSref',
 		'systemforvalter_avdeling_referanse',
 		'programvarer',
 		'datautveksling_avleverer_til',
@@ -251,6 +260,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'fields': (
 				('systemnavn', 'livslop_status'),
 				('systemtyper', 'systemurl'),
+				'LOSref',
 				('driftsmodell_foreignkey', 'systemeierskapsmodell'),
 				('alias','programvarer'),
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),

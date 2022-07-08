@@ -49,22 +49,6 @@
 
 	<hr>
 
-	<div>
-		<form action="{% url 'alle_systemer' %}" autocomplete="off">
-			<div class="form-group form-inline">
-				<div style="margin: auto; margin-top: 25px; margin-bottom: 35px;">
-					<center><h3>Søk</h3></center>
-					<input style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
-					placeholder="System eller programvare" class="form-control form-control-sm">
-					<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-					<a href="{% static 'brukerveiledning.docx' %}">Brukerveiledning</a>
-				</div>
-			</div>
-		</form>
-	</div>
-
-	<hr>
-
 	<h5>Finn system eller programvare basert på kategori</h5>
 	<ul style="column-count:3;">
 		{% for kategori in kategorier %}

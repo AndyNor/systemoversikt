@@ -1502,6 +1502,31 @@ def alle_systemer(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+	aktuelle_systemer = System.objects.all()
+	aktuelle_systemer = aktuelle_systemer.order_by('-ibruk', Lower('systemnavn'))
+
+	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
+	systemtyper = Systemtype.objects.all()
+
+	return render(request, 'system_alle.html', {
+		'request': request,
+		'systemer': aktuelle_systemer,
+		'search_term': search_term,
+		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
+		'systemtyper': systemtyper,
+		'overskrift': ("Systemer"),
+	})
+
+
+def search(request):
+	"""
+	Vise alle systemer
+	"""
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
 	try:
 		v = Virksomhet.objects.get(virksomhetsforkortelse__iexact=search_term)
@@ -1522,30 +1547,31 @@ def alle_systemer(request):
 		#Her ønsker vi å vise treff i beskrivelsesfeltet, men samtidig ikke vise systemer på nytt
 		potensielle_systemer = System.objects.filter(Q(systembeskrivelse__icontains=search_term) & ~Q(pk__in=aktuelle_systemer))
 		aktuelle_programvarer = Programvare.objects.filter(programvarenavn__icontains=search_term)
+		domenetreff = SystemUrl.objects.filter(domene__icontains=search_term)
 	else:
-		aktuelle_systemer = System.objects.all()
+		aktuelle_systemer = System.objects.none()
 		potensielle_systemer = System.objects.none()
 		aktuelle_programvarer = Programvare.objects.none()
+		domenetreff = SystemUrl.objects.none()
 
-	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0):  # bare ét systemtreff og ingen programvaretreff.
+	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
 		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
 
 	aktuelle_systemer = aktuelle_systemer.order_by('-ibruk', Lower('systemnavn'))
 	potensielle_systemer = potensielle_systemer.order_by('ibruk', Lower('systemnavn'))
 	aktuelle_programvarer.order_by(Lower('programvarenavn'))
+	domenetreff.order_by(Lower('domene'))
 
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
 	systemtyper = Systemtype.objects.all()
 
-	return render(request, 'system_alle.html', {
+	return render(request, 'site_search.html', {
 		'request': request,
 		'systemer': aktuelle_systemer,
 		'potensielle_systemer': potensielle_systemer,
 		'search_term': search_term,
-		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
-		'systemtyper': systemtyper,
+		'domenetreff': domenetreff,
 		'aktuelle_programvarer': aktuelle_programvarer,
-		'overskrift': ("Alle systemer"),
 	})
 
 

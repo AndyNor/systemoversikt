@@ -9,12 +9,13 @@
 			<a href="/"><img src="{% static 'Oslo-logo-morkeblaa-RGB.c2e496c6.svg' %}" style="float: left; margin: 10px 30px 10px 65px; height: 70px;"></a>
 
 			<div>
-				<form action="{% url 'alle_systemer' %}" autocomplete="off">
+				<form action="{% url 'search' %}" autocomplete="off">
 					<div class="form-group form-inline">
 						<div style="margin-top: 30px;">
 							<input style="width: 390px;" type="search" value="{{ search_term }}" name="search_term"
 							placeholder="Virksomhet, brukernavn, system eller programvare" class="form-control form-control-sm">
 							<input type="submit" value="Søk" class="btn btn-sm">
+							<a style="font-weight: normal; padding-left: 10px;" href="{% static 'brukerveiledning.docx' %}">Brukerveiledning</a>
 						</div>
 					</div>
 				</form>

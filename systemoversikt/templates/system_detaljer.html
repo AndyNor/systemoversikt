@@ -64,9 +64,35 @@
 		<h6>Alias: {{ systemdetaljer.alias }}</h6>
 	{% endif %}
 
-	{% if user.is_authenticated %}
-		<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/" class="redigeringsknapp btn btn-sm btn-link">{% include 'site_edit_button.html' %} Rediger systemdetaljer</a><br>
+	<h6>Kommunale tema:
+		{% for b in systemdetaljer.LOSref.all %}
+				{% comment %}
+				{% if b.kategori_ref.verdi == 'Ord' %}
+						{% for p in b.parent_id.all %}
+								<a href="{{ p.unik_id }}.html" class="badge badge-light">{{ p.verdi }}</a>
+						{% endfor %}
+				{% endif %}
+				{% endcomment %}
+				{% if b.kategori_ref.verdi == 'Tema' %}
+						<a href="{{ b.unik_id }}.html" class="badge badge-light">{{ b.verdi }}</a>
+				{% endif %}
+		{% endfor %}
+	</h6>
 
+
+	<h6>Kommunale ord:
+		{% for b in systemdetaljer.LOSref.all %}
+				{% if b.kategori_ref.verdi == 'Ord' %}
+						<a href="{{ b.unik_id }}.html" class="badge badge-light">{{ b.verdi }}</a>
+				{% endif %}
+		{% endfor %}
+	</h6>
+
+	{% if user.is_authenticated %}
+		<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/"
+		class="redigeringsknapp btn btn-sm btn-link">{% include 'site_edit_button.html' %} Rediger systemdetaljer</a><br>
+
+		{% comment %}
 		{% if user.profile.virksomhet %}
 			{% url 'systemer_virksomhet_ansvarlig_for' user.profile.virksomhet.pk as url_virk_ansv_for %}
 			<a href="{{ url_virk_ansv_for }}" class="btn btn-sm">{{ user.profile.virksomhet.virksomhetsforkortelse }}'s systemansvar</a>
@@ -74,6 +100,7 @@
 			{% url 'all_bruk_for_virksomhet' user.profile.virksomhet.pk as url_virk_bruker %}
 			<a href="{{ url_virk_bruker }}" class="btn btn-sm">{{ user.profile.virksomhet.virksomhetsforkortelse }}'s systembruk</a><br><br>
 		{% endif %}
+		{% endcomment %}
 
 	{% endif %}
 
@@ -109,7 +136,7 @@
 					<p>Ingen avhengigheter registrert</p>
 				{% else %}
 					{% if follow_count > 0 %}
-						<div id="cy" style="width: 100%; height: 1000px;"></div>
+						<div id="cy" style="width: 100%; height: 800px;"></div>
 					{% else %}
 						<div id="cy" style="width: 100%; height: 400px;"></div>
 					{% endif %}
@@ -1095,7 +1122,7 @@
 	var cy = cytoscape({
 		zoomingEnabled: true,
 		panningEnabled: true,
-		wheelSensitivity: 0.2,
+		wheelSensitivity: 0.0,
 		container: document.getElementById('cy'),
 		elements: {
 			nodes: [
@@ -1114,7 +1141,7 @@
 					'shape': 'data(shape)',
 					'background-color': 'data(color)',
 					'label': 'data(name)',
-					'font-size': '15px',
+					'font-size': '12px',
 				},
 			},
 			{
@@ -1140,15 +1167,14 @@
 				style: {
 					'label': 'data(id)',
 					'line-style': "solid",
-					'background-color': '#ffffff',
+					'background-color': '#ebf5fc',
 				}
 			},
 		],
 		layout: {
 			name: 'fcose',
-			animationDuration: 200, //ms
-			idealEdgeLength: 180,
-			tilingPaddingVertical: 200,
+			animationDuration: 0, //ms
+			idealEdgeLength: 150,
 		},
 	});
 	cy.on('tap', 'node', function(){

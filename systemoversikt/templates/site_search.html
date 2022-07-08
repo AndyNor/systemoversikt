@@ -1,0 +1,98 @@
+{% extends "system_index.html" %}
+
+{% block overskrift %}
+	Søkeresultater
+{% endblock overskrift %}
+
+{% block ekstrameny_system %}
+{% endblock ekstrameny_system %}
+
+{% block hovedinnhold %}
+
+	<h6>Treff på systemnavn</h6>
+	<table class="tablesorter">
+		<thead>
+			<tr>
+				<th>Systemnavn</th>
+				<th>Systemforvalter</th>
+				<th>Livsløpstatus</th>
+				<th>Sist oppdatering</th>
+			</tr>
+		</thead>
+			<tbody>
+			{% for system in systemer %}
+			<tr>
+				<td>{% include 'system_include_vis.html' with system=system %}</td>
+				<td>{{system.systemforvalter|default:""}}</td>
+				<td>{{system.get_livslop_status_display|default:"" }}</td>
+				<td>{{system.sist_oppdatert|date:"Y-m-d"}}<br>{{system.sist_oppdatert|timesince}}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h6>Treff på domener</h6>
+	{% if domenetreff %}
+	<ul style="column-count:1;">
+	{% for d in domenetreff %}
+		<li>{{d.domene}}</li>
+	{% endfor %}
+	</ul>
+	{% else %}
+		<p>Ingen</p>
+	{% endif %}
+
+	<h6>Treff på systembeskrivelser</h6>
+	<table class="tablesorter">
+		<thead>
+			<tr>
+				<th>Systemnavn</th>
+				<th>Beskrivelse</th>
+				<th>Systemforvalter</th>
+				<th>Livsløpstatus</th>
+				<th>Sist oppdatering</th>
+			</tr>
+		</thead>
+			<tbody>
+			{% for system in potensielle_systemer %}
+			<tr>
+				<td>{% include 'system_include_vis.html' with system=system %}</td>
+				<td>{{system.systembeskrivelse|default:"-" }}</td>
+				<td>{{system.systemforvalter|default:""}}</td>
+				<td>{{system.get_livslop_status_display|default:"" }}</td>
+				<td>{{system.sist_oppdatert|date:"Y-m-d"}}<br>{{system.sist_oppdatert|timesince}}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h6>Treff på programvare</h6>
+	<table class="tablesorter">
+		<thead>
+			<tr>
+				<th>Programvarenavn</th>
+				<th>Programvaretype</th>
+				<th>Leverandør</th>
+			</tr>
+		</thead>
+			<tbody>
+			{% for p in aktuelle_programvarer %}
+			<tr>
+				<td><a href="{% url 'programvaredetaljer' pk=p.pk %}">{{ p.programvarenavn }}</a></td>
+				<td>
+					{% for t in p.programvaretyper.all %}
+						{{ t }}<br>
+					{% endfor %}
+				</td>
+				<td>
+					{% for l in p.programvareleverandor.all %}
+						<a href="{% url 'leverandor' pk=l.pk %}">{{ l }}</a><br>
+					{% endfor %}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

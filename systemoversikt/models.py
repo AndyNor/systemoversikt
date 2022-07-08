@@ -3573,6 +3573,13 @@ class System(models.Model):
 			verbose_name="Tilhørende Microsoft enterprise application",
 			blank=True,
 			)
+	LOSref = models.ManyToManyField(
+			to="LOS",
+			related_name='systemer',
+			verbose_name="Begrepstagging (LOS)",
+			blank=True,
+			help_text=u"Tagg systemet med behandlinger / kommunale områder.",
+			)
 	history = HistoricalRecords()
 
 	def __str__(self):
@@ -5940,6 +5947,53 @@ class UBWEstimatForm(forms.ModelForm):
 				self.fields[dl['field']].widget = ListTextWidget(data_list=dl['choices'], name=dl['field'])
 
 		self.fields['kategori'].queryset = UBWFakturaKategori.objects.filter(belongs_to=_belongs_to)
+
+
+class LOS(models.Model):
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+		)
+	unik_id = models.URLField(
+		verbose_name="Unik URL",
+		max_length=300,
+		blank=False,
+		null=False,
+		)
+	verdi = models.CharField(
+		verbose_name="Verdi",
+		null=False,
+		blank=False,
+		max_length=300,
+		)
+	kategori_ref = models.ForeignKey(
+		to="LOS",
+		related_name='kategori',
+		verbose_name="ConceptScheme",
+		blank=True,
+		null=True,
+		on_delete=models.SET_NULL,
+		)
+	parent_id = models.ManyToManyField(
+		to="LOS",
+		related_name='children',
+		verbose_name="Overordnet ord/tema",
+		)
+	active = models.BooleanField(
+		verbose_name="I LOS?",
+		default=True,
+		)
+
+
+	def __str__(self):
+		return u'%s' % (self.verdi)
+
+	class Meta:
+		verbose_name_plural = "LOS fellesbegreper"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
 """
 class PRKuser(models.Model):
 	opprettet = models.DateTimeField(

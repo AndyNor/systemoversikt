@@ -13,18 +13,19 @@
 
 	{% if request.user.profile.virksomhet %}
 		{% url 'all_bruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_systembruk %}
-		<a href="{{ url_systembruk }}" class="btn btn-sm btn-link {% if url_systembruk in request.path %}fremhev{% endif %}">Vår bruk av systemer</a>
+		<a href="{{ url_systembruk }}" class="btn btn-sm btn-link {% if url_systembruk in request.path %}fremhev{% endif %}">👥 Vår bruk av systemer</a>
 	{% endif %}
 
 	{% url 'systemer_vurderinger' as url_systemer_vurderinger %}
-	<a href="{{ url_systemer_vurderinger }}" class="btn btn-sm btn-link {% if url_systemer_vurderinger in request.path %}fremhev{% endif %}">Systemvurderinger</a>
+	<a href="{{ url_systemer_vurderinger }}" class="btn btn-sm btn-link {% if url_systemer_vurderinger in request.path %}fremhev{% endif %}">⚖ Systemvurderinger</a>
 
 	{% url 'alle_systemer_forvaltere' as url_systemforvaltere %}
-	<a href="{{ url_systemforvaltere }}" class="btn btn-sm btn-link {% if url_systemforvaltere in request.path %}fremhev{% endif %}">Systemeierskap</a>
+	<a href="{{ url_systemforvaltere }}" class="btn btn-sm btn-link {% if url_systemforvaltere in request.path %}fremhev{% endif %}">👑 Systemeierskap</a>
 
 	{% url 'systemer_utfaset' as url_systemer_utfaset %}
-	<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfasede systemer</a>
+	<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">❌ Utfasede systemer</a>
 
+	<hr>
 	<p style="color: grey;">Systemklassifisering:
 
 	{% for klasse in kommuneklassifisering %}
@@ -33,8 +34,10 @@
 	{% endfor %}
 
 		{% url 'systemklassifisering_detaljer' id='__NONE__' as url_systemklassifisering_detaljer %}
-		<a href="{{url_systemklassifisering_detaljer}}" class="btn btn-sm btn-link {% if url_systemklassifisering_detaljer in request.path %}fremhev{% endif %}">-- mangler --</a>
+		<a href="{{url_systemklassifisering_detaljer}}" class="btn btn-sm btn-link {% if url_systemklassifisering_detaljer in request.path %}fremhev{% endif %}">❌ Mangler</a>
 	</p>
+
+	<hr>
 
 	<p style="color: grey;">Grensesnitt {% if perms.systemoversikt.change_systemtype %}(<a href="/admin/systemoversikt/systemtype/">rediger</a>){% endif %}:
 
@@ -44,20 +47,12 @@
 	{% endfor %}
 
 		{% url 'systemtype_detaljer_mangler' as url_systemtype_detaljer_mangler %}
-		<a href="{{url_systemtype_detaljer_mangler}}" class="btn btn-sm btn-link {% if url_systemtype_detaljer_mangler in request.path %}fremhev{% endif %}">-- mangler --</a>
+		<a href="{{url_systemtype_detaljer_mangler}}" class="btn btn-sm btn-link {% if url_systemtype_detaljer_mangler in request.path %}fremhev{% endif %}">❌ Mangler</a>
 	</p>
 
-	<form action="" autocomplete="off">
-		<div class="form-group form-inline">
-			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="Systemnavn inneholder" class="form-control form-control-sm">
-			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-		</div>
-	</form>
+	<hr>
 
-	<p>Søket gav {{ systemer.count }} treff på systemer.</p>
-
-	<p>Gjennomstreking betyr at systemet er markert som "ikke i bruk". 🔧 indikerer at systemet er infrastruktur.</p>
+	<p>{{ systemer.count }} treff på systemer. <span style="text-decoration: line-through;">Gjennomstreking</span> betyr at systemet er markert som "ikke i bruk". 🔧 indikerer at systemet er infrastruktur.</p>
 
 	{% include "system_include_hurtigvisning.html" %}
 
