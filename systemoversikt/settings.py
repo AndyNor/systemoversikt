@@ -75,9 +75,8 @@ INSTALLED_APPS = [
 	'mozilla_django_oidc',
 	'systemoversikt',
 	'rest_framework',
-	'systemoversikt.restapi',
-	'simple_history',
 	'mailer',
+	'simple_history',
 	'widget_tweaks',
 ]
 if THIS_ENVIRONMENT == "DEV":
@@ -89,6 +88,9 @@ if THIS_ENVIRONMENT == "DEV":
 # django-mailer
 EMAIL_BACKEND = "mailer.backend.DbBackend"
 
+
+#overgang til django 4 har innført "BigAutoField"
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # django SMTP-settings
 EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
@@ -264,7 +266,7 @@ CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Strict"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Strict"
-CSRF_FAILURE_VIEW = "systemoversikt.views.csrf403"
+#CSRF_FAILURE_VIEW = "systemoversikt.views.csrf403"
 SECURE_BROWSER_XSS_FILTER = True
 SESSION_COOKIE_AGE = 36000  # 10 timer
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
