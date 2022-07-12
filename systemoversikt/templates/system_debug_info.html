@@ -1,0 +1,15 @@
+{% extends "admin_index.html" %}
+
+
+{% block overskrift %}
+	Systeminformasjon
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+{{ sqlite_info }}<br>
+{{ python_info }}<br>
+{{ django_info }}<br>
+
+{% endblock hovedinnhold %}

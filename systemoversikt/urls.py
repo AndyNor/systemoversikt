@@ -35,6 +35,8 @@ urlpatterns = [
 
 	re_path(r'^favicon\.ico$', favicon_view),
 
+	re_path(r'^debug_info$', views.debug_info, name='debug_info'),
+
 	re_path(r'^$', views.home, name='home'),
 	re_path(r'^oidc/', include('mozilla_django_oidc.urls')),
 	re_path(r'^login/$', admin.site.login, name='login'),

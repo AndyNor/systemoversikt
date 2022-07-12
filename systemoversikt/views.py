@@ -27,6 +27,37 @@ import re
 FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
 SYSTEMTYPE_PROGRAMMER = "Selvstendig klientapplikasjon"
 
+
+
+def debug_info(request):
+	"""
+	Denne funksjonen viser debug-informasjon ifm. feilsøking av bibliotek og moduler
+	Tilgjengelig for personer som kan se logger
+	"""
+	required_permissions = ['auth.view_logentry']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		import sqlite3
+		sqlite_info = "SQLite: %s %s" % (sqlite3.version, sqlite3.__path__)
+
+		import sys
+		python_info = "Python: %s %s" % (sys.version, sys.executable)
+
+		import django
+		django_info = "Django: %s %s" % (django.VERSION, django.__path__)
+
+		return render(request, 'system_debug_info.html', {
+			'sqlite_info': sqlite_info,
+			'python_info': python_info,
+			'django_info': django_info,
+
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
+
 """
 Støttefunksjoner start
 """
