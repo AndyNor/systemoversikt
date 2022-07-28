@@ -29,12 +29,12 @@ class Command(BaseCommand):
 			db_dropped = 0
 
 			#temporary file with oracle disk size (no process of data update!)
-			print("Laster inn manuell fil med databasestørrelser:")
-			filepath_size = "systemoversikt/import/oracle_disksize.xlsx"
-			dfRaw = pd.read_excel(filepath_size)
-			dfRaw = dfRaw.replace(np.nan, '', regex=True)
-			size_data = dfRaw.to_dict('records')
-			size_data = {"%s@%s" % (item["SID"], item["Server Name"]):item["Bytes Used (GB)"] for item in size_data}
+			#print("Laster inn manuell fil med databasestørrelser:")
+			#filepath_size = "systemoversikt/import/oracle_disksize.xlsx"
+			#dfRaw = pd.read_excel(filepath_size)
+			#dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			#size_data = dfRaw.to_dict('records')
+			#size_data = {"%s@%s" % (item["SID"], item["Server Name"]):item["Bytes Used (GB)"] for item in size_data}
 
 			if ".xlsx" in destination_file:
 				dfRaw = pd.read_excel(destination_file)
@@ -42,7 +42,7 @@ class Command(BaseCommand):
 				data = dfRaw.to_dict('records')
 
 			if data == None:
-				print("Problemer med innlasting av manuell fil med databasestørrelser")
+				print("Problemer med innlasting fra SharePoint")
 				return
 
 			print("OK")
@@ -87,13 +87,13 @@ class Command(BaseCommand):
 
 				cmdb_db.db_version = "Oracle " + record["Version"]
 
-				try:
-					size_bytes = int(size_data[db_fullname]) * 1024 * 1024 * 1024  # kommer som string i GB.
-					cmdb_db.db_u_datafilessizekb = size_bytes
-					#print(size_bytes)
-				except:
-					#print("failed")
-					cmdb_db.db_u_datafilessizekb = 0
+				#try:
+				#	size_bytes = int(size_data[db_fullname]) * 1024 * 1024 * 1024  # kommer som string i GB.
+				#	cmdb_db.db_u_datafilessizekb = size_bytes
+				#	#print(size_bytes)
+				#except:
+				#	#print("failed")
+				#	cmdb_db.db_u_datafilessizekb = 0
 
 
 				if db_server != "":

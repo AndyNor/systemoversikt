@@ -23,9 +23,13 @@
 		🆔 {{ gruppe.distinguishedname }}<br>
 		{% if gruppe.parent %}
 		📁<a href="{% url 'adorgunit_detaljer' pk=gruppe.parent.pk %}"> {{ gruppe.parent }}</a><br>
-	{% endif %}
-		<i>"{{ gruppe.description }}"</i> (Fra PRK {% include 'site_janeivetikke.html' with boolean=gruppe.from_prk %})
+		{% endif %}
+		{% for prkvalg in gruppe.PRKvalg_ad_group_ref.all %}
+			📖<a href="{% url 'prk_skjema' skjema_id=prkvalg.skjemanavn.pk %}"> {{ prkvalg.skjemanavn.skjemanavn }} --> {{ prkvalg.valgnavn }}</a><br>
+		{% endfor%}
 	</p>
+	<hr>
+		<i>"{{ gruppe.description }}"</i> (Fra PRK {% include 'site_janeivetikke.html' with boolean=gruppe.from_prk %})
 	<hr>
 	Sist synkronisert {{ gruppe.sist_oppdatert }}
 		<a href="{% url 'ad_exact' name=gruppe.distinguishedname %}">🔎 slå opp direkte</a><br>
