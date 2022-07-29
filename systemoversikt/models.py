@@ -1542,6 +1542,124 @@ class CMDBRef(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class virtualIP(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	vip_name = models.CharField(
+			max_length=200,
+			null=True,
+			unique=True,
+			verbose_name="VIP name",
+			)
+	pool_name =models.CharField(
+			max_length=200,
+			null=True,
+			verbose_name="Pool name",
+			)
+	ip_address = models.GenericIPAddressField(
+			null=False,
+			verbose_name="IP-adresse",
+			)
+	port = models.IntegerField(
+			null=False,
+			verbose_name="Port",
+			)
+	hitcount = models.IntegerField(
+			null=False,
+			verbose_name="Hitcount",
+			)
+
+	def __str__(self):
+		return self.vip_name
+
+	class Meta:
+		verbose_name_plural = "CMDB: VIP-er"
+		verbose_name = "VIP"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class VirtualIPPool(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	pool_name = models.CharField(
+			max_length=200,
+			null=False,
+			verbose_name="Pool name",
+			)
+	ip_address = models.GenericIPAddressField(
+			null=False,
+			verbose_name="IP-adresse",
+			)
+	port = models.IntegerField(
+			null=False,
+			verbose_name="Port",
+			)
+	vip = models.ManyToManyField(
+			to='virtualIP',
+			related_name='pool_members',
+			verbose_name="Tilhørende VIP",
+			)
+	server = models.ForeignKey(
+			to='CMDBdevice',
+			on_delete=models.SET_NULL,
+			null=True,
+			related_name='vip_pool',
+			verbose_name="Server",
+			)
+	def __str__(self):
+		return self.pool_name
+
+	class Meta:
+		unique_together = ('pool_name', 'ip_address', 'port')
+		verbose_name_plural = "CMDB: VIP pools"
+		verbose_name = "VIP pool"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class NetworkContainer(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	comment = models.CharField(
+			max_length=200,
+			null=True,
+			verbose_name="VIP navn",
+			)
+	ip_address = models.GenericIPAddressField(
+			null=False,
+			verbose_name="IP-adresse",
+			)
+	subnet_mask = models.IntegerField(
+			null=False,
+			verbose_name="Port",
+			)
+	orgname = models.CharField(
+			max_length=200,
+			null=True,
+			verbose_name="Org name",
+			)
+	vrfname = models.CharField(
+			max_length=200,
+			null=True,
+			verbose_name="VRF name",
+			)
+	netcategory = models.CharField(
+			max_length=200,
+			null=True,
+			verbose_name="Kateogi",
+			)
+
+	class Meta:
+		unique_together = ("ip_address", "subnet_mask")
+		verbose_name_plural = "CMDB: Network containers"
+		verbose_name = "Network container"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
 
 class CMDBdatabase(models.Model):
 	opprettet = models.DateTimeField(

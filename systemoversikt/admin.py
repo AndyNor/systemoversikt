@@ -136,6 +136,25 @@ class KlientutstyrAdmin(admin.ModelAdmin):
 	list_filter = ('maskinadm_servicenivaa', 'maskinadm_sone', 'maskinadm_klienttype', 'maskinadm_virksomhet', 'maskinadm_sist_oppdatert')
 """
 
+@admin.register(virtualIP)
+class virtualIPAdmin(admin.ModelAdmin):
+	list_display = ('vip_name', 'pool_name', 'ip_address', 'port', 'hitcount',)
+	search_fields = ('vip_name', 'pool_name', 'ip_address',)
+	list_filter = ('port', )
+
+
+@admin.register(VirtualIPPool)
+class VirtualIPPoolAdmin(admin.ModelAdmin):
+	list_display = ('pool_name', 'ip_address', 'port', 'server')
+	search_fields = ('pool_name', 'ip_address',)
+	list_filter = ('port', 'vip',)
+	autocomplete_fields = ('vip', 'server',)
+
+
+admin.site.register(NetworkContainer)
+
+
+
 from django.contrib.admin import SimpleListFilter
 from django.db.models import Q
 class SystemList(SimpleListFilter):

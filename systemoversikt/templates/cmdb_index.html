@@ -59,6 +59,9 @@
 		{% url 'alle_ip' as url_alle_ip %}
 		<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP / Nettverk</a><br>
 
+		{% url 'alle_vip' as url_alle_vip %}
+		<a href="{{url_alle_vip}}" class="btn btn-sm btn-link {% if url_alle_vip in request.path %}fremhev{% endif %}">BigIP / VIP</a><br>
+
 		{% url 'alle_databaser' as url_alle_databaser %}
 		<a href="{{url_alle_databaser}}" class="btn btn-sm btn-link {% if url_alle_databaser in request.path %}fremhev{% endif %}">Databaser</a><br>
 

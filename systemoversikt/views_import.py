@@ -183,7 +183,7 @@ def load_nat(filename):
 		for line in nat_data:
 			t = {
 					"public_ip_address": line["Offisiell IP"],
-					"private_ip_address":line["Privat IP"],
+					"private_ip_address": line["Privat IP"],
 					"firewall":line["FW"],
 					"comment": line["Kommentar"]
 			}

@@ -41,7 +41,6 @@ class Command(BaseCommand):
 				return
 
 			antall_records = len(data)
-			#all_existing_db = list(CMDBdatabase.objects.filter(~Q(db_version__startswith="Oracle"))) #alt som ikke er oracle og aktivt
 
 			def size_str_to_bytes(data):
 				if data == "":

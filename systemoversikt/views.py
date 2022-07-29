@@ -146,6 +146,29 @@ def mal(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+
+def alle_vip(request):
+	"""
+	Vise alle lastbalanserte URL-er med deres pool-medlemmer
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		#logikk
+		#search_term = request.GET.get('search_term', '').strip()
+		alle_viper = virtualIP.objects.all()
+
+		return render(request, 'cmdb_alle_vip.html', {
+			'request': request,
+			'alle_viper': alle_viper,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
+
 def bruker_sok(request):
 	"""
 	Denne funksjonen viser resultat av søk etter brukere

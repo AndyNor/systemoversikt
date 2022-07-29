@@ -1,0 +1,43 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Lastbalanserte tjenester
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p></p>
+
+	<hr>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>VIP</th>
+		<th>IP</th>
+		<th>Pool members</th>
+		<th>Hit count</th>
+	</thead>
+	<tbody>
+	{% for vip in alle_viper %}
+		<tr>
+			<td>{{vip.vip_name}}</td>
+			<td>{{vip.ip_address}}:{{vip.port}}</td>
+			<td>
+				{% for member in vip.pool_members.all %}
+					<li>
+					{{ member.ip_address }}:{{ member.port }} ({{ member.server|default:"Ukjent" }})
+					</li>
+				{% endfor %}
+			</td>
+			<td>{{vip.hitcount}}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}
