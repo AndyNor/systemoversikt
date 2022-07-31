@@ -1,0 +1,38 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Nettverk / VLANs
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Nettverk</th>
+		<th>Beskrivelse</th>
+		<th>Lokasjons ID</th>
+		<th>Orgtilhørighet</th>
+		<th>VLAN ID</th>
+		<th>VRF</th>
+	</thead>
+	<tbody>
+	{% for nettverk in alle_nettverk %}
+		<tr>
+			<td>{{ nettverk.ip_address }}/{{ nettverk.subnet_mask }}</td>
+			<td>{{ nettverk.comment }}</td>
+			<td>{{ nettverk.locationid }}</td>
+			<td>{{ nettverk.orgname }}</td>
+			<td>{{ nettverk.vlanid }}</td>
+			<td>{{ nettverk.vrfname }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

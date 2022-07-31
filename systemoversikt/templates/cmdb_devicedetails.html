@@ -1,0 +1,63 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	{{ device.comp_name }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Dette er en {{ device.device_type }}, sist oppdatert {{ device.sist_oppdatert }}. Den er merket som {{ device.device_active|yesno:"aktiv, deaktiv"}} i CMDB.</p>
+
+
+<p>Den er klassifisert under {{ device.sub_name }} og er {{ device.billable|yesno:"fakturerbar, ikke fakturerbar" }}.</p>
+<p>Befinner seg på datasenter {{device.comp_location}}.</p>
+
+<p>Beskrivelse:
+	<li>"{{ device.description }}".</li>
+	<li>"{{ device.comments }}".</li>
+</p>
+
+<p>
+	Operativsystem er {{ device.comp_os_readable|default:"?" }}.<br>
+	IP er {{ device.comp_ip_address|default:"?" }} som ligger under VLAN {{device.vlan|default:"?"}}<br>
+	Har tildelt {{ device.comp_cpu_core_count|default:"?" }} CPU-kjerner / {{ device.comp_cpu_speed|default:"?" }} Mhz.<br>
+	Tildelt {{ device.comp_disk_space|default:"?" }} GB disk.<br>
+	Tildelt {{ device.comp_ram }} MB minne (RAM).<br>
+</p>
+
+{% if device.device_type == "SERVER" %}
+<p>
+	Registrert mot DNS: {{device.dns|default:"Ingen"}}.<br>
+	Registrert mot Lastbalansering:
+	<ul>
+		{% for pool in device.vip_pool.all %}
+			<li>{{pool}}</li>
+			<ul>
+				{% for vip in pool.vip.all %}
+					<li>Virtual IP: {{vip}}</li>
+				{% endfor %}
+			</ul>
+		{% endfor %}
+	</ul>
+</p>
+{% endif %}
+
+{% if device.device_type == "KLIENT" %}
+
+<p>
+	Klienten er en {{ device.maskinadm_klienttype|default:"?" }} som er {{ device.maskinadm_status|default:"?" }} i PRK.<br>
+	Det er en {{ device.model_id|default:"?" }}.<br>
+	Ble sist logget inn av {{ device.last_loggedin_user|default:"?" }}.<br>
+	Tilhører {{ device.maskinadm_virksomhet|default:"?" }} på lokasjon {{ device.maskinadm_lokasjon|default:"?" }}.<br>
+	Merksom som sikkerhetssone {{ device.maskinadm_sone|default:"?" }}.<br>
+	Sist sett {{ device.landesk_sist_sett|default:"?" }}.<br>
+</p>
+
+{% endif %}
+
+{% endblock hovedinnhold %}

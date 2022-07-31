@@ -30,7 +30,11 @@
 			<td>
 				{% for member in vip.pool_members.all %}
 					<li>
-					{{ member.ip_address }}:{{ member.port }} ({{ member.server|default:"Ukjent" }})
+						{{ member.ip_address }}:{{ member.port }}
+						{% if member.server %}
+							{% url 'cmdb_devicedetails' pk=member.server.pk as url_cmdb_devicedetails %}
+							(<a href="{{url_cmdb_devicedetails}}">{{ member.server }}</a>)
+						{% endif %}
 					</li>
 				{% endfor %}
 			</td>

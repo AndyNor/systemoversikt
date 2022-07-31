@@ -151,7 +151,11 @@ class VirtualIPPoolAdmin(admin.ModelAdmin):
 	autocomplete_fields = ('vip', 'server',)
 
 
-admin.site.register(NetworkContainer)
+@admin.register(NetworkContainer)
+class NetworkContainerAdmin(admin.ModelAdmin):
+	list_display = ('ip_address', 'subnet_mask', 'comment', 'locationid', 'orgname', 'vlanid', 'vrfname', 'netcategory')
+	search_fields = ('ip_address', 'comment', 'orgname', 'locationid', )
+	list_filter = ('netcategory',)
 
 
 

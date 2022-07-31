@@ -60,9 +60,11 @@
 	{% for maskin in maskiner %}
 	<tr {% if not maskin.device_active %} style="color: #d6d6d6;" {% endif %}>
 		<td>
-			{{ maskin.comp_name }}
+			{% url 'cmdb_devicedetails' pk=maskin.pk as url_devicedetails %}
+			<a href="{{ url_devicedetails }}">{{ maskin.comp_name }}</a>
+
 			{% url 'ad_details' name=maskin.comp_name as url_ad %}
-			<a href="{{ url_ad }}">(søk AD)</a>
+			<br><a href="{{ url_ad }}">(søk AD)</a>
 		</td>
 		<td>
 			{% url 'cmdbdevice' pk=maskin.sub_name.pk as url_bss %}

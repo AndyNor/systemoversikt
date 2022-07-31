@@ -50,8 +50,10 @@
 	{% for maskin in maskiner %}
 	<tr {% if not maskin.device_active %} style="color: #d6d6d6;" {% endif %}>
 		<td>
+			{% url 'cmdb_devicedetails' pk=maskin.pk as url_cmdb_devicedetails %}
+			<a href="{{ url_cmdb_devicedetails }}">{{ maskin.comp_name }}</a><br>
 			{% url 'ad_details' name=maskin.comp_name as url_ad %}
-			<a href="{{ url_ad }}">{{ maskin.comp_name }}</a>
+			<a href="{{ url_ad }}">Søk i AD</a>
 		</td>
 		<td>
 			BS: {{ maskin.sub_name.parent_ref }} <br>

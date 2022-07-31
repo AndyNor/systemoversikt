@@ -1,0 +1,84 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Configuration Management Database (CMDB) - Oversikt
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<hr>
+
+<div class="container">
+	<div class="row">
+		<div class="col-sm">
+			<h6>PRK skjema</h6>
+			<h3>{{ count_prk_skjema }}</h3>
+			<h6>PRK valg</h6>
+			<h3>{{ count_prk_skjema_valg }}</h3>
+			<h6>Antall grupper i Active Directory</h6>
+			<h3>{{ count_ad_grupper }}</h3>
+		</div>
+		<div class="col-sm">
+			<h6>Brukere i AD</h6>
+			<h3>{{ count_ad_users }}</h3>
+			<h6>Brukere i PRK</h6>
+			<h3>{{ count_prk_users }}</h3>
+		</div>
+		<div class="col-sm">
+			<h6>Office365 applikasjoner</h6>
+			<h3>{{ count_office_ea }}</h3>
+			<h6>Nøkler</h6>
+			<h3>{{ count_office_ea_keys }}</h3>
+		</div>
+	</div>
+	<hr>
+	<div class="row">
+		<div class="col-sm">
+			<h6>Business Services</h6>
+			<h3>{{ count_bs }}</h3>
+			<h6>Business Sub Services</h6>
+			<h3>{{ count_bss }}</h3>
+		</div>
+		<div class="col-sm">
+			<h6>Servere</h6>
+			<h3>{{ count_server }}</h3>
+			<h6>Klienter</h6>
+			<h3>{{ count_klienter }}</h3>
+		</div>
+		<div class="col-sm">
+			<h6>Nettverk</h6>
+			<h3>{{ count_vlan }}</h3>
+			<h6>Lastbalanserte tjenester</h6>
+			<h3>{{ count_vip }}</h3>
+			<h6>Pool-medlemmer</h6>
+			<h3>{{ count_vip_pool }}</h3>
+		</div>
+	</div>
+	<hr>
+	<div class="row">
+		<div class="col-sm">
+			<h6>Oracle-databaser</h6>
+			<h3>{{ count_oracle }}</h3>
+			<h6>MSSQL-databaser</h6>
+			<h3>{{ count_mssql }}</h3>
+		</div>
+		<div class="col-sm">
+			<h6>Minnebruk servere estimert</h6>
+			<h3>{{ count_mem|filesizeformat }}</h3>
+			<h6>Diskbruk servere estimert</h6>
+			<h3>{{ count_disk|filesizeformat }}</h3>
+		</div>
+		<div class="col-sm">
+
+		</div>
+	</div>
+</div>
+
+
+
+{% endblock hovedinnhold %}

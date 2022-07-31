@@ -1628,7 +1628,7 @@ class NetworkContainer(models.Model):
 	comment = models.CharField(
 			max_length=200,
 			null=True,
-			verbose_name="VIP navn",
+			verbose_name="Beskrivelse",
 			)
 	ip_address = models.GenericIPAddressField(
 			null=False,
@@ -1636,12 +1636,22 @@ class NetworkContainer(models.Model):
 			)
 	subnet_mask = models.IntegerField(
 			null=False,
-			verbose_name="Port",
+			verbose_name="Netmask",
+			)
+	locationid = models.CharField(
+			max_length=50,
+			null=True,
+			verbose_name="Location ID",
 			)
 	orgname = models.CharField(
 			max_length=200,
 			null=True,
 			verbose_name="Org name",
+			)
+	vlanid = models.CharField(
+			max_length=50,
+			null=True,
+			verbose_name="VLAN ID",
 			)
 	vrfname = models.CharField(
 			max_length=200,
@@ -1815,7 +1825,7 @@ class CMDBdevice(models.Model):
 			help_text=u"",
 			)
 	"""
-	comp_disk_space = models.IntegerField(
+	comp_disk_space = models.IntegerField(  # lagres i antall GB
 			verbose_name="Lagring",
 			blank=True,
 			null=True,
@@ -1902,7 +1912,7 @@ class CMDBdevice(models.Model):
 	#		null=True,
 	#		help_text=u"",
 	#		)
-	comp_ram = models.IntegerField(
+	comp_ram = models.IntegerField(  # lagres i antall MB
 			verbose_name="RAM",
 			blank=True,
 			null=True,
@@ -2012,7 +2022,7 @@ class CMDBdevice(models.Model):
 			blank=True,
 			null=True,
 			)
-	maskinadm_sist_oppdatert = models.DateTimeField(
+	maskinadm_sist_oppdatert = models.DateTimeField( # ikke bruk denne lenger
 			verbose_name="Maskinadm: Sist oppdatert",
 			null=True,
 			blank=True,
@@ -2035,7 +2045,7 @@ class CMDBdevice(models.Model):
 			blank=True,
 			null=True,
 			)
-	landesk_sist_sett = models.DateTimeField(
+	landesk_sist_sett = models.DateTimeField( # felt som indikerer når maskin sist ble skannet
 			verbose_name="Landesk: Sist sett",
 			null=True,
 			blank=True,
@@ -2046,7 +2056,7 @@ class CMDBdevice(models.Model):
 			blank=True,
 			null=True,
 			)
-	landesk_login = models.ForeignKey(
+	landesk_login = models.ForeignKey( # bruker sist logget på
 			to=User,
 			on_delete=models.SET_NULL,
 			related_name='landesk_login',

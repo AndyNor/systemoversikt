@@ -147,6 +147,100 @@ def mal(request, pk):
 
 
 
+def cmdb_statistikk(request):
+	"""
+	Vise alle statistikk over alt i CMDB
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		from django.db.models import Sum
+
+		#logikk
+		#search_term = request.GET.get('search_term', '').strip()
+		count_office_ea = AzureApplication.objects.all().count()
+		count_office_ea_keys = AzureApplicationKeys.objects.all().count()
+		count_ad_users = User.objects.all().count()
+		count_prk_users = User.objects.filter(profile__from_prk=True).count()
+		count_prk_skjema = PRKskjema.objects.all().count()
+		count_prk_skjema_valg = PRKvalg.objects.all().count()
+		count_ad_grupper = ADgroup.objects.all().count()
+		count_bs = CMDBbs.objects.all().count()
+		count_bss = CMDBRef.objects.all().count()
+		count_klienter = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).all().count()
+		count_server = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).all().count()
+		count_vlan = NetworkContainer.objects.all().count()
+		count_vip = virtualIP.objects.all().count()
+		count_vip_pool = VirtualIPPool.objects.all().count()
+		count_oracle = CMDBdatabase.objects.filter(db_version__icontains="oracle").all().count()
+		count_mssql = CMDBdatabase.objects.filter(db_version__icontains="mssql").all().count()
+		count_mem = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024*1024 # summen er MB --> bytes
+		count_disk = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] * 1024*1024*1024 # summen er GB --> bytes
+
+		return render(request, 'cmdb_statistikk.html', {
+			'request': request,
+			'count_office_ea': count_office_ea,
+			'count_office_ea_keys': count_office_ea_keys,
+			'count_ad_users': count_ad_users,
+			'count_prk_users': count_prk_users,
+			'count_prk_skjema': count_prk_skjema,
+			'count_prk_skjema_valg': count_prk_skjema_valg,
+			'count_ad_grupper': count_ad_grupper,
+			'count_bs': count_bs,
+			'count_bss': count_bss,
+			'count_server': count_server,
+			'count_klienter': count_klienter,
+			'count_vlan': count_vlan,
+			'count_vip': count_vip,
+			'count_vip_pool': count_vip_pool,
+			'count_oracle': count_oracle,
+			'count_mssql': count_mssql,
+			'count_mem': count_mem,
+			'count_disk': count_disk,
+
+
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def detaljer_vip(request, pk):
+	"""
+	Vise detaljer for lastbalanserte URL-er med deres pool-medlemmer
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		vip = virtualIP.objects.get(pk=pk)
+
+		return render(request, 'cmdb_alle_vip.html', {
+			'request': request,
+			'alle_viper': [vip],
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def cmdb_devicedetails(request, pk):
+	"""
+	Vise detaljer for server/klient (ting med IP)
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		device = CMDBdevice.objects.get(pk=pk)
+
+		return render(request, 'cmdb_devicedetails.html', {
+			'request': request,
+			'device': device,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def alle_vip(request):
 	"""
 	Vise alle lastbalanserte URL-er med deres pool-medlemmer
@@ -155,8 +249,6 @@ def alle_vip(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if any(map(request.user.has_perm, required_permissions)):
 
-		#logikk
-		#search_term = request.GET.get('search_term', '').strip()
 		alle_viper = virtualIP.objects.all()
 
 		return render(request, 'cmdb_alle_vip.html', {
@@ -166,6 +258,25 @@ def alle_vip(request):
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+
+def alle_nettverk(request):
+	"""
+	Vise alle nettverk
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		#logikk
+		#search_term = request.GET.get('search_term', '').strip()
+		alle_nettverk = NetworkContainer.objects.all()
+
+		return render(request, 'cmdb_alle_nettverk.html', {
+			'request': request,
+			'alle_nettverk': alle_nettverk,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 
@@ -3492,33 +3603,55 @@ def alle_ip(request):
 
 			ip_lookup = []
 			not_ip_addresses = []
+
+
+			all_networks = NetworkContainer.objects.all()
+			for vlan in all_networks:
+				i = ipaddress.ip_address(vlan.ip_address)
+				network = vlan.ip_address + "/" + str(vlan.subnet_mask)
+				if isinstance(i, ipaddress.IPv4Address):
+					vlan.__ipnetwork = ipaddress.IPv4Network(network)
+				else:
+					vlan.__ipnetwork = ipaddress.IPv6Network(network)
+
 			for item in search_ips:
 				try:
 					ip_address = ipaddress.ip_address(item)
+					ip_address_str = item
 				except:
 					not_ip_addresses.append(item)
 					continue  # skip this item
 
 
-				#dns_ekstern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_ekstern", domain)
-				#dns_intern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_intern", domain)
-				vlan_data = load_vlan(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vlan.tsv")
+				dns_ekstern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_ekstern", domain)
+				dns_intern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_intern", domain)
+				#vlan_data = load_vlan(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vlan.tsv")
 				nat_data = load_nat(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_nat.tsv")
-				bigip_data = load_bigip(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vip.tsv")
+				#bigip_data = load_bigip(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vip.tsv")
 
-				#dns_i = find_ip_in_dns(ip_address, dns_intern)
-				#dns_e = find_ip_in_dns(ip_address, dns_ekstern)
-				vlan = find_vlan(ip_address, vlan_data)
+				dns_i = find_ip_in_dns(ip_address, dns_intern)
+				dns_e = find_ip_in_dns(ip_address, dns_ekstern)
+				#vlan = find_vlan(ip_address, vlan_data)
+
+				def identify_ip_in_network(ip_address, all_networks):
+					for vlan in all_networks:
+						if ip_address in vlan.__ipnetwork:
+							return vlan
+					return None
+
+
+				netcont = identify_ip_in_network(ip_address ,all_networks)
 				nat = find_ip_in_nat(ip_address, nat_data)
-				vip = find_bigip(ip_address, bigip_data)
+				#vip = find_bigip(ip_address, bigip_data)
+				vip = virtualIP.objects.filter(ip_address=ip_address_str)
+				vip_pool = VirtualIPPool.objects.filter(ip_address=ip_address_str)
 
-				def dns_live(ip_address):
+				def dns_live(ip_address): # not used anymore
 					try:
 						return socket.gethostbyaddr(str(ip_address))[0]
 					except:
 						return None
 
-				#dns_live = dns_live(ip_address)
 
 				try:
 					comp_name = CMDBdevice.objects.get(comp_ip_address=item).comp_name
@@ -3529,11 +3662,11 @@ def alle_ip(request):
 				ip_lookup.append({
 						"address": ip_address,
 						"comp_name": comp_name,
-						#"dns_i": dns_i,
-						#"dns_e": dns_e,
-						#"dns_live": dns_live,
-						"vlan": vlan,
+						"dns_i": dns_i,
+						"dns_e": dns_e,
+						"vlan": netcont,
 						"vip": vip,
+						"vip_pool": vip_pool,
 				})
 		else:
 			ip_lookup = None

@@ -2,6 +2,11 @@
 
 {% block sidemeny %}
 
+	{% url 'cmdb_statistikk' as url_cmdb_statistikk %}
+	<a href="{{ url_cmdb_statistikk }}" class="btn btn-sm btn-link {% if url_cmdb_statistikk in request.path %}fremhev{% endif %}" >CMDB statistikk</a>
+
+	<hr>
+
 	<h6>Microsoft 365</h6>
 	{% url 'azure_applications' as url_azure_applications %}
 	<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}" >Enterprise applications</a>
@@ -57,7 +62,10 @@
 		<a href="{{url_alle_klienter}}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}">Klienter</a><br>
 
 		{% url 'alle_ip' as url_alle_ip %}
-		<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP / Nettverk</a><br>
+		<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP-søk</a><br>
+
+		{% url 'alle_nettverk' as url_alle_nettverk %}
+		<a href="{{url_alle_nettverk}}" class="btn btn-sm btn-link {% if url_alle_nettverk in request.path %}fremhev{% endif %}">VLAN / Nettverk</a><br>
 
 		{% url 'alle_vip' as url_alle_vip %}
 		<a href="{{url_alle_vip}}" class="btn btn-sm btn-link {% if url_alle_vip in request.path %}fremhev{% endif %}">BigIP / VIP</a><br>

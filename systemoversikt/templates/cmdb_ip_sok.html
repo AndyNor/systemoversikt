@@ -13,7 +13,7 @@
 
 	<p>Oversikt over ulike nettverksdata på felles IKT-plattform: VLAN, VIP-er i BigIP, NAT-adresser, samt sonefil fra DNS lastes inn i databasen. Alt dette skjer manuelt, men det jobbes med å automatisere.<br>Her kan du søke på IP-adresser, og du vil få treff fra de ulike kildene.</p>
 
-	<p>Du kan i lime inn hva du vil her. Kartoteket vil identifisere IP-adresser automatisk.</p>
+	<p>Du kan lime inn tekst her og IP-adresser vil identifiseres automatisk.</p>
 
 	<form action="{% url 'alle_ip' %}" method="POST" autocomplete="off">
 		{% csrf_token %}
@@ -33,7 +33,6 @@
 		<th>Host</th>
 		<th>DNS intern</th>
 		<th>DNS ekstern</th>
-		<th>DNS oppslag (direkte)</th>
 		<th>VLAN</th>
 		<th>VIP</th>
 	</thead>
@@ -43,14 +42,24 @@
 			<td>{{ip.address}}</td>
 			<td>
 				{% if ip.comp_name %}
-					<a href="{% url 'alle_servere' %}?search_term={{ip.comp_name}}">{{ip.comp_name}}</a>
+					<a href="{% url 'alle_servere' %}?device_search_term={{ip.comp_name}}">{{ip.comp_name}}</a>
 				{% endif %}
 			</td>
 			<td>{{ip.dns_i|default:"Ingen treff"}}</td>
 			<td>{{ip.dns_e|default:"Ingen treff"}}</td>
-			<td>{{ip.dns_live|default:"Ingen treff"}}</td>
-			<td>{{ip.vlan|default:"Ingen treff"}}</td>
-			<td>{{ip.vip|default:"Ingen treff"}}</td>
+			<td>{{ip.vlan.comment|default:"Ingen treff"}}</td>
+			<td>
+				{% for v in ip.vip %}
+					{{ v.vip_name }}<br>
+				{% endfor %}
+
+				{% for p in ip.vip_pool %}
+					{% for vip in p.vip.all %}
+						{% url 'detaljer_vip' pk=vip.pk as url_vip %}
+						<a href="{{url_vip}}">{{ vip.vip_name }}</a><br>
+					{% endfor %}
+				{% endfor %}
+			</td>
 		</tr>
 	{% endfor %}
 	</tbody>

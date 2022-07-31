@@ -16,6 +16,7 @@ from django.utils.timezone import make_aware
 import requests
 from systemoversikt.models import CMDBdevice, Virksomhet, ApplicationLog
 from django.core.exceptions import ObjectDoesNotExist
+from py_topping.data_connection.sharepoint import da_tran_SP365
 
 
 class Command(BaseCommand):
@@ -32,9 +33,19 @@ class Command(BaseCommand):
 		teller_slettet = 0
 		teller_utmeldt = 0
 
-		file = settings.BASE_DIR + "/systemoversikt/import/prk-klienter.csv"
-		with open(file, 'r', encoding='latin-1') as file:
-			csv_data = list(csv.DictReader(file, delimiter=","))
+
+		sp_site = os.environ['SHAREPOINT_SITE']
+		client_id = os.environ['SHAREPOINT_CLIENT_ID']
+		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
+		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
+		filename = "prk-klienter.csv"
+		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename
+		source_file = sp.create_link(source_filepath)
+		destination_file = 'systemoversikt/import/'+filename
+		sp.download(sharepoint_location = source_file, local_location = destination_file)
+
+		with open(destination_file, 'r', encoding='latin-1') as destination_file:
+			csv_data = list(csv.DictReader(destination_file, delimiter=","))
 		print("Det er %s linjer i filen" % len(csv_data))
 
 		@transaction.atomic

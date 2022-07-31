@@ -84,7 +84,7 @@ class Command(BaseCommand):
 					cmdb_db.db_operational_status = False
 
 				if record["Version"] != "":
-					cmdb_db.db_version = record["Version"]
+					cmdb_db.db_version = "MSSQL " + record["Version"]
 				else:
 					cmdb_db.db_version = "MSSQL"
 

@@ -89,8 +89,8 @@
 
 			{% if user.is_authenticated %}
 				<li class="hovedmeny">
-					{% url "alle_cmdbref" as alle_cmdbref_url %}
-					<a href="{{ alle_cmdbref_url }}" class="nav-link {% if alle_cmdbref_url in request.path %} active {% endif %}">CMDB</a>
+					{% url "cmdb_statistikk" as cmdb_statistikk_url %}
+					<a href="{{ cmdb_statistikk_url }}" class="nav-link {% if cmdb_statistikk_url in request.path %} active {% endif %}">CMDB</a>
 				</li>
 			{% endif %}
 
