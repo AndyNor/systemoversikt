@@ -15,7 +15,7 @@ this_env()
 THIS_ENVIRONMENT = os.environ['THIS_ENV'] # "PROD" / "TEST" / "DEV"
 
 if THIS_ENVIRONMENT == "PROD":
-	from secrets import load_secrets
+	from secrets_prod import load_secrets
 if THIS_ENVIRONMENT == "DEV":
 	from secrets_dev import load_secrets
 if THIS_ENVIRONMENT == "TEST":
