@@ -4947,6 +4947,9 @@ def ubw_multiselect(request):
 				return HttpResponseNotFound("Alle fakturaer må tilhøre samme enhet")
 		enhet = faktura.belongs_to
 
+	if not request.user in enhet.users.all():
+		return HttpResponseNotFound("Du må eie fakturaene for å kunne legge til metadata")
+
 	form = UBWMetadataForm(
 				belongs_to=enhet,
 				data=request.POST,
