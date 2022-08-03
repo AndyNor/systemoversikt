@@ -11,7 +11,7 @@ export https_proxy="http://user:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
 
 # run batch job
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_bss_updater
-python /home/drift23914/metadata/djangoapp/manage.py sharepoint_server_bss_updater
+python /home/drift23914/metadata/djangoapp/manage.py sharepoint_server_updater
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_client_updater
 python /home/drift23914/metadata/djangoapp/manage.py prk_maskinadm
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_database_mssql_updater
