@@ -17,4 +17,6 @@ python /home/drift23914/metadata/djangoapp/manage.py prk_maskinadm
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_database_mssql_updater
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_database_oracle_updater
 python /home/drift23914/metadata/djangoapp/manage.py sharepoint_server_disk_updater
+python /home/drift23914/metadata/djangoapp/manage.py sharepoint_vip_updater
+python /home/drift23914/metadata/djangoapp/manage.py sharepoint_vlan_updater
 

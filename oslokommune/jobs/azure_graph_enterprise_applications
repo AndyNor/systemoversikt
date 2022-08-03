@@ -11,3 +11,4 @@ export https_proxy="http://user:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
 
 # run batch job
 python /home/drift23914/metadata/djangoapp/manage.py azure_graph_enterprise_applications
+python /home/drift23914/metadata/djangoapp/manage.py digdir_los

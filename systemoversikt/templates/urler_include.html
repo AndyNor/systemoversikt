@@ -15,6 +15,7 @@
 		<th class="filter-select">Vurdering sikkerhetstest</th>
 		<th>Sikkerhetstestet</th>
 		<th>Registrert</th>
+		<th>Kommentar</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -33,10 +34,10 @@
 		<td>
 		{% for system in item.system_systemurl.all %}
 			{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
-			<a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a><br>
+			<a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a> ({{ system.get_livslop_status_display }})<br>
 		{% endfor %}
 		</td>
-		<td>{{ item.get_maalgruppe_display }}</td>
+		<td>{{ item.get_maalgruppe_display|default:"" }}</td>
 		<td>
 			{% if item.https %}
 				<span style="color: green; font-size: 18px;">✓</span>
@@ -54,6 +55,7 @@
 		&zwj;
 		</td>
 		<td>{{ item.sist_oppdatert|date:'Y-m-d' }}</td>
+		<td>{{ item.kommentar }}</td>
 	</tr>
 	{% endfor %}
 	</tbody>
