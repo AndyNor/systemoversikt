@@ -4933,9 +4933,42 @@ def ubw_endreenhet(request, belongs_to):
 
 
 def ubw_multiselect(request):
+	from django.http import HttpResponseNotFound
+
 	valgte = request.POST.getlist('selected_items', None)
+	valgte_fakturaer = UBWFaktura.objects.filter(pk__in=[int(v) for v in valgte])
+
+	enhet = None
+	for faktura in valgte_fakturaer:
+		if enhet == None:
+			pass
+		else:
+			if enhet != faktura.belongs_to:
+				return HttpResponseNotFound("Alle fakturaer må tilhøre samme enhet")
+		enhet = faktura.belongs_to
+
+	form = UBWMetadataForm(
+				belongs_to=enhet,
+				data=request.POST,
+				data_list=ubw_generer_ekstra_valg(enhet.pk),
+			)
+
+	if request.method == 'POST' and form.is_valid():
+
+		print(valgte_fakturaer)
+		instance = form.save(commit=False)
+		for faktura in valgte_fakturaer:
+			instance.belongs_to = faktura
+			instance.pk = None # triks for å få en ny instans. Ny pk tildeles automatisk.
+			instance.save()
+			print("lagrer %s" % instance)
+
+		return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
+
 	return render(request, 'ubw_multiselect.html', {
-		'valgte': valgte,
+		'post_data': valgte,
+		'valgte_fakturaer': valgte_fakturaer,
+		'form': form,
 	})
 
 

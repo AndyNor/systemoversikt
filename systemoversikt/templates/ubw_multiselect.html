@@ -2,6 +2,7 @@
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
+{% load widget_tweaks %}
 
 {% block overskrift %}
 	Økonomirapportering for {{ enhet }}
@@ -10,8 +11,45 @@
 {% block hovedinnhold %}
 
 
-<p>Multiselect</p>
+<p>Tagging av flere poster samtidig. Du har valgt disse linjene:</p>
 
- {{valgte}}
+{% for faktura in valgte_fakturaer %}
+	<li>{{ faktura }}</li>
+{% endfor %}
+
+<hr>
+<p>Endre alle disse med følgende metadata</p>
+
+	{% if form.is_multipart %}
+		<form method="post" action="" enctype="multipart/form-data">
+	{% else %}
+		<form method="post" action="">
+	{% endif %}
+	{% csrf_token %}
+	{% for value in post_data %}
+		<input type="hidden" name="selected_items" value="{{ value }}">
+	{% endfor %}
+		<fieldset>
+		{% for field in form %}
+		<div class="form-group {% if field.errors %} error {% endif %}">
+			<label for="{{ field.id_for_label }}">{{ field.label }}</label>
+			<div class="controls">
+				{% render_field field class+="form-control" %}
+				<span class="help-inline">
+				{% if field.errors %}
+					{% for error in field.errors %} <p style="color: red;">{{ error }}</p> {% endfor %}
+				{% else %} {{ field.help_text }} {% endif %}
+				</span>
+			</div>
+		</div>
+		{% endfor %}
+
+
+		<hr>
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary">Lagre</button>
+		</div>
+		</fieldset>
+	</form>
 
 {% endblock hovedinnhold %}

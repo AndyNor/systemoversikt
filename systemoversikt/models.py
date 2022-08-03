@@ -5900,7 +5900,7 @@ class UBWMetadata(models.Model):
 	#history = HistoricalRecords()
 
 	def __str__(self):
-		return u'%s' % (self.pk)
+		return u'UBWMetadata %s %s %s' % (self.pk, self.belongs_to, self.kategori)
 
 	class Meta:
 		verbose_name_plural = "UBW: fakturametadata"
