@@ -173,10 +173,12 @@ def cmdb_statistikk(request):
 		count_vlan = NetworkContainer.objects.all().count()
 		count_vip = virtualIP.objects.all().count()
 		count_vip_pool = VirtualIPPool.objects.all().count()
-		count_oracle = CMDBdatabase.objects.filter(db_version__icontains="oracle").all().count()
-		count_mssql = CMDBdatabase.objects.filter(db_version__icontains="mssql").all().count()
+		count_oracle = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).all().count()
+		count_mssql = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).all().count()
 		count_mem = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024*1024 # summen er MB --> bytes
 		count_disk = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] * 1024*1024*1024 # summen er GB --> bytes
+		count_oracle_disk = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] * 1024 # summen er Kb --> bytes
+		count_mssql_disk = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] * 1024 # summen er Kb --> bytes
 
 		return render(request, 'cmdb_statistikk.html', {
 			'request': request,
@@ -198,6 +200,8 @@ def cmdb_statistikk(request):
 			'count_mssql': count_mssql,
 			'count_mem': count_mem,
 			'count_disk': count_disk,
+			'count_oracle_disk': count_oracle_disk,
+			'count_mssql_disk': count_mssql_disk,
 
 
 		})

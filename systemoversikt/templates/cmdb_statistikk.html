@@ -51,7 +51,7 @@
 			<h3>{{ count_klienter }}</h3>
 		</div>
 		<div class="col-sm">
-			<h6>Nettverk</h6>
+			<h6>Nettverk (VLAN)</h6>
 			<h3>{{ count_vlan }}</h3>
 			<h6>Lastbalanserte tjenester</h6>
 			<h3>{{ count_vip }}</h3>
@@ -66,6 +66,12 @@
 			<h3>{{ count_oracle }}</h3>
 			<h6>MSSQL-databaser</h6>
 			<h3>{{ count_mssql }}</h3>
+		</div>
+		<div class="col-sm">
+			<h6>Diskbruk Oralce estimert</h6>
+			<h3>{{ count_oracle_disk|filesizeformat }}</h3>
+			<h6>Diskbruk MSSQL estimert</h6>
+			<h3>{{ count_mssql_disk|filesizeformat }}</h3>
 		</div>
 		<div class="col-sm">
 			<h6>Minnebruk servere estimert</h6>
