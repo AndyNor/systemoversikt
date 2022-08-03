@@ -52,7 +52,7 @@
 					{{ test.dato_rapport|date:'Y-m-d' }} ({{ test.dato_rapport|naturaltime }}): {{ test.get_type_test_display }}<br>
 				{% endfor %}
 		{% endfor %}
-		&zwj;
+		&zwj;{# zero-width space #}
 		</td>
 		<td>{{ item.sist_oppdatert|date:'Y-m-d' }}</td>
 		<td>{{ item.kommentar }}</td>
