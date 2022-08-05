@@ -19,25 +19,30 @@ class Command(BaseCommand):
 
 
 		# VIP-data
-		filename1 = "infoblox_network.csv"
-		filename2 = "infoblox_network_container_v4.csv"
-		filename3 = "infoblox_network_container_v6.csv"
+		filename1 = "infoblox_network_v4.csv"
+		filename2 = "infoblox_network_v6.csv"
+		filename3 = "infoblox_network_container_v4.csv"
+		filename4 = "infoblox_network_container_v6.csv"
 
 		source_filepath1 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename1
 		source_filepath2 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename2
 		source_filepath3 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename3
+		source_filepath4 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename4
 
 		source_file1 = sp.create_link(source_filepath1)
 		source_file2 = sp.create_link(source_filepath2)
 		source_file3 = sp.create_link(source_filepath3)
+		source_file4 = sp.create_link(source_filepath4)
 
 		destination_file1 = 'systemoversikt/import/'+filename1
 		destination_file2 = 'systemoversikt/import/'+filename2
 		destination_file3 = 'systemoversikt/import/'+filename3
+		destination_file4 = 'systemoversikt/import/'+filename4
 
 		sp.download(sharepoint_location = source_file1, local_location = destination_file1)
 		sp.download(sharepoint_location = source_file2, local_location = destination_file2)
 		sp.download(sharepoint_location = source_file3, local_location = destination_file3)
+		sp.download(sharepoint_location = source_file4, local_location = destination_file4)
 
 
 		@transaction.atomic
@@ -127,5 +132,6 @@ class Command(BaseCommand):
 
 		#eksekver
 		import_vlan(destination_file1, "networks", filename1)
-		import_vlan(destination_file2, "ipv4networks", filename2)
-		import_vlan(destination_file3, "ipv6networks", filename3)
+		import_vlan(destination_file1, "networks", filename2)
+		import_vlan(destination_file2, "ipv4networks", filename3)
+		import_vlan(destination_file3, "ipv6networks", filename4)
