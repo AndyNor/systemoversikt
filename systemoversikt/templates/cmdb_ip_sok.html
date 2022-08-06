@@ -30,34 +30,34 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>IP</th>
-		<th>Host</th>
-		<th>DNS intern</th>
-		<th>DNS ekstern</th>
+		<th>Server</th>
+		<th>DNS</th>
 		<th>VLAN</th>
 		<th>VIP</th>
 	</thead>
 	<tbody>
-	{% for ip in ip_lookup %}
+	{% for ip in matches %}
 		<tr>
-			<td>{{ip.address}}</td>
+			<td>{{ip.ip_address}}</td>
 			<td>
-				{% if ip.comp_name %}
-					<a href="{% url 'alle_servere' %}?device_search_term={{ip.comp_name}}">{{ip.comp_name}}</a>
-				{% endif %}
-			</td>
-			<td>{{ip.dns_i|default:"Ingen treff"}}</td>
-			<td>{{ip.dns_e|default:"Ingen treff"}}</td>
-			<td>{{ip.vlan.comment|default:"Ingen treff"}}</td>
-			<td>
-				{% for v in ip.vip %}
-					{{ v.vip_name }}<br>
+				{% for server in ip.servere.all %}
+					{{ server }}<br>
 				{% endfor %}
-
-				{% for p in ip.vip_pool %}
-					{% for vip in p.vip.all %}
-						{% url 'detaljer_vip' pk=vip.pk as url_vip %}
-						<a href="{{url_vip}}">{{ vip.vip_name }}</a><br>
-					{% endfor %}
+			</td>
+			<td>
+				{% for name in ip.dns.all %}
+					{{ name.dns_name }}<br>
+				{% endfor %}
+			</td>
+			<td>
+				{% for vlan in ip.vlan.all %}
+					<li>{{ vlan.comment }} ({{ vlan }})</li>
+				{% endfor %}
+			</td>
+			<td>
+				{% for vip in ip.viper.all %}
+					{% url 'detaljer_vip' pk=vip.pk as url_vip %}
+					<a href="{{ url_vip }}">{{ vip.vip_name }}</a><br>
 				{% endfor %}
 			</td>
 		</tr>
@@ -66,7 +66,7 @@
 	</table>
 
 {% if not_ip_addresses %}
-	<p>Følgende ting er ikke IP-adresser:
+	<p>Følgende ting ble ikke funnet:
 	<ul style="column-count:10;">
 	{% for item in not_ip_addresses %}
 		<li>{{item}}</li>

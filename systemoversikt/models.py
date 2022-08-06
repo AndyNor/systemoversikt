@@ -18,6 +18,7 @@ def new_display_name(self):
 User.add_to_class("__str__", new_display_name)
 
 
+
 class UserChangeLog(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -1348,7 +1349,7 @@ class CMDBbs(models.Model):
 
 
 # dette er business sub services. Kobles mot servere og databaser (endrer ikke navn nå)
-class CMDBRef(models.Model):
+class CMDBRef(models.Model): # BSS
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
 			auto_now_add=True,
@@ -1663,11 +1664,117 @@ class NetworkContainer(models.Model):
 			null=True,
 			verbose_name="Kateogi",
 			)
+	network_zone = models.CharField(
+			max_length=100,
+			null=True,
+			verbose_name="Nettverkssone",
+			)
+	network_zone_description = models.CharField(
+			max_length=400,
+			null=True,
+			verbose_name="Nettverkssonebeskrivelse",
+			)
+
+	def __str__(self):
+		return u'%s/%s' % (self.ip_address, self.subnet_mask)
 
 	class Meta:
 		unique_together = ("ip_address", "subnet_mask")
 		verbose_name_plural = "CMDB: Network containers"
 		verbose_name = "Network container"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class NetworkIPAddress(models.Model):
+	ip_address = models.GenericIPAddressField(
+		null=False,
+		unique=True,
+		verbose_name="IP-adresse",
+	)
+	servere = models.ManyToManyField(
+		to='CMDBdevice',
+		verbose_name="Serverkobling",
+		related_name='network_ip_address',
+	)
+	viper = models.ManyToManyField(
+		to='virtualIP',
+		verbose_name="Kobling til VIP-er",
+		related_name='network_ip_address',
+	)
+	vip_pools = models.ManyToManyField(
+		to='VirtualIPPool',
+		verbose_name="Kobling til VIP pool-er",
+		related_name='network_ip_address',
+	)
+	dns = models.ManyToManyField(
+		to='DNSrecord',
+		verbose_name="Kobling til DNS-records",
+		related_name='network_ip_address',
+	)
+	vlan = models.ManyToManyField(
+		to='NetworkContainer',
+		verbose_name="Kobling til VLAN",
+		related_name='network_ip_address',
+	)
+
+	class Meta:
+		verbose_name_plural = "CMDB: Network IP-address"
+		verbose_name = "IP-address"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+	def __str__(self):
+		return u'%s' % self.ip_address
+
+	def ant_servere(self):
+		return self.servere.all().count()
+
+	def ant_dns(self):
+		return self.dns.all().count()
+
+	def ant_vlan(self):
+		return self.vlan.all().count()
+
+	def ant_viper(self):
+		return self.viper.all().count()
+
+
+
+
+class DNSrecord(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	dns_name = models.CharField(
+			max_length=500,
+			unique=True,
+			verbose_name="DNS name",
+			)
+	dns_type = models.CharField(
+			max_length=50,
+			null=True,
+			verbose_name="DNS type",
+			)
+	ip_address = models.GenericIPAddressField(
+			null=True,
+			verbose_name="IP-adresse",
+			)
+	ttl = models.IntegerField(
+			null=True,
+			verbose_name="Time to live (TTL)",
+			)
+	dns_target = models.CharField(
+			max_length=50,
+			null=True,
+			verbose_name="DNS target (hvis CNAME)",
+			)
+
+	def __str__(self):
+		return u'%s: %s' % (self.dns_type, self.dns_name)
+
+	class Meta:
+		verbose_name_plural = "CMDB: DNS records"
+		verbose_name = "DNS-record"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

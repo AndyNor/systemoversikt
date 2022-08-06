@@ -153,9 +153,24 @@ class VirtualIPPoolAdmin(admin.ModelAdmin):
 
 @admin.register(NetworkContainer)
 class NetworkContainerAdmin(admin.ModelAdmin):
-	list_display = ('ip_address', 'subnet_mask', 'comment', 'locationid', 'orgname', 'vlanid', 'vrfname', 'netcategory')
+	list_display = ('ip_address', 'subnet_mask', 'network_zone', 'network_zone_description', 'comment', 'locationid', 'orgname', 'vlanid', 'vrfname', 'netcategory')
 	search_fields = ('ip_address', 'comment', 'orgname', 'locationid', )
-	list_filter = ('netcategory',)
+	list_filter = ('netcategory', 'network_zone',)
+
+
+@admin.register(NetworkIPAddress)
+class NetworkIPAddressAdmin(admin.ModelAdmin):
+	list_display = ('ip_address', 'ant_servere', 'ant_dns', 'ant_vlan', 'ant_viper',)
+	search_fields = ('ip_address',)
+	autocomplete_fields = ('servere', 'viper', 'dns', 'vlan',)
+
+
+
+@admin.register(DNSrecord)
+class DNSrecordAdmin(admin.ModelAdmin):
+	list_display = ('dns_name', 'dns_type', 'ip_address', 'dns_target', 'ttl',)
+	search_fields = ('dns_name', 'ip_address', 'dns_target',)
+	list_filter = ('dns_type',)
 
 
 

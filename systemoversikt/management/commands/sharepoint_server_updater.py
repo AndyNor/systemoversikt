@@ -9,6 +9,7 @@ import json, os
 import pandas as pd
 import numpy as np
 import re
+from systemoversikt.views import get_ipaddr_instance
 
 
 class Command(BaseCommand):
@@ -104,13 +105,14 @@ class Command(BaseCommand):
 					os_readable = 'Ukjent'
 
 				#print(os_readable)
+				comp_ip_address = record["IP Address"]
 
 				cmdbdevice.device_active = True
 				cmdbdevice.kilde_cmdb = True
 				cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])
 				cmdbdevice.comp_cpu_core_count = convertToInt(record["CPU total"])
 				cmdbdevice.comp_ram = convertToInt(record["RAM (MB)"])
-				cmdbdevice.comp_ip_address = record["IP Address"]
+				cmdbdevice.comp_ip_address = comp_ip_address
 				cmdbdevice.comp_cpu_speed = convertToInt(record["CPU speed (MHz)"])
 				cmdbdevice.comp_os = os
 				cmdbdevice.comp_os_version = os_version
@@ -121,6 +123,8 @@ class Command(BaseCommand):
 				cmdbdevice.description = record["Description"]
 				#cmdbdevice.billable = record["Billable"] #finnes ikke lenger i denne rapporten
 
+
+				# Sette type enhet
 				if record["Name.1"] in ["OK-Tykklient", "OK-Støttemaskin", "OK-Tynnklient"]:
 					cmdbdevice.device_type = "KLIENT"
 				else:
@@ -134,6 +138,16 @@ class Command(BaseCommand):
 					server_dropped += 1
 					continue
 
+
+				# Linke IP-adresse
+				if cmdbdevice.device_type = "SERVER": # vi trenger ikke alle klientene
+					ipaddr_ins = get_ipaddr_instance(comp_ip_address)
+					if ipaddr_ins != None:
+						if not cmdbdevice in ipaddr_ins.servere.all():
+							ipaddr_ins.servere.add(cmdbdevice)
+							ipaddr_ins.save()
+
+				# Lagre
 				cmdbdevice.save()
 
 			obsolete_devices = all_existing_devices

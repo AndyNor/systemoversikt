@@ -17,32 +17,30 @@ class Command(BaseCommand):
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
-
 		# VIP-data
 		filename1 = "infoblox_network_v4.csv"
 		filename2 = "infoblox_network_v6.csv"
 		filename3 = "infoblox_network_container_v4.csv"
 		filename4 = "infoblox_network_container_v6.csv"
+		sone_design = "VLAN_sikkerhetssoner.xlsx"
 
-		source_filepath1 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename1
-		source_filepath2 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename2
-		source_filepath3 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename3
-		source_filepath4 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename4
-
-		source_file1 = sp.create_link(source_filepath1)
-		source_file2 = sp.create_link(source_filepath2)
-		source_file3 = sp.create_link(source_filepath3)
-		source_file4 = sp.create_link(source_filepath4)
+		source1 = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename1)
+		source2 = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename2)
+		source3 = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename3)
+		source4 = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename4)
+		source_sone_design = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+sone_design)
 
 		destination_file1 = 'systemoversikt/import/'+filename1
 		destination_file2 = 'systemoversikt/import/'+filename2
 		destination_file3 = 'systemoversikt/import/'+filename3
 		destination_file4 = 'systemoversikt/import/'+filename4
+		destination_sone_design = 'systemoversikt/import/'+sone_design
 
-		sp.download(sharepoint_location = source_file1, local_location = destination_file1)
-		sp.download(sharepoint_location = source_file2, local_location = destination_file2)
-		sp.download(sharepoint_location = source_file3, local_location = destination_file3)
-		sp.download(sharepoint_location = source_file4, local_location = destination_file4)
+		sp.download(sharepoint_location = source1, local_location = destination_file1)
+		sp.download(sharepoint_location = source2, local_location = destination_file2)
+		sp.download(sharepoint_location = source3, local_location = destination_file3)
+		sp.download(sharepoint_location = source4, local_location = destination_file4)
+		sp.download(sharepoint_location = source_sone_design, local_location = destination_sone_design)
 
 
 		@transaction.atomic
@@ -51,7 +49,34 @@ class Command(BaseCommand):
 			vlan_dropped = 0
 			vlan_new = 0
 
+			sone_design_status = True
 
+
+			# klargjøre sonedesignet
+			def load_sone_design(file):
+				if ".xlsx" in file:
+					dfRaw = pd.read_excel(file)
+					dfRaw = dfRaw.replace(np.nan, '', regex=True)
+					data = dfRaw.to_dict('records')
+					return data
+
+			sone_design = load_sone_design(destination_sone_design)
+			if sone_design == None:
+				print("VLAN import: Kunne ikke laste sonedesignet.")
+				sone_design_status = False
+
+			def identity_security_zone(ip_address):
+				if sone_design_status:
+					for zone in sone_design:
+						supernett = ipaddress.IPv4Network(zone["Supernett"] + "/" + str(zone["Maske"]))
+						if ipaddress.ip_address(ip_address) in supernett:
+							print("Match %s with %s" % (ip_address, supernett))
+							return (zone["Sikkerhetsnivå"], zone["Beskrivelse"])
+
+				return (None, None)
+
+
+			# klargjøre metoder for å behandle vlan-importfiler fra Infoblox
 			def prefixlen(ip, netmask):
 				i = ipaddress.ip_address(ip)
 				network = ip + "/" + netmask
@@ -110,6 +135,7 @@ class Command(BaseCommand):
 					nc.orgname = line["EA-ORG-navn"]
 					nc.vlanid = line["EA-VLAN"]
 					nc.vrfname = line["EA-VRF-navn"]
+					nc.network_zone, nc.network_zone_description = identity_security_zone(nc.ip_address)
 
 				nc.netcategory = line["EA-net-kategori"]
 
@@ -131,7 +157,41 @@ class Command(BaseCommand):
 			print(logg_entry_message)
 
 		#eksekver
-		import_vlan(destination_file1, "networks", filename1)
-		import_vlan(destination_file1, "networks", filename2)
-		import_vlan(destination_file2, "ipv4networks", filename3)
-		import_vlan(destination_file3, "ipv6networks", filename4)
+		#import_vlan(destination_file1, "networks", filename1)
+		#import_vlan(destination_file1, "networks", filename2)
+		#import_vlan(destination_file2, "ipv4networks", filename3)
+		#import_vlan(destination_file3, "ipv6networks", filename4)
+
+
+
+		#match opp alle IP-adresser mot VLAN
+		@transaction.atomic
+		def ip_vlan_kobling():
+
+			from functools import lru_cache
+
+			@lru_cache(maxsize=128)
+			def make_network(network_str):
+				return ipaddress.IPv4Network(network_str) if isinstance(network_ip, ipaddress.IPv4Address) else ipaddress.IPv6Network(network_str)
+
+			alle_ip_adresser = NetworkIPAddress.objects.all()
+			alle_vlan = NetworkContainer.objects.all()
+
+			for ipadr in alle_ip_adresser:
+				if ipadr.ip_address == None: # skal ikke skje, men det var en feil i et tidligere importscript (klienter)
+					ipadr.delete()
+					continue
+				ant_vlan = 0
+				for vlan in alle_vlan:
+					network_ip = ipaddress.ip_address(vlan.ip_address)
+					network_str = vlan.ip_address + "/" + str(vlan.subnet_mask)
+					network = make_network(network_str)
+					if ipaddress.ip_address(ipadr.ip_address) in network:
+						ipadr.vlan.add(vlan)
+						ant_vlan += 1
+				ipadr.save()
+				print("%s med %s koblinger." % (ipadr, ant_vlan))
+
+		ip_vlan_kobling()
+
+

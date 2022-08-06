@@ -56,6 +56,13 @@ def debug_info(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def get_ipaddr_instance(address):
+	if address == "" or address == None:
+		return None
+	try:
+		return NetworkIPAddress.objects.get(ip_address=address)
+	except:
+		return NetworkIPAddress.objects.create(ip_address=address)
 
 
 """
@@ -179,6 +186,8 @@ def cmdb_statistikk(request):
 		count_disk = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] * 1024*1024*1024 # summen er GB --> bytes
 		count_oracle_disk = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
 		count_mssql_disk = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
+		count_dns_arecords = DNSrecord.objects.filter(dns_type="A record").count()
+		count_dns_cnames = DNSrecord.objects.filter(dns_type="CNAME").count()
 
 		return render(request, 'cmdb_statistikk.html', {
 			'request': request,
@@ -202,6 +211,8 @@ def cmdb_statistikk(request):
 			'count_disk': count_disk,
 			'count_oracle_disk': count_oracle_disk,
 			'count_mssql_disk': count_mssql_disk,
+			'count_dns_arecords': count_dns_arecords,
+			'count_dns_cnames': count_dns_cnames,
 
 
 		})
@@ -243,6 +254,26 @@ def cmdb_devicedetails(request, pk):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def alle_dns(request):
+	"""
+	Vise alle DNS navn og alias
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		alle_dnsnavn = DNSrecord.objects.all()
+
+		return render(request, 'cmdb_alle_dns.html', {
+			'request': request,
+			'alle_dnsnavn': alle_dnsnavn,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 
 
 def alle_vip(request):
@@ -3588,98 +3619,37 @@ def alle_ip(request):
 	"""
 	required_permissions = 'systemoversikt.view_cmdbdevice'
 	if request.user.has_perm(required_permissions):
-
-		from systemoversikt.views_import import load_dns_sonefile, load_vlan, load_nat, load_bigip, find_ip_in_dns, find_vlan, find_ip_in_nat, find_bigip
-		import os
-		import socket
-		socket.setdefaulttimeout(1)
+		import re
+		import ipaddress
 
 		search_term = request.POST.get('search_term', '').strip()  # strip removes trailing and leading space
+		matches = []
+		not_ip_addresses = []
+
 		if search_term != "":
-			# må legge dette i en konfigurasjonsfil, da det nå ligger to steder.
-			domain = "oslo.kommune.no"
-
-			import re
-			import ipaddress
 			search_term = search_term.replace('\"','').replace('\'','').replace(':',' ').replace('/', ' ').replace('\\', ' ') # dette vil feile for IPv6, som kommer på formatet [xxxx:xxxx::xxxx]:port
-			search_ips = re.findall(r"([^,;\t\s\n\r]+)", search_term)
-			search_ips = set(search_ips)
+			search_terms = re.findall(r"([^,;\t\s\n\r]+)", search_term)
+			search_terms = set(search_terms)
 
-			ip_lookup = []
-			not_ip_addresses = []
-
-
-			all_networks = NetworkContainer.objects.all()
-			for vlan in all_networks:
-				i = ipaddress.ip_address(vlan.ip_address)
-				network = vlan.ip_address + "/" + str(vlan.subnet_mask)
-				if isinstance(i, ipaddress.IPv4Address):
-					vlan.__ipnetwork = ipaddress.IPv4Network(network)
-				else:
-					vlan.__ipnetwork = ipaddress.IPv6Network(network)
-
-			for item in search_ips:
+			for term in search_terms:
 				try:
-					ip_address = ipaddress.ip_address(item)
-					ip_address_str = item
+					match = NetworkIPAddress.objects.get(ip_address=term)
+					matches.append(match)
 				except:
-					not_ip_addresses.append(item)
-					continue  # skip this item
+					not_ip_addresses.append(term)
+					continue  # skip this term
 
 
-				dns_ekstern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_ekstern", domain)
-				dns_intern = load_dns_sonefile(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_dns_intern", domain)
-				#vlan_data = load_vlan(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vlan.tsv")
-				nat_data = load_nat(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_nat.tsv")
-				#bigip_data = load_bigip(os.path.dirname(os.path.abspath(__file__)) + "/import/oslofelles_vip.tsv")
-
-				dns_i = find_ip_in_dns(ip_address, dns_intern)
-				dns_e = find_ip_in_dns(ip_address, dns_ekstern)
-				#vlan = find_vlan(ip_address, vlan_data)
-
-				def identify_ip_in_network(ip_address, all_networks):
-					for vlan in all_networks:
-						if ip_address in vlan.__ipnetwork:
-							return vlan
-					return None
-
-
-				netcont = identify_ip_in_network(ip_address ,all_networks)
-				nat = find_ip_in_nat(ip_address, nat_data)
-				#vip = find_bigip(ip_address, bigip_data)
-				vip = virtualIP.objects.filter(ip_address=ip_address_str)
-				vip_pool = VirtualIPPool.objects.filter(ip_address=ip_address_str)
-
-				def dns_live(ip_address): # not used anymore
-					try:
-						return socket.gethostbyaddr(str(ip_address))[0]
-					except:
-						return None
-
-
-				try:
-					comp_name = CMDBdevice.objects.get(comp_ip_address=item).comp_name
-				except:
-					comp_name = None
-
-
-				ip_lookup.append({
-						"address": ip_address,
-						"comp_name": comp_name,
-						"dns_i": dns_i,
-						"dns_e": dns_e,
-						"vlan": netcont,
-						"vip": vip,
-						"vip_pool": vip_pool,
-				})
-		else:
-			ip_lookup = None
-			not_ip_addresses = None
+				#def dns_live(ip_address): # not used anymore
+				#	try:
+				#		return socket.gethostbyaddr(str(ip_address))[0]
+				#	except:
+				#		return None
 
 
 		return render(request, 'cmdb_ip_sok.html', {
 			'request': request,
-			'ip_lookup': ip_lookup,
+			'matches': matches,
 			'search_term': search_term,
 			'not_ip_addresses': not_ip_addresses,
 		})

@@ -51,7 +51,7 @@ class Command(BaseCommand):
 				return None
 
 		@transaction.atomic
-		def import_cmdb_servers():
+		def import_cmdb_clients():
 
 			client_dropped = 0
 
@@ -103,6 +103,9 @@ class Command(BaseCommand):
 				cmdbdevice.sist_sett = str_to_date(str(record["Most recent discovery"]))
 				cmdbdevice.last_loggedin_user = str_to_user(record["Owner"])
 
+				# koble IP-adresse
+				# Det er ikke IP-adresser i filen (med noen veldig få unntak)
+
 				# fjernes siden
 				cmdbdevice.maskinadm_virksomhet = cmdbdevice.last_loggedin_user.profile.virksomhet if cmdbdevice.last_loggedin_user else None
 				cmdbdevice.maskinadm_sist_oppdatert = cmdbdevice.sist_sett
@@ -139,5 +142,5 @@ class Command(BaseCommand):
 
 
 		# eksekver
-		import_cmdb_servers()
+		import_cmdb_clients()
 

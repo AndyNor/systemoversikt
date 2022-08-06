@@ -7,6 +7,7 @@ import json, os
 import pandas as pd
 import numpy as np
 from django.db.models import Q
+from systemoversikt.views import get_ipaddr_instance
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -43,12 +44,12 @@ class Command(BaseCommand):
 
 			for line in data:
 				try:
-					virtualIP.objects.get(vip_name=line["name"])
+					vip_inst = virtualIP.objects.get(vip_name=line["name"])
 					# new, assume no change?
 					vip_dropped += 1
 				except:
 					# update
-					virtualIP.objects.create(
+					vip_inst = virtualIP.objects.create(
 						vip_name=line["name"],
 						pool_name=line["pool"],
 						ip_address=line["ip_address"],
@@ -57,6 +58,13 @@ class Command(BaseCommand):
 						)
 					print(".", end="", flush=True)
 					vip_new += 1
+
+				# Linke IP-adresse
+				ipaddr_ins = get_ipaddr_instance(line["ip_address"])
+				if ipaddr_ins != None:
+					if not vip_inst in ipaddr_ins.viper.all():
+						ipaddr_ins.viper.add(vip_inst)
+						ipaddr_ins.save()
 
 
 			logg_entry_message = 'Fant %s VIP-er i %s. %s nye og %s eksisterende.' % (
