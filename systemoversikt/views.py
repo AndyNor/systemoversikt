@@ -57,7 +57,7 @@ def debug_info(request):
 
 
 def get_ipaddr_instance(address):
-	if address == "" or address == None:
+	if address == "" or address == None or address == "0.0.0.0":
 		return None
 	try:
 		return NetworkIPAddress.objects.get(ip_address=address)

@@ -34,8 +34,8 @@ class Command(BaseCommand):
 		destination_file1 = 'systemoversikt/import/'+filename1
 		destination_file2 = 'systemoversikt/import/'+filename2
 
-		#sp.download(sharepoint_location = source_file1, local_location = destination_file1)
-		#sp.download(sharepoint_location = source_file2, local_location = destination_file2)
+		sp.download(sharepoint_location = source_file1, local_location = destination_file1)
+		sp.download(sharepoint_location = source_file2, local_location = destination_file2)
 
 
 		@transaction.atomic
