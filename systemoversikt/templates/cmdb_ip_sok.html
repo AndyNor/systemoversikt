@@ -29,11 +29,12 @@
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
-		<th>IP</th>
+		<th>IP-adresse</th>
 		<th>Server</th>
 		<th>DNS</th>
-		<th>VLAN</th>
-		<th>VIP</th>
+		<th>Nettverk / VLAN</th>
+		<th>Lastbalanserte tjenester (vip)</th>
+		<th>Lastbalanserte tjenester (pools)</th>
 	</thead>
 	<tbody>
 	{% for ip in matches %}
@@ -58,6 +59,11 @@
 				{% for vip in ip.viper.all %}
 					{% url 'detaljer_vip' pk=vip.pk as url_vip %}
 					<a href="{{ url_vip }}">{{ vip.vip_name }}</a><br>
+				{% endfor %}
+			</td>
+			<td>
+				{% for pool in ip.vip_pools.all %}
+					<li>{{ pool.pool_name }}</li>
 				{% endfor %}
 			</td>
 		</tr>

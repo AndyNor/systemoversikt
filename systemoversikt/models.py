@@ -1768,9 +1768,17 @@ class DNSrecord(models.Model):
 			null=True,
 			verbose_name="DNS target (hvis CNAME)",
 			)
+	dns_domain = models.CharField(
+			max_length=200,
+			null=False,
+			verbose_name="Domain",
+			)
 
 	def __str__(self):
 		return u'%s: %s' % (self.dns_type, self.dns_name)
+
+	def dns_full_name(self):
+		return u'%s.%s' % (self.dns_name, self.dns_domain)
 
 	class Meta:
 		verbose_name_plural = "CMDB: DNS records"
@@ -2039,34 +2047,34 @@ class CMDBdevice(models.Model):
 	#		null=True,
 	#		help_text=u"",
 	#		)
-	dns = models.CharField(
-			verbose_name="DNS",
-			max_length=200,
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	vlan = models.CharField(
-			verbose_name="VLAN",
-			max_length=200,
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	nat = models.CharField(
-			verbose_name="NAT",
-			max_length=200,
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	vip = models.CharField(
-			verbose_name="VIP / BigIP",
-			max_length=200,
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
+	#dns = models.CharField(
+	#		verbose_name="DNS",
+	#		max_length=200,
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
+	#vlan = models.CharField(
+	#		verbose_name="VLAN",
+	#		max_length=200,
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
+	#nat = models.CharField(
+	#		verbose_name="NAT",
+	#		max_length=200,
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
+	#vip = models.CharField(
+	#		verbose_name="VIP / BigIP",
+	#		max_length=200,
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
 	comments = models.TextField(
 			verbose_name="Comments",
 			unique=False,
@@ -2176,6 +2184,32 @@ class CMDBdevice(models.Model):
 
 	def __str__(self):
 		return u'%s' % (self.comp_name)
+
+	def nat(self):
+		return 'ikke implementert'
+
+	def vlan(self):
+		try:
+			return ', '.join([vlan.comment for vlan in self.network_ip_address.all()[0].vlan.all()])
+		except:
+			return 'ingen data'
+
+	def dns(self):
+		try:
+			return ', '.join([dns.dns_full_name() for dns in self.network_ip_address.all()[0].dns.all()])
+		except:
+			return 'ingen data'
+
+	def vip(self):
+		try:
+			string = ""
+			for pool in self.network_ip_address.all()[0].vip_pools.all():
+				for vip in pool.vip.all():
+					string += vip.vip_name
+			return string
+		except:
+			return 'ingen data'
+
 
 	def utdatert(self):
 		versjon = int(self.landesk_os_release) if self.landesk_os_release else 0

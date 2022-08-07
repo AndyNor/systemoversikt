@@ -19,7 +19,6 @@ class Command(BaseCommand):
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
 
-		domain = "oslo.kommune.no"
 		filename1 = "oslofelles_dns_ekstern"
 		filename2 = "oslofelles_dns_intern"
 
@@ -49,12 +48,13 @@ class Command(BaseCommand):
 			ip_linker = 0
 
 
-			def create_or_update(dns_name, dns_type, dns_target, ip_address, ttl):
+			def create_or_update(dns_name, dns_type, dns_target, ip_address, ttl, domain):
 				try:
 					dns_inst = DNSrecord.objects.get(dns_name=dns_name)
 					dns_inst.dns_type = dns_type
 					dns_inst.target = dns_target
 					dns_inst.ip_address = ip_address
+					dns_inst.dns_domain = domain
 					dns_inst.ttl = ttl
 
 					dns_inst.save()
@@ -66,12 +66,14 @@ class Command(BaseCommand):
 							dns_type=dns_type,
 							dns_target=dns_target,
 							ip_address=ip_address,
+							dns_domain=domain,
 							ttl=ttl,
 						)
 					nonlocal count_new
 					count_new += 1
 					dns_inst.save()
 					print("n", end="", flush=True)
+
 
 				# Linke IP-adresse
 				ipaddr_ins = get_ipaddr_instance(ip_address)
@@ -86,6 +88,7 @@ class Command(BaseCommand):
 			import dns.zone
 			z = dns.zone.from_file(source_file, domain)
 
+
 			for (name, ttl, rdata) in z.iterate_rdatas('A'):
 				antall_a_records += 1
 
@@ -95,6 +98,7 @@ class Command(BaseCommand):
 						dns_target=None,
 						ip_address=rdata.address,
 						ttl=int(ttl),
+						domain=domain,
 					)
 
 
@@ -114,6 +118,7 @@ class Command(BaseCommand):
 						dns_target=rdata.target,
 						ip_address=ip_address,
 						ttl=None,
+						domain=domain,
 					)
 
 
@@ -133,5 +138,5 @@ class Command(BaseCommand):
 			print(logg_entry_message)
 
 		#eksekver
-		import_dns(destination_file1, filename1, domain)
-		import_dns(destination_file2, filename2, domain)
+		import_dns(destination_file1, filename1, u"oslo.kommune.no")
+		import_dns(destination_file2, filename2, u"oslo.kommune.no")

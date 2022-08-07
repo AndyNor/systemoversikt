@@ -3962,11 +3962,41 @@ def cmdbdevice(request, pk):
 		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref).order_by("-device_active")
 		databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
 
+		vlan_lagt_til = []
+		def identifiser_vlan(network_ip_addresses):
+			if len(network_ip_addresses) > 0:
+				if len(network_ip_addresses[0].vlan.all()) > 0:
+					mest_presise_vlan = network_ip_addresses[0].vlan.all().order_by('-subnet_mask')[0]
+					nonlocal graf_data
+					nonlocal vlan_lagt_til
+
+					if mest_presise_vlan.comment not in vlan_lagt_til:
+						graf_data["nodes"].append({"data": { "id": mest_presise_vlan.comment }})
+						vlan_lagt_til.append(mest_presise_vlan.comment)
+					return mest_presise_vlan.comment
+			return "Ukjent VLAN"
+
+
+
+		graf_data = {"nodes": [], "edges": []}
+		for server in cmdbdevices:
+			graf_data["nodes"].append({"data": { "parent": identifiser_vlan(server.network_ip_address.all()), "id": "server"+str(server.pk), "name": server.comp_name, "shape": "ellipse", "color": "#1668c1" }})
+
+		for db in databaser:
+			#try:
+			dbserver = CMDBdevice.objects.get(comp_name=db.db_server)
+			network_ip_address = dbserver.network_ip_address.all()
+			#except:
+			#	network_ip_address = []
+			graf_data["nodes"].append({"data": { "parent": identifiser_vlan(network_ip_address), "id": "db"+str(db.pk), "name": db.db_database, "shape": "diamond", "color": "#d35215" }})
+
+
 		return render(request, 'cmdb_maskiner_detaljer.html', {
 			'request': request,
 			'cmdbref': [cmdbref],
 			'cmdbdevices': cmdbdevices,
 			'databaser': databaser,
+			'graf_data': graf_data,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

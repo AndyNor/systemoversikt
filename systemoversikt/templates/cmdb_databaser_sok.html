@@ -93,7 +93,7 @@
 	<tbody>
 	{% for db_versjon in databasestatistikk %}
 		<tr>
-			<td>{{ db_versjon.versjon }}</td>
+			<td><a href="{% url 'alle_databaser' %}?search_term={{ db_versjon.versjon }}">{{ db_versjon.versjon }}</a></td>
 			<td>{{ db_versjon.antall }}</td>
 		</tr>
 	{% endfor %}

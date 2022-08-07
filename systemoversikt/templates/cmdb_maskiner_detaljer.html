@@ -10,6 +10,15 @@
 	Business (Sub) Service "{{ cmdbref.0 }}"
 {% endblock overskrift %}
 
+{% block ekstrajavascript %}
+	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
 {% block hovedinnhold %}
 
 	{% if perms.systemoversikt.view_system %}
@@ -17,6 +26,10 @@
 		<p>{{cmdbref.0.comments|default:"-"}}</p>
 
 		{% include "cmdb_include.html" with cmdbref=cmdbref %}
+
+
+		<div id="cy" style="width: 100%; height: 400px;"></div>
+
 
 		<hr>
 		<h6>Servere</h6>
@@ -42,7 +55,8 @@
 			<tbody>
 			{% for item in cmdbdevices.all %}
 			<tr {% if not item.device_active %} style="color: #d6d6d6;" {% endif %}>
-				<td>{{ item.comp_name|default:"-" }}</td>
+				{% url 'cmdb_devicedetails' pk=item.pk as url_cmdb_devicedetails %}
+				<td><a href="{{url_cmdb_devicedetails}}">{{ item.comp_name|default:"-" }}</a></td>
 				<td>{% include 'site_janeivetikke.html' with boolean=item.device_active %}</td>
 				<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
 				<td>
@@ -59,10 +73,22 @@
 				<td>{{ item.comp_u_cpu_total|default:"-" }}</td>
 				<td>{{ item.comp_ram|default:"-" }}</td>
 				<td>{{ item.comp_ip_address|default:"-" }}</td>
-				<td>{{ item.vlan|default:"" }}</td>
+				<td>
+				{% for vlan in item.network_ip_address.all.0.vlan.all %}
+					<li>{{ vlan.comment }} ({{ vlan }})</li>
+				{% endfor %}
+				</td>
 				<td>{{ item.dns|default:"" }}</td>
 				<td>{{ item.nat|default:"" }}</td>
-				<td>{{ item.vip|default:"" }}</td>
+				<td>
+				{% for vip in item.network_ip_address.all.0.viper.all %}
+					{% url 'detaljer_vip' pk=vip.pk as url_vip %}
+					<a href="{{ url_vip }}">{{ vip.vip_name }}</a><br>
+				{% endfor %}
+				{% for pool in item.network_ip_address.all.0.vip_pools.all %}
+					<li>{{ pool.pool_name }}</li>
+				{% endfor %}
+				</td>
 				<td>{{ item.comp_os }}</td>
 				<td>{{ item.comp_os_version|default:"-" }}</td>
 				<td>{{ item.comp_os_service_pack|default:"-" }}</td>
@@ -101,3 +127,76 @@
 
 
 {% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	var cy = cytoscape({
+		zoomingEnabled: true,
+		panningEnabled: true,
+		wheelSensitivity: 0.0,
+		container: document.getElementById('cy'),
+		elements: {
+			nodes: [
+				{% for node in graf_data.nodes %} {{ node|safe }},
+				{% endfor %}
+			],
+			edges: [
+				{% for edge in graf_data.edges %} {{ edge|safe }},
+				{% endfor %}
+			],
+		},
+		style: [
+			{
+				selector: 'node',
+				style: {
+					'shape': 'data(shape)',
+					'background-color': 'data(color)',
+					'label': 'data(name)',
+					'font-size': '8px',
+				},
+			},
+			{
+				selector: 'node:selected',
+				style: {
+				},
+			},
+			{
+				selector: 'edge',
+				style: {
+					'target-arrow-shape': 'triangle',
+					'curve-style': 'bezier',
+					'line-style': 'data(linestyle)',
+				},
+			},
+			{
+				selector: 'edge:selected',
+				style: {
+				},
+			},
+			{
+				selector: ':parent',
+				style: {
+					'label': 'data(id)',
+					'line-style': "solid",
+					'background-color': '#ebf5fc',
+				}
+			},
+		],
+		layout: {
+			name: 'fcose',
+			animationDuration: 0, //ms
+			idealEdgeLength: 150,
+		},
+	});
+	cy.on('tap', 'node', function(){
+		if (this.data('href')) {
+			try { // your browser may block popups
+				window.open( this.data('href'), "_self" );
+			} catch(e){ // fall back on url change
+				window.location.href = this.data('href');
+			}
+		}
+	});
+
+</script>
+{% endblock script_append %}

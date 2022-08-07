@@ -19,6 +19,7 @@
 	<thead>
 		<th>VIP</th>
 		<th>IP</th>
+		<th>Domene</th>
 		<th>Pool members</th>
 		<th>Hit count</th>
 	</thead>
@@ -27,6 +28,13 @@
 		<tr>
 			<td>{{vip.vip_name}}</td>
 			<td>{{vip.ip_address}}:{{vip.port}}</td>
+			<td>
+				{% for ip in vip.network_ip_address.all %}
+					{% for dnsrec in ip.dns.all %}
+						{{ dnsrec.dns_full_name }}<br>
+					{% endfor %}
+				{% endfor %}
+			</td>
 			<td>
 				{% for member in vip.pool_members.all %}
 					<li>

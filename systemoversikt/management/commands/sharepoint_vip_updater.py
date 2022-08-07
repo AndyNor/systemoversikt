@@ -124,6 +124,13 @@ class Command(BaseCommand):
 						)
 					print(".", end="", flush=True)
 
+				# Linke IP-adresse
+				ipaddr_ins = get_ipaddr_instance(line["ip_address"])
+				if ipaddr_ins != None:
+					if not pool in ipaddr_ins.vip_pools.all():
+						ipaddr_ins.vip_pools.add(pool)
+						ipaddr_ins.save()
+
 
 				try:
 					alle_vip_treff = virtualIP.objects.filter(pool_name=line["pool"]).all()
