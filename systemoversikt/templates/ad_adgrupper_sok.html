@@ -32,6 +32,7 @@
 			<tr>
 				<th>Display name</th>
 				<th>Gruppenavn</th>
+				<th>PRK-valg?</th>
 				<th>Distribusjonsadresse</th>
 				<th>Antall direkte medlemmer</th>
 			</tr>
@@ -41,6 +42,11 @@
 		<tr>
 			<td>{{g.display_name|default:""}}</td>
 			<td><a href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.short }}</a></td>
+			<td>
+				{% for prk_valg in g.PRKvalg_ad_group_ref.all %}
+					{{ prk_valg.skjemanavn.skjematype }} {{ prk_valg.skjemanavn.skjemanavn }} - {{ prk_valg.valgnavn }}<br>
+				{% endfor %}
+			</td>
 			<td>{{g.mail|default:"-"}}</td>
 			<td>{{g.member_count}}</td>
 		</tr>
