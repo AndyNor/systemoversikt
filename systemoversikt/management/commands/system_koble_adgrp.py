@@ -15,11 +15,11 @@ class Command(BaseCommand):
 				if s.bs_system_referanse != None:
 					lookup_words = []
 					if len(s.systemnavn.split("(")[0]) > 3:
-						lookup_words.append(s.systemnavn.split("(")[0])
+						lookup_words.append(s.systemnavn.split("(")[0].strip())
 					if s.alias != None:
 						for a in s.alias.split():
 							if len(a.split("(")[0]) > 3:
-								lookup_words.append(a.split("(")[0])
+								lookup_words.append(a.split("(")[0].strip())
 					print(lookup_words)
 					for word in lookup_words:
 						adgrp = ADgroup.objects.filter(Q(common_name__icontains=word) | Q(display_name__icontains=word))
