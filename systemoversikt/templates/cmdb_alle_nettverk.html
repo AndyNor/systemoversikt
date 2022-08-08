@@ -20,16 +20,19 @@
 		<th>Orgtilhørighet</th>
 		<th>VLAN ID</th>
 		<th>VRF</th>
+		<th>Sone</th>
 	</thead>
 	<tbody>
 	{% for nettverk in alle_nettverk %}
 		<tr>
 			<td>{{ nettverk.ip_address }}/{{ nettverk.subnet_mask }}</td>
-			<td>{{ nettverk.comment }}</td>
+			{% url 'nettverk_detaljer' pk=nettverk.pk as url_nettverk %}
+			<td><a href="{{ url_nettverk }}">{{ nettverk.comment }}</a></td>
 			<td>{{ nettverk.locationid }}</td>
 			<td>{{ nettverk.orgname }}</td>
 			<td>{{ nettverk.vlanid }}</td>
 			<td>{{ nettverk.vrfname }}</td>
+			<td>{{ nettverk.network_zone|default:"ingen data" }}</td>
 		</tr>
 	{% endfor %}
 	</tbody>

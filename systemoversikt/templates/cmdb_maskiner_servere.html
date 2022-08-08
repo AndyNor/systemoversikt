@@ -67,7 +67,7 @@
 			<br><a href="{{ url_ad }}">(søk AD)</a>
 		</td>
 		<td>
-			{% url 'cmdbdevice' pk=maskin.sub_name.pk as url_bss %}
+			{% url 'cmdb_bss' pk=maskin.sub_name.pk as url_bss %}
 			<a href="{{ url_bss }}">{{ maskin.sub_name.navn }}</a>
 		</td>
 		{% if vis_detaljer %}

@@ -51,7 +51,7 @@
 		{% endcomment %}
 
 
-		<a href="{% url 'cmdbdevice' pk=item.pk %}">{{ item.navn }}</a>
+		<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
 		{% if item.is_bss %}<span> (gruppe)</span>{% endif %}
 	</td>
 	<td>

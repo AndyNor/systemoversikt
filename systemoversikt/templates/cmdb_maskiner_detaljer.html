@@ -75,7 +75,8 @@
 				<td>{{ item.comp_ip_address|default:"-" }}</td>
 				<td>
 				{% for vlan in item.network_ip_address.all.0.vlan.all %}
-					<li>{{ vlan.comment }} ({{ vlan }})</li>
+					{% url 'nettverk_detaljer' pk=vlan.pk as url_network_details %}
+					<li><a href="{{ url_network_details }}">{{ vlan.comment }} ({{ vlan }})</a></li>
 				{% endfor %}
 				</td>
 				<td>{{ item.dns|default:"" }}</td>

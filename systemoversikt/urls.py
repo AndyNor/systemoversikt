@@ -133,7 +133,7 @@ urlpatterns = [
 
 	re_path(r'^cmdb/$', views.cmdb_statistikk, name='cmdb_statistikk'),
 	re_path(r'^cmdb/bs/$', views.alle_cmdbref, name='alle_cmdbref_sok'),
-	re_path(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdbdevice, name='cmdbdevice'),
+	re_path(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdb_bss, name='cmdb_bss'),
 	re_path(r'^cmdb/servere/$', views.alle_servere, name='alle_servere'),
 	re_path(r'^cmdb/klienter/$', views.alle_klienter, name='alle_klienter'),
 	re_path(r'^cmdb/servere/utfaset/$', views.servere_utfaset, name='servere_utfaset'),
@@ -142,6 +142,7 @@ urlpatterns = [
 	re_path(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
 	re_path(r'^cmdb/dns/$', views.alle_dns, name='alle_dns'),
 	re_path(r'^cmdb/nettverk/$', views.alle_nettverk, name='alle_nettverk'),
+	re_path(r'^cmdb/nettverk/(?P<pk>\d{1,8})/$', views.nettverk_detaljer, name='nettverk_detaljer'),
 	re_path(r'^cmdb/vip/$', views.alle_vip, name='alle_vip'),
 	re_path(r'^cmdb/vip/(?P<pk>\d{1,8})/$', views.detaljer_vip, name='detaljer_vip'),
 	re_path(r'^cmdb/device/sok/$', views.maskin_sok, name='maskin_sok'),

@@ -1,0 +1,68 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Nettverksdetaljer for {{ nettverk.comment }} - {{ nettverk.ip_address }}/{{ nettverk.subnet_mask }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>IP-adresse</th>
+		<th>Server</th>
+		<th>Server service</th>
+		<th>VIP</th>
+		<th>Pools</th>
+		<th>DNS</th>
+	</thead>
+	<tbody>
+
+	{% for ip in network_ip_addresses %}
+		<tr>
+			<td>{{ ip }}</td>
+			<td>
+			{% for server in ip.servere.all %}
+				{{ server }}<br>
+			{% endfor %}
+			</td>
+			<td>
+			{% for server in ip.servere.all %}
+				{% url 'cmdb_bss' pk=server.sub_name.pk as url_bss %}
+				<a href="{{ url_bss }}">{{ server.sub_name }}</a><br>
+			{% endfor %}
+			</td>
+			<td>
+			{% for vip in ip.viper.all %}
+				{{ vip }}<br>
+			{% endfor %}
+			</td>
+			<td>
+			{% for pool in ip.vip_pools.all %}
+				{{ pool }}
+				{% for vip in pool.vip.all %}
+					{% url 'detaljer_vip' pk=vip.pk as url_vip %}
+					<a href="{{ url_vip }}">({{ vip.ip_address }}:{{ vip.port }})</a>
+				{% endfor %}
+				<br>
+			{% endfor %}
+			</td>
+			<td>
+			{% for dns in ip.dns.all %}
+				{{ dns }}<br>
+			{% endfor %}
+			</td>
+		</tr>
+
+
+	{% endfor %}
+
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

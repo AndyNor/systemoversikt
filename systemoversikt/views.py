@@ -57,12 +57,18 @@ def debug_info(request):
 
 
 def get_ipaddr_instance(address):
+
 	if address == "" or address == None or address == "0.0.0.0":
 		return None
+	import ipaddress
 	try:
 		return NetworkIPAddress.objects.get(ip_address=address)
 	except:
-		return NetworkIPAddress.objects.create(ip_address=address)
+		n = NetworkIPAddress.objects.create(ip_address=address)
+		n.ip_address_integer = int(ipaddress.ip_address(n.ip_address))
+		n.save()
+		return n
+
 
 
 """
@@ -294,6 +300,26 @@ def alle_vip(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def nettverk_detaljer(request, pk):
+	"""
+	Vise alt koblet til et nettverk
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		nettverk = NetworkContainer.objects.get(pk=pk)
+		network_ip_addresses = nettverk.network_ip_address.all().order_by('ip_address_integer')
+
+		return render(request, 'cmdb_nettverk_detaljer.html', {
+			'request': request,
+			'nettverk': nettverk,
+			'network_ip_addresses': network_ip_addresses,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 def alle_nettverk(request):
 	"""
 	Vise alle nettverk
@@ -302,8 +328,6 @@ def alle_nettverk(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if any(map(request.user.has_perm, required_permissions)):
 
-		#logikk
-		#search_term = request.GET.get('search_term', '').strip()
 		alle_nettverk = NetworkContainer.objects.all()
 
 		return render(request, 'cmdb_alle_nettverk.html', {
@@ -3951,7 +3975,7 @@ def alle_cmdbref(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-def cmdbdevice(request, pk):
+def cmdb_bss(request, pk):
 	"""
 	Søke og vise maskiner og databaser tilknyttet en business service for et system
 	Tilgangsstyring: må kunne vise cmdb-referanser (bs)

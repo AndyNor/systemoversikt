@@ -1691,6 +1691,10 @@ class NetworkIPAddress(models.Model):
 		unique=True,
 		verbose_name="IP-adresse",
 	)
+	ip_address_integer = models.IntegerField(
+		verbose_name="IP-adresse heltall",
+		null=True,
+	)
 	servere = models.ManyToManyField(
 		to='CMDBdevice',
 		verbose_name="Serverkobling",

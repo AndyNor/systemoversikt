@@ -160,7 +160,7 @@ class NetworkContainerAdmin(admin.ModelAdmin):
 
 @admin.register(NetworkIPAddress)
 class NetworkIPAddressAdmin(admin.ModelAdmin):
-	list_display = ('ip_address', 'ant_servere', 'ant_dns', 'ant_vlan', 'ant_viper',)
+	list_display = ('ip_address', 'ip_address_integer', 'ant_servere', 'ant_dns', 'ant_vlan', 'ant_viper',)
 	search_fields = ('ip_address',)
 	autocomplete_fields = ('servere', 'viper', 'dns', 'vlan',)
 

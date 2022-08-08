@@ -57,7 +57,7 @@
 			<a href="{% url 'alle_servere' %}?device_search_term={{ db.db_server }}&details=show">{{ db.db_server }}</a>
 		</td>
 		<td>
-			{% url 'cmdbdevice' pk=db.sub_name.pk as url_bss %}
+			{% url 'cmdb_bss' pk=db.sub_name.pk as url_bss %}
 			<a href="{{ url_bss }}">{{ db.sub_name.navn }}</a>
 		</td>
 		<td>

@@ -846,7 +846,7 @@
 				<tbody>
 				{% for cmdbref in systemdetaljer.bs_system_referanse.cmdb_bss_to_bs.all %}
 				<tr>
-					{% url 'cmdbdevice' pk=cmdbref.pk as url_cmdb %}
+					{% url 'cmdb_bss' pk=cmdbref.pk as url_cmdb %}
 					<td><a href="{{ url_cmdb }}">{{ cmdbref.navn }}</a></td>
 					<td>{{ cmdbref.get_kritikalitet_display|default:"-" }}</td>
 					<td>{{ cmdbref.u_service_availability_text }}</td>
