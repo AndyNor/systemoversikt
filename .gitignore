@@ -8,14 +8,12 @@ systemoversikt/management/commands/*.json
 ldap_update_all_users
 prk_sync
 bash_scripts/*
-*.bat
 /static/*
 
 # local
 dev.bat
 this_env.py
 migrations/
-*.whl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
