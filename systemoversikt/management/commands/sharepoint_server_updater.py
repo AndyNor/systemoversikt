@@ -16,6 +16,8 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		runtime_t0 = time.time()
+		EVENT_TYPE = "CMDB server import"
+		logg_entry = ApplicationLog.objects.create(event_type=EVENT_TYPE, message="Starter..")
 
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
