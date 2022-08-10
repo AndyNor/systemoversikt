@@ -157,10 +157,14 @@ class Command(BaseCommand):
 			print(logg_entry_message)
 
 		#eksekver
-		#import_vlan(destination_file1, "networks", filename1)
-		#import_vlan(destination_file1, "networks", filename2)
-		#import_vlan(destination_file2, "ipv4networks", filename3)
-		#import_vlan(destination_file3, "ipv6networks", filename4)
+
+		LOG_EVENT_TYPE="CMDB VLAN import"
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
+		import_vlan(destination_file1, "networks", filename1)
+		import_vlan(destination_file1, "networks", filename2)
+		import_vlan(destination_file2, "ipv4networks", filename3)
+		import_vlan(destination_file3, "ipv6networks", filename4)
 
 
 
@@ -168,6 +172,8 @@ class Command(BaseCommand):
 		@transaction.atomic
 		def ip_vlan_kobling():
 
+			LOG_EVENT_TYPE="CMDB VLAN IP-kobling"
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 			from functools import lru_cache
 
 			@lru_cache(maxsize=128)
@@ -191,6 +197,7 @@ class Command(BaseCommand):
 						ant_vlan += 1
 				ipadr.save()
 				print("%s med %s koblinger." % (ipadr, ant_vlan))
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Fullført")
 
 		ip_vlan_kobling()
 
