@@ -142,7 +142,7 @@ class Command(BaseCommand):
 
 
 				# Linke IP-adresse
-				if cmdbdevice.device_type = "SERVER": # vi trenger ikke alle klientene
+				if cmdbdevice.device_type == "SERVER": # vi trenger ikke alle klientene
 					ipaddr_ins = get_ipaddr_instance(comp_ip_address)
 					if ipaddr_ins != None:
 						if not cmdbdevice in ipaddr_ins.servere.all():
