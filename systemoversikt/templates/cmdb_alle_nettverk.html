@@ -25,7 +25,7 @@
 	<tbody>
 	{% for nettverk in alle_nettverk %}
 		<tr>
-			<td>{{ nettverk.ip_address }}/{{ nettverk.subnet_mask }}</td>
+			<td>{{ nettverk.ip_address }}/{{ nettverk.subnet_mask }} {% if vlan.disabled %} (deaktivert) {% endif %}</td>
 			{% url 'nettverk_detaljer' pk=nettverk.pk as url_nettverk %}
 			<td><a href="{{ url_nettverk }}">{{ nettverk.comment }}</a></td>
 			<td>{{ nettverk.locationid }}</td>

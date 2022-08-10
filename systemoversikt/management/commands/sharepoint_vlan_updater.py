@@ -48,6 +48,7 @@ class Command(BaseCommand):
 
 			vlan_dropped = 0
 			vlan_new = 0
+			vlan_deaktivert = 0
 
 			sone_design_status = True
 
@@ -97,11 +98,6 @@ class Command(BaseCommand):
 
 			for line in data:
 
-				if "disabled" in line:
-					if line["disabled"] == "True":
-						vlan_dropped += 1
-						continue
-
 				if "netmask*" in line: # ipv4 eksport
 					subnetint = prefixlen(line["address*"], line["netmask*"])
 
@@ -139,15 +135,21 @@ class Command(BaseCommand):
 
 				nc.netcategory = line["EA-net-kategori"]
 
+				if "disabled" in line:
+					if line["disabled"] == "True":
+						vlan_deaktivert += 1
+						nc.disabled = True
+
 				print(".", end="", flush=True)
 				nc.save()
 
 
-			logg_entry_message = 'Fant %s VLAN/nettverk i %s. %s nye og %s kunne ikke importeres.' % (
+			logg_entry_message = 'Fant %s VLAN/nettverk i %s. %s nye og %s kunne ikke importeres. %s deaktiverte.' % (
 					antall_records,
 					filename,
 					vlan_new,
 					vlan_dropped,
+					vlan_deaktivert,
 				)
 			logg_entry = ApplicationLog.objects.create(
 					event_type='CMDB VLAN import ' + logmessage,

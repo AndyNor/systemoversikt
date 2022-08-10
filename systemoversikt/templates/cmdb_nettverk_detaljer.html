@@ -6,7 +6,7 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Nettverksdetaljer for {{ nettverk.comment }} - {{ nettverk.ip_address }}/{{ nettverk.subnet_mask }}
+	Nettverksdetaljer for {{ nettverk.comment }} - {{ nettverk.ip_address }}/{{ nettverk.subnet_mask }} {% if vlan.disabled %} (deaktivert) {% endif %}
 {% endblock overskrift %}
 
 {% block hovedinnhold %}

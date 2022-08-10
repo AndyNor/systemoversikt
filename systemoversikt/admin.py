@@ -153,9 +153,9 @@ class VirtualIPPoolAdmin(admin.ModelAdmin):
 
 @admin.register(NetworkContainer)
 class NetworkContainerAdmin(admin.ModelAdmin):
-	list_display = ('ip_address', 'subnet_mask', 'network_zone', 'network_zone_description', 'comment', 'locationid', 'orgname', 'vlanid', 'vrfname', 'netcategory')
+	list_display = ('ip_address', 'subnet_mask', 'disabled', 'network_zone', 'network_zone_description', 'comment', 'locationid', 'orgname', 'vlanid', 'vrfname', 'netcategory')
 	search_fields = ('ip_address', 'comment', 'orgname', 'locationid', )
-	list_filter = ('netcategory', 'network_zone',)
+	list_filter = ('disabled', 'netcategory', 'network_zone',)
 
 
 @admin.register(NetworkIPAddress)

@@ -52,7 +52,7 @@
 			</td>
 			<td>
 				{% for vlan in ip.vlan.all %}
-					<li>{{ vlan.comment }} ({{ vlan }})</li>
+					<li>{{ vlan.comment }} ({{ vlan }}) {% if vlan.disabled %} (deaktivert) {% endif %}</li>
 				{% endfor %}
 			</td>
 			<td>
