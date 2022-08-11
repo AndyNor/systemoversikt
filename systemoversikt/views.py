@@ -3963,7 +3963,7 @@ def alle_cmdbref(request):
 
 		cmdbref = cmdbref.order_by("-operational_status", "parent_ref__navn", Lower("navn"))
 
-		utfasede_bs = CMDBbs.objects.filter(operational_status=False)
+		utfasede_bs = CMDBbs.objects.filter(operational_status=False).filter(~Q(systemreferanse=None))
 
 		return render(request, 'cmdb_bs_sok.html', {
 			'request': request,
