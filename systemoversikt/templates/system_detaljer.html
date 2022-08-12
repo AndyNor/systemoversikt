@@ -61,10 +61,10 @@
 	<h6>{{ systemdetaljer.systembeskrivelse|linebreaks }}</h6>
 
 	{% if systemdetaljer.alias %}
-		<h6>Alias: {{ systemdetaljer.alias }}</h6>
+		<p>Alias: {% for alias in systemdetaljer.alias_oppdelt %} <span class="badge badge-light">{{ alias }}</span> {% endfor %}</p>
 	{% endif %}
 
-	<h6>Kommunale tema:
+	<p>Kommunale tema:
 		{% for b in systemdetaljer.LOSref.all %}
 				{% comment %}
 				{% if b.kategori_ref.verdi == 'Ord' %}
@@ -77,16 +77,16 @@
 						<a href="{{ b.unik_id }}.html" class="badge badge-light">{{ b.verdi }}</a>
 				{% endif %}
 		{% endfor %}
-	</h6>
+	</p>
 
 
-	<h6>Kommunale ord:
+	<p>Kommunale ord:
 		{% for b in systemdetaljer.LOSref.all %}
 				{% if b.kategori_ref.verdi == 'Ord' %}
 						<a href="{{ b.unik_id }}.html" class="badge badge-light">{{ b.verdi }}</a>
 				{% endif %}
 		{% endfor %}
-	</h6>
+	</p>
 
 	{% if user.is_authenticated %}
 		<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/"
@@ -109,14 +109,18 @@
 		<div class="alert alert-warning" role="alert">
 			<h5>Dette systemet er markert som ikke lenger i bruk.</h5>
 		</div>
-	{% else %}
-		{% if not systemdetaljer.informasjon_kvalitetssikret %}
-		<div id="div_message" class="alert alert-warning">
-			<a class="close" data-dismiss="alert" href="#">×</a>
-			<h6 class="alert-heading">Informasjonen er ikke kvalitetssikret</h6>
-		</div>
-		{% endif %}
 	{% endif %}
+
+	{% comment %}
+	{% if not systemdetaljer.informasjon_kvalitetssikret %}
+	<div id="div_message" class="alert alert-warning">
+		<a class="close" data-dismiss="alert" href="#">×</a>
+		<h6 class="alert-heading">Informasjonen er ikke kvalitetssikret</h6>
+	</div>
+	{% endif %}
+	{% endcomment %}
+
+<hr>
 
 <div class="accordion" id="accordionSystem">
 

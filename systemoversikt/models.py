@@ -3309,7 +3309,7 @@ class System(models.Model):
 			verbose_name="Alternative søkenavn (alias)",
 			blank=True,
 			null=True,
-			help_text=u"Alternative navn på systemet for å avhjelpe søk. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje.",
+			help_text=u"Alternative navn på systemet for å avhjelpe søk. Kun enkeltord. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje.",
 			)
 	systembeskrivelse = models.TextField(
 			verbose_name="Systembeskrivelse",
@@ -3860,6 +3860,9 @@ class System(models.Model):
 			return u'%s (%s)' % (self.systemnavn, "avviklet")
 		else:
 			return u'%s' % (self.systemnavn)
+
+	def alias_oppdelt(self):
+		return self.alias.split()
 
 	def unike_server_os(self):
 		server_os = []
@@ -5432,7 +5435,7 @@ class PRKvalg(models.Model):
 	ad_group_ref = models.ForeignKey(
 			to="ADgroup",
 			on_delete=models.CASCADE,
-			related_name='PRKvalg_ad_group_ref',
+			related_name='prkvalg',
 			verbose_name="Kobling PRK-valg mot AD gruppe",
 			null=True,
 			blank=True,

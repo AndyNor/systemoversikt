@@ -24,7 +24,7 @@
 		{% if gruppe.parent %}
 		📁<a href="{% url 'adorgunit_detaljer' pk=gruppe.parent.pk %}"> {{ gruppe.parent }}</a><br>
 		{% endif %}
-		{% for prkvalg in gruppe.PRKvalg_ad_group_ref.all %}
+		{% for prkvalg in gruppe.prkvalg.all %}
 			📖<a href="{% url 'prk_skjema' skjema_id=prkvalg.skjemanavn.pk %}"> {{ prkvalg.skjemanavn.skjemanavn }} --> {{ prkvalg.valgnavn }}</a><br>
 		{% endfor%}
 	</p>

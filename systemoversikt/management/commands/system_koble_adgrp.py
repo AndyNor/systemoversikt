@@ -24,5 +24,10 @@ class Command(BaseCommand):
 					for word in lookup_words:
 						adgrp = ADgroup.objects.filter(Q(common_name__icontains=word) | Q(display_name__icontains=word))
 						for grp in adgrp:
-							print("   ", grp.common_name, grp.display_name)
+							# Aktive PRK-valg
+							if len(grp.prkvalg.all()) > 0:
+								print("   PRK:%s: %s - %s" % (grp.common_name, grp.prkvalg.all()[0].skjemanavn, grp.prkvalg.all()[0]))
+							# AD-grupper uten PRK-valg
+							else:
+								print("   ADgruppe:%s (%s)" % (grp.common_name, grp.display_name))
 					print("------")
