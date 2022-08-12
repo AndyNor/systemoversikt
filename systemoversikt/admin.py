@@ -153,9 +153,9 @@ class VirtualIPPoolAdmin(admin.ModelAdmin):
 
 @admin.register(NetworkContainer)
 class NetworkContainerAdmin(admin.ModelAdmin):
-	list_display = ('ip_address', 'subnet_mask', 'network_zone', 'network_zone_description', 'comment', 'locationid', 'orgname', 'vlanid', 'vrfname', 'netcategory')
+	list_display = ('ip_address', 'subnet_mask', 'disabled', 'network_zone', 'network_zone_description', 'comment', 'locationid', 'orgname', 'vlanid', 'vrfname', 'netcategory')
 	search_fields = ('ip_address', 'comment', 'orgname', 'locationid', )
-	list_filter = ('netcategory', 'network_zone',)
+	list_filter = ('disabled', 'netcategory', 'network_zone',)
 
 
 @admin.register(NetworkIPAddress)
@@ -1002,12 +1002,12 @@ class CMDBRefAdmin(admin.ModelAdmin):
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('alle_cmdbref'))
+			return redirect(reverse('alle_cmdbref_sok'))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('alle_cmdbref'))
+			return redirect(reverse('alle_cmdbref_sok'))
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):

@@ -53,6 +53,9 @@ class Command(BaseCommand):
 		@transaction.atomic
 		def import_cmdb_clients():
 
+			LOG_EVENT_TYPE = "CMDB klient import"
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
 			client_dropped = 0
 
 			if ".xlsx" in destination_file:
@@ -134,8 +137,9 @@ class Command(BaseCommand):
 					devices_set_inactive,
 					total_runtime,
 				)
+
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB klient import',
+					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print(logg_entry_message)

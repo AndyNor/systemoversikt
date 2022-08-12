@@ -1631,6 +1631,10 @@ class NetworkContainer(models.Model):
 			null=True,
 			verbose_name="Beskrivelse",
 			)
+	disabled = models.BooleanField(
+			verbose_name="Deaktivert",
+			default=False,
+			)
 	ip_address = models.GenericIPAddressField(
 			null=False,
 			verbose_name="IP-adresse",

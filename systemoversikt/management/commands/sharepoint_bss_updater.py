@@ -56,6 +56,9 @@ class Command(BaseCommand):
 		@transaction.atomic
 		def import_business_services():
 
+			LOG_EVENT_TYPE = "CMDB business service import"
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
 			import pandas as pd
 			import numpy as np
 			dfRaw = pd.read_excel(destination_file)
@@ -124,7 +127,7 @@ class Command(BaseCommand):
 					if business_sub_service.navn != bss_name:
 						message = "Nytt og gammelt navn stemmer ikke overens for %s og %s" % (business_sub_service.navn, bss_name)
 						logg_entry = ApplicationLog.objects.create(
-							event_type='CMDB business service import',
+							event_type=LOG_EVENT_TYPE,
 							message=message,
 							)
 						print(message)
@@ -169,7 +172,7 @@ class Command(BaseCommand):
 						bss_dropped,
 					)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB business service import',
+					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print("\n")
