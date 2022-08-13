@@ -2481,6 +2481,11 @@ class ADgroup(models.Model):
 			null=True,
 			help_text=u"Mor-gruppe (importert)",
 			)
+	systemer = models.ManyToManyField(
+			to="System",
+			related_name='adgrupper',
+			verbose_name="Systemer basert på navneoppslag",
+			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
 	def __str__(self):
@@ -5450,10 +5455,18 @@ class PRKvalg(models.Model):
 			default=True, # per definisjon
 			help_text=u"Settes automatisk",
 			)
+	systemer = models.ManyToManyField(
+		to="System",
+		related_name='prkvalg',
+		verbose_name="Systemer basert på navneoppslag",
+		)
 	#ikke behov for historikk
 
 	def __str__(self):
 		return u'PRK-valg %s' % (self.valgnavn)
+
+	def full_benevning(self):
+		return u'Skjema %s, gruppering %s, valg %s' % (self.skjemanavn, self.gruppering, self.valgnavn)
 
 	class Meta:
 		verbose_name_plural = "PRK: PRK-valg"

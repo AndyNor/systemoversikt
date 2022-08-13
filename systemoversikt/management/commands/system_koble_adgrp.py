@@ -26,8 +26,13 @@ class Command(BaseCommand):
 						for grp in adgrp:
 							# Aktive PRK-valg
 							if len(grp.prkvalg.all()) > 0:
-								print("   PRK:%s: %s - %s" % (grp.common_name, grp.prkvalg.all()[0].skjemanavn, grp.prkvalg.all()[0]))
-							# AD-grupper uten PRK-valg
-							else:
-								print("   ADgruppe:%s (%s)" % (grp.common_name, grp.display_name))
+								for prkvalg in grp.prkvalg.all():
+									print("   PRK:%s: %s - %s" % (grp.common_name, prkvalg.skjemanavn, prkvalg))
+									if s not in prkvalg.systemer.all():
+										prkvalg.systemer.add(s)
+										prkvalg.save()
+							print("   ADgruppe:%s (%s)" % (grp.common_name, grp.display_name))
+							if s not in grp.systemer.all():
+								grp.systemer.add(s)
+								grp.save()
 					print("------")
