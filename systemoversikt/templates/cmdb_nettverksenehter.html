@@ -1,0 +1,34 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Nettverksenheter
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Enhetsnavn</th>
+		<th>IP-adresse</th>
+		<th>Modell</th>
+		<th>Firmware</th>
+	</thead>
+	<tbody>
+	{% for device in nettverksenehter %}
+		<tr>
+			<td>{{device.name}}</td>
+			<td>{{device.ip_address}}</td>
+			<td>{{device.model}}</td>
+			<td>{{device.firmware}}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

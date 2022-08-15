@@ -143,6 +143,7 @@ urlpatterns = [
 	re_path(r'^cmdb/dns/$', views.alle_dns, name='alle_dns'),
 	re_path(r'^cmdb/nettverk/$', views.alle_nettverk, name='alle_nettverk'),
 	re_path(r'^cmdb/nettverk/(?P<pk>\d{1,8})/$', views.nettverk_detaljer, name='nettverk_detaljer'),
+	re_path(r'^cmdb/nettverksenheter/$', views.alle_nettverksenheter, name='alle_nettverksenheter'),
 	re_path(r'^cmdb/vip/$', views.alle_vip, name='alle_vip'),
 	re_path(r'^cmdb/vip/(?P<pk>\d{1,8})/$', views.detaljer_vip, name='detaljer_vip'),
 	re_path(r'^cmdb/device/sok/$', views.maskin_sok, name='maskin_sok'),

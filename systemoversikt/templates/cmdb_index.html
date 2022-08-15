@@ -67,6 +67,9 @@
 		{% url 'alle_nettverk' as url_alle_nettverk %}
 		<a href="{{url_alle_nettverk}}" class="btn btn-sm btn-link {% if url_alle_nettverk in request.path %}fremhev{% endif %}">VLAN / Nettverk</a><br>
 
+		{% url 'alle_nettverksenheter' as url_alle_nettverksenheter %}
+		<a href="{{url_alle_nettverksenheter}}" class="btn btn-sm btn-link {% if url_alle_nettverksenheter in request.path %}fremhev{% endif %}">Nettverksenheter</a><br>
+
 		{% url 'alle_vip' as url_alle_vip %}
 		<a href="{{url_alle_vip}}" class="btn btn-sm btn-link {% if url_alle_vip in request.path %}fremhev{% endif %}">BigIP / VIP</a><br>
 

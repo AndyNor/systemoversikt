@@ -159,6 +159,24 @@ def mal(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def alle_nettverksenheter(request):
+	"""
+	Viser alle nettverksenheter (cisco, bigip..)
+	Tilgjengelig for de som kan lese cmdb-data
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		#logikk
+		nettverksenehter = NetworkDevice.objects.all()
+
+		return render(request, 'cmdb_nettverksenehter.html', {
+			'request': request,
+			'nettverksenehter': nettverksenehter,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 
 def cmdb_statistikk(request):
 	"""
@@ -194,6 +212,8 @@ def cmdb_statistikk(request):
 		count_mssql_disk = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
 		count_dns_arecords = DNSrecord.objects.filter(dns_type="A record").count()
 		count_dns_cnames = DNSrecord.objects.filter(dns_type="CNAME").count()
+		count_cisco = NetworkDevice.objects.filter(model__icontains="cisco").count()
+		count_bigip = NetworkDevice.objects.filter(model__icontains="f5").count()
 
 		return render(request, 'cmdb_statistikk.html', {
 			'request': request,
@@ -219,8 +239,8 @@ def cmdb_statistikk(request):
 			'count_mssql_disk': count_mssql_disk,
 			'count_dns_arecords': count_dns_arecords,
 			'count_dns_cnames': count_dns_cnames,
-
-
+			'count_cisco': count_cisco,
+			'count_bigip': count_bigip,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

@@ -35,6 +35,11 @@ class Command(BaseCommand):
 		@transaction.atomic
 		def import_network():
 
+			num_cisco = 0
+			num_cisco_new = 0
+			num_bigip = 0
+			num_bigip_new = 0
+
 			### BigIP
 			if ".xlsx" in destination_file_bigip:
 				dfRaw = pd.read_excel(destination_file_bigip)
@@ -43,13 +48,16 @@ class Command(BaseCommand):
 			if data == None:
 				return
 
+
+			num_bigip = len(data)
 			for line in data:
-				print(line)
 				try:
 					inst = NetworkDevice.objects.get(name=line["Name"])
 				except:
-					inst = NetworkDevice.objects.create(name=line["Name"])
+					inst = NetworkDevice.objects.create(name=line["Name"], ip_address=line["IP Address"])
+					num_bigip_new += 1
 
+				print(inst.name)
 				inst.ip_address = line["IP Address"]
 				inst.model = line["Model ID"]
 				inst.firmware = ""
@@ -63,8 +71,9 @@ class Command(BaseCommand):
 						ipaddr_ins.save()
 
 
-			logg_entry_message = 'BigIP ferdig' % (
-
+			logg_entry_message = '%s bigip-enheter funnet. %s nye lagt til.' % (
+					num_bigip,
+					num_bigip_new,
 				)
 			logg_entry = ApplicationLog.objects.create(
 					event_type='CMDB Networkdevice import',
@@ -81,15 +90,17 @@ class Command(BaseCommand):
 			if data == None:
 				return
 
+			num_cisco = len(data)
 			for line in data:
-				print(line)
 				try:
-					inst = NetworkDevice.objects.get(name=line["Name.1"])
+					inst = NetworkDevice.objects.get(name=line["Name"])
 				except:
-					inst = NetworkDevice.objects.create(name=line["Name.1"])
+					inst = NetworkDevice.objects.create(name=line["Name"], ip_address=line["IP Address"])
+					num_cisco_new += 1
 
+				print(inst.name)
 				inst.ip_address = line["IP Address"]
-				model = "%s %s %s" % (line["Manufacturer"], line["Class version"], line["Name.2"])
+				model = "%s %s %s" % (line["Manufacturer"], line["Class"], line["Name.1"])
 				inst.model = model
 				inst.firmware = line["Firmware version"]
 				inst.save()
@@ -102,8 +113,9 @@ class Command(BaseCommand):
 						ipaddr_ins.save()
 
 
-			logg_entry_message = 'Ciscoutstyr ferdig.' % (
-
+			logg_entry_message = '%s cisco-enheter funnet. %s nye lagt til.' % (
+					num_cisco,
+					num_cisco_new,
 				)
 			logg_entry = ApplicationLog.objects.create(
 					event_type='CMDB Networkdevice import',

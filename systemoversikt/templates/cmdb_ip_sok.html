@@ -25,7 +25,6 @@
 	</form>
 
 	<hr>
-	<p>Oppslag kan ta lang tid dersom mange IP-adresser legges inn.
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
@@ -33,6 +32,7 @@
 		<th>Server</th>
 		<th>DNS</th>
 		<th>Nettverk / VLAN</th>
+		<th>Nettverksutstyr</th>
 		<th>Lastbalanserte tjenester (vip)</th>
 		<th>Lastbalanserte tjenester (pools)</th>
 	</thead>
@@ -53,6 +53,11 @@
 			<td>
 				{% for vlan in ip.vlan.all %}
 					<li>{{ vlan.comment }} ({{ vlan }}) {% if vlan.disabled %} (deaktivert) {% endif %}</li>
+				{% endfor %}
+			</td>
+			<td>
+				{% for netdevice in ip.networkdevices.all %}
+					<li>{{ netdevice.model }}: {{ netdevice.name }}</li>
 				{% endfor %}
 			</td>
 			<td>
