@@ -1724,6 +1724,11 @@ class NetworkIPAddress(models.Model):
 		verbose_name="Kobling til VLAN",
 		related_name='network_ip_address',
 	)
+	networkdevices = models.ManyToManyField(
+		to='NetworkDevice',
+		verbose_name="Kobling til nettverksenheter",
+		related_name='network_ip_address',
+	)
 
 	class Meta:
 		verbose_name_plural = "CMDB: Network IP-address"
@@ -1884,6 +1889,32 @@ class CMDBdatabase(models.Model):
 		verbose_name = "database"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+
+class NetworkDevice(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	name = models.CharField(
+			max_length=200,
+			unique=True,
+			verbose_name="Enhetsnavn",
+			)
+	ip_address = models.GenericIPAddressField(
+			null=False,
+			verbose_name="IP-adresse",
+			)
+	model = models.CharField(
+			max_length=200,
+			null=True,
+			verbose_name="Modell",
+			)
+	firmware = models.CharField(
+			max_length=200,
+			null=True,
+			verbose_name="Firmware",
+			)
 
 
 class CMDBdevice(models.Model):
