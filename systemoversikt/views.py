@@ -3613,11 +3613,17 @@ def alle_adgrupper(request):
 	else:
 		adgrupper = ADgroup.objects.none()
 
+	antall_adgr_tid = []
+	logs = ApplicationLog.objects.filter(event_type="AD group-import", message__startswith="Det tok")
+	for log in logs:
+		antall_adgr_tid.append({"label": log.opprettet.strftime("%b"), "value": float(re.search(r'sekunder\. (\d+) treff', log.message, re.I).groups()[0])})
+
 	required_permissions = 'auth.view_user'
 	if request.user.has_perm(required_permissions):
 		return render(request, 'ad_adgrupper_sok.html', {
 				"adgrupper": adgrupper,
 				"search_term": search_term,
+				'antall_adgr_tid': antall_adgr_tid,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
