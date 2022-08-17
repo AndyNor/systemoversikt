@@ -3990,12 +3990,14 @@ def alle_cmdbref(request):
 		cmdbref = cmdbref.order_by("-operational_status", "parent_ref__navn", Lower("navn"))
 
 		utfasede_bs = CMDBbs.objects.filter(operational_status=False).filter(~Q(systemreferanse=None))
+		bs_uten_system = CMDBbs.objects.filter(operational_status=True).filter(Q(systemreferanse=None))
 
 		return render(request, 'cmdb_bs_sok.html', {
 			'request': request,
 			'cmdbref': cmdbref,
 			'search_term': search_term,
 			'utfasede_bs': utfasede_bs,
+			'bs_uten_system': bs_uten_system,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
