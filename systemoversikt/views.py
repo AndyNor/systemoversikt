@@ -3981,7 +3981,7 @@ def alle_cmdbref(request):
 		search_term = request.GET.get('search_term', "").strip()
 
 		if search_term == "__all__":
-			cmdbref = CMDBRef.objects.filter(parent_ref__eksponert_for_bruker=True, parent_ref__operational_status=True)
+			cmdbref = CMDBRef.objects.filter(parent_ref__eksponert_for_bruker=True)#, parent_ref__operational_status=True)
 		elif len(search_term) < 1: # if one or less, return nothing
 			cmdbref = CMDBRef.objects.none()
 		else:
