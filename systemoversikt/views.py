@@ -3981,7 +3981,7 @@ def alle_cmdbref(request):
 		search_term = request.GET.get('search_term', "").strip()
 
 		if search_term == "__all__":
-			cmdbref = CMDBRef.objects.all()
+			cmdbref = CMDBRef.objects.filter(parent_ref__eksponert_for_bruker=True, parent_ref__operational_status=True)
 		elif len(search_term) < 1: # if one or less, return nothing
 			cmdbref = CMDBRef.objects.none()
 		else:
@@ -3989,15 +3989,15 @@ def alle_cmdbref(request):
 
 		cmdbref = cmdbref.order_by("-operational_status", "parent_ref__navn", Lower("navn"))
 
+		bs_uten_system = CMDBbs.objects.filter(operational_status=True).filter(Q(systemreferanse=None)).filter(eksponert_for_bruker=True)
 		utfasede_bs = CMDBbs.objects.filter(operational_status=False).filter(~Q(systemreferanse=None))
-		bs_uten_system = CMDBbs.objects.filter(operational_status=True).filter(Q(systemreferanse=None))
 
 		return render(request, 'cmdb_bs_sok.html', {
 			'request': request,
 			'cmdbref': cmdbref,
 			'search_term': search_term,
-			'utfasede_bs': utfasede_bs,
 			'bs_uten_system': bs_uten_system,
+			'utfasede_bs': utfasede_bs,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

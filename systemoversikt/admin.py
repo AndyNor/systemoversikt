@@ -994,9 +994,10 @@ class CMDBRefAdmin(admin.ModelAdmin):
 @admin.register(CMDBbs)
 class CMDBRefAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('navn', 'operational_status', 'systemreferanse', 'ant_bss', 'ant_devices', 'ant_databaser', 'bs_external_ref', 'opprettet')
+	list_display = ('navn', 'operational_status', 'eksponert_for_bruker', 'systemreferanse', 'ant_bss', 'ant_devices', 'ant_databaser', 'bs_external_ref', 'opprettet')
 	search_fields = ('navn',)
-	readonly_fields = ('navn',)
+	list_filter = ('eksponert_for_bruker', 'operational_status')
+	readonly_fields = ('navn', 'operational_status', 'bs_external_ref',)
 	autocomplete_fields = ('systemreferanse',)
 
 

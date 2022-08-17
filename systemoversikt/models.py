@@ -1319,7 +1319,11 @@ class CMDBbs(models.Model):
 			help_text=u"Importert",
 			)
 	operational_status = models.BooleanField(
-			verbose_name="I bruk?",
+			verbose_name="I bruk i ServiceNow",
+			default=True,
+			)
+	eksponert_for_bruker = models.BooleanField(
+			verbose_name="Eksponert mot bruker",
 			default=True,
 			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
