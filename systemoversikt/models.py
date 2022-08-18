@@ -2266,6 +2266,35 @@ class CMDBdevice(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class CMDBbackup(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	device = models.OneToOneField(
+			to="CMDBdevice",
+			related_name='backup',
+			on_delete=models.CASCADE,
+			verbose_name="Backup av",
+			)
+	backup_size_bytes = models.IntegerField(
+			null=True,
+			)
+	export_date = models.DateTimeField(
+			verbose_name="Dato uttrekk",
+			null=True,
+			)
+
+	class Meta:
+		verbose_name_plural = "CMDB: Backup"
+		verbose_name = "Backup"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+	def __str__(self):
+		return u'%s %s' % (self.device, self.backup_size_bytes)
+
+
+
 class CMDBDisk(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",

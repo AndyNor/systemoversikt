@@ -979,6 +979,14 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 	)
 
 
+@admin.register(CMDBbackup)
+class CMDBbackupAdmin(admin.ModelAdmin):
+	list_display = ('device', 'backup_size_bytes', 'export_date',)
+	search_fields = ('device',)
+	list_filter = ('export_date',)
+
+
+
 @admin.register(CMDBRef)
 class CMDBRefAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
