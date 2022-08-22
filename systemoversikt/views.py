@@ -4537,6 +4537,45 @@ def recursive_group_members(request, group):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def tilgangsgrupper_api(request):
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="api_tilgangsgrupper").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
+
+	from django.core.exceptions import MultipleObjectsReturned
+
+	sporring = request.GET["gruppenavn"]
+	try:
+		adgruppe = ADgroup.objects.get(distinguishedname__icontains=sporring)
+	except MultipleObjectsReturned:
+		return JsonResponse({"spørring": sporring, "status": "Spørringen gav flere treff. Vennligst oppgi et unikt gruppenavn.", "data": []}, safe=False)
+	data = []
+
+	# medlemmer
+	#	brukernavn
+	#	fra prk?
+	#	sist innlogget
+	#	passord utløper
+	#	passord utløpt
+	#	beskrivelse
+	# beskrivelse
+	# display name
+	# medlem av
+	# mail
+	# from prk
+	# parent
+
+	resultat = {"spørring": sporring, "data": adgruppe.common_name}
+	return JsonResponse(resultat, safe=False)
+
+
+
+
 def systemer_api(request):
 
 	if not request.method == "GET":
