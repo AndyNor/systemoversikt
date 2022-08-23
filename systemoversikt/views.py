@@ -4549,6 +4549,9 @@ def tilgangsgrupper_api(request):
 
 	from django.core.exceptions import MultipleObjectsReturned
 
+	if not "gruppenavn" in request.GET:
+		return JsonResponse({"message": "Du må oppgi et gruppenavn som GET-variabel. ?gruppenavn=<navn>", "data": None}, safe=False)
+
 	sporring = request.GET["gruppenavn"]
 	try:
 		adgruppe = ADgroup.objects.get(distinguishedname__icontains=sporring)
@@ -4556,21 +4559,43 @@ def tilgangsgrupper_api(request):
 		return JsonResponse({"spørring": sporring, "status": "Spørringen gav flere treff. Vennligst oppgi et unikt gruppenavn.", "data": []}, safe=False)
 	data = []
 
-	# medlemmer
-	#	brukernavn
-	#	fra prk?
-	#	sist innlogget
-	#	passord utløper
-	#	passord utløpt
-	#	beskrivelse
-	# beskrivelse
-	# display name
-	# medlem av
-	# mail
-	# from prk
-	# parent
+	from django.core.exceptions import ObjectDoesNotExist
+	def user_lookup(user):
+		try:
+			username = re.search(r'cn=([^\,]*)', user, re.I).groups()[0]
+			user = User.objects.get(username__iexact=username)
+			virksomhet = user.profile.virksomhet.virksomhetsforkortelse if user.profile.virksomhet else "Ukjent"
+			return {
+					"user_username": user.username,
+					"user_full_name": user.profile.displayName,
+					"user_from_prk": user.profile.from_prk,
+					"user_last_loggon": user.profile.lastLogonTimestamp,
+					"user_passwd_expire": user.profile.userPasswordExpiry,
+					"user_created": user.profile.whenCreated,
+					"user_virksomhet": virksomhet,
+					"user_description": user.profile.description,
+					"user_disabled": user.profile.accountdisable,
+					"user_passwd_never_expire": user.profile.dont_expire_password,
+				}
+		except ObjectDoesNotExist:
+			return {"username": username, "status": "Ingen treff på bruker i AD"}
 
-	resultat = {"spørring": sporring, "data": adgruppe.common_name}
+
+	data.append({"common_name": adgruppe.common_name})
+	data.append({"distinguishedname": adgruppe.distinguishedname})
+	data.append({"sist_oppdatert": adgruppe.sist_oppdatert})
+	data.append({"description": adgruppe.description})
+	data.append({"membercount": adgruppe.membercount})
+	data.append({"from_prk": adgruppe.from_prk})
+	data.append({"mail_enabled": adgruppe.mail})
+
+	medlemmer = [user_lookup(user) for user in json.loads(adgruppe.member)]
+	data.append({"medlemmer": medlemmer})
+
+	memberof = [user_lookup(mo) for mo in json.loads(adgruppe.memberof)]
+	data.append({"memberof": memberof})
+
+	resultat = {"spørring": sporring, "data": data}
 	return JsonResponse(resultat, safe=False)
 
 

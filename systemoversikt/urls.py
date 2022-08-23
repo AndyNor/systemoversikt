@@ -223,7 +223,7 @@ urlpatterns = [
 	re_path(r'^virksomhet/(?P<virksomhet_pk>\d+)/excelapi/$', views.system_excel_api, name='system_excel_api'), # det må brukes API-key
 	re_path(r'^systemer/iga/api/$', views.iga_api, name='iga_api'), # (det er innført behov for API-key)
 	re_path(r'^systemer/behandlingsoversikt/api/$', views.behandlingsoversikt_api, name='behandlingsoversikt_api'), # (det er innført behov for API-key)
-	re_path(r'^api/tilgangsgrupper/$', views.tilgangsgrupper_api, name='tilgangsgrupper_api'), # (det er innført behov for API-key)
+	re_path(r'^get-api/tilgangsgrupper/$', views.tilgangsgrupper_api, name='tilgangsgrupper_api'), # (det er innført behov for API-key)
 
 	# import og konvertering
 	re_path(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),
