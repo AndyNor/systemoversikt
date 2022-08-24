@@ -31,7 +31,7 @@
 			<td>
 				<a href="/admin/systemoversikt/leverandortilgang/{{lev.pk}}/change/">{% include 'site_edit_button.html' %}</a>
 				{% url 'adgruppe_detaljer' pk=lev.adgruppe.pk as url_adgruppe_detaljer %}
-				<a href="{{ url_adgruppe_detaljer }}">{{ lev.navn }}</a>
+				<a href="{{ url_adgruppe_detaljer }}">{{ lev }}</a>
 			</td>
 			<td>
 				{% for s in lev.systemer.all %}
@@ -53,7 +53,7 @@
 </table>
 
 
-<h4>Profiler som trolig mangler</h4>
+<h4>AD-grupper som trolig mangler kobling</h4>
 
 <ul style="column-count:2; font-size:9pt;">
 {% for gruppe in manglende_grupper %}

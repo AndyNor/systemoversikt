@@ -2439,9 +2439,9 @@ class Leverandortilgang(models.Model):
 			)
 	navn = models.CharField(
 			verbose_name="Visningsnavn",
-			blank=False,
-			null=False,
-			unique=True,
+			help_text="Valgfritt å fylle ut",
+			blank=True,
+			null=True,
 			max_length=100,
 			)
 	systemer = models.ManyToManyField(
@@ -2469,7 +2469,12 @@ class Leverandortilgang(models.Model):
 	history = HistoricalRecords()
 
 	def __str__(self):
-		return u'%s' % (self.navn)
+		if self.navn != None:
+			return u'%s' % (self.navn)
+		try:
+			return u'Leverandørtilgang for %s' % (''.join(s.systemnavn for s in self.systemer.all()))
+		except:
+			return u'Leverandørtilgang %s' % self.pk
 
 	def systemer_vis(self):
 		return ", ".join([
