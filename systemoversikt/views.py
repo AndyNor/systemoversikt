@@ -4543,8 +4543,8 @@ def tilgangsgrupper_api(request):
 
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn="api_tilgangsgrupper").values_list("key", flat=True)
-	if not key in list(allowed_keys):
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+	#if not key in list(allowed_keys):
+	#	return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 
 
 	from django.core.exceptions import MultipleObjectsReturned
@@ -4557,7 +4557,7 @@ def tilgangsgrupper_api(request):
 		adgruppe = ADgroup.objects.get(distinguishedname__icontains=sporring)
 	except MultipleObjectsReturned:
 		return JsonResponse({"spørring": sporring, "status": "Spørringen gav flere treff. Vennligst oppgi et unikt gruppenavn.", "data": []}, safe=False)
-	data = []
+	data = {}
 
 	from django.core.exceptions import ObjectDoesNotExist
 	def user_lookup(user):
@@ -4580,20 +4580,19 @@ def tilgangsgrupper_api(request):
 		except ObjectDoesNotExist:
 			return {"username": username, "status": "Ingen treff på bruker i AD"}
 
-
-	data.append({"common_name": adgruppe.common_name})
-	data.append({"distinguishedname": adgruppe.distinguishedname})
-	data.append({"sist_oppdatert": adgruppe.sist_oppdatert})
-	data.append({"description": adgruppe.description})
-	data.append({"membercount": adgruppe.membercount})
-	data.append({"from_prk": adgruppe.from_prk})
-	data.append({"mail_enabled": adgruppe.mail})
-
 	medlemmer = [user_lookup(user) for user in json.loads(adgruppe.member)]
-	data.append({"medlemmer": medlemmer})
-
 	memberof = [user_lookup(mo) for mo in json.loads(adgruppe.memberof)]
-	data.append({"memberof": memberof})
+
+	data['common_name'] = adgruppe.common_name
+	data['distinguishedname'] = adgruppe.distinguishedname
+	data['sist_oppdatert'] = adgruppe.sist_oppdatert
+	data['description'] = adgruppe.description
+	data['membercount'] = adgruppe.membercount
+	data['from_prk'] = adgruppe.from_prk
+	data['mail_enabled'] = adgruppe.mail
+	data['medlemmer'] = medlemmer
+	data['memberof'] = memberof
+
 
 	resultat = {"spørring": sporring, "data": data}
 	return JsonResponse(resultat, safe=False)
