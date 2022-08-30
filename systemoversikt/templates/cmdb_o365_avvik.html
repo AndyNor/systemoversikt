@@ -1,0 +1,32 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Unntaksgrupper Azure AD (unntatt etter lokal vurdering)
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Unntakskategori</th>
+		<th>Antall personer</th>
+		<th>Kommentarer</th>
+	</thead>
+	<tbody>
+	{% for s in statistikk %}
+		<tr>
+			<td>{{s.beskrivelse}}</td>
+			<td>{{s.medlemmer}}</td>
+			<td>{{s.kommentar}}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

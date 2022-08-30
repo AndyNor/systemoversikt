@@ -2569,6 +2569,7 @@ class ADgroup(models.Model):
 
 	class Meta:
 		verbose_name_plural = "AD: AD-grupper"
+		verbose_name = "ADgruppe"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 	def cn(self):

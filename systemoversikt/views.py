@@ -159,6 +159,49 @@ def mal(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+
+def o365_avvik(request):
+	"""
+	Viser alle avvik per virksomhet (cisco, bigip..)
+	Tilgjengelig for de som kan lese cmdb-data
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		#logikk
+		grupper = [
+			{"gruppe": "DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Vanlig bruker uten E3-lisens. I tillegg har alle på Citrix/AKS unntak."},
+			{"gruppe": "DS-OFFICE365E3_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Vanlig bruker med E3-lisens. I tillegg har alle på Citrix/AKS unntak."},
+			{"gruppe": "DS-OFFICE365SVC_UNNTAK_KJENTENHET", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Servicekontoer"},
+			{"gruppe": "DS-OFFICE365SVC_UNNTAK_MFA", "beskrivelse": "Unntak multifaktor autentisering", "kommentar": "Dette er antall service-kontoer. I tillegg har alle på Citrix/AKS unntak, samt møteromspaneler."},
+			{"gruppe": "DS-OFFICE365SPES_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Vanlige brukere"},
+			{"gruppe": "DS-OFFICE365SVC_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Servicekontoer"},
+			{"gruppe": "DS-OFFICE365SPES_UNNTAK_HOYRISIKO", "beskrivelse": "Oppkobling høyrisikoland", "kommentar": "Kina, Russland, Nord-Korea.."},
+		]
+
+		def hent_statistikk(g):
+			try:
+				gruppe = ADgroup.objects.get(common_name__iexact=g["gruppe"])
+				g["medlemmer"] = gruppe.membercount
+				return g
+			except:
+				print("fant ikke gruppen %s" % g)
+				return g
+
+		statistikk = []
+		for g in grupper:
+			statistikk.append(hent_statistikk(g))
+
+		return render(request, 'cmdb_o365_avvik.html', {
+			'statistikk': statistikk,
+			'request': request,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
+
 def alle_nettverksenheter(request):
 	"""
 	Viser alle nettverksenheter (cisco, bigip..)

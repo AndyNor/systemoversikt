@@ -14,6 +14,9 @@
 	{% url 'azure_application_keys' as url_azure_application_keys %}
 	<a href="{{ url_azure_application_keys }}" class="btn btn-sm btn-link {% if url_azure_application_keys in request.path %}fremhev{% endif %}" >Nøkler og sertifikater</a>
 
+	{% url 'o365_avvik' as url_o365_avvik %}
+	<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}" >Sikkerhetsavvik</a>
+
 
 	<hr>
 	<h6>Brukere og tilgangsgrupper</h6>

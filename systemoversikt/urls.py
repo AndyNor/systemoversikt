@@ -149,6 +149,8 @@ urlpatterns = [
 	re_path(r'^cmdb/device/sok/$', views.maskin_sok, name='maskin_sok'),
 	re_path(r'^cmdb/azure/applications/$', views.azure_applications, name='azure_applications'),
 	re_path(r'^cmdb/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
+	re_path(r'^cmdb/o365_avvik/$', views.o365_avvik, name='o365_avvik'),
+
 
 
 	re_path(r'^cmdb/prk/$', views.alle_prk, name='alle_prk'),
