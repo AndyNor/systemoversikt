@@ -192,9 +192,12 @@ def o365_avvik(request):
 		for g in grupper:
 			statistikk.append(hent_statistikk(g))
 
+		alle_virskomhet = Virksomhet.objects.filter(ordinar_virksomhet=True)
+
 		return render(request, 'cmdb_o365_avvik.html', {
 			'statistikk': statistikk,
 			'request': request,
+			'virksomheter': alle_virskomhet,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

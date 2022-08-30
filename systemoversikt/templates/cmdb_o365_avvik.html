@@ -29,4 +29,10 @@
 	</table>
 
 
+<h5>Detaljer</h5>
+{% for v in virksomheter %}
+	<li><a href="{% url 'virksomhet_sikkerhetsavvik' pk=v.pk %}">{{ v }}</a></li>
+{% endfor %}
+
+
 {% endblock hovedinnhold %}
