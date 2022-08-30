@@ -170,8 +170,8 @@ def o365_avvik(request):
 
 		#logikk
 		grupper = [
-			{"gruppe": "DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Vanlig bruker uten E3-lisens. I tillegg har alle på Citrix/AKS unntak."},
-			{"gruppe": "DS-OFFICE365E3_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Vanlig bruker med E3-lisens. I tillegg har alle på Citrix/AKS unntak."},
+			{"gruppe": "DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Vanlig bruker standardlisens. I tillegg har alle på Citrix/AKS unntak."},
+			{"gruppe": "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Vanlig bruker med utvidet lisens. I tillegg har alle på Citrix/AKS unntak."},
 			{"gruppe": "DS-OFFICE365SVC_UNNTAK_KJENTENHET", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Servicekontoer"},
 			{"gruppe": "DS-OFFICE365SVC_UNNTAK_MFA", "beskrivelse": "Unntak multifaktor autentisering", "kommentar": "Dette er antall service-kontoer. I tillegg har alle på Citrix/AKS unntak, samt møteromspaneler."},
 			{"gruppe": "DS-OFFICE365SPES_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Vanlige brukere"},
@@ -595,7 +595,7 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 		#Grupper for å unnta fra krav om kjent enhet
 		grupper_ikke_administrert = [
 			"DS-OFFICE365_OPSJON_IKKEADMINISTRERT",
-			"DS-OFFICE365E3_OPSJON_IKKEADMINISTRERT",
+			"DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT",
 			"DS-OFFICE365SVC_UNNTAK_KJENTENHET"
 		]
 		brukere_ikke_administrert, logg = hent_brukere(grupper_ikke_administrert, logg)
