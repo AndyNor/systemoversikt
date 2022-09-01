@@ -83,8 +83,13 @@
 		<td>{{ vir.systembruk_brukergruppe.all.count }}</td>
 
 		{% comment %}<td>{{ vir.ansatte|default:"-" }}</td>{% endcomment %}
-		<td>{{ vir.get_resultatenhet_display|default:"-" }}</td>
-		<td>{{ vir.get_office365_display|default:"-" }}</td>
+		<td>
+			{{ vir.get_resultatenhet_display|default:"-" }}<br>
+			{{ vir.antall_klienter }} klienter
+		</td>
+		<td>
+			{{ vir.get_office365_display|default:"-" }}
+		</td>
 		{% comment %}<td>
 			{% for person in vir.autoriserte_bestillere_tjenester.all %}
 				<a href="{% url 'ansvarlig' person.pk %}"
