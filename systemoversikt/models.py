@@ -1335,7 +1335,7 @@ class CMDBbs(models.Model):
 			)
 	bs_external_ref = models.CharField(
 			unique=True,
-			verbose_name="Foreignkey mot ServiceNow",
+			verbose_name="ForeignKey mot ServiceNow",
 			max_length=64,
 			blank=False,
 			null=True,
@@ -1474,7 +1474,7 @@ class CMDBRef(models.Model): # BSS
 			)
 	bss_external_ref = models.CharField(
 			unique=True,
-			verbose_name="Foreignkey mot ServiceNow",
+			verbose_name="ForeignKey mot ServiceNow",
 			max_length=64,
 			blank=False,
 			null=True,
@@ -2294,7 +2294,13 @@ class CMDBbackup(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-	device = models.OneToOneField(
+	device_str = models.CharField(
+			verbose_name="Device string",
+			max_length=200,
+			blank=True,
+			null=True,
+			)
+	device = models.ForeignKey(
 			to="CMDBdevice",
 			related_name='backup',
 			on_delete=models.CASCADE,
@@ -2307,6 +2313,16 @@ class CMDBbackup(models.Model):
 			verbose_name="Dato uttrekk",
 			null=True,
 			)
+	bss = models.ForeignKey(
+			to=CMDBRef,
+			related_name='backup',
+			verbose_name="Business Sub Service",
+			on_delete=models.CASCADE,
+			blank=True,
+			null=True,
+			help_text=u"",
+			)
+	# vurdere unique_together med device_str og device?
 
 	class Meta:
 		verbose_name_plural = "CMDB: Backup"
