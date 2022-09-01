@@ -3899,9 +3899,12 @@ def alle_klienter(request):
 		maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('model_id').annotate(Count('model_id'))
 		maskiner_model_stats = sorted(maskiner_model_stats, key=lambda os: os['model_id__count'], reverse=True)
 
+		if maskiner != None:
+			maskiner = maskiner.order_by('comp_name')
+
 		return render(request, 'cmdb_maskiner_klienter.html', {
 			'request': request,
-			'maskiner': maskiner.order_by('comp_name'),
+			'maskiner': maskiner,
 			'device_search_term': search_term,
 			'alle_maskinadm_klienter': alle_maskinadm_klienter,
 			'alle_cmdb_klienter': alle_cmdb_klienter,
