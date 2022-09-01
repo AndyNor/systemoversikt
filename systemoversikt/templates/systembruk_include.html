@@ -3,15 +3,13 @@
 	<table class="tablesorter excel">
 	<thead>
 	<tr>
-		<th>Bruksdetaljer</th>
+		<th class="filter-false"></th>
+		<th>Klargjort</th>
 		<th>System</th>
-		<th>Ca antall brukere</th>
+		<th>Bruksinformasjon</th>
+		<th>Systemdetaljer</th>
 		<th>Driftsmodell</th>
-		<th>Lokal forvalter</th>
-		<th>Abonnerer på felles behandlinger?</th>
-		<th>Teknisk egnethet</th>
-		<th>Strategisk verdi</th>
-		<th>Funksjonell egnethet</th>
+		<th>Lokale vurderinger</th>
 
 	</tr>
 	</thead>
@@ -22,37 +20,38 @@
 		<td>
 			<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
 			{% include 'site_edit_button.html' %}</a>
-			{% url "bruksdetaljer" bruk.pk as url_bruksdetaljer %}
-			<a href="{{ url_bruksdetaljer }}">{{ virksomhet.virksomhetsforkortelse }} bruk av {{ bruk.system }}</a>
 		</td>
-
+		<td>{{ bruk.system.get_klargjort_ny_sikkerhetsmodell_display }}</td>
 		<td>
-			{% include 'system_include_vis.html' with system=bruk.system %}<br>
-			({{ bruk.system.systemeierskapsmodell }})
+			{% include 'system_include_vis.html' with system=bruk.system %}
 		</td>
-
-		<td>{{ bruk.antall_brukere|default:"-" }}
+		<td>
+			Lokale forvaltere: {% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}
+			Antall brukere: {{ bruk.antall_brukere|default:"-" }}
 			{% if bruk.system.antall_brukere %}
-				({{ bruk.system.antall_brukere|default:"-" }})
-			{% endif %}
+				({{ bruk.system.antall_brukere|default:"-" }} totalt)
+			{% endif %}<br>
+			Abonnerer på fellesbehandlinger: {% include 'site_janeivetikke.html' with boolean=bruk.del_behandlinger %}<br>
+				{% url "bruksdetaljer" bruk.pk as url_bruksdetaljer %}
+			<a href="{{ url_bruksdetaljer }}">Flere detaljer</a>
+		</td>
+		<td>
+			{{ bruk.system.systemeierskapsmodell|default:"Ukjent" }}<br>
+			{% for type in bruk.system.systemtyper.all %}
+				{{ type }}<br>
+			{% endfor %}
 		</td>
 
 		<td>
 			{{ bruk.system.driftsmodell_foreignkey|default:"-" }}
 		</td>
 
-		<td>
-			{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}
-		</td>
 
 		<td>
-			{% include 'site_janeivetikke.html' with boolean=bruk.del_behandlinger %}
+			T: {{ bruk.get_teknisk_egnethet_display|default:"-" }}<br>
+			S: {{ bruk.get_strategisk_egnethet_display|default:"-" }}<br>
+			F: {{ bruk.get_funksjonell_egnethet_display|default:"-" }}
 		</td>
-
-
-		<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
-		<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
-		<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
 
 
 

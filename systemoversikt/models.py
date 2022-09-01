@@ -18,6 +18,18 @@ def new_display_name(self):
 User.add_to_class("__str__", new_display_name)
 
 
+VALG_KLARGJORT_SIKKERHETSMODELL = (
+	(None, "❔ Ikke vurdert"),
+	(1, "🟢 Klargjort via Azure Web Application Proxy"),
+	(2, "🟢 Klargjort via Citrix"),
+	(3, "🟢 Skytjeneste med Azure AD-pålogging"),
+	(4, "🟢 Desktopapplikasjon uten avhengigheter, ferdig pakket"),
+	(5, "🟡 Ikke klargjort, skal til Azure Web Application Proxy"),
+	(6, "🟡 Ikke klargjort, skal til Citrix"),
+	(7, "🟡 Ikke klargjort, skal kun pakkes som desktop applikasjon"),
+	(8, "🔴 Ingen løsning klar enda"),
+)
+
 
 class UserChangeLog(models.Model):
 	opprettet = models.DateTimeField(
@@ -2849,6 +2861,7 @@ PROGRAMVAREKATEGORI_VALG = (
 )
 
 LIVSLOEP_VALG = (
+	(None, '0 Ikke vurdert'),
 	(1, '1 💡 Under anskaffelse/utvikling'),
 	(2, '2 🤞 Nytt og moderne, men fortsatt litt umodent'),
 	(3, '3 👌 Moderne og modent'),
@@ -2999,6 +3012,12 @@ class Programvare(models.Model):
 			blank=True,
 			null=True,
 			help_text=u"",
+			)
+	klargjort_ny_sikkerhetsmodell = models.IntegerField(
+			choices=VALG_KLARGJORT_SIKKERHETSMODELL,
+			verbose_name="Status klargjort for ny sikkerhetsmodell",
+			blank=True, null=True,
+			help_text=u"Besnyttes av UKE for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
 			)
 	history = HistoricalRecords()
 
@@ -3936,6 +3955,12 @@ class System(models.Model):
 			verbose_name="Begrepstagging (LOS)",
 			blank=True,
 			help_text=u"Tagg systemet med behandlinger / kommunale områder.",
+			)
+	klargjort_ny_sikkerhetsmodell = models.IntegerField(
+			choices=VALG_KLARGJORT_SIKKERHETSMODELL,
+			verbose_name="Status klargjort for ny sikkerhetsmodell",
+			blank=True, null=True,
+			help_text=u"Besnyttes av UKE for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
 			)
 	history = HistoricalRecords()
 

@@ -298,7 +298,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'fields': (
 				('systemnavn', 'livslop_status'),
 				('systemtyper', 'systemurl'),
-				'LOSref',
+				('LOSref', 'klargjort_ny_sikkerhetsmodell'),
 				('driftsmodell_foreignkey', 'systemeierskapsmodell'),
 				('alias','programvarer'),
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
@@ -885,6 +885,29 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 	def get_ordering(self, request):
 		return [Lower('programvarenavn')]
 
+	autocomplete_fields = (
+		'programvareleverandor',
+		)
+
+	fieldsets = (
+		('Initiell registrering', {
+			'description': '<h3>Dette er informasjon alle programvarer bør ha utfylt</h3>',
+			'fields': (
+				('programvarenavn', 'klargjort_ny_sikkerhetsmodell'),
+				('livslop_status', 'programvaretyper', 'programvarekategori',),
+			),
+		}),
+		('Detaljer om programvare', {
+			'description': '<h3>Dette er informasjon som kan fylles ut senere</h3>',
+			'fields': (
+				('programvareleverandor'),
+				('strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet'),
+				('programvarebeskrivelse', 'kommentar'),
+				('kategorier'),
+			),
+		}),
+	)
+
 
 admin.site.unregister(User)  # den er som standard registrert
 @admin.register(User)
@@ -942,12 +965,12 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('all_programvarebruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
+			return redirect(reverse('all_bruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('all_programvarebruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
+			return redirect(reverse('all_bruk_for_virksomhet', kwargs={'pk': obj.brukergruppe.pk}))
 		return super().response_change(request, obj)
 
 	fieldsets = (

@@ -8,22 +8,75 @@
 {% endblock ekstrameny %}
 
 {% block overskrift %}
-	Systemer {{ virksomhet.virksomhetsforkortelse }} bruker
+	Systemer og applikasjoner {{ virksomhet.virksomhetsforkortelse }} bruker
 {% endblock overskrift %}
 
 
 {% block hovedinnhold %}
-	<p>Merk at det som vises under systemeierskapsmodell her faktisk er det som er satt på bruken, og ikke systemet. Det er derfor ikke nødvendigivs samsvar. Linken under bruksdetaljer er linken til selve bruken av systemet. Klikk på link under system for å komme til systemets detaljeside.<br>
-	Det vises {{ all_bruk.count }} systemer i bruk.</p>
+	<p>Det vises {{ all_systembruk.count }} systemer i bruk. Det er registret bruk av {{ all_programvarebruk.count }} programvarer.</p>
 
 	{% if user.is_authenticated %}
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer bruk av system</a>
+		<a href="/admin/systemoversikt/programvarebruk/add/?brukergruppe={{ virksomhet.pk }}" class="btn btn-sm btn-link">Legg til bruk av programvare</a>
 	{% endif %}
 
-	<h4>Aktive systemer</h4>
-	{% include "systembruk_include.html" with all_bruk=all_bruk %}
+	<h4>Aktive systemer i bruk</h4>
+	{% include "systembruk_include.html" with all_bruk=all_systembruk %}
 
-	<h4>Systemer som er avviklet</h4>
+	<h4>Aktive applikasjoner i bruk</h4>
+	<table class="tablesorter excel">
+	<thead>
+	<tr>
+		{% if user.is_authenticated %}
+			<th class="filter-false"></th>
+		{% endif %}
+		<th>Klargjort?</th>
+		<th>Programvare</th>
+		<th>Bruksinformasjon</th>
+		<th>Grensesnitt</th>
+		<th>Tilpassing</th>
+		<th>Livsløpstatus</th>
+		<th>Loakle vurderinger</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for bruk in all_programvarebruk %}
+	<tr>
+		{% if user.is_authenticated %}
+			<td><a href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
+		{% endif %}
+		<td>{{ bruk.programvare.get_klargjort_ny_sikkerhetsmodell_display }}</td>
+		<td>
+			{% url "programvaredetaljer" bruk.programvare.pk as url_programvaredetaljer %}
+			<a href="{{ url_programvaredetaljer }}">{{ bruk.programvare }}</a>
+		</td>
+		<td>
+			Behandlinger: {{ bruk.antall_behandlinger }}<br>
+			Brukere: {{ bruk.antall_brukere|default:"-" }}<br>
+			Lokale forvaltere: {% include "ansvarlig_include_vis.html" with ansvarlige=bruk.lokal_kontakt.all %}
+				{% url "programvarebruksdetaljer" bruk.pk as url_programvarebruksdetaljer %}
+			<a href="{{ url_programvarebruksdetaljer }}">Flere detaljer</a>
+		</td>
+		<td>
+			{% for type in bruk.programvare.programvaretyper.all %}
+				{{ type }}<br>
+			{% endfor %}
+		</td>
+		<td>{{ bruk.programvare.get_programvarekategori_display|default:"" }}</td>
+		<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
+		<td>
+			T: {{ bruk.get_teknisk_egnethet_display|default:"-" }}<br>
+			S: {{ bruk.get_strategisk_egnethet_display|default:"-" }}<br>
+			F: {{ bruk.get_funksjonell_egnethet_display|default:"-" }}<br>
+		</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+	<h4>Systemer registrert benyttet som er avviklet</h4>
 	{% include "systembruk_include.html" with all_bruk=ikke_i_bruk %}
 
 {% endblock hovedinnhold %}
+
+

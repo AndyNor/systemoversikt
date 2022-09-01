@@ -1906,13 +1906,13 @@ def all_bruk_for_virksomhet(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet_pk = pk
-	all_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).exclude(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
+	all_systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).exclude(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 
 	ikke_i_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).filter(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 
 
 	# ser ut til at excel 2016+ støtter dette..
-	for bruk in all_bruk:
+	for bruk in all_systembruk:
 		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(systemer=bruk.system.pk).count()
 		bruk.antall_behandlinger = ant
 
@@ -1922,9 +1922,17 @@ def all_bruk_for_virksomhet(request, pk):
 		messages.warning(request, 'Fant ingen virksomhet med denne ID-en.')
 		virksomhet = Virksomhet.objects.none()
 
+
+	all_programvarebruk = ProgramvareBruk.objects.filter(brukergruppe=virksomhet_pk).order_by(Lower('programvare__programvarenavn'))
+	for bruk in all_programvarebruk:
+		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(programvarer=bruk.programvare.pk).count()
+		bruk.antall_behandlinger = ant
+
+
 	return render(request, 'systembruk_alle.html', {
 		'request': request,
-		'all_bruk': all_bruk,
+		'all_systembruk': all_systembruk,
+		'all_programvarebruk': all_programvarebruk,
 		'ikke_i_bruk': ikke_i_bruk,
 		'virksomhet': virksomhet,
 	})
@@ -2013,7 +2021,7 @@ def alle_programvarer(request):
 	})
 
 
-def all_programvarebruk_for_virksomhet(request, pk):
+def all_programvarebruk_for_virksomhet(request, pk): # KAN SLETTES
 	"""
 	Vise all bruk av programvare for en virksomhet
 	"""
