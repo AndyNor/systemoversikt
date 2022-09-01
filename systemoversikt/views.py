@@ -3876,7 +3876,7 @@ def alle_klienter(request):
 		elif search_term == '__all__':
 			maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True)
 		else:
-			maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(sub_name__navn__icontains=search_term)).order_by('comp_name')
+			maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__icontains=search_term) | Q(model_id__icontains=search_term) | Q(maskinadm_virksomhet_str__icontains=search_term))
 
 		alle_maskinadm_klienter = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(kilde_prk=True).count()
 		alle_cmdb_klienter = CMDBdevice.objects.filter(device_active=True).filter(device_type="KLIENT").count()
@@ -3887,18 +3887,28 @@ def alle_klienter(request):
 		#klienter utmeldt/slettet i PRK men aktive i 2S CMDB
 		utmeldtslettet_prk_aktiv_snow = CMDBdevice.objects.filter(~Q(maskinadm_status="INNMELDT")).filter(device_type="KLIENT").filter(device_active=True).count()
 
-		maskiner_stats = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
-		maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
+		# klargjøring for statistikk
+		if maskiner == None:
+			stat_maskiner = CMDBdevice.objects.all()
+		else:
+			stat_maskiner = maskiner
+
+		maskiner_os_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
+		maskiner_os_stats = sorted(maskiner_os_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
+
+		maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('model_id').annotate(Count('model_id'))
+		maskiner_model_stats = sorted(maskiner_model_stats, key=lambda os: os['model_id__count'], reverse=True)
 
 		return render(request, 'cmdb_maskiner_klienter.html', {
 			'request': request,
-			'maskiner': maskiner,
+			'maskiner': maskiner.order_by('comp_name'),
 			'device_search_term': search_term,
 			'alle_maskinadm_klienter': alle_maskinadm_klienter,
 			'alle_cmdb_klienter': alle_cmdb_klienter,
 			'innmeldt_prk_inaktiv_snow': innmeldt_prk_inaktiv_snow,
 			'utmeldtslettet_prk_aktiv_snow': utmeldtslettet_prk_aktiv_snow,
-			'maskiner_stats': maskiner_stats,
+			'maskiner_os_stats': maskiner_os_stats,
+			'maskiner_model_stats': maskiner_model_stats,
 
 		})
 	else:

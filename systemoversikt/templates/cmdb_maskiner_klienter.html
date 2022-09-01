@@ -34,6 +34,37 @@
 
 	<p>Viser {{ maskiner.count }} maskiner.</p>
 
+
+	<table class="table table-sm tablesorter">
+	<thead>
+		<th>Operativsystem</th>
+		<th>Antall</th>
+	</thead>
+	<tbody>
+	{% for os in maskiner_os_stats %}
+		<tr>
+			<td><a href="{% url 'alle_klienter' %}?device_search_term={{os.comp_os_readable}}">{{ os.comp_os_readable|default:"Ukjent" }}</a></td>
+			<td>{{ os.comp_os_readable__count }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+	<table class="table table-sm tablesorter">
+	<thead>
+		<th>Klientmodell</th>
+		<th>Antall</th>
+	</thead>
+	<tbody>
+	{% for modell in maskiner_model_stats %}
+		<tr>
+			<td>{{ modell.model_id|default:"Ukjent" }}</td>
+			<td>{{ modell.model_id__count }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
@@ -41,6 +72,7 @@
 		<th>Business service</th>
 		<th>Beskrivelse</th>
 		<th>Modell</th>
+		<th>Lokasjon</th>
 		<th>Spesifikasjoner</th>
 		<th>Nettverk</th>
 		<th>Operativsystem</th>
@@ -67,6 +99,10 @@
 		</td>
 		<td>
 			{{ maskin.model_id|default:"-" }}
+		</td>
+		<td>
+			{{ maskin.comp_location|default:"-" }} / {{ maskin.maskinadm_virksomhet_str|default:"-" }} / {{ maskin.maskinadm_lokasjon|default:"-" }}<br>
+			{{ maskin.maskinadm_klienttype|default:"-" }} {{ maskin.maskinadm_sone|default:"-" }}<br>
 		</td>
 		<td>
 			Disk: {{ maskin.comp_disk_space|default:"-" }} GB <br>
@@ -96,20 +132,5 @@
 	</tbody>
 	</table>
 
-
-	<table class="table table-sm tablesorter">
-	<thead>
-		<th>Operativsystem</th>
-		<th>Antall</th>
-	</thead>
-	<tbody>
-	{% for os in maskiner_stats %}
-		<tr>
-			<td><a href="{% url 'alle_klienter' %}?device_search_term={{os.comp_os_readable}}">{{ os.comp_os_readable|default:"Ukjent" }}</a></td>
-			<td>{{ os.comp_os_readable__count }}</td>
-		</tr>
-	{% endfor %}
-	</tbody>
-	</table>
 
 {% endblock hovedinnhold %}
