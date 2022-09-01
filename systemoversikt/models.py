@@ -3187,6 +3187,8 @@ class Driftsmodell(models.Model):
 	history = HistoricalRecords()
 
 	def __str__(self):
+		if self.ansvarlig_virksomhet:
+			return u'%s: %s' % (self.ansvarlig_virksomhet.virksomhetsforkortelse, self.navn)
 		return u'%s' % (self.navn)
 
 	class Meta:

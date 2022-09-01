@@ -14,7 +14,7 @@
 	{% url 'maskin_sok' as url_maskin_sok %}
 	<a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Listesøk</a>
 
-	<p>Klienter importeres fra Sopra Sterias CMDB hver natt.<br>Data fra PRK maskinadmin lastes inn ved behov, og utfyller dataene fra Sopra Steria med status på om klienten er innmeldt.<br>Ved behov for å få Maskinadm-data oppdatert kan du ta kontakt med UKE.</p>
+	<p>Klienter importeres fra Sopra Sterias CMDB hver natt.<br>Data fra PRK maskinadmin lastes inn ved behov, og utfyller dataene fra Sopra Steria med status på om klienten er innmeldt.</p>
 
 	<b>{{ alle_maskinadm_klienter }}</b> aktive klienter i PRK.<br>
 	<b>{{ alle_cmdb_klienter }}</b> aktive klienter i 2S CMDB.<br>
@@ -40,6 +40,7 @@
 		<th>Maskinnavn</th>
 		<th>Business service</th>
 		<th>Beskrivelse</th>
+		<th>Modell</th>
 		<th>Spesifikasjoner</th>
 		<th>Nettverk</th>
 		<th>Operativsystem</th>
@@ -63,6 +64,9 @@
 		<td>
 			{{ maskin.description|default:"-" }} <br>
 			{{ maskin.comments|default:"-" }}
+		</td>
+		<td>
+			{{ maskin.model_id|default:"-" }}
 		</td>
 		<td>
 			Disk: {{ maskin.comp_disk_space|default:"-" }} GB <br>
