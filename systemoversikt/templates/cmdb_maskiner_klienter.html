@@ -34,36 +34,47 @@
 
 	<p>Viser {{ maskiner.count }} maskiner.</p>
 
+<div class="container">
+	<div class="row">
+		<div class="col-sm">
 
-	<table class="table table-sm tablesorter">
-	<thead>
-		<th>Operativsystem</th>
-		<th>Antall</th>
-	</thead>
-	<tbody>
-	{% for os in maskiner_os_stats %}
-		<tr>
-			<td><a href="{% url 'alle_klienter' %}?device_search_term={{os.comp_os_readable}}">{{ os.comp_os_readable|default:"Ukjent" }}</a></td>
-			<td>{{ os.comp_os_readable__count }}</td>
-		</tr>
-	{% endfor %}
-	</tbody>
-	</table>
+			<table class="table table-sm tablesorter">
+			<thead>
+				<th>Operativsystem</th>
+				<th>Antall</th>
+			</thead>
+			<tbody>
+			{% for os in maskiner_os_stats %}
+				<tr>
+					<td><a href="{% url 'alle_klienter' %}?device_search_term={{os.comp_os_readable}}">{{ os.comp_os_readable|default:"Ukjent" }}</a></td>
+					<td>{{ os.comp_os_readable__count }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+			</table>
 
-	<table class="table table-sm tablesorter">
-	<thead>
-		<th>Klientmodell</th>
-		<th>Antall</th>
-	</thead>
-	<tbody>
-	{% for modell in maskiner_model_stats %}
-		<tr>
-			<td>{{ modell.model_id|default:"Ukjent" }}</td>
-			<td>{{ modell.model_id__count }}</td>
-		</tr>
-	{% endfor %}
-	</tbody>
-	</table>
+		</div>
+		<div class="col-sm">
+
+			<table class="table table-sm tablesorter">
+			<thead>
+				<th>Klientmodell</th>
+				<th>Antall</th>
+			</thead>
+			<tbody>
+			{% for modell in maskiner_model_stats %}
+				<tr>
+					<td>{{ modell.model_id|default:"Ukjent" }}</td>
+					<td>{{ modell.model_id__count }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+			</table>
+
+		</div>
+	</div>
+</div>
+
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
