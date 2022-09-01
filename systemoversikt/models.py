@@ -25,6 +25,7 @@ VALG_KLARGJORT_SIKKERHETSMODELL = (
 	(3, "🟢 Skytjeneste med Azure AD-pålogging"),
 	(4, "🟢 Desktopapplikasjon uten avhengigheter, ferdig pakket"),
 	(5, "🟡 Ikke klargjort, skal til Azure Web Application Proxy"),
+	(9, "🟡 Ikke klargjort, skytjeneste som skal til Azure AD"),
 	(6, "🟡 Ikke klargjort, skal til Citrix"),
 	(7, "🟡 Ikke klargjort, skal kun pakkes som desktop applikasjon"),
 	(8, "🔴 Ingen løsning klar enda"),
