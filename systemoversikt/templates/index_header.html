@@ -1,4 +1,6 @@
 {% load static %}
+{% load templatetags %}
+
 
 <header>
 	<nav class="navbar navbar-light fixed-top" style="background-color: #fff; padding: 0;">
@@ -6,8 +8,8 @@
 
 		<div style="width: 100%; padding-top: 5px; padding-bottom: 5px;">
 
+			{% fellesinformasjon %}
 			<a href="/"><img src="{% static 'Oslo-logo-morkeblaa-RGB.c2e496c6.svg' %}" style="float: left; margin: 10px 30px 10px 65px; height: 70px;"></a>
-
 			<div>
 				<form action="{% url 'search' %}" autocomplete="off">
 					<div class="form-group form-inline">

@@ -22,7 +22,7 @@ class Command(BaseCommand):
 		def main(destination_file, filename, LOG_EVENT_TYPE):
 
 			if ".xlsx" in destination_file:
-				dfRaw = pd.read_excel(destination_file, sheet_name='CommVault Summary', skiprows=8, usecols=['Client', 'Total Protected App Size (GB)', 'Source Capture Date'])
+				dfRaw = pd.read_excel(destination_file, sheet_name='CommVault Summary', skiprows=8, usecols=['Client', 'Total Protected App Size (GB)', 'Source Capture Date', 'Business Sub Service',])
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				data = dfRaw.to_dict('records')
 
@@ -30,36 +30,50 @@ class Command(BaseCommand):
 				return
 
 			failed_device = 0
-			new = 0
-			updated = 0
+			failed_bss = 0
+
+
+			# fjerner alle registrerte innslag (finnes ingen identifikator)
+
+			names = [line["Client"] for line in data]
+			import collections
+			counter = collections.Counter(names)
+			flere_innslag = [k for k, v in counter.items() if v > 1]
+
+			CMDBbackup.objects.all().delete()
+			antall_linjer = len(data)
 
 			for line in data:
 				#print(line)
 				try:
 					device = CMDBdevice.objects.get(comp_name__iexact=line["Client"])
 				except:
+					device = None
 					failed_device += 1
 					print("%s feilet" % (line["Client"]))
-					continue
+
+				try:
+					bss = CMDBRef.objects.get(navn__iexact=line["Business Sub Service"])
+				except:
+					bss = None
+					failed_bss += 1
+
 
 				#print(device)
-				try:
-					inst = CMDBbackup.objects.get(device=device)
-					updated += 1
-				except:
-					inst = CMDBbackup.objects.create(device=device)
-					new += 1
+				inst = CMDBbackup.objects.create(device=device, device_str=line["Client"])
 
 				print(".", end="", flush=True)
 
 				size = int(line["Total Protected App Size (GB)"] * 1024 * 1024 * 1024) # bytes
 				inst.backup_size_bytes = size
 				inst.export_date = line["Source Capture Date"]
+				inst.bss = bss
 
 				inst.save()
 
 
-			logg_entry_message = '%s nye, %s oppdatert og %s feilet oppslag kilde.' % (new, updated, failed_device)
+			logg_flere_innslag = ', '.join(flere_innslag)
+			logg_entry_message = '%s innslag importert. %s feilet oppslag mot server. %s feilede bss oppslag. Duplikate innslag: %s' % (antall_linjer, failed_device, failed_bss, logg_flere_innslag)
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,

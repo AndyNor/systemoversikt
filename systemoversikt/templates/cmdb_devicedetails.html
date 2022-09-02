@@ -28,6 +28,7 @@
 	Har tildelt {{ device.comp_cpu_core_count|default:"?" }} CPU-kjerner / {{ device.comp_cpu_speed|default:"?" }} Mhz.<br>
 	Tildelt {{ device.comp_disk_space|default:"?" }} GB disk.<br>
 	Tildelt {{ device.comp_ram }} MB minne (RAM).<br>
+	Backup:	{% for b in device.backup_size %}	{{ b|filesizeformat }} {% if not forloop.last %} + {% endif %} {% endfor %}
 </p>
 
 {% if device.device_type == "SERVER" %}
@@ -42,6 +43,8 @@
 					<li>Virtual IP: {{vip}}</li>
 				{% endfor %}
 			</ul>
+		{% empty %}
+			<li>Ingen</li>
 		{% endfor %}
 	</ul>
 </p>

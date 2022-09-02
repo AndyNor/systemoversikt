@@ -260,6 +260,12 @@ def cmdb_statistikk(request):
 		count_dns_cnames = DNSrecord.objects.filter(dns_type="CNAME").count()
 		count_cisco = NetworkDevice.objects.filter(model__icontains="cisco").count()
 		count_bigip = NetworkDevice.objects.filter(model__icontains="f5").count()
+		count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+		count_service_accounts = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False).count()
+		count_drift_accounts = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False).count()
+		count_ressurs_accounts = User.objects.filter(profile__distinguishedname__icontains="OU=Ressurser").filter(profile__accountdisable=False).count()
+		count_inactive_accounts = User.objects.filter(profile__accountdisable=True).count()
+		count_utenfor_OK_accounts = User.objects.filter(~Q(profile__distinguishedname__icontains="OU=OK")).filter(profile__accountdisable=False).count()
 
 		return render(request, 'cmdb_statistikk.html', {
 			'request': request,
@@ -287,6 +293,12 @@ def cmdb_statistikk(request):
 			'count_dns_cnames': count_dns_cnames,
 			'count_cisco': count_cisco,
 			'count_bigip': count_bigip,
+			'count_backup': count_backup,
+			'count_service_accounts': count_service_accounts,
+			'count_drift_accounts': count_drift_accounts,
+			'count_ressurs_accounts': count_ressurs_accounts,
+			'count_inactive_accounts': count_inactive_accounts,
+			'count_utenfor_OK_accounts': count_utenfor_OK_accounts,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -2549,10 +2561,12 @@ def drifttilgang(request):
 		filsensitivt = adgruppe_oppslag(filsensitivt)
 
 		brukere = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
+		tekst_type_konto = "drift"
 
 		if "kilde" in request.GET:
 			if request.GET["kilde"] == "servicekontoer":
 				brukere = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False)
+				tekst_type_konto = "service"
 		#brukere = User.objects.filter(profile__accountdisable=False).filter(Q(profile__description__icontains="Sopra") | Q(profile__description__icontains="2S"))
 
 		"""
@@ -2583,6 +2597,7 @@ def drifttilgang(request):
 
 		return render(request, 'ad_drifttilgang.html', {
 			"brukere": brukere,
+			"tekst_type_konto": tekst_type_konto,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4113,6 +4128,7 @@ def cmdb_bss(request, pk):
 			#	network_ip_address = []
 			graf_data["nodes"].append({"data": { "parent": identifiser_vlan(network_ip_address), "id": "db"+str(db.pk), "name": db.db_database, "shape": "diamond", "color": "#d35215" }})
 
+		backup_inst = CMDBbackup.objects.filter(bss=cmdbref)
 
 		return render(request, 'cmdb_maskiner_detaljer.html', {
 			'request': request,
@@ -4120,6 +4136,7 @@ def cmdb_bss(request, pk):
 			'cmdbdevices': cmdbdevices,
 			'databaser': databaser,
 			'graf_data': graf_data,
+			'backup_inst': backup_inst,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

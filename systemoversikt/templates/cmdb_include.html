@@ -1,3 +1,5 @@
+{% load humanize %}
+
 
 <table class="table table-sm tablesorter excel">
 <thead>
@@ -10,6 +12,7 @@
 	<th>Service classification</th>
 	<th>Antall servere</th>
 	<th>Antall databaser</th>
+	<th>Mengde backup</th>
 	<th>Tilknyttet system</th>
 	<th>Antall systemer</th>
 	<th>I bruk</th>
@@ -59,6 +62,9 @@
 	</td>
 	<td>{{ item.ant_devices }}</td>
 	<td>{{ item.ant_databaser }}</td>
+	<td>
+		{{ item.backup_size|filesizeformat }}
+	</td>
 	<td>
 		{% if item.parent_ref.systemreferanse %}
 			{% url 'systemdetaljer' pk=item.parent_ref.systemreferanse.pk as url_system %}

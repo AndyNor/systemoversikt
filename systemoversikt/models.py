@@ -31,6 +31,24 @@ VALG_KLARGJORT_SIKKERHETSMODELL = (
 	(8, "🔴 Ingen løsning klar enda"),
 )
 
+class Fellesinformasjon(models.Model):
+	message = models.TextField(
+			verbose_name="message",
+			blank=False,
+			null=False,
+			)
+	aktiv = models.BooleanField(
+			verbose_name="Aktiv",
+			default=True,
+			help_text=u"",
+			)
+	def __str__(self):
+		return u'%s' % (self.message)
+
+	class Meta:
+		verbose_name_plural = "System: Fellesinformasjon"
+		default_permissions = ('view')
+
 
 class UserChangeLog(models.Model):
 	opprettet = models.DateTimeField(
@@ -56,7 +74,7 @@ class UserChangeLog(models.Model):
 
 	class Meta:
 		verbose_name_plural = "System: brukerendringer"
-		default_permissions = ('view')
+		default_permissions = ('add', 'change', 'delete', 'view')
 
 
 
@@ -1490,6 +1508,9 @@ class CMDBRef(models.Model): # BSS
 		else:
 			return u'%s (servergruppe)' % (self.navn)
 
+	def backup_size(self):
+		from django.db.models import Sum
+		return CMDBbackup.objects.filter(bss=self).aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
 
 	def u_service_availability_text(self):
 		lookup = {
@@ -2268,6 +2289,12 @@ class CMDBdevice(models.Model):
 		except:
 			return 'ingen data'
 
+	def backup_size(self):
+		if self.backup:
+			return [b.backup_size_bytes for b in self.backup.all()]
+		else:
+			return None
+
 	def vip(self):
 		try:
 			string = ""
@@ -2307,6 +2334,7 @@ class CMDBbackup(models.Model):
 			related_name='backup',
 			on_delete=models.CASCADE,
 			verbose_name="Backup av",
+			null=True,
 			)
 	backup_size_bytes = models.IntegerField(
 			null=True,

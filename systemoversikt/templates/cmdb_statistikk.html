@@ -24,10 +24,22 @@
 			<h3>{{ count_ad_grupper }}</h3>
 		</div>
 		<div class="col-sm">
-			<h6>Brukere i AD</h6>
+			<h6>Kontoer i AD</h6>
 			<h3>{{ count_ad_users }}</h3>
+			<h6>Deaktive kontoer i AD</h6>
+			<h3>{{ count_inactive_accounts }}</h3>
+			<h6>Kontoer utenfor OU=OK</h6>
+			<h3>{{ count_utenfor_OK_accounts }}</h3>
 			<h6>Brukere i PRK</h6>
 			<h3>{{ count_prk_users }}</h3>
+		</div>
+		<div class="col-sm">
+			<h6>Aktive driftbrukere</h6>
+			<h3>{{ count_drift_accounts }}</h3>
+			<h6>Aktive servicekontoer</h6>
+			<h3>{{ count_service_accounts }}</h3>
+			<h6>Aktive ressuerser (møterom, postbokser..)</h6>
+			<h3>{{ count_ressurs_accounts }}</h3>
 		</div>
 		<div class="col-sm">
 			<h6>Office365 applikasjoner</h6>
@@ -84,6 +96,9 @@
 			<h3>{{ count_mem|filesizeformat }}</h3>
 			<h6>Diskbruk servere estimert</h6>
 			<h3>{{ count_disk|filesizeformat }}</h3>
+			<h6>Backup totalt</h6>
+			<h3>{{ count_backup|filesizeformat }}</h3>
+
 		</div>
 		<div class="col-sm">
 			<h6>Sentralt nettverksutstyr</h6>

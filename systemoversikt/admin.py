@@ -1004,8 +1004,8 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 
 @admin.register(CMDBbackup)
 class CMDBbackupAdmin(admin.ModelAdmin):
-	list_display = ('device', 'backup_size_bytes', 'export_date',)
-	search_fields = ('device',)
+	list_display = ('device_str', 'device', 'backup_size_bytes', 'export_date', 'bss',)
+	search_fields = ('device_str', 'bss__navn')
 	list_filter = ('export_date',)
 
 
@@ -1044,6 +1044,10 @@ class CMDBRefAdmin(admin.ModelAdmin):
 
 	def get_ordering(self, request):
 		return [Lower('navn')]
+
+@admin.register(Fellesinformasjon)
+class FellesinformasjonAdmin(admin.ModelAdmin):
+	list_display = ('message', 'aktiv',)
 
 
 @admin.register(APIKeys)

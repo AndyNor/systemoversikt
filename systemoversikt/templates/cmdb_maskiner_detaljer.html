@@ -28,10 +28,11 @@
 		{% include "cmdb_include.html" with cmdbref=cmdbref %}
 
 
+		<hr>
 		<div id="cy" style="width: 100%; height: 400px;"></div>
 
-
 		<hr>
+
 		<h6>Servere</h6>
 		<table class="table table-sm tablesorter">
 			<thead>
@@ -42,6 +43,7 @@
 				<th width="25%">Disk space</th>
 				<th>Antall CPU</th>
 				<th>RAM (MB)</th>
+				<th>Backup</th>
 				<th>IP-address</th>
 				<th>VLAN</th>
 				<th>DNS</th>
@@ -72,6 +74,11 @@
 				</td>
 				<td>{{ item.comp_u_cpu_total|default:"-" }}</td>
 				<td>{{ item.comp_ram|default:"-" }}</td>
+				<td>
+					{% for b in item.backup_size %}
+						{{ b|filesizeformat }}<br>
+					{% endfor %}
+				</td>
 				<td>{{ item.comp_ip_address|default:"-" }}</td>
 				<td>
 				{% for vlan in item.network_ip_address.all.0.vlan.all %}
@@ -116,6 +123,27 @@
 				<td>{{ db.db_used_for }}</td>
 				<td>{{ db.db_version }}</td>
 				<td>{{ db.db_u_datafilessizekb }} ({{ db.db_u_datafilessizekb|filesizeformat }})</td>
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+
+
+		<h6>Backup</h6>
+		<table class="table table-sm tablesorter">
+			<thead>
+			<tr>
+				<th>Backupnavn</th>
+				<th>Størrelse</th>
+				<th>Eksportdato fra import</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for b in backup_inst.all %}
+			<tr>
+				<td>{{ b.device_str }}</td>
+				<td>{{ b.backup_size_bytes|filesizeformat }}</td>
+				<td>{{ b.export_date }}</td>
 			</tr>
 			{% endfor %}
 			</tbody>

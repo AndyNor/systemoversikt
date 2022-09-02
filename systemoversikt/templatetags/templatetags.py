@@ -3,7 +3,27 @@ from django.conf import settings
 from django.utils.html import format_html
 import string
 import random
+from systemoversikt.models import Fellesinformasjon
+
 register = template.Library()
+
+@register.simple_tag(name='fellesinformasjon')
+def fellesinformasjon():
+
+	try:
+		siste_fellesinfo = Fellesinformasjon.objects.all().order_by("-pk")[0]
+	except:
+		return ""
+	if siste_fellesinfo.aktiv:
+		html = format_html('''
+				<div style="color: black; position: fixed; font-size: 10pt; left: 50%; transform: translateX(-50%); text-align: center; background-color: yellow;">{}</div>
+				''',
+				siste_fellesinfo.message,
+			)
+		return html
+	else:
+		return ""
+
 
 ''' https://stackoverflow.com/questions/14496978/fields-verbose-name-in-templates '''
 @register.simple_tag
