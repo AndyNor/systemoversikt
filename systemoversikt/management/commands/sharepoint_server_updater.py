@@ -31,6 +31,16 @@ class Command(BaseCommand):
 
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
 
+
+		# laste ned "Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx"
+		# slå opp "VM Name" mot CMDBdevice, hvis ikke finnes, hopp over.
+		# lagre "HE disk Allocated (GB)" eller "HE-S disk Allocated (GB)" eller "MR disk Allocated (GB)" eller "MR-S disk Allocated (GB)" eller "LE disk Allocated (GB)" eller "LE-S disk Allocated (GB)"
+		# lagre "HE disk Used (GB)" eller "HE-S disk Used (GB)" eller "MR disk Used (GB)" eller "MR-S disk Used (GB)" eller "LE disk Used (GB)" eller "LE-S disk Used (GB)"
+		# lagre "VM CPU Usage (%)"
+		# lagre "Memory-Capacity (GB)" og "VM Memory Usage (%)"
+		# lagre "PowerState"
+		# lagre "Datastore Tier"
+
 		@transaction.atomic
 		def import_cmdb_servers():
 
