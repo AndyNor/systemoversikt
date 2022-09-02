@@ -818,10 +818,12 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 		except:
 			return "Ukjent tilhørighet"
 	def ou_lesbar(self):
-		try:
-			return self.ou.distinguishedname.split(",")[1:-4]
-		except:
-			return self.ou.distinguishedname
+		#if self.ou:
+		#	try:
+		#		return self.ou.distinguishedname.split(",")[1:-4]
+		#	except:
+		#		return self.ou.distinguishedname
+		return self.distinguishedname.split(",")[1:-4]
 
 """
 class Klientutstyr(models.Model):
