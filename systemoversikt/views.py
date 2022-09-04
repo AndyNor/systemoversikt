@@ -253,7 +253,7 @@ def cmdb_statistikk(request):
 		count_oracle = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).all().count()
 		count_mssql = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).all().count()
 		count_mem = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024*1024 # summen er MB --> bytes
-		count_disk = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] * 1024*1024*1024 # summen er GB --> bytes
+		count_disk = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] #summen er i bytes
 		count_oracle_disk = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
 		count_mssql_disk = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
 		count_dns_arecords = DNSrecord.objects.filter(dns_type="A record").count()
@@ -262,7 +262,7 @@ def cmdb_statistikk(request):
 		count_bigip = NetworkDevice.objects.filter(model__icontains="f5").count()
 		count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
 		count_service_accounts = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False).count()
-		count_drift_accounts = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False).count()
+		count_drift_accounts = User.objects.filter(Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") | Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere")).filter(profile__accountdisable=False).count()
 		count_ressurs_accounts = User.objects.filter(profile__distinguishedname__icontains="OU=Ressurser").filter(profile__accountdisable=False).count()
 		count_inactive_accounts = User.objects.filter(profile__accountdisable=True).count()
 		count_utenfor_OK_accounts = User.objects.filter(~Q(profile__distinguishedname__icontains="OU=OK")).filter(profile__accountdisable=False).count()
@@ -2560,7 +2560,7 @@ def drifttilgang(request):
 		]
 		filsensitivt = adgruppe_oppslag(filsensitivt)
 
-		brukere = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
+		brukere = User.objects.filter(Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") | Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere")).filter(profile__accountdisable=False)
 		tekst_type_konto = "drift"
 
 		if "kilde" in request.GET:
@@ -4927,7 +4927,7 @@ def cmdb_api(request):
 			s["server_os"] = server.comp_os
 			s["server_ram"] = server.comp_ram
 			if server.comp_disk_space:
-				s["server_disk"] = server.comp_disk_space * 1024  # ønskes oppgitt i megabyte
+				s["server_disk"] = server.comp_disk_space * 1024 * 1024  # ønskes oppgitt i megabyte (fra bytes)
 			else:
 				s["server_disk"] = None
 			#s["server_cpu_name"] = server.comp_cpu_name
@@ -5010,92 +5010,6 @@ def cmdb_api_kompass(request):
 	return JsonResponse(resultat, safe=False)
 
 
-
-"""
-def cmdb_api_new(request):
-
-	if not request.method == "GET":
-		raise Http404
-
-	key = request.headers.get("key", None)
-	allowed_keys = APIKeys.objects.filter(navn="api_cmdb").values_list("key", flat=True)
-	if not key in list(allowed_keys):
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
-
-	data = []
-	# tar ikke med tykke klienter da disse 11k per nå bare vil støye ned
-	query = CMDBRef.objects.filter(operational_status=True).filter(~Q(navn="OK-Tykklient"))
-	for bss in query:
-		line = {}
-		line["business_subservice_navn"] = bss.navn
-		line["business_service"] = bss.parent_ref.navn
-		line["sist_oppdatert"] = bss.sist_oppdatert
-		line["opprettet"] = bss.opprettet
-		line["environment"] = bss.get_environment_display()
-		line["busines_criticality"] = bss.kritikalitet
-		line["service_availability"] = bss.u_service_availability
-		line["service_operation_factor"] = bss.u_service_operation_factor
-		line["service_complexity"] = bss.u_service_complexity
-		#line["antall_tilknyttede_systemer"] = len(bss.parent_ref.all())
-
-		systemer = []
-		for s in [bss.parent_ref]:
-
-
-			systemeier = s.systemreferanse.systemeier.virksomhetsforkortelse if s.systemeier else "ukjent"
-			systemforvalter = s.systemreferanse.ystemforvalter.virksomhetsforkortelse if s.systemforvalter else "ukjent"
-			plattform = s.systemreferanse.driftsmodell_foreignkey.navn if s.driftsmodell_foreignkey else "ukjent"
-
-			systemer.append({
-				"systemnavn": s.systemreferanse.systemnavn,
-				"systemeier": systemeier,
-				"systemforvalter": systemforvalter,
-				"plattform": plattform,
-				"er_infrastruktur": s.systemreferanse.er_infrastruktur(),
-			})
-
-		line["tilknyttede_systemer"] = systemer
-		line["antall_servere"] = bss.ant_devices()
-
-		serverliste = []
-		for server in bss.cmdbdevice_sub_name.filter(active=True):
-			s = dict()
-			s["server_navn"] = server.comp_name
-			s["server_aktiv"] = server.active
-			s["server_os"] = server.comp_os
-			s["server_ram"] = server.comp_ram
-			if server.comp_disk_space:
-				s["server_disk"] = server.comp_disk_space * 1024  # ønskes oppgitt i megabyte
-			else:
-				s["server_disk"] = None
-			s["server_cpu_name"] = server.comp_cpu_name
-			s["server_cpu_speed"] = server.comp_cpu_speed
-			s["server_cpu_core_count"] = server.comp_cpu_core_count
-			s["server_cpu_count"] = server.comp_cpu_count
-			s["server_cpu_total"] = server.comp_u_cpu_total
-			serverliste.append(s)
-
-		line["servere"] = serverliste
-
-		line["antall_databaser"] = bss.ant_databaser()
-
-		databaseliste = []
-		for database in bss.cmdbdatabase_sub_name.filter(db_operational_status=True):
-			s = dict()
-			s["navn"] = database.db_database
-			s["version"] = database.db_version
-			s["datafilessizekb"] = database.db_u_datafilessizekb
-			s["db_comments"] = database.db_comments
-			databaseliste.append(s)
-
-		line["databaser"] = databaseliste
-
-
-		data.append(line)
-
-		resultat = {"antall bss": len(query), "data": data}
-	return JsonResponse(resultat, safe=False)
-"""
 
 
 ### UBW

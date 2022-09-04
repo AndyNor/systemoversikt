@@ -62,7 +62,7 @@
 				<td>{% include 'site_janeivetikke.html' with boolean=item.device_active %}</td>
 				<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
 				<td>
-					{{ item.comp_disk_space|default:"-" }} GB
+					{{ item.comp_disk_space|default:"-" }} bytes
 					<br><br>
 					{% for disk in item.cmdbdisk_computer.all %}
 						{% if disk.operational_status %}

@@ -1968,39 +1968,39 @@ class NetworkDevice(models.Model):
 
 
 class CMDBdevice(models.Model):
-	opprettet = models.DateTimeField(
+	opprettet = models.DateTimeField( # system
 			verbose_name="Opprettet",
 			auto_now_add=True,
 			null=True,
 			)
-	sist_oppdatert = models.DateTimeField(
+	sist_oppdatert = models.DateTimeField( # system
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-	device_type = models.CharField(
+	device_type = models.CharField( # om det er en server eller klient, leses ut basert på BSS tilhørighet
 			max_length=50,
 			blank=False,
 			null=True,
 			verbose_name="Enhetstype",
 			help_text="Settes automatisk ved import",
 			)
-	device_active = models.BooleanField(
+	device_active = models.BooleanField( # om maskinen er aktiv i 2S CMDB
 			verbose_name="Aktiv",
 			default=False, # dersom PRK-import oppretter enheter, skal de likevel ikke anses som aktive. Bare ekstra informasjon. Må eksplisitt settes til True
 			help_text=u"",
 			)
-	model_id = models.CharField(
+	model_id = models.CharField( # egen fil med detaljer som lastes etter computers-filen. Bare for klienter.
 			verbose_name="Klientmodell",
 			max_length=200,
 			blank=True,
 			null=True,
 			)
-	sist_sett = models.DateTimeField(
+	sist_sett = models.DateTimeField( # INGEN KILDE LENGER?
 			verbose_name="Sist sett",
 			null=True,
 			blank=True,
 			)
-	last_loggedin_user = models.ForeignKey(
+	last_loggedin_user = models.ForeignKey( # INGEN KILDE LENGER?
 			to=User,
 			on_delete=models.SET_NULL,
 			related_name='client',
@@ -2008,11 +2008,11 @@ class CMDBdevice(models.Model):
 			null=True,
 			blank=True,
 			)
-	billable = models.BooleanField(
+	billable = models.BooleanField( # Fra CMDB computers
 			verbose_name="Billable",
 			default=False,
 			)
-	comp_name = models.CharField(
+	comp_name = models.CharField( # Unikt navn på server.
 			unique=True,
 			verbose_name="Computer name",
 			max_length=600,
@@ -2021,26 +2021,12 @@ class CMDBdevice(models.Model):
 			help_text=u"",
 			db_index=True,
 			)
-	""" vi importerer bare sub service-nivået.
-	bs_name = models.CharField( # foreign key
-			verbose_name="Business Service",
-			max_length=600,
-			blank=True, null=True,
-			help_text=u"",
-			)
-	"""
-	comp_disk_space = models.IntegerField(  # lagres i antall GB
+	comp_disk_space = models.IntegerField(  # lagres i bytes
 			verbose_name="Lagring",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	#bs_u_service_portfolio = models.CharField(  # samme som "sub_u_service_portfolio"
-	#		verbose_name="Business portfolio",
-	#		max_length=600,
-	#		blank=True, null=True,
-	#		help_text=u"",
-	#		)
 	sub_name = models.ForeignKey(
 			to=CMDBRef,
 			related_name='cmdbdevice_sub_name',
@@ -2097,25 +2083,6 @@ class CMDBdevice(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	#comp_cpu_count = models.IntegerField(
-	#		verbose_name="CPU count",
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
-	#comp_cpu_name = models.CharField(
-	#		verbose_name="CPU name",
-	#		max_length=200,
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
-	#comp_u_cpu_total = models.IntegerField(
-	#		verbose_name="CPU total",
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
 	comp_ram = models.IntegerField(  # lagres i antall MB
 			verbose_name="RAM",
 			blank=True,
@@ -2129,41 +2096,6 @@ class CMDBdevice(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	#comp_sys_id = models.CharField(
-	#		verbose_name="Computer ID",
-	#		max_length=200,
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
-	#dns = models.CharField(
-	#		verbose_name="DNS",
-	#		max_length=200,
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
-	#vlan = models.CharField(
-	#		verbose_name="VLAN",
-	#		max_length=200,
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
-	#nat = models.CharField(
-	#		verbose_name="NAT",
-	#		max_length=200,
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
-	#vip = models.CharField(
-	#		verbose_name="VIP / BigIP",
-	#		max_length=200,
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
 	comments = models.TextField(
 			verbose_name="Comments",
 			unique=False,
@@ -2265,8 +2197,36 @@ class CMDBdevice(models.Model):
 			on_delete=models.SET_NULL,
 			related_name='landesk_login',
 			verbose_name="Landesk: Login name",
-			null=True,
-			blank=True,
+			null=True, blank=True,
+			)
+	vm_poweredon = models.BooleanField(
+			verbose_name="Powered on?",
+			default=False,
+			)
+	vm_comp_ram_usage = models.FloatField(
+			verbose_name="Utnyttelse av minne",
+			null=True, blank=True,
+			)
+	vm_comp_cpu_usage = models.FloatField(
+			verbose_name="VM: Utnyttelse av CPU",
+			null=True, blank=True,
+			)
+	vm_disk_allocation = models.FloatField(
+			verbose_name="VM: Disk allokert",
+			null=True, blank=True,
+			)
+	vm_disk_usage = models.FloatField(
+			verbose_name="VM: Disk i bruk",
+			null=True, blank=True,
+			)
+	vm_disk_tier = models.CharField(
+			verbose_name="VM: Disk tier",
+			max_length=300,
+			null=True, blank=True,
+			)
+	vm_disks_installed = models.IntegerField(
+			verbose_name="VM: Antall disker installert",
+			null=True, blank=True,
 			)
 
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres

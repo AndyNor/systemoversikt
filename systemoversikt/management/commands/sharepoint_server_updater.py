@@ -22,39 +22,32 @@ class Command(BaseCommand):
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
-
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers_bss.xlsx"
-		source_file = sp.create_link(source_filepath)
-		destination_file = 'systemoversikt/import/OK_computers_bss.xlsx'
+		print("Laster ned fil med kobling maskiner-bss")
+		computers_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers_bss.xlsx")
+		computers_destination_file = 'systemoversikt/import/OK_computers_bss.xlsx'
+		sp.download(sharepoint_location = computers_source_file, local_location = computers_destination_file)
 
-		sp.download(sharepoint_location = source_file, local_location = destination_file)
+		print("Laster ned fil med informasjon om disk fra vmware")
+		vmware_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx")
+		vmware_destination_file = 'systemoversikt/import/Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx'
+		sp.download(sharepoint_location = vmware_source_file, local_location = vmware_destination_file)
 
-
-		# laste ned "Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx"
-		# slå opp "VM Name" mot CMDBdevice, hvis ikke finnes, hopp over.
-		# lagre "HE disk Allocated (GB)" eller "HE-S disk Allocated (GB)" eller "MR disk Allocated (GB)" eller "MR-S disk Allocated (GB)" eller "LE disk Allocated (GB)" eller "LE-S disk Allocated (GB)"
-		# lagre "HE disk Used (GB)" eller "HE-S disk Used (GB)" eller "MR disk Used (GB)" eller "MR-S disk Used (GB)" eller "LE disk Used (GB)" eller "LE-S disk Used (GB)"
-		# lagre "VM CPU Usage (%)"
-		# lagre "Memory-Capacity (GB)" og "VM Memory Usage (%)"
-		# lagre "PowerState"
-		# lagre "Datastore Tier"
 
 		@transaction.atomic
 		def import_cmdb_servers():
 
 			server_dropped = 0
 
-			if ".xlsx" in destination_file:
-				dfRaw = pd.read_excel(destination_file)
+			if ".xlsx" in computers_destination_file:
+				dfRaw = pd.read_excel(computers_destination_file)
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
-				data = dfRaw.to_dict('records')
-
-			if data == None:
+				computers_data = dfRaw.to_dict('records')
+			if computers_data == None:
 				return
 
-			antall_records = len(data)
+			antall_records = len(computers_data)
 			all_existing_devices = list(CMDBdevice.objects.all())#filter(device_type="SERVER"))
 
 
@@ -75,8 +68,23 @@ class Command(BaseCommand):
 				return number * multiplier
 
 
+			def get_cmdb_instance(comp_name):
+				try:
+					cmdbdevice = CMDBdevice.objects.get(comp_name=comp_name.lower())
+					# fjerner fra oversikt over alle vi hadde før vi startet
+					nonlocal all_existing_devices
+					if cmdbdevice in all_existing_devices: # i tilfelle reintrodusert
+						all_existing_devices.remove(cmdbdevice)
+				except:
+					# lager en ny
+					cmdbdevice = CMDBdevice.objects.create(comp_name=comp_name.lower())
+					print("Opprettet %s" % comp_name)
+				return cmdbdevice
+
+
 			print("Alt lastet, oppdaterer databasen:")
-			for idx, record in enumerate(data):
+
+			for idx, record in enumerate(computers_data):
 				print(".", end="", flush=True)
 				if idx % 1000 == 0:
 					print("\n%s av %s" % (idx, antall_records))
@@ -88,15 +96,9 @@ class Command(BaseCommand):
 					continue  # Det må være en verdi på denne
 
 				# vi sjekker om enheten finnes fra før
-				try:
-					cmdbdevice = CMDBdevice.objects.get(comp_name=comp_name)
-					# fjerner fra oversikt over alle vi hadde før vi startet
-					if cmdbdevice in all_existing_devices: # i tilfelle reintrodusert
-						all_existing_devices.remove(cmdbdevice)
-				except:
-					# lager en ny
-					cmdbdevice = CMDBdevice.objects.create(comp_name=comp_name)
+				cmdbdevice = get_cmdb_instance(comp_name)
 
+				# OS-håndtering
 				os = record["Operating System"]
 				os_version = record["OS Version"]
 				os_sp = record["OS Service Pack"]
@@ -118,10 +120,10 @@ class Command(BaseCommand):
 
 				#print(os_readable)
 				comp_ip_address = record["IP Address"]
-
 				cmdbdevice.device_active = True
 				cmdbdevice.kilde_cmdb = True
-				cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])
+				if record["Disk space (GB)"] != "":
+					cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])*1024**3 # returnert som bytes (fra GB)
 				cmdbdevice.comp_cpu_core_count = convertToInt(record["CPU total"])
 				cmdbdevice.comp_ram = convertToInt(record["RAM (MB)"])
 				cmdbdevice.comp_ip_address = comp_ip_address
@@ -143,12 +145,12 @@ class Command(BaseCommand):
 					cmdbdevice.device_type = "SERVER"
 
 				sub_name = bss_cache(record["Name.1"])
-				if sub_name != None:
-					cmdbdevice.sub_name = sub_name
-				else:
+				if sub_name == None:
 					print('Business sub service %s for %s finnes ikke' % (record["Name.1"], comp_name))
-					server_dropped += 1
-					continue
+				cmdbdevice.sub_name = sub_name # det er OK at den er None
+				#else:
+				#	server_dropped += 1
+				#	continue
 
 
 				# Linke IP-adresse
@@ -162,6 +164,69 @@ class Command(BaseCommand):
 				# Lagre
 				cmdbdevice.save()
 
+			# gjennomgang av data fra vmware
+			def decode_disk(vm):
+				if vm["HE disk Allocated (GB)"] != "":
+					return (vm["HE disk Allocated (GB)"]*1024**3, vm["HE disk Used (GB)"]*1024**3, "HE")
+				if vm["HE-S disk Allocated (GB)"] != "":
+					return (vm["HE-S disk Allocated (GB)"]*1024**3, vm["HE-S disk Used (GB)"]*1024**3, "HE-S")
+
+				if vm["MR disk Allocated (GB)"] != "":
+					return (vm["MR disk Allocated (GB)"]*1024**3, vm["MR disk Used (GB)"]*1024**3, "MR")
+				if vm["MR-S disk Allocated (GB)"] != "":
+					return (vm["MR-S disk Allocated (GB)"]*1024**3, vm["MR-S disk Used (GB)"]*1024**3, "MR-S")
+
+				if vm["LE disk Allocated (GB)"] != "":
+					return (vm["LE disk Allocated (GB)"]*1024**3, vm["LE disk Used (GB)"]*1024**3, "LE")
+				if vm["LE-S disk Allocated (GB)"] != "":
+					return (vm["LE-S disk Allocated (GB)"]*1024**3, vm["LE-S disk Used (GB)"]*1024**3, "LE-S")
+
+				return (None, None, None)
+
+			if ".xlsx" in vmware_destination_file:
+				dfRaw = pd.read_excel(vmware_destination_file, sheet_name='Summarized', skiprows=8, usecols=[
+						'VM Name',
+						'HE disk Allocated (GB)',
+						'HE disk Used (GB)',
+						'HE-S disk Allocated (GB)',
+						'HE-S disk Used (GB)',
+						'MR disk Allocated (GB)',
+						'MR disk Used (GB)',
+						'MR-S disk Allocated (GB)',
+						'MR-S disk Used (GB)',
+						'LE disk Allocated (GB)',
+						'LE disk Used (GB)',
+						'LE-S disk Allocated (GB)',
+						'LE-S disk Used (GB)',
+						'VM CPU Usage (%)',
+						'VM Memory Usage (%)',
+						'PowerState',
+						'# of disks installed',
+					])
+				dfRaw = dfRaw.replace(np.nan, '', regex=True)
+				vmware_data = dfRaw.to_dict('records')
+
+				print(vmware_data[0])
+				for vm in vmware_data:
+					cmdbdevice = get_cmdb_instance(vm["VM Name"])
+					cmdbdevice.vm_poweredon = True if (vm["PowerState"] == "POWEREDON") else False
+					if vm["VM Memory Usage (%)"] != "":
+						cmdbdevice.vm_comp_ram_usage = vm["VM Memory Usage (%)"]
+					if vm["VM CPU Usage (%)"] != "":
+						cmdbdevice.vm_comp_cpu_usage = vm["VM CPU Usage (%)"]
+					cmdbdevice.vm_disk_allocation, cmdbdevice.vm_disk_usage, cmdbdevice.vm_disk_tier = decode_disk(vm)
+					#print(decode_disk(vm))
+					cmdbdevice.vm_disks_installed = vm["# of disks installed"]
+					print("%s: vm %s - cmdb %s" % (cmdbdevice.comp_name, cmdbdevice.vm_disk_allocation, cmdbdevice.comp_disk_space))
+
+					cmdbdevice.save()
+					print(".", end="", flush=True)
+			else:
+				print("Filen med VMware-data var ikke på riktig dataformat.")
+
+
+
+			#opprydding
 			obsolete_devices = all_existing_devices
 			devices_set_inactive = 0
 
@@ -171,6 +236,8 @@ class Command(BaseCommand):
 					devices_set_inactive += 1
 					item.save()
 
+
+			#oppsummering og logging
 			runtime_t1 = time.time()
 			total_runtime = round(runtime_t1 - runtime_t0, 1)
 
@@ -185,7 +252,6 @@ class Command(BaseCommand):
 					message=logg_entry_message,
 				)
 			print(logg_entry_message)
-
 
 		# eksekver
 		import_cmdb_servers()

@@ -323,6 +323,34 @@
 
 
 	<hr>
+
+	{% if systemdetaljer.bs_system_referanse %}
+	<h5>Servere og databaser</h5>
+	<p>Koblede data mot Sopra Sterias <a href="{% url 'cmdb_statistikk' %}">CMDB</a>. Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">beskrivelse av kritikalitet og tilgjengelighet</a>.</p>
+	<table class="table table-sm">
+		<thead>
+			<tr>
+				<th>Business Service</th>
+				<th>Criticality</th>
+				<th>Availability</th>
+				<th>Kompleksitet</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for cmdbref in systemdetaljer.bs_system_referanse.cmdb_bss_to_bs.all %}
+		<tr>
+			{% url 'cmdb_bss' pk=cmdbref.pk as url_cmdb %}
+			<td><a href="{{ url_cmdb }}">{{ cmdbref.navn }}</a></td>
+			<td>{{ cmdbref.get_kritikalitet_display|default:"-" }}</td>
+			<td>{{ cmdbref.u_service_availability_text }}</td>
+			<td>{{ cmdbref.u_service_complexity_text }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+
+	<hr>
 	<h5>Behandlinger i systemet</h5>
 	{% if user.is_authenticated %}
 	<p>
@@ -382,108 +410,6 @@
 	{% endif %}
 
 
-	<hr>
-	<h5>Virksomheters bruk av systemet</h5>
-	{% if user.is_authenticated %}
-		<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer bruk</a></p>
-	{% endif %}
-	<table class="table table-sm">
-		<thead>
-			<tr>
-				<th>Virksomhet</th>
-				<th>Ca. antall brukere</th>
-				{% if perms.systemoversikt.view_system %}
-				<th>Lokal KIT-vurdering {% explain_collapsed "Konfidensialitet, integritet og tilgjengelighet" %}</th>
-				{% endif %}
-				<th>Abonnerer på<br>felles behandlinger?</th>
-				<th>Lokal forvalter</th>
-				<th>Lokale vurderinger</th>
-				<th>Lokal RoS</th>
-				<th>Kommentar</th>
-			</tr>
-		</thead>
-		<tbody>
-			{% for bruk in systembruk %}
-			<tr>
-				<td style="width: 20%;">
-					{% if user.is_authenticated %}
-						<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
-						<img style="width: 11px; margin: 3px;"
-						src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
-					{% endif %}
-					{% url "bruksdetaljer" bruk.pk as url_bruk %}
-					<a href="{{ url_bruk }}">{{ bruk.brukergruppe.virksomhetsforkortelse }}</a>
-					{% if user.is_authenticated %}
-						<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/delete/">
-						<img style="width: 8px; margin: 3px;"
-						src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
-					{% endif %}
-				</td>
-
-				<td>{{ bruk.antall_brukere|default:"Ikke oppgitt" }}</td>
-
-				{% if perms.systemoversikt.view_system %}
-				<td>
-					K: {{ bruk.get_konfidensialitetsvurdering_display|default:"-" }}<br>
-					I: {{ bruk.get_integritetsvurdering_display|default:"-" }}<br>
-					T: {{ bruk.get_tilgjengelighetsvurdering_display|default:"-" }}<br>
-				</td>
-				{% endif %}
-
-				<td>
-					{% if bruk.del_behandlinger %}
-					<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
-					{% else %}
-					<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
-					{% endif %}
-					{{ bruk.del_behandlinger|yesno:"Ja,Nei" }}
-				</td>
-				<td>{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}</td>
-
-				<td>
-					Funksjonelt: {{ bruk.get_funksjonell_egnethet_display|default:"-" }}<br>
-					Strategisk knytning: {{ bruk.get_strategisk_egnethet_display|default:"-" }}<br>
-					Teknisk vurdering: {{ bruk.get_teknisk_egnethet_display|default:"-" }}
-				</td>
-				<td>
-					{% if bruk.url_risikovurdering %}
-						<a href="{{ bruk.url_risikovurdering }}">Link</a><br>
-					{% endif %}
-
-					{% if bruk.risikovurdering_tekst %}
-						{{ bruk.risikovurdering_tekst }}
-					{% endif %}
-				</td>
-				<td>{{ bruk.kommentar|default:"" }}</td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
-
-	<hr>
-	<h5>Tilgang til systemet</h5>
-	<h6>Bekreftede tilgangsgrupper</h6>
-	{% for adgroup in systemdetaljer.tilgangsgrupper_ad.all %}
-		{{ adgroup.prkvalg.all.0.valgnavn }}
-		<a href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">{{ adgroup.display_name }}</a>
-		({{ adgroup.membercount }} medlemmer)<br>
-	{% endfor %}
-	<hr>
-
-	<h6>PRK-valg basert på søk</h6>
-	{% for prkvalg in systemdetaljer.prkvalg.all %}
-		<a href="{% url 'prk_skjema' skjema_id=prkvalg.skjemanavn.pk %}">{{ prkvalg.full_benevning }}</a><br>
-	{% endfor %}
-	<hr>
-
-	<h6>AD-grupper basert på søk</h6>
-	{% for adgroup in systemdetaljer.adgrupper.all %}
-		<a href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">{{ adgroup.short }}</a>
-		({{ adgroup.membercount }} medlemmer)<br>
-	{% endfor %}
-
-
-	<hr>
 	<h5>Office 365 integrasjoner</h5>
 	<table class="table table-sm">
 		<thead>
@@ -513,7 +439,6 @@
 		</table>
 
 
-	<hr>
 	<h5>Sikkerhet og personvern</h5>
 	<table class="table table-sm">
 	{% if perms.systemoversikt.view_system %}
@@ -670,6 +595,107 @@
 
 
 	<hr>
+	<h5>Virksomheters bruk av systemet</h5>
+	{% if user.is_authenticated %}
+		<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer bruk</a></p>
+	{% endif %}
+	<table class="table table-sm">
+		<thead>
+			<tr>
+				<th>Virksomhet</th>
+				<th>Ca. antall brukere</th>
+				{% if perms.systemoversikt.view_system %}
+				<th>Lokal KIT-vurdering {% explain_collapsed "Konfidensialitet, integritet og tilgjengelighet" %}</th>
+				{% endif %}
+				<th>Abonnerer på<br>felles behandlinger?</th>
+				<th>Lokal forvalter</th>
+				<th>Lokale vurderinger</th>
+				<th>Lokal RoS</th>
+				<th>Kommentar</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for bruk in systembruk %}
+			<tr>
+				<td style="width: 20%;">
+					{% if user.is_authenticated %}
+						<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
+						<img style="width: 11px; margin: 3px;"
+						src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+					{% endif %}
+					{% url "bruksdetaljer" bruk.pk as url_bruk %}
+					<a href="{{ url_bruk }}">{{ bruk.brukergruppe.virksomhetsforkortelse }}</a>
+					{% if user.is_authenticated %}
+						<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/delete/">
+						<img style="width: 8px; margin: 3px;"
+						src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
+					{% endif %}
+				</td>
+
+				<td>{{ bruk.antall_brukere|default:"Ikke oppgitt" }}</td>
+
+				{% if perms.systemoversikt.view_system %}
+				<td>
+					K: {{ bruk.get_konfidensialitetsvurdering_display|default:"-" }}<br>
+					I: {{ bruk.get_integritetsvurdering_display|default:"-" }}<br>
+					T: {{ bruk.get_tilgjengelighetsvurdering_display|default:"-" }}<br>
+				</td>
+				{% endif %}
+
+				<td>
+					{% if bruk.del_behandlinger %}
+					<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">
+					{% else %}
+					<img style="width: 11px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(300deg);" src="{% static 'open-iconic/svg/x.svg' %}">
+					{% endif %}
+					{{ bruk.del_behandlinger|yesno:"Ja,Nei" }}
+				</td>
+				<td>{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}</td>
+
+				<td>
+					Funksjonelt: {{ bruk.get_funksjonell_egnethet_display|default:"-" }}<br>
+					Strategisk knytning: {{ bruk.get_strategisk_egnethet_display|default:"-" }}<br>
+					Teknisk vurdering: {{ bruk.get_teknisk_egnethet_display|default:"-" }}
+				</td>
+				<td>
+					{% if bruk.url_risikovurdering %}
+						<a href="{{ bruk.url_risikovurdering }}">Link</a><br>
+					{% endif %}
+
+					{% if bruk.risikovurdering_tekst %}
+						{{ bruk.risikovurdering_tekst }}
+					{% endif %}
+				</td>
+				<td>{{ bruk.kommentar|default:"" }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<hr>
+	<h5>Tilgang til systemet</h5>
+	<h6>Bekreftede tilgangsgrupper</h6>
+	{% for adgroup in systemdetaljer.tilgangsgrupper_ad.all %}
+		{{ adgroup.prkvalg.all.0.valgnavn }}
+		<a href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">{{ adgroup.display_name }}</a>
+		({{ adgroup.membercount }} medlemmer)<br>
+	{% endfor %}
+	<hr>
+
+	<h6>PRK-valg basert på søk</h6>
+	{% for prkvalg in systemdetaljer.prkvalg.all %}
+		<a href="{% url 'prk_skjema' skjema_id=prkvalg.skjemanavn.pk %}">{{ prkvalg.full_benevning }}</a><br>
+	{% endfor %}
+	<hr>
+
+	<h6>AD-grupper basert på søk</h6>
+	{% for adgroup in systemdetaljer.adgrupper.all %}
+		<a href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">{{ adgroup.short }}</a>
+		({{ adgroup.membercount }} medlemmer)<br>
+	{% endfor %}
+
+
+	<hr>
 	<h5>Driftsdetaljer</h5>
 	{% if systemdetaljer.driftsmodell_foreignkey %}
 		<table class="table table-sm">
@@ -750,32 +776,6 @@
 		</table>
 	{% endif %}
 
-
-	{% if systemdetaljer.bs_system_referanse %}
-	<h5>Servere og databaser</h5>
-	<p>Koblede data mot Sopra Sterias <a href="{% url 'cmdb_statistikk' %}">CMDB</a>. Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">beskrivelse av kritikalitet og tilgjengelighet</a>.</p>
-	<table class="table table-sm">
-		<thead>
-			<tr>
-				<th>Business Service</th>
-				<th>Criticality</th>
-				<th>Availability</th>
-				<th>Kompleksitet</th>
-			</tr>
-		</thead>
-		<tbody>
-		{% for cmdbref in systemdetaljer.bs_system_referanse.cmdb_bss_to_bs.all %}
-		<tr>
-			{% url 'cmdb_bss' pk=cmdbref.pk as url_cmdb %}
-			<td><a href="{{ url_cmdb }}">{{ cmdbref.navn }}</a></td>
-			<td>{{ cmdbref.get_kritikalitet_display|default:"-" }}</td>
-			<td>{{ cmdbref.u_service_availability_text }}</td>
-			<td>{{ cmdbref.u_service_complexity_text }}</td>
-		</tr>
-		{% endfor %}
-		</tbody>
-	</table>
-	{% endif %}
 
 	<br><br>
 	<h5>Utvidet informasjon</h5>
