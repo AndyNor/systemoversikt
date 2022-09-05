@@ -3,12 +3,13 @@ secrets.py
 secrets_dev.py
 secrets_test.py
 db.sqlite3
-systemoversikt/import/
 systemoversikt/management/commands/*.json
 ldap_update_all_users
 prk_sync
 bash_scripts/*
 /static/*
+*.xlsx
+*.csv
 
 # local
 dev.bat
