@@ -2234,6 +2234,17 @@ class CMDBdevice(models.Model):
 	def __str__(self):
 		return u'%s' % (self.comp_name)
 
+	def cpu_usage(self):
+		return int(self.vm_comp_cpu_usage * 100)
+
+	def disk_usage_free(self):
+		if self.vm_disk_allocation != 0 or self.vm_disk_allocation != None:
+			return 100 - int(self.vm_disk_usage / self.vm_disk_allocation * 100)
+		return None
+
+	def ram_usage(self):
+		return int(self.vm_comp_ram_usage * 100)
+
 	def nat(self):
 		return 'ikke implementert'
 
