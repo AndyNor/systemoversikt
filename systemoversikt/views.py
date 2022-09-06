@@ -3959,12 +3959,15 @@ def alle_servere(request):
 
 		vis_detaljer = True if request.GET.get('details') == "show" else False
 
+		inaktive_servere_poweredon = CMDBdevice.objects.filter(device_active=False, vm_poweredon=True)
+
 		return render(request, 'cmdb_maskiner_servere.html', {
 			'request': request,
 			'maskiner': maskiner,
 			'device_search_term': search_term,
 			'maskiner_stats': maskiner_stats,
 			'vis_detaljer': vis_detaljer,
+			'inaktive_servere_poweredon': inaktive_servere_poweredon,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
