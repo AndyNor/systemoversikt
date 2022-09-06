@@ -85,6 +85,15 @@
 		{% url 'alle_ip' as url_alle_ip %}
 		<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP-søk</a><br>
 
+		{% url 'cmdb_backup_index' as url_cmdb_backup_index %}
+		<a href="{{url_cmdb_backup_index}}" class="btn btn-sm btn-link {% if url_cmdb_backup_index in request.path %}fremhev{% endif %}">Backup</a><br>
+
+		{% url 'cmdb_lagring_index' as url_cmdb_lagring_index %}
+		<a href="{{url_cmdb_lagring_index}}" class="btn btn-sm btn-link {% if url_cmdb_lagring_index in request.path %}fremhev{% endif %}">Lagring</a><br>
+
+		{% url 'cmdb_minne_index' as url_cmdb_minne_index %}
+		<a href="{{url_cmdb_minne_index}}" class="btn btn-sm btn-link {% if url_cmdb_minne_index in request.path %}fremhev{% endif %}">Minnebruk</a><br>
+
 		{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}
 
 

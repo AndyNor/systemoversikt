@@ -417,6 +417,67 @@ def alle_nettverk(request):
 
 
 
+def cmdb_backup_index(request):
+	"""
+	Vise alle nettverk
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		return render(request, 'cmdb_backup_index.html', {
+			'request': request,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def cmdb_lagring_index(request):
+	"""
+	Vise alle nettverk
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		return render(request, 'cmdb_lagring_index.html', {
+			'request': request,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def cmdb_minne_index(request):
+	"""
+	Vise alle nettverk
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		return render(request, 'cmdb_minne_index.html', {
+			'request': request,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def cmdb_servere_disabled_poweredon(request):
+	"""
+	Vise alle nettverk
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		return render(request, 'cmdb_servere_disabled_poweredon.html', {
+			'request': request,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
 def bruker_sok(request):
 	"""
 	Denne funksjonen viser resultat av søk etter brukere
@@ -3990,7 +4051,7 @@ def servere_utfaset(request):
 	required_permissions = 'systemoversikt.view_cmdbdevice'
 	if request.user.has_perm(required_permissions):
 
-		maskiner = CMDBdevice.objects.filter(device_active=False).order_by("-sist_oppdatert")[:300]
+		maskiner = CMDBdevice.objects.filter(device_active=False, device_type="SERVER").order_by("-sist_oppdatert")[:300]
 		return render(request, 'cmdb_alle_maskiner_utfaset.html', {
 			'request': request,
 			'maskiner': maskiner,

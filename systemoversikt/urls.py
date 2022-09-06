@@ -135,6 +135,7 @@ urlpatterns = [
 	re_path(r'^cmdb/bs/$', views.alle_cmdbref, name='alle_cmdbref_sok'),
 	re_path(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdb_bss, name='cmdb_bss'),
 	re_path(r'^cmdb/servere/$', views.alle_servere, name='alle_servere'),
+	re_path(r'^cmdb/servere/diabledpoweredon/$', views.cmdb_servere_disabled_poweredon, name='cmdb_servere_disabled_poweredon'),
 	re_path(r'^cmdb/klienter/$', views.alle_klienter, name='alle_klienter'),
 	re_path(r'^cmdb/servere/utfaset/$', views.servere_utfaset, name='servere_utfaset'),
 	re_path(r'^cmdb/devicedetails/(?P<pk>\d{1,8})/$', views.cmdb_devicedetails, name='cmdb_devicedetails'),
@@ -150,6 +151,9 @@ urlpatterns = [
 	re_path(r'^cmdb/azure/applications/$', views.azure_applications, name='azure_applications'),
 	re_path(r'^cmdb/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
 	re_path(r'^cmdb/o365_avvik/$', views.o365_avvik, name='o365_avvik'),
+	re_path(r'^cmdb/backup/$', views.cmdb_backup_index, name='cmdb_backup_index'),
+	re_path(r'^cmdb/lagring/$', views.cmdb_lagring_index, name='cmdb_lagring_index'),
+	re_path(r'^cmdb/minne/$', views.cmdb_minne_index, name='cmdb_minne_index'),
 
 
 

@@ -1,0 +1,20 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	CMDB: Deaktive servere i CMDB som har status POWERED ON
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>
+	{% for s in inaktive_servere_poweredon %}
+		<li>{{ s }}</li>
+	{% endfor %}
+	</p>
+
+{% endblock hovedinnhold %}

@@ -15,7 +15,10 @@
 	<a href="{{url_servere_utfaset}}" class="btn btn-sm btn-link {% if url_servere_utfaset in request.path %}fremhev{% endif %}">Utfasede servere</a>
 
 	{% url 'maskin_sok' as url_maskin_sok %}
-	<a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Listesøk</a>
+	<a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Massesøk på servere</a>
+
+	{% url 'cmdb_servere_disabled_poweredon' as url_cmdb_servere_disabled_poweredon %}
+	<a href="{{url_cmdb_servere_disabled_poweredon}}" class="btn btn-sm btn-link {% if url_cmdb_servere_disabled_poweredon in request.path %}fremhev{% endif %}">Deaktiverte servere som står på</a>
 
 	<hr>
 
@@ -85,7 +88,7 @@
 		<td>
 			CPU: {{ maskin.comp_u_cpu_total|default:"-" }} Cores<br>
 			RAM: {{ maskin.comp_ram|default:"-" }} MB<br>
-			Disk: {{ maskin.comp_disk_space|default:"-" }} Bytes <br>
+			Disk: {{ maskin.comp_disk_space|filesizeformat }} Bytes <br>
 			{% if vis_detaljer %}
 			{% for disk in maskin.cmdbdisk_computer.all %}
 				{% if disk.operational_status %}
@@ -122,17 +125,6 @@
 	{% endfor %}
 	</tbody>
 	</table>
-
-	<hr>
-
-	<h5>Deaktive servere i CMDB som har status POWERED ON</h5>
-	<p>{{ inaktive_servere_poweredon|length }} servere.</p>
-	{% for s in inaktive_servere_poweredon %}
-		<li>{{ s }}</li>
-	{% endfor %}
-
-	<hr>
-
 
 	<table class="table table-sm tablesorter">
 	<thead>
