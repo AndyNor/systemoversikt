@@ -124,8 +124,12 @@
 	</table>
 
 	<hr>
+
 	<h5>Deaktive servere i CMDB som har status POWERED ON</h5>
-	{{ inaktive_servere_poweredon }}
+	<p>{{ inaktive_servere_poweredon|length }} servere.</p>
+	{% for s in inaktive_servere_poweredon %}
+		<li>{{ s }}</li>
+	{% endfor %}
 
 	<hr>
 
