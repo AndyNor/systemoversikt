@@ -10,6 +10,9 @@ bash_scripts/*
 /static/*
 *.xlsx
 *.csv
+*.tsv
+*_dns_*
+systemoversikt/import/*.json
 
 # local
 dev.bat
