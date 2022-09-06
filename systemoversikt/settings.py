@@ -46,7 +46,7 @@ if THIS_ENVIRONMENT == "PROD":
 	SITE_DOMAIN = "kartoteket.oslo.kommune.no"
 	SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
 	#SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
-	ALLOWED_HOSTS = ["localhost", "kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "10.134.162.203"]
+	ALLOWED_HOSTS = ["10.134.162.204", "localhost", "kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "10.134.162.203"]
 if THIS_ENVIRONMENT == "DEV":
 	SECURE_SSL_REDIRECT = False
 	TEST_ENV_NAME = "development"
