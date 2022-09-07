@@ -7,7 +7,7 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Business (Sub) Service "{{ cmdbref.0 }}"
+	Miljø "{{ cmdbref.0.navn }}"
 {% endblock overskrift %}
 
 {% block ekstrajavascript %}
@@ -22,8 +22,65 @@
 {% block hovedinnhold %}
 
 	{% if perms.systemoversikt.view_system %}
+
+		<hr>
+
+		<h6>Overordnet business Service:</h6>
+		<h4>{{ cmdbref.0.parent_ref }}</h4>
+
+
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-3">
+					<h6>Totalt allokert minne</h6>
+					<h3>{{ cmdbref.0.parent_ref.ram_allocated|filesizeformat }}</h3>
+					<h6>Totalt allokert disk</h6>
+					<h3>{{ cmdbref.0.parent_ref.san_allocated|filesizeformat }}</h3>
+					<h6>Totalt ubrukt disk</h6>
+					<h3>{{ cmdbref.0.parent_ref.san_unallocated|filesizeformat }}</h3>
+					<h6>Total backupstørrelse</h6>
+					<h3>{{ cmdbref.0.parent_ref.backup_size|filesizeformat }}</h3>
+				</div>
+				<div class="col-sm-9">
+					<h6>Alle miljø</h6>
+					{% for bss in cmdbref.0.parent_ref.cmdb_bss_to_bs.all %}
+						{% url 'cmdb_bss' pk=bss.pk as url_cmdb_bss %}
+						<a href="{{url_cmdb_bss}}">{{ bss.navn }}</a> {% if not forloop.last %} | {% endif %}
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+
+		<hr>
+
+
 		<h6>Beskrivelse fra Sopra Steria</h6>
 		<p>{{cmdbref.0.comments|default:"-"}}</p>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-sm">
+					<h6>Miljø allokert minne</h6>
+					<h3>{{ cmdbref.0.ram_allocated|filesizeformat }}</h3>
+				</div>
+				<div class="col-sm">
+					<h6>Miljø allokert disk</h6>
+					<h3>{{ cmdbref.0.san_allocated|filesizeformat }}</h3>
+				</div>
+				<div class="col-sm">
+					<h6>Miljø ubrukt disk</h6>
+					<h3>{{ cmdbref.0.san_unallocated|filesizeformat }}</h3>
+				</div>
+				<div class="col-sm">
+					<h6>Miljø backupstørrelse</h6>
+					<h3>{{ cmdbref.0.backup_size|filesizeformat }}</h3>
+				</div>
+				<div class="col-sm">
+					<h6>Miljø antall A-records</h6>
+					<h3>{{ cmdbref.0.antall_dns_rec }}</h3>
+				</div>
+			</div>
+		</div>
 
 		{% include "cmdb_include.html" with cmdbref=cmdbref %}
 
@@ -44,14 +101,11 @@
 				<th>Antall CPU</th>
 				<th>RAM (MB)</th>
 				<th>Backup</th>
-				<th>IP-address</th>
-				<th>VLAN</th>
+				<th>Nettverk</th>
 				<th>DNS</th>
 				<th>NAT</th>
 				<th>VIP</th>
 				<th>OS</th>
-				<th>OS version</th>
-				<th>OS service pack</th>
 			</tr>
 			</thead>
 			<tbody>
@@ -59,11 +113,14 @@
 			<tr {% if not item.device_active %} style="color: #d6d6d6;" {% endif %}>
 				{% url 'cmdb_devicedetails' pk=item.pk as url_cmdb_devicedetails %}
 				<td><a href="{{url_cmdb_devicedetails}}">{{ item.comp_name|default:"-" }}</a></td>
-				<td>{% include 'site_janeivetikke.html' with boolean=item.device_active %}</td>
+				<td>
+					{% include 'site_janeivetikke.html' with boolean=item.device_active %}<br>
+					{{ item.vm_poweredon|yesno:"Påskrudd, Avskrudd" }}
+				</td>
 				<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
 				<td>
-					{{ item.comp_disk_space|default:"-" }} bytes
-					<br><br>
+					{{ item.comp_disk_space|filesizeformat }} (Type {{ item.vm_disk_tier }})
+					<br>
 					{% for disk in item.cmdbdisk_computer.all %}
 						{% if disk.operational_status %}
 							<li>
@@ -72,19 +129,19 @@
 					{% endfor %}
 
 				</td>
-				<td>{{ item.comp_u_cpu_total|default:"-" }}</td>
-				<td>{{ item.comp_ram|default:"-" }}</td>
+				<td>{{ item.comp_cpu_core_count|default:"-" }}</td>
+				<td>{{ item.comp_ram_byes|filesizeformat }}</td>
 				<td>
 					{% for b in item.backup_size %}
 						{{ b|filesizeformat }}<br>
 					{% endfor %}
 				</td>
-				<td>{{ item.comp_ip_address|default:"-" }}</td>
 				<td>
-				{% for vlan in item.network_ip_address.all.0.vlan.all %}
-					{% url 'nettverk_detaljer' pk=vlan.pk as url_network_details %}
-					<li><a href="{{ url_network_details }}">{{ vlan.comment }} ({{ vlan }})</a></li>
-				{% endfor %}
+					IP: {{ item.comp_ip_address|default:"-" }}<br>
+					{% for vlan in item.network_ip_address.all.0.vlan.all %}
+						{% url 'nettverk_detaljer' pk=vlan.pk as url_network_details %}
+						<li><a href="{{ url_network_details }}">{{ vlan.comment }} ({{ vlan }})</a></li>
+					{% endfor %}
 				</td>
 				<td>{{ item.dns|default:"" }}</td>
 				<td>{{ item.nat|default:"" }}</td>
@@ -97,9 +154,11 @@
 					<li>{{ pool.pool_name }}</li>
 				{% endfor %}
 				</td>
-				<td>{{ item.comp_os }}</td>
-				<td>{{ item.comp_os_version|default:"-" }}</td>
-				<td>{{ item.comp_os_service_pack|default:"-" }}</td>
+				<td>
+					{{ item.comp_os }}<br>
+					{{ item.comp_os_version|default:"-" }}<br>
+					{{ item.comp_os_service_pack|default:"-" }}
+				</td>
 			</tr>
 			{% endfor %}
 			</tbody>
@@ -128,7 +187,6 @@
 			</tbody>
 		</table>
 
-
 		<h6>Backup</h6>
 		<table class="table table-sm tablesorter">
 			<thead>
@@ -148,6 +206,29 @@
 			{% endfor %}
 			</tbody>
 		</table>
+
+		<h6>DNS-navn</h6>
+		<table class="table table-sm tablesorter excel">
+		<thead>
+			<th>DNS-navn</th>
+			<th>DNS-type</th>
+			<th>IP adresse</th>
+			<th>Alias mot</th>
+			<th>Time to live (TTL)</th>
+		</thead>
+		<tbody>
+		{% for dns in cmdbref.0.alle_dns %}
+			<tr>
+				<td>{{ dns.dns_name }}</td>
+				<td>{{ dns.dns_type }}</td>
+				<td>{{ dns.ip_address }}</td>
+				<td>{{ dns.dns_target|default:"" }}</td>
+				<td>{{ dns.ttl|default:"" }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+
 
 	{% else %}
 		<p>Du mangler tilgangen view_system (Vise systemdetaljer).</p>

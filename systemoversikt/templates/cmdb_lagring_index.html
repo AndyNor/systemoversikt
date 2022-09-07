@@ -6,10 +6,52 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Overskrift
+	Oversikt over disk/SAN-forbruk
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
+<hr>
+<div class="container">
+	<div class="row">
+		<div class="col-sm">
+			<h6>Allokert lagring allokert totalt</h6>
+			<h3>{{ count_san_allocated|filesizeformat }}</h3>
+		</div>
+		<div class="col-sm">
+			<h6>Faktisk benyttet lagring totalt</h6>
+			<h3>{{ count_san_used|filesizeformat }} ({{pct_used}}%)</h3>
+		</div>
+		<div class="col-sm">
+			<h6>Allokert lagring uten kobling til business service</h6>
+			<h3>{{ count_san_missing_bs|filesizeformat }}</h3>
+		</div>
+	</div>
+</div>
+<hr>
+
+<h6>Lagring fordelt på Business Service</h6>
+<table class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th>Business service</th>
+		<th>Lagring allokert</th>
+		<th>Lagring benyttet</th>
+		<th>Lagring ubenyttet</th>
+		<th>Andel lagring benyttet</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for bs in bs_all %}
+	<tr>
+		<td>{{bs}}</td>
+		<td>{{bs.san_allocated}} ({{bs.san_allocated|filesizeformat}})</td>
+		<td>{{bs.san_used}} ({{bs.san_used|filesizeformat}})</td>
+		<td>{{bs.san_unallocated}} ({{bs.san_unallocated|filesizeformat}})</td>
+		<td>{% if bs.san_used_pct != "NaN" %} {{ bs.san_used_pct }}% {% else%} - {% endif %}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>
 
 {% endblock hovedinnhold %}

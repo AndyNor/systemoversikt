@@ -425,8 +425,18 @@ def cmdb_backup_index(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if any(map(request.user.has_perm, required_permissions)):
 
+		from django.db.models import Sum
+		count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+		count_backup_missing_bss = CMDBbackup.objects.filter(bss=None).aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+		pct_missing_all = int(count_backup_missing_bss / count_backup * 100)
+		bs_all = CMDBbs.objects.all()
+
 		return render(request, 'cmdb_backup_index.html', {
 			'request': request,
+			'count_backup': count_backup,
+			'count_backup_missing_bss': count_backup_missing_bss,
+			'pct_missing_all': pct_missing_all,
+			'bs_all': bs_all,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -440,8 +450,22 @@ def cmdb_lagring_index(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if any(map(request.user.has_perm, required_permissions)):
 
+
+		from django.db.models import Sum
+		count_san_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+		count_san_used = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
+		pct_used = int(count_san_used / count_san_allocated * 100)
+		count_san_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(sub_name=None).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+		bs_all = CMDBbs.objects.all()
+
 		return render(request, 'cmdb_lagring_index.html', {
 			'request': request,
+			'count_san_allocated': count_san_allocated,
+			'count_san_used': count_san_used,
+			'pct_used': pct_used,
+			'count_san_missing_bs': count_san_missing_bs,
+			'bs_all': bs_all,
+
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -455,8 +479,17 @@ def cmdb_minne_index(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if any(map(request.user.has_perm, required_permissions)):
 
+		count_ram_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024**2 #MB->bytes
+		count_ram_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(sub_name=None).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024**2 #MB->bytes
+		#vm_comp_ram_usage__sum
+		bs_all = CMDBbs.objects.all()
+
 		return render(request, 'cmdb_minne_index.html', {
 			'request': request,
+			'count_ram_allocated': count_ram_allocated,
+			'count_ram_missing_bs': count_ram_missing_bs,
+			'bs_all': bs_all,
+
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -470,8 +503,10 @@ def cmdb_servere_disabled_poweredon(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if any(map(request.user.has_perm, required_permissions)):
 
+		inaktive_servere_poweredon = CMDBdevice.objects.filter(device_active=False, vm_poweredon=True)
 		return render(request, 'cmdb_servere_disabled_poweredon.html', {
 			'request': request,
+			'inaktive_servere_poweredon': inaktive_servere_poweredon,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -3779,8 +3814,9 @@ def maskin_sok(request):
 			servers = query.split("\n")
 			for server in servers:
 				try:
-					match = CMDBdevice.objects.get(comp_name__iexact=server.strip())
-					hits.append(match)
+					match = CMDBdevice.objects.filter(comp_name__iexact=server.strip())
+					for m in match.all():
+						hits.append(m)
 				except:
 					misses.append(server.strip())
 
@@ -4020,15 +4056,12 @@ def alle_servere(request):
 
 		vis_detaljer = True if request.GET.get('details') == "show" else False
 
-		inaktive_servere_poweredon = CMDBdevice.objects.filter(device_active=False, vm_poweredon=True)
-
 		return render(request, 'cmdb_maskiner_servere.html', {
 			'request': request,
 			'maskiner': maskiner,
 			'device_search_term': search_term,
 			'maskiner_stats': maskiner_stats,
 			'vis_detaljer': vis_detaljer,
-			'inaktive_servere_poweredon': inaktive_servere_poweredon,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

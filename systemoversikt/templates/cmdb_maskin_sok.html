@@ -32,7 +32,7 @@
 	</thead>
 	<tbody>
 	{% for server in hits %}
-		<tr {% if server.device_active == False %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
+		<tr {% if server.device_active == False %} style="text-decoration: line-through; opacity: 60%;" {% endif %}>
 			<td>{{server.comp_name}}</td>
 			<td>{{server.sub_name.parent_ref}} <br> {{server.sub_name}} <br> {{server.sub_name.get_environment_display}}</td>
 			<td>

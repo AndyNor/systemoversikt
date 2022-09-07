@@ -6,10 +6,42 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Overskrift
+	Oversikt over backup-forbruk
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
+<hr>
+<div class="container">
+	<div class="row">
+		<div class="col-sm">
+			<h6>Backup totalt</h6>
+			<h3>{{ count_backup|filesizeformat }}</h3>
+		</div>
+		<div class="col-sm">
+			<h6>Backup uten kobling til business service</h6>
+			<h3>{{ count_backup_missing_bss|filesizeformat }} ({{pct_missing_all}}%)</h3>
+		</div>
+	</div>
+</div>
+<hr>
+
+<h6>Backup fordelt på Business Service</h6>
+<table class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th>Business service</th>
+		<th>Total mengde backup</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for bs in bs_all %}
+	<tr>
+		<td>{{bs}}</td>
+		<td>{{bs.backup_size}} ({{bs.backup_size|filesizeformat}})</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>
 
 {% endblock hovedinnhold %}

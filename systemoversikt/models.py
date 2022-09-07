@@ -7,6 +7,7 @@ from simple_history.models import HistoricalRecords
 from django import forms
 import json
 import re
+from django.db.models import Sum
 
 
 # som standard vises bare "self.username". Vi ønsker også å vise fult navn.
@@ -1374,6 +1375,41 @@ class CMDBbs(models.Model):
 	def __str__(self):
 		return u'%s' % (self.navn)
 
+	def backup_size(self):
+		total = 0
+		for bss in self.cmdb_bss_to_bs.all():
+			total += bss.backup_size()
+		return total
+
+	def san_used(self):
+		total = 0
+		for bss in self.cmdb_bss_to_bs.all():
+			total += bss.san_used()
+		return total
+
+	def san_allocated(self):
+		total = 0
+		for bss in self.cmdb_bss_to_bs.all():
+			total += bss.san_allocated()
+		return total
+
+	def san_unallocated(self):
+		total = 0
+		for bss in self.cmdb_bss_to_bs.all():
+			total += bss.san_unallocated()
+		return total
+
+	def san_used_pct(self):
+		if self.san_allocated() != 0:
+			return int(self.san_used() / self.san_allocated() * 100)
+		return "NaN"
+
+	def ram_allocated(self):
+		total = 0
+		for bss in self.cmdb_bss_to_bs.all():
+			total += bss.ram_allocated()
+		return total
+
 	def ant_bss(self):
 		return self.cmdb_bss_to_bs.all().count()
 
@@ -1508,9 +1544,62 @@ class CMDBRef(models.Model): # BSS
 		else:
 			return u'%s (servergruppe)' % (self.navn)
 
+	def alle_dns(self):
+		dnsrecords = set()
+		for server in self.cmdbdevice_sub_name.all():
+			# direkte dns-navn mot server
+			for netaddr in server.network_ip_address.all():
+				for dnsrec in netaddr.dns.all():
+					dnsrecords.add(dnsrec)
+
+			# indirekte dns-navn mot vip knyttet mot pool som server er medlem i
+			for pool in server.vip_pool.all():
+				#print("0", pool)
+				for vip in pool.vip.all():
+					#print("1",vip)
+					for netaddr in vip.network_ip_address.all():
+						#print("2",netaddr)
+						for dnsrec in netaddr.dns.all():
+							dnsrecords.add(dnsrec)
+							#print("3",dnsrec)
+
+		return dnsrecords
+
+	def antall_dns_rec(self):
+		return len(self.alle_dns())
+
+
 	def backup_size(self):
-		from django.db.models import Sum
-		return CMDBbackup.objects.filter(bss=self).aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+		total = CMDBbackup.objects.filter(bss=self).aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+		if total == None:
+			return 0
+		return total
+
+	def san_used(self):
+		total = CMDBdevice.objects.filter(sub_name=self).aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
+		if total == None:
+			return 0
+		return total
+
+	def san_allocated(self):
+		total = CMDBdevice.objects.filter(sub_name=self).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+		if total == None:
+			return 0
+		return total
+
+	def san_unallocated(self):
+		return self.san_allocated() - self.san_used()
+
+	def san_used_pct(self):
+		if self.san_allocated() != 0:
+			return int(self.san_used() / self.san_allocated() * 100)
+		return "NaN"
+
+	def ram_allocated(self):
+		total = CMDBdevice.objects.filter(sub_name=self).aggregate(Sum('comp_ram'))["comp_ram__sum"]
+		if total == None:
+			return 0
+		return total * 1024**2 # MB til bytes
 
 	def u_service_availability_text(self):
 		lookup = {
@@ -2235,15 +2324,24 @@ class CMDBdevice(models.Model):
 		return u'%s' % (self.comp_name)
 
 	def cpu_usage(self):
-		return int(self.vm_comp_cpu_usage * 100)
+		if self.vm_comp_cpu_usage != None:
+			return int(self.vm_comp_cpu_usage * 100)
+		return "? "
 
 	def disk_usage_free(self):
-		if self.vm_disk_allocation != 0 or self.vm_disk_allocation != None:
+		if not (self.vm_disk_usage == None or self.vm_disk_allocation == None):
 			return 100 - int(self.vm_disk_usage / self.vm_disk_allocation * 100)
-		return None
+		return "? "
+
+	def comp_ram_byes(self):
+		if self.comp_ram != None:
+			return self.comp_ram * 1024**2
+		return "? "
 
 	def ram_usage(self):
-		return int(self.vm_comp_ram_usage * 100)
+		if self.vm_comp_ram_usage != None:
+			return int(self.vm_comp_ram_usage * 100)
+		return "? "
 
 	def nat(self):
 		return 'ikke implementert'

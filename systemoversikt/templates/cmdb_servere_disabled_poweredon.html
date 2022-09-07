@@ -11,6 +11,10 @@
 
 {% block hovedinnhold %}
 
+	<p>Dette kan skyldes nye servere som ikke er registrert i CMDB.</p>
+
+	<p>Det er {{inaktive_servere_poweredon|length}} slike servere i databasen</p>
+
 	<p>
 	{% for s in inaktive_servere_poweredon %}
 		<li>{{ s }}</li>

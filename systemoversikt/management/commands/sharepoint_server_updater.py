@@ -210,6 +210,7 @@ class Command(BaseCommand):
 				for vm in vmware_data:
 					cmdbdevice = get_cmdb_instance(vm["VM Name"])
 					cmdbdevice.vm_poweredon = True if (vm["PowerState"] == "POWEREDON") else False
+					cmdbdevice.device_type = "SERVER"
 					if vm["VM Memory Usage (%)"] != "":
 						cmdbdevice.vm_comp_ram_usage = vm["VM Memory Usage (%)"]
 					if vm["VM CPU Usage (%)"] != "":
