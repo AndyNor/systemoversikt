@@ -479,9 +479,15 @@ def cmdb_minne_index(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if any(map(request.user.has_perm, required_permissions)):
 
-		count_ram_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024**2 #MB->bytes
-		count_ram_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(sub_name=None).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024**2 #MB->bytes
-		#vm_comp_ram_usage__sum
+		try:
+			count_ram_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024**2 #MB->bytes
+		except:
+			count_ram_allocated = 0
+		try:
+			count_ram_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(sub_name=None).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024**2 #MB->bytes
+		except:
+			count_ram_missing_bs = 0
+
 		bs_all = CMDBbs.objects.all()
 
 		return render(request, 'cmdb_minne_index.html', {
