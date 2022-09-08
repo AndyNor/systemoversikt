@@ -4486,7 +4486,8 @@ def ldap_users_securitygroups(user):
 		memberof = result[0][1]['memberOf']
 		return([g.decode() for g in memberof])
 	except:
-		print("error ldap_users_securitygroups(): %s" %(result))
+		print("Finner ikke 'memberof' attributtet.")
+		#print("error ldap_users_securitygroups(): %s" %(result))
 		return []
 
 
