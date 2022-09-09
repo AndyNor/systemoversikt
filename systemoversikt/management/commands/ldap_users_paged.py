@@ -167,18 +167,18 @@ class Command(BaseCommand):
 			user.is_active = True
 
 			if user.profile.ansattnr_ref == None:
-				#try:
-				ansattnr_match = re.search(r'(\d{4,})', user.username, re.I)
-				if ansattnr_match:
-					ansattnr = int(ansattnr_match[0])
-					try:
-						aid = AnsattID.objects.get(ansattnr=ansattnr)
-					except:
-						aid = AnsattID.objects.create(ansattnr=ansattnr)
+				try:
+					ansattnr_match = re.search(r'(\d{4,})', user.username, re.I)
+					if ansattnr_match:
+						ansattnr = int(ansattnr_match[0])
+						try:
+							aid = AnsattID.objects.get(ansattnr=ansattnr)
+						except:
+							aid = AnsattID.objects.create(ansattnr=ansattnr)
 
-					user.profile.ansattnr_ref = aid
-				#except:
-				#	print("Kobling mot AnsattID feilet for %s" % user)
+						user.profile.ansattnr_ref = aid
+				except:
+					print("Kobling mot AnsattID feilet for %s" % user)
 
 			user.save()
 			return
