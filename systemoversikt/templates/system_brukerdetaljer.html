@@ -16,6 +16,10 @@
 	{% url 'logger_users' as url_logger_users %}
 	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}">Logg over brukerendringer</a>
 
+	{% url 'cmdb_ad_flere_brukeridenter' as url_cmdb_ad_flere_brukeridenter %}
+	<a href="{{ url_cmdb_ad_flere_brukeridenter }}" class="btn btn-sm btn-link {% if url_cmdb_ad_flere_brukeridenter in request.path %}fremhev{% endif %}">Personer med flere identer</a>
+
+
 	<hr>
 
 	<form action="{% url 'bruker_sok' %}" autocomplete="off">

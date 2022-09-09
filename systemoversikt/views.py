@@ -471,6 +471,10 @@ def cmdb_lagring_index(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+
+
+
+
 def cmdb_minne_index(request):
 	"""
 	Vise alle nettverk
@@ -516,6 +520,34 @@ def cmdb_servere_disabled_poweredon(request):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def cmdb_ad_flere_brukeridenter(request):
+	"""
+	Viser informasjon om personer med mer enn 1 brukerident
+	"""
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+	import collections
+	ansattnr = []
+	relevante_brukere = User.objects.filter(profile__accountdisable=False).filter(Q(profile__distinguishedname__icontains="OU=Eksterne brukere,OU=OK")|Q(profile__distinguishedname__icontains="OU=Brukere,OU=OK"))#.values_list("username", flat=True)
+	for anr in relevante_brukere:
+		match = re.search(r'(\d{4,})', anr.username, re.I)
+		if match:
+			ansattnr.append(match[0])
+
+	counter = collections.Counter(ansattnr)
+	ansattnr_flere = [{"anr": anr, "count": count} for anr, count in counter.items() if count>1]
+	ant_ansattnr_flere = len(ansattnr_flere)
+
+	return render(request, 'cmdb_ad_flere_brukeridenter.html', {
+		'request': request,
+		'ant_ansattnr_flere': ant_ansattnr_flere,
+		'ansattnr_flere': ansattnr_flere,
+	})
 
 
 

@@ -664,6 +664,13 @@ class ADUser(models.Model):
 		verbose_name_plural = "AD brukere (utenfor PRK)"
 """
 
+class AnsattID(models.Model):
+	ansattnr = models.IntegerField()
+
+	def __str__(self):
+		return u'%s' % (self.ansattid)
+
+
 class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhørende virksomhet. Vurderer å fjerne denne.
 	#https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
 	user = models.OneToOneField(
@@ -779,6 +786,13 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			verbose_name="Ansattnr (PRK)",
 			blank=True,
 			null=True,
+			)
+	ansattnr_ref = models.ForeignKey(
+			to="AnsattID",
+			related_name='userprofile',
+			on_delete=models.SET_NULL,
+			null=True,
+			blank=True,
 			)
 	adgrupper = models.ManyToManyField(
 			to="ADgroup",

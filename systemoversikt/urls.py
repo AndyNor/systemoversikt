@@ -157,6 +157,8 @@ urlpatterns = [
 
 
 
+
+
 	re_path(r'^cmdb/prk/$', views.alle_prk, name='alle_prk'),
 	re_path(r'^cmdb/prk/browse/$', views.prk_browse, name='prk_browse'),
 	re_path(r'^cmdb/prk/browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
@@ -166,6 +168,8 @@ urlpatterns = [
 	re_path(r'^cmdb/ad/drifttilgang/$', views.drifttilgang, name='drifttilgang'),
 	re_path(r'^cmdb/ad/tbrukere/$', views.tbrukere, name='tbrukere'),
 	re_path(r'^cmdb/bruker/logger/$', views.logger_users, name='logger_users'),
+	re_path(r'^cmdb/bruker/flereidenter/$', views.cmdb_ad_flere_brukeridenter, name='cmdb_ad_flere_brukeridenter'),
+
 
 	re_path(r'^cmdb/ad/lookup/$', views.ad, name='ad'),
 	re_path(r'^cmdb/ad/analyse/$', views.ad_analyse, name='ad_analyse'),

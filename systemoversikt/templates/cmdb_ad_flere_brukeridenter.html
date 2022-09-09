@@ -1,0 +1,41 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Personer med flere brukerkontoer i brukerkatalogen
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<div class="container">
+		<div class="row">
+			<div class="col-sm">
+				<h6>Antall aktive personer</h6>
+				<h3>{{ ant_ansattnr_flere }}</h3>
+			</div>
+		</div>
+	</div>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Brukernavn</th>
+		<th>Antall identer</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for user in ansattnr_flere %}
+	<tr>
+		<td>{{user.anr}}</td>
+		<td>{{user.count}}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}
