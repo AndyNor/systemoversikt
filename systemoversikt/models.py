@@ -668,7 +668,7 @@ class AnsattID(models.Model):
 	ansattnr = models.IntegerField()
 
 	def __str__(self):
-		return u'%s' % (self.ansattid)
+		return u'%s' % (self.ansattnr)
 
 
 class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhørende virksomhet. Vurderer å fjerne denne.
