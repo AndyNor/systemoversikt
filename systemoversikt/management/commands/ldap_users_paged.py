@@ -168,9 +168,9 @@ class Command(BaseCommand):
 
 			if user.profile.ansattnr_ref == None:
 				try:
-					ansattnr_match = re.search(r'(\d{4,})', anr.username, re.I)
+					ansattnr_match = re.search(r'(\d{4,})', user.username, re.I)
 					if ansattnr_match:
-						ansattnr = match[0]
+						ansattnr = int(match[0])
 						aid = AnsattID.objects.get_or_create(ansattnr=ansattnr)
 						user.profile.ansattnr_ref = aid
 				except:
