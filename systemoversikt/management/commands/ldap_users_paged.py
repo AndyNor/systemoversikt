@@ -171,8 +171,12 @@ class Command(BaseCommand):
 				ansattnr_match = re.search(r'(\d{4,})', user.username, re.I)
 				if ansattnr_match:
 					ansattnr = int(ansattnr_match[0])
-					aid = AnsattID.objects.get_or_create(ansattnr=ansattnr)
-					user.profile.ansattnr_ref = aid.0 # first tupple
+					try:
+						aid = AnsattID.objects.get(ansattnr=ansattnr)
+					except:
+						aid = AnsattID.objects.create(ansattnr=ansattnr)
+
+					user.profile.ansattnr_ref = aid
 				#except:
 				#	print("Kobling mot AnsattID feilet for %s" % user)
 
