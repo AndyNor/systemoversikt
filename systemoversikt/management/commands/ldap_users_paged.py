@@ -172,7 +172,7 @@ class Command(BaseCommand):
 				if ansattnr_match:
 					ansattnr = int(ansattnr_match[0])
 					aid = AnsattID.objects.get_or_create(ansattnr=ansattnr)
-					user.profile.ansattnr_ref = aid
+					user.profile.ansattnr_ref = aid.0 # first tupple
 				#except:
 				#	print("Kobling mot AnsattID feilet for %s" % user)
 
