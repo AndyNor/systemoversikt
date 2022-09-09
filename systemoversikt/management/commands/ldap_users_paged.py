@@ -13,7 +13,7 @@ import sys
 import datetime
 
 from django.contrib.auth.models import User
-from systemoversikt.models import Virksomhet, ApplicationLog, ADOrgUnit, UserChangeLog
+from systemoversikt.models import Virksomhet, ApplicationLog, ADOrgUnit, UserChangeLog, AnsattID
 from django.db.models.functions import Upper
 import json
 import re
