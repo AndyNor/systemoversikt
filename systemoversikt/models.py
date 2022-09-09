@@ -794,6 +794,11 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			null=True,
 			blank=True,
 			)
+	ansattnr_antall = models.IntegerField(
+			verbose_name="Antall koblede kontoer",
+			blank=True,
+			null=True,
+			)
 	adgrupper = models.ManyToManyField(
 			to="ADgroup",
 			related_name='user',

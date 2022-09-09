@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils.html import format_html
 import string
 import random
-from systemoversikt.models import Fellesinformasjon
+from systemoversikt.models import *
 
 register = template.Library()
 

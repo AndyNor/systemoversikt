@@ -15,27 +15,104 @@
 		<div class="row">
 			<div class="col-sm">
 				<h6>Antall aktive personer</h6>
-				<h3>{{ ant_ansattnr_flere }}</h3>
+				<h3>{{ ant_ansattnr_unike }}</h3>
+			</div>
+			<div class="col-sm">
+				<h6>Antall kontoer</h6>
+				<h3>{{ ant_ansattnr_totalt }}</h3>
 			</div>
 		</div>
 	</div>
 
-	<table class="table table-sm tablesorter excel">
-	<thead>
-	<tr>
-		<th>Brukernavn</th>
-		<th>Antall identer</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for user in ansattnr_flere %}
-	<tr>
-		<td>{{user.anr}}</td>
-		<td>{{user.count}}</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-	</table>
+<hr>
+
+	<div class="container">
+		<div class="row">
+			<div class="col-sm-2">
+
+				<table class="table table-sm tablesorter excel">
+				<thead>
+				<tr>
+					<th>Brukertype</th>
+					<th>Antall</th>
+				</tr>
+				</thead>
+				<tbody>
+				{% for i in stat_brukertype %}
+				<tr>
+					<td>{{i.usertype}}</td>
+					<td>{{i.count}}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+
+			</div>
+			<div class="col-sm-3">
+
+				<table class="table table-sm tablesorter excel">
+				<thead>
+				<tr>
+					<th>Virksomhet</th>
+					<th>Antall</th>
+				</tr>
+				</thead>
+				<tbody>
+				{% for i in stat_virksomhet %}
+				<tr>
+					<td>{{i.virksomhet}}</td>
+					<td>{{i.count}}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+
+			</div>
+
+			<div class="col-sm-3">
+
+				<table class="table table-sm tablesorter excel">
+				<thead>
+				<tr>
+					<th>Org.enhet</th>
+					<th>Antall</th>
+				</tr>
+				</thead>
+				<tbody>
+				{% for i in stat_ou %}
+				<tr>
+					<td>{{i.ou}}</td>
+					<td>{{i.count}}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+
+			</div>
+
+			<div class="col-sm-2">
+				<table class="table table-sm tablesorter excel">
+					<thead>
+						<tr>
+							<th>Ansattnr</th>
+							<th>Antall</th>
+						</tr>
+					</thead>
+					<tbody>
+					{% for i in raw %}
+						<tr>
+							<td>{{i.anr}}</td>
+							<td>{{i.count}}</td>
+						</tr>
+					{% endfor %}
+					</tbody>
+				</table>
+			</div>
+
+
+		</div>
+	</div>
+
 
 
 {% endblock hovedinnhold %}

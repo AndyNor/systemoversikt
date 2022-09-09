@@ -22,6 +22,7 @@ from django.urls import reverse
 import json
 from django.db import transaction
 import re
+from django.db.models import Sum
 
 
 FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
@@ -232,7 +233,7 @@ def cmdb_statistikk(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if any(map(request.user.has_perm, required_permissions)):
 
-		from django.db.models import Sum
+
 
 		#logikk
 		#search_term = request.GET.get('search_term', '').strip()
@@ -425,7 +426,6 @@ def cmdb_backup_index(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if any(map(request.user.has_perm, required_permissions)):
 
-		from django.db.models import Sum
 		count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
 		count_backup_missing_bss = CMDBbackup.objects.filter(bss=None).aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
 		pct_missing_all = int(count_backup_missing_bss / count_backup * 100)
@@ -451,7 +451,6 @@ def cmdb_lagring_index(request):
 	if any(map(request.user.has_perm, required_permissions)):
 
 
-		from django.db.models import Sum
 		count_san_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
 		count_san_used = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
 		pct_used = int(count_san_used / count_san_allocated * 100)
@@ -531,6 +530,7 @@ def cmdb_ad_flere_brukeridenter(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+
 	import collections
 	ansattnr = []
 	relevante_brukere = User.objects.filter(profile__accountdisable=False).filter(Q(profile__distinguishedname__icontains="OU=Eksterne brukere,OU=OK")|Q(profile__distinguishedname__icontains="OU=Brukere,OU=OK"))#.values_list("username", flat=True)
@@ -540,13 +540,31 @@ def cmdb_ad_flere_brukeridenter(request):
 			ansattnr.append(match[0])
 
 	counter = collections.Counter(ansattnr)
-	ansattnr_flere = [{"anr": anr, "count": count} for anr, count in counter.items() if count>1]
+	ansattnr_flere = sorted([{"anr": anr, "count": count} for anr, count in counter.items() if count>1], key=lambda x: x['count'], reverse=True)
 	ant_ansattnr_flere = len(ansattnr_flere)
+
+	relevante_brukere = Profile.objects.filter(accountdisable=False).filter(ansattnr_antall__gt=1)
+
+	stat_brukertype = relevante_brukere.values('usertype').annotate(count=Count('usertype')).order_by('-count')
+
+	stat_virksomhet = relevante_brukere.values('virksomhet').annotate(count=Count('virksomhet')).order_by('-count')
+	for s in stat_virksomhet:
+		if s["count"] > 0:
+			s["virksomhet"] = Virksomhet.objects.get(pk=s["virksomhet"])
+
+	stat_ou = relevante_brukere.values('ou').annotate(count=Count('ou')).order_by('-count')
+	for s in stat_ou:
+		if s["count"] > 0:
+			s["ou"] = HRorg.objects.get(pk=s["ou"])
 
 	return render(request, 'cmdb_ad_flere_brukeridenter.html', {
 		'request': request,
-		'ant_ansattnr_flere': ant_ansattnr_flere,
-		'ansattnr_flere': ansattnr_flere,
+		'ant_ansattnr_unike': ant_ansattnr_flere,
+		'ant_ansattnr_totalt': len(relevante_brukere),
+		'stat_brukertype': stat_brukertype,
+		'stat_virksomhet': stat_virksomhet,
+		'stat_ou': stat_ou,
+		'raw': ansattnr_flere,
 	})
 
 
