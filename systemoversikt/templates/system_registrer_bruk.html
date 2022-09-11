@@ -16,13 +16,15 @@
 
 <form action="" method="post">{% csrf_token %}
 	<input type="button" class="btn btn-sm" value="Inverter valg" id="trigger">
-	<input type="submit" class="btn btn-primary btn-sm" value="Utfør endringer">
+	<input type="button" class="btn btn-sm" value="Avhuk alle" id="trigger_none">
+	<input style="margin-left: 50px;" type="submit" class="btn btn-primary btn-sm" value="Utfør endringer">
 	<hr>
 	{% for item in virksomheter_template %}
 		<input id="{{ item.virksomhet.virksomhetsforkortelse }}" type="checkbox" name="virksomheter" value="{{ item.virksomhet.pk }}" {% if item.bruk != None %} checked {% endif %}>
 		<label for="{{ item.virksomhet.virksomhetsforkortelse }}">{{ item.virksomhet.virksomhetsnavn }} ({{ item.virksomhet.virksomhetsforkortelse }})</label>
 		<br>
 	{% endfor %}
+	<input type="hidden" id="empty_submitt" name="empty_submitt" value="empty_submitt">
 
 </form>
 
@@ -42,6 +44,22 @@
 				}
 		}
 		changeCheckboxes(allCheckboxes)
+	}
+	function resetCheckboxes(list, value){
+		for(var i = list.length - 1 ; i >=0 ; i--){
+			list[i].checked = (typeof value === 'boolean') ? value : false ;
+		}
+	}
+	var trigger_none = document.getElementById("trigger_none");
+	trigger_none.onclick = function() {
+		var inputs = document.getElementsByTagName('input');
+		var allCheckboxes = [];
+			for (var j = inputs.length-1; j >= 0; j--){
+				if (inputs[j].type === 'checkbox'){
+					allCheckboxes.push(inputs[j]);
+				}
+		}
+		resetCheckboxes(allCheckboxes)
 	}
 </script>
 

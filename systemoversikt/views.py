@@ -2112,41 +2112,39 @@ def registrer_bruk(request, system):
 	if request.user.has_perm(required_permissions):
 
 		system_instans = System.objects.get(pk=system)
-
 		alle_virksomheter = list(Virksomhet.objects.all())
 
 		if request.POST:
 			virksomheter = request.POST.getlist("virksomheter", "")
-			if virksomheter != "":
-				for str_virksomhet in virksomheter:
-					virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
-					alle_virksomheter.remove(virksomhet)
-					try:
-						bruk = SystemBruk.objects.get(brukergruppe=virksomhet, system=system_instans)
-						if bruk.ibruk != True:
-							bruk.ibruk = True
-							bruk.save()
-							print("Satt %s aktiv" % bruk)
-					except ObjectDoesNotExist:
-						bruk = SystemBruk.objects.create(
-							brukergruppe=virksomhet,
-							system=system_instans,
-						)
-						print("Opprettet %s" % bruk)
-				for virk in alle_virksomheter: # alle som er igjen, ble ikke merket, merk som ikke i bruk
-					try:
-						bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk)
-						if bruk.ibruk != False:
-							bruk.ibruk = False
-							bruk.save()
-							print("Satt %s deaktiv" % bruk)
-					except ObjectDoesNotExist:
-						pass # trenger ikke sette et ikke-eksisterende objekt
-
+			for str_virksomhet in virksomheter:
+				virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
+				alle_virksomheter.remove(virksomhet)
+				try:
+					bruk = SystemBruk.objects.get(brukergruppe=virksomhet, system=system_instans)
+					if bruk.ibruk == False:
+						bruk.ibruk = True
+						bruk.save()
+						print("Satt %s aktiv" % bruk)
+				except ObjectDoesNotExist:
+					bruk = SystemBruk.objects.create(
+						brukergruppe=virksomhet,
+						system=system_instans,
+						ibruk=True,
+					)
+					print("Opprettet %s" % bruk)
+			for virk in alle_virksomheter: # alle som er igjen, ble ikke merket, merk som ikke i bruk
+				try:
+					bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk)
+					if bruk.ibruk == True:
+						bruk.ibruk = False
+						bruk.save()
+						print("Satt %s deaktiv" % bruk)
+				except ObjectDoesNotExist:
+					pass # trenger ikke sette et ikke-eksisterende objekt
 			return redirect('systemdetaljer', system_instans.pk)
 
 		virksomheter_template = list()
-		for virk in alle_virksomheter:
+		for virk in Virksomhet.objects.all():
 			try:
 				bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk, ibruk=True)
 				virksomheter_template.append({"virksomhet": virk, "bruk": bruk})
