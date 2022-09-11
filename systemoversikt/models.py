@@ -5918,6 +5918,16 @@ class AzureApplication(models.Model):
 	def antall_application_permissions(self):
 		return AzurePublishedPermissionScopes.objects.filter(azure_applications=self.id).filter(permission_type="Application").count()
 
+	def risikonivaa_autofill(self):
+		if self.risikonivaa != 0:
+			return self.get_risikonivaa_display()
+		else:
+			for perm in self.requiredResourceAccess.all():
+				if perm.warning_permission():
+					return "3 Høy (auto)"
+		return "1 Lav (auto)"
+
+
 	class Meta:
 		verbose_name_plural = "Azure applications"
 		default_permissions = ('add', 'change', 'delete', 'view')
