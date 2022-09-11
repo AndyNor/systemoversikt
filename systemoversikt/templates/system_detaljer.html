@@ -597,7 +597,9 @@
 	<hr>
 	<h5>Virksomheters bruk av systemet</h5>
 	{% if user.is_authenticated %}
-		<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer bruk</a></p>
+		<p>
+			<a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer bruk</a>
+		</p>
 	{% endif %}
 	<table class="table table-sm">
 		<thead>

@@ -1829,7 +1829,7 @@ def systemdetaljer(request, pk):
 	system_content_type = ContentType.objects.get_for_model(system)
 	siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
 
-	systembruk = SystemBruk.objects.filter(system=pk).order_by("brukergruppe")
+	systembruk = SystemBruk.objects.filter(system=pk).filter(ibruk=True).order_by("brukergruppe")
 	behandlinger = BehandlingerPersonopplysninger.objects.filter(systemer=pk).order_by("funksjonsomraade")
 	try:
 		dpia = DPIA.objects.get(for_system=pk)
@@ -2070,7 +2070,7 @@ def all_bruk_for_virksomhet(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet_pk = pk
-	all_systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).exclude(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
+	all_systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk, ibruk=True).exclude(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 
 	ikke_i_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).filter(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 
@@ -2103,6 +2103,7 @@ def all_bruk_for_virksomhet(request, pk):
 
 
 def registrer_bruk(request, system):
+	from django.core.exceptions import ObjectDoesNotExist
 	"""
 	Forenklet metode for å legge til bruk av system ved avkryssing
 	Tilgangsstyring: Må kunne legge til systembruk
@@ -2112,29 +2113,55 @@ def registrer_bruk(request, system):
 
 		system_instans = System.objects.get(pk=system)
 
+		alle_virksomheter = list(Virksomhet.objects.all())
+
 		if request.POST:
 			virksomheter = request.POST.getlist("virksomheter", "")
 			if virksomheter != "":
 				for str_virksomhet in virksomheter:
 					virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
+					alle_virksomheter.remove(virksomhet)
 					try:
+						bruk = SystemBruk.objects.get(brukergruppe=virksomhet, system=system_instans)
+						if bruk.ibruk != True:
+							bruk.ibruk = True
+							bruk.save()
+							print("Satt %s aktiv" % bruk)
+					except ObjectDoesNotExist:
 						bruk = SystemBruk.objects.create(
 							brukergruppe=virksomhet,
 							system=system_instans,
 						)
-						bruk.save()
-					except:
-						messages.warning(request, 'Kunne ikke opprette bruk for %s' % virksomhet)
+						print("Opprettet %s" % bruk)
+				for virk in alle_virksomheter: # alle som er igjen, ble ikke merket, merk som ikke i bruk
+					try:
+						bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk)
+						if bruk.ibruk != False:
+							bruk.ibruk = False
+							bruk.save()
+							print("Satt %s deaktiv" % bruk)
+					except ObjectDoesNotExist:
+						pass # trenger ikke sette et ikke-eksisterende objekt
+
 			return redirect('systemdetaljer', system_instans.pk)
 
-		virksomheter_med_bruk = SystemBruk.objects.filter(system=system_instans)
-		vmb = [bruk.brukergruppe.pk for bruk in virksomheter_med_bruk]
-		manglende_virksomheter = Virksomhet.objects.exclude(pk__in=vmb)
+		virksomheter_template = list()
+		for virk in alle_virksomheter:
+			try:
+				bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk, ibruk=True)
+				virksomheter_template.append({"virksomhet": virk, "bruk": bruk})
+			except:
+				virksomheter_template.append({"virksomhet": virk, "bruk": None})
+
+		#virksomheter_med_bruk = SystemBruk.objects.filter(system=system_instans)
+		#vmb = [bruk.brukergruppe.pk for bruk in virksomheter_med_bruk]
+		#manglende_virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True).exclude(pk__in=vmb)
 
 		return render(request, 'system_registrer_bruk.html', {
 			'request': request,
 			'system': system_instans,
-			'virksomheter_uten_bruk': manglende_virksomheter,
+			'virksomheter_template': virksomheter_template,
+			#'virksomheter_uten_bruk': manglende_virksomheter,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -2149,7 +2176,7 @@ def programvaredetaljer(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	programvare = Programvare.objects.get(pk=pk)
-	programvarebruk = ProgramvareBruk.objects.filter(programvare=pk).order_by("brukergruppe")
+	programvarebruk = ProgramvareBruk.objects.filter(programvare=pk, ibruk=True).order_by("brukergruppe")
 	behandlinger = BehandlingerPersonopplysninger.objects.filter(programvarer=pk).order_by("funksjonsomraade")
 	return render(request, "programvare_detaljer.html", {
 		'request': request,

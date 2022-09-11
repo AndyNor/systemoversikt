@@ -4543,6 +4543,13 @@ class ProgramvareBruk(models.Model):
 			related_name='programvarebruk_programvare',
 			blank=False, null=False,
 			)
+	ibruk = models.BooleanField(
+			verbose_name="Er programvaren i bruk?",
+			blank=False,
+			null=False,
+			default=True,
+			help_text=u"Er i bruk ved kryss, og 'ikke i bruk' når kryss fjernes. Kan fjernes i stedet for å slette koblingen og lokale vurderinger.",
+			)
 	livslop_status = models.IntegerField(
 			choices=LIVSLOEP_VALG,
 			verbose_name="Livsløpstatus",
@@ -4666,6 +4673,13 @@ class SystemBruk(models.Model):
 			blank=False,
 			null=False,
 			on_delete=models.PROTECT,  # slett SystemBruken når Systemet slettes
+			)
+	ibruk = models.BooleanField(
+			verbose_name="Er systemet i bruk?",
+			blank=False,
+			null=False,
+			default=True,
+			help_text=u"Er i bruk ved kryss, og 'ikke i bruk' når kryss fjernes. Kan fjernes i stedet for å slette koblingen og lokale vurderinger.",
 			)
 	del_behandlinger = models.BooleanField(
 			verbose_name="Abonner på felles behandlinger i systemet",

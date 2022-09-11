@@ -502,31 +502,24 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 	fieldsets = (
 		('Initiell registrering', {
 			'fields': (
-				'brukergruppe',
-				'system',
-				'antall_brukere', #reintrodusert 31.08.2020
-				'systemforvalter_kontaktpersoner_referanse',
-				'del_behandlinger',
+				('brukergruppe', 'system'),
+				('systemforvalter_kontaktpersoner_referanse', 'ibruk'),
+				('kommentar', 'antall_brukere'), #reintrodusert 31.08.2020
+				('url_risikovurdering', 'risikovurdering_tekst'),
 				'dato_sist_ros',
-				'url_risikovurdering',
-				'risikovurdering_tekst',
-				'kommentar',
 
 			),
 		}),
 		('Vurderinger', {
 			'fields': (
-				'strategisk_egnethet',
-				'funksjonell_egnethet',
-				'teknisk_egnethet',
-				'konfidensialitetsvurdering',
-				'integritetsvurdering',
-				'tilgjengelighetsvurdering',
+				('strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet'),
+				('konfidensialitetsvurdering', 'integritetsvurdering', 'tilgjengelighetsvurdering'),
 			),
 		}),
 		('Avvikles', {
 			'classes': ('collapse',),
 			'fields': (
+				'del_behandlinger',
 				'avtaletype',
 				'avtalestatus',
 				'kostnadersystem',
