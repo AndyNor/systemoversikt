@@ -3,7 +3,9 @@
 {% block sidemeny %}
 
 	{% url 'cmdb_statistikk' as url_cmdb_statistikk %}
+	{% url 'cmdb_per_virksomhet' as url_cmdb_per_virksomhet %}
 	<a href="{{ url_cmdb_statistikk }}" class="btn btn-sm btn-link {% if url_cmdb_statistikk in request.path %}fremhev{% endif %}" >CMDB statistikk</a>
+	<a href="{{ url_cmdb_per_virksomhet }}" class="btn btn-sm btn-link {% if url_cmdb_per_virksomhet in request.path %}fremhev{% endif %}" >Per virksomhet</a>
 
 	<hr>
 

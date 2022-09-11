@@ -17,12 +17,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
-import datetime
 from django.urls import reverse
-import json
 from django.db import transaction
-import re
 from django.db.models import Sum
+import datetime
+import json
+import re
 
 
 FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
@@ -135,29 +135,51 @@ Støttefunksjoner slutt
 """
 
 
-
-
-
-"""
-Funksjoner som genererer innhold / eksponert via URL. Tilgangsstyres dersom nødvendig.
-"""
-def mal(request, pk):
-	"""
-	Hva denne funksjonen gjør
-	Tilgjengelig for hvem?
-	"""
-	required_permissions = ['auth.RETTIGHET']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		#logikk
-		search_term = request.GET.get('search_term', '').strip()
-
-		return render(request, 'NAVN.html', {
-			'request': request,
-			'search_term': search_term,
-		})
-	else:
+def mal(request):
+	required_permissions = ['systemoversikt.XYZ']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	return render(request, 'mal.html', {
+		"request": request,
+	})
+
+
+
+def cmdb_per_virksomhet(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	message = ""
+	template_data = list()
+	bs_alle = list(CMDBbs.objects.filter(operational_status=True, eksponert_for_bruker=True))
+	for virksomhet in Virksomhet.objects.all():
+		bs_eier = []
+		for system in virksomhet.systemer_eier.all():
+			if hasattr(system, 'bs_system_referanse'):
+				bs = system.bs_system_referanse
+				bs_eier.append(bs)
+				try:
+					bs_alle.remove(bs)
+				except:
+					message += "%s brukes, men har deaktivert status fra 2S." % bs
+		bs_forvalter = []
+		for system in virksomhet.systemer_systemforvalter.all():
+			if hasattr(system, 'bs_system_referanse'):
+				bs = system.bs_system_referanse
+				bs_forvalter.append(bs)
+		template_data.append({"virksomhet": virksomhet, "bs_eier": bs_eier, "bs_forvalter": bs_forvalter,})
+
+	messages.warning(request, message)
+
+
+
+	return render(request, 'cmdb_per_virksomhet.html', {
+		"request": request,
+		"template_data": template_data,
+		"resterende_bs": bs_alle,
+	})
 
 
 
@@ -519,6 +541,7 @@ def cmdb_servere_disabled_poweredon(request):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 
 
 def cmdb_ad_flere_brukeridenter(request):

@@ -3564,7 +3564,7 @@ class System(models.Model):
 			)
 	systemeier = models.ForeignKey(
 			to=Virksomhet,
-			related_name='systemer_systemeier',
+			related_name='systemer_eier',
 			on_delete=models.SET_NULL,
 			verbose_name="Organisatorisk systemeier",
 			blank=True,

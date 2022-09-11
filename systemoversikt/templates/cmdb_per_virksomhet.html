@@ -1,0 +1,54 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Tjenester fordelt per virksomhet
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<hr>
+
+<table class="table table-sm tablesorter">
+	<thead>
+		<th>Virksomhet</th>
+		<th>Tjenesteeier</th>
+		<th>Tjenesteforvalter</th>
+	</thead>
+	<tbody>
+		{% for item in template_data %}
+		<tr>
+			<td>
+				{{ item.virksomhet }}
+			</td>
+			<td>
+				{% for bs in item.bs_eier %}
+					<li>{{ bs }} </li>
+				{% endfor %}
+			</td>
+			<td>
+				{% for bs in item.bs_forvalter %}
+					<li>{{ bs }} </li>
+				{% endfor %}
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+<hr>
+
+<h5>Tjenester uten eier</h5>
+{% for bs in resterende_bs %}
+	<li>{{ bs }}</li>
+{% endfor %}
+
+
+
+{% endblock %}
+
+
