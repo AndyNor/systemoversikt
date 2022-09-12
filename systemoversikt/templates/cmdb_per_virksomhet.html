@@ -27,12 +27,10 @@
 			</td>
 			<td>
 				{% for bs in item.bs_eier %}
+					<li>{{ bs }}</li>
 					<ul>
-						<li>{{ bs }}</li>
-						<ul>
-							<li>Ram: {{ bs.ram_allocated|filesizeformat }}, Disk: {{ bs.san_used|filesizeformat }}, Backup: {{ bs.backup_size|filesizeformat }}</li>
-							<li>Servere: {{ bs.ant_devices }}, Databaser: {{ bs.ant_databaser }}</li>
-						</ul>
+						<li>Ram: {{ bs.ram_allocated|filesizeformat }}, Disk: {{ bs.san_used|filesizeformat }}, Backup: {{ bs.backup_size|filesizeformat }}</li>
+						<li>Servere: {{ bs.ant_devices }}, Databaser: {{ bs.ant_databaser }}</li>
 					</ul>
 				{% endfor %}
 			</td>
