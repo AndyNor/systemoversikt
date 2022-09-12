@@ -49,7 +49,7 @@
 <h5>Tjenester uten eier</h5>
 {% for bs in resterende_bs %}
 	<ul>
-		<li>{{ bs }}</li>
+		<li>{{ bs }} {% if bs.systemreferanse %}({{ bs.systemreferanse }}){% endif %}</li>
 		<ul>
 			<li>Ram: {{ bs.ram_allocated|filesizeformat }}, Disk: {{ bs.san_used|filesizeformat }}, Backup: {{ bs.backup_size|filesizeformat }}</li>
 			<li>Servere: {{ bs.ant_devices }}, Databaser: {{ bs.ant_databaser }}</li>
