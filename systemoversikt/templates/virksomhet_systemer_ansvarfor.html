@@ -27,17 +27,13 @@
 				<th class="filter-false"></th>
 			{% endif %}
 				<th>Systemnavn</th>
-				<th>Kategorisering</th>
+				<th width="10%">Driftsmodell / plattform</th>
+				<th>Tilpasset drift</th>
 				<th>Pålogging</th>
-				<th>Systemeier</th>
-				<th>Systemforvalter</th>
+				<th width="20%">Forvaltning</th>
 				<th>Livsløp</th>
 				<th>Risikovurdering</th>
-				<th>Driftsmodell / plattform</th>
-				<th>Leverandør av system</th>
-				<th>Leverandør applikasjonsdrift</th>
-				<th>Leverandør basisdrift</th>
-				<th>Tilpasset drift</th>
+				<th>Leverandører</th>
 
 			</tr>
 		</thead>
@@ -53,10 +49,16 @@
 		</td>
 
 		<td>
-			{% for kategori in item.systemkategorier.all %}
-				{% url 'systemkategori' kategori.pk as url_systemkategorier %}
-				<a href="{{ url_systemkategorier }}">{{ kategori }}</a><br>
-			{% endfor %}
+			{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}
+			<a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a>
+		</td>
+
+		<td>
+			{% if item.isolert_drift %}
+				🕹️ Ja
+			{% else %}
+				Nei
+			{% endif %}
 		</td>
 
 		<td>
@@ -66,14 +68,14 @@
 		</td>
 
 		<td>
+			Systemeier:
 			{% url "virksomhet" item.systemeier.pk as url_systemeier %}
-			<a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a><br>
+			<b><a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a></b><br>
 			{% include "ansvarlig_include_vis.html" with ansvarlige=item.systemeier_kontaktpersoner_referanse.all %}
-		</td>
 
-		<td>
+			Systemforvalter:
 			{% url "virksomhet" item.systemforvalter.pk as url_systemforvalter %}
-			<a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"-" }}</a><br>
+			<b><a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"-" }}</a> {% if item.systemforvalter_avdeling_referanse%} <br>{{ item.systemforvalter_avdeling_referanse }} {% endif %}</b><br>
 			{% include "ansvarlig_include_vis.html" with ansvarlige=item.systemforvalter_kontaktpersoner_referanse.all %}
 		</td>
 
@@ -81,39 +83,31 @@
 
 		<td>{{ item.dato_sist_ros|date:'Y-m-d'|default:"-" }} ({{ item.dato_sist_ros|naturaltime|default:"Aldri" }})</td>
 
-		{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}
-		<td><a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a></td>
 
 		<td>
-			{% for lev in item.systemleverandor.all %}
-				{% url "leverandor" lev.pk as url_leverandor %}
-				<a href="{{ url_leverandor }}">{{ lev }}</a>
-				<br>
-			{% endfor %}
-		</td>
+		Systemleverandør:<br>
+		{% for lev in item.systemleverandor.all %}
+			{% url "leverandor" lev.pk as url_leverandor %}
+			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
+		{% empty %}
+			<li>Ikke oppgitt</li>
+		{% endfor %}
 
-		<td>
+		Applikasjonsdrift:<br>
 		{% for lev in item.applikasjonsdriftleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
-			<a href="{{ url_leverandor }}">{{ lev }}</a>
-			<br>
+			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
+		{% empty %}
+			<li>Ikke oppgitt</li>
 		{% endfor %}
-		</td>
 
-		<td>
-			{% for lev in item.basisdriftleverandor.all %}
-				{% url "leverandor" lev.pk as url_leverandor %}
-				<a href="{{ url_leverandor }}">{{ lev }}</a>
-				<br>
-			{% endfor %}
-		</td>
-
-		<td>
-			{% if item.isolert_drift %}
-				🕹️ Ja
-			{% else %}
-				-
-			{% endif %}
+		Basisdrift:<br>
+		{% for lev in item.basisdriftleverandor.all %}
+			{% url "leverandor" lev.pk as url_leverandor %}
+			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
+		{% empty %}
+			<li>Ikke oppgitt</li>
+		{% endfor %}
 		</td>
 
 	</tr>
