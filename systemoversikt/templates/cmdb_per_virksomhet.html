@@ -27,7 +27,16 @@
 			</td>
 			<td>
 				{% for bs in item.bs_eier %}
-					<li>{{ bs }} </li>
+					<ul>
+						<li>{{ bs }}</li>
+						<ul>
+							<li>Ram: {{ bs.ram_allocated|filesizeformat }}</li>
+							<li>Disk: {{ bs.san_used|filesizeformat }}</li>
+							<li>Backup: {{ bs.backup_size|filesizeformat }}</li>
+							<li>Servere: {{ bs.ant_devices }}</li>
+							<li>Databaser: {{ bs.ant_databaser }}</li>
+						</ul>
+					</ul>
 				{% endfor %}
 			</td>
 			<td>
