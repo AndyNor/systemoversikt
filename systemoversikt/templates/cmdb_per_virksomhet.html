@@ -30,11 +30,8 @@
 					<ul>
 						<li>{{ bs }}</li>
 						<ul>
-							<li>Ram: {{ bs.ram_allocated|filesizeformat }}</li>
-							<li>Disk: {{ bs.san_used|filesizeformat }}</li>
-							<li>Backup: {{ bs.backup_size|filesizeformat }}</li>
-							<li>Servere: {{ bs.ant_devices }}</li>
-							<li>Databaser: {{ bs.ant_databaser }}</li>
+							<li>Ram: {{ bs.ram_allocated|filesizeformat }}, Disk: {{ bs.san_used|filesizeformat }}, Backup: {{ bs.backup_size|filesizeformat }}</li>
+							<li>Servere: {{ bs.ant_devices }}, Databaser: {{ bs.ant_databaser }}</li>
 						</ul>
 					</ul>
 				{% endfor %}
