@@ -123,10 +123,10 @@ class Command(BaseCommand):
 				comp_ip_address = record["IP Address"]
 
 				if comp_ip_address == None or comp_ip_address == "":
-					print("Tom IP-adresse")
 					print("gethostbyname %s" % comp_name)
 					try:
-						comp_ip_address = socket.gethostbyname(comp_name)
+						full_comp_name = "%s%s" % (comp_name, ".oslofelles.oslo.kommune.no")
+						comp_ip_address = socket.gethostbyname(full_comp_name)
 						print(comp_ip_address)
 					except:
 						#print("gethostbyname failed %s" % comp_name)
