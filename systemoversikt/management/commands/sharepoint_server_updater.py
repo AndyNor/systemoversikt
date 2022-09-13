@@ -28,12 +28,12 @@ class Command(BaseCommand):
 		print("Laster ned fil med kobling maskiner-bss")
 		computers_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers_bss.xlsx")
 		computers_destination_file = 'systemoversikt/import/OK_computers_bss.xlsx'
-		#sp.download(sharepoint_location = computers_source_file, local_location = computers_destination_file)
+		sp.download(sharepoint_location = computers_source_file, local_location = computers_destination_file)
 
 		print("Laster ned fil med informasjon om disk fra vmware")
 		vmware_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx")
 		vmware_destination_file = 'systemoversikt/import/Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx'
-		#sp.download(sharepoint_location = vmware_source_file, local_location = vmware_destination_file)
+		sp.download(sharepoint_location = vmware_source_file, local_location = vmware_destination_file)
 
 
 		@transaction.atomic
@@ -175,7 +175,7 @@ class Command(BaseCommand):
 						ipaddr_ins.save()
 
 				# Lagre
-				#cmdbdevice.save()
+				cmdbdevice.save()
 
 			# gjennomgang av data fra vmware
 			def decode_disk(vm):
