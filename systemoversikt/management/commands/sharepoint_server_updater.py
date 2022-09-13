@@ -154,12 +154,12 @@ class Command(BaseCommand):
 
 
 				# Linke IP-adresse
-				if cmdbdevice.device_type == "SERVER": # vi trenger ikke alle klientene
-					ipaddr_ins = get_ipaddr_instance(comp_ip_address)
-					if ipaddr_ins != None:
-						if not cmdbdevice in ipaddr_ins.servere.all():
-							ipaddr_ins.servere.add(cmdbdevice)
-							ipaddr_ins.save()
+				#if cmdbdevice.device_type == "SERVER": # vi trenger ikke alle klientene
+				ipaddr_ins = get_ipaddr_instance(comp_ip_address)
+				if ipaddr_ins != None:
+					if not cmdbdevice in ipaddr_ins.servere.all():
+						ipaddr_ins.servere.add(cmdbdevice)
+						ipaddr_ins.save()
 
 				# Lagre
 				cmdbdevice.save()
