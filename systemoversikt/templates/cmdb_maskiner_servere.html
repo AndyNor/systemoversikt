@@ -90,7 +90,7 @@
 		<td>
 			CPU: {{ maskin.comp_u_cpu_total|default:"-" }} Cores<br>
 			RAM: {{ maskin.comp_ram|default:"-" }} MB<br>
-			Disk: {{ maskin.comp_disk_space|filesizeformat }} Bytes <br>
+			Disk: {{ maskin.comp_disk_space|filesizeformat }}<br>
 			{% if vis_detaljer %}
 			{% for disk in maskin.cmdbdisk_computer.all %}
 				{% if disk.operational_status %}
