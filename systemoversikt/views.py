@@ -1287,12 +1287,6 @@ def permissions(request):
 
 
 def roller(request):
-	"""
-	"""
-	required_permissions = ['systemoversikt.view_system']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
 	from django.core import serializers
 	from django.contrib.auth.models import Group
 
@@ -1327,16 +1321,6 @@ def roller(request):
 			'header': header,
 			'matrise': matrise,
 	})
-	#else:
-	#	return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-
-"""
-def video(request):
-	return render(request, 'video.html', {
-		'request': request,
-	})
-"""
 
 
 def logger(request):
