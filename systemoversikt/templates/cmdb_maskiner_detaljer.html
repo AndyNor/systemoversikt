@@ -97,9 +97,9 @@
 				<th>Computer name / hostname</th>
 				<th>Aktiv?</th>
 				<th>Service portfolio</th>
-				<th width="25%">Disk space</th>
 				<th>Antall CPU</th>
 				<th>RAM (MB)</th>
+				<th width="25%">Disk space</th>
 				<th>Backup</th>
 				<th>Nettverk</th>
 				<th>DNS</th>
@@ -118,6 +118,8 @@
 					{{ item.vm_poweredon|yesno:"Påskrudd, Avskrudd" }}
 				</td>
 				<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
+				<td>{{ item.comp_cpu_core_count|default:"-" }}</td>
+				<td>{{ item.comp_ram_byes|filesizeformat }}</td>
 				<td>
 					{{ item.comp_disk_space|filesizeformat }} (Type {{ item.vm_disk_tier }})
 					<br>
@@ -129,8 +131,6 @@
 					{% endfor %}
 
 				</td>
-				<td>{{ item.comp_cpu_core_count|default:"-" }}</td>
-				<td>{{ item.comp_ram_byes|filesizeformat }}</td>
 				<td>
 					{% for b in item.backup_size %}
 						{{ b|filesizeformat }}<br>
