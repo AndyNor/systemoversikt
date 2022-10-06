@@ -4824,7 +4824,7 @@ def tilgangsgrupper_api(request):
 	from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 	if not "gruppenavn" in request.GET:
-		return JsonResponse({"message": "Du må oppgi et gruppenavn som GET-variabel. ?gruppenavn=<navn>", "data": None}, safe=False)
+		return JsonResponse({"message": "Du må oppgi et gruppenavn som GET-variabel. ?gruppenavn=<navn>", "data": None}, safe=False, status=204)
 
 	sporring = request.GET["gruppenavn"]
 	try:
@@ -4885,7 +4885,7 @@ def tilgangsgrupper_api(request):
 
 
 	resultat = {"spørring": sporring, "data": data}
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
