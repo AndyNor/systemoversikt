@@ -4841,7 +4841,7 @@ def tilgangsgrupper_api(request):
 			user = User.objects.get(username__iexact=username)
 			virksomhet = user.profile.virksomhet.virksomhetsforkortelse if user.profile.virksomhet else "Ukjent"
 			return {
-					"user_username": user.username,
+					"medlem": user.username,
 					"status": "Treff på bruker i AD",
 					"user_full_name": user.profile.displayName,
 					"user_from_prk": user.profile.from_prk,
@@ -4855,8 +4855,8 @@ def tilgangsgrupper_api(request):
 				}
 		except ObjectDoesNotExist:
 			return {
-					"username": username,
-					"status": "Ingen treff på bruker i AD. Kanskje objektet er en annen tilgangsgruppe?",
+					"medlem": username,
+					"status": "Ingen treff på bruker i AD. Kanskje objektet er en tilgangsgruppe?",
 					"user_full_name": None,
 					"user_from_prk": None,
 					"user_last_loggon": None,
