@@ -4834,7 +4834,7 @@ def tilgangsgrupper_api(request):
 	except ObjectDoesNotExist:
 		return JsonResponse({"spørring": sporring, "status": "Spørringen gav ingen treff. Vennligst oppgi et gyldig gruppenavn.", "data": []}, safe=False, status=204)
 	except:
-		return
+		return JsonResponse({"spørring": sporring, "status": "Ukjent feil", "data": []}, safe=False, status=500)
 	data = {}
 
 	def user_lookup(user):
