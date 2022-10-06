@@ -12,28 +12,45 @@ import os
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)  # have to deactivate sertificate check
-		ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
-		l = ldap.initialize(os.environ["KARTOTEKET_LDAPSERVER"])
-		l.set_option(ldap.OPT_REFERRALS, 0)
-		l.bind_s(os.environ["KARTOTEKET_LDAPUSER"], os.environ["KARTOTEKET_LDAPPASSWORD"])
 
-		ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-		ldap_filter = '(&(objectCategory=Group)(cn=DS-SYE_APP_VIRK_GERICA))'
-		ldap_properties = []
+		def ldap_query_members(common_name, start, stop):
+			ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)  # have to deactivate sertificate check
+			ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+			l = ldap.initialize(os.environ["KARTOTEKET_LDAPSERVER"])
+			l.set_option(ldap.OPT_REFERRALS, 0)
+			l.bind_s(os.environ["KARTOTEKET_LDAPUSER"], os.environ["KARTOTEKET_LDAPPASSWORD"])
 
-		#attrs["member"]
-		#'member;range=5000-5002'
+			ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+			ldap_filter = '(&(objectCategory=Group)(cn=%s))' % common_name
+			ldap_properties = 'member;range=%s-%s' % (start, stop)
 
-		query_result = l.search_s(
-				ldap_path,
-				ldap.SCOPE_SUBTREE,
-				ldap_filter,
-				ldap_properties
-			)
-		for cn, attrs in query_result:
-			if cn != None:
-				print(cn)
+			#attrs["member"]
 
-		l.unbind_s()
+			query_result = l.search_s(
+					ldap_path,
+					ldap.SCOPE_SUBTREE,
+					ldap_filter,
+					[ldap_properties]
+				)
+
+			l.unbind_s()
+
+			for cn, attrs in query_result:
+				if common_name in cn:
+					return attrs
+				else:
+					return None
+
+
+		def all_members(common_name):
+			all_members = []
+			start = 5000
+			pagesize = 5000
+			next_members = ldap_query_members(common_name, start, start+pagesize-1)
+			print(next_members)
+
+
+
+		all_members = all_members("DS-SYE_APP_VIRK_GERICA")
+		print(len(all_members))
 
