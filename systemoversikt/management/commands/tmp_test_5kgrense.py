@@ -19,7 +19,8 @@ class Command(BaseCommand):
 		l.bind_s(os.environ["KARTOTEKET_LDAPUSER"], os.environ["KARTOTEKET_LDAPPASSWORD"])
 
 		ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-		ldap_filter = ('(cn=DS-SYE_APP_VIRK_GERICA)') # (objectCategory=Group)
+		ldap_filter = ('(cn=uke232914)') # (objectCategory=Group)
+		#ldap_filter = ('(cn=DS-SYE_APP_VIRK_GERICA)') # (objectCategory=Group)
 		ldap_properties = [] #['cn', 'displayName', 'description']
 
 		query_result = l.search_s(
