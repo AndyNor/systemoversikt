@@ -28,8 +28,9 @@ class Command(BaseCommand):
 				ldap_filter,
 				ldap_properties
 			)
-		print(query_result)
-		#for key in query_result:
-		#	virksomheter.append(key[1]["ou"][0].decode())
+		#print(query_result)
+		for cn,attrs in query_result:
+			print(len(attrs[ldap_properties[0]]))
+
 		l.unbind_s()
 
