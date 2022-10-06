@@ -23,6 +23,8 @@ class Command(BaseCommand):
 		#ldap_filter = ('(cn=DS-SYE_APP_VIRK_GERICA)') # (objectCategory=Group)
 		ldap_properties = [] #['cn', 'displayName', 'description']
 
+		print("leter opp %s" % ldap_filter)
+
 		query_result = l.search_s(
 				ldap_path,
 				ldap.SCOPE_BASE,
