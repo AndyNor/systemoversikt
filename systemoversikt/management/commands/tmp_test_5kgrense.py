@@ -49,6 +49,7 @@ class Command(BaseCommand):
 			next_members = ldap_query_members(common_name, start, stop)
 			for key in next_members:
 				if 'member;range' in key:
+					print(key)
 					print(len(next_members[key]))
 					for m in next_members[key]:
 						all_members.append(m.decode())
