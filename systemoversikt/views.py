@@ -4842,6 +4842,7 @@ def tilgangsgrupper_api(request):
 			virksomhet = user.profile.virksomhet.virksomhetsforkortelse if user.profile.virksomhet else "Ukjent"
 			return {
 					"user_username": user.username,
+					"status": "Treff på bruker i AD"
 					"user_full_name": user.profile.displayName,
 					"user_from_prk": user.profile.from_prk,
 					"user_last_loggon": user.profile.lastLogonTimestamp,
@@ -4853,7 +4854,19 @@ def tilgangsgrupper_api(request):
 					"user_passwd_never_expire": user.profile.dont_expire_password,
 				}
 		except ObjectDoesNotExist:
-			return {"username": username, "status": "Ingen treff på bruker i AD"}
+			return {
+					"username": username,
+					"status": "Ingen treff på bruker i AD. Kanskje objektet er en annen tilgangsgruppe?"
+					"user_full_name": None,
+					"user_from_prk": None,
+					"user_last_loggon": None,
+					"user_passwd_expire": None,
+					"user_created": None,
+					"user_virksomhet": None,
+					"user_description": None,
+					"user_disabled": None,
+					"user_passwd_never_expire": None,
+					}
 
 	medlemmer = [user_lookup(user) for user in json.loads(adgruppe.member)]
 	memberof = [user_lookup(mo) for mo in json.loads(adgruppe.memberof)]
