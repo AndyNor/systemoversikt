@@ -22,7 +22,7 @@ class Command(BaseCommand):
 		ldap_filter = '(&(objectCategory=Group)(cn=DS-SYE_APP_VIRK_GERICA))'
 		ldap_properties = []
 
-		attrs["member"]
+		#attrs["member"]
 		#'member;range=5000-5002'
 
 		query_result = l.search_s(
@@ -31,7 +31,7 @@ class Command(BaseCommand):
 				ldap_filter,
 				ldap_properties
 			)
-		for cn,attrs in query_result:
+		for cn, attrs in query_result:
 			if cn != None:
 				print(cn)
 
