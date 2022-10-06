@@ -63,7 +63,7 @@ class Command(BaseCommand):
 						member = []
 						binary_member = attrs["member"]
 						membercount = len(binary_member)
-						if membercount == 0:
+						if membercount == 0: # skjer enten fordi gruppen er tom, eller fordi det er flere enn 5000 medlemmer (i denne AD-en, kan settes til en annen verdi i AD)
 							try:
 								#https://bgstack15.wordpress.com/tag/ldap/
 								binary_member = attrs["member;range=0-4999"]
