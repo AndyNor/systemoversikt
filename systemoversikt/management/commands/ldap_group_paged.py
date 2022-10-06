@@ -84,6 +84,7 @@ class Command(BaseCommand):
 						if count_members < limit:
 							more_pages = False
 						for m in next_members[key]:
+							print(m)
 							all_members.append(m.decode())
 						start = start + limit
 
