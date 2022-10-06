@@ -39,7 +39,7 @@ class Command(BaseCommand):
 				if common_name in cn:
 					return attrs
 				else:
-					return None
+					return []
 
 
 		def all_members(common_name):
@@ -66,6 +66,6 @@ class Command(BaseCommand):
 
 
 
-		all_members = all_members("DS-SYE_APP_VIRK_GERICA")
+		all_members = all_members("DS-OFFICE365_BASIS_STANDARD")
 		print(len(all_members))
 
