@@ -20,7 +20,7 @@ class Command(BaseCommand):
 
 		ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 		ldap_filter = '(&(objectCategory=Group)(cn=DS-SYE_APP_VIRK_GERICA))'
-		ldap_properties = ['member;range=5000-5020']
+		ldap_properties = ['member;range=5000-9999']
 
 		query_result = l.search_s(
 				ldap_path,
