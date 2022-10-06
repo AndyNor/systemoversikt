@@ -44,8 +44,9 @@ class Command(BaseCommand):
 
 		def all_members(common_name):
 			all_members = []
+			limit = 5000
 			start = 0
-			stop = '10000'
+			stop = '*'
 			next_members = ldap_query_members(common_name, start, stop)
 			for key in next_members:
 				if 'member;range' in key:
