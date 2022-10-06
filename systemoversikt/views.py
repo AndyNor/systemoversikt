@@ -4817,8 +4817,8 @@ def tilgangsgrupper_api(request):
 
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn="api_tilgangsgrupper").values_list("key", flat=True)
-	if not key in list(allowed_keys):
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+	#if not key in list(allowed_keys):
+	#	return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 
 
 	from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -4842,7 +4842,7 @@ def tilgangsgrupper_api(request):
 			virksomhet = user.profile.virksomhet.virksomhetsforkortelse if user.profile.virksomhet else "Ukjent"
 			return {
 					"user_username": user.username,
-					"status": "Treff på bruker i AD"
+					"status": "Treff på bruker i AD",
 					"user_full_name": user.profile.displayName,
 					"user_from_prk": user.profile.from_prk,
 					"user_last_loggon": user.profile.lastLogonTimestamp,
@@ -4856,7 +4856,7 @@ def tilgangsgrupper_api(request):
 		except ObjectDoesNotExist:
 			return {
 					"username": username,
-					"status": "Ingen treff på bruker i AD. Kanskje objektet er en annen tilgangsgruppe?"
+					"status": "Ingen treff på bruker i AD. Kanskje objektet er en annen tilgangsgruppe?",
 					"user_full_name": None,
 					"user_from_prk": None,
 					"user_last_loggon": None,
