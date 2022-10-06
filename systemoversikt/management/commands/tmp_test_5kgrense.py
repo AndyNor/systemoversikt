@@ -45,14 +45,13 @@ class Command(BaseCommand):
 		def all_members(common_name):
 			all_members = []
 			start = 0
-			stop = '*'
-			key = 'member;range=%s-%s' % (start, stop)
+			stop = '10000'
 			next_members = ldap_query_members(common_name, start, stop)
 			for key in next_members:
-				print(key)
-			print(len(next_members[key]))
-			for m in next_members[key]:
-				all_members.append(m.decode())
+				if 'member;range' in key:
+					print(len(next_members[key]))
+					for m in next_members[key]:
+						all_members.append(m.decode())
 			return all_members
 
 
