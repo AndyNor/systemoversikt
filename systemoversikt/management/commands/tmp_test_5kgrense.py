@@ -48,11 +48,11 @@ class Command(BaseCommand):
 			stop = 2020
 			key = 'member;range=%s-%s' % (start, stop)
 			next_members = ldap_query_members(common_name, start, stop)
-			print(len(next_members))
 			#for key, attr in next_members:
 			#	print(key)
 			#	print(attr)
 			#all_members.append(m.decode())
+			print(len(next_members[key]))
 			for m in next_members[key]:
 				all_members.append(m.decode())
 			return all_members
