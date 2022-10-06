@@ -53,9 +53,9 @@ class Command(BaseCommand):
 				next_members = ldap_query_members(common_name, start, stop)
 				for key in next_members:
 					if 'member;range' in key:
-						print(key)
+						#print(key)
 						count_members = len(next_members[key])
-						print(count_members)
+						#print(count_members)
 						if count_members < limit:
 							more_pages = False
 						for m in next_members[key]:
@@ -67,5 +67,4 @@ class Command(BaseCommand):
 
 
 		all_members = all_members("DS-OFFICE365_BASIS_STANDARD")
-		print(len(all_members))
 

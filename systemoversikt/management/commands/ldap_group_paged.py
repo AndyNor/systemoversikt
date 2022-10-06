@@ -12,6 +12,7 @@ from systemoversikt.utils import ldap_paged_search
 from datetime import timedelta
 from django.utils import timezone
 import ldap
+import os
 import sys
 
 
@@ -37,6 +38,58 @@ class Command(BaseCommand):
 			"removed": 0,
 		}
 
+		def ldap_query_members(common_name, start, stop):
+			ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)  # have to deactivate sertificate check
+			ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+			l = ldap.initialize(os.environ["KARTOTEKET_LDAPSERVER"])
+			l.set_option(ldap.OPT_REFERRALS, 0)
+			l.bind_s(os.environ["KARTOTEKET_LDAPUSER"], os.environ["KARTOTEKET_LDAPPASSWORD"])
+
+			ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+			ldap_filter = '(&(objectCategory=Group)(cn=%s))' % common_name
+			ldap_properties = 'member;range=%s-%s' % (start, stop)
+
+			#attrs["member"]
+
+			query_result = l.search_s(
+					ldap_path,
+					ldap.SCOPE_SUBTREE,
+					ldap_filter,
+					[ldap_properties]
+				)
+
+			l.unbind_s()
+
+			for cn, attrs in query_result:
+				if common_name in cn:
+					return attrs
+				else:
+					return []
+
+
+		def all_members(common_name):
+			all_members = []
+			more_pages = True
+			limit = 5000 # hardkodet for nå. Burde egentlig sjekket hva den er..
+			start = 0
+			stop = '*' # best å ikke angi stopp, da rapporterer AD automatisk neste stopverdi
+
+			while more_pages:
+				next_members = ldap_query_members(common_name, start, stop)
+				for key in next_members:
+					if 'member;range' in key:
+						#print(key)
+						count_members = len(next_members[key])
+						#print(count_members)
+						if count_members < limit:
+							more_pages = False
+						for m in next_members[key]:
+							all_members.append(m.decode())
+						start = start + limit
+
+			return all_members
+
+
 		@transaction.atomic
 		def remove_unseen_groups():
 			old_groups = ADgroup.objects.filter(sist_oppdatert__lte=timezone.now()-timedelta(hours=12)) # det vil aldri gå mer enn noen få minutter, men for å være sikker..
@@ -60,16 +113,21 @@ class Command(BaseCommand):
 						continue
 
 					try:
+						common_name = distinguishedname[3:].split(",")[0]
+					except:
+						common_name = None
+
+					try:
 						member = []
 						binary_member = attrs["member"]
 						membercount = len(binary_member)
 						if membercount == 0: # skjer enten fordi gruppen er tom, eller fordi det er flere enn 5000 medlemmer (i denne AD-en, kan settes til en annen verdi i AD)
 							try:
-								#https://bgstack15.wordpress.com/tag/ldap/
-								binary_member = attrs["member;range=0-4999"]
+								binary_member = all_members(common_name)
 								membercount = len(binary_member)
-							except:
-								pass  # do nothing
+								print("Oppslag etter member-range. Fant %s medlemmer" % membercount)
+							except Exception as e:
+								print(e)
 						for m in binary_member:
 							member.append(m.decode())
 					except KeyError as e:
@@ -104,10 +162,6 @@ class Command(BaseCommand):
 					except KeyError as e:
 						pass
 
-					try:
-						common_name = distinguishedname[3:].split(",")[0]
-					except:
-						common_name = None
 
 					displayname = ""
 					try:
