@@ -20,7 +20,10 @@ class Command(BaseCommand):
 
 		ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 		ldap_filter = '(&(objectCategory=Group)(cn=DS-SYE_APP_VIRK_GERICA))'
-		ldap_properties = ['member;range=5000-5002']
+		ldap_properties = []
+
+		attrs["member"]
+		#'member;range=5000-5002'
 
 		query_result = l.search_s(
 				ldap_path,
@@ -28,9 +31,9 @@ class Command(BaseCommand):
 				ldap_filter,
 				ldap_properties
 			)
-		#print(query_result)
 		for cn,attrs in query_result:
-			print(attrs)
+			if cn != None:
+				print(cn)
 
 		l.unbind_s()
 
