@@ -44,16 +44,24 @@ class Command(BaseCommand):
 
 		def all_members(common_name):
 			all_members = []
+			more_pages = True
 			limit = 5000
 			start = 0
 			stop = '*'
-			next_members = ldap_query_members(common_name, start, stop)
-			for key in next_members:
-				if 'member;range' in key:
-					print(key)
-					print(len(next_members[key]))
-					for m in next_members[key]:
-						all_members.append(m.decode())
+
+			while more_pages:
+				next_members = ldap_query_members(common_name, start, stop)
+				for key in next_members:
+					if 'member;range' in key:
+						print(key)
+						count_members = len(next_members[key])
+						print(count_members)
+						if count_members < limit:
+							more_pages = False
+						for m in next_members[key]:
+							all_members.append(m.decode())
+						start = start + limit
+
 			return all_members
 
 
