@@ -44,9 +44,8 @@ class Command(BaseCommand):
 
 		def all_members(common_name):
 			all_members = []
-			start = 5000
-			stop = 15000
-			pagesize = 5000
+			start = 2000
+			stop = '*'
 			next_members = ldap_query_members(common_name, start, stop)
 			print(len(next_members))
 			for m in next_members:
@@ -57,5 +56,5 @@ class Command(BaseCommand):
 
 
 		all_members = all_members("DS-SYE_APP_VIRK_GERICA")
-		print(len(all_members))
+		#print(len(all_members))
 
