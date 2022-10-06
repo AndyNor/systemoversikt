@@ -4821,19 +4821,20 @@ def tilgangsgrupper_api(request):
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 
 
-	from django.core.exceptions import MultipleObjectsReturned
+	from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 	if not "gruppenavn" in request.GET:
 		return JsonResponse({"message": "Du må oppgi et gruppenavn som GET-variabel. ?gruppenavn=<navn>", "data": None}, safe=False)
 
 	sporring = request.GET["gruppenavn"]
 	try:
-		adgruppe = ADgroup.objects.get(distinguishedname__icontains=sporring)
+		adgruppe = ADgroup.objects.get(common_name__iexact=sporring)
 	except MultipleObjectsReturned:
-		return JsonResponse({"spørring": sporring, "status": "Spørringen gav flere treff. Vennligst oppgi et unikt gruppenavn.", "data": []}, safe=False)
+		return JsonResponse({"spørring": sporring, "status": "Spørringen gav flere treff. Dette burde ikke skje og bør undersøkes.", "data": []}, safe=False)
+	except ObjectDoesNotExist:
+		return JsonResponse({"spørring": sporring, "status": "Spørringen gav ingen treff. Vennligst oppgi et gyldig gruppenavn.", "data": []}, safe=False)
 	data = {}
 
-	from django.core.exceptions import ObjectDoesNotExist
 	def user_lookup(user):
 		try:
 			username = re.search(r'cn=([^\,]*)', user, re.I).groups()[0]
