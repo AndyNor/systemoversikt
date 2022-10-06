@@ -4830,9 +4830,11 @@ def tilgangsgrupper_api(request):
 	try:
 		adgruppe = ADgroup.objects.get(common_name__iexact=sporring)
 	except MultipleObjectsReturned:
-		return JsonResponse({"spørring": sporring, "status": "Spørringen gav flere treff. Dette burde ikke skje og bør undersøkes.", "data": []}, safe=False)
+		return JsonResponse({"spørring": sporring, "status": "Spørringen gav flere treff. Dette burde ikke skje og bør undersøkes.", "data": []}, safe=False, status=204)
 	except ObjectDoesNotExist:
-		return JsonResponse({"spørring": sporring, "status": "Spørringen gav ingen treff. Vennligst oppgi et gyldig gruppenavn.", "data": []}, safe=False)
+		return JsonResponse({"spørring": sporring, "status": "Spørringen gav ingen treff. Vennligst oppgi et gyldig gruppenavn.", "data": []}, safe=False, status=204)
+	except:
+		return
 	data = {}
 
 	def user_lookup(user):
