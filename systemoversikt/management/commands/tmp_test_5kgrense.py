@@ -45,8 +45,9 @@ class Command(BaseCommand):
 		def all_members(common_name):
 			all_members = []
 			start = 5000
+			stop = 9999
 			pagesize = 5000
-			next_members = ldap_query_members(common_name, start, start+pagesize-1)
+			next_members = ldap_query_members(common_name, start, stop)
 			for m in next_members:
 				all_members.append(m.decode())
 			return all_members
