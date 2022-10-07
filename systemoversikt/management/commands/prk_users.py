@@ -51,7 +51,7 @@ class Command(BaseCommand):
 			print("New encoding: %s" % r.encoding)
 			print("Statuskode: %s" % r.status_code)
 			if r.status_code == 200:
-				with open('/home/drift23914/metadata/djangoapp/systemoversikt/prk/usr.csv', 'w') as file_handle:
+				with open('systemoversikt/import/usr.csv', 'w') as file_handle:
 						file_handle.write(r.text)
 				datastructure = csv.DictReader(r.text.splitlines(), delimiter=";")
 			else:

@@ -5904,7 +5904,7 @@ def ubw_estimat_copy(request, pk):
 
 
 def prk_api(filename):
-	path = "/home/drift23914/metadata/djangoapp/systemoversikt/prk/" + filename
+	path = "systemoversikt/import/" + filename
 	with open(path, 'rt', encoding='utf-8') as file:
 		response = HttpResponse(file, content_type='text/csv; charset=utf-8')
 		response['Content-Disposition'] = 'attachment; filename="' + filename + '"'

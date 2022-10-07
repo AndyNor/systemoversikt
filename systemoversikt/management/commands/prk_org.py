@@ -43,7 +43,7 @@ class Command(BaseCommand):
 			print("New encoding: %s" % r.encoding)
 			print("Statuskode: %s" % r.status_code)
 			if r.status_code == 200:
-				with open('/home/drift23914/metadata/djangoapp/systemoversikt/prk/grp.csv', 'w') as file_handle:
+				with open('systemoversikt/import/grp.csv', 'w') as file_handle:
 					file_handle.write(r.text)
 				csv_data = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
 			else:
