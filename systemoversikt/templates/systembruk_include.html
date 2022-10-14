@@ -40,6 +40,16 @@
 			{% for type in bruk.system.systemtyper.all %}
 				{{ type }}<br>
 			{% endfor %}
+
+			Systemeier:
+			{% url "virksomhet" bruk.system.systemeier.pk as url_systemeier %}
+			<b><a href="{{ url_systemeier }}">{{ bruk.system.systemeier.virksomhetsforkortelse|default:"-" }}</a></b><br>
+			{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.system.systemeier_kontaktpersoner_referanse.all %}
+
+			Systemforvalter:
+			{% url "virksomhet" bruk.system.systemforvalter.pk as url_systemforvalter %}
+			<b><a href="{{ url_systemforvalter }}">{{ bruk.system.systemforvalter.virksomhetsforkortelse|default:"-" }}</a> {% if bruk.system.systemforvalter_avdeling_referanse%} <br>{{ bruk.system.systemforvalter_avdeling_referanse }} {% endif %}</b><br>
+			{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.system.systemforvalter_kontaktpersoner_referanse.all %}
 		</td>
 
 		<td>
