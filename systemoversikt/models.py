@@ -1314,10 +1314,10 @@ class Behandlingsgrunnlag(models.Model):
 
 
 CMDB_KRITIKALITET_VALG = (
-	(1, '1 most critical (24/7/365)'),
-	(2, '2 somewhat critical (07-20 alle dager)'),
-	(3, '3 less critical (07-16 virkedager)'),
-	(4, '4 not critical (best effort)'),
+	(1, '1 most critical'),
+	(2, '2 somewhat critical'),
+	(3, '3 less critical'),
+	(4, '4 not critical'),
 )
 
 CMDB_TYPE_VALG = (
