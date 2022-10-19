@@ -1174,6 +1174,11 @@ class SystemUrl(models.Model):
 	def __str__(self):
 		return u'%s' % (self.domene)
 
+	def vis_registrar(self):
+		if "oslo.kommune.no" in self.domene:
+			return "Oslo kommune"
+		return self.registrar
+
 	def own_domain(self):
 		# hardkodet her
 		if "oslo.kommune.no" in self.domene:
