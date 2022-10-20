@@ -27,6 +27,9 @@
 	{% url 'virksomhet_sikkerhetsavvik' pk=virksomhet.pk as url_virksomhet_sikkerhetsavvik %}
 		<a class="btn btn-sm btn-link {% if url_virksomhet_sikkerhetsavvik in request.path %}fremhev{% endif %}" href="{{url_virksomhet_sikkerhetsavvik}}">Avvik fra sikkerhetsmodell</a><br>
 
+	{% url 'virksomhet_leverandortilgang' pk=virksomhet.pk as url_virksomhet_leverandortilgang %}
+		<a class="btn btn-sm btn-link {% if url_virksomhet_leverandortilgang in request.path %}fremhev{% endif %}" href="{{url_virksomhet_leverandortilgang}}">Vår leverandørtilgang</a><br>
+
 
 	<hr><p style="color: grey;">Systemer og programmer</p>
 

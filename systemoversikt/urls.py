@@ -107,6 +107,7 @@ urlpatterns = [
 	re_path(r'^virksomhet/klienter/(?P<pk>\d{1,8})/$', views.klienter_hos_virksomhet, name='klienter_hos_virksomhet'),
 	re_path(r'^virksomhet/sikkerhetsavvik/$', views.virksomhet_sikkerhetsavvik, name='virksomhet_sikkerhetsavvik'),
 	re_path(r'^virksomhet/sikkerhetsavvik/(?P<pk>\d{1,8})/$', views.virksomhet_sikkerhetsavvik, name='virksomhet_sikkerhetsavvik'),
+	re_path(r'^virksomhet/leverandortilgang/(?P<pk>\d{1,8})/$', views.virksomhet_leverandortilgang, name='virksomhet_leverandortilgang'),
 
 
 	re_path(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),

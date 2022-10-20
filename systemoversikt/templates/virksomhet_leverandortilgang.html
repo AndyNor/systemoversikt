@@ -1,0 +1,27 @@
+{% extends "virksomhet_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block ekstrameny %}
+
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Leverandørtilgang {{ virksomhet }}
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+
+<p>Her vises personer med leverandørtilgang knyttet til systemer {{ virksomhet }} har ansvar for. System og sikkerhetsgruppe kobles under <a href="{% url 'leverandortilgang' %}">CMDB: leverandørtilgang</a>.</p>
+<hr>
+
+
+{% include 'cmdb_users_display_include.html' with member=member %}
+
+
+{% endblock hovedinnhold %}

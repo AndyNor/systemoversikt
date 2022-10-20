@@ -1,0 +1,83 @@
+{% load humanize %}
+{% load static %}
+
+<table class="tablesorter">
+<thead>
+	<tr>
+		<th>Navn</th>
+		<th>Brukernavn</th>
+		<th>Fra PRK?</th>
+		<th>Opprettet</th>
+		<th>Sist pålogget</th>
+		<td>Passordutløp</td>
+		<th width="25%">Beskrivelse</th>
+		<th>Tilganger</th>
+	</tr>
+</thead>
+<tbodt>
+{% for m in member.groups %}
+	<tr>
+		<td>👥 <a href="{% url 'adgruppe_detaljer' pk=m.pk %}">{{ m }}</a></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+	</tr>
+{% endfor %}
+
+{% for m in member.users %}
+	<tr>
+		<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>👤 {{m.first_name}} {{m.last_name}}</td>
+		<td>{{m.username}}</td>
+		<td>{{m.profile.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
+		<td>{{m.profile.whenCreated|date:"Ym" }}<br>({{m.profile.whenCreated|timesince}})</td>
+		<td>{{m.profile.lastLogonTimestamp|date:"Ym" }}<br>({{ m.profile.lastLogonTimestamp|timesince }})</td>
+		<td>
+			{% if m.profile.accountdisable %}
+				Konto er deaktivert
+			{% else %}
+				{{m.profile.password_expired|yesno:"Passord har utløpt,Passord er gyldig,Vet ikke" }}<br>
+				{{m.profile.dont_expire_password|yesno:"Utløper aldri,Utløper som normalt,Vet ikke" }}
+			{% endif %}
+		</td>
+		<td>{{m.profile.description}}</td>
+		<td>
+			{% if member.users|length < 500 %}
+				<b>{{m.profile.levtilgangprofil}}</b><br><br>
+				{% for gruppe in m.profile.adgrupper.all %}{{gruppe}}<br>{% endfor%}
+			{% endif %}
+		</td>
+	</tr>
+{% endfor %}
+
+{% for n in memberof.notfound %}
+	<tr>
+		<td>❓ {{ n }}</td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+	</tr>
+{% endfor %}
+
+{% for n in member.notfound %}
+	<tr>
+		<td>❓ {{ n }}</td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td></td>
+	</tr>
+{% endfor %}
+
+</tbodt>
+</table>

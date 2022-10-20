@@ -737,209 +737,237 @@ def klienter_hos_virksomhet(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def virksomhet_leverandortilgang(request, pk=None):
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	if pk == None:
+		return Http404
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+
+	relevante_grupper = list()
+
+	levprofiler = Leverandortilgang.objects.all()
+	for profile in levprofiler:
+		for system in profile.systemer.all():
+			if system.systemforvalter == virksomhet:
+				relevante_grupper.append(profile.adgruppe)
+
+	users = list()
+	for gruppe in relevante_grupper:
+		users.extend(json.loads(gruppe.member))
+
+	member = human_readable_members(users)
+
+	return render(request, 'virksomhet_leverandortilgang.html', {
+		'virksomhet': virksomhet,
+		'member': member,
+	})
+
 
 def virksomhet_sikkerhetsavvik(request, pk=None):
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		if pk == None:
-			try:
-				pk = request.user.profile.virksomhet.pk
-			except:
-				pass
-
-		virksomhet = Virksomhet.objects.get(pk=pk)
-		logg = ""
-
-
-		def hent_brukere(grupper, logg):
-			brukerliste = set()
-			for g in grupper:
-				try:
-					gruppe = ADgroup.objects.get(common_name=g)
-					members = json.loads(gruppe.member)
-					for m in members:
-						username = m.split(",")[0].split("=")[1]
-						if virksomhet.virksomhetsforkortelse in username:
-							logg += "la til %s " % (username)
-							brukerliste.add(username)
-					if len(brukerliste) > 500:
-						print("For mange brukere")
-						return (["Over 500 personer"], "")
-				except:
-					logg = "" # deaktivert # += "feilet for %s " % (g)
-					print("fant ikke gruppen %s" % g)
-
-			brukerliste = [b.lower() for b in brukerliste]
-			brukerobjekter = User.objects.filter(username__in=brukerliste)
-
-			return (brukerobjekter, logg)
-
-		#Grupper for å gi EM+S E5-lisens
-		grupper_med_emse5 = [
-			"DS-OFFICE365_OPSJON_E5SECURITY",
-			"DS-OFFICE365E3_OPSJON_E5SECURITY",
-		]
-		brukere_med_emse5, logg = hent_brukere(grupper_med_emse5, logg)
-
-		#Grupper for å unnta fra krav om kjent enhet
-		grupper_ikke_administrert = [
-			"DS-OFFICE365_OPSJON_IKKEADMINISTRERT",
-			"DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT",
-			"DS-OFFICE365SVC_UNNTAK_KJENTENHET"
-		]
-		brukere_ikke_administrert, logg = hent_brukere(grupper_ikke_administrert, logg)
-
-		#unntak MFA
-		grupper_unntak_mfa = [
-			"DS-OFFICE365SVC_UNNTAK_MFA",
-		]
-		brukere_unntak_mfa, logg = hent_brukere(grupper_unntak_mfa, logg)
-
-		#unntak innenfor EU
-		grupper_utenfor_eu = [
-			"DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",
-			"DS-OFFICE365SPES_UNNTAK_EUROPEISKIP",
-		]
-		brukere_utenfor_eu, logg = hent_brukere(grupper_utenfor_eu, logg)
-
-		grupper_hoyrisikoland = [
-			"DS-OFFICE365SPES_UNNTAK_HOYRISIKO",
-		]
-		brukere_hoyrisikoland, logg = hent_brukere(grupper_hoyrisikoland, logg)
-
-
-		#opptak
-		grupper_med_opptak = [
-			"DS-OFFICE365SPES_OPPTAK_OPPTAK",
-		]
-		brukere_med_opptak, logg = hent_brukere(grupper_med_opptak, logg)
-
-		grupper_med_liveevent = [
-			"DS-OFFICE365SPES_LIVEEVENT_LIVEEVENT",
-		]
-		brukere_med_liveevent, logg = hent_brukere(grupper_med_liveevent, logg)
-
-
-		#spesialroller
-		grupper_omraadeadm = [
-			"DS-OFFICE365SPES_OMRAADEADM_OMRAADEADM",
-		]
-		brukere_omraadeadm, logg = hent_brukere(grupper_omraadeadm, logg)
-		for user in brukere_omraadeadm:
-			if user in brukere_ikke_administrert:
-				user.avvik_kjent_enhet = True
-			else:
-				user.avvik_kjent_enhet = False
-
-		grupper_gjestegodk = [
-			"DS-OFFICE365SPES_OMRAADEADM_GJESTEGODK",
-		]
-		brukere_gjestegodk, logg = hent_brukere(grupper_gjestegodk, logg)
-
-		grupper_gruppeadm = [
-			"DS-OFFICE365SPES_OMRAADEADM_GRUPPEOPPRETTER",
-		]
-		brukere_gruppeadm, logg = hent_brukere(grupper_gruppeadm, logg)
-
-		grupper_byod_vpn = [
-			"DS-FJARB_OF20_SA_LISENS",
-		]
-		brukere_byod_vpn, logg = hent_brukere(grupper_byod_vpn, logg)
-
-
-		grupper_filefullcontrol_applomr = [
-			"DS-File-FullControl-Alle-%s-ApplOmr" % (virksomhet.virksomhetsforkortelse),
-		]
-		brukere_filefullcontrol_applomr, logg = hent_brukere(grupper_filefullcontrol_applomr, logg)
-
-		grupper_filefullcontrol_fellesomr = [
-			"DS-File-FullControl-Alle-%s-FellesOmr" % (virksomhet.virksomhetsforkortelse),
-		]
-		brukere_filefullcontrol_fellesomr, logg = hent_brukere(grupper_filefullcontrol_fellesomr, logg)
-
-		grupper_filefullcontrol_hjemmeomr = [
-			"DS-File-FullControl-Alle-%s-HomeFolders" % (virksomhet.virksomhetsforkortelse),
-		]
-		brukere_filefullcontrol_hjemmeomr, logg = hent_brukere(grupper_filefullcontrol_hjemmeomr, logg)
-
-
-		grupper_lokalskriver_is = [
-			"DS-%s_APP_KLIENT_LOCALPRINT" % (virksomhet.virksomhetsforkortelse),
-		]
-		brukere_lokalskriver_is, logg = hent_brukere(grupper_lokalskriver_is, logg)
-
-		grupper_lokalskriver_ss = [
-			"DS-%s_APP_KLIENT_LOCALPRINTSS" % (virksomhet.virksomhetsforkortelse),
-		]
-		brukere_lokalskriver_ss, logg = hent_brukere(grupper_lokalskriver_ss, logg)
-
-
-		grupper_usb_tykklient = [
-			"DS-%s_APP_KLIENT_USBAKSESSTYKK" % (virksomhet.virksomhetsforkortelse),
-			"DS-%s_APP_KLIENT_USBACCESSTYKK" % (virksomhet.virksomhetsforkortelse),
-
-		]
-		brukere_usb_tykklient, logg = hent_brukere(grupper_usb_tykklient, logg)
-
-		grupper_usb_tynnklient = [
-			"DS-%s_APP_KLIENT_USBAKSESSTYNN" % (virksomhet.virksomhetsforkortelse),
-			"DS-%s_APP_KLIENT_USBACCESSTYNN" % (virksomhet.virksomhetsforkortelse),
-		]
-		brukere_usb_tynnklient, logg = hent_brukere(grupper_usb_tynnklient, logg)
-
-
-		grupper_lokal_administrator = [
-			"DS-%s_APP_SUPPORT_LOKAL_ADMINISTRATOR" % (virksomhet.virksomhetsforkortelse),
-		]
-		brukere_lokal_administrator, logg = hent_brukere(grupper_lokal_administrator, logg)
-
-
-		return render(request, 'virksomhet_sikkerhetsavvik.html', {
-			'request': request,
-			'virksomhet': virksomhet,
-			'grupper_med_emse5': grupper_med_emse5,
-			'brukere_med_emse5': brukere_med_emse5,
-			'grupper_uten_administrert_klient': grupper_ikke_administrert,
-			'brukere_uten_administrert_klient': brukere_ikke_administrert,
-			'grupper_unntak_mfa': grupper_unntak_mfa,
-			'brukere_unntak_mfa': brukere_unntak_mfa,
-			'grupper_utenfor_eu': grupper_utenfor_eu,
-			'brukere_utenfor_eu': brukere_utenfor_eu,
-			'grupper_hoyrisikoland': grupper_hoyrisikoland,
-			'brukere_hoyrisikoland': brukere_hoyrisikoland,
-			'grupper_med_opptak': grupper_med_opptak,
-			'brukere_med_opptak': brukere_med_opptak,
-			'grupper_med_liveevent': grupper_med_liveevent,
-			'brukere_med_liveevent': brukere_med_liveevent,
-			'grupper_omraadeadm': grupper_omraadeadm,
-			'brukere_omraadeadm': brukere_omraadeadm,
-			'grupper_gjestegodk': grupper_gjestegodk,
-			'brukere_gjestegodk': brukere_gjestegodk,
-			'grupper_gruppeadm': grupper_gruppeadm,
-			'brukere_gruppeadm': brukere_gruppeadm,
-			'grupper_byod_vpn': grupper_byod_vpn,
-			'brukere_byod_vpn': brukere_byod_vpn,
-			'grupper_filefullcontrol_applomr': grupper_filefullcontrol_applomr,
-			'brukere_filefullcontrol_applomr': brukere_filefullcontrol_applomr,
-			'grupper_filefullcontrol_fellesomr': grupper_filefullcontrol_fellesomr,
-			'brukere_filefullcontrol_fellesomr': brukere_filefullcontrol_fellesomr,
-			'grupper_filefullcontrol_hjemmeomr': grupper_filefullcontrol_hjemmeomr,
-			'brukere_filefullcontrol_hjemmeomr': brukere_filefullcontrol_hjemmeomr,
-			'grupper_lokalskriver_is': grupper_lokalskriver_is,
-			'brukere_lokalskriver_is': brukere_lokalskriver_is,
-			'grupper_lokalskriver_ss': grupper_lokalskriver_ss,
-			'brukere_lokalskriver_ss': brukere_lokalskriver_ss,
-			'grupper_usb_tykklient': grupper_usb_tykklient,
-			'brukere_usb_tykklient': brukere_usb_tykklient,
-			'grupper_usb_tynnklient': grupper_usb_tynnklient,
-			'brukere_usb_tynnklient': brukere_usb_tynnklient,
-			'grupper_lokal_administrator': grupper_lokal_administrator,
-			'brukere_lokal_administrator': brukere_lokal_administrator,
-			'logging': logg,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	if pk == None:
+		try:
+			pk = request.user.profile.virksomhet.pk
+		except:
+			pass
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	logg = ""
+
+
+	def hent_brukere(grupper, logg):
+		brukerliste = set()
+		for g in grupper:
+			try:
+				gruppe = ADgroup.objects.get(common_name=g)
+				members = json.loads(gruppe.member)
+				for m in members:
+					username = m.split(",")[0].split("=")[1]
+					if virksomhet.virksomhetsforkortelse in username:
+						logg += "la til %s " % (username)
+						brukerliste.add(username)
+				if len(brukerliste) > 500:
+					print("For mange brukere")
+					return (["Over 500 personer"], "")
+			except:
+				logg = "" # deaktivert # += "feilet for %s " % (g)
+				print("fant ikke gruppen %s" % g)
+
+		brukerliste = [b.lower() for b in brukerliste]
+		brukerobjekter = User.objects.filter(username__in=brukerliste)
+
+		return (brukerobjekter, logg)
+
+	#Grupper for å gi EM+S E5-lisens
+	grupper_med_emse5 = [
+		"DS-OFFICE365_OPSJON_E5SECURITY",
+		"DS-OFFICE365E3_OPSJON_E5SECURITY",
+	]
+	brukere_med_emse5, logg = hent_brukere(grupper_med_emse5, logg)
+
+	#Grupper for å unnta fra krav om kjent enhet
+	grupper_ikke_administrert = [
+		"DS-OFFICE365_OPSJON_IKKEADMINISTRERT",
+		"DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT",
+		"DS-OFFICE365SVC_UNNTAK_KJENTENHET"
+	]
+	brukere_ikke_administrert, logg = hent_brukere(grupper_ikke_administrert, logg)
+
+	#unntak MFA
+	grupper_unntak_mfa = [
+		"DS-OFFICE365SVC_UNNTAK_MFA",
+	]
+	brukere_unntak_mfa, logg = hent_brukere(grupper_unntak_mfa, logg)
+
+	#unntak innenfor EU
+	grupper_utenfor_eu = [
+		"DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",
+		"DS-OFFICE365SPES_UNNTAK_EUROPEISKIP",
+	]
+	brukere_utenfor_eu, logg = hent_brukere(grupper_utenfor_eu, logg)
+
+	grupper_hoyrisikoland = [
+		"DS-OFFICE365SPES_UNNTAK_HOYRISIKO",
+	]
+	brukere_hoyrisikoland, logg = hent_brukere(grupper_hoyrisikoland, logg)
+
+
+	#opptak
+	grupper_med_opptak = [
+		"DS-OFFICE365SPES_OPPTAK_OPPTAK",
+	]
+	brukere_med_opptak, logg = hent_brukere(grupper_med_opptak, logg)
+
+	grupper_med_liveevent = [
+		"DS-OFFICE365SPES_LIVEEVENT_LIVEEVENT",
+	]
+	brukere_med_liveevent, logg = hent_brukere(grupper_med_liveevent, logg)
+
+
+	#spesialroller
+	grupper_omraadeadm = [
+		"DS-OFFICE365SPES_OMRAADEADM_OMRAADEADM",
+	]
+	brukere_omraadeadm, logg = hent_brukere(grupper_omraadeadm, logg)
+	for user in brukere_omraadeadm:
+		if user in brukere_ikke_administrert:
+			user.avvik_kjent_enhet = True
+		else:
+			user.avvik_kjent_enhet = False
+
+	grupper_gjestegodk = [
+		"DS-OFFICE365SPES_OMRAADEADM_GJESTEGODK",
+	]
+	brukere_gjestegodk, logg = hent_brukere(grupper_gjestegodk, logg)
+
+	grupper_gruppeadm = [
+		"DS-OFFICE365SPES_OMRAADEADM_GRUPPEOPPRETTER",
+	]
+	brukere_gruppeadm, logg = hent_brukere(grupper_gruppeadm, logg)
+
+	grupper_byod_vpn = [
+		"DS-FJARB_OF20_SA_LISENS",
+	]
+	brukere_byod_vpn, logg = hent_brukere(grupper_byod_vpn, logg)
+
+
+	grupper_filefullcontrol_applomr = [
+		"DS-File-FullControl-Alle-%s-ApplOmr" % (virksomhet.virksomhetsforkortelse),
+	]
+	brukere_filefullcontrol_applomr, logg = hent_brukere(grupper_filefullcontrol_applomr, logg)
+
+	grupper_filefullcontrol_fellesomr = [
+		"DS-File-FullControl-Alle-%s-FellesOmr" % (virksomhet.virksomhetsforkortelse),
+	]
+	brukere_filefullcontrol_fellesomr, logg = hent_brukere(grupper_filefullcontrol_fellesomr, logg)
+
+	grupper_filefullcontrol_hjemmeomr = [
+		"DS-File-FullControl-Alle-%s-HomeFolders" % (virksomhet.virksomhetsforkortelse),
+	]
+	brukere_filefullcontrol_hjemmeomr, logg = hent_brukere(grupper_filefullcontrol_hjemmeomr, logg)
+
+
+	grupper_lokalskriver_is = [
+		"DS-%s_APP_KLIENT_LOCALPRINT" % (virksomhet.virksomhetsforkortelse),
+	]
+	brukere_lokalskriver_is, logg = hent_brukere(grupper_lokalskriver_is, logg)
+
+	grupper_lokalskriver_ss = [
+		"DS-%s_APP_KLIENT_LOCALPRINTSS" % (virksomhet.virksomhetsforkortelse),
+	]
+	brukere_lokalskriver_ss, logg = hent_brukere(grupper_lokalskriver_ss, logg)
+
+
+	grupper_usb_tykklient = [
+		"DS-%s_APP_KLIENT_USBAKSESSTYKK" % (virksomhet.virksomhetsforkortelse),
+		"DS-%s_APP_KLIENT_USBACCESSTYKK" % (virksomhet.virksomhetsforkortelse),
+
+	]
+	brukere_usb_tykklient, logg = hent_brukere(grupper_usb_tykklient, logg)
+
+	grupper_usb_tynnklient = [
+		"DS-%s_APP_KLIENT_USBAKSESSTYNN" % (virksomhet.virksomhetsforkortelse),
+		"DS-%s_APP_KLIENT_USBACCESSTYNN" % (virksomhet.virksomhetsforkortelse),
+	]
+	brukere_usb_tynnklient, logg = hent_brukere(grupper_usb_tynnklient, logg)
+
+
+	grupper_lokal_administrator = [
+		"DS-%s_APP_SUPPORT_LOKAL_ADMINISTRATOR" % (virksomhet.virksomhetsforkortelse),
+	]
+	brukere_lokal_administrator, logg = hent_brukere(grupper_lokal_administrator, logg)
+
+
+	return render(request, 'virksomhet_sikkerhetsavvik.html', {
+		'request': request,
+		'virksomhet': virksomhet,
+		'grupper_med_emse5': grupper_med_emse5,
+		'brukere_med_emse5': brukere_med_emse5,
+		'grupper_uten_administrert_klient': grupper_ikke_administrert,
+		'brukere_uten_administrert_klient': brukere_ikke_administrert,
+		'grupper_unntak_mfa': grupper_unntak_mfa,
+		'brukere_unntak_mfa': brukere_unntak_mfa,
+		'grupper_utenfor_eu': grupper_utenfor_eu,
+		'brukere_utenfor_eu': brukere_utenfor_eu,
+		'grupper_hoyrisikoland': grupper_hoyrisikoland,
+		'brukere_hoyrisikoland': brukere_hoyrisikoland,
+		'grupper_med_opptak': grupper_med_opptak,
+		'brukere_med_opptak': brukere_med_opptak,
+		'grupper_med_liveevent': grupper_med_liveevent,
+		'brukere_med_liveevent': brukere_med_liveevent,
+		'grupper_omraadeadm': grupper_omraadeadm,
+		'brukere_omraadeadm': brukere_omraadeadm,
+		'grupper_gjestegodk': grupper_gjestegodk,
+		'brukere_gjestegodk': brukere_gjestegodk,
+		'grupper_gruppeadm': grupper_gruppeadm,
+		'brukere_gruppeadm': brukere_gruppeadm,
+		'grupper_byod_vpn': grupper_byod_vpn,
+		'brukere_byod_vpn': brukere_byod_vpn,
+		'grupper_filefullcontrol_applomr': grupper_filefullcontrol_applomr,
+		'brukere_filefullcontrol_applomr': brukere_filefullcontrol_applomr,
+		'grupper_filefullcontrol_fellesomr': grupper_filefullcontrol_fellesomr,
+		'brukere_filefullcontrol_fellesomr': brukere_filefullcontrol_fellesomr,
+		'grupper_filefullcontrol_hjemmeomr': grupper_filefullcontrol_hjemmeomr,
+		'brukere_filefullcontrol_hjemmeomr': brukere_filefullcontrol_hjemmeomr,
+		'grupper_lokalskriver_is': grupper_lokalskriver_is,
+		'brukere_lokalskriver_is': brukere_lokalskriver_is,
+		'grupper_lokalskriver_ss': grupper_lokalskriver_ss,
+		'brukere_lokalskriver_ss': brukere_lokalskriver_ss,
+		'grupper_usb_tykklient': grupper_usb_tykklient,
+		'brukere_usb_tykklient': brukere_usb_tykklient,
+		'grupper_usb_tynnklient': grupper_usb_tynnklient,
+		'brukere_usb_tynnklient': brukere_usb_tynnklient,
+		'grupper_lokal_administrator': grupper_lokal_administrator,
+		'brukere_lokal_administrator': brukere_lokal_administrator,
+		'logging': logg,
+	})
 
 
 def minside(request):
@@ -3863,7 +3891,7 @@ def alle_adgrupper(request):
 		if search_term[0:3] == "CN=":
 			search_term = search_term[3:]
 		search_term = search_term.split(",")[0]
-		adgrupper = ADgroup.objects.filter(Q(common_name__contains=search_term) | Q(display_name__contains=search_term))
+		adgrupper = ADgroup.objects.filter(Q(common_name__icontains=search_term) | Q(display_name__icontains=search_term) | Q(description__icontains=search_term))
 		for g in adgrupper:
 			members = json.loads(g.member)
 			g.member_count = len(members)

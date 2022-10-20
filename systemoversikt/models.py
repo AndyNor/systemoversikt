@@ -829,6 +829,19 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 	def save_user_profile(sender, instance, **kwargs):
 		instance.profile.save()
 
+
+	def levtilgangprofil(self):
+		alle_levprofiler = Leverandortilgang.objects.all()
+		alle_grupper = self.adgrupper.all()
+		systemer = list()
+
+		for levprofile in alle_levprofiler:
+			if levprofile.adgruppe in alle_grupper:
+				systemer.extend(levprofile.systemer.all())
+
+		return ' '.join([str(system) for system in systemer])
+
+
 	def kopiav(self):
 		if self.user.username.startswith("t-"):
 			try:
