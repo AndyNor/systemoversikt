@@ -759,6 +759,8 @@ def virksomhet_leverandortilgang(request, pk=None):
 	for gruppe in relevante_grupper:
 		users.extend(json.loads(gruppe.member))
 
+	users = list(set(users)) # sørger for unike personer
+
 	member = human_readable_members(users)
 
 	return render(request, 'virksomhet_leverandortilgang.html', {

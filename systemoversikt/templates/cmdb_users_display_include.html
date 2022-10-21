@@ -29,8 +29,8 @@
 {% endfor %}
 
 {% for m in member.users %}
-	<tr>
-		<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>👤 {{m.first_name}} {{m.last_name}}</td>
+	<tr {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>
+		<td>👤 {{m.first_name}} {{m.last_name}}</td>
 		<td>{{m.username}}</td>
 		<td>{{m.profile.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
 		<td>{{m.profile.whenCreated|date:"Ym" }}<br>({{m.profile.whenCreated|timesince}})</td>
