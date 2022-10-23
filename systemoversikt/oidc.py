@@ -5,6 +5,9 @@ from django.contrib.auth.models import Group
 from django.conf import settings
 from django.contrib import messages
 from django.utils import timezone
+import requests
+import os
+from systemoversikt.views import ldap_users_securitygroups
 
 
 class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
@@ -14,18 +17,17 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 		#messages.info(self.request, 'Prøver å logge inn')
 		self.request.session['oidc-token'] = claims
 		messages.info(self.request, '%s' % claims)
-		print(claims)
-		print("\nfilter_users_by_claims..\n")
-		print(claims)
 		email = claims.get('email').lower()
 		if not email:
 			return self.UserModel.objects.none()
 			messages.warning(self.request, 'Du mangler e-postadresse. Innlogging feilet.')
-		message = "Prøver å logge inn %s" % email
-		ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 		try:
+			message = "%s logget inn." % email
+			ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 			return self.UserModel.objects.filter(email=email)
 		except:
+			message = "%s kunne ikke logge inn. Kobling mot e-postadresse feilet" % email
+			ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 			messages.warning(self.request, 'Fant ingen korresponderende bruker for denne e-postadressen. Innlogging feilet.')
 			return self.UserModel.objects.none()
 
@@ -37,49 +39,77 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 		"""Verify the provided claims to decide if authentication should be allowed."""
 		#messages.info(self.request, 'Verifiserer claims')
 		# Verify claims required by default configuration
-		print("\nverify_claims..\n")
 		scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
 		if 'email' in scopes.split():
 			return 'email' in claims
-
 		return True
+
+
+	def get_userinfo(self, access_token, id_token, payload):
+		"""Return user details dictionary. The id_token and payload are not used in
+		the default implementation, but may be used when overriding this method"""
+		user_response = requests.get(
+			self.OIDC_OP_USER_ENDPOINT,
+			headers={
+				'Authorization': 'Bearer {0}'.format(access_token)
+			},
+			verify=self.get_settings('OIDC_VERIFY_SSL', True),
+			timeout=self.get_settings('OIDC_TIMEOUT', None),
+			proxies=self.get_settings('OIDC_PROXY', None))
+		user_response.raise_for_status()
+		user_info = user_response.json()
+		user_info.update(payload)
+
+
+		groups_response = requests.post(
+			"https://graph.microsoft.com/beta/me/getMemberObjects",
+			headers={
+				'Authorization': 'Bearer {0}'.format(access_token),
+			},
+			verify=self.get_settings('OIDC_VERIFY_SSL', True),
+			timeout=self.get_settings('OIDC_TIMEOUT', None),
+			proxies=self.get_settings('OIDC_PROXY', None))
+		print(groups_response.json())
+
+
+		return user_info
+
 
 	# https://docs.djangoproject.com/en/2.0/ref/contrib/auth/#django.contrib.auth.models.User.username
 	# https://mozilla-django-oidc.readthedocs.io/en/stable/installation.html#additional-optional-configuration
 	def update_user(self, user, claims):
-		print("\nUpdate user...\n")
-		#messages.info(self.request, 'Oppdaterer bruker')
 		user.is_active = True
-
 		user.first_name = claims.get('given_name', '')
 		user.last_name = claims.get('family_name', '')
 		user.email = claims.get('email', '')
 		user.is_staff = True
 
 		# sjekke om bruker skal være superbruker
-		claim_groups = claims.get('groups', '')
-		superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
-		if superuser_group in claim_groups:
-			user.is_superuser = True
-			messages.warning(self.request, 'Du ble logget på som systemadministrator')
-			claim_groups.remove(superuser_group)
-		else:
-			user.is_superuser = False
+		#claim_groups = claims.get('groups', '')
+		#claim_groups = grupper = ldap_users_securitygroups(user.username)
+		#print(claim_groups)
+		#superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
+		#if superuser_group in claim_groups:
+		#	user.is_superuser = True
+		#	messages.warning(self.request, 'Du ble logget på som systemadministrator')
+		#	claim_groups.remove(superuser_group)
+		#else:
+		#	user.is_superuser = False
 
 
 		#synkronisere gruppetilhørighet (slette alle og legge til på nytt)
-		current_memberships = user.groups.values_list('name',flat=True)
-		for existing_group in current_memberships:
-			g = Group.objects.get(name=existing_group)
-			g.user_set.remove(user)
+		#current_memberships = user.groups.values_list('name', flat=True)
+		#for existing_group in current_memberships:
+		#	g = Group.objects.get(name=existing_group)
+		#	g.user_set.remove(user)
 
-		for group in claim_groups:
-			try:
-				g = Group.objects.get(name=group)
-				g.user_set.add(user)
-			except:
-				#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
-				pass
+		#for group in claim_groups:
+		#	try:
+		#		g = Group.objects.get(name=group)
+		#		g.user_set.add(user)
+		#	except:
+		#		#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
+		#		pass
 
 		# prøve å sette virksomhetstilhørighet
 		try:
@@ -95,23 +125,9 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 
 		#user.last_login = timezone.now()
 		user.save()
-		messages.success(self.request, 'Du er nå logget på. Trykk på navnet ditt for å få opp mer administrativ informasjon. Ved siden av navnet ditt står det også hvilken virksomhet du nå representerer (som kan endres via den linken).')
+		messages.success(self.request, 'Du er nå logget på. Trykk på navnet ditt for å få opp detaljer og for å logge av.')
 		return user
 
-	def create_user(self, claims):
-		"""Return object for a newly created user account.
-		KeyCloak returns username in lower case. AD-LDAP by default in upper case.
-		In case of error "Multiple users returned" caused by two user objects, one with upper and one
-		with lower, make sure all import of usernames is in lowercase!
-		"""
-		print("\n\nCreate user...\n\n")
-		messages.info(self.request, 'Ny bruker opprettes')
-		username = claims.get('preferred_username', '').lower()
-		if username == '':
-			return None
-		user = self.UserModel.objects.create_user(username, is_staff=True) # må være staff for å kunne bruker adminpanel
-		user = self.update_user(user, claims)
-		return user
 
 
 def provider_logout(request):

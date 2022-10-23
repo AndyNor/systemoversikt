@@ -13,22 +13,16 @@
 	{% endif %}
 
 
-	<p>Du er logget inn som <b>{{ request.user.first_name }} {{ request.user.last_name }}</b> via en av Oslo kommunes identitetstjenere.<br><a class="btn btn-sm btn-link" href="{{ OIDC_IDP_URL_BASE }}/auth/realms/{{ OIDC_IDP_REALM }}/account/">🌍 Administrer pålogging</a></p>
+<p>
+	Du er logget inn som <b>{{ request.user.first_name }} {{ request.user.last_name }}</b><br>
 
-	<div style="width: 100px; text-align: center;">
-		<form action="{{ url_logout }}" method="post" style="border: 2px solid #2a2859;">
-			{% csrf_token %}
-			<input class="btn btn-sm btn-link" type="submit" name="Logg av" value="Logg av" />
-		</form>
-	</div>
-
-	<p>Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b>
+	Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b>
 	{% url 'bruker_detaljer' pk=request.user.pk as url_user_details %}
-	<a href="{{url_user_details}}" class="btn btn-sm btn-link">Informasjon om din bruker</a></p>
+	<a href="{{url_user_details}}" class="btn btn-sm btn-link">Informasjon om din bruker</a><br>
 
-
-	<p>Du representerer <b>{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</b>
-	<a href="{% url 'bytt_virksomhet' %}" class="btn btn-sm btn-link">Bytt virksomhet jeg representerer</a></p>
+	Du representerer <b>{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</b>
+	<a href="{% url 'bytt_virksomhet' %}" class="btn btn-sm btn-link">Bytt virksomhet jeg representerer</a>
+</p>
 
 
 	<p>Du er medlem i følgende grupper:<br>
@@ -52,5 +46,13 @@
 	<h6>Debug OIDC-token</h6>
 		<p>{{ oidctoken }}</p>
 	{% endif %}
+
+
+	<div style="width: 100px; text-align: center;">
+		<form action="{{ url_logout }}" method="post" style="border: 2px solid #2a2859;">
+			{% csrf_token %}
+			<input class="btn btn-sm btn-link" type="submit" name="Logg av" value="Logg av" />
+		</form>
+	</div>
 
 {% endblock hovedinnhold %}

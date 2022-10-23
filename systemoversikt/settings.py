@@ -40,28 +40,26 @@ if THIS_ENVIRONMENT == "TEST":
 	DEBUG = True
 
 if THIS_ENVIRONMENT == "PROD":
+	ALLOWED_HOSTS = ["10.134.162.204", "localhost", "kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "10.134.162.203"]
 	#SECURE_SSL_REDIRECT = True  #I Oslo kommune er det en webproxy som redirecter http til https i produksjon
 	TEST_ENV_NAME = "" # brukes ikke i produksjon
 	SITE_SCHEME = "https"
 	SITE_DOMAIN = "kartoteket.oslo.kommune.no"
-	SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
-	#SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
-	ALLOWED_HOSTS = ["10.134.162.204", "localhost", "kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "10.134.162.203"]
+	#SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
 if THIS_ENVIRONMENT == "DEV":
+	ALLOWED_HOSTS = ["localhost",]
 	SECURE_SSL_REDIRECT = False
 	TEST_ENV_NAME = "development"
 	SITE_SCHEME = "http"
 	SITE_DOMAIN = "localhost"
-	SITE_PORT_OVERRIDE = ":8000"  # start with ":", default empty ("")
-	#SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
-	ALLOWED_HOSTS = ["localhost", SITE_DOMAIN]
+	#SITE_PORT_OVERRIDE = ":8000"  # start with ":", default empty ("")
 if THIS_ENVIRONMENT == "TEST":
+	ALLOWED_HOSTS = ["10.134.162.204", "localhost", "localhost:8000", "kartoteket-test.oslo.kommune.no", "kartoteket.andynor.net"]
+	SECURE_SSL_REDIRECT = False
 	TEST_ENV_NAME = "test"
 	SITE_SCHEME = "http"
 	SITE_DOMAIN = "localhost:8000"
-	SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
-	#SITE_URL = SITE_SCHEME + "://" + SITE_DOMAIN + SITE_PORT_OVERRIDE
-	ALLOWED_HOSTS = ["10.134.162.204", "localhost", SITE_DOMAIN, "kartoteket-test.oslo.kommune.no", "kartoteket.andynor.net"]
+	#SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
 
 # Application definition
 INSTALLED_APPS = [
@@ -80,6 +78,11 @@ INSTALLED_APPS = [
 	'widget_tweaks',
 ]
 if THIS_ENVIRONMENT == "DEV":
+	INSTALLED_APPS += [
+		'debug_permissions',
+		'django_extensions',
+	]
+if THIS_ENVIRONMENT == "TEST":
 	INSTALLED_APPS += [
 		'debug_permissions',
 		'django_extensions',
@@ -131,8 +134,10 @@ MIDDLEWARE = [
 	'csp.middleware.CSPMiddleware',
 ]
 
-# Security headers
-# CSP reqires "CSPMiddleware"
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
+#SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+
+# Security headers. CSP reqires "CSPMiddleware"
 CSP_DEFAULT_SRC = ("'self'",)
 CSP_SCRIPT_SRC = ("'self'", "'unsafe-eval'") # numeric.js bruker desverre eval()
 CSP_FRAME_SRC = ("'self'",)
@@ -206,8 +211,8 @@ USE_TZ = True
 #Authentication
 if THIS_ENVIRONMENT == "PROD":
 	AUTHENTICATION_BACKENDS = (
-		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # SSO / login.oslo.kommune.no
 		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
+		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # SSO / login.oslo.kommune.no
 	)
 	LOGIN_URL = "/oidc/authenticate/"
 	LOGIN_REDIRECT_URL = "/"
@@ -257,7 +262,7 @@ if THIS_ENVIRONMENT == "TEST":
 	LOGOUT_REDIRECT_URL = "/"
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
-	OIDC_RP_SCOPES = "openid email"
+	OIDC_RP_SCOPES = "openid profile"
 	OIDC_IDP_URL_BASE = ""
 	OIDC_IDP_REALM = ""
 	OIDC_OP_JWKS_ENDPOINT = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
@@ -267,18 +272,24 @@ if THIS_ENVIRONMENT == "TEST":
 	OIDC_OP_TOKEN_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/token"
 	OIDC_OP_USER_ENDPOINT = "https://graph.microsoft.com/oidc/userinfo"
 	OIDC_MAX_STATES = 5
+	OIDC_CREATE_USER = False
+	OIDC_STORE_ACCESS_TOKEN = False
+	OIDC_STORE_ID_TOKEN = False
 	#OIDC_OP_LOGOUT_URL_METHOD = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/logout"
 
 
 #session security
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Strict"
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = "Strict"
 #CSRF_FAILURE_VIEW = "systemoversikt.views.csrf403"
-SECURE_BROWSER_XSS_FILTER = True
+
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax" # må endre fra strict grunnet at Firefox og Edge dropper session cookie dersom initiert fra andre domener
 SESSION_COOKIE_AGE = 57600  # 10 timer
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+SECURE_BROWSER_XSS_FILTER = True
+
 if THIS_ENVIRONMENT == "PROD":
 	SESSION_COOKIE_SECURE = True
 	CSRF_COOKIE_SECURE = True
@@ -286,11 +297,9 @@ if THIS_ENVIRONMENT == "PROD":
 if THIS_ENVIRONMENT == "DEV":
 	SESSION_COOKIE_SECURE = False
 	CSRF_COOKIE_SECURE = False
-	#SECURE_HSTS_SECONDS = 31536000
 if THIS_ENVIRONMENT == "TEST":
 	SESSION_COOKIE_SECURE = False
 	CSRF_COOKIE_SECURE = False
-	#SECURE_HSTS_SECONDS = 31536000
 
 
 
