@@ -209,21 +209,9 @@ if THIS_ENVIRONMENT == "PROD":
 		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # SSO / login.oslo.kommune.no
 		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
 	)
-if THIS_ENVIRONMENT == "DEV":
-	AUTHENTICATION_BACKENDS = (
-		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # SSO / login.oslo.kommune.no
-		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
-	)
-if THIS_ENVIRONMENT == "TEST":
-	AUTHENTICATION_BACKENDS = (
-		#'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # ikke satt opp for test
-		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
-	)
-
-OIDC_RP_CLIENT_SECRET = os.environ['KARTOTEKET_OIDC_RP_CLIENT_SECRET']
-if THIS_ENVIRONMENT == "PROD":
 	LOGIN_URL = "/oidc/authenticate/"
 	LOGIN_REDIRECT_URL = "/"
+	LOGOUT_REDIRECT_URL = "https://kartoteket.oslo.kommune.no"
 	OIDC_IDP_URL_BASE = "https://login.oslo.kommune.no"
 	OIDC_IDP_REALM = "AD"
 	OIDC_RP_SCOPES = "openid email"
@@ -231,16 +219,21 @@ if THIS_ENVIRONMENT == "PROD":
 	OIDC_RP_SIGN_ALGO = "RS256"
 	OIDC_OP_JWKS_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/certs"
 	OIDC_RP_CLIENT_ID = "systemoversikt"
+	OIDC_RP_CLIENT_SECRET = os.environ['KARTOTEKET_OIDC_RP_CLIENT_SECRET']
 	OIDC_OP_AUTHORIZATION_ENDPOINT = "https://login.oslo.kommune.no/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/auth"
 	OIDC_OP_TOKEN_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/token"
 	OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/userinfo"
 	OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
-	LOGOUT_REDIRECT_URL = "https://kartoteket.oslo.kommune.no"
 	SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # fordi det er HTTP mellom BigIP og Kartoteket (slik at redirect_uri mot KeyCloak blir https)
-	#LOGOUT_REDIRECT_URL = SITE_URL + "/"
+
 if THIS_ENVIRONMENT == "DEV":
+	AUTHENTICATION_BACKENDS = (
+		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # SSO / login.oslo.kommune.no
+		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
+	)
 	LOGIN_URL = "/oidc/authenticate/"
 	LOGIN_REDIRECT_URL = "/"
+	LOGOUT_REDIRECT_URL = "http://localhost:8000"
 	OIDC_IDP_URL_BASE = "http://localhost:8080"
 	OIDC_IDP_REALM = "behandlingsoversikt"
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
@@ -252,13 +245,29 @@ if THIS_ENVIRONMENT == "DEV":
 	OIDC_OP_TOKEN_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/token"
 	OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/userinfo"
 	OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
-	LOGOUT_REDIRECT_URL = "http://localhost:8000"
+
 if THIS_ENVIRONMENT == "TEST":
-	LOGIN_URL = "/login/"
-	LOGIN_REDIRECT_URL = "/"
+	AUTHENTICATION_BACKENDS = (
+		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # Azure AD
+		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
+	)
+	LOGIN_URL = "/oidc/authenticate/"
+	LOGIN_REDIRECT_URL = "/?login=ok"
+	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
 	LOGOUT_REDIRECT_URL = "/"
-	OIDC_IDP_URL_BASE = None  # kreves av context_processors.py
-	OIDC_IDP_REALM = None  # kreves av context_processors.py
+	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
+	OIDC_RP_SIGN_ALGO = "RS256"
+	OIDC_RP_SCOPES = "openid email"
+	OIDC_IDP_URL_BASE = ""
+	OIDC_IDP_REALM = ""
+	OIDC_OP_JWKS_ENDPOINT = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+	OIDC_RP_CLIENT_ID = os.environ['AZURE_ENTERPRISEAPP_CLIENT']
+	OIDC_RP_CLIENT_SECRET = os.environ['AZURE_ENTERPRISEAPP_SECRET']
+	OIDC_OP_AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/authorize"
+	OIDC_OP_TOKEN_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/token"
+	OIDC_OP_USER_ENDPOINT = "https://graph.microsoft.com/oidc/userinfo"
+	OIDC_MAX_STATES = 5
+	#OIDC_OP_LOGOUT_URL_METHOD = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/logout"
 
 
 #session security
@@ -268,13 +277,17 @@ SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Strict"
 #CSRF_FAILURE_VIEW = "systemoversikt.views.csrf403"
 SECURE_BROWSER_XSS_FILTER = True
-SESSION_COOKIE_AGE = 36000  # 10 timer
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 57600  # 10 timer
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 if THIS_ENVIRONMENT == "PROD":
 	SESSION_COOKIE_SECURE = True
 	CSRF_COOKIE_SECURE = True
 	SECURE_HSTS_SECONDS = 31536000
 if THIS_ENVIRONMENT == "DEV":
+	SESSION_COOKIE_SECURE = False
+	CSRF_COOKIE_SECURE = False
+	#SECURE_HSTS_SECONDS = 31536000
+if THIS_ENVIRONMENT == "TEST":
 	SESSION_COOKIE_SECURE = False
 	CSRF_COOKIE_SECURE = False
 	#SECURE_HSTS_SECONDS = 31536000
@@ -294,28 +307,24 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 20480
 
-"""
-log_file = os.path.join(BASE_DIR, 'django.log')
+
 LOGGING = {
 	'version': 1,
 	'disable_existing_loggers': False,
 	'handlers': {
-		'file': {
-			'level': 'DEBUG',
-			'class': 'logging.FileHandler',
-			'filename': log_file,
+		'console': {
+			'class': 'logging.StreamHandler',
 		},
 	},
 	'loggers': {
-		#'django': {
-		#	'handlers': ['file'],
-		#	'level': 'DEBUG',
-		#	'propagate': True,
-		#},
+		'django': {
+			'handlers': ['console'],
+			'level': 'WARNING',
+		},
 		'mozilla_django_oidc': {
-			'handlers': ['file'],
+			'handlers': ['console'],
 			'level': 'DEBUG'
 		},
 	},
 }
-"""
+

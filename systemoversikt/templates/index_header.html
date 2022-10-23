@@ -31,7 +31,8 @@
 				</form>
 			{% else %}
 				{% if TEST_ENV_NAME == 'test' %}
-					{% url "login" as url_login %}
+					{% comment %}{% url "login" as url_login %}{% endcomment %}
+					{% url "oidc_authentication_init" as url_login %}
 				{% else %}
 					{% url "oidc_authentication_init" as url_login %}
 				{% endif %}
