@@ -62,6 +62,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 		user_info.update(payload)
 
 
+		"""
 		groups_response = requests.post(
 			"https://graph.microsoft.com/beta/me/getMemberObjects",
 			headers={
@@ -71,7 +72,7 @@ class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 			timeout=self.get_settings('OIDC_TIMEOUT', None),
 			proxies=self.get_settings('OIDC_PROXY', None))
 		print(groups_response.json())
-
+		"""
 
 		return user_info
 
