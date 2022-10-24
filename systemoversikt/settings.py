@@ -215,7 +215,6 @@ if THIS_ENVIRONMENT == "PROD":
 		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
 	)
 	OIDC_PROXY = {'https': os.environ['PROXY_HTTPS'],}
-	OIDC_VERIFY_SSL = False # usikkert, men må sjekke
 	LOGIN_URL = "/oidc/authenticate/"
 	LOGIN_REDIRECT_URL = "/?login=ok"
 	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
