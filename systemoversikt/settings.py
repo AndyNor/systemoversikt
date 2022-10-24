@@ -210,6 +210,30 @@ USE_TZ = True
 
 #Authentication
 if THIS_ENVIRONMENT == "PROD":
+
+	AUTHENTICATION_BACKENDS = (
+		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
+		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # SSO / login.oslo.kommune.no
+	)
+	LOGIN_URL = "/oidc/authenticate/"
+	LOGIN_REDIRECT_URL = "/"
+	LOGOUT_REDIRECT_URL = "https://kartoteket.oslo.kommune.no"
+	OIDC_IDP_URL_BASE = "https://login.oslo.kommune.no"
+	OIDC_IDP_REALM = "AD"
+	OIDC_RP_SCOPES = "openid email"
+	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
+	OIDC_RP_SIGN_ALGO = "RS256"
+	OIDC_OP_JWKS_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/certs"
+	OIDC_RP_CLIENT_ID = "systemoversikt"
+	OIDC_RP_CLIENT_SECRET = os.environ['KARTOTEKET_OIDC_RP_CLIENT_SECRET']
+	OIDC_OP_AUTHORIZATION_ENDPOINT = "https://login.oslo.kommune.no/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/auth"
+	OIDC_OP_TOKEN_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/token"
+	OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/userinfo"
+	OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
+	SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # fordi det er HTTP mellom BigIP og Kartoteket (slik at redirect_uri mot KeyCloak blir https)
+
+
+	""" # Test med Azure AD
 	AUTHENTICATION_BACKENDS = (
 		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # Azure AD
 		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
@@ -238,7 +262,7 @@ if THIS_ENVIRONMENT == "PROD":
 	OIDC_STORE_ID_TOKEN = False
 	#OIDC_OP_LOGOUT_URL_METHOD = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/logout"
 	SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # fordi det er HTTP mellom BigIP og Kartoteket (slik at redirect_uri mot KeyCloak blir https)
-
+	"""
 
 if THIS_ENVIRONMENT == "DEV":
 	AUTHENTICATION_BACKENDS = (
