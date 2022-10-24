@@ -219,7 +219,7 @@ if THIS_ENVIRONMENT == "PROD":
 	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
 	LOGOUT_REDIRECT_URL = "/"
 	OIDC_PROXY = {
-		'https': os.environ['PROXY_HTTPS']
+		'https': os.environ['PROXY_HTTPS'],
 		'http': os.environ['PROXY_HTTP'],
 	}
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
@@ -271,7 +271,7 @@ if THIS_ENVIRONMENT == "TEST":
 	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
 	LOGOUT_REDIRECT_URL = "/"
 	OIDC_PROXY = {
-		'https': os.environ['PROXY_HTTPS']
+		'https': os.environ['PROXY_HTTPS'],
 		'http': os.environ['PROXY_HTTP'],
 	}
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
