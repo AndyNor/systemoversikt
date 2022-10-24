@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.utils import timezone
 import requests
 import os
+import systemoversikt.settings
 from systemoversikt.views import ldap_users_securitygroups
 
 

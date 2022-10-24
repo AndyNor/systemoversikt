@@ -218,6 +218,10 @@ if THIS_ENVIRONMENT == "PROD":
 	LOGIN_REDIRECT_URL = "/?login=ok"
 	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
 	LOGOUT_REDIRECT_URL = "/"
+	OIDC_PROXY = {
+		'http': os.environ['PROXY_HTTP'],
+		'https': os.environ['PROXY_HTTPS']
+	}
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
 	OIDC_RP_SCOPES = "openid profile"
@@ -244,6 +248,7 @@ if THIS_ENVIRONMENT == "DEV":
 	LOGIN_URL = "/oidc/authenticate/"
 	LOGIN_REDIRECT_URL = "/"
 	LOGOUT_REDIRECT_URL = "http://localhost:8000"
+	OIDC_PROXY = False
 	OIDC_IDP_URL_BASE = "http://localhost:8080"
 	OIDC_IDP_REALM = "behandlingsoversikt"
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
@@ -265,6 +270,7 @@ if THIS_ENVIRONMENT == "TEST":
 	LOGIN_REDIRECT_URL = "/?login=ok"
 	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
 	LOGOUT_REDIRECT_URL = "/"
+	OIDC_PROXY = False
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
 	OIDC_RP_SCOPES = "openid profile"
