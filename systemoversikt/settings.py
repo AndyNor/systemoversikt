@@ -220,7 +220,6 @@ if THIS_ENVIRONMENT == "PROD":
 	LOGOUT_REDIRECT_URL = "/"
 	OIDC_PROXY = {
 		'https': os.environ['PROXY_HTTPS'],
-		'http': os.environ['PROXY_HTTP'],
 	}
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
