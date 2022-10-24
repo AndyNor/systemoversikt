@@ -231,6 +231,7 @@ if THIS_ENVIRONMENT == "PROD":
 	OIDC_OP_TOKEN_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/token"
 	OIDC_OP_USER_ENDPOINT = "https://graph.microsoft.com/oidc/userinfo"
 	#IDC_GROUP_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/openid/userinfo?schema=openid"
+	OIDC_TIMEOUT = 3
 	OIDC_MAX_STATES = 5
 	OIDC_CREATE_USER = False
 	OIDC_STORE_ACCESS_TOKEN = False
@@ -282,6 +283,7 @@ if THIS_ENVIRONMENT == "TEST":
 	OIDC_OP_USER_ENDPOINT = "https://graph.microsoft.com/oidc/userinfo"
 	#IDC_GROUP_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/openid/userinfo?schema=openid"
 	OIDC_MAX_STATES = 5
+	OIDC_TIMEOUT = 3
 	OIDC_CREATE_USER = False
 	OIDC_STORE_ACCESS_TOKEN = False
 	OIDC_STORE_ID_TOKEN = False
