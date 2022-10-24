@@ -133,3 +133,4 @@ sqlite3_analyzer.exe
 sqlite_report.txt
 db.sqlite3.til.utv
 systemoversikt.zip
+systemoversikt/old_oidc.py
