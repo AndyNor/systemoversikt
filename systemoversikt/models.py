@@ -565,7 +565,7 @@ class Virksomhet(models.Model):
 	arkitekturkontakter = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='virksomhet_arkitekturkontakter',
-			verbose_name='Arkitekturkontakter i vår virksomhet',
+			verbose_name='Arkitektur hovedkontakter i vår virksomhet',
 			blank=True,
 			help_text=u"Personer som jobber med overordnet arkitektur knyttet til virksomhetens ibruktakelse av IKT",
 			)
