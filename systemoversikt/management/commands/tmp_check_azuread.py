@@ -17,8 +17,6 @@ class Command(BaseCommand):
 		proxies = {
 			'http': os.environ['PROXY_HTTPS'],
 		}
-		auth =
-
 		response_jwks = requests.get(
 			"https://login.microsoftonline.com/common/discovery/v2.0/keys",
 			verify=True,
