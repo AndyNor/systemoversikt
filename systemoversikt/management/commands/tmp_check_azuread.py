@@ -11,8 +11,8 @@ from systemoversikt.models import *
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		#cmd = 'export http_proxy="%s"' % (os.environ['PROXY_HTTPS'])
-		#os.system(cmd)
+		cmd = 'export http_proxy="%s"' % (os.environ['PROXY_HTTPS'])
+		os.system(cmd)
 
 		proxies = {
 			'http': os.environ['PROXY_HTTPS'],
