@@ -197,7 +197,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 				for group in claim_groups:
 					try:
 						g = Group.objects.get(name=group)
-						messages.info(self.request, 'Rettighet: %s' % g)
+						#messages.info(self.request, 'Rettighet: %s' % g)
 						g.user_set.add(user)
 					except:
 						#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
