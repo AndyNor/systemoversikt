@@ -11,17 +11,20 @@ from systemoversikt.models import *
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		cmd = 'export http_proxy="%s"' % (os.environ['PROXY_HTTPS'])
-		os.system(cmd)
+		#cmd = 'export http_proxy="%s"' % (os.environ['PROXY_HTTPS'])
+		#os.system(cmd)
+
+		basicAuthCredentials = (os.environ['PROXY_USER'], os.environ['PROXY_PASSWORD'])
 
 		proxies = {
-			'http': os.environ['PROXY_HTTPS'],
+			'https': os.environ['PROXY_ADDR_HTTPS'],
 		}
 		response_jwks = requests.get(
 			"https://login.microsoftonline.com/common/discovery/v2.0/keys",
 			verify=True,
 			timeout=5,
-			#proxies=proxies,
+			proxies=proxies,
+			auth=basicAuthCredentials,
 		)
 		response_jwks.raise_for_status()
 		jwks = response_jwks.json()
