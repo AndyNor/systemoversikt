@@ -17,7 +17,7 @@ class Command(BaseCommand):
 		basicAuthCredentials = (os.environ['PROXY_USER'], os.environ['PROXY_PASSWORD'])
 
 		proxies = {
-			'https': os.environ['PROXY_ADDR_HTTPS'],
+			'https': os.environ['PROXY_ADDR_HTTP'],
 		}
 		response_jwks = requests.get(
 			"https://login.microsoftonline.com/common/discovery/v2.0/keys",
