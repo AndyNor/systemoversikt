@@ -210,7 +210,7 @@ USE_TZ = True
 
 #Authentication
 if THIS_ENVIRONMENT == "PROD":
-
+	IDP_PROVIDER = "KEYCLOAK"
 	AUTHENTICATION_BACKENDS = (
 		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
 		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # SSO / login.oslo.kommune.no
@@ -265,27 +265,36 @@ if THIS_ENVIRONMENT == "PROD":
 	"""
 
 if THIS_ENVIRONMENT == "DEV":
+	IDP_PROVIDER = "AZUREAD"
 	AUTHENTICATION_BACKENDS = (
-		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # SSO / login.oslo.kommune.no
+		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # Azure AD
 		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
 	)
 	LOGIN_URL = "/oidc/authenticate/"
-	LOGIN_REDIRECT_URL = "/"
-	LOGOUT_REDIRECT_URL = "http://localhost:8000"
-	OIDC_PROXY = False
-	OIDC_IDP_URL_BASE = "http://localhost:8080"
-	OIDC_IDP_REALM = "behandlingsoversikt"
+	LOGIN_REDIRECT_URL = "/?login=ok"
+	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
+	LOGOUT_REDIRECT_URL = "/"
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
-	OIDC_OP_JWKS_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/certs"
-	OIDC_RP_CLIENT_ID = "sbo"
-	OIDC_RP_CLIENT_SECRET = os.environ['KARTOTEKET_OIDC_RP_CLIENT_SECRET']
-	OIDC_OP_AUTHORIZATION_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/auth"
-	OIDC_OP_TOKEN_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/token"
-	OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/userinfo"
-	OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
+	OIDC_RP_SCOPES = "openid"
+	OIDC_IDP_URL_BASE = ""
+	OIDC_IDP_REALM = ""
+	OIDC_OP_JWKS_ENDPOINT = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
+	OIDC_RP_CLIENT_ID = os.environ['AZURE_AUTH_CLIENT']
+	OIDC_RP_CLIENT_SECRET = os.environ['AZURE_AUTH_SECRET']
+	OIDC_OP_AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/authorize"
+	OIDC_OP_TOKEN_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/token"
+	OIDC_OP_USER_ENDPOINT = "https://graph.microsoft.com/oidc/userinfo"
+	#IDC_GROUP_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/openid/userinfo?schema=openid"
+	OIDC_MAX_STATES = 5
+	OIDC_TIMEOUT = 3
+	OIDC_CREATE_USER = False
+	OIDC_STORE_ACCESS_TOKEN = False
+	OIDC_STORE_ID_TOKEN = False
+	#OIDC_OP_LOGOUT_URL_METHOD = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/logout"
 
 if THIS_ENVIRONMENT == "TEST":
+	IDP_PROVIDER = "AZUREAD"
 	AUTHENTICATION_BACKENDS = (
 		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # Azure AD
 		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
