@@ -179,7 +179,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					claim_groups.append(kartotek_kompatibelt)
 
 
-				superuser_group = "DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
+				superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
 				if superuser_group in claim_groups:
 					user.is_superuser = True
 					messages.warning(self.request, 'Du ble logget på som systemadministrator')
