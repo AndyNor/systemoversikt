@@ -11,7 +11,8 @@ from systemoversikt.models import *
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		os.system('export https_proxy="%s' % (os.environ['PROXY_HTTPS']))
+		cmd = 'export https_proxy="%s"' % (os.environ['PROXY_HTTPS'])
+		os.system(cmd)
 
 		response_jwks = requests.get(
 			"https://login.microsoftonline.com/common/discovery/v2.0/keys",
