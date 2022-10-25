@@ -171,9 +171,9 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			user.email = claims.get('email', '')
 			user.is_staff = True
 
-			if AD_DIRECT_ACCESS == True:
-				claim_groups = ldap_users_securitygroups(user.username)
-				print(claim_groups)
+			#if AD_DIRECT_ACCESS == True:
+				#claim_groups = ldap_users_securitygroups(user.username)
+				#print(claim_groups)
 				#messages.info(self.request, claim_groups)
 
 				#superuser_group = "DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
@@ -199,8 +199,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 				#		#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
 				#		pass
 
-			else:
-				messages.info(self.request, 'Kan ikke oppdatere tilganger, ingen kontakt med AD')
+			#else:
+				#messages.info(self.request, 'Kan ikke oppdatere tilganger, ingen kontakt med AD')
 
 
 			# Sette virksomhetstilhørighet
