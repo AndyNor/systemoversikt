@@ -15,8 +15,10 @@ class Command(BaseCommand):
 			"https://login.microsoftonline.com/common/discovery/v2.0/keys",
 			verify=True,
 			timeout=5,
-			proxies=None
+			proxies={'https': os.environ['PROXY_HTTPS'],}
 		)
+
+
 		response_jwks.raise_for_status()
 		jwks = response_jwks.json()
 		print(jwks)
