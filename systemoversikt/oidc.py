@@ -90,7 +90,7 @@ if settings.IDP_PROVIDER == "KEYCLOAK":
 
 			#user.last_login = timezone.now()
 			user.save()
-			messages.success(self.request, 'Du er nå logget på. Trykk på navnet ditt for å få opp mer administrativ informasjon. Ved siden av navnet ditt står det også hvilken virksomhet du nå representerer (som kan endres via den linken).')
+			messages.success(self.request, 'Du er nå logget på. Trykk på navnet ditt for å få opp mer administrativ informasjon.')
 			return user
 
 		def create_user(self, claims):
