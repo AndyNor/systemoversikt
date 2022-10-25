@@ -173,7 +173,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 			if AD_DIRECT_ACCESS == True:
 				claim_groups = ldap_users_securitygroups(user.username)
-				messages.info(self.request, claim_groups)
+				print(claim_groups)
+				#messages.info(self.request, claim_groups)
 
 				#superuser_group = "DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
 				#if superuser_group in claim_groups:
