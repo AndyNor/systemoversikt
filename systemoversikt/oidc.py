@@ -171,36 +171,40 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			user.email = claims.get('email', '')
 			user.is_staff = True
 
-			#if AD_DIRECT_ACCESS == True:
-				#claim_groups = ldap_users_securitygroups(user.username)
-				#print(claim_groups)
-				#messages.info(self.request, claim_groups)
-
-				#superuser_group = "DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
-				#if superuser_group in claim_groups:
-				#	user.is_superuser = True
-				#	messages.warning(self.request, 'Du ble logget på som systemadministrator')
-				#	claim_groups.remove(superuser_group)
-				#else:
-				#	user.is_superuser = False
+			if settings.AD_DIRECT_ACCESS == True:
+				ad_groups = ldap_users_securitygroups(user.username)
+				claim_groups = []
+				for g in ad_groups:
+					kartotek_kompatibelt = "/" + g.split(',')[0].split('CN=')[1]
+					claim_groups.append(kartotek_kompatibelt)
 
 
-				#synkronisere gruppetilhørighet (slette alle og legge til på nytt)
-				#current_memberships = user.groups.values_list('name', flat=True)
-				#for existing_group in current_memberships:
-				#	g = Group.objects.get(name=existing_group)
-				#	g.user_set.remove(user)
+				superuser_group = "DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
+				if superuser_group in claim_groups:
+					user.is_superuser = True
+					messages.warning(self.request, 'Du ble logget på som systemadministrator')
+					claim_groups.remove(superuser_group)
+				else:
+					user.is_superuser = False
 
-				#for group in claim_groups:
-				#	try:
-				#		g = Group.objects.get(name=group)
-				#		g.user_set.add(user)
-				#	except:
-				#		#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
-				#		pass
+				# Slette alle rettigheter
+				current_memberships = user.groups.values_list('name', flat=True)
+				for existing_group in current_memberships:
+					g = Group.objects.get(name=existing_group)
+					g.user_set.remove(user)
 
-			#else:
-				#messages.info(self.request, 'Kan ikke oppdatere tilganger, ingen kontakt med AD')
+				# Legge til nye bekreftede rettigheter
+				for group in claim_groups:
+					try:
+						g = Group.objects.get(name=group)
+						messages.info(self.request, 'Rettighet: %s' % g)
+						g.user_set.add(user)
+					except:
+						#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
+						pass
+
+			else:
+				messages.info(self.request, 'Kan ikke oppdatere tilganger, ingen kontakt med AD')
 
 
 			# Sette virksomhetstilhørighet
@@ -223,13 +227,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 
 	def provider_logout(request):
-		# See your provider's documentation for details on if and how this is
-		# supported
-
-		"""
-		Kalles av mozilla_django_oidc.OIDCLogoutView via settings.OIDC_OP_LOGOUT_URL_METHOD som peker hit for å generere en identity provider logout URL.
-		OIDCLogoutView godtar både post og get, men har bare definert metoden post for utlogging. Ved å sette denne til get fungerer utlogging. Bug?
-		"""
+		# Kan kalles av mozilla_django_oidc.OIDCLogoutView via settings.OIDC_OP_LOGOUT_URL_METHOD
+		#OIDCLogoutView godtar både post og get, men har bare definert metoden post for utlogging. Ved å sette denne til get fungerer utlogging. Bug?
 		messages.info(request, 'Starter å logge ut')
 		redirect_url = settings.OIDC_IDP_URL_BASE + '/auth/realms/'+ settings.OIDC_IDP_REALM +'/protocol/openid-connect/logout?redirect_uri='  + settings.LOGOUT_REDIRECT_URL
 		return redirect_url
