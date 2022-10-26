@@ -211,6 +211,7 @@ USE_TZ = True
 #Authentication
 if THIS_ENVIRONMENT == "PROD":
 	#Keycloak
+	"""
 	IDP_PROVIDER = "KEYCLOAK"
 	AUTHENTICATION_BACKENDS = (
 		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
@@ -232,9 +233,9 @@ if THIS_ENVIRONMENT == "PROD":
 	OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/userinfo"
 	OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
 	SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # fordi det er HTTP mellom BigIP og Kartoteket (slik at redirect_uri mot KeyCloak blir https)
+	"""
 
 	# Azure AD
-	"""
 	IDP_PROVIDER = "AZUREAD"
 	AD_DIRECT_ACCESS = True
 	AUTHENTICATION_BACKENDS = (
@@ -265,7 +266,7 @@ if THIS_ENVIRONMENT == "PROD":
 	OIDC_STORE_ID_TOKEN = False
 	#OIDC_OP_LOGOUT_URL_METHOD = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/logout"
 	SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # fordi det er HTTP mellom BigIP og Kartoteket (slik at redirect_uri mot KeyCloak blir https)
-	"""
+
 
 if THIS_ENVIRONMENT == "DEV":
 	IDP_PROVIDER = "AZUREAD"
