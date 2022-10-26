@@ -40,7 +40,7 @@ if THIS_ENVIRONMENT == "TEST":
 	DEBUG = True
 
 if THIS_ENVIRONMENT == "PROD":
-	ALLOWED_HOSTS = ["10.134.162.204", "localhost", "kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "10.134.162.203"]
+	ALLOWED_HOSTS = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no",]
 	#SECURE_SSL_REDIRECT = True  #I Oslo kommune er det en webproxy som redirecter http til https i produksjon
 	TEST_ENV_NAME = "" # brukes ikke i produksjon
 	SITE_SCHEME = "https"
@@ -54,7 +54,7 @@ if THIS_ENVIRONMENT == "DEV":
 	SITE_DOMAIN = "localhost"
 	#SITE_PORT_OVERRIDE = ":8000"  # start with ":", default empty ("")
 if THIS_ENVIRONMENT == "TEST":
-	ALLOWED_HOSTS = ["10.134.162.204", "localhost", "localhost:8000", "kartoteket-test.oslo.kommune.no", "kartoteket.andynor.net"]
+	ALLOWED_HOSTS = ["localhost", "localhost:8000",]
 	SECURE_SSL_REDIRECT = False
 	TEST_ENV_NAME = "test"
 	SITE_SCHEME = "http"
