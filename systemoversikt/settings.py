@@ -337,6 +337,7 @@ CSRF_COOKIE_SAMESITE = "Strict"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax" # må endre fra strict grunnet at Firefox og Edge dropper session cookie dersom initiert fra andre domener
 SESSION_COOKIE_AGE = 57600  # 10 timer
+CSRF_COOKIE_NAME = "kartotek_csrf_cookie"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 SECURE_BROWSER_XSS_FILTER = True
