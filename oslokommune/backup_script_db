@@ -1,15 +1,15 @@
 #!/bin/sh
 
 # make a compressed backup of the db.sqlite3-file
-tar -zcf /home/drift23914/metadata/backup/db/db_`date +%F_%H:%M:%S`.tar.gz /home/drift23914/metadata/djangoapp/db.sqlite3
+tar -zcf /home/X/metadata/backup/db/db_`date +%F_%H:%M:%S`.tar.gz /home/X/metadata/djangoapp/db.sqlite3
 
 # remove duplicated - keep one copy
-#md5sum /home/drift23914/metadata/backup/db/* |\
+#md5sum /home/X/metadata/backup/db/* |\
 #sort |\
 #awk 'BEGIN{lasthash = ""} $1 == lasthash {print $2} {lasthash = $1}' |\
 #xargs rm
 
-cd /home/drift23914/metadata/backup/db/
+cd /home/X/metadata/backup/db/
 last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
     while read -d '' i; do
         s=$(stat -c '%s' "$i");
@@ -18,5 +18,5 @@ last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
 done
 
 # remove files older than 30 days
-find /home/drift23914/metadata/backup/db/ -mindepth 1 -mtime +30 -delete
+find /home/X/metadata/backup/db/ -mindepth 1 -mtime +30 -delete
 
