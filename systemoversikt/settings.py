@@ -40,7 +40,7 @@ if THIS_ENVIRONMENT == "TEST":
 	DEBUG = True
 
 if THIS_ENVIRONMENT == "PROD":
-	ALLOWED_HOSTS = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no",]
+	ALLOWED_HOSTS = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "okkartoteket-oslokommune.msappproxy.net"]
 	#SECURE_SSL_REDIRECT = True  #I Oslo kommune er det en webproxy som redirecter http til https i produksjon
 	TEST_ENV_NAME = "" # brukes ikke i produksjon
 	SITE_SCHEME = "https"
