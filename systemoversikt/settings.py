@@ -41,11 +41,11 @@ if THIS_ENVIRONMENT == "TEST":
 
 if THIS_ENVIRONMENT == "PROD":
 	ALLOWED_HOSTS = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "okkartoteket-oslokommune.msappproxy.net"]
-	CSRF_TRUSTED_ORIGINS = ALLOWED_HOSTS
+	CSRF_TRUSTED_ORIGINS = ["https://kartoteket.oslo.kommune.no", "https://systemoversikt.oslo.kommune.no", "https://okkartoteket-oslokommune.msappproxy.net"]
 	#SECURE_SSL_REDIRECT = True  #I Oslo kommune er det en webproxy som redirecter http til https i produksjon
 	TEST_ENV_NAME = "" # brukes ikke i produksjon
 	SITE_SCHEME = "https"
-	SITE_DOMAIN = ["https://kartoteket.oslo.kommune.no", "https://systemoversikt.oslo.kommune.no", "https://okkartoteket-oslokommune.msappproxy.net"]
+	SITE_DOMAIN = "kartoteket.oslo.kommune.no"
 	#SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
 if THIS_ENVIRONMENT == "DEV":
 	ALLOWED_HOSTS = ["localhost",]
