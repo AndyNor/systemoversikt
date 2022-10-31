@@ -45,7 +45,7 @@ if THIS_ENVIRONMENT == "PROD":
 	#SECURE_SSL_REDIRECT = True  #I Oslo kommune er det en webproxy som redirecter http til https i produksjon
 	TEST_ENV_NAME = "" # brukes ikke i produksjon
 	SITE_SCHEME = "https"
-	SITE_DOMAIN = "kartoteket.oslo.kommune.no"
+	SITE_DOMAIN = ["https://kartoteket.oslo.kommune.no", "https://systemoversikt.oslo.kommune.no", "https://okkartoteket-oslokommune.msappproxy.net"]
 	#SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
 if THIS_ENVIRONMENT == "DEV":
 	ALLOWED_HOSTS = ["localhost",]
