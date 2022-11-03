@@ -300,7 +300,7 @@ if THIS_ENVIRONMENT == "DEV":
 
 if THIS_ENVIRONMENT == "TEST":
 	IDP_PROVIDER = "AZUREAD"
-	AD_DIRECT_ACCESS = True
+	AD_DIRECT_ACCESS = False
 	AUTHENTICATION_BACKENDS = (
 		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # Azure AD
 		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig

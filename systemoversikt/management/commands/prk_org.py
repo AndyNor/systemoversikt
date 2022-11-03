@@ -42,12 +42,15 @@ class Command(BaseCommand):
 			r.encoding = "latin-1" # need to override
 			print("New encoding: %s" % r.encoding)
 			print("Statuskode: %s" % r.status_code)
-			if r.status_code == 200:
-				with open('systemoversikt/import/grp.csv', 'w') as file_handle:
-					file_handle.write(r.text)
-				csv_data = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
-			else:
+			try:
+				if r.status_code == 200:
+					with open('systemoversikt/import/grp.csv', 'w') as file_handle:
+						file_handle.write(r.text)
+					csv_data = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
+			except:
+				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="kunne ikke skrive til fil..")
 				sys.exit()
+
 
 		if LOCAL_DEBUG == True:
 			with open(debug_file, 'r', encoding='latin-1') as file:
