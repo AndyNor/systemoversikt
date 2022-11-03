@@ -40,7 +40,8 @@ if THIS_ENVIRONMENT == "TEST":
 	DEBUG = True
 
 if THIS_ENVIRONMENT == "PROD":
-	ALLOWED_HOSTS = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no",]
+	ALLOWED_HOSTS = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "okkartoteket-oslokommune.msappproxy.net"]
+	CSRF_TRUSTED_ORIGINS = ["https://kartoteket.oslo.kommune.no", "https://systemoversikt.oslo.kommune.no", "https://okkartoteket-oslokommune.msappproxy.net"]
 	#SECURE_SSL_REDIRECT = True  #I Oslo kommune er det en webproxy som redirecter http til https i produksjon
 	TEST_ENV_NAME = "" # brukes ikke i produksjon
 	SITE_SCHEME = "https"
@@ -337,6 +338,7 @@ CSRF_COOKIE_SAMESITE = "Strict"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax" # må endre fra strict grunnet at Firefox og Edge dropper session cookie dersom initiert fra andre domener
 SESSION_COOKIE_AGE = 57600  # 10 timer
+CSRF_COOKIE_NAME = "kartotek_csrf_cookie"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 SECURE_BROWSER_XSS_FILTER = True
