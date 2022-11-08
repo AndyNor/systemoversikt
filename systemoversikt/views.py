@@ -5954,8 +5954,7 @@ def prk_api_usr(request):
 			return prk_api("usr.csv")
 
 		else:
-			from django.http import HttpResponseForbidden
-			return HttpResponseForbidden()
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 
 def prk_api_grp(request):
@@ -5972,8 +5971,7 @@ def prk_api_grp(request):
 			return prk_api("grp.csv")
 
 		else:
-			from django.http import HttpResponseForbidden
-			return HttpResponseForbidden()
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 def azure_applications(request):
 	"""
