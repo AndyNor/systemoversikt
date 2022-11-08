@@ -5934,11 +5934,12 @@ def ubw_estimat_copy(request, pk):
 
 
 def prk_api(filename):
-	path = "/var/kartoteket/source/systemoversikt/import" + filename
+	path = "/var/kartoteket/source/systemoversikt/import/" + filename
 	with open(path, 'rt', encoding='utf-8') as file:
 		response = HttpResponse(file, content_type='text/csv; charset=utf-8')
 		response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 	return response
+
 
 def prk_api_usr(request):
 	if request.method == "GET":
