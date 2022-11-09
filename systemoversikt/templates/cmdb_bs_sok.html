@@ -61,6 +61,8 @@
 	<tr>
 		<th>Systemnavn</th>
 		<th>Plattform</th>
+		<th>Systemeier</th>
+		<th>Systemforvalter</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -68,6 +70,8 @@
 	<tr>
 		<td>{{ s.systemnavn }}</td>
 		<td>{{ s.driftsmodell_foreignkey }}</td>
+		<td>{{ s.systemeier|default:"?" }}</td>
+		<td>{{ s.systemforvalter|default:"?" }}</td>
 	</tr>
 	{% endfor %}
 	</tbody>
