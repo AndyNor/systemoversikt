@@ -3335,11 +3335,13 @@ class Driftsmodell(models.Model):
 			null=False,
 			help_text=u'',
 			)
-	overordnet_plattform = models.ManyToManyField(
+	overordnet_plattform = models.ForeignKey(
 			to="Driftsmodell",
 			related_name='driftsmodell_overordnet_plattform',
 			verbose_name="Overordnet plattform",
 			blank=True,
+			null=True,
+			on_delete=models.PROTECT,
 			help_text=u'Dersom dette er en "plattform på en plattform" kan du her henvise til hvilken plattform denne kjører på.',
 			)
 	history = HistoricalRecords()

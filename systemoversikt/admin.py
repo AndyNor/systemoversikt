@@ -1163,7 +1163,7 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('navn', 'sikkerhetsnivaa', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform')
 	search_fields = ('navn',)
-	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler', 'anbefalte_kategorier_personopplysninger', 'overordnet_plattform')
+	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler', 'anbefalte_kategorier_personopplysninger')
 	autocomplete_fields = ('ansvarlig_virksomhet',)
 
 	def response_add(self, request, obj, post_url_continue=None):
@@ -1185,6 +1185,7 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 					'navn',
 					'ansvarlig_virksomhet',
 					'type_plattform',
+					'overordnet_plattform',
 					'anbefalte_kategorier_personopplysninger',
 					'risikovurdering',
 					'kommentar',
@@ -1208,7 +1209,6 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 					'sikkerhet_backup',
 					'sikkerhet_logging',
 					'sikkerhet_fysisk_sikring',
-					'overordnet_plattform',
 				),
 			}),
 	)
