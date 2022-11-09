@@ -4292,6 +4292,10 @@ def alle_cmdbref(request):
 
 		bs_uten_system = CMDBbs.objects.filter(operational_status=True).filter(Q(systemreferanse=None)).filter(eksponert_for_bruker=True)
 		utfasede_bs = CMDBbs.objects.filter(operational_status=False).filter(~Q(systemreferanse=None))
+		virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
+		print(virksomhet_uke)
+		system_uten_bs = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke).filter(bs_system_referanse=None).filter(ibruk=True)
+
 
 		return render(request, 'cmdb_bs_sok.html', {
 			'request': request,
@@ -4299,6 +4303,7 @@ def alle_cmdbref(request):
 			'search_term': search_term,
 			'bs_uten_system': bs_uten_system,
 			'utfasede_bs': utfasede_bs,
+			'system_uten_bs': system_uten_bs,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
