@@ -4292,6 +4292,11 @@ def alle_cmdbref(request):
 
 		bs_uten_system = CMDBbs.objects.filter(operational_status=True).filter(Q(systemreferanse=None)).filter(eksponert_for_bruker=True)
 		utfasede_bs = CMDBbs.objects.filter(operational_status=False).filter(~Q(systemreferanse=None))
+		virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
+		#print(virksomhet_uke)
+		# Alle plattformer knyttet til UKE som ikke er en underplattform (overordnet er None)
+		system_uten_bs = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke).filter(driftsmodell_foreignkey__overordnet_plattform=None).filter(bs_system_referanse=None).filter(ibruk=True)
+
 
 		return render(request, 'cmdb_bs_sok.html', {
 			'request': request,
@@ -4299,6 +4304,7 @@ def alle_cmdbref(request):
 			'search_term': search_term,
 			'bs_uten_system': bs_uten_system,
 			'utfasede_bs': utfasede_bs,
+			'system_uten_bs': system_uten_bs,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -5934,11 +5940,12 @@ def ubw_estimat_copy(request, pk):
 
 
 def prk_api(filename):
-	path = "/var/kartoteket/source/systemoversikt/import" + filename
+	path = "/var/kartoteket/source/systemoversikt/import/" + filename
 	with open(path, 'rt', encoding='utf-8') as file:
 		response = HttpResponse(file, content_type='text/csv; charset=utf-8')
 		response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
 	return response
+
 
 def prk_api_usr(request):
 	if request.method == "GET":
@@ -5954,8 +5961,7 @@ def prk_api_usr(request):
 			return prk_api("usr.csv")
 
 		else:
-			from django.http import HttpResponseForbidden
-			return HttpResponseForbidden()
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 
 def prk_api_grp(request):
@@ -5972,8 +5978,7 @@ def prk_api_grp(request):
 			return prk_api("grp.csv")
 
 		else:
-			from django.http import HttpResponseForbidden
-			return HttpResponseForbidden()
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 def azure_applications(request):
 	"""

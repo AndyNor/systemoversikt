@@ -55,6 +55,29 @@
 	</table>
 
 
+	<h4>Systemer angitt å kjøre på felles IKT-plattform som ikke er koblet til en business service</h4>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Systemnavn</th>
+		<th>Plattform</th>
+		<th>Systemeier</th>
+		<th>Systemforvalter</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for s in system_uten_bs %}
+	<tr>
+		<td>{{ s.systemnavn }}</td>
+		<td>{{ s.driftsmodell_foreignkey }}</td>
+		<td>{{ s.systemeier|default:"?" }}</td>
+		<td>{{ s.systemforvalter|default:"?" }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
 	<h4>Utfasede business services som fremdeles er koblet mot et system</h4>
 	<table class="table table-sm tablesorter excel">
 	<thead>
