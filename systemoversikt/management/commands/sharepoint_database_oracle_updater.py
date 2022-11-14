@@ -149,12 +149,15 @@ class Command(BaseCommand):
 						if oracle_db.db_server in server:
 							# databasenavn og server stemmer, oppdater størrelse
 							old_size = oracle_db.db_u_datafilessizekb
-							oracle_db.db_u_datafilessizekb = size
-							oracle_db.save()
-							if old_size != size:
-								print("Oppdaterte server %s database %s fra %s til %s bytes" % (server, database_name, old_size, size))
+							if oracle_db.db_server in server:
+								if old_size != size:
+									oracle_db.db_u_datafilessizekb = size
+									oracle_db.save()
+									print("Oppdaterte server %s database %s fra %s til %s bytes" % (server, database_name, old_size, size))
+								else:
+									print(".", end="", flush=True)
 							else:
-								print(".", end="", flush=True)
+								pass # dette vil skje når samme database ligger på forskjellige servere
 						else:
 							print("Kunne ikke finne %s" % oracle_db)
 
