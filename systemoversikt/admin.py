@@ -1350,7 +1350,7 @@ admin.site.register(DefinisjonKontekster)
 class CMDBdatabaseAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('db_database', 'sub_name', 'db_version', 'db_u_datafilessizekb', 'db_used_for', 'db_operational_status', 'db_comments', )
-	search_fields = ('db_database', 'sub_name__navn', 'db_comments',)
+	search_fields = ('db_database', 'sub_name__navn', 'db_comments', 'db_version')
 	list_filter = ('opprettet', 'db_operational_status', 'db_version',)
 	autocomplete_fields = ('db_server_modelref',)
 
