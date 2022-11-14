@@ -151,7 +151,12 @@ class Command(BaseCommand):
 							old_size = oracle_db.db_u_datafilessizekb
 							oracle_db.db_u_datafilessizekb = size
 							oracle_db.save()
-							print("Oppdaterte server %s database %s fra %s til %s bytes" % (server, database_name, old_size, size))
+							if old_size != size:
+								print("Oppdaterte server %s database %s fra %s til %s bytes" % (server, database_name, old_size, size))
+							else:
+								print(".", end="", flush=True)
+						else:
+							print("Kunne ikke finne %s" % oracle_db)
 
 			update_size(oracle_size_is)
 			update_size(oracle_size_ss)
