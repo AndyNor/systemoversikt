@@ -35,6 +35,7 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
+		<th>Aktiv</th>
 		<th>Navn</th>
 		<th>Brukernavn</th>
 		<th>Passordbytte aktiv?</th>
@@ -50,6 +51,7 @@
 	{% for user in users %}
 
 	<tr>
+		<td>{{ m.profile.accountdisable|yesno:"Nei,Ja,?" }}</td>
 		{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
 		<td>{{user.first_name}} {{user.last_name}}</td>
 		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
