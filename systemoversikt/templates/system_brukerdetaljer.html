@@ -51,11 +51,11 @@
 	{% for user in users %}
 
 	<tr>
-		<td>{{ m.profile.accountdisable|yesno:"Nei,Ja,?" }}</td>
+		<td>{{ user.profile.accountdisable|yesno:"Nei,Ja,?" }}</td>
 		{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
 		<td>{{user.first_name}} {{user.last_name}}</td>
 		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
-		<td>{{ m.profile.dont_expire_password|yesno:"Aldri,Ja,Vet ikke" }}</td>
+		<td>{{ user.profile.dont_expire_password|yesno:"Aldri,Ja,Vet ikke" }}</td>
 		<td>{{ user.profile.description|default:"Ingen beskrivelse" }}</td>
 		<td>{{ user.profile.whenCreated|date:"Y-m-d" }} ({{ user.profile.whenCreated|timesince }})</td>
 		<td>{{user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent"}}</td>
