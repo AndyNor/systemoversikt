@@ -4852,11 +4852,12 @@ def tilgangsgrupper_api(request):
 		raise Http404
 
 	key = request.headers.get("key", None)
-	allowed_keys = APIKeys.objects.filter(navn="api_tilgangsgrupper").values_list("key", flat=True)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="api_tilgangsgrupper").values_list("key", flat=True)
 	if not key in list(allowed_keys):
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
-
+	owner = APIKeys.objects.get(key=key).navn
+	ApplicationLog.objects.create(event_type="API AD-grupper", message="Nøkkel tilhørende %s" %(owner))
 	from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 	if not "gruppenavn" in request.GET:
