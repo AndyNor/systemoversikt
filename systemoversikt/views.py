@@ -4856,9 +4856,13 @@ def tilgangsgrupper_api(request):
 	if not key in list(allowed_keys):
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
-	owner = APIKeys.objects.get(key=key).navn
-	ApplicationLog.objects.create(event_type="API AD-grupper", message="Nøkkel tilhørende %s" %(owner))
 	from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+	try:
+		owner = APIKeys.objects.get(key=key).navn
+	except MultipleObjectsReturned:
+		owner = "Flere treff på nøkkeleier"
+
+	ApplicationLog.objects.create(event_type="API AD-grupper", message="Nøkkel tilhørende %s" %(owner))
 
 	if not "gruppenavn" in request.GET:
 		return JsonResponse({"message": "Du må oppgi et gruppenavn som GET-variabel. ?gruppenavn=<navn>", "data": None}, safe=False, status=204)
@@ -5974,7 +5978,12 @@ def prk_api_grp(request):
 
 		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
 		if key in list(allowed_keys):
-			owner = APIKeys.objects.get(key=key).navn
+			from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+			try:
+				owner = APIKeys.objects.get(key=key).navn
+			except MultipleObjectsReturned:
+				owner = "Flere treff på nøkkeleier"
+
 			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
 			return prk_api("grp.csv")
 
