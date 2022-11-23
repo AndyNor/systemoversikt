@@ -128,7 +128,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			# Return all users matching the specified username
 			# messages.info(self.request, 'Prøver å logge inn')
 			self.request.session['oidc-token'] = claims
-			logger.error("Bruker forsøker å logge inn med claim: %s" % claims)
+			logger.error("Auth: filter_user_by_claim: %s" % claims)
 			#messages.info(self.request, '%s' % claims)
 			username = claims.get('samAccountName').lower()
 			if not username:
@@ -143,6 +143,37 @@ if settings.IDP_PROVIDER == "AZUREAD":
 				ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 				messages.warning(self.request, 'Fant ingen korresponderende bruker.')
 				return self.UserModel.objects.none()
+
+
+		def get_or_create_user(self, access_token, id_token, payload):
+			"""Returns a User instance if 1 user is found. Creates a user if not found
+			and configured to do so. Returns nothing if multiple users are matched."""
+
+			user_info = self.get_userinfo(access_token, id_token, payload)
+			logger.error("Auth: get_or_create_user: %s" % user_info)
+			claims_verified = self.verify_claims(user_info)
+			if not claims_verified:
+				msg = 'Claims verification failed'
+				raise SuspiciousOperation(msg)
+
+			# email based filtering
+			users = self.filter_users_by_claims(user_info)
+
+			if len(users) == 1:
+				return self.update_user(users[0], user_info)
+			elif len(users) > 1:
+				# In the rare case that two user accounts have the same email address,
+				# bail. Randomly selecting one seems really wrong. <-- JA! dette skriver altså utvikler av biblioteket :D
+				msg = 'Multiple users returned'
+				raise SuspiciousOperation(msg)
+			elif self.get_settings('OIDC_CREATE_USER', True): # denne er deaktivert i settings.py
+				user = self.create_user(user_info)
+				return user
+			else:
+				LOGGER.debug('Login failed: No user with %s found, and '
+							 'OIDC_CREATE_USER is False',
+							 self.describe_user_by_claims(user_info))
+				return None
 
 
 		def verify_claims(self, claims):
