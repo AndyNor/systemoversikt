@@ -128,7 +128,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			# Return all users matching the specified username
 			# messages.info(self.request, 'Prøver å logge inn')
 			self.request.session['oidc-token'] = claims
-			logger.error("Auth: filter_user_by_claim: %s" % claims)
+			#logger.error("Auth: filter_user_by_claim: %s" % claims)
 			#messages.info(self.request, '%s' % claims)
 			username = claims.get('samAccountName').lower()
 			if not username:
@@ -153,6 +153,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			logger.error("Auth: get_or_create_user: %s" % user_info)
 			claims_verified = self.verify_claims(user_info)
 			if not claims_verified:
+				logger.error("Auth: get_or_create_user: Claims verification failed")
 				msg = 'Claims verification failed'
 				raise SuspiciousOperation(msg)
 
@@ -160,6 +161,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			users = self.filter_users_by_claims(user_info)
 
 			if len(users) == 1:
+				logger.error("Auth: get_or_create_user fant brukerID %s" % users[0])
 				return self.update_user(users[0], user_info)
 			elif len(users) > 1:
 				# In the rare case that two user accounts have the same email address,
