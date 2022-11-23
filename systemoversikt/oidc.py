@@ -150,10 +150,10 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			and configured to do so. Returns nothing if multiple users are matched."""
 
 			user_info = self.get_userinfo(access_token, id_token, payload)
-			logger.error("Auth: get_or_create_user: %s" % user_info)
 			claims_verified = self.verify_claims(user_info)
 			if not claims_verified:
 				logger.error("Auth: get_or_create_user: Claims verification failed")
+				logger.error("Auth: get_or_create_user: %s" % user_info)
 				msg = 'Claims verification failed'
 				raise SuspiciousOperation(msg)
 
