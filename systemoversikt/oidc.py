@@ -119,6 +119,8 @@ if settings.IDP_PROVIDER == "KEYCLOAK":
 		redirect_url = settings.OIDC_IDP_URL_BASE + '/auth/realms/'+ settings.OIDC_IDP_REALM +'/protocol/openid-connect/logout?redirect_uri='  + settings.LOGOUT_REDIRECT_URL
 		return redirect_url
 
+import logging
+logger = logging.getLogger(__name__)
 
 if settings.IDP_PROVIDER == "AZUREAD":
 	class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
@@ -126,6 +128,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			# Return all users matching the specified username
 			# messages.info(self.request, 'Prøver å logge inn')
 			self.request.session['oidc-token'] = claims
+			logger.error("Bruker forsøker å logge inn med claim: %s" % claims)
 			#messages.info(self.request, '%s' % claims)
 			username = claims.get('samAccountName').lower()
 			if not username:
