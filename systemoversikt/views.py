@@ -5318,13 +5318,13 @@ def ubw_multiselect(request):
 
 	if request.method == 'POST' and form.is_valid():
 
-		print(valgte_fakturaer)
+		#print(valgte_fakturaer)
 		instance = form.save(commit=False)
 		for faktura in valgte_fakturaer:
 			instance.belongs_to = faktura
 			instance.pk = None # triks for å få en ny instans. Ny pk tildeles automatisk.
 			instance.save()
-			print("lagrer %s" % instance)
+			#print("lagrer %s" % instance)
 
 		return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
 
