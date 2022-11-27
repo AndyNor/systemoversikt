@@ -3665,7 +3665,7 @@ def ad_gruppeanalyse(request):
 			brukers_grupper = ldap_users_securitygroups(bruker.username)
 			brukers_unike_grupper = sorted(convert_distinguishedname_cn(brukers_grupper))
 		except:
-			print("ad_gruppeanalyse: Brukernavn finnes ikke")
+			#print("ad_gruppeanalyse: Brukernavn finnes ikke")
 			brukers_unike_grupper = None
 
 

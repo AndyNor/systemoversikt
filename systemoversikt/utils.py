@@ -155,7 +155,7 @@ def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, resu
 			sys.exit('ERROR: Could not pull LDAP results: %s' % e)
 		objects_start = objects_returned + 1
 		objects_returned += len(rdata)
-		print("\nINFO: New page %s (%s-%s)" % (current_round, objects_start, objects_returned))
+		#print("\nINFO: New page %s (%s-%s)" % (current_round, objects_start, objects_returned))
 
 		# Do stuff with results
 		result_handler(rdata, report_data, existing_objects)
@@ -169,7 +169,7 @@ def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, resu
 		if not cookie:
 			runtime_t1 = time.time()
 			total_runtime = round(runtime_t1 - runtime_t0, 2)
-			print("\nINFO: No more pages, %s results returned." % (objects_returned))
+			#print("\nINFO: No more pages, %s results returned." % (objects_returned))
 			break  # Done
 
 	l.unbind()
