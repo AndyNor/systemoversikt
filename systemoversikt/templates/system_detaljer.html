@@ -168,7 +168,9 @@
 			{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.systemeier_kontaktpersoner_referanse.all %}</td>
 		</tr>
 		<tr>
-			<td>
+			<td>{% get_verbose_field_name systemdetaljer "systemforvalter" %}
+			{% get_help_text systemdetaljer "systemforvalter" as text %}
+			{% explain_collapsed text %}
 			</td>
 			{% url "virksomhet" systemdetaljer.systemforvalter.pk as url_systemforvalter %}
 			<td><a href="{{ url_systemforvalter }}">{{ systemdetaljer.systemforvalter|default:"-" }}</a><br>

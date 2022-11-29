@@ -15,10 +15,13 @@ this_env()
 THIS_ENVIRONMENT = os.environ['THIS_ENV'] # "PROD" / "TEST" / "DEV"
 
 if THIS_ENVIRONMENT == "PROD":
+	from secrets_prod import SECRET_ALLOWED_HOSTS as SECRET_ALLOWED_HOSTS
 	from secrets_prod import load_secrets
 if THIS_ENVIRONMENT == "DEV":
+	from secrets_dev import SECRET_ALLOWED_HOSTS as SECRET_ALLOWED_HOSTS
 	from secrets_dev import load_secrets
 if THIS_ENVIRONMENT == "TEST":
+	from secrets_test import SECRET_ALLOWED_HOSTS as SECRET_ALLOWED_HOSTS
 	from secrets_test import load_secrets
 load_secrets()
 
@@ -40,7 +43,8 @@ if THIS_ENVIRONMENT == "TEST":
 	DEBUG = True
 
 if THIS_ENVIRONMENT == "PROD":
-	ALLOWED_HOSTS = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "okkartoteket-oslokommune.msappproxy.net"]
+	hosts = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "okkartoteket-oslokommune.msappproxy.net"]
+	ALLOWED_HOSTS = SECRET_ALLOWED_HOSTS + hosts
 	CSRF_TRUSTED_ORIGINS = ["https://kartoteket.oslo.kommune.no", "https://systemoversikt.oslo.kommune.no", "https://okkartoteket-oslokommune.msappproxy.net"]
 	#SECURE_SSL_REDIRECT = True  #I Oslo kommune er det en webproxy som redirecter http til https i produksjon
 	TEST_ENV_NAME = "" # brukes ikke i produksjon
@@ -48,14 +52,16 @@ if THIS_ENVIRONMENT == "PROD":
 	SITE_DOMAIN = "kartoteket.oslo.kommune.no"
 	#SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
 if THIS_ENVIRONMENT == "DEV":
-	ALLOWED_HOSTS = ["localhost",]
+	hosts = ["localhost"]
+	ALLOWED_HOSTS = SECRET_ALLOWED_HOSTS + hosts
 	SECURE_SSL_REDIRECT = False
 	TEST_ENV_NAME = "development"
 	SITE_SCHEME = "http"
 	SITE_DOMAIN = "localhost"
 	#SITE_PORT_OVERRIDE = ":8000"  # start with ":", default empty ("")
 if THIS_ENVIRONMENT == "TEST":
-	ALLOWED_HOSTS = ["localhost", "localhost:8000",]
+	hosts = ['localhost', 'localhost:8000']
+	ALLOWED_HOSTS = SECRET_ALLOWED_HOSTS + hosts
 	SECURE_SSL_REDIRECT = False
 	TEST_ENV_NAME = "test"
 	SITE_SCHEME = "http"

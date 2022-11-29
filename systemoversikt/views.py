@@ -3669,7 +3669,7 @@ def ad_gruppeanalyse(request):
 			brukers_grupper = ldap_users_securitygroups(bruker.username)
 			brukers_unike_grupper = sorted(convert_distinguishedname_cn(brukers_grupper))
 		except:
-			print("ad_gruppeanalyse: Brukernavn finnes ikke")
+			#print("ad_gruppeanalyse: Brukernavn finnes ikke")
 			brukers_unike_grupper = None
 
 
@@ -4856,12 +4856,17 @@ def tilgangsgrupper_api(request):
 		raise Http404
 
 	key = request.headers.get("key", None)
-	allowed_keys = APIKeys.objects.filter(navn="api_tilgangsgrupper").values_list("key", flat=True)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="api_tilgangsgrupper").values_list("key", flat=True)
 	if not key in list(allowed_keys):
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
-
 	from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+	try:
+		owner = APIKeys.objects.get(key=key).navn
+	except MultipleObjectsReturned:
+		owner = "Flere treff på nøkkeleier"
+
+	ApplicationLog.objects.create(event_type="API AD-grupper", message="Nøkkel tilhørende %s" %(owner))
 
 	if not "gruppenavn" in request.GET:
 		return JsonResponse({"message": "Du må oppgi et gruppenavn som GET-variabel. ?gruppenavn=<navn>", "data": None}, safe=False, status=204)
@@ -5317,13 +5322,13 @@ def ubw_multiselect(request):
 
 	if request.method == 'POST' and form.is_valid():
 
-		print(valgte_fakturaer)
+		#print(valgte_fakturaer)
 		instance = form.save(commit=False)
 		for faktura in valgte_fakturaer:
 			instance.belongs_to = faktura
 			instance.pk = None # triks for å få en ny instans. Ny pk tildeles automatisk.
 			instance.save()
-			print("lagrer %s" % instance)
+			#print("lagrer %s" % instance)
 
 		return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
 
@@ -5977,7 +5982,12 @@ def prk_api_grp(request):
 
 		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
 		if key in list(allowed_keys):
-			owner = APIKeys.objects.get(key=key).navn
+			from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+			try:
+				owner = APIKeys.objects.get(key=key).navn
+			except MultipleObjectsReturned:
+				owner = "Flere treff på nøkkeleier"
+
 			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
 			return prk_api("grp.csv")
 
