@@ -2039,11 +2039,14 @@ def search(request):
 		potensielle_systemer = System.objects.filter(Q(systembeskrivelse__icontains=search_term) & ~Q(pk__in=aktuelle_systemer))
 		aktuelle_programvarer = Programvare.objects.filter(programvarenavn__icontains=search_term)
 		domenetreff = SystemUrl.objects.filter(domene__icontains=search_term)
+		aktuelle_leverandorer = Leverandor.objects.filter(leverandor_navn__icontains=search_term)
+		aktuelle_personer = User.objects.filter(username__iexact=search_term)
 	else:
 		aktuelle_systemer = System.objects.none()
 		potensielle_systemer = System.objects.none()
 		aktuelle_programvarer = Programvare.objects.none()
 		domenetreff = SystemUrl.objects.none()
+		aktuelle_leverandorer = Leverandor.objects.none()
 
 	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
 		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
@@ -2063,6 +2066,7 @@ def search(request):
 		'search_term': search_term,
 		'domenetreff': domenetreff,
 		'aktuelle_programvarer': aktuelle_programvarer,
+		'aktuelle_leverandorer': aktuelle_leverandorer,
 	})
 
 

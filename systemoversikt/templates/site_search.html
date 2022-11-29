@@ -31,15 +31,23 @@
 		</tbody>
 	</table>
 
-	<h6>Treff på domener</h6>
-	{% if domenetreff %}
-	<ul style="column-count:1;">
-	{% for d in domenetreff %}
-		<li>{{d.domene}}</li>
-	{% endfor %}
+	{% if aktuelle_leverandorer %}
+	<h6>Leverandører</h6>
+	<ul>
+		{% for lev in aktuelle_leverandorer %}
+			<li><a href="{% url 'leverandor' pk=lev.pk %}">{{ lev }}</a></li>
+		{% endfor %}
 	</ul>
-	{% else %}
-		<p>Ingen</p>
+	<hr>
+	{% endif %}
+
+	{% if domenetreff %}
+		<h6>Treff på domener</h6>
+		<ul style="column-count:1;">
+		{% for d in domenetreff %}
+			<li>{{d.domene}}</li>
+		{% endfor %}
+		</ul>
 	{% endif %}
 
 	<h6>Treff på systembeskrivelser</h6>
@@ -66,33 +74,35 @@
 		</tbody>
 	</table>
 
-	<h6>Treff på programvare</h6>
-	<table class="tablesorter">
-		<thead>
-			<tr>
-				<th>Programvarenavn</th>
-				<th>Programvaretype</th>
-				<th>Leverandør</th>
-			</tr>
-		</thead>
-			<tbody>
-			{% for p in aktuelle_programvarer %}
-			<tr>
-				<td><a href="{% url 'programvaredetaljer' pk=p.pk %}">{{ p.programvarenavn }}</a></td>
-				<td>
-					{% for t in p.programvaretyper.all %}
-						{{ t }}<br>
-					{% endfor %}
-				</td>
-				<td>
-					{% for l in p.programvareleverandor.all %}
-						<a href="{% url 'leverandor' pk=l.pk %}">{{ l }}</a><br>
-					{% endfor %}
-				</td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+	{% if aktuelle_programvarer %}
+		<h6>Treff på programvare</h6>
+		<table class="tablesorter">
+			<thead>
+				<tr>
+					<th>Programvarenavn</th>
+					<th>Programvaretype</th>
+					<th>Leverandør</th>
+				</tr>
+			</thead>
+				<tbody>
+				{% for p in aktuelle_programvarer %}
+				<tr>
+					<td><a href="{% url 'programvaredetaljer' pk=p.pk %}">{{ p.programvarenavn }}</a></td>
+					<td>
+						{% for t in p.programvaretyper.all %}
+							{{ t }}<br>
+						{% endfor %}
+					</td>
+					<td>
+						{% for l in p.programvareleverandor.all %}
+							<a href="{% url 'leverandor' pk=l.pk %}">{{ l }}</a><br>
+						{% endfor %}
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	{% endif %}
 
 
 {% endblock hovedinnhold %}
