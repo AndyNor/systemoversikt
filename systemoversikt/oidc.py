@@ -146,6 +146,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 
 		def get_or_create_user(self, access_token, id_token, payload):
+			from django.core.exceptions import SuspiciousOperation
 			"""Returns a User instance if 1 user is found. Creates a user if not found
 			and configured to do so. Returns nothing if multiple users are matched."""
 
@@ -155,7 +156,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 				logger.error("Auth: get_or_create_user: Claims verification failed")
 				logger.error("Auth: get_or_create_user: %s" % user_info)
 				msg = 'Claims verification failed'
-				raise SuspiciousOperation(msg)
+				#raise SuspiciousOperation(msg)
+				return None
 
 			# email based filtering
 			users = self.filter_users_by_claims(user_info)
@@ -180,7 +182,10 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 		def verify_claims(self, claims):
 			# Verify the provided claims to decide if authentication should be allowed
-			return 'samAccountName' in claims
+			if 'samAccountName' in claims:
+				return 'samAccountName' in claims
+			messages.warning(self.request, 'Pålogging feilet. Dette kommer av at ditt claim ikke inneholder "samAccountName" som er ditt brukernavn i Oslofelles AD. Ditt claim: %s' % claims)
+			return False
 
 
 		def get_userinfo(self, access_token, id_token, payload):
