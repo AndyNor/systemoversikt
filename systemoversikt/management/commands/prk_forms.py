@@ -65,6 +65,7 @@ class Command(BaseCommand):
 
 		@transaction.atomic  # for speeding up database performance
 		def atomic():
+			print(data[0:10])
 			for item in data:
 
 				#sys.stdout.flush()
