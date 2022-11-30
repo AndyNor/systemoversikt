@@ -23,6 +23,7 @@
 			<th>Antall personer</th>
 			<th>Eiere</th>
 			<th>Kommentar</th>
+			<th>Gruppe</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -47,6 +48,7 @@
 				{% endfor %}
 			</td>
 			<td>{{ lev.kommentar }}</td>
+			<td><p style="font-size: 85%;">{{ lev.adgruppe }}</p></td>
 		</tr>
 		{% endfor %}
 	</tbody>
