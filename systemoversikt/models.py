@@ -1109,6 +1109,7 @@ class SystemHovedKategori(models.Model):
 MAALGRUPPE_VALG = (
 	(1, 'Innbyggere'),
 	(2, 'Ansatte'),
+	(3, 'Leverandører'),
 )
 
 SIKKERHETSTESTING_VALG = (

@@ -810,7 +810,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 	#Grupper for å gi EM+S E5-lisens
 	grupper_med_emse5 = [
 		"DS-OFFICE365_OPSJON_E5SECURITY",
-		"DS-OFFICE365E3_OPSJON_E5SECURITY",
 	]
 	brukere_med_emse5, logg = hent_brukere(grupper_med_emse5, logg)
 
