@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
 
 		# VIP-data
-		filename = "cmdb_ci_lb_service.csv"
+		filename = "OK Load Balancer Services.csv"
 		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename
 		source_file = sp.create_link(source_filepath)
 		destination_file = 'systemoversikt/import/'+filename
@@ -44,23 +44,27 @@ class Command(BaseCommand):
 
 			for line in data:
 				try:
-					vip_inst = virtualIP.objects.get(vip_name=line["name"])
+					vip_inst = virtualIP.objects.get(vip_name=line["u_load_balancer_service_1"])
 					# new, assume no change?
 					vip_dropped += 1
+					print(".", end="", flush=True)
 				except:
 					# update
 					vip_inst = virtualIP.objects.create(
-						vip_name=line["name"],
-						pool_name=line["pool"],
-						ip_address=line["ip_address"],
-						port=line["port"],
-						hitcount=line["hit_count"].replace(",",""),
-						)
-					print(".", end="", flush=True)
+						vip_name=line["u_load_balancer_service_1"],
+					)
 					vip_new += 1
+					print("+", end="", flush=True)
+
+				vip_inst.pool_name = line["u_load_balancer_service_1.pool"]
+				vip_inst.ip_address = line["u_load_balancer_service_1.ip_address"]
+				vip_inst.port = line["u_load_balancer_service_1.port"]
+				vip_inst.hitcount = line["u_load_balancer_service_1.hit_count"].replace(",","")
+				vip_inst.save()
+
 
 				# Linke IP-adresse
-				ipaddr_ins = get_ipaddr_instance(line["ip_address"])
+				ipaddr_ins = get_ipaddr_instance(line["u_load_balancer_service_1.ip_address"])
 				if ipaddr_ins != None:
 					if not vip_inst in ipaddr_ins.viper.all():
 						ipaddr_ins.viper.add(vip_inst)
@@ -86,7 +90,7 @@ class Command(BaseCommand):
 
 
 		# VIP-pool data
-		filename = "cmdb_ci_lb_pool_member.csv"
+		filename = "OK Load Balancer Pool Members.csv"
 		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename
 		source_file = sp.create_link(source_filepath)
 		destination_file = 'systemoversikt/import/'+filename
@@ -111,40 +115,46 @@ class Command(BaseCommand):
 			antall_records = len(data)
 
 			for line in data:
-				if line["pool"] == "" or line["ip_address"] == "" or line["service_port"] == "":
+				if line["u_load_balancer_pool_member_1.pool"] == "" or line["u_load_balancer_pool_member_1.ip_address"] == "" or line["u_load_balancer_pool_member_1.service_port"] == "":
 					continue
 				try:
-					pool = VirtualIPPool.objects.get(pool_name=line["pool"], port=line["service_port"], ip_address=line["ip_address"])
+					pool = VirtualIPPool.objects.get(
+							pool_name=line["u_load_balancer_pool_member_1.pool"],
+							port=line["u_load_balancer_pool_member_1.service_port"],
+							ip_address=line["u_load_balancer_pool_member_1.ip_address"]
+						)
+					print(".", end="", flush=True)
 					pool_dropped += 1
 				except:
 					pool = VirtualIPPool.objects.create(
-						pool_name=line["pool"],
-						port=line["service_port"],
-						ip_address=line["ip_address"],
+							pool_name=line["u_load_balancer_pool_member_1.pool"],
+							port=line["u_load_balancer_pool_member_1.service_port"],
+							ip_address=line["u_load_balancer_pool_member_1.ip_address"],
 						)
-					print(".", end="", flush=True)
+					print("+", end="", flush=True)
 
 				# Linke IP-adresse
-				ipaddr_ins = get_ipaddr_instance(line["ip_address"])
+				ipaddr_ins = get_ipaddr_instance(line["u_load_balancer_pool_member_1.ip_address"])
 				if ipaddr_ins != None:
 					if not pool in ipaddr_ins.vip_pools.all():
 						ipaddr_ins.vip_pools.add(pool)
 						ipaddr_ins.save()
 
-
 				try:
-					alle_vip_treff = virtualIP.objects.filter(pool_name=line["pool"]).all()
+					alle_vip_treff = virtualIP.objects.filter(pool_name=line["u_load_balancer_pool_member_1.pool"]).all()
 					for vip in alle_vip_treff:
 						pool.vip.add(vip)
-					print("*", end="", flush=True)
+					print("p", end="", flush=True)
 				except:
 					pool_not_connected += 1
+					print("?", end="", flush=True)
 
 				try:
-					pool.server = CMDBdevice.objects.get(comp_ip_address=line["ip_address"])
-					print("+", end="", flush=True)
+					pool.server = CMDBdevice.objects.get(comp_ip_address=line["u_load_balancer_pool_member_1.ip_address"])
+					print("s", end="", flush=True)
 				except:
-					pass
+					print("?", end="", flush=True)
+					#pass
 
 				pool.save()
 

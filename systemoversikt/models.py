@@ -711,6 +711,11 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			null=True,
 			blank=True,
 			)
+	pwdLastSet = models.DateTimeField(
+			verbose_name="Passord sist endret",
+			null=True,
+			blank=True,
+			)
 	virksomhet = models.ForeignKey(
 			to=Virksomhet,
 			related_name='brukers_virksomhet',

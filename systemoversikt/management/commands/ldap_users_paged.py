@@ -28,7 +28,7 @@ class Command(BaseCommand):
 		BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 		SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
 		LDAP_SCOPE = ldap.SCOPE_SUBTREE
-		ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated'] # if empty we get all attr we have access to
+		ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet'] # if empty we get all attr we have access to
 		PAGESIZE = 2000
 
 		report_data = {
@@ -135,6 +135,13 @@ class Command(BaseCommand):
 			except KeyError:
 				whenCreated = None
 			user.profile.whenCreated = whenCreated
+
+			try:
+				time_str = attrs["pwdLastSet"][0].decode().split('.')[0]
+				pwdLastSet = datetime.datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
+			except KeyError:
+				pwdLastSet = None
+			user.profile.pwdLastSet = pwdLastSet
 
 			try:
 				description = attrs["description"][0].decode()

@@ -39,7 +39,8 @@
 		<th>Navn</th>
 		<th>Brukernavn</th>
 		<th>Passordbytte aktiv?</th>
-		<th>Rolle</th>
+		<th>Sist passordbytte</th>
+		<th>Beskrivelse</th>
 		<th>Opprettet</th>
 		<td>Virksomhet</td>
 		<th>Avdeling</th>
@@ -56,6 +57,7 @@
 		<td>{{user.first_name}} {{user.last_name}}</td>
 		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
 		<td>{{ user.profile.dont_expire_password|yesno:"Aldri,Ja,Vet ikke" }}</td>
+		<td>{{ user.profile.pwdLastSet|date:"Y-m-d" }} ({{ user.profile.pwdLastSet|timesince }})</td>
 		<td>{{ user.profile.description|default:"Ingen beskrivelse" }}</td>
 		<td>{{ user.profile.whenCreated|date:"Y-m-d" }} ({{ user.profile.whenCreated|timesince }})</td>
 		<td>{{user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent"}}</td>
