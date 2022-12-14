@@ -131,11 +131,12 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			self.request.session['oidc-token'] = claims
 			#logger.error("Auth: filter_user_by_claim: %s" % claims)
 			#messages.info(self.request, '%s' % claims)
-			username = claims.get('samAccountName').lower()
-			email = claims.get('email').lower()
+			username = claims.get('samAccountName')
+			email = claims.get('email')
 
 
 			if username: # primærmetode
+				username = username.lower()
 				try:
 					message = "%s logget inn." % username
 					ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
@@ -146,6 +147,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 
 			if email: # sekundærmetode
+				email = email.lower()
 				try:
 					message = "%s logget inn." % email
 					ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
