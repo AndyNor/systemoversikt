@@ -139,7 +139,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 				try:
 					message = "%s logget inn." % username
 					ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
-					messages.warning(self.request, 'Pålogging via brukernavn.')
+					#messages.warning(self.request, 'Pålogging via brukernavn.')
 					return self.UserModel.objects.filter(username=username)
 				except:
 					messages.warning(self.request, 'Kunne ikke logge inn med brukernavn.')
