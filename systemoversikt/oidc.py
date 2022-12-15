@@ -141,7 +141,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					message = "%s logget inn." % username
 					ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 					#messages.warning(self.request, 'Pålogging via brukernavn.')
-					return self.UserModel.objects.filter(username=username)
+					return self.UserModel.objects.filter(username__iexact=username)
 				except:
 					messages.warning(self.request, 'Kunne ikke logge inn med brukernavn.')
 
@@ -152,7 +152,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					message = "%s logget inn." % email
 					ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 					messages.info(self.request, 'Pålogging via brukernavn feilet. Prøver pålogging via e-postadresse...')
-					return self.UserModel.objects.filter(email=email)
+					return self.UserModel.objects.filter(email__iexact=email)
 				except:
 					messages.warning(self.request, 'Kunne ikke logge inn med e-postadresse.')
 
@@ -199,7 +199,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			if 'samAccountName' in claims:
 				return 'samAccountName' in claims
 			if 'email' in claims:
-				messages.warning(self.request, 'Problemer med pålogging. Ditt claim ikke inneholder "samAccountName" som er ditt brukernavn i Oslofelles AD. Prøver alternativ pålogging med e-postadresse. Ditt claim: %s' % claims)
+				messages.warning(self.request, 'Problemer med pålogging. Ditt claim inneholder ikke "samAccountName" som er ditt brukernavn i Oslofelles AD. Prøver alternativ pålogging med e-postadresse. Ditt claim: %s' % claims)
 				return 'email' in claims
 			return False
 
