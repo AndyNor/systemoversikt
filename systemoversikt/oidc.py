@@ -154,7 +154,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					messages.info(self.request, 'Pålogging via brukernavn feilet. Prøver pålogging via e-postadresse...')
 					return self.UserModel.objects.filter(email__iexact=email)
 				except:
-					messages.warning(self.request, 'Kunne ikke logge inn med e-postadresse.')
+					messages.info(self.request, 'Kunne ikke logge inn med e-postadresse.')
 
 			messages.warning(self.request, 'Det fulge ikke med et brukernavn i claim, og e-post stemmer ikke med e-post i on-prem AD. Innlogging feilet.')
 			return self.UserModel.objects.none()
@@ -199,7 +199,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			if 'samAccountName' in claims:
 				return 'samAccountName' in claims
 			if 'email' in claims:
-				messages.warning(self.request, 'Problemer med pålogging. Ditt claim inneholder ikke "samAccountName" som er ditt brukernavn i Oslofelles AD. Prøver alternativ pålogging med e-postadresse. Ditt claim: %s' % claims)
+				#messages.info(self.request, 'Problemer med pålogging. Ditt claim inneholder ikke "samAccountName" som er ditt brukernavn i Oslofelles AD. Prøver alternativ pålogging med e-postadresse. Ditt claim: %s' % claims)
 				return 'email' in claims
 			return False
 
