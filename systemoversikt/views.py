@@ -592,6 +592,41 @@ def cmdb_ad_flere_brukeridenter(request):
 
 
 
+def ad_brukerlistesok(request):
+	"""
+	Denne funksjonen er for å søke opp mange brukernavn og se informasjon om de det er treff på
+	Tilgjengelig for de som har rettigheter til å se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+
+		search_term = request.POST.get('user_search_term', '').strip()  # strip removes trailing and leading space
+		users = []
+		not_users = []
+
+		search_term = search_term.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ')
+		search_term = search_term.split()
+
+		for term in search_term:
+			try:
+				user = User.objects.get(username=term.lower())
+				users.append(user)
+			except:
+				not_users.append(term)
+				continue  # skip this term
+
+		return render(request, 'ad_brukerlistesok.html', {
+			'request': request,
+			'user_search_term': search_term,
+			'users': users,
+			'not_users': not_users,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
 def bruker_sok(request):
 	"""
 	Denne funksjonen viser resultat av søk etter brukere

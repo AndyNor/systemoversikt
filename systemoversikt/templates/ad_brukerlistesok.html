@@ -6,7 +6,7 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Brukere i Active Directory (on-prem)
+	Eksakt søk på brukere i Active Directory (on-prem)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -24,15 +24,18 @@
 
 	<hr>
 
-	<form action="{% url 'bruker_sok' %}" autocomplete="off">
+	<form action="{% url 'cmdb_ad_brukerlistesok' %}" method="POST" autocomplete="off">
+		{% csrf_token %}
 		<div class="form-group form-inline">
-			<input size="55" style="width: 450px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="Søk i brukernavn eller navn (minimum 2 tegn)" class="form-control form-control-sm">
-			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<textarea rows="3" cols="50" style="width: 500px; height: 250px;" name="user_search_term"
+			placeholder="Liste med brukernavn, et per linje" class="form-control form-control-sm">{{ query }}</textarea>
+			<input style="margin-left: 10px;" type="submit" value="Slå opp" class="btn btn-primary btn-sm">
 		</div>
 	</form>
 
 	<hr>
+
+	{{ search_term }}
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
@@ -85,6 +88,14 @@
 	{% endfor %}
 	</tbody>
 	</table>
+
+
+	<hr>
+
+	<p>Følgende brukernavn ble ikke funnet:</p>
+	{% for user in not_users %}
+		<li>{{ user }}</li>
+	{% endfor %}
 
 
 {% endblock hovedinnhold %}

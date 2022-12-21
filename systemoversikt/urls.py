@@ -85,6 +85,8 @@ urlpatterns = [
 
 	re_path(r'^cmdb/bruker/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
 	re_path(r'^cmdb/bruker/$', views.bruker_sok, name='bruker_sok'),
+	re_path(r'^cmdb/bruker/brukerlistesok/$', views.ad_brukerlistesok, name='cmdb_ad_brukerlistesok'),
+
 
 	re_path(r'^virksomhet/$', views.alle_virksomheter, name='alle_virksomheter'),
 	re_path(r'^virksomhet/kontaktinfo/$', views.alle_virksomheter_kontaktinfo, name='alle_virksomheter_kontaktinfo'),
