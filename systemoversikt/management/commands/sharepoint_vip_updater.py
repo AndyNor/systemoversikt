@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from django.db.models import Q
 from systemoversikt.views import get_ipaddr_instance
+from django.core.exceptions import ObjectDoesNotExist
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -45,22 +46,26 @@ class Command(BaseCommand):
 			for line in data:
 				try:
 					vip_inst = virtualIP.objects.get(vip_name=line["u_load_balancer_service_1"])
-					# new, assume no change?
+
+					vip_inst.pool_name = line["u_load_balancer_service_1.pool"]
+					vip_inst.ip_address = line["u_load_balancer_service_1.ip_address"]
+					vip_inst.port = line["u_load_balancer_service_1.port"]
+					vip_inst.hitcount = line["u_load_balancer_service_1.hit_count"].replace(",","")
+					vip_inst.save()
+
 					vip_dropped += 1
-					print(".", end="", flush=True)
-				except:
-					# update
+					print("u", end="", flush=True)
+				except ObjectDoesNotExist:
+					# finnes ikke, oppretter ny
 					vip_inst = virtualIP.objects.create(
 						vip_name=line["u_load_balancer_service_1"],
+						pool_name=line["u_load_balancer_service_1.pool"],
+						ip_address=line["u_load_balancer_service_1.ip_address"],
+						port=line["u_load_balancer_service_1.port"],
+						hitcount=line["u_load_balancer_service_1.hit_count"].replace(",",""),
 					)
 					vip_new += 1
 					print("+", end="", flush=True)
-
-				vip_inst.pool_name = line["u_load_balancer_service_1.pool"]
-				vip_inst.ip_address = line["u_load_balancer_service_1.ip_address"]
-				vip_inst.port = line["u_load_balancer_service_1.port"]
-				vip_inst.hitcount = line["u_load_balancer_service_1.hit_count"].replace(",","")
-				vip_inst.save()
 
 
 				# Linke IP-adresse
