@@ -1796,6 +1796,10 @@ class VirtualIPPool(models.Model):
 	def __str__(self):
 		return self.pool_name
 
+	def indirect_pool_members(self):
+		vip = virtualIP.objects.get(ip_address=self.ip_address, port=self.port)
+		return vip.pool_members
+
 	class Meta:
 		unique_together = ('pool_name', 'ip_address', 'port')
 		verbose_name_plural = "CMDB: VIP pools"
