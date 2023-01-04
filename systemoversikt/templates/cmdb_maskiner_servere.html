@@ -55,6 +55,7 @@
 		{% endif %}
 		<th>Description</th>
 		<th>Spesifikasjoner</th>
+		<th>IP</th>
 		<th>Nettverk</th>
 		<th>Operativsystem</th>
 		<th>Tilhørende system</th>
@@ -100,7 +101,9 @@
 			{% endif %}
 		</td>
 		<td>
-			IP: {{ maskin.comp_ip_address }} <br>
+			{{ maskin.comp_ip_address }}
+		</td>
+		<td>
 			DNS: {{ maskin.dns|default:"" }} <br>
 			VLAN: {{ maskin.vlan|default:"" }} <br>
 			NAT: {{ maskin.nat|default:"" }} <br>
