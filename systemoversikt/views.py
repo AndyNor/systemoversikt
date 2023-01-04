@@ -601,7 +601,8 @@ def ad_brukerlistesok(request):
 	if any(map(request.user.has_perm, required_permissions)):
 
 
-		search_term = request.POST.get('user_search_term', '').strip()  # strip removes trailing and leading space
+		search_raw = request.POST.get('user_search_term', '').strip()  # strip removes trailing and leading space
+		search_term = search_raw
 		users = []
 		not_users = []
 
@@ -618,7 +619,7 @@ def ad_brukerlistesok(request):
 
 		return render(request, 'ad_brukerlistesok.html', {
 			'request': request,
-			'user_search_term': search_term,
+			'user_search_term': search_raw,
 			'users': users,
 			'not_users': not_users,
 		})
@@ -3693,9 +3694,6 @@ def ad_gruppeanalyse(request):
 	if request.user.has_perm(required_permissions):
 		import re
 
-		def convert_distinguishedname_cn(liste):
-			return [re.search(r'cn=([^\,]*)', g, re.I).groups()[0] for g in liste]
-
 		brukernavn_str = request.POST.get('brukernavn', "").strip().lower()
 
 		try:
@@ -4651,6 +4649,9 @@ def ldap_users_securitygroups(user):
 		print("Finner ikke 'memberof' attributtet.")
 		#print("error ldap_users_securitygroups(): %s" %(result))
 		return []
+
+def convert_distinguishedname_cn(liste):
+	return [re.search(r'cn=([^\,]*)', g, re.I).groups()[0] for g in liste]
 
 
 def ldap_get_details(name, ldap_filter):

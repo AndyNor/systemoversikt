@@ -28,14 +28,12 @@
 		{% csrf_token %}
 		<div class="form-group form-inline">
 			<textarea rows="3" cols="50" style="width: 500px; height: 250px;" name="user_search_term"
-			placeholder="Liste med brukernavn, et per linje" class="form-control form-control-sm">{{ query }}</textarea>
+			placeholder="Liste med brukernavn, et per linje" class="form-control form-control-sm">{{ user_search_term }}</textarea>
 			<input style="margin-left: 10px;" type="submit" value="Slå opp" class="btn btn-primary btn-sm">
 		</div>
 	</form>
 
 	<hr>
-
-	{{ search_term }}
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
@@ -43,14 +41,18 @@
 		<th>Aktiv</th>
 		<th>Navn</th>
 		<th>Brukernavn</th>
+		<th>Trusted for delegation</th>
+		<th>Don't require preauth</th>
 		<th>Passordbytte aktiv?</th>
 		<th>Sist passordbytte</th>
+		<th>Sist pålogget (ca)</th>
 		<th>Beskrivelse</th>
 		<th>Opprettet</th>
 		<td>Virksomhet</td>
 		<th>Avdeling</th>
 		<th>Nærmeste leder</th>
 		<th>Enheter</th>
+		<th>Gruppemedlemskap</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -61,8 +63,16 @@
 		{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
 		<td>{{user.first_name}} {{user.last_name}}</td>
 		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
+
+		<td>
+			{{ user.profile.trusted_for_delegation|yesno:"Nei,Ja,?" }}<br>
+			(Delegated: {{ user.profile.not_delegated|yesno:"Nei,Ja,?" }})
+		</td>
+		<td>{{ user.profile.dont_req_preauth|yesno:"Nei,Ja,?" }}</td>
+
 		<td>{{ user.profile.dont_expire_password|yesno:"Aldri,Ja,Vet ikke" }}</td>
 		<td>{{ user.profile.pwdLastSet|date:"Y-m-d" }} ({{ user.profile.pwdLastSet|timesince }})</td>
+		<td>{{ user.profile.lastLogonTimestamp|date:"Y-m-d" }} ({{ user.profile.lastLogonTimestamp|timesince }}) </td>
 		<td>{{ user.profile.description|default:"Ingen beskrivelse" }}</td>
 		<td>{{ user.profile.whenCreated|date:"Y-m-d" }} ({{ user.profile.whenCreated|timesince }})</td>
 		<td>{{user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent"}}</td>
@@ -84,6 +94,7 @@
 				<a href="/admin/systemoversikt/cmdbdevice/?q={{enhet.comp_name}}">{{enhet}}<br>
 			{% endfor %}
 		</td>
+		<td>{% for gruppe in user.profile.ad_grp_lookup %}{{ gruppe }}<br>{% endfor %}</td>
 	</tr>
 	{% endfor %}
 	</tbody>

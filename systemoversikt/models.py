@@ -817,6 +817,19 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			null=True,
 			help_text=u'Settes via automatiske jobber',
 			)
+	trusted_for_delegation = models.BooleanField(
+			verbose_name="When this flag is set, the service account (the user or computer account) under which a service runs is trusted for Kerberos delegation. Any such service can impersonate a client requesting the service. To enable a service for Kerberos delegation, you must set this flag on the userAccountControl property of the service account.",
+			default=False,
+			)
+	not_delegated = models.BooleanField(
+			verbose_name="When this flag is set, the security context of the user isn't delegated to a service even if the service account is set as trusted for Kerberos delegation.",
+			default=False,
+			)
+	dont_req_preauth = models.BooleanField(
+			verbose_name="(Windows 2000/Windows Server 2003) This account doesn't require Kerberos pre-authentication for logging on.",
+			default=False,
+			)
+
 	# med vilje er det ikke HistoricalRecords() på denne
 
 	def __str__(self):
@@ -873,6 +886,7 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			return enhet_str
 		except:
 			return "Ukjent tilhørighet"
+
 	def ou_lesbar(self):
 		#if self.ou:
 		#	try:
@@ -880,6 +894,12 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 		#	except:
 		#		return self.ou.distinguishedname
 		return self.distinguishedname.split(",")[1:-4]
+
+
+	def ad_grp_lookup(self):
+		from systemoversikt.views import ldap_users_securitygroups, convert_distinguishedname_cn
+		return sorted(convert_distinguishedname_cn(ldap_users_securitygroups(self.user.username)))
+
 
 """
 class Klientutstyr(models.Model):

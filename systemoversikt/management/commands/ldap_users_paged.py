@@ -73,10 +73,26 @@ class Command(BaseCommand):
 				user.profile.lockout = True
 			else:
 				user.profile.lockout = False
+
 			if "PASSWD_NOTREQD" in userAccountControl_decoded:
 				user.profile.passwd_notreqd = True
 			else:
 				user.profile.passwd_notreqd = False
+
+			if "TRUSTED_FOR_DELEGATION" in userAccountControl_decoded:
+				user.profile.trusted_for_delegation = True
+			else:
+				user.profile.trusted_for_delegation = False
+
+			if "NOT_DELEGATED" in userAccountControl_decoded:
+				user.profile.not_delegated = True
+			else:
+				user.profile.not_delegated = False
+
+			if "DONT_REQ_PREAUTH" in userAccountControl_decoded:
+				user.profile.dont_req_preauth = True
+			else:
+				user.profile.dont_req_preauth = False
 
 			try:
 				old_dont_expire_password = user.profile.dont_expire_password  # den finnes fra før av
