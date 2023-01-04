@@ -65,10 +65,10 @@
 		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
 
 		<td>
-			{{ user.profile.trusted_for_delegation|yesno:"Nei,Ja,?" }}<br>
-			(Delegated: {{ user.profile.not_delegated|yesno:"Nei,Ja,?" }})
+			{{ user.profile.trusted_for_delegation|yesno:"Ja,Nei,?" }}<br>
+			(Delegated: {{ user.profile.not_delegated|yesno:"Ja,Nei,?" }})
 		</td>
-		<td>{{ user.profile.dont_req_preauth|yesno:"Nei,Ja,?" }}</td>
+		<td>{{ user.profile.dont_req_preauth|yesno:"Ja,Nei,?" }}</td>
 
 		<td>{{ user.profile.dont_expire_password|yesno:"Aldri,Ja,Vet ikke" }}</td>
 		<td>{{ user.profile.pwdLastSet|date:"Y-m-d" }} ({{ user.profile.pwdLastSet|timesince }})</td>
