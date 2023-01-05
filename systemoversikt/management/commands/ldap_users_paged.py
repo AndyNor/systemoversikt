@@ -159,7 +159,7 @@ class Command(BaseCommand):
 			try:
 				time_str = attrs["pwdLastSet"][0].decode().split('.')[0]
 				pwdLastSet = datetime.datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
-			except KeyError, ValueError:
+			except (KeyError, ValueError):
 				pwdLastSet = None
 			user.profile.pwdLastSet = pwdLastSet
 
