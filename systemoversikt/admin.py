@@ -923,7 +923,6 @@ class UserAdmin(admin.ModelAdmin):
 	def userPasswordExpiry(self, obj):
 		return obj.profile.userPasswordExpiry
 	userPasswordExpiry.short_description = "Passord utløper"
-	userPasswordExpiry.boolean = True
 
 	def userNot_delegated(self, obj):
 		return obj.profile.not_delegated
