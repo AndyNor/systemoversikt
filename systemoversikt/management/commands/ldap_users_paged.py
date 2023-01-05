@@ -152,7 +152,7 @@ class Command(BaseCommand):
 			try:
 				time_str = attrs["whenCreated"][0].decode().split('.')[0]
 				whenCreated = datetime.datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
-			except KeyError, ValueError:
+			except (KeyError, ValueError):
 				whenCreated = None
 			user.profile.whenCreated = whenCreated
 
