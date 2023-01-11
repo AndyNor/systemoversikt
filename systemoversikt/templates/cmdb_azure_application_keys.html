@@ -11,11 +11,12 @@
 
 {% block hovedinnhold %}
 
-<p>Det er {{keys.count}} nøkler/sertifikater i databasen. Synkroniseres mot Azure Graph-API hver natt.</p>
+<p>Det er {{keys.count}} nøkler/sertifikater i databasen. Synkroniseres mot Azure Graph-API hver natt. Kobling system - EA skjer fra systemet.</p>
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>Applikasjonsnavn</th>
+		<th>System og eier</th>
 		<th>Nøkkelnavn</th>
 		<th>Dato for utløp</th>
 		<th>Nøkkel ID</th>
@@ -27,6 +28,15 @@
 	{% for k in keys %}
 		<tr>
 			<td>{{ k.applcaion_ref }}<br><span style="color: gray; font-style: italic;">{{ k.applcaion_ref.appId }}</span></td>
+			<td>
+				{% for system in k.applcaion_ref.systemreferanse.all %}
+					{% include 'system_include_vis.html' with systemer=system %}
+					({{ system.systemeier.virksomhetsforkortelse }})<br>
+					{% for ansvarlig in system.systemforvalter_kontaktpersoner_referanse.all %}
+						{{ ansvarlig.brukernavn.email }}<br>
+					{% endfor %}
+				{% endfor %}<br>
+			</td>
 			<td>{{ k.display_name }}</td>
 			<td {% if k.expire %} style="background-color: #ed8080;" {% endif %}
 				{% if k.expire_soon %} style="background-color: #f9b774;" {% endif %}>
