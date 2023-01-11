@@ -905,9 +905,9 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 admin.site.unregister(User)  # den er som standard registrert
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-	list_display = ('username', 'last_login', 'userPasswordExpiry', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
+	list_display = ('username', 'last_login', 'userPasswordExpiry', 'userNot_delegated', 'userDont_req_preauth', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
 	search_fields = ('last_login', 'username', 'first_name', 'last_name', 'email')
-	list_filter = ('profile__from_prk', 'profile__userPasswordExpiry', 'profile__virksomhet', 'is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'groups',)
+	list_filter = ('profile__from_prk', 'profile__userPasswordExpiry', 'profile__not_delegated', 'profile__dont_req_preauth', 'profile__virksomhet', 'is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'groups',)
 
 	def has_usable_password(self, obj):
 		return obj.has_usable_password()
@@ -923,6 +923,16 @@ class UserAdmin(admin.ModelAdmin):
 	def userPasswordExpiry(self, obj):
 		return obj.profile.userPasswordExpiry
 	userPasswordExpiry.short_description = "Passord utløper"
+
+	def userNot_delegated(self, obj):
+		return obj.profile.not_delegated
+	userNot_delegated.short_description = "Delegated"
+	userNot_delegated.boolean = True
+
+	def userDont_req_preauth(self, obj):
+		return obj.profile.dont_req_preauth
+	userDont_req_preauth.short_description = "Require preauth"
+	userDont_req_preauth.boolean = True
 
 	def virksomhet(self, obj):
 		return obj.profile.virksomhet

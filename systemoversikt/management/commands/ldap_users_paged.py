@@ -98,10 +98,12 @@ class Command(BaseCommand):
 				old_dont_expire_password = user.profile.dont_expire_password  # den finnes fra før av
 			except:
 				old_dont_expire_password = None
+
 			if "DONT_EXPIRE_PASSWORD" in userAccountControl_decoded:
 				user.profile.dont_expire_password = True
 			else:
 				user.profile.dont_expire_password = False
+
 			if old_dont_expire_password != None:
 				if old_dont_expire_password != user.profile.dont_expire_password:
 					message = ("Status endret for %s (%s). Ny verdi: %s" % (user, user.username, user.profile.dont_expire_password))
@@ -111,8 +113,10 @@ class Command(BaseCommand):
 				user.profile.password_expired = True
 			else:
 				user.profile.password_expired = False
+
 			if "OU=Eksterne brukere" in dn:
 				user.profile.ekstern_ressurs = True
+
 			if "OU=Brukere" in dn:
 				user.profile.ekstern_ressurs = False
 
@@ -148,14 +152,14 @@ class Command(BaseCommand):
 			try:
 				time_str = attrs["whenCreated"][0].decode().split('.')[0]
 				whenCreated = datetime.datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
-			except KeyError:
+			except (KeyError, ValueError):
 				whenCreated = None
 			user.profile.whenCreated = whenCreated
 
 			try:
 				time_str = attrs["pwdLastSet"][0].decode().split('.')[0]
 				pwdLastSet = datetime.datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
-			except KeyError:
+			except (KeyError, ValueError):
 				pwdLastSet = None
 			user.profile.pwdLastSet = pwdLastSet
 
