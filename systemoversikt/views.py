@@ -192,7 +192,7 @@ def o365_avvik(request):
 	if any(map(request.user.has_perm, required_permissions)):
 
 		#logikk
-		grupper = [
+		grupper_azure = [
 			{"gruppe": "DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Vanlig bruker standardlisens. I tillegg har alle på Citrix/AKS unntak."},
 			{"gruppe": "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Vanlig bruker med utvidet lisens. I tillegg har alle på Citrix/AKS unntak."},
 			{"gruppe": "DS-OFFICE365SVC_UNNTAK_KJENTENHET", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Servicekontoer"},
@@ -200,6 +200,11 @@ def o365_avvik(request):
 			{"gruppe": "DS-OFFICE365SPES_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Vanlige brukere"},
 			{"gruppe": "DS-OFFICE365SVC_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Servicekontoer"},
 			{"gruppe": "DS-OFFICE365SPES_UNNTAK_HOYRISIKO", "beskrivelse": "Oppkobling høyrisikoland", "kommentar": "Kina, Russland, Nord-Korea.."},
+		]
+
+		grupper_klient = [
+			{"gruppe": "DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT", "beskrivelse": "Lokal administrator", "kommentar": "Mulighet for lokaladministrator på klienter via MakeMeAdmin."},
+			{"gruppe": "DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE", "beskrivelse": "Nettleserutvidelser", "kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."},
 		]
 
 		def hent_statistikk(g):
@@ -211,14 +216,19 @@ def o365_avvik(request):
 				print("fant ikke gruppen %s" % g)
 				return g
 
-		statistikk = []
-		for g in grupper:
-			statistikk.append(hent_statistikk(g))
+		statistikk_azure = []
+		for g in grupper_azure:
+			statistikk_azure.append(hent_statistikk(g))
+
+		statistikk_klient = []
+		for g in grupper_klient:
+			statistikk_klient.append(hent_statistikk(g))
 
 		alle_virskomhet = Virksomhet.objects.filter(ordinar_virksomhet=True)
 
 		return render(request, 'cmdb_o365_avvik.html', {
-			'statistikk': statistikk,
+			'statistikk_azure': statistikk_azure,
+			'statistikk_klient': statistikk_klient,
 			'request': request,
 			'virksomheter': alle_virskomhet,
 		})

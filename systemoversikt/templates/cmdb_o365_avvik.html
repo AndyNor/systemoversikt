@@ -6,11 +6,12 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Unntaksgrupper Azure AD (unntatt etter lokal vurdering)
+	Unntaksgrupper som gir avvik fra standard sikkerhetsregler
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
+	<h5>Felles påloggingsportal Azure AD</h5>
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>Unntakskategori</th>
@@ -18,7 +19,7 @@
 		<th>Kommentarer</th>
 	</thead>
 	<tbody>
-	{% for s in statistikk %}
+	{% for s in statistikk_azure %}
 		<tr>
 			<td>{{s.beskrivelse}}</td>
 			<td>{{s.medlemmer}}</td>
@@ -28,6 +29,24 @@
 	</tbody>
 	</table>
 
+
+	<h5>Klientplattform</h5>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Unntakskategori</th>
+		<th>Antall personer</th>
+		<th>Kommentarer</th>
+	</thead>
+	<tbody>
+	{% for s in statistikk_klient %}
+		<tr>
+			<td>{{s.beskrivelse}}</td>
+			<td>{{s.medlemmer}}</td>
+			<td>{{s.kommentar}}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
 
 <h5>Detaljer</h5>
 {% for v in virksomheter %}
