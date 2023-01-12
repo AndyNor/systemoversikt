@@ -968,8 +968,14 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 
 	grupper_lokal_administrator = [
 		"DS-%s_APP_SUPPORT_LOKAL_ADMINISTRATOR" % (virksomhet.virksomhetsforkortelse),
+		"DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT",
 	]
 	brukere_lokal_administrator, logg = hent_brukere(grupper_lokal_administrator, logg)
+
+	grupper_nettleserutvidelser = [
+		"DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE",
+	]
+	brukere_nettleserutvidelser, logg = hent_brukere(grupper_nettleserutvidelser, logg)
 
 
 	return render(request, 'virksomhet_sikkerhetsavvik.html', {
@@ -1013,6 +1019,8 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 		'brukere_usb_tynnklient': brukere_usb_tynnklient,
 		'grupper_lokal_administrator': grupper_lokal_administrator,
 		'brukere_lokal_administrator': brukere_lokal_administrator,
+		'grupper_nettleserutvidelser': grupper_nettleserutvidelser,
+		'brukere_nettleserutvidelser': brukere_nettleserutvidelser,
 		'logging': logg,
 	})
 

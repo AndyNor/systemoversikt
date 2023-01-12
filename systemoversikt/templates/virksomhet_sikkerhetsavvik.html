@@ -88,6 +88,30 @@
 
 <hr>
 
+<h5>Brukere med tilgang til å installere vilkårlige nettleserutvidelser</h5>
+<p>Definert som {{ grupper_nettleserutvidelser }}.</p>
+<p>Fant {{ brukere_nettleserutvidelser.all.count }} brukere med unntak.</p>
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Bruker</th>
+	<th>Brukertype</th>
+	<th width="50%">Beskrivelse</th>
+	<th>Organisatorisk tilhørighet</th>
+</thead>
+<tbody>
+{% for bruker in brukere_nettleserutvidelser %}
+	<tr>
+		<td>{{ bruker }}</td>
+		<td>{{ bruker.profile.usertype }}</td>
+		<td>{{ bruker.profile.description }}</td>
+		<td>{{ bruker.profile.org_unit }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<hr>
+
 <h5>Office365: Brukere uten krav til administrert enhet</h5>
 <p>Definert som {{ grupper_uten_administrert_klient }}.</p>
 <p>Fant {{ brukere_uten_administrert_klient.all.count }} brukere med unntak.</p>
