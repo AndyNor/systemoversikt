@@ -193,9 +193,9 @@ def o365_avvik(request):
 
 		#logikk
 		grupper_azure = [
-			{"gruppe": "DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Vanlig bruker standardlisens. I tillegg har alle på Citrix/AKS unntak."},
-			{"gruppe": "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Vanlig bruker med utvidet lisens. I tillegg har alle på Citrix/AKS unntak."},
-			{"gruppe": "DS-OFFICE365SVC_UNNTAK_KJENTENHET", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Servicekontoer"},
+			{"gruppe": "DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er vanlige brukere med office-standardlisens. I tillegg har alle på Citrix/AKS unntak."},
+			{"gruppe": "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er vanlige brukere med office-utvidet lisens. I tillegg har alle på Citrix/AKS unntak."},
+			{"gruppe": "DS-OFFICE365SVC_UNNTAK_KJENTENHET", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er for servicekontoer"},
 			{"gruppe": "DS-OFFICE365SVC_UNNTAK_MFA", "beskrivelse": "Unntak multifaktor autentisering", "kommentar": "Dette er antall service-kontoer. I tillegg har alle på Citrix/AKS unntak, samt møteromspaneler."},
 			{"gruppe": "DS-OFFICE365SPES_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Vanlige brukere"},
 			{"gruppe": "DS-OFFICE365SVC_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Servicekontoer"},
