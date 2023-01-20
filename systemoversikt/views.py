@@ -4063,6 +4063,8 @@ def ad_prk_sok(request):
 		})
 """
 
+
+
 def prk_skjema(request, skjema_id):
 	"""
 	Bla i PRK-skjemaer, vise et konkret skjema
@@ -4324,6 +4326,23 @@ def alle_databaser(request):
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+def cmdb_forvaltere(request):
+	"""
+	"""
+	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		relevant_business_services = CMDBbs.objects.filter(eksponert_for_bruker=True).order_by("navn", Lower("navn"))
+
+		return render(request, 'cmdb_forvaltere.html', {
+			'request': request,
+			'relevant_business_services': relevant_business_services,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 
 def alle_cmdbref(request):
 	"""

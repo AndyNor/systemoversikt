@@ -63,6 +63,9 @@
 		{% url 'alle_cmdbref_sok' as url_alle_cmdbref %}
 		<a href="{{url_alle_cmdbref}}" class="btn btn-sm btn-link {% if url_alle_cmdbref in request.path %}fremhev{% endif %}">Business services</a><br>
 
+		{% url 'cmdb_forvaltere' as url_cmdb_forvaltere %}
+		<a href="{{url_cmdb_forvaltere}}" class="btn btn-sm btn-link {% if url_cmdb_forvaltere in request.path %}fremhev{% endif %}">Forvaltere</a><br>
+
 		{% url 'alle_servere' as url_alle_servere %}
 		<a href="{{url_alle_servere}}" class="btn btn-sm btn-link {% if url_alle_servere in request.path %}fremhev{% endif %}">Servere</a><br>
 

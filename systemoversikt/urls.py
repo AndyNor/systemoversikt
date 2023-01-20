@@ -158,8 +158,7 @@ urlpatterns = [
 	re_path(r'^cmdb/backup/$', views.cmdb_backup_index, name='cmdb_backup_index'),
 	re_path(r'^cmdb/lagring/$', views.cmdb_lagring_index, name='cmdb_lagring_index'),
 	re_path(r'^cmdb/minne/$', views.cmdb_minne_index, name='cmdb_minne_index'),
-
-
+	re_path(r'^cmdb/forvaltere/$', views.cmdb_forvaltere, name='cmdb_forvaltere'),
 
 
 

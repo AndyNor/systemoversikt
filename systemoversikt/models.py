@@ -1491,6 +1491,17 @@ class CMDBbs(models.Model):
 			counter += bss.ant_databaser()
 		return counter
 
+	def most_common_child_service_classification(self):
+		import collections
+		own_sub_services = self.cmdb_bss_to_bs.all()
+		service_classifications = [bss.service_classification for bss in own_sub_services]
+		counter = collections.Counter(service_classifications)
+		most_common = counter.most_common(1)
+		try:
+			return(most_common[0][0])
+		except:
+			return("Ikke mulig å identifisere")
+
 	class Meta:
 		verbose_name_plural = "CMDB: business services"
 		verbose_name = "business service"

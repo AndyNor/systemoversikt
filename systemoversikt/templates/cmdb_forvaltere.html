@@ -1,0 +1,48 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Systemdriftsavtalen: Tilknyttede forvaltere
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Forvaltere knyttet til systemer (business services) som driftes av systemdriftsleverandøren til UKE</p>
+
+<table class="table table-sm tablesorter excel">
+<thead>
+<tr>
+	<th>Business service</th>
+	<th>Mest benyttede service classification</th>
+	<th>Systemknytning</th>
+	<th>Forvaltere</th>
+	<th>Forvalteres nærmeste leder</th>
+</tr>
+</thead>
+<tbody>
+{% for business_service in relevant_business_services  %}
+<tr>
+	<td>{{ business_service }}</td>
+	<td>{{ business_service.most_common_child_service_classification }}</td>
+	<td>{{ business_service.systemreferanse|default:"" }}</td>
+	<td>
+		{% for ansvarlig in business_service.systemreferanse.systemforvalter_kontaktpersoner_referanse.all %}
+			{{ ansvarlig.brukernavn.email }}<br>
+		{% endfor %}
+	</td>
+	<td>
+		{% for ansvarlig in business_service.systemreferanse.systemforvalter_kontaktpersoner_referanse.all %}
+			{{ ansvarlig.brukernavn.profile.org_unit }}<br>
+		{% endfor %}
+	</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+{% endblock hovedinnhold %}
