@@ -20,7 +20,8 @@
 	<th>Mest benyttede service classification</th>
 	<th>Systemknytning</th>
 	<th>Forvaltere</th>
-	<th>Forvalteres nærmeste leder</th>
+	<th>Forvalteres tilhørighet</th>
+	<th>Nærmeste leder</th>
 </tr>
 </thead>
 <tbody>
@@ -36,7 +37,12 @@
 	</td>
 	<td>
 		{% for ansvarlig in business_service.systemreferanse.systemforvalter_kontaktpersoner_referanse.all %}
-			{{ ansvarlig.brukernavn.profile.org_unit }}<br>
+			{{ ansvarlig.brukernavn.profile.org_unit|default:"ukjent" }}<br>
+		{% endfor %}
+	</td>
+	<td>
+		{% for ansvarlig in business_service.systemreferanse.systemforvalter_kontaktpersoner_referanse.all %}
+			{{ ansvarlig.brukernavn.profile.org_unit.leder_hr|default:"ukjent" }}<br>
 		{% endfor %}
 	</td>
 </tr>
