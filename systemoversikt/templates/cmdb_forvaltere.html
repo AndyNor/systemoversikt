@@ -42,7 +42,7 @@
 	</td>
 	<td>
 		{% for ansvarlig in business_service.systemreferanse.systemforvalter_kontaktpersoner_referanse.all %}
-			{{ ansvarlig.brukernavn.profile.org_unit.leder_hr|default:"ukjent" }}<br>
+			{{ ansvarlig.brukernavn.profile.org_unit.leder.email|default:"ukjent" }}<br>
 		{% endfor %}
 	</td>
 </tr>
