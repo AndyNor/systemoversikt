@@ -146,6 +146,16 @@ def mal(request):
 
 
 
+def tool_unique_items(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	return render(request, 'tool_unique_items.html', {
+		"request": request,
+	})
+
+
 def cmdb_per_virksomhet(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
