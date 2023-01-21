@@ -190,6 +190,9 @@ urlpatterns = [
 	re_path(r'^cmdb/prk/userlookup/$', views.prk_userlookup, name='prk_userlookup'),
 	re_path(r'^cmdb/ad/gruppeanalyse/$', views.ad_gruppeanalyse, name='ad_gruppeanalyse'),
 
+
+	re_path(r'^cmdb/tools/unique$', views.tool_unique_items, name='tool_unique_items'),
+
 	re_path(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	re_path(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),
 
