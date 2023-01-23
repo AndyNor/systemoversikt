@@ -17,14 +17,17 @@
 		<div class="col-sm">
 			<h6>Allokert lagring allokert totalt</h6>
 			<h3>{{ count_san_allocated|filesizeformat }}</h3>
+			<p>{{ count_san_allocated }} bytes</p>
 		</div>
 		<div class="col-sm">
 			<h6>Faktisk benyttet lagring totalt</h6>
 			<h3>{{ count_san_used|filesizeformat }} ({{pct_used}}%)</h3>
+			<p>{{ count_san_used }} bytes</p>
 		</div>
 		<div class="col-sm">
 			<h6>Allokert lagring uten kobling til business service</h6>
 			<h3>{{ count_san_missing_bs|filesizeformat }}</h3>
+			<p>{{ count_san_missing_bs }} bytes</p>
 		</div>
 	</div>
 </div>

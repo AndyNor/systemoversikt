@@ -2394,10 +2394,10 @@ class CMDBdevice(models.Model):
 			max_length=300,
 			null=True, blank=True,
 			)
-	vm_disks_installed = models.IntegerField(
-			verbose_name="VM: Antall disker installert",
-			null=True, blank=True,
-			)
+	#vm_disks_installed = models.IntegerField(
+	#		verbose_name="VM: Antall disker installert",
+	#		null=True, blank=True,
+	#		)
 
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 

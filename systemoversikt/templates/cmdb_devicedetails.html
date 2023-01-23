@@ -30,7 +30,6 @@
 	Har tildelt {{ device.comp_cpu_core_count|default:"?" }} CPU-kjerner / {{ device.comp_cpu_speed|default:"?" }} Mhz. {{device.cpu_usage}}% aktiv.<br>
 	<hr>
 	Tildelt {{ device.comp_disk_space|filesizeformat }} {{ device.vm_disk_tier }} disk. {{device.disk_usage_free}}% ledig.<br>
-	Fordelt på {{ device.vm_disks_installed }} partisjoner:
 	{% for p in device.cmdbdisk_computer.all %}
 		<li>{{p.mount_point}} {{p.file_system}} {{p.size_bytes|filesizeformat}} ({{p.free_space_bytes|filesizeformat}} ledig)</li>
 	{% endfor %}

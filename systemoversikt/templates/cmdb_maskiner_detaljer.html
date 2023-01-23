@@ -193,7 +193,8 @@
 			<tr>
 				<th>Backupnavn</th>
 				<th>Størrelse</th>
-				<th>Eksportdato fra import</th>
+				<th>Frekvens</th>
+				<th>Policy</th>
 			</tr>
 			</thead>
 			<tbody>
@@ -201,7 +202,8 @@
 			<tr>
 				<td>{{ b.device_str }}</td>
 				<td>{{ b.backup_size_bytes|filesizeformat }}</td>
-				<td>{{ b.export_date }}</td>
+				<td>{{ b.backup_frequency }}</td>
+				<td>{{ b.storage_policy }}</td>
 			</tr>
 			{% endfor %}
 			</tbody>

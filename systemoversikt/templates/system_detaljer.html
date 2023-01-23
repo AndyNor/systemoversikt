@@ -336,6 +336,10 @@
 				<th>Criticality</th>
 				<th>Availability</th>
 				<th>Kompleksitet</th>
+				<th>Disk allokert</th>
+				<th>Disk brukt</th>
+				<th>Minne</th>
+				<th>Backup</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -346,6 +350,10 @@
 			<td>{{ cmdbref.get_kritikalitet_display|default:"-" }}</td>
 			<td>{{ cmdbref.u_service_availability_text }}</td>
 			<td>{{ cmdbref.u_service_complexity_text }}</td>
+			<td>{{ cmdbref.san_allocated|filesizeformat }}</td>
+			<td>{{ cmdbref.san_used|filesizeformat }}</td>
+			<td>{{ cmdbref.ram_allocated|filesizeformat }}</td>
+			<td>{{ cmdbref.backup_size|filesizeformat }}</td>
 		</tr>
 		{% endfor %}
 		</tbody>

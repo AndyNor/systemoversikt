@@ -17,6 +17,10 @@
 <thead>
 <tr>
 	<th>Business service</th>
+	<th>Backup</th>
+	<th>Minne</th>
+	<th>Disk allokert</th>
+	<th>Disk benyttet</th>
 	<th>Mest benyttede service classification</th>
 	<th>Systemknytning</th>
 	<th>Forvaltere</th>
@@ -28,6 +32,12 @@
 {% for business_service in relevant_business_services  %}
 <tr>
 	<td>{{ business_service }}</td>
+
+	<td>{{ business_service.backup_size }} ({{ business_service.backup_size|filesizeformat }})</td>
+	<td>{{ business_service.ram_allocated }} ({{ business_service.ram_allocated|filesizeformat }})</td>
+	<td>{{ business_service.san_allocated }} ({{ business_service.san_allocated|filesizeformat }})</td>
+	<td>{{ business_service.san_used }} ({{ business_service.san_used|filesizeformat }})</td>
+
 	<td>{{ business_service.most_common_child_service_classification }}</td>
 	<td>{{ business_service.systemreferanse|default:"" }}</td>
 	<td>

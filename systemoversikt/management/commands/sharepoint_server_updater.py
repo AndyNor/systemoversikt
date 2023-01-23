@@ -31,8 +31,9 @@ class Command(BaseCommand):
 		sp.download(sharepoint_location = computers_source_file, local_location = computers_destination_file)
 
 		print("Laster ned fil med informasjon om disk fra vmware")
-		vmware_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx")
-		vmware_destination_file = 'systemoversikt/import/Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx'
+		vmware_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/Virtual Servers.xlsx")
+		#vmware_destination_file = 'systemoversikt/import/Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx'
+		vmware_destination_file = 'systemoversikt/import/Virtual Servers.xlsx'
 		sp.download(sharepoint_location = vmware_source_file, local_location = vmware_destination_file)
 
 
@@ -178,6 +179,7 @@ class Command(BaseCommand):
 				cmdbdevice.save()
 
 			# gjennomgang av data fra vmware
+			"""
 			def decode_disk(vm):
 				if vm["HE disk Allocated (GB)"] != "":
 					return (vm["HE disk Allocated (GB)"]*1000**3, vm["HE disk Used (GB)"]*1000**3, "HE")
@@ -195,8 +197,10 @@ class Command(BaseCommand):
 					return (vm["LE-S disk Allocated (GB)"]*1000**3, vm["LE-S disk Used (GB)"]*1000**3, "LE-S")
 
 				return (None, None, None)
+			"""
 
 			if ".xlsx" in vmware_destination_file:
+				"""
 				dfRaw = pd.read_excel(vmware_destination_file, sheet_name='Summarized', skiprows=8, usecols=[
 						'VM Name',
 						'HE disk Allocated (GB)',
@@ -216,25 +220,48 @@ class Command(BaseCommand):
 						'PowerState',
 						'# of disks installed',
 					])
+				"""
+
+				dfRaw = pd.read_excel(vmware_destination_file, sheet_name='Export', skiprows=0, usecols=[
+						'Customer ID',
+						'VM Name',
+						'Business Sub Service',
+						'Allocated disk (GB)',
+						'Total Disk Used (GB)',
+						'Disk Tier',
+						'CPU',
+						'CPU Usage (Avg 7days)%',
+						'Mem-Capacity (GB)',
+						'Mem Usage (Avg 7days)%',
+						'UUID',
+						'Storage location',
+					])
+
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				vmware_data = dfRaw.to_dict('records')
 
-				print(vmware_data[0])
+				#print(vmware_data[0])
 				for vm in vmware_data:
+					if vm["Customer ID"] == "":
+						break
+
 					cmdbdevice = get_cmdb_instance(vm["VM Name"])
-					cmdbdevice.vm_poweredon = True if (vm["PowerState"] == "POWEREDON") else False
-					cmdbdevice.device_type = "SERVER"
-					if vm["VM Memory Usage (%)"] != "":
-						cmdbdevice.vm_comp_ram_usage = vm["VM Memory Usage (%)"]
-					if vm["VM CPU Usage (%)"] != "":
-						cmdbdevice.vm_comp_cpu_usage = vm["VM CPU Usage (%)"]
-					cmdbdevice.vm_disk_allocation, cmdbdevice.vm_disk_usage, cmdbdevice.vm_disk_tier = decode_disk(vm)
+					#cmdbdevice.vm_poweredon = True if (vm["PowerState"] == "POWEREDON") else False # we don't have this value here anymore
+					cmdbdevice.device_type = "SERVER" # never any clients in VMware
+					if vm["Mem Usage (Avg 7days)%"] != "":
+						cmdbdevice.vm_comp_ram_usage = vm["Mem Usage (Avg 7days)%"]
+					if vm["CPU Usage (Avg 7days)%"] != "":
+						cmdbdevice.vm_comp_cpu_usage = vm["CPU Usage (Avg 7days)%"]
+					#cmdbdevice.vm_disk_allocation, cmdbdevice.vm_disk_usage, cmdbdevice.vm_disk_tier = decode_disk(vm) # not used any more
+					cmdbdevice.vm_disk_allocation = vm["Allocated disk (GB)"]*1000**3
+					cmdbdevice.vm_disk_usage = vm["Total Disk Used (GB)"]*1000**3
+					cmdbdevice.vm_disk_tier = vm["Disk Tier"]
 					#print(decode_disk(vm))
-					cmdbdevice.vm_disks_installed = vm["# of disks installed"]
+					#cmdbdevice.vm_disks_installed = vm["# of disks installed"]
 					print("%s: vm %s - cmdb %s" % (cmdbdevice.comp_name, cmdbdevice.vm_disk_allocation, cmdbdevice.comp_disk_space))
 
 					cmdbdevice.save()
-					print(".", end="", flush=True)
+					#print(".", end="", flush=True)
 			else:
 				print("Filen med VMware-data var ikke på riktig dataformat.")
 
