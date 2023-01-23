@@ -13,7 +13,7 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		sp = da_tran_SP365(site_url = os.environ['SHAREPOINT_SITE'], client_id = os.environ['SHAREPOINT_CLIENT_ID'], client_secret = os.environ['SHAREPOINT_CLIENT_SECRET'])
-		filename = "Backup CommVault A34.xlsx"
+		filename = "CommVault.xlsx"
 		source = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename)
 		destination_file = 'systemoversikt/import/'+filename
 		sp.download(sharepoint_location = source, local_location = destination_file)
@@ -22,7 +22,8 @@ class Command(BaseCommand):
 		def main(destination_file, filename, LOG_EVENT_TYPE):
 
 			if ".xlsx" in destination_file:
-				dfRaw = pd.read_excel(destination_file, sheet_name='CommVault Summary', skiprows=8, usecols=['Client', 'Total Protected App Size (GB)', 'Source Capture Date', 'Business Sub Service',])
+				#dfRaw = pd.read_excel(destination_file, sheet_name='CommVault Summary', skiprows=8, usecols=['Client', 'Total Protected App Size (GB)', 'Source Capture Date', 'Business Sub Service', ])
+				dfRaw = pd.read_excel(destination_file, sheet_name='Export', skiprows=0, usecols=['Customer ID', 'Client', 'Total Protected App Size (GB)', 'Backup frequency', 'Business Sub Service', 'Storage Policy',])
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				data = dfRaw.to_dict('records')
 
@@ -45,6 +46,9 @@ class Command(BaseCommand):
 
 			for line in data:
 				#print(line)
+				if line['Customer ID'] == "Total": # end of content
+					print("End of data")
+					break
 				try:
 					device = CMDBdevice.objects.get(comp_name__iexact=line["Client"])
 				except:
@@ -64,9 +68,11 @@ class Command(BaseCommand):
 
 				print(".", end="", flush=True)
 
-				size = int(line["Total Protected App Size (GB)"] * 1024 * 1024 * 1024) # bytes
+				size = int(line["Total Protected App Size (GB)"] * 1000 * 1000 * 1000) # fra giga bytes til bytes (antar 1000 siden dette er et diskverktøy)
 				inst.backup_size_bytes = size
-				inst.export_date = line["Source Capture Date"]
+				inst.backup_frequency = line["Backup frequency"]
+				inst.storage_policy = line["Storage Policy"]
+				#inst.export_date = line["Source Capture Date"]
 				inst.bss = bss
 
 				inst.save()

@@ -89,7 +89,7 @@ class Command(BaseCommand):
 					cmdb_db.db_version = "MSSQL"
 
 				try:
-					filesize = int(record.get("DataFilesSizeKB", 0)) * 1024 # convert to bytes
+					filesize = int(record.get("DataFilesSizeKB", 0)) * 1000 # convert to bytes
 				except:
 					filesize = 0
 				cmdb_db.db_u_datafilessizekb = filesize

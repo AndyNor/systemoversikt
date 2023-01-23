@@ -49,13 +49,13 @@ class Command(BaseCommand):
 				order = data[-2:]
 				#print("%s %s" % (value, order))
 				if order == "KB":
-					return value * 1024
+					return value * 1000
 				if order == "MB":
-					return value * 1024 * 1024
+					return value * 1000 * 1000
 				if order == "GB":
-					return value * 1024 * 1024 * 1024
+					return value * 1000 * 1000 * 1000
 				if order == "TB":
-					return value * 1024 * 1024 * 1024 * 1024
+					return value * 1000 * 1000 * 1000 * 1000
 				return 0
 
 			for line in data:

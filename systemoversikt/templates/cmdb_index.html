@@ -60,49 +60,55 @@
 	<hr>
 
 	<h6>Applikasjon- og basisdrift</h6>
-		{% url 'alle_cmdbref_sok' as url_alle_cmdbref %}
-		<a href="{{url_alle_cmdbref}}" class="btn btn-sm btn-link {% if url_alle_cmdbref in request.path %}fremhev{% endif %}">Business services</a><br>
+	{% url 'alle_cmdbref_sok' as url_alle_cmdbref %}
+	<a href="{{url_alle_cmdbref}}" class="btn btn-sm btn-link {% if url_alle_cmdbref in request.path %}fremhev{% endif %}">Business services</a><br>
 
-		{% url 'cmdb_forvaltere' as url_cmdb_forvaltere %}
-		<a href="{{url_cmdb_forvaltere}}" class="btn btn-sm btn-link {% if url_cmdb_forvaltere in request.path %}fremhev{% endif %}">Forvaltere</a><br>
+	{% url 'cmdb_forvaltere' as url_cmdb_forvaltere %}
+	<a href="{{url_cmdb_forvaltere}}" class="btn btn-sm btn-link {% if url_cmdb_forvaltere in request.path %}fremhev{% endif %}">Forvaltere</a><br>
 
-		{% url 'alle_servere' as url_alle_servere %}
-		<a href="{{url_alle_servere}}" class="btn btn-sm btn-link {% if url_alle_servere in request.path %}fremhev{% endif %}">Servere</a><br>
+	{% url 'alle_servere' as url_alle_servere %}
+	<a href="{{url_alle_servere}}" class="btn btn-sm btn-link {% if url_alle_servere in request.path %}fremhev{% endif %}">Servere</a><br>
 
-		{% url 'alle_klienter' as url_alle_klienter %}
-		<a href="{{url_alle_klienter}}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}">Klienter</a><br>
+	{% url 'alle_klienter' as url_alle_klienter %}
+	<a href="{{url_alle_klienter}}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}">Klienter</a><br>
 
-		{% url 'alle_databaser' as url_alle_databaser %}
-		<a href="{{url_alle_databaser}}" class="btn btn-sm btn-link {% if url_alle_databaser in request.path %}fremhev{% endif %}">Databaser</a><br>
+	{% url 'alle_databaser' as url_alle_databaser %}
+	<a href="{{url_alle_databaser}}" class="btn btn-sm btn-link {% if url_alle_databaser in request.path %}fremhev{% endif %}">Databaser</a><br>
 
-		{% url 'alle_nettverk' as url_alle_nettverk %}
-		<a href="{{url_alle_nettverk}}" class="btn btn-sm btn-link {% if url_alle_nettverk in request.path %}fremhev{% endif %}">VLAN / Nettverk</a><br>
+	{% url 'alle_nettverk' as url_alle_nettverk %}
+	<a href="{{url_alle_nettverk}}" class="btn btn-sm btn-link {% if url_alle_nettverk in request.path %}fremhev{% endif %}">VLAN / Nettverk</a><br>
 
-		{% url 'alle_nettverksenheter' as url_alle_nettverksenheter %}
-		<a href="{{url_alle_nettverksenheter}}" class="btn btn-sm btn-link {% if url_alle_nettverksenheter in request.path %}fremhev{% endif %}">Nettverksenheter</a><br>
+	{% url 'alle_nettverksenheter' as url_alle_nettverksenheter %}
+	<a href="{{url_alle_nettverksenheter}}" class="btn btn-sm btn-link {% if url_alle_nettverksenheter in request.path %}fremhev{% endif %}">Nettverksenheter</a><br>
 
-		{% url 'alle_vip' as url_alle_vip %}
-		<a href="{{url_alle_vip}}" class="btn btn-sm btn-link {% if url_alle_vip in request.path %}fremhev{% endif %}">BigIP / VIP</a><br>
+	{% url 'alle_vip' as url_alle_vip %}
+	<a href="{{url_alle_vip}}" class="btn btn-sm btn-link {% if url_alle_vip in request.path %}fremhev{% endif %}">BigIP / VIP</a><br>
 
-		{% url 'alle_dns' as url_alle_dns %}
-		<a href="{{url_alle_dns}}" class="btn btn-sm btn-link {% if url_alle_dns in request.path %}fremhev{% endif %}">DNS</a><br>
+	{% url 'alle_dns' as url_alle_dns %}
+	<a href="{{url_alle_dns}}" class="btn btn-sm btn-link {% if url_alle_dns in request.path %}fremhev{% endif %}">DNS</a><br>
 
-		{% url 'alle_ip' as url_alle_ip %}
-		<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP-søk</a><br>
+	{% url 'alle_ip' as url_alle_ip %}
+	<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP-søk</a><br>
 
-		{% url 'cmdb_backup_index' as url_cmdb_backup_index %}
-		<a href="{{url_cmdb_backup_index}}" class="btn btn-sm btn-link {% if url_cmdb_backup_index in request.path %}fremhev{% endif %}">Backup</a><br>
+	{% url 'cmdb_backup_index' as url_cmdb_backup_index %}
+	<a href="{{url_cmdb_backup_index}}" class="btn btn-sm btn-link {% if url_cmdb_backup_index in request.path %}fremhev{% endif %}">Backup</a><br>
 
-		{% url 'cmdb_lagring_index' as url_cmdb_lagring_index %}
-		<a href="{{url_cmdb_lagring_index}}" class="btn btn-sm btn-link {% if url_cmdb_lagring_index in request.path %}fremhev{% endif %}">Lagring</a><br>
+	{% url 'cmdb_lagring_index' as url_cmdb_lagring_index %}
+	<a href="{{url_cmdb_lagring_index}}" class="btn btn-sm btn-link {% if url_cmdb_lagring_index in request.path %}fremhev{% endif %}">Lagring</a><br>
 
-		{% url 'cmdb_minne_index' as url_cmdb_minne_index %}
-		<a href="{{url_cmdb_minne_index}}" class="btn btn-sm btn-link {% if url_cmdb_minne_index in request.path %}fremhev{% endif %}">Minnebruk</a><br>
+	{% url 'cmdb_minne_index' as url_cmdb_minne_index %}
+	<a href="{{url_cmdb_minne_index}}" class="btn btn-sm btn-link {% if url_cmdb_minne_index in request.path %}fremhev{% endif %}">Minnebruk</a><br>
 
-		{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}
-
+	{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}
 
 	{% block ekstrameny_nettverk %}{% endblock ekstrameny_nettverk %}
+
+	<hr>
+	<h6>Verktøy</h6>
+	{% url 'tool_unique_items' as url_tool_unique_items %}
+	<a href="{{url_tool_unique_items}}" class="btn btn-sm btn-link {% if url_tool_unique_items in request.path %}fremhev{% endif %}">Unike elementer</a><br>
+
+
 {% endblock sidemeny %}
 
 {% block main_content %}

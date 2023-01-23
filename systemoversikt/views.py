@@ -151,9 +151,22 @@ def tool_unique_items(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	raw = request.POST.get('data', '').strip()  # strip removes trailing and leading space
+	filtered = raw.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ').replace(':',' ').replace('|',' ').lower()
+	splitted = filtered.split()
+	unike = sorted(set(splitted))
+
 	return render(request, 'tool_unique_items.html', {
 		"request": request,
+		"result": unike,
+		"query": raw,
 	})
+
+
+# def tool_email_addresses
+# def tool_longest_substring
+# def tool_item_count
+# def tool_different_items
 
 
 def cmdb_per_virksomhet(request):
@@ -295,7 +308,7 @@ def cmdb_statistikk(request):
 		count_vip_pool = VirtualIPPool.objects.all().count()
 		count_oracle = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).all().count()
 		count_mssql = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).all().count()
-		count_mem = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024*1024 # summen er MB --> bytes
+		count_mem = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000*1000 # summen er MB --> bytes
 		count_disk = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] #summen er i bytes
 		count_oracle_disk = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
 		count_mssql_disk = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
@@ -525,11 +538,11 @@ def cmdb_minne_index(request):
 	if any(map(request.user.has_perm, required_permissions)):
 
 		try:
-			count_ram_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024**2 #MB->bytes
+			count_ram_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
 		except:
 			count_ram_allocated = 0
 		try:
-			count_ram_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(sub_name=None).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1024**2 #MB->bytes
+			count_ram_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(sub_name=None).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
 		except:
 			count_ram_missing_bs = 0
 
@@ -5256,7 +5269,7 @@ def cmdb_api(request):
 			s["server_os"] = server.comp_os
 			s["server_ram"] = server.comp_ram
 			if server.comp_disk_space:
-				s["server_disk"] = server.comp_disk_space * 1024 * 1024  # ønskes oppgitt i megabyte (fra bytes)
+				s["server_disk"] = server.comp_disk_space * 1000 * 1000  # ønskes oppgitt i megabyte (fra bytes)
 			else:
 				s["server_disk"] = None
 			#s["server_cpu_name"] = server.comp_cpu_name

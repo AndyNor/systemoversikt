@@ -1676,7 +1676,7 @@ class CMDBRef(models.Model): # BSS
 		total = CMDBdevice.objects.filter(sub_name=self).aggregate(Sum('comp_ram'))["comp_ram__sum"]
 		if total == None:
 			return 0
-		return total * 1024**2 # MB til bytes
+		return total * 1000**2 # MB til bytes
 
 	def u_service_availability_text(self):
 		lookup = {
@@ -2416,7 +2416,7 @@ class CMDBdevice(models.Model):
 
 	def comp_ram_byes(self):
 		if self.comp_ram != None:
-			return self.comp_ram * 1024**2
+			return self.comp_ram * 1000**2
 		return "? "
 
 	def ram_usage(self):
@@ -2489,10 +2489,11 @@ class CMDBbackup(models.Model):
 	backup_size_bytes = models.IntegerField(
 			null=True,
 			)
-	export_date = models.DateTimeField(
-			verbose_name="Dato uttrekk",
-			null=True,
-			)
+	#tas vekk 23.01.2023 da den ikke ligger i powerBI-dashboardet
+	#export_date = models.DateTimeField(
+	#		verbose_name="Dato uttrekk",
+	#		null=True,
+	#		)
 	bss = models.ForeignKey(
 			to=CMDBRef,
 			related_name='backup',
@@ -2501,6 +2502,18 @@ class CMDBbackup(models.Model):
 			blank=True,
 			null=True,
 			help_text=u"",
+			)
+	backup_frequency = models.CharField(
+			verbose_name="Backup frequency",
+			max_length=10,
+			blank=True,
+			null=True,
+			)
+	storage_policy = models.CharField(
+			verbose_name="Storage Policy",
+			max_length=100,
+			blank=True,
+			null=True,
 			)
 	# vurdere unique_together med device_str og device?
 

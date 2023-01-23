@@ -136,7 +136,7 @@ class Command(BaseCommand):
 				cmdbdevice.device_active = True
 				cmdbdevice.kilde_cmdb = True
 				if record["Disk space (GB)"] != "":
-					cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])*1024**3 # returnert som bytes (fra GB)
+					cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])*1000**3 # returnert som bytes (fra GB)
 				cmdbdevice.comp_cpu_core_count = convertToInt(record["CPU total"])
 				cmdbdevice.comp_ram = convertToInt(record["RAM (MB)"])
 				cmdbdevice.comp_ip_address = comp_ip_address
@@ -180,19 +180,19 @@ class Command(BaseCommand):
 			# gjennomgang av data fra vmware
 			def decode_disk(vm):
 				if vm["HE disk Allocated (GB)"] != "":
-					return (vm["HE disk Allocated (GB)"]*1024**3, vm["HE disk Used (GB)"]*1024**3, "HE")
+					return (vm["HE disk Allocated (GB)"]*1000**3, vm["HE disk Used (GB)"]*1000**3, "HE")
 				if vm["HE-S disk Allocated (GB)"] != "":
-					return (vm["HE-S disk Allocated (GB)"]*1024**3, vm["HE-S disk Used (GB)"]*1024**3, "HE-S")
+					return (vm["HE-S disk Allocated (GB)"]*1000**3, vm["HE-S disk Used (GB)"]*1000**3, "HE-S")
 
 				if vm["MR disk Allocated (GB)"] != "":
-					return (vm["MR disk Allocated (GB)"]*1024**3, vm["MR disk Used (GB)"]*1024**3, "MR")
+					return (vm["MR disk Allocated (GB)"]*1000**3, vm["MR disk Used (GB)"]*1000**3, "MR")
 				if vm["MR-S disk Allocated (GB)"] != "":
-					return (vm["MR-S disk Allocated (GB)"]*1024**3, vm["MR-S disk Used (GB)"]*1024**3, "MR-S")
+					return (vm["MR-S disk Allocated (GB)"]*1000**3, vm["MR-S disk Used (GB)"]*1000**3, "MR-S")
 
 				if vm["LE disk Allocated (GB)"] != "":
-					return (vm["LE disk Allocated (GB)"]*1024**3, vm["LE disk Used (GB)"]*1024**3, "LE")
+					return (vm["LE disk Allocated (GB)"]*1000**3, vm["LE disk Used (GB)"]*1000**3, "LE")
 				if vm["LE-S disk Allocated (GB)"] != "":
-					return (vm["LE-S disk Allocated (GB)"]*1024**3, vm["LE-S disk Used (GB)"]*1024**3, "LE-S")
+					return (vm["LE-S disk Allocated (GB)"]*1000**3, vm["LE-S disk Used (GB)"]*1000**3, "LE-S")
 
 				return (None, None, None)
 

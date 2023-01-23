@@ -164,7 +164,7 @@ class Command(BaseCommand):
 					# databases are often set up redundant. Same size on both serveres.
 					# databasenavn og server stemmer, oppdater størrelse
 
-					new_size = int(record["Size (GB)"] * 1024 * 1024 * 1024)
+					new_size = int(record["Size (GB)"] * 1000 * 1000 * 1000)
 					old_size = oracle_db.db_u_datafilessizekb
 					#print("%s = %s" % (old_size, size))
 					if old_size != new_size:
