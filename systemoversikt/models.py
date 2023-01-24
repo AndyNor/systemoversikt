@@ -2445,6 +2445,14 @@ class CMDBdevice(models.Model):
 		else:
 			return None
 
+	def ratio_backup_disk(self):
+		backupsize = self.backup_size() # det vil i praksis aldri være flere verdier selv om det per datamodell er mulig
+		vm_disk_usage = self.vm_disk_usage
+		try:
+			return round(backupsize[0] / vm_disk_usage) # begge er bytes
+		except:
+			return "error"
+
 	def vip(self):
 		try:
 			string = ""

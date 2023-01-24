@@ -4249,7 +4249,7 @@ def alle_servere(request):
 		elif search_term == '__all__':
 			maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True)
 		else:
-			maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(sub_name__navn__icontains=search_term)).order_by('comp_name')
+			maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(sub_name__navn__icontains=search_term)).order_by('comp_name')
 
 		maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
 		maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)

@@ -101,6 +101,9 @@
 				<th>RAM (MB)</th>
 				<th width="25%">Disk space</th>
 				<th>Backup</th>
+				<th>Backup frequency</th>
+				<th>Ratio backup/disk</th>
+				<th>Backup policy</th>
 				<th>Nettverk</th>
 				<th>DNS</th>
 				<th>NAT</th>
@@ -121,7 +124,8 @@
 				<td>{{ item.comp_cpu_core_count|default:"-" }}</td>
 				<td>{{ item.comp_ram_byes|filesizeformat }}</td>
 				<td>
-					{{ item.comp_disk_space|filesizeformat }} (Type {{ item.vm_disk_tier }})
+					Allokert: {{ item.comp_disk_space|filesizeformat }} (Type {{ item.vm_disk_tier }})<br>
+					Benyttet: {{ item.vm_disk_usage|filesizeformat }}
 					<br>
 					{% for disk in item.cmdbdisk_computer.all %}
 						{% if disk.operational_status %}
@@ -134,6 +138,19 @@
 				<td>
 					{% for b in item.backup_size %}
 						{{ b|filesizeformat }}<br>
+					{% endfor %}
+				</td>
+				<td>
+					{% for backup in item.backup.all %}
+						{{ backup.backup_frequency }}<br>
+					{% endfor %}
+				</td>
+				<td>
+					{{ item.ratio_backup_disk }}
+				</td>
+				<td>
+					{% for backup in item.backup.all %}
+						{{ backup.storage_policy }}
 					{% endfor %}
 				</td>
 				<td>
