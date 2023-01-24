@@ -240,6 +240,8 @@ class Command(BaseCommand):
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				vmware_data = dfRaw.to_dict('records')
 
+				all_servers_before_vmware_import = list(CMDBdevice.objects.all().filter(device_type="SERVER"))
+
 				#print(vmware_data[0])
 				for vm in vmware_data:
 					if vm["Customer ID"] == "":
@@ -258,16 +260,31 @@ class Command(BaseCommand):
 					cmdbdevice.vm_disk_tier = vm["Disk Tier"]
 					#print(decode_disk(vm))
 					#cmdbdevice.vm_disks_installed = vm["# of disks installed"]
-					print("%s: vm %s - cmdb %s" % (cmdbdevice.comp_name, cmdbdevice.vm_disk_allocation, cmdbdevice.comp_disk_space))
+					#print("%s: vm %s - cmdb %s" % (cmdbdevice.comp_name, cmdbdevice.vm_disk_allocation, cmdbdevice.comp_disk_space))
 
 					cmdbdevice.save()
-					#print(".", end="", flush=True)
+					try:
+						all_servers_before_vmware_import.remove(cmdbdevice)
+					except:
+						print("Kan ikke fjerne %s fra listen over alle servere" % cmdbdevice)
+					print(".", end="", flush=True)
+
+				# clean up vmware disk import
+				servers_not_updateded_with_disk = all_servers_before_vmware_import
+				print("Det var %s eksisterende servere som ikke ble oppdatert" % (len(servers_not_updateded_with_disk)))
+				for cmdbdevice in servers_not_updateded_with_disk:
+					if cmdbdevice.vm_disk_allocation != 0:
+						cmdbdevice.vm_disk_allocation = 0
+						cmdbdevice.vm_disk_usage = 0
+						cmdbdevice.save()
+						print("Setting VM disk size for %s to 0" % cmdbdevice)
+
 			else:
 				print("Filen med VMware-data var ikke på riktig dataformat.")
 
 
 
-			#opprydding
+			#opprydding alle servere ikke sett fra hovedimport
 			obsolete_devices = all_existing_devices
 			devices_set_inactive = 0
 

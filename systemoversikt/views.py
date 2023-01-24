@@ -506,10 +506,12 @@ def cmdb_lagring_index(request):
 	if any(map(request.user.has_perm, required_permissions)):
 
 
-		count_san_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
-		count_san_used = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
+		count_san_allocated = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+		count_san_used = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
 		pct_used = int(count_san_used / count_san_allocated * 100)
-		count_san_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(sub_name=None).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+		count_san_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(sub_name=None).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+		count_not_active = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+
 		bs_all = CMDBbs.objects.all()
 
 		return render(request, 'cmdb_lagring_index.html', {
@@ -518,6 +520,7 @@ def cmdb_lagring_index(request):
 			'count_san_used': count_san_used,
 			'pct_used': pct_used,
 			'count_san_missing_bs': count_san_missing_bs,
+			'count_not_active': count_not_active,
 			'bs_all': bs_all,
 
 		})

@@ -2381,7 +2381,7 @@ class CMDBdevice(models.Model):
 			verbose_name="VM: Utnyttelse av CPU",
 			null=True, blank=True,
 			)
-	vm_disk_allocation = models.FloatField(
+	vm_disk_allocation = models.FloatField( # denne verdien resettes hver gang vmwaredata importeres, og kan brukes for å summere opp faktisk allokert disk for maskiner som er "deaktivert"
 			verbose_name="VM: Disk allokert",
 			null=True, blank=True,
 			)
