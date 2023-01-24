@@ -905,7 +905,7 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 admin.site.unregister(User)  # den er som standard registrert
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-	list_display = ('username', 'last_login', 'userPasswordExpiry', 'userNot_delegated', 'userDont_req_preauth', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
+	list_display = ('username', 'last_login', 'email', 'userPasswordExpiry', 'userNot_delegated', 'userDont_req_preauth', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
 	search_fields = ('last_login', 'username', 'first_name', 'last_name', 'email')
 	list_filter = ('profile__from_prk', 'profile__userPasswordExpiry', 'profile__not_delegated', 'profile__dont_req_preauth', 'profile__virksomhet', 'is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'groups',)
 
