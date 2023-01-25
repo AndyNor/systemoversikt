@@ -24,7 +24,7 @@
 
 	<p>Servere importeres fra Sopra Sterias CMDB automatisk hver natt. Sopra Steria knytter servere til business sub services. Servere oppdages og oppdateres med auto-discovery som samler inn IP-adresse, operativsystem, samt informasjon om disk, minne og cpu.</p>
 
-	<p>Merk at du her ikke kan søke på deaktive servere. Gå til <a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Massesøk på servere</a> dersom du ønsker å søke på inaktive servere også</p>
+	<p>Gå til <a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Massesøk på servere</a> dersom du ønsker å søke på mange servere samtidig</p>
 
 	<hr>
 
@@ -58,6 +58,7 @@
 		<th>IP</th>
 		<th>Nettverk</th>
 		<th>Operativsystem</th>
+		<th>Backup frekvens</th>
 		<th>Backup policy</th>
 		<th>Tilhørende system</th>
 		<th>Eierskap</th>
@@ -118,6 +119,10 @@
 		<td>
 			{% for policy in maskin.backup.all %}
 				{{ policy.backup_frequency }}<br>
+			{% endfor %}
+		</td>
+		<td>
+			{% for policy in maskin.backup.all %}
 				{{ policy.storage_policy }}
 			{% endfor %}
 		</td>

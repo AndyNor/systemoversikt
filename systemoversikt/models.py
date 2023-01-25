@@ -2455,11 +2455,11 @@ class CMDBdevice(models.Model):
 
 	def vip(self):
 		try:
-			string = ""
+			vip_names = []
 			for pool in self.network_ip_address.all()[0].vip_pools.all():
 				for vip in pool.vip.all():
-					string += vip.vip_name
-			return string
+					vip_names.append(vip)
+			return ', '.join([vip.vip_name for vip in vip_names])
 		except:
 			return 'ingen data'
 
