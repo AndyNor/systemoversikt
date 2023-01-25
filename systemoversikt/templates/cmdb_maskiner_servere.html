@@ -58,6 +58,7 @@
 		<th>IP</th>
 		<th>Nettverk</th>
 		<th>Operativsystem</th>
+		<th>Backup policy</th>
 		<th>Tilhørende system</th>
 		<th>Eierskap</th>
 	</tr>
@@ -113,6 +114,12 @@
 			{{ maskin.comp_os|default:"Ukjent" }}
 			{{ maskin.comp_os_version }}
 			{{ maskin.comp_os_service_pack }}
+		</td>
+		<td>
+			{% for policy in maskin.backup.all %}
+				{{ policy.backup_frequency }}<br>
+				{{ policy.storage_policy }}
+			{% endfor %}
 		</td>
 		<td>
 			{% if maskin.sub_name.parent_ref.systemreferanse %}
