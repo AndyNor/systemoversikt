@@ -18,6 +18,41 @@
 {% include 'index_css_header.html' %}
 <link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
 <style>
+    /* override the dark mode adjustments */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #79aec8;
+        --primary-fg: #fff;
+
+        --body-fg: #333;
+        --body-bg: #fff;
+        --body-quiet-color: #666;
+        --body-loud-color: #000;
+
+        --breadcrumbs-link-fg: #c4dce8;
+        --breadcrumbs-bg: var(--primary);
+
+        --link-fg: #447e9b;
+        --link-hover-color: #036;
+        --link-selected-fg: #5b80b2;
+
+        --hairline-color: #e8e8e8;
+        --border-color: #ccc;
+
+        --error-fg: #ba2121;
+        --message-success-bg: #dfd;
+        --message-warning-bg: #ffc;
+        --message-error-bg: #ffefef;
+
+        --darkened-bg: #f8f8f8;
+        --selected-bg: #e4e4e4;
+        --selected-row: #ffc;
+
+        --close-button-bg: #888;
+        --close-button-hover-bg: #609ab6;
+      }
+    }
+
     /* make control bar with delete and save fixed at bottom */
     .submit-row {
         position: fixed;

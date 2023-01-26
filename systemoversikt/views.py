@@ -730,6 +730,29 @@ def passwdneverexpire(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def tom_epost(request, pk):
+	"""
+	Denne funksjonen viser alle personer som har passordutløp kommende periode
+	Tilgjengelig for de som har rettigheter til å se brukere
+	"""
+	from django.utils import timezone
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		virksomhet = Virksomhet.objects.get(pk=pk)
+
+		brukere_uten_epost = User.objects.filter(email=None)
+
+		return render(request, 'virksomhet_tom_epost.html', {
+			'request': request,
+			'virksomhet': virksomhet,
+			'brukere_uten_epost': brukere_uten_epost,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
 def passwordexpire(request, pk):
 	"""
 	Denne funksjonen viser alle personer som har passordutløp kommende periode

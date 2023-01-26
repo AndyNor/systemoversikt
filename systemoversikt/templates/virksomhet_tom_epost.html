@@ -1,0 +1,38 @@
+{% extends "virksomhet_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny %}
+
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Brukere uten registert e-postadresse for {{ virksomhet.virksomhetsforkortelse }}
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+	<p>Ved overgang til ny klientplattform benyttes Azure AD for pålogging. Siden Azure AD benytter e-post som "brukernavn" har det vært stilt spørsmål rundt hvilke brukere som faktisk ikke har blitt tildelt e-post.
+	Det er også slik at personer i andre Micorosft tenants skal få tilgang til fellessystemer som gjestebruker. For at dette skal fungere må vi kunne koble vedkommendes e-post fra deres hjemmetenant med brukernavn i Oslofelles. Dette løses ved at det er satt opp automatikk som oppretter gjestekontoer i felles tenant basert på registrert e-post på brukeropjektet i on-premise AD.</p>
+
+	<table class="table table-sm tablesorter">
+		<thead>
+		<tr>
+			<th>Bruker</th>
+			<th>E-post</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for user in brukere_uten_epost %}
+		<tr>
+			<td>{{ user }}</td>
+			<td>{{ user.email }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}
