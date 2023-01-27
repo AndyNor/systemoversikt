@@ -50,5 +50,6 @@ urllib3==1.26.10
 xlrd==2.0.1
 python-ldap
 rdflib==6.2.0
+mammoth==1.5.0
 #pywin32==303
 #mod-wsgi==4.9.3
