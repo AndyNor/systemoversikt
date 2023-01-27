@@ -147,12 +147,15 @@ def mal(request):
 
 def tool_docx2html(request):
 
+	html = None
+	messages = None
 	if request.method == "POST":
 		import mammoth
 		docx_file = request.FILES['fileupload']
 		result = mammoth.convert_to_html(docx_file)
 		html = result.value
 		messages = result.messages
+
 
 	return render(request, 'tool_docx2html.html', {
 		"request": request,
