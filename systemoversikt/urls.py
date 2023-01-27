@@ -193,6 +193,8 @@ urlpatterns = [
 
 
 	re_path(r'^cmdb/tools/unique$', views.tool_unique_items, name='tool_unique_items'),
+	re_path(r'^cmdb/tools/docx2html$', views.tool_docx2html, name='tool_docx2html'),
+
 
 	re_path(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	re_path(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),
