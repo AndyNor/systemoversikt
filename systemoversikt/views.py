@@ -150,12 +150,26 @@ def tool_docx2html(request):
 	html = None
 	messages = None
 	if request.method == "POST":
+		print(request.POST)
 		import mammoth
-		docx_file = request.FILES['fileupload']
+		from bs4 import BeautifulSoup
+		try:
+			docx_file = request.FILES['fileupload']
+			filename = docx_file.name + ".html"
+		except:
+			html = "Ingen fil valgt"
+			filename = "error.html"
+
 		result = mammoth.convert_to_html(docx_file)
-		html = result.value
+		html = BeautifulSoup(result.value).prettify()
 		messages = result.messages
 
+		if "download" in request.POST:
+			response = HttpResponse(html, content_type='text/plain')
+			response['Content-Disposition'] = 'attachment; filename={0}'.format(filename)
+			return response
+
+		# ellers så var det "preview" in request.POST. Da returnerer vi HTML direkte
 
 	return render(request, 'tool_docx2html.html', {
 		"request": request,
