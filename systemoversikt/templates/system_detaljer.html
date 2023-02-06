@@ -688,7 +688,7 @@
 	<h5>Tilgang til systemet</h5>
 	<h6>Bekreftede tilgangsgrupper</h6>
 	{% for adgroup in systemdetaljer.tilgangsgrupper_ad.all %}
-		{{ adgroup.prkvalg.all.0.valgnavn }}
+		{{ adgroup.prkvalg.valgnavn }}
 		<a href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">{{ adgroup.display_name }}</a>
 		({{ adgroup.membercount }} medlemmer)<br>
 	{% endfor %}
