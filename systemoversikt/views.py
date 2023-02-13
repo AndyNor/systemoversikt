@@ -178,6 +178,20 @@ def tool_docx2html(request):
 	})
 
 
+def tool_compare_items(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	raw = request.POST.get('data', '').strip()  # strip removes trailing and leading space
+	filtered = raw.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ').replace(':',' ').replace('|',' ').lower()
+	splitted = filtered.split()
+	unike = sorted(set(splitted))
+
+	return render(request, 'tool_compare_items.html', {
+		"request": request,
+	})
+
 
 def tool_unique_items(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']

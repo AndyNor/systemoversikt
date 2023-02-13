@@ -6,19 +6,21 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Verktøy - Unike elementer
+	Verktøy - Sammenlikne elementer
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-<p>Lim inn tekst her. Tekst blir splittet opp og levert tilbake som unike elementer sortert. Funksjonen bryr seg ikke om det er små eller store bokstaver. Tegn som fjernes: <li>|,:;"'</li></p>
+<p>Lim inn elementer i hver boks. Tekst blir splittet opp og sammenliknet. Du får se hva som er unikt for hver boks, samt hva boksene har til felles. Funksjonen bryr seg ikke om det er små eller store bokstaver. Tegn som fjernes: <li>|,:;"'</li></p>
 
 	<form action="{% url 'tool_unique_items' %}" method="POST" autocomplete="off">
 		{% csrf_token %}
 		<div class="form-group form-inline">
-			<textarea style="width: 500px; height: 250px;" name="data"
-			placeholder="Ting du kun vil se unike instanser av" class="form-control form-control-sm">{{ query }}</textarea>
-			<input style="margin-left: 10px;" type="submit" value="Finn unike" class="btn btn-primary btn-sm">
+			<textarea style="width: 500px; height: 250px;" name="boks1"
+			placeholder="Boks 1 av" class="form-control form-control-sm">{{ query }}</textarea>
+			<textarea style="width: 500px; height: 250px;" name="boks2"
+			placeholder="Boks 2" class="form-control form-control-sm">{{ query }}</textarea>
+			<input style="margin-left: 10px;" type="submit" value="sammenlikn" class="btn btn-primary btn-sm">
 		</div>
 	</form>
 
