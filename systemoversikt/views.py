@@ -178,18 +178,38 @@ def tool_docx2html(request):
 	})
 
 
+def unique_splitted_items(text):
+	text = text.strip() # leading and trailing spaces
+	filtered = text.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ').replace(':',' ').replace('|',' ').lower()
+	splitted = filtered.split()
+	unike = set(splitted)
+	return unike
+
+
 def tool_compare_items(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	raw = request.POST.get('data', '').strip()  # strip removes trailing and leading space
-	filtered = raw.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ').replace(':',' ').replace('|',' ').lower()
-	splitted = filtered.split()
-	unike = sorted(set(splitted))
+	boks_a_raw = request.POST.get('boks_a', '')
+	boks_b_raw = request.POST.get('boks_b', '')
+
+	boks_a = unique_splitted_items(boks_a_raw)
+	boks_b = unique_splitted_items(boks_b_raw)
+
+	bare_i_a = boks_a.difference(boks_b)
+	bare_i_b = boks_b.difference(boks_a)
+	begge_a_og_b = boks_a.intersection(boks_b)
+	a_og_b = boks_a.union(boks_b)
 
 	return render(request, 'tool_compare_items.html', {
 		"request": request,
+		"boks_a_raw": boks_a_raw,
+		"boks_b_raw": boks_b_raw,
+		"bare_i_a": bare_i_a,
+		"bare_i_b": bare_i_b,
+		"begge_a_og_b": begge_a_og_b,
+		"a_og_b": a_og_b,
 	})
 
 

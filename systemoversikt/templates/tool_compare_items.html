@@ -6,26 +6,54 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Verktøy - Unike elementer
+	Verktøy - Sammenlikne elementer
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-<p>Lim inn tekst her. Tekst blir splittet opp og levert tilbake som unike elementer sortert. Funksjonen bryr seg ikke om det er små eller store bokstaver. Tegn som fjernes: <li>|,:;"'</li></p>
+<p>Lim inn elementer i hver boks. Tekst blir splittet opp og sammenliknet. Du får se hva som er unikt for hver boks, samt hva boksene har til felles. Funksjonen bryr seg ikke om det er små eller store bokstaver. Tegn som fjernes: <li>|,:;"'</li></p>
 
-	<form action="{% url 'tool_unique_items' %}" method="POST" autocomplete="off">
+	<form action="{% url 'tool_compare_items' %}" method="POST" autocomplete="off">
 		{% csrf_token %}
 		<div class="form-group form-inline">
-			<textarea style="width: 500px; height: 250px;" name="data"
-			placeholder="Ting du kun vil se unike instanser av" class="form-control form-control-sm">{{ query }}</textarea>
-			<input style="margin-left: 10px;" type="submit" value="Finn unike" class="btn btn-primary btn-sm">
+			<textarea style="width: 500px; height: 250px;" name="boks_a"
+			placeholder="Boks A" class="form-control form-control-sm">{{ boks_a_raw }}</textarea>
+			<textarea style="width: 500px; height: 250px;" name="boks_b"
+			placeholder="Boks B" class="form-control form-control-sm">{{ boks_b_raw }}</textarea>
+			<input style="margin-left: 10px;" type="submit" value="sammenlikn" class="btn btn-primary btn-sm">
 		</div>
 	</form>
 
 	<hr>
 
-	{% for item in result %}
-		{{ item }}<br>
-	{% endfor %}
+<div class="container">
+	<div class="row">
+		<div class="col-sm">
+			<h6>Elementer bare er i boks A</h6>
+			{% for item in bare_i_a %}
+				{{ item }}<br>
+			{% endfor %}
+		</div>
+		<div class="col-sm">
+			<h6>Elementer bare er i boks B</h6>
+			{% for item in bare_i_b %}
+				{{ item }}<br>
+			{% endfor %}
+		</div>
+		<div class="col-sm">
+			<h6>Elementer som er i begge boksene (intersection)</h6>
+			{% for item in begge_a_og_b %}
+				{{ item }}<br>
+			{% endfor %}
+		</div>
+		<div class="col-sm">
+			<h6>Alle unike elementer (union)</h6>
+			{% for item in a_og_b %}
+				{{ item }}<br>
+			{% endfor %}
+		</div>
+	</div>
+</div>
+<hr>
 
 {% endblock hovedinnhold %}
