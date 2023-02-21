@@ -5254,6 +5254,71 @@ def iga_api(request):
 	return JsonResponse(data, safe=False)
 
 
+def csirt_iplookup_api(request):
+
+	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Innkommende kall")
+	if not request.method == "GET":
+		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil: HTTP metode var ikke GET")
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="csirt_ipsok").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
+
+
+	import ipaddress
+	ip_string = request.GET.get('ip', '').strip()
+	if ip_string == '':
+		return JsonResponse({"error": "Ingen IP-adresse oppgitt. Send som GET-variabel 'ip'"}, safe=False)
+	try:
+		ip = ipaddress.ip_address(ip_string)
+	except ValueError:
+		return JsonResponse({"error": "Ikke en gyldig IP-adresse"}, safe=False)
+
+
+	try:
+		dns_match = [inst.dns_name for inst in DNSrecord.objects.filter(ip_address=ip_string).all()]
+	except:
+		dns_match = None
+
+
+	ip_match = NetworkIPAddress.objects.get(ip_address=ip_string)
+	host_match = ["%s" % (inst) for inst in ip_match.servere.all()]
+	vlan_match = ["%s subnet /%s: %s" % (inst.ip_address, inst.subnet_mask, inst.comment) for inst in ip_match.vlan.all()]
+
+	vip_match = ["%s port %s" % (vip.vip_name, vip.port) for vip in ip_match.viper.all()]
+	members = []
+	for vip in ip_match.viper.all():
+		for pool in vip.pool_members.all():
+			if pool.server:
+				members.append({"server": pool.server, "host_ip": pool.ip_address, "direct": True})
+			else:
+				for server in pool.indirect_pool_members().all():
+					members.append({"server": pool.server, "host_ip": pool.ip_address, "direct": False})
+
+	vip_pool_members = members
+
+
+	# pools, servernavn, interne ip-adresser, bss, systemnavn
+
+	# logic
+	data = {
+		"query_ip": ip_string,
+		"dns_matches": dns_match,
+		"vip_matches": vip_match,
+		"vip_pool_members": vip_pool_members,
+		"matching_vlans": vlan_match,
+		"direct_host": host_match,
+	}
+
+
+	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Vellykket kall")
+	return JsonResponse(data, safe=False)
+
+
 
 def behandlingsoversikt_api(request):
 	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Innkommende kall")

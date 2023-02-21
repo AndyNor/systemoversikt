@@ -1970,6 +1970,9 @@ class NetworkIPAddress(models.Model):
 	def ant_viper(self):
 		return self.viper.all().count()
 
+	def ant_pools(self):
+		return self.vip_pools.all().count()
+
 
 
 
