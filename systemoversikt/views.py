@@ -5256,12 +5256,15 @@ def iga_api(request):
 
 
 def behandlingsoversikt_api(request):
+	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Innkommende kall")
 	if not request.method == "GET":
+		ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Feil: HTTP metode var ikke GET")
 		raise Http404
 
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="behandlingsoversikt").values_list("key", flat=True)
 	if not key in list(allowed_keys):
+		ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Feil eller tom API-nøkkel")
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 
 	data = []
@@ -5278,6 +5281,7 @@ def behandlingsoversikt_api(request):
 		systeminfo["systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all()]
 		data.append(systeminfo)
 
+	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Vellykket kall")
 	return JsonResponse(data, safe=False)
 
 
