@@ -5269,8 +5269,12 @@ def csirt_iplookup_api(request):
 
 
 
+	from django.core.exceptions import ObjectDoesNotExist
 	import ipaddress
+
+
 	ip_string = request.GET.get('ip', '').strip()
+	port_string = request.GET.get('port', '').strip()
 	if ip_string == '':
 		return JsonResponse({"error": "Ingen IP-adresse oppgitt. Send som GET-variabel 'ip'"}, safe=False)
 	try:
@@ -5285,33 +5289,42 @@ def csirt_iplookup_api(request):
 		dns_match = None
 
 
-	ip_match = NetworkIPAddress.objects.get(ip_address=ip_string)
-	host_match = ["%s" % (inst) for inst in ip_match.servere.all()]
-	vlan_match = ["%s subnet /%s: %s" % (inst.ip_address, inst.subnet_mask, inst.comment) for inst in ip_match.vlan.all()]
+	try:
+		ip_match = NetworkIPAddress.objects.get(ip_address=ip_string)
 
-	vip_match = ["%s port %s" % (vip.vip_name, vip.port) for vip in ip_match.viper.all()]
-	members = []
-	for vip in ip_match.viper.all():
-		for pool in vip.pool_members.all():
-			if pool.server:
-				members.append({"server": pool.server, "host_ip": pool.ip_address, "direct": True})
-			else:
-				for server in pool.indirect_pool_members().all():
-					members.append({"server": pool.server, "host_ip": pool.ip_address, "direct": False})
+		vlan_match = ["%s subnet /%s: %s" % (inst.ip_address, inst.subnet_mask, inst.comment) for inst in ip_match.vlan.all()]
+		vip_match = ["%s port %s" % (vip.vip_name, vip.port) for vip in ip_match.viper.all()]
+		members = []
 
-	vip_pool_members = members
+		for vip in ip_match.viper.all():
+			if port_string != "":
+				if vip.port != int(port_string):
+					continue
+			for pool in vip.nested_pool_members():
 
+				for local_ip in pool.server.network_ip_address.all(): # Det er bare ét, men det er en mange-til-mangerelasjon
+					#host_vlan.append(["%s (%s/%s)" % (v.comment, v.ip_address, v.subnet_mask) for v in local_ip.vlan.all()])
+					domaint_vlan = local_ip.dominant_vlan()
+					host_vlan = "%s (%s/%s)" % (domaint_vlan.comment, domaint_vlan.ip_address, domaint_vlan.subnet_mask)
 
-	# pools, servernavn, interne ip-adresser, bss, systemnavn
+				members.append({
+					"server": pool.server.comp_name,
+					"host_ip": pool.ip_address,
+					"external_vip": "%s port %s" % (vip.vip_name, vip.port),
+					"server_vlan": host_vlan,
+					"bss": pool.server.sub_name.navn,
+				})
+		vip_pool_members = members
+	except ObjectDoesNotExist:
+		return JsonResponse({"error": "Ingen treff på IP-adresse"}, safe=False)
 
-	# logic
 	data = {
 		"query_ip": ip_string,
+		"query_port": port_string,
 		"dns_matches": dns_match,
 		"vip_matches": vip_match,
 		"vip_pool_members": vip_pool_members,
 		"matching_vlans": vlan_match,
-		"direct_host": host_match,
 	}
 
 

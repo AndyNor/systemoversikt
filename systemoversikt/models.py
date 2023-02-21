@@ -1796,6 +1796,28 @@ class virtualIP(models.Model):
 		verbose_name = "VIP"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+	def nested_pool_members(self):
+		members = []
+		candidates = list(self.pool_members.all())
+		already_seen = []
+
+		while candidates:
+			current_candidate = candidates.pop()
+			already_seen.append(current_candidate)
+			print(current_candidate)
+			if current_candidate.server:
+				members.append(current_candidate)
+				continue
+
+			new_candidates = list(current_candidate.indirect_pool_members())
+			for candidate in new_candidates:
+				if candidate not in candidates and candidate not in already_seen:
+					candidates.append(candidate)
+
+		return members
+
+
+
 
 class VirtualIPPool(models.Model):
 	sist_oppdatert = models.DateTimeField(
@@ -1831,8 +1853,12 @@ class VirtualIPPool(models.Model):
 		return self.pool_name
 
 	def indirect_pool_members(self):
-		vip = virtualIP.objects.get(ip_address=self.ip_address, port=self.port)
-		return vip.pool_members
+		try:
+			vip = virtualIP.objects.get(ip_address=self.ip_address, port=self.port)
+			return vip.pool_members.all()
+		except:
+			return []
+
 
 	class Meta:
 		unique_together = ('pool_name', 'ip_address', 'port')
@@ -1972,6 +1998,11 @@ class NetworkIPAddress(models.Model):
 
 	def ant_pools(self):
 		return self.vip_pools.all().count()
+
+	def dominant_vlan(self):
+		if self.ant_vlan() > 0:
+			return self.vlan.all().order_by('-subnet_mask')[0]
+		return []
 
 
 
