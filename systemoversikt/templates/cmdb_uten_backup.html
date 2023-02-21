@@ -1,0 +1,33 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Servere uten backup
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<h6>Servere uten backup fordelt på Business Service</h6>
+<table class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th>Business service</th>
+		<th>Server</th>
+		<th></th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for server in uten_backup %}
+	<tr>
+		<td>{{ server.sub_name }}</td>
+		<td>{{ server.comp_name }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>
+
+{% endblock hovedinnhold %}

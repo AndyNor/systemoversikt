@@ -540,6 +540,22 @@ def alle_nettverk(request):
 
 
 
+
+
+def cmdb_uten_backup(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	uten_backup = CMDBdevice.objects.filter(device_active=True, backup=None, device_type="SERVER")
+
+	return render(request, 'cmdb_uten_backup.html', {
+		'request': request,
+		'uten_backup': uten_backup,
+	})
+
+
+
 def cmdb_backup_index(request):
 	"""
 	Vise alle nettverk
