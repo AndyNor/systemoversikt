@@ -547,7 +547,7 @@ def cmdb_uten_backup(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	uten_backup = CMDBdevice.objects.filter(device_active=True, backup=None, device_type="SERVER")
+	uten_backup = CMDBdevice.objects.filter(device_active=True, backup=None, device_type="SERVER").order_by('sub_name__parent_ref')
 
 	return render(request, 'cmdb_uten_backup.html', {
 		'request': request,

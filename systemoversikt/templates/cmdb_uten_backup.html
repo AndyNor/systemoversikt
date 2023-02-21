@@ -12,17 +12,18 @@
 {% block hovedinnhold %}
 
 <h6>Servere uten backup fordelt på Business Service</h6>
-<table class="table table-sm tablesorter">
+<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
 		<th>Business service</th>
+		<th>Business sub service</th>
 		<th>Server</th>
-		<th></th>
 	</tr>
 	</thead>
 	<tbody>
 	{% for server in uten_backup %}
 	<tr>
+		<td>{{ server.sub_name.parent_ref }}</td>
 		<td>{{ server.sub_name }}</td>
 		<td>{{ server.comp_name }}</td>
 	</tr>
