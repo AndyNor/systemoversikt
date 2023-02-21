@@ -18,7 +18,7 @@
 		<th>Business service</th>
 		<th>Business sub service</th>
 		<th>Server</th>
-		<th>Billable</th>
+		<th>Sub service billable?</th>
 		<th>Serverbeskrivelse</th>
 	</tr>
 	</thead>
@@ -28,7 +28,7 @@
 		<td>{{ server.sub_name.parent_ref }}</td>
 		<td>{{ server.sub_name }}</td>
 		<td>{{ server.comp_name }}</td>
-		<td>{{ server.billable|yesno:"Ja,Nei" }}</td>
+		<td>{{ server.sub_name.u_service_billable|yesno:"Ja,Nei" }}</td>
 		<td>{{ server.comments }}<br>{{ server.description }}</td>
 	</tr>
 	{% endfor %}
