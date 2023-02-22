@@ -758,8 +758,8 @@ class RegistrerteAdmin(SimpleHistoryAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-	list_display = ('user', 'virksomhet', 'usertype', 'from_prk')
-	search_fields = ('user__username', 'user__first_name', 'user__last_name')
+	list_display = ('user', 'virksomhet', 'description', 'usertype', 'from_prk')
+	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'description',)
 	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som', 'adgrupper', 'org_unit',)
 	list_filter = ('usertype', 'from_prk')
 
