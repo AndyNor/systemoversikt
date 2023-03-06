@@ -748,6 +748,12 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			null=True,
 			blank=True,
 			)
+	account_type = models.CharField(
+			verbose_name="Brukertype (AD)",
+			max_length=30,
+			null=True,
+			blank=True,
+			)
 	description = models.TextField(
 			verbose_name="Beskrivelse (AD)",
 			blank=True,
@@ -832,7 +838,6 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			blank=True,
 			null=True,
 			)
-
 	# med vilje er det ikke HistoricalRecords() på denne
 
 	def __str__(self):

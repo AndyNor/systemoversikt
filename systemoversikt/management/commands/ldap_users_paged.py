@@ -114,11 +114,20 @@ class Command(BaseCommand):
 			else:
 				user.profile.password_expired = False
 
+
+			# map out type of user based on OU path
 			if "OU=Eksterne brukere" in dn:
 				user.profile.ekstern_ressurs = True
-
+				user.profile.account_type = "Ekstern"
 			if "OU=Brukere" in dn:
 				user.profile.ekstern_ressurs = False
+				user.profile.account_type = "Intern"
+			if "OU=Ressurser,OU=OK" in dn:
+				user.profile.account_type = "Ressurs"
+			if "OU=Servicekontoer,OU=OK" in dn:
+				user.profile.account_type = "Servicekonto"
+			if "OU=Kontakt,OU=OK" in dn:
+				user.profile.account_type = "Kontakt"
 
 			UserPasswordExpiry = attrs["msDS-UserPasswordExpiryTimeComputed"]
 			if len(UserPasswordExpiry) > 0:
