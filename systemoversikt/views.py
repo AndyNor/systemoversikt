@@ -852,8 +852,12 @@ def cmdb_uten_epost_stat(request):
 		totalt_antall_brukere = 0
 
 		for virksomhet in Virksomhet.objects.all():
-			brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False).count()
-			brukere_uten_epost = User.objects.filter(email="", profile__virksomhet=virksomhet, profile__accountdisable=False).count()
+
+			if virksomhet.virksomhetsforkortelse == "DRIFT":
+				continue # hopp over
+
+			brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
+			brukere_uten_epost = User.objects.filter(email="", profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
 
 			totalt_uten_epost += brukere_uten_epost
 			totalt_antall_brukere += brukere_i_virksomhet

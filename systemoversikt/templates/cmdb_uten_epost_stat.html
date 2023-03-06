@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-<p>Det er registrert {{totalt_uten_epost}} aktive kontoer (av {{totalt_antall_brukere}}) som ikke har en registrert e-postadresse. Noen av disse er systemkontoer og driftskontoer.</p>
+<p>Det er registrert {{totalt_uten_epost}} aktive kontoer (av {{totalt_antall_brukere}}) som ikke har en registrert e-postadresse. Dette er kun interne og eksterne brukere, og DRIFT-brukere er ikke tatt med. Det finnes også "ressurs", "service" og "kontakt"-kontoer. Disse er også filtert ut basert på organisatorisk plassering av kontoen.</p>
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
