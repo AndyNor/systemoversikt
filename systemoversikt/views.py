@@ -824,8 +824,8 @@ def tom_epost(request, pk):
 
 		virksomhet = Virksomhet.objects.get(pk=pk)
 
-		count_brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False).count()
-		brukere_uten_epost = User.objects.filter(email="", profile__virksomhet=virksomhet, profile__accountdisable=False)
+		count_brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
+		brukere_uten_epost = User.objects.filter(email="", profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern'])
 		#print(type(brukere_uten_epost[0].email))
 
 		return render(request, 'virksomhet_tom_epost.html', {
