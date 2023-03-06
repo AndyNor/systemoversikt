@@ -19,6 +19,9 @@
 	{% url 'o365_avvik' as url_o365_avvik %}
 	<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}" >Sikkerhetsavvik</a>
 
+	{% url 'cmdb_uten_epost_stat' as url_cmdb_uten_epost_stat %}
+	<a href="{{ url_cmdb_uten_epost_stat }}" class="btn btn-sm btn-link {% if url_cmdb_uten_epost_stat in request.path %}fremhev{% endif %}" >Brukere uten e-post</a>
+
 
 	<hr>
 	<h6>Brukere og tilgangsgrupper</h6>

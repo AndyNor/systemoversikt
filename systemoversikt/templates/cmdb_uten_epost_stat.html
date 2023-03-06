@@ -1,0 +1,39 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Statistikk over brukere uten e-post
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Det er registrert {{totalt_uten_epost}} aktive kontoer (av {{totalt_antall_brukere}}) som ikke har en registrert e-postadresse. Noen av disse er systemkontoer og driftskontoer.</p>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Virksomhet</th>
+		<th>Brukere uten e-post</th>
+		<th>Antall brukere</th>
+		<th>Andel av antall brukere</th>
+
+	</thead>
+	<tbody>
+	{% for s in stats %}
+		<tr>
+			<td><a href="{% url 'tom_epost' pk=s.virksomhet.pk %}">{{ s.virksomhet }}</a></td>
+			<td>{{ s.brukere_uten_epost }}</td>
+			<td>{{ s.brukere_i_virksomhet }}</td>
+			<td>
+				{% if s.andel_brukere_i_virksomhet %}
+					{{ s.andel_brukere_i_virksomhet }}%
+				{% endif %}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

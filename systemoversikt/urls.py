@@ -161,6 +161,8 @@ urlpatterns = [
 	re_path(r'^cmdb/lagring/$', views.cmdb_lagring_index, name='cmdb_lagring_index'),
 	re_path(r'^cmdb/minne/$', views.cmdb_minne_index, name='cmdb_minne_index'),
 	re_path(r'^cmdb/forvaltere/$', views.cmdb_forvaltere, name='cmdb_forvaltere'),
+	re_path(r'^cmdb/azure/uten_epost/$', views.cmdb_uten_epost_stat, name='cmdb_uten_epost_stat'),
+
 
 
 

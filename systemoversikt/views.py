@@ -838,6 +838,49 @@ def tom_epost(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def cmdb_uten_epost_stat(request):
+	"""
+	Denne funksjonen viser alle personer som har passordutløp kommende periode
+	Tilgjengelig for de som har rettigheter til å se brukere
+	"""
+	from django.utils import timezone
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		stats = []
+		totalt_uten_epost = 0
+		totalt_antall_brukere = 0
+
+		for virksomhet in Virksomhet.objects.all():
+			brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False).count()
+			brukere_uten_epost = User.objects.filter(email="", profile__virksomhet=virksomhet, profile__accountdisable=False).count()
+
+			totalt_uten_epost += brukere_uten_epost
+			totalt_antall_brukere += brukere_i_virksomhet
+
+			try:
+				andel_brukere_i_virksomhet = round(100*brukere_uten_epost / brukere_i_virksomhet)
+			except:
+				andel_brukere_i_virksomhet = None
+
+			stats.append(
+					{
+						"virksomhet": virksomhet,
+						"brukere_i_virksomhet": brukere_i_virksomhet,
+						"brukere_uten_epost": brukere_uten_epost,
+						"andel_brukere_i_virksomhet": andel_brukere_i_virksomhet,
+					}
+				)
+
+		return render(request, 'cmdb_uten_epost_stat.html', {
+			'request': request,
+			'stats': stats,
+			'totalt_uten_epost': totalt_uten_epost,
+			'totalt_antall_brukere': totalt_antall_brukere,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 
 def passwordexpire(request, pk):
 	"""
