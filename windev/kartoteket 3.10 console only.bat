@@ -1,2 +1,2 @@
 @echo off
-cmd /k "cd /d C:\Sourcecode\env\py310\Scripts & activate & cd /d C:\Sourcecode\systemoversikt"
+cmd /k "cd /d C:\Virtualenv\Kartoteket\Scripts & activate & cd /d C:\Git\kartoteket\systemoversikt\"
