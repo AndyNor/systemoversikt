@@ -2,9 +2,16 @@
 import pandas as pd
 import numpy as np
 
-def parse_groups(data):
-	#Laste inn grupper
-	return None
+def parse_firewall_named_groups(excel_file, sheet):
+	named_groups = {}
+	df = excel_file.parse(sheet,
+				skiprows=2, # de første radene er tomme
+			)
+	for column in df.columns:
+		if not column.startswith("Unnamed"):
+			named_groups[column] = df[column].dropna().tolist()#.to_dict('list')
+
+	return named_groups
 
 excel_file = pd.ExcelFile("firewall_all_ports.xlsx")
 print("Fant følgende ark i filen: %s" % excel_file.sheet_names)
@@ -15,9 +22,11 @@ for sheet in excel_file.sheet_names:
 	print("Åpner ark %s" % sheet)
 
 	if sheet == "README":
+		print("Ingen relevante data")
 		continue
 	if sheet == "Groups' Content":
-		named_network_groups = parse_groups(data=None)
+		named_network_groups = parse_firewall_named_groups(excel_file=excel_file, sheet=sheet)
+		print("Navngitte nettverk lastet")
 		continue
 
 	df = excel_file.parse(sheet,
@@ -35,7 +44,8 @@ for sheet in excel_file.sheet_names:
 			rule_id = "error"
 
 		def lookup_groups(something):
-			# det kan være en gruppe. Da returneres alle medlemmer
+			# det kan være en gruppe. Da returneres alle medlemmer.
+			#	hvis en gruppe (string) slås opp som en ny gruppe, må vi fortsette til vi bare har ip-adresser..
 
 			# hvis det ikke er noen treff, returnerer vi det vi fant
 			return something
@@ -62,11 +72,10 @@ for sheet in excel_file.sheet_names:
 print(len(all_openings))
 
 for opening in all_openings:
-	print("Regel %s: %s" % (opening, all_openings[opening]))
+	#print("Regel %s: %s" % (opening, all_openings[opening]))
+	pass
 
 
-#Slå opp tilhørende vlan
 # for hver adresse i source eller destination sjekker vi
-# først, er det et VLAN eller en enkelt IP.
-# hvis IP, identifiser tilhørende vlan
-# hvis nettverk, slå det opp.
+# 		hvis IP, identifiser tilhørende vlan
+# 		hvis nettverk, slå det opp.
