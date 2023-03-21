@@ -5317,6 +5317,64 @@ def iga_api(request):
 	return JsonResponse(data, safe=False)
 
 
+def csirt_maskinlookup_api(request):
+	#ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Innkommende kall")
+	if not request.method == "GET":
+		#ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Feil: HTTP metode var ikke GET")
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="csirt_ipsok").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Feil eller tom API-nøkkel")
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
+	from django.core.exceptions import ObjectDoesNotExist
+
+	maskin_string = request.GET.get('server', '').strip()
+	if maskin_string == '':
+		return JsonResponse({"error": "Servernavn er ikke oppgitt. Send som GET-variabel 'server'"}, safe=False)
+
+	try:
+		server_match = CMDBdevice.objects.get(comp_name=maskin_string)
+	except ObjectDoesNotExist:
+		return JsonResponse({"error": "Ingen treff på servernavn"}, safe=False)
+
+	try:
+		business_sub_service = server_match.sub_name.navn
+	except:
+		business_sub_service = ""
+	try:
+		business_service = server_match.sub_name.parent_ref.navn
+	except:
+		business_service = ""
+	try:
+		system = server_match.sub_name.parent_ref.systemreferanse.systemnavn
+	except:
+		system = ""
+	try:
+		systemalias = server_match.sub_name.parent_ref.systemreferanse.alias
+	except:
+		systemalias = ""
+
+	data = {
+		"query": maskin_string,
+		"hostname": server_match.comp_name,
+		"os": server_match.comp_os_readable,
+		"ip_address": server_match.comp_ip_address,
+		"business_sub_service": business_sub_service,
+		"business_service": business_service,
+		"system": system,
+		"systemalias": systemalias,
+	}
+
+
+	ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Vellykket kall mot {maskin_string}")
+	return JsonResponse(data, safe=False)
+
+
+
+
 def csirt_iplookup_api(request):
 
 	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Innkommende kall")
