@@ -5349,13 +5349,25 @@ def csirt_maskinlookup_api(request):
 	except:
 		business_service = ""
 	try:
-		system = server_match.sub_name.parent_ref.systemreferanse.systemnavn
+		systemnavn = server_match.sub_name.parent_ref.systemreferanse.systemnavn
 	except:
-		system = ""
+		systemnavn = ""
 	try:
 		systemalias = server_match.sub_name.parent_ref.systemreferanse.alias
 	except:
 		systemalias = ""
+	try:
+		systemeier = server_match.sub_name.parent_ref.systemreferanse.systemeier.virksomhetsforkortelse
+	except:
+		systemeier = ""
+	try:
+		systemforvalter = server_match.sub_name.parent_ref.systemreferanse.systemforvalter.virksomhetsforkortelse
+	except:
+		systemforvalter = ""
+	try:
+		systemforvaltere = [ansvarlig.brukernavn.email for ansvarlig in server_match.sub_name.parent_ref.systemreferanse.systemforvalter_kontaktpersoner_referanse.all()]
+	except:
+		systemforvaltere = []
 
 	data = {
 		"query": maskin_string,
@@ -5364,8 +5376,13 @@ def csirt_maskinlookup_api(request):
 		"ip_address": server_match.comp_ip_address,
 		"business_sub_service": business_sub_service,
 		"business_service": business_service,
-		"system": system,
-		"systemalias": systemalias,
+		"system": {
+			"systemnavn": systemnavn,
+			"systemalias": systemalias,
+			"systemeier": systemeier,
+			"systemforvalter": systemforvalter,
+			"systemforvaltere": systemforvaltere,
+		}
 	}
 
 
