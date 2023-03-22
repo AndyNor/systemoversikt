@@ -15,7 +15,8 @@
     <td>{{ e.ubw_kategori_display|default:"" }} ({{ e.ubw_kategori|default:"" }})</td>
 
     <td class="ubw_manuell">{{ e.periode_paalopt|date:"Ym" }}</td>
-    <td class="ubw_manuell">{{ e.kategori }}</td>
+    <td class="ubw_manuell">{{ e.kategori|default:"-" }}</td>
+    <td class="ubw_manuell">{{ e.ekstra_kategori|default:"-" }}</td>
     <td class="ubw_manuell">{{ e.leverandor|default:"-" }}</td>
     <td class="ubw_manuell">{{ e.kommentar|default:"-" }}</td>
     <td style="width: 220px">

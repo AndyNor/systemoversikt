@@ -11,19 +11,23 @@
 {% block hovedinnhold %}
 
 
-<p>Tagging av flere poster samtidig. Du har valgt disse linjene:</p>
+<p>Tagging av flere poster samtidig. Du har valgt disse fakturaene:</p>
 
 {% for faktura in valgte_fakturaer %}
 	<li>{{ faktura }}</li>
 {% endfor %}
 
 <hr>
-<p>Endre alle disse med følgende metadata</p>
+<p>For de valgte fakturaene vist over gjelder følgende:</p>
+<ul>
+	<li>Dersom det ikke er registrert metadata fra før, opprettes det ny metadata med utfylt informasjon. Samme metadata for alle valgte faktura.</li>
+	<li>Dersom det er registrert metadata fra før, oppdateres fakturaene med alle felter som er fylt ut utemom faktisk periode. Faktisk periode blir stående som den var. Du må likevel fylle ut en verdi da dette er et påkrevd felt. Faktisk periode vil da kun bli benyttet for eventuelle valgte faktura uten metadata fra før.</li>
+</ul>
 
 	{% if form.is_multipart %}
-		<form method="post" action="" enctype="multipart/form-data">
+		<form method="post" action="?submitted=ja" enctype="multipart/form-data">
 	{% else %}
-		<form method="post" action="">
+		<form method="post" action="?submitted=ja">
 	{% endif %}
 	{% csrf_token %}
 	{% for value in post_data %}

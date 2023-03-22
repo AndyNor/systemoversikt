@@ -5713,6 +5713,7 @@ def ubw_multiselect(request):
 	valgte = request.POST.getlist('selected_items', None)
 	valgte_fakturaer = UBWFaktura.objects.filter(pk__in=[int(v) for v in valgte])
 
+	# må finne ut hvilken enhet fakturaene tilhører. Alle må tilhøre samme enhet
 	enhet = None
 	for faktura in valgte_fakturaer:
 		if enhet == None:
@@ -5722,6 +5723,7 @@ def ubw_multiselect(request):
 				return HttpResponseNotFound("Alle fakturaer må tilhøre samme enhet")
 		enhet = faktura.belongs_to
 
+	# sjekker at bruker har tilgang til enheten for å gjøre endringer
 	if not request.user in enhet.users.all():
 		return HttpResponseNotFound("Du må eie fakturaene for å kunne legge til metadata")
 
@@ -5731,14 +5733,27 @@ def ubw_multiselect(request):
 				data_list=ubw_generer_ekstra_valg(enhet.pk),
 			)
 
-	if request.method == 'POST' and form.is_valid():
+	submitted = request.GET.get('submitted', "nei")
+	if request.method == 'POST' and form.is_valid() and submitted == "ja":
 
-		#print(valgte_fakturaer)
+		# hvis det er metadata allerede registrert, dropper vi fakturaen. Ellers legger vil til samme innsendte metadata mot alle valgte faktura
 		instance = form.save(commit=False)
 		for faktura in valgte_fakturaer:
+			if hasattr(faktura, "metadata_reference"):
+				messages.warning(request, f"Faktura {faktura} er allerede registrert med metadata")
+				for field in form.fields:
+					if field == "periode_paalopt":
+						continue # vi oppdaterer ikke dato på eksisterende metadata
+					if getattr(instance, field) != None:
+						setattr(faktura.metadata_reference, field, getattr(instance, field))
+						faktura.metadata_reference.save()
+						messages.success(request, f"Oppdaterte {field} til faktura {faktura} til {getattr(instance, field)}")
+				continue
+
 			instance.belongs_to = faktura
 			instance.pk = None # triks for å få en ny instans. Ny pk tildeles automatisk.
 			instance.save()
+			messages.success(request, f"Opprettet metadata til faktura {faktura}")
 			#print("lagrer %s" % instance)
 
 		return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
@@ -5800,6 +5815,10 @@ def ubw_api(request, pk):
 		except:
 			eksportdata["Kategori"] = ""
 		try:
+			eksportdata["Kategori2"] = faktura.metadata_reference.ekstra_kategori.name
+		except:
+			eksportdata["Kategori2"] = ""
+		try:
 			eksportdata["Periode påløpt år"] = faktura.metadata_reference.periode_paalopt.year
 		except:
 			eksportdata["Periode påløpt år"] = "_"
@@ -5856,7 +5875,7 @@ def ubw_api(request, pk):
 		faktura_eksport.append(eksportdata)
 
 
-	# resten her handler om estimater. Vi trener først noen tabeller å slå opp i der data faktisk ikke er registret på estimatet.
+	# resten her handler om estimater. Vi trenger først noen tabeller å slå opp i der data faktisk ikke er registret på estimatet.
 
 	# for å kunne fylle ut UBW Kontonavn
 	ubw_kontonavn_oppslag = list(UBWFaktura.objects.filter(belongs_to=enhet).values_list('ubw_account', 'ubw_xaccount').distinct())
@@ -5924,6 +5943,10 @@ def ubw_api(request, pk):
 			eksportdata["Kategori"] = e.kategori.name
 		except:
 			eksportdata["Kategori"] = ""
+		try:
+			eksportdata["Kategori2"] = e.ekstra_kategori.name
+		except:
+			eksportdata["Kategori2"] = ""
 		try:
 			eksportdata["Periode påløpt år"] = e.periode_paalopt.year
 		except:
@@ -6098,7 +6121,7 @@ def ubw_enhet(request, pk):
 			#	print(error_message)
 
 		uploaded_file = None
-		dager_gamle = 750
+		dager_gamle = 365
 		tidsgrense = datetime.date.today() - datetime.timedelta(days=dager_gamle)
 		gyldige_fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_voucher_date__gte=tidsgrense)
 		nye_fakturaer = gyldige_fakturaer.filter(metadata_reference=None).order_by('-ubw_voucher_date')

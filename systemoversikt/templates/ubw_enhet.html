@@ -19,13 +19,12 @@
 	<hr>
 	<h6>Importerte data fra økonomisystemet</h6>
 
-	Viset fakturaer som i UBW gjelder for de siste {{dager_gamle}} dager.
+	Viser fakturaer som er inntil {{dager_gamle}} dager gamle.
 
 	<hr>
 	<form action="{% url 'ubw_multiselect' %}" id="ubw_multiselect" method="post">
 		{% csrf_token %}
-		<button type="submit" class="btn btn-sm">Håndter markerte</button>
-
+		<button type="submit" class="btn btn-primary btn-sm">Endre metadata på valgte fakturaer</button>
 
 		<table class="table table-striped tablesorter">
 			<thead>
@@ -44,7 +43,8 @@
 					<th>{% get_verbose_field_name model "ubw_kategori" %}</th>
 					<th class="ubw_manuell">Periode Påløpt (YYYYmm)</th>
 					{# <th class="ubw_manuell">Budsjettert</th> #}
-					<th class="ubw_manuell">Kategori</th>
+					<th class="ubw_manuell">Kategori1</th>
+					<th class="ubw_manuell">Kategori2</th>
 					<th class="ubw_manuell">Leverandør</th>
 					<th class="ubw_manuell">Kommentar</th>
 					<th class="filter-false">Tillegg</th>

@@ -6421,7 +6421,7 @@ class UBWMetadata(models.Model):
 		blank=False,
 		)
 	periode_paalopt = models.DateField(
-		verbose_name="Faktisk periode påløpt",
+		verbose_name="Faktisk periode påløpt (yyyy-mm-dd)",
 		null=False,
 		blank=False,
 		)
@@ -6434,8 +6434,17 @@ class UBWMetadata(models.Model):
 		)
 	kategori = models.ForeignKey(
 		to="UBWFakturaKategori",
+		related_name="kategori",
 		on_delete=models.PROTECT,
-		verbose_name="Type / kategori",
+		verbose_name="Kategori 1",
+		null=True,
+		blank=True,
+		)
+	ekstra_kategori = models.ForeignKey(
+		to="UBWFakturaKategori",
+		related_name="ekstra_kategori",
+		on_delete=models.PROTECT,
+		verbose_name="Kategori 2",
 		null=True,
 		blank=True,
 		)
@@ -6563,13 +6572,23 @@ class UBWEstimat(models.Model):
 		blank=True,
 		)
 	periode_paalopt = models.DateField(
-		verbose_name="Faktisk periode påløpt",
-		null=False, blank=False,
+		verbose_name="Faktisk periode påløpt (yyyy-mm-dd)",
+		null=False,
+		blank=False,
 		)
 	kategori = models.ForeignKey(
 		to="UBWFakturaKategori",
+		related_name="estimat_kategori",
 		on_delete=models.PROTECT,
-		verbose_name="Type / kategori",
+		verbose_name="Kategori 1",
+		null=True,
+		blank=True,
+		)
+	ekstra_kategori = models.ForeignKey(
+		to="UBWFakturaKategori",
+		related_name="estimat_ekstra_kategori",
+		on_delete=models.PROTECT,
+		verbose_name="Kategori 2",
 		null=True,
 		blank=True,
 		)
