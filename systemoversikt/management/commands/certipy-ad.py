@@ -10,7 +10,7 @@ import subprocess
 
 class Command(BaseCommand):
 	def handle(self, **options):
-		username = os.environ['KARTOTEKET_LDAPUSER']
+		username = os.environ['KARTOTEKET_LDAPUSER'].split("\\")[1]
 		password = os.environ['KARTOTEKET_LDAPPASSWORD']
 		ldap_server = os.environ["KARTOTEKET_LDAPSERVER"]
 
