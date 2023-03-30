@@ -242,12 +242,12 @@ def cmdb_adcs_index(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-	from os import listdir
+	from os import listdir, path
 	from os.path import isfile, join
 	import re
 	import json
 
-	path = "systemoversikt/pki"
+	path = path.dirname(path.abspath(__file__)) + "/pki"
 	limit = 3
 
 	summary = []
