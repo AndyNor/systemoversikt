@@ -1,0 +1,47 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Brannmur
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	{% for line in debug %}
+		<p>{{ line }}</p>
+	{% endfor %}
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Regel</th>
+		<th>Virtuell brannmur</th>
+		<th>Type åpning</th>
+		<th>Kilde</th>
+		<th>Destinasjon</th>
+		<th>Protokoll</th>
+		<th>Beskrivelse</th>
+		<th>Retning</th>
+	</thead>
+	<tbody>
+
+	{% for id, opening in all_openings.items %}
+		<tr>
+			<td>{{ id }}</td>
+			<td>{{ opening.firewall }}</td>
+			<td>{{ opening.permit }}</td>
+			<td>{{ opening.source }}</td>
+			<td>{{ opening.destination }}</td>
+			<td>{{ opening.service }}</td>
+			<td>{{ opening.beskrivelse }}</td>
+			<td>{{ opening.retning }}</td>
+		</tr>
+	{% endfor %}
+
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

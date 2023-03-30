@@ -5669,6 +5669,156 @@ def cmdb_api_kompass(request):
 
 
 
+def firewall_parser(request):
+	import pandas as pd
+	import numpy as np
+	import ipaddress
+	from functools import lru_cache
+
+	debug = []
+
+	def erstatte_grupper_med_ipadresser(adresser, oppslagsverk):
+		for a in adresser:
+			if a in ["All-IPv4-Addresses", "All-Addresses", "All-IPv6-Addresses"]:
+				continue
+			try:
+				ipaddress.ip_network(a)
+				# hvis dette er et nettverk, gå til neste adresse
+				continue
+			except ValueError:
+				pass # hvis ikke, fortsett
+			try:
+				ipaddress.ipaddress(a)
+				# dette er en ipadresse, gå til neste adresse
+				continue
+			except:
+				# det er hverken et nettverk eller ip-adresse, erstatt ved oppslag
+				try:
+					oppslag = oppslagsverk[a]
+					#print(f"fjerne {a}")
+					adresser.remove(a)
+					#print(f"legge til {oppslag}")
+					adresser.extend(oppslag)
+				except:
+					print(f"*** feilet oppslag mot navngitt ipgruppe {a}")
+		return adresser
+
+	def parse_firewall_named_groups(excel_file, sheet):
+		debug.append("Klargjør navngitte nettverk")
+		named_groups = {}
+		df = excel_file.parse(sheet,
+					skiprows=2, # de første radene er tomme
+				)
+		for column in df.columns:
+			if not column.startswith("Unnamed"):
+				named_groups[column] = df[column].dropna().tolist()#.to_dict('list')
+
+		#utvide (expand) alle grupper slik at en gruppe ikke inneholder en annen gruppereferanse
+		expanded_named_groups = []
+		for ng in named_groups:
+			named_groups[ng] = erstatte_grupper_med_ipadresser(named_groups[ng], named_groups)
+
+		return named_groups
+
+	excel_file = pd.ExcelFile("systemoversikt/import/firewall_all_ports.xlsx")
+	debug.append("Fant følgende ark i filen: %s" % excel_file.sheet_names)
+
+	all_openings = {}
+
+	for sheet in excel_file.sheet_names:
+		debug.append("Åpner ark %s" % sheet)
+
+		if sheet == "README":
+			debug.append("- ingen relevante data")
+			continue
+		if sheet == "Groups' Content":
+			named_network_groups = parse_firewall_named_groups(excel_file=excel_file, sheet=sheet)
+			debug.append("- navngitte nettverk lastet")
+			continue
+
+		df = excel_file.parse(sheet,
+					skiprows=2, # de første radene er tomme
+					usecols=[2, 3, 4, 7, 9, 10, 14],
+					names=['rule_id', 'permit', 'source', 'destination', 'service', 'beskrivelse', 'retning',]
+				)
+		df['rule_id'].ffill(inplace=True)
+		df = df.replace(np.nan, '', regex=True)
+		data = df.to_dict('records')
+		for line in data:
+			try:
+				rule_id = int(line["rule_id"])
+			except:
+				rule_id = "ID mangler"
+
+			def lookup_groups(something):
+				# det kan være en gruppe. Da returneres alle medlemmer.
+				#	hvis en gruppe (string) slås opp som en ny gruppe, må vi fortsette til vi bare har ip-adresser..
+
+				# hvis det ikke er noen treff, returnerer vi det vi fant
+				return something
+
+
+			if not rule_id in all_openings:
+				all_openings[rule_id] = {
+						'firewall': sheet,
+						'permit': line["permit"],
+						'source': [line["source"]],
+						'destination': [line["destination"]],
+						'service': [line["service"]],
+						'beskrivelse': line["beskrivelse"],
+						'retning': line["retning"],
+						}
+			else:
+				if line["source"] != "":
+					all_openings[rule_id]["source"].append(line["source"])
+				if line["destination"] != "":
+					all_openings[rule_id]["destination"].append(line["destination"])
+
+	@lru_cache(maxsize=512)
+	def lookup_network(network):
+		try:
+			nc = NetworkContainer.objects.get(ip_address=str(network.network_address), subnet_mask=network.prefixlen)
+			return nc.comment
+		except:
+			return network
+
+	debug.append(f"Det er {len(all_openings)} brannmurdefinisjoner i filen")
+
+	for opening in all_openings:
+		all_openings[opening]["source"] = erstatte_grupper_med_ipadresser(all_openings[opening]["source"], named_network_groups)
+		all_openings[opening]["destination"] = erstatte_grupper_med_ipadresser(all_openings[opening]["destination"], named_network_groups)
+
+
+	# oppslag mot kjente nettverk
+	for id, opening in all_openings.items():
+		#print("Regel %s: %s" % (opening, all_openings[opening]))
+		for source in opening["source"]:
+			try:
+				network = ipaddress.ip_network(source)
+				# hvis dette er et nettverk..
+				lookup_network(network)
+				continue
+			except ValueError:
+				pass # hvis ikke, fortsett
+			try:
+				ipaddress.ipaddress(source)
+				# dette er en ipadresse..
+				continue
+			except:
+				pass
+
+
+	# returnere som json
+	#return JsonResponse(all_openings, safe=False)
+
+	# returnere som html/tabell
+	return render(request, 'cmdb_brannmur.html', {
+		'all_openings': all_openings,
+		"debug": debug,
+	})
+
+
+
 
 ### UBW
 
