@@ -236,6 +236,60 @@ def tool_unique_items(request):
 # def tool_different_items
 
 
+def cmdb_adcs_index(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+	from os import listdir
+	from os.path import isfile, join
+	import re
+	import json
+
+	path = "systemoversikt/pki"
+	limit = 3
+
+	summary = []
+
+	selected_file_str = request.GET.get("file", None)
+	if selected_file_str:
+		if re.match(r"^\d{14}_Certipy.json$", selected_file_str):
+			# only if valid open the file
+			with open(f"{path}/{selected_file_str}") as f:
+				selected_file = list(json.load(f).items())
+
+			for k, v in selected_file[1][1].items():
+				summary.append({
+						"template": v["Template Name"],
+						"ca": v["Certificate Authorities"],
+						"key_usage": v["Extended Key Usage"],
+						"validity_period": v["Validity Period"],
+						"vulnerabilities": v["[!] Vulnerabilities"]
+					})
+
+
+		else:
+			raise Http404
+	else:
+		selected_file = None
+
+	# always show file list
+	filelist = [f for f in listdir(path) if isfile(join(path, f))]
+	filelist = sorted(filelist, reverse=True)
+	if len(filelist) > limit:
+		filelist = filelist[:limit]
+
+	return render(request, 'cmdb_adcs_index.html', {
+		"request": request,
+		"filelist": filelist,
+		"selected_file": json.dumps(selected_file, indent=4),
+		"summary": summary,
+	})
+
+
+
+
 def cmdb_per_virksomhet(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -971,7 +1025,7 @@ def virksomhet_leverandortilgang(request, pk=None):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	if pk == None:
-		return Http404
+		raise Http404
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 

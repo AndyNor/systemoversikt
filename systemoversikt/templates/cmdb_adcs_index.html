@@ -1,0 +1,55 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	AD-CS Maler
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Beskrivelse kommer</p>
+
+	<ul>
+	{% for file in filelist %}
+		<li><a href="?file={{file}}">{{ file }}</a></li>
+	{% endfor %}
+	</ul>
+
+	<hr>
+
+	<h3>Oppsummering</h3>
+	<h5>{{summary|length}} sårbarheter</h5>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Template Name</th>
+		<th>Certificate Authorities</th>
+		<th>Extended Key Usage</th>
+		<th>Validity Period</th>
+		<th>Vulnerabilities</th>
+	</thead>
+	<tbody>
+		{% for item in summary %}
+			<tr>
+				<td>{{ item.template }}</td>
+				<td>{{ item.ca }}</td>
+				<td>{{ item.key_usage }}</td>
+				<td>{{ item.validity_period }}</td>
+				<td>{{ item.vulnerabilities }}</td>
+			</tr>
+		{% endfor %}
+	</tbody>
+	</table>
+
+	<hr>
+	<h3>Rådata</h3>
+	<pre>{{ selected_file }}</pre>
+
+
+
+
+
+{% endblock hovedinnhold %}

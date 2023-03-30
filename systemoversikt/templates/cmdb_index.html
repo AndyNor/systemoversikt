@@ -108,6 +108,9 @@
 	{% url 'cmdb_minne_index' as url_cmdb_minne_index %}
 	<a href="{{url_cmdb_minne_index}}" class="btn btn-sm btn-link {% if url_cmdb_minne_index in request.path %}fremhev{% endif %}">Minnebruk</a><br>
 
+	{% url 'cmdb_adcs_index' as url_cmdb_adcs_index %}
+	<a href="{{url_cmdb_adcs_index}}" class="btn btn-sm btn-link {% if url_cmdb_adcs_index in request.path %}fremhev{% endif %}">ADCS certifikatmaler</a><br>
+
 	{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}
 
 	{% block ekstrameny_nettverk %}{% endblock ekstrameny_nettverk %}

@@ -158,6 +158,7 @@ urlpatterns = [
 	re_path(r'^cmdb/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
 	re_path(r'^cmdb/o365_avvik/$', views.o365_avvik, name='o365_avvik'),
 	re_path(r'^cmdb/backup/$', views.cmdb_backup_index, name='cmdb_backup_index'),
+	re_path(r'^cmdb/adcs/$', views.cmdb_adcs_index, name='cmdb_adcs_index'),
 	re_path(r'^cmdb/uten_backup/$', views.cmdb_uten_backup, name='cmdb_uten_backup'),
 	re_path(r'^cmdb/lagring/$', views.cmdb_lagring_index, name='cmdb_lagring_index'),
 	re_path(r'^cmdb/minne/$', views.cmdb_minne_index, name='cmdb_minne_index'),
