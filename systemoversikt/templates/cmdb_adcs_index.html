@@ -15,7 +15,7 @@
 
 	<ul>
 	{% for file in filelist %}
-		<li><a href="?file={{file}}">{{ file }}</a></li>
+		<li><a href="?file={{ file.filename }}">{{ file.tekst }}</a></li>
 	{% endfor %}
 	</ul>
 

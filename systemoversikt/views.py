@@ -280,9 +280,17 @@ def cmdb_adcs_index(request):
 	if len(filelist) > limit:
 		filelist = filelist[:limit]
 
+	filelist_readable = []
+	for item in filelist:
+		tekst = f"{item[0:4]}-{item[4:6]}-{item[6:8]} {item[8:10]}:{item[10:12]}.{item[12:14]}"
+		filelist_readable.append({
+				"filename": item,
+				"tekst": tekst,
+			})
+
 	return render(request, 'cmdb_adcs_index.html', {
 		"request": request,
-		"filelist": filelist,
+		"filelist": filelist_readable,
 		"selected_file": json.dumps(selected_file, indent=4),
 		"summary": summary,
 	})
