@@ -326,6 +326,33 @@
 
 	<hr>
 
+	<h5>Leverandørtilgang</h5>
+	<table class="table table-sm">
+		<thead>
+			<tr>
+				<th>Navn</th>
+				<th>Sikkerhetsgruppe</th>
+				<th>Antall medlemmer</th>
+				<th>Kommentar</th>
+			</tr>
+		</thead>
+		<tbody>
+	{% for levtilgang in systemdetaljer.leverandortilgang.all %}
+		<tr>
+			<td>{{ levtilgang }}</td>
+			<td>
+				{{ levtilgang.adgruppe.common_name }}
+			</td>
+			<td>
+				{{ levtilgang.adgruppe.membercount }}
+			</td>
+			<td>{{ levtilgang.kommentar }}</td>
+	{% endfor %}
+		</tbody>
+	</table>
+
+	<hr>
+
 	{% if systemdetaljer.bs_system_referanse %}
 	<h5>Servere og databaser</h5>
 	<p>Koblede data mot Sopra Sterias <a href="{% url 'cmdb_statistikk' %}">CMDB</a>. Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">beskrivelse av kritikalitet og tilgjengelighet</a>.</p>
