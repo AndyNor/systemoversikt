@@ -237,7 +237,7 @@ def tool_unique_items(request):
 
 
 def cmdb_adcs_index(request):
-	required_permissions = ['systemoversikt.view_cmdbdevice']
+	required_permissions = ['systemoversikt.change_azureapplication']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
