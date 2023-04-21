@@ -135,3 +135,4 @@ db.sqlite3.til.utv
 systemoversikt.zip
 systemoversikt/old_oidc.py
 *.json
+systemoversikt/management/commands/sertifikat_sjekker_config.py
