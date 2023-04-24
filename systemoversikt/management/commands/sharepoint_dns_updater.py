@@ -45,6 +45,8 @@ class Command(BaseCommand):
 			antall_a_records = 0
 			antall_cname_records = 0
 			cname_records_failed = 0
+			antall_txt = 0
+			antall_mx = 0
 			ip_linker = 0
 
 
@@ -129,6 +131,7 @@ class Command(BaseCommand):
 					)
 
 			for (name, ttl, rdata) in z.iterate_rdatas('MX'):
+				antall_mx += 1
 				antall_cname_records += 1
 				dns_target = str(rdata.exchange).strip(".")
 
@@ -145,6 +148,7 @@ class Command(BaseCommand):
 
 
 			for (name, ttl, rdata) in z.iterate_rdatas('TXT'):
+				antall_txt += 1
 				create_or_update(
 						dns_name=name,
 						dns_type="TXT",
@@ -165,9 +169,11 @@ class Command(BaseCommand):
 			for entry in gamle_dnsinnslag:
 				entry.delete()
 
-			logg_entry_message = 'Fant %s A-records og %s alias i %s. %s alias kunne ikke slås opp. %s nye A-records/CNAMES. %s IP-referanser skrevet. %s slettet.' % (
+			logg_entry_message = 'Fant %s A-records, %s alias, %s mx og %s txt i %s. %s alias kunne ikke slås opp. %s nye A-records/CNAMES. %s IP-referanser skrevet. %s slettet.' % (
 					antall_a_records,
 					antall_cname_records,
+					antall_mx,
+					antall_txt,
 					filename_str,
 					cname_records_failed,
 					count_new,

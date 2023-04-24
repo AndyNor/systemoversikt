@@ -93,6 +93,9 @@
 	{% url 'alle_dns' as url_alle_dns %}
 	<a href="{{url_alle_dns}}" class="btn btn-sm btn-link {% if url_alle_dns in request.path %}fremhev{% endif %}">DNS</a><br>
 
+	{% url 'dns_txt' as url_dns_txt %}
+	<a href="{{url_dns_txt}}" class="btn btn-sm btn-link {% if url_dns_txt in request.path %}fremhev{% endif %}">TXT-records</a><br>
+
 	{% url 'alle_ip' as url_alle_ip %}
 	<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP-søk</a><br>
 
