@@ -90,7 +90,7 @@ def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, resu
 	LDAPPASSWORD = os.environ["KARTOTEKET_LDAPPASSWORD"]
 	LDAPSERVER = os.environ["KARTOTEKET_LDAPSERVER"]
 
-	ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_ALLOW)  # TODO this is unsafe
+	ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)  # self signed
 	ldap.set_option(ldap.OPT_REFERRALS, 0)
 	LDAP24API = LooseVersion(ldap.__version__) >= LooseVersion('2.4')
 
