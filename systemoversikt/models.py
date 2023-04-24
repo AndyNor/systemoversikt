@@ -2055,7 +2055,7 @@ class DNSrecord(models.Model):
 			null=True,
 			help_text=u"DNS TXT",
 			)
-	unique_together = ('dns_name', 'dns_type')
+	unique_together = ('dns_name', 'dns_type', 'source')
 
 	def __str__(self):
 		return u'%s: %s' % (self.dns_type, self.dns_name)

@@ -50,7 +50,7 @@ class Command(BaseCommand):
 
 			def create_or_update(dns_name, dns_type, dns_target, ip_address, ttl, domain, txt, source):
 				try:
-					dns_inst = DNSrecord.objects.get(dns_name=dns_name, dns_type=dns_type)
+					dns_inst = DNSrecord.objects.get(dns_name=dns_name, dns_type=dns_type, source=source)
 					dns_inst.dns_target = dns_target
 					dns_inst.ip_address = ip_address
 					dns_inst.ttl = ttl
