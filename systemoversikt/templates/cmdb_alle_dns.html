@@ -11,26 +11,28 @@
 
 {% block hovedinnhold %}
 
-	<p>Det er {{ alle_dnsnavn.count }} navn/alias i databasen.</p>
+	<p>Det er {{ alle_dnsnavn.count }} navn/alias/mx/txt i databasen.</p>
 
 	<hr>
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>DNS-navn</th>
+		<th>Alias mot</th>
 		<th>DNS-type</th>
 		<th>IP adresse</th>
-		<th>Alias mot</th>
 		<th>Time to live (TTL)</th>
+		<th>Kilde</th>
 	</thead>
 	<tbody>
 	{% for dns in alle_dnsnavn %}
 		<tr>
 			<td>{{ dns.dns_name }}</td>
+			<td>{{ dns.dns_target|default:"" }}</td>
 			<td>{{ dns.dns_type }}</td>
 			<td>{{ dns.ip_address }}</td>
-			<td>{{ dns.dns_target|default:"" }}</td>
 			<td>{{ dns.ttl|default:"" }}</td>
+			<td>{{ dns.source }}</td>
 		</tr>
 	{% endfor %}
 	</tbody>

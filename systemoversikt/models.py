@@ -2019,8 +2019,12 @@ class DNSrecord(models.Model):
 			)
 	dns_name = models.CharField(
 			max_length=500,
-			unique=True,
 			verbose_name="DNS name",
+			)
+	source = models.CharField(
+			max_length=50,
+			null=True,
+			verbose_name="Kilde",
 			)
 	dns_type = models.CharField(
 			max_length=50,
@@ -2036,15 +2040,22 @@ class DNSrecord(models.Model):
 			verbose_name="Time to live (TTL)",
 			)
 	dns_target = models.CharField(
-			max_length=50,
+			max_length=200,
 			null=True,
-			verbose_name="DNS target (hvis CNAME)",
+			verbose_name="DNS target (hvis CNAME eller MX)",
 			)
 	dns_domain = models.CharField(
 			max_length=200,
 			null=False,
 			verbose_name="Domain",
 			)
+	txt = models.TextField(
+			verbose_name="txt-data",
+			blank=True,
+			null=True,
+			help_text=u"DNS TXT",
+			)
+	unique_together = ('dns_name', 'dns_type')
 
 	def __str__(self):
 		return u'%s: %s' % (self.dns_type, self.dns_name)

@@ -543,6 +543,22 @@ def alle_dns(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def dns_txt(request):
+	"""
+	Vise alle DNS navn og alias
+	Tilgjengelig for de som kan lese CMDB
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		txt_records = DNSrecord.objects.filter(dns_type="TXT")
+
+		return render(request, 'cmdb_dns_txt.html', {
+			'request': request,
+			'txt_records': txt_records,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def alle_vip(request):

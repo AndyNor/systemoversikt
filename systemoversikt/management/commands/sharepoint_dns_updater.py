@@ -48,17 +48,19 @@ class Command(BaseCommand):
 			ip_linker = 0
 
 
-			def create_or_update(dns_name, dns_type, dns_target, ip_address, ttl, domain):
+			def create_or_update(dns_name, dns_type, dns_target, ip_address, ttl, domain, txt, source):
 				try:
-					dns_inst = DNSrecord.objects.get(dns_name=dns_name)
-					dns_inst.dns_type = dns_type
-					dns_inst.target = dns_target
+					dns_inst = DNSrecord.objects.get(dns_name=dns_name, dns_type=dns_type)
+					dns_inst.dns_target = dns_target
 					dns_inst.ip_address = ip_address
-					dns_inst.dns_domain = domain
 					dns_inst.ttl = ttl
+					dns_inst.dns_domain = domain
+					dns_inst.txt = txt
+					dns_inst.source = source
 
 					dns_inst.save()
 					print("u", end="", flush=True)
+
 
 				except:
 					dns_inst = DNSrecord.objects.create(
@@ -66,8 +68,10 @@ class Command(BaseCommand):
 							dns_type=dns_type,
 							dns_target=dns_target,
 							ip_address=ip_address,
-							dns_domain=domain,
 							ttl=ttl,
+							dns_domain=domain,
+							txt=txt,
+							source=source,
 						)
 					nonlocal count_new
 					count_new += 1
@@ -88,7 +92,6 @@ class Command(BaseCommand):
 			import dns.zone
 			z = dns.zone.from_file(source_file, domain)
 
-
 			for (name, ttl, rdata) in z.iterate_rdatas('A'):
 				antall_a_records += 1
 
@@ -99,6 +102,8 @@ class Command(BaseCommand):
 						ip_address=rdata.address,
 						ttl=int(ttl),
 						domain=domain,
+						txt=None,
+						source=filename_str,
 					)
 
 
@@ -119,17 +124,46 @@ class Command(BaseCommand):
 						ip_address=ip_address,
 						ttl=None,
 						domain=domain,
+						txt=None,
+						source=filename_str,
+					)
+
+			for (name, ttl, rdata) in z.iterate_rdatas('MX'):
+				antall_cname_records += 1
+				dns_target = str(rdata.exchange).strip(".")
+
+				create_or_update(
+						dns_name=name,
+						dns_type="MX",
+						dns_target=dns_target,
+						ip_address=None,
+						ttl=ttl,
+						domain=domain,
+						txt=rdata.preference,
+						source=filename_str,
+					)
+
+
+			for (name, ttl, rdata) in z.iterate_rdatas('TXT'):
+				create_or_update(
+						dns_name=name,
+						dns_type="TXT",
+						dns_target=None,
+						ip_address=None,
+						ttl=int(ttl),
+						domain=domain,
+						txt=rdata,
+						source=filename_str,
 					)
 
 			# slette alle innslag som ikke ble oppdatert
 			from django.utils import timezone
 			from datetime import timedelta
-			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+			tidligere = timezone.now() - timedelta(hours=1) # 6 timer gammelt
 			gamle_dnsinnslag = DNSrecord.objects.filter(sist_oppdatert__lte=tidligere)
 			antall_slettet = len(gamle_dnsinnslag)
 			for entry in gamle_dnsinnslag:
 				entry.delete()
-
 
 			logg_entry_message = 'Fant %s A-records og %s alias i %s. %s alias kunne ikke slås opp. %s nye A-records/CNAMES. %s IP-referanser skrevet. %s slettet.' % (
 					antall_a_records,

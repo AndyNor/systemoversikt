@@ -150,6 +150,7 @@ urlpatterns = [
 	re_path(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 	re_path(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),
 	re_path(r'^cmdb/dns/$', views.alle_dns, name='alle_dns'),
+	re_path(r'^cmdb/dns/txt/$', views.dns_txt, name='dns_txt'),
 	re_path(r'^cmdb/nettverk/$', views.alle_nettverk, name='alle_nettverk'),
 	re_path(r'^cmdb/nettverk/(?P<pk>\d{1,8})/$', views.nettverk_detaljer, name='nettverk_detaljer'),
 	re_path(r'^cmdb/nettverksenheter/$', views.alle_nettverksenheter, name='alle_nettverksenheter'),
