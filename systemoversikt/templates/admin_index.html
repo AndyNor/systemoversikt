@@ -10,6 +10,12 @@
 	{% url 'logger_audit' as url_logger_audit %}
 	<a href="{{ url_logger_audit }}" class="btn btn-sm btn-link {% if url_logger_audit in request.path %}fremhev{% endif %}">📖 Systemlogg</a><br>
 
+	{% url 'logger_autentisering' as url_logger_autentisering %}
+	<a href="{{ url_logger_autentisering }}" class="btn btn-sm btn-link {% if url_logger_autentisering in request.path %}fremhev{% endif %}">📖 Pålogginger</a><br>
+
+	{% url 'logger_api' as url_logger_api %}
+	<a href="{{ url_logger_api }}" class="btn btn-sm btn-link {% if url_logger_api in request.path %}fremhev{% endif %}">📖 API-bruk</a><br>
+
 	{% url 'logger_users' as url_logger_users %}
 	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}">📖 Brukerlogg</a><br>
 

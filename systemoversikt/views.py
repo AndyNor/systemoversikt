@@ -1675,13 +1675,49 @@ def logger_audit(request):
 	required_permissions = 'systemoversikt.view_applicationlog'
 	if request.user.has_perm(required_permissions):
 
-		recent_loggs = ApplicationLog.objects.order_by('-opprettet')[:1500]
+		recent_loggs = ApplicationLog.objects.filter(~Q(event_type__icontains="api")).filter(~Q(event_type__icontains="Brukerpålogging")).order_by('-opprettet')[:1500]
 		return render(request, 'site_logger_audit.html', {
 			'request': request,
 			'recent_loggs': recent_loggs,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def logger_api(request):
+	"""
+	viser alle endringer på objekter i løsningen
+	Tilgangsstyring: Se applikasjonslogger
+	"""
+	required_permissions = 'systemoversikt.view_applicationlog'
+	if request.user.has_perm(required_permissions):
+
+		recent_loggs = ApplicationLog.objects.filter(event_type__icontains="api").order_by('-opprettet')[:1500]
+		return render(request, 'site_logger_audit.html', {
+			'request': request,
+			'recent_loggs': recent_loggs,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+def logger_autentisering(request):
+	"""
+	viser alle endringer på objekter i løsningen
+	Tilgangsstyring: Se applikasjonslogger
+	"""
+	required_permissions = 'systemoversikt.view_applicationlog'
+	if request.user.has_perm(required_permissions):
+
+		recent_loggs = ApplicationLog.objects.filter(event_type__icontains="Brukerpålogging").order_by('-opprettet')[:1500]
+		return render(request, 'site_logger_audit.html', {
+			'request': request,
+			'recent_loggs': recent_loggs,
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 
 
 def logger_users(request):
