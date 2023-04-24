@@ -121,14 +121,24 @@ class Command(BaseCommand):
 						domain=domain,
 					)
 
+			# slette alle innslag som ikke ble oppdatert
+			from django.utils import timezone
+			from datetime import timedelta
+			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+			gamle_dnsinnslag = DNSrecord.objects.filter(sist_oppdatert__lte=tidligere)
+			antall_slettet = len(gamle_dnsinnslag)
+			for entry in gamle_dnsinnslag:
+				entry.delete()
 
-			logg_entry_message = 'Fant %s A-records og %s alias i %s. %s alias kunne ikke slås opp. %s nye A-records/CNAMES. %s IP-referanser skrevet.' % (
+
+			logg_entry_message = 'Fant %s A-records og %s alias i %s. %s alias kunne ikke slås opp. %s nye A-records/CNAMES. %s IP-referanser skrevet. %s slettet.' % (
 					antall_a_records,
 					antall_cname_records,
 					filename_str,
 					cname_records_failed,
 					count_new,
 					ip_linker,
+					antall_slettet,
 				)
 			logg_entry = ApplicationLog.objects.create(
 					event_type='CMDB DNS import',

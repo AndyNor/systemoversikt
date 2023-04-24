@@ -168,9 +168,9 @@ class NetworkIPAddressAdmin(admin.ModelAdmin):
 
 @admin.register(DNSrecord)
 class DNSrecordAdmin(admin.ModelAdmin):
-	list_display = ('dns_name', 'dns_type', 'dns_domain', 'ip_address', 'dns_target', 'ttl',)
+	list_display = ('sist_oppdatert', 'dns_name', 'dns_type', 'dns_domain', 'ip_address', 'dns_target', 'ttl',)
 	search_fields = ('dns_name', 'ip_address', 'dns_target',)
-	list_filter = ('dns_type',)
+	list_filter = ('dns_type', 'sist_oppdatert',)
 
 
 
