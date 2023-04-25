@@ -248,7 +248,7 @@ def cmdb_adcs_index(request):
 	import json
 
 	path = path.dirname(path.abspath(__file__)) + "/pki"
-	limit = 25
+	limit = 60
 
 	summary = []
 
