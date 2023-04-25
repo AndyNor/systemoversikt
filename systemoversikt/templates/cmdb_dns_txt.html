@@ -1,0 +1,35 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	DNS TXT-innslag
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Det er {{ txt_records.count }} txt-records i databasen.</p>
+
+	<hr>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Navn</th>
+		<th>TXT</th>
+		<th>Kilde</th>
+	</thead>
+	<tbody>
+	{% for dns in txt_records %}
+		<tr>
+			<td>{{ dns.dns_name }}</td>
+			<td>{{ dns.txt }}</td>
+			<td>{{ dns.source }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

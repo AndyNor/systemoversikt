@@ -11,7 +11,6 @@ bash_scripts/*
 *.xlsx
 *.csv
 *.tsv
-*_dns_*
 systemoversikt/import/*.json
 
 # local
@@ -136,3 +135,5 @@ systemoversikt.zip
 systemoversikt/old_oidc.py
 *.json
 systemoversikt/management/commands/sertifikat_sjekker_config.py
+systemoversikt/import/oslofelles_dns_ekstern
+systemoversikt/import/oslofelles_dns_intern
