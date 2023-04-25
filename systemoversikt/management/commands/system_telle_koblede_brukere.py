@@ -23,8 +23,8 @@ class Command(BaseCommand):
 					if profile.ansattnr_antall != antall:
 						profile.ansattnr_antall = antall
 						profile.save()
-			ApplicationLog.objects.create(event_type="Brukerpålogging", message="Ferdig med opptelling")
 
 		ApplicationLog.objects.create(event_type="Duplikatteller", message="Starter..")
 		opptelling()
+		ApplicationLog.objects.create(event_type="Duplikatteller", message="Ferdig med opptelling")
 
