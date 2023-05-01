@@ -3303,6 +3303,67 @@ def virksomhet(request, pk):
 
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk).filter(~Q(ibruk=False)).count()
 
+	nodes = []
+	parents = []
+	def color(system):
+		if system.er_infrastruktur():
+			return '#c592d1'
+		if hasattr(system, 'bs_system_referanse'):
+			return '#93d174'
+		return '#eb8282'
+
+	def parent(system):
+		if system.systemforvalter_avdeling_referanse:
+			parents.append(system.systemforvalter_avdeling_referanse.ou)
+			return system.systemforvalter_avdeling_referanse.ou
+
+		try:
+			forste_forvalters_ou = system.systemforvalter_kontaktpersoner_referanse.all()[0].brukernavn.profile.org_unit.ou
+			parents.append(forste_forvalters_ou)
+			return forste_forvalters_ou
+		except:
+			pass
+
+		parents.append('Ukjent')
+		return 'Ukjent'
+
+	def systemnavn(system):
+		maximum = 20
+		if len(system.systemnavn) > maximum:
+			return system.systemnavn[:maximum]
+		return system.systemnavn
+
+	for system in System.objects.filter(systemforvalter=pk):
+		if system.er_ibruk():
+			nodes.append({
+				'data': {
+					'id': system.pk,
+					'name': systemnavn(system),
+					'parent': parent(system),
+					'shape': 'rectangle',
+					'color': color(system),
+					'href': f'/systemer/detaljer/{system.pk}/',
+				}
+			})
+
+	for p in set(parents):
+		nodes.append(
+			{'data':
+				{'id': p,
+				#'parent': virksomhet.virksomhetsforkortelse,
+				'color': 'white'
+				}
+			},
+		)
+	#nodes.append(
+	#		{'data':
+	#			{'id': virksomhet.virksomhetsforkortelse,
+	#			'color': 'white'
+	#			}
+	#		},
+	#	)
+
+
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
 		'virksomhet': virksomhet,
@@ -3318,6 +3379,7 @@ def virksomhet(request, pk):
 		'ant_systemer_eier': ant_systemer_eier,
 		'ant_systemer_forvalter': ant_systemer_forvalter,
 		'systemer_drifter': systemer_drifter,
+		'nodes': nodes,
 	})
 
 
