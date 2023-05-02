@@ -3049,7 +3049,12 @@ class Systemtype(models.Model):
 	er_infrastruktur = models.BooleanField(
 			verbose_name="Er denne kategorien infrastruktur?",
 			default=False,
-			help_text=u"Brukes for å skjule systemet i visninger der infrastruktur ikke er relevant.",
+			help_text=u"Brukes for å identifisere systemet som er infrastruktur.",
+			)
+	er_integrasjon = models.BooleanField(
+			verbose_name="Er denne kategorien en integrasjon?",
+			default=False,
+			help_text=u"Brukes for å identifisere systemet som er integrasjoner.",
 			)
 	history = HistoricalRecords()
 
@@ -3644,6 +3649,16 @@ class Database(models.Model):
 	class Meta:
 		verbose_name_plural = "Systemoversikt: databasetyper"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
+SYSTEM_COLORS = {
+	"infrastruktur": '#d2b5d9',
+	"integrasjon": '#b189bb',
+	"drift_uke": '#9db3e5',
+	"offentlig_sky": '#b5dba2',
+	"ukjent": '#b9b9b9',
+}
 
 
 class System(models.Model):
@@ -4299,6 +4314,13 @@ class System(models.Model):
 		else:
 			return False
 
+	def er_integrasjon(self):
+		for stype in self.systemtyper.all():
+			if stype.er_integrasjon:
+				return True
+		else:
+			return False
+
 	def forventet_url(self):
 		for systemtype in self.systemtyper.all():
 			if systemtype.har_url:
@@ -4316,6 +4338,25 @@ class System(models.Model):
 		if self.livslop_status in [1,6,7]:
 			return False
 		return True
+
+	def color(self):
+		if self.er_infrastruktur():
+			return SYSTEM_COLORS["infrastruktur"]
+
+		if self.er_integrasjon():
+			return SYSTEM_COLORS["integrasjon"]
+
+		if hasattr(self, 'bs_system_referanse'): # drift hos UKE
+			return SYSTEM_COLORS["drift_uke"]
+
+		try:
+			if self.driftsmodell_foreignkey.type_plattform == 2:
+				return SYSTEM_COLORS["offentlig_sky"]
+		except:
+			pass
+
+		return SYSTEM_COLORS["ukjent"] # alt annet
+
 
 
 

@@ -11,7 +11,7 @@
 
 
 {% block overskrift %}
-	Driftsplattformer
+	Landingssoner (datasenter)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -22,34 +22,28 @@
 	<table class="tablesorter excel">
 		<thead>
 		<tr>
-			{% if user.is_authenticated %}
-			<th class="filter-false">Rediger</th>
-			{% endif %}
+			<th>Landingssone</th>
 			<th>Forvaltet av</th>
-			<th>Driftsmodeller</th>
+			<th>Type</th>
 			<th>Antall systemer</th>
 			<th>Kommentar</th>
-			{% if user.is_authenticated %}
-			<th class="filter-false">Slett</th>
-			{% endif %}
 		</tr>
 		</thead>
 		<tbody>
 		{% for item in driftsmodeller %}
 		<tr {% if item.own_domain %} style="background-color: #fffee6;" {% endif %}>
 
-			{% if user.is_authenticated %}
 			<td>
 				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
+				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
+					<a href="{{ url_detaljer_driftsmodell }}">{{ item.navn }}</a>
 			</td>
-			{% endif %}
 			<td>
 				{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
 					<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet|default:"-" }}</a>
 			</td>
 			<td>
-				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
-					<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
+				{{ item.get_type_plattform_display }}
 			</td>
 			<td>
 				{{ item.antall_systemer }}
@@ -57,12 +51,6 @@
 			<td>
 				{{ item.kommentar }}
 			</td>
-
-			{% if user.is_authenticated %}
-			<td>
-				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
-			</td>
-			{% endif %}
 
 		</tr>
 		{% endfor %}

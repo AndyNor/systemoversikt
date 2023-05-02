@@ -72,6 +72,16 @@
 			</div>
 		</div>
 
+		<hr>
+		<h6>Systemansvar fordelt på seksjoner</h6>
+
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.drift_uke}}; text-align: center;">Driftes av 2S</div>
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.offentlig_sky}}; text-align: center;">Offentlig sky</div>
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.infrastruktur}}; text-align: center;">Infrastruktur</div>
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.integrasjon}}; text-align: center;">Integrasjon</div>
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.ukjent}}; text-align: center;">Ukjent</div>
+
+		<br><hr>
 
 		<div id="cy" style="width: {{node_size}}px; height: {{node_size}}px;"></div>
 
@@ -203,7 +213,7 @@
 			{
 				selector: ':parent',
 				style: {
-					'font-size': '16',
+					'font-size': '12',
 					'label': 'data(id)',
 					'line-style': "solid",
 					'background-color': 'data(color)',

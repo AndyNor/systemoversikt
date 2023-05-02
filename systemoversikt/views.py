@@ -3309,12 +3309,6 @@ def virksomhet(request, pk):
 
 	nodes = []
 	parents = []
-	def color(system):
-		if system.er_infrastruktur():
-			return '#c592d1'
-		if hasattr(system, 'bs_system_referanse'):
-			return '#93d174'
-		return '#eb8282'
 
 	def parent(system):
 		if system.systemforvalter_avdeling_referanse:
@@ -3346,7 +3340,7 @@ def virksomhet(request, pk):
 					'name': systemnavn(system),
 					'parent': parent(system),
 					'shape': 'rectangle',
-					'color': color(system),
+					'color': system.color(),
 					'href': f'/systemer/detaljer/{system.pk}/',
 				}
 			})
@@ -3367,7 +3361,7 @@ def virksomhet(request, pk):
 	#			}
 	#		},
 	#	)
-
+	from systemoversikt.models import SYSTEM_COLORS
 
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
@@ -3386,6 +3380,7 @@ def virksomhet(request, pk):
 		'systemer_drifter': systemer_drifter,
 		'nodes': nodes,
 		'node_size': 350 + 8*antall_graph_noder,
+		'system_colors': SYSTEM_COLORS,
 	})
 
 

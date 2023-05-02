@@ -798,7 +798,7 @@ class SystemKategoriAdmin(SimpleHistoryAdmin):
 
 @admin.register(Systemtype)
 class SystemtypeAdmin(SimpleHistoryAdmin):
-	list_display = ('kategorinavn', 'definisjon', 'har_url', 'er_infrastruktur')
+	list_display = ('kategorinavn', 'definisjon', 'har_url', 'er_infrastruktur', 'er_integrasjon',)
 	search_fields = ('kategorinavn',)
 
 	def get_ordering(self, request):
