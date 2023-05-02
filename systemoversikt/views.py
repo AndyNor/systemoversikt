@@ -2231,6 +2231,9 @@ def systemdetaljer(request, pk):
 	avhengigheter_reverse_systemer = System.objects.filter(avhengigheter_referanser=pk)
 	avhengigheter_reverse_systembruk = SystemBruk.objects.filter(avhengigheter_referanser=pk)
 
+	print(len(avhengigheter_graf["nodes"]))
+
+
 	return render(request, 'system_detaljer.html', {
 		'request': request,
 		'systemdetaljer': system,
@@ -2246,6 +2249,7 @@ def systemdetaljer(request, pk):
 		'siste_endringer_antall': siste_endringer_antall,
 		'avhengigheter_graf': avhengigheter_graf,
 		'follow_count': original_follow_count,
+		'avhengigheter_chart_size': 250 + len(avhengigheter_graf["nodes"])*15,
 	})
 
 
@@ -3333,6 +3337,7 @@ def virksomhet(request, pk):
 			return system.systemnavn[:maximum]
 		return system.systemnavn
 
+	antall_graph_noder = System.objects.filter(systemforvalter=pk).count()
 	for system in System.objects.filter(systemforvalter=pk):
 		if system.er_ibruk():
 			nodes.append({
@@ -3380,6 +3385,7 @@ def virksomhet(request, pk):
 		'ant_systemer_forvalter': ant_systemer_forvalter,
 		'systemer_drifter': systemer_drifter,
 		'nodes': nodes,
+		'node_size': 350 + 8*antall_graph_noder,
 	})
 
 
