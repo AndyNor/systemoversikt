@@ -1,0 +1,111 @@
+﻿{% extends "system_index.html" %}
+{% load static %}
+{% load templatetags %}
+
+{% block ekstrajavascript %}
+	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block overskrift %}
+	Kartoteket
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<h6>Systemansvar fordelt på virksomhet</h6>
+	<p>Her vises alle systemer utenom infrastruktur og integrasjoner gruppert på virksomhet som forvalter systemet. Sekundært om ingen forvalter er oppgitt brukes systemeier.</p>
+
+	<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.drift_uke}}; text-align: center;">Driftes av 2S</div>
+	<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.offentlig_sky}}; text-align: center;">Offentlig sky</div>
+	<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.ukjent}}; text-align: center;">Ukjent</div>
+
+	<br><hr>
+
+	<div id="cy" style="width: {{node_size}}px; height: {{node_size}}px;"></div>
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	var cy = cytoscape({
+		zoomingEnabled: true,
+		panningEnabled: true,
+		wheelSensitivity: 0.4,
+		container: document.getElementById('cy'),
+		elements: {
+			nodes: [
+				{% for node in nodes %}
+					{{ node|safe }},
+				{% endfor %}
+			],
+			edges: [
+			],
+		},
+		style: [
+			{
+				selector: 'node',
+				style: {
+					'shape': 'data(shape)',
+					'width': '100',
+					'height': '35',
+					'background-color': 'data(color)',
+					'label': 'data(name)',
+					'font-size': '10',
+					'text-valign': 'center',
+					'text-halign': 'center',
+				},
+			},
+			{
+				selector: 'node:selected',
+				style: {
+				},
+			},
+			{
+				selector: 'edge',
+				style: {
+					'target-arrow-shape': 'triangle',
+					'curve-style': 'bezier',
+					'line-style': 'data(linestyle)',
+				},
+			},
+			{
+				selector: 'edge:selected',
+				style: {
+				},
+			},
+			{
+				selector: ':parent',
+				style: {
+					'font-size': '12',
+					'label': 'data(id)',
+					'line-style': "solid",
+					'background-color': 'data(color)',
+					'text-valign': 'top',
+				}
+			},
+		],
+		layout: {
+			name: 'fcose',
+			fit: true,
+			packComponents: true,
+			animationDuration: 0, //ms
+			idealEdgeLength: 150,
+		},
+	});
+	cy.on('tap', 'node', function(){
+		if (this.data('href')) {
+			try { // your browser may block popups
+				window.open( this.data('href'), "_self" );
+			} catch(e){ // fall back on url change
+				window.location.href = this.data('href');
+			}
+		}
+	});
+
+</script>
+{% endblock script_append %}

@@ -1781,6 +1781,78 @@ def home(request):
 	})
 
 
+def home_chart(request):
+	"""
+	Startsiden med oversikt over systemer per kategori
+	Tilgangsstyring: ÅPEN
+	"""
+
+	nodes = []
+	parents = []
+
+	def systemnavn_forkortet(system):
+		maximum = 20
+		if len(system.systemnavn) > maximum:
+			return system.systemnavn[:maximum]
+		return system.systemnavn
+
+	def system_virksomhet(system, parents):
+		if system.systemforvalter:
+			parents.append(system.systemforvalter.virksomhetsforkortelse)
+			return system.systemforvalter.virksomhetsforkortelse
+
+		#if system.systemeier:
+		#	parents.append(system.systemeier.virksomhetsforkortelse)
+		#	return system.systemeier.virksomhetsforkortelse
+
+		parents.append('Ingen')
+		return 'Ingen'
+
+	antall_graph_noder = 0
+	for system in System.objects.all():
+		if not system.er_ibruk():
+			continue
+
+		if system.er_integrasjon():
+			continue
+
+		if system.er_infrastruktur():
+			continue
+
+		antall_graph_noder += 1
+		nodes.append({
+			'data': {
+				'id': system.pk,
+				'name': systemnavn_forkortet(system),
+				'parent': system_virksomhet(system, parents),
+				'shape': 'rectangle',
+				'color': system.color(),
+				'href': f'/systemer/detaljer/{system.pk}/',
+			}
+		})
+
+	for p in set(parents):
+		nodes.append(
+			{'data':
+				{'id': p,
+				#'parent': virksomhet.virksomhetsforkortelse,
+				'color': 'white'
+				}
+			},
+		)
+
+	node_size = 350 + 8*antall_graph_noder
+	if node_size > 1920:
+		node_size = 1920
+
+	return render(request, 'site_home_chart.html', {
+		'request': request,
+		'nodes': nodes,
+		'node_size': node_size,
+		'system_colors': SYSTEM_COLORS,
+	})
+
+
 def alle_definisjoner(request):
 	"""
 	Viser definisjoner
@@ -3284,6 +3356,7 @@ def systemer_virksomhet_ansvarlig_for(request, pk):
 	})
 
 
+
 def virksomhet(request, pk):
 	"""
 	Vise detaljer om en valgt virksomhet
@@ -3310,7 +3383,13 @@ def virksomhet(request, pk):
 	nodes = []
 	parents = []
 
-	def parent(system):
+	def systemnavn_forkortet(system):
+		maximum = 20
+		if len(system.systemnavn) > maximum:
+			return system.systemnavn[:maximum]
+		return system.systemnavn
+
+	def system_seksjon(system, parents):
 		if system.systemforvalter_avdeling_referanse:
 			parents.append(system.systemforvalter_avdeling_referanse.ou)
 			return system.systemforvalter_avdeling_referanse.ou
@@ -3322,14 +3401,9 @@ def virksomhet(request, pk):
 		except:
 			pass
 
-		parents.append('Ukjent')
-		return 'Ukjent'
+		parents.append('Ingen')
+		return 'Ingen'
 
-	def systemnavn(system):
-		maximum = 20
-		if len(system.systemnavn) > maximum:
-			return system.systemnavn[:maximum]
-		return system.systemnavn
 
 	antall_graph_noder = System.objects.filter(systemforvalter=pk).count()
 	for system in System.objects.filter(systemforvalter=pk):
@@ -3337,8 +3411,8 @@ def virksomhet(request, pk):
 			nodes.append({
 				'data': {
 					'id': system.pk,
-					'name': systemnavn(system),
-					'parent': parent(system),
+					'name': systemnavn_forkortet(system),
+					'parent': system_seksjon(system, parents),
 					'shape': 'rectangle',
 					'color': system.color(),
 					'href': f'/systemer/detaljer/{system.pk}/',
@@ -3379,7 +3453,7 @@ def virksomhet(request, pk):
 		'ant_systemer_forvalter': ant_systemer_forvalter,
 		'systemer_drifter': systemer_drifter,
 		'nodes': nodes,
-		'node_size': 350 + 8*antall_graph_noder,
+		'node_size': 450 + 7*antall_graph_noder,
 		'system_colors': SYSTEM_COLORS,
 	})
 

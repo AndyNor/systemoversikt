@@ -38,6 +38,7 @@ urlpatterns = [
 	re_path(r'^debug_info$', views.debug_info, name='debug_info'),
 
 	re_path(r'^$', views.home, name='home'),
+	re_path(r'^chart/', views.home_chart, name='home_chart'),
 	re_path(r'^oidc/', include('mozilla_django_oidc.urls')),
 	re_path(r'^login/$', admin.site.login, name='login'),
 	re_path(r'^logout/$', admin.site.logout, name='logout'),
