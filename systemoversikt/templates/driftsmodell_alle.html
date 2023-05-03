@@ -26,6 +26,7 @@
 			<th>Forvaltet av</th>
 			<th>Type</th>
 			<th>Utviklingsplattform</th>
+			<th>Samarbeidspartner</th>
 			<th>Antall systemer</th>
 			<th>Kommentar</th>
 		</tr>
@@ -48,6 +49,9 @@
 			</td>
 			<td>
 				{{ item.utviklingsplattform|yesno:"Ja,Nei" }}
+			</td>
+			<td>
+				{{ item.samarbeidspartner|yesno:"Ja,Nei" }}
 			</td>
 			<td>
 				{{ item.antall_systemer }}

@@ -3465,10 +3465,16 @@ class Driftsmodell(models.Model):
 			help_text=u'Dersom dette er en "plattform på en plattform" kan du her henvise til hvilken plattform denne kjører på.',
 			)
 	utviklingsplattform = models.BooleanField(
-			verbose_name="Er utviklingsplattform",
+			verbose_name="Er utviklingsplattform?",
 			blank=True, null=False,
 			default=False,
 			help_text=u"For å vise systemer som er selvutviklet",
+			)
+	samarbeidspartner = models.BooleanField(
+			verbose_name="Er samarbeidspartner?",
+			blank=True, null=False,
+			default=False,
+			help_text=u"For å vise systemer som er fra samarbeidspartnere",
 			)
 	history = HistoricalRecords()
 
@@ -3664,6 +3670,7 @@ SYSTEM_COLORS = {
 	"drift_uke": '#9db3e5',
 	"offentlig_sky": '#b5dba2',
 	"egenutviklet": '#e3b27f',
+	"samarbeidspartner": "#fce883",
 	"ukjent": '#b9b9b9',
 }
 
@@ -4337,6 +4344,15 @@ class System(models.Model):
 
 		return False
 
+	def er_samarbeidspartner(self):
+		try:
+			if self.driftsmodell_foreignkey.samarbeidspartner:
+				return True
+		except:
+			pass
+
+		return False
+
 	def forventet_url(self):
 		for systemtype in self.systemtyper.all():
 			if systemtype.har_url:
@@ -4373,6 +4389,9 @@ class System(models.Model):
 
 		if self.er_selvutviklet():
 			return SYSTEM_COLORS["egenutviklet"]
+
+		if self.er_samarbeidspartner():
+			return SYSTEM_COLORS["samarbeidspartner"]
 
 		return SYSTEM_COLORS["ukjent"] # alt annet
 

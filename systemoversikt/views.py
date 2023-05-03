@@ -1813,7 +1813,7 @@ def home_chart(request):
 		return 'Ingen'
 
 	antall_graph_noder = 0
-	for system in System.objects.all():
+	for system in System.objects.all().order_by('systemnavn'):
 		if not system.er_ibruk():
 			continue
 
@@ -3410,7 +3410,7 @@ def virksomhet(request, pk):
 
 
 	antall_graph_noder = System.objects.filter(systemforvalter=pk).count()
-	for system in System.objects.filter(systemforvalter=pk):
+	for system in System.objects.filter(systemforvalter=pk).order_by('systemnavn'):
 		if system.er_ibruk():
 			nodes.append({
 				'data': {

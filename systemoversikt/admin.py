@@ -1196,6 +1196,7 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 					'ansvarlig_virksomhet',
 					'type_plattform',
 					'utviklingsplattform',
+					'samarbeidspartner',
 					'overordnet_plattform',
 					'anbefalte_kategorier_personopplysninger',
 					'risikovurdering',
