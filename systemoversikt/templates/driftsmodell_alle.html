@@ -25,6 +25,7 @@
 			<th>Landingssone</th>
 			<th>Forvaltet av</th>
 			<th>Type</th>
+			<th>Utviklingsplattform</th>
 			<th>Antall systemer</th>
 			<th>Kommentar</th>
 		</tr>
@@ -44,6 +45,9 @@
 			</td>
 			<td>
 				{{ item.get_type_plattform_display }}
+			</td>
+			<td>
+				{{ item.utviklingsplattform|yesno:"Ja,Nei" }}
 			</td>
 			<td>
 				{{ item.antall_systemer }}
