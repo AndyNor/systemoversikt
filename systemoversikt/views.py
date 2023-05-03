@@ -1787,6 +1787,10 @@ def home_chart(request):
 	Tilgangsstyring: ÅPEN
 	"""
 
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	nodes = []
 	parents = []
 
