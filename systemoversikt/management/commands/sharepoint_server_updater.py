@@ -123,7 +123,7 @@ class Command(BaseCommand):
 				#print(os_readable)
 				comp_ip_address = record["IP Address"]
 
-				if comp_ip_address == None or comp_ip_address == "":
+				if (comp_ip_address == None or comp_ip_address == "") and "ws" not in comp_name:
 					print("gethostbyname %s" % comp_name)
 					try:
 						full_comp_name = "%s%s" % (comp_name, ".oslofelles.oslo.kommune.no")
