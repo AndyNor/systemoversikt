@@ -4,7 +4,6 @@ from systemoversikt.models import *
 from django.db import transaction
 import os
 import time
-import csv
 from functools import lru_cache
 import json, os
 import pandas as pd
@@ -27,8 +26,8 @@ class Command(BaseCommand):
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
 		print("Laster ned fil med kobling maskiner-bss")
-		computers_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers_bss.csv")
-		computers_destination_file = 'systemoversikt/import/OK_computers_bss.csv'
+		computers_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers_bss.xlsx")
+		computers_destination_file = 'systemoversikt/import/OK_computers_bss.xlsx'
 		sp.download(sharepoint_location = computers_source_file, local_location = computers_destination_file)
 
 		print("Laster ned fil med informasjon om disk fra vmware")
@@ -47,9 +46,6 @@ class Command(BaseCommand):
 				dfRaw = pd.read_excel(computers_destination_file)
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				computers_data = dfRaw.to_dict('records')
-			if ".csv" in computers_destination_file:
-				with open(f"{computers_destination_file}", 'r', encoding='latin-1') as file:
-					computers_data = list(csv.DictReader(file, delimiter=","))
 			if computers_data == None:
 				return
 
@@ -60,15 +56,14 @@ class Command(BaseCommand):
 			@lru_cache(maxsize=512)
 			def bss_cache(bss_name):
 				try:
-					sub_name = CMDBRef.objects.get(navn=record["sub_name"])
+					sub_name = CMDBRef.objects.get(navn=record["Name.1"])
 					return sub_name
 				except:
 					return None
 
 			def convertToInt(string, multiplier=1):
 				try:
-					string = string.replace(",","")
-					number = float(string)
+					number = int(string)
 				except:
 					return None
 
@@ -96,7 +91,7 @@ class Command(BaseCommand):
 				if idx % 1000 == 0:
 					print("\n%s av %s" % (idx, antall_records))
 
-				comp_name = record["comp_name"].lower()
+				comp_name = record["Name"].lower()
 				if comp_name == "":
 					print("Maskinen mangler navn")
 					server_dropped += 1
@@ -106,9 +101,9 @@ class Command(BaseCommand):
 				cmdbdevice = get_cmdb_instance(comp_name)
 
 				# OS-håndtering
-				os = record["comp_os"]
-				os_version = record["comp_os_version"]
-				os_sp = record["comp_os_service_pack"]
+				os = record["Operating System"]
+				os_version = record["OS Version"]
+				os_sp = record["OS Service Pack"]
 
 				if "Windows" in os:
 					os_readable = os.replace("64-bit", "").replace("32-bit", "").replace(",","").strip()
@@ -126,10 +121,10 @@ class Command(BaseCommand):
 					os_readable = 'Ukjent'
 
 				#print(os_readable)
-				comp_ip_address = record["comp_ip_address"]
+				comp_ip_address = record["IP Address"]
 
-				if (comp_ip_address == None or comp_ip_address == "") and "ws" not in comp_name:
-					#print("gethostbyname %s" % comp_name)
+				if comp_ip_address == None or comp_ip_address == "":
+					print("gethostbyname %s" % comp_name)
 					try:
 						full_comp_name = "%s%s" % (comp_name, ".oslofelles.oslo.kommune.no")
 						comp_ip_address = socket.gethostbyname(full_comp_name)
@@ -141,31 +136,31 @@ class Command(BaseCommand):
 
 				cmdbdevice.device_active = True
 				cmdbdevice.kilde_cmdb = True
-				if record["comp_disk_space"] != "":
-					cmdbdevice.comp_disk_space = convertToInt(record["comp_disk_space"])*1000**3 # returnert som bytes (fra GB)
-				cmdbdevice.comp_cpu_core_count = convertToInt(record["comp_u_cpu_total"])
-				cmdbdevice.comp_ram = convertToInt(record["comp_ram"])
+				if record["Disk space (GB)"] != "":
+					cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])*1000**3 # returnert som bytes (fra GB)
+				cmdbdevice.comp_cpu_core_count = convertToInt(record["CPU total"])
+				cmdbdevice.comp_ram = convertToInt(record["RAM (MB)"])
 				cmdbdevice.comp_ip_address = comp_ip_address
-				cmdbdevice.comp_cpu_speed = convertToInt(record["comp_cpu_speed"])
+				cmdbdevice.comp_cpu_speed = convertToInt(record["CPU speed (MHz)"])
 				cmdbdevice.comp_os = os
 				cmdbdevice.comp_os_version = os_version
 				cmdbdevice.comp_os_service_pack = os_sp
 				cmdbdevice.comp_os_readable = os_readable
-				cmdbdevice.comp_location = record["comp_location"]
-				cmdbdevice.comments = record["comp_comments"]
-				cmdbdevice.description = record["comp_short_description"]
+				cmdbdevice.comp_location = record["Location"]
+				cmdbdevice.comments = record["Comments"]
+				cmdbdevice.description = record["Description"]
 				#cmdbdevice.billable = record["Billable"] #finnes ikke lenger i denne rapporten
 
 
 				# Sette type enhet
-				if record["sub_name"] in ["OK-Tykklient", "OK-Støttemaskin", "OK-Tynnklient"]:
+				if record["Name.1"] in ["OK-Tykklient", "OK-Støttemaskin", "OK-Tynnklient"]:
 					cmdbdevice.device_type = "KLIENT"
 				else:
 					cmdbdevice.device_type = "SERVER"
 
-				sub_name = bss_cache(record["sub_name"])
+				sub_name = bss_cache(record["Name.1"])
 				if sub_name == None:
-					print('Business sub service %s for %s finnes ikke' % (record["sub_name"], comp_name))
+					print('Business sub service %s for %s finnes ikke' % (record["Name.1"], comp_name))
 				cmdbdevice.sub_name = sub_name # det er OK at den er None
 				#else:
 				#	server_dropped += 1
@@ -318,4 +313,3 @@ class Command(BaseCommand):
 
 		# eksekver
 		import_cmdb_servers()
-
