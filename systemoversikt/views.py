@@ -20,6 +20,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.db import transaction
 from django.db.models import Sum
+from os import path
 import datetime
 import json
 import re
@@ -242,7 +243,7 @@ def cmdb_adcs_index(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-	from os import listdir, path
+
 	from os.path import isfile, join
 	import re
 	import json
