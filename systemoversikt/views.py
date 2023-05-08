@@ -6055,7 +6055,7 @@ def firewall_parser(request):
 	@lru_cache(maxsize=256)
 	def lookup_device(ip_address):
 		try:
-			server = CMDBdevice.objects.get(comp_ip_address=str(ip_address))
+			server = CMDBdevice.objects.filter(comp_ip_address=str(ip_address))[0]
 			#print(f"* Oppslag av {ip_address} som {server}")
 			return (f"{server.comp_name} ({server.sub_name.navn})")
 		except ObjectDoesNotExist:
