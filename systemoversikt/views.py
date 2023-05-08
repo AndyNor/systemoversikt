@@ -6057,7 +6057,10 @@ def firewall_parser(request):
 		try:
 			server = CMDBdevice.objects.get(comp_ip_address=str(ip_address))
 			#print(f"* Oppslag av {ip_address} som {server}")
-			return (f"{server.comp_name} ({server.sub_name.navn})")
+			try:
+				return (f"{server.comp_name} ({server.sub_name.navn})")
+			except:
+				return (f"{server.comp_name}")
 		except ObjectDoesNotExist:
 			print(f"* Oppslag feilet for server {ip_address}")
 			return None
