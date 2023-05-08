@@ -33,8 +33,16 @@
 			<td>{{ id }}</td>
 			<td>{{ opening.firewall }}</td>
 			<td>{{ opening.permit }}</td>
-			<td>{{ opening.source }}</td>
-			<td>{{ opening.destination }}</td>
+			<td>
+			{% for s in opening.source %}
+				<li>{{ s }}</li>
+			{% endfor %}
+			</td>
+			<td>
+			{% for d in opening.destination %}
+				<li>{{ d }}</li>
+			{% endfor %}
+			</td>
 			<td>{{ opening.service }}</td>
 			<td>{{ opening.beskrivelse }}</td>
 			<td>{{ opening.retning }}</td>

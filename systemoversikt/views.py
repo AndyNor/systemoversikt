@@ -4828,7 +4828,7 @@ def cmdb_bss(request, pk):
 	required_permissions = 'systemoversikt.view_cmdbref'
 	if request.user.has_perm(required_permissions):
 		cmdbref = CMDBRef.objects.get(pk=pk)
-		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref).order_by("-device_active")
+		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref).filter(device_active=True)
 		databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
 
 		vlan_lagt_til = []
@@ -5933,30 +5933,34 @@ def firewall_parser(request):
 	debug = []
 
 	def erstatte_grupper_med_ipadresser(adresser, oppslagsverk):
+		nye_adresser = set()
 		for a in adresser:
 			if a in ["All-IPv4-Addresses", "All-Addresses", "All-IPv6-Addresses"]:
+				nye_adresser.add(a)  # legger tilbake som den var
 				continue
 			try:
 				ipaddress.ip_network(a)
+				nye_adresser.add(a)  # legger tilbake som den var
 				# hvis dette er et nettverk, gå til neste adresse
 				continue
 			except ValueError:
 				pass # hvis ikke, fortsett
 			try:
 				ipaddress.ipaddress(a)
+				nye_adresser.add(a)  # legger tilbake som den var
 				# dette er en ipadresse, gå til neste adresse
 				continue
 			except:
 				# det er hverken et nettverk eller ip-adresse, erstatt ved oppslag
 				try:
 					oppslag = oppslagsverk[a]
-					#print(f"fjerne {a}")
-					adresser.remove(a)
-					#print(f"legge til {oppslag}")
-					adresser.extend(oppslag)
+					nye_adresser.add(oppslag)
+					continue
 				except:
+					nye_adresser.add(a)  # legger tilbake som den var
 					print(f"*** feilet oppslag mot navngitt ipgruppe {a}")
-		return adresser
+
+		return list(nye_adresser)
 
 	def parse_firewall_named_groups(excel_file, sheet):
 		debug.append("Klargjør navngitte nettverk")
@@ -6029,13 +6033,6 @@ def firewall_parser(request):
 				if line["destination"] != "":
 					all_openings[rule_id]["destination"].append(line["destination"])
 
-	@lru_cache(maxsize=512)
-	def lookup_network(network):
-		try:
-			nc = NetworkContainer.objects.get(ip_address=str(network.network_address), subnet_mask=network.prefixlen)
-			return nc.comment
-		except:
-			return network
 
 	debug.append(f"Det er {len(all_openings)} brannmurdefinisjoner i filen")
 
@@ -6044,23 +6041,63 @@ def firewall_parser(request):
 		all_openings[opening]["destination"] = erstatte_grupper_med_ipadresser(all_openings[opening]["destination"], named_network_groups)
 
 
-	# oppslag mot kjente nettverk
-	for id, opening in all_openings.items():
-		#print("Regel %s: %s" % (opening, all_openings[opening]))
-		for source in opening["source"]:
+	@lru_cache(maxsize=256)
+	def lookup_network(network):
+		try:
+			nc = NetworkContainer.objects.get(ip_address=str(network.network_address), subnet_mask=network.prefixlen)
+			return nc.comment
+		except:
+			print(f"** Oppslag feilet for nettverk {network}")
+			return None
+
+	@lru_cache(maxsize=256)
+	def lookup_device(ip_address):
+		try:
+			server = CMDBdevice.objects.get(comp_ip_address=str(ip_address))
+			#print(f"* Oppslag av {ip_address} som {server}")
+			return (f"{server.comp_name} ({server.sub_name.navn})")
+		except ObjectDoesNotExist:
+			print(f"* Oppslag feilet for server {ip_address}")
+			return None
+
+	def oppslag_kjente_nettverk(data):
+		# oppslag mot kjente nettverk
+		nye_data = set()
+		for n in data:
+			if "/" in n:
+				try:
+					network = ipaddress.ip_network(n) # hvis dette er et nettverk..
+					oppslag = lookup_network(network)
+					if oppslag:
+						nye_data.add(oppslag)
+						continue
+					else:
+						nye_data.add(n) # legger tilbake og fortsetter
+						continue
+				except:
+					pass
+
 			try:
-				network = ipaddress.ip_network(source)
-				# hvis dette er et nettverk..
-				lookup_network(network)
-				continue
+				ip_address = ipaddress.ip_address(n)  # dette er en ipadresse..
+				oppslag = lookup_device(ip_address)
+				if oppslag:
+					nye_data.add(oppslag)
+					continue
+				else:
+					nye_data.add(n) # legger tilbake og fortsetter
+					continue
 			except ValueError:
-				pass # hvis ikke, fortsett
-			try:
-				ipaddress.ipaddress(source)
-				# dette er en ipadresse..
-				continue
-			except:
 				pass
+
+			# kommer vi så langt er det bare en string som vi må legge tilbake
+			nye_data.add(n) # legger tilbake og fortsetter
+
+		return list(nye_data)
+
+	# søke opp vlan navn og maskinnavn fra databasen
+	for opening in all_openings:
+		all_openings[opening]["source"] = oppslag_kjente_nettverk(all_openings[opening]["source"])
+		all_openings[opening]["destination"] = oppslag_kjente_nettverk(all_openings[opening]["destination"])
 
 
 	# returnere som json
