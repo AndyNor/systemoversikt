@@ -6047,7 +6047,7 @@ def firewall_parser(request):
 	def lookup_network(network):
 		try:
 			nc = NetworkContainer.objects.get(ip_address=str(network.network_address), subnet_mask=network.prefixlen)
-			return nc.comment
+			return f"{nc.comment} ({network})"
 		except:
 			print(f"** Oppslag feilet for nettverk {network}")
 			return None
