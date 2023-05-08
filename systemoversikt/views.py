@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.shortcuts import render, redirect, get_object_or_404
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core import serializers
 from systemoversikt.models import *
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
@@ -6055,11 +6055,14 @@ def firewall_parser(request):
 	@lru_cache(maxsize=256)
 	def lookup_device(ip_address):
 		try:
-			server = CMDBdevice.objects.filter(comp_ip_address=str(ip_address))[0]
+			server = CMDBdevice.objects.get(comp_ip_address=str(ip_address))
 			#print(f"* Oppslag av {ip_address} som {server}")
 			return (f"{server.comp_name} ({server.sub_name.navn})")
 		except ObjectDoesNotExist:
 			print(f"* Oppslag feilet for server {ip_address}")
+			return None
+		except MultipleObjectsReturned:
+			debug.append(f"Flere maskiner med ip {ip_address}")
 			return None
 
 	def oppslag_kjente_nettverk(data):
