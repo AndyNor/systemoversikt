@@ -5979,7 +5979,8 @@ def firewall_parser(request):
 
 		return named_groups
 
-	excel_file = pd.ExcelFile("systemoversikt/import/firewall_all_ports.xlsx")
+	filename = path.dirname(path.abspath(__file__)) + "/import/firewall_all_ports.xlsx"
+	excel_file = pd.ExcelFile(filename)
 	debug.append("Fant følgende ark i filen: %s" % excel_file.sheet_names)
 
 	all_openings = {}
