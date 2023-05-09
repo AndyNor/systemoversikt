@@ -6068,6 +6068,14 @@ def firewall_parser(request):
 			debug.append(f"Flere maskiner med ip {ip_address}")
 			return None
 
+	@lru_cache(maxsize=256)
+	def lookup_vip(ip_address):
+		try:
+			return virtualIP.objects.get(ip_address=str(ip_address)).vip_name
+			print(f"- VIP match på {ip_address}")
+		except (ObjectDoesNotExist, MultipleObjectsReturned):
+			return None
+
 	def oppslag_kjente_nettverk(data):
 		# oppslag mot kjente nettverk
 		nye_data = set()
@@ -6092,8 +6100,18 @@ def firewall_parser(request):
 					nye_data.add(oppslag)
 					continue
 				else:
-					nye_data.add(n) # legger tilbake og fortsetter
+					pass
+			except ValueError:
+				pass
+
+			try:
+				ip_address = ipaddress.ip_address(n)  # dette er en ipadresse..
+				oppslag = lookup_vip(ip_address)
+				if oppslag:
+					nye_data.add(oppslag)
 					continue
+				else:
+					pass
 			except ValueError:
 				pass
 
