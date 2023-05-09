@@ -5926,6 +5926,11 @@ def cmdb_api_kompass(request):
 
 
 def firewall_parser(request):
+	required_permissions = ['systemoversikt.change_azureapplication']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
 	import pandas as pd
 	import numpy as np
 	import ipaddress
