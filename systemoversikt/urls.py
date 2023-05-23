@@ -48,6 +48,7 @@ urlpatterns = [
 	re_path(r'^admin/logger/audit/$', views.logger_audit, name='logger_audit'),
 	re_path(r'^admin/logger/autentisering/$', views.logger_autentisering, name='logger_autentisering'),
 	re_path(r'^admin/logger/api/$', views.logger_api, name='logger_api'),
+	re_path(r'^admin/logger/api/csirt/$', views.logger_api_csirt, name='logger_api_csirt'),
 	re_path(r'^admin/roller/$', views.roller, name='roller'),
 	re_path(r'^admin/rettigheter/$', views.permissions, name='permissions'),
 	re_path(r'^admin/erstattansvarlig/$', views.ansvarlig_bytte, name='ansvarlig_bytte'),

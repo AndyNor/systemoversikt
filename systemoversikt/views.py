@@ -1701,6 +1701,22 @@ def logger_audit(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def logger_api_csirt(request):
+	"""
+	viser der cisrt-spørringer feiler
+	Tilgangsstyring: Se applikasjonslogger
+	"""
+	required_permissions = 'systemoversikt.view_applicationlog'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	recent_loggs = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").filter(message__icontains="Ingen treff").order_by('-opprettet')[:1000]
+	return render(request, 'site_logger_audit.html', {
+		'request': request,
+		'recent_loggs': recent_loggs,
+	})
+
+
 def logger_api(request):
 	"""
 	viser alle endringer på objekter i løsningen
@@ -5590,13 +5606,13 @@ def csirt_maskinlookup_api(request):
 
 	maskin_string = request.GET.get('server', '').strip()
 	if maskin_string == '':
-		ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Servernavn ikke oppgitt")
+		ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Ingen treff på tomt servernavn")
 		return JsonResponse({"error": "Servernavn er ikke oppgitt. Send som GET-variabel 'server'"}, safe=False)
 
 	try:
 		server_match = CMDBdevice.objects.get(comp_name=maskin_string)
 	except ObjectDoesNotExist:
-		ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Fant ikke {maskin_string}")
+		ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Ingen treff på {maskin_string}")
 		return JsonResponse({"error": "Ingen treff på servernavn"}, safe=False)
 
 	try:
@@ -5671,12 +5687,12 @@ def csirt_iplookup_api(request):
 	ip_string = request.GET.get('ip', '').strip()
 	port_string = request.GET.get('port', '').strip()
 	if ip_string == '':
-		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Ingen IP-adresse oppgitt")
+		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Ingen treff på tom IP-adresse")
 		return JsonResponse({"error": "Ingen IP-adresse oppgitt. Send som GET-variabel 'ip'"}, safe=False)
 	try:
 		ip = ipaddress.ip_address(ip_string)
 	except ValueError:
-		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ugyldig IP-adresse {ip_string}")
+		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på ugyldig IP-adresse {ip_string}")
 		return JsonResponse({"error": "Ikke en gyldig IP-adresse"}, safe=False)
 
 
