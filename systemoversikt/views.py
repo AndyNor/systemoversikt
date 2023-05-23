@@ -5658,9 +5658,9 @@ def csirt_iplookup_api(request):
 
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="csirt_ipsok").values_list("key", flat=True)
-	if not key in list(allowed_keys):
-		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+	#if not key in list(allowed_keys):
+	#	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
+	#	return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 
 
 
@@ -5702,6 +5702,10 @@ def csirt_iplookup_api(request):
 					domaint_vlan = local_ip.dominant_vlan()
 					host_vlan = "%s (%s/%s)" % (domaint_vlan.comment, domaint_vlan.ip_address, domaint_vlan.subnet_mask)
 
+					from django.utils import timezone
+					pool.server.eksternt_eksponert_dato = timezone.now()
+					pool.server.save()
+
 				members.append({
 					"server": pool.server.comp_name,
 					"host_ip": pool.ip_address,
@@ -5723,7 +5727,7 @@ def csirt_iplookup_api(request):
 	}
 
 	source_ip = get_client_ip(request)
-	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Vellykket kall fra {source_ip}")
+	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Vellykket kall mot {ip_string} utført fra {source_ip}")
 	return JsonResponse(data, safe=False)
 
 

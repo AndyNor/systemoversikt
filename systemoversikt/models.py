@@ -2444,6 +2444,10 @@ class CMDBdevice(models.Model):
 			max_length=300,
 			null=True, blank=True,
 			)
+	eksternt_eksponert_dato = models.DateTimeField( # settes av csirt_iplookup_api()
+			verbose_name="Sist eksponert mot Internett dato",
+			null=True, blank=True,
+			)
 	#vm_disks_installed = models.IntegerField(
 	#		verbose_name="VM: Antall disker installert",
 	#		null=True, blank=True,
