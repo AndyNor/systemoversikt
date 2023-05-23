@@ -5376,7 +5376,8 @@ def tilgangsgrupper_api(request):
 	except MultipleObjectsReturned:
 		owner = "Flere treff på nøkkeleier"
 
-	ApplicationLog.objects.create(event_type="API AD-grupper", message="Nøkkel tilhørende %s" %(owner))
+	source_ip = get_client_ip(request)
+	ApplicationLog.objects.create(event_type="API AD-grupper", message=f"Nøkkel tilhørende {owner} fra {source_ip}")
 
 	if not "gruppenavn" in request.GET:
 		return JsonResponse({"message": "Du må oppgi et gruppenavn som GET-variabel. ?gruppenavn=<navn>", "data": None}, safe=False, status=204)
@@ -5721,10 +5722,21 @@ def csirt_iplookup_api(request):
 		"matching_vlans": vlan_match,
 	}
 
-
-	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Vellykket kall")
+	source_ip = get_client_ip(request)
+	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Vellykket kall fra {source_ip}")
 	return JsonResponse(data, safe=False)
 
+
+def get_client_ip(request):
+	try:
+		x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+		if x_forwarded_for:
+			ip = x_forwarded_for.split(',')[0]
+		else:
+			ip = request.META.get('REMOTE_ADDR')
+		return ip
+	except:
+		return "get_client_ip() feilet"
 
 
 def behandlingsoversikt_api(request):
@@ -5737,7 +5749,7 @@ def behandlingsoversikt_api(request):
 	allowed_keys = APIKeys.objects.filter(navn__startswith="behandlingsoversikt").values_list("key", flat=True)
 	if not key in list(allowed_keys):
 		ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Feil eller tom API-nøkkel")
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	data = []
 	for s in System.objects.all():
@@ -5753,7 +5765,8 @@ def behandlingsoversikt_api(request):
 		systeminfo["systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all()]
 		data.append(systeminfo)
 
-	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Vellykket kall")
+	source_ip = get_client_ip(request)
+	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message=f"Vellykket kall fra {source_ip}")
 	return JsonResponse(data, safe=False)
 
 
