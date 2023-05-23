@@ -5590,11 +5590,13 @@ def csirt_maskinlookup_api(request):
 
 	maskin_string = request.GET.get('server', '').strip()
 	if maskin_string == '':
+		ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Servernavn ikke oppgitt")
 		return JsonResponse({"error": "Servernavn er ikke oppgitt. Send som GET-variabel 'server'"}, safe=False)
 
 	try:
 		server_match = CMDBdevice.objects.get(comp_name=maskin_string)
 	except ObjectDoesNotExist:
+		ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Fant ikke {maskin_string}")
 		return JsonResponse({"error": "Ingen treff på servernavn"}, safe=False)
 
 	try:
@@ -5651,18 +5653,16 @@ def csirt_maskinlookup_api(request):
 
 def csirt_iplookup_api(request):
 
-	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Innkommende kall")
+	#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Innkommende kall")
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil: HTTP metode var ikke GET")
 		raise Http404
 
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="csirt_ipsok").values_list("key", flat=True)
-	#if not key in list(allowed_keys):
-	#	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
-	#	return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
-
-
+	if not key in list(allowed_keys):
+		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 
 	from django.core.exceptions import ObjectDoesNotExist
 	import ipaddress
@@ -5671,10 +5671,12 @@ def csirt_iplookup_api(request):
 	ip_string = request.GET.get('ip', '').strip()
 	port_string = request.GET.get('port', '').strip()
 	if ip_string == '':
+		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Ingen IP-adresse oppgitt")
 		return JsonResponse({"error": "Ingen IP-adresse oppgitt. Send som GET-variabel 'ip'"}, safe=False)
 	try:
 		ip = ipaddress.ip_address(ip_string)
 	except ValueError:
+		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ugyldig IP-adresse {ip_string}")
 		return JsonResponse({"error": "Ikke en gyldig IP-adresse"}, safe=False)
 
 
@@ -5715,6 +5717,7 @@ def csirt_iplookup_api(request):
 				})
 		vip_pool_members = members
 	except ObjectDoesNotExist:
+		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på {ip_string}")
 		return JsonResponse({"error": "Ingen treff på IP-adresse"}, safe=False)
 
 	data = {
