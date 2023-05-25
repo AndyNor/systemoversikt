@@ -24,9 +24,11 @@
 
 	<a href="/admin/" class="btn btn-sm btn-link" >Adminpanelet</a><br>
 
-	<a href="{% url 'valgbarekategorier' %}" class="btn btn-sm btn-link">Valgbare kategorier</a><br>
+	{% url 'valgbarekategorier' as url_valgbarekategorier %}
+	<a href="{{ url_valgbarekategorier }}" class="btn btn-sm btn-link {% if url_valgbarekategorier in request.path %}fremhev{% endif %}">Valgbare kategorier</a><br>
 
-	<a href="{% url 'databasestatistikk' %}" class="btn btn-sm btn-link">Databasestatistikk</a><br>
+	{% url 'databasestatistikk' as url_databasestatistikk %}
+	<a href="{{ url_databasestatistikk }}" class="btn btn-sm btn-link {% if url_databasestatistikk in request.path %}fremhev{% endif %}">Databasestatistikk</a><br>
 
 	{% url 'minside' as url_minside %}
 	<a href="{{ url_minside }}" class="btn btn-sm btn-link {% if url_minside in request.path %}fremhev{% endif %}">👤 Min pålogging</a><br>
