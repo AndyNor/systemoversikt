@@ -1715,6 +1715,7 @@ def databasestatistikk(request):
 
 
 	import os
+	import logging
 	logger = logging.getLogger(__name__)
 	database_file = settings.DATABASES['default']['NAME']
 
