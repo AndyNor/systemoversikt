@@ -26,6 +26,8 @@
 
 	<a href="{% url 'valgbarekategorier' %}" class="btn btn-sm btn-link">Valgbare kategorier</a><br>
 
+	<a href="{% url 'databasestatistikk' %}" class="btn btn-sm btn-link">Databasestatistikk</a><br>
+
 	{% url 'minside' as url_minside %}
 	<a href="{{ url_minside }}" class="btn btn-sm btn-link {% if url_minside in request.path %}fremhev{% endif %}">👤 Min pålogging</a><br>
 

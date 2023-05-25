@@ -54,6 +54,8 @@ urlpatterns = [
 	re_path(r'^admin/erstattansvarlig/$', views.ansvarlig_bytte, name='ansvarlig_bytte'),
 	re_path(r'^admin/valgbarekategorier/$', views.valgbarekategorier, name='valgbarekategorier'),
 	re_path(r'^admin/bytt_virksomhet/$', views.bytt_virksomhet, name='bytt_virksomhet'),
+	re_path(r'^admin/databasestatistikk/$', views.databasestatistikk, name='databasestatistikk'),
+
 
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 

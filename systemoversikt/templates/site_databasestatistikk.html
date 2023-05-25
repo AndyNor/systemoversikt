@@ -1,0 +1,29 @@
+{% extends "admin_index.html" %}
+{% load static %}
+
+{% block overskrift %}
+	Tabeller og størrelser i databasen
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Størrelsen på databasefilen er {{file_size|filesizeformat}} og summen av alle størrelser per tabell er {{sum_size|filesizeformat}}.</p>
+
+	<table class="tablesorter excel">
+	<thead>
+	<tr>
+		<th>Tabell</th>
+		<th>Størrelse</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for stat in stats %}
+	<tr>
+		<td>{{ stat.name }}</td>
+		<td>{{ stat.size }} ({{ stat.size|filesizeformat }})</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

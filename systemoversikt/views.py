@@ -1667,6 +1667,8 @@ def roller(request):
 	})
 
 
+
+
 def logger(request):
 	"""
 	viser alle endringer på objekter i løsningen
@@ -1690,15 +1692,55 @@ def logger_audit(request):
 	Tilgangsstyring: Se applikasjonslogger
 	"""
 	required_permissions = 'systemoversikt.view_applicationlog'
-	if request.user.has_perm(required_permissions):
-
-		recent_loggs = ApplicationLog.objects.filter(~Q(event_type__icontains="api")).filter(~Q(event_type__icontains="Brukerpålogging")).order_by('-opprettet')[:1500]
-		return render(request, 'site_logger_audit.html', {
-			'request': request,
-			'recent_loggs': recent_loggs,
-		})
-	else:
+	if not request.user.has_perm(required_permissions):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	recent_loggs = ApplicationLog.objects.filter(~Q(event_type__icontains="api")).filter(~Q(event_type__icontains="Brukerpålogging")).order_by('-opprettet')[:1500]
+	return render(request, 'site_logger_audit.html', {
+		'request': request,
+		'recent_loggs': recent_loggs,
+	})
+
+
+
+
+def databasestatistikk(request):
+	"""
+	viser størrelse på alle tabeller i databasefilen
+	"""
+	required_permissions = 'systemoversikt.view_applicationlog'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
+	import os
+	database_file = settings.DATABASES['default']['NAME']
+
+	file_size = os.stat(database_file).st_size
+
+	query = f'SELECT name, SUM("pgsize") AS size FROM "dbstat" GROUP BY name ORDER BY -size;'
+	data = os.popen(f'sqlite3 {database_file} "{query}" ".exit').read()
+
+	data = data.splitlines()
+
+	sum_size = 0.0
+
+	stats = []
+	for line in data:
+		line = line.strip()
+		name = line.split("|")[0]
+		size = float(line.split("|")[1])
+		sum_size += size
+		stats.append({"name": name, "size": size})
+
+
+	return render(request, 'site_databasestatistikk.html', {
+		'request': request,
+		'stats': stats,
+		'file_size': file_size,
+		'sum_size': sum_size,
+	})
 
 
 def logger_api_csirt(request):
