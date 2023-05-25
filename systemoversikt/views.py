@@ -1715,12 +1715,16 @@ def databasestatistikk(request):
 
 
 	import os
+	logger = logging.getLogger(__name__)
 	database_file = settings.DATABASES['default']['NAME']
 
 	file_size = os.stat(database_file).st_size
 
 	query = f'SELECT name, SUM("pgsize") AS size FROM "dbstat" GROUP BY name ORDER BY -size;'
 	data = os.popen(f'sqlite3 {database_file} "{query}" ".exit').read()
+
+	logger.error(data)
+
 
 	data = data.splitlines()
 
