@@ -1753,7 +1753,14 @@ def logger_api_csirt(request):
 	if not request.user.has_perm(required_permissions):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	recent_loggs = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").filter(message__icontains="Ingen treff").order_by('-opprettet')[:1000]
+	try:
+		siste_kjoring = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").last().opprettet
+		time_delta = siste_kjoring - datetime.timedelta(hours=1)
+		recent_loggs = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").filter(message__icontains="Ingen treff").filter(opprettet__gte=time_delta).order_by('-opprettet')
+	except:
+		recent_loggs = None
+
+
 	return render(request, 'site_logger_audit.html', {
 		'request': request,
 		'recent_loggs': recent_loggs,
