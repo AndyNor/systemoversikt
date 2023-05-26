@@ -24,7 +24,13 @@
 	{% for server in servere %}
 	<tr>
 		<td>{{server.comp_name}}</td>
-		<td>{{server.vip_pool}}</td>
+		<td>
+			{% for pool in server.vip_pool.all %}
+				{% for vip in pool.vip.all %}
+					{{vip}}<br>
+				{% endfor %}
+			{% endfor %}
+		</td>
 		<td>{{server.sub_name}}</td>
 		<td>{{server.eksternt_eksponert_dato}}</td>
 	</tr>
