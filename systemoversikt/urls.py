@@ -208,6 +208,7 @@ urlpatterns = [
 	re_path(r'^cmdb/tools/unique$', views.tool_unique_items, name='tool_unique_items'),
 	re_path(r'^cmdb/tools/compare$', views.tool_compare_items, name='tool_compare_items'),
 	re_path(r'^cmdb/tools/docx2html$', views.tool_docx2html, name='tool_docx2html'),
+	re_path(r'^cmdb/tools/word_count$', views.tool_word_count, name='tool_word_count'),
 
 
 	re_path(r'^dpia/$', views.alle_dpia, name='alle_dpia'),

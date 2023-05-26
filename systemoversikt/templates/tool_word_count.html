@@ -1,0 +1,49 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Verktøy - Ordteller
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Lim inn tekst i boksen. Tekst blir splittet opp i "ord" og hvert ord blir telt opp. Du får se alle unike ord og deres frekvens. Funksjonen skiller ikke mellom små og store bokstaver. Tegn som kan brukes som skilletegn er mellomrom, komma, kolon, | og semikolon.</p>
+
+	<form action="{% url 'tool_word_count' %}" method="POST" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group form-inline">
+			<textarea style="width: 500px; height: 250px;" name="inndata"
+			placeholder="Inndata" class="form-control form-control-sm">{{ inndata }}</textarea>
+			<input style="margin-left: 10px;" type="submit" value="Tell opp" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	<hr>
+
+	<table id="word_count" class="excel tablesorter" style="width: 60%;">
+		<thead>
+			<tr>
+				<th>Ord</th>
+				<th>Frekvens</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for ord in alle_ord %}
+			<tr>
+				<td>
+					{{ ord.ord }}
+				</td>
+				<td>
+					{{ ord.frekvens }}
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

@@ -146,6 +146,27 @@ def mal(request):
 	})
 
 
+def tool_word_count(request):
+
+	import collections
+
+	inndata = request.POST.get('inndata', '')
+	filtered = inndata.replace(',',' ').replace(';',' ').replace(':',' ').replace('|',' ').replace('.','').lower()
+	words = filtered.split()
+	stripped_words = []
+	for w in words:
+		stripped_words.append(w.strip())
+
+	counter = collections.Counter(stripped_words)
+	alle_ord = [{"ord": word, "frekvens": frequency} for word, frequency in dict(counter).items()]
+
+	return render(request, 'tool_word_count.html', {
+		"request": request,
+		"alle_ord": alle_ord,
+		"inndata": inndata,
+	})
+
+
 def tool_docx2html(request):
 
 	html = None
