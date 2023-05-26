@@ -4705,37 +4705,57 @@ def alle_klienter(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def cmdb_internetteksponerte_servere(request):
+	"""
+	Søke og vise alle maskiner
+	Tilgangsstyring: må kunne vise cmdb-maskiner
+	"""
+	required_permissions = 'systemoversikt.view_cmdbdevice'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	dager_gamle = 30
+	tidsgrense = datetime.date.today() - datetime.timedelta(days=dager_gamle)
+	servere = CMDBdevice.objects.filter(eksternt_eksponert_dato__gte=tidsgrense).order_by("-eksternt_eksponert_dato")
+
+	return render(request, 'cmdb_internetteksponerte_servere.html', {
+		'request': request,
+		'servere': servere,
+	})
+
+
+
 def alle_servere(request):
 	"""
 	Søke og vise alle maskiner
 	Tilgangsstyring: må kunne vise cmdb-maskiner
 	"""
 	required_permissions = 'systemoversikt.view_cmdbdevice'
-	if request.user.has_perm(required_permissions):
-
-		search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
-
-		if search_term == '':
-			maskiner = None
-		elif search_term == '__all__':
-			maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True)
-		else:
-			maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(sub_name__navn__icontains=search_term)).order_by('comp_name')
-
-		maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
-		maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
-
-		vis_detaljer = True if request.GET.get('details') == "show" else False
-
-		return render(request, 'cmdb_maskiner_servere.html', {
-			'request': request,
-			'maskiner': maskiner,
-			'device_search_term': search_term,
-			'maskiner_stats': maskiner_stats,
-			'vis_detaljer': vis_detaljer,
-		})
-	else:
+	if not request.user.has_perm(required_permissions):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
+
+	if search_term == '':
+		maskiner = None
+	elif search_term == '__all__':
+		maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True)
+	else:
+		maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(sub_name__navn__icontains=search_term)).order_by('comp_name')
+
+	maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
+	maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
+
+	vis_detaljer = True if request.GET.get('details') == "show" else False
+
+	return render(request, 'cmdb_maskiner_servere.html', {
+		'request': request,
+		'maskiner': maskiner,
+		'device_search_term': search_term,
+		'maskiner_stats': maskiner_stats,
+		'vis_detaljer': vis_detaljer,
+	})
+
 
 
 def valgbarekategorier(request):

@@ -72,6 +72,9 @@
 	{% url 'alle_servere' as url_alle_servere %}
 	<a href="{{url_alle_servere}}" class="btn btn-sm btn-link {% if url_alle_servere in request.path %}fremhev{% endif %}">Servere</a><br>
 
+	{% url 'cmdb_internetteksponerte_servere' as url_cmdb_internetteksponerte_servere %}
+	<a href="{{url_cmdb_internetteksponerte_servere}}" class="btn btn-sm btn-link {% if url_cmdb_internetteksponerte_servere in request.path %}fremhev{% endif %}">Internetteksponerte servere</a><br>
+
 	{% url 'alle_klienter' as url_alle_klienter %}
 	<a href="{{url_alle_klienter}}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}">Klienter</a><br>
 

@@ -1,0 +1,36 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Internetteksponerte servere
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Maskinnavn</th>
+		<th>Eksponert via</th>
+		<th>Tjeneste</th>
+		<th>Sist sett</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for server in servere %}
+	<tr>
+		<td>{{server.comp_name}}</td>
+		<td>{{server.vip_pool}}</td>
+		<td>{{server.sub_name}}</td>
+		<td>{{server.eksternt_eksponert_dato}}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}
