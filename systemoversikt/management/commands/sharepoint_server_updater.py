@@ -87,7 +87,6 @@ class Command(BaseCommand):
 			print("Alt lastet, oppdaterer databasen:")
 
 			for idx, record in enumerate(computers_data):
-				continue
 				print(".", end="", flush=True)
 				if idx % 1000 == 0:
 					print("\n%s av %s" % (idx, antall_records))
