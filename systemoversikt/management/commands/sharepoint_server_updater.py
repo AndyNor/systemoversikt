@@ -31,9 +31,9 @@ class Command(BaseCommand):
 		sp.download(sharepoint_location = computers_source_file, local_location = computers_destination_file)
 
 		print("Laster ned fil med informasjon om disk fra vmware")
-		vmware_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/Virtual Servers.xlsx")
+		vmware_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/RAW data related to virtual servers.xlsx")
 		#vmware_destination_file = 'systemoversikt/import/Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx'
-		vmware_destination_file = 'systemoversikt/import/RAW data related to virtual servers.xlsx'
+		vmware_destination_file = 'systemoversikt/import/Virtual Servers.xlsx'
 		sp.download(sharepoint_location = vmware_source_file, local_location = vmware_destination_file)
 
 
