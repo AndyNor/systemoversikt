@@ -117,11 +117,11 @@ class Command(BaseCommand):
 		sp.download(sharepoint_location = source_file, local_location = oracle_size_file)
 		print("Lastet ned separat oversikt over filstørrelser..")
 
-		dfRaw = pd.read_excel(oracle_size_file, sheet_name='EXTERNAL_ZONE_SIZES')
+		dfRaw = pd.read_excel(oracle_size_file, sheet_name='Internal Zone')
 		dfRaw = dfRaw.replace(np.nan, '', regex=True)
 		oracle_size_ez = dfRaw.to_dict('records')
 
-		dfRaw = pd.read_excel(oracle_size_file, sheet_name='INTERNAL_ZONE_SIZES')
+		dfRaw = pd.read_excel(oracle_size_file, sheet_name='Secure Zone')
 		dfRaw = dfRaw.replace(np.nan, '', regex=True)
 		oracle_size_is = dfRaw.to_dict('records')
 
@@ -134,8 +134,8 @@ class Command(BaseCommand):
 
 		database_size_not_found = []
 		for idx, record in enumerate(oracle_sizes):
-			import_databasenavn = record["TARGET_NAME"].strip()
-			import_server = record["HOST_NAME"].strip().split(".")[0]
+			import_databasenavn = record["Database Name"].strip()
+			import_server = record["Server"].strip().split(".")[0]
 			try:
 				dbinstance = CMDBdatabase.objects.get(db_database=import_databasenavn,db_server=import_server)
 			except:
@@ -144,7 +144,7 @@ class Command(BaseCommand):
 				feilet_for.append("%s@%s" % (import_databasenavn, import_server))
 				continue
 
-			new_size = int(record["DATABASE SIZE IN GB"] * 1000 * 1000 * 1000)
+			new_size = int(record["Database Size"] * 1000 * 1000 * 1000)
 			old_size = dbinstance.db_u_datafilessizekb
 			if old_size != new_size:
 				dbinstance.db_u_datafilessizekb = new_size
