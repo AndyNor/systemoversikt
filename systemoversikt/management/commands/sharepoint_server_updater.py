@@ -87,6 +87,7 @@ class Command(BaseCommand):
 			print("Alt lastet, oppdaterer databasen:")
 
 			for idx, record in enumerate(computers_data):
+				continue
 				print(".", end="", flush=True)
 				if idx % 1000 == 0:
 					print("\n%s av %s" % (idx, antall_records))
@@ -249,10 +250,10 @@ class Command(BaseCommand):
 					cmdbdevice = get_cmdb_instance(vm["Machine Name"])
 					#cmdbdevice.vm_poweredon = True if (vm["PowerState"] == "POWEREDON") else False # we don't have this value here anymore
 					cmdbdevice.device_type = "SERVER" # never any clients in VMware
-					if vm["Mem Usage (Avg 7days)%"] != "":
-						cmdbdevice.vm_comp_ram_usage = vm["Mem Usage (Avg 7days)%"]
-					if vm["CPU Usage (Avg 7days)%"] != "":
-						cmdbdevice.vm_comp_cpu_usage = vm["CPU Usage (Avg 7days)%"]
+					#if vm["Mem Usage (Avg 7days)%"] != "":
+					#	cmdbdevice.vm_comp_ram_usage = vm["Mem Usage (Avg 7days)%"]
+					#if vm["CPU Usage (Avg 7days)%"] != "":
+					#	cmdbdevice.vm_comp_cpu_usage = vm["CPU Usage (Avg 7days)%"]
 					#cmdbdevice.vm_disk_allocation, cmdbdevice.vm_disk_usage, cmdbdevice.vm_disk_tier = decode_disk(vm) # not used any more
 					cmdbdevice.vm_disk_allocation = vm["Allocated disk (GB)"]*1000**3
 					cmdbdevice.vm_disk_usage = vm["Total Disk Used (GB)"]*1000**3

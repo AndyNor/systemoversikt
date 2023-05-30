@@ -5703,8 +5703,13 @@ def csirt_maskinlookup_api(request):
 	try:
 		server_match = CMDBdevice.objects.get(comp_name=maskin_string)
 	except ObjectDoesNotExist:
-		ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Ingen treff på {maskin_string}")
-		return JsonResponse({"error": "Ingen treff på servernavn"}, safe=False)
+		try:
+			alias_string = DNSrecord.objects.get(dns_name=maskin_string).dns_target
+			server_match = CMDBdevice.objects.get(comp_name=alias_string)
+			ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Ingen treff på {maskin_string}, men treff på {alias_string}")
+		except:
+			ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Ingen treff på {maskin_string}")
+			return JsonResponse({"error": "Ingen treff på servernavn"}, safe=False)
 
 	try:
 		business_sub_service = server_match.sub_name.navn
