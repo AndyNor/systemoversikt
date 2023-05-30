@@ -33,7 +33,7 @@ class Command(BaseCommand):
 		print("Laster ned fil med informasjon om disk fra vmware")
 		vmware_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/Virtual Servers.xlsx")
 		#vmware_destination_file = 'systemoversikt/import/Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx'
-		vmware_destination_file = 'systemoversikt/import/Virtual Servers.xlsx'
+		vmware_destination_file = 'systemoversikt/import/RAW data related to virtual servers.xlsx'
 		sp.download(sharepoint_location = vmware_source_file, local_location = vmware_destination_file)
 
 
@@ -224,15 +224,14 @@ class Command(BaseCommand):
 
 				dfRaw = pd.read_excel(vmware_destination_file, sheet_name='Export', skiprows=0, usecols=[
 						'Customer ID',
-						'VM Name',
-						'Business Sub Service',
+						'Machine Name',
 						'Allocated disk (GB)',
 						'Total Disk Used (GB)',
 						'Disk Tier',
 						'CPU',
-						'CPU Usage (Avg 7days)%',
+						#'CPU Usage (Avg 7days)%',
 						'Mem-Capacity (GB)',
-						'Mem Usage (Avg 7days)%',
+						#'Mem Usage (Avg 7days)%',
 						'UUID',
 						'Storage location',
 					])
@@ -247,7 +246,7 @@ class Command(BaseCommand):
 					if vm["Customer ID"] == "":
 						break
 
-					cmdbdevice = get_cmdb_instance(vm["VM Name"])
+					cmdbdevice = get_cmdb_instance(vm["Machine Name"])
 					#cmdbdevice.vm_poweredon = True if (vm["PowerState"] == "POWEREDON") else False # we don't have this value here anymore
 					cmdbdevice.device_type = "SERVER" # never any clients in VMware
 					if vm["Mem Usage (Avg 7days)%"] != "":
