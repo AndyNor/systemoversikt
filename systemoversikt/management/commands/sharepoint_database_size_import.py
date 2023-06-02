@@ -8,6 +8,10 @@ import pandas as pd
 import numpy as np
 from django.db.models import Q
 
+
+### NOT IN USE ANYMORE ###
+
+
 class Command(BaseCommand):
 	def handle(self, **options):
 
