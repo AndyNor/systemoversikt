@@ -115,6 +115,25 @@
 	</div>
 </div>
 
+<hr>
+<h3>AD-identnedbryting</h3>
+<p>Fordeling av aktive AD-brukere per virksomhet (omtrentlig, da det er noen få identer som i Kartoteket er låst grunnet systemansvar, men som har sluttet).</p>
+<table class="tablesorter excel">
+<thead>
+<tr>
+	<th>Virksomhet</th>
+	<th>Antall brukere</th>
+</tr>
+</thead>
+<tbody>
+{% for v in ad_brukere_per_virksomhet %}
+<tr>
+	<td>{{v.virksomhet__virksomhetsforkortelse}}</td>
+	<td>{{v.antall}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
 
 
 {% endblock hovedinnhold %}
