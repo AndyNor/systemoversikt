@@ -916,6 +916,30 @@ def passwdneverexpire(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+def ansatte_virksomhet(request, pk):
+	"""
+	Denne funksjonen viser alle personer i en virksomhet
+	Tilgjengelig for de som har rettigheter til å se brukere
+	"""
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	from datetime import datetime
+	dato = datetime.today().strftime('%Y-%m-%d')
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	brukere = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False)
+
+	return render(request, 'virksomhet_ansatte_virksomhet.html', {
+		'request': request,
+		'virksomhet': virksomhet,
+		'brukere': brukere,
+		'dato': dato,
+	})
+
+
+
 def tom_epost(request, pk):
 	"""
 	Denne funksjonen viser alle personer som har passordutløp kommende periode
@@ -923,22 +947,21 @@ def tom_epost(request, pk):
 	"""
 	from django.utils import timezone
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		virksomhet = Virksomhet.objects.get(pk=pk)
-
-		count_brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
-		brukere_uten_epost = User.objects.filter(email="", profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern'])
-		#print(type(brukere_uten_epost[0].email))
-
-		return render(request, 'virksomhet_tom_epost.html', {
-			'request': request,
-			'virksomhet': virksomhet,
-			'count_brukere_i_virksomhet': count_brukere_i_virksomhet,
-			'brukere_uten_epost': brukere_uten_epost,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+
+	count_brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
+	brukere_uten_epost = User.objects.filter(email="", profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern'])
+	#print(type(brukere_uten_epost[0].email))
+
+	return render(request, 'virksomhet_tom_epost.html', {
+		'request': request,
+		'virksomhet': virksomhet,
+		'count_brukere_i_virksomhet': count_brukere_i_virksomhet,
+		'brukere_uten_epost': brukere_uten_epost,
+	})
 
 
 def cmdb_uten_epost_stat(request):

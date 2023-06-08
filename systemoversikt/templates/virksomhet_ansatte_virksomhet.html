@@ -1,0 +1,41 @@
+{% extends "virksomhet_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny %}
+
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Detaljer for personer i virksomheten {{ virksomhet.virksomhetsforkortelse }}
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+	<table id="Ansatte_{{virksomhet.virksomhetsforkortelse}}_{{dato}}" class="table table-sm tablesorter excel">
+		<thead>
+		<tr>
+			<td>Type bruker</td>
+			<th>Navn</th>
+			<th>E-post</th>
+			<th>Avdeling</th>
+			<th>Seksjon</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for b in brukere %}
+		<tr>
+			<td>{{ b.profile.account_type }}</td>
+			<td>{{ b.profile.displayName }}</td>
+			<td>{{ b.email }}</td>
+			<td>{{ b.profile.avdeling }}</td>
+			<td>{{ b.profile.org_unit }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

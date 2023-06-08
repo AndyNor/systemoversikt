@@ -21,6 +21,9 @@
 	{% url 'virksomhet_prkadmin' pk=virksomhet.pk as url_prkadmins %}
 		<a class="btn btn-sm btn-link {% if url_prkadmins in request.path %}fremhev{% endif %}" href="{{url_prkadmins}}">PRK-administratorer</a><br>
 
+	{% url 'ansatte_virksomhet' pk=virksomhet.pk as url_ansatte_virksomhet %}
+		<a class="btn btn-sm btn-link {% if url_ansatte_virksomhet in request.path %}fremhev{% endif %}" href="{{url_ansatte_virksomhet}}">Brukerliste e-post</a><br>
+
 	{% url 'passwordexpire' pk=virksomhet.pk as url_passwordexpire %}
 		<a class="btn btn-sm btn-link {% if url_passwordexpire in request.path %}fremhev{% endif %}" href="{{url_passwordexpire}}">Passordutløp</a><br>
 

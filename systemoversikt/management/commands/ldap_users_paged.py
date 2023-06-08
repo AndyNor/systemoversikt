@@ -297,6 +297,8 @@ class Command(BaseCommand):
 				except:
 					#print("kan ikke slette bruker %s (%s)" % (user.username, sys.exc_info()[0]))
 					result["report_data"]["user_not_deleted"].append(user.username)
+					user.profile.accountdisable = True
+					user.save()
 		slett_ikkeaktive_brukere()
 
 		def report(result):

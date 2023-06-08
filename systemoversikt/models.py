@@ -882,7 +882,7 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			enhet = self.org_unit
 			enhet_str = "%s" % (enhet)
 			current_level = enhet.level
-			while current_level > 3:  # level 2 er virksomheter, så vi ønsket et nivå ned (en verdi opp).
+			while current_level > 3:  # level 2 er virksomheter, så vi ønsket et nivå over
 				mor_enhet = enhet.direkte_mor
 				enhet_str = "%s - %s" % (mor_enhet, enhet_str)
 				mor_level = mor_enhet.level
@@ -894,6 +894,22 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			return enhet_str
 		except:
 			return "Ukjent tilhørighet"
+
+	def avdeling(self):
+		try:
+			enhet = self.org_unit
+			current_level = enhet.level
+			while current_level > 3:  # level 2 er virksomheter, så vi ønsket et nivå over
+				mor_enhet = enhet.direkte_mor
+				mor_level = mor_enhet.level
+				if current_level > mor_level:
+					enhet = mor_enhet
+					current_level = mor_level
+				else:
+					break
+			return enhet
+		except:
+			return "Ukjent avdeling"
 
 	def ou_lesbar(self):
 		#if self.ou:
