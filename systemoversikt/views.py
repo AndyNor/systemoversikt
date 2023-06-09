@@ -3187,7 +3187,7 @@ def tbrukere(request):
 	required_permissions = ['auth.view_user']
 	if any(map(request.user.has_perm, required_permissions)):
 
-		brukere = User.objects.filter(username__istartswith="t-").filter(profile__accountdisable=False).order_by("username")
+		brukere = User.objects.filter(Q(username__istartswith="t-") | Q(username__istartswith="t_")| Q(username__icontains="_t2")).filter(profile__accountdisable=False).order_by("username")
 
 		return render(request, 'ad_tbrukere.html', {
 			"brukere": brukere,
