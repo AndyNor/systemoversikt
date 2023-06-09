@@ -869,9 +869,22 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 
 
 	def kopiav(self):
-		if self.user.username.startswith("t-"):
+		username = self.user.username.lower()
+		if username.startswith("t-"):
 			try:
-				username = self.user.username.replace("t-","")
+				username = username.replace("t-","")
+				return User.objects.get(username=username)
+			except:
+				pass
+		if username.startswith("t_"):
+			try:
+				username = username.replace("t_","")
+				return User.objects.get(username=username)
+			except:
+				pass
+		if "_t" in username:
+			try:
+				username = username.split("_t")[0]
 				return User.objects.get(username=username)
 			except:
 				pass
