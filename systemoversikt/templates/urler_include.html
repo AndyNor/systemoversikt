@@ -38,7 +38,7 @@
 		<td>
 		{% for system in item.system_systemurl.all %}
 			{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
-			<a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a> ({{ system.get_livslop_status_display }})<br>
+			<a href="{{ url_systemdetaljer }}">{{ system }}</a> ({{ system.get_livslop_status_display }})<br>
 		{% endfor %}
 		</td>
 		<td>{{ item.get_maalgruppe_display|default:"" }}</td>

@@ -4304,10 +4304,10 @@ class System(models.Model):
 	history = HistoricalRecords()
 
 	def __str__(self):
-		if self.ibruk == False:
-			return u'%s (%s)' % (self.systemnavn, "avviklet")
-		else:
-			return u'%s' % (self.systemnavn)
+		try:
+			return f'{self.systemnavn} ({self.systemforvalter.virksomhetsforkortelse})'
+		except:
+			return f'{self.systemnavn}'
 
 	def alias_oppdelt(self):
 		return self.alias.split()
