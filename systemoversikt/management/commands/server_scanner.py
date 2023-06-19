@@ -13,9 +13,11 @@ class Command(BaseCommand):
 		dfRaw = pd.read_excel('systemoversikt\\management\\commands\\lokalt\\servere.xlsx', sheet_name='eksport')
 		dfRaw = dfRaw.replace(np.nan, '', regex=True)
 		targets = dfRaw.to_dict('records')
-		timeout = 0.1
+		timeout = 0.2
 		ports = [
-				(25, "SMTP"),
+				#(25, "SMTP"),
+				#(3389, "RDP"),
+				(445, "SMB"),
 			]
 		open_hosts = []
 		shares = []
