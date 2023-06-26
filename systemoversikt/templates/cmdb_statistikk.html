@@ -136,14 +136,22 @@ Noen typer informasjon hentes inn automatisk i Kartoteket:
 <thead>
 <tr>
 	<th>Virksomhet</th>
-	<th>Antall brukere</th>
+	<th>Interne brukere</th>
+	<th>Eksterne brukere</th>
+	<th>Servicekontoer</th>
+	<th>Ressurser</th>
+	<th>Kontakter</th>
 </tr>
 </thead>
 <tbody>
-{% for v in ad_brukere_per_virksomhet %}
+{% for virksomhet in ad_brukere_per_virksomhet %}
 <tr>
-	<td>{{v.virksomhet__virksomhetsforkortelse}}</td>
-	<td>{{v.antall}}</td>
+	<td>{{virksomhet.virksomhet}}</td>
+	<td>{{virksomhet.interne}}</td>
+	<td>{{virksomhet.eksterne}}</td>
+	<td>{{virksomhet.servicekontoer}}</td>
+	<td>{{virksomhet.ressurser}}</td>
+	<td>{{virksomhet.kontakter}}</td>
 </tr>
 {% endfor %}
 </tbody>

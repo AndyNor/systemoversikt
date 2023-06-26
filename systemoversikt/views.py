@@ -473,8 +473,23 @@ def cmdb_statistikk(request):
 		count_ressurs_accounts = User.objects.filter(profile__distinguishedname__icontains="OU=Ressurser").filter(profile__accountdisable=False).count()
 		count_inactive_accounts = User.objects.filter(profile__accountdisable=True).count()
 		count_utenfor_OK_accounts = User.objects.filter(~Q(profile__distinguishedname__icontains="OU=OK")).filter(profile__accountdisable=False).count()
-		ad_brukere_per_virksomhet = Profile.objects.filter(accountdisable=False).values("virksomhet__virksomhetsforkortelse").annotate(antall=Count('virksomhet'))
-		print(Profile.objects.filter(accountdisable=False).count())
+
+		ad_brukere_per_virksomhet = []
+		for virksomhet in Virksomhet.objects.all():
+			interne = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Intern").count()
+			eksterne = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Ekstern").count()
+			servicekontoer = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Servicekonto").count()
+			ressurser = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Ressurs").count()
+			kontakter = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Kontakt").count()
+
+			ad_brukere_per_virksomhet.append({
+				'virksomhet': virksomhet,
+				'interne': interne,
+				'eksterne': eksterne,
+				'servicekontoer': servicekontoer,
+				'ressurser': ressurser,
+				'kontakter': kontakter,
+				})
 
 		return render(request, 'cmdb_statistikk.html', {
 			'request': request,
