@@ -1073,6 +1073,19 @@ def bruker_detaljer(request, pk):
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+def lokasjoner_hos_virksomhet(request, pk):
+	required_permissions = 'systemoversikt.view_virksomhet'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	lokasjoner = WANLokasjon.objects.filter(virksomhet=virksomhet)
+	return render(request, 'virksomhet_lokasjoner.html', {
+		'request': request,
+		'virksomhet': virksomhet,
+		'lokasjoner': lokasjoner,
+	})
+
 
 def klienter_hos_virksomhet(request, pk):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
@@ -2219,18 +2232,16 @@ def systemkvalitet_virksomhet(request, pk):
 	Tilgangsstyring: De som kan se virksomheter
 	"""
 	required_permissions = 'systemoversikt.view_virksomhet'
-	if request.user.has_perm(required_permissions):
-
-		virksomhet = Virksomhet.objects.get(pk=pk)
-		systemer_ansvarlig_for = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
-		return render(request, 'virksomhet_hvamangler.html', {
-			'request': request,
-			'virksomhet': virksomhet,
-			'systemer': systemer_ansvarlig_for,
-		})
-	else:
+	if not request.user.has_perm(required_permissions):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	systemer_ansvarlig_for = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
+	return render(request, 'virksomhet_hvamangler.html', {
+		'request': request,
+		'virksomhet': virksomhet,
+		'systemer': systemer_ansvarlig_for,
+	})
 
 
 def systemer_vurderinger(request):

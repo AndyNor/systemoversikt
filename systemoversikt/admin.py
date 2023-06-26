@@ -427,7 +427,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 			('Initiell registrering', {
 				'fields': (
 					'virksomhetsnavn',
-					'virksomhetsforkortelse',
+					('virksomhetsforkortelse','gamle_virksomhetsforkortelser'),
 					('odepartmentnumber', 'leder',),
 					'ordinar_virksomhet',
 					'orgnummer',
@@ -1240,7 +1240,11 @@ class ADgroupAdmin(admin.ModelAdmin):
 	list_filter = ('from_prk', 'opprettet', 'sist_oppdatert')
 	autocomplete_fields = ('parent',)
 
-
+@admin.register(WANLokasjon)
+class WANLokasjonAdmin(admin.ModelAdmin):
+	list_display = ('lokasjons_id', 'virksomhet', 'aksess_type', 'adresse', 'beskrivelse')
+	search_fields = ('lokasjons_id', 'virksomhet', 'adresse', 'beskrivelse')
+	list_filter = ('virksomhet',)
 
 
 @admin.register(AutorisertBestiller)

@@ -406,6 +406,14 @@ class Virksomhet(models.Model):
 			max_length=10,
 			help_text=u"Dette feltet brukes som standard visningsnavn.",
 			)
+	gamle_virksomhetsforkortelser = models.CharField(
+			verbose_name="Alternative virksomhetsforkortelse",
+			blank=True,
+			null=True,
+			max_length=100,
+			help_text=u"Alternative/gamle forkortelser. Skilletegn skal være komma (,).",
+			)
+
 	virksomhetsnavn = models.CharField(
 			unique=True,
 			verbose_name="Virksomhetsnavn",
@@ -5164,6 +5172,45 @@ class RegistrertKlassifisering(models.Model):
 
 	class Meta:
 		verbose_name_plural = "Behandling: klasser av registrerte"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class WANLokasjon(models.Model):
+	lokasjons_id = models.CharField(
+			unique=True,
+			verbose_name="Lokasjons ID",
+			blank=False,
+			null=False,
+			max_length=15,
+			)
+	virksomhet = models.ForeignKey(
+			to=Virksomhet,
+			on_delete=models.SET_NULL,
+			verbose_name="Virksomhetstilhørighet",
+			blank=True,
+			null=True,
+			)
+	aksess_type = models.TextField(
+			verbose_name="Aksesstype",
+			blank=True,
+			null=True,
+			)
+	adresse = models.TextField(
+			verbose_name="Lokasjonsadresse",
+			blank=True,
+			null=True,
+		)
+	beskrivelse = models.TextField(
+			verbose_name="Beskrivelse",
+			blank=False,
+			null=False,
+			)
+
+	def __str__(self):
+		return u'%s' % (self.lokasjons_id)
+
+	class Meta:
+		verbose_name_plural = "CMDB: WAN Lokasjoner"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

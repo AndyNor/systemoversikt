@@ -16,6 +16,9 @@
 	{% url 'klienter_hos_virksomhet' pk=virksomhet.pk as url_klienter_hos_virksomhet %}
 		<a href="{{ url_klienter_hos_virksomhet }}" class="btn btn-sm btn-link {% if url_klienter_hos_virksomhet in request.path %}fremhev{% endif %}">Våre klienter</a><br>
 
+	{% url 'lokasjoner_hos_virksomhet' pk=virksomhet.pk as url_lokasjoner_hos_virksomhet %}
+		<a href="{{ url_lokasjoner_hos_virksomhet }}" class="btn btn-sm btn-link {% if url_lokasjoner_hos_virksomhet in request.path %}fremhev{% endif %}">Våre lokasjoner</a><br>
+
 
 	<hr><p style="color: grey;">Brukertilgang</p>
 	{% url 'virksomhet_prkadmin' pk=virksomhet.pk as url_prkadmins %}

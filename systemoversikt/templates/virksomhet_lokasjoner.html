@@ -1,0 +1,44 @@
+{% extends "virksomhet_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block ekstrameny %}
+
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	WAN-lokasjoner hos {{ virksomhet }}
+{% endblock overskrift %}
+
+
+{% block hovedinnhold %}
+
+<p>Det er registrert {{ lokasjoner.all.count }} lokasjoner i databasen.</p>
+
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Lokasjon ID</th>
+	<th>Hastighet</th>
+	<th>Adresse</th>
+	<th>Beskrivelse</th>
+</thead>
+<tbody>
+{% for lokasjon in lokasjoner %}
+	<tr>
+		<td>{{ lokasjon.lokasjons_id }}</td>
+		<td>{{ lokasjon.aksess_type }}</td>
+		<td>{{ lokasjon.adresse }}</td>
+		<td>{{ lokasjon.beskrivelse|default:"-" }}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+Klienter avmeldt som er aktive på nettverket.
+Klienter som er innmeldt, men som ikke er aktive.
+
+{% endblock hovedinnhold %}
