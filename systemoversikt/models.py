@@ -600,6 +600,9 @@ class Virksomhet(models.Model):
 		except:
 			return None
 
+	def antall_lokasjoner(self):
+		return WANLokasjon.objects.filter(virksomhet=self).count()
+
 	def antall_klienter(self):
 		from django.db.models import Q
 		#return CMDBdevice.objects.filter(maskinadm_virksomhet=self).filter(~(Q(maskinadm_status__in=["UTMELDT", "SLETTET"]) and Q(landesk_login=None))).count()

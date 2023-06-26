@@ -10,13 +10,13 @@
 {% endblock ekstrameny %}
 
 {% block overskrift %}
-	WAN-lokasjoner hos {{ virksomhet }}
+	WAN-lokasjoner hos {{ virksomhet }}.
 {% endblock overskrift %}
 
 
 {% block hovedinnhold %}
 
-<p>Det er registrert {{ lokasjoner.all.count }} lokasjoner i databasen.</p>
+<p>Det er registrert {{ lokasjoner.all.count }} lokasjoner i databasen. Disse dataene oppdateres sjeldent (ikke automatisert)</p>
 
 <table class="table table-sm tablesorter excel">
 <thead>
@@ -36,9 +36,5 @@
 {% endfor %}
 </tbody>
 </table>
-
-
-Klienter avmeldt som er aktive på nettverket.
-Klienter som er innmeldt, men som ikke er aktive.
 
 {% endblock hovedinnhold %}

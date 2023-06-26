@@ -39,9 +39,10 @@
 		<th>Virksomhet</th>
 		<th>Tilh. Byråd</th>
 		<th>Leder</th>
+		<th>Lokasjoner</th>
 		<th>Antall systemer i bruk</th>
 		{% comment %}<th>Antall ansatte</th>{% endcomment %}
-		<th>Drift av klientplattform</th>
+		<th>Klientplattform</th>
 		<th>Kontorstøtte</th>
 		{% comment %}<th>Autoriserte bestillere InfoTorget</th>{% endcomment %}
 		{% comment %}<th>Autoriserte bestillere mot intern tjenesteleverandør</th>{% endcomment %}
@@ -81,6 +82,9 @@
 				{% include "ansvarlig_include_vis.html" with ansvarlige=vir.leder.all %}
 			{% endif %}
 		</td>
+
+		{% url 'lokasjoner_hos_virksomhet' pk=vir.pk as url_lokasjoner %}
+		<td><a href="{{url_lokasjoner}}">{{ vir.antall_lokasjoner }}</a></td>
 
 		<td>{{ vir.systembruk_brukergruppe.all.count }}</td>
 
