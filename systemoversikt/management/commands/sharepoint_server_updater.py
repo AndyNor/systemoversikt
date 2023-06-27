@@ -1,16 +1,15 @@
 from django.core.management.base import BaseCommand
 from py_topping.data_connection.sharepoint import da_tran_SP365
-from systemoversikt.models import *
 from django.db import transaction
-import os
-import time
 from functools import lru_cache
-import json, os
+import json, os, re, socket, time
 import pandas as pd
 import numpy as np
-import re
-import socket
+
+from systemoversikt.models import *
 from systemoversikt.views import get_ipaddr_instance
+
+client_business_services = ["OK-Tykklient", "OK-Støttemaskin", "OK-Tynnklient"]
 
 
 class Command(BaseCommand):
@@ -50,7 +49,7 @@ class Command(BaseCommand):
 				return
 
 			antall_records = len(computers_data)
-			all_existing_devices = list(CMDBdevice.objects.all())#filter(device_type="SERVER"))
+			all_existing_devices = list(CMDBdevice.objects.filter(device_type="SERVER"))
 
 
 			@lru_cache(maxsize=512)
@@ -87,9 +86,6 @@ class Command(BaseCommand):
 			print("Alt lastet, oppdaterer databasen:")
 
 			for idx, record in enumerate(computers_data):
-				print(".", end="", flush=True)
-				if idx % 1000 == 0:
-					print("\n%s av %s" % (idx, antall_records))
 
 				comp_name = record["Name"].lower()
 				if comp_name == "":
@@ -97,8 +93,21 @@ class Command(BaseCommand):
 					server_dropped += 1
 					continue  # Det må være en verdi på denne
 
-				# vi sjekker om enheten finnes fra før
-				cmdbdevice = get_cmdb_instance(comp_name)
+				# Sette type enhet
+				if record["Name.1"] not in client_business_services:
+					# vi sjekker om enheten finnes fra før
+					cmdbdevice = get_cmdb_instance(comp_name)
+					cmdbdevice.device_type = "SERVER"
+					print(".", end="", flush=True)
+				else:
+					continue
+					#cmdbdevice.device_type = "KLIENT"
+
+
+				if idx % 200 == 0:
+					print("\n%s av %s" % (idx, antall_records))
+
+
 
 				# OS-håndtering
 				os = record["Operating System"]
@@ -124,11 +133,11 @@ class Command(BaseCommand):
 				comp_ip_address = record["IP Address"]
 
 				if (comp_ip_address == None or comp_ip_address == "") and "ws" not in comp_name:
-					print("gethostbyname %s" % comp_name)
+					#print("gethostbyname %s" % comp_name)
 					try:
 						full_comp_name = "%s%s" % (comp_name, ".oslofelles.oslo.kommune.no")
 						comp_ip_address = socket.gethostbyname(full_comp_name)
-						print(comp_ip_address)
+						print(f"Oppslag av {full_comp_name} fant {comp_ip_address}")
 					except:
 						#print("gethostbyname failed %s" % comp_name)
 						pass
@@ -152,12 +161,6 @@ class Command(BaseCommand):
 				#cmdbdevice.billable = record["Billable"] #finnes ikke lenger i denne rapporten
 
 
-				# Sette type enhet
-				if record["Name.1"] in ["OK-Tykklient", "OK-Støttemaskin", "OK-Tynnklient"]:
-					cmdbdevice.device_type = "KLIENT"
-				else:
-					cmdbdevice.device_type = "SERVER"
-
 				sub_name = bss_cache(record["Name.1"])
 				if sub_name == None:
 					print('Business sub service %s for %s finnes ikke' % (record["Name.1"], comp_name))
@@ -178,108 +181,59 @@ class Command(BaseCommand):
 				# Lagre
 				cmdbdevice.save()
 
-			# gjennomgang av data fra vmware
-			"""
-			def decode_disk(vm):
-				if vm["HE disk Allocated (GB)"] != "":
-					return (vm["HE disk Allocated (GB)"]*1000**3, vm["HE disk Used (GB)"]*1000**3, "HE")
-				if vm["HE-S disk Allocated (GB)"] != "":
-					return (vm["HE-S disk Allocated (GB)"]*1000**3, vm["HE-S disk Used (GB)"]*1000**3, "HE-S")
 
-				if vm["MR disk Allocated (GB)"] != "":
-					return (vm["MR disk Allocated (GB)"]*1000**3, vm["MR disk Used (GB)"]*1000**3, "MR")
-				if vm["MR-S disk Allocated (GB)"] != "":
-					return (vm["MR-S disk Allocated (GB)"]*1000**3, vm["MR-S disk Used (GB)"]*1000**3, "MR-S")
+			print("\nFerdig med import. Går over til VMware-data")
+			dfRaw = pd.read_excel(vmware_destination_file, sheet_name='Export', skiprows=0, usecols=[
+					'Customer ID',
+					'Machine Name',
+					'Allocated disk (GB)',
+					'Total Disk Used (GB)',
+					'Disk Tier',
+					'CPU',
+					#'CPU Usage (Avg 7days)%',
+					'Mem-Capacity (GB)',
+					#'Mem Usage (Avg 7days)%',
+					'UUID',
+					'Storage location',
+				])
 
-				if vm["LE disk Allocated (GB)"] != "":
-					return (vm["LE disk Allocated (GB)"]*1000**3, vm["LE disk Used (GB)"]*1000**3, "LE")
-				if vm["LE-S disk Allocated (GB)"] != "":
-					return (vm["LE-S disk Allocated (GB)"]*1000**3, vm["LE-S disk Used (GB)"]*1000**3, "LE-S")
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			vmware_data = dfRaw.to_dict('records')
 
-				return (None, None, None)
-			"""
+			all_servers_before_vmware_import = list(CMDBdevice.objects.all().filter(device_type="SERVER"))
 
-			if ".xlsx" in vmware_destination_file:
-				"""
-				dfRaw = pd.read_excel(vmware_destination_file, sheet_name='Summarized', skiprows=8, usecols=[
-						'VM Name',
-						'HE disk Allocated (GB)',
-						'HE disk Used (GB)',
-						'HE-S disk Allocated (GB)',
-						'HE-S disk Used (GB)',
-						'MR disk Allocated (GB)',
-						'MR disk Used (GB)',
-						'MR-S disk Allocated (GB)',
-						'MR-S disk Used (GB)',
-						'LE disk Allocated (GB)',
-						'LE disk Used (GB)',
-						'LE-S disk Allocated (GB)',
-						'LE-S disk Used (GB)',
-						'VM CPU Usage (%)',
-						'VM Memory Usage (%)',
-						'PowerState',
-						'# of disks installed',
-					])
-				"""
+			for vm in vmware_data:
+				if vm["Customer ID"] == "":
+					break # siste linjen, stopper
 
-				dfRaw = pd.read_excel(vmware_destination_file, sheet_name='Export', skiprows=0, usecols=[
-						'Customer ID',
-						'Machine Name',
-						'Allocated disk (GB)',
-						'Total Disk Used (GB)',
-						'Disk Tier',
-						'CPU',
-						#'CPU Usage (Avg 7days)%',
-						'Mem-Capacity (GB)',
-						#'Mem Usage (Avg 7days)%',
-						'UUID',
-						'Storage location',
-					])
+				cmdbdevice = get_cmdb_instance(vm["Machine Name"])
+				cmdbdevice.device_type = "SERVER" # never any clients in VMware
 
-				dfRaw = dfRaw.replace(np.nan, '', regex=True)
-				vmware_data = dfRaw.to_dict('records')
+				cmdbdevice.vm_disk_allocation = int(vm["Allocated disk (GB)"]) * 1000 ** 3
+				cmdbdevice.vm_disk_usage = int(vm["Total Disk Used (GB)"]) * 1000 ** 3
+				cmdbdevice.vm_disk_tier = vm["Disk Tier"]
 
-				all_servers_before_vmware_import = list(CMDBdevice.objects.all().filter(device_type="SERVER"))
+				cmdbdevice.save()
 
-				#print(vmware_data[0])
-				for vm in vmware_data:
-					if vm["Customer ID"] == "":
-						break
+				try:
+					all_servers_before_vmware_import.remove(cmdbdevice)
+				except:
+					pass # går ikke om den ikke finnes fra før av. Det kan skje.
+					#print("Kan ikke fjerne %s fra listen over alle servere" % cmdbdevice)
 
-					cmdbdevice = get_cmdb_instance(vm["Machine Name"])
-					#cmdbdevice.vm_poweredon = True if (vm["PowerState"] == "POWEREDON") else False # we don't have this value here anymore
-					cmdbdevice.device_type = "SERVER" # never any clients in VMware
-					#if vm["Mem Usage (Avg 7days)%"] != "":
-					#	cmdbdevice.vm_comp_ram_usage = vm["Mem Usage (Avg 7days)%"]
-					#if vm["CPU Usage (Avg 7days)%"] != "":
-					#	cmdbdevice.vm_comp_cpu_usage = vm["CPU Usage (Avg 7days)%"]
-					#cmdbdevice.vm_disk_allocation, cmdbdevice.vm_disk_usage, cmdbdevice.vm_disk_tier = decode_disk(vm) # not used any more
-					cmdbdevice.vm_disk_allocation = vm["Allocated disk (GB)"]*1000**3
-					cmdbdevice.vm_disk_usage = vm["Total Disk Used (GB)"]*1000**3
-					cmdbdevice.vm_disk_tier = vm["Disk Tier"]
-					#print(decode_disk(vm))
-					#cmdbdevice.vm_disks_installed = vm["# of disks installed"]
-					#print("%s: vm %s - cmdb %s" % (cmdbdevice.comp_name, cmdbdevice.vm_disk_allocation, cmdbdevice.comp_disk_space))
+				print(".", end="", flush=True)
 
+			# clean up vmware disk import
+			print("\nRydder opp gamle servere")
+			servers_not_updateded_with_disk = all_servers_before_vmware_import
+			print("Det var %s eksisterende servere som ikke ble oppdatert med VMware-data" % (len(servers_not_updateded_with_disk)))
+			for cmdbdevice in servers_not_updateded_with_disk:
+				if cmdbdevice.vm_disk_allocation != 0:
+					cmdbdevice.vm_disk_allocation = 0
+					cmdbdevice.vm_disk_usage = 0
 					cmdbdevice.save()
-					try:
-						all_servers_before_vmware_import.remove(cmdbdevice)
-					except:
-						print("Kan ikke fjerne %s fra listen over alle servere" % cmdbdevice)
-					print(".", end="", flush=True)
+					print("Setting VM disk size for %s to 0" % cmdbdevice)
 
-				# clean up vmware disk import
-				servers_not_updateded_with_disk = all_servers_before_vmware_import
-				print("Det var %s eksisterende servere som ikke ble oppdatert" % (len(servers_not_updateded_with_disk)))
-				for cmdbdevice in servers_not_updateded_with_disk:
-					if cmdbdevice.vm_disk_allocation != 0:
-						cmdbdevice.vm_disk_allocation = 0
-						cmdbdevice.vm_disk_usage = 0
-						cmdbdevice.save()
-						print("Setting VM disk size for %s to 0" % cmdbdevice)
-
-			else:
-				print("Filen med VMware-data var ikke på riktig dataformat.")
 
 
 

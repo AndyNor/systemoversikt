@@ -18,8 +18,6 @@ from systemoversikt.models import CMDBdevice, Virksomhet, ApplicationLog
 from django.core.exceptions import ObjectDoesNotExist
 from py_topping.data_connection.sharepoint import da_tran_SP365
 
-### NOT IN USE ANYMORE ###
-
 
 class Command(BaseCommand):
 	def handle(self, **options):
