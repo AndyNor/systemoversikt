@@ -13,6 +13,16 @@
 
 	<p>Det er {{ alle_viper.count }} lastbalanserte tjenester i databasen.</p>
 
+	<form action="{% url 'alle_vip' %}" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="55" style="width: 450px;" type="search" value="{{ vip_search_term }}" name="search_term"
+			placeholder="Søk på VIP-navn, VIP-IP, domene" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?search_term=__ALL__">Vis alt</a>
+
+		</div>
+	</form>
+
 	<hr>
 
 	<table class="table table-sm tablesorter excel">

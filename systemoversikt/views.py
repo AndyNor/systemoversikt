@@ -607,16 +607,35 @@ def alle_vip(request):
 	Tilgjengelig for de som kan lese CMDB
 	"""
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	def vip_loopup(term):
+		return virtualIP.objects.filter(
+				Q(vip_name__icontains=search_term) |
+				Q(pool_name__icontains=search_term) |
+				Q(ip_address__icontains=search_term)
+			)
+
+	search_term_raw = request.GET.get('search_term', '')
+	search_term = search_term_raw.strip()
+
+	if search_term == "__ALL__":
 		alle_viper = virtualIP.objects.all()
 
-		return render(request, 'cmdb_alle_vip.html', {
-			'request': request,
-			'alle_viper': alle_viper,
-		})
+	elif len(search_term) > 1:
+		alle_viper = vip_loopup(search_term)
+
 	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		alle_viper = []
+
+
+	return render(request, 'cmdb_alle_vip.html', {
+		'request': request,
+		'alle_viper': alle_viper,
+		'vip_search_term': search_term_raw,
+	})
+
 
 
 def nettverk_detaljer(request, pk):
@@ -647,11 +666,47 @@ def alle_nettverk(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if any(map(request.user.has_perm, required_permissions)):
 
-		alle_nettverk = NetworkContainer.objects.all()
+		def network_loopup(term):
+			return NetworkContainer.objects.filter(
+					Q(ip_address__icontains=search_term) |
+					Q(orgname__icontains=search_term) |
+					Q(comment__icontains=search_term) |
+					Q(vrfname__icontains=search_term)
+				)
+
+		search_term_raw = request.GET.get('search_term', '')
+		search_term = search_term_raw.strip().split('/')[0]
+
+		if search_term == "__ALL__":
+			nettverk = NetworkContainer.objects.all()
+
+		elif len(search_term) > 1:
+			nettverk = network_loopup(search_term)
+
+			#if len(nettverk) == 0:
+			#	search_term = '.'.join(search_term.split(".")[:-1])
+			#	nettverk = network_loopup(search_term)
+
+			if len(nettverk) == 0: # ingen treff, kan være søk på en IP i et nettverk
+				try:
+					import ipaddress
+					nettverk = []
+					search_ip = ipaddress.ip_address(search_term)
+					alle_vlan = NetworkContainer.objects.all()
+					for vlan in alle_vlan:
+						vlan_network = ipaddress.ip_network(vlan.ip_address + "/" + str(vlan.subnet_mask))
+						if search_ip in vlan_network:
+							nettverk.append(vlan)
+				except:
+					pass
+
+		else:
+			nettverk = []
 
 		return render(request, 'cmdb_alle_nettverk.html', {
 			'request': request,
-			'alle_nettverk': alle_nettverk,
+			'alle_nettverk': nettverk,
+			'vlan_search_term': search_term_raw,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
