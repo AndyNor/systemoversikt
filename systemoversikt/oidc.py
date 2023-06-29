@@ -212,7 +212,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					headers={
 						'Authorization': 'Bearer {0}'.format(access_token)
 					},
-					verify=self.get_settings('OIDC_VERIFY_SSL', False),
+					verify=self.get_settings('OIDC_VERIFY_SSL', True),
 					timeout=self.get_settings('OIDC_TIMEOUT', None),
 					proxies=self.get_settings('OIDC_PROXY', None))
 			except:
