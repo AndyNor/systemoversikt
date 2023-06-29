@@ -249,7 +249,7 @@ if THIS_ENVIRONMENT == "PROD":
 		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # Azure AD
 		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
 	)
-	OIDC_PROXY = {'https': os.environ['PROXY_HTTP'],}
+	OIDC_PROXY = {'http': os.environ['PROXY_HTTP'],}
 	LOGIN_URL = "/oidc/authenticate/"
 	LOGIN_REDIRECT_URL = "/?login=ok"
 	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
