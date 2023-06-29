@@ -72,9 +72,6 @@
 	{% url 'alle_servere' as url_alle_servere %}
 	<a href="{{url_alle_servere}}" class="btn btn-sm btn-link {% if url_alle_servere in request.path %}fremhev{% endif %}">Servere</a><br>
 
-	{% url 'cmdb_internetteksponerte_servere' as url_cmdb_internetteksponerte_servere %}
-	<a href="{{url_cmdb_internetteksponerte_servere}}" class="btn btn-sm btn-link {% if url_cmdb_internetteksponerte_servere in request.path %}fremhev{% endif %}">Internetteksponerte servere</a><br>
-
 	{% url 'alle_klienter' as url_alle_klienter %}
 	<a href="{{url_alle_klienter}}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}">Klienter</a><br>
 
@@ -96,17 +93,11 @@
 	{% url 'alle_dns' as url_alle_dns %}
 	<a href="{{url_alle_dns}}" class="btn btn-sm btn-link {% if url_alle_dns in request.path %}fremhev{% endif %}">DNS</a><br>
 
-	{% url 'dns_txt' as url_dns_txt %}
-	<a href="{{url_dns_txt}}" class="btn btn-sm btn-link {% if url_dns_txt in request.path %}fremhev{% endif %}">TXT-records</a><br>
-
 	{% url 'alle_ip' as url_alle_ip %}
 	<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP-søk</a><br>
 
 	{% url 'cmdb_backup_index' as url_cmdb_backup_index %}
 	<a href="{{url_cmdb_backup_index}}" class="btn btn-sm btn-link {% if url_cmdb_backup_index in request.path %}fremhev{% endif %}">Backup</a><br>
-
-	{% url 'cmdb_uten_backup' as url_cmdb_uten_backup %}
-	<a href="{{url_cmdb_uten_backup}}" class="btn btn-sm btn-link {% if url_cmdb_uten_backup in request.path %}fremhev{% endif %}">Mangler backup</a><br>
 
 	{% url 'cmdb_lagring_index' as url_cmdb_lagring_index %}
 	<a href="{{url_cmdb_lagring_index}}" class="btn btn-sm btn-link {% if url_cmdb_lagring_index in request.path %}fremhev{% endif %}">Lagring</a><br>

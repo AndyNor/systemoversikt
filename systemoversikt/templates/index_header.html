@@ -48,32 +48,8 @@
 		</div>
 
 		<div style="width: 100%; min-width: 1100px; border: 1px solid;">
+
 			<ul class="nav">
-				<li class="hovedmeny">
-					{% url "alle_virksomheter" as alle_virksomheter_url %}
-					<a href="{{ alle_virksomheter_url }}" class="nav-link {% if alle_virksomheter_url in request.path %} active {% endif %}">Virksomheter</a>
-				</li>
-
-			{% if user.profile.virksomhet %}
-				<li class="hovedmeny">
-					{% url "dashboard_all" virksomhet=user.profile.virksomhet.pk as dashboard_url %}
-					<a href="{{ dashboard_url }}" class="nav-link {% if dashboard_url in request.path %} active {% endif %}">Vårt dashboard</a>
-				</li>
-			{% endif %}
-
-			{% if user.is_authenticated %}
-				<li class="hovedmeny">
-					{% url "alle_behandlinger" as alle_behandlinger_url %}
-					<a href="{{ alle_behandlinger_url }}" class="nav-link {% if alle_behandlinger_url in request.path %} active {% endif %}">Behandlinger</a>
-				</li>
-			{% endif %}
-
-			{% if user.is_authenticated %}
-				<li class="hovedmeny">
-					{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
-					<a href="{{ alle_driftsmodeller_url }}" class="nav-link {% if alle_driftsmodeller_url in request.path %} active {% endif %}">Driftsplattformer</a>
-				</li>
-			{% endif %}
 
 				<li class="hovedmeny">
 					{% url "alle_systemer" as alle_systemer_url %}
@@ -85,9 +61,36 @@
 					<a href="{{ alle_programvarer_url }}" class="nav-link {% if alle_programvarer_url in request.path %} active {% endif %}">Programvarer</a>
 				</li>
 
+			{% if user.is_authenticated %}
+				<li class="hovedmeny">
+					{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
+					<a href="{{ alle_driftsmodeller_url }}" class="nav-link {% if alle_driftsmodeller_url in request.path %} active {% endif %}">Driftsplattformer</a>
+				</li>
+			{% endif %}
+
 				<li class="hovedmeny">
 					{% url "alle_systemurler" as alle_systemurler_url %}
 					<a href="{{ alle_systemurler_url }}" class="nav-link {% if alle_systemurler_url in request.path %} active {% endif %}">Domener</a>
+				</li>
+
+				<li class="hovedmeny">
+					{% url "alle_virksomheter" as alle_virksomheter_url %}
+					<a href="{{ alle_virksomheter_url }}" class="nav-link {% if alle_virksomheter_url in request.path %} active {% endif %}">Virksomheter</a>
+				</li>
+
+
+			{% comment %}
+			{% if user.is_authenticated %}
+				<li class="hovedmeny">
+					{% url "alle_behandlinger" as alle_behandlinger_url %}
+					<a href="{{ alle_behandlinger_url }}" class="nav-link {% if alle_behandlinger_url in request.path %} active {% endif %}">Behandlinger</a>
+				</li>
+			{% endif %}
+			{% endcomment %}
+
+				<li class="hovedmeny">
+					{% url "alle_definisjoner" as alle_definisjoner_url %}
+					<a href="{{ alle_definisjoner_url }}" class="nav-link {% if alle_definisjoner_url in request.path %} active {% endif %}">Begreper</a>
 				</li>
 
 			{% if user.is_authenticated %}
@@ -96,12 +99,6 @@
 					<a href="{{ cmdb_statistikk_url }}" class="nav-link {% if cmdb_statistikk_url in request.path %} active {% endif %}">CMDB</a>
 				</li>
 			{% endif %}
-
-				<li class="hovedmeny">
-					{% url "alle_definisjoner" as alle_definisjoner_url %}
-					<a href="{{ alle_definisjoner_url }}" class="nav-link {% if alle_definisjoner_url in request.path %} active {% endif %}">Begreper</a>
-				</li>
-
 
 			{% if user.is_authenticated %}
 				<li class="hovedmeny">

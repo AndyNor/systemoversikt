@@ -23,6 +23,13 @@
 	{% endcomment %}
 
 
+	{% if user.profile.virksomhet %}
+		{% url "dashboard_all" virksomhet=user.profile.virksomhet.pk as dashboard_url %}
+		<a href="{{ dashboard_url }}" class="btn btn-sm btn-link">👥 Vårt dashboard</a>
+		</li>
+	{% endif %}
+
+
 	{% block ekstrameny %}{% endblock ekstrameny %}
 {% endblock sidemeny %}
 

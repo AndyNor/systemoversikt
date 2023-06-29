@@ -15,6 +15,9 @@
 
 	<hr>
 
+	{% url 'dns_txt' as url_dns_txt %}
+	<a href="{{url_dns_txt}}" class="btn btn-sm btn-link {% if url_dns_txt in request.path %}fremhev{% endif %}">Vis alle TXT-records</a>
+
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>DNS-navn</th>

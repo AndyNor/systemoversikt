@@ -8,16 +8,15 @@
 
 {% block hovedinnhold %}
 
-
-	<h6>Oslo kommunes system- og behandlingsoversikt</h6>
+	<h6>Oslo kommunes systemoversikt. For oversikt over behandlinger, se <a href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a>.</h6>
 	<hr>
 
 	<div class="container-fluid">
 		<div class="row">
-			<div class="col-sm-5">
+			<div class="col-sm-6">
 
-				<h1>{{ antall_systemer }}</h1>
 				<h6>Systemer i Kartoteket</h6>
+				<h1>{{ antall_systemer }}</h1>
 				<p>De {{nyeste_systemer.count}} nyeste:</p>
 				<ol style="column-count: 2;">
 				{% for system in nyeste_systemer %}
@@ -27,10 +26,10 @@
 				</ol>
 
 			</div>
-			<div class="col-sm-4">
+			<div class="col-sm-6">
 
-				<h1>{{ antall_programvarer }}</h1>
 				<h6>Programvarer i Kartoteket</h6>
+				<h1>{{ antall_programvarer }}</h1>
 				<p>De {{nyeste_programvarer.count}} nyeste:</p>
 				<ol style="column-count: 2;">
 				{% for programvare in nyeste_programvarer %}
@@ -40,19 +39,16 @@
 				</ol>
 
 			</div>
-			<div class="col-sm-3">
-				<h1>{{ antall_behandlinger }}</h1>
-				<h6>Behandlinger i Kartoteket</h6>
-			</div>
+
 		</div>
 	</div>
 
 
 	<hr>
-	<a class="btn btn-primary btn-sm" href="{% url 'home_chart' %}">Systemansvar fordelt på virksomhet</a>
+	<a class="btn btn-primary btn-sm" href="{% url 'home_chart' %}">Visualisering av systemansvar fordelt på virksomhet</a>
 	<hr>
 
-	<h5>Finn system eller programvare basert på kategori</h5>
+	<h6>Finn system eller programvare basert på kategori</h6>
 	<ul style="column-count:3;">
 		{% for kategori in kategorier %}
 			{% url 'systemkategori' pk=kategori.pk as url_systemkategori %}
