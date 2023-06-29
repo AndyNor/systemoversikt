@@ -206,21 +206,18 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 		def get_userinfo(self, access_token, id_token, payload):
 			#Return user details dictionary
-			try:
-				user_response = requests.get(
-					self.OIDC_OP_USER_ENDPOINT,
-					headers={
-						'Authorization': 'Bearer {0}'.format(access_token)
-					},
-					verify=self.get_settings('OIDC_VERIFY_SSL', True),
-					timeout=self.get_settings('OIDC_TIMEOUT', None),
-					proxies=self.get_settings('OIDC_PROXY', None))
-				user_response.raise_for_status()
-				user_info = user_response.json()
-				user_info.update(payload)
-				# her skal vi prøve å hente ut gruppene direkte fra azure ad, men vet ikke helt hvordan enda..
-			except:
-				user_info = None
+			user_response = requests.get(
+				self.OIDC_OP_USER_ENDPOINT,
+				headers={
+					'Authorization': 'Bearer {0}'.format(access_token)
+				},
+				verify=self.get_settings('OIDC_VERIFY_SSL', False), # TEMPORARY TESTING
+				timeout=self.get_settings('OIDC_TIMEOUT', None),
+				proxies=self.get_settings('OIDC_PROXY', None))
+			user_response.raise_for_status()
+			user_info = user_response.json()
+			user_info.update(payload)
+			# her skal vi prøve å hente ut gruppene direkte fra azure ad, men vet ikke helt hvordan enda..
 			return user_info
 
 
