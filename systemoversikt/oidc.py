@@ -206,14 +206,19 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 		def get_userinfo(self, access_token, id_token, payload):
 			#Return user details dictionary
-			user_response = requests.get(
-				self.OIDC_OP_USER_ENDPOINT,
-				headers={
-					'Authorization': 'Bearer {0}'.format(access_token)
-				},
-				verify=self.get_settings('OIDC_VERIFY_SSL', False),
-				timeout=self.get_settings('OIDC_TIMEOUT', None),
-				proxies=self.get_settings('OIDC_PROXY', None))
+			try:
+				user_response = requests.get(
+					self.OIDC_OP_USER_ENDPOINT,
+					headers={
+						'Authorization': 'Bearer {0}'.format(access_token)
+					},
+					verify=self.get_settings('OIDC_VERIFY_SSL', False),
+					timeout=self.get_settings('OIDC_TIMEOUT', None),
+					proxies=self.get_settings('OIDC_PROXY', None))
+			except:
+				logger.error("Auth: get_userinfo: No contact with Microsoft Azure AD")
+				return None
+
 			user_response.raise_for_status()
 			user_info = user_response.json()
 			user_info.update(payload)
