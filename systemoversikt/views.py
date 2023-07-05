@@ -6169,17 +6169,21 @@ def firewall_parser(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-
 	import pandas as pd
 	import numpy as np
 	import ipaddress
 	from functools import lru_cache
+	import os
 
 	debug = []
 
 	def erstatte_grupper_med_ipadresser(adresser, oppslagsverk):
 		nye_adresser = set()
 		for a in adresser:
+
+			a = a.strip()
+			#print(f"-{a}-")
+
 			if a in ["All-IPv4-Addresses", "All-Addresses", "All-IPv6-Addresses"]:
 				nye_adresser.add(a)  # legger tilbake som den var
 				continue
@@ -6199,105 +6203,118 @@ def firewall_parser(request):
 				# det er hverken et nettverk eller ip-adresse, erstatt ved oppslag
 				try:
 					oppslag = oppslagsverk[a]
-					nye_adresser.add(oppslag)
+					#print(oppslag)
+					for element in oppslag:
+						nye_adresser.add(element)
+					#print(f"erstatte_grupper_med_ipadresser() fant oppslag for {a}")
 					continue
 				except:
 					nye_adresser.add(a)  # legger tilbake som den var
-					print(f"*** feilet oppslag mot navngitt ipgruppe {a}")
+					#print(f"erstatte_grupper_med_ipadresser() feilet oppslag for {a}")
+					#print(f"*** feilet oppslag mot navngitt ipgruppe {a}")
 
 		return list(nye_adresser)
 
-	def parse_firewall_named_groups(excel_file, sheet):
-		debug.append("Klargjør navngitte nettverk")
+
+	def erstatte_portgrupper(data, oppslagsverk):
+		nye_data = set()
+		for p in data:
+			if p in ["IP"]:
+				nye_data.add("Alle porter (all IP)")
+				continue
+			try:
+				oppslag = oppslagsverk[p]
+				for element in oppslag:
+					nye_data.add(element)
+				continue
+			except:
+				nye_data.add(p)  # legger tilbake som den var
+		return nye_data
+
+
+	def parse_firewall_port_groups(excel_file, sheet):
+		print("Klargjør navngitte porter")
 		named_groups = {}
 		df = excel_file.parse(sheet,
-					skiprows=2, # de første radene er tomme
+				skiprows=0, # hvis de første radene er tomme
+			)
+		for index, row in df.iterrows():
+			alias = row["Name"]
+			description = row["Description"]
+			try:
+				named_groups[alias] = [s + " " + description for s in row["Content"].split(",")]
+			except:
+				print(f"* kunne ikke lese inn {alias} med verdi {description}")
+				pass
+				#debug.append(f"* kunne ikke lese inn {alias} med verdi {value}")
+		return named_groups
+
+
+	def parse_firewall_named_groups(excel_file, sheet):
+		print("Klargjør navngitte nettverk")
+		named_groups = {}
+
+		df = excel_file.parse(sheet,
+					skiprows=0, # hvis de første radene er tomme
 				)
-		for column in df.columns:
-			if not column.startswith("Unnamed"):
-				named_groups[column] = df[column].dropna().tolist()#.to_dict('list')
+
+		#for column in df.columns:
+		#	if not column.startswith("Unnamed"):
+		#		named_groups[column] = df[column].dropna().tolist()#.to_dict('list')
+
+		for index, row in df.iterrows():
+			#print(type(row["Content"]))
+			#print(row["Content"])
+			alias = row["Name"]
+			value = row["Content"]
+			try:
+				named_groups[alias] = value.split(",")
+			except:
+				#print(f"* kunne ikke lese inn {alias} med verdi {value}")
+				#debug.append(f"* kunne ikke lese inn {alias} med verdi {value}")
+				pass
 
 		#utvide (expand) alle grupper slik at en gruppe ikke inneholder en annen gruppereferanse
 		expanded_named_groups = []
 		for ng in named_groups:
+			#print(ng)
 			named_groups[ng] = erstatte_grupper_med_ipadresser(named_groups[ng], named_groups)
+
+		for el in named_groups:
+			debug.append(f"* {el} {named_groups[el]}")
 
 		return named_groups
 
-	filename = path.dirname(path.abspath(__file__)) + "/import/firewall_all_ports.xlsx"
-	excel_file = pd.ExcelFile(filename)
-	debug.append("Fant følgende ark i filen: %s" % excel_file.sheet_names)
 
-	all_openings = {}
-
-	for sheet in excel_file.sheet_names:
-		debug.append("Åpner ark %s" % sheet)
-
-		if sheet == "README":
-			debug.append("- ingen relevante data")
-			continue
-		if sheet == "Groups' Content":
-			named_network_groups = parse_firewall_named_groups(excel_file=excel_file, sheet=sheet)
-			debug.append("- navngitte nettverk lastet")
-			continue
-
-		df = excel_file.parse(sheet,
-					skiprows=2, # de første radene er tomme
-					usecols=[2, 3, 4, 7, 9, 10, 14],
-					names=['rule_id', 'permit', 'source', 'destination', 'service', 'beskrivelse', 'retning',]
-				)
-		df['rule_id'].ffill(inplace=True)
-		df = df.replace(np.nan, '', regex=True)
-		data = df.to_dict('records')
-		for line in data:
+	def parse_target(target):
+		if type(target) == int:
 			try:
-				rule_id = int(line["rule_id"])
+				n = str(target)
+				if len(n) == 10:
+					return "%s.%s.%s.%s" % (n[-10:-9], n[-9:-6], n[-6:-3], n[-3:])
+				if len(n) == 11:
+					return "%s.%s.%s.%s" % (n[-11:-9], n[-9:-6], n[-6:-3], n[-3:])
+				if len(n) == 12:
+					return "%s.%s.%s.%s" % (n[-12:-9], n[-9:-6], n[-6:-3], n[-3:])
 			except:
-				rule_id = "ID mangler"
+				return target
 
-			def lookup_groups(something):
-				# det kan være en gruppe. Da returneres alle medlemmer.
-				#	hvis en gruppe (string) slås opp som en ny gruppe, må vi fortsette til vi bare har ip-adresser..
+		else:
+			return target
 
-				# hvis det ikke er noen treff, returnerer vi det vi fant
-				return something
-
-
-			if not rule_id in all_openings:
-				all_openings[rule_id] = {
-						'firewall': sheet,
-						'permit': line["permit"],
-						'source': [line["source"]],
-						'destination': [line["destination"]],
-						'service': [line["service"]],
-						'beskrivelse': line["beskrivelse"],
-						'retning': line["retning"],
-						}
-			else:
-				if line["source"] != "":
-					all_openings[rule_id]["source"].append(line["source"])
-				if line["destination"] != "":
-					all_openings[rule_id]["destination"].append(line["destination"])
-
-
-	debug.append(f"Det er {len(all_openings)} brannmurdefinisjoner i filen")
-
-	for opening in all_openings:
-		all_openings[opening]["source"] = erstatte_grupper_med_ipadresser(all_openings[opening]["source"], named_network_groups)
-		all_openings[opening]["destination"] = erstatte_grupper_med_ipadresser(all_openings[opening]["destination"], named_network_groups)
-
-
-	@lru_cache(maxsize=256)
+	@lru_cache(maxsize=1024)
 	def lookup_network(network):
+		return network
 		try:
 			nc = NetworkContainer.objects.get(ip_address=str(network.network_address), subnet_mask=network.prefixlen)
 			return f"{nc.comment} ({network})"
 		except:
-			print(f"** Oppslag feilet for nettverk {network}")
+			#print(f"** Oppslag feilet for nettverk {network}")
 			return None
 
-	@lru_cache(maxsize=256)
+	@lru_cache(maxsize=1024)
 	def lookup_device(ip_address):
+		return ip_address
 		try:
 			server = CMDBdevice.objects.get(comp_ip_address=str(ip_address))
 			#print(f"* Oppslag av {ip_address} som {server}")
@@ -6306,24 +6323,31 @@ def firewall_parser(request):
 			except:
 				return (f"{server.comp_name}")
 		except ObjectDoesNotExist:
-			print(f"* Oppslag feilet for server {ip_address}")
+			#print(f"* Oppslag feilet for server {ip_address}")
 			return None
 		except MultipleObjectsReturned:
-			debug.append(f"Flere maskiner med ip {ip_address}")
+			print(f"Flere maskiner med ip {ip_address}")
 			return None
 
-	@lru_cache(maxsize=256)
+	@lru_cache(maxsize=1024)
 	def lookup_vip(ip_address):
+		return ip_address
 		try:
 			return virtualIP.objects.get(ip_address=str(ip_address)).vip_name
-			print(f"- VIP match på {ip_address}")
+			#print(f"- VIP match på {ip_address}")
 		except (ObjectDoesNotExist, MultipleObjectsReturned):
 			return None
+
 
 	def oppslag_kjente_nettverk(data):
 		# oppslag mot kjente nettverk
 		nye_data = set()
+		#print(f"data = {data}")
 		for n in data:
+
+			if n == None:
+				continue
+
 			if "/" in n:
 				try:
 					network = ipaddress.ip_network(n) # hvis dette er et nettverk..
@@ -6364,11 +6388,114 @@ def firewall_parser(request):
 
 		return list(nye_data)
 
-	# søke opp vlan navn og maskinnavn fra databasen
+
+	# Her starter behandlingen
+	filename = path.dirname(path.abspath(__file__)) + "/import/firewall_everything.xlsx"
+	file_edit_stamp = os.path.getmtime(filename)
+	file_edit_date = datetime.datetime.fromtimestamp(file_edit_stamp).strftime('%Y-%m-%d %H:%M:%S')
+	print(f"Filen er fra {file_edit_date}")
+
+	excel_file = pd.ExcelFile(filename)
+	#print("Fant følgende ark i filen: %s" % excel_file.sheet_names)
+
+	all_openings = {}
+
+	for sheet in excel_file.sheet_names:
+		print("Åpner ark %s" % sheet)
+
+		if sheet == "README":
+			#debug.append("* ingen relevante data")
+			continue
+
+		if sheet == "All FW network groups":
+			named_network_groups = parse_firewall_named_groups(excel_file=excel_file, sheet=sheet)
+			print("* navngitte nettverk er lastet")
+			continue
+
+		if sheet == "All FW service groups":
+			named_port_groups = parse_firewall_port_groups(excel_file=excel_file, sheet=sheet)
+			print("* navngitte porter er lastet")
+			continue
+
+		try:
+			df = excel_file.parse(sheet,
+						#skiprows=2, # de første radene er tomme
+						#usecols=[2, 3, 4, 7, 9, 10, 14],
+						skiprows=0, # de første radene er tomme
+						usecols=[0, 1, 2, 3, 4, 6, 8],
+						names=['rule_id', 'permit', 'source', 'destination', 'service', 'beskrivelse', 'enabled',]
+					)
+		except:
+			print("* Ingen regler funnet")
+			continue
+
+		df['rule_id'].ffill(inplace=True)
+		df = df.replace(np.nan, '', regex=True)
+		data = df.to_dict('records')
+		for line in data:
+			try:
+				sheet_rule_id = int(line["rule_id"])
+				rule_id = f"{sheet}-{sheet_rule_id}"
+			except:
+				rule_id = "ID mangler"
+
+			if not rule_id in all_openings:
+				all_openings[rule_id] = {
+						'firewall': sheet,
+						'permit': line["permit"],
+						'source': [parse_target(line["source"])],
+						'destination': [parse_target(line["destination"])],
+						'service': [line["service"]],
+						'beskrivelse': line["beskrivelse"],
+						'enabled': line["enabled"],
+						}
+			else:
+				if line["source"] != "":
+					all_openings[rule_id]["source"].append(parse_target(line["source"]))
+				if line["destination"] != "":
+					all_openings[rule_id]["destination"].append(parse_target(line["destination"]))
+				if line["service"] != "":
+					all_openings[rule_id]["service"].append(line["service"])
+
+		print(f"* Fant {len(data)} regler")
+
+	print(f"Det er {len(all_openings)} brannmurdefinisjoner i filen")
+
+	# erstatte grupper med faktiske medlemmer (ip, nett og porter)
+	for opening in all_openings:
+		all_openings[opening]["source"] = erstatte_grupper_med_ipadresser(all_openings[opening]["source"], named_network_groups)
+		all_openings[opening]["destination"] = erstatte_grupper_med_ipadresser(all_openings[opening]["destination"], named_network_groups)
+		all_openings[opening]["service"] = erstatte_portgrupper(all_openings[opening]["service"], named_port_groups)
+
+	# søke opp navn på vlan, servere vip-er fra databasen
 	for opening in all_openings:
 		all_openings[opening]["source"] = oppslag_kjente_nettverk(all_openings[opening]["source"])
 		all_openings[opening]["destination"] = oppslag_kjente_nettverk(all_openings[opening]["destination"])
 
+
+	# lagre navngitte netterk til Nettverksgruppe
+	print("Sletter alle gamle navngitte nettverksgrupper i database")
+	Nettverksgruppe.objects.all().delete()
+	for idx, members in named_network_groups.items():
+		Nettverksgruppe.objects.create(
+				name=idx,
+				members=json.dumps(members),
+			)
+	print("Lagret alle navngitte nettverksgrupper til database")
+
+
+
+	# lagre brannmuråpningene til Brannmurregel
+
+
+	# flytte koden til en kommando
+
+	# vise vlan og brannmurregler per business subservice
+
+
+	# vise alt samt søke i brannmurregler
+
+	# vise alt fra navngitte nettverksgrupper
 
 	# returnere som json
 	#return JsonResponse(all_openings, safe=False)
@@ -6376,6 +6503,8 @@ def firewall_parser(request):
 	# returnere som html/tabell
 	return render(request, 'cmdb_brannmur.html', {
 		'all_openings': all_openings,
+		'named_network_groups': named_network_groups,
+		'named_port_groups': named_port_groups,
 		"debug": debug,
 	})
 

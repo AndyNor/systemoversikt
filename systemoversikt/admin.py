@@ -1373,6 +1373,13 @@ class CMDBdatabaseAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(Nettverksgruppe)
+class NettverksgruppeAdmin(admin.ModelAdmin):
+	list_display = ('name', 'members',)
+	search_fields = ('name', 'members',)
+
+
+
 ''' Visning av  logger i django adminpanelet
 https://djangosnippets.org/snippets/3009/ '''
 action_names = {

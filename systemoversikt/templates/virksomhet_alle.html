@@ -37,15 +37,15 @@
 		{% endif %}
 		<th>Forkortelse</th>
 		<th>Virksomhet</th>
-		<th>Tilh. Byråd</th>
-		<th>Leder</th>
-		<th>Lokasjoner</th>
+		<th>Nettverk lokasjoner</th>
 		<th>Antall systemer i bruk</th>
 		{% comment %}<th>Antall ansatte</th>{% endcomment %}
+		<th>Antall klienter</th>
 		<th>Klientplattform</th>
 		<th>Kontorstøtte</th>
 		{% comment %}<th>Autoriserte bestillere InfoTorget</th>{% endcomment %}
 		{% comment %}<th>Autoriserte bestillere mot intern tjenesteleverandør</th>{% endcomment %}
+		<th>Leder</th>
 		<th>Personvernkoordinator (PKO)</th>
 		<th>Informasjonssikkerhetskoordinator (ISK)</th>
 		<th>IKT-hovedkontakt</th>
@@ -67,20 +67,10 @@
 
 		{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
 		<td>
-			<a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn|truncatewords:6 }}</a>
-		</td>
-		<td>
+			<a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn|truncatewords:6 }}</a><br>
 			{% for vir in vir.overordnede_virksomheter.all %}
 				{{ vir }}<br>
 			{% endfor %}
-		</td>
-
-		<td>
-			{% if vir.leder_hr %}
-				<a href="{% url 'bruker_detaljer' pk=vir.leder_hr.pk %}">{{vir.leder_hr.profile.displayName}}</a>
-			{% else %}
-				{% include "ansvarlig_include_vis.html" with ansvarlige=vir.leder.all %}
-			{% endif %}
 		</td>
 
 		{% url 'lokasjoner_hos_virksomhet' pk=vir.pk as url_lokasjoner %}
@@ -89,9 +79,9 @@
 		<td>{{ vir.systembruk_brukergruppe.all.count }}</td>
 
 		{% comment %}<td>{{ vir.ansatte|default:"-" }}</td>{% endcomment %}
+		<td>{{ vir.antall_klienter }}</td>
 		<td>
-			{{ vir.get_resultatenhet_display|default:"-" }}<br>
-			{{ vir.antall_klienter }} klienter
+			{{ vir.get_resultatenhet_display|default:"-" }}
 		</td>
 		<td>
 			{{ vir.get_office365_display|default:"-" }}
@@ -116,6 +106,15 @@
 				{{ person }}</a><br>
 			{% endfor %}
 		</td>{% endcomment %}
+
+		<td>
+			{% if vir.leder_hr %}
+				<a href="{% url 'bruker_detaljer' pk=vir.leder_hr.pk %}">{{vir.leder_hr.profile.displayName}}</a>
+			{% else %}
+				{% include "ansvarlig_include_vis.html" with ansvarlige=vir.leder.all %}
+			{% endif %}
+		</td>
+
 		<td>
 			{% for person in vir.personvernkoordinator.all %}
 				<a href="{% url 'ansvarlig' person.pk %}"

@@ -6869,6 +6869,94 @@ class LOS(models.Model):
 
 
 
+class Nettverksgruppe(models.Model):
+	name =models.CharField(
+		verbose_name="Navn",
+		null=False,
+		blank=False,
+		max_length=250,
+		)
+	members = models.TextField(
+		verbose_name="Medlemmer (JSON)",
+		blank=False,
+		null=False,
+		)
+
+	def __str__(self):
+		return u'%s' % (self.name)
+
+	class Meta:
+		verbose_name_plural = "CMDB: Nettverksgruppe"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+class Brannmurregel(models.Model):
+	regel_id = models.CharField(
+		verbose_name="Regel ID",
+		null=False,
+		blank=False,
+		max_length=50,
+		)
+	brannmur = models.CharField(
+		verbose_name="Virtuell brannmur",
+		null=False,
+		blank=False,
+		max_length=50,
+		)
+	active = models.BooleanField(
+		verbose_name="Regel aktiv?",
+		blank=False,
+		null=False,
+		default=False,
+		)
+	permit = models.BooleanField(
+		verbose_name="Tillat trafikk?",
+		blank=False,
+		null=False,
+		default=False,
+		)
+	source = models.TextField(
+		verbose_name="Kilde (JSON)",
+		blank=False,
+		null=False,
+		)
+	destination = models.TextField(
+		verbose_name="Destinasjon (JSON)",
+		blank=False,
+		null=False,
+		)
+	protocol =  models.TextField(
+		verbose_name="Port/protokoll (JSON)",
+		blank=False,
+		null=False,
+		)
+	comment =  models.TextField(
+		verbose_name="Kommentar",
+		blank=True,
+		null=True,
+		)
+	ref_vip = models.ManyToManyField(
+		to="virtualIP",
+		related_name='firewall_rules',
+		verbose_name="Tilknyttede VIP-er",
+		)
+	ref_server = models.ManyToManyField(
+		to="CMDBdevice",
+		related_name='firewall_rules',
+		verbose_name="Tilknyttede servere",
+		)
+	ref_vlan = models.ManyToManyField(
+		to="NetworkContainer",
+		related_name='firewall_rules',
+		verbose_name="Tilknyttede VLAN",
+		)
+
+	def __str__(self):
+		return u'%s' % (self.regel_id)
+
+	class Meta:
+		verbose_name_plural = "CMDB: Brannmurregler"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
 """
 class PRKuser(models.Model):
 	opprettet = models.DateTimeField(

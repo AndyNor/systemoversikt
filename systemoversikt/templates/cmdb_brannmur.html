@@ -11,26 +11,34 @@
 
 {% block hovedinnhold %}
 
+	{% comment %}
 	{% for line in debug %}
 		<p>{{ line }}</p>
 	{% endfor %}
+	{% endcomment %}
 
+	{% comment %}
+	{{ named_port_groups }}
+	{% endcomment %}
+
+	<h5>Brannmurregler</h5>
 	<table class="table table-sm tablesorter excel">
 	<thead>
-		<th>Regel</th>
+		<th>Regel ID</th>
+		<th>Regel aktiv?</th>
 		<th>Virtuell brannmur</th>
 		<th>Type åpning</th>
 		<th>Kilde</th>
 		<th>Destinasjon</th>
 		<th>Protokoll</th>
 		<th>Beskrivelse</th>
-		<th>Retning</th>
 	</thead>
 	<tbody>
 
 	{% for id, opening in all_openings.items %}
 		<tr>
 			<td>{{ id }}</td>
+			<td>{{ opening.enabled }}</td>
 			<td>{{ opening.firewall }}</td>
 			<td>{{ opening.permit }}</td>
 			<td>
@@ -43,13 +51,41 @@
 				<li>{{ d }}</li>
 			{% endfor %}
 			</td>
-			<td>{{ opening.service }}</td>
+			<td>
+			{% for port in opening.service %}
+				<li>{{ port }}</li>
+			{% endfor %}
+			</td>
 			<td>{{ opening.beskrivelse }}</td>
-			<td>{{ opening.retning }}</td>
 		</tr>
 	{% endfor %}
 
 	</tbody>
 	</table>
+
+	{% comment %}
+	<h5>Navngitte grupper</h5>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Gruppenavn</th>
+		<th>Innhold</th>
+	</thead>
+	<tbody>
+
+	{% for gruppe, innhold in named_network_groups.items %}
+		<tr>
+			<td>{{ gruppe }}</td>
+			<td>
+			{% for i in innhold %}
+				<li>{{ i }}</li>
+			{% endfor %}
+			</td>
+		</tr>
+	{% endfor %}
+
+	</tbody>
+	</table>
+	{% endcomment %}
+
 
 {% endblock hovedinnhold %}
