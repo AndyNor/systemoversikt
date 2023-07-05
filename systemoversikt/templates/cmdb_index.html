@@ -81,8 +81,8 @@
 	{% url 'alle_nettverk' as url_alle_nettverk %}
 	<a href="{{url_alle_nettverk}}" class="btn btn-sm btn-link {% if url_alle_nettverk in request.path %}fremhev{% endif %}">VLAN / Nettverk</a><br>
 
-	{% url 'firewall_parser' as url_firewall_parser %}
-	<a href="{{url_firewall_parser}}" class="btn btn-sm btn-link {% if url_firewall_parser in request.path %}fremhev{% endif %}">Brannmur</a><br>
+	{% url 'cmdb_firewall' as url_cmdb_firewall %}
+	<a href="{{url_cmdb_firewall}}" class="btn btn-sm btn-link {% if url_cmdb_firewall in request.path %}fremhev{% endif %}">Brannmur</a><br>
 
 	{% url 'alle_nettverksenheter' as url_alle_nettverksenheter %}
 	<a href="{{url_alle_nettverksenheter}}" class="btn btn-sm btn-link {% if url_alle_nettverksenheter in request.path %}fremhev{% endif %}">Nettverksenheter</a><br>

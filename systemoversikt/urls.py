@@ -60,7 +60,7 @@ urlpatterns = [
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 
 	re_path(r'^sok/$', views.search, name='search'),
-	re_path(r'^firewall/$', views.firewall_parser, name='firewall_parser'),
+	re_path(r'^firewall/$', views.cmdb_firewall, name='cmdb_firewall'),
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
 	re_path(r'^systemer/forvalteroversikt/$', views.alle_systemer_forvaltere, name='alle_systemer_forvaltere'),

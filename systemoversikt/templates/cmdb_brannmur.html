@@ -11,15 +11,19 @@
 
 {% block hovedinnhold %}
 
-	{% comment %}
-	{% for line in debug %}
-		<p>{{ line }}</p>
-	{% endfor %}
-	{% endcomment %}
+	<p>Fant {{ all_openings.count }} brannmurregler i databasen som passet med ditt søk.</p>
 
-	{% comment %}
-	{{ named_port_groups }}
-	{% endcomment %}
+	<form action="{% url 'cmdb_firewall' %}" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="55" style="width: 450px;" type="search" value="{{ brannmur_search_term }}" name="search_term"
+			placeholder="Søk blant kilde, destinasjon, protokoll eller kommentar" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?search_term=__ALL__">Vis alt</a>
+
+		</div>
+	</form>
+
+	<hr>
 
 	<h5>Brannmurregler</h5>
 	<table class="table table-sm tablesorter excel">
@@ -35,28 +39,28 @@
 	</thead>
 	<tbody>
 
-	{% for id, opening in all_openings.items %}
+	{% for opening in all_openings %}
 		<tr>
-			<td>{{ id }}</td>
+			<td>{{ opening.regel_id }}</td>
 			<td>{{ opening.enabled }}</td>
-			<td>{{ opening.firewall }}</td>
+			<td>{{ opening.brannmur }}</td>
 			<td>{{ opening.permit }}</td>
 			<td>
-			{% for s in opening.source %}
+			{% for s in opening.source_items %}
 				<li>{{ s }}</li>
 			{% endfor %}
 			</td>
 			<td>
-			{% for d in opening.destination %}
+			{% for d in opening.destination_items %}
 				<li>{{ d }}</li>
 			{% endfor %}
 			</td>
 			<td>
-			{% for port in opening.service %}
+			{% for port in opening.protocol_items %}
 				<li>{{ port }}</li>
 			{% endfor %}
 			</td>
-			<td>{{ opening.beskrivelse }}</td>
+			<td>{{ opening.comment }}</td>
 		</tr>
 	{% endfor %}
 
@@ -71,7 +75,6 @@
 		<th>Innhold</th>
 	</thead>
 	<tbody>
-
 	{% for gruppe, innhold in named_network_groups.items %}
 		<tr>
 			<td>{{ gruppe }}</td>
@@ -82,7 +85,6 @@
 			</td>
 		</tr>
 	{% endfor %}
-
 	</tbody>
 	</table>
 	{% endcomment %}

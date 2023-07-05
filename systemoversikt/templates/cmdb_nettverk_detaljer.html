@@ -11,12 +11,12 @@
 
 {% block hovedinnhold %}
 
-
+	<hr>
+	<h5>Enheter i nettverket</h5>
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>IP-adresse</th>
 		<th>Server</th>
-		<th>Server service</th>
 		<th>VIP</th>
 		<th>Pools</th>
 		<th>DNS</th>
@@ -28,13 +28,10 @@
 			<td>{{ ip }}</td>
 			<td>
 			{% for server in ip.servere.all %}
-				{{ server }}<br>
-			{% endfor %}
-			</td>
-			<td>
-			{% for server in ip.servere.all %}
-				{% url 'cmdb_bss' pk=server.sub_name.pk as url_bss %}
-				<a href="{{ url_bss }}">{{ server.sub_name }}</a><br>
+				{% if server.device_active %}
+					{% url 'cmdb_bss' pk=server.sub_name.pk as url_bss %}
+					{{ server }} (<a href="{{ url_bss }}">{{ server.sub_name }}</a>)<br>
+				{% endif %}
 			{% endfor %}
 			</td>
 			<td>
@@ -60,6 +57,62 @@
 		</tr>
 
 
+	{% endfor %}
+
+	</tbody>
+	</table>
+
+
+	<hr>
+	<h5>Brannmurregler knyttet til nettverket</h5>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Regel ID</th>
+		<th>Regel aktiv?</th>
+		<th>Virtuell brannmur</th>
+		<th>Type åpning</th>
+		<th>Kilde</th>
+		<th>Destinasjon</th>
+		<th>Protokoll</th>
+		<th>Beskrivelse</th>
+	</thead>
+	<tbody>
+
+	{% for opening in firewall_openings %}
+		<tr>
+			<td>{{ opening.regel_id }}</td>
+			<td>{{ opening.active }}</td>
+			<td>{{ opening.brannmur }}</td>
+			<td>{{ opening.permit }}</td>
+			<td>
+			{% for source in opening.source_items %}
+				<li
+					{% if nettverk.ip_address in source %} style="background-color: #f7f779;"{% endif %}
+					{% for ip in network_ip_addresses %}
+						{% if ip.ip_address in source %} style="background-color: #79f787;"{% endif %}
+					{% endfor %}>
+					{{ source }}
+				</li>
+			{% endfor %}
+			</td>
+			<td>
+			{% for dest in opening.destination_items %}
+				<li
+					{% if nettverk.ip_address in dest %} style="background-color: #f7f779;"{% endif %}
+					{% for ip in network_ip_addresses %}
+						{% if ip.ip_address in dest %} style="background-color: #79f787;"{% endif %}
+					{% endfor %}>
+					{{ dest }}
+				</li>
+			{% endfor %}
+			</td>
+			<td>
+			{% for port in opening.protocol_items %}
+				<li>{{ port }}</li>
+			{% endfor %}
+			</td>
+			<td>{{ opening.comment }}</td>
+		</tr>
 	{% endfor %}
 
 	</tbody>

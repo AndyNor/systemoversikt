@@ -1379,6 +1379,13 @@ class NettverksgruppeAdmin(admin.ModelAdmin):
 	search_fields = ('name', 'members',)
 
 
+@admin.register(Brannmurregel)
+class BrannmurregelAdmin(admin.ModelAdmin):
+	list_display = ('regel_id', 'active', 'permit', 'source', 'destination', 'protocol', 'comment',)
+	search_fields = ('source', 'destination', 'protocol', 'comment',)
+	list_filter = ('active', 'permit', 'brannmur',)
+	autocomplete_fields = ('ref_vip', 'ref_server', 'ref_vlan',)
+
 
 ''' Visning av  logger i django adminpanelet
 https://djangosnippets.org/snippets/3009/ '''

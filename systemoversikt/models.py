@@ -2052,6 +2052,7 @@ class NetworkIPAddress(models.Model):
 
 
 
+
 class DNSrecord(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -6956,6 +6957,15 @@ class Brannmurregel(models.Model):
 	class Meta:
 		verbose_name_plural = "CMDB: Brannmurregler"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+	def source_items(self):
+		return json.loads(self.source)
+
+	def destination_items(self):
+		return json.loads(self.destination)
+
+	def protocol_items(self):
+		return json.loads(self.protocol)
 
 """
 class PRKuser(models.Model):
