@@ -643,7 +643,7 @@ def nettverk_detaljer(request, pk):
 	Vise alt koblet til et nettverk
 	Tilgjengelig for de som kan lese CMDB
 	"""
-	required_permissions = ['systemoversikt.view_cmdbdevice']
+	required_permissions = ['systemoversikt.view_brannmurregel']
 	if any(map(request.user.has_perm, required_permissions)):
 
 		nettverk = NetworkContainer.objects.get(pk=pk)
@@ -6167,7 +6167,7 @@ def cmdb_api_kompass(request):
 
 
 def cmdb_firewall(request):
-	required_permissions = ['systemoversikt.change_azureapplication']
+	required_permissions = ['systemoversikt.view_brannmurregel']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
