@@ -4531,21 +4531,74 @@ def adgruppe_detaljer(request, pk):
 	Vise informasjon om en konkret AD-gruppe
 	Tilgangsstyring: må kunne vise informasjon om brukere
 	"""
+	required_permissions = 'auth.view_user'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	import json
 	gruppe = ADgroup.objects.get(pk=pk)
 
 	member = human_readable_members(json.loads(gruppe.member))
 	memberof = human_readable_members(json.loads(gruppe.memberof))
 
+	return render(request, 'ad_adgruppe_detaljer.html', {
+			"gruppe": gruppe,
+			"member": member,
+			"memberof": memberof,
+	})
+
+
+def virksomhet_adgruppe_detaljer(request):
+	"""
+	Vise informasjon om en konkret AD-gruppe for en enkelt virksomhet
+	Tilgangsstyring: må kunne vise informasjon om brukere
+	"""
 	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		return render(request, 'ad_adgruppe_detaljer.html', {
-				"gruppe": gruppe,
-				"member": member,
-				"memberof": memberof,
-		})
-	else:
+	if not request.user.has_perm(required_permissions):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		virksomhetsforkotelse = request.user.profile.virksomhet_innlogget_som.virksomhetsforkortelse
+	except:
+		return render(request, 'ad_analyse.html', {})
+
+
+	valgt_gruppe = None
+	valgt_gruppe_medlemmer = None
+	valg_grupper = None
+	search_term = ""
+
+
+	search_term_raw = request.GET.get("search_term", False)
+	if search_term_raw:
+		valg_grupper = ADgroup.objects.filter(Q(distinguishedname__icontains=search_term_raw) | Q(display_name__icontains=search_term_raw))
+		search_term = search_term_raw
+
+
+	valgt_gruppe = request.GET.get("valgt_gruppe", False)
+	if valgt_gruppe:
+
+		gruppe = ADgroup.objects.get(pk=valgt_gruppe)
+		members = json.loads(gruppe.member)
+		filtrerte_medlemmer = set()
+		for m in members:
+			if virksomhetsforkotelse in m:
+				filtrerte_medlemmer.add(m)
+
+		members = human_readable_members(list(filtrerte_medlemmer))
+
+		valgt_gruppe = gruppe
+		valgt_gruppe_medlemmer = members
+		search_term = gruppe
+
+
+	return render(request, 'virksomhet_adgruppe_detaljer.html', {
+			"valg_grupper": valg_grupper,
+			"valgt_gruppe": valgt_gruppe,
+			"valgt_gruppe_medlemmer": valgt_gruppe_medlemmer,
+			"search_term": search_term,
+			"virksomhetsforkotelse": virksomhetsforkotelse,
+	})
 
 
 def ad_analyse(request):

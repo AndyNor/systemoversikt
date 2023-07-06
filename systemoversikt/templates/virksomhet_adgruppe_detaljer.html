@@ -1,0 +1,37 @@
+{% extends "virksomhet_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Finn virksomhetens medlemmer i tilgangsgruppe
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<form action="{% url 'virksomhet_adgruppe_detaljer' %}" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Navn på gruppe" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	<hr>
+
+	{% if valg_grupper %}
+		<h6>Mente du:</h6>
+		{% for g in valg_grupper %}
+			<a href="?valgt_gruppe={{ g.pk }}">{{ g }}</a><br>
+		{% endfor %}
+	{% endif %}
+
+	{% if valgt_gruppe %}
+		<h5>Medlemmer i {{ valgt_gruppe}} for {{ virksomhetsforkotelse }}</h5>
+		{% include 'cmdb_users_display_include.html' with member=valgt_gruppe_medlemmer%}
+	{% endif %}
+
+
+{% endblock hovedinnhold %}
