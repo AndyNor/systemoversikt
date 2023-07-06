@@ -6192,8 +6192,6 @@ def cmdb_firewall(request):
 	else:
 		firewall_openings = []
 
-	# vise vlan og brannmurregler per business subservice
-
 	return render(request, 'cmdb_brannmur.html', {
 		'all_openings': firewall_openings,
 		'brannmur_search_term': search_term_raw,

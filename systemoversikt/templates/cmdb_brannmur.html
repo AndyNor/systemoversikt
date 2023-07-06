@@ -42,9 +42,9 @@
 	{% for opening in all_openings %}
 		<tr>
 			<td>{{ opening.regel_id }}</td>
-			<td>{{ opening.enabled }}</td>
+			<td>{{ opening.active|yesno:"Aktiv,Inaktiv,?" }}</td>
 			<td>{{ opening.brannmur }}</td>
-			<td>{{ opening.permit }}</td>
+			<td>{{ opening.permit|yesno:"Tillat,Blokker,?" }}</td>
 			<td>
 			{% for s in opening.source_items %}
 				<li>{{ s }}</li>
