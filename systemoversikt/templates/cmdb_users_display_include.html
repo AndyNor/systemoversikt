@@ -6,6 +6,7 @@
 	<tr>
 		<th>Navn</th>
 		<th>Brukernavn</th>
+		<th>Avdeling</th>
 		<th>Fra PRK?</th>
 		<th>Opprettet</th>
 		<th>Sist pålogget</th>
@@ -32,6 +33,11 @@
 	<tr {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>
 		<td>👤 {{m.first_name}} {{m.last_name}}</td>
 		<td>{{m.username}}</td>
+		<td>
+			{% if member.users|length < 500 %}
+				{{m.profile.avdeling}}
+			{% endif %}
+		</td>
 		<td>{{m.profile.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
 		<td>{{m.profile.whenCreated|date:"Ym" }}<br>({{m.profile.whenCreated|timesince}})</td>
 		<td>{{m.profile.lastLogonTimestamp|date:"Ym" }}<br>({{ m.profile.lastLogonTimestamp|timesince }})</td>

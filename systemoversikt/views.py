@@ -24,6 +24,7 @@ from os import path
 import datetime
 import json
 import re
+import time
 
 
 FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
@@ -4501,28 +4502,33 @@ def adgruppe_graf(request, pk):
 
 
 def human_readable_members(items, onlygroups=False):
+
+	#runtime_t0 = time.time()
 	groups = []
 	users = []
 	notfound = []
 
-	@transaction.atomic
-	def action():
-		for item in items:
+	for item in items:
+		if onlygroups == False:
+			regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0]
 			try:
-				g = ADgroup.objects.get(distinguishedname=item)
-				groups.append(g)
-				continue
+				u = User.objects.get(username__iexact=regex_username)
 			except:
-				pass
-			if onlygroups == False:
-				regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0]
-				try:
-					u = User.objects.get(username__iexact=regex_username)
-				except:
-					notfound.append(item)  # vi fant ikke noe, returner det vi fikk
-					continue
-				users.append(u)
-	action()
+				notfound.append(item)  # vi fant ikke noe, returner det vi fikk
+				continue
+			users.append(u)
+			continue
+
+		try:
+			g = ADgroup.objects.get(distinguishedname=item)
+			groups.append(g)
+		except:
+			pass
+
+	#runtime_t1 = time.time()
+	#logg_total_runtime = runtime_t1 - runtime_t0
+	#print(logg_total_runtime)
+
 	return {"groups": groups, "users": users, "notfound": notfound}
 
 
