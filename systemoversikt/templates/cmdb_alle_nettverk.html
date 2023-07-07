@@ -6,12 +6,12 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Nettverk / VLANs
+	Nettverkssegmenter (VLAN)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-<p>Nettverksdata fra Infoblox. Her kan du finne detaljer på nettverkssegmenter</p>
+<p>Nettverksdata fra Infoblox. Her kan du finne detaljer på nettverkssegmenter. Dataene oppdateres ved manuell import</p>
 
 	<form action="{% url 'alle_nettverk' %}" autocomplete="off">
 		<div class="form-group form-inline">
@@ -26,6 +26,7 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>Nettverk</th>
+		<th>Tilknyttede IP-enheter</th>
 		<th>Beskrivelse</th>
 		<th>Lokasjons ID</th>
 		<th>Orgtilhørighet</th>
@@ -37,6 +38,7 @@
 	{% for nettverk in alle_nettverk %}
 		<tr>
 			<td>{{ nettverk.ip_address }}/{{ nettverk.subnet_mask }} {% if vlan.disabled %} (deaktivert) {% endif %}</td>
+			<td>{{ nettverk.network_ip_address.all|length }}</td>
 			{% url 'nettverk_detaljer' pk=nettverk.pk as url_nettverk %}
 			<td><a href="{{ url_nettverk }}">{{ nettverk.comment }}</a></td>
 			<td>{{ nettverk.locationid }}</td>

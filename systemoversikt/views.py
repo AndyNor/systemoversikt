@@ -656,6 +656,7 @@ def nettverk_detaljer(request, pk):
 			'nettverk': nettverk,
 			'network_ip_addresses': network_ip_addresses,
 			'firewall_openings': firewall_openings,
+			'config_maximum_mark_server': 100,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

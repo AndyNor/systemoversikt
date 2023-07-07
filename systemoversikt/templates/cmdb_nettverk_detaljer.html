@@ -11,6 +11,8 @@
 
 {% block hovedinnhold %}
 
+	<p>Fant {{network_ip_addresses|length}} enheter med IP-adresse og {{firewall_openings|length}} brannmuråpninger tilknyttet nettverket.</p>
+
 	<hr>
 	<h5>Enheter i nettverket</h5>
 	<table class="table table-sm tablesorter excel">
@@ -88,10 +90,12 @@
 			{% for source in opening.source_items %}
 				<li
 					{% if nettverk.ip_address in source %} style="background-color: #f7f779;"{% endif %}
-					{% for ip in network_ip_addresses %}
-						{% if ip.ip_address in source %} style="background-color: #79f787;"{% endif %}
-					{% endfor %}>
-					{{ source }}
+					{% if network_ip_addresses|length < config_maximum_mark_server %}
+						{% for ip in network_ip_addresses %}
+							{% if ip.ip_address in source %} style="background-color: #79f787;"{% endif %}
+						{% endfor %}
+					{% endif %}
+					>{{ source }}
 				</li>
 			{% endfor %}
 			</td>
@@ -99,10 +103,12 @@
 			{% for dest in opening.destination_items %}
 				<li
 					{% if nettverk.ip_address in dest %} style="background-color: #f7f779;"{% endif %}
-					{% for ip in network_ip_addresses %}
-						{% if ip.ip_address in dest %} style="background-color: #79f787;"{% endif %}
-					{% endfor %}>
-					{{ dest }}
+					{% if network_ip_addresses|length < config_maximum_mark_server %}
+						{% for ip in network_ip_addresses %}
+							{% if ip.ip_address in dest %} style="background-color: #79f787;"{% endif %}
+						{% endfor %}
+					{% endif %}
+					>{{ dest }}
 				</li>
 			{% endfor %}
 			</td>
