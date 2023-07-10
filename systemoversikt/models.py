@@ -2249,10 +2249,10 @@ class CMDBdatabase(models.Model):
 			help_text=u"Importert: db_comments",
 			)
 	db_status = models.TextField(
-			verbose_name="db_status",
+			verbose_name="Install status",
 			blank=True,
 			null=True,
-			help_text=u"Importert: db_status",
+			help_text=u"Importert: (tidligere db_status)",
 			)
 	sub_name = models.ForeignKey(
 			to=CMDBRef,
