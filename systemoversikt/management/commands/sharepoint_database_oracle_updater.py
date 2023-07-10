@@ -134,8 +134,8 @@ class Command(BaseCommand):
 
 		database_size_not_found = []
 		for idx, record in enumerate(oracle_sizes):
-			import_databasenavn = record["Database Name"].strip()
-			import_server = record["Server"].strip().split(".")[0]
+			import_databasenavn = record["DATABASE NAME"].strip()
+			import_server = record["SERVER"].strip().split(".")[0]
 			try:
 				dbinstance = CMDBdatabase.objects.get(db_database=import_databasenavn,db_server=import_server)
 			except:
@@ -144,7 +144,7 @@ class Command(BaseCommand):
 				feilet_for.append("%s@%s" % (import_databasenavn, import_server))
 				continue
 
-			new_size = int(record["Database Size"] * 1000 * 1000 * 1000)
+			new_size = int(record["SIZE IN GB"] * 1000 * 1000 * 1000)
 			old_size = dbinstance.db_u_datafilessizekb
 			if old_size != new_size:
 				dbinstance.db_u_datafilessizekb = new_size
