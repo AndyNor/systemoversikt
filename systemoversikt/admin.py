@@ -1530,3 +1530,7 @@ class UBWMetadataAdmin(admin.ModelAdmin):
 class UBWEstimatAdmin(admin.ModelAdmin):
 	list_display = ('belongs_to', 'aktiv', 'prognose_kategori', 'estimat_account', 'estimat_dim_1', 'estimat_dim_4', 'estimat_amount', 'budsjett_amount', 'periode_paalopt')
 
+
+
+admin.site.register(KritiskFunksjon)
+admin.site.register(KritiskKapabilitet)

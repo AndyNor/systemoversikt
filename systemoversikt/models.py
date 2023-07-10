@@ -1406,10 +1406,10 @@ class Behandlingsgrunnlag(models.Model):
 
 
 CMDB_KRITIKALITET_VALG = (
-	(1, '1 most critical'),
-	(2, '2 somewhat critical'),
-	(3, '3 less critical'),
-	(4, '4 not critical'),
+	(1, '1: most critical'),
+	(2, '2: somewhat critical'),
+	(3, '3: less critical'),
+	(4, '4: not critical'),
 )
 
 CMDB_TYPE_VALG = (
@@ -1798,6 +1798,23 @@ class CMDBRef(models.Model): # BSS
 		else:
 			return False
 
+	def vlan(self):
+		alle_vlan = set()
+		for server in CMDBdevice.objects.filter(sub_name=self.pk, device_active=True):
+			for ipaddr in server.network_ip_address.all():
+				for vlan in ipaddr.vlan.all():
+					alle_vlan.add(vlan)
+
+
+		for database in CMDBdatabase.objects.filter(sub_name=self.pk, db_operational_status=True):
+			dbserver = CMDBdevice.objects.get(comp_name=database.db_server)
+			for ipaddr in dbserver.network_ip_address.all():
+				for vlan in ipaddr.vlan.all():
+					alle_vlan.add(vlan)
+
+		return list(alle_vlan)
+
+
 	class Meta:
 		verbose_name_plural = "CMDB: business sub services"
 		verbose_name = "sub service"
@@ -2108,6 +2125,63 @@ class DNSrecord(models.Model):
 		verbose_name_plural = "CMDB: DNS records"
 		verbose_name = "DNS-record"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+KRITISKE_KATEGORIER = (
+	(1, 'Styringsevne og suvernitet'),
+	(2, 'Befolkningens sikkerhet'),
+	(3, 'Samfunnets funksjonalitet'),
+)
+
+
+class KritiskFunksjon(models.Model):
+	navn = models.CharField(
+			max_length=150,
+			null=False,
+			verbose_name="Funksjon",
+			)
+	kategori = models.IntegerField(
+			choices=KRITISKE_KATEGORIER,
+			verbose_name="Hovedkategori",
+			blank=False, null=False,
+			)
+	def __str__(self):
+		return u'%s' % (self.navn)
+
+	class Meta:
+		verbose_name_plural = "Kritiske funksjoner"
+		verbose_name = "Kritisk funksjon"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
+class KritiskKapabilitet(models.Model):
+	navn = models.CharField(
+			max_length=150,
+			null=False,
+			verbose_name="Funksjon",
+			)
+	funksjon = models.ForeignKey(
+			to=KritiskFunksjon,
+			related_name='funksjoner',
+			verbose_name="Tilhørende funksjon",
+			on_delete=models.CASCADE,
+			blank=False,
+			null=False,
+		)
+	beskrivelse = models.TextField(
+			verbose_name="Beskrivelse",
+			blank=True,
+			null=True,
+			)
+	def __str__(self):
+		return u'%s' % (self.navn)
+
+	class Meta:
+		verbose_name_plural = "Kritiske kapabiliteter"
+		verbose_name = "Kritisk kapabilitet"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
 
 
 class CMDBdatabase(models.Model):

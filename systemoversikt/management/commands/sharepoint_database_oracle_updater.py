@@ -117,11 +117,11 @@ class Command(BaseCommand):
 		sp.download(sharepoint_location = source_file, local_location = oracle_size_file)
 		print("Lastet ned separat oversikt over filstørrelser..")
 
-		dfRaw = pd.read_excel(oracle_size_file, sheet_name='Internal Zone')
+		dfRaw = pd.read_excel(oracle_size_file, sheet_name='IS_DATABASE_SIZE_OEM03072023')
 		dfRaw = dfRaw.replace(np.nan, '', regex=True)
 		oracle_size_ez = dfRaw.to_dict('records')
 
-		dfRaw = pd.read_excel(oracle_size_file, sheet_name='Secure Zone')
+		dfRaw = pd.read_excel(oracle_size_file, sheet_name='SS_DATABASE_SIZE_OEM03072023')
 		dfRaw = dfRaw.replace(np.nan, '', regex=True)
 		oracle_size_is = dfRaw.to_dict('records')
 

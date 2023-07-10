@@ -21,239 +21,298 @@
 
 {% block hovedinnhold %}
 
-	{% if perms.systemoversikt.view_system %}
+	<h6>Beskrivelse fra Sopra Steria CMDB:</h6>
+	<p>{{cmdbref.0.comments|default:"-"}}</p>
 
-		<hr>
+	<hr>
 
-		<h6>Overordnet business Service:</h6>
-		<h4>{{ cmdbref.0.parent_ref }}</h4>
+	<p>
+		{% if cmdbref.0.parent_ref.systemreferanse %}
+			{% url 'systemdetaljer' pk=cmdbref.0.parent_ref.systemreferanse.pk as url_system %}
+			<h5>Koblet til systemet <a href="{{ url_system }}">{{ cmdbref.0.parent_ref.systemreferanse }}</a> på {{ cmdbref.0.parent_ref.systemreferanse.driftsmodell_foreignkey.navn|default:"Ukjent driftsplattform" }}</h5>
+			<a href="/admin/systemoversikt/cmdbbs/{{ cmdbref.0.parent_ref.pk }}/change/">✎ endre</a>
+		{% else %}
+			Mangler systemkobling. <a href="/admin/systemoversikt/cmdbbs/{{ cmdbref.0.parent_ref.pk }}/change/">✎ utfør kobling</a>
+		{% endif %}
+	</p>
 
+	<hr>
 
-		<div class="container">
-			<div class="row">
-				<div class="col-sm-3">
-					<h6>Totalt allokert minne</h6>
-					<h3>{{ cmdbref.0.parent_ref.ram_allocated|filesizeformat }}</h3>
-					<h6>Totalt allokert disk</h6>
-					<h3>{{ cmdbref.0.parent_ref.san_allocated|filesizeformat }}</h3>
-					<h6>Totalt ubrukt disk</h6>
-					<h3>{{ cmdbref.0.parent_ref.san_unallocated|filesizeformat }}</h3>
-					<h6>Total backupstørrelse</h6>
-					<h3>{{ cmdbref.0.parent_ref.backup_size|filesizeformat }}</h3>
-				</div>
-				<div class="col-sm-9">
-					<h6>Alle miljø</h6>
-					{% for bss in cmdbref.0.parent_ref.cmdb_bss_to_bs.all %}
-						{% url 'cmdb_bss' pk=bss.pk as url_cmdb_bss %}
-						<a href="{{url_cmdb_bss}}">{{ bss.navn }}</a> {% if not forloop.last %} | {% endif %}
-					{% endfor %}
-				</div>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm">
+				<h6>Operativ</h6>
+				<h3>{% include 'site_janeivetikke.html' with boolean=cmdbref.0.operational_status %}</h3>
+			</div>
+			<div class="col-sm">
+				<h6>Opprettet</h6>
+				<h5>{{ cmdbref.0.opprettet|timesince }}</h5>
+			</div>
+			<div class="col-sm">
+				<h6>Antall servere</h6>
+				<h3>{{ cmdbdevices.all|length }}</h3>
+			</div>
+			<div class="col-sm">
+				<h6>Antall databaser</h6>
+				<h3>{{ databaser|length }}</h3>
+			</div>
+			<div class="col-sm">
+				<h6>Totalt allokert minne</h6>
+				<h3>{{ cmdbref.0.ram_allocated|filesizeformat }}</h3>
+			</div>
+			<div class="col-sm">
+				<h6>Allokert disk</h6>
+				<h3>{{ cmdbref.0.san_allocated|filesizeformat }}</h3>
+			</div>
+			<div class="col-sm">
+				<h6>Ubrukt disk</h6>
+				<h3>{{ cmdbref.0.san_unallocated|filesizeformat }}</h3>
+			</div>
+			<div class="col-sm">
+				<h6>Backupstørrelse</h6>
+				<h3>{{ cmdbref.0.backup_size|filesizeformat }}</h3>
+			</div>
+			<div class="col-sm">
+				<h6>DNS-navn</h6>
+				<h3>{{ cmdbref.0.antall_dns_rec }}</h3>
 			</div>
 		</div>
-
 		<hr>
-
-
-		<h6>Beskrivelse fra Sopra Steria</h6>
-		<p>{{cmdbref.0.comments|default:"-"}}</p>
-
-		<div class="container">
-			<div class="row">
-				<div class="col-sm">
-					<h6>Miljø allokert minne</h6>
-					<h3>{{ cmdbref.0.ram_allocated|filesizeformat }}</h3>
-				</div>
-				<div class="col-sm">
-					<h6>Miljø allokert disk</h6>
-					<h3>{{ cmdbref.0.san_allocated|filesizeformat }}</h3>
-				</div>
-				<div class="col-sm">
-					<h6>Miljø ubrukt disk</h6>
-					<h3>{{ cmdbref.0.san_unallocated|filesizeformat }}</h3>
-				</div>
-				<div class="col-sm">
-					<h6>Miljø backupstørrelse</h6>
-					<h3>{{ cmdbref.0.backup_size|filesizeformat }}</h3>
-				</div>
-				<div class="col-sm">
-					<h6>Miljø antall A-records</h6>
-					<h3>{{ cmdbref.0.antall_dns_rec }}</h3>
-				</div>
+		<div class="row">
+			<div class="col-sm">
+				<h6>Type sub-service</h6>
+				<p>{{ cmdbref.0.service_classification|default:"" }}</p>
+			</div>
+			<div class="col-sm">
+				<h6>Business service</h6>
+				<p>{{ cmdbref.0.parent_ref.navn|default:'?' }}</p>
+			</div>
+			<div class="col-sm">
+				<h6>Tjenestemiljø</h6>
+				<p>{{ cmdbref.0.get_environment_display|default:"-" }}</p>
+			</div>
+			<div class="col-sm">
+				<h6>Business criticality</h6>
+				<p>{{ cmdbref.0.get_kritikalitet_display|default:"Ikke definert" }}</p>
+			</div>
+			<div class="col-sm">
+				<h6>Service availablity</h6>
+				<p>{{ cmdbref.0.u_service_availability_text|default:"Ikke definert" }}</p>
+			</div>
+			<div class="col-sm">
+				<h6>Service operation factor</h6>
+				<p>{{ cmdbref.0.u_service_operation_factor_text|default:"Ikke definert" }}</p>
+			</div>
+			<div class="col-sm">
+				<h6>Service complexity</h6>
+				<p>{{ cmdbref.0.u_service_complexity_text|default:"Ikke definert" }}</p>
 			</div>
 		</div>
+	</div>
 
-		{% include "cmdb_include.html" with cmdbref=cmdbref %}
+	<hr>
 
+	<h6>Graf med servere og databaser fordelt på VLAN</h6>
 
-		<hr>
-		<div id="cy" style="width: 100%; height: 400px;"></div>
+	<div id="cy" style="width: 100%; height: 500px;"></div>
 
-		<hr>
+	<h6>Tilknyttede VLAN</h6>
+	{% for vlan in cmdbref.0.vlan %}
+		<a href="{% url 'nettverk_detaljer' vlan.pk %}">{{ vlan.comment }}</a> ({{ vlan }})<br>
+	{% endfor %}
 
-		<h6>Servere</h6>
-		<table class="table table-sm tablesorter">
-			<thead>
-			<tr>
-				<th>Computer name / hostname</th>
-				<th>Aktiv?</th>
-				<th>Service portfolio</th>
-				<th>Antall CPU</th>
-				<th>RAM (MB)</th>
-				<th width="25%">Disk space</th>
-				<th>Backup</th>
-				<th>Backup frequency</th>
-				<th>Ratio backup/disk</th>
-				<th>Backup policy</th>
-				<th>Nettverk</th>
-				<th>DNS</th>
-				<th>NAT</th>
-				<th>VIP</th>
-				<th>OS</th>
-			</tr>
-			</thead>
-			<tbody>
-			{% for item in cmdbdevices.all %}
-			<tr {% if not item.device_active %} style="color: #d6d6d6;" {% endif %}>
-				{% url 'cmdb_devicedetails' pk=item.pk as url_cmdb_devicedetails %}
-				<td><a href="{{url_cmdb_devicedetails}}">{{ item.comp_name|default:"-" }}</a></td>
-				<td>
-					{% include 'site_janeivetikke.html' with boolean=item.device_active %}<br>
-					{{ item.vm_poweredon|yesno:"Påskrudd, Avskrudd" }}
-				</td>
-				<td>{{ item.bs_u_service_portfolio|default:"-" }}</td>
-				<td>{{ item.comp_cpu_core_count|default:"-" }}</td>
-				<td>{{ item.comp_ram_byes|filesizeformat }}</td>
-				<td>
-					Allokert: {{ item.comp_disk_space|filesizeformat }} (Type {{ item.vm_disk_tier }})<br>
-					Benyttet: {{ item.vm_disk_usage|filesizeformat }}
-					<br>
-					{% for disk in item.cmdbdisk_computer.all %}
-						{% if disk.operational_status %}
-							<li>
-							{{ disk.file_system}} {{disk.free_space_bytes|filesizeformat}} of {{disk.size_bytes|filesizeformat}} ({{ disk.mount_point|truncatechars:35 }})</li>
-						{% endif %}
-					{% endfor %}
+	{% comment %}
+		Lage en abstrahert figur som viser sammendrag av brannmuråpninger?
+	{% endcomment %}
 
-				</td>
-				<td>
-					{% for b in item.backup_size %}
-						{{ b|filesizeformat }}<br>
-					{% endfor %}
-				</td>
-				<td>
-					{% for backup in item.backup.all %}
-						{{ backup.backup_frequency }}<br>
-					{% endfor %}
-				</td>
-				<td>
-					{{ item.ratio_backup_disk }}
-				</td>
-				<td>
-					{% for backup in item.backup.all %}
-						{{ backup.storage_policy }}
-					{% endfor %}
-				</td>
-				<td>
-					IP: {{ item.comp_ip_address|default:"-" }}<br>
-					{% for vlan in item.network_ip_address.all.0.vlan.all %}
-						{% url 'nettverk_detaljer' pk=vlan.pk as url_network_details %}
-						<li><a href="{{ url_network_details }}">{{ vlan.comment }} ({{ vlan }})</a></li>
-					{% endfor %}
-				</td>
-				<td>{{ item.dns|default:"" }}</td>
-				<td>{{ item.nat|default:"" }}</td>
-				<td>
-				{% for vip in item.network_ip_address.all.0.viper.all %}
-					{% url 'detaljer_vip' pk=vip.pk as url_vip %}
-					<a href="{{ url_vip }}">{{ vip.vip_name }}</a><br>
-				{% endfor %}
-				{% for pool in item.network_ip_address.all.0.vip_pools.all %}
-					<li>{{ pool.pool_name }}</li>
-				{% endfor %}
-				</td>
-				<td>
-					{{ item.comp_os }}<br>
-					{{ item.comp_os_version|default:"-" }}<br>
-					{{ item.comp_os_service_pack|default:"-" }}
-				</td>
-			</tr>
-			{% endfor %}
-			</tbody>
-		</table>
+	<hr>
 
-
-		<h6>Databaser</h6>
-		<table class="table table-sm tablesorter">
-			<thead>
-			<tr>
-				<th width="25%">Database</th>
-				<th>Used for</th>
-				<th>Version</th>
-				<th>File size (kb)</th>
-			</tr>
-			</thead>
-			<tbody>
-			{% for db in databaser %}
-			<tr {% if not db.db_operational_status %} style="color: #d6d6d6;" {% endif %}>
-				<td>{{ db.db_database }}</td>
-				<td>{{ db.db_used_for }}</td>
-				<td>{{ db.db_version }}</td>
-				<td>{{ db.db_u_datafilessizekb }} ({{ db.db_u_datafilessizekb|filesizeformat }})</td>
-			</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-
-		<h6>Backup</h6>
-		<table class="table table-sm tablesorter">
-			<thead>
-			<tr>
-				<th>Backupnavn</th>
-				<th>Størrelse</th>
-				<th>Frekvens</th>
-				<th>Policy</th>
-			</tr>
-			</thead>
-			<tbody>
-			{% for b in backup_inst.all %}
-			<tr>
-				<td>{{ b.device_str }}</td>
-				<td>{{ b.backup_size_bytes|filesizeformat }}</td>
-				<td>{{ b.backup_frequency }}</td>
-				<td>{{ b.storage_policy }}</td>
-			</tr>
-			{% endfor %}
-			</tbody>
-		</table>
-
-		<h6>DNS-navn</h6>
-		<table class="table table-sm tablesorter excel">
+	<h6>Servere</h6>
+	<table class="table table-sm tablesorter">
 		<thead>
-			<th>DNS-navn</th>
-			<th>DNS-type</th>
-			<th>IP adresse</th>
-			<th>Alias mot</th>
-			<th>Time to live (TTL)</th>
+		<tr>
+			<th>Computer name / hostname</th>
+			<th>Aktiv?</th>
+			<th>OS</th>
+			<th>Antall CPU</th>
+			<th>RAM (MB)</th>
+			<th>Disk space</th>
+			<th>Backup</th>
+			<th>Backup frequency</th>
+			<th>Ratio backup/disk</th>
+			<th>Backup policy</th>
+			<th>Nettverk</th>
+			<th>DNS</th>
+			<th>VIP</th>
+		</tr>
 		</thead>
 		<tbody>
-		{% for dns in cmdbref.0.alle_dns %}
-			<tr>
-				<td>{{ dns.dns_name }}</td>
-				<td>{{ dns.dns_type }}</td>
-				<td>{{ dns.ip_address }}</td>
-				<td>{{ dns.dns_target|default:"" }}</td>
-				<td>{{ dns.ttl|default:"" }}</td>
-			</tr>
+		{% for item in cmdbdevices.all %}
+		<tr {% if not item.device_active %} style="color: #d6d6d6;" {% endif %}>
+			{% url 'cmdb_devicedetails' pk=item.pk as url_cmdb_devicedetails %}
+			<td><a href="{{url_cmdb_devicedetails}}">{{ item.comp_name|default:"-" }}</a></td>
+			<td>
+				{% include 'site_janeivetikke.html' with boolean=item.device_active %}
+				{% comment %}{{ item.vm_poweredon|yesno:"Påskrudd, Avskrudd" }}{% endcomment %}
+			</td>
+			<td>
+				{{ item.comp_os }} {{ item.comp_os_version|default:"-" }} {{ item.comp_os_service_pack|default:"-" }}
+			</td>
+			<td>{{ item.comp_cpu_core_count|default:"-" }}</td>
+			<td>{{ item.comp_ram_byes|filesizeformat }}</td>
+			<td>
+				Allokert: {{ item.comp_disk_space|filesizeformat }} (Type {{ item.vm_disk_tier }})<br>
+				Benyttet: {{ item.vm_disk_usage|filesizeformat }}
+				<br>
+				{% for disk in item.cmdbdisk_computer.all %}
+					{% if disk.operational_status %}
+						<li>
+						{{ disk.file_system}} {{disk.free_space_bytes|filesizeformat}} of {{disk.size_bytes|filesizeformat}} ({{ disk.mount_point|truncatechars:35 }})</li>
+					{% endif %}
+				{% endfor %}
+
+			</td>
+			<td>
+				{% for b in item.backup_size %}
+					{{ b|filesizeformat }}<br>
+				{% endfor %}
+			</td>
+			<td>
+				{% for backup in item.backup.all %}
+					{{ backup.backup_frequency }}<br>
+				{% endfor %}
+			</td>
+			<td>
+				{{ item.ratio_backup_disk }}
+			</td>
+			<td>
+				{% for backup in item.backup.all %}
+					{{ backup.storage_policy }}
+				{% endfor %}
+			</td>
+			<td>
+				IP: {{ item.comp_ip_address|default:"-" }}<br>
+				{% for vlan in item.network_ip_address.all.0.vlan.all %}
+					{% url 'nettverk_detaljer' pk=vlan.pk as url_network_details %}
+					<li><a href="{{ url_network_details }}">{{ vlan.comment }} ({{ vlan }})</a></li>
+				{% endfor %}
+			</td>
+			<td>{{ item.dns|default:"" }}</td>
+			<td>
+			{% for vip in item.network_ip_address.all.0.viper.all %}
+				{% url 'detaljer_vip' pk=vip.pk as url_vip %}
+				<a href="{{ url_vip }}">{{ vip.vip_name }}</a><br>
+			{% endfor %}
+			{% for pool in item.network_ip_address.all.0.vip_pools.all %}
+				<li>{{ pool.pool_name }}</li>
+			{% endfor %}
+			</td>
+		</tr>
 		{% endfor %}
 		</tbody>
-		</table>
+	</table>
 
 
-	{% else %}
-		<p>Du mangler tilgangen view_system (Vise systemdetaljer).</p>
+	<h6>Databaser</h6>
+	<table class="table table-sm tablesorter">
+		<thead>
+		<tr>
+			<th width="25%">Database</th>
+			<th>Used for</th>
+			<th>Version</th>
+			<th>File size (kb)</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for db in databaser %}
+		<tr {% if not db.db_operational_status %} style="color: #d6d6d6;" {% endif %}>
+			<td>{{ db.db_database }}</td>
+			<td>{{ db.db_used_for }}</td>
+			<td>{{ db.db_version }}</td>
+			<td>{{ db.db_u_datafilessizekb }} ({{ db.db_u_datafilessizekb|filesizeformat }})</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
 
-	{% endif %}
+	<h6>Backup</h6>
+	<table class="table table-sm tablesorter">
+		<thead>
+		<tr>
+			<th>Backupnavn</th>
+			<th>Størrelse</th>
+			<th>Frekvens</th>
+			<th>Policy</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for b in backup_inst.all %}
+		<tr>
+			<td>{{ b.device_str }}</td>
+			<td>{{ b.backup_size_bytes|filesizeformat }}</td>
+			<td>{{ b.backup_frequency }}</td>
+			<td>{{ b.storage_policy }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
 
+	<h6>DNS-navn</h6>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>DNS-navn</th>
+		<th>DNS-type</th>
+		<th>IP adresse</th>
+		<th>Alias mot</th>
+		<th>Time to live (TTL)</th>
+	</thead>
+	<tbody>
+	{% for dns in cmdbref.0.alle_dns %}
+		<tr>
+			<td>{{ dns.dns_name }}</td>
+			<td>{{ dns.dns_type }}</td>
+			<td>{{ dns.ip_address }}</td>
+			<td>{{ dns.dns_target|default:"" }}</td>
+			<td>{{ dns.ttl|default:"" }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+	<hr>
+	<h5>Overordnet business Service er {{ cmdbref.0.parent_ref }}</h5>
+	<hr>
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-sm-3">
+				<h6>Totalt allokert minne</h6>
+				<h3>{{ cmdbref.0.parent_ref.ram_allocated|filesizeformat }}</h3>
+			</div>
+			<div class="col-sm-3">
+				<h6>Totalt allokert disk</h6>
+				<h3>{{ cmdbref.0.parent_ref.san_allocated|filesizeformat }}</h3>
+			</div>
+			<div class="col-sm-3">
+				<h6>Totalt ubrukt disk</h6>
+				<h3>{{ cmdbref.0.parent_ref.san_unallocated|filesizeformat }}</h3>
+			</div>
+			<div class="col-sm-3">
+				<h6>Total backupstørrelse</h6>
+				<h3>{{ cmdbref.0.parent_ref.backup_size|filesizeformat }}</h3>
+			</div>
+		</div>
+		<hr>
+		<div class="row">
+			<div class="col-sm-9">
+				<h4>Alle miljø</h4>
+				{% for bss in cmdbref.0.parent_ref.cmdb_bss_to_bs.all %}
+					{% url 'cmdb_bss' pk=bss.pk as url_cmdb_bss %}
+					<a href="{{url_cmdb_bss}}">{{ bss.navn }}</a> {% if not forloop.last %} | {% endif %}
+				{% endfor %}
+			</div>
+		</div>
+	</div>
 
 {% endblock hovedinnhold %}
 
@@ -262,7 +321,7 @@
 	var cy = cytoscape({
 		zoomingEnabled: true,
 		panningEnabled: true,
-		wheelSensitivity: 0.0,
+		wheelSensitivity: 0.1,
 		container: document.getElementById('cy'),
 		elements: {
 			nodes: [
