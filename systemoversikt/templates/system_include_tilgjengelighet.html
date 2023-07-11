@@ -11,7 +11,6 @@
 			{% endif %}
 			<th>Systemnavn</th>
 			<th>Systemeier</th>
-			<th>Kategorisering</th>
 			<th>Infrastruktur?</th>
 			<th>Driftsmodell / plattform</th>
 			<th>Kobling CMDB: Tjenestenivå</th>
@@ -30,19 +29,16 @@
 
 			<td>
 				{% include 'system_include_vis.html' with system=item %}<br>
-				{{ item.get_systemeierskapsmodell_display|default:"-" }}
+				{{ item.get_systemeierskapsmodell_display|default:"-" }}<br>
+				{% for kategori in item.systemkategorier.all %}
+					{% url 'systemkategori' kategori.pk as url_systemkategorier %}
+					<a href="{{ url_systemkategorier }}">{{ kategori }}</a><br>
+				{% endfor %}
 			</td>
 
 			<td>
 				{% url 'drift_beredskap_for_eier' 163 item.systemeier.pk as url_beredskap_for_eier %}
 				<a href="{{ url_beredskap_for_eier }}">{{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a>
-			</td>
-
-			<td>
-				{% for kategori in item.systemkategorier.all %}
-					{% url 'systemkategori' kategori.pk as url_systemkategorier %}
-					<a href="{{ url_systemkategorier }}">{{ kategori }}</a><br>
-				{% endfor %}
 			</td>
 
 			<td>
@@ -55,11 +51,28 @@
 			<td>
 			{% for bss in item.bs_system_referanse.cmdb_bss_to_bs.all %}
 				{% if bss.operational_status == 1 %}
-					{% if bss.environment == 1 %}
-						<li>
-						{{ bss.navn }}:<br>
-						{{ bss.u_service_availability_text }}
-						</li>
+					{% if bss.er_produksjon %}
+						{% if bss.environment == 1 %}
+							<li>
+							{{ bss.navn }}<br>
+							{{ bss.u_service_availability_text }}
+							</li>
+						{% endif %}
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+			</td>
+
+			<td>
+			{% for bss in item.bs_system_referanse.cmdb_bss_to_bs.all %}
+				{% if bss.operational_status == 1 %}
+					{% if bss.er_produksjon %}
+						{% if bss.environment == 1 %}
+							<li>
+							{{ bss.navn }}<br>
+							{{ bss.u_service_operation_factor_text }}
+							</li>
+						{% endif %}
 					{% endif %}
 				{% endif %}
 			{% endfor %}
@@ -69,23 +82,12 @@
 			{% for bss in item.bs_system_referanse.cmdb_bss_to_bs.all %}
 				{% if bss.operational_status == 1 %}
 					{% if bss.environment == 1 %}
-						<li>
-						{{ bss.navn }}:<br>
-						{{ bss.u_service_operation_factor_text }}
-						</li>
-					{% endif %}
-				{% endif %}
-			{% endfor %}
-			</td>
-
-			<td>
-			{% for bss in item.bs_system_referanse.cmdb_bss_to_bs.all %}
-				{% if bss.operational_status == 1 %}
-					{% if bss.environment == 1 %}
-						<li>
-						{{ bss.navn }}:<br>
-						{{ bss.u_service_complexity_text }}
-						</li>
+						{% if bss.er_produksjon %}
+							<li>
+							{{ bss.navn }}<br>
+							{{ bss.u_service_complexity_text }}
+							</li>
+						{% endif %}
 					{% endif %}
 				{% endif %}
 			{% endfor %}

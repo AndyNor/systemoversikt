@@ -52,7 +52,7 @@
 			<ul class="nav">
 
 				<li class="hovedmeny">
-					{% url "alle_systemer" as alle_systemer_url %}
+					{% url "systemklassifisering_tom" as alle_systemer_url %}
 					<a href="{{ alle_systemer_url }}" class="nav-link {% if alle_systemer_url in request.path %} active {% endif %}">Systemer</a>
 				</li>
 

@@ -413,6 +413,39 @@ def o365_avvik(request):
 
 
 
+def system_kritisk_funksjon(request):
+	"""
+	Viser alle kritiske funksjoner og hvilke systemer som understøtter dem
+	Tilgjengelig for de som kan XXXX
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	kritiske_funksjoner = KritiskFunksjon.objects.all()
+	systemer = System.objects.filter(~Q(kritisk_kapabilitet=None))
+
+	return render(request, 'system_kritisk_funksjon.html', {
+		'request': request,
+		'kritiske_funksjoner': kritiske_funksjoner,
+		'systemer': systemer,
+	})
+
+
+def system_informasjonsbehandling(request):
+	"""
+	Vise alle LOS-begreper og systemer som er knyttet til
+	Tilgjengelig for de som kan XXXX
+	"""
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	return render(request, 'system_los_oversikt.html', {
+		'request': request,
+	})
+
+
 def alle_nettverksenheter(request):
 	"""
 	Viser alle nettverksenheter (cisco, bigip..)
@@ -2545,7 +2578,7 @@ def systemer_pakket(request):
 	})
 
 
-def systemklassifisering_detaljer(request, id):
+def systemklassifisering_detaljer(request, kriterie=None):
 	"""
 	Vise systemer filtrert basert på systemeierskapsmodell (felles, sektor, virksomhet)
 	"""
@@ -2553,18 +2586,21 @@ def systemklassifisering_detaljer(request, id):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	if id == "__NONE__":
+	if kriterie == None:
+		kriterie = "FELLESSYSTEM"
+
+	if kriterie == "__NONE__":
 		utvalg_systemer = System.objects.filter(~Q(ibruk=False)).filter(systemeierskapsmodell=None)
-		id = "tom"
+		kriterie = "uten verdi"
 	else:
-		utvalg_systemer = System.objects.filter(~Q(ibruk=False)).filter(systemeierskapsmodell=id)
+		utvalg_systemer = System.objects.filter(~Q(ibruk=False)).filter(systemeierskapsmodell=kriterie)
 
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
 	systemtyper = Systemtype.objects.all()
 
 	return render(request, 'system_alle.html', {
 		'request': request,
-		'overskrift': ("Systemer der systemklassifisering er %s" % id.lower()),
+		'overskrift': ("Systemer der systemklassifisering er %s" % kriterie.lower()),
 		'systemer': utvalg_systemer,
 		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
 		'systemtyper': systemtyper,
@@ -2599,6 +2635,8 @@ def systemtype_detaljer(request, pk=None):
 		'systemtyper': systemtyper,
 	})
 
+
+
 def alle_systemer_forvaltere(request):
 	required_permissions = 'systemoversikt.view_system'
 	if not request.user.has_perm(required_permissions):
@@ -2612,6 +2650,8 @@ def alle_systemer_forvaltere(request):
 	})
 
 
+
+
 def alle_systemer(request):
 	"""
 	Vise alle systemer
@@ -2620,8 +2660,8 @@ def alle_systemer(request):
 	if not request.user.has_perm(required_permissions):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-	aktuelle_systemer = System.objects.all()
+	search_term = request.GET.get('vis', 'fellessystem').strip()  # strip removes trailing and leading space
+	aktuelle_systemer = System.objects.filter()
 	aktuelle_systemer = aktuelle_systemer.order_by('-ibruk', Lower('systemnavn'))
 
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
@@ -2630,7 +2670,6 @@ def alle_systemer(request):
 	return render(request, 'system_alle.html', {
 		'request': request,
 		'systemer': aktuelle_systemer,
-		'search_term': search_term,
 		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
 		'systemtyper': systemtyper,
 		'overskrift': ("Systemer"),
@@ -3912,7 +3951,7 @@ def drift_beredskap(request, pk, eier=None):
 	if request.user.has_perm(required_permissions):
 
 		virksomhet = Virksomhet.objects.get(pk=pk)
-		systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False))
+		systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True)
 		if eier:
 			eier = Virksomhet.objects.get(pk=eier)
 			systemer_drifter = systemer_drifter.filter(systemeier=eier)
@@ -4001,7 +4040,7 @@ def systemer_utfaset(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	systemer = System.objects.filter(ibruk=False).order_by("-sist_oppdatert")
+	systemer = System.objects.filter(livslop_status__in=[6,7]).order_by("-sist_oppdatert")
 	return render(request, 'system_utfaset.html', {
 		'systemer': systemer,
 })

@@ -52,12 +52,10 @@
 	<th>Vedlikeholdsavtale?</th>
 	<th>Systemeier</th>
 	<th>Forvalter</th>
-	<th width="20%">Systembeskrivelse</th>
 	<th>Livsløpstatus</th>
 	<td>CMDB-referanse</td>
 	<th>Database</th>
 	<th>Serverplattform</th>
-	<th>Strategisk knytning</th>
 	<th>Funksjonell egnethet</th>
 	<th>Teknisk egnethet</th>
 	<th>Krever SMB</th>
@@ -69,17 +67,15 @@
 <tbody>
 {% for system in systemer %}
 <tr>
-	<td>{% include 'system_include_vis.html' with system=system %}</td>
+	<td><h6>{% include 'system_include_vis.html' with system=system %}</h6></td>
 	<td>{{ system.driftsmodell_foreignkey }}</td>
 	<td>{{ system.systemleverandor_vedlikeholdsavtale|yesno:"Ja, Nei, Vet ikke" }}</td>
 	<td>{{ system.systemeier.virksomhetsforkortelse }}</td>
 	<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
-	<td>{{ system.systembeskrivelse }}</td>
 	<td>{{ system.get_livslop_status_display|default:"-" }}</td>
 	<td>{% include 'bs_include_vis.html' with bs=system.bs_system_referanse %}
 	<td>{{ system.databaseplattform }}</td>
 	<td>{{ system.serverplattform }}</td>
-	<td>{{ system.get_strategisk_egnethet_display|default:"-" }}</td>
 	<td>{{ system.get_funksjonell_egnethet_display|default:"-" }}</td>
 	<td>{{ system.get_teknisk_egnethet_display|default:"-" }}</td>
 	<td>{{ system.legacy_klient_krever_smb|yesno:"Ja, Nei, Vet ikke" }}</td>

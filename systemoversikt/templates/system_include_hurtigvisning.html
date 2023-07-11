@@ -13,7 +13,7 @@
 		<tbody>
 		{% for system in systemer %}
 		<tr>
-			<td>{% include 'system_include_vis.html' with system=system %}</td>
+			<td><h6>{% include 'system_include_vis.html' with system=system %}</h6></td>
 			<td>{{system.systemforvalter|default:""}}</td>
 			<td>{{system.er_ibruk|yesno:'Ja, Nei'}}</td>
 			<td>{{system.get_livslop_status_display|default:"" }}</td>

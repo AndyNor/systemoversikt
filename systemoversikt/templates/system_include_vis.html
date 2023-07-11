@@ -1,11 +1,16 @@
 
 {% url "systemdetaljer" system.pk as url_systemdetaljer %}
-{% if system.er_infrastruktur %}
-	<span alt="Er infrastruktur">🔧</span>
-{% endif %}
-<a href="{{ url_systemdetaljer }}" style="
+
+<h6>
+	<a href="{{ url_systemdetaljer }}" style="
 	{% if system.livslop_status == 6 %}text-decoration: line-through;{% endif %}
 	{% if system.livslop_status == 7 %}text-decoration: line-through;{% endif %}
-	">{{ system }}</a>
+	">
+	{% if system.er_infrastruktur %}
+		<span alt="Er infrastruktur">🔧</span>
+	{% endif %}
+		{{ system }}
+	</a>
+</h6>
 
 

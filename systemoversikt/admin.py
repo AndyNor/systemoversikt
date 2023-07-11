@@ -266,10 +266,10 @@ class SystemAdmin(SimpleHistoryAdmin):
 	filter_horizontal = ('systemkategorier', 'informasjonsklassifisering',)
 	autocomplete_fields = (
 		'systemeier',
+		'programvarer',
 		'systemforvalter',
 		'LOSref',
 		'systemforvalter_avdeling_referanse',
-		'programvarer',
 		'datautveksling_avleverer_til',
 		'datautveksling_mottar_fra',
 		'avhengigheter_referanser',
@@ -284,7 +284,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'loggingalternativer',
 		'autentiseringsteknologi',
 		'autentiseringsalternativer',
-		#'autorisasjonsalternativer',
+		'kritisk_kapabilitet',
 		'database_supported',
 		'database_in_use',
 		'godkjente_bestillere',
@@ -293,71 +293,68 @@ class SystemAdmin(SimpleHistoryAdmin):
 	)
 
 	fieldsets = (
-		('Initiell registrering', {
-			'description': '<h3>Dette er informasjon alle systemer må ha utfylt</h3>',
+		('Initiell registrering - informasjon alle systemer må ha utfylt', {
+			'description': '',
 			'fields': (
-				('systemnavn', 'livslop_status'),
-				('systemtyper', 'systemurl'),
-				('LOSref', 'klargjort_ny_sikkerhetsmodell'),
+				('systemnavn', 'programvarer'),
+				('alias', 'livslop_status'),
 				('driftsmodell_foreignkey', 'systemeierskapsmodell'),
-				('alias','programvarer'),
-				('systemeier', 'systemeier_kontaktpersoner_referanse'),
-				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
-				('systemforvalter_avdeling_referanse', 'godkjente_bestillere'),
 				'systembeskrivelse',
-				'er_arkiv',
+				('systemtyper', 'systemurl'),
+				('systemeier', 'systemeier_kontaktpersoner_referanse'),
+				'systemforvalter',
+				('systemforvalter_avdeling_referanse', 'systemforvalter_kontaktpersoner_referanse'),
+				'godkjente_bestillere',
+				'systemkategorier',
 			),
 		}),
-		('Forvalters vurderinger og brukerperspektivet', {
-			'description': '<h3>Resterende felter er tilleggsinformasjon du kan fylle ut siden</h3>',
+		('Informasjonsbehandling og andre vurderinger', {
+			'description': 'Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/ywUfBg">definisjoner på Confluence</a>.',
 			'fields': (
+				('kritisk_kapabilitet', 'LOSref'),
+				'informasjonsklassifisering',
+				('sikkerhetsnivaa', 'integritetsvurdering'),
+				('tilgjengelighetsvurdering','tilgjengelighet_kritiske_perioder'),
+				('avhengigheter_referanser','avhengigheter'),
+				'er_arkiv',
+				('innsyn_innbygger', 'innsyn_ansatt'),
+				'kontaktperson_innsyn',
+				('datautveksling_mottar_fra', 'datautveksling_avleverer_til'),
+				('risikovurdering_behovsvurdering', 'dato_sist_ros'),
+				('teknisk_egnethet', 'funksjonell_egnethet'),
+				'kjente_mangler',
+				('url_risikovurdering', 'risikovurdering_tekst'),
+			)
+		}),
+		('Brukerperspektivet og tilgangsstyring', {
+			'fields': (
+				'tilgangsgrupper_ad',
 				'kontaktgruppe_url',
 				'brukerdokumentasjon_url',
 				'antall_brukere',
 				'superbrukere',
-				('teknisk_egnethet', 'funksjonell_egnethet'),
-				'kjente_mangler',
-				'systemkategorier',
 			),
 		}),
-		('Leverandører, avtaler, dokumentasjon og drift', {
+		('Leverandører og drift', {
 			'fields': (
-				('systemleverandor_vedlikeholdsavtale', 'systemleverandor'),
-				'high_level_design_url',
 				'basisdriftleverandor',
 				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
-				'low_level_design_url',
+				('systemleverandor', 'systemleverandor_vedlikeholdsavtale',),
 				'nokkelpersonell',
-			),
-		}),
-		('Sikkerhetsmessige vurderinger og utlevering av personopplysninger', {
-			'description': 'Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/ywUfBg">definisjoner på Confluence</a>.',
-			'fields': (
-				('sikkerhetsnivaa', 'integritetsvurdering'),
-				('tilgjengelighetsvurdering','tilgjengelighet_kritiske_perioder'),
-				'informasjonsklassifisering',
-				('datautveksling_mottar_fra', 'datautveksling_avleverer_til'),
-				('innsyn_innbygger', 'innsyn_ansatt'),
-				'kontaktperson_innsyn',
-				('risikovurdering_behovsvurdering', 'dato_sist_ros'),
-				('url_risikovurdering', 'risikovurdering_tekst'),
-			)
-		}),
-		('Tekniske vurderinger og integrasjoner', {
-			'fields': (
-				'tilgangsgrupper_ad',
+				'high_level_design_url',
+				('klargjort_ny_sikkerhetsmodell'),
 				'enterprise_applicatons',
-				('avhengigheter_referanser','avhengigheter'),
 				('autentiseringsteknologi', 'autentiseringsalternativer'),
 				('legacy_klient_krever_smb', 'legacy_klient_krever_direkte_db'),
 				('legacy_klient_krever_onprem_lisensserver', 'legacy_klient_autentisering'),
 				'isolert_drift',
 				('database_in_use', 'database_supported'),
+				'low_level_design_url',
 				'datamodell_url',
 				'datasett_url',
 				'api_url',
 				'kildekode_url',
-			)
+			),
 		}),
 		('Utfases', {
 			'description': '<h3>Kun for oppslag. Dette vil bli avviklet</h3>',
@@ -884,7 +881,6 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 
 	fieldsets = (
 		('Initiell registrering', {
-			'description': '<h3>Dette er informasjon alle programvarer bør ha utfylt</h3>',
 			'fields': (
 				('programvarenavn', 'klargjort_ny_sikkerhetsmodell'),
 				('livslop_status', 'programvaretyper', 'programvarekategori',),
@@ -1531,6 +1527,15 @@ class UBWEstimatAdmin(admin.ModelAdmin):
 	list_display = ('belongs_to', 'aktiv', 'prognose_kategori', 'estimat_account', 'estimat_dim_1', 'estimat_dim_4', 'estimat_amount', 'budsjett_amount', 'periode_paalopt')
 
 
+@admin.register(KritiskFunksjon)
+class KritiskFunksjonAdmin(admin.ModelAdmin):
+	list_display = ('navn', 'kategori',)
+	search_fields = ('navn',)
+	#list_filter = ('')
 
-admin.site.register(KritiskFunksjon)
-admin.site.register(KritiskKapabilitet)
+
+@admin.register(KritiskKapabilitet)
+class KritiskKapabilitetAdmin(admin.ModelAdmin):
+	list_display = ('navn', 'funksjon', 'beskrivelse')
+	search_fields = ('navn', 'beskrivelse')
+	#list_filter = ('')

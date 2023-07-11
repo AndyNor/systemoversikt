@@ -1,0 +1,70 @@
+{% extends "system_index.html" %}
+
+{% block overskrift %}
+	Kritiske funksjoner
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Her har vi tatt i bruk <a href="https://www.dsb.no/globalassets/dokumenter/rapporter/kiks-2_januar.pdf">DSB sitt rammverk for samfunnets kritiske funksjoner</a> for klassifisering. Under hvert system, ved redigering av systemdetaljer, kan du utføre en kobling til dette rammeverkets kritiske kapabiliteter. På denne visningen får du totaloversikt over disse knytningene.</p>
+
+<h5>Sett fra kritisk funksjon</h5>
+<table class="table table-sm excel">
+<thead>
+<tr>
+	<th>Område</th>
+	<th>Kritisk funksjon</th>
+	<th>Systemknytninger</th>
+</tr>
+</thead>
+<tbody>
+{% for funksjon in kritiske_funksjoner %}
+<tr>
+	<td>{{funksjon.get_kategori_display}}</td>
+	<td>{{funksjon.navn}}</td>
+	<td>
+		{% for system in funksjon.systemer %}
+			<li>{{system}} knyttet til {% for kapabilitet in system.kritisk_kapabilitet.all %}{{kapabilitet}}{% if not forloop.last %}, {% endif %}{% endfor %}</li>
+		{% endfor %}
+	</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+<h5>Sett fra systemperspektivet</h5>
+<table class="table table-sm excel tablesorter">
+<thead>
+<tr>
+	<th>System</th>
+	<th>Driftsplattform</th>
+	<th>Tjenestenivå</th>
+	<th>Kapabilitet</th>
+	<th>Kritisk funksjon</th>
+	<th>Område</th>
+</tr>
+</thead>
+<tbody>
+{% for system in systemer %}
+	{% for kapabilitet in system.kritisk_kapabilitet.all %}
+	<tr>
+		<td>{{system.systemnavn}}</td>
+		<td>{{system.driftsmodell_foreignkey}}</td>
+		<td>
+			{% for bss in system.bs_system_referanse.cmdb_bss_to_bs.all %}
+				{% if bss.er_produksjon %}
+				<li>{{ bss.navn }} {{ bss.u_service_availability_text }}</li>
+				{% endif %}
+			{% endfor %}
+		</td>
+		<td>{{kapabilitet}}</td>
+		<td>{{kapabilitet.funksjon.navn}}</td>
+		<td>{{kapabilitet.funksjon.get_kategori_display}}</td>
+	</tr>
+	{% endfor %}
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock hovedinnhold %}

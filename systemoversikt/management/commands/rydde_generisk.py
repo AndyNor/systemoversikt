@@ -20,6 +20,15 @@ class Command(BaseCommand):
 		teller_uten_eier = 0
 		teller_rettet = 0
 		for system in System.objects.all():
+
+			# fikse manglende tilgjengelighetsvurdering
+			if system.tilgjengelighetsvurdering == None:
+				system.tilgjengelighetsvurdering = 6
+				system.save()
+				print(f"Endret tilgjengelighetsvurdering til ukjent for {system}.")
+
+
+			# fikse manglende systemforvalter ved å sette systemeier dersom det eksisterer
 			if system.systemforvalter:
 				continue
 
@@ -31,6 +40,8 @@ class Command(BaseCommand):
 			print(f"{system} har hverken forvalter eller eier")
 			teller_uten_eier += 1
 
-		logg_entry_message = f"Rettet {teller_rettet} systemer. Fant også {teller_uten_eier} systemer uten eier"
+
+
+		logg_entry_message = f"Rettet {teller_rettet} systemer uten forvalter organisasjon satt. Fant også {teller_uten_eier} systemer uten eier."
 		print(logg_entry_message)
 		logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)

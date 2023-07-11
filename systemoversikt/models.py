@@ -32,6 +32,7 @@ VALG_KLARGJORT_SIKKERHETSMODELL = (
 	(8, "🔴 Ingen løsning klar enda"),
 )
 
+
 class Fellesinformasjon(models.Model):
 	message = models.TextField(
 			verbose_name="message",
@@ -1666,6 +1667,11 @@ class CMDBRef(models.Model): # BSS
 		else:
 			return u'%s (servergruppe)' % (self.navn)
 
+	def er_produksjon(self):
+		if self.environment == 1:
+			return True
+		return False
+
 	def alle_dns(self):
 		dnsrecords = set()
 		for server in self.cmdbdevice_sub_name.all():
@@ -1725,10 +1731,10 @@ class CMDBRef(models.Model): # BSS
 
 	def u_service_availability_text(self):
 		lookup = {
-			"T1": "T1: 24/7/365, 99.9%",
-			"T2": "T2: 07-20 alle dager, 99.5%",
-			"T3": "T3: 07-16 virkedager, 99%",
-			"T4": "T4: Best effort",
+			"T1": "T1🟢: 24/7/365, 99.9%",
+			"T2": "T2🟢: 07-20 alle dager, 99.5%",
+			"T3": "T3🟡: 07-16 virkedager, 99%",
+			"T4": "T4🔴: Best effort",
 		}
 		try:
 			return lookup[self.u_service_availability]
@@ -1738,11 +1744,11 @@ class CMDBRef(models.Model): # BSS
 
 	def u_service_operation_factor_text(self):
 		lookup = {
-			"D1": "D1: Liv og helse",
-			"D2": "D2: Virksomhetskritisk",
-			"D3": "D3: Kritisk",
-			"D4": "D4: Periodisk kritisk",
-			"D5": "D5: Ikke kritisk",
+			"D1": "D1🟢: Liv og helse",
+			"D2": "D2🟢: Virksomhetskritisk",
+			"D3": "D3🟡: Kritisk",
+			"D4": "D4🟡: Periodisk kritisk",
+			"D5": "D5🔴: Ikke kritisk",
 		}
 		try:
 			return lookup[self.u_service_operation_factor]
@@ -1819,6 +1825,7 @@ class CMDBRef(models.Model): # BSS
 		verbose_name_plural = "CMDB: business sub services"
 		verbose_name = "sub service"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
 
 
 class virtualIP(models.Model):
@@ -2153,13 +2160,19 @@ class KritiskFunksjon(models.Model):
 		verbose_name = "Kritisk funksjon"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+	def systemer(self):
+		systemer = set()
+		for kapabilitet in self.funksjoner.all():
+			for system in kapabilitet.systemer.all():
+				systemer.add(system)
+		return list(systemer)
 
 
 class KritiskKapabilitet(models.Model):
 	navn = models.CharField(
 			max_length=150,
 			null=False,
-			verbose_name="Funksjon",
+			verbose_name="Kapabilitet",
 			)
 	funksjon = models.ForeignKey(
 			to=KritiskFunksjon,
@@ -3222,6 +3235,7 @@ VURDERINGER_SIKKERHET_VALG = (
 	(3, '3 Moderat'),
 	(4, '2 Lav'),
 	(5, '1 Ubetydelig'),
+	(6, '0 Ikke vurdert'),
 )
 
 #☹ 😕 😐 🙂 😃
@@ -3831,10 +3845,10 @@ class System(models.Model):
 			max_length=100,
 			blank=False,
 			null=False,
-			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Undersøk om systemet er registrert før du eventuelt registrerer et nytt. Bruk \"(Felles)\" for fellessystemer, alternativt \"(<virksomhet>)\" for virksomhetsspesifikke systemer.",
+			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Undersøk om systemet er registrert før du eventuelt registrerer et nytt.",
 			)
 	alias = models.TextField(
-			verbose_name="Alternative søkenavn (alias)",
+			verbose_name="Alias",
 			blank=True,
 			null=True,
 			help_text=u"Alternative navn på systemet for å avhjelpe søk. Kun enkeltord. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje.",
@@ -3935,7 +3949,7 @@ class System(models.Model):
 #			)
 	sikkerhetsnivaa = models.IntegerField(
 			choices=SIKKERHETSNIVAA_VALG,
-			verbose_name="Konfidensialitetsnivå til systemet",
+			verbose_name="Konfidensialitetsnivå",
 			blank=True,
 			null=True,
 			help_text=u'Sikkerhetsnivå for felles IKT-plattform i hht <a target="_blank" href="https://confluence.oslo.kommune.no/x/y8seAw">Informasjonstyper og behandlingskrav</a>',
@@ -3943,9 +3957,9 @@ class System(models.Model):
 	programvarer = models.ManyToManyField(
 			to=Programvare,
 			related_name='system_programvarer',
-			verbose_name="Programvarer benyttet",
+			verbose_name="Tilknyttet programvare",
 			blank=True,
-			help_text=u"Programvarer benyttet i systemet",
+			help_text=u"Programvare benyttet av- eller knyttet til systemet",
 			)
 	#database = models.IntegerField(
 	#		verbose_name="Database (utfases, grunnet ny måte å registrere på)", choices=DB_VALG,
@@ -3999,7 +4013,7 @@ class System(models.Model):
 			related_name='system_systemtyper',
 			verbose_name="Systemtype / menneskelig grensesnitt",
 			blank=True,
-			help_text=u"Her beskriver hva slags type system dette er. Merk særlig dette feltet dersom systemet er en integrasjon eller infrastrukturkomponent.",
+			help_text=u"Her beskriver hva slags type system dette er. Systmer merket med integrasjon eller infrastrukturkomponent blir skjult i en del visninger",
 			)
 	systemkategorier = models.ManyToManyField(
 			to=SystemKategori,
@@ -4020,14 +4034,14 @@ class System(models.Model):
 			verbose_name="Aktiv vedlikeholdsavtale med systemleverandør?",
 			default=None,
 			null=True,
-			help_text=u"Kan settes til ja, nei eller ukjent. Standard er ukjent.",
+			help_text=u"",
 			)
 	systemleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_systemleverandor',
 			verbose_name="Systemleverandør (tjenesteleverandør)",
 			blank=True,
-			help_text=u"Her fyller du ut leverandør som har utviklet systemet. I noen situasjoner kjøpes systemet som en tjeneste (SaaS), og i andre tilfeller er serverkapasitet og applikasjonsdrift utført av en tredjepartsleverandør. Fyll da inn feltene under.",
+			help_text=u"Leverandør som har utviklet systemet.",
 			)
 	basisdriftleverandor = models.ManyToManyField(
 			to=Leverandor,
@@ -4150,24 +4164,25 @@ class System(models.Model):
 			verbose_name="Oppsummert konfidensialitetsvurdering (utfases)",
 			blank=True,
 			null=True,
-			help_text=u"Oppsummert: Hvor sensitive er opplysningene?",
+			help_text=u"Hvor sensitive er opplysningene?",
 			)
 	integritetsvurdering = models.IntegerField(
 			choices=VURDERINGER_SIKKERHET_VALG,
-			verbose_name="Oppsummert integritetsvurdering",
+			verbose_name="Integritetsvurdering",
 			blank=True,
 			null=True,
-			help_text=u"Oppsummert: Hvor kritisk er det at opplysningene stemmer?",
+			help_text=u"Hvor kritisk er det at opplysningene stemmer?",
 			)
 	tilgjengelighetsvurdering = models.IntegerField(
 			choices=VURDERINGER_SIKKERHET_VALG,
-			verbose_name="Oppsummert tilgjengelighetsvurdering",
+			verbose_name="Tilgjengelighetsvurdering",
 			blank=True,
 			null=True,
-			help_text=u"Oppsummert: Hvor kritisk er det om systemet ikke virker?",
+			default=6,
+			help_text=u"Hvor kritisk er det at systemet virker?",
 			)
 	tilgjengelighet_kritiske_perioder = models.TextField(
-			verbose_name="Utdypning tilgjengelighet: Kritiske perioder og konsekvenser ved nedetid",
+			verbose_name="Kritiske perioder og konsekvenser ved nedetid",
 			blank=True,
 			null=True,
 			help_text=u"Her legger du inn perioder av året hvor det er særskilt behov for at systemet er tilgjengelig. F.eks. knyttet til frister som eiendomsskatt, barnehageopptak eller lønnskjøring.",
@@ -4275,17 +4290,17 @@ class System(models.Model):
 			related_name='system_kontaktperson_innsyn',
 			verbose_name="Kontaktperson innsyn",
 			blank=True,
-			help_text=u"Person som kan kontaktes for å undersøke om det er personopplysninger i systemet knyttet til en innsynsbegjæring.",
+			help_text=u"Dersom arkiv: Person som kan kontaktes for å undersøke om det er personopplysninger i systemet knyttet til en innsynsbegjæring.",
 			)
 	innsyn_innbygger = models.BooleanField(
 			verbose_name="Innsyn relevant for innbygger?",
 			default=True,
-			help_text=u"Krysses av dersom det er aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en innbygger.",
+			help_text=u"Dersom arkiv: Er det aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en innbygger.",
 			)
 	innsyn_ansatt = models.BooleanField(
 			verbose_name="Innsyn relevant for (tidligere) ansatt?",
 			default=True,
-			help_text=u"Krysses av dersom det er aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en ansatt",
+			help_text=u"Dersom arkiv: Er det aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en ansatt",
 			)
 	kjente_mangler = models.TextField(
 			verbose_name="Kjente mangler i systemet",
@@ -4322,9 +4337,9 @@ class System(models.Model):
 	godkjente_bestillere = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='system_godkjente_bestillere',
-			verbose_name="Andre godkjente bestillere (Kompass)",
+			verbose_name="Andre godkjente Kompass-bestillere",
 			blank=True,
-			help_text=u"Forvaltere er autorisert til å bestille endringer på systemet i Kompass. Disse personene er også autorisert for å bestille endringer.",
+			help_text=u"Forvaltere er autorisert til å bestille endringer på systemet i Kompass. I tillegg er disse personene autorisert for å bestille endringer på systemet.",
 			)
 	er_arkiv = models.BooleanField(
 			verbose_name="Er systemet et arkiv?",
@@ -4387,6 +4402,12 @@ class System(models.Model):
 			blank=True, null=True,
 			help_text=u"Besnyttes av UKE for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
 			)
+	kritisk_kapabilitet = models.ManyToManyField(
+		to=KritiskKapabilitet,
+		related_name="systemer",
+		verbose_name="Kritisk kapabilitet",
+		blank=True,
+		help_text=u"Understøtter systemet en kritisk funksjon?")
 	history = HistoricalRecords()
 
 	def __str__(self):
@@ -5365,7 +5386,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			verbose_name="Krav til sikkerhetsnivå",
 			blank=True,
 			null=True,
-			help_text=u'Sikkerhetsnivå for felles IKT-plattform i hht <a target="_blank" href="https://confluence.oslo.kommune.no/x/y8seAw">Informasjonstyper og behandlingskrav</a>',
+			help_text=u'Sensitiviteten til opplysninger i systemet. Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/y8seAw">Informasjonstyper og behandlingskrav</a>',
 			)
 			#draftit: ingen tilsvarende
 	dpia_tidligere_bekymringer_risikoer = models.TextField(

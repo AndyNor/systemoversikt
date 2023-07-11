@@ -10,14 +10,4 @@
 
 	{% include "system_include_hurtigvisning.html" %}
 
-	{% if potensielle_systemer %}
-	<hr>
-	<p>Mente du? (basert på systembeskrivelser)</p>
-	<ul style="column-count:5;">
-	{% for system in potensielle_systemer %}
-		<li><a href="{% url 'systemdetaljer' pk=system.pk %}">{{system.systemnavn}}</a></li>
-	{% endfor %}
-	</ul>
-	{% endif %}
-
 {% endblock hovedinnhold %}

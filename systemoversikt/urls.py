@@ -72,11 +72,15 @@ urlpatterns = [
 	re_path(r'^systemer/utfaset/$', views.systemer_utfaset, name='systemer_utfaset'),
 	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/$', views.bruksdetaljer, name='bruksdetaljer'),
 	re_path(r'^systemer/bruk/registrer_bruk/(?P<system>\d{1,8})/$', views.registrer_bruk, name='registrer_bruk'),
-	re_path(r'^systemer/systemklassifisering/(?P<id>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
+	re_path(r'^systemer/systemklassifisering/$', views.systemklassifisering_detaljer, name='systemklassifisering_tom'),
+	re_path(r'^systemer/systemklassifisering/(?P<kriterie>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	re_path(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),
 	re_path(r'^systemer/systemtype/tom/$', views.systemtype_detaljer, name='systemtype_detaljer_mangler'),
 	re_path(r'^system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
 	re_path(r'^system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
+	re_path(r'^systemer/kritiske_funksjoner/$', views.system_kritisk_funksjon, name='system_kritisk_funksjon'),
+	re_path(r'^systemer/informasjonsbehandling/$', views.system_informasjonsbehandling, name='system_informasjonsbehandling'),
+
 
 	re_path(r'^behandlinger/user/$', views.mine_behandlinger, name='mine_behandlinger'),
 	re_path(r'^behandlinger/alle/$', views.alle_behandlinger, name='alle_behandlinger'),
