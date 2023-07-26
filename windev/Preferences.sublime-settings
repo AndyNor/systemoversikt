@@ -4,13 +4,15 @@
 	"folder_exclude_patterns":
 	[
 		"__pycache__",
-		"migrations"
+		"migrations",
+		"static",
+		".pyc",
 	],
-	"font_size": 8,
+	"font_size": 11,
 	"ignored_packages":
 	[
 		"Vintage"
 	],
 	"theme": "Adaptive.sublime-theme",
-	"trim_trailing_white_space_on_save": true
+	"trim_trailing_white_space_on_save": true,
 }
