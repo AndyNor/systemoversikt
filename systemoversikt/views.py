@@ -2537,7 +2537,6 @@ def systemdetaljer(request, pk):
 	datautveksling_avleverer_til = System.objects.filter(datautveksling_mottar_fra__in=[system])
 
 	avhengigheter_reverse_systemer = System.objects.filter(avhengigheter_referanser=pk)
-	avhengigheter_reverse_systembruk = SystemBruk.objects.filter(avhengigheter_referanser=pk)
 
 	print(len(avhengigheter_graf["nodes"]))
 
@@ -2550,7 +2549,6 @@ def systemdetaljer(request, pk):
 		'datautveksling_mottar_fra': datautveksling_mottar_fra,
 		'datautveksling_avleverer_til': datautveksling_avleverer_til,
 		'avhengigheter_reverse_systemer': avhengigheter_reverse_systemer,
-		'avhengigheter_reverse_systembruk': avhengigheter_reverse_systembruk,
 		'hoy_risiko': hoy_risiko,
 		'dpia': dpia,
 		'siste_endringer': siste_endringer,

@@ -3967,10 +3967,10 @@ class System(models.Model):
 	#		help_text=u"Dersom databasehotell, legg til databasehotellet som en teknisk avhengighet.",
 	#		)
 	avhengigheter = models.TextField(
-			verbose_name="Utlevering og avhengigheter (fritekst)",
+			verbose_name="Beskrivelse av avhengigheter (fritekst)",
 			blank=True,
 			null=True,
-			help_text=u"Her kan du gi utdypende beskrivelser til feltene som omhandler utlevering og systemtekniske avhengigeheter.",
+			help_text=u"Her kan du gi utdypende beskrivelse knyttet til systemtekniske avhengigeheter.",
 			)
 	avhengigheter_referanser = models.ManyToManyField(
 			to="System",
@@ -4293,12 +4293,12 @@ class System(models.Model):
 			help_text=u"Dersom arkiv: Person som kan kontaktes for å undersøke om det er personopplysninger i systemet knyttet til en innsynsbegjæring.",
 			)
 	innsyn_innbygger = models.BooleanField(
-			verbose_name="Innsyn relevant for innbygger?",
+			verbose_name="Innsyn relevant for innbyggere?",
 			default=True,
 			help_text=u"Dersom arkiv: Er det aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en innbygger.",
 			)
 	innsyn_ansatt = models.BooleanField(
-			verbose_name="Innsyn relevant for (tidligere) ansatt?",
+			verbose_name="Innsyn relevant for ansatte?",
 			default=True,
 			help_text=u"Dersom arkiv: Er det aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en ansatt",
 			)
