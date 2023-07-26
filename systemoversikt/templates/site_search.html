@@ -21,7 +21,9 @@
 				{% if system.er_infrastruktur %}
 				<img src="{% static 'infra.png' %}">
 				{% elif system.er_integrasjon %}
-				<img src="{% static 'infra.png' %}">
+				<img src="{% static 'integrasjon.png' %}">
+				{% elif system.driftsmodell_foreignkey.type_plattform == 2 %} {% comment %} public cloud {% endcomment %}
+				<img src="{% static 'sky.png' %}">
 				{% else %}
 				<img src="{% static 'system.png' %}">
 				{% endif %}
