@@ -12,14 +12,11 @@ import os
 from this_env import this_env
 this_env()
 
-THIS_ENVIRONMENT = os.environ['THIS_ENV'] # "PROD" / "TEST" / "DEV"
+THIS_ENVIRONMENT = os.environ['THIS_ENV'] # "PROD" or "TEST"
 
 if THIS_ENVIRONMENT == "PROD":
 	from secrets_prod import SECRET_ALLOWED_HOSTS as SECRET_ALLOWED_HOSTS
 	from secrets_prod import load_secrets
-if THIS_ENVIRONMENT == "DEV":
-	from secrets_dev import SECRET_ALLOWED_HOSTS as SECRET_ALLOWED_HOSTS
-	from secrets_dev import load_secrets
 if THIS_ENVIRONMENT == "TEST":
 	from secrets_test import SECRET_ALLOWED_HOSTS as SECRET_ALLOWED_HOSTS
 	from secrets_test import load_secrets
@@ -37,8 +34,6 @@ SECRET_KEY = os.environ['KARTOTEKET_SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 if THIS_ENVIRONMENT == "PROD":
 	DEBUG = False
-if THIS_ENVIRONMENT == "DEV":
-	DEBUG = True
 if THIS_ENVIRONMENT == "TEST":
 	DEBUG = True
 
@@ -46,19 +41,10 @@ if THIS_ENVIRONMENT == "PROD":
 	hosts = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "okkartoteket-oslokommune.msappproxy.net"]
 	ALLOWED_HOSTS = SECRET_ALLOWED_HOSTS + hosts
 	CSRF_TRUSTED_ORIGINS = ["https://kartoteket.oslo.kommune.no", "https://systemoversikt.oslo.kommune.no", "https://okkartoteket-oslokommune.msappproxy.net"]
-	#SECURE_SSL_REDIRECT = True  #I Oslo kommune er det en webproxy som redirecter http til https i produksjon
 	TEST_ENV_NAME = "" # brukes ikke i produksjon
 	SITE_SCHEME = "https"
 	SITE_DOMAIN = "kartoteket.oslo.kommune.no"
-	#SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
-if THIS_ENVIRONMENT == "DEV":
-	hosts = ["localhost"]
-	ALLOWED_HOSTS = SECRET_ALLOWED_HOSTS + hosts
-	SECURE_SSL_REDIRECT = False
-	TEST_ENV_NAME = "development"
-	SITE_SCHEME = "http"
-	SITE_DOMAIN = "localhost"
-	#SITE_PORT_OVERRIDE = ":8000"  # start with ":", default empty ("")
+
 if THIS_ENVIRONMENT == "TEST":
 	hosts = ['localhost', 'localhost:8000']
 	ALLOWED_HOSTS = SECRET_ALLOWED_HOSTS + hosts
@@ -66,7 +52,7 @@ if THIS_ENVIRONMENT == "TEST":
 	TEST_ENV_NAME = "test"
 	SITE_SCHEME = "http"
 	SITE_DOMAIN = "localhost:8000"
-	#SITE_PORT_OVERRIDE = ""  # start with ":", default empty ("")
+
 
 # Application definition
 INSTALLED_APPS = [
@@ -84,11 +70,7 @@ INSTALLED_APPS = [
 	'simple_history',
 	'widget_tweaks',
 ]
-if THIS_ENVIRONMENT == "DEV":
-	INSTALLED_APPS += [
-		'debug_permissions',
-		'django_extensions',
-	]
+
 if THIS_ENVIRONMENT == "TEST":
 	INSTALLED_APPS += [
 		'debug_permissions',
@@ -106,14 +88,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
 EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
 DEFAULT_FROM_EMAIL = "kartoteket@uke.oslo.kommune.no"
+
 if THIS_ENVIRONMENT == "PROD":
 	EMAIL_HOST = "indre-relay.oslo.kommune.no"
 	EMAIL_PORT = 25
 	EMAIL_USE_TLS = True
-if THIS_ENVIRONMENT == "DEV":
-	EMAIL_HOST = "localhost"
-	EMAIL_PORT = 25
-	EMAIL_USE_TLS = True
+
 if THIS_ENVIRONMENT == "TEST":
 	EMAIL_HOST = "localhost"
 	EMAIL_PORT = 9999 # vi ønsker ikke at test skal sende ut mail
@@ -217,32 +197,6 @@ USE_TZ = True
 
 #Authentication
 if THIS_ENVIRONMENT == "PROD":
-	#Keycloak
-	"""
-	IDP_PROVIDER = "KEYCLOAK"
-	AUTHENTICATION_BACKENDS = (
-		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
-		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # SSO / login.oslo.kommune.no
-	)
-	LOGIN_URL = "/oidc/authenticate/"
-	LOGIN_REDIRECT_URL = "/"
-	LOGOUT_REDIRECT_URL = "https://kartoteket.oslo.kommune.no"
-	OIDC_IDP_URL_BASE = "https://login.oslo.kommune.no"
-	OIDC_IDP_REALM = "AD"
-	OIDC_RP_SCOPES = "openid email"
-	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
-	OIDC_RP_SIGN_ALGO = "RS256"
-	OIDC_OP_JWKS_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/certs"
-	OIDC_RP_CLIENT_ID = "systemoversikt"
-	OIDC_RP_CLIENT_SECRET = os.environ['KARTOTEKET_OIDC_RP_CLIENT_SECRET']
-	OIDC_OP_AUTHORIZATION_ENDPOINT = "https://login.oslo.kommune.no/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/auth"
-	OIDC_OP_TOKEN_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/token"
-	OIDC_OP_USER_ENDPOINT = OIDC_IDP_URL_BASE + "/auth/realms/"+OIDC_IDP_REALM+"/protocol/openid-connect/userinfo"
-	OIDC_OP_LOGOUT_URL_METHOD = "systemoversikt.oidc.provider_logout"  # deaktiver denne for å skru av single logout
-	SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # fordi det er HTTP mellom BigIP og Kartoteket (slik at redirect_uri mot KeyCloak blir https)
-	"""
-
-	# Azure AD
 	IDP_PROVIDER = "AZUREAD"
 	AD_DIRECT_ACCESS = True
 	AUTHENTICATION_BACKENDS = (
@@ -272,38 +226,8 @@ if THIS_ENVIRONMENT == "PROD":
 	OIDC_STORE_ACCESS_TOKEN = False
 	OIDC_STORE_ID_TOKEN = False
 	#OIDC_OP_LOGOUT_URL_METHOD = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/logout"
-	SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # fordi det er HTTP mellom BigIP og Kartoteket (slik at redirect_uri mot KeyCloak blir https)
+	SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https') # fordi det er HTTP mellom BigIP og Kartoteket (slik at redirect_uri blir https)
 
-
-if THIS_ENVIRONMENT == "DEV":
-	IDP_PROVIDER = "AZUREAD"
-	AD_DIRECT_ACCESS = False
-	AUTHENTICATION_BACKENDS = (
-		'systemoversikt.oidc.CustomOIDCAuthenticationBackend',  # Azure AD
-		'django.contrib.auth.backends.ModelBackend',  # trenger denne dersom SSO ikke er tilgjengelig
-	)
-	LOGIN_URL = "/oidc/authenticate/"
-	LOGIN_REDIRECT_URL = "/?login=ok"
-	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
-	LOGOUT_REDIRECT_URL = "/"
-	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
-	OIDC_RP_SIGN_ALGO = "RS256"
-	OIDC_RP_SCOPES = "openid"
-	OIDC_IDP_URL_BASE = ""
-	OIDC_IDP_REALM = ""
-	OIDC_OP_JWKS_ENDPOINT = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
-	OIDC_RP_CLIENT_ID = os.environ['AZURE_AUTH_CLIENT']
-	OIDC_RP_CLIENT_SECRET = os.environ['AZURE_AUTH_SECRET']
-	OIDC_OP_AUTHORIZATION_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/authorize"
-	OIDC_OP_TOKEN_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/token"
-	OIDC_OP_USER_ENDPOINT = "https://graph.microsoft.com/oidc/userinfo"
-	#IDC_GROUP_ENDPOINT = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/openid/userinfo?schema=openid"
-	OIDC_MAX_STATES = 5
-	OIDC_TIMEOUT = 3
-	OIDC_CREATE_USER = False
-	OIDC_STORE_ACCESS_TOKEN = False
-	OIDC_STORE_ID_TOKEN = False
-	#OIDC_OP_LOGOUT_URL_METHOD = "https://login.microsoftonline.com/"+os.environ['AZURE_TENANT_ID']+"/oauth2/v2.0/logout"
 
 if THIS_ENVIRONMENT == "TEST":
 	IDP_PROVIDER = "AZUREAD"
@@ -353,9 +277,7 @@ if THIS_ENVIRONMENT == "PROD":
 	SESSION_COOKIE_SECURE = True
 	CSRF_COOKIE_SECURE = True
 	SECURE_HSTS_SECONDS = 31536000
-if THIS_ENVIRONMENT == "DEV":
-	SESSION_COOKIE_SECURE = False
-	CSRF_COOKIE_SECURE = False
+
 if THIS_ENVIRONMENT == "TEST":
 	SESSION_COOKIE_SECURE = False
 	CSRF_COOKIE_SECURE = False

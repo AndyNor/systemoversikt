@@ -1,0 +1,17 @@
+* Installer python (husk env. path) (pip følger med)
+
+* Installer Github desktop
+
+* python -m pip install --user virtualenv
+
+* python -m virtualenv <navn på env>
+
+* opprett server-snarvei i testserver.bat
+@echo off
+cmd /k "cd /d C:\Utvikling\virtualenv\kartoteket\Scripts & activate & cd /d C:\Utvikling\kildekode\systemoversikt & python manage.py runserver"
+
+
+* opprett console-snarvei i console.bat
+@echo off
+cmd /k "cd /d C:\Utvikling\virtualenv\kartoteket\Scripts & activate & cd /d C:\Utvikling\kildekode\systemoversikt"
+

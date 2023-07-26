@@ -29,7 +29,7 @@
 			{{ item.vis_registrar|default:"?" }}
 		</td>
 		<td>
-			<a href="{{ item.domene }}">{% if item.own_domain %}<span style="color: green; font-size: 18px;">✓</span>{% endif %} {{ item.domene }}</a>
+			<a href="{{ item.domene }}">{% if item.own_domain %}<span style="color: green; font-size: 18px;">✓</span>{% endif %} {{ item.domene|truncatechars:70 }}</a>
 		</td>
 		<td>
 			{% url 'virksomhet' pk=item.eier.pk as url_eier %}
