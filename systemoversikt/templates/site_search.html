@@ -1,4 +1,5 @@
 {% extends "system_index.html" %}
+{% load static %}
 
 {% block overskrift %}
 	Søkeresultater
@@ -9,100 +10,85 @@
 
 {% block hovedinnhold %}
 
-	<h6>Treff på systemnavn</h6>
-	<table class="tablesorter">
-		<thead>
-			<tr>
-				<th>Systemnavn</th>
-				<th>Systemforvalter</th>
-				<th>Livsløpstatus</th>
-				<th>Sist oppdatering</th>
-			</tr>
-		</thead>
-			<tbody>
-			{% for system in systemer %}
-			<tr>
-				<td>{% include 'system_include_vis.html' with system=system %}</td>
-				<td>{{system.systemforvalter|default:""}}</td>
-				<td>{{system.get_livslop_status_display|default:"" }}</td>
-				<td>{{system.sist_oppdatert|date:"Y-m-d"}}<br>{{system.sist_oppdatert|timesince}}</td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+	<h6>Treff på system- og programvarenavn</h6>
 
-	{% if aktuelle_leverandorer %}
-	<h6>Leverandører</h6>
-	<ul>
-		{% for lev in aktuelle_leverandorer %}
-			<li><a href="{% url 'leverandor' pk=lev.pk %}">{{ lev }}</a></li>
-		{% endfor %}
-	</ul>
-	<hr>
-	{% endif %}
+	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
 
-	{% if domenetreff %}
-		<h6>Treff på domener</h6>
-		<ul style="column-count:1;">
-		{% for d in domenetreff %}
-			<li>{{d.domene}}</li>
-		{% endfor %}
-		</ul>
-	{% endif %}
+	{% for system in systemer %}
+		{% url "systemdetaljer" system.pk as url_systemdetaljer %}
+		<div style="margin: 10px;">
+			<a href="{{ url_systemdetaljer }}">
+				{% if system.er_infrastruktur %}
+				<img src="{% static 'infra.png' %}">
+				{% elif system.er_integrasjon %}
+				<img src="{% static 'infra.png' %}">
+				{% else %}
+				<img src="{% static 'system.png' %}">
+				{% endif %}
 
-	<h6>Treff på systembeskrivelser</h6>
-	<table class="tablesorter">
-		<thead>
-			<tr>
-				<th>Systemnavn</th>
-				<th>Beskrivelse</th>
-				<th>Systemforvalter</th>
-				<th>Livsløpstatus</th>
-				<th>Sist oppdatering</th>
-			</tr>
-		</thead>
-			<tbody>
-			{% for system in potensielle_systemer %}
-			<tr>
-				<td>{% include 'system_include_vis.html' with system=system %}</td>
-				<td>{{system.systembeskrivelse|default:"-" }}</td>
-				<td>{{system.systemforvalter|default:""}}</td>
-				<td>{{system.get_livslop_status_display|default:"" }}</td>
-				<td>{{system.sist_oppdatert|date:"Y-m-d"}}<br>{{system.sist_oppdatert|timesince}}</td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+				<br>{{ system }}</a>
+		</div>
+	{% endfor %}
 
 	{% if aktuelle_programvarer %}
-		<h6>Treff på programvare</h6>
-		<table class="tablesorter">
-			<thead>
-				<tr>
-					<th>Programvarenavn</th>
-					<th>Programvaretype</th>
-					<th>Leverandør</th>
-				</tr>
-			</thead>
-				<tbody>
-				{% for p in aktuelle_programvarer %}
-				<tr>
-					<td><a href="{% url 'programvaredetaljer' pk=p.pk %}">{{ p.programvarenavn }}</a></td>
-					<td>
-						{% for t in p.programvaretyper.all %}
-							{{ t }}<br>
-						{% endfor %}
-					</td>
-					<td>
-						{% for l in p.programvareleverandor.all %}
-							<a href="{% url 'leverandor' pk=l.pk %}">{{ l }}</a><br>
-						{% endfor %}
-					</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
+		{% for p in aktuelle_programvarer %}
+		<div style="margin: 10px;">
+			<a href="{% url 'programvaredetaljer' pk=p.pk %}">
+				<img src="{% static 'programvare.png' %}">
+
+				<br>{{ p.programvarenavn }}</a>
+		</div>
+		{% endfor %}
 	{% endif %}
+	</div>
+
+	<hr>
+	<h6>Treff på URL-er</h6>
+	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
+
+		{% for d in domenetreff %}
+			<div style="margin: 10px; max-width: 150px; overflow-wrap: break-word;">
+				<img src="{% static 'url.png' %}">
+				<br>{{d.domene}}
+			</div>
+		{% endfor %}
+	</div>
+
+
+	<hr>
+	<h6>Treff på leverandører</h6>
+	<div style="display: grid; grid-template-columns: repeat(6, 1fr);">
+
+		{% for lev in aktuelle_leverandorer %}
+			<div style="margin: 10px;">
+				<img src="{% static 'leverandor.png' %}">
+				<br><a href="{% url 'leverandor' pk=lev.pk %}">{{ lev }}</a>
+			</div>
+		{% endfor %}
+
+	</div>
+
+	<hr>
+	<h6>Treff på tekst i systembeskrivelser</h6>
+
+
+	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
+	{% for system in potensielle_systemer %}
+		{% url "systemdetaljer" system.pk as url_systemdetaljer %}
+		<div style="margin: 10px;">
+			<a href="{{ url_systemdetaljer }}">
+				{% if system.er_infrastruktur %}
+				<img src="{% static 'infra.png' %}">
+				{% elif system.er_integrasjon %}
+				<img src="{% static 'infra.png' %}">
+				{% else %}
+				<img src="{% static 'system.png' %}">
+				{% endif %}
+
+				<br>{{ system }}</a>
+		</div>
+	{% endfor %}
+	</div>
 
 
 {% endblock hovedinnhold %}
