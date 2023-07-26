@@ -1,0 +1,20 @@
+{% load static %}
+
+{% url "systemdetaljer" system.pk as url_systemdetaljer %}
+<div style="margin: 10px;">
+	<a href="{{ url_systemdetaljer }}">
+		{% if system.er_infrastruktur %}
+		<img src="{% static 'infra.png' %}">
+		{% elif system.er_integrasjon %}
+		<img src="{% static 'integrasjon.png' %}">
+		{% elif system.driftsmodell_foreignkey.type_plattform == 2 %} {% comment %} public cloud {% endcomment %}
+		<img src="{% static 'sky.png' %}">
+		{% else %}
+		<img src="{% static 'system.png' %}">
+		{% endif %}
+
+		<br><p style="
+			{% if system.livslop_status == 6 %}text-decoration: line-through;{% endif %}
+			{% if system.livslop_status == 7 %}text-decoration: line-through;{% endif %}
+		">{{ system }}</p></a>
+</div>

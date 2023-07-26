@@ -15,21 +15,7 @@
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
 
 	{% for system in systemer %}
-		{% url "systemdetaljer" system.pk as url_systemdetaljer %}
-		<div style="margin: 10px;">
-			<a href="{{ url_systemdetaljer }}">
-				{% if system.er_infrastruktur %}
-				<img src="{% static 'infra.png' %}">
-				{% elif system.er_integrasjon %}
-				<img src="{% static 'integrasjon.png' %}">
-				{% elif system.driftsmodell_foreignkey.type_plattform == 2 %} {% comment %} public cloud {% endcomment %}
-				<img src="{% static 'sky.png' %}">
-				{% else %}
-				<img src="{% static 'system.png' %}">
-				{% endif %}
-
-				<br>{{ system }}</a>
-		</div>
+		{% include "system_include_vis_ikon.html" with system=system %}
 	{% endfor %}
 
 	{% if aktuelle_programvarer %}
@@ -76,19 +62,7 @@
 
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
 	{% for system in potensielle_systemer %}
-		{% url "systemdetaljer" system.pk as url_systemdetaljer %}
-		<div style="margin: 10px;">
-			<a href="{{ url_systemdetaljer }}">
-				{% if system.er_infrastruktur %}
-				<img src="{% static 'infra.png' %}">
-				{% elif system.er_integrasjon %}
-				<img src="{% static 'infra.png' %}">
-				{% else %}
-				<img src="{% static 'system.png' %}">
-				{% endif %}
-
-				<br>{{ system }}</a>
-		</div>
+		{% include "system_include_vis_ikon.html" with system=system %}
 	{% endfor %}
 	</div>
 

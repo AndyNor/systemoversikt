@@ -4011,24 +4011,24 @@ class System(models.Model):
 	systemtyper = models.ManyToManyField(
 			to=Systemtype,
 			related_name='system_systemtyper',
-			verbose_name="Systemtype / menneskelig grensesnitt",
+			verbose_name="Grensesnitt",
 			blank=True,
-			help_text=u"Her beskriver hva slags type system dette er. Systmer merket med integrasjon eller infrastrukturkomponent blir skjult i en del visninger",
+			help_text=u"Her beskriver hva slags type funksjon systemet har. Systmer merket med integrasjon eller infrastrukturkomponent blir skjult i en del visninger",
 			)
 	systemkategorier = models.ManyToManyField(
 			to=SystemKategori,
 			related_name='system_systemkategorier',
-			verbose_name="Systemkategori(er)",
+			verbose_name="Systemkategorier",
 			blank=True,
 			help_text=u"Dette er et sett med kategorier som forvaltes av UKE ved seksjon for information management (IM). Velg det som passer best.",
 			)
 	systemurl = models.ManyToManyField(
 			to=SystemUrl,
 			related_name='system_systemurl',
-			verbose_name="URL (dersom webapplikasjon)",
+			verbose_name="URL",
 			blank=True,
 			default=None,
-			help_text=u"Adressen systemet nås på via nettleser",
+			help_text=u"Fylles ut dersom systemet har en web-frontend. Adressen systemet nås på via nettleser",
 			)
 	systemleverandor_vedlikeholdsavtale = models.BooleanField(
 			verbose_name="Aktiv vedlikeholdsavtale med systemleverandør?",
@@ -4337,7 +4337,7 @@ class System(models.Model):
 	godkjente_bestillere = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='system_godkjente_bestillere',
-			verbose_name="Andre godkjente Kompass-bestillere",
+			verbose_name="Godkjente Kompass-bestillere",
 			blank=True,
 			help_text=u"Forvaltere er autorisert til å bestille endringer på systemet i Kompass. I tillegg er disse personene autorisert for å bestille endringer på systemet.",
 			)
