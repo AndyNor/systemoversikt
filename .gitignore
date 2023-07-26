@@ -1,18 +1,19 @@
-# Secrets and database
+# Project specific stuff
+systemoversikt/import/oslofelles_dns_ekstern
+systemoversikt/import/oslofelles_dns_intern
+systemoversikt/management/commands/sertifikat_sjekker_config.py
 secrets.py
 secrets_dev.py
 secrets_test.py
-db.sqlite3
-systemoversikt/management/commands/*.json
-ldap_update_all_users
-prk_sync
-bash_scripts/*
 /static/*
 *.xlsx
 *.csv
 *.tsv
-systemoversikt/import/*.json
+*.json
+*.exe
 
+
+# Template stuff
 # local
 dev.bat
 this_env.py
@@ -120,20 +121,6 @@ venv.bak/
 # mkdocs documentation
 /site
 
-# mypy
-.mypy_cache/
-*.csv
-db.sqlite3.old
-db.sqlite3.test
-new_report
-sqldiff.exe
-sqlite3.exe
-sqlite3_analyzer.exe
-sqlite_report.txt
-db.sqlite3.til.utv
-systemoversikt.zip
-systemoversikt/old_oidc.py
-*.json
-systemoversikt/management/commands/sertifikat_sjekker_config.py
-systemoversikt/import/oslofelles_dns_ekstern
-systemoversikt/import/oslofelles_dns_intern
+
+# Added by Github desktop
+
