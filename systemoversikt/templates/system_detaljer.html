@@ -96,7 +96,7 @@
 		<div class="row">
 			<div class="col-5">
 
-				<h6>LOS-klassifisering</h6>
+				<h6>LOS-klassifisering (<a target="_blank" href="{% url 'system_los_struktur_indeks' %}">Oppslagsverk</a>)</h6>
 				Kommunale tema:
 				{% for b in systemdetaljer.LOSref.all %}
 						{% comment %}
@@ -1005,7 +1005,7 @@
 		layout: {
 			name: 'fcose',
 			animationDuration: 0, //ms
-			idealEdgeLength: 150,
+			idealEdgeLength: 250,
 		},
 	});
 	cy.on('tap', 'node', function(){

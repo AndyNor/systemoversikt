@@ -80,6 +80,9 @@ urlpatterns = [
 	re_path(r'^system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
 	re_path(r'^systemer/kritiske_funksjoner/$', views.system_kritisk_funksjon, name='system_kritisk_funksjon'),
 	re_path(r'^systemer/informasjonsbehandling/$', views.system_informasjonsbehandling, name='system_informasjonsbehandling'),
+	re_path(r'^systemer/los_struktur/$', views.system_los_struktur, name='system_los_struktur_indeks'),
+	re_path(r'^systemer/los_struktur/(?P<pk>\d{1,8})/$', views.system_los_struktur, name='system_los_struktur'),
+
 
 
 	re_path(r'^behandlinger/user/$', views.mine_behandlinger, name='mine_behandlinger'),

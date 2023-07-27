@@ -6954,6 +6954,85 @@ class LOS(models.Model):
 		verbose_name="I LOS?",
 		default=True,
 		)
+	buffer_alle_tema = models.ManyToManyField(
+		to="LOS",
+		related_name='alle_tema_buffer',
+		verbose_name="Alle tema (buffer)",
+		)
+
+
+	def er_tema(self):
+		if self.kategori_ref.verdi == "Tema":
+			return True
+		return False
+
+
+	def er_hovedtema(self):
+		if self.kategori_ref.verdi == "Tema" and len(self.parent_id.all()) == 0:
+			return True
+		return False
+
+	def kategori_tekst(self):
+		if not self.er_tema(): # Ord
+			return "Ord"
+		if self.er_hovedtema():
+			return "Hovedtema" # hovedtema
+		return "Undertema" # undertema
+
+
+	def color(self):
+		if not self.er_tema(): # Ord
+			return "#d9d7d7"
+		if self.er_hovedtema():
+			return "#343a40" # hovedtema
+		return "#007bff" # undertema
+
+
+
+	def badge(self):
+		if not self.er_tema(): # Ord
+			return "badge-light"
+		if self.er_hovedtema():
+			return "badge-dark" # hovedtema
+		return "badge-primary" # undertema
+
+
+	def alle_tema(self):
+		if len(self.buffer_alle_tema.all()) > 0:
+			return self.buffer_alle_tema.all()
+
+		alle_tema = set()
+		stack = []
+		stack.extend(self.parent_id.all())
+		while len(stack) > 0:
+			item = stack.pop()
+			#print(item)
+			stack.extend(item.parent_id.all())
+			if item.er_tema():
+				alle_tema.add(item)
+
+		for tema in alle_tema:
+			self.buffer_alle_tema.add(tema)
+
+		return self.buffer_alle_tema.all()
+
+
+	def hovedtema(self):
+		hovedtema = set()
+		alle_tema = self.alle_tema()
+		for tema in alle_tema:
+			if tema.er_hovedtema():
+				hovedtema.add(tema)
+		return hovedtema
+
+	def undertema(self):
+		undertema = set()
+		alle_tema = self.alle_tema()
+		#print(alle_tema)
+		for tema in alle_tema:
+			if not tema.er_hovedtema():
+				undertema.add(tema)
+		return undertema
 
 
 	def __str__(self):

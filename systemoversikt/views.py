@@ -446,6 +446,55 @@ def system_informasjonsbehandling(request):
 	})
 
 
+def system_los_struktur(request, pk=None):
+	"""
+	Vise alle LOS-begreper grafisk
+	"""
+
+	los_graf = {"nodes": [], "edges": []}
+
+	nodes = LOS.objects.filter(active=True).filter(~Q(kategori_ref=None))
+
+	if pk:
+		nodes = nodes.filter(buffer_alle_tema=pk)
+		nodes = list(nodes)
+		nodes.append(LOS.objects.get(pk=pk))
+
+	for node in nodes:
+
+		if not pk:
+			if node.kategori_ref.verdi != "Tema":
+				continue
+
+		los_graf["nodes"].append(
+				{"data": {
+					"id": node.pk,
+					#"parent": node.hovedtema(),
+					"name": node.verdi,
+					"shape": "ellipse",
+					"color": node.color(),
+					#"size": node.size(),
+					"href": reverse('system_los_struktur', args=[node.pk])
+					}
+				})
+
+		for parent in node.parent_id.all():
+			if parent in nodes:
+				los_graf["edges"].append(
+						{"data": {
+							"source": node.pk,
+							"target": parent.pk,
+							"linestyle": "solid"
+							}
+						})
+
+	return render(request, 'system_los_struktur.html', {
+		'request': request,
+		'los_graf': los_graf,
+		'nodes': nodes,
+	})
+
+
 def alle_nettverksenheter(request):
 	"""
 	Viser alle nettverksenheter (cisco, bigip..)
