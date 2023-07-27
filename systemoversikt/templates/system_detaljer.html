@@ -72,15 +72,17 @@
 		<div id="cy" style="width: {{avhengigheter_chart_size}}px; height: {{avhengigheter_chart_size}}px;"></div>
 	{% endif %}
 
-	Systemeravhengigheter:
-	{% for system in systemdetaljer.avhengigheter_referanser.all %}
-		{% url "systemdetaljer" system.pk as url_system %}
-		<a class="badge badge-light" href="{{ url_system }}">{{ system.systemnavn }}</a>
-	{% endfor %}
-	{% for system in avhengigheter_reverse_systemer.all %}
-		{% url "systemdetaljer" system.pk as url_system %}
-		<a class="badge badge-light" href="{{ url_system }}">{{ system.systemnavn }}</a>
-	{% endfor %}
+	{% if systemdetaljer.avhengigheter_referanser %}
+		Systemeravhengigheter:
+		{% for system in systemdetaljer.avhengigheter_referanser.all %}
+			{% url "systemdetaljer" system.pk as url_system %}
+			<a class="badge badge-light" href="{{ url_system }}">{{ system.systemnavn }}</a>
+		{% endfor %}
+		{% for system in avhengigheter_reverse_systemer.all %}
+			{% url "systemdetaljer" system.pk as url_system %}
+			<a class="badge badge-light" href="{{ url_system }}">{{ system.systemnavn }}</a>
+		{% endfor %}
+	 {% endif %}
 
 	{% if systemdetaljer.avhengigheter %}
 		<br>{{ systemdetaljer.avhengigheter|default:"-"|linebreaks }}
@@ -89,6 +91,7 @@
 
 	<hr>
 
+	<h5>Om systemet</h5>
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-5">
@@ -263,6 +266,7 @@
 
 			<div class="col-12">
 
+				<br>
 				<h5>Virksomheters bruk</h5>
 				{% if user.is_authenticated %}
 					<p>
@@ -340,6 +344,7 @@
 		<div class="row">
 			<div class="col-12">
 
+				<br>
 				<h5>Leverandører</h5>
 
 				Utviklingsleverandør:
@@ -426,6 +431,7 @@
 		<div class="row">
 			<div class="col-12">
 				<hr>
+				<br>
 				<h5>Servere og databaser</h5>
 				{% if systemdetaljer.bs_system_referanse %}
 				<p>Koblede data mot Sopra Sterias <a href="{% url 'cmdb_statistikk' %}">CMDB</a>. Se <a target="_blank" href="https://confluence.oslo.kommune.no/x/34MWBg">beskrivelse av kritikalitet og tilgjengelighet</a>.</p>
@@ -508,6 +514,7 @@
 			<div class="col-12">
 
 				<hr>
+				<br>
 				<h5>Office 365 integrasjoner</h5>
 				<table class="table table-sm">
 					<thead>
@@ -540,6 +547,7 @@
 		</div>
 
 		<hr>
+		<br>
 		<h5>Sikkerhet og personvern</h5>
 		<div class="row">
 			<div class="col-3">
@@ -693,6 +701,7 @@
 		</div>
 
 		<hr>
+		<br>
 		<h5>Tilgangsstyring</h5>
 		<div class="row">
 			<div class="col-4">
@@ -729,7 +738,7 @@
 
 		<hr>
 		<div class="row">
-
+			<br><br>
 			<div class="col-6">
 			<b>Informasjon sist oppdatert</b><br>
 			{{ systemdetaljer.sist_oppdatert|date:'Y-m-d' }} ({{ systemdetaljer.sist_oppdatert|naturaltime }})
