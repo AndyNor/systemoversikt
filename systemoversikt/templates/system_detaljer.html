@@ -72,7 +72,7 @@
 		<div id="cy" style="width: {{avhengigheter_chart_size}}px; height: {{avhengigheter_chart_size}}px;"></div>
 	{% endif %}
 
-	{% if systemdetaljer.avhengigheter_referanser %}
+	{% if systemdetaljer.avhengigheter_referanser.all|length > 0 %}
 		Systemeravhengigheter:
 		{% for system in systemdetaljer.avhengigheter_referanser.all %}
 			{% url "systemdetaljer" system.pk as url_system %}
