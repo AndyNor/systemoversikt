@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-	<p>Det er {{ alle_viper.count }} lastbalanserte tjenester i databasen.</p>
+	<p>Fant {{ alle_viper.count }} lastbalanserte tjenester i databasen som passer med søket.</p>
 
 	<form action="{% url 'alle_vip' %}" autocomplete="off">
 		<div class="form-group form-inline">

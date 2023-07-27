@@ -500,7 +500,7 @@
 			<div class="col-6">
 
 
-				<br>{% get_verbose_field_name systemdetaljer "database_supported" %}:<br>
+				{% get_verbose_field_name systemdetaljer "database_supported" %}:<br>
 				{% for db in systemdetaljer.database_supported.all %}
 					<span class="badge badge-light">{{ db }}</span>
 				{% endfor %}
@@ -629,6 +629,11 @@
 						<p style="background-color: #f8f9fa;">{{ autentiseringsalternativ.navn }}</p>
 					{% endfor %}
 				{% endif %}
+
+				<hr>
+
+				<b>Sårbarhetsoversikt</b><br>
+				<i>Her kommer link til sårbarhetsoversikten</i>
 
 
 			</div>
