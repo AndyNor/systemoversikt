@@ -724,8 +724,8 @@
 				<b>PRK-valg basert på automatisk søk</b><br>
 				{% for prkvalg in systemdetaljer.prkvalg.all %}
 					<br><a style="font-size: 85%;" href="{% url 'prk_skjema' skjema_id=prkvalg.skjemanavn.pk %}">📂 {{ prkvalg.valgnavn }}</a>
+					({{ prkvalg.ad_group_ref.membercount }} medlemmer)
 					<br><span style="font-size: 75%;">{{ prkvalg.ad_group_ref.short }}</span>
-					<br>({{ prkvalg.ad_group_ref.membercount }} medlemmer)
 				{% endfor %}
 
 			</div>
@@ -734,7 +734,7 @@
 				<b>AD-grupper basert på automatisk søk</b><br>
 				{% for adgroup in systemdetaljer.adgrupper.all %}
 					<a style="font-size: 75%;" href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">📂 {{ adgroup.short }}</a>
-					<br>({{ adgroup.membercount }} medlemmer)
+					({{ adgroup.membercount }} medlemmer)<br>
 				{% endfor %}
 
 			</div>
