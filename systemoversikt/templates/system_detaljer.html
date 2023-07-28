@@ -96,6 +96,15 @@
 		<div class="row">
 			<div class="col-5">
 
+				<h6>Kritisk funksjonalitet? (<a target="_blank" href="{% url 'system_kritisk_funksjon' %}">Oversikt</a>)</h6>
+				{% for k in systemdetaljer.kritisk_kapabilitet.all %}
+					<span class="badge badge-dark">{{ k.navn }}</span>
+				{% empty %}
+					Ikke kritisk
+				{% endfor %}
+
+				<hr>
+
 				<h6>LOS-klassifisering (<a target="_blank" href="{% url 'system_los_struktur_indeks' %}">Oppslagsverk</a>)</h6>
 				Kommunale tema:
 				{% for b in systemdetaljer.LOSref.all %}

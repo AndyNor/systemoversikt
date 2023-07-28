@@ -36,8 +36,8 @@
 
 		{% for d in domenetreff %}
 			<div style="margin: 10px; max-width: 150px; overflow-wrap: break-word;">
-				<img src="{% static 'url.png' %}">
-				<br>{{d.domene}}
+				<a target="_blank" href="{{d.domene}}"><img src="{% static 'url.png' %}">
+				<br>{{d.domene}}</a>
 			</div>
 		{% endfor %}
 	</div>

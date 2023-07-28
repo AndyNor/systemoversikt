@@ -32,7 +32,7 @@
 </tbody>
 </table>
 
-
+<hr>
 <h5>Sett fra systemperspektivet</h5>
 <table class="table table-sm excel tablesorter">
 <thead>
@@ -66,5 +66,29 @@
 {% endfor %}
 </tbody>
 </table>
+
+<hr>
+<h5>Hele begrepsapparatet</h5>
+<table class="table table-sm excel">
+<thead>
+<tr>
+	<th>Område</th>
+	<th>Funksjon</th>
+	<th>Kapabilitet</th>
+	<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody>
+{% for kapabilitet in kritiske_kapabiliteter %}
+<tr>
+	<td>{{kapabilitet.funksjon.get_kategori_display}}</td>
+	<td>{{kapabilitet.funksjon.navn}}</td>
+	<td>{{kapabilitet.navn}}</td>
+	<td>{{kapabilitet.beskrivelse}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
 
 {% endblock hovedinnhold %}

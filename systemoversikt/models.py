@@ -6960,6 +6960,12 @@ class LOS(models.Model):
 		verbose_name="Alle tema (buffer)",
 		)
 
+	def __str__(self):
+		if self.active:
+			return u'%s (%s)' % (self.verdi, self.kategori_tekst())
+		else:
+			return u'%s (utfaset)' % (self.verdi)
+
 
 	def er_tema(self):
 		if self.kategori_ref.verdi == "Tema":
@@ -7034,9 +7040,6 @@ class LOS(models.Model):
 				undertema.add(tema)
 		return undertema
 
-
-	def __str__(self):
-		return u'%s' % (self.verdi)
 
 	class Meta:
 		verbose_name_plural = "LOS fellesbegreper"

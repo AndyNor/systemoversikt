@@ -423,12 +423,14 @@ def system_kritisk_funksjon(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	kritiske_funksjoner = KritiskFunksjon.objects.all()
+	kritiske_kapabiliteter = KritiskKapabilitet.objects.all()
 	systemer = System.objects.filter(~Q(kritisk_kapabilitet=None))
 
 	return render(request, 'system_kritisk_funksjon.html', {
 		'request': request,
 		'kritiske_funksjoner': kritiske_funksjoner,
 		'systemer': systemer,
+		'kritiske_kapabiliteter': kritiske_kapabiliteter,
 	})
 
 
