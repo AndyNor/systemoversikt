@@ -166,9 +166,10 @@
 				{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
 
 				<hr>
-
-				{% get_verbose_field_name systemdetaljer "godkjente_bestillere" %}
-				<br>{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.godkjente_bestillere.all %}
+				{% if systemdetaljer.godkjente_bestillere %}
+					{% get_verbose_field_name systemdetaljer "godkjente_bestillere" %}
+					<br>{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.godkjente_bestillere.all %}
+				{% endif %}
 
 				<hr>
 
@@ -192,26 +193,27 @@
 				{% for url in systemdetaljer.systemurl.all %}
 					<div style="margin: 10px; max-width: 350px; overflow-wrap: break-word;">
 						<img style="float:left;" src="{% static 'url.png' %}">
-						<span style="font-size: 75%;">{{url.domene}}</span>
+						<a href="{{url.domene}}" style="font-size: 75%;">{{url.domene}}</a>
 					</div>
 					<br>
 				{% endfor %}
 
-				<hr>
-
-				<h6>{% get_verbose_field_name systemdetaljer "programvarer" %}:</h6>
-				{% for programvare in systemdetaljer.programvarer.all %}
-					{% url "programvaredetaljer" programvare.pk as url_programvare %}
-					<a href="{{ url_programvare }}"><img src="{% static 'programvare.png' %}"> {{ programvare }}</a>
-					{% if programvare.programvareleverandor.all|length > 0 %}
-					levert av
-						{% for programvareleverandor in programvare.programvareleverandor.all %}
-							{% url 'leverandor' programvareleverandor.pk as url_programvareleverandor %}
-							<a href="{{ url_programvareleverandor }}">{{ programvareleverandor }}</a>,
-						{% endfor %}
-					{% endif %}
-					<br>
-				{% endfor %}
+				{% if systemdetaljer.programvarer %}
+					<hr>
+					<h6>{% get_verbose_field_name systemdetaljer "programvarer" %}:</h6>
+					{% for programvare in systemdetaljer.programvarer.all %}
+						{% url "programvaredetaljer" programvare.pk as url_programvare %}
+						<a href="{{ url_programvare }}"><img src="{% static 'programvare.png' %}"> {{ programvare }}</a>
+						{% if programvare.programvareleverandor.all|length > 0 %}
+						levert av
+							{% for programvareleverandor in programvare.programvareleverandor.all %}
+								{% url 'leverandor' programvareleverandor.pk as url_programvareleverandor %}
+								<a href="{{ url_programvareleverandor }}">{{ programvareleverandor }}</a>,
+							{% endfor %}
+						{% endif %}
+						<br>
+					{% endfor %}
+				{% endif %}
 
 
 			</div>
