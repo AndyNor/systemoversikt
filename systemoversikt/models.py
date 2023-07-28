@@ -3823,7 +3823,7 @@ class System(models.Model):
 			blank=True,
 			null=False,
 			default=True,
-			help_text=u"Til informasjon. Ble tidligere benyttet for å skjule system fra noen visninger.",
+			help_text=u"Ble tidligere benyttet for å skjule system fra noen visninger. Bruk heller Livsløpstatus-feltet.",
 			)
 	kvalitetssikret = models.OneToOneField(
 			to=Oppdatering,
@@ -3845,13 +3845,13 @@ class System(models.Model):
 			max_length=100,
 			blank=False,
 			null=False,
-			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Undersøk om systemet er registrert før du eventuelt registrerer et nytt.",
+			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Undersøk om systemet er registrert før du eventuelt registrerer et nytt. Merk at programvare som kjører på en klient skal registrers som <a target='_blank' href='/admin/systemoversikt/programvare/add/'>programvare</a>.",
 			)
 	alias = models.TextField(
 			verbose_name="Alias",
 			blank=True,
 			null=True,
-			help_text=u"Alternative navn på systemet for å avhjelpe søk. Kun enkeltord. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje.",
+			help_text=u"Alternative navn på systemet for å avhjelpe søk. Kun enkeltord. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje. Disse alias brukes også for å søke opp tilgangsgrupper tilhørende systemet.",
 			)
 	systembeskrivelse = models.TextField(
 			verbose_name="Systembeskrivelse",
@@ -3873,7 +3873,7 @@ class System(models.Model):
 			related_name='system_systemeier_kontaktpersoner',
 			verbose_name="Systemeier (personer)",
 			blank=True,
-			help_text=u"Person(er) med operativt systemeierskap.",
+			help_text=u"Person(er) med operativt systemeierskap. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
 			)
 	systemforvalter = models.ForeignKey(
 			to=Virksomhet,
@@ -3889,7 +3889,7 @@ class System(models.Model):
 			related_name='system_systemforvalter_kontaktpersoner',
 			verbose_name="Systemforvalter (personer)",
 			blank=True,
-			help_text=u"Person(er) med operativt forvalteransvar",
+			help_text=u"Person(er) med operativt forvalteransvar. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
 			)
 	systemforvalter_avdeling_referanse = models.ForeignKey(
 			to='HRorg',
@@ -3919,7 +3919,7 @@ class System(models.Model):
 			verbose_name="Driftsplattform",
 			blank=True,
 			null=True,
-			help_text=u"Driftsplattform systemet kjører på. Merk at kommunen kan ha flere instanser av samme system driftet ulike steder.",
+			help_text=u"Driftsplattform systemet kjører på. Brukes blant annet for å tegne opp avhengighetsfiguren. Merk at kommunen kan ha flere instanser av samme system driftet ulike steder. Det er derfor svært viktig at denne blir satt riktig.",
 			)
 	leveransemodell_fip = models.IntegerField(
 			choices=LEVERANSEMODELL_VALG,
@@ -3977,21 +3977,21 @@ class System(models.Model):
 			related_name='system_avhengigheter_referanser',
 			verbose_name="Systemtekniske avhengigheter til andre systemer",
 			blank=True,
-			help_text=u"Her lister du opp andre systemer dette systemet er avhengig av, da utover at det overføres personopplysninger. F.eks. pålogginssystemer (AD, FEIDE, ID-porten..), databasehotell (Oracle, MSSQL..) eller RPA-prosesser.",
+			help_text=u"Her lister du opp andre systemer dette systemet er avhengig av. brukes blant annet for opptegning av avhengighetsfiguren. Kan F.eks. være påloggingsportaler (AD, FEIDE, ID-porten), databasehotell (Oracle, MSSQL..), RPA-prosesser, integrasjoner osv.",
 			)
 	datautveksling_mottar_fra = models.ManyToManyField(
 			to="System",
 			related_name='system_datautveksling_mottar_fra',
 			verbose_name="Mottar personopplysninger fra følgende systemer",
 			blank=True,
-			help_text=u"Her lister du opp systemer dette systemet mottar personopplysinger fra. Dersom overføringen skjer via en integrasjon, velges integrasjonen her. Valg her vises blant annet i systemets DPIA.",
+			help_text=u"Her lister du opp systemer dette systemet mottar personopplysinger fra. Dersom overføringen skjer via en integrasjon, velges integrasjonen her.",
 			)
 	datautveksling_avleverer_til = models.ManyToManyField(
 			to="System",
 			related_name='system_datautveksling_avleverer_til',
 			verbose_name="Avleverer personopplysninger til følgende systemer",
 			blank=True,
-			help_text=u"Her lister du opp systemer dette systemet avleverer personopplysinger til. Dersom overføringen skjer via en integrasjon, velges integrasjonen her. Valg her vises blant annet i systemets DPIA.",
+			help_text=u"Her lister du opp systemer dette systemet avleverer personopplysinger til. Dersom overføringen skjer via en integrasjon, velges integrasjonen her.",
 			)
 	systemeierskapsmodell = models.CharField(
 			choices=SYSTEMEIERSKAPSMODELL_VALG,
@@ -4013,7 +4013,7 @@ class System(models.Model):
 			related_name='system_systemtyper',
 			verbose_name="Grensesnitt",
 			blank=True,
-			help_text=u"Her beskriver hva slags type funksjon systemet har. Systmer merket med integrasjon eller infrastrukturkomponent blir skjult i en del visninger",
+			help_text=u"Her beskriver hva slags type funksjon systemet har. Systmer merket med integrasjonskomponent eller infrastrukturkomponent blir skjult i en del visninger",
 			)
 	systemkategorier = models.ManyToManyField(
 			to=SystemKategori,
@@ -4028,7 +4028,7 @@ class System(models.Model):
 			verbose_name="URL",
 			blank=True,
 			default=None,
-			help_text=u"Fylles ut dersom systemet har en web-frontend. Adressen systemet nås på via nettleser",
+			help_text=u"Fylles ut dersom systemet har en web-frontend. Adressen systemet nås på via nettleser. Hvis du ikke finner adressen i listen må du opprette ny med +-tegnet.",
 			)
 	systemleverandor_vedlikeholdsavtale = models.BooleanField(
 			verbose_name="Aktiv vedlikeholdsavtale med systemleverandør?",
@@ -4136,7 +4136,7 @@ class System(models.Model):
 			verbose_name="Livsløpstatus",
 			blank=True,
 			null=True,
-			help_text=u"Om systemet er nytt, moderne eller skal fases ut. Setter du status 5 eller 6 vil systemet havne på 'End of life (EOL)'-listen.",
+			help_text=u"Setter du 1 under anskaffelse vil systemet anses som ikke i bruk (enda). Setter du status 5 eller 6 vil systemet havne på 'End of life (EOL)'-listen.",
 			)
 	strategisk_egnethet = models.IntegerField(
 			choices=VURDERINGER_STRATEGISK_VALG,
@@ -4197,7 +4197,7 @@ class System(models.Model):
 			verbose_name="Risikovurdering (URL)",
 			blank=True,
 			null=True,
-			help_text=u"URL-referanse dersom det finnes. Om ikke kan fritekstfeltet under benyttes.",
+			help_text=u"URL-referanse dersom det finnes. Om ikke kan fritekstfeltet benyttes.",
 			)
 	risikovurdering_tekst = models.TextField(
 			verbose_name="Risikovurdering fritekst",
@@ -4290,7 +4290,7 @@ class System(models.Model):
 			related_name='system_kontaktperson_innsyn',
 			verbose_name="Kontaktperson innsyn",
 			blank=True,
-			help_text=u"Dersom arkiv: Person som kan kontaktes for å undersøke om det er personopplysninger i systemet knyttet til en innsynsbegjæring.",
+			help_text=u"Dersom arkiv: Person som kan kontaktes for å undersøke om det er personopplysninger i systemet knyttet til en innsynsbegjæring. Dersom du ikke finner personen du leter etter kan du legge til ny med +-tegnet.",
 			)
 	innsyn_innbygger = models.BooleanField(
 			verbose_name="Innsyn relevant for innbyggere?",
@@ -4339,7 +4339,7 @@ class System(models.Model):
 			related_name='system_godkjente_bestillere',
 			verbose_name="Godkjente Kompass-bestillere",
 			blank=True,
-			help_text=u"Forvaltere er autorisert til å bestille endringer på systemet i Kompass. I tillegg er disse personene autorisert for å bestille endringer på systemet.",
+			help_text=u"Forvaltere er autorisert til å bestille endringer på systemet i Kompass. I tillegg er disse personene autorisert for å bestille endringer på systemet. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
 			)
 	er_arkiv = models.BooleanField(
 			verbose_name="Er systemet et arkiv?",
@@ -4357,7 +4357,7 @@ class System(models.Model):
 			related_name='system_referanse',
 			verbose_name="Tilhørende tilgangsgrupper (AD)",
 			blank=True,
-			help_text=u'Velg en eller flere sikkerhetsgrupper i AD tilhørende systemet.',
+			help_text=u'Velg en eller flere sikkerhetsgrupper i AD tilhørende systemet. Brukes for å linke opp grupper og personer med tilgang.',
 			)
 	legacy_klient_krever_smb = models.BooleanField(
 			verbose_name="Direkte kommunikasjon med filområde.",
@@ -4387,6 +4387,7 @@ class System(models.Model):
 			to="AzureApplication",
 			related_name='systemreferanse',
 			verbose_name="Tilhørende Microsoft enterprise application",
+			help_text=u"Brukes for å koble systemet til Microsoft enterprise applications (pålogging med Azure AD og andre MS Graph-tilganger).",
 			blank=True,
 			)
 	LOSref = models.ManyToManyField(
@@ -4394,7 +4395,7 @@ class System(models.Model):
 			related_name='systemer',
 			verbose_name="Begrepstagging (LOS)",
 			blank=True,
-			help_text=u"Tagg systemet med behandlinger / kommunale områder.",
+			help_text=u"Tagg systemet med behandlinger / kommunale områder. LOS er standardbegreper forvaltet av DigDir.",
 			)
 	klargjort_ny_sikkerhetsmodell = models.IntegerField(
 			choices=VALG_KLARGJORT_SIKKERHETSMODELL,
@@ -4407,7 +4408,7 @@ class System(models.Model):
 		related_name="systemer",
 		verbose_name="Kritisk kapabilitet",
 		blank=True,
-		help_text=u"Understøtter systemet en kritisk funksjon?")
+		help_text=u"Understøtter systemet en kritisk funksjon? Kategorier basert på rammeverket fra DSB.")
 	history = HistoricalRecords()
 
 	def __str__(self):

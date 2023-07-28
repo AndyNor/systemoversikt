@@ -40,11 +40,8 @@
 		{% url 'systemer_vurderinger' as url_systemer_vurderinger %}
 		<a href="{{ url_systemer_vurderinger }}" class="btn btn-sm btn-link {% if url_systemer_vurderinger in request.path %}fremhev{% endif %}">Systemvurderinger</a>
 
-		{% url 'alle_leverandorer' as alle_leverandorer_url %}
-		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Alle leverandører</a>
-		<hr>
-
-
+	<hr>
+	<h6>Kritiske funksjoner og informasjonsverdier</h6>
 		{% url 'system_kritisk_funksjon' as url_system_kritisk_funksjon %}
 		<a href="{{url_system_kritisk_funksjon}}" class="btn btn-sm btn-link {% if url_system_kritisk_funksjon in request.path %}fremhev{% endif %}">Kritiske funksjoner</a>
 
@@ -55,7 +52,15 @@
 		<a href="{{url_system_los_struktur}}" class="btn btn-sm btn-link {% if url_system_los_struktur in request.path %}fremhev{% endif %}">LOS-strukturen</a>
 
 
+	<hr>
+	<h6>Leverandører</h6>
+
+		{% url 'alle_leverandorer' as alle_leverandorer_url %}
+		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Alle leverandører</a>
 		<hr>
+
+	<hr>
+	<h6>Utfasing</h6>
 
 		{% url 'systemer_utfaset' as url_systemer_utfaset %}
 		<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfasede systemer ❌</a>
