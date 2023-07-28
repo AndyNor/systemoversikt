@@ -437,14 +437,17 @@ def system_kritisk_funksjon(request):
 def system_informasjonsbehandling(request):
 	"""
 	Vise alle LOS-begreper og systemer som er knyttet til
-	Tilgjengelig for de som kan XXXX
+	Tilgjengelig for de som kan se CMDB
 	"""
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	los_hovedtema = LOS.objects.filter(kategori_ref__verdi="Tema", active=True, parent_id=None)
+
 	return render(request, 'system_los_oversikt.html', {
 		'request': request,
+		'los_hovedtema': los_hovedtema,
 	})
 
 

@@ -10,6 +10,7 @@ from django.db.models.functions import Lower
 from django.utils.html import escape
 from django.urls import reverse, NoReverseMatch
 import csv
+from django.db.models import Q
 from django.http import HttpResponse
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.auth.models import User
@@ -127,6 +128,9 @@ class LOSAdmin(admin.ModelAdmin):
 	autocomplete_fields = ('kategori_ref', 'parent_id', 'buffer_alle_tema',)
 	list_filter = ('active', 'parent_id')
 
+	def get_queryset(self, request):
+		qs = super().get_queryset(request)
+		return qs.filter(~Q(parent_id=None)) # ønsker ikke hovedtema. Hovedtema har ikke noen parent.
 
 """
 @admin.register(Klientutstyr)

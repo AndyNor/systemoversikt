@@ -6,6 +6,40 @@
 
 {% block hovedinnhold %}
 
-	<p></p>
+
+<p>Her vises alle koblinger mellom LOS-rammeerket og systemer registrert i Kartoteket. Koblingen utføres ved å redigere det aktuelle systemet.</p>
+
+<hr>
+
+
+<table class="table table-sm">
+	<thead>
+		<tr>
+			<th>Hovedtema</th>
+			<th>Undertema</th>
+			<th>Systemer</th>
+		</tr>
+	</thead>
+	<tbody>
+{% for hovedtema in los_hovedtema %}
+	{% for tema in hovedtema.children.all %}
+		<tr>
+			<td>{{hovedtema.verdi}}</td>
+			<td>{{tema.verdi}}</td>
+			<td>
+				{% for system in tema.systemer.all %}
+						<li>{{ system }}
+						{% for ord in system.los_ord %}
+							<span class="badge badge-light">{{ ord.verdi }}</span>
+						{% endfor %}
+						</li>
+				{% endfor %}
+			</td>
+		</tr>
+	{% endfor %}
+{% endfor %}
+	</tbody>
+</table>
+
 
 {% endblock hovedinnhold %}

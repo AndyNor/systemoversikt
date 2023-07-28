@@ -3845,7 +3845,7 @@ class System(models.Model):
 			max_length=100,
 			blank=False,
 			null=False,
-			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Undersøk om systemet er registrert før du eventuelt registrerer et nytt. Merk at programvare som kjører på en klient skal registrers som <a target='_blank' href='/admin/systemoversikt/programvare/add/'>programvare</a>.",
+			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Undersøk om systemet er registrert før du eventuelt registrerer et nytt. Tidligere navn angis under Alias. Virksomhetsforkortelse til forvalter blir lagt til automatisk i visninger. Merk at programvare som kjører på en klient skal registrers som <a target='_blank' href='/admin/systemoversikt/programvare/add/'>programvare</a>.",
 			)
 	alias = models.TextField(
 			verbose_name="Alias",
@@ -4395,7 +4395,7 @@ class System(models.Model):
 			related_name='systemer',
 			verbose_name="Begrepstagging (LOS)",
 			blank=True,
-			help_text=u"Tagg systemet med behandlinger / kommunale områder. LOS er standardbegreper forvaltet av DigDir.",
+			help_text=u"Her kan du tagge systemet med informasjonsområder (kommunale områder) standardiserte LOS-begreper forvaltet av DigDir. Du finner både tema og ord i listen. Anbefaler at du primært velger tema fra listen og sekundært andre ord som supplerer. Ord kan være knyttet til flere tema, så det er ikke mulig å entydig automatisk velge riktig tema basert på ord. Oversikten over behandlinger hensyntar bare på koblinger mot tema.",
 			)
 	klargjort_ny_sikkerhetsmodell = models.IntegerField(
 			choices=VALG_KLARGJORT_SIKKERHETSMODELL,
@@ -4411,11 +4411,21 @@ class System(models.Model):
 		help_text=u"Understøtter systemet en kritisk funksjon? Kategorier basert på rammeverket fra DSB.")
 	history = HistoricalRecords()
 
+
 	def __str__(self):
 		try:
 			return f'{self.systemnavn} ({self.systemforvalter.virksomhetsforkortelse})'
 		except:
 			return f'{self.systemnavn}'
+
+
+	def los_ord(self):
+		words = list()
+		for word in self.LOSref.all():
+			if not word.er_tema():
+				words.append(word)
+		return words
+
 
 	def alias_oppdelt(self):
 		return self.alias.split()
