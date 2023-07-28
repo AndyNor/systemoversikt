@@ -193,7 +193,7 @@
 				{% for url in systemdetaljer.systemurl.all %}
 					<div style="margin: 10px; max-width: 350px; overflow-wrap: break-word;">
 						<img style="float:left;" src="{% static 'url.png' %}">
-						<a href="{{url.domene}}" style="font-size: 75%;">{{url.domene}}</a>
+						<a target="_blank" href="{{url.domene}}" style="font-size: 75%;">{{url.domene}}</a>
 					</div>
 					<br>
 				{% endfor %}
@@ -479,10 +479,9 @@
 				{% endif %}
 
 				{% if systemdetaljer.driftsmodell_foreignkey %}
-
-						<br>
-						{% get_verbose_field_name systemdetaljer.driftsmodell_foreignkey "kommentar" %} (fra driftsmodell)
-						{{ systemdetaljer.driftsmodell_foreignkey.kommentar|default:"-" }}
+					<br>
+					{% get_verbose_field_name systemdetaljer.driftsmodell_foreignkey "kommentar" %} (fra driftsmodell)
+					{{ systemdetaljer.driftsmodell_foreignkey.kommentar|default:"-" }}
 				{% endif %}
 
 			</div>
@@ -594,6 +593,9 @@
 				<b>Risikovurdering</b><br>
 				{% if systemdetaljer.url_risikovurdering %}
 					<a target="_blank" href="{{ systemdetaljer.url_risikovurdering}}">{{systemdetaljer.systemnavn}}'s risikovurdering</a>
+
+				{% else %}
+					Link til risikovurdering mangler!
 				{% endif %}
 				{% if systemdetaljer.dato_sist_ros %}
 					<br>Dato: {{ systemdetaljer.dato_sist_ros|date:'Y-m-d'|default:'-' }}, {{ systemdetaljer.dato_sist_ros|naturaltime|default:'aldri' }}
