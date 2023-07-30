@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
 			if ".xlsx" in destination_file:
 				#dfRaw = pd.read_excel(destination_file, sheet_name='CommVault Summary', skiprows=8, usecols=['Client', 'Total Protected App Size (GB)', 'Source Capture Date', 'Business Sub Service', ])
-				dfRaw = pd.read_excel(destination_file, sheet_name='Export', skiprows=0, usecols=['Customer ID', 'Client', 'Total Protected App Size (GB)', 'Backup frequency', 'Business Sub Service', 'Storage Policy',])
+				dfRaw = pd.read_excel(destination_file, sheet_name='Export', skiprows=0, usecols=['Customer ID', 'Client', 'Total Protected App Size (GB)', 'Backup frequency', 'Business Service / Most Critical Service', 'Storage Policy',])
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				data = dfRaw.to_dict('records')
 
