@@ -4601,21 +4601,21 @@ def human_readable_members(items, onlygroups=False):
 	notfound = []
 
 	for item in items:
+		match = False
 		if onlygroups == False:
 			regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0]
 			try:
 				u = User.objects.get(username__iexact=regex_username)
-			except:
-				notfound.append(item)  # vi fant ikke noe, returner det vi fikk
+				users.append(u)
+				match = True
 				continue
-			users.append(u)
-			continue
-
+			except:
+				pass
 		try:
 			g = ADgroup.objects.get(distinguishedname=item)
 			groups.append(g)
 		except:
-			pass
+			notfound.append(item)  # vi fant ikke noe, returner det vi fikk
 
 	#runtime_t1 = time.time()
 	#logg_total_runtime = runtime_t1 - runtime_t0

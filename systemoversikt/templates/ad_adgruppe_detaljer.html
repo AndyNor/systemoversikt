@@ -35,11 +35,15 @@
 		<a href="{% url 'ad_exact' name=gruppe.distinguishedname %}">🔎 slå opp direkte</a><br>
 
 
-	{% if memberof.groups %}
+	{% if memberof %}
 		{% for m in memberof.groups %}
 		Er nøstet inn i: <a href="{% url 'adgruppe_detaljer' pk=m.pk %}">👥 {{ m }}</a><br>
 		{% endfor %}
+		{% for m in memberof.notfound %}
+		Er nøstet inn i: 👥 {{ m }}<br>
+		{% endfor %}
 	{% endif%}
+
 	<a href="{% url 'adgruppe_graf' pk=gruppe.pk %}">📈 Graf opp alle underliggende nøstede grupper</a><br>
 
 
