@@ -13,7 +13,7 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		sp = da_tran_SP365(site_url = os.environ['SHAREPOINT_SITE'], client_id = os.environ['SHAREPOINT_CLIENT_ID'], client_secret = os.environ['SHAREPOINT_CLIENT_SECRET'])
-		filename = "CommVault.xlsx"
+		filename = "CommVault client backup volume (GB) with BS and NSS relations.xlsx"
 		source = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename)
 		destination_file = 'systemoversikt/import/'+filename
 		sp.download(sharepoint_location = source, local_location = destination_file)
