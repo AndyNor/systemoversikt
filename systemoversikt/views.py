@@ -4457,6 +4457,8 @@ def ad_gruppeanalyse(request):
 
 		for gr in sikkerhetsgrupper_oppsplittet:
 			stripped_gr = gr.strip()
+			if "\\" in stripped_gr:
+				stripped_gr = stripped_gr.split("\\")[1]
 			try:
 				sikkerhetsgrupper.append(ADgroup.objects.get(common_name=stripped_gr))
 			except:
