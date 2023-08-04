@@ -25,7 +25,7 @@
 	<tbody>
 	{% for s in systemer %}
 	<tr>
-		<td>{{ s.systemnavn }}</td>
+		<td><a href="/admin/systemoversikt/system/{{s.pk}}/change/">{{ s.systemnavn }}</a></td>
 		<td>{{ s.driftsmodell_foreignkey|default:"Ukjent" }}</td>
 		<td>{{ s.bs_system_referanse|default:"Ikke koblet" }}</td>
 		<td>{{ s.systemeier|default:"Ukjent" }}</td>
