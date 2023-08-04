@@ -3841,7 +3841,6 @@ class System(models.Model):
 			)
 	systemnavn = models.CharField(
 			verbose_name="Systemnavn",
-			unique=True,
 			max_length=100,
 			blank=False,
 			null=False,
@@ -3878,10 +3877,10 @@ class System(models.Model):
 	systemforvalter = models.ForeignKey(
 			to=Virksomhet,
 			related_name='systemer_systemforvalter',
-			on_delete=models.SET_NULL,
+			on_delete=models.PROTECT,
 			verbose_name="Organisatorisk systemforvalter",
-			blank=True,
-			null=True,
+			blank=False,
+			null=False,
 			help_text=u"Den virksomhet som har ansvar for forvaltning av systemet. Normalt en etat underlagt byrådsavdeling som har systemeierskapet",
 			)
 	systemforvalter_kontaktpersoner_referanse = models.ManyToManyField(
@@ -4411,6 +4410,8 @@ class System(models.Model):
 		help_text=u"Understøtter systemet en kritisk funksjon? Kategorier basert på rammeverket fra DSB.")
 	history = HistoricalRecords()
 
+
+	unique_together = ('systemnavn', 'systemforvalter')
 
 	def __str__(self):
 		try:
