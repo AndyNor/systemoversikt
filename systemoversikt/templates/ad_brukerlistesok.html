@@ -38,6 +38,7 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
+		<th class="filter-false"></th>
 		<th>Aktiv</th>
 		<th>Navn</th>
 		<th>Brukernavn</th>
@@ -59,6 +60,7 @@
 	{% for user in users %}
 
 	<tr>
+		<td>{{ forloop.counter }}</td>
 		<td>{{ user.profile.accountdisable|yesno:"Nei,Ja,?" }}</td>
 		{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
 		<td>{{user.first_name}} {{user.last_name}}</td>
