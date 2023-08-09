@@ -166,8 +166,7 @@ class Command(BaseCommand):
 			user.profile.whenCreated = whenCreated
 
 			try:
-				time_str = attrs["pwdLastSet"][0].decode().split('.')[0]
-				pwdLastSet = datetime.datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
+				pwdLastSet = microsoft_date_decode(attrs["pwdLastSet"][0].decode())
 			except (KeyError, ValueError):
 				pwdLastSet = None
 			user.profile.pwdLastSet = pwdLastSet
