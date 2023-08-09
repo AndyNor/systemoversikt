@@ -2990,6 +2990,11 @@ def programvaredetaljer(request, pk):
 	if not request.user.has_perm(required_permissions):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+
+	siste_endringer_antall = 10
+	content_type = ContentType.objects.get_for_model(Programvare)
+	siste_endringer = LogEntry.objects.filter(content_type=content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
+
 	programvare = Programvare.objects.get(pk=pk)
 	programvarebruk = ProgramvareBruk.objects.filter(programvare=pk, ibruk=True).order_by("brukergruppe")
 	behandlinger = BehandlingerPersonopplysninger.objects.filter(programvarer=pk).order_by("funksjonsomraade")
@@ -2998,6 +3003,8 @@ def programvaredetaljer(request, pk):
 		'programvare': programvare,
 		'programvarebruk': programvarebruk,
 		'behandlinger': behandlinger,
+		'siste_endringer': siste_endringer,
+		'siste_endringer_antall': siste_endringer_antall,
 	})
 
 

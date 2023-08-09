@@ -141,6 +141,9 @@
 		<hr>
 	{% endif %}
 
-	Data sist oppdatert {{ programvare.sist_oppdatert|date:'Y-m-d' }} ({{ programvare.sist_oppdatert|naturaltime }})
+	Endringslogg (siste {{ siste_endringer_antall }})<br>
+	{% for endring in siste_endringer %}
+		{{ endring.action_time|date:"Y-m-d" }} av {{ endring.user.get_full_name|default:endring.user }}<br>
+	{% endfor %}
 
 {% endblock hovedinnhold %}
