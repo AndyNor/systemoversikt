@@ -15,14 +15,14 @@
 
 {% block hovedinnhold %}
 
-	<p>For å legge til et system i denne kategorien må du velge kategorien fra systemets redigeringsside.</p>
+	<p>For å legge til et system eller programvare i denne kategorien må du velge kategorien fra systemet/programvarens redigeringsside.</p>
 
-	<h6>Følgende {{ systemer.count }} systemer er registrert</h6>
+	<h6>Systemer</h6>
 	{% include "system_include_hurtigvisning.html" %}
 
 	<hr>
 
-	<h6>Følgende {{ programvarer.count }} programvarer er registrert</h6>
+	<h6>Programvarer</h6>
 	{% include "programvare_include.html" %}
 
 {% endblock hovedinnhold %}

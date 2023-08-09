@@ -2,15 +2,15 @@
 {% load templatetags %}
 
 {% block underoverskrift %}
-	Registrer bruk for {{ system.systemnavn }}
+	Registrer bruk for {{ target_name }}
 {% endblock underoverskrift %}
 
 {% block main_content %}
-<p>Når du krysser av for en ny virksomhet, opprettes det en "tom" men aktiv systembruk. Lokale vurderinger kan legges til i etterkant.
+<p>Når du krysser av for en ny virksomhet, opprettes det en "tom" men aktiv bruk. Lokale vurderinger og kontaktpersoner kan du legge til i etterkant.
 <p>Når du fjerner et kryss, oppdateres informasjonen om bruken med at den ikke lenger er aktiv. Informasjonen beholdes, men vises ikke lenger.
 </p>
 
-<h5><a href="{% url 'systemdetaljer' system.pk %}#bruk">Tilbake til systemet</a></h5>
+<h5><a href="{{ back_link }}#bruk">Tilbake</a></h5>
 
 <hr>
 

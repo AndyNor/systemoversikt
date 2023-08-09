@@ -32,8 +32,11 @@
 		class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Endre informasjon om systemet</a><br>
 	{% endif %}
 
+	<hr>
+
 	<h6>{{ systemdetaljer.systembeskrivelse|linebreaks }}</h6>
 
+	<hr>
 
 	{% if systemdetaljer.alias %}
 		Alias: {% for alias in systemdetaljer.alias_oppdelt %} <span class="badge badge-light">{{ alias }}</span> {% endfor %}</li>

@@ -3350,25 +3350,31 @@ class Programvare(models.Model):
 			null=False,
 			help_text=u"",
 			)
-	programvarekategori = models.IntegerField(
-			choices=PROGRAMVAREKATEGORI_VALG,
-			verbose_name="Programvaretype",
+	alias = models.TextField(
+			verbose_name="Alias",
 			blank=True,
 			null=True,
-			help_text=u"",
+			help_text=u"Alternative navn på programvaren for å avhjelpe søk. Kun enkeltord. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje. Disse alias brukes også for å søke opp tilgangsgrupper tilhørende systemet.",
+			)
+	programvarekategori = models.IntegerField(
+			choices=PROGRAMVAREKATEGORI_VALG,
+			verbose_name="Tilpassing",
+			blank=True,
+			null=True,
+			help_text=u"Er programvaren spesialtilpasset våre behov?",
 			)
 	programvaretyper = models.ManyToManyField(
 			to=Systemtype,
 			related_name='programvare_programvaretyper',
-			verbose_name="Programvaretype(r)",
+			verbose_name="Programvaretype",
 			blank=True,
-			help_text=u"",
+			help_text=u"Kategori programvare?",
 			)
 	programvarebeskrivelse = models.TextField(
 			verbose_name="Programvarebeskrivelse",
 			blank=True,
 			null=True,
-			help_text=u"",
+			help_text=u"Beskriv gjerne lisensmodell og hvilken periode lisens er skaffet for. Kommenter gjerne også om det er noe spesielt med måten applikasjonen er publisert på.",
 			)
 	programvareleverandor = models.ManyToManyField(
 			to=Leverandor,
@@ -3380,11 +3386,11 @@ class Programvare(models.Model):
 	kategorier = models.ManyToManyField(
 			to=SystemKategori,
 			related_name='programvare_systemkategorier',
-			verbose_name="Kategori(er)",
+			verbose_name="Kategorier",
 			blank=True,
 			help_text=u"")
 	kommentar = models.TextField(
-			verbose_name="Kommentar (fritekst)",
+			verbose_name="Kommentar (ikke bruk)",
 			blank=True,
 			null=True,
 			help_text=u"",
@@ -3430,10 +3436,20 @@ class Programvare(models.Model):
 			blank=True, null=True,
 			help_text=u"Besnyttes av UKE for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
 			)
+	systemdokumentasjon_url = models.URLField(
+			verbose_name="Systemdokumentasjon",
+			max_length=600,
+			blank=True,
+			null=True,
+			help_text=u"URL til systemdokumentasjon",
+			)
 	history = HistoricalRecords()
 
 	def __str__(self):
 		return u'%s' % (self.programvarenavn)
+
+	def alias_oppdelt(self):
+		return self.alias.split()
 
 	class Meta:
 		verbose_name_plural = "Programvarer: programvarer"

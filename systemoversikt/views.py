@@ -2744,19 +2744,19 @@ def search(request):
 	except:
 		pass
 
-
-	try:
-		u = User.objects.get(username__iexact=search_term)
-		return redirect('bruker_detaljer', u.pk)
-	except:
-		pass
+	if len(search_term) > 4: # det er noen få brukernavn som er identiske med systemnavn..
+		try:
+			u = User.objects.get(username__iexact=search_term)
+			return redirect('bruker_detaljer', u.pk)
+		except:
+			pass
 
 
 	if search_term != '':
 		aktuelle_systemer = System.objects.filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
 		#Her ønsker vi å vise treff i beskrivelsesfeltet, men samtidig ikke vise systemer på nytt
 		potensielle_systemer = System.objects.filter(Q(systembeskrivelse__icontains=search_term) & ~Q(pk__in=aktuelle_systemer))
-		aktuelle_programvarer = Programvare.objects.filter(programvarenavn__icontains=search_term)
+		aktuelle_programvarer = Programvare.objects.filter(Q(programvarenavn__icontains=search_term)|Q(alias__icontains=search_term))
 		domenetreff = SystemUrl.objects.filter(domene__icontains=search_term)
 		aktuelle_leverandorer = Leverandor.objects.filter(leverandor_navn__icontains=search_term)
 		aktuelle_personer = User.objects.filter(username__iexact=search_term)
@@ -2911,18 +2911,75 @@ def registrer_bruk(request, system):
 			except:
 				virksomheter_template.append({"virksomhet": virk, "bruk": None})
 
-		#virksomheter_med_bruk = SystemBruk.objects.filter(system=system_instans)
-		#vmb = [bruk.brukergruppe.pk for bruk in virksomheter_med_bruk]
-		#manglende_virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True).exclude(pk__in=vmb)
-
 		return render(request, 'system_registrer_bruk.html', {
 			'request': request,
-			'system': system_instans,
+			'target': system_instans,
+			'target_name': system_instans.systemnavn,
+			'back_link': reverse('systemdetaljer', args=[system_instans.pk]),
 			'virksomheter_template': virksomheter_template,
-			#'virksomheter_uten_bruk': manglende_virksomheter,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+
+def registrer_bruk_programvare(request, programvare):
+	from django.core.exceptions import ObjectDoesNotExist
+	"""
+	Forenklet metode for å legge til bruk av programvare ved avkryssing
+	Tilgangsstyring: Må kunne legge til programvarebruk
+	"""
+	required_permissions = 'systemoversikt.add_programvarebruk'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	programvare_instans = Programvare.objects.get(pk=programvare)
+	alle_virksomheter = list(Virksomhet.objects.all())
+
+	if request.POST:
+		virksomheter = request.POST.getlist("virksomheter", "")
+		for str_virksomhet in virksomheter:
+			virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
+			alle_virksomheter.remove(virksomhet)
+			try:
+				bruk = ProgramvareBruk.objects.get(brukergruppe=virksomhet, programvare=programvare_instans)
+				if bruk.ibruk == False:
+					bruk.ibruk = True
+					bruk.save()
+					print("Satt %s aktiv" % bruk)
+			except ObjectDoesNotExist:
+				bruk = ProgramvareBruk.objects.create(
+					brukergruppe=virksomhet,
+					programvare=programvare_instans,
+					ibruk=True,
+				)
+				print("Opprettet %s" % bruk)
+		for virk in alle_virksomheter: # alle som er igjen, ble ikke merket, merk som ikke i bruk
+			try:
+				bruk = ProgramvareBruk.objects.get(programvare=programvare_instans, brukergruppe=virk)
+				if bruk.ibruk == True:
+					bruk.ibruk = False
+					bruk.save()
+					print("Satt %s deaktiv" % bruk)
+			except ObjectDoesNotExist:
+				pass # trenger ikke sette et ikke-eksisterende objekt
+		return redirect('programvaredetaljer', programvare_instans.pk)
+
+	virksomheter_template = list()
+	for virk in Virksomhet.objects.filter(ordinar_virksomhet=True):
+		try:
+			bruk = ProgramvareBruk.objects.get(programvare=programvare_instans, brukergruppe=virk, ibruk=True)
+			virksomheter_template.append({"virksomhet": virk, "bruk": bruk})
+		except:
+			virksomheter_template.append({"virksomhet": virk, "bruk": None})
+
+	return render(request, 'system_registrer_bruk.html', {
+		'request': request,
+		'target': programvare_instans,
+		'target_name': programvare_instans.programvarenavn,
+		'back_link': reverse('programvaredetaljer', args=[programvare_instans.pk]),
+		'virksomheter_template': virksomheter_template,
+	})
 
 
 def programvaredetaljer(request, pk):

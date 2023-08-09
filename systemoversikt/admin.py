@@ -879,24 +879,44 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 	def get_ordering(self, request):
 		return [Lower('programvarenavn')]
 
+
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('programvaredetaljer', kwargs={'pk': obj.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('programvaredetaljer', kwargs={'pk': obj.pk}))
+		return super().response_change(request, obj)
+
 	autocomplete_fields = (
 		'programvareleverandor',
+		'programvaretyper',
 		)
 
 	fieldsets = (
 		('Initiell registrering', {
 			'fields': (
-				('programvarenavn', 'klargjort_ny_sikkerhetsmodell'),
-				('livslop_status', 'programvaretyper', 'programvarekategori',),
+				('programvarenavn', 'programvaretyper', 'programvarekategori',),
+				('alias',),
+				'programvareleverandor',
+				'programvarebeskrivelse',
+				'livslop_status',
+				'klargjort_ny_sikkerhetsmodell',
 			),
 		}),
 		('Detaljer om programvare', {
-			'description': '<h3>Dette er informasjon som kan fylles ut senere</h3>',
 			'fields': (
-				('programvareleverandor'),
+				'systemdokumentasjon_url',
+				'kategorier',
 				('strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet'),
-				('programvarebeskrivelse', 'kommentar'),
-				('kategorier'),
+			),
+		}),
+		('Utfases', {
+			'classes': ('collapse',),
+			'fields': (
+				'kommentar',
 			),
 		}),
 	)
@@ -979,21 +999,20 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 	fieldsets = (
 			('Initiell registrering', {
 				'fields': (
-					'brukergruppe',
 					'programvare',
+					('brukergruppe', 'antall_brukere',),
+					'ibruk',
 					'lokal_kontakt',
+					('funksjonell_egnethet', 'teknisk_egnethet',),
 					'kommentar',
-					'strategisk_egnethet',
-					'funksjonell_egnethet',
-					'teknisk_egnethet',
 				),
 			}),
-			('Diverse', {
+			('Utfases', {
 				'classes': ('collapse',),
 				'fields': (
+					'strategisk_egnethet',
 					'livslop_status',
 					'programvareeierskap',
-					'antall_brukere',
 					'avtaletype',
 					'avtalestatus',
 					'avtale_kan_avropes',

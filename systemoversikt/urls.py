@@ -72,6 +72,7 @@ urlpatterns = [
 	re_path(r'^systemer/utfaset/$', views.systemer_utfaset, name='systemer_utfaset'),
 	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/$', views.bruksdetaljer, name='bruksdetaljer'),
 	re_path(r'^systemer/bruk/registrer_bruk/(?P<system>\d{1,8})/$', views.registrer_bruk, name='registrer_bruk'),
+	re_path(r'^programvare/bruk/registrer_bruk/(?P<programvare>\d{1,8})/$', views.registrer_bruk_programvare, name='registrer_bruk_programvare'),
 	re_path(r'^systemer/systemklassifisering/$', views.systemklassifisering_detaljer, name='systemklassifisering_tom'),
 	re_path(r'^systemer/systemklassifisering/(?P<kriterie>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	re_path(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),
