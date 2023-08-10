@@ -270,6 +270,8 @@ urlpatterns = [
 	re_path(r'^get-api/tilgangsgrupper/$', views.tilgangsgrupper_api, name='tilgangsgrupper_api'), # (det er innført behov for API-key)
 	re_path(r'^ukecsirt/ipsok/api/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # (det er innført behov for API-key)
 	re_path(r'^ukecsirt/maskinsok/api/$', views.csirt_maskinlookup_api, name='csirt_maskinlookup_api'), # (det er innført behov for API-key)
+	re_path(r'^get-api/tilganger/$', views.get_api_tilganger, name='get_api_tilganger'), # (det er innført behov for API-key)
+
 
 	# import og konvertering
 	re_path(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),

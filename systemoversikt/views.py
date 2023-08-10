@@ -6007,6 +6007,37 @@ def iga_api(request):
 	return JsonResponse(data, safe=False)
 
 
+def get_api_tilganger(request):
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="get_api_tilganger").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+
+	business_services = set()
+	email = request.GET.get('email', '').strip()
+	try:
+		user = User.objects.get(email=email)
+	except:
+		return JsonResponse({"error": "No match for email address or no email address given. Please supply GET variable 'email' (?email=<>)."}, safe=False, content_type='application/json; charset=utf-8')
+
+
+	for system in user.ansvarlig_brukernavn.system_systemeier_kontaktpersoner.all():
+		if hasattr(system, "bs_system_referanse"):
+			business_services.add(system.bs_system_referanse.navn)
+
+	for system in user.ansvarlig_brukernavn.system_systemforvalter_kontaktpersoner.all():
+		if hasattr(system, "bs_system_referanse"):
+			business_services.add(system.bs_system_referanse.navn)
+
+	result = {"email": email, "username": user.username, "business_services": list(business_services)}
+
+	return JsonResponse(result, safe=False)
+
+
+
 def csirt_maskinlookup_api(request):
 	#ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Innkommende kall")
 	if not request.method == "GET":
