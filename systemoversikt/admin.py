@@ -910,12 +910,13 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 			'fields': (
 				'systemdokumentasjon_url',
 				'kategorier',
-				('strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet'),
+				('funksjonell_egnethet', 'teknisk_egnethet'),
 			),
 		}),
 		('Utfases', {
 			'classes': ('collapse',),
 			'fields': (
+				'strategisk_egnethet',
 				'kommentar',
 			),
 		}),
