@@ -126,7 +126,7 @@ class LOSAdmin(admin.ModelAdmin):
 	list_display = ('verdi', 'unik_id', 'kategori_ref', 'active',)
 	search_fields = ('verdi', 'parent_id__verdi',)
 	autocomplete_fields = ('kategori_ref', 'parent_id', 'buffer_alle_tema',)
-	list_filter = ('active', 'parent_id')
+	list_filter = ('active',)
 
 	def get_queryset(self, request):
 		qs = super().get_queryset(request)
