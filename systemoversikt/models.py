@@ -6996,8 +6996,9 @@ class LOS(models.Model):
 
 
 	def er_tema(self):
-		if self.kategori_ref.verdi == "Tema":
-			return True
+		if self.kategori_ref:
+			if self.kategori_ref.verdi == "Tema":
+				return True
 		return False
 
 
