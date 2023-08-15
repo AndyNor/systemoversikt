@@ -23,6 +23,7 @@
 	<table id="systemer" class="tablesorter excel">
 		<thead>
 			<tr>
+				<th class="filter-false"></th>
 			{% if perms.systemoversikt.change_system %}
 				<th class="filter-false"></th>
 			{% endif %}
@@ -40,6 +41,7 @@
 	<tbody>
 	{% for item in systemer_ansvarlig_for %}
 	<tr>
+		<td>{{ forloop.counter}}</td>
 		{% if perms.systemoversikt.change_system %}
 			<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</td>
 		{% endif %}
@@ -114,5 +116,19 @@
 	{% endfor %}
 	</tbody>
 	</table>
+
+	<hr>
+
+	<h5>Unike eiere</h5>
+	{% for ansvarlig in unike_ansvarlige_eiere %}
+		<li>{{ansvarlig}}</li>
+	{% endfor %}
+
+	<hr>
+
+	<h5>Unike forvaltere</h5>
+	{% for ansvarlig in unike_ansvarlige_forvaltere %}
+		<li>{{ansvarlig}}</li>
+	{% endfor %}
 
 {% endblock hovedinnhold %}

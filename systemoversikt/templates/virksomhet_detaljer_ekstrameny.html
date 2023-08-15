@@ -46,7 +46,10 @@
 		<a href="{{ url_all_bruk_for_virksomhet }}" class="btn btn-sm btn-link {% if url_all_bruk_for_virksomhet in request.path %}fremhev{% endif %}">Vår bruk</a><br>
 
 	{% url 'systemer_virksomhet_ansvarlig_for' pk=virksomhet.pk as url_systemer_virksomhet_ansvarlig_for %}
-		<a href="{{ url_systemer_virksomhet_ansvarlig_for }}" class="btn btn-sm btn-link {% if url_systemer_virksomhet_ansvarlig_for in request.path %}fremhev{% endif %}">Vi eier/forvalter</a><br>
+		<a href="{{ url_systemer_virksomhet_ansvarlig_for }}" class="btn btn-sm btn-link {% if url_systemer_virksomhet_ansvarlig_for in request.path %}fremhev{% endif %}">Vi eier/forvalter (alt)</a><br>
+
+	{% url 'systemer_virksomhet_ansvarlig_for_fip' pk=virksomhet.pk as url_systemer_virksomhet_ansvarlig_for_fip %}
+		<a href="{{ url_systemer_virksomhet_ansvarlig_for_fip }}" class="btn btn-sm btn-link {% if url_systemer_virksomhet_ansvarlig_for_fip in request.path %}fremhev{% endif %}">Vi eier/forvalter (kun FIP)</a><br>
 
 	{% url 'driftsmodell_virksomhet' pk=virksomhet.pk as url_detaljer_virksomhet %}
 		<a href="{{ url_detaljer_virksomhet }}" class="btn btn-sm btn-link {% if url_detaljer_virksomhet in request.path %}fremhev{% endif %}">Vi  drifter</a><br>

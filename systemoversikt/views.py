@@ -3708,9 +3708,45 @@ def systemer_virksomhet_ansvarlig_for(request, pk):
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
 
+	unike_ansvarlige_eiere = set()
+	unike_ansvarlige_forvaltere = set()
+	for system in systemer_ansvarlig_for:
+		for ansvarlig in system.systemforvalter_kontaktpersoner_referanse.all():
+			unike_ansvarlige_forvaltere.add(ansvarlig)
+		for ansvarlig in system.systemeier_kontaktpersoner_referanse.all():
+			unike_ansvarlige_eiere.add(ansvarlig)
+
 	return render(request, 'virksomhet_systemer_ansvarfor.html', {
 		'virksomhet': virksomhet,
 		'systemer_ansvarlig_for': systemer_ansvarlig_for,
+		'unike_ansvarlige_eiere': list(unike_ansvarlige_eiere),
+		'unike_ansvarlige_forvaltere': list(unike_ansvarlige_forvaltere),
+	})
+
+
+def systemer_virksomhet_ansvarlig_for_fip(request, pk):
+
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
+	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).filter(driftsmodell_foreignkey__ansvarlig_virksomhet=uke).order_by(Lower('systemnavn'))
+
+	unike_ansvarlige_eiere = set()
+	unike_ansvarlige_forvaltere = set()
+	for system in systemer_ansvarlig_for:
+		for ansvarlig in system.systemforvalter_kontaktpersoner_referanse.all():
+			unike_ansvarlige_forvaltere.add(ansvarlig)
+		for ansvarlig in system.systemeier_kontaktpersoner_referanse.all():
+			unike_ansvarlige_eiere.add(ansvarlig)
+
+	return render(request, 'virksomhet_systemer_ansvarfor.html', {
+		'virksomhet': virksomhet,
+		'systemer_ansvarlig_for': systemer_ansvarlig_for,
+		'unike_ansvarlige_eiere': list(unike_ansvarlige_eiere),
+		'unike_ansvarlige_forvaltere': list(unike_ansvarlige_forvaltere),
 	})
 
 
