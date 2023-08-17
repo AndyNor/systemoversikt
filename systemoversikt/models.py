@@ -3432,9 +3432,9 @@ class Programvare(models.Model):
 			)
 	klargjort_ny_sikkerhetsmodell = models.IntegerField(
 			choices=VALG_KLARGJORT_SIKKERHETSMODELL,
-			verbose_name="Status klargjort for ny sikkerhetsmodell",
+			verbose_name="Status SMART-klienter",
 			blank=True, null=True,
-			help_text=u"Besnyttes av UKE for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
+			help_text=u"Besnyttes for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
 			)
 	systemdokumentasjon_url = models.URLField(
 			verbose_name="Systemdokumentasjon",
