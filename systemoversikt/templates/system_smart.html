@@ -1,0 +1,85 @@
+{% extends "system_index.html" %}
+{% load static %}
+
+
+{% block underoverskrift %}
+	SMART-kartlegging (alle systemer)
+{% endblock underoverskrift %}
+
+{% block main_content %}
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Klargjort</th>
+		<th>Systemnavn</th>
+
+		<th>Driftsmodell</th>
+		<th>BS/BSS</th>
+		<th>Livsløp</th>
+		<th>Antall servere</th>
+		<th>Antall databaser</th>
+
+		<th>Organisatorisk systemeier</th>
+		<th>Organisatorisk forvalter</th>
+
+		<th>Systemeiere</th>
+		<th>Systemeiere e-post</th>
+		<th>Forvaltere</th>
+		<th>Forvaltere e-post</th>
+
+		<th>Utviklingsleverandør</th>
+		<th>Applikasjonsleverandør</th>
+
+		<th>Bruk av virksomheter</th>
+
+
+	</tr>
+	</thead>
+	<tbody>
+	{% for s in systemer %}
+	<tr>
+		<td>{{ s.get_klargjort_ny_sikkerhetsmodell_display }}</td>
+		<td>{{ s }}</td>
+
+		<td>{{ s.driftsmodell_foreignkey|default:"Ukjent" }}</td>
+		<td>{{ s.bs_system_referanse|default:"Ikke koblet" }}</td>
+		<td>{{ s.get_livslop_status_display }}</td>
+		<td>{{ s.bs_system_referanse.ant_devices|default:"Ukjent" }}</td>
+		<td>{{ s.bs_system_referanse.ant_databaser|default:"Ukjent" }}</td>
+
+		<td>{{ s.systemeier|default:"Ukjent" }}</td>
+		<td>{{ s.systemforvalter|default:"Ukjent" }}</td>
+
+		<td>{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}{{ ansvarlig}}<br>{% endfor%}</td>
+		<td>{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}{{ ansvarlig.brukernavn.email|default:"(sluttet)" }}<br>{% endfor%}</td>
+
+		<td>{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}{{ ansvarlig }}<br>{% endfor%}</td>
+		<td>{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}{{ ansvarlig.brukernavn.email|default:"(sluttet)" }}<br>{% endfor%}</td>
+
+		<td>
+			{% for lev in s.systemleverandor.all %}
+				{{ lev|default:"Ukjent" }}<br>
+			{% endfor %}
+		</td>
+		<td>
+			{% for lev in s.applikasjonsdriftleverandor.all %}
+				{{ lev|default:"Ukjent" }}<br>
+			{% endfor %}
+		</td>
+
+		<td>
+			{{ s.systembruk_system.all|length }}<br>
+			{% for bruk in s.systembruk_system.all %}
+				{{ bruk.brukergruppe.virksomhetsforkortelse }}
+			{% endfor %}
+		</td>
+
+
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock main_content %}

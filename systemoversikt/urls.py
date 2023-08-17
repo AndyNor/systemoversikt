@@ -64,6 +64,7 @@ urlpatterns = [
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
 	re_path(r'^systemer/forvalteroversikt/$', views.alle_systemer_forvaltere, name='alle_systemer_forvaltere'),
+	re_path(r'^systemer/smartkartlegging/$', views.alle_systemer_smart, name='alle_systemer_smart'),
 	re_path(r'^systemer/pakket/$', views.systemer_pakket, name='systemer_pakket'),
 	re_path(r'^systemer/vurderinger/$', views.systemer_vurderinger, name='systemer_vurderinger'),
 	re_path(r'^systemer/FIP/endoflife/$', views.systemer_EOL, name='systemer_EOL'),

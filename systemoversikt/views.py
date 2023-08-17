@@ -2702,6 +2702,19 @@ def alle_systemer_forvaltere(request):
 	})
 
 
+def alle_systemer_smart(request):
+	required_permissions = 'systemoversikt.view_system'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	systemer = System.objects.all()
+
+	return render(request, 'system_smart.html', {
+		'request': request,
+		'systemer': systemer,
+	})
+
+
 
 
 def alle_systemer(request):
