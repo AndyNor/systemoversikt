@@ -20,6 +20,9 @@
 	<h6>Importerte data fra økonomisystemet</h6>
 
 	Viser fakturaer som er inntil {{dager_gamle}} dager gamle.
+	<a class="badge badge-light" href="?historikk=90">90 dager</a>
+	<a class="badge badge-light" href="?historikk=365">1 år</a>
+	<a class="badge badge-light" href="?historikk=1825">5 år</a>
 
 	<hr>
 	<form action="{% url 'ubw_multiselect' %}" id="ubw_multiselect" method="post">

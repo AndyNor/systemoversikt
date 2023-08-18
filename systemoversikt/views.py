@@ -6948,7 +6948,7 @@ def ubw_enhet(request, pk):
 			#	print(error_message)
 
 		uploaded_file = None
-		dager_gamle = 365
+		dager_gamle = int(request.GET.get("historikk", 365))
 		tidsgrense = datetime.date.today() - datetime.timedelta(days=dager_gamle)
 		gyldige_fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).filter(ubw_voucher_date__gte=tidsgrense)
 		nye_fakturaer = gyldige_fakturaer.filter(metadata_reference=None).order_by('-ubw_voucher_date')
