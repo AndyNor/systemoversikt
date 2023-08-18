@@ -11,6 +11,7 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
+		<th>ID</th>
 		<th>Klargjort</th>
 		<th>Systemnavn</th>
 
@@ -42,6 +43,7 @@
 	<tbody>
 	{% for s in systemer %}
 	<tr>
+		<td>{{ s.pk }}</td>
 		<td>{{ s.get_klargjort_ny_sikkerhetsmodell_display }}</td>
 		<td>{{ s }}</td>
 
