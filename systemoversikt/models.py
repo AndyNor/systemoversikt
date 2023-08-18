@@ -22,13 +22,15 @@ User.add_to_class("__str__", new_display_name)
 VALG_KLARGJORT_SIKKERHETSMODELL = (
 	(None, "❔ Ikke vurdert"),
 	(1, "🟢 Klargjort via Azure Web Application Proxy"),
-	(2, "🟢 Klargjort via Citrix"),
-	(3, "🟢 Skytjeneste med Azure AD-pålogging"),
+	(2, "🟢 Klargjort som Citrix publisert applikasjon"),
+	(3, "🟢 Direkteeksponert webtjeneste med Azure AD-pålogging"),
 	(4, "🟢 Desktopapplikasjon uten avhengigheter, ferdig pakket"),
+	(9, "🟢 Publisert på dedikerte AVD-maskiner"),
 	(5, "🟡 Ikke klargjort, skal til Azure Web Application Proxy"),
-	(9, "🟡 Ikke klargjort, skytjeneste som skal til Azure AD"),
-	(6, "🟡 Ikke klargjort, skal til Citrix"),
+	(9, "🟡 Ikke klargjort, skal direkteeksponeres og ha Azure AD autentisering"),
+	(6, "🟡 Ikke klargjort, skal publiseres som Citrix strømmet app"),
 	(7, "🟡 Ikke klargjort, skal kun pakkes som desktop applikasjon"),
+	(10, "🟡 Ikke klargjort, skal til dedikerte AVD-maskiner"),
 	(8, "🔴 Ingen løsning klar enda"),
 )
 
