@@ -14,6 +14,9 @@
 		<th>Klargjort</th>
 		<th>Systemnavn</th>
 
+		<th>Klassifisering</th>
+		<th>Grensesnitt</th>
+
 		<th>Driftsmodell</th>
 		<th>BS/BSS</th>
 		<th>Livsløp</th>
@@ -41,6 +44,13 @@
 	<tr>
 		<td>{{ s.get_klargjort_ny_sikkerhetsmodell_display }}</td>
 		<td>{{ s }}</td>
+
+		<td>{{ s.get_systemeierskapsmodell_display|default:"-" }}</td>
+		<td>
+			{% for systemtype in s.systemtyper.all %}
+				{{ systemtype }}<br>
+			{% endfor %}
+		</td>
 
 		<td>{{ s.driftsmodell_foreignkey|default:"Ukjent" }}</td>
 		<td>{{ s.bs_system_referanse|default:"Ikke koblet" }}</td>
