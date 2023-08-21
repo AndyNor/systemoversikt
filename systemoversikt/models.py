@@ -687,10 +687,10 @@ class AnsattID(models.Model):
 
 LISENCE_VALG = (
 	(0, 'Ingen'),
-	(1, 'Tykklient'),
-	(2, 'Flerbruker'),
-	(3, 'Ingen epost'),
-	(4, 'Education'),
+	(1, 'G1 E3 (Tykklient)'),
+	(2, 'G2 F3 (Flerbruker)'),
+	(3, 'G3 F1 (Ingen epost)'),
+	(4, 'G4 A3 (Education)'),
 )
 
 
