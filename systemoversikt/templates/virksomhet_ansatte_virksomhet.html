@@ -19,6 +19,7 @@
 		<thead>
 		<tr>
 			<th>Type bruker</th>
+			<th>Brukernavn</th>
 			<th>Navn</th>
 			<th>O365-lisens (planlagt)</th>
 			<th>E-post</th>
@@ -30,6 +31,7 @@
 		{% for b in brukere %}
 		<tr>
 			<td>{{ b.profile.account_type }}</td>
+			<td>{{ b.username }}</td>
 			<td>{{ b.profile.displayName }}</td>
 			<td>{{ b.profile.get_o365lisence_display }}</td>
 			<td>{{ b.email }}</td>
