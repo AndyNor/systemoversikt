@@ -685,6 +685,15 @@ class AnsattID(models.Model):
 		return u'%s' % (self.ansattnr)
 
 
+LISENCE_VALG = (
+	(0, 'Ingen'),
+	(1, 'Tykklient'),
+	(2, 'Flerbruker'),
+	(3, 'Ingen epost'),
+	(4, 'Education'),
+)
+
+
 class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhørende virksomhet. Vurderer å fjerne denne.
 	#https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
 	user = models.OneToOneField(
@@ -851,6 +860,13 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			verbose_name="dont_req_preauth",
 			blank=True,
 			null=True,
+			)
+	o365lisence = models.IntegerField(
+			choices=LISENCE_VALG,
+			verbose_name="Lisenser Office365",
+			blank=True,
+			default=0,
+			help_text=u'Settes automatisk',
 			)
 	# med vilje er det ikke HistoricalRecords() på denne
 

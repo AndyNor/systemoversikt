@@ -25,7 +25,7 @@
 	</form>
 
 	<hr>
-
+	<h5>Treff på hoster</h5>
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>IP-adresse</th>
@@ -37,7 +37,7 @@
 		<th>Lastbalanserte tjenester (pools)</th>
 	</thead>
 	<tbody>
-	{% for ip in matches %}
+	{% for ip in host_matches %}
 		<tr>
 			<td>{{ip.ip_address}}</td>
 			<td>
@@ -76,8 +76,14 @@
 	</tbody>
 	</table>
 
+	<h5>Treff på nettverk</h5>
+	{% for network in network_matches %}
+		{{ network.ip_address }}/{{ network.subnet_mask }}: {{network.comment}}<br>
+	{% endfor %}
+
 {% if not_ip_addresses %}
-	<p>Følgende ting ble ikke funnet:
+	<hr>
+	<h5>Ingen treff på</h5>
 	<ul style="column-count:10;">
 	{% for item in not_ip_addresses %}
 		<li>{{item}}</li>

@@ -4915,7 +4915,8 @@ def alle_ip(request):
 		import ipaddress
 
 		search_term = request.POST.get('search_term', '').strip()  # strip removes trailing and leading space
-		matches = []
+		host_matches = []
+		network_matches = []
 		not_ip_addresses = []
 
 		if search_term != "":
@@ -4926,10 +4927,20 @@ def alle_ip(request):
 			for term in search_terms:
 				try:
 					match = NetworkIPAddress.objects.get(ip_address=term)
-					matches.append(match)
+					host_matches.append(match)
+					continue
 				except:
-					not_ip_addresses.append(term)
-					continue  # skip this term
+					pass
+
+				try:
+					match = NetworkContainer.objects.get(ip_address=term)
+					network_matches.append(match)
+					continue
+				except:
+					pass
+
+				not_ip_addresses.append(term)
+				continue  # skip this term
 
 
 				#def dns_live(ip_address): # not used anymore
@@ -4941,7 +4952,8 @@ def alle_ip(request):
 
 		return render(request, 'cmdb_ip_sok.html', {
 			'request': request,
-			'matches': matches,
+			'host_matches': host_matches,
+			'network_matches': network_matches,
 			'search_term': search_term,
 			'not_ip_addresses': not_ip_addresses,
 		})
