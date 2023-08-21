@@ -18,8 +18,9 @@
 	<table id="Ansatte_{{virksomhet.virksomhetsforkortelse}}_{{dato}}" class="table table-sm tablesorter excel">
 		<thead>
 		<tr>
-			<td>Type bruker</td>
+			<th>Type bruker</th>
 			<th>Navn</th>
+			<th>O365-lisens (planlagt)</th>
 			<th>E-post</th>
 			<th>Avdeling</th>
 			<th>Seksjon</th>
@@ -30,6 +31,7 @@
 		<tr>
 			<td>{{ b.profile.account_type }}</td>
 			<td>{{ b.profile.displayName }}</td>
+			<td>{{ b.profile.get_o365lisence_display }}</td>
 			<td>{{ b.email }}</td>
 			<td>{{ b.profile.avdeling }}</td>
 			<td>{{ b.profile.org_unit }}</td>

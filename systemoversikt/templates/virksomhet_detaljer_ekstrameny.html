@@ -21,20 +21,20 @@
 
 
 	<hr><p style="color: grey;">Brukertilgang</p>
+	{% url 'ansatte_virksomhet' pk=virksomhet.pk as url_ansatte_virksomhet %}
+		<a class="btn btn-sm btn-link {% if url_ansatte_virksomhet in request.path %}fremhev{% endif %}" href="{{url_ansatte_virksomhet}}">Alle aktive brukere</a><br>
+
+	{% url 'virksomhet_sikkerhetsavvik' pk=virksomhet.pk as url_virksomhet_sikkerhetsavvik %}
+		<a class="btn btn-sm btn-link {% if url_virksomhet_sikkerhetsavvik in request.path %}fremhev{% endif %}" href="{{url_virksomhet_sikkerhetsavvik}}">Avvik fra sikkerhetsmodell</a><br>
+
 	{% url 'virksomhet_prkadmin' pk=virksomhet.pk as url_prkadmins %}
 		<a class="btn btn-sm btn-link {% if url_prkadmins in request.path %}fremhev{% endif %}" href="{{url_prkadmins}}">PRK-administratorer</a><br>
-
-	{% url 'ansatte_virksomhet' pk=virksomhet.pk as url_ansatte_virksomhet %}
-		<a class="btn btn-sm btn-link {% if url_ansatte_virksomhet in request.path %}fremhev{% endif %}" href="{{url_ansatte_virksomhet}}">Brukerliste e-post</a><br>
 
 	{% url 'passwordexpire' pk=virksomhet.pk as url_passwordexpire %}
 		<a class="btn btn-sm btn-link {% if url_passwordexpire in request.path %}fremhev{% endif %}" href="{{url_passwordexpire}}">Passordutløp</a><br>
 
 	{% url 'tom_epost' pk=virksomhet.pk as url_tom_epost %}
 		<a class="btn btn-sm btn-link {% if url_tom_epost in request.path %}fremhev{% endif %}" href="{{url_tom_epost}}">Uten e-post</a><br>
-
-	{% url 'virksomhet_sikkerhetsavvik' pk=virksomhet.pk as url_virksomhet_sikkerhetsavvik %}
-		<a class="btn btn-sm btn-link {% if url_virksomhet_sikkerhetsavvik in request.path %}fremhev{% endif %}" href="{{url_virksomhet_sikkerhetsavvik}}">Avvik fra sikkerhetsmodell</a><br>
 
 	{% url 'virksomhet_leverandortilgang' pk=virksomhet.pk as url_virksomhet_leverandortilgang %}
 		<a class="btn btn-sm btn-link {% if url_virksomhet_leverandortilgang in request.path %}fremhev{% endif %}" href="{{url_virksomhet_leverandortilgang}}">Vår leverandørtilgang</a><br>
