@@ -38,7 +38,8 @@
 
 			<td>
 				{% url 'drift_beredskap_for_eier' 163 item.systemeier.pk as url_beredskap_for_eier %}
-				<a href="{{ url_beredskap_for_eier }}">Driftes av UKE for {{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a>
+				{{ item.systemeier.virksomhetsforkortelse|default:"-" }}<br>
+				<a href="{{ url_beredskap_for_eier }}">Vis alt UKE drifter</a>
 			</td>
 
 			<td>
