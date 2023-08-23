@@ -55,7 +55,7 @@
 		<a href="{{ url_detaljer_virksomhet }}" class="btn btn-sm btn-link {% if url_detaljer_virksomhet in request.path %}fremhev{% endif %}">Vi  drifter</a><br>
 
 	{% url 'drift_beredskap' pk=virksomhet.pk as url_drift_beredskap %}
-		<a href="{{ url_drift_beredskap }}" class="btn btn-sm btn-link {% if url_drift_beredskap in request.path %}fremhev{% endif %}">Systemprioriteringer</a><br>
+		<a href="{{ url_drift_beredskap }}" class="btn btn-sm btn-link {% if url_drift_beredskap in request.path %}fremhev{% endif %}">Systemprioriteringer (vi drifter selv)</a><br>
 
 	{% url 'virksomhet_urler' pk=virksomhet.pk as url_virksomhet_urler %}
 		<a href="{{ url_virksomhet_urler }}" class="btn btn-sm btn-link {% if url_virksomhet_urler in request.path %}fremhev{% endif %}">Våre domener</a><br>

@@ -4112,31 +4112,26 @@ def drift_beredskap(request, pk, eier=None):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	required_permissions = 'systemoversikt.view_system'
-	if request.user.has_perm(required_permissions):
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True)
+	if eier:
+		eier = Virksomhet.objects.get(pk=eier)
+		systemer_drifter = systemer_drifter.filter(systemeier=eier)
+	systemer_drifter = systemer_drifter.order_by('tilgjengelighetsvurdering')
 
-		virksomhet = Virksomhet.objects.get(pk=pk)
-		systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True)
-		if eier:
-			eier = Virksomhet.objects.get(pk=eier)
-			systemer_drifter = systemer_drifter.filter(systemeier=eier)
-		systemer_drifter = systemer_drifter.order_by('tilgjengelighetsvurdering')
+	if eier:
+		ikke_infra = []
+		for s in systemer_drifter:
+			if not s.er_infrastruktur():
+				ikke_infra.append(s)
+		systemer_drifter = ikke_infra
 
-		if eier:
-			ikke_infra = []
-			for s in systemer_drifter:
-				if not s.er_infrastruktur():
-					ikke_infra.append(s)
-			systemer_drifter = ikke_infra
-		return render(request, 'systemer_drifter_prioritering.html', {
-			'virksomhet': virksomhet,
-			'request': request,
-			'systemer': systemer_drifter,
-			'eier': eier,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
+	return render(request, 'systemer_drifter_prioritering.html', {
+		'virksomhet': virksomhet,
+		'request': request,
+		'systemer': systemer_drifter,
+		'eier': eier,
+	})
 
 
 def driftsmodell_virksomhet(request, pk):
