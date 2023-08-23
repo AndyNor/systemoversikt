@@ -216,7 +216,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					timeout=self.get_settings('OIDC_TIMEOUT', None),
 					proxies=self.get_settings('OIDC_PROXY', None))
 			except:
-				logger.error("Auth: get_userinfo: No contact with Microsoft Azure AD")
+				logger.error("Auth: get_userinfo: Ingen kontakt med Microsoft Azure AD")
 				return None
 
 			user_response.raise_for_status()
@@ -234,36 +234,39 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			user.is_staff = True
 
 			if settings.AD_DIRECT_ACCESS == True:
-				ad_groups = ldap_users_securitygroups(user.username)
-				claim_groups = []
-				for g in ad_groups:
-					kartotek_kompatibelt = "/" + g.split(',')[0].split('CN=')[1]
-					claim_groups.append(kartotek_kompatibelt)
+				try:
+					ad_groups = ldap_users_securitygroups(user.username)
+					claim_groups = []
+					for g in ad_groups:
+						kartotek_kompatibelt = "/" + g.split(',')[0].split('CN=')[1]
+						claim_groups.append(kartotek_kompatibelt)
 
 
-				superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
-				if superuser_group in claim_groups:
-					user.is_superuser = True
-					messages.warning(self.request, 'Du ble logget på som systemadministrator')
-					claim_groups.remove(superuser_group)
-				else:
-					user.is_superuser = False
+					superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
+					if superuser_group in claim_groups:
+						user.is_superuser = True
+						messages.warning(self.request, 'Du ble logget på som systemadministrator')
+						claim_groups.remove(superuser_group)
+					else:
+						user.is_superuser = False
 
-				# Slette alle rettigheter
-				current_memberships = user.groups.values_list('name', flat=True)
-				for existing_group in current_memberships:
-					g = Group.objects.get(name=existing_group)
-					g.user_set.remove(user)
+					# Slette alle rettigheter
+					current_memberships = user.groups.values_list('name', flat=True)
+					for existing_group in current_memberships:
+						g = Group.objects.get(name=existing_group)
+						g.user_set.remove(user)
 
-				# Legge til nye bekreftede rettigheter
-				for group in claim_groups:
-					try:
-						g = Group.objects.get(name=group)
-						#messages.info(self.request, 'Rettighet: %s' % g)
-						g.user_set.add(user)
-					except:
-						#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
-						pass
+					# Legge til nye bekreftede rettigheter
+					for group in claim_groups:
+						try:
+							g = Group.objects.get(name=group)
+							#messages.info(self.request, 'Rettighet: %s' % g)
+							g.user_set.add(user)
+						except:
+							#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
+							pass
+				except:
+					logger.error("Auth: update_user: Ingen kontakt med AD. Kan ikke oppdatere tilganger.")
 
 			else:
 				messages.info(self.request, 'Kan ikke oppdatere tilganger, ingen kontakt med AD')
