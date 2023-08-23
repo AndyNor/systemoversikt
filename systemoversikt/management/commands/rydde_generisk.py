@@ -21,6 +21,17 @@ class Command(BaseCommand):
 		teller_rettet = 0
 		for system in System.objects.all():
 
+			if system.er_ibruk():
+				if system.ibruk == False:
+					system.ibruk = True
+					system.save()
+					print(f"Rettet ibruk på {system} til sann.")
+			else:
+				if system.ibruk == True:
+					system.ibruk = False
+					system.save()
+					print(f"Rettet ibruk på {system} til usann.")
+
 			# fikse manglende tilgjengelighetsvurdering
 			if system.tilgjengelighetsvurdering == None:
 				system.tilgjengelighetsvurdering = 6

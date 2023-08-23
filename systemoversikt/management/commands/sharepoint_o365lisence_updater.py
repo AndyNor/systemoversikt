@@ -37,14 +37,15 @@ class Command(BaseCommand):
 			if row["Type"] == "TYKKLIENT":
 				username = row["Owner"].replace("OSLOFELLES\\", "").lower()
 				unike_personer_i_client_ower_data.add(username)
+		unike_personer_i_client_ower_data = list(unike_personer_i_client_ower_data)
 
-		organisatorik_education = []
+		#organisatorik_education = []
 
-		print("Opprydding")
-		for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Ekstern']):
-			if profile.o365lisence != 0:
-				profile.o365lisence = 0
-				profile.save()
+		#print("Opprydding")
+		#for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Ekstern']):
+		#	if profile.o365lisence != 0:
+		#		profile.o365lisence = 0
+		#		profile.save()
 
 
 		print("Starter gjennomgang")
@@ -63,7 +64,7 @@ class Command(BaseCommand):
 
 
 			# har tykklient, har e-post, putt i gruppe 1
-			if profile.user.username in list(unike_personer_i_client_ower_data):
+			if profile.user.username in unike_personer_i_client_ower_data:
 				profile.o365lisence = 1
 				profile.save()
 				print(f"{forloop_counter} {profile} i gruppe 1: Tykk klient")
