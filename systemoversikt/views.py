@@ -1092,6 +1092,52 @@ def ansatte_virksomhet(request, pk):
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	brukere = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False)
 
+	# relevante grupper knyttet til lisens
+	ad_grupper = [
+		{"gruppe":"DS-OFFICE365_BASIS_STANDARD", "navn": "Office 365 E1"},
+		{"gruppe":"DS-OFFICE365E5S_BASIS_STANDARDE1", "navn": "Office 365 E1"},
+		{"gruppe":"DS-OFFICE365SPES_BOOKINGS_O365E1", "navn": "Office 365 E1"},
+
+		{"gruppe":"DS-OFFICE365_BASIS_OPPOE3", "navn": "Office 365 E3"},
+		{"gruppe":"DS-OFFICE365_BASIS_STANDARD_O365E3", "navn": "Office 365 E3"},
+		{"gruppe":"DS-OFFICE365SPES_BOOKINGS_O365E3", "navn": "Office 365 E3"},
+
+		{"gruppe":"DS-OFFICE365_BASIS_STANDARD_M365E3", "navn": "Microsoft 365 E3"},
+		{"gruppe":"DS-OFFICE365E5S_BASIS_STANDARDE3", "navn": "Microsoft 365 E3"},
+		{"gruppe":"DS-OFFICE365SPES_BOOKINGS_M365E3", "navn": "Microsoft 365 E3"},
+	]
+
+	#bufre alle gruppemedlemmer direkte under var ad_grupper
+	for idx, group in enumerate(ad_grupper):
+		try:
+			adgroup = ADgroup.objects.get(common_name=group["gruppe"])
+		except:
+			continue
+
+		adgroup_members = json.loads(adgroup.member)
+		adgroup_members_clean = set()
+		for m in adgroup_members:
+			try:
+				adgroup_members_clean.add(m.split(",")[0].split("=")[1].lower())
+			except:
+				pass
+		group["adgroup_members_clean"] = list(adgroup_members_clean)
+
+	# slå opp for hver bruker
+	for bruker in brukere:
+		match = False
+		for group in ad_grupper:
+			try:
+				members = group["adgroup_members_clean"]
+			except:
+				members = [] # skjer dersom gruppen ikke finnes
+			if bruker.username.lower() in members:
+				bruker.dagens365lisens = group["navn"]
+				match = True
+				break
+		if not match:
+			bruker.dagens365lisens = "-"
+
 	return render(request, 'virksomhet_ansatte_virksomhet.html', {
 		'request': request,
 		'virksomhet': virksomhet,
