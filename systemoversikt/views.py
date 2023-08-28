@@ -5351,6 +5351,7 @@ def alle_cmdbref(request):
 				.filter(systemtyper__er_infrastruktur=False)
 				.filter(ibruk=True)
 				.order_by('driftsmodell_foreignkey')
+				.distinct()
 		)
 
 		bs_utenfor_fip = (System.objects
@@ -5359,6 +5360,7 @@ def alle_cmdbref(request):
 				.filter(systemtyper__er_infrastruktur=False)
 				.filter(ibruk=True)
 				.order_by('driftsmodell_foreignkey')
+				.distinct()
 		)
 
 
