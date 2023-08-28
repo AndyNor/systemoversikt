@@ -68,7 +68,7 @@
 	<tbody>
 	{% for s in system_uten_bs %}
 	<tr>
-		<td>{{ s.systemnavn }}</td>
+		<td><a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s.systemnavn }}</a></td>
 		<td>{{ s.driftsmodell_foreignkey }}</td>
 		<td>{{ s.systemeier|default:"?" }}</td>
 		<td>{{ s.systemforvalter|default:"?" }}</td>
