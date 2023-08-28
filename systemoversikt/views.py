@@ -5344,7 +5344,14 @@ def alle_cmdbref(request):
 		virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
 		#print(virksomhet_uke)
 		# Alle plattformer knyttet til UKE som ikke er en underplattform (overordnet er None)
-		system_uten_bs = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke).filter(driftsmodell_foreignkey__overordnet_plattform=None).filter(bs_system_referanse=None).filter(ibruk=True).order_by('driftsmodell_foreignkey')
+		system_uten_bs = (System.objects
+				.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke)
+				.filter(driftsmodell_foreignkey__overordnet_plattform=None)
+				.filter(bs_system_referanse=None)
+				.filter(systemtyper__er_infrastruktur=False)
+				.filter(ibruk=True)
+				.order_by('driftsmodell_foreignkey')
+		)
 
 
 		return render(request, 'cmdb_bs_sok.html', {
