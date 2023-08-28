@@ -77,6 +77,28 @@
 	</tbody>
 	</table>
 
+	<h4>Systemer med Business Service kobling med angitt plattform annen enn felles IKT-plattform.</h4>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Systemnavn</th>
+		<th>Plattform</th>
+		<th>Systemeier</th>
+		<th>Systemforvalter</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for s in bs_utenfor_fip %}
+	<tr>
+		<td><a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s.systemnavn }}</a></td>
+		<td>{{ s.driftsmodell_foreignkey }}</td>
+		<td>{{ s.systemeier|default:"?" }}</td>
+		<td>{{ s.systemforvalter|default:"?" }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
 
 	<h4>Utfasede business services som fremdeles er koblet mot et system</h4>
 	<table class="table table-sm tablesorter excel">

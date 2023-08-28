@@ -5347,7 +5347,15 @@ def alle_cmdbref(request):
 		system_uten_bs = (System.objects
 				.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke)
 				.filter(driftsmodell_foreignkey__overordnet_plattform=None)
-				.filter(bs_system_referanse=None)
+				.filter(bs_system_referanse=None) # skal ikke ha kobling
+				.filter(systemtyper__er_infrastruktur=False)
+				.filter(ibruk=True)
+				.order_by('driftsmodell_foreignkey')
+		)
+
+		bs_utenfor_fip = (System.objects
+				.filter(~Q(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke))
+				.filter(~Q(bs_system_referanse=None)) # må ha kobling
 				.filter(systemtyper__er_infrastruktur=False)
 				.filter(ibruk=True)
 				.order_by('driftsmodell_foreignkey')
@@ -5361,6 +5369,7 @@ def alle_cmdbref(request):
 			'bs_uten_system': bs_uten_system,
 			'utfasede_bs': utfasede_bs,
 			'system_uten_bs': system_uten_bs,
+			'bs_utenfor_fip': bs_utenfor_fip,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
