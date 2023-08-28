@@ -2819,14 +2819,14 @@ def search(request):
 		domenetreff = SystemUrl.objects.filter(domene__icontains=search_term)
 		aktuelle_leverandorer = Leverandor.objects.filter(leverandor_navn__icontains=search_term)
 		aktuelle_personer = User.objects.filter(username__iexact=search_term)
-		business_services = CMDBbs.objects.filter(navn__icontains=search_term)
+		business_services = CMDBRef.objects.filter(navn__icontains=search_term)
 	else:
 		aktuelle_systemer = System.objects.none()
 		potensielle_systemer = System.objects.none()
 		aktuelle_programvarer = Programvare.objects.none()
 		domenetreff = SystemUrl.objects.none()
 		aktuelle_leverandorer = Leverandor.objects.none()
-		business_services = CMDBbs.objects.none()
+		business_services = CMDBRef.objects.none()
 
 	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
 		return redirect('systemdetaljer', aktuelle_systemer[0].pk)

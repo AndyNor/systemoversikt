@@ -67,12 +67,12 @@
 	</div>
 
 	<hr>
-	<h6>Treff på business service</h6>
+	<h6>Treff på business sub services</h6>
 
 
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
-	{% for bs in business_services %}
-		<a href="{% url 'cmdb_bss' bs.pk %}">{{bs}}</a>
+	{% for bss in business_services %}
+		<a href="{% url 'cmdb_bss' bss.pk %}">{{bss}}</a>
 	{% endfor %}
 	</div>
 
