@@ -5341,6 +5341,18 @@ def alle_cmdbref(request):
 
 		bs_uten_system = CMDBbs.objects.filter(operational_status=True).filter(Q(systemreferanse=None)).filter(eksponert_for_bruker=True)
 		utfasede_bs = CMDBbs.objects.filter(operational_status=False).filter(~Q(systemreferanse=None))
+
+		skjult_server_db = []
+		skjult_server_db_candidates = (CMDBbs.objects
+				.filter(operational_status=True)
+				.filter(eksponert_for_bruker=False)
+				.distinct()
+		)
+		for bs in skjult_server_db_candidates:
+			if bs.ant_devices() > 0 or bs.ant_databaser() > 0:
+				skjult_server_db.append(bs)
+
+
 		virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
 		#print(virksomhet_uke)
 		# Alle plattformer knyttet til UKE som ikke er en underplattform (overordnet er None)
@@ -5372,6 +5384,7 @@ def alle_cmdbref(request):
 			'utfasede_bs': utfasede_bs,
 			'system_uten_bs': system_uten_bs,
 			'bs_utenfor_fip': bs_utenfor_fip,
+			'skjult_server_db': skjult_server_db,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

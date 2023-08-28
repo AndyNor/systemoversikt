@@ -55,6 +55,27 @@
 	</table>
 
 
+	<h4>Skjulte business services med databaser eller servere</h4>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Business service</th>
+		<th>Endre</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for bs in skjult_server_db %}
+	<tr>
+		<td><a href="/cmdb/bs/?search_term={{bs.navn}}">{{ bs.navn }}</a></td>
+		<td>
+			<a href="/admin/systemoversikt/cmdbbs/{{ bs.pk }}/change/">✎ rediger</a>
+		</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
 	<h4>Systemer angitt å kjøre på felles IKT-plattform som ikke er koblet til en business service</h4>
 	<p>Viser ikke infrastrukturkomponenter</p>
 	<table class="table table-sm tablesorter excel">
