@@ -83,6 +83,7 @@
 	<thead>
 	<tr>
 		<th>Systemnavn</th>
+		<th>BS</th>
 		<th>Plattform</th>
 		<th>Systemeier</th>
 		<th>Systemforvalter</th>
@@ -92,6 +93,7 @@
 	{% for s in bs_utenfor_fip %}
 	<tr>
 		<td><a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s.systemnavn }}</a></td>
+		<td><a href="/cmdb/bs/?search_term={{s.bs_system_referanse.navn}}">{{ s.bs_system_referanse.navn }}</a></td>
 		<td>{{ s.driftsmodell_foreignkey }}</td>
 		<td>{{ s.systemeier|default:"?" }}</td>
 		<td>{{ s.systemforvalter|default:"?" }}</td>
