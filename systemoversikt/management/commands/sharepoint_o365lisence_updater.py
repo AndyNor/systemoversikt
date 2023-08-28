@@ -38,6 +38,7 @@ class Command(BaseCommand):
 				username = row["Owner"].replace("OSLOFELLES\\", "").lower()
 				unike_personer_i_client_ower_data.add(username)
 		unike_personer_i_client_ower_data = list(unike_personer_i_client_ower_data)
+		print(len(unike_personer_i_client_ower_data))
 
 		#organisatorik_education = []
 
@@ -56,25 +57,25 @@ class Command(BaseCommand):
 			if profile.user.email == "":
 				profile.o365lisence = 3
 				profile.save()
-				print(f"{forloop_counter} {profile} i gruppe 3: mangler epost")
+				#print(f"{forloop_counter} {profile} i gruppe 3: mangler epost")
 				continue
 
 			# er i organisatorik_education, putt i gruppe 4
-
+			# mangler informasjon nødvendig for å utføre kobling. Disse havner derfor i gruppe 2 flerbruker for nå.
 
 
 			# har tykklient, har e-post, putt i gruppe 1
 			if profile.user.username in unike_personer_i_client_ower_data:
 				profile.o365lisence = 1
 				profile.save()
-				print(f"{forloop_counter} {profile} i gruppe 1: Tykk klient")
+				#print(f"{forloop_counter} {profile} i gruppe 1: Tykk klient")
 				continue
 
 
 			# Alle andre aktive personer, putt i gruppe 2
 			profile.o365lisence = 2
 			profile.save()
-			print(f"{forloop_counter} {profile} i gruppe 2: Flerbruker")
+			#print(f"{forloop_counter} {profile} i gruppe 2: Flerbruker")
 			continue
 
 
