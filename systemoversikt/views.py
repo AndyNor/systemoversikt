@@ -5335,7 +5335,7 @@ def alle_cmdbref(request):
 		elif len(search_term) < 1: # if one or less, return nothing
 			cmdbref = CMDBRef.objects.none()
 		else:
-			cmdbref = CMDBRef.objects.filter(navn__icontains=search_term)
+			cmdbref = CMDBRef.objects.filter(navn__icontains=search_term, parent_ref__navn__icontains=search_term)
 
 		cmdbref = cmdbref.order_by("-operational_status", "parent_ref__navn", Lower("navn"))
 
