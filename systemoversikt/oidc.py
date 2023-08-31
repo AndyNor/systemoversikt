@@ -152,7 +152,11 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					message = "%s logget inn." % email
 					ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 					messages.info(self.request, 'Pålogging via brukernavn feilet. Prøver pålogging via e-postadresse...')
-					return self.UserModel.objects.filter(email__iexact=email)
+					try:
+						return self.UserModel.objects.filter(email__iexact=email)
+					except:
+						logger.error("Auth: filter_user_by_claim: No match for %s" % email)
+						return self.UserModel.objects.none()
 				except:
 					messages.info(self.request, 'Kunne ikke logge inn med e-postadresse.')
 
