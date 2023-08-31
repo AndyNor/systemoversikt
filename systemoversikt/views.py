@@ -2638,7 +2638,7 @@ def systemdetaljer(request, pk):
 
 	avhengigheter_reverse_systemer = System.objects.filter(avhengigheter_referanser=pk)
 
-	print(len(avhengigheter_graf["nodes"]))
+	#print(len(avhengigheter_graf["nodes"]))
 
 
 	return render(request, 'system_detaljer.html', {
