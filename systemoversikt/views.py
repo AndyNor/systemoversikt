@@ -388,7 +388,7 @@ def o365_avvik(request):
 				g["medlemmer"] = gruppe.membercount
 				return g
 			except:
-				print("fant ikke gruppen %s" % g)
+				#print("fant ikke gruppen %s" % g)
 				return g
 
 		statistikk_azure = []
@@ -1374,7 +1374,7 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 					return (["Over 500 personer"], "")
 			except:
 				logg = "" # deaktivert # += "feilet for %s " % (g)
-				print("fant ikke gruppen %s" % g)
+				#print("fant ikke gruppen %s" % g)
 
 		brukerliste = [b.lower() for b in brukerliste]
 		brukerobjekter = User.objects.filter(username__in=brukerliste)
