@@ -388,7 +388,7 @@ def o365_avvik(request):
 				g["medlemmer"] = gruppe.membercount
 				return g
 			except:
-				print("fant ikke gruppen %s" % g)
+				#print("fant ikke gruppen %s" % g)
 				return g
 
 		statistikk_azure = []
@@ -1374,7 +1374,7 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 					return (["Over 500 personer"], "")
 			except:
 				logg = "" # deaktivert # += "feilet for %s " % (g)
-				print("fant ikke gruppen %s" % g)
+				#print("fant ikke gruppen %s" % g)
 
 		brukerliste = [b.lower() for b in brukerliste]
 		brukerobjekter = User.objects.filter(username__in=brukerliste)
@@ -2753,7 +2753,7 @@ def alle_systemer_smart(request):
 	if not request.user.has_perm(required_permissions):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	systemer = System.objects.all()
+	systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
 
 	return render(request, 'system_smart.html', {
 		'request': request,

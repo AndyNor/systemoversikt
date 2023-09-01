@@ -133,6 +133,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			#messages.info(self.request, '%s' % claims)
 			username = claims.get('samAccountName')
 			email = claims.get('email')
+			#print(f"username {username}, email {email}")
 
 
 			if username: # primærmetode
