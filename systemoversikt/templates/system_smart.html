@@ -5,93 +5,142 @@
 {% block underoverskrift %}
 	SMART-kartlegging (alle systemer)
 {% endblock underoverskrift %}
-
 {% block main_content %}
 
-	<table class="table table-sm tablesorter excel">
-	<thead>
-	<tr>
-		<th>ID</th>
-		<th>Klargjort</th>
-		<th>Systemnavn</th>
-
-		<th>Klassifisering</th>
-		<th>Grensesnitt</th>
-
-		<th>Driftsmodell</th>
-		<th>BS/BSS</th>
-		<th>Livsløp</th>
-		<th>Antall servere</th>
-		<th>Antall databaser</th>
-
-		<th>Organisatorisk systemeier</th>
-		<th>Organisatorisk forvalter</th>
-
-		<th>Systemeiere</th>
-		<th>Systemeiere e-post</th>
-		<th>Forvaltere</th>
-		<th>Forvaltere e-post</th>
-
-		<th>Utviklingsleverandør</th>
-		<th>Applikasjonsleverandør</th>
-
-		<th>Bruk av virksomheter</th>
+Denne rapporten inneholder først detaljer for alle systemer som er koblet til en driftsplattform UKE er ansvarlig for.
+Under denne tabellen finner du en ny tabell med alle integrasjoner som er registrert.
 
 
-	</tr>
-	</thead>
-	<tbody>
-	{% for s in systemer %}
+<table class="table table-sm tablesorter excel">
+<thead>
+<tr>
+	<th>ID</th>
+	<th>Klargjort</th>
+	<th>Systemnavn</th>
+
+	<th>Klassifisering</th>
+	<th>Grensesnitt</th>
+
+	<th>Driftsmodell</th>
+	<th>BS/BSS</th>
+	<th>Livsløp</th>
+	<th>Antall servere</th>
+	<th>Antall databaser</th>
+
+	<th>Organisatorisk systemeier</th>
+	<th>Organisatorisk forvalter</th>
+
+	<th>Systemeiere</th>
+	<th>Systemeiere e-post</th>
+	<th>Forvaltere</th>
+	<th>Forvaltere e-post</th>
+
+	<th>Utviklingsleverandør</th>
+	<th>Applikasjonsleverandør</th>
+
+	<th>Bruk av virksomheter</th>
+
+
+</tr>
+</thead>
+<tbody>
+{% for s in systemer %}
+<tr>
+	<td>{{ s.pk }}</td>
+	<td>{{ s.get_klargjort_ny_sikkerhetsmodell_display }}</td>
+	<td>{{ s }}</td>
+
+	<td>{{ s.get_systemeierskapsmodell_display|default:"-" }}</td>
+	<td>
+		{% for systemtype in s.systemtyper.all %}
+			{{ systemtype }}<br>
+		{% endfor %}
+	</td>
+
+	<td>{{ s.driftsmodell_foreignkey|default:"Ukjent" }}</td>
+	<td>{{ s.bs_system_referanse|default:"Ikke koblet" }}</td>
+	<td>{{ s.get_livslop_status_display }}</td>
+	<td>{{ s.bs_system_referanse.ant_devices|default:"Ukjent" }}</td>
+	<td>{{ s.bs_system_referanse.ant_databaser|default:"Ukjent" }}</td>
+
+	<td>{{ s.systemeier|default:"Ukjent" }}</td>
+	<td>{{ s.systemforvalter|default:"Ukjent" }}</td>
+
+	<td>{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}{{ ansvarlig}}<br>{% endfor%}</td>
+	<td>{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}{{ ansvarlig.brukernavn.email|default:"(sluttet)" }}<br>{% endfor%}</td>
+
+	<td>{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}{{ ansvarlig }}<br>{% endfor%}</td>
+	<td>{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}{{ ansvarlig.brukernavn.email|default:"(sluttet)" }}<br>{% endfor%}</td>
+
+	<td>
+		{% for lev in s.systemleverandor.all %}
+			{{ lev|default:"Ukjent" }}<br>
+		{% endfor %}
+	</td>
+	<td>
+		{% for lev in s.applikasjonsdriftleverandor.all %}
+			{{ lev|default:"Ukjent" }}<br>
+		{% endfor %}
+	</td>
+
+	<td>
+		{{ s.systembruk_system.all|length }}<br>
+		{% for bruk in s.systembruk_system.all %}
+			{{ bruk.brukergruppe.virksomhetsforkortelse }}
+		{% endfor %}
+	</td>
+
+
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<hr>
+
+<table class="table table-sm tablesorter excel">
+<thead>
+<tr>
+	<th>IDSource</th>
+	<th>SystemnavnSource</th>
+	<th>Type avhengighet</th>
+	<th>IDTarget</th>
+	<th>SystemnavnTarget</th>
+</tr>
+</thead>
+<tbody>
+{% for s in systemer %}
+	{% for avhengighet in s.avhengigheter_referanser.all %}
 	<tr>
 		<td>{{ s.pk }}</td>
-		<td>{{ s.get_klargjort_ny_sikkerhetsmodell_display }}</td>
-		<td>{{ s }}</td>
-
-		<td>{{ s.get_systemeierskapsmodell_display|default:"-" }}</td>
-		<td>
-			{% for systemtype in s.systemtyper.all %}
-				{{ systemtype }}<br>
-			{% endfor %}
-		</td>
-
-		<td>{{ s.driftsmodell_foreignkey|default:"Ukjent" }}</td>
-		<td>{{ s.bs_system_referanse|default:"Ikke koblet" }}</td>
-		<td>{{ s.get_livslop_status_display }}</td>
-		<td>{{ s.bs_system_referanse.ant_devices|default:"Ukjent" }}</td>
-		<td>{{ s.bs_system_referanse.ant_databaser|default:"Ukjent" }}</td>
-
-		<td>{{ s.systemeier|default:"Ukjent" }}</td>
-		<td>{{ s.systemforvalter|default:"Ukjent" }}</td>
-
-		<td>{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}{{ ansvarlig}}<br>{% endfor%}</td>
-		<td>{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}{{ ansvarlig.brukernavn.email|default:"(sluttet)" }}<br>{% endfor%}</td>
-
-		<td>{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}{{ ansvarlig }}<br>{% endfor%}</td>
-		<td>{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}{{ ansvarlig.brukernavn.email|default:"(sluttet)" }}<br>{% endfor%}</td>
-
-		<td>
-			{% for lev in s.systemleverandor.all %}
-				{{ lev|default:"Ukjent" }}<br>
-			{% endfor %}
-		</td>
-		<td>
-			{% for lev in s.applikasjonsdriftleverandor.all %}
-				{{ lev|default:"Ukjent" }}<br>
-			{% endfor %}
-		</td>
-
-		<td>
-			{{ s.systembruk_system.all|length }}<br>
-			{% for bruk in s.systembruk_system.all %}
-				{{ bruk.brukergruppe.virksomhetsforkortelse }}
-			{% endfor %}
-		</td>
-
-
+		<td>{{ s.systemnavn }}</td>
+		<td>Systemtekniske avhengigheter til andre systemer</td>
+		<td>{{ avhengighet.pk }}</td>
+		<td>{{ avhengighet.systemnavn }}</td>
 	</tr>
 	{% endfor %}
-	</tbody>
-	</table>
 
+	{% for mottar in s.datautveksling_mottar_fra.all %}
+	<tr>
+		<td>{{ s.pk }}</td>
+		<td>{{ s.systemnavn }}</td>
+		<td>Mottar personopplysninger fra følgende systemer</td>
+		<td>{{ mottar.pk }}</td>
+		<td>{{ mottar.systemnavn }}</td>
+	</tr>
+	{% endfor %}
+
+	{% for avleverer in s.datautveksling_avleverer_til.all %}
+	<tr>
+		<td>{{ s.pk }}</td>
+		<td>{{ s.systemnavn }}</td>
+		<td>Avleverer personopplysninger til følgende systemer</td>
+		<td>{{ avleverer.pk }}</td>
+		<td>{{ avleverer.systemnavn }}</td>
+	</tr>
+	{% endfor %}
+{% endfor %}
+</tbody>
+</table>
 
 {% endblock main_content %}
