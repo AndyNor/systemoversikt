@@ -129,10 +129,11 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			# Return all users matching the specified username
 			# messages.info(self.request, 'Prøver å logge inn')
 			self.request.session['oidc-token'] = claims
-			logger.error("Auth: filter_user_by_claim: %s" % claims)
+			#logger.error("Auth: filter_user_by_claim: %s" % claims)
 			#messages.info(self.request, '%s' % claims)
 			username = claims.get('samAccountName')
 			email = claims.get('email')
+			#print(f"username {username}, email {email}")
 
 
 			if username: # primærmetode
