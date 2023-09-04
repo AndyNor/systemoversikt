@@ -363,53 +363,84 @@ def o365_avvik(request):
 	Viser alle avvik per virksomhet (cisco, bigip..)
 	Tilgjengelig for de som kan lese cmdb-data
 	"""
-	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		#logikk
-		grupper_azure = [
-			{"gruppe": "DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er vanlige brukere med office-standardlisens. I tillegg har alle på Citrix/AKS unntak."},
-			{"gruppe": "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er vanlige brukere med office-utvidet lisens. I tillegg har alle på Citrix/AKS unntak."},
-			{"gruppe": "DS-OFFICE365SVC_UNNTAK_KJENTENHET", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er for servicekontoer"},
-			{"gruppe": "DS-OFFICE365SVC_UNNTAK_MFA", "beskrivelse": "Unntak multifaktor autentisering", "kommentar": "Dette er antall service-kontoer. I tillegg har alle på Citrix/AKS unntak, samt møteromspaneler."},
-			{"gruppe": "DS-OFFICE365SPES_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Vanlige brukere"},
-			{"gruppe": "DS-OFFICE365SVC_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Servicekontoer"},
-			{"gruppe": "DS-OFFICE365SPES_UNNTAK_HOYRISIKO", "beskrivelse": "Oppkobling høyrisikoland", "kommentar": "Kina, Russland, Nord-Korea.."},
-		]
-
-		grupper_klient = [
-			{"gruppe": "DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT", "beskrivelse": "Lokal administrator", "kommentar": "Mulighet for lokaladministrator på klienter via MakeMeAdmin."},
-			{"gruppe": "DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE", "beskrivelse": "Nettleserutvidelser", "kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."},
-		]
-
-		def hent_statistikk(g):
-			try:
-				gruppe = ADgroup.objects.get(common_name__iexact=g["gruppe"])
-				g["medlemmer"] = gruppe.membercount
-				return g
-			except:
-				#print("fant ikke gruppen %s" % g)
-				return g
-
-		statistikk_azure = []
-		for g in grupper_azure:
-			statistikk_azure.append(hent_statistikk(g))
-
-		statistikk_klient = []
-		for g in grupper_klient:
-			statistikk_klient.append(hent_statistikk(g))
-
-		alle_virskomhet = Virksomhet.objects.filter(ordinar_virksomhet=True)
-
-		return render(request, 'cmdb_o365_avvik.html', {
-			'statistikk_azure': statistikk_azure,
-			'statistikk_klient': statistikk_klient,
-			'request': request,
-			'virksomheter': alle_virskomhet,
-		})
-	else:
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	#logikk
+	grupper_azure = [
+		{"gruppe": "DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er vanlige brukere med office-standardlisens. I tillegg har alle på Citrix/AKS unntak."},
+		{"gruppe": "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er vanlige brukere med office-utvidet lisens. I tillegg har alle på Citrix/AKS unntak."},
+		{"gruppe": "DS-OFFICE365SVC_UNNTAK_KJENTENHET", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er for servicekontoer"},
+		{"gruppe": "DS-OFFICE365SVC_UNNTAK_MFA", "beskrivelse": "Unntak multifaktor autentisering", "kommentar": "Dette er antall service-kontoer. I tillegg har alle på Citrix/AKS unntak, samt møteromspaneler."},
+		{"gruppe": "DS-OFFICE365SPES_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Vanlige brukere"},
+		{"gruppe": "DS-OFFICE365SVC_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Servicekontoer"},
+		{"gruppe": "DS-OFFICE365SPES_UNNTAK_HOYRISIKO", "beskrivelse": "Oppkobling høyrisikoland", "kommentar": "Kina, Russland, Nord-Korea.."},
+	]
+
+	grupper_klient = [
+		{"gruppe": "DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT", "beskrivelse": "Lokal administrator", "kommentar": "Mulighet for lokaladministrator på klienter via MakeMeAdmin."},
+		{"gruppe": "DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE", "beskrivelse": "Nettleserutvidelser", "kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."},
+	]
+
+	def hent_statistikk(g):
+		try:
+			gruppe = ADgroup.objects.get(common_name__iexact=g["gruppe"])
+			g["medlemmer"] = gruppe.membercount
+			return g
+		except:
+			#print("fant ikke gruppen %s" % g)
+			return g
+
+	statistikk_azure = []
+	for g in grupper_azure:
+		statistikk_azure.append(hent_statistikk(g))
+
+	statistikk_klient = []
+	for g in grupper_klient:
+		statistikk_klient.append(hent_statistikk(g))
+
+	alle_virskomhet = Virksomhet.objects.filter(ordinar_virksomhet=True)
+
+	return render(request, 'rapport_sikkerhetsavvik.html', {
+		'statistikk_azure': statistikk_azure,
+		'statistikk_klient': statistikk_klient,
+		'request': request,
+		'virksomheter': alle_virskomhet,
+	})
+
+
+
+
+
+def rapport_startside(request):
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	return render(request, 'rapport_startside.html', {
+		'request': request,
+	})
+
+
+def o365_lisenser(request):
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	data = []
+	data.append({"tekst": "Brukere i gruppe 1 - Tykk klient", "antall": len(User.objects.filter(profile__o365lisence=1))})
+	data.append({"tekst": "Brukere i gruppe 2 - Flerbruker", "antall": len(User.objects.filter(profile__o365lisence=2))})
+	data.append({"tekst": "Brukere i gruppe 3 - Mangler epost", "antall": len(User.objects.filter(profile__o365lisence=3))})
+	data.append({"tekst": "Brukere i gruppe 4 - Educaton", "antall": len(User.objects.filter(profile__o365lisence=4))})
+
+	virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True)
+
+	return render(request, 'rapport_o365_lisenser.html', {
+		'request': request,
+		'data': data,
+		'virksomheter': virksomheter,
+	})
 
 
 

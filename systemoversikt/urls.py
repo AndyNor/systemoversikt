@@ -57,6 +57,12 @@ urlpatterns = [
 	re_path(r'^admin/databasestatistikk/$', views.databasestatistikk, name='databasestatistikk'),
 
 
+	re_path(r'^rapport/startside/$', views.rapport_startside, name='rapport_startside'),
+	re_path(r'^rapport/sikkerhetsavvik/$', views.o365_avvik, name='o365_avvik'),
+	re_path(r'^rapport/o365_lisenser/$', views.o365_lisenser, name='o365_lisenser'),
+	re_path(r'^rapport/ad/drifttilgang/$', views.drifttilgang, name='drifttilgang'),
+	re_path(r'^rapport/ad/tbrukere/$', views.tbrukere, name='tbrukere'),
+
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 
 	re_path(r'^sok/$', views.search, name='search'),
@@ -176,7 +182,6 @@ urlpatterns = [
 	re_path(r'^cmdb/device/sok/$', views.maskin_sok, name='maskin_sok'),
 	re_path(r'^cmdb/azure/applications/$', views.azure_applications, name='azure_applications'),
 	re_path(r'^cmdb/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
-	re_path(r'^cmdb/o365_avvik/$', views.o365_avvik, name='o365_avvik'),
 	re_path(r'^cmdb/backup/$', views.cmdb_backup_index, name='cmdb_backup_index'),
 	re_path(r'^cmdb/adcs/$', views.cmdb_adcs_index, name='cmdb_adcs_index'),
 	re_path(r'^cmdb/uten_backup/$', views.cmdb_uten_backup, name='cmdb_uten_backup'),
@@ -194,8 +199,6 @@ urlpatterns = [
 
 	re_path(r'^cmdb/ad/leverandortilgang/$', views.leverandortilgang, name='leverandortilgang'),
 	re_path(r'^cmdb/ad/leverandortilgang/(?P<valgt_gruppe>[-._a-zA-Z0-9\s]{2,100})/$', views.leverandortilgang, name='leverandortilgang_detaljer'),
-	re_path(r'^cmdb/ad/drifttilgang/$', views.drifttilgang, name='drifttilgang'),
-	re_path(r'^cmdb/ad/tbrukere/$', views.tbrukere, name='tbrukere'),
 	re_path(r'^cmdb/bruker/logger/$', views.logger_users, name='logger_users'),
 	re_path(r'^cmdb/bruker/flereidenter/$', views.cmdb_ad_flere_brukeridenter, name='cmdb_ad_flere_brukeridenter'),
 

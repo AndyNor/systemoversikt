@@ -1,0 +1,28 @@
+{% extends "index.html" %}
+
+{% block sidemeny %}
+
+	<h6>Rapporter</h6>
+
+	{% url 'o365_avvik' as url_o365_avvik %}
+	<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}">Sikkerhetsavvik sluttbrukere</a>
+
+	{% url 'o365_lisenser' as url_o365_lisenser %}
+	<a href="{{ url_o365_lisenser }}" class="btn btn-sm btn-link {% if url_o365_lisenser in request.path %}fremhev{% endif %}">o365 lisenser</a>
+
+	{% url 'drifttilgang' as url_drifttilgang %}
+	<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Driftbrukere (tar tid)</a>
+
+	{% url 'drifttilgang' as url_drifttilgang %}
+	<a href="{{ url_drifttilgang }}?kilde=servicekontoer" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Servicekontoer (tar tid)</a>
+
+	{% url 'tbrukere' as url_tbrukere %}
+	<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a>
+
+{% endblock sidemeny %}
+
+{% block main_content %}
+	<h3>{% block overskrift %}{% endblock overskrift %}</h3>
+	{% block hovedinnhold %}{% endblock hovedinnhold %}
+{% endblock main_content %}
+

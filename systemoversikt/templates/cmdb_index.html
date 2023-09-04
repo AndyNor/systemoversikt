@@ -16,9 +16,6 @@
 	{% url 'azure_application_keys' as url_azure_application_keys %}
 	<a href="{{ url_azure_application_keys }}" class="btn btn-sm btn-link {% if url_azure_application_keys in request.path %}fremhev{% endif %}" >Nøkler og sertifikater</a>
 
-	{% url 'o365_avvik' as url_o365_avvik %}
-	<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}" >Sikkerhetsavvik</a>
-
 	{% url 'cmdb_uten_epost_stat' as url_cmdb_uten_epost_stat %}
 	<a href="{{ url_cmdb_uten_epost_stat }}" class="btn btn-sm btn-link {% if url_cmdb_uten_epost_stat in request.path %}fremhev{% endif %}" >Brukere uten e-post</a>
 
@@ -47,14 +44,6 @@
 	{% url 'leverandortilgang' as url_leverandortilgang %}
 	<a href="{{ url_leverandortilgang }}" class="btn btn-sm btn-link {% if url_leverandortilgang in request.path %}fremhev{% endif %}">Leverandørtilgang</a>
 
-	{% url 'drifttilgang' as url_drifttilgang %}
-	<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Driftbrukere (tar tid)</a>
-
-	{% url 'drifttilgang' as url_drifttilgang %}
-	<a href="{{ url_drifttilgang }}?kilde=servicekontoer" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Servicekontoer (tar tid)</a>
-
-	{% url 'tbrukere' as url_tbrukere %}
-	<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a>
 
 
 	{% block ekstrameny_ad %}{% endblock ekstrameny_ad %}
