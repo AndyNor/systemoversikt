@@ -49,60 +49,65 @@ class Command(BaseCommand):
 				profile.save()
 
 
-		print("Starter gjennomgang")
-		for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Intern']):
-			forloop_counter += 1
+		@transaction.atomic  # for speeding up database performance
+		def run():
 
-			# Noen virksomheter skal ikke ha lisens fra UKE
-			try:
-				if profile.virksomhet.virksomhetsforkortelse.upper() in ["UDE", "BYS", "VAV"]:
-					profile.o365lisence = 0
+			print("Starter gjennomgang")
+			for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Intern']):
+				forloop_counter += 1
+
+				# Noen virksomheter skal ikke ha lisens fra UKE
+				try:
+					if profile.virksomhet.virksomhetsforkortelse.upper() in ["UDE", "BYS", "VAV"]:
+						profile.o365lisence = 0
+						profile.save()
+						print(f"{forloop_counter} {profile} får ikke lisens fordi medlem i UDE, BYS eller VAV")
+						continue
+				except:
+					pass
+
+
+				# er i en seksjon som er knyttet til "barnehage", putt i gruppe 4
+				try:
+					if "barnehage" in profile.org_unit.ou.lower():
+						profile.o365lisence = 4
+						profile.save()
+						print(f"{forloop_counter} {profile} i gruppe 4: education")
+						continue
+				except:
+					pass
+
+				# mangler e-post, putt i gruppe 3
+				if profile.user.email == "":
+					profile.o365lisence = 3
 					profile.save()
-					print(f"{forloop_counter} {profile} får ikke lisens fordi medlem i UDE, BYS eller VAV")
+					print(f"{forloop_counter} {profile} i gruppe 3: mangler epost")
 					continue
-			except:
-				pass
 
-
-			# er i en seksjon som er knyttet til "barnehage", putt i gruppe 4
-			try:
-				if "barnehage" in profile.org_unit.ou.lower():
-					profile.o365lisence = 4
+				# har tykklient, har e-post, putt i gruppe 1
+				if profile.user.username in unike_personer_i_client_ower_data:
+					profile.o365lisence = 1
 					profile.save()
-					print(f"{forloop_counter} {profile} i gruppe 4: education")
+					print(f"{forloop_counter} {profile} i gruppe 1: Tykk klient")
 					continue
-			except:
-				pass
 
-			# mangler e-post, putt i gruppe 3
-			if profile.user.email == "":
-				profile.o365lisence = 3
+				# Alle andre aktive personer, putt i gruppe 2
+				profile.o365lisence = 2
 				profile.save()
-				print(f"{forloop_counter} {profile} i gruppe 3: mangler epost")
+				print(f"{forloop_counter} {profile} i gruppe 2: Flerbruker")
 				continue
 
-			# har tykklient, har e-post, putt i gruppe 1
-			if profile.user.username in unike_personer_i_client_ower_data:
-				profile.o365lisence = 1
-				profile.save()
-				print(f"{forloop_counter} {profile} i gruppe 1: Tykk klient")
-				continue
 
-			# Alle andre aktive personer, putt i gruppe 2
-			profile.o365lisence = 2
-			profile.save()
-			print(f"{forloop_counter} {profile} i gruppe 2: Flerbruker")
-			continue
+			print("Brukere i gruppe 1 - Tykk klient")
+			print(len(User.objects.filter(profile__o365lisence=1)))
 
+			print("Brukere i gruppe 2 - Flerbruker")
+			print(len(User.objects.filter(profile__o365lisence=2)))
 
-		print("Brukere i gruppe 1 - Tykk klient")
-		print(len(User.objects.filter(profile__o365lisence=1)))
+			print("Brukere i gruppe 3 - Mangler epost")
+			print(len(User.objects.filter(profile__o365lisence=3)))
 
-		print("Brukere i gruppe 2 - Flerbruker")
-		print(len(User.objects.filter(profile__o365lisence=2)))
+			print("Brukere i gruppe 4 - Educaton")
+			print(len(User.objects.filter(profile__o365lisence=4)))
 
-		print("Brukere i gruppe 3 - Mangler epost")
-		print(len(User.objects.filter(profile__o365lisence=3)))
-
-		print("Brukere i gruppe 4 - Educaton")
-		print(len(User.objects.filter(profile__o365lisence=4)))
+		run():
