@@ -53,32 +53,35 @@ class Command(BaseCommand):
 		for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Intern']):
 			forloop_counter += 1
 
+			# er i en seksjon som er knyttet til "barnehage", putt i gruppe 4
+			try:
+				if "barnehage" in profile.org_unit.ou.lower():
+					profile.o365lisence = 4
+					profile.save()
+					print(f"{forloop_counter} {profile} i gruppe 4: education")
+					continue
+			except:
+				pass
+
 			# mangler e-post, putt i gruppe 3
 			if profile.user.email == "":
 				profile.o365lisence = 3
 				profile.save()
-				#print(f"{forloop_counter} {profile} i gruppe 3: mangler epost")
+				print(f"{forloop_counter} {profile} i gruppe 3: mangler epost")
 				continue
-
-			# er i organisatorik_education, putt i gruppe 4
-			# mangler informasjon nødvendig for å utføre kobling. Disse havner derfor i gruppe 2 flerbruker for nå.
-
 
 			# har tykklient, har e-post, putt i gruppe 1
 			if profile.user.username in unike_personer_i_client_ower_data:
 				profile.o365lisence = 1
 				profile.save()
-				#print(f"{forloop_counter} {profile} i gruppe 1: Tykk klient")
+				print(f"{forloop_counter} {profile} i gruppe 1: Tykk klient")
 				continue
-
 
 			# Alle andre aktive personer, putt i gruppe 2
 			profile.o365lisence = 2
 			profile.save()
-			#print(f"{forloop_counter} {profile} i gruppe 2: Flerbruker")
+			print(f"{forloop_counter} {profile} i gruppe 2: Flerbruker")
 			continue
-
-
 
 
 		print("Brukere i gruppe 1 - Tykk klient")
@@ -87,7 +90,7 @@ class Command(BaseCommand):
 		print("Brukere i gruppe 2 - Flerbruker")
 		print(len(User.objects.filter(profile__o365lisence=2)))
 
-		print("Brukere i gruppe 3 - mangler epost")
+		print("Brukere i gruppe 3 - Mangler epost")
 		print(len(User.objects.filter(profile__o365lisence=3)))
 
 		print("Brukere i gruppe 4 - Educaton")
