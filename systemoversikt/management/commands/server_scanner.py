@@ -16,8 +16,8 @@ class Command(BaseCommand):
 		timeout = 0.2
 		ports = [
 				#(25, "SMTP"),
-				#(3389, "RDP"),
-				(445, "SMB"),
+				(3389, "RDP"),
+				#(445, "SMB"),
 			]
 		open_hosts = []
 		shares = []
