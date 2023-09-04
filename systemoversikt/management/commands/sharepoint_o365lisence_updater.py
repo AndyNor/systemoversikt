@@ -56,7 +56,7 @@ class Command(BaseCommand):
 
 				# Noen virksomheter skal ikke ha lisens fra UKE
 				try:
-					if profile.virksomhet.virksomhetsforkortelse.upper() in ["UDE", "BYS", "VAV"]:
+					if profile.virksomhet.virksomhetsforkortelse.upper() in ["UDE", "BYS", "VAV", "INE", "PBE", "BBY", "KRV", "REG"]:
 						profile.o365lisence = 0
 						profile.save()
 						print(f"{forloop_counter} {profile} får ikke lisens fordi medlem i UDE, BYS eller VAV")
