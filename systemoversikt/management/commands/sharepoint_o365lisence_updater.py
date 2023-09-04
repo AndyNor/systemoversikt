@@ -42,16 +42,27 @@ class Command(BaseCommand):
 
 		#organisatorik_education = []
 
-		#print("Opprydding")
-		#for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Ekstern']):
-		#	if profile.o365lisence != 0:
-		#		profile.o365lisence = 0
-		#		profile.save()
+		print("Opprydding")
+		for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Ekstern']):
+			if profile.o365lisence != 0:
+				profile.o365lisence = 0
+				profile.save()
 
 
 		print("Starter gjennomgang")
 		for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Intern']):
 			forloop_counter += 1
+
+			# Noen virksomheter skal ikke ha lisens fra UKE
+			try:
+				if profile.virksomhet.virksomhetsforkortelse.upper() in ["UDE", "BYS", "VAV"]:
+					profile.o365lisence = 0
+					profile.save()
+					print(f"{forloop_counter} {profile} får ikke lisens fordi medlem i UDE, BYS eller VAV")
+					continue
+			except:
+				pass
+
 
 			# er i en seksjon som er knyttet til "barnehage", putt i gruppe 4
 			try:
