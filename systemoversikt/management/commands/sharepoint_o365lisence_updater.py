@@ -110,4 +110,4 @@ class Command(BaseCommand):
 			print("Brukere i gruppe 4 - Educaton")
 			print(len(User.objects.filter(profile__o365lisence=4)))
 
-		run():
+		run()
