@@ -367,30 +367,39 @@ def o365_avvik(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+
+
+	#Antall «ikke krav til administrert enhet» OG «tillates å koble opp fra moderat-risiko-land»
+
+
+
 	#logikk
 	grupper_azure = [
-		{"gruppe": "DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er vanlige brukere med office-standardlisens. I tillegg har alle på Citrix/AKS unntak."},
-		{"gruppe": "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er vanlige brukere med office-utvidet lisens. I tillegg har alle på Citrix/AKS unntak."},
-		{"gruppe": "DS-OFFICE365SVC_UNNTAK_KJENTENHET", "beskrivelse": "Ikke-administrert enhet", "kommentar": "Dette er for servicekontoer"},
-		{"gruppe": "DS-OFFICE365SVC_UNNTAK_MFA", "beskrivelse": "Unntak multifaktor autentisering", "kommentar": "Dette er antall service-kontoer. I tillegg har alle på Citrix/AKS unntak, samt møteromspaneler."},
-		{"gruppe": "DS-OFFICE365SPES_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Vanlige brukere"},
-		{"gruppe": "DS-OFFICE365SVC_UNNTAK_EUROPEISKIP", "beskrivelse": "Oppkobling utenfor EU", "kommentar": "Servicekontoer"},
-		{"gruppe": "DS-OFFICE365SPES_UNNTAK_HOYRISIKO", "beskrivelse": "Oppkobling høyrisikoland", "kommentar": "Kina, Russland, Nord-Korea.."},
+		{"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"], "beskrivelse": "Unntak administrert enhet ordinære brukere", "kommentar": "I tillegg har alle på Citrix/AKS unntak."},
+		{"grupper": ["DS-OFFICE365SVC_UNNTAK_KJENTENHET",], "beskrivelse": "Unntak administrert enhet servicekontoer", "kommentar": "Dette er for servicekontoer"},
+		{"grupper": ["DS-OFFICE365SVC_UNNTAK_MFA",], "beskrivelse": "Unntak multifaktor autentisering servicekontoer", "kommentar": "Dette er antall service-kontoer. I tillegg har alle på Citrix/AKS unntak, samt møteromspaneler."},
+		{"grupper": ["DS-OFFICE365SPES_UNNTAK_EUROPEISKIP",], "beskrivelse": "Unntak oppkobling moderat risikoland ordinære brukere", "kommentar": ""},
+		{"grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",], "beskrivelse": "Unntak oppkobling moderat risikoland servicekontoer", "kommentar": ""},
+		{"grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",], "beskrivelse": "Unntak høyrisikoland (avviklet)", "kommentar": ""},
 	]
 
 	grupper_klient = [
-		{"gruppe": "DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT", "beskrivelse": "Lokal administrator", "kommentar": "Mulighet for lokaladministrator på klienter via MakeMeAdmin."},
-		{"gruppe": "DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE", "beskrivelse": "Nettleserutvidelser", "kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."},
+		{"grupper": "DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT", "beskrivelse": "Lokal administrator", "kommentar": "Mulighet for lokaladministrator på klienter via MakeMeAdmin."},
+		{"grupper": "DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE", "beskrivelse": "Nettleserutvidelser", "kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."},
 	]
 
 	def hent_statistikk(g):
-		try:
-			gruppe = ADgroup.objects.get(common_name__iexact=g["gruppe"])
-			g["medlemmer"] = gruppe.membercount
-			return g
-		except:
-			#print("fant ikke gruppen %s" % g)
-			return g
+		antall = 0
+		for gruppe in g["grupper"]:
+			try:
+				gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
+				antall += gruppe.membercount
+			except:
+				#print("fant ikke gruppen %s" % g)
+				pass
+		g["medlemmer"] = antall
+		return g
+
 
 	statistikk_azure = []
 	for g in grupper_azure:
