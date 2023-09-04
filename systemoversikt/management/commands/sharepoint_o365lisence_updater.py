@@ -16,41 +16,39 @@ from systemoversikt.models import *
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		sp_site = os.environ['SHAREPOINT_SITE']
-		client_id = os.environ['SHAREPOINT_CLIENT_ID']
-		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
-
-		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
-
-		print("Laster ned fil med klient-bruker-detaljer")
-		client_owner_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers.xlsx")
-		client_owner_dest_file = 'systemoversikt/import/OK_computers.xlsx'
-		sp.download(sharepoint_location = client_owner_source_file, local_location = client_owner_dest_file)
-
-		dfRaw = pd.read_excel(client_owner_dest_file)
-		dfRaw = dfRaw.replace(np.nan, '', regex=True)
-		client_ower_data = dfRaw.to_dict('records')
-
-		forloop_counter = 0
-		unike_personer_i_client_ower_data = set()
-		for row in client_ower_data:
-			if row["Type"] == "TYKKLIENT":
-				username = row["Owner"].replace("OSLOFELLES\\", "").lower()
-				unike_personer_i_client_ower_data.add(username)
-		unike_personer_i_client_ower_data = list(unike_personer_i_client_ower_data)
-		print(len(unike_personer_i_client_ower_data))
-
-		#organisatorik_education = []
-
-		print("Opprydding")
-		for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Ekstern']):
-			if profile.o365lisence != 0:
-				profile.o365lisence = 0
-				profile.save()
-
-
 		@transaction.atomic  # for speeding up database performance
 		def run():
+			sp_site = os.environ['SHAREPOINT_SITE']
+			client_id = os.environ['SHAREPOINT_CLIENT_ID']
+			client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
+
+			sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
+
+			print("Laster ned fil med klient-bruker-detaljer")
+			client_owner_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers.xlsx")
+			client_owner_dest_file = 'systemoversikt/import/OK_computers.xlsx'
+			sp.download(sharepoint_location = client_owner_source_file, local_location = client_owner_dest_file)
+
+			dfRaw = pd.read_excel(client_owner_dest_file)
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			client_ower_data = dfRaw.to_dict('records')
+
+			forloop_counter = 0
+			unike_personer_i_client_ower_data = set()
+			for row in client_ower_data:
+				if row["Type"] == "TYKKLIENT":
+					username = row["Owner"].replace("OSLOFELLES\\", "").lower()
+					unike_personer_i_client_ower_data.add(username)
+			unike_personer_i_client_ower_data = list(unike_personer_i_client_ower_data)
+			print(len(unike_personer_i_client_ower_data))
+
+			#organisatorik_education = []
+
+			print("Opprydding")
+			for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Ekstern']):
+				if profile.o365lisence != 0:
+					profile.o365lisence = 0
+					profile.save()
 
 			print("Starter gjennomgang")
 			for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Intern']):
