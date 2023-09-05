@@ -9,9 +9,9 @@ from systemoversikt.models import *
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		f = io.open("systemoversikt/management/commands/iso-3166-2.json", mode="r", encoding="utf-8")
-		content = f.read()
-		countrycodes = json.loads(content)
+		#f = io.open("systemoversikt/management/commands/iso-3166-2.json", mode="r", encoding="utf-8")
+		#content = f.read()
+		#countrycodes = json.loads(content)
 
 		client_credential = ClientSecretCredential(
 				tenant_id=os.environ['AZURE_TENANT_ID'],
@@ -24,15 +24,21 @@ class Command(BaseCommand):
 		resp = client.get(query)
 		json_data = json.loads(resp.text)
 
-		print(json.dumps(json_data, sort_keys=True, indent=4))
+		#print(json.dumps(json_data, sort_keys=True, indent=4))
 
 		for named_location in json_data["value"]:
-			print(named_location["displayName"])
+			print(named_location["displayName"] + " (" + named_location["id"] + ")")
+			#isTrusted
+			#createdDateTime # 2021-04-14T07:52:53.7467133Z
+			# modifiedDateTime # bruker bare sist endret
 			if "countriesAndRegions" in named_location:
 				for code in named_location["countriesAndRegions"]:
-					if code in countrycodes:
-						print("** " + countrycodes[code])
-					else:
-						print(f"** Ukjent kode: {code}")
+					#if code in countrycodes:
+						#print("** " + countrycodes[code])
+					print("** " + code)
+					#else:
+					#	print(f"** Ukjent kode: {code}")
+				for ip in named_location["ipRanges"]:
+					print ("** " + ip["cidrAddress"])
 
 
