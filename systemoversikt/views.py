@@ -384,8 +384,8 @@ def o365_avvik(request):
 	]
 
 	grupper_klient = [
-		{"grupper": "DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT", "beskrivelse": "Lokal administrator", "kommentar": "Mulighet for lokaladministrator på klienter via MakeMeAdmin."},
-		{"grupper": "DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE", "beskrivelse": "Nettleserutvidelser", "kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."},
+		{"grupper": ["DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT",], "beskrivelse": "Lokal administrator", "kommentar": "Mulighet for lokaladministrator på klienter via MakeMeAdmin."},
+		{"grupper": ["DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE",], "beskrivelse": "Nettleserutvidelser", "kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."},
 	]
 
 	def hent_statistikk(g):
