@@ -2695,7 +2695,7 @@ def systemdetaljer(request, pk):
 		'siste_endringer_antall': siste_endringer_antall,
 		'avhengigheter_graf': avhengigheter_graf,
 		'follow_count': original_follow_count,
-		'avhengigheter_chart_size': 300 + len(avhengigheter_graf["nodes"])*17,
+		'avhengigheter_chart_size': 300 + len(avhengigheter_graf["nodes"])*20,
 	})
 
 
