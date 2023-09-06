@@ -2793,7 +2793,7 @@ def alle_systemer_smart(request):
 	if not request.user.has_perm(required_permissions):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
+	systemer = System.objects.all() #filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
 
 	return render(request, 'system_smart.html', {
 		'request': request,
