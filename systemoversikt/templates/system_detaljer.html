@@ -72,7 +72,7 @@
 	{% if avhengigheter_graf.nodes|length < 2 %}
 		<p>Ingen avhengigheter registrert</p>
 	{% else %}
-		<div id="cy" style="width: {{avhengigheter_chart_size}}px; height: {{avhengigheter_chart_size}}px;"></div>
+		<div id="cy" style="background-color: #f7f7f7; border: 1px solid #d6d4d4; width: 100%; height: {{avhengigheter_chart_size}}px;"></div>
 	{% endif %}
 
 	{% if systemdetaljer.avhengigheter_referanser.all|length > 0 %}
@@ -969,7 +969,7 @@
 	var cy = cytoscape({
 		zoomingEnabled: true,
 		panningEnabled: true,
-		wheelSensitivity: 0.0,
+		wheelSensitivity: 0.1,
 		container: document.getElementById('cy'),
 		elements: {
 			nodes: [
