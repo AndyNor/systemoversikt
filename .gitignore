@@ -126,3 +126,9 @@ venv.bak/
 pyvenv.cfg
 systemoversikt/management/commands/lokalt/scan_result_rdp.json
 systemoversikt/management/commands/lokalt/scan_result_smb.json
+systemoversikt/management/commands/lokalt/2023-06 scan_result RDP servere.json
+systemoversikt/management/commands/lokalt/RDP_scan_result_all_servers_client_network.json
+systemoversikt/management/commands/lokalt/scan_result.json
+*Certipy.json
+kritiske_kapabilitet.json
+kritiske_funksjoner.json
