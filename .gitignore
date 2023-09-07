@@ -9,7 +9,6 @@ secrets_test.py
 *.xlsx
 *.csv
 *.tsv
-*.json
 *.exe
 
 
@@ -125,3 +124,5 @@ venv.bak/
 # Added by Github desktop
 
 pyvenv.cfg
+systemoversikt/management/commands/lokalt/scan_result_rdp.json
+systemoversikt/management/commands/lokalt/scan_result_smb.json
