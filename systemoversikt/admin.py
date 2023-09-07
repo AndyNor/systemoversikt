@@ -319,7 +319,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'systemkategorier',
 				'informasjonsklassifisering',
 				('sikkerhetsnivaa', 'integritetsvurdering'),
-				('tilgjengelighetsvurdering','tilgjengelighet_kritiske_perioder'),
+				('tilgjengelighetsvurdering', 'tilgjengelighet_periodisk_kritisk', 'tilgjengelighet_timer_til_kritisk', 'tilgjengelighet_kritiske_perioder'),
 				'er_arkiv',
 				('innsyn_innbygger', 'innsyn_ansatt'),
 				'kontaktperson_innsyn',

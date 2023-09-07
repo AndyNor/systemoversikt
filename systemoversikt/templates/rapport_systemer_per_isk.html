@@ -1,0 +1,58 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Kartlegging av kritiske funksjoner
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Her vises systemer på felles IKT-plattform avgrenset til private skyplattformer. Infrastruktur-systemer er ikke med. Alle systemer har en virksomhet som forvalter. Her vises ISK til virksomhet som forvalter hvert system </p>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Driftsmiljø</th>
+		<th>Rediger systemet</th>
+		<th>Forvalter</th>
+		<th>Tilknyttet ISK</th>
+		<th>Kritisk funksjon</th>
+		<th>Tilgjengelighetsvurdering</th>
+	</thead>
+	<tbody>
+	{% for system in aktuelle_systemer %}
+		<tr>
+			<td>{{ system.driftsmodell_foreignkey }} ({{ system.driftsmodell_foreignkey.get_type_plattform_display }})</td>
+
+			<td><a target="_blank" href="/admin/systemoversikt/system/{{system.pk}}/change/">{{ system }}</a></td>
+
+			<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
+
+			<td>
+				{% for ansvarlig in system.systemforvalter.informasjonssikkerhetskoordinator.all %}
+					<li>{{ ansvarlig.brukernavn.email }}</li>
+				{% endfor %}
+			</td>
+
+			<td>
+				{% for kap in system.kritisk_kapabilitet.all %}
+					<li>{{ kap }}</li>
+				{% endfor %}
+			</td>
+
+			<td>
+				<li>{{ system.get_tilgjengelighetsvurdering_display }}</li>
+				{% if system.tilgjengelighet_periodisk_kritisk %}<li>Kritisk kun i perioder</li>{% endif %}
+				{% if system.tilgjengelighet_timer_til_kritisk %}<li>Det tar {{system.tilgjengelighet_timer_til_kritisk}} timer før det er kritisk.</li>{% endif %}
+				{% if system.tilgjengelighet_kritiske_perioder %}<li>{{ system.tilgjengelighet_kritiske_perioder }}</li>{% endif %}
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

@@ -423,14 +423,35 @@ def o365_avvik(request):
 
 
 def rapport_startside(request):
-	required_permissions = ['auth.view_user']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
 	return render(request, 'rapport_startside.html', {
 		'request': request,
 	})
 
+
+def isk_ansvarlig_for_system(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	aktuelle_systemer = list()
+
+	systemer = System.objects.all()
+	for s in systemer:
+		if s.er_infrastruktur():
+			continue # skip
+
+		if s.driftsmodell_foreignkey != None:
+			if s.driftsmodell_foreignkey.type_plattform != 1: # 1 er private cloud
+				continue # skip
+
+			if s.driftsmodell_foreignkey.ansvarlig_virksomhet != None: # hvis noen eier denne plattformen
+				if s.driftsmodell_foreignkey.ansvarlig_virksomhet.virksomhetsforkortelse == "UKE": # og dersom denne eier er UKE
+					aktuelle_systemer.append(s)
+
+	return render(request, 'rapport_systemer_per_isk.html', {
+		'request': request,
+		'aktuelle_systemer': aktuelle_systemer,
+	})
 
 def o365_lisenser(request):
 	required_permissions = ['auth.view_user']

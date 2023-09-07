@@ -588,11 +588,23 @@
 				<b>{% get_verbose_field_name systemdetaljer "tilgjengelighetsvurdering" %}</b><br>
 				<span class="badge badge-dark">{{ systemdetaljer.get_tilgjengelighetsvurdering_display|default:"-" }}</span>
 
+				{% if systemdetaljer.tilgjengelighet_periodisk_kritisk == True %}
+					<span class="badge badge-light">Periodisk kritisk</span>
+				{% else %}
+					<span class="badge badge-dark">Alltid kritisk</span>
+				{% endif %}
+
 				<hr>
 				{% get_verbose_field_name systemdetaljer "kritisk_kapabilitet" %}<br>
 				{% for kapabilitet in systemdetaljer.kritisk_kapabilitet.all %}
 					<span class="badge badge-light">{{ kapabilitet }}</span>
 				{% endfor %}
+
+
+				{% if systemdetaljer.tilgjengelighet_timer_til_kritisk %}
+					<hr>
+					Nedetid før kritisk <span class="badge badge-light">{{ systemdetaljer.tilgjengelighet_timer_til_kritisk }} timer</span>
+				{% endif %}
 
 				<hr>
 

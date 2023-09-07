@@ -62,6 +62,8 @@ urlpatterns = [
 	re_path(r'^rapport/o365_lisenser/$', views.o365_lisenser, name='o365_lisenser'),
 	re_path(r'^rapport/ad/drifttilgang/$', views.drifttilgang, name='drifttilgang'),
 	re_path(r'^rapport/ad/tbrukere/$', views.tbrukere, name='tbrukere'),
+	re_path(r'^rapport/systemperisk/$', views.isk_ansvarlig_for_system, name='isk_ansvarlig_for_system'),
+
 
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 

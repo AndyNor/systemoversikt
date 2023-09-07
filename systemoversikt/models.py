@@ -4218,7 +4218,18 @@ class System(models.Model):
 			verbose_name="Kritiske perioder og konsekvenser ved nedetid",
 			blank=True,
 			null=True,
-			help_text=u"Her legger du inn perioder av året hvor det er særskilt behov for at systemet er tilgjengelig. F.eks. knyttet til frister som eiendomsskatt, barnehageopptak eller lønnskjøring.",
+			help_text=u"Her begrunner du hvorfor systemet er kritisk, samt dokumenterer perioder av året hvor det er særskilt behov for at systemet er tilgjengelig. F.eks. knyttet til frister som eiendomsskatt, barnehageopptak eller lønnskjøring.",
+			)
+	tilgjengelighet_periodisk_kritisk = models.BooleanField(
+			verbose_name="Kritisk kun i perioder?",
+			default=False,
+			help_text=u"Kryss av dersom systemet kun er kritisk i visse perioder i løpet av måneden eller året.",
+			)
+	tilgjengelighet_timer_til_kritisk = models.IntegerField(
+			verbose_name="Timer til kritisk",
+			blank=True,
+			null=True,
+			help_text=u"Hvor mange timer tar det fra systemet blir utilgjengelig til det er kritisk?",
 			)
 	risikovurdering_behovsvurdering = models.IntegerField(
 			choices=VALG_RISIKOVURDERING_BEHOVSVURDERING,
