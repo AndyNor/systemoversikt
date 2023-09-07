@@ -33,7 +33,7 @@
 
 			<td>
 				{% for ansvarlig in system.systemforvalter.informasjonssikkerhetskoordinator.all %}
-					<li>{{ ansvarlig.brukernavn.email }}</li>
+					<li>{{ ansvarlig.brukernavn.email }} {% if ansvarlig.brukernavn.profile.accountdisable %} (sluttet){% endif %}</li>
 				{% endfor %}
 			</td>
 
