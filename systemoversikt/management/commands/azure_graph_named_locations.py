@@ -9,9 +9,9 @@ from systemoversikt.models import *
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		#f = io.open("systemoversikt/management/commands/iso-3166-2.json", mode="r", encoding="utf-8")
-		#content = f.read()
-		#countrycodes = json.loads(content)
+		f = io.open("systemoversikt/management/commands/iso-3166-2.json", mode="r", encoding="utf-8")
+		content = f.read()
+		countrycodes = json.loads(content)
 
 		client_credential = ClientSecretCredential(
 				tenant_id=os.environ['AZURE_TENANT_ID'],
@@ -33,12 +33,13 @@ class Command(BaseCommand):
 			# modifiedDateTime # bruker bare sist endret
 			if "countriesAndRegions" in named_location:
 				for code in named_location["countriesAndRegions"]:
-					#if code in countrycodes:
-						#print("** " + countrycodes[code])
-					print("** " + code)
-					#else:
-					#	print(f"** Ukjent kode: {code}")
-				for ip in named_location["ipRanges"]:
-					print ("** " + ip["cidrAddress"])
+					if code in countrycodes:
+						print("** " + countrycodes[code])
+					#print("** " + code)
+					else:
+						print(f"** {code}")
+				#for ip in named_location["ipRanges"]:
+					#print ("** " + ip["cidrAddress"])
+
 
 
