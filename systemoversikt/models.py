@@ -6517,7 +6517,7 @@ class UBWFakturaKategori(models.Model):
 		)
 	belongs_to = models.ForeignKey(
 		to="UBWRapporteringsenhet",
-		on_delete=models.CASCADE,
+		on_delete=models.PROTECT,
 		verbose_name="Tilhører",
 		null=False, blank=False,
 		)
