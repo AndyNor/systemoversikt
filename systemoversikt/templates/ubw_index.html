@@ -32,7 +32,7 @@
 	<h6>Våre kategorier</h6>
 	<ul style="column-count:1;">
 		{% for k in kategorier %}
-		<li><a href="/admin/systemoversikt/ubwfakturakategori/{{k.pk}}/change/"></a>{{ k }}</li>
+		<li><a href="/admin/systemoversikt/ubwfakturakategori/{{k.pk}}/change/">{{ k }}</a></li>
 		{% endfor %}
 		<li><a href="{% url 'ubw_kategori' belongs_to=enhet.pk %}">Opprett ny</a></li>
 	</ul>
