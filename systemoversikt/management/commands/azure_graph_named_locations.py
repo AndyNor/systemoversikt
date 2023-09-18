@@ -2,6 +2,10 @@ from django.core.management.base import BaseCommand
 import io
 import os
 import simplejson as json
+from django.utils.timezone import make_aware
+from datetime import datetime
+from datetime import timedelta
+from django.utils import timezone
 from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
 from systemoversikt.models import *
@@ -26,20 +30,72 @@ class Command(BaseCommand):
 
 		#print(json.dumps(json_data, sort_keys=True, indent=4))
 
+		def oversett_iso3166(koder):
+			oversatt = set()
+			for code in named_location["countriesAndRegions"]:
+				if code in countrycodes:
+					oversatt.add(countrycodes[code])
+				else:
+					oversatt.add(code)
+			return json.dumps(list(oversatt))
+
+
+		def hentSubnet(ipRanges):
+			ranges = set()
+			for iprange in ipRanges:
+				ranges.add(iprange["cidrAddress"])
+			return json.dumps(list(ranges))
+
+
+
+		date_format = "%Y-%m-%dT%H:%M:%S"
+		def str_to_date(date_string):
+			date_string = date_string.split(".")[0]
+			return make_aware(datetime.strptime(date_string, date_format))
+
+
 		for named_location in json_data["value"]:
-			print(named_location["displayName"] + " (" + named_location["id"] + ")")
-			#isTrusted
-			#createdDateTime # 2021-04-14T07:52:53.7467133Z
-			# modifiedDateTime # bruker bare sist endret
+			print("Laster " + named_location["displayName"] + " (" + named_location["id"] + ")")
+
+			try:
+				nl = AzureNamedLocations.objects.get(ipNamedLocation_id=named_location["id"])
+			except:
+				nl = AzureNamedLocations.objects.create(ipNamedLocation_id=named_location["id"])
+
+			nl.active = True
+			nl.displayName = named_location["displayName"]
+
+			if "isTrusted" in named_location:
+				nl.isTrusted = named_location["isTrusted"]
+
+			if named_location["modifiedDateTime"] != None:
+				sist_endret = str_to_date(named_location["modifiedDateTime"])
+				nl.sist_endret = sist_endret
+
+			if "ipRanges" in named_location:
+				nl.ipRanges = hentSubnet(named_location["ipRanges"])
+
 			if "countriesAndRegions" in named_location:
-				for code in named_location["countriesAndRegions"]:
-					if code in countrycodes:
-						print("** " + countrycodes[code])
-					#print("** " + code)
-					else:
-						print(f"** {code}")
-				#for ip in named_location["ipRanges"]:
-					#print ("** " + ip["cidrAddress"])
+				koder = oversett_iso3166(named_location["countriesAndRegions"])
+				nl.countriesAndRegions = koder
+
+			nl.save()
+
+		# sjekke om noe ikke ble oppdatert og sette deaktivert
+
+		tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+		deaktive = AzureNamedLocations.objects.filter(sist_oppdatert__lte=tidligere)
+		for d in deaktive:
+			d.active = False
+			d.save()
+			print("%s satt deaktiv" % d)
+
+
+
+
+		print("*** Ferdig innlest")
+
+
 
 
 

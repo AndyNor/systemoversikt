@@ -5396,6 +5396,54 @@ BEHANDLING_VALGFRIHET = (
 )
 
 
+class AzureNamedLocations(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	active = models.BooleanField(
+			verbose_name="Aktiv",
+			default=True,
+			)
+	ipNamedLocation_id = models.CharField(
+			unique=True,
+			verbose_name="Named Location ID",
+			blank=False,
+			null=False,
+			max_length=256,
+			)
+	displayName = models.CharField(
+			unique=True,
+			verbose_name="Display Name",
+			blank=True,
+			null=True,
+			max_length=512,
+			)
+	sist_endret = models.DateTimeField(
+			verbose_name="Sist endret",
+			blank=True,
+			null=True,
+			)
+	isTrusted = models.BooleanField(
+			verbose_name="Trygg gruppe (Is trusted)",
+			default=False,
+			)
+	ipRanges = models.TextField(
+			verbose_name="IP-ranges (subnet)",
+			blank=True,
+			null=True,
+		)
+	countriesAndRegions = models.TextField(
+			verbose_name="Land og regioner",
+			blank=True,
+			null=True,
+			)
+
+	def __str__(self):
+		return u'%s' % (self.displayName)
+
+
+
 class BehandlingerPersonopplysninger(models.Model):
 	# Draftit - Records, kalles der en "behandllingsaktivitet"
 	opprettet = models.DateTimeField(
