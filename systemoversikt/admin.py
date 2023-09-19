@@ -75,7 +75,7 @@ class AzureApplicationKeysAdmin(admin.ModelAdmin):
 class AzureNamedLocationsAdmin(admin.ModelAdmin):
 	list_display = ('active', 'displayName', 'sist_endret', 'isTrusted', 'ipRanges', 'countriesAndRegions', 'ipNamedLocation_id',)
 	search_fields = ('displayName',)
-	readonly_fields = ['displayName', 'isTrusted', 'ipRanges', 'countriesAndRegions', 'ipNamedLocation_id', 'active', 'sist_endret']
+	readonly_fields = ['displayName', 'isTrusted', 'ipRanges', 'countriesAndRegions', 'ipNamedLocation_id', 'active', 'sist_endret',]
 
 
 

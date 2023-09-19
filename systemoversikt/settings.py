@@ -125,11 +125,11 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 #SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 # Security headers. CSP reqires "CSPMiddleware"
-CSP_DEFAULT_SRC = ("'self'",)
+CSP_DEFAULT_SRC = ("'self'", "*.gstatic.com")
 CSP_SCRIPT_SRC = ("'self'", "'unsafe-eval'") # numeric.js bruker desverre eval()
 CSP_FRAME_SRC = ("'self'",)
 CSP_IMG_SRC = ("'self' data:")
-CSP_STYLE_SRC = ("'unsafe-inline'", "'self'")
+CSP_STYLE_SRC = ("'unsafe-inline'", "'self'", "*.gstatic.com")
 CSP_INCLUDE_NONCE_IN = ['script-src']
 SECURE_CONTENT_TYPE_NOSNIFF = True  # requires "SecurityMiddleware"
 

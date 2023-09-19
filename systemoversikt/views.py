@@ -3105,6 +3105,35 @@ def registrer_bruk_programvare(request, programvare):
 	})
 
 
+def rapport_named_locations(request):
+
+	color_table = []
+	color_table.append(['Land', 'Fargekode'])
+
+	def populate(named_location_id, color_code): # 1 is green, 2 is yellow, 3 is red and 4 is black
+		named_location = AzureNamedLocations.objects.get(ipNamedLocation_id=named_location_id)
+		for country in json.loads(named_location.countriesAndRegions):
+			#print(country)
+			color_table.append([{"v": country["code"], "f": country["name"]}, color_code])
+
+	data = [
+		{"named_location_id": '141f4101-6ea0-4cd0-9c6e-2b57e868876f', "color_code": 1}, # grønn
+		{"named_location_id": '1b0ee1ab-e197-45bf-b48c-c05999613ea8', "color_code": 2}, # gul
+		{"named_location_id": '1c5daa1a-f370-4512-9078-bf81159ee7b2', "color_code": 3}, # rød
+		{"named_location_id": '801537bb-85ee-4b84-8202-1e69779a54c3', "color_code": 4}, # sort
+	]
+
+	for item in data:
+		populate(item["named_location_id"], item["color_code"])
+
+	#print(color_table)
+
+	return render(request, "rapport_named_locations.html", {
+		'request': request,
+		'color_table': color_table,
+	})
+
+
 def programvaredetaljer(request, pk):
 	"""
 	Vise detaljer for programvare

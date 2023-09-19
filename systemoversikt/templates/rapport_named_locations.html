@@ -1,0 +1,74 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Oversikt over tilkobling fra land
+{% endblock overskrift %}
+
+{% block css_append %}
+	<link rel="stylesheet" href="{% static '/d3-geomap/d3-geomap.css' %}">
+{% endblock %}
+
+{% block ekstrajavascript %}
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block hovedinnhold %}
+
+<h5>Hele verden</h5><hr>
+<div id="world_div" style="width: 1500px; height: 700px;"></div>
+
+<h5>Europa</h5><hr>
+<div id="europa_div" style="width: 1500px; height: 700px;"></div>
+
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+      google.charts.load('current', {
+        'packages': ['geochart'],
+      });
+      google.charts.setOnLoadCallback(drawRegionsMap);
+
+      function drawRegionsMap() {
+        var data = google.visualization.arrayToDataTable({{color_table|safe}});
+
+        var options = {
+        	colorAxis: {colors: ['#66ff66', '#ffcc00', '#ff4d4d', '#000000']},
+        	backgroundColor: '#e6f7ff',
+        	legend: 'none',
+        	datalessRegionColor: '#adad85',
+        };
+
+        var chart = new google.visualization.GeoChart(document.getElementById('world_div'));
+
+        chart.draw(data, options);
+      }
+</script>
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+      google.charts.load('current', {
+        'packages': ['geochart'],
+      });
+      google.charts.setOnLoadCallback(drawRegionsMap);
+
+      function drawRegionsMap() {
+        var data = google.visualization.arrayToDataTable({{color_table|safe}});
+
+        var options = {
+        	colorAxis: {colors: ['#66ff66', '#ffcc00', '#ff4d4d', '#000000']},
+        	backgroundColor: '#e6f7ff',
+        	legend: 'none',
+        	datalessRegionColor: '#adad85',
+        	region: '150', // Western Europe
+        };
+
+        var chart = new google.visualization.GeoChart(document.getElementById('europa_div'));
+
+        chart.draw(data, options);
+      }
+</script>
+
+{% endblock hovedinnhold %}

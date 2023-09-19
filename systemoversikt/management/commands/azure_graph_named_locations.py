@@ -31,13 +31,14 @@ class Command(BaseCommand):
 		#print(json.dumps(json_data, sort_keys=True, indent=4))
 
 		def oversett_iso3166(koder):
-			oversatt = set()
-			for code in named_location["countriesAndRegions"]:
+			return_data = []
+			for code in koder:
 				if code in countrycodes:
-					oversatt.add(countrycodes[code])
+					name = countrycodes[code]
 				else:
-					oversatt.add(code)
-			return json.dumps(list(oversatt))
+					name = code
+				return_data.append({"code": code, "name": name})
+			return json.dumps(return_data)
 
 
 		def hentSubnet(ipRanges):

@@ -22,6 +22,9 @@
 	{% url 'isk_ansvarlig_for_system' as url_isk_ansvarlig_for_system %}
 	<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">System per ISK</a>
 
+	{% url 'rapport_named_locations' as url_rapport_named_locations %}
+	<a href="{{ url_rapport_named_locations }}" class="btn btn-sm btn-link {% if url_rapport_named_locations in request.path %}fremhev{% endif %}">Oppkobling fra land</a>
+
 {% endblock sidemeny %}
 
 {% block main_content %}
