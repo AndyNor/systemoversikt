@@ -19,11 +19,16 @@
 
 {% block hovedinnhold %}
 
+<!-- https://developers.google.com/chart/interactive/docs/gallery/geochart -->
+
 <h5>Hele verden</h5><hr>
 <div id="world_div" style="width: 1500px; height: 700px;"></div>
 
 <h5>Europa</h5><hr>
-<div id="europa_div" style="width: 1500px; height: 700px;"></div>
+<div id="europa_div" style="width: 1500px; height: 800px;"></div>
+
+<h5>Asia</h5><hr>
+<div id="oceania_div" style="width: 1500px; height: 800px;"></div>
 
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
@@ -66,6 +71,29 @@
         };
 
         var chart = new google.visualization.GeoChart(document.getElementById('europa_div'));
+
+        chart.draw(data, options);
+      }
+</script>
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+      google.charts.load('current', {
+        'packages': ['geochart'],
+      });
+      google.charts.setOnLoadCallback(drawRegionsMap);
+
+      function drawRegionsMap() {
+        var data = google.visualization.arrayToDataTable({{color_table|safe}});
+
+        var options = {
+          colorAxis: {colors: ['#66ff66', '#ffcc00', '#ff4d4d', '#000000']},
+          backgroundColor: '#e6f7ff',
+          legend: 'none',
+          datalessRegionColor: '#adad85',
+          region: '009', // Western Europe
+        };
+
+        var chart = new google.visualization.GeoChart(document.getElementById('oceania_div'));
 
         chart.draw(data, options);
       }
