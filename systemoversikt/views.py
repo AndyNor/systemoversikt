@@ -370,22 +370,58 @@ def o365_avvik(request):
 
 
 	#Antall «ikke krav til administrert enhet» OG «tillates å koble opp fra moderat-risiko-land»
-
+	#Antall «ikke krav til administrert enhet» OG «tillates å koble opp fra høy-risiko-land»
 
 
 	#logikk
-	grupper_azure = [
-		{"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"], "beskrivelse": "Unntak administrert enhet ordinære brukere", "kommentar": "I tillegg har alle på Citrix/AKS unntak."},
-		{"grupper": ["DS-OFFICE365SVC_UNNTAK_KJENTENHET",], "beskrivelse": "Unntak administrert enhet servicekontoer", "kommentar": "Dette er for servicekontoer"},
-		{"grupper": ["DS-OFFICE365SVC_UNNTAK_MFA",], "beskrivelse": "Unntak multifaktor autentisering servicekontoer", "kommentar": "Dette er antall service-kontoer. I tillegg har alle på Citrix/AKS unntak, samt møteromspaneler."},
-		{"grupper": ["DS-OFFICE365SPES_UNNTAK_EUROPEISKIP",], "beskrivelse": "Unntak oppkobling moderat risikoland ordinære brukere", "kommentar": ""},
-		{"grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",], "beskrivelse": "Unntak oppkobling moderat risikoland servicekontoer", "kommentar": ""},
-		{"grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",], "beskrivelse": "Unntak høyrisikoland (avviklet)", "kommentar": ""},
-	]
-
-	grupper_klient = [
-		{"grupper": ["DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT",], "beskrivelse": "Lokal administrator", "kommentar": "Mulighet for lokaladministrator på klienter via MakeMeAdmin."},
-		{"grupper": ["DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE",], "beskrivelse": "Nettleserutvidelser", "kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."},
+	grupper = [
+		{
+			"kategori": "Administrert enhet",
+			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
+			"beskrivelse": "Unntak administrert enhet for ordinære brukere",
+			"kommentar": "I tillegg har alle på Citrix/AKS unntak."
+		},
+		{
+			"kategori": "Administrert enhet",
+			"grupper": ["DS-OFFICE365SVC_UNNTAK_KJENTENHET",],
+			"beskrivelse": "Unntak administrert enhet for servicekontoer",
+			"kommentar": ""
+		},
+		{
+			"kategori": "Multifaktor autentisering",
+			"grupper": ["DS-OFFICE365SVC_UNNTAK_MFA",],
+			"beskrivelse": "Unntak multifaktor autentisering for servicekontoer",
+			"kommentar": "I tillegg har Citrix/AKS og møteromspaneler unntak."
+		},
+		{
+			"kategori": "På reise",
+			"grupper": ["DS-OFFICE365SPES_UNNTAK_EUROPEISKIP",],
+			"beskrivelse": "Unntak fra gule land for ordinære brukere",
+			"kommentar": ""},
+		{
+			"kategori": "På reise",
+			"grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",],
+			"beskrivelse": "Unntak fra gule land for servicekontoer",
+			"kommentar": ""
+		},
+		{
+			"kategori": "På reise",
+			"grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",],
+			"beskrivelse": "Unntak fra røde land for ordinære brukere",
+			"kommentar": ""
+		},
+		{
+			"kategori": "Klientplattform",
+			"grupper": ["DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT",],
+			"beskrivelse": "Lokal administrator", "kommentar":
+			"Mulighet for lokaladministrator på klienter via MakeMeAdmin."
+		},
+		{
+			"kategori": "Klientplattform",
+			"grupper": ["DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE",],
+			"beskrivelse": "Nettleserutvidelser",
+			"kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."
+		},
 	]
 
 	def hent_statistikk(g):
@@ -401,19 +437,14 @@ def o365_avvik(request):
 		return g
 
 
-	statistikk_azure = []
-	for g in grupper_azure:
-		statistikk_azure.append(hent_statistikk(g))
-
-	statistikk_klient = []
-	for g in grupper_klient:
-		statistikk_klient.append(hent_statistikk(g))
+	statistikk = []
+	for g in grupper:
+		statistikk.append(hent_statistikk(g))
 
 	alle_virskomhet = Virksomhet.objects.filter(ordinar_virksomhet=True)
 
 	return render(request, 'rapport_sikkerhetsavvik.html', {
-		'statistikk_azure': statistikk_azure,
-		'statistikk_klient': statistikk_klient,
+		'statistikk': statistikk,
 		'request': request,
 		'virksomheter': alle_virskomhet,
 	})
