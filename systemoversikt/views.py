@@ -368,9 +368,9 @@ def o365_avvik(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-
-	#Antall «ikke krav til administrert enhet» OG «tillates å koble opp fra moderat-risiko-land»
-	#Antall «ikke krav til administrert enhet» OG «tillates å koble opp fra høy-risiko-land»
+	# 1 flytte konfigurasjon til database
+	# 2 flytte logikk som sjekker antall til batch job, sjekke hver dag
+	# 3 vise antall nå + historikk her
 
 
 	#logikk

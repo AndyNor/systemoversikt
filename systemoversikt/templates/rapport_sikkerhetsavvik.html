@@ -32,7 +32,7 @@
 			<td>{{s.beskrivelse}}</td>
 			<td>{{s.medlemmer}}</td>
 			<td>{{s.kommentar}}</td>
-			<td><div><canvas height="60" id="adgr_chart_{{forloop.counter}}"></canvas></div></td>
+			<td><div><canvas height="100" id="adgr_chart_{{forloop.counter}}"></canvas></div></td>
 		</tr>
 	{% endfor %}
 	</tbody>
@@ -50,7 +50,7 @@ const data{{forloop.counter}} = {
 };
 
 const config{{forloop.counter}} = {
-	type: 'bar',
+	type: 'line',
 	data: data{{forloop.counter}},
 	options: {
 		plugins: {
@@ -59,12 +59,19 @@ const config{{forloop.counter}} = {
 		scales: {
 			y: {
 				beginAtZero: true,
-			}
-			yAxis: [{
+				ticks: {
+					display: true,
+				}
+			},
+			xAxes: {
+				display: true,
+				scaleLabel: {
+					display: false,
+				},
 				ticks: {
 					display: false,
 				}
-			}]
+			}
 		}
 	},
 };
