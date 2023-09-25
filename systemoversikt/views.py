@@ -1168,6 +1168,13 @@ def ansatte_virksomhet(request, pk):
 		{"gruppe":"DS-OFFICE365SPES_BOOKINGS_M365E3", "navn": "Microsoft 365 E3"},
 	]
 
+	nye_adgrupper = [
+		{"gruppe":"Task-OF2-Lisens-O365-G1", "navn": "G1 Standardklient"},
+		{"gruppe":"Task-OF2-Lisens-O365-G2", "navn": "G2 Flerbruker"},
+		{"gruppe":"Task-OF2-Lisens-O365-G3", "navn": "G3 Uten e-post"},
+		{"gruppe":"Task-OF2-Lisens-O365-G4", "navn": "G4 Education"},
+	]
+
 	#bufre alle gruppemedlemmer direkte under var ad_grupper
 	for idx, group in enumerate(ad_grupper):
 		try:
@@ -1184,7 +1191,25 @@ def ansatte_virksomhet(request, pk):
 				pass
 		group["adgroup_members_clean"] = list(adgroup_members_clean)
 
-	# slå opp for hver bruker
+
+	#bufre alle gruppemedlemmer direkte under var nye_adgrupper
+	for idx, group in enumerate(nye_adgrupper):
+		try:
+			adgroup = ADgroup.objects.get(common_name=group["gruppe"])
+		except:
+			continue
+
+		adgroup_members = json.loads(adgroup.member)
+		adgroup_members_clean = set()
+		for m in adgroup_members:
+			try:
+				adgroup_members_clean.add(m.split(",")[0].split("=")[1].lower())
+			except:
+				pass
+		group["adgroup_members_clean"] = list(adgroup_members_clean)
+
+
+	# slå opp for hver bruker gammel lisens
 	for bruker in brukere:
 		match = False
 		for group in ad_grupper:
@@ -1198,6 +1223,21 @@ def ansatte_virksomhet(request, pk):
 				break
 		if not match:
 			bruker.dagens365lisens = "-"
+
+	# slå opp for hver bruker ny lisens
+	for bruker in brukere:
+		match = False
+		for group in nye_adgrupper:
+			try:
+				members = group["adgroup_members_clean"]
+			except:
+				members = [] # skjer dersom gruppen ikke finnes
+			if bruker.username.lower() in members:
+				bruker.ny365lisens = group["navn"]
+				match = True
+				break
+		if not match:
+			bruker.ny365lisens = "-"
 
 	return render(request, 'virksomhet_ansatte_virksomhet.html', {
 		'request': request,

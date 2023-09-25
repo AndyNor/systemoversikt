@@ -37,6 +37,15 @@ class Command(BaseCommand):
 			m2m_relations = []
 			fk_relations = []
 
+			for ansvarlig in alle_ansvarlige:
+				if ansvarlig.brukernavn.profile.accountdisable == False: # aktiv bruker
+					dagens_seksjon_cache = ansvarlig.cache_seksjon
+					faktisk_seksjon = ansvarlig.brukernavn.profile.org_unit
+					if dagens_seksjon_cache != faktisk_seksjon:
+						ansvarlig.cache_seksjon = faktisk_seksjon
+						ansvarlig.save()
+						print(f"Endret seksjon (cache) for {ansvarlig} til {faktisk_seksjon}")
+
 			print("Identifiserer aktuelle relasjonsfelt:\n")
 
 			for f in Ansvarlig._meta.get_fields(include_hidden=False):
@@ -48,10 +57,16 @@ class Command(BaseCommand):
 					#print(f.__dict__)
 					fk_relations.append(f)
 
+			print("m2m_relations")
 			for m2m in m2m_relations:
-				print("%s.%s" % (m2m.related_model._meta, m2m.field.name))
+				print("* %s.%s" % (m2m.related_model._meta, m2m.field.name))
+
+			print("\nfk_relations")
 			for fk in fk_relations:
-				print("%s.%s" % (fk.related_model._meta, fk.field.name))
+				try:
+					print("* %s.%s" % (fk.related_model._meta, fk.field.name))
+				except:
+					fk_relations.remove(fk)
 
 			print("\nLeter etter brukere som kan deaktiveres")
 
@@ -64,12 +79,12 @@ class Command(BaseCommand):
 
 				for fk in fk_relations:
 					model = fk.related_model
-					fieldname =  fk.field.name
+					fieldname = fk.field.name
 					ansvarlig_for = model.objects.filter(**{ fieldname: ansvarlig.pk})
 					ansvar_teller += len(ansvarlig_for)
 
 				if ansvar_teller == 0:
-					print("* %s slettes" % ansvarlig)
+					print(f"* {ansvarlig} slettes")
 					ansvarlig.delete()
 					message = ("%s (%s) er ikke registrert med ansvar. Slettet automatisk." % (ansvarlig, ansvarlig.brukernavn.username))
 					UserChangeLog.objects.create(event_type='Ansvarlig slettet', message=message)

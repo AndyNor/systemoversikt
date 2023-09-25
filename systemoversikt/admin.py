@@ -825,9 +825,10 @@ class SystemHovedKategoriAdmin(SimpleHistoryAdmin):
 
 @admin.register(Ansvarlig)
 class AnsvarligAdmin(SimpleHistoryAdmin):
-	list_display = ('brukernavn', 'brukers_brukernavn', 'kommentar')
+	list_display = ('brukernavn', 'vil_motta_epost_varsler', 'brukers_brukernavn', 'cache_seksjon')
 	search_fields = ('brukernavn__username', 'brukernavn__first_name', 'brukernavn__last_name', 'brukernavn__email')
 	autocomplete_fields = ('brukernavn',)
+	readonly_fields = ('cache_seksjon',)
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
@@ -855,11 +856,11 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 			'fields': (
 				'brukernavn',
 				'vil_motta_epost_varsler',
+				'cache_seksjon',
 				)
 			}
 		),
 		('Fylles ut dersom rollen har fullmakt knyttet til sertifikatadministrasjon', {
-			'classes': ('collapse',),
 			'fields': (
 				'telefon',
 				'fdato',

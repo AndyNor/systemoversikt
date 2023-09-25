@@ -299,7 +299,7 @@ class Ansvarlig(models.Model):
 			help_text=u"Dag, måned, år, f.eks. 100575 (10.mai 1975). Dette feltet fyller du bare ut dersom personen har en rolle innen sertifikatgodkjenning.",
 			)
 	kommentar = models.TextField(
-			verbose_name="Organisatorisk tilhørighet / rolle (fases ut)",
+			verbose_name="Kommentar (fases ut)",
 			blank=True,
 			null=True,
 			help_text=u"Fritekst",
@@ -308,6 +308,15 @@ class Ansvarlig(models.Model):
 			verbose_name="Ønsker du å motta e-postvarsler?",
 			default=False,
 			help_text=u"",
+			)
+	cache_seksjon = models.ForeignKey(
+			to='HRorg',
+			related_name='ansvarlig',
+			verbose_name="Seksjon (cache)",
+			blank=True,
+			null=True,
+			on_delete=models.SET_NULL,
+			help_text=u"Seksjon ansvarlige sist ble sett knyttet til",
 			)
 	history = HistoricalRecords()
 
