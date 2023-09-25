@@ -5,48 +5,76 @@
 {% block ekstrameny_business_service %}
 {% endblock ekstrameny_business_service %}
 
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
 {% block overskrift %}
 	Unntaksgrupper som gir avvik fra standard sikkerhetsregler
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-	<h5>Felles påloggingsportal Azure AD</h5>
+<p>Her vises utvalgte statistikker på sikkerhetsavvik knyttet til enkeltpersoner.</p>
+
 	<table class="table table-sm tablesorter excel">
 	<thead>
+		<th>Område</th>
 		<th>Unntakskategori</th>
 		<th>Antall personer</th>
 		<th>Kommentarer</th>
+		<th>Historikk</th>
 	</thead>
 	<tbody>
-	{% for s in statistikk_azure %}
+	{% for s in statistikk %}
 		<tr>
+			<td>{{s.kategori}}</td>
 			<td>{{s.beskrivelse}}</td>
 			<td>{{s.medlemmer}}</td>
 			<td>{{s.kommentar}}</td>
+			<td><div><canvas height="60" id="adgr_chart_{{forloop.counter}}"></canvas></div></td>
 		</tr>
 	{% endfor %}
 	</tbody>
 	</table>
 
+{% for s in statistikk %}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const data{{forloop.counter}} = {
+	labels: [1,2,3,4],
+	datasets: [{
+		backgroundColor: 'rgb(255, 99, 132)',
+		borderColor: 'rgb(255, 99, 132)',
+		data: [1,2,3,4],
+	}]
+};
 
-	<h5>Klientplattform</h5>
-	<table class="table table-sm tablesorter excel">
-	<thead>
-		<th>Unntakskategori</th>
-		<th>Antall personer</th>
-		<th>Kommentarer</th>
-	</thead>
-	<tbody>
-	{% for s in statistikk_klient %}
-		<tr>
-			<td>{{s.beskrivelse}}</td>
-			<td>{{s.medlemmer}}</td>
-			<td>{{s.kommentar}}</td>
-		</tr>
-	{% endfor %}
-	</tbody>
-	</table>
+const config{{forloop.counter}} = {
+	type: 'bar',
+	data: data{{forloop.counter}},
+	options: {
+		plugins: {
+			legend: false,
+		},
+		scales: {
+			y: {
+				beginAtZero: true,
+			}
+			yAxis: [{
+				ticks: {
+					display: false,
+				}
+			}]
+		}
+	},
+};
+const myChart{{forloop.counter}} = new Chart(
+document.getElementById('adgr_chart_{{forloop.counter}}'),
+	config{{forloop.counter}}
+);
+</script>
+{% endfor %}
+
 
 <h5>Detaljer</h5>
 {% for v in virksomheter %}
