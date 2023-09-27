@@ -432,14 +432,14 @@ def o365_avvik(request):
 			"kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."
 		},
 		{
-			"kategori": "Kobinasjon",
+			"kategori": "Kombinasjon",
 			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
 			"AND_grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",],
 			"beskrivelse": "Unntak administrert enhet og tilgang fra gule land",
 			"kommentar": ""
 		},
 		{
-			"kategori": "Kobinasjon",
+			"kategori": "Kombinasjon",
 			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
 			"AND_grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",],
 			"beskrivelse": "Unntak administrert enhet og tilgang fra røde land",
