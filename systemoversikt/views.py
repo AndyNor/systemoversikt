@@ -450,14 +450,14 @@ def o365_avvik(request):
 	def konkrete_brukere(grupper):
 		gruppeemdlemmer = set()
 		for gruppe in grupper:
-			try:
-				gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
-				brukere = json.loads(gruppe)
-				for bruker in brukere:
-					gruppeemdlemmer.add(bruker.split(',')[0].split('CN=')[1])
-			except:
-				print("fant ikke gruppen %s" % gruppe)
-				pass
+			#try:
+			gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
+			brukere = json.loads(gruppe)
+			for bruker in brukere:
+				gruppeemdlemmer.add(bruker.split(',')[0].split('CN=')[1])
+			#except:
+			#	print("fant ikke gruppen %s" % gruppe)
+			#	pass
 		return gruppeemdlemmer
 
 
