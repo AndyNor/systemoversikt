@@ -475,12 +475,12 @@ def o365_avvik(request):
 		else: # Det er 1 eller flere grupper som skal AND-es sammen. Vi må derfor lese ut faktiske identer.
 			gruppeemdlemmer = konkrete_brukere(i["grupper"])
 			AND_gruppemedlemmer = konkrete_brukere(i["AND_grupper"])
-			print(list(gruppeemdlemmer))
-			print(list(AND_gruppemedlemmer))
+			#print(list(gruppeemdlemmer))
+			#print(list(AND_gruppemedlemmer))
 			medlemmer_union = gruppeemdlemmer.intersection(AND_gruppemedlemmer)
 
 			antall = len(medlemmer_union)
-			print(antall)
+			#print(antall)
 			i["konkrete_medlemmer"] = list(medlemmer_union)
 
 
