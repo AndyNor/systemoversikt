@@ -477,7 +477,7 @@ def o365_avvik(request):
 			AND_gruppemedlemmer = konkrete_brukere(i["AND_grupper"])
 			print(list(gruppeemdlemmer))
 			print(list(AND_gruppemedlemmer))
-			medlemmer_union = gruppeemdlemmer.union(AND_gruppemedlemmer)
+			medlemmer_union = gruppeemdlemmer.intersection(AND_gruppemedlemmer)
 
 			antall = len(medlemmer_union)
 			print(antall)
