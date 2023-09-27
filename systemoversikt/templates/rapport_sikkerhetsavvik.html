@@ -31,7 +31,10 @@
 			<td>{{s.kategori}}</td>
 			<td>{{s.beskrivelse}}</td>
 			<td>{{s.medlemmer}}</td>
-			<td>{{s.kommentar}}</td>
+			<td>
+				{{s.kommentar}}<br>
+				{{s.konkrete_medlemmer}}
+			</td>
 			<td><div><canvas height="100" id="adgr_chart_{{forloop.counter}}"></canvas></div></td>
 		</tr>
 	{% endfor %}

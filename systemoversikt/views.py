@@ -368,78 +368,129 @@ def o365_avvik(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+	from systemoversikt.views import ldap_users_securitygroups
 	# 1 flytte konfigurasjon til database
 	# 2 flytte logikk som sjekker antall til batch job, sjekke hver dag
 	# 3 vise antall nå + historikk her
 
 
 	#logikk
-	grupper = [
+	innhentingsbehov = [
 		{
 			"kategori": "Administrert enhet",
 			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
+			"AND_grupper": None,
 			"beskrivelse": "Unntak administrert enhet for ordinære brukere",
 			"kommentar": "I tillegg har alle på Citrix/AKS unntak."
 		},
 		{
 			"kategori": "Administrert enhet",
 			"grupper": ["DS-OFFICE365SVC_UNNTAK_KJENTENHET",],
+			"AND_grupper": None,
 			"beskrivelse": "Unntak administrert enhet for servicekontoer",
 			"kommentar": ""
 		},
 		{
 			"kategori": "Multifaktor autentisering",
 			"grupper": ["DS-OFFICE365SVC_UNNTAK_MFA",],
+			"AND_grupper": None,
 			"beskrivelse": "Unntak multifaktor autentisering for servicekontoer",
 			"kommentar": "I tillegg har Citrix/AKS og møteromspaneler unntak."
 		},
 		{
 			"kategori": "På reise",
 			"grupper": ["DS-OFFICE365SPES_UNNTAK_EUROPEISKIP",],
+			"AND_grupper": None,
 			"beskrivelse": "Unntak fra gule land for ordinære brukere",
 			"kommentar": ""},
 		{
 			"kategori": "På reise",
 			"grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",],
+			"AND_grupper": None,
 			"beskrivelse": "Unntak fra gule land for servicekontoer",
 			"kommentar": ""
 		},
 		{
 			"kategori": "På reise",
 			"grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",],
+			"AND_grupper": None,
 			"beskrivelse": "Unntak fra røde land for ordinære brukere",
 			"kommentar": ""
 		},
 		{
 			"kategori": "Klientplattform",
 			"grupper": ["DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT",],
+			"AND_grupper": None,
 			"beskrivelse": "Lokal administrator", "kommentar":
 			"Mulighet for lokaladministrator på klienter via MakeMeAdmin."
 		},
 		{
 			"kategori": "Klientplattform",
 			"grupper": ["DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE",],
+			"AND_grupper": None,
 			"beskrivelse": "Nettleserutvidelser",
 			"kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."
 		},
+		{
+			"kategori": "Kobinasjon",
+			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
+			"AND_grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",],
+			"beskrivelse": "Unntak administrert enhet og tilgang fra gule land",
+			"kommentar": ""
+		},
+		{
+			"kategori": "Kobinasjon",
+			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
+			"AND_grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",],
+			"beskrivelse": "Unntak administrert enhet og tilgang fra røde land",
+			"kommentar": ""
+		},
 	]
 
-	def hent_statistikk(g):
-		antall = 0
-		for gruppe in g["grupper"]:
+	def konkrete_brukere(grupper):
+		gruppeemdlemmer = set()
+		for gruppe in grupper:
 			try:
 				gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
-				antall += gruppe.membercount
+				brukere = json.loads(gruppe)
+				for bruker in brukere:
+					gruppeemdlemmer.add(bruker.split(',')[0].split('CN=')[1])
 			except:
-				#print("fant ikke gruppen %s" % g)
+				print("fant ikke gruppen %s" % gruppe)
 				pass
-		g["medlemmer"] = antall
-		return g
+		return gruppeemdlemmer
+
+
+
+	def hent_statistikk(i):
+		antall = 0
+		if not i["AND_grupper"]: # Det er bare ordinære grupper som kan slås opp direkte. Er mye raskere enn å dekode enkeltbrukere.
+			for gruppe in i["grupper"]:
+				try:
+					gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
+					antall += gruppe.membercount
+				except:
+					print("fant ikke gruppen %s" % gruppe)
+					pass
+		else: # Det er 1 eller flere grupper som skal AND-es sammen. Vi må derfor lese ut faktiske identer.
+			gruppeemdlemmer = konkrete_brukere(i["grupper"])
+			AND_gruppemedlemmer = konkrete_brukere(i["AND_grupper"])
+			print(list(gruppeemdlemmer))
+			print(list(AND_gruppemedlemmer))
+			medlemmer_union = gruppeemdlemmer.union(AND_gruppemedlemmer)
+
+			antall = len(medlemmer_union)
+			print(antall)
+			i["konkrete_medlemmer"] = list(medlemmer_union)
+
+
+		i["medlemmer"] = antall
+		return i
 
 
 	statistikk = []
-	for g in grupper:
-		statistikk.append(hent_statistikk(g))
+	for i in innhentingsbehov:
+		statistikk.append(hent_statistikk(i))
 
 	alle_virskomhet = Virksomhet.objects.filter(ordinar_virksomhet=True)
 
@@ -5854,6 +5905,7 @@ def ldap_users_securitygroups(user):
 		print("Finner ikke 'memberof' attributtet.")
 		#print("error ldap_users_securitygroups(): %s" %(result))
 		return []
+
 
 def convert_distinguishedname_cn(liste):
 	return [re.search(r'cn=([^\,]*)', g, re.I).groups()[0] for g in liste]
