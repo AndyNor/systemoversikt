@@ -48,13 +48,17 @@ urlpatterns = [
 	re_path(r'^admin/logger/audit/$', views.logger_audit, name='logger_audit'),
 	re_path(r'^admin/logger/autentisering/$', views.logger_autentisering, name='logger_autentisering'),
 	re_path(r'^admin/logger/api/$', views.logger_api, name='logger_api'),
-	re_path(r'^admin/logger/api/csirt/$', views.logger_api_csirt, name='logger_api_csirt'),
+	re_path(r'^admin/logger/api_csirt/$', views.logger_api_csirt, name='logger_api_csirt'),
 	re_path(r'^admin/roller/$', views.roller, name='roller'),
 	re_path(r'^admin/rettigheter/$', views.permissions, name='permissions'),
 	re_path(r'^admin/erstattansvarlig/$', views.ansvarlig_bytte, name='ansvarlig_bytte'),
 	re_path(r'^admin/valgbarekategorier/$', views.valgbarekategorier, name='valgbarekategorier'),
 	re_path(r'^admin/bytt_virksomhet/$', views.bytt_virksomhet, name='bytt_virksomhet'),
 	re_path(r'^admin/databasestatistikk/$', views.databasestatistikk, name='databasestatistikk'),
+	re_path(r'^admin/system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
+	re_path(r'^admin/system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
+	re_path(r'^admin/bruker/logger/$', views.logger_users, name='logger_users'),
+	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 
 
 	re_path(r'^rapport/startside/$', views.rapport_startside, name='rapport_startside'),
@@ -65,11 +69,7 @@ urlpatterns = [
 	re_path(r'^rapport/systemperisk/$', views.isk_ansvarlig_for_system, name='isk_ansvarlig_for_system'),
 	re_path(r'^rapport/named_locations/$', views.rapport_named_locations, name='rapport_named_locations'),
 
-
-	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
-
 	re_path(r'^sok/$', views.search, name='search'),
-	re_path(r'^firewall/$', views.cmdb_firewall, name='cmdb_firewall'),
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
 	re_path(r'^systemer/forvalteroversikt/$', views.alle_systemer_forvaltere, name='alle_systemer_forvaltere'),
@@ -87,14 +87,10 @@ urlpatterns = [
 	re_path(r'^systemer/systemklassifisering/(?P<kriterie>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	re_path(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),
 	re_path(r'^systemer/systemtype/tom/$', views.systemtype_detaljer, name='systemtype_detaljer_mangler'),
-	re_path(r'^system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
-	re_path(r'^system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
 	re_path(r'^systemer/kritiske_funksjoner/$', views.system_kritisk_funksjon, name='system_kritisk_funksjon'),
 	re_path(r'^systemer/informasjonsbehandling/$', views.system_informasjonsbehandling, name='system_informasjonsbehandling'),
 	re_path(r'^systemer/los_struktur/$', views.system_los_struktur, name='system_los_struktur_indeks'),
 	re_path(r'^systemer/los_struktur/(?P<pk>\d{1,8})/$', views.system_los_struktur, name='system_los_struktur'),
-
-
 
 	re_path(r'^behandlinger/user/$', views.mine_behandlinger, name='mine_behandlinger'),
 	re_path(r'^behandlinger/alle/$', views.alle_behandlinger, name='alle_behandlinger'),
@@ -111,6 +107,7 @@ urlpatterns = [
 	re_path(r'^cmdb/bruker/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
 	re_path(r'^cmdb/bruker/$', views.bruker_sok, name='bruker_sok'),
 	re_path(r'^cmdb/bruker/brukerlistesok/$', views.ad_brukerlistesok, name='cmdb_ad_brukerlistesok'),
+	re_path(r'^cmdb/firewall/$', views.cmdb_firewall, name='cmdb_firewall'),
 
 
 	re_path(r'^virksomhet/$', views.alle_virksomheter, name='alle_virksomheter'),
@@ -202,7 +199,6 @@ urlpatterns = [
 
 	re_path(r'^cmdb/ad/leverandortilgang/$', views.leverandortilgang, name='leverandortilgang'),
 	re_path(r'^cmdb/ad/leverandortilgang/(?P<valgt_gruppe>[-._a-zA-Z0-9\s]{2,100})/$', views.leverandortilgang, name='leverandortilgang_detaljer'),
-	re_path(r'^cmdb/bruker/logger/$', views.logger_users, name='logger_users'),
 	re_path(r'^cmdb/bruker/flereidenter/$', views.cmdb_ad_flere_brukeridenter, name='cmdb_ad_flere_brukeridenter'),
 
 

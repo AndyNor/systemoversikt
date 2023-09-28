@@ -33,7 +33,7 @@
 	var cy = cytoscape({
 		zoomingEnabled: true,
 		panningEnabled: true,
-		wheelSensitivity: 0.25,
+		wheelSensitivity: 0.1,
 		container: document.getElementById('cy'),
 		elements: {
 			nodes: [
@@ -85,8 +85,8 @@
 			},
 		],
 		layout: {
-			name: 'breadthfirst',
-			animationDuration: 2000, //ms
+			name: 'cose',
+			animationDuration: 300, //ms
 		},
 	});
 	cy.on('tap', 'node', function(){

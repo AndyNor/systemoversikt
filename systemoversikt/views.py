@@ -25,15 +25,342 @@ import datetime
 import json
 import re
 import time
+from django.utils import timezone
 
 
-FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
-SYSTEMTYPE_PROGRAMMER = "Selvstendig klientapplikasjon"
+##########################
+# Støttefunksjoner start #
+##########################
+def decode_useraccountcontrol(code): # støttefunksjon for LDAP
+	#https://support.microsoft.com/nb-no/help/305144/how-to-use-useraccountcontrol-to-manipulate-user-account-properties
+	active_codes = ""
+	status_codes = {
+			"SCRIPT": 0,
+			"ACCOUNTDISABLE": 1,
+			"LOCKOUT": 3,
+			"PASSWD_NOTREQD": 5,
+			"PASSWD_CANT_CHANGE": 6,
+			"NORMAL_ACCOUNT": 9,
+			"DONT_EXPIRE_PASSWORD": 16,
+			"SMARTCARD_REQUIRED": 18,
+			"PASSWORD_EXPIRED": 23,
+		}
+	for key in status_codes:
+		if int(code) >> status_codes[key] & 1:
+			active_codes += " " + key
+	return active_codes
 
+
+def get_client_ip(request): # støttefunksjon
+	try:
+		x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+		if x_forwarded_for:
+			ip = x_forwarded_for.split(',')[0]
+		else:
+			ip = request.META.get('REMOTE_ADDR')
+		return ip
+	except:
+		return "get_client_ip() feilet"
+
+
+def ldap_query(ldap_path, ldap_filter, ldap_properties, timeout): # støttefunksjon for LDAP
+	import ldap, os
+	server = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
+	user = os.environ["KARTOTEKET_LDAPUSER"]
+	password = os.environ["KARTOTEKET_LDAPPASSWORD"]
+	ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)  # have to deactivate sertificate check
+	ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+	ldapClient = ldap.initialize(server)
+	ldapClient.timeout = timeout
+	ldapClient.set_option(ldap.OPT_REFERRALS, 0)  # tells the server not to chase referrals
+	ldapClient.bind_s(user, password)  # synchronious
+
+	result = ldapClient.search_s(
+			ldap_path,
+			ldap.SCOPE_SUBTREE,
+			ldap_filter,
+			ldap_properties
+	)
+
+	ldapClient.unbind_s()
+	return result
 
 """
-Støttefunksjoner start
+def ldap_get_user_details(username): # støttefunksjon for LDAP
+
+	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+	ldap_filter = ('(&(objectClass=user)(cn=%s))' % username)
+	ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass']
+
+	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
+	users = []
+	for cn,attrs in result:
+		if cn:
+			attrs_decoded = {}
+			for key in attrs:
+				attrs_decoded[key] = []
+				if key == "lastLogonTimestamp":
+					# always just one timestamp, hence item 0 hardcoded
+					ms_timestamp = int(attrs[key][0][:-1].decode())  # removing one trailing digit converting 100ns to microsec.
+					converted_date = datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ms_timestamp)
+					attrs_decoded[key].append(converted_date)
+				elif key == "userAccountControl":
+					accountControl = decode_useraccountcontrol(int(attrs[key][0].decode()))
+					attrs_decoded[key].append(accountControl)
+				elif key == "memberOf":
+					for element in attrs[key]:
+						e = element.decode()
+						regex_find_group = re.search(r'cn=([^\,]*)', e, re.I).groups()[0]
+
+						attrs_decoded[key].append({
+								"group": regex_find_group,
+								"cn": e,
+						})
+					continue  # skip the next for..
+				else:
+					for element in attrs[key]:
+						attrs_decoded[key].append(element.decode())
+
+			users.append({
+					"cn": cn,
+					"attrs": attrs_decoded,
+			})
+	return users
+
+
+def ldap_get_group_details(group): # støttefunksjon for LDAP
+
+	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+	ldap_filter = ('(&(cn=%s)(objectclass=group))' % group)
+	ldap_properties = ['description', 'cn', 'member', 'objectClass']
+
+	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
+
+	groups = []
+	for cn,attrs in result:
+		if cn:
+			attrs_decoded = {}
+			for key in attrs:
+				attrs_decoded[key] = []
+				if key == "member":
+					for element in attrs[key]:
+						e = element.decode()
+						regex_find_username = re.search(r'cn=([^\,]*)', e, re.I).groups()[0]
+
+						try:
+							user = User.objects.get(username__iexact=regex_find_username)
+						except:
+							user = None
+
+						attrs_decoded[key].append({
+								"username": regex_find_username,
+								"user": user,
+								"cn": e,
+						})
+					continue  # skip the next for..
+				for element in attrs[key]:
+					attrs_decoded[key].append(element.decode())
+
+			groups.append({
+					"cn": cn,
+					"attrs": attrs_decoded,
+			})
+	return groups
 """
+
+
+def ldap_get_recursive_group_members(group): # støttefunksjon for LDAP
+	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+	ldap_filter = ('(&(objectCategory=person)(objectClass=user)(memberOf:1.2.840.113556.1.4.1941:=%s))' % group)
+	ldap_properties = ['cn', 'displayName', 'description']
+
+	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=100)
+	users = []
+
+	for cn,attrs in result:
+		if cn:
+			attrs_decoded = {}
+			for key in attrs:
+				attrs_decoded[key] = []
+				for element in attrs[key]:
+					attrs_decoded[key].append(element.decode())
+
+			users.append({
+					"cn": cn,
+					"attrs": attrs_decoded,
+			})
+
+	return users
+
+
+def ldap_users_securitygroups(user): # støttefunksjon for LDAP
+	ldap_filter = ('(cn=%s)' % user)
+	result = ldap_query(ldap_path="DC=oslofelles,DC=oslo,DC=kommune,DC=no", ldap_filter=ldap_filter, ldap_properties=[], timeout=5)
+	try:
+		memberof = result[0][1]['memberOf']
+		return([g.decode() for g in memberof])
+	except:
+		print("Finner ikke 'memberof' attributtet.")
+		#print("error ldap_users_securitygroups(): %s" %(result))
+		return []
+
+
+def convert_distinguishedname_cn(liste): # støttefunksjon
+	return [re.search(r'cn=([^\,]*)', g, re.I).groups()[0] for g in liste]
+
+
+def ldap_get_details(name, ldap_filter): # støttefunksjon
+	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+	ldap_properties = []
+	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
+	groups = []
+	users = []
+	computers = []
+
+	for cn,attrs in result:
+		if cn:
+
+			if b'computer' in attrs["objectClass"]:
+				attrs_decoded = {}
+				for key in attrs:
+					if key in ['description', 'cn', 'objectClass', 'operatingSystem', 'operatingSystemVersion', 'dNSHostName',]:
+						attrs_decoded[key] = []
+						for element in attrs[key]:
+							attrs_decoded[key].append(element.decode())
+					else:
+						continue
+
+				computers.append({
+						"cn": cn,
+						"attrs": attrs_decoded,
+				})
+
+				return ({
+						"computers": computers,
+						"raw": result,
+					})
+
+
+			if b'user' in attrs["objectClass"]:
+				import codecs
+				attrs_decoded = {}
+				for key in attrs:
+					if key in ['cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'whenCreated', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass', 'thumbnailPhoto']:
+						# if not, then we don't bother decoding the value for now
+						attrs_decoded[key] = []
+						if key == "lastLogonTimestamp":
+							# always just one timestamp, hence item 0 hardcoded
+							## TODO flere steder
+							ms_timestamp = int(attrs[key][0][:-1].decode())  # removing one trailing digit converting 100ns to microsec.
+							converted_date = datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ms_timestamp)
+							attrs_decoded[key].append(converted_date)
+						elif key == "whenCreated":
+							value = attrs[key][0].decode().split('.')[0]
+							converted_date = datetime.datetime.strptime(value, "%Y%m%d%H%M%S")
+							attrs_decoded[key].append(converted_date)
+						elif key == "userAccountControl":
+							accountControl = decode_useraccountcontrol(int(attrs[key][0].decode()))
+							attrs_decoded[key].append(accountControl)
+						elif key == "thumbnailPhoto":
+							attrs_decoded[key].append(codecs.encode(attrs[key][0], 'base64').decode('utf-8'))
+						elif key == "memberOf":
+							for element in attrs[key]:
+								e = element.decode()
+								regex_find_group = re.search(r'cn=([^\,]*)', e, re.I).groups()[0]
+
+								attrs_decoded[key].append({
+										"group": regex_find_group,
+										"cn": e,
+								})
+							continue  # skip the next for..
+						else:
+							for element in attrs[key]:
+								attrs_decoded[key].append(element.decode())
+					else:
+						continue
+
+				users.append({
+						"cn": cn,
+						"attrs": attrs_decoded,
+				})
+				return ({
+						"users": users,
+						"raw": result,
+					})
+
+
+			if b'group' in attrs["objectClass"]:
+				attrs_decoded = {}
+				for key in attrs:
+					if key in ['description', 'cn', 'member', 'objectClass', 'memberOf']:
+						attrs_decoded[key] = []
+						if key == "member":
+							for element in attrs[key]:
+								e = element.decode()
+								regex_find_username = re.search(r'cn=([^\,]*)', e, re.I).groups()[0]
+
+								try:
+									user = User.objects.get(username__iexact=regex_find_username)
+								except:
+									user = None
+
+								attrs_decoded[key].append({
+										"username": regex_find_username,
+										"user": user,
+										"cn": e,
+								})
+							continue  # skip the next for..
+						for element in attrs[key]:
+							attrs_decoded[key].append(element.decode())
+					else:
+						continue
+
+				groups.append({
+						"cn": cn,
+						"attrs": attrs_decoded,
+				})
+				return ({
+						"groups": groups,
+						"raw": result,
+					})
+	return None
+
+"""
+def ldap_exact(name): # støttefunksjon for LDAP
+	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+	ldap_filter = ('(distinguishedName=%s)' % name)
+	ldap_properties = []
+
+	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=100)
+	prepare = []
+
+	for cn,attrs in result:
+		if cn:
+			attrs_decoded = {}
+			for key in attrs:
+				attrs_decoded[key] = []
+				for element in attrs[key]:
+					try:
+						attrs_decoded[key].append(element.decode())
+					except:
+						attrs_decoded[key].append(element)
+
+			prepare.append({
+					"cn": cn,
+					"attrs": attrs_decoded,
+			})
+
+	return {"raw": prepare}
+"""
+
+def prk_api(filename): # støttefunksjon
+	path = "/var/kartoteket/source/systemoversikt/import/" + filename
+	with open(path, 'rt', encoding='utf-8') as file:
+		response = HttpResponse(file, content_type='text/csv; charset=utf-8')
+		response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
+	return response
+
+
 def get_ipaddr_instance(address):
 
 	if address == "" or address == None or address == "0.0.0.0":
@@ -78,13 +405,12 @@ def behandlingsprotokoll_felles(virksomhet):
 	return delte_behandlinger
 
 def behandlingsprotokoll(virksomhet):
-	"""
-	slå sammen felles og egne behandlinger til et sett med behandlinger
-	"""
+	#slå sammen felles og egne behandlinger til et sett med behandlinger
 	virksomhetens_behandlinger = behandlingsprotokoll_egne(virksomhet)
 	delte_behandlinger = behandlingsprotokoll_felles(virksomhet)
 	alle_relevante_behandlinger = virksomhetens_behandlinger.union(delte_behandlinger).order_by('internt_ansvarlig')
 	return alle_relevante_behandlinger
+
 
 """
 def csrf403(request):
@@ -113,19 +439,77 @@ def unique_splitted_items(text):
 
 
 def formater_permissions(permissions):
+	if permissions == None:
+		return []
 	return [tag.replace(".", ": ").replace("_", " ") for tag in permissions]
 
 
+def adgruppe_utnosting(gr): # støttefunksjon
+	hierarki = []
+	hierarki.append(gr)
 
-"""
-Støttefunksjoner slutt
-"""
+	def identifiser_underliggende_grupper(gr):
+		child_groups = []
+		for element in json.loads(gr.member):
+			try: # fra LDAP-svaret vet vi ikke om en member er en gruppe eller en brukerident. Vi må derfor slå opp.
+				g = ADgroup.objects.get(distinguishedname=element)
+				child_groups.append(g)
+			except:
+				pass # må være noe annet enn en gruppe, gitt at kartotekets database er synkronisert med AD
+		return child_groups
+
+	stack = []
+	stack += identifiser_underliggende_grupper(gr)
+
+	while stack:
+		denne_gruppen = stack.pop()
+		#print(denne_gruppen)
+		hierarki.append(denne_gruppen)
+		nye_undergrupper = identifiser_underliggende_grupper(denne_gruppen)
+		for ug in nye_undergrupper:
+			if ug not in hierarki:
+				stack.append(ug)
+
+	return hierarki
 
 
 
-"""
-Ordinære views
-"""
+def human_readable_members(items, onlygroups=False): # støttefunksjon
+	groups = []
+	users = []
+	notfound = []
+
+	for item in items:
+		match = False
+		if onlygroups == False:
+			regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0]
+			try:
+				u = User.objects.get(username__iexact=regex_username)
+				users.append(u)
+				match = True
+				continue
+			except:
+				pass
+		try:
+			g = ADgroup.objects.get(distinguishedname=item)
+			groups.append(g)
+		except:
+			notfound.append(item)  # vi fant ikke noe, returner det vi fikk
+
+	return {"groups": groups, "users": users, "notfound": notfound}
+
+
+
+
+##########################
+# Støttefunksjoner slutt #
+##########################
+
+
+
+##################
+# Ordinære views #
+##################
 
 def mal(request):
 	required_permissions = ['systemoversikt.XYZ']
@@ -169,6 +553,7 @@ def debug_info(request):
 
 
 def tool_word_count(request):
+	required_permissions = None
 	import collections
 	inndata = request.POST.get('inndata', '')
 	filtered = inndata.replace(',',' ').replace(';',' ').replace(':',' ').replace('|',' ').replace('.','').lower()
@@ -275,7 +660,6 @@ def tool_unique_items(request):
 # def tool_item_count
 
 
-
 def cmdb_adcs_index(request):
 	required_permissions = ['systemoversikt.change_azureapplication']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -283,8 +667,6 @@ def cmdb_adcs_index(request):
 
 	from os import path, listdir
 	from os.path import isfile, join
-	import re
-	import json
 
 	path = path.dirname(path.abspath(__file__)) + "/pki/"
 	limit = 60
@@ -367,6 +749,7 @@ def cmdb_per_virksomhet(request):
 		"template_data": template_data,
 		"resterende_bs": bs_alle,
 	})
+
 
 
 def o365_avvik(request):
@@ -501,6 +884,77 @@ def o365_avvik(request):
 
 
 
+def prk_api_usr(request): #API
+	if request.method == "GET":
+
+		key = request.headers.get("key", None)
+		if key == None:
+			key = request.GET.get("key", None)
+
+		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
+		if key in list(allowed_keys):
+			owner = APIKeys.objects.get(key=key).navn
+			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
+			return prk_api("usr.csv")
+
+		else:
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+
+
+def prk_api_grp(request): #API
+	if request.method == "GET":
+
+		key = request.headers.get("key", None)
+		if key == None:
+			key = request.GET.get("key", None)
+
+		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
+		if key in list(allowed_keys):
+			from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+			try:
+				owner = APIKeys.objects.get(key=key).navn
+			except MultipleObjectsReturned:
+				owner = "Flere treff på nøkkeleier"
+
+			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
+			return prk_api("grp.csv")
+
+		else:
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+
+
+def azure_applications(request):
+	#Vise liste over alle Azure enterprise applications med rettigheter de har fått tildelt
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	applikasjoner = AzureApplication.objects.filter(active=True).order_by('-createdDateTime')
+
+	return render(request, 'cmdb_azure_applications.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'applikasjoner': applikasjoner,
+	})
+
+
+
+def azure_application_keys(request):
+	#Vise liste over alle Azure enterprise application keys etter utløpsdato
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	keys = AzureApplicationKeys.objects.order_by('end_date_time')
+
+	return render(request, 'cmdb_azure_application_keys.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'keys': keys,
+	})
+
 
 
 def rapport_startside(request):
@@ -511,13 +965,13 @@ def rapport_startside(request):
 	})
 
 
+
 def isk_ansvarlig_for_system(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	aktuelle_systemer = list()
-
 	systemer = System.objects.all()
 	for s in systemer:
 		if s.er_infrastruktur():
@@ -536,6 +990,8 @@ def isk_ansvarlig_for_system(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'aktuelle_systemer': aktuelle_systemer,
 	})
+
+
 
 def o365_lisenser(request):
 	required_permissions = ['auth.view_user']
@@ -560,10 +1016,7 @@ def o365_lisenser(request):
 
 
 def system_kritisk_funksjon(request):
-	"""
-	Viser alle kritiske funksjoner og hvilke systemer som understøtter dem
-	Tilgjengelig for de som kan XXXX
-	"""
+	#Viser alle kritiske funksjoner og hvilke systemer som understøtter dem
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -581,11 +1034,9 @@ def system_kritisk_funksjon(request):
 	})
 
 
+
 def system_informasjonsbehandling(request):
-	"""
-	Vise alle LOS-begreper og systemer som er knyttet til
-	Tilgjengelig for de som kan se CMDB
-	"""
+	#Vise alle LOS-begreper og systemer som er knyttet til
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -599,10 +1050,9 @@ def system_informasjonsbehandling(request):
 	})
 
 
+
 def system_los_struktur(request, pk=None):
-	"""
-	Vise alle LOS-begreper grafisk
-	"""
+	#Vise alle LOS-begreper grafisk
 	required_permissions = None
 	los_graf = {"nodes": [], "edges": []}
 
@@ -649,206 +1099,180 @@ def system_los_struktur(request, pk=None):
 	})
 
 
+
 def alle_nettverksenheter(request):
-	"""
-	Viser alle nettverksenheter (cisco, bigip..)
-	Tilgjengelig for de som kan lese cmdb-data
-	"""
+	#Viser alle nettverksenheter (cisco, bigip..)
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		#logikk
-		nettverksenehter = NetworkDevice.objects.all()
-
-		return render(request, 'cmdb_nettverksenehter.html', {
-			'request': request,
-			'required_permissions': formater_permissions(required_permissions),
-			'nettverksenehter': nettverksenehter,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	nettverksenehter = NetworkDevice.objects.all()
+
+	return render(request, 'cmdb_nettverksenehter.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'nettverksenehter': nettverksenehter,
+	})
+
 
 
 def cmdb_statistikk(request):
-	"""
-	Vise alle statistikk over alt i CMDB
-	Tilgjengelig for de som kan lese CMDB
-	"""
+	#Vise alle statistikk over alt i CMDB
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-
-
-		#logikk
-		#search_term = request.GET.get('search_term', '').strip()
-		count_office_ea = AzureApplication.objects.all().count()
-		count_office_ea_keys = AzureApplicationKeys.objects.all().count()
-		count_ad_users = User.objects.all().count()
-		count_prk_users = User.objects.filter(profile__from_prk=True).count()
-		count_prk_skjema = PRKskjema.objects.all().count()
-		count_prk_skjema_valg = PRKvalg.objects.all().count()
-		count_ad_grupper = ADgroup.objects.all().count()
-		count_bs = CMDBbs.objects.all().count()
-		count_bss = CMDBRef.objects.all().count()
-		count_klienter = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).all().count()
-		count_server = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).all().count()
-		count_vlan = NetworkContainer.objects.all().count()
-		count_vip = virtualIP.objects.all().count()
-		count_vip_pool = VirtualIPPool.objects.all().count()
-		count_oracle = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).all().count()
-		count_mssql = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).all().count()
-		count_mem = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000*1000 # summen er MB --> bytes
-		count_disk = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] #summen er i bytes
-		count_oracle_disk = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
-		count_mssql_disk = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
-		count_dns_arecords = DNSrecord.objects.filter(dns_type="A record").count()
-		count_dns_cnames = DNSrecord.objects.filter(dns_type="CNAME").count()
-		count_cisco = NetworkDevice.objects.filter(model__icontains="cisco").count()
-		count_bigip = NetworkDevice.objects.filter(model__icontains="f5").count()
-		count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
-		count_service_accounts = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False).count()
-		count_drift_accounts = User.objects.filter(Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") | Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere")).filter(profile__accountdisable=False).count()
-		count_ressurs_accounts = User.objects.filter(profile__distinguishedname__icontains="OU=Ressurser").filter(profile__accountdisable=False).count()
-		count_inactive_accounts = User.objects.filter(profile__accountdisable=True).count()
-		count_utenfor_OK_accounts = User.objects.filter(~Q(profile__distinguishedname__icontains="OU=OK")).filter(profile__accountdisable=False).count()
-
-		ad_brukere_per_virksomhet = []
-		for virksomhet in Virksomhet.objects.all():
-			interne = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Intern").count()
-			eksterne = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Ekstern").count()
-			servicekontoer = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Servicekonto").count()
-			ressurser = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Ressurs").count()
-			kontakter = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Kontakt").count()
-
-			ad_brukere_per_virksomhet.append({
-				'virksomhet': virksomhet,
-				'interne': interne,
-				'eksterne': eksterne,
-				'servicekontoer': servicekontoer,
-				'ressurser': ressurser,
-				'kontakter': kontakter,
-				})
-
-		return render(request, 'cmdb_statistikk.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'count_office_ea': count_office_ea,
-			'count_office_ea_keys': count_office_ea_keys,
-			'count_ad_users': count_ad_users,
-			'count_prk_users': count_prk_users,
-			'count_prk_skjema': count_prk_skjema,
-			'count_prk_skjema_valg': count_prk_skjema_valg,
-			'count_ad_grupper': count_ad_grupper,
-			'count_bs': count_bs,
-			'count_bss': count_bss,
-			'count_server': count_server,
-			'count_klienter': count_klienter,
-			'count_vlan': count_vlan,
-			'count_vip': count_vip,
-			'count_vip_pool': count_vip_pool,
-			'count_oracle': count_oracle,
-			'count_mssql': count_mssql,
-			'count_mem': count_mem,
-			'count_disk': count_disk,
-			'count_oracle_disk': count_oracle_disk,
-			'count_mssql_disk': count_mssql_disk,
-			'count_dns_arecords': count_dns_arecords,
-			'count_dns_cnames': count_dns_cnames,
-			'count_cisco': count_cisco,
-			'count_bigip': count_bigip,
-			'count_backup': count_backup,
-			'count_service_accounts': count_service_accounts,
-			'count_drift_accounts': count_drift_accounts,
-			'count_ressurs_accounts': count_ressurs_accounts,
-			'count_inactive_accounts': count_inactive_accounts,
-			'count_utenfor_OK_accounts': count_utenfor_OK_accounts,
-			'ad_brukere_per_virksomhet': ad_brukere_per_virksomhet,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	count_office_ea = AzureApplication.objects.all().count()
+	count_office_ea_keys = AzureApplicationKeys.objects.all().count()
+	count_ad_users = User.objects.all().count()
+	count_prk_users = User.objects.filter(profile__from_prk=True).count()
+	count_prk_skjema = PRKskjema.objects.all().count()
+	count_prk_skjema_valg = PRKvalg.objects.all().count()
+	count_ad_grupper = ADgroup.objects.all().count()
+	count_bs = CMDBbs.objects.all().count()
+	count_bss = CMDBRef.objects.all().count()
+	count_klienter = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).all().count()
+	count_server = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).all().count()
+	count_vlan = NetworkContainer.objects.all().count()
+	count_vip = virtualIP.objects.all().count()
+	count_vip_pool = VirtualIPPool.objects.all().count()
+	count_oracle = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).all().count()
+	count_mssql = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).all().count()
+	count_mem = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000*1000 # summen er MB --> bytes
+	count_disk = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] #summen er i bytes
+	count_oracle_disk = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
+	count_mssql_disk = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
+	count_dns_arecords = DNSrecord.objects.filter(dns_type="A record").count()
+	count_dns_cnames = DNSrecord.objects.filter(dns_type="CNAME").count()
+	count_cisco = NetworkDevice.objects.filter(model__icontains="cisco").count()
+	count_bigip = NetworkDevice.objects.filter(model__icontains="f5").count()
+	count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+	count_service_accounts = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False).count()
+	count_drift_accounts = User.objects.filter(Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") | Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere")).filter(profile__accountdisable=False).count()
+	count_ressurs_accounts = User.objects.filter(profile__distinguishedname__icontains="OU=Ressurser").filter(profile__accountdisable=False).count()
+	count_inactive_accounts = User.objects.filter(profile__accountdisable=True).count()
+	count_utenfor_OK_accounts = User.objects.filter(~Q(profile__distinguishedname__icontains="OU=OK")).filter(profile__accountdisable=False).count()
+
+	ad_brukere_per_virksomhet = []
+	for virksomhet in Virksomhet.objects.all():
+		interne = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Intern").count()
+		eksterne = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Ekstern").count()
+		servicekontoer = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Servicekonto").count()
+		ressurser = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Ressurs").count()
+		kontakter = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Kontakt").count()
+
+		ad_brukere_per_virksomhet.append({
+			'virksomhet': virksomhet,
+			'interne': interne,
+			'eksterne': eksterne,
+			'servicekontoer': servicekontoer,
+			'ressurser': ressurser,
+			'kontakter': kontakter,
+			})
+
+	return render(request, 'cmdb_statistikk.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'count_office_ea': count_office_ea,
+		'count_office_ea_keys': count_office_ea_keys,
+		'count_ad_users': count_ad_users,
+		'count_prk_users': count_prk_users,
+		'count_prk_skjema': count_prk_skjema,
+		'count_prk_skjema_valg': count_prk_skjema_valg,
+		'count_ad_grupper': count_ad_grupper,
+		'count_bs': count_bs,
+		'count_bss': count_bss,
+		'count_server': count_server,
+		'count_klienter': count_klienter,
+		'count_vlan': count_vlan,
+		'count_vip': count_vip,
+		'count_vip_pool': count_vip_pool,
+		'count_oracle': count_oracle,
+		'count_mssql': count_mssql,
+		'count_mem': count_mem,
+		'count_disk': count_disk,
+		'count_oracle_disk': count_oracle_disk,
+		'count_mssql_disk': count_mssql_disk,
+		'count_dns_arecords': count_dns_arecords,
+		'count_dns_cnames': count_dns_cnames,
+		'count_cisco': count_cisco,
+		'count_bigip': count_bigip,
+		'count_backup': count_backup,
+		'count_service_accounts': count_service_accounts,
+		'count_drift_accounts': count_drift_accounts,
+		'count_ressurs_accounts': count_ressurs_accounts,
+		'count_inactive_accounts': count_inactive_accounts,
+		'count_utenfor_OK_accounts': count_utenfor_OK_accounts,
+		'ad_brukere_per_virksomhet': ad_brukere_per_virksomhet,
+	})
+
 
 
 def detaljer_vip(request, pk):
-	"""
-	Vise detaljer for lastbalanserte URL-er med deres pool-medlemmer
-	Tilgjengelig for de som kan lese CMDB
-	"""
+	#Vise detaljer for lastbalanserte URL-er med deres pool-medlemmer
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		vip = virtualIP.objects.get(pk=pk)
-
-		return render(request, 'cmdb_alle_vip.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'alle_viper': [vip],
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	vip = virtualIP.objects.get(pk=pk)
+
+	return render(request, 'cmdb_alle_vip.html', {
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+		'alle_viper': [vip],
+	})
+
 
 
 def cmdb_devicedetails(request, pk):
-	"""
-	Vise detaljer for server/klient (ting med IP)
-	Tilgjengelig for de som kan lese CMDB
-	"""
+	#Vise detaljer for server/klient (ting med IP)
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		device = CMDBdevice.objects.get(pk=pk)
-
-		return render(request, 'cmdb_devicedetails.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'device': device,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	device = CMDBdevice.objects.get(pk=pk)
+
+	return render(request, 'cmdb_devicedetails.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'device': device,
+	})
+
 
 
 def alle_dns(request):
-	"""
-	Vise alle DNS navn og alias
-	Tilgjengelig for de som kan lese CMDB
-	"""
+	#Vise alle DNS navn og alias
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		alle_dnsnavn = DNSrecord.objects.all()
-
-		return render(request, 'cmdb_alle_dns.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'alle_dnsnavn': alle_dnsnavn,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	alle_dnsnavn = DNSrecord.objects.all()
+	return render(request, 'cmdb_alle_dns.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'alle_dnsnavn': alle_dnsnavn,
+	})
+
 
 
 def dns_txt(request):
-	"""
-	Vise alle DNS navn og alias
-	Tilgjengelig for de som kan lese CMDB
-	"""
+	#Vise alle DNS navn og alias
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		txt_records = DNSrecord.objects.filter(dns_type="TXT")
-
-		return render(request, 'cmdb_dns_txt.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'txt_records': txt_records,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	txt_records = DNSrecord.objects.filter(dns_type="TXT")
+
+	return render(request, 'cmdb_dns_txt.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'txt_records': txt_records,
+	})
+
 
 
 def alle_vip(request):
-	"""
-	Vise alle lastbalanserte URL-er med deres pool-medlemmer
-	Tilgjengelig for de som kan lese CMDB
-	"""
+	#Vise alle lastbalanserte URL-er med deres pool-medlemmer
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -872,7 +1296,6 @@ def alle_vip(request):
 	else:
 		alle_viper = []
 
-
 	return render(request, 'cmdb_alle_vip.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -883,84 +1306,71 @@ def alle_vip(request):
 
 
 def nettverk_detaljer(request, pk):
-	"""
-	Vise alt koblet til et nettverk
-	Tilgjengelig for de som kan lese CMDB
-	"""
+	#Vise brannmuråpninger koblet til et nettverk
 	required_permissions = ['systemoversikt.view_brannmurregel']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		nettverk = NetworkContainer.objects.get(pk=pk)
-		network_ip_addresses = nettverk.network_ip_address.all().order_by('ip_address_integer')
-		firewall_openings = nettverk.firewall_rules.filter(active=True)
-
-		return render(request, 'cmdb_nettverk_detaljer.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'nettverk': nettverk,
-			'network_ip_addresses': network_ip_addresses,
-			'firewall_openings': firewall_openings,
-			'config_maximum_mark_server': 100,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	nettverk = NetworkContainer.objects.get(pk=pk)
+	network_ip_addresses = nettverk.network_ip_address.all().order_by('ip_address_integer')
+	firewall_openings = nettverk.firewall_rules.filter(active=True)
+
+	return render(request, 'cmdb_nettverk_detaljer.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'nettverk': nettverk,
+		'network_ip_addresses': network_ip_addresses,
+		'firewall_openings': firewall_openings,
+		'config_maximum_mark_server': 100,
+	})
+
 
 
 def alle_nettverk(request):
-	"""
-	Vise alle nettverk
-	Tilgjengelig for de som kan lese CMDB
-	"""
+	#Vise alle nettverk
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		def network_loopup(term):
-			return NetworkContainer.objects.filter(
-					Q(ip_address__icontains=search_term) |
-					Q(orgname__icontains=search_term) |
-					Q(comment__icontains=search_term) |
-					Q(vrfname__icontains=search_term)
-				)
-
-		search_term_raw = request.GET.get('search_term', '')
-		search_term = search_term_raw.strip().split('/')[0]
-
-		if search_term == "__ALL__":
-			nettverk = NetworkContainer.objects.all()
-
-		elif len(search_term) > 1:
-			nettverk = network_loopup(search_term)
-
-			#if len(nettverk) == 0:
-			#	search_term = '.'.join(search_term.split(".")[:-1])
-			#	nettverk = network_loopup(search_term)
-
-			if len(nettverk) == 0: # ingen treff, kan være søk på en IP i et nettverk
-				try:
-					import ipaddress
-					nettverk = []
-					search_ip = ipaddress.ip_address(search_term)
-					alle_vlan = NetworkContainer.objects.all()
-					for vlan in alle_vlan:
-						vlan_network = ipaddress.ip_network(vlan.ip_address + "/" + str(vlan.subnet_mask))
-						if search_ip in vlan_network:
-							nettverk.append(vlan)
-				except:
-					pass
-
-		else:
-			nettverk = []
-
-		return render(request, 'cmdb_alle_nettverk.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'alle_nettverk': nettverk,
-			'vlan_search_term': search_term_raw,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	def network_loopup(term):
+		return NetworkContainer.objects.filter(
+				Q(ip_address__icontains=search_term) |
+				Q(orgname__icontains=search_term) |
+				Q(comment__icontains=search_term) |
+				Q(vrfname__icontains=search_term)
+			)
 
+	search_term_raw = request.GET.get('search_term', '')
+	search_term = search_term_raw.strip().split('/')[0]
+
+	if search_term == "__ALL__":
+		nettverk = NetworkContainer.objects.all()
+
+	elif len(search_term) > 1:
+		nettverk = network_loopup(search_term)
+
+		if len(nettverk) == 0: # ingen treff, kan være søk på en IP i et nettverk
+			try:
+				import ipaddress
+				nettverk = []
+				search_ip = ipaddress.ip_address(search_term)
+				alle_vlan = NetworkContainer.objects.all()
+				for vlan in alle_vlan:
+					vlan_network = ipaddress.ip_network(vlan.ip_address + "/" + str(vlan.subnet_mask))
+					if search_ip in vlan_network:
+						nettverk.append(vlan)
+			except:
+				pass
+
+	else:
+		nettverk = []
+
+	return render(request, 'cmdb_alle_nettverk.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'alle_nettverk': nettverk,
+		'vlan_search_term': search_term_raw,
+	})
 
 
 
@@ -980,125 +1390,99 @@ def cmdb_uten_backup(request):
 
 
 def cmdb_backup_index(request):
-	"""
-	Vise alle nettverk
-	Tilgjengelig for de som kan lese CMDB
-	"""
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
-		count_backup_missing_bss = CMDBbackup.objects.filter(bss=None).aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
-		pct_missing_all = int(count_backup_missing_bss / count_backup * 100)
-		bs_all = CMDBbs.objects.all()
-
-		return render(request, 'cmdb_backup_index.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'count_backup': count_backup,
-			'count_backup_missing_bss': count_backup_missing_bss,
-			'pct_missing_all': pct_missing_all,
-			'bs_all': bs_all,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+	count_backup_missing_bss = CMDBbackup.objects.filter(bss=None).aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+	pct_missing_all = int(count_backup_missing_bss / count_backup * 100)
+	bs_all = CMDBbs.objects.all()
+
+	return render(request, 'cmdb_backup_index.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'count_backup': count_backup,
+		'count_backup_missing_bss': count_backup_missing_bss,
+		'pct_missing_all': pct_missing_all,
+		'bs_all': bs_all,
+	})
+
 
 
 def cmdb_lagring_index(request):
-	"""
-	Vise alle nettverk
-	Tilgjengelig for de som kan lese CMDB
-	"""
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-
-		count_san_allocated = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
-		count_san_used = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
-		pct_used = int(count_san_used / count_san_allocated * 100)
-		count_san_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(sub_name=None).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
-		count_not_active = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
-
-		bs_all = CMDBbs.objects.all()
-
-		return render(request, 'cmdb_lagring_index.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'count_san_allocated': count_san_allocated,
-			'count_san_used': count_san_used,
-			'pct_used': pct_used,
-			'count_san_missing_bs': count_san_missing_bs,
-			'count_not_active': count_not_active,
-			'bs_all': bs_all,
-
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	count_san_allocated = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+	count_san_used = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
+	pct_used = int(count_san_used / count_san_allocated * 100)
+	count_san_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(sub_name=None).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+	count_not_active = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
 
+	bs_all = CMDBbs.objects.all()
 
+	return render(request, 'cmdb_lagring_index.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'count_san_allocated': count_san_allocated,
+		'count_san_used': count_san_used,
+		'pct_used': pct_used,
+		'count_san_missing_bs': count_san_missing_bs,
+		'count_not_active': count_not_active,
+		'bs_all': bs_all,
+
+	})
 
 
 
 def cmdb_minne_index(request):
-	"""
-	Vise alle nettverk
-	Tilgjengelig for de som kan lese CMDB
-	"""
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		try:
-			count_ram_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
-		except:
-			count_ram_allocated = 0
-		try:
-			count_ram_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(sub_name=None).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
-		except:
-			count_ram_missing_bs = 0
-
-		bs_all = CMDBbs.objects.all()
-
-		return render(request, 'cmdb_minne_index.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'count_ram_allocated': count_ram_allocated,
-			'count_ram_missing_bs': count_ram_missing_bs,
-			'bs_all': bs_all,
-
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		count_ram_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
+	except:
+		count_ram_allocated = 0
+	try:
+		count_ram_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(sub_name=None).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
+	except:
+		count_ram_missing_bs = 0
+
+	bs_all = CMDBbs.objects.all()
+
+	return render(request, 'cmdb_minne_index.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'count_ram_allocated': count_ram_allocated,
+		'count_ram_missing_bs': count_ram_missing_bs,
+		'bs_all': bs_all,
+
+	})
+
 
 
 def cmdb_servere_disabled_poweredon(request):
-	"""
-	Vise alle nettverk
-	Tilgjengelig for de som kan lese CMDB
-	"""
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		inaktive_servere_poweredon = CMDBdevice.objects.filter(device_active=False, vm_poweredon=True)
-		return render(request, 'cmdb_servere_disabled_poweredon.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'inaktive_servere_poweredon': inaktive_servere_poweredon,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	inaktive_servere_poweredon = CMDBdevice.objects.filter(device_active=False, vm_poweredon=True)
+	return render(request, 'cmdb_servere_disabled_poweredon.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'inaktive_servere_poweredon': inaktive_servere_poweredon,
+	})
 
 
 
 def cmdb_ad_flere_brukeridenter(request):
-	"""
-	Viser informasjon om personer med mer enn 1 brukerident
-	"""
+	#Viser informasjon om personer med mer enn 1 brukerident
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-
 
 	import collections
 	ansattnr = []
@@ -1140,115 +1524,96 @@ def cmdb_ad_flere_brukeridenter(request):
 
 
 def ad_brukerlistesok(request):
-	"""
-	Denne funksjonen er for å søke opp mange brukernavn og se informasjon om de det er treff på
-	Tilgjengelig for de som har rettigheter til å se brukere
-	"""
+	#Denne funksjonen er for å søke opp mange brukernavn og se informasjon om de det er treff på
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-
-		search_raw = request.POST.get('user_search_term', '').strip()  # strip removes trailing and leading space
-		search_term = search_raw
-		users = []
-		not_users = []
-
-		search_term = search_term.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ')
-		search_term = search_term.split()
-
-		for term in search_term:
-			try:
-				user = User.objects.get(username=term.lower())
-				users.append(user)
-			except:
-				not_users.append(term)
-				continue  # skip this term
-
-		return render(request, 'ad_brukerlistesok.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'user_search_term': search_raw,
-			'users': users,
-			'not_users': not_users,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_raw = request.POST.get('user_search_term', '').strip()  # strip removes trailing and leading space
+	search_term = search_raw
+	users = []
+	not_users = []
+
+	search_term = search_term.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ')
+	search_term = search_term.split()
+
+	for term in search_term:
+		try:
+			user = User.objects.get(username=term.lower())
+			users.append(user)
+		except:
+			not_users.append(term)
+			continue  # skip this term
+
+	return render(request, 'ad_brukerlistesok.html', {
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+		'user_search_term': search_raw,
+		'users': users,
+		'not_users': not_users,
+	})
 
 
 
 def bruker_sok(request):
-	"""
-	Denne funksjonen viser resultat av søk etter brukere
-	Tilgjengelig for de som har rettigheter til å se brukere
-	"""
+	#Denne funksjonen viser resultat av søk etter brukere
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-
-		search_term = request.GET.get('search_term', '').strip()
-
-		from functools import reduce
-		from operator import or_, and_
-
-		# vi ønsker her å søke med AND-operatør mellom alle ord mot displayname, men OR-et med første ordet mot username.
-		fields = (
-			'profile__displayName__icontains',
-		)
-		parts = []
-		terms = search_term.split(" ")
-		for term in terms:
-			for field in fields:
-				parts.append(Q(**{field: term}))
-
-		query_display = reduce(and_, parts)
-		username_query = Q(**{'username__icontains': terms[0]})
-		query = reduce(or_, [query_display, username_query])
-		#print(query)
-
-		if len(search_term) > 2:
-			users = User.objects.filter(query).distinct()
-
-		else:
-			users = User.objects.none()
-
-		return render(request, 'system_brukerdetaljer.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'search_term': search_term,
-			'users': users,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	from functools import reduce
+	from operator import or_, and_
+	search_term = request.GET.get('search_term', '').strip()
+	# vi ønsker her å søke med AND-operatør mellom alle ord mot displayname, men OR-et med første ordet mot username.
+	fields = (
+		'profile__displayName__icontains',
+	)
+	parts = []
+	terms = search_term.split(" ")
+	for term in terms:
+		for field in fields:
+			parts.append(Q(**{field: term}))
+
+	query_display = reduce(and_, parts)
+	username_query = Q(**{'username__icontains': terms[0]})
+	query = reduce(or_, [query_display, username_query])
+	#print(query)
+
+	if len(search_term) > 2:
+		users = User.objects.filter(query).distinct()
+
+	else:
+		users = User.objects.none()
+
+	return render(request, 'system_brukerdetaljer.html', {
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+		'search_term': search_term,
+		'users': users,
+	})
+
 
 
 def passwdneverexpire(request, pk):
-	"""
-	Denne funksjonen viser alle personer som har satt passord utløper aldri
-	Tilgjengelig for de som har rettigheter til å se brukere
-	"""
-	from django.utils import timezone
+	#Denne funksjonen viser alle personer som har satt passord utløper aldri
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		virksomhet = Virksomhet.objects.get(pk=pk)
-
-		users = User.objects.filter(profile__virksomhet=virksomhet.pk).filter(profile__usertype__in=["Ansatt", "Ekstern"]).filter(profile__dont_expire_password=True).order_by('profile__displayName')
-
-		return render(request, 'virksomhet_passwordneverexpire.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'virksomhet': virksomhet,
-			'users': users,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	users = User.objects.filter(profile__virksomhet=virksomhet.pk).filter(profile__usertype__in=["Ansatt", "Ekstern"]).filter(profile__dont_expire_password=True).order_by('profile__displayName')
+
+	return render(request, 'virksomhet_passwordneverexpire.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': virksomhet,
+		'users': users,
+	})
+
 
 
 def ansatte_virksomhet(request, pk):
-	"""
-	Denne funksjonen viser alle personer i en virksomhet
-	Tilgjengelig for de som har rettigheter til å se brukere
-	"""
+	#Denne funksjonen viser alle personer i en virksomhet
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -1297,7 +1662,6 @@ def ansatte_virksomhet(request, pk):
 				pass
 		group["adgroup_members_clean"] = list(adgroup_members_clean)
 
-
 	#bufre alle gruppemedlemmer direkte under var nye_adgrupper
 	for idx, group in enumerate(nye_adgrupper):
 		try:
@@ -1313,7 +1677,6 @@ def ansatte_virksomhet(request, pk):
 			except:
 				pass
 		group["adgroup_members_clean"] = list(adgroup_members_clean)
-
 
 	# slå opp for hver bruker gammel lisens
 	for bruker in brukere:
@@ -1356,20 +1719,14 @@ def ansatte_virksomhet(request, pk):
 
 
 def tom_epost(request, pk):
-	"""
-	Denne funksjonen viser alle personer som har passordutløp kommende periode
-	Tilgjengelig for de som har rettigheter til å se brukere
-	"""
-	from django.utils import timezone
+	#Denne funksjonen viser alle personer som har passordutløp kommende periode
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-
 	count_brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
 	brukere_uten_epost = User.objects.filter(email="", profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern'])
-	#print(type(brukere_uten_epost[0].email))
 
 	return render(request, 'virksomhet_tom_epost.html', {
 		'request': request,
@@ -1381,120 +1738,110 @@ def tom_epost(request, pk):
 
 
 def cmdb_uten_epost_stat(request):
-	"""
-	Denne funksjonen viser alle personer som har passordutløp kommende periode
-	Tilgjengelig for de som har rettigheter til å se brukere
-	"""
-	from django.utils import timezone
+	#Denne funksjonen viser alle personer som har passordutløp kommende periode
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		stats = []
-		totalt_uten_epost = 0
-		totalt_antall_brukere = 0
-
-		for virksomhet in Virksomhet.objects.all():
-
-			if virksomhet.virksomhetsforkortelse == "DRIFT":
-				continue # hopp over
-
-			brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
-			brukere_uten_epost = User.objects.filter(email="", profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
-
-			totalt_uten_epost += brukere_uten_epost
-			totalt_antall_brukere += brukere_i_virksomhet
-
-			try:
-				andel_brukere_i_virksomhet = round(100*brukere_uten_epost / brukere_i_virksomhet)
-			except:
-				andel_brukere_i_virksomhet = None
-
-			stats.append(
-					{
-						"virksomhet": virksomhet,
-						"brukere_i_virksomhet": brukere_i_virksomhet,
-						"brukere_uten_epost": brukere_uten_epost,
-						"andel_brukere_i_virksomhet": andel_brukere_i_virksomhet,
-					}
-				)
-
-		return render(request, 'cmdb_uten_epost_stat.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'stats': stats,
-			'totalt_uten_epost': totalt_uten_epost,
-			'totalt_antall_brukere': totalt_antall_brukere,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	stats = []
+	totalt_uten_epost = 0
+	totalt_antall_brukere = 0
+
+	for virksomhet in Virksomhet.objects.all():
+
+		if virksomhet.virksomhetsforkortelse == "DRIFT":
+			continue # hopp over
+
+		brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
+		brukere_uten_epost = User.objects.filter(email="", profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
+
+		totalt_uten_epost += brukere_uten_epost
+		totalt_antall_brukere += brukere_i_virksomhet
+
+		try:
+			andel_brukere_i_virksomhet = round(100*brukere_uten_epost / brukere_i_virksomhet)
+		except:
+			andel_brukere_i_virksomhet = None
+
+		stats.append(
+				{
+					"virksomhet": virksomhet,
+					"brukere_i_virksomhet": brukere_i_virksomhet,
+					"brukere_uten_epost": brukere_uten_epost,
+					"andel_brukere_i_virksomhet": andel_brukere_i_virksomhet,
+				}
+			)
+
+	return render(request, 'cmdb_uten_epost_stat.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'stats': stats,
+		'totalt_uten_epost': totalt_uten_epost,
+		'totalt_antall_brukere': totalt_antall_brukere,
+	})
 
 
 def passwordexpire(request, pk):
-	"""
-	Denne funksjonen viser alle personer som har passordutløp kommende periode
-	Tilgjengelig for de som har rettigheter til å se brukere
-	"""
-	from django.utils import timezone
+	#Denne funksjonen viser alle personer som har passordutløp kommende periode
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-		periode = 14 ## dager
-		innaktiv = 182 ## dager
-		now = timezone.now()
-		virksomhet = Virksomhet.objects.get(pk=pk)
+	periode = 14 ## dager
+	innaktiv = 182 ## dager
+	now = timezone.now()
+	virksomhet = Virksomhet.objects.get(pk=pk)
 
-		if request.GET.get('alt') == "ja":
-			users = User.objects.filter(profile__userPasswordExpiry__gte=now)
-		else:
-			users = User.objects.filter(profile__virksomhet=pk)
+	if request.GET.get('alt') == "ja":
+		users = User.objects.filter(profile__userPasswordExpiry__gte=now)
+	else:
+		users = User.objects.filter(profile__virksomhet=pk)
 
-		users = users.filter(profile__usertype__in=["Ansatt", "Ekstern"]).filter(profile__accountdisable=False).filter(profile__userPasswordExpiry__lte=now+datetime.timedelta(days=periode)).order_by('profile__userPasswordExpiry')
+	users = users.filter(profile__usertype__in=["Ansatt", "Ekstern"]).filter(profile__accountdisable=False).filter(profile__userPasswordExpiry__lte=now+datetime.timedelta(days=periode)).order_by('profile__userPasswordExpiry')
 
-		for u in users:
-			if u.profile.lastLogonTimestamp:
-				if u.profile.lastLogonTimestamp < (now - datetime.timedelta(days=innaktiv)):
-					u.inactive = True
-				else:
-					u.inactive = False
+	for u in users:
+		if u.profile.lastLogonTimestamp:
+			if u.profile.lastLogonTimestamp < (now - datetime.timedelta(days=innaktiv)):
+				u.inactive = True
 			else:
 				u.inactive = False
+		else:
+			u.inactive = False
 
-			if u.profile.userPasswordExpiry < now:
-				u.expired = True
-			else:
-				u.expired = False
+		if u.profile.userPasswordExpiry < now:
+			u.expired = True
+		else:
+			u.expired = False
 
-		return render(request, 'virksomhet_passwordexpire.html', {
-			'request': request,
+	return render(request, 'virksomhet_passwordexpire.html', {
+		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-			'virksomhet': virksomhet,
-			'users': users,
-			'periode': periode,
-			'innaktiv': innaktiv,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		'virksomhet': virksomhet,
+		'users': users,
+		'periode': periode,
+		'innaktiv': innaktiv,
+	})
+
+
 
 def bruker_detaljer(request, pk):
-	"""
-	Denne funksjonen viser detaljer om en bruker lastet inn i kartoteket
-	Tilgjengelig for de som har rettigheter til å se brukere
-	"""
+	#Denne funksjonen viser detaljer om en bruker lastet inn i kartoteket
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		user = User.objects.get(pk=pk)
-		return render(request, 'system_brukerdetaljer.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'users': [user],
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	user = User.objects.get(pk=pk)
+	return render(request, 'system_brukerdetaljer.html', {
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+		'users': [user],
+	})
+
+
+
 def lokasjoner_hos_virksomhet(request, pk):
-	required_permissions = 'systemoversikt.view_virksomhet'
-	if not request.user.has_perm(required_permissions):
+	required_permissions = ['systemoversikt.view_virksomhet']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
@@ -1507,22 +1854,22 @@ def lokasjoner_hos_virksomhet(request, pk):
 	})
 
 
+
 def klienter_hos_virksomhet(request, pk):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		virksomhet = Virksomhet.objects.get(pk=pk)
-
-		alle_klienter_hos_virksomhet = CMDBdevice.objects.filter(maskinadm_virksomhet=virksomhet).filter(~(Q(maskinadm_status__in=["UTMELDT", "SLETTET"]) and Q(landesk_login=None)))
-
-		return render(request, 'virksomhet_klientoversikt.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'virksomhet': virksomhet,
-			'alle_klienter_hos_virksomhet': alle_klienter_hos_virksomhet,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	alle_klienter_hos_virksomhet = CMDBdevice.objects.filter(maskinadm_virksomhet=virksomhet).filter(~(Q(maskinadm_status__in=["UTMELDT", "SLETTET"]) and Q(landesk_login=None)))
+
+	return render(request, 'virksomhet_klientoversikt.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': virksomhet,
+		'alle_klienter_hos_virksomhet': alle_klienter_hos_virksomhet,
+	})
+
 
 
 def virksomhet_leverandortilgang(request, pk=None):
@@ -1534,7 +1881,6 @@ def virksomhet_leverandortilgang(request, pk=None):
 		raise Http404
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-
 	relevante_grupper = list()
 
 	levprofiler = Leverandortilgang.objects.all()
@@ -1548,13 +1894,13 @@ def virksomhet_leverandortilgang(request, pk=None):
 		users.extend(json.loads(gruppe.member))
 
 	users = list(set(users)) # sørger for unike personer
-
 	member = human_readable_members(users)
 
 	return render(request, 'virksomhet_leverandortilgang.html', {
 		'virksomhet': virksomhet,
 		'member': member,
 	})
+
 
 
 def virksomhet_sikkerhetsavvik(request, pk=None):
@@ -1570,7 +1916,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	logg = ""
-
 
 	def hent_brukere(grupper, logg):
 		brukerliste = set()
@@ -1592,7 +1937,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 
 		brukerliste = [b.lower() for b in brukerliste]
 		brukerobjekter = User.objects.filter(username__in=brukerliste)
-
 		return (brukerobjekter, logg)
 
 	#Grupper for å gi EM+S E5-lisens
@@ -1627,7 +1971,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 	]
 	brukere_hoyrisikoland, logg = hent_brukere(grupper_hoyrisikoland, logg)
 
-
 	#opptak
 	grupper_med_opptak = [
 		"DS-OFFICE365SPES_OPPTAK_OPPTAK",
@@ -1638,7 +1981,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 		"DS-OFFICE365SPES_LIVEEVENT_LIVEEVENT",
 	]
 	brukere_med_liveevent, logg = hent_brukere(grupper_med_liveevent, logg)
-
 
 	#spesialroller
 	grupper_omraadeadm = [
@@ -1666,7 +2008,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 	]
 	brukere_byod_vpn, logg = hent_brukere(grupper_byod_vpn, logg)
 
-
 	grupper_filefullcontrol_applomr = [
 		"DS-File-FullControl-Alle-%s-ApplOmr" % (virksomhet.virksomhetsforkortelse),
 	]
@@ -1682,7 +2023,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 	]
 	brukere_filefullcontrol_hjemmeomr, logg = hent_brukere(grupper_filefullcontrol_hjemmeomr, logg)
 
-
 	grupper_lokalskriver_is = [
 		"DS-%s_APP_KLIENT_LOCALPRINT" % (virksomhet.virksomhetsforkortelse),
 	]
@@ -1692,7 +2032,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 		"DS-%s_APP_KLIENT_LOCALPRINTSS" % (virksomhet.virksomhetsforkortelse),
 	]
 	brukere_lokalskriver_ss, logg = hent_brukere(grupper_lokalskriver_ss, logg)
-
 
 	grupper_usb_tykklient = [
 		"DS-%s_APP_KLIENT_USBAKSESSTYKK" % (virksomhet.virksomhetsforkortelse),
@@ -1707,7 +2046,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 	]
 	brukere_usb_tynnklient, logg = hent_brukere(grupper_usb_tynnklient, logg)
 
-
 	grupper_lokal_administrator = [
 		"DS-%s_APP_SUPPORT_LOKAL_ADMINISTRATOR" % (virksomhet.virksomhetsforkortelse),
 		"DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT",
@@ -1718,7 +2056,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 		"DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE",
 	]
 	brukere_nettleserutvidelser, logg = hent_brukere(grupper_nettleserutvidelser, logg)
-
 
 	return render(request, 'virksomhet_sikkerhetsavvik.html', {
 		'request': request,
@@ -1768,14 +2105,12 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 	})
 
 
+
 def minside(request):
-	"""
-	Når innlogget, vise informasjon om innlogget bruker
-	"""
+	#Når innlogget, vise informasjon om innlogget bruker
 	required_permissions = None
 	try:
 		oidctoken = request.session['oidc-token']
-
 	except:
 		oidctoken = "OIDC er ikke i bruk"
 
@@ -1789,10 +2124,9 @@ def minside(request):
 		return redirect("/")
 
 
+
 def dashboard_all(request, virksomhet=None):
-	"""
-	Generere virksomhets dashboard med statistikk over systmemer
-	"""
+	#Generere virksomhets dashboard med statistikk over systmemer
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -1820,12 +2154,6 @@ def dashboard_all(request, virksomhet=None):
 
 	antall_systemer_uten_driftsmodell = len(System.objects.filter(driftsmodell_foreignkey=None).filter(~Q(ibruk=False)).all())
 
-
-	#virksomheter per antall eier, antall forvalter
-	#per system, antall ros 0,5 år, 1år, eldre og ingen
-	#per system, antall med behandling og uten
-	#per system, antall dpia og uten.
-
 	def systemeierPerVirksomhet(systemer):
 		#print(type(systemer))
 		resultat = []
@@ -1833,12 +2161,14 @@ def dashboard_all(request, virksomhet=None):
 			resultat.append(systemer.filter(systemeier=virksomhet).count())
 		resultat.append(systemer.filter(systemeier=None).count())
 		return resultat
+
 	def systemforvalterPerVirksomhet(systemer):
 		resultat = []
 		for virksomhet in alle_virksomheter:
 			resultat.append(systemer.filter(systemforvalter=virksomhet).count())
 		resultat.append(systemer.filter(systemforvalter=None).count())
 		return resultat
+
 	def statusRoS(systemer):
 		minus_six_months = datetime.date.today() - datetime.timedelta(days=182)
 		minus_twelve_months = minus_six_months - datetime.timedelta(days=183)
@@ -1850,6 +2180,7 @@ def dashboard_all(request, virksomhet=None):
 		ros_mangler_ikke_prioritert = systemer.filter(Q(dato_sist_ros=None) & Q(risikovurdering_behovsvurdering=1)).count()
 		ros_ikke_behov = systemer.filter(Q(dato_sist_ros=None) & Q(risikovurdering_behovsvurdering=0)).count() # 0 er "Ikke behov / inngår i annet systems risikovurdering"
 		return [ros_ikke_behov,ros_seks_mnd_siden,ros_et_aar_siden,ros_gammel,ros_mangler_prioritert,ros_mangler_ikke_prioritert]
+
 	def statusDPIA(systemer):
 		#['Utført', 'Ikke utført', 'Ikke behov',]
 		dpia_ok = systemer.filter(~Q(DPIA_for_system=None)).count()
@@ -1861,8 +2192,8 @@ def dashboard_all(request, virksomhet=None):
 			if behandlinger.count() > 0:
 				dpia_ikke_behov += 1
 		dpia_mangler_antall = dpia_mangler.count()
-
 		return [dpia_ok, dpia_mangler_antall - dpia_ikke_behov, dpia_ikke_behov]
+
 	def statusSikkerhetsnivaa(systemer):
 		#['Gradert', 'Sikret', 'Internt', 'Eksternt', 'Ukjent']
 		gradert = systemer.filter(sikkerhetsnivaa=4).count()
@@ -1871,6 +2202,7 @@ def dashboard_all(request, virksomhet=None):
 		eksternt = systemer.filter(sikkerhetsnivaa=1).count()
 		ukjent = systemer.filter(sikkerhetsnivaa=None).count()
 		return [gradert,sikret,internt,eksternt,ukjent]
+
 	def statusTjenestenivaa(systemer):
 		kritikalitet = []
 		for s in systemer:
@@ -1881,13 +2213,14 @@ def dashboard_all(request, virksomhet=None):
 		t_tree = sum(x == 3 for x in kritikalitet)
 		t_four = sum(x == 4 for x in kritikalitet)
 		t_unknown = sum(x == None for x in kritikalitet)
-
 		#['T1', 'T2', 'T3', 'T4','Ukjent']
 		return [t_one,t_two,t_tree,t_four,t_unknown]
+
 	def statusKvalitet(systemer):
 		kvalitetssikret = systemer.filter(informasjon_kvalitetssikret=True).count()
 		ikke = systemer.filter(informasjon_kvalitetssikret=False).count()
 		return[kvalitetssikret, ikke]
+
 	def statusLivslop(systemer):
 		anskaffelse = systemer.filter(livslop_status=1).count()
 		nytt = systemer.filter(livslop_status=2).count()
@@ -1896,7 +2229,6 @@ def dashboard_all(request, virksomhet=None):
 		byttes = systemer.filter(livslop_status=5).count()
 		ukjent = systemer.filter(livslop_status=None).count()
 		return [anskaffelse,nytt,moderne,modent,byttes,ukjent]
-
 
 	systemlister = [
 		{
@@ -1981,147 +2313,138 @@ def dashboard_all(request, virksomhet=None):
 	})
 
 
+
 def ansvarlig_bytte(request):
-	required_permissions = 'systemoversikt.change_ansvarlig'
-	if request.user.has_perm(required_permissions):
-
-		str_ansvarlig_fra = request.POST.get('ansvarlig_fra', '')
-		str_ansvarlig_til = request.POST.get('ansvarlig_til', '')
-
-
-		try:
-			bruker_fra = User.objects.get(username=str_ansvarlig_fra)
-			ansvarlig_fra = Ansvarlig.objects.get(brukernavn=bruker_fra)
-		except:
-			ansvarlig_fra = None
-
-		try:
-			bruker_til = User.objects.get(username=str_ansvarlig_til)
-			try:
-				ansvarlig_til = Ansvarlig.objects.get(brukernavn=bruker_til)
-			except:
-				# det kan hende personen ikke allerede er opprettet som ansvarlig, så da gjør vi det her
-				ansvarlig_til = Ansvarlig.objects.create(brukernavn=bruker_til)
-		except:
-			ansvarlig_til = None
-
-
-		if ansvarlig_fra == None or ansvarlig_til == None:
-			feilmelding = "Et eller begge feltene inneholder et ugyldig brukernavn"
-		else:
-			feilmelding = ""
-
-		resultat = []
-
-		if ansvarlig_fra != None and ansvarlig_til != None and ansvarlig_fra != ansvarlig_til:
-
-			# her lister vi først ut alle felter på Ansvarlig-klassen som er av typen mange-til-mange eller fremmednøkkel.
-			m2m_relations = []
-			fk_relations = []
-			detaljert_logg = ""
-
-			for f in Ansvarlig._meta.get_fields(include_hidden=False):
-				if f.get_internal_type() in ["ManyToManyField"]:
-					m2m_relations.append(f)
-				if f.get_internal_type() in ["ForeignKey"]:
-					fk_relations.append(f)
-
-			#field
-			#model
-			#related_name
-			#related_model
-
-			for m2mr in m2m_relations:
-				for obj in getattr(ansvarlig_fra, m2mr.name).all():
-					object_field = getattr(obj, m2mr.field.name)
-					object_field.remove(ansvarlig_fra)
-					object_field.add(ansvarlig_til)
-					melding = ("Fjernet %s og la til %s på %s %s" % (ansvarlig_fra, ansvarlig_til, obj.__class__.__name__, obj))
-					detaljert_logg += ("%s %s, " % (obj.__class__.__name__, obj))
-					resultat.append(melding)
-
-			for fkr in fk_relations:
-				for obj in getattr(ansvarlig_fra, fkr.name).all():
-					setattr(obj, fkr.field.name, ansvarlig_til)
-					obj.save()
-					melding = ("Fjernet %s og la til %s på %s %s" % (ansvarlig_fra, ansvarlig_til, obj.__class__.__name__, obj))
-					detaljert_logg += ("%s %s, " % (obj.__class__.__name__, obj))
-					resultat.append(melding)
-
-			logg_entry_message = "%s har overført alt ansvar fra %s til %s for %s" % (request.user, ansvarlig_fra, ansvarlig_til, detaljert_logg)
-
-			ApplicationLog.objects.create(
-					event_type='Overføring av ansvar',
-					message=logg_entry_message,
-				)
-
-		else:
-			resultat = None
-
-
-		return render(request, "ansvarlig_bytte.html", {
-			'str_ansvarlig_fra': str_ansvarlig_fra,
-			'str_ansvarlig_til': str_ansvarlig_til,
-			'ansvarlig_fra': ansvarlig_fra,
-			'ansvarlig_til': ansvarlig_til,
-			'resultat': resultat,
-		})
-	else:
+	required_permissions = ['systemoversikt.change_ansvarlig']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	str_ansvarlig_fra = request.POST.get('ansvarlig_fra', '')
+	str_ansvarlig_til = request.POST.get('ansvarlig_til', '')
+
+	try:
+		bruker_fra = User.objects.get(username=str_ansvarlig_fra)
+		ansvarlig_fra = Ansvarlig.objects.get(brukernavn=bruker_fra)
+	except:
+		ansvarlig_fra = None
+
+	try:
+		bruker_til = User.objects.get(username=str_ansvarlig_til)
+		try:
+			ansvarlig_til = Ansvarlig.objects.get(brukernavn=bruker_til)
+		except:
+			# det kan hende personen ikke allerede er opprettet som ansvarlig, så da gjør vi det her
+			ansvarlig_til = Ansvarlig.objects.create(brukernavn=bruker_til)
+	except:
+		ansvarlig_til = None
+
+	if ansvarlig_fra == None or ansvarlig_til == None:
+		feilmelding = "Et eller begge feltene inneholder et ugyldig brukernavn"
+	else:
+		feilmelding = ""
+
+	resultat = []
+
+	if ansvarlig_fra != None and ansvarlig_til != None and ansvarlig_fra != ansvarlig_til:
+
+		# her lister vi først ut alle felter på Ansvarlig-klassen som er av typen mange-til-mange eller fremmednøkkel.
+		m2m_relations = []
+		fk_relations = []
+		detaljert_logg = ""
+
+		for f in Ansvarlig._meta.get_fields(include_hidden=False):
+			if f.get_internal_type() in ["ManyToManyField"]:
+				m2m_relations.append(f)
+			if f.get_internal_type() in ["ForeignKey"]:
+				fk_relations.append(f)
+
+		#field
+		#model
+		#related_name
+		#related_model
+
+		for m2mr in m2m_relations:
+			for obj in getattr(ansvarlig_fra, m2mr.name).all():
+				object_field = getattr(obj, m2mr.field.name)
+				object_field.remove(ansvarlig_fra)
+				object_field.add(ansvarlig_til)
+				melding = ("Fjernet %s og la til %s på %s %s" % (ansvarlig_fra, ansvarlig_til, obj.__class__.__name__, obj))
+				detaljert_logg += ("%s %s, " % (obj.__class__.__name__, obj))
+				resultat.append(melding)
+
+		for fkr in fk_relations:
+			for obj in getattr(ansvarlig_fra, fkr.name).all():
+				setattr(obj, fkr.field.name, ansvarlig_til)
+				obj.save()
+				melding = ("Fjernet %s og la til %s på %s %s" % (ansvarlig_fra, ansvarlig_til, obj.__class__.__name__, obj))
+				detaljert_logg += ("%s %s, " % (obj.__class__.__name__, obj))
+				resultat.append(melding)
+
+		logg_entry_message = "%s har overført alt ansvar fra %s til %s for %s" % (request.user, ansvarlig_fra, ansvarlig_til, detaljert_logg)
+
+		ApplicationLog.objects.create(
+				event_type='Overføring av ansvar',
+				message=logg_entry_message,
+			)
+	else:
+		resultat = None
+
+	return render(request, "ansvarlig_bytte.html", {
+		'str_ansvarlig_fra': str_ansvarlig_fra,
+		'str_ansvarlig_til': str_ansvarlig_til,
+		'ansvarlig_fra': ansvarlig_fra,
+		'ansvarlig_til': ansvarlig_til,
+		'resultat': resultat,
+	})
+
+
 
 def user_clean_up(request):
-	"""
-	Denne funksjonen er laget for å slette/anonymisere data i testmiljøet.
-	Tilgangsstyring: STRENGT BESKYTTET
-	"""
-	required_permissions = 'auth.change_permission'
-	if request.user.has_perm(required_permissions):
-		if settings.DEBUG == True:  # Testmiljø
-			from django.contrib.auth.models import User
-			for user in User.objects.all():
-				try:
-					user.delete()
-				except:
-					print("Kan ikke slette bruker %s. Forsøker å anonymisere" % user)
-
-				anonymous_firstname = ("First-" + user.username[:3])
-				user.first_name = anonymous_firstname
-				anonymous_lastname = ("Last-" + user.username[3:])
-				user.last_name = anonymous_lastname
-				user.save()
-		else:
-			print("Du får ikke kjøre denne kommandoen i produksjon!")
-
-		return render(request, "site_home.html", {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		})
-	else:
+	#Denne funksjonen er laget for å slette/anonymisere data i testmiljøet.
+	required_permissions = ['auth.change_permission']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	if settings.DEBUG == True:  # Testmiljø
+		from django.contrib.auth.models import User
+		for user in User.objects.all():
+			try:
+				user.delete()
+			except:
+				print("Kan ikke slette bruker %s. Forsøker å anonymisere" % user)
+
+			anonymous_firstname = ("First-" + user.username[:3])
+			user.first_name = anonymous_firstname
+			anonymous_lastname = ("Last-" + user.username[3:])
+			user.last_name = anonymous_lastname
+			user.save()
+	else:
+		print("Du får ikke kjøre denne kommandoen i produksjon!")
+
+	return render(request, "site_home.html", {
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+	})
+
 
 
 def permissions(request):
-	"""
-	viser informasjon om alle ansvarliges aktive rettigheter
-	Tilgangsstyring: De som kan redigere ansvarlige
-	"""
-	required_permissions = 'systemoversikt.change_ansvarlig'
-	if request.user.has_perm(required_permissions):
-		ansvarlige = Ansvarlig.objects.all()
-		return render(request, 'site_permissions.html', {
-			'ansvarlige': ansvarlige,
-		})
-	else:
+	#viser informasjon om alle ansvarliges aktive rettigheter
+	required_permissions = ['systemoversikt.change_ansvarlig']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	ansvarlige = Ansvarlig.objects.all()
+	return render(request, 'site_permissions.html', {
+		'ansvarlige': ansvarlige,
+	})
+
 
 
 def roller(request):
+	required_permissions = None
 	from django.core import serializers
 	from django.contrib.auth.models import Group
-
-	required_permissions = None
-	#required_permissions = 'auth.view_group'
-	#if request.user.has_perm(required_permissions):
 	groups = Group.objects.all()
 	if request.GET.get('export') == "json":
 		export = []
@@ -2155,32 +2478,25 @@ def roller(request):
 
 
 
-
 def logger(request):
-	"""
-	viser alle endringer på objekter i løsningen
-	Tilgangsstyring: Se endringslogger
-	"""
-	required_permissions = 'admin.view_logentry'
-	if request.user.has_perm(required_permissions):
-
-		recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:300]
-		return render(request, 'site_audit_logger.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'recent_admin_loggs': recent_admin_loggs,
-		})
-	else:
+	#viser alle endringer på objekter i løsningen
+	required_permissions = ['admin.view_logentry']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:300]
+	return render(request, 'site_audit_logger.html', {
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+		'recent_admin_loggs': recent_admin_loggs,
+	})
+
 
 
 def logger_audit(request):
-	"""
-	viser alle endringer på objekter i løsningen
-	Tilgangsstyring: Se applikasjonslogger
-	"""
-	required_permissions = 'systemoversikt.view_applicationlog'
-	if not request.user.has_perm(required_permissions):
+	#viser alle endringer på objekter i løsningen
+	required_permissions = ['systemoversikt.view_applicationlog']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	recent_loggs = ApplicationLog.objects.filter(~Q(event_type__icontains="api")).filter(~Q(event_type__icontains="Brukerpålogging")).order_by('-opprettet')[:1500]
@@ -2192,38 +2508,27 @@ def logger_audit(request):
 
 
 
-
 def databasestatistikk(request):
-	"""
-	viser størrelse på alle tabeller i databasefilen
-	"""
-	required_permissions = 'systemoversikt.view_applicationlog'
-	if not request.user.has_perm(required_permissions):
+	#viser størrelse på alle tabeller i databasefilen
+	required_permissions = ['systemoversikt.view_applicationlog']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-
 
 	import os
 	database_file = settings.DATABASES['default']['NAME']
-
 	file_size = os.stat(database_file).st_size
-
 	query = f'sqlite3 {database_file} "SELECT name, SUM(pgsize) AS size FROM dbstat GROUP BY name ORDER BY -size;" ".exit"'
 	data = os.popen(query).read()
-
-
 	data = data.splitlines()
-
 	sum_size = 0.0
-
 	stats = []
+
 	for line in data:
 		line = line.strip()
 		name = line.split("|")[0]
 		size = float(line.split("|")[1])
 		sum_size += size
 		stats.append({"name": name, "size": size})
-
 
 	return render(request, 'site_databasestatistikk.html', {
 		'request': request,
@@ -2234,13 +2539,11 @@ def databasestatistikk(request):
 	})
 
 
+
 def logger_api_csirt(request):
-	"""
-	viser der cisrt-spørringer feiler
-	Tilgangsstyring: Se applikasjonslogger
-	"""
-	required_permissions = 'systemoversikt.view_applicationlog'
-	if not request.user.has_perm(required_permissions):
+	#viser der cisrt-spørringer feiler
+	required_permissions = ['systemoversikt.view_applicationlog']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
@@ -2250,7 +2553,6 @@ def logger_api_csirt(request):
 	except:
 		recent_loggs = None
 
-
 	return render(request, 'site_logger_audit.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -2258,77 +2560,60 @@ def logger_api_csirt(request):
 	})
 
 
-def logger_api(request):
-	"""
-	viser alle endringer på objekter i løsningen
-	Tilgangsstyring: Se applikasjonslogger
-	"""
-	required_permissions = 'systemoversikt.view_applicationlog'
-	if request.user.has_perm(required_permissions):
 
-		recent_loggs = ApplicationLog.objects.filter(event_type__icontains="api").order_by('-opprettet')[:1500]
-		return render(request, 'site_logger_audit.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'recent_loggs': recent_loggs,
-		})
-	else:
+def logger_api(request):
+	#viser alle endringer på objekter i løsningen
+	required_permissions = ['systemoversikt.view_applicationlog']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	recent_loggs = ApplicationLog.objects.filter(event_type__icontains="api").order_by('-opprettet')[:1500]
+	return render(request, 'site_logger_audit.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'recent_loggs': recent_loggs,
+	})
+
 
 
 def logger_autentisering(request):
-	"""
-	viser alle endringer på objekter i løsningen
-	Tilgangsstyring: Se applikasjonslogger
-	"""
-	required_permissions = 'systemoversikt.view_applicationlog'
-	if request.user.has_perm(required_permissions):
-
-		recent_loggs = ApplicationLog.objects.filter(event_type__icontains="Brukerpålogging").order_by('-opprettet')[:1500]
-		return render(request, 'site_logger_audit.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'recent_loggs': recent_loggs,
-		})
-	else:
+	#viser alle endringer på objekter i løsningen
+	required_permissions = ['systemoversikt.view_applicationlog']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	recent_loggs = ApplicationLog.objects.filter(event_type__icontains="Brukerpålogging").order_by('-opprettet')[:1500]
+	return render(request, 'site_logger_audit.html', {
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+		'recent_loggs': recent_loggs,
+	})
 
 
 
 def logger_users(request):
-	"""
-	viser selektive endringer på brukere/ansvarlige i løsningen
-	Tilgangsstyring: Se brukere
-	"""
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-
-		recent_loggs = UserChangeLog.objects.order_by('-opprettet')[:800]
-		return render(request, 'site_logger_users.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'recent_loggs': recent_loggs,
-		})
-	else:
+	#viser selektive endringer på brukere/ansvarlige i løsningen
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	recent_loggs = UserChangeLog.objects.order_by('-opprettet')[:800]
+	return render(request, 'site_logger_users.html', {
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+		'recent_loggs': recent_loggs,
+	})
+
 
 
 def home(request):
-	"""
-	Startsiden med oversikt over systemer per kategori
-	Tilgangsstyring: ÅPEN
-	"""
+	#Startsiden med oversikt over systemer per kategori
 	required_permissions = None
 	antall_systemer = System.objects.filter(~Q(ibruk=False)).count()
 	nyeste_systemer = System.objects.filter(~Q(ibruk=False)).order_by('-pk')[:10]
-
 	antall_programvarer = Programvare.objects.count()
 	nyeste_programvarer = Programvare.objects.order_by('-pk')[:10]
-
 	antall_behandlinger = BehandlingerPersonopplysninger.objects.count()
-
-	#print(nyeste_systemer)
 	kategorier = SystemKategori.objects.all()
 
 	return render(request, 'site_home.html', {
@@ -2343,14 +2628,11 @@ def home(request):
 	})
 
 
-def home_chart(request):
-	"""
-	Startsiden med oversikt over systemer per kategori
-	Tilgangsstyring: ÅPEN
-	"""
 
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+def home_chart(request):
+	#Startsiden med oversikt over systemer per kategori
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	nodes = []
@@ -2366,10 +2648,6 @@ def home_chart(request):
 		if system.systemforvalter:
 			parents.append(system.systemforvalter.virksomhetsforkortelse)
 			return system.systemforvalter.virksomhetsforkortelse
-
-		#if system.systemeier:
-		#	parents.append(system.systemeier.virksomhetsforkortelse)
-		#	return system.systemeier.virksomhetsforkortelse
 
 		parents.append('Ingen')
 		return 'Ingen'
@@ -2421,17 +2699,16 @@ def home_chart(request):
 
 
 def alle_definisjoner(request):
-	"""
-	Viser definisjoner
-	Tilgangsstyring: ÅPEN
-	"""
+	#Viser definisjoner
 	required_permissions = None
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
 	if (search_term == ""):
 		definisjoner = Definisjon.objects.all()
+
 	elif len(search_term) < 2: # if one or less, return nothing
 		definisjoner = Definisjon.objects.none()
+
 	else:
 		definisjoner = Definisjon.objects.filter(
 				Q(begrep__icontains=search_term) |
@@ -2450,11 +2727,9 @@ def alle_definisjoner(request):
 	})
 
 
+
 def definisjon(request, begrep):
-	"""
-	Viser en definisjon
-	Tilgangsstyring: ÅPEN
-	"""
+	#Viser en definisjon
 	required_permissions = None
 	passende_definisjoner = Definisjon.objects.filter(begrep=begrep)
 	return render(request, 'definisjon_detaljer.html', {
@@ -2465,12 +2740,10 @@ def definisjon(request, begrep):
 	})
 
 
+
 def tjenestekatalogen_forvalter_api(request):
-	"""
-	Dette er et API for å hente ut alle systemforvaltere.
-	Brukere:
-		Tjenestekatalogen til UKE
-	"""
+	#Dette er et API for å hente ut alle systemforvaltere.
+	#Brukere: Tjenestekatalogen til UKE
 	if request.method == "GET":
 
 		key = request.headers.get("key", None)
@@ -2536,12 +2809,10 @@ def tjenestekatalogen_forvalter_api(request):
 		raise Http404
 
 
+
 def tjenestekatalogen_systemer_api(request):
-	"""
-	Dette er et API for å hente ut alle systemforvaltere.
-	Brukere:
-		Tjenestekatalogen til UKE
-	"""
+	#Dette er et API for å hente ut alle systemforvaltere.
+	#Brukere: Tjenestekatalogen til UKE
 	if request.method == "GET":
 
 		key = request.headers.get("key", None)
@@ -2579,10 +2850,9 @@ def tjenestekatalogen_systemer_api(request):
 		raise Http404
 
 
+
 def ansvarlig(request, pk):
-	"""
-	Viser informasjon om en ansvarlig
-	"""
+	#Viser informasjon om en ansvarlig
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -2609,8 +2879,6 @@ def ansvarlig(request, pk):
 	programvarebruk_kontakt_for = ProgramvareBruk.objects.filter(lokal_kontakt=pk)
 	kompass_godkjent_bestiller_for = System.objects.filter(godkjente_bestillere=pk)
 
-
-
 	return render(request, 'ansvarlig_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -2635,15 +2903,15 @@ def ansvarlig(request, pk):
 	})
 
 
+
 def alle_ansvarlige(request):
-	"""
-	Viser informasjon om alle ansvarlige
-	"""
+	#Viser informasjon om alle ansvarlige
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	ansvarlige = Ansvarlig.objects.all().order_by('brukernavn__first_name')
+
 	return render(request, 'ansvarlig_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -2652,34 +2920,32 @@ def alle_ansvarlige(request):
 	})
 
 
+
 def alle_ansvarlige_eksport(request):
-	"""
-	Viser informasjon om alle ansvarlige
-	Tilgangsstyring: De som kan opprette/endre ansvarlige
-	"""
-	required_permissions = 'systemoversikt.change_ansvarlig'
-	if request.user.has_perm(required_permissions):
-		ansvarlige = Ansvarlig.objects.filter(brukernavn__is_active=True)
-		return render(request, 'ansvarlig_eksport.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'ansvarlige': ansvarlige,
-		})
-	else:
+	#Viser informasjon om alle ansvarlige
+	required_permissions = ['systemoversikt.change_ansvarlig']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	ansvarlige = Ansvarlig.objects.filter(brukernavn__is_active=True)
+
+	return render(request, 'ansvarlig_eksport.html', {
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+		'ansvarlige': ansvarlige,
+	})
+
 
 
 def systemkvalitet_virksomhet(request, pk):
-	"""
-	Viser informasjon om datakvalitet per system
-	Tilgangsstyring: De som kan se virksomheter
-	"""
-	required_permissions = 'systemoversikt.view_virksomhet'
-	if not request.user.has_perm(required_permissions):
+	#Viser informasjon om datakvalitet per system
+	required_permissions = ['systemoversikt.view_virksomhet']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_ansvarlig_for = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
+
 	return render(request, 'virksomhet_hvamangler.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -2688,12 +2954,11 @@ def systemkvalitet_virksomhet(request, pk):
 	})
 
 
+
 def systemer_vurderinger(request):
-	"""
-	Vise alle systemvurderinger
-	"""
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+	#Vise alle systemvurderinger
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	systemer = System.objects.all()
@@ -2706,11 +2971,9 @@ def systemer_vurderinger(request):
 
 
 def systemer_EOL(request):
-	"""
-	EOS-visning for felles IKT-plattform
-	"""
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+	#EOS-visning for felles IKT-plattform
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=163)
@@ -2726,7 +2989,6 @@ def systemer_EOL(request):
 		else:
 			systemer.append(s)
 
-
 	return render(request, 'systemer_EOL_vurderinger_FIP.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -2736,16 +2998,13 @@ def systemer_EOL(request):
 
 
 def systemdetaljer(request, pk):
-	"""
-	Viser detaljer om et system
-	Tilgangsstyring: Merk at noen informasjonselementer er begrenset i template
-	"""
+	#Viser detaljer om et system
+	#Tilgangsstyring: Merk at noen informasjonselementer er begrenset i template
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	system = System.objects.get(pk=pk)
-
 	avhengigheter_graf = {"nodes": [], "edges": []}
 	observerte_driftsmodeller = set()
 	first_round = True
@@ -2849,14 +3108,10 @@ def systemdetaljer(request, pk):
 		aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
 		follow_count-=1
 
-
 	# legge til alle driftsmodeller som ble funnet
 	for driftsmodell in observerte_driftsmodeller:
 		if driftsmodell is not None:
 			avhengigheter_graf["nodes"].append({"data": { "id": driftsmodell.navn }},)
-
-
-
 
 	siste_endringer_antall = 10
 	system_content_type = ContentType.objects.get_for_model(system)
@@ -2874,11 +3129,7 @@ def systemdetaljer(request, pk):
 	# "avleverer til" fra et annet system tilsvarer "mottar fra" dette systemet
 	datautveksling_mottar_fra = System.objects.filter(datautveksling_avleverer_til__in=[system])
 	datautveksling_avleverer_til = System.objects.filter(datautveksling_mottar_fra__in=[system])
-
 	avhengigheter_reverse_systemer = System.objects.filter(avhengigheter_referanser=pk)
-
-	#print(len(avhengigheter_graf["nodes"]))
-
 
 	return render(request, 'system_detaljer.html', {
 		'request': request,
@@ -2899,10 +3150,9 @@ def systemdetaljer(request, pk):
 	})
 
 
+
 def systemer_pakket(request):
-	"""
-	Uferdig: vising av hvordan applikasjoner er pakket
-	"""
+	#Uferdig: vising av hvordan applikasjoner er pakket
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -2917,10 +3167,9 @@ def systemer_pakket(request):
 	})
 
 
+
 def systemklassifisering_detaljer(request, kriterie=None):
-	"""
-	Vise systemer filtrert basert på systemeierskapsmodell (felles, sektor, virksomhet)
-	"""
+	#Vise systemer filtrert basert på systemeierskapsmodell (felles, sektor, virksomhet)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -2947,10 +3196,9 @@ def systemklassifisering_detaljer(request, kriterie=None):
 	})
 
 
+
 def systemtype_detaljer(request, pk=None):
-	"""
-	Vise systemer filtrert basert på systemtype (web/app/infrastruktur osv.)
-	"""
+	#Vise systemer filtrert basert på systemtype (web/app/infrastruktur osv.)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -2979,8 +3227,8 @@ def systemtype_detaljer(request, pk=None):
 
 
 def alle_systemer_forvaltere(request):
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	systemer = System.objects.all()
@@ -2992,9 +3240,10 @@ def alle_systemer_forvaltere(request):
 	})
 
 
+
 def alle_systemer_smart(request):
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	systemer = System.objects.all() #filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
@@ -3007,13 +3256,10 @@ def alle_systemer_smart(request):
 
 
 
-
 def alle_systemer(request):
-	"""
-	Vise alle systemer
-	"""
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+	#Vise alle systemer
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	search_term = request.GET.get('vis', 'fellessystem').strip()  # strip removes trailing and leading space
@@ -3033,12 +3279,11 @@ def alle_systemer(request):
 	})
 
 
+
 def search(request):
-	"""
-	Vise alle systemer
-	"""
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+	#Vise alle systemer
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
@@ -3055,7 +3300,6 @@ def search(request):
 			return redirect('bruker_detaljer', u.pk)
 		except:
 			pass
-
 
 	if search_term != '':
 		aktuelle_systemer = System.objects.filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
@@ -3098,15 +3342,15 @@ def search(request):
 	})
 
 
+
 def bruksdetaljer(request, pk):
-	"""
-	Vise detaljer om systembruk
-	"""
-	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
-	if not request.user.has_perm(required_permissions):
+	#Vise detaljer om systembruk
+	required_permissions = ['systemoversikt.view_behandlingerpersonopplysninger']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	bruk = SystemBruk.objects.get(pk=pk)
+
 	return render(request, 'systembruk_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -3114,13 +3358,10 @@ def bruksdetaljer(request, pk):
 	})
 
 
+
 def mine_systembruk(request):
-	"""
-	Vise detaljer om innlogget brukers virksomhets systembruk
-	"""
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+	#Redirect for å sende bruker til detaljer om innlogget brukers virksomhets systembruk
+	required_permissions = None
 
 	try:
 		brukers_virksomhet = virksomhet_til_bruker(request)
@@ -3131,19 +3372,16 @@ def mine_systembruk(request):
 		return redirect('alle_virksomheter')
 
 
+
 def all_bruk_for_virksomhet(request, pk):
-	"""
-	Vise detaljer om en valgt virksomhets systembruk
-	"""
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+	#Vise detaljer om en valgt virksomhets systembruk
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet_pk = pk
 	all_systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk, ibruk=True).exclude(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
-
 	ikke_i_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).filter(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
-
 
 	# ser ut til at excel 2016+ støtter dette..
 	for bruk in all_systembruk:
@@ -3156,12 +3394,10 @@ def all_bruk_for_virksomhet(request, pk):
 		messages.warning(request, 'Fant ingen virksomhet med denne ID-en.')
 		virksomhet = Virksomhet.objects.none()
 
-
 	all_programvarebruk = ProgramvareBruk.objects.filter(brukergruppe=virksomhet_pk).order_by(Lower('programvare__programvarenavn'))
 	for bruk in all_programvarebruk:
 		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(programvarer=bruk.programvare.pk).count()
 		bruk.antall_behandlinger = ant
-
 
 	return render(request, 'systembruk_alle.html', {
 		'request': request,
@@ -3173,78 +3409,72 @@ def all_bruk_for_virksomhet(request, pk):
 	})
 
 
+
 def registrer_bruk(request, system):
-	from django.core.exceptions import ObjectDoesNotExist
-	"""
-	Forenklet metode for å legge til bruk av system ved avkryssing
-	Tilgangsstyring: Må kunne legge til systembruk
-	"""
-	required_permissions = 'systemoversikt.add_systembruk'
-	if request.user.has_perm(required_permissions):
-
-		system_instans = System.objects.get(pk=system)
-		alle_virksomheter = list(Virksomhet.objects.all())
-
-		if request.POST:
-			virksomheter = request.POST.getlist("virksomheter", "")
-			for str_virksomhet in virksomheter:
-				virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
-				alle_virksomheter.remove(virksomhet)
-				try:
-					bruk = SystemBruk.objects.get(brukergruppe=virksomhet, system=system_instans)
-					if bruk.ibruk == False:
-						bruk.ibruk = True
-						bruk.save()
-						print("Satt %s aktiv" % bruk)
-				except ObjectDoesNotExist:
-					bruk = SystemBruk.objects.create(
-						brukergruppe=virksomhet,
-						system=system_instans,
-						ibruk=True,
-					)
-					print("Opprettet %s" % bruk)
-			for virk in alle_virksomheter: # alle som er igjen, ble ikke merket, merk som ikke i bruk
-				try:
-					bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk)
-					if bruk.ibruk == True:
-						bruk.ibruk = False
-						bruk.save()
-						print("Satt %s deaktiv" % bruk)
-				except ObjectDoesNotExist:
-					pass # trenger ikke sette et ikke-eksisterende objekt
-			return redirect('systemdetaljer', system_instans.pk)
-
-		virksomheter_template = list()
-		for virk in Virksomhet.objects.all():
-			try:
-				bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk, ibruk=True)
-				virksomheter_template.append({"virksomhet": virk, "bruk": bruk})
-			except:
-				virksomheter_template.append({"virksomhet": virk, "bruk": None})
-
-		return render(request, 'system_registrer_bruk.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'target': system_instans,
-			'target_name': system_instans.systemnavn,
-			'back_link': reverse('systemdetaljer', args=[system_instans.pk]),
-			'virksomheter_template': virksomheter_template,
-		})
-	else:
+	#Forenklet metode for å legge til bruk av system ved avkryssing
+	required_permissions = ['systemoversikt.add_systembruk']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	from django.core.exceptions import ObjectDoesNotExist
+	system_instans = System.objects.get(pk=system)
+	alle_virksomheter = list(Virksomhet.objects.all())
+
+	if request.POST:
+		virksomheter = request.POST.getlist("virksomheter", "")
+		for str_virksomhet in virksomheter:
+			virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
+			alle_virksomheter.remove(virksomhet)
+			try:
+				bruk = SystemBruk.objects.get(brukergruppe=virksomhet, system=system_instans)
+				if bruk.ibruk == False:
+					bruk.ibruk = True
+					bruk.save()
+					print("Satt %s aktiv" % bruk)
+			except ObjectDoesNotExist:
+				bruk = SystemBruk.objects.create(
+					brukergruppe=virksomhet,
+					system=system_instans,
+					ibruk=True,
+				)
+				print("Opprettet %s" % bruk)
+		for virk in alle_virksomheter: # alle som er igjen, ble ikke merket, merk som ikke i bruk
+			try:
+				bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk)
+				if bruk.ibruk == True:
+					bruk.ibruk = False
+					bruk.save()
+					print("Satt %s deaktiv" % bruk)
+			except ObjectDoesNotExist:
+				pass # trenger ikke sette et ikke-eksisterende objekt
+		return redirect('systemdetaljer', system_instans.pk)
+
+	virksomheter_template = list()
+	for virk in Virksomhet.objects.all():
+		try:
+			bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk, ibruk=True)
+			virksomheter_template.append({"virksomhet": virk, "bruk": bruk})
+		except:
+			virksomheter_template.append({"virksomhet": virk, "bruk": None})
+
+	return render(request, 'system_registrer_bruk.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'target': system_instans,
+		'target_name': system_instans.systemnavn,
+		'back_link': reverse('systemdetaljer', args=[system_instans.pk]),
+		'virksomheter_template': virksomheter_template,
+	})
 
 
 
 def registrer_bruk_programvare(request, programvare):
-	from django.core.exceptions import ObjectDoesNotExist
-	"""
-	Forenklet metode for å legge til bruk av programvare ved avkryssing
-	Tilgangsstyring: Må kunne legge til programvarebruk
-	"""
-	required_permissions = 'systemoversikt.add_programvarebruk'
-	if not request.user.has_perm(required_permissions):
+	#Forenklet metode for å legge til bruk av programvare ved avkryssing
+	required_permissions = ['systemoversikt.add_programvarebruk']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	from django.core.exceptions import ObjectDoesNotExist
 	programvare_instans = Programvare.objects.get(pk=programvare)
 	alle_virksomheter = list(Virksomhet.objects.all())
 
@@ -3295,6 +3525,7 @@ def registrer_bruk_programvare(request, programvare):
 	})
 
 
+
 def rapport_named_locations(request):
 
 	required_permissions = None
@@ -3317,8 +3548,6 @@ def rapport_named_locations(request):
 	for item in data:
 		populate(item["named_location_id"], item["color_code"])
 
-	#print(color_table)
-
 	return render(request, "rapport_named_locations.html", {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -3326,22 +3555,20 @@ def rapport_named_locations(request):
 	})
 
 
-def programvaredetaljer(request, pk):
-	"""
-	Vise detaljer for programvare
-	"""
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+def programvaredetaljer(request, pk):
+	#Vise detaljer for programvare
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	siste_endringer_antall = 10
 	content_type = ContentType.objects.get_for_model(Programvare)
 	siste_endringer = LogEntry.objects.filter(content_type=content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
-
 	programvare = Programvare.objects.get(pk=pk)
 	programvarebruk = ProgramvareBruk.objects.filter(programvare=pk, ibruk=True).order_by("brukergruppe")
 	behandlinger = BehandlingerPersonopplysninger.objects.filter(programvarer=pk).order_by("funksjonsomraade")
+
 	return render(request, "programvare_detaljer.html", {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -3353,12 +3580,11 @@ def programvaredetaljer(request, pk):
 	})
 
 
+
 def alle_programvarer(request):
-	"""
-	Vise alle programvarer
-	"""
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+	#Vise alle programvarer
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
@@ -3380,17 +3606,17 @@ def alle_programvarer(request):
 	})
 
 
+
 def all_programvarebruk_for_virksomhet(request, pk): # KAN SLETTES
-	"""
-	Vise all bruk av programvare for en virksomhet
-	"""
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+	#Vise all bruk av programvare for en virksomhet
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	virksomhet_pk = pk
 	all_bruk = ProgramvareBruk.objects.filter(brukergruppe=virksomhet_pk).order_by(Lower('programvare__programvarenavn'))
+
 	for bruk in all_bruk:
 		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(programvarer=bruk.programvare.pk).count()
 		bruk.antall_behandlinger = ant
@@ -3403,15 +3629,15 @@ def all_programvarebruk_for_virksomhet(request, pk): # KAN SLETTES
 	})
 
 
+
 def programvarebruksdetaljer(request, pk):
-	"""
-	Vise detaljer for bruk av programvare
-	"""
-	required_permissions = 'systemoversikt.view_system'
-	if not request.user.has_perm(required_permissions):
+	#Vise detaljer for bruk av programvare
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	bruksdetaljer = ProgramvareBruk.objects.get(pk=pk)
+
 	return render(request, "programvarebruk_detaljer.html", {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -3441,55 +3667,48 @@ def tjenestedetaljer(request, pk):
 	})
 """
 
-def alle_behandlinger(request):
-	"""
-	Vise alle behandlinger (av personopplysninger) registrert for kommunen
-	Tilgangsstyring: Vise behandlinger
-	"""
-	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
-	if request.user.has_perm(required_permissions):
 
-		behandlinger = BehandlingerPersonopplysninger.objects.all()
-		return render(request, 'behandling_alle.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'behandlinger': behandlinger,
-		})
-	else:
+def alle_behandlinger(request):
+	#Vise alle behandlinger (av personopplysninger) registrert for kommunen
+	required_permissions = ['systemoversikt.view_behandlingerpersonopplysninger']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	behandlinger = BehandlingerPersonopplysninger.objects.all()
+
+	return render(request, 'behandling_alle.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'behandlinger': behandlinger,
+	})
+
 
 
 def behandlingsdetaljer(request, pk):
-	"""
-	Vise detaljer for en behandling av personopplysninger
-	Tilgangsstyring: Vise behandlinger
-	"""
-	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
-	if request.user.has_perm(required_permissions):
-
-		behandling = BehandlingerPersonopplysninger.objects.get(pk=pk)
-
-		siste_endringer_antall = 10
-		system_content_type = ContentType.objects.get_for_model(BehandlingerPersonopplysninger)
-		siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
-
-		return render(request, 'behandling_detaljer.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'behandling': behandling,
-			'siste_endringer': siste_endringer,
-			'siste_endringer_antall': siste_endringer_antall,
-		})
-	else:
+	#Vise detaljer for en behandling av personopplysninger
+	required_permissions = ['systemoversikt.view_behandlingerpersonopplysninger']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	behandling = BehandlingerPersonopplysninger.objects.get(pk=pk)
+
+	siste_endringer_antall = 10
+	system_content_type = ContentType.objects.get_for_model(BehandlingerPersonopplysninger)
+	siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
+
+	return render(request, 'behandling_detaljer.html', {
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+		'behandling': behandling,
+		'siste_endringer': siste_endringer,
+		'siste_endringer_antall': siste_endringer_antall,
+	})
 
 
 
 def mine_behandlinger(request):
-	"""
-	Vise alle behandling av personopplysninger for innlogget brukers virksomhet
-	Tilgangsstyring: Innlogget + tilgang på siden det sendes til.
-	"""
+	#Vise alle behandling av personopplysninger for innlogget brukers virksomhet
+	required_permissions = None # kun redirect
 	try:
 		brukers_virksomhet = virksomhet_til_bruker(request)
 		pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
@@ -3501,14 +3720,11 @@ def mine_behandlinger(request):
 
 
 def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False):
-	"""
-	Vise alle behandling av personopplysninger for en valgt virksomhet
-	Tilgangsstyring: Merk at noe informasjon i tillegg er tilgangsstyrt i template
-	"""
-	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
-	if not request.user.has_perm(required_permissions):
+	#Vise alle behandling av personopplysninger for en valgt virksomhet
+	#Tilgangsstyring: Merk at noe informasjon i tillegg er tilgangsstyrt i template
+	required_permissions = ['systemoversikt.view_behandlingerpersonopplysninger']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
 
 	# internt_ansvarlig benyttes for å filtrere ut på underavdeling/seksjon/
 	vir = Virksomhet.objects.get(pk=pk)
@@ -3547,71 +3763,67 @@ def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False):
 	})
 
 
+
 def behandling_kopier(request, system_pk):
-	"""
-	Funksjon for å kunne velge og kopiere en behandling til innlogget brukers virksomhet
-	Tilgangsstyring: Legge til behandling (begrenset til egen virksomhet i kode)
-	"""
-	required_permissions = 'systemoversikt.add_behandlingerpersonopplysninger'
-	if request.user.has_perm(required_permissions):
-
-		din_virksomhet = request.user.profile.virksomhet
-		dette_systemet = System.objects.get(pk=system_pk)
-		kandidatbehandlinger = BehandlingerPersonopplysninger.objects.filter(systemer=dette_systemet).order_by("-fellesbehandling")
-		valgte_behandlinger = request.POST.getlist("behandling", "")
-		#messages.success(request, 'Du valgte: %s' % valgte_behandlinger)
-
-		if valgte_behandlinger != "":
-			for behandling_pk in valgte_behandlinger:
-				behandling = BehandlingerPersonopplysninger.objects.get(pk=int(behandling_pk))
-				behandling.behandlingsansvarlig = din_virksomhet
-				behandling.internt_ansvarlig = "Må endres (kopi)"
-				behandling.fellesbehandling = False  # en kopi er ikke en fellesbehandling
-
-				opprinnelig_kategorier_personopplysninger = behandling.kategorier_personopplysninger.all()
-				opprinnelig_den_registrerte = behandling.den_registrerte.all()
-				opprinnelig_den_registrerte_hovedkateogi = behandling.den_registrerte_hovedkateogi.all()
-				opprinnelig_behandlingsgrunnlag_valg = behandling.behandlingsgrunnlag_valg.all()
-				opprinnelig_systemer = behandling.systemer.all()
-				opprinnelig_programvarer = behandling.programvarer.all()
-				opprinnelig_navn_databehandler = behandling.navn_databehandler.all()
-
-				behandling.pk = None  # dette er nå en ny instans av objektet, og den gamle er uberørt
-				behandling.save()
-
-				behandling.kategorier_personopplysninger.set(opprinnelig_kategorier_personopplysninger)
-				behandling.den_registrerte.set(opprinnelig_den_registrerte)
-				behandling.den_registrerte_hovedkateogi.set(opprinnelig_den_registrerte_hovedkateogi)
-				behandling.behandlingsgrunnlag_valg.set(opprinnelig_behandlingsgrunnlag_valg)
-				behandling.systemer.set(opprinnelig_systemer)
-				behandling.programvarer.set(opprinnelig_programvarer)
-				behandling.navn_databehandler.set(opprinnelig_navn_databehandler)
-
-				messages.success(request, 'Lagret ny kopi av %s med id %s' % (behandling_pk, behandling.pk))
-
-		#TODO Denne mangler behandler virksomheten "abonnerer på". Må vurdere å lage en metode som returnerer virksomhetens aktive behandlinger og gjenbruke denne
-		dine_eksisterende_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=din_virksomhet).filter(systemer=dette_systemet)
-
-		return render(request, 'system_kopier_behandling.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'system': dette_systemet,
-			'dine_eksisterende_behandlinger': dine_eksisterende_behandlinger,
-			'kandidatbehandlinger': kandidatbehandlinger,
-			'din_virksomhet': din_virksomhet,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-
-def virksomhet_ansvarlige(request, pk):
-	"""
-	Vise alle ansvarlige knyttet til valgt virksomhet
-	"""
-	required_permissions = ['systemoversikt.view_ansvarlig']
+	#Funksjon for å kunne velge og kopiere en behandling til innlogget brukers virksomhet
+	#Tilgangsstyring: Legge til behandling (begrenset til egen virksomhet i kode)
+	required_permissions = ['systemoversikt.add_behandlingerpersonopplysninger']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	din_virksomhet = request.user.profile.virksomhet
+	dette_systemet = System.objects.get(pk=system_pk)
+	kandidatbehandlinger = BehandlingerPersonopplysninger.objects.filter(systemer=dette_systemet).order_by("-fellesbehandling")
+	valgte_behandlinger = request.POST.getlist("behandling", "")
+	#messages.success(request, 'Du valgte: %s' % valgte_behandlinger)
+
+	if valgte_behandlinger != "":
+		for behandling_pk in valgte_behandlinger:
+			behandling = BehandlingerPersonopplysninger.objects.get(pk=int(behandling_pk))
+			behandling.behandlingsansvarlig = din_virksomhet
+			behandling.internt_ansvarlig = "Må endres (kopi)"
+			behandling.fellesbehandling = False  # en kopi er ikke en fellesbehandling
+
+			opprinnelig_kategorier_personopplysninger = behandling.kategorier_personopplysninger.all()
+			opprinnelig_den_registrerte = behandling.den_registrerte.all()
+			opprinnelig_den_registrerte_hovedkateogi = behandling.den_registrerte_hovedkateogi.all()
+			opprinnelig_behandlingsgrunnlag_valg = behandling.behandlingsgrunnlag_valg.all()
+			opprinnelig_systemer = behandling.systemer.all()
+			opprinnelig_programvarer = behandling.programvarer.all()
+			opprinnelig_navn_databehandler = behandling.navn_databehandler.all()
+
+			behandling.pk = None  # dette er nå en ny instans av objektet, og den gamle er uberørt
+			behandling.save()
+
+			behandling.kategorier_personopplysninger.set(opprinnelig_kategorier_personopplysninger)
+			behandling.den_registrerte.set(opprinnelig_den_registrerte)
+			behandling.den_registrerte_hovedkateogi.set(opprinnelig_den_registrerte_hovedkateogi)
+			behandling.behandlingsgrunnlag_valg.set(opprinnelig_behandlingsgrunnlag_valg)
+			behandling.systemer.set(opprinnelig_systemer)
+			behandling.programvarer.set(opprinnelig_programvarer)
+			behandling.navn_databehandler.set(opprinnelig_navn_databehandler)
+
+			messages.success(request, 'Lagret ny kopi av %s med id %s' % (behandling_pk, behandling.pk))
+
+	#TODO Denne mangler behandler virksomheten "abonnerer på". Må vurdere å lage en metode som returnerer virksomhetens aktive behandlinger og gjenbruke denne
+	dine_eksisterende_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=din_virksomhet).filter(systemer=dette_systemet)
+
+	return render(request, 'system_kopier_behandling.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'system': dette_systemet,
+		'dine_eksisterende_behandlinger': dine_eksisterende_behandlinger,
+		'kandidatbehandlinger': kandidatbehandlinger,
+		'din_virksomhet': din_virksomhet,
+	})
+
+
+
+def virksomhet_ansvarlige(request, pk):
+	#Vise alle ansvarlige knyttet til valgt virksomhet
+	required_permissions = ['systemoversikt.view_ansvarlig']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	ansvarlige = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).order_by('brukernavn__first_name')
@@ -3623,11 +3835,9 @@ def virksomhet_ansvarlige(request, pk):
 	})
 
 
+
 def enhet_detaljer(request, pk):
-	"""
-	Vise informasjon om en konkret organisatorisk enhet
-	Tilgjengelig for de som kan se brukerdetaljer
-	"""
+	#Vise informasjon om en konkret organisatorisk enhet
 	required_permissions = ['auth.view_user']
 	if any(map(request.user.has_perm, required_permissions)):
 
@@ -3637,7 +3847,7 @@ def enhet_detaljer(request, pk):
 
 		return render(request, 'virksomhet_enhet_detaljer.html', {
 			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
+			'required_permissions': formater_permissions(required_permissions),
 			'unit': unit,
 			'sideenheter': sideenheter,
 			'personer': personer,
@@ -3646,420 +3856,395 @@ def enhet_detaljer(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
+
 def virksomhet_enhetsok(request):
-	"""
-	Vise informasjon om organisatorisk struktur
-	Tilgjengelig for de som kan se brukere
-	"""
+	#Vise informasjon om organisatorisk struktur
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		search_term = request.GET.get('search_term', "").strip()
-		if len(search_term) > 1:
-			units = HRorg.objects.filter(ou__icontains=search_term).filter(active=True).order_by('virksomhet_mor')
-		else:
-			units = HRorg.objects.none()
-
-		return render(request, 'virksomhet_enhetsok.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'units': units,
-			'search_term': search_term,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_term = request.GET.get('search_term', "").strip()
+	if len(search_term) > 1:
+		units = HRorg.objects.filter(ou__icontains=search_term).filter(active=True).order_by('virksomhet_mor')
+	else:
+		units = HRorg.objects.none()
+
+	return render(request, 'virksomhet_enhetsok.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'units': units,
+		'search_term': search_term,
+	})
+
 
 
 def virksomhet_enheter(request, pk):
-	"""
-	Vise informasjon om organisatorisk struktur
-	Tilgjengelig for de som kan se brukere
-	"""
+	#Vise informasjon om organisatorisk struktur
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		import math
-		virksomhet = Virksomhet.objects.get(pk=pk)
-
-		avhengigheter_graf = {"nodes": [], "edges": []}
-
-		def color(unit):
-			palett = {
-				1: "black",
-				2: "#ff0000",
-				3: "#cc0033",
-				4: "#990066",
-				5: "#660099",
-				6: "#3300cc",
-				7: "#0000ff",
-			}
-			return palett[unit.level]
-
-		"""
-		def size(unit):
-			minimum = 25
-			if unit.num_members > 0:
-				adjusted_member_count = minimum + (20 * math.log(unit.num_members, 10))
-				return ("%spx" % adjusted_member_count)
-			else:
-				return ("%spx" % minimum)
-		"""
-
-		nodes = []
-		units = HRorg.objects.filter(virksomhet_mor=pk).filter(active=True).filter(level__gt=2)
-		for u in units:
-			members = User.objects.filter(profile__org_unit=u.pk)
-			if len(members) > 0:
-				u.num_members = len(members)
-				nodes.append(u)
-				nodes.append(u.direkte_mor)
-				avhengigheter_graf["edges"].append(
-						{"data": {
-							"source": u.direkte_mor.pk,
-							"target": u.pk,
-							"linestyle": "solid"
-							}
-						})
-		for u in nodes:
-			avhengigheter_graf["nodes"].append(
-					{"data": {
-						"id": u.pk,
-						"name": u.ou,
-						"shape": "ellipse",
-						"color": color(u),
-						#"size": size(u)
-						#"href": reverse('adgruppe_detaljer', args=[m.pk])
-						}
-					})
-
-		return render(request, 'virksomhet_enheter.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'units': units,
-			'virksomhet': virksomhet,
-			'avhengigheter_graf': avhengigheter_graf,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	import math
+	virksomhet = Virksomhet.objects.get(pk=pk)
+
+	avhengigheter_graf = {"nodes": [], "edges": []}
+
+	def color(unit):
+		palett = {
+			1: "black",
+			2: "#ff0000",
+			3: "#cc0033",
+			4: "#990066",
+			5: "#660099",
+			6: "#3300cc",
+			7: "#0000ff",
+		}
+		return palett[unit.level]
+
+	"""
+	def size(unit):
+		minimum = 25
+		if unit.num_members > 0:
+			adjusted_member_count = minimum + (20 * math.log(unit.num_members, 10))
+			return ("%spx" % adjusted_member_count)
+		else:
+			return ("%spx" % minimum)
+	"""
+
+	nodes = []
+	units = HRorg.objects.filter(virksomhet_mor=pk).filter(active=True).filter(level__gt=2)
+	for u in units:
+		members = User.objects.filter(profile__org_unit=u.pk)
+		if len(members) > 0:
+			u.num_members = len(members)
+			nodes.append(u)
+			nodes.append(u.direkte_mor)
+			avhengigheter_graf["edges"].append(
+				{"data": {
+					"source": u.direkte_mor.pk,
+					"target": u.pk,
+					"linestyle": "solid"
+					}
+				})
+	for u in nodes:
+		avhengigheter_graf["nodes"].append(
+			{"data": {
+				"id": u.pk,
+				"name": u.ou,
+				"parent": u.direkte_mor.ou,
+				"shape": "ellipse",
+				"color": color(u),
+				#"size": size(u)
+				#"href": reverse('adgruppe_detaljer', args=[m.pk])
+				}
+			})
+
+	return render(request, 'virksomhet_enheter.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'units': units,
+		'virksomhet': virksomhet,
+		'avhengigheter_graf': avhengigheter_graf,
+	})
 
 
 
 def leverandortilgang(request, valgt_gruppe=None):
-	"""
-	Vise informasjon brukere som har leverandørtilgang
-	Tilgjengelig for de som kan se brukere
-	"""
+	#Vise informasjon brukere som har leverandørtilgang
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		if valgt_gruppe == None:
-
-			leverandortilganger = Leverandortilgang.objects.all()
-			unwanted_objects = [lt.adgruppe.distinguishedname for lt in leverandortilganger]
-
-			manglende_grupper = []
-			kjente_potensielle_mangler = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS']
-
-			for mangel in kjente_potensielle_mangler:
-				dml_grupper = ADgroup.objects.filter(distinguishedname__icontains=mangel).exclude(distinguishedname__in=[o for o in unwanted_objects])
-				for g in dml_grupper:
-					if g.common_name != None:
-						manglende_grupper.append(g)
-
-			manglende_grupper.sort(key=lambda g : g.common_name)
-
-			return render(request, 'ad_leverandortilgang.html', {
-					"manglende_grupper": manglende_grupper,
-					"leverandortilganger": leverandortilganger,
-			})
-
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	if valgt_gruppe == None:
+
+		leverandortilganger = Leverandortilgang.objects.all()
+		unwanted_objects = [lt.adgruppe.distinguishedname for lt in leverandortilganger]
+
+		manglende_grupper = []
+		kjente_potensielle_mangler = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS']
+
+		for mangel in kjente_potensielle_mangler:
+			dml_grupper = ADgroup.objects.filter(distinguishedname__icontains=mangel).exclude(distinguishedname__in=[o for o in unwanted_objects])
+			for g in dml_grupper:
+				if g.common_name != None:
+					manglende_grupper.append(g)
+
+		manglende_grupper.sort(key=lambda g : g.common_name)
+
+		return render(request, 'ad_leverandortilgang.html', {
+				"manglende_grupper": manglende_grupper,
+				"leverandortilganger": leverandortilganger,
+		})
+
+	# må sjekkes, hva om ikke None?
+
 
 
 def tbrukere(request):
-	"""
-	Vise informasjon brukere som er opprettet for å teste noe (og ikke har blitt slettet i etterkant)
-	Tilgjengelig for de som kan se brukere
-	"""
+	#Vise informasjon brukere som er opprettet for å teste noe (og ikke har blitt slettet i etterkant)
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		brukere = User.objects.filter(Q(username__istartswith="t-") | Q(username__istartswith="t_")| Q(username__icontains="_t2")).filter(profile__accountdisable=False).order_by("username")
-
-		return render(request, 'ad_tbrukere.html', {
-			"brukere": brukere,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	brukere = User.objects.filter(Q(username__istartswith="t-") | Q(username__istartswith="t_")| Q(username__icontains="_t2")).filter(profile__accountdisable=False).order_by("username")
+
+	return render(request, 'ad_tbrukere.html', {
+		"brukere": brukere,
+	})
+
+
 
 def drifttilgang(request):
-	"""
-	Vise informasjon brukere som har drifttilgang
-	Tilgjengelig for de som kan se brukere
-	"""
+	#Vise informasjon brukere som har drifttilgang
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		def adgruppe_oppslag(liste):
-			oppslag = []
-			for cn in liste:
-				try:
-					oppslag.append(ADgroup.objects.get(common_name=cn))
-				except:
-					print("error adgruppe_oppslag() %s" % (cn))
-			return oppslag
-
-		serveradmins = [
-			"GS-OpsRole-ErgoGroup-AdminAlleMemberServere",
-			"GS-OpsRole-Ergogroup-ServerAdmins",
-			"Task-OF2-ServerAdmin-AllMemberServers",
-			"Role-OF2-Admin-Citrix Services",
-			"DS-MemberServer-Admin-AlleManagementServere",
-			"DS-MemberServer-Admin-AlleManagementServere",
-			"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_SERVERADMIN",
-			"Role-OF2-AdminAlleMemberServere",
-		]
-		serveradmins = adgruppe_oppslag(serveradmins)
-
-		domainadmins = [
-			"Domain Admins",
-			"Enterprise Admins",
-			"Role-Domain-Admins-UVA",
-			"On-Prem Domain Admins (009378fe-ecdf-4f49-bd65-d82411703915)",
-		]
-		domainadmins = adgruppe_oppslag(domainadmins)
-
-		prkadmin = [
-			"DS-GKAT_BRGR_SYSADM",
-			"DS-GKAT_ADMSENTRALESKJEMA_ALLE",
-			"DS-GKAT_ADMSENTRALESKJEMA_KOKS",
-			"DS-GKAT_IMPSKJEMA_TIGIMP",
-			"DS-GKAT_IMPSKJEMA_TSIMP",
-			"DS-GKAT_MODULER_GLOBAL_ADMINISTRASJON",
-			"DS-GKAT_DSGLOKALESKJEMA_ALLE",
-			"DS-GKAT_DSGLOKALESKJEMA_INFOCARE",
-			"DS-GKAT_DSGLOKALESKJEMA_OPPRETTE",
-			"DS-GKAT_DSGSENTRALESKJEMA_ALLE",
-			"DS-GKAT_DSGSENTRALESKJEMA_OPPRETTE",
-			"DS-GKAT_ADMLOKALESKJEMA_ALLE",
-			"DS-GKAT_ADMLOKALESKJEMA_APPLIKASJON",
-		]
-		prkadmin = adgruppe_oppslag(prkadmin)
-
-
-		sqladmins = [
-			"GS-UKE-MSSQL-DBA",
-			"DS-OF2-SQL-SYSADMIN",
-			"DS-DRIFT_DRIFTSPERSONELL_DATABASE_SQL",
-			"GS-Role-MSSQL-DBA",
-			"GS-UKE-MSSQL-DBA",
-			"DS-Role-MSSQL-DBA",
-			"DS-DRIFT_DRIFTSPERSONELL_DATABASE_ORACLE",
-			"DS-OF2-TASK-SQLCluster",
-		]
-		sqladmins = adgruppe_oppslag(sqladmins)
-
-		citrixadmin = [
-			"Task-OF2-Admin-Citrix XenApp",
-			"DS-DRIFT_DRIFTSPERSONELL_REMOTE_CITRIXDIRECTOR",
-			"DS-DRIFT_DRIFTSPERSONELL_CITRIX_APPV_ADMIN",
-			"DS-DRIFT_DRIFTSPERSONELL_CITRIX_CITRIX_NETSCALER_ADM",
-			"DS-DRIFT_DRIFTSPERSONELL_CITRIX_ADMINISTRATOR",
-			"DS-DRIFT_DRIFTSPERSONELL_CITRIX_DRIFT",
-		]
-		citrixadmin = adgruppe_oppslag(citrixadmin)
-
-		sccmadmin = [
-			"Task-SCCM-Application-Administrator",
-			"Task-SCCM-Application-Author",
-			"Task-SCCM-Application-Deployment-Manager",
-			"Task-SCCM-Asset-Manager",
-			"Task-SCCM-Compliance-Settings-Manager",
-			"Task-SCCM-Endpoint-Protection-Manager",
-			"Task-SCCM-Operations-Administrator",
-			"Task-SCCM-OSD-Manager",
-			"Task-SCCM-Infrastructure-Administrator",
-			"Task-SCCM-Remote-Tools-Operator",
-			"Task-SCCM-Security-Administrator",
-			"Task-SCCM-Software-Update-Manager",
-			"Task-SCCM-Full-Administrator",
-			"Task-SCCM-SRV-Admin",
-			"Task-SCCM-ClientInstall_SikkerSone_MP",
-			"Task-SCCM-ClientInstall_InternSone_MP",
-			"Task-SCCM-ClientInstall",
-			"TASK-SCCM-CLIENT-INSTALL-EXCLUDE",
-			"Task-SCCM-RemoteDesktop",
-			"Task-SCCM-SQL-Admin",
-			"DS-DRIFT_DRIFTSPERSONELL_SCCM_SCCMFULLADM",
-			"DA-SCCM-SQL-SysAdmin-F",
-		]
-		sccmadmin = adgruppe_oppslag(sccmadmin)
-
-		levtilgang = [
-			"DS-DRIFT_DML_LEVTILGANG_LEVTILGANGSS",
-			"DS-DRIFT_DML_LEVTILGANG_LEVTILGANG",
-			"DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGIS",
-			"DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGSS",
-		]
-		levtilgang = adgruppe_oppslag(levtilgang)
-
-		dcadmin = [
-			"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_ADMINDC",
-		]
-		dcadmin = adgruppe_oppslag(dcadmin)
-
-		exchangeadmin = [
-			"DS-DRIFT_DRIFTSPERSONELL_MAIL_EXH_FULL_ADMINISTRATOR",
-		]
-		exchangeadmin = adgruppe_oppslag(exchangeadmin)
-
-		filsensitivt = [
-			"DS-DRIFT_DRIFTSPERSONELL_ACCESSMGMT_OVERGREPSMOTTAKET",
-		]
-		filsensitivt = adgruppe_oppslag(filsensitivt)
-
-		brukere = User.objects.filter(Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") | Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere")).filter(profile__accountdisable=False)
-		tekst_type_konto = "drift"
-
-		if "kilde" in request.GET:
-			if request.GET["kilde"] == "servicekontoer":
-				brukere = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False)
-				tekst_type_konto = "service"
-		#brukere = User.objects.filter(profile__accountdisable=False).filter(Q(profile__description__icontains="Sopra") | Q(profile__description__icontains="2S"))
-
-		"""
-		driftbrukere4 = User.objects.filter(username__istartswith="T-DRIFT")
-		for u in list(set(driftbrukerex) - (set(driftbrukere))):
-			print(u.username)
-		driftbrukere2 = User.objects.filter(username__istartswith="t-")
-		driftbrukerey = User.objects.filter(username__istartswith="a-")
-		driftbrukere3 = User.objects.filter(profile__virksomhet=None)
-
-		"""
-
-		#adg_filter = set(serveradmins).union(set(domainadmins)).union(set(prkadmin)).union(set(sqladmins)).union(set(citrixadmin)).union(set(sccmadmin)).union(set(levtilgang)).union(set(dcadmin)).union(set(exchangeadmin)).union(set(filsensitivt))
-		#b.reduserte_adgrupper = set(b.profile.adgrupper.all()).difference(adg_filter)
-
-		for b in brukere:
-			b.serveradmin = set(serveradmins).intersection(set(b.profile.adgrupper.all()))
-			b.domainadmin = set(domainadmins).intersection(set(b.profile.adgrupper.all()))
-			b.prkadmin = set(prkadmin).intersection(set(b.profile.adgrupper.all()))
-			b.sqladmin = set(sqladmins).intersection(set(b.profile.adgrupper.all()))
-			b.citrixadmin = set(citrixadmin).intersection(set(b.profile.adgrupper.all()))
-			b.sccmadmin = set(sccmadmin).intersection(set(b.profile.adgrupper.all()))
-			b.levtilgang = set(levtilgang).intersection(set(b.profile.adgrupper.all()))
-			b.dcadmin = set(dcadmin).intersection(set(b.profile.adgrupper.all()))
-			b.exchangeadmin = set(exchangeadmin).intersection(set(b.profile.adgrupper.all()))
-			b.filsensitivt = set(filsensitivt).intersection(set(b.profile.adgrupper.all()))
-
-
-		return render(request, 'ad_drifttilgang.html', {
-			"brukere": brukere,
-			"tekst_type_konto": tekst_type_konto,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	def adgruppe_oppslag(liste):
+		oppslag = []
+		for cn in liste:
+			try:
+				oppslag.append(ADgroup.objects.get(common_name=cn))
+			except:
+				print("error adgruppe_oppslag() %s" % (cn))
+		return oppslag
+
+	serveradmins = [
+		"GS-OpsRole-ErgoGroup-AdminAlleMemberServere",
+		"GS-OpsRole-Ergogroup-ServerAdmins",
+		"Task-OF2-ServerAdmin-AllMemberServers",
+		"Role-OF2-Admin-Citrix Services",
+		"DS-MemberServer-Admin-AlleManagementServere",
+		"DS-MemberServer-Admin-AlleManagementServere",
+		"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_SERVERADMIN",
+		"Role-OF2-AdminAlleMemberServere",
+	]
+	serveradmins = adgruppe_oppslag(serveradmins)
+
+	domainadmins = [
+		"Domain Admins",
+		"Enterprise Admins",
+		"Role-Domain-Admins-UVA",
+		"On-Prem Domain Admins (009378fe-ecdf-4f49-bd65-d82411703915)",
+	]
+	domainadmins = adgruppe_oppslag(domainadmins)
+
+	prkadmin = [
+		"DS-GKAT_BRGR_SYSADM",
+		"DS-GKAT_ADMSENTRALESKJEMA_ALLE",
+		"DS-GKAT_ADMSENTRALESKJEMA_KOKS",
+		"DS-GKAT_IMPSKJEMA_TIGIMP",
+		"DS-GKAT_IMPSKJEMA_TSIMP",
+		"DS-GKAT_MODULER_GLOBAL_ADMINISTRASJON",
+		"DS-GKAT_DSGLOKALESKJEMA_ALLE",
+		"DS-GKAT_DSGLOKALESKJEMA_INFOCARE",
+		"DS-GKAT_DSGLOKALESKJEMA_OPPRETTE",
+		"DS-GKAT_DSGSENTRALESKJEMA_ALLE",
+		"DS-GKAT_DSGSENTRALESKJEMA_OPPRETTE",
+		"DS-GKAT_ADMLOKALESKJEMA_ALLE",
+		"DS-GKAT_ADMLOKALESKJEMA_APPLIKASJON",
+	]
+	prkadmin = adgruppe_oppslag(prkadmin)
+
+	sqladmins = [
+		"GS-UKE-MSSQL-DBA",
+		"DS-OF2-SQL-SYSADMIN",
+		"DS-DRIFT_DRIFTSPERSONELL_DATABASE_SQL",
+		"GS-Role-MSSQL-DBA",
+		"GS-UKE-MSSQL-DBA",
+		"DS-Role-MSSQL-DBA",
+		"DS-DRIFT_DRIFTSPERSONELL_DATABASE_ORACLE",
+		"DS-OF2-TASK-SQLCluster",
+	]
+	sqladmins = adgruppe_oppslag(sqladmins)
+
+	citrixadmin = [
+		"Task-OF2-Admin-Citrix XenApp",
+		"DS-DRIFT_DRIFTSPERSONELL_REMOTE_CITRIXDIRECTOR",
+		"DS-DRIFT_DRIFTSPERSONELL_CITRIX_APPV_ADMIN",
+		"DS-DRIFT_DRIFTSPERSONELL_CITRIX_CITRIX_NETSCALER_ADM",
+		"DS-DRIFT_DRIFTSPERSONELL_CITRIX_ADMINISTRATOR",
+		"DS-DRIFT_DRIFTSPERSONELL_CITRIX_DRIFT",
+	]
+	citrixadmin = adgruppe_oppslag(citrixadmin)
+
+	sccmadmin = [
+		"Task-SCCM-Application-Administrator",
+		"Task-SCCM-Application-Author",
+		"Task-SCCM-Application-Deployment-Manager",
+		"Task-SCCM-Asset-Manager",
+		"Task-SCCM-Compliance-Settings-Manager",
+		"Task-SCCM-Endpoint-Protection-Manager",
+		"Task-SCCM-Operations-Administrator",
+		"Task-SCCM-OSD-Manager",
+		"Task-SCCM-Infrastructure-Administrator",
+		"Task-SCCM-Remote-Tools-Operator",
+		"Task-SCCM-Security-Administrator",
+		"Task-SCCM-Software-Update-Manager",
+		"Task-SCCM-Full-Administrator",
+		"Task-SCCM-SRV-Admin",
+		"Task-SCCM-ClientInstall_SikkerSone_MP",
+		"Task-SCCM-ClientInstall_InternSone_MP",
+		"Task-SCCM-ClientInstall",
+		"TASK-SCCM-CLIENT-INSTALL-EXCLUDE",
+		"Task-SCCM-RemoteDesktop",
+		"Task-SCCM-SQL-Admin",
+		"DS-DRIFT_DRIFTSPERSONELL_SCCM_SCCMFULLADM",
+		"DA-SCCM-SQL-SysAdmin-F",
+	]
+	sccmadmin = adgruppe_oppslag(sccmadmin)
+
+	levtilgang = [
+		"DS-DRIFT_DML_LEVTILGANG_LEVTILGANGSS",
+		"DS-DRIFT_DML_LEVTILGANG_LEVTILGANG",
+		"DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGIS",
+		"DS-DRIFT_DML_DRIFTTILGANG_DRIFTTILGANGSS",
+	]
+	levtilgang = adgruppe_oppslag(levtilgang)
+
+	dcadmin = [
+		"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_ADMINDC",
+	]
+	dcadmin = adgruppe_oppslag(dcadmin)
+
+	exchangeadmin = [
+		"DS-DRIFT_DRIFTSPERSONELL_MAIL_EXH_FULL_ADMINISTRATOR",
+	]
+	exchangeadmin = adgruppe_oppslag(exchangeadmin)
+
+	filsensitivt = [
+		"DS-DRIFT_DRIFTSPERSONELL_ACCESSMGMT_OVERGREPSMOTTAKET",
+	]
+	filsensitivt = adgruppe_oppslag(filsensitivt)
+
+	brukere = User.objects.filter(Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") | Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere")).filter(profile__accountdisable=False)
+	tekst_type_konto = "drift"
+
+	if "kilde" in request.GET:
+		if request.GET["kilde"] == "servicekontoer":
+			brukere = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False)
+			tekst_type_konto = "service"
+	#brukere = User.objects.filter(profile__accountdisable=False).filter(Q(profile__description__icontains="Sopra") | Q(profile__description__icontains="2S"))
+
+	"""
+	driftbrukere4 = User.objects.filter(username__istartswith="T-DRIFT")
+	for u in list(set(driftbrukerex) - (set(driftbrukere))):
+		print(u.username)
+	driftbrukere2 = User.objects.filter(username__istartswith="t-")
+	driftbrukerey = User.objects.filter(username__istartswith="a-")
+	driftbrukere3 = User.objects.filter(profile__virksomhet=None)
+	"""
+
+	#adg_filter = set(serveradmins).union(set(domainadmins)).union(set(prkadmin)).union(set(sqladmins)).union(set(citrixadmin)).union(set(sccmadmin)).union(set(levtilgang)).union(set(dcadmin)).union(set(exchangeadmin)).union(set(filsensitivt))
+	#b.reduserte_adgrupper = set(b.profile.adgrupper.all()).difference(adg_filter)
+
+	for b in brukere:
+		b.serveradmin = set(serveradmins).intersection(set(b.profile.adgrupper.all()))
+		b.domainadmin = set(domainadmins).intersection(set(b.profile.adgrupper.all()))
+		b.prkadmin = set(prkadmin).intersection(set(b.profile.adgrupper.all()))
+		b.sqladmin = set(sqladmins).intersection(set(b.profile.adgrupper.all()))
+		b.citrixadmin = set(citrixadmin).intersection(set(b.profile.adgrupper.all()))
+		b.sccmadmin = set(sccmadmin).intersection(set(b.profile.adgrupper.all()))
+		b.levtilgang = set(levtilgang).intersection(set(b.profile.adgrupper.all()))
+		b.dcadmin = set(dcadmin).intersection(set(b.profile.adgrupper.all()))
+		b.exchangeadmin = set(exchangeadmin).intersection(set(b.profile.adgrupper.all()))
+		b.filsensitivt = set(filsensitivt).intersection(set(b.profile.adgrupper.all()))
+
+	return render(request, 'ad_drifttilgang.html', {
+		"brukere": brukere,
+		"tekst_type_konto": tekst_type_konto,
+	})
+
 
 
 def prk_userlookup(request):
-	"""
-	Vise informasjon om vilkårlige brukere
-	Tilgjengelig for de som kan se brukere
-	"""
+	#Vise informasjon om vilkårlige brukere
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-		if request.POST:
-			query = request.POST.get('query', '').strip()
-			users = re.findall(r"([^,;\t\s\n\r]+)", query)
-			users_result = []
-			for item in users:
-				try:
-					u = User.objects.get(username__iexact=item)
-					users_result.append({
-						"username": u.username,
-						"organization": u.profile.org_tilhorighet,
-						"accountdisable": u.profile.accountdisable,
-						"name": u.profile.displayName,
-						})
-				except:
-					messages.warning(request, 'Fant ikke info på "%s"' % (item))
-					continue
-
-		else:
-			users_result = []
-			query = ""
-
-		return render(request, 'prk_userlookup.html', {
-			"query": query,
-			"users": users_result,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	if request.POST:
+		query = request.POST.get('query', '').strip()
+		users = re.findall(r"([^,;\t\s\n\r]+)", query)
+		users_result = []
+		for item in users:
+			try:
+				u = User.objects.get(username__iexact=item)
+				users_result.append({
+					"username": u.username,
+					"organization": u.profile.org_tilhorighet,
+					"accountdisable": u.profile.accountdisable,
+					"name": u.profile.displayName,
+					})
+			except:
+				messages.warning(request, 'Fant ikke info på "%s"' % (item))
+				continue
+
+	else:
+		users_result = []
+		query = ""
+
+	return render(request, 'prk_userlookup.html', {
+		"query": query,
+		"users": users_result,
+	})
+
 
 
 def virksomhet_prkadmin(request, pk):
-	"""
-	Vise alle PRK-administratorer for angitt virksomhet
-	Tilgangsstyring: må kunne vise informasjon om brukere
-	"""
-	import json
-	from functools import lru_cache
+	#Vise alle PRK-administratorer for angitt virksomhet
 
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-
-		@lru_cache(maxsize=2048)
-		def lookup_user(username):
-			try:
-				user = User.objects.get(username__iexact=username)
-				return user
-			except:
-				return username
-
-		try:
-			vir = Virksomhet.objects.get(pk=pk)
-		except:
-			vir = None
-
-		skjema_grupper = ADgroup.objects.filter(distinguishedname__icontains="gkat")
-
-		prk_admins = {}
-
-		for g in skjema_grupper:
-			group_name = g.distinguishedname[6:].split(",")[0]
-			if group_name == "GKAT":
-				continue
-
-			members = json.loads(g.member)
-			users = []
-			for m in members:
-				match = re.search(r'CN=(' + re.escape(vir.virksomhetsforkortelse) + '\d{2,8}),', m, re.IGNORECASE)
-				if match:
-					user = lookup_user(match[1])
-					users.append(user)
-				else:
-					pass
-
-			prk_admins[group_name] = users
-
-		user_set = set(a for b in prk_admins.values() for a in b)
-		prk_admins_inverted = dict((new_key, [key for key,value in prk_admins.items() if new_key in value]) for new_key in user_set)
-
-
-		return render(request, 'virksomhet_prkadm.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'virksomhet': vir,
-			'prk_admins': prk_admins_inverted,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	from functools import lru_cache
+
+	@lru_cache(maxsize=2048)
+	def lookup_user(username):
+		try:
+			user = User.objects.get(username__iexact=username)
+			return user
+		except:
+			return username
+	try:
+		vir = Virksomhet.objects.get(pk=pk)
+	except:
+		vir = None
+
+	skjema_grupper = ADgroup.objects.filter(distinguishedname__icontains="gkat")
+	prk_admins = {}
+
+	for g in skjema_grupper:
+		group_name = g.distinguishedname[6:].split(",")[0]
+		if group_name == "GKAT":
+			continue
+
+		members = json.loads(g.member)
+		users = []
+		for m in members:
+			match = re.search(r'CN=(' + re.escape(vir.virksomhetsforkortelse) + '\d{2,8}),', m, re.IGNORECASE)
+			if match:
+				user = lookup_user(match[1])
+				users.append(user)
+			else:
+				pass
+
+		prk_admins[group_name] = users
+
+	user_set = set(a for b in prk_admins.values() for a in b)
+	prk_admins_inverted = dict((new_key, [key for key,value in prk_admins.items() if new_key in value]) for new_key in user_set)
+
+	return render(request, 'virksomhet_prkadm.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': vir,
+		'prk_admins': prk_admins_inverted,
+	})
+
 
 
 def systemer_virksomhet_ansvarlig_for(request, pk):
-
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4083,8 +4268,8 @@ def systemer_virksomhet_ansvarlig_for(request, pk):
 	})
 
 
-def systemer_virksomhet_ansvarlig_for_fip(request, pk):
 
+def systemer_virksomhet_ansvarlig_for_fip(request, pk):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4111,11 +4296,9 @@ def systemer_virksomhet_ansvarlig_for_fip(request, pk):
 
 
 def virksomhet(request, pk):
-	"""
-	Vise detaljer om en valgt virksomhet
-	Tilgangsstyring: ÅPEN
-	"""
+	#Vise detaljer om en valgt virksomhet
 	required_permissions = None
+
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
 	antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
@@ -4157,7 +4340,6 @@ def virksomhet(request, pk):
 
 		parents.append('Ingen')
 		return 'Ingen'
-
 
 	antall_graph_noder = System.objects.filter(systemforvalter=pk).count()
 	for system in System.objects.filter(systemforvalter=pk).order_by('systemnavn'):
@@ -4213,51 +4395,46 @@ def virksomhet(request, pk):
 	})
 
 
+
 def min_virksomhet(request):
-	"""
-	Vise detaljer om en innlogget brukers virksomhet
-	Tilgangsstyring: redirect for innloggede brukere
-	"""
+	#Vise detaljer om en innlogget brukers virksomhet
+	required_permissions = None # kun redirect
+
 	try:
 		brukers_virksomhet = virksomhet_til_bruker(request)
 		pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
 		return redirect('virksomhet', pk)
+
 	except:
 		messages.warning(request, 'Din bruker er ikke tilknyttet en virksomhet')
 		return redirect('alle_virksomheter')
 
 
 def innsyn_virksomhet(request, pk):
-	"""
-	Vise informasjon om kontaktpersoner for innsyn for en valgt virksomhet (for systemer virksomhet behandler personopplysninger i)
-	Tilgangsstyring: Vise behandlinger
-	"""
-	required_permissions = 'systemoversikt.view_behandlingerpersonopplysninger'
-	if request.user.has_perm(required_permissions):
-
-		virksomhet = Virksomhet.objects.get(pk=pk)
-		virksomhets_behandlingsprotokoll = behandlingsprotokoll(pk)
-		systemer = []
-		for behandling in virksomhets_behandlingsprotokoll:
-			for system in behandling.systemer.all():
-				if (system not in systemer) and (system.innsyn_innbygger or system.innsyn_ansatt) and (system.ibruk != False):
-					systemer.append(system)
-
-		return render(request, 'virksomhet_innsyn.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'virksomhet': virksomhet,
-			'systemer': systemer,
-		})
-	else:
+	#Vise informasjon om kontaktpersoner for innsyn for en valgt virksomhet (for systemer virksomhet behandler personopplysninger i)
+	required_permissions = ['systemoversikt.view_behandlingerpersonopplysninger']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	virksomhets_behandlingsprotokoll = behandlingsprotokoll(pk)
+	systemer = []
+	for behandling in virksomhets_behandlingsprotokoll:
+		for system in behandling.systemer.all():
+			if (system not in systemer) and (system.innsyn_innbygger or system.innsyn_ansatt) and (system.ibruk != False):
+				systemer.append(system)
+
+	return render(request, 'virksomhet_innsyn.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': virksomhet,
+		'systemer': systemer,
+	})
+
 
 
 def bytt_virksomhet(request):
-	"""
-	Støttefunksjon for å bytte virksomhet innlogget bruker representerer
-	Tilgangsstyring: Innlogget og avhengig av virksomhet innlogget bruker er logget inn som
-	"""
+	#Tilgangsstyring: Innlogget og avhengig av virksomhet innlogget bruker er logget inn som
 	#returnere en liste over virksomheter som gjeldende bruker kan representere
 	required_permissions = None
 	brukers_virksomhet_innlogget_som = request.user.profile.virksomhet_innlogget_som
@@ -4294,30 +4471,27 @@ def bytt_virksomhet(request):
 
 
 def sertifikatmyndighet(request):
-	"""
-	Vise informasjon om delegeringer knyttet til sertifikater
-	"""
-	required_permissions = 'systemoversikt.view_virksomhet'
-	if request.user.has_perm(required_permissions):
-
-		virksomheter = Virksomhet.objects.all()
-		return render(request, 'virksomhet_sertifikatmyndigheter.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'virksomheter': virksomheter,
-		})
-
-	else:
+	#Vise informasjon om delegeringer knyttet til sertifikater
+	required_permissions = ['systemoversikt.view_virksomhet']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomheter = Virksomhet.objects.all()
+
+	return render(request, 'virksomhet_sertifikatmyndigheter.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomheter': virksomheter,
+	})
+
 
 
 def alle_virksomheter(request):
-	"""
-	Vise oversikt over alle virksomheter
-	Tilgangsstyring: ÅPEN
-	"""
+	#Vise oversikt over alle virksomheter
 	required_permissions = None
+
 	search_term = request.GET.get('search_term', "").strip()
+
 	if search_term in ("", "__all__"):
 		virksomheter = Virksomhet.objects.all()
 	else:
@@ -4332,11 +4506,9 @@ def alle_virksomheter(request):
 	})
 
 
+
 def alle_virksomheter_kontaktinfo(request):
-	"""
-	Vise oversikt over alle virksomheter
-	Tilgangsstyring: LUKKET
-	"""
+	#Vise oversikt over alle virksomheter
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4351,7 +4523,6 @@ def alle_virksomheter_kontaktinfo(request):
 
 
 def virksomhet_arkivplan(request, pk):
-
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4366,10 +4537,10 @@ def virksomhet_arkivplan(request, pk):
 		'systembruk': systembruk,
 	})
 
+
+
 def leverandor(request, pk):
-	"""
-	Vise detaljer for en valgt leverandør
-	"""
+	#Vise detaljer for en valgt leverandør
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4384,6 +4555,7 @@ def leverandor(request, pk):
 	sikkerhetstester = Sikkerhetstester.objects.filter(testet_av=pk)
 	plattformer = Driftsmodell.objects.filter(leverandor=pk)
 	plattformer_underleverandor = Driftsmodell.objects.filter(underleverandorer=pk)
+
 	return render(request, 'leverandor_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -4400,16 +4572,14 @@ def leverandor(request, pk):
 	})
 
 
+
 def alle_leverandorer(request):
-	"""
-	Vise liste over alle leverandører
-	"""
+	#Vise liste over alle leverandører
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	from django.db.models.functions import Lower
-
 	search_term = request.GET.get('search_term', "").strip()
 
 	if search_term == "":
@@ -4426,15 +4596,15 @@ def alle_leverandorer(request):
 	})
 
 
+
 def alle_driftsmodeller(request):
-	"""
-	Vise liste over alle driftsmodeller
-	"""
+	#Vise liste over alle driftsmodeller
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	driftsmodeller = Driftsmodell.objects.all().order_by('-ansvarlig_virksomhet', 'navn')
+
 	return render(request, 'driftsmodell_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -4442,38 +4612,35 @@ def alle_driftsmodeller(request):
 	})
 
 
-def driftsmodell_virksomhet_klassifisering(request, pk):
-	"""
-	Vise informasjon om sikkerhethetsklassifisering for systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
-	Tilgangsstyring: For plattformforvaltere
-	"""
-	required_permissions = 'systemoversikt.change_systemkategori'
-	if request.user.has_perm(required_permissions):
 
-		virksomhet = Virksomhet.objects.get(pk=pk)
-		driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet)
-		systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('sikkerhetsnivaa')
-		return render(request, 'alle_systemer_virksomhet_drifter_klassifisering.html', {
-			'virksomhet': virksomhet,
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'systemer': systemer_drifter,
-			'driftsmodeller': driftsmodeller,
-		})
-	else:
+def driftsmodell_virksomhet_klassifisering(request, pk):
+	#Vise informasjon om sikkerhethetsklassifisering for systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
+	required_permissions = ['systemoversikt.change_systemkategori']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet)
+	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('sikkerhetsnivaa')
+	return render(request, 'alle_systemer_virksomhet_drifter_klassifisering.html', {
+		'virksomhet': virksomhet,
+		'request': request,
+	'required_permissions': formater_permissions(required_permissions),
+		'systemer': systemer_drifter,
+		'driftsmodeller': driftsmodeller,
+	})
+
 
 
 def drift_beredskap(request, pk, eier=None):
-	"""
-	Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
-	"""
+	#Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True)
+
 	if eier:
 		eier = Virksomhet.objects.get(pk=eier)
 		systemer_drifter = systemer_drifter.filter(systemeier=eier)
@@ -4495,10 +4662,9 @@ def drift_beredskap(request, pk, eier=None):
 	})
 
 
+
 def driftsmodell_virksomhet(request, pk):
-	"""
-	Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
-	"""
+	#Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4506,6 +4672,7 @@ def driftsmodell_virksomhet(request, pk):
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet).order_by("navn")
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
+
 	return render(request, 'system_virksomhet_drifter.html', {
 		'virksomhet': virksomhet,
 		'request': request,
@@ -4515,10 +4682,9 @@ def driftsmodell_virksomhet(request, pk):
 	})
 
 
+
 def detaljer_driftsmodell(request, pk):
-	"""
-	Vise detaljer om en valgt driftsmodell (inkl. systemer tilknyttet)
-	"""
+	#Vise detaljer om en valgt driftsmodell (inkl. systemer tilknyttet)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4541,38 +4707,37 @@ def detaljer_driftsmodell(request, pk):
 	})
 
 
+
 def systemer_uten_driftsmodell(request):
-	"""
-	Vise liste over systemer der driftsmodell mangler
-	"""
+	#Vise liste over systemer der driftsmodell mangler
 	required_permissions = ['systemoversikt.view_system']
+
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	mangler = System.objects.filter(Q(driftsmodell_foreignkey=None) & ~Q(systemtyper=1))
+
 	return render(request, 'driftsmodell_mangler.html', {
 		'systemer': mangler,
 })
 
 
 def systemer_utfaset(request):
-	"""
-	Vise liste over systemer satt til "ikke i bruk"
-	"""
+	#Vise liste over systemer satt til "ikke i bruk"
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	systemer = System.objects.filter(livslop_status__in=[6,7]).order_by("-sist_oppdatert")
+
 	return render(request, 'system_utfaset.html', {
 		'systemer': systemer,
 })
 
 
+
 def systemkategori(request, pk):
-	"""
-	Vise detaljer om en kategori
-	"""
+	#Vise detaljer om en kategori
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4580,6 +4745,7 @@ def systemkategori(request, pk):
 	kategori = SystemKategori.objects.get(pk=pk)
 	systemer = System.objects.filter(systemkategorier=pk).order_by(Lower('systemnavn'))
 	programvarer = Programvare.objects.filter(kategorier=pk).order_by(Lower('programvarenavn'))
+
 	return render(request, 'kategori_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -4589,10 +4755,9 @@ def systemkategori(request, pk):
 	})
 
 
+
 def alle_hovedkategorier(request):
-	"""
-	Vise liste over alle hovedkategorier
-	"""
+	#Vise liste over alle hovedkategorier
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4612,7 +4777,6 @@ def alle_hovedkategorier(request):
 		if len(subkategori.systemhovedkategori_systemkategorier.all()) == 0:
 			subkategorier_uten_hovedkategori.append(subkategori)
 
-
 	return render(request, 'kategori_hoved_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -4621,15 +4785,15 @@ def alle_hovedkategorier(request):
 	})
 
 
+
 def alle_systemkategorier(request):
-	"""
-	Vise liste over alle (under)kategorier
-	"""
+	#Vise liste over alle (under)kategorier
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	kategorier = SystemKategori.objects.order_by('kategorinavn')
+
 	return render(request, 'kategori_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -4638,9 +4802,7 @@ def alle_systemkategorier(request):
 
 
 def uten_systemkategori(request):
-	"""
-	Vise liste over alle systemer uten (under)kategori
-	"""
+	#Vise liste over alle systemer uten (under)kategori
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4649,6 +4811,7 @@ def uten_systemkategori(request):
 	antall_programvarer = Programvare.objects.all().count()
 	systemer = System.objects.annotate(num_categories=Count('systemkategorier')).filter(num_categories=0)
 	programvarer = Programvare.objects.annotate(num_categories=Count('kategorier')).filter(num_categories=0)
+
 	return render(request, 'kategori_system_uten.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -4659,126 +4822,115 @@ def uten_systemkategori(request):
 	})
 
 
+
 def alle_systemurler(request):
-	"""
-	Vise liste over alle URLer
-	"""
+	#Vise liste over alle URLer
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	urler = SystemUrl.objects.order_by('domene')
+
 	return render(request, 'urler_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'web_urler': urler,
 	})
 
+
+
 def virksomhet_urler(request, pk):
-	"""
-	Vise liste over alle URLer
-	"""
+	#Vise liste over alle URLer
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	required_permissions = 'systemoversikt.view_system'
-	if request.user.has_perm(required_permissions):
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	urler = SystemUrl.objects.filter(eier=virksomhet.pk).order_by('domene')
 
-		virksomhet = Virksomhet.objects.get(pk=pk)
-		urler = SystemUrl.objects.filter(eier=virksomhet.pk).order_by('domene')
-		return render(request, 'urler_alle.html', {
-			'request': request,
+	return render(request, 'urler_alle.html', {
+		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-			'web_urler': urler,
-			'virksomhet': virksomhet,
-		})
+		'web_urler': urler,
+		'virksomhet': virksomhet,
+	})
 
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 
 def bytt_kategori(request, fra, til):
-	"""
-	Funksjon for å bytte all bruk av én kategori til en annen kategori
-	Tilgangsstyring: STRENG, krever tilgang til å endre systemkategorier.
-	"""
-	required_permissions = 'systemoversikt.change_systemkategori'
-	if request.user.has_perm(required_permissions):
-		try:
-			kategori_fra = SystemKategori.objects.get(pk=fra)
-			kategori_til = SystemKategori.objects.get(pk=til)
-		except:
-			messages.warning(request, 'Erstatte kategori feilet. Enten "fra" eller "til" kategori finnes ikke.')
-			return redirect('alle_virksomheter')
-
-		kildesystemer = System.objects.filter(systemkategorier=fra)
-		error = ok = 0
-		for system in kildesystemer:
-			try:
-				system.systemkategorier.remove(kategori_fra)
-				system.systemkategorier.add(kategori_til)
-				ok += 1
-			except:
-				error += 1
-
-		messages.success(request, 'Byttet fra %s til %s (ok: %s, error: %s)'% (
-					kategori_fra.kategorinavn,
-					kategori_til.kategorinavn,
-					ok,
-					error,
-				))
-		return redirect('alle_virksomheter')
-	else:
+	#Funksjon for å bytte all bruk av én kategori til en annen kategori
+	required_permissions = ['systemoversikt.change_systemkategori']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		kategori_fra = SystemKategori.objects.get(pk=fra)
+		kategori_til = SystemKategori.objects.get(pk=til)
+	except:
+		messages.warning(request, 'Erstatte kategori feilet. Enten "fra" eller "til" kategori finnes ikke.')
+		return redirect('alle_virksomheter')
+
+	kildesystemer = System.objects.filter(systemkategorier=fra)
+	error = ok = 0
+	for system in kildesystemer:
+		try:
+			system.systemkategorier.remove(kategori_fra)
+			system.systemkategorier.add(kategori_til)
+			ok += 1
+		except:
+			error += 1
+
+	messages.success(request, 'Byttet fra %s til %s (ok: %s, error: %s)'% (
+				kategori_fra.kategorinavn,
+				kategori_til.kategorinavn,
+				ok,
+				error,
+			))
+	return redirect('alle_virksomheter')
 
 
 
 def bytt_leverandor(request, fra, til):
-	"""
-	Funksjon for å bytte all bruk av én leverandør til en annen leverandør
-	Tilgangsstyring: krever tilgang til å endre systemer.
-	"""
-	required_permissions = 'systemoversikt.change_system'
-	if request.user.has_perm(required_permissions):
-		try:
-			leverandor_fra = Leverandor.objects.get(pk=fra)
-			leverandor_til = Leverandor.objects.get(pk=til)
-		except:
-			messages.warning(request, 'Erstatte leverandør feilet. Enten "fra" eller "til"-leverandør finnes ikke.')
-			return redirect('alle_leverandorer')
-
-		def bytt(message, kildesystemer, fra, til):
-			error = ok = 0
-			for kilde in kildesystemer:
-				try:
-					kilde.systemleverandor.remove(leverandor_fra)
-					kilde.systemleverandor.add(leverandor_til)
-					ok += 1
-				except:
-					error += 1
-			messages.success(request, '%s: Byttet fra %s til %s (ok: %s, error: %s)'% (
-						message,
-						leverandor_fra.leverandor_navn,
-						leverandor_til.leverandor_navn,
-						ok,
-						error,
-					))
-
-		bytt("Systemer",System.objects.filter(systemleverandor=fra), leverandor_fra, leverandor_til)
-		bytt("Systemebruk",SystemBruk.objects.filter(systemleverandor=fra), leverandor_fra, leverandor_til)
-
-		return redirect('alle_leverandorer')
-	else:
+	#Funksjon for å bytte all bruk av én leverandør til en annen leverandør
+	required_permissions = ['systemoversikt.change_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		leverandor_fra = Leverandor.objects.get(pk=fra)
+		leverandor_til = Leverandor.objects.get(pk=til)
+	except:
+		messages.warning(request, 'Erstatte leverandør feilet. Enten "fra" eller "til"-leverandør finnes ikke.')
+		return redirect('alle_leverandorer')
+
+	def bytt(message, kildesystemer, fra, til):
+		error = ok = 0
+		for kilde in kildesystemer:
+			try:
+				kilde.systemleverandor.remove(leverandor_fra)
+				kilde.systemleverandor.add(leverandor_til)
+				ok += 1
+			except:
+				error += 1
+		messages.success(request, '%s: Byttet fra %s til %s (ok: %s, error: %s)'% (
+					message,
+					leverandor_fra.leverandor_navn,
+					leverandor_til.leverandor_navn,
+					ok,
+					error,
+				))
+
+	bytt("Systemer",System.objects.filter(systemleverandor=fra), leverandor_fra, leverandor_til)
+	bytt("Systemebruk",SystemBruk.objects.filter(systemleverandor=fra), leverandor_fra, leverandor_til)
+
+	return redirect('alle_leverandorer')
+
 
 
 def system_til_programvare(request, system_id=None):
-	"""
-	Funksjon for å opprette en instans av programvare basert på system (systemet må slettes manuelt etterpå)
-	Tilgangsstyring: krever tilgang til å endre systemer.
-	"""
-	required_permissions = 'systemoversikt.change_system'
-	if not request.user.has_perm(required_permissions):
+	#Funksjon for å opprette en instans av programvare basert på system (systemet må slettes manuelt etterpå)
+	required_permissions = ['systemoversikt.change_system']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	if system_id:
@@ -4847,16 +4999,10 @@ def system_til_programvare(request, system_id=None):
 
 
 def adorgunit_detaljer(request, pk=None):
-	"""
-	Vise informasjon om en konkret AD-OU
-	Tilgangsstyring: må kunne vise informasjon om brukere
-	"""
-	required_permissions = 'auth.view_user'
-	if not request.user.has_perm(required_permissions):
-		return render(request, '403.html', {
-			'required_permissions': required_permissions,
-			'groups': request.user.groups,
-		})
+	#Vise informasjon om en konkret AD-OU
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	import os
 
@@ -4878,287 +5024,208 @@ def adorgunit_detaljer(request, pk=None):
 	users = User.objects.filter(profile__ou=pk).order_by(Lower('first_name'))
 
 	return render(request, 'ad_adorgunit_detaljer.html', {
-			"required_permissions": required_permissions,
-			"ou": ou,
-			"groups": groups,
-			"parent": parent,
-			"children": children,
-			"users": users,
+		"required_permissions": required_permissions,
+		"ou": ou,
+		"groups": groups,
+		"parent": parent,
+		"children": children,
+		"users": users,
 	})
 
 
 
-
-def adgruppe_utnosting(gr):
-	hierarki = []
-	hierarki.append(gr)
-
-	def identifiser_underliggende_grupper(gr):
-		child_groups = []
-		for element in json.loads(gr.member):
-			try: # fra LDAP-svaret vet vi ikke om en member er en gruppe eller en brukerident. Vi må derfor slå opp.
-				g = ADgroup.objects.get(distinguishedname=element)
-				child_groups.append(g)
-			except:
-				pass # må være noe annet enn en gruppe, gitt at kartotekets database er synkronisert med AD
-		return child_groups
-
-	stack = []
-	stack += identifiser_underliggende_grupper(gr)
-
-	while stack:
-		denne_gruppen = stack.pop()
-		#print(denne_gruppen)
-		hierarki.append(denne_gruppen)
-		nye_undergrupper = identifiser_underliggende_grupper(denne_gruppen)
-		for ug in nye_undergrupper:
-			if ug not in hierarki:
-				stack.append(ug)
-
-	return hierarki
-
-
 def ad_gruppeanalyse(request):
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		import re
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-		brukernavn_str = request.POST.get('brukernavn', "").strip().lower()
+	brukernavn_str = request.POST.get('brukernavn', "").strip().lower()
 
+	try:
+		bruker = User.objects.get(username=brukernavn_str)
+		brukers_grupper = ldap_users_securitygroups(bruker.username)
+		brukers_unike_grupper = sorted(convert_distinguishedname_cn(brukers_grupper))
+	except:
+		#print("ad_gruppeanalyse: Brukernavn finnes ikke")
+		brukers_unike_grupper = None
+
+
+	sikkerhetsgrupper_str = request.POST.get('sikkerhetsgrupper', "")
+	sikkerhetsgrupper = []
+	feilede_oppslag = []
+	sikkerhetsgrupper_oppsplittet = re.findall(r"([^,;\n\r]+)", sikkerhetsgrupper_str) # alt mellom tegn som typisk brukes for å splitte unike ting.
+
+	for gr in sikkerhetsgrupper_oppsplittet:
+		stripped_gr = gr.strip()
+		if "\\" in stripped_gr:
+			stripped_gr = stripped_gr.split("\\")[1]
 		try:
-			bruker = User.objects.get(username=brukernavn_str)
-			brukers_grupper = ldap_users_securitygroups(bruker.username)
-			brukers_unike_grupper = sorted(convert_distinguishedname_cn(brukers_grupper))
+			sikkerhetsgrupper.append(ADgroup.objects.get(common_name=stripped_gr))
 		except:
-			#print("ad_gruppeanalyse: Brukernavn finnes ikke")
-			brukers_unike_grupper = None
+			feilede_oppslag.append(stripped_gr)
+
+	utnostede_grupper = []
+	for gr in sikkerhetsgrupper:
+		utnostede_grupper += adgruppe_utnosting(gr)
+
+	utnostede_grupper_ant_medlemmer = 0
+	for gr in utnostede_grupper:
+		utnostede_grupper_ant_medlemmer += gr.membercount
 
 
-		sikkerhetsgrupper_str = request.POST.get('sikkerhetsgrupper', "")
-		sikkerhetsgrupper = []
-		feilede_oppslag = []
-		sikkerhetsgrupper_oppsplittet = re.findall(r"([^,;\n\r]+)", sikkerhetsgrupper_str) # alt mellom tegn som typisk brukes for å splitte unike ting.
-
-		for gr in sikkerhetsgrupper_oppsplittet:
-			stripped_gr = gr.strip()
-			if "\\" in stripped_gr:
-				stripped_gr = stripped_gr.split("\\")[1]
-			try:
-				sikkerhetsgrupper.append(ADgroup.objects.get(common_name=stripped_gr))
-			except:
-				feilede_oppslag.append(stripped_gr)
-
-		utnostede_grupper = []
-		for gr in sikkerhetsgrupper:
-			utnostede_grupper += adgruppe_utnosting(gr)
-
-		utnostede_grupper_ant_medlemmer = 0
-		for gr in utnostede_grupper:
-			utnostede_grupper_ant_medlemmer += gr.membercount
-
-
-		if brukers_unike_grupper and utnostede_grupper:
-			set_brukers_grupper = set(brukers_unike_grupper)
-			set_sikkerhetsgruppeutnosting = [g.common_name for g in utnostede_grupper]
-			sammenfallende = set_brukers_grupper.intersection(set_sikkerhetsgruppeutnosting)
-		else:
-			sammenfallende = None
-
-		context = {
-			'form_brukernavn': brukernavn_str,
-			'form_sikkerhetsgrupper': sikkerhetsgrupper_str,
-			'brukers_unike_grupper': brukers_unike_grupper,
-			'feilede_oppslag': feilede_oppslag,
-			'unike_utnostede_grupper': utnostede_grupper,
-			'sammenfallende': sammenfallende,
-			'utnostede_grupper_ant_medlemmer': utnostede_grupper_ant_medlemmer,
-		}
-		return render(request, 'ad_gruppeanalyse.html', context)
+	if brukers_unike_grupper and utnostede_grupper:
+		set_brukers_grupper = set(brukers_unike_grupper)
+		set_sikkerhetsgruppeutnosting = [g.common_name for g in utnostede_grupper]
+		sammenfallende = set_brukers_grupper.intersection(set_sikkerhetsgruppeutnosting)
 	else:
-		context = {
-			'required_permissions': required_permissions,
-			'groups': request.user.groups
-		}
-		return render(request, '403.html', context)
+		sammenfallende = None
+
+	context = {
+		'form_brukernavn': brukernavn_str,
+		'form_sikkerhetsgrupper': sikkerhetsgrupper_str,
+		'brukers_unike_grupper': brukers_unike_grupper,
+		'feilede_oppslag': feilede_oppslag,
+		'unike_utnostede_grupper': utnostede_grupper,
+		'sammenfallende': sammenfallende,
+		'utnostede_grupper_ant_medlemmer': utnostede_grupper_ant_medlemmer,
+	}
+	return render(request, 'ad_gruppeanalyse.html', context)
+
 
 
 def adgruppe_graf(request, pk):
-	"""
-	Vise en graf over hvordan grupper er nøstet nedover fra en gitt gruppe
-	Tilgangsstyring: Må kunne vise informasjon om brukere
-	"""
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-
-		import math
-		morgruppe = ADgroup.objects.get(pk=pk)
-
-		avhengigheter_graf = {"nodes": [], "edges": []}
-		nye_grupper = []
-		ferdige = []
-
-		maks_grense = int(request.GET.get('maks_grense', 50))  # strip removes trailing and leading space
-		grense = 0
-
-		def define_color(gruppe):
-			if gruppe.from_prk:
-				return "#3bc319"
-			else:
-				return "#da3747"
-
-		def define_size(gruppe):
-			minimum = 25
-			if gruppe.membercount > 0:
-				adjusted_member_count = minimum + (20 * math.log(gruppe.membercount, 10))
-				return ("%spx" % adjusted_member_count)
-			else:
-				return ("%spx" % minimum)
-
-		def registrere_gruppe(gruppe):
-			if gruppe not in ferdige:
-				size = define_size(gruppe)
-				avhengigheter_graf["nodes"].append(
-						{"data": {
-								"parent": '',
-								"id": gruppe.pk,
-								"name": gruppe.short(),
-								"shape": "triangle",
-								"size": size,
-								"color": "#202020"
-							},
-						})
-				ferdige.append(gruppe.pk)
-
-			members = human_readable_members(json.loads(gruppe.member), onlygroups=True)
-			for m in members["groups"]:
-				color = define_color(m)
-				size = define_size(m)
-				if m not in ferdige and m.parent != None:
-					nonlocal grense
-					if grense < maks_grense:
-						nye_grupper.append(m)
-						grense += 1
-					#print("added %s" % m)
-
-					avhengigheter_graf["nodes"].append(
-							{"data": {
-								"parent": m.parent.pk,
-								"id": m.pk,
-								"name": m.display_name,
-								"shape": "ellipse",
-								"color": color,
-								"size": size,
-								"href": reverse('adgruppe_detaljer', args=[m.pk])
-								}
-							})
-					avhengigheter_graf["edges"].append(
-							{"data": {
-								"source": gruppe.pk,
-								"target": m.pk,
-								"linestyle": "solid"
-								}
-							})
-					ferdige.append(m.pk)
-
-		registrere_gruppe(morgruppe)
-
-		while nye_grupper:
-			g = nye_grupper.pop()
-			#print("removed %s" % g)
-			registrere_gruppe(g)
-
-
-		return render(request, 'ad_graf.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'avhengigheter_graf': avhengigheter_graf,
-			'morgruppe': morgruppe,
-			'maks_grense': maks_grense,
-			'grense': grense,
-		})
-	else:
+	#Vise en graf over hvordan grupper er nøstet nedover fra en gitt gruppe
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	import math
+	morgruppe = ADgroup.objects.get(pk=pk)
 
-def human_readable_members(items, onlygroups=False):
+	avhengigheter_graf = {"nodes": [], "edges": []}
+	nye_grupper = []
+	ferdige = []
 
-	#runtime_t0 = time.time()
-	groups = []
-	users = []
-	notfound = []
+	maks_grense = int(request.GET.get('maks_grense', 50))  # strip removes trailing and leading space
+	grense = 0
 
-	for item in items:
-		match = False
-		if onlygroups == False:
-			regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0]
-			try:
-				u = User.objects.get(username__iexact=regex_username)
-				users.append(u)
-				match = True
-				continue
-			except:
-				pass
-		try:
-			g = ADgroup.objects.get(distinguishedname=item)
-			groups.append(g)
-		except:
-			notfound.append(item)  # vi fant ikke noe, returner det vi fikk
+	def define_color(gruppe):
+		if gruppe.from_prk:
+			return "#3bc319"
+		else:
+			return "#da3747"
 
-	#runtime_t1 = time.time()
-	#logg_total_runtime = runtime_t1 - runtime_t0
-	#print(logg_total_runtime)
+	def define_size(gruppe):
+		minimum = 25
+		if gruppe.membercount > 0:
+			adjusted_member_count = minimum + (20 * math.log(gruppe.membercount, 10))
+			return ("%spx" % adjusted_member_count)
+		else:
+			return ("%spx" % minimum)
 
-	return {"groups": groups, "users": users, "notfound": notfound}
+	def registrere_gruppe(gruppe):
+		if gruppe not in ferdige:
+			size = define_size(gruppe)
+			avhengigheter_graf["nodes"].append(
+					{"data": {
+							"parent": '',
+							"id": gruppe.pk,
+							"name": gruppe.short(),
+							"shape": "triangle",
+							"size": size,
+							"color": "#202020"
+						},
+					})
+			ferdige.append(gruppe.pk)
+
+		members = human_readable_members(json.loads(gruppe.member), onlygroups=True)
+		for m in members["groups"]:
+			color = define_color(m)
+			size = define_size(m)
+			if m not in ferdige and m.parent != None:
+				nonlocal grense
+				if grense < maks_grense:
+					nye_grupper.append(m)
+					grense += 1
+				#print("added %s" % m)
+
+				avhengigheter_graf["nodes"].append(
+						{"data": {
+							"parent": m.parent.pk,
+							"id": m.pk,
+							"name": m.display_name,
+							"shape": "ellipse",
+							"color": color,
+							"size": size,
+							"href": reverse('adgruppe_detaljer', args=[m.pk])
+							}
+						})
+				avhengigheter_graf["edges"].append(
+						{"data": {
+							"source": gruppe.pk,
+							"target": m.pk,
+							"linestyle": "solid"
+							}
+						})
+				ferdige.append(m.pk)
+
+	registrere_gruppe(morgruppe)
+
+	while nye_grupper:
+		g = nye_grupper.pop()
+		#print("removed %s" % g)
+		registrere_gruppe(g)
+
+	return render(request, 'ad_graf.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'avhengigheter_graf': avhengigheter_graf,
+		'morgruppe': morgruppe,
+		'maks_grense': maks_grense,
+		'grense': grense,
+	})
+
 
 
 def adgruppe_detaljer(request, pk):
-	"""
-	Vise informasjon om en konkret AD-gruppe
-	Tilgangsstyring: må kunne vise informasjon om brukere
-	"""
-	required_permissions = 'auth.view_user'
-	if not request.user.has_perm(required_permissions):
+	#Vise informasjon om en konkret AD-gruppe
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	import json
 	gruppe = ADgroup.objects.get(pk=pk)
-
 	member = human_readable_members(json.loads(gruppe.member))
 	memberof = human_readable_members(json.loads(gruppe.memberof))
 
 	return render(request, 'ad_adgruppe_detaljer.html', {
-			"gruppe": gruppe,
-			"member": member,
-			"memberof": memberof,
+		"gruppe": gruppe,
+		"member": member,
+		"memberof": memberof,
 	})
 
 
+
 def virksomhet_adgruppe_detaljer(request):
-	"""
-	Vise informasjon om en konkret AD-gruppe for en enkelt virksomhet
-	Tilgangsstyring: må kunne vise informasjon om brukere
-	"""
-	required_permissions = 'auth.view_user'
-	if not request.user.has_perm(required_permissions):
+	#Vise informasjon om en konkret AD-gruppe for en enkelt virksomhet
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
 		virksomhetsforkotelse = request.user.profile.virksomhet_innlogget_som.virksomhetsforkortelse
+
 	except:
 		return render(request, 'ad_analyse.html', {})
-
 
 	valgt_gruppe = None
 	valgt_gruppe_medlemmer = None
 	valg_grupper = None
 	search_term = ""
 
-
 	search_term_raw = request.GET.get("search_term", False)
 	if search_term_raw:
 		valg_grupper = ADgroup.objects.filter(Q(distinguishedname__icontains=search_term_raw) | Q(display_name__icontains=search_term_raw))
 		search_term = search_term_raw
-
 
 	valgt_gruppe = request.GET.get("valgt_gruppe", False)
 	if valgt_gruppe:
@@ -5176,44 +5243,42 @@ def virksomhet_adgruppe_detaljer(request):
 		valgt_gruppe_medlemmer = members
 		search_term = gruppe
 
-
 	return render(request, 'virksomhet_adgruppe_detaljer.html', {
-			"valg_grupper": valg_grupper,
-			"valgt_gruppe": valgt_gruppe,
-			"valgt_gruppe_medlemmer": valgt_gruppe_medlemmer,
-			"search_term": search_term,
-			"virksomhetsforkotelse": virksomhetsforkotelse,
+		"valg_grupper": valg_grupper,
+		"valgt_gruppe": valgt_gruppe,
+		"valgt_gruppe_medlemmer": valgt_gruppe_medlemmer,
+		"search_term": search_term,
+		"virksomhetsforkotelse": virksomhetsforkotelse,
 	})
 
 
+
 def ad_analyse(request):
-	"""
-	Vise informasjon om tomme ADgrupper, AD-grupper ikke fra PRK osv.
-	Tilgangsstyring: må kunne vise informasjon om brukere
-	"""
+	#Vise informasjon om tomme ADgrupper, AD-grupper ikke fra PRK osv.
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	antall_alle_grupper = ADgroup.objects.all().count()
 	maks = int(request.GET.get('antall', 0))
 	adgrupper_tomme = ADgroup.objects.filter(membercount__lte=maks)
 	antall_tomme = len(adgrupper_tomme)
 
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		return render(request, 'ad_analyse.html', {
-				"adgrupper_tomme": adgrupper_tomme,
-				"maks": maks,
-				"antall_alle_grupper": antall_alle_grupper,
-				"antall_tomme": antall_tomme,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+	return render(request, 'ad_analyse.html', {
+		"adgrupper_tomme": adgrupper_tomme,
+		"maks": maks,
+		"antall_alle_grupper": antall_alle_grupper,
+		"antall_tomme": antall_tomme,
+	})
+
 
 
 def alle_adgrupper(request):
-	"""
-	Vise informasjon om AD-grupper
-	Tilgangsstyring: må kunne vise informasjon om brukere
-	"""
+	#Vise informasjon om AD-grupper
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 	if len(search_term) > 1:
 		if search_term[0:3] == "CN=":
@@ -5231,108 +5296,90 @@ def alle_adgrupper(request):
 	for log in logs:
 		antall_adgr_tid.append({"label": log.opprettet.strftime("%b %y"), "value": float(re.search(r'sekunder\. (\d+) treff', log.message, re.I).groups()[0])})
 
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		return render(request, 'ad_adgrupper_sok.html', {
-				"adgrupper": adgrupper,
-				"search_term": search_term,
-				'antall_adgr_tid': antall_adgr_tid,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+	return render(request, 'ad_adgrupper_sok.html', {
+		"adgrupper": adgrupper,
+		"search_term": search_term,
+		'antall_adgr_tid': antall_adgr_tid,
+		'required_permissions': required_permissions,
+	})
+
 
 
 def maskin_sok(request):
-	"""
-	Søke opp hostnavn
-	Tilgangsstyring: må kunne vise cmdb-maskiner
-	"""
-	required_permissions = 'systemoversikt.view_cmdbdevice'
-	if request.user.has_perm(required_permissions):
-
-		hits = []
-		misses = []
-		query = request.POST.get('search_term', '').strip()
-		if query != "":
-			#servers = re.findall(r'\w+',search_term)
-			servers = query.split("\n")
-			for server in servers:
-				try:
-					match = CMDBdevice.objects.filter(comp_name__iexact=server.strip())
-					for m in match.all():
-						hits.append(m)
-				except:
-					misses.append(server.strip())
-
-
-
-		return render(request, 'cmdb_maskin_sok.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'query': query,
-			'hits': hits,
-			'misses': misses,
-		})
-	else:
+	#Søke opp hostnavn
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	hits = []
+	misses = []
+	query = request.POST.get('search_term', '').strip()
+	if query != "":
+		#servers = re.findall(r'\w+',search_term)
+		servers = query.split("\n")
+		for server in servers:
+			try:
+				match = CMDBdevice.objects.filter(comp_name__iexact=server.strip())
+				for m in match.all():
+					hits.append(m)
+			except:
+				misses.append(server.strip())
+
+	return render(request, 'cmdb_maskin_sok.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'query': query,
+		'hits': hits,
+		'misses': misses,
+	})
+
 
 
 def alle_ip(request):
-	"""
-	Søke opp IP-adresser, både mot CMDB maskiner og via live dns-query
-	Tilgangsstyring: må kunne vise cmdb-maskiner
-	"""
-	required_permissions = 'systemoversikt.view_cmdbdevice'
-	if request.user.has_perm(required_permissions):
-		import re
-		import ipaddress
-
-		search_term = request.POST.get('search_term', '').strip()  # strip removes trailing and leading space
-		host_matches = []
-		network_matches = []
-		not_ip_addresses = []
-
-		if search_term != "":
-			search_term = search_term.replace('\"','').replace('\'','').replace(':',' ').replace('/', ' ').replace('\\', ' ') # dette vil feile for IPv6, som kommer på formatet [xxxx:xxxx::xxxx]:port
-			search_terms = re.findall(r"([^,;\t\s\n\r]+)", search_term)
-			search_terms = set(search_terms)
-
-			for term in search_terms:
-				try:
-					match = NetworkIPAddress.objects.get(ip_address=term)
-					host_matches.append(match)
-					continue
-				except:
-					pass
-
-				try:
-					match = NetworkContainer.objects.get(ip_address=term)
-					network_matches.append(match)
-					continue
-				except:
-					pass
-
-				not_ip_addresses.append(term)
-				continue  # skip this term
-
-
-				#def dns_live(ip_address): # not used anymore
-				#	try:
-				#		return socket.gethostbyaddr(str(ip_address))[0]
-				#	except:
-				#		return None
-
-
-		return render(request, 'cmdb_ip_sok.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'host_matches': host_matches,
-			'network_matches': network_matches,
-			'search_term': search_term,
-			'not_ip_addresses': not_ip_addresses,
-		})
-	else:
+	#Søke opp IP-adresser, både mot CMDB maskiner og via live dns-query
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	import ipaddress
+
+	search_term = request.POST.get('search_term', '').strip()  # strip removes trailing and leading space
+	host_matches = []
+	network_matches = []
+	not_ip_addresses = []
+
+	if search_term != "":
+		search_term = search_term.replace('\"','').replace('\'','').replace(':',' ').replace('/', ' ').replace('\\', ' ') # dette vil feile for IPv6, som kommer på formatet [xxxx:xxxx::xxxx]:port
+		search_terms = re.findall(r"([^,;\t\s\n\r]+)", search_term)
+		search_terms = set(search_terms)
+
+		for term in search_terms:
+			try:
+				match = NetworkIPAddress.objects.get(ip_address=term)
+				host_matches.append(match)
+				continue
+			except:
+				pass
+
+			try:
+				match = NetworkContainer.objects.get(ip_address=term)
+				network_matches.append(match)
+				continue
+			except:
+				pass
+
+			not_ip_addresses.append(term)
+			continue  # skip this term
+
+	return render(request, 'cmdb_ip_sok.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'host_matches': host_matches,
+		'network_matches': network_matches,
+		'search_term': search_term,
+		'not_ip_addresses': not_ip_addresses,
+	})
+
 
 """
 def ad_prk_sok(request):
@@ -5351,161 +5398,144 @@ def ad_prk_sok(request):
 """
 
 
-
 def prk_skjema(request, skjema_id):
-	"""
-	Bla i PRK-skjemaer, vise et konkret skjema
-	Tilgangsstyring: må kunne vise prk-skjemaer
-	"""
-	required_permissions = 'systemoversikt.view_prkvalg'
-	if request.user.has_perm(required_permissions):
-
-		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-
-		skjema = PRKskjema.objects.get(pk=skjema_id)
-
-		if search_term:
-			valg = PRKvalg.objects.filter(skjemanavn=skjema).filter(virksomhet__virksomhetsforkortelse=search_term).order_by("gruppering")
-		else:
-			valg = PRKvalg.objects.filter(skjemanavn=skjema).order_by("gruppering")
-
-		return render(request, 'prk_vis_skjema.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'skjema': skjema,
-			'valg': valg,
-		})
-	else:
+	#Bla i PRK-skjemaer, vise et konkret skjema
+	required_permissions = ['systemoversikt.view_prkvalg']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+	skjema = PRKskjema.objects.get(pk=skjema_id)
+
+	if search_term:
+		valg = PRKvalg.objects.filter(skjemanavn=skjema).filter(virksomhet__virksomhetsforkortelse=search_term).order_by("gruppering")
+	else:
+		valg = PRKvalg.objects.filter(skjemanavn=skjema).order_by("gruppering")
+
+	return render(request, 'prk_vis_skjema.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'skjema': skjema,
+		'valg': valg,
+	})
+
 
 
 def prk_browse(request):
-	"""
-	Bla i PRK-skjemaer
-	Tilgangsstyring: må kunne vise prk-skjemaer
-	"""
-	required_permissions = 'systemoversikt.view_prkvalg'
-	if request.user.has_perm(required_permissions):
-
-		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-
-		if search_term:
-			skjema = PRKskjema.objects.filter(skjemanavn__icontains=search_term)
-		else:
-			skjema = PRKskjema.objects.all()
-
-		skjema = skjema.order_by('skjematype', 'skjemanavn')
-
-		return render(request, 'prk_bla.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'skjema': skjema,
-			'search_term': search_term,
-		})
-	else:
+	#Bla i PRK-skjemaer
+	required_permissions = ['systemoversikt.view_prkvalg']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+
+	if search_term:
+		skjema = PRKskjema.objects.filter(skjemanavn__icontains=search_term)
+	else:
+		skjema = PRKskjema.objects.all()
+
+	skjema = skjema.order_by('skjematype', 'skjemanavn')
+
+	return render(request, 'prk_bla.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'skjema': skjema,
+		'search_term': search_term,
+	})
+
 
 
 def alle_prk(request):
-	"""
-	Søke og vise PRK-skjemaer
-	Tilgangsstyring: må kunne vise prk-skjemaer
-	"""
-	required_permissions = 'systemoversikt.view_prkvalg'
-	if request.user.has_perm(required_permissions):
-
-		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-
-		if (search_term == "__all__"):
-			skjemavalg = PRKvalg.objects
-		elif len(search_term) < 2: # if one or less, return nothing
-			skjemavalg = PRKvalg.objects.none()
-		else:
-			skjemavalg = PRKvalg.objects.filter(
-					Q(valgnavn__icontains=search_term) |
-					Q(beskrivelse__icontains=search_term) |
-					Q(gruppering__feltnavn__icontains=search_term) |
-					Q(skjemanavn__skjemanavn__icontains=search_term) |
-					Q(gruppenavn__icontains=search_term)
-			)
-
-		skjemavalg = skjemavalg.order_by('skjemanavn__skjemanavn', 'gruppering__feltnavn')
-
-		return render(request, 'prk_skjema_sok.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'search_term': search_term,
-			'skjemavalg': skjemavalg,
-		})
-	else:
+	#Søke og vise PRK-skjemaer
+	required_permissions = ['systemoversikt.view_prkvalg']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+
+	if (search_term == "__all__"):
+		skjemavalg = PRKvalg.objects
+	elif len(search_term) < 2: # if one or less, return nothing
+		skjemavalg = PRKvalg.objects.none()
+	else:
+		skjemavalg = PRKvalg.objects.filter(
+				Q(valgnavn__icontains=search_term) |
+				Q(beskrivelse__icontains=search_term) |
+				Q(gruppering__feltnavn__icontains=search_term) |
+				Q(skjemanavn__skjemanavn__icontains=search_term) |
+				Q(gruppenavn__icontains=search_term)
+		)
+
+	skjemavalg = skjemavalg.order_by('skjemanavn__skjemanavn', 'gruppering__feltnavn')
+
+	return render(request, 'prk_skjema_sok.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'search_term': search_term,
+		'skjemavalg': skjemavalg,
+	})
+
 
 
 def alle_klienter(request):
-	"""
-	Søke og vise alle klienter
-	Tilgangsstyring: må kunne vise cmdb-maskiner
-	"""
-	required_permissions = 'systemoversikt.view_cmdbdevice'
-	if request.user.has_perm(required_permissions):
-
-		search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
-
-		if search_term == '':
-			maskiner = None
-		elif search_term == '__all__':
-			maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True)
-		else:
-			maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__icontains=search_term) | Q(model_id__icontains=search_term) | Q(maskinadm_virksomhet_str__icontains=search_term))
-
-		alle_maskinadm_klienter = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(kilde_prk=True).count()
-		alle_cmdb_klienter = CMDBdevice.objects.filter(device_active=True).filter(device_type="KLIENT").count()
-
-		#klienter innmeldt i PRK som ikke er aktive i 2S CMDB
-		innmeldt_prk_inaktiv_snow = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(device_active=False).count()
-
-		#klienter utmeldt/slettet i PRK men aktive i 2S CMDB
-		utmeldtslettet_prk_aktiv_snow = CMDBdevice.objects.filter(~Q(maskinadm_status="INNMELDT")).filter(device_type="KLIENT").filter(device_active=True).count()
-
-		# klargjøring for statistikk
-		if maskiner == None:
-			stat_maskiner = CMDBdevice.objects.all()
-		else:
-			stat_maskiner = maskiner
-
-		maskiner_os_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
-		maskiner_os_stats = sorted(maskiner_os_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
-
-		maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('model_id').annotate(Count('model_id'))
-		maskiner_model_stats = sorted(maskiner_model_stats, key=lambda os: os['model_id__count'], reverse=True)
-
-		if maskiner != None:
-			maskiner = maskiner.order_by('comp_name')
-
-		return render(request, 'cmdb_maskiner_klienter.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'maskiner': maskiner,
-			'device_search_term': search_term,
-			'alle_maskinadm_klienter': alle_maskinadm_klienter,
-			'alle_cmdb_klienter': alle_cmdb_klienter,
-			'innmeldt_prk_inaktiv_snow': innmeldt_prk_inaktiv_snow,
-			'utmeldtslettet_prk_aktiv_snow': utmeldtslettet_prk_aktiv_snow,
-			'maskiner_os_stats': maskiner_os_stats,
-			'maskiner_model_stats': maskiner_model_stats,
-
-		})
-	else:
+	#Søke og vise alle klienter
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
+
+	if search_term == '':
+		maskiner = None
+	elif search_term == '__all__':
+		maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True)
+	else:
+		maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__icontains=search_term) | Q(model_id__icontains=search_term) | Q(maskinadm_virksomhet_str__icontains=search_term))
+
+	alle_maskinadm_klienter = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(kilde_prk=True).count()
+	alle_cmdb_klienter = CMDBdevice.objects.filter(device_active=True).filter(device_type="KLIENT").count()
+
+	#klienter innmeldt i PRK som ikke er aktive i 2S CMDB
+	innmeldt_prk_inaktiv_snow = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(device_active=False).count()
+
+	#klienter utmeldt/slettet i PRK men aktive i 2S CMDB
+	utmeldtslettet_prk_aktiv_snow = CMDBdevice.objects.filter(~Q(maskinadm_status="INNMELDT")).filter(device_type="KLIENT").filter(device_active=True).count()
+
+	# klargjøring for statistikk
+	if maskiner == None:
+		stat_maskiner = CMDBdevice.objects.all()
+	else:
+		stat_maskiner = maskiner
+
+	maskiner_os_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
+	maskiner_os_stats = sorted(maskiner_os_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
+
+	maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('model_id').annotate(Count('model_id'))
+	maskiner_model_stats = sorted(maskiner_model_stats, key=lambda os: os['model_id__count'], reverse=True)
+
+	if maskiner != None:
+		maskiner = maskiner.order_by('comp_name')
+
+	return render(request, 'cmdb_maskiner_klienter.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'maskiner': maskiner,
+		'device_search_term': search_term,
+		'alle_maskinadm_klienter': alle_maskinadm_klienter,
+		'alle_cmdb_klienter': alle_cmdb_klienter,
+		'innmeldt_prk_inaktiv_snow': innmeldt_prk_inaktiv_snow,
+		'utmeldtslettet_prk_aktiv_snow': utmeldtslettet_prk_aktiv_snow,
+		'maskiner_os_stats': maskiner_os_stats,
+		'maskiner_model_stats': maskiner_model_stats,
+
+	})
+
 
 
 def cmdb_internetteksponerte_servere(request):
-	"""
-	Søke og vise alle maskiner
-	Tilgangsstyring: må kunne vise cmdb-maskiner
-	"""
-	required_permissions = 'systemoversikt.view_cmdbdevice'
-	if not request.user.has_perm(required_permissions):
+	#Søke og vise alle maskiner
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	dager_gamle = 30
@@ -5521,12 +5551,9 @@ def cmdb_internetteksponerte_servere(request):
 
 
 def alle_servere(request):
-	"""
-	Søke og vise alle maskiner
-	Tilgangsstyring: må kunne vise cmdb-maskiner
-	"""
-	required_permissions = 'systemoversikt.view_cmdbdevice'
-	if not request.user.has_perm(required_permissions):
+	#Søke og vise alle maskiner
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
@@ -5555,241 +5582,223 @@ def alle_servere(request):
 
 
 def valgbarekategorier(request):
-	"""
-	Vise noen linker knyttet til admin-panel. Valgfelt brukt i skjema.
-	"""
+	#Vise noen linker knyttet til admin-panel. Valgfelt brukt i skjema.
+	required_permissions = None
+
 	return render(request, 'cmdb_valgbarekategorier.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 	})
 
 
+
 def servere_utfaset(request):
-	"""
-	Vise alle avviklede maskiner
-	Tilgangsstyring: må kunne vise cmdb-maskiner
-	"""
-	required_permissions = 'systemoversikt.view_cmdbdevice'
-	if request.user.has_perm(required_permissions):
-
-		maskiner = CMDBdevice.objects.filter(device_active=False, device_type="SERVER").order_by("-sist_oppdatert")[:300]
-		return render(request, 'cmdb_alle_maskiner_utfaset.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'maskiner': maskiner,
-		})
-
-	else:
+	#Vise alle avviklede maskiner
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	maskiner = CMDBdevice.objects.filter(device_active=False, device_type="SERVER").order_by("-sist_oppdatert")[:300]
+
+	return render(request, 'cmdb_alle_maskiner_utfaset.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'maskiner': maskiner,
+	})
+
+
 
 def alle_databaser(request):
-	"""
-	Søke og vise alle databaser
-	Tilgangsstyring: må kunne vise cmdb-databaser
-	"""
-	required_permissions = 'systemoversikt.view_cmdbdatabase'
-	if request.user.has_perm(required_permissions):
-
-		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-
-		if search_term == "__all__":
-			databaser = CMDBdatabase.objects.filter(db_operational_status=1)
-		elif len(search_term) < 2: # if one or less, return nothing
-			databaser = CMDBdatabase.objects.none()
-		else:
-			databaser = CMDBdatabase.objects.filter(db_operational_status=1).filter(
-					Q(db_database__icontains=search_term) |
-					Q(sub_name__navn__icontains=search_term) |
-					Q(db_version__icontains=search_term)
-				)
-
-		databaser = databaser.order_by('db_database')
-
-		for d in databaser:
-			try:
-				server_str = d.db_comments.split("@")[1]
-			except:
-				server_str = None
-			d.server_str = server_str # dette legger bare til et felt. Vi skriver ingen ting her.
-
-
-		def cmdb_os_stats(maskiner):
-			maskiner_stats = []
-			for os in os_major:
-				maskiner_stats.append({
-					'major': os['db_version'],
-					'count': os['db_version__count']
-				})
-			return sorted(maskiner_stats, key=lambda os: os['db_version'], reverse=True)
-
-		databaseversjoner = CMDBdatabase.objects.all().values('db_version').distinct().annotate(Count('db_version'))
-		databasestatistikk = []
-		for versjon in databaseversjoner:
-			if versjon["db_version"] == "":
-				versjon["db_version"] = "ukjent"
-			databasestatistikk.append({
-					'versjon': versjon["db_version"],
-					'antall': versjon["db_version__count"]
-				})
-		databasestatistikk = sorted(databasestatistikk, key=lambda v: v['antall'], reverse=True)
-
-		return render(request, 'cmdb_databaser_sok.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'databaser': databaser,
-			'search_term': search_term,
-			'databasestatistikk': databasestatistikk,
-		})
-	else:
+	#Søke og vise alle databaser
+	required_permissions = ['systemoversikt.view_cmdbdatabase']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+
+	if search_term == "__all__":
+		databaser = CMDBdatabase.objects.filter(db_operational_status=1)
+	elif len(search_term) < 2: # if one or less, return nothing
+		databaser = CMDBdatabase.objects.none()
+	else:
+		databaser = CMDBdatabase.objects.filter(db_operational_status=1).filter(
+				Q(db_database__icontains=search_term) |
+				Q(sub_name__navn__icontains=search_term) |
+				Q(db_version__icontains=search_term)
+			)
+
+	databaser = databaser.order_by('db_database')
+
+	for d in databaser:
+		try:
+			server_str = d.db_comments.split("@")[1]
+		except:
+			server_str = None
+		d.server_str = server_str # dette legger bare til et felt. Vi skriver ingen ting her.
+
+	def cmdb_os_stats(maskiner):
+		maskiner_stats = []
+		for os in os_major:
+			maskiner_stats.append({
+				'major': os['db_version'],
+				'count': os['db_version__count']
+			})
+		return sorted(maskiner_stats, key=lambda os: os['db_version'], reverse=True)
+
+	databaseversjoner = CMDBdatabase.objects.all().values('db_version').distinct().annotate(Count('db_version'))
+	databasestatistikk = []
+	for versjon in databaseversjoner:
+		if versjon["db_version"] == "":
+			versjon["db_version"] = "ukjent"
+		databasestatistikk.append({
+				'versjon': versjon["db_version"],
+				'antall': versjon["db_version__count"]
+			})
+	databasestatistikk = sorted(databasestatistikk, key=lambda v: v['antall'], reverse=True)
+
+	return render(request, 'cmdb_databaser_sok.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'databaser': databaser,
+		'search_term': search_term,
+		'databasestatistikk': databasestatistikk,
+	})
+
+
 
 def cmdb_forvaltere(request):
-	"""
-	"""
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		relevant_business_services = CMDBbs.objects.filter(eksponert_for_bruker=True).order_by("navn", Lower("navn"))
-
-		return render(request, 'cmdb_forvaltere.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'relevant_business_services': relevant_business_services,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	relevant_business_services = CMDBbs.objects.filter(eksponert_for_bruker=True).order_by("navn", Lower("navn"))
+
+	return render(request, 'cmdb_forvaltere.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'relevant_business_services': relevant_business_services,
+	})
 
 
 
 def alle_cmdbref(request):
-	"""
-	Søke og vise alle business services (bs)
-	Tilgangsstyring: må kunne vise cmdb-referanser (bs)
-	"""
+	#Søke og vise alle business services (bs)
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		search_term = request.GET.get('search_term', "").strip()
-
-		if search_term == "__all__":
-			cmdbref = CMDBRef.objects.filter(parent_ref__eksponert_for_bruker=True)#, parent_ref__operational_status=True)
-		elif len(search_term) < 1: # if one or less, return nothing
-			cmdbref = CMDBRef.objects.none()
-		else:
-			cmdbref = CMDBRef.objects.filter(navn__icontains=search_term, parent_ref__navn__icontains=search_term)
-
-		cmdbref = cmdbref.order_by("-operational_status", "parent_ref__navn", Lower("navn"))
-
-		bs_uten_system = CMDBbs.objects.filter(operational_status=True).filter(Q(systemreferanse=None)).filter(eksponert_for_bruker=True)
-		utfasede_bs = CMDBbs.objects.filter(operational_status=False).filter(~Q(systemreferanse=None))
-
-		skjult_server_db = []
-		skjult_server_db_candidates = (CMDBbs.objects
-				.filter(operational_status=True)
-				.filter(eksponert_for_bruker=False)
-				.distinct()
-		)
-		for bs in skjult_server_db_candidates:
-			if bs.ant_devices() > 0 or bs.ant_databaser() > 0:
-				skjult_server_db.append(bs)
-
-
-		virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
-		#print(virksomhet_uke)
-		# Alle plattformer knyttet til UKE som ikke er en underplattform (overordnet er None)
-		system_uten_bs = (System.objects
-				.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke)
-				.filter(driftsmodell_foreignkey__overordnet_plattform=None)
-				.filter(bs_system_referanse=None) # skal ikke ha kobling
-				.filter(systemtyper__er_infrastruktur=False)
-				.filter(ibruk=True)
-				.order_by('driftsmodell_foreignkey')
-				.distinct()
-		)
-
-		bs_utenfor_fip = (System.objects
-				.filter(~Q(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke))
-				.filter(~Q(bs_system_referanse=None)) # må ha kobling
-				.filter(systemtyper__er_infrastruktur=False)
-				.filter(ibruk=True)
-				.order_by('driftsmodell_foreignkey')
-				.distinct()
-		)
-
-
-		return render(request, 'cmdb_bs_sok.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'cmdbref': cmdbref,
-			'search_term': search_term,
-			'bs_uten_system': bs_uten_system,
-			'utfasede_bs': utfasede_bs,
-			'system_uten_bs': system_uten_bs,
-			'bs_utenfor_fip': bs_utenfor_fip,
-			'skjult_server_db': skjult_server_db,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_term = request.GET.get('search_term', "").strip()
+
+	if search_term == "__all__":
+		cmdbref = CMDBRef.objects.filter(parent_ref__eksponert_for_bruker=True)#, parent_ref__operational_status=True)
+	elif len(search_term) < 1: # if one or less, return nothing
+		cmdbref = CMDBRef.objects.none()
+	else:
+		cmdbref = CMDBRef.objects.filter(navn__icontains=search_term, parent_ref__navn__icontains=search_term)
+
+	cmdbref = cmdbref.order_by("-operational_status", "parent_ref__navn", Lower("navn"))
+
+	bs_uten_system = CMDBbs.objects.filter(operational_status=True).filter(Q(systemreferanse=None)).filter(eksponert_for_bruker=True)
+	utfasede_bs = CMDBbs.objects.filter(operational_status=False).filter(~Q(systemreferanse=None))
+
+	skjult_server_db = []
+	skjult_server_db_candidates = (CMDBbs.objects
+			.filter(operational_status=True)
+			.filter(eksponert_for_bruker=False)
+			.distinct()
+	)
+	for bs in skjult_server_db_candidates:
+		if bs.ant_devices() > 0 or bs.ant_databaser() > 0:
+			skjult_server_db.append(bs)
+
+	virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
+	#print(virksomhet_uke)
+	# Alle plattformer knyttet til UKE som ikke er en underplattform (overordnet er None)
+	system_uten_bs = (System.objects
+			.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke)
+			.filter(driftsmodell_foreignkey__overordnet_plattform=None)
+			.filter(bs_system_referanse=None) # skal ikke ha kobling
+			.filter(systemtyper__er_infrastruktur=False)
+			.filter(ibruk=True)
+			.order_by('driftsmodell_foreignkey')
+			.distinct()
+	)
+
+	bs_utenfor_fip = (System.objects
+			.filter(~Q(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke))
+			.filter(~Q(bs_system_referanse=None)) # må ha kobling
+			.filter(systemtyper__er_infrastruktur=False)
+			.filter(ibruk=True)
+			.order_by('driftsmodell_foreignkey')
+			.distinct()
+	)
+
+	return render(request, 'cmdb_bs_sok.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'cmdbref': cmdbref,
+		'search_term': search_term,
+		'bs_uten_system': bs_uten_system,
+		'utfasede_bs': utfasede_bs,
+		'system_uten_bs': system_uten_bs,
+		'bs_utenfor_fip': bs_utenfor_fip,
+		'skjult_server_db': skjult_server_db,
+	})
+
 
 
 def cmdb_bss(request, pk):
-	"""
-	Søke og vise maskiner og databaser tilknyttet en business service for et system
-	Tilgangsstyring: må kunne vise cmdb-referanser (bs)
-	"""
-	required_permissions = 'systemoversikt.view_cmdbref'
-	if request.user.has_perm(required_permissions):
-		cmdbref = CMDBRef.objects.get(pk=pk)
-		cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref).filter(device_active=True)
-		databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
-
-		vlan_lagt_til = []
-		def identifiser_vlan(network_ip_addresses):
-			if len(network_ip_addresses) > 0:
-				if len(network_ip_addresses[0].vlan.all()) > 0:
-					mest_presise_vlan = network_ip_addresses[0].vlan.all().order_by('-subnet_mask')[0]
-					nonlocal graf_data
-					nonlocal vlan_lagt_til
-
-					if mest_presise_vlan.comment not in vlan_lagt_til:
-						graf_data["nodes"].append({"data": { "id": mest_presise_vlan.comment }})
-						vlan_lagt_til.append(mest_presise_vlan.comment)
-					return mest_presise_vlan.comment
-			return "Ukjent VLAN"
-
-
-
-		graf_data = {"nodes": [], "edges": []}
-		for server in cmdbdevices:
-			graf_data["nodes"].append({"data": { "parent": identifiser_vlan(server.network_ip_address.all()), "id": "server"+str(server.pk), "name": server.comp_name, "shape": "ellipse", "color": "#1668c1" }})
-
-		for db in databaser:
-			#try:
-			dbserver = CMDBdevice.objects.get(comp_name=db.db_server)
-			network_ip_address = dbserver.network_ip_address.all()
-			#except:
-			#	network_ip_address = []
-			graf_data["nodes"].append({"data": { "parent": identifiser_vlan(network_ip_address), "id": "db"+str(db.pk), "name": db.db_database, "shape": "diamond", "color": "#d35215" }})
-
-		backup_inst = CMDBbackup.objects.filter(bss=cmdbref)
-
-		return render(request, 'cmdb_maskiner_detaljer.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'cmdbref': [cmdbref],
-			'cmdbdevices': cmdbdevices,
-			'databaser': databaser,
-			'graf_data': graf_data,
-			'backup_inst': backup_inst,
-		})
-	else:
+	#Søke og vise maskiner og databaser tilknyttet en business service for et system
+	required_permissions = ['systemoversikt.view_cmdbref']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	cmdbref = CMDBRef.objects.get(pk=pk)
+	cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref).filter(device_active=True)
+	databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
+
+	vlan_lagt_til = []
+	def identifiser_vlan(network_ip_addresses):
+		if len(network_ip_addresses) > 0:
+			if len(network_ip_addresses[0].vlan.all()) > 0:
+				mest_presise_vlan = network_ip_addresses[0].vlan.all().order_by('-subnet_mask')[0]
+				nonlocal graf_data
+				nonlocal vlan_lagt_til
+
+				if mest_presise_vlan.comment not in vlan_lagt_til:
+					graf_data["nodes"].append({"data": { "id": mest_presise_vlan.comment }})
+					vlan_lagt_til.append(mest_presise_vlan.comment)
+				return mest_presise_vlan.comment
+		return "Ukjent VLAN"
+
+	graf_data = {"nodes": [], "edges": []}
+	for server in cmdbdevices:
+		graf_data["nodes"].append({"data": { "parent": identifiser_vlan(server.network_ip_address.all()), "id": "server"+str(server.pk), "name": server.comp_name, "shape": "ellipse", "color": "#1668c1" }})
+
+	for db in databaser:
+		#try:
+		dbserver = CMDBdevice.objects.get(comp_name=db.db_server)
+		network_ip_address = dbserver.network_ip_address.all()
+		#except:
+		#	network_ip_address = []
+		graf_data["nodes"].append({"data": { "parent": identifiser_vlan(network_ip_address), "id": "db"+str(db.pk), "name": db.db_database, "shape": "diamond", "color": "#d35215" }})
+
+	backup_inst = CMDBbackup.objects.filter(bss=cmdbref)
+
+	return render(request, 'cmdb_maskiner_detaljer.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'cmdbref': [cmdbref],
+		'cmdbdevices': cmdbdevices,
+		'databaser': databaser,
+		'graf_data': graf_data,
+		'backup_inst': backup_inst,
+	})
+
 
 
 def alle_avtaler(request, virksomhet=None):
-	"""
-	Vise alle avtaler
-	"""
+	#Vise alle avtaler
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -5798,6 +5807,7 @@ def alle_avtaler(request, virksomhet=None):
 	if virksomhet:
 		virksomhet = Virksomhet.objects.get(pk=virksomhet)
 		avtaler = avtaler.filter(Q(virksomhet=virksomhet) | Q(leverandor_intern=virksomhet))
+
 	return render(request, 'avtale_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -5806,15 +5816,15 @@ def alle_avtaler(request, virksomhet=None):
 	})
 
 
+
 def avtaledetaljer(request, pk):
-	"""
-	Vise detaljer for en avtale
-	"""
+	#Vise detaljer for en avtale
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	avtale = Avtale.objects.get(pk=pk)
+
 	return render(request, 'avtale_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -5822,10 +5832,9 @@ def avtaledetaljer(request, pk):
 	})
 
 
+
 def databehandleravtaler_virksomhet(request, pk):
-	"""
-	Vise alle databehandleravtaler for en valgt virksomhet
-	"""
+	#Vise alle databehandleravtaler for en valgt virksomhet
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -5833,6 +5842,7 @@ def databehandleravtaler_virksomhet(request, pk):
 	virksomet = Virksomhet.objects.get(pk=pk)
 	utdypende_beskrivelse = ("Viser databehandleravtaler for %s" % virksomet)
 	avtaler = Avtale.objects.filter(virksomhet=pk).filter(avtaletype=1) # 1 er databehandleravtaler
+
 	return render(request, 'avtale_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -5841,15 +5851,15 @@ def databehandleravtaler_virksomhet(request, pk):
 	})
 
 
+
 def alle_dpia(request):
-	"""
-	Under utvikling: Vise alle DPIA-vurderinger
-	"""
+	#Under utvikling: Vise alle DPIA-vurderinger
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	alle_dpia = DPIA.objects.all()
+
 	return render(request, 'dpia_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -5857,15 +5867,15 @@ def alle_dpia(request):
 	})
 
 
+
 def detaljer_dpia(request, pk):
-	"""
-	Under utvikling: Vise metadata om en DPIA-vurdering
-	"""
+	#Under utvikling: Vise metadata om en DPIA-vurdering
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	dpia = DPIA.objects.get(pk=pk)
+
 	return render(request, 'detaljer_dpia.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -5873,417 +5883,83 @@ def detaljer_dpia(request, pk):
 	})
 
 
-# støttefunksjon for LDAP
-def decode_useraccountcontrol(code):
-	#https://support.microsoft.com/nb-no/help/305144/how-to-use-useraccountcontrol-to-manipulate-user-account-properties
-	active_codes = ""
-	status_codes = {
-			"SCRIPT": 0,
-			"ACCOUNTDISABLE": 1,
-			"LOCKOUT": 3,
-			"PASSWD_NOTREQD": 5,
-			"PASSWD_CANT_CHANGE": 6,
-			"NORMAL_ACCOUNT": 9,
-			"DONT_EXPIRE_PASSWORD": 16,
-			"SMARTCARD_REQUIRED": 18,
-			"PASSWORD_EXPIRED": 23,
-		}
-	for key in status_codes:
-		if int(code) >> status_codes[key] & 1:
-			active_codes += " " + key
-	return active_codes
-
-
-# støttefunksjon for LDAP
-def ldap_query(ldap_path, ldap_filter, ldap_properties, timeout):
-	import ldap, os
-	server = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
-	user = os.environ["KARTOTEKET_LDAPUSER"]
-	password = os.environ["KARTOTEKET_LDAPPASSWORD"]
-	ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)  # have to deactivate sertificate check
-	ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
-	ldapClient = ldap.initialize(server)
-	ldapClient.timeout = timeout
-	ldapClient.set_option(ldap.OPT_REFERRALS, 0)  # tells the server not to chase referrals
-	ldapClient.bind_s(user, password)  # synchronious
-
-	result = ldapClient.search_s(
-			ldap_path,
-			ldap.SCOPE_SUBTREE,
-			ldap_filter,
-			ldap_properties
-	)
-
-	ldapClient.unbind_s()
-	return result
-
-"""
-def ldap_get_user_details(username):
-	import re
-
-	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-	ldap_filter = ('(&(objectClass=user)(cn=%s))' % username)
-	ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass']
-
-	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
-	users = []
-	for cn,attrs in result:
-		if cn:
-			attrs_decoded = {}
-			for key in attrs:
-				attrs_decoded[key] = []
-				if key == "lastLogonTimestamp":
-					# always just one timestamp, hence item 0 hardcoded
-					ms_timestamp = int(attrs[key][0][:-1].decode())  # removing one trailing digit converting 100ns to microsec.
-					converted_date = datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ms_timestamp)
-					attrs_decoded[key].append(converted_date)
-				elif key == "userAccountControl":
-					accountControl = decode_useraccountcontrol(int(attrs[key][0].decode()))
-					attrs_decoded[key].append(accountControl)
-				elif key == "memberOf":
-					for element in attrs[key]:
-						e = element.decode()
-						regex_find_group = re.search(r'cn=([^\,]*)', e, re.I).groups()[0]
-
-						attrs_decoded[key].append({
-								"group": regex_find_group,
-								"cn": e,
-						})
-					continue  # skip the next for..
-				else:
-					for element in attrs[key]:
-						attrs_decoded[key].append(element.decode())
-
-			users.append({
-					"cn": cn,
-					"attrs": attrs_decoded,
-			})
-	return users
-"""
-
-"""
-def ldap_get_group_details(group):
-	import re
-
-	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-	ldap_filter = ('(&(cn=%s)(objectclass=group))' % group)
-	ldap_properties = ['description', 'cn', 'member', 'objectClass']
-
-	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
-
-	groups = []
-	for cn,attrs in result:
-		if cn:
-			attrs_decoded = {}
-			for key in attrs:
-				attrs_decoded[key] = []
-				if key == "member":
-					for element in attrs[key]:
-						e = element.decode()
-						regex_find_username = re.search(r'cn=([^\,]*)', e, re.I).groups()[0]
-
-						try:
-							user = User.objects.get(username__iexact=regex_find_username)
-						except:
-							user = None
-
-						attrs_decoded[key].append({
-								"username": regex_find_username,
-								"user": user,
-								"cn": e,
-						})
-					continue  # skip the next for..
-				for element in attrs[key]:
-					attrs_decoded[key].append(element.decode())
-
-			groups.append({
-					"cn": cn,
-					"attrs": attrs_decoded,
-			})
-	return groups
-"""
-
-# støttefunksjon for LDAP
-def ldap_get_recursive_group_members(group):
-	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-	ldap_filter = ('(&(objectCategory=person)(objectClass=user)(memberOf:1.2.840.113556.1.4.1941:=%s))' % group)
-	ldap_properties = ['cn', 'displayName', 'description']
-
-	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=100)
-	users = []
-
-	for cn,attrs in result:
-		if cn:
-			attrs_decoded = {}
-			for key in attrs:
-				attrs_decoded[key] = []
-				for element in attrs[key]:
-					attrs_decoded[key].append(element.decode())
-
-			users.append({
-					"cn": cn,
-					"attrs": attrs_decoded,
-			})
-
-	return users
-
-
-
-# støttefunksjon for LDAP
-
-def ldap_users_securitygroups(user):
-	ldap_filter = ('(cn=%s)' % user)
-	result = ldap_query(ldap_path="DC=oslofelles,DC=oslo,DC=kommune,DC=no", ldap_filter=ldap_filter, ldap_properties=[], timeout=5)
-	try:
-		memberof = result[0][1]['memberOf']
-		return([g.decode() for g in memberof])
-	except:
-		print("Finner ikke 'memberof' attributtet.")
-		#print("error ldap_users_securitygroups(): %s" %(result))
-		return []
-
-
-def convert_distinguishedname_cn(liste):
-	return [re.search(r'cn=([^\,]*)', g, re.I).groups()[0] for g in liste]
-
-
-def ldap_get_details(name, ldap_filter):
-	import re
-	import json
-
-	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-	ldap_properties = []
-
-	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
-
-	groups = []
-	users = []
-	computers = []
-
-	for cn,attrs in result:
-		if cn:
-
-			if b'computer' in attrs["objectClass"]:
-				attrs_decoded = {}
-				for key in attrs:
-					if key in ['description', 'cn', 'objectClass', 'operatingSystem', 'operatingSystemVersion', 'dNSHostName',]:
-						attrs_decoded[key] = []
-						for element in attrs[key]:
-							attrs_decoded[key].append(element.decode())
-					else:
-						continue
-
-				computers.append({
-						"cn": cn,
-						"attrs": attrs_decoded,
-				})
-
-				return ({
-						"computers": computers,
-						"raw": result,
-					})
-
-
-			if b'user' in attrs["objectClass"]:
-				import codecs
-				attrs_decoded = {}
-				for key in attrs:
-					if key in ['cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'whenCreated', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass', 'thumbnailPhoto']:
-						# if not, then we don't bother decoding the value for now
-						attrs_decoded[key] = []
-						if key == "lastLogonTimestamp":
-							# always just one timestamp, hence item 0 hardcoded
-							## TODO flere steder
-							ms_timestamp = int(attrs[key][0][:-1].decode())  # removing one trailing digit converting 100ns to microsec.
-							converted_date = datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ms_timestamp)
-							attrs_decoded[key].append(converted_date)
-						elif key == "whenCreated":
-							value = attrs[key][0].decode().split('.')[0]
-							converted_date = datetime.datetime.strptime(value, "%Y%m%d%H%M%S")
-							attrs_decoded[key].append(converted_date)
-						elif key == "userAccountControl":
-							accountControl = decode_useraccountcontrol(int(attrs[key][0].decode()))
-							attrs_decoded[key].append(accountControl)
-						elif key == "thumbnailPhoto":
-							attrs_decoded[key].append(codecs.encode(attrs[key][0], 'base64').decode('utf-8'))
-						elif key == "memberOf":
-							for element in attrs[key]:
-								e = element.decode()
-								regex_find_group = re.search(r'cn=([^\,]*)', e, re.I).groups()[0]
-
-								attrs_decoded[key].append({
-										"group": regex_find_group,
-										"cn": e,
-								})
-							continue  # skip the next for..
-						else:
-							for element in attrs[key]:
-								attrs_decoded[key].append(element.decode())
-					else:
-						continue
-
-				users.append({
-						"cn": cn,
-						"attrs": attrs_decoded,
-				})
-				return ({
-						"users": users,
-						"raw": result,
-					})
-
-
-			if b'group' in attrs["objectClass"]:
-				attrs_decoded = {}
-				for key in attrs:
-					if key in ['description', 'cn', 'member', 'objectClass', 'memberOf']:
-						attrs_decoded[key] = []
-						if key == "member":
-							for element in attrs[key]:
-								e = element.decode()
-								regex_find_username = re.search(r'cn=([^\,]*)', e, re.I).groups()[0]
-
-								try:
-									user = User.objects.get(username__iexact=regex_find_username)
-								except:
-									user = None
-
-								attrs_decoded[key].append({
-										"username": regex_find_username,
-										"user": user,
-										"cn": e,
-								})
-							continue  # skip the next for..
-						for element in attrs[key]:
-							attrs_decoded[key].append(element.decode())
-					else:
-						continue
-
-				groups.append({
-						"cn": cn,
-						"attrs": attrs_decoded,
-				})
-				return ({
-						"groups": groups,
-						"raw": result,
-					})
-	return None
-
-"""
-def ldap_exact(name):
-	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-	ldap_filter = ('(distinguishedName=%s)' % name)
-	ldap_properties = []
-
-	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=100)
-	prepare = []
-
-	for cn,attrs in result:
-		if cn:
-			attrs_decoded = {}
-			for key in attrs:
-				attrs_decoded[key] = []
-				for element in attrs[key]:
-					try:
-						attrs_decoded[key].append(element.decode())
-					except:
-						attrs_decoded[key].append(element)
-
-			prepare.append({
-					"cn": cn,
-					"attrs": attrs_decoded,
-			})
-
-	return {"raw": prepare}
-"""
-
 
 def ad(request):
-	"""
-	Startside for LDAP/AD-spørringer
-	"""
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-
-		return render(request, 'ad_index.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		})
-	else:
+	#Startside for LDAP/AD-spørringer
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	return render(request, 'ad_index.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+	})
+
 
 
 def ad_details(request, name):
-	"""
-	Søke opp en eksakt CN i AD
-	Tilgangsstyring: Må kunne vise informasjon om brukere
-	"""
-	import time
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		runtime_t0 = time.time()
-		ldap_filter = ('(cn=%s)' % name)
-		result = ldap_get_details(name, ldap_filter)
-		runtime_t1 = time.time()
-		logg_total_runtime = runtime_t1 - runtime_t0
-		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
-
-		return render(request, 'ad_details.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'result': result,
-		})
-	else:
+	#Søke opp en eksakt CN i AD
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	runtime_t0 = time.time()
+	ldap_filter = ('(cn=%s)' % name)
+	result = ldap_get_details(name, ldap_filter)
+	runtime_t1 = time.time()
+	logg_total_runtime = runtime_t1 - runtime_t0
+	messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
+
+	return render(request, 'ad_details.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'result': result,
+	})
+
 
 
 def ad_exact(request, name):
-	"""
-	Søke opp et eksakt DN i AD
-	Tilgangsstyring: Må kunne vise informasjon om brukere
-	"""
-	import time
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		runtime_t0 = time.time()
-		ldap_filter = ('(distinguishedName=%s)' % name)
-		result = ldap_get_details(name, ldap_filter)
-		runtime_t1 = time.time()
-		logg_total_runtime = runtime_t1 - runtime_t0
-		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
-
-		return render(request, 'ad_details.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'result': result,
-		})
-	else:
+	#Søke opp et eksakt DN i AD
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	runtime_t0 = time.time()
+	ldap_filter = ('(distinguishedName=%s)' % name)
+	result = ldap_get_details(name, ldap_filter)
+	runtime_t1 = time.time()
+	logg_total_runtime = runtime_t1 - runtime_t0
+	messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
+
+	return render(request, 'ad_details.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'result': result,
+	})
+
 
 
 def recursive_group_members(request, group):
-	"""
-	Søke opp alle brukere rekursivt med tilgang til et DN i AD
-	Tilgangsstyring: Må kunne vise informasjon om brukere
-	"""
-	import time
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		runtime_t0 = time.time()
-		result = ldap_get_recursive_group_members(group)
-		runtime_t1 = time.time()
-		logg_total_runtime = runtime_t1 - runtime_t0
-		messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
-
-		return render(request, 'ad_recursive.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'result': result,
-		})
-	else:
+	#Søke opp alle brukere rekursivt med tilgang til et DN i AD
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	runtime_t0 = time.time()
+	result = ldap_get_recursive_group_members(group)
+	runtime_t1 = time.time()
+	logg_total_runtime = runtime_t1 - runtime_t0
+	messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
 
-def tilgangsgrupper_api(request):
+	return render(request, 'ad_recursive.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'result': result,
+	})
+
+
+
+def tilgangsgrupper_api(request): #API
 	if not request.method == "GET":
 		raise Http404
 
@@ -6361,14 +6037,12 @@ def tilgangsgrupper_api(request):
 	data['medlemmer'] = medlemmer
 	data['memberof'] = memberof
 
-
 	resultat = {"spørring": sporring, "data": data}
 	return JsonResponse(resultat, safe=False, status=200)
 
 
 
-
-def systemer_api(request):
+def systemer_api(request): #API
 
 	if not request.method == "GET":
 		raise Http404
@@ -6412,7 +6086,7 @@ def systemer_api(request):
 
 
 
-def system_excel_api(request, virksomhet_pk=None):
+def system_excel_api(request, virksomhet_pk=None): #API
 
 	if not request.method == "GET":
 		raise Http404
@@ -6422,12 +6096,10 @@ def system_excel_api(request, virksomhet_pk=None):
 
 	virksomhet = Virksomhet.objects.get(pk=virksomhet_pk)
 
-
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="virksomhet_").values_list("key", flat=True)
 	if not key in list(allowed_keys):
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
-
 
 	relevante_systemer = []
 
@@ -6442,7 +6114,6 @@ def system_excel_api(request, virksomhet_pk=None):
 		if system not in relevante_systemer:
 			system.__midlertidig_type = "Kun bruk"
 			relevante_systemer.append(system)
-
 
 	data = []
 	for system in relevante_systemer:
@@ -6468,7 +6139,8 @@ def system_excel_api(request, virksomhet_pk=None):
 	return JsonResponse(resultat, safe=False)
 
 
-def iga_api(request):
+
+def iga_api(request): #API
 	if not request.method == "GET":
 		raise Http404
 
@@ -6496,7 +6168,8 @@ def iga_api(request):
 	return JsonResponse(data, safe=False)
 
 
-def get_api_tilganger(request):
+
+def get_api_tilganger(request): #API
 	if not request.method == "GET":
 		raise Http404
 
@@ -6512,7 +6185,6 @@ def get_api_tilganger(request):
 	except:
 		return JsonResponse({"error": "No match for email address or no email address given. Please supply GET variable 'email' (?email=<>)."}, safe=False, content_type='application/json; charset=utf-8')
 
-
 	for system in user.ansvarlig_brukernavn.system_systemeier_kontaktpersoner.all():
 		if hasattr(system, "bs_system_referanse"):
 			business_services.add(system.bs_system_referanse.navn)
@@ -6522,12 +6194,11 @@ def get_api_tilganger(request):
 			business_services.add(system.bs_system_referanse.navn)
 
 	result = {"email": email, "username": user.username, "business_services": list(business_services)}
-
 	return JsonResponse(result, safe=False)
 
 
 
-def csirt_maskinlookup_api(request):
+def csirt_maskinlookup_api(request): #API
 	#ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Innkommende kall")
 	if not request.method == "GET":
 		#ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Feil: HTTP metode var ikke GET")
@@ -6602,15 +6273,12 @@ def csirt_maskinlookup_api(request):
 		}
 	}
 
-
 	ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Vellykket kall mot {maskin_string}")
 	return JsonResponse(data, safe=False)
 
 
 
-
 def csirt_iplookup_api(request):
-
 	#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Innkommende kall")
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil: HTTP metode var ikke GET")
@@ -6625,7 +6293,6 @@ def csirt_iplookup_api(request):
 	from django.core.exceptions import ObjectDoesNotExist
 	import ipaddress
 
-
 	ip_string = request.GET.get('ip', '').strip()
 	port_string = request.GET.get('port', '').strip()
 	if ip_string == '':
@@ -6637,12 +6304,10 @@ def csirt_iplookup_api(request):
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på ugyldig IP-adresse {ip_string}")
 		return JsonResponse({"error": "Ikke en gyldig IP-adresse"}, safe=False)
 
-
 	try:
 		dns_match = [inst.dns_name for inst in DNSrecord.objects.filter(ip_address=ip_string).all()]
 	except:
 		dns_match = None
-
 
 	try:
 		ip_match = NetworkIPAddress.objects.get(ip_address=ip_string)
@@ -6662,7 +6327,6 @@ def csirt_iplookup_api(request):
 					domaint_vlan = local_ip.dominant_vlan()
 					host_vlan = "%s (%s/%s)" % (domaint_vlan.comment, domaint_vlan.ip_address, domaint_vlan.subnet_mask)
 
-					from django.utils import timezone
 					pool.server.eksternt_eksponert_dato = timezone.now()
 					pool.server.save()
 
@@ -6674,6 +6338,7 @@ def csirt_iplookup_api(request):
 					"bss": pool.server.sub_name.navn,
 				})
 		vip_pool_members = members
+
 	except ObjectDoesNotExist:
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på {ip_string}")
 		return JsonResponse({"error": "Ingen treff på IP-adresse"}, safe=False)
@@ -6692,19 +6357,8 @@ def csirt_iplookup_api(request):
 	return JsonResponse(data, safe=False)
 
 
-def get_client_ip(request):
-	try:
-		x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-		if x_forwarded_for:
-			ip = x_forwarded_for.split(',')[0]
-		else:
-			ip = request.META.get('REMOTE_ADDR')
-		return ip
-	except:
-		return "get_client_ip() feilet"
 
-
-def behandlingsoversikt_api(request):
+def behandlingsoversikt_api(request): #API
 	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Innkommende kall")
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Feil: HTTP metode var ikke GET")
@@ -6736,7 +6390,7 @@ def behandlingsoversikt_api(request):
 
 
 
-def csirt_api(request):
+def csirt_api(request): #API
 	if not request.method == "GET":
 		raise Http404
 
@@ -6764,9 +6418,8 @@ def csirt_api(request):
 
 
 
-def cmdb_api(request):
+def cmdb_api(request): #API
 	# brukes for å samle inn faktureringsgrunnlag (koble servere til systemeier)
-
 	if not request.method == "GET":
 		raise Http404
 
@@ -6807,7 +6460,6 @@ def cmdb_api(request):
 		else:
 			return("error")
 
-
 		line["antall_servere"] = bss.ant_devices()
 
 		serverliste = []
@@ -6830,9 +6482,7 @@ def cmdb_api(request):
 			serverliste.append(s)
 
 		line["servere"] = serverliste
-
 		line["antall_databaser"] = bss.ant_databaser()
-
 		databaseliste = []
 		for database in bss.cmdbdatabase_sub_name.filter(db_operational_status=True):
 			s = dict()
@@ -6846,17 +6496,15 @@ def cmdb_api(request):
 			databaseliste.append(s)
 
 		line["databaser"] = databaseliste
-
-
 		data.append(line)
-
 		resultat = {"antall bss": len(query), "data": data}
+
 	return JsonResponse(resultat, safe=False)
 
 
-def cmdb_api_kompass(request):
-	# brukes for å oppdatere Kompass med informasjon om drift (bss, systemer, maskiner osv.)
 
+def cmdb_api_kompass(request): #API
+	# brukes for å oppdatere Kompass med informasjon om drift (bss, systemer, maskiner osv.)
 	if not request.method == "GET":
 		raise Http404
 
@@ -6895,7 +6543,6 @@ def cmdb_api_kompass(request):
 			bss_liste.append(b)
 
 		line["Business_subservices"] = bss_liste
-
 		data.append(line)
 
 	resultat = {"antall business services": len(query), "data": data}
@@ -6907,7 +6554,6 @@ def cmdb_firewall(request):
 	required_permissions = ['systemoversikt.view_brannmurregel']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
 
 	def firewall_loopup(term):
 		return Brannmurregel.objects.filter(
@@ -6936,14 +6582,12 @@ def cmdb_firewall(request):
 
 
 
+#############
+# UBW-modul #
+#############
 
-### UBW
-
-"""
-Det viktigste med tilgangsstyringen her er integritet, slik at en eier av en enhet kan være sikker på at ingen andre har importert/endret på sine data.
-"""
-
-def kvartal(date):
+# Det viktigste med tilgangsstyringen her er integritet, slik at en eier av en enhet kan være sikker på at ingen andre har importert/endret på sine data.
+def kvartal(date): # støttefunksjon
 	try:
 		kvartal = (date.month - 1) // 3 + 1 # // is floor division
 		if kvartal in [1, 2, 3, 4]:
@@ -6952,9 +6596,10 @@ def kvartal(date):
 		return "error"
 
 
-def ubw_endreenhet(request, belongs_to):
-	from django.http import HttpResponseRedirect
 
+def ubw_endreenhet(request, belongs_to):
+	required_permissions = None
+	from django.http import HttpResponseRedirect
 	enhet = UBWRapporteringsenhet.objects.get(pk=belongs_to)
 	if request.method == 'POST':
 		form = UBWEnhetForm(data=request.POST, instance=enhet)
@@ -6969,14 +6614,16 @@ def ubw_endreenhet(request, belongs_to):
 		form = UBWEnhetForm(instance=enhet)
 
 	return render(request, 'ubw_ekstra.html', {
+			'request': request,
+			'required_permissions': required_permissions,
 			'form': form,
 			'enhet': enhet,
 	})
 
 
+
 def ubw_multiselect(request):
 	from django.http import HttpResponseNotFound
-
 	valgte = request.POST.getlist('selected_items', None)
 	valgte_fakturaer = UBWFaktura.objects.filter(pk__in=[int(v) for v in valgte])
 
@@ -6991,6 +6638,8 @@ def ubw_multiselect(request):
 		enhet = faktura.belongs_to
 
 	# sjekker at bruker har tilgang til enheten for å gjøre endringer
+	if enhet == None:
+		return HttpResponseNotFound("Du må velge minst én post")
 	if not request.user in enhet.users.all():
 		return HttpResponseNotFound("Du må eie fakturaene for å kunne legge til metadata")
 
@@ -7032,7 +6681,8 @@ def ubw_multiselect(request):
 	})
 
 
-def ubw_api(request, pk):
+
+def ubw_api(request, pk): #API
 	supplied_key = request.headers.get("key", None)
 	unit_key = UBWRapporteringsenhet.objects.get(pk=pk).api_key
 
@@ -7041,9 +6691,7 @@ def ubw_api(request, pk):
 
 	import calendar
 	enhet = UBWRapporteringsenhet.objects.get(pk=pk)
-
 	faktura_eksport = []
-
 	fakturaer = UBWFaktura.objects.filter(belongs_to=enhet).order_by('-ubw_voucher_date')
 	for faktura in fakturaer:
 		eksportdata = {}
@@ -7137,13 +6785,10 @@ def ubw_api(request, pk):
 		except:
 			eksportdata["UBW kategori Teskt"] = ""
 
-
 		# ta vare på dette.
 		faktura_eksport.append(eksportdata)
 
-
 	# resten her handler om estimater. Vi trenger først noen tabeller å slå opp i der data faktisk ikke er registret på estimatet.
-
 	# for å kunne fylle ut UBW Kontonavn
 	ubw_kontonavn_oppslag = list(UBWFaktura.objects.filter(belongs_to=enhet).values_list('ubw_account', 'ubw_xaccount').distinct())
 	#print(ubw_kontonavn_oppslag)
@@ -7160,14 +6805,12 @@ def ubw_api(request, pk):
 	ubw_kategorinavn_oppslag = list(UBWFaktura.objects.filter(belongs_to=enhet).values_list('ubw_kategori', 'ubw_kategori_text').distinct())
 	#print(ubw_kategorinavn_oppslag)
 
-
 	def oppslag(verdi, oppslagsliste):
 		for item in oppslagsliste:
 			if item[0] == verdi:
 				#print(item[1])
 				return item[1]
 		return "ukjent"
-
 
 	estimat = UBWEstimat.objects.filter(belongs_to=enhet).filter(aktiv=True).order_by('-periode_paalopt')
 	for e in estimat:
@@ -7255,19 +6898,20 @@ def ubw_api(request, pk):
 	return JsonResponse(faktura_eksport, safe=False)
 
 
+
 def ubw_home(request):
 	enheter = UBWRapporteringsenhet.objects.all()
 
 	return render(request, 'ubw_home.html', {
-				'enheter': enheter,
-			})
+		'enheter': enheter,
+	})
+
+
 
 def ubw_enhet(request, pk):
 	import csv
-	import datetime
 	from decimal import Decimal
 	enhet = UBWRapporteringsenhet.objects.get(pk=pk)
-
 	kategorier = UBWFakturaKategori.objects.filter(belongs_to=enhet)
 
 	def try_int(string):
@@ -7362,7 +7006,6 @@ def ubw_enhet(request, pk):
 			#		line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
 			#		line["amount"] = Decimal((line["amount"].replace(",",".")))
 
-
 			if ".xlsx" in file.name:
 				print("Excel-import påstartet")
 				dfRaw = pd.read_excel(io=file.read(), sheet_name=1)
@@ -7394,7 +7037,6 @@ def ubw_enhet(request, pk):
 		nye_fakturaer = gyldige_fakturaer.filter(metadata_reference=None).order_by('-ubw_voucher_date')
 		behandlede_fakturaer = gyldige_fakturaer.filter(~Q(metadata_reference=None)).order_by('-ubw_voucher_date')
 
-
 		model = UBWFaktura
 		domain = ("%s://%s") % (settings.SITE_SCHEME, settings.SITE_DOMAIN)
 
@@ -7412,6 +7054,7 @@ def ubw_enhet(request, pk):
 		messages.warning(request, 'Du har ikke tilgang på denne UBW-modulen. Logget inn?')
 		return HttpResponseRedirect(reverse('home'))
 
+
 """
 def check_belongs_to(user, enhet_id):
 	try:
@@ -7423,14 +7066,14 @@ def check_belongs_to(user, enhet_id):
 	return False
 """
 
-def ubw_generer_ekstra_valg(belongs_to):
-	data = []
 
+def ubw_generer_ekstra_valg(belongs_to): # støttefunksjon
+	data = []
 	# trenger kategorien to ganger da den ene er verdi og den andre er visning. Like i dette tilfellet.
 	leverandor_kategorier = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_xapar_id', 'ubw_xapar_id').distinct())
 	data.append({'field': 'leverandor', 'choices': leverandor_kategorier})
-
 	return data
+
 
 
 def ubw_ekstra(request, faktura_id, pk=None):
@@ -7466,18 +7109,18 @@ def ubw_ekstra(request, faktura_id, pk=None):
 				instance.save()
 				return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
 
-
 		return render(request, 'ubw_ekstra.html', {
-				'form': form,
-				'faktura': faktura,
-				'enhet': enhet,
-				'ekstra': True,
-				'kategorier': kategorier,
+			'form': form,
+			'faktura': faktura,
+			'enhet': enhet,
+			'ekstra': True,
+			'kategorier': kategorier,
 		})
+
+
 
 def ubw_kategori(request, belongs_to):
 	from django.http import HttpResponseRedirect
-
 	enhet = UBWRapporteringsenhet.objects.get(pk=belongs_to)
 	kategorier = UBWFakturaKategori.objects.filter(belongs_to=enhet)
 	if request.method == 'POST':
@@ -7492,12 +7135,12 @@ def ubw_kategori(request, belongs_to):
 		form = UBWFakturaKategoriForm()
 
 	return render(request, 'ubw_ekstra.html', {
-			'form': form,
-			'enhet': enhet,
-			'kategori': True,
-			'kategorier': kategorier,
-
+		'form': form,
+		'enhet': enhet,
+		'kategori': True,
+		'kategorier': kategorier,
 	})
+
 
 
 def ubw_my_estimates(request, enhet):
@@ -7505,6 +7148,7 @@ def ubw_my_estimates(request, enhet):
 		return UBWEstimat.objects.filter(belongs_to=enhet).order_by('-periode_paalopt')
 	else:
 		return UBWEstimat.objects.none()
+
 
 
 def ubw_estimat_list(request, belongs_to):
@@ -7518,6 +7162,7 @@ def ubw_estimat_list(request, belongs_to):
 		'enhet': enhet,
 		'kategorier': kategorier,
 	})
+
 
 
 def save_ubw_estimat_form(request, belongs_to, form, template_name):
@@ -7542,6 +7187,7 @@ def save_ubw_estimat_form(request, belongs_to, form, template_name):
 	context = {'form': form, 'belongs_to': belongs_to,}
 	data['html_form'] = render_to_string(template_name, context, request=request)
 	return JsonResponse(data)
+
 
 
 def ubw_generer_estimat_valg(belongs_to):
@@ -7569,8 +7215,9 @@ def ubw_generer_estimat_valg(belongs_to):
 	prognose_ubwkategori = list(UBWFaktura.objects.filter(belongs_to=belongs_to).values_list('ubw_kategori', 'ubw_kategori_text').distinct())
 	data.append({'field': 'ubw_kategori', 'choices': prognose_ubwkategori})
 
-
 	return data
+
+
 
 def ubw_estimat_create(request, belongs_to):
 	if request.method == 'POST':
@@ -7582,6 +7229,7 @@ def ubw_estimat_create(request, belongs_to):
 	else:
 		form = UBWEstimatForm(data_list=ubw_generer_estimat_valg(belongs_to), belongs_to=belongs_to)
 	return save_ubw_estimat_form(request, belongs_to, form, 'ubw_estimat_partial_create.html')
+
 
 
 def ubw_estimat_update(request, belongs_to, pk):
@@ -7602,7 +7250,8 @@ def ubw_estimat_update(request, belongs_to, pk):
 	return save_ubw_estimat_form(request, belongs_to, form, 'ubw_estimat_partial_update.html')
 
 
-def ubw_estimat_delete(request, pk):
+
+def ubw_estimat_delete(request, pk): #API
 	estimat = get_object_or_404(UBWEstimat, pk=pk)
 	data = dict()
 	if request.method == 'POST':
@@ -7623,7 +7272,8 @@ def ubw_estimat_delete(request, pk):
 	return JsonResponse(data)
 
 
-def ubw_estimat_copy(request, pk):
+
+def ubw_estimat_copy(request, pk): #API
 	estimat = get_object_or_404(UBWEstimat, pk=pk)
 	data = dict()
 	if request.method == 'POST':
@@ -7645,84 +7295,6 @@ def ubw_estimat_copy(request, pk):
 		data['html_form'] = render_to_string('ubw_estimat_partial_copy.html', context, request=request)
 	return JsonResponse(data)
 
-
-### UBW end
-
-
-def prk_api(filename):
-	path = "/var/kartoteket/source/systemoversikt/import/" + filename
-	with open(path, 'rt', encoding='utf-8') as file:
-		response = HttpResponse(file, content_type='text/csv; charset=utf-8')
-		response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
-
-
-def prk_api_usr(request):
-	if request.method == "GET":
-
-		key = request.headers.get("key", None)
-		if key == None:
-			key = request.GET.get("key", None)
-
-		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
-		if key in list(allowed_keys):
-			owner = APIKeys.objects.get(key=key).navn
-			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
-			return prk_api("usr.csv")
-
-		else:
-			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
-
-
-def prk_api_grp(request):
-	if request.method == "GET":
-
-		key = request.headers.get("key", None)
-		if key == None:
-			key = request.GET.get("key", None)
-
-		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
-		if key in list(allowed_keys):
-			from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-			try:
-				owner = APIKeys.objects.get(key=key).navn
-			except MultipleObjectsReturned:
-				owner = "Flere treff på nøkkeleier"
-
-			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
-			return prk_api("grp.csv")
-
-		else:
-			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
-
-def azure_applications(request):
-	"""
-	Vise liste over alle Azure enterprise applications med rettigheter de har fått tildelt
-	Tilgangsstyring: Samme som for å se CMDB-data
-	"""
-	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	applikasjoner = AzureApplication.objects.filter(active=True).order_by('-createdDateTime')
-	return render(request, 'cmdb_azure_applications.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'applikasjoner': applikasjoner,
-	})
-
-def azure_application_keys(request):
-	"""
-	Vise liste over alle Azure enterprise application keys etter utløpsdato
-	Tilgangsstyring: Samme som for å se CMDB-data
-	"""
-	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	keys = AzureApplicationKeys.objects.order_by('end_date_time')
-	return render(request, 'cmdb_azure_application_keys.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'keys': keys,
-	})
+###########
+# UBW end #
+###########
