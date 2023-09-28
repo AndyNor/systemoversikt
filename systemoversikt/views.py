@@ -31,34 +31,9 @@ FELLES_OG_SEKTORSYSTEMER = ("FELLESSYSTEM", "SEKTORSYSTEM")
 SYSTEMTYPE_PROGRAMMER = "Selvstendig klientapplikasjon"
 
 
-
-def debug_info(request):
-	"""
-	Denne funksjonen viser debug-informasjon ifm. feilsøking av bibliotek og moduler
-	Tilgjengelig for personer som kan se logger
-	"""
-	required_permissions = ['auth.view_logentry']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		import sqlite3
-		sqlite_info = "SQLite: %s %s" % (sqlite3.version, sqlite3.__path__)
-
-		import sys
-		python_info = "Python: %s %s" % (sys.version, sys.executable)
-
-		import django
-		django_info = "Django: %s %s" % (django.VERSION, django.__path__)
-
-		return render(request, 'system_debug_info.html', {
-			'sqlite_info': sqlite_info,
-			'python_info': python_info,
-			'django_info': django_info,
-
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-
+"""
+Støttefunksjoner start
+"""
 def get_ipaddr_instance(address):
 
 	if address == "" or address == None or address == "0.0.0.0":
@@ -72,11 +47,6 @@ def get_ipaddr_instance(address):
 		n.save()
 		return n
 
-
-
-"""
-Støttefunksjoner start
-"""
 def virksomhet_til_bruker(request):
 	"""
 	Slå opp brukers virksomhet
@@ -121,6 +91,7 @@ def csrf403(request):
 	#Støttefunksjon for å vise feilmelding
 	return render(request, 'csrf403.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 	})
 """
 
@@ -132,10 +103,29 @@ def login(request):
 		return redirect(reverse('oidc_authentication_init'))
 	else:
 		return redirect("/admin/")
+
+def unique_splitted_items(text):
+	text = text.strip() # leading and trailing spaces
+	filtered = text.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ').replace(':',' ').replace('|',' ').lower()
+	splitted = filtered.split()
+	unike = set(splitted)
+	return unike
+
+
+def formater_permissions(permissions):
+	return [tag.replace(".", ": ").replace("_", " ") for tag in permissions]
+
+
+
 """
 Støttefunksjoner slutt
 """
 
+
+
+"""
+Ordinære views
+"""
 
 def mal(request):
 	required_permissions = ['systemoversikt.XYZ']
@@ -143,14 +133,43 @@ def mal(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	return render(request, 'mal.html', {
-		"request": request,
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 	})
 
 
+
+def debug_info(request):
+	"""
+	Denne funksjonen viser debug-informasjon ifm. feilsøking av bibliotek og moduler
+	Tilgjengelig for personer som kan se logger
+	"""
+	required_permissions = ['auth.view_logentry']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	import sqlite3
+	sqlite_info = "SQLite: %s %s" % (sqlite3.version, sqlite3.__path__)
+
+	import sys
+	python_info = "Python: %s %s" % (sys.version, sys.executable)
+
+	import django
+	django_info = "Django: %s %s" % (django.VERSION, django.__path__)
+
+	return render(request, 'system_debug_info.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'sqlite_info': sqlite_info,
+		'python_info': python_info,
+		'django_info': django_info,
+
+	})
+
+
+
 def tool_word_count(request):
-
 	import collections
-
 	inndata = request.POST.get('inndata', '')
 	filtered = inndata.replace(',',' ').replace(';',' ').replace(':',' ').replace('|',' ').replace('.','').lower()
 	words = filtered.split()
@@ -162,14 +181,16 @@ def tool_word_count(request):
 	alle_ord = [{"ord": word, "frekvens": frequency} for word, frequency in dict(counter).items()]
 
 	return render(request, 'tool_word_count.html', {
-		"request": request,
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"alle_ord": alle_ord,
 		"inndata": inndata,
 	})
 
 
-def tool_docx2html(request):
 
+def tool_docx2html(request):
+	required_permissions = None
 	html = None
 	messages = None
 	if request.method == "POST":
@@ -195,18 +216,12 @@ def tool_docx2html(request):
 		# ellers så var det "preview" in request.POST. Da returnerer vi HTML direkte
 
 	return render(request, 'tool_docx2html.html', {
-		"request": request,
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"html": html,
 		"messages": messages,
 	})
 
-
-def unique_splitted_items(text):
-	text = text.strip() # leading and trailing spaces
-	filtered = text.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ').replace(':',' ').replace('|',' ').lower()
-	splitted = filtered.split()
-	unike = set(splitted)
-	return unike
 
 
 def tool_compare_items(request):
@@ -226,7 +241,8 @@ def tool_compare_items(request):
 	a_og_b = boks_a.union(boks_b)
 
 	return render(request, 'tool_compare_items.html', {
-		"request": request,
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"boks_a_raw": boks_a_raw,
 		"boks_b_raw": boks_b_raw,
 		"bare_i_a": bare_i_a,
@@ -234,6 +250,7 @@ def tool_compare_items(request):
 		"begge_a_og_b": begge_a_og_b,
 		"a_og_b": a_og_b,
 	})
+
 
 
 def tool_unique_items(request):
@@ -247,23 +264,22 @@ def tool_unique_items(request):
 	unike = sorted(set(splitted))
 
 	return render(request, 'tool_unique_items.html', {
-		"request": request,
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"result": unike,
 		"query": raw,
 	})
 
 
-# def tool_email_addresses
 # def tool_longest_substring
 # def tool_item_count
-# def tool_different_items
+
 
 
 def cmdb_adcs_index(request):
 	required_permissions = ['systemoversikt.change_azureapplication']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
 
 	from os import path, listdir
 	from os.path import isfile, join
@@ -272,7 +288,6 @@ def cmdb_adcs_index(request):
 
 	path = path.dirname(path.abspath(__file__)) + "/pki/"
 	limit = 60
-
 	summary = []
 
 	selected_file_str = request.GET.get("file", None)
@@ -290,8 +305,6 @@ def cmdb_adcs_index(request):
 						"validity_period": v["Validity Period"],
 						"vulnerabilities": v["[!] Vulnerabilities"]
 					})
-
-
 		else:
 			raise Http404
 	else:
@@ -312,12 +325,12 @@ def cmdb_adcs_index(request):
 			})
 
 	return render(request, 'cmdb_adcs_index.html', {
-		"request": request,
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"filelist": filelist_readable,
 		"selected_file": json.dumps(selected_file, indent=4),
 		"summary": summary,
 	})
-
 
 
 
@@ -348,33 +361,25 @@ def cmdb_per_virksomhet(request):
 
 	messages.warning(request, message)
 
-
-
 	return render(request, 'cmdb_per_virksomhet.html', {
-		"request": request,
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"template_data": template_data,
 		"resterende_bs": bs_alle,
 	})
 
 
-
 def o365_avvik(request):
-	"""
-	Viser alle avvik per virksomhet (cisco, bigip..)
-	Tilgjengelig for de som kan lese cmdb-data
-	"""
+	#Viser alle avvik per virksomhet (cisco, bigip..)
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
 
 	from systemoversikt.views import ldap_users_securitygroups
 	# 1 flytte konfigurasjon til database
 	# 2 flytte logikk som sjekker antall til batch job, sjekke hver dag
 	# 3 vise antall nå + historikk her
 
-
-	#logikk
 	innhentingsbehov = [
 		{
 			"kategori": "Administrert enhet",
@@ -450,17 +455,15 @@ def o365_avvik(request):
 	def konkrete_brukere(grupper):
 		gruppeemdlemmer = set()
 		for gruppe in grupper:
-			#try:
-			gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
-			brukere = json.loads(gruppe.member)
-			for bruker in brukere:
-				gruppeemdlemmer.add(bruker.split(',')[0].split('CN=')[1])
-			#except:
-			#	print("fant ikke gruppen %s" % gruppe)
-			#	pass
+			try:
+				gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
+				brukere = json.loads(gruppe.member)
+				for bruker in brukere:
+					gruppeemdlemmer.add(bruker.split(',')[0].split('CN=')[1])
+			except:
+				messages.error(request, f"fant ikke gruppen {gruppe}")
+				pass
 		return gruppeemdlemmer
-
-
 
 	def hent_statistikk(i):
 		antall = 0
@@ -470,23 +473,18 @@ def o365_avvik(request):
 					gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
 					antall += gruppe.membercount
 				except:
-					print("fant ikke gruppen %s" % gruppe)
+					messages.error(request, f"fant ikke gruppen {gruppe}")
 					pass
 		else: # Det er 1 eller flere grupper som skal AND-es sammen. Vi må derfor lese ut faktiske identer.
 			gruppeemdlemmer = konkrete_brukere(i["grupper"])
 			AND_gruppemedlemmer = konkrete_brukere(i["AND_grupper"])
-			#print(list(gruppeemdlemmer))
-			#print(list(AND_gruppemedlemmer))
-			medlemmer_union = gruppeemdlemmer.intersection(AND_gruppemedlemmer)
+			medlemmer_snitt = gruppeemdlemmer.intersection(AND_gruppemedlemmer)
 
-			antall = len(medlemmer_union)
-			#print(antall)
-			i["konkrete_medlemmer"] = list(medlemmer_union)
-
+			antall = len(medlemmer_snitt)
+			i["konkrete_medlemmer"] = list(medlemmer_snitt)
 
 		i["medlemmer"] = antall
 		return i
-
 
 	statistikk = []
 	for i in innhentingsbehov:
@@ -495,8 +493,9 @@ def o365_avvik(request):
 	alle_virskomhet = Virksomhet.objects.filter(ordinar_virksomhet=True)
 
 	return render(request, 'rapport_sikkerhetsavvik.html', {
-		'statistikk': statistikk,
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'statistikk': statistikk,
 		'virksomheter': alle_virskomhet,
 	})
 
@@ -505,8 +504,10 @@ def o365_avvik(request):
 
 
 def rapport_startside(request):
+	required_permissions = None
 	return render(request, 'rapport_startside.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 	})
 
 
@@ -532,6 +533,7 @@ def isk_ansvarlig_for_system(request):
 
 	return render(request, 'rapport_systemer_per_isk.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'aktuelle_systemer': aktuelle_systemer,
 	})
 
@@ -550,6 +552,7 @@ def o365_lisenser(request):
 
 	return render(request, 'rapport_o365_lisenser.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'data': data,
 		'virksomheter': virksomheter,
 	})
@@ -571,6 +574,7 @@ def system_kritisk_funksjon(request):
 
 	return render(request, 'system_kritisk_funksjon.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'kritiske_funksjoner': kritiske_funksjoner,
 		'systemer': systemer,
 		'kritiske_kapabiliteter': kritiske_kapabiliteter,
@@ -590,6 +594,7 @@ def system_informasjonsbehandling(request):
 
 	return render(request, 'system_los_oversikt.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'los_hovedtema': los_hovedtema,
 	})
 
@@ -598,7 +603,7 @@ def system_los_struktur(request, pk=None):
 	"""
 	Vise alle LOS-begreper grafisk
 	"""
-
+	required_permissions = None
 	los_graf = {"nodes": [], "edges": []}
 
 	nodes = LOS.objects.filter(active=True).filter(~Q(kategori_ref=None))
@@ -638,6 +643,7 @@ def system_los_struktur(request, pk=None):
 
 	return render(request, 'system_los_struktur.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'los_graf': los_graf,
 		'nodes': nodes,
 	})
@@ -656,6 +662,7 @@ def alle_nettverksenheter(request):
 
 		return render(request, 'cmdb_nettverksenehter.html', {
 			'request': request,
+			'required_permissions': formater_permissions(required_permissions),
 			'nettverksenehter': nettverksenehter,
 		})
 	else:
@@ -724,6 +731,7 @@ def cmdb_statistikk(request):
 
 		return render(request, 'cmdb_statistikk.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'count_office_ea': count_office_ea,
 			'count_office_ea_keys': count_office_ea_keys,
 			'count_ad_users': count_ad_users,
@@ -772,6 +780,7 @@ def detaljer_vip(request, pk):
 
 		return render(request, 'cmdb_alle_vip.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'alle_viper': [vip],
 		})
 	else:
@@ -790,6 +799,7 @@ def cmdb_devicedetails(request, pk):
 
 		return render(request, 'cmdb_devicedetails.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'device': device,
 		})
 	else:
@@ -808,6 +818,7 @@ def alle_dns(request):
 
 		return render(request, 'cmdb_alle_dns.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'alle_dnsnavn': alle_dnsnavn,
 		})
 	else:
@@ -826,6 +837,7 @@ def dns_txt(request):
 
 		return render(request, 'cmdb_dns_txt.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'txt_records': txt_records,
 		})
 	else:
@@ -863,6 +875,7 @@ def alle_vip(request):
 
 	return render(request, 'cmdb_alle_vip.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'alle_viper': alle_viper,
 		'vip_search_term': search_term_raw,
 	})
@@ -883,6 +896,7 @@ def nettverk_detaljer(request, pk):
 
 		return render(request, 'cmdb_nettverk_detaljer.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'nettverk': nettverk,
 			'network_ip_addresses': network_ip_addresses,
 			'firewall_openings': firewall_openings,
@@ -939,6 +953,7 @@ def alle_nettverk(request):
 
 		return render(request, 'cmdb_alle_nettverk.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'alle_nettverk': nettverk,
 			'vlan_search_term': search_term_raw,
 		})
@@ -958,6 +973,7 @@ def cmdb_uten_backup(request):
 
 	return render(request, 'cmdb_uten_backup.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'uten_backup': uten_backup,
 	})
 
@@ -978,6 +994,7 @@ def cmdb_backup_index(request):
 
 		return render(request, 'cmdb_backup_index.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'count_backup': count_backup,
 			'count_backup_missing_bss': count_backup_missing_bss,
 			'pct_missing_all': pct_missing_all,
@@ -1006,6 +1023,7 @@ def cmdb_lagring_index(request):
 
 		return render(request, 'cmdb_lagring_index.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'count_san_allocated': count_san_allocated,
 			'count_san_used': count_san_used,
 			'pct_used': pct_used,
@@ -1043,6 +1061,7 @@ def cmdb_minne_index(request):
 
 		return render(request, 'cmdb_minne_index.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'count_ram_allocated': count_ram_allocated,
 			'count_ram_missing_bs': count_ram_missing_bs,
 			'bs_all': bs_all,
@@ -1063,6 +1082,7 @@ def cmdb_servere_disabled_poweredon(request):
 		inaktive_servere_poweredon = CMDBdevice.objects.filter(device_active=False, vm_poweredon=True)
 		return render(request, 'cmdb_servere_disabled_poweredon.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'inaktive_servere_poweredon': inaktive_servere_poweredon,
 		})
 	else:
@@ -1108,6 +1128,7 @@ def cmdb_ad_flere_brukeridenter(request):
 
 	return render(request, 'cmdb_ad_flere_brukeridenter.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'ant_ansattnr_unike': ant_ansattnr_flere,
 		'ant_ansattnr_totalt': len(relevante_brukere),
 		'stat_brukertype': stat_brukertype,
@@ -1145,6 +1166,7 @@ def ad_brukerlistesok(request):
 
 		return render(request, 'ad_brukerlistesok.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'user_search_term': search_raw,
 			'users': users,
 			'not_users': not_users,
@@ -1191,6 +1213,7 @@ def bruker_sok(request):
 
 		return render(request, 'system_brukerdetaljer.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'search_term': search_term,
 			'users': users,
 		})
@@ -1213,6 +1236,7 @@ def passwdneverexpire(request, pk):
 
 		return render(request, 'virksomhet_passwordneverexpire.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'virksomhet': virksomhet,
 			'users': users,
 		})
@@ -1323,6 +1347,7 @@ def ansatte_virksomhet(request, pk):
 
 	return render(request, 'virksomhet_ansatte_virksomhet.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'brukere': brukere,
 		'dato': dato,
@@ -1348,6 +1373,7 @@ def tom_epost(request, pk):
 
 	return render(request, 'virksomhet_tom_epost.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'count_brukere_i_virksomhet': count_brukere_i_virksomhet,
 		'brukere_uten_epost': brukere_uten_epost,
@@ -1394,6 +1420,7 @@ def cmdb_uten_epost_stat(request):
 
 		return render(request, 'cmdb_uten_epost_stat.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'stats': stats,
 			'totalt_uten_epost': totalt_uten_epost,
 			'totalt_antall_brukere': totalt_antall_brukere,
@@ -1439,6 +1466,7 @@ def passwordexpire(request, pk):
 
 		return render(request, 'virksomhet_passwordexpire.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'virksomhet': virksomhet,
 			'users': users,
 			'periode': periode,
@@ -1458,6 +1486,7 @@ def bruker_detaljer(request, pk):
 		user = User.objects.get(pk=pk)
 		return render(request, 'system_brukerdetaljer.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'users': [user],
 		})
 	else:
@@ -1472,6 +1501,7 @@ def lokasjoner_hos_virksomhet(request, pk):
 	lokasjoner = WANLokasjon.objects.filter(virksomhet=virksomhet)
 	return render(request, 'virksomhet_lokasjoner.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'lokasjoner': lokasjoner,
 	})
@@ -1487,6 +1517,7 @@ def klienter_hos_virksomhet(request, pk):
 
 		return render(request, 'virksomhet_klientoversikt.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'virksomhet': virksomhet,
 			'alle_klienter_hos_virksomhet': alle_klienter_hos_virksomhet,
 		})
@@ -1691,6 +1722,7 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 
 	return render(request, 'virksomhet_sikkerhetsavvik.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'grupper_med_emse5': grupper_med_emse5,
 		'brukere_med_emse5': brukere_med_emse5,
@@ -1740,7 +1772,7 @@ def minside(request):
 	"""
 	Når innlogget, vise informasjon om innlogget bruker
 	"""
-
+	required_permissions = None
 	try:
 		oidctoken = request.session['oidc-token']
 
@@ -1750,6 +1782,7 @@ def minside(request):
 	if request.user.is_authenticated:
 		return render(request, 'site_minside.html', {
 			'request': request,
+			'required_permissions': formater_permissions(required_permissions),
 			'oidctoken': oidctoken,
 		})
 	else:
@@ -1941,6 +1974,7 @@ def dashboard_all(request, virksomhet=None):
 
 	return render(request, 'virksomhet_dashboard.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemlister': systemlister,
 		'alle_virksomheter': alle_virksomheter,
 		'virksomhet': virksomhet,
@@ -2060,6 +2094,7 @@ def user_clean_up(request):
 
 		return render(request, "site_home.html", {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -2084,6 +2119,7 @@ def roller(request):
 	from django.core import serializers
 	from django.contrib.auth.models import Group
 
+	required_permissions = None
 	#required_permissions = 'auth.view_group'
 	#if request.user.has_perm(required_permissions):
 	groups = Group.objects.all()
@@ -2112,6 +2148,7 @@ def roller(request):
 
 		return render(request, 'site_roller.html', {
 			'request': request,
+			'required_permissions': formater_permissions(required_permissions),
 			'header': header,
 			'matrise': matrise,
 	})
@@ -2130,6 +2167,7 @@ def logger(request):
 		recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:300]
 		return render(request, 'site_audit_logger.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'recent_admin_loggs': recent_admin_loggs,
 		})
 	else:
@@ -2148,6 +2186,7 @@ def logger_audit(request):
 	recent_loggs = ApplicationLog.objects.filter(~Q(event_type__icontains="api")).filter(~Q(event_type__icontains="Brukerpålogging")).order_by('-opprettet')[:1500]
 	return render(request, 'site_logger_audit.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'recent_loggs': recent_loggs,
 	})
 
@@ -2188,6 +2227,7 @@ def databasestatistikk(request):
 
 	return render(request, 'site_databasestatistikk.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'stats': stats,
 		'file_size': file_size,
 		'sum_size': sum_size,
@@ -2213,6 +2253,7 @@ def logger_api_csirt(request):
 
 	return render(request, 'site_logger_audit.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'recent_loggs': recent_loggs,
 	})
 
@@ -2228,6 +2269,7 @@ def logger_api(request):
 		recent_loggs = ApplicationLog.objects.filter(event_type__icontains="api").order_by('-opprettet')[:1500]
 		return render(request, 'site_logger_audit.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'recent_loggs': recent_loggs,
 		})
 	else:
@@ -2245,6 +2287,7 @@ def logger_autentisering(request):
 		recent_loggs = ApplicationLog.objects.filter(event_type__icontains="Brukerpålogging").order_by('-opprettet')[:1500]
 		return render(request, 'site_logger_audit.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'recent_loggs': recent_loggs,
 		})
 	else:
@@ -2264,6 +2307,7 @@ def logger_users(request):
 		recent_loggs = UserChangeLog.objects.order_by('-opprettet')[:800]
 		return render(request, 'site_logger_users.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'recent_loggs': recent_loggs,
 		})
 	else:
@@ -2275,7 +2319,7 @@ def home(request):
 	Startsiden med oversikt over systemer per kategori
 	Tilgangsstyring: ÅPEN
 	"""
-
+	required_permissions = None
 	antall_systemer = System.objects.filter(~Q(ibruk=False)).count()
 	nyeste_systemer = System.objects.filter(~Q(ibruk=False)).order_by('-pk')[:10]
 
@@ -2289,6 +2333,7 @@ def home(request):
 
 	return render(request, 'site_home.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'kategorier': kategorier,
 		'antall_systemer': antall_systemer,
 		'nyeste_systemer': nyeste_systemer,
@@ -2368,6 +2413,7 @@ def home_chart(request):
 
 	return render(request, 'site_home_chart.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'nodes': nodes,
 		'node_size': node_size,
 		'system_colors': SYSTEM_COLORS,
@@ -2379,6 +2425,7 @@ def alle_definisjoner(request):
 	Viser definisjoner
 	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = None
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
 	if (search_term == ""):
@@ -2397,6 +2444,7 @@ def alle_definisjoner(request):
 
 	return render(request, 'definisjon_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'definisjoner': definisjoner,
 		'search_term': search_term,
 	})
@@ -2407,9 +2455,11 @@ def definisjon(request, begrep):
 	Viser en definisjon
 	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = None
 	passende_definisjoner = Definisjon.objects.filter(begrep=begrep)
 	return render(request, 'definisjon_detaljer.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'begrep': begrep,
 		'definisjoner': passende_definisjoner,
 	})
@@ -2563,6 +2613,7 @@ def ansvarlig(request, pk):
 
 	return render(request, 'ansvarlig_detaljer.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'ansvarlig': ansvarlig,
 		'systemeier_for': systemeier_for,
 		'systemforvalter_for': systemforvalter_for,
@@ -2595,6 +2646,7 @@ def alle_ansvarlige(request):
 	ansvarlige = Ansvarlig.objects.all().order_by('brukernavn__first_name')
 	return render(request, 'ansvarlig_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'ansvarlige': ansvarlige,
 		'suboverskrift': "Hele kommunen",
 	})
@@ -2610,6 +2662,7 @@ def alle_ansvarlige_eksport(request):
 		ansvarlige = Ansvarlig.objects.filter(brukernavn__is_active=True)
 		return render(request, 'ansvarlig_eksport.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'ansvarlige': ansvarlige,
 		})
 	else:
@@ -2629,6 +2682,7 @@ def systemkvalitet_virksomhet(request, pk):
 	systemer_ansvarlig_for = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
 	return render(request, 'virksomhet_hvamangler.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'systemer': systemer_ansvarlig_for,
 	})
@@ -2646,6 +2700,7 @@ def systemer_vurderinger(request):
 
 	return render(request, 'systemer_vurderinger.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
 	})
 
@@ -2674,6 +2729,7 @@ def systemer_EOL(request):
 
 	return render(request, 'systemer_EOL_vurderinger_FIP.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
 		'infrastruktur': infrastruktur,
 	})
@@ -2826,6 +2882,7 @@ def systemdetaljer(request, pk):
 
 	return render(request, 'system_detaljer.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemdetaljer': system,
 		'systembruk': systembruk,
 		'behandlinger': behandlinger,
@@ -2854,6 +2911,7 @@ def systemer_pakket(request):
 	programvarer = Programvare.objects.all()
 	return render(request, 'system_hvordan_pakket.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
 		'programvarer': programvarer,
 	})
@@ -2881,6 +2939,7 @@ def systemklassifisering_detaljer(request, kriterie=None):
 
 	return render(request, 'system_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'overskrift': ("Systemer der systemklassifisering er %s" % kriterie.lower()),
 		'systemer': utvalg_systemer,
 		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
@@ -2910,6 +2969,7 @@ def systemtype_detaljer(request, pk=None):
 	utvalg_systemer = utvalg_systemer.order_by('ibruk', Lower('systemnavn'))
 	return render(request, 'system_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'overskrift': overskrift,
 		'systemer': utvalg_systemer,
 		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
@@ -2927,6 +2987,7 @@ def alle_systemer_forvaltere(request):
 
 	return render(request, 'system_forvalteroversikt.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
 	})
 
@@ -2940,6 +3001,7 @@ def alle_systemer_smart(request):
 
 	return render(request, 'system_smart.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
 	})
 
@@ -2963,6 +3025,7 @@ def alle_systemer(request):
 
 	return render(request, 'system_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': aktuelle_systemer,
 		'kommuneklassifisering': SYSTEMEIERSKAPSMODELL_VALG,
 		'systemtyper': systemtyper,
@@ -3024,6 +3087,7 @@ def search(request):
 
 	return render(request, 'site_search.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': aktuelle_systemer,
 		'potensielle_systemer': potensielle_systemer,
 		'search_term': search_term,
@@ -3045,6 +3109,7 @@ def bruksdetaljer(request, pk):
 	bruk = SystemBruk.objects.get(pk=pk)
 	return render(request, 'systembruk_detaljer.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'bruk': bruk,
 	})
 
@@ -3100,6 +3165,7 @@ def all_bruk_for_virksomhet(request, pk):
 
 	return render(request, 'systembruk_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'all_systembruk': all_systembruk,
 		'all_programvarebruk': all_programvarebruk,
 		'ikke_i_bruk': ikke_i_bruk,
@@ -3158,6 +3224,7 @@ def registrer_bruk(request, system):
 
 		return render(request, 'system_registrer_bruk.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'target': system_instans,
 			'target_name': system_instans.systemnavn,
 			'back_link': reverse('systemdetaljer', args=[system_instans.pk]),
@@ -3220,6 +3287,7 @@ def registrer_bruk_programvare(request, programvare):
 
 	return render(request, 'system_registrer_bruk.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'target': programvare_instans,
 		'target_name': programvare_instans.programvarenavn,
 		'back_link': reverse('programvaredetaljer', args=[programvare_instans.pk]),
@@ -3229,6 +3297,7 @@ def registrer_bruk_programvare(request, programvare):
 
 def rapport_named_locations(request):
 
+	required_permissions = None
 	color_table = []
 	color_table.append(['Land', 'Fargekode'])
 
@@ -3252,6 +3321,7 @@ def rapport_named_locations(request):
 
 	return render(request, "rapport_named_locations.html", {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'color_table': color_table,
 	})
 
@@ -3274,6 +3344,7 @@ def programvaredetaljer(request, pk):
 	behandlinger = BehandlingerPersonopplysninger.objects.filter(programvarer=pk).order_by("funksjonsomraade")
 	return render(request, "programvare_detaljer.html", {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'programvare': programvare,
 		'programvarebruk': programvarebruk,
 		'behandlinger': behandlinger,
@@ -3304,6 +3375,7 @@ def alle_programvarer(request):
 	return render(request, 'programvare_alle.html', {
 		'overskrift': "Programvarer og applikasjoner",
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'programvarer': aktuelle_programvarer,
 	})
 
@@ -3325,6 +3397,7 @@ def all_programvarebruk_for_virksomhet(request, pk): # KAN SLETTES
 
 	return render(request, "programvarebruk_alle.html", {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'all_bruk': all_bruk,
 	})
@@ -3341,6 +3414,7 @@ def programvarebruksdetaljer(request, pk):
 	bruksdetaljer = ProgramvareBruk.objects.get(pk=pk)
 	return render(request, "programvarebruk_detaljer.html", {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'bruksdetaljer': bruksdetaljer,
 	})
 
@@ -3353,6 +3427,7 @@ def alle_tjenester(request):
 	return render(request, template, {
 		'overskrift': "Tjenester",
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'tjenester': tjenester,
 	})
 
@@ -3361,6 +3436,7 @@ def tjenestedetaljer(request, pk):
 
 	return render(request, 'detaljer_tjeneste.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'tjeneste': tjeneste,
 	})
 """
@@ -3376,6 +3452,7 @@ def alle_behandlinger(request):
 		behandlinger = BehandlingerPersonopplysninger.objects.all()
 		return render(request, 'behandling_alle.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'behandlinger': behandlinger,
 		})
 	else:
@@ -3398,6 +3475,7 @@ def behandlingsdetaljer(request, pk):
 
 		return render(request, 'behandling_detaljer.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'behandling': behandling,
 			'siste_endringer': siste_endringer,
 			'siste_endringer_antall': siste_endringer_antall,
@@ -3461,6 +3539,7 @@ def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False):
 
 	return render(request, "behandling_behandlingsprotokoll.html", {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'behandlinger': behandlinger,
 		'virksomhet': vir,
 		'interne_avdelinger': virksomhetens_behandlinger_avdelinger,
@@ -3515,6 +3594,7 @@ def behandling_kopier(request, system_pk):
 
 		return render(request, 'system_kopier_behandling.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'system': dette_systemet,
 			'dine_eksisterende_behandlinger': dine_eksisterende_behandlinger,
 			'kandidatbehandlinger': kandidatbehandlinger,
@@ -3537,6 +3617,7 @@ def virksomhet_ansvarlige(request, pk):
 	ansvarlige = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).order_by('brukernavn__first_name')
 	return render(request, 'ansvarlig_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'ansvarlige': ansvarlige,
 		'virksomhet': virksomhet,
 	})
@@ -3556,6 +3637,7 @@ def enhet_detaljer(request, pk):
 
 		return render(request, 'virksomhet_enhet_detaljer.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'unit': unit,
 			'sideenheter': sideenheter,
 			'personer': personer,
@@ -3580,6 +3662,7 @@ def virksomhet_enhetsok(request):
 
 		return render(request, 'virksomhet_enhetsok.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'units': units,
 			'search_term': search_term,
 		})
@@ -3651,6 +3734,7 @@ def virksomhet_enheter(request, pk):
 
 		return render(request, 'virksomhet_enheter.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'units': units,
 			'virksomhet': virksomhet,
 			'avhengigheter_graf': avhengigheter_graf,
@@ -3966,6 +4050,7 @@ def virksomhet_prkadmin(request, pk):
 
 		return render(request, 'virksomhet_prkadm.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'virksomhet': vir,
 			'prk_admins': prk_admins_inverted,
 		})
@@ -4030,6 +4115,7 @@ def virksomhet(request, pk):
 	Vise detaljer om en valgt virksomhet
 	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = None
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
 	antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
@@ -4107,6 +4193,7 @@ def virksomhet(request, pk):
 
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'antall_brukere': antall_brukere,
 		'antall_eksterne_brukere': antall_eksterne_brukere,
@@ -4158,6 +4245,7 @@ def innsyn_virksomhet(request, pk):
 
 		return render(request, 'virksomhet_innsyn.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'virksomhet': virksomhet,
 			'systemer': systemer,
 		})
@@ -4171,6 +4259,7 @@ def bytt_virksomhet(request):
 	Tilgangsstyring: Innlogget og avhengig av virksomhet innlogget bruker er logget inn som
 	"""
 	#returnere en liste over virksomheter som gjeldende bruker kan representere
+	required_permissions = None
 	brukers_virksomhet_innlogget_som = request.user.profile.virksomhet_innlogget_som
 	if brukers_virksomhet_innlogget_som != None:
 		# Vi tar med virksomheten bruker er logget inn med samt alle virksomheter som har angitt gjeldende virksomhet som overordnet virksomhet.
@@ -4198,6 +4287,7 @@ def bytt_virksomhet(request):
 
 	return render(request, 'site_bytt_virksomhet.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'brukers_virksomhet': aktiv_representasjon,
 		'dine_virksomheter': dine_virksomheter,
 	})
@@ -4213,6 +4303,7 @@ def sertifikatmyndighet(request):
 		virksomheter = Virksomhet.objects.all()
 		return render(request, 'virksomhet_sertifikatmyndigheter.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'virksomheter': virksomheter,
 		})
 
@@ -4225,6 +4316,7 @@ def alle_virksomheter(request):
 	Vise oversikt over alle virksomheter
 	Tilgangsstyring: ÅPEN
 	"""
+	required_permissions = None
 	search_term = request.GET.get('search_term', "").strip()
 	if search_term in ("", "__all__"):
 		virksomheter = Virksomhet.objects.all()
@@ -4235,6 +4327,7 @@ def alle_virksomheter(request):
 
 	return render(request, 'virksomhet_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomheter': virksomheter,
 	})
 
@@ -4252,6 +4345,7 @@ def alle_virksomheter_kontaktinfo(request):
 
 	return render(request, 'virksomhet_alle_kontaktinfo.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomheter': virksomheter,
 	})
 
@@ -4267,6 +4361,7 @@ def virksomhet_arkivplan(request, pk):
 
 	return render(request, 'virksomhet_arkivplan.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'systembruk': systembruk,
 	})
@@ -4291,6 +4386,7 @@ def leverandor(request, pk):
 	plattformer_underleverandor = Driftsmodell.objects.filter(underleverandorer=pk)
 	return render(request, 'leverandor_detaljer.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'leverandor': leverandor,
 		'systemleverandor_for': systemleverandor_for,
 		'databehandler_for': databehandler_for,
@@ -4325,6 +4421,7 @@ def alle_leverandorer(request):
 
 	return render(request, 'leverandor_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'leverandorer': leverandorer,
 	})
 
@@ -4340,6 +4437,7 @@ def alle_driftsmodeller(request):
 	driftsmodeller = Driftsmodell.objects.all().order_by('-ansvarlig_virksomhet', 'navn')
 	return render(request, 'driftsmodell_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'driftsmodeller': driftsmodeller,
 	})
 
@@ -4358,6 +4456,7 @@ def driftsmodell_virksomhet_klassifisering(request, pk):
 		return render(request, 'alle_systemer_virksomhet_drifter_klassifisering.html', {
 			'virksomhet': virksomhet,
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'systemer': systemer_drifter,
 			'driftsmodeller': driftsmodeller,
 		})
@@ -4390,6 +4489,7 @@ def drift_beredskap(request, pk, eier=None):
 	return render(request, 'systemer_drifter_prioritering.html', {
 		'virksomhet': virksomhet,
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer_drifter,
 		'eier': eier,
 	})
@@ -4409,6 +4509,7 @@ def driftsmodell_virksomhet(request, pk):
 	return render(request, 'system_virksomhet_drifter.html', {
 		'virksomhet': virksomhet,
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer_drifter,
 		'driftsmodeller': driftsmodeller,
 	})
@@ -4432,6 +4533,7 @@ def detaljer_driftsmodell(request, pk):
 
 	return render(request, 'driftsmodell_detaljer.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'driftsmodell': driftsmodell,
 		'systemer': systemer,
 		'isolert_drift': isolert_drift,
@@ -4480,6 +4582,7 @@ def systemkategori(request, pk):
 	programvarer = Programvare.objects.filter(kategorier=pk).order_by(Lower('programvarenavn'))
 	return render(request, 'kategori_detaljer.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
 		'kategori': kategori,
 		'programvarer': programvarer,
@@ -4512,6 +4615,7 @@ def alle_hovedkategorier(request):
 
 	return render(request, 'kategori_hoved_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'hovedkategorier': hovedkategorier,
 		'subkategorier_uten_hovedkategori': subkategorier_uten_hovedkategori,
 	})
@@ -4528,6 +4632,7 @@ def alle_systemkategorier(request):
 	kategorier = SystemKategori.objects.order_by('kategorinavn')
 	return render(request, 'kategori_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'kategorier': kategorier,
 	})
 
@@ -4546,6 +4651,7 @@ def uten_systemkategori(request):
 	programvarer = Programvare.objects.annotate(num_categories=Count('kategorier')).filter(num_categories=0)
 	return render(request, 'kategori_system_uten.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
 		'programvarer': programvarer,
 		'antall_systemer': antall_systemer,
@@ -4564,6 +4670,7 @@ def alle_systemurler(request):
 	urler = SystemUrl.objects.order_by('domene')
 	return render(request, 'urler_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'web_urler': urler,
 	})
 
@@ -4582,6 +4689,7 @@ def virksomhet_urler(request, pk):
 		urler = SystemUrl.objects.filter(eier=virksomhet.pk).order_by('domene')
 		return render(request, 'urler_alle.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'web_urler': urler,
 			'virksomhet': virksomhet,
 		})
@@ -4670,71 +4778,72 @@ def system_til_programvare(request, system_id=None):
 	Tilgangsstyring: krever tilgang til å endre systemer.
 	"""
 	required_permissions = 'systemoversikt.change_system'
-	if request.user.has_perm(required_permissions):
-
-		if system_id:
-			try:
-				#finne systemet som skal konverteres
-				kildesystem = System.objects.get(pk=system_id)
-
-				try:
-					Programvare.objects.get(programvarenavn=kildesystem.systemnavn)
-					messages.warning(request, 'Programvare med navn %s finnes allerede' % kildesystem.systemnavn)
-					resume = False
-				except:
-					resume = True
-
-				if resume:
-					#nytt programvareobjekt med kopierte verdier
-					ny_programvare = Programvare.objects.create(
-							programvarenavn=kildesystem.systemnavn,
-							programvarekategori=kildesystem.programvarekategori,
-							programvarebeskrivelse=kildesystem.systembeskrivelse,
-							kommentar=kildesystem.kommentar,
-							strategisk_egnethet=kildesystem.strategisk_egnethet,
-							funksjonell_egnethet=kildesystem.funksjonell_egnethet,
-							teknisk_egnethet=kildesystem.teknisk_egnethet,
-							selvbetjening=kildesystem.selvbetjening,
-							livslop_status=kildesystem.livslop_status,
-						)
-					for leverandor in kildesystem.systemleverandor.all():
-						ny_programvare.programvareleverandor.add(leverandor)
-					for kategori in kildesystem.systemkategorier.all():
-						ny_programvare.kategorier.add(kategori)
-					for programvaretype in kildesystem.systemtyper.all():
-						ny_programvare.programvaretyper.add(programvaretype)
-					ny_programvare.save()
-
-					#nye programvarebruk per systembruk
-					for systembruk in kildesystem.systembruk_system.all():
-						ny_programvarebruk = ProgramvareBruk.objects.create(
-								brukergruppe=systembruk.brukergruppe,
-								programvare=ny_programvare,
-								livslop_status=systembruk.livslop_status,
-								kommentar=systembruk.kommentar,
-								strategisk_egnethet=systembruk.strategisk_egnethet,
-								funksjonell_egnethet=systembruk.funksjonell_egnethet,
-								teknisk_egnethet=systembruk.teknisk_egnethet,
-							)
-
-					#registrere behandlinger på programvaren fra systemet
-					for behandling in kildesystem.behandling_systemer.all():
-						behandling.programvarer.add(ny_programvare)
-						behandling.save()
-
-					messages.success(request, 'Konvertere system til programvare. Ny programvare %s er opprettet' % ny_programvare.programvarenavn)
-
-			except Exception as e:
-				messages.warning(request, 'Konvertere system til programvare feilet med feilmelding %s' % e)
-
-		utvalg_systemer = System.objects.filter(systemtyper=1)
-
-		return render(request, 'system_tilprogramvare.html', {
-			'request': request,
-			'systemer': utvalg_systemer,
-		})
-	else:
+	if not request.user.has_perm(required_permissions):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	if system_id:
+		try:
+			#finne systemet som skal konverteres
+			kildesystem = System.objects.get(pk=system_id)
+
+			try:
+				Programvare.objects.get(programvarenavn=kildesystem.systemnavn)
+				messages.warning(request, 'Programvare med navn %s finnes allerede' % kildesystem.systemnavn)
+				resume = False
+			except:
+				resume = True
+
+			if resume:
+				#nytt programvareobjekt med kopierte verdier
+				ny_programvare = Programvare.objects.create(
+						programvarenavn=kildesystem.systemnavn,
+						programvarekategori=kildesystem.programvarekategori,
+						programvarebeskrivelse=kildesystem.systembeskrivelse,
+						kommentar=kildesystem.kommentar,
+						strategisk_egnethet=kildesystem.strategisk_egnethet,
+						funksjonell_egnethet=kildesystem.funksjonell_egnethet,
+						teknisk_egnethet=kildesystem.teknisk_egnethet,
+						selvbetjening=kildesystem.selvbetjening,
+						livslop_status=kildesystem.livslop_status,
+					)
+				for leverandor in kildesystem.systemleverandor.all():
+					ny_programvare.programvareleverandor.add(leverandor)
+				for kategori in kildesystem.systemkategorier.all():
+					ny_programvare.kategorier.add(kategori)
+				for programvaretype in kildesystem.systemtyper.all():
+					ny_programvare.programvaretyper.add(programvaretype)
+				ny_programvare.save()
+
+				#nye programvarebruk per systembruk
+				for systembruk in kildesystem.systembruk_system.all():
+					ny_programvarebruk = ProgramvareBruk.objects.create(
+							brukergruppe=systembruk.brukergruppe,
+							programvare=ny_programvare,
+							livslop_status=systembruk.livslop_status,
+							kommentar=systembruk.kommentar,
+							strategisk_egnethet=systembruk.strategisk_egnethet,
+							funksjonell_egnethet=systembruk.funksjonell_egnethet,
+							teknisk_egnethet=systembruk.teknisk_egnethet,
+						)
+
+				#registrere behandlinger på programvaren fra systemet
+				for behandling in kildesystem.behandling_systemer.all():
+					behandling.programvarer.add(ny_programvare)
+					behandling.save()
+
+				messages.success(request, 'Konvertere system til programvare. Ny programvare %s er opprettet' % ny_programvare.programvarenavn)
+
+		except Exception as e:
+			messages.warning(request, 'Konvertere system til programvare feilet med feilmelding %s' % e)
+
+	utvalg_systemer = System.objects.filter(systemtyper=1)
+
+	return render(request, 'system_tilprogramvare.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'systemer': utvalg_systemer,
+	})
+
 
 
 def adorgunit_detaljer(request, pk=None):
@@ -4742,6 +4851,13 @@ def adorgunit_detaljer(request, pk=None):
 	Vise informasjon om en konkret AD-OU
 	Tilgangsstyring: må kunne vise informasjon om brukere
 	"""
+	required_permissions = 'auth.view_user'
+	if not request.user.has_perm(required_permissions):
+		return render(request, '403.html', {
+			'required_permissions': required_permissions,
+			'groups': request.user.groups,
+		})
+
 	import os
 
 	if pk == None:
@@ -4761,17 +4877,16 @@ def adorgunit_detaljer(request, pk=None):
 
 	users = User.objects.filter(profile__ou=pk).order_by(Lower('first_name'))
 
-	required_permissions = 'auth.view_user'
-	if request.user.has_perm(required_permissions):
-		return render(request, 'ad_adorgunit_detaljer.html', {
-				"ou": ou,
-				"groups": groups,
-				"parent": parent,
-				"children": children,
-				"users": users,
-		})
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+	return render(request, 'ad_adorgunit_detaljer.html', {
+			"required_permissions": required_permissions,
+			"ou": ou,
+			"groups": groups,
+			"parent": parent,
+			"children": children,
+			"users": users,
+	})
+
+
 
 
 def adgruppe_utnosting(gr):
@@ -4955,6 +5070,7 @@ def adgruppe_graf(request, pk):
 
 		return render(request, 'ad_graf.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'avhengigheter_graf': avhengigheter_graf,
 			'morgruppe': morgruppe,
 			'maks_grense': maks_grense,
@@ -5152,6 +5268,7 @@ def maskin_sok(request):
 
 		return render(request, 'cmdb_maskin_sok.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'query': query,
 			'hits': hits,
 			'misses': misses,
@@ -5208,6 +5325,7 @@ def alle_ip(request):
 
 		return render(request, 'cmdb_ip_sok.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'host_matches': host_matches,
 			'network_matches': network_matches,
 			'search_term': search_term,
@@ -5227,6 +5345,7 @@ def ad_prk_sok(request):
 
 		return render(request, 'ad_prk_sok.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'search_term': search_term,
 		})
 """
@@ -5252,6 +5371,7 @@ def prk_skjema(request, skjema_id):
 
 		return render(request, 'prk_vis_skjema.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'skjema': skjema,
 			'valg': valg,
 		})
@@ -5278,6 +5398,7 @@ def prk_browse(request):
 
 		return render(request, 'prk_bla.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'skjema': skjema,
 			'search_term': search_term,
 		})
@@ -5312,6 +5433,7 @@ def alle_prk(request):
 
 		return render(request, 'prk_skjema_sok.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'search_term': search_term,
 			'skjemavalg': skjemavalg,
 		})
@@ -5362,6 +5484,7 @@ def alle_klienter(request):
 
 		return render(request, 'cmdb_maskiner_klienter.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'maskiner': maskiner,
 			'device_search_term': search_term,
 			'alle_maskinadm_klienter': alle_maskinadm_klienter,
@@ -5391,6 +5514,7 @@ def cmdb_internetteksponerte_servere(request):
 
 	return render(request, 'cmdb_internetteksponerte_servere.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'servere': servere,
 	})
 
@@ -5421,6 +5545,7 @@ def alle_servere(request):
 
 	return render(request, 'cmdb_maskiner_servere.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'maskiner': maskiner,
 		'device_search_term': search_term,
 		'maskiner_stats': maskiner_stats,
@@ -5435,6 +5560,7 @@ def valgbarekategorier(request):
 	"""
 	return render(request, 'cmdb_valgbarekategorier.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 	})
 
 
@@ -5449,6 +5575,7 @@ def servere_utfaset(request):
 		maskiner = CMDBdevice.objects.filter(device_active=False, device_type="SERVER").order_by("-sist_oppdatert")[:300]
 		return render(request, 'cmdb_alle_maskiner_utfaset.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'maskiner': maskiner,
 		})
 
@@ -5508,6 +5635,7 @@ def alle_databaser(request):
 
 		return render(request, 'cmdb_databaser_sok.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'databaser': databaser,
 			'search_term': search_term,
 			'databasestatistikk': databasestatistikk,
@@ -5525,6 +5653,7 @@ def cmdb_forvaltere(request):
 
 		return render(request, 'cmdb_forvaltere.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'relevant_business_services': relevant_business_services,
 		})
 	else:
@@ -5590,6 +5719,7 @@ def alle_cmdbref(request):
 
 		return render(request, 'cmdb_bs_sok.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'cmdbref': cmdbref,
 			'search_term': search_term,
 			'bs_uten_system': bs_uten_system,
@@ -5645,6 +5775,7 @@ def cmdb_bss(request, pk):
 
 		return render(request, 'cmdb_maskiner_detaljer.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'cmdbref': [cmdbref],
 			'cmdbdevices': cmdbdevices,
 			'databaser': databaser,
@@ -5669,6 +5800,7 @@ def alle_avtaler(request, virksomhet=None):
 		avtaler = avtaler.filter(Q(virksomhet=virksomhet) | Q(leverandor_intern=virksomhet))
 	return render(request, 'avtale_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'avtaler': avtaler,
 		'virksomhet': virksomhet,
 	})
@@ -5685,6 +5817,7 @@ def avtaledetaljer(request, pk):
 	avtale = Avtale.objects.get(pk=pk)
 	return render(request, 'avtale_detaljer.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'avtale': avtale,
 	})
 
@@ -5702,6 +5835,7 @@ def databehandleravtaler_virksomhet(request, pk):
 	avtaler = Avtale.objects.filter(virksomhet=pk).filter(avtaletype=1) # 1 er databehandleravtaler
 	return render(request, 'avtale_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'avtaler': avtaler,
 		'utdypende_beskrivelse': utdypende_beskrivelse,
 	})
@@ -5718,6 +5852,7 @@ def alle_dpia(request):
 	alle_dpia = DPIA.objects.all()
 	return render(request, 'dpia_alle.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'alle_dpia': alle_dpia,
 	})
 
@@ -5733,6 +5868,7 @@ def detaljer_dpia(request, pk):
 	dpia = DPIA.objects.get(pk=pk)
 	return render(request, 'detaljer_dpia.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'dpia': dpia,
 	})
 
@@ -6070,6 +6206,7 @@ def ad(request):
 
 		return render(request, 'ad_index.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -6092,6 +6229,7 @@ def ad_details(request, name):
 
 		return render(request, 'ad_details.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'result': result,
 		})
 	else:
@@ -6115,6 +6253,7 @@ def ad_exact(request, name):
 
 		return render(request, 'ad_details.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'result': result,
 		})
 	else:
@@ -6137,6 +6276,7 @@ def recursive_group_members(request, group):
 
 		return render(request, 'ad_recursive.html', {
 			'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 			'result': result,
 		})
 	else:
@@ -7567,6 +7707,7 @@ def azure_applications(request):
 	applikasjoner = AzureApplication.objects.filter(active=True).order_by('-createdDateTime')
 	return render(request, 'cmdb_azure_applications.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'applikasjoner': applikasjoner,
 	})
 
@@ -7582,5 +7723,6 @@ def azure_application_keys(request):
 	keys = AzureApplicationKeys.objects.order_by('end_date_time')
 	return render(request, 'cmdb_azure_application_keys.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'keys': keys,
 	})

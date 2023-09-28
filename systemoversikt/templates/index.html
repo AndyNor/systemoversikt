@@ -182,11 +182,12 @@
 	</div>
 
 	<div id="main_content">
-	{% if DEBUG %}
-	<div id="div_message" class="alert alert-info">
-		Du er på en testinstans som heter <b>{{ TEST_ENV_NAME }}</b>.
-	</div>
-	{% endif %}
+
+		{% if DEBUG %}
+		<div id="div_message" class="alert alert-info">
+			Du er på en testinstans som heter <b>{{ TEST_ENV_NAME }}</b>.
+		</div>
+		{% endif %}
 
 		{% if messages %}
 			{% for message in messages %}
@@ -199,8 +200,18 @@
 		{% endif %}
 
 		<h3>{% block underoverskrift %}{% endblock underoverskrift %}</h3>
+
 		{% block undermeny %}{% endblock undermeny %}
+
 		{% block main_content %}{% endblock main_content %}
+
+		{% if required_permissions %}
+			<hr>
+			{% for tag in required_permissions %}
+				Krever tilgangene: <span class="badge badge-light">{{ tag }}</span>
+				{% if not forloop.last %} eller {% endif %}
+			{% endfor %}
+		{% endif %}
 	</div>
 
 </main>

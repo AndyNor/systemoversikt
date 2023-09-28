@@ -33,9 +33,18 @@
 			<td>{{s.medlemmer}}</td>
 			<td>
 				{{s.kommentar}}
-				{% for b in s.konkrete_medlemmer%}
-					<li>{{ b }}</li>
+				<br><br>
+				Definert som følgende grupper:<br>
+				{% for gruppe in s.grupper %}
+					<li><a href="{% url 'alle_adgrupper'%}?search_term={{gruppe}}">{{ gruppe }}</a></li>
 				{% endfor %}
+				{% if s.konkrete_medlemmer|length > 0 %}
+					<hr>
+					Følgende brukeridenter:<br>
+					{% for b in s.konkrete_medlemmer %}
+						<li>{{ b }}</li>
+					{% endfor %}
+				{% endif %}
 			</td>
 			<td><div><canvas height="100" id="adgr_chart_{{forloop.counter}}"></canvas></div></td>
 		</tr>
