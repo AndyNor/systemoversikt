@@ -34,10 +34,19 @@
 			<td>
 				{{s.kommentar}}
 				<br><br>
-				Definert som følgende grupper:<br>
+				definert som medlemskap i følgende grupper:<br>
 				{% for gruppe in s.grupper %}
 					<li><a href="{% url 'alle_adgrupper'%}?search_term={{gruppe}}">{{ gruppe }}</a></li>
 				{% endfor %}
+
+				{% if s.AND_grupper %}
+				samtidig som bruker også er medlem i:<br>
+					{% for gruppe in s.AND_grupper %}
+					<li><a href="{% url 'alle_adgrupper'%}?search_term={{gruppe}}">{{ gruppe }}</a></li>
+					{% endfor %}
+				{% endif %}
+
+
 				{% if s.konkrete_medlemmer|length > 0 %}
 					<hr>
 					Følgende brukeridenter:<br>
