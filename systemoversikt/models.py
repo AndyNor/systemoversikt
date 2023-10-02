@@ -3816,6 +3816,10 @@ class RapportGruppemedlemskaper(models.Model):
 			related_name='rapport_kombinasjon',
 			blank=True,
 			)
+	tidslinjedata = models.TextField(
+			blank=True,
+			null=True,
+			)
 
 	def __str__(self):
 		return f'{self.kategori} {self.beskrivelse}'

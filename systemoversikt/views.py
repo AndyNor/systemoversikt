@@ -765,7 +765,7 @@ def o365_avvik(request):
 
 
 	innhentingsbehov = []
-	for i in RapportGruppemedlemskaper.objects.all():
+	for i in RapportGruppemedlemskaper.objects.all().order_by('kategori'):
 		innhentingsbehov.append({
 				"kategori": i.kategori,
 				"beskrivelse": i.beskrivelse,
