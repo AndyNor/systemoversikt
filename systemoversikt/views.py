@@ -822,7 +822,7 @@ def o365_avvik(request):
 		{
 			"kategori": "Kombinasjon",
 			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
-			"AND_grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP", "OFFICE365SPES_UNNTAK_EUROPEISKIP"],
+			"AND_grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP", "DS-OFFICE365SPES_UNNTAK_EUROPEISKIP"],
 			"beskrivelse": "Både unntak administrert enhet og tilgang fra gule land",
 			"kommentar": ""
 		},
