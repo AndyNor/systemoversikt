@@ -904,7 +904,7 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			if levprofile.adgruppe in alle_grupper:
 				systemer.extend(levprofile.systemer.all())
 
-		return ' '.join([str(system) for system in systemer])
+		return [system.systemnavn for system in systemer]
 
 
 	def kopiav(self):

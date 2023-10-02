@@ -51,7 +51,7 @@
 		<td>
 			{% if m.serveradmin %} 💻 Server-admin<br> {% endif %}
 			{% if m.domainadmin %} ⚠️ Domain-admin<br> {% endif %}
-			{% if m.prkadmin %} ⚠️ PRK-admin<br> {% endif %}
+			{% if m.prkadmin %} 👤 PRK-admin<br> {% endif %}
 			{% if m.sqladmin %} 📚 SQL-admin<br> {% endif %}
 			{% if m.citrixadmin %} 📸 Citrix-admin<br> {% endif %}
 			{% if m.sccmadmin %} 🐛 SCCM-admin<br> {% endif %}
@@ -75,7 +75,7 @@
 		<td>{{ m.profile.dont_expire_password|yesno:"Utløper aldri,Utløper,Vet ikke" }}</td>
 		<td>{{ m.profile.description }}</td>
 		<td>
-			<b>{{m.profile.levtilgangprofil}}</b><br><br>
+			<b>{% for system in m.profile.levtilgangprofil %}<li>{{ system }}</li>{% empty %}Ingen knytning{% endfor %}</b><br><br>
 			{% for gruppe in m.profile.adgrupper.all %}{{gruppe}}<br>{% endfor%}
 		</td>
 	</tr>
