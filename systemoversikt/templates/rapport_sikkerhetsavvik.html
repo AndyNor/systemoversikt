@@ -68,11 +68,11 @@
 {% for s in statistikk %}
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 const data{{forloop.counter}} = {
-	labels: [1,2,3,4],
+	labels: [{% for data in s.tidslinjedata %}"{{ data.date }}",{% endfor %}],
 	datasets: [{
 		backgroundColor: 'rgb(255, 99, 132)',
 		borderColor: 'rgb(255, 99, 132)',
-		data: [1,2,3,4],
+		data: [{% for data in s.tidslinjedata %}"{{ data.count }}",{% endfor %}],
 	}]
 };
 

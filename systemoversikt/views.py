@@ -758,12 +758,6 @@ def o365_avvik(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	from systemoversikt.views import ldap_users_securitygroups
-	# 1 flytte konfigurasjon til database
-	# 2 flytte logikk som sjekker antall til batch job, sjekke hver dag
-	# 3 vise antall nå + historikk her
-
-
 	innhentingsbehov = []
 	for i in RapportGruppemedlemskaper.objects.all().order_by('kategori'):
 		innhentingsbehov.append({
@@ -772,83 +766,10 @@ def o365_avvik(request):
 				"kommentar": i.kommentar,
 				"grupper": [g.common_name for g in i.grupper.all()],
 				"AND_grupper":[g.common_name for g in i.AND_grupper.all()],
+				"tidslinjedata": json.loads(i.tidslinjedata),
 			})
-	"""
-	innhentingsbehov = [
-		{
-			"kategori": "Administrert enhet",
-			"beskrivelse": "Unntak administrert enhet for ordinære brukere",
-			"kommentar": "I tillegg har alle på Citrix/AKS unntak.",
-			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
-			"AND_grupper": [],
-		},
-		{
-			"kategori": "Administrert enhet",
-			"beskrivelse": "Unntak administrert enhet for servicekontoer",
-			"kommentar": "",
-			"grupper": ["DS-OFFICE365SVC_UNNTAK_KJENTENHET",],
-			"AND_grupper": [],
-		},
-		{
-			"kategori": "Multifaktor autentisering",
-			"beskrivelse": "Unntak multifaktor autentisering for servicekontoer",
-			"kommentar": "I tillegg har Citrix/AKS og møteromspaneler unntak.",
-			"grupper": ["DS-OFFICE365SVC_UNNTAK_MFA",],
-			"AND_grupper": [],
-		},
-		{
-			"kategori": "På reise",
-			"beskrivelse": "Unntak fra gule land for ordinære brukere",
-			"kommentar": "",
-			"grupper": ["DS-OFFICE365SPES_UNNTAK_EUROPEISKIP",],
-			"AND_grupper": [],
-		},
-		{
-			"kategori": "På reise",
-			"beskrivelse": "Unntak fra gule land for servicekontoer",
-			"kommentar": "",
-			"grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",],
-			"AND_grupper": [],
-		},
-		{
-			"kategori": "På reise",
-			"beskrivelse": "Unntak fra røde land for ordinære brukere",
-			"kommentar": "",
-			"grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",],
-			"AND_grupper": [],
-		},
-		{
-			"kategori": "Klientplattform",
-			"beskrivelse": "Lokal administrator",
-			"kommentar": "Mulighet for lokaladministrator på klienter via MakeMeAdmin.",
-			"grupper": ["DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT",],
-			"AND_grupper": [],
-		},
-		{
-			"kategori": "Klientplattform",
-			"beskrivelse": "Nettleserutvidelser",
-			"kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede.",
-			"grupper": ["DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE",],
-			"AND_grupper": [],
-		},
-		{
-			"kategori": "Kombinasjon",
-			"beskrivelse": "Både unntak administrert enhet og tilgang fra gule land",
-			"kommentar": "",
-			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
-			"AND_grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP", "DS-OFFICE365SPES_UNNTAK_EUROPEISKIP"],
-		},
-		{
-			"kategori": "Kombinasjon",
-			"beskrivelse": "Både unntak administrert enhet og tilgang fra røde land",
-			"kommentar": "",
-			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
-			"AND_grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",],
-		},
-	]
-	"""
 
-	def konkrete_brukere(grupper):
+	def rapport_konkrete_brukere(grupper):
 		gruppeemdlemmer = set()
 		for gruppe in grupper:
 			try:
@@ -866,7 +787,7 @@ def o365_avvik(request):
 
 		return gruppeemdlemmer
 
-	def hent_statistikk(i):
+	def rapport_hent_statistikk(i):
 		antall = 0
 		if len(i["AND_grupper"]) == 0: # Det er bare ordinære grupper som kan slås opp direkte. Er mye raskere enn å dekode enkeltbrukere.
 			for gruppe in i["grupper"]:
@@ -877,8 +798,8 @@ def o365_avvik(request):
 					messages.error(request, f"fant ikke gruppen {gruppe}")
 					pass
 		else: # Det er 1 eller flere grupper som skal AND-es sammen. Vi må derfor lese ut faktiske identer.
-			gruppeemdlemmer = konkrete_brukere(i["grupper"])
-			AND_gruppemedlemmer = konkrete_brukere(i["AND_grupper"])
+			gruppeemdlemmer = rapport_konkrete_brukere(i["grupper"])
+			AND_gruppemedlemmer = rapport_konkrete_brukere(i["AND_grupper"])
 			medlemmer_snitt = gruppeemdlemmer.intersection(AND_gruppemedlemmer)
 
 			antall = len(medlemmer_snitt)
@@ -889,7 +810,7 @@ def o365_avvik(request):
 
 	statistikk = []
 	for i in innhentingsbehov:
-		statistikk.append(hent_statistikk(i))
+		statistikk.append(rapport_hent_statistikk(i))
 
 	alle_virskomhet = Virksomhet.objects.filter(ordinar_virksomhet=True)
 
