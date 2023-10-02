@@ -11,24 +11,21 @@
 {% block hovedinnhold %}
 
 	<h6>Treff på system- og programvarenavn</h6>
-
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
-
 	{% for system in systemer %}
 		{% include "system_include_vis_ikon.html" with system=system %}
 	{% endfor %}
-
 	{% if aktuelle_programvarer %}
 		{% for p in aktuelle_programvarer %}
 		<div style="margin: 10px;">
 			<a href="{% url 'programvaredetaljer' pk=p.pk %}">
 				<img src="{% static 'programvare.png' %}">
-
 				<br>{{ p.programvarenavn }}</a>
 		</div>
 		{% endfor %}
 	{% endif %}
 	</div>
+
 
 	<hr>
 	<h6>Treff på URL-er</h6>
@@ -46,33 +43,38 @@
 	<hr>
 	<h6>Treff på leverandører</h6>
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr);">
-
 		{% for lev in aktuelle_leverandorer %}
 			<div style="margin: 10px;">
 				<img src="{% static 'leverandor.png' %}">
 				<br><a href="{% url 'leverandor' pk=lev.pk %}">{{ lev }}</a>
 			</div>
 		{% endfor %}
-
 	</div>
+
 
 	<hr>
 	<h6>Treff på tekst i systembeskrivelser</h6>
-
-
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
 	{% for system in potensielle_systemer %}
 		{% include "system_include_vis_ikon.html" with system=system %}
 	{% endfor %}
 	</div>
 
+
 	<hr>
 	<h6>Treff på business sub services</h6>
-
-
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
 	{% for bss in business_services %}
-		<a href="{% url 'cmdb_bss' bss.pk %}">{{bss}}</a>
+		<a href="{% url 'cmdb_bss' bss.pk %}">{{ bss }}</a>
+	{% endfor %}
+	</div>
+
+
+	<hr>
+	<h6>Treff på tilgangsgrupper</h6>
+	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
+	{% for adgr in aktuelle_adgrupper %}
+		<a href="{% url 'adgruppe_detaljer' adgr.pk %}">{{ adgr }}</a>
 	{% endfor %}
 	</div>
 

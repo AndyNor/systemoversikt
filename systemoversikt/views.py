@@ -3253,6 +3253,7 @@ def search(request):
 		aktuelle_leverandorer = Leverandor.objects.filter(leverandor_navn__icontains=search_term)
 		aktuelle_personer = User.objects.filter(username__iexact=search_term)
 		business_services = CMDBRef.objects.filter(navn__icontains=search_term)
+		aktuelle_adgrupper = ADgroup.objects.filter(common_name__icontains=search_term)
 	else:
 		aktuelle_systemer = System.objects.none()
 		potensielle_systemer = System.objects.none()
@@ -3260,6 +3261,7 @@ def search(request):
 		domenetreff = SystemUrl.objects.none()
 		aktuelle_leverandorer = Leverandor.objects.none()
 		business_services = CMDBRef.objects.none()
+		aktuelle_adgrupper = ADgroup.objects.none()
 
 	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
 		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
@@ -3268,6 +3270,7 @@ def search(request):
 	potensielle_systemer = potensielle_systemer.order_by('ibruk', Lower('systemnavn'))
 	aktuelle_programvarer.order_by(Lower('programvarenavn'))
 	domenetreff.order_by(Lower('domene'))
+	aktuelle_adgrupper.order_by(Lower('common_name'))
 
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
 	systemtyper = Systemtype.objects.all()
@@ -3282,6 +3285,7 @@ def search(request):
 		'aktuelle_programvarer': aktuelle_programvarer,
 		'aktuelle_leverandorer': aktuelle_leverandorer,
 		'business_services': business_services,
+		'aktuelle_adgrupper': aktuelle_adgrupper,
 	})
 
 
@@ -5133,14 +5137,28 @@ def adgruppe_detaljer(request, pk):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	render_anyway = True if (request.GET.get('alt') == "ja") else False
+	render_limit = 300
+	rendered = False
 	gruppe = ADgroup.objects.get(pk=pk)
-	member = human_readable_members(json.loads(gruppe.member))
+
+	member = {}
+	memberof = {}
+
+	member_decoded = json.loads(gruppe.member)
+	if (len(member_decoded) <= render_limit) or render_anyway:
+		member = human_readable_members(member_decoded)
+		rendered = True
+
 	memberof = human_readable_members(json.loads(gruppe.memberof))
 
 	return render(request, 'ad_adgruppe_detaljer.html', {
 		"gruppe": gruppe,
 		"member": member,
 		"memberof": memberof,
+		"render_anyway": render_anyway,
+		"render_limit": render_limit,
+		"rendered": rendered,
 	})
 
 

@@ -50,7 +50,12 @@
 
 	<hr>
 	<h6>Medlemer i gruppen</h6>
-	{% include 'cmdb_users_display_include.html' with member=member%}
+	{% if rendered %}
+		{% include 'cmdb_users_display_include.html' with member=member%}
+	{% else %}
+		<h4>Det er over {{ render_limit }} personer</h4>
+		<p><a class="btn btn-link" href="?alt=ja">Vis alle</a> (kan ta lang tid)</p>
+	{% endif %}
 
 
 {% endblock hovedinnhold %}
