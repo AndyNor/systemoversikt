@@ -3,11 +3,6 @@
 
 {% block ekstrameny_programvare %}
 
-	{% if request.user.profile.virksomhet %}
-		{% url 'all_programvarebruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
-			<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-link">Vår bruk av programvare</a>
-	{% endif %}
-
 	{% if user.is_authenticated %}
 		<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer programvare</a>
 

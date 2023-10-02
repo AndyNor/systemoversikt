@@ -153,7 +153,6 @@ urlpatterns = [
 
 	re_path(r'^programvare/alle/$', views.alle_programvarer, name='alle_programvarer'),
 	re_path(r'^programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
-	re_path(r'^virksomhet/programvare/(?P<pk>\d{1,8})/$', views.all_programvarebruk_for_virksomhet, name='all_programvarebruk_for_virksomhet'),
 	re_path(r'^programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
 
 	re_path(r'^ansvarlige/alle/$', views.alle_ansvarlige, name='alle_ansvarlige'),

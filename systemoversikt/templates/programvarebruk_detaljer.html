@@ -18,8 +18,6 @@
 
 <div class="card">
 	<div class="card-body">
-		{% url "all_programvarebruk_for_virksomhet" bruksdetaljer.brukergruppe.pk as url_all_programvarebruk_for_virksomhet %}
-		<h6><a href="{{ url_all_programvarebruk_for_virksomhet }}">All programvarebruk knyttet til {{ bruksdetaljer.brukergruppe }}</a></h6><br>
 		{% if user.is_authenticated %}
 		<p><a href="/admin/systemoversikt/programvarebruk/{{ bruksdetaljer.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">(Rediger detaljer)</a></p>
 		{% endif %}

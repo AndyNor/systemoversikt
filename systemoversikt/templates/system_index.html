@@ -11,10 +11,7 @@
 
 		{% if request.user.profile.virksomhet %}
 			{% url 'all_bruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_systembruk %}
-			<a href="{{ url_systembruk }}" class="btn btn-sm btn-link {% if url_systembruk in request.path %}fremhev{% endif %}">👥 Vår bruk av systemer</a>
-
-			{% url 'all_programvarebruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_all_programvarebruk_for_virksomhet %}
-			<a href="{{ url_all_programvarebruk_for_virksomhet }}" class="btn btn-sm btn-link">👥 Vår bruk av programvare</a>
+			<a href="{{ url_systembruk }}" class="btn btn-sm btn-link {% if url_systembruk in request.path %}fremhev{% endif %}">👥 Vår bruk</a>
 		{% endif %}
 
 

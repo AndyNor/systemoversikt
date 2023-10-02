@@ -3550,28 +3550,6 @@ def alle_programvarer(request):
 
 
 
-def all_programvarebruk_for_virksomhet(request, pk): # KAN SLETTES
-	#Vise all bruk av programvare for en virksomhet
-	required_permissions = ['systemoversikt.view_system']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	virksomhet = Virksomhet.objects.get(pk=pk)
-	virksomhet_pk = pk
-	all_bruk = ProgramvareBruk.objects.filter(brukergruppe=virksomhet_pk).order_by(Lower('programvare__programvarenavn'))
-
-	for bruk in all_bruk:
-		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(programvarer=bruk.programvare.pk).count()
-		bruk.antall_behandlinger = ant
-
-	return render(request, "programvarebruk_alle.html", {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'virksomhet': virksomhet,
-		'all_bruk': all_bruk,
-	})
-
-
 
 def programvarebruksdetaljer(request, pk):
 	#Vise detaljer for bruk av programvare
