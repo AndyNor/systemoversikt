@@ -763,77 +763,90 @@ def o365_avvik(request):
 	# 2 flytte logikk som sjekker antall til batch job, sjekke hver dag
 	# 3 vise antall nå + historikk her
 
+
+	innhentingsbehov = []
+	for i in RapportGruppemedlemskaper.objects.all():
+		innhentingsbehov.append({
+				"kategori": i.kategori,
+				"beskrivelse": i.beskrivelse,
+				"kommentar": i.kommentar,
+				"grupper": [g.common_name for g in i.grupper.all()],
+				"AND_grupper":[g.common_name for g in i.AND_grupper.all()],
+			})
+	"""
 	innhentingsbehov = [
 		{
 			"kategori": "Administrert enhet",
-			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
-			"AND_grupper": None,
 			"beskrivelse": "Unntak administrert enhet for ordinære brukere",
-			"kommentar": "I tillegg har alle på Citrix/AKS unntak."
+			"kommentar": "I tillegg har alle på Citrix/AKS unntak.",
+			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
+			"AND_grupper": [],
 		},
 		{
 			"kategori": "Administrert enhet",
-			"grupper": ["DS-OFFICE365SVC_UNNTAK_KJENTENHET",],
-			"AND_grupper": None,
 			"beskrivelse": "Unntak administrert enhet for servicekontoer",
-			"kommentar": ""
+			"kommentar": "",
+			"grupper": ["DS-OFFICE365SVC_UNNTAK_KJENTENHET",],
+			"AND_grupper": [],
 		},
 		{
 			"kategori": "Multifaktor autentisering",
-			"grupper": ["DS-OFFICE365SVC_UNNTAK_MFA",],
-			"AND_grupper": None,
 			"beskrivelse": "Unntak multifaktor autentisering for servicekontoer",
-			"kommentar": "I tillegg har Citrix/AKS og møteromspaneler unntak."
+			"kommentar": "I tillegg har Citrix/AKS og møteromspaneler unntak.",
+			"grupper": ["DS-OFFICE365SVC_UNNTAK_MFA",],
+			"AND_grupper": [],
 		},
 		{
 			"kategori": "På reise",
-			"grupper": ["DS-OFFICE365SPES_UNNTAK_EUROPEISKIP",],
-			"AND_grupper": None,
 			"beskrivelse": "Unntak fra gule land for ordinære brukere",
-			"kommentar": ""},
+			"kommentar": "",
+			"grupper": ["DS-OFFICE365SPES_UNNTAK_EUROPEISKIP",],
+			"AND_grupper": [],
+		},
 		{
 			"kategori": "På reise",
-			"grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",],
-			"AND_grupper": None,
 			"beskrivelse": "Unntak fra gule land for servicekontoer",
-			"kommentar": ""
+			"kommentar": "",
+			"grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP",],
+			"AND_grupper": [],
 		},
 		{
 			"kategori": "På reise",
-			"grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",],
-			"AND_grupper": None,
 			"beskrivelse": "Unntak fra røde land for ordinære brukere",
-			"kommentar": ""
+			"kommentar": "",
+			"grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",],
+			"AND_grupper": [],
 		},
 		{
 			"kategori": "Klientplattform",
+			"beskrivelse": "Lokal administrator",
+			"kommentar": "Mulighet for lokaladministrator på klienter via MakeMeAdmin.",
 			"grupper": ["DS-SIKKERHETKLIENT_LOKALADMIN_ADMINKLIENT",],
-			"AND_grupper": None,
-			"beskrivelse": "Lokal administrator", "kommentar":
-			"Mulighet for lokaladministrator på klienter via MakeMeAdmin."
+			"AND_grupper": [],
 		},
 		{
 			"kategori": "Klientplattform",
-			"grupper": ["DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE",],
-			"AND_grupper": None,
 			"beskrivelse": "Nettleserutvidelser",
-			"kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede."
+			"kommentar": "Mulighet for å legge til vilkårlige nettleserutvidelser ut over de hvitlistede.",
+			"grupper": ["DS-SIKKERHETKLIENT_NETTLESERUTVIDELSER_INSTALLNETTLE",],
+			"AND_grupper": [],
 		},
 		{
 			"kategori": "Kombinasjon",
+			"beskrivelse": "Både unntak administrert enhet og tilgang fra gule land",
+			"kommentar": "",
 			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
 			"AND_grupper": ["DS-OFFICE365SVC_UNNTAK_EUROPEISKIP", "DS-OFFICE365SPES_UNNTAK_EUROPEISKIP"],
-			"beskrivelse": "Både unntak administrert enhet og tilgang fra gule land",
-			"kommentar": ""
 		},
 		{
 			"kategori": "Kombinasjon",
+			"beskrivelse": "Både unntak administrert enhet og tilgang fra røde land",
+			"kommentar": "",
 			"grupper": ["DS-OFFICE365_OPSJON_IKKEADMINISTRERT", "DS-OFFICE365E5S_OPSJON_IKKEADMINISTRERT"],
 			"AND_grupper": ["DS-OFFICE365SPES_UNNTAK_HOYRISIKO",],
-			"beskrivelse": "Både unntak administrert enhet og tilgang fra røde land",
-			"kommentar": ""
 		},
 	]
+	"""
 
 	def konkrete_brukere(grupper):
 		gruppeemdlemmer = set()
@@ -855,7 +868,7 @@ def o365_avvik(request):
 
 	def hent_statistikk(i):
 		antall = 0
-		if not i["AND_grupper"]: # Det er bare ordinære grupper som kan slås opp direkte. Er mye raskere enn å dekode enkeltbrukere.
+		if len(i["AND_grupper"]) == 0: # Det er bare ordinære grupper som kan slås opp direkte. Er mye raskere enn å dekode enkeltbrukere.
 			for gruppe in i["grupper"]:
 				try:
 					gruppe = ADgroup.objects.get(common_name__iexact=gruppe)

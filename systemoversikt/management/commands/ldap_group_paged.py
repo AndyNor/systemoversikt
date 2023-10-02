@@ -194,7 +194,7 @@ class Command(BaseCommand):
 
 
 		def report(result):
-			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s endrede." % (
+			log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s endrede." % ( # graf over antall grupper over tid er avhengig av denne!
 					result["total_runtime"],
 					result["objects_returned"],
 					result["report_data"]["created"],

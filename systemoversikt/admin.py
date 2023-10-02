@@ -575,6 +575,15 @@ class OppdateringAdmin(admin.ModelAdmin):
 	autocomplete_fields = ('user',)
 
 
+
+@admin.register(RapportGruppemedlemskaper)
+class RapportGruppemedlemskaperAdmin(admin.ModelAdmin):
+	list_display = ('beskrivelse', 'kategori',)
+	autocomplete_fields = ('grupper', 'AND_grupper',)
+
+
+
+
 @admin.register(Leverandor)
 class LeverandorAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]

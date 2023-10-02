@@ -3786,6 +3786,46 @@ VALG_RISIKOVURDERING_BEHOVSVURDERING = (
 )
 
 
+
+class RapportGruppemedlemskaper(models.Model):
+	opprettet = models.DateTimeField(
+			auto_now_add=True,
+			null=True,
+			)
+	kategori = models.CharField(
+			max_length=100,
+			blank=False,
+			null=False,
+			)
+	beskrivelse = models.CharField(
+			max_length=250,
+			blank=False,
+			null=False,
+			)
+	kommentar = models.CharField(
+			max_length=250,
+			blank=True,
+			null=True,
+			)
+	grupper = models.ManyToManyField(
+			to=ADgroup,
+			related_name='rapport_enkel',
+			)
+	AND_grupper = models.ManyToManyField(
+			to=ADgroup,
+			related_name='rapport_kombinasjon',
+			blank=True,
+			)
+
+	def __str__(self):
+		return f'{self.kategori} {self.beskrivelse}'
+
+	class Meta:
+		verbose_name_plural = "Rapport: Innhentingsbehov"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
 class Oppdatering(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",

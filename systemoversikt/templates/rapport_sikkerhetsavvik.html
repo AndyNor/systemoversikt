@@ -32,7 +32,7 @@
 			<td>{{s.beskrivelse}}</td>
 			<td>{{s.medlemmer}}</td>
 			<td>
-				{{s.kommentar}}
+				{{s.kommentar|default:""}}
 				<br><br>
 				definert som medlemskap i følgende grupper:<br>
 				{% for gruppe in s.grupper %}
@@ -49,10 +49,14 @@
 
 				{% if s.konkrete_medlemmer|length > 0 %}
 					<hr>
-					Følgende brukeridenter:<br>
-					{% for b in s.konkrete_medlemmer %}
-						<li>{{ b }}</li>
-					{% endfor %}
+					<button class="btn btn-sm" type="button" data-toggle="collapse" data-target="#collapse{{forloop.counter}}" aria-expanded="false" aria-controls="collapse{{forloop.counter}}">Vis brukeridenter</button>
+					<div class="collapse" id="collapse{{forloop.counter}}">
+						<div class="card card-body">
+						{% for b in s.konkrete_medlemmer %}
+							<li>{{ b }}</li>
+						{% endfor %}
+						</div>
+					</div>
 				{% endif %}
 			</td>
 			<td><div><canvas height="100" id="adgr_chart_{{forloop.counter}}"></canvas></div></td>
