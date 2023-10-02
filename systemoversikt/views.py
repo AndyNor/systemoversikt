@@ -1157,7 +1157,7 @@ def detaljer_vip(request, pk):
 
 	return render(request, 'cmdb_alle_vip.html', {
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
 		'alle_viper': [vip],
 	})
 
@@ -1486,7 +1486,7 @@ def ad_brukerlistesok(request):
 
 	return render(request, 'ad_brukerlistesok.html', {
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
 		'user_search_term': search_raw,
 		'users': users,
 		'not_users': not_users,
@@ -1526,7 +1526,7 @@ def bruker_sok(request):
 
 	return render(request, 'system_brukerdetaljer.html', {
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
 		'search_term': search_term,
 		'users': users,
 	})
@@ -1772,7 +1772,7 @@ def bruker_detaljer(request, pk):
 	user = User.objects.get(pk=pk)
 	return render(request, 'system_brukerdetaljer.html', {
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
 		'users': [user],
 	})
 
@@ -1836,6 +1836,8 @@ def virksomhet_leverandortilgang(request, pk=None):
 	member = human_readable_members(users)
 
 	return render(request, 'virksomhet_leverandortilgang.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'member': member,
 	})
@@ -2362,7 +2364,7 @@ def user_clean_up(request):
 
 	return render(request, "site_home.html", {
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
 	})
 
 
@@ -2375,6 +2377,8 @@ def permissions(request):
 
 	ansvarlige = Ansvarlig.objects.all()
 	return render(request, 'site_permissions.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'ansvarlige': ansvarlige,
 	})
 
@@ -2426,7 +2430,7 @@ def logger(request):
 	recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:300]
 	return render(request, 'site_audit_logger.html', {
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
 		'recent_admin_loggs': recent_admin_loggs,
 	})
 
@@ -2524,7 +2528,7 @@ def logger_autentisering(request):
 	recent_loggs = ApplicationLog.objects.filter(event_type__icontains="Brukerpålogging").order_by('-opprettet')[:1500]
 	return render(request, 'site_logger_audit.html', {
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
 		'recent_loggs': recent_loggs,
 	})
 
@@ -2539,7 +2543,7 @@ def logger_users(request):
 	recent_loggs = UserChangeLog.objects.order_by('-opprettet')[:800]
 	return render(request, 'site_logger_users.html', {
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
 		'recent_loggs': recent_loggs,
 	})
 
@@ -2870,7 +2874,7 @@ def alle_ansvarlige_eksport(request):
 
 	return render(request, 'ansvarlig_eksport.html', {
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
 		'ansvarlige': ansvarlige,
 	})
 
@@ -3637,7 +3641,7 @@ def behandlingsdetaljer(request, pk):
 
 	return render(request, 'behandling_detaljer.html', {
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
 		'behandling': behandling,
 		'siste_endringer': siste_endringer,
 		'siste_endringer_antall': siste_endringer_antall,
@@ -3911,8 +3915,10 @@ def leverandortilgang(request, valgt_gruppe=None):
 		manglende_grupper.sort(key=lambda g : g.common_name)
 
 		return render(request, 'ad_leverandortilgang.html', {
-				"manglende_grupper": manglende_grupper,
-				"leverandortilganger": leverandortilganger,
+			"request": request,
+			"required_permissions": required_permissions,
+			"manglende_grupper": manglende_grupper,
+			"leverandortilganger": leverandortilganger,
 		})
 
 	# må sjekkes, hva om ikke None?
@@ -3928,6 +3934,8 @@ def tbrukere(request):
 	brukere = User.objects.filter(Q(username__istartswith="t-") | Q(username__istartswith="t_")| Q(username__icontains="_t2")).filter(profile__accountdisable=False).order_by("username")
 
 	return render(request, 'ad_tbrukere.html', {
+		"request": request,
+		"required_permissions": required_permissions,
 		"brukere": brukere,
 	})
 
@@ -4090,6 +4098,8 @@ def drifttilgang(request):
 		b.filsensitivt = set(filsensitivt).intersection(set(b.profile.adgrupper.all()))
 
 	return render(request, 'ad_drifttilgang.html', {
+		"request": request,
+		"required_permissions": required_permissions,
 		"brukere": brukere,
 		"tekst_type_konto": tekst_type_konto,
 	})
@@ -4124,6 +4134,8 @@ def prk_userlookup(request):
 		query = ""
 
 	return render(request, 'prk_userlookup.html', {
+		"request": request,
+		"required_permissions": required_permissions,
 		"query": query,
 		"users": users_result,
 	})
@@ -4200,6 +4212,8 @@ def systemer_virksomhet_ansvarlig_for(request, pk):
 			unike_ansvarlige_eiere.add(ansvarlig)
 
 	return render(request, 'virksomhet_systemer_ansvarfor.html', {
+		"request": request,
+		"required_permissions": required_permissions,
 		'virksomhet': virksomhet,
 		'systemer_ansvarlig_for': systemer_ansvarlig_for,
 		'unike_ansvarlige_eiere': list(unike_ansvarlige_eiere),
@@ -4226,6 +4240,8 @@ def systemer_virksomhet_ansvarlig_for_fip(request, pk):
 			unike_ansvarlige_eiere.add(ansvarlig)
 
 	return render(request, 'virksomhet_systemer_ansvarfor.html', {
+		"request": request,
+		"required_permissions": required_permissions,
 		'virksomhet': virksomhet,
 		'systemer_ansvarlig_for': systemer_ansvarlig_for,
 		'unike_ansvarlige_eiere': list(unike_ansvarlige_eiere),
@@ -4562,9 +4578,9 @@ def driftsmodell_virksomhet_klassifisering(request, pk):
 	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet)
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('sikkerhetsnivaa')
 	return render(request, 'alle_systemer_virksomhet_drifter_klassifisering.html', {
-		'virksomhet': virksomhet,
 		'request': request,
-	'required_permissions': formater_permissions(required_permissions),
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': virksomhet,
 		'systemer': systemer_drifter,
 		'driftsmodeller': driftsmodeller,
 	})
@@ -4593,9 +4609,9 @@ def drift_beredskap(request, pk, eier=None):
 		systemer_drifter = ikke_infra
 
 	return render(request, 'systemer_drifter_prioritering.html', {
-		'virksomhet': virksomhet,
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': virksomhet,
 		'systemer': systemer_drifter,
 		'eier': eier,
 	})
@@ -4613,9 +4629,9 @@ def driftsmodell_virksomhet(request, pk):
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
 
 	return render(request, 'system_virksomhet_drifter.html', {
-		'virksomhet': virksomhet,
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': virksomhet,
 		'systemer': systemer_drifter,
 		'driftsmodeller': driftsmodeller,
 	})
@@ -4657,6 +4673,8 @@ def systemer_uten_driftsmodell(request):
 	mangler = System.objects.filter(Q(driftsmodell_foreignkey=None) & ~Q(systemtyper=1))
 
 	return render(request, 'driftsmodell_mangler.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': mangler,
 })
 
@@ -4670,6 +4688,8 @@ def systemer_utfaset(request):
 	systemer = System.objects.filter(livslop_status__in=[6,7]).order_by("-sist_oppdatert")
 
 	return render(request, 'system_utfaset.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
 })
 
@@ -4963,7 +4983,8 @@ def adorgunit_detaljer(request, pk=None):
 	users = User.objects.filter(profile__ou=pk).order_by(Lower('first_name'))
 
 	return render(request, 'ad_adorgunit_detaljer.html', {
-		"required_permissions": required_permissions,
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"ou": ou,
 		"groups": groups,
 		"parent": parent,
@@ -5020,6 +5041,8 @@ def ad_gruppeanalyse(request):
 		sammenfallende = None
 
 	context = {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'form_brukernavn': brukernavn_str,
 		'form_sikkerhetsgrupper': sikkerhetsgrupper_str,
 		'brukers_unike_grupper': brukers_unike_grupper,
@@ -5154,7 +5177,10 @@ def virksomhet_adgruppe_detaljer(request):
 		virksomhetsforkotelse = request.user.profile.virksomhet_innlogget_som.virksomhetsforkortelse
 
 	except:
-		return render(request, 'ad_analyse.html', {})
+		return render(request, 'ad_analyse.html', {
+			'request': request,
+			'required_permissions': formater_permissions(required_permissions),
+		})
 
 	valgt_gruppe = None
 	valgt_gruppe_medlemmer = None
@@ -5183,6 +5209,8 @@ def virksomhet_adgruppe_detaljer(request):
 		search_term = gruppe
 
 	return render(request, 'virksomhet_adgruppe_detaljer.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"valg_grupper": valg_grupper,
 		"valgt_gruppe": valgt_gruppe,
 		"valgt_gruppe_medlemmer": valgt_gruppe_medlemmer,
@@ -5204,6 +5232,8 @@ def ad_analyse(request):
 	antall_tomme = len(adgrupper_tomme)
 
 	return render(request, 'ad_analyse.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"adgrupper_tomme": adgrupper_tomme,
 		"maks": maks,
 		"antall_alle_grupper": antall_alle_grupper,
@@ -5236,6 +5266,8 @@ def alle_adgrupper(request):
 		antall_adgr_tid.append({"label": log.opprettet.strftime("%b %y"), "value": float(re.search(r'sekunder\. (\d+) treff', log.message, re.I).groups()[0])})
 
 	return render(request, 'ad_adgrupper_sok.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"adgrupper": adgrupper,
 		"search_term": search_term,
 		'antall_adgr_tid': antall_adgr_tid,
@@ -6515,6 +6547,8 @@ def cmdb_firewall(request):
 		firewall_openings = []
 
 	return render(request, 'cmdb_brannmur.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'all_openings': firewall_openings,
 		'brannmur_search_term': search_term_raw,
 	})
@@ -6614,6 +6648,8 @@ def ubw_multiselect(request):
 		return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
 
 	return render(request, 'ubw_multiselect.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'post_data': valgte,
 		'valgte_fakturaer': valgte_fakturaer,
 		'form': form,
@@ -6842,6 +6878,8 @@ def ubw_home(request):
 	enheter = UBWRapporteringsenhet.objects.all()
 
 	return render(request, 'ubw_home.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'enheter': enheter,
 	})
 
@@ -6980,6 +7018,8 @@ def ubw_enhet(request, pk):
 		domain = ("%s://%s") % (settings.SITE_SCHEME, settings.SITE_DOMAIN)
 
 		return render(request, 'ubw_enhet.html', {
+			'request': request,
+			'required_permissions': formater_permissions(required_permissions),
 			'enhet': enhet,
 			'uploaded_file': uploaded_file,
 			'nye_fakturaer': nye_fakturaer,
@@ -7049,6 +7089,8 @@ def ubw_ekstra(request, faktura_id, pk=None):
 				return HttpResponseRedirect(reverse('ubw_enhet', kwargs={'pk': enhet.pk}))
 
 		return render(request, 'ubw_ekstra.html', {
+			'request': request,
+			'required_permissions': formater_permissions(required_permissions),
 			'form': form,
 			'faktura': faktura,
 			'enhet': enhet,
@@ -7074,6 +7116,8 @@ def ubw_kategori(request, belongs_to):
 		form = UBWFakturaKategoriForm()
 
 	return render(request, 'ubw_ekstra.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'form': form,
 		'enhet': enhet,
 		'kategori': True,
@@ -7096,6 +7140,8 @@ def ubw_estimat_list(request, belongs_to):
 	estimat = ubw_my_estimates(request, enhet)
 	model = UBWEstimat
 	return render(request, 'ubw_estimat_list.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'estimat': estimat,
 		'model': model,
 		'enhet': enhet,
