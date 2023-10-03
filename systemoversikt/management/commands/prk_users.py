@@ -32,15 +32,13 @@ class Command(BaseCommand):
 
 		print("Laster inn brukere...")
 
-
-		LOCAL_DEBUG = False
 		debug_file = os.path.dirname(os.path.abspath(__file__)) + "/usr.csv"
 
-		if LOCAL_DEBUG == True:
+		if os.environ['THIS_ENV'] == "TEST":
 			with open(debug_file, 'r', encoding='latin-1') as file:
 				datastructure = list(csv.DictReader(file, delimiter=";"))
 
-		else:
+		else: # production code
 			url = os.environ["PRK_USERS_URL"]
 			#apikey = os.environ["PRK_FORM_APIKEY"]
 			headers = {}

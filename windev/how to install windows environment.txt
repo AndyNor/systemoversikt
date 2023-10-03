@@ -1,3 +1,5 @@
+#https://github.com/cgohlke/python-ldap-build/releases
+
 * Installer python (husk env. path) (pip følger med)
 
 * Installer Github desktop

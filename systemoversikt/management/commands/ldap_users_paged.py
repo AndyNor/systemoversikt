@@ -17,6 +17,8 @@ from systemoversikt.models import Virksomhet, ApplicationLog, ADOrgUnit, UserCha
 from django.db.models.functions import Upper
 import json
 import re
+import hashlib
+import os
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -146,16 +148,28 @@ class Command(BaseCommand):
 			first_name = ""
 			if "givenName" in attrs:
 				first_name = attrs["givenName"][0].decode()
+			if os.environ['THIS_ENV'] == "TEST":
+				# fjerne navn i testmiljøet
+				first_name = hashlib.sha256(first_name.encode('utf-8')).hexdigest()[0:24]
 			user.first_name = first_name
 
 			last_name = ""
 			if "sn" in attrs:
 				last_name = attrs["sn"][0].decode()
+			if os.environ['THIS_ENV'] == "TEST":
+				# fjerne navn i testmiljøet
+				last_name = hashlib.sha256(last_name.encode('utf-8')).hexdigest()[0:24]
 			user.last_name = last_name
 
 			email = ""
 			if "mail" in attrs:
 				email = attrs["mail"][0].decode()
+				if os.environ['THIS_ENV'] == "TEST": # innrykk: kan bare splitte hvis vi vet det er en e-postadresse
+					# fjerne navn i testmiljøet
+					email_parts = email.split("@")
+					email_identifier = hashlib.sha256(email_parts[0].encode('utf-8')).hexdigest()[0:24]
+					email_domain = email_parts[1]
+					email = f"{email_identifier}@{email_domain}"
 			user.email = email
 
 			try:
@@ -197,6 +211,9 @@ class Command(BaseCommand):
 				displayName = attrs["displayName"][0].decode()
 			except KeyError:
 				displayName = ""
+			if os.environ['THIS_ENV'] == "TEST":
+				# fjerne navn i testmiljøet
+				displayName = hashlib.sha256(displayName.encode('utf-8')).hexdigest()[0:24]
 			user.profile.displayName = displayName
 
 			user.is_active = True
