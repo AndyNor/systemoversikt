@@ -1,0 +1,22 @@
+﻿{% extends "system_index.html" %}
+{% load static %}
+{% load templatetags %}
+
+{% block overskrift %}
+	Ny funksjonalitet i Kartoteket
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/nyefunksjoner/add/"><span class="edit_button">✎</span>Legg til nyhet</a>
+
+	<hr>
+
+	{% for nyhet in nyheter %}
+		{% url nyhet.reverse_url as url_link %}
+		<a href="/admin/systemoversikt/nyefunksjoner/{{nyhet.pk}}/change/">✎</a><span class="badge badge-light">{{ nyhet.tidspunkt|date:"Y-m-d" }}</span> {{ nyhet.beskrivelse }} <a href="{{ url_link }}"> Gå til siden.</a><br>
+	{% empty %}
+		<p>Ingen nyheter å vise</p>
+	{% endfor %}
+
+{% endblock hovedinnhold %}

@@ -1,4 +1,5 @@
 {% extends "index.html" %}
+{% load templatetags %}
 
 {% block main_content %}
 
@@ -9,25 +10,36 @@
 
 	{% else %}
 
-		{% if required_permissions %}
-			<p>Du mangler følgende rettigheter for å se denne siden:
-				<br>{{ required_permissions }}
-			</p>
-		{% endif %}
-
-		{% if groups %}
-			<p>Dette er de tilgangene du har:
-				{% for group in groups.all %}
-					<br>{{ group }}
-				{% empty %}
-					<br>Ingen
-				{% endfor %}
-			</p>
-		{% endif %}
-
-
 		<p><i>Det er tilgangsstyring via Person og ressurskatalogen (PRK) via skjemaet "(F) System- og behandlingsoversikt".<br>
 		Ta kontakt med din nærmeste PRK-administrator for tildeling av tilgang</i></p>
+
+		Følgende grupper gir tilgang til denne siden:
+		{% for p in required_permissions %}
+			{% group_from_permission p as groups %}
+			{% for g in groups %}
+				<li>{{ g }}</li>
+			{% endfor %}
+		{% endfor %}
+
+
+		<hr>
+		{% if required_permissions %}
+			Du manglet følgende rettigheter for å se denne siden:
+				{% for p in required_permissions %}
+				<li>{{ p }}</li>
+				{% endfor %}
+		{% endif %}
+		<hr>
+		{% if groups %}
+			Dette er tilgangene du har:
+				{% for group in groups.all %}
+					<li>{{ group }}</li>
+				{% empty %}
+					<li>Ingen</li>
+				{% endfor %}
+		{% endif %}
+
+
 
 	{% endif %}
 

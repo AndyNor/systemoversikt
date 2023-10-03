@@ -128,6 +128,11 @@ class HRorgAdmin(admin.ModelAdmin):
 	list_filter = ('active', 'opprettet', 'virksomhet_mor')
 
 
+@admin.register(NyeFunksjoner)
+class NyeFunksjonerAdmin(admin.ModelAdmin):
+	list_display = ('beskrivelse', 'tidspunkt', 'reverse_url',)
+
+
 @admin.register(LOS)
 class LOSAdmin(admin.ModelAdmin):
 	list_display = ('verdi', 'unik_id', 'kategori_ref', 'active',)

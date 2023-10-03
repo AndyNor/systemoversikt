@@ -48,6 +48,18 @@
 	<a class="btn btn-primary btn-sm" href="{% url 'home_chart' %}">Visualisering av systemansvar fordelt på virksomhet</a>
 	<hr>
 
+	<h6>Ny funksjonalitet i Kartoteket</h6>
+	{% for nyhet in nyheter %}
+		{% url nyhet.reverse_url as url_link %}
+		<li><span class="badge badge-light">{{ nyhet.tidspunkt|date:"Y-m-d" }}</span> {{ nyhet.beskrivelse }} <a href="{{ url_link }}"> Gå til siden.</a></li>
+	{% empty %}
+		<p>Ingen nyheter å vise</p>
+	{% endfor %}
+	{% if nyheter|length > 0 %}
+		<br><a href="{% url 'alle_nyheter' %}">Se arkiv</a>
+	{% endif %}
+	<hr>
+
 	<h6>Finn system eller programvare basert på kategori</h6>
 	<ul style="column-count:3;">
 		{% for kategori in kategorier %}

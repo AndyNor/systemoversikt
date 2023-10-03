@@ -4,8 +4,35 @@ from django.utils.html import format_html
 import string
 import random
 from systemoversikt.models import *
+from django.contrib.auth.models import Permission
 
 register = template.Library()
+
+
+@register.simple_tag
+def group_from_permission(permission_str):
+	try:
+		permission_parts = permission_str.split(".")
+		app_label = permission_parts[0]
+		codename = permission_parts[1]
+		permissions = Permission.objects.filter(content_type__app_label=app_label, codename=codename)
+		all_groups = set()
+		for p in permissions:
+			groups = p.group_set.all()
+			for g in groups:
+				all_groups.add(g.name)
+
+		result = []
+		for group_name in list(all_groups):
+			if "/" in group_name:
+				group_name = group_name.replace("/", "")
+
+
+
+		return result
+	except:
+		return f'Ingen treff på rettighet "{permission_str}"'
+
 
 @register.simple_tag(name='fellesinformasjon')
 def fellesinformasjon():
@@ -43,6 +70,7 @@ def get_help_text(instance, field_name):
 
 def id_generator(size=8, chars=string.ascii_uppercase):
 	return ''.join(random.choice(chars) for _ in range(size))
+
 
 @register.simple_tag()
 def explain_collapsed(text):

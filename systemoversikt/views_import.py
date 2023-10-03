@@ -58,6 +58,7 @@ def import_group_permissions(request):
 
 				return render(request, 'site_home.html', {
 					'request': request,
+					'required_permissions': required_permissions,
 				})
 			except:
 				messages.warning(request, 'Filen %s finnes ikke' % (filepath))

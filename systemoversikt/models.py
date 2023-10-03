@@ -82,6 +82,34 @@ class UserChangeLog(models.Model):
 
 
 
+class NyeFunksjoner(models.Model):
+	tidspunkt = models.DateTimeField(
+			verbose_name="Tidspunkt",
+			null=False,
+			blank=False,
+			help_text=u"Kan dateres tilbake i tid.",
+			)
+	beskrivelse = models.TextField(
+			verbose_name="Beskrivelse",
+			blank=False,
+			null=False,
+			help_text=u"Hva får sluttbruker tilgang til å gjøre?",
+			)
+	reverse_url = models.CharField(
+			verbose_name="URL-oppslagstekst",
+			max_length=250,
+			blank=False,
+			null=False,
+			help_text=u"URL-navnet som skal bli til en link.",
+			)
+	def __str__(self):
+		return f'{self.beskrivelse}'
+
+	class Meta:
+		verbose_name_plural = "System: Nye funksjoner"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
 
 class APIKeys(models.Model):
 	sist_oppdatert = models.DateTimeField(

@@ -58,6 +58,7 @@ urlpatterns = [
 	re_path(r'^admin/system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
 	re_path(r'^admin/system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
 	re_path(r'^admin/bruker/logger/$', views.logger_users, name='logger_users'),
+	re_path(r'^admin/nyheter/$', views.alle_nyheter, name='alle_nyheter'),
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 
 
@@ -281,6 +282,6 @@ urlpatterns = [
 	re_path(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
 
 	# Er denne i bruk?
-	re_path(r'^user_clean_up/$', views.user_clean_up, name='user_clean_up'),
+	#re_path(r'^user_clean_up/$', views.user_clean_up, name='user_clean_up'),
 
 ]

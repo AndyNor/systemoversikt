@@ -2331,6 +2331,8 @@ def ansvarlig_bytte(request):
 		resultat = None
 
 	return render(request, "ansvarlig_bytte.html", {
+		'request': request,
+		'required_permissions': required_permissions,
 		'str_ansvarlig_fra': str_ansvarlig_fra,
 		'str_ansvarlig_til': str_ansvarlig_til,
 		'ansvarlig_fra': ansvarlig_fra,
@@ -2339,7 +2341,7 @@ def ansvarlig_bytte(request):
 	})
 
 
-
+"""
 def user_clean_up(request):
 	#Denne funksjonen er laget for å slette/anonymisere data i testmiljøet.
 	required_permissions = ['auth.change_permission']
@@ -2366,6 +2368,7 @@ def user_clean_up(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 	})
+"""
 
 
 
@@ -2549,6 +2552,17 @@ def logger_users(request):
 
 
 
+def alle_nyheter(request):
+	required_permissions = None
+	nyheter = NyeFunksjoner.objects.all().order_by('-tidspunkt')
+	return render(request, 'system_nyheter_alle.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'nyheter': nyheter,
+	})
+
+
+
 def home(request):
 	#Startsiden med oversikt over systemer per kategori
 	required_permissions = None
@@ -2558,6 +2572,7 @@ def home(request):
 	nyeste_programvarer = Programvare.objects.order_by('-pk')[:10]
 	antall_behandlinger = BehandlingerPersonopplysninger.objects.count()
 	kategorier = SystemKategori.objects.all()
+	nyheter = NyeFunksjoner.objects.all().order_by('-tidspunkt')[:5]
 
 	return render(request, 'site_home.html', {
 		'request': request,
@@ -2568,6 +2583,7 @@ def home(request):
 		'antall_programvarer': antall_programvarer,
 		'nyeste_programvarer': nyeste_programvarer,
 		'antall_behandlinger': antall_behandlinger,
+		'nyheter': nyheter,
 	})
 
 
