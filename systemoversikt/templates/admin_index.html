@@ -2,8 +2,14 @@
 
 {% block sidemeny %}
 
-	<h6>Admin</h6>
+	<a href="/admin/" class="btn btn-sm btn-link" >Adminpanelet</a><br>
 
+	{% url 'databasestatistikk' as url_databasestatistikk %}
+	<a href="{{ url_databasestatistikk }}" class="btn btn-sm btn-link {% if url_databasestatistikk in request.path %}fremhev{% endif %}">Tabellstørrelser</a><br>
+
+	<hr>
+
+	<h6>Logger</h6>
 	{% url 'logger' as url_logger %}
 	<a href="{{ url_logger }}" class="btn btn-sm btn-link {% if url_logger in request.path %}fremhev{% endif %}">📖 Redigeringslogg</a><br>
 
@@ -22,14 +28,14 @@
 	{% url 'logger_users' as url_logger_users %}
 	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}">📖 Brukerlogg</a><br>
 
-	<a href="/admin/" class="btn btn-sm btn-link" >Adminpanelet</a><br>
-
+	<hr>
+	<h6>Kategorier</h6>
 	{% url 'valgbarekategorier' as url_valgbarekategorier %}
 	<a href="{{ url_valgbarekategorier }}" class="btn btn-sm btn-link {% if url_valgbarekategorier in request.path %}fremhev{% endif %}">Valgbare kategorier</a><br>
 
-	{% url 'databasestatistikk' as url_databasestatistikk %}
-	<a href="{{ url_databasestatistikk }}" class="btn btn-sm btn-link {% if url_databasestatistikk in request.path %}fremhev{% endif %}">Databasestatistikk</a><br>
 
+	<hr>
+	<h6>Tilgangsstyring</h6>
 	{% url 'minside' as url_minside %}
 	<a href="{{ url_minside }}" class="btn btn-sm btn-link {% if url_minside in request.path %}fremhev{% endif %}">👤 Min pålogging</a><br>
 
@@ -39,6 +45,9 @@
 	{% url 'permissions' as url_permissions %}
 	<a href="{{ url_permissions }}" class="btn btn-sm btn-link {% if url_permissions in request.path %}fremhev{% endif %}">Kartotekbrukere</a>
 
+
+	<hr>
+	<h6>Støttefunksjoner</h6>
 	{% url 'ansvarlig_bytte' as url_ansvarlig_bytte %}
 	<a href="{{ url_ansvarlig_bytte }}" class="btn btn-sm btn-link {% if url_ansvarlig_bytte in request.path %}fremhev{% endif %}">⚙️ Flytt ansvar</a><br>
 

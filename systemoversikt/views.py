@@ -6871,6 +6871,7 @@ def ubw_api(request, pk): #API
 
 
 def ubw_home(request):
+	required_permissions = None
 	enheter = UBWRapporteringsenhet.objects.all()
 
 	return render(request, 'ubw_home.html', {
@@ -6882,6 +6883,8 @@ def ubw_home(request):
 
 
 def ubw_enhet(request, pk):
+	required_permissions = None
+
 	import csv
 	from decimal import Decimal
 	enhet = UBWRapporteringsenhet.objects.get(pk=pk)
@@ -7052,6 +7055,7 @@ def ubw_generer_ekstra_valg(belongs_to): # støttefunksjon
 
 
 def ubw_ekstra(request, faktura_id, pk=None):
+	required_permissions = None
 	faktura = UBWFaktura.objects.get(pk=faktura_id)
 	enhet = faktura.belongs_to
 	kategorier = UBWFakturaKategori.objects.filter(belongs_to=enhet)
@@ -7097,6 +7101,8 @@ def ubw_ekstra(request, faktura_id, pk=None):
 
 
 def ubw_kategori(request, belongs_to):
+	required_permissions = None
+
 	from django.http import HttpResponseRedirect
 	enhet = UBWRapporteringsenhet.objects.get(pk=belongs_to)
 	kategorier = UBWFakturaKategori.objects.filter(belongs_to=enhet)
@@ -7131,6 +7137,8 @@ def ubw_my_estimates(request, enhet):
 
 
 def ubw_estimat_list(request, belongs_to):
+	required_permissions = None
+
 	enhet = get_object_or_404(UBWRapporteringsenhet, pk=belongs_to)
 	kategorier = UBWFakturaKategori.objects.filter(belongs_to=enhet)
 	estimat = ubw_my_estimates(request, enhet)
