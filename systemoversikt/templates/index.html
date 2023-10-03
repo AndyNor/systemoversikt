@@ -208,9 +208,16 @@
 		{% if required_permissions %}
 			<hr>
 			{% for tag in required_permissions %}
+				<span style="float: right;">
 				Krever tilgangene: <span class="badge badge-light">{{ tag }}</span>
 				{% if not forloop.last %} eller {% endif %}
+				</span>
 			{% endfor %}
+		{% else %}
+			<hr>
+			<span style="float: right;">
+			Ingen tilgangsstyring
+			</span>
 		{% endif %}
 	</div>
 
