@@ -26,17 +26,14 @@ def group_from_permission(permission_str):
 		for group_name in list(all_groups):
 			if "/" in group_name:
 				group_name = group_name.replace("/", "")
-			try:
 				ad_group = ADgroup.objects.get(common_name=group_name)
-				print(ad_group)
-				print(ad_group.prkvalg)
-				prk_valg = ad_group.prkvalg.valgnavn
-				result.append(f"{prk_valg} ({group_name})")
-			except:
-				result.append(f"{group_name}")
-
-
+				if len(ad_group.prkvalg.all()) == 1:
+					prk_valg = ad_group.prkvalg.all()[0]
+					result.append(f'{prk_valg.skjemanavn}: Gruppering "{prk_valg.gruppering}" valg "{prk_valg.valgnavn}"')
+				else:
+					result.append(f'Ingen treff i PRK, men AD-gruppen heter "{group_name}"')
 		return result
+
 	except:
 		return f'Ingen treff på rettighet "{permission_str}"'
 

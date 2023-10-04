@@ -13,7 +13,7 @@
 		<p><i>Det er tilgangsstyring via Person og ressurskatalogen (PRK) via skjemaet "(F) System- og behandlingsoversikt".<br>
 		Ta kontakt med din nærmeste PRK-administrator for tildeling av tilgang</i></p>
 
-		Følgende grupper gir tilgang til denne siden:
+		Følgende valg i PRK gir tilgang til denne siden:
 		{% for p in required_permissions %}
 			{% group_from_permission p as groups %}
 			{% for g in groups %}
