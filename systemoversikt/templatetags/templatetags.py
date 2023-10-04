@@ -28,6 +28,8 @@ def group_from_permission(permission_str):
 				group_name = group_name.replace("/", "")
 			try:
 				ad_group = ADgroup.objects.get(common_name=group_name)
+				print(ad_group)
+				print(ad_group.prkvalg)
 				prk_valg = ad_group.prkvalg.valgnavn
 				result.append(f"{prk_valg} ({group_name})")
 			except:
