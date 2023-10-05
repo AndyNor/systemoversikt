@@ -3,22 +3,25 @@ from py_topping.data_connection.sharepoint import da_tran_SP365
 from systemoversikt.models import *
 from django.db import transaction
 import os
+import pandas as pd
+import numpy as np
 
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = ""
+		LOG_EVENT_TYPE = "CMDB business service import"
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+		filnavn = "OK_business_services.xlsx"
+
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
-
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
-
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_business_services.xlsx"
+		source_filepath = f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{filnavn}"
 		source_file = sp.create_link(source_filepath)
 		destination_file = 'systemoversikt/import/OK_business_services.xlsx'
-
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
-
 
 		def konverter_kritikalitet(str):
 			oppslagsmatrise = {
@@ -56,11 +59,6 @@ class Command(BaseCommand):
 		@transaction.atomic
 		def import_business_services():
 
-			LOG_EVENT_TYPE = "CMDB business service import"
-			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
-
-			import pandas as pd
-			import numpy as np
 			dfRaw = pd.read_excel(destination_file)
 			dfRaw = dfRaw.replace(np.nan, '', regex=True)
 			data = dfRaw.to_dict('records')

@@ -12,6 +12,11 @@ from systemoversikt.views import get_ipaddr_instance
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_nettwork_eq"
+		EVENT_TYPE = "CMDB Networkdevice import"
+		FILNAVN = {"filename1": "OK - Kartoteket F5 Big-IP.xlsx", "filename2": "OK - Kartoteket Network Gear.xlsx"}
+
+
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
@@ -19,16 +24,16 @@ class Command(BaseCommand):
 
 
 		# bigip-data
-		filename = "OK - Kartoteket F5 Big-IP.xlsx"
-		source_filepath_bigip = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename
-		destination_file_bigip = 'systemoversikt/import/'+filename
+		filename1 = FILNAVN["filename1"]
+		source_filepath_bigip = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename1
+		destination_file_bigip = 'systemoversikt/import/'+filename1
 		sp.download(sharepoint_location = sp.create_link(source_filepath_bigip), local_location = destination_file_bigip)
 
 
 		# router-data
-		filename = "OK - Kartoteket Network Gear.xlsx"
-		source_filepath_cisco = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename
-		destination_file_cisco = 'systemoversikt/import/'+filename
+		filename2 = FILNAVN["filename2"]
+		source_filepath_cisco = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename2
+		destination_file_cisco = 'systemoversikt/import/'+filename2
 		sp.download(sharepoint_location = sp.create_link(source_filepath_cisco), local_location = destination_file_cisco)
 
 
@@ -118,7 +123,7 @@ class Command(BaseCommand):
 					num_cisco_new,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB Networkdevice import',
+					event_type=EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print(logg_entry_message)

@@ -11,15 +11,19 @@ from django.db.models import Q
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_database_mssql"
+		LOG_EVENT_TYPE = "CMDB database import"
+		FILNAVN = "OK_db_sql.xlsx"
+
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
 
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_db_sql.xlsx"
+		source_filepath = f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{FILNAVN}"
 		source_file = sp.create_link(source_filepath)
-		destination_file = 'systemoversikt/import/OK_db_sql.xlsx'
+		destination_file = f'systemoversikt/import/{FILNAVN}'
 
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
 
@@ -119,7 +123,7 @@ class Command(BaseCommand):
 					len(obsolete_devices),
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB database import',
+					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print("\n")

@@ -18,6 +18,7 @@ import requests # TODO trengs denne?
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "lokal_match_grp_prk"
 		LOG_EVENT_TYPE = 'Oppslag ADgrp-PRKgrp'
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 

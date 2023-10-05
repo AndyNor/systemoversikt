@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-Hensikten med denne koden er å fikse tilknytning virksomhet for DRIFT-brukere
-"""
+# Flytte systemer og programvarer fra en virksomhet til en annen
+# MÅ ALLTID VERIFISERES FØR DEN KJØRES!
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from systemoversikt.models import *
@@ -44,10 +44,11 @@ class Command(BaseCommand):
 
 			#skrive over kommentarer og andre relevante felt
 
-		for behandling in BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=gammel_virksomhet):
-			print("Flytter behandlingen %s fra %s til %s" % (behandling.behandlingen, gammel_virksomhet, ny_virksomhet))
-			behandling.behandlingsansvarlig = ny_virksomhet
-			behandling.save()
+
+		#for behandling in BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=gammel_virksomhet):
+		#	print("Flytter behandlingen %s fra %s til %s" % (behandling.behandlingen, gammel_virksomhet, ny_virksomhet))
+		#	behandling.behandlingsansvarlig = ny_virksomhet
+		#	behandling.save()
 
 
 		# samme for avtale

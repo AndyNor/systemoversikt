@@ -12,14 +12,18 @@ from django.db.models import Q
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_backup"
+		LOG_EVENT_TYPE="CMDB Backup import"
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+		filnavn = "CommVault client backup volume (GB) with BS and NSS relations.xlsx"
+
 		sp = da_tran_SP365(site_url = os.environ['SHAREPOINT_SITE'], client_id = os.environ['SHAREPOINT_CLIENT_ID'], client_secret = os.environ['SHAREPOINT_CLIENT_SECRET'])
-		filename = "CommVault client backup volume (GB) with BS and NSS relations.xlsx"
-		source = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename)
-		destination_file = 'systemoversikt/import/'+filename
+		source = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filnavn)
+		destination_file = 'systemoversikt/import/'+filnavn
 		sp.download(sharepoint_location = source, local_location = destination_file)
 
 		@transaction.atomic
-		def main(destination_file, filename, LOG_EVENT_TYPE):
+		def main(destination_file, filnavn, LOG_EVENT_TYPE):
 
 			if ".xlsx" in destination_file:
 				#dfRaw = pd.read_excel(destination_file, sheet_name='CommVault Summary', skiprows=8, usecols=['Client', 'Total Protected App Size (GB)', 'Source Capture Date', 'Business Sub Service', ])
@@ -89,7 +93,4 @@ class Command(BaseCommand):
 
 
 		#eksekver
-		LOG_EVENT_TYPE="CMDB Backup import"
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
-
-		main(destination_file, filename, LOG_EVENT_TYPE)
+		main(destination_file, filnavn, LOG_EVENT_TYPE)

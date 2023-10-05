@@ -12,15 +12,19 @@ from django.db.models import Q
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_database_oracle"
+		EVENT_TYPE = "CMDB database import (Oracle)"
+		FILENAVN = "OK_db_oracle%20.xlsx"
+
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
 
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_db_oracle%20.xlsx"
+		source_filepath = f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{FILENAVN}"
 		source_file = sp.create_link(source_filepath)
-		destination_file = 'systemoversikt/import/OK_db_oracle.xlsx'
+		destination_file = f'systemoversikt/import/{FILENAVN}'
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
 
 		db_dropped = 0
@@ -158,7 +162,7 @@ class Command(BaseCommand):
 
 		logg_entry_message = f"Oppdaterte størrelser på Orcale-databaser. {antall_endret} endret. {antall_ingen_endring} som før. {antall_feilet} oppslag feilet: {feilet_for}"
 		logg_entry = ApplicationLog.objects.create(
-				event_type='CMDB database import (Oracle)',
+				event_type=EVENT_TYPE,
 				message=logg_entry_message,
 			)
 		print(f"\n {logg_entry_message}")

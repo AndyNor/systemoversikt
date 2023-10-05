@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Hensikten med denne koden er å oppdatere en lokal oversikt over alle AD-grupper, både for å kunne analysere medlemskap, f.eks. tomme grupper, kunne finne grupper som ikke stammer fra AD, kunne følge med på opprettelse av nye grupper.
-"""
-
+#Hensikten med denne koden er å oppdatere en lokal oversikt over alle AD-grupper, både for å kunne analysere medlemskap, f.eks. tomme grupper, kunne finne grupper som ikke stammer fra AD, kunne følge med på opprettelse av nye grupper.
 # TODO slette grupper som ikke ble funnet
 
 from django.core.management.base import BaseCommand
@@ -22,6 +19,7 @@ import json
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "ad_groups"
 		LOG_EVENT_TYPE = "AD group-import"
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 

@@ -20,6 +20,7 @@ import csv
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "prk_org"
 		LOG_EVENT_TYPE = 'PRK org-import'
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 

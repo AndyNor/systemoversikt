@@ -1,8 +1,5 @@
 # -*- coding: utf-8 -*-
-
-"""
-Hensikten med denne koden å
-"""
+# Fjerne "ansvarlige" som ikke lenger har noen roller
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -17,14 +14,12 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.db import transaction
 
-
-# nå importert alle brukere
-
 class Command(BaseCommand):
 	def handle(self, **options):
 		"""
 		Her sjekker vi først klassen "ansvarlige" for alle felter og avhengig av relasjonstype identifiserer vi om det er aktive relasjoner til dem. Normalt benyttes mangetilmange-relasjoner mot ansvarlige, men det er noen få unntak med OneToOneFields.
 		"""
+		INTEGRASJON_KODEORD = "lokal_rydde_ansvarlig"
 		LOG_EVENT_TYPE = 'Rydde ansvarlige'
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 

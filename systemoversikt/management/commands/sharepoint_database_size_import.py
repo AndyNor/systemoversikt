@@ -15,13 +15,16 @@ from django.db.models import Q
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_database_mssql_size"
+		EVENT_TYPE = "CMDB database size import"
+		filename = "A34 - Database - Status and size.xlsx"
+
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
 
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
-		filename = "A34 - Database - Status and size.xlsx"
 
 		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename
 		source_file = sp.create_link(source_filepath)
@@ -87,7 +90,7 @@ class Command(BaseCommand):
 					feilede_oppslag,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB database size import',
+					event_type=EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print("\n")

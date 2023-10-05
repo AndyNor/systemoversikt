@@ -13,26 +13,22 @@ from systemoversikt.views import get_ipaddr_instance
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_dns"
+		FILNAVN = {"filename1": "oslofelles_dns_ekstern", "filename2": "oslofelles_dns_intern"}
+		EVENT_TYPE = "CMDB DNS import"
+
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
-
-
-		filename1 = "oslofelles_dns_ekstern"
-		filename2 = "oslofelles_dns_intern"
-
+		filename1 = FILNAVN["filename1"]
+		filename2 = FILNAVN["filename2"]
 		source_filepath1 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename1
 		source_filepath2 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename2
-
-
 		source_file1 = sp.create_link(source_filepath1)
 		source_file2 = sp.create_link(source_filepath2)
-
-
 		destination_file1 = 'systemoversikt/import/'+filename1
 		destination_file2 = 'systemoversikt/import/'+filename2
-
 		sp.download(sharepoint_location = source_file1, local_location = destination_file1)
 		sp.download(sharepoint_location = source_file2, local_location = destination_file2)
 
@@ -181,7 +177,7 @@ class Command(BaseCommand):
 					antall_slettet,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB DNS import',
+					event_type=EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print("\n")

@@ -1,3 +1,5 @@
+# Hente ut statisikk på utvalgte grupper. Kjøres normalt 1 gang per uke.
+
 from django.core.management.base import BaseCommand
 import os
 import simplejson as json
@@ -9,6 +11,9 @@ from datetime import datetime
 
 class Command(BaseCommand):
 	def handle(self, **options):
+
+		INTEGRASJON_KODEORD = "ad_graph_sikkerhetsavvik"
+		LOG_EVENT_TYPE = 'Grafdata for sikkerhetsavvik'
 
 		# forenklet logikk som kun henter ut tallene nødvendig og lagrer disse
 		innhentingsbehov = []

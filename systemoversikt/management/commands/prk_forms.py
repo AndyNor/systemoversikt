@@ -22,9 +22,10 @@ class Command(BaseCommand):
 		#for v in PRKvalg.objects.all():
 		#	v.delete()
 
+		INTEGRASJON_KODEORD = "prk_forms"
 		LOG_EVENT_TYPE = 'PRK-skjemaimport'
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 		runtime_t0 = time.time()
 
 		url = os.environ["PRK_FORM_URL"]

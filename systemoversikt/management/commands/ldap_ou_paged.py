@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-""" Hensikten med denne koden er """
 
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
@@ -14,6 +13,7 @@ from systemoversikt.models import ApplicationLog, ADOrgUnit
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "ad_ou"
 		LOG_EVENT_TYPE = "AD OU-import"
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 

@@ -14,8 +14,11 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 class Command(BaseCommand):
 	def handle(self, **options):
 
-
+		INTEGRASJON_KODEORD = "sp_firewall"
 		LOG_EVENT_TYPE = "Brannmurimport"
+		FILNAVN = "firewall_2023-05-24.xlsx"
+
+
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 		sp_site = os.environ['SHAREPOINT_SITE']
@@ -23,11 +26,10 @@ class Command(BaseCommand):
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
-		filename = "firewall_2023-05-24.xlsx"
-		source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/" + filename)
+		source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/" + FILNAVN)
 		destination_file = 'systemoversikt/import/firewall.xlsx'
 		sp.download(sharepoint_location=source_file, local_location=destination_file)
-		print(f"Lastet ned {filename}")
+		print(f"Lastet ned {FILNAVN}")
 
 		#debug = []
 

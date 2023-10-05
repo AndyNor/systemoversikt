@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# En enkel skanner for å sjekke om server er et åpent rele. Kjøres ved behov.
+
 from django.core.management.base import BaseCommand
 import smtplib
 

@@ -9,7 +9,7 @@ from django.db import transaction
 import os
 import time
 import sys
-
+from rdflib import Graph, SKOS
 from django.conf import settings
 from systemoversikt.models import LOS, ApplicationLog
 from django.db.models import Q
@@ -17,7 +17,8 @@ from django.db.models import Q
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		from rdflib import Graph, SKOS
+		INTEGRASJON_KODEORD = "los_begreper"
+		LOG_EVENT_TYPE = "Oppdatere LOS"
 
 		ant_nye = 0
 		ant_totalt = 0

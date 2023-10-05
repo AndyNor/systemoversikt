@@ -9,6 +9,9 @@ from systemoversikt.models import System, Database
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "lokal_systemforvalter_seksjon"
+		LOG_EVENT_TYPE = 'Sette seksjon på system'
+
 		for s in System.objects.all():
 			if s.systemforvalter_avdeling_referanse != None:
 				continue # vi overskriver ikke

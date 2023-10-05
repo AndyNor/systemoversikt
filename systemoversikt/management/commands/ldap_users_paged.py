@@ -23,7 +23,9 @@ import os
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		LOG_EVENT_TYPE = "AD user-import"
+		INTEGRASJON_KODEORD = "ad_users"
+		LOG_EVENT_TYPE = "AD user-import" # hentes automatisk
+
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 		# Configuration

@@ -110,6 +110,68 @@ class NyeFunksjoner(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class IntegrasjonKonfigurasjon(models.Model):
+	kodeord = models.CharField(
+		max_length=50,
+		blank=False,
+		null=False,
+		unique=True,
+	)
+	kilde = models.CharField(
+		max_length=100,
+		blank=False,
+		null=False,
+	)
+	protokoll = models.CharField(
+		max_length=30,
+		blank=False,
+		null=False,
+	)
+	informasjon = models.CharField(
+		max_length=250,
+		blank=False,
+		null=False,
+	)
+	sp_filnavn = models.CharField(
+		max_length=150,
+		blank=True,
+		null=True,
+		help_text=u"Kun relevant dersom hentet fra Kartotekets SharePoint-site.",
+	)
+	url = models.URLField(
+		max_length=300,
+		blank=True,
+		null=True,
+	)
+	frekvensangivelse = models.CharField(
+		max_length=300,
+		blank=True,
+		null=True,
+	)
+	dato_sist_oppdatert = models.DateTimeField(
+		help_text=u"Settes automatisk basert på dato fra kilden. Dersom fra SharePoint, settes filens sist oppdaterte dato.",
+		blank=True,
+		null=True,
+	)
+	script_navn = models.CharField(
+		max_length=400,
+		blank=True,
+		null=True,
+		help_text=u"Settes automatisk når script kjører og oppdaterer sist oppdatert.",
+	)
+	log_event_type = models.CharField(
+		max_length=300,
+		blank=False,
+		null=False,
+	)
+
+	def __str__(self):
+		return f'{self.kilde} {self.protokoll} {self.informasjon}'
+
+	class Meta:
+		verbose_name_plural = "System: Integrasjonskonfigurasjoner"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
 
 class APIKeys(models.Model):
 	sist_oppdatert = models.DateTimeField(

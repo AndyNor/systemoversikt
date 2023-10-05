@@ -11,6 +11,11 @@ import numpy as np
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_server_disk"
+		EVENT_TYPE = "CMDB disk import"
+		FILNAVN = "OK_disk_information.xlsx"
+
+
 		runtime_t0 = time.time()
 
 		sp_site = os.environ['SHAREPOINT_SITE']
@@ -19,9 +24,9 @@ class Command(BaseCommand):
 
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_disk_information.xlsx"
+		source_filepath = f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{FILNAVN}"
 		source_file = sp.create_link(source_filepath)
-		destination_file = 'systemoversikt/import/OK_disk_information.xlsx'
+		destination_file = f'systemoversikt/import/{FILNAVN}'
 
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
 
@@ -112,7 +117,7 @@ class Command(BaseCommand):
 					total_runtime,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB disk import',
+					event_type=EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print("\n")

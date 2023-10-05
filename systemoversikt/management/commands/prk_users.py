@@ -22,6 +22,7 @@ from django.db import transaction
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "prk_users"
 		LOG_EVENT_TYPE = 'PRK user import'
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 

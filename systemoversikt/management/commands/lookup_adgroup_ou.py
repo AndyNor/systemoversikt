@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Hensikten med denne koden er
-"""
+
 from django.core.management.base import BaseCommand
 from systemoversikt.models import ADgroup, ADOrgUnit, ApplicationLog
 from django.core.exceptions import ObjectDoesNotExist
@@ -13,6 +11,7 @@ import time
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "lokal_match_grp_ou"
 		LOG_EVENT_TYPE = 'Oppslag ADgrp-ADou'
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
@@ -23,7 +22,7 @@ class Command(BaseCommand):
 				{"dn": "CN=Builtin,DC=oslofelles,DC=oslo,DC=kommune,DC=no", "ou": "Builtin"},
 				{"dn": "CN=Microsoft Exchange System Objects,DC=oslofelles,DC=oslo,DC=kommune,DC=no", "ou": "Microsoft Exchange System Objects"},
 				{"dn": "DC=oslofelles,DC=oslo,DC=kommune,DC=no", "ou": "DC root"},
-				]
+			]
 
 		for item in missing:
 			if len(ADOrgUnit.objects.filter(distinguishedname=item["dn"])) == 0:

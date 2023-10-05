@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-Hensikten med denne koden er å
+DENNE SKAL FASES UT
 """
-
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.db import transaction

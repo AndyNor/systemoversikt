@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Hensikten med denne koden er å
+SKAL UTFASES
 """
 
 from django.core.management.base import BaseCommand

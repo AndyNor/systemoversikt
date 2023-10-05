@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+# DENNE ER HELT MANUELL. KJØRES BARE VED BEHOV
+
 from django.core.management.base import BaseCommand
 from django.conf import settings
 #from mailer import send_mail

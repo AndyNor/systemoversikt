@@ -17,9 +17,13 @@ from systemoversikt.management.commands.sharepoint_server_updater import client_
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_klienter"
 		LOG_EVENT_TYPE = "CMDB klient import"
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+		FILNAVN = {"client_owner_source_filename": "OK_computers.xlsx",  "client_bss_source_filename": "OK_computers_bss.xlsx"}
 
+		client_owner_source_filename = FILNAVN["client_owner_source_filename"]
+		client_bss_source_filename = FILNAVN["client_bss_source_filename"]
 
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
@@ -28,13 +32,13 @@ class Command(BaseCommand):
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
 		print("Laster ned fil med klient-bruker-detaljer")
-		client_owner_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers.xlsx")
-		client_owner_dest_file = 'systemoversikt/import/OK_computers.xlsx'
+		client_owner_source_file = sp.create_link(f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{client_owner_source_filename}")
+		client_owner_dest_file = f'systemoversikt/import/{client_owner_source_filename}'
 		sp.download(sharepoint_location = client_owner_source_file, local_location = client_owner_dest_file)
 
 		print("Laster ned fil med klient-bss kobling")
-		client_bss_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers_bss.xlsx")
-		client_bss_dest_file = 'systemoversikt/import/OK_computers_bss.xlsx'
+		client_bss_source_file = sp.create_link(f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{client_bss_source_filename}")
+		client_bss_dest_file = f'systemoversikt/import/{client_bss_source_filename}'
 		sp.download(sharepoint_location = client_bss_source_file, local_location = client_bss_dest_file)
 
 		@transaction.atomic

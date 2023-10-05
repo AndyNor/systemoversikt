@@ -16,6 +16,10 @@ from systemoversikt.models import *
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_365lisens_populator"
+		EVENT_TYPE = "Lisensforslagtildeler"
+		FILNAVN = "OK_computers.xlsx"
+
 		@transaction.atomic  # for speeding up database performance
 		def run():
 			sp_site = os.environ['SHAREPOINT_SITE']
@@ -25,8 +29,8 @@ class Command(BaseCommand):
 			sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
 			print("Laster ned fil med klient-bruker-detaljer")
-			client_owner_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers.xlsx")
-			client_owner_dest_file = 'systemoversikt/import/OK_computers.xlsx'
+			client_owner_source_file = sp.create_link(f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{FILNAVN}")
+			client_owner_dest_file = f'systemoversikt/import/{FILNAVN}'
 			sp.download(sharepoint_location = client_owner_source_file, local_location = client_owner_dest_file)
 
 			dfRaw = pd.read_excel(client_owner_dest_file)

@@ -1,3 +1,9 @@
+"""
+denne klienten heter "UKE - Kartoteket - Lesetilgang MS Graph"
+og er tildelt rettighetene "Read consent and permission grant policies" og
+"Read all applications"
+"""
+
 from django.core.management.base import BaseCommand
 import os
 import simplejson as json
@@ -9,9 +15,9 @@ from dateutil import parser
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		""" denne klienten heter "UKE - Kartoteket - Lesetilgang MS Graph"
-		og er tildelt rettighetene "Read consent and permission grant policies" og
-		"Read all applications" """
+		INTEGRASJON_KODEORD = "azure_enterprise_applications"
+		LOG_EVENT_TYPE = "Azure enterprise applications"
+
 		client_credential = ClientSecretCredential(
 				tenant_id=os.environ['AZURE_TENANT_ID'],
 				client_id=os.environ['AZURE_ENTERPRISEAPP_CLIENT'],

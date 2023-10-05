@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+#Vi går her igjennom alle avtaler og sjekker om- og når de går ut, slik at vi kan varsle riktige personer.
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
-#from mailer import send_mail
 from django.core.mail import EmailMessage
 from systemoversikt.models import Ansvarlig, Avtale
 from django.urls import reverse
@@ -12,10 +12,8 @@ from datetime import date
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		"""
-		Vi går her igjennom alle avtaler og sjekker om- og når de går ut, slik at vi kan varsle riktige personer.
-		"""
-
+		INTEGRASJON_KODEORD = "epost_avtaleutlop"
+		LOG_EVENT_TYPE = "E-post sende avtaleutløp"
 		varslingstidspunkt = [90, 30] # dager før utløp. merk at det ikke er noen hukommelse på utsendte varsler.
 
 		alle_relevante_avtaler = Avtale.objects.filter(fornying_varsling_valg=True) # kun avtaler hvor det er krysset av for varsling

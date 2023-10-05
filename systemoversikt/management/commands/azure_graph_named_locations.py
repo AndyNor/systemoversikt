@@ -13,6 +13,9 @@ from systemoversikt.models import *
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "azure_named_locations"
+		LOG_EVENT_TYPE = "Azure named locations"
+
 		f = io.open("systemoversikt/management/commands/iso-3166-2.json", mode="r", encoding="utf-8")
 		content = f.read()
 		countrycodes = json.loads(content)

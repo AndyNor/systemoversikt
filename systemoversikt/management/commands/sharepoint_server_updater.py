@@ -15,8 +15,14 @@ client_business_services = ["OK-Tykklient", "OK-Støttemaskin", "OK-Tynnklient"]
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		runtime_t0 = time.time()
+		INTEGRASJON_KODEORD = "sp_virtual_machines"
 		EVENT_TYPE = "CMDB server import"
+		FILNAVN = {"filename_computers": "OK_computers_bss.xlsx", "filename_vmware": "RAW data related to virtual servers.xlsx"}
+
+		filename_computers = FILNAVN["filename_computers"]
+		filename_vmware = FILNAVN["filename_vmware"]
+
+		runtime_t0 = time.time()
 		logg_entry = ApplicationLog.objects.create(event_type=EVENT_TYPE, message="Starter..")
 
 		sp_site = os.environ['SHAREPOINT_SITE']
@@ -25,14 +31,14 @@ class Command(BaseCommand):
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
 		print("Laster ned fil med kobling maskiner-bss")
-		computers_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/OK_computers_bss.xlsx")
-		computers_destination_file = 'systemoversikt/import/OK_computers_bss.xlsx'
+		computers_source_file = sp.create_link(f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{filename_computers}")
+		computers_destination_file = f'systemoversikt/import/{filename_computers}'
 		sp.download(sharepoint_location = computers_source_file, local_location = computers_destination_file)
 
 		print("Laster ned fil med informasjon om disk fra vmware")
-		vmware_source_file = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/RAW data related to virtual servers.xlsx")
+		vmware_source_file = sp.create_link(f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{filename_vmware}")
 		#vmware_destination_file = 'systemoversikt/import/Storage - BS and BSS  A34-Oslo kommune_03-2022.xlsx'
-		vmware_destination_file = 'systemoversikt/import/Virtual Servers.xlsx'
+		vmware_destination_file = f'systemoversikt/import/{filename_vmware}'
 		sp.download(sharepoint_location = vmware_source_file, local_location = vmware_destination_file)
 
 
