@@ -189,6 +189,9 @@ class Command(BaseCommand):
 				description = attrs["description"][0].decode()
 			except KeyError:
 				description = ""
+			if os.environ['THIS_ENV'] == "TEST":
+				# fjerne beskrivelse i testmiljøet
+				description = hashlib.sha256(description.encode('utf-8')).hexdigest()[0:24]
 			user.profile.description = description
 
 			try:

@@ -778,11 +778,17 @@ class RegistrerteAdmin(SimpleHistoryAdmin):
 		return [Lower('kategorinavn')]
 
 
+@admin.register(AnsattID)
+class AnsattIDAdmin(SimpleHistoryAdmin):
+	list_display = ('ansattnr',)
+	search_fields = ('ansattnr',)
+
+
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
 	list_display = ('user', 'virksomhet', 'description', 'usertype', 'from_prk')
 	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'description',)
-	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som', 'adgrupper', 'org_unit',)
+	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som', 'adgrupper', 'org_unit', 'ansattnr_ref')
 	list_filter = ('usertype', 'from_prk')
 
 
