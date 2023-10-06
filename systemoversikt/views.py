@@ -51,6 +51,27 @@ def decode_useraccountcontrol(code): # støttefunksjon for LDAP
 	return active_codes
 
 
+def push_pushover(message):
+	import http.client, urllib
+	import os
+	USER_KEY = os.environ['PUSHOVER_USER_KEY']
+	APP_TOKEN = os.environ['PUSHOVER_APP_TOKEN']
+	if USER_KEY != "" and APP_TOKEN != "":
+		try:
+			conn = http.client.HTTPSConnection("api.pushover.net:443")
+			conn.request("POST", "/1/messages.json",
+				urllib.parse.urlencode({
+					"token": APP_TOKEN,
+					"user": USER_KEY,
+					"message": message,
+				}), { "Content-type": "application/x-www-form-urlencoded" })
+			conn.getresponse()
+		except Exception as e:
+			print(f"Error: Kan ikke sende til pushover grunnet {e}")
+		return
+	print(f"Pushover er ikke konfigurert")
+
+
 def get_client_ip(request): # støttefunksjon
 	try:
 		x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -200,7 +221,7 @@ def ldap_users_securitygroups(user): # støttefunksjon for LDAP
 		memberof = result[0][1]['memberOf']
 		return([g.decode() for g in memberof])
 	except:
-		print("Finner ikke 'memberof' attributtet.")
+		print(f"Finner ikke 'memberof' attributtet for {user}.")
 		#print("error ldap_users_securitygroups(): %s" %(result))
 		return []
 

@@ -44,7 +44,7 @@ class Command(BaseCommand):
 			else:
 				message = "PRK_skjemaimport klarte ikke koble til API"
 				logg_entry = ApplicationLog.objects.create(
-						event_type='PRK-skjemaimport',
+						event_type=LOG_EVENT_TYPE,
 						message=message,
 				)
 				sys.exit(message)

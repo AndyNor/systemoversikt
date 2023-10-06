@@ -1,8 +1,5 @@
-"""
-denne klienten heter "UKE - Kartoteket - Lesetilgang MS Graph"
-og er tildelt rettighetene "Read consent and permission grant policies" og
-"Read all applications"
-"""
+# -*- coding: utf-8 -*-
+#Graph-klienten heter "UKE - Kartoteket - Lesetilgang MS Graph"
 
 from django.core.management.base import BaseCommand
 import os
@@ -11,12 +8,43 @@ from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
 from systemoversikt.models import *
 from dateutil import parser
+from django.utils import timezone
+from datetime import timedelta
+from systemoversikt.views import push_pushover
 
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		# initielt oppsett
 		INTEGRASJON_KODEORD = "azure_enterprise_applications"
 		LOG_EVENT_TYPE = "Azure enterprise applications"
+		KILDE = "Azure Graph"
+		PROTOKOLL = "REST"
+		BESKRIVELSE = "Enterprise applications og nøkkelmetadata"
+		FILNAVN = ""
+		URL = ""
+		FREKVENS = "Hver natt"
+
+		try:
+			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
+		except:
+			int_config = IntegrasjonKonfigurasjon.objects.create(
+					kodeord=INTEGRASJON_KODEORD,
+					kilde=KILDE,
+					protokoll=PROTOKOLL,
+					informasjon=BESKRIVELSE,
+					sp_filnavn=FILNAVN,
+					url=URL,
+					frekvensangivelse=FREKVENS,
+					log_event_type=LOG_EVENT_TYPE,
+				)
+
+		SCRIPT_NAVN = os.path.basename(__file__)
+		int_config.script_navn = SCRIPT_NAVN
+		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.save()
+
+		print(f"Starter {SCRIPT_NAVN}")
 
 		client_credential = ClientSecretCredential(
 				tenant_id=os.environ['AZURE_TENANT_ID'],
@@ -42,6 +70,8 @@ class Command(BaseCommand):
 				s.resourceAppStr = load_appdata["value"][0]["appDisplayName"]
 				s.permission_type = "Delegated"
 				s.isEnabled = permissionScope["isEnabled"]
+				#if permissionScope["value"] == "":
+				#	print(permissionScope)
 				s.value = permissionScope["value"]
 				s.grant_type = [permissionScope["type"]]
 				s.adminConsentDescription = permissionScope["adminConsentDescription"]
@@ -49,7 +79,7 @@ class Command(BaseCommand):
 				s.userConsentDescription = permissionScope["userConsentDescription"]
 				s.userConsentDisplayName = permissionScope["userConsentDisplayName"]
 				s.save()
-				print("Added PermissionScope %s" % permissionScope["value"])
+				#print("Added PermissionScope %s" % permissionScope["value"])
 
 			for role in load_appdata["value"][0]["appRoles"]: # Application
 				try:
@@ -68,14 +98,14 @@ class Command(BaseCommand):
 				s.userConsentDescription = ""
 				s.userConsentDisplayName = ""
 				s.save()
-				print("Added role %s" % role["value"])
+				#print("Added role %s" % role["value"])
 
 			logg_message = "servicePrincipalsLookup() har lastet rettigheter fra %s" % (load_appdata["value"][0]["appDisplayName"])
 			logg_entry = ApplicationLog.objects.create(
-					event_type='Azure Enterprise Applications',
+					event_type=LOG_EVENT_TYPE,
 					message=logg_message,
 				)
-			#print(logg_message)
+			print(logg_message)
 
 
 
@@ -87,13 +117,14 @@ class Command(BaseCommand):
 				return permissionScope
 			except:
 				# den eksisterer ikke, og vi må hente den ned fra Azure.
-				print("Fant ikke permissionScope, slår opp..")
+				print(f"Fant ikke permissionScope {scope_id}. Slår opp..")
 				servicePrincipalsLookup(resourceAppId)
 				try:
 					# vi prøver nok en gang. Nå bør den eksistere.
 					permissionScope = AzurePublishedPermissionScopes.objects.get(scope_id=scope_id)
 					return permissionScope
 				except:
+					print(f"permissionScopeLookup() returnerte Null for app {resourceAppId} med scope_id {scope_id}")
 					return None
 
 
@@ -130,7 +161,7 @@ class Command(BaseCommand):
 					a.createdDateTime = parser.parse(app['createdDateTime']) # 2021-12-15T13:10:38Z
 					a.displayName = app['displayName']
 					a.active = True
-					print(app['displayName'])
+					#print(app['displayName'])
 					#slett tidligere koblinger:
 					a.requiredResourceAccess.clear()
 					for rra in app['requiredResourceAccess']: #publishedPermissionScopes hvis serviceprincipal
@@ -168,7 +199,7 @@ class Command(BaseCommand):
 								)
 
 
-			safety = 10 # må justeres om det blir veldig mange apper.
+			safety = 30 # må justeres om det blir veldig mange apper.
 			results_per_page = 100
 			maximum_results = (safety + 1) * results_per_page
 
@@ -184,8 +215,6 @@ class Command(BaseCommand):
 					break
 
 			#sette applikasjoner som ikke har vært sett til deaktivt
-			from django.utils import timezone
-			from datetime import timedelta
 			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
 			deaktive_apper = AzureApplication.objects.filter(sist_oppdatert__lte=tidligere)
 			for a in deaktive_apper:
@@ -196,10 +225,27 @@ class Command(BaseCommand):
 			#logg dersom vellykket
 			logg_message = "Fant %s applikasjoner. Maksgrense er satt til %s" % (APPLICATIONS_FOUND, maximum_results)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='Azure Enterprise Applications',
+					event_type=LOG_EVENT_TYPE,
 					message=logg_message,
 				)
 			print(logg_message)
 
 
-		load_azure_apps()
+			# lagre sist oppdatert tidspunkt
+			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.save()
+
+		# eksekver
+		try:
+			load_azure_apps()
+
+		except Exception as e:
+			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
+			logg_entry = ApplicationLog.objects.create(
+					event_type=LOG_EVENT_TYPE,
+					message=logg_message,
+					)
+			print(logg_message)
+
+			# Push error
+			push_pushover(f"{SCRIPT_NAVN} feilet")

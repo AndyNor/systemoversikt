@@ -155,7 +155,7 @@ def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, resu
 			sys.exit('ERROR: Could not pull LDAP results: %s' % e)
 		objects_start = objects_returned + 1
 		objects_returned += len(rdata)
-		#print("\nINFO: New page %s (%s-%s)" % (current_round, objects_start, objects_returned))
+		print(f"Page {current_round}: {objects_start}-{objects_returned}")
 
 		# Do stuff with results
 		result_handler(rdata, report_data, existing_objects)
