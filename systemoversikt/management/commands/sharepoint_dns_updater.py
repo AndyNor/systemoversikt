@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_dns"
 		FILNAVN = {"filename1": "oslofelles_dns_ekstern", "filename2": "oslofelles_dns_intern"}
-		EVENT_TYPE = "CMDB DNS import"
+		LOG_EVENT_TYPE = "CMDB DNS import"
 
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
@@ -177,7 +177,7 @@ class Command(BaseCommand):
 					antall_slettet,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type=EVENT_TYPE,
+					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print("\n")

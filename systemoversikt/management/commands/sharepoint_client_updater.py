@@ -19,9 +19,10 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_klienter"
 		LOG_EVENT_TYPE = "CMDB klient import"
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 		FILNAVN = {"client_owner_source_filename": "OK_computers.xlsx",  "client_bss_source_filename": "OK_computers_bss.xlsx"}
 
+
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 		client_owner_source_filename = FILNAVN["client_owner_source_filename"]
 		client_bss_source_filename = FILNAVN["client_bss_source_filename"]
 

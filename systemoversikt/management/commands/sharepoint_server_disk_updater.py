@@ -12,7 +12,7 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_server_disk"
-		EVENT_TYPE = "CMDB disk import"
+		LOG_EVENT_TYPE = "CMDB disk import"
 		FILNAVN = "OK_disk_information.xlsx"
 
 
@@ -117,7 +117,7 @@ class Command(BaseCommand):
 					total_runtime,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type=EVENT_TYPE,
+					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print("\n")

@@ -13,7 +13,7 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_database_oracle"
-		EVENT_TYPE = "CMDB database import (Oracle)"
+		LOG_EVENT_TYPE = "CMDB database import (Oracle)"
 		FILENAVN = "OK_db_oracle%20.xlsx"
 
 		sp_site = os.environ['SHAREPOINT_SITE']
@@ -162,7 +162,7 @@ class Command(BaseCommand):
 
 		logg_entry_message = f"Oppdaterte størrelser på Orcale-databaser. {antall_endret} endret. {antall_ingen_endring} som før. {antall_feilet} oppslag feilet: {feilet_for}"
 		logg_entry = ApplicationLog.objects.create(
-				event_type=EVENT_TYPE,
+				event_type=LOG_EVENT_TYPE,
 				message=logg_entry_message,
 			)
 		print(f"\n {logg_entry_message}")

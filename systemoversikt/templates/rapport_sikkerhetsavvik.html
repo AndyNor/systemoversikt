@@ -65,6 +65,13 @@
 	</tbody>
 	</table>
 
+	<h5>Detaljer per virksomhet</h5>
+	<ol style="column-count: 3;">
+	{% for v in virksomheter %}
+		<li><a href="{% url 'virksomhet_sikkerhetsavvik' pk=v.pk %}">{{ v }}</a></li>
+	{% endfor %}
+	</ol>
+
 {% for s in statistikk %}
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 const data{{forloop.counter}} = {
@@ -107,12 +114,6 @@ document.getElementById('adgr_chart_{{forloop.counter}}'),
 	config{{forloop.counter}}
 );
 </script>
-{% endfor %}
-
-
-<h5>Detaljer</h5>
-{% for v in virksomheter %}
-	<li><a href="{% url 'virksomhet_sikkerhetsavvik' pk=v.pk %}">{{ v }}</a></li>
 {% endfor %}
 
 

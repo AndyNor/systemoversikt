@@ -12,7 +12,7 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "lokal_duplikatteller"
-		EVENT_TYPE = "Duplikatteller"
+		LOG_EVENT_TYPE = "Duplikatteller"
 
 		@transaction.atomic
 		def opptelling():
@@ -27,7 +27,7 @@ class Command(BaseCommand):
 						profile.ansattnr_antall = antall
 						profile.save()
 
-		ApplicationLog.objects.create(event_type="Duplikatteller", message="Starter..")
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Starter..")
 		opptelling()
-		ApplicationLog.objects.create(event_type="Duplikatteller", message="Ferdig med opptelling")
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Ferdig med opptelling")
 

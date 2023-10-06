@@ -13,7 +13,7 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_nettwork_eq"
-		EVENT_TYPE = "CMDB Networkdevice import"
+		LOG_EVENT_TYPE = "CMDB Networkdevice import"
 		FILNAVN = {"filename1": "OK - Kartoteket F5 Big-IP.xlsx", "filename2": "OK - Kartoteket Network Gear.xlsx"}
 
 
@@ -81,7 +81,7 @@ class Command(BaseCommand):
 					num_bigip_new,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB Networkdevice import',
+					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print(logg_entry_message)
@@ -123,7 +123,7 @@ class Command(BaseCommand):
 					num_cisco_new,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type=EVENT_TYPE,
+					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print(logg_entry_message)

@@ -16,14 +16,14 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_virtual_machines"
-		EVENT_TYPE = "CMDB server import"
+		LOG_EVENT_TYPE = "CMDB server import"
 		FILNAVN = {"filename_computers": "OK_computers_bss.xlsx", "filename_vmware": "RAW data related to virtual servers.xlsx"}
 
 		filename_computers = FILNAVN["filename_computers"]
 		filename_vmware = FILNAVN["filename_vmware"]
 
 		runtime_t0 = time.time()
-		logg_entry = ApplicationLog.objects.create(event_type=EVENT_TYPE, message="Starter..")
+		logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Starter..")
 
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
@@ -265,7 +265,7 @@ class Command(BaseCommand):
 					total_runtime,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB server import',
+					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print(logg_entry_message)

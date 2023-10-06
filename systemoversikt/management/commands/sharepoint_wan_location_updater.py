@@ -13,7 +13,7 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_wan"
 		FILNAVN = "WAN_lokasjoner_2023-06-26.xlsx"
-		EVENT_TYPE = "WAN location import"
+		LOG_EVENT_TYPE = "WAN location import"
 
 
 		sp_site = os.environ['SHAREPOINT_SITE']
@@ -27,10 +27,7 @@ class Command(BaseCommand):
 		destination_file = 'systemoversikt/import/'+wan_data_file
 		sp.download(sharepoint_location = source, local_location = destination_file)
 
-
-		LOG_EVENT_TYPE = EVENT_TYPE
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Starter..")
-
 
 		if not ".xlsx" in destination_file:
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Fant ikke riktig datafil..")

@@ -17,7 +17,7 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_365lisens_populator"
-		EVENT_TYPE = "Lisensforslagtildeler"
+		LOG_EVENT_TYPE = "Lisensforslagtildeler"
 		FILNAVN = "OK_computers.xlsx"
 
 		@transaction.atomic  # for speeding up database performance

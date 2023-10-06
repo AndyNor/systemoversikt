@@ -14,7 +14,7 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_vlan"
 		FILNAVN = {"filename1": "infoblox_network_v4.csv", "filename2": "infoblox_network_v6.csv", "filename3": "infoblox_network_container_v4.csv", "filename4": "infoblox_network_container_v6.csv", "sone_design": "VLAN_sikkerhetssoner.xlsx"}
-		EVENT_TYPE = "CMDB VLAN import"
+		LOG_EVENT_TYPE = "CMDB VLAN import"
 
 
 		sp_site = os.environ['SHAREPOINT_SITE']
@@ -157,7 +157,7 @@ class Command(BaseCommand):
 					vlan_deaktivert,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type=f'{EVENT_TYPE} {logmessage}',
+					event_type=f'{LOG_EVENT_TYPE} {logmessage}',
 					message=logg_entry_message,
 				)
 			print("\n")
@@ -165,7 +165,7 @@ class Command(BaseCommand):
 
 		#eksekver
 
-		ApplicationLog.objects.create(event_type=EVENT_TYPE, message="starter..")
+		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 		import_vlan(destination_file1, "ipv4networks", filename1)
 		import_vlan(destination_file1, "ipv6networks", filename2)
@@ -178,8 +178,7 @@ class Command(BaseCommand):
 		@transaction.atomic
 		def ip_vlan_kobling():
 
-			LOG_EVENT_TYPE = f"{EVENT_TYPE} IP-kobling"
-			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+			ApplicationLog.objects.create(event_type=f"{LOG_EVENT_TYPE} IP-kobling", message="starter..")
 			from functools import lru_cache
 
 			@lru_cache(maxsize=128)

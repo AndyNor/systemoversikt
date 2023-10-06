@@ -16,7 +16,7 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_database_mssql_size"
-		EVENT_TYPE = "CMDB database size import"
+		LOG_EVENT_TYPE = "CMDB database size import"
 		FILNAVN = "A34 - Database - Status and size.xlsx"
 
 		sp_site = os.environ['SHAREPOINT_SITE']
@@ -90,7 +90,7 @@ class Command(BaseCommand):
 					feilede_oppslag,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type=EVENT_TYPE,
+					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			print("\n")

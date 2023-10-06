@@ -15,7 +15,7 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_lastbalansering"
 		FILNAVN = {"filename_vip": "OK Load Balancer Services.csv", "filename_pool": "OK Load Balancer Pool Members.csv"}
-		EVENT_TYPE = "CMDB VIP import"
+		LOG_EVENT_TYPE = "CMDB VIP import"
 
 
 		filename_vip = FILNAVN["filename_vip"]
@@ -90,7 +90,7 @@ class Command(BaseCommand):
 					vip_dropped,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type=EVENT_TYPE,
+					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			#print("\n")
@@ -177,7 +177,7 @@ class Command(BaseCommand):
 					pool_not_connected,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type=f'{EVENT_TYPE} pools',
+					event_type=f'{LOG_EVENT_TYPE} pools',
 					message=logg_entry_message,
 				)
 			#print("\n")
