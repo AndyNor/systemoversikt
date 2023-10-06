@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-Hensikten med denne koden er å fikse tilknytning virksomhet for DRIFT-brukere
-"""
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from systemoversikt.models import *
@@ -9,6 +7,9 @@ from django.db.models import Q
 
 class Command(BaseCommand):
 	def handle(self, **options):
+
+		INTEGRASJON_KODEORD = "lokal_match_system_adgrp"
+		EVENT_TYPE = "Koble system og adgrp"
 
 		for s in System.objects.filter(ibruk=True).all():
 			if hasattr(s, "bs_system_referanse"):

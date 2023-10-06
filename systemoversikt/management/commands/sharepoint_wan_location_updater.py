@@ -11,19 +11,24 @@ from django.db.models import Q
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_wan"
+		FILNAVN = "WAN_lokasjoner_2023-06-26.xlsx"
+		EVENT_TYPE = "WAN location import"
+
+
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
 		# WAN location data
-		wan_data_file = "WAN_lokasjoner_2023-06-26.xlsx"
+		wan_data_file = FILNAVN
 		source = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+wan_data_file)
 		destination_file = 'systemoversikt/import/'+wan_data_file
 		sp.download(sharepoint_location = source, local_location = destination_file)
 
 
-		LOG_EVENT_TYPE="WAN location import"
+		LOG_EVENT_TYPE = EVENT_TYPE
 		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Starter..")
 
 

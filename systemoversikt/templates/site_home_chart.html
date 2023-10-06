@@ -30,6 +30,14 @@
 
 	<div id="cy" style="width: {{node_size}}px; height: {{node_size}}px;"></div>
 
+	<hr>
+	<h6>Se også detaljer per virksomhet</h6>
+	<ol style="column-count: 3;">
+	{% for vir in virksomheter %}
+		<li><a href="{% url 'virksomhet' pk=vir.pk %}">{{ vir }}</a></li>
+	{% endfor %}
+	</ol>
+
 {% endblock hovedinnhold %}
 
 {% block script_append %}

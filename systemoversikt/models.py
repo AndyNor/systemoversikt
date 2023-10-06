@@ -133,7 +133,8 @@ class IntegrasjonKonfigurasjon(models.Model):
 		null=False,
 	)
 	sp_filnavn = models.CharField(
-		max_length=150,
+		verbose_name="Filnavn i SharePoint",
+		max_length=500,
 		blank=True,
 		null=True,
 		help_text=u"Kun relevant dersom hentet fra Kartotekets SharePoint-site.",

@@ -12,17 +12,22 @@ import ipaddress
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_vlan"
+		FILNAVN = {"filename1": "infoblox_network_v4.csv", "filename2": "infoblox_network_v6.csv", "filename3": "infoblox_network_container_v4.csv", "filename4": "infoblox_network_container_v6.csv", "sone_design": "VLAN_sikkerhetssoner.xlsx"}
+		EVENT_TYPE = "CMDB VLAN import"
+
+
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
 		# VIP-data
-		filename1 = "infoblox_network_v4.csv"
-		filename2 = "infoblox_network_v6.csv"
-		filename3 = "infoblox_network_container_v4.csv"
-		filename4 = "infoblox_network_container_v6.csv"
-		sone_design = "VLAN_sikkerhetssoner.xlsx"
+		filename1 = FILNAVN["filename1"]
+		filename2 = FILNAVN["filename2"]
+		filename3 = FILNAVN["filename3"]
+		filename4 = FILNAVN["filename4"]
+		sone_design = FILNAVN["sone_design"]
 
 		source1 = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename1)
 		source2 = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename2)
@@ -152,7 +157,7 @@ class Command(BaseCommand):
 					vlan_deaktivert,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB VLAN import ' + logmessage,
+					event_type=f'{EVENT_TYPE} {logmessage}',
 					message=logg_entry_message,
 				)
 			print("\n")
@@ -160,13 +165,12 @@ class Command(BaseCommand):
 
 		#eksekver
 
-		LOG_EVENT_TYPE="CMDB VLAN import"
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+		ApplicationLog.objects.create(event_type=EVENT_TYPE, message="starter..")
 
-		import_vlan(destination_file1, "networks", filename1)
-		import_vlan(destination_file1, "networks", filename2)
-		import_vlan(destination_file2, "ipv4networks", filename3)
-		import_vlan(destination_file3, "ipv6networks", filename4)
+		import_vlan(destination_file1, "ipv4networks", filename1)
+		import_vlan(destination_file1, "ipv6networks", filename2)
+		import_vlan(destination_file2, "ipv4networkcontainers", filename3)
+		import_vlan(destination_file3, "ipv6networkcontainers", filename4)
 
 
 
@@ -174,7 +178,7 @@ class Command(BaseCommand):
 		@transaction.atomic
 		def ip_vlan_kobling():
 
-			LOG_EVENT_TYPE="CMDB VLAN IP-kobling"
+			LOG_EVENT_TYPE = f"{EVENT_TYPE} IP-kobling"
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 			from functools import lru_cache
 

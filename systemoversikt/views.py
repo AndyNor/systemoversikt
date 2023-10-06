@@ -2648,12 +2648,15 @@ def home_chart(request):
 	if node_size > 1920:
 		node_size = 1920
 
+	virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True)
+
 	return render(request, 'site_home_chart.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'nodes': nodes,
 		'node_size': node_size,
 		'system_colors': SYSTEM_COLORS,
+		'virksomheter': virksomheter,
 	})
 
 

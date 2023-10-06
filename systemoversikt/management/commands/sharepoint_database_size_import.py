@@ -17,7 +17,7 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_database_mssql_size"
 		EVENT_TYPE = "CMDB database size import"
-		filename = "A34 - Database - Status and size.xlsx"
+		FILNAVN = "A34 - Database - Status and size.xlsx"
 
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
@@ -26,9 +26,9 @@ class Command(BaseCommand):
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 
 
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename
+		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+FILNAVN
 		source_file = sp.create_link(source_filepath)
-		destination_file = 'systemoversikt/import/'+filename
+		destination_file = 'systemoversikt/import/'+FILNAVN
 
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
 

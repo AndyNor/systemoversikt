@@ -13,6 +13,14 @@ from django.core.exceptions import ObjectDoesNotExist
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "sp_lastbalansering"
+		FILNAVN = {"filename_vip": "OK Load Balancer Services.csv", "filename_pool": "OK Load Balancer Pool Members.csv"}
+		EVENT_TYPE = "CMDB VIP import"
+
+
+		filename_vip = FILNAVN["filename_vip"]
+		filename_pool = FILNAVN["filename_pool"]
+
 		sp_site = os.environ['SHAREPOINT_SITE']
 		client_id = os.environ['SHAREPOINT_CLIENT_ID']
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
@@ -20,10 +28,9 @@ class Command(BaseCommand):
 
 
 		# VIP-data
-		filename = "OK Load Balancer Services.csv"
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename
+		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename_vip
 		source_file = sp.create_link(source_filepath)
-		destination_file = 'systemoversikt/import/'+filename
+		destination_file = 'systemoversikt/import/'+filename_vip
 
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
 
@@ -78,12 +85,12 @@ class Command(BaseCommand):
 
 			logg_entry_message = 'Fant %s VIP-er i %s. %s nye og %s eksisterende.' % (
 					antall_records,
-					filename,
+					filename_vip,
 					vip_new,
 					vip_dropped,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB VIP import',
+					event_type=EVENT_TYPE,
 					message=logg_entry_message,
 				)
 			#print("\n")
@@ -95,10 +102,9 @@ class Command(BaseCommand):
 
 
 		# VIP-pool data
-		filename = "OK Load Balancer Pool Members.csv"
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename
+		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename_pool
 		source_file = sp.create_link(source_filepath)
-		destination_file = 'systemoversikt/import/'+filename
+		destination_file = 'systemoversikt/import/'+filename_pool
 
 		sp.download(sharepoint_location = source_file, local_location = destination_file)
 
@@ -165,13 +171,13 @@ class Command(BaseCommand):
 
 			logg_entry_message = 'Fant %s pools i %s. %s nye. %s unike. %s mangler VIP-knytning.' % (
 					antall_records,
-					filename,
+					filename_pool,
 					pool_new,
 					pool_dropped,
 					pool_not_connected,
 				)
 			logg_entry = ApplicationLog.objects.create(
-					event_type='CMDB VIP pool import',
+					event_type=f'{EVENT_TYPE} pools',
 					message=logg_entry_message,
 				)
 			#print("\n")

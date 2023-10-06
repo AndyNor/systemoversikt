@@ -11,6 +11,9 @@ from django.db import transaction
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		INTEGRASJON_KODEORD = "lokal_duplikatteller"
+		EVENT_TYPE = "Duplikatteller"
+
 		@transaction.atomic
 		def opptelling():
 			idx = 1
