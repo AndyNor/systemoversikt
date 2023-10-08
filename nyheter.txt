@@ -1,0 +1,63 @@
+Leverandørtilgang, også ned på virksomhet
+Kritiske funksjoner
+LOS-kategorisering
+systemprioriteringer
+PRK-administratorer
+word --> html
+rapport driftsbrukere og servicekontoer
+Brannmurregler
+**AD Brukere, flere identer, listesøk
+**AD Grupper og analyseverktøy, tomme grupper
+Enterprise apps og nøkler
+UBW-verktøy
+
+
+Registrere systemer,
+	eier, forvalter,
+	driftsplattform,
+	leverandører,
+	bruk,
+	domener
+	programvare
+	bruk
+	avtaler
+Registrere virksomheter, kontaktpersoner, roller
+	klienter
+	lokasjoner
+	aktive brukere ++
+	Passordutløp
+	egen bruk
+	vi drifter selv
+	vi eier/forvalter
+	innsynsmodul
+	arkivplan
+	Dashboard?
+Begreper
+kopibrukere
+SMART-kartlegging?
+Sertifikatfullmakter?
+o365-lisenser
+Nettverkslokasjoner
+flytt ansvar
+system til programvare
+brukere uten e-post, også ned på virksomhet
+PRK-organisasjonstreet
+PRK-skjema
+OU-strukturen
+BS og BSS
+Servere
+Klienter
+Databaser
+VLAN
+BigIP
+DNS
+IP-søk
+Backup
+Lagring
+Minnebruk
+sertifikatmaler
+verktøy - ordteller, unike elementer, sammenlike
+
+
+
+

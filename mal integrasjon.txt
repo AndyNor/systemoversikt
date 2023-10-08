@@ -1,0 +1,68 @@
+# -*- coding: utf-8 -*-
+from systemoversikt.models import *
+import os
+from django.utils import timezone
+from datetime import timedelta
+from systemoversikt.views import push_pushover
+
+		KILDE = ""
+		PROTOKOLL = ""
+		BESKRIVELSE = ""
+		FILNAVN = ""
+		URL = ""
+		FREKVENS = ""
+
+		try:
+			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
+		except:
+			int_config = IntegrasjonKonfigurasjon.objects.create(
+					kodeord=INTEGRASJON_KODEORD,
+					kilde=KILDE,
+					protokoll=PROTOKOLL,
+					informasjon=BESKRIVELSE,
+					sp_filnavn=FILNAVN,
+					url=URL,
+					frekvensangivelse=FREKVENS,
+					log_event_type=LOG_EVENT_TYPE,
+				)
+
+		SCRIPT_NAVN = os.path.basename(__file__)
+		int_config.script_navn = SCRIPT_NAVN
+		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.save()
+
+		print(f"Starter {SCRIPT_NAVN}")
+
+-------------------------------
+
+		#logg dersom vellykket
+		logg_message = f"Innlasting av named {antall_lagret} lokasjoner utført"
+		logg_entry = ApplicationLog.objects.create(
+				event_type=LOG_EVENT_TYPE,
+				message=logg_message,
+				)
+		print(logg_message)
+
+--------------------------------
+
+		# lagre sist oppdatert tidspunkt
+		int_config.dato_sist_oppdatert = timezone.now()
+		int_config.save()
+
+
+-------------------------------
+		try:
+			ALL KODE
+
+		except Exception as e:
+			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
+			logg_entry = ApplicationLog.objects.create(
+					event_type=LOG_EVENT_TYPE,
+					message=logg_message,
+					)
+			print(logg_message)
+
+			# Push error
+			push_pushover(f"{SCRIPT_NAVN} feilet")
+
+
