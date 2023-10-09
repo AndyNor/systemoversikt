@@ -6662,6 +6662,8 @@ class AzurePublishedPermissionScopes(models.Model):
 		if "Group.Read.All" in self.value:
 			return True
 		return False
+		# "Access selected site collections"
+
 
 	class Meta:
 		verbose_name_plural = "Azure permission scopes"
