@@ -10,6 +10,35 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "lokal_match_system_adgrp"
 		LOG_EVENT_TYPE = "Koble system og adgrp"
+		KILDE = "Lokal"
+		PROTOKOLL = "N/A"
+		BESKRIVELSE = "Koble systemer med AD-grupper"
+		FILNAVN = ""
+		URL = ""
+		FREKVENS = "Hver natt"
+
+		try:
+			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
+		except:
+			int_config = IntegrasjonKonfigurasjon.objects.create(
+					kodeord=INTEGRASJON_KODEORD,
+					kilde=KILDE,
+					protokoll=PROTOKOLL,
+					informasjon=BESKRIVELSE,
+					sp_filnavn=FILNAVN,
+					url=URL,
+					frekvensangivelse=FREKVENS,
+					log_event_type=LOG_EVENT_TYPE,
+				)
+
+		SCRIPT_NAVN = os.path.basename(__file__)
+		int_config.script_navn = SCRIPT_NAVN
+		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.save()
+
+		print(f"Starter {SCRIPT_NAVN}")
+
+
 
 		for s in System.objects.filter(ibruk=True).all():
 			if hasattr(s, "bs_system_referanse"):

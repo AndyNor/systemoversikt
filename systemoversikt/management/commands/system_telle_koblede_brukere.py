@@ -13,6 +13,36 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "lokal_duplikatteller"
 		LOG_EVENT_TYPE = "Duplikatteller"
+		KILDE = "Lokal"
+		PROTOKOLL = "N/A"
+		BESKRIVELSE = "Telle opp koblede brukerkontoer"
+		FILNAVN = ""
+		URL = ""
+		FREKVENS = "Hver natt"
+
+		try:
+			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
+		except:
+			int_config = IntegrasjonKonfigurasjon.objects.create(
+					kodeord=INTEGRASJON_KODEORD,
+					kilde=KILDE,
+					protokoll=PROTOKOLL,
+					informasjon=BESKRIVELSE,
+					sp_filnavn=FILNAVN,
+					url=URL,
+					frekvensangivelse=FREKVENS,
+					log_event_type=LOG_EVENT_TYPE,
+				)
+
+		SCRIPT_NAVN = os.path.basename(__file__)
+		int_config.script_navn = SCRIPT_NAVN
+		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.save()
+
+		print(f"Starter {SCRIPT_NAVN}")
+
+
+
 
 		@transaction.atomic
 		def opptelling():

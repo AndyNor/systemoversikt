@@ -14,8 +14,35 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_lastbalansering"
-		FILNAVN = {"filename_vip": "OK Load Balancer Services.csv", "filename_pool": "OK Load Balancer Pool Members.csv"}
 		LOG_EVENT_TYPE = "CMDB VIP import"
+		KILDE = "Service Now"
+		PROTOKOLL = "SMTP og SharePoint"
+		BESKRIVELSE = "Ekstern og intern IP-adresse, navn på VIP og tilhørende pool med servere"
+		FILNAVN = {"filename_vip": "OK Load Balancer Services.csv", "filename_pool": "OK Load Balancer Pool Members.csv"}
+		URL = ""
+		FREKVENS = "Hver natt"
+
+		try:
+			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
+		except:
+			int_config = IntegrasjonKonfigurasjon.objects.create(
+					kodeord=INTEGRASJON_KODEORD,
+					kilde=KILDE,
+					protokoll=PROTOKOLL,
+					informasjon=BESKRIVELSE,
+					sp_filnavn=FILNAVN,
+					url=URL,
+					frekvensangivelse=FREKVENS,
+					log_event_type=LOG_EVENT_TYPE,
+				)
+
+		SCRIPT_NAVN = os.path.basename(__file__)
+		int_config.script_navn = SCRIPT_NAVN
+		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.save()
+
+		print(f"Starter {SCRIPT_NAVN}")
+
 
 
 		filename_vip = FILNAVN["filename_vip"]

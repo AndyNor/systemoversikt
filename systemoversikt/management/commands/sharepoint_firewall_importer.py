@@ -20,12 +20,12 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_firewall"
 		LOG_EVENT_TYPE = "Brannmurimport"
-		KILDE = ""
-		PROTOKOLL = ""
-		BESKRIVELSE = ""
+		KILDE = "Cisco ASA"
+		PROTOKOLL = "SharePoint"
+		BESKRIVELSE = "Brannmurregler og brannmurgrupper"
 		FILNAVN = "firewall_2023-05-24.xlsx"
 		URL = ""
-		FREKVENS = ""
+		FREKVENS = "Manuelt på forespørsel"
 
 		try:
 			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)

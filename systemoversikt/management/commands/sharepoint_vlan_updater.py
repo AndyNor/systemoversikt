@@ -13,8 +13,37 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_vlan"
-		FILNAVN = {"filename1": "infoblox_network_v4.csv", "filename2": "infoblox_network_v6.csv", "filename3": "infoblox_network_container_v4.csv", "filename4": "infoblox_network_container_v6.csv", "sone_design": "VLAN_sikkerhetssoner.xlsx"}
 		LOG_EVENT_TYPE = "CMDB VLAN import"
+		KILDE = "Infoblox"
+		PROTOKOLL = "SharePoint"
+		BESKRIVELSE = "Nettverkssegmenter med IP-nettverk og beskrivelse"
+		FILNAVN = {"filename1": "infoblox_network_v4.csv", "filename2": "infoblox_network_v6.csv", "filename3": "infoblox_network_container_v4.csv", "filename4": "infoblox_network_container_v6.csv", "sone_design": "VLAN_sikkerhetssoner.xlsx"}
+		URL = "https://infoblox.oslo.kommune.no/ui/"
+		FREKVENS = "Manuelt på forespørsel"
+
+		try:
+			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
+		except:
+			int_config = IntegrasjonKonfigurasjon.objects.create(
+					kodeord=INTEGRASJON_KODEORD,
+					kilde=KILDE,
+					protokoll=PROTOKOLL,
+					informasjon=BESKRIVELSE,
+					sp_filnavn=FILNAVN,
+					url=URL,
+					frekvensangivelse=FREKVENS,
+					log_event_type=LOG_EVENT_TYPE,
+				)
+
+		SCRIPT_NAVN = os.path.basename(__file__)
+		int_config.script_navn = SCRIPT_NAVN
+		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.save()
+
+		print(f"Starter {SCRIPT_NAVN}")
+
+
+
 
 
 		sp_site = os.environ['SHAREPOINT_SITE']

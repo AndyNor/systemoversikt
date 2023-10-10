@@ -18,7 +18,36 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_365lisens_populator"
 		LOG_EVENT_TYPE = "Lisensforslagtildeler"
+		KILDE = "Service Now"
+		PROTOKOLL = "SMTP og SharePoint"
+		BESKRIVELSE = "Bruk av sist innlogget bruker for å fordele lisenser"
 		FILNAVN = "OK_computers.xlsx"
+		URL = ""
+		FREKVENS = "Hver natt (midlertidig)"
+
+		try:
+			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
+		except:
+			int_config = IntegrasjonKonfigurasjon.objects.create(
+					kodeord=INTEGRASJON_KODEORD,
+					kilde=KILDE,
+					protokoll=PROTOKOLL,
+					informasjon=BESKRIVELSE,
+					sp_filnavn=FILNAVN,
+					url=URL,
+					frekvensangivelse=FREKVENS,
+					log_event_type=LOG_EVENT_TYPE,
+				)
+
+		SCRIPT_NAVN = os.path.basename(__file__)
+		int_config.script_navn = SCRIPT_NAVN
+		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.save()
+
+		print(f"Starter {SCRIPT_NAVN}")
+
+
+
 
 		@transaction.atomic  # for speeding up database performance
 		def run():

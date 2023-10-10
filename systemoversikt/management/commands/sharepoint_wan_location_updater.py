@@ -12,8 +12,36 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_wan"
-		FILNAVN = "WAN_lokasjoner_2023-06-26.xlsx"
 		LOG_EVENT_TYPE = "WAN location import"
+		KILDE = "Manuell oversikt"
+		PROTOKOLL = "SharePoint"
+		BESKRIVELSE = "Oversikt over kommunens (nettverks)lokasjoner"
+		FILNAVN = "WAN_lokasjoner_2023-06-26.xlsx"
+		URL = ""
+		FREKVENS = "Manuelt på forespørsel"
+
+		try:
+			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
+		except:
+			int_config = IntegrasjonKonfigurasjon.objects.create(
+					kodeord=INTEGRASJON_KODEORD,
+					kilde=KILDE,
+					protokoll=PROTOKOLL,
+					informasjon=BESKRIVELSE,
+					sp_filnavn=FILNAVN,
+					url=URL,
+					frekvensangivelse=FREKVENS,
+					log_event_type=LOG_EVENT_TYPE,
+				)
+
+		SCRIPT_NAVN = os.path.basename(__file__)
+		int_config.script_navn = SCRIPT_NAVN
+		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.save()
+
+		print(f"Starter {SCRIPT_NAVN}")
+
+
 
 
 		sp_site = os.environ['SHAREPOINT_SITE']
