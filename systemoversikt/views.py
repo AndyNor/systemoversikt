@@ -31,6 +31,29 @@ from django.utils import timezone
 ##########################
 # Støttefunksjoner start #
 ##########################
+def sharepoint_get_file(source_filepath):
+	from office365.runtime.auth.authentication_context import AuthenticationContext
+	from office365.sharepoint.client_context import ClientContext
+	from office365.sharepoint.files.file import File
+	import os
+
+	ctx_auth = AuthenticationContext(os.environ['SHAREPOINT_SITE'])
+	ctx_auth.acquire_token_for_app(os.environ['SHAREPOINT_CLIENT_ID'], os.environ['SHAREPOINT_CLIENT_SECRET'])
+	ctx = ClientContext(os.environ['SHAREPOINT_SITE'], ctx_auth)
+
+	file = ctx.web.get_file_by_server_relative_path(source_filepath).get().execute_query()
+	modified_date = datetime.datetime.strptime(file.time_last_modified, "%Y-%m-%dT%H:%M:%SZ")
+	#print(file.length)
+	FILNAVN = source_filepath.split("/")[-1] # last element of split
+	destination_file = f'systemoversikt/import/{FILNAVN}'
+
+	with open(destination_file, "wb") as local_file:
+		file.download(local_file)
+		ctx.execute_query()
+	print(f"Lastet ned fil til {destination_file} ")
+
+	return {"destination_file": destination_file, "modified_date": modified_date}
+
 def decode_useraccountcontrol(code): # støttefunksjon for LDAP
 	#https://support.microsoft.com/nb-no/help/305144/how-to-use-useraccountcontrol-to-manipulate-user-account-properties
 	active_codes = ""

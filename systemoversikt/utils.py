@@ -134,7 +134,7 @@ def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, resu
 	try:
 		l.simple_bind_s(LDAPUSER, LDAPPASSWORD)
 	except ldap.LDAPError as e:
-		exit('ERROR: LDAP bind failed: %s' % e)
+		raise Exception(f'ERROR: LDAP bind failed: {e}')
 
 	lc = create_controls(PAGESIZE)
 
@@ -147,12 +147,13 @@ def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, resu
 		try:
 			msgid = l.search_ext(BASEDN, LDAP_SCOPE, SEARCHFILTER, ATTRLIST, serverctrls=[lc])
 		except ldap.LDAPError as e:
-			sys.exit('ERROR: LDAP search failed: %s' % e)
+			raise Exception(f'ERROR: LDAP search failed: {e}')
 
 		try:
 			rtype, rdata, rmsgid, serverctrls = l.result3(msgid)
 		except ldap.LDAPError as e:
-			sys.exit('ERROR: Could not pull LDAP results: %s' % e)
+			raise Exception(f'ERROR: Could not pull LDAP results: {e}')
+
 		objects_start = objects_returned + 1
 		objects_returned += len(rdata)
 		print(f"Page {current_round}: {objects_start}-{objects_returned}")

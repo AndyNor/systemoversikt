@@ -20,7 +20,7 @@ class Command(BaseCommand):
 		PROTOKOLL = "SMTP og Sharepoint"
 		BESKRIVELSE = "Tjenestegrupperinger fra driftsleverandør"
 		FILNAVN = "OK_business_services.xlsx"
-		URL = ""
+		URL = "https://soprasteria.service-now.com/"
 		FREKVENS = "Hver natt"
 
 		try:
@@ -47,31 +47,13 @@ class Command(BaseCommand):
 		try:
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
 			source_filepath = f"/sites/74722/Begrensede-dokumenter/{FILNAVN}"
-			destination_file = f'systemoversikt/import/{FILNAVN}'
-
-			from office365.runtime.auth.authentication_context import AuthenticationContext
-			from office365.sharepoint.client_context import ClientContext
-			from office365.sharepoint.files.file import File
-
-			ctx_auth = AuthenticationContext(os.environ['SHAREPOINT_SITE'])
-			ctx_auth.acquire_token_for_app(os.environ['SHAREPOINT_CLIENT_ID'], os.environ['SHAREPOINT_CLIENT_SECRET'])
-			ctx = ClientContext(os.environ['SHAREPOINT_SITE'], ctx_auth)
-
-			#file = File.open_binary(ctx, source_filepath)
-			#created_date = file.get_property('TimeLastModified')
-			#print(created_date)
-
-			with open(destination_file, "wb") as local_file:
-				file = ctx.web.get_file_by_server_relative_url(source_filepath)
-				file.download(local_file)
-				ctx.execute_query()
-				#print(file.properties)
-			print(f"Lastet ned fil til {destination_file} ")
-
-			#with open(destination_file, "wb") as local_file:
-			#	local_file.write(file.content)
-
+			from systemoversikt.views import sharepoint_get_file
+			result = sharepoint_get_file(source_filepath)
+			destination_file = result["destination_file"]
+			modified_date = result["modified_date"]
+			print(f"Filen er datert {modified_date}")
 
 			def konverter_kritikalitet(str):
 				oppslagsmatrise = {
@@ -232,7 +214,7 @@ class Command(BaseCommand):
 			# eksekver
 			import_business_services()
 			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.dato_sist_oppdatert = modified_date # her setter vi filens dato, ikke dato for kjøring av script
 			int_config.save()
 
 
@@ -245,7 +227,7 @@ class Command(BaseCommand):
 			print(logg_message)
 
 			# Push error
-			#push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet")
 
 
 

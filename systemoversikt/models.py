@@ -6600,7 +6600,7 @@ class AzurePublishedPermissionScopes(models.Model):
 		)
 	value = models.CharField(
 		max_length=200,
-		null=False,
+		null=True,
 		)
 	grant_type = models.TextField(
 		# ment å holde en liste (array)

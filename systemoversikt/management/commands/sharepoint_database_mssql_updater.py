@@ -45,18 +45,12 @@ class Command(BaseCommand):
 		print(f"Starter {SCRIPT_NAVN}")
 
 		try:
-
-			sp_site = os.environ['SHAREPOINT_SITE']
-			client_id = os.environ['SHAREPOINT_CLIENT_ID']
-			client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
-
-			sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
-
-			source_filepath = f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{FILNAVN}"
-			source_file = sp.create_link(source_filepath)
-			destination_file = f'systemoversikt/import/{FILNAVN}'
-
-			sp.download(sharepoint_location = source_file, local_location = destination_file)
+			from systemoversikt.views import sharepoint_get_file
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{FILNAVN}"
+			result = sharepoint_get_file(source_filepath)
+			destination_file = result["destination_file"]
+			modified_date = result["modified_date"]
+			print(f"Filen er datert {modified_date}")
 
 
 			@transaction.atomic
@@ -65,6 +59,11 @@ class Command(BaseCommand):
 				db_dropped = 0
 
 				if ".xlsx" in destination_file:
+
+					# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
+					import warnings
+					warnings.simplefilter("ignore")
+
 					dfRaw = pd.read_excel(destination_file)
 					dfRaw = dfRaw.replace(np.nan, '', regex=True)
 					data = dfRaw.to_dict('records')
@@ -77,13 +76,13 @@ class Command(BaseCommand):
 
 				print("Alt lastet, oppdaterer databasen:")
 				for idx, record in enumerate(data):
-					print(".", end="", flush=True)
+					#print(".", end="", flush=True)
 					#if idx % 1000 == 0:
 					#	print("\n%s av %s" % (idx, antall_records))
 
 					db_name = record["Name"]
 					if db_name == "":
-						print("Database mangler navn")
+						print(f"Database mangler navn {record}")
 						db_dropped += 1
 						continue  # Det må være en verdi på denne
 
@@ -157,13 +156,13 @@ class Command(BaseCommand):
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
 					)
-				print("\n")
+				#print("\n")
 				print(logg_entry_message)
 
 			#eksekver
 			import_cmdb_databases()
 			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.dato_sist_oppdatert = modified_date
 			int_config.save()
 
 

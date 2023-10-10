@@ -47,15 +47,22 @@ class Command(BaseCommand):
 		try:
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
-			filnavn = FILNAVN
 
-			sp = da_tran_SP365(site_url = os.environ['SHAREPOINT_SITE'], client_id = os.environ['SHAREPOINT_CLIENT_ID'], client_secret = os.environ['SHAREPOINT_CLIENT_SECRET'])
-			source = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filnavn)
-			destination_file = 'systemoversikt/import/'+filnavn
-			sp.download(sharepoint_location = source, local_location = destination_file)
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{FILNAVN}"
+			from systemoversikt.views import sharepoint_get_file
+			result = sharepoint_get_file(source_filepath)
+			destination_file = result["destination_file"]
+			modified_date = result["modified_date"]
+			print(f"Filen er datert {modified_date}")
+
 
 			@transaction.atomic
-			def main(destination_file, filnavn, LOG_EVENT_TYPE):
+			def main(destination_file, FILNAVN, LOG_EVENT_TYPE):
+
+
+				# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
+				import warnings
+				warnings.simplefilter("ignore")
 
 				if ".xlsx" in destination_file:
 					#dfRaw = pd.read_excel(destination_file, sheet_name='CommVault Summary', skiprows=8, usecols=['Client', 'Total Protected App Size (GB)', 'Source Capture Date', 'Business Sub Service', ])
@@ -102,7 +109,7 @@ class Command(BaseCommand):
 					#print(device)
 					inst = CMDBbackup.objects.create(device=device, device_str=line["Client"])
 
-					print(".", end="", flush=True)
+					#print(".", end="", flush=True)
 
 					size = int(line["Total Protected App Size (GB)"] * 1000 * 1000 * 1000) # fra giga bytes til bytes (antar 1000 siden dette er et diskverktøy)
 					inst.backup_size_bytes = size
@@ -125,10 +132,10 @@ class Command(BaseCommand):
 
 
 			#eksekver
-			main(destination_file, filnavn, LOG_EVENT_TYPE)
+			main(destination_file, FILNAVN, LOG_EVENT_TYPE)
 
 			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.dato_sist_oppdatert = modified_date
 			int_config.save()
 
 

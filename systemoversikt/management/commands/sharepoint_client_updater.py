@@ -51,24 +51,25 @@ class Command(BaseCommand):
 		try:
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+
 			client_owner_source_filename = FILNAVN["client_owner_source_filename"]
 			client_bss_source_filename = FILNAVN["client_bss_source_filename"]
+			from systemoversikt.views import sharepoint_get_file
 
-			sp_site = os.environ['SHAREPOINT_SITE']
-			client_id = os.environ['SHAREPOINT_CLIENT_ID']
-			client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
+			# kobling eier-maskin
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{client_owner_source_filename}"
+			result = sharepoint_get_file(source_filepath)
+			client_owner_dest_file = result["destination_file"]
+			client_owner_modified_date = result["modified_date"]
+			print(f"Filen er datert {client_owner_modified_date}")
 
-			sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
+			# kobling maskin-bss
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{client_bss_source_filename}"
+			result = sharepoint_get_file(source_filepath)
+			client_bss_dest_file = result["destination_file"]
+			client_bss_modified_date = result["modified_date"]
+			print(f"Filen er datert {client_bss_modified_date}")
 
-			print("Laster ned fil med klient-bruker-detaljer")
-			client_owner_source_file = sp.create_link(f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{client_owner_source_filename}")
-			client_owner_dest_file = f'systemoversikt/import/{client_owner_source_filename}'
-			sp.download(sharepoint_location = client_owner_source_file, local_location = client_owner_dest_file)
-
-			print("Laster ned fil med klient-bss kobling")
-			client_bss_source_file = sp.create_link(f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{client_bss_source_filename}")
-			client_bss_dest_file = f'systemoversikt/import/{client_bss_source_filename}'
-			sp.download(sharepoint_location = client_bss_source_file, local_location = client_bss_dest_file)
 
 			@transaction.atomic
 			def import_cmdb_clients():
@@ -116,7 +117,7 @@ class Command(BaseCommand):
 						cmdbdevice = CMDBdevice.objects.get(comp_name=comp_name.lower())
 					except:
 						cmdbdevice = CMDBdevice.objects.create(comp_name=comp_name.lower())
-						print("Opprettet %s" % comp_name.lower())
+						#print("Opprettet %s" % comp_name.lower())
 					return cmdbdevice
 
 
@@ -138,6 +139,11 @@ class Command(BaseCommand):
 				runtime_t0 = time.time()
 
 				# oppdatere alle klienter med bss-kobling
+
+				# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
+				import warnings
+				warnings.simplefilter("ignore")
+
 				dfRaw = pd.read_excel(client_bss_dest_file)
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				client_bss_data = dfRaw.to_dict('records')
@@ -146,15 +152,16 @@ class Command(BaseCommand):
 					ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Feilet, fant ikke klient-bss data.")
 					return
 
+				print("Starter å opprette klientinstanser og koble dem til business sub service")
 				antall_records = len(client_bss_data)
 				for idx, record in enumerate(client_bss_data):
 
-					if idx % 200 == 0:
-						print("\n%s av %s" % (idx, antall_records))
+					if idx % 2000 == 0:
+						print("%s av %s" % (idx, antall_records))
 
 					comp_name = record["Name"].lower()
 					if comp_name == "":
-						print("Maskinen mangler navn")
+						print(f"Maskinen mangler navn: {record}")
 						client_dropped += 1
 						continue  # Det må være en verdi på denne
 
@@ -163,7 +170,7 @@ class Command(BaseCommand):
 						# vi sjekker om enheten finnes fra før
 						cmdbdevice = get_cmdb_instance(comp_name)
 						cmdbdevice.device_type = "KLIENT"
-						print(".", end="", flush=True)
+						#print(".", end="", flush=True)
 					else:
 						continue
 						#cmdbdevice.device_type = "SERVER" # handled in another script
@@ -193,6 +200,7 @@ class Command(BaseCommand):
 
 
 				# Koble maskin til sluttbruker
+				print("Starter å koble maskin til sluttbruker")
 				dfRaw = pd.read_excel(client_owner_dest_file)
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				client_ower_data = dfRaw.to_dict('records')
@@ -202,13 +210,13 @@ class Command(BaseCommand):
 
 				antall_records = len(client_ower_data)
 				for idx, record in enumerate(client_ower_data):
-					print(".", end="", flush=True)
-					if idx % 200 == 0:
-						print("\n%s av %s" % (idx, antall_records))
+					#print(".", end="", flush=True)
+					if idx % 2000 == 0:
+						print("%s av %s" % (idx, antall_records))
 
 					comp_name = record["Name"].lower()
 					if comp_name == "":
-						print("Klienten mangler navn")
+						print(f"Klienten mangler navn: {record}")
 						client_dropped += 1
 						continue  # Det må være en verdi på denne
 
@@ -262,7 +270,7 @@ class Command(BaseCommand):
 			# eksekver
 			import_cmdb_clients()
 			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.dato_sist_oppdatert = client_owner_modified_date
 			int_config.save()
 
 
