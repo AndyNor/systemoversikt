@@ -45,9 +45,10 @@ from systemoversikt.views import push_pushover
 
 --------------------------------
 
-		# lagre sist oppdatert tidspunkt
-		int_config.dato_sist_oppdatert = timezone.now()
-		int_config.save()
+			# lagre sist oppdatert tidspunkt
+			int_config.dato_sist_oppdatert = modified_date
+			int_config.sist_status = logg_entry_message
+			int_config.save()
 
 
 -------------------------------
@@ -66,3 +67,20 @@ from systemoversikt.views import push_pushover
 			push_pushover(f"{SCRIPT_NAVN} feilet")
 
 
++++++
+
+
+			from systemoversikt.views import sharepoint_get_file
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{FILNAVN}"
+			result = sharepoint_get_file(source_filepath)
+			destination_file = result["destination_file"]
+			modified_date = result["modified_date"]
+			print(f"Filen er datert {modified_date}")
+
+
+
+----
+
+				# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
+				import warnings
+				warnings.simplefilter("ignore")

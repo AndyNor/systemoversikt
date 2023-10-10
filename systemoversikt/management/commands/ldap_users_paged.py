@@ -375,6 +375,7 @@ class Command(BaseCommand):
 			report(result)
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.sist_status = log_entry_message
 			int_config.save()
 
 

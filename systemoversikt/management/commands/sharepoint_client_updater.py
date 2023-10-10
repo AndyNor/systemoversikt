@@ -271,6 +271,7 @@ class Command(BaseCommand):
 			import_cmdb_clients()
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = client_owner_modified_date
+			int_config.sist_status = logg_entry_message
 			int_config.save()
 
 

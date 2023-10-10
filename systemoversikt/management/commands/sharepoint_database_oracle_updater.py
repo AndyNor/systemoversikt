@@ -19,12 +19,12 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_database_oracle"
 		LOG_EVENT_TYPE = "CMDB database import (Oracle)"
-		KILDE = "Manuelt script mot servere"
+		KILDE = "ServiceNow"
 		PROTOKOLL = "SMTP og SharePoint"
-		BESKRIVELSE = "Informasjon om størrelser på Oracle-databaser"
-		FILNAVN = "OK_db_oracle%20.xlsx"
+		BESKRIVELSE = "Informasjon om Oracle-databaser, server de kjører på, tjenesteknytning og miljø."
+		FILNAVN = "OK_db_oracle .xlsx"
 		URL = ""
-		FREKVENS = "Manuelt en gang per måned"
+		FREKVENS = "Hver natt"
 
 		try:
 			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
@@ -49,40 +49,30 @@ class Command(BaseCommand):
 
 		try:
 
-			FILENAVN = FILNAVN
-			sp_site = os.environ['SHAREPOINT_SITE']
-			client_id = os.environ['SHAREPOINT_CLIENT_ID']
-			client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
-
-			sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
-
-			source_filepath = f"https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/{FILENAVN}"
-			source_file = sp.create_link(source_filepath)
-			destination_file = f'systemoversikt/import/{FILENAVN}'
-			sp.download(sharepoint_location = source_file, local_location = destination_file)
+			from systemoversikt.views import sharepoint_get_file
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{FILNAVN}"
+			result = sharepoint_get_file(source_filepath)
+			destination_file = result["destination_file"]
+			modified_date = result["modified_date"]
+			print(f"Filen er datert {modified_date}")
 
 			db_dropped = 0
 			db_servermissing = 0
 
-			if ".xlsx" in destination_file:
-				dfRaw = pd.read_excel(destination_file, engine="openpyxl")
-				dfRaw = dfRaw.replace(np.nan, '', regex=True)
-				data = dfRaw.to_dict('records')
+			# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
+			import warnings
+			warnings.simplefilter("ignore")
+			dfRaw = pd.read_excel(destination_file, engine="openpyxl")
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			data = dfRaw.to_dict('records')
 
-			if data == None:
-				print("Problemer med innlasting fra SharePoint: Oracledatabaser")
-				return
-
-
-			print("OK")
 			antall_records = len(data)
 			all_existing_db = list(CMDBdatabase.objects.filter(Q(db_version__startswith="Oracle")))
 
 
-			print("Alt lastet, oppdaterer databasen:")
+			print(f"Oppdaterer databasen. Fant {antall_records} records.")
 			for idx, record in enumerate(data):
-				print(".", end="", flush=True)
-
+				#print(".", end="", flush=True)
 				try:
 					db_fullname = record["Name"] # det er to felt som heter "name" og dette er det første...
 					db_name = record["Name"].split("@")[0] # første del er databasenavnet
@@ -91,7 +81,7 @@ class Command(BaseCommand):
 					db_dropped += 1
 					continue # hvis dette ikke går er navnet feilformattert.
 				if db_name == "":
-					print("Database mangler navn")
+					print(f"Database mangler navn {record}")
 					db_dropped += 1
 					continue  # Det må være en verdi på denne
 
@@ -120,7 +110,7 @@ class Command(BaseCommand):
 						cmdbdevice = CMDBdevice.objects.get(comp_name=db_server)
 						cmdb_db.db_server_modelref = cmdbdevice
 					except:
-						print("\nFeilet for %s" % record)
+						print("Feilet for %s" % record)
 						db_servermissing += 1
 						pass
 
@@ -143,61 +133,16 @@ class Command(BaseCommand):
 			for item in obsolete_devices:
 				item.delete()
 
-			# overskrive størrelser på databaser fra egen eksportfil
-			source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/oracle_database_size.xlsx"
-			source_file = sp.create_link(source_filepath)
-			oracle_size_file = 'systemoversikt/import/oracle_database_size.xlsx'
-			sp.download(sharepoint_location = source_file, local_location = oracle_size_file)
-			print("Lastet ned separat oversikt over filstørrelser..")
-
-			dfRaw = pd.read_excel(oracle_size_file, sheet_name='IS_DATABASE_SIZE_OEM03072023')
-			dfRaw = dfRaw.replace(np.nan, '', regex=True)
-			oracle_size_ez = dfRaw.to_dict('records')
-
-			dfRaw = pd.read_excel(oracle_size_file, sheet_name='SS_DATABASE_SIZE_OEM03072023')
-			dfRaw = dfRaw.replace(np.nan, '', regex=True)
-			oracle_size_is = dfRaw.to_dict('records')
-
-			oracle_sizes = oracle_size_ez + oracle_size_is
-
-			antall_endret = 0
-			antall_ingen_endring = 0
-			antall_feilet = 0
-			feilet_for = []
-
-			database_size_not_found = []
-			for idx, record in enumerate(oracle_sizes):
-				import_databasenavn = record["DATABASE NAME"].strip()
-				import_server = record["SERVER"].strip().split(".")[0]
-				try:
-					dbinstance = CMDBdatabase.objects.get(db_database=import_databasenavn,db_server=import_server)
-				except:
-					#print(f"No matching database with name {import_databasenavn} for server {import_server}")
-					antall_feilet += 1
-					feilet_for.append("%s@%s" % (import_databasenavn, import_server))
-					continue
-
-				new_size = int(record["SIZE IN GB"] * 1000 * 1000 * 1000)
-				old_size = dbinstance.db_u_datafilessizekb
-				if old_size != new_size:
-					dbinstance.db_u_datafilessizekb = new_size
-					dbinstance.save()
-					print(f"Oppdaterte størrelse på {import_databasenavn}@{import_server} fra {old_size} til {new_size}")
-					antall_endret += 1
-				else:
-					#print(f"Ingen endring på {import_databasenavn}")
-					antall_ingen_endring += 1
-
-
-			logg_entry_message = f"Oppdaterte størrelser på Orcale-databaser. {antall_endret} endret. {antall_ingen_endring} som før. {antall_feilet} oppslag feilet: {feilet_for}"
+			logg_entry_message = f"Oppdaterte Orcale-databaser."
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
 				)
-			print(f"\n {logg_entry_message}")
+			print(f"{logg_entry_message}")
 
 			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.dato_sist_oppdatert = modified_date
+			int_config.sist_status = logg_entry_message
 			int_config.save()
 
 

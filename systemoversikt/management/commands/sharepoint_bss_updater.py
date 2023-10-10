@@ -215,6 +215,7 @@ class Command(BaseCommand):
 			import_business_services()
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date # her setter vi filens dato, ikke dato for kjøring av script
+			int_config.sist_status = logg_entry_message
 			int_config.save()
 
 

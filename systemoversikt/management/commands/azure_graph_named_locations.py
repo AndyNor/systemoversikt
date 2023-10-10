@@ -129,9 +129,6 @@ class Command(BaseCommand):
 				d.save()
 				print("%s satt deaktiv" % d)
 
-			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = timezone.now()
-			int_config.save()
 
 			#logg dersom vellykket
 			logg_message = f"Innlasting av named {antall_lagret} lokasjoner utført"
@@ -141,7 +138,13 @@ class Command(BaseCommand):
 					)
 			print(logg_message)
 
+			# lagre sist oppdatert tidspunkt
+			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.sist_status = logg_message
+			int_config.save()
+
 			print("*** Ferdig innlest")
+
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"

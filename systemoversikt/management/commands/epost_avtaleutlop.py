@@ -104,6 +104,7 @@ Hilsen Kartoteket
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.sist_status = logg_message
 			int_config.save()
 
 

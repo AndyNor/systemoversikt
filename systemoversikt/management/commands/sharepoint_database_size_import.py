@@ -12,9 +12,7 @@ import pandas as pd
 import numpy as np
 import os
 
-
 ### Er denne i bruk? ###
-
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -51,14 +49,12 @@ class Command(BaseCommand):
 
 		try:
 
-			sp_site = os.environ['SHAREPOINT_SITE']
-			client_id = os.environ['SHAREPOINT_CLIENT_ID']
-			client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
-			sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
-			source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+FILNAVN
-			source_file = sp.create_link(source_filepath)
-			destination_file = 'systemoversikt/import/'+FILNAVN
-			sp.download(sharepoint_location = source_file, local_location = destination_file)
+			from systemoversikt.views import sharepoint_get_file
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{FILNAVN}"
+			result = sharepoint_get_file(source_filepath)
+			destination_file = result["destination_file"]
+			modified_date = result["modified_date"]
+			print(f"Filen er datert {modified_date}")
 
 			@transaction.atomic
 			def import_cmdb_database_size():
@@ -66,13 +62,12 @@ class Command(BaseCommand):
 				db_dropped = 0
 				feilede_oppslag = 0
 
-				if ".xlsx" in destination_file:
-					dfRaw = pd.read_excel(destination_file, skiprows=2)
-					dfRaw = dfRaw.replace(np.nan, '', regex=True)
-					data = dfRaw.to_dict('records')
-
-				if data == None:
-					return
+				# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
+				import warnings
+				warnings.simplefilter("ignore")
+				dfRaw = pd.read_excel(destination_file, skiprows=2)
+				dfRaw = dfRaw.replace(np.nan, '', regex=True)
+				data = dfRaw.to_dict('records')
 
 				antall_records = len(data)
 
@@ -107,27 +102,26 @@ class Command(BaseCommand):
 					new_size = int(size_str_to_bytes(line["Database Size"]) + size_str_to_bytes(line["Transaction Log Size"]))
 					db.db_u_datafilessizekb = new_size
 					db.save()
-					print("Oppdaterte %s fra %s til %s bytes" % (db_database, old_size, new_size))
+					#print("Oppdaterte %s fra %s til %s bytes" % (db_database, old_size, new_size))
 					#print("%s %s %s %s" % (line["Name"], line["Operational State"], line["Database Size"], line["Transaction Log Size"]))
 
 
-				logg_entry_message = 'Fant %s databaser i %s. %s feilet oppslag mot eksisterende database' % (
+				logg_entry_message = 'Fant %s databaser. %s feilet oppslag mot eksisterende database' % (
 						antall_records,
-						filename,
 						feilede_oppslag,
 					)
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
 					)
-				print("\n")
 				print(logg_entry_message)
 
 			#eksekver
 			import_cmdb_database_size()
 
 			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.dato_sist_oppdatert = modified_date
+			int_config.sist_status = logg_entry_message
 			int_config.save()
 
 

@@ -165,6 +165,11 @@ class IntegrasjonKonfigurasjon(models.Model):
 		blank=False,
 		null=False,
 	)
+	sist_status = models.TextField(
+		verbose_name="Sist status",
+		blank=True,
+		null=True,
+	)
 
 	def __str__(self):
 		return f'{self.kilde} {self.protokoll} {self.informasjon}'

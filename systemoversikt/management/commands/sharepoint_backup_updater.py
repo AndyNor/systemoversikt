@@ -136,6 +136,7 @@ class Command(BaseCommand):
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date
+			int_config.sist_status = logg_entry_message
 			int_config.save()
 
 

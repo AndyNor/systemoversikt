@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
-from systemoversikt.models import *
 from django.utils import timezone
 from datetime import timedelta
 from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
 from py_topping.data_connection.sharepoint import da_tran_SP365
 from django.db import transaction
-import os
+from django.db.models import Q
+from systemoversikt.views import get_ipaddr_instance
+from systemoversikt.models import *
+from systemoversikt.views import push_pushover
 import json, os
 import pandas as pd
 import numpy as np
-from django.db.models import Q
 import ipaddress
-from systemoversikt.views import get_ipaddr_instance
 
 
 class Command(BaseCommand):
@@ -20,12 +20,12 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_dns"
 		LOG_EVENT_TYPE = "CMDB DNS import"
-		KILDE = ""
-		PROTOKOLL = ""
-		BESKRIVELSE = ""
+		KILDE = "DNS bind-servere"
+		PROTOKOLL = "SharePoint"
+		BESKRIVELSE = "DNS-navn, alias og TXT-records"
 		FILNAVN = {"filename1": "oslofelles_dns_ekstern", "filename2": "oslofelles_dns_intern"}
 		URL = ""
-		FREKVENS = ""
+		FREKVENS = "Manuelt på forespørsel"
 
 		try:
 			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
@@ -48,23 +48,23 @@ class Command(BaseCommand):
 
 		print(f"Starter {SCRIPT_NAVN}")
 
+		kilde_ekstern = FILNAVN["filename1"]
+		kilde_intern = FILNAVN["filename2"]
+
 		try:
 
-			sp_site = os.environ['SHAREPOINT_SITE']
-			client_id = os.environ['SHAREPOINT_CLIENT_ID']
-			client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
-			sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
-			filename1 = FILNAVN["filename1"]
-			filename2 = FILNAVN["filename2"]
-			source_filepath1 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename1
-			source_filepath2 = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename2
-			source_file1 = sp.create_link(source_filepath1)
-			source_file2 = sp.create_link(source_filepath2)
-			destination_file1 = 'systemoversikt/import/'+filename1
-			destination_file2 = 'systemoversikt/import/'+filename2
-			sp.download(sharepoint_location = source_file1, local_location = destination_file1)
-			sp.download(sharepoint_location = source_file2, local_location = destination_file2)
+			from systemoversikt.views import sharepoint_get_file
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{kilde_ekstern}"
+			result = sharepoint_get_file(source_filepath)
+			destination_file1 = result["destination_file"]
+			destination_file1_modified_date = result["modified_date"]
+			print(f"Filen er datert {destination_file1_modified_date}")
 
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{kilde_intern}"
+			result = sharepoint_get_file(source_filepath)
+			destination_file2 = result["destination_file"]
+			destination_file2_modified_date = result["modified_date"]
+			print(f"Filen er datert {destination_file2_modified_date}")
 
 			@transaction.atomic
 			def import_dns(source_file, filename_str, domain):
@@ -90,7 +90,7 @@ class Command(BaseCommand):
 						dns_inst.source = source
 
 						dns_inst.save()
-						print("u", end="", flush=True)
+						#print("u", end="", flush=True)
 
 
 					except:
@@ -107,7 +107,7 @@ class Command(BaseCommand):
 						nonlocal count_new
 						count_new += 1
 						dns_inst.save()
-						print("n", end="", flush=True)
+						#print("n", end="", flush=True)
 
 
 					# Linke IP-adresse
@@ -213,15 +213,16 @@ class Command(BaseCommand):
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
 					)
-				print("\n")
 				print(logg_entry_message)
+				return logg_entry_message
 
 			#eksekver
-			import_dns(destination_file1, filename1, u"oslo.kommune.no")
-			import_dns(destination_file2, filename2, u"oslo.kommune.no")
+			logg_entry_message1 = import_dns(destination_file1, destination_file1, u"oslo.kommune.no")
+			logg_entry_message2 = import_dns(destination_file2, destination_file2, u"oslo.kommune.no")
 
 			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.dato_sist_oppdatert = destination_file1_modified_date
+			int_config.sist_status = {logg_entry_message1, logg_entry_message2}
 			int_config.save()
 
 

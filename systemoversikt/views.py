@@ -35,6 +35,7 @@ def sharepoint_get_file(source_filepath):
 	from office365.runtime.auth.authentication_context import AuthenticationContext
 	from office365.sharepoint.client_context import ClientContext
 	from office365.sharepoint.files.file import File
+	from django.utils.timezone import make_aware
 	import os
 
 	ctx_auth = AuthenticationContext(os.environ['SHAREPOINT_SITE'])
@@ -42,7 +43,7 @@ def sharepoint_get_file(source_filepath):
 	ctx = ClientContext(os.environ['SHAREPOINT_SITE'], ctx_auth)
 
 	file = ctx.web.get_file_by_server_relative_path(source_filepath).get().execute_query()
-	modified_date = datetime.datetime.strptime(file.time_last_modified, "%Y-%m-%dT%H:%M:%SZ")
+	modified_date = make_aware(datetime.datetime.strptime(file.time_last_modified, "%Y-%m-%dT%H:%M:%SZ"))
 	#print(file.length)
 	FILNAVN = source_filepath.split("/")[-1] # last element of split
 	destination_file = f'systemoversikt/import/{FILNAVN}'
