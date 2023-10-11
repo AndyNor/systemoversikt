@@ -2,6 +2,7 @@
 from django.core.management.base import BaseCommand
 from systemoversikt.views import push_pushover
 from systemoversikt.models import *
+from django.utils import timezone
 import subprocess
 import os
 
