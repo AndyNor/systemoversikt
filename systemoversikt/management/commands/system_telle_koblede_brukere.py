@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-"""
-Hensikten med denne koden er å fikse tilknytning virksomhet for DRIFT-brukere
-"""
+# Hensikten med denne koden er å fikse tilknytning virksomhet for DRIFT-brukere
+
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from systemoversikt.models import *
 from django.db.models import Q
 from django.db import transaction
+from systemoversikt.models import *
+from django.utils import timezone
+from datetime import timedelta
+from systemoversikt.views import push_pushover
+import os
+
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -42,22 +46,42 @@ class Command(BaseCommand):
 		print(f"Starter {SCRIPT_NAVN}")
 
 
+		try:
+			@transaction.atomic
+			def opptelling():
+				idx = 1
+				antall_profiler = Profile.objects.all().count()
+				for profile in Profile.objects.all():
+					if idx % 5000 == 0:
+						print(f"{idx} av {antall_profiler}")
+					idx += 1
+					if profile.ansattnr_ref != None:
+						antall = len(profile.ansattnr_ref.userprofile.all())
+						if profile.ansattnr_antall != antall:
+							profile.ansattnr_antall = antall
+							profile.save()
+
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Starter..")
+			opptelling()
+			logg_entry_message = "Ferdig med opptelling"
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
+			print(logg_entry_message)
+
+			# lagre sist oppdatert tidspunkt
+			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.sist_status = logg_entry_message
+			int_config.save()
 
 
-		@transaction.atomic
-		def opptelling():
-			idx = 1
-			for profile in Profile.objects.all():
-				if idx % 1000 == 0:
-					print("%s" % idx)
-				idx += 1
-				if profile.ansattnr_ref != None:
-					antall = len(profile.ansattnr_ref.userprofile.all())
-					if profile.ansattnr_antall != antall:
-						profile.ansattnr_antall = antall
-						profile.save()
 
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Starter..")
-		opptelling()
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Ferdig med opptelling")
+		except Exception as e:
+			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
+			logg_entry = ApplicationLog.objects.create(
+					event_type=LOG_EVENT_TYPE,
+					message=logg_message,
+					)
+			print(logg_message)
+
+			# Push error
+			push_pushover(f"{SCRIPT_NAVN} feilet")
 

@@ -1,6 +1,10 @@
+# -*- coding: utf-8 -*-
+from systemoversikt.models import *
+from django.utils import timezone
+from datetime import timedelta
+from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
 from py_topping.data_connection.sharepoint import da_tran_SP365
-from systemoversikt.models import *
 from django.db import transaction
 import os, sys
 import json
@@ -41,77 +45,88 @@ class Command(BaseCommand):
 
 		print(f"Starter {SCRIPT_NAVN}")
 
+		try:
 
 
+			from systemoversikt.views import sharepoint_get_file
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{FILNAVN}"
+			result = sharepoint_get_file(source_filepath)
+			destination_file = result["destination_file"]
+			modified_date = result["modified_date"]
+			print(f"Filen er datert {modified_date}")
 
-		sp_site = os.environ['SHAREPOINT_SITE']
-		client_id = os.environ['SHAREPOINT_CLIENT_ID']
-		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
-		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Starter..")
 
-		# WAN location data
-		wan_data_file = FILNAVN
-		source = sp.create_link("https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+wan_data_file)
-		destination_file = 'systemoversikt/import/'+wan_data_file
-		sp.download(sharepoint_location = source, local_location = destination_file)
+			# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
+			import warnings
+			warnings.simplefilter("ignore")
 
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Starter..")
+			dfRaw = pd.read_excel(destination_file)
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			wan_lokasjoner = dfRaw.to_dict('records')
 
-		if not ".xlsx" in destination_file:
-			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Fant ikke riktig datafil..")
-			sys.exit()
+			if wan_lokasjoner == None:
+				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Datafilen var tom..")
+				sys.exit()
 
-		dfRaw = pd.read_excel(destination_file)
-		dfRaw = dfRaw.replace(np.nan, '', regex=True)
-		wan_lokasjoner = dfRaw.to_dict('records')
+			# tømmel gamle data
+			WANLokasjon.objects.all().delete()
+			print(f"Slettet alle eksisterende WANLokasjon-er")
 
-		if wan_lokasjoner == None:
-			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Datafilen var tom..")
-			sys.exit()
+			antall_records = len(wan_lokasjoner)
+			for line in wan_lokasjoner:
 
-		# tømmel gamle data
-		WANLokasjon.objects.all().delete()
-		print(f"Slettet alle eksisterende WANLokasjon-er")
-
-		antall_records = len(wan_lokasjoner)
-		for line in wan_lokasjoner:
-
-			try:
-				lokasjons_id = line["LokasjonID"]
-				virksomhetsforkortelse = lokasjons_id[0:3]
-			except:
-				continue
-
-			try:
-				#print(virksomhetsforkortelse)
-				virksomhet = Virksomhet.objects.get(virksomhetsforkortelse__iexact=virksomhetsforkortelse)
-			except:
 				try:
-					virksomhet = Virksomhet.objects.get(gamle_virksomhetsforkortelser__icontains=virksomhetsforkortelse)
+					lokasjons_id = line["LokasjonID"]
+					virksomhetsforkortelse = lokasjons_id[0:3]
 				except:
-					virksomhet = None
-					print(f"ingen match mot {virksomhetsforkortelse}")
+					continue
 
-			from django.db import IntegrityError
-			try:
-				w = WANLokasjon.objects.create(lokasjons_id=lokasjons_id)
-				w.virksomhet = virksomhet
-				w.aksess_type = line["AksessType"]
-				w.adresse = line["Adresse"]
-				w.beskrivelse = line["Virksomhet"]
-				w.save()
-				#print(f"lagret {lokasjons_id}")
-			except IntegrityError as e:
-				print(f"Integritetsfeil {e} for {lokasjons_id}")
+				try:
+					#print(virksomhetsforkortelse)
+					virksomhet = Virksomhet.objects.get(virksomhetsforkortelse__iexact=virksomhetsforkortelse)
+				except:
+					try:
+						virksomhet = Virksomhet.objects.get(gamle_virksomhetsforkortelser__icontains=virksomhetsforkortelse)
+					except:
+						virksomhet = None
+						print(f"ingen match for {line}")
 
-		logg_entry_message = 'Fant %s WAN-lokasjoneri %s.' % (
-				antall_records,
-				wan_data_file,
-			)
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
+				from django.db import IntegrityError
+				try:
+					w = WANLokasjon.objects.create(lokasjons_id=lokasjons_id)
+					w.virksomhet = virksomhet
+					w.aksess_type = line["AksessType"]
+					w.adresse = line["Adresse"]
+					w.beskrivelse = line["Virksomhet"]
+					w.save()
+					#print(f"lagret {lokasjons_id}")
+				except IntegrityError as e:
+					print(f"Integritetsfeil {e} for {lokasjons_id}")
 
-		print("\n")
-		print(logg_entry_message)
+			logg_entry_message = 'Fant %s WAN-lokasjoneri.' % (
+					antall_records,
+				)
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
+
+			print(logg_entry_message)
+
+			# lagre sist oppdatert tidspunkt
+			int_config.dato_sist_oppdatert = modified_date
+			int_config.sist_status = logg_entry_message
+			int_config.save()
+
+
+		except Exception as e:
+			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
+			logg_entry = ApplicationLog.objects.create(
+					event_type=LOG_EVENT_TYPE,
+					message=logg_message,
+					)
+			print(logg_message)
+
+			# Push error
+			push_pushover(f"{SCRIPT_NAVN} feilet")
 
 
 
