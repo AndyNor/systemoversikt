@@ -265,10 +265,11 @@ class Command(BaseCommand):
 				logg_entry_message = f'Fant {antall_records} klienter. {client_dropped} manglet navn. Satte {devices_set_inactive} tynne klienter inaktive. Import tok {total_runtime} sekunder'
 				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 				print(logg_entry_message)
+				return logg_entry_message
 
 
 			# eksekver
-			import_cmdb_clients()
+			logg_entry_message = import_cmdb_clients()
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = client_owner_modified_date
 			int_config.sist_status = logg_entry_message

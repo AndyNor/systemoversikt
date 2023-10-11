@@ -151,9 +151,10 @@ class Command(BaseCommand):
 					)
 				#print("\n")
 				print(logg_entry_message)
+				return logg_entry_message
 
 			#eksekver
-			import_cmdb_databases()
+			logg_entry_message = import_cmdb_databases()
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date
 			int_config.sist_status = logg_entry_message

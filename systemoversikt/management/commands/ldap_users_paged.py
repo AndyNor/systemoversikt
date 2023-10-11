@@ -371,8 +371,9 @@ class Command(BaseCommand):
 						message=log_entry_message,
 				)
 				print(log_entry_message)
+				return log_entry_message
 
-			report(result)
+			log_entry_message = report(result)
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = log_entry_message

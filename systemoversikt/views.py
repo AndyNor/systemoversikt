@@ -76,20 +76,14 @@ def decode_useraccountcontrol(code): # støttefunksjon for LDAP
 
 
 def push_pushover(message):
-	import http.client, urllib
-	import os
+	import os, requests
 	USER_KEY = os.environ['PUSHOVER_USER_KEY']
 	APP_TOKEN = os.environ['PUSHOVER_APP_TOKEN']
 	if USER_KEY != "" and APP_TOKEN != "":
 		try:
+			payload = {"message": message, "user": USER_KEY, "token": APP_TOKEN}
+			r = requests.post('https://api.pushover.net/1/messages.json', data=payload, headers={'User-Agent': 'Python'})
 			conn = http.client.HTTPSConnection("api.pushover.net:443")
-			conn.request("POST", "/1/messages.json",
-				urllib.parse.urlencode({
-					"token": APP_TOKEN,
-					"user": USER_KEY,
-					"message": message,
-				}), { "Content-type": "application/x-www-form-urlencoded" })
-			conn.getresponse()
 		except Exception as e:
 			print(f"Error: Kan ikke sende til pushover grunnet {e}")
 		return

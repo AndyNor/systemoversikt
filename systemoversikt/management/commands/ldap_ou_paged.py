@@ -125,15 +125,16 @@ class Command(BaseCommand):
 						message=log_entry_message,
 				)
 				print(log_entry_message)
+				return log_entry_message
 
 
 			result = ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data)
 			map_child_mother()
-			report(result)
+			log_entry_message = report(result)
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
-			int_config.sist_status = logg_entry_message
+			int_config.sist_status = log_entry_message
 			int_config.save()
 
 		except Exception as e:

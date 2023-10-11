@@ -230,7 +230,6 @@ class Command(BaseCommand):
 				)
 			print(logg_message)
 
-
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_message

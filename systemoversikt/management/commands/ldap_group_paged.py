@@ -258,6 +258,7 @@ class Command(BaseCommand):
 
 			cleanup()
 
+
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
 			logg_entry = ApplicationLog.objects.create(

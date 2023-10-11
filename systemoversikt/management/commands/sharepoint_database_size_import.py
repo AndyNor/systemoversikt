@@ -114,9 +114,10 @@ class Command(BaseCommand):
 						message=logg_entry_message,
 					)
 				print(logg_entry_message)
+				return logg_entry_message
 
 			#eksekver
-			import_cmdb_database_size()
+			logg_entry_message = import_cmdb_database_size()
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date
