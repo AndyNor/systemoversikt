@@ -1,8 +1,9 @@
 #!/bin/sh
-source ~/metadata/py36-venv/bin/activate
-cd metadata/djangoapp/
 
-# enable proxy
+source /var/kartoteket/virtualenv/py39/bin/activate
+#export LD_LIBRARY_PATH="/usr/local/lib/"
+cd /var/kartoteket/source/systemoversikt/
+
 export http_proxy="http://user:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
 export https_proxy="http://user:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
-
+export no_proxy="tjenester.oslo.kommune.no"

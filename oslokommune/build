@@ -1,5 +1,15 @@
+#!/bin/sh
+git fetch
+git reset --hard origin/master
+
+pip install -r requirements.txt
+
 python manage.py makemigrations
 python manage.py migrate
-python manage.py collectstatic --noinput
-sudo service httpd restart
 
+python manage.py collectstatic --noinput
+
+#sqlite3 db.sqlite3 "VACUUM;"
+
+#sudo service httpd restart
+sudo /bin/systemctl restart httpd.service
