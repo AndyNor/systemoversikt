@@ -4,7 +4,6 @@ from django.utils import timezone
 from datetime import timedelta
 from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
-from py_topping.data_connection.sharepoint import da_tran_SP365
 from django.db import transaction
 import os, sys
 import json
@@ -90,7 +89,8 @@ class Command(BaseCommand):
 						virksomhet = Virksomhet.objects.get(gamle_virksomhetsforkortelser__icontains=virksomhetsforkortelse)
 					except:
 						virksomhet = None
-						print(f"ingen match for {line}")
+						virksomhet
+						print(f"ingen match for {lokasjons_id}")
 
 				from django.db import IntegrityError
 				try:

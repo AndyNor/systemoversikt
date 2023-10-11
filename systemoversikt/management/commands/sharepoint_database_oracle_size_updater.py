@@ -3,7 +3,6 @@ from django.utils import timezone
 from datetime import timedelta
 from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
-from py_topping.data_connection.sharepoint import da_tran_SP365
 from systemoversikt.models import *
 from django.db import transaction
 import os
@@ -56,11 +55,11 @@ class Command(BaseCommand):
 			modified_date = result["modified_date"]
 			print(f"Filen er datert {modified_date}")
 
-			dfRaw = pd.read_excel(destination_file, sheet_name='IS_DATABASE_SIZE_OEM03072023')
+			dfRaw = pd.read_excel(destination_file, sheet_name='IS')
 			dfRaw = dfRaw.replace(np.nan, '', regex=True)
 			oracle_size_ez = dfRaw.to_dict('records')
 
-			dfRaw = pd.read_excel(destination_file, sheet_name='SS_DATABASE_SIZE_OEM03072023')
+			dfRaw = pd.read_excel(destination_file, sheet_name='SS')
 			dfRaw = dfRaw.replace(np.nan, '', regex=True)
 			oracle_size_is = dfRaw.to_dict('records')
 
@@ -74,7 +73,7 @@ class Command(BaseCommand):
 			database_size_not_found = []
 			for idx, record in enumerate(oracle_sizes):
 				import_databasenavn = record["DATABASE NAME"].strip()
-				import_server = record["SERVER"].strip().split(".")[0]
+				import_server = record["DATABASE SERVER"].strip().split(".")[0]
 				try:
 					dbinstance = CMDBdatabase.objects.get(db_database=import_databasenavn,db_server=import_server)
 				except:
@@ -83,7 +82,7 @@ class Command(BaseCommand):
 					feilet_for.append("%s@%s" % (import_databasenavn, import_server))
 					continue
 
-				new_size = int(record["SIZE IN GB"] * 1000 * 1000 * 1000)
+				new_size = int(record["DATABASE SIZE"] * 1000 * 1000 * 1000)
 				old_size = dbinstance.db_u_datafilessizekb
 				if old_size != new_size:
 					dbinstance.db_u_datafilessizekb = new_size

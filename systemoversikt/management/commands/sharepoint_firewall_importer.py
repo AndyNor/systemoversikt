@@ -4,7 +4,6 @@ from django.utils import timezone
 from datetime import timedelta
 from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
-from py_topping.data_connection.sharepoint import da_tran_SP365
 from django.db import transaction
 import json, os, datetime
 import pandas as pd

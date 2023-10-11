@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
-from py_topping.data_connection.sharepoint import da_tran_SP365
 from systemoversikt.models import *
 from django.db import transaction
 from django.db.models import Q

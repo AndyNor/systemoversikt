@@ -3,7 +3,6 @@ from django.utils import timezone
 from datetime import timedelta
 from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
-from py_topping.data_connection.sharepoint import da_tran_SP365
 from systemoversikt.models import *
 from django.db import transaction
 import os
@@ -60,32 +59,32 @@ class Command(BaseCommand):
 			result = sharepoint_get_file(source_filepath)
 			destination_file1 = result["destination_file"]
 			destination_file1_modified_date = result["modified_date"]
-			print(f"Filen er datert {filename1_modified_date}")
+			print(f"Filen er datert {destination_file1_modified_date}")
 
 			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename2}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file2 = result["destination_file"]
 			destination_file2_modified_date = result["modified_date"]
-			print(f"Filen er datert {filename2_modified_date}")
+			print(f"Filen er datert {destination_file2_modified_date}")
 
 			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename3}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file3 = result["destination_file"]
 			destination_file3_modified_date = result["modified_date"]
-			print(f"Filen er datert {filename3_modified_date}")
+			print(f"Filen er datert {destination_file3_modified_date}")
 
 			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename4}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file4 = result["destination_file"]
 			destination_file4_modified_date = result["modified_date"]
-			print(f"Filen er datert {filename4_modified_date}")
+			print(f"Filen er datert {destination_file4_modified_date}")
 
 			# sonedesign
 			source_filepath = f"/sites/74722/Begrensede-dokumenter/{sone_design}"
 			result = sharepoint_get_file(source_filepath)
 			destination_sone_design = result["destination_file"]
 			destination_sone_design_modified_date = result["modified_date"]
-			print(f"Filen er datert {sone_design_modified_date}")
+			print(f"Filen er datert {destination_sone_design_modified_date}")
 
 
 			@transaction.atomic
@@ -115,11 +114,11 @@ class Command(BaseCommand):
 					sone_design_status = False
 
 				def identity_security_zone(ip_address):
-					if sone_design_status:
+					if sone_design_status == True:
 						for zone in sone_design:
 							supernett = ipaddress.IPv4Network(zone["Supernett"] + "/" + str(zone["Maske"]))
 							if ipaddress.ip_address(ip_address) in supernett:
-								print("Match %s with %s" % (ip_address, supernett))
+								#print("Match %s with %s" % (ip_address, supernett))
 								return (zone["Sikkerhetsnivå"], zone["Beskrivelse"])
 
 					return (None, None)
@@ -170,7 +169,7 @@ class Command(BaseCommand):
 							ip_address=line["address*"],
 							subnet_mask=subnetint,
 							)
-						print("n", end="", flush=True)
+						#print("n", end="", flush=True)
 						vlan_new += 1
 
 					nc.comment = line["comment"]
@@ -188,7 +187,7 @@ class Command(BaseCommand):
 							vlan_deaktivert += 1
 							nc.disabled = True
 
-					print(".", end="", flush=True)
+					#print(".", end="", flush=True)
 					nc.save()
 
 
@@ -203,18 +202,19 @@ class Command(BaseCommand):
 						event_type=f'{LOG_EVENT_TYPE} {logmessage}',
 						message=logg_entry_message,
 					)
-				print("\n")
 				print(logg_entry_message)
+				return logg_entry_message
 
 			#eksekver
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
-			import_vlan(destination_file1, "ipv4networks", filename1)
-			import_vlan(destination_file1, "ipv6networks", filename2)
-			import_vlan(destination_file2, "ipv4networkcontainers", filename3)
-			import_vlan(destination_file3, "ipv6networkcontainers", filename4)
+			logg_entry_message = ""
 
+			logg_entry_message += import_vlan(destination_file1, "ipv4networks", filename1)
+			logg_entry_message += import_vlan(destination_file1, "ipv6networks", filename2)
+			logg_entry_message += import_vlan(destination_file2, "ipv4networkcontainers", filename3)
+			logg_entry_message += import_vlan(destination_file3, "ipv6networkcontainers", filename4)
 
 
 			#match opp alle IP-adresser mot VLAN
@@ -231,7 +231,10 @@ class Command(BaseCommand):
 				alle_ip_adresser = NetworkIPAddress.objects.all()
 				alle_vlan = NetworkContainer.objects.all()
 
-				for ipadr in alle_ip_adresser:
+				antall_ip_adresser = len(alle_ip_adresser)
+				for idx, ipadr in enumerate(alle_ip_adresser):
+					if idx % 200 == 0:
+						print(f"{idx} av {antall_ip_adresser}")
 					if ipadr.ip_address == None: # skal ikke skje, men det var en feil i et tidligere importscript (klienter)
 						ipadr.delete()
 						continue
@@ -244,10 +247,12 @@ class Command(BaseCommand):
 							ipadr.vlan.add(vlan)
 							ant_vlan += 1
 					ipadr.save()
-					print("%s med %s koblinger." % (ipadr, ant_vlan))
+					#print("%s med %s koblinger." % (ipadr, ant_vlan))
 				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Fullført")
 
+			print(f"Kobler sammen alle objekter med IP-adresse mot VLAN/subnet..")
 			ip_vlan_kobling()
+			print(f"Fullført")
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = destination_file1_modified_date # eller timezone.now()

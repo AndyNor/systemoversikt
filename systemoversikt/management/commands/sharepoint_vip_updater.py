@@ -1,14 +1,16 @@
+# -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
-from py_topping.data_connection.sharepoint import da_tran_SP365
 from systemoversikt.models import *
 from django.db import transaction
-import os
 import json, os
 import pandas as pd
 import numpy as np
 from django.db.models import Q
 from systemoversikt.views import get_ipaddr_instance
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
+from datetime import timedelta
+from systemoversikt.views import push_pushover
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -43,173 +45,187 @@ class Command(BaseCommand):
 
 		print(f"Starter {SCRIPT_NAVN}")
 
+		try:
+
+			filename_vip = FILNAVN["filename_vip"]
+			filename_pool = FILNAVN["filename_pool"]
+
+			from systemoversikt.views import sharepoint_get_file
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename_vip}"
+			result = sharepoint_get_file(source_filepath)
+			vip_destination_file = result["destination_file"]
+			vip_modified_date = result["modified_date"]
+			print(f"Filen er datert {vip_modified_date}")
 
 
-		filename_vip = FILNAVN["filename_vip"]
-		filename_pool = FILNAVN["filename_pool"]
+			from systemoversikt.views import sharepoint_get_file
+			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename_pool}"
+			result = sharepoint_get_file(source_filepath)
+			pool_destination_file = result["destination_file"]
+			pool_modified_date = result["modified_date"]
+			print(f"Filen er datert {pool_modified_date}")
 
-		sp_site = os.environ['SHAREPOINT_SITE']
-		client_id = os.environ['SHAREPOINT_CLIENT_ID']
-		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
-		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
+			logg_entry_message = ""
+
+			@transaction.atomic
+			def import_vip():
+
+				vip_dropped = 0
+				vip_new = 0
+
+				import csv
+				with open(vip_destination_file, 'r', encoding='latin-1') as file:
+					data = list(csv.DictReader(file, delimiter=","))
+
+				antall_records = len(data)
+
+				for line in data:
+					try:
+						vip_inst = virtualIP.objects.get(vip_name=line["u_load_balancer_service_1"])
+						vip_inst.pool_name = line["u_load_balancer_service_1.pool"]
+						vip_inst.ip_address = line["u_load_balancer_service_1.ip_address"]
+						vip_inst.port = line["u_load_balancer_service_1.port"]
+						vip_inst.hitcount = line["u_load_balancer_service_1.hit_count"].replace(",","")
+						vip_inst.save()
+						vip_dropped += 1
+						#print("u", end="", flush=True)
+
+					except ObjectDoesNotExist:
+						# finnes ikke, oppretter ny
+						vip_inst = virtualIP.objects.create(
+							vip_name=line["u_load_balancer_service_1"],
+							pool_name=line["u_load_balancer_service_1.pool"],
+							ip_address=line["u_load_balancer_service_1.ip_address"],
+							port=line["u_load_balancer_service_1.port"],
+							hitcount=line["u_load_balancer_service_1.hit_count"].replace(",",""),
+						)
+						vip_new += 1
+						#print("+", end="", flush=True)
 
 
-		# VIP-data
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename_vip
-		source_file = sp.create_link(source_filepath)
-		destination_file = 'systemoversikt/import/'+filename_vip
+					# Linke IP-adresse
+					ipaddr_ins = get_ipaddr_instance(line["u_load_balancer_service_1.ip_address"])
+					if ipaddr_ins != None:
+						if not vip_inst in ipaddr_ins.viper.all():
+							ipaddr_ins.viper.add(vip_inst)
+							ipaddr_ins.save()
 
-		sp.download(sharepoint_location = source_file, local_location = destination_file)
-
-
-		@transaction.atomic
-		def import_vip():
-
-			vip_dropped = 0
-			vip_new = 0
-
-			import csv
-			with open(destination_file, 'r', encoding='latin-1') as file:
-				data = list(csv.DictReader(file, delimiter=","))
-
-			if data == None:
-				return
-
-			antall_records = len(data)
-
-			for line in data:
-				try:
-					vip_inst = virtualIP.objects.get(vip_name=line["u_load_balancer_service_1"])
-
-					vip_inst.pool_name = line["u_load_balancer_service_1.pool"]
-					vip_inst.ip_address = line["u_load_balancer_service_1.ip_address"]
-					vip_inst.port = line["u_load_balancer_service_1.port"]
-					vip_inst.hitcount = line["u_load_balancer_service_1.hit_count"].replace(",","")
-					vip_inst.save()
-
-					vip_dropped += 1
-					print("u", end="", flush=True)
-				except ObjectDoesNotExist:
-					# finnes ikke, oppretter ny
-					vip_inst = virtualIP.objects.create(
-						vip_name=line["u_load_balancer_service_1"],
-						pool_name=line["u_load_balancer_service_1.pool"],
-						ip_address=line["u_load_balancer_service_1.ip_address"],
-						port=line["u_load_balancer_service_1.port"],
-						hitcount=line["u_load_balancer_service_1.hit_count"].replace(",",""),
+				logg_entry_message = 'Fant %s VIP-er i %s. %s nye og %s eksisterende.' % (
+						antall_records,
+						filename_vip,
+						vip_new,
+						vip_dropped,
 					)
-					vip_new += 1
-					print("+", end="", flush=True)
+				logg_entry = ApplicationLog.objects.create(
+						event_type=LOG_EVENT_TYPE,
+						message=logg_entry_message,
+					)
+				print(logg_entry_message)
+				return logg_entry_message
+
+			#eksekver
+			print(f"Importerer VIP-data..")
+			logg_entry_message += import_vip()
 
 
-				# Linke IP-adresse
-				ipaddr_ins = get_ipaddr_instance(line["u_load_balancer_service_1.ip_address"])
-				if ipaddr_ins != None:
-					if not vip_inst in ipaddr_ins.viper.all():
-						ipaddr_ins.viper.add(vip_inst)
-						ipaddr_ins.save()
+
+			# VIP-pool data
+			@transaction.atomic
+			def import_pool():
+
+				pool_dropped = 0
+				pool_new = 0
+				pool_not_connected = 0
+
+				import csv
+				with open(pool_destination_file, 'r', encoding='latin-1') as file:
+					data = list(csv.DictReader(file, delimiter=","))
+
+				if data == None:
+					return
+
+				antall_records = len(data)
+
+				for idx, line in enumerate(data):
+					if idx % 500 == 0:
+						print(f"{idx} av {len(data)}")
+
+					if line["u_load_balancer_pool_member_1.pool"] == "" or line["u_load_balancer_pool_member_1.ip_address"] == "" or line["u_load_balancer_pool_member_1.service_port"] == "":
+						continue
+					try:
+						pool = VirtualIPPool.objects.get(
+								pool_name=line["u_load_balancer_pool_member_1.pool"],
+								port=line["u_load_balancer_pool_member_1.service_port"],
+								ip_address=line["u_load_balancer_pool_member_1.ip_address"]
+							)
+						#print(".", end="", flush=True)
+						pool_dropped += 1
+					except:
+						pool = VirtualIPPool.objects.create(
+								pool_name=line["u_load_balancer_pool_member_1.pool"],
+								port=line["u_load_balancer_pool_member_1.service_port"],
+								ip_address=line["u_load_balancer_pool_member_1.ip_address"],
+							)
+						#print("+", end="", flush=True)
+
+					# Linke IP-adresse
+					ipaddr_ins = get_ipaddr_instance(line["u_load_balancer_pool_member_1.ip_address"])
+					if ipaddr_ins != None:
+						if not pool in ipaddr_ins.vip_pools.all():
+							ipaddr_ins.vip_pools.add(pool)
+							ipaddr_ins.save()
+
+					try:
+						alle_vip_treff = virtualIP.objects.filter(pool_name=line["u_load_balancer_pool_member_1.pool"]).all()
+						for vip in alle_vip_treff:
+							pool.vip.add(vip)
+						#print("p", end="", flush=True)
+					except:
+						pool_not_connected += 1
+						#print("?", end="", flush=True)
+						pass
+
+					try:
+						pool.server = CMDBdevice.objects.get(comp_ip_address=line["u_load_balancer_pool_member_1.ip_address"])
+						#print("s", end="", flush=True)
+					except:
+						#print("?", end="", flush=True)
+						pass
+
+					pool.save()
+
+				logg_entry_message = 'Fant %s pools i %s. %s nye. %s unike. %s mangler VIP-knytning.' % (
+						antall_records,
+						filename_pool,
+						pool_new,
+						pool_dropped,
+						pool_not_connected,
+					)
+				logg_entry = ApplicationLog.objects.create(
+						event_type=f'{LOG_EVENT_TYPE} pools',
+						message=logg_entry_message,
+					)
+				#print("\n")
+				print(logg_entry_message)
+				return logg_entry_message
+
+			#eksekver
+			print(f"Importerer pool-data..")
+			logg_entry_message += import_pool()
+
+			# lagre sist oppdatert tidspunkt
+			int_config.dato_sist_oppdatert = vip_modified_date # eller timezone.now()
+			int_config.sist_status = logg_entry_message
+			int_config.save()
 
 
-			logg_entry_message = 'Fant %s VIP-er i %s. %s nye og %s eksisterende.' % (
-					antall_records,
-					filename_vip,
-					vip_new,
-					vip_dropped,
-				)
+		except Exception as e:
+			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
-					message=logg_entry_message,
-				)
-			#print("\n")
-			print(logg_entry_message)
+					message=logg_message,
+					)
+			print(logg_message)
 
-		#eksekver
-		import_vip()
-
-
-
-		# VIP-pool data
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename_pool
-		source_file = sp.create_link(source_filepath)
-		destination_file = 'systemoversikt/import/'+filename_pool
-
-		sp.download(sharepoint_location = source_file, local_location = destination_file)
-
-
-		@transaction.atomic
-		def import_pool():
-
-			pool_dropped = 0
-			pool_new = 0
-			pool_not_connected = 0
-
-			import csv
-			with open(destination_file, 'r', encoding='latin-1') as file:
-				data = list(csv.DictReader(file, delimiter=","))
-
-			if data == None:
-				return
-
-			antall_records = len(data)
-
-			for line in data:
-				if line["u_load_balancer_pool_member_1.pool"] == "" or line["u_load_balancer_pool_member_1.ip_address"] == "" or line["u_load_balancer_pool_member_1.service_port"] == "":
-					continue
-				try:
-					pool = VirtualIPPool.objects.get(
-							pool_name=line["u_load_balancer_pool_member_1.pool"],
-							port=line["u_load_balancer_pool_member_1.service_port"],
-							ip_address=line["u_load_balancer_pool_member_1.ip_address"]
-						)
-					print(".", end="", flush=True)
-					pool_dropped += 1
-				except:
-					pool = VirtualIPPool.objects.create(
-							pool_name=line["u_load_balancer_pool_member_1.pool"],
-							port=line["u_load_balancer_pool_member_1.service_port"],
-							ip_address=line["u_load_balancer_pool_member_1.ip_address"],
-						)
-					print("+", end="", flush=True)
-
-				# Linke IP-adresse
-				ipaddr_ins = get_ipaddr_instance(line["u_load_balancer_pool_member_1.ip_address"])
-				if ipaddr_ins != None:
-					if not pool in ipaddr_ins.vip_pools.all():
-						ipaddr_ins.vip_pools.add(pool)
-						ipaddr_ins.save()
-
-				try:
-					alle_vip_treff = virtualIP.objects.filter(pool_name=line["u_load_balancer_pool_member_1.pool"]).all()
-					for vip in alle_vip_treff:
-						pool.vip.add(vip)
-					print("p", end="", flush=True)
-				except:
-					pool_not_connected += 1
-					print("?", end="", flush=True)
-
-				try:
-					pool.server = CMDBdevice.objects.get(comp_ip_address=line["u_load_balancer_pool_member_1.ip_address"])
-					print("s", end="", flush=True)
-				except:
-					print("?", end="", flush=True)
-					#pass
-
-				pool.save()
-
-			logg_entry_message = 'Fant %s pools i %s. %s nye. %s unike. %s mangler VIP-knytning.' % (
-					antall_records,
-					filename_pool,
-					pool_new,
-					pool_dropped,
-					pool_not_connected,
-				)
-			logg_entry = ApplicationLog.objects.create(
-					event_type=f'{LOG_EVENT_TYPE} pools',
-					message=logg_entry_message,
-				)
-			#print("\n")
-			print(logg_entry_message)
-
-		#eksekver
-		import_pool()
-
+			# Push error
+			push_pushover(f"{SCRIPT_NAVN} feilet")
