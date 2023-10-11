@@ -127,12 +127,12 @@ class Command(BaseCommand):
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
 					)
-				print("\n")
 				print(logg_entry_message)
+				return logg_entry_message
 
 
 			#eksekver
-			main(destination_file, FILNAVN, LOG_EVENT_TYPE)
+			logg_entry_message = main(destination_file, FILNAVN, LOG_EVENT_TYPE)
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date

@@ -444,7 +444,7 @@ class Command(BaseCommand):
 							members=json.dumps(members),
 						)
 					#print(".", end="", flush=True)
-				print("\nLagret alle navngitte nettverksgrupper i databasen")
+				print("Lagret alle navngitte nettverksgrupper i databasen")
 
 			# utføre lagring
 			store_network_grp_to_db(named_network_groups)
@@ -489,7 +489,7 @@ class Command(BaseCommand):
 						r.ref_vlan.add(*all_openings[rule_id]["destination"]["networks"])
 
 					#print(".", end="", flush=True)
-				print("\nLagret alle brannmurregler i databasen")
+				print("Lagret alle brannmurregler i databasen")
 
 			# utføre lagring
 			store_to_db(all_openings)

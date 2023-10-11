@@ -68,6 +68,7 @@ class Command(BaseCommand):
 
 			@transaction.atomic  # for speeding up database performance
 			def atomic():
+				nonlocal vellykket
 				for g in ADgroup.objects.filter(parent=None):
 					#sys.stdout.flush()
 					# antar komma ikke tillates i gruppenavn ref. https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2003/cc776019(v=ws.10)?redirectedfrom=MSDN
