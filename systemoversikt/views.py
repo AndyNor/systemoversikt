@@ -6659,6 +6659,7 @@ def ubw_multiselect(request):
 	from django.http import HttpResponseNotFound
 	valgte = request.POST.getlist('selected_items', None)
 	valgte_fakturaer = UBWFaktura.objects.filter(pk__in=[int(v) for v in valgte])
+	required_permissions = None # Egen tilgangsstyring i logikk i koden
 
 	# må finne ut hvilken enhet fakturaene tilhører. Alle må tilhøre samme enhet
 	enhet = None
