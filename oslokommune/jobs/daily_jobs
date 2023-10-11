@@ -1,0 +1,59 @@
+#!/bin/sh
+export no_proxy="tjenester.oslo.kommune.no"
+export http_proxy="http://user:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
+export https_proxy="http://user:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
+
+source /var/kartoteket/virtualenv/py39/bin/activate
+
+cd /var/kartoteket/source/systemoversikt/
+
+# run batch AD/PRK
+python /var/kartoteket/source/systemoversikt/manage.py ldap_users_paged
+python /var/kartoteket/source/systemoversikt/manage.py ldap_drift_medlemskap
+python /var/kartoteket/source/systemoversikt/manage.py prk_org
+python /var/kartoteket/source/systemoversikt/manage.py ldap_group_paged
+python /var/kartoteket/source/systemoversikt/manage.py ldap_ou_paged
+python /var/kartoteket/source/systemoversikt/manage.py prk_users
+python /var/kartoteket/source/systemoversikt/manage.py prk_forms
+python /var/kartoteket/source/systemoversikt/manage.py lookup_adgroup_prk
+python /var/kartoteket/source/systemoversikt/manage.py lookup_adgroup_ou
+python /var/kartoteket/source/systemoversikt/manage.py system_koble_adgrp
+python /var/kartoteket/source/systemoversikt/manage.py system_telle_koblede_brukere
+
+# run batch SharePoint
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_bss_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_server_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_client_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_database_mssql_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_database_oracle_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_database_size_import
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_database_oracle_size_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_server_disk_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_vip_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_vlan_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_dns_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_backup_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_network_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_wan_location_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_firewall_importer
+
+# run batch rydde
+python /var/kartoteket/source/systemoversikt/manage.py rydde_ansvarlige
+python /var/kartoteket/source/systemoversikt/manage.py rydde_generisk
+python /var/kartoteket/source/systemoversikt/manage.py rydde_sette_seksjon
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_o365lisence_updater
+python /var/kartoteket/source/systemoversikt/manage.py rapport_avvik
+
+# run batch azure
+python /var/kartoteket/source/systemoversikt/manage.py azure_graph_enterprise_applications
+python /var/kartoteket/source/systemoversikt/manage.py digdir_los
+python /var/kartoteket/source/systemoversikt/manage.py azure_graph_named_locations
+
+# run batch e-mail
+python /var/kartoteket/source/systemoversikt/manage.py epost_avtaleutlop
+python /var/kartoteket/source/systemoversikt/manage.py send_mail
+
+# run certipy-ad
+cd /var/kartoteket/source/systemoversikt/systemoversikt/pki # files need to be here
+python /var/kartoteket/source/systemoversikt/manage.py certipy-ad
+
