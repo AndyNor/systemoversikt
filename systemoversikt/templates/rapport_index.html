@@ -31,6 +31,12 @@
 	{% url 'system_informasjonsbehandling' as url_system_informasjonsbehandling %}
 	<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if url_system_informasjonsbehandling in request.path %}fremhev{% endif %}">LOS Informasjonsklassifisering</a>
 
+	{% url 'systemer_utfaset' as url_systemer_utfaset %}
+	<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfasede systemer</a>
+
+	{% url 'systemer_EOL' as url_systemer_EOL %}
+	<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if url_systemer_EOL in request.path %}fremhev{% endif %}">End of life-systemer</a>
+
 {% endblock sidemeny %}
 
 {% block main_content %}

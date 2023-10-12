@@ -47,14 +47,6 @@
 		{% url 'alle_leverandorer' as alle_leverandorer_url %}
 		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Alle leverandører</a>
 
-	<hr>
-	<h6>Utfasing</h6>
-
-		{% url 'systemer_utfaset' as url_systemer_utfaset %}
-		<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfasede systemer ❌</a>
-
-		{% url 'systemer_EOL' as url_systemer_EOL %}
-		<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if url_systemer_EOL in request.path %}fremhev{% endif %}">End of life 💾</a>
 
 	{% block ekstrameny_system %}{% endblock ekstrameny_system %}
 	{% block ekstrameny_leverandor %}{% endblock ekstrameny_leverandor %}
