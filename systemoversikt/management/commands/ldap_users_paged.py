@@ -356,22 +356,24 @@ class Command(BaseCommand):
 			def report(result):
 				#print("\nVirksomheter det ikke var brukere for i AD: ", gyldige_virksomheter)
 				#print("\nVirksomheter som ikke er i kartoteket: ", ad_grupper_utenfor_kartoteket)
-				log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s oppdatert, %s deaktivert, %s reaktivert og %s slettet.\nFølgende brukere kunne ikke slettes: %s" % (
-						result["total_runtime"],
-						result["objects_returned"],
-						result["report_data"]["created"],
-						result["report_data"]["modified"],
-						result["report_data"]["deaktivert"],
-						result["report_data"]["reaktivert"],
-						result["report_data"]["removed"],
-						result["report_data"]["user_not_deleted"],
-				)
+
+				total_runtime = result["total_runtime"],
+				objects_returned = result["objects_returned"],
+				created = result["report_data"]["created"],
+				modified = result["report_data"]["modified"],
+				deaktivert = result["report_data"]["deaktivert"],
+				reaktivert = result["report_data"]["reaktivert"],
+				removed = result["report_data"]["removed"],
+				user_not_deleted = result["report_data"]["user_not_deleted"],
+
+				log_statistics = f"Det tok {total_runtime} sekunder. {objects_returned} treff. {created} nye, {modified} oppdatert, {deaktivert} deaktivert, {reaktivert} reaktivert og {removed} slettet. {len(user_not_deleted)} kunne ikke slettes (låst)."
+				log_entry_message = f"{log_statistics} Følgende brukere kunne ikke slettes: {user_not_deleted}"
 				log_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=log_entry_message,
 				)
 				print(log_entry_message)
-				return log_entry_message
+				return log_statistics
 
 			log_entry_message = report(result)
 			# lagre sist oppdatert tidspunkt
