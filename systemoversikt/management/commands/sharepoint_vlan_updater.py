@@ -43,7 +43,7 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		print(f"Starter {SCRIPT_NAVN}")
+		print(f"------------\nStarter {SCRIPT_NAVN}")
 
 		try:
 
@@ -233,7 +233,7 @@ class Command(BaseCommand):
 
 				antall_ip_adresser = len(alle_ip_adresser)
 				for idx, ipadr in enumerate(alle_ip_adresser):
-					if idx % 200 == 0:
+					if idx % 2000 == 0:
 						print(f"{idx} av {antall_ip_adresser}")
 					if ipadr.ip_address == None: # skal ikke skje, men det var en feil i et tidligere importscript (klienter)
 						ipadr.delete()
