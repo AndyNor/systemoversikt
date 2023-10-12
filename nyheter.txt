@@ -1,5 +1,3 @@
-Leverandørtilgang, også ned på virksomhet
-Kritiske funksjoner
 LOS-kategorisering
 systemprioriteringer
 PRK-administratorer
