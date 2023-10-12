@@ -3957,8 +3957,11 @@ def leverandortilgang(request, valgt_gruppe=None):
 
 		manglende_grupper.sort(key=lambda g : g.common_name)
 
+		virksomheter = virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True)
+
 		return render(request, 'ad_leverandortilgang.html', {
 			"request": request,
+			"virksomheter": virksomheter,
 			"required_permissions": required_permissions,
 			"manglende_grupper": manglende_grupper,
 			"leverandortilganger": leverandortilganger,

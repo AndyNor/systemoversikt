@@ -64,5 +64,12 @@
 {% endfor %}
 </ul>
 
+<h5>Detaljer per virksomhet</h5>
+<ol style="column-count: 3;">
+{% for v in virksomheter %}
+	<li><a href="{% url 'virksomhet_leverandortilgang' pk=v.pk %}">{{ v }}</a></li>
+{% endfor %}
+</ol>
+
 
 {% endblock hovedinnhold %}
