@@ -1148,8 +1148,11 @@ def cmdb_statistikk(request):
 			'kontakter': kontakter,
 			})
 
+	integrasjoner = IntegrasjonKonfigurasjon.objects.all()
+
 	return render(request, 'cmdb_statistikk.html', {
 		'request': request,
+		'integrasjoner': integrasjoner,
 		'required_permissions': formater_permissions(required_permissions),
 		'count_office_ea': count_office_ea,
 		'count_office_ea_keys': count_office_ea_keys,

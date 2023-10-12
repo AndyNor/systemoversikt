@@ -197,17 +197,7 @@ class Command(BaseCommand):
 				for entry in gamle_dnsinnslag:
 					entry.delete()
 
-				logg_entry_message = 'Fant %s A-records, %s alias, %s mx og %s txt i %s. %s alias kunne ikke slås opp. %s nye A-records/CNAMES. %s IP-referanser skrevet. %s slettet.' % (
-						antall_a_records,
-						antall_cname_records,
-						antall_mx,
-						antall_txt,
-						filename_str,
-						cname_records_failed,
-						count_new,
-						ip_linker,
-						antall_slettet,
-					)
+				logg_entry_message = f'{filename_str}: Fant {antall_a_records} A-records, {antall_cname_records} alias, {antall_mx} mx og {antall_txt} txt. {cname_records_failed} alias kunne ikke slås opp. {count_new} nye A-records/CNAMES. {ip_linker} IP-referanser skrevet. {antall_slettet} slettet.'
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
@@ -216,12 +206,12 @@ class Command(BaseCommand):
 				return logg_entry_message
 
 			#eksekver
-			logg_entry_message1 = import_dns(destination_file1, destination_file1, u"oslo.kommune.no")
-			logg_entry_message2 = import_dns(destination_file2, destination_file2, u"oslo.kommune.no")
+			logg_entry_message1 = import_dns(destination_file1, "Ekstern DNS", u"oslo.kommune.no")
+			logg_entry_message2 = import_dns(destination_file2, "Intern DNS", u"oslo.kommune.no")
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = destination_file1_modified_date
-			int_config.sist_status = {logg_entry_message1, logg_entry_message2}
+			int_config.sist_status = f"{logg_entry_message1}\n{logg_entry_message2}"
 			int_config.save()
 
 
