@@ -132,7 +132,7 @@ I tillegg har driftsleverandør dashboard i PowerBI som UKE sine forvaltere har 
 		<tr>
 			<td>{{ i.kilde }}</td>
 			<td>{{ i.frekvensangivelse }}</td>
-			<td>{{ i.dato_sist_oppdatert|timesince }}</td>
+			<td>{{ i.dato_sist_oppdatert|date:"Ymd" }}<br>{{ i.dato_sist_oppdatert|timesince }}</td>
 			<td>{{ i.informasjon }}</td>
 			<td>{{ i.sist_status }}</td>
 		</tr>
