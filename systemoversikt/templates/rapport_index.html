@@ -25,6 +25,12 @@
 	{% url 'rapport_named_locations' as url_rapport_named_locations %}
 	<a href="{{ url_rapport_named_locations }}" class="btn btn-sm btn-link {% if url_rapport_named_locations in request.path %}fremhev{% endif %}">Oppkobling fra land</a>
 
+	{% url 'system_kritisk_funksjon' as url_system_kritisk_funksjon %}
+	<a href="{{url_system_kritisk_funksjon}}" class="btn btn-sm btn-link {% if url_system_kritisk_funksjon in request.path %}fremhev{% endif %}">Kritiske samfunnsfunksjoner</a>
+
+	{% url 'system_informasjonsbehandling' as url_system_informasjonsbehandling %}
+	<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if url_system_informasjonsbehandling in request.path %}fremhev{% endif %}">LOS Informasjonsklassifisering</a>
+
 {% endblock sidemeny %}
 
 {% block main_content %}

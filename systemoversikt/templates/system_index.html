@@ -40,17 +40,6 @@
 		{% url 'alle_systemer_smart' as url_systemsmart %}
 		<a href="{{ url_systemsmart }}" class="btn btn-sm btn-link {% if url_systemsmart in request.path %}fremhev{% endif %}">SMART-kartlegging</a>
 
-	<hr>
-	<h6>Kritiske funksjoner og informasjonsverdier</h6>
-		{% url 'system_kritisk_funksjon' as url_system_kritisk_funksjon %}
-		<a href="{{url_system_kritisk_funksjon}}" class="btn btn-sm btn-link {% if url_system_kritisk_funksjon in request.path %}fremhev{% endif %}">Kritiske funksjoner</a>
-
-		{% url 'system_informasjonsbehandling' as url_system_informasjonsbehandling %}
-		<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if url_system_informasjonsbehandling in request.path %}fremhev{% endif %}">Informasjonsbehandling</a>
-
-		{% url 'system_los_struktur_indeks' as url_system_los_struktur %}
-		<a href="{{url_system_los_struktur}}" class="btn btn-sm btn-link {% if url_system_los_struktur in request.path %}fremhev{% endif %}">LOS-strukturen</a>
-
 
 	<hr>
 	<h6>Leverandører</h6>
