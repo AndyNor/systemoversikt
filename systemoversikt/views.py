@@ -2614,7 +2614,7 @@ def home(request):
 	nyeste_programvarer = Programvare.objects.order_by('-pk')[:10]
 	antall_behandlinger = BehandlingerPersonopplysninger.objects.count()
 	kategorier = SystemKategori.objects.all()
-	nyheter = NyeFunksjoner.objects.all().order_by('-tidspunkt')[:5]
+	nyheter = NyeFunksjoner.objects.all().order_by('-tidspunkt')[:10]
 
 	return render(request, 'site_home.html', {
 		'request': request,
