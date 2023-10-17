@@ -4633,6 +4633,16 @@ def driftsmodell_virksomhet_klassifisering(request, pk):
 
 
 
+def drift_beredskap_redirect(request):
+	try:
+		vir = request.user.profile.virksomhet
+		return HttpResponseRedirect(reverse('drift_beredskap', kwargs={'pk': vir.pk}))
+	except:
+		messages.info("Du er ikke logget inn. Vennligst logg inn slik at du kan sendes til riktig beredskapsplan")
+		return HttpResponseRedirect(reverse('home',))
+
+
+
 def drift_beredskap(request, pk, eier=None):
 	#Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
 	required_permissions = ['systemoversikt.view_system']
