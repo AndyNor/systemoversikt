@@ -1,43 +1,12 @@
-Enterprise apps og nøkler
+AD Brukere, flere identer, listesøk
 
-
-ting som trenger en redirect (mot virksomhet?)
-	PRK-administratorer
-	klienter
-	lokasjoner
-	aktive brukere ++
-	Passordutløp
-	egen bruk
-	vi drifter selv
-	vi eier/forvalter
-	innsynsmodul
-	arkivplan
-	Dashboard?
-	Nettverkslokasjoner
-	brukere uten e-post, også ned på virksomhet
-
-
-**AD Brukere, flere identer, listesøk
-
-**AD Grupper og analyseverktøy, tomme grupper
-
-UBW-verktøy
+AD Grupper og analyseverktøy, tomme grupper
 
 Begreper
 
-PRK-organisasjonstreet
+PRK-organisasjonstreet, PRK-skjema, OU-strukturen
 
-PRK-skjema
-
-OU-strukturen
-
-BS og BSS
-
-Servere
-
-Klienter
-
-Databaser
+BS og BSS, Servere, Klienter, Databaser
 
 VLAN
 
@@ -45,17 +14,6 @@ BigIP
 
 DNS
 
-IP-søk
-
 Backup
 
-Lagring
-
-Minnebruk
-
-
-
-
-
-
-
+legge servicePrincipalName inn i profilen

@@ -56,6 +56,6 @@ soupsieve==2.4
 sqlparse==0.4.4
 typing_extensions==4.5.0
 tzdata==2022.7
-urllib3==1.26.17
+urllib3==1.26.18
 xlrd==2.0.1
 mod-wsgi; platform_system == 'Linux'
