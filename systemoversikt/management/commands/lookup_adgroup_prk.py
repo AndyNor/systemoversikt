@@ -83,7 +83,7 @@ class Command(BaseCommand):
 
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
-			logg_entry_message = "Kjøretid: %s. %s treff og %s bom." % (
+			logg_entry_message = "Kjøretid %s sekunder. %s var vellykket og %s feilet." % (
 					round(logg_total_runtime, 1),
 					count_hits,
 					count_misses,

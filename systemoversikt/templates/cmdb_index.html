@@ -101,21 +101,6 @@
 
 	{% block ekstrameny_nettverk %}{% endblock ekstrameny_nettverk %}
 
-	<hr>
-	<h6>Verktøy</h6>
-	{% url 'tool_word_count' as url_tool_word_count %}
-	<a href="{{url_tool_word_count}}" class="btn btn-sm btn-link {% if url_tool_word_count in request.path %}fremhev{% endif %}">Ordteller</a><br>
-
-	{% url 'tool_unique_items' as url_tool_unique_items %}
-	<a href="{{url_tool_unique_items}}" class="btn btn-sm btn-link {% if url_tool_unique_items in request.path %}fremhev{% endif %}">Unike elementer</a><br>
-
-	{% url 'tool_compare_items' as url_tool_compare_items %}
-	<a href="{{url_tool_compare_items}}" class="btn btn-sm btn-link {% if url_tool_compare_items in request.path %}fremhev{% endif %}">Sammenlikne elementer</a><br>
-
-	{% url 'tool_docx2html' as url_tool_docx2html %}
-	<a href="{{url_tool_docx2html}}" class="btn btn-sm btn-link {% if url_tool_docx2html in request.path %}fremhev{% endif %}">Word > HTML</a><br>
-
-
 {% endblock sidemeny %}
 
 {% block main_content %}

@@ -104,7 +104,7 @@ class Command(BaseCommand):
 				except IntegrityError as e:
 					print(f"Integritetsfeil {e} for {lokasjons_id}")
 
-			logg_entry_message = 'Fant %s WAN-lokasjoneri.' % (
+			logg_entry_message = 'Fant %s WAN-lokasjoner.' % (
 					antall_records,
 				)
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)

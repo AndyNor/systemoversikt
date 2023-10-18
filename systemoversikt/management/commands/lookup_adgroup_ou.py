@@ -94,10 +94,10 @@ class Command(BaseCommand):
 
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
-			logg_entry_message = "Kjøretid: %s. Bom: %s. Vellykket: %s." % (
+			logg_entry_message = "Kjøretid %s sekunder. %s var vellykket og %s feilet." % (
 					round(logg_total_runtime, 1),
-					len(failed),
 					vellykket,
+					len(failed),
 			)
 			print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(

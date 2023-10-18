@@ -1,4 +1,4 @@
-{% extends "cmdb_index.html" %}
+{% extends "tools_index.html" %}
 {% load humanize %}
 {% load static %}
 
@@ -6,12 +6,12 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Verktøy - Sammenlikne elementer
+	Union og snitt
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-<p>Lim inn elementer i hver boks. Tekst blir splittet opp og sammenliknet. Du får se hva som er unikt for hver boks, samt hva boksene har til felles. Funksjonen bryr seg ikke om det er små eller store bokstaver. Tegn som fjernes: <li>|,:;"'</li></p>
+<p>Lim inn elementer i hver boks. Tekst blir splittet opp og sammenlignet. Du får se hva som er unikt for hver boks, samt hva boksene har til felles. Funksjonen bryr seg ikke om det er små eller store bokstaver. Tegn som fjernes: <li>|,:;"'</li></p>
 
 	<form action="{% url 'tool_compare_items' %}" method="POST" autocomplete="off">
 		{% csrf_token %}
@@ -41,7 +41,7 @@
 			{% endfor %}
 		</div>
 		<div class="col-sm">
-			<h6>Elementer som er i begge boksene (intersection)</h6>
+			<h6>Elementer som er i begge boksene<br>(snitt / intersection)</h6>
 			{% for item in begge_a_og_b %}
 				{{ item }}<br>
 			{% endfor %}
@@ -54,6 +54,5 @@
 		</div>
 	</div>
 </div>
-<hr>
 
 {% endblock hovedinnhold %}

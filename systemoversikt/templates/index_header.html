@@ -118,6 +118,12 @@
 					<a href="{{ url_logger }}" class="nav-link {% if '/admin/' in request.path %} active {% endif %}">Admin</a>
 				</li>
 			{% endif %}
+
+				<li class="hovedmeny">
+					{% url 'tools_index' as url_tools %}
+					<a href="{{ url_tools }}" class="nav-link {% if '/tools/' in request.path %} active {% endif %}">Verktøy</a>
+				</li>
+
 			</ul>
 		</div>
 	</nav>

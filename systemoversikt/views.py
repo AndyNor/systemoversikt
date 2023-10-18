@@ -561,6 +561,13 @@ def mal(request):
 	})
 
 
+def tools_index(request):
+	required_permissions = None
+	return render(request, 'tools_index.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+	})
+
 
 def debug_info(request):
 	"""

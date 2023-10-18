@@ -61,6 +61,8 @@ urlpatterns = [
 	re_path(r'^admin/nyheter/$', views.alle_nyheter, name='alle_nyheter'),
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 
+	re_path(r'^tools/', views.tools_index, name="tools_index"),
+
 
 	re_path(r'^rapport/startside/$', views.rapport_startside, name='rapport_startside'),
 	re_path(r'^rapport/sikkerhetsavvik/$', views.o365_avvik, name='o365_avvik'),

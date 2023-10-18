@@ -17,13 +17,6 @@ ting som trenger en redirect (mot virksomhet?)
 	brukere uten e-post, også ned på virksomhet
 
 
-verktøy
-	flytt ansvar
-	system til programvare
-	verktøy - ordteller, unike elementer, sammenlike
-	word --> html
-
-
 **AD Brukere, flere identer, listesøk
 
 **AD Grupper og analyseverktøy, tomme grupper
