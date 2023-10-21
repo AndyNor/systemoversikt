@@ -4639,6 +4639,20 @@ def driftsmodell_virksomhet_klassifisering(request, pk):
 	})
 
 
+def rapport_prioriteringer(request):
+	#Vise indeks over systemprioritering
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	#SE PÅ
+	virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True).filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True)
+
+	return render(request, 'rapport_prioriteringer.html', {
+		'request': request,
+		'virksomheter': virksomheter,
+	})
+
 
 def drift_beredskap_redirect(request):
 	try:

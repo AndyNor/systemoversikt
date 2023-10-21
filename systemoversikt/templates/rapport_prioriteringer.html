@@ -1,0 +1,23 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Systemprioriteringer (kontinuitet)
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Omfanget av systemer er stort på de største driftsmiljøene i Oslo kommune. Det er derfor viktig å ha oppdatert informasjon om hvor kritiske de ulike systemene er. Vurderingene gjøres for det enkelte system og sammenstilles så gruppert på den virksomhet som har ansvaret for driften.</p>
+
+<h5>Gå til prioriteringsplan for:</h5>
+<ol style="column-count: 3;">
+{% for v in virksomheter %}
+	<li><a href="{% url 'drift_beredskap' pk=v.pk %}">{{ v }}</a></li>
+{% endfor %}
+</ol>
+
+{% endblock hovedinnhold %}

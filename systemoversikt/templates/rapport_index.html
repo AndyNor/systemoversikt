@@ -37,6 +37,9 @@
 	{% url 'systemer_EOL' as url_systemer_EOL %}
 	<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if url_systemer_EOL in request.path %}fremhev{% endif %}">End of life-systemer</a>
 
+	{% url 'rapport_prioriteringer' as url_rapport_prioriteringer %}
+	<a href="{{ url_rapport_prioriteringer }}" class="btn btn-sm btn-link {% if url_rapport_prioriteringer in request.path %}fremhev{% endif %}">Systemprioriteringer</a>
+
 {% endblock sidemeny %}
 
 {% block main_content %}
