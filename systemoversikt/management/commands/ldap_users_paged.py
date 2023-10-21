@@ -61,7 +61,7 @@ class Command(BaseCommand):
 			BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 			SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
 			LDAP_SCOPE = ldap.SCOPE_SUBTREE
-			ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet'] # if empty we get all attr we have access to
+			ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet', 'servicePrincipalName'] # if empty we get all attr we have access to
 			PAGESIZE = 2000
 
 			report_data = {
@@ -74,6 +74,16 @@ class Command(BaseCommand):
 			}
 
 			def update_user_status(user, dn, attrs, user_organization, report_data):
+
+				if "servicePrincipalName" in attrs:
+					#print(attrs["servicePrincipalName"])
+					all_spn = []
+					for spn in attrs["servicePrincipalName"]:
+						all_spn.append(spn.decode())
+					user.profile.service_principal_name = json.dumps(all_spn)
+				else:
+					user.profile.service_principal_name = None
+
 
 				if "userAccountControl" in attrs:
 					userAccountControl = int(attrs["userAccountControl"][0].decode())

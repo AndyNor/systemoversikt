@@ -19,6 +19,9 @@
 	{% url 'tbrukere' as url_tbrukere %}
 	<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a>
 
+	{% url 'alle_spn' as url_alle_spn %}
+	<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">Kontoer med SPN</a>
+
 	{% url 'isk_ansvarlig_for_system' as url_isk_ansvarlig_for_system %}
 	<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">System per ISK</a>
 

@@ -69,6 +69,7 @@ urlpatterns = [
 	re_path(r'^rapport/o365_lisenser/$', views.o365_lisenser, name='o365_lisenser'),
 	re_path(r'^rapport/ad/drifttilgang/$', views.drifttilgang, name='drifttilgang'),
 	re_path(r'^rapport/ad/tbrukere/$', views.tbrukere, name='tbrukere'),
+	re_path(r'^rapport/ad/spn/$', views.alle_spn, name='alle_spn'),
 	re_path(r'^rapport/systemperisk/$', views.isk_ansvarlig_for_system, name='isk_ansvarlig_for_system'),
 	re_path(r'^rapport/named_locations/$', views.rapport_named_locations, name='rapport_named_locations'),
 
@@ -232,11 +233,8 @@ urlpatterns = [
 
 	re_path(r'^driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
 	re_path(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
-<<<<<<< Updated upstream
 	re_path(r'^virksomhet/drift/prioriteringer/$', views.drift_beredskap_redirect, name='drift_beredskap_redirect'),
-=======
 	re_path(r'^rapport/prioriteringer/$', views.rapport_prioriteringer, name='rapport_prioriteringer'),
->>>>>>> Stashed changes
 	re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/$', views.drift_beredskap, name='drift_beredskap'),
 	re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/(?P<eier>\d{1,8})$', views.drift_beredskap, name='drift_beredskap_for_eier'),
 	re_path(r'^virksomhet/driftsmodell/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),

@@ -973,6 +973,12 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			default=0,
 			help_text=u'Settes automatisk',
 			)
+	service_principal_name = models.CharField(
+			verbose_name="Service Principal Name (AD)",
+			max_length=256,
+			blank=True,
+			null=True,
+			)
 	# med vilje er det ikke HistoricalRecords() på denne
 
 	def __str__(self):

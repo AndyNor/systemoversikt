@@ -77,6 +77,7 @@ def decode_useraccountcontrol(code): # støttefunksjon for LDAP
 
 def push_pushover(message):
 	import os, requests
+	import http.client
 	USER_KEY = os.environ['PUSHOVER_USER_KEY']
 	APP_TOKEN = os.environ['PUSHOVER_APP_TOKEN']
 	if USER_KEY != "" and APP_TOKEN != "":
@@ -3977,6 +3978,22 @@ def leverandortilgang(request, valgt_gruppe=None):
 	# må sjekkes, hva om ikke None?
 
 
+def alle_spn(request):
+	#Vise informasjon brukere som er opprettet for å teste noe (og ikke har blitt slettet i etterkant)
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	brukere = User.objects.filter(~Q(profile__service_principal_name=None)).order_by("username")
+
+	for b in brukere:
+		b.spns = json.loads(b.profile.service_principal_name)
+
+	return render(request, 'ad_alle_spn.html', {
+		"request": request,
+		"required_permissions": required_permissions,
+		"brukere": brukere,
+	})
 
 def tbrukere(request):
 	#Vise informasjon brukere som er opprettet for å teste noe (og ikke har blitt slettet i etterkant)
