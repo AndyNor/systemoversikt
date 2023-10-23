@@ -6453,6 +6453,7 @@ def behandlingsoversikt_api(request): #API
 	for s in System.objects.all():
 		systeminfo = {}
 		systeminfo["system_navn"] = s.systemnavn
+		systeminfo["system_navn_visning"] = s.__str__()
 		systeminfo["system_id"] = s.id
 		systeminfo["ibruk"] = s.er_ibruk()
 		systeminfo["system_klassifisering"] = s.systemeierskapsmodell
