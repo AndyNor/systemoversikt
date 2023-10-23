@@ -28,6 +28,8 @@
 				<th class="filter-false"></th>
 			{% endif %}
 				<th>Systemnavn</th>
+				<th>Systemklasse</th>
+				<th>Kategorier</th>
 				<th width="10%">Driftsmodell / plattform</th>
 				<th>Tilpasset drift</th>
 				<th>Pålogging</th>
@@ -48,6 +50,16 @@
 
 		<td>
 		{% include 'system_include_vis.html' with system=item %}
+		</td>
+
+		<td>
+			{{ item.get_systemeierskapsmodell_display|default:"" }}
+		</td>
+
+		<td>
+			{% for k in item.systemtyper.all %}
+				{{ k }}<br>
+			{% endfor %}
 		</td>
 
 		<td>
