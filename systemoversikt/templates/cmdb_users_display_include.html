@@ -6,8 +6,8 @@
 	<tr>
 		<th>Navn</th>
 		<th>Brukernavn</th>
-		<th>E-post</th>
 		<th>Avdeling</th>
+		<th>E-post</th>
 		<th>Fra PRK?</th>
 		<th>Opprettet</th>
 		<th>Sist pålogget</th>
@@ -41,7 +41,7 @@
 				{{m.profile.avdeling}}
 			{% endif %}
 		</td>
-		<td> {{ m.email }} </td>
+		<td>{{ m.email }}</td>
 		<td>{{m.profile.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
 		<td>{{m.profile.whenCreated|date:"Ym" }}<br>({{m.profile.whenCreated|timesince}})</td>
 		<td>{{m.profile.lastLogonTimestamp|date:"Ym" }}<br>({{ m.profile.lastLogonTimestamp|timesince }})</td>
