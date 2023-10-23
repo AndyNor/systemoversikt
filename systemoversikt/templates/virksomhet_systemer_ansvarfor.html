@@ -28,6 +28,7 @@
 				<th class="filter-false"></th>
 			{% endif %}
 				<th>Systemnavn</th>
+				<th>PK</th>
 				<th>Systemklasse</th>
 				<th>Kategorier</th>
 				<th width="10%">Driftsmodell / plattform</th>
@@ -51,6 +52,8 @@
 		<td>
 		{% include 'system_include_vis.html' with system=item %}
 		</td>
+
+		<td>{{ item.pk }}</td>
 
 		<td>
 			{{ item.get_systemeierskapsmodell_display|default:"" }}
