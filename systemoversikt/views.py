@@ -1326,7 +1326,8 @@ def alle_nettverk(request):
 				Q(ip_address__icontains=search_term) |
 				Q(orgname__icontains=search_term) |
 				Q(comment__icontains=search_term) |
-				Q(vrfname__icontains=search_term)
+				Q(vrfname__icontains=search_term) |
+				Q(locationid__icontains=search_term)
 			)
 
 	search_term_raw = request.GET.get('search_term', '')
