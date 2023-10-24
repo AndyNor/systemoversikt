@@ -4367,8 +4367,8 @@ def virksomhet(request, pk):
 		parents.append('Ingen')
 		return 'Ingen'
 
-	antall_graph_noder = System.objects.filter(systemforvalter=pk).count()
-	for system in System.objects.filter(systemforvalter=pk).order_by('systemnavn'):
+	antall_graph_noder = System.objects.filter(systemforvalter=pk).(filter(~Q(livslop_status__in=[6,7]))).count()
+	for system in System.objects.filter(systemforvalter=pk).(filter(~Q(livslop_status__in=[6,7]))).order_by('systemnavn'):
 		if system.er_ibruk():
 			nodes.append({
 				'data': {
