@@ -252,7 +252,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 						user.is_superuser = True
 						messages.warning(self.request, 'Du ble logget på som systemadministrator')
 						from systemoversikt.views import push_pushover
-						push_pushover(f"Bruker {user} logget inn som systemadministrator")
+						#push_pushover(f"Bruker {user} logget inn som systemadministrator")
 						claim_groups.remove(superuser_group)
 					else:
 						user.is_superuser = False
