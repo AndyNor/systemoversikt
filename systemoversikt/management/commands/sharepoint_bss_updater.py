@@ -48,7 +48,7 @@ class Command(BaseCommand):
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{FILNAVN}"
+			source_filepath = f"/Begrensede-dokumenter/{FILNAVN}"
 			from systemoversikt.views import sharepoint_get_file
 			result = sharepoint_get_file(source_filepath)
 			destination_file = result["destination_file"]
