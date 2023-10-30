@@ -43,7 +43,7 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		print(f"------------\nStarter {SCRIPT_NAVN}")
+		print(f"------ Starter {SCRIPT_NAVN} ------")
 		try:
 			antall_oppslag = 0
 			driftbrukere = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)

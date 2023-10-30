@@ -44,7 +44,7 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		print(f"------------\nStarter {SCRIPT_NAVN}")
+		print(f"------ Starter {SCRIPT_NAVN} ------")
 
 		try:
 

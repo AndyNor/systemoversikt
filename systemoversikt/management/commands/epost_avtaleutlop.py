@@ -44,7 +44,7 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		print(f"------------\nStarter {SCRIPT_NAVN}")
+		print(f"------ Starter {SCRIPT_NAVN} ------")
 
 		try:
 			varslingstidspunkt = [90, 30] # dager før utløp. merk at det ikke er noen hukommelse på utsendte varsler.
