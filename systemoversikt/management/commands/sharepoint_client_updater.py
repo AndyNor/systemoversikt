@@ -57,14 +57,14 @@ class Command(BaseCommand):
 			from systemoversikt.views import sharepoint_get_file
 
 			# kobling eier-maskin
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{client_owner_source_filename}"
+			source_filepath = f"{client_owner_source_filename}"
 			result = sharepoint_get_file(source_filepath)
 			client_owner_dest_file = result["destination_file"]
 			client_owner_modified_date = result["modified_date"]
 			print(f"Filen er datert {client_owner_modified_date}")
 
 			# kobling maskin-bss
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{client_bss_source_filename}"
+			source_filepath = f"{client_bss_source_filename}"
 			result = sharepoint_get_file(source_filepath)
 			client_bss_dest_file = result["destination_file"]
 			client_bss_modified_date = result["modified_date"]

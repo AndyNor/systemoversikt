@@ -55,32 +55,32 @@ class Command(BaseCommand):
 			filename4 = FILNAVN["filename4"]
 			sone_design = FILNAVN["sone_design"]
 
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename1}"
+			source_filepath = f"{filename1}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file1 = result["destination_file"]
 			destination_file1_modified_date = result["modified_date"]
 			print(f"Filen er datert {destination_file1_modified_date}")
 
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename2}"
+			source_filepath = f"{filename2}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file2 = result["destination_file"]
 			destination_file2_modified_date = result["modified_date"]
 			print(f"Filen er datert {destination_file2_modified_date}")
 
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename3}"
+			source_filepath = f"{filename3}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file3 = result["destination_file"]
 			destination_file3_modified_date = result["modified_date"]
 			print(f"Filen er datert {destination_file3_modified_date}")
 
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename4}"
+			source_filepath = f"{filename4}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file4 = result["destination_file"]
 			destination_file4_modified_date = result["modified_date"]
 			print(f"Filen er datert {destination_file4_modified_date}")
 
 			# sonedesign
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{sone_design}"
+			source_filepath = f"{sone_design}"
 			result = sharepoint_get_file(source_filepath)
 			destination_sone_design = result["destination_file"]
 			destination_sone_design_modified_date = result["modified_date"]

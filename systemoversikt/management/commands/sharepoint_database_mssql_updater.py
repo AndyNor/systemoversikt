@@ -45,7 +45,7 @@ class Command(BaseCommand):
 
 		try:
 			from systemoversikt.views import sharepoint_get_file
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{FILNAVN}"
+			source_filepath = f"{FILNAVN}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file = result["destination_file"]
 			modified_date = result["modified_date"]

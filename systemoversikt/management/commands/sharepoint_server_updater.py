@@ -59,14 +59,14 @@ class Command(BaseCommand):
 
 			from systemoversikt.views import sharepoint_get_file
 
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename_computers}"
+			source_filepath = f"{filename_computers}"
 			result = sharepoint_get_file(source_filepath)
 			computers_destination_file = result["destination_file"]
 			computers_destination_file_modified_date = result["modified_date"]
 			print(f"Filen er datert {computers_destination_file_modified_date}")
 
 
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename_vmware}"
+			source_filepath = f"{filename_vmware}"
 			result = sharepoint_get_file(source_filepath)
 			vmware_destination_file = result["destination_file"]
 			vmware_destination_file_modified_date = result["modified_date"]

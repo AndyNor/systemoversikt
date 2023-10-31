@@ -37,7 +37,7 @@ class Command(BaseCommand):
 		client_secret = os.environ['SHAREPOINT_CLIENT_SECRET']
 		sp = da_tran_SP365(site_url = sp_site, client_id = client_id, client_secret = client_secret)
 		filename = "prk-klienter.csv"
-		source_filepath = "https://oslokommune.sharepoint.com/:x:/r/sites/74722/Begrensede-dokumenter/"+filename
+		source_filepath = "https://oslokommune.sharepoint.com/:x:/r"+filename
 		source_file = sp.create_link(source_filepath)
 		destination_file = 'systemoversikt/import/'+filename
 		sp.download(sharepoint_location = source_file, local_location = destination_file)

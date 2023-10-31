@@ -31,29 +31,62 @@ from django.utils import timezone
 ##########################
 # Støttefunksjoner start #
 ##########################
-def sharepoint_get_file(source_filepath):
-	from office365.runtime.auth.authentication_context import AuthenticationContext
-	from office365.sharepoint.client_context import ClientContext
-	from office365.sharepoint.files.file import File
+def sharepoint_get_file(filename):
+	from azure.identity import ClientSecretCredential
+	from msgraph.core import GraphClient
 	from django.utils.timezone import make_aware
 	import os
+	import requests
 
-	ctx_auth = AuthenticationContext(os.environ['SHAREPOINT_SITE'])
-	ctx_auth.acquire_token_for_app(os.environ['SHAREPOINT_CLIENT_ID'], os.environ['SHAREPOINT_CLIENT_SECRET'])
-	ctx = ClientContext(os.environ['SHAREPOINT_SITE'], ctx_auth)
+	client_credential = ClientSecretCredential(
+			tenant_id=os.environ['AZURE_TENANT_ID'],
+			client_id=os.environ['AZURE_ENTERPRISEAPP_CLIENT'],
+			client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
+	)
+	site_id = os.environ['SHAREPOINT_SITE_ID']
+	library_id = os.environ['SHAREPOINT_LIBRARY_ID']
 
-	file = ctx.web.get_file_by_server_relative_path(source_filepath).get().execute_query()
-	modified_date = make_aware(datetime.datetime.strptime(file.time_last_modified, "%Y-%m-%dT%H:%M:%SZ"))
-	#print(file.length)
-	FILNAVN = source_filepath.split("/")[-1] # last element of split
-	destination_file = f'systemoversikt/import/{FILNAVN}'
+	client = GraphClient(credential=client_credential, api_version='beta')
+	#query = f"/sites/{site_id}/drives/{library_id}/root/children" # liste alle elementer
+	query = f"/sites/{site_id}/drives/{library_id}/items/root:/{filename}"
+	print(f"Spørring: {query}")
+	resp = client.get(query)
+	file_metadata = json.loads(resp.text)
 
-	with open(destination_file, "wb") as local_file:
-		file.download(local_file)
-		ctx.execute_query()
+	print(file_metadata["lastModifiedDateTime"])
+	modified_date = make_aware(datetime.datetime.strptime(file_metadata["lastModifiedDateTime"], "%Y-%m-%dT%H:%M:%SZ"))
+	destination_file = f'systemoversikt/import/{filename}'
+
+	response = requests.get(file_metadata["@microsoft.graph.downloadUrl"])
+	with open(destination_file, "wb") as f:
+		f.write(response.content)
 	print(f"Lastet ned fil til {destination_file} ")
 
 	return {"destination_file": destination_file, "modified_date": modified_date}
+
+	#gammelt
+	#from office365.runtime.auth.authentication_context import AuthenticationContext
+	#from office365.sharepoint.client_context import ClientContext
+	#from office365.sharepoint.files.file import File
+
+	#ctx_auth = AuthenticationContext(os.environ['SHAREPOINT_SITE'])
+	#ctx_auth.acquire_token_for_app(os.environ['SHAREPOINT_CLIENT_ID'], os.environ['SHAREPOINT_CLIENT_SECRET'])
+	#ctx = ClientContext(os.environ['SHAREPOINT_SITE'], ctx_auth)
+
+	#file = ctx.web.get_file_by_server_relative_path(source_filepath).get().execute_query()
+	#modified_date = make_aware(datetime.datetime.strptime(file.time_last_modified, "%Y-%m-%dT%H:%M:%SZ"))
+	#print(file.length)
+	#FILNAVN = source_filepath.split("/")[-1] # last element of split
+	#destination_file = f'systemoversikt/import/{FILNAVN}'
+
+	#with open(destination_file, "wb") as local_file:
+	#	file.download(local_file)
+	#	ctx.execute_query()
+	#print(f"Lastet ned fil til {destination_file} ")
+
+	#return {"destination_file": destination_file, "modified_date": modified_date}
+
+
 
 def decode_useraccountcontrol(code): # støttefunksjon for LDAP
 	#https://support.microsoft.com/nb-no/help/305144/how-to-use-useraccountcontrol-to-manipulate-user-account-properties

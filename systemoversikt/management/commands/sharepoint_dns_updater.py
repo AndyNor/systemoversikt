@@ -53,13 +53,13 @@ class Command(BaseCommand):
 		try:
 
 			from systemoversikt.views import sharepoint_get_file
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{kilde_ekstern}"
+			source_filepath = f"{kilde_ekstern}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file1 = result["destination_file"]
 			destination_file1_modified_date = result["modified_date"]
 			print(f"Filen er datert {destination_file1_modified_date}")
 
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{kilde_intern}"
+			source_filepath = f"{kilde_intern}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file2 = result["destination_file"]
 			destination_file2_modified_date = result["modified_date"]

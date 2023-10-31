@@ -51,14 +51,14 @@ class Command(BaseCommand):
 
 			from systemoversikt.views import sharepoint_get_file
 			# bigip-data
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename1}"
+			source_filepath = f"{filename1}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file_bigip = result["destination_file"]
 			destination_file_bigip_modified_date = result["modified_date"]
 			print(f"Filen er datert {destination_file_bigip_modified_date}")
 
 			# router-data
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename2}"
+			source_filepath = f"{filename2}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file_cisco = result["destination_file"]
 			destination_file_cisco_modified_date = result["modified_date"]

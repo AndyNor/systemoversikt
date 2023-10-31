@@ -51,7 +51,7 @@ class Command(BaseCommand):
 			filename_pool = FILNAVN["filename_pool"]
 
 			from systemoversikt.views import sharepoint_get_file
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename_vip}"
+			source_filepath = f"{filename_vip}"
 			result = sharepoint_get_file(source_filepath)
 			vip_destination_file = result["destination_file"]
 			vip_modified_date = result["modified_date"]
@@ -59,7 +59,7 @@ class Command(BaseCommand):
 
 
 			from systemoversikt.views import sharepoint_get_file
-			source_filepath = f"/sites/74722/Begrensede-dokumenter/{filename_pool}"
+			source_filepath = f"{filename_pool}"
 			result = sharepoint_get_file(source_filepath)
 			pool_destination_file = result["destination_file"]
 			pool_modified_date = result["modified_date"]
