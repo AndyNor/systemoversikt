@@ -273,9 +273,9 @@ class Command(BaseCommand):
 				if ardoc_livsløpsstatus != None:
 					if system_ref.livslop_status != int(ardoc_livsløpsstatus):
 						print(f"Livsløpstatus for '{system_ref.systemnavn}' blir endret fra '{system_ref.livslop_status}' til '{ardoc_livsløpsstatus}'.")
-						#system_ref.livslop_status = int(ardoc_livsløpsstatus)
-						#system_ref.save()
-						pass
+						system_ref.livslop_status = int(ardoc_livsløpsstatus)
+						system_ref.save()
+						#pass
 
 
 			logg_entry_message = f"Det var {antall_records} systemer i filen"
