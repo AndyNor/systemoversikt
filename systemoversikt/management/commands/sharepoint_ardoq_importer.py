@@ -239,12 +239,12 @@ class Command(BaseCommand):
 
 			antall_records = len(data)
 
-			for item in reset_data:
-				s = System.objects.get(pk=item[0])
-				ny_verdi = item[1]
-				print(f"endrer {s}: fra {s.livslop_status} tilbake til {ny_verdi}")
-				s.livslop_status = ny_verdi
-				s.save()
+			#for item in reset_data:
+			#	s = System.objects.get(pk=item[0])
+			#	ny_verdi = item[1]
+			#	print(f"endrer {s}: fra {s.livslop_status} tilbake til {ny_verdi}")
+			#	s.livslop_status = ny_verdi
+			#	s.save()
 
 			for record in data:
 				try:
@@ -272,7 +272,7 @@ class Command(BaseCommand):
 				#	print(f"Systembeskrivelse for '{system_ref.systemnavn}' er endret fra '{system_ref.systembeskrivelse}' til '{ardoc_systembeskrivelse}'.")
 				if ardoc_livsløpsstatus != None:
 					if system_ref.livslop_status != int(ardoc_livsløpsstatus):
-						#print(f"Livsløpstatus for '{system_ref.systemnavn}' er endret fra '{system_ref.livslop_status}' til '{ardoc_livsløpsstatus}'.")
+						print(f"Livsløpstatus for '{system_ref.systemnavn}' blir endret fra '{system_ref.livslop_status}' til '{ardoc_livsløpsstatus}'.")
 						#system_ref.livslop_status = int(ardoc_livsløpsstatus)
 						#system_ref.save()
 						pass
