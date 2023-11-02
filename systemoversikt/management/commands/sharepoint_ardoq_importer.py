@@ -79,7 +79,7 @@ class Command(BaseCommand):
 					pass
 
 				ardoc_systembeskrivelse = record["Description"]
-				ardoc_systembeskrivelse = ardoc_systembeskrivelse.replace("\\-", "-")
+				ardoc_systembeskrivelse = ardoc_systembeskrivelse.replace("\\", "")
 
 				try:
 					ardoc_livsløpsstatus = record["INV Livsløpstatus"][0]
