@@ -95,7 +95,7 @@ class Command(BaseCommand):
 					continue
 
 				#if system_ref.systemnavn != ardoc_systemnavn:
-					#print(f"Systemnavn blir endret fra '{system_ref.systemnavn}' til '{ardoc_systemnavn}'.")
+					print(f"Systemnavn blir endret fra '{system_ref.systemnavn}' til '{ardoc_systemnavn}'.")
 					#system_ref.systemnavn = ardoc_systemnavn
 					#system_ref.save()
 
@@ -103,16 +103,15 @@ class Command(BaseCommand):
 					measure = SequenceMatcher(a=system_ref.systembeskrivelse,b=ardoc_systembeskrivelse).ratio()
 					if measure < 0.96:
 						print(f"{system_ref}: {measure}")
-						system_ref.systembeskrivelse = ardoc_systembeskrivelse
-						system_ref.save()
+						#system_ref.systembeskrivelse = ardoc_systembeskrivelse
+						#system_ref.save()
 
 
-				#if ardoc_livsløpsstatus != None:
-					#if system_ref.livslop_status != int(ardoc_livsløpsstatus):
-						#print(f"Livsløpstatus for '{system_ref.systemnavn}' blir endret fra '{system_ref.livslop_status}' til '{ardoc_livsløpsstatus}'.")
+				if ardoc_livsløpsstatus != None:
+					if system_ref.livslop_status != int(ardoc_livsløpsstatus):
+						print(f"Livsløpstatus for '{system_ref.systemnavn}' blir endret fra '{system_ref.livslop_status}' til '{ardoc_livsløpsstatus}'.")
 						#system_ref.livslop_status = int(ardoc_livsløpsstatus)
 						#system_ref.save()
-						#pass
 
 
 			logg_entry_message = f"Det var {antall_records} systemer i filen"
