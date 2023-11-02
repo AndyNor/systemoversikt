@@ -71,8 +71,15 @@ class Command(BaseCommand):
 					ardoc_system_id = int(record["Kartoteket SYS ID"])
 				except:
 					ardoc_system_id = None
+
 				ardoc_systemnavn = record["Name"]
+				try:
+					ardoc_systemnavn = ardoc_systemnavn.split("(")[0]
+				except:
+					pass
+
 				ardoc_systembeskrivelse = record["Description"]
+
 				try:
 					ardoc_livsløpsstatus = record["INV Livsløpstatus"][0]
 				except:
