@@ -99,9 +99,10 @@ class Command(BaseCommand):
 
 				if system_ref.systembeskrivelse != ardoc_systembeskrivelse:
 					print("----------------------------------")
-					print(f"Systembeskrivelse for '{system_ref.systemnavn}' blir endret fra")
+					print(f"Systembeskrivelse for '{system_ref.systemnavn}'")
+					print(f"FRA -------------")
 					print(f"{system_ref.systembeskrivelse}")
-					print("\n")
+					print(f"TIL -------------")
 					print(f"{ardoc_systembeskrivelse}")
 
 
