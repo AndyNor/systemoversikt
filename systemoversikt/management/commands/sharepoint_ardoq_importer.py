@@ -97,13 +97,14 @@ class Command(BaseCommand):
 					system_ref.systemnavn = ardoc_systemnavn
 					system_ref.save()
 
-				if system_ref.systembeskrivelse != ardoc_systembeskrivelse:
-					print("----------------------------------")
-					print(f"Systembeskrivelse for '{system_ref.systemnavn}'")
-					print(f"FRA -------------")
-					print(f"{system_ref.systembeskrivelse}")
-					print(f"TIL -------------")
-					print(f"{ardoc_systembeskrivelse}")
+				if ardoc_systembeskrivelse != "":
+					if system_ref.systembeskrivelse != ardoc_systembeskrivelse:
+						print("----------------------------------")
+						print(f"Systembeskrivelse for '{system_ref.systemnavn}'")
+						print(f"FRA -------------")
+						print(f"{system_ref.systembeskrivelse}")
+						print(f"TIL -------------")
+						print(f"{ardoc_systembeskrivelse}")
 
 
 				if ardoc_livsløpsstatus != None:
