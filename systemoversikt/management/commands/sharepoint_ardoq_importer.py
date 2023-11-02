@@ -98,6 +98,7 @@ class Command(BaseCommand):
 					system_ref.save()
 
 				if system_ref.systembeskrivelse != ardoc_systembeskrivelse:
+					print("----------------------------------")
 					print(f"Systembeskrivelse for '{system_ref.systemnavn}' blir endret fra '{system_ref.systembeskrivelse}' til '{ardoc_systembeskrivelse}'.")
 
 
