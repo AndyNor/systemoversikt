@@ -9,6 +9,7 @@ from datetime import datetime
 import pandas as pd
 import numpy as np
 import os
+from difflib import SequenceMatcher
 
 
 class Command(BaseCommand):
@@ -93,26 +94,24 @@ class Command(BaseCommand):
 					#print(f"Fant ikke system med id {ardoc_system_id}: {ardoc_systemnavn}")
 					continue
 
-				if system_ref.systemnavn != ardoc_systemnavn:
-					print(f"Systemnavn blir endret fra '{system_ref.systemnavn}' til '{ardoc_systemnavn}'.")
-					system_ref.systemnavn = ardoc_systemnavn
-					system_ref.save()
+				#if system_ref.systemnavn != ardoc_systemnavn:
+					#print(f"Systemnavn blir endret fra '{system_ref.systemnavn}' til '{ardoc_systemnavn}'.")
+					#system_ref.systemnavn = ardoc_systemnavn
+					#system_ref.save()
 
 				if ardoc_systembeskrivelse != "":
-					if system_ref.systembeskrivelse.strip() != ardoc_systembeskrivelse.strip():
-						print("\n\n\n----------------------------------")
-						print(f"Systembeskrivelse for '{system_ref.systemnavn}'")
-						print(f"FRA -------------")
-						print(f"{system_ref.systembeskrivelse}")
-						print(f"TIL -------------")
-						print(f"{ardoc_systembeskrivelse}")
-
-
-				if ardoc_livsløpsstatus != None:
-					if system_ref.livslop_status != int(ardoc_livsløpsstatus):
-						print(f"Livsløpstatus for '{system_ref.systemnavn}' blir endret fra '{system_ref.livslop_status}' til '{ardoc_livsløpsstatus}'.")
-						system_ref.livslop_status = int(ardoc_livsløpsstatus)
+					measure = SequenceMatcher(a=system_ref.systembeskrivelse,b=ardoc_systembeskrivelse).ratio()
+					if measure < 0.96:
+						print(f"{system_ref}: {measure}")
+						system_ref.systembeskrivelse = ardoc_systembeskrivelse
 						system_ref.save()
+
+
+				#if ardoc_livsløpsstatus != None:
+					#if system_ref.livslop_status != int(ardoc_livsløpsstatus):
+						#print(f"Livsløpstatus for '{system_ref.systemnavn}' blir endret fra '{system_ref.livslop_status}' til '{ardoc_livsløpsstatus}'.")
+						#system_ref.livslop_status = int(ardoc_livsløpsstatus)
+						#system_ref.save()
 						#pass
 
 
