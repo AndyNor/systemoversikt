@@ -97,8 +97,10 @@ class Command(BaseCommand):
 					system_ref.systemnavn = ardoc_systemnavn
 					system_ref.save()
 
-				#if system_ref.systembeskrivelse != ardoc_systembeskrivelse:
-				#	print(f"Systembeskrivelse for '{system_ref.systemnavn}' er endret fra '{system_ref.systembeskrivelse}' til '{ardoc_systembeskrivelse}'.")
+				if system_ref.systembeskrivelse != ardoc_systembeskrivelse:
+					print(f"Systembeskrivelse for '{system_ref.systemnavn}' blir endret fra '{system_ref.systembeskrivelse}' til '{ardoc_systembeskrivelse}'.")
+
+
 				if ardoc_livsløpsstatus != None:
 					if system_ref.livslop_status != int(ardoc_livsløpsstatus):
 						print(f"Livsløpstatus for '{system_ref.systemnavn}' blir endret fra '{system_ref.livslop_status}' til '{ardoc_livsløpsstatus}'.")
