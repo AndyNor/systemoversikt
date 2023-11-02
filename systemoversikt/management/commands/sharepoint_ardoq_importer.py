@@ -99,7 +99,7 @@ class Command(BaseCommand):
 					system_ref.save()
 
 				if ardoc_systembeskrivelse != "":
-					if system_ref.systembeskrivelse != ardoc_systembeskrivelse:
+					if system_ref.systembeskrivelse.strip() != ardoc_systembeskrivelse.strip():
 						print("\n\n\n----------------------------------")
 						print(f"Systembeskrivelse for '{system_ref.systemnavn}'")
 						print(f"FRA -------------")
