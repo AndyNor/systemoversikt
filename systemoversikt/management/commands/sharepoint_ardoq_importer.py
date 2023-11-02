@@ -74,7 +74,7 @@ class Command(BaseCommand):
 
 				ardoc_systemnavn = record["Name"]
 				try:
-					ardoc_systemnavn = ardoc_systemnavn.split("(")[0]
+					ardoc_systemnavn = ardoc_systemnavn.split("(")[0].strip()
 				except:
 					pass
 
