@@ -79,6 +79,7 @@ class Command(BaseCommand):
 					pass
 
 				ardoc_systembeskrivelse = record["Description"]
+				ardoc_systembeskrivelse = ardoc_systembeskrivelse.replace("\\-", "-")
 
 				try:
 					ardoc_livsløpsstatus = record["INV Livsløpstatus"][0]
@@ -99,7 +100,7 @@ class Command(BaseCommand):
 
 				if ardoc_systembeskrivelse != "":
 					if system_ref.systembeskrivelse != ardoc_systembeskrivelse:
-						print("----------------------------------")
+						print("\n\n\n----------------------------------")
 						print(f"Systembeskrivelse for '{system_ref.systemnavn}'")
 						print(f"FRA -------------")
 						print(f"{system_ref.systembeskrivelse}")
