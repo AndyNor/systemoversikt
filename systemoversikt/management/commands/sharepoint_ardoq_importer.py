@@ -99,6 +99,29 @@ class Command(BaseCommand):
 					system_ref.systemforvalter = ardoc_virk_forvalter
 					system_ref.save()
 
+
+				ny_eiere = record["Systemeier"]
+				gammel_eiere = ", ".join(a.__str__() for a in system_ref.systemeier_kontaktpersoner_referanse.all())
+				ny_forvaltere = record["Systemforvalter"]
+				gammel_forvaltere = ", ".join(a.__str__() for a in system_ref.systemforvalter_kontaktpersoner_referanse.all())
+
+
+				print("--------------------------------")
+				print(system_ref)
+				if ny_eiere != gammel_eiere:
+					print(f"*** ny eier    : {ny_eiere}\ngammel eier: {gammel_eiere}")
+				if ny_forvaltere != gammel_forvaltere:
+					print(f"*** ny forvalte: {ny_forvaltere}\ngammel for : {gammel_forvaltere}")
+
+
+
+				#ardoc_kontaktpersoner_eiere = record["Systemeier"].split(",")
+				#if ardoc_kontaktpersoner_eiere != "":
+				#	for eier in ardoc_kontaktpersoner_eiere:
+				#		print(eier)
+				#
+
+
 				#if system_ref.systemnavn != ardoc_systemnavn:
 				#	print(f"Systemnavn blir endret fra '{system_ref.systemnavn}' til '{ardoc_systemnavn}'.")
 				#	system_ref.systemnavn = ardoc_systemnavn
