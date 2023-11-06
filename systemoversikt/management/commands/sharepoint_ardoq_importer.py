@@ -87,7 +87,7 @@ class Command(BaseCommand):
 				print(ardoc_virk_eier)
 				ardoc_virk_eier = Virksomhet.objects.get(virksomhetsnavn=ardoc_virk_eier)
 
-				ardoc_virk_forvalter = record["Organisatorisk systemforvalter"].strip()
+				ardoc_virk_forvalter = record["Organisatorisk systemforvalter"].split("(")[0].strip()
 				print(ardoc_virk_forvalter)
 				ardoc_virk_forvalter = Virksomhet.objects.get(virksomhetsnavn=ardoc_virk_forvalter)
 
