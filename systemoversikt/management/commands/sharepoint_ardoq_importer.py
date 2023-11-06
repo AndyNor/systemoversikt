@@ -83,11 +83,11 @@ class Command(BaseCommand):
 				system_ref.inv_konklusjon_beskrivelse = ardoc_konklusjon_beskrivelse
 				system_ref.save()
 
-				ardoc_virk_eier = record["Organisatorisk systemeier"].split("(")[0]
+				ardoc_virk_eier = record["Organisatorisk systemeier"].split("(")[0].strip()
 				print(ardoc_virk_eier)
 				ardoc_virk_eier = Virksomhet.objects.get(virksomhetsnavn=ardoc_virk_eier)
 
-				ardoc_virk_forvalter = record["Organisatorisk systemforvalter"]
+				ardoc_virk_forvalter = record["Organisatorisk systemforvalter"].strip()
 				print(ardoc_virk_forvalter)
 				ardoc_virk_forvalter = Virksomhet.objects.get(virksomhetsnavn=ardoc_virk_forvalter)
 
