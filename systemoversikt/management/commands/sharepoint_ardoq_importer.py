@@ -84,13 +84,20 @@ class Command(BaseCommand):
 				system_ref.save()
 
 				ardoc_virk_eier = record["Organisatorisk systemeier"].split("(")[0].strip()
-				print(ardoc_virk_eier)
 				ardoc_virk_eier = Virksomhet.objects.get(virksomhetsnavn=ardoc_virk_eier)
 
 				ardoc_virk_forvalter = record["Organisatorisk systemforvalter"].split("(")[0].strip()
-				print(ardoc_virk_forvalter)
 				ardoc_virk_forvalter = Virksomhet.objects.get(virksomhetsnavn=ardoc_virk_forvalter)
 
+				if ardoc_virk_eier.pk != system_ref.systemeier.pk:
+					print(f"{system_ref} har mismatch. Hadde {system_ref.systemeier}, settes til {ardoc_virk_eier}")
+					system_ref.systemeier = ardoc_virk_eier
+					system_ref.save()
+
+				if ardoc_virk_forvalter.pk != system_ref.systemforvalter.pk:
+					print(f"{system_ref} har mismatch. Hadde {system_ref.systemforvalter}, settes til {ardoc_virk_forvalter}")
+					system_ref.systemforvalter = ardoc_virk_forvalter
+					system_ref.save()
 
 				#if system_ref.systemnavn != ardoc_systemnavn:
 				#	print(f"Systemnavn blir endret fra '{system_ref.systemnavn}' til '{ardoc_systemnavn}'.")
