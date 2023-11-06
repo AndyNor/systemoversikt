@@ -84,9 +84,11 @@ class Command(BaseCommand):
 				system_ref.save()
 
 				ardoc_virk_eier = record["Organisatorisk systemeier"].split("(")[0]
+				print(ardoc_virk_eier)
 				ardoc_virk_eier = Virksomhet.objects.get(virksomhetsnavn=ardoc_virk_eier)
 
 				ardoc_virk_forvalter = record["Organisatorisk systemforvalter"]
+				print(ardoc_virk_forvalter)
 				ardoc_virk_forvalter = Virksomhet.objects.get(virksomhetsnavn=ardoc_virk_forvalter)
 
 
