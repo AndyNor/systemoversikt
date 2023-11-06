@@ -4603,11 +4603,24 @@ class System(models.Model):
 			help_text=u"Besnyttes av UKE for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
 			)
 	kritisk_kapabilitet = models.ManyToManyField(
-		to=KritiskKapabilitet,
-		related_name="systemer",
-		verbose_name="Kritisk kapabilitet",
-		blank=True,
-		help_text=u"Understøtter systemet en kritisk funksjon? Kategorier basert på rammeverket fra DSB.")
+			to=KritiskKapabilitet,
+			related_name="systemer",
+			verbose_name="Kritisk kapabilitet",
+			blank=True,
+			help_text=u"Understøtter systemet en kritisk funksjon? Kategorier basert på rammeverket fra DSB."
+			)
+	inv_konklusjon = models.CharField(
+			verbose_name="Konklusjon modernisering",
+			max_length=250,
+			blank=True,
+			null=True,
+			)
+	inv_konklusjon_beskrivelse = models.TextField(
+			verbose_name="Detaljert konklusjon modernisering",
+			blank=True,
+			null=True,
+			)
+
 	history = HistoricalRecords()
 
 

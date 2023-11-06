@@ -15,8 +15,10 @@ Under denne tabellen finner du en ny tabell med alle integrasjoner som er regist
 <thead>
 <tr>
 	<th>ID</th>
-	<th>Klargjort</th>
 	<th>Systemnavn</th>
+	<th>Entra ID status</th>
+	<th>Konklusjon</th>
+	<th>Konklusjon detaljert</th>
 
 	<th>Klassifisering</th>
 	<th>Grensesnitt</th>
@@ -48,8 +50,10 @@ Under denne tabellen finner du en ny tabell med alle integrasjoner som er regist
 {% for s in systemer %}
 <tr>
 	<td>{{ s.pk }}</td>
-	<td>{{ s.get_klargjort_ny_sikkerhetsmodell_display }}</td>
 	<td>{{ s }}</td>
+	<td>{{ s.get_klargjort_ny_sikkerhetsmodell_display }}</td>
+	<td>{{ s.inv_konklusjon }}</td>
+	<td>{{ s.inv_konklusjon_beskrivelse }}</td>
 
 	<td>{{ s.get_systemeierskapsmodell_display|default:"-" }}</td>
 	<td>

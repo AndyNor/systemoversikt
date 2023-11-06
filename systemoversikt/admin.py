@@ -359,6 +359,8 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'nokkelpersonell',
 				'high_level_design_url',
 				('klargjort_ny_sikkerhetsmodell'),
+				'inv_konklusjon',
+				'inv_konklusjon_beskrivelse',
 				'enterprise_applicatons',
 				('autentiseringsteknologi', 'autentiseringsalternativer'),
 				('legacy_klient_krever_smb', 'legacy_klient_krever_direkte_db'),

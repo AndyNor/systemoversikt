@@ -34,7 +34,13 @@
 
 	<hr>
 
-	<h6>{{ systemdetaljer.systembeskrivelse|linebreaks }}</h6>
+	<h6>
+		{{ systemdetaljer.systembeskrivelse|linebreaks }}
+		<hr>
+		{{ systemdetaljer.inv_konklusjon }}
+		<br>
+		{{ systemdetaljer.inv_konklusjon_beskrivelse }}
+	</h6>
 
 	<hr>
 

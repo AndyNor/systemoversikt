@@ -69,49 +69,45 @@ class Command(BaseCommand):
 
 			for record in data:
 				try:
-					ardoc_system_id = int(record["Kartoteket SYS ID"])
+					ardoc_system_id = int(record["Kartoteket SysID"])
 				except:
 					ardoc_system_id = None
 
-				ardoc_systemnavn = record["Name"]
-				try:
-					ardoc_systemnavn = ardoc_systemnavn.split("(")[0].strip()
-				except:
-					pass
+				ardoc_konklusjon = record["Konklusjon"].replace("\\", "")
+				ardoc_konklusjon_beskrivelse = record["Konklusjon Beskrivelse"].replace("\\", "")
 
-				ardoc_systembeskrivelse = record["Description"]
-				ardoc_systembeskrivelse = ardoc_systembeskrivelse.replace("\\", "")
+				#try:
+				system_ref = System.objects.get(pk=ardoc_system_id)
 
-				try:
-					ardoc_livsløpsstatus = record["INV Livsløpstatus"][0]
-				except:
-					ardoc_livsløpsstatus = None
+				system_ref.inv_konklusjon = ardoc_konklusjon
+				system_ref.inv_konklusjon_beskrivelse = ardoc_konklusjon_beskrivelse
+				system_ref.save()
 
-				try:
-					system_ref = System.objects.get(pk=ardoc_system_id)
-					#print(f"{system_ref.pk} {system_ref.livslop_status}")
-				except:
-					#print(f"Fant ikke system med id {ardoc_system_id}: {ardoc_systemnavn}")
-					continue
+				ardoc_virk_eier = record["Organisatorisk systemeier"].split("(")[0]
+				ardoc_virk_eier = Virksomhet.objects.get(virksomhetsnavn=ardoc_virk_eier)
+
+				ardoc_virk_forvalter = record["Organisatorisk systemforvalter"]
+				ardoc_virk_forvalter = Virksomhet.objects.get(virksomhetsnavn=ardoc_virk_forvalter)
+
 
 				#if system_ref.systemnavn != ardoc_systemnavn:
-					print(f"Systemnavn blir endret fra '{system_ref.systemnavn}' til '{ardoc_systemnavn}'.")
-					#system_ref.systemnavn = ardoc_systemnavn
-					#system_ref.save()
+				#	print(f"Systemnavn blir endret fra '{system_ref.systemnavn}' til '{ardoc_systemnavn}'.")
+				#	system_ref.systemnavn = ardoc_systemnavn
+				#	system_ref.save()
 
-				if ardoc_systembeskrivelse != "":
-					measure = SequenceMatcher(a=system_ref.systembeskrivelse,b=ardoc_systembeskrivelse).ratio()
-					if measure < 0.96:
-						print(f"{system_ref}: {measure}")
-						#system_ref.systembeskrivelse = ardoc_systembeskrivelse
-						#system_ref.save()
+				#if ardoc_systembeskrivelse != "":
+				#	measure = SequenceMatcher(a=system_ref.systembeskrivelse,b=ardoc_systembeskrivelse).ratio()
+				#	if measure < 0.96:
+				#		print(f"{system_ref}: {measure}")
+				#		#system_ref.systembeskrivelse = ardoc_systembeskrivelse
+				#		#system_ref.save()
 
 
-				if ardoc_livsløpsstatus != None:
-					if system_ref.livslop_status != int(ardoc_livsløpsstatus):
-						print(f"Livsløpstatus for '{system_ref.systemnavn}' blir endret fra '{system_ref.livslop_status}' til '{ardoc_livsløpsstatus}'.")
-						#system_ref.livslop_status = int(ardoc_livsløpsstatus)
-						#system_ref.save()
+				#if ardoc_livsløpsstatus != None:
+				#	if system_ref.livslop_status != int(ardoc_livsløpsstatus):
+				#		print(f"Livsløpstatus for '{system_ref.systemnavn}' blir endret fra '{system_ref.livslop_status}' til '{ardoc_livsløpsstatus}'.")
+				#		system_ref.livslop_status = int(ardoc_livsløpsstatus)
+				#		system_ref.save()
 
 
 			logg_entry_message = f"Det var {antall_records} systemer i filen"
