@@ -96,7 +96,7 @@
 				<a href="/admin/systemoversikt/cmdbdevice/?q={{enhet.comp_name}}">{{enhet}}<br>
 			{% endfor %}
 		</td>
-		<td>{% for gruppe in user.profile.ad_grp_lookup %}{{ gruppe }}<br>{% endfor %}</td>
+		<td>{% for gruppe in user.profile.ad_grp_lookup %}{{ gruppe }} <br>{% endfor %}</td>
 	</tr>
 	{% endfor %}
 	</tbody>
