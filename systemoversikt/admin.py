@@ -266,6 +266,8 @@ class SystemAdmin(SimpleHistoryAdmin):
 	search_fields = ('systemnavn', 'alias',)
 	list_filter = ('autentiseringsteknologi', 'autentiseringsalternativer', 'database_in_use', 'database_supported', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
+	readonly_fields = ['inv_konklusjon', 'inv_konklusjon_beskrivelse']
+
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.pk}))
