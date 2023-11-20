@@ -139,6 +139,7 @@ class Command(BaseCommand):
 			APPLICATIONS_FOUND = 0
 
 			def load_next_response(nextLink):
+				#print(nextLink)
 				resp = client.get(nextLink)
 				load_appdata = json.loads(resp.text)
 				#print(json.dumps(load_appdata, sort_keys=True, indent=4))
@@ -199,20 +200,13 @@ class Command(BaseCommand):
 								)
 
 
-			safety = 30 # må justeres om det blir veldig mange apper.
-			results_per_page = 100
-			maximum_results = (safety + 1) * results_per_page
-
 			# fjerner alle registrerte nøkler (keys) (#1)
 			AzureApplicationKeys.objects.all().delete()
 
-			initial_query = '/applications?$top=%s' % results_per_page
+			initial_query = '/applications'
 			next_page = load_next_response(initial_query)
 			while(next_page):
 				next_page = load_next_response(next_page)
-				safety -= 1
-				if safety <= 0:
-					break
 
 			#sette applikasjoner som ikke har vært sett til deaktivt
 			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
@@ -223,7 +217,7 @@ class Command(BaseCommand):
 				print("%s satt deaktiv" % a)
 
 			#logg dersom vellykket
-			logg_message = "Fant %s applikasjoner. Maksgrense er satt til %s" % (APPLICATIONS_FOUND, maximum_results)
+			logg_message = "Fant %s applikasjoner." % (APPLICATIONS_FOUND)
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_message,
