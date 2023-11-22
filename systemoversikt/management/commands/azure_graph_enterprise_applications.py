@@ -176,7 +176,7 @@ class Command(BaseCommand):
 					a.active = True if app.get('accountEnabled') == True else False
 					a.servicePrincipalType = servicePrincipalType
 					a.tags = app.get('tags')
-					a.from_graph = True
+					a.notes = app.get('notes')
 					a.requiredResourceAccess.clear()
 					a.save()
 
@@ -232,11 +232,7 @@ class Command(BaseCommand):
 						print(f"Fant ikke app {displayName}")
 						continue
 
-					#a.homePageUrl = app.get('homePageUrl')
-					#a.identifierUris = app.get('identifierUris')
-					#a.isAppProxy = ???
-					#a.assignmentRequired = ???
-					#a.applicationVisibility = ???
+					a.from_applications = True
 
 					#slett tidligere rettighetskoblinger og sett dem på nytt
 					a.requiredResourceAccess.clear()
@@ -280,7 +276,7 @@ class Command(BaseCommand):
 
 			# henter inn alle azure apps
 			APPLICATIONS_FOUND_ALL = 0
-			initial_query = '/servicePrincipals?$select=appId,displayName,accountEnabled,createdDateTime,tags,servicePrincipalType,keyCredentials,passwordCredentials'
+			initial_query = '/servicePrincipals?$select=appId,notes,displayName,accountEnabled,createdDateTime,tags,servicePrincipalType,keyCredentials,passwordCredentials'
 
 			next_page = load_next_response_app(initial_query)
 			while(next_page):
@@ -317,10 +313,9 @@ class Command(BaseCommand):
 			int_config.save()
 
 		# eksekver
-		#try:
-		load_azure_apps()
+		try:
+			load_azure_apps()
 
-		"""
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
 			logg_entry = ApplicationLog.objects.create(
@@ -330,5 +325,4 @@ class Command(BaseCommand):
 			print(logg_message)
 
 			# Push error
-			#push_pushover(f"{SCRIPT_NAVN} feilet")
-		"""
+			push_pushover(f"{SCRIPT_NAVN} feilet")

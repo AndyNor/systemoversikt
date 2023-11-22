@@ -15,8 +15,10 @@
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
+		<th>Kilde</th>
 		<th>Applikasjonsnavn</th>
 		<th>Type</th>
+		<th>Notater</th>
 		<th>Tags</th>
 		<th>System og eier</th>
 		<th>Risikonivå</th>
@@ -29,8 +31,10 @@
 	<tbody>
 	{% for a in applikasjoner %}
 		<tr>
+			<td>{{a.from_applications|yesno:"EA,SP"}}</td>
 			<td><a href="/admin/systemoversikt/azureapplication/{{a.id}}/change/">{{a.displayName|truncatechars:35}}</a></td>
 			<td>{{a.servicePrincipalType}}</td>
+			<td>{{a.notes|default:"-"}}</td>
 			<td>{{a.tags}}</td>
 			<td>
 				{% for system in a.systemreferanse.all %}

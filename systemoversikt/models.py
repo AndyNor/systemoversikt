@@ -6585,7 +6585,8 @@ class AzureApplication(models.Model):
 	assignmentRequired = models.BooleanField(null=True)
 	isAppProxy = models.BooleanField(null=True)
 	identifierUris = models.TextField(null=True)
-	from_graph = models.BooleanField(null=True, default=True)
+	notes = models.TextField(null=True)
+	from_applications = models.BooleanField(default=False)
 
 
 	def __str__(self):
