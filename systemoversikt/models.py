@@ -6577,6 +6577,15 @@ class AzureApplication(models.Model):
 		null=False,
 		help_text=u"Beholdes ved synkronisering mot Azure som skjer hver natt",
 		)
+	homepageUrl = models.TextField(null=True)
+	applicationType = models.CharField(max_length=100,null=True, blank=True)
+	accountEnabled = models.BooleanField(null=True)
+	applicationVisibility = models.CharField(max_length=25, null=True, blank=True)
+	assignmentRequired = models.BooleanField(null=True)
+	isAppProxy = models.BooleanField(null=True)
+	identifierUri = models.TextField(null=True)
+	from_graph = models.BooleanField(null=True, default=True)
+
 
 	def __str__(self):
 		return u'%s' % (self.displayName)
