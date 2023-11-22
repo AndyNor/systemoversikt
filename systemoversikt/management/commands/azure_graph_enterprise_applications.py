@@ -52,61 +52,71 @@ class Command(BaseCommand):
 				client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
 		)
 
+		api_version = "beta"
+
 		# det antas i denne implementeringen at det ikke skjer endringer på en permissionscope ID
 		def servicePrincipalsLookup(resourceAppId):
 			# for en enkel forklaring på feltene, les https://joonasw.net/view/defining-permissions-and-roles-in-aad
-			client = GraphClient(credential=client_credential, api_version='beta')
+			client = GraphClient(credential=client_credential, api_version=api_version)
 			query = "/servicePrincipals?filter=appId eq '%s'" % (resourceAppId)
 			resp = client.get(query)
 			load_appdata = json.loads(resp.text)
 			#print(json.dumps(load_appdata, sort_keys=True, indent=4))
-			for permissionScope in load_appdata["value"][0]["publishedPermissionScopes"]: # Delegated
-				try:
-					s = AzurePublishedPermissionScopes.objects.get(scope_id=permissionScope["id"])
-				except:
-					s = AzurePublishedPermissionScopes.objects.create(scope_id=permissionScope["id"])
+			if "value" in load_appdata:
+				for permissionScope in load_appdata["value"][0]["publishedPermissionScopes"]: # Delegated
+					try:
+						s = AzurePublishedPermissionScopes.objects.get(scope_id=permissionScope["id"])
+					except:
+						s = AzurePublishedPermissionScopes.objects.create(scope_id=permissionScope["id"])
 
-				s.resourceAppId = resourceAppId
-				s.resourceAppStr = load_appdata["value"][0]["appDisplayName"]
-				s.permission_type = "Delegated"
-				s.isEnabled = permissionScope["isEnabled"]
-				#if permissionScope["value"] == "":
-				#	print(permissionScope)
-				s.value = permissionScope["value"]
-				s.grant_type = [permissionScope["type"]]
-				s.adminConsentDescription = permissionScope["adminConsentDescription"]
-				s.adminConsentDisplayName = permissionScope["adminConsentDisplayName"]
-				s.userConsentDescription = permissionScope["userConsentDescription"]
-				s.userConsentDisplayName = permissionScope["userConsentDisplayName"]
-				s.save()
-				#print("Added PermissionScope %s" % permissionScope["value"])
+					s.resourceAppId = resourceAppId
+					s.resourceAppStr = load_appdata["value"][0]["appDisplayName"]
+					s.permission_type = "Delegated"
+					s.isEnabled = permissionScope["isEnabled"]
+					#if permissionScope["value"] == "":
+					#	print(permissionScope)
+					s.value = permissionScope["value"]
+					s.grant_type = [permissionScope["type"]]
+					s.adminConsentDescription = permissionScope["adminConsentDescription"]
+					s.adminConsentDisplayName = permissionScope["adminConsentDisplayName"]
+					s.userConsentDescription = permissionScope["userConsentDescription"]
+					s.userConsentDisplayName = permissionScope["userConsentDisplayName"]
+					s.save()
+					#print("Added PermissionScope %s" % permissionScope["value"])
 
-			for role in load_appdata["value"][0]["appRoles"]: # Application
-				try:
-					s = AzurePublishedPermissionScopes.objects.get(scope_id=role["id"])
-				except:
-					s = AzurePublishedPermissionScopes.objects.create(scope_id=role["id"])
+				for role in load_appdata["value"][0]["appRoles"]: # Application
+					try:
+						s = AzurePublishedPermissionScopes.objects.get(scope_id=role["id"])
+					except:
+						s = AzurePublishedPermissionScopes.objects.create(scope_id=role["id"])
 
-				s.resourceAppId = resourceAppId
-				s.resourceAppStr = load_appdata["value"][0]["appDisplayName"]
-				s.permission_type = "Application"
-				s.isEnabled = role["isEnabled"]
-				s.value = role["value"]
-				s.grant_type = role["allowedMemberTypes"]
-				s.adminConsentDescription = role["description"]
-				s.adminConsentDisplayName = role["displayName"]
-				s.userConsentDescription = ""
-				s.userConsentDisplayName = ""
-				s.save()
-				#print("Added role %s" % role["value"])
+					s.resourceAppId = resourceAppId
+					s.resourceAppStr = load_appdata["value"][0]["appDisplayName"]
+					s.permission_type = "Application"
+					s.isEnabled = role["isEnabled"]
+					s.value = role["value"]
+					s.grant_type = role["allowedMemberTypes"]
+					s.adminConsentDescription = role["description"]
+					s.adminConsentDisplayName = role["displayName"]
+					s.userConsentDescription = ""
+					s.userConsentDisplayName = ""
+					s.save()
+					#print("Added role %s" % role["value"])
 
-			logg_message = "servicePrincipalsLookup() har lastet rettigheter fra %s" % (load_appdata["value"][0]["appDisplayName"])
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-				)
-			print(logg_message)
-
+				logg_message = "servicePrincipalsLookup() har lastet rettigheter fra %s" % (load_appdata["value"][0]["appDisplayName"])
+				logg_entry = ApplicationLog.objects.create(
+						event_type=LOG_EVENT_TYPE,
+						message=logg_message,
+					)
+				print(logg_message)
+			else:
+				# Det ble ikke funnet noen rettigheter
+				logg_message = "servicePrincipalsLookup() fant ingen rettigheter"
+				logg_entry = ApplicationLog.objects.create(
+						event_type=LOG_EVENT_TYPE,
+						message=logg_message,
+					)
+				print(logg_message)
 
 
 		def permissionScopeLookup(resourceAppId, scope_id):
@@ -134,12 +144,71 @@ class Command(BaseCommand):
 
 
 		def load_azure_apps():
-			client = GraphClient(credential=client_credential, api_version='beta')
+			client = GraphClient(credential=client_credential, api_version=api_version)
 
-			APPLICATIONS_FOUND = 0
+			def load_next_response_app(nextLink):
+				resp = client.get(nextLink)
+				load_appdata = json.loads(resp.text)
+				#print(json.dumps(load_appdata, sort_keys=True, indent=4))
+				extract_and_store_app(load_appdata)
+				try:
+					return load_appdata["@odata.nextLink"]
+				except:
+					return False
+
+			def extract_and_store_app(json_text):
+				for app in json_text["value"]:
+					nonlocal APPLICATIONS_FOUND_ALL
+					APPLICATIONS_FOUND_ALL += 1
+
+					servicePrincipalType = app.get('servicePrincipalType')
+					displayName = app.get('displayName')
+
+					#print(f"{APPLICATIONS_FOUND_ALL}: {servicePrincipalType} {displayName}")
+
+					try:
+						a = AzureApplication.objects.get(appId=app['appId'])
+					except:
+						a = AzureApplication.objects.create(appId=app['appId'])
+
+					a.createdDateTime = parser.parse(app['createdDateTime']) # 2021-12-15T13:10:38Z
+					a.displayName = displayName
+					a.active = True if app.get('accountEnabled') == True else False
+					a.servicePrincipalType = servicePrincipalType
+					a.tags = app.get('tags')
+					a.from_graph = True
+					a.requiredResourceAccess.clear()
+					a.save()
+
+					# legger til alle nøkler som identifiseres og kobler dem til riktig app
+					for keycredential in app['keyCredentials']:
+						key_end_date = parser.parse(keycredential["endDateTime"])
+						if not AzureApplicationKeys.objects.filter(key_id=keycredential["keyId"],applcaion_ref=a).exists():
+							k = AzureApplicationKeys.objects.create(
+									applcaion_ref=a,
+									key_id=keycredential["keyId"],
+									display_name=keycredential["displayName"],
+									key_type=keycredential["type"],
+									key_usage=keycredential["usage"],
+									end_date_time=key_end_date,
+									)
+
+					for passwordcredential in app['passwordCredentials']:
+						key_end_date = parser.parse(passwordcredential["endDateTime"])
+						if not AzureApplicationKeys.objects.filter(key_id=passwordcredential["keyId"],applcaion_ref=a).exists():
+							k = AzureApplicationKeys.objects.create(
+									applcaion_ref=a,
+									key_id=passwordcredential["keyId"],
+									display_name=passwordcredential["displayName"],
+									key_type="Client Secret",
+									key_usage="",
+									end_date_time=key_end_date,
+									hint=passwordcredential["hint"]
+									)
+
+
 
 			def load_next_response(nextLink):
-				#print(nextLink)
 				resp = client.get(nextLink)
 				load_appdata = json.loads(resp.text)
 				#print(json.dumps(load_appdata, sort_keys=True, indent=4))
@@ -150,63 +219,81 @@ class Command(BaseCommand):
 					return False
 
 			def extract_and_store(json_text):
-
 				for app in json_text["value"]:
 					nonlocal APPLICATIONS_FOUND
 					APPLICATIONS_FOUND += 1
+
+					displayName = app.get('displayName')
+					#print(f"{APPLICATIONS_FOUND}: {displayName}")
+
 					try:
 						a = AzureApplication.objects.get(appId=app['appId'])
 					except:
-						a = AzureApplication.objects.create(appId=app['appId'])
+						print(f"Fant ikke app {displayName}")
+						continue
 
-					a.createdDateTime = parser.parse(app['createdDateTime']) # 2021-12-15T13:10:38Z
-					a.displayName = app['displayName']
-					a.active = True
-					#print(app['displayName'])
-					#slett tidligere koblinger:
+					#a.homePageUrl = app.get('homePageUrl')
+					#a.identifierUris = app.get('identifierUris')
+					#a.isAppProxy = ???
+					#a.assignmentRequired = ???
+					#a.applicationVisibility = ???
+
+					#slett tidligere rettighetskoblinger og sett dem på nytt
 					a.requiredResourceAccess.clear()
-					for rra in app['requiredResourceAccess']: #publishedPermissionScopes hvis serviceprincipal
-						resourceAppId = rra["resourceAppId"]
-						for ra in rra["resourceAccess"]:
-							scope_id = ra["id"]
-							a.requiredResourceAccess.add(permissionScopeLookup(resourceAppId, scope_id))
-
+					if 'requiredResourceAccess' in app:
+						for rra in app['requiredResourceAccess']: #publishedPermissionScopes hvis serviceprincipal
+							resourceAppId = rra["resourceAppId"]
+							for ra in rra["resourceAccess"]:
+								scope_id = ra["id"]
+								a.requiredResourceAccess.add(permissionScopeLookup(resourceAppId, scope_id))
 					a.save()
 
 					# legger til alle nøkler som identifiseres og kobler dem til riktig app
-					# det antas at tabellen med nøkler tømmes ved hver kjøring, se #1
-
 					for keycredential in app['keyCredentials']:
 						key_end_date = parser.parse(keycredential["endDateTime"])
-						k = AzureApplicationKeys.objects.create(
-								applcaion_ref=a, # a i the application we are looping through
-								key_id=keycredential["keyId"],
-								display_name=keycredential["displayName"],
-								key_type=keycredential["type"],
-								key_usage=keycredential["usage"],
-								end_date_time=key_end_date,
-								)
+						if not AzureApplicationKeys.objects.filter(key_id=keycredential["keyId"],applcaion_ref=a).exists():
+							k = AzureApplicationKeys.objects.create(
+									applcaion_ref=a,
+									key_id=keycredential["keyId"],
+									display_name=keycredential["displayName"],
+									key_type=keycredential["type"],
+									key_usage=keycredential["usage"],
+									end_date_time=key_end_date,
+									)
 
 					for passwordcredential in app['passwordCredentials']:
 						key_end_date = parser.parse(passwordcredential["endDateTime"])
-						k = AzureApplicationKeys.objects.create(
-								applcaion_ref=a, # a i the application we are looping through
-								key_id=passwordcredential["keyId"],
-								display_name=passwordcredential["displayName"],
-								key_type="Client Secret",
-								key_usage="",
-								end_date_time=key_end_date,
-								hint=passwordcredential["hint"]
-								)
+						if not AzureApplicationKeys.objects.filter(key_id=passwordcredential["keyId"],applcaion_ref=a).exists():
+							k = AzureApplicationKeys.objects.create(
+									applcaion_ref=a,
+									key_id=passwordcredential["keyId"],
+									display_name=passwordcredential["displayName"],
+									key_type="Client Secret",
+									key_usage="",
+									end_date_time=key_end_date,
+									hint=passwordcredential["hint"]
+									)
 
 
 			# fjerner alle registrerte nøkler (keys) (#1)
 			AzureApplicationKeys.objects.all().delete()
 
-			initial_query = '/applications'
+			# henter inn alle azure apps
+			APPLICATIONS_FOUND_ALL = 0
+			initial_query = '/servicePrincipals?$select=appId,displayName,accountEnabled,createdDateTime,tags,servicePrincipalType,keyCredentials,passwordCredentials'
+
+			next_page = load_next_response_app(initial_query)
+			while(next_page):
+				next_page = load_next_response_app(next_page)
+
+			# henter inn mer informasjon om alle application
+			APPLICATIONS_FOUND = 0
+			initial_query = '/applications?$select=appId,displayName,requiredResourceAccess,keyCredentials,passwordCredentials'
+
 			next_page = load_next_response(initial_query)
 			while(next_page):
 				next_page = load_next_response(next_page)
+
 
 			#sette applikasjoner som ikke har vært sett til deaktivt
 			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
@@ -217,7 +304,7 @@ class Command(BaseCommand):
 				print("%s satt deaktiv" % a)
 
 			#logg dersom vellykket
-			logg_message = "Fant %s applikasjoner." % (APPLICATIONS_FOUND)
+			logg_message = f"Fant {APPLICATIONS_FOUND_ALL} applikasjoner under /servicePrincipals og {APPLICATIONS_FOUND} under /applications."
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_message,
@@ -230,9 +317,10 @@ class Command(BaseCommand):
 			int_config.save()
 
 		# eksekver
-		try:
-			load_azure_apps()
+		#try:
+		load_azure_apps()
 
+		"""
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
 			logg_entry = ApplicationLog.objects.create(
@@ -242,4 +330,5 @@ class Command(BaseCommand):
 			print(logg_message)
 
 			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			#push_pushover(f"{SCRIPT_NAVN} feilet")
+		"""

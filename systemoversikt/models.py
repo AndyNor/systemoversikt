@@ -6483,7 +6483,6 @@ class AzureApplicationKeys(models.Model):
 			max_length=200,
 			null=False,
 			blank=False,
-			unique=True,
 			)
 	display_name = models.CharField(
 			max_length=400,
@@ -6509,6 +6508,7 @@ class AzureApplicationKeys(models.Model):
 			null=True,
 			blank=True,
 			)
+	unique_together = ('applcaion_ref', 'key_id')
 
 	def __str__(self):
 		return u'%s' % (self.display_name)
@@ -6578,12 +6578,13 @@ class AzureApplication(models.Model):
 		help_text=u"Beholdes ved synkronisering mot Azure som skjer hver natt",
 		)
 	homepageUrl = models.TextField(null=True)
-	applicationType = models.CharField(max_length=100,null=True, blank=True)
+	servicePrincipalType = models.CharField(max_length=100,null=True, blank=True)
+	tags = models.TextField(null=True)
 	accountEnabled = models.BooleanField(null=True)
 	applicationVisibility = models.CharField(max_length=25, null=True, blank=True)
 	assignmentRequired = models.BooleanField(null=True)
 	isAppProxy = models.BooleanField(null=True)
-	identifierUri = models.TextField(null=True)
+	identifierUris = models.TextField(null=True)
 	from_graph = models.BooleanField(null=True, default=True)
 
 
@@ -6592,6 +6593,9 @@ class AzureApplication(models.Model):
 
 	def antall_application_permissions(self):
 		return AzurePublishedPermissionScopes.objects.filter(azure_applications=self.id).filter(permission_type="Application").count()
+
+	def antall_permissions(self):
+		return AzurePublishedPermissionScopes.objects.filter(azure_applications=self.id).count()
 
 	def risikonivaa_autofill(self):
 		if self.risikonivaa != 0:

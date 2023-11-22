@@ -16,18 +16,22 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>Applikasjonsnavn</th>
+		<th>Type</th>
+		<th>Tags</th>
 		<th>System og eier</th>
 		<th>Risikonivå</th>
 		<th>Vurdering</th>
 		<th>Dato opprettet</th>
 		<th>Applikasjons ID</th>
 		<th>Gitte rettigheter</th>
-		<th>Antall "application" -rettigheter</th>
+		<th>Antall rettigheter</th>
 	</thead>
 	<tbody>
 	{% for a in applikasjoner %}
 		<tr>
 			<td><a href="/admin/systemoversikt/azureapplication/{{a.id}}/change/">{{a.displayName|truncatechars:35}}</a></td>
+			<td>{{a.servicePrincipalType}}</td>
+			<td>{{a.tags}}</td>
 			<td>
 				{% for system in a.systemreferanse.all %}
 					{% include 'system_include_vis.html' with systemer=system %}
@@ -54,7 +58,7 @@
 
 				{% endfor %}
 			</td>
-			<td>{{ a.antall_application_permissions }}</td>
+			<td>{{ a.antall_permissions }}</td>
 		</tr>
 	{% endfor %}
 	</tbody>
