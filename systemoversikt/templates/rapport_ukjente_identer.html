@@ -1,0 +1,64 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Brukerkontoer uten knytning til virksomhet
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Dette er en rapport med oversikt over alle kontoer som ikke er knyttet til en virksomhet. Dette er kontoer som per design ikke skal opprettes, men som trolig henger igjen fra da domenet ble opprettet.</p>
+
+Det er {{ identer|length }} slike kontoer i domenet.
+
+<table class="tablesorter excel">
+<thead>
+	<tr>
+		<th class="filter-false">#</th>
+		<th>Navn</th>
+		<th>Brukernavn</th>
+		<th>E-post</th>
+		<th>Opprettet</th>
+		<th>Sist pålogget</th>
+		<td>Passordutløp</td>
+		<th width="25%">Beskrivelse</th>
+		<th>Tilganger</th>
+		<th>OU-path</th>
+	</tr>
+</thead>
+<tbodt>
+
+{% for m in identer %}
+	<tr>
+		<td>{{ forloop.counter }}</td>
+		<td>{{m.first_name}} {{m.last_name}}</td>
+		<td>{{m.username}}</td>
+		<td>{{ m.email }}</td>
+		<td>{{m.profile.whenCreated|date:"Ym" }}<br>({{m.profile.whenCreated|timesince}})</td>
+		<td>{{m.profile.lastLogonTimestamp|date:"Ym" }}<br>({{ m.profile.lastLogonTimestamp|timesince }})</td>
+		<td>
+			{% if m.profile.accountdisable %}
+				Konto er deaktivert
+			{% else %}
+				{{m.profile.password_expired|yesno:"Passord har utløpt,Passord er gyldig,Vet ikke" }}<br>
+				{{m.profile.dont_expire_password|yesno:"Utløper aldri,Utløper som normalt,Vet ikke" }}
+			{% endif %}
+		</td>
+		<td>{{m.profile.description}}</td>
+		<td>
+			{% for gruppe in m.profile.adgrupper.all %}
+				{{gruppe}}<br>
+			{% endfor%}
+		</td>
+		<td>{{ m.profile.ou_lesbar }}</td>
+	</tr>
+{% endfor %}
+
+</tbodt>
+</table>
+
+{% endblock hovedinnhold %}

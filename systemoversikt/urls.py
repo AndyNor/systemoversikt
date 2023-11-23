@@ -72,6 +72,7 @@ urlpatterns = [
 	re_path(r'^rapport/ad/spn/$', views.alle_spn, name='alle_spn'),
 	re_path(r'^rapport/systemperisk/$', views.isk_ansvarlig_for_system, name='isk_ansvarlig_for_system'),
 	re_path(r'^rapport/named_locations/$', views.rapport_named_locations, name='rapport_named_locations'),
+	re_path(r'^rapport/ukjente_identer/$', views.rapport_ukjente_identer, name='rapport_ukjente_identer'),
 
 	re_path(r'^sok/$', views.search, name='search'),
 

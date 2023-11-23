@@ -19,6 +19,9 @@
 	{% url 'tbrukere' as url_tbrukere %}
 	<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a>
 
+	{% url 'rapport_ukjente_identer' as url_rapport_ukjente_identer %}
+	<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Brukere uten knytning</a>
+
 	{% url 'alle_spn' as url_alle_spn %}
 	<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">Kontoer med SPN</a>
 

@@ -1066,12 +1066,9 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			return "Ukjent avdeling"
 
 	def ou_lesbar(self):
-		#if self.ou:
-		#	try:
-		#		return self.ou.distinguishedname.split(",")[1:-4]
-		#	except:
-		#		return self.ou.distinguishedname
-		return self.distinguishedname.split(",")[1:-4]
+		if self.distinguishedname != None:
+			return self.distinguishedname.split(",")[1:-4]
+		return ""
 
 
 	def ad_grp_lookup(self):

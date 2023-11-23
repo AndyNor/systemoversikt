@@ -867,6 +867,7 @@ def o365_avvik(request):
 
 		return gruppeemdlemmer
 
+
 	def rapport_hent_statistikk(i):
 		antall = 0
 		if len(i["AND_grupper"]) == 0: # Det er bare ordinære grupper som kan slås opp direkte. Er mye raskere enn å dekode enkeltbrukere.
@@ -4702,6 +4703,19 @@ def rapport_prioriteringer(request):
 	return render(request, 'rapport_prioriteringer.html', {
 		'request': request,
 		'virksomheter': virksomheter,
+	})
+
+
+def rapport_ukjente_identer(request):
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	identer = User.objects.filter(profile__accountdisable=False, profile__virksomhet=None)
+
+	return render(request, 'rapport_ukjente_identer.html', {
+		'request': request,
+		'identer': identer,
 	})
 
 
