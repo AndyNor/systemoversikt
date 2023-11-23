@@ -184,15 +184,15 @@ urlpatterns = [
 	re_path(r'^cmdb/vip/$', views.alle_vip, name='alle_vip'),
 	re_path(r'^cmdb/vip/(?P<pk>\d{1,8})/$', views.detaljer_vip, name='detaljer_vip'),
 	re_path(r'^cmdb/device/sok/$', views.maskin_sok, name='maskin_sok'),
-	re_path(r'^cmdb/azure/applications/$', views.azure_applications, name='azure_applications'),
-	re_path(r'^cmdb/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
+	re_path(r'^rapport/azure/applications/$', views.azure_applications, name='azure_applications'),
+	re_path(r'^rapport/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
 	re_path(r'^cmdb/backup/$', views.cmdb_backup_index, name='cmdb_backup_index'),
 	re_path(r'^cmdb/adcs/$', views.cmdb_adcs_index, name='cmdb_adcs_index'),
 	re_path(r'^cmdb/uten_backup/$', views.cmdb_uten_backup, name='cmdb_uten_backup'),
 	re_path(r'^cmdb/lagring/$', views.cmdb_lagring_index, name='cmdb_lagring_index'),
 	re_path(r'^cmdb/minne/$', views.cmdb_minne_index, name='cmdb_minne_index'),
 	re_path(r'^cmdb/forvaltere/$', views.cmdb_forvaltere, name='cmdb_forvaltere'),
-	re_path(r'^cmdb/azure/uten_epost/$', views.cmdb_uten_epost_stat, name='cmdb_uten_epost_stat'),
+	re_path(r'^rapport/azure/uten_epost/$', views.cmdb_uten_epost_stat, name='cmdb_uten_epost_stat'),
 
 
 

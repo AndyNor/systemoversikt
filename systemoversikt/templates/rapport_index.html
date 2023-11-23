@@ -46,6 +46,15 @@
 	{% url 'rapport_prioriteringer' as url_rapport_prioriteringer %}
 	<a href="{{ url_rapport_prioriteringer }}" class="btn btn-sm btn-link {% if url_rapport_prioriteringer in request.path %}fremhev{% endif %}">Systemprioriteringer</a>
 
+	{% url 'azure_applications' as url_azure_applications %}
+	<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}" >Enterprise applications</a>
+
+	{% url 'azure_application_keys' as url_azure_application_keys %}
+	<a href="{{ url_azure_application_keys }}" class="btn btn-sm btn-link {% if url_azure_application_keys in request.path %}fremhev{% endif %}" >Nøkler og sertifikater</a>
+
+	{% url 'cmdb_uten_epost_stat' as url_cmdb_uten_epost_stat %}
+	<a href="{{ url_cmdb_uten_epost_stat }}" class="btn btn-sm btn-link {% if url_cmdb_uten_epost_stat in request.path %}fremhev{% endif %}" >Brukere uten e-post</a>
+
 {% endblock sidemeny %}
 
 {% block main_content %}

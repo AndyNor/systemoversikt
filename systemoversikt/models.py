@@ -6577,13 +6577,11 @@ class AzureApplication(models.Model):
 	homepageUrl = models.TextField(null=True)
 	servicePrincipalType = models.CharField(max_length=100,null=True, blank=True)
 	tags = models.TextField(null=True)
-	accountEnabled = models.BooleanField(null=True)
-	applicationVisibility = models.CharField(max_length=25, null=True, blank=True)
-	assignmentRequired = models.BooleanField(null=True)
-	isAppProxy = models.BooleanField(null=True)
-	identifierUris = models.TextField(null=True)
+	#applicationVisibility = models.CharField(max_length=25, null=True, blank=True)
+	#isAppProxy = models.BooleanField(null=True)
 	notes = models.TextField(null=True)
 	from_applications = models.BooleanField(default=False)
+	publisherName = models.CharField(max_length=300, null=True, blank=True)
 
 
 	def __str__(self):
@@ -6603,6 +6601,12 @@ class AzureApplication(models.Model):
 				if perm.warning_permission():
 					return "3 Høy (auto)"
 		return "1 Lav (auto)"
+
+	def er_enterprise_app(self):
+		if self.tags != None:
+			if "WindowsAzureActiveDirectoryIntegratedApp" in self.tags:
+				return True
+		return False
 
 
 	class Meta:

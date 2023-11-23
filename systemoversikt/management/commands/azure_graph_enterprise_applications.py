@@ -52,7 +52,7 @@ class Command(BaseCommand):
 				client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
 		)
 
-		api_version = "beta"
+		api_version = "v1.0"
 
 		# det antas i denne implementeringen at det ikke skjer endringer på en permissionscope ID
 		def servicePrincipalsLookup(resourceAppId):
@@ -178,6 +178,7 @@ class Command(BaseCommand):
 					a.tags = app.get('tags')
 					a.notes = app.get('notes')
 					a.requiredResourceAccess.clear()
+					a.publisherName = app.get('publisherName')
 					a.save()
 
 					# legger til alle nøkler som identifiseres og kobler dem til riktig app
@@ -276,7 +277,7 @@ class Command(BaseCommand):
 
 			# henter inn alle azure apps
 			APPLICATIONS_FOUND_ALL = 0
-			initial_query = '/servicePrincipals?$select=appId,notes,displayName,accountEnabled,createdDateTime,tags,servicePrincipalType,keyCredentials,passwordCredentials'
+			initial_query = '/servicePrincipals?$select=appId,notes,publisherName,displayName,accountEnabled,createdDateTime,tags,servicePrincipalType,keyCredentials,passwordCredentials'
 
 			next_page = load_next_response_app(initial_query)
 			while(next_page):
