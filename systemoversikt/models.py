@@ -6644,7 +6644,7 @@ class AzurePublishedPermissionScopes(models.Model):
 	grant_type = models.TextField(
 		# ment å holde en liste (array)
 		# for å oppbevare permissionScope["type"] eller role["allowedMemberTypes"]
-		null=False,
+		null=True, # resourceSpecificApplicationPermissions har ikke denne
 		)
 	adminConsentDescription = models.TextField(
 		null=True,
