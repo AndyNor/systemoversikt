@@ -28,8 +28,8 @@ class Command(BaseCommand):
 		#appId = "a958cfb9-702f-4749-91b9-76425c24607d"
 		#id = "08d19d40-dc96-4c23-ab8e-9924217988e3"
 
-		appId="31359c7f-bd7e-475c-86db-fdb8c937548e"
-		id = "f6f085a8-02a3-4e9e-8d4d-70edc703e54e"
+		appId="de8bc8b5-d9f9-48b1-a8ad-b748da725064"
+		id = "a4df79b7-738d-45eb-bd43-9027794e90f3"
 		resourceId = "f79aa4bf-5541-4a86-9dd0-37eca09a4047"
 
 		#appId = "73b44d20-8bc2-4baf-a286-75aa54e95638"

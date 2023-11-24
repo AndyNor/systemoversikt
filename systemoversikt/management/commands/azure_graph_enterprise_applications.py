@@ -241,9 +241,14 @@ class Command(BaseCommand):
 
 					grant_data = getOauth2PermissionGrants(object_id)
 					for grant in grant_data["value"]:
-						scopes = permissionGrantLookup(grant["resourceId"], grant["scope"], "id")
-						for scope in scopes:
-							a.requiredResourceAccess.add(scope)
+						if grant["consentType"] == "AllPrincipals":
+							scopes = permissionGrantLookup(grant["resourceId"], grant["scope"], "id")
+							for scope in scopes:
+								a.requiredResourceAccess.add(scope)
+						if grant["consentType"] == "Principal":
+							user = grant["principalId"]
+							scopes = grant["scope"]
+							print(f"User consent for app {displayName} for user {user} for {scopes}")
 
 
 
