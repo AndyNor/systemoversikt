@@ -62,6 +62,12 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 	return export_as_csv
 
 
+
+@admin.register(AzureUserConsents)
+class AzureUserConsentsAdmin(admin.ModelAdmin):
+	list_display=search_fields=readonly_fields = ('appId', 'appDisplayName', 'userId', 'userDisplayName', 'scopes')
+
+
 @admin.register(AzureApplicationKeys)
 class AzureApplicationKeysAdmin(admin.ModelAdmin):
 	list_display = ('applcaion_ref', 'key_id', 'display_name', 'key_type', 'key_usage', 'end_date_time')

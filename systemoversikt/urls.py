@@ -34,14 +34,16 @@ urlpatterns = [
 	path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 
 	re_path(r'^favicon\.ico$', favicon_view),
-
 	re_path(r'^debug_info$', views.debug_info, name='debug_info'),
-
 	re_path(r'^$', views.home, name='home'),
 	re_path(r'^chart/', views.home_chart, name='home_chart'),
 	re_path(r'^oidc/', include('mozilla_django_oidc.urls')),
 	re_path(r'^login/$', admin.site.login, name='login'),
 	re_path(r'^logout/$', admin.site.logout, name='logout'),
+	re_path(r'^tools/', views.tools_index, name="tools_index"),
+	re_path(r'^sok/$', views.search, name='search'),
+	re_path(r'^domener/alle/$', views.alle_systemurler, name='alle_systemurler'),
+
 
 	re_path(r'^admin/profil/', views.minside, name="minside"),
 	re_path(r'^admin/logger/database/$', views.logger, name='logger'),
@@ -61,8 +63,6 @@ urlpatterns = [
 	re_path(r'^admin/nyheter/$', views.alle_nyheter, name='alle_nyheter'),
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 
-	re_path(r'^tools/', views.tools_index, name="tools_index"),
-
 
 	re_path(r'^rapport/startside/$', views.rapport_startside, name='rapport_startside'),
 	re_path(r'^rapport/sikkerhetsavvik/$', views.o365_avvik, name='o365_avvik'),
@@ -73,8 +73,12 @@ urlpatterns = [
 	re_path(r'^rapport/systemperisk/$', views.isk_ansvarlig_for_system, name='isk_ansvarlig_for_system'),
 	re_path(r'^rapport/named_locations/$', views.rapport_named_locations, name='rapport_named_locations'),
 	re_path(r'^rapport/ukjente_identer/$', views.rapport_ukjente_identer, name='rapport_ukjente_identer'),
+	re_path(r'^rapport/prioriteringer/$', views.rapport_prioriteringer, name='rapport_prioriteringer'),
+	re_path(r'^rapport/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
+	re_path(r'^rapport/azure/uten_epost/$', views.cmdb_uten_epost_stat, name='cmdb_uten_epost_stat'),
+	re_path(r'^rapport/azure/applications/$', views.azure_applications, name='azure_applications'),
+	re_path(r'^rapport/azure/user_consents/$', views.azure_user_consents, name='azure_user_consents'),
 
-	re_path(r'^sok/$', views.search, name='search'),
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
 	re_path(r'^systemer/forvalteroversikt/$', views.alle_systemer_forvaltere, name='alle_systemer_forvaltere'),
@@ -97,25 +101,22 @@ urlpatterns = [
 	re_path(r'^systemer/los_struktur/$', views.system_los_struktur, name='system_los_struktur_indeks'),
 	re_path(r'^systemer/los_struktur/(?P<pk>\d{1,8})/$', views.system_los_struktur, name='system_los_struktur'),
 
+
 	re_path(r'^behandlinger/user/$', views.mine_behandlinger, name='mine_behandlinger'),
 	re_path(r'^behandlinger/alle/$', views.alle_behandlinger, name='alle_behandlinger'),
 	re_path(r'^behandlinger/kopier/(?P<system_pk>\d{1,8})/$', views.behandling_kopier, name='behandling_kopier'),
-	re_path(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
-	#re_path(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/(?P<internt_ansvarlig>.*)/$', views.alle_behandlinger_virksomhet, name='behandlinger_virksomhet_ansvarlig'),
 	re_path(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
 
-	re_path(r'^virksomhet/alle_avtaler/$', views.alle_avtaler, name='alle_avtaler'),
-	re_path(r'^avtaler/detaljer/(?P<pk>\d{1,8})/$', views.avtaledetaljer, name='avtaledetaljer'),
-	re_path(r'^virksomhet/avtaler/(?P<virksomhet>\d{1,8})/$', views.alle_avtaler, name='avtalervirksomhet'),
-	re_path(r'^avtaler/databehandleravtale/virksomhet/(?P<pk>\d{1,8})/$', views.databehandleravtaler_virksomhet, name='databehandleravtaler_virksomhet'),
 
-	re_path(r'^cmdb/bruker/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
-	re_path(r'^cmdb/bruker/$', views.bruker_sok, name='bruker_sok'),
-	re_path(r'^cmdb/bruker/brukerlistesok/$', views.ad_brukerlistesok, name='cmdb_ad_brukerlistesok'),
-	re_path(r'^cmdb/firewall/$', views.cmdb_firewall, name='cmdb_firewall'),
+	re_path(r'^avtaler/detaljer/(?P<pk>\d{1,8})/$', views.avtaledetaljer, name='avtaledetaljer'),
+	re_path(r'^avtaler/databehandleravtale/virksomhet/(?P<pk>\d{1,8})/$', views.databehandleravtaler_virksomhet, name='databehandleravtaler_virksomhet'),
 
 
 	re_path(r'^virksomhet/$', views.alle_virksomheter, name='alle_virksomheter'),
+	re_path(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
+	re_path(r'^virksomhet/avtaler/(?P<virksomhet>\d{1,8})/$', views.alle_avtaler, name='avtalervirksomhet'),
+	re_path(r'^virksomhet/domener/(?P<pk>\d{1,8})/$', views.virksomhet_urler, name='virksomhet_urler'),
+	re_path(r'^virksomhet/alle_avtaler/$', views.alle_avtaler, name='alle_avtaler'),
 	re_path(r'^virksomhet/kontaktinfo/$', views.alle_virksomheter_kontaktinfo, name='alle_virksomheter_kontaktinfo'),
 	re_path(r'^virksomhet/alle/$', views.alle_virksomheter, name='alle_virksomheter_sidemeny'),
 	re_path(r'^virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet, name='virksomhet'),
@@ -143,9 +144,11 @@ urlpatterns = [
 	re_path(r'^virksomhet/lokasjoner/(?P<pk>\d{1,8})/$', views.lokasjoner_hos_virksomhet, name='lokasjoner_hos_virksomhet'),
 	re_path(r'^virksomhet/tilgangsgrupper/$', views.virksomhet_adgruppe_detaljer, name='virksomhet_adgruppe_detaljer'),
 
+
 	re_path(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
 	re_path(r'^leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
 	re_path(r'^leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),
+
 
 	re_path(r'^hovedkategorier/alle/$', views.alle_hovedkategorier, name='alle_hovedkategorier'),
 	re_path(r'^hovedkategorier/subkategorier/$', views.alle_systemkategorier, name='alle_systemkategorier'),
@@ -153,8 +156,6 @@ urlpatterns = [
 	re_path(r'^hovedkategorier/subkategorier/uten_kategori/$', views.uten_systemkategori, name='uten_systemkategorier'),
 	re_path(r'^hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
 
-	re_path(r'^domener/alle/$', views.alle_systemurler, name='alle_systemurler'),
-	re_path(r'^virksomhet/domener/(?P<pk>\d{1,8})/$', views.virksomhet_urler, name='virksomhet_urler'),
 
 	re_path(r'^programvare/alle/$', views.alle_programvarer, name='alle_programvarer'),
 	re_path(r'^programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
@@ -164,6 +165,11 @@ urlpatterns = [
 	re_path(r'^ansvarlige/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),
 	re_path(r'^ansvarlige/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
 
+
+	re_path(r'^cmdb/bruker/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
+	re_path(r'^cmdb/bruker/$', views.bruker_sok, name='bruker_sok'),
+	re_path(r'^cmdb/bruker/brukerlistesok/$', views.ad_brukerlistesok, name='cmdb_ad_brukerlistesok'),
+	re_path(r'^cmdb/firewall/$', views.cmdb_firewall, name='cmdb_firewall'),
 	re_path(r'^cmdb/statistikk/$', views.cmdb_statistikk, name='cmdb_statistikk'),
 	re_path(r'^cmdb/per_virksomhet/$', views.cmdb_per_virksomhet, name='cmdb_per_virksomhet'),
 	re_path(r'^cmdb/bs/$', views.alle_cmdbref, name='alle_cmdbref_sok'),
@@ -184,28 +190,18 @@ urlpatterns = [
 	re_path(r'^cmdb/vip/$', views.alle_vip, name='alle_vip'),
 	re_path(r'^cmdb/vip/(?P<pk>\d{1,8})/$', views.detaljer_vip, name='detaljer_vip'),
 	re_path(r'^cmdb/device/sok/$', views.maskin_sok, name='maskin_sok'),
-	re_path(r'^rapport/azure/applications/$', views.azure_applications, name='azure_applications'),
-	re_path(r'^rapport/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
 	re_path(r'^cmdb/backup/$', views.cmdb_backup_index, name='cmdb_backup_index'),
 	re_path(r'^cmdb/adcs/$', views.cmdb_adcs_index, name='cmdb_adcs_index'),
 	re_path(r'^cmdb/uten_backup/$', views.cmdb_uten_backup, name='cmdb_uten_backup'),
 	re_path(r'^cmdb/lagring/$', views.cmdb_lagring_index, name='cmdb_lagring_index'),
 	re_path(r'^cmdb/minne/$', views.cmdb_minne_index, name='cmdb_minne_index'),
 	re_path(r'^cmdb/forvaltere/$', views.cmdb_forvaltere, name='cmdb_forvaltere'),
-	re_path(r'^rapport/azure/uten_epost/$', views.cmdb_uten_epost_stat, name='cmdb_uten_epost_stat'),
-
-
-
-
 	re_path(r'^cmdb/prk/$', views.alle_prk, name='alle_prk'),
 	re_path(r'^cmdb/prk/browse/$', views.prk_browse, name='prk_browse'),
 	re_path(r'^cmdb/prk/browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
-
 	re_path(r'^cmdb/ad/leverandortilgang/$', views.leverandortilgang, name='leverandortilgang'),
 	re_path(r'^cmdb/ad/leverandortilgang/(?P<valgt_gruppe>[-._a-zA-Z0-9\s]{2,100})/$', views.leverandortilgang, name='leverandortilgang_detaljer'),
 	re_path(r'^cmdb/bruker/flereidenter/$', views.cmdb_ad_flere_brukeridenter, name='cmdb_ad_flere_brukeridenter'),
-
-
 	re_path(r'^cmdb/ad/lookup/$', views.ad, name='ad'),
 	re_path(r'^cmdb/ad/analyse/$', views.ad_analyse, name='ad_analyse'),
 	re_path(r'^cmdb/ad/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
@@ -221,8 +217,6 @@ urlpatterns = [
 	re_path(r'^cmdb/ad/lookup/exact/(?P<name>[^#\+\"\\\<\>\;]{2,200})/$', views.ad_exact, name='ad_exact'),
 	re_path(r'^cmdb/prk/userlookup/$', views.prk_userlookup, name='prk_userlookup'),
 	re_path(r'^cmdb/ad/gruppeanalyse/$', views.ad_gruppeanalyse, name='ad_gruppeanalyse'),
-
-
 	re_path(r'^cmdb/tools/unique$', views.tool_unique_items, name='tool_unique_items'),
 	re_path(r'^cmdb/tools/compare$', views.tool_compare_items, name='tool_compare_items'),
 	re_path(r'^cmdb/tools/docx2html$', views.tool_docx2html, name='tool_docx2html'),
@@ -232,21 +226,26 @@ urlpatterns = [
 	re_path(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
 	re_path(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),
 
-	re_path(r'^driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
+
 	re_path(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
+	re_path(r'^driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
+	re_path(r'^driftsmodell/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),
+
+
 	re_path(r'^virksomhet/drift/prioriteringer/$', views.drift_beredskap_redirect, name='drift_beredskap_redirect'),
-	re_path(r'^rapport/prioriteringer/$', views.rapport_prioriteringer, name='rapport_prioriteringer'),
 	re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/$', views.drift_beredskap, name='drift_beredskap'),
 	re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/(?P<eier>\d{1,8})$', views.drift_beredskap, name='drift_beredskap_for_eier'),
 	re_path(r'^virksomhet/driftsmodell/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
 	re_path(r'^virksomhet/driftsmodell/klassifisering/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet_klassifisering, name='driftsmodell_virksomhet_klassifisering'),
-	re_path(r'^driftsmodell/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),
+
 
 	re_path(r'^definisjon/alle/$', views.alle_definisjoner, name='alle_definisjoner'),
 	re_path(r'^definisjon/(?P<begrep>[-_a-zA-Z0-9\s]{1,150})/$', views.definisjon, name='definisjon'),
 
+
 	re_path(r'^dashboard/$', views.dashboard_all, name='dashboard_all'),
 	re_path(r'^dashboard/(?P<virksomhet>\d+)/$', views.dashboard_all, name='dashboard_all'),
+
 
 	# ubw
 	re_path(r'^ubw/alle/$', views.ubw_home, name='ubw_home'),
@@ -286,8 +285,5 @@ urlpatterns = [
 	# import og konvertering
 	re_path(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),
 	re_path(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
-
-	# Er denne i bruk?
-	#re_path(r'^user_clean_up/$', views.user_clean_up, name='user_clean_up'),
 
 ]

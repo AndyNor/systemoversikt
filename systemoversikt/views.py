@@ -944,6 +944,20 @@ def prk_api_grp(request): #API
 			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 
+def azure_user_consents(request):
+	#Vise liste over alle Azure enterprise applications med rettigheter de har fått tildelt
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	userconsents = AzureUserConsents.objects.all()
+
+	return render(request, 'rapport_azure_user_consents.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'userconsents': userconsents,
+	})
+
 
 def azure_applications(request):
 	#Vise liste over alle Azure enterprise applications med rettigheter de har fått tildelt

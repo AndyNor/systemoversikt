@@ -23,13 +23,13 @@
 	<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Brukere uten knytning</a>
 
 	{% url 'alle_spn' as url_alle_spn %}
-	<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">Kontoer med SPN</a>
+	<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">AD-kontoer med SPN</a>
 
 	{% url 'isk_ansvarlig_for_system' as url_isk_ansvarlig_for_system %}
 	<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">System per ISK</a>
 
 	{% url 'rapport_named_locations' as url_rapport_named_locations %}
-	<a href="{{ url_rapport_named_locations }}" class="btn btn-sm btn-link {% if url_rapport_named_locations in request.path %}fremhev{% endif %}">Oppkobling fra land</a>
+	<a href="{{ url_rapport_named_locations }}" class="btn btn-sm btn-link {% if url_rapport_named_locations in request.path %}fremhev{% endif %}">EntraID: Oppkobling fra land</a>
 
 	{% url 'system_kritisk_funksjon' as url_system_kritisk_funksjon %}
 	<a href="{{url_system_kritisk_funksjon}}" class="btn btn-sm btn-link {% if url_system_kritisk_funksjon in request.path %}fremhev{% endif %}">Kritiske samfunnsfunksjoner</a>
@@ -47,13 +47,16 @@
 	<a href="{{ url_rapport_prioriteringer }}" class="btn btn-sm btn-link {% if url_rapport_prioriteringer in request.path %}fremhev{% endif %}">Systemprioriteringer</a>
 
 	{% url 'azure_applications' as url_azure_applications %}
-	<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}" >Enterprise applications</a>
+	<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}">Azure service principals</a>
+
+	{% url 'azure_user_consents' as url_azure_user_consents %}
+	<a href="{{ url_azure_user_consents }}" class="btn btn-sm btn-link {% if url_azure_user_consents in request.path %}fremhev{% endif %}">Azure user consents</a>
 
 	{% url 'azure_application_keys' as url_azure_application_keys %}
-	<a href="{{ url_azure_application_keys }}" class="btn btn-sm btn-link {% if url_azure_application_keys in request.path %}fremhev{% endif %}" >Nøkler og sertifikater</a>
+	<a href="{{ url_azure_application_keys }}" class="btn btn-sm btn-link {% if url_azure_application_keys in request.path %}fremhev{% endif %}">Azure nøkler og sertifikater</a>
 
 	{% url 'cmdb_uten_epost_stat' as url_cmdb_uten_epost_stat %}
-	<a href="{{ url_cmdb_uten_epost_stat }}" class="btn btn-sm btn-link {% if url_cmdb_uten_epost_stat in request.path %}fremhev{% endif %}" >Brukere uten e-post</a>
+	<a href="{{ url_cmdb_uten_epost_stat }}" class="btn btn-sm btn-link {% if url_cmdb_uten_epost_stat in request.path %}fremhev{% endif %}">Brukere uten e-post</a>
 
 {% endblock sidemeny %}
 

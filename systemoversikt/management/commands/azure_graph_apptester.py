@@ -41,16 +41,16 @@ class Command(BaseCommand):
 
 		query = f"/servicePrincipals?filter=appId eq '{appId}'"
 		print(query)
-		resp = client.get(query)
-		load_appdata = json.loads(resp.text)
-		print(json.dumps(load_appdata, sort_keys=True, indent=4))
+		#resp = client.get(query)
+		#load_appdata = json.loads(resp.text)
+		#print(json.dumps(load_appdata, sort_keys=True, indent=4))
 
 
 		query = f"/servicePrincipals/{id}/oauth2PermissionGrants" # delegatedPermissionClassifications
-		print(query)
-		resp = client.get(query)
-		load_appdata = json.loads(resp.text)
-		print(json.dumps(load_appdata, sort_keys=True, indent=4))
+		#print(query)
+		#resp = client.get(query)
+		#load_appdata = json.loads(resp.text)
+		#print(json.dumps(load_appdata, sort_keys=True, indent=4))
 
 		query = f"/servicePrincipals?filter=id eq 'f79aa4bf-5541-4a86-9dd0-37eca09a4047'"
 		#print(query)
@@ -69,4 +69,8 @@ class Command(BaseCommand):
 				print(json.dumps(element, sort_keys=True, indent=4))
 		"""
 
-
+		query = f"/users/29d3e814-e58e-464e-84b9-35807bb290f3"
+		print(query)
+		resp = client.get(query)
+		load_appdata = json.loads(resp.text)
+		print(json.dumps(load_appdata, sort_keys=True, indent=4))

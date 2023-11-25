@@ -62,6 +62,7 @@ class Command(BaseCommand):
 				query = "/servicePrincipals?filter=appId eq '%s'" % (resourceAppId)
 			if mode == "id":
 				query = "/servicePrincipals?filter=id eq '%s'" % (resourceAppId)
+			print(query)
 			resp = client.get(query)
 			load_appdata = json.loads(resp.text)
 			#print(json.dumps(load_appdata, sort_keys=True, indent=4))
@@ -188,6 +189,13 @@ class Command(BaseCommand):
 						print(f"permissionGrantLookup() returnerte Null for app {resourceAppId} med scope_id {scope_part}")
 			return scopes
 
+		def lookup_userDisplayName(user):
+			#client = GraphClient(credential=client_credential, api_version=api_version)
+			#query = f"/users/{user}"
+			#print(query)
+			#load_appdata = json.loads(client.get(query).text)
+			return ""
+
 
 		# tester
 		#servicePrincipalsLookup("00000002-0000-0000-c000-000000000000")
@@ -214,13 +222,14 @@ class Command(BaseCommand):
 
 					servicePrincipalType = app.get('servicePrincipalType')
 					displayName = app.get('displayName')
+					appId = app.get('appId')
 
 					print(f"{APPLICATIONS_FOUND_ALL}: {servicePrincipalType} {displayName}")
 
 					try:
-						a = AzureApplication.objects.get(appId=app['appId'])
+						a = AzureApplication.objects.get(appId=appId)
 					except:
-						a = AzureApplication.objects.create(appId=app['appId'])
+						a = AzureApplication.objects.create(appId=appId)
 
 					a.createdDateTime = parser.parse(app['createdDateTime']) # 2021-12-15T13:10:38Z
 					a.displayName = displayName
@@ -236,7 +245,7 @@ class Command(BaseCommand):
 					def getOauth2PermissionGrants(object_id):
 						client = GraphClient(credential=client_credential, api_version=api_version)
 						query = f"/servicePrincipals/{object_id}/oauth2PermissionGrants"
-						#print(query)
+						print(query)
 						return json.loads(client.get(query).text)
 
 					grant_data = getOauth2PermissionGrants(object_id)
@@ -248,7 +257,9 @@ class Command(BaseCommand):
 						if grant["consentType"] == "Principal":
 							user = grant["principalId"]
 							scopes = grant["scope"]
-							print(f"User consent for app {displayName} for user {user} for {scopes}")
+							userDisplayName = lookup_userDisplayName(user)
+							AzureUserConsents.objects.create(appId=appId,appDisplayName=displayName,userId=user,scopes=scopes,userDisplayName=userDisplayName)
+							#print(f"User {user} has consented for app {displayName} for scopes {scopes}")
 
 
 
@@ -344,6 +355,7 @@ class Command(BaseCommand):
 
 			# fjerner alle registrerte nøkler (keys) (#1)
 			AzureApplicationKeys.objects.all().delete()
+			AzureUserConsents.objects.all().delete()
 
 			# fjerner alle tidligere rettigheter
 			for app in AzureApplication.objects.all():
@@ -370,9 +382,10 @@ class Command(BaseCommand):
 			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
 			deaktive_apper = AzureApplication.objects.filter(sist_oppdatert__lte=tidligere)
 			for a in deaktive_apper:
-				a.active = False
-				a.save()
-				print("%s satt deaktiv" % a)
+				if a.active:
+					a.active = False
+					a.save()
+					print("%s satt deaktiv" % a)
 
 			#logg dersom vellykket
 			logg_message = f"Fant {APPLICATIONS_FOUND_ALL} applikasjoner under /servicePrincipals og {APPLICATIONS_FOUND} under /applications."
@@ -388,10 +401,9 @@ class Command(BaseCommand):
 			int_config.save()
 
 		# eksekver
-		#try:
-		load_azure_apps()
+		try:
+			load_azure_apps()
 
-		"""
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
 			logg_entry = ApplicationLog.objects.create(
@@ -402,4 +414,4 @@ class Command(BaseCommand):
 
 			# Push error
 			push_pushover(f"{SCRIPT_NAVN} feilet")
-		"""
+

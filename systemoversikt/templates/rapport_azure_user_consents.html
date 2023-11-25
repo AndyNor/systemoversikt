@@ -1,0 +1,35 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block overskrift %}
+	Azure User Consents
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p></p>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>userId</th>
+		<th>userDisplayName</th>
+		<th>appDisplayName</th>
+		<th>appId</th>
+		<th>scopes</th>
+	</thead>
+	<tbody>
+	{% for consent in userconsents %}
+		<tr>
+			<td>{{consent.userId}}</td>
+			<td>{{consent.userDisplayName}}</td>
+			<td>{{consent.appDisplayName}}</td>
+			<td>{{consent.appId}}</td>
+			<td>{{consent.scopes}}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

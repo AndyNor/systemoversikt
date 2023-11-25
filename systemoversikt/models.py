@@ -6469,6 +6469,20 @@ RISIKO_VALG = (
 	(3, '3 Høy'),
 )
 
+
+class AzureUserConsents(models.Model):
+	userId = models.TextField(null=False)
+	appId = models.TextField()
+	scopes = models.TextField(null=False)
+	userDisplayName = models.TextField()
+	appDisplayName = models.TextField(null=False)
+
+	def __str__(self):
+		return f"{self.userId} {self.appDisplayName} {self.scopes}"
+	class Meta:
+		verbose_name_plural = "Azure User Consents"
+
+
 class AzureApplicationKeys(models.Model):
 	applcaion_ref = models.ForeignKey(
 			to="AzureApplication",
