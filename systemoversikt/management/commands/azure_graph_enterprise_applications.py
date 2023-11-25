@@ -62,7 +62,7 @@ class Command(BaseCommand):
 				query = "/servicePrincipals?filter=appId eq '%s'" % (resourceAppId)
 			if mode == "id":
 				query = "/servicePrincipals?filter=id eq '%s'" % (resourceAppId)
-			print(query)
+			#print(query)
 			resp = client.get(query)
 			load_appdata = json.loads(resp.text)
 			#print(json.dumps(load_appdata, sort_keys=True, indent=4))
@@ -87,7 +87,7 @@ class Command(BaseCommand):
 					s.userConsentDescription = permissionScope["userConsentDescription"]
 					s.userConsentDisplayName = permissionScope["userConsentDisplayName"]
 					s.save()
-					#print("Added PermissionScope %s" % permissionScope["value"])
+					print("Added PermissionScope %s" % permissionScope["value"])
 
 				for role in load_appdata["value"][0]["appRoles"]: # Application
 					try:
@@ -107,7 +107,7 @@ class Command(BaseCommand):
 					s.userConsentDescription = ""
 					s.userConsentDisplayName = ""
 					s.save()
-					#print("Added role %s" % role["value"])
+					print("Added role %s" % role["value"])
 
 				for resourceSpecific in load_appdata["value"][0]["resourceSpecificApplicationPermissions"]:
 					try:
@@ -127,7 +127,7 @@ class Command(BaseCommand):
 					s.userConsentDescription = ""
 					s.userConsentDisplayName = ""
 					s.save()
-					#print("Added resourceSpecific %s" % resourceSpecific["value"])
+					print("Added resourceSpecific %s" % resourceSpecific["value"])
 
 
 				logg_message = "servicePrincipalsLookup() har lastet rettigheter fra %s" % (load_appdata["value"][0]["appDisplayName"])
@@ -245,7 +245,7 @@ class Command(BaseCommand):
 					def getOauth2PermissionGrants(object_id):
 						client = GraphClient(credential=client_credential, api_version=api_version)
 						query = f"/servicePrincipals/{object_id}/oauth2PermissionGrants"
-						print(query)
+						#print(query)
 						return json.loads(client.get(query).text)
 
 					grant_data = getOauth2PermissionGrants(object_id)
