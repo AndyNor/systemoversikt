@@ -131,18 +131,18 @@ class Command(BaseCommand):
 
 
 				logg_message = "servicePrincipalsLookup() har lastet rettigheter fra %s" % (load_appdata["value"][0]["appDisplayName"])
-				logg_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE,
-						message=logg_message,
-					)
+				#logg_entry = ApplicationLog.objects.create(
+				#		event_type=LOG_EVENT_TYPE,
+				#		message=logg_message,
+				#	)
 				print(logg_message)
 			else:
 				# Det ble ikke funnet noen rettigheter
 				logg_message = "servicePrincipalsLookup() fant ingen rettigheter"
-				logg_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE,
-						message=logg_message,
-					)
+				#logg_entry = ApplicationLog.objects.create(
+				#		event_type=LOG_EVENT_TYPE,
+				#		message=logg_message,
+				#	)
 				print(logg_message)
 
 
