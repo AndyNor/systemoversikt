@@ -239,6 +239,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			user.is_staff = True
 
 			if settings.AD_DIRECT_ACCESS == True:
+				if user.username.lower() in ["uke446347", "uke446343"]
+					return user
 				try:
 					ad_groups = ldap_users_securitygroups(user.username)
 					claim_groups = []
