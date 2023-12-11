@@ -4204,6 +4204,7 @@ def drifttilgang(request):
 	#adg_filter = set(serveradmins).union(set(domainadmins)).union(set(prkadmin)).union(set(sqladmins)).union(set(citrixadmin)).union(set(sccmadmin)).union(set(levtilgang)).union(set(dcadmin)).union(set(exchangeadmin)).union(set(filsensitivt))
 	#b.reduserte_adgrupper = set(b.profile.adgrupper.all()).difference(adg_filter)
 
+	"""
 	for b in brukere:
 		b.serveradmin = set(serveradmins).intersection(set(b.profile.adgrupper.all()))
 		b.domainadmin = set(domainadmins).intersection(set(b.profile.adgrupper.all()))
@@ -4215,6 +4216,7 @@ def drifttilgang(request):
 		b.dcadmin = set(dcadmin).intersection(set(b.profile.adgrupper.all()))
 		b.exchangeadmin = set(exchangeadmin).intersection(set(b.profile.adgrupper.all()))
 		b.filsensitivt = set(filsensitivt).intersection(set(b.profile.adgrupper.all()))
+	"""
 
 	return render(request, 'ad_drifttilgang.html', {
 		"request": request,
