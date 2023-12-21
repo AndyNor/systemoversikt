@@ -3,12 +3,6 @@
 # make a compressed backup of the db.sqlite3-file
 tar -zcf /var/kartoteket/backup/db/db_`date +%F_%H:%M:%S`.tar.gz /var/kartoteket/source/systemoversikt/db.sqlite3
 
-# remove duplicated - keep one copy
-#md5sum /home/X/metadata/backup/db/* |\
-#sort |\
-#awk 'BEGIN{lasthash = ""} $1 == lasthash {print $2} {lasthash = $1}' |\
-#xargs rm
-
 cd /var/kartoteket/backup/db/
 last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
     while read -d '' i; do

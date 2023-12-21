@@ -1,15 +1,9 @@
 #!/bin/sh
 
 # make a compressed backup of the "systemoversikt"-folder
-tar -zcf /home/X/metadata/backup/app/djangoapp_`date +%F_%H:%M:%S`.tar.gz /home/X/metadata/djangoapp/systemoversikt
+tar -zcf /var/kartoteket/backup/app/djangoapp_`date +%F_%H:%M:%S`.tar.gz /home/X/metadata/djangoapp/systemoversikt
 
-# remove duplicates - keep one
-#md5sum /home/X/metadata/backup/app/* |\
-#sort |\
-#awk 'BEGIN{lasthash = ""} $1 == lasthash {print $2} {lasthash = $1}' |\
-#xargs rm
-
-cd /home/X/metadata/backup/app/
+cd /var/kartoteket/backup/app/
 last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
     while read -d '' i; do
         s=$(stat -c '%s' "$i");
