@@ -1,15 +1,24 @@
 #!/bin/sh
+echo "Downloading latest source code.."
 git fetch
 git reset --hard origin/master
 
-pip install -r requirements.txt
+echo "Installing dependencies.."
+pip install -q -r requirements.txt
 
-python manage.py makemigrations
-python manage.py migrate
 
-python manage.py collectstatic --noinput
+echo "Migrating database.."
+python /var/kartoteket/source/systemoversikt/manage.py makemigrations
+python /var/kartoteket/source/systemoversikt/manage.py migrate
 
-#sqlite3 db.sqlite3 "VACUUM;"
+echo "Collecting static files.."
+python /var/kartoteket/source/systemoversikt/manage.py collectstatic --noinput
 
+echo "Rydder opp i databasefilen.."
+sqlite3 db.sqlite3 "VACUUM;"
+
+echo "Restarting webserver.."
 #sudo service httpd restart
-sudo /bin/systemctl restart httpd.service
+sudo systemctl restart httpd.service
+
+echo "Server is now updated!"
