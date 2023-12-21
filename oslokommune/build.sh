@@ -14,9 +14,6 @@ python /var/kartoteket/source/systemoversikt/manage.py migrate
 echo "Collecting static files.."
 python /var/kartoteket/source/systemoversikt/manage.py collectstatic --noinput
 
-echo "Rydder opp i databasefilen.."
-sqlite3 /var/kartoteket/source/systemoversikt/db.sqlite3 "VACUUM;"
-
 echo "Restarting webserver.."
 #sudo service httpd restart
 sudo systemctl restart httpd.service
