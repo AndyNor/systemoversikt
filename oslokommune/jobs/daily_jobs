@@ -1,8 +1,4 @@
 #!/bin/sh
-export no_proxy="tjenester.oslo.kommune.no"
-export http_proxy="http://user:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
-export https_proxy="http://user:pass@inetproxy.oslofelles.oslo.kommune.no:3128"
-
 source /var/kartoteket/virtualenv/py39/bin/activate
 
 cd /var/kartoteket/source/systemoversikt/
