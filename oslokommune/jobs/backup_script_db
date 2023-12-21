@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # make a compressed backup of the db.sqlite3-file
-tar -zcf /home/X/metadata/backup/db/db_`date +%F_%H:%M:%S`.tar.gz /home/X/metadata/djangoapp/db.sqlite3
+tar -zcf /var/kartoteket/backup/db/db_`date +%F_%H:%M:%S`.tar.gz /var/kartoteket/source/systemoversikt/db.sqlite3
 
 # remove duplicated - keep one copy
 #md5sum /home/X/metadata/backup/db/* |\
@@ -9,7 +9,7 @@ tar -zcf /home/X/metadata/backup/db/db_`date +%F_%H:%M:%S`.tar.gz /home/X/metada
 #awk 'BEGIN{lasthash = ""} $1 == lasthash {print $2} {lasthash = $1}' |\
 #xargs rm
 
-cd /home/X/metadata/backup/db/
+cd /var/kartoteket/backup/db/
 last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
     while read -d '' i; do
         s=$(stat -c '%s' "$i");
@@ -18,5 +18,5 @@ last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
 done
 
 # remove files older than 30 days
-find /home/X/metadata/backup/db/ -mindepth 1 -mtime +30 -delete
+find /var/kartoteket/backup/db/ -mindepth 1 -mtime +30 -delete
 
