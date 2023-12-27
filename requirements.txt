@@ -58,4 +58,6 @@ typing_extensions==4.5.0
 tzdata==2022.7
 urllib3==1.26.18
 xlrd==2.0.1
+rdflib
+certipy-ad
 mod-wsgi; platform_system == 'Linux'
