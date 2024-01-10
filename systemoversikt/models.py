@@ -4085,6 +4085,13 @@ class System(models.Model):
 			on_delete=models.SET_NULL,
 			help_text=u"Seksjon forvaltning er plassert til.",
 			)
+	forvaltning_epost = models.EmailField(
+			verbose_name="E-post til forvaltergruppen",
+			blank=True,
+			null=True,
+			help_text=u"Fylles ut dersom forvaltergruppen har en dedikert fellespostboks.",
+
+			)
 	superbrukere = models.TextField(
 			verbose_name="Superbrukere",
 			blank=True,

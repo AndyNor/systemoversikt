@@ -183,6 +183,12 @@
 				<br><br>Kontaktpersoner forvalter:<br>
 				{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
 
+				<br>
+				{% if systemdetaljer.forvaltning_epost %}
+					{% get_verbose_field_name systemdetaljer "forvaltning_epost" %}<br>
+					{{ systemdetaljer.forvaltning_epost }}
+				{% endif %}
+
 				<hr>
 				{% if systemdetaljer.godkjente_bestillere %}
 					{% get_verbose_field_name systemdetaljer "godkjente_bestillere" %}

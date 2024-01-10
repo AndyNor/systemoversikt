@@ -329,6 +329,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
 				'systemforvalter',
 				('systemforvalter_avdeling_referanse', 'systemforvalter_kontaktpersoner_referanse'),
+				'forvaltning_epost',
 				'godkjente_bestillere',
 			),
 		}),
