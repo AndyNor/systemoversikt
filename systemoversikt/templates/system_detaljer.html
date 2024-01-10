@@ -168,7 +168,7 @@
 				{% url "virksomhet" systemdetaljer.systemeier.pk as url_systemeier %}
 				<a href="{{ url_systemeier }}">{{ systemdetaljer.systemeier|default:"-" }}</a>
 				<br><br>Kontaktpersoner eier:<br>
-				{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.systemeier_kontaktpersoner_referanse.all %}
+				{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemeier_kontaktpersoner_referanse.all %}
 
 				<hr>
 				<h6>Systemforvalter</h6>
@@ -181,12 +181,12 @@
 				{% endif %}
 
 				<br><br>Kontaktpersoner forvalter:<br>
-				{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
+				{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
 
 				<hr>
 				{% if systemdetaljer.godkjente_bestillere %}
 					{% get_verbose_field_name systemdetaljer "godkjente_bestillere" %}
-					<br>{% include "ansvarlig_include_vis.html" with ansvarlige=systemdetaljer.godkjente_bestillere.all %}
+					<br>{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.godkjente_bestillere.all %}
 				{% endif %}
 
 				<hr>
