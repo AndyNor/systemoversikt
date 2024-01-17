@@ -80,8 +80,8 @@ class Command(BaseCommand):
 					with open('systemoversikt/import/usr.csv', 'w') as file_handle:
 							file_handle.write(r.text)
 					datastructure = csv.DictReader(r.text.splitlines(), delimiter=";")
-				else:
-					sys.exit()
+				#else:
+				#	sys.exit()
 
 
 
