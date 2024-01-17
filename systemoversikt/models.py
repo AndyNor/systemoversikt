@@ -1999,7 +1999,7 @@ class virtualIP(models.Model):
 		while candidates:
 			current_candidate = candidates.pop()
 			already_seen.append(current_candidate)
-			print(current_candidate)
+			#print(current_candidate)
 			if current_candidate.server:
 				members.append(current_candidate)
 				continue

@@ -49,18 +49,18 @@ def sharepoint_get_file(filename):
 	client = GraphClient(credential=client_credential, api_version='beta')
 	#query = f"/sites/{site_id}/drives/{library_id}/root/children" # liste alle elementer
 	query = f"/sites/{site_id}/drives/{library_id}/items/root:/{filename}"
-	print(f"Spørring: {query}")
+	#print(f"Spørring: {query}")
 	resp = client.get(query)
 	file_metadata = json.loads(resp.text)
 
-	print(file_metadata["lastModifiedDateTime"])
+	#print(file_metadata["lastModifiedDateTime"])
 	modified_date = make_aware(datetime.datetime.strptime(file_metadata["lastModifiedDateTime"], "%Y-%m-%dT%H:%M:%SZ"))
 	destination_file = f'systemoversikt/import/{filename}'
 
 	response = requests.get(file_metadata["@microsoft.graph.downloadUrl"])
 	with open(destination_file, "wb") as f:
 		f.write(response.content)
-	print(f"Lastet ned fil til {destination_file} ")
+	#print(f"Lastet ned fil til {destination_file} ")
 
 	return {"destination_file": destination_file, "modified_date": modified_date}
 
@@ -659,7 +659,7 @@ def tool_docx2html(request):
 	html = None
 	messages = None
 	if request.method == "POST":
-		print(request.POST)
+		#print(request.POST)
 		import mammoth
 		from bs4 import BeautifulSoup
 		try:
@@ -1969,7 +1969,7 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 						logg += "la til %s " % (username)
 						brukerliste.add(username)
 				if len(brukerliste) > 500:
-					print("For mange brukere")
+					#print("For mange brukere")
 					return (["Over 500 personer"], "")
 			except:
 				logg = "" # deaktivert # += "feilet for %s " % (g)
@@ -3495,21 +3495,21 @@ def registrer_bruk(request, system):
 				if bruk.ibruk == False:
 					bruk.ibruk = True
 					bruk.save()
-					print("Satt %s aktiv" % bruk)
+					#print("Satt %s aktiv" % bruk)
 			except ObjectDoesNotExist:
 				bruk = SystemBruk.objects.create(
 					brukergruppe=virksomhet,
 					system=system_instans,
 					ibruk=True,
 				)
-				print("Opprettet %s" % bruk)
+				#print("Opprettet %s" % bruk)
 		for virk in alle_virksomheter: # alle som er igjen, ble ikke merket, merk som ikke i bruk
 			try:
 				bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk)
 				if bruk.ibruk == True:
 					bruk.ibruk = False
 					bruk.save()
-					print("Satt %s deaktiv" % bruk)
+					#print("Satt %s deaktiv" % bruk)
 			except ObjectDoesNotExist:
 				pass # trenger ikke sette et ikke-eksisterende objekt
 		return redirect('systemdetaljer', system_instans.pk)
@@ -3553,21 +3553,21 @@ def registrer_bruk_programvare(request, programvare):
 				if bruk.ibruk == False:
 					bruk.ibruk = True
 					bruk.save()
-					print("Satt %s aktiv" % bruk)
+					#print("Satt %s aktiv" % bruk)
 			except ObjectDoesNotExist:
 				bruk = ProgramvareBruk.objects.create(
 					brukergruppe=virksomhet,
 					programvare=programvare_instans,
 					ibruk=True,
 				)
-				print("Opprettet %s" % bruk)
+				#print("Opprettet %s" % bruk)
 		for virk in alle_virksomheter: # alle som er igjen, ble ikke merket, merk som ikke i bruk
 			try:
 				bruk = ProgramvareBruk.objects.get(programvare=programvare_instans, brukergruppe=virk)
 				if bruk.ibruk == True:
 					bruk.ibruk = False
 					bruk.save()
-					print("Satt %s deaktiv" % bruk)
+					#print("Satt %s deaktiv" % bruk)
 			except ObjectDoesNotExist:
 				pass # trenger ikke sette et ikke-eksisterende objekt
 		return redirect('programvaredetaljer', programvare_instans.pk)
@@ -4072,7 +4072,8 @@ def drifttilgang(request):
 			try:
 				oppslag.append(ADgroup.objects.get(common_name=cn))
 			except:
-				print("error adgruppe_oppslag() %s" % (cn))
+				#print("error adgruppe_oppslag() %s" % (cn))
+				pass
 		return oppslag
 
 	serveradmins = [
@@ -7161,7 +7162,7 @@ def ubw_enhet(request, pk):
 			#		line["amount"] = Decimal((line["amount"].replace(",",".")))
 
 			if ".xlsx" in file.name:
-				print("Excel-import påstartet")
+				#print("Excel-import påstartet")
 				dfRaw = pd.read_excel(io=file.read(), sheet_name=1)
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				#print(dfRaw)
