@@ -8,7 +8,7 @@ from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth.models import User
 from systemoversikt.models import *
-from systemoversikt.management.commands.sharepoint_server_updater import client_business_services
+from systemoversikt.management.commands.sharepoint_server_updater import CLIENT_BUSINESS_SERVICES
 from systemoversikt.views import push_pushover
 import json, os, re, time, sys
 import pandas as pd
@@ -166,7 +166,7 @@ class Command(BaseCommand):
 						continue  # Det må være en verdi på denne
 
 					# Sette type enhet
-					if record["Name.1"] in client_business_services:
+					if record["Name.1"] in CLIENT_BUSINESS_SERVICES:
 						# vi sjekker om enheten finnes fra før
 						cmdbdevice = get_cmdb_instance(comp_name)
 						cmdbdevice.device_type = "KLIENT"
