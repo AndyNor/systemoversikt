@@ -66,7 +66,7 @@ class Command(BaseCommand):
 
 			if wan_lokasjoner == None:
 				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Datafilen var tom..")
-				sys.exit()
+				#sys.exit()
 
 			# tømmel gamle data
 			WANLokasjon.objects.all().delete()

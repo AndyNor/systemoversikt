@@ -74,7 +74,7 @@ class Command(BaseCommand):
 							event_type=LOG_EVENT_TYPE,
 							message=message,
 					)
-					sys.exit(message)
+					#sys.exit(message)
 
 			if os.environ['THIS_ENV'] == "TEST":
 				print(f"Opening test file {debug_file}")
