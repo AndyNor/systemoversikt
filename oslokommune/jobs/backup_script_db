@@ -14,3 +14,5 @@ done
 # remove files older than 30 days
 find /var/kartoteket/backup/db/ -mindepth 1 -mtime +30 -delete
 
+#+x
+

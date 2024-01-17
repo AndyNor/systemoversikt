@@ -10,3 +10,5 @@ last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
         [[ $s = $last ]] && rm "$i";
     last=$s;
 done
+
+#+x
