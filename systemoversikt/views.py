@@ -1577,8 +1577,12 @@ def ad_brukerlistesok(request):
 
 	for term in search_term:
 		try:
-			user = User.objects.get(username=term.lower())
-			users.append(user)
+			try:
+				user = User.objects.get(username=term.lower())
+				users.append(user)
+			except:
+				user = User.objects.get(email=term.lower())
+				users.append(user)
 		except:
 			not_users.append(term)
 			continue  # skip this term

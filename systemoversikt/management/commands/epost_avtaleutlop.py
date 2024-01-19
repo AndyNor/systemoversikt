@@ -71,7 +71,6 @@ class Command(BaseCommand):
 				avtalenavn = avtale.kortnavn
 
 				subject = "Kartoteket: Påminnelse om avtaleutløp"
-				reply_to = "andre.nordbo@uke.oslo.kommune.no"
 				recipients = e_post_mottakere
 				message = '''\
 
@@ -91,7 +90,6 @@ Hilsen Kartoteket
 							body=message,
 							from_email=settings.DEFAULT_FROM_EMAIL,
 							to=recipients,
-							reply_to=[reply_to],
 					)
 					email.send()
 					antall_klargjort += 1
