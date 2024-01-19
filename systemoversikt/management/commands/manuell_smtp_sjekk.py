@@ -8,10 +8,12 @@ import smtplib
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		sender = os.environ['EMAIL_SECRET_EMAILADDR']
+
 		email = EmailMessage(
 				subject="test av SMTP ut fra server",
 				body="test av SMTP ut fra server",
-				from_email=settings.DEFAULT_FROM_EMAIL,
-				to=[settings.DEFAULT_FROM_EMAIL],
+				from_email=sender,
+				to=[sender],
 		)
 		email.send()
