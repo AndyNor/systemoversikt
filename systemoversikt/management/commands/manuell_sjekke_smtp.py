@@ -4,6 +4,8 @@
 
 from django.core.management.base import BaseCommand
 import smtplib
+import os
+from django.core.mail import EmailMessage
 
 class Command(BaseCommand):
 	def handle(self, **options):
