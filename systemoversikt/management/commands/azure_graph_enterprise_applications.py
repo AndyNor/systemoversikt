@@ -10,6 +10,7 @@ from systemoversikt.models import *
 from dateutil import parser
 from django.utils import timezone
 from datetime import timedelta
+from datetime import datetime
 from systemoversikt.views import push_pushover
 
 class Command(BaseCommand):
@@ -44,7 +45,8 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		print(f"------ Starter {SCRIPT_NAVN} ------")
+		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		client_credential = ClientSecretCredential(
 				tenant_id=os.environ['AZURE_TENANT_ID'],
@@ -87,7 +89,7 @@ class Command(BaseCommand):
 					s.userConsentDescription = permissionScope["userConsentDescription"]
 					s.userConsentDisplayName = permissionScope["userConsentDisplayName"]
 					s.save()
-					print("Added PermissionScope %s" % permissionScope["value"])
+					#print("Added PermissionScope %s" % permissionScope["value"])
 
 				for role in load_appdata["value"][0]["appRoles"]: # Application
 					try:
@@ -107,7 +109,7 @@ class Command(BaseCommand):
 					s.userConsentDescription = ""
 					s.userConsentDisplayName = ""
 					s.save()
-					print("Added role %s" % role["value"])
+					#print("Added role %s" % role["value"])
 
 				for resourceSpecific in load_appdata["value"][0]["resourceSpecificApplicationPermissions"]:
 					try:
@@ -127,7 +129,7 @@ class Command(BaseCommand):
 					s.userConsentDescription = ""
 					s.userConsentDisplayName = ""
 					s.save()
-					print("Added resourceSpecific %s" % resourceSpecific["value"])
+					#print("Added resourceSpecific %s" % resourceSpecific["value"])
 
 
 				logg_message = "servicePrincipalsLookup() har lastet rettigheter fra %s" % (load_appdata["value"][0]["appDisplayName"])
@@ -135,15 +137,16 @@ class Command(BaseCommand):
 				#		event_type=LOG_EVENT_TYPE,
 				#		message=logg_message,
 				#	)
-				print(logg_message)
+				#print(logg_message)
 			else:
 				# Det ble ikke funnet noen rettigheter
-				logg_message = "servicePrincipalsLookup() fant ingen rettigheter"
+				logg_message = f"servicePrincipalsLookup() fant ingen rettigheter for {resourceAppId} {mode}"
 				#logg_entry = ApplicationLog.objects.create(
 				#		event_type=LOG_EVENT_TYPE,
 				#		message=logg_message,
 				#	)
 				print(logg_message)
+				pass
 
 
 		def permissionScopeLookup(resourceAppId, scope_id, mode):
@@ -224,7 +227,7 @@ class Command(BaseCommand):
 					displayName = app.get('displayName')
 					appId = app.get('appId')
 
-					print(f"{APPLICATIONS_FOUND_ALL}: {servicePrincipalType} {displayName}")
+					#print(f"{APPLICATIONS_FOUND_ALL}: {servicePrincipalType} {displayName}")
 
 					try:
 						a = AzureApplication.objects.get(appId=appId)

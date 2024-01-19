@@ -5,6 +5,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
+from datetime import datetime
 from systemoversikt.views import push_pushover
 import json, os
 import pandas as pd
@@ -42,7 +43,8 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		print(f"------ Starter {SCRIPT_NAVN} ------")
+		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		try:
 

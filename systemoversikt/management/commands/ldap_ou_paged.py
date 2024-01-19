@@ -6,6 +6,7 @@ from systemoversikt.utils import ldap_paged_search
 from systemoversikt.models import *
 from django.utils import timezone
 from datetime import timedelta
+from datetime import datetime
 from systemoversikt.views import push_pushover
 import ldap
 import sys
@@ -42,7 +43,8 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		print(f"------ Starter {SCRIPT_NAVN} ------")
+		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		try:
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")

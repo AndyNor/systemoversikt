@@ -7,12 +7,14 @@ import simplejson as json
 from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
 from systemoversikt.models import *
+from datetime import datetime
 
 class Command(BaseCommand):
 	def handle(self, **options):
 
 		SCRIPT_NAVN = os.path.basename(__file__)
-		print(f"------ Starter {SCRIPT_NAVN} ------")
+		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		client_credential = ClientSecretCredential(
 				tenant_id=os.environ['AZURE_TENANT_ID'],

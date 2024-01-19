@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand
 from systemoversikt.views import push_pushover
 from systemoversikt.models import *
 from django.utils import timezone
+from datetime import datetime
 import subprocess
 import os
 
@@ -37,7 +38,8 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		print(f"------ Starter {SCRIPT_NAVN} ------")
+		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		try:
 			username = os.environ['KARTOTEKET_LDAPUSER'].split("\\")[1]
