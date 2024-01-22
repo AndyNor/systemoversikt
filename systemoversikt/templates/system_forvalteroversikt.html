@@ -17,9 +17,7 @@
 		<th>Organisatorisk systemeier</th>
 		<th>Organisatorisk forvalter</th>
 		<th>Systemeiere</th>
-		<th>Systemeiere e-post</th>
 		<th>Forvaltere</th>
-		<th>Forvaltere e-post</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -31,11 +29,27 @@
 		<td>{{ s.systemeier|default:"Ukjent" }}</td>
 		<td>{{ s.systemforvalter|default:"Ukjent" }}</td>
 
-		<td>{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}{{ ansvarlig}}<br>{% endfor%}</td>
-		<td>{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}{{ ansvarlig.brukernavn.email }}<br>{% endfor%}</td>
+		<td>
+			{% for ansvarlig in s.systemeier_kontaktpersoner_referanse.all %}
+				<li style="{% if ansvarlig.brukernavn.profile.accountdisable %}text-decoration: line-through;{% endif %}">
+				{{ ansvarlig }}
+				{% if ansvarlig.brukernavn.email %}
+					({{ ansvarlig.brukernavn.email }})
+				{% endif %}
+				</li>
+			{% endfor%}
+		</td>
 
-		<td>{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}{{ ansvarlig }}<br>{% endfor%}</td>
-		<td>{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}{{ ansvarlig.brukernavn.email }}<br>{% endfor%}</td>
+		<td>
+			{% for ansvarlig in s.systemforvalter_kontaktpersoner_referanse.all %}
+				<li style="{% if ansvarlig.brukernavn.profile.accountdisable %}text-decoration: line-through;{% endif %}">
+				{{ ansvarlig }}
+				{% if ansvarlig.brukernavn.email %}
+					({{ ansvarlig.brukernavn.email }})
+				{% endif %}
+				</li>
+			{% endfor%}
+		</td>
 	</tr>
 	{% endfor %}
 	</tbody>
