@@ -3,13 +3,14 @@
 <table class="tablesorter excel">
 	<thead>
 	<tr>
-		<th>Avtalenavn</th>
+		<th>Avtale</th>
 		<th>Omfang</th>
 		<td>Gyldighet</td>
 		<th>Avtaleeier</th>
 		<th>Avtaleforvaltere</th>
 		<th>Avtalepart</th>
 		<th>Avtalereferanse</th>
+		<th>Tilknyttede avtaler</th>
 		<th>Beskrivelse</th>
 	</tr>
 	</thead>
@@ -60,6 +61,14 @@
 			{% else %}
 				{{ item.avtalereferanse|default:"-" }}
 			{% endif %}
+		</td>
+		<td>
+			{% for avtale in item.intern_avtalereferanse.all %}
+				<li>{{ avtale }}</li>
+			{% endfor %}
+			{% for avtale in item.avtale_intern_avtalereferanse.all %}
+				<li>{{ avtale }}</li>
+			{% endfor %}
 		</td>
 		<td>{{ item.beskrivelse|linebreaks }}</td>
 	</tr>
