@@ -8,6 +8,33 @@
 
 	<p>Viser {{ systemer.count }} utfasede systemer. Sortert etter oppdateringsdato.</p>
 
-	{% include "system_include_hurtigvisning.html" %}
+	<table class="tablesorter excel">
+		<thead>
+			<tr>
+				<th>Systemnavn</th>
+				<th>Livsløpstatus</th>
+				<th>Dato utfaset</th>
+				<th>Systemforvalter</th>
+				<th>Brukergrupper</th>
+			</tr>
+		</thead>
+			<tbody>
+			{% for system in systemer %}
+			<tr>
+				<td><h6>{% include 'system_include_vis.html' with system=system %}</h6></td>
+				<td>{{system.get_livslop_status_display|default:"" }}</td>
+				<td>{{system.dato_end_of_life|date:"Y-m-d"}}</td>
+				<td>{{system.systemforvalter|default:""}}</td>
+				<td>
+					{% for bruk in system.systembruk_system.all %}
+						{% if bruk.ibruk %}
+							{{ bruk.brukergruppe.virksomhetsforkortelse }},
+						{% endif %}
+					{% endfor %}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
 
 {% endblock hovedinnhold %}

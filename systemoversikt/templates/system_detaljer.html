@@ -36,10 +36,12 @@
 
 	<h6>
 		{{ systemdetaljer.systembeskrivelse|linebreaks }}
-		<hr>
-		{{ systemdetaljer.inv_konklusjon }}
-		<br>
-		{{ systemdetaljer.inv_konklusjon_beskrivelse }}
+		{% if systemdetaljer.inv_konklusjon %}
+			<hr>
+			{{ systemdetaljer.inv_konklusjon|default:"" }}
+			<br>
+			{{ systemdetaljer.inv_konklusjon_beskrivelse|default:"" }}
+		{% endif %}
 	</h6>
 
 	<hr>
@@ -151,12 +153,24 @@
 				<span class="badge badge-light">{{ systemdetaljer.get_livslop_status_display|default:"-" }}</span>
 
 				<br>
+				{% get_verbose_field_name systemdetaljer "dato_etablert" %}:
+				<span class="badge badge-light">{{ systemdetaljer.dato_etablert|date:"Y-m-d"|default:"-" }}</span>
+
+				<br>
+				{% get_verbose_field_name systemdetaljer "dato_end_of_life" %}:
+				<span class="badge badge-light">{{ systemdetaljer.dato_end_of_life|date:"Y-m-d"|default:"-" }}</span>
+
+				<br><br>
 				{% get_verbose_field_name systemdetaljer "funksjonell_egnethet" %}:
 				<span class="badge badge-light">{{ systemdetaljer.get_funksjonell_egnethet_display|default:"-" }}</span>
 
 				<br>
 				{% get_verbose_field_name systemdetaljer "teknisk_egnethet" %}:
 				<span class="badge badge-light">{{ systemdetaljer.get_teknisk_egnethet_display|default:"-" }}</span>
+
+				<hr>
+				<h6>{% get_verbose_field_name systemdetaljer "arkivkommentar" %}</h6>
+				<span class="badge badge-light">{{ systemdetaljer.arkivkommentar|default:"-" }}</span>
 
 
 

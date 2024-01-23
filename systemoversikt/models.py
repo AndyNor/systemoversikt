@@ -4513,17 +4513,17 @@ class System(models.Model):
 			related_name='system_kontaktperson_innsyn',
 			verbose_name="Kontaktperson innsyn",
 			blank=True,
-			help_text=u"Dersom arkiv: Person som kan kontaktes for å undersøke om det er personopplysninger i systemet knyttet til en innsynsbegjæring. Dersom du ikke finner personen du leter etter kan du legge til ny med +-tegnet.",
+			help_text=u"Person som kan kontaktes for å undersøke om det er personopplysninger i systemet knyttet til en innsynsbegjæring. Dersom du ikke finner personen du leter etter kan du legge til ny med +-tegnet.",
 			)
 	innsyn_innbygger = models.BooleanField(
 			verbose_name="Innsyn relevant for innbyggere?",
 			default=True,
-			help_text=u"Dersom arkiv: Er det aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en innbygger.",
+			help_text=u"Er det aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en innbygger.",
 			)
 	innsyn_ansatt = models.BooleanField(
 			verbose_name="Innsyn relevant for ansatte?",
 			default=True,
-			help_text=u"Dersom arkiv: Er det aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en ansatt",
+			help_text=u"Er det aktuelt å søke igjennom dette systemet etter personopplysninger ved innsynsbegjæring fra en ansatt",
 			)
 	kjente_mangler = models.TextField(
 			verbose_name="Kjente mangler i systemet",
@@ -4641,6 +4641,21 @@ class System(models.Model):
 			)
 	inv_konklusjon_beskrivelse = models.TextField(
 			verbose_name="Detaljert konklusjon modernisering",
+			blank=True,
+			null=True,
+			)
+	dato_etablert = models.DateField(
+			verbose_name="Dato systemet ble tatt i bruk",
+			null=True,
+			blank=True,
+			)
+	dato_end_of_life = models.DateField(
+			verbose_name="Dato systemet skal fases ut eller ble faset ut",
+			null=True,
+			blank=True,
+			)
+	arkivkommentar = models.TextField(
+			verbose_name="Arkivars kommentarer til systemet",
 			blank=True,
 			null=True,
 			)

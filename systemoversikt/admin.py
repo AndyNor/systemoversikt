@@ -322,6 +322,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'fields': (
 				('systemnavn', 'programvarer'),
 				('alias', 'livslop_status'),
+				('dato_etablert', 'dato_end_of_life'),
 				('driftsmodell_foreignkey', 'systemeierskapsmodell'),
 				('avhengigheter_referanser','avhengigheter'),
 				'systembeskrivelse',
@@ -341,7 +342,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'informasjonsklassifisering',
 				('sikkerhetsnivaa', 'integritetsvurdering'),
 				('tilgjengelighetsvurdering', 'tilgjengelighet_periodisk_kritisk', 'tilgjengelighet_timer_til_kritisk', 'tilgjengelighet_kritiske_perioder'),
-				'er_arkiv',
+				('er_arkiv', 'arkivkommentar'),
 				('innsyn_innbygger', 'innsyn_ansatt'),
 				'kontaktperson_innsyn',
 				('datautveksling_mottar_fra', 'datautveksling_avleverer_til'),

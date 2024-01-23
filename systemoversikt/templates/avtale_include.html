@@ -3,56 +3,54 @@
 <table class="tablesorter excel">
 	<thead>
 	<tr>
-		{% if user.is_authenticated %}
-		<th class="filter-false">Rediger</th>
-		{% endif %}
 		<th>Avtalenavn</th>
-		<th>Avtaletype</th>
-		<th>Systemknytning?</th>
-		<th>Fornying</th>
-		<th>Avtalepart Oslo kommune</th>
-		<th>Avtaleforvalter</th>
-		<th>Internleverandør</th>
-		<th>Eksternleverandør</th>
+		<th>Omfang</th>
+		<td>Gyldighet</td>
+		<th>Avtaleeier</th>
+		<th>Avtaleforvaltere</th>
+		<th>Avtalepart</th>
 		<th>Avtalereferanse</th>
-		{% if user.is_authenticated %}
-		<th class="filter-false">Slett</th>
-		{% endif %}
+		<th>Beskrivelse</th>
 	</tr>
 	</thead>
 	<tbody>
 	{% for item in avtaler %}
 	<tr {% if item.own_domain %} style="background-color: #fffee6;" {% endif %}>
-		{% if user.is_authenticated %}
-		<td>
-			<a href="/admin/systemoversikt/avtale/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
-		</td>
-		{% endif %}
 		<td>
 			{% url 'avtaledetaljer' item.pk as url_avtaledetaljer %}
-			<a href="{{ url_avtaledetaljer }}">{{ item.kortnavn }}</a>
-		</td>
-		<td>
+			<a href="/admin/systemoversikt/avtale/{{ item.pk }}/change/">{{ item.kortnavn }}</a>
+			<br>
 			{{ item.get_avtaletype_display|default:"-" }}
 		</td>
 		<td>
-			{% for s in item.for_system.all %}
-				{{ s }}<br>
+			{% for system in item.for_system.all %}
+				<li>{{ system }}</li>
+			{% endfor %}
+			{% for plattform in item.for_driftsmodell.all %}
+				<li>{{ plattform }}</li>
 			{% endfor %}
 		</td>
-		<td>{{ item.fornying_dato|default:"-" }} {% if item.fornying_dato %} ({{ item.fornying_dato|timeuntil }}) {% endif %}</td>
+		<td>
+			Signert {{ item.dato_signert|date:"Y-m-d"|default:"-" }}<br>
+			Fornyes {{ item.fornying_dato|default:"-" }}
+			{% if item.fornying_dato %}
+				({{ item.fornying_dato|timeuntil }})
+			{% endif %}
+		</td>
 		<td>
 			{% url 'virksomhet' pk=item.virksomhet.pk as url_virksomhet %}
 			<a href="{{ url_virksomhet }}">{{ item.virksomhet.virksomhetsforkortelse }}</a>
+			{% if item.avtaleansvarlig_seksjon %}
+				ved {{ item.avtaleansvarlig_seksjon }}
+			{% endif %}
 		</td>
 		<td>
 			{% include "ansvarlig_include_vis.html" with ansvarlige=item.avtaleansvarlig.all %}
 		</td>
 		<td>
 			{% url 'virksomhet' pk=item.leverandor_intern.pk as url_leverandor_intern %}
-			<a href="{{ url_leverandor_intern }}">{{ item.leverandor_intern.virksomhetsforkortelse|default:"" }}</a>
-		</td>
-		<td>
+			<a href="{{ url_leverandor_intern }}">{{ item.leverandor_intern|default:"" }}</a>
+			<br>
 			{% url 'leverandor' pk=item.leverandor.pk as url_leverandor %}
 			<a href="{{ url_leverandor }}">{{ item.leverandor|default:"" }}</a>
 		</td>
@@ -63,11 +61,7 @@
 				{{ item.avtalereferanse|default:"-" }}
 			{% endif %}
 		</td>
-		{% if user.is_authenticated %}
-		<td>
-			<a href="/admin/systemoversikt/avtale/{{ item.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a>
-		</td>
-		{% endif %}
+		<td>{{ item.beskrivelse|linebreaks }}</td>
 	</tr>
 	{% endfor %}
 	</tbody>

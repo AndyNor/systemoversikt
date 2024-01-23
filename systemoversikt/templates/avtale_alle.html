@@ -21,12 +21,6 @@
 
 {% block hovedinnhold %}
 
-
-	<p>
-	Det er {{ avtaler.count }} avtaler registrert.
-	</p>
-
-
 	<a href="/admin/systemoversikt/avtale/add/{%if virksomhet %}?virksomhet={{virksomhet.pk}}{%endif%}" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer ny avtale</a>
 
 	{% if request.user.profile.virksomhet %}
@@ -37,10 +31,7 @@
 	{% url "alle_avtaler" as alle_avtaler_url %}
 	<a href="{{ alle_avtaler_url }}" class="btn btn-sm btn-link">Se alle avtaler</a>
 
-
 	<a href="https://felles.intranett.oslo.kommune.no/anskaffelser/samkjopsavtaler/samkjopsavtaler-a-a/" target="_blank" class="btn btn-sm btn-link">🌍 Samkjøpsavtaler A-Å (intranett)</a>
-
-
 
 	{% include 'avtale_include.html' %}
 
