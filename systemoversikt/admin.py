@@ -1127,7 +1127,7 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('kortnavn', 'avtaletype', 'virksomhet', 'leverandor', 'leverandor_intern', 'avtalereferanse', 'dokumenturl')
 	search_fields = ('kortnavn', 'beskrivelse', 'avtalereferanse')
-	autocomplete_fields = ('avtaleansvarlig', 'virksomhet', 'leverandor', 'intern_avtalereferanse', 'leverandor_intern', 'fornying_ekstra_varsling', 'for_system')
+	autocomplete_fields = ('avtaleansvarlig_seksjon', 'avtaleansvarlig', 'virksomhet', 'leverandor', 'intern_avtalereferanse', 'leverandor_intern', 'fornying_ekstra_varsling', 'for_system', 'for_driftsmodell',)
 	filter_horizontal = ('avtaleansvarlig', 'for_system',)
 
 	def response_add(self, request, obj, post_url_continue=None):
@@ -1144,30 +1144,37 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 		return [Lower('kortnavn')]
 
 	fieldsets = (
-				('Avtaleparter', {
-					'fields': (
-						'virksomhet',
-						('leverandor', 'leverandor_intern'),
-					),
-				}),
-				('Avtalefornying', {
-					'fields': (
-						('fornying_dato', 'fornying_varsling_valg'),
-						'fornying_ekstra_varsling',
-					),
-				}),
-				('Om avtalen', {
-					'fields': (
-						'avtaletype',
-						'kortnavn',
-						'beskrivelse',
-						'avtaleansvarlig',
-						'for_system',
-						'avtalereferanse',
-						'dokumenturl',
-						'intern_avtalereferanse',
-					),
-				}),
+			('Om avtalen', {
+				'fields': (
+					('avtaletype', 'kortnavn'),
+					('avtalereferanse', 'dokumenturl'),
+				),
+			}),
+			('Avtaleparter', {
+				'fields': (
+					'virksomhet',
+					('avtaleansvarlig_seksjon', 'avtaleansvarlig'),
+					('leverandor', 'leverandor_intern'),
+				),
+			}),
+			('Avtaleomfang', {
+				'fields': (
+					('for_system', 'for_driftsmodell'),
+					'intern_avtalereferanse',
+				),
+			}),
+			('Avtalefornying', {
+				'fields': (
+					'dato_signert',
+					('fornying_dato', 'fornying_varsling_valg'),
+					'fornying_ekstra_varsling',
+				),
+			}),
+			('Kommentarer', {
+				'fields': (
+					'beskrivelse',
+				),
+			}),
 		)
 
 

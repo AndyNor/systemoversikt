@@ -3196,7 +3196,14 @@ class Avtale(models.Model):
 			related_name="avtale_for_system",
 			verbose_name="Gjelder for følgende systemer",
 			blank=True,
-			help_text=u"Bruk dette feltet dersom denne avtalen spesifikt regulerer et tjenestekjøp eller 3.parts applikasjonsdrift. Dersom basisdrift og applikasjonsdrift/vedlikehold utføres av leverandøren tilhørende valgt driftsplattform lar du dette feltet stå tomt.",
+			help_text=u"For å angi system avtalen gjelder for",
+			)
+	for_driftsmodell = models.ManyToManyField(
+			to="Driftsmodell",
+			related_name="avtale",
+			verbose_name="Gjelder for platformene",
+			blank=True,
+			help_text=u"For å angi plattform avtalen gjelder for",
 			)
 	beskrivelse = models.TextField(
 			verbose_name="Detaljer om avtalen (fritekst)",
@@ -3219,6 +3226,14 @@ class Avtale(models.Model):
 			verbose_name="Avtaleforvalter",
 			blank=True,
 			help_text=u"Den person (rolle) som forvalter avtalen.",
+			)
+	avtaleansvarlig_seksjon = models.ForeignKey(
+			to='HRorg',
+			related_name='avtale',
+			on_delete=models.SET_NULL,
+			verbose_name='Ansvarlig seksjon',
+			null=True,
+			blank=True,
 			)
 	leverandor = models.ForeignKey(
 			to=Leverandor,
@@ -3254,6 +3269,11 @@ class Avtale(models.Model):
 			)
 	fornying_dato = models.DateField(
 			verbose_name="Dato for fornying",
+			null=True,
+			blank=True,
+			)
+	dato_signert = models.DateField(
+			verbose_name="Signert dato",
 			null=True,
 			blank=True,
 			)
