@@ -1259,28 +1259,27 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
-		return [Lower('navn')]
+		return ['sort_order', Lower('navn')]
 
 	fieldsets = (
 			('Obligatorisk informasjon', {
 				'fields': (
-					'navn',
+					('navn', 'sort_order'),
 					'ansvarlig_virksomhet',
-					'type_plattform',
-					'utviklingsplattform',
-					'samarbeidspartner',
 					'overordnet_plattform',
-					'anbefalte_kategorier_personopplysninger',
-					'risikovurdering',
+					'type_plattform',
+					('utviklingsplattform','samarbeidspartner'),
+					'avtaler',
 					'kommentar',
-					'leverandor',
-					'underleverandorer',
-					'avtaler'
 				),
 			}),
 			('Tilleggsinformasjon', {
 				'classes': ('collapse',),
 				'fields': (
+					'leverandor',
+					'underleverandorer',
+					'risikovurdering',
+					'anbefalte_kategorier_personopplysninger',
 					'sikkerhetsnivaa',
 					'databehandleravtale_notater',
 					'lokasjon_lagring_valgmeny',

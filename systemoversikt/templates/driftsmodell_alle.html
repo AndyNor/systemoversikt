@@ -11,22 +11,20 @@
 
 
 {% block overskrift %}
-	Landingssoner (datasenter)
+	Driftsplattformer (landingssoner)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
-	<p>Her ser du en oversikt over alle {{ driftsmodeller.count }} driftsplattformer. Alle driftsplattformer skal kobles til ansvarlig virksomhet i kommunen.<br>
-	Alle systemer bør kobles mot en av disse driftsplattformene. Dersom systemet tilhører flere driftsmodeller, velges den mest fremtrendende.<br>
-	Klikk på en driftsplattform for å se generell informasjon samt alle systemer som er tilknyttet.</p>
+	En driftsplattform er en spesifikk infrastruktur hvor systemkomponenter kan driftes. Alle driftsplattformer skal kobles til ansvarlig virksomhet i kommunen, og alle systemer skal kobles mot en av disse driftsplattformene. Dersom systemet tilhører flere driftsmodeller, kan du velge den som er mest fremtrendende, eller splitte systemregistreringen inn i flere systemkomponenter fordelt riktig på driftsplattform. Trykk på en driftsplattform for å se alle systemer som er tilknyttet.</p>
 
 	<table class="tablesorter excel">
 		<thead>
 		<tr>
 			<th>Landingssone</th>
+			<th>Bygger på</th>
 			<th>Forvaltet av</th>
 			<th>Type</th>
-			<th>Utviklingsplattform</th>
-			<th>Samarbeidspartner</th>
+			<th>Utvikling</th>
 			<th>Antall systemer</th>
 			<th>Kommentar</th>
 		</tr>
@@ -41,6 +39,9 @@
 					<a href="{{ url_detaljer_driftsmodell }}">{{ item.navn }}</a>
 			</td>
 			<td>
+				{{ item.overordnet_plattform|default:"" }}
+			</td>
+			<td>
 				{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
 					<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet|default:"-" }}</a>
 			</td>
@@ -49,9 +50,6 @@
 			</td>
 			<td>
 				{{ item.utviklingsplattform|yesno:"Ja,Nei" }}
-			</td>
-			<td>
-				{{ item.samarbeidspartner|yesno:"Ja,Nei" }}
 			</td>
 			<td>
 				{{ item.antall_systemer }}

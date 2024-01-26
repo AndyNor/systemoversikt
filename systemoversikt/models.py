@@ -3771,6 +3771,13 @@ class Driftsmodell(models.Model):
 			default=False,
 			help_text=u"For å vise systemer som er fra samarbeidspartnere",
 			)
+	sort_order = models.IntegerField(
+			verbose_name="Sorteringsrekkefølge",
+			default=3,
+			blank=False,
+			null=False,
+			help_text=u'Lavere tall vises først.',
+			)
 	history = HistoricalRecords()
 
 	def __str__(self):
