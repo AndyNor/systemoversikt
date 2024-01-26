@@ -653,6 +653,153 @@ def tool_word_count(request):
 	})
 
 
+def tool_systemimport(request):
+	required_permissions = ['systemoversikt.change_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	import json
+	innlogget_som = request.user.profile.virksomhet_innlogget_som
+
+	if request.GET.get('upload') == "true":
+		# Det er lastet opp nye data
+		user_input_new_data = request.POST.get('user_input_new_data', '')
+		try:
+			user_input_json = json.loads(user_input_new_data)
+			import_data_result = ""
+			validated = True
+		except:
+			import_data_result = "Det du limte inn er ikke gyldig JSON"
+			validated = False
+
+		if validated:
+			oppdatert = 0
+			totalt = len(user_input_json['systemer'])
+			for system_new in user_input_json['systemer']:
+				system_new_id = system_new['id']
+				try:
+					system_old = System.objects.get(pk=system_new_id)
+				except:
+					import_data_result += f"Feilet å finne system med ID: {system_new_id}.\n"
+					continue
+
+				if system_old.systemforvalter == innlogget_som or system_old.systemeier == innlogget_som:
+
+					try:
+						system_old.systemnavn = system_new['systemnavn']
+						system_old.alias = system_new['alias']
+						system_old.er_arkiv = system_new['er_arkiv']
+						system_old.antall_brukere = system_new['antall_brukere']
+						system_old.livslop_status = system_new['livslop_status']
+						system_old.url_risikovurdering = system_new['url_risikovurdering']
+						system_old.systembeskrivelse = system_new['systembeskrivelse']
+						system_old.konfidensialitetsvurdering = system_new['konfidensialitetsvurdering']
+						system_old.tilgjengelighetsvurdering = system_new['tilgjengelighetsvurdering']
+
+						if system_new['driftsmodell_foreignkey']:
+							system_old.driftsmodell_foreignkey.pk = system_new['driftsmodell_foreignkey']
+
+						system_old.forvaltning_epost = system_new['forvaltning_epost']
+
+						system_old.kritisk_kapabilitet.clear()
+						for kapabilitet in system_new['kritisk_kapabilitet']:
+							system_old.kritisk_kapabilitet.add(kapabilitet)
+
+						system_old.avhengigheter_referanser.clear()
+						for avhengighet in system_new['avhengigheter_referanser']:
+							system_old.avhengigheter_referanser.add(avhengighet)
+
+						if system_new['dato_sist_ros']:
+							system_old.dato_sist_ros = datetime.datetime.strptime(system_new['dato_sist_ros'], '%Y-%m-%d')
+
+						system_old.systemforvalter_kontaktpersoner_referanse.clear()
+						for email in system_new['systemforvalter_kontaktpersoner_referanse']:
+							try:
+								user = User.objects.get(email=email)
+							except:
+								import_data_result += f"Person med e-postadresse {email} finnes ikke.\n"
+								continue
+
+							try:
+								ansvarlig = Ansvarlig.objects.get(brukernavn=user)
+							except:
+								ansvarlig = Ansvarlig.objects.create(brukernavn=user)
+								import_data_result += f"{user} opprettet som ansvarlig.\n"
+
+							system_old.systemforvalter_kontaktpersoner_referanse.add(ansvarlig)
+
+						system_old.save()
+						import_data_result += f"Oppdaterte {system_old}\n"
+						oppdatert += 1
+
+					except Exception as e:
+						import_data_result += f"Feilet for {system_old} med: {e}\n"
+
+				else:
+					import_data_result += f"Du har ikke rettigheter til å endre {system_old}.\n"
+
+			import_data_result += f"Importerte {oppdatert} av {totalt}."
+
+	valgte_systemer_eksport = request.POST.getlist('eksport_systemer', None)
+	if valgte_systemer_eksport:
+		valgte_systemer_eksport = list(map(int, valgte_systemer_eksport))
+		eksport_systemdata = []
+		for system in valgte_systemer_eksport:
+			try:
+				system = System.objects.get(pk=system)
+			except:
+				continue
+
+			eksport_systemdata.append({
+					"id": system.pk,
+					"systemnavn": system.systemnavn,
+					"alias": system.alias,
+					"er_arkiv": system.er_arkiv,
+					"antall_brukere": system.antall_brukere,
+					"livslop_status": system.livslop_status,
+					"kritisk_kapabilitet": [k.pk for k in system.kritisk_kapabilitet.all()],
+					"url_risikovurdering": system.url_risikovurdering,
+					"dato_sist_ros": system.dato_sist_ros.strftime('%Y-%m-%d') if system.dato_sist_ros else None,
+					"systembeskrivelse": system.systembeskrivelse,
+					"konfidensialitetsvurdering": system.konfidensialitetsvurdering,
+					"tilgjengelighetsvurdering": system.tilgjengelighetsvurdering,
+					"systemforvalter_kontaktpersoner_referanse": [ansvarlig.brukernavn.email for ansvarlig in system.systemforvalter_kontaktpersoner_referanse.all()],
+					"driftsmodell_foreignkey": system.driftsmodell_foreignkey.pk if system.driftsmodell_foreignkey else None,
+					"forvaltning_epost": system.forvaltning_epost,
+					"avhengigheter_referanser": [referanse.pk for referanse in system.avhengigheter_referanser.all()]
+				})
+
+		oppslagstabeller = {
+			"driftsmodell_foreignkey": {driftsmodell.pk: driftsmodell.__str__() for driftsmodell in Driftsmodell.objects.all()},
+			"livslop_status": {livslop[0]: livslop[1] for livslop in LIVSLOEP_VALG},
+			"konfidensialitetsvurdering": {valg[0]: valg[1] for valg in VURDERINGER_SIKKERHET_VALG},
+			"tilgjengelighetsvurdering": {valg[0]: valg[1] for valg in VURDERINGER_SIKKERHET_VALG},
+			"kritisk_kapabilitet": {kapabilitet.pk: kapabilitet.__str__() for kapabilitet in KritiskKapabilitet.objects.all()},
+			"avhengigheter_referanser": {system.pk: system.__str__() for system in System.objects.all()},
+		}
+
+		eksport_json = {
+			"systemer": eksport_systemdata,
+			"oppslagstabeller": oppslagstabeller,
+		}
+
+
+	mine_systemer = System.objects.filter(Q(systemeier=innlogget_som)|Q(systemforvalter=innlogget_som))
+	for system in mine_systemer:
+		if system.pk in valgte_systemer_eksport:
+			system.valgt = True
+
+	return render(request, 'tool_systemimport.html', {
+		'request': request,
+		'innlogget_som': innlogget_som,
+		'mine_systemer': mine_systemer,
+		'import_data_result': import_data_result if 'import_data_result' in locals() else None,
+		'eksport_json': json.dumps(eksport_json, indent=4) if 'eksport_json' in locals() else None,
+		'valgte_systemer_eksport': valgte_systemer_eksport,
+		'user_input_new_data': user_input_new_data if 'user_input_new_data' in locals() else ''
+	})
+
+
 
 def tool_docx2html(request):
 	required_permissions = None

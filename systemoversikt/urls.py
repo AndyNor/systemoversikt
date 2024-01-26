@@ -40,7 +40,6 @@ urlpatterns = [
 	re_path(r'^oidc/', include('mozilla_django_oidc.urls')),
 	re_path(r'^login/$', admin.site.login, name='login'),
 	re_path(r'^logout/$', admin.site.logout, name='logout'),
-	re_path(r'^tools/', views.tools_index, name="tools_index"),
 	re_path(r'^sok/$', views.search, name='search'),
 	re_path(r'^domener/alle/$', views.alle_systemurler, name='alle_systemurler'),
 
@@ -217,10 +216,14 @@ urlpatterns = [
 	re_path(r'^cmdb/ad/lookup/exact/(?P<name>[^#\+\"\\\<\>\;]{2,200})/$', views.ad_exact, name='ad_exact'),
 	re_path(r'^cmdb/prk/userlookup/$', views.prk_userlookup, name='prk_userlookup'),
 	re_path(r'^cmdb/ad/gruppeanalyse/$', views.ad_gruppeanalyse, name='ad_gruppeanalyse'),
-	re_path(r'^cmdb/tools/unique$', views.tool_unique_items, name='tool_unique_items'),
-	re_path(r'^cmdb/tools/compare$', views.tool_compare_items, name='tool_compare_items'),
-	re_path(r'^cmdb/tools/docx2html$', views.tool_docx2html, name='tool_docx2html'),
-	re_path(r'^cmdb/tools/word_count$', views.tool_word_count, name='tool_word_count'),
+
+	re_path(r'^tools/unique$', views.tool_unique_items, name='tool_unique_items'),
+	re_path(r'^tools/compare$', views.tool_compare_items, name='tool_compare_items'),
+	re_path(r'^tools/docx2html$', views.tool_docx2html, name='tool_docx2html'),
+	re_path(r'^tools/word_count$', views.tool_word_count, name='tool_word_count'),
+	re_path(r'^tools/systemimport$', views.tool_systemimport, name='tool_systemimport'),
+	# Last tool-entry here
+	re_path(r'^tools/', views.tools_index, name="tools_index"),
 
 
 	re_path(r'^dpia/$', views.alle_dpia, name='alle_dpia'),

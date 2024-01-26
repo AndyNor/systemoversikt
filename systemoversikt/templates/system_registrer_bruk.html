@@ -15,8 +15,8 @@
 <hr>
 
 <form action="" method="post">{% csrf_token %}
-	<input type="button" class="btn btn-sm" value="Inverter valg" id="trigger">
-	<input type="button" class="btn btn-sm" value="Avhuk alle" id="trigger_none">
+	<input type="button" class="btn btn-sm" value="Inverter valgte" id="trigger">
+	<input type="button" class="btn btn-sm" value="Fjern alle" id="trigger_none">
 	<input style="margin-left: 50px;" type="submit" class="btn btn-primary btn-sm" value="Utfør endringer">
 	<hr>
 	{% for item in virksomheter_template %}

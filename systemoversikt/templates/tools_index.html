@@ -14,11 +14,18 @@
 	{% url 'tool_docx2html' as url_tool_docx2html %}
 	<a href="{{url_tool_docx2html}}" class="btn btn-sm btn-link {% if url_tool_docx2html in request.path %}fremhev{% endif %}">Word > HTML</a><br>
 
+	{% url 'tool_systemimport' as url_tool_systemimport %}
+	<a href="{{url_tool_systemimport}}" class="btn btn-sm btn-link {% if url_tool_systemimport in request.path %}fremhev{% endif %}">Importer systemer</a><br>
+
 
 {% endblock sidemeny %}
 
 {% block main_content %}
 	<h3>{% block overskrift %}Verktøy{% endblock overskrift %}</h3>
-	{% block hovedinnhold %}Du finner ulike verktøy i sidemenyen.{% endblock hovedinnhold %}
+
+	{% block hovedinnhold %}
+			Du finner ulike verktøy i sidemenyen.
+	{% endblock hovedinnhold %}
+
 {% endblock main_content %}
 

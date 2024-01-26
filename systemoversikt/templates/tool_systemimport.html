@@ -1,0 +1,106 @@
+{% extends "tools_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Import av systemdetaljer (selektive felter)
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Denne funksjonen lar deg importere nye data for eksisterende systemer din virksomhet eier eller forvalter.</p>
+
+<p>Du representerer {{ innlogget_som }}</p>
+
+
+<h5>Importer data</h5>
+<form action="?upload=true" method="POST" autocomplete="off">
+	{% csrf_token %}
+	<div class="form-group form-inline">
+		<textarea rows="3" cols="50" style="width: 500px; height: 250px;" name="user_input_new_data"
+		placeholder="JSON-formatterte oppdaterte data" class="form-control form-control-sm">{{ user_input_new_data }}</textarea>
+		<input style="margin-left: 10px;" type="submit" value="Last inn" class="btn btn-primary btn-sm">
+	</div>
+</form>
+
+<hr>
+<h5>Resultat av import</h5>
+
+{% if import_data_result %}
+	<pre>{{ import_data_result }}</pre>
+{% else %}
+	<li><i>Ingen data lastet opp enda..</i></li>
+{% endif %}
+
+<hr>
+
+<h5>Resultat av eksport</h5>
+{% if eksport_json %}
+	<pre>{{ eksport_json }}</pre>
+{% else %}
+	<pre>Ingen systemer valgt for eksport..</pre>
+{% endif %}
+
+
+<hr>
+
+<h5>Trekk ut data</h5>
+
+<form action="{% url 'tool_systemimport' %}" method="post">{% csrf_token %}
+	<input type="button" class="btn btn-sm" value="Inverter valgte" id="trigger">
+	<input type="button" class="btn btn-sm" value="Fjern alle" id="trigger_none">
+	<input style="margin-left: 50px;" type="submit" class="btn btn-primary btn-sm" value="Eksporter">
+	<hr>
+	<ul style="column-count: 3; list-style: none; margin: 0;">
+	{% for system in mine_systemer %}
+	<li>
+		<input id="{{ system }}" type="checkbox" name="eksport_systemer" value="{{ system.pk }}" {% if system.valgt %} checked {% endif %}>
+		<label for="{{ system }}">{{ system }}</label>
+	</li>
+	{% endfor %}
+	</ul>
+
+</form>
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	function changeCheckboxes(list, value){
+		for(var i = list.length - 1 ; i >=0 ; i--){
+			list[i].checked = (typeof value === 'boolean') ? value : !list[i].checked ;
+		}
+	}
+	var trigger = document.getElementById("trigger");
+	trigger.onclick = function() {
+		var inputs = document.getElementsByTagName('input');
+		var allCheckboxes = [];
+			for (var j = inputs.length-1; j >= 0; j--){
+				if (inputs[j].type === 'checkbox'){
+					allCheckboxes.push(inputs[j]);
+				}
+		}
+		changeCheckboxes(allCheckboxes)
+	}
+	function resetCheckboxes(list, value){
+		for(var i = list.length - 1 ; i >=0 ; i--){
+			list[i].checked = (typeof value === 'boolean') ? value : false ;
+		}
+	}
+	var trigger_none = document.getElementById("trigger_none");
+	trigger_none.onclick = function() {
+		var inputs = document.getElementsByTagName('input');
+		var allCheckboxes = [];
+			for (var j = inputs.length-1; j >= 0; j--){
+				if (inputs[j].type === 'checkbox'){
+					allCheckboxes.push(inputs[j]);
+				}
+		}
+		resetCheckboxes(allCheckboxes)
+	}
+</script>
+
+
+
+
+{% endblock hovedinnhold %}
