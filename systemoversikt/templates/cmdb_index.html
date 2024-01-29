@@ -32,6 +32,9 @@
 	{% url 'leverandortilgang' as url_leverandortilgang %}
 	<a href="{{ url_leverandortilgang }}" class="btn btn-sm btn-link {% if url_leverandortilgang in request.path %}fremhev{% endif %}">Leverandørtilgang</a>
 
+	{% url 'entra_id_oppslag' as url_entra_id_oppslag %}
+	<a href="{{ url_entra_id_oppslag }}" class="btn btn-sm btn-link {% if url_entra_id_oppslag in request.path %}fremhev{% endif %}">Brukersøk Entra ID</a>
+
 
 
 	{% block ekstrameny_ad %}{% endblock ekstrameny_ad %}

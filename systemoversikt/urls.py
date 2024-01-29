@@ -167,6 +167,8 @@ urlpatterns = [
 
 	re_path(r'^cmdb/bruker/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
 	re_path(r'^cmdb/bruker/$', views.bruker_sok, name='bruker_sok'),
+	re_path(r'^cmdb/entraidbruker/$', views.entra_id_oppslag, name='entra_id_oppslag'),
+
 	re_path(r'^cmdb/bruker/brukerlistesok/$', views.ad_brukerlistesok, name='cmdb_ad_brukerlistesok'),
 	re_path(r'^cmdb/firewall/$', views.cmdb_firewall, name='cmdb_firewall'),
 	re_path(r'^cmdb/statistikk/$', views.cmdb_statistikk, name='cmdb_statistikk'),

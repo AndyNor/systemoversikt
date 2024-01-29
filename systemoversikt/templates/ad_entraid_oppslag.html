@@ -1,0 +1,69 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Entra ID direktesøk
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<form action="" method="POST" autocomplete="off">
+	{% csrf_token %}
+	<div class="form-group form-inline">
+		<textarea style="width: 500px; height: 50px;" name="inndata"
+		placeholder="E-postadresse til en brukerident" class="form-control form-control-sm">{{ inndata }}</textarea>
+		<input style="margin-left: 10px;" type="submit" value="Søk" class="btn btn-primary btn-sm">
+	</div>
+</form>
+
+
+{% if user_metadata_json_response %}
+
+	Display Name: <h5>{{ user_metadata_json_response.displayName }}</h5>
+	Account Enabled: <h5>{{ user_metadata_json_response.accountEnabled|yesno:"Ja, Nei" }}</h5>
+
+	User Principal Name: <h5>{{ user_metadata_json_response.userPrincipalName }}</h5>
+	Mail: <h5>{{ user_metadata_json_response.mail }}</h5>
+	On Premises Sam Account Name: <h5>{{ user_metadata_json_response.onPremisesSamAccountName }}</h5>
+
+	Company Name: <h5>{{ user_metadata_json_response.companyName }}</h5>
+	Department: <h5>{{ user_metadata_json_response.department }}</h5>
+	Job Title: <h5>{{ user_metadata_json_response.jobTitle }}</h5>
+	Employee Id: <h5>{{ user_metadata_json_response.employeeId }}</h5>
+
+	Mobile Phone: <h5>{{ user_metadata_json_response.mobilePhone }}</h5>
+
+	Extension Attributes:
+	<ul>
+		<li>EA1: <b>{{ user_metadata_json_response.onPremisesExtensionAttributes.extensionAttribute1 }}</b></li>
+		<li>EA2: <b>{{ user_metadata_json_response.onPremisesExtensionAttributes.extensionAttribute2 }}</b></li>
+		<li>EA3: <b>{{ user_metadata_json_response.onPremisesExtensionAttributes.extensionAttribute3 }}</b></li>
+	</ul>
+
+{% endif %}
+
+
+{% if user_groups_json_response %}
+	<h5>Gruppemedlemskap</h5>
+	{% for group in user_groups_json_response.value %}
+
+		<li><b>{{ group.displayName }}</b> (<i>{{ group.mailNickname }}</i>)</li>
+
+	{% endfor %}
+{% endif %}
+
+
+{% comment %}
+<h5>Rådata</h5>
+<pre>
+{{ user_metadata_pre_response }}
+{{ user_groups_pre_response }}
+</pre>
+{% endcomment %}
+
+
+{% endblock hovedinnhold %}

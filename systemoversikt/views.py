@@ -1743,6 +1743,53 @@ def ad_brukerlistesok(request):
 	})
 
 
+def entra_id_oppslag(request):
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+	from azure.identity import ClientSecretCredential
+	from msgraph.core import GraphClient
+	import os
+	import re
+
+	inndata = request.POST.get('inndata', "")
+	#print(f"{request.user} søkte i Azure AD etter: {inndata}.")
+	message = f"{request.user} søkte på: {inndata}."
+	ApplicationLog.objects.create(event_type="Azure AD brukersøk", message=message)
+	inndata = re.sub(r'[^A-Za-z\.\@]', '', inndata)
+
+	if inndata != "":
+		client_credential = ClientSecretCredential(
+				tenant_id=os.environ['AZURE_TENANT_ID'],
+				client_id=os.environ['AZURE_ENTERPRISEAPP_CLIENT'],
+				client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
+		)
+		api_version = "beta"
+		client = GraphClient(credential=client_credential, api_version=api_version)
+
+		user_metadata_query = f"/users/{inndata}"
+		resp = client.get(user_metadata_query)
+		user_metadata_json_response = json.loads(resp.text)
+		#user_metadata_pre_response = json.dumps(user_metadata_json_response, sort_keys=True, indent=4)
+
+		user_groups_query = f"/users/{inndata}/memberOf"
+		resp = client.get(user_groups_query)
+		user_groups_json_response = json.loads(resp.text)
+		#user_groups_pre_response = json.dumps(user_groups_json_response, sort_keys=True, indent=4)
+
+
+	return render(request, 'ad_entraid_oppslag.html', {
+		'request': request,
+		'user_metadata_json_response': user_metadata_json_response if 'user_metadata_json_response' in locals() else "",
+		#'user_metadata_pre_response': user_metadata_pre_response if 'user_metadata_pre_response' in locals() else "",
+		'user_groups_json_response': user_groups_json_response if 'user_groups_json_response' in locals() else "",
+		#'user_groups_pre_response': user_groups_pre_response if 'user_groups_pre_response' in locals() else "",
+		'inndata': inndata,
+	})
+
+
 
 def bruker_sok(request):
 	#Denne funksjonen viser resultat av søk etter brukere
