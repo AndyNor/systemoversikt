@@ -1757,10 +1757,10 @@ def entra_id_oppslag(request):
 	inndata = request.POST.get('inndata', "")
 	#print(f"{request.user} søkte i Azure AD etter: {inndata}.")
 	message = f"{request.user} søkte på: {inndata}."
-	ApplicationLog.objects.create(event_type="Azure AD brukersøk", message=message)
 	inndata = re.sub(r'[^A-Za-z\.\@]', '', inndata)
 
 	if inndata != "":
+		ApplicationLog.objects.create(event_type="Azure AD brukersøk", message=message)
 		client_credential = ClientSecretCredential(
 				tenant_id=os.environ['AZURE_TENANT_ID'],
 				client_id=os.environ['AZURE_ENTERPRISEAPP_CLIENT'],
