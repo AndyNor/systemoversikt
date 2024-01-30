@@ -239,7 +239,7 @@ urlpatterns = [
 
 	re_path(r'^virksomhet/drift/prioriteringer/$', views.drift_beredskap_redirect, name='drift_beredskap_redirect'),
 	re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/$', views.drift_beredskap, name='drift_beredskap'),
-	re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/(?P<eier>\d{1,8})$', views.drift_beredskap, name='drift_beredskap_for_eier'),
+	#re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/(?P<eier>\d{1,8})$', views.drift_beredskap, name='drift_beredskap_for_eier'),
 	re_path(r'^virksomhet/driftsmodell/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
 	re_path(r'^virksomhet/driftsmodell/klassifisering/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet_klassifisering, name='driftsmodell_virksomhet_klassifisering'),
 

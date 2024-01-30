@@ -4944,7 +4944,7 @@ def drift_beredskap_redirect(request):
 
 
 
-def drift_beredskap(request, pk, eier=None):
+def drift_beredskap(request, pk):
 	#Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -4953,24 +4953,17 @@ def drift_beredskap(request, pk, eier=None):
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True)
 
-	if eier:
-		eier = Virksomhet.objects.get(pk=eier)
-		systemer_drifter = systemer_drifter.filter(systemeier=eier)
-	systemer_drifter = systemer_drifter.order_by('tilgjengelighetsvurdering')
-
-	if eier:
-		ikke_infra = []
-		for s in systemer_drifter:
-			if not s.er_infrastruktur():
-				ikke_infra.append(s)
-		systemer_drifter = ikke_infra
+	ikke_infra = []
+	for s in systemer_drifter:
+		if not s.er_infrastruktur():
+			ikke_infra.append(s)
+	systemer_drifter = ikke_infra
 
 	return render(request, 'systemer_drifter_prioritering.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'systemer': systemer_drifter,
-		'eier': eier,
 	})
 
 
