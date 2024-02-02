@@ -20,7 +20,7 @@
 <form action="?upload=true" method="POST" autocomplete="off">
 	{% csrf_token %}
 	<div class="form-group form-inline">
-		<textarea rows="3" cols="50" style="width: 500px; height: 250px;" name="user_input_new_data"
+		<textarea rows="3" cols="50" style="width: 800px; height: 250px;" name="user_input_new_data"
 		placeholder="JSON-formatterte oppdaterte data" class="form-control form-control-sm">{{ user_input_new_data }}</textarea>
 		<input style="margin-left: 10px;" type="submit" value="Last inn" class="btn btn-primary btn-sm">
 	</div>

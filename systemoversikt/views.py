@@ -676,9 +676,13 @@ def tool_systemimport(request):
 			oppdatert = 0
 			totalt = len(user_input_json['systemer'])
 			for system_new in user_input_json['systemer']:
+				if not 'id' in system_new:
+					import_data_result += f"feltet id er obligatorisk.\n"
+					continue
 				system_new_id = system_new['id']
 				try:
 					system_old = System.objects.get(pk=system_new_id)
+					import_data_result += f"Starter på {system_old}\n"
 				except:
 					import_data_result += f"Feilet å finne system med ID: {system_new_id}.\n"
 					continue
@@ -686,50 +690,86 @@ def tool_systemimport(request):
 				if system_old.systemforvalter == innlogget_som or system_old.systemeier == innlogget_som:
 
 					try:
-						system_old.systemnavn = system_new['systemnavn']
-						system_old.alias = system_new['alias']
-						system_old.er_arkiv = system_new['er_arkiv']
-						system_old.antall_brukere = system_new['antall_brukere']
-						system_old.livslop_status = system_new['livslop_status']
-						system_old.url_risikovurdering = system_new['url_risikovurdering']
-						system_old.systembeskrivelse = system_new['systembeskrivelse']
-						system_old.konfidensialitetsvurdering = system_new['konfidensialitetsvurdering']
-						system_old.tilgjengelighetsvurdering = system_new['tilgjengelighetsvurdering']
+						if 'systemnavn' in system_new:
+							system_old.systemnavn = system_new['systemnavn']
+							import_data_result += f"- oppdaterte systemnavn\n"
 
-						if system_new['driftsmodell_foreignkey']:
+						if 'alias' in system_new:
+							system_old.alias = system_new['alias']
+							import_data_result += f"- oppdaterte alias\n"
+
+						if 'er_arkiv' in system_new:
+							system_old.er_arkiv = system_new['er_arkiv']
+							import_data_result += f"- oppdaterte er_arkiv\n"
+
+						if 'antall_brukere' in system_new:
+							system_old.antall_brukere = system_new['antall_brukere']
+							import_data_result += f"- oppdaterte antall_brukere\n"
+
+						if 'livslop_status' in system_new:
+							system_old.livslop_status = system_new['livslop_status']
+							import_data_result += f"- oppdaterte livslop_status\n"
+
+						if 'url_risikovurdering' in system_new:
+							system_old.url_risikovurdering = system_new['url_risikovurdering']
+							import_data_result += f"- oppdaterte url_risikovurdering\n"
+
+						if 'systembeskrivelse' in system_new:
+							system_old.systembeskrivelse = system_new['systembeskrivelse']
+							import_data_result += f"- oppdaterte systembeskrivelse\n"
+
+						if 'konfidensialitetsvurdering' in system_new:
+							system_old.konfidensialitetsvurdering = system_new['konfidensialitetsvurdering']
+							import_data_result += f"- oppdaterte konfidensialitetsvurdering\n"
+
+						if 'tilgjengelighetsvurdering' in system_new:
+							system_old.tilgjengelighetsvurdering = system_new['tilgjengelighetsvurdering']
+							import_data_result += f"- oppdaterte tilgjengelighetsvurdering\n"
+
+						if 'driftsmodell_foreignkey' in system_new:
 							system_old.driftsmodell_foreignkey.pk = system_new['driftsmodell_foreignkey']
+							import_data_result += f"- oppdaterte driftsmodell_foreignkey\n"
 
-						system_old.forvaltning_epost = system_new['forvaltning_epost']
+						if 'forvaltning_epost' in system_new:
+							system_old.forvaltning_epost = system_new['forvaltning_epost']
+							import_data_result += f"- oppdaterte forvaltning_epost\n"
 
-						system_old.kritisk_kapabilitet.clear()
-						for kapabilitet in system_new['kritisk_kapabilitet']:
-							system_old.kritisk_kapabilitet.add(kapabilitet)
+						if 'kritisk_kapabilitet' in system_new:
+							system_old.kritisk_kapabilitet.clear()
+							for kapabilitet in system_new['kritisk_kapabilitet']:
+								system_old.kritisk_kapabilitet.add(kapabilitet)
+							import_data_result += f"- oppdaterte kritisk_kapabilitet\n"
 
-						system_old.avhengigheter_referanser.clear()
-						for avhengighet in system_new['avhengigheter_referanser']:
-							system_old.avhengigheter_referanser.add(avhengighet)
+						if 'avhengigheter_referanser' in system_new:
+							system_old.avhengigheter_referanser.clear()
+							for avhengighet in system_new['avhengigheter_referanser']:
+								system_old.avhengigheter_referanser.add(avhengighet)
+							import_data_result += f"- oppdaterte avhengigheter_referanser\n"
 
-						if system_new['dato_sist_ros']:
+						if 'dato_sist_ros' in system_new:
 							system_old.dato_sist_ros = datetime.datetime.strptime(system_new['dato_sist_ros'], '%Y-%m-%d')
+							import_data_result += f"- oppdaterte dato_sist_ros\n"
 
-						system_old.systemforvalter_kontaktpersoner_referanse.clear()
-						for email in system_new['systemforvalter_kontaktpersoner_referanse']:
-							try:
-								user = User.objects.get(email=email)
-							except:
-								import_data_result += f"Person med e-postadresse {email} finnes ikke.\n"
-								continue
+						if 'systemforvalter_kontaktpersoner_referanse' in system_new:
+							system_old.systemforvalter_kontaktpersoner_referanse.clear()
+							for email in system_new['systemforvalter_kontaktpersoner_referanse']:
+								try:
+									user = User.objects.get(email=email)
+								except:
+									import_data_result += f"Person med e-postadresse {email} finnes ikke.\n"
+									continue
 
-							try:
-								ansvarlig = Ansvarlig.objects.get(brukernavn=user)
-							except:
-								ansvarlig = Ansvarlig.objects.create(brukernavn=user)
-								import_data_result += f"{user} opprettet som ansvarlig.\n"
+								try:
+									ansvarlig = Ansvarlig.objects.get(brukernavn=user)
+								except:
+									ansvarlig = Ansvarlig.objects.create(brukernavn=user)
+									import_data_result += f"{user} opprettet som ansvarlig.\n"
 
-							system_old.systemforvalter_kontaktpersoner_referanse.add(ansvarlig)
+								system_old.systemforvalter_kontaktpersoner_referanse.add(ansvarlig)
+							import_data_result += f"- oppdaterte systemforvalter_kontaktpersoner_referanse\n"
 
 						system_old.save()
-						import_data_result += f"Oppdaterte {system_old}\n"
+						import_data_result += f"Ferdig med {system_old}\n"
 						oppdatert += 1
 
 					except Exception as e:
