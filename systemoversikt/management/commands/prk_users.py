@@ -83,8 +83,8 @@ class Command(BaseCommand):
 							file_handle.write(r.text)
 					print(f"Fil lastet ned")
 					datastructure = csv.DictReader(r.text.splitlines(), delimiter=";")
-				#else:
-				#	sys.exit()
+				else:
+					print(f"Error connecting: {r.status_code}.")
 
 
 			print("Resetting profiles")
