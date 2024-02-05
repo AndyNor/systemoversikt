@@ -3793,6 +3793,19 @@ class Driftsmodell(models.Model):
 	def antall_systemer(self):
 		return self.systemer.all().count()
 
+	def plattform_nivaa(self):
+		if self.overordnet_plattform == None:
+			return 1
+
+		seen = []
+		level = 1
+		while self.overordnet_plattform != None:
+			if self.overordnet_plattform in seen:
+				return level
+			seen.append(self.overordnet_plattform)
+			level += 1
+		return level
+
 
 class Autorisasjonsmetode(models.Model):
 	navn = models.CharField(
