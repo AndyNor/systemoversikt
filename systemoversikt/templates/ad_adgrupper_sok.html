@@ -22,40 +22,6 @@
 
 	<hr>
 
-	<div><canvas height="80" id="adgr_chart"></canvas></div>
-
-	<script type="text/javascript" nonce="{{request.csp_nonce}}">
-	const data = {
-		labels: [{% for data in antall_adgr_tid %}"{{ data.label }}",{% endfor %}],
-		datasets: [{
-			backgroundColor: 'rgb(255, 99, 132)',
-			borderColor: 'rgb(255, 99, 132)',
-			data: [{% for data in antall_adgr_tid %}{{ data.value|unlocalize }},{% endfor %}],
-		}]
-	};
-
-	const config = {
-		type: 'line',
-		data: data,
-		options: {
-			plugins: {
-				legend: false,
-			},
-			scales: {
-				y: {
-					beginAtZero: true
-				}
-			}
-		},
-	};
-	const myChart = new Chart(
-	document.getElementById('adgr_chart'),
-		config
-	);
-	</script>
-
-	<hr>
-
 	<p>Data synkroniseres hver natt. Koden for import tar nå inn alle medlemmer, og er ikke begrenset til 5000 lenger.</p>
 
 	<form action="" autocomplete="off">

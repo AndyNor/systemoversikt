@@ -77,6 +77,9 @@ urlpatterns = [
 	re_path(r'^rapport/azure/uten_epost/$', views.cmdb_uten_epost_stat, name='cmdb_uten_epost_stat'),
 	re_path(r'^rapport/azure/applications/$', views.azure_applications, name='azure_applications'),
 	re_path(r'^rapport/azure/user_consents/$', views.azure_user_consents, name='azure_user_consents'),
+	re_path(r'^rapport/integrasjoner/status/$', views.rapport_cmdb_status, name='rapport_cmdb_status'),
+	re_path(r'^rapport/ad/identer/$', views.rapport_ad_identer, name='rapport_ad_identer'),
+	re_path(r'^rapport/ad/adgrupper/$', views.rapport_ad_adgrupper, name='rapport_ad_adgrupper'),
 
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),

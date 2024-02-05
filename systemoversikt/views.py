@@ -1336,6 +1336,49 @@ def alle_nettverksenheter(request):
 	})
 
 
+def rapport_cmdb_status(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	integrasjoner = IntegrasjonKonfigurasjon.objects.all()
+
+	return render(request, 'rapport_cmdb_status.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'integrasjoner': integrasjoner,
+	})
+
+
+def rapport_ad_identer(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	ad_brukere_per_virksomhet = []
+	for virksomhet in Virksomhet.objects.all():
+		interne = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Intern").count()
+		eksterne = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Ekstern").count()
+		servicekontoer = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Servicekonto").count()
+		ressurser = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Ressurs").count()
+		kontakter = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Kontakt").count()
+
+		ad_brukere_per_virksomhet.append({
+			'virksomhet': virksomhet,
+			'interne': interne,
+			'eksterne': eksterne,
+			'servicekontoer': servicekontoer,
+			'ressurser': ressurser,
+			'kontakter': kontakter,
+			})
+
+	return render(request, 'rapport_ad_identer.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'ad_brukere_per_virksomhet': ad_brukere_per_virksomhet,
+	})
+
+
 
 def cmdb_statistikk(request):
 	#Vise alle statistikk over alt i CMDB
@@ -1374,28 +1417,8 @@ def cmdb_statistikk(request):
 	count_inactive_accounts = User.objects.filter(profile__accountdisable=True).count()
 	count_utenfor_OK_accounts = User.objects.filter(~Q(profile__distinguishedname__icontains="OU=OK")).filter(profile__accountdisable=False).count()
 
-	ad_brukere_per_virksomhet = []
-	for virksomhet in Virksomhet.objects.all():
-		interne = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Intern").count()
-		eksterne = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Ekstern").count()
-		servicekontoer = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Servicekonto").count()
-		ressurser = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Ressurs").count()
-		kontakter = Profile.objects.filter(accountdisable=False, virksomhet=virksomhet, account_type="Kontakt").count()
-
-		ad_brukere_per_virksomhet.append({
-			'virksomhet': virksomhet,
-			'interne': interne,
-			'eksterne': eksterne,
-			'servicekontoer': servicekontoer,
-			'ressurser': ressurser,
-			'kontakter': kontakter,
-			})
-
-	integrasjoner = IntegrasjonKonfigurasjon.objects.all()
-
 	return render(request, 'cmdb_statistikk.html', {
 		'request': request,
-		'integrasjoner': integrasjoner,
 		'required_permissions': formater_permissions(required_permissions),
 		'count_office_ea': count_office_ea,
 		'count_office_ea_keys': count_office_ea_keys,
@@ -1427,7 +1450,6 @@ def cmdb_statistikk(request):
 		'count_ressurs_accounts': count_ressurs_accounts,
 		'count_inactive_accounts': count_inactive_accounts,
 		'count_utenfor_OK_accounts': count_utenfor_OK_accounts,
-		'ad_brukere_per_virksomhet': ad_brukere_per_virksomhet,
 	})
 
 
@@ -4952,8 +4974,8 @@ def rapport_prioriteringer(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	#SE PÅ
-	virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True).filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True)
+	virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True).filter(~Q(driftsmodell_ansvarlig_virksomhet=None))
+
 
 	return render(request, 'rapport_prioriteringer.html', {
 		'request': request,
@@ -5645,6 +5667,24 @@ def ad_analyse(request):
 	})
 
 
+def rapport_ad_adgrupper(request):
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	antall_adgr_tid = []
+	logs = ApplicationLog.objects.filter(event_type="AD group-import", message__startswith="Det tok")
+	for log in logs:
+		antall_adgr_tid.append({"label": log.opprettet.strftime("%b %y"), "value": float(re.search(r'sekunder\. (\d+) treff', log.message, re.I).groups()[0])})
+
+
+	return render(request, 'rapport_ad_adgrupper.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'antall_adgr_tid': antall_adgr_tid,
+	})
+
+
 
 def alle_adgrupper(request):
 	#Vise informasjon om AD-grupper
@@ -5664,18 +5704,11 @@ def alle_adgrupper(request):
 	else:
 		adgrupper = ADgroup.objects.none()
 
-	antall_adgr_tid = []
-	logs = ApplicationLog.objects.filter(event_type="AD group-import", message__startswith="Det tok")
-	for log in logs:
-		antall_adgr_tid.append({"label": log.opprettet.strftime("%b %y"), "value": float(re.search(r'sekunder\. (\d+) treff', log.message, re.I).groups()[0])})
-
 	return render(request, 'ad_adgrupper_sok.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		"adgrupper": adgrupper,
 		"search_term": search_term,
-		'antall_adgr_tid': antall_adgr_tid,
-		'required_permissions': required_permissions,
 	})
 
 

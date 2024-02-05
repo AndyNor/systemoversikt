@@ -2,40 +2,30 @@
 
 {% block sidemeny %}
 
-	<h6>Rapporter</h6>
-
-	{% url 'o365_avvik' as url_o365_avvik %}
-	<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}">Sikkerhetsavvik sluttbrukere</a>
-
-	{% url 'o365_lisenser' as url_o365_lisenser %}
-	<a href="{{ url_o365_lisenser }}" class="btn btn-sm btn-link {% if url_o365_lisenser in request.path %}fremhev{% endif %}">o365 lisenser</a>
-
-	{% url 'drifttilgang' as url_drifttilgang %}
-	<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Driftbrukere</a>
-
-	{% url 'drifttilgang' as url_drifttilgang %}
-	<a href="{{ url_drifttilgang }}?kilde=servicekontoer" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Servicekontoer</a>
-
-	{% url 'tbrukere' as url_tbrukere %}
-	<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a>
-
-	{% url 'rapport_ukjente_identer' as url_rapport_ukjente_identer %}
-	<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Brukere uten knytning</a>
-
-	{% url 'alle_spn' as url_alle_spn %}
-	<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">AD-kontoer med SPN</a>
-
-	{% url 'isk_ansvarlig_for_system' as url_isk_ansvarlig_for_system %}
-	<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">System per ISK</a>
-
+	<h6>For sluttbrukere</h6>
 	{% url 'rapport_named_locations' as url_rapport_named_locations %}
-	<a href="{{ url_rapport_named_locations }}" class="btn btn-sm btn-link {% if url_rapport_named_locations in request.path %}fremhev{% endif %}">EntraID: Oppkobling fra land</a>
+	<a href="{{ url_rapport_named_locations }}" class="btn btn-sm btn-link {% if url_rapport_named_locations in request.path %}fremhev{% endif %}">Gule og rød land</a>
+
+
+
+	<hr><h6>For ISK og PKO</h6>
+	{% url 'o365_avvik' as url_o365_avvik %}
+	<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}">Sikkerhetsavvik</a>
 
 	{% url 'system_kritisk_funksjon' as url_system_kritisk_funksjon %}
 	<a href="{{url_system_kritisk_funksjon}}" class="btn btn-sm btn-link {% if url_system_kritisk_funksjon in request.path %}fremhev{% endif %}">Kritiske samfunnsfunksjoner</a>
 
 	{% url 'system_informasjonsbehandling' as url_system_informasjonsbehandling %}
-	<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if url_system_informasjonsbehandling in request.path %}fremhev{% endif %}">LOS Informasjonsklassifisering</a>
+	<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if url_system_informasjonsbehandling in request.path %}fremhev{% endif %}">Informasjonsklassifisering</a>
+
+	{% url 'isk_ansvarlig_for_system' as url_isk_ansvarlig_for_system %}
+	<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">Systemer fordelt på ISK</a>
+
+
+
+	<hr><h6>For systemforvaltere</h6>
+	{% url 'rapport_prioriteringer' as url_rapport_prioriteringer %}
+	<a href="{{ url_rapport_prioriteringer }}" class="btn btn-sm btn-link {% if url_rapport_prioriteringer in request.path %}fremhev{% endif %}">Systemprioriteringer</a>
 
 	{% url 'systemer_utfaset' as url_systemer_utfaset %}
 	<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfasede systemer</a>
@@ -43,9 +33,10 @@
 	{% url 'systemer_EOL' as url_systemer_EOL %}
 	<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if url_systemer_EOL in request.path %}fremhev{% endif %}">End of life-systemer</a>
 
-	{% url 'rapport_prioriteringer' as url_rapport_prioriteringer %}
-	<a href="{{ url_rapport_prioriteringer }}" class="btn btn-sm btn-link {% if url_rapport_prioriteringer in request.path %}fremhev{% endif %}">Systemprioriteringer</a>
 
+
+
+	<hr><h6>Microsoft Azure</h6>
 	{% url 'azure_applications' as url_azure_applications %}
 	<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}">Azure service principals</a>
 
@@ -55,8 +46,47 @@
 	{% url 'azure_application_keys' as url_azure_application_keys %}
 	<a href="{{ url_azure_application_keys }}" class="btn btn-sm btn-link {% if url_azure_application_keys in request.path %}fremhev{% endif %}">Azure nøkler og sertifikater</a>
 
-	{% url 'cmdb_uten_epost_stat' as url_cmdb_uten_epost_stat %}
-	<a href="{{ url_cmdb_uten_epost_stat }}" class="btn btn-sm btn-link {% if url_cmdb_uten_epost_stat in request.path %}fremhev{% endif %}">Brukere uten e-post</a>
+
+
+
+	<hr><h6>Active Directory</h6>
+	{% url 'rapport_ad_identer' as url_rapport_ad_identer %}
+	<a href="{{ url_rapport_ad_identer }}" class="btn btn-sm btn-link {% if url_rapport_ad_identer in request.path %}fremhev{% endif %}">AD-identstatistikk</a>
+
+	{% url 'tbrukere' as url_tbrukere %}
+	<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a>
+
+	{% url 'rapport_ukjente_identer' as url_rapport_ukjente_identer %}
+	<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Brukere uten virksomhetsknytning</a>
+
+	{% url 'alle_spn' as url_alle_spn %}
+	<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">AD-kontoer med SPN</a>
+
+	{% url 'rapport_ad_adgrupper' as url_rapport_ad_adgrupper %}
+	<a href="{{ url_rapport_ad_adgrupper }}" class="btn btn-sm btn-link {% if url_rapport_ad_adgrupper in request.path %}fremhev{% endif %}">Statistikk AD-grupper</a>
+
+
+
+
+
+	<hr><h6>Leverandørtilgang</h6>
+	{% url 'drifttilgang' as url_drifttilgang %}
+	<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Driftbrukere</a>
+
+	{% url 'drifttilgang' as url_drifttilgang %}
+	<a href="{{ url_drifttilgang }}?kilde=servicekontoer" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Servicekontoer</a>
+
+
+
+
+	<hr><h6>Annet</h6>
+	{% url 'rapport_cmdb_status' as url_rapport_cmdb_status %}
+	<a href="{{ url_rapport_cmdb_status }}" class="btn btn-sm btn-link {% if url_rapport_cmdb_status in request.path %}fremhev{% endif %}">CMDB integrasjonsstatus</a>
+
+	{% url 'o365_lisenser' as url_o365_lisenser %}
+	<a href="{{ url_o365_lisenser }}" class="btn btn-sm btn-link {% if url_o365_lisenser in request.path %}fremhev{% endif %}">o365 lisenser</a>
+
+
 
 {% endblock sidemeny %}
 
