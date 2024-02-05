@@ -81,50 +81,44 @@ class Command(BaseCommand):
 				if r.status_code == 200:
 					with open('systemoversikt/import/usr.csv', 'w') as file_handle:
 							file_handle.write(r.text)
+					print(f"Fil lastet ned")
 					datastructure = csv.DictReader(r.text.splitlines(), delimiter=";")
 				#else:
 				#	sys.exit()
 
 
+			print("Resetting profiles")
+			Profile.objects.all().update(usertype=None)
+			Profile.objects.all().update(org_unit=None)
+			Profile.objects.all().update(ansattnr=None)
+			Profile.objects.all().update(from_prk=False)
 
-			@transaction.atomic
-			def perform_atomic_update():
-				nonlocal logg_hits
-				nonlocal datastructure
+			for line in datastructure:
+				#print(line["EMPLOYEENUMBER"])
+				usertype = "%s" % (line["EMPLOYEETYPENAME"])
+				ansattnr = int(line["EMPLOYEENUMBER"])
+				try:
+					org_unit = HRorg.objects.get(ouid=line["OUID"])
+				except:
+					org_unit = None
 
-				print("Resetting profiles")
-				Profile.objects.all().update(usertype=None)
-				Profile.objects.all().update(org_unit=None)
-				Profile.objects.all().update(ansattnr=None)
-				Profile.objects.all().update(from_prk=False)
-
-				for line in datastructure:
-					#print(line["EMPLOYEENUMBER"])
-					usertype = "%s" % (line["EMPLOYEETYPENAME"])
-					ansattnr = int(line["EMPLOYEENUMBER"])
+				usernames_str = ["%s%s" % (line["O"], line["EMPLOYEENUMBER"]),	"%s%s" % ("DRIFT", line["EMPLOYEENUMBER"])]
+				usernames = []
+				for u in usernames_str:
 					try:
-						org_unit = HRorg.objects.get(ouid=line["OUID"])
+						usernames.append(User.objects.get(username__iexact=u))
 					except:
-						org_unit = None
+						pass
 
-					usernames_str = ["%s%s" % (line["O"], line["EMPLOYEENUMBER"]),	"%s%s" % ("DRIFT", line["EMPLOYEENUMBER"])]
-					usernames = []
-					for u in usernames_str:
-						try:
-							usernames.append(User.objects.get(username__iexact=u))
-						except:
-							pass
+				logg_hits += 1
+				for u in usernames:
 
-					logg_hits += 1
-					for u in usernames:
+					u.profile.usertype = usertype
+					u.profile.org_unit = org_unit
+					u.profile.ansattnr = ansattnr
+					u.profile.from_prk = True
+					u.save()
 
-						u.profile.usertype = usertype
-						u.profile.org_unit = org_unit
-						u.profile.ansattnr = ansattnr
-						u.profile.from_prk = True
-						u.save()
-
-			perform_atomic_update()
 
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
