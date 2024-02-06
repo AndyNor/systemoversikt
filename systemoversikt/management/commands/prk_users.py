@@ -72,7 +72,7 @@ class Command(BaseCommand):
 				url = os.environ["PRK_USERS_URL"]
 				apikey = os.environ["PRK_USERS_APIKEY"]
 				headers = {"apikey": apikey}
-				print(headers)
+				#print(headers)
 				print("Kobler til %s" % url)
 				r = requests.get(url, headers=headers)
 				print("Original encoding: %s" % r.encoding)
@@ -95,7 +95,7 @@ class Command(BaseCommand):
 			Profile.objects.all().update(from_prk=False)
 
 			for line in datastructure:
-				#print(line["EMPLOYEENUMBER"])
+				print(line["EMPLOYEENUMBER"])
 				usertype = "%s" % (line["EMPLOYEETYPENAME"])
 				ansattnr = int(line["EMPLOYEENUMBER"])
 				try:
