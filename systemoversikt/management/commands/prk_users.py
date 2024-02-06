@@ -95,7 +95,7 @@ class Command(BaseCommand):
 			Profile.objects.all().update(from_prk=False)
 
 			for line in datastructure:
-				print(line["EMPLOYEENUMBER"])
+				#print(line["EMPLOYEENUMBER"])
 				usertype = "%s" % (line["EMPLOYEETYPENAME"])
 				ansattnr = int(line["EMPLOYEENUMBER"])
 				try:
