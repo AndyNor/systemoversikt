@@ -72,6 +72,7 @@ class Command(BaseCommand):
 				url = os.environ["PRK_USERS_URL"]
 				apikey = os.environ["PRK_USERS_APIKEY"]
 				headers = {"apikey": apikey}
+				print(headers)
 				print("Kobler til %s" % url)
 				r = requests.get(url, headers=headers)
 				print("Original encoding: %s" % r.encoding)
