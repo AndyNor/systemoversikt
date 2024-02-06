@@ -1,0 +1,42 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	AD-identnedbryting
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+
+<p>Fordeling av aktive AD-brukere per virksomhet. Inneholder både vanlige brukere og service-kontoer.</p>
+<table class="tablesorter excel">
+<thead>
+<tr>
+	<th>Virksomhet</th>
+	<th>Interne brukere</th>
+	<th>Eksterne brukere</th>
+	<th>Servicekontoer</th>
+	<th>Ressurser</th>
+	<th>Kontakter</th>
+</tr>
+</thead>
+<tbody>
+{% for virksomhet in ad_brukere_per_virksomhet %}
+<tr>
+	<td>{{virksomhet.virksomhet}}</td>
+	<td>{{virksomhet.interne}}</td>
+	<td>{{virksomhet.eksterne}}</td>
+	<td>{{virksomhet.servicekontoer}}</td>
+	<td>{{virksomhet.ressurser}}</td>
+	<td>{{virksomhet.kontakter}}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+{% endblock hovedinnhold %}

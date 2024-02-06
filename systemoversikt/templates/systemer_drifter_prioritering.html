@@ -1,5 +1,6 @@
 {% extends "virksomhet_index.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block ekstrameny %}
 
@@ -8,14 +9,109 @@
 {% endblock ekstrameny %}
 
 {% block overskrift %}
-	{{virksomhet.virksomhetsforkortelse}}s beredskaps/kontinuitetsplan: Prioriteringer {% if eier %} for {{eier}} {% endif %}
+	Prioriteringer for systemgjenoppretting<br>
+	{{virksomhet}} {% if eier %} for {{eier}} {% endif %}
 {% endblock overskrift %}
 
 
 {% block hovedinnhold %}
 
-	<p>Viser {{ systemer.count }} systemer.</p>
+<p>Her vises systemer {{virksomhet}} har ansvar for applikasjonsdrift av. Prioriteten settes som produktet av tilgjengelighetsvurderingen (1-5), tjenestenivået med driftsleverandør (1-4), kritikalitetsvurderingen hos driftsleverandør (1-5) og om systemet er samfunnskritisk (1) eller ikke (2).</p>
 
-	{% include "system_include_tilgjengelighet.html" with systemer=systemer %}
+<table id="systemer" class="tablesorter excel">
+	<thead>
+		<tr>
+			<th class="filter-false"></th>
+			<th>Prioritet</th>
+			<th>System</th>
+			<th>Driftsplattform</th>
+			<th>Tilgjengelighetsvurdering</th>
+			<th>Samfunnskritisk funksjon</th>
+			<th>Tjenestenivå</th>
+			<th>Kritikalitet</th>
+			<th>Kompleksitet</th>
+
+		</tr>
+	</thead>
+	<tbody>
+	{% for system in systemer %}
+		<tr>
+			<td>
+				<a href="/admin/systemoversikt/system/{{ system.pk }}/change/">{% include 'site_edit_button.html' %}
+			</td>
+
+			<td>
+				{{ system.systemprioritet }}
+			</td>
+
+			<td>
+				{% include 'system_include_vis.html' with system=system %}
+				{{ system.get_systemeierskapsmodell_display|default:"-" }}
+			</td>
+
+			{% url "detaljer_driftsmodell" system.driftsmodell_foreignkey.pk as url_driftsmodell %}
+			<td><a href="{{ url_driftsmodell }}">{{ system.driftsmodell_foreignkey|default:"" }}</a></td>
+
+			<td>
+				{{ system.get_tilgjengelighetsvurdering_display|default:"-" }}<br>
+				{{ system.tilgjengelighet_kritiske_perioder|linebreaks|default:"-"}}
+			</td>
+
+			<td>
+				{% for kapabilitet in system.kritisk_kapabilitet.all %}
+					<li>{{ kapabilitet }}</li>
+				{% endfor %}
+			</td>
+
+			<td>
+			{% for bss in system.bs_system_referanse.cmdb_bss_to_bs.all %}
+				{% if bss.operational_status == 1 %}
+					{% if bss.er_produksjon %}
+						{% if bss.environment == 1 %}
+							<li>
+							{{ bss.navn }}<br>
+							{{ bss.u_service_availability_text }}
+							</li>
+						{% endif %}
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+			</td>
+
+			<td>
+			{% for bss in system.bs_system_referanse.cmdb_bss_to_bs.all %}
+				{% if bss.operational_status == 1 %}
+					{% if bss.er_produksjon %}
+						{% if bss.environment == 1 %}
+							<li>
+							{{ bss.navn }}<br>
+							{{ bss.u_service_operation_factor_text }}
+							</li>
+						{% endif %}
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+			</td>
+
+			<td>
+			{% for bss in system.bs_system_referanse.cmdb_bss_to_bs.all %}
+				{% if bss.operational_status == 1 %}
+					{% if bss.environment == 1 %}
+						{% if bss.er_produksjon %}
+							<li>
+							{{ bss.navn }}<br>
+							{{ bss.u_service_complexity_text }}
+							</li>
+						{% endif %}
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+			</td>
+
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+
 
 {% endblock hovedinnhold %}

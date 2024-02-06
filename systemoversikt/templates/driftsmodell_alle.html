@@ -20,7 +20,8 @@
 	<table class="tablesorter excel">
 		<thead>
 		<tr>
-			<th>Landingssone</th>
+			<th>Plattform/tenant</th>
+			<th>Nivå</th>
 			<th>Bygger på</th>
 			<th>Forvaltet av</th>
 			<th>Type</th>
@@ -36,8 +37,9 @@
 			<td>
 				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
 				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
-					<a href="{{ url_detaljer_driftsmodell }}">{{ item.navn }}</a>
+					<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
 			</td>
+			<td>{{ item.plattform_nivaa }}</td>
 			<td>
 				{{ item.overordnet_plattform|default:"" }}
 			</td>

@@ -1884,15 +1884,15 @@ class CMDBRef(models.Model): # BSS
 
 	def u_service_complexity_text(self):
 		lookup = {
-			"K1": "K1: 0-100 brukere, enkelt omfang",
-			"K2": "K2: 0-100 brukere, middels omfang",
-			"K3": "K3: 0-100 brukere, høyt omfang",
-			"K4": "K4: 100-1000 brukere, enkelt omfang",
-			"K5": "K5: 100-1000 brukere, middels omfang",
-			"K6": "K6: 100-1000 brukere, høyt omfang",
-			"K7": "K7: 1000+ brukere, enkelt omfang",
-			"K8": "K8: 1000+ brukere, middels omfang",
-			"K9": "K9: 1000+ brukere, høyt omfang",
+			"K1": "K1 🟢: 0-100 brukere, enkelt omfang",
+			"K2": "K2 🟡: 0-100 brukere, middels omfang",
+			"K3": "K3 🔴: 0-100 brukere, høyt omfang",
+			"K4": "K4 🟡: 100-1000 brukere, enkelt omfang",
+			"K5": "K5 🟡: 100-1000 brukere, middels omfang",
+			"K6": "K6 🔴: 100-1000 brukere, høyt omfang",
+			"K7": "K7 🟡: 1000+ brukere, enkelt omfang",
+			"K8": "K8 🔴: 1000+ brukere, middels omfang",
+			"K9": "K9 🔴: 1000+ brukere, høyt omfang",
 		}
 		try:
 			return lookup[self.u_service_complexity]
@@ -3793,6 +3793,19 @@ class Driftsmodell(models.Model):
 	def antall_systemer(self):
 		return self.systemer.all().count()
 
+	def plattform_nivaa(self):
+		if self.overordnet_plattform == None:
+			return 1
+
+		seen = []
+		level = 1
+		while self.overordnet_plattform != None:
+			if self.overordnet_plattform in seen:
+				return level
+			seen.append(self.overordnet_plattform)
+			level += 1
+		return level
+
 
 class Autorisasjonsmetode(models.Model):
 	navn = models.CharField(
@@ -4868,6 +4881,37 @@ class System(models.Model):
 			if avtale.avtaletype == 1: #1=databehandleravtale
 				databehandleravtaler.append(avtale)
 		return databehandleravtaler
+
+
+	def systemprioritet(self):
+		import re
+		tilgjengelighet = self.tilgjengelighetsvurdering
+
+		tjenestenivaa = 4
+		for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
+			if bss.operational_status == 1 and bss.er_produksjon:
+				try:
+					bss_tjenestenivaa = int(re.findall(r'\d+', bss.u_service_availability)[0])
+					if bss_tjenestenivaa < tjenestenivaa:
+						tjenestenivaa = bss_tjenestenivaa
+				except:
+					pass
+
+		kritikalitet = 5
+		for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
+			if bss.operational_status == 1 and bss.er_produksjon:
+				try:
+					bss_kritikalitet = int(re.findall(r'\d+', bss.u_service_operation_factor)[0])
+					if bss_kritikalitet < kritikalitet:
+						kritikalitet = bss_kritikalitet
+				except:
+					pass
+
+		sammfunnskritisk = 2
+		if len(self.kritisk_kapabilitet.all()) > 0:
+			sammfunnskritisk = 1
+
+		return tilgjengelighet * tjenestenivaa * kritikalitet * sammfunnskritisk
 
 
 	class Meta:

@@ -1,0 +1,59 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load l10n %}
+
+{% block overskrift %}
+	Tilgangsgrupper i Active Directory
+{% endblock overskrift %}
+
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+
+{% block hovedinnhold %}
+
+	{% url 'ad_analyse' as url_ad_analyse %}
+	<a href="{{ url_ad_analyse }}?antall=0" class="btn btn-sm btn-link {% if url_ad_analyse in request.path %}fremhev{% endif %}">Tomme sikkerhetsgrupper</a>
+
+	{% url 'ad' as url_ad %}
+	<a href="{{url_ad}}" class="btn btn-sm {% if url_ad in request.path %}fremhev{% endif %}">Innebygde roller</a>
+
+	<hr>
+
+	<div><canvas height="80" id="adgr_chart"></canvas></div>
+
+	<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	const data = {
+		labels: [{% for data in antall_adgr_tid %}"{{ data.label }}",{% endfor %}],
+		datasets: [{
+			backgroundColor: 'rgb(255, 99, 132)',
+			borderColor: 'rgb(255, 99, 132)',
+			data: [{% for data in antall_adgr_tid %}{{ data.value|unlocalize }},{% endfor %}],
+		}]
+	};
+
+	const config = {
+		type: 'line',
+		data: data,
+		options: {
+			plugins: {
+				legend: false,
+			},
+			scales: {
+				y: {
+					beginAtZero: true
+				}
+			}
+		},
+	};
+	const myChart = new Chart(
+	document.getElementById('adgr_chart'),
+		config
+	);
+	</script>
+
+	<hr>
+
+{% endblock hovedinnhold %}
