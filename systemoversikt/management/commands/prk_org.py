@@ -62,7 +62,9 @@ class Command(BaseCommand):
 
 			if os.environ['THIS_ENV'] == "PROD":
 				url = os.environ["PRK_ORG_URL"]
-				headers = {}
+				apikey = os.environ["PRK_ORG_APIKEY"]
+				headers = {"apikey": apikey}
+
 				print("Kobler til %s" % url)
 				r = requests.get(url, headers=headers)
 				print("Original encoding: %s" % r.encoding)
