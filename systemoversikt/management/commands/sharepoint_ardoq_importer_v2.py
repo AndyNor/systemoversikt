@@ -77,8 +77,9 @@ class Command(BaseCommand):
 				except:
 					log += f"Fant ikke systemet med ID {ardoc_system_id}\n"
 
-				nye_eiere = record["Systemeier epost"].split(",").strip()
+				nye_eiere = record["Systemeier epost"].split(",")
 				for ny_eier in nye_eiere:
+					ny_eier = ny_eier.strip()
 					try:
 						ansvarlig = Ansvarlig.objects.get(brukernavn__email=ny_eier)
 					except:
@@ -95,8 +96,9 @@ class Command(BaseCommand):
 
 
 
-				nye_forvaltere = record["Systemforvalter epost"].split(",").strip()
+				nye_forvaltere = record["Systemforvalter epost"].split(",")
 				for ny_forvalter in nye_forvaltere:
+					ny_forvalter = ny_forvalter.strip()
 					try:
 						ansvarlig = Ansvarlig.objects.get(brukernavn__email=ny_forvalter)
 					except:
