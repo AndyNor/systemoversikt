@@ -69,6 +69,7 @@ class Command(BaseCommand):
 			antall_records = len(data)
 
 			log = ""
+			feil = ""
 
 			for record in data:
 				ardoc_system_id = int(record["Kartoteket SysID"])
@@ -77,44 +78,48 @@ class Command(BaseCommand):
 				except:
 					log += f"Fant ikke systemet med ID {ardoc_system_id}\n"
 
-				nye_eiere = record["Systemeier epost"].split(",")
-				for ny_eier in nye_eiere:
-					ny_eier = ny_eier.strip()
-					try:
-						ansvarlig = Ansvarlig.objects.get(brukernavn__email=ny_eier)
-					except:
+				if record["Systemeier epost"] != "":
+					nye_eiere = record["Systemeier epost"].split(",")
+					system_ref.systemeier_kontaktpersoner_referanse.clear()
+					for ny_eier in nye_eiere:
+						ny_eier = ny_eier.strip()
 						try:
-							user = User.objects.get(email=ny_eier)
-							ansvarlig = Ansvarlig.objects.create(brukernavn=user)
-							log += f"Opprettet ansvarlig knyttet til {user}\n"
+							ansvarlig = Ansvarlig.objects.get(brukernavn__email=ny_eier)
 						except:
-							log += f"fant ingen bruker med epost {ny_eier}\n"
+							try:
+								user = User.objects.get(email=ny_eier)
+								ansvarlig = Ansvarlig.objects.create(brukernavn=user)
+								#log += f"Opprettet ansvarlig knyttet til {user}\n"
+							except:
+								feil += f"fant ingen bruker med epost {ny_eier}\n"
 
-					if ansvarlig not in system_ref.systemeier_kontaktpersoner_referanse.all():
-						system_ref.systemeier_kontaktpersoner_referanse.add(ansvarlig)
-						log += f"{system_ref}: la til eier {ansvarlig}\n"
+						if ansvarlig not in system_ref.systemeier_kontaktpersoner_referanse.all():
+							system_ref.systemeier_kontaktpersoner_referanse.add(ansvarlig)
+							log += f"{system_ref}: la til eier {ansvarlig}\n"
 
 
 
-				nye_forvaltere = record["Systemforvalter epost"].split(",")
-				for ny_forvalter in nye_forvaltere:
-					ny_forvalter = ny_forvalter.strip()
-					try:
-						ansvarlig = Ansvarlig.objects.get(brukernavn__email=ny_forvalter)
-					except:
+				if record["Systemforvalter epost"] != "":
+					nye_forvaltere = record["Systemforvalter epost"].split(",")
+					system_ref.systemforvalter_kontaktpersoner_referanse.clear()
+					for ny_forvalter in nye_forvaltere:
+						ny_forvalter = ny_forvalter.strip()
 						try:
-							user = User.objects.get(email=ny_forvalter)
-							ansvarlig = Ansvarlig.objects.create(brukernavn=user)
-							log += f"Opprettet ansvarlig knyttet til {user}\n"
+							ansvarlig = Ansvarlig.objects.get(brukernavn__email=ny_forvalter)
 						except:
-							log += f"fant ingen bruker med epost {ny_forvalter}\n"
+							try:
+								user = User.objects.get(email=ny_forvalter)
+								ansvarlig = Ansvarlig.objects.create(brukernavn=user)
+								#log += f"Opprettet ansvarlig knyttet til {user}\n"
+							except:
+								feil += f"fant ingen bruker med epost {ny_forvalter}\n"
 
-					if ansvarlig not in system_ref.systemforvalter_kontaktpersoner_referanse.all():
-						system_ref.systemforvalter_kontaktpersoner_referanse.add(ansvarlig)
-						log += f"{system_ref}: la til forvalter {ansvarlig}\n"
+						if ansvarlig not in system_ref.systemforvalter_kontaktpersoner_referanse.all():
+							system_ref.systemforvalter_kontaktpersoner_referanse.add(ansvarlig)
+							log += f"{system_ref}: la til forvalter {ansvarlig}\n"
 
 
-			logg_entry_message = f"Det var {antall_records} systemer i filen.\n {log}"
+			logg_entry_message = f"Det var {antall_records} systemer i filen.\nLogg: {log}\nFeil: {feil}"
 			print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
