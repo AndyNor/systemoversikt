@@ -68,12 +68,14 @@ class Command(BaseCommand):
 
 			antall_records = len(data)
 
+			log = ""
+
 			for record in data:
 				ardoc_system_id = int(record["Kartoteket SysID"])
 				try:
 					system_ref = System.objects.get(pk=ardoc_system_id)
 				except:
-					print(f"Fant ikke systemet med ID {ardoc_system_id}")
+					log += f"Fant ikke systemet med ID {ardoc_system_id}\n"
 
 				nye_eiere = record["Systemeier epost"].split(",")
 				for ny_eier in nye_eiere:
@@ -83,14 +85,13 @@ class Command(BaseCommand):
 						try:
 							user = User.objects.get(email=ny_eier)
 							ansvarlig = Ansvarlig.objects.create(brukernavn=user)
-							print(f"Opprettet ansvarlig knyttet til {user}")
+							log += f"Opprettet ansvarlig knyttet til {user}\n"
 						except:
-							print(f"fant ingen bruker med epost {ny_eier}")
+							log += f"fant ingen bruker med epost {ny_eier}\n"
 
 					if ansvarlig not in system_ref.systemeier_kontaktpersoner_referanse.all():
-						#system_ref.systemeier_kontaktpersoner_referanse.add(ansvarlig)
-						print(f"{system_ref}: la til eier {ansvarlig}")
-						#system_ref.save()
+						system_ref.systemeier_kontaktpersoner_referanse.add(ansvarlig)
+						log += f"{system_ref}: la til eier {ansvarlig}\n"
 
 
 
@@ -102,19 +103,16 @@ class Command(BaseCommand):
 						try:
 							user = User.objects.get(email=ny_forvalter)
 							ansvarlig = Ansvarlig.objects.create(brukernavn=user)
-							print(f"Opprettet ansvarlig knyttet til {user}")
+							log += f"Opprettet ansvarlig knyttet til {user}\n"
 						except:
-							print(f"fant ingen bruker med epost {ny_forvalter}")
+							log += f"fant ingen bruker med epost {ny_forvalter}\n"
 
 					if ansvarlig not in system_ref.systemforvalter_kontaktpersoner_referanse.all():
-						#system_ref.systemforvalter_kontaktpersoner_referanse.add(ansvarlig)
-						print(f"{system_ref}: la til forvalter {ansvarlig}")
-						#system_ref.save()
+						system_ref.systemforvalter_kontaktpersoner_referanse.add(ansvarlig)
+						log += f"{system_ref}: la til forvalter {ansvarlig}\n"
 
 
-
-
-			logg_entry_message = f"Det var {antall_records} systemer i filen"
+			logg_entry_message = f"Det var {antall_records} systemer i filen.\n {log}"
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
