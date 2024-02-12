@@ -18,6 +18,17 @@
 
 <p>Her vises systemer {{virksomhet}} har ansvar for applikasjonsdrift av. Prioriteten settes som produktet av tilgjengelighetsvurderingen (1-5), tjenestenivået med driftsleverandør (1-4), kritikalitetsvurderingen hos driftsleverandør (1-5) og om systemet er samfunnskritisk (1) eller ikke (2).</p>
 
+
+<h5>Forenklet liste</h5>
+<ol>
+	{% for system in systemer_drifter_top_x %}
+		<li>{{ system }}</li>
+	{% endfor %}
+</ol>
+
+<hr>
+
+<h5>Detaljert oversikt</h5>
 <table id="systemer" class="tablesorter excel">
 	<thead>
 		<tr>
@@ -112,6 +123,5 @@
 	{% endfor %}
 	</tbody>
 </table>
-
 
 {% endblock hovedinnhold %}

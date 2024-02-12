@@ -5015,6 +5015,8 @@ def drift_beredskap(request, pk):
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True).order_by('cache_systemprioritet')
 
+	systemer_drifter_top_x = systemer_drifter[0:30]
+
 	ikke_infra = []
 	for s in systemer_drifter:
 		if not s.er_infrastruktur():
@@ -5026,6 +5028,7 @@ def drift_beredskap(request, pk):
 		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'systemer': systemer_drifter,
+		'systemer_drifter_top_x': systemer_drifter_top_x,
 	})
 
 
