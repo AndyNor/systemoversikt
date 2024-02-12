@@ -137,7 +137,8 @@ urlpatterns = [
 	re_path(r'^virksomhet/enhet/graf/(?P<pk>\d{1,8})/$', views.virksomhet_enheter, name='virksomhet_enheter'),
 	re_path(r'^virksomhet/prkadmin/(?P<pk>\d{1,8})/$', views.virksomhet_prkadmin, name='virksomhet_prkadmin'),
 	re_path(r'^virksomhet/systemer/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
-	re_path(r'^virksomhet/systemer/ansvarligfor/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
+	re_path(r'^virksomhet/systemer/forvalter/basis/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
+	re_path(r'^virksomhet/systemer/forvalter/basis/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
 	re_path(r'^virksomhet/systemer/ansvarligfor/fip/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for_fip, name='systemer_virksomhet_ansvarlig_for_fip'),
 	re_path(r'^virksomhet/klienter/(?P<pk>\d{1,8})/$', views.klienter_hos_virksomhet, name='klienter_hos_virksomhet'),
 	re_path(r'^virksomhet/sikkerhetsavvik/$', views.virksomhet_sikkerhetsavvik, name='virksomhet_sikkerhetsavvik'),
@@ -145,6 +146,9 @@ urlpatterns = [
 	re_path(r'^virksomhet/leverandortilgang/(?P<pk>\d{1,8})/$', views.virksomhet_leverandortilgang, name='virksomhet_leverandortilgang'),
 	re_path(r'^virksomhet/lokasjoner/(?P<pk>\d{1,8})/$', views.lokasjoner_hos_virksomhet, name='lokasjoner_hos_virksomhet'),
 	re_path(r'^virksomhet/tilgangsgrupper/$', views.virksomhet_adgruppe_detaljer, name='virksomhet_adgruppe_detaljer'),
+	re_path(r'^virksomhet/systemer/forvalter/sikkerhetsvurderinger/$', views.virksomhet_forvalter_isk, name='virksomhet_forvalter_isk'),
+	re_path(r'^virksomhet/systemer/forvalter/sikkerhetsvurderinger/(?P<pk>\d{1,8})/$', views.virksomhet_forvalter_isk, name='virksomhet_forvalter_isk'),
+
 
 
 	re_path(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
@@ -243,7 +247,8 @@ urlpatterns = [
 	re_path(r'^virksomhet/drift/prioriteringer/$', views.drift_beredskap_redirect, name='drift_beredskap_redirect'),
 	re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/$', views.drift_beredskap, name='drift_beredskap'),
 	#re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/(?P<eier>\d{1,8})$', views.drift_beredskap, name='drift_beredskap_for_eier'),
-	re_path(r'^virksomhet/driftsmodell/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
+	re_path(r'^virksomhet/systemer/drifter/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
+	re_path(r'^virksomhet/systemer/drifter/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
 	re_path(r'^virksomhet/driftsmodell/klassifisering/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet_klassifisering, name='driftsmodell_virksomhet_klassifisering'),
 
 

@@ -4,7 +4,7 @@
 <table class="tablesorter">
 	<thead>
 	<tr>
-		<th class="filter-false">Rediger</th>
+		<th class="filter-false">Endre</th>
 		<th>System</th>
 		<th>Bruk</th>
 		<th>Kvalitetssikret</th>
@@ -35,7 +35,7 @@
 		<tr>
 			<td>
 				<a href="/admin/systemoversikt/system/{{ system.pk }}/change/">
-				<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a>
+				{% include 'site_edit_button.html' %}</a>
 			</td>
 			<td>
 				{% url "systemdetaljer" system.pk as url_systemdetaljer %}

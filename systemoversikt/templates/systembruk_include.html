@@ -3,9 +3,9 @@
 	<table class="tablesorter excel">
 	<thead>
 	<tr>
-		<th class="filter-false"></th>
-		<th>Klargjort</th>
-		<th>System</th>
+		<th class="filter-false">Endre</th>
+		<th>Klargjort SMART</th>
+		<th>Systemnavn</th>
 		<th>Bruksinformasjon</th>
 		<th>Systemdetaljer</th>
 		<th>Driftsmodell</th>
@@ -24,6 +24,7 @@
 		<td>{{ bruk.system.get_klargjort_ny_sikkerhetsmodell_display }}</td>
 		<td>
 			{% include 'system_include_vis.html' with system=bruk.system %}
+			{{ bruk.system.get_systemeierskapsmodell_display|default:"" }}
 		</td>
 		<td>
 			Lokale forvaltere: {% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}
@@ -31,22 +32,16 @@
 			{% if bruk.system.antall_brukere %}
 				({{ bruk.system.antall_brukere|default:"-" }} totalt)
 			{% endif %}<br>
-			Abonnerer på fellesbehandlinger: {% include 'site_janeivetikke.html' with boolean=bruk.del_behandlinger %}<br>
 				{% url "bruksdetaljer" bruk.pk as url_bruksdetaljer %}
 			<a href="{{ url_bruksdetaljer }}">Flere detaljer</a>
 		</td>
 		<td>
-			{{ bruk.system.systemeierskapsmodell|default:"Ukjent" }}<br>
-			{% for type in bruk.system.systemtyper.all %}
-				{{ type }}<br>
-			{% endfor %}
-
 			Systemeier:
 			{% url "virksomhet" bruk.system.systemeier.pk as url_systemeier %}
 			<b><a href="{{ url_systemeier }}">{{ bruk.system.systemeier.virksomhetsforkortelse|default:"-" }}</a></b><br>
 			{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.system.systemeier_kontaktpersoner_referanse.all %}
 
-			Systemforvalter:
+			<br>Systemforvalter:
 			{% url "virksomhet" bruk.system.systemforvalter.pk as url_systemforvalter %}
 			<b><a href="{{ url_systemforvalter }}">{{ bruk.system.systemforvalter.virksomhetsforkortelse|default:"-" }}</a> {% if bruk.system.systemforvalter_avdeling_referanse%} <br>{{ bruk.system.systemforvalter_avdeling_referanse }} {% endif %}</b><br>
 			{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.system.systemforvalter_kontaktpersoner_referanse.all %}

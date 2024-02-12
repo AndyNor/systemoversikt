@@ -21,8 +21,10 @@
 			<th>Type bruker</th>
 			<th>Brukernavn</th>
 			<th>Navn</th>
+			{% comment %}
 			<th>Dagens O365-lisens</th>
 			<th>O365-lisens (planlagt)</th>
+			{% endcomment %}
 			<th>Ny O365-lisens</th>
 			<th>E-post</th>
 			<th>Avdeling</th>
@@ -35,8 +37,10 @@
 			<td>{{ b.profile.account_type }}</td>
 			<td>{{ b.username }}</td>
 			<td>{{ b.profile.displayName }}</td>
+			{% comment %}
 			<td>{{ b.dagens365lisens }}</td>
 			<td>{{ b.profile.get_o365lisence_display }}</td>
+			{% endcomment %}
 			<td>{{ b.ny365lisens }}</td>
 			<td>{{ b.email }}</td>
 			<td>{{ b.profile.avdeling }}</td>

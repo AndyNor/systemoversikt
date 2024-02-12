@@ -2,9 +2,7 @@
 {% load static %}
 
 {% block ekstrameny %}
-
 	{% include 'virksomhet_detaljer_ekstrameny.html' %}
-
 {% endblock ekstrameny %}
 
 {% block overskrift %}
@@ -13,28 +11,25 @@
 
 
 {% block hovedinnhold %}
-	<p>Det vises {{ all_systembruk.count }} systemer i bruk. Det er registret bruk av {{ all_programvarebruk.count }} programvarer.</p>
+	<p>Her vises systemer og applikasjoner som {{ virksomhet }} benytter seg av, uavhengig av hvem som forvalter og drifter systemet.</p>
 
-	{% if user.is_authenticated %}
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer bruk av system</a>
-		<a href="/admin/systemoversikt/programvarebruk/add/?brukergruppe={{ virksomhet.pk }}" class="btn btn-sm btn-link">Legg til bruk av programvare</a>
-	{% endif %}
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer bruk av system</a>
+	<a href="/admin/systemoversikt/programvarebruk/add/?brukergruppe={{ virksomhet.pk }}" class="btn btn-sm btn-link">Registrer bruk av programvare</a>
 
-	<h4>Aktive systemer i bruk</h4>
+	<hr>
+
+	<h6>Systemer i bruk</h6>
 	{% include "systembruk_include.html" with all_bruk=all_systembruk %}
 
-	<h4>Aktive applikasjoner i bruk</h4>
+	<h6>Applikasjoner i bruk</h6>
 	<table class="tablesorter excel">
 	<thead>
 	<tr>
-		{% if user.is_authenticated %}
-			<th class="filter-false"></th>
-		{% endif %}
-		<th>Klargjort?</th>
+		<th class="filter-false">Endre</th>
+		<th>Klargjort SMART</th>
 		<th>Programvare</th>
 		<th>Bruksinformasjon</th>
 		<th>Grensesnitt</th>
-		<th>Tilpassing</th>
 		<th>Livsløpstatus</th>
 		<th>Loakle vurderinger</th>
 	</tr>
@@ -42,16 +37,13 @@
 	<tbody>
 	{% for bruk in all_programvarebruk %}
 	<tr>
-		{% if user.is_authenticated %}
-			<td><a href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
-		{% endif %}
+		<td><a href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 		<td>{{ bruk.programvare.get_klargjort_ny_sikkerhetsmodell_display }}</td>
 		<td>
 			{% url "programvaredetaljer" bruk.programvare.pk as url_programvaredetaljer %}
 			<a href="{{ url_programvaredetaljer }}">{{ bruk.programvare }}</a>
 		</td>
 		<td>
-			Behandlinger: {{ bruk.antall_behandlinger }}<br>
 			Brukere: {{ bruk.antall_brukere|default:"-" }}<br>
 			Lokale forvaltere: {% include "ansvarlig_include_vis.html" with ansvarlige=bruk.lokal_kontakt.all %}
 				{% url "programvarebruksdetaljer" bruk.pk as url_programvarebruksdetaljer %}
@@ -62,7 +54,6 @@
 				{{ type }}<br>
 			{% endfor %}
 		</td>
-		<td>{{ bruk.programvare.get_programvarekategori_display|default:"" }}</td>
 		<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
 		<td>
 			T: {{ bruk.get_teknisk_egnethet_display|default:"-" }}<br>

@@ -5,38 +5,54 @@
 
 
 {% block ekstrameny %}
-
 	{% include 'virksomhet_detaljer_ekstrameny.html' %}
-
 {% endblock ekstrameny %}
 
 {% block overskrift %}
-	Systemer {{ virksomhet.virksomhetsforkortelse }} er eier av eller forvalter for
+	Basisinformasjon for systemer {{ virksomhet.virksomhetsforkortelse }} forvalter
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-	<p>{{ virksomhet.virksomhetsforkortelse }} har ansvar for {{ systemer_ansvarlig_for.count }} systemer.</p>
+	<p>Systemer {{ virksomhet }} er systemeier eller systemforvalter for. Her vises alle unike eiere og forvaltere, samt basisinformasjon på tabellform samlet slik at IKT-hovedkontakt får komplett oversikt.</p>
 
 	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Registrer nytt system</a>
+
+	<hr>
+
+	<div class="container">
+		<div class="row">
+			<div class="col-sm">
+				<h6>Unike eiere</h6>
+				<ul style="font-size: 85%;">
+				{% for ansvarlig in unike_ansvarlige_eiere %}
+					<li>{{ansvarlig}}</li>
+				{% endfor %}
+				</ul>
+			</div>
+
+			<div class="col-sm">
+				<h6>Unike forvaltere</h6>
+				<ul style="font-size: 85%;">
+				{% for ansvarlig in unike_ansvarlige_forvaltere %}
+					<li>{{ansvarlig}}</li>
+				{% endfor %}
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<hr>
 
 	<table id="systemer" class="tablesorter excel">
 		<thead>
 			<tr>
 				<th class="filter-false"></th>
-			{% if perms.systemoversikt.change_system %}
 				<th class="filter-false"></th>
-			{% endif %}
 				<th>Systemnavn</th>
-				<th>PK</th>
-				<th>Systemklasse</th>
-				<th>Kategorier</th>
-				<th width="10%">Driftsmodell / plattform</th>
-				<th>Tilpasset drift</th>
-				<th>Pålogging</th>
-				<th width="20%">Forvaltning</th>
+				<th>Driftsplattform</th>
+				<th>Forvaltning</th>
 				<th>Livsløp</th>
-				<th>Risikovurdering</th>
 				<th>Leverandører</th>
 
 			</tr>
@@ -45,43 +61,29 @@
 	{% for item in systemer_ansvarlig_for %}
 	<tr>
 		<td>{{ forloop.counter}}</td>
-		{% if perms.systemoversikt.change_system %}
-			<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</td>
-		{% endif %}
+
+		<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</td>
 
 		<td>
 		{% include 'system_include_vis.html' with system=item %}
-		</td>
-
-		<td>{{ item.pk }}</td>
-
-		<td>
+		{% if item.systemeierskapsmodell %}
 			{{ item.get_systemeierskapsmodell_display|default:"" }}
+		{% else %}
+			<span style="background-color: #ffacac">Systemeierskapsmodell mangler</span>
+		{% endif %}
 		</td>
 
 		<td>
-			{% for k in item.systemtyper.all %}
-				{{ k }}<br>
-			{% endfor %}
-		</td>
-
-		<td>
-			{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}
-			<a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a>
-		</td>
-
-		<td>
-			{% if item.isolert_drift %}
-				🕹️ Ja
+			{% if item.driftsmodell_foreignkey %}
+				{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}
+				<a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a><br>
 			{% else %}
-				Nei
+				<span style="background-color: #ffacac">Driftsmodell mangler</span>
 			{% endif %}
-		</td>
 
-		<td>
-			{% for metode in item.autentiseringsteknologi.all %}
-				{{ metode }}<br>
-			{% endfor %}
+			{% if item.isolert_drift %}
+				🕹️ På tilpasset drift
+			{% endif %}
 		</td>
 
 		<td>
@@ -90,6 +92,7 @@
 			<b><a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a></b><br>
 			{% include "ansvarlig_include_vis.html" with ansvarlige=item.systemeier_kontaktpersoner_referanse.all %}
 
+			<br>
 			Systemforvalter:
 			{% url "virksomhet" item.systemforvalter.pk as url_systemforvalter %}
 			<b><a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"-" }}</a> {% if item.systemforvalter_avdeling_referanse%} <br>{{ item.systemforvalter_avdeling_referanse }} {% endif %}</b><br>
@@ -98,32 +101,29 @@
 
 		<td>{{ item.get_livslop_status_display|default:"" }}</td>
 
-		<td>{{ item.dato_sist_ros|date:'Y-m-d'|default:"-" }} ({{ item.dato_sist_ros|naturaltime|default:"Aldri" }})</td>
-
-
 		<td>
-		Systemleverandør:<br>
+		Systemleverandør:
 		{% for lev in item.systemleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
 		{% empty %}
-			<li>Ikke oppgitt</li>
+			<li><span style="background-color: #ffacac">Mangler</span></li>
 		{% endfor %}
 
-		Applikasjonsdrift:<br>
+		Applikasjonsdrift:
 		{% for lev in item.applikasjonsdriftleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
 		{% empty %}
-			<li>Ikke oppgitt</li>
+			<li><span style="background-color: #ffacac">Mangler</span></li>
 		{% endfor %}
 
-		Basisdrift:<br>
+		Basisdrift:
 		{% for lev in item.basisdriftleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
 		{% empty %}
-			<li>Ikke oppgitt</li>
+			<li><span style="background-color: #ffacac">Mangler</span></li>
 		{% endfor %}
 		</td>
 
@@ -131,19 +131,5 @@
 	{% endfor %}
 	</tbody>
 	</table>
-
-	<hr>
-
-	<h5>Unike eiere</h5>
-	{% for ansvarlig in unike_ansvarlige_eiere %}
-		<li>{{ansvarlig}}</li>
-	{% endfor %}
-
-	<hr>
-
-	<h5>Unike forvaltere</h5>
-	{% for ansvarlig in unike_ansvarlige_forvaltere %}
-		<li>{{ansvarlig}}</li>
-	{% endfor %}
 
 {% endblock hovedinnhold %}

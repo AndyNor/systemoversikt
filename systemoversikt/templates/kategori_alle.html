@@ -36,7 +36,7 @@
 	{% for kat in kategorier %}
 	<tr>
 		{% if user.is_authenticated %}
-		<td><a href="/admin/systemoversikt/systemkategori/{{ kat.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/systemkategori/{{ kat.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 		{% endif %}
 		<td>{% for hovedkat in kat.systemhovedkategori_systemkategorier.all %} {{ hovedkat.hovedkategorinavn }}<br> {% endfor %}</td>
 		{% url 'systemkategori' pk=kat.pk as url_systemkategori %}

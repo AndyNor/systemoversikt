@@ -19,7 +19,7 @@
 <div class="card">
 	<div class="card-body">
 		{% if user.is_authenticated %}
-		<p><a href="/admin/systemoversikt/programvarebruk/{{ bruksdetaljer.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">(Rediger detaljer)</a></p>
+		<p><a href="/admin/systemoversikt/programvarebruk/{{ bruksdetaljer.pk }}/change/">{% include 'site_edit_button.html' %}(Rediger detaljer)</a></p>
 		{% endif %}
 	</div>
 </div>

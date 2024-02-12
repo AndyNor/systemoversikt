@@ -27,7 +27,7 @@
 		<hr>
 		{% if perms.systemoversikt.change_definisjon %}
 		<a href="/admin/systemoversikt/definisjon/{{ d.pk }}/change/">
-		<img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger">rediger</a> |
+		{% include 'site_edit_button.html' %}rediger</a> |
 		{% endif %}
 
 		Kontekst: <span class="badge badge-pill badge-light" style="font-size: 90%;">{{ d.kontekst_ref|default:"kontekst mangler" }}</span> |

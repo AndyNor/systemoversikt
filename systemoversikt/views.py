@@ -4577,7 +4577,17 @@ def virksomhet_prkadmin(request, pk):
 
 
 
-def systemer_virksomhet_ansvarlig_for(request, pk):
+def systemer_virksomhet_ansvarlig_for(request, pk=None):
+
+	if pk == None:
+		try:
+			brukers_virksomhet = virksomhet_til_bruker(request)
+			pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
+			return redirect('systemer_virksomhet_ansvarlig_for', pk)
+		except:
+			messages.warning(request, 'Din bruker er ikke tilknyttet en virksomhet')
+			return redirect('alle_virksomheter')
+
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -4600,6 +4610,34 @@ def systemer_virksomhet_ansvarlig_for(request, pk):
 		'systemer_ansvarlig_for': systemer_ansvarlig_for,
 		'unike_ansvarlige_eiere': list(unike_ansvarlige_eiere),
 		'unike_ansvarlige_forvaltere': list(unike_ansvarlige_forvaltere),
+	})
+
+
+
+def virksomhet_forvalter_isk(request, pk=None):
+
+	if pk == None:
+		try:
+			brukers_virksomhet = virksomhet_til_bruker(request)
+			pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
+			return redirect('virksomhet_forvalter_isk', pk)
+		except:
+			messages.warning(request, 'Din bruker er ikke tilknyttet en virksomhet')
+			return redirect('alle_virksomheter')
+
+
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
+
+	return render(request, 'virksomhet_forvalter_isk.html', {
+		"request": request,
+		"required_permissions": required_permissions,
+		'virksomhet': virksomhet,
+		'systemer_ansvarlig_for': systemer_ansvarlig_for,
 	})
 
 
@@ -4865,13 +4903,13 @@ def virksomhet_arkivplan(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet).filter(system__er_arkiv=True)
+	systemer = System.objects.filter(Q(systemeier=virksomhet) | Q(systemforvalter=virksomhet))
 
 	return render(request, 'virksomhet_arkivplan.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
-		'systembruk': systembruk,
+		'systemer': systemer,
 	})
 
 
@@ -5035,7 +5073,18 @@ def drift_beredskap(request, pk):
 
 
 
-def driftsmodell_virksomhet(request, pk):
+def driftsmodell_virksomhet(request, pk=None):
+
+	if pk == None:
+		try:
+			brukers_virksomhet = virksomhet_til_bruker(request)
+			pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
+			return redirect('driftsmodell_virksomhet', pk)
+		except:
+			messages.warning(request, 'Din bruker er ikke tilknyttet en virksomhet')
+			return redirect('alle_virksomheter')
+
+
 	#Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):

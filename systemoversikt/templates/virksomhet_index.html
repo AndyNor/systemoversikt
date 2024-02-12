@@ -23,20 +23,6 @@
 	{% endcomment %}
 
 
-	{% if user.profile.virksomhet %}
-		{% url "dashboard_all" virksomhet=user.profile.virksomhet.pk as dashboard_url %}
-		<a href="{{ dashboard_url }}" class="btn btn-sm btn-link {% if dashboard_url in request.path %}fremhev{% endif %}">👥 Vårt dashboard</a>
-		</li>
-	{% endif %}
-
-
-	{% if user.profile.virksomhet %}
-		{% url "virksomhet_adgruppe_detaljer" as virksomhet_adgruppe_url %}
-		<a href="{{ virksomhet_adgruppe_url }}" class="btn btn-sm btn-link {% if virksomhet_adgruppe_url in request.path %}fremhev{% endif %}">👥 Våre gruppemedlemskap</a>
-		</li>
-	{% endif %}
-
-
 	{% block ekstrameny %}{% endblock ekstrameny %}
 {% endblock sidemeny %}
 

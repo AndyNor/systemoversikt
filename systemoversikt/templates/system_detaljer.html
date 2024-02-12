@@ -832,7 +832,7 @@
 	<table class="table table-sm">
 		<thead>
 			<tr>
-				<th class="filter-false">Rediger</th>
+				<th class="filter-false">Endre</th>
 				<th>Fellesbehandling?</th>
 				<th>Beskrivelse av behandling</th>
 				<th>Av virksomhet</th>
@@ -847,7 +847,7 @@
 			{% url "behandlingsdetaljer" b.pk as url_behandlingsdetaljer %}
 			{% url "virksomhet" b.behandlingsansvarlig.pk as url_virksomhet %}
 			<tr>
-				<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+				<td><a href="/admin/systemoversikt/behandlingerpersonopplysninger/{{ b.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 				<td>
 					{% if b.fellesbehandling %}
 					<img style="width: 12px; filter: invert(30%) sepia(150%) saturate(500%) hue-rotate(70deg);" src="{% static 'open-iconic/svg/check.svg' %}">

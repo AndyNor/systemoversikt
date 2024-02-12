@@ -13,7 +13,7 @@
 	<thead>
 	<tr>
 		{% if user.is_authenticated %}
-		<th class="filter-false">Rediger</th>
+		<th class="filter-false">Endre</th>
 		{% endif %}
 		<th>Hovedkategori</th>
 		<th>Subkategorier</th>
@@ -25,7 +25,7 @@
 	{% for hovedkat in hovedkategorier %}
 	<tr>
 		{% if user.is_authenticated %}
-		<td><a href="/admin/systemoversikt/systemhovedkategori/{{ hovedkat.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/systemhovedkategori/{{ hovedkat.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 		{% endif %}
 		<td>{{ hovedkat }}</td>
 		<td>

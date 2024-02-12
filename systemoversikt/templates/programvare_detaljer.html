@@ -110,7 +110,7 @@
 		<tbody>
 			{% for bruk in programvarebruk %}
 			<tr>
-				<td><a href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/"><img style="width: 14px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" alt="rediger"></a></td>
+				<td><a href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 
 				<td>{% url "programvarebruksdetaljer" bruk.pk as url_bruk %}
 				<a href="{{ url_bruk }}">{{ bruk.brukergruppe }}</a></td>

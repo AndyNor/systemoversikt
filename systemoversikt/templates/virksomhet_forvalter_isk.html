@@ -1,0 +1,82 @@
+{% extends "virksomhet_index.html" %}
+{% load static %}
+
+{% block ekstrameny %}
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Sikkerhetsvurderinger for systemer {{ virksomhet.virksomhetsforkortelse }} forvalter
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Systemer {{virksomhet}} er systemeier eller systemforvalter for. Her vises vurderinger samlet slik at informasjonssikkerhetskoordinator får komplett oversikt.</p>
+
+<table class="tablesorter excel">
+<thead>
+<tr>
+	<th class="filter-false"></th>
+	<th class="filter-false">Endre</th>
+	<th>System</th>
+	<th>Tilgjengelighet</th>
+	<th>Kritisk kapabilitet</th>
+	<th>Informasjonsområder</th>
+	<th>Konfidensialitet</th>
+	<th>Integritet</th>
+	<th>Risikovurdering</th>
+</tr>
+</thead>
+<tbody>
+{% for system in systemer_ansvarlig_for %}
+<tr>
+	<td>{{ forloop.counter}}</td>
+	<td>
+		<a href="/admin/systemoversikt/system/{{ system.pk }}/change/">{% include 'site_edit_button.html' %}</a>
+		</td>
+	<td>{% include 'system_include_vis.html' with system=system %}</td>
+	<td>
+		{{ system.get_tilgjengelighetsvurdering_display|default:"-" }}
+	</td>
+	<td>
+		{% for kapabilitet in system.kritisk_kapabilitet.all %}
+			<li>{{ kapabilitet }}</li>
+		{% empty %}
+			-
+		{% endfor %}
+	</td>
+	<td>
+		{% for los in system.LOSref.all %}
+			<li>{{ los }}</li>
+		{% empty %}
+			-
+		{% endfor %}
+	</td>
+	<td>
+		{{ system.get_konfidensialitetsvurdering_display|default:"-" }}
+		{% for informasjonsklasse in system.informasjonsklassifisering.all %}
+			<li>{{ informasjonsklasse }}</li>
+		{% endfor %}
+	</td>
+	<td>
+		{{ system.get_integritetsvurdering_display|default:"-" }}
+	</td>
+	<td>
+		{% if system.risikovurdering_tekst %}
+			{{ system.risikovurdering_tekst }}<br>
+		{% endif %}
+		{% if system.url_risikovurdering %}
+			<a href="{{ system.url_risikovurdering }}">Risikovurdering</a><br>
+		{% endif %}
+		{% if system.dato_sist_ros %}
+			Oppdatert {{ system.dato_sist_ros|date:"d M Y" }}<br>
+		{% endif %}
+	</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+
+{% endblock hovedinnhold %}
