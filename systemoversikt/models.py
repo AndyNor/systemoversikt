@@ -4897,7 +4897,7 @@ class System(models.Model):
 			for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
 				if bss.operational_status == 1 and bss.er_produksjon:
 					try:
-						bss_tjenestenivaa = int(re.findall(r'\d+', bss.u_service_availability)[0])
+						bss_tjenestenivaa = int(re.findall(r'T\d+', bss.u_service_availability)[0])
 						if bss_tjenestenivaa < tjenestenivaa:
 							tjenestenivaa = bss_tjenestenivaa
 					except:
