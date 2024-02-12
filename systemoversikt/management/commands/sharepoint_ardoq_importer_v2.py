@@ -77,7 +77,7 @@ class Command(BaseCommand):
 				except:
 					log += f"Fant ikke systemet med ID {ardoc_system_id}\n"
 
-				nye_eiere = record["Systemeier epost"].split(",")
+				nye_eiere = record["Systemeier epost"].split(",").strip()
 				for ny_eier in nye_eiere:
 					try:
 						ansvarlig = Ansvarlig.objects.get(brukernavn__email=ny_eier)
@@ -95,7 +95,7 @@ class Command(BaseCommand):
 
 
 
-				nye_forvaltere = record["Systemforvalter epost"].split(",")
+				nye_forvaltere = record["Systemforvalter epost"].split(",").strip()
 				for ny_forvalter in nye_eiere:
 					try:
 						ansvarlig = Ansvarlig.objects.get(brukernavn__email=ny_forvalter)
@@ -113,6 +113,7 @@ class Command(BaseCommand):
 
 
 			logg_entry_message = f"Det var {antall_records} systemer i filen.\n {log}"
+			print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
