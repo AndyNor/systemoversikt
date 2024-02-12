@@ -96,7 +96,7 @@ class Command(BaseCommand):
 
 
 				nye_forvaltere = record["Systemforvalter epost"].split(",").strip()
-				for ny_forvalter in nye_eiere:
+				for ny_forvalter in nye_forvaltere:
 					try:
 						ansvarlig = Ansvarlig.objects.get(brukernavn__email=ny_forvalter)
 					except:
