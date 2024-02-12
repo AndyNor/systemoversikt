@@ -5013,7 +5013,7 @@ def drift_beredskap(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True)
+	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True).order_by('cache_systemprioritet')
 
 	ikke_infra = []
 	for s in systemer_drifter:

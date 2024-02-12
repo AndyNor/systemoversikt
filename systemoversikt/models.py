@@ -4679,6 +4679,9 @@ class System(models.Model):
 			blank=True,
 			null=True,
 			)
+	cache_systemprioritet = models.IntegerField(
+			default=240,
+			) # Denne blir kalkulert ved visning
 
 	history = HistoricalRecords()
 
@@ -4886,32 +4889,50 @@ class System(models.Model):
 	def systemprioritet(self):
 		import re
 		tilgjengelighet = self.tilgjengelighetsvurdering
+		if tilgjengelighet == None:
+			tilgjengelighet = 5
 
 		tjenestenivaa = 4
-		for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
-			if bss.operational_status == 1 and bss.er_produksjon:
-				try:
-					bss_tjenestenivaa = int(re.findall(r'\d+', bss.u_service_availability)[0])
-					if bss_tjenestenivaa < tjenestenivaa:
-						tjenestenivaa = bss_tjenestenivaa
-				except:
-					pass
+		try:
+			for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
+				if bss.operational_status == 1 and bss.er_produksjon:
+					try:
+						bss_tjenestenivaa = int(re.findall(r'\d+', bss.u_service_availability)[0])
+						if bss_tjenestenivaa < tjenestenivaa:
+							tjenestenivaa = bss_tjenestenivaa
+					except:
+						pass
+		except:
+			pass # forblir 4
+			#print(f"{self} tjenestenivaa finnes ikke")
 
 		kritikalitet = 5
-		for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
-			if bss.operational_status == 1 and bss.er_produksjon:
-				try:
-					bss_kritikalitet = int(re.findall(r'\d+', bss.u_service_operation_factor)[0])
-					if bss_kritikalitet < kritikalitet:
-						kritikalitet = bss_kritikalitet
-				except:
-					pass
+		try:
+			for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
+				if bss.operational_status == 1 and bss.er_produksjon:
+					try:
+						bss_kritikalitet = int(re.findall(r'\d+', bss.u_service_operation_factor)[0])
+						if bss_kritikalitet < kritikalitet:
+							kritikalitet = bss_kritikalitet
+					except:
+						pass
+		except:
+			pass # forblir 5
+			#print(f"{self} kritikalitet finnes ikke")
 
 		sammfunnskritisk = 2
 		if len(self.kritisk_kapabilitet.all()) > 0:
 			sammfunnskritisk = 1
 
-		return tilgjengelighet * tjenestenivaa * kritikalitet * sammfunnskritisk
+		score = tilgjengelighet * tjenestenivaa * kritikalitet * sammfunnskritisk
+
+		if self.cache_systemprioritet != score:
+			print(f"{self} cache {self.cache_systemprioritet} var ikke lik score {score}, oppdaterer..")
+			self.cache_systemprioritet = score
+			self.save()
+
+		#print(f"{self}: {tilgjengelighet} * {tjenestenivaa} * {kritikalitet} * {sammfunnskritisk} = {score}")
+		return score
 
 
 	class Meta:
