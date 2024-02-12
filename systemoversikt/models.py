@@ -4927,12 +4927,12 @@ class System(models.Model):
 		score = tilgjengelighet * tjenestenivaa * kritikalitet * sammfunnskritisk
 
 		if self.cache_systemprioritet != score:
-			print(f"{self} cache {self.cache_systemprioritet} var ikke lik score {score}, oppdaterer..")
+			#print(f"{self} cache {self.cache_systemprioritet} var ikke lik score {score}, oppdaterer..")
 			self.cache_systemprioritet = score
 			self.save()
 
-		#print(f"{self}: {tilgjengelighet} * {tjenestenivaa} * {kritikalitet} * {sammfunnskritisk} = {score}")
-		return score
+		tekst = f"{tilgjengelighet}*{tjenestenivaa}*{kritikalitet}*{sammfunnskritisk}={score}"
+		return tekst
 
 
 	class Meta:
