@@ -50,8 +50,13 @@
 
 	<h6>Ny funksjonalitet i Kartoteket</h6>
 	{% for nyhet in nyheter %}
-		{% url nyhet.reverse_url as url_link %}
-		<li><span class="badge badge-light">{{ nyhet.tidspunkt|date:"Y-m-d" }}</span> {{ nyhet.beskrivelse }} <a href="{{ url_link }}"> Gå til siden.</a></li>
+		<li>
+			<span class="badge badge-light">{{ nyhet.tidspunkt|date:"Y-m-d" }}</span> {{ nyhet.beskrivelse }}
+			{% if nyhet.reverse_url %}
+				{% url nyhet.reverse_url as url_link %}
+				<a href="{{ url_link }}"> Gå til siden.</a>
+				{% endif %}
+		</li>
 	{% empty %}
 		<p>Ingen nyheter å vise</p>
 	{% endfor %}

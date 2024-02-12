@@ -98,8 +98,8 @@ class NyeFunksjoner(models.Model):
 	reverse_url = models.CharField(
 			verbose_name="URL-oppslagstekst",
 			max_length=250,
-			blank=False,
-			null=False,
+			blank=True,
+			null=True,
 			help_text=u"URL-navnet som skal bli til en link.",
 			)
 	def __str__(self):
