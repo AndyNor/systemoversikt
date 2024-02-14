@@ -4892,33 +4892,39 @@ class System(models.Model):
 		if tilgjengelighet == None:
 			tilgjengelighet = 5
 
-		tjenestenivaa = 4
-		try:
-			for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
-				if bss.operational_status == 1 and bss.er_produksjon:
-					try:
-						bss_tjenestenivaa = int(re.findall(r'T(\d+)', bss.u_service_availability)[0])
-						if bss_tjenestenivaa < tjenestenivaa:
-							tjenestenivaa = bss_tjenestenivaa
-					except:
-						pass
-		except:
-			pass # forblir 4
-			#print(f"{self} tjenestenivaa finnes ikke")
+		if self.bs_system_referanse != None:
+			tjenestenivaa = 4
+			try:
+				for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
+					if bss.operational_status == 1 and bss.er_produksjon:
+						try:
+							bss_tjenestenivaa = int(re.findall(r'T(\d+)', bss.u_service_availability)[0])
+							if bss_tjenestenivaa < tjenestenivaa:
+								tjenestenivaa = bss_tjenestenivaa
+						except:
+							pass
+			except:
+				pass # forblir 4
+				#print(f"{self} tjenestenivaa finnes ikke")
 
-		kritikalitet = 5
-		try:
-			for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
-				if bss.operational_status == 1 and bss.er_produksjon:
-					try:
-						bss_kritikalitet = int(re.findall(r'\d+', bss.u_service_operation_factor)[0])
-						if bss_kritikalitet < kritikalitet:
-							kritikalitet = bss_kritikalitet
-					except:
-						pass
-		except:
-			pass # forblir 5
-			#print(f"{self} kritikalitet finnes ikke")
+			kritikalitet = 5
+			try:
+				for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
+					if bss.operational_status == 1 and bss.er_produksjon:
+						try:
+							bss_kritikalitet = int(re.findall(r'\d+', bss.u_service_operation_factor)[0])
+							if bss_kritikalitet < kritikalitet:
+								kritikalitet = bss_kritikalitet
+						except:
+							pass
+			except:
+				pass # forblir 5
+				#print(f"{self} kritikalitet finnes ikke")
+
+		else: # ingen CMDB-kobling finnes
+			tjenestenivaa = 1
+			kritikalitet = 1
+
 
 		sammfunnskritisk = 2
 		if len(self.kritisk_kapabilitet.all()) > 0:
