@@ -4122,7 +4122,17 @@ def behandling_kopier(request, system_pk):
 
 
 
-def virksomhet_ansvarlige(request, pk):
+def virksomhet_ansvarlige(request, pk=None):
+
+	if pk == None:
+		try:
+			brukers_virksomhet = virksomhet_til_bruker(request)
+			pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
+			return redirect('virksomhet_ansvarlige', pk)
+		except:
+			messages.warning(request, 'Din bruker er ikke tilknyttet en virksomhet')
+			return redirect('alle_virksomheter')
+
 	#Vise alle ansvarlige knyttet til valgt virksomhet
 	required_permissions = ['systemoversikt.view_ansvarlig']
 	if not any(map(request.user.has_perm, required_permissions)):

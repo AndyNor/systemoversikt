@@ -126,6 +126,7 @@ urlpatterns = [
 	re_path(r'^virksomhet/tomepost/(?P<pk>\d{1,8})/$', views.tom_epost, name='tom_epost'),
 	re_path(r'^virksomhet/vanlige_brukere/(?P<pk>\d{1,8})/$', views.ansatte_virksomhet, name='ansatte_virksomhet'),
 	re_path(r'^virksomhet/passwdneverexpire/(?P<pk>\d{1,8})/$', views.passwdneverexpire, name='passwdneverexpire'),
+	re_path(r'^virksomhet/ansvarlige/$', views.virksomhet_ansvarlige, name='virksomhet_ansvarlige'),
 	re_path(r'^virksomhet/ansvarlige/(?P<pk>\d{1,8})/$', views.virksomhet_ansvarlige, name='virksomhet_ansvarlige'),
 	re_path(r'^virksomhet/min/$', views.min_virksomhet, name='min_virksomhet'),
 	re_path(r'^virksomhet/arkivplan/(?P<pk>\d{1,8})/$', views.virksomhet_arkivplan, name='virksomhet_arkivplan'),
