@@ -4923,8 +4923,8 @@ class System(models.Model):
 					#print(f"{self} kritikalitet finnes ikke")
 
 		else: # ingen CMDB-kobling finnes
-			tjenestenivaa = 1
-			kritikalitet = 1
+			tjenestenivaa = 2
+			kritikalitet = 2 # balanse mellom å la ikke-kritiske systemer havne for høyt på prioritet og at kritiske systemer havner for langt ned på listen dersom ikke koblet til tjeneste
 
 
 		sammfunnskritisk = 2
