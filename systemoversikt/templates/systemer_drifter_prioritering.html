@@ -20,11 +20,26 @@
 
 
 <h5>Forenklet liste top {{antall_top_x}}</h5>
-<ol>
+<table class="excel table">
+	<thead>
+		<tr>
+			<th class="filter-false">Prioritet</th>
+			<th>Systemnavn</th>
+			<th>Plassering</th>
+			<th>Beskrivelse</th>
+		</tr>
+	</thead>
+	<tbody>
 	{% for system in systemer_drifter_top_x %}
-		<li>{{ system }}</li>
+	<tr>
+		<td>{{ forloop.counter }}</td>
+		<td>{{ system }}</td>
+		<td>{{ system.driftsmodell_foreignkey.get_type_plattform_display }}</td>
+		<td>{{ system.systembeskrivelse|truncatechars:200 }}</td>
+	</tr>
 	{% endfor %}
-</ol>
+	</tbody>
+</table>
 
 <hr>
 
