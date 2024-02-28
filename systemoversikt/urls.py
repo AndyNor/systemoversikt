@@ -182,6 +182,7 @@ urlpatterns = [
 	re_path(r'^cmdb/statistikk/$', views.cmdb_statistikk, name='cmdb_statistikk'),
 	re_path(r'^cmdb/per_virksomhet/$', views.cmdb_per_virksomhet, name='cmdb_per_virksomhet'),
 	re_path(r'^cmdb/bs/$', views.alle_cmdbref, name='alle_cmdbref_sok'),
+	re_path(r'^cmdb/bs/disconnect/$', views.cmdb_bs_disconnect, name='cmdb_bs_disconnect'),
 	re_path(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdb_bss, name='cmdb_bss'),
 	re_path(r'^cmdb/servere/$', views.alle_servere, name='alle_servere'),
 	re_path(r'^cmdb/eksponerte_servere/$', views.cmdb_internetteksponerte_servere, name='cmdb_internetteksponerte_servere'),

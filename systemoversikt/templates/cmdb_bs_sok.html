@@ -216,28 +216,32 @@
 
 
 	<h4>Utfasede business services som fremdeles er koblet mot et system</h4>
+	<a href="{% url 'cmdb_bs_disconnect' %}">Løskoble alle</a>
 	<table class="table table-sm tablesorter excel">
-	<thead>
-	<tr>
-		<th>Business service</th>
-		<th>Koblet system</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for bs in utfasede_bs %}
-	<tr>
-		<td>{{ bs }}</td>
-		<td>
-			{% if bs.systemreferanse %}
-				{{ bs.systemreferanse.systemnavn }}
-				<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ bs.pk }}/change/">✎ frakoble?</a>
-			{% else %}
-				Ikke koblet
-			{% endif %}
+		<thead>
+		<tr>
+			<th>Business service</th>
+			<th>Koblet system</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for bs in utfasede_bs %}
+		<tr>
+			<td>{{ bs }}</td>
+			<td>
+				{% if bs.systemreferanse %}
+					{{ bs.systemreferanse.systemnavn }}
+					<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ bs.pk }}/change/">✎ frakoble?</a>
+				{% else %}
+					Ikke koblet
+				{% endif %}
 
-		</td>
-	</tr>
-	{% endfor %}
+			</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
 
 
 {% endblock hovedinnhold %}

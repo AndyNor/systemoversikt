@@ -6268,6 +6268,19 @@ def cmdb_bss(request, pk):
 	})
 
 
+def cmdb_bs_disconnect(request):
+	# frikoble alle system - business service-koblinger
+	required_permissions = ['systemoversikt.delete_system'] # kun administrator-rollen
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	for service in CMDBbs.objects.all():
+		service.systemreferanse = None
+		service.save()
+
+	from django.http import HttpResponseRedirect
+	return HttpResponseRedirect(reverse('alle_cmdbref_sok'))
+
 
 def alle_avtaler(request, virksomhet=None):
 	#Vise alle avtaler
@@ -6888,6 +6901,8 @@ def csirt_api(request): #API
 		data.append(systeminfo)
 
 	return JsonResponse(data, safe=False)
+
+
 
 
 
