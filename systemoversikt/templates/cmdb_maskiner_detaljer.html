@@ -91,10 +91,12 @@
 				<h6>Tjenestemiljø</h6>
 				<p>{{ cmdbref.0.get_environment_display|default:"-" }}</p>
 			</div>
+			{% comment %}
 			<div class="col-sm">
 				<h6>Business criticality</h6>
 				<p>{{ cmdbref.0.get_kritikalitet_display|default:"Ikke definert" }}</p>
 			</div>
+			{% endcomment %}
 			<div class="col-sm">
 				<h6>Service availablity</h6>
 				<p>{{ cmdbref.0.u_service_availability_text|default:"Ikke definert" }}</p>

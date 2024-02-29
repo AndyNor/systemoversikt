@@ -19,7 +19,6 @@ import hashlib
 import os
 import ldap
 import sys
-import datetime
 
 class Command(BaseCommand):
 	def handle(self, **options):

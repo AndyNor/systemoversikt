@@ -479,9 +479,12 @@
 					<thead>
 						<tr>
 							<th>Business Service</th>
+							{% comment %}
 							<th>Criticality</th>
-							<th>Availability</th>
+							{% endcomment %}
+							<th>Tjenestenivå</th>
 							<th>Kompleksitet</th>
+							<th>Kritikalitet</th>
 							<th>Disk allokert</th>
 							<th>Disk brukt</th>
 							<th>Minne</th>
@@ -493,9 +496,12 @@
 					<tr>
 						{% url 'cmdb_bss' pk=cmdbref.pk as url_cmdb %}
 						<td><a href="{{ url_cmdb }}">{{ cmdbref.navn }}</a></td>
+						{% comment %}
 						<td>{{ cmdbref.get_kritikalitet_display|default:"-" }}</td>
+						{% endcomment %}
 						<td>{{ cmdbref.u_service_availability_text }}</td>
 						<td>{{ cmdbref.u_service_complexity_text }}</td>
+						<td>{{ cmdbref.u_service_operation_factor_text }}</td>
 						<td>{{ cmdbref.san_allocated|filesizeformat }}</td>
 						<td>{{ cmdbref.san_used|filesizeformat }}</td>
 						<td>{{ cmdbref.ram_allocated|filesizeformat }}</td>

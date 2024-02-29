@@ -44,10 +44,12 @@
 	<th>Tilknyttet system</th>
 	<th>Driftplattform</th>
 	<th>Miljø</th>
+	{% comment %}
 	<th>Kritikalitet</th>
+	{% endcomment %}
 	<th>Availability (SLA)</th>
 	<th>Operation factor</th>
-	<th>Complexity</th>
+	<th>Kritikalitet</th>
 </tr>
 </thead>
 <tbody>
@@ -103,7 +105,9 @@
 
 	<td>{{ item.get_environment_display|default:"-" }}</td>
 
+	{% comment %}
 	<td>{{ item.get_kritikalitet_display|default:"X ukjent" }}</td>
+	{% endcomment %}
 
 	<td {% if not item.u_service_availability %} style="color: red;" {% endif %}>
 		{{ item.u_service_availability_text|default:"T?" }}

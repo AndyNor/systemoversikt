@@ -1081,9 +1081,9 @@ class CMDBbackupAdmin(admin.ModelAdmin):
 @admin.register(CMDBRef)
 class CMDBRefAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('navn', 'parent_ref', 'environment', 'kritikalitet', 'operational_status', 'service_classification', 'bss_external_ref', 'opprettet')
+	list_display = ('navn', 'parent_ref', 'environment', 'operational_status', 'service_classification', 'bss_external_ref', 'opprettet')
 	search_fields = ('navn',)
-	list_filter = ('environment', 'kritikalitet', 'operational_status', 'service_classification', 'opprettet')
+	list_filter = ('environment', 'operational_status', 'service_classification', 'opprettet')
 
 	def get_ordering(self, request):
 		return [Lower('navn')]
