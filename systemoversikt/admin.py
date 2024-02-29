@@ -62,6 +62,10 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 	return export_as_csv
 
 
+@admin.register(IpProtocol)
+class IpProtocolAdmin(admin.ModelAdmin):
+	list_display=search_fields=readonly_fields = ('protocol', 'port', 'description')
+
 
 @admin.register(AzureUserConsents)
 class AzureUserConsentsAdmin(admin.ModelAdmin):
