@@ -10,8 +10,7 @@ from django.contrib.auth.models import User
 from django.db.models.functions import Upper
 from systemoversikt.models import *
 from django.utils import timezone
-from datetime import timedelta
-from datetime import datetime
+import datetime
 from systemoversikt.views import push_pushover
 import json
 import re
@@ -51,7 +50,7 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+		timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		try:
@@ -217,7 +216,7 @@ class Command(BaseCommand):
 
 				try:
 					time_str = attrs["whenCreated"][0].decode().split('.')[0]
-					whenCreated = datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
+					whenCreated = datetime.datetime.strptime(time_str, "%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
 				except (KeyError, ValueError):
 					whenCreated = None
 				user.profile.whenCreated = whenCreated
