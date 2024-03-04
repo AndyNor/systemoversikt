@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_virtual_machines"
 		LOG_EVENT_TYPE = "CMDB server import"
-		FILNAVN = {"filename_computers": "OK_computers_bss.xlsx", "filename_vmware": "RAW data related to virtual servers.xlsx"}
+		FILNAVN = {"filename_computers": "A34_CMDB_servers_to_service.xlsx", "filename_vmware": "RAW data related to virtual servers.xlsx"}
 		KILDE = "Service Now og VMware"
 		PROTOKOLL = "SMTP og SharePoint"
 		BESKRIVELSE = "Informasjon om virtuelle servere"

@@ -20,7 +20,7 @@ class Command(BaseCommand):
 		KILDE = "Service Now"
 		PROTOKOLL = "SMTP og SharePoint"
 		BESKRIVELSE = "Diskstørrelser til virtuelle maskiner"
-		FILNAVN = "OK_disk_information.xlsx"
+		FILNAVN = "A34_CMDB_disk_partitions.xlsx"
 		URL = ""
 		FREKVENS = "Hver natt"
 

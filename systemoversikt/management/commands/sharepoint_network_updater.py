@@ -20,7 +20,7 @@ class Command(BaseCommand):
 		KILDE = "Service Now"
 		PROTOKOLL = "SMTP og SharePoint"
 		BESKRIVELSE = "BigIP instanser og nettverksinstanser"
-		FILNAVN = {"filename1": "OK - Kartoteket F5 Big-IP.xlsx", "filename2": "OK - Kartoteket Network Gear.xlsx"}
+		FILNAVN = {"filename1": "A34_CMDB_bigip_partitions.xlsx", "filename2": "A34_CMDB_nettwork_equipment.xlsx"}
 		URL = "https://soprasteria.service-now.com/"
 		FREKVENS = "Hver natt"
 

@@ -19,7 +19,7 @@ class Command(BaseCommand):
 		KILDE = "Service Now"
 		PROTOKOLL = "SMTP og Sharepoint"
 		BESKRIVELSE = "Tjenestegrupperinger fra driftsleverandør"
-		FILNAVN = "OK_business_services.xlsx"
+		FILNAVN = "A34_CMDB_services.xlsx"
 		URL = "https://soprasteria.service-now.com/"
 		FREKVENS = "Hver natt"
 
