@@ -10,8 +10,7 @@ from django.contrib.auth.models import User
 from django.db.models.functions import Upper
 from systemoversikt.models import *
 from django.utils import timezone
-from datetime import timedelta
-from datetime import datetime
+import datetime
 from systemoversikt.views import push_pushover
 import json
 import re
@@ -19,7 +18,6 @@ import hashlib
 import os
 import ldap
 import sys
-import datetime
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -52,7 +50,7 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+		timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		try:

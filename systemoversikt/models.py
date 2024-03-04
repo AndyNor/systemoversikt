@@ -2012,6 +2012,25 @@ class virtualIP(models.Model):
 		return members
 
 
+class IpProtocol(models.Model):
+	port = models.IntegerField(
+		null=False,
+		)
+	protocol = models.CharField(
+		max_length=10,
+		null=False,
+		)
+	description = models.TextField(
+		null=True,
+		)
+
+	def __str__(self):
+		return f"IP protokoll {self.protocol} {self.port}"
+
+	class Meta:
+		verbose_name_plural = "Nettverk: IP-protokoller"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
 
 
 class VirtualIPPool(models.Model):

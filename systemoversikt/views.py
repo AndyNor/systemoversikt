@@ -2426,6 +2426,7 @@ def minside(request):
 
 
 def dashboard_all(request, virksomhet=None):
+	# UTFASET
 	#Generere virksomhets dashboard med statistikk over systmemer
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
