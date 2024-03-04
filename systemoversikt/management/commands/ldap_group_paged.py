@@ -248,7 +248,7 @@ class Command(BaseCommand):
 			report(result)
 			remove_unseen_groups()
 
-
+			"""
 			@transaction.atomic  # uklart om det er behov for denne lenger. trolig noe som gikk galt første kjøringer av scripetet..
 			def cleanup():
 				from django.db.models import Count
@@ -259,6 +259,7 @@ class Command(BaseCommand):
 					group.delete()
 
 			cleanup()
+			"""
 
 
 		except Exception as e:

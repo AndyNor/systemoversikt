@@ -247,7 +247,7 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 
 @admin.register(Leverandortilgang)
 class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
-	list_display = ('navn', 'systemer_vis', 'adgruppe', 'kommentar', 'opprettet')
+	list_display = ('pk', 'adgruppe', 'systemer_vis', 'navn', 'kommentar', 'opprettet')
 	search_fields = ('navn',)
 
 	filter_horizontal = ('systemer',)

@@ -1402,7 +1402,9 @@ def cmdb_statistikk(request):
 	count_vip_pool = VirtualIPPool.objects.all().count()
 	count_oracle = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).all().count()
 	count_mssql = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).all().count()
-	count_mem = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000*1000 # summen er MB --> bytes
+	count_mem = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"]
+	if count_mem:
+		count_mem = count_mem * 1000*1000 # summen er MB --> bytes
 	count_disk = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] #summen er i bytes
 	count_oracle_disk = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
 	count_mssql_disk = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
@@ -4272,7 +4274,7 @@ def leverandortilgang(request, valgt_gruppe=None):
 	if valgt_gruppe == None:
 
 		leverandortilganger = Leverandortilgang.objects.all()
-		unwanted_objects = [lt.adgruppe.distinguishedname for lt in leverandortilganger]
+		unwanted_objects = [getattr(lt.adgruppe, 'distinguishedname') if lt.adgruppe else "" for lt in leverandortilganger]
 
 		manglende_grupper = []
 		kjente_potensielle_mangler = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS']

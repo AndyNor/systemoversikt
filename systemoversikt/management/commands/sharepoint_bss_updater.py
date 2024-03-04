@@ -120,9 +120,9 @@ class Command(BaseCommand):
 					bss_dropped = 0
 					bs_dropped = 0
 					bss_name = record["Name"]
-					bs_name = record["Name.1"]
-					bss_id = record["Sys ID.1"]
-					bs_id = record["Sys ID"]
+					bss_id = record["Sys ID"]
+					bs_name = record["Parent"]
+					bs_id = record["Sys ID.1"]
 
 					if bs_name == "" or bss_name == "":
 						print(f"Business service navn eller BSS-navn mangler ({record})")

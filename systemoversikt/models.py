@@ -3018,9 +3018,9 @@ class Leverandortilgang(models.Model):
 			related_name='leverandortilgang',
 			verbose_name="AD-gruppeknytning",
 			blank=False,
-			null=True,
+			null=False,
 			help_text=u"Gis tilgang via følgende AD-gruppe",
-			on_delete=models.SET_NULL,
+			on_delete=models.CASCADE,
 			)
 	kommentar = models.TextField(
 			verbose_name="Kommentar",
