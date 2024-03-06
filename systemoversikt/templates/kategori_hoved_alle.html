@@ -16,9 +16,9 @@
 		<th class="filter-false">Endre</th>
 		{% endif %}
 		<th>Hovedkategori</th>
+		<th>Totalt antall systemer</th>
+		<th>Totalt antall programvarer</th>
 		<th>Subkategorier</th>
-		<th>Antall systemer</th>
-		<th>Antall programvarer</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -29,18 +29,18 @@
 		{% endif %}
 		<td>{{ hovedkat }}</td>
 		<td>
+			{{ hovedkat.systemteller }}
+		</td>
+		<td>
+			{{ hovedkat.programteller }}
+		</td>
+		<td>
 			{% for subkat in hovedkat.subkategorier.all %}
 				{% url 'systemkategori' pk=subkat.pk as url_subkat %}
 				<a href="{{ url_subkat }}">{{ subkat }}</a><br>
 			{% empty%}
 				ingen
 			{% endfor %}
-		</td>
-		<td>
-			{{ hovedkat.systemteller }}
-		</td>
-		<td>
-			{{ hovedkat.programteller }}
 		</td>
 	</tr>
 	{% endfor %}

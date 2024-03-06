@@ -23,7 +23,7 @@
 
 	{% if systemdetaljer.ibruk == False %}
 	<div class="alert alert-warning" role="alert">
-		Dette systemet er markert som ikke i bruk. Det er enten under innføring eller er avviklet.
+		Dette systemet er markert som ikke i bruk. {{systemdetaljer.get_livslop_status_display}}.
 	</div>
 	{% endif %}
 
