@@ -4160,6 +4160,7 @@ def enhet_detaljer(request, pk):
 		unit = HRorg.objects.get(pk=pk)
 		sideenheter = HRorg.objects.filter(direkte_mor=unit).order_by('ou')
 		personer = User.objects.filter(profile__org_unit=pk).order_by('profile__displayName')
+		systemer_ansvarfor = System.objects.filter(systemforvalter_avdeling_referanse=unit)
 
 		return render(request, 'virksomhet_enhet_detaljer.html', {
 			'request': request,
@@ -4167,6 +4168,7 @@ def enhet_detaljer(request, pk):
 			'unit': unit,
 			'sideenheter': sideenheter,
 			'personer': personer,
+			'systemer_ansvarfor': systemer_ansvarfor,
 		})
 	else:
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })

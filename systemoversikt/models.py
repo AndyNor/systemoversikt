@@ -512,14 +512,14 @@ class Virksomhet(models.Model):
 			blank=True,
 			null=True,
 			max_length=10,
-			help_text=u"Dette feltet brukes som standard visningsnavn.",
+			help_text=u"Dette feltet brukes som standard visningsnavn, og brukes for å koble brukeridenter til virksomheten.",
 			)
 	gamle_virksomhetsforkortelser = models.CharField(
 			verbose_name="Alternative virksomhetsforkortelse",
 			blank=True,
 			null=True,
 			max_length=100,
-			help_text=u"Alternative/gamle forkortelser. Skilletegn skal være komma (,).",
+			help_text=u"Alternative/gamle forkortelser. Bruk mellomrom dersom flere. Brukes ved tildeling av WAN-lokasjoner og for filtrering av brukeridenter.",
 			)
 
 	virksomhetsnavn = models.CharField(
@@ -531,7 +531,7 @@ class Virksomhet(models.Model):
 	overordnede_virksomheter = models.ManyToManyField(
 			to="Virksomhet",
 			related_name='virksomhet_overordnede_virksomheter',
-			verbose_name="Overordnede virksomheter",
+			verbose_name="Byrådsavdeling",
 			blank=True,
 			help_text=u'Dersom aktuelt kan en annen virksomhet angis som overornet denne.',
 			)
@@ -595,7 +595,7 @@ class Virksomhet(models.Model):
 			related_name='virksomhet_autoriserte_bestillere_tjenester_uke',
 			verbose_name='Autoriserte bestillere av tjenester fra intern tjenesteleverandør.',
 			blank=True,
-			help_text=u"En autorisert bestiller er en person virksomheten har autorisert til å bestille tjenester via den selvbetjeningsportalen (kundeportalen).",
+			help_text=u"En autorisert bestiller er en person virksomheten har autorisert til å bestille tjenester via selvbetjeningsportalen (kundeportalen).",
 			)
 	orgnummer = models.CharField(
 			verbose_name="Vårt organisasjonsnummer",

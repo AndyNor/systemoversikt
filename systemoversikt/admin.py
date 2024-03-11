@@ -462,22 +462,26 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 					'orgnummer',
 					('resultatenhet',
 					'office365'),
-				),
-			}),
-			('Organisatorisk', {
-				'fields': (
 					'overordnede_virksomheter',
 					'kan_representeres',
-					'ikt_kontakt',
-					'arkitekturkontakter',
-					'personvernkoordinator',
-					'informasjonssikkerhetskoordinator',
-					'ks_fiks_admin_ref',
 					'intranett_url',
 					'www_url',
 				),
 			}),
+			('Organisatorisk', {
+				'fields': (
+					'ikt_kontakt',
+					'personvernkoordinator',
+					'informasjonssikkerhetskoordinator',
+					'uke_kam_referanse',
+					'arkitekturkontakter',
+					'ks_fiks_admin_ref',
+					'autoriserte_bestillere_tjenester',
+					'autoriserte_bestillere_tjenester_uke',
+				),
+			}),
 			('GDPR / sikkerhet', {
+				'classes': ('collapse',),
 				'fields': (
 					'styringssystem',
 					'rutine_tilgangskontroll',
@@ -490,14 +494,6 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 				'fields': (
 					'autoriserte_bestillere_sertifikater',
 					('sertifikatfullmakt_avgitt_web', 'sertifikatfullmakt_avgitt_virksomhet'),
-				),
-			}),
-			('UKE-spesifikt', {
-				'classes': ('collapse',),
-				'fields': (
-					'uke_kam_referanse',
-					'autoriserte_bestillere_tjenester',
-					'autoriserte_bestillere_tjenester_uke',
 				),
 			}),
 			('Utfaset', {
