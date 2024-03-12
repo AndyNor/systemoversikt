@@ -184,10 +184,10 @@ class Command(BaseCommand):
 					if record["Disk space (GB)"] != "":
 						cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])*1000**3 # returnert som bytes (fra GB)
 
-					cmdbdevice.comp_cpu_core_count = convertToInt(record["CPU total"])
+					#cmdbdevice.comp_cpu_core_count = convertToInt(record["CPU total"])
 					cmdbdevice.comp_ram = convertToInt(record["RAM (MB)"])
 					cmdbdevice.comp_ip_address = comp_ip_address
-					cmdbdevice.comp_cpu_speed = convertToInt(record["CPU speed (MHz)"])
+					#cmdbdevice.comp_cpu_speed = convertToInt(record["CPU speed (MHz)"])
 					cmdbdevice.comp_os = os
 					cmdbdevice.comp_os_version = os_version
 					cmdbdevice.comp_os_service_pack = os_sp
@@ -198,9 +198,9 @@ class Command(BaseCommand):
 					#cmdbdevice.billable = record["Billable"] #finnes ikke lenger i denne rapporten
 
 
-					sub_name = bss_cache(record["Name.1"])
+					sub_name = bss_cache(record["Service"])
 					if sub_name == None:
-						print('Business sub service %s for %s finnes ikke' % (record["Name.1"], comp_name))
+						print('Business sub service %s for %s finnes ikke' % (record["Service"], comp_name))
 					cmdbdevice.sub_name = sub_name # det er OK at den er None
 					#else:
 					#	server_dropped += 1
