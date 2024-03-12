@@ -93,7 +93,7 @@ class Command(BaseCommand):
 				@lru_cache(maxsize=512)
 				def bss_cache(bss_name):
 					try:
-						sub_name = CMDBRef.objects.get(navn=record["Name.1"])
+						sub_name = CMDBRef.objects.get(navn=record["Service"])
 						return sub_name
 					except:
 						return None
@@ -135,13 +135,13 @@ class Command(BaseCommand):
 						continue  # Det må være en verdi på denne
 
 					# Sette type enhet
-					if record["Name.1"] not in CLIENT_BUSINESS_SERVICES:
+					#if record["Service"] not in CLIENT_BUSINESS_SERVICES:
 						# vi sjekker om enheten finnes fra før
-						cmdbdevice = get_cmdb_instance(comp_name)
-						cmdbdevice.device_type = "SERVER"
+					cmdbdevice = get_cmdb_instance(comp_name)
+					cmdbdevice.device_type = "SERVER"
 						#print(".", end="", flush=True)
-					else:
-						continue
+					#else:
+						#continue
 						#cmdbdevice.device_type = "KLIENT"
 
 
