@@ -60,8 +60,11 @@ class Command(BaseCommand):
 			@transaction.atomic
 			def import_cmdb_disk():
 
-				disk_dropped = 0
+				# sletter alle gamle
+				print("Sletter alle gamle disker")
+				CMDBDisk.objects.all().delete()
 
+				disk_dropped = 0
 
 				# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
 				import warnings
@@ -72,7 +75,6 @@ class Command(BaseCommand):
 				data = dfRaw.to_dict('records')
 
 				antall_records = len(data)
-				all_existing_devices = list(CMDBDisk.objects.all())
 
 				def convertToInt(string, multiplier=1):
 					try:
@@ -82,12 +84,10 @@ class Command(BaseCommand):
 
 					return number * multiplier
 
-				ikke_koblet = 0
-
-				print("Alt lastet, oppdaterer databasen:")
+				print("Data lastet, oppdaterer databasen..")
 				for idx, record in enumerate(data):
 					#print(".", end="", flush=True)
-					if idx % 3000 == 0:
+					if idx % 2000 == 0:
 						print("%s av %s" % (idx, antall_records))
 
 					disk_name = record["Name"]
@@ -102,15 +102,8 @@ class Command(BaseCommand):
 						print(f'Disk for {computer} manglet mount point')
 						continue
 
-					# vi sjekker om disken finnes fra før
-					try:
-						cmdb_disk = CMDBDisk.objects.get(Q(computer=record["Computer"]) & Q(mount_point=mount_point))
-						# fjerner fra oversikt over alle vi hadde før vi startet
-						if cmdb_disk in all_existing_devices: # i tilfelle reintrodusert
-							all_existing_devices.remove(cmdb_disk)
-					except:
-						# lager en ny
-						cmdb_disk = CMDBDisk.objects.create(computer=record["Computer"], mount_point=mount_point)
+					# lager en ny
+					cmdb_disk = CMDBDisk.objects.create(computer=record["Computer"], mount_point=mount_point)
 
 
 					cmdb_disk.operational_status = True
@@ -129,14 +122,11 @@ class Command(BaseCommand):
 
 					cmdb_disk.save()
 
-				obsolete_devices = all_existing_devices
-				for item in obsolete_devices:
-					item.delete()
 
 				runtime_t1 = time.time()
 				total_runtime = round(runtime_t1 - runtime_t0, 1)
 
-				logg_entry_message = f'{antall_records} disker funnet. {disk_dropped} manglet vesentlig informasjon og ble ikke importert. {len(obsolete_devices)} gamle slettet. Tok {total_runtime} sekunder'
+				logg_entry_message = f'{antall_records} disker funnet. {disk_dropped} manglet vesentlig informasjon og ble ikke importert. Tok {total_runtime} sekunder'
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
