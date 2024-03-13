@@ -3388,8 +3388,9 @@ TJENESTENIVAA_VALG = (
 SYSTEMEIERSKAPSMODELL_VALG = (
 	('VIRKSOMHETSSYSTEM', 'Virksomhetssystem'),
 	('SEKTORSYSTEM', 'Sektorsystem'),
-	('TVERRSEKTORIELT', 'Tverrsektorielt'),
-	('FELLESSYSTEM', 'Fellessystem'),
+	('TVERRSEKTORIELT', 'Tverrsektorielt system'),
+	('FELLESSYSTEM', 'Fellessystem valgfritt'),
+	('FELLESSYSTEM_OBLIGATORISK', 'Fellessystem obligatorisk'),
 	('STOTTE', 'IKT-støttesystem'),
 )
 
