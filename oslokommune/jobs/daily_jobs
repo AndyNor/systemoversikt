@@ -22,8 +22,8 @@ python /var/kartoteket/source/systemoversikt/manage.py sharepoint_bss_updater
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_server_updater
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_client_updater
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_database_mssql_updater
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_database_mssql_size_import
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_database_oracle_updater
-python /var/kartoteket/source/systemoversikt/manage.py sharepoint_database_size_import
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_database_oracle_size_updater
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_server_disk_updater
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_vip_updater
