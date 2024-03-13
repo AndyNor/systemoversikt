@@ -49,9 +49,9 @@ I tillegg har driftsleverandør dashboard i PowerBI som UKE sine forvaltere har 
 			<h3>{{ count_ressurs_accounts }}</h3>
 		</div>
 		<div class="col-sm">
-			<h6>Office365 applikasjoner</h6>
+			<h6>Office365 Service Principals</h6>
 			<h3>{{ count_office_ea }}</h3>
-			<h6>Nøkler</h6>
+			<h6>Service Principal Secrets</h6>
 			<h3>{{ count_office_ea_keys }}</h3>
 		</div>
 	</div>
@@ -66,6 +66,8 @@ I tillegg har driftsleverandør dashboard i PowerBI som UKE sine forvaltere har 
 		<div class="col-sm">
 			<h6>Servere</h6>
 			<h3>{{ count_server }}</h3>
+			<h6>Minnebruk servere estimert</h6>
+			<h3>{{ count_mem|filesizeformat }}</h3>
 			<h6>Klienter</h6>
 			<h3>{{ count_klienter }}</h3>
 		</div>
@@ -99,11 +101,9 @@ I tillegg har driftsleverandør dashboard i PowerBI som UKE sine forvaltere har 
 			<h3>{{ count_mssql_disk|filesizeformat }}</h3>
 		</div>
 		<div class="col-sm">
-			<h6>Minnebruk servere estimert</h6>
-			<h3>{{ count_mem|filesizeformat }}</h3>
-			<h6>Diskbruk servere (fra Service Now)</h6>
+			<h6>Diskbruk servere</h6>
 			<h3>{{ count_disk|filesizeformat }}</h3>
-			<h6>Backup totalt</h6>
+			<h6>Backup servere</h6>
 			<h3>{{ count_backup|filesizeformat }}</h3>
 
 		</div>
