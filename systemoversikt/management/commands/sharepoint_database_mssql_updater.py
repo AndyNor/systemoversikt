@@ -123,14 +123,14 @@ class Command(BaseCommand):
 						filesize = 0
 					cmdb_db.db_u_datafilessizekb = filesize
 
-					cmdb_db.db_used_for = record["Used for"]
+					cmdb_db.db_used_for = record["Environment"]
 					cmdb_db.db_comments = record["Comments"]
 					cmdb_db.billable = record["Billable"]
 					cmdb_db.db_status = record["Install Status"]
 
 					cmdb_db.sub_name = None  # reset old lookups
 					try:
-						business_service = CMDBRef.objects.get(navn=record["Name.1"]) # dette er det andre "name"-feltet
+						business_service = CMDBRef.objects.get(navn=record["Service"])
 						cmdb_db.sub_name = business_service # add this lookup
 					except:
 						pass
