@@ -19,11 +19,11 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_database_oracle"
 		LOG_EVENT_TYPE = "CMDB database import (Oracle)"
-		KILDE = "ServiceNow"
-		PROTOKOLL = "SMTP og SharePoint"
+		KILDE = "Service Now"
+		PROTOKOLL = "E-post"
 		BESKRIVELSE = "Informasjon om Oracle-databaser, server de kjører på, tjenesteknytning og miljø."
-		FILNAVN = "OK_db_oracle .xlsx"
-		URL = ""
+		FILNAVN = "A34_CMDB_db_oracle.xlsx"
+		URL = "https://soprasteria.service-now.com/"
 		FREKVENS = "Hver natt"
 
 		try:
@@ -115,14 +115,14 @@ class Command(BaseCommand):
 						db_servermissing += 1
 						pass
 
-				cmdb_db.db_used_for = record["Used for"]
+				cmdb_db.db_used_for = record["Environment"]
 				cmdb_db.db_comments = record["Comments"]
 				cmdb_db.billable = record["Billable"]
 				cmdb_db.db_status = record["Install Status"]
 
 				cmdb_db.sub_name = None  # reset old lookups
 				try:
-					business_service = CMDBRef.objects.get(navn=record["Name.1"]) # dette er det andre "name"-feltet
+					business_service = CMDBRef.objects.get(navn=record["Service"]) # dette er det andre "name"-feltet
 					cmdb_db.sub_name = business_service # add this lookup
 				except:
 					pass
