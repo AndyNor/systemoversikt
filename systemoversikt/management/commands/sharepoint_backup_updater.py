@@ -99,7 +99,7 @@ class Command(BaseCommand):
 					except:
 						device = None
 						failed_device += 1
-						print("%s feilet" % (line["Client"]))
+						#print("%s feilet" % (line["Client"]))
 
 					try:
 						bss = CMDBRef.objects.get(navn__iexact=line["Business Sub Service"])
@@ -124,7 +124,7 @@ class Command(BaseCommand):
 
 
 				logg_flere_innslag = ', '.join(flere_innslag)
-				logg_entry_message = '%s innslag importert. %s feilet oppslag mot server. %s feilede bss oppslag. Duplikate innslag: %s' % (antall_linjer, failed_device, failed_bss, logg_flere_innslag)
+				logg_entry_message = f'{antall_linjer} innslag importert. {failed_device} feilet oppslag mot server. {failed_bss} feilede bss oppslag. Duplikate innslag: {logg_flere_innslag}'
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
