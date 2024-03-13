@@ -19,12 +19,12 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_database_mssql_size"
 		LOG_EVENT_TYPE = "CMDB database size import"
-		KILDE = "Service Now"
-		PROTOKOLL = "SMTP og SharePoint"
+		KILDE = "Manuelt uttrekk"
+		PROTOKOLL = "E-post"
 		BESKRIVELSE = "Størrelse på MSSQL-databaser"
 		FILNAVN = "A34 - Database - Status and size.xlsx"
-		URL = "https://soprasteria.service-now.com/"
-		FREKVENS = "Hver natt"
+		URL = ""
+		FREKVENS = "Månedlig"
 
 		try:
 			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
