@@ -23,7 +23,7 @@ class Command(BaseCommand):
 		KILDE = "Service Now"
 		PROTOKOLL = "SMTP og SharePoint"
 		BESKRIVELSE = "Klienter med eier og business service-kobling"
-		FILNAVN = {"client_owner_source_filename": "OK_computers.xlsx",  "client_bss_source_filename": "OK_computers_bss.xlsx"}
+		FILNAVN = {"client_owner_source_filename": "A34_CMDB_clients.xlsx"}
 		URL = "https://soprasteria.service-now.com/"
 		FREKVENS = "Hver natt"
 
@@ -54,7 +54,7 @@ class Command(BaseCommand):
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 			client_owner_source_filename = FILNAVN["client_owner_source_filename"]
-			client_bss_source_filename = FILNAVN["client_bss_source_filename"]
+			#client_bss_source_filename = FILNAVN["client_bss_source_filename"]
 			from systemoversikt.views import sharepoint_get_file
 
 			# kobling eier-maskin
@@ -65,11 +65,13 @@ class Command(BaseCommand):
 			print(f"Filen er datert {client_owner_modified_date}")
 
 			# kobling maskin-bss
+			"""
 			source_filepath = f"{client_bss_source_filename}"
 			result = sharepoint_get_file(source_filepath)
 			client_bss_dest_file = result["destination_file"]
 			client_bss_modified_date = result["modified_date"]
 			print(f"Filen er datert {client_bss_modified_date}")
+			"""
 
 
 			@transaction.atomic
@@ -142,6 +144,7 @@ class Command(BaseCommand):
 				# oppdatere alle klienter med bss-kobling
 
 				# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
+				"""
 				import warnings
 				warnings.simplefilter("ignore")
 
@@ -197,6 +200,7 @@ class Command(BaseCommand):
 						print('Business sub service %s for %s finnes ikke' % (record["Name.1"], comp_name))
 					cmdbdevice.sub_name = sub_name # det er OK at den er None
 					cmdbdevice.save()
+				"""
 
 
 
