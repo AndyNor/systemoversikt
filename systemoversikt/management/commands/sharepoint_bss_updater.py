@@ -17,7 +17,7 @@ class Command(BaseCommand):
 		INTEGRASJON_KODEORD = "sp_business_services"
 		LOG_EVENT_TYPE = "CMDB business service import"
 		KILDE = "Service Now"
-		PROTOKOLL = "SMTP og Sharepoint"
+		PROTOKOLL = "E-post"
 		BESKRIVELSE = "Tjenestegrupperinger fra driftsleverandør"
 		FILNAVN = "A34_CMDB_services.xlsx"
 		URL = "https://soprasteria.service-now.com/"

@@ -23,7 +23,7 @@ class Command(BaseCommand):
 		LOG_EVENT_TYPE = "CMDB server import"
 		FILNAVN = {"filename_computers": "A34_CMDB_servers_to_service.xlsx", "filename_vmware": "RAW data related to virtual servers.xlsx"}
 		KILDE = "Service Now og VMware"
-		PROTOKOLL = "SMTP og SharePoint"
+		PROTOKOLL = "E-post"
 		BESKRIVELSE = "Informasjon om virtuelle servere"
 		URL = "https://soprasteria.service-now.com/"
 		FREKVENS = "Hver natt (vmware på forespørsel)"
@@ -247,8 +247,8 @@ class Command(BaseCommand):
 
 					cmdbdevice = get_cmdb_instance(vm["Machine Name"])
 					cmdbdevice.device_type = "SERVER" # never any clients in VMware
-					cmdbdevice.vm_disk_allocation = int(vm["Allocated disk (GB)"]) * 1000 ** 3
-					cmdbdevice.vm_disk_usage = int(vm["Total Disk Used (GB)"]) * 1000 ** 3
+					cmdbdevice.vm_disk_allocation = (float(vm["Allocated disk (GB)"]) * 1000 ** 3) if vm["Allocated disk (GB)"] != "" else 0
+					cmdbdevice.vm_disk_usage = (float(vm["Total Disk Used (GB)"]) * 1000 ** 3) if vm["Total Disk Used (GB)"] != "" else 0
 					cmdbdevice.vm_disk_tier = vm["Disk Tier"]
 					cmdbdevice.save()
 
