@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_database_mssql"
 		LOG_EVENT_TYPE = "CMDB database import"
-		KILDE = "Manuelt uttrekk"
+		KILDE = "Service Now"
 		PROTOKOLL = "E-post"
 		BESKRIVELSE = "MSSQL-databaser med tjenesteknytning"
 		FILNAVN = "A34_CMDB_db_mssql.xlsx"
