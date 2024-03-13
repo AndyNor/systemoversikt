@@ -206,6 +206,8 @@ class Command(BaseCommand):
 
 				# Koble maskin til sluttbruker
 				print("Starter å koble maskin til sluttbruker")
+				import warnings
+				warnings.simplefilter("ignore")
 				dfRaw = pd.read_excel(client_owner_dest_file)
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				client_ower_data = dfRaw.to_dict('records')
@@ -256,7 +258,7 @@ class Command(BaseCommand):
 				devices_set_inactive = 0
 
 				utdaterte_klienter = CMDBdevice.objects.filter(device_type="KLIENT", sist_oppdatert__lte=timezone.now()-timedelta(hours=12)) # det vil aldri gå mer enn noen få minutter, men for å være sikker..
-				print(f"Setter {len(utdaterte_klienter)} utdaterte klienter til deaktivert")
+				#print(f"Setter {len(utdaterte_klienter)} utdaterte klienter til deaktivert")
 				for klient in utdaterte_klienter:
 					klient.device_active = False
 					klient.save()
@@ -267,7 +269,7 @@ class Command(BaseCommand):
 				runtime_t1 = time.time()
 				total_runtime = round(runtime_t1 - runtime_t0, 1)
 
-				logg_entry_message = f'Fant {antall_records} klienter. {client_dropped} manglet navn. Satte {devices_set_inactive} tynne klienter inaktive. Import tok {total_runtime} sekunder'
+				logg_entry_message = f'Fant {antall_records} klienter. {client_dropped} manglet navn. Satte {devices_set_inactive} eksisterende klienter inaktive. Import tok {total_runtime} sekunder'
 				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 				print(logg_entry_message)
 				return logg_entry_message
