@@ -17,9 +17,9 @@ class Command(BaseCommand):
 		INTEGRASJON_KODEORD = "sp_database_mssql"
 		LOG_EVENT_TYPE = "CMDB database import"
 		KILDE = "Manuelt uttrekk"
-		PROTOKOLL = "SMTP og SharePoint"
+		PROTOKOLL = "E-post"
 		BESKRIVELSE = "MSSQL-databaser med tjenesteknytning"
-		FILNAVN = "OK_db_sql.xlsx"
+		FILNAVN = "A34_CMDB_db_mssql.xlsx"
 		URL = "https://soprasteria.service-now.com/"
 		FREKVENS = "Hver natt"
 
