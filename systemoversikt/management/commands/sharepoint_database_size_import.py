@@ -88,7 +88,13 @@ class Command(BaseCommand):
 						return value * 1000 * 1000 * 1000 * 1000
 					return 0
 
+				antall_unmanaged = 0
+
 				for line in data:
+					if line["Status"] == "Unmanaged":
+						antall_unmanaged += 1
+						continue
+
 					try:
 						db_server = line["Server Name"].replace(".oslofelles.oslo.kommune.no", "")
 						db_database = line["Name"]
@@ -107,10 +113,7 @@ class Command(BaseCommand):
 					#print("%s %s %s %s" % (line["Name"], line["Operational State"], line["Database Size"], line["Transaction Log Size"]))
 
 
-				logg_entry_message = 'Fant %s databaser. %s feilet oppslag mot eksisterende database' % (
-						antall_records,
-						feilede_oppslag,
-					)
+				logg_entry_message = f'Fant {antall_records} databaser. {antall_unmanaged} er "unmanaged". {feilede_oppslag} feilet oppslag mot eksisterende database'
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
