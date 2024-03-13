@@ -20,7 +20,7 @@ class Command(BaseCommand):
 		KILDE = "Service Now"
 		PROTOKOLL = "SMTP og SharePoint"
 		BESKRIVELSE = "BigIP instanser og nettverksinstanser"
-		FILNAVN = {"filename1": "A34_CMDB_bigip_virtual_ips.xlsx", "filename2": "A34_CMDB_nettwork_equipment.xlsx"}
+		FILNAVN = {"filename1": "A34_CMDB_bigip_partitions.xlsx", "filename2": "A34_CMDB_nettwork_equipment.xlsx"}
 		URL = "https://soprasteria.service-now.com/"
 		FREKVENS = "Hver natt"
 
@@ -46,121 +46,110 @@ class Command(BaseCommand):
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
-		try:
+		#try:
 
-			filename1 = FILNAVN["filename1"]
-			filename2 = FILNAVN["filename2"]
+		filename1 = FILNAVN["filename1"]
+		filename2 = FILNAVN["filename2"]
 
-			from systemoversikt.views import sharepoint_get_file
-			# bigip-data
-			source_filepath = f"{filename1}"
-			result = sharepoint_get_file(source_filepath)
-			destination_file_bigip = result["destination_file"]
-			destination_file_bigip_modified_date = result["modified_date"]
-			print(f"Filen er datert {destination_file_bigip_modified_date}")
+		from systemoversikt.views import sharepoint_get_file
+		# bigip-data
+		source_filepath = f"{filename1}"
+		result = sharepoint_get_file(source_filepath)
+		destination_file_bigip = result["destination_file"]
+		destination_file_bigip_modified_date = result["modified_date"]
+		print(f"Filen er datert {destination_file_bigip_modified_date}")
 
-			# router-data
-			source_filepath = f"{filename2}"
-			result = sharepoint_get_file(source_filepath)
-			destination_file_cisco = result["destination_file"]
-			destination_file_cisco_modified_date = result["modified_date"]
-			print(f"Filen er datert {destination_file_cisco_modified_date}")
-
-
-			@transaction.atomic
-			def import_network():
-
-				num_cisco = 0
-				num_cisco_new = 0
-				num_bigip = 0
-				num_bigip_new = 0
-
-				### BigIP
-
-				# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
-				import warnings
-				warnings.simplefilter("ignore")
-
-				dfRaw = pd.read_excel(destination_file_bigip)
-				dfRaw = dfRaw.replace(np.nan, '', regex=True)
-				data = dfRaw.to_dict('records')
-
-				num_bigip = len(data)
-				for line in data:
-					try:
-						inst = NetworkDevice.objects.get(name=line["Name"])
-					except:
-						inst = NetworkDevice.objects.create(name=line["Name"], ip_address=line["IP Address"])
-						num_bigip_new += 1
-
-					#print(inst.name)
-					inst.ip_address = line["IP Address"]
-					inst.model = line["Model ID"]
-					inst.firmware = ""
-					inst.save()
-
-					# Linke IP-adresse
-					ipaddr_ins = get_ipaddr_instance(inst.ip_address)
-					if ipaddr_ins != None:
-						if not inst in ipaddr_ins.networkdevices.all():
-							ipaddr_ins.networkdevices.add(inst)
-							ipaddr_ins.save()
+		# router-data
+		source_filepath = f"{filename2}"
+		result = sharepoint_get_file(source_filepath)
+		destination_file_cisco = result["destination_file"]
+		destination_file_cisco_modified_date = result["modified_date"]
+		print(f"Filen er datert {destination_file_cisco_modified_date}")
 
 
-				### Cisco
-				dfRaw = pd.read_excel(destination_file_cisco)
-				dfRaw = dfRaw.replace(np.nan, '', regex=True)
-				data = dfRaw.to_dict('records')
+		@transaction.atomic
+		def import_network():
 
-				num_cisco = len(data)
-				for line in data:
-					try:
-						inst = NetworkDevice.objects.get(name=line["Name"])
-					except:
-						inst = NetworkDevice.objects.create(name=line["Name"], ip_address=line["IP Address"])
-						num_cisco_new += 1
+			num_cisco = 0
+			num_cisco_new = 0
+			num_bigip = 0
+			num_bigip_new = 0
 
-					#print(inst.name)
-					inst.ip_address = line["IP Address"]
-					model = "%s %s %s" % (line["Manufacturer"], line["Class"], line["Name.1"])
-					inst.model = model
-					inst.firmware = line["Firmware version"]
-					inst.save()
+			### BigIP
 
-					# Linke IP-adresse
-					ipaddr_ins = get_ipaddr_instance(inst.ip_address)
-					if ipaddr_ins != None:
-						if not inst in ipaddr_ins.networkdevices.all():
-							ipaddr_ins.networkdevices.add(inst)
-							ipaddr_ins.save()
+			# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
+			import warnings
+			warnings.simplefilter("ignore")
 
+			dfRaw = pd.read_excel(destination_file_bigip)
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			data = dfRaw.to_dict('records')
 
-				logg_entry_message = f'{num_cisco} cisco-enheter funnet. {num_cisco_new} nye lagt til. {num_bigip} bigip-enheter funnet. {num_bigip_new} nye lagt til.'
-				logg_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE,
-						message=logg_entry_message,
-					)
-				print(logg_entry_message)
-				return logg_entry_message
+			num_bigip = len(data)
+			for line in data:
+				try:
+					inst = NetworkDevice.objects.get(name=line["Name"])
+				except:
+					inst = NetworkDevice.objects.create(name=line["Name"], ip_address=line["IP Address"])
+					num_bigip_new += 1
 
+				#print(inst.name)
+				inst.ip_address = line["IP Address"]
+				inst.model = line["Model ID"]
+				inst.firmware = ""
+				inst.save()
 
-			#eksekver
-			logg_entry_message = import_network()
-			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = destination_file_bigip_modified_date # eller timezone.now()
-			int_config.sist_status = logg_entry_message
-			int_config.save()
+				# Linke IP-adresse
+				ipaddr_ins = get_ipaddr_instance(inst.ip_address)
+				if ipaddr_ins != None:
+					if not inst in ipaddr_ins.networkdevices.all():
+						ipaddr_ins.networkdevices.add(inst)
+						ipaddr_ins.save()
 
 
+			### Cisco
+			dfRaw = pd.read_excel(destination_file_cisco)
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			data = dfRaw.to_dict('records')
 
-		except Exception as e:
-			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
+			num_cisco = len(data)
+			for line in data:
+				try:
+					inst = NetworkDevice.objects.get(name=line["Name"])
+				except:
+					inst = NetworkDevice.objects.create(name=line["Name"], ip_address=line["IP Address"])
+					num_cisco_new += 1
+
+				#print(inst.name)
+				inst.ip_address = line["IP Address"]
+				model = "%s %s %s" % (line["Manufacturer"], line["Class"], line["Name.1"])
+				inst.model = model
+				inst.firmware = line["Firmware version"]
+				inst.save()
+
+				# Linke IP-adresse
+				ipaddr_ins = get_ipaddr_instance(inst.ip_address)
+				if ipaddr_ins != None:
+					if not inst in ipaddr_ins.networkdevices.all():
+						ipaddr_ins.networkdevices.add(inst)
+						ipaddr_ins.save()
+
+
+			logg_entry_message = f'{num_cisco} cisco-enheter funnet. {num_cisco_new} nye lagt til. {num_bigip} bigip-enheter funnet. {num_bigip_new} nye lagt til.'
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
-			print(logg_message)
+					message=logg_entry_message,
+				)
+			print(logg_entry_message)
+			return logg_entry_message
 
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+
+		#eksekver
+		logg_entry_message = import_network()
+		# lagre sist oppdatert tidspunkt
+		int_config.dato_sist_oppdatert = destination_file_bigip_modified_date # eller timezone.now()
+		int_config.sist_status = logg_entry_message
+		int_config.save()
+
+
 
