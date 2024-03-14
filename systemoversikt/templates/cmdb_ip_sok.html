@@ -42,7 +42,10 @@
 			<td>{{ip.ip_address}}</td>
 			<td>
 				{% for server in ip.servere.all %}
-					{{ server }}<br>
+					<b>{{ server }}</b><br>
+					{% if server.sub_name.parent_ref.systemreferanse %}{{ server.sub_name.parent_ref.systemreferanse }}<br>
+					{{server.sub_name.parent_ref.systemreferanse.get_sikkerhetsnivaa_display|default:"Ukjent sikkerhetsnivå"}}{% endif %}
+					<br>
 				{% endfor %}
 			</td>
 			<td>
@@ -78,7 +81,7 @@
 
 	<h5>Treff på nettverk</h5>
 	{% for network in network_matches %}
-		{{ network.ip_address }}/{{ network.subnet_mask }}: {{network.comment}}<br>
+		{{ network.ip_address }}/{{ network.subnet_mask }} er <b>{{network.comment}}</b> med sikkerhetsnivå <b>{{network.network_zone}}</b><br>
 	{% endfor %}
 
 {% if not_ip_addresses %}
