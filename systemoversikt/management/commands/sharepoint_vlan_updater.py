@@ -21,9 +21,12 @@ class Command(BaseCommand):
 		KILDE = "Infoblox"
 		PROTOKOLL = "SharePoint"
 		BESKRIVELSE = "Nettverkssegmenter med IP-nettverk og beskrivelse"
-		FILNAVN = {"filename1": "infoblox_network_v4.csv", "filename2": "infoblox_network_v6.csv", "filename3": "infoblox_network_container_v4.csv", "filename4": "infoblox_network_container_v6.csv", "sone_design": "VLAN_sikkerhetssoner.xlsx"}
+		FILNAVN = {"infoblox_data": "infoblox.csv", "sone_design": "VLAN_sikkerhetssoner.xlsx"}
 		URL = "https://infoblox.oslo.kommune.no/ui/"
 		FREKVENS = "Manuelt på forespørsel"
+
+		write_mode = True
+		koble_ip = True
 
 		try:
 			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
@@ -51,39 +54,17 @@ class Command(BaseCommand):
 
 			from systemoversikt.views import sharepoint_get_file
 
-			filename1 = FILNAVN["filename1"]
-			filename2 = FILNAVN["filename2"]
-			filename3 = FILNAVN["filename3"]
-			filename4 = FILNAVN["filename4"]
+			infoblox_data = FILNAVN["infoblox_data"]
 			sone_design = FILNAVN["sone_design"]
 
-			source_filepath = f"{filename1}"
-			result = sharepoint_get_file(source_filepath)
-			destination_file1 = result["destination_file"]
-			destination_file1_modified_date = result["modified_date"]
-			print(f"Filen er datert {destination_file1_modified_date}")
-
-			source_filepath = f"{filename2}"
-			result = sharepoint_get_file(source_filepath)
-			destination_file2 = result["destination_file"]
-			destination_file2_modified_date = result["modified_date"]
-			print(f"Filen er datert {destination_file2_modified_date}")
-
-			source_filepath = f"{filename3}"
-			result = sharepoint_get_file(source_filepath)
-			destination_file3 = result["destination_file"]
-			destination_file3_modified_date = result["modified_date"]
-			print(f"Filen er datert {destination_file3_modified_date}")
-
-			source_filepath = f"{filename4}"
-			result = sharepoint_get_file(source_filepath)
-			destination_file4 = result["destination_file"]
-			destination_file4_modified_date = result["modified_date"]
-			print(f"Filen er datert {destination_file4_modified_date}")
+			# VLAN data
+			result = sharepoint_get_file(infoblox_data)
+			destination_infoblox_data = result["destination_file"]
+			destination_infoblox_data_modified_date = result["modified_date"]
+			print(f"Filen er datert {destination_infoblox_data_modified_date}")
 
 			# sonedesign
-			source_filepath = f"{sone_design}"
-			result = sharepoint_get_file(source_filepath)
+			result = sharepoint_get_file(sone_design)
 			destination_sone_design = result["destination_file"]
 			destination_sone_design_modified_date = result["modified_date"]
 			print(f"Filen er datert {destination_sone_design_modified_date}")
@@ -96,10 +77,8 @@ class Command(BaseCommand):
 				vlan_new = 0
 				vlan_deaktivert = 0
 
-				sone_design_status = True
-
-
 				# klargjøre sonedesignet
+				sone_design_status = True
 				def load_sone_design(file):
 					# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
 					import warnings
@@ -137,69 +116,86 @@ class Command(BaseCommand):
 					return network.prefixlen
 
 				import csv
+				from io import StringIO
+
 				with open(destination_file, 'r', encoding='utf-8') as file:
-					data = list(csv.DictReader(file, delimiter=","))
+					data = file.readlines()
 
 				if data == None:
+					print("Fant ingen data i filen")
 					return
 
-				antall_records = len(data)
+				antall_records = 0
+				antall_networkcontainer = 0
+				antall_network = 0
+				antall_ipv6networkcontainer = 0
+				antall_ipv6network = 0
 
 				for line in data:
 
-					if "netmask*" in line: # ipv4 eksport
-						subnetint = prefixlen(line["address*"], line["netmask*"])
+					if line.startswith("header-"):
+						current_header = line
+						continue
 
-						if line["address*"] == "" or line["netmask*"] == "":
+					if not line.startswith(("networkcontainer,", "network,", "ipv6networkcontainer,", "ipv6network,")):
+						continue
+
+					if line.startswith("networkcontainer,"):
+						antall_networkcontainer += 1
+					if line.startswith("network,"):
+						antall_network += 1
+					if line.startswith("ipv6networkcontainer,"):
+						antall_ipv6networkcontainer += 1
+					if line.startswith("ipv6network,"):
+						antall_ipv6network += 1
+
+
+					decoded_line = list(csv.DictReader(StringIO(f"{current_header}\n{line}"), delimiter=","))[0]
+					antall_records += 1
+
+					if "netmask*" in decoded_line:
+						if decoded_line["address*"] == "" or decoded_line["netmask*"] == "":
 							vlan_dropped += 1
 							continue
+						subnetint = prefixlen(decoded_line["address*"], decoded_line["netmask*"])
 
-					if "cidr*" in line: #ipv4 eksport
-						subnetint = prefixlen(line["address*"], line["cidr*"])
 
-						if line["address*"] == "" or line["cidr*"] == "":
+					if "cidr*" in decoded_line:
+						if decoded_line["address*"] == "" or decoded_line["cidr*"] == "":
 							vlan_dropped += 1
 							continue
-
+						subnetint = prefixlen(decoded_line["address*"], decoded_line["cidr*"])
 
 					try:
-						nc = NetworkContainer.objects.get(ip_address=line["address*"], subnet_mask=subnetint)
-						# new, assume no change?
+						nc = NetworkContainer.objects.get(ip_address=decoded_line["address*"], subnet_mask=subnetint)
 					except:
-						# update
 						nc = NetworkContainer.objects.create(
-							ip_address=line["address*"],
+							ip_address=decoded_line["address*"],
 							subnet_mask=subnetint,
 							)
 						#print("n", end="", flush=True)
 						vlan_new += 1
 
-					nc.comment = line["comment"]
-					nc.locationid = line["EA-LokasjonsID"]
-					if not "cidr*" in line: # disse er ikke med i v6-eksporten..
-						nc.orgname = line["EA-ORG-navn"]
-						nc.vlanid = line["EA-VLAN"]
-						nc.vrfname = line["EA-VRF-navn"]
+					nc.comment = decoded_line["comment"]
+					nc.locationid = decoded_line["EA-LokasjonsID"]
+					if not "cidr*" in decoded_line: # disse er ikke med i v6-eksporten..
+						nc.orgname = decoded_line["EA-ORG-navn"]
+						nc.vlanid = decoded_line["EA-VLAN"]
+						nc.vrfname = decoded_line["EA-VRF-navn"]
 						nc.network_zone, nc.network_zone_description = identity_security_zone(nc.ip_address)
 
-					nc.netcategory = line["EA-net-kategori"]
+					nc.netcategory = decoded_line["EA-net-kategori"]
 
-					if "disabled" in line:
-						if line["disabled"] == "True":
+					if "disabled" in decoded_line:
+						if decoded_line["disabled"] == "True":
 							vlan_deaktivert += 1
 							nc.disabled = True
 
 					#print(".", end="", flush=True)
-					nc.save()
+					if write_mode:
+						nc.save()
 
-
-				logg_entry_message = 'Fant %s VLAN/nettverk i %s. %s nye og %s kunne ikke importeres. %s deaktiverte.' % (
-						antall_records,
-						filename,
-						vlan_new,
-						vlan_dropped,
-						vlan_deaktivert,
-					)
+				logg_entry_message = f'Fant {antall_records} VLAN/nettverk i {filename}.\n{antall_networkcontainer} IPv4 containere\n{antall_network} IPv4 nett:\n{antall_ipv6networkcontainer} IPv6 containere:\n{antall_ipv6network} IPv6 nettverk.\n{vlan_new} nye nettverk. {vlan_dropped} kunne ikke importeres. {vlan_deaktivert} er merket som deaktiverte.'
 				logg_entry = ApplicationLog.objects.create(
 						event_type=f'{LOG_EVENT_TYPE} {logmessage}',
 						message=logg_entry_message,
@@ -207,19 +203,8 @@ class Command(BaseCommand):
 				print(logg_entry_message)
 				return logg_entry_message
 
-			#eksekver
-
-			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
-
-			logg_entry_message = ""
-
-			logg_entry_message += import_vlan(destination_file1, "ipv4networks", filename1)
-			logg_entry_message += import_vlan(destination_file1, "ipv6networks", filename2)
-			logg_entry_message += import_vlan(destination_file2, "ipv4networkcontainers", filename3)
-			logg_entry_message += import_vlan(destination_file3, "ipv6networkcontainers", filename4)
 
 
-			#match opp alle IP-adresser mot VLAN
 			@transaction.atomic
 			def ip_vlan_kobling():
 
@@ -235,7 +220,7 @@ class Command(BaseCommand):
 
 				antall_ip_adresser = len(alle_ip_adresser)
 				for idx, ipadr in enumerate(alle_ip_adresser):
-					if idx % 2000 == 0:
+					if idx % 200 == 0:
 						print(f"{idx} av {antall_ip_adresser}")
 					if ipadr.ip_address == None: # skal ikke skje, men det var en feil i et tidligere importscript (klienter)
 						ipadr.delete()
@@ -248,16 +233,22 @@ class Command(BaseCommand):
 						if ipaddress.ip_address(ipadr.ip_address) in network:
 							ipadr.vlan.add(vlan)
 							ant_vlan += 1
-					ipadr.save()
+					if write_mode:
+						ipadr.save()
 					#print("%s med %s koblinger." % (ipadr, ant_vlan))
-				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Fullført")
+				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="IP-kobling fullført")
+
+			#eksekver
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter prosessering..")
+			logg_entry_message = import_vlan(destination_infoblox_data, "Infoblox", infoblox_data)
 
 			print(f"Kobler sammen alle objekter med IP-adresse mot VLAN/subnet..")
-			ip_vlan_kobling()
+			if koble_ip:
+				ip_vlan_kobling()
 			print(f"Fullført")
 
 			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = destination_file1_modified_date # eller timezone.now()
+			int_config.dato_sist_oppdatert = destination_infoblox_data_modified_date # eller timezone.now()
 			int_config.sist_status = logg_entry_message
 			int_config.save()
 
@@ -271,6 +262,7 @@ class Command(BaseCommand):
 			print(logg_message)
 
 			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			#push_pushover(f"{SCRIPT_NAVN} feilet")
+
 
 
