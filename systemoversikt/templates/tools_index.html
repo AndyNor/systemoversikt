@@ -17,6 +17,9 @@
 	{% url 'tool_systemimport' as url_tool_systemimport %}
 	<a href="{{url_tool_systemimport}}" class="btn btn-sm btn-link {% if url_tool_systemimport in request.path %}fremhev{% endif %}">Importer systemer</a><br>
 
+	{% url 'tool_csv_converter' as url_tool_csv_converter %}
+	<a href="{{url_tool_csv_converter}}" class="btn btn-sm btn-link {% if url_tool_csv_converter in request.path %}fremhev{% endif %}">CSV-konverter</a><br>
+
 
 {% endblock sidemeny %}
 

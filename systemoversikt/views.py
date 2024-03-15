@@ -875,6 +875,23 @@ def tool_docx2html(request):
 	})
 
 
+def tool_csv_converter(request):
+	if request.method == "POST":
+		import csv
+		from io import StringIO
+		file_content = request.FILES['fileupload'].read().decode('utf-8')
+		rows = list(csv.DictReader(StringIO(file_content), delimiter=","))
+		header = list(rows[0].keys())
+
+		#print(header)
+		#print(rows)
+
+	return render(request, 'tool_csv_converter.html', {
+		'request': request,
+		'rows': rows if 'rows' in locals() else None,
+		'header': header if 'header' in locals() else None,
+	})
+
 
 def tool_compare_items(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']

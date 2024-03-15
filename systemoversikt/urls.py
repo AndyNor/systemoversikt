@@ -233,6 +233,7 @@ urlpatterns = [
 	re_path(r'^tools/docx2html$', views.tool_docx2html, name='tool_docx2html'),
 	re_path(r'^tools/word_count$', views.tool_word_count, name='tool_word_count'),
 	re_path(r'^tools/systemimport$', views.tool_systemimport, name='tool_systemimport'),
+	re_path(r'^tools/csv_converter$', views.tool_csv_converter, name='tool_csv_converter'),
 	# Last tool-entry here
 	re_path(r'^tools/', views.tools_index, name="tools_index"),
 

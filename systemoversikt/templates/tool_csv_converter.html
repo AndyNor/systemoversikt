@@ -1,0 +1,45 @@
+{% extends "tools_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	CSV-konverter
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+
+	<h6>Velg csv-fil for konvertering</h6>
+	<form method="post" enctype="multipart/form-data">
+		{% csrf_token %}
+		<input class="" type="file" name="fileupload">
+		<input class="btn btn-sm btn-primary" type="submit" name="convert" value="Konverter">
+	</form>
+
+
+	{% if rows %}
+		<hr>
+
+		<table class="table table-sm tablesorter excel">
+			<thead>
+			{% for h in header %}
+				<th>{{ h }}</th>
+			{% endfor %}
+			</thead>
+			<tbody>
+			{% for row in rows %}
+				<tr>
+				{% for key, value in row.items %}
+					<td>{{ value }}</td>
+				{% endfor %}
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+
+	{% endif %}
+
+{% endblock hovedinnhold %}
