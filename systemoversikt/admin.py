@@ -269,6 +269,25 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 
+@admin.register(SystemIntegration)
+class SystemIntegrationAdmin(SimpleHistoryAdmin):
+	list_display = ('pk', 'source_system', 'destination_system', 'integration_type', 'personopplysninger', 'description',)
+	search_fields = ('source_system.systemnavn', 'destination_system.systemnavn','description',)
+	list_filter = ('integration_type', 'personopplysninger',)
+	autocomplete_fields = ('source_system', 'destination_system',)
+
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.source_system.pk}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.source_system.pk}))
+		return super().response_change(request, obj)
+
+
+
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
@@ -328,7 +347,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('alias', 'livslop_status'),
 				('dato_etablert', 'dato_end_of_life'),
 				('driftsmodell_foreignkey', 'systemeierskapsmodell'),
-				('avhengigheter_referanser','avhengigheter'),
 				'systembeskrivelse',
 				('systemtyper', 'systemurl'),
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
@@ -349,7 +367,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('er_arkiv', 'arkivkommentar'),
 				('innsyn_innbygger', 'innsyn_ansatt'),
 				'kontaktperson_innsyn',
-				('datautveksling_mottar_fra', 'datautveksling_avleverer_til'),
 				('risikovurdering_behovsvurdering', 'dato_sist_ros'),
 				('teknisk_egnethet', 'funksjonell_egnethet'),
 				'kjente_mangler',
@@ -394,6 +411,8 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'fields': (
 				#'cmdbref',
 				#'ibruk',
+				('avhengigheter_referanser','avhengigheter'),
+				('datautveksling_mottar_fra', 'datautveksling_avleverer_til'),
 				'systemtekniske_sikkerhetstiltak',
 				'programvarekategori',
 				'strategisk_egnethet',

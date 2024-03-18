@@ -3396,11 +3396,11 @@ SYSTEMEIERSKAPSMODELL_VALG = (
 
 # må lage et script som inverterer verdiene i databasen 5 til 1 og 4 til 2 samtidig som disse inverteres.
 VURDERINGER_SIKKERHET_VALG = (
-	(1, '5 Svært alvorlig'),
-	(2, '4 Alvorlig'),
-	(3, '3 Moderat'),
-	(4, '2 Lav'),
-	(5, '1 Ubetydelig'),
+	(1, '🔴5 Svært alvorlig'),
+	(2, '🔴4 Alvorlig'),
+	(3, '🟡3 Moderat'),
+	(4, '🟢2 Lav'),
+	(5, '🟢1 Ubetydelig'),
 	(6, '0 Ikke vurdert'),
 )
 
@@ -3456,11 +3456,11 @@ SELVBETJENING_VALG = (
 )
 
 SIKKERHETSNIVAA_VALG = (
-	(1, 'Åpen'),
-	(2, 'Intern'),
-	(5, 'Beskyttet'),
-	(3, 'Strengt beskyttet'),
-	(4, 'Gradert')
+	(1, '🟢 Åpen'),
+	(2, '🟡Intern'),
+	(5, '🔴Beskyttet'),
+	(3, '🔴Strengt beskyttet'),
+	(4, '🔴Gradert')
 )
 
 LEVERANSEMODELL_VALG = (
@@ -4054,6 +4054,91 @@ SYSTEM_COLORS = {
 }
 
 
+VALG_SYSTEM_INTEGRATION_DIRECTION = (
+	("RECIEVE", "Mottar opplysninger fra destinasjon"),
+	("DELIVER", "Avleverer opplysninger til destinasjon"),
+	("BOTH", "Overføring av opplysninger begge retninger"),
+)
+
+VALG_SYSTEM_INTEGRATION_TYPE = (
+	("INTEGRATION", "Informasjonsoverføring"),
+	("AUTHENTICATION", "Federert pålogging"),
+	("PUBLICATION", "Applikasjonspublisering"),
+	("COMPONENT", "Tilhørende systemkomponent"),
+)
+
+
+class SystemIntegration(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	source_system = models.ForeignKey(
+			to='System',
+			related_name='system_integration_source',
+			on_delete=models.CASCADE,
+			verbose_name="Kildesystem",
+			blank=False,
+			null=False,
+			)
+	destination_system = models.ForeignKey(
+			to='System',
+			related_name='system_integration_destination',
+			on_delete=models.CASCADE,
+			verbose_name="Destinasjonssystem",
+			blank=False,
+			null=False,
+			)
+	integration_type = models.CharField(
+			choices=VALG_SYSTEM_INTEGRATION_TYPE,
+			verbose_name="Type avhengighet",
+			max_length=50,
+			blank=False,
+			null=False,
+		)
+	personopplysninger = models.BooleanField(
+			verbose_name="Overføres personopplysninger?",
+			blank=True,
+			null=True,
+			)
+	description = models.TextField(
+			verbose_name="Tekstlig beskrivelse",
+			blank=True,
+			null=True,
+			help_text=u"Relevant informasjon om integrasjonen. F.eks. hva som overføres av informasjon, frekvens og protokoll.",
+			)
+	history = HistoricalRecords()
+
+	unique_together = ('source_system', 'destination_system', 'integration_type')
+
+
+
+	def __str__(self):
+		return f'{self.integration_type} fra {self.source_system} til {self.destination_system}'
+
+	class Meta:
+		verbose_name_plural = "Systemoversikt: systemavhengigheter"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+	def color(self):
+		if self.integration_type == "INTEGRATION":
+			return "#A6B4F3"
+		if self.integration_type == "AUTHENTICATION":
+			return "#DCA7A7"
+		if self.integration_type == "PUBLICATION":
+			return "#A7BD64"
+		if self.integration_type == "COMPONENT":
+			return "#C6C6C6"
+
+		return "black"
+
+
+
 class System(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -4623,13 +4708,13 @@ class System(models.Model):
 			help_text=u'Velg en eller flere sikkerhetsgrupper i AD tilhørende systemet. Brukes for å linke opp grupper og personer med tilgang.',
 			)
 	legacy_klient_krever_smb = models.BooleanField(
-			verbose_name="Direkte kommunikasjon med filområde.",
+			verbose_name="Direkte kommunikasjon med filområder?",
 			blank=True,
 			null=True,
 			help_text=u"Settes dersom systemets klient må kommunisere direkte med on-prem filområder. OneDrive er ikke on-prem og er derfor ikke en grunnlag for å sette 'ja' på denne. Settes til 'ja' dersom minst ét av grensesnittene krever on-prem filområdetilgang.",
 			)
 	legacy_klient_krever_direkte_db = models.BooleanField(
-			verbose_name="Direkte kommunikasjon med databaseserver fra klient.",
+			verbose_name="Direkte kommunikasjon med databaseserver fra klient?",
 			blank=True,
 			null=True,
 			help_text=u"Settes dersom systemets klient må kommunisere direkte med databaser. Settes til 'ja' dersom minst ét av grensesnittene krever dette.",
@@ -4806,8 +4891,8 @@ class System(models.Model):
 				return True
 		return False
 
-	def antall_avhengigheter(self):
-		return len(self.datautveksling_mottar_fra.all()) + len(self.datautveksling_avleverer_til.all()) + len(self.avhengigheter_referanser.all())
+	def antall_avhengigheter(self): # SER IKKE UT TIL Å VÆRE I BRUK
+		return len(self.system_integration_source.all()) + len(self.system_integration_destination.all())
 
 	def antall_bruk(self):
 		bruk = SystemBruk.objects.filter(system=self.pk)
