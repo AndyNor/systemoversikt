@@ -43,7 +43,7 @@
 		{% url "systemdetaljer" item.pk as url_systemdetaljer %}
 		<td>
 			{% if item.informasjon_kvalitetssikret is False %}
-			<img style="width: 14px;" src="{% static 'open-iconic/svg/warning.svg' %}" title="Kvalitet ikke verifisert">
+			⚠
 			{% endif %}
 
 			<a href="{{ url_systemdetaljer }}">{{ item }}</a>

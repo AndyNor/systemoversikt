@@ -46,7 +46,7 @@
 	<td>{{ prog.get_funksjonell_egnethet_display|default:"-" }}</td>
 	<td>{{ prog.get_teknisk_egnethet_display|default:"-" }}</td>
 	{% if user.is_authenticated %}
-	<td><a href="/admin/systemoversikt/programvare/{{ prog.pk }}/delete/"><img style="width: 8px; margin: 3px;" src="{% static 'open-iconic/svg/x.svg' %}" alt="slett"></a></td>
+	<td><a href="/admin/systemoversikt/programvare/{{ prog.pk }}/delete/">❌</a></td>
 	{% endif %}
 </tr>
 {% endfor %}
