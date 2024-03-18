@@ -18,7 +18,7 @@
 	{% comment %}{% if item.felles_sektorsystem %} style="background-color: #0779002b;" {% endif %}{% endcomment %}
 	>
 	{% if perms.systemoversikt.change_system %}
-		<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/"><img style="width: 11px; margin: 3px;" src="{% static 'open-iconic/svg/pencil.svg' %}" title="rediger"></a></td>
+		<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/">✎</a></td>
 	{% endif %}
 
 	<td>
