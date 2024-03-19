@@ -35,6 +35,38 @@ VALG_KLARGJORT_SIKKERHETSMODELL = (
 )
 
 
+class CitrixPublication(models.Model):
+	sone = models.CharField(
+			verbose_name="sone",
+			blank=False,
+			null=False,
+			max_length=10,
+		)
+	publikasjon_json = models.TextField(
+			verbose_name="Publikasjon JSON",
+			blank=False,
+			null=False,
+		)
+	publikasjon_UUID = models.CharField(
+			verbose_name="Publikasjon UUID",
+			blank=False,
+			null=False,
+			unique=True,
+			max_length=40,
+		)
+	publikasjon_active = models.BooleanField(
+			verbose_name="Publisert",
+			default=True,
+			)
+
+	def __str__(self):
+		return f"Citrix publikasjon {publikasjon_UUID}"
+
+	class Meta:
+		verbose_name_plural = "CMDB: Citrixpublikasjoner"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
 class Fellesinformasjon(models.Model):
 	message = models.TextField(
 			verbose_name="message",
