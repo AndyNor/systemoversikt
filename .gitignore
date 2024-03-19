@@ -10,7 +10,8 @@ secrets_test.py
 *.csv
 *.tsv
 *.exe
-
+*.json
+/import/*
 
 # Template stuff
 # local
@@ -133,5 +134,3 @@ systemoversikt/management/commands/lokalt/scan_result.json
 kritiske_kapabilitet.json
 kritiske_funksjoner.json
 systemoversikt/management/commands/manuell_sertifikat_sjekker_config.py
-systemoversikt/import/citrix_publikasjoner_is.json
-systemoversikt/import/citrix_publikasjoner_ss.json
