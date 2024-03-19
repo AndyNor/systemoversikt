@@ -58,6 +58,9 @@
 	{% url 'alle_databaser' as url_alle_databaser %}
 	<a href="{{url_alle_databaser}}" class="btn btn-sm btn-link {% if url_alle_databaser in request.path %}fremhev{% endif %}">Databaser</a><br>
 
+	{% url 'alle_citrixpub' as url_alle_citrixpub %}
+	<a href="{{url_alle_citrixpub}}" class="btn btn-sm btn-link {% if url_alle_citrixpub in request.path %}fremhev{% endif %}">Citrix apper</a><br>
+
 	{% url 'alle_nettverk' as url_alle_nettverk %}
 	<a href="{{url_alle_nettverk}}" class="btn btn-sm btn-link {% if url_alle_nettverk in request.path %}fremhev{% endif %}">VLAN / Nettverk</a><br>
 

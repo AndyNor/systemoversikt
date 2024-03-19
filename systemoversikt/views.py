@@ -1339,6 +1339,19 @@ def system_los_struktur(request, pk=None):
 	})
 
 
+def alle_citrixpub(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	citrixapps = CitrixPublication.objects.filter(publikasjon_active=True)
+	for app in citrixapps:
+		app.publikasjon_json = json.loads(app.publikasjon_json)
+
+	return render(request, 'cmdb_citrix_apps.html', {
+		'request': request,
+		'citrixapps': citrixapps,
+	})
 
 def alle_nettverksenheter(request):
 	#Viser alle nettverksenheter (cisco, bigip..)

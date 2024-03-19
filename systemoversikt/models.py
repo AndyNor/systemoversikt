@@ -60,7 +60,7 @@ class CitrixPublication(models.Model):
 			)
 
 	def __str__(self):
-		return f"Citrix publikasjon {publikasjon_UUID}"
+		return f"Citrix publikasjon {self.publikasjon_UUID}"
 
 	class Meta:
 		verbose_name_plural = "CMDB: Citrixpublikasjoner"

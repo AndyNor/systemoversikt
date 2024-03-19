@@ -89,6 +89,15 @@ class AzureNamedLocationsAdmin(admin.ModelAdmin):
 
 
 
+
+@admin.register(CitrixPublication)
+class CitrixPublicationAdmin(admin.ModelAdmin):
+	list_display = ('publikasjon_UUID', 'sone', 'publikasjon_active',)
+	search_fields = ('publikasjon_UUID', 'publikasjon_json')
+	list_filter = ('publikasjon_active', 'sone',)
+	readonly_fields = ['publikasjon_UUID', 'sone', 'publikasjon_active', 'publikasjon_json']
+
+
 @admin.register(AzureApplication)
 class AzureApplicationAdmin(admin.ModelAdmin):
 	list_display = ('displayName', 'risikonivaa', 'createdDateTime', 'appId', 'sist_oppdatert',)
@@ -295,7 +304,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 	search_fields = ('systemnavn', 'alias',)
 	list_filter = ('autentiseringsteknologi', 'autentiseringsalternativer', 'database_in_use', 'database_supported', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
 
-	readonly_fields = ['inv_konklusjon', 'inv_konklusjon_beskrivelse']
+	#readonly_fields = ['inv_konklusjon', 'inv_konklusjon_beskrivelse']
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):

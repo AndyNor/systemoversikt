@@ -2,14 +2,17 @@
 from django.core.management.base import BaseCommand
 from systemoversikt.models import *
 from django.db import transaction
-import json, os
+import json, os, io
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
+from systemoversikt.views import sharepoint_get_file
 
 class Command(BaseCommand):
 	def handle(self, **options):
+
+		skip_sp = False # Sett til True ved lokal testing
 
 		INTEGRASJON_KODEORD = "sp_citrix"
 		LOG_EVENT_TYPE = "Citrix publikasjon"
@@ -43,8 +46,6 @@ class Command(BaseCommand):
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		try:
-			from systemoversikt.views import sharepoint_get_file
-
 			def hent_fil(filnavn):
 				source_filepath = f"{filnavn}"
 				result = sharepoint_get_file(source_filepath)
@@ -53,34 +54,48 @@ class Command(BaseCommand):
 				print(f"{filnavn} er datert {modified_date}")
 				return (destination_file, modified_date)
 
-			fil_citrix_is = FILNAVN["citrix_is"]
-			citrix_is_data, citrix_is_date = hent_fil(fil_citrix_is)
-			fil_citrix_ss = FILNAVN["citrix_ss"]
-			citrix_ss_data, citrix_ss_date = hent_fil(fil_citrix_ss)
+			sp_citrix_is = FILNAVN["citrix_is"]
+			sp_citrix_ss = FILNAVN["citrix_ss"]
+
+			if skip_sp:
+				citrix_is_lokalfil, citrix_is_date = ("systemoversikt/import/citrix_publikasjoner_is.json", None)
+				citrix_ss_lokalfil, citrix_ss_date = ("systemoversikt/import/citrix_publikasjoner_ss.json", None)
+			else:
+				citrix_is_lokalfil, citrix_is_date = hent_fil(sp_citrix_is)
+				citrix_ss_lokalfil, citrix_ss_date = hent_fil(sp_citrix_ss)
+
 			logg_entry_message = ""
 
-			print(citrix_is_data)
+			print(citrix_is_lokalfil)
+			print(citrix_ss_lokalfil)
 
 			@transaction.atomic
-			def import_citrix(filnavn, data, dato):
+			def import_citrix(filnavn, filsti, dato, zone):
 
-				# åpne fil
+				with open(filsti, 'r', encoding="utf-8") as f:
+					#print(f"Encoding er {f.encoding}") # de originale filene var "cp1252", men er konvertert via Sublime text editor
+					data = f.read()#.encode('latin1').decode('cp1252').encode('utf-8')
 
-				antall_records = len(data)
+				json_data = json.loads(data)
+				antall_records = len(json_data)
 
-				#for line in data:
-					#print(line)
-					# bearbeide
+				for line in json_data:
+					c, created = CitrixPublication.objects.get_or_create(publikasjon_UUID=line['UUID'])
+					c.sone = zone
+					c.publikasjon_json = json.dumps(line)
+					c.publikasjon_active = line['Enabled']
+					c.save()
 
 
-				logg_entry_message = f'Fant {antall_records} publikasjoner datert {dato}'
+				logg_entry_message = f'Fant {antall_records} publikasjoner datert {dato} i {filnavn}'
+				print(logg_entry_message)
 				return logg_entry_message
 
 			#eksekver
-			print(f"Importerer fra {fil_citrix_is}")
-			logg_entry_message += import_citrix(fil_citrix_is, citrix_is_data, citrix_is_date)
-			print(f"Importerer fra {fil_citrix_ss}")
-			logg_entry_message += import_citrix(fil_citrix_ss, citrix_ss_data, citrix_ss_date)
+			print(f"Importerer fra {sp_citrix_is}")
+			logg_entry_message += import_citrix(sp_citrix_is, citrix_is_lokalfil, citrix_is_date, "Intern")
+			print(f"Importerer fra {sp_citrix_ss}")
+			logg_entry_message += import_citrix(sp_citrix_ss, citrix_ss_lokalfil, citrix_ss_date, "Sikker")
 
 
 			# lagre sist oppdatert tidspunkt

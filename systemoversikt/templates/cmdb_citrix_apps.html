@@ -1,0 +1,56 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Citrix-publiseringer
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<table class="table table-sm tablesorter excel">
+		<thead>
+			<th>Sone</th>
+			<th>BrowserName<br>
+			Application Name</th>
+			<th>AdminFolderName</th>
+			<td>ClientFolder</th>
+			<td>WorkingDirectory<br>
+			CommandLineExecutable<br>
+			CommandLineArguments</th>
+			<th>Description</th>
+			<th>ShortcutAddedToDesktop<br>
+			ShortcutAddedToStartMenu<br>
+			StartMenuFolder</th>
+			<th>UserFilterEnabled</th>
+			<th>DesktopGroup</th>
+			<th>Tilgangsstyring</th>
+		</thead>
+	<tbody>
+	{% for app in citrixapps %}
+		<tr>
+			<td>{{app.sone}}</td>
+			<td>{{app.publikasjon_json.BrowserName|default:"-"}}<br>
+			{{app.publikasjon_json.ApplicationName|default:"-"}}</td>
+			<td>{{app.publikasjon_json.AdminFolderName}}</td>
+			<td>{{app.publikasjon_json.ClientFolder|default:""}}</td>
+			<td>{{app.publikasjon_json.WorkingDirectory|default:"-"}}<br>
+			{{app.publikasjon_json.CommandLineExecutable|default:"-"}}<br>
+			{{app.publikasjon_json.CommandLineArguments|default:"-"}}</td>
+			<td>{{app.publikasjon_json.Description|default:"-"}}</td>
+			<td>{{app.publikasjon_json.ShortcutAddedToDesktop|yesno:"Ja,-"}}<br>
+			{{app.publikasjon_json.ShortcutAddedToStartMenu|yesno:"Ja,-"}}<br>
+			{{app.publikasjon_json.StartMenuFolder|default:""}}</td>
+			<td>{{app.publikasjon_json.UserFilterEnabled|yesno:"Ja, Nei"}}</td>
+			<td>{{app.publikasjon_json.AllAssociatedDesktopGroupUids}}</td>
+			<td>{{app.publikasjon_json.AssociatedUserFullNames}}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}
