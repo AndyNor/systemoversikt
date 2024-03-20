@@ -94,8 +94,8 @@ class AzureNamedLocationsAdmin(admin.ModelAdmin):
 class CitrixPublicationAdmin(admin.ModelAdmin):
 	list_display = ('publikasjon_UUID', 'sone', 'publikasjon_active',)
 	search_fields = ('publikasjon_UUID', 'publikasjon_json')
-	list_filter = ('publikasjon_active', 'sone',)
-	readonly_fields = ['publikasjon_UUID', 'sone', 'publikasjon_active', 'publikasjon_json']
+	list_filter = ('publikasjon_active', 'sone', 'type_vApp', 'type_nettleser', 'type_remotedesktop', 'type_produksjon', 'type_medlemmer')
+	readonly_fields = ['publikasjon_UUID', 'sone', 'publikasjon_active', 'publikasjon_json', 'type_vApp', 'type_nettleser', 'type_remotedesktop', 'type_produksjon', 'type_medlemmer']
 
 
 @admin.register(AzureApplication)

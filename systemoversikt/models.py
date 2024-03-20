@@ -55,9 +55,36 @@ class CitrixPublication(models.Model):
 			max_length=40,
 		)
 	publikasjon_active = models.BooleanField(
-			verbose_name="Publisert",
+			verbose_name="Aktiv",
 			default=True,
 			)
+	type_vApp = models.BooleanField(
+			verbose_name="Er en vApp",
+			default=False,
+			)
+	type_nettleser = models.BooleanField(
+			verbose_name="Via nettleser",
+			default=False,
+			)
+	type_remotedesktop = models.BooleanField(
+			verbose_name="Er remote desktop",
+			default=False,
+			)
+	type_produksjon = models.BooleanField(
+			verbose_name="For produksjon",
+			default=True,
+			)
+	type_medlemmer = models.BooleanField(
+			verbose_name="Er publisert",
+			default=True,
+			)
+	#systemknytning = models.ForeignKey(
+	#		to="System",
+	#		verbose_name="Systemknytning",
+	#		on_delete=models.SET_NULL,
+	#		blank=True,
+	#		null=True,
+	#		)
 
 	def __str__(self):
 		return f"Citrix publikasjon {self.publikasjon_UUID}"
@@ -3647,6 +3674,8 @@ class Programvare(models.Model):
 		return u'%s' % (self.programvarenavn)
 
 	def alias_oppdelt(self):
+		if self.alias == None:
+			return []
 		return self.alias.split()
 
 	class Meta:
@@ -4841,7 +4870,10 @@ class System(models.Model):
 
 
 	def alias_oppdelt(self):
+		if self.alias == None:
+			return []
 		return self.alias.split()
+
 
 	def unike_server_os(self):
 		server_os = []
@@ -5077,6 +5109,31 @@ class System(models.Model):
 
 		tekst = f"{tilgjengelighet}*{tjenestenivaa}*{kritikalitet}*{sammfunnskritisk}={score}"
 		return tekst
+
+
+	def citrix_publiseringer_pk(self):
+		navn = self.systemnavn.split()
+		#print(navn)
+		alias = self.alias_oppdelt()
+		#print(alias)
+		words = navn + alias
+		#print(words)
+		hits = []
+		for w in words:
+			if len(w) > 2:
+				hits.extend((list(CitrixPublication.objects.filter(publikasjon_json__icontains=w))))
+		return hits
+
+
+	def citrix_publiseringer(self):
+		hits = self.citrix_publiseringer_pk()
+
+		if hits:
+			for t in hits:
+				t.publikasjon_json = json.loads(t.publikasjon_json)
+			return hits
+		else:
+			return None
 
 
 	class Meta:

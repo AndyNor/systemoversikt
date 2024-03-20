@@ -12,7 +12,7 @@ from systemoversikt.views import sharepoint_get_file
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		skip_sharepoint = False # Sett til True ved lokal testing
+		skip_sharepoint = True # Sett til True ved lokal testing
 
 		INTEGRASJON_KODEORD = "sp_citrix"
 		LOG_EVENT_TYPE = "Citrix publikasjon"
@@ -103,8 +103,24 @@ class Command(BaseCommand):
 								oppslag = obj["DesktopGroupName"]
 						#print(f"{desktopgroup} --> {oppslag}")
 						AllAssociatedDesktopGroupUids_Name.append(oppslag)
-
 					line["AllAssociatedDesktopGroupUids_Name"] = AllAssociatedDesktopGroupUids_Name
+
+					if any(sub in line["CommandLineExecutable"].lower() for sub in ["\\appv\\", "app-v", "sfttray.exe"]):
+						c.type_vApp = True  # default False
+
+					if any(sub in line["CommandLineExecutable"].lower() for sub in ["chrome.exe","firefox.exe","msedge.exe", "iexplore.exe"]):
+						c.type_nettleser = True # default False
+
+					if any(sub in line["CommandLineExecutable"].lower() for sub in ["mstsc.exe",]):
+						c.type_remotedesktop = True # default False
+
+					if any(sub in line["BrowserName"].lower() for sub in ["demo","test","kurs", "preprod"]):
+						c.type_produksjon = False # default True
+					if any(sub in line["ApplicationName"].lower() for sub in ["demo","test","kurs", "preprod"]):
+						c.type_produksjon = False # default True
+
+					if len(line["AssociatedUserFullNames"]) == 0:
+						c.type_medlemmer = False # default True
 
 					c.publikasjon_json = json.dumps(line)
 					c.publikasjon_active = line['Enabled']
@@ -115,12 +131,34 @@ class Command(BaseCommand):
 				print(logg_entry_message)
 				return logg_entry_message
 
+			"""
+			@transaction.atomic
+			def koble_system():
+				teller = 0
+				alle = System.objects.all().count()
+				for system in System.objects.all().order_by('tilgjengelighetsvurdering'):
+					teller += 1
+					if teller % 30 == 0:
+						print(f"{teller} av {alle}")
+					for publisering in system.citrix_publiseringer_pk():
+						if publisering.systemknytning == None:
+							publisering.systemknytning = system
+							publisering.save()
+							#print(f"Koblet {publisering} med {system}")
+						else:
+							pass
+							#print(f"Publisering {publisering} var allerede koblet til {publisering.systemknytning}")
+			"""
+
 			#eksekver
+			CitrixPublication.objects.all().delete() # ved behov
 			print(f"Importerer fra {sp_citrix_is}")
 			logg_entry_message += import_citrix(sp_citrix_is, citrix_is_lokalfil, citrix_is_date, "Intern", citrix_is_desktop_gr_lokalfil)
 			print(f"Importerer fra {sp_citrix_ss}")
 			logg_entry_message += import_citrix(sp_citrix_ss, citrix_ss_lokalfil, citrix_ss_date, "Sikker", citrix_ss_desktop_gr_lokalfil)
 
+			#koble mot systemer
+			#koble_system()
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = citrix_is_date # eller timezone.now()

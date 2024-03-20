@@ -17,6 +17,13 @@
 			<th>DesktopGroup</th>
 			<th>BrowserName<br>
 			Application Name</th>
+
+			<th>vApp</th>
+			<th>Nettleser</th>
+			<th>Remote desktop</th>
+			<th>Produksjon</th>
+			<th>Har medlemmer</th>
+
 			<th>AdminFolderName</th>
 			<td>ClientFolder</th>
 			<td>WorkingDirectory<br>
@@ -38,6 +45,13 @@
 			{% endfor %}</td>
 			<td>{{app.publikasjon_json.BrowserName|default:"-"}}<br>
 			{{app.publikasjon_json.ApplicationName|default:"-"}}</td>
+
+			<td>{{app.type_vApp|yesno:"Ja,Nei"}}</td>
+			<td>{{app.type_nettleser|yesno:"Ja,Nei"}}</td>
+			<td>{{app.type_remotedesktop|yesno:"Ja,Nei"}}</td>
+			<td>{{app.type_produksjon|yesno:"Ja,Nei"}}</td>
+			<td>{{app.type_medlemmer|yesno:"Ja,Nei"}}</td>
+
 			<td>{{app.publikasjon_json.AdminFolderName}}</td>
 			<td>{{app.publikasjon_json.ClientFolder|default:""}}</td>
 			<td>{{app.publikasjon_json.WorkingDirectory|default:"-"}}<br>

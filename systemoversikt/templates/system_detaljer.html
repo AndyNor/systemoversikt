@@ -631,8 +631,30 @@
 				{{systemdetaljer.legacy_klient_krever_onprem_lisensserver|yesno:"🔴Ja,🟢Nei, 🟡Vet ikke"}}<br>
 			{% get_verbose_field_name systemdetaljer "legacy_klient_autentisering" %}
 				{{systemdetaljer.legacy_klient_autentisering|yesno:"🔴Ja,🟢Nei, 🟡Vet ikke"}}<br>
+		</div>
+	</div>
 
 
+	<br><br><b>Citrix-publiseringer</b>
+	<div class="row">
+		<div class="col-12">
+			<div id="accordion-citrix">
+				<div class="card">
+					<div class="card-header" id="heading-citrix">
+						<h5 class="mb-0">
+							<button class="btn btn-link" data-toggle="collapse" data-target="#collapse-citrix" aria-expanded="true" aria-controls="collapse-citrix">Citrix-publiseringer
+							</button>
+						</h5>
+					</div>
+					<div id="collapse-citrix" class="collapse" aria-labelledby="heading-citrix" data-parent="#accordion-citrix">
+						<div class="card-body">
+						{% for publisering in systemdetaljer.citrix_publiseringer %}
+							{{ publisering.publikasjon_json.ApplicationName }} ({{ publisering.sone }} sone)<br>
+						{% endfor %}
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 
