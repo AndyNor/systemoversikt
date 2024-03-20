@@ -14,6 +14,7 @@
 	<table class="table table-sm tablesorter excel">
 		<thead>
 			<th>Sone</th>
+			<th>DesktopGroup</th>
 			<th>BrowserName<br>
 			Application Name</th>
 			<th>AdminFolderName</th>
@@ -26,13 +27,15 @@
 			ShortcutAddedToStartMenu<br>
 			StartMenuFolder</th>
 			<th>UserFilterEnabled</th>
-			<th>DesktopGroup</th>
-			<th>Tilgangsstyring</th>
+			<th>AssociatedUserFullNames</th>
 		</thead>
 	<tbody>
 	{% for app in citrixapps %}
 		<tr>
 			<td>{{app.sone}}</td>
+			<td style="white-space: nowrap;">{% for name in app.publikasjon_json.AllAssociatedDesktopGroupUids_Name %}
+				{{name}}<br>
+			{% endfor %}</td>
 			<td>{{app.publikasjon_json.BrowserName|default:"-"}}<br>
 			{{app.publikasjon_json.ApplicationName|default:"-"}}</td>
 			<td>{{app.publikasjon_json.AdminFolderName}}</td>
@@ -45,7 +48,6 @@
 			{{app.publikasjon_json.ShortcutAddedToStartMenu|yesno:"Ja,-"}}<br>
 			{{app.publikasjon_json.StartMenuFolder|default:""}}</td>
 			<td>{{app.publikasjon_json.UserFilterEnabled|yesno:"Ja, Nei"}}</td>
-			<td>{{app.publikasjon_json.AllAssociatedDesktopGroupUids}}</td>
 			<td>{{app.publikasjon_json.AssociatedUserFullNames}}</td>
 		</tr>
 	{% endfor %}
