@@ -2824,11 +2824,28 @@ def logger(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:300]
+	aktive_antall_uker = 52
+	aktive_antall_personer = 30
+	period = datetime.datetime.now() - datetime.timedelta(weeks=aktive_antall_uker)
+	top_users = LogEntry.objects.values('user_id').filter(action_time__gte=period).annotate(count=Count('user_id')).order_by('-count')[:30]
+	user_ids = [entry['user_id'] for entry in top_users]
+	users = User.objects.filter(id__in=user_ids)
+	top_endringer = []
+	for user, entry in zip(users, top_users):
+		top_endringer.append({"user": user, "email": user.email, "count": entry['count']})
+
+
+	antall_vist = 500
+	recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:antall_vist]
 	return render(request, 'site_audit_logger.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'recent_admin_loggs': recent_admin_loggs,
+		'antall_vist': antall_vist,
+		'top_endringer': top_endringer,
+		'aktive_antall_uker': aktive_antall_uker,
+		'aktive_antall_personer': aktive_antall_personer,
+
 	})
 
 

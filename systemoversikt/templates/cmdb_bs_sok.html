@@ -11,9 +11,11 @@
 
 {% block hovedinnhold %}
 
-	<p>CMDB står for "Configuration management database" og er i praksis en eller flere databaser med informasjon om hva et driftsmiljø består av. Sopra Steria har organisert servere, databaser, nettverksutstyr med mer i "Business Services". En business service representerer en tjeneste og består igjen av business sub services per miljø (test, produksjon, kurs..). I Kartoteket knytter vi business service til system. Kobling sub service til service gjøres av Sopra Steria, og alt av ressurser (servere, databaser) er knyttet til en sub service.</p>
+	<p>CMDB står for "Configuration management database" og er i praksis en eller flere databaser med informasjon om hva et driftsmiljø består av. Sopra Steria har organisert servere og databaser under "miljø" som i  praksis er test/produksjon/kurs for et system. Hvert miljø er koblet til en kategori.
 
-	<p>Det er knyttet tilgjengelighetskrav til business sub services, som igjen dikterer SLA krav knyttet til bestillinger og håndtering av feil på underliggende systemer. Ler mer om SLA-nivåene på <a href="https://confluence.oslo.kommune.no/x/34MWBg" target="_blank">Confluence</a>.</p>
+	I Kartoteket skal vi nå knytte systemet direkte til de miljø det består av. Denne knytningen vil skje fra systemets redigeringsside.</p>
+
+	<p>Det er knyttet tilgjengelighetskrav til hvert miljø, som igjen dikterer SLA krav knyttet til bestillinger og håndtering av feil på underliggende systemer. Ler mer om SLA-nivåene på <a href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Kontinuit--og-beredskapsarbeid.aspx" target="_blank">SharePoint</a>.</p>
 
 	<p>Importen av disse dataene skjer automatik hver natt</p>
 
@@ -35,8 +37,8 @@
 	<th>Opprettet</th>
 	<th>Oppdatert</th>
 	<th>Aktiv?</th>
-	<th>Business Service</th>
-	<th>Business Sub Service</th>
+	<th>Nivå 1 Business Service (kategori)</th>
+	<th>Nivå 2 Business Service Offering (miljø)</th>
 	<th>Service classification</th>
 	<th>Antall servere</th>
 	<th>Antall databaser</th>
