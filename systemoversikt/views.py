@@ -3640,7 +3640,7 @@ def systemklassifisering_detaljer(request, kriterie=None):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	if kriterie == None:
-		kriterie = "FELLESSYSTEM"
+		kriterie = "FELLESSYSTEM_OBLIGATORISK"
 
 	if kriterie == "__NONE__":
 		utvalg_systemer = System.objects.filter(~Q(ibruk=False)).filter(systemeierskapsmodell=None)
