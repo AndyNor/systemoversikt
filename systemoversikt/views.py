@@ -3679,7 +3679,7 @@ def systemtype_detaljer(request, pk=None):
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
 	systemtyper = Systemtype.objects.all()
 
-	utvalg_systemer = utvalg_systemer.order_by('ibruk', Lower('systemnavn'))
+	utvalg_systemer = utvalg_systemer.filter(livslop_status__in=[1,2,3,4,5]).order_by('ibruk', Lower('systemnavn'))
 	return render(request, 'system_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
