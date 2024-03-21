@@ -22,6 +22,7 @@
 	<th>Tilgjengelighet</th>
 	<th>Kritisk kapabilitet</th>
 	<th>Informasjonsområder</th>
+	<th>Autentisering</th>
 	<th>Konfidensialitet</th>
 	<th>Integritet</th>
 	<th>Risikovurdering</th>
@@ -51,6 +52,9 @@
 		{% empty %}
 			-
 		{% endfor %}
+	</td>
+	<td>
+		{% for metode in system.vis_autentisering %}{{ metode }}{% endfor %}
 	</td>
 	<td>
 		{{ system.get_konfidensialitetsvurdering_display|default:"-" }}

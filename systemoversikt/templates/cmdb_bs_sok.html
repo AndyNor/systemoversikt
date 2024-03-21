@@ -17,7 +17,16 @@
 
 	<p>Det er knyttet tilgjengelighetskrav til hvert miljø, som igjen dikterer SLA krav knyttet til bestillinger og håndtering av feil på underliggende systemer. Ler mer om SLA-nivåene på <a href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Kontinuit--og-beredskapsarbeid.aspx" target="_blank">SharePoint</a>.</p>
 
-	<p>Importen av disse dataene skjer automatik hver natt</p>
+	<p>Importen av disse dataene skjer automatisk hver natt</p>
+
+	<hr>
+	Hopp til
+	<a href="#anchor_uten_systemkobling" class="btn btn-sm btn-link">Uten systemkobling</a>
+	<a href="#anchor_skjult" class="btn btn-sm btn-link">Skjult med databaser eller servere</a>
+	<a href="#anchor_mangler" class="btn btn-sm btn-link">System uten kobling</a>
+	<a href="#anchor_ukjent" class="btn btn-sm btn-link">Koblede systemer med ukjent plattform</a>
+	<a href="#anchor_utfaset" class="btn btn-sm btn-link">Utfaset men systemkoblet</a>
+
 
 	<hr>
 
@@ -34,9 +43,6 @@
 <table class="table table-sm tablesorter excel">
 <thead>
 <tr>
-	<th>Opprettet</th>
-	<th>Oppdatert</th>
-	<th>Aktiv?</th>
 	<th>Nivå 1 Business Service (kategori)</th>
 	<th>Nivå 2 Business Service Offering (miljø)</th>
 	<th>Service classification</th>
@@ -49,85 +55,78 @@
 	{% comment %}
 	<th>Kritikalitet</th>
 	{% endcomment %}
-	<th>Availability (SLA)</th>
-	<th>Operation factor</th>
+	<th>Tilgjengelighet</th>
+	<th>Driftskompleksitet</th>
 	<th>Kritikalitet</th>
 </tr>
 </thead>
 <tbody>
 {% for item in cmdbref %}
-<tr {% if item.operational_status == 0 %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
-	<td>{{ item.opprettet|timesince }}</td>
-	<td>{{ item.sist_oppdatert|timesince }}</td>
+	<tr {% if item.operational_status == 0 %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 
-	<td>
-		{% include 'site_janeivetikke.html' with boolean=item.operational_status %}<br>
-		{{ item.get_operational_status_display|default:"-" }}
-	</td>
+		<td>{{ item.parent_ref.navn|default:'?' }}</td>
+		<td>
+			{% comment %}
+				{% if user.is_authenticated %}
+				<a href="/admin/systemoversikt/cmdbref/{{ item.pk }}/change/">
+					✎</a>
+				{% endif %}
+			{% endcomment %}
 
-	<td>{{ item.parent_ref.navn|default:'?' }}</td>
-	<td>
-		{% comment %}
-			{% if user.is_authenticated %}
-			<a href="/admin/systemoversikt/cmdbref/{{ item.pk }}/change/">
-				✎</a>
+
+			<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
+			{% if item.is_bss %}<span> (gruppe)</span>{% endif %}
+		</td>
+		<td>
+			{{ item.service_classification|default:"" }}
+		</td>
+		<td>{{ item.ant_devices }}</td>
+		<td>{{ item.ant_databaser }}</td>
+		<td>
+			{{ item.backup_size|filesizeformat }}
+		</td>
+		<td>
+			{% if item.parent_ref.systemreferanse %}
+				{% url 'systemdetaljer' pk=item.parent_ref.systemreferanse.pk as url_system %}
+				<a href="{{ url_system }}">{{ item.parent_ref.systemreferanse }}</a><br>
+				<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ endre?</a>
+			{% else %}
+				<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ koble?</a>
 			{% endif %}
+		</td>
+
+		<td>
+			{% if item.parent_ref.systemreferanse %}
+				{{ item.parent_ref.systemreferanse.driftsmodell_foreignkey|default:"Ikke koblet" }}
+			{% else %}
+				-
+			{% endif %}
+		</td>
+
+		<td>{{ item.get_environment_display|default:"-" }}</td>
+
+		{% comment %}
+		<td>{{ item.get_kritikalitet_display|default:"X ukjent" }}</td>
 		{% endcomment %}
 
+		<td {% if not item.u_service_availability %} style="color: red;" {% endif %}>
+			{{ item.u_service_availability_text|default:"T?" }}
+		</td>
+		<td {% if not item.u_service_operation_factor %} style="color: red;" {% endif %}>
+			{{ item.u_service_operation_factor_text|default:"D?" }}
+		</td>
+		<td {% if not item.u_service_complexity %} style="color: red;" {% endif %}>
+			{{ item.u_service_complexity_text|default:"K?" }}
+		</td>
 
-		<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
-		{% if item.is_bss %}<span> (gruppe)</span>{% endif %}
-	</td>
-	<td>
-		{{ item.service_classification|default:"" }}
-	</td>
-	<td>{{ item.ant_devices }}</td>
-	<td>{{ item.ant_databaser }}</td>
-	<td>
-		{{ item.backup_size|filesizeformat }}
-	</td>
-	<td>
-		{% if item.parent_ref.systemreferanse %}
-			{% url 'systemdetaljer' pk=item.parent_ref.systemreferanse.pk as url_system %}
-			<a href="{{ url_system }}">{{ item.parent_ref.systemreferanse }}</a><br>
-			<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ endre?</a>
-		{% else %}
-			<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ koble?</a>
-		{% endif %}
-	</td>
-
-	<td>
-		{% if item.parent_ref.systemreferanse %}
-			{{ item.parent_ref.systemreferanse.driftsmodell_foreignkey|default:"Ikke koblet" }}
-		{% else %}
-			-
-		{% endif %}
-	</td>
-
-	<td>{{ item.get_environment_display|default:"-" }}</td>
-
-	{% comment %}
-	<td>{{ item.get_kritikalitet_display|default:"X ukjent" }}</td>
-	{% endcomment %}
-
-	<td {% if not item.u_service_availability %} style="color: red;" {% endif %}>
-		{{ item.u_service_availability_text|default:"T?" }}
-	</td>
-	<td {% if not item.u_service_operation_factor %} style="color: red;" {% endif %}>
-		{{ item.u_service_operation_factor|default:"D?" }}
-	</td>
-	<td {% if not item.u_service_complexity %} style="color: red;" {% endif %}>
-		{{ item.u_service_complexity|default:"K?" }}
-	</td>
-
-</tr>
+	</tr>
 {% endfor %}
 </tbody>
 </table>
 
 
 
-	<h4>Business services uten kobling til et system</h4>
+	<h3 style="scroll-margin-top: 150px;" id="anchor_uten_systemkobling">Mangler systemkobling</h3>
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
@@ -150,7 +149,8 @@
 	</table>
 
 
-	<h4>Skjulte business services med databaser eller servere</h4>
+
+	<h3 style="scroll-margin-top: 150px;" id="anchor_skjult">Skjult men har databaser eller servere</h3>
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
@@ -171,7 +171,8 @@
 	</table>
 
 
-	<h4>Systemer angitt å kjøre på felles IKT-plattform som ikke er koblet til en business service</h4>
+
+	<h3 style="scroll-margin-top: 150px;" id="anchor_mangler">Systemer angitt som felles IKT-plattform men mangler kobling</h3>
 	<p>Viser ikke infrastrukturkomponenter</p>
 	<table class="table table-sm tablesorter excel">
 	<thead>
@@ -194,7 +195,9 @@
 	</tbody>
 	</table>
 
-	<h4>Systemer med Business Service kobling med angitt plattform annen enn felles IKT-plattform.</h4>
+
+
+	<h3 style="scroll-margin-top: 150px;" id="anchor_ukjent">Koblede systemer med ukjent plattform</h3>
 	<p>Viser ikke infrastrukturkomponenter</p>
 	<table class="table table-sm tablesorter excel">
 	<thead>
@@ -220,7 +223,8 @@
 	</table>
 
 
-	<h4>Utfasede business services som fremdeles er koblet mot et system</h4>
+
+	<h3 style="scroll-margin-top: 150px;" id="anchor_utfaset">Utfaset men er systemkoblet</h3>
 	<a href="{% url 'cmdb_bs_disconnect' %}">Løskoble alle</a>
 	<table class="table table-sm tablesorter excel">
 		<thead>

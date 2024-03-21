@@ -5135,6 +5135,13 @@ class System(models.Model):
 		else:
 			return None
 
+	def vis_autentisering(self):
+		relevante_integrasjoner = SystemIntegration.objects.filter(source_system=self).filter(integration_type="AUTHENTICATION")
+		if len(relevante_integrasjoner) > 0:
+			return [i.destination_system for i in relevante_integrasjoner]
+		else:
+			return self.autentiseringsteknologi.all()
+
 
 	class Meta:
 		verbose_name_plural = "Systemoversikt: systemer"

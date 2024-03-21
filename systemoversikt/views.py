@@ -6308,13 +6308,11 @@ def alle_cmdbref(request):
 	search_term = request.GET.get('search_term', "").strip()
 
 	if search_term == "__all__":
-		cmdbref = CMDBRef.objects.filter(parent_ref__eksponert_for_bruker=True)#, parent_ref__operational_status=True)
-	elif len(search_term) < 1: # if one or less, return nothing
-		cmdbref = CMDBRef.objects.none()
+		cmdbref = CMDBRef.objects.all()#, parent_ref__operational_status=True)
+	elif len(search_term) < 1:
+		cmdbref = CMDBRef.objects.filter(operational_status=True).order_by("parent_ref__navn", Lower("navn"))
 	else:
 		cmdbref = CMDBRef.objects.filter(navn__icontains=search_term, parent_ref__navn__icontains=search_term)
-
-	cmdbref = cmdbref.order_by("-operational_status", "parent_ref__navn", Lower("navn"))
 
 	bs_uten_system = CMDBbs.objects.filter(operational_status=True).filter(Q(systemreferanse=None)).filter(eksponert_for_bruker=True)
 	utfasede_bs = CMDBbs.objects.filter(operational_status=False).filter(~Q(systemreferanse=None))
