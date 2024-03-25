@@ -55,7 +55,7 @@
 			{{ maskin.comp_os_service_pack }}
 		</td>
 		<td>
-			{{ maskin.sub_name.parent_ref.systemreferanse|default:"-" }}
+			{{ maskin.sub_name.system|default:"-" }}
 		</td>
 		<td>
 			{{ maskin.dns|default:"" }}

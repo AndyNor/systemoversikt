@@ -42,12 +42,12 @@ class Command(BaseCommand):
 			if bss == None:
 				continue
 			try:
-				systemeier = bss.parent_ref.systemreferanse.systemeier.virksomhetsforkortelse
+				systemeier = bss.system.systemeier.virksomhetsforkortelse
 			except:
 				systemeier = "?"
 
 			try:
-				systemnavn = bss.parent_ref.systemreferanse.systemnavn
+				systemnavn = bss.system.systemnavn
 			except:
 				systemnavn = "?"
 

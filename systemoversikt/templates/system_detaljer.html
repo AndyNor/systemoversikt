@@ -447,7 +447,7 @@
 				Systemet er under ordinær drift.
 			{% endif %}
 
-			{% if systemdetaljer.bs_system_referanse %}
+			{% if systemdetaljer.service_offerings.all|length > 0 %}
 			<p>Koblede data mot Sopra Sterias <a href="{% url 'cmdb_statistikk' %}">CMDB</a>. Se <a target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Kontinuit--og-beredskapsarbeid.aspx">beskrivelse av kritikalitet og tilgjengelighet</a>.</p>
 			<table class="table table-sm">
 				<thead>
@@ -466,7 +466,7 @@
 					</tr>
 				</thead>
 				<tbody>
-				{% for cmdbref in systemdetaljer.bs_system_referanse.cmdb_bss_to_bs.all %}
+				{% for cmdbref in systemdetaljer.service_offerings.all %}
 				<tr>
 					{% url 'cmdb_bss' pk=cmdbref.pk as url_cmdb %}
 					<td><a href="{{ url_cmdb }}">{{ cmdbref.navn }}</a></td>

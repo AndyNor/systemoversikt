@@ -45,12 +45,11 @@
 <tr>
 	<th>Nivå 1 Business Service (kategori)</th>
 	<th>Nivå 2 Business Service Offering (miljø)</th>
+	<th>Tilknyttet system</th>
 	<th>Service classification</th>
 	<th>Antall servere</th>
 	<th>Antall databaser</th>
 	<th>Mengde backup</th>
-	<th>Tilknyttet system</th>
-	<th>Driftplattform</th>
 	<th>Miljø</th>
 	{% comment %}
 	<th>Kritikalitet</th>
@@ -78,29 +77,19 @@
 			{% if item.is_bss %}<span> (gruppe)</span>{% endif %}
 		</td>
 		<td>
+			{% for system in item.system.all %}
+				{% url 'systemdetaljer' pk=item.system.pk as url_system %}
+				<a href="{{ url_system }}">{{ system }}</a>
+				{% if not forloop.last %} og {% endif %}
+			{% endfor %}
+		</td>
+		<td>
 			{{ item.service_classification|default:"" }}
 		</td>
 		<td>{{ item.ant_devices }}</td>
 		<td>{{ item.ant_databaser }}</td>
 		<td>
 			{{ item.backup_size|filesizeformat }}
-		</td>
-		<td>
-			{% if item.parent_ref.systemreferanse %}
-				{% url 'systemdetaljer' pk=item.parent_ref.systemreferanse.pk as url_system %}
-				<a href="{{ url_system }}">{{ item.parent_ref.systemreferanse }}</a><br>
-				<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ endre?</a>
-			{% else %}
-				<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ koble?</a>
-			{% endif %}
-		</td>
-
-		<td>
-			{% if item.parent_ref.systemreferanse %}
-				{{ item.parent_ref.systemreferanse.driftsmodell_foreignkey|default:"Ikke koblet" }}
-			{% else %}
-				-
-			{% endif %}
 		</td>
 
 		<td>{{ item.get_environment_display|default:"-" }}</td>

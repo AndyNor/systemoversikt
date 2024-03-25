@@ -36,9 +36,9 @@
 			<td>{{server.comp_name}}</td>
 			<td>{{server.sub_name.parent_ref}} <br> {{server.sub_name}} <br> {{server.sub_name.get_environment_display}}</td>
 			<td>
-				{% if server.sub_name.parent_ref.systemreferanse %}
-					<b>{{server.sub_name.parent_ref.systemreferanse}}</b><br>
-					{{server.sub_name.parent_ref.systemreferanse.systemeier_kontaktpersoner_referanse.all.0}}
+				{% if server.sub_name.system %}
+					<b>{{server.sub_name.system}}</b><br>
+					{{server.sub_name.system.systemeier_kontaktpersoner_referanse.all.0}}
 				{% endif %}
 
 				{% if server.landesk_login %}

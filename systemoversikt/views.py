@@ -6314,8 +6314,8 @@ def alle_cmdbref(request):
 	else:
 		cmdbref = CMDBRef.objects.filter(navn__icontains=search_term, parent_ref__navn__icontains=search_term)
 
-	bs_uten_system = CMDBbs.objects.filter(operational_status=True).filter(Q(systemreferanse=None)).filter(eksponert_for_bruker=True)
-	utfasede_bs = CMDBbs.objects.filter(operational_status=False).filter(~Q(systemreferanse=None))
+	bs_uten_system = CMDBRef.objects.filter(operational_status=True).filter(Q(system=None))
+	utfasede_bs = CMDBRef.objects.filter(operational_status=False).filter(~Q(system=None))
 
 	skjult_server_db = []
 	skjult_server_db_candidates = (CMDBbs.objects
@@ -6333,7 +6333,7 @@ def alle_cmdbref(request):
 	system_uten_bs = (System.objects
 			.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke)
 			.filter(driftsmodell_foreignkey__overordnet_plattform=None)
-			.filter(bs_system_referanse=None) # skal ikke ha kobling
+			.filter(service_offerings=None) # skal ikke ha kobling
 			.filter(systemtyper__er_infrastruktur=False)
 			.filter(ibruk=True)
 			.order_by('driftsmodell_foreignkey')
@@ -6342,7 +6342,7 @@ def alle_cmdbref(request):
 
 	bs_utenfor_fip = (System.objects
 			.filter(~Q(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke))
-			.filter(~Q(bs_system_referanse=None)) # må ha kobling
+			.filter(~Q(service_offerings=None)) # må ha kobling
 			.filter(systemtyper__er_infrastruktur=False)
 			.filter(ibruk=True)
 			.order_by('driftsmodell_foreignkey')
@@ -6388,8 +6388,26 @@ def cmdb_bss(request, pk):
 		return "Ukjent VLAN"
 
 	graf_data = {"nodes": [], "edges": []}
+	graf_data["nodes"].append({"data": { "id": "root_parent", "name": cmdbref.navn, "shape": "ellipse", "color": "black" }})
+
 	for server in cmdbdevices:
-		graf_data["nodes"].append({"data": { "parent": identifiser_vlan(server.network_ip_address.all()), "id": "server"+str(server.pk), "name": server.comp_name, "shape": "ellipse", "color": "#1668c1" }})
+		graf_data["nodes"].append(
+						{"data": {
+							"parent": identifiser_vlan(server.network_ip_address.all()),
+							"id": "server"+str(server.pk),
+							"name": server.comp_name,
+							"shape": "ellipse",
+							"color": "#1668c1"
+							}
+						})
+		graf_data["edges"].append(
+						{"data": {
+							"source": "server"+str(server.pk),
+							"target": "root_parent",
+							"linestyle": "solid",
+							"linecolor": "#1668c1",
+							}
+						})
 
 	for db in databaser:
 		#try:
@@ -6397,7 +6415,23 @@ def cmdb_bss(request, pk):
 		network_ip_address = dbserver.network_ip_address.all()
 		#except:
 		#	network_ip_address = []
-		graf_data["nodes"].append({"data": { "parent": identifiser_vlan(network_ip_address), "id": "db"+str(db.pk), "name": db.db_database, "shape": "diamond", "color": "#d35215" }})
+		graf_data["nodes"].append(
+						{"data": {
+							"parent": identifiser_vlan(network_ip_address),
+							"id": "db"+str(db.pk),
+							"name": db.db_database,
+							"shape": "diamond",
+							"color": "#d35215" }
+						})
+		graf_data["edges"].append(
+						{"data": {
+							"source": "db"+str(db.pk),
+							"target": "root_parent",
+							"linestyle": "solid",
+							"linecolor": "#d35215",
+							}
+						})
+
 
 	backup_inst = CMDBbackup.objects.filter(bss=cmdbref)
 
@@ -6866,23 +6900,23 @@ def csirt_maskinlookup_api(request): #API
 	except:
 		business_service = ""
 	try:
-		systemnavn = server_match.sub_name.parent_ref.systemreferanse.systemnavn
+		systemnavn = server_match.sub_name.system.systemnavn
 	except:
 		systemnavn = ""
 	try:
-		systemalias = server_match.sub_name.parent_ref.systemreferanse.alias
+		systemalias = server_match.sub_name.system.alias
 	except:
 		systemalias = ""
 	try:
-		systemeier = server_match.sub_name.parent_ref.systemreferanse.systemeier.virksomhetsforkortelse
+		systemeier = server_match.sub_name.system.systemeier.virksomhetsforkortelse
 	except:
 		systemeier = ""
 	try:
-		systemforvalter = server_match.sub_name.parent_ref.systemreferanse.systemforvalter.virksomhetsforkortelse
+		systemforvalter = server_match.sub_name.system.systemforvalter.virksomhetsforkortelse
 	except:
 		systemforvalter = ""
 	try:
-		systemforvaltere = [ansvarlig.brukernavn.email for ansvarlig in server_match.sub_name.parent_ref.systemreferanse.systemforvalter_kontaktpersoner_referanse.all()]
+		systemforvaltere = [ansvarlig.brukernavn.email for ansvarlig in server_match.sub_name.system.systemforvalter_kontaktpersoner_referanse.all()]
 	except:
 		systemforvaltere = []
 
@@ -7076,8 +7110,8 @@ def cmdb_api(request): #API
 		line["service_operation_factor"] = bss.u_service_operation_factor
 		line["service_complexity"] = bss.u_service_complexity
 		if bss.parent_ref:
-			if bss.parent_ref.systemreferanse:
-				system = bss.parent_ref.systemreferanse
+			if bss.system:
+				system = bss.system
 				line["tilknyttet_system"] = system.systemnavn if system else "Ikke koblet"
 				line["systemeier"] = system.systemeier.virksomhetsforkortelse if system.systemeier else "Ikke oppgitt"
 				line["systemforvalter"] = system.systemforvalter.virksomhetsforkortelse if system.systemforvalter else "Ikke oppgitt"

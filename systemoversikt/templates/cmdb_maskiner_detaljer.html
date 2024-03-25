@@ -27,12 +27,15 @@
 	<hr>
 
 	<p>
-		{% if cmdbref.0.parent_ref.systemreferanse %}
-			{% url 'systemdetaljer' pk=cmdbref.0.parent_ref.systemreferanse.pk as url_system %}
-			<h5>Koblet til systemet <a href="{{ url_system }}">{{ cmdbref.0.parent_ref.systemreferanse }}</a> på {{ cmdbref.0.parent_ref.systemreferanse.driftsmodell_foreignkey.navn|default:"Ukjent driftsplattform" }}</h5>
-			<a href="/admin/systemoversikt/cmdbbs/{{ cmdbref.0.parent_ref.pk }}/change/">✎ endre</a>
+		{% if cmdbref.0.system %}
+			<h5>Koblet til system
+				{% for system in cmdbref.0.system.all %}
+					{% url 'systemdetaljer' pk=system.pk as url_system %}
+					<a href="{{ url_system }}">{{ system }}</a>
+					{% if not forloop.last %} og {% endif %}
+				{% endfor %}
 		{% else %}
-			Mangler systemkobling. <a href="/admin/systemoversikt/cmdbbs/{{ cmdbref.0.parent_ref.pk }}/change/">✎ utfør kobling</a>
+			Mangler systemkobling.
 		{% endif %}
 	</p>
 
@@ -116,7 +119,7 @@
 
 	<h6>Graf med servere og databaser fordelt på VLAN</h6>
 
-	<div id="cy" style="width: 100%; height: 500px;"></div>
+	<div id="cy" style="width: 100%; height: 700px;"></div>
 
 	<h6>Tilknyttede VLAN</h6>
 	{% for vlan in cmdbref.0.vlan %}
@@ -166,12 +169,14 @@
 				Allokert: {{ item.comp_disk_space|filesizeformat }} (Type {{ item.vm_disk_tier }})<br>
 				Benyttet: {{ item.vm_disk_usage|filesizeformat }}
 				<br>
+				{% comment %}
 				{% for disk in item.cmdbdisk_computer.all %}
 					{% if disk.operational_status %}
 						<li>
 						{{ disk.file_system}} {{disk.free_space_bytes|filesizeformat}} of {{disk.size_bytes|filesizeformat}} ({{ disk.mount_point|truncatechars:35 }})</li>
 					{% endif %}
 				{% endfor %}
+				{% endcomment %}
 
 			</td>
 			<td>
@@ -260,7 +265,7 @@
 	</table>
 
 	<h6>DNS-navn</h6>
-	<table class="table table-sm tablesorter excel">
+	<table class="table table-sm tablesorter">
 	<thead>
 		<th>DNS-navn</th>
 		<th>DNS-type</th>
@@ -282,39 +287,6 @@
 	</table>
 
 
-	<hr>
-	<h5>Overordnet business Service er {{ cmdbref.0.parent_ref }}</h5>
-	<hr>
-	<div class="container-fluid">
-		<div class="row">
-			<div class="col-sm-3">
-				<h6>Totalt allokert minne</h6>
-				<h3>{{ cmdbref.0.parent_ref.ram_allocated|filesizeformat }}</h3>
-			</div>
-			<div class="col-sm-3">
-				<h6>Totalt allokert disk</h6>
-				<h3>{{ cmdbref.0.parent_ref.san_allocated|filesizeformat }}</h3>
-			</div>
-			<div class="col-sm-3">
-				<h6>Totalt ubrukt disk</h6>
-				<h3>{{ cmdbref.0.parent_ref.san_unallocated|filesizeformat }}</h3>
-			</div>
-			<div class="col-sm-3">
-				<h6>Total backupstørrelse</h6>
-				<h3>{{ cmdbref.0.parent_ref.backup_size|filesizeformat }}</h3>
-			</div>
-		</div>
-		<hr>
-		<div class="row">
-			<div class="col-sm-9">
-				<h4>Alle miljø</h4>
-				{% for bss in cmdbref.0.parent_ref.cmdb_bss_to_bs.all %}
-					{% url 'cmdb_bss' pk=bss.pk as url_cmdb_bss %}
-					<a href="{{url_cmdb_bss}}">{{ bss.navn }}</a> {% if not forloop.last %} | {% endif %}
-				{% endfor %}
-			</div>
-		</div>
-	</div>
 
 {% endblock hovedinnhold %}
 
@@ -342,7 +314,7 @@
 					'shape': 'data(shape)',
 					'background-color': 'data(color)',
 					'label': 'data(name)',
-					'font-size': '8px',
+					'font-size': '9px',
 				},
 			},
 			{
@@ -356,6 +328,10 @@
 					'target-arrow-shape': 'triangle',
 					'curve-style': 'bezier',
 					'line-style': 'data(linestyle)',
+					'line-color': 'data(linecolor)',
+					'target-distance-from-node': 25,
+					'source-distance-from-node': 5,
+					'width': 1,
 				},
 			},
 			{
@@ -368,14 +344,14 @@
 				style: {
 					'label': 'data(id)',
 					'line-style': "solid",
-					'background-color': '#ebf5fc',
+					'background-color': '#F1F9FF',
 				}
 			},
 		],
 		layout: {
 			name: 'fcose',
 			animationDuration: 0, //ms
-			idealEdgeLength: 150,
+			idealEdgeLength: 100,
 		},
 	});
 	cy.on('tap', 'node', function(){
@@ -387,6 +363,7 @@
 			}
 		}
 	});
+	cy.zoomingEnabled = false
 
 </script>
 {% endblock script_append %}

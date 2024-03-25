@@ -43,8 +43,8 @@
 			<td>
 				{% for server in ip.servere.all %}
 					<b>{{ server }}</b><br>
-					{% if server.sub_name.parent_ref.systemreferanse %}{{ server.sub_name.parent_ref.systemreferanse }}<br>
-					{{server.sub_name.parent_ref.systemreferanse.get_sikkerhetsnivaa_display|default:"Ukjent sikkerhetsnivå"}}{% endif %}
+					{% if server.sub_name.system %}{{ server.sub_name.system }}<br>
+					{{server.sub_name.system.get_sikkerhetsnivaa_display|default:"Ukjent sikkerhetsnivå"}}{% endif %}
 					<br>
 				{% endfor %}
 			</td>

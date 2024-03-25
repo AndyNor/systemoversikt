@@ -84,7 +84,7 @@
 			</td>
 
 			<td>
-			{% for bss in system.bs_system_referanse.cmdb_bss_to_bs.all %}
+			{% for bss in system.service_offerings.all %}
 				{% if bss.operational_status == 1 %}
 					{% if bss.er_produksjon %}
 						{% if bss.environment == 1 %}
@@ -99,7 +99,7 @@
 			</td>
 
 			<td>
-			{% for bss in system.bs_system_referanse.cmdb_bss_to_bs.all %}
+			{% for bss in system.service_offerings.all %}
 				{% if bss.operational_status == 1 %}
 					{% if bss.er_produksjon %}
 						{% if bss.environment == 1 %}
@@ -120,7 +120,7 @@
 			</td>
 
 			<td>
-			{% for bss in system.bs_system_referanse.cmdb_bss_to_bs.all %}
+			{% for bss in system.service_offerings.all %}
 				{% if bss.operational_status == 1 %}
 					{% if bss.environment == 1 %}
 						{% if bss.er_produksjon %}

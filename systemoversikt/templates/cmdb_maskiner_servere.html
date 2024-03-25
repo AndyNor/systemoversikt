@@ -130,14 +130,14 @@
 			{% endfor %}
 		</td>
 		<td>
-			{% if maskin.sub_name.parent_ref.systemreferanse %}
-				{% url 'systemdetaljer' pk=maskin.sub_name.parent_ref.systemreferanse.pk as url_system %}
-				<a href="{{ url_system }}">{{ maskin.sub_name.parent_ref.systemreferanse }}</a>
+			{% if maskin.sub_name.system %}
+				{% url 'systemdetaljer' pk=maskin.sub_name.system.pk as url_system %}
+				<a href="{{ url_system }}">{{ maskin.sub_name.system }}</a>
 			{% endif %}
 		</td>
 		<td>
-			{% if maskin.sub_name.parent_ref.systemreferanse %}
-				{{maskin.sub_name.parent_ref.systemreferanse.systemeier_kontaktpersoner_referanse.all.0}}
+			{% if maskin.sub_name.system %}
+				{{maskin.sub_name.system.systemeier_kontaktpersoner_referanse.all.0}}
 			{% endif %}
 		</td>
 

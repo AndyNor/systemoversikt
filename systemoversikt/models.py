@@ -1624,7 +1624,7 @@ CMDB_OPERATIONAL_STATUS = (
 	(0, 'Not operational'),
 )
 
-# dette er nye business service. Kobles mot System
+# Dette er nivå 1 av CMDB-modellen, såkalt "business Service" i Service Now Common Service Data Model
 class CMDBbs(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -1641,15 +1641,6 @@ class CMDBbs(models.Model):
 			blank=False,
 			null=False,
 			help_text=u"Importert",
-			)
-	systemreferanse = models.OneToOneField(
-			to="System",
-			related_name="bs_system_referanse",
-			verbose_name="Tilhørende system",
-			blank=True,
-			null=True,
-			on_delete=models.SET_NULL,
-			help_text=u"Settes av UKE IKT-plattformforvaltning",
 			)
 	bs_external_ref = models.CharField(
 			unique=True,
@@ -1734,12 +1725,16 @@ class CMDBbs(models.Model):
 			return("Ikke mulig å identifisere")
 
 	class Meta:
-		verbose_name_plural = "CMDB: business services"
-		verbose_name = "business service"
+		verbose_name_plural = "CMDB: Business Services"
+		verbose_name = "Business Service"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-# dette er business sub services. Kobles mot servere og databaser (endrer ikke navn nå)
+
+# Dette er nivå 2 av CMDB-modellen, såkalt "Business Service Offering" i Service Now Common Service Data Model
+# Er koblet til nivå 1, men nivå 1 er bare en "sekkepost" eller kategori, og er derfor ikke nyttig.
+# Det er under disse servere og databaser modelleres inn.
+# Systemer har kobling til 0, 1 eller flere slike nivå2 offerings.
 class CMDBRef(models.Model): # BSS
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -1750,13 +1745,6 @@ class CMDBRef(models.Model): # BSS
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-
-	#hva brukes denne til? (ser ikke ut til å være i bruk lenger, til fordel for "operational_status")
-	#aktiv = models.NullBooleanField(
-	#		verbose_name="Er dette CMDB-innslaget fortsatt gyldig?",
-	#		blank=True, null=True,
-	#		help_text=u"Ja eller nei",
-	#		)
 	navn = models.CharField(
 			unique=False, # eksporter fra cmdb er ikke konsistente desverre..
 			verbose_name="Sub service navn",
@@ -1958,18 +1946,11 @@ class CMDBRef(models.Model): # BSS
 		except:
 			return self.u_service_complexity
 
-
 	def er_infrastruktur_tom_bs(self):
 		if self.cmdb_type in [3, 4, 6]:
 			return True
 		else:
 			return False
-
-	#def system_mangler(self):
-	#	if self.cmdb_type == 1 and self.system_cmdbref.count() < 1:
-	#		return True
-	#	else:
-	#		return False
 
 	def er_ukjent(self):
 		if self.cmdb_type == 2:
@@ -2007,8 +1988,8 @@ class CMDBRef(models.Model): # BSS
 
 
 	class Meta:
-		verbose_name_plural = "CMDB: business sub services"
-		verbose_name = "sub service"
+		verbose_name_plural = "CMDB: Business Service Offerings"
+		verbose_name = "Service offering"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -4334,17 +4315,13 @@ class System(models.Model):
 			null=True,
 			help_text=u"Gammelt nivå for oppetidsgaranti (gull, sølv og brosje)",
 			)
-#	cmdbref_prod = models.ForeignKey(CMDBRef, related_name='system_cmdbref_prod',
-#			on_delete=models.PROTECT,
-#			verbose_name="Referanse til CMDB: Produksjon",
-#			blank=True, null=True,
-#			help_text=u"Kobling til Sopra Steria CMDB for Produksjon. Denne brukes for å vise tjenestenivå til systemet.",
-#			)
-#	cmdbref = models.ManyToManyField(CMDBRef, related_name='system_cmdbref',
-#			verbose_name="Referanse til Sopra Steria CMDB",
-#			blank=True,
-#			help_text=u"Velg alle aktuelle med '(servergruppe)' bak navnet. Produksjon, test og annet.",
-#			)
+	service_offerings = models.ManyToManyField(
+			to=CMDBRef,
+			related_name='system',
+			verbose_name="Kobling mot Service Offerings fra CMDB",
+			blank=True,
+			help_text=u"Her velger du alle service offerings knyttet til dette systemet. Ta kontakt med UKE om du trenger hjelp med denne koblingen.",
+			)
 	sikkerhetsnivaa = models.IntegerField(
 			choices=SIKKERHETSNIVAA_VALG,
 			verbose_name="Konfidensialitetsnivå",
@@ -4359,11 +4336,6 @@ class System(models.Model):
 			blank=True,
 			help_text=u"Programvare benyttet av- eller knyttet til systemet",
 			)
-	#database = models.IntegerField(
-	#		verbose_name="Database (utfases, grunnet ny måte å registrere på)", choices=DB_VALG,
-	#		blank=True, null=True,
-	#		help_text=u"Dersom databasehotell, legg til databasehotellet som en teknisk avhengighet.",
-	#		)
 	avhengigheter = models.TextField(
 			verbose_name="Beskrivelse av avhengigheter (fritekst)",
 			blank=True,
@@ -4640,11 +4612,6 @@ class System(models.Model):
 			blank=True,
 			help_text=u"Hvordan logger bruker på? Husk også å legge til systemavhengighet dersom AD/LDAP/SAML/OIDC. (Henger sammen med hvordan brukere opprettes)",
 			)
-	#autorisasjonsalternativer = models.ManyToManyField(Autorisasjonsmetode,
-	#		verbose_name="Tilgangsteknologi", related_name='system_autorisasjonsalternativer',
-	#		blank=True,
-	#		help_text=u"Hvordan får bruker tilgang til informasjon i systemet?",
-	#		)
 	loggingalternativer = models.ManyToManyField(
 			to=Loggkategori,
 			related_name='system_loggingalternativer',
@@ -4847,10 +4814,8 @@ class System(models.Model):
 			)
 	cache_systemprioritet = models.IntegerField(
 			default=240,
-			) # Denne blir kalkulert ved visning
-
+			) # Denne blir kalkulert ved hver visning
 	history = HistoricalRecords()
-
 
 	unique_together = ('systemnavn', 'systemforvalter')
 
@@ -4860,7 +4825,6 @@ class System(models.Model):
 		except:
 			return f'{self.systemnavn}'
 
-
 	def los_ord(self):
 		words = list()
 		for word in self.LOSref.all():
@@ -4868,17 +4832,15 @@ class System(models.Model):
 				words.append(word)
 		return words
 
-
 	def alias_oppdelt(self):
 		if self.alias == None:
 			return []
 		return self.alias.split()
 
-
 	def unike_server_os(self):
 		server_os = []
 		try:
-			for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
+			for bss in self.service_offerings.all():
 				for server in bss.cmdbdevice_sub_name.all():
 						server_os.append("%s %s" % (server.comp_os, server.comp_os_version))
 		except:
@@ -4897,7 +4859,7 @@ class System(models.Model):
 
 	def databaseplattform(self):
 		databaser = []
-		alle_bss = self.bs_system_referanse.cmdb_bss_to_bs.all()
+		alle_bss = self.service_offerings.all()
 		for bss in alle_bss:
 			alle_db = CMDBdatabase.objects.filter(sub_name=bss)
 			for db in alle_db:
@@ -4907,10 +4869,9 @@ class System(models.Model):
 		#fallback to manual field
 		return ', '.join([db.navn for db in self.database_in_use.all()])
 
-
 	def serverplattform(self):
 		serveros = []
-		alle_bss = self.bs_system_referanse.cmdb_bss_to_bs.all()
+		alle_bss = self.service_offerings.all()
 		for bss in alle_bss:
 			servere = CMDBdevice.objects.filter(sub_name=bss)
 			for s in servere:
@@ -4991,15 +4952,11 @@ class System(models.Model):
 
 		return SYSTEM_COLORS["ukjent"] # alt annet
 
-
-
-
-
 	# brukes bare av dashboard, flyttes dit? ("def statusTjenestenivaa(systemer)")
 	def fip_kritikalitet(self):
 		if hasattr(self, 'bs_system_referanse'):
 			kritikalitet = []
-			for ref in self.bs_system_referanse.cmdb_bss_to_bs.all():
+			for ref in self.service_offerings.all():
 				if ref.environment == 1: # 1 er produksjon
 					kritikalitet.append(ref.kritikalitet)
 
@@ -5013,7 +4970,7 @@ class System(models.Model):
 	def fip_kritikalitet_text(self):
 		if hasattr(self, 'bs_system_referanse'):
 			prod_referanser = []
-			for ref in self.bs_system_referanse.cmdb_bss_to_bs.all():
+			for ref in self.system.all():
 				if ref.environment == 1: # 1 er produksjon
 					prod_referanser.append(ref)
 			if len(prod_referanser) == 1:
@@ -5054,7 +5011,6 @@ class System(models.Model):
 				databehandleravtaler.append(avtale)
 		return databehandleravtaler
 
-
 	def systemprioritet(self):
 		import re
 		tilgjengelighet = self.tilgjengelighetsvurdering
@@ -5065,7 +5021,7 @@ class System(models.Model):
 			if self.bs_system_referanse != None:
 				tjenestenivaa = 4
 				try:
-					for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
+					for bss in self.system.all():
 						if bss.operational_status == 1 and bss.er_produksjon:
 							try:
 								bss_tjenestenivaa = int(re.findall(r'T(\d+)', bss.u_service_availability)[0])
@@ -5079,7 +5035,7 @@ class System(models.Model):
 
 				kritikalitet = 5
 				try:
-					for bss in self.bs_system_referanse.cmdb_bss_to_bs.all():
+					for bss in self.service_offerings.all():
 						if bss.operational_status == 1 and bss.er_produksjon:
 							try:
 								bss_kritikalitet = int(re.findall(r'\d+', bss.u_service_operation_factor)[0])
@@ -5095,7 +5051,6 @@ class System(models.Model):
 			tjenestenivaa = 2
 			kritikalitet = 2 # balanse mellom å la ikke-kritiske systemer havne for høyt på prioritet og at kritiske systemer havner for langt ned på listen dersom ikke koblet til tjeneste
 
-
 		sammfunnskritisk = 2
 		if len(self.kritisk_kapabilitet.all()) > 0:
 			sammfunnskritisk = 1
@@ -5110,7 +5065,6 @@ class System(models.Model):
 		tekst = f"{tilgjengelighet}*{tjenestenivaa}*{kritikalitet}*{sammfunnskritisk}={score}"
 		return tekst
 
-
 	def citrix_publiseringer_pk(self):
 		navn = self.systemnavn.split()
 		#print(navn)
@@ -5123,7 +5077,6 @@ class System(models.Model):
 			if len(w) > 2:
 				hits.extend((list(CitrixPublication.objects.filter(publikasjon_json__icontains=w))))
 		return hits
-
 
 	def citrix_publiseringer(self):
 		hits = self.citrix_publiseringer_pk()
@@ -5141,7 +5094,6 @@ class System(models.Model):
 			return [i.destination_system for i in relevante_integrasjoner]
 		else:
 			return self.autentiseringsteknologi.all()
-
 
 	class Meta:
 		verbose_name_plural = "Systemoversikt: systemer"

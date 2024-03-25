@@ -319,12 +319,12 @@ class SystemAdmin(SimpleHistoryAdmin):
 	def get_ordering(self, request):
 		return [Lower('systemnavn')]
 
-	filter_horizontal = ('systemkategorier', 'informasjonsklassifisering',)
+	filter_horizontal = ('systemkategorier', 'informasjonsklassifisering', 'kritisk_kapabilitet', 'LOSref', 'service_offerings')
 	autocomplete_fields = (
 		'systemeier',
 		'programvarer',
 		'systemforvalter',
-		'LOSref',
+		#'LOSref',
 		'systemforvalter_avdeling_referanse',
 		'datautveksling_avleverer_til',
 		'datautveksling_mottar_fra',
@@ -340,7 +340,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'loggingalternativer',
 		'autentiseringsteknologi',
 		'autentiseringsalternativer',
-		'kritisk_kapabilitet',
+		#'kritisk_kapabilitet',
 		'database_supported',
 		'database_in_use',
 		'godkjente_bestillere',
@@ -368,7 +368,8 @@ class SystemAdmin(SimpleHistoryAdmin):
 		('Informasjonsbehandling og andre vurderinger', {
 			'description': '',
 			'fields': (
-				('kritisk_kapabilitet', 'LOSref'),
+				'kritisk_kapabilitet',
+				'LOSref',
 				'systemkategorier',
 				'informasjonsklassifisering',
 				('sikkerhetsnivaa', 'integritetsvurdering'),
@@ -393,6 +394,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		}),
 		('Leverandører og drift', {
 			'fields': (
+				'service_offerings',
 				'basisdriftleverandor',
 				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
 				('systemleverandor', 'systemleverandor_vedlikeholdsavtale',),
@@ -1121,11 +1123,11 @@ class CMDBRefAdmin(admin.ModelAdmin):
 @admin.register(CMDBbs)
 class CMDBRefAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('navn', 'operational_status', 'eksponert_for_bruker', 'systemreferanse', 'ant_bss', 'ant_devices', 'ant_databaser', 'bs_external_ref', 'opprettet')
+	list_display = ('navn', 'operational_status', 'eksponert_for_bruker', 'ant_bss', 'ant_devices', 'ant_databaser', 'bs_external_ref', 'opprettet')
 	search_fields = ('navn',)
 	list_filter = ('eksponert_for_bruker', 'operational_status')
 	readonly_fields = ('navn', 'operational_status', 'bs_external_ref',)
-	autocomplete_fields = ('systemreferanse',)
+	autocomplete_fields = ()
 
 
 	def response_add(self, request, obj, post_url_continue=None):
