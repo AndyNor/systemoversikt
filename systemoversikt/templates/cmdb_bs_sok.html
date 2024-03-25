@@ -78,7 +78,7 @@
 		</td>
 		<td>
 			{% for system in item.system.all %}
-				{% url 'systemdetaljer' pk=item.system.pk as url_system %}
+				{% url 'systemdetaljer' pk=system.pk as url_system %}
 				<a href="{{ url_system }}">{{ system }}</a>
 				{% if not forloop.last %} og {% endif %}
 			{% endfor %}
