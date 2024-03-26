@@ -18,6 +18,10 @@ class Command(BaseCommand):
 							destination_system=s,
 							integration_type="INTEGRATION",
 						)
+					if i.personopplysninger == False:
+						i.personopplysninger = True
+						i.save()
+						print(f"{i} har personopplysninger")
 					if created:
 						print(f"{i}")
 				for system in s.datautveksling_avleverer_til.all():
@@ -26,6 +30,10 @@ class Command(BaseCommand):
 							destination_system=system,
 							integration_type="INTEGRATION",
 						)
+					if i.personopplysninger == False:
+						i.personopplysninger = True
+						i.save()
+						print(f"{i} har personopplysninger")
 					if created:
 						print(f"{i}")
 				for system in s.avhengigheter_referanser.all():
