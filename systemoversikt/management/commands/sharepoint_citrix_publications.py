@@ -12,7 +12,7 @@ from systemoversikt.views import sharepoint_get_file
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		skip_sharepoint = True # Sett til True ved lokal testing
+		skip_sharepoint = False # Sett til True ved lokal testing
 
 		INTEGRASJON_KODEORD = "sp_citrix"
 		LOG_EVENT_TYPE = "Citrix publikasjon"
@@ -24,6 +24,8 @@ class Command(BaseCommand):
 				"citrix_is_desktop_gr": "citrix_BrokerDesktopGroups_is.json",
 				"citrix_ss": "citrix_publikasjoner_ss.json",
 				"citrix_ss_desktop_gr": "citrix_BrokerDesktopGroups_ss.json",
+				"citrix_is_servers": "citrix_Machine_list_IS.json",
+				"citrix_ss_servers": "citrix_Machine_list_SS.json",
 			}
 		URL = ""
 		FREKVENS = "Manuelt"
@@ -63,17 +65,23 @@ class Command(BaseCommand):
 			sp_citrix_ss = FILNAVN["citrix_ss"]
 			sp_citrix_is_desktop_gr = FILNAVN["citrix_is_desktop_gr"]
 			sp_citrix_ss_desktop_gr = FILNAVN["citrix_ss_desktop_gr"]
+			sp_citrix_is_servers = FILNAVN["citrix_is_servers"]
+			sp_citrix_ss_servers = FILNAVN["citrix_ss_servers"]
 
 			if skip_sharepoint:
 				citrix_is_lokalfil, citrix_is_date = ("systemoversikt/import/citrix_publikasjoner_is.json", None)
 				citrix_ss_lokalfil, citrix_ss_date = ("systemoversikt/import/citrix_publikasjoner_ss.json", None)
 				citrix_is_desktop_gr_lokalfil, citrix_is_desktop_gr_date = ("systemoversikt/import/citrix_BrokerDesktopGroups_is.json", None)
 				citrix_ss_desktop_gr_lokalfil, citrix_ss_desktop_gr_date = ("systemoversikt/import/citrix_BrokerDesktopGroups_ss.json", None)
+				citrix_is_servers, citrix_is_servers_date = ("systemoversikt/import/citrix_Machine_list_IS.json.json", None)
+				citrix_ss_servers, citrix_ss_servers_date = ("systemoversikt/import/citrix_Machine_list_SS.json.json", None)
 			else:
 				citrix_is_lokalfil, citrix_is_date = hent_fil(sp_citrix_is)
 				citrix_ss_lokalfil, citrix_ss_date = hent_fil(sp_citrix_ss)
 				citrix_is_desktop_gr_lokalfil, citrix_is_desktop_gr_date = hent_fil(sp_citrix_is_desktop_gr)
 				citrix_ss_desktop_gr_lokalfil, citrix_ss_desktop_gr_date = hent_fil(sp_citrix_ss_desktop_gr)
+				citrix_is_servers, citrix_is_servers_date = hent_fil(sp_citrix_is_servers)
+				citrix_ss_servers, citrix_ss_servers_date = hent_fil(sp_citrix_ss_servers)
 
 			logg_entry_message = ""
 
@@ -131,39 +139,62 @@ class Command(BaseCommand):
 				print(logg_entry_message)
 				return logg_entry_message
 
-			"""
-			@transaction.atomic
-			def koble_system():
-				teller = 0
-				alle = System.objects.all().count()
-				for system in System.objects.all().order_by('tilgjengelighetsvurdering'):
-					teller += 1
-					if teller % 30 == 0:
-						print(f"{teller} av {alle}")
-					for publisering in system.citrix_publiseringer_pk():
-						if publisering.systemknytning == None:
-							publisering.systemknytning = system
-							publisering.save()
-							#print(f"Koblet {publisering} med {system}")
-						else:
-							pass
-							#print(f"Publisering {publisering} var allerede koblet til {publisering.systemknytning}")
-			"""
 
-			#eksekver
-			CitrixPublication.objects.all().delete() # ved behov
+			def import_desktop_groups(filsti):
+
+				print(f"Laster inn DesktopGroups for {filsti}...")
+				with open(filsti, 'r', encoding="utf-8") as f:
+					citrix_desktop_groups = f.read()
+				citrix_desktop_groups_json = json.loads(citrix_desktop_groups)
+
+				antall_ok = 0
+				feilede = 0
+
+				for entry in citrix_desktop_groups_json:
+					server_name = entry["HostedMachineName"]
+					try:
+						server = CMDBdevice.objects.get(comp_name__iexact=server_name)
+					except:
+						#print(f"Fant ikke server {server_name}")
+						feilede += 1
+						continue
+
+					server.citrix_desktop_group = entry["DesktopGroupName"]
+					server.save()
+					antall_ok += 1
+
+				logg_entry_message = f'Oppdaterte servere fra {filsti}. {antall_ok} lagt til. {feilede} feilet.'
+				print(logg_entry_message)
+				return logg_entry_message
+
+
+			# importer
 			print(f"Importerer fra {sp_citrix_is}")
 			logg_entry_message += import_citrix(sp_citrix_is, citrix_is_lokalfil, citrix_is_date, "Intern", citrix_is_desktop_gr_lokalfil)
 			print(f"Importerer fra {sp_citrix_ss}")
 			logg_entry_message += import_citrix(sp_citrix_ss, citrix_ss_lokalfil, citrix_ss_date, "Sikker", citrix_ss_desktop_gr_lokalfil)
 
-			#koble mot systemer
-			#koble_system()
+
+			# slette gamle
+			print("Sletter gamle data..")
+			#CitrixPublication.objects.all().delete() # ved behov
+			for_gammelt = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+			deaktive = CitrixPublication.objects.filter(sist_oppdatert__lte=for_gammelt).delete()
+
+
+			# laste inn DesktopGroups til servere
+			print("Sletter tidligere DesktopGroups på alle servere")
+			CMDBdevice.objects.all().update(citrix_desktop_group=None)
+
+			logg_entry_message += import_desktop_groups(citrix_is_servers)
+			logg_entry_message += import_desktop_groups(citrix_ss_servers)
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = citrix_is_date # eller timezone.now()
 			int_config.sist_status = logg_entry_message
 			int_config.save()
+
+			print("Ferdig")
 
 
 		except Exception as e:

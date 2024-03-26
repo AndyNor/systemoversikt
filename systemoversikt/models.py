@@ -36,6 +36,10 @@ VALG_KLARGJORT_SIKKERHETSMODELL = (
 
 
 class CitrixPublication(models.Model):
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+		)
 	sone = models.CharField(
 			verbose_name="sone",
 			blank=False,
@@ -2761,12 +2765,14 @@ class CMDBdevice(models.Model):
 			verbose_name="Sist eksponert mot Internett dato",
 			null=True, blank=True,
 			)
-	#vm_disks_installed = models.IntegerField(
-	#		verbose_name="VM: Antall disker installert",
-	#		null=True, blank=True,
-	#		)
-
+	citrix_desktop_group = models.CharField(
+			verbose_name="Citrix-import: desktop group name",
+			max_length=500,
+			null=True, blank=True,
+			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
+
+
 
 	def __str__(self):
 		return u'%s' % (self.comp_name)

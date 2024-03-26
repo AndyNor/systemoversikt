@@ -20,7 +20,7 @@ class Command(BaseCommand):
 		KILDE = "Ardoq"
 		PROTOKOLL = "Sharepoint"
 		BESKRIVELSE = "Oppdaterte data fra ardoc"
-		FILNAVN = "eksport_ardoq.xlsx"
+		FILNAVN = "eksport_ardoq.xlsx.old"
 		URL = ""
 		FREKVENS = "Ved behov"
 

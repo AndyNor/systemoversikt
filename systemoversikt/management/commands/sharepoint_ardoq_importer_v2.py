@@ -20,7 +20,7 @@ class Command(BaseCommand):
 		KILDE = "Ardoq"
 		PROTOKOLL = "Sharepoint"
 		BESKRIVELSE = "Oppdaterte data fra ardoc v2 - kun eiere og forvaltere"
-		FILNAVN = "INV eksport til kartoteket-med konklusjon.xlsx"
+		FILNAVN = "INV eksport til kartoteket-med konklusjon.xlsx.old"
 		URL = ""
 		FREKVENS = "Ved behov"
 
