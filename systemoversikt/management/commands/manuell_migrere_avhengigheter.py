@@ -18,7 +18,7 @@ class Command(BaseCommand):
 							destination_system=s,
 							integration_type="INTEGRATION",
 						)
-					if i.personopplysninger == False:
+					if i.personopplysninger != True:
 						i.personopplysninger = True
 						i.save()
 						print(f"{i} har personopplysninger")
@@ -30,7 +30,7 @@ class Command(BaseCommand):
 							destination_system=system,
 							integration_type="INTEGRATION",
 						)
-					if i.personopplysninger == False:
+					if i.personopplysninger != True:
 						i.personopplysninger = True
 						i.save()
 						print(f"{i} har personopplysninger")
