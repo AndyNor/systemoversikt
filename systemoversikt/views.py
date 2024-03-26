@@ -1338,6 +1338,21 @@ def system_los_struktur(request, pk=None):
 		'nodes': nodes,
 	})
 
+def citrix_desktop_group(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	group_name = request.GET.get("gruppe", "")
+	citrix_desktop_group_members = CMDBdevice.objects.filter(citrix_desktop_group=group_name)
+
+	return render(request, 'cmdb_citrix_desktop_group.html', {
+		'request': request,
+		'citrix_desktop_group_members': citrix_desktop_group_members,
+		'group_name': group_name,
+	})
+
+
 
 def alle_citrixpub(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
@@ -3393,7 +3408,7 @@ def systemdetaljer(request, pk):
 
 		def parent(system):
 			if system.driftsmodell_foreignkey is not None:
-				return system.driftsmodell_foreignkey.navn
+				return f"drift_{system.driftsmodell_foreignkey.pk}"
 			else:
 				return "Ukjent"
 
@@ -3410,7 +3425,7 @@ def systemdetaljer(request, pk):
 		def avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa):
 			for aktuelt_system in aktivt_nivaa_systemer:
 
-				avhengigheter_graf["nodes"].append({"data": { "parent": parent(aktuelt_system), "id": aktuelt_system.pk, "name": aktuelt_system.systemnavn, "shape": "ellipse", "color": "#C63D3D" }},)
+				avhengigheter_graf["nodes"].append({"data": { "id": aktuelt_system.pk, "parent": parent(aktuelt_system), "name": aktuelt_system.systemnavn, "shape": "ellipse", "color": "#C63D3D" }},)
 				observerte_driftsmodeller.add(aktuelt_system.driftsmodell_foreignkey)
 
 				for s in aktuelt_system.system_integration_source.all():
@@ -3420,8 +3435,8 @@ def systemdetaljer(request, pk):
 						neste_nivaa.add(s)
 						observerte_systemer.add(s)
 					if s not in behandlede_systemer:
-						avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": integrasjon.color(), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-						avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, 'linewidth': 2, "target": s.pk, 'curve-style': 'bezier', "linecolor": integrasjon.color(), "linestyle": "solid" }},)
+						avhengigheter_graf["nodes"].append({"data": { "id": s.pk, "parent": parent(s), "name": s.systemnavn, "shape": "ellipse", "color": integrasjon.color(), "href": reverse('systemdetaljer', args=[s.pk]) }},)
+						avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, "target": s.pk, 'linewidth': 2, 'curve-style': 'bezier', "linecolor": integrasjon.color(), "linestyle": "solid" }},)
 						observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
 
 				if first_round:
@@ -3432,7 +3447,7 @@ def systemdetaljer(request, pk):
 							neste_nivaa.add(s)
 							observerte_systemer.add(s)
 						if s not in behandlede_systemer:
-							avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": integrasjon.color(), "href": reverse('systemdetaljer', args=[s.pk]) }},)
+							avhengigheter_graf["nodes"].append({"data": { "id": s.pk, "parent": parent(s), "name": s.systemnavn, "shape": "ellipse", "color": integrasjon.color(), "href": reverse('systemdetaljer', args=[s.pk]) }},)
 							avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": aktuelt_system.pk, 'linewidth': 1, 'curve-style': 'bezier', "linecolor": integrasjon.color(), "linestyle": "dashed" }},)
 							observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
 
@@ -3453,7 +3468,11 @@ def systemdetaljer(request, pk):
 		# legge til alle driftsmodeller som ble funnet
 		for driftsmodell in observerte_driftsmodeller:
 			if driftsmodell is not None:
-				avhengigheter_graf["nodes"].append({"data": { "id": driftsmodell.navn }},)
+				if driftsmodell.overordnet_plattform:
+					avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.pk}", "name": driftsmodell.navn, "parent": f"drift_{driftsmodell.overordnet_plattform.pk}" }},)
+					avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.overordnet_plattform.pk}", "name": driftsmodell.overordnet_plattform.navn }},)
+				else:
+					avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.pk}", "name": driftsmodell.navn }},)
 
 		return avhengigheter_graf
 

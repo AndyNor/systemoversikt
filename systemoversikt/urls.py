@@ -227,7 +227,9 @@ urlpatterns = [
 	re_path(r'^cmdb/ad/lookup/exact/(?P<name>[^#\+\"\\\<\>\;]{2,200})/$', views.ad_exact, name='ad_exact'),
 	re_path(r'^cmdb/prk/userlookup/$', views.prk_userlookup, name='prk_userlookup'),
 	re_path(r'^cmdb/ad/gruppeanalyse/$', views.ad_gruppeanalyse, name='ad_gruppeanalyse'),
-	re_path(r'^cmdb/ad/citrix/apps/$', views.alle_citrixpub, name='alle_citrixpub'),
+	re_path(r'^cmdb/ad/citrix/apps/$', views.alle_citrixpub, name='alle_citrixpub'), # beholdes som redirect
+	re_path(r'^cmdb/citrix/apps/$', views.alle_citrixpub, name='alle_citrixpub'),
+	re_path(r'^cmdb/citrix/desktop_group/$', views.citrix_desktop_group, name='citrix_desktop_group'),
 
 	re_path(r'^tools/unique$', views.tool_unique_items, name='tool_unique_items'),
 	re_path(r'^tools/compare$', views.tool_compare_items, name='tool_compare_items'),

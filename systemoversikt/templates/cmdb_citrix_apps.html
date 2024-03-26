@@ -41,7 +41,7 @@
 		<tr>
 			<td>{{app.sone}}</td>
 			<td style="white-space: nowrap;">{% for name in app.publikasjon_json.AllAssociatedDesktopGroupUids_Name %}
-				{{name}}<br>
+				<a href="{% url 'citrix_desktop_group' %}?gruppe={{name}}">{{name}}</a><br>
 			{% endfor %}</td>
 			<td>{{app.publikasjon_json.BrowserName|default:"-"}}<br>
 			{{app.publikasjon_json.ApplicationName|default:"-"}}</td>

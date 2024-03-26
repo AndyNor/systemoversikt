@@ -1,0 +1,22 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Citrix desktop group {{ group_name }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	{% for server in citrix_desktop_group_members %}
+	<li>{{ server }} -
+		{% for ip in server.network_ip_address.all %}
+			{{ ip }}
+			- {{ ip.vlan.all.0.comment }}
+		{% endfor %}</li>
+	{% endfor %}
+
+{% endblock hovedinnhold %}
