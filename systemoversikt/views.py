@@ -3425,7 +3425,13 @@ def systemdetaljer(request, pk):
 		def avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa):
 			for aktuelt_system in aktivt_nivaa_systemer:
 
-				avhengigheter_graf["nodes"].append({"data": { "id": aktuelt_system.pk, "parent": parent(aktuelt_system), "name": aktuelt_system.systemnavn, "shape": "ellipse", "color": "#C63D3D" }},)
+				avhengigheter_graf["nodes"].append({"data": {
+							"id": aktuelt_system.pk,
+							"parent": parent(aktuelt_system),
+							"name": aktuelt_system.systemnavn,
+							"shape": "ellipse",
+							"color": "#C63D3D"
+						}},)
 				observerte_driftsmodeller.add(aktuelt_system.driftsmodell_foreignkey)
 
 				for s in aktuelt_system.system_integration_source.all():
