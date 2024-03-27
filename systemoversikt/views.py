@@ -6491,9 +6491,9 @@ def cmdb_bs_disconnect(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	for service in CMDBbs.objects.all():
-		service.systemreferanse = None
-		service.save()
+	#for service in CMDBbs.objects.all():
+	#	service.systemreferanse = None
+	#	service.save()
 
 	from django.http import HttpResponseRedirect
 	return HttpResponseRedirect(reverse('alle_cmdbref_sok'))
