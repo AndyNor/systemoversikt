@@ -106,7 +106,8 @@
 				<a href="{{ url_systemforvalter }}">{{ systemdetaljer.systemforvalter|default:"-" }}</a>
 
 				{% if systemdetaljer.systemforvalter_avdeling_referanse %}
-					<br>Seksjon: <a href="">{{ systemdetaljer.systemforvalter_avdeling_referanse }}</a>
+					{% url "enhet_detaljer" systemdetaljer.systemforvalter_avdeling_referanse.pk as url_enhet_detaljer %}
+					<br>Seksjon: <a href="{{url_enhet_detaljer}}">{{ systemdetaljer.systemforvalter_avdeling_referanse }}</a>
 				{% endif %}
 
 				<br><br>Kontaktpersoner forvalter<br>

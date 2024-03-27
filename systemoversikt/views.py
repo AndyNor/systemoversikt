@@ -4882,20 +4882,20 @@ def virksomhet(request, pk):
 			return system.systemnavn[:maximum]
 		return system.systemnavn
 
-	def system_seksjon(system, parents):
+	def system_seksjon(system):
 		if system.systemforvalter_avdeling_referanse:
-			parents.append(system.systemforvalter_avdeling_referanse.ou)
-			return system.systemforvalter_avdeling_referanse.ou
+			parents.append(system.systemforvalter_avdeling_referanse)
+			return f"org_{system.systemforvalter_avdeling_referanse.pk}"
 
 		try:
-			forste_forvalters_ou = system.systemforvalter_kontaktpersoner_referanse.all()[0].brukernavn.profile.org_unit.ou
+			forste_forvalters_ou = system.systemforvalter_kontaktpersoner_referanse.all()[0].brukernavn.profile.org_unit
 			parents.append(forste_forvalters_ou)
-			return forste_forvalters_ou
+			return forste_forvalters_ou.ou
 		except:
 			pass
 
-		parents.append('Ingen')
-		return 'Ingen'
+		parents.append('Ukjent')
+		return 'Ukjent'
 
 	antall_graph_noder = System.objects.filter(systemforvalter=pk).filter(~Q(livslop_status__in=[6,7])).count()
 	for system in System.objects.filter(systemforvalter=pk).filter(~Q(livslop_status__in=[6,7])).order_by('systemnavn'):
@@ -4904,29 +4904,43 @@ def virksomhet(request, pk):
 				'data': {
 					'id': system.pk,
 					'name': systemnavn_forkortet(system),
-					'parent': system_seksjon(system, parents),
+					'parent': system_seksjon(system),
 					'shape': 'rectangle',
 					'color': system.color(),
 					'href': f'/systemer/detaljer/{system.pk}/',
 				}
 			})
 
-	for p in set(parents):
-		nodes.append(
-			{'data':
-				{'id': p,
-				#'parent': virksomhet.virksomhetsforkortelse,
-				'color': 'white'
-				}
-			},
-		)
-	#nodes.append(
-	#		{'data':
-	#			{'id': virksomhet.virksomhetsforkortelse,
-	#			'color': 'white'
-	#			}
-	#		},
-	#	)
+	print(list(set(parents)))
+
+	all_parents = list(set(parents))
+	work_queue = list(set(parents))
+	while work_queue:
+		item = work_queue.pop()
+		if item == 'Ukjent' or item == None:
+			continue
+		if item.direkte_mor != None:
+			if item.direkte_mor not in all_parents:
+				#print(f"La til {item.direkte_mor}")
+				work_queue.append(item.direkte_mor)
+				all_parents.append(item.direkte_mor)
+			else:
+				#print(f"{item.direkte_mor} var allerede lagt til")
+				pass
+
+
+	for p in all_parents:
+		if p == 'Ukjent':
+			nodes.append({'data': {'id': p, 'name': p, 'color': 'white',}},)
+			continue
+		if p == None:
+			continue
+		if p.direkte_mor != None:
+			nodes.append({'data': {'id': f"org_{p.pk}", 'name': p.ou, 'color': 'white', 'parent': f"org_{p.direkte_mor.pk}"}},)
+			#nodes.append({'data': {'id': f"org_{p.direkte_mor.pk}", 'name': p.direkte_mor.ou, 'color': 'white',}},)
+		else:
+			nodes.append({'data': {'id': f"org_{p.pk}", 'name': p.ou, 'color': 'white',}},)
+
 	from systemoversikt.models import SYSTEM_COLORS
 
 	return render(request, 'virksomhet_detaljer.html', {
@@ -4946,7 +4960,7 @@ def virksomhet(request, pk):
 		'ant_systemer_forvalter': ant_systemer_forvalter,
 		'systemer_drifter': systemer_drifter,
 		'nodes': nodes,
-		'node_size': 450 + 7*antall_graph_noder,
+		'node_size': 400 + 8 * antall_graph_noder,
 		'system_colors': SYSTEM_COLORS,
 	})
 

@@ -642,14 +642,14 @@ class Virksomhet(models.Model):
 	ikt_kontakt = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='virksomhet_ikt_kontakt',
-			verbose_name='Vår IKT-hovedkontakt',
+			verbose_name='IKT-hovedkontakter',
 			blank=True,
 			help_text=u"Virksomhetens kontaktpunkt for IKT.",
 			)
 	autoriserte_bestillere_tjenester = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='virksomhet_autoriserte_bestillere_tjenester',
-			verbose_name='Autoriserte bestillere InfoTorg',
+			verbose_name='Autoriserte bestillere i InfoTorg',
 			blank=True,
 			help_text=u"En autorisert bestiller InfoTorg er en person virksomheten har autorisert til å bestille brukere til data fra det sentrale folkeregistret.",
 			)
@@ -744,7 +744,7 @@ class Virksomhet(models.Model):
 	arkitekturkontakter = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='virksomhet_arkitekturkontakter',
-			verbose_name='Arkitektur hovedkontakter i vår virksomhet',
+			verbose_name='Arkitekturkontakter',
 			blank=True,
 			help_text=u"Personer som jobber med overordnet arkitektur knyttet til virksomhetens ibruktakelse av IKT",
 			)
