@@ -86,14 +86,14 @@
 			<td>
 			{% for bss in system.service_offerings.all %}
 				{% if bss.operational_status == 1 %}
-					{% if bss.er_produksjon %}
+					{% comment %}{% if bss.er_produksjon %}{% endcomment %}
 
 							<li>
 							{{ bss.navn }}<br>
 							{{ bss.u_service_availability_text }}
 							</li>
 
-					{% endif %}
+					{% comment %}{% endif %}{% endcomment %}
 				{% endif %}
 			{% endfor %}
 			</td>
@@ -122,7 +122,7 @@
 			<td>
 			{% for bss in system.service_offerings.all %}
 				{% if bss.operational_status == 1 %}
-					{% comment %}{% if bss.er_produksjon %}
+					{% comment %}{% if bss.er_produksjon %}{% endcomment %}
 
 							<li>
 							{{ bss.navn }}<br>
