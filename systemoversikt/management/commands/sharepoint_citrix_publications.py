@@ -130,7 +130,7 @@ class Command(BaseCommand):
 					if len(line["AssociatedUserFullNames"]) == 0:
 						c.type_medlemmer = False # default True
 
-					c.display_name = f"{line['BrowserName']} - {line['ApplicationName']}"
+					c.display_name = f"{line['AdminFolderName']} - {line['BrowserName']} - {line['ApplicationName']}"
 					c.publikasjon_json = json.dumps(line)
 					c.publikasjon_active = line['Enabled']
 					c.save()
