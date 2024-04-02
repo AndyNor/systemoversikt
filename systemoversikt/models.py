@@ -5035,35 +5035,28 @@ class System(models.Model):
 		if tilgjengelighet == None:
 			tilgjengelighet = 5
 
-		if hasattr(self, 'bs_system_referanse'):
-			if self.bs_system_referanse != None:
-				tjenestenivaa = 4
-				try:
-					for bss in self.system.all():
-						if bss.operational_status == 1 and bss.er_produksjon:
-							try:
-								bss_tjenestenivaa = int(re.findall(r'T(\d+)', bss.u_service_availability)[0])
-								if bss_tjenestenivaa < tjenestenivaa:
-									tjenestenivaa = bss_tjenestenivaa
-							except:
-								pass
-				except:
-					pass # forblir 4
-					#print(f"{self} tjenestenivaa finnes ikke")
 
-				kritikalitet = 5
-				try:
-					for bss in self.service_offerings.all():
-						if bss.operational_status == 1 and bss.er_produksjon:
-							try:
-								bss_kritikalitet = int(re.findall(r'\d+', bss.u_service_operation_factor)[0])
-								if bss_kritikalitet < kritikalitet:
-									kritikalitet = bss_kritikalitet
-							except:
-								pass
-				except:
-					pass # forblir 5
-					#print(f"{self} kritikalitet finnes ikke")
+		if self.service_offerings != None:
+
+			tjenestenivaa = 4
+			for bss in self.service_offerings.all():
+				if bss.operational_status == 1:# and bss.er_produksjon:
+					try:
+						bss_tjenestenivaa = int(re.findall(r'T(\d+)', bss.u_service_availability)[0])
+						if bss_tjenestenivaa < tjenestenivaa:
+							tjenestenivaa = bss_tjenestenivaa
+					except:
+						pass
+
+			kritikalitet = 5
+			for bss in self.service_offerings.all():
+				if bss.operational_status == 1:# and bss.er_produksjon:
+					try:
+						bss_kritikalitet = int(re.findall(r'\d+', bss.u_service_operation_factor)[0])
+						if bss_kritikalitet < kritikalitet:
+							kritikalitet = bss_kritikalitet
+					except:
+						pass
 
 		else: # ingen CMDB-kobling finnes
 			tjenestenivaa = 2

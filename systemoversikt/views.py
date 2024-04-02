@@ -1367,6 +1367,7 @@ def alle_citrixpub(request):
 
 	return render(request, 'cmdb_citrix_apps.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'citrixapps': citrixapps,
 	})
 
