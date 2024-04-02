@@ -58,6 +58,12 @@ class CitrixPublication(models.Model):
 			unique=True,
 			max_length=40,
 		)
+	display_name = models.CharField(
+			verbose_name="Visningsnavn",
+			blank=True,
+			null=True,
+			max_length=300,
+		)
 	publikasjon_active = models.BooleanField(
 			verbose_name="Aktiv",
 			default=True,
@@ -91,7 +97,7 @@ class CitrixPublication(models.Model):
 	#		)
 
 	def __str__(self):
-		return f"Citrix publikasjon {self.publikasjon_UUID}"
+		return f"{self.display_name} {self.sone}"
 
 	class Meta:
 		verbose_name_plural = "CMDB: Citrixpublikasjoner"
@@ -4340,7 +4346,7 @@ class System(models.Model):
 			related_name='system_programvarer',
 			verbose_name="Tilknyttet programvare",
 			blank=True,
-			help_text=u"Programvare benyttet av- eller knyttet til systemet",
+			help_text=u"Programvare benyttet av- eller knyttet til systemet. Her fører du opp navn på programvaren systemet er bygget opp av.",
 			)
 	avhengigheter = models.TextField(
 			verbose_name="Beskrivelse av avhengigheter (fritekst)",
@@ -4821,6 +4827,12 @@ class System(models.Model):
 	cache_systemprioritet = models.IntegerField(
 			default=240,
 			) # Denne blir kalkulert ved hver visning
+	citrix_publications = models.ManyToManyField(
+			to="CitrixPublication",
+			related_name="systemer",
+			verbose_name="Tilkoblede citrixpubliseringer",
+			blank=True,
+		)
 	history = HistoricalRecords()
 
 	unique_together = ('systemnavn', 'systemforvalter')

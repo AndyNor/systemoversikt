@@ -319,7 +319,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 	def get_ordering(self, request):
 		return [Lower('systemnavn')]
 
-	filter_horizontal = ('systemkategorier', 'informasjonsklassifisering', 'kritisk_kapabilitet', 'LOSref', 'service_offerings')
+	filter_horizontal = ('systemkategorier', 'informasjonsklassifisering', 'kritisk_kapabilitet', 'LOSref', 'service_offerings', 'citrix_publications',)
 	autocomplete_fields = (
 		'systemeier',
 		'programvarer',
@@ -386,6 +386,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		('Brukerperspektivet og tilgangsstyring', {
 			'fields': (
 				'tilgangsgrupper_ad',
+				'citrix_publications',
 				'kontaktgruppe_url',
 				'brukerdokumentasjon_url',
 				'antall_brukere',
