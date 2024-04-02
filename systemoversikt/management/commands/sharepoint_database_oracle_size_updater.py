@@ -22,7 +22,7 @@ class Command(BaseCommand):
 		KILDE = "ServiceNow"
 		PROTOKOLL = "SMTP og SharePoint"
 		BESKRIVELSE = "Informasjon om Oracle-databaser og deres størrelser."
-		FILNAVN = "oracle_database_size.xlsx"
+		FILNAVN = "A34_CMDB_oracle_database_size.xlsx"
 		URL = ""
 		FREKVENS = "Manuelt en gang per måned"
 
