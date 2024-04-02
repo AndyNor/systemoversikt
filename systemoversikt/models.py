@@ -1927,11 +1927,11 @@ class CMDBRef(models.Model): # BSS
 
 	def u_service_operation_factor_text(self):
 		lookup = {
-			"D1": "D1🟢: Liv og helse",
-			"D2": "D2🟢: Virksomhetskritisk",
+			"D1": "D1🔴: Liv og helse",
+			"D2": "D2🔴: Virksomhetskritisk",
 			"D3": "D3🟡: Kritisk",
 			"D4": "D4🟡: Periodisk kritisk",
-			"D5": "D5🔴: Ikke kritisk",
+			"D5": "D5🟢: Ikke kritisk",
 		}
 		try:
 			return lookup[self.u_service_operation_factor]
