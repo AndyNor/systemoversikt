@@ -38,6 +38,8 @@ def sharepoint_get_file(filename):
 	import os
 	import requests
 
+	print(f'Starter nedlasting av "{filename}"...')
+
 	client_credential = ClientSecretCredential(
 			tenant_id=os.environ['AZURE_TENANT_ID'],
 			client_id=os.environ['AZURE_ENTERPRISEAPP_CLIENT'],
