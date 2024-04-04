@@ -837,7 +837,7 @@ class ProfileAdmin(admin.ModelAdmin):
 	list_display = ('user', 'virksomhet', 'description', 'usertype', 'from_prk')
 	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'description',)
 	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som', 'adgrupper', 'org_unit', 'ansattnr_ref')
-	list_filter = ('usertype', 'from_prk')
+	list_filter = ('usertype', 'from_prk', 'passwd_notreqd')
 
 
 @admin.register(SystemUrl)
