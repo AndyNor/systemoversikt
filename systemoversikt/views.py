@@ -1361,14 +1361,28 @@ def alle_citrixpub(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	antall_apper_totalt = CitrixPublication.objects.all().count()
+	antall_apper_koblet = CitrixPublication.objects.filter(publikasjon_active=True, systemer=None).count()
+
 	citrixapps = CitrixPublication.objects.filter(publikasjon_active=True)
 	for app in citrixapps:
 		app.publikasjon_json = json.loads(app.publikasjon_json)
+
+	try:
+		antall_apper_koblet_pct = antall_apper_koblet / len(citrixapps)
+	except:
+		antall_apper_koblet_pct = "?"
+
+	unike_siloer = CMDBdevice.objects.order_by().values('citrix_desktop_group').distinct()
 
 	return render(request, 'cmdb_citrix_apps.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'citrixapps': citrixapps,
+		'antall_apper_totalt': antall_apper_totalt,
+		'antall_apper_koblet': antall_apper_koblet,
+		'antall_apper_koblet_pct': f"{round(antall_apper_koblet_pct * 100, 1)}%",
+		'unike_siloer': unike_siloer,
 	})
 
 def alle_nettverksenheter(request):
@@ -3622,6 +3636,10 @@ def systemdetaljer(request, pk):
 
 	avhengigheter_graf_ny = generer_graf_ny(system, follow_count)
 
+	citrix_apps = system.citrix_publications.all()
+	for app in citrix_apps:
+		app.publikasjon_json = json.loads(app.publikasjon_json)
+
 	return render(request, 'system_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -3640,6 +3658,7 @@ def systemdetaljer(request, pk):
 		'follow_count': follow_count,
 		'avhengigheter_chart_size': 300 + len(avhengigheter_graf["nodes"])*20,
 		'avhengigheter_chart_size_ny': 300 + len(avhengigheter_graf_ny["nodes"])*20,
+		'citrix_apps': citrix_apps,
 	})
 
 

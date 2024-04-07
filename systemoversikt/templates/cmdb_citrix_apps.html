@@ -11,72 +11,100 @@
 
 {% block hovedinnhold %}
 
-	<table class="table table-sm tablesorter excel">
-		<thead>
-			<th>Sone</th>
-			<th>DesktopGroup</th>
-			<th>BrowserName<br>
-			Application Name</th>
+	<p>Det er {{antall_apper_totalt}} citrixapper. {{citrixapps|length}} er aktive og vises her. Av disse mangler {{antall_apper_koblet}} ({{antall_apper_koblet_pct}}) kobling til et system.</p>
 
-			<th>Systemkoblet?</th>
-
-			<th>vApp</th>
-			<th>Nettleser</th>
-			<th>Remote desktop</th>
-			<th>Produksjon</th>
-			<th>Har medlemmer</th>
-
-			<th>AdminFolderName</th>
-			<td>ClientFolder</th>
-			<td>WorkingDirectory<br>
-			CommandLineExecutable<br>
-			CommandLineArguments</th>
-			<th>Description</th>
-			<th>ShortcutAddedToDesktop<br>
-			ShortcutAddedToStartMenu<br>
-			StartMenuFolder</th>
-			<th>UserFilterEnabled</th>
-			<th>AssociatedUserFullNames</th>
-		</thead>
-	<tbody>
-	{% for app in citrixapps %}
-		<tr>
-			<td>{{app.sone}}</td>
-			<td style="white-space: nowrap;">{% for name in app.publikasjon_json.AllAssociatedDesktopGroupUids_Name %}
-				<a href="{% url 'citrix_desktop_group' %}?gruppe={{name}}">{{name}}</a><br>
-			{% endfor %}</td>
-			<td>{{app.publikasjon_json.BrowserName|default:"-"}}<br>
-			{{app.publikasjon_json.ApplicationName|default:"-"}}</td>
-
-			<td>
-				{% for system in app.systemer.all %}
-					{{ system }}<br>
-				{% empty %}
-					Ingen
-				{% endfor %}
-			</td>
-
-			<td>{{app.type_vApp|yesno:"Ja,Nei"}}</td>
-			<td>{{app.type_nettleser|yesno:"Ja,Nei"}}</td>
-			<td>{{app.type_remotedesktop|yesno:"Ja,Nei"}}</td>
-			<td>{{app.type_produksjon|yesno:"Ja,Nei"}}</td>
-			<td>{{app.type_medlemmer|yesno:"Ja,Nei"}}</td>
-
-			<td>{{app.publikasjon_json.AdminFolderName}}</td>
-			<td>{{app.publikasjon_json.ClientFolder|default:""}}</td>
-			<td>{{app.publikasjon_json.WorkingDirectory|default:"-"}}<br>
-			{{app.publikasjon_json.CommandLineExecutable|default:"-"}}<br>
-			{{app.publikasjon_json.CommandLineArguments|default:"-"}}</td>
-			<td>{{app.publikasjon_json.Description|default:"-"}}</td>
-			<td>{{app.publikasjon_json.ShortcutAddedToDesktop|yesno:"Ja,-"}}<br>
-			{{app.publikasjon_json.ShortcutAddedToStartMenu|yesno:"Ja,-"}}<br>
-			{{app.publikasjon_json.StartMenuFolder|default:""}}</td>
-			<td>{{app.publikasjon_json.UserFilterEnabled|yesno:"Ja, Nei"}}</td>
-			<td>{{app.publikasjon_json.AssociatedUserFullNames}}</td>
-		</tr>
+	Unike siloer:
+	<ul style="column-count:5;">
+	{% for silo in unike_siloer %}
+		{% if silo.citrix_desktop_group != None %}
+		<li><a href="{% url 'citrix_desktop_group' %}?gruppe={{silo.citrix_desktop_group}}">{{silo.citrix_desktop_group}}</a></li>
+		{% endif %}
 	{% endfor %}
-	</tbody>
-	</table>
+	</ul>
+
+
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Sone</th>
+	<th>DesktopGroup</th>
+	<th>BrowserName<br>
+	Application Name</th>
+
+	<th>Systemkoblet?</th>
+
+	<th>vApp</th>
+	<th>Nettleser</th>
+	<th>Remote desktop</th>
+	<th>Produksjon</th>
+	<th>Har medlemmer</th>
+
+	<th>AdminFolderName</th>
+	<th>ClientFolder</th>
+	<th>
+		WorkingDirectory<br>
+		CommandLineExecutable<br>
+		CommandLineArguments
+	</th>
+	<th>Description</th>
+	<th>
+		ShortcutAddedToDesktop<br>
+		ShortcutAddedToStartMenu<br>
+		StartMenuFolder
+	</th>
+	<th>UserFilterEnabled</th>
+	<th>AssociatedUserFullNames</th>
+</thead>
+<tbody>
+	{% for app in citrixapps %}
+	<tr>
+		<td>{{app.sone}}</td>
+		<td style="white-space: nowrap;">
+			{% for name in app.publikasjon_json.AllAssociatedDesktopGroupUids_Name %}
+			<a href="{% url 'citrix_desktop_group' %}?gruppe={{name}}">{{name}}</a><br>
+			{% endfor %}
+		</td>
+		<td>
+			{{app.publikasjon_json.BrowserName|default:"-"}}<br>
+			{{app.publikasjon_json.ApplicationName|default:"-"}}
+		</td>
+		<td>
+			{% for system in app.systemer.all %}
+				{{ system }}<br>
+			{% empty %}
+				Ingen
+			{% endfor %}
+		</td>
+
+		<td>{{app.type_vApp|yesno:"Ja,Nei"}}</td>
+		<td>{{app.type_nettleser|yesno:"Ja,Nei"}}</td>
+		<td>{{app.type_remotedesktop|yesno:"Ja,Nei"}}</td>
+		<td>{{app.type_produksjon|yesno:"Ja,Nei"}}</td>
+		<td>{{app.type_medlemmer|yesno:"Ja,Nei"}}</td>
+
+		<td>{{app.publikasjon_json.AdminFolderName}}</td>
+		<td>{{app.publikasjon_json.ClientFolder|default:""}}</td>
+		<td>
+			{{app.publikasjon_json.WorkingDirectory|default:"-"}}<br>
+			{{app.publikasjon_json.CommandLineExecutable|default:"-"}}<br>
+			{{app.publikasjon_json.CommandLineArguments|default:"-"}}
+		</td>
+		<td>{{app.publikasjon_json.Description|default:"-"}}</td>
+		<td>
+			{{app.publikasjon_json.ShortcutAddedToDesktop|yesno:"Ja,-"}}<br>
+			{{app.publikasjon_json.ShortcutAddedToStartMenu|yesno:"Ja,-"}}<br>
+			{{app.publikasjon_json.StartMenuFolder|default:""}}
+		</td>
+		<td>{{app.publikasjon_json.UserFilterEnabled|yesno:"Ja, Nei"}}</td>
+		<td>
+			{% for item in app.publikasjon_json.AssociatedUserFullNames %}
+				{% url 'ad_details' item as url_ad_details %}
+				<a href="{{url_ad_details}}">{{item}}</a><br>
+			{% endfor %}
+		</td>
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
 
 
 {% endblock hovedinnhold %}
