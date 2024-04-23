@@ -295,6 +295,7 @@ urlpatterns = [
 	re_path(r'^virksomhet/(?P<virksomhet_pk>\d+)/excelapi/$', views.system_excel_api, name='system_excel_api'), # det må brukes API-key
 	re_path(r'^systemer/iga/api/$', views.iga_api, name='iga_api'), # (det er innført behov for API-key)
 	re_path(r'^systemer/behandlingsoversikt/api/$', views.behandlingsoversikt_api, name='behandlingsoversikt_api'), # (det er innført behov for API-key)
+	re_path(r'^api/vav/akva/$', views.vav_akva_api, name='vav_akva_api'), # (det er innført behov for API-key)
 	re_path(r'^get-api/tilgangsgrupper/$', views.tilgangsgrupper_api, name='tilgangsgrupper_api'), # (det er innført behov for API-key)
 	re_path(r'^ukecsirt/ipsok/api/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # (det er innført behov for API-key)
 	re_path(r'^ukecsirt/maskinsok/api/$', views.csirt_maskinlookup_api, name='csirt_maskinlookup_api'), # (det er innført behov for API-key)

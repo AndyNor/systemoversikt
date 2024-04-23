@@ -1,6 +1,5 @@
 #!/bin/sh
 source /var/kartoteket/virtualenv/py39/bin/activate
-
 cd /var/kartoteket/source/systemoversikt/
 
 # run batch AD/PRK
@@ -33,6 +32,7 @@ python /var/kartoteket/source/systemoversikt/manage.py sharepoint_backup_updater
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_network_updater
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_wan_location_updater
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_firewall_importer
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_citrix_publications
 
 # run batch rydde
 python /var/kartoteket/source/systemoversikt/manage.py rydde_ansvarlige
@@ -54,4 +54,4 @@ python /var/kartoteket/source/systemoversikt/manage.py send_mail
 cd /var/kartoteket/source/systemoversikt/systemoversikt/pki # files need to be here
 python /var/kartoteket/source/systemoversikt/manage.py certipy-ad
 
-#+x
+

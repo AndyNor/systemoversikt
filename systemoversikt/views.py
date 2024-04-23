@@ -7062,6 +7062,43 @@ def csirt_iplookup_api(request):
 	return JsonResponse(data, safe=False)
 
 
+def vav_akva_api(request): #API
+	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Innkommende kall")
+	if not request.method == "GET":
+		ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Feil: HTTP metode var ikke GET")
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="akva_vav").values_list("key", flat=True)
+	#if not key in list(allowed_keys):
+	#	ApplicationLog.objects.create(event_type="API Akva VAV", message="Feil eller tom API-nøkkel")
+	#	return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	data = []
+	for b in SystemBruk.objects.filter(brukergruppe__virksomhetsforkortelse="VAV"):
+		systeminfo = {}
+		systeminfo["system_navn"] = b.system.systemnavn
+		systeminfo["system_navn_visning"] = b.system.__str__()
+		systeminfo["system_id"] = b.system.id
+		systeminfo["ibruk"] = b.system.er_ibruk()
+		systeminfo["livslop_status"] = b.system.livslop_status
+		systeminfo["livslop_status_visning"] = b.system.get_livslop_status_display()
+		systeminfo["system_klassifisering"] = b.system.systemeierskapsmodell
+		systeminfo["systemkategorier"] = [kategori.kategorinavn for kategori in b.system.systemkategorier.all()]
+		systeminfo["sist_oppdatert"] = b.system.sist_oppdatert
+		systeminfo["systemeier"] = b.system.systemeier.virksomhetsforkortelse if b.system.systemeier else None
+		systeminfo["systemeier_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.system.systemeier_kontaktpersoner_referanse.all()]
+		systeminfo["systemforvalter"] = b.system.systemforvalter.virksomhetsforkortelse if b.system.systemforvalter else None
+		systeminfo["systemforvalter_seksjon"] = b.system.systemforvalter_avdeling_referanse.ou if b.system.systemforvalter_avdeling_referanse else None
+		systeminfo["systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.system.systemforvalter_kontaktpersoner_referanse.all()]
+		systeminfo["lokal_systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.systemforvalter_kontaktpersoner_referanse.all()]
+		data.append(systeminfo)
+
+	source_ip = get_client_ip(request)
+	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message=f"Vellykket kall fra {source_ip}")
+	return JsonResponse(data, safe=False)
+
+
 
 def behandlingsoversikt_api(request): #API
 	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Innkommende kall")
