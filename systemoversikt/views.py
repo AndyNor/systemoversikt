@@ -3916,10 +3916,17 @@ def all_bruk_for_virksomhet(request, pk):
 		bruk.antall_behandlinger = ant
 
 
-	a = set(System.objects.filter(Q(systemeier=virksomhet_pk) or Q(systemforvalter=virksomhet_pk)))  #{1, 2, 3, 4} #systemer virksomhet eier liste
-	b = set(SystemBruk.objects.filter(brukergruppe=virksomhet_pk)) # {3, 4} #systemer virksomhet bruker liste
-	mangler_bruk = b.difference(a)
+	eier_eller_forvalter = set(System.objects.filter(Q(systemeier=virksomhet_pk) or Q(systemforvalter=virksomhet_pk)))  #{1, 2, 3, 4} #systemer virksomhet eier liste
+	systembruk = set(SystemBruk.objects.filter(brukergruppe=virksomhet_pk)) # {3, 4} #systemer virksomhet bruker liste
+	systemer_ibruk = []
+	for b in systembruk:
+		systemer_ibruk.append(b.system)
+	systemer_ibruk = set(systemer_ibruk)
 
+	#print([s.id for s in systemer_ibruk])
+	#print([s.id for s in eier_eller_forvalter])
+	mangler_bruk = eier_eller_forvalter - systemer_ibruk
+	#print([s.id for s in mangler_bruk])
 
 	return render(request, 'systembruk_alle.html', {
 		'request': request,
@@ -7088,6 +7095,7 @@ def csirt_iplookup_api(request):
 	return JsonResponse(data, safe=False)
 
 
+
 def vav_akva_api(request): #API
 	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Innkommende kall")
 	if not request.method == "GET":
@@ -7123,6 +7131,7 @@ def vav_akva_api(request): #API
 	source_ip = get_client_ip(request)
 	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message=f"Vellykket kall fra {source_ip}")
 	return JsonResponse(data, safe=False)
+
 
 
 
