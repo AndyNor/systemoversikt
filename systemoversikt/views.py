@@ -3915,6 +3915,12 @@ def all_bruk_for_virksomhet(request, pk):
 		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(programvarer=bruk.programvare.pk).count()
 		bruk.antall_behandlinger = ant
 
+
+	a = set(System.objects.filter(Q(systemeier=virksomhet_pk) or Q(systemforvalter=virksomhet_pk)))  #{1, 2, 3, 4} #systemer virksomhet eier liste
+	b = set(SystemBruk.objects.filter(brukergruppe=virksomhet_pk)) # {3, 4} #systemer virksomhet bruker liste
+	mangler_bruk = b.difference(a)
+
+
 	return render(request, 'systembruk_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -3922,6 +3928,7 @@ def all_bruk_for_virksomhet(request, pk):
 		'all_programvarebruk': all_programvarebruk,
 		'ikke_i_bruk': ikke_i_bruk,
 		'virksomhet': virksomhet,
+		'mangler_bruk': mangler_bruk,
 	})
 
 
@@ -4933,7 +4940,7 @@ def virksomhet(request, pk):
 				}
 			})
 
-	print(list(set(parents)))
+	#print(list(set(parents)))
 
 	all_parents = list(set(parents))
 	work_queue = list(set(parents))
@@ -4953,15 +4960,15 @@ def virksomhet(request, pk):
 
 	for p in all_parents:
 		if p == 'Ukjent':
-			nodes.append({'data': {'id': p, 'name': p, 'color': 'white',}},)
+			nodes.append({'data': {'id': p, 'name': p, 'color': 'white', 'shape': 'rectangle',}},)
 			continue
 		if p == None:
 			continue
 		if p.direkte_mor != None:
-			nodes.append({'data': {'id': f"org_{p.pk}", 'name': p.ou, 'color': 'white', 'parent': f"org_{p.direkte_mor.pk}"}},)
+			nodes.append({'data': {'id': f"org_{p.pk}", 'name': p.ou, 'color': 'white', 'shape': 'rectangle', 'parent': f"org_{p.direkte_mor.pk}"}},)
 			#nodes.append({'data': {'id': f"org_{p.direkte_mor.pk}", 'name': p.direkte_mor.ou, 'color': 'white',}},)
 		else:
-			nodes.append({'data': {'id': f"org_{p.pk}", 'name': p.ou, 'color': 'white',}},)
+			nodes.append({'data': {'id': f"org_{p.pk}", 'name': p.ou, 'color': 'white', 'shape': 'rectangle',}},)
 
 	from systemoversikt.models import SYSTEM_COLORS
 
@@ -4982,7 +4989,7 @@ def virksomhet(request, pk):
 		'ant_systemer_forvalter': ant_systemer_forvalter,
 		'systemer_drifter': systemer_drifter,
 		'nodes': nodes,
-		'node_size': 400 + 8 * antall_graph_noder,
+		'node_size': 600 + 5 * antall_graph_noder,
 		'system_colors': SYSTEM_COLORS,
 	})
 

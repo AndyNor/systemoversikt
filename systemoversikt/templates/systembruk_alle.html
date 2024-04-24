@@ -18,6 +18,15 @@
 
 	<hr>
 
+	Systemer {{ virksomhet.virksomhetsforkortelse }} eier eller forvalter hvor {{ virksomhet.virksomhetsforkortelse }} ikke har registrert egen bruk.
+	<ul style="column-count:5;">
+	{% for system in mangler_bruk %}
+		<li><a href="{% url 'systemdetaljer' system.pk %}">{{ system }}</a></li>
+	{% endfor %}
+	</ul>
+
+	<hr>
+
 	<h6>Systemer i bruk</h6>
 	{% include "systembruk_include.html" with all_bruk=all_systembruk %}
 
