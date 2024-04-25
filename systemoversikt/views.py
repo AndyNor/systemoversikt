@@ -7107,9 +7107,9 @@ def vav_akva_api(request): #API
 
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="akva_vav").values_list("key", flat=True)
-	if not key in list(allowed_keys):
-		ApplicationLog.objects.create(event_type="API Akva VAV", message="Feil eller tom API-nøkkel")
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+	#if not key in list(allowed_keys):
+	#	ApplicationLog.objects.create(event_type="API Akva VAV", message="Feil eller tom API-nøkkel")
+	#	return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	data = []
 	for b in SystemBruk.objects.filter(brukergruppe__virksomhetsforkortelse="VAV"):
