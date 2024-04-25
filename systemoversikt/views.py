@@ -7096,6 +7096,9 @@ def csirt_iplookup_api(request):
 
 
 
+
+
+
 def vav_akva_api(request): #API
 	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Innkommende kall")
 	if not request.method == "GET":
@@ -7104,9 +7107,9 @@ def vav_akva_api(request): #API
 
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="akva_vav").values_list("key", flat=True)
-	#if not key in list(allowed_keys):
-	#	ApplicationLog.objects.create(event_type="API Akva VAV", message="Feil eller tom API-nøkkel")
-	#	return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+	if not key in list(allowed_keys):
+		ApplicationLog.objects.create(event_type="API Akva VAV", message="Feil eller tom API-nøkkel")
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	data = []
 	for b in SystemBruk.objects.filter(brukergruppe__virksomhetsforkortelse="VAV"):
@@ -7126,11 +7129,15 @@ def vav_akva_api(request): #API
 		systeminfo["systemforvalter_seksjon"] = b.system.systemforvalter_avdeling_referanse.ou if b.system.systemforvalter_avdeling_referanse else None
 		systeminfo["systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.system.systemforvalter_kontaktpersoner_referanse.all()]
 		systeminfo["lokal_systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.systemforvalter_kontaktpersoner_referanse.all()]
+		systeminfo["lokal_systemeier_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.systemeier_kontaktpersoner_referanse.all()]
 		data.append(systeminfo)
 
 	source_ip = get_client_ip(request)
 	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message=f"Vellykket kall fra {source_ip}")
 	return JsonResponse(data, safe=False)
+
+
+
 
 
 

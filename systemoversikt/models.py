@@ -5562,7 +5562,14 @@ class SystemBruk(models.Model):
 			related_name='systembruk_systemforvalter_kontaktpersoner',
 			verbose_name="Lokal forvalter (person)",
 			blank=True,
-			help_text=u"Dersom fellesløsning på applikasjonshotell, hvilke roller/personer fyller rollen som forvalter?",
+			help_text=u"Dersom fellesløsning på applikasjonshotell, hvilke roller/personer fyller rollen som lokal forvalter?",
+			)
+	systemeier_kontaktpersoner_referanse = models.ManyToManyField(
+			to=Ansvarlig,
+			related_name='systembruk_systemeier_kontaktpersoner',
+			verbose_name="Lokal eier (person)",
+			blank=True,
+			help_text=u"Dersom fellesløsning på applikasjonshotell, hvilke roller/personer fyller rollen som lokal eier?",
 			)
 	livslop_status = models.IntegerField(
 			choices=LIVSLOEP_VALG,

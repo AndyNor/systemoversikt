@@ -542,7 +542,7 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 	list_display = ('system', 'brukergruppe', 'kommentar', 'avtaletype', 'systemeierskap', 'kostnadersystem')
 	search_fields = ('system__systemnavn', 'system__systembeskrivelse', 'kommentar', 'systemforvalter')
 	list_filter = ('avtalestatus', 'avtale_kan_avropes', 'systemeierskapsmodell', 'brukergruppe')
-	autocomplete_fields = ('brukergruppe', 'system', 'systemforvalter', 'systemforvalter_kontaktpersoner_referanse', 'avhengigheter_referanser')
+	autocomplete_fields = ('brukergruppe', 'system', 'systemforvalter', 'systemeier_kontaktpersoner_referanse', 'systemforvalter_kontaktpersoner_referanse', 'avhengigheter_referanser')
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
@@ -559,6 +559,7 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 		('Initiell registrering', {
 			'fields': (
 				('brukergruppe', 'system'),
+				('systemeier_kontaktpersoner_referanse'),
 				('systemforvalter_kontaktpersoner_referanse', 'ibruk'),
 				('kommentar', 'antall_brukere'), #reintrodusert 31.08.2020
 				('url_risikovurdering', 'risikovurdering_tekst'),
