@@ -3048,8 +3048,8 @@ def home_chart(request):
 
 	def system_virksomhet(system, parents):
 		if system.systemforvalter:
-			parents.append(system.systemforvalter.virksomhetsforkortelse)
-			return system.systemforvalter.virksomhetsforkortelse
+			parents.append(system.systemforvalter.virksomhetsnavn)
+			return system.systemforvalter.virksomhetsnavn
 
 		parents.append('Ingen')
 		return 'Ingen'
