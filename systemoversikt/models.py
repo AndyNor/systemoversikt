@@ -4098,13 +4098,16 @@ class Database(models.Model):
 
 
 SYSTEM_COLORS = {
+	"samarbeidspartner": "#FFCA28",
+	"ukjent": '#E0E0E0',
+	"saas": '#81C784',
+	"drift_uke_privat": '#E57373',
+	"drift_uke_sky": '#FFCDD2',
+	"drift_virksomhet_privat": '#64B5F6',
+	"drift_virksomhet_sky": '#BBDEFB',
 	"infrastruktur": '#d2b5d9',
 	"integrasjon": '#b189bb',
-	"drift_uke": '#9db3e5',
-	"offentlig_sky": '#b5dba2',
 	"egenutviklet": '#e3b27f',
-	"samarbeidspartner": "#fce883",
-	"ukjent": '#b9b9b9',
 }
 
 
@@ -4928,6 +4931,31 @@ class System(models.Model):
 
 		return False
 
+	def er_privat_sky(self):
+		try:
+			if self.driftsmodell_foreignkey.type_plattform == 1:
+				return True
+		except:
+			return False
+
+	def mangler_driftsmodell(self):
+		if self.driftsmodell_foreignkey == None:
+			return True
+
+	def driftes_av_uke(self):
+		try:
+			if self.driftsmodell_foreignkey.ansvarlig_virksomhet.pk == 163:
+				return True
+		except:
+			return False
+
+	def er_saas(self):
+		try:
+			if self.driftsmodell_foreignkey.pk == 2:
+				return True
+		except:
+			return False
+
 	def forventet_url(self):
 		for systemtype in self.systemtyper.all():
 			if systemtype.har_url:
@@ -4947,28 +4975,26 @@ class System(models.Model):
 		return True
 
 	def color(self):
-		if self.er_infrastruktur():
-			return SYSTEM_COLORS["infrastruktur"]
 
-		if self.er_integrasjon():
-			return SYSTEM_COLORS["integrasjon"]
-
-		if hasattr(self, 'bs_system_referanse'): # drift hos UKE
-			return SYSTEM_COLORS["drift_uke"]
-
-		try:
-			if self.driftsmodell_foreignkey.type_plattform == 2:
-				return SYSTEM_COLORS["offentlig_sky"]
-		except:
-			pass
-
-		if self.er_selvutviklet():
-			return SYSTEM_COLORS["egenutviklet"]
+		if self.mangler_driftsmodell():
+			return SYSTEM_COLORS["ukjent"]
 
 		if self.er_samarbeidspartner():
 			return SYSTEM_COLORS["samarbeidspartner"]
 
-		return SYSTEM_COLORS["ukjent"] # alt annet
+		if self.er_saas():
+			return SYSTEM_COLORS["saas"]
+
+		if self.er_privat_sky():
+			if self.driftes_av_uke():
+				return SYSTEM_COLORS["drift_uke_privat"]
+			return SYSTEM_COLORS["drift_virksomhet_privat"]
+
+		else: # er ikke privat sky
+			if self.driftes_av_uke():
+				return SYSTEM_COLORS["drift_uke_sky"]
+			return SYSTEM_COLORS["drift_virksomhet_sky"]
+
 
 	# brukes bare av dashboard, flyttes dit? ("def statusTjenestenivaa(systemer)")
 	def fip_kritikalitet(self):
