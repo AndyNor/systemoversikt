@@ -867,8 +867,60 @@ LISENCE_VALG = (
 	(4, 'G4 A3 (Education)'),
 )
 
+PRIVELIGERTE_GRUPPER = [
+	"Access Control Assistance Operators",
+	"Account Operators",
+	"Administrators",
+	"Allowed RODC Password Replication",
+	"Backup Operators",
+	"Certificate Service DCOM Access",
+	"Cert Publishers",
+	"Cloneable Domain Controllers",
+	"Cryptographic Operators",
+	"Denied RODC Password Replication",
+	"Device Owners",
+	"DHCP Administrators",
+	"DHCP Users",
+	"Distributed COM Users",
+	"DnsUpdateProxy",
+	"DnsAdmins",
+	"Domain Admins",
+	"Domain Computers",
+	"Domain Controllers",
+	"Enterprise Admins",
+	"Enterprise Key Admins",
+	"Enterprise Read-only Domain Controllers",
+	"Event Log Readers",
+	"Group Policy Creator Owners",
+	"Hyper-V Administrators",
+	"IIS_IUSRS",
+	"Incoming Forest Trust Builders",
+	"Key Admins",
+	"Network Configuration Operators",
+	"Performance Log Users",
+	"Performance Monitor Users",
+	"Pre–Windows 2000 Compatible Access",
+	"Print Operators",
+	"Protected Users",
+	"RAS and IAS Servers",
+	"RDS Endpoint Servers",
+	"RDS Management Servers",
+	"RDS Remote Access Servers",
+	"Read-only Domain Controllers",
+	"Remote Desktop Users",
+	"Remote Management Users",
+	"Replicator",
+	"Schema Admins",
+	"Server Operators",
+	"Storage Replica Administrators",
+	"System Managed Accounts",
+	"Terminal Server License Servers",
+	"Windows Authorization Access",
+	"WinRMRemoteWMIUsers_"
+]
 
-class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhørende virksomhet. Vurderer å fjerne denne.
+
+class Profile(models.Model):
 	#https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
 	user = models.OneToOneField(
 			to=User,
@@ -1048,6 +1100,10 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 			blank=True,
 			null=True,
 			)
+	gruppemedlemskap = models.ManyToManyField(
+			to="ADgroup",
+			related_name='profiles',
+			)
 	# med vilje er det ikke HistoricalRecords() på denne
 
 	def __str__(self):
@@ -1141,9 +1197,17 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 
 
 	def ad_grp_lookup(self):
-		from systemoversikt.views import ldap_users_securitygroups, convert_distinguishedname_cn
-		return sorted(convert_distinguishedname_cn(ldap_users_securitygroups(self.user.username)))
+		try:
+			from systemoversikt.views import ldap_users_securitygroups, convert_distinguishedname_cn
+			return sorted(convert_distinguishedname_cn(ldap_users_securitygroups(self.user.username)))
+		except:
+			return  ["AD ikke tilgjengelig"]
 
+	def priveligert_bruker(self):
+		if any(gruppe in self.gruppemedlemskap for gruppe in PRIVELIGERTE_GRUPPER):
+			return "Ja"
+		else:
+			return "Nei"
 
 """
 class Klientutstyr(models.Model):

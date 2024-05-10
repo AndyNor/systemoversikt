@@ -44,6 +44,7 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
+		runtime_t0 = time.time()
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 		try:
@@ -64,7 +65,11 @@ class Command(BaseCommand):
 						print("Error, fant ikke %s" % (g))
 
 			#logg dersom vellykket
-			logg_message = f"Lastet inn alle grupper for {antall_oppslag} driftbrukere."
+
+			runtime_t1 = time.time()
+			logg_total_runtime = runtime_t1 - runtime_t0
+
+			logg_message = f"Lastet inn alle grupper for {antall_oppslag} driftbrukere. Det tok {logg_total_runtime} sekunder."
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_message,

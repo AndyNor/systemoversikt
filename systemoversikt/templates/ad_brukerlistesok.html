@@ -42,18 +42,21 @@
 		<th>Aktiv</th>
 		<th>Navn</th>
 		<th>Brukernavn</th>
-		<th>Trusted for delegation</th>
+		<th>OU-path</th>
+		<th>Priveligert?</th>
+		<th>Trusted for delegation?</th>
+		<th>Delegated?</th>
 		<th>Don't require preauth</th>
 		<th>Passordbytte aktiv?</th>
 		<th>Sist passordbytte</th>
+		<th>Opprettet</th>
 		<th>Sist pålogget (ca)</th>
 		<th>Beskrivelse</th>
-		<th>Opprettet</th>
-		<td>Virksomhet</td>
-		<th>Avdeling</th>
-		<th>Nærmeste leder</th>
-		<th>Enheter</th>
-		<th>Gruppemedlemskap</th>
+		{% comment %}<td>Virksomhet</td>{% endcomment %}
+		{% comment %}<th>Avdeling</th>{% endcomment %}
+		{% comment %}<th>Nærmeste leder</th>{% endcomment %}
+		{% comment %}<th>Enheter</th>{% endcomment %}
+		{% comment %}<th>Gruppemedlemskap</th>{% endcomment %}
 	</tr>
 	</thead>
 	<tbody>
@@ -66,37 +69,42 @@
 		<td>{{user.first_name}} {{user.last_name}}</td>
 		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
 
+		<td>{{ user.profile.ou_lesbar }}</td>
+		<td>{{ user.profile.priveligert_bruker }}</td>
+
 		<td>
-			{{ user.profile.trusted_for_delegation|yesno:"Ja,Nei,?" }}<br>
-			(Delegated: {{ user.profile.not_delegated|yesno:"Ja,Nei,?" }})
+			{{ user.profile.trusted_for_delegation|yesno:"Ja,Nei,?" }}
+		</td>
+		<td>
+			{{ user.profile.not_delegated|yesno:"Ja,Nei,?" }}
 		</td>
 		<td>{{ user.profile.dont_req_preauth|yesno:"Ja,Nei,?" }}</td>
 
 		<td>{{ user.profile.dont_expire_password|yesno:"Aldri,Ja,Vet ikke" }}</td>
 		<td>{{ user.profile.pwdLastSet|date:"Y-m-d" }} ({{ user.profile.pwdLastSet|timesince }})</td>
+		<td>{{ user.profile.whenCreated|date:"Y-m-d" }} ({{ user.profile.whenCreated|timesince }})</td>
 		<td>{{ user.profile.lastLogonTimestamp|date:"Y-m-d" }} ({{ user.profile.lastLogonTimestamp|timesince }}) </td>
 		<td>{{ user.profile.description|default:"Ingen beskrivelse" }}</td>
-		<td>{{ user.profile.whenCreated|date:"Y-m-d" }} ({{ user.profile.whenCreated|timesince }})</td>
-		<td>{{user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent"}}</td>
-		<td>
+		{% comment %}<td>{{user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent"}}</td>{% endcomment %}
+		{% comment %}<td>
 			{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
 			{{ user.profile.usertype|default:"" }}
 			{% if url_enhet %}
 			<a href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a>
 			{% endif %}
-		</td>
-		<td>
+		</td>{% endcomment %}
+		{% comment %}<td>
 			{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
 			{% if url_leder%}
 			<a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a>
 			{% endif %}
-		</td>
-		<td>
+		</td>{% endcomment %}
+		{% comment %}<td>
 			{% for enhet in user.landesk_login.all %}
 				<a href="/admin/systemoversikt/cmdbdevice/?q={{enhet.comp_name}}">{{enhet}}<br>
 			{% endfor %}
-		</td>
-		<td>{% for gruppe in user.profile.ad_grp_lookup %}{{ gruppe }} <br>{% endfor %}</td>
+		</td>{% endcomment %}
+		{% comment %}<td>{% for gruppe in user.profile.ad_grp_lookup %}{{ gruppe }} <br>{% endfor %}</td>{% endcomment %}
 	</tr>
 	{% endfor %}
 	</tbody>
