@@ -50,7 +50,7 @@ class Command(BaseCommand):
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 		try:
 			antall_oppslag = 0
-			driftbrukere = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
+			driftbrukere = User.objects.all()#filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
 			for bruker in driftbrukere:
 				#print("slår opp %s" % (bruker))
 				bruker.profile.adgrupper.clear() # tøm alle eksisterende

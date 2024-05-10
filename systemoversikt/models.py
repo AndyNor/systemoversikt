@@ -1100,10 +1100,6 @@ class Profile(models.Model):
 			blank=True,
 			null=True,
 			)
-	gruppemedlemskap = models.ManyToManyField(
-			to="ADgroup",
-			related_name='profiles',
-			)
 	# med vilje er det ikke HistoricalRecords() på denne
 
 	def __str__(self):
@@ -1204,7 +1200,7 @@ class Profile(models.Model):
 			return  ["AD ikke tilgjengelig"]
 
 	def priveligert_bruker(self):
-		if any(gruppe in self.gruppemedlemskap for gruppe in PRIVELIGERTE_GRUPPER):
+		if any(gruppe in self.adgrupper for gruppe in PRIVELIGERTE_GRUPPER):
 			return "Ja"
 		else:
 			return "Nei"
