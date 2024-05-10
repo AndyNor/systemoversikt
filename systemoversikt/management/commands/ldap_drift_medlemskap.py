@@ -11,6 +11,7 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from systemoversikt.views import ldap_users_securitygroups
 from systemoversikt.views import push_pushover
+from django.db.models import Q
 import os
 import time
 
