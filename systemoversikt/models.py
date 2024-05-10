@@ -917,6 +917,51 @@ PRIVELIGERTE_GRUPPER = [
 	"Terminal Server License Servers",
 	"Windows Authorization Access",
 	"WinRMRemoteWMIUsers_",
+	# server admins
+	"GS-OpsRole-ErgoGroup-AdminAlleMemberServere",
+	"GS-OpsRole-Ergogroup-ServerAdmins",
+	"Task-OF2-ServerAdmin-AllMemberServers",
+	"Role-OF2-Admin-Citrix Services",
+	"DS-MemberServer-Admin-AlleManagementServere",
+	"DS-MemberServer-Admin-AlleManagementServere",
+	"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_SERVERADMIN",
+	"Role-OF2-AdminAlleMemberServere",
+	# domain admins
+	"Role-Domain-Admins-UVA",
+	# PRK admins
+	"DS-GKAT_BRGR_SYSADM",
+	"DS-GKAT_ADMSENTRALESKJEMA_ALLE",
+	"DS-GKAT_ADMSENTRALESKJEMA_KOKS",
+	"DS-GKAT_IMPSKJEMA_TIGIMP",
+	"DS-GKAT_IMPSKJEMA_TSIMP",
+	"DS-GKAT_MODULER_GLOBAL_ADMINISTRASJON",
+	"DS-GKAT_DSGLOKALESKJEMA_ALLE",
+	"DS-GKAT_DSGLOKALESKJEMA_INFOCARE",
+	"DS-GKAT_DSGLOKALESKJEMA_OPPRETTE",
+	"DS-GKAT_DSGSENTRALESKJEMA_ALLE",
+	"DS-GKAT_DSGSENTRALESKJEMA_OPPRETTE",
+	"DS-GKAT_ADMLOKALESKJEMA_ALLE",
+	"DS-GKAT_ADMLOKALESKJEMA_APPLIKASJON",
+	# SQL admins
+	"GS-UKE-MSSQL-DBA",
+	"DS-OF2-SQL-SYSADMIN",
+	"DS-DRIFT_DRIFTSPERSONELL_DATABASE_SQL",
+	"GS-Role-MSSQL-DBA",
+	"GS-UKE-MSSQL-DBA",
+	"DS-Role-MSSQL-DBA",
+	"DS-DRIFT_DRIFTSPERSONELL_DATABASE_ORACLE",
+	"DS-OF2-TASK-SQLCluster",
+	# Citrix admins
+	"Task-OF2-Admin-Citrix XenApp",
+	"DS-DRIFT_DRIFTSPERSONELL_REMOTE_CITRIXDIRECTOR",
+	"DS-DRIFT_DRIFTSPERSONELL_CITRIX_APPV_ADMIN",
+	"DS-DRIFT_DRIFTSPERSONELL_CITRIX_CITRIX_NETSCALER_ADM",
+	"DS-DRIFT_DRIFTSPERSONELL_CITRIX_ADMINISTRATOR",
+	"DS-DRIFT_DRIFTSPERSONELL_CITRIX_DRIFT",
+	# annet
+	"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_ADMINDC",
+	"DS-DRIFT_DRIFTSPERSONELL_MAIL_EXH_FULL_ADMINISTRATOR",
+	"DS-DRIFT_DRIFTSPERSONELL_ACCESSMGMT_OVERGREPSMOTTAKET",
 ]
 
 class Profile(models.Model):
@@ -1199,6 +1244,8 @@ class Profile(models.Model):
 			return  ["AD ikke tilgjengelig"]
 
 	def priveligert_bruker(self):
+		if len(self.adgrupper) == 0:
+			return "Vet ikke"
 		for gruppe in self.adgrupper.all():
 			if any(pg.lower() in gruppe.common_name.lower() for pg in PRIVELIGERTE_GRUPPER):
 				return "Ja"
