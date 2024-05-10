@@ -45,7 +45,7 @@
 		<th>OU-path</th>
 
 		<th>Priveligert?</th>
-		<th>Grupper</th>
+		{% comment %}<th>Grupper</th>{% endcomment %}
 		<th>Trusted for delegation?</th>
 		<th>Delegated?</th>
 		<th>Don't require preauth</th>
@@ -76,7 +76,7 @@
 		<td>{{ user.profile.ou_lesbar }}</td>
 
 		<td>{{ user.profile.priveligert_bruker }}</td>
-		<td>{% for gruppe in user.profile.adgrupper.all %}<li>{{ gruppe }}</li>{% endfor %}</td>
+		{% comment %}<td>{% for gruppe in user.profile.adgrupper.all %}<li>{{ gruppe }}</li>{% endfor %}</td>{% endcomment %}
 		<td>{{ user.profile.trusted_for_delegation|yesno:"Ja,Nei,?" }}</td>
 		<td>{{ user.profile.not_delegated|yesno:"Ja,Nei,?" }}</td>
 		<td>{{ user.profile.dont_req_preauth|yesno:"Ja,Nei,?" }}</td>

@@ -962,6 +962,10 @@ PRIVELIGERTE_GRUPPER = [
 	"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_ADMINDC",
 	"DS-DRIFT_DRIFTSPERSONELL_MAIL_EXH_FULL_ADMINISTRATOR",
 	"DS-DRIFT_DRIFTSPERSONELL_ACCESSMGMT_OVERGREPSMOTTAKET",
+	"Steria Admin",
+	"GS-SAM-SharepointAdmin_IS",
+	"GS-NAE-EQUITRAC_ADMIN",
+	"Task-OF2-EGE-JumpserverAdmin",
 ]
 
 class Profile(models.Model):
@@ -1244,8 +1248,6 @@ class Profile(models.Model):
 			return  ["AD ikke tilgjengelig"]
 
 	def priveligert_bruker(self):
-		if len(self.adgrupper) == 0:
-			return "Vet ikke"
 		for gruppe in self.adgrupper.all():
 			if any(pg.lower() in gruppe.common_name.lower() for pg in PRIVELIGERTE_GRUPPER):
 				return "Ja"
