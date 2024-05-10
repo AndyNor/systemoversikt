@@ -54,6 +54,7 @@ class Command(BaseCommand):
 			driftbrukere = User.objects.all()#filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
 			antall_brukere = len(driftbrukere)
 			for bruker in driftbrukere:
+				antall_oppslag += 1
 				if antall_oppslag % 100 == 0:
 					print(f"{antall_oppslag} av {antall_brukere}")
 				#print("slår opp %s" % (bruker))
@@ -65,7 +66,6 @@ class Command(BaseCommand):
 						bruker.profile.adgrupper.add(adg)
 						bruker.profile.adgrupper_antall = len(grupper)
 						bruker.save()
-						antall_oppslag += 1
 					except:
 						print("Error, fant ikke %s" % (g))
 
