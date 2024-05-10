@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from systemoversikt.views import ldap_users_securitygroups
 from systemoversikt.views import push_pushover
 import os
+import time
 
 class Command(BaseCommand):
 	def handle(self, **options):
