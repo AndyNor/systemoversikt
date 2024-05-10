@@ -51,7 +51,7 @@ class Command(BaseCommand):
 
 		try:
 			antall_oppslag = 0
-			driftbrukere = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
+			driftbrukere = User.objects.filter(profile__accountdisable=False).filter(Q(username__istartswith="DRIFT") | Q(profile_distinguishedname__iconains="ServiceAccounts"))
 			antall_brukere = len(driftbrukere)
 			for bruker in driftbrukere:
 				antall_oppslag += 1
