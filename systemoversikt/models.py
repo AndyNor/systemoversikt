@@ -916,9 +916,8 @@ PRIVELIGERTE_GRUPPER = [
 	"System Managed Accounts",
 	"Terminal Server License Servers",
 	"Windows Authorization Access",
-	"WinRMRemoteWMIUsers_"
+	"WinRMRemoteWMIUsers_",
 ]
-
 
 class Profile(models.Model):
 	#https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
@@ -1200,10 +1199,10 @@ class Profile(models.Model):
 			return  ["AD ikke tilgjengelig"]
 
 	def priveligert_bruker(self):
-		if any(gruppe in self.adgrupper for gruppe in PRIVELIGERTE_GRUPPER):
-			return "Ja"
-		else:
-			return "Nei"
+		for gruppe in self.adgrupper.all():
+			if any(pg.lower() in gruppe.common_name.lower() for pg in PRIVELIGERTE_GRUPPER):
+				return "Ja"
+		return "Nei"
 
 """
 class Klientutstyr(models.Model):

@@ -43,15 +43,20 @@
 		<th>Navn</th>
 		<th>Brukernavn</th>
 		<th>OU-path</th>
+
 		<th>Priveligert?</th>
+		<th>Grupper</th>
 		<th>Trusted for delegation?</th>
 		<th>Delegated?</th>
 		<th>Don't require preauth</th>
+
 		<th>Passordbytte aktiv?</th>
 		<th>Sist passordbytte</th>
 		<th>Opprettet</th>
 		<th>Sist pålogget (ca)</th>
+
 		<th>Beskrivelse</th>
+
 		{% comment %}<td>Virksomhet</td>{% endcomment %}
 		{% comment %}<th>Avdeling</th>{% endcomment %}
 		{% comment %}<th>Nærmeste leder</th>{% endcomment %}
@@ -68,23 +73,21 @@
 		{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
 		<td>{{user.first_name}} {{user.last_name}}</td>
 		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
-
 		<td>{{ user.profile.ou_lesbar }}</td>
-		<td>{{ user.profile.priveligert_bruker }}</td>
 
-		<td>
-			{{ user.profile.trusted_for_delegation|yesno:"Ja,Nei,?" }}
-		</td>
-		<td>
-			{{ user.profile.not_delegated|yesno:"Ja,Nei,?" }}
-		</td>
+		<td>{{ user.profile.priveligert_bruker }}</td>
+		<td>{% for gruppe in user.profile.adgrupper.all %}<li>{{ gruppe }}</li>{% endfor %}</td>
+		<td>{{ user.profile.trusted_for_delegation|yesno:"Ja,Nei,?" }}</td>
+		<td>{{ user.profile.not_delegated|yesno:"Ja,Nei,?" }}</td>
 		<td>{{ user.profile.dont_req_preauth|yesno:"Ja,Nei,?" }}</td>
 
 		<td>{{ user.profile.dont_expire_password|yesno:"Aldri,Ja,Vet ikke" }}</td>
 		<td>{{ user.profile.pwdLastSet|date:"Y-m-d" }} ({{ user.profile.pwdLastSet|timesince }})</td>
 		<td>{{ user.profile.whenCreated|date:"Y-m-d" }} ({{ user.profile.whenCreated|timesince }})</td>
 		<td>{{ user.profile.lastLogonTimestamp|date:"Y-m-d" }} ({{ user.profile.lastLogonTimestamp|timesince }}) </td>
+
 		<td>{{ user.profile.description|default:"Ingen beskrivelse" }}</td>
+
 		{% comment %}<td>{{user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent"}}</td>{% endcomment %}
 		{% comment %}<td>
 			{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}

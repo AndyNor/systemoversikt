@@ -48,10 +48,14 @@ class Command(BaseCommand):
 		runtime_t0 = time.time()
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+
 		try:
 			antall_oppslag = 0
 			driftbrukere = User.objects.all()#filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
+			antall_brukere = len(driftbrukere)
 			for bruker in driftbrukere:
+				if antall_oppslag % 100 == 0:
+					print(f"{antall_oppslag} av {antall_brukere}")
 				#print("slår opp %s" % (bruker))
 				bruker.profile.adgrupper.clear() # tøm alle eksisterende
 				grupper = ldap_users_securitygroups(bruker.username)
@@ -70,7 +74,7 @@ class Command(BaseCommand):
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
 
-			logg_message = f"Lastet inn alle grupper for {antall_oppslag} brukere. Det tok {logg_total_runtime} sekunder."
+			logg_message = f"Lastet inn alle grupper for {antall_oppslag} brukere. Det tok {round(logg_total_runtime, 1)} sekunder."
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_message,
