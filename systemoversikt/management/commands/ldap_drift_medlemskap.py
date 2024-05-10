@@ -18,10 +18,10 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "ad_drift_tilganger"
-		LOG_EVENT_TYPE = "AD gruppemedlemskap for drift"
+		LOG_EVENT_TYPE = "AD gruppemedlemskap for alle brukere"
 		KILDE = "Active Directory OSLOFELLES"
 		PROTOKOLL = "LDAP"
-		BESKRIVELSE = "Tilgangsgrupper for DRIFT-brukere"
+		BESKRIVELSE = "Tilgangsgrupper for alle brukere"
 		FILNAVN = ""
 		URL = ""
 		FREKVENS = "Hver natt"
@@ -70,7 +70,7 @@ class Command(BaseCommand):
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
 
-			logg_message = f"Lastet inn alle grupper for {antall_oppslag} driftbrukere. Det tok {logg_total_runtime} sekunder."
+			logg_message = f"Lastet inn alle grupper for {antall_oppslag} brukere. Det tok {logg_total_runtime} sekunder."
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_message,
