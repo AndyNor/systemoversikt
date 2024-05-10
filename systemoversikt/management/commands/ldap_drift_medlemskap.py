@@ -55,7 +55,7 @@ class Command(BaseCommand):
 			antall_brukere = len(driftbrukere)
 			for bruker in driftbrukere:
 				antall_oppslag += 1
-				if antall_oppslag % 100 == 0:
+				if antall_oppslag % 25 == 0:
 					print(f"{antall_oppslag} av {antall_brukere}")
 				#print("slår opp %s" % (bruker))
 				bruker.profile.adgrupper.clear() # tøm alle eksisterende
