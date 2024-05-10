@@ -18,10 +18,10 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "ad_drift_tilganger"
-		LOG_EVENT_TYPE = "AD gruppemedlemskap for alle brukere"
+		LOG_EVENT_TYPE = "AD gruppemedlemskap for alle aktive driftbrukere"
 		KILDE = "Active Directory OSLOFELLES"
 		PROTOKOLL = "LDAP"
-		BESKRIVELSE = "Tilgangsgrupper for alle brukere"
+		BESKRIVELSE = "Tilgangsgrupper for alle aktive driftbrukere"
 		FILNAVN = ""
 		URL = ""
 		FREKVENS = "Hver natt"
@@ -51,7 +51,7 @@ class Command(BaseCommand):
 
 		try:
 			antall_oppslag = 0
-			driftbrukere = User.objects.all()#filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
+			driftbrukere = User.objects.filter(username__istartswith="DRIFT").filter(profile__accountdisable=False)
 			antall_brukere = len(driftbrukere)
 			for bruker in driftbrukere:
 				antall_oppslag += 1

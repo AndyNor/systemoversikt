@@ -275,7 +275,7 @@ def ldap_users_securitygroups(user): # støttefunksjon for LDAP
 		memberof = result[0][1]['memberOf']
 		return([g.decode() for g in memberof])
 	except:
-		print(f"Finner ikke 'memberof' attributtet for {user}.")
+		#print(f"Finner ikke 'memberof' attributtet for {user}.")
 		#print("error ldap_users_securitygroups(): %s" %(result))
 		return []
 
