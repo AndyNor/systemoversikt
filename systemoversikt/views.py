@@ -275,7 +275,7 @@ def ldap_users_securitygroups(user): # støttefunksjon for LDAP
 		memberof = result[0][1]['memberOf']
 		return([g.decode() for g in memberof])
 	except:
-		print(f"Finner ikke 'memberof' attributtet for {user}.")
+		#print(f"Finner ikke 'memberof' attributtet for {user}.")
 		#print("error ldap_users_securitygroups(): %s" %(result))
 		return []
 
@@ -4527,7 +4527,7 @@ def tbrukere(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	brukere = User.objects.filter(Q(username__istartswith="t-") | Q(username__istartswith="t_")| Q(username__icontains="_t2")).filter(profile__accountdisable=False).order_by("username")
+	brukere = User.objects.filter( Q(username__istartswith="t-") | Q(username__istartswith="t_") | Q(username__icontains="_t2") | Q(username__icontains="aks20") | Q(username__icontains="_qa") | Q(username__icontains="-qa") ).order_by("username")
 
 	return render(request, 'ad_tbrukere.html', {
 		"request": request,

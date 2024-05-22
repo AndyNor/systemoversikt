@@ -867,8 +867,108 @@ LISENCE_VALG = (
 	(4, 'G4 A3 (Education)'),
 )
 
+PRIVELIGERTE_GRUPPER = [
+	"Access Control Assistance Operators",
+	"Account Operators",
+	"Administrators",
+	"Allowed RODC Password Replication",
+	"Backup Operators",
+	"Certificate Service DCOM Access",
+	"Cert Publishers",
+	"Cloneable Domain Controllers",
+	"Cryptographic Operators",
+	"Denied RODC Password Replication",
+	"Device Owners",
+	"DHCP Administrators",
+	"DHCP Users",
+	"Distributed COM Users",
+	"DnsUpdateProxy",
+	"DnsAdmins",
+	"Domain Admins",
+	"Domain Computers",
+	"Domain Controllers",
+	"Enterprise Admins",
+	"Enterprise Key Admins",
+	"Enterprise Read-only Domain Controllers",
+	"Event Log Readers",
+	"Group Policy Creator Owners",
+	"Hyper-V Administrators",
+	"IIS_IUSRS",
+	"Incoming Forest Trust Builders",
+	"Key Admins",
+	"Network Configuration Operators",
+	"Performance Log Users",
+	"Performance Monitor Users",
+	"Pre–Windows 2000 Compatible Access",
+	"Print Operators",
+	"Protected Users",
+	"RAS and IAS Servers",
+	"RDS Endpoint Servers",
+	"RDS Management Servers",
+	"RDS Remote Access Servers",
+	"Read-only Domain Controllers",
+	"Remote Desktop Users",
+	"Remote Management Users",
+	"Replicator",
+	"Schema Admins",
+	"Server Operators",
+	"Storage Replica Administrators",
+	"System Managed Accounts",
+	"Terminal Server License Servers",
+	"Windows Authorization Access",
+	"WinRMRemoteWMIUsers_",
+	# server admins
+	"GS-OpsRole-ErgoGroup-AdminAlleMemberServere",
+	"GS-OpsRole-Ergogroup-ServerAdmins",
+	"Task-OF2-ServerAdmin-AllMemberServers",
+	"Role-OF2-Admin-Citrix Services",
+	"DS-MemberServer-Admin-AlleManagementServere",
+	"DS-MemberServer-Admin-AlleManagementServere",
+	"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_SERVERADMIN",
+	"Role-OF2-AdminAlleMemberServere",
+	# domain admins
+	"Role-Domain-Admins-UVA",
+	# PRK admins
+	"DS-GKAT_BRGR_SYSADM",
+	"DS-GKAT_ADMSENTRALESKJEMA_ALLE",
+	"DS-GKAT_ADMSENTRALESKJEMA_KOKS",
+	"DS-GKAT_IMPSKJEMA_TIGIMP",
+	"DS-GKAT_IMPSKJEMA_TSIMP",
+	"DS-GKAT_MODULER_GLOBAL_ADMINISTRASJON",
+	"DS-GKAT_DSGLOKALESKJEMA_ALLE",
+	"DS-GKAT_DSGLOKALESKJEMA_INFOCARE",
+	"DS-GKAT_DSGLOKALESKJEMA_OPPRETTE",
+	"DS-GKAT_DSGSENTRALESKJEMA_ALLE",
+	"DS-GKAT_DSGSENTRALESKJEMA_OPPRETTE",
+	"DS-GKAT_ADMLOKALESKJEMA_ALLE",
+	"DS-GKAT_ADMLOKALESKJEMA_APPLIKASJON",
+	# SQL admins
+	"GS-UKE-MSSQL-DBA",
+	"DS-OF2-SQL-SYSADMIN",
+	"DS-DRIFT_DRIFTSPERSONELL_DATABASE_SQL",
+	"GS-Role-MSSQL-DBA",
+	"GS-UKE-MSSQL-DBA",
+	"DS-Role-MSSQL-DBA",
+	"DS-DRIFT_DRIFTSPERSONELL_DATABASE_ORACLE",
+	"DS-OF2-TASK-SQLCluster",
+	# Citrix admins
+	"Task-OF2-Admin-Citrix XenApp",
+	"DS-DRIFT_DRIFTSPERSONELL_REMOTE_CITRIXDIRECTOR",
+	"DS-DRIFT_DRIFTSPERSONELL_CITRIX_APPV_ADMIN",
+	"DS-DRIFT_DRIFTSPERSONELL_CITRIX_CITRIX_NETSCALER_ADM",
+	"DS-DRIFT_DRIFTSPERSONELL_CITRIX_ADMINISTRATOR",
+	"DS-DRIFT_DRIFTSPERSONELL_CITRIX_DRIFT",
+	# annet
+	"DS-DRIFT_DRIFTSPERSONELL_SERVERMGMT_ADMINDC",
+	"DS-DRIFT_DRIFTSPERSONELL_MAIL_EXH_FULL_ADMINISTRATOR",
+	"DS-DRIFT_DRIFTSPERSONELL_ACCESSMGMT_OVERGREPSMOTTAKET",
+	"Steria Admin",
+	"GS-SAM-SharepointAdmin_IS",
+	"GS-NAE-EQUITRAC_ADMIN",
+	"Task-OF2-EGE-JumpserverAdmin",
+]
 
-class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhørende virksomhet. Vurderer å fjerne denne.
+class Profile(models.Model):
 	#https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
 	user = models.OneToOneField(
 			to=User,
@@ -1141,9 +1241,17 @@ class Profile(models.Model): # brukes for å knytte innlogget bruker med tilhør
 
 
 	def ad_grp_lookup(self):
-		from systemoversikt.views import ldap_users_securitygroups, convert_distinguishedname_cn
-		return sorted(convert_distinguishedname_cn(ldap_users_securitygroups(self.user.username)))
+		try:
+			from systemoversikt.views import ldap_users_securitygroups, convert_distinguishedname_cn
+			return sorted(convert_distinguishedname_cn(ldap_users_securitygroups(self.user.username)))
+		except:
+			return  ["AD ikke tilgjengelig"]
 
+	def priveligert_bruker(self):
+		for gruppe in self.adgrupper.all():
+			if any(pg.lower() in gruppe.common_name.lower() for pg in PRIVELIGERTE_GRUPPER):
+				return "Ja"
+		return "Nei"
 
 """
 class Klientutstyr(models.Model):
