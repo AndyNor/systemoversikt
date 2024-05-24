@@ -50,9 +50,11 @@
 			<td>{{ vir.orgnummer|default:"Ukjent" }}</td>
 
 			<td>
-				{% for person in vir.leder.all %}
-					<a href="{% url 'ansvarlig' person.pk %}">{{ person }}</a>
-				{% endfor %}
+				{% if vir.leder_hr %}
+					<a href="{% url 'bruker_detaljer' pk=vir.leder_hr.pk %}">{{vir.leder_hr.profile.displayName}}</a>
+				{% else %}
+					{% include "ansvarlig_include_vis.html" with ansvarlige=vir.leder.all %}
+				{% endif %}
 			</td>
 
 			<td>
