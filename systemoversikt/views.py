@@ -5085,7 +5085,7 @@ def sertifikatmyndighet(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	virksomheter = Virksomhet.objects.all()
+	virksomheter = Virksomhet.objects.all().order_by('-sertifikatfullmakt_avgitt_web')
 
 	return render(request, 'virksomhet_sertifikatmyndigheter.html', {
 		'request': request,

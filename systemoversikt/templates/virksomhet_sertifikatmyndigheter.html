@@ -12,19 +12,17 @@
 
 {% block hovedinnhold %}
 
-	<p>Viser status på fullmakter gitt til UKE/2S for å utstede web- og virksomhetssertifikater.</p>
+	<p>Viser status på fullmakter gitt av virksomheter til Buypass for at Sopra Steria skal kunne utstede web- og virksomhetssertifikater.</p>
 
 		<table class="tablesorter">
 		<thead>
 		<tr>
 			<th>Virksomhetsnavn</th>
-			<th>Forkortet</th>
-			<th>Klientplattform</th>
-			<th>Fullmakt web</th>
-			<th>Fullmakt virksomhet</th>
+			<th>Driftsmodell</th>
+			<th>Fullmakt gitt?</th>
 			<th>Organisasjonsnummer</th>
-			<th>Leder</th>
-			<th>Bestillere</th>
+			<th>Virksomhetsleder</th>
+			<th>Godkjente bestillere</th>
 		</tr>
 		</thead>
 		<tbody>
@@ -38,10 +36,8 @@
 				{% endif %}
 
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn|truncatewords:6 }}</a>
+				<a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn|truncatewords:6 }}</a> ({{ vir.virksomhetsforkortelse }})
 			</td>
-
-			<td>{{ vir.virksomhetsforkortelse }}</td>
 
 			<td>{{ vir.get_resultatenhet_display }}</td>
 
@@ -50,31 +46,18 @@
 					{{ vir.sertifikatfullmakt_avgitt_web|yesno:"Ja,Nei,-" }}
 				</p>
 			</td>
-			<td>
-				<p {% if vir.sertifikatfullmakt_avgitt_virksomhet %} style="background-color: #ada" {% endif %}>
-					{{ vir.sertifikatfullmakt_avgitt_virksomhet|yesno:"Ja,Nei,-" }}
-				</p>
-			</td>
 
 			<td>{{ vir.orgnummer|default:"Ukjent" }}</td>
+
 			<td>
 				{% for person in vir.leder.all %}
 					<a href="{% url 'ansvarlig' person.pk %}">{{ person }}</a>
-					<ul>
-						<li>E-post: {{ person.brukernavn.email|default:"Ukjent" }}</li>
-						<li>Tlf: {{ person.telefon|default:"Ukjent" }}</li>
-						<li>Fødselsdato: {{ person.fdato|default:"Ukjent" }}</li>
-					</ul><br>
 				{% endfor %}
 			</td>
+
 			<td>
 				{% for autorisertbestiller in vir.autoriserte_bestillere_sertifikater.all %}
 					<a href="{% url 'ansvarlig' autorisertbestiller.person.pk %}">{{ autorisertbestiller.person }}</a>
-					<ul><li>E-post: {{ autorisertbestiller.person.brukernavn.email|default:"Ukjent" }}</li>
-					<li>Tlf: {{ autorisertbestiller.person.telefon|default:"Ukjent" }}</li>
-					<li>Fødselsdato: {{ autorisertbestiller.person.fdato|default:"Ukjent" }}</li>
-					<li>Rolle: {{ autorisertbestiller.person.kommentar|default:"Ukjent" }}</li>
-				</ul><br>
 				{% endfor %}
 			</td>
 		</tr>
