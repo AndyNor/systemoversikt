@@ -29,9 +29,30 @@
 <div id="europa_div" style="width: 1500px; height: 800px;"></div>
 <br><br>
 
-<h5>South-Eastern Asia</h5><hr>
+<h5>Asia</h5><hr>
 <div id="oceania_div" style="width: 1500px; height: 800px;"></div>
 <br><br>
+
+
+<table> <table class="table table-sm tablesorter excel">
+  <thead>
+  <tr>
+    <th>Land</th>
+    <th>Fargekode</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for country in color_table_display %}
+  <tr>
+    <td>{{ country.land }}</td>
+    <td>{{ country.farge }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+  </table>
+
+</table>
+
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
       google.charts.load('current', {
