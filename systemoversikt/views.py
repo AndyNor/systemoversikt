@@ -4060,28 +4060,31 @@ def rapport_named_locations(request):
 
 	required_permissions = None
 	color_table = []
+	color_table_display = []
 	color_table.append(['Land', 'Fargekode'])
 
-	def populate(named_location_id, color_code): # 1 is green, 2 is yellow, 3 is red and 4 is black
+	def populate(named_location_id, color_code, color_name): # 1 is green, 2 is yellow, 3 is red and 4 is black
 		named_location = AzureNamedLocations.objects.get(ipNamedLocation_id=named_location_id)
 		for country in json.loads(named_location.countriesAndRegions):
 			#print(country)
 			color_table.append([{"v": country["code"], "f": country["name"]}, color_code])
+			color_table_display.append({"land": country["name"], "farge": color_name})
 
 	data = [
-		{"named_location_id": '141f4101-6ea0-4cd0-9c6e-2b57e868876f', "color_code": 1}, # grønn
-		{"named_location_id": '1b0ee1ab-e197-45bf-b48c-c05999613ea8', "color_code": 2}, # gul
-		{"named_location_id": '1c5daa1a-f370-4512-9078-bf81159ee7b2', "color_code": 3}, # rød
-		{"named_location_id": '801537bb-85ee-4b84-8202-1e69779a54c3', "color_code": 4}, # sort
+		{"named_location_id": '141f4101-6ea0-4cd0-9c6e-2b57e868876f', "color_code": 1, "color_name": "grønn"}, # grønn
+		{"named_location_id": '1b0ee1ab-e197-45bf-b48c-c05999613ea8', "color_code": 2, "color_name": "gul"}, # gul
+		{"named_location_id": '1c5daa1a-f370-4512-9078-bf81159ee7b2', "color_code": 3, "color_name": "rød"}, # rød
+		{"named_location_id": '801537bb-85ee-4b84-8202-1e69779a54c3', "color_code": 4, "color_name": "sort"}, # sort
 	]
 
 	for item in data:
-		populate(item["named_location_id"], item["color_code"])
+		populate(item["named_location_id"], item["color_code"], item["color_name"])
 
 	return render(request, "rapport_named_locations.html", {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'color_table': color_table,
+		'color_table_display': color_table_display,
 	})
 
 
@@ -5082,7 +5085,7 @@ def sertifikatmyndighet(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	virksomheter = Virksomhet.objects.all()
+	virksomheter = Virksomhet.objects.all().order_by('-sertifikatfullmakt_avgitt_web')
 
 	return render(request, 'virksomhet_sertifikatmyndigheter.html', {
 		'request': request,

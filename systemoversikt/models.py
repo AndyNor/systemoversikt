@@ -600,7 +600,7 @@ class Virksomhet(models.Model):
 	overordnede_virksomheter = models.ManyToManyField(
 			to="Virksomhet",
 			related_name='virksomhet_overordnede_virksomheter',
-			verbose_name="Byrådsavdeling",
+			verbose_name="Tilhører byrådsavdeling",
 			blank=True,
 			help_text=u'Dersom aktuelt kan en annen virksomhet angis som overornet denne.',
 			)
@@ -683,21 +683,14 @@ class Virksomhet(models.Model):
 			related_name='virksomhet_autoriserte_bestillere_sertifikater',
 			verbose_name="Autoriserte sertifikatbestillere",
 			blank=True,
-			help_text=u"Fylles ut dersom virksomhetsleder har avgitt fullmakt for ustedelse av websertifikater og/eller virksomhetssertifikater.",
+			help_text=u"Personer som kan godkjenne utstedelse av nye websertifikater og virksomhetssertifikater.",
 			)
 	sertifikatfullmakt_avgitt_web = models.BooleanField(
-			verbose_name="Avgitt fullmakt for websertifikater?",
+			verbose_name="Avgitt sertifikatfullmakt til Buypass?",
 			blank=True,
 			null=True,
 			default=False,
-			help_text=u"Krysses av dersom virksomhet har avgitt fullmakt til driftsleverandør for utstedelse av websertifikater for sitt org.nummer.",
-			)
-	sertifikatfullmakt_avgitt_virksomhet = models.BooleanField(
-			verbose_name="Avgitt fullmakt for virksomhetssertifikater?",
-			blank=True,
-			null=True,
-			default=False,
-			help_text=u"Krysses av dersom virksomhet har avgitt fullmakt til driftsleverandør for utstedelse av virksomhetssertifikater for sitt org.nummer.",
+			help_text=u"Krysses av dersom virksomhet har avgitt fullmakt til driftsleverandør for å utstede digitale sertifikater sitt org.nummer.",
 			)
 	rutine_tilgangskontroll = models.URLField(
 			verbose_name="Rutiner for tilgangskontroll",

@@ -486,15 +486,15 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 	fieldsets = (
 			('Initiell registrering', {
 				'fields': (
-					'virksomhetsnavn',
+					('virksomhetsnavn','orgnummer',),
 					('virksomhetsforkortelse','gamle_virksomhetsforkortelser'),
-					('odepartmentnumber', 'leder',),
 					'ordinar_virksomhet',
-					'orgnummer',
+					('odepartmentnumber', 'leder',),
+					('overordnede_virksomheter','kan_representeres',),
 					('resultatenhet',
 					'office365'),
-					'overordnede_virksomheter',
-					'kan_representeres',
+					'sertifikatfullmakt_avgitt_web',
+					'autoriserte_bestillere_sertifikater',
 					'intranett_url',
 					'www_url',
 				),
@@ -518,13 +518,6 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 					'rutine_tilgangskontroll',
 					'rutine_behandling_personopplysninger',
 					'rutine_klage_behandling',
-				),
-			}),
-			('Sertifikatadministrasjon', {
-				'classes': ('collapse',),
-				'fields': (
-					'autoriserte_bestillere_sertifikater',
-					('sertifikatfullmakt_avgitt_web', 'sertifikatfullmakt_avgitt_virksomhet'),
 				),
 			}),
 			('Utfaset', {
