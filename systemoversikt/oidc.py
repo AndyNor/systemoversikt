@@ -233,8 +233,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 		def update_user(self, user, claims):
 			user.is_active = True
-			user.first_name = claims.get('given_name', '')
-			user.last_name = claims.get('family_name', '')
+			#user.first_name = claims.get('given_name', '')
+			#user.last_name = claims.get('family_name', '')
 			user.email = claims.get('email', '')
 			user.is_staff = True
 

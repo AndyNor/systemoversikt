@@ -292,7 +292,7 @@ MIDDLEWARE_CLASSES = [
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 STATIC_URL = '/static/'
-STATIC_DIRS = [os.path.join(BASE_DIR, 'statics'),]
+#STATIC_DIRS = [os.path.join(BASE_DIR, 'statics'),]
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 20480
