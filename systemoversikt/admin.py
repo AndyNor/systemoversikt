@@ -828,10 +828,10 @@ class AnsattIDAdmin(SimpleHistoryAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-	list_display = ('user', 'virksomhet', 'description', 'usertype', 'from_prk')
-	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'description',)
+	list_display = ('user', 'virksomhet', 'org_unit', 'usertype', 'from_prk', 'adgrupper_antall', 'description')
+	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'description', 'user__email',)
 	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som', 'adgrupper', 'org_unit', 'ansattnr_ref')
-	list_filter = ('usertype', 'from_prk', 'passwd_notreqd')
+	list_filter = ('usertype', 'from_prk', 'passwd_notreqd', 'whenCreated')
 
 
 @admin.register(SystemUrl)
