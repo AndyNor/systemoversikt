@@ -47,7 +47,7 @@ def fellesinformasjon():
 		return ""
 	if siste_fellesinfo.aktiv:
 		html = format_html('''
-				<div style="color: black; position: fixed; font-size: 10pt; left: 50%; transform: translateX(-50%); text-align: center; background-color: yellow;">{}</div>
+				<div style="color: black; position: fixed; font-size: 10pt; margin-left: 100px; text-align: center; background-color: #ffff0033;">{}</div>
 				''',
 				siste_fellesinfo.message,
 			)

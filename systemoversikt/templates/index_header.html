@@ -3,43 +3,47 @@
 
 
 <header>
-	<nav class="navbar navbar-light fixed-top" style="background-color: #fff; padding: 0;">
+	<nav class="navbar navbar-light fixed-top" style="background-color: #fff; padding: 0; min-width: 950px;">
 
 
 		<div style="width: 100%; padding-top: 5px; padding-bottom: 5px;">
 
 			{% fellesinformasjon %}
-			<a href="/"><img src="{% static 'Oslo-logo-morkeblaa-RGB.c2e496c6.svg' %}" style="float: left; margin: 10px 30px 10px 65px; height: 70px;"></a>
-			<div>
-				<form action="{% url 'search' %}" autocomplete="off">
-					<div class="form-group form-inline">
-						<div style="margin-top: 30px;">
-							<input style="width: 390px;" type="search" value="{{ search_term }}" name="search_term"
-							placeholder="Virksomhet, brukernavn, system, url eller programvare" class="form-control form-control-sm">
-							<input type="submit" value="Søk" class="btn btn-sm">
-							<a style="font-weight: normal; padding-left: 10px;" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">Brukerveiledning</a>
-						</div>
-					</div>
-				</form>
-			</div>
+			<a href="/"><img src="{% static 'Oslo-logo-morkeblaa-RGB.c2e496c6.svg' %}" style="float: left; margin: 10px 30px 10px 35px; height: 70px;"></a>
+
+			<form action="{% url 'search' %}" autocomplete="off" style="float: left; overflow-wrap: ; padding-top: 35px;">
+				<div class="form-group form-inline">
+					<input style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
+					placeholder="" class="form-control form-control-sm">
+
+					<input type="submit" value="Søk" class="btn btn-sm">
+
+					<a class="btn btn-sm" style="font-weight: normal; margin-left: 5px; background-color: #F8F0DD;" target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">Veiledning</a>
+				</div>
+			</form>
+
 
 			{% if user.is_authenticated %}
-				<form method="post" action="{% url 'minside' %}" style="position: absolute; right: 5px; top: 25px;">
+				<form method="post" action="{% url 'minside' %}" style="float: left; margin-left: 5px; padding-top: 35px;">
 					{% csrf_token %}
 					<input type="hidden" name="next" value="{{ request.path }}">
-					<button id="login_button" type="submit" class="btn btn-sm btn-link">{{ request.user.first_name }} {{ request.user.last_name }}</button>
+					<button class="btn btn-sm" style="background-color: #dfe5d7;" type="submit">{{ request.user.first_name }} {{ request.user.last_name }}</button>
+				</form>
+				{% if TEST_ENV_NAME == 'test' %}
+					{% url "logout" as url_logout %}
+				{% else %}
+					{% url "oidc_logout" as url_logout %}
+				{% endif %}
+				<form method="post" action="{{ url_logout }}" style="float: left; margin-left: 5px; padding-top: 35px;">
+					{% csrf_token %}
+					<input class="btn btn-sm" style="background-color: #dc354536;" type="submit" name="Logg av" value="Logg av" />
 				</form>
 			{% else %}
-				{% if TEST_ENV_NAME == 'test' %}
-					{% comment %}{% url "login" as url_login %}{% endcomment %}
-					{% url "oidc_authentication_init" as url_login %}
-				{% else %}
-					{% url "oidc_authentication_init" as url_login %}
-				{% endif %}
-				<form method="get" action="{{ url_login }}" style="position: absolute; right: 5px; top: 25px;">
+				{% url "oidc_authentication_init" as url_login %}
+				<form method="get" action="{{ url_login }}" style="float: left; margin-left: 5px; padding-top: 35px;">
 					{% csrf_token %}
 					<input type="hidden" name="next" value="{{ request.path }}">
-					<button id="login_button" type="submit" class="btn btn-sm btn-link">Logg inn</button>
+					<button id="login_button" style="background-color: #dc354536;" type="submit" class="btn btn-sm btn-link">Logg inn</button>
 				</form>
 			{% endif %}
 
@@ -53,25 +57,20 @@
 
 				<li class="hovedmeny">
 					{% url "systemklassifisering_tom" as alle_systemer_url %}
-					<a href="{{ alle_systemer_url }}" class="nav-link {% if '/systemer/' in request.path %} active {% endif %}">Systemer</a>
+					<a href="{{ alle_systemer_url }}" class="nav-link {% if '/systemer/' in request.path %} active {% endif %}">System</a>
 				</li>
 
 				<li class="hovedmeny">
 					{% url "alle_programvarer" as alle_programvarer_url %}
-					<a href="{{ alle_programvarer_url }}" class="nav-link {% if '/programvare/' in request.path %} active {% endif %}">Programvarer</a>
+					<a href="{{ alle_programvarer_url }}" class="nav-link {% if '/programvare/' in request.path %} active {% endif %}">Programvare</a>
 				</li>
 
 			{% if user.is_authenticated %}
 				<li class="hovedmeny">
 					{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
-					<a href="{{ alle_driftsmodeller_url }}" class="nav-link {% if '/driftsmodell/' in request.path %} active {% endif %}">Driftsplattformer</a>
+					<a href="{{ alle_driftsmodeller_url }}" class="nav-link {% if '/driftsmodell/' in request.path %} active {% endif %}">Plattformer</a>
 				</li>
 			{% endif %}
-
-				<li class="hovedmeny">
-					{% url "alle_systemurler" as alle_systemurler_url %}
-					<a href="{{ alle_systemurler_url }}" class="nav-link {% if '/domener/' in request.path %} active {% endif %}">Domener</a>
-				</li>
 
 				<li class="hovedmeny">
 					{% url "alle_virksomheter" as alle_virksomheter_url %}
@@ -87,11 +86,6 @@
 				</li>
 			{% endif %}
 			{% endcomment %}
-
-				<li class="hovedmeny">
-					{% url "alle_definisjoner" as alle_definisjoner_url %}
-					<a href="{{ alle_definisjoner_url }}" class="nav-link {% if '/definisjon/' in request.path %} active {% endif %}">Begreper</a>
-				</li>
 
 			{% if user.is_authenticated %}
 				<li class="hovedmeny">

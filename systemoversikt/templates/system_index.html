@@ -11,6 +11,11 @@
 
 		<hr>
 
+		{% url "alle_systemurler" as alle_systemurler_url %}
+		<a href="{{ alle_systemurler_url }}" class="nav-link {% if '/domener/' in request.path %} active {% endif %}">Alle URLer</a>
+
+		<hr>
+
 		{% url 'min_virksomhet' as url_min_virksomhet %}
 		<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 Min virksomhet</a>
 
