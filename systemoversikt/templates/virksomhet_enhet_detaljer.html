@@ -1,9 +1,9 @@
-{% extends "cmdb_index.html" %}
+{% extends "brukere_index.html" %}
 {% load humanize %}
 {% load static %}
 
 {% block overskrift %}
-	Organisasjonsoversikt
+	{{ unit }}
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -16,10 +16,7 @@
 		</div>
 	</form>
 
-	<br>
 	<hr>
-	<h4>{{ unit }}</h4>
-
 
 	{% url 'bruker_detaljer' pk=unit.leder.pk as url_leder %}
 	{% url 'enhet_detaljer' pk=unit.direkte_mor.pk as url_enhet %}

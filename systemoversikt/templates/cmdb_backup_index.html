@@ -11,8 +11,6 @@
 
 {% block hovedinnhold %}
 
-{% url 'cmdb_uten_backup' as url_cmdb_uten_backup %}
-<a href="{{url_cmdb_uten_backup}}" class="btn btn-sm btn-link {% if url_cmdb_uten_backup in request.path %}fremhev{% endif %}">Servere som mangler backup</a> |
 
 <hr>
 <div class="container">

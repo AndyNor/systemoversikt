@@ -1381,7 +1381,7 @@ def alle_citrixpub(request):
 		'citrixapps': citrixapps,
 		'antall_apper_totalt': antall_apper_totalt,
 		'antall_apper_koblet': antall_apper_koblet,
-		'antall_apper_koblet_pct': f"{round(antall_apper_koblet_pct * 100, 1)}%",
+		'antall_apper_koblet_pct': f"{round(antall_apper_koblet_pct * 100, 1)}%" if antall_apper_koblet_pct != "?" else None,
 		'unike_siloer': unike_siloer,
 	})
 
@@ -4355,6 +4355,17 @@ def virksomhet_ansvarlige(request, pk=None):
 		'virksomhet': virksomhet,
 	})
 
+
+def brukere_startside(request):
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		return render(request, 'brukere_startside.html', {
+			'request': request,
+			'required_permissions': formater_permissions(required_permissions),
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
 def enhet_detaljer(request, pk):

@@ -1,4 +1,4 @@
-{% extends "cmdb_index.html" %}
+{% extends "brukere_index.html" %}
 {% load humanize %}
 {% load static %}
 {% load l10n %}
@@ -13,14 +13,6 @@
 
 
 {% block hovedinnhold %}
-
-	{% url 'ad_analyse' as url_ad_analyse %}
-	<a href="{{ url_ad_analyse }}?antall=0" class="btn btn-sm btn-link {% if url_ad_analyse in request.path %}fremhev{% endif %}">Tomme sikkerhetsgrupper</a>
-
-	{% url 'ad' as url_ad %}
-	<a href="{{url_ad}}" class="btn btn-sm {% if url_ad in request.path %}fremhev{% endif %}">Innebygde roller</a>
-
-	<hr>
 
 	<p>Data synkroniseres hver natt. Koden for import tar nå inn alle medlemmer, og er ikke begrenset til 5000 lenger.</p>
 
