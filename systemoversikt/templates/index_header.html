@@ -11,39 +11,39 @@
 			{% fellesinformasjon %}
 			<a href="/"><img src="{% static 'Oslo-logo-morkeblaa-RGB.c2e496c6.svg' %}" style="float: left; margin: 10px 30px 10px 35px; height: 70px;"></a>
 
-			<form action="{% url 'search' %}" autocomplete="off" style="float: left; overflow-wrap: ; padding-top: 35px;">
+			<form action="{% url 'search' %}" autocomplete="off" style="float: left; overflow-wrap: ; padding: 35px 0 0 0;">
 				<div class="form-group form-inline">
 					<input style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
 					placeholder="" class="form-control form-control-sm">
 
-					<input type="submit" value="Søk" class="btn btn-sm">
+					<input style="padding: 5px 10px 5px 10px; background-color: #e3e3e3;" type="submit" value="Søk" class="btn btn-sm">
 
-					<a class="btn btn-sm" style="font-weight: normal; margin-left: 5px; background-color: #F8F0DD;" target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">Veiledning</a>
+					<a class="btn btn-sm" style="padding: 5px; font-weight: normal; margin-left: 5px; background-color: #F8F0DD;" target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">Veiledning</a>
 				</div>
 			</form>
 
 
 			{% if user.is_authenticated %}
-				<form method="post" action="{% url 'minside' %}" style="float: left; margin-left: 5px; padding-top: 35px;">
+				<form method="post" action="{% url 'minside' %}" style="float: left; margin: 0 0 5px 0; padding: 35px 0 0 5px;">
 					{% csrf_token %}
 					<input type="hidden" name="next" value="{{ request.path }}">
-					<button class="btn btn-sm" style="background-color: #dfe5d7;" type="submit">{{ request.user.first_name }} {{ request.user.last_name }}</button>
+					<button class="btn btn-sm" style="background-color: #dfe5d7; padding: 5px 10px 5px 10px;" type="submit">{{ request.user.first_name }} {{ request.user.last_name }}</button>
 				</form>
 				{% if TEST_ENV_NAME == 'test' %}
 					{% url "logout" as url_logout %}
 				{% else %}
 					{% url "oidc_logout" as url_logout %}
 				{% endif %}
-				<form method="post" action="{{ url_logout }}" style="float: left; margin-left: 5px; padding-top: 35px;">
+				<form method="post" action="{{ url_logout }}" style="float: left; margin: 0 0 5px 0; padding: 35px 0 0 5px;">
 					{% csrf_token %}
-					<input class="btn btn-sm" style="background-color: #dc354536;" type="submit" name="Logg av" value="Logg av" />
+					<input class="btn btn-sm" style="color: black; background-color: #dc354536; padding: 5px 10px 5px 10px;" type="submit" name="Logg av" value="Logg av" />
 				</form>
 			{% else %}
 				{% url "oidc_authentication_init" as url_login %}
-				<form method="get" action="{{ url_login }}" style="float: left; margin-left: 5px; padding-top: 35px;">
+				<form method="get" action="{{ url_login }}" style="float: left; margin: 0 0 5px 0; padding: 35px 0 0 5px;">
 					{% csrf_token %}
 					<input type="hidden" name="next" value="{{ request.path }}">
-					<button id="login_button" style="background-color: #dc354536;" type="submit" class="btn btn-sm btn-link">Logg inn</button>
+					<button id="login_button" style="background-color: #dc354536; padding: 5px 10px 5px 10px;" type="submit" class="btn btn-sm btn-link">Logg inn</button>
 				</form>
 			{% endif %}
 

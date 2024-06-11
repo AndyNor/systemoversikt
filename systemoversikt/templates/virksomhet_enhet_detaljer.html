@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block overskrift %}
-	Organisasjon
+	Organisasjonsoversikt
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -24,18 +24,14 @@
 	{% url 'bruker_detaljer' pk=unit.leder.pk as url_leder %}
 	{% url 'enhet_detaljer' pk=unit.direkte_mor.pk as url_enhet %}
 
-	Ledes av <a href="{{url_leder}}">{{ unit.leder.profile.displayName|default:"Ukjent" }}</a>, og er organisert under <a href="{{url_enhet}}">{{unit.direkte_mor|default:"Ukjent"}}</a>.
-
-
+	Ledes av <a href="{{url_leder}}">{{ unit.leder.profile.displayName|default:"Ukjent" }}</a><br>
+	Overordnet ledd er <a href="{{url_enhet}}">{{unit.direkte_mor|default:"Ukjent"}}</a><br>
 	{% if sideenheter %}
-		<hr>
-		<h5>Underliggende enheter</h5>
-			<ul style="column-count:4;">
+	Underliggende ledd:
+		<ul style="column-count:4;">
 		{% for sideenhet in sideenheter %}
 			{% url 'enhet_detaljer' pk=sideenhet.pk as url_enhet %}
 			<li><a href="{{url_enhet}}">{{ sideenhet }}</a></li>
-		{% empty %}
-			<li>Ingen</li>
 		{% endfor %}
 		</ul>
 	{% endif %}
@@ -50,13 +46,13 @@
 		<th>System</th>
 		<th>Forvalter</th>
 		<th>Klassifisering</th>
-		<th>Grensesnitt</th>
+		<th>Livsløp</th>
 	</tr>
 </thead>
 <tbodt>
 {% for system in systemer_ansvarfor %}
 	<tr>
-		<td><a href="/admin/systemoversikt/system/{{system.pk}}/change/">{{ system }}</a></td>
+		<td>{% include 'system_include_vis.html' with system=system %}</td>
 		<td>
 			{% for person in system.systemforvalter_kontaktpersoner_referanse.all %}
 				{{ person }} {% if not forloop.last %} og {% endif %}
@@ -66,9 +62,7 @@
 			{{ system.get_systemeierskapsmodell_display|default:"-" }}
 		</td>
 		<td>
-			{% for type in system.systemtyper.all %}
-				{{ type }} {% if not forloop.last %} og {% endif %}
-			{% endfor %}
+			{{ system.get_livslop_status_display }}
 		</td>
 	</tr>
 {% endfor %}

@@ -4365,7 +4365,7 @@ def enhet_detaljer(request, pk):
 		unit = HRorg.objects.get(pk=pk)
 		sideenheter = HRorg.objects.filter(direkte_mor=unit).order_by('ou')
 		personer = User.objects.filter(profile__org_unit=pk).order_by('profile__displayName')
-		systemer_ansvarfor = System.objects.filter(systemforvalter_avdeling_referanse=unit)
+		systemer_ansvarfor = System.objects.filter(systemforvalter_avdeling_referanse=unit).filter(~Q(livslop_status__in=[7]))
 
 		return render(request, 'virksomhet_enhet_detaljer.html', {
 			'request': request,
