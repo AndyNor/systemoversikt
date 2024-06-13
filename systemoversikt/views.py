@@ -1381,7 +1381,7 @@ def alle_citrixpub(request):
 		'citrixapps': citrixapps,
 		'antall_apper_totalt': antall_apper_totalt,
 		'antall_apper_koblet': antall_apper_koblet,
-		'antall_apper_koblet_pct': f"{round(antall_apper_koblet_pct * 100, 1)}%",
+		'antall_apper_koblet_pct': f"{round(antall_apper_koblet_pct * 100, 1)}%" if antall_apper_koblet_pct != "?" else None,
 		'unike_siloer': unike_siloer,
 	})
 
@@ -4356,6 +4356,17 @@ def virksomhet_ansvarlige(request, pk=None):
 	})
 
 
+def brukere_startside(request):
+	required_permissions = ['auth.view_user']
+	if any(map(request.user.has_perm, required_permissions)):
+
+		return render(request, 'brukere_startside.html', {
+			'request': request,
+			'required_permissions': formater_permissions(required_permissions),
+		})
+	else:
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 
 def enhet_detaljer(request, pk):
 	#Vise informasjon om en konkret organisatorisk enhet
@@ -4365,7 +4376,7 @@ def enhet_detaljer(request, pk):
 		unit = HRorg.objects.get(pk=pk)
 		sideenheter = HRorg.objects.filter(direkte_mor=unit).order_by('ou')
 		personer = User.objects.filter(profile__org_unit=pk).order_by('profile__displayName')
-		systemer_ansvarfor = System.objects.filter(systemforvalter_avdeling_referanse=unit)
+		systemer_ansvarfor = System.objects.filter(systemforvalter_avdeling_referanse=unit).filter(~Q(livslop_status__in=[7]))
 
 		return render(request, 'virksomhet_enhet_detaljer.html', {
 			'request': request,

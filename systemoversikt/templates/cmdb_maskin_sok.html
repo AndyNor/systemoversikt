@@ -37,8 +37,9 @@
 			<td>{{server.sub_name.parent_ref}} <br> {{server.sub_name}} <br> {{server.sub_name.get_environment_display}}</td>
 			<td>
 				{% if server.sub_name.system %}
-					<b>{{server.sub_name.system}}</b><br>
-					{{server.sub_name.system.systemeier_kontaktpersoner_referanse.all.0}}
+					{% for system in server.sub_name.system.all %}
+					<b>{{system}}</b> {{system.systemeier_kontaktpersoner_referanse.all.0}}<br>
+					{% endfor %}
 				{% endif %}
 
 				{% if server.landesk_login %}

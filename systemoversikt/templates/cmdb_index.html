@@ -1,66 +1,76 @@
 {% extends "index.html" %}
 
 {% block sidemeny %}
-
 	{% url 'cmdb_statistikk' as url_cmdb_statistikk %}
-	{% url 'cmdb_per_virksomhet' as url_cmdb_per_virksomhet %}
-	<a href="{{ url_cmdb_statistikk }}" class="btn btn-sm btn-link {% if url_cmdb_statistikk in request.path %}fremhev{% endif %}" >CMDB statistikk</a>
-	<a href="{{ url_cmdb_per_virksomhet }}" class="btn btn-sm btn-link {% if url_cmdb_per_virksomhet in request.path %}fremhev{% endif %}" >Per virksomhet</a>
+	<a href="{{ url_cmdb_statistikk }}" class="btn btn-sm btn-link {% if url_cmdb_statistikk in request.path %}fremhev{% endif %}" >Statistikk</a>
 
 
-	<hr>
-	<h6>Brukere og tilgangsgrupper</h6>
+	<hr><h6>Sopra Steria tjenester</h6>
 
-	{% url 'virksomhet_enhetsok' as url_virksomhet_enhetsok %}
-	<a href="{{ url_virksomhet_enhetsok }}" class="btn btn-sm btn-link {% if url_virksomhet_enhetsok in request.path %}fremhev{% endif %}">Organisasjon</a>
-
-	{% url 'bruker_sok' as url_bruker_sok %}
-	<a href="{{ url_bruker_sok }}" class="btn btn-sm btn-link {% if url_bruker_sok in request.path %}fremhev{% endif %}">Brukeridenter</a>
-
-	{% url 'alle_prk' as url_alle_prk %}
-	<a href="{{ url_alle_prk }}"class="btn btn-sm btn-link {% if url_alle_prk in request.path %}fremhev{% endif %}">PRK-skjema</a>
-
-	{% url 'alle_adgrupper' as url_alle_adgrupper %}
-	<a href="{{ url_alle_adgrupper }}" class="btn btn-sm btn-link {% if url_alle_adgrupper in request.path %}fremhev{% endif %}">Tilgangsgrupper</a>
-
-	{% url 'ad_gruppeanalyse' as url_ad_gruppeanalyse %}
-	<a href="{{ url_ad_gruppeanalyse }}" class="btn btn-sm btn-link {% if url_ad_gruppeanalyse in request.path %}fremhev{% endif %}">Gruppeanalyse</a>
-
-	{% url 'adorgunit_detaljer' as url_adorgunit_detaljer %}
-	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}">OU-strukturen</a>
-
-	{% url 'leverandortilgang' as url_leverandortilgang %}
-	<a href="{{ url_leverandortilgang }}" class="btn btn-sm btn-link {% if url_leverandortilgang in request.path %}fremhev{% endif %}">Leverandørtilgang</a>
-
-	{% url 'entra_id_oppslag' as url_entra_id_oppslag %}
-	<a href="{{ url_entra_id_oppslag }}" class="btn btn-sm btn-link {% if url_entra_id_oppslag in request.path %}fremhev{% endif %}">Brukersøk Entra ID</a>
-
-
-
-	{% block ekstrameny_ad %}{% endblock ekstrameny_ad %}
-	{% block ekstrameny_prk %}{% endblock ekstrameny_prk %}
-
-	<hr>
-
-	<h6>Applikasjon- og basisdrift</h6>
 	{% url 'alle_cmdbref_sok' as url_alle_cmdbref %}
 	<a href="{{url_alle_cmdbref}}" class="btn btn-sm btn-link {% if url_alle_cmdbref in request.path %}fremhev{% endif %}">Business services</a><br>
+
+	{% url 'cmdb_per_virksomhet' as url_cmdb_per_virksomhet %}
+	<a href="{{ url_cmdb_per_virksomhet }}" class="btn btn-sm btn-link {% if url_cmdb_per_virksomhet in request.path %}fremhev{% endif %}" >Tjenester per virksomhet</a>
 
 	{% url 'cmdb_forvaltere' as url_cmdb_forvaltere %}
 	<a href="{{url_cmdb_forvaltere}}" class="btn btn-sm btn-link {% if url_cmdb_forvaltere in request.path %}fremhev{% endif %}">Forvaltere</a><br>
 
+
+	<hr><h6>Servere og klienter</h6>
 	{% url 'alle_servere' as url_alle_servere %}
 	<a href="{{url_alle_servere}}" class="btn btn-sm btn-link {% if url_alle_servere in request.path %}fremhev{% endif %}">Servere</a><br>
+
+	{% url 'cmdb_minne_index' as url_cmdb_minne_index %}
+	<a href="{{url_cmdb_minne_index}}" class="btn btn-sm btn-link {% if url_cmdb_minne_index in request.path %}fremhev{% endif %}">Servere minnebruk</a><br>
+
+	{% url 'servere_utfaset' as url_servere_utfaset %}
+	<a href="{{url_servere_utfaset}}" class="btn btn-sm btn-link {% if url_servere_utfaset in request.path %}fremhev{% endif %}">Servere utfaset</a>
+
+	{% url 'maskin_sok' as url_maskin_sok %}
+	<a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Servere massesøk</a>
+
+	{% url 'cmdb_servere_disabled_poweredon' as url_cmdb_servere_disabled_poweredon %}
+	<a href="{{url_cmdb_servere_disabled_poweredon}}" class="btn btn-sm btn-link {% if url_cmdb_servere_disabled_poweredon in request.path %}fremhev{% endif %}">Servere deaktivert online</a>
+
+	{% url 'cmdb_internetteksponerte_servere' as url_cmdb_internetteksponerte_servere %}
+	<a href="{{url_cmdb_internetteksponerte_servere}}" class="btn btn-sm btn-link {% if url_cmdb_internetteksponerte_servere in request.path %}fremhev{% endif %}">Servere internetteksponerte</a>
 
 	{% url 'alle_klienter' as url_alle_klienter %}
 	<a href="{{url_alle_klienter}}" class="btn btn-sm btn-link {% if url_alle_klienter in request.path %}fremhev{% endif %}">Klienter</a><br>
 
+
+	<hr><h6>Databaser</h6>
 	{% url 'alle_databaser' as url_alle_databaser %}
 	<a href="{{url_alle_databaser}}" class="btn btn-sm btn-link {% if url_alle_databaser in request.path %}fremhev{% endif %}">Databaser</a><br>
 
+
+	<hr><h6>Lagring og backup</h6>
+	{% url 'cmdb_backup_index' as url_cmdb_backup_index %}
+	<a href="{{url_cmdb_backup_index}}" class="btn btn-sm btn-link {% if url_cmdb_backup_index in request.path %}fremhev{% endif %}">Backup</a><br>
+
+	{% url 'cmdb_uten_backup' as url_cmdb_uten_backup %}
+	<a href="{{url_cmdb_uten_backup}}" class="btn btn-sm btn-link {% if url_cmdb_uten_backup in request.path %}fremhev{% endif %}">Servere uten backup</a>
+
+	{% url 'cmdb_lagring_index' as url_cmdb_lagring_index %}
+	<a href="{{url_cmdb_lagring_index}}" class="btn btn-sm btn-link {% if url_cmdb_lagring_index in request.path %}fremhev{% endif %}">Lagring</a><br>
+
+
+
+	<hr><h6>Applikasjonspublisering</h6>
 	{% url 'alle_citrixpub' as url_alle_citrixpub %}
 	<a href="{{url_alle_citrixpub}}" class="btn btn-sm btn-link {% if url_alle_citrixpub in request.path %}fremhev{% endif %}">Citrix apper</a><br>
 
+	{% url 'alle_vip' as url_alle_vip %}
+	<a href="{{url_alle_vip}}" class="btn btn-sm btn-link {% if url_alle_vip in request.path %}fremhev{% endif %}">BigIP / VIP</a><br>
+
+	{% url 'alle_dns' as url_alle_dns %}
+	<a href="{{url_alle_dns}}" class="btn btn-sm btn-link {% if url_alle_dns in request.path %}fremhev{% endif %}">DNS</a><br>
+
+
+
+	<hr>
+	<h6>Nettverk</h6>
 	{% url 'alle_nettverk' as url_alle_nettverk %}
 	<a href="{{url_alle_nettverk}}" class="btn btn-sm btn-link {% if url_alle_nettverk in request.path %}fremhev{% endif %}">VLAN / Nettverk</a><br>
 
@@ -70,26 +80,14 @@
 	{% url 'alle_nettverksenheter' as url_alle_nettverksenheter %}
 	<a href="{{url_alle_nettverksenheter}}" class="btn btn-sm btn-link {% if url_alle_nettverksenheter in request.path %}fremhev{% endif %}">Nettverksenheter</a><br>
 
-	{% url 'alle_vip' as url_alle_vip %}
-	<a href="{{url_alle_vip}}" class="btn btn-sm btn-link {% if url_alle_vip in request.path %}fremhev{% endif %}">BigIP / VIP</a><br>
-
-	{% url 'alle_dns' as url_alle_dns %}
-	<a href="{{url_alle_dns}}" class="btn btn-sm btn-link {% if url_alle_dns in request.path %}fremhev{% endif %}">DNS</a><br>
-
 	{% url 'alle_ip' as url_alle_ip %}
 	<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP-søk</a><br>
 
-	{% url 'cmdb_backup_index' as url_cmdb_backup_index %}
-	<a href="{{url_cmdb_backup_index}}" class="btn btn-sm btn-link {% if url_cmdb_backup_index in request.path %}fremhev{% endif %}">Backup</a><br>
 
-	{% url 'cmdb_lagring_index' as url_cmdb_lagring_index %}
-	<a href="{{url_cmdb_lagring_index}}" class="btn btn-sm btn-link {% if url_cmdb_lagring_index in request.path %}fremhev{% endif %}">Lagring</a><br>
-
-	{% url 'cmdb_minne_index' as url_cmdb_minne_index %}
-	<a href="{{url_cmdb_minne_index}}" class="btn btn-sm btn-link {% if url_cmdb_minne_index in request.path %}fremhev{% endif %}">Minnebruk</a><br>
-
+	<hr><h6>Diverse</h6>
 	{% url 'cmdb_adcs_index' as url_cmdb_adcs_index %}
 	<a href="{{url_cmdb_adcs_index}}" class="btn btn-sm btn-link {% if url_cmdb_adcs_index in request.path %}fremhev{% endif %}">ADCS certifikatmaler</a><br>
+
 
 	{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}
 

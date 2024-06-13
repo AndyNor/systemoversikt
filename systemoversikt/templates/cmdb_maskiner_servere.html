@@ -11,20 +11,6 @@
 
 {% block hovedinnhold %}
 
-	{% url 'servere_utfaset' as url_servere_utfaset %}
-	<a href="{{url_servere_utfaset}}" class="btn btn-sm btn-link {% if url_servere_utfaset in request.path %}fremhev{% endif %}">Utfasede servere</a>
-
-	{% url 'maskin_sok' as url_maskin_sok %}
-	<a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Massesøk på servere</a>
-
-	{% url 'cmdb_servere_disabled_poweredon' as url_cmdb_servere_disabled_poweredon %}
-	<a href="{{url_cmdb_servere_disabled_poweredon}}" class="btn btn-sm btn-link {% if url_cmdb_servere_disabled_poweredon in request.path %}fremhev{% endif %}">Deaktiverte servere som står på</a>
-
-	{% url 'cmdb_internetteksponerte_servere' as url_cmdb_internetteksponerte_servere %}
-	<a href="{{url_cmdb_internetteksponerte_servere}}" class="btn btn-sm btn-link {% if url_cmdb_internetteksponerte_servere in request.path %}fremhev{% endif %}">Internetteksponerte servere</a>
-
-	<hr>
-
 	<p>Servere importeres fra Sopra Sterias CMDB automatisk hver natt. Sopra Steria knytter servere til business sub services. Servere oppdages og oppdateres med auto-discovery som samler inn IP-adresse, operativsystem, samt informasjon om disk, minne og cpu.</p>
 
 	<p>Gå til <a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Massesøk på servere</a> dersom du ønsker å søke på mange servere samtidig</p>

@@ -58,9 +58,42 @@ urlpatterns = [
 	re_path(r'^admin/databasestatistikk/$', views.databasestatistikk, name='databasestatistikk'),
 	re_path(r'^admin/system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
 	re_path(r'^admin/system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
-	re_path(r'^admin/bruker/logger/$', views.logger_users, name='logger_users'),
 	re_path(r'^admin/nyheter/$', views.alle_nyheter, name='alle_nyheter'),
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
+
+
+	re_path(r'^brukere/$', views.brukere_startside, name="brukere_startside"),
+	re_path(r'^brukere/organisasjon/enhet/$', views.virksomhet_enhetsok, name='virksomhet_enhetsok'),
+	re_path(r'^brukere/organisasjon/enhet/(?P<pk>\d{1,8})/$', views.enhet_detaljer, name='enhet_detaljer'),
+	re_path(r'^brukere/ad_flereidenter/$', views.cmdb_ad_flere_brukeridenter, name='cmdb_ad_flere_brukeridenter'),
+	re_path(r'^brukere/ad_logger/$', views.logger_users, name='logger_users'),
+	re_path(r'^brukere/entraidbruker/$', views.entra_id_oppslag, name='entra_id_oppslag'),
+	re_path(r'^brukere/ad/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
+	re_path(r'^brukere/ad/$', views.bruker_sok, name='bruker_sok'),
+	re_path(r'^brukere/ad_brukerlistesok/$', views.ad_brukerlistesok, name='cmdb_ad_brukerlistesok'),
+	re_path(r'^brukere/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
+	re_path(r'^brukere/adgruppe/(?P<pk>\d{1,8})/$', views.adgruppe_detaljer, name='adgruppe_detaljer'),
+	re_path(r'^brukere/adgruppe_graf/(?P<pk>\d{1,8})/$', views.adgruppe_graf, name='adgruppe_graf'),
+
+	re_path(r'^brukere/prk/$', views.alle_prk, name='alle_prk'),
+	re_path(r'^brukere/prk_browse/$', views.prk_browse, name='prk_browse'),
+	re_path(r'^brukere/prk_browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
+	re_path(r'^brukere/prk_userlookup/$', views.prk_userlookup, name='prk_userlookup'),
+	re_path(r'^brukere/leverandortilgang/$', views.leverandortilgang, name='leverandortilgang'),
+	re_path(r'^brukere/leverandortilgang/(?P<valgt_gruppe>[-._a-zA-Z0-9\s]{2,100})/$', views.leverandortilgang, name='leverandortilgang_detaljer'),
+	re_path(r'^brukere/ad_lookup/$', views.ad, name='ad'),
+	re_path(r'^brukere/ad_analyse/$', views.ad_analyse, name='ad_analyse'),
+	re_path(r'^brukere/ad_orgunit/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
+	re_path(r'^brukere/ad_orgunit/(?P<pk>\d{1,8})/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
+	re_path(r'^brukere/ad_lookup/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),  #denne må komme etter ad/adgrupper/
+	# i AD er følgende tegn ulovlige: # + " \ < > ; (RFC 2253)
+	# komma tillates da det brukes for å skille elementer fra hverandre
+	# leading space eller #, samt trailing space er heller ikke tillatt, men vi gjør ikke noe med dem.
+	re_path(r'^brukere/ad_lookup_recursive/(?P<group>[^#\+\"\\\<\>\;]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
+	re_path(r'^brukere/ad_lookup_exact/(?P<name>[^#\+\"\\\<\>\;]{2,200})/$', views.ad_exact, name='ad_exact'),
+	re_path(r'^brukere/ad_gruppeanalyse/$', views.ad_gruppeanalyse, name='ad_gruppeanalyse'),
+
+
 
 
 	re_path(r'^rapport/startside/$', views.rapport_startside, name='rapport_startside'),
@@ -133,8 +166,6 @@ urlpatterns = [
 	re_path(r'^virksomhet/sertifikatmyndighet/$', views.sertifikatmyndighet, name='sertifikatmyndighet'),
 	re_path(r'^virksomhet/innsyn/(?P<pk>\d{1,8})/$', views.innsyn_virksomhet, name='innsyn_virksomhet'),
 	re_path(r'^virksomhet/systemkvalitet/(?P<pk>\d{1,8})/$', views.systemkvalitet_virksomhet, name='systemkvalitet_virksomhet'),
-	re_path(r'^virksomhet/enhet/$', views.virksomhet_enhetsok, name='virksomhet_enhetsok'),
-	re_path(r'^virksomhet/enhet/(?P<pk>\d{1,8})/$', views.enhet_detaljer, name='enhet_detaljer'),
 	re_path(r'^virksomhet/enhet/graf/(?P<pk>\d{1,8})/$', views.virksomhet_enheter, name='virksomhet_enheter'),
 	re_path(r'^virksomhet/prkadmin/(?P<pk>\d{1,8})/$', views.virksomhet_prkadmin, name='virksomhet_prkadmin'),
 	re_path(r'^virksomhet/systemer/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
@@ -173,18 +204,13 @@ urlpatterns = [
 	re_path(r'^ansvarlige/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
 
 
-	re_path(r'^cmdb/bruker/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
-	re_path(r'^cmdb/bruker/$', views.bruker_sok, name='bruker_sok'),
-	re_path(r'^cmdb/entraidbruker/$', views.entra_id_oppslag, name='entra_id_oppslag'),
-
-	re_path(r'^cmdb/bruker/brukerlistesok/$', views.ad_brukerlistesok, name='cmdb_ad_brukerlistesok'),
 	re_path(r'^cmdb/firewall/$', views.cmdb_firewall, name='cmdb_firewall'),
 	re_path(r'^cmdb/statistikk/$', views.cmdb_statistikk, name='cmdb_statistikk'),
 	re_path(r'^cmdb/per_virksomhet/$', views.cmdb_per_virksomhet, name='cmdb_per_virksomhet'),
 	re_path(r'^cmdb/bs/$', views.alle_cmdbref, name='alle_cmdbref_sok'),
 	re_path(r'^cmdb/bs/disconnect/$', views.cmdb_bs_disconnect, name='cmdb_bs_disconnect'),
 	re_path(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdb_bss, name='cmdb_bss'),
-	re_path(r'^cmdb/servere/$', views.alle_servere, name='alle_servere'),
+	re_path(r'^cmdb/server_sok/$', views.alle_servere, name='alle_servere'),
 	re_path(r'^cmdb/eksponerte_servere/$', views.cmdb_internetteksponerte_servere, name='cmdb_internetteksponerte_servere'),
 	re_path(r'^cmdb/servere/diabledpoweredon/$', views.cmdb_servere_disabled_poweredon, name='cmdb_servere_disabled_poweredon'),
 	re_path(r'^cmdb/klienter/$', views.alle_klienter, name='alle_klienter'),
@@ -206,27 +232,6 @@ urlpatterns = [
 	re_path(r'^cmdb/lagring/$', views.cmdb_lagring_index, name='cmdb_lagring_index'),
 	re_path(r'^cmdb/minne/$', views.cmdb_minne_index, name='cmdb_minne_index'),
 	re_path(r'^cmdb/forvaltere/$', views.cmdb_forvaltere, name='cmdb_forvaltere'),
-	re_path(r'^cmdb/prk/$', views.alle_prk, name='alle_prk'),
-	re_path(r'^cmdb/prk/browse/$', views.prk_browse, name='prk_browse'),
-	re_path(r'^cmdb/prk/browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
-	re_path(r'^cmdb/ad/leverandortilgang/$', views.leverandortilgang, name='leverandortilgang'),
-	re_path(r'^cmdb/ad/leverandortilgang/(?P<valgt_gruppe>[-._a-zA-Z0-9\s]{2,100})/$', views.leverandortilgang, name='leverandortilgang_detaljer'),
-	re_path(r'^cmdb/bruker/flereidenter/$', views.cmdb_ad_flere_brukeridenter, name='cmdb_ad_flere_brukeridenter'),
-	re_path(r'^cmdb/ad/lookup/$', views.ad, name='ad'),
-	re_path(r'^cmdb/ad/analyse/$', views.ad_analyse, name='ad_analyse'),
-	re_path(r'^cmdb/ad/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
-	re_path(r'^cmdb/ad/adgruppe/(?P<pk>\d{1,8})/$', views.adgruppe_detaljer, name='adgruppe_detaljer'),
-	re_path(r'^cmdb/ad/adgruppe/graf/(?P<pk>\d{1,8})/$', views.adgruppe_graf, name='adgruppe_graf'),
-	re_path(r'^cmdb/ad/adorgunit/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
-	re_path(r'^cmdb/ad/adorgunit/(?P<pk>\d{1,8})/$', views.adorgunit_detaljer, name='adorgunit_detaljer'),
-	re_path(r'^cmdb/ad/lookup/(?P<name>[-._a-zA-Z0-9\s]{2,100})/$', views.ad_details, name='ad_details'),  #denne må komme etter ad/adgrupper/
-	# i AD er følgende tegn ulovlige: # + " \ < > ; (RFC 2253)
-	# komma tillates da det brukes for å skille elementer fra hverandre
-	# leading space eller #, samt trailing space er heller ikke tillatt, men vi gjør ikke noe med dem.
-	re_path(r'^cmdb/ad/lookup/recursive/(?P<group>[^#\+\"\\\<\>\;]{2,200})/$', views.recursive_group_members, name='recursive_group_members'),
-	re_path(r'^cmdb/ad/lookup/exact/(?P<name>[^#\+\"\\\<\>\;]{2,200})/$', views.ad_exact, name='ad_exact'),
-	re_path(r'^cmdb/prk/userlookup/$', views.prk_userlookup, name='prk_userlookup'),
-	re_path(r'^cmdb/ad/gruppeanalyse/$', views.ad_gruppeanalyse, name='ad_gruppeanalyse'),
 	re_path(r'^cmdb/ad/citrix/apps/$', views.alle_citrixpub, name='alle_citrixpub'), # beholdes som redirect
 	re_path(r'^cmdb/citrix/apps/$', views.alle_citrixpub, name='alle_citrixpub'),
 	re_path(r'^cmdb/citrix/desktop_group/$', views.citrix_desktop_group, name='citrix_desktop_group'),
