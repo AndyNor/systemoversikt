@@ -1115,18 +1115,18 @@ def o365_avvik(request):
 def prk_api_usr(request): #API
 	if request.method == "GET":
 
-		#key = request.headers.get("key", None)
-		#if key == None:
-		#	key = request.GET.get("key", None)
+		key = request.headers.get("key", None)
+		if key == None:
+			key = request.GET.get("key", None)
 
-		#allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
-		#if key in list(allowed_keys):
-		#owner = APIKeys.objects.get(key=key).navn
-		#ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
-		return prk_api("usr.csv")
+		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
+		if key in list(allowed_keys):
+			owner = APIKeys.objects.get(key=key).navn
+			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
+			return prk_api("usr.csv")
 
-		#else:
-		#	return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+		else:
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 
 
