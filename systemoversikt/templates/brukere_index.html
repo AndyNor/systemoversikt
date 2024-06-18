@@ -13,27 +13,27 @@
 	{% url 'bruker_sok' as url_bruker_sok %}
 	<a href="{{ url_bruker_sok }}" class="btn btn-sm btn-link {% if url_bruker_sok in request.path %}fremhev{% endif %}">Brukersøk AD</a>
 
-	{% url 'cmdb_ad_brukerlistesok' as url_cmdb_ad_brukerlistesok %}
-	<a href="{{ url_cmdb_ad_brukerlistesok }}" class="btn btn-sm btn-link {% if url_cmdb_ad_brukerlistesok in request.path %}fremhev{% endif %}">Eksakt listesøk</a>
-
 	{% url 'entra_id_oppslag' as url_entra_id_oppslag %}
 	<a href="{{ url_entra_id_oppslag }}" class="btn btn-sm btn-link {% if url_entra_id_oppslag in request.path %}fremhev{% endif %}">Brukersøk Entra ID</a>
 
+	{% url 'cmdb_ad_brukerlistesok' as url_cmdb_ad_brukerlistesok %}
+	<a href="{{ url_cmdb_ad_brukerlistesok }}" class="btn btn-sm btn-link {% if url_cmdb_ad_brukerlistesok in request.path %}fremhev{% endif %}">Brukeranalyse</a>
+
 	{% url 'logger_users' as url_logger_users %}
-	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}">Logg over brukerendringer</a>
+	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}">Brukerendringslogg</a>
 
 	{% url 'cmdb_ad_flere_brukeridenter' as url_cmdb_ad_flere_brukeridenter %}
-	<a href="{{ url_cmdb_ad_flere_brukeridenter }}" class="btn btn-sm btn-link {% if url_cmdb_ad_flere_brukeridenter in request.path %}fremhev{% endif %}">Personer med flere identer</a>
+	<a href="{{ url_cmdb_ad_flere_brukeridenter }}" class="btn btn-sm btn-link {% if url_cmdb_ad_flere_brukeridenter in request.path %}fremhev{% endif %}">Flere identer</a>
 
 
 
 	<br><br>
 	<h6>Tilgangsgrupper</h6>
 	{% url 'alle_adgrupper' as url_alle_adgrupper %}
-	<a href="{{ url_alle_adgrupper }}" class="btn btn-sm btn-link {% if url_alle_adgrupper in request.path %}fremhev{% endif %}">Søk på tilgangsgrupper</a>
+	<a href="{{ url_alle_adgrupper }}" class="btn btn-sm btn-link {% if url_alle_adgrupper in request.path %}fremhev{% endif %}">Tilgangsgrupper</a>
 
 	{% url 'ad_analyse' as url_ad_analyse %}
-	<a href="{{ url_ad_analyse }}?antall=0" class="btn btn-sm btn-link {% if url_ad_analyse in request.path %}fremhev{% endif %}">Tomme sikkerhetsgrupper</a>
+	<a href="{{ url_ad_analyse }}?antall=0" class="btn btn-sm btn-link {% if url_ad_analyse in request.path %}fremhev{% endif %}">Tomme tilgangsgrupper</a>
 
 	{% url 'ad' as url_ad %}
 	<a href="{{url_ad}}" class="btn btn-sm {% if url_ad in request.path %}fremhev{% endif %}">Innebygde AD-roller</a>
@@ -42,7 +42,7 @@
 	<a href="{{ url_ad_gruppeanalyse }}" class="btn btn-sm btn-link {% if url_ad_gruppeanalyse in request.path %}fremhev{% endif %}">Gruppeanalyse</a>
 
 	{% url 'adorgunit_detaljer' as url_adorgunit_detaljer %}
-	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}">OU-strukturen i AD</a>
+	<a href="{{ url_adorgunit_detaljer }}" class="btn btn-sm btn-link {% if url_adorgunit_detaljer in request.path %}fremhev{% endif %}">OU-strukturen</a>
 
 	{% url 'leverandortilgang' as url_leverandortilgang %}
 	<a href="{{ url_leverandortilgang }}" class="btn btn-sm btn-link {% if url_leverandortilgang in request.path %}fremhev{% endif %}">Leverandørtilgang</a>
@@ -51,7 +51,7 @@
 	<br><br>
 	<h6>Fases ut</h6>
 	{% url 'alle_prk' as url_alle_prk %}
-	<a href="{{ url_alle_prk }}"class="btn btn-sm btn-link {% if url_alle_prk in request.path %}fremhev{% endif %}">PRK skjema</a>
+	<a href="{{ url_alle_prk }}"class="btn btn-sm btn-link {% if url_alle_prk in request.path %}fremhev{% endif %}">PRK-skjema</a>
 
 {% endblock sidemeny %}
 
