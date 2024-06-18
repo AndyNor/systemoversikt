@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-	<p>"Programvare" i Kartoteket brukes for å registrere det offisielle navnet til programkode og skrivebordsapplikasjoner. Dette i kontrast med "systemer" som er programvare satt opp på servere og  databaser.<br>Det er viktig at du registrerer programvare riktig mot system, da UKE CSIRT bruker oversikten over programvare for å undersøke om kommunen er truffet av sårbarheter i programvare. UKE CSIRT har også andre kilder.</p>
+	<p>"Programvare" i Kartoteket brukes for å registrere det offisielle navnet til programkode og skrivebordsapplikasjoner. Dette i kontrast med "systemer" som er programvare satt opp på servere og  databaser.<br>Det er viktig at du registrerer programvare riktig mot system, da UKE CSIRT bruker oversikten over programvare for å undersøke om kommunen er truffet av sårbarheter i programvare.</p>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
@@ -23,6 +23,26 @@
 	</form>
 
 	<p>Viser {{ programvarer.count }} programvarer.</p>
+
+
+	<div id="accordion-programvare">
+		<div class="card">
+			<div class="card-header" id="heading-programvare">
+				<h5 class="mb-0">
+					<button class="btn btn-link" data-toggle="collapse" data-target="#collapse-prk" aria-expanded="true" aria-controls="collapse-prk">Rå liste
+					</button>
+				</h5>
+			</div>
+			<div id="collapse-prk" class="collapse" aria-labelledby="heading-programvare" data-parent="#accordion-programvare">
+				<div class="card-body">
+				{% for p in programvarer.all %}
+					{{p}},
+				{% endfor %}
+				</div>
+			</div>
+		</div>
+	</div>
+
 
 	{% include "programvare_include.html" %}
 
