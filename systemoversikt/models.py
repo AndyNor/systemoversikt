@@ -4460,7 +4460,7 @@ class System(models.Model):
 			)
 	programvarer = models.ManyToManyField(
 			to=Programvare,
-			related_name='system_programvarer',
+			related_name='systemer',
 			verbose_name="Tilknyttet programvare",
 			blank=True,
 			help_text=u"Programvare benyttet av- eller knyttet til systemet. Her fører du opp navn på programvaren systemet er bygget opp av.",

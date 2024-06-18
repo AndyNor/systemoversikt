@@ -135,7 +135,7 @@
 	</table>
 	<hr>
 
-	{% if programvare.system_programvarer.all %}
+	{% if programvare.systemer.all %}
 		<h5>Systemer med avhengigheter til {{programvare.programvarenavn}}</h5>
 		{% include "system_include_hurtigvisning.html" with systemer=programvare.system_programvarer.all %}
 		<hr>

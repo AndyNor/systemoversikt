@@ -2,53 +2,44 @@
 
 <table class="tablesorter excel">
 <thead>
-<tr>
-	{% if user.is_authenticated %}
-	<th class="filter-false">Endre</th>
-	{% endif %}
-	<th>Programvare</th>
-	<th>Antall bruk registrert</th>
-	<th>Antall behandlinger registrert</th>
-	<th width="15%">Beskrivelse av programvaren</th>
-	<th>Programvareleverandør</th>
-	<th>Kategori</th>
-	<th>Livsløpstatus</th>
-	<th>Strategisk knytning</th>
-	<th>Funksjonell egnethet</th>
-	<th>Teknisk egnethet</th>
-	{% if user.is_authenticated %}
-	<th class="filter-false"></th>
-	{% endif %}
-</tr>
+	<tr>
+		<th class="filter-false">Endre</th>
+		<th>Programvareleverandør</th>
+		<th>Programvare</th>
+		<th>Systemkoblinger</th>
+		<th width="30%">Beskrivelse av programvaren</th>
+		<th width="15%">Kategori</th>
+	</tr>
 </thead>
 <tbody>
 {% for prog in programvarer %}
-<tr>
-	{% if user.is_authenticated %}
-	<td><a href="/admin/systemoversikt/programvare/{{ prog.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
-	{% endif %}
-	<td>{% url "programvaredetaljer" prog.pk as url_programvaredetaljer %}<a href="{{ url_programvaredetaljer }}">{{ prog.programvarenavn }}</a></td>
-	<td>{{ prog.programvarebruk_programvare.count }}</td>
-	<td>{{ prog.behandling_programvarer.count }}</td>
-	<td>{{ prog.programvarebeskrivelse }}</td>
-	<td>{% for lev in prog.programvareleverandor.all %}
-		{% url "leverandor" lev.pk as url_leverandor %}
-		<a href="{{ url_leverandor }}">{{ lev }}</a><br>
-	{% endfor %}</td>
-	<td>
-		{% for kategori in prog.kategorier.all %}
-			{% url "systemkategori" kategori.pk as url_systemkategori %}
-			<a href="{{ url_systemkategori }}">{{ kategori }}</a><br>
-		{% endfor %}
-	</td>
-	<td>{{ prog.get_livslop_status_display|default:"-" }}</td>
-	<td>{{ prog.get_strategisk_egnethet_display|default:"-" }}</td>
-	<td>{{ prog.get_funksjonell_egnethet_display|default:"-" }}</td>
-	<td>{{ prog.get_teknisk_egnethet_display|default:"-" }}</td>
-	{% if user.is_authenticated %}
-	<td><a href="/admin/systemoversikt/programvare/{{ prog.pk }}/delete/">❌</a></td>
-	{% endif %}
-</tr>
+	<tr>
+		<td><a href="/admin/systemoversikt/programvare/{{ prog.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
+
+		<td>{% for lev in prog.programvareleverandor.all %}
+			{% url "leverandor" lev.pk as url_leverandor %}
+			<a href="{{ url_leverandor }}">{{ lev }}</a><br>
+		{% endfor %}</td>
+
+		<td>{% url "programvaredetaljer" prog.pk as url_programvaredetaljer %}<a href="{{ url_programvaredetaljer }}">{{ prog.programvarenavn }}</a></td>
+
+		<td>
+			{% for system in prog.systemer.all %}
+				{% include 'system_include_vis.html' with systemer=system %}
+			{% endfor %}
+		</td>
+
+		<td>{{ prog.programvarebeskrivelse }}</td>
+
+
+		<td>
+			{% for kategori in prog.kategorier.all %}
+				{% url "systemkategori" kategori.pk as url_systemkategori %}
+				<a href="{{ url_systemkategori }}">{{ kategori }}</a><br>
+			{% endfor %}
+		</td>
+
+	</tr>
 {% endfor %}
 </tbody>
 </table>
