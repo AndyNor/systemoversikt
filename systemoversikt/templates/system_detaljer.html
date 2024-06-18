@@ -27,20 +27,47 @@
 
 	{% if user.is_authenticated %}
 		<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/"
-		class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Endre informasjon om systemet</a><br>
+		class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Endre informasjon om {{systemdetaljer.systemnavn}}</a><br>
 	{% endif %}
 
 	<hr>
 
-	<h6>
-		{{ systemdetaljer.systembeskrivelse|linebreaks }}
-		{% if systemdetaljer.inv_konklusjon %}
-			<hr>
-			{{ systemdetaljer.inv_konklusjon|default:"" }}
-			<br>
-			{{ systemdetaljer.inv_konklusjon_beskrivelse|default:"" }}
-		{% endif %}
+	<h6 style="margin: 0 200px 25px 35px;">
+		{{ systemdetaljer.systembeskrivelse|default:"Ingen beskrivelse oppgitt"|linebreaks }}
 	</h6>
+
+	{% if systemdetaljer.programvarer.count > 0 %}
+		<br><hr>
+		Programvare<br>
+		{% for programvare in systemdetaljer.programvarer.all %}
+			{% url "programvaredetaljer" programvare.pk as url_programvare %}
+			<a style="margin-right: 15px;" href="{{ url_programvare }}"><img src="{% static 'programvare.png' %}" style="height: 35px;"> {{ programvare }}</a>
+			{% if programvare.programvareleverandor.all|length > 0 %}
+			levert av
+				{% for programvareleverandor in programvare.programvareleverandor.all %}
+					{% url 'leverandor' programvareleverandor.pk as url_programvareleverandor %}
+					<a href="{{ url_programvareleverandor }}">{{ programvareleverandor }}</a>,
+				{% endfor %}
+			{% endif %}
+		{% endfor %}
+	{% endif %}
+
+	{% if systemdetaljer.systemurl.count > 0 %}
+	<br><br>Webpubliseringer
+	<div class="row">
+		<div class="col-12">
+			{% for url in systemdetaljer.systemurl.all %}
+				<span style="margin: 10px; overflow-wrap: break-word;">
+					<a target="_blank" href="{{url.domene}}"><img style="height: 35px;" src="{% static 'url.png' %}">{{url.domene}}</a><br>
+				</span>
+			{% empty %}
+				<p>Ingen ting å vise</p>
+			{% endfor %}
+		</div>
+	</div>
+	{% endif %}
+
+	<hr>
 
 	{% if systemdetaljer.alias %}
 		Alias {% for alias in systemdetaljer.alias_oppdelt %} <span class="badge badge-light">{{ alias }}</span> {% endfor %}</li>
@@ -52,12 +79,6 @@
 		{% url "systemkategori" kategori.pk as url_systemkategori %}
 		<a class="badge badge-light" href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a>
 	{% endfor %}
-
-	{% if systemdetaljer.systemeierskapsmodell %}
-		<br>
-		{% get_verbose_field_name systemdetaljer "systemeierskapsmodell" %}:
-		<span class="badge badge-light">{{ systemdetaljer.get_systemeierskapsmodell_display|default:"-" }}</span>
-	{% endif %}
 
 	{% if systemdetaljer.er_arkiv %}
 		og <span class="badge badge-light">🗁 Arkivsystem</span>
@@ -73,19 +94,31 @@
 
 	<br><hr>
 	Hopp til
-	<a href="#anchor_systemav" class="btn btn-sm btn-link">Systemavhengigheter</a>
+	{% if systemdetaljer.inv_konklusjon %}
+	<a href="#anchor_inv" class="btn btn-sm btn-link">Innrulleringsvurderinger</a>
+	{% endif %}
+	<a href="#anchor_eierskap" class="btn btn-sm btn-link">Eierskap og forvaltning</a>
+	<a href="#anchor_bruk" class="btn btn-sm btn-link">Virksomheters bruk av systemet</a>
+	<a href="#anchor_systemav" class="btn btn-sm btn-link">Figur og systemavhengigheter</a>
 	<a href="#anchor_livslop" class="btn btn-sm btn-link">Livsløpsvurderinger</a>
 	<a href="#anchor_sikkerhet" class="btn btn-sm btn-link">Sikkerhet og personvern</a>
 	<a href="#anchor_tilgang" class="btn btn-sm btn-link">Tilgangsstyring</a>
 	<a href="#anchor_citrix" class="btn btn-sm btn-link">Citrix-publiseringer</a>
-	<a href="#anchor_integrasjoner" class="btn btn-sm btn-link">Integrasjoner</a>
 	<a href="#anchor_servere_database" class="btn btn-sm btn-link">Servere og databaser</a>
-	<a href="#anchor_bruk" class="btn btn-sm btn-link">Virksomheters bruk av systemet</a>
 	<a href="#anchor_leverandor" class="btn btn-sm btn-link">Leverandører</a>
 	<a href="#anchor_leverandortilgang" class="btn btn-sm btn-link">3.parts leverandørtilgang</a>
 	<a href="#anchor_eksterne" class="btn btn-sm btn-link">Eksterne ressurser</a>
 	<a href="#anchor_oppdatert" class="btn btn-sm btn-link">Informasjon sist oppdatert</a>
 
+
+	{% if systemdetaljer.inv_konklusjon %}
+	<br><hr>
+	<h3 style="scroll-margin-top: 150px;" id="anchor_inv">Innrulleringsvurderinger (INV)</h3>
+		<hr>
+		{{ systemdetaljer.inv_konklusjon|default:"" }}
+		<br>
+		{{ systemdetaljer.inv_konklusjon_beskrivelse|default:"" }}
+	{% endif %}
 
 
 	<br><hr>
@@ -94,9 +127,18 @@
 		<div class="row">
 
 			<div class="col-4">
+
+				{% if systemdetaljer.systemeierskapsmodell %}
+				<br>
+				{% get_verbose_field_name systemdetaljer "systemeierskapsmodell" %}
+				<span class="badge badge-light">{{ systemdetaljer.get_systemeierskapsmodell_display|default:"-" }}</span>
+				<hr>
+				{% endif %}
+
+
 				<h6>Systemeierskap</h6>
 				{% url "virksomhet" systemdetaljer.systemeier.pk as url_systemeier %}
-				<a href="{{ url_systemeier }}">{{ systemdetaljer.systemeier|default:"-" }}</a>
+				<a href="{{ url_systemeier }}">{{ systemdetaljer.systemeier|default:"" }}</a>
 				<br><br>Kontaktpersoner<br>
 				{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemeier_kontaktpersoner_referanse.all %}
 			</div>
@@ -104,7 +146,7 @@
 			<div class="col-4">
 				<h6>Systemforvaltning</h6>
 				{% url "virksomhet" systemdetaljer.systemforvalter.pk as url_systemforvalter %}
-				<a href="{{ url_systemforvalter }}">{{ systemdetaljer.systemforvalter|default:"-" }}</a>
+				<a href="{{ url_systemforvalter }}">{{ systemdetaljer.systemforvalter|default:"" }}</a>
 
 				{% if systemdetaljer.systemforvalter_avdeling_referanse %}
 					{% url "enhet_detaljer" systemdetaljer.systemforvalter_avdeling_referanse.pk as url_enhet_detaljer %}
@@ -143,6 +185,75 @@
 	</div>
 
 
+	<br><hr>
+	<h3 style="scroll-margin-top: 150px;" id="anchor_bruk">Virksomheters bruk av systemet</h3>
+	<div class="row">
+		<div class="col-12">
+			<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer og endre bruk</a></p>
+			{% if systembruk %}
+				<table class="table table-sm" style="font-size: 10px;">
+					<thead>
+						<tr>
+							<th>Virksomhet</th>
+							<th>Ca. antall brukere</th>
+							{% if perms.systemoversikt.view_system %}
+							<th>Lokal KIT-vurdering {% explain_collapsed "Konfidensialitet, integritet og tilgjengelighet" %}</th>
+							{% endif %}
+							<th>Lokalt kontaktpunkt</th>
+							<th>Lokale vurderinger</th>
+							<th>Lokal RoS</th>
+							<th>Kommentar</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for bruk in systembruk %}
+						<tr>
+							<td style="width: 20%;">
+								{% if user.is_authenticated %}
+									<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
+									{% include 'site_edit_button.html' %}</a>
+								{% endif %}
+								{% url "bruksdetaljer" bruk.pk as url_bruk %}
+								<a href="{{ url_bruk }}">{{ bruk.brukergruppe.virksomhetsforkortelse }}</a>
+							</td>
+
+							<td>{{ bruk.antall_brukere|default:"Ikke oppgitt" }}</td>
+
+							{% if perms.systemoversikt.view_system %}
+							<td>
+								K: {{ bruk.get_konfidensialitetsvurdering_display|default:"-" }}<br>
+								I: {{ bruk.get_integritetsvurdering_display|default:"-" }}<br>
+								T: {{ bruk.get_tilgjengelighetsvurdering_display|default:"-" }}<br>
+							</td>
+							{% endif %}
+
+							<td>{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}</td>
+
+							<td>
+								Funksjonelt: {{ bruk.get_funksjonell_egnethet_display|default:"-" }}<br>
+								Strategisk knytning: {{ bruk.get_strategisk_egnethet_display|default:"-" }}<br>
+								Teknisk vurdering: {{ bruk.get_teknisk_egnethet_display|default:"-" }}
+							</td>
+							<td>
+								{% if bruk.url_risikovurdering %}
+									<a href="{{ bruk.url_risikovurdering }}">Link</a><br>
+								{% endif %}
+
+								{% if bruk.risikovurdering_tekst %}
+									{{ bruk.risikovurdering_tekst }}
+								{% endif %}
+							</td>
+							<td>{{ bruk.kommentar|default:"" }}</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			{% else %}
+				<p>Ingen virksomheter registrert</p>
+			{% endif %}
+		</div>
+	</div>
+
 
 	<br><hr>
 	<h3 style="scroll-margin-top: 150px;" id="anchor_systemav">Systemavhengigheter</h3>
@@ -158,21 +269,103 @@
 		<p>Ingen avhengigheter registrert</p>
 	{% endif %}
 
-	{% if systemdetaljer.programvarer.count > 0 %}
-		<br><hr>
-		Tilknyttet programvare<br>
-		{% for programvare in systemdetaljer.programvarer.all %}
-			{% url "programvaredetaljer" programvare.pk as url_programvare %}
-			<a style="margin-right: 15px;" href="{{ url_programvare }}"><img src="{% static 'programvare.png' %}" style="height: 35px;"> {{ programvare }}</a>
-			{% if programvare.programvareleverandor.all|length > 0 %}
-			levert av
-				{% for programvareleverandor in programvare.programvareleverandor.all %}
-					{% url 'leverandor' programvareleverandor.pk as url_programvareleverandor %}
-					<a href="{{ url_programvareleverandor }}">{{ programvareleverandor }}</a>,
+	<br>
+	<h5>Registrerte integrasjoner</h5>
+	<div class="row">
+		<div class="col-12">
+			<table class="table table-sm tablesorter" style="font-size: 12px;">
+				<thead>
+					<tr>
+						<th class="filter-false"></th>
+						<th>Type</th>
+						<th>Kilde</th>
+						<th>Destinasjon</th>
+						<th>Personopplysninger?</th>
+						<th>Kommentar</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for avhengighet in systemdetaljer.system_integration_source.all %}
+				<tr>
+					<td><a href="/admin/systemoversikt/systemintegration/{{avhengighet.pk}}/change/">✎</a></td>
+					<td style="background-color: {{ avhengighet.color  }};">{{ avhengighet.get_integration_type_display }}</td>
+					<td>{{ avhengighet.source_system }}</td>
+					<td>{{ avhengighet.destination_system }}</td>
+					<td>{{ avhengighet.personopplysninger|yesno:"Ja,Nei,Vet ikke" }}</td>
+					<td>{{ avhengighet.description|default:"-" }}</td>
+				</tr>
+				{% endfor %}
+				{% for avhengighet in systemdetaljer.system_integration_destination.all %}
+				<tr>
+					<td><a href="/admin/systemoversikt/systemintegration/{{avhengighet.pk}}/change/">✎</a></td>
+					<td style="background-color: {{ avhengighet.color  }};">{{ avhengighet.get_integration_type_display }}</td>
+					<td>{{ avhengighet.source_system }}</td>
+					<td>{{ avhengighet.destination_system }}</td>
+					<td>{{ avhengighet.personopplysninger|yesno:"Ja,Nei,Vet ikke" }}</td>
+					<td>{{ avhengighet.description|default:"-" }}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?source_system={{systemdetaljer.pk}}&integration_type=INTEGRATION">Ny integrasjon utlevering</a>
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?destination_system={{systemdetaljer.pk}}&integration_type=INTEGRATION">Ny integrasjon mottak</a>
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?source_system={{systemdetaljer.pk}}&integration_type=PUBLICATION">Ny applikasjonspublisering</a>
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?source_system={{systemdetaljer.pk}}&integration_type=AUTHENTICATION">Ny påloggingsmetode</a>
+
+
+			<br><br><b>Azure-integrasjoner</b>
+			{% if systemdetaljer.enterprise_applicatons|length > 0 %}
+			<div class="row">
+				<div class="col-12">
+					<table class="table table-sm">
+						<thead>
+							<tr>
+								<th>Applikasjonsnavn (Enterprise application)</th>
+								<th>Rettigheter</th>
+								<th>Nøkler</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for ea in systemdetaljer.enterprise_applicatons.all %}
+							<tr>
+								<td>{{ ea.displayName }}</td>
+								<td>
+									{% for perm in ea.requiredResourceAccess.all %}
+										{{ perm.adminConsentDisplayName }}<br>
+									{%  endfor %}
+								</td>
+								<td>
+									{% for key in ea.keys.all %}
+										{{ key }} utløper {{ key.end_date_time }}<br>
+									{%  endfor %}
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			</div>
+			{% else %}
+				<p>Ingen ting å vise</p>
+			{% endif %}
+
+
+			<b>{% get_verbose_field_name systemdetaljer "autentiseringsteknologi" %}</b>
+			{% for auth in systemdetaljer.autentiseringsteknologi.all %}
+				<span class="badge badge-light">{{ auth.navn }}</span>
+			{% empty %}
+				<br>Ingen ting å vise
+			{% endfor %}
+			{% if systemdetaljer.autentiseringsalternativer %}
+				<br>
+				{% for autentiseringsalternativ in systemdetaljer.autentiseringsalternativer.all %}
+					<p style="background-color: #f8f9fa;">{{ autentiseringsalternativ.navn }}</p>
 				{% endfor %}
 			{% endif %}
-		{% endfor %}
-	{% endif %}
+		</div>
+	</div>
+
 
 
 
@@ -180,34 +373,38 @@
 	<h3 style="scroll-margin-top: 150px;" id="anchor_livslop">Livsløpsvurderinger</h3>
 	<div class="container-fluid">
 		<div class="row">
-			<div class="col-4">
+			<div class="col-12">
 				{% get_verbose_field_name systemdetaljer "livslop_status" %}:
 				<span class="badge badge-light">{{ systemdetaljer.get_livslop_status_display|default:"-" }}</span>
 
-				<br>
-				{% get_verbose_field_name systemdetaljer "dato_etablert" %}:
+				<br>{% get_verbose_field_name systemdetaljer "dato_etablert" %}:
 				<span class="badge badge-light">{{ systemdetaljer.dato_etablert|date:"Y-m-d"|default:"-" }}</span>
 
-				<br>
-				{% get_verbose_field_name systemdetaljer "dato_end_of_life" %}:
+				<br>{% get_verbose_field_name systemdetaljer "dato_end_of_life" %}:
 				<span class="badge badge-light">{{ systemdetaljer.dato_end_of_life|date:"Y-m-d"|default:"-" }}</span>
-			</div>
-			<div class="col-4">
-				{% get_verbose_field_name systemdetaljer "funksjonell_egnethet" %}:
+
+				<br>{% get_verbose_field_name systemdetaljer "funksjonell_egnethet" %}:
 				<span class="badge badge-light">{{ systemdetaljer.get_funksjonell_egnethet_display|default:"-" }}</span>
 
-				<br>
-				{% get_verbose_field_name systemdetaljer "teknisk_egnethet" %}:
+				<br>{% get_verbose_field_name systemdetaljer "teknisk_egnethet" %}:
 				<span class="badge badge-light">{{ systemdetaljer.get_teknisk_egnethet_display|default:"-" }}</span>
 
-			</div>
-			<div class="col-4">
-				{% get_verbose_field_name systemdetaljer "arkivkommentar" %}<br>
+				<br><br>{% get_verbose_field_name systemdetaljer "arkivkommentar" %}<br>
 				<span class="badge badge-light">{{ systemdetaljer.arkivkommentar|default:"-" }}</span>
+
+				<br><br>
+				<b>Legacyvurderinger</b><br>
+				{% get_verbose_field_name systemdetaljer "legacy_klient_krever_smb" %}
+					{{systemdetaljer.legacy_klient_krever_smb|yesno:"🔴Ja,🟢Nei, 🟡Vet ikke"}}<br>
+				{% get_verbose_field_name systemdetaljer "legacy_klient_krever_direkte_db" %}
+					{{systemdetaljer.legacy_klient_krever_direkte_db|yesno:"🔴Ja,🟢Nei, 🟡Vet ikke"}}<br>
+				{% get_verbose_field_name systemdetaljer "legacy_klient_krever_onprem_lisensserver" %}
+					{{systemdetaljer.legacy_klient_krever_onprem_lisensserver|yesno:"🔴Ja,🟢Nei, 🟡Vet ikke"}}<br>
+				{% get_verbose_field_name systemdetaljer "legacy_klient_autentisering" %}
+					{{systemdetaljer.legacy_klient_autentisering|yesno:"🔴Ja,🟢Nei, 🟡Vet ikke"}}<br>
 			</div>
 		</div>
 	</div>
-
 
 
 
@@ -582,241 +779,29 @@
 				<thead>
 					<th>Sone</th>
 					<th>DesktopGroup</th>
-					<th>BrowserName<br>
-					Application Name</th>
-
-					<th>Nettleser</th>
-					<th>Produksjon</th>
-
+					<th>BrowserName - Application Name</th>
 					<th>AdminFolderName</th>
 					<td>ClientFolder</th>
-					<td>WorkingDirectory<br>
-					CommandLineExecutable<br>
-					CommandLineArguments</th>
-					<th>AssociatedUserFullNames</th>
 				</thead>
 			<tbody>
 			{% for app in citrix_apps %}
 				<tr>
 					<td>{{app.sone}}</td>
+
 					<td style="white-space: nowrap;">{% for name in app.publikasjon_json.AllAssociatedDesktopGroupUids_Name %}
 						<a href="{% url 'citrix_desktop_group' %}?gruppe={{name}}">{{name}}</a><br>
 					{% endfor %}</td>
-					<td>{{app.publikasjon_json.BrowserName|default:"-"}}<br>
-					{{app.publikasjon_json.ApplicationName|default:"-"}}</td>
 
-					<td>{{app.type_nettleser|yesno:"Ja,Nei"}}</td>
-					<td>{{app.type_produksjon|yesno:"Ja,Nei"}}</td>
+					<td>{{app.publikasjon_json.BrowserName|default:"-"}} - {{app.publikasjon_json.ApplicationName|default:"-"}}</td>
 
 					<td>{{app.publikasjon_json.AdminFolderName}}</td>
+
 					<td>{{app.publikasjon_json.ClientFolder|default:""}}</td>
-					<td>{{app.publikasjon_json.WorkingDirectory|default:"-"}}<br>
-					{{app.publikasjon_json.CommandLineExecutable|default:"-"}}<br>
-					{{app.publikasjon_json.CommandLineArguments|default:"-"}}</td>
-					<td>
-						{% for item in app.publikasjon_json.AssociatedUserFullNames %}
-							{% url 'ad_details' item as url_ad_details %}
-							<a href="{{url_ad_details}}">{{item}}</a><br>
-						{% endfor %}
-					</td>
 				</tr>
 			{% endfor %}
 			</tbody>
 			</table>
 
-		</div>
-	</div>
-
-
-
-	<br><hr>
-	<h3 style="scroll-margin-top: 150px;" id="anchor_integrasjoner">Integrasjoner</h3>
-	<b>Registrerte integrasjoner</b>
-	<div class="row">
-		<div class="col-12">
-			<table class="table table-sm tablesorter" style="font-size: 12px;">
-				<thead>
-					<tr>
-						<th class="filter-false"></th>
-						<th>Type</th>
-						<th>Kilde</th>
-						<th>Destinasjon</th>
-						<th>Personopplysninger?</th>
-						<th>Kommentar</th>
-					</tr>
-				</thead>
-				<tbody>
-				{% for avhengighet in systemdetaljer.system_integration_source.all %}
-				<tr>
-					<td><a href="/admin/systemoversikt/systemintegration/{{avhengighet.pk}}/change/">✎</a></td>
-					<td style="background-color: {{ avhengighet.color  }};">{{ avhengighet.get_integration_type_display }}</td>
-					<td>{{ avhengighet.source_system }}</td>
-					<td>{{ avhengighet.destination_system }}</td>
-					<td>{{ avhengighet.personopplysninger|yesno:"Ja,Nei,Vet ikke" }}</td>
-					<td>{{ avhengighet.description|default:"-" }}</td>
-				</tr>
-				{% endfor %}
-				{% for avhengighet in systemdetaljer.system_integration_destination.all %}
-				<tr>
-					<td><a href="/admin/systemoversikt/systemintegration/{{avhengighet.pk}}/change/">✎</a></td>
-					<td style="background-color: {{ avhengighet.color  }};">{{ avhengighet.get_integration_type_display }}</td>
-					<td>{{ avhengighet.source_system }}</td>
-					<td>{{ avhengighet.destination_system }}</td>
-					<td>{{ avhengighet.personopplysninger|yesno:"Ja,Nei,Vet ikke" }}</td>
-					<td>{{ avhengighet.description|default:"-" }}</td>
-				</tr>
-				{% endfor %}
-				</tbody>
-			</table>
-
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?source_system={{systemdetaljer.pk}}&integration_type=INTEGRATION">Ny integrasjon utlevering</a>
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?destination_system={{systemdetaljer.pk}}&integration_type=INTEGRATION">Ny integrasjon mottak</a>
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?source_system={{systemdetaljer.pk}}&integration_type=PUBLICATION">Ny applikasjonspublisering</a>
-			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?source_system={{systemdetaljer.pk}}&integration_type=AUTHENTICATION">Ny påloggingsmetode</a>
-
-			<br><br>
-			{% get_verbose_field_name systemdetaljer "autentiseringsteknologi" %}
-			{% for auth in systemdetaljer.autentiseringsteknologi.all %}
-				<span class="badge badge-light">{{ auth.navn }}</span>
-			{% endfor %}
-			{% if systemdetaljer.autentiseringsalternativer %}
-				<br>
-				{% for autentiseringsalternativ in systemdetaljer.autentiseringsalternativer.all %}
-					<p style="background-color: #f8f9fa;">{{ autentiseringsalternativ.navn }}</p>
-				{% endfor %}
-			{% endif %}
-
-			<br><b>Legacyvurderinger</b><br>
-			{% get_verbose_field_name systemdetaljer "legacy_klient_krever_smb" %}
-				{{systemdetaljer.legacy_klient_krever_smb|yesno:"🔴Ja,🟢Nei, 🟡Vet ikke"}}<br>
-			{% get_verbose_field_name systemdetaljer "legacy_klient_krever_direkte_db" %}
-				{{systemdetaljer.legacy_klient_krever_direkte_db|yesno:"🔴Ja,🟢Nei, 🟡Vet ikke"}}<br>
-			{% get_verbose_field_name systemdetaljer "legacy_klient_krever_onprem_lisensserver" %}
-				{{systemdetaljer.legacy_klient_krever_onprem_lisensserver|yesno:"🔴Ja,🟢Nei, 🟡Vet ikke"}}<br>
-			{% get_verbose_field_name systemdetaljer "legacy_klient_autentisering" %}
-				{{systemdetaljer.legacy_klient_autentisering|yesno:"🔴Ja,🟢Nei, 🟡Vet ikke"}}<br>
-		</div>
-	</div>
-
-
-
-	<br><br><b>Domener / URL-er</b>
-	<div class="row">
-		<div class="col-12">
-			{% for url in systemdetaljer.systemurl.all %}
-				<span style="margin: 10px; overflow-wrap: break-word;">
-					<a target="_blank" href="{{url.domene}}"><img style="height: 35px;" src="{% static 'url.png' %}">{{url.domene}}</a><br>
-				</span>
-			{% empty %}
-				<p>Ingen ting å vise</p>
-			{% endfor %}
-		</div>
-	</div>
-
-	<br><br><b>Azure-integrasjoner</b>
-	{% if systemdetaljer.enterprise_applicatons|length > 0 %}
-	<div class="row">
-		<div class="col-12">
-			<table class="table table-sm">
-				<thead>
-					<tr>
-						<th>Applikasjonsnavn (Enterprise application)</th>
-						<th>Rettigheter</th>
-						<th>Nøkler</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for ea in systemdetaljer.enterprise_applicatons.all %}
-					<tr>
-						<td>{{ ea.displayName }}</td>
-						<td>
-							{% for perm in ea.requiredResourceAccess.all %}
-								{{ perm.adminConsentDisplayName }}<br>
-							{%  endfor %}
-						</td>
-						<td>
-							{% for key in ea.keys.all %}
-								{{ key }} utløper {{ key.end_date_time }}<br>
-							{%  endfor %}
-						</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
-		</div>
-	</div>
-	{% else %}
-		<p>Ingen ting å vise</p>
-	{% endif %}
-
-
-
-	<br><hr>
-	<h3 style="scroll-margin-top: 150px;" id="anchor_bruk">Virksomheters bruk av systemet</h3>
-	<div class="row">
-		<div class="col-12">
-			<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer og endre bruk</a></p>
-			{% if systembruk %}
-				<table class="table table-sm" style="font-size: 10px;">
-					<thead>
-						<tr>
-							<th>Virksomhet</th>
-							<th>Ca. antall brukere</th>
-							{% if perms.systemoversikt.view_system %}
-							<th>Lokal KIT-vurdering {% explain_collapsed "Konfidensialitet, integritet og tilgjengelighet" %}</th>
-							{% endif %}
-							<th>Lokalt kontaktpunkt</th>
-							<th>Lokale vurderinger</th>
-							<th>Lokal RoS</th>
-							<th>Kommentar</th>
-						</tr>
-					</thead>
-					<tbody>
-						{% for bruk in systembruk %}
-						<tr>
-							<td style="width: 20%;">
-								{% if user.is_authenticated %}
-									<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
-									{% include 'site_edit_button.html' %}</a>
-								{% endif %}
-								{% url "bruksdetaljer" bruk.pk as url_bruk %}
-								<a href="{{ url_bruk }}">{{ bruk.brukergruppe.virksomhetsforkortelse }}</a>
-							</td>
-
-							<td>{{ bruk.antall_brukere|default:"Ikke oppgitt" }}</td>
-
-							{% if perms.systemoversikt.view_system %}
-							<td>
-								K: {{ bruk.get_konfidensialitetsvurdering_display|default:"-" }}<br>
-								I: {{ bruk.get_integritetsvurdering_display|default:"-" }}<br>
-								T: {{ bruk.get_tilgjengelighetsvurdering_display|default:"-" }}<br>
-							</td>
-							{% endif %}
-
-							<td>{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}</td>
-
-							<td>
-								Funksjonelt: {{ bruk.get_funksjonell_egnethet_display|default:"-" }}<br>
-								Strategisk knytning: {{ bruk.get_strategisk_egnethet_display|default:"-" }}<br>
-								Teknisk vurdering: {{ bruk.get_teknisk_egnethet_display|default:"-" }}
-							</td>
-							<td>
-								{% if bruk.url_risikovurdering %}
-									<a href="{{ bruk.url_risikovurdering }}">Link</a><br>
-								{% endif %}
-
-								{% if bruk.risikovurdering_tekst %}
-									{{ bruk.risikovurdering_tekst }}
-								{% endif %}
-							</td>
-							<td>{{ bruk.kommentar|default:"" }}</td>
-						</tr>
-						{% endfor %}
-					</tbody>
-				</table>
-			{% else %}
-				<p>Ingen virksomheter registrert</p>
-			{% endif %}
 		</div>
 	</div>
 
