@@ -13,19 +13,19 @@
 
 <table class="table table-sm tablesorter excel">
 	<thead>
+		<th>Informasjon om</th>
 		<th>Kilde</th>
 		<th>Oppdateringsfrekvens</th>
 		<th>Sist oppdatert</th>
-		<th>Informasjon om</th>
 		<th width="30%">Sist status</th>
 	</thead>
 	<tbody>
 	{% for i in integrasjoner %}
 		<tr>
+			<td>{{ i.informasjon }}</td>
 			<td>{{ i.kilde }}</td>
 			<td>{{ i.frekvensangivelse }}</td>
 			<td>{{ i.dato_sist_oppdatert|date:"Ymd" }}<br>{{ i.dato_sist_oppdatert|timesince }}</td>
-			<td>{{ i.informasjon }}</td>
 			<td>{{ i.sist_status }}</td>
 		</tr>
 	{% endfor %}
