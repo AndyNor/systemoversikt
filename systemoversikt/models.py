@@ -4447,7 +4447,7 @@ class System(models.Model):
 	service_offerings = models.ManyToManyField(
 			to=CMDBRef,
 			related_name='system',
-			verbose_name="Kobling mot Service Offerings fra CMDB",
+			verbose_name="service offerings (CMDB)",
 			blank=True,
 			help_text=u"Her velger du alle service offerings knyttet til dette systemet. Ta kontakt med UKE om du trenger hjelp med denne koblingen.",
 			)
