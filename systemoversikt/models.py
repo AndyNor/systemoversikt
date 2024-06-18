@@ -179,6 +179,7 @@ class NyeFunksjoner(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+
 class IntegrasjonKonfigurasjon(models.Model):
 	kodeord = models.CharField(
 		max_length=50,
@@ -242,6 +243,18 @@ class IntegrasjonKonfigurasjon(models.Model):
 
 	def __str__(self):
 		return f'{self.kilde} {self.protokoll} {self.informasjon}'
+
+	def color(self):
+		from datetime import datetime, timedelta
+		from django.utils import timezone
+		today = timezone.now()
+		difference = today - self.dato_sist_oppdatert
+		if difference < timedelta(days=1):
+			return "#b8e1ca"
+		if difference < timedelta(days=28):
+			return "#e1cfa3"
+		return "#cf949a"
+
 
 	class Meta:
 		verbose_name_plural = "System: Integrasjonskonfigurasjoner"

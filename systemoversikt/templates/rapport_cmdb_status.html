@@ -25,7 +25,9 @@
 			<td>{{ i.informasjon }}</td>
 			<td>{{ i.kilde }}</td>
 			<td>{{ i.frekvensangivelse }}</td>
-			<td>{{ i.dato_sist_oppdatert|date:"Ymd" }}<br>{{ i.dato_sist_oppdatert|timesince }}</td>
+			<td style="background-color: {{ i.color }};">
+				{{ i.dato_sist_oppdatert|date:"Y-m-d H:i" }}<br>{{ i.dato_sist_oppdatert|timesince }}
+			</td>
 			<td>{{ i.sist_status }}</td>
 		</tr>
 	{% endfor %}
