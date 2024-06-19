@@ -5,103 +5,103 @@
 	<h6>For sluttbrukere</h6>
 
 		{% url 'rapport_named_locations' as url_rapport_named_locations %}
-		<a href="{{ url_rapport_named_locations }}" class="btn btn-sm btn-link {% if url_rapport_named_locations in request.path %}fremhev{% endif %}">Gule og rød land</a>
+		<a href="{{ url_rapport_named_locations }}" class="btn btn-sm btn-link {% if url_rapport_named_locations in request.path %}fremhev{% endif %}">Gule og rød land</a><br>
 
 
 
 	<hr><h6>For ISK og PKO</h6>
 
 		{% url 'o365_avvik' as url_o365_avvik %}
-		<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}">Sikkerhetsavvik</a>
+		<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}">Sikkerhetsavvik</a><br>
 
 		{% url 'system_kritisk_funksjon' as url_system_kritisk_funksjon %}
-		<a href="{{url_system_kritisk_funksjon}}" class="btn btn-sm btn-link {% if url_system_kritisk_funksjon in request.path %}fremhev{% endif %}">Kritiske samfunnsfunksjoner</a>
+		<a href="{{url_system_kritisk_funksjon}}" class="btn btn-sm btn-link {% if url_system_kritisk_funksjon in request.path %}fremhev{% endif %}">Kritiske samfunnsfunksjoner</a><br>
 
 		{% url 'system_informasjonsbehandling' as url_system_informasjonsbehandling %}
-		<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if url_system_informasjonsbehandling in request.path %}fremhev{% endif %}">Informasjonsklassifisering</a>
+		<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if url_system_informasjonsbehandling in request.path %}fremhev{% endif %}">Informasjonsklassifisering</a><br>
 
 		{% url 'isk_ansvarlig_for_system' as url_isk_ansvarlig_for_system %}
-		<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">Systemer mot ISK</a>
+		<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">Systemer mot ISK</a><br>
 
 
 
 	<hr><h6>For systemforvaltere</h6>
 
 		{% url 'rapport_prioriteringer' as url_rapport_prioriteringer %}
-		<a href="{{ url_rapport_prioriteringer }}" class="btn btn-sm btn-link {% if url_rapport_prioriteringer in request.path %}fremhev{% endif %}">Prioriteringer</a>
+		<a href="{{ url_rapport_prioriteringer }}" class="btn btn-sm btn-link {% if url_rapport_prioriteringer in request.path %}fremhev{% endif %}">Prioriteringer</a><br>
 
 		{% url 'systemer_utfaset' as url_systemer_utfaset %}
-		<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfaset</a>
+		<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfaset</a><br>
 
 		{% url 'systemer_EOL' as url_systemer_EOL %}
-		<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if url_systemer_EOL in request.path %}fremhev{% endif %}">End of life</a>
+		<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if url_systemer_EOL in request.path %}fremhev{% endif %}">End of life</a><br>
 
 
 	<hr><h6>Systemperspektiver</h6>
 
 		{% url 'alle_systemer' as url_alle_systemer %}
-		<a href="{{url_alle_systemer}}" class="btn btn-sm btn-link {% if url_alle_systemer in request.path %}fremhev{% endif %}">Systemer</a>
+		<a href="{{url_alle_systemer}}" class="btn btn-sm btn-link {% if url_alle_systemer in request.path %}fremhev{% endif %}">Systemer</a><br>
 
-		<a href="{% url 'systemer_uten_driftsmodell' %}" class="btn btn-sm btn-link">Systemer uten driftmiljø</a>
+		<a href="{% url 'systemer_uten_driftsmodell' %}" class="btn btn-sm btn-link">Systemer uten driftmiljø</a><br>
 
 		{% url 'alle_hovedkategorier' as url_alle_hovedkategorier %}
-		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Systemkategorier</a>
+		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Systemkategorier</a><br>
 
 		{% url 'alle_systemer_forvaltere' as url_systemforvaltere %}
-		<a href="{{ url_systemforvaltere }}" class="btn btn-sm btn-link {% if url_systemforvaltere in request.path %}fremhev{% endif %}">Kontaktpersoner</a>
+		<a href="{{ url_systemforvaltere }}" class="btn btn-sm btn-link {% if url_systemforvaltere in request.path %}fremhev{% endif %}">Kontaktpersoner</a><br>
 
 		{% url 'systemer_vurderinger' as url_systemer_vurderinger %}
-		<a href="{{ url_systemer_vurderinger }}" class="btn btn-sm btn-link {% if url_systemer_vurderinger in request.path %}fremhev{% endif %}">Systemvurderinger</a>
+		<a href="{{ url_systemer_vurderinger }}" class="btn btn-sm btn-link {% if url_systemer_vurderinger in request.path %}fremhev{% endif %}">Systemvurderinger</a><br>
 
 		{% url 'alle_systemer_smart' as url_systemsmart %}
-		<a href="{{ url_systemsmart }}" class="btn btn-sm btn-link {% if url_systemsmart in request.path %}fremhev{% endif %}">SMART-kartlegging</a>
+		<a href="{{ url_systemsmart }}" class="btn btn-sm btn-link {% if url_systemsmart in request.path %}fremhev{% endif %}">SMART-kartlegging</a><br>
 
 		{% url 'alle_leverandorer' as alle_leverandorer_url %}
-		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Leverandører</a>
+		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Leverandører</a><br>
 
 		{% url 'systemer_pakket' as url_systemer_pakket %}
-		<a href="{{url_systemer_pakket}}" class="btn btn-sm {% if url_systemer_pakket in request.path %}fremhev{% endif %}">Programvarepakking</a>
+		<a href="{{url_systemer_pakket}}" class="btn btn-sm {% if url_systemer_pakket in request.path %}fremhev{% endif %}">Programvarepakking</a><br>
 
 
 	<hr><h6>For Azure forvaltningen</h6>
 
 		{% url 'azure_applications' as url_azure_applications %}
-		<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}">Service principals</a>
+		<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}">Service principals</a><br>
 
 		{% url 'azure_user_consents' as url_azure_user_consents %}
-		<a href="{{ url_azure_user_consents }}" class="btn btn-sm btn-link {% if url_azure_user_consents in request.path %}fremhev{% endif %}">User consents</a>
+		<a href="{{ url_azure_user_consents }}" class="btn btn-sm btn-link {% if url_azure_user_consents in request.path %}fremhev{% endif %}">User consents</a><br>
 
 		{% url 'azure_application_keys' as url_azure_application_keys %}
-		<a href="{{ url_azure_application_keys }}" class="btn btn-sm btn-link {% if url_azure_application_keys in request.path %}fremhev{% endif %}">Nøkler og sertifikater</a>
+		<a href="{{ url_azure_application_keys }}" class="btn btn-sm btn-link {% if url_azure_application_keys in request.path %}fremhev{% endif %}">Nøkler og sertifikater</a><br>
 
 
 
 	<hr><h6>Active Directory</h6>
 
 		{% url 'rapport_ad_identer' as url_rapport_ad_identer %}
-		<a href="{{ url_rapport_ad_identer }}" class="btn btn-sm btn-link {% if url_rapport_ad_identer in request.path %}fremhev{% endif %}">Identstatistikk</a>
+		<a href="{{ url_rapport_ad_identer }}" class="btn btn-sm btn-link {% if url_rapport_ad_identer in request.path %}fremhev{% endif %}">Identstatistikk</a><br>
 
 		{% url 'tbrukere' as url_tbrukere %}
-		<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a>
+		<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a><br>
 
 		{% url 'rapport_ukjente_identer' as url_rapport_ukjente_identer %}
-		<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Manuelt opprettet</a>
+		<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Manuelt opprettet</a><br>
 
 		{% url 'alle_spn' as url_alle_spn %}
-		<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">Med SPN</a>
+		<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">Med SPN</a><br>
 
 		{% url 'rapport_ad_adgrupper' as url_rapport_ad_adgrupper %}
-		<a href="{{ url_rapport_ad_adgrupper }}" class="btn btn-sm btn-link {% if url_rapport_ad_adgrupper in request.path %}fremhev{% endif %}">Grupper over tid</a>
+		<a href="{{ url_rapport_ad_adgrupper }}" class="btn btn-sm btn-link {% if url_rapport_ad_adgrupper in request.path %}fremhev{% endif %}">Grupper over tid</a><br>
 
 
 
 	<hr><h6>Leverandørtilgang</h6>
 
 		{% url 'drifttilgang' as url_drifttilgang %}
-		<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Driftbrukere</a>
+		<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Driftbrukere</a><br>
 
 		{% url 'drifttilgang' as url_drifttilgang %}
-		<a href="{{ url_drifttilgang }}?kilde=servicekontoer" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Servicekontoer</a>
+		<a href="{{ url_drifttilgang }}?kilde=servicekontoer" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Servicekontoer</a><br>
 
 
 
@@ -109,10 +109,10 @@
 	<hr><h6>Annet</h6>
 
 		{% url 'rapport_cmdb_status' as url_rapport_cmdb_status %}
-		<a href="{{ url_rapport_cmdb_status }}" class="btn btn-sm btn-link {% if url_rapport_cmdb_status in request.path %}fremhev{% endif %}">CMDB integrasjonsstatus</a>
+		<a href="{{ url_rapport_cmdb_status }}" class="btn btn-sm btn-link {% if url_rapport_cmdb_status in request.path %}fremhev{% endif %}">CMDB integrasjonsstatus</a><br>
 
 		{% url 'o365_lisenser' as url_o365_lisenser %}
-		<a href="{{ url_o365_lisenser }}" class="btn btn-sm btn-link {% if url_o365_lisenser in request.path %}fremhev{% endif %}">o365 lisenser</a>
+		<a href="{{ url_o365_lisenser }}" class="btn btn-sm btn-link {% if url_o365_lisenser in request.path %}fremhev{% endif %}">o365 lisenser</a><br>
 
 
 
