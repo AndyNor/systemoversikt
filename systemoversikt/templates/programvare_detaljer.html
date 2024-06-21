@@ -93,6 +93,14 @@
 
 	<hr>
 
+	{% if programvare.systemer.all %}
+		<h5>Systemer med avhengigheter til {{programvare.programvarenavn}}</h5>
+		{% include "system_include_hurtigvisning.html" with systemer=programvare.systemer.all %}
+		<hr>
+	{% endif %}
+
+	<hr>
+
 	<h5>Virksomheters bruk av {{ programvare.programvarenavn }}</h5>
 	<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk_programvare' programvare.pk %}">Registrer bruk</a></p>
 	<table class="tablesorter">
@@ -135,11 +143,7 @@
 	</table>
 	<hr>
 
-	{% if programvare.systemer.all %}
-		<h5>Systemer med avhengigheter til {{programvare.programvarenavn}}</h5>
-		{% include "system_include_hurtigvisning.html" with systemer=programvare.system_programvarer.all %}
-		<hr>
-	{% endif %}
+
 
 	Endringslogg (siste {{ siste_endringer_antall }})<br>
 	{% for endring in siste_endringer %}
