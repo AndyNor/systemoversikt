@@ -35,9 +35,7 @@
 			</div>
 			<div id="collapse-prk" class="collapse" aria-labelledby="heading-programvare" data-parent="#accordion-programvare">
 				<div class="card-body">
-				{% for p in programvarer.all %}
-					{{p}},
-				{% endfor %}
+				{{ programvare_json }}
 				</div>
 			</div>
 		</div>

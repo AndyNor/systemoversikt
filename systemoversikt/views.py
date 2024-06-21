@@ -4131,11 +4131,14 @@ def alle_programvarer(request):
 
 	aktuelle_programvarer = aktuelle_programvarer.order_by(Lower('programvarenavn'))
 
+	programvare_json = json.dumps(list(Programvare.objects.values_list('programvarenavn', flat=True).distinct()))
+
 	return render(request, 'programvare_alle.html', {
 		'overskrift': "Programvarer og applikasjoner",
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'programvarer': aktuelle_programvarer,
+		'programvare_json': programvare_json,
 	})
 
 

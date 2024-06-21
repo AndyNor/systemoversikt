@@ -40,15 +40,15 @@
 		<br><hr>
 		Programvare<br>
 		{% for programvare in systemdetaljer.programvarer.all %}
+
 			{% url "programvaredetaljer" programvare.pk as url_programvare %}
-			<a style="margin-right: 15px;" href="{{ url_programvare }}"><img src="{% static 'programvare.png' %}" style="height: 35px;"> {{ programvare }}</a>
-			{% if programvare.programvareleverandor.all|length > 0 %}
-			levert av
+				<a style="margin-right: 5px; margin-left: 15px;" href="{{ url_programvare }}">
+				<img src="{% static 'programvare.png' %}" style="height: 35px;">
 				{% for programvareleverandor in programvare.programvareleverandor.all %}
 					{% url 'leverandor' programvareleverandor.pk as url_programvareleverandor %}
-					<a href="{{ url_programvareleverandor }}">{{ programvareleverandor }}</a>,
+					<a href="{{ url_programvareleverandor }}">{{ programvareleverandor }}</a>
 				{% endfor %}
-			{% endif %}
+				{{ programvare }}</a>
 		{% endfor %}
 	{% endif %}
 
