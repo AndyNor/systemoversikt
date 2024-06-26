@@ -2856,7 +2856,7 @@ def logger(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	aktive_antall_uker = 52
+	aktive_antall_uker = 1
 	aktive_antall_personer = 30
 	period = datetime.datetime.now() - datetime.timedelta(weeks=aktive_antall_uker)
 	top_users = LogEntry.objects.values('user_id').filter(action_time__gte=period).annotate(count=Count('user_id')).order_by('-count')[:30]
