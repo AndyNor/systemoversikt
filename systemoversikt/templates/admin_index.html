@@ -25,9 +25,6 @@
 	{% url 'logger_api_csirt' as url_logger_api_csirt %}
 	<a href="{{ url_logger_api_csirt }}" class="btn btn-sm btn-link {% if url_logger_api_csirt in request.path %}fremhev{% endif %}">📖 API-bruk CSIRT feiler</a><br>
 
-	{% url 'logger_users' as url_logger_users %}
-	<a href="{{ url_logger_users }}" class="btn btn-sm btn-link {% if url_logger_users in request.path %}fremhev{% endif %}">📖 Brukerlogg</a><br>
-
 	<hr>
 	<h6>Kategorier</h6>
 	{% url 'valgbarekategorier' as url_valgbarekategorier %}
