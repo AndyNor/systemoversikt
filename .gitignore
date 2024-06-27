@@ -134,3 +134,4 @@ systemoversikt/management/commands/lokalt/scan_result.json
 kritiske_kapabilitet.json
 kritiske_funksjoner.json
 systemoversikt/management/commands/manuell_sertifikat_sjekker_config.py
+*.ini
