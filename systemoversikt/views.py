@@ -6355,7 +6355,7 @@ def alle_databaser(request):
 			})
 		return sorted(maskiner_stats, key=lambda os: os['db_version'], reverse=True)
 
-	databaseversjoner = CMDBdatabase.objects.all().values('db_version').distinct().annotate(Count('db_version'))
+	databaseversjoner = CMDBdatabase.objects.filter(db_operational_status=True).values('db_version').distinct().annotate(Count('db_version'))
 	databasestatistikk = []
 	for versjon in databaseversjoner:
 		if versjon["db_version"] == "":
