@@ -6954,7 +6954,7 @@ def get_api_tilganger(request): #API
 
 
 def csirt_maskinlookup_api(request): #API
-	#ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Innkommende kall")
+	#ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Innkommende kall fra {get_client_ip(request)}")
 	if not request.method == "GET":
 		#ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message="Feil: HTTP metode var ikke GET")
 		raise Http404
@@ -7034,7 +7034,7 @@ def csirt_maskinlookup_api(request): #API
 
 
 def csirt_iplookup_api(request):
-	#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Innkommende kall")
+	#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Innkommende kall fra {get_client_ip(request)}")
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil: HTTP metode var ikke GET")
 		raise Http404
@@ -7117,7 +7117,7 @@ def csirt_iplookup_api(request):
 
 
 def vav_akva_api(request): #API
-	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Innkommende kall")
+	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message=f"Innkommende kall fra {get_client_ip(request)}")
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Feil: HTTP metode var ikke GET")
 		raise Http404
@@ -7157,10 +7157,21 @@ def vav_akva_api(request): #API
 
 
 
+def api_programvare(request): #API
+	ApplicationLog.objects.create(event_type="API programvare", message=f"Innkommende kall fra {get_client_ip(request)}")
+	if not request.method == "GET":
+		ApplicationLog.objects.create(event_type="API programvare", message="Feil: HTTP metode var ikke GET")
+		raise Http404
+
+	programvare_json = json.dumps(list(Programvare.objects.values_list('programvarenavn', flat=True).distinct()))
+
+	ApplicationLog.objects.create(event_type="API programvare", message=f"Vellykket kall fra {get_client_ip(request)}")
+	return JsonResponse(programvare_json, safe=False)
+
 
 
 def behandlingsoversikt_api(request): #API
-	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Innkommende kall")
+	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message=f"Innkommende kall fra {get_client_ip(request)}")
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message="Feil: HTTP metode var ikke GET")
 		raise Http404

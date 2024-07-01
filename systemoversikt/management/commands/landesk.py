@@ -11,7 +11,6 @@ import sys
 import csv
 from datetime import datetime
 from django.utils.timezone import make_aware
-import requests
 from systemoversikt.models import CMDBdevice, Virksomhet, ApplicationLog
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
