@@ -41,6 +41,7 @@
 <thead>
 	<tr>
 		<th>System</th>
+		<th>Tilhørende programvare</th>
 		<th>Forvalter</th>
 		<th>Klassifisering</th>
 		<th>Livsløp</th>
@@ -50,6 +51,11 @@
 {% for system in systemer_ansvarfor %}
 	<tr>
 		<td>{% include 'system_include_vis.html' with system=system %}</td>
+		<td>
+			{% for programvare in system.programvarer.all %}
+				{{ programvare }} {% if not forloop.last %} og {% endif %}
+			{% endfor %}
+		</td>
 		<td>
 			{% for person in system.systemforvalter_kontaktpersoner_referanse.all %}
 				{{ person }} {% if not forloop.last %} og {% endif %}
