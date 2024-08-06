@@ -7166,7 +7166,7 @@ def api_programvare(request): #API
 	programvare_json = json.dumps(list(Programvare.objects.values_list('programvarenavn', flat=True).distinct()))
 
 	ApplicationLog.objects.create(event_type="API programvare", message=f"Vellykket kall fra {get_client_ip(request)}")
-	return JsonResponse(programvare_json, safe=False)
+	return JsonResponse(programvare_json, safe=True)
 
 
 
