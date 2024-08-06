@@ -7163,10 +7163,9 @@ def api_programvare(request): #API
 		ApplicationLog.objects.create(event_type="API programvare", message="Feil: HTTP metode var ikke GET")
 		raise Http404
 
-	programvare_json = json.dumps(list(Programvare.objects.values_list('programvarenavn', flat=True).distinct()))
-
+	programvare = Programvare.objects.values_list('programvarenavn', flat=True).distinct()
 	ApplicationLog.objects.create(event_type="API programvare", message=f"Vellykket kall fra {get_client_ip(request)}")
-	return JsonResponse(programvare_json, safe=False)
+	return JsonResponse(list(programvare), safe=False)
 
 
 
