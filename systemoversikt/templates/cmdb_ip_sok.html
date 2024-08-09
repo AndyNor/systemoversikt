@@ -43,8 +43,10 @@
 			<td>
 				{% for server in ip.servere.all %}
 					<b>{{ server }}</b><br>
-					{% if server.sub_name.system %}{{ server.sub_name.system }}<br>
-					{{server.sub_name.system.get_sikkerhetsnivaa_display|default:"Ukjent sikkerhetsnivå"}}{% endif %}
+					{% for system in server.sub_name.system.all %}
+						{{ system }}<br>
+						{{ system.get_sikkerhetsnivaa_display|default:"Ukjent sikkerhetsnivå"}}
+					{% endfor %}
 					<br>
 				{% endfor %}
 			</td>
