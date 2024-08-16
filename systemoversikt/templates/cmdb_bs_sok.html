@@ -116,11 +116,11 @@
 
 
 	<h3 style="scroll-margin-top: 150px;" id="anchor_uten_systemkobling">Mangler systemkobling</h3>
+	<p>Søk opp system og legg til kobling til business service fra systemets redigeringsside</p>
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
 		<th>Business service</th>
-		<th>Koble?</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -128,9 +128,6 @@
 	<tr>
 		<td>
 			{{ bs }}
-		</td>
-		<td>
-			<a href="/admin/systemoversikt/cmdbbs/{{ bs.pk }}/change/">✎ koble</a>
 		</td>
 	</tr>
 	{% endfor %}
