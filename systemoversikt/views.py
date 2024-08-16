@@ -6901,8 +6901,8 @@ def iga_api(request): #API
 
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="iga").values_list("key", flat=True)
-	#if not key in list(allowed_keys):
-	#	return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 
 	data = []
 	for s in System.objects.all():
