@@ -26,8 +26,6 @@ Under denne tabellen finner du en ny tabell med alle integrasjoner som er regist
 	<th>Driftsmodell</th>
 	<th>BS/BSS</th>
 	<th>Livsløp</th>
-	<th>Antall servere</th>
-	<th>Antall databaser</th>
 
 	<th>Organisatorisk systemeier</th>
 	<th>Organisatorisk forvalter</th>
@@ -63,10 +61,12 @@ Under denne tabellen finner du en ny tabell med alle integrasjoner som er regist
 	</td>
 
 	<td>{{ s.driftsmodell_foreignkey|default:"Ukjent" }}</td>
-	<td>{{ s.bs_system_referanse|default:"Ikke koblet" }}</td>
+
+	<td>{% for offering in s.service_offerings.all %}
+			{{ offering }}
+		{% endfor %}</td>
+
 	<td>{{ s.get_livslop_status_display }}</td>
-	<td>{{ s.bs_system_referanse.ant_devices|default:"Ukjent" }}</td>
-	<td>{{ s.bs_system_referanse.ant_databaser|default:"Ukjent" }}</td>
 
 	<td>{{ s.systemeier|default:"Ukjent" }}</td>
 	<td>{{ s.systemforvalter|default:"Ukjent" }}</td>
