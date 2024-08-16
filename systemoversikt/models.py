@@ -2032,6 +2032,7 @@ class CMDBRef(models.Model): # BSS
 			"T2": "T2🟢: 07-20 alle dager, 99.5%",
 			"T3": "T3🟡: 07-16 virkedager, 99%",
 			"T4": "T4🔴: Best effort",
+			"E1": "T4🟡: Egendrift",
 		}
 		try:
 			return lookup[self.u_service_availability]

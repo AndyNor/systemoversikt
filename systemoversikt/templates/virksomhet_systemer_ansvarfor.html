@@ -58,52 +58,62 @@
 			</tr>
 		</thead>
 	<tbody>
-	{% for item in systemer_ansvarlig_for %}
+	{% for system in systemer_ansvarlig_for %}
 	<tr>
 		<td>{{ forloop.counter}}</td>
 
-		<td><a href="/admin/systemoversikt/system/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</td>
+		<td><a href="/admin/systemoversikt/system/{{ system.pk }}/change/">{% include 'site_edit_button.html' %}</td>
 
 		<td>
-		{% include 'system_include_vis.html' with system=item %}
-		{% if item.systemeierskapsmodell %}
-			{{ item.get_systemeierskapsmodell_display|default:"" }}
+		{% include 'system_include_vis.html' with system=system %}
+		{% if system.systemeierskapsmodell %}
+			{{ system.get_systemeierskapsmodell_display|default:"" }}
 		{% else %}
 			<span style="background-color: #ffacac">Systemeierskapsmodell mangler</span>
 		{% endif %}
 		</td>
 
 		<td>
-			{% if item.driftsmodell_foreignkey %}
-				{% url "detaljer_driftsmodell" item.driftsmodell_foreignkey.pk as url_driftsmodell %}
-				<a href="{{ url_driftsmodell }}">{{ item.driftsmodell_foreignkey|default:"" }}</a><br>
+			{% if system.driftsmodell_foreignkey %}
+				{% url "detaljer_driftsmodell" system.driftsmodell_foreignkey.pk as url_driftsmodell %}
+				<a href="{{ url_driftsmodell }}">{{ system.driftsmodell_foreignkey|default:"" }}</a><br>
+
+				{% if system.isolert_drift %}
+					🕹️ På tilpasset drift
+				{% endif %}
+
+				{% if system.service_offerings %}
+					{% for offering in system.service_offerings.all %}
+
+						<li>{{ offering.navn}} - {{offering.environment}} - {{ offering.u_service_availability_text }}</li>
+
+					{% endfor %}
+				{% endif %}
+
 			{% else %}
 				<span style="background-color: #ffacac">Driftsmodell mangler</span>
 			{% endif %}
 
-			{% if item.isolert_drift %}
-				🕹️ På tilpasset drift
-			{% endif %}
 		</td>
 
 		<td>
 			Systemeier:
-			{% url "virksomhet" item.systemeier.pk as url_systemeier %}
-			<b><a href="{{ url_systemeier }}">{{ item.systemeier.virksomhetsforkortelse|default:"-" }}</a></b><br>
-			{% include "ansvarlig_include_vis.html" with ansvarlige=item.systemeier_kontaktpersoner_referanse.all %}
+			{% url "virksomhet" system.systemeier.pk as url_systemeier %}
+			<b><a href="{{ url_systemeier }}">{{ system.systemeier.virksomhetsforkortelse|default:"-" }}</a></b><br>
+			{% include "ansvarlig_include_vis.html" with ansvarlige=system.systemeier_kontaktpersoner_referanse.all %}
 
 			<br>
 			Systemforvalter:
-			{% url "virksomhet" item.systemforvalter.pk as url_systemforvalter %}
-			<b><a href="{{ url_systemforvalter }}">{{ item.systemforvalter.virksomhetsforkortelse|default:"-" }}</a> {% if item.systemforvalter_avdeling_referanse%} <br>{{ item.systemforvalter_avdeling_referanse }} {% endif %}</b><br>
-			{% include "ansvarlig_include_vis.html" with ansvarlige=item.systemforvalter_kontaktpersoner_referanse.all %}
+			{% url "virksomhet" system.systemforvalter.pk as url_systemforvalter %}
+			<b><a href="{{ url_systemforvalter }}">{{ system.systemforvalter.virksomhetsforkortelse|default:"-" }}</a> {% if system.systemforvalter_avdeling_referanse%} <br>{{ system.systemforvalter_avdeling_referanse }} {% endif %}</b><br>
+			{% include "ansvarlig_include_vis.html" with ansvarlige=system.systemforvalter_kontaktpersoner_referanse.all %}
 		</td>
 
-		<td>{{ item.get_livslop_status_display|default:"" }}</td>
+		<td>{{ system.get_livslop_status_display|default:"" }}</td>
 
 		<td>
 		Systemleverandør:
-		{% for lev in item.systemleverandor.all %}
+		{% for lev in system.systemleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
 		{% empty %}
@@ -111,7 +121,7 @@
 		{% endfor %}
 
 		Applikasjonsdrift:
-		{% for lev in item.applikasjonsdriftleverandor.all %}
+		{% for lev in system.applikasjonsdriftleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
 		{% empty %}
@@ -119,7 +129,7 @@
 		{% endfor %}
 
 		Basisdrift:
-		{% for lev in item.basisdriftleverandor.all %}
+		{% for lev in system.basisdriftleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
 		{% empty %}
