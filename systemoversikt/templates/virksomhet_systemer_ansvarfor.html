@@ -85,7 +85,7 @@
 				{% if system.service_offerings %}
 					{% for offering in system.service_offerings.all %}
 
-						<li>{{ offering.navn}} - {{offering.environment}} - {{ offering.u_service_availability_text }}</li>
+						<li>{{ offering.navn}} - {{offering.get_environment_display}} - {{ offering.u_service_availability_text }}</li>
 
 					{% endfor %}
 				{% endif %}
