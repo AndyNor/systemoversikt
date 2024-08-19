@@ -4131,7 +4131,10 @@ def alle_programvarer(request):
 
 	aktuelle_programvarer = aktuelle_programvarer.order_by(Lower('programvarenavn'))
 
-	programvare_json = json.dumps(list(Programvare.objects.values_list('programvarenavn', flat=True).distinct()))
+	programvare = Programvare.objects.values_list('programvarenavn', flat=True).distinct()
+	leverandorer = Leverandor.objects.values_list('leverandor_navn', flat=True).distinct()
+	systemer = System.objects.values_list('systemnavn', flat=True).distinct()
+	programvare_json = json.dumps(list(programvare) + list(leverandorer) + list(systemer))
 
 	return render(request, 'programvare_alle.html', {
 		'overskrift': "Programvarer og applikasjoner",
@@ -7166,8 +7169,10 @@ def api_programvare(request): #API
 		raise Http404
 
 	programvare = Programvare.objects.values_list('programvarenavn', flat=True).distinct()
+	leverandorer = Leverandor.objects.values_list('leverandor_navn', flat=True).distinct()
+	systemer = System.objects.values_list('systemnavn', flat=True).distinct()
 	ApplicationLog.objects.create(event_type="API programvare", message=f"Vellykket kall fra {get_client_ip(request)}")
-	return JsonResponse(list(programvare), safe=False)
+	return JsonResponse(list(programvare) + list(leverandorer) + list(systemer), safe=False)
 
 
 
