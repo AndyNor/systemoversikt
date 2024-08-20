@@ -7045,7 +7045,7 @@ def csirt_iplookup_api(request):
 		raise Http404
 
 	key = request.headers.get("key", None)
-	allowed_keys = APIKeys.objects.filter(navn__startswith="csirt_ipsok").values_list("key", flat=True)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="vulnapp").values_list("key", flat=True)
 	if not key in list(allowed_keys) and not os.environ['THIS_ENV'] == "TEST":
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
@@ -7168,6 +7168,12 @@ def api_programvare(request): #API
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API programvare", message="Feil: HTTP metode var ikke GET")
 		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="vulnapp").values_list("key", flat=True)
+	if not key in list(allowed_keys) and not os.environ['THIS_ENV'] == "TEST":
+		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 
 	programvare = Programvare.objects.values_list('programvarenavn', flat=True).distinct()
 	#leverandorer = Leverandor.objects.values_list('leverandor_navn', flat=True).distinct()
