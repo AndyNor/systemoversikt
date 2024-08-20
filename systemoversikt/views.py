@@ -20,7 +20,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.db import transaction
 from django.db.models import Sum
-from os import path
+import os
 import datetime
 import json
 import re
@@ -7046,7 +7046,7 @@ def csirt_iplookup_api(request):
 
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="csirt_ipsok").values_list("key", flat=True)
-	if not key in list(allowed_keys):
+	if not key in list(allowed_keys) and not os.environ['THIS_ENV'] == "TEST":
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
 
@@ -7064,10 +7064,11 @@ def csirt_iplookup_api(request):
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på ugyldig IP-adresse {ip_string}")
 		return JsonResponse({"error": "Ikke en gyldig IP-adresse"}, safe=False)
 
-	try:
+
+	if DNSrecord.objects.filter(ip_address=ip_string).count() <= 15:
 		dns_match = [inst.dns_name for inst in DNSrecord.objects.filter(ip_address=ip_string).all()]
-	except:
-		dns_match = None
+	else:
+		dns_match = ["Flere enn 15"]
 
 	try:
 		ip_match = NetworkIPAddress.objects.get(ip_address=ip_string)
@@ -7169,10 +7170,10 @@ def api_programvare(request): #API
 		raise Http404
 
 	programvare = Programvare.objects.values_list('programvarenavn', flat=True).distinct()
-	leverandorer = Leverandor.objects.values_list('leverandor_navn', flat=True).distinct()
-	systemer = System.objects.values_list('systemnavn', flat=True).distinct()
+	#leverandorer = Leverandor.objects.values_list('leverandor_navn', flat=True).distinct()
+	#systemer = System.objects.values_list('systemnavn', flat=True).distinct()
 	ApplicationLog.objects.create(event_type="API programvare", message=f"Vellykket kall fra {get_client_ip(request)}")
-	return JsonResponse(list(programvare) + list(leverandorer) + list(systemer), safe=False)
+	return JsonResponse(list(programvare), safe=False)
 
 
 
