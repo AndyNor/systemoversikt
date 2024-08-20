@@ -2630,6 +2630,29 @@ class NetworkDevice(models.Model):
 			)
 
 
+class QualysVuln(models.Model):
+	source = models.TextField()
+	server = models.ForeignKey(to="CMDBdevice", on_delete=models.SET_NULL, related_name='qualys_vulnerabilities', null=True)
+	title = models.TextField()
+	severity = models.IntegerField()
+	first_seen = models.DateTimeField(null=True)
+	last_seen = models.DateTimeField(null=True)
+	pulic_facing = models.BooleanField()
+	cve_info = models.TextField()
+	result = models.TextField()
+	os = models.TextField()
+	status = models.TextField(null=True)
+
+	def __str__(self):
+		return f"{self.source} {self.title}"
+
+	class Meta:
+		verbose_name_plural = "Qualys: vulnerabilities"
+		verbose_name = "vulnerability"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
 class CMDBdevice(models.Model):
 	opprettet = models.DateTimeField( # system
 			verbose_name="Opprettet",

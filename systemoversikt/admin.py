@@ -62,6 +62,16 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 	return export_as_csv
 
 
+@admin.register(QualysVuln)
+class QualysVulnAdmin(admin.ModelAdmin):
+	list_display=('source', 'title', 'status', 'severity', 'first_seen', 'last_seen', 'pulic_facing', 'cve_info')
+	search_fields = ('cve_info', 'title', 'source')
+	list_filter = ('severity', 'os', 'status', 'pulic_facing', 'first_seen')
+	autocomplete_fields = ('server',)
+	def has_change_permission(self, request, obj=None):
+		return False
+
+
 @admin.register(IpProtocol)
 class IpProtocolAdmin(admin.ModelAdmin):
 	list_display=search_fields=readonly_fields = ('protocol', 'port', 'description')
