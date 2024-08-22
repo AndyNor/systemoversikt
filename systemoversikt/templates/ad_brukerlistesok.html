@@ -30,6 +30,7 @@
 		<th class="filter-false"></th>
 		<th>Aktiv</th>
 		<th>Navn</th>
+		<th>E-post</th>
 		<th>Brukernavn</th>
 		<th>OU-path</th>
 
@@ -62,6 +63,7 @@
 		{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
 		<td>{{user.first_name}} {{user.last_name}}</td>
 		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
+		<td>{{user.email }}</td>
 		<td>{{ user.profile.ou_lesbar }}</td>
 
 		<td>{{ user.profile.priveligert_bruker }}</td>

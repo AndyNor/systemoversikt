@@ -7141,7 +7141,7 @@ def vav_akva_api(request): #API
 		systeminfo["system_navn_visning"] = b.system.__str__()
 		systeminfo["system_id"] = b.system.id
 		systeminfo["ibruk"] = b.system.er_ibruk()
-		systeminfo["livslop_status"] = b.system.livslop_status
+		systeminfo["livslop_status"] = b.system.livslop_status if b.system.livslop_status != None else 0
 		systeminfo["livslop_status_visning"] = b.system.get_livslop_status_display()
 		systeminfo["system_klassifisering"] = b.system.systemeierskapsmodell
 		systeminfo["systemkategorier"] = [kategori.kategorinavn for kategori in b.system.systemkategorier.all()]
@@ -7153,6 +7153,20 @@ def vav_akva_api(request): #API
 		systeminfo["systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.system.systemforvalter_kontaktpersoner_referanse.all()]
 		systeminfo["lokal_systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.systemforvalter_kontaktpersoner_referanse.all()]
 		systeminfo["lokal_systemeier_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.systemeier_kontaktpersoner_referanse.all()]
+		systeminfo["url_webportal"] =  [url.domene for url in b.system.systemurl.all()]
+		systeminfo["url_systemoversikt"] = reverse('systemdetaljer', kwargs={'pk': b.system.pk})
+		systeminfo["systembeskrivelse"] = b.system.systembeskrivelse if b.system.systembeskrivelse != None else ""
+		systeminfo["lokal_systembeskrivelse"] = b.kommentar if b.kommentar != None else ""
+		systeminfo["leverandor_applikasjon"] = [leverandor.leverandor_navn for leverandor in b.system.systemleverandor.all()]
+		systeminfo["leverandor_applikasjonsdrift"] = [leverandor.leverandor_navn for leverandor in b.system.applikasjonsdriftleverandor.all()]
+		systeminfo["leverandor_driftsmiljo"] = [leverandor.leverandor_navn for leverandor in b.system.basisdriftleverandor.all()]
+		systeminfo["funksjonell_egnethet"] = b.system.funksjonell_egnethet
+		systeminfo["funksjonell_egnethet_tekst"] = b.system.get_funksjonell_egnethet_display()
+		systeminfo["teknisk_egnethet"] = b.system.teknisk_egnethet
+		systeminfo["teknisk_egnethet_tekst"] = b.system.get_teknisk_egnethet_display()
+		systeminfo["konfidensialitetsvurdering"] = b.system.sikkerhetsnivaa
+		systeminfo["konfidensialitetsvurdering_tekst"] = b.system.get_sikkerhetsnivaa_display()
+		systeminfo["superbrukere"] = b.system.superbrukere
 		data.append(systeminfo)
 
 	source_ip = get_client_ip(request)

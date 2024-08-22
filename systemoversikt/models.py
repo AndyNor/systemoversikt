@@ -4687,6 +4687,9 @@ class System(models.Model):
 			null=True,
 			help_text=u"Moderne teknologi eller masse teknisk gjeld?",
 			)
+
+
+	#### DENNE BRUKES IKKE??
 	konfidensialitetsvurdering = models.IntegerField(
 			choices=VURDERINGER_SIKKERHET_VALG,
 			verbose_name="Oppsummert konfidensialitetsvurdering (utfases)",
@@ -4694,6 +4697,9 @@ class System(models.Model):
 			null=True,
 			help_text=u"Hvor sensitive er opplysningene?",
 			)
+
+
+
 	integritetsvurdering = models.IntegerField(
 			choices=VURDERINGER_SIKKERHET_VALG,
 			verbose_name="Integritetsvurdering",
