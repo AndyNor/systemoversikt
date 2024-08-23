@@ -3652,10 +3652,10 @@ SELVBETJENING_VALG = (
 
 SIKKERHETSNIVAA_VALG = (
 	(1, '🟢 Åpen'),
-	(2, '🟡Intern'),
-	(5, '🔴Beskyttet'),
-	(3, '🔴Strengt beskyttet'),
-	(4, '🔴Gradert')
+	(2, '🟡 Intern'),
+	(5, '🔴 Beskyttet'),
+	(3, '🔴 Strengt beskyttet'),
+	(4, '🔴 Gradert')
 )
 
 LEVERANSEMODELL_VALG = (
