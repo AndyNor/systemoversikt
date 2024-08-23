@@ -7134,6 +7134,8 @@ def vav_akva_api(request): #API
 	#	ApplicationLog.objects.create(event_type="API Akva VAV", message="Feil eller tom API-nøkkel")
 	#	return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
+	from systemoversikt.settings import SITE_SCHEME, SITE_DOMAIN
+
 	data = []
 	for b in SystemBruk.objects.filter(brukergruppe__virksomhetsforkortelse="VAV"):
 		systeminfo = {}
@@ -7153,8 +7155,8 @@ def vav_akva_api(request): #API
 		systeminfo["systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.system.systemforvalter_kontaktpersoner_referanse.all()]
 		systeminfo["lokal_systemforvalter_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.systemforvalter_kontaktpersoner_referanse.all()]
 		systeminfo["lokal_systemeier_personer"] = [ansvarlig.brukernavn.email for ansvarlig in b.systemeier_kontaktpersoner_referanse.all()]
-		systeminfo["url_webportal"] =  [url.domene for url in b.system.systemurl.all()]
-		systeminfo["url_systemoversikt"] = reverse('systemdetaljer', kwargs={'pk': b.system.pk})
+		systeminfo["url_webportal"] = [url.domene for url in b.system.systemurl.all()]
+		systeminfo["url_systemoversikt"] = SITE_SCHEME + "://" + SITE_DOMAIN + reverse('systemdetaljer', kwargs={'pk': b.system.pk})
 		systeminfo["systembeskrivelse"] = b.system.systembeskrivelse if b.system.systembeskrivelse != None else ""
 		systeminfo["lokal_systembeskrivelse"] = b.kommentar if b.kommentar != None else ""
 		systeminfo["leverandor_applikasjon"] = [leverandor.leverandor_navn for leverandor in b.system.systemleverandor.all()]
