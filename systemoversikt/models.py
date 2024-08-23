@@ -2637,7 +2637,7 @@ class QualysVuln(models.Model):
 	severity = models.IntegerField()
 	first_seen = models.DateTimeField(null=True)
 	last_seen = models.DateTimeField(null=True)
-	pulic_facing = models.BooleanField()
+	public_facing = models.BooleanField()
 	cve_info = models.TextField()
 	result = models.TextField()
 	os = models.TextField()
