@@ -112,7 +112,7 @@
 		<td>{{ system.get_livslop_status_display|default:"" }}</td>
 
 		<td>
-		Systemleverandør:
+		Systemleverandør (programvare):
 		{% if system.systemleverandor_vedlikeholdsavtale %}
 			<span style="color: #268f26;">Har supportavtale</span>
 		{% else %}
@@ -122,23 +122,23 @@
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
 		{% empty %}
-			<li><span style="background-color: #ffacac">Mangler</span></li>
+			<li><span style="background-color: #ffacac">Mangler systemleverandør</span></li>
 		{% endfor %}
 
-		Applikasjonsdrift:
+		Applikasjonsdrift (systemdrift):
 		{% for lev in system.applikasjonsdriftleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
 		{% empty %}
-			<li><span style="background-color: #ffacac">Mangler</span></li>
+			<li><span style="background-color: #ffacac">Mangler applikasjonsdriftleverandør</span></li>
 		{% endfor %}
 
-		Basisdrift:
+		Basisdrift (infrastrukturdrift):
 		{% for lev in system.basisdriftleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>
 		{% empty %}
-			<li><span style="background-color: #ffacac">Mangler</span></li>
+			<li><span style="background-color: #ffacac">Mangler basisdriftleverandør</span></li>
 		{% endfor %}
 		</td>
 

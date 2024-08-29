@@ -6,7 +6,8 @@
 			<th>Systemnavn</th>
 			<th>Systemforvalter</th>
 			<th>Systemet er i bruk?</th>
-			<th>Supportavtale programvare</th>
+			<th>Programvareleverandør</th>
+			<th>Applikasjonsdriftleverandør (systemdrift)</th>
 			<th>Livsløpstatus</th>
 			<th>Sist oppdatering</th>
 		</tr>
@@ -26,6 +27,12 @@
 				{% for lev in system.systemleverandor.all %}
 					<li>{{ lev.leverandor_navn }}</li>
 					{% empty%} Ingen leverandør oppgitt
+				{% endfor %}
+			</td>
+			<td>
+				{% for lev in system.applikasjonsdriftleverandor.all %}
+					<li>{{ lev.leverandor_navn }}</li>
+					{% empty%} <span style="color: #c10000;">Mangler applikasjonsdriftleverandør</span>
 				{% endfor %}
 			</td>
 			<td>{{system.get_livslop_status_display|default:"" }}</td>
