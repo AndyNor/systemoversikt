@@ -113,6 +113,11 @@
 
 		<td>
 		Systemleverandør:
+		{% if system.systemleverandor_vedlikeholdsavtale %}
+			<span style="color: #268f26;">Har supportavtale</span>
+		{% else %}
+			<span style="color: #c10000;">Mangler supportavtale</span>
+		{% endif %}
 		{% for lev in system.systemleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<li><a href="{{ url_leverandor }}">{{ lev }}</a></li>

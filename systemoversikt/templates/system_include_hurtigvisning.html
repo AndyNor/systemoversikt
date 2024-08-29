@@ -6,6 +6,7 @@
 			<th>Systemnavn</th>
 			<th>Systemforvalter</th>
 			<th>Systemet er i bruk?</th>
+			<th>Supportavtale programvare</th>
 			<th>Livsløpstatus</th>
 			<th>Sist oppdatering</th>
 		</tr>
@@ -16,6 +17,17 @@
 			<td><h6>{% include 'system_include_vis.html' with system=system %}</h6></td>
 			<td>{{system.systemforvalter|default:""}}</td>
 			<td>{{system.er_ibruk|yesno:'Ja, Nei'}}</td>
+			<td>{% if system.systemleverandor_vedlikeholdsavtale %}
+					<span style="color: #268f26;">Har avtale</span>
+				{% else %}
+					<span style="color: #c10000;">Mangler avtale</span>
+				{% endif %}
+				<br>
+				{% for lev in system.systemleverandor.all %}
+					<li>{{ lev.leverandor_navn }}</li>
+					{% empty%} Ingen leverandør oppgitt
+				{% endfor %}
+			</td>
 			<td>{{system.get_livslop_status_display|default:"" }}</td>
 			<td>{{system.sist_oppdatert|date:"Y-m-d"}}<br>{{system.sist_oppdatert|timesince}}</td>
 		</tr>
