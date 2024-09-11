@@ -634,7 +634,7 @@
 			</td>
 			<td>
 				{% for gruppe in levtilgang.adgrupper.all %}
-					{{ gruppe.membercount }}<br>
+					<a href="{% url 'adgruppe_detaljer' pk=gruppe.pk %}">{{ gruppe.membercount }}</a><br>
 				{% endfor %}
 			</td>
 			<td>{{ levtilgang.kommentar }}</td>
