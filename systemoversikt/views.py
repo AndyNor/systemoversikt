@@ -7121,8 +7121,6 @@ def csirt_iplookup_api(request):
 
 
 
-
-
 def vav_akva_api(request): #API
 	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message=f"Innkommende kall fra {get_client_ip(request)}")
 	if not request.method == "GET":
@@ -7170,6 +7168,7 @@ def vav_akva_api(request): #API
 		systeminfo["konfidensialitetsvurdering"] = b.system.sikkerhetsnivaa
 		systeminfo["konfidensialitetsvurdering_tekst"] = b.system.get_sikkerhetsnivaa_display()
 		systeminfo["superbrukere"] = b.system.superbrukere
+		systeminfo["driftsplattform"] = b.system.driftsmodell_foreignkey.__str__() if b.system.driftsmodell_foreignkey else None
 		data.append(systeminfo)
 
 	source_ip = get_client_ip(request)
