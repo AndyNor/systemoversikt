@@ -1178,8 +1178,9 @@ class Profile(models.Model):
 		systemer = list()
 
 		for levprofile in alle_levprofiler:
-			if levprofile.adgruppe in alle_grupper:
-				systemer.extend(levprofile.systemer.all())
+			for adgrp in levprofile.adgrupper.all():
+				if adgrp in alle_grupper:
+					systemer.extend(levprofile.systemer.all())
 
 		return [system.systemnavn for system in systemer]
 
