@@ -628,10 +628,14 @@
 		<tr>
 			<td>{{ levtilgang }}</td>
 			<td>
-				{{ levtilgang.adgruppe.common_name }}
+				{% for gruppe in levtilgang.adgrupper.all %}
+					{{ gruppe.common_name }}<br>
+				{% endfor %}
 			</td>
 			<td>
-				{{ levtilgang.adgruppe.membercount }}
+				{% for gruppe in levtilgang.adgrupper.all %}
+					{{ gruppe.membercount }}<br>
+				{% endfor %}
 			</td>
 			<td>{{ levtilgang.kommentar }}</td>
 		</tr>

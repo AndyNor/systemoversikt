@@ -269,9 +269,10 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 	list_display = ('pk', 'adgruppe', 'systemer_vis', 'navn', 'kommentar', 'opprettet')
 	search_fields = ('navn',)
 
-	filter_horizontal = ('systemer',)
 	autocomplete_fields = (
+		'systemer',
 		'adgruppe',
+		'adgrupper',
 	)
 
 	def get_ordering(self, request):

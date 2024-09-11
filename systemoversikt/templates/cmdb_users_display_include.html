@@ -55,8 +55,8 @@
 		</td>
 		<td>{{m.profile.description}}</td>
 		<td>
-			{% if member.users|length < 500 %}
-				<b>{% for system in m.profile.levtilgangprofil %}<li>{{ system }}</li>{% empty %}Ingen knytning{% endfor %}</b><br><br>
+			{% for system in m.profile.levtilgangprofil %}{{ system }}<br>{% empty %}{% endfor %}<br>
+			{% if show_access_groups %}
 				{% for gruppe in m.profile.adgrupper.all %}{{gruppe}}<br>{% endfor%}
 			{% endif %}
 		</td>

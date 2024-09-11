@@ -3217,6 +3217,13 @@ class Leverandortilgang(models.Model):
 			help_text=u"Gis tilgang via følgende AD-gruppe",
 			on_delete=models.CASCADE,
 			)
+	adgrupper = models.ManyToManyField(
+			to='ADgroup',
+			related_name='leverandortilganger',
+			verbose_name="AD-gruppeknytninger",
+			blank=False,
+			help_text=u"Gis tilgang via følgende AD-gruppe",
+			)
 	kommentar = models.TextField(
 			verbose_name="Kommentar",
 			help_text=u"Utdypende detaljer",

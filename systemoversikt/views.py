@@ -2261,6 +2261,7 @@ def virksomhet_leverandortilgang(request, pk=None):
 	member = human_readable_members(users)
 
 	return render(request, 'virksomhet_leverandortilgang.html', {
+		'show_access_groups': False,
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,

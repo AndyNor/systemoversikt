@@ -40,15 +40,23 @@
 				{% endfor %}
 			</td>
 			<td>
-				{{ lev.adgruppe.antall_underliggende_medlemmer }}
+				{% for gruppe in lev.adgrupper.all %}
+					{{ gruppe.antall_underliggende_medlemmer }}<br>
+				{% endfor %}
 			</td>
 			<td>
 				{% for s in lev.systemer.all %}
 					{{ s.systemforvalter.virksomhetsforkortelse }}<br>
 				{% endfor %}
 			</td>
-			<td>{{ lev.kommentar }}</td>
-			<td><p style="font-size: 85%;">{{ lev.adgruppe }}</p></td>
+			<td>
+				{{ lev.kommentar }}
+			</td>
+			<td style="font-size: 85%;">
+				{% for gruppe in lev.adgrupper.all %}
+					{{ gruppe.common_name }}<br>
+				{% endfor %}
+			</td>
 		</tr>
 		{% endfor %}
 	</tbody>
