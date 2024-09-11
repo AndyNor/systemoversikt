@@ -3208,15 +3208,6 @@ class Leverandortilgang(models.Model):
 			blank=False,
 			help_text=u"Brukes for tilgang til følgende systemer",
 			)
-	adgruppe = models.ForeignKey(
-			to="ADgroup",
-			related_name='leverandortilgang',
-			verbose_name="AD-gruppeknytning",
-			blank=False,
-			null=False,
-			help_text=u"Gis tilgang via følgende AD-gruppe",
-			on_delete=models.CASCADE,
-			)
 	adgrupper = models.ManyToManyField(
 			to='ADgroup',
 			related_name='leverandortilganger',

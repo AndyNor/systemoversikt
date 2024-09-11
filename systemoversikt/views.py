@@ -4499,13 +4499,15 @@ def leverandortilgang(request, valgt_gruppe=None):
 	if valgt_gruppe == None:
 
 		leverandortilganger = Leverandortilgang.objects.all()
-		unwanted_objects = [getattr(lt.adgruppe, 'distinguishedname') if lt.adgruppe else "" for lt in leverandortilganger]
+		connected_groups = []
+		for lt in leverandortilganger:
+			connected_groups.extend([getattr(adgruppe, 'distinguishedname') if adgruppe else "" for adgruppe in lt.adgrupper.all()])
 
 		manglende_grupper = []
-		kjente_potensielle_mangler = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS']
+		kjente_levtilganggrupper = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS', 'DS-DRIFT_SC2_']
 
-		for mangel in kjente_potensielle_mangler:
-			dml_grupper = ADgroup.objects.filter(distinguishedname__icontains=mangel).exclude(distinguishedname__in=[o for o in unwanted_objects])
+		for levtilganggruppe in kjente_levtilganggrupper:
+			dml_grupper = ADgroup.objects.filter(distinguishedname__icontains=levtilganggruppe).exclude(distinguishedname__in=[o for o in connected_groups])
 			for g in dml_grupper:
 				if g.common_name != None:
 					manglende_grupper.append(g)

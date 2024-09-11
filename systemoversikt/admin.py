@@ -266,12 +266,11 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 
 @admin.register(Leverandortilgang)
 class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
-	list_display = ('pk', 'adgruppe', 'systemer_vis', 'navn', 'kommentar', 'opprettet')
+	list_display = ('pk', 'systemer_vis', 'navn', 'kommentar', 'opprettet')
 	search_fields = ('navn',)
 
 	autocomplete_fields = (
 		'systemer',
-		'adgruppe',
 		'adgrupper',
 	)
 
