@@ -269,9 +269,21 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 	list_display = ('pk', 'systemer_vis', 'navn', 'kommentar', 'opprettet')
 	search_fields = ('navn',)
 
+	def formfield_for_manytomany(self, db_field, request, **kwargs):
+		if db_field.name == "adgrupper":
+			query = Q()
+			from systemoversikt.views import LEVERANDORTILGANG_KJENTE_GRUPPER
+			for term in LEVERANDORTILGANG_KJENTE_GRUPPER:
+				query |= Q(distinguishedname__icontains=term)
+				kwargs["queryset"] = ADgroup.objects.filter(query)
+		return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+	filter_horizontal = (
+		'adgrupper',
+	)
+
 	autocomplete_fields = (
 		'systemer',
-		'adgrupper',
 	)
 
 	def get_ordering(self, request):
@@ -1345,6 +1357,7 @@ class ADgroupAdmin(admin.ModelAdmin):
 	search_fields = ('distinguishedname', 'display_name', 'mail', 'member')
 	list_filter = ('from_prk', 'opprettet', 'sist_oppdatert')
 	autocomplete_fields = ('parent',)
+
 
 @admin.register(WANLokasjon)
 class WANLokasjonAdmin(admin.ModelAdmin):

@@ -20,10 +20,9 @@
 		<tr>
 			<th>Navn</th>
 			<th>Tilkoblede systemer</th>
-			<th>Antall personer</th>
 			<th>Eiere</th>
 			<th>Kommentar</th>
-			<th>Gruppe</th>
+			<th>Gruppe (personer)</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -40,11 +39,6 @@
 				{% endfor %}
 			</td>
 			<td>
-				{% for gruppe in lev.adgrupper.all %}
-					{{ gruppe.antall_underliggende_medlemmer }}<br>
-				{% endfor %}
-			</td>
-			<td>
 				{% for s in lev.systemer.all %}
 					{{ s.systemforvalter.virksomhetsforkortelse }}</a><br>
 				{% endfor %}
@@ -54,7 +48,7 @@
 			</td>
 			<td style="font-size: 85%;">
 				{% for gruppe in lev.adgrupper.all %}
-					<a href="{% url 'adgruppe_detaljer' pk=gruppe.pk %}">{{ gruppe.common_name }}</a><br>
+					<a href="{% url 'adgruppe_detaljer' pk=gruppe.pk %}">{{ gruppe.common_name }}</a> ({{ gruppe.antall_underliggende_medlemmer }})<br>
 				{% endfor %}
 			</td>
 		</tr>
