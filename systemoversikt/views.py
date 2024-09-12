@@ -4510,7 +4510,7 @@ def leverandortilgang(request, valgt_gruppe=None):
 			dml_grupper = ADgroup.objects.filter(distinguishedname__icontains=levtilganggruppe).exclude(distinguishedname__in=[o for o in connected_groups])
 			for g in dml_grupper:
 				if g.common_name != None:
-					if all(substring not in g.common_name for substring in ["_L4-", "_L1-"]):
+					if all(substring not in g.common_name for substring in ["_L0-", "_L4-", "_L1-"]):
 						manglende_grupper.append(g)
 
 		manglende_grupper.sort(key=lambda g : g.common_name)
