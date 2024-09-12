@@ -36,7 +36,7 @@
 			</td>
 			<td>
 				{% for s in lev.systemer.all %}
-					{{ s.systemnavn }}<br>
+					<a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s.systemnavn }}</a><br>
 				{% endfor %}
 			</td>
 			<td>
@@ -46,7 +46,7 @@
 			</td>
 			<td>
 				{% for s in lev.systemer.all %}
-					{{ s.systemforvalter.virksomhetsforkortelse }}<br>
+					{{ s.systemforvalter.virksomhetsforkortelse }}</a><br>
 				{% endfor %}
 			</td>
 			<td>
@@ -54,7 +54,7 @@
 			</td>
 			<td style="font-size: 85%;">
 				{% for gruppe in lev.adgrupper.all %}
-					{{ gruppe.common_name }}<br>
+					<a href="{% url 'adgruppe_detaljer' pk=gruppe.pk %}">{{ gruppe.common_name }}</a><br>
 				{% endfor %}
 			</td>
 		</tr>
