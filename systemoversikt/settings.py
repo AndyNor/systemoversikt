@@ -69,13 +69,15 @@ INSTALLED_APPS = [
 	'mailer',
 	'simple_history',
 	'widget_tweaks',
+	'django_extensions',
+	'debug_permissions',
 ]
 
-if THIS_ENVIRONMENT == "TEST":
-	INSTALLED_APPS += [
-		'debug_permissions',
-		'django_extensions',
-	]
+#if THIS_ENVIRONMENT == "TEST":
+#	INSTALLED_APPS += [
+#		'debug_permissions',
+#		'django_extensions',
+#	]
 
 # django-mailer
 EMAIL_BACKEND = "mailer.backend.DbBackend"
