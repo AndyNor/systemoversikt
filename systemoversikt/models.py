@@ -3228,7 +3228,7 @@ class Leverandortilgang(models.Model):
 		if self.navn != None:
 			return u'%s' % (self.navn)
 		try:
-			return u'Leverandørtilgang for %s' % (''.join(s.systemnavn for s in self.systemer.all()))
+			return u'Leverandørtilgang for %s' % (', '.join(s.systemnavn for s in self.systemer.all()))
 		except:
 			return u'Leverandørtilgang %s' % self.pk
 
