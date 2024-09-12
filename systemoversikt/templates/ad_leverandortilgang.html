@@ -68,7 +68,7 @@
 <ul style="column-count:2; font-size:9pt;">
 {% for gruppe in manglende_grupper %}
 	{% url 'adgruppe_detaljer' gruppe.pk as url_adgruppe_detaljer %}
-	<li><a href="{{ url_adgruppe_detaljer }}">{{ gruppe.common_name }} ({{ gruppe.membercount }})</a> (<a href="/admin/systemoversikt/leverandortilgang/add/?adgruppe={{gruppe.pk}}">koble</a>)</li>
+	<li><a href="{{ url_adgruppe_detaljer }}">{{ gruppe.common_name }} ({{ gruppe.membercount }})</a> (<a href="/admin/systemoversikt/leverandortilgang/add/?adgrupper={{gruppe.pk}}">koble</a>)</li>
 {% endfor %}
 </ul>
 
