@@ -357,10 +357,13 @@ class Command(BaseCommand):
 
 
 			# fjerner alle registrerte nøkler (keys) (#1)
+			print("Sletter all nøkkelinformasjon")
 			AzureApplicationKeys.objects.all().delete()
+			print("Sletter all consent-informasjon")
 			AzureUserConsents.objects.all().delete()
 
 			# fjerner alle tidligere rettigheter
+			print("Sletter all rettighetsinformasjon")
 			for app in AzureApplication.objects.all():
 				app.requiredResourceAccess.clear() # trenger ikke lagre eksplisitt
 
@@ -368,11 +371,13 @@ class Command(BaseCommand):
 			APPLICATIONS_FOUND_ALL = 0
 			initial_query = '/servicePrincipals?$select=appId,id,notes,publisherName,displayName,accountEnabled,createdDateTime,tags,servicePrincipalType,keyCredentials,passwordCredentials'
 
+			print("Laster inn azure apps via /servicePrincipals")
 			next_page = load_next_response_servicePrincipals(initial_query)
 			while(next_page):
 				next_page = load_next_response_servicePrincipals(next_page)
 
 			# henter inn mer informasjon om alle application
+			print("Laster inn alle application via /applications")
 			APPLICATIONS_FOUND = 0
 			initial_query = '/applications?$select=appId,displayName,requiredResourceAccess,keyCredentials,passwordCredentials'
 
@@ -381,7 +386,8 @@ class Command(BaseCommand):
 				next_page = load_next_response_applications(next_page)
 
 
-			#sette applikasjoner som ikke har vært sett til deaktivt
+			# sette applikasjoner som ikke har vært sett til deaktivt
+			print("Deaktiverer applikasjoner som ikke har blitt oppdatert denne runden")
 			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
 			deaktive_apper = AzureApplication.objects.filter(sist_oppdatert__lte=tidligere)
 			for a in deaktive_apper:
@@ -389,6 +395,23 @@ class Command(BaseCommand):
 					a.active = False
 					a.save()
 					print("%s satt deaktiv" % a)
+
+			# varsle om nye SP via pushover
+			print("Klargjør melding om nye apper til Pushover")
+			message = "Nye SP i Azure med rettigheter:\n"
+			limit = 10
+			for sp in AzureApplication.objects.filter(opprettet__gte=tidligere):
+				if limit > 0:
+					if sp.antall_permissions() > 0:
+						message += f"{sp.displayName} autonivå {sp.risikonivaa_autofill()}\n"
+						limit -= 1
+				else:
+					message += f"Det er flere..\n"
+					break
+
+			print(message)
+			push_pushover(message)
+
 
 			#logg dersom vellykket
 			logg_message = f"Fant {APPLICATIONS_FOUND_ALL} applikasjoner under /servicePrincipals og {APPLICATIONS_FOUND} under /applications."
