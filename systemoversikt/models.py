@@ -7048,7 +7048,7 @@ class AzureApplication(models.Model):
 		help_text=u"Beholdes ved synkronisering mot Azure som skjer hver natt",
 		)
 	risikonivaa = models.IntegerField(choices=RISIKO_VALG,
-		verbose_name="Vurdering av risiko",
+		verbose_name="UTFASET Vurdering av risiko",
 		default=0,
 		blank=False,
 		null=False,
@@ -7074,14 +7074,11 @@ class AzureApplication(models.Model):
 		return AzurePublishedPermissionScopes.objects.filter(azure_applications=self.id).count()
 
 	def risikonivaa_autofill(self):
-		if self.risikonivaa != 0:
-			return self.get_risikonivaa_display() # an assesment has been registered
-		else: # automatic evaluation
-			risk_level = 0
-			for perm in self.requiredResourceAccess.all():
-				this_risk_level = perm.risk_level()
-				if this_risk_level > risk_level:
-					risk_level = this_risk_level
+		risk_level = 0
+		for perm in self.requiredResourceAccess.all():
+			this_risk_level = perm.risk_level()
+			if this_risk_level > risk_level:
+				risk_level = this_risk_level
 		if risk_level == 3:
 			return "3 Høy (auto)"
 		if risk_level == 2:
