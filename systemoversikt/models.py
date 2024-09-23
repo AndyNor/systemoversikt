@@ -7075,11 +7075,17 @@ class AzureApplication(models.Model):
 
 	def risikonivaa_autofill(self):
 		if self.risikonivaa != 0:
-			return self.get_risikonivaa_display()
-		else:
+			return self.get_risikonivaa_display() # an assesment has been registered
+		else: # automatic evaluation
+			risk_level = 0
 			for perm in self.requiredResourceAccess.all():
-				if perm.warning_permission():
-					return "3 Høy (auto)"
+				this_risk_level = perm.risk_level()
+				if this_risk_level > risk_level:
+					risk_level = this_risk_level
+		if risk_level == 3:
+			return "3 Høy (auto)"
+		if risk_level == 2:
+			return "2 Middels (auto)"
 		return "1 Lav (auto)"
 
 	def er_enterprise_app(self):
@@ -7157,14 +7163,18 @@ class AzurePublishedPermissionScopes(models.Model):
 
 
 	def warning_permission(self):
+		if "User.Read.All" in self.value:
+			return False
+		if "Sites.Selected" in self.value:
+			return False
 		if self.permission_type == "Application":
 			return True
-		if "full access" in self.adminConsentDisplayName:
-			return True
-		if "ReadWrite.All" in self.value:
-			return True
-		if "Mail.ReadWrite" in self.value:
-			return True
+		#if "full access" in self.adminConsentDisplayName:
+		#	return True
+		#if "ReadWrite.All" in self.value:
+		#	return True
+		#if "Mail.ReadWrite" in self.value:
+		#	return True
 		return False # default
 
 	def safe_permission(self):
@@ -7178,10 +7188,26 @@ class AzurePublishedPermissionScopes(models.Model):
 			return True
 		if "profile" in self.value:
 			return True
-		if "Group.Read.All" in self.value:
+		if "GroupMember.Read.All" in self.value:
+			return True
+		if "MailboxSettings.Read" in self.value:
 			return True
 		return False
 		# "Access selected site collections"
+
+	def risk_level(self):
+		if self.safe_permission():
+			return 1 # low
+		if self.warning_permission():
+			return 3 # high
+		return 2 # medium
+
+	def risk_color(self):
+		if self.safe_permission():
+			return "#00b92a" # low
+		if self.warning_permission():
+			return "#dc3545" # high
+		return "#bd8e00" # medium
 
 
 	class Meta:

@@ -54,14 +54,9 @@
 				{% for r in a.requiredResourceAccess.all %}
 
 				<li>
-					<span
-						{% if r.application_rights %} style="color: red;" {% else %} style="color: green;" {% endif %}>
-						{{ r.permission_type }}</span>
-					<span>{{ r.resourceAppStr }}</span>
-					<span
-						{% if r.warning_permission %} style="color: red;" {% endif %}
-						{% if r.safe_permission %} style="color: green;" {% endif %}>
-						{{ r.adminConsentDisplayName }} ({{ r }})</span>
+					<span style="color: {{ r.risk_color }};">
+						{{ r.permission_type }} {{ r.resourceAppStr }} {{ r.adminConsentDisplayName }} ({{ r }})
+					</span>
 				</li>
 
 				{% endfor %}

@@ -399,18 +399,21 @@ class Command(BaseCommand):
 			# varsle om nye SP via pushover
 			print("Klargjør melding om nye apper til Pushover")
 			message = "Nye SP i Azure med rettigheter:\n"
+			antall_nye = 0
 			limit = 10
 			for sp in AzureApplication.objects.filter(opprettet__gte=tidligere):
 				if limit > 0:
 					if sp.antall_permissions() > 0:
 						message += f"{sp.displayName} autonivå {sp.risikonivaa_autofill()}\n"
+						antall_nye += 1
 						limit -= 1
 				else:
 					message += f"Det er flere..\n"
 					break
 
 			print(message)
-			push_pushover(message)
+			if antall_nye > 0:
+				push_pushover(message)
 
 
 			#logg dersom vellykket
