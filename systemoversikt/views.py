@@ -1259,6 +1259,45 @@ def o365_lisenser(request):
 
 
 
+def systemer_citrix(request):
+	#Viser alle systemer som er knyttet til Citrix med metadata
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	systemer_på_citrix = System.objects.filter(~Q(citrix_publications=None))
+
+	for s in systemer_på_citrix:
+
+		citrix_apps = s.citrix_publications.filter(publikasjon_active=True)
+
+		s.tmp_antall_publiseringer = len(citrix_apps)
+		s.tmp_intern = True if any(app.sone == "Sikker" for app in citrix_apps) else False
+		s.tmp_sikker = True if any(app.sone == "Intern" for app in citrix_apps) else False
+
+
+		s.tmp_vApp = True if any(app.type_vApp for app in citrix_apps) else False
+		s.tmp_nettleser = True if any(app.type_nettleser for app in citrix_apps) else False
+		s.tmp_remotedesktop = True if any(app.type_remotedesktop for app in citrix_apps) else False
+
+		unike_desktop_groups = []
+		for app in citrix_apps:
+			decoded_json = json.loads(app.publikasjon_json)
+			#print(decoded_json)
+			unike_desktop_groups.extend(decoded_json["AllAssociatedDesktopGroupUids_Name"])
+
+		s.tmp_desktop_groups = set(unike_desktop_groups)
+
+
+	return render(request, 'systemer_citrix.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'systemer': systemer_på_citrix,
+	})
+
+
+
+
 def system_kritisk_funksjon(request):
 	#Viser alle kritiske funksjoner og hvilke systemer som understøtter dem
 	required_permissions = ['systemoversikt.view_cmdbdevice']

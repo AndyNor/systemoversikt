@@ -135,6 +135,7 @@ urlpatterns = [
 	re_path(r'^systemer/informasjonsbehandling/$', views.system_informasjonsbehandling, name='system_informasjonsbehandling'),
 	re_path(r'^systemer/los_struktur/$', views.system_los_struktur, name='system_los_struktur_indeks'),
 	re_path(r'^systemer/los_struktur/(?P<pk>\d{1,8})/$', views.system_los_struktur, name='system_los_struktur'),
+	re_path(r'^systemer/via_citrix/$', views.systemer_citrix, name='systemer_citrix'),
 
 
 	re_path(r'^behandlinger/user/$', views.mine_behandlinger, name='mine_behandlinger'),

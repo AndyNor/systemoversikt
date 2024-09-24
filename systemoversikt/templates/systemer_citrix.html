@@ -1,0 +1,41 @@
+{% extends "rapport_index.html" %}
+
+{% block overskrift %}
+	Systemer som leveres fra Citrix
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Viser {{ systemer.count }} systemer.</p>
+
+	<table class="tablesorter excel">
+	<thead>
+		<tr>
+			<th>System</th>
+			<th>Antall publiseringer</th>
+			<th>Siloer</th>
+			<th>Intern</th>
+			<th>Sikker</th>
+			<th>vApp</th>
+			<th>Nettleser</th>
+			<th>Remote desktop</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for system in systemer %}
+		<tr>
+			<td>{{ system }}</td>
+			<td>{{ system.tmp_antall_publiseringer }}</td>
+			<td>{% for silo in system.tmp_desktop_groups %}{{ silo }}<br>{% endfor %}</td>
+			<td>{{ system.tmp_intern|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+			<td>{{ system.tmp_sikker|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+			<td>{{ system.tmp_vApp|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+			<td>{{ system.tmp_nettleser|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+			<td>{{ system.tmp_remotedesktop|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

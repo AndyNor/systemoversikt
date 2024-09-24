@@ -42,7 +42,11 @@
 		{% url 'alle_systemer' as url_alle_systemer %}
 		<a href="{{url_alle_systemer}}" class="btn btn-sm btn-link {% if url_alle_systemer in request.path %}fremhev{% endif %}">Systemer</a><br>
 
-		<a href="{% url 'systemer_uten_driftsmodell' %}" class="btn btn-sm btn-link">Systemer uten driftmiljø</a><br>
+		{% url 'systemer_citrix' as url_systemer_citrix %}
+		<a href="{{url_systemer_citrix}}" class="btn btn-sm btn-link {% if url_systemer_citrix in request.path %}fremhev{% endif %}">Systemer på Citrix</a><br>
+
+		{% url 'systemer_uten_driftsmodell' as url_systemer_uten_driftsmodell %}
+		<a href="{{url_systemer_uten_driftsmodell}}" class="btn btn-sm btn-link {% if url_systemer_uten_driftsmodell in request.path %}fremhev{% endif %}">Systemer uten driftmiljø</a><br>
 
 		{% url 'alle_hovedkategorier' as url_alle_hovedkategorier %}
 		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Systemkategorier</a><br>
