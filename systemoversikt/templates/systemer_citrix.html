@@ -6,13 +6,13 @@
 
 {% block hovedinnhold %}
 
-	<p>Viser {{ systemer.count }} systemer.</p>
+	<p>Viser {{ systemer.count }} systemer. Gå til <a href="{% url 'alle_citrixpub' %}">oversikt over citrix-publikasjoner</a> for å se alle koblinger. For å koble system til publisering, må du gå til redigeringssiden for systemet og finne valgboksen "Tilkoblede citrixpubliseringer".</p>
 
 	<table class="tablesorter excel">
 	<thead>
 		<tr>
 			<th>System</th>
-			<th>Antall publiseringer</th>
+			<th>Antall aktive publiseringer</th>
 			<th>Siloer</th>
 			<th>Intern</th>
 			<th>Sikker</th>
@@ -24,7 +24,7 @@
 	<tbody>
 	{% for system in systemer %}
 		<tr>
-			<td>{{ system }}</td>
+			<td><a href="{% url 'citrixpub_for_system' pk=system.pk %}">{{ system }}</a></td>
 			<td>{{ system.tmp_antall_publiseringer }}</td>
 			<td>{% for silo in system.tmp_desktop_groups %}{{ silo }}<br>{% endfor %}</td>
 			<td>{{ system.tmp_intern|yesno:"🟢 Ja, 🔴 Nei" }}</td>
