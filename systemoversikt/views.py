@@ -1898,16 +1898,13 @@ def ad_brukerlistesok(request):
 	search_term = search_term.split()
 
 	for term in search_term:
+		term_lower = term.lower()
 		try:
-			try:
-				user = User.objects.get(username=term.lower())
-				users.append(user)
-			except:
-				user = User.objects.get(email=term.lower())
-				users.append(user)
+			user = User.objects.get(Q(username=term_lower) | Q(email__contains=term_lower))
+			users.append(user)
 		except:
-			not_users.append(term)
-			continue  # skip this term
+			not_users.append(term_lower)
+			continue
 
 	return render(request, 'ad_brukerlistesok.html', {
 		'request': request,
@@ -1974,10 +1971,11 @@ def bruker_sok(request):
 
 	from functools import reduce
 	from operator import or_, and_
-	search_term = request.GET.get('search_term', '').replace(",","").strip()
+	from unidecode import unidecode
+	search_term = unidecode(request.GET.get('search_term', '')).replace(","," ").strip().lower()
 	# vi ønsker her å søke med AND-operatør mellom alle ord mot displayname, men OR-et med første ordet mot username.
 	fields = (
-		'profile__displayName__icontains',
+		'profile__displayName__contains',
 	)
 	parts = []
 	terms = search_term.split(" ")
@@ -1986,9 +1984,12 @@ def bruker_sok(request):
 			parts.append(Q(**{field: term}))
 
 	query_display = reduce(and_, parts)
-	username_query = Q(**{'username__icontains': terms[0]})
-	query = reduce(or_, [query_display, username_query])
+	username_query = Q(**{'username__contains': terms[0]})
+	email_query = Q(**{'email': terms[0]})
+	query = reduce(or_, [query_display, username_query, email_query])
 	#print(query)
+
+	print(query)
 
 	if len(search_term) > 2:
 		users = User.objects.filter(query).distinct()

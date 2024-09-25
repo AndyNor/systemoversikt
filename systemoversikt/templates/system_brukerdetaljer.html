@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-	<p>Alle brukere synkroniseres hver natt mot AD.</p>
+	<p>Alle brukere synkroniseres hver natt mot Active Directory. Her kan du søke på brukernavn, visningsnavn og e-postadresse. Dersom du skriver inn flere ord (fornavn, mellomnavn og etternavn), prøver vi å finne brukere som inneholder alle ordene. Tegn som æ, ø, å og f.eks. ö, á og é blir byttet ut med normaliserte tegn. E-post må være eksakt lik, mens brukernavn må inneholde ordet du skriver inn. Du kan f.eks. søke på "HEL4" og få opp alle brukernavn som starter med dette.</p>
 
 	<hr>
 
@@ -50,7 +50,7 @@
 		<td>{{ user.profile.accountdisable|yesno:"Nei,Ja,?" }}</td>
 		{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
 		<td>{{user.first_name}} {{user.last_name}}</td>
-		<td><a href="{{ url_ad_exact }}">🔍</a> {{user.username}}</td>
+		<td><a href="{{ url_ad_exact }}">🔍</a> <a href="/admin/auth/user/{{user.pk}}/change/">{{user.username}}</a></td>
 		<td>{{ user.profile.dont_expire_password|yesno:"Aldri,Ja,Vet ikke" }}</td>
 		<td>{{ user.profile.pwdLastSet|date:"Y-m-d" }} ({{ user.profile.pwdLastSet|timesince }})</td>
 		<td>{{ user.profile.description|default:"Ingen beskrivelse" }}</td>
