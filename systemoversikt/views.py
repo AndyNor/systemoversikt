@@ -1964,7 +1964,7 @@ def entra_id_oppslag(request):
 
 
 def bruker_sok(request):
-	#Denne funksjonen viser resultat av søk etter brukere
+	#Denne funksjonen utfører søk etter brukere basert på e-post, brukernavn og displayname
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
