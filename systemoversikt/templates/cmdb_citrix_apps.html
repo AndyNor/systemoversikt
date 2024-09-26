@@ -33,16 +33,28 @@
 	<th>BrowserName<br>
 	Application Name</th>
 
+	<th>Produksjon</th>
 	<th>Systemkoblet?</th>
 
+	<th>NHN-nettside</th>
 	<th>vApp</th>
 	<th>Nettleser</th>
 	<th>Remote desktop</th>
-	<th>Produksjon</th>
-	<th>Har medlemmer</th>
 
-	<th>AdminFolderName</th>
-	<th>ClientFolder</th>
+	<th>EXE</th>
+	<th>BAT</th>
+	<th>VBS</th>
+	<th>PS1</th>
+	<th>CMD</th>
+
+	<th>Har medlemmer</th>
+	<th>Totalt antall unike medlemmer</th>
+	<th>AssociatedUserFullNames</th>
+
+	<th>
+		AdminFolderName
+		ClientFolder
+	</th>
 	<th>
 		WorkingDirectory<br>
 		CommandLineExecutable<br>
@@ -55,7 +67,6 @@
 		StartMenuFolder
 	</th>
 	<th>UserFilterEnabled</th>
-	<th>AssociatedUserFullNames</th>
 </thead>
 <tbody>
 	{% for app in citrixapps %}
@@ -70,6 +81,7 @@
 			{{app.publikasjon_json.BrowserName|default:"-"}}<br>
 			{{app.publikasjon_json.ApplicationName|default:"-"}}
 		</td>
+		<td>{{app.type_produksjon|yesno:"🟢 Ja, 🔴 Nei"}}</td>
 		<td>
 			{% for system in app.systemer.all %}
 				{{ system }}<br>
@@ -78,14 +90,31 @@
 			{% endfor %}
 		</td>
 
-		<td>{{app.type_vApp|yesno:"Ja,Nei"}}</td>
-		<td>{{app.type_nettleser|yesno:"Ja,Nei"}}</td>
-		<td>{{app.type_remotedesktop|yesno:"Ja,Nei"}}</td>
-		<td>{{app.type_produksjon|yesno:"Ja,Nei"}}</td>
-		<td>{{app.type_medlemmer|yesno:"Ja,Nei"}}</td>
 
-		<td>{{app.publikasjon_json.AdminFolderName}}</td>
-		<td>{{app.publikasjon_json.ClientFolder|default:""}}</td>
+		<td>{{app.type_nhn|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+		<td>{{app.type_vApp|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+		<td>{{app.type_nettleser|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+		<td>{{app.type_remotedesktop|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_executable|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+		<td>{{app.type_bat|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+		<td>{{app.type_vbs|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+		<td>{{app.type_ps1|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+		<td>{{app.type_cmd|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_medlemmer|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+		<td>{{app.cache_antall_publisert_til}}</td>
+		<td>
+			{% for item in app.publikasjon_json.AssociatedUserFullNames %}
+				{% url 'ad_details' item as url_ad_details %}
+				<a href="{{url_ad_details}}">{{item}}</a><br>
+			{% endfor %}
+		</td>
+
+		<td>
+			{{app.publikasjon_json.AdminFolderName}}
+			{{app.publikasjon_json.ClientFolder|default:""}}
+		</td>
 		<td>
 			{{app.publikasjon_json.WorkingDirectory|default:"-"}}<br>
 			{{app.publikasjon_json.CommandLineExecutable|default:"-"}}<br>
@@ -98,12 +127,6 @@
 			{{app.publikasjon_json.StartMenuFolder|default:""}}
 		</td>
 		<td>{{app.publikasjon_json.UserFilterEnabled|yesno:"Ja, Nei"}}</td>
-		<td>
-			{% for item in app.publikasjon_json.AssociatedUserFullNames %}
-				{% url 'ad_details' item as url_ad_details %}
-				<a href="{{url_ad_details}}">{{item}}</a><br>
-			{% endfor %}
-		</td>
 	</tr>
 	{% endfor %}
 </tbody>

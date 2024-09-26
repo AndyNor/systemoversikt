@@ -68,6 +68,10 @@ class CitrixPublication(models.Model):
 			verbose_name="Aktiv",
 			default=True,
 			)
+	cache_antall_publisert_til = models.IntegerField(
+			verbose_name="Antall publisert til (cache)",
+			null=True,
+			)
 	type_vApp = models.BooleanField(
 			verbose_name="Er en vApp",
 			default=False,
@@ -88,13 +92,30 @@ class CitrixPublication(models.Model):
 			verbose_name="Er publisert",
 			default=True,
 			)
-	#systemknytning = models.ForeignKey(
-	#		to="System",
-	#		verbose_name="Systemknytning",
-	#		on_delete=models.SET_NULL,
-	#		blank=True,
-	#		null=True,
-	#		)
+	type_nhn = models.BooleanField(
+			verbose_name="Norsk Helsenett-side",
+			default=False,
+			)
+	type_executable = models.BooleanField(
+			verbose_name="Executable file?",
+			default=False,
+			)
+	type_vbs = models.BooleanField(
+			verbose_name="VBS file?",
+			default=False,
+			)
+	type_ps1 = models.BooleanField(
+			verbose_name="PS1 file?",
+			default=False,
+			)
+	type_bat = models.BooleanField(
+			verbose_name="BAT file?",
+			default=False,
+			)
+	type_cmd = models.BooleanField(
+			verbose_name="BAT file?",
+			default=False,
+			)
 
 	def __str__(self):
 		return f"{self.display_name} {self.sone}"

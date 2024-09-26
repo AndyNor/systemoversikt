@@ -1272,13 +1272,22 @@ def systemer_citrix(request):
 		citrix_apps = s.citrix_publications.filter(publikasjon_active=True)
 
 		s.tmp_antall_publiseringer = len(citrix_apps)
-		s.tmp_intern = True if any(app.sone == "Sikker" for app in citrix_apps) else False
-		s.tmp_sikker = True if any(app.sone == "Intern" for app in citrix_apps) else False
+		s.tmp_intern = True if any(app.sone == "Intern" for app in citrix_apps) else False
+		s.tmp_sikker = True if any(app.sone == "Sikker" for app in citrix_apps) else False
 
 
 		s.tmp_vApp = True if any(app.type_vApp for app in citrix_apps) else False
 		s.tmp_nettleser = True if any(app.type_nettleser for app in citrix_apps) else False
 		s.tmp_remotedesktop = True if any(app.type_remotedesktop for app in citrix_apps) else False
+
+		s.tmp_nhn = True if any(app.type_nhn for app in citrix_apps) else False
+		s.tmp_antall_brukere = max(app.cache_antall_publisert_til for app in citrix_apps)
+
+		s.tmp_executable = True if any(app.type_executable for app in citrix_apps) else False
+		s.tmp_vbs = True if any(app.type_vbs for app in citrix_apps) else False
+		s.tmp_ps1 = True if any(app.type_ps1 for app in citrix_apps) else False
+		s.tmp_bat = True if any(app.type_bat for app in citrix_apps) else False
+		s.tmp_cmd = True if any(app.type_cmd for app in citrix_apps) else False
 
 		unike_desktop_groups = []
 		for app in citrix_apps:

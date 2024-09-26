@@ -13,12 +13,19 @@
 		<tr>
 			<th>System</th>
 			<th>Antall aktive publiseringer</th>
+			<th>Flest brukere</th>
 			<th>Siloer</th>
 			<th>Intern</th>
 			<th>Sikker</th>
+			<th>NHN?</th>
 			<th>vApp</th>
 			<th>Nettleser</th>
 			<th>Remote desktop</th>
+			<th>Annen exe-fil</th>
+			<th>.bat</th>
+			<th>.vbs</th>
+			<th>.ps1</th>
+			<th>.cmd</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -26,12 +33,20 @@
 		<tr>
 			<td><a href="{% url 'citrixpub_for_system' pk=system.pk %}">{{ system }}</a></td>
 			<td>{{ system.tmp_antall_publiseringer }}</td>
+			<td>{{ system.tmp_antall_brukere }}</td>
 			<td>{% for silo in system.tmp_desktop_groups %}{{ silo }}<br>{% endfor %}</td>
 			<td>{{ system.tmp_intern|yesno:"🟢 Ja, 🔴 Nei" }}</td>
 			<td>{{ system.tmp_sikker|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+			<td>{{ system.tmp_nhn|yesno:"🟢 Ja, 🔴 Nei" }}</td>
 			<td>{{ system.tmp_vApp|yesno:"🟢 Ja, 🔴 Nei" }}</td>
 			<td>{{ system.tmp_nettleser|yesno:"🟢 Ja, 🔴 Nei" }}</td>
 			<td>{{ system.tmp_remotedesktop|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+
+			<td>{{ system.tmp_executable|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+			<td>{{ system.tmp_vbs|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+			<td>{{ system.tmp_ps1|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+			<td>{{ system.tmp_bat|yesno:"🟢 Ja, 🔴 Nei" }}</td>
+			<td>{{ system.tmp_cmd|yesno:"🟢 Ja, 🔴 Nei" }}</td>
 		</tr>
 	{% endfor %}
 	</tbody>
