@@ -38,22 +38,30 @@
 
 	{% if systemdetaljer.programvarer.count > 0 %}
 		<br><hr>
-		Programvare<br>
+		Programvare benyttet av systemet<br>
+		<div>
 		{% for programvare in systemdetaljer.programvarer.all %}
+			<div style="float: left; margin-left: 20px;">
 
-			{% url "programvaredetaljer" programvare.pk as url_programvare %}
-				<a style="margin-right: 5px; margin-left: 15px;" href="{{ url_programvare }}">
-				<img src="{% static 'programvare.png' %}" style="height: 35px;">
-				{% for programvareleverandor in programvare.programvareleverandor.all %}
-					{% url 'leverandor' programvareleverandor.pk as url_programvareleverandor %}
-					<a href="{{ url_programvareleverandor }}">{{ programvareleverandor }}</a>
-				{% endfor %}
-				{{ programvare }}</a>
+				{% url "programvaredetaljer" programvare.pk as url_programvare %}
+				<a href="{{ url_programvare }}"><b>{{ programvare }}</b></a>
+
+				<img src="{% static 'programvare.png' %}" style="height: 40px; float: left;">
+				<div>
+					{% for programvareleverandor in programvare.programvareleverandor.all %}
+						{% url 'leverandor' programvareleverandor.pk as url_programvareleverandor %}
+						<a href="{{ url_programvareleverandor }}">{{ programvareleverandor }}</a>
+						{% if not forloop.last %}, {% endif %}
+					{% endfor %}
+				</div>
+			</div>
 		{% endfor %}
+		</div>
+		<br style="clear: both;">
 	{% endif %}
 
 	{% if systemdetaljer.systemurl.count > 0 %}
-	<br><br>Webpubliseringer
+	<br>Webpubliseringer
 	<div class="row">
 		<div class="col-12">
 			{% for url in systemdetaljer.systemurl.all %}
