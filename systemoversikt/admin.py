@@ -964,9 +964,10 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 @admin.register(Programvare)
 class ProgramvareAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('programvarenavn', 'programvarebeskrivelse', 'kommentar')
-	search_fields = ('programvarenavn', 'programvarebeskrivelse', 'kommentar')
-	filter_horizontal = ('programvareleverandor', 'kategorier')
+	list_display = ('programvarenavn', 'programvarebeskrivelse',)
+	search_fields = ('programvarenavn', 'programvarebeskrivelse',)
+	list_filter = ('programvaretyper', 'programvareleverandor',)
+	filter_horizontal = ('programvareleverandor', 'kategorier',)
 
 	def get_ordering(self, request):
 		return [Lower('programvarenavn')]
@@ -990,24 +991,23 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 	fieldsets = (
 		('Initiell registrering', {
 			'fields': (
-				('programvarenavn', 'programvaretyper', 'programvarekategori',),
-				('alias',),
+				'programvarenavn',
 				'programvareleverandor',
 				'programvarebeskrivelse',
-				'livslop_status',
-				'klargjort_ny_sikkerhetsmodell',
-			),
-		}),
-		('Detaljer om programvare', {
-			'fields': (
-				'systemdokumentasjon_url',
 				'kategorier',
-				('funksjonell_egnethet', 'teknisk_egnethet'),
+				'programvaretyper',
+				'klargjort_ny_sikkerhetsmodell',
 			),
 		}),
 		('Utfases', {
 			'classes': ('collapse',),
 			'fields': (
+				'programvarekategori',
+				'alias',
+				'livslop_status',
+				'systemdokumentasjon_url',
+				'funksjonell_egnethet',
+				'teknisk_egnethet',
 				'strategisk_egnethet',
 				'kommentar',
 			),
