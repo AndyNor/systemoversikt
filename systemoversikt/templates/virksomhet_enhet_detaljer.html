@@ -8,7 +8,7 @@
 
 {% block hovedinnhold %}
 
-	<form action="{% url 'virksomhet_enhetsok' %}" autocomplete="off">
+	<form style="float: right;" action="{% url 'virksomhet_enhetsok' %}" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="35" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
 			placeholder="Søk på avdeling, seksjon eller team" class="form-control form-control-sm">
@@ -21,11 +21,11 @@
 	{% url 'bruker_detaljer' pk=unit.leder.pk as url_leder %}
 	{% url 'enhet_detaljer' pk=unit.direkte_mor.pk as url_enhet %}
 
-	Ledes av <a href="{{url_leder}}">{{ unit.leder.profile.displayName|default:"Ukjent" }}</a><br>
-	Overordnet ledd er <a href="{{url_enhet}}">{{unit.direkte_mor|default:"Ukjent"}}</a><br>
+	<p>{{ unit }} ledes av <a href="{{url_leder}}">{{ unit.leder.profile.displayName|default:"Ukjent" }}</a>, og ligger under <a href="{{url_enhet}}">{{unit.direkte_mor|default:"Ukjent"}}</a></p>
+
 	{% if sideenheter %}
-	Underliggende ledd:
-		<ul style="column-count:4;">
+	{{ unit }} er igjen organisert i:
+		<ul style="column-count:3;">
 		{% for sideenhet in sideenheter %}
 			{% url 'enhet_detaljer' pk=sideenhet.pk as url_enhet %}
 			<li><a href="{{url_enhet}}">{{ sideenhet }}</a></li>
@@ -35,7 +35,7 @@
 
 
 	<hr>
-	<h5>Systemansvar</h5>
+	<h5>Systemansvar for {{ unit }}</h5>
 
 <table class="tablesorter excel">
 <thead>
@@ -76,7 +76,7 @@
 
 	<hr>
 
-	<h5>Medarbeidere</h5>
+	<h5>Medarbeidere i {{ unit }}</h5>
 	<ul style="column-count:4;">
 	{% for u in personer %}
 		{% url 'bruker_detaljer' pk=u.pk as url_person %}

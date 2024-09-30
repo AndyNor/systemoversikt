@@ -71,29 +71,29 @@
 				Vi er systemeier for <b>{{ant_systemer_eier}}</b> systemer og forvalter for <b>{{ant_systemer_forvalter}}</b> systemer.<br>
 				Vi drifter <b>{{systemer_drifter}}</b> systemer.</li>
 				Vi har <b>{{ deaktiverte_brukere }}</b> med ansvar som har sluttet.<br>
-				Vi har <b>{{ antall_brukere }}</b> aktive interne og <b>{{ antall_eksterne_brukere }}</b> interne brukere i brukerkatalogen.<br>
+				Vi har <b>{{ antall_brukere }}</b> interne og <b>{{ antall_eksterne_brukere }}</b> ekstern brukere i brukerkatalogen.<br>
 
 			</div>
 		</div>
 
 		<hr>
-		<h6>Systemansvar fordelt på seksjoner</h6>
-		<p>Her vises alle systemer hvor {{ virksomhet }} er angitt som systemforvalter. Systemene er videre gruppert på seksjonen systemet er knyttet til, sekundært seksjonen til første oppgitte forvalter.</p>
 
-		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.drift_uke_privat}}; text-align: center;">UKE privat datasenter</div>
-		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.drift_uke_sky}}; text-align: center;">UKE offentlig sky</div>
-		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.drift_virksomhet_privat}}; text-align: center;">Virksomhet privat datasenter</div>
-		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.drift_virksomhet_sky}}; text-align: center;">Virksomhet offentlig sky</div>
-
-		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.saas}}; text-align: center;">SaaS</div>
-		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.samarbeidspartner}}; text-align: center;">Samarbeidspartner</div>
-		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.ukjent}}; text-align: center;">Ukjent drift</div>
-
-		<br><hr>
-
-		<div id="cy" style="width: 100%; height: {{node_size}}px;"></div>
+		<h6>Avdelinger</h6>
+		<div class="row">
+			<div class="col-sm-12">
+				<ul style="column-count: 3;">
+				{% for u in enheter %}
+					{% url 'enhet_detaljer' pk=u.pk as url_enhet %}
+					<li><a href="{{url_enhet}}">{{ u }}</a></li>
+				{% empty %}
+					<li>Ingen</li>
+				{% endfor %}
+				</ul>
+			</div>
+		</div>
 
 		<hr>
+
 		<h6>Andre kontaktpersoner</h6>
 		<div class="row">
 			<div class="col-sm-12">
@@ -108,21 +108,24 @@
 			</div>
 		</div>
 
-
 		<hr>
-		<h6>Avdelinger</h6>
-		<div class="row">
-			<div class="col-sm-12">
-				<ul style="column-count: 3;">
-				{% for u in enheter %}
-					{% url 'enhet_detaljer' pk=u.pk as url_enhet %}
-					<li><a href="{{url_enhet}}">{{ u }}</a></li>
-				{% empty %}
-					<li>Ingen</li>
-				{% endfor %}
-				</ul>
-			</div>
-		</div>
+
+		<h6>Systemansvar fordelt på seksjoner</h6>
+		<p>Her vises alle systemer hvor {{ virksomhet }} er angitt som systemforvalter. Systemene er videre gruppert på seksjonen systemet er knyttet til, sekundært seksjonen til første oppgitte forvalter.</p>
+
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.drift_uke_privat}}; text-align: center;">UKE privat datasenter</div>
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.drift_uke_sky}}; text-align: center;">UKE offentlig sky</div>
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.drift_virksomhet_privat}}; text-align: center;">Virksomhet privat datasenter</div>
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.drift_virksomhet_sky}}; text-align: center;">Virksomhet offentlig sky</div>
+
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.saas}}; text-align: center;">SaaS</div>
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.samarbeidspartner}}; text-align: center;">Samarbeidspartner</div>
+		<div style="float: left; margin: 5px; padding: 2px; width: 100px; font-size: 10px; background-color: {{system_colors.ukjent}}; text-align: center;">Ukjent drift</div>
+
+		<br><hr>
+
+		<div id="cy" style="width: 100%; height: 1200px;"></div>
+
 
 		{% comment %}
 		<hr>
