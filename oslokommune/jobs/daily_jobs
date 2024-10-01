@@ -33,6 +33,7 @@ python /var/kartoteket/source/systemoversikt/manage.py sharepoint_network_update
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_wan_location_updater
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_firewall_importer
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_citrix_publications
+python /var/kartoteket/source/systemoversikt/manage.py sharepoint_qualys
 
 # run batch rydde
 python /var/kartoteket/source/systemoversikt/manage.py rydde_ansvarlige
