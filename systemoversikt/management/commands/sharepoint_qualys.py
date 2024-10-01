@@ -64,8 +64,7 @@ class Command(BaseCommand):
 		@lru_cache(maxsize=384)
 		def lookup_server(servername):
 			try:
-				server = CMDBdevice.objects.get(comp_name=line["servername"])
-				return server
+				return CMDBdevice.objects.get(comp_name__iexact=servername)
 			except:
 				return None
 
@@ -73,6 +72,7 @@ class Command(BaseCommand):
 		@transaction.atomic
 		def save_to_database(data):
 			processed = 0
+			failed_server_lookups = 0
 			for line in data:
 				try:
 					int(line['ID'])
@@ -90,7 +90,7 @@ class Command(BaseCommand):
 							severity=int(line['Severity']),
 							first_seen=line['First detected'],
 							last_seen=line['Last detected'],
-							pulic_facing=line['Public Facing'],
+							public_facing=line['Public Facing'],
 							cve_info=line['CVE ID'],
 							result=line['Results'],
 							os=line['OS'],
@@ -101,8 +101,10 @@ class Command(BaseCommand):
 					if server:
 						q.server = server
 						q.save()
+					else:
+						failed_server_lookups += 1
 
-			return processed
+			return (processed, failed_server_lookups)
 
 
 		def import_qualys():
@@ -115,12 +117,15 @@ class Command(BaseCommand):
 
 			split_size = 5000
 			antall_totalt = 0
+			failed_server_lookups = 0
 
 			for i in range(0, len(data), split_size):
-				antall_totalt += save_to_database(data[i:i + split_size])
-				print(f"Ferdig med {antall_totalt}")
+				return_data = save_to_database(data[i:i + split_size])
+				antall_totalt += return_data[0]
+				failed_server_lookups += return_data[1]
+				print(f"Ferdig med {antall_totalt}. {failed_server_lookups} feilet oppslag mot server så langt.")
 
-			logg_entry_message = f'utført'
+			logg_entry_message = f'\nFerdig med import. {antall_totalt} sårbarheter importert. {failed_server_lookups} feilet oppslag mot server.'
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,

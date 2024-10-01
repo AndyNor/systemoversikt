@@ -116,10 +116,10 @@
 			{% endfor %}
 		</td>
 		<td>
-			{% if maskin.sub_name.system %}
-				{% url 'systemdetaljer' pk=maskin.sub_name.system.pk as url_system %}
-				<a href="{{ url_system }}">{{ maskin.sub_name.system }}</a>
-			{% endif %}
+			{% for system in maskin.sub_name.system.all %}
+				{% url 'systemdetaljer' pk=system.pk as url_system %}
+				<a href="{{ url_system }}">{{ system }}</a>
+			{% endfor %}
 		</td>
 		<td>
 			{% if maskin.sub_name.system %}

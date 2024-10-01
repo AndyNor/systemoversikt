@@ -117,6 +117,7 @@
 	<a href="#anchor_leverandortilgang" class="btn btn-sm btn-link">3.parts leverandørtilgang</a>
 	<a href="#anchor_eksterne" class="btn btn-sm btn-link">Eksterne ressurser</a>
 	<a href="#anchor_oppdatert" class="btn btn-sm btn-link">Informasjon sist oppdatert</a>
+	<a href="#anchor_vuln" class="btn btn-sm btn-link">Sårbarheter</a>
 
 
 	{% if systemdetaljer.inv_konklusjon %}
@@ -557,12 +558,8 @@
 				<hr>
 				<a target="_blank" href="{{ systemdetaljer.driftsmodell_foreignkey.risikovurdering }}">Risikovurdering for {{systemdetaljer.driftsmodell_foreignkey}}</a>
 			{% endif %}
-
-			<br><a href="https://okcsirt.oslo.kommune.no/qualys_search" target="_blank">Sårbarheter i sårbarhetsoversikten</a>
 		</div>
 	</div>
-
-
 
 
 	<br><hr>
@@ -874,6 +871,55 @@
 		{% endfor %}
 		</div>
 	</div>
+
+
+	<br><hr>
+	<h3 style="scroll-margin-top: 150px;" id="anchor_vuln">Sårbarheter</h3>
+	<div class="row">
+	{% if current_user_is_owner %}
+
+		<div class="col-12">
+			<b>Sårbarheter med alvorlighetsgrad 4 eller 5 knyttet til systemets servere</b> (Vises kun for eiere og forvaltere)
+			<table class="table table-sm tablesorter excel">
+				<thead>
+					<tr>
+						<th>Først sett</th>
+						<th>Sist sett</th>
+						<th>Miljø</th>
+						<th>Server</th>
+						<th>OS</th>
+						<th>Internett-eksponert</th>
+						<th>Alvorlighetsgrad</th>
+						<th>Beskrivelse</th>
+						<th style="word-wrap: break-word; width: 500px;">Lokasjon</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for vuln in systemdetaljer.vulnerabilities %}
+				<tr>
+					<td>{{ vuln.first_seen|date:"Y-m-d" }}</td>
+					<td>{{ vuln.last_seen|date:"Y-m-d" }}</td>
+					<td>{{ vuln.tmp_offering.navn }}</td>
+					<td>{{ vuln.server }}</td>
+					<td>{{ vuln.os }}</td>
+					<td>{{ vuln.public_facing|yesno:"🔴 Ja, 🟢 Nei" }}</td>
+					<td>
+						{% if vuln.severity == 4 %}🟡{% endif %}
+						{% if vuln.severity == 5 %}🔴{% endif %}
+						{{ vuln.severity }}
+					</td>
+					<td>{{ vuln.title }}</td>
+					<td>{{ vuln.result|truncatechars:300 }}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% else %}
+			Sårbarheter vises kun for systemeier og systemforvalter
+		{% endif %}
+	</div>
+
 
 
 	{% comment %}

@@ -1993,7 +1993,7 @@ class CMDBRef(models.Model): # BSS
 
 	def alle_dns(self):
 		dnsrecords = set()
-		for server in self.cmdbdevice_sub_name.all():
+		for server in self.devices.all():
 			# direkte dns-navn mot server
 			for netaddr in server.network_ip_address.all():
 				for dnsrec in netaddr.dns.all():
@@ -2654,7 +2654,12 @@ class NetworkDevice(models.Model):
 
 class QualysVuln(models.Model):
 	source = models.TextField()
-	server = models.ForeignKey(to="CMDBdevice", on_delete=models.SET_NULL, related_name='qualys_vulnerabilities', null=True)
+	server = models.ForeignKey(
+			to="CMDBdevice",
+			on_delete=models.SET_NULL,
+			related_name='qualys_vulnerabilities',
+			null=True
+			)
 	title = models.TextField()
 	severity = models.IntegerField()
 	first_seen = models.DateTimeField(null=True)
@@ -2670,8 +2675,35 @@ class QualysVuln(models.Model):
 
 	class Meta:
 		verbose_name_plural = "Qualys: vulnerabilities"
-		verbose_name = "vulnerability"
+		verbose_name = "sårbarhet"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+# vise kategori 4 og 5-sårbarhetene per system for systemforvaltere: OK
+# vise egenskap: Er internett-eksponert: OK
+
+# ny egenskap: known exploited, oppdatert daglig
+# vise egenskap known exploited
+
+# ny egenskap: om sårbarhet er en OS-sårbarhet, basert på kriterie XXXXX
+# vise om sårbarhet er OS-sårbarhet
+
+# ny egenskap: om serverOS er EOL, basert på kriterie XXXXX
+# vise om sårbarhet er knyttet til EOL OS
+
+# ny visning: vise alt som ikke er koblet til en server
+
+# ny side: differanse på internett-eksponert ihht kartoteket og qualys-data
+
+# Endre slik at kun eier/forvalter kan endre på system (+ root + generisk systemforvalter/full tilgang-rolle)
+# Kartoteket vil ha følgende roller
+# * Systemadministrator (OK)
+# * Overordnet dataforvalter (opprettes)
+# * virksomhetens dataforvalter (opprettes), begrenses til tilhørende virksomhet
+# * eier/forvalter av system, automatisk basert på data i kartoteket
+# * begrenset lesebruker med tilgang til brukere og grupper
+
+
 
 
 
@@ -2737,7 +2769,7 @@ class CMDBdevice(models.Model):
 			)
 	sub_name = models.ForeignKey(
 			to=CMDBRef,
-			related_name='cmdbdevice_sub_name',
+			related_name='devices',
 			verbose_name="Business Sub Service",
 			on_delete=models.CASCADE,
 			blank=True,
@@ -5031,7 +5063,7 @@ class System(models.Model):
 		server_os = []
 		try:
 			for bss in self.service_offerings.all():
-				for server in bss.cmdbdevice_sub_name.all():
+				for server in bss.devices.all():
 						server_os.append("%s %s" % (server.comp_os, server.comp_os_version))
 		except:
 			pass
@@ -5300,6 +5332,28 @@ class System(models.Model):
 			return [i.destination_system for i in relevante_integrasjoner]
 		else:
 			return self.autentiseringsteknologi.all()
+
+	def eiere(self):
+		brukernavn = set()
+		forvaltere = [ansvarlig.brukernavn.username for ansvarlig in self.systemforvalter_kontaktpersoner_referanse.all()]
+		eiere = [ansvarlig.brukernavn.username for ansvarlig in self.systemeier_kontaktpersoner_referanse.all()]
+		brukernavn.update(forvaltere)
+		brukernavn.update(eiere)
+		#print(f"{forvaltere} og {eiere} og unike brukernavn {brukernavn}")
+		return brukernavn
+
+	def vulnerabilities(self):
+		connected_vulns = set()
+		for service_offering in self.service_offerings.all():
+			#print(service_offering)
+			for server in service_offering.devices.all():
+				#print(server)
+				for vuln in server.qualys_vulnerabilities.all():
+					if vuln.severity in [4,5]:
+						vuln.tmp_offering = service_offering
+						connected_vulns.add(vuln)
+		#print(connected_vulns)
+		return list(connected_vulns)
 
 	class Meta:
 		verbose_name_plural = "Systemoversikt: systemer"

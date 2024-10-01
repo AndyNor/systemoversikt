@@ -3698,6 +3698,8 @@ def systemdetaljer(request, pk):
 	for app in citrix_apps:
 		app.publikasjon_json = json.loads(app.publikasjon_json)
 
+	current_user_is_owner = True if request.user.username in system.eiere() else False
+
 	return render(request, 'system_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -3717,6 +3719,7 @@ def systemdetaljer(request, pk):
 		'avhengigheter_chart_size': 300 + len(avhengigheter_graf["nodes"])*20,
 		'avhengigheter_chart_size_ny': 300 + len(avhengigheter_graf_ny["nodes"])*20,
 		'citrix_apps': citrix_apps,
+		'current_user_is_owner': current_user_is_owner,
 	})
 
 
@@ -7366,7 +7369,7 @@ def cmdb_api(request): #API
 		line["antall_servere"] = bss.ant_devices()
 
 		serverliste = []
-		for server in bss.cmdbdevice_sub_name.filter(device_active=True):
+		for server in bss.devices.filter(device_active=True):
 			s = dict()
 			s["server_navn"] = server.comp_name
 			s["billable"] = server.billable
