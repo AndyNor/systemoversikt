@@ -10,7 +10,6 @@ from django.db.models import Count
 from django.template.loader import render_to_string
 from django.db.models.functions import Lower
 from django.db.models import Q
-#from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
@@ -27,12 +26,38 @@ import re
 import time
 from django.utils import timezone
 
+
+
+##########################
+# Fellesvariabler #
+##########################
+
 LEVERANDORTILGANG_KJENTE_GRUPPER = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS', 'DS-DRIFT_SC2_']
+
 
 
 ##########################
 # Støttefunksjoner start #
 ##########################
+
+def auth_er_ansvarlig(user):
+	return True if len(Ansvarlig.objects.filter(brukernavn=user)) > 0 else False
+
+def auth_er_systemforvalter(user):
+	if auth_er_ansvarlig(user):
+		# nå vet vi at vedkommende er registrert som ansvarlig
+		ansvarlig = user.ansvarlig_brukernavn
+		return True if System.objects.filter(Q(systemeier_kontaktpersoner_referanse=ansvarlig) | Q(systemforvalter_kontaktpersoner_referanse=ansvarlig)) else False
+	else:
+		return False
+
+def auth_er_virksomhetsrolle(user):
+	if auth_er_ansvarlig(user):
+		ansvarlig = user.ansvarlig_brukernavn
+		return True if Virksomhet.objects.filter(Q(ikt_kontakt=ansvarlig) | Q(personvernkoordinator=ansvarlig) | Q(informasjonssikkerhetskoordinator=ansvarlig)) else False
+	else:
+		return False
+
 def sharepoint_get_file(filename):
 	from azure.identity import ClientSecretCredential
 	from msgraph.core import GraphClient
@@ -1924,50 +1949,124 @@ def ad_brukerlistesok(request):
 	})
 
 
+def get_client_for_graph():
+	import os
+	from msgraph.core import GraphClient
+	from azure.identity import ClientSecretCredential
+	client_credential = ClientSecretCredential(
+			tenant_id=os.environ['AZURE_TENANT_ID'],
+			client_id=os.environ['AZURE_ENTERPRISEAPP_CLIENT'],
+			client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
+	)
+	api_version = "beta"
+	client = GraphClient(credential=client_credential, api_version=api_version)
+	return client
+
+
+def fetch_groups_for_user_id(user_id):
+	client = get_client_for_graph()
+	query = f"/users/{user_id}/memberOf"
+	groups = []
+	response = client.get(query)
+	data = response.json()
+	groups.extend(data.get('value', []))
+	next_link = data.get('@odata.nextLink')
+	while next_link:
+		response = client.get(next_link)
+		data = response.json()
+		groups.extend(data.get('value', []))
+		next_link = data.get('@odata.nextLink')
+	return groups
+
+
+def get_usermetadata_from_spn_or_email(spn_or_email):
+	client = get_client_for_graph()
+	query = f"/users?$count=true&$filter=startsWith(userPrincipalName, '{spn_or_email}') or onPremisesExtensionAttributes/extensionAttribute2 eq '{spn_or_email.upper()}'"
+	resp = client.get(query, headers={'ConsistencyLevel': 'eventual'})
+	if resp.status_code == 200:
+		return resp.json()
+	return False
+
+
+def auth_kartoteket_group_lookup(username):
+	user = get_usermetadata_from_spn_or_email(username)
+	if not user:
+		print("Auth: fant ingen bruker")
+		return False
+
+	if not user["@odata.count"] == 1:
+		print("Auth: fant flere brukere")
+		return False
+
+	# bare ét treff
+	metadata = user["value"][0] # det er bare ét treff, så vi kan ta det første
+	#print(metadata)
+	groups = fetch_groups_for_user_id(metadata["id"])
+	#print(groups)
+
+	relevant_groups = []
+	for g in groups:
+		if "onPremisesSyncEnabled" in g:
+			if g["onPremisesSyncEnabled"]:
+				relevant_groups.append(g["displayName"])
+
+	#print(relevant_groups)
+	return relevant_groups
+
+
+
+	client = get_client_for_graph()
+	query = f"/users?$count=true$onPremisesExtensionAttributes/extensionAttribute2 eq '{username.upper()}'"
+	resp = client.get(query, headers={'ConsistencyLevel': 'eventual'})
+	if resp.status_code == 200:
+		metadata = json.loads(resp.text)
+		if metadata["@odata.count"] == 1:
+			metadata = metadata["value"][0] # det er bare ét treff, så vi kan ta det første
+			groups = fetch_groups_for_user_id(metadata["id"])
+			relevant_groups = []
+
+
+
 def entra_id_oppslag(request):
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-
-	from azure.identity import ClientSecretCredential
-	from msgraph.core import GraphClient
-	import os
 	import re
-
 	inndata = request.POST.get('inndata', "")
-	#print(f"{request.user} søkte i Azure AD etter: {inndata}.")
 	message = f"{request.user} søkte på: {inndata}."
-	inndata = re.sub(r'[^A-Za-z\.\@]', '', inndata)
+	inndata = re.sub(r'[^A-Za-z0-9\.\@]', '', inndata) # sørge for at det kun er lovlige tegn
 
 	if inndata != "":
 		ApplicationLog.objects.create(event_type="Azure AD brukersøk", message=message)
-		client_credential = ClientSecretCredential(
-				tenant_id=os.environ['AZURE_TENANT_ID'],
-				client_id=os.environ['AZURE_ENTERPRISEAPP_CLIENT'],
-				client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
-		)
-		api_version = "beta"
-		client = GraphClient(credential=client_credential, api_version=api_version)
 
-		user_metadata_query = f"/users/{inndata}"
-		resp = client.get(user_metadata_query)
-		user_metadata_json_response = json.loads(resp.text)
-		#user_metadata_pre_response = json.dumps(user_metadata_json_response, sort_keys=True, indent=4)
+		client = get_client_for_graph()
+		metadata = get_usermetadata_from_spn_or_email(inndata)
 
-		user_groups_query = f"/users/{inndata}/memberOf"
-		resp = client.get(user_groups_query)
-		user_groups_json_response = json.loads(resp.text)
-		#user_groups_pre_response = json.dumps(user_groups_json_response, sort_keys=True, indent=4)
+		if metadata:
+			if metadata["@odata.count"] == 1:
+				metadata = metadata["value"][0] # det er bare ét treff, så vi kan ta det første
+				groups = fetch_groups_for_user_id(metadata["id"])
+			else:
+				messages.info(request, f'Flere treff på: "{inndata}" i Entra ID. Sørg for at det er unikt.')
+				metadata = None
+				groups = None
 
+		else: # returned False meaning not a 200 OK from server
+			messages.info(request, f'Ingen treff på: "{inndata}" i Entra ID.')
+			metadata = None
+			groups = None
+
+	metadata = metadata if 'metadata' in locals() else None
+	groups = groups if 'groups' in locals() else None
 
 	return render(request, 'ad_entraid_oppslag.html', {
 		'request': request,
-		'user_metadata_json_response': user_metadata_json_response if 'user_metadata_json_response' in locals() else "",
-		#'user_metadata_pre_response': user_metadata_pre_response if 'user_metadata_pre_response' in locals() else "",
-		'user_groups_json_response': user_groups_json_response if 'user_groups_json_response' in locals() else "",
-		#'user_groups_pre_response': user_groups_pre_response if 'user_groups_pre_response' in locals() else "",
+		'metadata': metadata,
+		'groups': groups,
 		'inndata': inndata,
+		'raw_groups': json.dumps(groups, sort_keys=True, indent=4),
+		'raw_metadata': json.dumps(metadata, sort_keys=True, indent=4),
 	})
 
 
@@ -3699,6 +3798,7 @@ def systemdetaljer(request, pk):
 		app.publikasjon_json = json.loads(app.publikasjon_json)
 
 	current_user_is_owner = True if request.user.username in system.eiere() else False
+	current_user_is_privileged
 
 	return render(request, 'system_detaljer.html', {
 		'request': request,

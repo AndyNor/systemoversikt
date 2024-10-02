@@ -146,7 +146,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 				except:
 					messages.warning(self.request, 'Kunne ikke logge inn med brukernavn.')
 
-
+			# siden vi ikke returnerte basert på username, prøver vi email
 			if email: # sekundærmetode
 				email = email.lower()
 				try:
@@ -163,6 +163,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 			messages.warning(self.request, 'Det fulge ikke med et brukernavn i claim, og e-post stemmer ikke med e-post i on-prem AD. Innlogging feilet.')
 			return self.UserModel.objects.none()
+
 
 		def get_or_create_user(self, access_token, id_token, payload):
 			from django.core.exceptions import SuspiciousOperation
@@ -236,49 +237,91 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			#user.first_name = claims.get('given_name', '')
 			#user.last_name = claims.get('family_name', '')
 			user.email = claims.get('email', '')
-			user.is_staff = True
+			user.is_staff = True # kreves for å kunne nå django adminportal som brukes for nesten all redigering.
+
+			#følgende tilgangsstyring skal her implementeres:
+			#CN=DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE,ou=Systemoversikt,ou=Felles,...
+			# gir lesetilgang og skal også gis direkte ved pålogging dersom "ansvarlig".
+
+			#CN=DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER,ou=Systemoversikt,ou=Felles,...
+			# kan ikke tildeles via IDA/PRK, men settes automatisk ved pålogging
+
+			#CN=DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER,ou=Systemoversikt,ou=Felles,...
+			# gir systemforvaltertilgang + virksomhet + plattformer
+
+			#CN=DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR,ou=Systemoversikt,ou=Felles,...
+			# gir superbruker på tvers av virksomheter, settes automatisk til hovedkontakt/ISK/PKO
+
+			#CN=DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER,ou=Systemoversikt,ou=Felles,...
+			# brukes noe få steder for å si tilgang til ting som ellers er låst ned.
+
+			#CN=DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR,ou=Systemoversikt,ou=Felles,...
+			# gir root-tilgang til admingrensesnittet
+
+			claim_groups = []
 
 			if settings.AD_DIRECT_ACCESS == True:
-				if user.username.lower() in ["uke446347", "uke446343"]:
-					return user
 				try:
 					ad_groups = ldap_users_securitygroups(user.username)
-					claim_groups = []
+					#print(ad_groups)
 					for g in ad_groups:
 						kartotek_kompatibelt = "/" + g.split(',')[0].split('CN=')[1]
 						claim_groups.append(kartotek_kompatibelt)
-
-
-					superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
-					if superuser_group in claim_groups:
-						user.is_superuser = True
-						messages.warning(self.request, 'Du ble logget på som systemadministrator')
-						from systemoversikt.views import push_pushover
-						#push_pushover(f"Bruker {user} logget inn som systemadministrator")
-						claim_groups.remove(superuser_group)
-					else:
-						user.is_superuser = False
-
-					# Slette alle rettigheter
-					current_memberships = user.groups.values_list('name', flat=True)
-					for existing_group in current_memberships:
-						g = Group.objects.get(name=existing_group)
-						g.user_set.remove(user)
-
-					# Legge til nye bekreftede rettigheter
-					for group in claim_groups:
-						try:
-							g = Group.objects.get(name=group)
-							#messages.info(self.request, 'Rettighet: %s' % g)
-							g.user_set.add(user)
-						except:
-							#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
-							pass
 				except:
 					logger.error("Auth: update_user: Ingen kontakt med AD. Kan ikke oppdatere tilganger.")
 
 			else:
-				messages.info(self.request, 'Kan ikke oppdatere tilganger, ingen kontakt med AD')
+				from systemoversikt.views import auth_kartoteket_group_lookup
+				aad_groups = auth_kartoteket_group_lookup(user.username)
+				for g in aad_groups:
+					kartotek_kompatibelt = "/DS-" + g
+					claim_groups.append(kartotek_kompatibelt)
+
+			#print(claim_groups)
+
+			superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
+			if superuser_group in claim_groups:
+				user.is_superuser = True
+				messages.warning(self.request, 'Du ble logget på som systemadministrator')
+				from systemoversikt.views import push_pushover
+				#push_pushover(f"Bruker {user} logget inn som systemadministrator")
+				claim_groups.remove(superuser_group)
+			else:
+				user.is_superuser = False
+
+			# Slette alle rettigheter
+			current_memberships = user.groups.values_list('name', flat=True)
+			for existing_group in current_memberships:
+				g = Group.objects.get(name=existing_group)
+				g.user_set.remove(user)
+
+			# Legge til nye bekreftede rettigheter
+			# først alle tilgangsgrupper som kommer fra AD
+			for group in claim_groups:
+				try:
+					g = Group.objects.get(name=group)
+					#messages.info(self.request, 'Rettighet: %s' % g)
+					g.user_set.add(user)
+				except:
+					#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
+					pass
+
+			# så grupper sluttbruker skal tildeles automatisk
+			from systemoversikt.views import auth_er_ansvarlig, auth_er_systemforvalter, auth_er_virksomhetsrolle
+			if auth_er_ansvarlig(user):
+				ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
+				ansvarlig_group.user_set.add(user)
+				messages.info(self.request, 'Du ble automatisk tildelt leserettigheter')
+
+			if auth_er_systemforvalter(user):
+				systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+				systemforvalter_group.user_set.add(user)
+				messages.info(self.request, 'Du ble automatisk tildelt systemforvalter-tilgang')
+
+			if auth_er_virksomhetsrolle(user):
+				virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
+				virksomhetsrolle_group.user_set.add(user)
+				messages.info(self.request, 'Du ble automatisk tildelt virksomhetstilganger')
 
 
 			# Sette virksomhetstilhørighet

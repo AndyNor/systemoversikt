@@ -8,6 +8,14 @@ from django.contrib.auth.models import Permission
 
 register = template.Library()
 
+@register.filter
+def get_odata_type(value):
+	if value.get('@odata.type') == "#microsoft.graph.administrativeUnit":
+		return "Administrative Unit"
+	if value.get('@odata.type') == "#microsoft.graph.group":
+		return "Group"
+	return value.get('@odata.type', '')
+
 
 @register.simple_tag
 def group_from_permission(permission_str):

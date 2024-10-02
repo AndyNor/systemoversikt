@@ -2695,15 +2695,6 @@ class QualysVuln(models.Model):
 
 # ny side: differanse på internett-eksponert ihht kartoteket og qualys-data
 
-# Endre slik at kun eier/forvalter kan endre på system (+ root + generisk systemforvalter/full tilgang-rolle)
-# Kartoteket vil ha følgende roller
-# * Systemadministrator (OK)
-# * Overordnet dataforvalter (opprettes)
-# * virksomhetens dataforvalter (opprettes), begrenses til tilhørende virksomhet
-# * eier/forvalter av system, automatisk basert på data i kartoteket
-# * begrenset lesebruker med tilgang til brukere og grupper
-
-
 
 
 

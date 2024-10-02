@@ -1,6 +1,7 @@
 {% extends "brukere_index.html" %}
 {% load humanize %}
 {% load static %}
+{% load templatetags %}
 
 {% block ekstrameny_business_service %}
 {% endblock ekstrameny_business_service %}
@@ -21,49 +22,80 @@
 </form>
 
 
-{% if user_metadata_json_response %}
+{% if metadata %}
 
-	Display Name: <h5>{{ user_metadata_json_response.displayName }}</h5>
-	Account Enabled: <h5>{{ user_metadata_json_response.accountEnabled|yesno:"Ja, Nei" }}</h5>
+	Display Name: <h5>{{ metadata.displayName }}</h5>
+	Account Enabled: <h5>{{ metadata.accountEnabled|yesno:"Ja, Nei" }}</h5>
 
-	User Principal Name: <h5>{{ user_metadata_json_response.userPrincipalName }}</h5>
-	Mail: <h5>{{ user_metadata_json_response.mail }}</h5>
-	On Premises Sam Account Name: <h5>{{ user_metadata_json_response.onPremisesSamAccountName }}</h5>
+	User Principal Name: <h5>{{ metadata.userPrincipalName }}</h5>
+	Mail: <h5>{{ metadata.mail }}</h5>
+	On Premises Sam Account Name: <h5>{{ metadata.onPremisesSamAccountName }}</h5>
 
-	Company Name: <h5>{{ user_metadata_json_response.companyName }}</h5>
-	Department: <h5>{{ user_metadata_json_response.department }}</h5>
-	Job Title: <h5>{{ user_metadata_json_response.jobTitle }}</h5>
-	Employee Id: <h5>{{ user_metadata_json_response.employeeId }}</h5>
+	Company Name: <h5>{{ metadata.companyName }}</h5>
+	Department: <h5>{{ metadata.department }}</h5>
+	Job Title: <h5>{{ metadata.jobTitle }}</h5>
+	Employee Id: <h5>{{ metadata.employeeId }}</h5>
 
-	Mobile Phone: <h5>{{ user_metadata_json_response.mobilePhone }}</h5>
+	Mobile Phone: <h5>{{ metadata.mobilePhone }}</h5>
 
 	Extension Attributes:
 	<ul>
-		<li>EA1: <b>{{ user_metadata_json_response.onPremisesExtensionAttributes.extensionAttribute1 }}</b></li>
-		<li>EA2: <b>{{ user_metadata_json_response.onPremisesExtensionAttributes.extensionAttribute2 }}</b></li>
-		<li>EA3: <b>{{ user_metadata_json_response.onPremisesExtensionAttributes.extensionAttribute3 }}</b></li>
+		<li>EA1: <b>{{ metadata.onPremisesExtensionAttributes.extensionAttribute1 }}</b></li>
+		<li>EA2: <b>{{ metadata.onPremisesExtensionAttributes.extensionAttribute2 }}</b></li>
+		<li>EA3: <b>{{ metadata.onPremisesExtensionAttributes.extensionAttribute3 }}</b></li>
 	</ul>
 
+	<button class="btn btn-sm col-sm-3" type="button" data-toggle="collapse"
+		data-target="#metadata"
+		aria-expanded="false"
+		aria-controls="metadata">
+		Rå respons
+	</button>
+	<div class="collapse" id="metadata">
+		<pre>{{raw_metadata}}</pre>
+	</div>
+
 {% endif %}
 
 
-{% if user_groups_json_response %}
-	<h5>Gruppemedlemskap</h5>
-	{% for group in user_groups_json_response.value %}
+{% if groups %}
+	<h5>Gruppemedlemskap: {{ groups|length }}</h5>
 
-		<li><b>{{ group.displayName }}</b> (<i>{{ group.mailNickname }}</i>)</li>
-
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>odata_type</th>
+		<th>onPremisesSyncEnabled</th>
+		<th>displayName</th>
+		<th>mailEnabled</th>
+		<th>mailNickname</th>
+		<th>description</th>
+	</thead>
+	<tbody>
+	{% for group in groups %}
+		<tr>
+			<td>{{ group|get_odata_type }}</td>
+			<td>{{ group.onPremisesSyncEnabled|yesno:"Ja, Nei, -" }}</td>
+			<td>{{ group.displayName|default:"-" }}<br>{{ group.id }}</td>
+			<td>{{ group.mailEnabled|yesno:"Ja, Nei" }}</td>
+			<td>{{ group.mailNickname }}</td>
+			<td>{{ group.description|default:"-" }}</td>
+		</tr>
 	{% endfor %}
+	</tbody>
+	</table>
+
+	<button class="btn btn-sm col-sm-3" type="button" data-toggle="collapse"
+		data-target="#grupper"
+		aria-expanded="false"
+		aria-controls="grupper">
+		Rå respons
+	</button>
+	<div class="collapse" id="grupper">
+		<pre>{{raw_groups}}</pre>
+	</div>
+
 {% endif %}
 
-
-{% comment %}
-<h5>Rådata</h5>
-<pre>
-{{ user_metadata_pre_response }}
-{{ user_groups_pre_response }}
-</pre>
-{% endcomment %}
 
 
 {% endblock hovedinnhold %}
