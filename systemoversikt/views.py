@@ -3798,7 +3798,7 @@ def systemdetaljer(request, pk):
 		app.publikasjon_json = json.loads(app.publikasjon_json)
 
 	current_user_is_owner = True if request.user.username in system.eiere() else False
-	current_user_is_privileged
+	#current_user_is_privileged
 
 	return render(request, 'system_detaljer.html', {
 		'request': request,
