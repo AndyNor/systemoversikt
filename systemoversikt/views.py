@@ -2008,7 +2008,7 @@ def auth_kartoteket_group_lookup(username):
 	for g in groups:
 		if "onPremisesSyncEnabled" in g:
 			if g["onPremisesSyncEnabled"]:
-				relevant_groups.append(g["displayName"])
+				relevant_groups.append(g["mailNickname"])
 
 	#print(relevant_groups)
 	return relevant_groups
@@ -3798,7 +3798,9 @@ def systemdetaljer(request, pk):
 		app.publikasjon_json = json.loads(app.publikasjon_json)
 
 	current_user_is_owner = True if request.user.username in system.eiere() else False
-	#current_user_is_privileged
+	if request.user.groups.filter(name='/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER').exists():
+		current_user_is_owner = True
+
 
 	return render(request, 'system_detaljer.html', {
 		'request': request,

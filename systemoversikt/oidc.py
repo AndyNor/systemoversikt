@@ -272,10 +272,13 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 			else:
 				from systemoversikt.views import auth_kartoteket_group_lookup
-				aad_groups = auth_kartoteket_group_lookup(user.username)
-				for g in aad_groups:
-					kartotek_kompatibelt = "/DS-" + g
-					claim_groups.append(kartotek_kompatibelt)
+				try:
+					aad_groups = auth_kartoteket_group_lookup(user.username)
+					for g in aad_groups:
+						kartotek_kompatibelt = "/" + g
+						claim_groups.append(kartotek_kompatibelt)
+				except:
+					messages.info(self.request, 'Kunne ikke hente grupper fra Entra ID')
 
 			#print(claim_groups)
 

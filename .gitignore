@@ -1,6 +1,4 @@
 # Project specific stuff
-systemoversikt/import/oslofelles_dns_ekstern
-systemoversikt/import/oslofelles_dns_intern
 systemoversikt/management/commands/sertifikat_sjekker_config.py
 secrets.py
 secrets_dev.py
@@ -10,8 +8,7 @@ secrets_test.py
 *.csv
 *.tsv
 *.exe
-*.json
-/import/*
+*/import/*
 
 # Template stuff
 # local
