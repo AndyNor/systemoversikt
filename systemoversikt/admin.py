@@ -853,7 +853,7 @@ class ProfileAdmin(admin.ModelAdmin):
 	list_display = ('user', 'virksomhet', 'org_unit', 'usertype', 'from_prk', 'adgrupper_antall', 'description')
 	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'description', 'user__email',)
 	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som', 'adgrupper', 'org_unit', 'ansattnr_ref')
-	list_filter = ('usertype', 'from_prk', 'passwd_notreqd', 'whenCreated')
+	list_filter = ('usertype', 'from_prk', 'whenCreated')
 
 
 @admin.register(SystemUrl)
@@ -1018,9 +1018,24 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 admin.site.unregister(User)  # den er som standard registrert
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-	list_display = ('username', 'last_login', 'email', 'userPasswordExpiry', 'userNot_delegated', 'userDont_req_preauth', 'first_name', 'last_name', 'from_prk', 'is_active', 'is_staff', 'has_usable_password', 'accountdisable', 'intern_person', 'virksomhet', 'evigvarende_passord', 'password_expired')
+	list_display = (
+				'username',
+				'email',
+				'first_name',
+				'last_name',
+				'is_active',
+				'is_staff',
+				'last_login',
+			)
 	search_fields = ('last_login', 'username', 'first_name', 'last_name', 'email')
-	list_filter = ('profile__from_prk', 'profile__userPasswordExpiry', 'profile__not_delegated', 'profile__dont_req_preauth', 'profile__virksomhet', 'is_staff', 'is_superuser', 'is_active', 'profile__dont_expire_password', 'profile__password_expired', 'profile__ekstern_ressurs', 'profile__accountdisable', 'groups',)
+	list_filter = (
+				'is_superuser',
+				'profile__accountdisable',
+				'profile__passwd_notreqd',
+				'profile__dont_req_preauth',
+				'profile__trusted_for_delegation',
+				'profile__not_delegated',
+			)
 
 	def has_usable_password(self, obj):
 		return obj.has_usable_password()
