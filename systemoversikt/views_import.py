@@ -34,15 +34,15 @@ def import_group_permissions(request):
 		try:
 			with open(filepath, 'r', encoding='UTF-8') as json_file:
 				data = json.load(json_file)
+				Group.objects.all().delete()
 				for group in data:
-					#print(group["group"])
 					group_name = group["group"]
 					try:
 						g = Group.objects.get(name=group_name)
 					except:
-						Group.objects.create(name=group_name)
+						g = Group.objects.create(name=group_name)
 						messages.warning(request, 'Gruppen %s eksisterte ikke, men er nå opprettet.' % group_name)
-						continue
+
 					g.permissions.clear()
 					for new_perm in group["permissions"]:
 						#print(new_perm)

@@ -241,22 +241,46 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 			#følgende tilgangsstyring skal her implementeres:
 			#CN=DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE,ou=Systemoversikt,ou=Felles,...
-			# gir lesetilgang og skal også gis direkte ved pålogging dersom "ansvarlig".
+			# Gir lesetilgang
+			# Gis direkte ved pålogging dersom innlogget bruker har en "ansvarlig"-rolle
+			# gis til UKE systemutvikling
+			# kan tildeles via IDA.
 
 			#CN=DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER,ou=Systemoversikt,ou=Felles,...
-			# kan ikke tildeles via IDA/PRK, men settes automatisk ved pålogging
+			# gir tilgang til å redigere systemer tilhørende din virksomhet
+			# Tildeles automatisk dersom du er systemforvalter eller eier
+			# kan ikke tildeles via IDA/PRK
 
 			#CN=DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER,ou=Systemoversikt,ou=Felles,...
-			# gir systemforvaltertilgang + virksomhet + plattformer
+			# Gir systemforvaltertilgang + virksomhet + plattformer for alt registrert på din virksomhet
+			# settes automatisk ved pålogging for hovedkontakt/ISK/PKO.
+			# kan tildeles via IDA
 
 			#CN=DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR,ou=Systemoversikt,ou=Felles,...
-			# gir superbruker på tvers av virksomheter, settes automatisk til hovedkontakt/ISK/PKO
+			# gir superbruker på tvers av virksomheter
+			# kan kun tildeles via IDA
 
 			#CN=DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER,ou=Systemoversikt,ou=Felles,...
-			# brukes noe få steder for å si tilgang til ting som ellers er låst ned.
+			# brukes for å kunne se sårbarheter for alle systemer
+			# tildeles via IDA begrenset med autorisasjon
 
 			#CN=DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR,ou=Systemoversikt,ou=Felles,...
 			# gir root-tilgang til admingrensesnittet
+			# kan kun settes via IDA med autorisasjon
+
+
+
+			# gjenomgå og konsolidere følgende grupper
+			# * /DS-SYSTEMOVERSIKT_BRUKER_BRUKERTILGANG
+			# * /DS-SYSTEMOVERSIKT_BRUKER_CMDB
+			# * /DS-SYSTEMOVERSIKT_BRUKER_LEVERANDOR
+
+
+			# endre slik at redigering av system er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
+			# endre slik at redigering av virksomhet er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
+			# endre slik at redigering av plattform er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
+
+
 
 			claim_groups = []
 
@@ -300,18 +324,29 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 			# Legge til nye bekreftede rettigheter
 			# først alle tilgangsgrupper som kommer fra AD
+			directly_assignable_groups = [
+				"/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE",
+				"/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER",
+				"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR",
+				"/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER",
+				"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR",
+				"/DS-SYSTEMOVERSIKT_OKONOMI_FULLTILGANG", #midlertidig så lenge UBW-modulen kjører her
+				"/DS-SYSTEMOVERSIKT_FORVALTER_BEHANDLINGSANSVARLIG", #midlertidig frem til modulen avvikles helt
+			]
+
 			for group in claim_groups:
-				try:
-					g = Group.objects.get(name=group)
-					#messages.info(self.request, 'Rettighet: %s' % g)
-					g.user_set.add(user)
-				except:
-					#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
-					pass
+				if group in directly_assignable_groups:
+					try:
+						g = Group.objects.get(name=group)
+						#messages.info(self.request, 'Rettighet: %s' % g)
+						g.user_set.add(user)
+					except:
+						#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
+						pass
 
 			# så grupper sluttbruker skal tildeles automatisk
 			from systemoversikt.views import auth_er_ansvarlig, auth_er_systemforvalter, auth_er_virksomhetsrolle
-			if auth_er_ansvarlig(user):
+			if auth_er_ansvarlig(user) or "/DS-ROLLEGRUPPER_UKEAOS_ANSATTELLERKONSULENT" in claim_groups:
 				ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
 				ansvarlig_group.user_set.add(user)
 				messages.info(self.request, 'Du ble automatisk tildelt leserettigheter')
@@ -324,6 +359,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			if auth_er_virksomhetsrolle(user):
 				virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
 				virksomhetsrolle_group.user_set.add(user)
+				systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+				systemforvalter_group.user_set.add(user)
 				messages.info(self.request, 'Du ble automatisk tildelt virksomhetstilganger')
 
 

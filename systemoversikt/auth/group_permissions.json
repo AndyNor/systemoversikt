@@ -321,6 +321,22 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
+                "codename": "view_brannmurregel"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_cmdbbs"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_cmdbdatabase"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_cmdbdevice"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
                 "codename": "view_cmdbdisk"
             },
             {
@@ -398,6 +414,10 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_integrasjonkonfigurasjon"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_klientutstyr"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -626,11 +646,31 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
+                "codename": "add_driftsmodell"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "change_driftsmodell"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
                 "codename": "view_driftsmodell"
             },
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_leverandor"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "add_leverandortilgang"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "change_leverandortilgang"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_leverandortilgang"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -731,245 +771,8 @@
         ]
     },
     {
-        "group": "/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMKATEGORI",
-        "permissions": [
-            {
-                "content_type__app_label": "admin",
-                "codename": "view_logentry"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_autentiseringsmetode"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_autentiseringsmetode"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_autentiseringsmetode"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_autentiseringsmetode"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_database"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_database"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_database"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_database"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_driftsmodell"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_informasjonsklasse"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_informasjonsklasse"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_informasjonsklasse"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_loggkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_loggkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_loggkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_loggkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_personsonopplysningskategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_personsonopplysningskategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_personsonopplysningskategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_personsonopplysningskategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_registrertklassifisering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_registrertklassifisering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_registrertklassifisering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrertklassifisering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_relasjonregistrert"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_relasjonregistrert"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_relasjonregistrert"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_relasjonregistrert"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_systemhovedkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_systemhovedkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_systemhovedkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_systemhovedkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_systemkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_systemkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_systemkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_systemkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_systemtype"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_systemtype"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_systemtype"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_systemtype"
-            }
-        ]
-    },
-    {
         "group": "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR",
         "permissions": [
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_adgroup"
-            },
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_adgroup"
@@ -985,14 +788,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_ansvarlig"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_applicationlog"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_applicationlog"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -1028,47 +823,7 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "delete_behandlingerpersonopplysninger"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_behandlingerpersonopplysninger"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_behovfordpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_behovfordpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_cmdbdatabase"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_cmdbdatabase"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_cmdbdevice"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -1076,71 +831,7 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "add_cmdbref"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_cmdbref"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_databehandleravtale"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_databehandleravtale"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_databehandleravtale"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_databehandleravtale"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_definisjonkontekster"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_definisjonkontekster"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_definisjonkontekster"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_dpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_dpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_dpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_dpia"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -1153,14 +844,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_driftsmodell"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_informasjonsklasse"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_informasjonsklasse"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -1184,59 +867,7 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "add_loggkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_loggkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_loggkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_oppdatering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_oppdatering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_oppdatering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_personsonopplysningskategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_personsonopplysningskategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_personsonopplysningskategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_prkgruppe"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_prkgruppe"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_prkskjema"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_prkskjema"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_prkvalg"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -1285,42 +916,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_registrertklassifisering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_registrertklassifisering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrertklassifisering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_relasjonregistrert"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_relasjonregistrert"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_relasjonregistrert"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -1396,6 +991,10 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
+                "codename": "delete_systemtype"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
                 "codename": "view_systemtype"
             },
             {
@@ -1416,22 +1015,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "add_tjeneste"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_tjeneste"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_tjeneste"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_tjeneste"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "add_virksomhet"
             },
             {
@@ -1445,65 +1028,7 @@
         ]
     },
     {
-        "group": "/DS-SYSTEMOVERSIKT_FORVALTER_PLATTFORMFORVALTER",
-        "permissions": [
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_driftsmodell"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_driftsmodell"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_driftsmodell"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_leverandortilgang"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_leverandortilgang"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_leverandortilgang"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_leverandortilgang"
-            }
-        ]
-    },
-    {
-        "group": "/DS-SYSTEMOVERSIKT_BRUKER_LEVERANDOR",
-        "permissions": [
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_ansvarlig"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_cmdbdatabase"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_cmdbdevice"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_cmdbref"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_virksomhet"
-            }
-        ]
-    },
-    {
-        "group": "/DS-SYSTEMOVERSIKT_BRUKER_BRUKERTILGANG",
+        "group": "/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE",
         "permissions": [
             {
                 "content_type__app_label": "auth",
@@ -1525,117 +1050,6 @@
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_aduser"
             },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_ansvarlig"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_prkgruppe"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_prkskjema"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_prkuser"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_prkvalg"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_system"
-            }
-        ]
-    },
-    {
-        "group": "/DS-SYSTEMOVERSIKT_BRUKER_CMDB",
-        "permissions": [
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_azureapplication"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_brannmurregel"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_cmdbbs"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_cmdbdatabase"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_cmdbdevice"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_cmdbref"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_klientutstyr"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_system"
-            }
-        ]
-    },
-    {
-        "group": "/DS-ROLLEGRUPPER_UKEAOS_ANSATTELLERKONSULENT",
-        "permissions": [
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_applicationlog"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_cmdbdatabase"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_cmdbdevice"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_cmdbref"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_database"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_prkuser"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_prkvalg"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_system"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_system"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_system"
-            }
-        ]
-    },
-    {
-        "group": "/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE",
-        "permissions": [
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_ansvarlig"
@@ -1683,6 +1097,22 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_leverandor"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_prkgruppe"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_prkskjema"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_prkuser"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_prkvalg"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -1735,19 +1165,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_virksomhet"
-            }
-        ]
-    },
-    {
-        "group": "/DS-SYSTEMOVERSIKT_FORVALTER_SIKKERHETSANSVARLIG",
-        "permissions": [
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_azureapplication"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_azureapplication"
             }
         ]
     },
@@ -1869,16 +1286,20 @@
         ]
     },
     {
-        "group": "/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SYSTEMSAARBARHETER",
+        "group": "/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER",
         "permissions": [
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "change_azureapplication"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_azureapplication"
+            },
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_qualysvuln"
             }
         ]
-    },
-    {
-        "group": "/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER",
-        "permissions": []
     }
 ]

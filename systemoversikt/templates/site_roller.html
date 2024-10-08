@@ -7,26 +7,20 @@
 
 {% block hovedinnhold %}
 
-	<p>Via PRK legges brukeridenter (som f.eks. din bruker) inn i ulike AD-sikkerhetsgrupper. Disse sikkerhetsgruppene er speilet i dette systemet og tildelt ulike rettigheter. For eksempel å kunne opprette et system eller endre på en virksomhet. Rollen "virksomhetsadministrator" skal kunne endre på virksomheter, mens en systemforvalter skal kunne endre på systemer.</p>
+	<p><b>Tilgangsstyring er nå under endring</b></p>
 
-	<p>Det er ikke lagt opp til eksplisitt eierskap til data (systemer, behandlinger), men eksempelvis behandlinger og systemer er assosiert med en eller flere virksomheter og enkeltpersoner. Det er mulig å begrense mulighet for å endre et enkelt objekt til en virksomhet eller person, men det må veies opp mot de ulemper slik begrensning vil ha. Det er etablert en regel som hindrer virksomheter å endre/slette behandlinger som tilhører andre virksomheter, men ut over dette er det ingen tekniske hindringer.</p>
+	<p>Via IDA (før PRK) legges brukeridenter (som f.eks. din bruker) inn i ulike AD-sikkerhetsgrupper. Disse sikkerhetsgruppene er speilet i dette systemet og tildelt ulike rettigheter. For eksempel å kunne opprette et system eller endre på en virksomhet.</p>
 
-	<img src="{% static 'kartoteket tilgangsstyring.png' %}">
+	<p>Mange tilganger settes automatisk ved pålogging basert på roller du er tildelt i Kartoteket. F.eks. vil du få tilganger for å redigere systemer dersom du er systemforvalter.</p>
 
-	<p>Noe forenklet rollebeskrivelse.
 	<ul>
-		<li>Behandlingsansvarlig: Kan både redigere systemer og behandlinger, men ikke plattformer eller valgmenyer</li>
-		<li>Systemforvalter: Kan redigere på systemer, men bare se behandinger registrert på systemer.</li>
-		<li>Virksomhetsforvalter (virksomheter): Kan endre på detaljer om virksomhete.</li>
-		<li>Systemkategoriforvalter (systemkategori): Kan endre på valgmenyer. Krever godkjenning fra UKE før tildelign.</li>
-		<li>Administrator: Kan se og endre det meste. Noen unntak knyttet til behandlinger og systemer.</li>
-		<li>Plattformforvalter: kan legge til og lette driftsplattformer.</li>
-		<li>Leverandør: Kan se CMDB-data i tillegg til alt som er åpent. (skal fases ut)</li>
-		<li>Brukertilgang: Kan se/søke i data fra PRK/AD.</li>
-		<li>CMDB: Kan se CMDB-data</li>
-		<li>Netcompany: Egen gruppe for utviklere på ITAS, tilsvarende som for "CMDB" (men med egen AD-gruppe)</li>
+		<li>Lesetilgang: Lar deg lese deltajer om alle systemer og søke opp i brukere og gruppemedlemskap. Gis enten direkte dersom du er registrert som ansvarlig i Kartoteket, jobber i UKE systemutvikling eller kan gis vis personlig tildeling i IDA.</li>
+		<li>Systemforvalter: Lar deg endre informasjon om din virksomhets systemer. Tildeles automatisk om du er registrert som systemforvalter eller systemeier i Kartoteket. Kan ikke tildeles direkte via IDA.</li>
+		<li>Virksomhetsforvalter: Lar deg endre detaljer om din virksomhet, endre plattformer knyttet til din virksomhet, samt redigere virksomhetens systemer. Tildeles automatisk til registrerte IKT-hovedkontakter, ISK og PKO-er. Kan også tildeles direkte via IDA.</li>
+		<li>Administrator: Har tilgang til å redigere systemer, plattformer og virksomheter på tvers av alle virksomheter. Kan kun tildeles direkte via IDA.</li>
+		<li>Sikkerhetsanalytiker: Får se sårbarheter for alle systemer. Kan kun tildeles via IDA og krever autorisasjon.</li>
+		<li>Systemadministrator: Full tilgang til alt i Kartoteket. Kan kun tildeles via IDA og krever autorisasjon.</li>
 	</ul>
-	</p>
 
 	<hr>
 

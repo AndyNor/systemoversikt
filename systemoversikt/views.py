@@ -2988,7 +2988,7 @@ def roller(request):
 		header = []
 		grupper_med_rettigheter = {}
 		for g in groups:
-			header.append(g.name.split("_")[2])
+			header.append(g.name.split("/DS-SYSTEMOVERSIKT_")[1].replace("_", " "))
 			grupper_med_rettigheter[g.name] = [p.codename for p in g.permissions.all()]
 
 		unique_permissions = list(set([ x for y in grupper_med_rettigheter.values() for x in y]))
