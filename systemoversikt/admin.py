@@ -468,6 +468,26 @@ class SystemAdmin(SimpleHistoryAdmin):
 		}),
 	)
 
+	def save_model(self, request, obj, form, change):
+		# vi ønsker å begrense tilgang til å opprette system mot andre virksomheter
+		if not request.user.is_superuser:
+			if obj.systemforvalter != request.user.profile.virksomhet:
+				messages.warning(request, f'Du har ikke rettigheter til å registrere systemer for andre virksomheter. Byttet forvalter til {request.user.profile.virksomhet}.')
+			obj.systemforvalter = request.user.profile.virksomhet  # uansett hva en ikke-superbruker gjør vil behandlingen knyttes til innlogget brukers virksomhet
+		super().save_model(request, obj, form, change)
+
+	def has_change_permission(self, request, obj=None):
+		if obj:
+			if request.user.is_superuser:
+				return True
+			if obj.systemforvalter == request.user.profile.virksomhet:
+				if request.user.has_perm('systemoversikt.change_system'):
+					return True
+			else:
+				messages.warning(request, 'Du får ikke endre systemer for andre virksomheter')
+				return False
+
+
 
 @admin.register(Virksomhet)
 class VirksomhetAdmin(SimpleHistoryAdmin):

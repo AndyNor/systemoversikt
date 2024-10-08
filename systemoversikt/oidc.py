@@ -269,17 +269,9 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			# kan kun settes via IDA med autorisasjon
 
 
-
-			# gjenomgå og konsolidere følgende grupper
-			# * /DS-SYSTEMOVERSIKT_BRUKER_BRUKERTILGANG
-			# * /DS-SYSTEMOVERSIKT_BRUKER_CMDB
-			# * /DS-SYSTEMOVERSIKT_BRUKER_LEVERANDOR
-
-
 			# endre slik at redigering av system er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
 			# endre slik at redigering av virksomhet er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
 			# endre slik at redigering av plattform er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
-
 
 
 			claim_groups = []
