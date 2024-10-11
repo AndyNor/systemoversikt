@@ -925,9 +925,7 @@ def tool_csv_converter(request):
 
 
 def tool_compare_items(request):
-	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+	required_permissions = []
 
 	boks_a_raw = request.POST.get('boks_a', '')
 	boks_b_raw = request.POST.get('boks_b', '')
@@ -954,9 +952,7 @@ def tool_compare_items(request):
 
 
 def tool_unique_items(request):
-	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+	required_permissions = []
 
 	raw = request.POST.get('data', '').strip()  # strip removes trailing and leading space
 	filtered = raw.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ').replace(':',' ').replace('|',' ').lower()
@@ -5074,7 +5070,9 @@ def systemer_virksomhet_ansvarlig_for_fip(request, pk):
 
 def virksomhet(request, pk):
 	#Vise detaljer om en valgt virksomhet
-	required_permissions = None
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()

@@ -14,7 +14,13 @@ from django.db.models import Q
 from django.http import HttpResponse
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, DELETION
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.http import HttpResponseRedirect
 from .models import *
+
+def is_admin(request):
+	return request.user.groups.filter(name="/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR").exists()
+
 
 # https://gist.github.com/jeremyjbowers/e8d007446155c12033e6
 def export_as_csv_action(description="Export selected objects as CSV file", fields=None, exclude=None, header=True):
@@ -470,23 +476,29 @@ class SystemAdmin(SimpleHistoryAdmin):
 
 	def save_model(self, request, obj, form, change):
 		# vi ønsker å begrense tilgang til å opprette system mot andre virksomheter
-		if not request.user.is_superuser:
+		if not (request.user.is_superuser or is_admin(request)):
 			if obj.systemforvalter != request.user.profile.virksomhet:
-				messages.warning(request, f'Du har ikke rettigheter til å registrere systemer for andre virksomheter. Byttet forvalter til {request.user.profile.virksomhet}.')
-			obj.systemforvalter = request.user.profile.virksomhet  # uansett hva en ikke-superbruker gjør vil behandlingen knyttes til innlogget brukers virksomhet
+				messages.warning(request, f"Du har ikke rettigheter til å registrere systemer for andre virksomheter. Du tilhører {request.user.profile.virksomhet}.")
+				return HttpResponseRedirect(request.path)
 		super().save_model(request, obj, form, change)
+
 
 	def has_change_permission(self, request, obj=None):
 		if obj:
 			if request.user.is_superuser:
+				messages.warning(request, 'Du er root og kan endre alt!')
 				return True
-			if obj.systemforvalter == request.user.profile.virksomhet:
-				if request.user.has_perm('systemoversikt.change_system'):
+			if is_admin(request):
+				#messages.warning(request, 'Du er superbruker')
+				return True
+			if request.user.has_perm('systemoversikt.change_system'):
+				if obj.systemforvalter == request.user.profile.virksomhet:
 					return True
-			else:
-				messages.warning(request, 'Du får ikke endre systemer for andre virksomheter')
-				return False
-
+				else:
+					messages.warning(request, f'Du har ikke rettigheter til å endre systemer for andre virksomheter enn {request.user.profile.virksomhet.virksomhetsforkortelse}. Kun "superbrukere" har denne tilgangen.')
+					return False
+			messages.warning(request, f'Du har ikke rettigheter til å endre systemer.')
+			return False
 
 
 @admin.register(Virksomhet)
@@ -569,6 +581,31 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 				),
 			})
 		)
+
+	def save_model(self, request, obj, form, change):
+		# vi ønsker å begrense tilgang til å redigere virksomheter for andre virksomheter
+		if not (request.user.is_superuser or is_admin(request)):
+			if request.user.profile.virksomhet != obj:
+				messages.warning(request, f"Du har ikke rettigheter til å registrere andre virksomheter. Du tilhører {request.user.profile.virksomhet}.")
+				return HttpResponseRedirect(request.path)
+		super().save_model(request, obj, form, change)
+
+	def has_change_permission(self, request, obj=None):
+		if obj:
+			if request.user.is_superuser:
+				messages.warning(request, 'Du er root og kan endre alt!')
+				return True
+			if is_admin(request):
+				#messages.warning(request, 'Du er superbruker')
+				return True
+			if request.user.has_perm('systemoversikt.change_virksomhet'):
+				if request.user.profile.virksomhet == obj:
+					return True
+				else:
+					messages.warning(request, f'Du har ikke rettigheter til å endre virksomhetsdetaljer for andre virksomheter enn {request.user.profile.virksomhet.virksomhetsforkortelse}. Kun "superbrukere" har denne tilgangen.')
+					return False
+			messages.warning(request, f'Du har ikke rettigheter til å endre virksomheter.')
+			return False
 
 
 @admin.register(SystemBruk)
@@ -1377,6 +1414,31 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 				),
 			}),
 	)
+
+	def save_model(self, request, obj, form, change):
+		# vi ønsker å begrense tilgang til å redigere virksomheter for andre virksomheter
+		if not (request.user.is_superuser or is_admin(request)):
+			if request.user.profile.virksomhet != obj.ansvarlig_virksomhet:
+				messages.warning(request, f"Du har ikke rettigheter til å endre på denne driftsmodellen. Du tilhører {request.user.profile.virksomhet}.")
+				return HttpResponseRedirect(request.path)
+		super().save_model(request, obj, form, change)
+
+	def has_change_permission(self, request, obj=None):
+		if obj:
+			if request.user.is_superuser:
+				messages.warning(request, 'Du er root og kan endre alt!')
+				return True
+			if is_admin(request):
+				#messages.warning(request, 'Du er superbruker')
+				return True
+			if request.user.has_perm('systemoversikt.change_virksomhet'):
+				if request.user.profile.virksomhet == obj.ansvarlig_virksomhet:
+					return True
+				else:
+					messages.warning(request, f'Du har ikke rettigheter til å endre plattformer for andre virksomheter enn {request.user.profile.virksomhet.virksomhetsforkortelse}. Kun "superbrukere" har denne tilgangen.')
+					return False
+			messages.warning(request, f'Du har ikke rettigheter til å endre plattformer.')
+			return False
 
 
 @admin.register(ADOrgUnit)

@@ -357,26 +357,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "add_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_definisjonkontekster"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_definisjonkontekster"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "add_dpia"
             },
             {
@@ -490,18 +470,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_registrertklassifisering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_sikkerhetstester"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_sikkerhetstester"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_sikkerhetstester"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -1076,18 +1044,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "view_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_definisjonkontekster"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_driftsmodell"
             },
             {
@@ -1125,18 +1081,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrertklassifisering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_relasjonregistrert"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -1299,6 +1243,18 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_qualysvuln"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "add_sikkerhetstester"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "change_sikkerhetstester"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_sikkerhetstester"
             }
         ]
     }
