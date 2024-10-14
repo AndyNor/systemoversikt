@@ -9,6 +9,14 @@
 {% block hovedinnhold %}
 
 	<h6>Oslo kommunes systemoversikt. For oversikt over behandlinger, se <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a>.</h6>
+
+	<hr>
+
+	<h6 style="background-color: yellow;">Opprydding i tilganger til Kartoteket</h6>
+	<p>Dersom du opplever å ha mistet tilganger i Kartoteket, kommer det av at vi nå jobber med å forenkle tilgangsstyringsmodellen. Konsekvensen av dette er at en del gamle tilgangsgrupper har blitt avviklet og erstattet med automatisk tildeling av rettigheter ved pålogging.</p>
+	<p>Se <a href="{% url 'roller' %}">oversikt over roller</a> for beskrivelse av hvordan ny tilgangsstyring vil fungere. Se også tabellen under med forklaring på hvilke tilganger som overføres, og hva de nye navnene blir i IDA.</p>
+	<img src="{% static 'matrise for nye tilgangsgrupper.png' %}">
+
 	<hr>
 
 	<div class="container-fluid">

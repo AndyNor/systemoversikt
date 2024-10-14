@@ -357,18 +357,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "add_dpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_dpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_dpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_driftsmodell"
             },
             {
@@ -1041,6 +1029,10 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_avtale"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_cmdbdevice"
             },
             {
                 "content_type__app_label": "systemoversikt",
