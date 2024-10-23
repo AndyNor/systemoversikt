@@ -97,9 +97,11 @@
 			<a href="{{ url_ad }}">Søk i AD</a>
 		</td>
 		<td>
-			BS: {{ maskin.sub_name.parent_ref }} <br>
-			{% url 'cmdbdevice' pk=maskin.sub_name.pk as url_bss %}
-			BSS: <a href="{{ url_bss }}">{{ maskin.sub_name }}</a>
+			{% for offering in maskin.service_offerings.all %}
+				BS: {{ offering.parent_ref }} <br>
+				{% url 'cmdbdevice' pk=offering.pk as url_bss %}
+				BSS: <a href="{{ url_bss }}">{{ offering }}</a>
+			{% endfor %}
 		</td>
 		<td>
 			{{ maskin.description|default:"-" }} <br>

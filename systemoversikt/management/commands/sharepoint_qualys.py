@@ -60,6 +60,20 @@ class Command(BaseCommand):
 		QualysVuln.objects.all().delete()
 
 
+		def ansvar_basisdrift(vulnerability):
+
+			patches_av_drift = [
+					"Splunk Universal Forwarder",
+					"Microsoft Azure Connected Machine Agent",
+					"Windows Server Security Update for",
+				]
+
+			if any(phrase in vulnerability.title for phrase in patches_av_drift):
+				return True
+			return False
+
+
+
 
 		@lru_cache(maxsize=384)
 		def lookup_server(servername):
@@ -98,6 +112,7 @@ class Command(BaseCommand):
 						)
 
 					server = lookup_server(line["Hostname"])
+					q.ansvar_basisdrift = ansvar_basisdrift(q)
 					if server:
 						q.server = server
 						q.save()

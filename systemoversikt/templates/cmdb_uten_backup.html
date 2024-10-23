@@ -25,10 +25,22 @@
 	<tbody>
 	{% for server in uten_backup %}
 	<tr>
-		<td>{{ server.sub_name.parent_ref }}</td>
-		<td>{{ server.sub_name }}</td>
+		<td>
+			{% for offering in maskin.service_offerings.all %}
+				{{ offering.parent_ref }}
+			{% endfor %}
+		</td>
+		<td>
+			{% for offering in maskin.service_offerings.all %}
+				{{ offering }}
+			{% endfor %}
+		</td>
 		<td>{{ server.comp_name }}</td>
-		<td>{{ server.sub_name.u_service_billable|yesno:"Ja,Nei" }}</td>
+		<td>
+			{% for offering in maskin.service_offerings.all %}
+				{{ offering.u_service_billable|yesno:"Ja,Nei" }}
+			{% endfor %}
+		</td>
 		<td>{{ server.comments }}<br>{{ server.description }}</td>
 	</tr>
 	{% endfor %}

@@ -6,7 +6,10 @@
 
 {% block hovedinnhold %}
 
-	<p>Viser {{ systemer.count }} systemer. Gå til <a href="{% url 'alle_citrixpub' %}">oversikt over citrix-publikasjoner</a> for å se alle koblinger. For å koble system til publisering, må du gå til redigeringssiden for systemet og finne valgboksen "Tilkoblede citrixpubliseringer".</p>
+	<p>Viser {{ systemer.count }} systemer koblet til Citrix-publiseringer.<br> Gå til <a href="{% url 'alle_citrixpub' %}">oversikt over citrix-publikasjoner</a> for å se alle koblinger.<br>For å koble system til publisering, må du gå til redigeringssiden for systemet og finne valgboksen "Tilkoblede citrixpubliseringer".</p>
+
+	<p style="background-color: {{ integrasjonsstatus.color }};">
+		Citrix-apper ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}</p>
 
 	<table class="tablesorter excel">
 	<thead>

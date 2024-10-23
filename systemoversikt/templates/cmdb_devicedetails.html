@@ -13,8 +13,13 @@
 
 <p>Dette er en {{ device.device_type }}, sist oppdatert {{ device.sist_oppdatert }}. Den er merket som {{ device.device_active|yesno:"aktiv, deaktiv"}} i CMDB. Den er {{device.vm_poweredon|yesno:"påskrudd, avskrudd"}} i VMware.</p>
 
-{% url 'cmdb_bss' pk=device.sub_name.pk as url_cmdb_bss %}
-<p>Den er klassifisert under <a href="{{ url_cmdb_bss }}">{{ device.sub_name }}</a> og er {{ device.billable|yesno:"fakturerbar, ikke fakturerbar" }}.</p>
+<p>Den er klassifisert under
+{% for offering in device.service_offerings.all %}
+	{% url 'cmdb_bss' pk=offering.pk as url_cmdb_bss %}
+	<a href="{{ url_cmdb_bss }}">{{ offering }}</a>,
+{% endfor %}
+og er {{ device.billable|yesno:"fakturerbar, ikke fakturerbar" }}.</p>
+
 <p>Befinner seg på datasenter {{device.comp_location}}.</p>
 
 <p>Beskrivelse:

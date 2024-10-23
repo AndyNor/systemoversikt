@@ -41,7 +41,9 @@
 			<a href="{{ url_ad }}">{{ maskin.comp_name }}</a>
 		</td>
 		<td>
-			{{ maskin.sub_name }}
+			{% for offering in maskin.service_offerings.all %}
+				{{ offering }}
+			{% endfor %}
 		</td>
 		<td>
 			{{ maskin.bs_u_service_portfolio }}
@@ -55,7 +57,9 @@
 			{{ maskin.comp_os_service_pack }}
 		</td>
 		<td>
-			{{ maskin.sub_name.system|default:"-" }}
+			{% for offering in maskin.service_offerings.all %}
+				{{ offering.system|default:"-" }}
+			{% endfor %}
 		</td>
 		<td>
 			{{ maskin.dns|default:"" }}

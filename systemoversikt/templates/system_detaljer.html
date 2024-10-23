@@ -878,37 +878,44 @@
 	<div class="row">
 	{% if current_user_is_owner %}
 
+		<p style="background-color: {{ integrasjonsstatus.color }};">
+		Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}</p>
+
 		<div class="col-12">
 			<b>Sårbarheter med alvorlighetsgrad 4 eller 5 knyttet til systemets servere</b> (Vises kun for eiere og forvaltere)
 			<table class="table table-sm tablesorter excel">
 				<thead>
 					<tr>
+						<th>Beskrivelse</th>
 						<th>Først sett</th>
 						<th>Sist sett</th>
 						<th>Miljø</th>
 						<th>Server</th>
 						<th>OS</th>
+						<th>EOL?</th>
 						<th>Internett-eksponert</th>
 						<th>Alvorlighetsgrad</th>
-						<th>Beskrivelse</th>
+						<th>Ansvar</th>
 						<th style="word-wrap: break-word; width: 500px;">Lokasjon</th>
 					</tr>
 				</thead>
 				<tbody>
 				{% for vuln in systemdetaljer.vulnerabilities %}
 				<tr>
+					<td>{{ vuln.title }}</td>
 					<td>{{ vuln.first_seen|date:"Y-m-d" }}</td>
 					<td>{{ vuln.last_seen|date:"Y-m-d" }}</td>
 					<td>{{ vuln.tmp_offering.navn }}</td>
 					<td>{{ vuln.server }}</td>
 					<td>{{ vuln.os }}</td>
+					<td>{{ vuln.derived_os_endoflife|yesno:"🔴 End of life, 🟢 Supportert" }}</td>
 					<td>{{ vuln.public_facing|yesno:"🔴 Ja, 🟢 Nei" }}</td>
 					<td>
 						{% if vuln.severity == 4 %}🟡{% endif %}
 						{% if vuln.severity == 5 %}🔴{% endif %}
 						{{ vuln.severity }}
 					</td>
-					<td>{{ vuln.title }}</td>
+					<td>{{ vuln.ansvar_basisdrift|yesno:"🖥️ Basisdrift, 💾 Applikasjonsdrift" }}</td>
 					<td>{{ vuln.result|truncatechars:300 }}</td>
 				</tr>
 				{% endfor %}

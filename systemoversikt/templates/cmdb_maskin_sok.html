@@ -34,13 +34,19 @@
 	{% for server in hits %}
 		<tr {% if server.device_active == False %} style="text-decoration: line-through; opacity: 60%;" {% endif %}>
 			<td>{{server.comp_name}}</td>
-			<td>{{server.sub_name.parent_ref}} <br> {{server.sub_name}} <br> {{server.sub_name.get_environment_display}}</td>
 			<td>
-				{% if server.sub_name.system %}
-					{% for system in server.sub_name.system.all %}
-					<b>{{system}}</b> {{system.systemeier_kontaktpersoner_referanse.all.0}}<br>
-					{% endfor %}
-				{% endif %}
+				{% for offering in server.service_offerings.all %}
+					{{offering.parent_ref}} <br> {{offering}} <br> {{offering.get_environment_display}}
+				{% endfor %}
+			</td>
+			<td>
+				{% for offering in server.service_offerings.all %}
+					{% if offering.system %}
+						{% for system in offering.system.all %}
+						<b>{{system}}</b> {{system.systemeier_kontaktpersoner_referanse.all.0}}<br>
+						{% endfor %}
+					{% endif %}
+				{% endfor %}
 
 				{% if server.landesk_login %}
 					{{ server.landesk_login }}<br>

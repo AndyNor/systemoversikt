@@ -266,14 +266,15 @@ class IntegrasjonKonfigurasjon(models.Model):
 		return f'{self.kilde} {self.protokoll} {self.informasjon}'
 
 	def color(self):
-		from datetime import datetime, timedelta
-		from django.utils import timezone
-		today = timezone.now()
-		difference = today - self.dato_sist_oppdatert
-		if difference < timedelta(days=1):
-			return "#b8e1ca"
-		if difference < timedelta(days=28):
-			return "#e1cfa3"
+		if self.dato_sist_oppdatert:
+			from datetime import datetime, timedelta
+			from django.utils import timezone
+			today = timezone.now()
+			difference = today - self.dato_sist_oppdatert
+			if difference < timedelta(days=1):
+				return "#b8e1ca"
+			if difference < timedelta(days=28):
+				return "#e1cfa3"
 		return "#cf949a"
 
 
@@ -1993,7 +1994,7 @@ class CMDBRef(models.Model): # BSS
 
 	def alle_dns(self):
 		dnsrecords = set()
-		for server in self.devices.all():
+		for server in self.servers.all():
 			# direkte dns-navn mot server
 			for netaddr in server.network_ip_address.all():
 				for dnsrec in netaddr.dns.all():
@@ -2023,13 +2024,13 @@ class CMDBRef(models.Model): # BSS
 		return total
 
 	def san_used(self):
-		total = CMDBdevice.objects.filter(sub_name=self).aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
+		total = CMDBdevice.objects.filter(service_offerings=self).aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
 		if total == None:
 			return 0
 		return total
 
 	def san_allocated(self):
-		total = CMDBdevice.objects.filter(sub_name=self).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+		total = CMDBdevice.objects.filter(service_offerings=self).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
 		if total == None:
 			return 0
 		return total
@@ -2043,7 +2044,7 @@ class CMDBRef(models.Model): # BSS
 		return "NaN"
 
 	def ram_allocated(self):
-		total = CMDBdevice.objects.filter(sub_name=self).aggregate(Sum('comp_ram'))["comp_ram__sum"]
+		total = CMDBdevice.objects.filter(service_offerings=self).aggregate(Sum('comp_ram'))["comp_ram__sum"]
 		if total == None:
 			return 0
 		return total * 1000**2 # MB til bytes
@@ -2106,7 +2107,7 @@ class CMDBRef(models.Model): # BSS
 			return False
 
 	def ant_devices(self):
-		return CMDBdevice.objects.filter(sub_name=self.pk, device_active=True).count()
+		return CMDBdevice.objects.filter(service_offerings=self.pk, device_active=True).count()
 
 	def ant_databaser(self):
 		return CMDBdatabase.objects.filter(sub_name=self.pk, db_operational_status=True).count()
@@ -2119,7 +2120,7 @@ class CMDBRef(models.Model): # BSS
 
 	def vlan(self):
 		alle_vlan = set()
-		for server in CMDBdevice.objects.filter(sub_name=self.pk, device_active=True):
+		for server in CMDBdevice.objects.filter(service_offerings=self.pk, device_active=True):
 			for ipaddr in server.network_ip_address.all():
 				for vlan in ipaddr.vlan.all():
 					alle_vlan.add(vlan)
@@ -2669,6 +2670,7 @@ class QualysVuln(models.Model):
 	result = models.TextField()
 	os = models.TextField()
 	status = models.TextField(null=True)
+	ansvar_basisdrift = models.BooleanField(default=False)
 
 	def __str__(self):
 		return f"{self.source} {self.title}"
@@ -2758,14 +2760,21 @@ class CMDBdevice(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	sub_name = models.ForeignKey(
+	# fjernes til fordel for m2m-feltet service_offerings
+	#sub_name = models.ForeignKey(
+	#		to=CMDBRef,
+	#		related_name='devices',
+	#		verbose_name="Business Sub Service",
+	#		on_delete=models.CASCADE,
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
+	service_offerings = models.ManyToManyField(
 			to=CMDBRef,
-			related_name='devices',
-			verbose_name="Business Sub Service",
-			on_delete=models.CASCADE,
+			related_name='servers',
+			verbose_name="Service Offerings",
 			blank=True,
-			null=True,
-			help_text=u"",
 			)
 	comp_ip_address = models.CharField(
 			verbose_name="IP-address",
@@ -2964,6 +2973,7 @@ class CMDBdevice(models.Model):
 			max_length=500,
 			null=True, blank=True,
 			)
+	derived_os_endoflife = models.BooleanField(default=False)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
 
@@ -2977,7 +2987,7 @@ class CMDBdevice(models.Model):
 		return "? "
 
 	def disk_usage_free(self):
-		if not (self.vm_disk_usage == None or self.vm_disk_allocation == None):
+		if self.vm_disk_usage != None and self.vm_disk_allocation not in [None, 0]:
 			return 100 - int(self.vm_disk_usage / self.vm_disk_allocation * 100)
 		return "? "
 
@@ -5054,7 +5064,7 @@ class System(models.Model):
 		server_os = []
 		try:
 			for bss in self.service_offerings.all():
-				for server in bss.devices.all():
+				for server in bss.servers.all():
 						server_os.append("%s %s" % (server.comp_os, server.comp_os_version))
 		except:
 			pass
@@ -5086,7 +5096,7 @@ class System(models.Model):
 		serveros = []
 		alle_bss = self.service_offerings.all()
 		for bss in alle_bss:
-			servere = CMDBdevice.objects.filter(sub_name=bss)
+			servere = CMDBdevice.objects.filter(service_offerings=bss)
 			for s in servere:
 				serveros.append("%s %s" % (s.comp_os, s.comp_os_version))
 		return ', '.join([os for os in set(serveros)])
@@ -5337,7 +5347,7 @@ class System(models.Model):
 		connected_vulns = set()
 		for service_offering in self.service_offerings.all():
 			#print(service_offering)
-			for server in service_offering.devices.all():
+			for server in service_offering.servers.all():
 				#print(server)
 				for vuln in server.qualys_vulnerabilities.all():
 					if vuln.severity in [4,5]:

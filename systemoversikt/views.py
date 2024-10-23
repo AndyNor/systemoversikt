@@ -1319,10 +1319,16 @@ def systemer_citrix(request):
 		s.tmp_desktop_groups = set(unike_desktop_groups)
 
 
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="citrixpubliseringer")
+	except:
+		integrasjonsstatus = None
+
 	return render(request, 'systemer_citrix.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer_på_citrix,
+		'integrasjonsstatus': integrasjonsstatus,
 	})
 
 
@@ -1451,6 +1457,11 @@ def alle_citrixpub(request, pk=None):
 
 	unike_siloer = CMDBdevice.objects.order_by().values('citrix_desktop_group').distinct()
 
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="citrixpubliseringer")
+	except:
+		integrasjonsstatus = None
+
 	return render(request, 'cmdb_citrix_apps.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -1460,6 +1471,7 @@ def alle_citrixpub(request, pk=None):
 		'antall_apper_koblet': antall_apper_koblet,
 		'antall_apper_koblet_pct': f"{round(antall_apper_koblet_pct * 100, 1)}%" if antall_apper_koblet_pct != "?" else None,
 		'unike_siloer': unike_siloer,
+		'integrasjonsstatus': integrasjonsstatus,
 	})
 
 def alle_nettverksenheter(request):
@@ -1808,7 +1820,7 @@ def cmdb_lagring_index(request):
 	count_san_allocated = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
 	count_san_used = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
 	pct_used = int(count_san_used / count_san_allocated * 100)
-	count_san_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(sub_name=None).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+	count_san_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(service_offerings=None).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
 	count_not_active = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
 
 	bs_all = CMDBbs.objects.all()
@@ -3797,6 +3809,10 @@ def systemdetaljer(request, pk):
 	if request.user.groups.filter(name='/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER').exists():
 		current_user_is_owner = True
 
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
 
 	return render(request, 'system_detaljer.html', {
 		'request': request,
@@ -3818,6 +3834,7 @@ def systemdetaljer(request, pk):
 		'avhengigheter_chart_size_ny': 300 + len(avhengigheter_graf_ny["nodes"])*20,
 		'citrix_apps': citrix_apps,
 		'current_user_is_owner': current_user_is_owner,
+		'integrasjonsstatus': integrasjonsstatus,
 	})
 
 
@@ -6439,7 +6456,7 @@ def alle_servere(request):
 	elif search_term == '__all__':
 		maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True)
 	else:
-		maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(sub_name__navn__icontains=search_term)).order_by('comp_name')
+		maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(service_offerings__navn__icontains=search_term)).order_by('comp_name')
 
 	maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
 	maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
@@ -6628,7 +6645,7 @@ def cmdb_bss(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	cmdbref = CMDBRef.objects.get(pk=pk)
-	cmdbdevices = CMDBdevice.objects.filter(sub_name=cmdbref).filter(device_active=True)
+	cmdbdevices = CMDBdevice.objects.filter(service_offerings=cmdbref).filter(device_active=True)
 	databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
 
 	vlan_lagt_til = []
@@ -7120,7 +7137,8 @@ def get_api_tilganger(request): #API
 	return JsonResponse(result, safe=False)
 
 
-
+# denne er ikke lenger i bruk
+"""
 def csirt_maskinlookup_api(request): #API
 	#ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Innkommende kall fra {get_client_ip(request)}")
 	if not request.method == "GET":
@@ -7198,7 +7216,7 @@ def csirt_maskinlookup_api(request): #API
 
 	ApplicationLog.objects.create(event_type="API CSIRT maskin-søk", message=f"Vellykket kall mot {maskin_string}")
 	return JsonResponse(data, safe=False)
-
+"""
 
 
 def csirt_iplookup_api(request):

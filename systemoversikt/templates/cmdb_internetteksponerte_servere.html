@@ -31,7 +31,7 @@
 				{% endfor %}
 			{% endfor %}
 		</td>
-		<td>{{server.sub_name}}</td>
+		<td>{% for offering in server.service_offerings.all %}{{offering}}{% if not forloop.last %}, {% endif %} {% endfor %}</td>
 		<td>{{server.eksternt_eksponert_dato}}</td>
 	</tr>
 	{% endfor %}

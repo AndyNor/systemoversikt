@@ -154,17 +154,35 @@ class Command(BaseCommand):
 					if "Windows" in os:
 						os_readable = os.replace("64-bit", "").replace("32-bit", "").replace(",","").strip()
 					elif "Linux" in os:
-						version_match = re.search(r'(\d).\d', os_version)
+						version_match = re.search(r'(^\d+.\d+)', os_version)
 						if version_match:
 							os_readable = "%s %s" % (os, version_match[1])
 						else:
 							os_readable = os
 					else:
 						os_readable = os
-					os_readable = os_readable.strip()
+					os_readable = os_readable.strip().lower()
 
 					if os_readable == '':
 						os_readable = 'Ukjent'
+
+
+					end_of_life_os = [ # all lowercase in order to match
+							"windows 2012",
+							"windows 2008",
+							"windows 2000",
+							"red hat 6",
+							"red hat 5",
+							"red hat 4",
+							"red hat 3",
+							"centos linux 7"
+						]
+
+					if any(version in os_readable for version in end_of_life_os):
+						derived_os_endoflife = True
+					else:
+						derived_os_endoflife = False
+
 
 					#print(os_readable)
 					comp_ip_address = record["IP Address"]
@@ -195,13 +213,14 @@ class Command(BaseCommand):
 					cmdbdevice.comp_location = record["Location"]
 					cmdbdevice.comments = record["Comments"]
 					cmdbdevice.description = record["Description"]
+					cmdbdevice.derived_os_endoflife = derived_os_endoflife
 					#cmdbdevice.billable = record["Billable"] #finnes ikke lenger i denne rapporten
 
 
 					sub_name = bss_cache(record["Service"])
 					if sub_name == None:
 						print('Business sub service %s for %s finnes ikke' % (record["Service"], comp_name))
-					cmdbdevice.sub_name = sub_name # det er OK at den er None
+					cmdbdevice.service_offerings.add(sub_name) # det er OK at den er None
 					#else:
 					#	server_dropped += 1
 					#	continue
@@ -282,12 +301,19 @@ class Command(BaseCommand):
 						devices_set_inactive += 1
 						item.save()
 
+				# telle servere med flere service offerings-koblinger
+				from django.db.models import Count
+				servere_flere_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=1)
+				#print(f"Det er {len(servere_flere_offerings)} servere med flere koblinger til service offerings.")
+				servere_flereennto_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=2)
+				#print(f"Det er {len(servere_flereennto_offerings)} servere med flere enn 2 koblinger til service offerings.")
+
 
 				#oppsummering og logging
 				runtime_t1 = time.time()
 				total_runtime = round(runtime_t1 - runtime_t0, 1)
 
-				logg_entry_message = f'Fant {antall_records} maskiner. {antall_servere} av disse er servere. {server_dropped} manglet navn eller tilhørighet. Satte {devices_set_inactive} servere inaktiv. Tok {total_runtime} sekunder'
+				logg_entry_message = f'Fant {antall_records} maskiner. {antall_servere} av disse er servere. {server_dropped} manglet navn eller tilhørighet. Satte {devices_set_inactive} servere inaktiv. Tok {total_runtime} sekunder. Det er {len(servere_flere_offerings)} servere med flere koblinger til service offerings, og {len(servere_flereennto_offerings)} med flere enn 2.'
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,

@@ -64,8 +64,11 @@
 			<br><a href="{{ url_ad }}">(søk AD)</a>
 		</td>
 		<td>
-			{% url 'cmdb_bss' pk=maskin.sub_name.pk as url_bss %}
-			<a href="{{ url_bss }}">{{ maskin.sub_name.navn }}</a>
+			{% for offering in maskin.service_offerings.all %}
+				{% url 'cmdb_bss' pk=offering.pk as url_bss %}
+				<a href="{{ url_bss }}">{{ offering.navn }}</a>
+				{% if not forloop.last %}<br>{% endif %}
+			{% endfor %}
 		</td>
 		{% if vis_detaljer %}
 		<td>
@@ -122,9 +125,11 @@
 			{% endfor %}
 		</td>
 		<td>
-			{% if maskin.sub_name.system %}
-				{{maskin.sub_name.system.systemeier_kontaktpersoner_referanse.all.0}}
-			{% endif %}
+			{% for offering in maskin.service_offerings.all %}
+				{% if offering.system %}
+					{{offering.system.systemeier_kontaktpersoner_referanse.all.0}}
+				{% endif %}
+			{% endfor %}
 		</td>
 
 	</tr>
