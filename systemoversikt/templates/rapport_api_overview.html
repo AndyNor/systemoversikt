@@ -1,0 +1,33 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	API-er i Kartoteket
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>De fleste av API-ene krever API-nøkkel for å kunne brukes</p>
+
+<ul>
+	<li><a href="/tjenestekatalogen/forvaltere/">/tjenestekatalogen/forvaltere/</a></li>
+	<li><a href="/tjenestekatalogen/systemer/">/tjenestekatalogen/systemer/</a></li>
+	<li><a href="/cmdb/api/">/cmdb/api/</a></li>
+	<li><a href="/cmdb/csirt_api/">/cmdb/csirt_api/</a></li>
+	<li><a href="/cmdb/api/kompass/">/cmdb/api/kompass/</a></li>
+	<li><a href="/systemer/api/">/systemer/api/</a></li>
+	<li><a href="/virksomhet/(?P<virksomhet_pk>\d+)/excelapi/">/virksomhet/(?P<virksomhet_pk>\d+)/excelapi/</a></virksomhet_pk>
+	<li><a href="/systemer/iga/api/">/systemer/iga/api/</a></li>
+	<li><a href="/systemer/behandlingsoversikt/api/">/systemer/behandlingsoversikt/api/</a></li>
+	<li><a href="/api/vav/akva/">/api/vav/akva/</a></li>
+	<li><a href="/get-api/tilgangsgrupper/">/get-api/tilgangsgrupper/</a></li>
+	<li><a href="/ukecsirt/ipsok/api/">/ukecsirt/ipsok/api/</a></li>
+	<li><a href="/get-api/tilganger/">/get-api/tilganger/</a></li>
+	<li><a href="/api/programvare/">/api/programvare/</a> (åpen, brukes av sårbarhetsoversikten)
+</li>
+
+{% endblock hovedinnhold %}

@@ -2163,7 +2163,6 @@ def ansatte_virksomhet(request, pk):
 				pass
 		group["adgroup_members_clean"] = list(adgroup_members_clean)
 
-
 	# slå opp for hver bruker ny lisens
 	for bruker in brukere:
 		match = False
@@ -2358,7 +2357,7 @@ def virksomhet_leverandortilgang(request, pk=None):
 	for profile in levprofiler:
 		for system in profile.systemer.all():
 			if system.systemforvalter == virksomhet:
-				relevante_grupper.append(profile.adgruppe)
+				relevante_grupper.extend(profile.adgrupper.all())
 
 	users = list()
 	for gruppe in relevante_grupper:
@@ -4604,6 +4603,19 @@ def virksomhet_enheter(request, pk):
 		'units': units,
 		'virksomhet': virksomhet,
 		'avhengigheter_graf': avhengigheter_graf,
+	})
+
+
+def api_overview(request):
+	#Vise informasjon brukere som har leverandørtilgang
+	required_permissions = ['auth.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+	return render(request, 'rapport_api_overview.html', {
+		"request": request,
+		"required_permissions": required_permissions,
 	})
 
 

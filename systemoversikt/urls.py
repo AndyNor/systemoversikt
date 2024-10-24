@@ -30,8 +30,10 @@ router.register(r'behandling', apiviews.VirksomhetViewSet)
 favicon_view = RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=True)
 
 urlpatterns = [
-	path('api/', include(router.urls)),
-	path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+	#path('api/', include(router.urls)),
+	#path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+
+
 
 	re_path(r'^favicon\.ico$', favicon_view),
 	re_path(r'^debug_info$', views.debug_info, name='debug_info'),
@@ -74,7 +76,6 @@ urlpatterns = [
 	re_path(r'^brukere/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
 	re_path(r'^brukere/adgruppe/(?P<pk>\d{1,8})/$', views.adgruppe_detaljer, name='adgruppe_detaljer'),
 	re_path(r'^brukere/adgruppe_graf/(?P<pk>\d{1,8})/$', views.adgruppe_graf, name='adgruppe_graf'),
-
 	re_path(r'^brukere/prk/$', views.alle_prk, name='alle_prk'),
 	re_path(r'^brukere/prk_browse/$', views.prk_browse, name='prk_browse'),
 	re_path(r'^brukere/prk_browse/(?P<skjema_id>\d{1,8})/$', views.prk_skjema, name='prk_skjema'),
@@ -94,11 +95,9 @@ urlpatterns = [
 	re_path(r'^brukere/ad_gruppeanalyse/$', views.ad_gruppeanalyse, name='ad_gruppeanalyse'),
 
 
-
-
 	re_path(r'^rapport/startside/$', views.rapport_startside, name='rapport_startside'),
 	re_path(r'^rapport/sikkerhetsavvik/$', views.o365_avvik, name='o365_avvik'),
-	re_path(r'^rapport/o365_lisenser/$', views.o365_lisenser, name='o365_lisenser'),
+	#re_path(r'^rapport/o365_lisenser/$', views.o365_lisenser, name='o365_lisenser'),
 	re_path(r'^rapport/ad/drifttilgang/$', views.drifttilgang, name='drifttilgang'),
 	re_path(r'^rapport/ad/tbrukere/$', views.tbrukere, name='tbrukere'),
 	re_path(r'^rapport/ad/spn/$', views.alle_spn, name='alle_spn'),
@@ -113,29 +112,40 @@ urlpatterns = [
 	re_path(r'^rapport/integrasjoner/status/$', views.rapport_cmdb_status, name='rapport_cmdb_status'),
 	re_path(r'^rapport/ad/identer/$', views.rapport_ad_identer, name='rapport_ad_identer'),
 	re_path(r'^rapport/ad/adgrupper/$', views.rapport_ad_adgrupper, name='rapport_ad_adgrupper'),
+	re_path(r'^rapport/hovedkategorier/alle/$', views.alle_hovedkategorier, name='alle_hovedkategorier'),
+	re_path(r'^rapport/hovedkategorier/subkategorier/$', views.alle_systemkategorier, name='alle_systemkategorier'),
+	re_path(r'^rapport/hovedkategorier/subkategorier/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
+	re_path(r'^rapport/hovedkategorier/subkategorier/uten_kategori/$', views.uten_systemkategori, name='uten_systemkategorier'),
+	re_path(r'^rapport/hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
+	re_path(r'^rapport/forvalteroversikt/$', views.alle_systemer_forvaltere, name='alle_systemer_forvaltere'),
+	#re_path(r'^rapport/smartkartlegging/$', views.alle_systemer_smart, name='alle_systemer_smart'),
+	re_path(r'^rapport/endoflife/$', views.systemer_EOL, name='systemer_EOL'),
+	re_path(r'^rapport/utfaset/$', views.systemer_utfaset, name='systemer_utfaset'),
+	re_path(r'^rapport/via_citrix/$', views.systemer_citrix, name='systemer_citrix'),
+	re_path(r'^rapport/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),
+	re_path(r'^rapport/kritiske_funksjoner/$', views.system_kritisk_funksjon, name='system_kritisk_funksjon'),
+	re_path(r'^rapport/informasjonsbehandling/$', views.system_informasjonsbehandling, name='system_informasjonsbehandling'),
+	re_path(r'^rapport/los_struktur/$', views.system_los_struktur, name='system_los_struktur_indeks'),
+	re_path(r'^rapport/los_struktur/(?P<pk>\d{1,8})/$', views.system_los_struktur, name='system_los_struktur'),
+	re_path(r'^rapport/vurderinger/$', views.systemer_vurderinger, name='systemer_vurderinger'),
+	re_path(r'^rapport/leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
+	re_path(r'^rapport/leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
+	re_path(r'^rapport/leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),
+	re_path(r'^rapport/api/', views.api_overview, name="api_overview"),
+
 
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
-	re_path(r'^systemer/forvalteroversikt/$', views.alle_systemer_forvaltere, name='alle_systemer_forvaltere'),
-	re_path(r'^systemer/smartkartlegging/$', views.alle_systemer_smart, name='alle_systemer_smart'),
 	re_path(r'^systemer/pakket/$', views.systemer_pakket, name='systemer_pakket'),
-	re_path(r'^systemer/vurderinger/$', views.systemer_vurderinger, name='systemer_vurderinger'),
-	re_path(r'^systemer/FIP/endoflife/$', views.systemer_EOL, name='systemer_EOL'),
 	re_path(r'^systemer/detaljer/(?P<pk>\d{1,8})/$', views.systemdetaljer, name='systemdetaljer'),
 	re_path(r'^systemer/bruk/$', views.mine_systembruk, name='mine_systembruk'),
-	re_path(r'^systemer/utfaset/$', views.systemer_utfaset, name='systemer_utfaset'),
 	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/$', views.bruksdetaljer, name='bruksdetaljer'),
 	re_path(r'^systemer/bruk/registrer_bruk/(?P<system>\d{1,8})/$', views.registrer_bruk, name='registrer_bruk'),
-	re_path(r'^programvare/bruk/registrer_bruk/(?P<programvare>\d{1,8})/$', views.registrer_bruk_programvare, name='registrer_bruk_programvare'),
 	re_path(r'^systemer/systemklassifisering/$', views.systemklassifisering_detaljer, name='systemklassifisering_tom'),
 	re_path(r'^systemer/systemklassifisering/(?P<kriterie>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	re_path(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),
 	re_path(r'^systemer/systemtype/tom/$', views.systemtype_detaljer, name='systemtype_detaljer_mangler'),
-	re_path(r'^systemer/kritiske_funksjoner/$', views.system_kritisk_funksjon, name='system_kritisk_funksjon'),
-	re_path(r'^systemer/informasjonsbehandling/$', views.system_informasjonsbehandling, name='system_informasjonsbehandling'),
-	re_path(r'^systemer/los_struktur/$', views.system_los_struktur, name='system_los_struktur_indeks'),
-	re_path(r'^systemer/los_struktur/(?P<pk>\d{1,8})/$', views.system_los_struktur, name='system_los_struktur'),
-	re_path(r'^systemer/via_citrix/$', views.systemer_citrix, name='systemer_citrix'),
+
 
 
 	re_path(r'^behandlinger/user/$', views.mine_behandlinger, name='mine_behandlinger'),
@@ -183,22 +193,11 @@ urlpatterns = [
 	re_path(r'^virksomhet/systemer/forvalter/sikkerhetsvurderinger/(?P<pk>\d{1,8})/$', views.virksomhet_forvalter_isk, name='virksomhet_forvalter_isk'),
 
 
-
-	re_path(r'^leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
-	re_path(r'^leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
-	re_path(r'^leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),
-
-
-	re_path(r'^hovedkategorier/alle/$', views.alle_hovedkategorier, name='alle_hovedkategorier'),
-	re_path(r'^hovedkategorier/subkategorier/$', views.alle_systemkategorier, name='alle_systemkategorier'),
-	re_path(r'^hovedkategorier/subkategorier/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
-	re_path(r'^hovedkategorier/subkategorier/uten_kategori/$', views.uten_systemkategori, name='uten_systemkategorier'),
-	re_path(r'^hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
-
-
 	re_path(r'^programvare/alle/$', views.alle_programvarer, name='alle_programvarer'),
 	re_path(r'^programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
 	re_path(r'^programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
+	re_path(r'^programvare/bruk/registrer_bruk/(?P<programvare>\d{1,8})/$', views.registrer_bruk_programvare, name='registrer_bruk_programvare'),
+
 
 	re_path(r'^ansvarlige/alle/$', views.alle_ansvarlige, name='alle_ansvarlige'),
 	re_path(r'^ansvarlige/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),
@@ -237,6 +236,8 @@ urlpatterns = [
 	re_path(r'^cmdb/citrix/apps/(?P<pk>\d{1,8})/$', views.alle_citrixpub, name='citrixpub_for_system'),
 	re_path(r'^cmdb/citrix/desktop_group/$', views.citrix_desktop_group, name='citrix_desktop_group'),
 
+
+
 	re_path(r'^tools/unique$', views.tool_unique_items, name='tool_unique_items'),
 	re_path(r'^tools/compare$', views.tool_compare_items, name='tool_compare_items'),
 	re_path(r'^tools/docx2html$', views.tool_docx2html, name='tool_docx2html'),
@@ -253,7 +254,7 @@ urlpatterns = [
 
 	re_path(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
 	re_path(r'^driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
-	re_path(r'^driftsmodell/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),
+
 
 
 	re_path(r'^virksomhet/drift/prioriteringer/$', views.drift_beredskap_redirect, name='drift_beredskap_redirect'),
@@ -280,7 +281,6 @@ urlpatterns = [
 	re_path(r'^ubw/ekstra/(?P<faktura_id>\d+)/(?P<pk>\d+)/$', views.ubw_ekstra, name='ubw_ekstra_edit'),
 	re_path(r'^ubw/kategori/(?P<belongs_to>\d+)/$', views.ubw_kategori, name='ubw_kategori'),
 	re_path(r'^ubw/endreenhet/(?P<belongs_to>\d+)/$', views.ubw_endreenhet, name='ubw_endreenhet'),
-
 	re_path(r'^ubw/(?P<belongs_to>\d+)/estimat/$', views.ubw_estimat_list, name='ubw_estimat_list'),
 	re_path(r'^ubw/(?P<belongs_to>\d+)/estimat/create/$', views.ubw_estimat_create, name='ubw_estimat_create'),
 	re_path(r'^ubw/(?P<belongs_to>\d+)/estimat/(?P<pk>\d+)/update/$', views.ubw_estimat_update, name='ubw_estimat_update'),
@@ -288,15 +288,18 @@ urlpatterns = [
 	re_path(r'^ubw/estimat/(?P<pk>\d+)/copy/$', views.ubw_estimat_copy, name='ubw_estimat_copy'),
 	re_path(r'^ubw/multiselect/$', views.ubw_multiselect, name='ubw_multiselect'),
 
+
+
 	re_path(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),
 	re_path(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),
 
+
+	# Alle API-er
 	re_path(r'^tjenestekatalogen/forvaltere/$', views.tjenestekatalogen_forvalter_api, name='tjenestekatalogen_forvalter_api'), # brukes av UKE/tjenestekatalogen. Bruker API-nøkkel.
 	re_path(r'^tjenestekatalogen/systemer/$', views.tjenestekatalogen_systemer_api, name='tjenestekatalogen_systemer_api'), # brukes av UKE/tjenestekatalogen. Bruker API-nøkkel.
 	re_path(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'), # (det er innført behov for API-key)
 	re_path(r'^cmdb/csirt_api/$', views.csirt_api, name='csirt_api'), # (det er innført behov for API-key)
 	re_path(r'^cmdb/api/kompass/$', views.cmdb_api_kompass, name='cmdb_api_kompass'), # (det er innført behov for API-key)
-	#re_path(r'^cmdb/api/test/$', views.cmdb_api_new, name='cmdb_api_new'), # (det er innført behov for API-key)
 	re_path(r'^systemer/api/$', views.systemer_api, name='systemer_api'), # (det er innført behov for API-key)
 	re_path(r'^virksomhet/(?P<virksomhet_pk>\d+)/excelapi/$', views.system_excel_api, name='system_excel_api'), # det må brukes API-key
 	re_path(r'^systemer/iga/api/$', views.iga_api, name='iga_api'), # (det er innført behov for API-key)
@@ -304,9 +307,9 @@ urlpatterns = [
 	re_path(r'^api/vav/akva/$', views.vav_akva_api, name='vav_akva_api'), # (det er innført behov for API-key)
 	re_path(r'^get-api/tilgangsgrupper/$', views.tilgangsgrupper_api, name='tilgangsgrupper_api'), # (det er innført behov for API-key)
 	re_path(r'^ukecsirt/ipsok/api/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # (det er innført behov for API-key)
-	#re_path(r'^ukecsirt/maskinsok/api/$', views.csirt_maskinlookup_api, name='csirt_maskinlookup_api'), # (det er innført behov for API-key)
 	re_path(r'^get-api/tilganger/$', views.get_api_tilganger, name='get_api_tilganger'), # (det er innført behov for API-key)
 	re_path(r'^api/programvare/$', views.api_programvare, name='api_programvare'), # (det er innført behov for API-key)
+
 
 
 	# import og konvertering

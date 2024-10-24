@@ -1198,7 +1198,7 @@ class Profile(models.Model):
 					break
 			return enhet
 		except:
-			return "Ukjent avdeling"
+			return None
 
 	def ou_lesbar(self):
 		if self.distinguishedname != None:

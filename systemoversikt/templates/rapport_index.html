@@ -21,7 +21,7 @@
 		<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if url_system_informasjonsbehandling in request.path %}fremhev{% endif %}">Informasjonsklassifisering</a><br>
 
 		{% url 'isk_ansvarlig_for_system' as url_isk_ansvarlig_for_system %}
-		<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">Systemer mot ISK</a><br>
+		<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">ISK per system</a><br>
 
 
 
@@ -39,9 +39,6 @@
 
 	<hr><h6>Systemperspektiver</h6>
 
-		{% url 'alle_systemer' as url_alle_systemer %}
-		<a href="{{url_alle_systemer}}" class="btn btn-sm btn-link {% if url_alle_systemer in request.path %}fremhev{% endif %}">Systemer</a><br>
-
 		{% url 'systemer_citrix' as url_systemer_citrix %}
 		<a href="{{url_systemer_citrix}}" class="btn btn-sm btn-link {% if url_systemer_citrix in request.path %}fremhev{% endif %}">Systemer på Citrix</a><br>
 
@@ -57,14 +54,9 @@
 		{% url 'systemer_vurderinger' as url_systemer_vurderinger %}
 		<a href="{{ url_systemer_vurderinger }}" class="btn btn-sm btn-link {% if url_systemer_vurderinger in request.path %}fremhev{% endif %}">Systemvurderinger</a><br>
 
-		{% url 'alle_systemer_smart' as url_systemsmart %}
-		<a href="{{ url_systemsmart }}" class="btn btn-sm btn-link {% if url_systemsmart in request.path %}fremhev{% endif %}">SMART-kartlegging</a><br>
-
 		{% url 'alle_leverandorer' as alle_leverandorer_url %}
 		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Leverandører</a><br>
 
-		{% url 'systemer_pakket' as url_systemer_pakket %}
-		<a href="{{url_systemer_pakket}}" class="btn btn-sm {% if url_systemer_pakket in request.path %}fremhev{% endif %}">Programvarepakking</a><br>
 
 
 	<hr><h6>For Azure forvaltningen</h6>
@@ -83,7 +75,7 @@
 	<hr><h6>Active Directory</h6>
 
 		{% url 'rapport_ad_identer' as url_rapport_ad_identer %}
-		<a href="{{ url_rapport_ad_identer }}" class="btn btn-sm btn-link {% if url_rapport_ad_identer in request.path %}fremhev{% endif %}">Identstatistikk</a><br>
+		<a href="{{ url_rapport_ad_identer }}" class="btn btn-sm btn-link {% if url_rapport_ad_identer in request.path %}fremhev{% endif %}">AD-identnedbryting</a><br>
 
 		{% url 'tbrukere' as url_tbrukere %}
 		<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a><br>
@@ -108,16 +100,13 @@
 		<a href="{{ url_drifttilgang }}?kilde=servicekontoer" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Servicekontoer</a><br>
 
 
-
-
-	<hr><h6>Annet</h6>
+	<hr><h6>Kartotekets integrasjoner</h6>
 
 		{% url 'rapport_cmdb_status' as url_rapport_cmdb_status %}
 		<a href="{{ url_rapport_cmdb_status }}" class="btn btn-sm btn-link {% if url_rapport_cmdb_status in request.path %}fremhev{% endif %}">CMDB integrasjonsstatus</a><br>
 
-		{% url 'o365_lisenser' as url_o365_lisenser %}
-		<a href="{{ url_o365_lisenser }}" class="btn btn-sm btn-link {% if url_o365_lisenser in request.path %}fremhev{% endif %}">o365 lisenser</a><br>
-
+		{% url 'api_overview' as url_api_overview %}
+		<a href="{{ url_api_overview }}" class="btn btn-sm btn-link {% if url_api_overview in request.path %}fremhev{% endif %}">Kartotekets API-er</a><br>
 
 
 {% endblock sidemeny %}

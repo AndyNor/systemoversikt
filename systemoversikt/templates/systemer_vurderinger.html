@@ -1,15 +1,9 @@
-{% extends "system_index.html" %}
+{% extends "rapport_index.html" %}
 {% load static %}
 
 {% block ekstrameny_programvare %}
 
-	{% if user.is_authenticated %}
-		<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer programvare</a>
-
-		{% url 'systemer_pakket' as url_systemer_pakket %}
-			<a href="{{url_systemer_pakket}}" class="btn btn-sm {% if url_systemer_pakket in request.path %}fremhev{% endif %}">Programvarepakking</a>
-	{% endif %}
-
+	<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Registrer programvare</a>
 
 {% endblock ekstrameny_programvare %}
 

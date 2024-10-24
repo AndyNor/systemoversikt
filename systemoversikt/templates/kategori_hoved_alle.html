@@ -1,4 +1,4 @@
-{% extends "system_index.html" %}
+{% extends "rapport_index.html" %}
 {% load static %}
 
 {% block overskrift %}
@@ -12,9 +12,7 @@
 	<table class="tablesorter excel">
 	<thead>
 	<tr>
-		{% if user.is_authenticated %}
 		<th class="filter-false">Endre</th>
-		{% endif %}
 		<th>Hovedkategori</th>
 		<th>Totalt antall systemer</th>
 		<th>Totalt antall programvarer</th>
@@ -24,9 +22,7 @@
 	<tbody>
 	{% for hovedkat in hovedkategorier %}
 	<tr>
-		{% if user.is_authenticated %}
 		<td><a href="/admin/systemoversikt/systemhovedkategori/{{ hovedkat.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
-		{% endif %}
 		<td>{{ hovedkat }}</td>
 		<td>
 			{{ hovedkat.systemteller }}

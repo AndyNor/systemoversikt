@@ -35,8 +35,8 @@
 			<td>{{ b.profile.displayName }}</td>
 			<td>{{ b.ny365lisens }}</td>
 			<td>{{ b.email }}</td>
-			<td>{{ b.profile.avdeling }}</td>
-			<td>{{ b.profile.org_unit }}</td>
+			<td>{{ b.profile.avdeling|default:"-" }}</td>
+			<td>{{ b.profile.org_unit|default:"-" }}</td>
 		</tr>
 		{% endfor %}
 	</tbody>
