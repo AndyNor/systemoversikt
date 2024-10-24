@@ -61,8 +61,8 @@
 			<tbody>
 			{% for modell in maskiner_model_stats %}
 				<tr>
-					<td>{{ modell.model_id|default:"Ukjent" }}</td>
-					<td>{{ modell.model_id__count }}</td>
+					<td>{{ modell.client_model_id|default:"Ukjent" }}</td>
+					<td>{{ modell.client_model_id__count }}</td>
 				</tr>
 			{% endfor %}
 			</tbody>
@@ -108,11 +108,10 @@
 			{{ maskin.comments|default:"-" }}
 		</td>
 		<td>
-			{{ maskin.model_id|default:"-" }}
+			{{ maskin.client_model_id|default:"-" }}
 		</td>
 		<td>
-			{{ maskin.comp_location|default:"-" }} / {{ maskin.maskinadm_virksomhet_str|default:"-" }} / {{ maskin.maskinadm_lokasjon|default:"-" }}<br>
-			{{ maskin.maskinadm_klienttype|default:"-" }} {{ maskin.maskinadm_sone|default:"-" }}<br>
+			{{ maskin.comp_location|default:"-" }}<br>
 		</td>
 		<td>
 			Disk: {{ maskin.comp_disk_space|default:"-" }} Bytes <br>
@@ -132,9 +131,7 @@
 			{{ maskin.comp_os_service_pack }}
 		</td>
 		<td>
-			{% if maskin.landesk_login %}
-				{{ maskin.landesk_login }}<br>{{maskin.maskinadm_status}}
-			{% endif %}
+			---
 		</td>
 
 	</tr>

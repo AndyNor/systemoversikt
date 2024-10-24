@@ -22,24 +22,17 @@
 <thead>
 	<th>Maskinnavn</th>
 	<th>Type</th>
-	<th>Sikkerhetssone</th>
-	<th>Lokasjon (maskinadm)</th>
-	<th>Sist innlogget (landesk)</th>
-	<th>Sist sett (landesk)</th>
-	<th>Status (maskinadm)</th>
+	<th>Sist innlogget</th>
 	<th>Windows-versjon</th>
 </thead>
 <tbody>
 {% for klient in alle_klienter_hos_virksomhet %}
 	<tr>
 		<td>{{ klient.comp_name }}</td>
-		<td>{{ klient.landesk_manufacturer }}</td>
-		<td>{{ klient.maskinadm_sone }}</td>
-		<td>{{ klient.maskinadm_lokasjon }}</td>
-		<td>{{ klient.landesk_login|default:"-" }}</td>
-		<td>{{ klient.landesk_sist_sett|date:'Y-m-d'|default:"-" }}</td>
-		<th>{{ klient.maskinadm_status|default:"" }}</td>
-		<th {% if klient.utdatert %} style="background-color: #ff9292" {% endif %}>{{ klient.landesk_os_release }}</td>
+		<td>---</td>
+		<td>---</td>
+		<td>{{ klient.client_sist_sett|date:'Y-m-d'|default:"-" }}</td>
+		<th>---</td>
 	</tr>
 {% endfor %}
 </tbody>

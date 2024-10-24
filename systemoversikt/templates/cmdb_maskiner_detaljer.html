@@ -158,7 +158,6 @@
 			<td><a href="{{url_cmdb_devicedetails}}">{{ item.comp_name|default:"-" }}</a></td>
 			<td>
 				{% include 'site_janeivetikke.html' with boolean=item.device_active %}
-				{% comment %}{{ item.vm_poweredon|yesno:"Påskrudd, Avskrudd" }}{% endcomment %}
 			</td>
 			<td>
 				{{ item.comp_os }} {{ item.comp_os_version|default:"-" }} {{ item.comp_os_service_pack|default:"-" }}
@@ -167,17 +166,7 @@
 			<td>{{ item.comp_ram_byes|filesizeformat }}</td>
 			<td>
 				Allokert: {{ item.comp_disk_space|filesizeformat }} (Type {{ item.vm_disk_tier }})<br>
-				Benyttet: {{ item.vm_disk_usage|filesizeformat }}
-				<br>
-				{% comment %}
-				{% for disk in item.cmdbdisk_computer.all %}
-					{% if disk.operational_status %}
-						<li>
-						{{ disk.file_system}} {{disk.free_space_bytes|filesizeformat}} of {{disk.size_bytes|filesizeformat}} ({{ disk.mount_point|truncatechars:35 }})</li>
-					{% endif %}
-				{% endfor %}
-				{% endcomment %}
-
+				Benyttet: {{ item.vm_disk_usage|filesizeformat }}<br>
 			</td>
 			<td>
 				{% for b in item.backup_size %}

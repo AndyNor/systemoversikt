@@ -179,13 +179,6 @@ class LOSAdmin(admin.ModelAdmin):
 		qs = super().get_queryset(request)
 		return qs.filter(~Q(parent_id=None)) # ønsker ikke hovedtema. Hovedtema har ikke noen parent.
 
-"""
-@admin.register(Klientutstyr)
-class KlientutstyrAdmin(admin.ModelAdmin):
-	list_display = ('maskinadm_wsnummer', 'maskinadm_virksomhet', 'maskinadm_virksomhet_str', 'maskinadm_klienttype', 'maskinadm_sone', 'maskinadm_servicenivaa', 'maskinadm_sist_oppdatert')
-	search_fields = ('maskinadm_wsnummer',)
-	list_filter = ('maskinadm_servicenivaa', 'maskinadm_sone', 'maskinadm_klienttype', 'maskinadm_virksomhet', 'maskinadm_sist_oppdatert')
-"""
 
 @admin.register(virtualIP)
 class virtualIPAdmin(admin.ModelAdmin):
@@ -574,12 +567,6 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 					'rutine_klage_behandling',
 				),
 			}),
-			('Utfaset', {
-				'classes': ('collapse',),
-				'fields': (
-					'ansatte',
-				),
-			})
 		)
 
 	def save_model(self, request, obj, form, change):
@@ -1473,10 +1460,10 @@ class AutorisertBestillerAdmin(SimpleHistoryAdmin):
 @admin.register(CMDBdevice)
 class CMDBdeviceAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('comp_name', 'device_type', 'sist_oppdatert', 'model_id', 'sist_sett', 'last_loggedin_user', 'device_active', 'kilde_cmdb', 'kilde_prk', 'kilde_landesk', 'maskinadm_status', 'maskinadm_virksomhet_str', 'comp_ip_address', 'comp_os_readable', 'comp_ram', 'dns', 'vlan')
+	list_display = ('comp_name', 'device_type', 'sist_oppdatert', 'client_model_id', 'client_sist_sett', 'client_last_loggedin_user', 'device_active', 'kilde_cmdb', 'comp_ip_address', 'comp_os_readable', 'comp_ram', 'dns', 'vlan')
 	search_fields = ('comp_name', 'comments', 'description')
-	list_filter = ('device_active', 'device_type', 'comp_os_readable', 'sist_sett', 'kilde_cmdb', 'kilde_prk', 'kilde_landesk', 'maskinadm_status', 'maskinadm_klienttype', 'landesk_manufacturer', 'landesk_os_release', 'landesk_os', 'maskinadm_virksomhet',)
-	autocomplete_fields = ('last_loggedin_user', 'maskinadm_virksomhet', 'landesk_login')
+	list_filter = ('device_active', 'device_type', 'comp_os_readable', 'client_sist_sett', 'kilde_cmdb',)
+	autocomplete_fields = ('client_last_loggedin_user',)
 	filter_horizontal = ('service_offerings',)
 
 @admin.register(CMDBDisk)

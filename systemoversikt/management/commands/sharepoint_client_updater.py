@@ -241,17 +241,13 @@ class Command(BaseCommand):
 					cmdbdevice.kilde_cmdb = True
 					cmdbdevice.comp_os = record["Operating System"]
 					cmdbdevice.comp_os_readable = os_readable
-					cmdbdevice.model_id = record["Model ID"]
-					cmdbdevice.sist_sett = str_to_date(str(record["Most recent discovery"]))
-					cmdbdevice.last_loggedin_user_id = str_to_user(record["Owner"]) #_id setter direkte uten å først hente ned modelreferanse
-
-					# fjernes siden
-					cmdbdevice.maskinadm_virksomhet = cmdbdevice.last_loggedin_user.profile.virksomhet if cmdbdevice.last_loggedin_user else None
-					cmdbdevice.maskinadm_sist_oppdatert = cmdbdevice.sist_sett
-					cmdbdevice.landesk_login = cmdbdevice.last_loggedin_user
+					cmdbdevice.client_model_id = record["Model ID"]
+					cmdbdevice.client_sist_sett = str_to_date(str(record["Most recent discovery"]))
+					cmdbdevice.client_last_loggedin_user_id = str_to_user(record["Owner"]) #_id setter direkte uten å først hente ned modelreferanse
+					cmdbdevice.client_virksomhet = cmdbdevice.client_last_loggedin_user.profile.virksomhet if cmdbdevice.client_last_loggedin_user else None
 					cmdbdevice.device_type = "KLIENT"
-					cmdbdevice.save()
 
+					cmdbdevice.save()
 
 
 				# Opprydding av gamle ting ikke sett ved oppdatering

@@ -1866,20 +1866,6 @@ def cmdb_minne_index(request):
 
 
 
-def cmdb_servere_disabled_poweredon(request):
-	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	inaktive_servere_poweredon = CMDBdevice.objects.filter(device_active=False, vm_poweredon=True)
-	return render(request, 'cmdb_servere_disabled_poweredon.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'inaktive_servere_poweredon': inaktive_servere_poweredon,
-	})
-
-
-
 def cmdb_ad_flere_brukeridenter(request):
 	#Viser informasjon om personer med mer enn 1 brukerident
 	required_permissions = ['auth.view_user']
@@ -2153,44 +2139,15 @@ def ansatte_virksomhet(request, pk):
 	brukere = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False)
 
 	# relevante grupper knyttet til lisens
-	ad_grupper = [
-		{"gruppe":"DS-OFFICE365_BASIS_STANDARD", "navn": "Office 365 E1"},
-		{"gruppe":"DS-OFFICE365E5S_BASIS_STANDARDE1", "navn": "Office 365 E1"},
-		{"gruppe":"DS-OFFICE365SPES_BOOKINGS_O365E1", "navn": "Office 365 E1"},
-
-		{"gruppe":"DS-OFFICE365_BASIS_OPPOE3", "navn": "Office 365 E3"},
-		{"gruppe":"DS-OFFICE365_BASIS_STANDARD_O365E3", "navn": "Office 365 E3"},
-		{"gruppe":"DS-OFFICE365SPES_BOOKINGS_O365E3", "navn": "Office 365 E3"},
-
-		{"gruppe":"DS-OFFICE365_BASIS_STANDARD_M365E3", "navn": "Microsoft 365 E3"},
-		{"gruppe":"DS-OFFICE365E5S_BASIS_STANDARDE3", "navn": "Microsoft 365 E3"},
-		{"gruppe":"DS-OFFICE365SPES_BOOKINGS_M365E3", "navn": "Microsoft 365 E3"},
-	]
-
 	nye_adgrupper = [
 		{"gruppe":"Task-OF2-Lisens-O365-G1", "navn": "G1 Standardklient"},
 		{"gruppe":"Task-OF2-Lisens-O365-G2", "navn": "G2 Flerbruker"},
 		{"gruppe":"Task-OF2-Lisens-O365-G3", "navn": "G3 Uten e-post"},
 		{"gruppe":"Task-OF2-Lisens-O365-G4", "navn": "G4 Education"},
+		{"gruppe":"Task-OF2-Lisens-O365-G5", "navn": "G5 Beskrivelse?"}
 	]
 
-	#bufre alle gruppemedlemmer direkte under var ad_grupper
-	for idx, group in enumerate(ad_grupper):
-		try:
-			adgroup = ADgroup.objects.get(common_name=group["gruppe"])
-		except:
-			continue
-
-		adgroup_members = json.loads(adgroup.member)
-		adgroup_members_clean = set()
-		for m in adgroup_members:
-			try:
-				adgroup_members_clean.add(m.split(",")[0].split("=")[1].lower())
-			except:
-				pass
-		group["adgroup_members_clean"] = list(adgroup_members_clean)
-
-	#bufre alle gruppemedlemmer direkte under var nye_adgrupper
+	#bufre alle gruppemedlemmer direkte under nye_adgrupper
 	for idx, group in enumerate(nye_adgrupper):
 		try:
 			adgroup = ADgroup.objects.get(common_name=group["gruppe"])
@@ -2206,20 +2163,6 @@ def ansatte_virksomhet(request, pk):
 				pass
 		group["adgroup_members_clean"] = list(adgroup_members_clean)
 
-	# slå opp for hver bruker gammel lisens
-	for bruker in brukere:
-		match = False
-		for group in ad_grupper:
-			try:
-				members = group["adgroup_members_clean"]
-			except:
-				members = [] # skjer dersom gruppen ikke finnes
-			if bruker.username.lower() in members:
-				bruker.dagens365lisens = group["navn"]
-				match = True
-				break
-		if not match:
-			bruker.dagens365lisens = "-"
 
 	# slå opp for hver bruker ny lisens
 	for bruker in brukere:
@@ -2389,7 +2332,7 @@ def klienter_hos_virksomhet(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	alle_klienter_hos_virksomhet = CMDBdevice.objects.filter(maskinadm_virksomhet=virksomhet).filter(~(Q(maskinadm_status__in=["UTMELDT", "SLETTET"]) and Q(landesk_login=None)))
+	alle_klienter_hos_virksomhet = CMDBdevice.objects.filter(client_virksomhet=virksomhet).filter(~Q(client_last_loggedin_user=None))
 
 	return render(request, 'virksomhet_klientoversikt.html', {
 		'request': request,
@@ -6383,16 +6326,10 @@ def alle_klienter(request):
 	elif search_term == '__all__':
 		maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True)
 	else:
-		maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__icontains=search_term) | Q(model_id__icontains=search_term) | Q(maskinadm_virksomhet_str__icontains=search_term))
+		maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__icontains=search_term) | Q(client_model_id__icontains=search_term) )
 
-	alle_maskinadm_klienter = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(kilde_prk=True).count()
 	alle_cmdb_klienter = CMDBdevice.objects.filter(device_active=True).filter(device_type="KLIENT").count()
 
-	#klienter innmeldt i PRK som ikke er aktive i 2S CMDB
-	innmeldt_prk_inaktiv_snow = CMDBdevice.objects.filter(maskinadm_status="INNMELDT").filter(device_active=False).count()
-
-	#klienter utmeldt/slettet i PRK men aktive i 2S CMDB
-	utmeldtslettet_prk_aktiv_snow = CMDBdevice.objects.filter(~Q(maskinadm_status="INNMELDT")).filter(device_type="KLIENT").filter(device_active=True).count()
 
 	# klargjøring for statistikk
 	if maskiner == None:
@@ -6403,8 +6340,8 @@ def alle_klienter(request):
 	maskiner_os_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
 	maskiner_os_stats = sorted(maskiner_os_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
 
-	maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('model_id').annotate(Count('model_id'))
-	maskiner_model_stats = sorted(maskiner_model_stats, key=lambda os: os['model_id__count'], reverse=True)
+	maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('client_model_id').annotate(Count('model_id'))
+	maskiner_model_stats = sorted(maskiner_model_stats, key=lambda os: os['client_model_id__count'], reverse=True)
 
 	if maskiner != None:
 		maskiner = maskiner.order_by('comp_name')
@@ -6414,10 +6351,7 @@ def alle_klienter(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'maskiner': maskiner,
 		'device_search_term': search_term,
-		'alle_maskinadm_klienter': alle_maskinadm_klienter,
 		'alle_cmdb_klienter': alle_cmdb_klienter,
-		'innmeldt_prk_inaktiv_snow': innmeldt_prk_inaktiv_snow,
-		'utmeldtslettet_prk_aktiv_snow': utmeldtslettet_prk_aktiv_snow,
 		'maskiner_os_stats': maskiner_os_stats,
 		'maskiner_model_stats': maskiner_model_stats,
 
@@ -6708,7 +6642,7 @@ def cmdb_bss(request, pk):
 						})
 
 
-	backup_inst = CMDBbackup.objects.filter(bss=cmdbref)
+	backup_inst = CMDBbackup.objects.filter(device__service_offerings=cmdbref)
 
 	return render(request, 'cmdb_maskiner_detaljer.html', {
 		'request': request,

@@ -660,12 +660,6 @@ class Virksomhet(models.Model):
 			blank=True,
 			help_text=u"Dette feltet oppdateres av intern tjenesteleverandør.",
 			)
-	ansatte = models.IntegerField(
-			verbose_name="Antall ansatte",
-			blank=True,
-			null=True,
-			help_text=u"Her kan antall ansatte i virksomheten angis.",
-			)
 	intranett_url = models.URLField(
 			verbose_name="På intranett (internt)",
 			max_length=600,
@@ -810,8 +804,10 @@ class Virksomhet(models.Model):
 
 	def antall_klienter(self):
 		from django.db.models import Q
-		#return CMDBdevice.objects.filter(maskinadm_virksomhet=self).filter(~(Q(maskinadm_status__in=["UTMELDT", "SLETTET"]) and Q(landesk_login=None))).count()
-		return CMDBdevice.objects.filter(maskinadm_virksomhet=self).filter(device_active=True).count()
+		return CMDBdevice.objects.filter(client_virksomhet=self).filter(device_active=True).count()
+
+	def antall_brukeridenter(self):
+		return Profile.objects.filter(virksomhet=self).count()
 
 	def __str__(self):
 		return u'%s (%s)' % (self.virksomhetsnavn, self.virksomhetsforkortelse)
@@ -820,65 +816,6 @@ class Virksomhet(models.Model):
 		verbose_name_plural = "Virksomheter: virksomheter"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
-"""
-class ADUser(models.Model):
-	sAMAccountName = models.CharField(
-			verbose_name="sAMAccountName",
-			max_length=100,
-			blank=True, null=True,
-			help_text=u"importert",
-			)
-	distinguishedname = models.TextField(
-			verbose_name="distinguishedname",
-			unique=True,
-			help_text=u"importert",
-			)
-	userAccountControl = models.TextField(
-			verbose_name="userAccountControl",
-			blank=True, null=True,
-			help_text=u"importert",
-			)
-	description = models.TextField(
-			verbose_name="description",
-			blank=True, null=True,
-			help_text=u"importert",
-			)
-	displayName = models.CharField(
-			verbose_name="displayName",
-			max_length=300,
-			blank=True, null=True,
-			help_text=u"importert",
-			)
-	etternavn = models.CharField(
-			verbose_name="etternavn",
-			max_length=100,
-			blank=True, null=True,
-			help_text=u"importert",
-			)
-	fornavn = models.CharField(
-			verbose_name="fornavn",
-			max_length=100,
-			blank=True, null=True,
-			help_text=u"importert",
-			)
-	lastLogonTimestamp = models.DateTimeField(
-			verbose_name="lastLogonTimestamp",
-			null=True, blank=True,
-			help_text=u"importert",
-			)
-	from_prk = models.BooleanField(
-			verbose_name="Bruker fra PRK?",
-			default=False,
-			help_text="Importeres",
-			)
-	# med vilje er det ikke HistoricalRecords() på denne
-
-	def __str__(self):
-		return u'%s' % (self.sAMAccountName)
-
-	class Meta:
-		verbose_name_plural = "AD brukere (utenfor PRK)"
-"""
 
 class AnsattID(models.Model):
 	ansattnr = models.IntegerField()
@@ -1282,67 +1219,6 @@ class Profile(models.Model):
 				return "Ja"
 		return "Nei"
 
-"""
-class Klientutstyr(models.Model):
-	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
-	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
-	maskinadm_wsnummer = models.CharField(
-			verbose_name="WS-nummer",
-			max_length=20,
-			blank=True,
-			null=True,
-			)
-	maskinadm_virksomhet = models.ForeignKey(
-			to="Virksomhet",
-			on_delete=models.SET_NULL,
-			verbose_name="Tilhører virksomhet",
-			related_name='klientutstyr_virksomhet',
-			null=True,
-			blank=True,
-			)
-	maskinadm_virksomhet_str = models.CharField(
-			verbose_name="Virksomhet (tekst)",
-			max_length=30,
-			blank=True,
-			null=True,
-			)
-	maskinadm_klienttype = models.CharField(
-			verbose_name="Klienttype",
-			max_length=12,
-			blank=True,
-			null=True,
-			)
-	maskinadm_sone = models.CharField(
-			verbose_name="Sikkerhetssone",
-			max_length=6,
-			blank=True,
-			null=True,
-			)
-	maskinadm_servicenivaa = models.CharField(
-			verbose_name="Servicenivå",
-			max_length=2,
-			blank=True,
-			null=True,
-			)
-	maskinadm_sist_oppdatert = models.DateTimeField(
-			verbose_name="Maskinadm: sist_oppdatert",
-			null=True,
-			)
-
-	def __str__(self):
-		return u'%s' % (self.maskinadm_wsnummer)
-
-	class Meta:
-		verbose_name_plural = "PRK: klientutstyr"
-		default_permissions = ('add', 'change', 'delete', 'view')
-"""
 
 class Leverandor(models.Model):
 	opprettet = models.DateTimeField(
@@ -2018,7 +1894,7 @@ class CMDBRef(models.Model): # BSS
 
 
 	def backup_size(self):
-		total = CMDBbackup.objects.filter(bss=self).aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+		total = CMDBbackup.objects.filter(device__service_offerings=self).aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
 		if total == None:
 			return 0
 		return total
@@ -2722,18 +2598,18 @@ class CMDBdevice(models.Model):
 			default=False, # dersom PRK-import oppretter enheter, skal de likevel ikke anses som aktive. Bare ekstra informasjon. Må eksplisitt settes til True
 			help_text=u"",
 			)
-	model_id = models.CharField( # egen fil med detaljer som lastes etter computers-filen. Bare for klienter.
+	client_model_id = models.CharField( # egen fil med detaljer som lastes etter computers-filen. Bare for klienter.
 			verbose_name="Klientmodell",
 			max_length=200,
 			blank=True,
 			null=True,
 			)
-	sist_sett = models.DateTimeField( # INGEN KILDE LENGER?
+	client_sist_sett = models.DateTimeField( # INGEN KILDE LENGER?
 			verbose_name="Sist sett",
 			null=True,
 			blank=True,
 			)
-	last_loggedin_user = models.ForeignKey( # INGEN KILDE LENGER?
+	client_last_loggedin_user = models.ForeignKey( # INGEN KILDE LENGER?
 			to=User,
 			on_delete=models.SET_NULL,
 			related_name='client',
@@ -2760,16 +2636,6 @@ class CMDBdevice(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	# fjernes til fordel for m2m-feltet service_offerings
-	#sub_name = models.ForeignKey(
-	#		to=CMDBRef,
-	#		related_name='devices',
-	#		verbose_name="Business Sub Service",
-	#		on_delete=models.CASCADE,
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
 	service_offerings = models.ManyToManyField(
 			to=CMDBRef,
 			related_name='servers',
@@ -2852,104 +2718,13 @@ class CMDBdevice(models.Model):
 			verbose_name="Kilde CMDB",
 			default=False,
 			)
-	kilde_prk = models.BooleanField(
-			verbose_name="Kilde PRK",
-			default=False,
-			)
-	kilde_landesk = models.BooleanField(
-			verbose_name="Kilde LanDesk",
-			default=False,
-			)
-	maskinadm_virksomhet = models.ForeignKey(
+	client_virksomhet = models.ForeignKey(
 			to="Virksomhet",
 			on_delete=models.SET_NULL,
-			verbose_name="PRK Virksomhet",
+			verbose_name="Kliens tilhørende virksomhet",
 			related_name='cmdbdevice_virksomhet',
 			null=True,
 			blank=True,
-			)
-	maskinadm_virksomhet_str = models.CharField(
-			verbose_name="PRK Virksomhet",
-			max_length=300,
-			blank=True,
-			null=True,
-			)
-	maskinadm_lokasjon = models.CharField(
-			verbose_name="Maskinadm: Lokasjon",
-			max_length=300,
-			blank=True,
-			null=True,
-			)
-	maskinadm_klienttype = models.CharField(
-			verbose_name="Maskinadm: Klienttype",
-			max_length=200,
-			blank=True,
-			null=True,
-			)
-	maskinadm_status = models.CharField(
-			verbose_name="PRK status",
-			max_length=200,
-			blank=True,
-			null=True,
-			)
-	maskinadm_sone = models.CharField(
-			verbose_name="Maskinadm: Sikkerhetssone",
-			max_length=200,
-			blank=True,
-			null=True,
-			)
-	maskinadm_sist_oppdatert = models.DateTimeField( # ikke bruk denne lenger
-			verbose_name="Maskinadm: Sist oppdatert",
-			null=True,
-			blank=True,
-			)
-	landesk_nic = models.CharField(
-			verbose_name="Landesk: NIC",
-			max_length=24,
-			blank=True,
-			null=True,
-			)
-	landesk_manufacturer = models.CharField(
-			verbose_name="Landesk: Produsent",
-			max_length=300,
-			blank=True,
-			null=True,
-			)
-	landesk_os_release = models.CharField(
-			verbose_name="Landesk: OS release",
-			max_length=100,
-			blank=True,
-			null=True,
-			)
-	landesk_sist_sett = models.DateTimeField( # felt som indikerer når maskin sist ble skannet
-			verbose_name="Landesk: Sist sett",
-			null=True,
-			blank=True,
-			)
-	landesk_os = models.CharField(
-			verbose_name="Landesk: OS",
-			max_length=300,
-			blank=True,
-			null=True,
-			)
-	landesk_login = models.ForeignKey( # bruker sist logget på
-			to=User,
-			on_delete=models.SET_NULL,
-			related_name='landesk_login',
-			verbose_name="Landesk: Login name",
-			null=True, blank=True,
-			)
-	vm_poweredon = models.BooleanField(
-			verbose_name="Powered on?",
-			default=False,
-			)
-	vm_comp_ram_usage = models.FloatField(
-			verbose_name="Utnyttelse av minne",
-			null=True, blank=True,
-			)
-	vm_comp_cpu_usage = models.FloatField(
-			verbose_name="VM: Utnyttelse av CPU",
-			null=True, blank=True,
 			)
 	vm_disk_allocation = models.FloatField( # denne verdien resettes hver gang vmwaredata importeres, og kan brukes for å summere opp faktisk allokert disk for maskiner som er "deaktivert"
 			verbose_name="VM: Disk allokert",
@@ -2974,17 +2749,16 @@ class CMDBdevice(models.Model):
 			null=True, blank=True,
 			)
 	derived_os_endoflife = models.BooleanField(default=False)
+	power = models.FloatField(
+			verbose_name="Kwh",
+			null=True, blank=True,
+			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres
 
 
 
 	def __str__(self):
 		return u'%s' % (self.comp_name)
-
-	def cpu_usage(self):
-		if self.vm_comp_cpu_usage != None:
-			return int(self.vm_comp_cpu_usage * 100)
-		return "? "
 
 	def disk_usage_free(self):
 		if self.vm_disk_usage != None and self.vm_disk_allocation not in [None, 0]:
@@ -2994,11 +2768,6 @@ class CMDBdevice(models.Model):
 	def comp_ram_byes(self):
 		if self.comp_ram != None:
 			return self.comp_ram * 1000**2
-		return "? "
-
-	def ram_usage(self):
-		if self.vm_comp_ram_usage != None:
-			return int(self.vm_comp_ram_usage * 100)
 		return "? "
 
 	def nat(self):
@@ -3040,12 +2809,6 @@ class CMDBdevice(models.Model):
 		except:
 			return 'ingen data'
 
-
-	def utdatert(self):
-		versjon = int(self.landesk_os_release) if self.landesk_os_release else 0
-		if versjon < 1909:
-			return True
-		return False
 
 	class Meta:
 		verbose_name_plural = "CMDB: maskiner"
@@ -8016,112 +7779,3 @@ class Brannmurregel(models.Model):
 	def protocol_items(self):
 		return json.loads(self.protocol)
 
-"""
-class PRKuser(models.Model):
-	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
-	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
-	username = models.CharField(
-			verbose_name="Brukernavn",
-			max_length=20,
-			unique=True,
-			help_text=u"Importert",
-			)
-	usertype = models.CharField(
-			verbose_name="Brukernavn",
-			max_length=20,
-			null=False, blank=False,
-			help_text=u"Importert",
-			)
-	#ikke behov for historikk
-	def __str__(self):
-		return u'%s (%s)' % (self.username, self.usertype)
-
-	class Meta:
-		verbose_name_plural = "PRK brukere"
-		default_permissions = ('add', 'change', 'delete', 'view')
-"""
-
-"""
-LIVSSYKLUS_VALG = (
-	(1, '1 valg 1'),
-	(2, '2 valg 2'),
-	(3, '3 valg 3'),
-)
-
-class Tjeneste(models.Model):
-	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
-	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
-	tjenesteleverandor = models.ForeignKey(Virksomhet,
-			on_delete=models.PROTECT,
-			verbose_name="Virksomhet som leverer tjenesten",
-			related_name="tjeneste_tjenesteleverandor",
-			blank=True,
-			null=True,
-			help_text="Den virksomhet du kan ta kontakt med for å be om tjenesten.",
-			)
-	tjenestenavn = models.CharField(unique=True,
-			verbose_name="Navn på tjeneste",
-			max_length=150,
-			blank=False, null=False,
-			help_text=u"",
-			)
-	beskrivelse = models.TextField(
-			verbose_name="Beskrivelse av tjenesten",
-			blank=True, null=True,
-			help_text=u"Hva får virksomheten ved å ta i bruk denne tjenesten?",
-			)
-	systemer = models.ManyToManyField(System, related_name='tjeneste_systemer',
-			verbose_name="Kjernesystem(er): Hvilke systemer som inngår i tjenesten",
-			blank=True,
-			)
-	tjenesteleder = models.ManyToManyField(Ansvarlig, related_name='tjeneste_tjenesteleder',
-			verbose_name="Tjenesteleder",
-			blank=True,
-			)
-	tjenesteforvalter = models.ManyToManyField(Ansvarlig, related_name='tjeneste_tjenesteforvalter',
-			verbose_name="Tjenesteforvalter",
-			blank=True,
-			)
-	livssyklus = models.IntegerField(choices=LIVSSYKLUS_VALG,
-			verbose_name="Status på livssyklus",
-			blank=True, null=True,
-			help_text=u"",
-			)
-	etablering = models.IntegerField(choices=LIVSSYKLUS_VALG,
-			verbose_name="Status på etablering",
-			blank=True, null=True,
-			help_text=u"",
-			)
-	tjenesteleveranse = models.IntegerField(choices=LIVSSYKLUS_VALG,
-			verbose_name="Status på tjenesteleveranse",
-			blank=True, null=True,
-			help_text=u"",
-			)
-	faglig_ansvar = models.TextField(
-			verbose_name="Faglig ansvar",
-			blank=True, null=True,
-			help_text=u"",
-			)
-	history = HistoricalRecords()
-
-	def __str__(self):
-		return u'%s' % (self.tjenestenavn)
-
-	class Meta:
-		verbose_name_plural = "Tjenester"
-		default_permissions = ('add', 'change', 'delete', 'view')
-"""

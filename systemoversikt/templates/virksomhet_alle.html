@@ -15,36 +15,22 @@
 	{% url 'alle_virksomheter_kontaktinfo' as kontaktinfo_url %}
 	<a href="{{ kontaktinfo_url }}" class="btn btn-sm btn-link">Vis kontaktinfo ISK/PSK</a>
 
-	<p>Virksomheter er her definert som organisatoriske enheter fra AD, og kan derfor ha noen flere registreringer enn i offisielle organisasjonskart. Det er {{ virksomheter.count }} virksomheter registrert.</p>
+	<p>Virksomheter er her definert som organisatoriske enheter fra Active Directory, og kan derfor ha noen flere registreringer enn i offisielle organisasjonskart. Det er {{ virksomheter.count }} virksomheter registrert.</p>
 
 	<p>Rollene ISK og PKO er knyttet til sikkerhet og personvern. Rollen "arkitekturkontakt" er nå endret til "arkitektur hovedkontakt", og brukes ved innkalling til arkitekturforum for IKT og digitalisering, sammen med rollen IKT-hovedkontakt.</p>
-
-	<form action="" autocomplete="off">
-		<div class="form-group form-inline">
-			<input style="width: 340px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="Søk på virksomhetsnavn eller forkortelse" class="form-control form-control-sm">
-			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
-		</div>
-	</form>
-
 
 	<table id="alle_virksomheter" class="tablesorter excel">
 	<thead>
 	<tr>
-		{% if user.is_authenticated %}
 		<th class="filter-false"></th>
-		{% endif %}
-		<th>Forkortelse</th>
 		<th>Virksomhet</th>
+		<th>Byråd</th>
 		<th>Nettverk lokasjoner</th>
-		<th>Antall systemer i bruk</th>
-		{% comment %}<th>Antall ansatte</th>{% endcomment %}
+		<th>Forvalter for systemer</th>
+		<th>Antall brukeridenter</th>
 		<th>Antall klienter</th>
 		<th>Klientplattform</th>
 		<th>Kontorstøtte</th>
-		{% comment %}<th>Autoriserte bestillere InfoTorget</th>{% endcomment %}
-		{% comment %}<th>Autoriserte bestillere mot intern tjenesteleverandør</th>{% endcomment %}
 		<th>Leder</th>
 		<th>Personvernkoordinator (PKO)</th>
 		<th>Informasjonssikkerhetskoordinator (ISK)</th>
@@ -56,29 +42,22 @@
 	<tbody>
 	{% for vir in virksomheter %}
 	<tr {% if not vir.ordinar_virksomhet %} style="opacity: 0.33;" {% endif %}>
-		{% if user.is_authenticated %}
 		<td>
-				<a href="/admin/systemoversikt/virksomhet/{{ vir.pk }}/change/">
-				{% include 'site_edit_button.html' %}</a>
+			<a href="/admin/systemoversikt/virksomhet/{{ vir.pk }}/change/">
+			{% include 'site_edit_button.html' %}</a>
 		</td>
-		{% endif %}
-
-		<td>{{ vir.virksomhetsforkortelse }}</td>
-
-		{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+		<td>{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+			<a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn|truncatewords:6 }}</a> ({{ vir.virksomhetsforkortelse }})
+		</td>
 		<td>
-			<a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn|truncatewords:6 }}</a><br>
 			{% for vir in vir.overordnede_virksomheter.all %}
-				{{ vir }}<br>
+				{{ vir.virksomhetsforkortelse }}<br>
 			{% endfor %}
 		</td>
-
 		{% url 'lokasjoner_hos_virksomhet' pk=vir.pk as url_lokasjoner %}
 		<td><a href="{{url_lokasjoner}}">{{ vir.antall_lokasjoner }}</a></td>
-
-		<td>{{ vir.systembruk_brukergruppe.all.count }}</td>
-
-		{% comment %}<td>{{ vir.ansatte|default:"-" }}</td>{% endcomment %}
+		<td>{{ vir.systemer_systemforvalter.all.count }}</td>
+		<td>{{ vir.antall_brukeridenter|default:"-" }}</td>
 		<td>{{ vir.antall_klienter }}</td>
 		<td>
 			{{ vir.get_resultatenhet_display|default:"-" }}
@@ -86,27 +65,6 @@
 		<td>
 			{{ vir.get_office365_display|default:"-" }}
 		</td>
-		{% comment %}<td>
-			{% for person in vir.autoriserte_bestillere_tjenester.all %}
-				<a href="{% url 'ansvarlig' person.pk %}"
-				{% if person.brukernavn.is_active == False %}
-					style="text-decoration: line-through;"
-				{% endif %}
-				>
-				{{ person }}</a><br>
-			{% endfor %}
-		</td>{% endcomment %}
-		{% comment %}<td>
-			{% for person in vir.autoriserte_bestillere_tjenester_uke.all %}
-				<a href="{% url 'ansvarlig' person.pk %}"
-				{% if person.brukernavn.is_active == False %}
-					style="text-decoration: line-through;"
-				{% endif %}
-				>
-				{{ person }}</a><br>
-			{% endfor %}
-		</td>{% endcomment %}
-
 		<td>
 			{% if vir.leder_hr %}
 				<a href="{% url 'bruker_detaljer' pk=vir.leder_hr.pk %}">{{vir.leder_hr.profile.displayName}}</a>
@@ -114,7 +72,6 @@
 				{% include "ansvarlig_include_vis.html" with ansvarlige=vir.leder.all %}
 			{% endif %}
 		</td>
-
 		<td>
 			{% for person in vir.personvernkoordinator.all %}
 				<a href="{% url 'ansvarlig' person.pk %}"
@@ -160,8 +117,7 @@
 				<a href="{% url 'ansvarlig' person.pk %}"
 				{% if person.brukernavn.is_active == False  %}
 					style="text-decoration: line-through;"
-				{% endif %}
-				>
+				{% endif %}>
 				{{ person }}</a><br>
 			{% endfor %}
 		</td>

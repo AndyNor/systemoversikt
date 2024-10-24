@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-<p>Dette er en {{ device.device_type }}, sist oppdatert {{ device.sist_oppdatert }}. Den er merket som {{ device.device_active|yesno:"aktiv, deaktiv"}} i CMDB. Den er {{device.vm_poweredon|yesno:"påskrudd, avskrudd"}} i VMware.</p>
+<p>Dette er en {{ device.device_type }}, sist oppdatert {{ device.sist_oppdatert }}. Den er merket som {{ device.device_active|yesno:"aktiv, deaktiv"}} i CMDB.</p>
 
 <p>Den er klassifisert under
 {% for offering in device.service_offerings.all %}
@@ -32,14 +32,14 @@ og er {{ device.billable|yesno:"fakturerbar, ikke fakturerbar" }}.</p>
 	<hr>
 	IP er {{ device.comp_ip_address|default:"?" }} som ligger under VLAN {{device.vlan|default:"?"}}<br>
 	<hr>
-	Har tildelt {{ device.comp_cpu_core_count|default:"?" }} CPU-kjerner / {{ device.comp_cpu_speed|default:"?" }} Mhz. {{device.cpu_usage}}% aktiv.<br>
+	Har tildelt {{ device.comp_cpu_core_count|default:"?" }} CPU-kjerner / {{ device.comp_cpu_speed|default:"?" }} Mhz.<br>
 	<hr>
 	Tildelt {{ device.comp_disk_space|filesizeformat }} {{ device.vm_disk_tier }} disk. {{device.disk_usage_free}}% ledig.<br>
 	{% for p in device.cmdbdisk_computer.all %}
 		<li>{{p.mount_point}} {{p.file_system}} {{p.size_bytes|filesizeformat}} ({{p.free_space_bytes|filesizeformat}} ledig)</li>
 	{% endfor %}
 	<hr>
-	Tildelt {{ device.comp_ram }} MB minne (RAM). {{ device.ram_usage }}% benyttes (ved sist eksport).
+	Tildelt {{ device.comp_ram }} MB minne (RAM).
 	<hr>
 	Størrelse på backup: {% for b in device.backup_size %}	{{ b|filesizeformat }} {% if not forloop.last %} + {% endif %} {% endfor %}
 </p>
@@ -69,14 +69,12 @@ og er {{ device.billable|yesno:"fakturerbar, ikke fakturerbar" }}.</p>
 {% if device.device_type == "KLIENT" %}
 
 <p>
-	Klienten er en {{ device.maskinadm_klienttype|default:"?" }} som er {{ device.maskinadm_status|default:"?" }} i PRK.<br>
-	Det er en {{ device.model_id|default:"?" }}.<br>
+	Det er en {{ device.client_model_id|default:"?" }}.<br>
 	<hr>
-	Ble sist logget inn av {{ device.last_loggedin_user|default:"?" }}.<br>
-	Tilhører {{ device.maskinadm_virksomhet|default:"?" }} på lokasjon {{ device.maskinadm_lokasjon|default:"?" }}.<br>
+	Ble sist logget inn av {{ device.client_last_loggedin_user|default:"?" }}.<br>
+	Tilhører {{ device.maskinadm_virksomhet|default:"?" }}<br>
 	<hr>
-	Merksom som sikkerhetssone {{ device.maskinadm_sone|default:"?" }}.<br>
-	Sist sett {{ device.landesk_sist_sett|default:"?" }}.<br>
+	Sist sett {{ device.client_sist_sett|default:"?" }}.<br>
 </p>
 
 {% endif %}

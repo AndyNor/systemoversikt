@@ -51,9 +51,6 @@
 	<th>Antall databaser</th>
 	<th>Mengde backup</th>
 	<th>Miljø</th>
-	{% comment %}
-	<th>Kritikalitet</th>
-	{% endcomment %}
 	<th>Tilgjengelighet</th>
 	<th>Driftskompleksitet</th>
 	<th>Kritikalitet</th>
@@ -71,7 +68,6 @@
 					✎</a>
 				{% endif %}
 			{% endcomment %}
-
 
 			<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
 			{% if item.is_bss %}<span> (gruppe)</span>{% endif %}
@@ -93,10 +89,6 @@
 		</td>
 
 		<td>{{ item.get_environment_display|default:"-" }}</td>
-
-		{% comment %}
-		<td>{{ item.get_kritikalitet_display|default:"X ukjent" }}</td>
-		{% endcomment %}
 
 		<td {% if not item.u_service_availability %} style="color: red;" {% endif %}>
 			{{ item.u_service_availability_text|default:"T?" }}

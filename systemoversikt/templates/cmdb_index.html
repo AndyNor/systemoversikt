@@ -30,9 +30,6 @@
 	{% url 'maskin_sok' as url_maskin_sok %}
 	<a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Servere massesøk</a>
 
-	{% url 'cmdb_servere_disabled_poweredon' as url_cmdb_servere_disabled_poweredon %}
-	<a href="{{url_cmdb_servere_disabled_poweredon}}" class="btn btn-sm btn-link {% if url_cmdb_servere_disabled_poweredon in request.path %}fremhev{% endif %}">Servere deaktivert online</a>
-
 	{% url 'cmdb_internetteksponerte_servere' as url_cmdb_internetteksponerte_servere %}
 	<a href="{{url_cmdb_internetteksponerte_servere}}" class="btn btn-sm btn-link {% if url_cmdb_internetteksponerte_servere in request.path %}fremhev{% endif %}">Servere internetteksponerte</a>
 

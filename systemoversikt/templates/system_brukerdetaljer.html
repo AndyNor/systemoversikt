@@ -69,11 +69,7 @@
 			<a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a>
 			{% endif %}
 		</td>
-		<td>
-			{% for enhet in user.landesk_login.all %}
-				<a href="/admin/systemoversikt/cmdbdevice/?q={{enhet.comp_name}}">{{enhet}}<br>
-			{% endfor %}
-		</td>
+		<td>---</td>
 	</tr>
 	{% endfor %}
 	</tbody>
