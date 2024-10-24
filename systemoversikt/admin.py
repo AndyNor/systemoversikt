@@ -1191,9 +1191,9 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 
 @admin.register(CMDBbackup)
 class CMDBbackupAdmin(admin.ModelAdmin):
-	list_display = ('device_str', 'device', 'backup_size_bytes', 'bss', 'backup_frequency', 'storage_policy',)
-	search_fields = ('device_str', 'bss__navn')
-	list_filter = ('backup_frequency', 'storage_policy', 'bss')
+	list_display = ('device_str', 'device', 'backup_size_bytes', 'backup_frequency', 'storage_policy',)
+	search_fields = ('device_str',)
+	list_filter = ('backup_frequency', 'storage_policy',)
 
 
 

@@ -3079,15 +3079,17 @@ class CMDBbackup(models.Model):
 	#		verbose_name="Dato uttrekk",
 	#		null=True,
 	#		)
-	bss = models.ForeignKey(
-			to=CMDBRef,
-			related_name='backup',
-			verbose_name="Business Sub Service",
-			on_delete=models.CASCADE,
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
+
+	# fjernet fordi den nå har blitt mange til mange, og vi følger heller kobling fra server.
+	#bss = models.ForeignKey(
+	#		to=CMDBRef,
+	#		related_name='backup',
+	#		verbose_name="Business Sub Service",
+	#		on_delete=models.CASCADE,
+	#		blank=True,
+	#		null=True,
+	#		help_text=u"",
+	#		)
 	backup_frequency = models.CharField(
 			verbose_name="Backup frequency",
 			max_length=10,
