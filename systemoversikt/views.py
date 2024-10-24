@@ -1032,19 +1032,19 @@ def cmdb_per_virksomhet(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	message = ""
 	template_data = list()
 	bs_alle = list(CMDBbs.objects.filter(operational_status=True, eksponert_for_bruker=True))
 	for virksomhet in Virksomhet.objects.all():
 		bs_eier = []
 		for system in virksomhet.systemer_eier.all():
-			if hasattr(system, 'bs_system_referanse'):
-				bs = system.bs_system_referanse
-				bs_eier.append(bs)
+			offerings = system.service_offerings.all()
+			for offering in offerings:
+				bs_eier.append(offering)
 				try:
-					bs_alle.remove(bs)
+					bs_alle.remove(offering)
 				except:
-					message += "%s brukes, men har deaktivert status fra 2S." % bs
+					pass
+
 		bs_forvalter = []
 		for system in virksomhet.systemer_systemforvalter.all():
 			if hasattr(system, 'bs_system_referanse'):
@@ -1052,12 +1052,10 @@ def cmdb_per_virksomhet(request):
 				bs_forvalter.append(bs)
 		template_data.append({"virksomhet": virksomhet, "bs_eier": bs_eier, "bs_forvalter": bs_forvalter,})
 
-	messages.warning(request, message)
-
 	return render(request, 'cmdb_per_virksomhet.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-		"template_data": template_data,
+		'template_data': template_data,
 		"resterende_bs": bs_alle,
 	})
 
@@ -1781,7 +1779,7 @@ def cmdb_uten_backup(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	uten_backup = CMDBdevice.objects.filter(device_active=True, backup=None, device_type="SERVER").order_by('sub_name__parent_ref')
+	uten_backup = CMDBdevice.objects.filter(device_active=True, backup=None, device_type="SERVER").order_by('service_offerings__parent_ref')
 
 	return render(request, 'cmdb_uten_backup.html', {
 		'request': request,
@@ -1797,16 +1795,12 @@ def cmdb_backup_index(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
-	count_backup_missing_bss = CMDBbackup.objects.filter(bss=None).aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
-	pct_missing_all = int(count_backup_missing_bss / count_backup * 100)
 	bs_all = CMDBbs.objects.all()
 
 	return render(request, 'cmdb_backup_index.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'count_backup': count_backup,
-		'count_backup_missing_bss': count_backup_missing_bss,
-		'pct_missing_all': pct_missing_all,
 		'bs_all': bs_all,
 	})
 
@@ -6352,7 +6346,7 @@ def alle_klienter(request):
 	maskiner_os_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
 	maskiner_os_stats = sorted(maskiner_os_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
 
-	maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('client_model_id').annotate(Count('model_id'))
+	maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('client_model_id').annotate(Count('client_model_id'))
 	maskiner_model_stats = sorted(maskiner_model_stats, key=lambda os: os['client_model_id__count'], reverse=True)
 
 	if maskiner != None:

@@ -26,19 +26,19 @@
 	{% for server in uten_backup %}
 	<tr>
 		<td>
-			{% for offering in maskin.service_offerings.all %}
-				{{ offering.parent_ref }}
+			{% for offering in server.service_offerings.all %}
+				{{ offering.parent_ref }}<br>
 			{% endfor %}
 		</td>
 		<td>
-			{% for offering in maskin.service_offerings.all %}
-				{{ offering }}
+			{% for offering in server.service_offerings.all %}
+				{{ offering }}<br>
 			{% endfor %}
 		</td>
 		<td>{{ server.comp_name }}</td>
 		<td>
-			{% for offering in maskin.service_offerings.all %}
-				{{ offering.u_service_billable|yesno:"Ja,Nei" }}
+			{% for offering in server.service_offerings.all %}
+				{{ offering.u_service_billable|yesno:"Ja,Nei" }}<br>
 			{% endfor %}
 		</td>
 		<td>{{ server.comments }}<br>{{ server.description }}</td>
