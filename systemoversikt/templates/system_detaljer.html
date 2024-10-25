@@ -343,15 +343,17 @@
 								<td>{{ ea.appId }}</td>
 								<td>
 									{% for perm in ea.requiredResourceAccess.all %}
+									<li>
 										<span style="color: {{ perm.risk_color }};">
 										{{ perm.permission_type }} {{ perm.resourceAppStr }} {{ perm.adminConsentDisplayName }} ({{ perm }})
 										</span>
-									{%  endfor %}
+									</li>
+									{% endfor %}
 								</td>
 								<td>
 									{% for key in ea.keys.all %}
 										{{ key.key_type }} utløper {{ key.end_date_time }}<br>
-									{%  endfor %}
+									{% endfor %}
 								</td>
 							</tr>
 							{% endfor %}
