@@ -323,30 +323,34 @@
 			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?source_system={{systemdetaljer.pk}}&integration_type=AUTHENTICATION">Ny påloggingsmetode</a>
 
 
-			<br><br><b>Azure-integrasjoner</b>
-			{% if systemdetaljer.enterprise_applicatons|length > 0 %}
+			<br><br><b>Azure graph-integrasjoner</b>
+			{% if systemdetaljer.enterprise_applicatons.all|length > 0 %}
 			<div class="row">
 				<div class="col-12">
 					<table class="table table-sm">
 						<thead>
 							<tr>
 								<th>Applikasjonsnavn (Enterprise application)</th>
+								<th>App ID</th>
 								<th>Rettigheter</th>
-								<th>Nøkler</th>
+								<th>Nøkler (det kan være flere)</th>
 							</tr>
 						</thead>
 						<tbody>
 							{% for ea in systemdetaljer.enterprise_applicatons.all %}
 							<tr>
 								<td>{{ ea.displayName }}</td>
+								<td>{{ ea.appId }}</td>
 								<td>
 									{% for perm in ea.requiredResourceAccess.all %}
-										{{ perm.adminConsentDisplayName }}<br>
+										<span style="color: {{ perm.risk_color }};">
+										{{ perm.permission_type }} {{ perm.resourceAppStr }} {{ perm.adminConsentDisplayName }} ({{ perm }})
+										</span>
 									{%  endfor %}
 								</td>
 								<td>
 									{% for key in ea.keys.all %}
-										{{ key }} utløper {{ key.end_date_time }}<br>
+										{{ key.key_type }} utløper {{ key.end_date_time }}<br>
 									{%  endfor %}
 								</td>
 							</tr>
