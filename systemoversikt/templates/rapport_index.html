@@ -90,6 +90,10 @@
 		<a href="{{ url_rapport_ad_adgrupper }}" class="btn btn-sm btn-link {% if url_rapport_ad_adgrupper in request.path %}fremhev{% endif %}">Grupper over tid</a><br>
 
 
+	<hr><h6>Sikkerhetsanalytiker</h6>
+		{% url 'vulnstats' as url_vulnstats %}
+		<a href="{{ url_vulnstats }}" class="btn btn-sm btn-link {% if url_vulnstats in request.path %}fremhev{% endif %}">Sårbarhetsstatistikk</a><br>
+
 
 	<hr><h6>Leverandørtilgang</h6>
 

@@ -132,7 +132,9 @@ urlpatterns = [
 	re_path(r'^rapport/leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
 	re_path(r'^rapport/leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),
 	re_path(r'^rapport/api/', views.api_overview, name="api_overview"),
-
+	re_path(r'^rapport/vulnstats/overview/', views.vulnstats, name="vulnstats"),
+	re_path(r'^rapport/vulnstats/severity/(?P<severity>\d{1})/$', views.vulnstats_severity, name="vulnstats_severity"),
+	re_path(r'^rapport/vulnstats/whereis/(?P<vuln>.+)/$', views.vulnstats_whereis, name="vulnstats_whereis"),
 
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),

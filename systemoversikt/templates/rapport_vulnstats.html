@@ -1,0 +1,153 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Statistikk over sårbarheter
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+Antall sårbarheter totalt <h3>{{ data.count_all }}</h3>
+<p><i>En sårbarhet telles for hver gang den identifiseres på en enhet (server eller nettverksutstyr).</i></p>
+
+<p style="background-color: {{ integrasjonsstatus.color }};">
+Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
+
+<hr>
+
+
+<p>Sårbarheter fordelt på status</p>
+<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+{% for status in data.count_status %}
+	<li><h5>{{ status.status }}</h5> <h3>{{ status.count }}</h3></li>
+{% endfor %}
+</ul>
+
+<hr>
+
+<i>Sårbarheter fordelt på alvorlighetsgrad. Alvorlighetsgrad 1 er minst kritisk og alvorlighetsgrad 5 er mest kritisk</i><br><br>
+
+
+<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
+{% for alvorlighet in data.count_unike_alvorligheter %}
+	<li>Alvorlighetsgrad {{ alvorlighet.severity }}<h3>{{ alvorlighet.count }}</h3></li>
+{% endfor %}
+</ul>
+
+<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
+{% for item in data.count_unike_vulns %}
+	<li>Unike sårbarheter<h3><a href="{% url 'vulnstats_severity' severity=forloop.counter %}">{{ item.unique_titles }}</a></h3></li>
+{% endfor %}
+</ul>
+
+<hr>
+
+Kan ikke kobles til server <h3>{{ data.count_uten_server }}</h3>
+
+Disse kildene er
+<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+{% for unique_source in data.unique_source_no_server %}
+	<li>{{ unique_source.source }} ({{ unique_source.count }} sårbarheter)</li>
+{% endfor %}
+</ul>
+
+<hr>
+
+Servere uten sårbarheter
+<h3>{{data.count_servere_uten_vuln}} av {{data.count_servere_aktive}}</h3>
+Har disse faktisk Qualys-agent?
+
+
+<hr>
+De siste dagene er forskjellen på Kartotekets observerte eksponerte servere de siste {{ data.eksponert_dager_gamle }} dagene slik. Basert på Shodan-oppslag via lastbalanserte VIP-er.
+
+<h5>Kun angitt som eksponert i Kartoteket</h5>
+<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+{% for server in data.eksponert_kun_kartoteket %}
+	<li>{{ server }}</li>
+{% endfor %}
+</ul>
+
+<hr>
+
+<h5>Kun angitt som eksponert i Qualys</h5>
+<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+{% for server in data.eksponert_kun_qualys %}
+	<li>{{ server }}</li>
+{% endfor %}
+</ul>
+
+
+<hr>
+
+Sårbarheter fordelt på "først sett" dato
+<div><canvas height="100" id="vuln_timechart_first_seen"></canvas></div>
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const first_seen_monthly_data = {
+	labels: [{% for date in data.count_first_seen_monthly %}"{{ date.year|date:"Y" }}-{{ date.month|date:"M" }}",{% endfor %}],
+	datasets: [{
+		backgroundColor: 'rgb(255, 99, 132)',
+		borderColor: 'rgb(255, 99, 132)',
+		data: [{% for date in data.count_first_seen_monthly %}{{ date.count }},{% endfor %}],
+	}]
+};
+const first_seen_monthly_config = {
+	type: 'bar',
+	data: first_seen_monthly_data,
+	options: {
+		plugins: {
+			legend: false,
+		},
+		scales: {
+			y: {
+				//type: 'logarithmic',
+				beginAtZero: true,
+				//max: 4000
+			}
+		}
+	},
+};
+const first_seen_monthly_myChart = new Chart(document.getElementById('vuln_timechart_first_seen'), first_seen_monthly_config);
+</script>
+
+<hr>
+
+Sårbarheter fordelt på "sist sett" dag av året
+<div><canvas height="100" id="vuln_timechart_last_seen"></canvas></div>
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const last_seen_monthly_data = {
+	labels: [{% for date in data.count_last_seen_monthly %}"{{ date.year|date:"Y" }}-{{ date.day|date:"z" }}",{% endfor %}],
+	datasets: [{
+		backgroundColor: 'rgb(255, 99, 132)',
+		borderColor: 'rgb(255, 99, 132)',
+		data: [{% for date in data.count_last_seen_monthly %}{{ date.count }},{% endfor %}],
+	}]
+};
+const last_seen_monthly_config = {
+	type: 'bar',
+	data: last_seen_monthly_data,
+	options: {
+		plugins: {
+			legend: false,
+		},
+		scales: {
+			y: {
+				//type: 'logarithmic',
+				beginAtZero: true,
+				//max: 4000
+			}
+		}
+	},
+};
+const last_seen_monthly_myChart = new Chart(document.getElementById('vuln_timechart_last_seen'), last_seen_monthly_config);
+</script>
+
+{% endblock hovedinnhold %}

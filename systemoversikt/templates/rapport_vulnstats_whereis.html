@@ -1,0 +1,58 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Sårbarhetsdetaljer for {{ vuln }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p style="background-color: {{ integrasjonsstatus.color }};">
+Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
+
+<i>{{ data.vulnerabilities.0.cve_info }}</i>
+
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Enhet</th>
+	<th>Enhetkobling</th>
+	<th>Operativsystem</th>
+	<th>Aktiv?</th>
+	<th>Miljø</th>
+	<th>Først sett</th>
+	<th>Eksponert</th>
+	<th>Funn</th>
+</tr>
+</thead>
+<tbody>
+{% for vuln in data.vulnerabilities %}
+<tr>
+	<td>{{ vuln.source }}</td>
+	<td>{{ vuln.server|default:"ingen" }}<br>{{ vuln.server.comp_ip_address }}</td>
+	<td>{{ vuln.os }}</td>
+	<td>{{ vuln.server.device_active|yesno:"Ja, Nei" }}</td>
+	<td>
+	{% for offering in vuln.server.service_offerings.all %}
+		{{ offering }}{% if not forloop.last%},{% endif %}
+	{% endfor %}
+	<td>{{ vuln.first_seen }}</td>
+	<td>{{ vuln.public_facing|yesno:"Ja, Nei" }}</td>
+	<td>{{ vuln.result }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<hr>
+
+
+{% endblock hovedinnhold %}

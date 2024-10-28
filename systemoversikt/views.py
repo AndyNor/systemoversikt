@@ -455,6 +455,7 @@ def ldap_exact(name): # støttefunksjon for LDAP
 	return {"raw": prepare}
 """
 
+
 def prk_api(filename): # støttefunksjon
 	path = "/var/kartoteket/source/systemoversikt/systemoversikt/import/" + filename
 	with open(path, 'rt', encoding='utf-8') as file:
@@ -679,6 +680,139 @@ def tool_word_count(request):
 		'required_permissions': formater_permissions(required_permissions),
 		"alle_ord": alle_ord,
 		"inndata": inndata,
+	})
+
+
+def vulnstats(request):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	from django.db.models import Count
+	from django.db.models.functions import TruncMonth, TruncYear, TruncDay
+	data =  {}
+
+	count_all = QualysVuln.objects.all().count()
+	data["count_all"] = count_all
+
+	unique_source_no_server = QualysVuln.objects.filter(server=None).values('source').annotate(count=Count('source')).order_by('-count')
+	data["unique_source_no_server"] = unique_source_no_server
+
+	count_uten_server = QualysVuln.objects.filter(server=None).count()
+	data["count_uten_server"] = count_uten_server
+
+	count_status = QualysVuln.objects.values('status').annotate(count=Count('status'))
+	data["count_status"] = count_status
+
+	count_unike_alvorligheter = QualysVuln.objects.values('severity').annotate(count=Count('severity'))
+	data["count_unike_alvorligheter"] = count_unike_alvorligheter
+
+	count_first_seen_monthly = QualysVuln.objects.annotate(
+				year=TruncYear('first_seen'),
+				month=TruncMonth('first_seen')
+				).values('year', 'month').annotate(count=Count('id')).order_by('year', 'month')
+	data["count_first_seen_monthly"] = count_first_seen_monthly
+
+	count_last_seen_monthly = QualysVuln.objects.annotate(
+				year=TruncYear('last_seen'),
+				day=TruncDay('last_seen')
+				).values('year', 'day').annotate(count=Count('id')).order_by('year', 'day')
+	data["count_last_seen_monthly"] = count_last_seen_monthly
+
+	count_servere_aktive = CMDBdevice.objects.filter(device_active=True, device_type="SERVER")
+	count_servere_uten_vuln = count_servere_aktive.filter(qualys_vulnerabilities=None)
+	data["count_servere_aktive"] = count_servere_aktive.count()
+	data["count_servere_uten_vuln"] = count_servere_uten_vuln.count()
+
+	count_unike_vulns = QualysVuln.objects.values('severity').annotate(unique_titles=Count('title', distinct=True))
+	data["count_unike_vulns"] = count_unike_vulns
+
+	# eksponert internett kartoteket vs qualys
+	dager_gamle = 30
+	tidsgrense = datetime.date.today() - datetime.timedelta(days=dager_gamle)
+	kartoteket_internett_eksponert = set(CMDBdevice.objects.filter(eksternt_eksponert_dato__gte=tidsgrense))
+	qualys_internett_eksponert = set(CMDBdevice.objects.filter(qualys_vulnerabilities__public_facing=True))
+	data["eksponert_kun_kartoteket"] = kartoteket_internett_eksponert - qualys_internett_eksponert
+	data["eksponert_kun_qualys"] = qualys_internett_eksponert - kartoteket_internett_eksponert
+	data["eksponert_dager_gamle"] = dager_gamle
+
+
+
+	# ansvar_basisdrift og ikke, sortert på flest unike sårbarheter
+
+	#EGEN SIDE nedbryting service offering, ned på server
+
+	#EGEN SIDE sårbarheter for en server
+
+	# servere uten offering-kobling?
+
+	#legge nettverksutstyr til cmdbdevice
+
+	# sårbarheter eldre enn 1 måned med og uten obsolete
+	# og 2 måender med og uten obsolete
+	# og 3 måender med og uten obsolete
+
+
+	return render(request, 'rapport_vulnstats.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'data': data,
+		'integrasjonsstatus': integrasjonsstatus,
+	})
+
+
+
+def vulnstats_severity(request, severity):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	data = {}
+
+	top_unike_vulns = QualysVuln.objects.filter(severity=severity).values('title').annotate(count=Count('title')).order_by('-count')
+	data["top_unike_vulns"] = top_unike_vulns
+
+	return render(request, 'rapport_vulnstats_severity.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'data': data,
+		'severity': severity,
+		'integrasjonsstatus': integrasjonsstatus,
+	})
+
+
+def vulnstats_whereis(request, vuln):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	data = {}
+
+	vulnerabilities = QualysVuln.objects.filter(title=vuln)
+	data["vulnerabilities"] = vulnerabilities
+
+	return render(request, 'rapport_vulnstats_whereis.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'data': data,
+		'integrasjonsstatus': integrasjonsstatus,
+		'vuln': vuln,
 	})
 
 
