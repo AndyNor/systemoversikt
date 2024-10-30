@@ -725,7 +725,7 @@ def vulnstats(request):
 				).values('year', 'day').annotate(count=Count('id')).order_by('year', 'day')
 	data["count_last_seen_monthly"] = count_last_seen_monthly
 
-	count_servere_aktive = CMDBdevice.objects.filter(device_active=True, device_type="SERVER")
+	count_servere_aktive = CMDBdevice.objects.filter(device_type="SERVER")
 	count_servere_uten_vuln = count_servere_aktive.filter(qualys_vulnerabilities=None)
 	data["count_servere_aktive"] = count_servere_aktive.count()
 	data["count_servere_uten_vuln"] = count_servere_uten_vuln.count()
@@ -757,6 +757,9 @@ def vulnstats(request):
 	# sårbarheter eldre enn 1 måned med og uten obsolete
 	# og 2 måender med og uten obsolete
 	# og 3 måender med og uten obsolete
+
+	# deaktivete servere
+	# merge nettverksutstyr med cmdb device
 
 
 	return render(request, 'rapport_vulnstats.html', {
@@ -1612,7 +1615,7 @@ def alle_nettverksenheter(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	nettverksenehter = NetworkDevice.objects.all()
+	nettverksenehter = CMDBdevice.objects.filter(device_type="NETWORK")
 
 	return render(request, 'cmdb_nettverksenehter.html', {
 		'request': request,
@@ -1680,23 +1683,23 @@ def cmdb_statistikk(request):
 	count_ad_grupper = ADgroup.objects.all().count()
 	count_bs = CMDBbs.objects.filter(operational_status=True).count()
 	count_bss = CMDBRef.objects.filter(operational_status=1).count()
-	count_klienter = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).all().count()
-	count_server = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).all().count()
+	count_klienter = CMDBdevice.objects.filter(device_type="KLIENT").all().count()
+	count_server = CMDBdevice.objects.filter(device_type="SERVER").all().count()
 	count_vlan = NetworkContainer.objects.all().count()
 	count_vip = virtualIP.objects.all().count()
 	count_vip_pool = VirtualIPPool.objects.all().count()
 	count_oracle = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).all().count()
 	count_mssql = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).all().count()
-	count_mem = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"]
+	count_mem = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('comp_ram'))["comp_ram__sum"]
 	if count_mem:
 		count_mem = count_mem * 1000*1000 # summen er MB --> bytes
-	count_disk = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] #summen er i bytes
+	count_disk = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('comp_disk_space'))["comp_disk_space__sum"] #summen er i bytes
 	count_oracle_disk = CMDBdatabase.objects.filter(db_version__icontains="oracle", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
 	count_mssql_disk = CMDBdatabase.objects.filter(db_version__icontains="mssql", db_operational_status=True).aggregate(Sum('db_u_datafilessizekb'))["db_u_datafilessizekb__sum"] # summen er i bytes
 	count_dns_arecords = DNSrecord.objects.filter(dns_type="A record").count()
 	count_dns_cnames = DNSrecord.objects.filter(dns_type="CNAME").count()
-	count_cisco = NetworkDevice.objects.filter(model__icontains="cisco").count()
-	count_bigip = NetworkDevice.objects.filter(model__icontains="f5").count()
+	count_cisco = CMDBdevice.objects.filter(device_type="NETWORK").filter(comp_os__icontains="cisco").count()
+	count_bigip = CMDBdevice.objects.filter(device_type="NETWORK").filter(comp_os__icontains="f5").count()
 	count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
 	count_service_accounts = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False).count()
 	count_drift_accounts = User.objects.filter(Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") | Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere")).filter(profile__accountdisable=False).count()
@@ -1913,7 +1916,7 @@ def cmdb_uten_backup(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	uten_backup = CMDBdevice.objects.filter(device_active=True, backup=None, device_type="SERVER").order_by('service_offerings__parent_ref')
+	uten_backup = CMDBdevice.objects.filter(backup=None, device_type="SERVER").order_by('service_offerings__parent_ref')
 
 	return render(request, 'cmdb_uten_backup.html', {
 		'request': request,
@@ -1949,7 +1952,7 @@ def cmdb_lagring_index(request):
 	count_san_used = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
 	pct_used = int(count_san_used / count_san_allocated * 100)
 	count_san_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(service_offerings=None).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
-	count_not_active = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
+	count_not_active = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
 
 	bs_all = CMDBbs.objects.all()
 
@@ -1973,11 +1976,11 @@ def cmdb_minne_index(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		count_ram_allocated = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
+		count_ram_allocated = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
 	except:
 		count_ram_allocated = 0
 	try:
-		count_ram_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).filter(sub_name=None).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
+		count_ram_missing_bs = CMDBdevice.objects.filter(device_type="SERVER").filter(sub_name=None).aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
 	except:
 		count_ram_missing_bs = 0
 
@@ -6331,16 +6334,14 @@ def alle_ip(request):
 
 		for term in search_terms:
 			try:
-				match = NetworkIPAddress.objects.get(ip_address=term)
-				host_matches.append(match)
-				continue
+				matches = NetworkIPAddress.objects.filter(ip_address=term)
+				host_matches.extend(matches)
 			except:
 				pass
 
 			try:
-				match = NetworkContainer.objects.get(ip_address=term)
-				network_matches.append(match)
-				continue
+				matches = NetworkContainer.objects.filter(ip_address=term)
+				network_matches.extend(matches)
 			except:
 				pass
 
@@ -6464,11 +6465,11 @@ def alle_klienter(request):
 	if search_term == '':
 		maskiner = None
 	elif search_term == '__all__':
-		maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True)
+		maskiner = CMDBdevice.objects.filter(device_type="KLIENT")
 	else:
-		maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(device_active=True).filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__icontains=search_term) | Q(client_model_id__icontains=search_term) )
+		maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__icontains=search_term) | Q(client_model_id__icontains=search_term) )
 
-	alle_cmdb_klienter = CMDBdevice.objects.filter(device_active=True).filter(device_type="KLIENT").count()
+	alle_cmdb_klienter = CMDBdevice.objects.filter(device_type="KLIENT").count()
 
 
 	# klargjøring for statistikk
@@ -6477,10 +6478,10 @@ def alle_klienter(request):
 	else:
 		stat_maskiner = maskiner
 
-	maskiner_os_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
+	maskiner_os_stats = stat_maskiner.filter(device_type="KLIENT").values('comp_os_readable').annotate(Count('comp_os_readable'))
 	maskiner_os_stats = sorted(maskiner_os_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
 
-	maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").filter(device_active=True).values('client_model_id').annotate(Count('client_model_id'))
+	maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").values('client_model_id').annotate(Count('client_model_id'))
 	maskiner_model_stats = sorted(maskiner_model_stats, key=lambda os: os['client_model_id__count'], reverse=True)
 
 	if maskiner != None:
@@ -6528,11 +6529,11 @@ def alle_servere(request):
 	if search_term == '':
 		maskiner = None
 	elif search_term == '__all__':
-		maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True)
+		maskiner = CMDBdevice.objects.filter(device_type="SERVER")
 	else:
 		maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(service_offerings__navn__icontains=search_term)).order_by('comp_name')
 
-	maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").filter(device_active=True).values('comp_os_readable').annotate(Count('comp_os_readable'))
+	maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").values('comp_os_readable').annotate(Count('comp_os_readable'))
 	maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
 
 	vis_detaljer = True if request.GET.get('details') == "show" else False
@@ -6557,21 +6558,6 @@ def valgbarekategorier(request):
 		'required_permissions': formater_permissions(required_permissions),
 	})
 
-
-
-def servere_utfaset(request):
-	#Vise alle avviklede maskiner
-	required_permissions = ['systemoversikt.view_cmdbdevice']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	maskiner = CMDBdevice.objects.filter(device_active=False, device_type="SERVER").order_by("-sist_oppdatert")[:300]
-
-	return render(request, 'cmdb_alle_maskiner_utfaset.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'maskiner': maskiner,
-	})
 
 
 
@@ -6698,6 +6684,12 @@ def alle_cmdbref(request):
 			.distinct()
 	)
 
+	# telle servere med flere service offerings-koblinger
+	from django.db.models import Count
+	servere_flere_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=1)
+	servere_flereennto_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=2)
+
+
 	return render(request, 'cmdb_bs_sok.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -6708,6 +6700,8 @@ def alle_cmdbref(request):
 		'system_uten_bs': system_uten_bs,
 		'bs_utenfor_fip': bs_utenfor_fip,
 		'skjult_server_db': skjult_server_db,
+		'servere_flere_offerings': servere_flere_offerings,
+		'servere_flereennto_offerings': servere_flereennto_offerings,
 	})
 
 
@@ -6719,7 +6713,7 @@ def cmdb_bss(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	cmdbref = CMDBRef.objects.get(pk=pk)
-	cmdbdevices = CMDBdevice.objects.filter(service_offerings=cmdbref).filter(device_active=True)
+	cmdbdevices = CMDBdevice.objects.filter(service_offerings=cmdbref)
 	databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
 
 	vlan_lagt_til = []
@@ -7561,22 +7555,17 @@ def cmdb_api(request): #API
 		line["antall_servere"] = bss.ant_devices()
 
 		serverliste = []
-		for server in bss.devices.filter(device_active=True):
+		for server in bss.devices.all():
 			s = dict()
 			s["server_navn"] = server.comp_name
 			s["billable"] = server.billable
-			s["server_aktiv"] = server.device_active
 			s["server_os"] = server.comp_os
 			s["server_ram"] = server.comp_ram
 			if server.comp_disk_space:
 				s["server_disk"] = server.comp_disk_space * 1000 * 1000  # ønskes oppgitt i megabyte (fra bytes)
 			else:
 				s["server_disk"] = None
-			#s["server_cpu_name"] = server.comp_cpu_name
-			#s["server_cpu_speed"] = server.comp_cpu_speed
 			s["server_cpu_core_count"] = server.comp_cpu_core_count
-			#s["server_cpu_count"] = server.comp_cpu_count
-			#s["server_cpu_total"] = server.comp_u_cpu_total
 			serverliste.append(s)
 
 		line["servere"] = serverliste

@@ -34,12 +34,3 @@ class Command(BaseCommand):
 		result = ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data)
 		"""
 
-		@transaction.atomic
-		def run_job():
-			for s in CMDBdevice.objects.filter(device_active=True):
-				s.device_active = False
-				s.save()
-
-
-		run_job()
-

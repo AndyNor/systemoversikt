@@ -804,7 +804,7 @@ class Virksomhet(models.Model):
 
 	def antall_klienter(self):
 		from django.db.models import Q
-		return CMDBdevice.objects.filter(client_virksomhet=self).filter(device_active=True).count()
+		return CMDBdevice.objects.filter(client_virksomhet=self).count()
 
 	def antall_brukeridenter(self):
 		return Profile.objects.filter(virksomhet=self).count()
@@ -1983,7 +1983,7 @@ class CMDBRef(models.Model): # BSS
 			return False
 
 	def ant_devices(self):
-		return CMDBdevice.objects.filter(service_offerings=self.pk, device_active=True).count()
+		return CMDBdevice.objects.filter(service_offerings=self.pk).count()
 
 	def ant_databaser(self):
 		return CMDBdatabase.objects.filter(sub_name=self.pk, db_operational_status=True).count()
@@ -1996,7 +1996,7 @@ class CMDBRef(models.Model): # BSS
 
 	def vlan(self):
 		alle_vlan = set()
-		for server in CMDBdevice.objects.filter(service_offerings=self.pk, device_active=True):
+		for server in CMDBdevice.objects.filter(service_offerings=self.pk):
 			for ipaddr in server.network_ip_address.all():
 				for vlan in ipaddr.vlan.all():
 					alle_vlan.add(vlan)
@@ -2248,11 +2248,6 @@ class NetworkIPAddress(models.Model):
 		verbose_name="Kobling til VLAN",
 		related_name='network_ip_address',
 	)
-	networkdevices = models.ManyToManyField(
-		to='NetworkDevice',
-		verbose_name="Kobling til nettverksenheter",
-		related_name='network_ip_address',
-	)
 
 	class Meta:
 		verbose_name_plural = "CMDB: Network IP-address"
@@ -2502,33 +2497,6 @@ class CMDBdatabase(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-class NetworkDevice(models.Model):
-	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
-	name = models.CharField(
-			max_length=200,
-			unique=True,
-			verbose_name="Enhetsnavn",
-			)
-	ip_address = models.GenericIPAddressField(
-			null=False,
-			verbose_name="IP-adresse",
-			)
-	model = models.CharField(
-			max_length=200,
-			null=True,
-			verbose_name="Modell",
-			)
-	firmware = models.CharField(
-			max_length=200,
-			null=True,
-			verbose_name="Firmware",
-			)
-
-
 class QualysVuln(models.Model):
 	source = models.TextField()
 	server = models.ForeignKey(
@@ -2586,17 +2554,12 @@ class CMDBdevice(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-	device_type = models.CharField( # om det er en server eller klient, leses ut basert på BSS tilhørighet
+	device_type = models.CharField( # SERVER, CLIENT, NETWORK
 			max_length=50,
 			blank=False,
 			null=True,
 			verbose_name="Enhetstype",
 			help_text="Settes automatisk ved import",
-			)
-	device_active = models.BooleanField( # om maskinen er aktiv i 2S CMDB
-			verbose_name="Aktiv",
-			default=False, # dersom PRK-import oppretter enheter, skal de likevel ikke anses som aktive. Bare ekstra informasjon. Må eksplisitt settes til True
-			help_text=u"",
 			)
 	client_model_id = models.CharField( # egen fil med detaljer som lastes etter computers-filen. Bare for klienter.
 			verbose_name="Klientmodell",
@@ -2645,12 +2608,6 @@ class CMDBdevice(models.Model):
 	comp_ip_address = models.CharField(
 			verbose_name="IP-address",
 			max_length=100,
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	comp_cpu_speed = models.IntegerField(
-			verbose_name="CPU-hastighet (MHz?)",
 			blank=True,
 			null=True,
 			help_text=u"",
@@ -2714,14 +2671,10 @@ class CMDBdevice(models.Model):
 			null=True,
 			blank=True,
 			)
-	kilde_cmdb = models.BooleanField(
-			verbose_name="Kilde CMDB",
-			default=False,
-			)
 	client_virksomhet = models.ForeignKey(
 			to="Virksomhet",
 			on_delete=models.SET_NULL,
-			verbose_name="Kliens tilhørende virksomhet",
+			verbose_name="Klientens tilhørende virksomhet",
 			related_name='cmdbdevice_virksomhet',
 			null=True,
 			blank=True,

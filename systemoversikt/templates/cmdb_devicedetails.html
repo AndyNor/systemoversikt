@@ -6,77 +6,124 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	{{ device.comp_name }}
+	CMDB-enhetsdetaljer for {{ device.comp_name }}
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-<p>Dette er en {{ device.device_type }}, sist oppdatert {{ device.sist_oppdatert }}. Den er merket som {{ device.device_active|yesno:"aktiv, deaktiv"}} i CMDB.</p>
+<table class="table">
+<thead>
+	<tr>
+		<th>Enhetsnavn</th>
+		<th>Type enhet</th>
+		<th>Operativsystem</th>
+		<th>IP</th>
+		<th>DNS</th>
+		<th>VLAN</th>
+		<th>Lastbalansering</th>
+		<th>Service offering</th>
+		<th>Beskrivelse og kommentar</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>{{ device.comp_name }}</td>
+		<td>
+			{{ device.device_type|lower|capfirst }}
+		</td>
+		<td>
+			{{ device.comp_os_readable|default:"?" }}
+			{% if device.derived_os_endoflife %}<br>(end of life){% endif %}
+		</td>
+		<td>{{ device.comp_ip_address|default:"?" }}</td>
+		<td>{{device.dns|default:"Ingen"}}</td>
+		<td>{{ device.vlan|default:"?"}} </td>
+		<td>
+		{% for pool in device.vip_pool.all %}
+			<li>{{pool}}</li>
+			<ul>
+				{% for vip in pool.vip.all %}
+					<li>Virtual IP: {{vip}}</li>
+				{% endfor %}
+			</ul>
+		{% empty %}
+			Ingen
+		{% endfor %}
+		</td>
+		<td>
+		{% for offering in device.service_offerings.all %}
+			{% url 'cmdb_bss' pk=offering.pk as url_cmdb_bss %}
+			<a href="{{ url_cmdb_bss }}">{{ offering }}</a>
+		{% endfor %}
+		</td>
+		<td>
+			{% if device.description %}{{ device.description }}<br>{% endif %}
+			{% if device.comments %}{{ device.comments }}<br>{% endif %}
+		</td>
+	</tr>
+</tbody>
+</table>
 
-<p>Den er klassifisert under
-{% for offering in device.service_offerings.all %}
-	{% url 'cmdb_bss' pk=offering.pk as url_cmdb_bss %}
-	<a href="{{ url_cmdb_bss }}">{{ offering }}</a>,
-{% endfor %}
-og er {{ device.billable|yesno:"fakturerbar, ikke fakturerbar" }}.</p>
-
-<p>Befinner seg på datasenter {{device.comp_location}}.</p>
-
-<p>Beskrivelse:
-	<li>"{{ device.description }}".</li>
-	<li>"{{ device.comments }}".</li>
-</p>
-
-<p>
-	Operativsystem er {{ device.comp_os_readable|default:"?" }}.<br>
-	<hr>
-	IP er {{ device.comp_ip_address|default:"?" }} som ligger under VLAN {{device.vlan|default:"?"}}<br>
-	<hr>
-	Har tildelt {{ device.comp_cpu_core_count|default:"?" }} CPU-kjerner / {{ device.comp_cpu_speed|default:"?" }} Mhz.<br>
-	<hr>
-	Tildelt {{ device.comp_disk_space|filesizeformat }} {{ device.vm_disk_tier }} disk. {{device.disk_usage_free}}% ledig.<br>
-	{% for p in device.cmdbdisk_computer.all %}
-		<li>{{p.mount_point}} {{p.file_system}} {{p.size_bytes|filesizeformat}} ({{p.free_space_bytes|filesizeformat}} ledig)</li>
-	{% endfor %}
-	<hr>
-	Tildelt {{ device.comp_ram }} MB minne (RAM).
-	<hr>
-	Størrelse på backup: {% for b in device.backup_size %}	{{ b|filesizeformat }} {% if not forloop.last %} + {% endif %} {% endfor %}
-</p>
 
 {% if device.device_type == "SERVER" %}
-<p>
-	<hr>
-	Registrert mot DNS:
-	<li>{{device.dns|default:"Ingen"}}.</li>
-	<hr>
-	Registrert mot Lastbalansering:
-
-	{% for pool in device.vip_pool.all %}
-		<li>{{pool}}</li>
-		<ul>
-			{% for vip in pool.vip.all %}
-				<li>Virtual IP: {{vip}}</li>
-			{% endfor %}
-		</ul>
-	{% empty %}
-		<li>Ingen</li>
-	{% endfor %}
-
-</p>
+<h5>Lagring</h5>
+<table class="table">
+<thead>
+	<tr>
+		<th>Minne (RAM)</th>
+		<th>Backup</th>
+		<th>Tildelt disk</th>
+		<th>Ledig disk</th>
+		<th>Diskhastighet</th>
+		<th>Partisjoner</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>{{ device.comp_ram }} MB</td>
+		<td>
+			{% for b in device.backup_size %}
+				{{ b|filesizeformat }}
+				{% if not forloop.last %} +
+				{% endif %}
+			{% endfor %}</td>
+		<td>{{ device.vm_disk_allocation|filesizeformat }}</td>
+		<td>{{ device.vm_disk_usage|filesizeformat }}</td>
+		<td>{{ device.vm_disk_tier }}</td>
+		<td>
+		{% for p in device.cmdbdisk_computer.all %}
+			<li>
+				{{p.mount_point}}
+				{{p.file_system}}
+				{{p.size_bytes|filesizeformat}}
+				({{p.free_space_bytes|filesizeformat}} ledig)
+			</li>
+		{% endfor %}
+		</td>
+	</tr>
+</tbody>
+</table>
 {% endif %}
 
 {% if device.device_type == "KLIENT" %}
-
-<p>
-	Det er en {{ device.client_model_id|default:"?" }}.<br>
-	<hr>
-	Ble sist logget inn av {{ device.client_last_loggedin_user|default:"?" }}.<br>
-	Tilhører {{ device.maskinadm_virksomhet|default:"?" }}<br>
-	<hr>
-	Sist sett {{ device.client_sist_sett|default:"?" }}.<br>
-</p>
-
+<h5>Klientdetaljer</h5>
+<table class="table">
+<thead>
+	<tr>
+		<th>Klientmodell</th>
+		<th>Sist pålogget</th>
+		<th>Sist sett</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
+		<td>{{ device.client_model_id|default:"?" }}</td>
+		<td>{{ device.client_last_loggedin_user|default:"?" }}</td>
+		<td>{{ device.client_sist_sett|default:"?" }}</td>
+	</tr>
+</tbody>
+</table>
 {% endif %}
+
 
 {% endblock hovedinnhold %}

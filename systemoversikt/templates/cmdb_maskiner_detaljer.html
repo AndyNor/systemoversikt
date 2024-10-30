@@ -137,7 +137,6 @@
 		<thead>
 		<tr>
 			<th>Computer name / hostname</th>
-			<th>Aktiv?</th>
 			<th>OS</th>
 			<th>Antall CPU</th>
 			<th>RAM (MB)</th>
@@ -153,12 +152,9 @@
 		</thead>
 		<tbody>
 		{% for item in cmdbdevices.all %}
-		<tr {% if not item.device_active %} style="color: #d6d6d6;" {% endif %}>
+		<tr>
 			{% url 'cmdb_devicedetails' pk=item.pk as url_cmdb_devicedetails %}
 			<td><a href="{{url_cmdb_devicedetails}}">{{ item.comp_name|default:"-" }}</a></td>
-			<td>
-				{% include 'site_janeivetikke.html' with boolean=item.device_active %}
-			</td>
 			<td>
 				{{ item.comp_os }} {{ item.comp_os_version|default:"-" }} {{ item.comp_os_service_pack|default:"-" }}
 			</td>

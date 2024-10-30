@@ -26,7 +26,6 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 	<th>Enhet</th>
 	<th>Enhetkobling</th>
 	<th>Operativsystem</th>
-	<th>Aktiv?</th>
 	<th>Miljø</th>
 	<th>Først sett</th>
 	<th>Eksponert</th>
@@ -39,7 +38,6 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 	<td>{{ vuln.source }}</td>
 	<td>{{ vuln.server|default:"ingen" }}<br>{{ vuln.server.comp_ip_address }}</td>
 	<td>{{ vuln.os }}</td>
-	<td>{{ vuln.server.device_active|yesno:"Ja, Nei" }}</td>
 	<td>
 	{% for offering in vuln.server.service_offerings.all %}
 		{{ offering }}{% if not forloop.last%},{% endif %}

@@ -8,11 +8,12 @@ from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth.models import User
 from systemoversikt.models import *
-from systemoversikt.management.commands.sharepoint_server_updater import CLIENT_BUSINESS_SERVICES
 from systemoversikt.views import push_pushover
 import json, os, re, time, sys
 import pandas as pd
 import numpy as np
+import warnings
+from systemoversikt.views import sharepoint_get_file
 
 
 class Command(BaseCommand):
@@ -52,27 +53,12 @@ class Command(BaseCommand):
 		try:
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
-
 			client_owner_source_filename = FILNAVN["client_owner_source_filename"]
-			#client_bss_source_filename = FILNAVN["client_bss_source_filename"]
-			from systemoversikt.views import sharepoint_get_file
-
-			# kobling eier-maskin
 			source_filepath = f"{client_owner_source_filename}"
 			result = sharepoint_get_file(source_filepath)
 			client_owner_dest_file = result["destination_file"]
 			client_owner_modified_date = result["modified_date"]
 			print(f"Filen er datert {client_owner_modified_date}")
-
-			# kobling maskin-bss
-			"""
-			source_filepath = f"{client_bss_source_filename}"
-			result = sharepoint_get_file(source_filepath)
-			client_bss_dest_file = result["destination_file"]
-			client_bss_modified_date = result["modified_date"]
-			print(f"Filen er datert {client_bss_modified_date}")
-			"""
-
 
 			@transaction.atomic
 			def import_cmdb_clients():
@@ -141,72 +127,9 @@ class Command(BaseCommand):
 				client_dropped = 0
 				runtime_t0 = time.time()
 
-				# oppdatere alle klienter med bss-kobling
-
-				# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
-				"""
-				import warnings
-				warnings.simplefilter("ignore")
-
-				dfRaw = pd.read_excel(client_bss_dest_file)
-				dfRaw = dfRaw.replace(np.nan, '', regex=True)
-				client_bss_data = dfRaw.to_dict('records')
-
-				if client_bss_data == None:
-					ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Feilet, fant ikke klient-bss data.")
-					return
-
-				print("Starter å opprette klientinstanser og koble dem til business sub service")
-				antall_records = len(client_bss_data)
-				for idx, record in enumerate(client_bss_data):
-
-					if idx % 2000 == 0:
-						print("%s av %s" % (idx, antall_records))
-
-					comp_name = record["Name"].lower()
-					if comp_name == "":
-						print(f"Maskinen mangler navn: {record}")
-						client_dropped += 1
-						continue  # Det må være en verdi på denne
-
-					# Sette type enhet
-					if record["Name.1"] in CLIENT_BUSINESS_SERVICES:
-						# vi sjekker om enheten finnes fra før
-						cmdbdevice = get_cmdb_instance(comp_name)
-						cmdbdevice.device_type = "KLIENT"
-						#print(".", end="", flush=True)
-					else:
-						continue
-						#cmdbdevice.device_type = "SERVER" # handled in another script
-
-					if record["Disk space (GB)"] != "":
-						cmdbdevice.comp_disk_space = convertToInt(record["Disk space (GB)"])*1000**3 # returnert som bytes (fra GB)
-					cmdbdevice.comp_cpu_core_count = convertToInt(record["CPU total"])
-					cmdbdevice.comp_ram = convertToInt(record["RAM (MB)"])
-					cmdbdevice.comp_cpu_speed = convertToInt(record["CPU speed (MHz)"])
-					cmdbdevice.comp_os = record["Operating System"]
-					cmdbdevice.comp_os_version = record["OS Version"]
-					cmdbdevice.comp_os_service_pack = record["OS Service Pack"]
-					cmdbdevice.comp_os_readable = os_readable(record["Operating System"], record["OS Version"], record["OS Service Pack"])
-					cmdbdevice.comp_location = record["Location"]
-					cmdbdevice.comments = record["Comments"]
-					cmdbdevice.description = record["Description"]
-					cmdbdevice.device_active = True
-					cmdbdevice.kilde_cmdb = True
-					#cmdbdevice.billable = record["Billable"] #finnes ikke lenger i denne rapporten
-
-					sub_name = bss_cache(record["Name.1"])
-					if sub_name == None:
-						print('Business sub service %s for %s finnes ikke' % (record["Name.1"], comp_name))
-					cmdbdevice.sub_name = sub_name # det er OK at den er None
-					cmdbdevice.save()
-				"""
-
-
-
 				# Koble maskin til sluttbruker
 				print("Starter å koble maskin til sluttbruker")
-				import warnings
+
 				warnings.simplefilter("ignore")
 				dfRaw = pd.read_excel(client_owner_dest_file)
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
@@ -237,8 +160,6 @@ class Command(BaseCommand):
 					if os_readable == '':
 						os_readable = 'Ukjent'
 
-					cmdbdevice.device_active = True
-					cmdbdevice.kilde_cmdb = True
 					cmdbdevice.comp_os = record["Operating System"]
 					cmdbdevice.comp_os_readable = os_readable
 					cmdbdevice.client_model_id = record["Model ID"]
@@ -250,22 +171,18 @@ class Command(BaseCommand):
 					cmdbdevice.save()
 
 
-				# Opprydding av gamle ting ikke sett ved oppdatering
-				devices_set_inactive = 0
-
-				utdaterte_klienter = CMDBdevice.objects.filter(device_type="KLIENT", sist_oppdatert__lte=timezone.now()-timedelta(hours=12)) # det vil aldri gå mer enn noen få minutter, men for å være sikker..
-				#print(f"Setter {len(utdaterte_klienter)} utdaterte klienter til deaktivert")
-				for klient in utdaterte_klienter:
-					klient.device_active = False
-					klient.save()
-					devices_set_inactive += 1
+				#opprydding alle klienter ikke sett fra hovedimport
+				for_gammelt = timezone.now() - timedelta(hours=12) # 12 timer gammelt, scriptet bruker bare noen minutter..
+				ikke_oppdatert = CMDBdevice.objects.filter(device_type="KLIENT").filter(sist_oppdatert__lte=for_gammelt)
+				antall_ikke_oppdatert = ikke_oppdatert.count()
+				ikke_oppdatert.delete()
 
 
 				# Oppsummering og logging
 				runtime_t1 = time.time()
 				total_runtime = round(runtime_t1 - runtime_t0, 1)
 
-				logg_entry_message = f'Fant {antall_records} klienter. {client_dropped} manglet navn. Satte {devices_set_inactive} eksisterende klienter inaktive. Import tok {total_runtime} sekunder'
+				logg_entry_message = f'Importerte {antall_records} klienter. {client_dropped} manglet navn. Slettet {antall_ikke_oppdatert} klienter som ikke ble sett. Import tok {total_runtime} sekunder'
 				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 				print(logg_entry_message)
 				return logg_entry_message

@@ -32,7 +32,7 @@
 	</thead>
 	<tbody>
 	{% for server in hits %}
-		<tr {% if server.device_active == False %} style="text-decoration: line-through; opacity: 60%;" {% endif %}>
+		<tr>
 			<td>{{server.comp_name}}</td>
 			<td>
 				{% for offering in server.service_offerings.all %}

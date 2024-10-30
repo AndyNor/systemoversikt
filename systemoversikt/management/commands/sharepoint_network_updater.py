@@ -15,8 +15,8 @@ from systemoversikt.views import get_ipaddr_instance
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		INTEGRASJON_KODEORD = "sp_nettwork_eq"
-		LOG_EVENT_TYPE = "CMDB Networkdevice import"
+		INTEGRASJON_KODEORD = "sp_network_eq"
+		LOG_EVENT_TYPE = "CMDB Network device import"
 		KILDE = "Service Now"
 		PROTOKOLL = "SMTP og SharePoint"
 		BESKRIVELSE = "BigIP instanser og nettverksinstanser"
@@ -88,22 +88,24 @@ class Command(BaseCommand):
 			num_bigip = len(data)
 			for line in data:
 				try:
-					inst = NetworkDevice.objects.get(name=line["Name"])
+					inst = CMDBdevice.objects.get(comp_name=line["Name"])
 				except:
-					inst = NetworkDevice.objects.create(name=line["Name"], ip_address=line["IP Address"])
+					inst = CMDBdevice.objects.create(comp_name=line["Name"], comp_ip_address=line["IP Address"])
 					num_bigip_new += 1
 
 				#print(inst.name)
-				inst.ip_address = line["IP Address"]
-				inst.model = line["Model ID"]
-				inst.firmware = ""
+				inst.device_type = "NETWORK"
+				inst.comp_ip_address = line["IP Address"]
+				inst.comp_os = line["Model ID"]
+				inst.comp_os_version = ""
+				inst.comp_os_readable = f"{line['Model ID']}"
 				inst.save()
 
 				# Linke IP-adresse
-				ipaddr_ins = get_ipaddr_instance(inst.ip_address)
+				ipaddr_ins = get_ipaddr_instance(inst.comp_ip_address)
 				if ipaddr_ins != None:
-					if not inst in ipaddr_ins.networkdevices.all():
-						ipaddr_ins.networkdevices.add(inst)
+					if not inst in ipaddr_ins.servere.all():
+						ipaddr_ins.servere.add(inst)
 						ipaddr_ins.save()
 
 
@@ -115,27 +117,37 @@ class Command(BaseCommand):
 			num_cisco = len(data)
 			for line in data:
 				try:
-					inst = NetworkDevice.objects.get(name=line["Name"])
+					inst = CMDBdevice.objects.get(comp_name=line["Name"])
 				except:
-					inst = NetworkDevice.objects.create(name=line["Name"], ip_address=line["IP Address"])
+					inst = CMDBdevice.objects.create(comp_name=line["Name"], comp_ip_address=line["IP Address"])
 					num_cisco_new += 1
 
 				#print(inst.name)
-				inst.ip_address = line["IP Address"]
+				inst.device_type = "NETWORK"
+				inst.comp_ip_address = line["IP Address"]
 				model = "%s %s %s" % (line["Manufacturer"], line["Class"], line["Name.1"])
-				inst.model = model
-				inst.firmware = line["Firmware version"]
+				inst.comp_os = model
+				inst.comp_os_version = line["Firmware version"]
+				inst.comp_os_readable = f"{model} {inst.comp_os_version}"
 				inst.save()
 
 				# Linke IP-adresse
-				ipaddr_ins = get_ipaddr_instance(inst.ip_address)
+				ipaddr_ins = get_ipaddr_instance(inst.comp_ip_address)
 				if ipaddr_ins != None:
-					if not inst in ipaddr_ins.networkdevices.all():
-						ipaddr_ins.networkdevices.add(inst)
+					if not inst in ipaddr_ins.servere.all():
+						ipaddr_ins.servere.add(inst)
 						ipaddr_ins.save()
 
 
-			logg_entry_message = f'{num_cisco} cisco-enheter funnet. {num_cisco_new} nye lagt til. {num_bigip} bigip-enheter funnet. {num_bigip_new} nye lagt til.'
+			#opprydding alle nettverksenheter som ikke er sett ved oppdatering
+			for_gammelt = timezone.now() - timedelta(hours=12) # 12 timer gammelt, scriptet bruker bare noen minutter..
+			ikke_oppdatert = CMDBdevice.objects.filter(device_type="NETWORK").filter(sist_oppdatert__lte=for_gammelt)
+			tekst_ikke_oppdatert = ",".join(ikke_oppdatert)
+			antall_ikke_oppdatert = ikke_oppdatert.count()
+			ikke_oppdatert.delete()
+
+
+			logg_entry_message = f'Importerte {num_cisco} cisco-enheter hvor {num_cisco_new} var nye. Importerte {num_bigip} bigip-enheter hvor {num_bigip_new} var nye. Slettet {antall_ikke_oppdatert} enheter: {tekst_ikke_oppdatert}'
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
@@ -146,6 +158,7 @@ class Command(BaseCommand):
 
 		#eksekver
 		logg_entry_message = import_network()
+
 		# lagre sist oppdatert tidspunkt
 		int_config.dato_sist_oppdatert = destination_file_bigip_modified_date # eller timezone.now()
 		int_config.sist_status = logg_entry_message

@@ -30,12 +30,12 @@
 			<td>{{ ip }}</td>
 			<td>
 			{% for server in ip.servere.all %}
-				{% if server.device_active %}
-					{% for offering in maskin.service_offerings.all %}
-						{% url 'cmdb_bss' pk=offering.pk as url_bss %}
-						{{ server }} (<a href="{{ url_bss }}">{{ offering }}</a>)<br>
-					{% endfor %}
-				{% endif %}
+
+				{% for offering in maskin.service_offerings.all %}
+					{% url 'cmdb_bss' pk=offering.pk as url_bss %}
+					{{ server }} (<a href="{{ url_bss }}">{{ offering }}</a>)<br>
+				{% endfor %}
+
 			{% endfor %}
 			</td>
 			<td>

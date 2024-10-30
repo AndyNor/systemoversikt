@@ -89,7 +89,7 @@
 	</thead>
 	<tbody>
 	{% for maskin in maskiner %}
-	<tr {% if not maskin.device_active %} style="color: #d6d6d6;" {% endif %}>
+	<tr>
 		<td>
 			{% url 'cmdb_devicedetails' pk=maskin.pk as url_cmdb_devicedetails %}
 			<a href="{{ url_cmdb_devicedetails }}">{{ maskin.comp_name }}</a><br>

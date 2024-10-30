@@ -11,13 +11,47 @@
 
 {% block hovedinnhold %}
 
-	<p>CMDB står for "Configuration management database" og er i praksis en eller flere databaser med informasjon om hva et driftsmiljø består av. Sopra Steria har organisert servere og databaser under "miljø" som i  praksis er test/produksjon/kurs for et system. Hvert miljø er koblet til en kategori.
-
-	I Kartoteket skal vi nå knytte systemet direkte til de miljø det består av. Denne knytningen vil skje fra systemets redigeringsside.</p>
+	<p>CMDB står for Configuration Management DataBase og er en som navnet antyder en database med informasjon om hva et driftsmiljø består av. Sopra Steria har organisert servere og databaser under "miljø" de kaller "service offerings", typisk et for produksjon, preproduksjon og test. I Kartoteket knytter vi nå service offerings til systemet direkte fra det enkelte system fra systemets redigeringsside.</p>
 
 	<p>Det er knyttet tilgjengelighetskrav til hvert miljø, som igjen dikterer SLA krav knyttet til bestillinger og håndtering av feil på underliggende systemer. Ler mer om SLA-nivåene på <a href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Kontinuit--og-beredskapsarbeid.aspx" target="_blank">SharePoint</a>.</p>
 
-	<p>Importen av disse dataene skjer automatisk hver natt</p>
+	<p>Importen av disse dataene skjer automatisk hver natt. Det er <b>{{servere_flere_offerings|length}}</b> servere koblet til flere service offerings, hvorav <b>{{servere_flereennto_offerings|length}}</b> har flere enn to koblinger.</p>
+
+	<div id="accordion">
+		<div class="card">
+			<div class="card-header" id="heading">
+				<h5 class="mb-0">
+					<button class="btn btn-link" data-toggle="collapse" data-target="#collapse" aria-expanded="true" aria-controls="collapse">Rå liste
+					</button>
+				</h5>
+			</div>
+			<div id="collapse" class="collapse" aria-labelledby="heading" data-parent="#accordion">
+				<div class="card-body">
+
+					<table class="table">
+					<thead>
+						<th>Server</th>
+						<th>Service Offerings</th>
+					</thead>
+					<tbody>
+					{% for server in servere_flere_offerings %}
+						<tr>
+							<td>{{ server }}</td>
+							<td>
+								{% for offering in server.service_offerings.all %}
+									{{ offering }}<br>
+								{% endfor %}
+							</td>
+						</tr>
+					{% endfor %}
+					</tbody>
+					</table>
+
+				</div>
+			</div>
+		</div>
+	</div>
+
 
 	<hr>
 	Hopp til

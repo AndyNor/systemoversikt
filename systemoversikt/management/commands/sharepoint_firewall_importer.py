@@ -224,7 +224,7 @@ class Command(BaseCommand):
 
 			# klargjøre cachet data for servere
 			cmdb_server_buffer = {}
-			all_cmdb_servers = CMDBdevice.objects.filter(device_active=True, device_type="SERVER").values("comp_ip_address", "pk", "comp_name", "sub_name__navn")
+			all_cmdb_servers = CMDBdevice.objects.filter(device_type="SERVER").values("comp_ip_address", "pk", "comp_name", "sub_name__navn")
 			for item in all_cmdb_servers:
 				server = item["comp_ip_address"]
 				if server == "":
@@ -238,28 +238,12 @@ class Command(BaseCommand):
 
 			@lru_cache(maxsize=512)
 			def lookup_device(ip_address):
-				#return None
 				try:
-					#ip_address = ipaddress.ip_address(ip_address)  # dette er en ipadresse..
-					#servere = CMDBdevice.objects.filter(comp_ip_address=str(ip_address), device_active=True)
-
-					#if len(servere) == 0:
-					#	return None
-
-					#if len(servere) > 1:
-					#	print(f"Flere maskiner med ip {ip_address}")
-					#	return None
-
 					server = cmdb_server_buffer[ip_address]
 					pk = server["pk"]
 					comp_name = server["comp_name"]
 					sub_name = server[sub_name]
 
-					#server = servere[0]
-					#try:
-					#	server_str = (f"{server.comp_name} ({server.sub_name.navn})")
-					#except:
-					#	server_str = (f"{server.comp_name}")
 					server_str = f"{comp_name} ({sub_name})"
 
 					return {"pk": pk, "name": server_str}

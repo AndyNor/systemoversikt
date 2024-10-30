@@ -82,44 +82,55 @@ class Command(BaseCommand):
 			except:
 				return None
 
+		@lru_cache(maxsize=64)
+		def lookup_ip(ip):
+			try:
+				return CMDBdevice.objects.get(comp_ip_address__iexact=ip)
+			except:
+				return None
+
 
 		@transaction.atomic
 		def save_to_database(data):
 			processed = 0
+			fixed = 0
 			failed_server_lookups = 0
 			for line in data:
-				try:
-					int(line['ID'])
-				except:
-					continue # Det må være en gyldig ID i denne kolonnen
+				if not line['ID'].isdigit():
+					continue
 
-				if line["Status"] != "Fixed": # dropper de som er rettet
+				if line["Status"] == "Fixed": # dropper de som er rettet
+					fixed += 1
+					continue
 
-					source = f"{line['Hostname']} {line['IP']}"
-					processed += 1
+				source = f"{line['Hostname']} {line['IP']}"
+				processed += 1
 
-					q = QualysVuln.objects.create(
-							source=source,
-							title=line['Title'],
-							severity=int(line['Severity']),
-							first_seen=line['First detected'],
-							last_seen=line['Last detected'],
-							public_facing=line['Public Facing'],
-							cve_info=line['CVE ID'],
-							result=line['Results'],
-							os=line['OS'],
-							status=line['Status'],
-						)
+				q = QualysVuln.objects.create(
+						source=source,
+						title=line['Title'],
+						severity=int(line['Severity']),
+						first_seen=line['First detected'],
+						last_seen=line['Last detected'],
+						public_facing=line['Public Facing'],
+						cve_info=line['CVE ID'],
+						result=line['Results'],
+						os=line['OS'],
+						status=line['Status'],
+					)
 
-					server = lookup_server(line["Hostname"])
-					q.ansvar_basisdrift = ansvar_basisdrift(q)
-					if server:
-						q.server = server
-						q.save()
-					else:
-						failed_server_lookups += 1
+				q.ansvar_basisdrift = ansvar_basisdrift(q)
 
-			return (processed, failed_server_lookups)
+				server = lookup_server(line["Hostname"])
+				if not server:
+					server = lookup_ip(line["IP"])
+				if not server:
+					failed_server_lookups += 1
+					serer = None
+				q.server = server
+				q.save()
+
+			return (processed, failed_server_lookups, fixed)
 
 
 		def import_qualys():
@@ -130,17 +141,20 @@ class Command(BaseCommand):
 			dfRaw = dfRaw.replace(np.nan, '', regex=True)
 			data = dfRaw.to_dict('records')
 
-			split_size = 5000
+			linjer_kilde = len(data)
+			split_size = 1000
 			antall_totalt = 0
 			failed_server_lookups = 0
+			antall_fixed = 0
 
 			for i in range(0, len(data), split_size):
 				return_data = save_to_database(data[i:i + split_size])
 				antall_totalt += return_data[0]
 				failed_server_lookups += return_data[1]
-				print(f"Ferdig med {antall_totalt}. {failed_server_lookups} feilet oppslag mot server så langt.")
+				antall_fixed += return_data[2]
+				print(f"Processing batch {i}-{i+split_size}/{linjer_kilde}. Saved {antall_totalt} vulnerabilities, where {failed_server_lookups} failed server match and {antall_fixed} was fixed and not saved")
 
-			logg_entry_message = f'\nFerdig med import. {antall_totalt} sårbarheter importert. {failed_server_lookups} feilet oppslag mot server.'
+			logg_entry_message = f'\nDone importing {antall_totalt} vulnerabilities, where {failed_server_lookups} of them failed server lookup'
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,

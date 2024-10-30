@@ -21,10 +21,10 @@
 	<tbody>
 	{% for device in nettverksenehter %}
 		<tr>
-			<td>{{device.name}}</td>
-			<td>{{device.ip_address}}</td>
-			<td>{{device.model}}</td>
-			<td>{{device.firmware}}</td>
+			<td>{{device.comp_name}}</td>
+			<td>{{device.comp_ip_address}}</td>
+			<td>{{device.comp_os}}</td>
+			<td>{{device.comp_os_version}}</td>
 		</tr>
 	{% endfor %}
 	</tbody>
