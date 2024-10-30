@@ -96,7 +96,11 @@ class Command(BaseCommand):
 			fixed = 0
 			failed_server_lookups = 0
 			for line in data:
-				if not line['ID'].isdigit():
+				try:
+					item_id = int(line['ID'])
+				except:
+					item_id = None
+				if not item_id:
 					continue
 
 				if line["Status"] == "Fixed": # dropper de som er rettet
