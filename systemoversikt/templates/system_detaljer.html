@@ -797,6 +797,11 @@
 					<th>BrowserName - Application Name</th>
 					<th>AdminFolderName</th>
 					<td>ClientFolder</th>
+					<th>
+						WorkingDirectory<br>
+						CommandLineExecutable<br>
+						CommandLineArguments
+					</th>
 				</thead>
 			<tbody>
 			{% for app in citrix_apps %}
@@ -812,6 +817,12 @@
 					<td>{{app.publikasjon_json.AdminFolderName}}</td>
 
 					<td>{{app.publikasjon_json.ClientFolder|default:""}}</td>
+					<td>
+						{{app.publikasjon_json.WorkingDirectory|default:"-"}}<br>
+						{{app.publikasjon_json.CommandLineExecutable|default:"-"}}<br>
+						{{app.publikasjon_json.CommandLineArguments|default:"-"}}
+					</td>
+
 				</tr>
 			{% endfor %}
 			</tbody>
