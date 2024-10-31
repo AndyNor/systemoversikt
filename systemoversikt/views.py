@@ -4063,7 +4063,7 @@ def search(request):
 			pass
 
 	if search_term != '':
-		aktuelle_systemer = System.objects.filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
+		aktuelle_systemer = System.objects.filter(~Q(livslop_status=7)).filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
 		#Her ønsker vi å vise treff i beskrivelsesfeltet, men samtidig ikke vise systemer på nytt
 		potensielle_systemer = System.objects.filter(Q(systembeskrivelse__icontains=search_term) & ~Q(pk__in=aktuelle_systemer))
 		aktuelle_programvarer = Programvare.objects.filter(Q(programvarenavn__icontains=search_term)|Q(alias__icontains=search_term))
