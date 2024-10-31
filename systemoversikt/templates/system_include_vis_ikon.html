@@ -13,8 +13,10 @@
 		<img src="{% static 'system.png' %}">
 		{% endif %}
 
-		<br><p style="
-			{% if system.livslop_status == 6 %}text-decoration: line-through;{% endif %}
-			{% if system.livslop_status == 7 %}text-decoration: line-through;{% endif %}
-		">{{ system }}</p></a>
+		<br><p>
+			{{ system }}<br>
+			{{ system.driftsmodell_foreignkey|default:"" }}<br>
+			{% if system.livslop_status == 6 %}<span style="color:red;">Avvikles</span>{% endif %}
+			{% if system.livslop_status == 7 %}<span style="color:red;">Avviklet</span>{% endif %}
+		</p></a>
 </div>
