@@ -247,7 +247,14 @@ class Command(BaseCommand):
 				ikke_oppdatert = CMDBdevice.objects.filter(device_type="SERVER").filter(sist_oppdatert__lte=for_gammelt)
 				tekst_ikke_oppdatert = ",".join([device.comp_name for device in ikke_oppdatert.all()])
 				antall_ikke_oppdatert = ikke_oppdatert.count()
-				ikke_oppdatert.delete()
+
+
+				#ikke_oppdatert.delete()
+				batch_size = 500
+				while ikke_oppdatert.count():
+					ids = ikke_oppdatert.values_list('pk', flat=True)[:batch_size]
+					ikke_oppdatert.filter(pk__in=ids).delete()
+					print(f"Slettet ny batch på {batch_size}..")
 
 
 				#oppsummering og logging
