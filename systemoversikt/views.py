@@ -1934,6 +1934,7 @@ def cmdb_backup_index(request):
 	count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
 	bs_all = CMDBbs.objects.all()
 
+
 	return render(request, 'cmdb_backup_index.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
