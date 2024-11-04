@@ -79,11 +79,6 @@ class Command(BaseCommand):
 
 				# fjerner alle registrerte innslag (finnes ingen identifikator)
 
-				names = [line["Client"] for line in data]
-				import collections
-				counter = collections.Counter(names)
-				flere_innslag = [k for k, v in counter.items() if v > 1]
-
 				CMDBbackup.objects.all().delete()
 				antall_linjer = len(data)
 
@@ -118,8 +113,7 @@ class Command(BaseCommand):
 					inst.save()
 
 
-				logg_flere_innslag = ', '.join(flere_innslag)
-				logg_entry_message = f'{antall_linjer} innslag importert. {failed_device} feilet oppslag mot server. Duplikate innslag: {logg_flere_innslag}'
+				logg_entry_message = f'{antall_linjer} innslag importert. {failed_device} feilet oppslag mot server.'
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
