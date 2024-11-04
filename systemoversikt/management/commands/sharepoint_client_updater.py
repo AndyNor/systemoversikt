@@ -181,7 +181,7 @@ class Command(BaseCommand):
 				batch_size = 500
 				while ikke_oppdatert.count():
 					ids = ikke_oppdatert.values_list('pk', flat=True)[:batch_size]
-					ikke_oppdatert.objects.filter(pk__in=ids).delete()
+					ikke_oppdatert.filter(pk__in=ids).delete()
 					print(f"Slettet ny batch på {batch_size}..")
 
 
