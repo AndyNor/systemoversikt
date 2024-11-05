@@ -48,133 +48,146 @@ class Command(BaseCommand):
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
-		from systemoversikt.views import sharepoint_get_file
+		try:
 
-		source_filepath = FILNAVN
-		result = sharepoint_get_file(source_filepath)
-		destination_file = result["destination_file"]
-		destination_file_modified_date = result["modified_date"]
-		print(f"Filen er datert {destination_file_modified_date}")
+			from systemoversikt.views import sharepoint_get_file
 
-		# tømme alle gamle innslag og starte på nytt
-		QualysVuln.objects.all().delete()
+			source_filepath = FILNAVN
+			result = sharepoint_get_file(source_filepath)
+			destination_file = result["destination_file"]
+			destination_file_modified_date = result["modified_date"]
+			print(f"Filen er datert {destination_file_modified_date}")
 
-
-		def ansvar_basisdrift(vulnerability):
-
-			patches_av_drift = [
-					"Splunk Universal Forwarder",
-					"Microsoft Azure Connected Machine Agent",
-					"Windows Server Security Update for",
-				]
-
-			if any(phrase in vulnerability.title for phrase in patches_av_drift):
-				return True
-			return False
+			# tømme alle gamle innslag og starte på nytt
+			QualysVuln.objects.all().delete()
 
 
+			def ansvar_basisdrift(vulnerability):
+
+				patches_av_drift = [
+						"Splunk Universal Forwarder",
+						"Microsoft Azure Connected Machine Agent",
+						"Windows Server Security Update for",
+					]
+
+				if any(phrase in vulnerability.title for phrase in patches_av_drift):
+					return True
+				return False
 
 
-		@lru_cache(maxsize=384)
-		def lookup_server(servername):
-			try:
-				return CMDBdevice.objects.get(comp_name__iexact=servername)
-			except:
-				return None
-
-		@lru_cache(maxsize=64)
-		def lookup_ip(ip):
-			try:
-				return CMDBdevice.objects.get(comp_ip_address__iexact=ip)
-			except:
-				return None
 
 
-		@transaction.atomic
-		def save_to_database(data):
-			processed = 0
-			fixed = 0
-			failed_server_lookups = 0
-			for line in data:
+			@lru_cache(maxsize=384)
+			def lookup_server(servername):
 				try:
-					item_id = int(line['ID'])
+					return CMDBdevice.objects.get(comp_name__iexact=servername)
 				except:
-					item_id = None
-				if not item_id:
-					continue
+					return None
 
-				if line["Status"] == "Fixed": # dropper de som er rettet
-					fixed += 1
-					continue
+			@lru_cache(maxsize=64)
+			def lookup_ip(ip):
+				try:
+					return CMDBdevice.objects.get(comp_ip_address__iexact=ip)
+				except:
+					return None
 
-				source = f"{line['Hostname']} {line['IP']}"
-				processed += 1
 
-				q = QualysVuln.objects.create(
-						source=source,
-						title=line['Title'],
-						severity=int(line['Severity']),
-						first_seen=line['First detected'],
-						last_seen=line['Last detected'],
-						public_facing=line['Public Facing'],
-						cve_info=line['CVE ID'],
-						result=line['Results'],
-						os=line['OS'],
-						status=line['Status'],
+			@transaction.atomic
+			def save_to_database(data):
+				processed = 0
+				fixed = 0
+				failed_server_lookups = 0
+				for line in data:
+					try:
+						item_id = int(line['ID'])
+					except:
+						item_id = None
+					if not item_id:
+						continue
+
+					if line["Status"] == "Fixed": # dropper de som er rettet
+						fixed += 1
+						continue
+
+					source = f"{line['Hostname']} {line['IP']}"
+					processed += 1
+
+					q = QualysVuln.objects.create(
+							source=source,
+							title=line['Title'],
+							severity=int(line['Severity']),
+							first_seen=line['First detected'],
+							last_seen=line['Last detected'],
+							public_facing=line['Public Facing'],
+							cve_info=line['CVE ID'],
+							result=line['Results'],
+							os=line['OS'],
+							status=line['Status'],
+						)
+
+					q.ansvar_basisdrift = ansvar_basisdrift(q)
+
+					server = lookup_server(line["Hostname"])
+					if not server:
+						server = lookup_ip(line["IP"])
+					if not server:
+						failed_server_lookups += 1
+						serer = None
+					q.server = server
+					q.save()
+
+				return (processed, failed_server_lookups, fixed)
+
+
+			def import_qualys():
+
+				print("Åpner filen...")
+				warnings.simplefilter("ignore")
+				dfRaw = pd.read_excel(destination_file)
+				dfRaw = dfRaw.replace(np.nan, '', regex=True)
+				data = dfRaw.to_dict('records')
+
+				linjer_kilde = len(data)
+				split_size = 1000
+				antall_totalt = 0
+				failed_server_lookups = 0
+				antall_fixed = 0
+
+				for i in range(0, len(data), split_size):
+					return_data = save_to_database(data[i:i + split_size])
+					antall_totalt += return_data[0]
+					failed_server_lookups += return_data[1]
+					antall_fixed += return_data[2]
+					print(f"Processing batch {i}-{i+split_size}/{linjer_kilde}. Saved {antall_totalt} vulnerabilities, where {failed_server_lookups} failed server match and {antall_fixed} was fixed and not saved")
+
+				logg_entry_message = f'\nDone importing {antall_totalt} vulnerabilities, where {failed_server_lookups} of them failed server lookup'
+				logg_entry = ApplicationLog.objects.create(
+						event_type=LOG_EVENT_TYPE,
+						message=logg_entry_message,
 					)
-
-				q.ansvar_basisdrift = ansvar_basisdrift(q)
-
-				server = lookup_server(line["Hostname"])
-				if not server:
-					server = lookup_ip(line["IP"])
-				if not server:
-					failed_server_lookups += 1
-					serer = None
-				q.server = server
-				q.save()
-
-			return (processed, failed_server_lookups, fixed)
+				print(logg_entry_message)
+				return logg_entry_message
 
 
-		def import_qualys():
+			# eksekvere
+			logg_entry_message = import_qualys()
 
-			print("Åpner filen...")
-			warnings.simplefilter("ignore")
-			dfRaw = pd.read_excel(destination_file)
-			dfRaw = dfRaw.replace(np.nan, '', regex=True)
-			data = dfRaw.to_dict('records')
 
-			linjer_kilde = len(data)
-			split_size = 1000
-			antall_totalt = 0
-			failed_server_lookups = 0
-			antall_fixed = 0
+			# logge resultatet
+			int_config.dato_sist_oppdatert = destination_file_modified_date # eller timezone.now()
+			int_config.sist_status = logg_entry_message
+			int_config.save()
 
-			for i in range(0, len(data), split_size):
-				return_data = save_to_database(data[i:i + split_size])
-				antall_totalt += return_data[0]
-				failed_server_lookups += return_data[1]
-				antall_fixed += return_data[2]
-				print(f"Processing batch {i}-{i+split_size}/{linjer_kilde}. Saved {antall_totalt} vulnerabilities, where {failed_server_lookups} failed server match and {antall_fixed} was fixed and not saved")
-
-			logg_entry_message = f'\nDone importing {antall_totalt} vulnerabilities, where {failed_server_lookups} of them failed server lookup'
+		except Exception as e:
+			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
-					message=logg_entry_message,
-				)
-			print(logg_entry_message)
-			return logg_entry_message
+					message=logg_message,
+					)
+			print(logg_message)
 
-
-		# eksekvere
-		logg_entry_message = import_qualys()
-
-
-		# logge resultatet
-		int_config.dato_sist_oppdatert = destination_file_modified_date # eller timezone.now()
-		int_config.sist_status = logg_entry_message
-		int_config.save()
+			# Push error
+			push_pushover(f"{SCRIPT_NAVN} feilet")
 
 
 

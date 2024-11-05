@@ -32,59 +32,49 @@
 <table class="table table-sm tablesorter excel">
 <thead>
 	<th>Sone</th>
-	<th>DesktopGroup</th>
-	<th>BrowserName<br>
-	Application Name</th>
-
-	<th>Produksjon</th>
+	<th>Terminalservergruppe<br>(DesktopGroup)</th>
+	<th>Mappe<br>(AdminFolderName og ClientFolder)</th>
+	<th>Applikasjonsnavn<br>(BrowserName og Application Name)</th>
 	<th>Systemkoblet?</th>
-
+	<th>Totalt antall unike medlemmer</th>
+	<th>Hva som kjøres<br>(WorkingDirectory, CommandLineExecutable og CommandLineArguments)</th>
+	<th>AssociatedUserFullNames</th>
+	<th>Produksjon</th>
 	<th>NHN-nettside</th>
 	<th>vApp</th>
 	<th>Nettleser</th>
 	<th>Remote desktop</th>
-
 	<th>EXE</th>
 	<th>BAT</th>
 	<th>VBS</th>
 	<th>PS1</th>
 	<th>CMD</th>
-
 	<th>Har medlemmer</th>
-	<th>Totalt antall unike medlemmer</th>
-	<th>AssociatedUserFullNames</th>
-
-	<th>
-		AdminFolderName
-		ClientFolder
-	</th>
-	<th>
-		WorkingDirectory<br>
-		CommandLineExecutable<br>
-		CommandLineArguments
-	</th>
 	<th>Description</th>
-	<th>
-		ShortcutAddedToDesktop<br>
-		ShortcutAddedToStartMenu<br>
-		StartMenuFolder
-	</th>
+	<th>Desktop og startmeny<br>(ShortcutAddedToDesktop, ShortcutAddedToStartMenu og StartMenuFolder)</th>
 	<th>UserFilterEnabled</th>
 </thead>
 <tbody>
 	{% for app in citrixapps %}
 	<tr>
 		<td>{{app.sone}}</td>
+
 		<td style="white-space: nowrap;">
 			{% for name in app.publikasjon_json.AllAssociatedDesktopGroupUids_Name %}
 			<a href="{% url 'citrix_desktop_group' %}?gruppe={{name}}">{{name}}</a><br>
 			{% endfor %}
 		</td>
+
 		<td>
-			{{app.publikasjon_json.BrowserName|default:"-"}}<br>
+			<span style="color: grey;">{{app.publikasjon_json.AdminFolderName}}</span><br>
+			{{app.publikasjon_json.ClientFolder|default:""}}
+		</td>
+
+		<td>
+			<span style="color: grey;">{{app.publikasjon_json.BrowserName|default:"-"}}</span><br>
 			{{app.publikasjon_json.ApplicationName|default:"-"}}
 		</td>
-		<td>{{app.type_produksjon|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
 		<td>
 			{% for system in app.systemer.all %}
 				{{ system }}<br>
@@ -93,20 +83,14 @@
 			{% endfor %}
 		</td>
 
-
-		<td>{{app.type_nhn|yesno:"🟢 Ja, 🔴 Nei"}}</td>
-		<td>{{app.type_vApp|yesno:"🟢 Ja, 🔴 Nei"}}</td>
-		<td>{{app.type_nettleser|yesno:"🟢 Ja, 🔴 Nei"}}</td>
-		<td>{{app.type_remotedesktop|yesno:"🟢 Ja, 🔴 Nei"}}</td>
-
-		<td>{{app.type_executable|yesno:"🟢 Ja, 🔴 Nei"}}</td>
-		<td>{{app.type_bat|yesno:"🟢 Ja, 🔴 Nei"}}</td>
-		<td>{{app.type_vbs|yesno:"🟢 Ja, 🔴 Nei"}}</td>
-		<td>{{app.type_ps1|yesno:"🟢 Ja, 🔴 Nei"}}</td>
-		<td>{{app.type_cmd|yesno:"🟢 Ja, 🔴 Nei"}}</td>
-
-		<td>{{app.type_medlemmer|yesno:"🟢 Ja, 🔴 Nei"}}</td>
 		<td>{{app.cache_antall_publisert_til}}</td>
+
+		<td>
+			{{app.publikasjon_json.WorkingDirectory|default:"-"}}<br>
+			{{app.publikasjon_json.CommandLineExecutable|default:"-"}}<br>
+			{{app.publikasjon_json.CommandLineArguments|default:"-"}}
+		</td>
+
 		<td>
 			{% for item in app.publikasjon_json.AssociatedUserFullNames %}
 				{% url 'ad_details' item as url_ad_details %}
@@ -114,22 +98,38 @@
 			{% endfor %}
 		</td>
 
-		<td>
-			{{app.publikasjon_json.AdminFolderName}}
-			{{app.publikasjon_json.ClientFolder|default:""}}
-		</td>
-		<td>
-			{{app.publikasjon_json.WorkingDirectory|default:"-"}}<br>
-			{{app.publikasjon_json.CommandLineExecutable|default:"-"}}<br>
-			{{app.publikasjon_json.CommandLineArguments|default:"-"}}
-		</td>
+		<td>{{app.type_produksjon|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_nhn|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_vApp|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_nettleser|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_remotedesktop|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_executable|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_bat|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_vbs|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_ps1|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_cmd|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
+		<td>{{app.type_medlemmer|yesno:"🟢 Ja, 🔴 Nei"}}</td>
+
 		<td>{{app.publikasjon_json.Description|default:"-"}}</td>
+
 		<td>
 			{{app.publikasjon_json.ShortcutAddedToDesktop|yesno:"Ja,-"}}<br>
 			{{app.publikasjon_json.ShortcutAddedToStartMenu|yesno:"Ja,-"}}<br>
 			{{app.publikasjon_json.StartMenuFolder|default:""}}
 		</td>
+
 		<td>{{app.publikasjon_json.UserFilterEnabled|yesno:"Ja, Nei"}}</td>
+
 	</tr>
 	{% endfor %}
 </tbody>
