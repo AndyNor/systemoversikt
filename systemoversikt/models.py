@@ -2514,6 +2514,7 @@ class QualysVuln(models.Model):
 			)
 	title = models.TextField()
 	severity = models.IntegerField()
+	known_exploited = models.BooleanField(default=False)
 	first_seen = models.DateTimeField(null=True)
 	last_seen = models.DateTimeField(null=True)
 	public_facing = models.BooleanField()
@@ -2525,6 +2526,14 @@ class QualysVuln(models.Model):
 
 	def __str__(self):
 		return f"{self.source} {self.title}"
+
+	def known_exploited_info(self):
+		try:
+			cves = self.cve_info.split(",")
+			exploited = ExploitedVulnerability.objects.filter(cve_id__in=cves)
+			return ", ".join(f"{e.cve_id}" for e in exploited)
+		except:
+			return f"known_exploited_info() feilet"
 
 	class Meta:
 		verbose_name_plural = "Qualys: vulnerabilities"
@@ -5058,7 +5067,7 @@ class System(models.Model):
 				#print(server)
 				for vuln in server.qualys_vulnerabilities.all():
 					if vuln.severity in [4,5]:
-						vuln.tmp_offering = service_offering
+						vuln.tmp_offering = service_offering # brukes kun i template
 						connected_vulns.add(vuln)
 		#print(connected_vulns)
 		return list(connected_vulns)

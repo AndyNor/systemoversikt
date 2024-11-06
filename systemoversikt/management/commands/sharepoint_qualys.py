@@ -76,6 +76,7 @@ class Command(BaseCommand):
 
 
 
+			ALL_EXPLOITED_CVES = list(ExploitedVulnerability.objects.values_list('cve_id', flat=True))
 
 			@lru_cache(maxsize=384)
 			def lookup_server(servername):
@@ -134,6 +135,12 @@ class Command(BaseCommand):
 						failed_server_lookups += 1
 						serer = None
 					q.server = server
+
+					# sette known exploited
+					for cve in q.cve_info.split(","):
+						if cve in ALL_EXPLOITED_CVES:
+							q.known_exploited = True
+
 					q.save()
 
 				return (processed, failed_server_lookups, fixed)

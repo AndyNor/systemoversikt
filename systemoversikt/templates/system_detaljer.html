@@ -910,7 +910,8 @@
 						<th>Server</th>
 						<th>OS</th>
 						<th>EOL?</th>
-						<th>Internett-eksponert</th>
+						<th>Internett-eksponert?</th>
+						<th>Kjent utnyttet?</th>
 						<th>Alvorlighetsgrad</th>
 						<th>Ansvar</th>
 						<th style="word-wrap: break-word; width: 500px;">Lokasjon</th>
@@ -927,6 +928,7 @@
 					<td>{{ vuln.os }}</td>
 					<td>{{ vuln.derived_os_endoflife|yesno:"🔴 End of life, 🟢 Supportert" }}</td>
 					<td>{{ vuln.public_facing|yesno:"🔴 Ja, 🟢 Nei" }}</td>
+					<td>{{ vuln.known_exploited|yesno:"🔴 Ja, 🟢 Nei" }}<br>{{vuln.known_exploited_info|safe}}</td>
 					<td>
 						{% if vuln.severity == 4 %}🟡{% endif %}
 						{% if vuln.severity == 5 %}🔴{% endif %}

@@ -70,9 +70,9 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 
 @admin.register(QualysVuln)
 class QualysVulnAdmin(admin.ModelAdmin):
-	list_display=('source', 'server', 'title', 'status', 'severity', 'first_seen', 'last_seen', 'public_facing', 'cve_info', 'result', 'os')
+	list_display=('source', 'server', 'title', 'status', 'severity', 'known_exploited', 'first_seen', 'last_seen', 'public_facing', 'cve_info', 'result', 'os')
 	search_fields = ('cve_info', 'title', 'source')
-	list_filter = ('severity', 'os', 'status', 'public_facing', 'first_seen')
+	list_filter = ('severity', 'known_exploited', 'os', 'status', 'public_facing', 'first_seen')
 	autocomplete_fields = ('server',)
 	def has_change_permission(self, request, obj=None):
 		return False
