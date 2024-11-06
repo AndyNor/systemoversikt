@@ -61,7 +61,7 @@ class Command(BaseCommand):
 			BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 			SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
 			LDAP_SCOPE = ldap.SCOPE_SUBTREE
-			ATTRLIST = ['cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet', 'servicePrincipalName'] # if empty we get all attr we have access to
+			ATTRLIST = ['objectSid', 'cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet', 'servicePrincipalName'] # if empty we get all attr we have access to
 			PAGESIZE = 2000
 
 			report_data = {
@@ -202,6 +202,18 @@ class Command(BaseCommand):
 					# fjerne navn i testmiljøet
 					last_name = hashlib.sha256(last_name.encode('utf-8')).hexdigest()[0:24]
 				user.last_name = last_name
+
+				try:
+					objectsid = attrs["objectSid"]
+					if len(objectid) == 0:
+						print(f"ObjectSid contains no elements for {user}")
+					else:
+						user.object_sid = decode_sid(objectsid[0])
+						if len(objectid) > 1:
+							print(f"ObjectSid contains more than one element for {user}")
+				except:
+					print(f"ObjectSid failed for {user}")
+
 
 				email = ""
 				if "mail" in attrs:
