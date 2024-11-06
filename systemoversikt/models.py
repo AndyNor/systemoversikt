@@ -2532,24 +2532,6 @@ class QualysVuln(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-# vise kategori 4 og 5-sårbarhetene per system for systemforvaltere: OK
-# vise egenskap: Er internett-eksponert: OK
-
-# ny egenskap: known exploited, oppdatert daglig
-# vise egenskap known exploited
-
-# ny egenskap: om sårbarhet er en OS-sårbarhet, basert på kriterie XXXXX
-# vise om sårbarhet er OS-sårbarhet
-
-# ny egenskap: om serverOS er EOL, basert på kriterie XXXXX
-# vise om sårbarhet er knyttet til EOL OS
-
-# ny visning: vise alt som ikke er koblet til en server
-
-# ny side: differanse på internett-eksponert ihht kartoteket og qualys-data
-
-
-
 
 class CMDBdevice(models.Model):
 	opprettet = models.DateTimeField( # system
