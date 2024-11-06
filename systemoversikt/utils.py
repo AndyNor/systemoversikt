@@ -160,6 +160,7 @@ def ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, resu
 
 		# Do stuff with results
 		result_handler(rdata, report_data, existing_objects)
+		time.sleep(2)
 
 		pctrls = get_pctrls(serverctrls)
 		if not pctrls:
