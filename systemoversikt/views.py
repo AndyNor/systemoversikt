@@ -311,6 +311,13 @@ def convert_distinguishedname_cn(liste): # støttefunksjon
 	return [re.search(r'cn=([^\,]*)', g, re.I).groups()[0] for g in liste]
 
 
+def decode_sid(sid):
+	revision, sub_authority_count = struct.unpack('BB', sid[:2])
+	identifier_authority = struct.unpack('>Q', b'\x00\x00' + sid[2:8])[0]
+	sub_authorities = struct.unpack('<' + 'I' * sub_authority_count, sid[8:])
+	return 'S-{}-{}-{}'.format(revision, identifier_authority, '-'.join(map(str, sub_authorities)))
+
+
 def ldap_get_details(name, ldap_filter, request): # støttefunksjon
 	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 	ldap_properties = []
@@ -357,6 +364,16 @@ def ldap_get_details(name, ldap_filter, request): # støttefunksjon
 								ms_timestamp = int(attrs[key][0][:-1].decode())  # removing one trailing digit converting 100ns to microsec.
 								converted_date = datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ms_timestamp)
 								attrs_decoded[key].append(converted_date)
+
+							elif key == "objectGUID":
+								import uuid
+								for element in attrs[key]:
+									attrs_decoded[key].append(uuid.UUID(bytes_le=element))
+
+							elif key == "objectSid":
+								for element in attrs[key]:
+									attrs_decoded[key].append(decode_sid(element))
+
 							elif key == "whenCreated":
 								value = attrs[key][0].decode().split('.')[0]
 								converted_date = datetime.datetime.strptime(value, "%Y%m%d%H%M%S")
