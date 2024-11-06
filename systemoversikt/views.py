@@ -347,39 +347,42 @@ def ldap_get_details(name, ldap_filter): # støttefunksjon
 				import codecs
 				attrs_decoded = {}
 				for key in attrs:
-					if key in ['objectGUID', 'objectSid', 'cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'whenCreated', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass', 'thumbnailPhoto']:
-						# if not, then we don't bother decoding the value for now
-						attrs_decoded[key] = []
-						if key == "lastLogonTimestamp":
-							# always just one timestamp, hence item 0 hardcoded
-							## TODO flere steder
-							ms_timestamp = int(attrs[key][0][:-1].decode())  # removing one trailing digit converting 100ns to microsec.
-							converted_date = datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ms_timestamp)
-							attrs_decoded[key].append(converted_date)
-						elif key == "whenCreated":
-							value = attrs[key][0].decode().split('.')[0]
-							converted_date = datetime.datetime.strptime(value, "%Y%m%d%H%M%S")
-							attrs_decoded[key].append(converted_date)
-						elif key == "userAccountControl":
-							accountControl = decode_useraccountcontrol(int(attrs[key][0].decode()))
-							attrs_decoded[key].append(accountControl)
-						elif key == "thumbnailPhoto":
-							attrs_decoded[key].append(codecs.encode(attrs[key][0], 'base64').decode('utf-8'))
-						elif key == "memberOf":
-							for element in attrs[key]:
-								e = element.decode()
-								regex_find_group = re.search(r'cn=([^\,]*)', e, re.I).groups()[0]
+					try:
+						if key in ['objectGUID', 'objectSid', 'cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'whenCreated', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass', 'thumbnailPhoto']:
+							# if not, then we don't bother decoding the value for now
+							attrs_decoded[key] = []
+							if key == "lastLogonTimestamp":
+								# always just one timestamp, hence item 0 hardcoded
+								## TODO flere steder
+								ms_timestamp = int(attrs[key][0][:-1].decode())  # removing one trailing digit converting 100ns to microsec.
+								converted_date = datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ms_timestamp)
+								attrs_decoded[key].append(converted_date)
+							elif key == "whenCreated":
+								value = attrs[key][0].decode().split('.')[0]
+								converted_date = datetime.datetime.strptime(value, "%Y%m%d%H%M%S")
+								attrs_decoded[key].append(converted_date)
+							elif key == "userAccountControl":
+								accountControl = decode_useraccountcontrol(int(attrs[key][0].decode()))
+								attrs_decoded[key].append(accountControl)
+							elif key == "thumbnailPhoto":
+								attrs_decoded[key].append(codecs.encode(attrs[key][0], 'base64').decode('utf-8'))
+							elif key == "memberOf":
+								for element in attrs[key]:
+									e = element.decode()
+									regex_find_group = re.search(r'cn=([^\,]*)', e, re.I).groups()[0]
 
-								attrs_decoded[key].append({
-										"group": regex_find_group,
-										"cn": e,
-								})
-							continue  # skip the next for..
+									attrs_decoded[key].append({
+											"group": regex_find_group,
+											"cn": e,
+									})
+								continue  # skip the next for..
+							else:
+								for element in attrs[key]:
+									attrs_decoded[key].append(element.decode())
 						else:
-							for element in attrs[key]:
-								attrs_decoded[key].append(element.decode())
-					else:
-						continue
+							continue
+					except Exception as e:
+						messages.warning(request, e)
 
 				users.append({
 						"cn": cn,
