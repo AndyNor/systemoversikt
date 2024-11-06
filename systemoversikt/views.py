@@ -2075,7 +2075,7 @@ def ad_brukerlistesok(request):
 	users = []
 	not_users = []
 
-	search_term = search_term.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ')
+	search_term = search_term.replace('\"','').replace('\'','').replace(',',' ').replace(';',' ').replace('(',' ').replace(')',' ')
 	search_term = search_term.split()
 
 	for term in search_term:
