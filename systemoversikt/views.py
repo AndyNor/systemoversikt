@@ -347,7 +347,7 @@ def ldap_get_details(name, ldap_filter): # støttefunksjon
 				import codecs
 				attrs_decoded = {}
 				for key in attrs:
-					if key in ['cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'whenCreated', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass', 'thumbnailPhoto']:
+					if key in ['objectGUID', 'objectSid', 'cn', 'sAMAccountName', 'mail', 'givenName', 'displayName', 'whenCreated', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass', 'thumbnailPhoto']:
 						# if not, then we don't bother decoding the value for now
 						attrs_decoded[key] = []
 						if key == "lastLogonTimestamp":
