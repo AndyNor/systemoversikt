@@ -682,6 +682,34 @@ def debug_info(request):
 	})
 
 
+def tool_ntfs(request):
+	required_permissions = ['systemoversikt.auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+	#GENERIC_READ            = 0x80000000
+	#GENERIC_WRITE           = 0x40000000
+	#GENERIC_EXECUTE         = 0x20000000
+	#GENERIC_ALL             = 0x10000000
+	#MAXIMUM_ALLOWED         = 0x02000000
+	#ACCESS_SYSTEM_SECURITY  = 0x01000000
+	#SYNCHRONIZE             = 0x00100000
+	#WRITE_OWNER             = 0x00080000
+	#WRITE_DACL              = 0x00040000
+	#READ_CONTROL            = 0x00020000
+	#DELETE                  = 0x00010000
+
+
+	#sddl_string = "D:AI(A;OICI;FA;;;S-1-5-21-1123878227-590538075-4181424053-65398)(A;OICI;FA;;;BA)(A;OICI;FA;;;SY)(A;OICI;FA;;;S-1-5-21-1123878227-590538075-4181424053-48099)(A;OICI;0x1200a9;;;S-1-5-21-1123878227-590538075-4181424053-73462)(A;OICI;0x1301bf;;;S-1-5-21-1123878227-590538075-4181424053-73463)(A;OICIID;0x1200a9;;;S-1-5-21-1123878227-590538075-4181424053-64527)(A;OICIID;0x1301bf;;;S-1-5-21-1123878227-590538075-4181424053-64528)(A;OICIID;FA;;;S-1-5-21-1123878227-590538075-4181424053-65398)(A;OICIID;FA;;;BA)(A;CIID;0x1200a9;;;S-1-5-21-1123878227-590538075-4181424053-304757)(A;OICIID;FA;;;SY)(A;OICIID;FA;;;S-1-5-21-1123878227-590538075-4181424053-48099)(A;OICIID;FA;;;S-1-5-21-1123878227-590538075-4181424053-442325)(A;OICIID;FA;;;S-1-5-21-1123878227-590538075-4181424053-167812)"
+	#https://github.com/qtc-de/wconv?tab=readme-ov-file#parse-sddl
+
+
+	return render(request, 'tool_ntfs.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+	})
+
 
 def tool_word_count(request):
 	required_permissions = None
@@ -2061,7 +2089,6 @@ def cmdb_ad_flere_brukeridenter(request):
 		'stat_ou': stat_ou,
 		'raw': ansattnr_flere,
 	})
-
 
 
 def ad_brukerlistesok(request):
