@@ -7397,7 +7397,7 @@ def csirt_iplookup_api(request):
 					"host_ip": pool.ip_address,
 					"external_vip": "%s port %s" % (vip.vip_name, vip.port),
 					"server_vlan": host_vlan,
-					"bss": pool.server.sub_name.navn,
+					"bss": [offering.navn for offering in pool.server.service_offerings.all()],
 				})
 		vip_pool_members = members
 
