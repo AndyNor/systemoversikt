@@ -2081,7 +2081,7 @@ def ad_brukerlistesok(request):
 	for term in search_term:
 		term_lower = term.lower()
 		try:
-			user = User.objects.get(Q(username=term_lower) | Q(email__contains=term_lower))
+			user = User.objects.get(Q(username=term_lower) | Q(email__contains=term_lower) | Q(profile__object_sid=term_lower))
 			users.append(user)
 		except:
 			not_users.append(term_lower)

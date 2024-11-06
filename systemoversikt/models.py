@@ -1118,6 +1118,7 @@ class Profile(models.Model):
 			max_length=128,
 			blank=True,
 			null=True,
+			db_index=True,
 			)
 	# med vilje er det ikke HistoricalRecords() på denne
 
