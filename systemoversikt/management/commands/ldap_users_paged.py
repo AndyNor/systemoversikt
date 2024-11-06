@@ -18,6 +18,7 @@ import hashlib
 import os
 import ldap
 import sys
+from systemoversikt.views import decode_sid
 
 class Command(BaseCommand):
 	def handle(self, **options):

@@ -8,7 +8,6 @@ from django import forms
 import json
 import re
 from django.db.models import Sum
-from systemoversikt.views import decode_sid
 
 
 # som standard vises bare "self.username". Vi ønsker også å vise fult navn.
