@@ -205,11 +205,11 @@ class Command(BaseCommand):
 
 				#try:
 				objectsid = attrs["objectSid"]
-				if len(objectid) == 0:
+				if len(objectsid) == 0:
 					print(f"ObjectSid contains no elements for {user}")
 				else:
 					user.object_sid = decode_sid(objectsid[0])
-					if len(objectid) > 1:
+					if len(objectsid) > 1:
 						print(f"ObjectSid contains more than one element for {user}")
 				#except:
 				#	print(f"ObjectSid failed for {user}")
