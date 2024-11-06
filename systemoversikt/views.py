@@ -312,6 +312,7 @@ def convert_distinguishedname_cn(liste): # støttefunksjon
 
 
 def decode_sid(sid):
+	import struct
 	revision, sub_authority_count = struct.unpack('BB', sid[:2])
 	identifier_authority = struct.unpack('>Q', b'\x00\x00' + sid[2:8])[0]
 	sub_authorities = struct.unpack('<' + 'I' * sub_authority_count, sid[8:])
