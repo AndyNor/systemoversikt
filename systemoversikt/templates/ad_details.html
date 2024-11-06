@@ -44,7 +44,8 @@
 			<h3>Bruker</h3>
 			<h5>{{ user.attrs.displayName.0 }} ({{ user.attrs.cn.0 }})</h5>
 			<p>Canonical Name: {{ user.cn }}</p>
-			<p>SID: {% for sid in user.objectSid %}{{ sid }}{% endfor %}</p>
+			<p>objectSid: {% for item in user.attrs.objectSid %} <br>{{ item }} {% endfor %}</p>
+			<p>objectGUID: {% for item in user.attrs.objectGUID %} <br>{{ item }} {% endfor %}</p>
 
 			{% if user.attrs.thumbnailPhoto.0 %}
 			<p>thumbnailPhoto-bilde:<br>
