@@ -7623,6 +7623,22 @@ class LOS(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class ExploitedVulnerability(models.Model):
+	# Model to keep track of exploited vulnerabilities (CISA)
+	cve_id = models.CharField(max_length=20, primary_key=True)
+	vendor_project = models.CharField(max_length=255)
+	product = models.CharField(max_length=255)
+	vulnerability_name = models.CharField(max_length=255)
+	date_added = models.DateField()
+	short_description = models.TextField()
+	required_action = models.TextField()
+	due_date = models.DateField()
+	known_ransomware_campaign_use = models.CharField(max_length=255)
+
+	def __str__(self):
+		return self.cve_id
+
+
 
 class Nettverksgruppe(models.Model):
 	name =models.CharField(

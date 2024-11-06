@@ -5,6 +5,7 @@ from django.core import serializers
 from systemoversikt.models import *
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.db.models import Count
 from django.template.loader import render_to_string
@@ -7476,6 +7477,39 @@ def vav_akva_api(request): #API
 	return JsonResponse(data, safe=False)
 
 
+@csrf_exempt
+def api_known_exploited(request): #API
+	event_type = "API known exploited"
+	ApplicationLog.objects.create(event_type=event_type, message=f"Innkommende kall fra {get_client_ip(request)}")
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="vulnapp_knownex").values_list("key", flat=True)
+	if not key in list(allowed_keys) and not os.environ['THIS_ENV'] == "TEST":
+		ApplicationLog.objects.create(event_type=event_type, message="Feil eller tom API-nøkkel")
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+
+	if request.method == 'POST':
+		try:
+			data = json.loads(request.body)
+			data = data.replace("vulnapp.exploitedvulnerability", "systemoversikt.exploitedvulnerability")
+
+			count = 0
+			for deserialized_object in serializers.deserialize('json', data):
+				obj = deserialized_object.object
+				obj.save()
+				count += 1
+
+			print(f"Updated {count} known exploited CVEs")
+
+			return JsonResponse({'message': 'Thanks for the update!'})
+		except json.JSONDecodeError:
+			return JsonResponse({'error': 'Invalid JSON'}, status=400)
+	return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+	ApplicationLog.objects.create(event_type=event_type, message=f"Vellykket oppdatering fra {get_client_ip(request)}")
+
+
 
 
 
@@ -7489,13 +7523,16 @@ def api_programvare(request): #API
 	allowed_keys = APIKeys.objects.filter(navn__startswith="vulnapp").values_list("key", flat=True)
 	if not key in list(allowed_keys) and not os.environ['THIS_ENV'] == "TEST":
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	programvare = Programvare.objects.values_list('programvarenavn', flat=True).distinct()
+	programvarelev = Programvare.objects.filter(~Q(programvareleverandor=None)).values_list('programvareleverandor__leverandor_navn', flat=True).distinct()
+
+	data = {"programvare": list(programvare), "programvarelev": list(programvarelev)}
 	#leverandorer = Leverandor.objects.values_list('leverandor_navn', flat=True).distinct()
 	#systemer = System.objects.values_list('systemnavn', flat=True).distinct()
 	ApplicationLog.objects.create(event_type="API programvare", message=f"Vellykket kall fra {get_client_ip(request)}")
-	return JsonResponse(list(programvare), safe=False)
+	return JsonResponse(data, safe=False)
 
 
 

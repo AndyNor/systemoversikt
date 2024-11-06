@@ -311,6 +311,8 @@ urlpatterns = [
 	re_path(r'^ukecsirt/ipsok/api/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # (det er innført behov for API-key)
 	re_path(r'^get-api/tilganger/$', views.get_api_tilganger, name='get_api_tilganger'), # (det er innført behov for API-key)
 	re_path(r'^api/programvare/$', views.api_programvare, name='api_programvare'), # (det er innført behov for API-key)
+	re_path(r'^api/known_exploited/$', views.api_known_exploited, name='api_known_exploited'), # (det er innført behov for API-key)
+
 
 
 
