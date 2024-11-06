@@ -311,7 +311,7 @@ def convert_distinguishedname_cn(liste): # støttefunksjon
 	return [re.search(r'cn=([^\,]*)', g, re.I).groups()[0] for g in liste]
 
 
-def ldap_get_details(name, ldap_filter): # støttefunksjon
+def ldap_get_details(name, ldap_filter, request): # støttefunksjon
 	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 	ldap_properties = []
 	result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
@@ -6915,7 +6915,7 @@ def ad_details(request, name):
 
 	runtime_t0 = time.time()
 	ldap_filter = ('(cn=%s)' % name)
-	result = ldap_get_details(name, ldap_filter)
+	result = ldap_get_details(name, ldap_filter, request)
 	runtime_t1 = time.time()
 	logg_total_runtime = runtime_t1 - runtime_t0
 	messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
@@ -6936,7 +6936,7 @@ def ad_exact(request, name):
 
 	runtime_t0 = time.time()
 	ldap_filter = ('(distinguishedName=%s)' % name)
-	result = ldap_get_details(name, ldap_filter)
+	result = ldap_get_details(name, ldap_filter, request)
 	runtime_t1 = time.time()
 	logg_total_runtime = runtime_t1 - runtime_t0
 	messages.success(request, 'Dette søket tok %s sekunder' % round(logg_total_runtime, 1))
