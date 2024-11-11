@@ -748,40 +748,57 @@ def vulnstats(request):
 	from django.db.models.functions import TruncMonth, TruncYear, TruncDay
 	data =  {}
 
-	count_all = QualysVuln.objects.all().count()
-	data["count_all"] = count_all
+	data["count_all"] = QualysVuln.objects.all().count()
 
-	unique_source_no_server = QualysVuln.objects.filter(server=None).values('source').annotate(count=Count('source')).order_by('-count')
-	data["unique_source_no_server"] = unique_source_no_server
+	data["unique_source_no_server"] = QualysVuln.objects.filter(server=None).values('source').annotate(count=Count('source')).order_by("source")
 
-	count_uten_server = QualysVuln.objects.filter(server=None).count()
-	data["count_uten_server"] = count_uten_server
+	data["count_uten_server"] = QualysVuln.objects.filter(server=None).count()
 
-	count_status = QualysVuln.objects.values('status').annotate(count=Count('status'))
-	data["count_status"] = count_status
+	data["count_status"] = QualysVuln.objects.values('status').annotate(count=Count('status'))
 
-	count_unike_alvorligheter = QualysVuln.objects.values('severity').annotate(count=Count('severity'))
-	data["count_unike_alvorligheter"] = count_unike_alvorligheter
+	data["count_unike_alvorligheter"] = QualysVuln.objects.values('severity').annotate(count=Count('severity'))
+	severities = {item['severity'] for item in data["count_unike_alvorligheter"]}
+	[data["count_unike_alvorligheter"].append({"severity": severity, "count": 0}) for severity in range(1, 6) if severity not in severities]
+	data["count_unike_alvorligheter"] = sorted(data["count_unike_alvorligheter"], key=lambda x: x['severity'], reverse=False)
 
-	count_first_seen_monthly = QualysVuln.objects.annotate(
+	data["count_unike_vulns"] = QualysVuln.objects.values('severity').annotate(unique_titles=Count('title', distinct=True))
+	severities = {item['severity'] for item in data["count_unike_vulns"]}
+	[data["count_unike_vulns"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
+	data["count_unike_vulns"] = sorted(data["count_unike_vulns"], key=lambda x: x['severity'], reverse=False)
+
+	data["count_unike_known_exploited_vulns"] = list(QualysVuln.objects.filter(known_exploited=True).values('severity').annotate(unique_titles=Count('title', distinct=True)))
+	severities = {item['severity'] for item in data["count_unike_known_exploited_vulns"]}
+	[data["count_unike_known_exploited_vulns"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
+	data["count_unike_known_exploited_vulns"] = sorted(data["count_unike_known_exploited_vulns"], key=lambda x: x['severity'], reverse=False)
+
+
+	data["count_unike_known_exploited_public_face"] = list(QualysVuln.objects.filter(known_exploited=True, public_facing=True).values('severity').annotate(unique_titles=Count('title', distinct=True)))
+	severities = {item['severity'] for item in data["count_unike_known_exploited_public_face"]}
+	[data["count_unike_known_exploited_public_face"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
+	data["count_unike_known_exploited_public_face"] = sorted(data["count_unike_known_exploited_public_face"], key=lambda x: x['severity'], reverse=False)
+
+
+	data["count_first_seen_monthly"] = QualysVuln.objects.annotate(
 				year=TruncYear('first_seen'),
 				month=TruncMonth('first_seen')
 				).values('year', 'month').annotate(count=Count('id')).order_by('year', 'month')
-	data["count_first_seen_monthly"] = count_first_seen_monthly
 
-	count_last_seen_monthly = QualysVuln.objects.annotate(
+	data["count_last_seen_monthly"] = QualysVuln.objects.annotate(
 				year=TruncYear('last_seen'),
 				day=TruncDay('last_seen')
 				).values('year', 'day').annotate(count=Count('id')).order_by('year', 'day')
-	data["count_last_seen_monthly"] = count_last_seen_monthly
 
-	count_servere_aktive = CMDBdevice.objects.filter(device_type="SERVER")
-	count_servere_uten_vuln = count_servere_aktive.filter(qualys_vulnerabilities=None)
-	data["count_servere_aktive"] = count_servere_aktive.count()
-	data["count_servere_uten_vuln"] = count_servere_uten_vuln.count()
+	data["count_first_seen_monthly_public_facing"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[5]).annotate(
+				year=TruncYear('first_seen'),
+				month=TruncMonth('first_seen')
+				).values('year', 'month').annotate(count=Count('id')).order_by('year', 'month')
 
-	count_unike_vulns = QualysVuln.objects.values('severity').annotate(unique_titles=Count('title', distinct=True))
-	data["count_unike_vulns"] = count_unike_vulns
+	data["vulns_first_seen_monthly_public_facing"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[5]).values('title').annotate(count=Count('title')).order_by('-count')
+
+
+	data["count_servere_aktive"] = CMDBdevice.objects.filter(device_type="SERVER").count()
+	data["count_servere_uten_vuln"] = CMDBdevice.objects.filter(device_type="SERVER").filter(qualys_vulnerabilities=None).count()
+
 
 	# eksponert internett kartoteket vs qualys
 	dager_gamle = 30
@@ -792,27 +809,26 @@ def vulnstats(request):
 	data["eksponert_kun_qualys"] = qualys_internett_eksponert - kartoteket_internett_eksponert
 	data["eksponert_dager_gamle"] = dager_gamle
 
+	data["count_known_exploited"] = QualysVuln.objects.filter(known_exploited=True).count()
+	data["count_known_exploited_unique"] = QualysVuln.objects.filter(known_exploited=True).values("title").annotate(count=Count('title')).count()
 
+	# servere uten offering-kobling
+	data["servere_uten_offering"] = CMDBdevice.objects.filter(service_offerings=None, device_type__in=["SERVER", "NETTWORK"])
 
-	# ansvar_basisdrift og ikke, sortert på flest unike sårbarheter
+	# finne flere kandidater til ansvar basisdrift
 
-	#EGEN SIDE nedbryting service offering, ned på server
+	# vise top 10 ting basisdrift ikke har patchet
 
-	#EGEN SIDE sårbarheter for en server
+	# vise top 10 ting forvalter ikke har patchet
 
-	# servere uten offering-kobling?
+	# vise alle service offerings med antall sårbarheter og sårbarheter per server
 
-	#legge nettverksutstyr til cmdbdevice
+	# vise alle enheter i en service offering med antall sårbarheter per enhet
 
-	# sårbarheter eldre enn 1 måned med og uten obsolete
-	# og 2 måender med og uten obsolete
-	# og 3 måender med og uten obsolete
+	# vise alle sårbarheter for en enhet, sortert på mest kritisk først
 
-	# deaktivete servere
-	# merge nettverksutstyr med cmdb device
+	# obsolete server med i graph over sist sett og først sett
 
-	# ny egenskap: known exploited, oppdatert daglig
-	# vise egenskap known exploited
 
 
 	return render(request, 'rapport_vulnstats.html', {
@@ -822,6 +838,52 @@ def vulnstats(request):
 		'integrasjonsstatus': integrasjonsstatus,
 	})
 
+
+
+def vulnstats_severity_known_exploited_public(request, severity):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	data = {}
+
+	data["top_unike_vulns"] = QualysVuln.objects.filter(known_exploited=True, public_facing=True).filter(severity=severity).values('title').annotate(count=Count('title')).order_by('-count')
+
+	return render(request, 'rapport_vulnstats_severity_known_exp_public.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'data': data,
+		'severity': severity,
+		'integrasjonsstatus': integrasjonsstatus,
+	})
+
+
+def vulnstats_severity_known_exploited(request, severity):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	data = {}
+
+	data["top_unike_vulns"] = QualysVuln.objects.filter(known_exploited=True).filter(severity=severity).values('title').annotate(count=Count('title')).order_by('-count')
+
+	return render(request, 'rapport_vulnstats_severity_known_exp.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'data': data,
+		'severity': severity,
+		'integrasjonsstatus': integrasjonsstatus,
+	})
 
 
 def vulnstats_severity(request, severity):

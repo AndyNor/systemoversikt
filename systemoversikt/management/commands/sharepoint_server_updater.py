@@ -213,6 +213,18 @@ class Command(BaseCommand):
 					cmdbdevice.save()
 
 
+				#opprydding alle servere ikke sett fra hovedimport
+				for_gammelt = timezone.now() - timedelta(hours=12) # 12 timer gammelt, scriptet bruker bare noen minutter..
+				ikke_oppdatert = CMDBdevice.objects.filter(device_type="SERVER").filter(sist_oppdatert__lte=for_gammelt)
+				tekst_ikke_oppdatert = ",".join([device.comp_name for device in ikke_oppdatert.all()])
+				antall_ikke_oppdatert = ikke_oppdatert.count()
+				#ikke_oppdatert.delete()
+				batch_size = 500
+				while ikke_oppdatert.count():
+					ids = ikke_oppdatert.values_list('pk', flat=True)[:batch_size]
+					ikke_oppdatert.filter(pk__in=ids).delete()
+					print(f"Slettet ny batch på {batch_size}..")
+
 
 				print("Ferdig med import. Går over til VMware-data. Setter disk allokert og brukt, samt disk tier og power consumption.")
 				dfRaw = pd.read_excel(vmware_destination_file, sheet_name='Export', skiprows=0, usecols=[
@@ -235,26 +247,13 @@ class Command(BaseCommand):
 						break # siste linjen, stopper
 
 					cmdbdevice = get_cmdb_instance(vm["Machine Name"])
-					cmdbdevice.vm_disk_allocation = (float(vm["Allocated Disk Volume (GB)"]) * 1000 ** 3) if vm["Allocated Disk Volume (GB)"] != "" else 0
-					cmdbdevice.vm_disk_usage = (float(vm["Used Disk Volume (GB)"]) * 1000 ** 3) if vm["Used Disk Volume (GB)"] != "" else 0
-					cmdbdevice.vm_disk_tier = vm["Disk Tier"]
-					cmdbdevice.power = float(vm["Power Consumption"]) if vm["Power Consumption"] != "" else 0
-					cmdbdevice.save()
+					if cmdbdevice:
+						cmdbdevice.vm_disk_allocation = (float(vm["Allocated Disk Volume (GB)"]) * 1000 ** 3) if vm["Allocated Disk Volume (GB)"] != "" else 0
+						cmdbdevice.vm_disk_usage = (float(vm["Used Disk Volume (GB)"]) * 1000 ** 3) if vm["Used Disk Volume (GB)"] != "" else 0
+						cmdbdevice.vm_disk_tier = vm["Disk Tier"]
+						cmdbdevice.power = float(vm["Power Consumption"]) if vm["Power Consumption"] != "" else 0
+						cmdbdevice.save()
 
-
-				#opprydding alle servere ikke sett fra hovedimport
-				for_gammelt = timezone.now() - timedelta(hours=12) # 12 timer gammelt, scriptet bruker bare noen minutter..
-				ikke_oppdatert = CMDBdevice.objects.filter(device_type="SERVER").filter(sist_oppdatert__lte=for_gammelt)
-				tekst_ikke_oppdatert = ",".join([device.comp_name for device in ikke_oppdatert.all()])
-				antall_ikke_oppdatert = ikke_oppdatert.count()
-
-
-				#ikke_oppdatert.delete()
-				batch_size = 500
-				while ikke_oppdatert.count():
-					ids = ikke_oppdatert.values_list('pk', flat=True)[:batch_size]
-					ikke_oppdatert.filter(pk__in=ids).delete()
-					print(f"Slettet ny batch på {batch_size}..")
 
 
 				#oppsummering og logging

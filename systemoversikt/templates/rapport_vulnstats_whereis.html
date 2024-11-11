@@ -10,7 +10,7 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Sårbarhetsdetaljer for {{ vuln }}
+	Hvor sårbarheten er, for {{ vuln }}
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -20,12 +20,13 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 
 <i>{{ data.vulnerabilities.0.cve_info }}</i>
 
-<table class="table tablesorter">
+<table class="table tablesorter excel">
 <thead>
 <tr>
 	<th>Enhet</th>
 	<th>Enhetkobling</th>
 	<th>Operativsystem</th>
+	<th>EOL?</th>
 	<th>Miljø</th>
 	<th>Først sett</th>
 	<th>Eksponert</th>
@@ -36,12 +37,15 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 {% for vuln in data.vulnerabilities %}
 <tr>
 	<td>{{ vuln.source }}</td>
-	<td>{{ vuln.server|default:"ingen" }}<br>{{ vuln.server.comp_ip_address }}</td>
+	<td>{{ vuln.server|default:"ingen" }}</td>
 	<td>{{ vuln.os }}</td>
+	<td>{{ vuln.server.derived_os_endoflife|yesno:"EOL, Supportert" }}</td>
 	<td>
+	<ul style="list-style-type: square;">
 	{% for offering in vuln.server.service_offerings.all %}
-		{{ offering }}{% if not forloop.last%},{% endif %}
+		<li style="margin-bottom: 5px;">{{ offering.navn }} ({{offering.u_service_availability|default:"T?"}}) {% if not forloop.last%}{% endif %}</li>
 	{% endfor %}
+	</ul>
 	<td>{{ vuln.first_seen }}</td>
 	<td>{{ vuln.public_facing|yesno:"Ja, Nei" }}</td>
 	<td>{{ vuln.result }}</td>

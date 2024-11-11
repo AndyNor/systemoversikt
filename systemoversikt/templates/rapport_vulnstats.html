@@ -23,12 +23,19 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 
 <hr>
 
-
 <p>Sårbarheter fordelt på status</p>
 <ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
 {% for status in data.count_status %}
 	<li><h5>{{ status.status }}</h5> <h3>{{ status.count }}</h3></li>
 {% endfor %}
+</ul>
+
+<hr>
+
+<p>Kjente utnyttede sårbarheter</p>
+<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+	<li>Totalt antall <h3>{{data.count_known_exploited}}</h3></li>
+	<li>Unike<h3>{{data.count_known_exploited_unique}}</h3></li>
 </ul>
 
 <hr>
@@ -42,13 +49,32 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 {% endfor %}
 </ul>
 
+<hr>
+
 <ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
 {% for item in data.count_unike_vulns %}
-	<li>Unike sårbarheter<h3><a href="{% url 'vulnstats_severity' severity=forloop.counter %}">{{ item.unique_titles }}</a></h3></li>
+	<li>Unike sårbarheter<br>alvorlighet {{item.severity}}<h3><a href="{% url 'vulnstats_severity' severity=forloop.counter %}">{{ item.unique_titles }}</a></h3></li>
 {% endfor %}
 </ul>
 
 <hr>
+
+<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
+{% for item in data.count_unike_known_exploited_vulns %}
+	<li>Unike kjent utnyttede<br>alvorlighet {{item.severity}}<h3><a href="{% url 'vulnstats_severity_known_exploited' severity=forloop.counter %}">{{ item.unique_titles }}</a></h3></li>
+{% endfor %}
+</ul>
+
+<hr>
+
+<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
+{% for item in data.count_unike_known_exploited_public_face %}
+	<li>Unike kjent utnyttede<br>internett-eksponert<br> alvorlighet {{item.severity}}<h3><a href="{% url 'vulnstats_severity_known_exploited_public' severity=forloop.counter %}">{{ item.unique_titles }}</a></h3></li>
+{% endfor %}
+</ul>
+
+<hr>
+
 
 Kan ikke kobles til server <h3>{{ data.count_uten_server }}</h3>
 
@@ -56,6 +82,14 @@ Disse kildene er
 <ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
 {% for unique_source in data.unique_source_no_server %}
 	<li>{{ unique_source.source }} ({{ unique_source.count }} sårbarheter)</li>
+{% endfor %}
+</ul>
+
+Servere uten offering knyttet til seg <h3>{{data.servere_uten_offering|length}}</h3>
+Disse kildene er
+<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+{% for device in data.servere_uten_offering %}
+	<li>{{ device }}</li>
 {% endfor %}
 </ul>
 
@@ -149,5 +183,63 @@ const last_seen_monthly_config = {
 };
 const last_seen_monthly_myChart = new Chart(document.getElementById('vuln_timechart_last_seen'), last_seen_monthly_config);
 </script>
+
+
+<hr>
+
+Kjent utnyttet, alvorlighetsgrad 5, fordelt på "først sett" dato
+<div><canvas height="100" id="vuln_timechart_first_seen_public_facing"></canvas></div>
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const first_seen_public_monthly_data = {
+	labels: [{% for date in data.count_first_seen_monthly_public_facing %}"{{ date.year|date:"Y" }}-{{ date.month|date:"M" }}",{% endfor %}],
+	datasets: [{
+		backgroundColor: 'rgb(255, 99, 132)',
+		borderColor: 'rgb(255, 99, 132)',
+		data: [{% for date in data.count_first_seen_monthly_public_facing %}{{ date.count }},{% endfor %}],
+	}]
+};
+const first_seen_monthly_public_config = {
+	type: 'bar',
+	data: first_seen_public_monthly_data,
+	options: {
+		plugins: {
+			legend: false,
+		},
+		scales: {
+			y: {
+				//type: 'logarithmic',
+				beginAtZero: true,
+				//max: 4000
+			}
+		},
+		onClick: function(event, elements) {
+			if (elements.length > 0) {
+				var elementIndex = elements[0].index;
+				var datestr = this.data.labels[elementIndex];
+				console.log(datestr)
+				//window.open(url, '_blank');
+			}
+		}
+	},
+};
+const first_seen_monthly_public_myChart = new Chart(document.getElementById('vuln_timechart_first_seen_public_facing'), first_seen_monthly_public_config);
+</script>
+
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Tittel</th>
+	<th>Antall</th>
+</tr>
+</thead>
+<tbody>
+{% for vuln in data.vulns_first_seen_monthly_public_facing %}
+<tr>
+	<td><a href="{% url 'vulnstats_whereis' vuln=vuln.title %}">{{ vuln.title }}</a></td>
+	<td>{{ vuln.count }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
 
 {% endblock hovedinnhold %}

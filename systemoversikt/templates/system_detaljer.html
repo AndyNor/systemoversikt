@@ -41,7 +41,7 @@
 		Programvare benyttet av systemet<br>
 		<div>
 		{% for programvare in systemdetaljer.programvarer.all %}
-			<div style="float: left; margin-left: 20px;">
+			<div style="float: left; margin-left: 20px; min-width: 150px;">
 
 				{% url "programvaredetaljer" programvare.pk as url_programvare %}
 				<a href="{{ url_programvare }}"><b>{{ programvare }}</b></a>

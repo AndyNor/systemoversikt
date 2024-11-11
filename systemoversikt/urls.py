@@ -134,6 +134,8 @@ urlpatterns = [
 	re_path(r'^rapport/api/', views.api_overview, name="api_overview"),
 	re_path(r'^rapport/vulnstats/overview/', views.vulnstats, name="vulnstats"),
 	re_path(r'^rapport/vulnstats/severity/(?P<severity>\d{1})/$', views.vulnstats_severity, name="vulnstats_severity"),
+	re_path(r'^rapport/vulnstats/severity/exploited/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited, name="vulnstats_severity_known_exploited"),
+	re_path(r'^rapport/vulnstats/severity/exploited/public_facing/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited_public, name="vulnstats_severity_known_exploited_public"),
 	re_path(r'^rapport/vulnstats/whereis/(?P<vuln>.+)/$', views.vulnstats_whereis, name="vulnstats_whereis"),
 
 
