@@ -47,6 +47,9 @@ class Command(BaseCommand):
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
+		print(f"Sletter alle cmdb-enheter..")
+		CMDBdevice.objects.all().delete()
+
 		try:
 
 			filename_computers = FILNAVN["filename_computers"]
