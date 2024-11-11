@@ -76,14 +76,11 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 <hr>
 
 
-Kan ikke kobles til server <h3>{{ data.count_uten_server }}</h3>
+Antall sårbarheter som ikke kan kobles til server <h3>{{ data.count_uten_server }}</h3>
 
-Disse kildene er
-<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
-{% for unique_source in data.unique_source_no_server %}
-	<li>{{ unique_source.source }} ({{ unique_source.count }} sårbarheter)</li>
-{% endfor %}
-</ul>
+Se enhetene på <a href="{% url 'vulnstats_ukjente_servere' %}">{% url 'vulnstats_ukjente_servere' %}</a>
+
+<hr>
 
 Servere uten offering knyttet til seg <h3>{{data.servere_uten_offering|length}}</h3>
 Disse kildene er

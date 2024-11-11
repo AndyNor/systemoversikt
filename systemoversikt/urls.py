@@ -137,6 +137,7 @@ urlpatterns = [
 	re_path(r'^rapport/vulnstats/severity/exploited/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited, name="vulnstats_severity_known_exploited"),
 	re_path(r'^rapport/vulnstats/severity/exploited/public_facing/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited_public, name="vulnstats_severity_known_exploited_public"),
 	re_path(r'^rapport/vulnstats/whereis/(?P<vuln>.+)/$', views.vulnstats_whereis, name="vulnstats_whereis"),
+	re_path(r'^rapport/vulnstats/ukjente_servere/$', views.vulnstats_ukjente_servere, name="vulnstats_ukjente_servere"),
 
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),

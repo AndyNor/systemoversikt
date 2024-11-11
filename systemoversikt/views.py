@@ -746,11 +746,9 @@ def vulnstats(request):
 
 	from django.db.models import Count
 	from django.db.models.functions import TruncMonth, TruncYear, TruncDay
-	data =  {}
+	data = {}
 
 	data["count_all"] = QualysVuln.objects.all().count()
-
-	data["unique_source_no_server"] = QualysVuln.objects.filter(server=None).values('source').annotate(count=Count('source')).order_by("source")
 
 	data["count_uten_server"] = QualysVuln.objects.filter(server=None).count()
 
@@ -838,6 +836,26 @@ def vulnstats(request):
 		'integrasjonsstatus': integrasjonsstatus,
 	})
 
+
+def vulnstats_ukjente_servere(request):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	data = {}
+	data["unique_source_no_server"] = QualysVuln.objects.filter(server=None).values('source').annotate(count=Count('source')).order_by("source")
+
+	return render(request, 'rapport_vulnstats_ukjente_servere.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'data': data,
+		'integrasjonsstatus': integrasjonsstatus,
+	})
 
 
 def vulnstats_severity_known_exploited_public(request, severity):

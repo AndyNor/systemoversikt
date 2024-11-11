@@ -1,0 +1,22 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Sårbarhetsoversikt: Servere ikke funnet i CMDB
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+
+<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+{% for unique_source in data.unique_source_no_server %}
+	<li>{{ unique_source.source }} ({{ unique_source.count }} sårbarheter)</li>
+{% endfor %}
+</ul>
+
+
+{% endblock hovedinnhold %}

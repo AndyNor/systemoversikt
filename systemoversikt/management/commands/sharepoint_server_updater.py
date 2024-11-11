@@ -126,7 +126,7 @@ class Command(BaseCommand):
 						server_dropped += 1
 						continue  # Det må være en verdi på denne
 
-					cmdbdevice = get_cmdb_instance(comp_name)
+					cmdbdevice = get_or_create_cmdb_instance(comp_name)
 					if cmdbdevice == None:
 						continue
 
@@ -214,7 +214,7 @@ class Command(BaseCommand):
 
 
 				#opprydding alle servere ikke sett fra hovedimport
-				for_gammelt = timezone.now() - timedelta(hours=12) # 12 timer gammelt, scriptet bruker bare noen minutter..
+				for_gammelt = timezone.now() - timedelta(hours=2) # 12 timer gammelt, scriptet bruker bare noen minutter..
 				ikke_oppdatert = CMDBdevice.objects.filter(device_type="SERVER").filter(sist_oppdatert__lte=for_gammelt)
 				tekst_ikke_oppdatert = ",".join([device.comp_name for device in ikke_oppdatert.all()])
 				antall_ikke_oppdatert = ikke_oppdatert.count()
