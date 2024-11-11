@@ -1089,6 +1089,13 @@ class Profile(models.Model):
 			verbose_name="trusted_for_delegation",
 			blank=True,
 			null=True,
+			default=False,
+			)
+	trusted_to_auth_for_delegation = models.BooleanField(
+			verbose_name="trusted_for_delegation",
+			blank=True,
+			null=True,
+			default=False,
 			)
 	not_delegated = models.BooleanField(
 			verbose_name="not_delegated",

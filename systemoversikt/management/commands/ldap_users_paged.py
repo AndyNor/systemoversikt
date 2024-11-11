@@ -129,6 +129,11 @@ class Command(BaseCommand):
 				else:
 					user.profile.trusted_for_delegation = False
 
+				if "TRUSTED_TO_AUTH_FOR_DELEGATION" in userAccountControl_decoded:
+					user.profile.trusted_to_auth_for_delegation = True
+				else:
+					user.profile.trusted_to_auth_for_delegation = False
+
 				if "NOT_DELEGATED" in userAccountControl_decoded:
 					user.profile.not_delegated = True
 				else:
