@@ -86,6 +86,9 @@
 		{% url 'alle_spn' as url_alle_spn %}
 		<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">Med SPN</a><br>
 
+		{% url 'rapport_trusted_delegation' as url_rapport_trusted_delegation %}
+		<a href="{{ url_rapport_trusted_delegation }}" class="btn btn-sm btn-link {% if url_rapport_trusted_delegation in request.path %}fremhev{% endif %}">Trusted delegation</a><br>
+
 		{% url 'rapport_ad_adgrupper' as url_rapport_ad_adgrupper %}
 		<a href="{{ url_rapport_ad_adgrupper }}" class="btn btn-sm btn-link {% if url_rapport_ad_adgrupper in request.path %}fremhev{% endif %}">Grupper over tid</a><br>
 

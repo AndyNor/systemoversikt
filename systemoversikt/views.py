@@ -4921,6 +4921,25 @@ def leverandortilgang(request, valgt_gruppe=None):
 	# må sjekkes, hva om ikke None?
 
 
+def rapport_trusted_delegation(request):
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	brukere = User.objects.filter(profile__trusted_for_delegation=True).order_by("username")
+
+	for b in brukere:
+		try:
+			b.spns = json.loads(b.profile.service_principal_name)
+		except:
+			b.spns = None
+
+	return render(request, 'rapport_trusted_delegation.html', {
+		"request": request,
+		"required_permissions": required_permissions,
+		"brukere": brukere,
+	})
+
 def alle_spn(request):
 	#Vise informasjon brukere som er opprettet for å teste noe (og ikke har blitt slettet i etterkant)
 	required_permissions = ['auth.view_user']
