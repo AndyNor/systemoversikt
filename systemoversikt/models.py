@@ -2792,6 +2792,12 @@ class CMDBbackup(models.Model):
 			verbose_name="Backup av",
 			null=True,
 			)
+	source_type = models.CharField(
+			verbose_name="Source type",
+			max_length=15,
+			blank=True,
+			null=True,
+			)
 	backup_size_bytes = models.IntegerField(
 			null=True,
 			)
@@ -2802,15 +2808,19 @@ class CMDBbackup(models.Model):
 	#		)
 
 	# fjernet fordi den nå har blitt mange til mange, og vi følger heller kobling fra server.
-	#bss = models.ForeignKey(
-	#		to=CMDBRef,
-	#		related_name='backup',
-	#		verbose_name="Business Sub Service",
-	#		on_delete=models.CASCADE,
-	#		blank=True,
-	#		null=True,
-	#		help_text=u"",
-	#		)
+	# reintrodusert
+	storage_size_bytes = models.IntegerField(
+			null=True,
+			)
+	bss = models.ForeignKey(
+			to=CMDBRef,
+			related_name='backup',
+			verbose_name="Business Sub Service",
+			on_delete=models.CASCADE,
+			blank=True,
+			null=True,
+			help_text=u"",
+			)
 	backup_frequency = models.CharField(
 			verbose_name="Backup frequency",
 			max_length=10,
@@ -2822,6 +2832,13 @@ class CMDBbackup(models.Model):
 			max_length=100,
 			blank=True,
 			null=True,
+			)
+	environment = models.IntegerField(
+			choices=CMDB_ENV_VALG,
+			verbose_name="Miljø",
+			blank=True,
+			null=True,
+			help_text=u"Importert",
 			)
 	# vurdere unique_together med device_str og device?
 

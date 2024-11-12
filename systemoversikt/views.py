@@ -2065,14 +2065,80 @@ def cmdb_backup_index(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
-	bs_all = CMDBbs.objects.all()
+	offering_all = CMDBRef.objects.all()
+
+	sum_offering_all = 0
+	for offering in offering_all:
+		sum_offering_all += offering.backup_size()
+
+	volum_servere_d30 = 0
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30"):
+		volum_servere_d30 += backup_data.backup_size_bytes
+
+	volum_oracle_d40 = 0
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D40"):
+		volum_oracle_d40 += backup_data.backup_size_bytes
+
+	volum_file_exch_DWMY = 0
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30-W13-M12-Y10").filter(~Q(device_str__icontains="SQL")):
+		volum_file_exch_DWMY += backup_data.backup_size_bytes
+
+	volum_mssql_DWMY = 0
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30-W13-M12-Y10", device_str__icontains="SQL"):
+		volum_mssql_DWMY += backup_data.backup_size_bytes
+
+	volum_ukjent = 0
+	for backup_data in CMDBbackup.objects.filter(backup_frequency=""):
+		volum_ukjent += backup_data.backup_size_bytes
+
+	volum_servere_d30_test = 0
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30", environment__in=[2,3,4,5,6,7,8]):
+		volum_servere_d30_test += backup_data.backup_size_bytes
+
+	volum_oracle_d40_test = 0
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D40", environment__in=[2,3,4,5,6,7,8]):
+		volum_oracle_d40_test += backup_data.backup_size_bytes
+
+	volum_file_exch_DWMY_test = 0
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30-W13-M12-Y10", environment__in=[2,3,4,5,6,7,8]).filter(~Q(device_str__icontains="SQL")):
+		volum_file_exch_DWMY_test += backup_data.backup_size_bytes
+
+	volum_mssql_DWMY_test = 0
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30-W13-M12-Y10", device_str__icontains="SQL", environment__in=[2,3,4,5,6,7,8]):
+		volum_mssql_DWMY_test += backup_data.backup_size_bytes
+
+	volum_ukjent_test = 0
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="", environment__in=[2,3,4,5,6,7,8]):
+		volum_ukjent_test += backup_data.backup_size_bytes
+
+	pct_servere_d30 = round(100 * volum_servere_d30_test / count_backup, 1)
+	pct_oracle_d40 = round(100 * volum_oracle_d40_test / count_backup, 1)
+	pct_file_exch_DWMY = round(100 * volum_file_exch_DWMY_test / count_backup, 1)
+	pct_mssql_DWMY = round(100 * volum_mssql_DWMY_test / count_backup, 1)
+	pct_ukjent = round(100 * volum_ukjent_test / count_backup, 1)
 
 
 	return render(request, 'cmdb_backup_index.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'count_backup': count_backup,
-		'bs_all': bs_all,
+		'offering_all': offering_all,
+		'sum_offering_all': sum_offering_all,
+		'volum_servere_d30': volum_servere_d30,
+		'volum_oracle_d40': volum_oracle_d40,
+		'volum_file_exch_DWMY': volum_file_exch_DWMY,
+		'volum_mssql_DWMY': volum_mssql_DWMY,
+		'volum_ukjent': volum_ukjent,
+		'volum_servere_d30_test': volum_servere_d30_test,
+		'volum_oracle_d40_test': volum_oracle_d40_test,
+		'volum_file_exch_DWMY_test': volum_file_exch_DWMY_test,
+		'volum_mssql_DWMY_test': volum_mssql_DWMY_test,
+		'volum_ukjent_test': volum_ukjent_test,
+		'pct_servere_d30': pct_servere_d30,
+		'pct_oracle_d40': pct_oracle_d40,
+		'pct_file_exch_DWMY': pct_file_exch_DWMY,
+		'pct_mssql_DWMY': pct_mssql_DWMY,
+		'pct_ukjent': pct_ukjent,
 	})
 
 

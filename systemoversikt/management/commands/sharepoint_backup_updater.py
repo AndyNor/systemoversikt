@@ -57,6 +57,13 @@ class Command(BaseCommand):
 			modified_date = result["modified_date"]
 			print(f"Filen er datert {modified_date}")
 
+			print(f"Sletter all gammel backup-data")
+			try:
+				CMDBbackup.objects.all().delete()
+			except:
+				for item in CMDBbackup.objects.all():
+					item.delete()
+
 
 			@transaction.atomic
 			def main(destination_file, FILNAVN, LOG_EVENT_TYPE):
@@ -68,7 +75,7 @@ class Command(BaseCommand):
 
 				if ".xlsx" in destination_file:
 					#dfRaw = pd.read_excel(destination_file, sheet_name='CommVault Summary', skiprows=8, usecols=['Client', 'Total Protected App Size (GB)', 'Source Capture Date', 'Business Sub Service', ])
-					dfRaw = pd.read_excel(destination_file, sheet_name='Export', skiprows=0, usecols=['Client', 'Total Protected App Size (GB)', 'Backup frequency', 'Business Service / Most Critical Service',])
+					dfRaw = pd.read_excel(destination_file, sheet_name='Export', skiprows=0, usecols=['Client', 'Total Protected App Size (GB)', 'Total Media Size (GB)', 'Backup frequency',])
 					dfRaw = dfRaw.replace(np.nan, '', regex=True)
 					data = dfRaw.to_dict('records')
 
@@ -84,7 +91,6 @@ class Command(BaseCommand):
 				counter = collections.Counter(names)
 				flere_innslag = [k for k, v in counter.items() if v > 1]
 
-				CMDBbackup.objects.all().delete()
 				antall_linjer = len(data)
 
 				for line in data:
@@ -92,22 +98,58 @@ class Command(BaseCommand):
 					if line['Client'] == "": # end of content
 						print("End of data")
 						break
+
+					#is_server = False
+
+					# figure out metadata
 					try:
 						device = CMDBdevice.objects.get(comp_name__iexact=line["Client"])
+						is_server = True
+						bss = device.service_offerings.all()[0]
+						environment = bss.environment
+						source_type = "SERVER"
 					except:
 						device = None
+						bss = None
+						environment = None
+						source_type = "OTHER"
 						failed_device += 1
-						#print("%s feilet" % (line["Client"]))
 
+					"""
+					if not is_server:
+						db_match = False
+						try:
+							database = CMDBdatabase.objects.get(db_database=line["Client"])
+							db_match = True
+						except:
+							device = None
+							bss = None
+							environment = None
+							source_type = "OTHER"
+							failed_device += 1
+
+						if db_match:
+							device = database.db_server_modelref
+							bss = database.sub_name
+							environment = bss.environment
+							source_type = "DATABASE"
+					"""
 
 
 					#print(device)
-					inst = CMDBbackup.objects.create(device=device, device_str=line["Client"])
+					inst = CMDBbackup.objects.create(device_str=line["Client"])
+					inst.source_type = source_type
 
 					#print(".", end="", flush=True)
 
-					size = int(line["Total Protected App Size (GB)"] * 1000 * 1000 * 1000) # fra giga bytes til bytes (antar 1000 siden dette er et diskverktøy)
-					inst.backup_size_bytes = size
+					inst.device = device
+					inst.bss = bss
+					inst.environment = environment
+
+					backup_size = int(line["Total Protected App Size (GB)"] * 1000 * 1000 * 1000) # fra giga bytes til bytes (antar 1000 siden dette er et diskverktøy)
+					inst.backup_size_bytes = backup_size
+					storage_size = int(line["Total Media Size (GB)"] * 1000 * 1000 * 1000) # fra giga bytes til bytes (antar 1000 siden dette er et diskverktøy)
+					inst.storage_size_bytes = storage_size
 					inst.backup_frequency = line["Backup frequency"]
 					try:
 						inst.storage_policy = line["Storage Policy"]

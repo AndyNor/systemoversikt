@@ -29,7 +29,51 @@
 </div>
 <hr>
 
+<div class="container">
+	<div class="row">
+		<div class="col-sm">
+			<h6>Backup servere (D30)</h6>
+			<h3>{{ volum_servere_d30|filesizeformat }}</h3>
+			<h6>Test/preprod</h6>
+			<h3>{{ volum_servere_d30_test|filesizeformat }}</h3>
+			<h5>{{pct_servere_d30}}%</h5>
+		</div>
+		<div class="col-sm">
+			<h6>Backup oracle (D40)</h6>
+			<h3>{{ volum_oracle_d40|filesizeformat }}</h3>
+			<h6>Test/preprod</h6>
+			<h3>{{ volum_oracle_d40_test|filesizeformat }}</h3>
+			<h5>{{pct_oracle_d40}}%</h5>
+		</div>
+		<div class="col-sm">
+			<h6>Backup fil, exchange (D30-W13-M12-Y10)</h6>
+			<h3>{{ volum_file_exch_DWMY|filesizeformat }}</h3>
+			<h6>Test/preprod</h6>
+			<h3>{{ volum_file_exch_DWMY_test|filesizeformat }}</h3>
+			<h5>{{pct_file_exch_DWMY}}%</h5>
+		</div>
+		<div class="col-sm">
+			<h6>Backup mssql (D30-W13-M12-Y10)</h6>
+			<h3>{{ volum_mssql_DWMY|filesizeformat }}</h3>
+			<h6>Test/preprod</h6>
+			<h3>{{ volum_mssql_DWMY_test|filesizeformat }}</h3>
+			<h5>{{pct_mssql_DWMY}}%</h5>
+		</div>
+		<div class="col-sm">
+			<h6>Backup ukjent policy</h6>
+			<h3>{{ volum_ukjent|filesizeformat }}</h3>
+			<h6>Test/preprod</h6>
+			<h3>{{ volum_ukjent_test|filesizeformat }}</h3>
+			<h5>{{pct_ukjent}}%</h5>
+		</div>
+
+	</div>
+</div>
+<hr>
+
+
 <h6>Backup fordelt på Business Service</h6>
+<h4>Totalt {{sum_offering_all|filesizeformat}}</h4>
 <table class="table table-sm tablesorter">
 	<thead>
 	<tr>
@@ -39,11 +83,15 @@
 	</tr>
 	</thead>
 	<tbody>
-	{% for bs in bs_all %}
+	{% for offering in offering_all %}
 	<tr>
-		<td>{{ bs }}</td>
-		<td>{{ bs.systemreferanse|default:"Ingen knytning" }}</td>
-		<td>{{ bs.backup_size }} ({{ bs.backup_size|filesizeformat }})</td>
+		<td>{{ offering }}</td>
+		<td>
+			{% for system in offering.system.all %}
+			{{ system }}
+			{% endfor %}
+		</td>
+		<td>{{ offering.backup_size }} ({{ offering.backup_size|filesizeformat }})</td>
 	</tr>
 	{% endfor %}
 	</tbody>
