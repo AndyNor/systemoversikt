@@ -12,11 +12,11 @@
 		{% else %}
 		<img src="{% static 'system.png' %}">
 		{% endif %}
-
-		<br><p>
-			{{ system }}<br>
-			{{ system.driftsmodell_foreignkey|default:"" }}<br>
-			{% if system.livslop_status == 6 %}<span style="color:red;">Avvikles</span>{% endif %}
-			{% if system.livslop_status == 7 %}<span style="color:red;">Avviklet</span>{% endif %}
-		</p></a>
+		<br><span style="font-size: 13pt;">{{ system }}</span>
+		</a>
+		{% if system.driftsmodell_foreignkey %}<br>{{ system.driftsmodell_foreignkey }}{% endif %}
+		{% if system.livslop_status == 1 %}<br><span style="color:green;">Innføres</span>{% endif %}
+		{% if system.livslop_status == 5 %}<br><span style="color:red;">Skal byttes ut</span>{% endif %}
+		{% if system.livslop_status == 6 %}<br><span style="color:red;">Avvikles</span>{% endif %}
+		{% if system.livslop_status == 7 %}<br><span style="color:red;">Avviklet</span>{% endif %}
 </div>
