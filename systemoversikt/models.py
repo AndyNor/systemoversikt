@@ -3597,6 +3597,10 @@ class Programvare(models.Model):
 			null=True,
 			help_text=u"URL til systemdokumentasjon",
 			)
+	til_cveoversikt_og_nyheter = models.BooleanField(
+			verbose_name="Overføres til sårbarhetsoversikten (CVE/nyheter)",
+			default=True,
+			)
 	history = HistoricalRecords()
 
 	def __str__(self):

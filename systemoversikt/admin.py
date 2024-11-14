@@ -1038,24 +1038,25 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 				'programvarenavn',
 				'programvareleverandor',
 				'programvarebeskrivelse',
-				'kategorier',
-				'programvaretyper',
+				'til_cveoversikt_og_nyheter',
 				'klargjort_ny_sikkerhetsmodell',
-			),
-		}),
-		('Utfases', {
-			'classes': ('collapse',),
-			'fields': (
-				'programvarekategori',
-				'alias',
-				'livslop_status',
-				'systemdokumentasjon_url',
 				'funksjonell_egnethet',
 				'teknisk_egnethet',
-				'strategisk_egnethet',
-				'kommentar',
+				#'programvaretyper',
+				'kategorier',
 			),
 		}),
+		#('Utfases', {
+		#	'classes': ('collapse',),
+		#	'fields': (
+		#		'programvarekategori',
+		#		'alias',
+		#		'livslop_status',
+		#		'systemdokumentasjon_url',
+		#		'strategisk_egnethet',
+		#		'kommentar',
+		#	),
+		#}),
 	)
 
 
@@ -1152,27 +1153,28 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 			('Initiell registrering', {
 				'fields': (
 					'programvare',
-					('brukergruppe', 'antall_brukere',),
+					'brukergruppe',
 					'ibruk',
+					'antall_brukere',
 					'lokal_kontakt',
-					('funksjonell_egnethet', 'teknisk_egnethet',),
+					#('funksjonell_egnethet', 'teknisk_egnethet',),
 					'kommentar',
 				),
 			}),
-			('Utfases', {
-				'classes': ('collapse',),
-				'fields': (
-					'strategisk_egnethet',
-					'livslop_status',
-					'programvareeierskap',
-					'avtaletype',
-					'avtalestatus',
-					'avtale_kan_avropes',
-					'borger',
-					'kostnader',
-					'programvareleverandor',
-				),
-			}),
+			#('Utfases', {
+			#	'classes': ('collapse',),
+			#	'fields': (
+			#		'strategisk_egnethet',
+			#		'livslop_status',
+			#		'programvareeierskap',
+			#		'avtaletype',
+			#		'avtalestatus',
+			#		'avtale_kan_avropes',
+			#		'borger',
+			#		'kostnader',
+			#		'programvareleverandor',
+			#	),
+			#}),
 	)
 
 

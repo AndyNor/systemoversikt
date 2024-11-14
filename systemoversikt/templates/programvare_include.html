@@ -4,11 +4,12 @@
 <thead>
 	<tr>
 		<th class="filter-false">Endre</th>
-		<th>Programvareleverandør</th>
-		<th>Programvare</th>
+		<th>Programvarenavn</th>
+		<th>Leverandør</th>
 		<th>Systemkoblinger</th>
-		<th width="30%">Beskrivelse av programvaren</th>
-		<th width="15%">Kategori</th>
+		<th>Beskrivelse</th>
+		<th>Kategori</th>
+		<th>Overføres systemoversikt?</th>
 	</tr>
 </thead>
 <tbody>
@@ -16,12 +17,17 @@
 	<tr>
 		<td><a href="/admin/systemoversikt/programvare/{{ prog.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 
-		<td>{% for lev in prog.programvareleverandor.all %}
+		<td>
+			{% url "programvaredetaljer" prog.pk as url_programvaredetaljer %}
+			<a href="{{ url_programvaredetaljer }}">{{ prog.programvarenavn }}</a>
+		</td>
+
+		<td>
+		{% for lev in prog.programvareleverandor.all %}
 			{% url "leverandor" lev.pk as url_leverandor %}
 			<a href="{{ url_leverandor }}">{{ lev }}</a><br>
-		{% endfor %}</td>
-
-		<td>{% url "programvaredetaljer" prog.pk as url_programvaredetaljer %}<a href="{{ url_programvaredetaljer }}">{{ prog.programvarenavn }}</a></td>
+		{% endfor %}
+		</td>
 
 		<td>
 			{% for system in prog.systemer.all %}
@@ -31,7 +37,6 @@
 
 		<td>{{ prog.programvarebeskrivelse }}</td>
 
-
 		<td>
 			{% for kategori in prog.kategorier.all %}
 				{% url "systemkategori" kategori.pk as url_systemkategori %}
@@ -39,6 +44,7 @@
 			{% endfor %}
 		</td>
 
+		<td>{{ prog.til_cveoversikt_og_nyheter|yesno:"🟢 Ja,🔴 Nei" }}</td>
 	</tr>
 {% endfor %}
 </tbody>

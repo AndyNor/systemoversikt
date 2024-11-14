@@ -4,59 +4,23 @@
 {% load templatetags %}
 
 {% block overskrift %}
-	{{ programvare.programvarenavn }}
+	Detaljer for {{ programvare.programvarenavn }} (programvare)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
 	{% if user.is_authenticated %}
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/programvare/{{ programvare.pk }}/change/">{% include 'site_edit_button.html' %} Endre informasjon om programvaren</a>
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/programvare/{{ programvare.pk }}/change/">{% include 'site_edit_button.html' %} Rediger</a>
 	{% endif %}
 
 	<hr>
+	{% if programvare.programvarebeskrivelse %}{{ programvare.programvarebeskrivelse }}<hr>{% endif %}
 
-	<h6>{{ programvare.programvarebeskrivelse|default:"Ingen beskrivelse" }}</h6>
-
-	<hr>
-
-	{% if programvare.alias %}
-		Alias: {% for alias in programvare.alias_oppdelt %} <span class="badge badge-light">{{ alias }}</span> {% endfor %}</li>
-		<br>
-	{% endif %}
-
-
-	{% if programvare.programvaretyper %}
-		{% get_verbose_field_name programvare "programvaretyper" %}:
-		{% for type in programvare.programvaretyper.all %}
-			<span class="badge badge-light">{{ type }}</span>
-		{% endfor %}
-		<br>
-	{% endif %}
-
-	{% if programvare.programvarekategori %}
-		{% get_verbose_field_name programvare "programvarekategori" %}:
-		<span class="badge badge-light">{{ programvare.get_programvarekategori_display|default:"-" }}</span>
-		<br>
-	{% endif %}
-
-	Status SMART-klienter: {{ programvare.get_klargjort_ny_sikkerhetsmodell_display }}
-
-	<br>
-	{% get_verbose_field_name programvare "programvareleverandor" %}
-	{% for lev in programvare.programvareleverandor.all %}
-		{% url "leverandor" lev.pk as url_leverandor %}
-		<a class="badge badge-dark" href="{{ url_leverandor }}">{{ lev }}</a><br>
-	{% endfor %}
-
-
-	<hr>
-
-	<h5>Om programvaren</h5>
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-4">
 
-				<h6>{% get_verbose_field_name programvare "kategorier" %}:</h6>
+				<h6>Kategorisering</h6>
 				{% for kategori in programvare.kategorier.all %}
 					{% url "systemkategori" kategori.pk as url_systemkategori %}
 					<li><a class="badge badge-light" href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a></li>
@@ -65,12 +29,16 @@
 			</div>
 			<div class="col-4">
 
+				<h6>Programvareleverandør</h6>
+				{% for lev in programvare.programvareleverandor.all %}
+					{% url "leverandor" lev.pk as url_leverandor %}
+					<a class="badge badge-light" href="{{ url_leverandor }}">{{ lev }}</a><br>
+				{% endfor %}
+
+			</div>
+			<div class="col-4">
 				<h6>Vurderinger <a target="_blank" href="https://confluence.oslo.kommune.no/x/ywUfBg">(vurderingskriterier)</a></h6>
 
-				{% get_verbose_field_name programvare "livslop_status" %}:
-				<span class="badge badge-light">{{ programvare.get_livslop_status_display|default:"-" }}</span>
-
-				<br>
 				{% get_verbose_field_name programvare "funksjonell_egnethet" %}:
 				<span class="badge badge-light">{{ programvare.get_funksjonell_egnethet_display|default:"-" }}</span>
 
@@ -78,41 +46,23 @@
 				{% get_verbose_field_name programvare "teknisk_egnethet" %}:
 				<span class="badge badge-light">{{ programvare.get_teknisk_egnethet_display|default:"-" }}</span>
 
-
-			</div>
-			<div class="col-4">
-
-				<h6>Dokumentasjon</h6>
-				{% if programvare.systemdokumentasjon_url %}
-					<a target="_blank" class="btn btn-sm btn-link" href="{{ programvare.systemdokumentasjon_url }}">🌍 {% get_verbose_field_name programvare "systemdokumentasjon_url" %}</a>
-				{% endif %}
-
 			</div>
 		</div>
 	</div>
 
-	<hr>
-
-	{% if programvare.systemer.all %}
-		<h5>Systemer med avhengigheter til {{programvare.programvarenavn}}</h5>
-		{% include "system_include_hurtigvisning.html" with systemer=programvare.systemer.all %}
-		<hr>
-	{% endif %}
 
 	<hr>
-
-	<h5>Virksomheters bruk av {{ programvare.programvarenavn }}</h5>
+	<h5>Virksomheter som bruker {{ programvare.programvarenavn }}</h5>
 	<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk_programvare' programvare.pk %}">Registrer bruk</a></p>
+	{% if programvarebruk %}
 	<table class="tablesorter">
 		<thead>
 			<tr>
 				<th class="filter-false"></th>
-				<th>Bruksdetaljer</th>
-				<th>Brukere</th>
+				<th>Virksomhet</th>
+				<th>Lokalt antall brukere</th>
 				<th>Lokal kontaktperson</th>
-				<th>Funksjonell egnethet</th>
-				<th>Teknisk egnethet</th>
-				<th class="filter-false"></th>
+				<th>Lokal kommentar</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -129,25 +79,27 @@
 					{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.lokal_kontakt.all %}
 				</td>
 
-				<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
+				<td>{{ bruk.kommentar|default:"-" }}</td>
 
-				<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
-				{% if user.is_authenticated %}
-
-				<td><a href="/admin/systemoversikt/programvarebruk/{{ bruk.pk }}/delete/">❌</a></td>
-
-				{% endif %}
 			</tr>
 			{% endfor %}
 		</tbody>
 	</table>
-	<hr>
+	{% endif %}
 
 
+	{% if programvare.systemer.all %}
+		<hr>
+		<h5>Systemer med avhengigheter til {{programvare.programvarenavn}}</h5>
+		<p>Avhengigheter til programvare registreres fra systemet</p>
+		{% include "system_include_hurtigvisning.html" with systemer=programvare.systemer.all %}
+		<hr>
+	{% endif %}
 
-	Endringslogg (siste {{ siste_endringer_antall }})<br>
+	<br><br><br>
+	<h5>Siste {{ siste_endringer_antall }} endring på {{ programvare.programvarenavn }}</h5>
 	{% for endring in siste_endringer %}
-		{{ endring.action_time|date:"Y-m-d" }} av {{ endring.user.get_full_name|default:endring.user }}<br>
+		<li>{{ endring.action_time|date:"Y-m-d" }} av {{ endring.user.get_full_name|default:endring.user }}</li>
 	{% endfor %}
 
 {% endblock hovedinnhold %}

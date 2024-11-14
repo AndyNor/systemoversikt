@@ -11,7 +11,9 @@
 
 {% block hovedinnhold %}
 
-	<p>"Programvare" i Kartoteket brukes for å registrere det offisielle navnet til programkode og skrivebordsapplikasjoner. Dette i kontrast med "systemer" som er programvare satt opp på servere og  databaser.<br>Det er viktig at du registrerer programvare riktig mot system, da UKE CSIRT bruker oversikten over programvare for å undersøke om kommunen er truffet av sårbarheter i programvare.</p>
+	<p>"Programvare" i Kartoteket brukes for å registrere det offisielle navnet til programkode og skrivebordsapplikasjoner. Dette i kontrast med "systemer" som er programvare satt opp på servere og  databaser.</p>
+
+	<p>Det er viktig at du registrerer programvare riktig mot system, da UKE CSIRT bruker oversikten over programvare for å undersøke om kommunen er truffet av sårbarheter i programvare. Du kan huke av/på om en programvare skal sendes til sårbarhetsoversikten.</p>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
@@ -22,8 +24,9 @@
 		</div>
 	</form>
 
-	<p>Viser {{ programvarer.count }} programvarer.</p>
+	<p>Kartoteket inneholder {{ programvarer.count }} programvarer.</p>
 
+	{% include "programvare_include.html" %}
 
 	<div id="accordion-programvare">
 		<div class="card">
@@ -40,8 +43,5 @@
 			</div>
 		</div>
 	</div>
-
-
-	{% include "programvare_include.html" %}
 
 {% endblock hovedinnhold %}

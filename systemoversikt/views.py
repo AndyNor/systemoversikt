@@ -7690,8 +7690,8 @@ def api_programvare(request): #API
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
-	programvare = Programvare.objects.values_list('programvarenavn', flat=True).distinct()
-	programvarelev = Programvare.objects.filter(~Q(programvareleverandor=None)).values_list('programvareleverandor__leverandor_navn', flat=True).distinct()
+	programvare = Programvare.objects.filter(til_cveoversikt_og_nyheter=True).values_list('programvarenavn', flat=True).distinct()
+	programvarelev = Programvare.objects.filter(til_cveoversikt_og_nyheter=True).filter(~Q(programvareleverandor=None)).values_list('programvareleverandor__leverandor_navn', flat=True).distinct()
 
 	data = {"programvare": list(programvare), "programvarelev": list(programvarelev)}
 	#leverandorer = Leverandor.objects.values_list('leverandor_navn', flat=True).distinct()
