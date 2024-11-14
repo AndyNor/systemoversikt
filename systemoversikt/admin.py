@@ -105,6 +105,12 @@ class AzureNamedLocationsAdmin(admin.ModelAdmin):
 
 
 
+@admin.register(EntraIDConditionalAccessPolicies)
+class EntraIDConditionalAccessPoliciesAdmin(admin.ModelAdmin):
+	list_display = ('timestamp', 'modification', 'changes',)
+	search_fields = ('json_policy',)
+	readonly_fields = ['timestamp', 'modification', 'changes', 'json_policy',]
+
 
 @admin.register(CitrixPublication)
 class CitrixPublicationAdmin(admin.ModelAdmin):

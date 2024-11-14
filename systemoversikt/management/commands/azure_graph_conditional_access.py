@@ -13,15 +13,16 @@ from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
 from systemoversikt.views import push_pushover
 from systemoversikt.models import *
+from deepdiff import DeepDiff
 
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		INTEGRASJON_KODEORD = "azure_password_polcy"
-		LOG_EVENT_TYPE = "Azure Password policy"
+		INTEGRASJON_KODEORD = "azure_ad_conditional_access"
+		LOG_EVENT_TYPE = "Conditional Access"
 		KILDE = "Azure Graph"
 		PROTOKOLL = "REST"
-		BESKRIVELSE = "Informasjon om passordpolicy"
+		BESKRIVELSE = "Informasjon om CA-regler"
 		FILNAVN = ""
 		URL = ""
 		FREKVENS = "Hver natt"
@@ -57,11 +58,39 @@ class Command(BaseCommand):
 			)
 
 			client = GraphClient(credential=client_credential, api_version='v1.0')
-			query = "/policies/authenticationMethods"
+			query = "/identity/conditionalAccess/policies"
 			resp = client.get(query)
-			json_data = json.loads(resp.text)
 
-			print(json.dumps(json_data, sort_keys=True, indent=4))
+			if resp.status_code != 200:
+				raise requests.ConnectionError("Failed to connect to graph API: Got HTTP {resp.status_code}")
+
+			print(f"HTTP {resp.status_code} OK")
+			this_policy = EntraIDConditionalAccessPolicies.objects.create(json_policy=resp.text)
+			print(f"Opprettet policy med pk={this_policy.pk}")
+
+
+			try:
+				last_policy_pk = this_policy.pk - 1
+				last_policy = EntraIDConditionalAccessPolicies.objects.get(pk=last_policy_pk)
+				print(f"Sammenlikner med policy med pk={last_policy.pk}")
+
+				# Parse JSON strings into dictionaries
+				dict_old = json.loads(last_policy.json_policy)
+				dict_new = json.loads(this_policy.json_policy)
+
+				# Find the differences
+				diff = DeepDiff(dict_old, dict_new, ignore_order=True)
+				print(f"Endring:\n{diff}")
+
+				changes_detected = bool(diff)
+
+				this_policy.modification = changes_detected
+				this_policy.changes = diff
+				this_policy.save()
+
+			except Exception as e:
+				print(f"Kan ikke sammenlikne med forrige version av policy: {e}")
+				pass
 
 
 			#logg dersom vellykket
@@ -76,8 +105,6 @@ class Command(BaseCommand):
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_message
 			int_config.save()
-
-			#print("*** Ferdig innlest")
 
 
 		except Exception as e:

@@ -62,3 +62,4 @@ rdflib
 certipy-ad
 mod-wsgi; platform_system == 'Linux'
 unidecode==1.3.8
+deepdiff==8.0.1

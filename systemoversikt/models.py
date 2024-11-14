@@ -35,10 +35,38 @@ VALG_KLARGJORT_SIKKERHETSMODELL = (
 )
 
 
+class EntraIDConditionalAccessPolicies(models.Model):
+	timestamp = models.DateTimeField(
+			verbose_name="Lastet inn",
+			auto_now=True,
+		)
+	json_policy = models.TextField(
+			verbose_name="Policy raw JSON",
+			blank=False,
+			null=False,
+		)
+	modification = models.BooleanField(
+			verbose_name="Endret siden sist?",
+			default=False,
+		)
+	changes = models.TextField(
+			verbose_name="Endringer siden sist",
+			blank=True,
+			null=True,
+		)
+
+	def __str__(self):
+		return f"CA policy {self.timestamp}"
+
+	class Meta:
+		verbose_name_plural = "Azure: Conditional Access policyer"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
 class CitrixPublication(models.Model):
 	sist_oppdatert = models.DateTimeField(
-		verbose_name="Sist oppdatert",
-		auto_now=True,
+			verbose_name="Sist oppdatert",
+			auto_now=True,
 		)
 	sone = models.CharField(
 			verbose_name="sone",
@@ -67,55 +95,55 @@ class CitrixPublication(models.Model):
 	publikasjon_active = models.BooleanField(
 			verbose_name="Aktiv",
 			default=True,
-			)
+		)
 	cache_antall_publisert_til = models.IntegerField(
 			verbose_name="Antall publisert til (cache)",
 			null=True,
-			)
+		)
 	type_vApp = models.BooleanField(
 			verbose_name="Er en vApp",
 			default=False,
-			)
+		)
 	type_nettleser = models.BooleanField(
 			verbose_name="Via nettleser",
 			default=False,
-			)
+		)
 	type_remotedesktop = models.BooleanField(
 			verbose_name="Er remote desktop",
 			default=False,
-			)
+		)
 	type_produksjon = models.BooleanField(
 			verbose_name="For produksjon",
 			default=True,
-			)
+		)
 	type_medlemmer = models.BooleanField(
 			verbose_name="Er publisert",
 			default=True,
-			)
+		)
 	type_nhn = models.BooleanField(
 			verbose_name="Norsk Helsenett-side",
 			default=False,
-			)
+		)
 	type_executable = models.BooleanField(
 			verbose_name="Executable file?",
 			default=False,
-			)
+		)
 	type_vbs = models.BooleanField(
 			verbose_name="VBS file?",
 			default=False,
-			)
+		)
 	type_ps1 = models.BooleanField(
 			verbose_name="PS1 file?",
 			default=False,
-			)
+		)
 	type_bat = models.BooleanField(
 			verbose_name="BAT file?",
 			default=False,
-			)
+		)
 	type_cmd = models.BooleanField(
 			verbose_name="BAT file?",
 			default=False,
-			)
+		)
 
 	def __str__(self):
 		return f"{self.display_name} {self.sone}"
@@ -167,7 +195,7 @@ class UserChangeLog(models.Model):
 		return u'%s %s' % (self.event_type, self.message)
 
 	class Meta:
-		verbose_name_plural = "System: brukerendringer"
+		verbose_name_plural = "System: Brukerendringer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -344,7 +372,7 @@ class ApplicationLog(models.Model):
 		return u'%s %s %s' % (self.opprettet.strftime('%Y-%m-%d %H:%M:%S'), self.event_type, self.message)
 
 	class Meta:
-		verbose_name_plural = "System: applikasjonslogger"
+		verbose_name_plural = "System: Applikasjonslogger"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 class DefinisjonKontekster(models.Model):
@@ -368,7 +396,7 @@ class DefinisjonKontekster(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Definisjoner: definisjonskontekster"
+		verbose_name_plural = "Definisjoner: Definisjonskontekster"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -463,7 +491,7 @@ class Definisjon(models.Model):
 		return u'%s' % (self.begrep)
 
 	class Meta:
-		verbose_name_plural = "Definisjoner: definisjoner"
+		verbose_name_plural = "Definisjoner: Definisjoner"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 class Ansvarlig(models.Model):
@@ -550,7 +578,7 @@ class Ansvarlig(models.Model):
 			return u'%s (tastet inn)' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "System: ansvarlige"
+		verbose_name_plural = "Organisasjon: Ansvarlige"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -579,7 +607,7 @@ class AutorisertBestiller(models.Model):
 		return u'%s' % (self.person)
 
 	class Meta:
-		verbose_name_plural = "System: autoriserte bestillere av sertifikater"
+		verbose_name_plural = "Organisasjon: Autoriserte sertifikatbestillere"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -813,7 +841,7 @@ class Virksomhet(models.Model):
 		return u'%s (%s)' % (self.virksomhetsnavn, self.virksomhetsforkortelse)
 
 	class Meta:
-		verbose_name_plural = "Virksomheter: virksomheter"
+		verbose_name_plural = "Organisasjon: Virksomheter"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -822,6 +850,10 @@ class AnsattID(models.Model):
 
 	def __str__(self):
 		return u'%s' % (self.ansattnr)
+
+	class Meta:
+		verbose_name_plural = "Organisasjon: Ansattnummer"
+		default_permissions = ('add', 'change', 'delete', 'view')
 
 
 LISENCE_VALG = (
@@ -1133,7 +1165,7 @@ class Profile(models.Model):
 		return u'%s' % (self.user)
 
 	class Meta:
-		verbose_name_plural = "System: brukerprofiler"
+		verbose_name_plural = "System: Brukerprofiler"
 
 	@receiver(post_save, sender=User)
 	def create_user_profile(sender, instance, created, **kwargs):
@@ -1281,7 +1313,7 @@ class Leverandor(models.Model):
 		return u'%s' % (self.leverandor_navn)
 
 	class Meta:
-		verbose_name_plural = "Leverandører: leverandører"
+		verbose_name_plural = "Organisasjon: Leverandører"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -1315,7 +1347,7 @@ class InformasjonsKlasse(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Behandling: informasjonsklasser"
+		verbose_name_plural = "Behandling: Informasjonsklasser"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['navn']
 
@@ -1357,7 +1389,7 @@ class SystemKategori(models.Model):
 			return u'%s' % (self.kategorinavn)
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: systemkategorier"
+		verbose_name_plural = "Systemkategori: Systemkategorier"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['kategorinavn']
 
@@ -1396,7 +1428,8 @@ class SystemHovedKategori(models.Model):
 		return u'%s' % (self.hovedkategorinavn)
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: systemhovedkategorier"
+		verbose_name_plural = "Systemkategori: Systemhovedkategorier"
+		verbose_name = "systemhovedkategori"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['hovedkategorinavn']
 
@@ -1497,7 +1530,8 @@ class SystemUrl(models.Model):
 			return False
 
 	class Meta:
-		verbose_name_plural = "Domener: URL-er"
+		verbose_name_plural = "Systemoversikt: URL-er"
+		verbose_name = "URL"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['domene']
 
@@ -1542,7 +1576,7 @@ class Personsonopplysningskategori(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Behandling: personopplysningskategorier"
+		verbose_name_plural = "Behandling: Personopplysningskategorier"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['navn']
 
@@ -1581,7 +1615,7 @@ class Registrerte(models.Model):
 		return u'%s' % (self.kategorinavn)
 
 	class Meta:
-		verbose_name_plural = "Behandling: kategorier registrerte"
+		verbose_name_plural = "Behandling: Kategorier registrerte"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['kategorinavn']
 
@@ -1622,7 +1656,7 @@ class Behandlingsgrunnlag(models.Model):
 		return u'%s (%s)' % (self.grunnlag, self.lovparagraf)
 
 	class Meta:
-		verbose_name_plural = "Behandling: behandlingsgrunnlag"
+		verbose_name_plural = "Behandling: Behandlingsgrunnlag"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['grunnlag']
 
@@ -1762,8 +1796,8 @@ class CMDBbs(models.Model):
 			return("Ikke mulig å identifisere")
 
 	class Meta:
-		verbose_name_plural = "CMDB: Business Services"
-		verbose_name = "Business Service"
+		verbose_name_plural = "CMDB: Business services"
+		verbose_name = "business service"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -2026,8 +2060,8 @@ class CMDBRef(models.Model): # BSS
 
 
 	class Meta:
-		verbose_name_plural = "CMDB: Business Service Offerings"
-		verbose_name = "Service offering"
+		verbose_name_plural = "CMDB: Business service offerings"
+		verbose_name = "service offering"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -2065,8 +2099,8 @@ class virtualIP(models.Model):
 		return self.vip_name
 
 	class Meta:
-		verbose_name_plural = "CMDB: VIP-er"
-		verbose_name = "VIP"
+		verbose_name_plural = "CMDB: Virtual IPs"
+		verbose_name = "virtual IP"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 	def nested_pool_members(self):
@@ -2106,7 +2140,7 @@ class IpProtocol(models.Model):
 		return f"IP protokoll {self.protocol} {self.port}"
 
 	class Meta:
-		verbose_name_plural = "Nettverk: IP-protokoller"
+		verbose_name_plural = "CMDB: IP-protokoller"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -2222,8 +2256,8 @@ class NetworkContainer(models.Model):
 
 	class Meta:
 		unique_together = ("ip_address", "subnet_mask")
-		verbose_name_plural = "CMDB: Network containers"
-		verbose_name = "Network container"
+		verbose_name_plural = "CMDB: VLAN"
+		verbose_name = "network container"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -2379,8 +2413,8 @@ class KritiskFunksjon(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Kritiske funksjoner"
-		verbose_name = "Kritisk funksjon"
+		verbose_name_plural = "Systemkategori: Kritiske funksjoner"
+		verbose_name = "kritisk funksjon"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 	def systemer(self):
@@ -2414,8 +2448,8 @@ class KritiskKapabilitet(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Kritiske kapabiliteter"
-		verbose_name = "Kritisk kapabilitet"
+		verbose_name_plural = "Systemkategori: Kritiske kapabiliteter"
+		verbose_name = "kritisk kapabilitet"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -2506,7 +2540,7 @@ class CMDBdatabase(models.Model):
 		return u'%s' % (self.db_database)
 
 	class Meta:
-		verbose_name_plural = "CMDB: databaser"
+		verbose_name_plural = "CMDB: Databaser"
 		verbose_name = "database"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
@@ -2543,7 +2577,7 @@ class QualysVuln(models.Model):
 			return f"known_exploited_info() feilet"
 
 	class Meta:
-		verbose_name_plural = "Qualys: vulnerabilities"
+		verbose_name_plural = "Qualys: Sårbarheter"
 		verbose_name = "sårbarhet"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
@@ -2769,7 +2803,7 @@ class CMDBdevice(models.Model):
 
 
 	class Meta:
-		verbose_name_plural = "CMDB: maskiner"
+		verbose_name_plural = "CMDB: Enheter"
 		verbose_name = "maskin"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
@@ -2843,8 +2877,8 @@ class CMDBbackup(models.Model):
 	# vurdere unique_together med device_str og device?
 
 	class Meta:
-		verbose_name_plural = "CMDB: Backup"
-		verbose_name = "Backup"
+		verbose_name_plural = "CMDB: Sikkerhetskopier"
+		verbose_name = "sikkerhetskopi"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 	def __str__(self):
@@ -2921,7 +2955,7 @@ class CMDBDisk(models.Model):
 		return u'%s' % (self.size_bytes)
 
 	class Meta:
-		verbose_name_plural = "CMDB: disker"
+		verbose_name_plural = "CMDB: Serverdisker"
 		verbose_name = "disk"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
@@ -2970,7 +3004,8 @@ class ADOrgUnit(models.Model):
 		return u'%s' % (self.distinguishedname)
 
 	class Meta:
-		verbose_name_plural = "AD: organizational units"
+		verbose_name_plural = "Active Directory: OU-er"
+		verbose_name = "OU"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 	def cn(self):
@@ -3033,7 +3068,7 @@ class Leverandortilgang(models.Model):
 		systemer_vis.short_description = "Systemer"
 
 	class Meta:
-		verbose_name_plural = "Leverandørtilganger"
+		verbose_name_plural = "Systemoversikt: Leverandørtilganger"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3118,8 +3153,8 @@ class ADgroup(models.Model):
 		return u'%s' % (self.display_name)
 
 	class Meta:
-		verbose_name_plural = "AD: AD-grupper"
-		verbose_name = "ADgruppe"
+		verbose_name_plural = "Active Directory: AD-grupper"
+		verbose_name = "AD-gruppe"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 	def cn(self):
@@ -3302,7 +3337,7 @@ class Avtale(models.Model):
 		return u'%s med %s (%s)' % (self.kortnavn, self.leverandor, self.get_avtaletype_display())
 
 	class Meta:
-		verbose_name_plural = "Avtaler"
+		verbose_name_plural = "Organisasjon: Avtaler"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3347,7 +3382,7 @@ class Systemtype(models.Model):
 		return u'%s' % (self.kategorinavn)
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: systemtyper"
+		verbose_name_plural = "Systemkategori: Systemtyper"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3482,7 +3517,7 @@ class Region(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Behandling: regioner"
+		verbose_name_plural = "Behandling: Regioner"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3612,7 +3647,7 @@ class Programvare(models.Model):
 		return self.alias.split()
 
 	class Meta:
-		verbose_name_plural = "Programvarer: programvarer"
+		verbose_name_plural = "Systemoversikt: Programvarer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3800,7 +3835,8 @@ class Driftsmodell(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: driftsmodeller"
+		verbose_name_plural = "Systemoversikt: Driftsplattformer"
+		verbose_name = "driftsplattform"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['navn']
 
@@ -3842,7 +3878,7 @@ class Autorisasjonsmetode(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: autorisasjonsmetoder"
+		verbose_name_plural = "Systemkategori: Autorisasjonsmetoder"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3868,7 +3904,7 @@ class Autentiseringsteknologi(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: autentiseringsteknologi"
+		verbose_name_plural = "Systemkategori: Autentiseringsteknologi"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3893,7 +3929,7 @@ class Autentiseringsmetode(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: autentiseringsmetoder"
+		verbose_name_plural = "Systemkategori: Autentiseringsmetoder"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3917,7 +3953,7 @@ class Loggkategori(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "System: loggkategorier"
+		verbose_name_plural = "System: Loggkategorier"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -3978,7 +4014,7 @@ class RapportGruppemedlemskaper(models.Model):
 		return f'{self.kategori} {self.beskrivelse}'
 
 	class Meta:
-		verbose_name_plural = "Rapport: Innhentingsbehov"
+		verbose_name_plural = "Rapport: Innhentingsbehov AD-grupper"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -4014,7 +4050,7 @@ class Oppdatering(models.Model):
 		return u'Oppdatering %s' % (self.pk)
 
 	class Meta:
-		verbose_name_plural = "System: dataoppdateringer"
+		verbose_name_plural = "System: Dataoppdateringer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -4032,7 +4068,8 @@ class Database(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: databasetyper"
+		verbose_name_plural = "Systemkategori: Databasetyper"
+		verbose_name = "databasetype"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -4119,7 +4156,8 @@ class SystemIntegration(models.Model):
 		return f'{self.integration_type} fra {self.source_system} til {self.destination_system}'
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: systemavhengigheter"
+		verbose_name_plural = "Systemoversikt: Systemavhengigheter"
+		verbose_name = "systemintegrasjon"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 	def color(self):
@@ -5101,7 +5139,7 @@ class System(models.Model):
 		return list(connected_vulns)
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: systemer"
+		verbose_name_plural = "Systemoversikt: Systemer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -5172,7 +5210,8 @@ class Sikkerhetstester(models.Model):
 		return u'%s: %s' % (self.testet_av, self.dato_rapport)
 
 	class Meta:
-		verbose_name_plural = "Domener: sikkerhetstester"
+		verbose_name_plural = "Systemoversikt: Sikkerhetstester"
+		verbose_name = "sikkerhetstest"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -5502,7 +5541,7 @@ class ProgramvareBruk(models.Model):
 		return u'%s - %s' % (self.programvare, self.brukergruppe)
 
 	class Meta:
-		verbose_name_plural = "Programvarer: programvarebruk"
+		verbose_name_plural = "Organisasjon: Programvarebruk"
 		unique_together = ('programvare', 'brukergruppe')
 		default_permissions = ('add', 'change', 'delete', 'view')
 
@@ -5725,7 +5764,7 @@ class SystemBruk(models.Model):
 		return u'%s - %s' % (self.system, self.brukergruppe)
 
 	class Meta:
-		verbose_name_plural = "Systemoversikt: systembruk"
+		verbose_name_plural = "Organisasjon: Systembruk"
 		unique_together = ('system', 'brukergruppe')
 		default_permissions = ('add', 'change', 'delete', 'view')
 
@@ -5753,7 +5792,7 @@ class BehandlingInformering(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Behandling: informeringsvalg"
+		verbose_name_plural = "Behandling: Informeringsvalg"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -5778,7 +5817,7 @@ class RegistrertKlassifisering(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Behandling: klasser av registrerte"
+		verbose_name_plural = "Behandling: Klasser av registrerte"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -5836,7 +5875,7 @@ class RelasjonRegistrert(models.Model):
 		return u'%s' % (self.navn)
 
 	class Meta:
-		verbose_name_plural = "Behandling: registrerts relasjoner"
+		verbose_name_plural = "Behandling: Registrerts relasjoner"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -5893,6 +5932,9 @@ class AzureNamedLocations(models.Model):
 	def __str__(self):
 		return u'%s' % (self.displayName)
 
+	class Meta:
+		verbose_name_plural = "Azure: Named locations"
+		default_permissions = ('add', 'change', 'delete', 'view')
 
 
 class BehandlingerPersonopplysninger(models.Model):
@@ -6401,7 +6443,7 @@ class BehandlingerPersonopplysninger(models.Model):
 		return u'%s: %s' % (self.behandlingsansvarlig, self.behandlingen)
 
 	class Meta:
-		verbose_name_plural = "Behandling: behandlinger (protokoll)"
+		verbose_name_plural = "Behandling: Behandlingsprotokoller"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -6586,8 +6628,8 @@ class HRorg(models.Model):
 			return u'%s (ukjent)' % (self.ou)
 
 	class Meta:
-		verbose_name_plural = "PRK: HR-organisasjoner"
-		verbose_name  = "HR-organization"
+		verbose_name_plural = "Organisasjon: Organisasjonsledd"
+		verbose_name  = "HR-organisasjonsledd"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -6766,7 +6808,7 @@ class AzureUserConsents(models.Model):
 	def __str__(self):
 		return f"{self.userId} {self.appDisplayName} {self.scopes}"
 	class Meta:
-		verbose_name_plural = "Azure User Consents"
+		verbose_name_plural = "Azure: User Consents"
 
 
 class AzureApplicationKeys(models.Model):
@@ -6811,7 +6853,7 @@ class AzureApplicationKeys(models.Model):
 		return u'%s' % (self.display_name)
 
 	class Meta:
-		verbose_name_plural = "Azure application keys"
+		verbose_name_plural = "Azure: Application keys"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 	def expire(self):
@@ -6913,7 +6955,7 @@ class AzureApplication(models.Model):
 
 
 	class Meta:
-		verbose_name_plural = "Azure applications"
+		verbose_name_plural = "Azure: Service Principals"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -7028,7 +7070,7 @@ class AzurePublishedPermissionScopes(models.Model):
 
 
 	class Meta:
-		verbose_name_plural = "Azure permission scopes"
+		verbose_name_plural = "Azure: Permission scopes"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -7656,7 +7698,8 @@ class LOS(models.Model):
 
 
 	class Meta:
-		verbose_name_plural = "LOS fellesbegreper"
+		verbose_name_plural = "Systemkategori: LOS fellesbegreper"
+		verbose_name = "LOS-begrep"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
@@ -7694,7 +7737,7 @@ class Nettverksgruppe(models.Model):
 		return u'%s' % (self.name)
 
 	class Meta:
-		verbose_name_plural = "CMDB: Nettverksgruppe"
+		verbose_name_plural = "CMDB: Navngitte nettverksalias"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 class Brannmurregel(models.Model):
