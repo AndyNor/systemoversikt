@@ -7523,12 +7523,12 @@ def csirt_iplookup_api(request):
 	ip_string = request.GET.get('ip', '').strip()
 	port_string = request.GET.get('port', '').strip()
 	if ip_string == '':
-		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Ingen treff på tom IP-adresse")
+		#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Ingen treff på tom IP-adresse")
 		return JsonResponse({"error": "Ingen IP-adresse oppgitt. Send som GET-variabel 'ip'"}, safe=False)
 	try:
 		ip = ipaddress.ip_address(ip_string)
 	except ValueError:
-		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på ugyldig IP-adresse {ip_string}")
+		#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på ugyldig IP-adresse {ip_string}")
 		return JsonResponse({"error": "Ikke en gyldig IP-adresse"}, safe=False)
 
 
@@ -7568,7 +7568,7 @@ def csirt_iplookup_api(request):
 		vip_pool_members = members
 
 	except ObjectDoesNotExist:
-		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på {ip_string}")
+		#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på {ip_string}")
 		return JsonResponse({"error": "Ingen treff på IP-adresse"}, safe=False)
 
 	data = {
