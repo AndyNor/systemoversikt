@@ -2358,11 +2358,11 @@ def entra_id_oppslag(request):
 
 	import re
 	inndata = request.POST.get('inndata', "")
-	message = f"{request.user} søkte på: {inndata}."
+	#message = f"{request.user} søkte på: {inndata}."
 	inndata = re.sub(r'[^A-Za-z0-9\.\@]', '', inndata) # sørge for at det kun er lovlige tegn
 
 	if inndata != "":
-		ApplicationLog.objects.create(event_type="Azure AD brukersøk", message=message)
+		#ApplicationLog.objects.create(event_type="Azure AD brukersøk", message=message)
 
 		client = get_client_for_graph()
 		metadata = get_usermetadata_from_spn_or_email(inndata)
@@ -3366,24 +3366,24 @@ def databasestatistikk(request):
 
 
 
-def logger_api_csirt(request):
-	#viser der cisrt-spørringer feiler
-	required_permissions = ['systemoversikt.view_applicationlog']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	try:
-		siste_kjoring = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").last().opprettet
-		time_delta = siste_kjoring - datetime.timedelta(hours=1)
-		recent_loggs = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").filter(message__icontains="Ingen treff").filter(opprettet__gte=time_delta).order_by('-opprettet')
-	except:
-		recent_loggs = None
-
-	return render(request, 'site_logger_audit.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'recent_loggs': recent_loggs,
-	})
+#def logger_api_csirt(request):
+#	#viser der cisrt-spørringer feiler
+#	required_permissions = ['systemoversikt.view_applicationlog']
+#	if not any(map(request.user.has_perm, required_permissions)):
+#		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+#
+#	try:
+#		siste_kjoring = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").last().opprettet
+#		time_delta = siste_kjoring - datetime.timedelta(hours=1)
+#		recent_loggs = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").filter(message__icontains="Ingen treff").filter(opprettet__gte=time_delta).order_by('-opprettet')
+#	except:
+#		recent_loggs = None
+#
+#	return render(request, 'site_logger_audit.html', {
+#		'request': request,
+#		'required_permissions': formater_permissions(required_permissions),
+#		'recent_loggs': recent_loggs,
+#	})
 
 
 
@@ -3393,7 +3393,7 @@ def logger_api(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	recent_loggs = ApplicationLog.objects.filter(event_type__icontains="api").order_by('-opprettet')[:1500]
+	recent_loggs = ApplicationLog.objects.filter(event_type__icontains="api").order_by('-opprettet')[:5000]
 	return render(request, 'site_logger_audit.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -7667,12 +7667,15 @@ def api_known_exploited(request): #API
 
 			print(f"Updated {count} known exploited CVEs")
 
+			ApplicationLog.objects.create(event_type=event_type, message=f"Vellykket oppdatering fra {get_client_ip(request)}")
 			return JsonResponse({'message': 'Thanks for the update!'})
 		except json.JSONDecodeError:
+			ApplicationLog.objects.create(event_type=event_type, message=f"Invalid JSON fra {get_client_ip(request)}")
 			return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+	ApplicationLog.objects.create(event_type=event_type, message=f"Invalid request method fra {get_client_ip(request)}")
 	return JsonResponse({'error': 'Invalid request method'}, status=405)
 
-	ApplicationLog.objects.create(event_type=event_type, message=f"Vellykket oppdatering fra {get_client_ip(request)}")
 
 
 
