@@ -13,7 +13,6 @@ De {{aktive_antall_personer}} mest aktive personene siste {{aktive_antall_uker}}
 	<thead>
 	<tr>
 		<th>Bruker</th>
-		<th>E-post</th>
 		<th>Antall endringer</th>
 	</tr>
 	</thead>
@@ -21,7 +20,6 @@ De {{aktive_antall_personer}} mest aktive personene siste {{aktive_antall_uker}}
 	{% for p in top_endringer %}
 	<tr>
 		<td>{{ p.user }}</td>
-		<td>{{ p.email }}</td>
 		<td>{{ p.count }}</td>
 	</tr>
 	{% endfor %}
