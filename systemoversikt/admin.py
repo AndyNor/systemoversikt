@@ -117,8 +117,7 @@ class CitrixPublicationAdmin(admin.ModelAdmin):
 	list_display = ('publikasjon_UUID', 'sone', 'publikasjon_active',)
 	search_fields = ('publikasjon_UUID', 'publikasjon_json')
 	list_filter = ('publikasjon_active', 'sone', 'type_vApp', 'type_nettleser', 'type_remotedesktop', 'type_produksjon', 'type_medlemmer')
-	readonly_fields = ['publikasjon_UUID', 'sone', 'publikasjon_active', 'publikasjon_json', 'type_vApp', 'type_nettleser', 'type_remotedesktop', 'type_produksjon', 'type_medlemmer']
-
+	readonly_fields = [field.name for field in CitrixPublication._meta.fields]
 
 @admin.register(AzureApplication)
 class AzureApplicationAdmin(admin.ModelAdmin):
@@ -126,7 +125,7 @@ class AzureApplicationAdmin(admin.ModelAdmin):
 	search_fields = ('displayName', 'appId',)
 	list_filter = ('risikonivaa',)
 	autocomplete_fields = ('requiredResourceAccess',)
-	readonly_fields = ["appId",]
+	readonly_fields = [field.name for field in AzureApplication._meta.fields]
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):

@@ -22,7 +22,7 @@ class Command(BaseCommand):
 		LOG_EVENT_TYPE = "Conditional Access"
 		KILDE = "Azure Graph"
 		PROTOKOLL = "REST"
-		BESKRIVELSE = "Informasjon om CA-regler"
+		BESKRIVELSE = "Conditional Access-regler (CA-regler)"
 		FILNAVN = ""
 		URL = ""
 		FREKVENS = "Hver natt"
