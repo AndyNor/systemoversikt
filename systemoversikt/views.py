@@ -3317,7 +3317,7 @@ def logger(request):
 		'aktive_antall_uker': aktive_antall_uker,
 		'aktive_antall_personer': aktive_antall_personer,
 		'top_users': top_users,
-		'user': user,
+		'users': users,
 
 
 	})
