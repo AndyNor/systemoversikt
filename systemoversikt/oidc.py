@@ -378,6 +378,10 @@ if settings.IDP_PROVIDER == "AZUREAD":
 								virksomhetsrolle_group.user_set.add(user)
 								systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
 								systemforvalter_group.user_set.add(user)
+
+							if group == "/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER":
+								systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+								systemforvalter_group.user_set.add(user)
 						except:
 							#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
 							pass
