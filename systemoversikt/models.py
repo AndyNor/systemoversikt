@@ -925,6 +925,8 @@ PRIVELIGERTE_GRUPPER = [
 	"Role-OF2-AdminAlleMemberServere",
 	# domain admins
 	"Role-Domain-Admins-UVA",
+	"On-Prem Enterprise Admins",
+	"On-Prem Domain Admins",
 	# PRK admins
 	"DS-GKAT_BRGR_SYSADM",
 	"DS-GKAT_ADMSENTRALESKJEMA_ALLE",
