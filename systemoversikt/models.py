@@ -7028,6 +7028,17 @@ class AzurePublishedPermissionScopes(models.Model):
 			return False
 		if "Sites.Selected" in self.value:
 			return False
+		if "Score.Read.All" in self.value:
+			return False
+		if "Place.Read.All" in self.value:
+			return False
+		if "AdministrativeUnit.Read.All" in self.value:
+			return False
+		if "Policy.Read.All" in self.value:
+			return False
+		if "Group.Read.All" in self.value:
+			return False
+
 		if self.permission_type == "Application":
 			return True
 		#if "full access" in self.adminConsentDisplayName:
