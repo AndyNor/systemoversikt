@@ -4,6 +4,8 @@
 
 from django.core.management.base import BaseCommand
 from systemoversikt.models import *
+from django.utils import timezone
+from datetime import timedelta
 from datetime import datetime
 import requests
 from requests.auth import HTTPBasicAuth
@@ -50,14 +52,15 @@ class Command(BaseCommand):
 
 			url = 'https://data.helsecert.no/blocklist/v2/'
 
+			print(f"Kobler til {url}")
 			response = requests.get(url, auth=HTTPBasicAuth(username, password))
 
 			if response.status_code == 200:
-				print('Authentication successful')
+				print('Autentisering var vellykket')
 				print('Response:', response)
 				print('Response:', response.text)
 			else:
-				print('Authentication failed')
+				print('Autentisering feilet')
 				print('Status Code:', response.status_code)
 				print('Response:', response.text)
 
