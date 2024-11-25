@@ -7,6 +7,7 @@ from systemoversikt.models import *
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
+import time
 import requests
 from requests.auth import HTTPBasicAuth
 import os
