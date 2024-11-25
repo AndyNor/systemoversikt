@@ -60,8 +60,7 @@ class Command(BaseCommand):
 
 			if response.status_code == 200:
 				print('Autentisering var vellykket')
-				print('Response:', response)
-				print('Response:', response.text)
+				print(f"Det er {len(response.text)} elementer i blocklist")
 			else:
 				print('Autentisering feilet')
 				print('Status Code:', response.status_code)
