@@ -54,7 +54,8 @@ class Command(BaseCommand):
 
 			if response.status_code == 200:
 				print('Authentication successful')
-				print('Response:', response.json())
+				print('Response:', response)
+				print('Response:', response.text)
 			else:
 				print('Authentication failed')
 				print('Status Code:', response.status_code)
