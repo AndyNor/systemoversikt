@@ -48,6 +48,8 @@ class Command(BaseCommand):
 
 		try:
 
+			runtime_t0 = time.time()
+
 			username = os.environ['HELSECERT_BLOCKLIST_USERNAME']
 			password = os.environ['HELSECERT_BLOCKLIST_PASSWORD']
 
