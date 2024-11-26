@@ -15,8 +15,8 @@
 <form action="" method="POST" autocomplete="off">
 	{% csrf_token %}
 	<div class="form-group form-inline">
-		<textarea style="width: 500px; height: 50px;" name="inndata"
-		placeholder="E-postadresse til en brukerident" class="form-control form-control-sm">{{ inndata }}</textarea>
+		<input size="55" style="width: 450px;" type="search" value="{{ inndata }}" name="inndata"
+			placeholder="E-postadresse eller brukerident" class="form-control form-control-sm">
 		<input style="margin-left: 10px;" type="submit" value="Søk" class="btn btn-primary btn-sm">
 	</div>
 </form>

@@ -101,7 +101,7 @@
 					<tbody>
 					{% for i in raw %}
 						<tr>
-							<td>{{i.anr}}</td>
+							<td><a href="{% url 'bruker_sok' %}?search_term={{i.anr}}">{{i.anr}}</a></td>
 							<td>{{i.count}}</td>
 						</tr>
 					{% endfor %}

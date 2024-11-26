@@ -2523,7 +2523,7 @@ def entra_id_oppslag(request):
 	metadata = metadata if 'metadata' in locals() else None
 	groups = groups if 'groups' in locals() else None
 
-	return render(request, 'ad_entraid_oppslag.html', {
+	return render(request, 'brukere_brukersok_entraid.html', {
 		'request': request,
 		'metadata': metadata,
 		'groups': groups,
@@ -2557,7 +2557,8 @@ def bruker_sok(request):
 	query_display = reduce(and_, parts)
 	username_query = Q(**{'username__contains': terms[0]})
 	email_query = Q(**{'email': terms[0]})
-	query = reduce(or_, [query_display, username_query, email_query])
+	sid_query = Q(**{'profile__object_sid__iexact': terms[0]})
+	query = reduce(or_, [query_display, username_query, email_query, sid_query])
 	#print(query)
 
 	print(query)
@@ -2568,7 +2569,7 @@ def bruker_sok(request):
 	else:
 		users = User.objects.none()
 
-	return render(request, 'system_brukerdetaljer.html', {
+	return render(request, 'brukere_brukersok_ad.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'search_term': search_term,
@@ -2770,7 +2771,7 @@ def bruker_detaljer(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	user = User.objects.get(pk=pk)
-	return render(request, 'system_brukerdetaljer.html', {
+	return render(request, 'brukere_brukersok_ad.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'users': [user],

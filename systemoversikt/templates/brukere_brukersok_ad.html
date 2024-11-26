@@ -11,14 +11,14 @@
 
 {% block hovedinnhold %}
 
-	<p>Alle brukere synkroniseres hver natt mot Active Directory. Her kan du søke på brukernavn, visningsnavn og e-postadresse. Dersom du skriver inn flere ord (fornavn, mellomnavn og etternavn), prøver vi å finne brukere som inneholder alle ordene. E-post må være eksakt lik, mens brukernavn må inneholde ordet du skriver inn. Du kan f.eks. søke på "HEL4" og få opp alle brukernavn som starter med dette.</p>
+	<p>Alle brukere synkroniseres hver natt mot Active Directory. Her kan du søke på brukernavn, visningsnavn, e-postadresse eller SID. Dersom du skriver inn flere ord (fornavn, mellomnavn og etternavn), prøver vi å finne brukere som inneholder alle ordene. E-post må være eksakt lik, mens brukernavn må inneholde ordet du skriver inn. Du kan f.eks. søke på "HEL4" og få opp alle brukernavn som starter med dette.</p>
 
 	<hr>
 
 	<form action="{% url 'bruker_sok' %}" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="55" style="width: 450px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="Søk i brukernavn eller navn (minimum 2 tegn)" class="form-control form-control-sm">
+			placeholder="Brukernavn, navn, e-post eller SID" class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 		</div>
 	</form>

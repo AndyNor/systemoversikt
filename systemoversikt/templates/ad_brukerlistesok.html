@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-	<p>Alle brukere synkroniseres hver natt mot AD.</p>
+	<p>Alle brukere synkroniseres hver natt mot AD. Merk at Entra ID Web Application Proxy har en timeout. Spør du etter for mye data, vil proxyen i forkant av Kartoteket gå ut på tid og gå i feilmelding. Unngå dette ved å søke på maks ca. 200 elementer om gangen.</p>
 
 	<form action="{% url 'cmdb_ad_brukerlistesok' %}" method="POST" autocomplete="off">
 		{% csrf_token %}
