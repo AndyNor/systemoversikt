@@ -18,6 +18,8 @@
 <p style="background-color: {{ integrasjonsstatus.color }};">
 Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
 
+<h4>{{antall}} unike sårbarheter</h4>
+
 <table class="table tablesorter">
 <thead>
 <tr>

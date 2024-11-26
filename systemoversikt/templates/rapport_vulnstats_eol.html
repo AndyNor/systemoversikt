@@ -10,7 +10,7 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Statistikk over sårbarheter med alvorlighetsgrad {{ severity }}
+	Sårbarheter på end of life-servere med alvorlighetsgrad {{ severity }}
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -18,20 +18,22 @@
 <p style="background-color: {{ integrasjonsstatus.color }};">
 Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
 
-<h4>{{antall}} unike sårbarheter</h4>
-
 <table class="table tablesorter">
 <thead>
 <tr>
 	<th>Tittel</th>
-	<th>Antall</th>
+	<th>Server</th>
+	<th>OS</th>
+	<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 {% for vuln in data.top_unike_vulns %}
 <tr>
-	<td><a href="{% url 'vulnstats_whereis' vuln=vuln.title %}">{{ vuln.title }}</a></td>
-	<td>{{ vuln.count }}</td>
+	<td>{{ vuln.title }}</td>
+	<td>{{ vuln.server }}</td>
+	<td>{{ vuln.server.comp_os_readable }}</td>
+	<td>{{ vuln.severity}}</td>
 </tr>
 {% endfor %}
 </tbody>
