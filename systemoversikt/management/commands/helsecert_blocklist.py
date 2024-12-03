@@ -96,7 +96,7 @@ class Command(BaseCommand):
 
 				azure_response = requests.put(url, headers=headers, data=blocklist)
 
-				if azure_response.status_code == 200:
+				if azure_response.status_code == 201: # http 201 er "created"
 					status_levere = "Lastet opp til Azure-blob."
 					print(f"Lastet opp blocklist til Azure blob (HTTP {azure_response.status_code})")
 				else:
