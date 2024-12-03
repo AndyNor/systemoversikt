@@ -1,0 +1,49 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Sårbarheter fordelt på service offering
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p style="background-color: {{ integrasjonsstatus.color }};">
+Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
+
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Offering</th>
+	<th>Severity 1</th>
+	<th>Severity 2</th>
+	<th>Severity 3</th>
+	<th>Severity 4</th>
+	<th>Severity 5</th>
+</tr>
+</thead>
+<tbody>
+{% for offering in data.offerings %}
+<tr>
+	<td>{{ offering.offering|default:"Uten kobling" }}</td>
+	<td>{{ offering.counts.0 }}</td>
+	<td>{{ offering.counts.1 }}</td>
+	<td>{{ offering.counts.2 }}</td>
+	<td>{{ offering.counts.3 }}</td>
+	<td>{{ offering.counts.4 }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<hr>
+
+
+{% endblock hovedinnhold %}

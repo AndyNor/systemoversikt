@@ -1,0 +1,44 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Søk etter sårbarheter
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p style="background-color: {{ integrasjonsstatus.color }};">
+Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
+
+{% if search_term %}
+<p>Her er alle treff på "{{ search_term }}"</p>
+
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Tittel</th>
+	<th>Antall</th>
+</tr>
+</thead>
+<tbody>
+{% for vuln in vulns %}
+<tr>
+	<td><a href="{% url 'vulnstats_whereis' vuln=vuln.title %}">{{ vuln.title }}</a></td>
+	<td>{{ vuln.count }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endif %}
+
+
+{% endblock hovedinnhold %}

@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.db.models import Count
 from django.template.loader import render_to_string
-from django.db.models.functions import Lower
+from django.db.models.functions import Lower, TruncMonth, TruncYear, TruncDay
 from django.db.models import Q
 from django.http import HttpResponseBadRequest, JsonResponse
 from django.contrib.admin.models import LogEntry
@@ -744,8 +744,6 @@ def vulnstats(request):
 	except:
 		integrasjonsstatus = None
 
-	from django.db.models import Count
-	from django.db.models.functions import TruncMonth, TruncYear, TruncDay
 	data = {}
 
 	data["count_all"] = QualysVuln.objects.all().count()
@@ -812,12 +810,18 @@ def vulnstats(request):
 				day=TruncDay('last_seen')
 				).values('year', 'day').annotate(count=Count('id')).order_by('year', 'day'))
 
-	data["count_first_seen_monthly_public_facing"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[5]).annotate(
+	data["count_first_seen_monthly_public_facing_5"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[5]).annotate(
 				year=TruncYear('first_seen'),
 				month=TruncMonth('first_seen')
 				).values('year', 'month').annotate(count=Count('id')).order_by('year', 'month')
 
-	data["vulns_first_seen_monthly_public_facing"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[5]).values('title').annotate(count=Count('title')).order_by('-count')
+	data["count_first_seen_monthly_public_facing_4"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[4]).annotate(
+				year=TruncYear('first_seen'),
+				month=TruncMonth('first_seen')
+				).values('year', 'month').annotate(count=Count('id')).order_by('year', 'month')
+
+	data["vulns_first_seen_monthly_public_facing_5"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[5]).values('title').annotate(count=Count('title')).order_by('-count')
+	data["vulns_first_seen_monthly_public_facing_4"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[4]).values('title').annotate(count=Count('title')).order_by('-count')
 
 
 	data["count_servere_aktive"] = CMDBdevice.objects.filter(device_type="SERVER").count()
@@ -840,21 +844,6 @@ def vulnstats(request):
 	data["servere_uten_offering"] = CMDBdevice.objects.filter(service_offerings=None, device_type__in=["SERVER", "NETTWORK"])
 
 
-	#vise noe statistikk rundt end of life, hvor mange servere
-
-	# finne flere kandidater til ansvar basisdrift
-
-	# vise top 10 ting basisdrift ikke har patchet eldre enn 30 dager.
-
-	# vise top 10 ting forvalter ikke har patchet eldre enn 30 dager
-
-	# vise alle service offerings med servere og antall sårbarheter
-	# vise alle sårbarheter for en enhet, sortert på mest kritisk først
-
-
-
-
-
 	return render(request, 'rapport_vulnstats.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -862,6 +851,58 @@ def vulnstats(request):
 		'integrasjonsstatus': integrasjonsstatus,
 	})
 
+
+def vulnstats_search(request):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	search_term = request.GET.get("query", None)
+	vulns = QualysVuln.objects.filter(Q(title__icontains=search_term) | Q(cve_info__icontains=search_term)).values('title').annotate(count=Count('title')).order_by('-count')
+
+
+	return render(request, 'rapport_vulnstats_search.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'search_term': search_term,
+		'vulns': vulns,
+		'integrasjonsstatus': integrasjonsstatus,
+	})
+
+def vulnstats_offerings(request):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	from collections import defaultdict
+	data = {}
+	queryset = QualysVuln.objects.values('server__service_offerings__navn', 'severity').annotate(count=Count('id'))
+	### HER ER DET HARDKODET AT DET ER 5 ULIKE ALVORLIGHETSGRADER, [1-5]
+	results = defaultdict(lambda: [0] * 5)
+	for entry in queryset:
+		offering = entry['server__service_offerings__navn']
+		severity = entry['severity']
+		count = entry['count']
+		results[offering][severity - 1] = count
+	data["offerings"] = [{'offering': offering, 'counts': counts} for offering, counts in results.items()]
+
+	return render(request, 'rapport_vulnstats_offerings.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'data': data,
+		'offering': offering,
+		'integrasjonsstatus': integrasjonsstatus,
+	})
 
 
 def vulnstats_severity_eol(request, severity):

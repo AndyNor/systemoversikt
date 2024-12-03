@@ -137,12 +137,14 @@ urlpatterns = [
 	re_path(r'^rapport/vulnstats/severity/(?P<severity>\d{1})/$', views.vulnstats_severity, name="vulnstats_severity"),
 	re_path(r'^rapport/vulnstats/severity/exploited/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited, name="vulnstats_severity_known_exploited"),
 	re_path(r'^rapport/vulnstats/severity/exploited/public_facing/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited_public, name="vulnstats_severity_known_exploited_public"),
-	re_path(r'^rapport/vulnstats/whereis/(?P<vuln>.+)/$', views.vulnstats_whereis, name="vulnstats_whereis"),
+	re_path(r'^rapport/vulnstats/whereis/(?P<vuln>.+)?/$', views.vulnstats_whereis, name="vulnstats_whereis"),
 	re_path(r'^rapport/vulnstats/ukjente_servere/$', views.vulnstats_ukjente_servere, name="vulnstats_ukjente_servere"),
 	re_path(r'^rapport/vulnstats/eol/(?P<severity>\d{1})/$', views.vulnstats_severity_eol, name="vulnstats_severity_eol"),
 	re_path(r'^rapport/vulnstats/severity/not_current/(?P<severity>\d{1})/$', views.vulnstats_severity_not_current, name="vulnstats_severity_not_current"),
 	re_path(r'^rapport/vulnstats/severity/exploited/not_current/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited_not_current, name="vulnstats_severity_known_exploited_not_current"),
 	re_path(r'^rapport/vulnstats/severity/exploited/public_facing/not_current/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited_public_not_current, name="vulnstats_severity_known_exploited_public_not_current"),
+	re_path(r'^rapport/vulnstats/all_offerings/', views.vulnstats_offerings, name="vulnstats_offerings"),
+	re_path(r'^rapport/vulnstats/search/', views.vulnstats_search, name="vulnstats_search"),
 
 
 

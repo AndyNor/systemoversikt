@@ -24,6 +24,21 @@ Antall sårbarheter totalt <h4>{{ data.count_all }}</h4>
 
 <hr>
 
+	<div class="container mt-5">
+		<form action="{% url 'vulnstats_search' %}" method="get" class="form-inline">
+			<div class="form-group mb-2">
+				<label for="query" class="sr-only">Søk etter sårbarhet</label>
+				<input type="text" id="query" name="query" class="form-control" placeholder="Søk etter sårbarhet" required>
+			</div>
+			<button type="submit" class="btn btn-primary mb-2 ml-2">Søk</button>
+		</form>
+	</div>
+
+<hr>
+<a href="{% url 'vulnstats_offerings' %}">Sårbarheter fordelt på service offering</a>
+
+<hr>
+
 <p>Sårbarheter fordelt på status</p>
 <ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
 {% for status in data.count_status %}
@@ -246,21 +261,21 @@ const last_seen_monthly_myChart_not_current = new Chart(document.getElementById(
 
 <hr>
 
-<h4>Kjent utnyttet, alvorlighetsgrad 5</h4>
+<h4>Kjent utnyttet, alvorlighetsgrad 5: Detaljer</h4>
 Fordelt på "først sett" dato
-<div><canvas height="50" id="vuln_timechart_first_seen_public_facing"></canvas></div>
+<div><canvas height="30" id="vuln_timechart_first_seen_public_facing_5"></canvas></div>
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
-const first_seen_public_monthly_data = {
-	labels: [{% for date in data.count_first_seen_monthly_public_facing %}"{{ date.year|date:"Y" }}-{{ date.month|date:"M" }}",{% endfor %}],
+const first_seen_public_monthly_data_5 = {
+	labels: [{% for date in data.count_first_seen_monthly_public_facing_5 %}"{{ date.year|date:"Y" }}-{{ date.month|date:"M" }}",{% endfor %}],
 	datasets: [{
 		backgroundColor: 'rgb(255, 99, 132)',
 		borderColor: 'rgb(255, 99, 132)',
-		data: [{% for date in data.count_first_seen_monthly_public_facing %}{{ date.count }},{% endfor %}],
+		data: [{% for date in data.count_first_seen_monthly_public_facing_5 %}{{ date.count }},{% endfor %}],
 	}]
 };
-const first_seen_monthly_public_config = {
+const first_seen_monthly_public_config_5 = {
 	type: 'bar',
-	data: first_seen_public_monthly_data,
+	data: first_seen_public_monthly_data_5,
 	options: {
 		plugins: {
 			legend: false,
@@ -282,7 +297,7 @@ const first_seen_monthly_public_config = {
 		}
 	},
 };
-const first_seen_monthly_public_myChart = new Chart(document.getElementById('vuln_timechart_first_seen_public_facing'), first_seen_monthly_public_config);
+const first_seen_monthly_public_myChart_5 = new Chart(document.getElementById('vuln_timechart_first_seen_public_facing_5'), first_seen_monthly_public_config_5);
 </script>
 
 <table class="table tablesorter">
@@ -293,7 +308,7 @@ const first_seen_monthly_public_myChart = new Chart(document.getElementById('vul
 </tr>
 </thead>
 <tbody>
-{% for vuln in data.vulns_first_seen_monthly_public_facing %}
+{% for vuln in data.vulns_first_seen_monthly_public_facing_5 %}
 <tr>
 	<td><a href="{% url 'vulnstats_whereis' vuln=vuln.title %}">{{ vuln.title }}</a></td>
 	<td>{{ vuln.count }}</td>
@@ -302,6 +317,64 @@ const first_seen_monthly_public_myChart = new Chart(document.getElementById('vul
 </tbody>
 </table>
 
+
+<hr>
+
+<h4>Kjent utnyttet, alvorlighetsgrad 4: Detaljer</h4>
+Fordelt på "først sett" dato
+<div><canvas height="30" id="vuln_timechart_first_seen_public_facing_4"></canvas></div>
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const first_seen_public_monthly_data_4 = {
+	labels: [{% for date in data.count_first_seen_monthly_public_facing_4 %}"{{ date.year|date:"Y" }}-{{ date.month|date:"M" }}",{% endfor %}],
+	datasets: [{
+		backgroundColor: 'rgb(255, 99, 132)',
+		borderColor: 'rgb(255, 99, 132)',
+		data: [{% for date in data.count_first_seen_monthly_public_facing_4 %}{{ date.count }},{% endfor %}],
+	}]
+};
+const first_seen_monthly_public_config_4 = {
+	type: 'bar',
+	data: first_seen_public_monthly_data_4,
+	options: {
+		plugins: {
+			legend: false,
+		},
+		scales: {
+			y: {
+				//type: 'logarithmic',
+				beginAtZero: true,
+				//max: 4000
+			}
+		},
+		onClick: function(event, elements) {
+			if (elements.length > 0) {
+				var elementIndex = elements[0].index;
+				var datestr = this.data.labels[elementIndex];
+				console.log(datestr)
+				//window.open(url, '_blank');
+			}
+		}
+	},
+};
+const first_seen_monthly_public_myChart_4 = new Chart(document.getElementById('vuln_timechart_first_seen_public_facing_4'), first_seen_monthly_public_config_4);
+</script>
+
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Tittel</th>
+	<th>Antall</th>
+</tr>
+</thead>
+<tbody>
+{% for vuln in data.vulns_first_seen_monthly_public_facing_4 %}
+<tr>
+	<td><a href="{% url 'vulnstats_whereis' vuln=vuln.title %}">{{ vuln.title }}</a></td>
+	<td>{{ vuln.count }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
 
 <hr>
 
