@@ -840,19 +840,17 @@ def vulnstats(request):
 	data["servere_uten_offering"] = CMDBdevice.objects.filter(service_offerings=None, device_type__in=["SERVER", "NETTWORK"])
 
 
-
-	# obsolete server med i graph over sist sett og først sett
-
-	#prosentvis end of life-servere.
+	#vise noe statistikk rundt end of life, hvor mange servere
 
 	# finne flere kandidater til ansvar basisdrift
 
-	# vise top 10 ting basisdrift ikke har patchet
+	# vise top 10 ting basisdrift ikke har patchet eldre enn 30 dager.
 
-	# vise top 10 ting forvalter ikke har patchet
+	# vise top 10 ting forvalter ikke har patchet eldre enn 30 dager
 
 	# vise alle service offerings med servere og antall sårbarheter
 	# vise alle sårbarheter for en enhet, sortert på mest kritisk først
+
 
 
 

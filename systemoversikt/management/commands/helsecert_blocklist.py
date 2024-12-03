@@ -48,6 +48,9 @@ class Command(BaseCommand):
 
 		try:
 
+			status_hente = ""
+			status_levere = ""
+
 			runtime_t0 = time.time()
 
 			username = os.environ['HELSECERT_BLOCKLIST_USERNAME']
@@ -61,15 +64,48 @@ class Command(BaseCommand):
 			if response.status_code == 200:
 				print('Autentisering var vellykket')
 				print(f"Det er {len(response.text)} elementer i blocklist")
+				blocklist = response.text
+				status_hente = "Lastet ned blocklist."
+
 			else:
 				print('Autentisering feilet')
 				print('Status Code:', response.status_code)
 				print('Response:', response.text)
+				blocklist = None
+				status_hente = "Feilet nedlasting av blocklist."
+
+
+			if blocklist:  # Koble til Azure blob storage og lagre filen der
+
+				blob = "https://ukecsirtstorage001.blob.core.windows.net/helsecert/ip.csv"
+				sp = "racwd"
+				st = "2024-11-28T12:16:43Z"
+				se = "2028-01-01T20:16:43Z"
+				sip = os.environ['BLOCKLIST_AZURE_SIP']
+				spr = "https"
+				sv = "2022-11-02"
+				sr = "b"
+				sig = os.environ['BLOCKLIST_AZURE_SIG']
+
+				url = f"{blob}?sp={sp}&st={st}&se={se}&sip={sip}&spr={spr}&sv={sv}&sr={sr}&sig={sig}"
+				headers = {
+					"x-ms-blob-type": "BlockBlob",
+					"Content-Type": "text/csv"
+				}
+
+				azure_response = requests.put(url, headers=headers, data=blocklist)
+
+				if azure_response.status_code == 200:
+					status_levere = "Lastet opp til Azure-blob."
+					print("Lastet opp blocklist til Azure blob (HTTP {azure_response.status_code})")
+				else:
+					status_levere = "Feilet opplasting til Azure-blob."
+					print("Feilet å laste opp Azure blob (HTTP {azure_response.status_code})")
 
 
 			runtime_t1 = time.time()
 			logg_total_runtime = round(runtime_t1 - runtime_t0, 1)
-			logg_entry_message = f"Kjøretid: {logg_total_runtime} sekunder"
+			logg_entry_message = f"{status_hente} {status_levere} Kjøretid: {logg_total_runtime} sekunder"
 			print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
