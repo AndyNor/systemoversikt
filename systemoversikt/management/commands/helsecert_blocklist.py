@@ -88,6 +88,7 @@ class Command(BaseCommand):
 				sig = os.environ['BLOCKLIST_AZURE_SIG']
 
 				url = f"{blob}?sp={sp}&st={st}&se={se}&sip={sip}&spr={spr}&sv={sv}&sr={sr}&sig={sig}"
+				print(url)
 				headers = {
 					"x-ms-blob-type": "BlockBlob",
 					"Content-Type": "text/csv"
@@ -106,7 +107,7 @@ class Command(BaseCommand):
 			runtime_t1 = time.time()
 			logg_total_runtime = round(runtime_t1 - runtime_t0, 1)
 			logg_entry_message = f"{status_hente} {status_levere} Kjøretid: {logg_total_runtime} sekunder"
-			print(logg_entry_message)
+			#print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
