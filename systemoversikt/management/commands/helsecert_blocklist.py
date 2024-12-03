@@ -97,10 +97,10 @@ class Command(BaseCommand):
 
 				if azure_response.status_code == 200:
 					status_levere = "Lastet opp til Azure-blob."
-					print("Lastet opp blocklist til Azure blob (HTTP {azure_response.status_code})")
+					print(f"Lastet opp blocklist til Azure blob (HTTP {azure_response.status_code})")
 				else:
 					status_levere = "Feilet opplasting til Azure-blob."
-					print("Feilet å laste opp Azure blob (HTTP {azure_response.status_code})")
+					print(f"Feilet å laste opp Azure blob. Statuskode HTTP {azure_response.status_code} og respons {azure_response.text}.")
 
 
 			runtime_t1 = time.time()
