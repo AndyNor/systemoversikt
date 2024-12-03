@@ -88,7 +88,7 @@ class Command(BaseCommand):
 				sig = os.environ['BLOCKLIST_AZURE_SIG']
 
 				url = f"{blob}?sp={sp}&st={st}&se={se}&sip={sip}&spr={spr}&sv={sv}&sr={sr}&sig={sig}"
-				print(url)
+				#print(url)
 				headers = {
 					"x-ms-blob-type": "BlockBlob",
 					"Content-Type": "text/csv"

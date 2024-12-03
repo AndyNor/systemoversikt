@@ -34,6 +34,7 @@ python /var/kartoteket/source/systemoversikt/manage.py sharepoint_wan_location_u
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_firewall_importer
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_citrix_publications
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_qualys
+python /var/kartoteket/source/systemoversikt/manage.py helsecert_blocklist
 
 # run batch rydde
 python /var/kartoteket/source/systemoversikt/manage.py rydde_ansvarlige
