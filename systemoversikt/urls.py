@@ -131,9 +131,9 @@ urlpatterns = [
 	re_path(r'^rapport/leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
 	re_path(r'^rapport/leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
 	re_path(r'^rapport/leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),
-	re_path(r'^rapport/api/', views.api_overview, name="api_overview"),
-	re_path(r'^rapport/trustedfordelegation/', views.rapport_trusted_delegation, name="rapport_trusted_delegation"),
-	re_path(r'^rapport/vulnstats/overview/', views.vulnstats, name="vulnstats"),
+	re_path(r'^rapport/api/$', views.api_overview, name="api_overview"),
+	re_path(r'^rapport/trustedfordelegation/$', views.rapport_trusted_delegation, name="rapport_trusted_delegation"),
+	re_path(r'^rapport/vulnstats/overview/$', views.vulnstats, name="vulnstats"),
 	re_path(r'^rapport/vulnstats/severity/(?P<severity>\d{1})/$', views.vulnstats_severity, name="vulnstats_severity"),
 	re_path(r'^rapport/vulnstats/severity/exploited/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited, name="vulnstats_severity_known_exploited"),
 	re_path(r'^rapport/vulnstats/severity/exploited/public_facing/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited_public, name="vulnstats_severity_known_exploited_public"),
@@ -143,8 +143,10 @@ urlpatterns = [
 	re_path(r'^rapport/vulnstats/severity/not_current/(?P<severity>\d{1})/$', views.vulnstats_severity_not_current, name="vulnstats_severity_not_current"),
 	re_path(r'^rapport/vulnstats/severity/exploited/not_current/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited_not_current, name="vulnstats_severity_known_exploited_not_current"),
 	re_path(r'^rapport/vulnstats/severity/exploited/public_facing/not_current/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited_public_not_current, name="vulnstats_severity_known_exploited_public_not_current"),
-	re_path(r'^rapport/vulnstats/all_offerings/', views.vulnstats_offerings, name="vulnstats_offerings"),
-	re_path(r'^rapport/vulnstats/search/', views.vulnstats_search, name="vulnstats_search"),
+	re_path(r'^rapport/vulnstats/all_offerings/$', views.vulnstats_offerings, name="vulnstats_offerings"),
+	re_path(r'^rapport/vulnstats/search/$', views.vulnstats_search, name="vulnstats_search"),
+	re_path(r'^rapport/vulnstats/offering/(?P<pk>\d{1,8})?', views.vulnstats_offering, name="vulnstats_offering"),
+	re_path(r'^rapport/vulnstats/all/$', views.vulnstats_all, name="vulnstats_all"),
 
 
 

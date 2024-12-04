@@ -87,10 +87,12 @@ class Command(BaseCommand):
 
 			@lru_cache(maxsize=64)
 			def lookup_ip(ip):
-				try:
-					return CMDBdevice.objects.get(comp_ip_address__iexact=ip)
-				except:
+				matches = CMDBdevice.objects.filter(comp_ip_address__iexact=ip)
+				if len(matches) < 1:
 					return None
+				if len(matches) > 1:
+					print(f"Det er flere treff på {ip}, velger den første")
+				return matches[0]
 
 
 			@transaction.atomic

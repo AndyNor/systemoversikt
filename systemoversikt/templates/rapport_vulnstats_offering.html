@@ -10,45 +10,38 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Sårbarheter fordelt på service offering
+	Sårbarheter for <b>{{offering|default:"Ukjent"}}</b>
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-<a href="{% url 'vulnstats' %}" class="btn btn-sm btn-primary">Tilbake</a>
+
+<a href="{% url 'vulnstats_offerings' %}" class="btn btn-sm btn-primary">Tilbake</a>
 <hr>
 
 <p style="background-color: {{ integrasjonsstatus.color }};">
 Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
 
 
-
 <table class="table tablesorter">
 <thead>
 <tr>
-	<th>Offering</th>
-	<th>Severity 1</th>
-	<th>Severity 2</th>
-	<th>Severity 3</th>
-	<th>Severity 4</th>
-	<th>Severity 5</th>
+	<th>Tittel</th>
+	<th>Alvorlighetsgrad</th>
+	<th>Antall</th>
 </tr>
 </thead>
 <tbody>
-{% for line in data.offerings %}
+{% for vuln in data.vulns %}
 <tr>
-	<td><a href="{% url 'vulnstats_offering' pk=line.offering_pk %}">{{ line.offering|default:"Uten kobling" }}</a></td>
-	<td>{{ line.counts.0 }}</td>
-	<td>{{ line.counts.1 }}</td>
-	<td>{{ line.counts.2 }}</td>
-	<td>{{ line.counts.3 }}</td>
-	<td>{{ line.counts.4 }}</td>
+	<td>{{ vuln.title }}</td>
+	<td>{{ vuln.severity }}</td>
+	<td>{{ vuln.num_vulns }}</td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
 
-<hr>
 
 
 {% endblock hovedinnhold %}

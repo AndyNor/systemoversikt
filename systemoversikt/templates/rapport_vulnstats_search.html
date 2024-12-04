@@ -10,21 +10,24 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Søk etter sårbarheter
+	Søk etter sårbarheter som inneholder <b>{{ search_term }}</b>
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
+
+<a href="{% url 'vulnstats' %}" class="btn btn-sm btn-primary">Tilbake</a>
+<hr>
 
 <p style="background-color: {{ integrasjonsstatus.color }};">
 Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
 
 {% if search_term %}
-<p>Her er alle treff på "{{ search_term }}"</p>
 
 <table class="table tablesorter">
 <thead>
 <tr>
 	<th>Tittel</th>
+	<th>Severity</th>
 	<th>Antall</th>
 </tr>
 </thead>
@@ -32,13 +35,19 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 {% for vuln in vulns %}
 <tr>
 	<td><a href="{% url 'vulnstats_whereis' vuln=vuln.title %}">{{ vuln.title }}</a></td>
+	<td>{{ vuln.severity }}</td>
 	<td>{{ vuln.count }}</td>
 </tr>
 {% endfor %}
 </tbody>
 </table>
 
+{% else %}
+
+	<p>Ingen treff</p>
+
 {% endif %}
+
 
 
 {% endblock hovedinnhold %}

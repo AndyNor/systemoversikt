@@ -24,20 +24,21 @@ Antall sårbarheter totalt <h4>{{ data.count_all }}</h4>
 
 <hr>
 
-	<div class="container mt-5">
-		<form action="{% url 'vulnstats_search' %}" method="get" class="form-inline">
-			<div class="form-group mb-2">
-				<label for="query" class="sr-only">Søk etter sårbarhet</label>
-				<input type="text" id="query" name="query" class="form-control" placeholder="Søk etter sårbarhet" required>
-			</div>
-			<button type="submit" class="btn btn-primary mb-2 ml-2">Søk</button>
-		</form>
+<form action="{% url 'vulnstats_search' %}" method="get" class="form-inline">
+	<div class="form-group mb-2">
+		<label for="query" class="sr-only">Søk etter sårbarhet</label>
+		<input type="text" style="width: 400px;" id="query" name="query" class="form-control" placeholder="Tittel, CVE eller filsti" required>
 	</div>
+	<button type="submit" class="btn btn-primary mb-2 ml-2">Søk</button>
+</form>
 
 <hr>
-<a href="{% url 'vulnstats_offerings' %}">Sårbarheter fordelt på service offering</a>
+
+<a class="btn btn-sm btn-primary" href="{% url 'vulnstats_offerings' %}">Sårbarheter fordelt på service offering</a>
+<a class="btn btn-sm btn-primary" href="{% url 'vulnstats_all' %}">Alle unike sårbarheter</a>
 
 <hr>
+
 
 <p>Sårbarheter fordelt på status</p>
 <ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
@@ -55,6 +56,12 @@ Antall sårbarheter totalt <h4>{{ data.count_all }}</h4>
 </ul>
 
 <hr>
+
+Antall sårbarheter som ikke kan kobles til server <h4>{{ data.count_uten_server }}</h4>
+<a class="btn btn-sm btn-primary" href="{% url 'vulnstats_ukjente_servere' %}">Se enhetene</a>
+
+<hr>
+
 
 <h4>Sårbarheter fordelt på alvorlighetsgrad</h4>
 <i>Alvorlighetsgrad 1 er minst kritisk og alvorlighetsgrad 5 er mest kritisk</i><br><br>
@@ -378,11 +385,6 @@ const first_seen_monthly_public_myChart_4 = new Chart(document.getElementById('v
 
 <hr>
 
-Antall sårbarheter som ikke kan kobles til server <h4>{{ data.count_uten_server }}</h4>
-
-Se enhetene på <a href="{% url 'vulnstats_ukjente_servere' %}">{% url 'vulnstats_ukjente_servere' %}</a>
-
-<hr>
 
 Servere uten offering knyttet til seg <h4>{{data.servere_uten_offering|length}}</h4>
 Disse kildene er

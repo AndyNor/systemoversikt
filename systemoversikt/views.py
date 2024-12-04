@@ -852,6 +852,28 @@ def vulnstats(request):
 	})
 
 
+
+def vulnstats_all(request):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	data = {}
+	data["vulns"] = QualysVuln.objects.values('title', 'severity', 'ansvar_basisdrift').annotate(num_vulns=Count('title')).order_by('-num_vulns')
+
+	return render(request, 'rapport_vulnstats_all.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'integrasjonsstatus': integrasjonsstatus,
+		'data': data,
+	})
+
+
 def vulnstats_search(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -863,7 +885,7 @@ def vulnstats_search(request):
 		integrasjonsstatus = None
 
 	search_term = request.GET.get("query", None)
-	vulns = QualysVuln.objects.filter(Q(title__icontains=search_term) | Q(cve_info__icontains=search_term)).values('title').annotate(count=Count('title')).order_by('-count')
+	vulns = QualysVuln.objects.filter(Q(title__icontains=search_term) | Q(cve_info__icontains=search_term) | Q(result__icontains=search_term)).values('title', 'severity').annotate(count=Count('title')).order_by('-count')
 
 
 	return render(request, 'rapport_vulnstats_search.html', {
@@ -873,6 +895,7 @@ def vulnstats_search(request):
 		'vulns': vulns,
 		'integrasjonsstatus': integrasjonsstatus,
 	})
+
 
 def vulnstats_offerings(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
@@ -886,15 +909,18 @@ def vulnstats_offerings(request):
 
 	from collections import defaultdict
 	data = {}
-	queryset = QualysVuln.objects.values('server__service_offerings__navn', 'severity').annotate(count=Count('id'))
-	### HER ER DET HARDKODET AT DET ER 5 ULIKE ALVORLIGHETSGRADER, [1-5]
-	results = defaultdict(lambda: [0] * 5)
+	queryset = QualysVuln.objects.values('server__service_offerings__navn', 'server__service_offerings__pk', 'severity').annotate(count=Count('id'))
+	results = defaultdict(lambda: ([0] * 5, None))  # 5 plasser for antall sårbarheter per kritikalitet + en plass for offering ID
 	for entry in queryset:
 		offering = entry['server__service_offerings__navn']
+		offering_pk = entry['server__service_offerings__pk']
 		severity = entry['severity']
 		count = entry['count']
-		results[offering][severity - 1] = count
-	data["offerings"] = [{'offering': offering, 'counts': counts} for offering, counts in results.items()]
+		counts, _ = results[offering]
+		counts[severity - 1] = count
+		results[offering] = (counts, offering_pk)
+
+	data["offerings"] = [{'offering': offering, 'offering_pk': offering_pk, 'counts': counts} for offering, (counts, offering_pk) in results.items()]
 
 	return render(request, 'rapport_vulnstats_offerings.html', {
 		'request': request,
@@ -902,6 +928,37 @@ def vulnstats_offerings(request):
 		'data': data,
 		'offering': offering,
 		'integrasjonsstatus': integrasjonsstatus,
+	})
+
+
+
+def vulnstats_offering(request, pk=None):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	if pk == "None":
+		pk = None
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	data = {}
+	if pk != None:
+		offering = CMDBRef.objects.get(pk=pk)
+	else:
+		offering = None
+
+	data["vulns"] = QualysVuln.objects.filter(server__service_offerings=offering).values('title', 'severity').annotate(num_vulns=Count('title')).order_by('-severity', '-num_vulns')
+
+	return render(request, 'rapport_vulnstats_offering.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'integrasjonsstatus': integrasjonsstatus,
+		'data': data,
+		'offering': offering,
 	})
 
 
