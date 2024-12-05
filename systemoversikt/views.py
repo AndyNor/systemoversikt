@@ -749,6 +749,7 @@ def vulnstats(request):
 	data["count_all"] = QualysVuln.objects.all().count()
 
 	data["count_uten_server"] = QualysVuln.objects.filter(server=None).count()
+	data["count_uten_server_antall_servere"] = QualysVuln.objects.filter(server=None).values("source").distinct().count()
 
 	data["count_status"] = QualysVuln.objects.values('status').annotate(count=Count('status'))
 
@@ -849,6 +850,27 @@ def vulnstats(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'data': data,
 		'integrasjonsstatus': integrasjonsstatus,
+	})
+
+
+def vulnstats_servere_uten_vuln(request):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+	except:
+		integrasjonsstatus = None
+
+	data = {}
+	data["servere_uten_vuln"] = CMDBdevice.objects.filter(device_type="SERVER").filter(qualys_vulnerabilities=None)
+
+	return render(request, 'rapport_vulnstats_servere_uten_vuln.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'integrasjonsstatus': integrasjonsstatus,
+		'data': data,
 	})
 
 

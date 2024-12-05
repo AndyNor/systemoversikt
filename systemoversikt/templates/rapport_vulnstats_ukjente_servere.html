@@ -12,11 +12,11 @@
 {% block hovedinnhold %}
 
 
-<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+<ol style="column-count: 3;">
 {% for unique_source in data.unique_source_no_server %}
 	<li>{{ unique_source.source }} ({{ unique_source.count }} sårbarheter)</li>
 {% endfor %}
-</ul>
+</ol>
 
 
 {% endblock hovedinnhold %}

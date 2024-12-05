@@ -63,7 +63,14 @@ Antall sårbarheter totalt <h4>{{ data.count_all }}</h4>
 <hr>
 
 Antall sårbarheter som ikke kan kobles til server <h4>{{ data.count_uten_server }}</h4>
+Antall servere <h4>{{data.count_uten_server_antall_servere}}</h4>
 <a class="btn btn-sm btn-primary" href="{% url 'vulnstats_ukjente_servere' %}">Se enhetene</a>
+
+<hr>
+
+Servere uten sårbarheter
+<h4>{{data.count_servere_uten_vuln}} av {{data.count_servere_aktive}}</h4>
+<a class="btn btn-sm btn-primary" href="{% url 'vulnstats_servere_uten_vuln' %}">Se enhetene</a>
 
 <hr>
 
@@ -398,12 +405,6 @@ Disse kildene er
 	<li>{{ device }}</li>
 {% endfor %}
 </ul>
-
-<hr>
-
-Servere uten sårbarheter
-<h4>{{data.count_servere_uten_vuln}} av {{data.count_servere_aktive}}</h4>
-Har disse faktisk Qualys-agent?
 
 
 <hr>

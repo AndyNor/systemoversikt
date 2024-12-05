@@ -264,6 +264,11 @@ class Command(BaseCommand):
 			int_config.sist_status = logg_entry_message
 			int_config.save()
 
+			ApplicationLog.objects.create(
+					event_type=LOG_EVENT_TYPE,
+					message=logg_entry_message,
+					)
+
 			print("Ferdig")
 
 
