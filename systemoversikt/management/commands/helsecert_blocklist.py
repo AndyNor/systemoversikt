@@ -87,7 +87,23 @@ class Command(BaseCommand):
 						return False
 
 				def parse_comment(comment):
+
+					# Split the string at the first space to separate the date-time
+					parts = text.split(' ', 1)
+					date_time = parts[0]
+					key_values = parts[1]
+
+					# Use a regular expression to find all key-value pairs
+					pattern = re.compile(r'(\w+):([^ ]+(?: [^ ]+)*)')
+					matches = pattern.findall(key_values)
+
+					# Convert matches to a dictionary
+					result = {key: value for key, value in matches}
+
+					print("Date-Time:", date_time)
+					print("Key-Value Pairs:", result)
 					return comment
+
 
 				ips = []
 				domains = []
@@ -104,7 +120,7 @@ class Command(BaseCommand):
 						domains.append({data: parse_comment(comment)})
 
 				json_string = json.dumps({"ips": ips, "domains": domains})
-				print(json_string)
+				#print(json_string)
 
 				blob = "https://ukecsirtstorage001.blob.core.windows.net/helsecert/blocklist.json"
 				sp = "racw"
