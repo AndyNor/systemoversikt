@@ -94,7 +94,7 @@ class Command(BaseCommand):
 					key_values = parts[1]
 
 					# Use a regular expression to find all key-value pairs
-					pattern = re.compile(r'(\w+):([^ ]+(?: [^ ]+)*)')
+					pattern = re.compile(r'(\w+):([^:]+?)(?=\s\w+:|$)')
 					matches = pattern.findall(key_values)
 
 					# Convert matches to a dictionary
