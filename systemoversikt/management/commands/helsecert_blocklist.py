@@ -65,7 +65,7 @@ class Command(BaseCommand):
 
 			if response.status_code == 200:
 				print('Autentisering var vellykket')
-				print(f"Det er {len(response.text)} elementer i blocklist")
+				print(f"Det er {len(response.text.splitlines())} elementer i blocklist")
 				blocklist = response.text
 				status_hente = "Lastet ned blocklist."
 
@@ -91,9 +91,7 @@ class Command(BaseCommand):
 
 				ips = []
 				domains = []
-				for line in blocklist:
-					print(line)
-					print(string)
+				for line in blocklist.splitlines():
 					try:
 						data, comment = line.split(" # ")
 					except:
