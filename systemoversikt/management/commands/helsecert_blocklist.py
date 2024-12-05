@@ -56,7 +56,7 @@ class Command(BaseCommand):
 			username = os.environ['HELSECERT_BLOCKLIST_USERNAME']
 			password = os.environ['HELSECERT_BLOCKLIST_PASSWORD']
 
-			url = 'https://data.helsecert.no/blocklist/v2/'
+			url = 'https://data.helsecert.no/blocklist/v2/?f=list_context'
 
 			print(f"Kobler til {url}")
 			response = requests.get(url, auth=HTTPBasicAuth(username, password))
@@ -74,6 +74,8 @@ class Command(BaseCommand):
 				blocklist = None
 				status_hente = "Feilet nedlasting av blocklist."
 
+
+			print(blocklist)
 
 			if blocklist:  # Koble til Azure blob storage og lagre filen der
 
