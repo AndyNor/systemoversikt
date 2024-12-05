@@ -89,7 +89,7 @@ class Command(BaseCommand):
 				def parse_comment(comment):
 
 					# Split the string at the first space to separate the date-time
-					parts = text.split(' ', 1)
+					parts = comment.split(' ', 1)
 					date_time = parts[0]
 					key_values = parts[1]
 
