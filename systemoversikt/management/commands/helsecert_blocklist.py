@@ -91,11 +91,13 @@ class Command(BaseCommand):
 
 				ips = []
 				domains = []
-				for e in blocklist:
+				for line in blocklist:
+					print(line)
+					print(string)
 					try:
-						data, comment = e.split(" # ")
+						data, comment = line.split(" # ")
 					except:
-						print(e)
+						print(line)
 						continue
 
 					if is_valid_ip(data): # dette er en IP-adresse
