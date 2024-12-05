@@ -79,10 +79,10 @@ class Command(BaseCommand):
 
 			if blocklist:  # Koble til Azure blob storage og lagre filen der
 
-				blob = "https://ukecsirtstorage001.blob.core.windows.net/helsecert/ip.csv"
-				sp = "racwd"
-				st = "2024-11-28T12:16:43Z"
-				se = "2028-01-01T20:16:43Z"
+				blob = "https://ukecsirtstorage001.blob.core.windows.net/helsecert/blocklist.json"
+				sp = "racw"
+				st = "2024-12-05T09:21:10Z"
+				se = "2026-03-03T17:21:10Z"
 				sip = os.environ['BLOCKLIST_AZURE_SIP']
 				spr = "https"
 				sv = "2022-11-02"
