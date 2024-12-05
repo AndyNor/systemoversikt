@@ -65,7 +65,8 @@ class Command(BaseCommand):
 
 			if response.status_code == 200:
 				print('Autentisering var vellykket')
-				print(f"Det er {len(response.text.splitlines())} elementer i blocklist")
+				antall_linjer_blocklist = len(response.text.splitlines())
+				print(f"Det er {antall_linjer_blocklist} elementer i blocklist")
 				blocklist = response.text
 				status_hente = "Lastet ned blocklist."
 
@@ -106,11 +107,13 @@ class Command(BaseCommand):
 
 				ips = []
 				domains = []
+				failed_lines = 0
 				for line in blocklist.splitlines():
 					try:
 						data, comment = line.split(" # ")
 					except:
-						print(line)
+						print(f"feilet å splitte {line}")
+						failed_lines += 1
 						continue
 
 					if is_valid_ip(data): # dette er en IP-adresse
@@ -119,7 +122,7 @@ class Command(BaseCommand):
 						domains.append({data: parse_comment(comment)})
 
 				json_string = json.dumps({"ips": ips, "domains": domains})
-				#print(json_string)
+				print(json_string)
 
 				blob = "https://ukecsirtstorage001.blob.core.windows.net/helsecert/blocklist.json"
 				sp = "racw"
@@ -132,7 +135,7 @@ class Command(BaseCommand):
 				sig = os.environ['BLOCKLIST_AZURE_SIG']
 
 				url = f"{blob}?sp={sp}&st={st}&se={se}&sip={sip}&spr={spr}&sv={sv}&sr={sr}&sig={sig}"
-				print(url)
+				#print(url)
 				headers = {
 					"x-ms-blob-type": "BlockBlob",
 					"Content-Type": "text/csv"
@@ -141,16 +144,16 @@ class Command(BaseCommand):
 				azure_response = requests.put(url, headers=headers, data=json_string)
 
 				if azure_response.status_code == 201: # http 201 er "created"
-					status_levere = "Lastet opp til Azure-blob."
+					status_levere = "Lastet opp til Azure-blob"
 					print(f"Lastet opp blocklist til Azure blob (HTTP {azure_response.status_code})")
 				else:
-					status_levere = "Feilet opplasting til Azure-blob."
+					status_levere = "Feilet opplasting til Azure-blob"
 					print(f"Feilet å laste opp Azure blob. Statuskode HTTP {azure_response.status_code} og respons {azure_response.text}.")
 
 
 			runtime_t1 = time.time()
 			logg_total_runtime = round(runtime_t1 - runtime_t0, 1)
-			logg_entry_message = f"{status_hente} {status_levere} Kjøretid: {logg_total_runtime} sekunder"
+			logg_entry_message = f"{status_hente}. {status_levere}. Feilede linjer: {failed_lines}. Kjøretid: {logg_total_runtime} sekunder"
 			#print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
