@@ -19,7 +19,7 @@ from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from django.urls import reverse
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Sum, F
 import os
 import datetime
 import json
@@ -1952,8 +1952,28 @@ def citrix_desktop_group(request):
 
 	return render(request, 'cmdb_citrix_desktop_group.html', {
 		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'citrix_desktop_group_members': citrix_desktop_group_members,
 		'group_name': group_name,
+	})
+
+
+def citrix_mappings(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	citrix_mappings = (System.objects.filter(~Q(citrix_publications=None))
+			.values('systemnavn', 'pk', 'citrix_publications__publikasjon_UUID')
+			.annotate(publication_UUID=F('citrix_publications__publikasjon_UUID'))
+			.values('systemnavn', 'pk', 'publication_UUID')
+		)
+	citrix_mappings = json.dumps(list(citrix_mappings))
+
+	return render(request, 'cmdb_citrix_mappings.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'citrix_mappings': citrix_mappings,
 	})
 
 

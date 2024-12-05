@@ -252,6 +252,7 @@ urlpatterns = [
 	re_path(r'^cmdb/citrix/apps/$', views.alle_citrixpub, name='alle_citrixpub'),
 	re_path(r'^cmdb/citrix/apps/(?P<pk>\d{1,8})/$', views.alle_citrixpub, name='citrixpub_for_system'),
 	re_path(r'^cmdb/citrix/desktop_group/$', views.citrix_desktop_group, name='citrix_desktop_group'),
+	re_path(r'^cmdb/citrix/mappings/$', views.citrix_mappings, name='citrix_mappings'),
 
 
 

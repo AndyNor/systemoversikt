@@ -55,6 +55,10 @@
 	{% url 'alle_citrixpub' as url_alle_citrixpub %}
 	<a href="{{url_alle_citrixpub}}" class="btn btn-sm btn-link {% if url_alle_citrixpub in request.path %}fremhev{% endif %}">Citrix apper</a><br>
 
+	{% url 'citrix_mappings' as url_citrix_mappings %}
+	<a href="{{url_citrix_mappings}}" class="btn btn-sm btn-link {% if url_citrix_mappings in request.path %}fremhev{% endif %}">Citrix-mappinger</a><br>
+
+
 	{% url 'alle_vip' as url_alle_vip %}
 	<a href="{{url_alle_vip}}" class="btn btn-sm btn-link {% if url_alle_vip in request.path %}fremhev{% endif %}">BigIP / VIP</a><br>
 

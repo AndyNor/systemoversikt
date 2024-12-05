@@ -1,0 +1,16 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Citrix-mappinger
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<pre style="height: 450px; word-wrap: break-word; white-space: pre-wrap;">{{ citrix_mappings }}</pre>
+
+{% endblock hovedinnhold %}
