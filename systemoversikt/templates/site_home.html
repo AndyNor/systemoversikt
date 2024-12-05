@@ -3,27 +3,29 @@
 {% load templatetags %}
 
 {% block overskrift %}
-	Kartoteket
+	Kartoteket: Oslo kommunes systemoversikt
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-	<h6>Oslo kommunes systemoversikt. For oversikt over behandlinger, se <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a>.</h6>
+	<p>For oversikt over behandlinger må du gå til <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a>.</p>
 
 	<hr>
 
-	<h6 style="background-color: yellow;">Opprydding i tilganger til Kartoteket</h6>
-	<p>Dersom du opplever å ha mistet tilganger i Kartoteket, kommer det av at vi nå jobber med å forenkle tilgangsstyringsmodellen. Konsekvensen av dette er at en del gamle tilgangsgrupper har blitt avviklet og erstattet med automatisk tildeling av rettigheter ved pålogging.</p>
-	<p>Se <a href="{% url 'roller' %}">oversikt over roller</a> for beskrivelse av hvordan ny tilgangsstyring vil fungere. Se også tabellen under med forklaring på hvilke tilganger som overføres, og hva de nye navnene blir i IDA.</p>
-	<img src="{% static 'matrise for nye tilgangsgrupper.png' %}">
+	<p>Kartoteket er tilgangsstyrt. Se <a href="{% url 'roller' %}">oversikt over roller</a> for beskrivelse av hvordan  tilgangsstyringen fungerer. Du må logge på med knappen øverst ved siden av søkefeltet for å bli gjenkjent og få tilgang til rollene dine.</p>
 
 	<hr>
 
+	Brukerdokumentasjonen finner du på <a class="btn btn-sm" style="padding: 5px; font-weight: normal; margin-left: 5px; background-color: #F8F0DD;" target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">SharePoint</a>
+
+	<hr>
+
+	<p>I systemoversikten registrerer vi driftsplattformer, systemer og programvare. Systemer er samlinger av servere, databaser og programvare inn under et forvaltningsteam, og kjører på en eller flere driftsplattformer. Programvare kan kjøres på servere eller klienter, og kobles til systemet det tilhører.</p>
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-sm-6">
 
-				<h6>Systemer i Kartoteket</h6>
+				<h6>Antall systemer i Kartoteket</h6>
 				<h1>{{ antall_systemer }}</h1>
 				<p>De {{nyeste_systemer.count}} nyeste:</p>
 				<ol style="column-count: 2;">
@@ -36,7 +38,8 @@
 			</div>
 			<div class="col-sm-6">
 
-				<h6>Programvarer i Kartoteket</h6>
+				<h6>Antall programvarer i Kartoteket</h6>
+				<i>For å bli varslet av UKE CSIRT om sårbarheter, må du registrere programvare og knytte det til ditt system.</i>
 				<h1>{{ antall_programvarer }}</h1>
 				<p>De {{nyeste_programvarer.count}} nyeste:</p>
 				<ol style="column-count: 2;">
@@ -53,7 +56,8 @@
 
 
 	<hr>
-	<a class="btn btn-primary btn-sm" href="{% url 'home_chart' %}">Visualisering av systemansvar fordelt på virksomhet</a>
+	<p>For å få oversikt over systemer kan du enten søke opp din virksomhet, eller du kan sjekke ut den samlede grafen over alle systemer her:</p>
+	<a class="btn btn-sm" style="padding: 5px; font-weight: normal; margin-left: 5px; background-color: #F8F0DD;" href="{% url 'home_chart' %}">Visualisering av alt systemansvar i kommunen</a>
 	<hr>
 
 	<h6>Ny funksjonalitet i Kartoteket</h6>

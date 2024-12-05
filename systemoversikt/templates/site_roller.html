@@ -7,29 +7,35 @@
 
 {% block hovedinnhold %}
 
-	<p><b>Tilgangsstyring er nå under endring</b></p>
 
-	<p>Via IDA (før PRK) legges brukeridenter (som f.eks. din bruker) inn i ulike AD-sikkerhetsgrupper. Disse sikkerhetsgruppene er speilet i dette systemet og tildelt ulike rettigheter. For eksempel å kunne opprette et system eller endre på en virksomhet.</p>
+	<p>Rollen "virksomhetsforvalter" settes innledningsvis via tilgangsverktøyet IDA. Når den første virksomhetsforvalteren har fylt inn IKT-hovedkontakter, ISK-er og PKO-er, vil disse automatisk ved pålogging få denne rollen uten å måtte innom IDA. Disse rollene registrerer systemer og angir systemeiere og systemforvaltere.</p>
 
-	<p>Mange tilganger settes automatisk ved pålogging basert på roller du er tildelt i Kartoteket. F.eks. vil du få tilganger for å redigere systemer dersom du er systemforvalter.</p>
+	<p>De fleste andre tilganger settes automatisk ved pålogging basert på roller tildelt i Kartoteket. F.eks. vil du få tilganger for å redigere systemer dersom du er systemforvalter.</p>
+
+	<p>Her er en oversikt over roller i Kartoteket og hvordan de kan tildeles</p>
 
 	<ul>
-		<li>Lesetilgang: Lar deg lese deltajer om alle systemer, søke opp brukere og gruppemedlemskap, samt slå opp CMDB-informasjon. Gis enten direkte ved pålogging dersom du er registrert som ansvarlig i Kartoteket, jobber i UKE systemutvikling eller kan gis via IDA ved direktetildeling.</li>
+		<li>Lesetilgang: Lar deg lese deltajer om alle systemer, søke opp brukere og gruppemedlemskap, samt slå opp CMDB-informasjon. Gis direkte ved pålogging dersom du er registrert som ansvarlig i Kartoteket, jobber i UKE systemutvikling. Kan også gis direkte via IDA.</li>
 		<li>Systemforvalter: Lar deg endre informasjon om din virksomhets systemer. Tildeles automatisk om du er registrert som systemforvalter eller systemeier i Kartoteket. Kan ikke tildeles direkte via IDA.</li>
 		<li>Virksomhetsforvalter: Lar deg endre detaljer om din virksomhet, endre plattformer knyttet til din virksomhet, samt redigere virksomhetens systemer. Tildeles automatisk til registrerte IKT-hovedkontakter, ISK og PKO-er. Kan også tildeles direkte via IDA.</li>
 		<li>Administrator: Har tilgang til å redigere systemer, plattformer og virksomheter på tvers av alle virksomheter. Kan kun tildeles direkte via IDA.</li>
-		<li>Sikkerhetsanalytiker: Får se sårbarheter for alle systemer. Kan kun tildeles via IDA og krever autorisasjon.</li>
-		<li>Systemadministrator: Full tilgang til alt i Kartoteket, inkludert systemtabeller. Kan kun tildeles via IDA og krever autorisasjon.</li>
+		<li>Sikkerhetsanalytiker: Får se sårbarheter for alle systemer. Kan kun tildeles via IDA og krever autorisasjon fra UKE IKT-sikkerhet.</li>
+		<li>Systemadministrator: Full tilgang til alt i Kartoteket, inkludert systemtabeller. Kan kun tildeles via IDA og krever autorisasjon fra IKT-sikkerhet.</li>
 	</ul>
 
+	<p>Tilgangsstyringen ble endret høsten 2024. Den gamle tilgangsstyringen var kun basert på tilgangsstyring via PRK. Her er matrisen som viser koblingen mellom gamle og nye tilgangsgrupper. Merk at valget "UBW" og "bahandlingsansvarlig" teknisk sett eksisterer, men må etterspørres manuelt av Kartotekets forvalter.</p>
+
+	<img src="{% static 'matrise for nye tilgangsgrupper.png' %}">
+
+
 	<hr>
+	<p>Her ser du hvilke konkrete databasetilganger de ulike rollene gir</p>
 
 	<a href="{{ url_roller }}?export=json" class="btn btn-sm btn-link {% if url_alle_systemer in request.path %}fremhev{% endif %}" >Eksporter rolleknytning</a>
 
 	{% url 'import_group_permissions' as url_import_group_permissions %}
 	<a href="{{ url_import_group_permissions }}" class="btn btn-sm btn-link {% if url_import_group_permissions in request.path %}fremhev{% endif %}" >⚙️ Importer rolleknytning</a>
 
-	<hr>
 
 	<table class="table table-sm tablesorter">
 		<thead>
