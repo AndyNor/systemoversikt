@@ -11,6 +11,8 @@ import time
 import requests
 from requests.auth import HTTPBasicAuth
 import os
+import ipaddress
+import json
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -75,9 +77,29 @@ class Command(BaseCommand):
 				status_hente = "Feilet nedlasting av blocklist."
 
 
-			print(blocklist)
-
 			if blocklist:  # Koble til Azure blob storage og lagre filen der
+
+				def is_valid_ip(address):
+					try:
+						ipaddress.ip_address(address)
+						return True
+					except ValueError:
+						return False
+
+				def parse_comment(comment):
+					return comment
+
+				ips = []
+				domains = []
+				for e in blocklist:
+					data, comment = string.split(" # ")
+					if is_valid_ip(data): # dette er en IP-adresse
+						ips.append({data: parse_comment(comment)})
+					else:
+						domains.append({data: parse_comment(comment)})
+
+				json_string = json.dumps({"ips": ips, "domains": domains})
+				print(json_string)
 
 				blob = "https://ukecsirtstorage001.blob.core.windows.net/helsecert/blocklist.json"
 				sp = "racw"
@@ -96,7 +118,7 @@ class Command(BaseCommand):
 					"Content-Type": "text/csv"
 				}
 
-				azure_response = requests.put(url, headers=headers, data=blocklist)
+				azure_response = requests.put(url, headers=headers, data=json_string)
 
 				if azure_response.status_code == 201: # http 201 er "created"
 					status_levere = "Lastet opp til Azure-blob."
