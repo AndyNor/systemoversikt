@@ -122,7 +122,7 @@ class Command(BaseCommand):
 						domains.append({data: parse_comment(comment)})
 
 				json_string = json.dumps({"ips": ips, "domains": domains})
-				print(json_string)
+				#print(json_string)
 
 				blob = "https://ukecsirtstorage001.blob.core.windows.net/helsecert/blocklist.json"
 				sp = "racw"
