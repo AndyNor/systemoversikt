@@ -92,7 +92,7 @@ class Command(BaseCommand):
 				ips = []
 				domains = []
 				for e in blocklist:
-					data, comment = string.split(" # ")
+					data, comment = e.split(" # ")
 					if is_valid_ip(data): # dette er en IP-adresse
 						ips.append({data: parse_comment(comment)})
 					else:
