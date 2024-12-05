@@ -99,10 +99,9 @@ class Command(BaseCommand):
 
 					# Convert matches to a dictionary
 					result = {key: value for key, value in matches}
+					result["date"] = date_time
 
-					print("Date-Time:", date_time)
-					print("Key-Value Pairs:", result)
-					return comment
+					return result
 
 
 				ips = []
@@ -133,7 +132,7 @@ class Command(BaseCommand):
 				sig = os.environ['BLOCKLIST_AZURE_SIG']
 
 				url = f"{blob}?sp={sp}&st={st}&se={se}&sip={sip}&spr={spr}&sv={sv}&sr={sr}&sig={sig}"
-				#print(url)
+				print(url)
 				headers = {
 					"x-ms-blob-type": "BlockBlob",
 					"Content-Type": "text/csv"
