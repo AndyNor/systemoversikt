@@ -9,5 +9,8 @@ from dateutil import parser
 class Command(BaseCommand):
 	def handle(self, **options):
 
+		maks = 0
 		for system in System.objects.values('alias'):
-			print(system)
+			if len(system.alias) > maks:
+				maks = len(system.alias)
+		print(maks)
