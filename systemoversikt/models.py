@@ -4219,11 +4219,12 @@ class System(models.Model):
 			null=False,
 			help_text=u"Se <a target='_blank' href='/definisjon/System/'>definisjon av system</a>. Undersøk om systemet er registrert før du eventuelt registrerer et nytt. Tidligere navn angis under Alias. Virksomhetsforkortelse til forvalter blir lagt til automatisk i visninger. Merk at programvare som kjører på en klient skal registrers som <a target='_blank' href='/admin/systemoversikt/programvare/add/'>programvare</a>.",
 			)
-	alias = models.TextField(
+	alias = models.CharField(
 			verbose_name="Alias",
+			max_length=162,
 			blank=True,
 			null=True,
-			help_text=u"Alternative navn på systemet for å avhjelpe søk. Kun enkeltord. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje. Disse alias brukes også for å søke opp tilgangsgrupper tilhørende systemet.",
+			help_text=u"Alternative navn på systemet for å avhjelpe søk. Maks 162 tegn. Kun enkeltord. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje. Disse alias brukes også for å søke opp tilgangsgrupper tilhørende systemet.",
 			)
 	systembeskrivelse = models.TextField(
 			verbose_name="Systembeskrivelse",
