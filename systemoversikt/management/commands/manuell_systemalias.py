@@ -11,6 +11,6 @@ class Command(BaseCommand):
 
 		maks = 0
 		for system in System.objects.values('alias'):
-			if len(system.alias) > maks:
-				maks = len(system.alias)
+			if len(system['alias']) > maks:
+				maks = len(system['alias'])
 		print(maks)
