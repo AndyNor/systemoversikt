@@ -10,8 +10,10 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 		maks = 0
-		for system in System.objects.values('alias'):
+		for system in System.objects.values('systemnavn', 'alias'):
 			try:
+				if len(system['alias']) > 100:
+					print(system['systemnavn'])
 				if len(system['alias']) > maks:
 					maks = len(system['alias'])
 			except:
