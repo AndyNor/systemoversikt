@@ -206,7 +206,7 @@ class Command(BaseCommand):
 					#print(unike_brukere)
 
 
-					c.display_name = f"{line['ClientFolder']} {line['ApplicationName']} {line['CommandLineArguments']}"
+					c.display_name = f"{line['ClientFolder']} {line['BrowserName']} {line['ApplicationName']} {line['CommandLineExecutable']} {line['CommandLineArguments']}"
 					#print(c.display_name)
 					c.publikasjon_json = json.dumps(line)
 					c.publikasjon_active = line['Enabled']

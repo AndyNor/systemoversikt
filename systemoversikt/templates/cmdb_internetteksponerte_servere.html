@@ -11,6 +11,8 @@
 
 {% block hovedinnhold %}
 
+<p>Her vises alle servere som automatisk har blitt tagget som internett-eksponert. Dette skjer ved at vi laster ned Shodan-data hver natt for hele IP-adresseområdet til Oslo kommune 171.23.0.0/16. Så sjekker vi alle IP-adresser opp mot BigIP-dataene for å identifisere de bakenforliggende serverne i de lastbalanserte "pool"-ene og tagger disse. En server må ha vært sett eksponert nylig for å dukke opp her i denne listen.</p>
+
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
