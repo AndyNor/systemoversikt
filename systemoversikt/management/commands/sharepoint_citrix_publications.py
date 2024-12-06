@@ -226,6 +226,7 @@ class Command(BaseCommand):
 
 				antall_ok = 0
 				feilede = 0
+				feilede_servere = []
 
 				for entry in citrix_desktop_groups_json:
 					server_name = entry["HostedMachineName"]
@@ -234,13 +235,14 @@ class Command(BaseCommand):
 					except:
 						#print(f"Fant ikke server {server_name}")
 						feilede += 1
+						feilede_servere.append(server_name)
 						continue
 
 					server.citrix_desktop_group = entry["DesktopGroupName"]
 					server.save()
 					antall_ok += 1
 
-				logg_entry_message = f'Oppdaterte {antall_ok} servere fra {filsti}. {feilede} feilet.\n'
+				logg_entry_message = f'Oppdaterte {antall_ok} servere fra {filsti}. {feilede} feilet: {feilede_servere}\n'
 				print(logg_entry_message)
 				return logg_entry_message
 
