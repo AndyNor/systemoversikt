@@ -101,6 +101,7 @@ class Command(BaseCommand):
 				antall_records = len(json_data)
 
 				antall_nyopprettede_publikasjoner = 0
+				antall_aktive = 0
 
 				for line in json_data:
 					c, created = CitrixPublication.objects.get_or_create(publikasjon_UUID=line['UUID'])
@@ -209,10 +210,14 @@ class Command(BaseCommand):
 					#print(c.display_name)
 					c.publikasjon_json = json.dumps(line)
 					c.publikasjon_active = line['Enabled']
+
+					if c.publikasjon_active:
+						antall_aktive += 1
+
 					c.save()
 
 
-				logg_entry_message = f'Fant {antall_records} publikasjoner datert {dato} i {filnavn}. Det var {antall_nyopprettede_publikasjoner} nye publikasjoner.\n'
+				logg_entry_message = f'Fant {antall_records} publikasjoner datert {dato} i {filnavn}. Det er {antall_aktive} aktive hvorav {antall_nyopprettede_publikasjoner} er nye publikasjoner.\n'
 				print(logg_entry_message)
 				return logg_entry_message
 
@@ -259,7 +264,8 @@ class Command(BaseCommand):
 			#CitrixPublication.objects.all().delete() # ved behov
 			for_gammelt = timezone.now() - timedelta(hours=6) # 6 timer gammelt
 			deaktive = CitrixPublication.objects.filter(sist_oppdatert__lte=for_gammelt)
-			logg_entry_message += f"Sletter {len(deaktive)} gamle publikasjoner."
+			print(f"Sletter {len(deaktive)} gamle publikasjoner.")
+			logg_entry_message += f"Sletter {len(deaktive)} gamle publikasjoner. "
 			deaktive.delete()
 
 

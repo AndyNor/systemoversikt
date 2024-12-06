@@ -53,6 +53,7 @@
 	<th>Description</th>
 	<th>Desktop og startmeny<br>(ShortcutAddedToDesktop, ShortcutAddedToStartMenu og StartMenuFolder)</th>
 	<th>UserFilterEnabled</th>
+	<td>Opprettet</td>
 </thead>
 <tbody>
 	{% for app in citrixapps %}
@@ -129,6 +130,7 @@
 		</td>
 
 		<td>{{app.publikasjon_json.UserFilterEnabled|yesno:"Ja, Nei"}}</td>
+		<td>{{app.opprettet|date:"Y-m-d H:i"}}</td>
 
 	</tr>
 	{% endfor %}

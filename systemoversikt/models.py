@@ -64,6 +64,11 @@ class EntraIDConditionalAccessPolicies(models.Model):
 
 
 class CitrixPublication(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
 			auto_now=True,
