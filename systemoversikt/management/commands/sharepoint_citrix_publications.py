@@ -52,6 +52,7 @@ class Command(BaseCommand):
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
+
 		try:
 			def hent_fil(filnavn):
 				source_filepath = f"{filnavn}"
@@ -99,8 +100,14 @@ class Command(BaseCommand):
 				json_desktop_gr = json.loads(desktop_gr_data)
 				antall_records = len(json_data)
 
+				antall_nyopprettede_publikasjoner = 0
+
 				for line in json_data:
 					c, created = CitrixPublication.objects.get_or_create(publikasjon_UUID=line['UUID'])
+
+					if created:
+						antall_nyopprettede_publikasjoner += 1
+
 					c.sone = zone
 
 					AllAssociatedDesktopGroupUids_Name = []
@@ -205,14 +212,14 @@ class Command(BaseCommand):
 					c.save()
 
 
-				logg_entry_message = f'Fant {antall_records} publikasjoner datert {dato} i {filnavn}'
+				logg_entry_message = f'Fant {antall_records} publikasjoner datert {dato} i {filnavn}. Det var {antall_nyopprettede_publikasjoner} nye publikasjoner.\n'
 				print(logg_entry_message)
 				return logg_entry_message
 
 
 			def import_desktop_groups(filsti):
 
-				print(f"Laster inn DesktopGroups for {filsti}...")
+				print(f"Laster inn DesktopGroups for {filsti}.")
 				with open(filsti, 'r', encoding="utf-8") as f:
 					citrix_desktop_groups = f.read()
 				citrix_desktop_groups_json = json.loads(citrix_desktop_groups)
@@ -233,7 +240,7 @@ class Command(BaseCommand):
 					server.save()
 					antall_ok += 1
 
-				logg_entry_message = f'Oppdaterte servere fra {filsti}. {antall_ok} lagt til. {feilede} feilet.'
+				logg_entry_message = f'Oppdaterte {antall_ok} servere fra {filsti}. {feilede} feilet.\n'
 				print(logg_entry_message)
 				return logg_entry_message
 
@@ -246,10 +253,12 @@ class Command(BaseCommand):
 
 
 			# slette gamle
-			print("Sletter gamle data..")
+			print("Sletter gamle data.")
 			#CitrixPublication.objects.all().delete() # ved behov
 			for_gammelt = timezone.now() - timedelta(hours=6) # 6 timer gammelt
-			deaktive = CitrixPublication.objects.filter(sist_oppdatert__lte=for_gammelt).delete()
+			deaktive = CitrixPublication.objects.filter(sist_oppdatert__lte=for_gammelt)
+			logg_entry_message += f"Sletter {len(deaktive)} gamle publikasjoner."
+			deaktive.delete()
 
 
 			# laste inn DesktopGroups til servere
