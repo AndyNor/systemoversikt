@@ -388,7 +388,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 				# så grupper sluttbruker skal tildeles automatisk
 				from systemoversikt.views import auth_er_ansvarlig, auth_er_systemforvalter, auth_er_virksomhetsrolle
-				if auth_er_ansvarlig(user) or "/DS-ROLLEGRUPPER_UKEAOS_ANSATTELLERKONSULENT" in claim_groups:
+				if auth_er_ansvarlig(user) or ("/DS-ROLLEGRUPPER_UKEAOS_ANSATTELLERKONSULENT" in claim_groups) or ("/24055" in claim_groups): # Utviklere og driftlev
 					ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
 					ansvarlig_group.user_set.add(user)
 					messages.info(self.request, 'Du ble automatisk tildelt leserettigheter')
