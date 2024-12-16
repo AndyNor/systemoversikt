@@ -7029,6 +7029,7 @@ class AzurePublishedPermissionScopes(models.Model):
 
 
 	def warning_permission(self):
+		# moderate risk return False
 		if "User.Read.All" in self.value:
 			return False
 		if "Sites.Selected" in self.value:

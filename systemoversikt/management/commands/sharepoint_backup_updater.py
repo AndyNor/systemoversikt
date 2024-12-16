@@ -95,25 +95,38 @@ class Command(BaseCommand):
 
 				for line in data:
 					#print(line)
-					if line['Client'] == "": # end of content
+					client = line['Client']
+					if client == "": # end of content
 						print("End of data")
 						break
+
+					if ".oslo.kommune.no" in client.lower():
+						client = client.lower().replace(".oslo.kommune.no", "")
 
 					#is_server = False
 
 					# figure out metadata
 					try:
-						device = CMDBdevice.objects.get(comp_name__iexact=line["Client"])
+						device = CMDBdevice.objects.get(comp_name__iexact=client)
 						is_server = True
 						bss = device.service_offerings.all()[0]
 						environment = bss.environment
 						source_type = "SERVER"
 					except:
-						device = None
-						bss = None
-						environment = None
-						source_type = "OTHER"
-						failed_device += 1
+
+						try:
+							client = client.split("_")[0] # alt før første _
+							device = CMDBdevice.objects.get(comp_name__iexact=client)
+							is_server = True
+							bss = device.service_offerings.all()[0]
+							environment = bss.environment
+							source_type = "SERVER"
+						except:
+							device = None
+							bss = None
+							environment = None
+							source_type = "OTHER"
+							failed_device += 1
 
 					"""
 					if not is_server:

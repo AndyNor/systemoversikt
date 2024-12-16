@@ -27,6 +27,7 @@
 		<th>Hostnavn</th>
 		<th>Business Service</th>
 		<th>System / Eierskap</th>
+		<th>Disk</th>
 		<th>Nettverk</th>
 		<th>Beskrivelse</th>
 	</thead>
@@ -48,6 +49,9 @@
 					{% endif %}
 				{% endfor %}
 
+			</td>
+			<td>
+				Allokert: {{ server.comp_disk_space|filesizeformat }}<br>
 			</td>
 			<td>
 				{{ server.comp_ip_address|default:"-" }}<br>

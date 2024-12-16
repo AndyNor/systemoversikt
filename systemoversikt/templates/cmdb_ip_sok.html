@@ -25,62 +25,66 @@
 	</form>
 
 	<hr>
-	<h5>Treff på hoster</h5>
-	<table class="table table-sm tablesorter excel">
-	<thead>
-		<th>IP-adresse</th>
-		<th>Server</th>
-		<th>DNS</th>
-		<th>Nettverk / VLAN</th>
-		<th>Lastbalanserte tjenester (vip)</th>
-		<th>Lastbalanserte tjenester (pools)</th>
-	</thead>
-	<tbody>
-	{% for ip in host_matches %}
-		<tr>
-			<td>{{ip.ip_address}}</td>
-			<td>
-				{% for server in ip.servere.all %}
-					<b>{{ server }}</b><br>
-					{% for offering in server.service_offerings.all %}
-						{% for system in offering.system.all %}
-							{{ system }}<br>
-							{{ system.get_sikkerhetsnivaa_display|default:"Ukjent sikkerhetsnivå"}}<br>
+	{% if host_matches|length > 0 %}
+		<h5>Treff på hoster</h5>
+		<table class="table table-sm tablesorter excel">
+		<thead>
+			<th>IP-adresse</th>
+			<th>Server</th>
+			<th>DNS</th>
+			<th>Nettverk / VLAN</th>
+			<th>Lastbalanserte tjenester (vip)</th>
+			<th>Lastbalanserte tjenester (pools)</th>
+		</thead>
+		<tbody>
+		{% for ip in host_matches %}
+			<tr>
+				<td>{{ip.ip_address}}</td>
+				<td>
+					{% for server in ip.servere.all %}
+						<b>{{ server }}</b><br>
+						{% for offering in server.service_offerings.all %}
+							{% for system in offering.system.all %}
+								{{ system }}<br>
+								{{ system.get_sikkerhetsnivaa_display|default:"Ukjent sikkerhetsnivå"}}<br>
+							{% endfor %}
 						{% endfor %}
+						<br>
 					{% endfor %}
-					<br>
-				{% endfor %}
-			</td>
-			<td>
-				{% for name in ip.dns.all %}
-					{{ name.dns_name }}<br>
-				{% endfor %}
-			</td>
-			<td>
-				{% for vlan in ip.vlan.all %}
-					<li>{{ vlan.comment }} ({{ vlan }}) {% if vlan.disabled %} (deaktivert) {% endif %}</li>
-				{% endfor %}
-			</td>
-			<td>
-				{% for vip in ip.viper.all %}
-					{% url 'detaljer_vip' pk=vip.pk as url_vip %}
-					<a href="{{ url_vip }}">{{ vip.vip_name }}</a><br>
-				{% endfor %}
-			</td>
-			<td>
-				{% for pool in ip.vip_pools.all %}
-					<li>{{ pool.pool_name }}</li>
-				{% endfor %}
-			</td>
-		</tr>
-	{% endfor %}
-	</tbody>
-	</table>
+				</td>
+				<td>
+					{% for name in ip.dns.all %}
+						{{ name.dns_name }}<br>
+					{% endfor %}
+				</td>
+				<td>
+					{% for vlan in ip.vlan.all %}
+						<li>{{ vlan.comment }} ({{ vlan }}) {% if vlan.disabled %} (deaktivert) {% endif %}</li>
+					{% endfor %}
+				</td>
+				<td>
+					{% for vip in ip.viper.all %}
+						{% url 'detaljer_vip' pk=vip.pk as url_vip %}
+						<a href="{{ url_vip }}">{{ vip.vip_name }}</a><br>
+					{% endfor %}
+				</td>
+				<td>
+					{% for pool in ip.vip_pools.all %}
+						<li>{{ pool.pool_name }}</li>
+					{% endfor %}
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	{% endif %}
 
+	{% if network_matches|length > 0 %}
 	<h5>Treff på nettverk</h5>
 	{% for network in network_matches %}
 		{{ network.ip_address }}/{{ network.subnet_mask }} er <b>{{network.comment}}</b> med sikkerhetsnivå <b>{{network.network_zone}}</b><br>
 	{% endfor %}
+	{% endif %}
 
 {% if not_ip_addresses %}
 	<hr>

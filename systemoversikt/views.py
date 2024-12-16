@@ -6834,20 +6834,25 @@ def alle_ip(request):
 		search_terms = set(search_terms)
 
 		for term in search_terms:
-			try:
-				matches = NetworkIPAddress.objects.filter(ip_address=term)
+
+			machine_match = False
+			matches = NetworkIPAddress.objects.filter(ip_address=term)
+			if matches:
 				host_matches.extend(matches)
-			except:
-				pass
+				machine_match = True
 
-			try:
-				matches = NetworkContainer.objects.filter(ip_address=term)
+			vlan_match = False
+			matches = NetworkContainer.objects.filter(ip_address=term)
+			if matches:
 				network_matches.extend(matches)
-			except:
-				pass
+			else:
 
-			not_ip_addresses.append(term)
-			continue  # skip this term
+
+				vlan_match = True
+
+			if (not machine_match) and (not vlan_match):
+				not_ip_addresses.append(term)
+
 
 	return render(request, 'cmdb_ip_sok.html', {
 		'request': request,
@@ -7827,6 +7832,10 @@ def csirt_iplookup_api(request):
 		vip_match = ["%s port %s" % (vip.vip_name, vip.port) for vip in ip_match.viper.all()]
 		members = []
 
+		for server in ip_match.servere.all():
+			server.eksternt_eksponert_dato = timezone.now()
+			server.save()
+
 		for vip in ip_match.viper.all():
 			if port_string != "":
 				if vip.port != int(port_string):
@@ -7838,8 +7847,8 @@ def csirt_iplookup_api(request):
 					domaint_vlan = local_ip.dominant_vlan()
 					host_vlan = "%s (%s/%s)" % (domaint_vlan.comment, domaint_vlan.ip_address, domaint_vlan.subnet_mask)
 
-					pool.server.eksternt_eksponert_dato = timezone.now()
-					pool.server.save()
+				pool.server.eksternt_eksponert_dato = timezone.now()
+				pool.server.save()
 
 				members.append({
 					"server": pool.server.comp_name,
