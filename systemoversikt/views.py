@@ -2342,6 +2342,8 @@ def cmdb_backup_index(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+	count_backup_ukjent = CMDBbackup.objects.filter(source_type="OTHER").aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
+
 	offering_all = CMDBRef.objects.all()
 
 	sum_offering_all = 0
@@ -2399,6 +2401,7 @@ def cmdb_backup_index(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'count_backup': count_backup,
+		'count_backup_ukjent': count_backup_ukjent,
 		'offering_all': offering_all,
 		'sum_offering_all': sum_offering_all,
 		'volum_servere_d30': volum_servere_d30,
