@@ -21,7 +21,7 @@ class Command(BaseCommand):
 		KILDE = "Service Now"
 		PROTOKOLL = "SMTP og SharePoint"
 		BESKRIVELSE = "Ekstern og intern IP-adresse, navn på VIP og tilhørende pool med servere"
-		FILNAVN = {"filename_vip": "OK Load Balancer Services.csv", "filename_pool": "OK Load Balancer Pool Members.csv"}
+		FILNAVN = {"filename_vip": "OK Load Balancer Services with servers.csv", "filename_pool": "OK Load Balancer Pool Members.csv"}
 		URL = ""
 		FREKVENS = "Hver natt"
 
