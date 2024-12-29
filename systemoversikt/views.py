@@ -754,50 +754,62 @@ def vulnstats(request):
 	data["count_status"] = QualysVuln.objects.values('status').annotate(count=Count('status'))
 
 	data["count_unike_alvorligheter"] = QualysVuln.objects.values('severity').annotate(count=Count('severity'))
-	severities = {item['severity'] for item in data["count_unike_alvorligheter"]}
-	[data["count_unike_alvorligheter"].append({"severity": severity, "count": 0}) for severity in range(1, 6) if severity not in severities]
-	data["count_unike_alvorligheter"] = sorted(data["count_unike_alvorligheter"], key=lambda x: x['severity'], reverse=False)
+	if len(data["count_unike_alvorligheter"]) > 0:
+		severities = {item['severity'] for item in data["count_unike_alvorligheter"]}
+		[data["count_unike_alvorligheter"].append({"severity": severity, "count": 0}) for severity in range(1, 6) if severity not in severities]
+		data["count_unike_alvorligheter"] = sorted(data["count_unike_alvorligheter"], key=lambda x: x['severity'], reverse=False)
 
 	data["count_unike_alvorligheter_eol"] = QualysVuln.objects.filter(server__derived_os_endoflife=True).values('severity').annotate(count=Count('severity'))
-	severities = {item['severity'] for item in data["count_unike_alvorligheter_eol"]}
-	[data["count_unike_alvorligheter_eol"].append({"severity": severity, "count": 0}) for severity in range(1, 6) if severity not in severities]
-	data["count_unike_alvorligheter_eol"] = sorted(data["count_unike_alvorligheter_eol"], key=lambda x: x['severity'], reverse=False)
+	if len(data["count_unike_alvorligheter_eol"]) > 0:
+		severities = {item['severity'] for item in data["count_unike_alvorligheter_eol"]}
+		[data["count_unike_alvorligheter_eol"].append({"severity": severity, "count": 0}) for severity in range(1, 6) if severity not in severities]
+		data["count_unike_alvorligheter_eol"] = sorted(data["count_unike_alvorligheter_eol"], key=lambda x: x['severity'], reverse=False)
 
 
 
 	data["count_unike_vulns"] = QualysVuln.objects.values('severity').annotate(unique_titles=Count('severity'))
-	severities = {item['severity'] for item in data["count_unike_vulns"]}
-	[data["count_unike_vulns"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
-	data["count_unike_vulns"] = sorted(data["count_unike_vulns"], key=lambda x: x['severity'], reverse=False)
+	if len(data["count_unike_vulns"]) > 0:
+		severities = {item['severity'] for item in data["count_unike_vulns"]}
+		[data["count_unike_vulns"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
+		data["count_unike_vulns"] = sorted(data["count_unike_vulns"], key=lambda x: x['severity'], reverse=False)
+
 
 	data["count_unike_known_exploited_vulns"] = list(QualysVuln.objects.filter(known_exploited=True).values('severity').annotate(unique_titles=Count('severity')))
-	severities = {item['severity'] for item in data["count_unike_known_exploited_vulns"]}
-	[data["count_unike_known_exploited_vulns"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
-	data["count_unike_known_exploited_vulns"] = sorted(data["count_unike_known_exploited_vulns"], key=lambda x: x['severity'], reverse=False)
+	if len(data["count_unike_known_exploited_vulns"]) > 0:
+		severities = {item['severity'] for item in data["count_unike_known_exploited_vulns"]}
+		[data["count_unike_known_exploited_vulns"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
+		data["count_unike_known_exploited_vulns"] = sorted(data["count_unike_known_exploited_vulns"], key=lambda x: x['severity'], reverse=False)
+
 
 	data["count_unike_known_exploited_public_face"] = list(QualysVuln.objects.filter(known_exploited=True, public_facing=True).values('severity').annotate(unique_titles=Count('severity')))
-	severities = {item['severity'] for item in data["count_unike_known_exploited_public_face"]}
-	[data["count_unike_known_exploited_public_face"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
-	data["count_unike_known_exploited_public_face"] = sorted(data["count_unike_known_exploited_public_face"], key=lambda x: x['severity'], reverse=False)
+	if len(data["count_unike_known_exploited_public_face"]) > 0:
+		severities = {item['severity'] for item in data["count_unike_known_exploited_public_face"]}
+		[data["count_unike_known_exploited_public_face"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
+		data["count_unike_known_exploited_public_face"] = sorted(data["count_unike_known_exploited_public_face"], key=lambda x: x['severity'], reverse=False)
 
 
 	# samme, men filtrert bort siste måneden
 	for_nytt = timezone.now() - datetime.timedelta(days=30)
 
 	data["count_unike_vulns_not_current"] = QualysVuln.objects.filter(first_seen__lte=for_nytt).values('severity').annotate(unique_titles=Count('severity'))
-	severities = {item['severity'] for item in data["count_unike_vulns_not_current"]}
-	[data["count_unike_vulns_not_current"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
-	data["count_unike_vulns_not_current"] = sorted(data["count_unike_vulns_not_current"], key=lambda x: x['severity'], reverse=False)
+	if len(data["count_unike_vulns_not_current"]) > 0:
+		severities = {item['severity'] for item in data["count_unike_vulns_not_current"]}
+		[data["count_unike_vulns_not_current"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
+		data["count_unike_vulns_not_current"] = sorted(data["count_unike_vulns_not_current"], key=lambda x: x['severity'], reverse=False)
+
 
 	data["count_unike_known_exploited_vulns_not_current"] = list(QualysVuln.objects.filter(first_seen__lte=for_nytt).filter(known_exploited=True).values('severity').annotate(unique_titles=Count('severity')))
-	severities = {item['severity'] for item in data["count_unike_known_exploited_vulns_not_current"]}
-	[data["count_unike_known_exploited_vulns_not_current"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
-	data["count_unike_known_exploited_vulns_not_current"] = sorted(data["count_unike_known_exploited_vulns_not_current"], key=lambda x: x['severity'], reverse=False)
+	if len(data["count_unike_known_exploited_vulns_not_current"]) > 0:
+		severities = {item['severity'] for item in data["count_unike_known_exploited_vulns_not_current"]}
+		[data["count_unike_known_exploited_vulns_not_current"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
+		data["count_unike_known_exploited_vulns_not_current"] = sorted(data["count_unike_known_exploited_vulns_not_current"], key=lambda x: x['severity'], reverse=False)
+
 
 	data["count_unike_known_exploited_public_face_not_current"] = list(QualysVuln.objects.filter(first_seen__lte=for_nytt).filter(known_exploited=True, public_facing=True).values('severity').annotate(unique_titles=Count('severity')))
-	severities = {item['severity'] for item in data["count_unike_known_exploited_public_face_not_current"]}
-	[data["count_unike_known_exploited_public_face_not_current"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
-	data["count_unike_known_exploited_public_face_not_current"] = sorted(data["count_unike_known_exploited_public_face_not_current"], key=lambda x: x['severity'], reverse=False)
+	if len(data["count_unike_known_exploited_public_face_not_current"]) > 0:
+		severities = {item['severity'] for item in data["count_unike_known_exploited_public_face_not_current"]}
+		[data["count_unike_known_exploited_public_face_not_current"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
+		data["count_unike_known_exploited_public_face_not_current"] = sorted(data["count_unike_known_exploited_public_face_not_current"], key=lambda x: x['severity'], reverse=False)
 
 
 	#Sårbarheter fordelt på "først sett" dato
