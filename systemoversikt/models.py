@@ -5149,10 +5149,13 @@ class System(models.Model):
 		if len(self.systemforvalter_kontaktpersoner_referanse.all()) > 0:
 			return self.systemforvalter_kontaktpersoner_referanse.all()[0].brukernavn.email
 		else:
-			"ukjent"
+			return "ukjent"
 
 	def kontakt_ikthoved(self):
-		return self.systemforvalter.ikt_kontakt.all()[0].brukernavn.email
+		if len(self.systemforvalter.ikt_kontakt.all()) > 0:
+			return self.systemforvalter.ikt_kontakt.all()[0].brukernavn.email
+		else:
+			return "ukjent"
 
 	class Meta:
 		verbose_name_plural = "Systemoversikt: Systemer"
