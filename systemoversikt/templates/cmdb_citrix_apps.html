@@ -36,6 +36,9 @@
 	<th>Mappe<br>(AdminFolderName og ClientFolder)</th>
 	<th>Applikasjonsnavn<br>(BrowserName og Application Name)</th>
 	<th>Systemkoblet?</th>
+	<th>Virksomhet</th>
+	<td>Forvalter</td>
+	<td>IKT-hovedkontakt</td>
 	<th>Totalt antall unike medlemmer</th>
 	<th>Hva som kjøres<br>(WorkingDirectory, CommandLineExecutable og CommandLineArguments)</th>
 	<th>AssociatedUserFullNames</th>
@@ -79,6 +82,30 @@
 		<td>
 			{% for system in app.systemer.all %}
 				{{ system }}<br>
+			{% empty %}
+				Ingen
+			{% endfor %}
+		</td>
+
+		<td>
+			{% for system in app.systemer.all %}
+				{{ system.systemeier.virksomhetsforkortelse }}<br>
+			{% empty %}
+				Ingen
+			{% endfor %}
+		</td>
+
+		<td>
+			{% for system in app.systemer.all %}
+				{{ system.kontakt_forvalter }}<br>
+			{% empty %}
+				Ingen
+			{% endfor %}
+		</td>
+
+		<td>
+			{% for system in app.systemer.all %}
+				{{ system.kontakt_ikthoved }}<br>
 			{% empty %}
 				Ingen
 			{% endfor %}

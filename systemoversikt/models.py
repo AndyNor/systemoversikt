@@ -5145,6 +5145,15 @@ class System(models.Model):
 		#print(connected_vulns)
 		return list(connected_vulns)
 
+	def kontakt_forvalter(self):
+		if len(self.systemforvalter_kontaktpersoner_referanse.all()) > 0:
+			return self.systemforvalter_kontaktpersoner_referanse.all()[0].brukernavn.email
+		else:
+			"ukjent"
+
+	def kontakt_ikthoved(self):
+		return self.systemforvalter.ikt_kontakt.all()[0].brukernavn.email
+
 	class Meta:
 		verbose_name_plural = "Systemoversikt: Systemer"
 		default_permissions = ('add', 'change', 'delete', 'view')
