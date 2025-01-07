@@ -57,11 +57,14 @@ class Command(BaseCommand):
 
 			username = os.environ['HELSECERT_BLOCKLIST_USERNAME']
 			password = os.environ['HELSECERT_BLOCKLIST_PASSWORD']
+			api_key = os.environ['HELSECERT_BLOCKLIST_API_KEY']
 
-			url = 'https://data.helsecert.no/blocklist/v2/?f=list_context'
+			#url = 'https://data.helsecert.no/blocklist/v2/?f=list_context'
+			url = f'https://blocklist.helsecert.no/v3?apikey={api_key}&format=list_context'
 
 			print(f"Kobler til {url}")
-			response = requests.get(url, auth=HTTPBasicAuth(username, password))
+			#response = requests.get(url, auth=HTTPBasicAuth(username, password))
+			response = requests.get(url)
 
 			if response.status_code == 200:
 				print('Autentisering var vellykket')
