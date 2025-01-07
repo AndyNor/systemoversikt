@@ -3586,17 +3586,13 @@ def logger(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	aktive_antall_uker = 1
+	aktive_antall_uker = 4
 	aktive_antall_personer = 10
 	period = datetime.datetime.now() - datetime.timedelta(weeks=aktive_antall_uker)
 	top_users = LogEntry.objects.filter(action_time__gte=period).values('user_id').annotate(count=Count('user_id')).order_by('-count')[:aktive_antall_personer]
 	print(top_users)
-	user_ids = [entry['user_id'] for entry in top_users]
-	users = User.objects.filter(id__in=user_ids)
-	top_endringer = []
-	for user, entry in zip(users, top_users):
-		top_endringer.append({"user": user, "count": entry['count']})
-
+	for user in top_users:
+		user["user"] = User.objects.get(pk=user["user_id"])
 
 	antall_vist = 500
 	recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:antall_vist]
@@ -3606,11 +3602,11 @@ def logger(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'recent_admin_loggs': recent_admin_loggs,
 		'antall_vist': antall_vist,
-		'top_endringer': top_endringer,
+		#'top_endringer': top_endringer,
 		'aktive_antall_uker': aktive_antall_uker,
 		'aktive_antall_personer': aktive_antall_personer,
 		'top_users': top_users,
-		'users': users,
+		#'users': users,
 
 
 	})

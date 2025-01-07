@@ -17,18 +17,15 @@ De {{aktive_antall_personer}} mest aktive personene siste {{aktive_antall_uker}}
 	</tr>
 	</thead>
 	<tbody>
-	{% for p in top_endringer %}
+	{% for p in top_users %}
 	<tr>
-		<td>{{ p.user }}</td>
+		<td>{{ p.user.profile.displayName }}</td>
 		<td>{{ p.count }}</td>
 	</tr>
 	{% endfor %}
 	</tbody>
 	</table>
 
-<hr>
-
-{{top_users}}
 
 <hr>
 
