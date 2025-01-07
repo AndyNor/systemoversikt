@@ -1,0 +1,52 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Sårbarheter nettverksenheter
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<a href="{% url 'vulnstats' %}" class="btn btn-sm btn-primary">Tilbake</a>
+<hr>
+
+<p style="background-color: {{ integrasjonsstatus.color }};">
+Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
+
+<hr>
+
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Enhet</th>
+	<th>IP</th>
+	<th>Sårbarheter</th>
+</tr>
+</thead>
+<tbody>
+{% for device in data.nettverksenheter %}
+<tr>
+	<td>{{ device }}</a></td>
+	<td>{{ device.comp_ip_address }}</a></td>
+	<td>
+		{% for vuln in device.vulnerabilities %}
+			<li>Alvorlighet {{ vuln.severity }}: {{vuln.title }}</li>
+		{% endfor %}
+	</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+
+
+{% endblock hovedinnhold %}

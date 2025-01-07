@@ -41,104 +41,61 @@ Antall sårbarheter totalt <h4>{{ data.count_all }}</h4>
 
 <a class="btn btn-sm btn-primary" href="{% url 'vulnstats_offerings' %}">Sårbarheter fordelt på service offering</a>
 <a class="btn btn-sm btn-primary" href="{% url 'vulnstats_all' %}">Alle unike sårbarheter</a>
+<a class="btn btn-sm btn-primary" href="{% url 'vulnstats_datakvalitet' %}">Datakvalitet</a>
+<a class="btn btn-sm btn-primary" href="{% url 'vulnstats_nettverk' %}">Nettverkssårbarheter</a>
 
 <hr>
-
-
-<p>Sårbarheter fordelt på status</p>
-<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
-{% for status in data.count_status %}
-	<li><h5>{{ status.status }}</h5> <h4>{{ status.count }}</h4></li>
-{% endfor %}
-</ul>
-
-<hr>
-
-<p>Kjente utnyttede sårbarheter</p>
-<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
-	<li>Totalt antall <h4>{{data.count_known_exploited}}</h4></li>
-	<li>Unike<h4>{{data.count_known_exploited_unique}}</h4></li>
-</ul>
-
-<hr>
-
-Antall sårbarheter som ikke kan kobles til server <h4>{{ data.count_uten_server }}</h4>
-Antall servere <h4>{{data.count_uten_server_antall_servere}}</h4>
-<a class="btn btn-sm btn-primary" href="{% url 'vulnstats_ukjente_servere' %}">Se enhetene</a>
-
-<hr>
-
-Servere uten sårbarheter
-<h4>{{data.count_servere_uten_vuln}} av {{data.count_servere_aktive}}</h4>
-<a class="btn btn-sm btn-primary" href="{% url 'vulnstats_servere_uten_vuln' %}">Se enhetene</a>
-
-<hr>
-
 
 <h4>Sårbarheter fordelt på alvorlighetsgrad</h4>
 <i>Alvorlighetsgrad 1 er minst kritisk og alvorlighetsgrad 5 er mest kritisk</i><br><br>
 
-<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
-{% for alvorlighet in data.count_unike_alvorligheter %}
-	<li>Alvorlighetsgrad {{ alvorlighet.severity }}<h4>{{ alvorlighet.count }}</h4></li>
-{% endfor %}
-</ul>
-
-<hr>
-
-<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
-{% for alvorlighet in data.count_unike_alvorligheter_eol %}
-	<li>End-of-life servere<br>Alvorlighetsgrad {{ alvorlighet.severity }}<h4><a href="{% url 'vulnstats_severity_eol' severity=forloop.counter %}">{{ alvorlighet.count }}</a></h4></li>
-{% endfor %}
-</ul>
-
-
-<hr>
-<h4>Unike sårbarheter (alt)</h4>
+<h6>Unike sårbarheter</h6>
 <ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
 {% for item in data.count_unike_vulns %}
-	<li>Unike sårbarheter<br>alvorlighet {{item.severity}}<h4><a href="{% url 'vulnstats_severity' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
+	<li>Alvorlighet {{item.severity}}<h4><a href="{% url 'vulnstats_severity' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
 {% endfor %}
 </ul>
-
-<hr>
-
-<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
-{% for item in data.count_unike_known_exploited_vulns %}
-	<li>Unike kjent utnyttede<br>alvorlighet {{item.severity}}<h4><a href="{% url 'vulnstats_severity_known_exploited' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
-{% endfor %}
-</ul>
-
-<hr>
-
-<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
-{% for item in data.count_unike_known_exploited_public_face %}
-	<li>Unike kjent utnyttede<br>internett-eksponert<br> alvorlighet {{item.severity}}<h4><a href="{% url 'vulnstats_severity_known_exploited_public' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
-{% endfor %}
-</ul>
-
-<hr>
-
-<h4>Unike (utenom siste 30 dager)</h4>
 <ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
 {% for item in data.count_unike_vulns_not_current %}
-	<li>Unike sårbarheter<br>alvorlighet {{item.severity}}<h4><a href="{% url 'vulnstats_severity_not_current' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
+	<li>Utenom siste {{for_nytt_dager}} dager: <h4><a href="{% url 'vulnstats_severity_not_current' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
 {% endfor %}
 </ul>
 
 <hr>
 
+<h6>End-of-life</h6>
+<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
+{% for alvorlighet in data.count_unike_alvorligheter_eol %}
+	<li>Alvorlighetsgrad {{ alvorlighet.severity }}<h4><a href="{% url 'vulnstats_severity_eol' severity=forloop.counter %}">{{ alvorlighet.count }}</a></h4></li>
+{% endfor %}
+</ul>
+
+<hr>
+
+<h6>Kjent utnyttede</h6>
+<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
+{% for item in data.count_unike_known_exploited_vulns %}
+	<li>Alvorlighet {{item.severity}}<h4><a href="{% url 'vulnstats_severity_known_exploited' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
+{% endfor %}
+</ul>
 <ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
 {% for item in data.count_unike_known_exploited_vulns_not_current %}
-	<li>Unike kjent utnyttede<br>alvorlighet {{item.severity}}<h4><a href="{% url 'vulnstats_severity_known_exploited_not_current' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
+	<li>Utenom siste {{for_nytt_dager}} dager: <h4><a href="{% url 'vulnstats_severity_known_exploited_not_current' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
 {% endfor %}
 </ul>
 
+
 <hr>
 
+<h6>Kjent utnyttede internett-eksponert</h6>
+<ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
+{% for item in data.count_unike_known_exploited_public_face %}
+	<li>Alvorlighet {{item.severity}}<h4><a href="{% url 'vulnstats_severity_known_exploited_public' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
+{% endfor %}
+</ul>
 <ul style="column-count: 5; list-style-type: none; padding: 0px; margin: 0px;">
 {% for item in data.count_unike_known_exploited_public_face_not_current %}
-	<li>Unike kjent utnyttede<br>internett-eksponert<br> alvorlighet {{item.severity}}<h4><a href="{% url 'vulnstats_severity_known_exploited_public_not_current' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
+	<li>Utenom siste {{for_nytt_dager}} dager: <h4><a href="{% url 'vulnstats_severity_known_exploited_public_not_current' severity=forloop.counter %}">{{ item.unique_titles }}</a></h4></li>
 {% endfor %}
 </ul>
 
@@ -214,39 +171,6 @@ const first_seen_monthly_myChart_not_current = new Chart(document.getElementById
 
 <h4>Sårbarheter fordelt på "sist sett" dag av året</h4>
 Det bør være minimalt lenger tilbake i tid, og kan tyde på at dataene burde vært ryddet opp i.
-<div><canvas height="50" id="vuln_timechart_last_seen"></canvas></div>
-<script type="text/javascript" nonce="{{request.csp_nonce}}">
-const last_seen_monthly_data = {
-	labels: [{% for date in data.count_last_seen_monthly %}"{{ date.year|date:"Y" }}-{{ date.day|date:"z" }}",{% endfor %}],
-	datasets: [{
-		backgroundColor: 'rgb(255, 99, 132)',
-		borderColor: 'rgb(255, 99, 132)',
-		data: [{% for date in data.count_last_seen_monthly %}{{ date.count }},{% endfor %}],
-	}]
-};
-const last_seen_monthly_config = {
-	type: 'bar',
-	data: last_seen_monthly_data,
-	options: {
-		plugins: {
-			legend: false,
-		},
-		scales: {
-			y: {
-				//type: 'logarithmic',
-				beginAtZero: true,
-				//max: 4000
-			}
-		}
-	},
-};
-const last_seen_monthly_myChart = new Chart(document.getElementById('vuln_timechart_last_seen'), last_seen_monthly_config);
-</script>
-
-
-<hr>
-
-Samme data, men utenom de to siste dagene
 <div><canvas height="50" id="vuln_timechart_last_seen_not_current"></canvas></div>
 {% with data.count_last_seen_monthly|slice:":-2" as slice %}
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
@@ -395,36 +319,7 @@ const first_seen_monthly_public_myChart_4 = new Chart(document.getElementById('v
 </tbody>
 </table>
 
-<hr>
 
-
-Servere uten offering knyttet til seg <h4>{{data.servere_uten_offering|length}}</h4>
-Disse kildene er
-<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
-{% for device in data.servere_uten_offering %}
-	<li>{{ device }}</li>
-{% endfor %}
-</ul>
-
-
-<hr>
-De siste dagene er forskjellen på Kartotekets observerte eksponerte servere de siste {{ data.eksponert_dager_gamle }} dagene slik. Basert på Shodan-oppslag via lastbalanserte VIP-er.
-
-<h5>Kun angitt som eksponert i Kartoteket</h5>
-<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
-{% for server in data.eksponert_kun_kartoteket %}
-	<li><a href="">{{ server }}</a></li>
-{% endfor %}
-</ul>
-
-<hr>
-
-<h5>Kun angitt som eksponert i Qualys</h5>
-<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
-{% for server in data.eksponert_kun_qualys %}
-	<li>{{ server }}</li>
-{% endfor %}
-</ul>
 
 
 {% endblock hovedinnhold %}

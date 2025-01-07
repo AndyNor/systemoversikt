@@ -147,6 +147,8 @@ urlpatterns = [
 	re_path(r'^rapport/vulnstats/search/$', views.vulnstats_search, name="vulnstats_search"),
 	re_path(r'^rapport/vulnstats/offering/(?P<pk>\d{1,8})?', views.vulnstats_offering, name="vulnstats_offering"),
 	re_path(r'^rapport/vulnstats/all/$', views.vulnstats_all, name="vulnstats_all"),
+	re_path(r'^rapport/vulnstats/datakvalitet/$', views.vulnstats_datakvalitet, name="vulnstats_datakvalitet"),
+	re_path(r'^rapport/vulnstats/netteverk/$', views.vulnstats_nettverk, name="vulnstats_nettverk"),
 	re_path(r'^rapport/vulnstats/servere_uten_vuln/$', views.vulnstats_servere_uten_vuln, name="vulnstats_servere_uten_vuln"),
 
 

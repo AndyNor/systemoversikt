@@ -18,5 +18,36 @@
 {% endfor %}
 </ol>
 
+<hr>
+
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Kilde</th>
+	<th>OS</th>
+	<th>Sårbarhet</th>
+	<th>Alvorlighetsgrad</th>
+	<th>Kjent utnyttet?</th>
+	<th>Først sett</th>
+</tr>
+</thead>
+<tbody>
+{% for vuln in data.vulnerabilies_high_severity %}
+<tr>
+	<td>{{ vuln.source }}</td>
+	<td>{{ vuln.os }}</td>
+	<td>{{ vuln.title }}</td>
+	<td>{{ vuln.severity }}</td>
+	<td>{{ vuln.known_exploited|yesno:"Ja, Nei" }}</td>
+	<td>{{ vuln.first_seen|date:"Y-m-d" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+
+
+
 
 {% endblock hovedinnhold %}

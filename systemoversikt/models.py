@@ -2808,6 +2808,8 @@ class CMDBdevice(models.Model):
 		except:
 			return 'ingen data'
 
+	def vulnerabilities(self):
+		return self.qualys_vulnerabilities.all()
 
 	class Meta:
 		verbose_name_plural = "CMDB: Enheter"

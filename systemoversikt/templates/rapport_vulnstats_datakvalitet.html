@@ -1,0 +1,72 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Sårbarheter datakvalitet
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<a href="{% url 'vulnstats' %}" class="btn btn-sm btn-primary">Tilbake</a>
+<hr>
+
+<p style="background-color: {{ integrasjonsstatus.color }};">
+Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
+
+<hr>
+
+Antall sårbarheter som ikke kan kobles til server <h4>{{ data.count_uten_server }}</h4>
+Antall servere <h4>{{data.count_uten_server_antall_servere}}</h4>
+<a class="btn btn-sm btn-primary" href="{% url 'vulnstats_ukjente_servere' %}">Se enhetene</a>
+
+<hr>
+
+Servere uten sårbarheter
+<h4>{{data.count_servere_uten_vuln}} av {{data.count_servere_aktive}}</h4>
+<a class="btn btn-sm btn-primary" href="{% url 'vulnstats_servere_uten_vuln' %}">Se enhetene</a>
+
+<hr>
+
+
+Servere uten offering knyttet til seg <h4>{{data.servere_uten_offering|length}}</h4>
+Disse kildene er
+<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+{% for device in data.servere_uten_offering %}
+	<li>{{ device }}</li>
+{% endfor %}
+</ul>
+
+
+<hr>
+De siste dagene er forskjellen på Kartotekets observerte eksponerte servere de siste {{ data.eksponert_dager_gamle }} dagene slik. Basert på Shodan-oppslag via lastbalanserte VIP-er.
+
+<h5>Kun angitt som eksponert i Kartoteket</h5>
+<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+{% for server in data.eksponert_kun_kartoteket %}
+	<li><a href="">{{ server }}</a></li>
+{% empty %}
+	Ingen
+{% endfor %}
+</ul>
+
+<hr>
+
+<h5>Kun angitt som eksponert i Qualys</h5>
+<ul style="column-count: 3; list-style-type: none; padding: 0px; margin: 0px;">
+{% for server in data.eksponert_kun_qualys %}
+	<li>{{ server }}</li>
+{% empty %}
+	Ingen
+{% endfor %}
+</ul>
+
+
+{% endblock hovedinnhold %}
