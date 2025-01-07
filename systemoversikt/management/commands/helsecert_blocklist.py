@@ -60,7 +60,7 @@ class Command(BaseCommand):
 			api_key = os.environ['HELSECERT_BLOCKLIST_APIKEY']
 
 			#url = 'https://data.helsecert.no/blocklist/v2/?f=list_context'
-			url = f'https://blocklist.helsecert.no/v3?apikey={api_key}&format=list_context'
+			url = f'https://blocklist.helsecert.no/v3?apikey={api_key}&format=list_context&type=all'
 
 			print(f"Kobler til {url}")
 			#response = requests.get(url, auth=HTTPBasicAuth(username, password))
