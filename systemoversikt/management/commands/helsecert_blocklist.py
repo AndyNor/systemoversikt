@@ -103,7 +103,7 @@ class Command(BaseCommand):
 
 					# Convert matches to a dictionary
 					result = {key: value for key, value in matches}
-					result["date"] = date_time
+					result["dato"] = date_time
 
 					return result
 
