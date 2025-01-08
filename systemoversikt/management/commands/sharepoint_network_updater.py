@@ -98,6 +98,7 @@ class Command(BaseCommand):
 				inst.comp_os = line["Model ID"]
 				inst.comp_os_version = ""
 				inst.comp_os_readable = f"{line['Model ID']}"
+				inst.eksternt_eksponert_dato = timezone.now()
 				inst.save()
 
 				# Linke IP-adresse
@@ -128,6 +129,7 @@ class Command(BaseCommand):
 				inst.comp_os = model
 				inst.comp_os_version = line["Firmware version"]
 				inst.comp_os_readable = f"{model} {inst.comp_os_version}"
+				inst.eksternt_eksponert_dato = timezone.now()
 				inst.save()
 
 				# Linke IP-adresse
