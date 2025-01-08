@@ -66,6 +66,8 @@ class Command(BaseCommand):
 			#response = requests.get(url, auth=HTTPBasicAuth(username, password))
 			response = requests.get(url)
 
+			antall_linjer_blocklist = 0
+
 			if response.status_code == 200:
 				print('Autentisering var vellykket')
 				antall_linjer_blocklist = len(response.text.splitlines())
@@ -156,7 +158,7 @@ class Command(BaseCommand):
 
 			runtime_t1 = time.time()
 			logg_total_runtime = round(runtime_t1 - runtime_t0, 1)
-			logg_entry_message = f"{status_hente}. {status_levere}. Feilede linjer: {failed_lines}. Kjøretid: {logg_total_runtime} sekunder"
+			logg_entry_message = f"{status_hente}. {status_levere}. Antall linjer: {antall_linjer_blocklist}. Feilede linjer: {failed_lines}. Kjøretid: {logg_total_runtime} sekunder"
 			#print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
