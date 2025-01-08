@@ -733,15 +733,14 @@
 	<br><hr>
 	<h3 style="scroll-margin-top: 150px;" id="anchor_tilgang">Tilgangsstyring</h3>
 	<div class="row">
-		<div class="col-4">
+		<div class="col-6">
 			<b>Bekreftede tilgangsgrupper</b><br>
 			{% for adgroup in systemdetaljer.tilgangsgrupper_ad.all %}
-				{{ adgroup.prkvalg.valgnavn }}
-				<a href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">{{ adgroup.display_name }}</a>
+				<a href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">{{ adgroup }}</a>
 				({{ adgroup.membercount }} medlemmer)<br>
 			{% endfor %}
 		</div>
-		<div class="col-4">
+		<div class="col-3">
 			<div id="accordion-prkgrp">
 				<div class="card">
 					<div class="card-header" id="heading-prkgrp">
@@ -762,7 +761,7 @@
 				</div>
 			</div>
 		</div>
-		<div class="col-4">
+		<div class="col-3">
 			<div id="accordion-adgrp">
 				<div class="card">
 					<div class="card-header" id="heading-adgrp">
