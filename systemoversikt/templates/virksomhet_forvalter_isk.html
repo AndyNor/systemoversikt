@@ -38,6 +38,16 @@
 	<td>{% include 'system_include_vis.html' with system=system %}</td>
 	<td>
 		{{ system.get_tilgjengelighetsvurdering_display|default:"-" }}
+		{% if system.tilgjengelighet_kritiske_perioder %}
+			<br>{{ system.tilgjengelighet_kritiske_perioder }}.
+		{% endif %}
+		{% if system.tilgjengelighet_timer_til_kritisk %}
+			<br>Kritisk etter {{ system.tilgjengelighet_timer_til_kritisk }} timer.
+		{% endif %}
+		{% if system.tilgjengelighet_periodisk_kritisk %}
+			Kun kritisk i perioder.
+		{% endif %}
+
 	</td>
 	<td>
 		{% for kapabilitet in system.kritisk_kapabilitet.all %}
