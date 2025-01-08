@@ -82,7 +82,10 @@
 	{% if network_matches|length > 0 %}
 	<h5>Treff på nettverk</h5>
 	{% for network in network_matches %}
-		{{ network.ip_address }}/{{ network.subnet_mask }} er <b>{{network.comment}}</b> med sikkerhetsnivå <b>{{network.network_zone}}</b><br>
+		{{ network.term }} gav treff i
+		{% for n in network.matches %}
+			<li>{{ n.ip_address }}/{{ n.subnet_mask }} som er <b>{{n.comment}}</b> ({{n.network_zone|default:"ukjent"}})</li>
+		{% endfor%}
 	{% endfor %}
 	{% endif %}
 

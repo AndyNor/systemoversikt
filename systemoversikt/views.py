@@ -6869,12 +6869,41 @@ def alle_ip(request):
 	network_matches = []
 	not_ip_addresses = []
 
+	cache_networks = list(NetworkContainer.objects.values_list('ip_address', 'subnet_mask', 'id'))
+	networks_with_id = []
+	for ip, mask, id in cache_networks:
+		try:
+			if ':' in ip:
+				network = ipaddress.IPv6Network(f"{ip}/{mask}", strict=False)
+			else:
+				network = ipaddress.IPv4Network(f"{ip}/{mask}", strict=False)
+			networks_with_id.append((network, mask, id))
+		except ValueError as e:
+			print(f"Error processing {ip}/{mask}: {e}")
+
+
+	def find_matching_networks(ip_address, networks_with_id):
+		try:
+			ip = ipaddress.ip_address(ip_address) # HVSI IKKE IP-adresse?
+			matching_ids = [id for network, mask, id in networks_with_id if ip in network]
+			if len(matching_ids) > 0:
+				matching_objects = NetworkContainer.objects.filter(id__in=matching_ids)
+				return [o for o in matching_objects if o.subnet_mask > 16]  # we don't want networks too broad
+			else:
+				return None
+		except:
+			return None
+
+
+
+	def ipnetwork_search(ip_string):
+		matching_ids = find_matching_networks(ip_address, networks_with_id)
+
 	if search_term != "":
 		search_term = search_term.replace('\"','').replace('\'','').replace(':',' ').replace('/', ' ').replace('\\', ' ') # dette vil feile for IPv6, som kommer på formatet [xxxx:xxxx::xxxx]:port
 		search_terms = re.findall(r"([^,;\t\s\n\r]+)", search_term)
-		search_terms = set(search_terms)
 
-		for term in search_terms:
+		for term in set(search_terms):
 
 			machine_match = False
 			matches = NetworkIPAddress.objects.filter(ip_address=term)
@@ -6885,11 +6914,13 @@ def alle_ip(request):
 			vlan_match = False
 			matches = NetworkContainer.objects.filter(ip_address=term)
 			if matches:
-				network_matches.extend(matches)
-			else:
-
-
+				network_matches.append({"term": term, "matches": matches})
 				vlan_match = True
+			else:
+				matches = find_matching_networks(term, networks_with_id)
+				if matches:
+					network_matches.append({"term": term, "matches": matches})
+					vlan_match = True
 
 			if (not machine_match) and (not vlan_match):
 				not_ip_addresses.append(term)
