@@ -21,8 +21,8 @@ class Command(BaseCommand):
 		BESKRIVELSE = "Citrixpubliseringer fra intern og sikker sone"
 		FILNAVN = {
 				"citrix_is": "citrix_publikasjoner_is.json",
-				"citrix_is_desktop_gr": "citrix_BrokerDesktopGroups_is.json",
 				"citrix_ss": "citrix_publikasjoner_ss.json",
+				"citrix_is_desktop_gr": "citrix_BrokerDesktopGroups_is.json",
 				"citrix_ss_desktop_gr": "citrix_BrokerDesktopGroups_ss.json",
 				"citrix_is_servers": "citrix_Machine_list_IS.json",
 				"citrix_ss_servers": "citrix_Machine_list_SS.json",
@@ -108,6 +108,7 @@ class Command(BaseCommand):
 
 					if created:
 						antall_nyopprettede_publikasjoner += 1
+						print(f"** Opprettet: {line['ApplicationName']} ({line['Enabled']})")
 
 					c.sone = zone
 
@@ -265,8 +266,10 @@ class Command(BaseCommand):
 			for_gammelt = timezone.now() - timedelta(hours=6) # 6 timer gammelt
 			deaktive = CitrixPublication.objects.filter(sist_oppdatert__lte=for_gammelt)
 			print(f"Sletter {len(deaktive)} gamle publikasjoner.")
-			logg_entry_message += f"Sletter {len(deaktive)} gamle publikasjoner. "
-			deaktive.delete()
+			logg_entry_message += f"Sletter {len(deaktive)} gamle publikasjoner."
+			for pub in deaktive:
+				print(f"** Slettet: {pub.display_name}")
+				pub.delete()
 
 
 			# laste inn DesktopGroups til servere
