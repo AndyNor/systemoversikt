@@ -1809,7 +1809,7 @@ def rapport_systemer_forsomt(request):
 
 	tidsgrense = timezone.now() - datetime.timedelta(days=oppdatert_siden)
 
-	systemer_oppdatert_nylig = System.objects.filter(sist_oppdatert__lte=tidsgrense).filter(~Q(driftsmodell_foreignkey__id=11))
+	systemer_oppdatert_nylig = System.objects.filter(sist_oppdatert__lte=tidsgrense).filter(~Q(driftsmodell_foreignkey__id=11)).filter(~Q(livslop_status__in=[1, 7])) # under innføring, avviklet
 
 	systemer_ukjent_livslop = systemer_oppdatert_nylig.filter(livslop_status__in=[None, 8])
 	systemer_ukjent_systemforvalter = systemer_oppdatert_nylig.filter(Q(systemforvalter=None) | Q(systemforvalter__ordinar_virksomhet=False))
