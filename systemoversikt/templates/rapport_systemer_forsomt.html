@@ -1,0 +1,48 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Forsømte systemer
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Her vises systemer som:
+		<li>Ikke har blitt oppdatert på {{ oppdatert_siden }} dager</li>
+		<li>Ikke har gyldig eierskap satt eller ikke har angitt livssyklusstatus</li>
+		<li>Har færre enn {{ minimum_oppdateringer }} oppdateringer siden opprettelse</li>
+
+	</p>
+
+	<hr>
+
+	<p>Fant {{systemer|length}} potensielt forsømte systemer</p>
+
+	<table class="tablesorter excel">
+		<thead>
+			<tr>
+				<th>Systemnavn</th>
+				<th>Livsløpstatus</th>
+				<th>Sist oppdatert</th>
+				<th>Systemforvalter</th>
+				<th>Antall ganger oppdatert</th>
+			</tr>
+		</thead>
+			<tbody>
+			{% for system in systemer %}
+			<tr>
+				<td><h6>{% include 'system_include_vis.html' with system=system %}</h6></td>
+				<td>{{ system.get_livslop_status_display|default:"" }}</td>
+				<td>{{ system.sist_oppdatert|date:"Y-m-d" }} ({{ system.sist_oppdatert|timesince }})</td>
+				<td>{{ system.systemforvalter|default:"" }}</td>
+				<td>{{ system.antall_oppdateringer }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

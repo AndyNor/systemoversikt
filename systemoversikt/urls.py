@@ -150,6 +150,7 @@ urlpatterns = [
 	re_path(r'^rapport/vulnstats/datakvalitet/$', views.vulnstats_datakvalitet, name="vulnstats_datakvalitet"),
 	re_path(r'^rapport/vulnstats/netteverk/$', views.vulnstats_nettverk, name="vulnstats_nettverk"),
 	re_path(r'^rapport/vulnstats/servere_uten_vuln/$', views.vulnstats_servere_uten_vuln, name="vulnstats_servere_uten_vuln"),
+	re_path(r'^rapport/systemer/forsomt/$', views.rapport_systemer_forsomt, name="rapport_systemer_forsomt"),
 
 
 

@@ -1798,6 +1798,40 @@ def rapport_startside(request):
 
 
 
+def rapport_systemer_forsomt(request):
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+	oppdatert_siden = 365 # dager
+	minimum_oppdateringer = 3 # ganger
+
+	tidsgrense = timezone.now() - datetime.timedelta(days=oppdatert_siden)
+
+	systemer_oppdatert_nylig = System.objects.filter(sist_oppdatert__lte=tidsgrense)
+
+	systemer_ukjent_livslop = systemer_oppdatert_nylig.filter(livslop_status__in=[None, 8])
+	systemer_ukjent_systemforvalter = systemer_oppdatert_nylig.filter(Q(systemforvalter=None) | Q(systemforvalter__ordinar_virksomhet=False))
+
+	combined_queryset = systemer_ukjent_livslop | systemer_ukjent_systemforvalter
+
+	for s in combined_queryset:
+		s.antall_oppdateringer = s.antall_oppdateringer()
+		if s.antall_oppdateringer >= minimum_oppdateringer:
+			combined_queryset = combined_queryset.exclude(pk=s.pk)
+
+
+	return render(request, 'rapport_systemer_forsomt.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'oppdatert_siden': oppdatert_siden,
+		'systemer': combined_queryset,
+		'minimum_oppdateringer': minimum_oppdateringer,
+	})
+
+
+
 def isk_ansvarlig_for_system(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):

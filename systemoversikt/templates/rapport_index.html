@@ -39,6 +39,10 @@
 
 	<hr><h6>Systemperspektiver</h6>
 
+
+		{% url 'rapport_systemer_forsomt' as url_rapport_systemer_forsomt %}
+		<a href="{{url_rapport_systemer_forsomt}}" class="btn btn-sm btn-link {% if url_rapport_systemer_forsomt in request.path %}fremhev{% endif %}">Forsømte systemer</a><br>
+
 		{% url 'systemer_citrix' as url_systemer_citrix %}
 		<a href="{{url_systemer_citrix}}" class="btn btn-sm btn-link {% if url_systemer_citrix in request.path %}fremhev{% endif %}">Systemer på Citrix</a><br>
 

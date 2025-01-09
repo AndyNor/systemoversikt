@@ -8,6 +8,8 @@ from django import forms
 import json
 import re
 from django.db.models import Sum
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.admin.models import LogEntry
 
 
 # som standard vises bare "self.username". Vi ønsker også å vise fult navn.
@@ -5158,6 +5160,11 @@ class System(models.Model):
 			return self.systemforvalter.ikt_kontakt.all()[0].brukernavn.email
 		else:
 			return "ukjent"
+
+
+	def antall_oppdateringer(self):
+		system_content_type = ContentType.objects.get_for_model(self)
+		return len(LogEntry.objects.filter(content_type=system_content_type).filter(object_id=self.pk))
 
 	class Meta:
 		verbose_name_plural = "Systemoversikt: Systemer"
