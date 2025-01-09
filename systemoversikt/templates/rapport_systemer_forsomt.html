@@ -26,6 +26,7 @@
 		<thead>
 			<tr>
 				<th>Systemnavn</th>
+				<th>Driftsplattform</th>
 				<th>Livsløpstatus</th>
 				<th>Sist oppdatert</th>
 				<th>Systemforvalter</th>
@@ -36,6 +37,7 @@
 			{% for system in systemer %}
 			<tr>
 				<td><h6>{% include 'system_include_vis.html' with system=system %}</h6></td>
+				<td>{{ system.driftsmodell_foreignkey }}</td>
 				<td>{{ system.get_livslop_status_display|default:"" }}</td>
 				<td>{{ system.sist_oppdatert|date:"Y-m-d" }} ({{ system.sist_oppdatert|timesince }})</td>
 				<td>{{ system.systemforvalter|default:"" }}</td>
