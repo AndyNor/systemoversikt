@@ -105,7 +105,9 @@ urlpatterns = [
 	re_path(r'^rapport/named_locations/$', views.rapport_named_locations, name='rapport_named_locations'),
 	re_path(r'^rapport/ukjente_identer/$', views.rapport_ukjente_identer, name='rapport_ukjente_identer'),
 	re_path(r'^rapport/prioriteringer/$', views.rapport_prioriteringer, name='rapport_prioriteringer'),
-	re_path(r'^rapport/azure/keys/$', views.azure_application_keys, name='azure_application_keys'),
+	re_path(r'^rapport/azure/keys/expired/$', views.azure_application_keys_expired, name='azure_application_keys_expired'),
+	re_path(r'^rapport/azure/keys/expiring/$', views.azure_application_keys_soon, name='azure_application_keys_soon'),
+	re_path(r'^rapport/azure/keys/active/$', views.azure_application_keys_active, name='azure_application_keys_active'),
 	re_path(r'^rapport/azure/uten_epost/$', views.cmdb_uten_epost_stat, name='cmdb_uten_epost_stat'),
 	re_path(r'^rapport/azure/applications/$', views.azure_applications, name='azure_applications'),
 	re_path(r'^rapport/azure/user_consents/$', views.azure_user_consents, name='azure_user_consents'),
@@ -312,32 +314,30 @@ urlpatterns = [
 
 
 
-	re_path(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),
-	re_path(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),
-
-
 	# Alle API-er
-	re_path(r'^tjenestekatalogen/forvaltere/$', views.tjenestekatalogen_forvalter_api, name='tjenestekatalogen_forvalter_api'), # brukes av UKE/tjenestekatalogen. Bruker API-nøkkel.
-	re_path(r'^tjenestekatalogen/systemer/$', views.tjenestekatalogen_systemer_api, name='tjenestekatalogen_systemer_api'), # brukes av UKE/tjenestekatalogen. Bruker API-nøkkel.
-	re_path(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'), # (det er innført behov for API-key)
-	re_path(r'^cmdb/csirt_api/$', views.csirt_api, name='csirt_api'), # (det er innført behov for API-key)
-	re_path(r'^cmdb/api/kompass/$', views.cmdb_api_kompass, name='cmdb_api_kompass'), # (det er innført behov for API-key)
-	re_path(r'^systemer/api/$', views.systemer_api, name='systemer_api'), # (det er innført behov for API-key)
-	re_path(r'^virksomhet/(?P<virksomhet_pk>\d+)/excelapi/$', views.system_excel_api, name='system_excel_api'), # det må brukes API-key
-	re_path(r'^systemer/iga/api/$', views.iga_api, name='iga_api'), # (det er innført behov for API-key)
-	re_path(r'^systemer/behandlingsoversikt/api/$', views.behandlingsoversikt_api, name='behandlingsoversikt_api'), # (det er innført behov for API-key)
-	re_path(r'^api/vav/akva/$', views.vav_akva_api, name='vav_akva_api'), # (det er innført behov for API-key)
-	re_path(r'^get-api/tilgangsgrupper/$', views.tilgangsgrupper_api, name='tilgangsgrupper_api'), # (det er innført behov for API-key)
-	re_path(r'^ukecsirt/ipsok/api/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # (det er innført behov for API-key)
-	re_path(r'^get-api/tilganger/$', views.get_api_tilganger, name='get_api_tilganger'), # (det er innført behov for API-key)
-	re_path(r'^api/programvare/$', views.api_programvare, name='api_programvare'), # (det er innført behov for API-key)
-	re_path(r'^api/known_exploited/$', views.api_known_exploited, name='api_known_exploited'), # (det er innført behov for API-key)
+	re_path(r'^systemer/behandlingsoversikt/api/$', views.behandlingsoversikt_api, name='behandlingsoversikt_api'), # Overføring av systemer til behandlingsoversikten
+	re_path(r'^api/vav/akva/$', views.vav_akva_api, name='vav_akva_api'), # Overføring av data om systemer til VAV sitt AKVA-system
+	re_path(r'^get-api/tilgangsgrupper/$', views.tilgangsgrupper_api, name='tilgangsgrupper_api'), # Brukes for å søke opp medlemmer av AD-grupper, flere brukere inkl. SYE
+	re_path(r'^ukecsirt/ipsok/api/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # IP-oppslag fra vulnapp, returnerer CMDB-data og merker device som internett-eksponert
+	re_path(r'^api/programvare/$', views.api_programvare, name='api_programvare'), # Brukes av vulnapp for å hente alle applikasjoner
+	re_path(r'^api/known_exploited/$', views.api_known_exploited, name='api_known_exploited'), # VulnApp kaller denne for å laste opp CVE known exploited
 
+	re_path(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),# UKE manuell nedlasting av PRK-data, to personer, sjeldent i bruk
+	re_path(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),# UKE manuell nedlasting av PRK-data, to personer, sjeldent i bruk
 
+	re_path(r'^tjenestekatalogen/forvaltere/$', views.tjenestekatalogen_forvalter_api, name='tjenestekatalogen_forvalter_api'), # brukes av UKE/tjenestekatalogen. må sjekkes om faktisk i bruk
+	re_path(r'^tjenestekatalogen/systemer/$', views.tjenestekatalogen_systemer_api, name='tjenestekatalogen_systemer_api'), # brukes av UKE/tjenestekatalogen. må sjekkes om faktisk i bruk
+	re_path(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'), # UKE innhenting til faktureringsgrunnlag. Sporadisk bruk 2023/2024
+
+	re_path(r'^cmdb/csirt_api/$', views.csirt_api, name='csirt_api'), # Ble brukt av vulnapp for å hente alle systemer, ikke i bruk
+	re_path(r'^cmdb/api/kompass/$', views.cmdb_api_kompass, name='cmdb_api_kompass'), # Ble laget for å overføre business_service til Kompass, trolig ikke i bruk
+	re_path(r'^systemer/api/$', views.systemer_api, name='systemer_api'), # API for systemer, ikke i bruk
+	re_path(r'^virksomhet/(?P<virksomhet_pk>\d+)/excelapi/$', views.system_excel_api, name='system_excel_api'), # Generisk API for å koble til excel, trolig ikke i bruk
+	re_path(r'^systemer/iga/api/$', views.iga_api, name='iga_api'), # API for IGA for systemdata, trolig ikke i bruk
+	re_path(r'^get-api/tilganger/$', views.get_api_tilganger, name='get_api_tilganger'), # Returnere business services en e-postadresse er oppgitt ansvarlig for (via system). Ikke i bruk.
 
 
 	# import og konvertering
 	re_path(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),
 	re_path(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
-
 ]

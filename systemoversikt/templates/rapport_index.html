@@ -71,8 +71,14 @@
 		{% url 'azure_user_consents' as url_azure_user_consents %}
 		<a href="{{ url_azure_user_consents }}" class="btn btn-sm btn-link {% if url_azure_user_consents in request.path %}fremhev{% endif %}">User consents</a><br>
 
-		{% url 'azure_application_keys' as url_azure_application_keys %}
-		<a href="{{ url_azure_application_keys }}" class="btn btn-sm btn-link {% if url_azure_application_keys in request.path %}fremhev{% endif %}">Nøkler og sertifikater</a><br>
+		{% url 'azure_application_keys_expired' as url_azure_application_keys_expired %}
+		<a href="{{ url_azure_application_keys_expired }}" class="btn btn-sm btn-link {% if url_azure_application_keys_expired in request.path %}fremhev{% endif %}">Nøkler utgått</a><br>
+
+		{% url 'azure_application_keys_soon' as url_azure_application_keys_soon %}
+		<a href="{{ url_azure_application_keys_soon }}" class="btn btn-sm btn-link {% if url_azure_application_keys_soon in request.path %}fremhev{% endif %}">Nøkler snart utgår</a><br>
+
+		{% url 'azure_application_keys_active' as url_azure_application_keys_active %}
+		<a href="{{ url_azure_application_keys_active }}" class="btn btn-sm btn-link {% if url_azure_application_keys_active in request.path %}fremhev{% endif %}">Aktive nøkler</a><br>
 
 
 

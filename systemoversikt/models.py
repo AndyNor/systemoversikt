@@ -6893,7 +6893,7 @@ class AzureApplicationKeys(models.Model):
 			return False
 		from django.utils import timezone
 		from datetime import timedelta
-		return (timezone.now() + timedelta(45)) > self.end_date_time
+		return (timezone.now() + timedelta(30)) > self.end_date_time
 
 
 class AzureApplication(models.Model):

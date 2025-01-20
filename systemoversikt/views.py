@@ -1773,21 +1773,54 @@ def azure_applications(request):
 
 
 
-def azure_application_keys(request):
+def azure_application_keys_expired(request):
 	#Vise liste over alle Azure enterprise application keys etter utløpsdato
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	keys = AzureApplicationKeys.objects.order_by('end_date_time')
+	keys = AzureApplicationKeys.objects.filter(end_date_time__lt=timezone.now()).order_by('-end_date_time')
 
 	return render(request, 'cmdb_azure_application_keys.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'keys': keys,
+		'text_header': 'utløpt',
 	})
 
+AZUREAPP_KEY_EXPIRE_WARNING = 30
 
+def azure_application_keys_soon(request):
+	#Vise liste over alle Azure enterprise application keys etter utløpsdato
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	warning = (timezone.now() + datetime.timedelta(AZUREAPP_KEY_EXPIRE_WARNING))
+	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=timezone.now()).filter(end_date_time__lte=warning).order_by('end_date_time')
+
+	return render(request, 'cmdb_azure_application_keys.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'keys': keys,
+		'text_header': 'utløper snart',
+	})
+
+def azure_application_keys_active(request):
+	#Vise liste over alle Azure enterprise application keys etter utløpsdato
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	warning = (timezone.now() + datetime.timedelta(AZUREAPP_KEY_EXPIRE_WARNING))
+	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=warning).order_by('end_date_time')
+
+	return render(request, 'cmdb_azure_application_keys.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'keys': keys,
+		'text_header': 'aktive',
+	})
 
 def rapport_startside(request):
 	required_permissions = None
