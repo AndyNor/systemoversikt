@@ -11,7 +11,9 @@
 
 {% block hovedinnhold %}
 
-<p>Det er {{keys.count}} nøkler/sertifikater i databasen. Synkroniseres mot Azure Graph-API hver natt. Kobling system - EA skjer fra systemet.</p>
+<p>Merk at denne oversikten ikke viser nøkler hvor både key_type="AsymmetricX509Cert" samtidig som key_usage="Verify"</p>
+
+<p>Det er {{keys.count}} treff på nøkler/sertifikater i databasen.<br>Data synkroniseres mot Azure Graph-API hver natt. Kobling system - EA skjer fra systemet.</p>
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
