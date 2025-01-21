@@ -8,6 +8,10 @@
 
 {% block ekstrajavascript %}
 	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels" nonce="{{request.csp_nonce}}"></script>
+	<script type="text/javascript" nonce="{{request.csp_nonce}}">
+		Chart.register(ChartDataLabels);
+	</script>
 {% endblock ekstrajavascript %}
 
 {% block hovedinnhold %}
@@ -36,6 +40,9 @@ const config = {
 	options: {
 		responsive: true,
 		plugins: {
+			datalabels: {
+				display: false,
+			},
 			legend: false,
 		},
 		scales: {
@@ -55,9 +62,23 @@ document.getElementById('auth_timechart'),
 
 Antall unike personer pålogget, fordelt på virksomhet, siste {{ period }} dager
 
-<canvas id="myPieChart" style="max-height: 600px;"></canvas>
+<canvas id="myPieChart"></canvas>
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
+
+const backgroundColors = [
+    '#A6CEE3', '#1F78B4', '#B2DF8A', '#33A02C', '#FB9A99',
+    '#E31A1C', '#FDBF6F', '#FF7F00', '#CAB2D6', '#6A3D9A',
+    '#FFFF99', '#B15928', '#8DD3C7', '#FFFFB3', '#BEBADA',
+    '#FB8072', '#80B1D3', '#FDB462', '#B3DE69', '#FCCDE5',
+    '#D9D9D9', '#BC80BD', '#CCEBC5', '#FFED6F', '#E41A1C',
+    '#377EB8', '#4DAF4A', '#984EA3', '#FF7F00', '#FFFF33',
+    '#A65628', '#F781BF', '#999999', '#66C2A5', '#FC8D62',
+    '#8DA0CB', '#E78AC3', '#A6D854', '#FFD92F', '#E5C494',
+    '#B3B3B3', '#8DD3C7', '#FFFFB3', '#BEBADA', '#FB8072',
+    '#80B1D3', '#FDB462', '#B3DE69', '#FCCDE5', '#D9D9D9'
+]
+
 const myPieChartdata = {{ quarterly_usernames|safe }}
 const myPieChartlabels = myPieChartdata.map(item => item.word);
 const myPieChartcounts = myPieChartdata.map(item => item.count);
@@ -69,14 +90,28 @@ const myPieChart = new Chart(ctx, {
 		labels: myPieChartlabels,
 		datasets: [{
 			data: myPieChartcounts,
+			backgroundColor: backgroundColors,
 			borderWidth: 1
 		}]
 	},
 	options: {
 		responsive: true,
 		plugins: {
-			legend: {
+			datalabels: {
 				display: true,
+				color: '#fff',
+				formatter: function(value, context) {
+					return context.chart.data.labels[context.dataIndex];
+				},
+				font: {
+					weight: 'bold'
+				},
+				anchor: 'end',
+				align: 'start',
+				offset: 10
+			},
+			legend: {
+				display: false,
 				position: 'left',
 			},
 			title: {
@@ -92,9 +127,10 @@ const myPieChart = new Chart(ctx, {
 
 Antall redigeringer av data, fordelt på virksomhet, siste {{ period }} dager
 
-<canvas id="myPieChart_edit" style="max-height: 600px;"></canvas>
+<canvas id="myPieChart_edit"></canvas>
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
+
 const myPieChartdata_edit = {{ editing_users_processed|safe }}
 const myPieChartlabels_edit = myPieChartdata_edit.map(item => item.word);
 const myPieChartcounts_edit = myPieChartdata_edit.map(item => item.count);
@@ -106,23 +142,37 @@ const myPieChart_edit = new Chart(ctx_edit, {
 		labels: myPieChartlabels_edit,
 		datasets: [{
 			data: myPieChartcounts_edit,
+			backgroundColor: backgroundColors,
 			borderWidth: 1
 		}]
 	},
 	options: {
 		responsive: true,
 		plugins: {
+			datalabels: {
+				color: '#fff',
+				formatter: function(value, context) {
+					return context.chart.data.labels[context.dataIndex];
+				},
+				font: {
+					weight: 'bold'
+				},
+				anchor: 'end',
+				align: 'start',
+				offset: 10
+			},
 			legend: {
 				display: true,
-				position: 'left',
+				position: 'right',
 			},
 			title: {
-				display: false,
+				display: true,
 				text: ''
 			}
 		}
 	}
 });
+
 </script>
 
 {% endblock hovedinnhold %}
