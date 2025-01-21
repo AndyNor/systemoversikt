@@ -99,7 +99,7 @@ const myPieChart = new Chart(ctx, {
 		plugins: {
 			datalabels: {
 				display: true,
-				color: '#fff',
+				color: '#000',
 				formatter: function(value, context) {
 					return context.chart.data.labels[context.dataIndex];
 				},
@@ -150,7 +150,7 @@ const myPieChart_edit = new Chart(ctx_edit, {
 		responsive: true,
 		plugins: {
 			datalabels: {
-				color: '#fff',
+				color: '#000',
 				formatter: function(value, context) {
 					return context.chart.data.labels[context.dataIndex];
 				},
