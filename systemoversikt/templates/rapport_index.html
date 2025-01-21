@@ -107,6 +107,8 @@
 		{% url 'vulnstats' as url_vulnstats %}
 		<a href="{{ url_vulnstats }}" class="btn btn-sm btn-link {% if url_vulnstats in request.path %}fremhev{% endif %}">Sårbarhetsstatistikk</a><br>
 
+		{% url 'rapport_sikkerhetstester' as url_sikkerhetstester %}
+		<a href="{{ url_sikkerhetstester }}" class="btn btn-sm btn-link {% if url_sikkerhetstester in request.path %}fremhev{% endif %}">Sikkerhetstester</a><br>
 
 	<hr><h6>Leverandørtilgang</h6>
 

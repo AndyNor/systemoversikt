@@ -1757,6 +1757,72 @@ def azure_user_consents(request):
 	})
 
 
+def admin_visitors(request): # brukerstatisikk
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+
+	from collections import Counter
+	logged_in_events = ApplicationLog.objects.filter(event_type__icontains="Brukerpålogging", message__icontains="logget inn")
+
+	# hente informasjon om antall pålogginger siste x dager
+	period = 60 # days
+	period_timestamp = timezone.now() - datetime.timedelta(period)
+	auth_this_period = logged_in_events.filter(opprettet__gte=period_timestamp).count()
+
+
+	# hente informasjon om antall pålogginger fordelt per måned tilbake i tid
+	from django.db.models.functions import TruncMonth
+	auth_over_time = logged_in_events.annotate(year_month=TruncMonth('opprettet')).values('year_month').annotate(count=Count('id')).values('year_month', 'count')
+
+
+	# hente data om pålogginger fordelt på virksomhet for de siste x dager
+	quarterly_usernames = logged_in_events.filter(opprettet__gte=period_timestamp).values('message').distinct()
+	quarterly_usernames_processed = []
+	for element in quarterly_usernames:
+		username = element["message"].split("logget inn.")[0]
+		etat = ""
+		if "@" in username: # e-mail / upn
+			match = re.search(r"@([a-zA-Z0-9-]+)\.", username)
+			if match:
+				etat = match.group(1)
+		else:
+			match = re.match(r"(\D*?)\d", username)
+			if match:
+				etat = match.group(1)
+		quarterly_usernames_processed.append(etat)
+
+	quarterly_usernames_processed = {item: quarterly_usernames_processed.count(item) for item in set(quarterly_usernames_processed)}
+
+	counts = Counter(quarterly_usernames_processed)
+	result = [{"word": word, "count": count} for word, count in counts.items()]
+	quarterly_usernames_processed = result
+
+
+	# hente data om endringer fordelt på virksomhet for de siste x dager
+	editing_users = LogEntry.objects.filter(action_time__gte=period_timestamp).values('user_id')
+	editing_users_processed = []
+	for user in editing_users:
+		virksomhet = User.objects.get(id=user["user_id"]).profile.virksomhet.virksomhetsforkortelse
+		editing_users_processed.append(virksomhet)
+
+	counts = Counter(editing_users_processed)
+	result = [{"word": word, "count": count} for word, count in counts.items()]
+	editing_users_processed = result
+
+
+	return render(request, 'admin_visitors.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'auth_this_period': auth_this_period,
+		'period': period,
+		'auth_over_time': auth_over_time,
+		'quarterly_usernames': quarterly_usernames_processed,
+		'editing_users_processed': editing_users_processed,
+	})
+
+
 def azure_applications(request):
 	#Vise liste over alle Azure enterprise applications med rettigheter de har fått tildelt
 	required_permissions = ['systemoversikt.view_cmdbdevice']
@@ -1771,6 +1837,20 @@ def azure_applications(request):
 		'applikasjoner': applikasjoner,
 	})
 
+
+def rapport_sikkerhetstester(request):
+	#Vise liste over alle Azure enterprise application keys etter utløpsdato
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	sikkerhetstester = Sikkerhetstester.objects.all().order_by("-dato_rapport")
+
+	return render(request, 'rapport_sikkerhetstester.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'sikkerhetstester': sikkerhetstester,
+	})
 
 
 def azure_application_keys_expired(request):

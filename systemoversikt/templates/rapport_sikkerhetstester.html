@@ -1,0 +1,41 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Alle registrerte sikkerhetstester
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Dato rapport</th>
+	<th>Type test</th>
+	<th>Testet system</th>
+	<th>Utført av</th>
+	<th>Notater</th>
+</tr>
+</thead>
+<tbody>
+{% for test in sikkerhetstester %}
+<tr>
+	<td><a href="/admin/systemoversikt/sikkerhetstester/{{test.id}}/change/">{{ test.dato_rapport|date:"Y-m-d" }}</a></td>
+	<td>{{ test.get_type_test_display|default:"-" }}</td>
+	<td>{% for system in test.systemer.all %}{{ system }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+	<td>{{ test.testet_av|default:"-" }}</td>
+	<td>{{ test.notater }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock hovedinnhold %}

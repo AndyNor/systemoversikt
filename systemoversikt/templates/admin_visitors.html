@@ -1,0 +1,128 @@
+{% extends "admin_index.html" %}
+{% load static %}
+{% load templatetags %}
+
+{% block overskrift %}
+	Statistikk over pålogging og endringer i Kartoteket
+{% endblock overskrift %}
+
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block hovedinnhold %}
+
+<p>Pålogginger de siste {{ period }} dagene<h4>{{ auth_this_period }}</h4></p>
+
+<hr>
+
+<p>Pålogginger per måned over tid</p>
+<canvas id="auth_timechart" style="max-height: 400px;"></canvas>
+
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const data = {
+	labels: [{% for month in auth_over_time %}"{{ month.year_month|date:'Y-m' }}",{% endfor %}],
+	datasets: [{
+		backgroundColor: 'rgb(255, 99, 132)',
+		borderColor: 'rgb(255, 99, 132)',
+		data: [{% for month in auth_over_time %}{{ month.count }},{% endfor %}],
+	}]
+};
+
+const config = {
+	type: 'line',
+	data: data,
+	options: {
+		responsive: true,
+		plugins: {
+			legend: false,
+		},
+		scales: {
+			y: {
+				beginAtZero: true
+			}
+		}
+	},
+};
+const myChart = new Chart(
+document.getElementById('auth_timechart'),
+	config
+);
+</script>
+
+<hr>
+
+Antall unike personer pålogget, fordelt på virksomhet, siste {{ period }} dager
+
+<canvas id="myPieChart" style="max-height: 600px;"></canvas>
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const myPieChartdata = {{ quarterly_usernames|safe }}
+const myPieChartlabels = myPieChartdata.map(item => item.word);
+const myPieChartcounts = myPieChartdata.map(item => item.count);
+
+const ctx = document.getElementById('myPieChart').getContext('2d');
+const myPieChart = new Chart(ctx, {
+	type: 'doughnut',
+	data: {
+		labels: myPieChartlabels,
+		datasets: [{
+			data: myPieChartcounts,
+			borderWidth: 1
+		}]
+	},
+	options: {
+		responsive: true,
+		plugins: {
+			legend: {
+				display: true,
+				position: 'left',
+			},
+			title: {
+				display: false,
+				text: ''
+			}
+		}
+	}
+});
+</script>
+
+<hr>
+
+Antall redigeringer av data, fordelt på virksomhet, siste {{ period }} dager
+
+<canvas id="myPieChart_edit" style="max-height: 600px;"></canvas>
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const myPieChartdata_edit = {{ editing_users_processed|safe }}
+const myPieChartlabels_edit = myPieChartdata_edit.map(item => item.word);
+const myPieChartcounts_edit = myPieChartdata_edit.map(item => item.count);
+
+const ctx_edit = document.getElementById('myPieChart_edit').getContext('2d');
+const myPieChart_edit = new Chart(ctx_edit, {
+	type: 'doughnut',
+	data: {
+		labels: myPieChartlabels_edit,
+		datasets: [{
+			data: myPieChartcounts_edit,
+			borderWidth: 1
+		}]
+	},
+	options: {
+		responsive: true,
+		plugins: {
+			legend: {
+				display: true,
+				position: 'left',
+			},
+			title: {
+				display: false,
+				text: ''
+			}
+		}
+	}
+});
+</script>
+
+{% endblock hovedinnhold %}

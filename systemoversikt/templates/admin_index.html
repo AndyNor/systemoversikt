@@ -7,6 +7,9 @@
 	{% url 'databasestatistikk' as url_databasestatistikk %}
 	<a href="{{ url_databasestatistikk }}" class="btn btn-sm btn-link {% if url_databasestatistikk in request.path %}fremhev{% endif %}">Tabellstørrelser</a><br>
 
+	{% url 'admin_visitors' as url_admin_visitors %}
+	<a href="{{ url_admin_visitors }}" class="btn btn-sm btn-link {% if url_admin_visitors in request.path %}fremhev{% endif %}">Bruksoversikt</a><br>
+
 	<hr>
 
 	<h6>Logger</h6>

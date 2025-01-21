@@ -5,8 +5,24 @@ import string
 import random
 from systemoversikt.models import *
 from django.contrib.auth.models import Permission
+import datetime
 
 register = template.Library()
+
+@register.filter
+def quarter(value):
+	if isinstance(value, datetime.date):
+		month = value.month
+		if month in [1, 2, 3]:
+			return "Q1"
+		elif month in [4, 5, 6]:
+			return "Q2"
+		elif month in [7, 8, 9]:
+			return "Q3"
+		elif month in [10, 11, 12]:
+			return "Q4"
+	return ""
+
 
 @register.filter
 def get_odata_type(value):

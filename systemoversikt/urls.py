@@ -61,6 +61,7 @@ urlpatterns = [
 	re_path(r'^admin/system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
 	re_path(r'^admin/system_til_programvare/(?P<system_id>\d{1,8})/$', views.system_til_programvare, name='system_til_programvare'),
 	re_path(r'^admin/nyheter/$', views.alle_nyheter, name='alle_nyheter'),
+	re_path(r'^admin/bruksstatistikk/$', views.admin_visitors, name='admin_visitors'),
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 
 
@@ -153,8 +154,7 @@ urlpatterns = [
 	re_path(r'^rapport/vulnstats/netteverk/$', views.vulnstats_nettverk, name="vulnstats_nettverk"),
 	re_path(r'^rapport/vulnstats/servere_uten_vuln/$', views.vulnstats_servere_uten_vuln, name="vulnstats_servere_uten_vuln"),
 	re_path(r'^rapport/systemer/forsomt/$', views.rapport_systemer_forsomt, name="rapport_systemer_forsomt"),
-
-
+	re_path(r'^rapport/sikkerhetstester/$', views.rapport_sikkerhetstester, name="rapport_sikkerhetstester"),
 
 
 

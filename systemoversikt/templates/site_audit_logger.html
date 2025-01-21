@@ -19,7 +19,7 @@ De {{aktive_antall_personer}} mest aktive personene siste {{aktive_antall_uker}}
 	<tbody>
 	{% for p in top_users %}
 	<tr>
-		<td>{{ p.user.profile.displayName }}</td>
+		<td>{{ p.user.profile.displayName }} ({{ p.user.profile.virksomhet.virksomhetsforkortelse }})</td>
 		<td>{{ p.count }}</td>
 	</tr>
 	{% endfor %}

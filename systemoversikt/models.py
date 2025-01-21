@@ -5202,14 +5202,14 @@ class Sikkerhetstester(models.Model):
 			choices=TYPE_SIKKERHETSTEST,
 			verbose_name="Type sikkerhetstest",
 			blank=False, null=True,
-			help_text=u"Velg mest aktuelle som definert på <a href='https://confluence.oslo.kommune.no/x/eww4B'>Confluence</a>",
+			help_text=u"Velg mest aktuelle som definert på <a href='https://confluence.oslo.kommune.no/x/eww4B'>Confluence</a> (trenger ny link)",
 			)
 	rapport = models.URLField(
 			verbose_name="Link til rapport",
 			max_length=600,
 			blank=True,
 			null=True,
-			help_text=u"F.eks. på confluence eller til et arkivsystem",
+			help_text=u"Ikke i bruk. Linker brekker..",
 			)
 	dato_rapport = models.DateTimeField(
 			verbose_name="Dato for sluttføring av rapport",
@@ -5224,7 +5224,7 @@ class Sikkerhetstester(models.Model):
 			verbose_name="Testet av (leverandør)",
 			null=True,
 			blank=True,
-			help_text=u'Leverandør som har utført testen',
+			help_text=u'Den som har utført testen, enten en leverandør eller en etat',
 			)
 	notater = models.TextField(
 			verbose_name="Omfang av test og andre notater",

@@ -237,7 +237,7 @@ class SystemList(SimpleListFilter):
 @admin.register(Sikkerhetstester)
 class SikkerhetstesterAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('dato_rapport', 'vis_systemer', 'type_test', 'testet_av', 'rapport', 'notater')
+	list_display = ('dato_rapport', 'vis_systemer', 'type_test', 'testet_av', 'notater')
 	list_filter = ('dato_rapport', SystemList)
 	autocomplete_fields = ('systemer', 'testet_av')
 
@@ -256,6 +256,24 @@ class SikkerhetstesterAdmin(SimpleHistoryAdmin):
 			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.systemer.all()[0].pk}))
 		return super().response_change(request, obj)
 
+
+	fieldsets = (
+			('Registrering', {
+				'fields': (
+					'dato_rapport',
+					'type_test',
+					'systemer',
+					'testet_av',
+					'notater',
+				),
+			}),
+			('Utfaset', {
+				'classes': ('collapse',),
+				'fields': (
+					'rapport',
+				),
+			}),
+		)
 
 
 @admin.register(Autorisasjonsmetode)
