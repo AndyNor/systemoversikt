@@ -4742,6 +4742,7 @@ def search(request):
 		aktuelle_personer = User.objects.filter(username__iexact=search_term)
 		business_services = CMDBRef.objects.filter(navn__icontains=search_term)
 		aktuelle_adgrupper = ADgroup.objects.filter(common_name__icontains=search_term)
+		aktuelle_servere = CMDBdevice.objects.filter(comp_name__icontains=search_term)
 	else:
 		aktuelle_systemer = System.objects.none()
 		potensielle_systemer = System.objects.none()
@@ -4750,6 +4751,7 @@ def search(request):
 		aktuelle_leverandorer = Leverandor.objects.none()
 		business_services = CMDBRef.objects.none()
 		aktuelle_adgrupper = ADgroup.objects.none()
+		aktuelle_servere = CMDBdevice.objects.none()
 
 	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
 		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
@@ -4760,8 +4762,8 @@ def search(request):
 	domenetreff.order_by(Lower('domene'))
 	aktuelle_adgrupper.order_by(Lower('common_name'))
 
-	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
-	systemtyper = Systemtype.objects.all()
+	#from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
+	#systemtyper = Systemtype.objects.all()
 
 	return render(request, 'site_search.html', {
 		'request': request,
@@ -4774,6 +4776,7 @@ def search(request):
 		'aktuelle_leverandorer': aktuelle_leverandorer,
 		'business_services': business_services,
 		'aktuelle_adgrupper': aktuelle_adgrupper,
+		'aktuelle_servere': aktuelle_servere,
 	})
 
 

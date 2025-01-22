@@ -72,9 +72,17 @@
 
 	<hr>
 	<h6>Treff på tilgangsgrupper</h6>
-	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
+	<div style="display: grid; grid-template-columns: repeat(3, 1fr)">
 	{% for adgr in aktuelle_adgrupper %}
 		<a href="{% url 'adgruppe_detaljer' adgr.pk %}">{{ adgr }}</a>
+	{% endfor %}
+	</div>
+
+	<hr>
+	<h6>Treff på servere</h6>
+	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
+	{% for server in aktuelle_servere %}
+		<a href="{% url 'cmdb_devicedetails' server.pk %}">{{ server }}</a>
 	{% endfor %}
 	</div>
 

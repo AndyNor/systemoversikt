@@ -2179,9 +2179,9 @@ class VirtualIPPool(models.Model):
 			)
 	server = models.ForeignKey(
 			to='CMDBdevice',
+			related_name='vip_pool',
 			on_delete=models.SET_NULL,
 			null=True,
-			related_name='vip_pool',
 			verbose_name="Server",
 			)
 	def __str__(self):
@@ -2752,6 +2752,15 @@ class CMDBdevice(models.Model):
 	derived_os_endoflife = models.BooleanField(default=False)
 	power = models.FloatField(
 			verbose_name="Kwh",
+			null=True, blank=True,
+			)
+	service_now_install_status = models.CharField(
+			verbose_name="Install status fra service now",
+			max_length=200,
+			null=True, blank=True,
+			)
+	service_now_last_updated = models.DateTimeField(
+			verbose_name="Dato sist skannet av Service Now",
 			null=True, blank=True,
 			)
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres

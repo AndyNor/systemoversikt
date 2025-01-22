@@ -11,16 +11,15 @@
 
 {% block hovedinnhold %}
 
+<h5>Basis</h5>
 <table class="table">
 <thead>
 	<tr>
 		<th>Enhetsnavn</th>
 		<th>Type enhet</th>
+		<th>Lokasjon</th>
+		<th>Sist skannet</th>
 		<th>Operativsystem</th>
-		<th>IP</th>
-		<th>DNS</th>
-		<th>VLAN</th>
-		<th>Lastbalansering</th>
 		<th>Service offering</th>
 		<th>Beskrivelse og kommentar</th>
 	</tr>
@@ -29,12 +28,50 @@
 	<tr>
 		<td>{{ device.comp_name }}</td>
 		<td>
-			{{ device.device_type|lower|capfirst }}
+			{{ device.device_type|lower|capfirst }}<br>
+			{% if device.service_now_install_status %}
+			({{ device.service_now_install_status|default:"" }})
+			{% endif %}
+		</td>
+		<td>{{ device.comp_location }}</td>
+		<td>
+			{{ device.service_now_last_updated|date:"Y-m-d"|default:"Ukjent" }}<br>
+			{% if device.service_now_last_updated %}
+			({{ device.service_now_last_updated|timesince }})<br>
+			{% endif %}
 		</td>
 		<td>
 			{{ device.comp_os_readable|default:"?" }}
 			{% if device.derived_os_endoflife %}<br>(end of life){% endif %}
 		</td>
+		<td>
+		{% for offering in device.service_offerings.all %}
+			{% url 'cmdb_bss' pk=offering.pk as url_cmdb_bss %}
+			<a href="{{ url_cmdb_bss }}">{{ offering }}</a>
+		{% empty %}
+			Mangler kobling i Service Now
+		{% endfor %}
+		</td>
+		<td>
+			{% if device.description %}{{ device.description }}<br>{% endif %}
+			{% if device.comments %}{{ device.comments }}<br>{% endif %}
+		</td>
+	</tr>
+</tbody>
+</table>
+
+<h5>Nettverk</h5>
+<table class="table">
+<thead>
+	<tr>
+		<th>IP</th>
+		<th>DNS</th>
+		<th>VLAN</th>
+		<th>Lastbalansering</th>
+	</tr>
+</thead>
+<tbody>
+	<tr>
 		<td>{{ device.comp_ip_address|default:"?" }}</td>
 		<td>{{device.dns|default:"Ingen"}}</td>
 		<td>{{ device.vlan|default:"?"}} </td>
@@ -49,16 +86,6 @@
 		{% empty %}
 			Ingen
 		{% endfor %}
-		</td>
-		<td>
-		{% for offering in device.service_offerings.all %}
-			{% url 'cmdb_bss' pk=offering.pk as url_cmdb_bss %}
-			<a href="{{ url_cmdb_bss }}">{{ offering }}</a>
-		{% endfor %}
-		</td>
-		<td>
-			{% if device.description %}{{ device.description }}<br>{% endif %}
-			{% if device.comments %}{{ device.comments }}<br>{% endif %}
 		</td>
 	</tr>
 </tbody>
@@ -87,9 +114,9 @@
 				{% if not forloop.last %} +
 				{% endif %}
 			{% endfor %}</td>
-		<td>{{ device.vm_disk_allocation|filesizeformat }}</td>
-		<td>{{ device.vm_disk_usage|filesizeformat }}</td>
-		<td>{{ device.vm_disk_tier }}</td>
+		<td>{{device.comp_disk_space|filesizeformat}} (CMDB)<br>{{ device.vm_disk_allocation|filesizeformat }} (VMware)</td>
+		<td>{{ device.vm_disk_usage|filesizeformat }} (VMware)</td>
+		<td>{{ device.vm_disk_tier }} (VMware)</td>
 		<td>
 		{% for p in device.cmdbdisk_computer.all %}
 			<li>

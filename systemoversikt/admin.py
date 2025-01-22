@@ -1490,6 +1490,7 @@ class CMDBdeviceAdmin(admin.ModelAdmin):
 	list_filter = ('device_type', 'comp_os_readable', 'client_sist_sett',)
 	autocomplete_fields = ('client_last_loggedin_user',)
 	filter_horizontal = ('service_offerings',)
+	#readonly_fields = [f.name for f in CMDBdevice._meta.get_fields()] # virker ikke
 
 @admin.register(CMDBDisk)
 class UserChangeLogAdmin(admin.ModelAdmin):
