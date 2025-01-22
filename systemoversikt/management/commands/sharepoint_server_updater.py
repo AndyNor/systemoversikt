@@ -281,6 +281,23 @@ class Command(BaseCommand):
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				vmware_data = dfRaw.to_dict('records')
 
+				# er det duplikater i vmware-dataene? (kommer egentlig fra powerbi-rapport)
+				alle_systemnavn_vmware = [vm["Machine Name"].lower() for vm in vmware_data]
+				print(f"VMware-filen har {len(alle_systemnavn_vmware)} systemer, men kun {len(set(alle_systemnavn_vmware))} unike.")
+				duplicates = [item for item, count in Counter(alle_systemnavn_vmware).items() if count > 1]
+				print(f"Duplikater VMware: {duplicates}")
+
+				# hva er i vmware-data, men ikke i CMDB-data?
+				print(f"Det som kun er i VMware-data:")
+				print(list(set(alle_systemnavn_vmware) - set(alle_systemnavn)))
+
+				# hva er i CMDB-data, men ikke i vmware-data?
+				print(f"Det som kun er i CMDB-data:")
+				print(list(set(alle_systemnavn) - set(alle_systemnavn_vmware)))
+
+
+
+				# laste inn nye data fra vmware-filen
 				for idx, vm in enumerate(vmware_data):
 
 					if idx % 300 == 0:
