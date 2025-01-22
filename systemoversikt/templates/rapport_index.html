@@ -80,6 +80,9 @@
 		{% url 'azure_application_keys_active' as url_azure_application_keys_active %}
 		<a href="{{ url_azure_application_keys_active }}" class="btn btn-sm btn-link {% if url_azure_application_keys_active in request.path %}fremhev{% endif %}">Aktive nøkler</a><br>
 
+		{% url 'rapport_conditional_access' as url_rapport_conditional_access %}
+		<a href="{{ url_rapport_conditional_access }}" class="btn btn-sm btn-link {% if url_rapport_conditional_access in request.path %}fremhev{% endif %}">Conditional Access-regler</a><br>
+
 
 
 	<hr><h6>Active Directory</h6>

@@ -63,6 +63,18 @@ class EntraIDConditionalAccessPolicies(models.Model):
 	class Meta:
 		verbose_name_plural = "Azure: Conditional Access policyer"
 		default_permissions = ('add', 'change', 'delete', 'view')
+		get_latest_by = 'timestamp'
+
+	def changes_to_json(self):
+		import ast
+		try:
+			return json.dumps(ast.literal_eval(self.changes), indent=4)
+		except:
+			return {}
+
+	def json_policy_as_json(self):
+		return json.loads(self.json_policy)
+
 
 
 class CitrixPublication(models.Model):

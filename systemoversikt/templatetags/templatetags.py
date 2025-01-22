@@ -33,6 +33,14 @@ def get_odata_type(value):
 	return value.get('@odata.type', '')
 
 
+@register.filter
+def json_indent(value):
+	try:
+		return json.dumps(value, indent=4)
+	except:
+		'filter "json_indent" feilet'
+
+
 @register.simple_tag
 def group_from_permission(permission_str):
 	try:

@@ -1757,6 +1757,26 @@ def azure_user_consents(request):
 	})
 
 
+
+def rapport_conditional_access(request):
+	required_permissions = ['systemoversikt.view_entraidconditionalaccesspolicies']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	antall_siste_endringer = 10
+
+	ca_regler_endringer = EntraIDConditionalAccessPolicies.objects.filter(modification=True).order_by('-timestamp')[:antall_siste_endringer]
+	ca_regler_nyeste = EntraIDConditionalAccessPolicies.objects.latest()
+
+	return render(request, 'rapport_conditional_access.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'antall_siste_endringer': antall_siste_endringer,
+		'ca_regler_endringer': ca_regler_endringer,
+		'ca_regler_nyeste': ca_regler_nyeste,
+	})
+
+
 def admin_visitors(request): # brukerstatisikk
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):

@@ -1,0 +1,60 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block overskrift %}
+	Azure felles: Conditional Access-regler
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Denne rapporten gir en oversikt over endringer på Conditional Access-regler i felles Azure-tenant.
+Hver natt lastes alle regler inn via et API, og sammenliknes med regelen fra dagen før.</p>
+
+<h5>CA-regler nå (sist synkronisering)</h5>
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Regel</th>
+	<th>Controls</th>
+	<th>Conditions</th>
+</tr>
+</thead>
+<tbody>
+{% for regel in ca_regler_nyeste.json_policy_as_json.value %}
+<tr>
+	<td width="20%">{{regel.displayName}} ({{regel.state}})</td>
+	<td width="40%">
+		<h6>Grant controls</h6>
+		<pre style="max-width: 500px; overflow: auto;">{{regel.grantControls|json_indent}}</pre>
+		<h6>Session controls</h6>
+		<pre style="max-width: 500px; overflow: auto;">{{regel.sessionControls|json_indent}}</pre>
+	</td>
+	<td width="40%"><pre style="max-width: 500px; overflow: auto;">{{regel.conditions|json_indent}}</pre></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<hr>
+
+<h5>De siste {{ antall_siste_endringer }} endringene på CA-regler</h5>
+<table class="table table-sm">
+<thead>
+<tr>
+	<th>Dato</th>
+	<th>Endring</th>
+</tr>
+</thead>
+<tbody>
+{% for ca in ca_regler_endringer %}
+<tr>
+	<td>{{ ca.timestamp }}</td>
+	<td><pre>{{ ca.changes_to_json }}</pre></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock hovedinnhold %}
