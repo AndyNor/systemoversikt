@@ -2761,10 +2761,8 @@ class CMDBdevice(models.Model):
 			max_length=500,
 			null=True, blank=True,
 			)
-	derived_os_endoflife = models.BooleanField(default=False)
-	power = models.FloatField(
-			verbose_name="Kwh",
-			null=True, blank=True,
+	derived_os_endoflife = models.BooleanField(
+			default=False
 			)
 	service_now_install_status = models.CharField(
 			verbose_name="Install status fra service now",
