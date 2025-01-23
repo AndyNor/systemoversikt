@@ -273,7 +273,6 @@ class Command(BaseCommand):
 				dfRaw = pd.read_excel(vmware_destination_file, sheet_name='Export', skiprows=0, usecols=[
 						'Machine Name',
 						'Allocated Disk Volume (GB)',
-						'Power Consumption',
 						'Used Disk Volume (GB)',
 						'Disk Tier',
 					])
@@ -282,18 +281,18 @@ class Command(BaseCommand):
 				vmware_data = dfRaw.to_dict('records')
 
 				# er det duplikater i vmware-dataene? (kommer egentlig fra powerbi-rapport)
-				alle_systemnavn_vmware = [vm["Machine Name"].lower() for vm in vmware_data]
-				print(f"VMware-filen har {len(alle_systemnavn_vmware)} systemer, men kun {len(set(alle_systemnavn_vmware))} unike.")
-				duplicates = [item for item, count in Counter(alle_systemnavn_vmware).items() if count > 1]
-				print(f"Duplikater VMware: {duplicates}")
+				#alle_systemnavn_vmware = [vm["Machine Name"].lower() for vm in vmware_data]
+				#print(f"VMware-filen har {len(alle_systemnavn_vmware)} systemer, men kun {len(set(alle_systemnavn_vmware))} unike.")
+				#duplicates = [item for item, count in Counter(alle_systemnavn_vmware).items() if count > 1]
+				#print(f"Duplikater VMware: {duplicates}")
 
 				# hva er i vmware-data, men ikke i CMDB-data?
-				print(f"Det som kun er i VMware-data:")
-				print(list(set(alle_systemnavn_vmware) - set(alle_systemnavn)))
+				#print(f"Det som kun er i VMware-data:")
+				#print(list(set(alle_systemnavn_vmware) - set(alle_systemnavn)))
 
 				# hva er i CMDB-data, men ikke i vmware-data?
-				print(f"Det som kun er i CMDB-data:")
-				print(list(set(alle_systemnavn) - set(alle_systemnavn_vmware)))
+				#print(f"Det som kun er i CMDB-data:")
+				#print(list(set(alle_systemnavn) - set(alle_systemnavn_vmware)))
 
 
 
@@ -311,15 +310,12 @@ class Command(BaseCommand):
 						cmdbdevice.vm_disk_allocation = (float(vm["Allocated Disk Volume (GB)"]) * 1000 ** 3) if vm["Allocated Disk Volume (GB)"] != "" else 0
 						cmdbdevice.vm_disk_usage = (float(vm["Used Disk Volume (GB)"]) * 1000 ** 3) if vm["Used Disk Volume (GB)"] != "" else 0
 						cmdbdevice.vm_disk_tier = vm["Disk Tier"]
-						cmdbdevice.power = float(vm["Power Consumption"]) if vm["Power Consumption"] != "" else 0
 						cmdbdevice.save()
 
 
 				#oppsummering og logging
 				runtime_t1 = time.time()
 				total_runtime = round(runtime_t1 - runtime_t0, 1)
-
-
 
 				logg_entry_message = f'Importen inneholder {antall_records} servere. {nye_servere_importert} nye servere ble importert. {server_dropped} manglet navn. Slettet {antall_ikke_oppdatert} gamle serere som ikke ble sett: {tekst_ikke_oppdatert}. Det var {servere_uten_offering} servere uten knytning til service offering. Duplikater: {duplicates}. Import tok {total_runtime} sekunder.'
 				logg_entry = ApplicationLog.objects.create(
