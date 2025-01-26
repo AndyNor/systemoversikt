@@ -4,13 +4,21 @@
 {% load templatetags %}
 
 {% block overskrift %}
-	Detaljer for {{ programvare.programvarenavn }} (programvare)
+	{{ programvare.programvarenavn }} (programvare)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
+	<img src="{% static 'programvare.png' %}" style="float: left; margin: 0px;">
+
 	{% if user.is_authenticated %}
-		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/programvare/{{ programvare.pk }}/change/">{% include 'site_edit_button.html' %} Rediger</a>
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/programvare/{{ programvare.pk }}/change/">{% include 'site_edit_button.html' %} Rediger {{ programvare.programvarenavn }}</a>
+	{% endif %}
+
+	{% if programvare.til_cveoversikt_og_nyheter %}
+		<p style="color: green;">Overføres til sårbarhetsoversikten</p>
+	{% else %}
+		<p style="color: red;">Overføres ikke til sårbarhetsoversikten</p>
 	{% endif %}
 
 	<hr>

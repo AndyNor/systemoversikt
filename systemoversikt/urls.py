@@ -190,6 +190,7 @@ urlpatterns = [
 	re_path(r'^virksomhet/kontaktinfo/$', views.alle_virksomheter_kontaktinfo, name='alle_virksomheter_kontaktinfo'),
 	re_path(r'^virksomhet/alle/$', views.alle_virksomheter, name='alle_virksomheter_sidemeny'),
 	re_path(r'^virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet, name='virksomhet'),
+	re_path(r'^virksomhet/figur/system_seksjon/(?P<pk>\d{1,8})/$', views.virksomhet_figur_system_seksjon, name='virksomhet_figur_system_seksjon'),
 	re_path(r'^virksomhet/passwdexpire/(?P<pk>\d{1,8})/$', views.passwordexpire, name='passwordexpire'),
 	re_path(r'^virksomhet/tomepost/(?P<pk>\d{1,8})/$', views.tom_epost, name='tom_epost'),
 	re_path(r'^virksomhet/vanlige_brukere/(?P<pk>\d{1,8})/$', views.ansatte_virksomhet, name='ansatte_virksomhet'),

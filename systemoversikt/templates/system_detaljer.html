@@ -19,11 +19,28 @@
 
 {% block hovedinnhold %}
 
-	{% if systemdetaljer.ibruk == False %}
-	<div class="alert alert-warning" role="alert">
-		Dette systemet er markert som ikke i bruk. {{systemdetaljer.get_livslop_status_display}}.
+
+	<div style="margin: 10px;">
+		<a href="{{ url_systemdetaljer }}" style="float: left; margin: 10px;">
+			{% if systemdetaljer.er_infrastruktur %}
+			<img src="{% static 'infra.png' %}">
+			{% elif systemdetaljer.er_integrasjon %}
+			<img src="{% static 'integrasjon.png' %}">
+			{% elif systemdetaljer.driftsmodell_foreignkey.type_plattform == 2 %} {% comment %} public cloud {% endcomment %}
+			<img src="{% static 'sky.png' %}">
+			{% else %}
+			<img src="{% static 'system.png' %}">
+			{% endif %}
+		</a>
+
+			{% if systemdetaljer.driftsmodell_foreignkey %}{{ systemdetaljer.driftsmodell_foreignkey }}{% endif %}
+			{% if systemdetaljer.livslop_status == 1 %}<span style="color:green;">Under innføring</span>{% endif %}
+			{% if systemdetaljer.livslop_status == 5 %}<span style="color:red;">Skal byttes ut</span>{% endif %}
+			{% if systemdetaljer.livslop_status == 6 %}<span style="color:red;">Under avvikling</span>{% endif %}
+			{% if systemdetaljer.livslop_status == 7 %}<span style="color:red;">Er avviklet</span>{% endif %}
 	</div>
-	{% endif %}
+
+	<hr>
 
 	{% if user.is_authenticated %}
 		<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/"
@@ -32,12 +49,10 @@
 
 	<hr>
 
-	<h6 style="margin: 0 200px 25px 35px;">
-		{{ systemdetaljer.systembeskrivelse|default:"Ingen beskrivelse oppgitt"|linebreaks }}
-	</h6>
+	<h6>{{ systemdetaljer.systembeskrivelse|default:"Ingen beskrivelse oppgitt"|linebreaks }}</h6>
 
 	{% if systemdetaljer.programvarer.count > 0 %}
-		<br><hr>
+		<hr>
 		Programvare benyttet av systemet<br>
 		<div>
 		{% for programvare in systemdetaljer.programvarer.all %}
@@ -61,7 +76,7 @@
 	{% endif %}
 
 	{% if systemdetaljer.systemurl.count > 0 %}
-	<br>Webpubliseringer
+	<hr>Webpubliseringer
 	<div class="row">
 		<div class="col-12">
 			{% for url in systemdetaljer.systemurl.all %}

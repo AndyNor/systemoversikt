@@ -5882,31 +5882,7 @@ def systemer_virksomhet_ansvarlig_for_fip(request, pk):
 	})
 
 
-
-def virksomhet(request, pk):
-	#Vise detaljer om en valgt virksomhet
-	required_permissions = ['systemoversikt.view_system']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	virksomhet = Virksomhet.objects.get(pk=pk)
-	antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
-	antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
-
-	systemforvalter_ikke_kvalitetssikret = System.objects.filter(systemforvalter=pk).filter(informasjon_kvalitetssikret=False).count()
-	systemeier_ikke_kvalitetssikret = System.objects.filter(systemeier=pk).filter(informasjon_kvalitetssikret=False).count()
-
-	deaktiverte_brukere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).filter(brukernavn__profile__accountdisable=True).count()
-	ant_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).count()
-	behandling_ikke_kvalitetssikret = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(informasjon_kvalitetssikret=False).count()
-
-	ant_systemer_bruk = SystemBruk.objects.filter(brukergruppe=pk).count()
-	ant_systemer_eier = System.objects.filter(systemeier=pk).count()
-	ant_systemer_forvalter = System.objects.filter(systemforvalter=pk).count()
-	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=3)
-
-	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk).filter(~Q(ibruk=False)).count()
-
+def _collect_system_graph_data(pk, kilde="tjenester"):
 	nodes = []
 	parents = []
 
@@ -5931,8 +5907,21 @@ def virksomhet(request, pk):
 		parents.append('Ukjent')
 		return 'Ukjent'
 
-	antall_graph_noder = System.objects.filter(systemforvalter=pk).filter(~Q(livslop_status__in=[6,7])).count()
-	for system in System.objects.filter(systemforvalter=pk).filter(~Q(livslop_status__in=[6,7])).order_by('systemnavn'):
+	if kilde == "tjenester":
+		relevante_systemer = (System.objects.filter(systemforvalter=pk)
+									.filter(~Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True))
+									.filter(~Q(livslop_status__in=[6,7]))
+									.order_by('systemnavn')
+									)
+
+	if kilde == "infrastruktur":
+		relevante_systemer = (System.objects.filter(systemforvalter=pk)
+									.filter(Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True))
+									.filter(~Q(livslop_status__in=[6,7]))
+									.order_by('systemnavn')
+									)
+
+	for system in relevante_systemer:
 		if system.er_ibruk():
 			nodes.append({
 				'data': {
@@ -5944,8 +5933,6 @@ def virksomhet(request, pk):
 					'href': f'/systemer/detaljer/{system.pk}/',
 				}
 			})
-
-	#print(list(set(parents)))
 
 	all_parents = list(set(parents))
 	work_queue = list(set(parents))
@@ -5962,7 +5949,6 @@ def virksomhet(request, pk):
 				#print(f"{item.direkte_mor} var allerede lagt til")
 				pass
 
-
 	for p in all_parents:
 		if p == 'Ukjent':
 			nodes.append({'data': {'id': p, 'name': p, 'color': 'white', 'shape': 'rectangle',}},)
@@ -5975,6 +5961,54 @@ def virksomhet(request, pk):
 		else:
 			nodes.append({'data': {'id': f"org_{p.pk}", 'name': p.ou, 'color': 'white', 'shape': 'rectangle',}},)
 
+	return nodes
+
+
+
+def virksomhet_figur_system_seksjon(request, pk):
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	kilde = request.GET.get('kilde', None)
+	from systemoversikt.models import SYSTEM_COLORS
+
+	return render(request, 'virksomhet_figur_system_seksjon.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': virksomhet,
+		'nodes': _collect_system_graph_data(pk, kilde=kilde),
+		'system_colors': SYSTEM_COLORS,
+		'kilde': kilde,
+	})
+
+
+
+def virksomhet(request, pk):
+	#Vise detaljer om en valgt virksomhet
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
+	antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
+
+	systemforvalter_ikke_kvalitetssikret = System.objects.filter(systemforvalter=pk).filter(informasjon_kvalitetssikret=False).count()
+	systemeier_ikke_kvalitetssikret = System.objects.filter(systemeier=pk).filter(informasjon_kvalitetssikret=False).count()
+
+	deaktiverte_brukere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).filter(brukernavn__profile__accountdisable=True).count()
+	ant_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).count()
+	behandling_ikke_kvalitetssikret = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(informasjon_kvalitetssikret=False).count()
+
+	ant_systemer_bruk = SystemBruk.objects.filter(brukergruppe=pk).count()
+	ant_systemer_eier = System.objects.filter(systemeier=pk).count()
+	ant_systemer_forvalter = System.objects.filter(systemforvalter=pk).count()
+	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=3)
+
+
+	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk).filter(~Q(ibruk=False)).count()
 	from systemoversikt.models import SYSTEM_COLORS
 
 	return render(request, 'virksomhet_detaljer.html', {
@@ -5993,8 +6027,8 @@ def virksomhet(request, pk):
 		'ant_systemer_eier': ant_systemer_eier,
 		'ant_systemer_forvalter': ant_systemer_forvalter,
 		'systemer_drifter': systemer_drifter,
-		'nodes': nodes,
-		'node_size': 600 + 5 * antall_graph_noder,
+		'nodes_tjenester': _collect_system_graph_data(pk, kilde="tjenester"),
+		'nodes_infra': _collect_system_graph_data(pk, kilde="infrastruktur"),
 		'system_colors': SYSTEM_COLORS,
 	})
 

@@ -1,0 +1,150 @@
+{% load static %}
+{% load templatetags %}
+
+{% block ekstrajavascript %}
+
+	<!-- CSS includes-->
+	<link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
+	<link rel="stylesheet" href="{% static 'tablesorter/theme.default.css' %}">
+	<link rel="stylesheet" href="{% static 'tablesorter/filter.formatter.css' %}">
+
+
+	<!-- JavaScript includes -->
+	<script src="{% static 'jquery/jquery-3.3.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'bootstrap/bootstrap.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tablesorter/jquery.tablesorter.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tablesorter/jquery.tablesorter.widgets.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tablesorter/parser-network.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'floatThead/jquery.floatThead.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tableexport/xlsx.core.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tableexport/FileSaver.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tableexport/tableexport.js' %}" nonce="{{request.csp_nonce}}"></script>
+
+	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+
+
+{% endblock ekstrajavascript %}
+
+
+{% block hovedinnhold %}
+
+
+		<h3>{{kilde|capfirst}} fordelt på seksjoner for {{virksomhet}}</h3>
+
+		<div style="float: left; border: solid 1px black; margin-left: 5px; padding: 8px; font-size: 10px; background-color: {{system_colors.drift_uke_privat}}; text-align: center;">Privat datasenter</div>
+		<div style="float: left; border: solid 1px black; margin-left: 5px; padding: 8px; font-size: 10px; background-color: {{system_colors.drift_uke_sky}}; text-align: center;">Offentlig sky</div>
+		<div style="float: left; border: solid 1px black; margin-left: 5px; padding: 8px; font-size: 10px; background-color: {{system_colors.saas}}; text-align: center;">SaaS</div>
+		<div style="float: left; border: solid 1px black; margin-left: 5px; padding: 8px; font-size: 10px; background-color: {{system_colors.samarbeidspartner}}; text-align: center;">Samarbeidspartner</div>
+		<div style="float: left; border: solid 1px black; margin-left: 5px; padding: 8px; font-size: 10px; background-color: {{system_colors.ukjent}}; text-align: center;">Ukjent drift</div>
+
+		<br><hr>
+
+		<div id="cy" style="width: 100%; height: 100%;"></div>
+
+
+	</div>
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+
+var cy = cytoscape({
+	zoomingEnabled: true,
+	wheelSensitivity: 0.1,
+	userZoomingEnabled: true,
+	panningEnabled: true,
+	container: document.getElementById('cy'),
+	elements: {
+		nodes: [
+			{% for node in nodes %}
+				{{ node|safe }},
+			{% endfor %}
+		],
+		edges: [
+		],
+	},
+	style: [
+		{
+			selector: 'node',
+			style: {
+				'label': 'data(name)',
+				'shape': 'data(shape)',
+				'background-color': 'data(color)',
+				'width': '120',
+				'height': '20',
+				'font-size': '11',
+				'text-valign': 'center',
+				'text-wrap': 'wrap',
+				'text-max-width': "150",
+			},
+		},
+		{
+			selector: 'node:selected',
+			style: {
+			},
+		},
+		{
+			selector: 'edge',
+			style: {
+				'target-arrow-shape': 'triangle',
+				'curve-style': 'bezier',
+				'line-style': 'data(linestyle)',
+			},
+		},
+		{
+			selector: 'edge:selected',
+			style: {
+			},
+		},
+		{
+			selector: ':parent',
+			style: {
+				'label': 'data(name)',
+				'font-size': '12',
+				'line-style': "dotted",
+				'background-color': 'data(color)',
+				'text-valign': 'top',
+				'text-max-width': "400",
+			}
+		},
+	],
+});
+
+// Apply the layout and then fit the graph
+cy.layout({ name: 'fcose' }).run();
+cy.fit();
+
+// Function to adjust the zoom and pan to move the graph to the top
+function adjustZoomAndPan() {
+	let boundingBox = cy.elements().boundingBox();
+	let cyHeight = cy.container().clientHeight;
+	let zoomLevel = cyHeight / boundingBox.h;
+	cy.zoom(zoomLevel);
+	cy.pan({ x: 0, y: 0 });
+}
+
+// Call the function to adjust the zoom and pan
+adjustZoomAndPan();
+
+cy.on('tap', 'node', function(){
+	if (this.data('href')) {
+		try { // your browser may block popups
+			window.open( this.data('href'), "_blank" );
+		} catch(e){ // fall back on url change
+			window.location.href = this.data('href');
+		}
+	}
+});
+
+</script>
+
+
+
+
+{% endblock script_append %}

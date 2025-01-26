@@ -4105,13 +4105,13 @@ class Database(models.Model):
 
 
 SYSTEM_COLORS = {
-	"samarbeidspartner": "#FFCA28",
+	"samarbeidspartner": "#ffde76",
 	"ukjent": '#E0E0E0',
-	"saas": '#81C784',
-	"drift_uke_privat": '#E57373',
-	"drift_uke_sky": '#FFCDD2',
-	"drift_virksomhet_privat": '#64B5F6',
-	"drift_virksomhet_sky": '#BBDEFB',
+	"saas": '#c89df9',
+	"drift_uke_privat": '#b7eb95',
+	"drift_uke_sky": '#aac1ff',
+	"drift_virksomhet_privat": '#b7eb95',
+	"drift_virksomhet_sky": '#aac1ff',
 	"infrastruktur": '#d2b5d9',
 	"integrasjon": '#b189bb',
 	"egenutviklet": '#e3b27f',
