@@ -143,7 +143,7 @@ class Command(BaseCommand):
 			#opprydding alle nettverksenheter som ikke er sett ved oppdatering
 			for_gammelt = timezone.now() - timedelta(hours=12) # 12 timer gammelt, scriptet bruker bare noen minutter..
 			ikke_oppdatert = CMDBdevice.objects.filter(device_type="NETWORK").filter(sist_oppdatert__lte=for_gammelt)
-			tekst_ikke_oppdatert = ",".join(ikke_oppdatert)
+			tekst_ikke_oppdatert = ",".join(device.comp_name for device in ikke_oppdatert)
 			antall_ikke_oppdatert = ikke_oppdatert.count()
 			ikke_oppdatert.delete()
 
