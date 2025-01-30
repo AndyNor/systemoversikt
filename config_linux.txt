@@ -1,0 +1,112 @@
+# sjekke OS versjon
+cat /etc/os-release
+
+# sjekke hostname
+hostname
+
+# sjekke IP-adresse
+ip addr
+
+# skru av selinux
+sudo setenforce 0 # stoppe selinux
+sudo nano /etc/selinux/config <-- "SELINUX=disabled"
+
+# installere editor Nano
+sudo dnf install nano
+
+# stoppe firewall lokalt, da det er brannmur på wmvare-laget
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+
+# justere på DNS ved behov
+nano /etc/resolv.conf
+
+# automatiske oppdateringer
+sudo dnf check-update
+sudo systemctl enable --now dnf-automatic.timer
+rpm -qi dnf-automatic
+
+# installere bibliotek
+sudo dnf install epel-release -y
+sudo dnf install dnf-automatic
+sudo dnf install python39, python39-devel, git, openldap-devel, gcc, httpd
+
+# starte httpd
+sudo systemctl enable httpd.service
+sudo systemctl start httpd.service
+
+# sjekk at nok diskplass er tildelt /var og eventuelt legge til mer ubrukt plass
+df -h
+sudo vgs
+sudo lvextend -L +25G /dev/mapper/system-var -r
+
+# opprette grupper og brukere
+sudo groupadd kartoteket
+cat /etc/group | grep kartoteket
+
+sudo usermod -a -G kartoteket <BRUKER>
+sudo usermod -a -G kartoteket apache
+groups apache
+
+# opprette lokasjon for kildekode
+sudo mkdir /var/kartoteket
+sudo chown <BRUKER> /var/kartoteket/
+chgrp -R kartoteket /var/kartoteket/
+ls -lha
+
+# intallere postgresql
+dnf module list postgresql
+sudo dnf module enable postgresql:16
+sudo apt-get install postgresql postgresql-contrib
+sudo postgresql-setup --initdb
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+psql --version
+sudo -u postgres psql
+\l
+\du
+CREATE DATABASE kartoteket; CREATE USER django_server WITH ENCRYPTED PASSWORD '<HEMMELIG>';
+ALTER ROLE django_server SET client_encoding TO 'utf8';
+ALTER ROLE django_server SET default_transaction_isolation TO 'read committed';
+ALTER ROLE django_server SET timezone TO 'UTC';
+GRANT ALL PRIVILEGES ON DATABASE mydb TO django_server;
+\q
+
+# lage environment inne i kildekodemappen
+python3.9 -m venv /var/kartoteket/virtualenv/py39
+touch /var/kartoteket/start
+chmod +x /var/kartoteket/start
+nano /var/kartoteket/start <-- innhold fra fil inn hit
+
+# lage link til home-mappe
+ln -s /var/kartoteket/start start
+
+# klone kildekode fra GIT
+cd /var/kartoteket/source/
+git clone https://github.com/AndyNor/systemoversikt.git
+cd /var/kartoteket/source/systemoversikt/
+pip install --upgrade pip
+pip install -r requirements.txt
+cp this_env.example.py this_env.py <-- sette opp riktig miljø i filen
+
+# legge inn hemmeligheter
+cp secrets_test.example.py secrets_prod.py
+
+mkdir /var/kartoteket/source/systemoversikt/systemoversikt/pki/
+
+nano build <-- kopier inn fra kildefil
+
+chmod +x build
+
+# endre slik at sudo passord ikke er nødvendig for kartotekbruker
+visudo /etc/sudoers.d/xhttpd <-- "%kartoteket ALL=NOPASSWD: /bin/systemctl restart httpd.service"
+
+mod_wsgi-express module-config <-- LoadModule wsgi_module "/var/kartoteket/virtualenv/py39/lib64/python3.9/site-packages/mod_wsgi/server/mod_wsgi-py39.cpython-39-x86_64-linux-gnu.so"
+WSGIPythonHome "/var/kartoteket/virtualenv/py39"
+
+sudo nano /etc/httpd/conf.d/django.conf <-- last inn config her
+
+sudo nano /etc/httpd/conf/httpd.conf  <-- last inn config her
+
+# sette opp con-jobber for backup og nattlige jobber
+# egen fil med oppsett i git

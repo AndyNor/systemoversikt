@@ -62,7 +62,7 @@ class Command(BaseCommand):
 
 			if os.environ['THIS_ENV'] == "PROD":
 				url = os.environ["PRK_ORG_URL"]
-				apikey = os.environ["PRK_GENERELLEKSPORT_APIKEY"]
+				apikey = os.environ["PRK_ORG_APIKEY"]
 				headers = {"apikey": apikey}
 
 				print("Kobler til %s" % url)
