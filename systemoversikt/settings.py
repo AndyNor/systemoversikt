@@ -163,12 +163,27 @@ WSGI_APPLICATION = 'systemoversikt.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
-DATABASES = {
-	'default': {
-		'ENGINE': 'django.db.backends.sqlite3',
-		'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+if THIS_ENVIRONMENT == "TEST":
+	DATABASES = {
+		'default': {
+			'ENGINE': 'django.db.backends.sqlite3',
+			'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+		}
 	}
-}
+
+if THIS_ENVIRONMENT == "PROD":
+	DATABASES = {
+		'default': {
+			'ENGINE': 'django.db.backends.postgresql',
+			'NAME': 'kartoteket',
+			'USER': os.environ["POSTGRES_USER"],
+			'PASSWORD': os.environ["POSTGRES_PASSWORD"],
+			'HOST': 'localhost',
+			'PORT': '5432',
+		}
+	}
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
