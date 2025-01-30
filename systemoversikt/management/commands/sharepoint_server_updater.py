@@ -133,11 +133,27 @@ class Command(BaseCommand):
 
 
 				def get_cmdb_instance(comp_name):
-					try:
-						return CMDBdevice.objects.get(comp_name=comp_name.lower())
-					except:
-						return None
+					comp_name = comp_name.lower()
 
+					try:
+						return CMDBdevice.objects.get(comp_name=comp_name)
+					except:
+						pass
+
+					comp_name = comp_name.replace(".oslo.kommune.no", "")
+					try:
+						return CMDBdevice.objects.get(comp_name=comp_name)
+					except:
+						pass
+
+					if "-" in comp_name:
+						comp_name = '-'.join(comp_name.split("-")[:-1]) # alt unntatt siste "-ettellernannet"
+						try:
+							return CMDBdevice.objects.get(comp_name=comp_name)
+						except:
+							pass
+
+					return None
 
 				def get_or_create_cmdb_instance(comp_name):
 					try:

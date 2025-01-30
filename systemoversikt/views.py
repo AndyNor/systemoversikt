@@ -2557,27 +2557,37 @@ def cmdb_backup_index(request):
 
 	sum_offering_all = 0
 	for offering in offering_all:
+		offering.size = offering.backup_size()
 		sum_offering_all += offering.backup_size()
 
+	num_offerings_show = 30
+	offerings_sorted = sorted(offering_all, key=lambda item: item.size, reverse=True)[0:num_offerings_show]
+
 	volum_servere_d30 = 0
-	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30"):
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30").filter(~Q(environment__in=[2,3,4,5,6,7,8])):
 		volum_servere_d30 += backup_data.backup_size_bytes
 
 	volum_oracle_d40 = 0
-	for backup_data in CMDBbackup.objects.filter(backup_frequency="D40"):
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D40").filter(~Q(environment__in=[2,3,4,5,6,7,8])):
 		volum_oracle_d40 += backup_data.backup_size_bytes
 
 	volum_file_exch_DWMY = 0
-	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30-W13-M12-Y10").filter(~Q(device_str__icontains="SQL")):
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30-W13-M12-Y10").filter(~Q(device_str__icontains="SQL")).filter(~Q(environment__in=[2,3,4,5,6,7,8])):
 		volum_file_exch_DWMY += backup_data.backup_size_bytes
 
 	volum_mssql_DWMY = 0
-	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30-W13-M12-Y10", device_str__icontains="SQL"):
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30-W13-M12-Y10", device_str__icontains="SQL").filter(~Q(environment__in=[2,3,4,5,6,7,8])):
 		volum_mssql_DWMY += backup_data.backup_size_bytes
 
 	volum_ukjent = 0
-	for backup_data in CMDBbackup.objects.filter(backup_frequency=""):
+	for backup_data in CMDBbackup.objects.filter(backup_frequency="").filter(~Q(environment__in=[2,3,4,5,6,7,8])):
 		volum_ukjent += backup_data.backup_size_bytes
+
+	volum_d60_dmm = 0
+	for backup_data in CMDBbackup.objects.filter(Q(backup_frequency="D60") | Q(backup_frequency="D30-M13-M12")).filter(~Q(environment__in=[2,3,4,5,6,7,8])):
+		volum_d60_dmm += backup_data.backup_size_bytes
+
+
 
 	volum_servere_d30_test = 0
 	for backup_data in CMDBbackup.objects.filter(backup_frequency="D30", environment__in=[2,3,4,5,6,7,8]):
@@ -2599,19 +2609,34 @@ def cmdb_backup_index(request):
 	for backup_data in CMDBbackup.objects.filter(backup_frequency="", environment__in=[2,3,4,5,6,7,8]):
 		volum_ukjent_test += backup_data.backup_size_bytes
 
-	pct_servere_d30 = round(100 * volum_servere_d30_test / count_backup, 1)
-	pct_oracle_d40 = round(100 * volum_oracle_d40_test / count_backup, 1)
-	pct_file_exch_DWMY = round(100 * volum_file_exch_DWMY_test / count_backup, 1)
-	pct_mssql_DWMY = round(100 * volum_mssql_DWMY_test / count_backup, 1)
-	pct_ukjent = round(100 * volum_ukjent_test / count_backup, 1)
+	volum_d60_dmm_test = 0
+	for backup_data in CMDBbackup.objects.filter(Q(backup_frequency="D60") | Q(backup_frequency="D30-M13-M12")).filter(Q(environment__in=[2,3,4,5,6,7,8])):
+		volum_d60_dmm_test += backup_data.backup_size_bytes
 
+	pct_servere_d30_prod = round(100 * volum_servere_d30 / count_backup, 2)
+	pct_oracle_d40_prod = round(100 * volum_oracle_d40 / count_backup, 2)
+	pct_file_exch_DWMY_prod = round(100 * volum_file_exch_DWMY / count_backup, 2)
+	pct_mssql_DWMY_prod = round(100 * volum_mssql_DWMY / count_backup, 2)
+	pct_ukjent_prod = round(100 * volum_ukjent / count_backup, 2)
+	pct_ud60_dmm = round(100 * volum_d60_dmm / count_backup, 2)
+
+	pct_servere_d30 = round(100 * volum_servere_d30_test / count_backup, 2)
+	pct_oracle_d40 = round(100 * volum_oracle_d40_test / count_backup, 2)
+	pct_file_exch_DWMY = round(100 * volum_file_exch_DWMY_test / count_backup, 2)
+	pct_mssql_DWMY = round(100 * volum_mssql_DWMY_test / count_backup, 2)
+	pct_ukjent = round(100 * volum_ukjent_test / count_backup, 2)
+	pct_ud60_dmm_test = round(100 * volum_d60_dmm_test / count_backup, 2)
+
+	pct_kontroll = pct_servere_d30_prod + pct_oracle_d40_prod + pct_file_exch_DWMY_prod + pct_mssql_DWMY_prod + pct_ukjent_prod + pct_ud60_dmm + pct_servere_d30 + pct_oracle_d40 + pct_file_exch_DWMY + pct_mssql_DWMY + pct_ukjent + pct_ud60_dmm_test
+
+	backup_uten_kobling = CMDBbackup.objects.filter(source_type="OTHER").order_by('-backup_size_bytes')[0:num_offerings_show]
 
 	return render(request, 'cmdb_backup_index.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'count_backup': count_backup,
 		'count_backup_ukjent': count_backup_ukjent,
-		'offering_all': offering_all,
+		'offering_all': offerings_sorted,
 		'sum_offering_all': sum_offering_all,
 		'volum_servere_d30': volum_servere_d30,
 		'volum_oracle_d40': volum_oracle_d40,
@@ -2628,6 +2653,18 @@ def cmdb_backup_index(request):
 		'pct_file_exch_DWMY': pct_file_exch_DWMY,
 		'pct_mssql_DWMY': pct_mssql_DWMY,
 		'pct_ukjent': pct_ukjent,
+		'pct_servere_d30_prod': pct_servere_d30_prod,
+		'pct_oracle_d40_prod': pct_oracle_d40_prod,
+		'pct_file_exch_DWMY_prod': pct_file_exch_DWMY_prod,
+		'pct_mssql_DWMY_prod': pct_mssql_DWMY_prod,
+		'pct_ukjent_prod': pct_ukjent_prod,
+		'volum_d60_dmm': volum_d60_dmm,
+		'volum_d60_dmm_test': volum_d60_dmm_test,
+		'pct_ud60_dmm': pct_ud60_dmm,
+		'pct_ud60_dmm_test': pct_ud60_dmm_test,
+		'pct_kontroll': pct_kontroll,
+		'num_offerings_show': num_offerings_show,
+		'backup_uten_kobling': backup_uten_kobling,
 	})
 
 

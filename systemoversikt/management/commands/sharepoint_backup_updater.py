@@ -65,6 +65,38 @@ class Command(BaseCommand):
 					item.delete()
 
 
+			def get_cmdb_instance(comp_name):
+				comp_name = comp_name.lower()
+
+				try:
+					return CMDBdevice.objects.get(comp_name=comp_name)
+				except:
+					pass
+
+				comp_name = comp_name.replace(".oslo.kommune.no", "")
+				try:
+					return CMDBdevice.objects.get(comp_name=comp_name)
+				except:
+					pass
+
+				if "-" in comp_name:
+					comp_name = '-'.join(comp_name.split("-")[:-1]) # alt unntatt siste "-ettellernannet"
+					try:
+						return CMDBdevice.objects.get(comp_name=comp_name)
+					except:
+						pass
+
+				if "_" in comp_name:
+					comp_name = comp_name.split("_")[0] # alt før første _
+					try:
+						return CMDBdevice.objects.get(comp_name=comp_name)
+					except:
+						pass
+
+				return None
+
+
+
 			@transaction.atomic
 			def main(destination_file, FILNAVN, LOG_EVENT_TYPE):
 
@@ -100,53 +132,23 @@ class Command(BaseCommand):
 						print("End of data")
 						break
 
-					if ".oslo.kommune.no" in client.lower():
-						client = client.lower().replace(".oslo.kommune.no", "")
 
-					#is_server = False
-
-					# figure out metadata
-					try:
-						device = CMDBdevice.objects.get(comp_name__iexact=client)
+					device = get_cmdb_instance(client)
+					if device:
 						is_server = True
-						bss = device.service_offerings.all()[0]
-						environment = bss.environment
-						source_type = "SERVER"
-					except:
-
 						try:
-							client = client.split("_")[0] # alt før første _
-							device = CMDBdevice.objects.get(comp_name__iexact=client)
-							is_server = True
 							bss = device.service_offerings.all()[0]
 							environment = bss.environment
-							source_type = "SERVER"
 						except:
-							device = None
 							bss = None
 							environment = None
-							source_type = "OTHER"
-							failed_device += 1
-
-					"""
-					if not is_server:
-						db_match = False
-						try:
-							database = CMDBdatabase.objects.get(db_database=line["Client"])
-							db_match = True
-						except:
-							device = None
-							bss = None
-							environment = None
-							source_type = "OTHER"
-							failed_device += 1
-
-						if db_match:
-							device = database.db_server_modelref
-							bss = database.sub_name
-							environment = bss.environment
-							source_type = "DATABASE"
-					"""
+						source_type = "SERVER"
+					else:
+						device = None
+						bss = None
+						environment = None
+						source_type = "OTHER"
+						failed_device += 1
 
 
 					#print(device)
@@ -168,7 +170,6 @@ class Command(BaseCommand):
 						inst.storage_policy = line["Storage Policy"]
 					except:
 						pass
-					#inst.export_date = line["Source Capture Date"]
 
 					inst.save()
 
@@ -195,6 +196,7 @@ class Command(BaseCommand):
 			int_config.dato_sist_oppdatert = modified_date
 			int_config.sist_status = logg_entry_message
 			int_config.save()
+
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"

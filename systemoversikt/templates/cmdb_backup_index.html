@@ -33,48 +33,63 @@
 <div class="container">
 	<div class="row">
 		<div class="col-sm">
-			<h6>Backup servere (D30)</h6>
+			<h6>Servere prod (D30)</h6>
 			<h3>{{ volum_servere_d30|filesizeformat }}</h3>
-			<h6>Test/preprod</h6>
+			<h5>{{pct_servere_d30_prod}}%</h5>
+			<br><h6>Servere test/preprod</h6>
 			<h3>{{ volum_servere_d30_test|filesizeformat }}</h3>
 			<h5>{{pct_servere_d30}}%</h5>
 		</div>
 		<div class="col-sm">
-			<h6>Backup oracle (D40)</h6>
+			<h6>Oracle prod (D40)</h6>
 			<h3>{{ volum_oracle_d40|filesizeformat }}</h3>
-			<h6>Test/preprod</h6>
+			<h5>{{pct_oracle_d40_prod}}%</h5>
+			<br><h6>Oracle test/preprod</h6>
 			<h3>{{ volum_oracle_d40_test|filesizeformat }}</h3>
 			<h5>{{pct_oracle_d40}}%</h5>
 		</div>
 		<div class="col-sm">
-			<h6>Backup fil, exchange (D30-W13-M12-Y10)</h6>
+			<h6>Fil og exchange prod (D30-W13-M12-Y10)</h6>
 			<h3>{{ volum_file_exch_DWMY|filesizeformat }}</h3>
-			<h6>Test/preprod</h6>
+			<h5>{{pct_file_exch_DWMY_prod}}%</h5>
+			<br><h6>Fil og exchange test/preprod</h6>
 			<h3>{{ volum_file_exch_DWMY_test|filesizeformat }}</h3>
 			<h5>{{pct_file_exch_DWMY}}%</h5>
 		</div>
 		<div class="col-sm">
-			<h6>Backup mssql (D30-W13-M12-Y10)</h6>
+			<h6>MSSQL prod (D30-W13-M12-Y10)</h6>
 			<h3>{{ volum_mssql_DWMY|filesizeformat }}</h3>
-			<h6>Test/preprod</h6>
+			<h5>{{pct_mssql_DWMY_prod}}%</h5>
+			<br><h6>MSSQL test/preprod</h6>
 			<h3>{{ volum_mssql_DWMY_test|filesizeformat }}</h3>
 			<h5>{{pct_mssql_DWMY}}%</h5>
 		</div>
 		<div class="col-sm">
-			<h6>Backup ukjent policy</h6>
+			<h6>Test? prod (D60 og D30-W13-M12)</h6>
+			<h3>{{ volum_d60_dmm|filesizeformat }}</h3>
+			<h5>{{pct_ud60_dmm}}%</h5>
+			<br><h6>Test? test/preprod</h6>
+			<h3>{{ volum_d60_dmm_test|filesizeformat }}</h3>
+			<h5>{{pct_ud60_dmm_test}}%</h5>
+		</div>
+		<div class="col-sm">
+			<h6>Ukjent policy prod</h6>
 			<h3>{{ volum_ukjent|filesizeformat }}</h3>
-			<h6>Test/preprod</h6>
+			<h5>{{pct_ukjent_prod}}%</h5>
+			<br><h6>Ukjent policy test/preprod</h6>
 			<h3>{{ volum_ukjent_test|filesizeformat }}</h3>
 			<h5>{{pct_ukjent}}%</h5>
 		</div>
-
 	</div>
 </div>
+
+<p>Kontroll: <b>{{pct_kontroll}}%</b>. Hvis denne ikke er 100%, er det innført nye ukjente policyer</p>
 <hr>
 
 
-<h6>Backup fordelt på Business Service</h6>
-<h4>Totalt {{sum_offering_all|filesizeformat}}</h4>
+<h4>Backup fordelt på Business Service</h4>
+<h6>Totalt {{sum_offering_all|filesizeformat}}</h6>
+<p>Her vises de {{num_offerings_show}} største tjenestene</p>
 <table class="table table-sm tablesorter">
 	<thead>
 	<tr>
@@ -93,6 +108,27 @@
 			{% endfor %}
 		</td>
 		<td>{{ offering.backup_size }} ({{ offering.backup_size|filesizeformat }})</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+</table>
+
+<hr>
+
+<h4>Backup uten knytning til server / business service</h4>
+<p>Her vises de {{num_offerings_show}} største klientene (kildene)</p>
+<table class="table table-sm tablesorter">
+	<thead>
+	<tr>
+		<th>Kilde</th>
+		<th>Mengde backup</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for kilde in backup_uten_kobling %}
+	<tr>
+		<td>{{ kilde.device_str }}</td>
+		<td>{{ kilde.backup_size_bytes }} ({{ kilde.backup_size_bytes|filesizeformat }})</td>
 	</tr>
 	{% endfor %}
 	</tbody>
