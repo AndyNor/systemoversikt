@@ -376,7 +376,7 @@ class ApplicationLog(models.Model):
 			)
 	event_type = models.CharField(
 			verbose_name="event_type",
-			max_length=30,
+			max_length=100,
 			blank=False,
 			null=False,
 			help_text=u"event_type",
