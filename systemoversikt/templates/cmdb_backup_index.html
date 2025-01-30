@@ -122,6 +122,7 @@
 	<tr>
 		<th>Kilde</th>
 		<th>Mengde backup</th>
+		<th>Prosent av totalen</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -129,6 +130,7 @@
 	<tr>
 		<td>{{ kilde.device_str }}</td>
 		<td>{{ kilde.backup_size_bytes }} ({{ kilde.backup_size_bytes|filesizeformat }})</td>
+		<td>{{ kilde.pct }}%</td>
 	</tr>
 	{% endfor %}
 	</tbody>

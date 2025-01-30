@@ -2627,9 +2627,11 @@ def cmdb_backup_index(request):
 	pct_ukjent = round(100 * volum_ukjent_test / count_backup, 2)
 	pct_ud60_dmm_test = round(100 * volum_d60_dmm_test / count_backup, 2)
 
-	pct_kontroll = pct_servere_d30_prod + pct_oracle_d40_prod + pct_file_exch_DWMY_prod + pct_mssql_DWMY_prod + pct_ukjent_prod + pct_ud60_dmm + pct_servere_d30 + pct_oracle_d40 + pct_file_exch_DWMY + pct_mssql_DWMY + pct_ukjent + pct_ud60_dmm_test
+	pct_kontroll = round(pct_servere_d30_prod + pct_oracle_d40_prod + pct_file_exch_DWMY_prod + pct_mssql_DWMY_prod + pct_ukjent_prod + pct_ud60_dmm + pct_servere_d30 + pct_oracle_d40 + pct_file_exch_DWMY + pct_mssql_DWMY + pct_ukjent + pct_ud60_dmm_test, 2)
 
 	backup_uten_kobling = CMDBbackup.objects.filter(source_type="OTHER").order_by('-backup_size_bytes')[0:num_offerings_show]
+	for b in backup_uten_kobling:
+		b.pct = round(100* b.backup_size_bytes / count_backup, 2)
 
 	return render(request, 'cmdb_backup_index.html', {
 		'request': request,
