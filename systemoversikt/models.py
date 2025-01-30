@@ -115,7 +115,7 @@ class CitrixPublication(models.Model):
 			verbose_name="Aktiv",
 			default=True,
 		)
-	cache_antall_publisert_til = models.IntegerField(
+	cache_antall_publisert_til = models.BigIntegerField(
 			verbose_name="Antall publisert til (cache)",
 			null=True,
 		)
@@ -435,7 +435,7 @@ class Definisjon(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-	status = models.IntegerField(
+	status = models.BigIntegerField(
 			choices=DEFINISJON_STATUS_VALG,
 			verbose_name="Status på definisjon",
 			blank=False,
@@ -803,7 +803,7 @@ class Virksomhet(models.Model):
 			blank=True,
 			help_text=u"Person(er) i rollen som informasjonssikkerhetskoordinator.",
 			)
-	odepartmentnumber = models.IntegerField(
+	odepartmentnumber = models.BigIntegerField(
 			verbose_name="Organisasjonens department-nummer",
 			blank=True,
 			null=True,
@@ -823,7 +823,7 @@ class Virksomhet(models.Model):
 			blank=True,
 			help_text=u"Personer som jobber med overordnet arkitektur knyttet til virksomhetens ibruktakelse av IKT",
 			)
-	office365 = models.IntegerField(
+	office365 = models.BigIntegerField(
 		choices=OFFICE365_VALG,
 			verbose_name="Modell for kontorstøtte",
 			blank=True,
@@ -865,7 +865,7 @@ class Virksomhet(models.Model):
 
 
 class AnsattID(models.Model):
-	ansattnr = models.IntegerField()
+	ansattnr = models.BigIntegerField()
 
 	def __str__(self):
 		return u'%s' % (self.ansattnr)
@@ -1108,7 +1108,7 @@ class Profile(models.Model):
 			null=True,
 			blank=True,
 			)
-	ansattnr = models.IntegerField(
+	ansattnr = models.BigIntegerField(
 			verbose_name="Ansattnr (PRK)",
 			blank=True,
 			null=True,
@@ -1120,7 +1120,7 @@ class Profile(models.Model):
 			null=True,
 			blank=True,
 			)
-	ansattnr_antall = models.IntegerField(
+	ansattnr_antall = models.BigIntegerField(
 			verbose_name="Antall koblede kontoer",
 			blank=True,
 			null=True,
@@ -1132,7 +1132,7 @@ class Profile(models.Model):
 			blank=True,
 			help_text=u'Settes via automatiske jobber',
 			)
-	adgrupper_antall = models.IntegerField(
+	adgrupper_antall = models.BigIntegerField(
 			verbose_name="Antall gruppemedlemskap",
 			blank=True,
 			null=True,
@@ -1160,7 +1160,7 @@ class Profile(models.Model):
 			blank=True,
 			null=True,
 			)
-	o365lisence = models.IntegerField(
+	o365lisence = models.BigIntegerField(
 			choices=LISENCE_VALG,
 			verbose_name="Lisenser Office365",
 			blank=True,
@@ -1495,14 +1495,14 @@ class SystemUrl(models.Model):
 			default=None,
 			help_text=u"",
 			)
-	maalgruppe = models.IntegerField(
+	maalgruppe = models.BigIntegerField(
 			choices=MAALGRUPPE_VALG,
 			verbose_name="Målgruppe",
 			blank=True,
 			null=True,
 			help_text=u'Hvem kan bruke / nå tjenesten på denne URL-en?',
 			)
-	vurdering_sikkerhetstest = models.IntegerField(
+	vurdering_sikkerhetstest = models.BigIntegerField(
 			choices=SIKKERHETSTESTING_VALG,
 			verbose_name="Vurdering sikkerhetstest",
 			blank=True,
@@ -1571,7 +1571,7 @@ class Personsonopplysningskategori(models.Model):
 			null=False,
 			help_text=u"",
 			)
-	artikkel = models.IntegerField(
+	artikkel = models.BigIntegerField(
 			verbose_name="Artikkelreferanse",
 			blank=True,
 			null=True,
@@ -1846,7 +1846,7 @@ class CMDBRef(models.Model): # BSS
 			help_text=u"Importert",
 			db_index=True,
 			)
-	operational_status = models.IntegerField(
+	operational_status = models.BigIntegerField(
 			choices=CMDB_OPERATIONAL_STATUS,
 			verbose_name="Operational status",
 			blank=True,
@@ -1862,14 +1862,14 @@ class CMDBRef(models.Model): # BSS
 			verbose_name="Tilhørerende Business service",
 			help_text=u"Importert",
 			)
-	environment = models.IntegerField(
+	environment = models.BigIntegerField(
 			choices=CMDB_ENV_VALG,
 			verbose_name="Miljø",
 			blank=True,
 			null=True,
 			help_text=u"Importert",
 			)
-	kritikalitet = models.IntegerField(
+	kritikalitet = models.BigIntegerField(
 			choices=CMDB_KRITIKALITET_VALG,
 			verbose_name="Busines criticality (SLA)",
 			blank=True,
@@ -2107,11 +2107,11 @@ class virtualIP(models.Model):
 			null=False,
 			verbose_name="IP-adresse",
 			)
-	port = models.IntegerField(
+	port = models.BigIntegerField(
 			null=False,
 			verbose_name="Port",
 			)
-	hitcount = models.IntegerField(
+	hitcount = models.BigIntegerField(
 			null=False,
 			verbose_name="Hitcount",
 			)
@@ -2146,7 +2146,7 @@ class virtualIP(models.Model):
 
 
 class IpProtocol(models.Model):
-	port = models.IntegerField(
+	port = models.BigIntegerField(
 		null=False,
 		)
 	protocol = models.CharField(
@@ -2180,7 +2180,7 @@ class VirtualIPPool(models.Model):
 			null=False,
 			verbose_name="IP-adresse",
 			)
-	port = models.IntegerField(
+	port = models.BigIntegerField(
 			null=False,
 			verbose_name="Port",
 			)
@@ -2232,7 +2232,7 @@ class NetworkContainer(models.Model):
 			null=False,
 			verbose_name="IP-adresse",
 			)
-	subnet_mask = models.IntegerField(
+	subnet_mask = models.BigIntegerField(
 			null=False,
 			verbose_name="Netmask",
 			)
@@ -2288,7 +2288,7 @@ class NetworkIPAddress(models.Model):
 		unique=True,
 		verbose_name="IP-adresse",
 	)
-	ip_address_integer = models.IntegerField(
+	ip_address_integer = models.BigIntegerField(
 		verbose_name="IP-adresse heltall",
 		null=True,
 	)
@@ -2378,7 +2378,7 @@ class DNSrecord(models.Model):
 			null=True,
 			verbose_name="IP-adresse",
 			)
-	ttl = models.IntegerField(
+	ttl = models.BigIntegerField(
 			null=True,
 			verbose_name="Time to live (TTL)",
 			)
@@ -2425,7 +2425,7 @@ class KritiskFunksjon(models.Model):
 			null=False,
 			verbose_name="Funksjon",
 			)
-	kategori = models.IntegerField(
+	kategori = models.BigIntegerField(
 			choices=KRITISKE_KATEGORIER,
 			verbose_name="Hovedkategori",
 			blank=False, null=False,
@@ -2499,7 +2499,7 @@ class CMDBdatabase(models.Model):
 			verbose_name="Billable",
 			default=False,
 			)
-	db_u_datafilessizekb = models.IntegerField( ### Det er faktisk bytes som skrives til denne. Gammelt navn fra CMDB-rapport.
+	db_u_datafilessizekb = models.BigIntegerField( ### Det er faktisk bytes som skrives til denne. Gammelt navn fra CMDB-rapport.
 			verbose_name="db_u_datafilessizekb",
 			blank=True,
 			null=False,
@@ -2575,7 +2575,7 @@ class QualysVuln(models.Model):
 			null=True
 			)
 	title = models.TextField()
-	severity = models.IntegerField()
+	severity = models.BigIntegerField()
 	known_exploited = models.BooleanField(default=False)
 	first_seen = models.DateTimeField(null=True)
 	last_seen = models.DateTimeField(null=True)
@@ -2653,7 +2653,7 @@ class CMDBdevice(models.Model):
 			help_text=u"",
 			db_index=True,
 			)
-	comp_disk_space = models.IntegerField(  # lagres i bytes
+	comp_disk_space = models.BigIntegerField(  # lagres i bytes
 			verbose_name="Lagring",
 			blank=True,
 			null=True,
@@ -2700,13 +2700,13 @@ class CMDBdevice(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	comp_cpu_core_count = models.IntegerField(
+	comp_cpu_core_count = models.BigIntegerField(
 			verbose_name="CPU core count",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	comp_ram = models.IntegerField(  # lagres i antall MB
+	comp_ram = models.BigIntegerField(  # lagres i antall MB
 			verbose_name="RAM",
 			blank=True,
 			null=True,
@@ -2862,7 +2862,7 @@ class CMDBbackup(models.Model):
 			blank=True,
 			null=True,
 			)
-	backup_size_bytes = models.IntegerField(
+	backup_size_bytes = models.BigIntegerField(
 			null=True,
 			)
 	#tas vekk 23.01.2023 da den ikke ligger i powerBI-dashboardet
@@ -2873,7 +2873,7 @@ class CMDBbackup(models.Model):
 
 	# fjernet fordi den nå har blitt mange til mange, og vi følger heller kobling fra server.
 	# reintrodusert
-	storage_size_bytes = models.IntegerField(
+	storage_size_bytes = models.BigIntegerField(
 			null=True,
 			)
 	bss = models.ForeignKey(
@@ -2897,7 +2897,7 @@ class CMDBbackup(models.Model):
 			blank=True,
 			null=True,
 			)
-	environment = models.IntegerField(
+	environment = models.BigIntegerField(
 			choices=CMDB_ENV_VALG,
 			verbose_name="Miljø",
 			blank=True,
@@ -2929,12 +2929,12 @@ class CMDBDisk(models.Model):
 			verbose_name="operational_status",
 			default=False,
 			)
-	size_bytes = models.IntegerField(
+	size_bytes = models.BigIntegerField(
 			verbose_name="Size in bytes",
 			blank=True,
 			null=True,
 			)
-	#capacity = models.IntegerField(
+	#capacity = models.BigIntegerField(
 	#		verbose_name="capacity",
 	#		blank=True, null=True,
 	#		)
@@ -2948,7 +2948,7 @@ class CMDBDisk(models.Model):
 			unique=False,
 			null=True
 			)
-	#available_space = models.IntegerField(
+	#available_space = models.BigIntegerField(
 	#		verbose_name="available_space",
 	#		blank=True, null=True,
 	#		)
@@ -2957,7 +2957,7 @@ class CMDBDisk(models.Model):
 			unique=False,
 			null=True
 			)
-	free_space_bytes = models.IntegerField(
+	free_space_bytes = models.BigIntegerField(
 			verbose_name="free_space_bytes",
 			blank=True,
 			null=True,
@@ -3131,7 +3131,7 @@ class ADgroup(models.Model):
 			blank=True,
 			null=True,
 			)
-	membercount = models.IntegerField(
+	membercount = models.BigIntegerField(
 			verbose_name="Antall medlemmer",
 			blank=True,
 			null=True,
@@ -3141,7 +3141,7 @@ class ADgroup(models.Model):
 			blank=True,
 			null=True,
 			)
-	memberofcount = models.IntegerField(
+	memberofcount = models.BigIntegerField(
 			verbose_name="Antall medlem av",
 			blank=True,
 			null=True,
@@ -3241,7 +3241,7 @@ class Avtale(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
-	avtaletype = models.IntegerField(
+	avtaletype = models.BigIntegerField(
 			choices=AVTALETYPE_VALG,
 			verbose_name="Avtaletype",
 			blank=True,
@@ -3575,7 +3575,7 @@ class Programvare(models.Model):
 			null=True,
 			help_text=u"Alternative navn på programvaren for å avhjelpe søk. Kun enkeltord. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje. Disse alias brukes også for å søke opp tilgangsgrupper tilhørende systemet.",
 			)
-	programvarekategori = models.IntegerField(
+	programvarekategori = models.BigIntegerField(
 			choices=PROGRAMVAREKATEGORI_VALG,
 			verbose_name="Tilpassing",
 			blank=True,
@@ -3614,42 +3614,42 @@ class Programvare(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	strategisk_egnethet = models.IntegerField(
+	strategisk_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_STRATEGISK_VALG,
 			verbose_name="Strategisk egnethet",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	funksjonell_egnethet = models.IntegerField(
+	funksjonell_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_FUNKSJONELL_VALG,
 			verbose_name="Funksjonell egnethet",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	teknisk_egnethet = models.IntegerField(
+	teknisk_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_TEKNISK_VALG,
 			verbose_name="Teknisk egnethet",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	selvbetjening = models.IntegerField(
+	selvbetjening = models.BigIntegerField(
 			choices=SELVBETJENING_VALG,
 			verbose_name="Selvbetjening",
 			blank=True,
 			null=True,
 			help_text=u"Dersom ja betyr dette at systemet har et brukergrensesnitt der brukere selv kan registrere nødvendig informasjon i systemet.",
 			)
-	livslop_status = models.IntegerField(
+	livslop_status = models.BigIntegerField(
 			choices=LIVSLOEP_VALG,
 			verbose_name="Livsløpstatus",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	klargjort_ny_sikkerhetsmodell = models.IntegerField(
+	klargjort_ny_sikkerhetsmodell = models.BigIntegerField(
 			choices=VALG_KLARGJORT_SIKKERHETSMODELL,
 			verbose_name="Status SMART-klienter",
 			blank=True, null=True,
@@ -3747,7 +3747,7 @@ class Driftsmodell(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	sikkerhetsnivaa = models.IntegerField(
+	sikkerhetsnivaa = models.BigIntegerField(
 			choices=SIKKERHETSNIVAA_VALG,
 			verbose_name="Høyeste tillate sikkerhetsnivå",
 			blank=True,
@@ -3821,7 +3821,7 @@ class Driftsmodell(models.Model):
 			blank=True,
 			help_text=u"",
 			)
-	type_plattform = models.IntegerField(
+	type_plattform = models.BigIntegerField(
 			choices=DRIFTSTYPE_VALG,
 			verbose_name="Type driftsmiljø",
 			default=0,
@@ -3850,7 +3850,7 @@ class Driftsmodell(models.Model):
 			default=False,
 			help_text=u"For å vise systemer som er fra samarbeidspartnere",
 			)
-	sort_order = models.IntegerField(
+	sort_order = models.BigIntegerField(
 			verbose_name="Sorteringsrekkefølge",
 			default=3,
 			blank=False,
@@ -4323,7 +4323,7 @@ class System(models.Model):
 			null=True,
 			help_text=u"Driftsplattform systemet kjører på. Brukes blant annet for å tegne opp avhengighetsfiguren. Merk at kommunen kan ha flere instanser av samme system driftet ulike steder. Det er derfor svært viktig at denne blir satt riktig.",
 			)
-	leveransemodell_fip = models.IntegerField(
+	leveransemodell_fip = models.BigIntegerField(
 			choices=LEVERANSEMODELL_VALG,
 			verbose_name="Leveransemodell (for felles IKT-plattform)",
 			blank=True,
@@ -4345,7 +4345,7 @@ class System(models.Model):
 			blank=True,
 			help_text=u"Her velger du alle service offerings knyttet til dette systemet. Ta kontakt med UKE om du trenger hjelp med denne koblingen.",
 			)
-	sikkerhetsnivaa = models.IntegerField(
+	sikkerhetsnivaa = models.BigIntegerField(
 			choices=SIKKERHETSNIVAA_VALG,
 			verbose_name="Konfidensialitetsnivå",
 			blank=True,
@@ -4394,7 +4394,7 @@ class System(models.Model):
 			null=True,
 			help_text=u"I henhold til Oslo kommunes IKT-reglement.",
 			)
-	programvarekategori = models.IntegerField(
+	programvarekategori = models.BigIntegerField(
 			choices=PROGRAMVAREKATEGORI_VALG,
 			verbose_name="Programvaretype (flyttet til programvare)",
 			blank=True,
@@ -4517,35 +4517,35 @@ class System(models.Model):
 			null=True,
 			help_text=u"Ikke bruk dette feltet",
 			)
-	selvbetjening = models.IntegerField(
+	selvbetjening = models.BigIntegerField(
 			choices=SELVBETJENING_VALG,
 			verbose_name="Selvbetjening (fases ut)",
 			blank=True,
 			null=True,
 			help_text=u"Dersom ja betyr dette at systemet har et brukergrensesnitt der brukere selv kan registrere nødvendig informasjon i systemet.",
 			)
-	livslop_status = models.IntegerField(
+	livslop_status = models.BigIntegerField(
 			choices=LIVSLOEP_VALG,
 			verbose_name="Livsløpstatus",
 			blank=True,
 			null=True,
 			help_text=u"Setter du 1 under anskaffelse vil systemet anses som ikke i bruk (enda). Setter du status 5 eller 6 vil systemet havne på 'End of life (EOL)'-listen.",
 			)
-	strategisk_egnethet = models.IntegerField(
+	strategisk_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_STRATEGISK_VALG,
 			verbose_name="Strategisk egnethet (fases ut)",
 			blank=True,
 			null=True,
 			help_text=u"Hvor viktig systemet er opp mot virksomhetens oppdrag",
 			)
-	funksjonell_egnethet = models.IntegerField(
+	funksjonell_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_FUNKSJONELL_VALG,
 			verbose_name="Funksjonell egnethet",
 			blank=True,
 			null=True,
 			help_text=u"Hvor godt systemet løser behovet",
 			)
-	teknisk_egnethet = models.IntegerField(
+	teknisk_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_TEKNISK_VALG,
 			verbose_name="Teknisk egnethet",
 			blank=True,
@@ -4555,7 +4555,7 @@ class System(models.Model):
 
 
 	#### DENNE BRUKES IKKE??
-	konfidensialitetsvurdering = models.IntegerField(
+	konfidensialitetsvurdering = models.BigIntegerField(
 			choices=VURDERINGER_SIKKERHET_VALG,
 			verbose_name="Oppsummert konfidensialitetsvurdering (utfases)",
 			blank=True,
@@ -4565,14 +4565,14 @@ class System(models.Model):
 
 
 
-	integritetsvurdering = models.IntegerField(
+	integritetsvurdering = models.BigIntegerField(
 			choices=VURDERINGER_SIKKERHET_VALG,
 			verbose_name="Integritetsvurdering",
 			blank=True,
 			null=True,
 			help_text=u"Hvor kritisk er det at opplysningene stemmer?",
 			)
-	tilgjengelighetsvurdering = models.IntegerField(
+	tilgjengelighetsvurdering = models.BigIntegerField(
 			choices=VURDERINGER_SIKKERHET_VALG,
 			verbose_name="Tilgjengelighetsvurdering",
 			blank=True,
@@ -4591,13 +4591,13 @@ class System(models.Model):
 			default=False,
 			help_text=u"Kryss av dersom systemet kun er kritisk i visse perioder i løpet av måneden eller året.",
 			)
-	tilgjengelighet_timer_til_kritisk = models.IntegerField(
+	tilgjengelighet_timer_til_kritisk = models.BigIntegerField(
 			verbose_name="Timer til kritisk",
 			blank=True,
 			null=True,
 			help_text=u"Hvor mange timer tar det fra systemet blir utilgjengelig til det er kritisk?",
 			)
-	risikovurdering_behovsvurdering = models.IntegerField(
+	risikovurdering_behovsvurdering = models.BigIntegerField(
 			choices=VALG_RISIKOVURDERING_BEHOVSVURDERING,
 			verbose_name="Behov for risikovurdering?",
 			blank=False, null=False, default=2, # 2: Prioriteres
@@ -4751,7 +4751,7 @@ class System(models.Model):
 			default=False,
 			help_text=u"Krysses av dersom systemet er et arkivsystem i henhold til arkivlovverk.",
 			)
-	antall_brukere = models.IntegerField(
+	antall_brukere = models.BigIntegerField(
 			verbose_name="Antall brukere",
 			blank=True,
 			null=True,
@@ -4802,7 +4802,7 @@ class System(models.Model):
 			blank=True,
 			help_text=u"Her kan du tagge systemet med informasjonsområder (kommunale områder) standardiserte LOS-begreper forvaltet av DigDir. Du finner både tema og ord i listen. Anbefaler at du primært velger tema fra listen og sekundært andre ord som supplerer. Ord kan være knyttet til flere tema, så det er ikke mulig å entydig automatisk velge riktig tema basert på ord. Oversikten over behandlinger hensyntar bare på koblinger mot tema.",
 			)
-	klargjort_ny_sikkerhetsmodell = models.IntegerField(
+	klargjort_ny_sikkerhetsmodell = models.BigIntegerField(
 			choices=VALG_KLARGJORT_SIKKERHETSMODELL,
 			verbose_name="Status klargjort for ny sikkerhetsmodell",
 			blank=True, null=True,
@@ -4841,7 +4841,7 @@ class System(models.Model):
 			blank=True,
 			null=True,
 			)
-	cache_systemprioritet = models.IntegerField(
+	cache_systemprioritet = models.BigIntegerField(
 			default=240,
 			) # Denne blir kalkulert ved hver visning
 	citrix_publications = models.ManyToManyField(
@@ -5217,7 +5217,7 @@ class Sikkerhetstester(models.Model):
 			verbose_name="Systemer testet",
 			blank=False,
 			)
-	type_test = models.IntegerField(
+	type_test = models.BigIntegerField(
 			choices=TYPE_SIKKERHETSTEST,
 			verbose_name="Type sikkerhetstest",
 			blank=False, null=True,
@@ -5491,7 +5491,7 @@ class ProgramvareBruk(models.Model):
 			default=True,
 			help_text=u"Er i bruk ved kryss, og 'ikke i bruk' når kryss fjernes. Kan fjernes i stedet for å slette koblingen og lokale vurderinger.",
 			)
-	livslop_status = models.IntegerField(
+	livslop_status = models.BigIntegerField(
 			choices=LIVSLOEP_VALG,
 			verbose_name="Livsløpstatus",
 			blank=True,
@@ -5510,7 +5510,7 @@ class ProgramvareBruk(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	antall_brukere = models.IntegerField(
+	antall_brukere = models.BigIntegerField(
 			verbose_name="Antall brukere",
 			blank=True,
 			null=True,
@@ -5523,7 +5523,7 @@ class ProgramvareBruk(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	avtalestatus = models.IntegerField(
+	avtalestatus = models.BigIntegerField(
 			choices=VURDERING_AVTALESTATUS_VALG,
 			verbose_name="Avtalestatus",
 			blank=True,
@@ -5536,33 +5536,33 @@ class ProgramvareBruk(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	borger = models.IntegerField(
+	borger = models.BigIntegerField(
 			choices=IBRUK_VALG,
 			verbose_name="For borger?",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	kostnader = models.IntegerField(
+	kostnader = models.BigIntegerField(
 			verbose_name="Kostnader for programvaren",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	strategisk_egnethet = models.IntegerField(
+	strategisk_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_STRATEGISK_VALG,
 			verbose_name="Strategisk egnethet",
 			blank=True, null=True,
 			help_text=u"",
 			)
-	funksjonell_egnethet = models.IntegerField(
+	funksjonell_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_FUNKSJONELL_VALG,
 			verbose_name="Funksjonell egnethet",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	teknisk_egnethet = models.IntegerField(
+	teknisk_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_TEKNISK_VALG,
 			verbose_name="Teknisk egnethet",
 			blank=True,
@@ -5651,7 +5651,7 @@ class SystemBruk(models.Model):
 			blank=True,
 			help_text=u"Dersom fellesløsning på applikasjonshotell, hvilke roller/personer fyller rollen som lokal eier?",
 			)
-	livslop_status = models.IntegerField(
+	livslop_status = models.BigIntegerField(
 			choices=LIVSLOEP_VALG,
 			verbose_name="Livsløpstatus",
 			blank=True,
@@ -5695,27 +5695,27 @@ class SystemBruk(models.Model):
 			null=True,
 			help_text=u"Dette feltet blir faset ut. Dette er spesifisert på systemet.",
 			)
-	antall_brukere = models.IntegerField(  #reintrodusert 31.08.2020
+	antall_brukere = models.BigIntegerField(  #reintrodusert 31.08.2020
 			verbose_name="Antall brukere?",
 			blank=True,
 			null=True,
 			help_text=u"Ca hvor mange bruker systemet hos dere? (fylles ut dersom relevant)",
 			)
-	konfidensialitetsvurdering = models.IntegerField(
+	konfidensialitetsvurdering = models.BigIntegerField(
 			choices=VURDERINGER_SIKKERHET_VALG,
 			verbose_name="Konfidensialitetsvurdering",
 			blank=True,
 			null=True,
 			help_text=u"Hvor sensitive er opplysningene?",
 			)
-	integritetsvurdering = models.IntegerField(
+	integritetsvurdering = models.BigIntegerField(
 			choices=VURDERINGER_SIKKERHET_VALG,
 			verbose_name="Integritetsvurdering",
 			blank=True,
 			null=True,
 			help_text=u"Hvor kritisk er det at opplysningene stemmer?",
 			)
-	tilgjengelighetsvurdering = models.IntegerField(
+	tilgjengelighetsvurdering = models.BigIntegerField(
 			choices=VURDERINGER_SIKKERHET_VALG,
 			verbose_name="Tilgjengelighetsvurdering",
 			blank=True,
@@ -5729,7 +5729,7 @@ class SystemBruk(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	avtalestatus = models.IntegerField(
+	avtalestatus = models.BigIntegerField(
 			choices=VURDERING_AVTALESTATUS_VALG,
 			verbose_name="Avtalestatus",
 			blank=True,
@@ -5742,11 +5742,11 @@ class SystemBruk(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	#borger = models.IntegerField(blank=True, null=True, choices=IBRUK_VALG,
+	#borger = models.BigIntegerField(blank=True, null=True, choices=IBRUK_VALG,
 	#		verbose_name="For borger?",
 	#		help_text=u"",
 	#		)
-	kostnadersystem = models.IntegerField(
+	kostnadersystem = models.BigIntegerField(
 			verbose_name="Kostnader for system",
 			blank=True,
 			null=True, help_text=u"",
@@ -5759,28 +5759,28 @@ class SystemBruk(models.Model):
 			null=True,
 			help_text=u"Feltet skal avvikles da dette settes på systemet, ikke bruken",
 			)
-	programvarekategori = models.IntegerField(
+	programvarekategori = models.BigIntegerField(
 			choices=PROGRAMVAREKATEGORI_VALG,
 			verbose_name="Programvarekategori",
 			blank=True,
 			null=True,
 			help_text=u"Feltet skal avvikles. Har ikke noe her å gjøre.",
 			)
-	strategisk_egnethet = models.IntegerField(
+	strategisk_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_STRATEGISK_VALG,
 			verbose_name="Strategisk egnethet",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	funksjonell_egnethet = models.IntegerField(
+	funksjonell_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_FUNKSJONELL_VALG,
 			verbose_name="Funksjonell egnethet",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	teknisk_egnethet = models.IntegerField(
+	teknisk_egnethet = models.BigIntegerField(
 			choices=VURDERINGER_TEKNISK_VALG,
 			verbose_name="Teknisk egnethet",
 			blank=True,
@@ -6026,7 +6026,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			help_text="Dersom denne behandlingen gjelder et system mange virksomheter bruker kan du krysse av for denne. Virksomheter som velger å abonnere på delte behandlinger (under sin systembruk) vil da få opp denne i sin behandlingsprotokoll.",
 			)
 			#draftit: ingen tilsvarende
-	krav_sikkerhetsnivaa  = models.IntegerField(
+	krav_sikkerhetsnivaa  = models.BigIntegerField(
 			choices=SIKKERHETSNIVAA_VALG,
 			verbose_name="Krav til sikkerhetsnivå",
 			blank=True,
@@ -6162,7 +6162,7 @@ class BehandlingerPersonopplysninger(models.Model):
 			help_text=u"",
 			)
 	#burde vært rettet opp til valgfrihet
-	valgfriget_registrerte = models.IntegerField(
+	valgfriget_registrerte = models.BigIntegerField(
 			choices=BEHANDLING_VALGFRIHET,
 			verbose_name="Hvor mye kontroll vil de registrerte ha på den behandlingen som foretas?",
 			blank=True,
@@ -6519,63 +6519,63 @@ class BehovForDPIA(models.Model):
 			null=False,
 			help_text=u"Behandlingen denne vurderingen gjelder for.",
 			)
-	evaluering_profilering = models.IntegerField(
+	evaluering_profilering = models.BigIntegerField(
 			choices=BEHOV_FOR_DPIA_VALG,
 			default=0,
 			null=False,
 			verbose_name="Evaluering eller poengsetting?",
 			help_text=u'Innebærer behandlingen evaluering eller scoring / profilering i stor skala for å forutsi den registrertes antatte evner/egenskaper? (Inkludert profilering og forutsigelse, spesielt «aspekter som gjelder arbeidsprestasjoner, økonomisk situasjon, helse, personlige preferanser eller interesser, pålitelighet eller atferd, plassering eller bevegelser» (fortalepunkt 71 og 91).)',
 			)
-	automatiskbeslutning = models.IntegerField(
+	automatiskbeslutning = models.BigIntegerField(
 			choices=BEHOV_FOR_DPIA_VALG,
 			default=0,
 			null=False,
 			verbose_name="Automatiske beslutninger med rettslig eller tilsvarende betydelig virkning?",
 			help_text=u'Behandling som har som formål å ta beslutninger om den registrerte som har «rettsvirkning for den fysiske personen» eller «på lignende måte i betydelig grad påvirker den fysiske personen» (artikkel 35 nr. 3 a).',
 			)
-	systematiskmonitorering = models.IntegerField(
+	systematiskmonitorering = models.BigIntegerField(
 			choices=BEHOV_FOR_DPIA_VALG,
 			default=0,
 			null=False,
 			verbose_name="Systematisk monitorering?",
 			help_text=u'Behandlingsaktiviteter som brukes for å observere, overvåke eller kontrollere de registrerte, inkludert opplysninger som har blitt samlet inn gjennom nettverk eller «en systematisk overvåking i stor skala av et offentlig tilgjengelig område» (artikkel 35 nr. 3 c). ',
 			)
-	saerligekategorier = models.IntegerField(
+	saerligekategorier = models.BigIntegerField(
 			choices=BEHOV_FOR_DPIA_VALG,
 			default=0,
 			null=False,
 			verbose_name="Særlige kategorier av personopplysninger eller opplysninger av svært personlig karakter ?",
 			help_text=u'Dette omfatter særlige kategorier av personopplysninger (tidligere kalt sensitive personopplysninger) som er definert i artikkel 9 (for eksempel informasjon om enkeltpersoners politiske meninger), samt personopplysninger vedrørende straffedommer og lovovertredelser som definert i artikkel 10. ',
 			)
-	storskala = models.IntegerField(
+	storskala = models.BigIntegerField(
 			choices=BEHOV_FOR_DPIA_VALG,
 			default=0,
 			null=False,
 			verbose_name="Personopplysninger behandles i stor skala?",
 			help_text=u'Innebærer behandlingen evaluering eller scoring / profilering i stor skala for å forutsi den registrertes antatte evner/egenskaper?',
 			)
-	sammenstilling = models.IntegerField(
+	sammenstilling = models.BigIntegerField(
 			choices=BEHOV_FOR_DPIA_VALG,
 			default=0,
 			null=False,
 			verbose_name="Matching eller sammenstilling av datasett?",
 			help_text=u'Dette kan for eksempel stamme fra to eller flere databehandlingsoperasjoner som gjennomføres med ulike formål og/eller av ulike behandlingsansvarlige på en måte som overstiger den registrertes rimelige forventninger.',
 			)
-	saarbare_registrerte = models.IntegerField(
+	saarbare_registrerte = models.BigIntegerField(
 			choices=BEHOV_FOR_DPIA_VALG,
 			default=0,
 			null=False,
 			verbose_name="Personopplysninger om sårbare registrerte?",
 			help_text=u'Behandling av denne typen av personopplysninger er et kriterium på grunn av den skjeve maktbalansen mellom de registrerte og den behandlingsansvarlige, som betyr at enkeltpersoner kan være ute av stand til, på en enkel måte, å gi sitt samtykke eller motsette seg behandlingen av sine personopplysninger eller utøve sine rettigheter. Sårbare registrerte kan omfatte barn (de kan anses å ikke være i stand til på en bevisst og gjennomtenkt måte å motsette seg eller gi samtykke til behandling av sine personopplysninger), arbeidstakere, mer sårbare befolkningsgrupper som behøver sosial beskyttelse (psykisk syke personer, asylsøkere, eldre personer, pasienter og så videre), samt i de situasjoner der det foreligger en ubalanse i forholdet mellom den registrerte og den behandlingsansvarlige.',
 			)
-	innovativ_anvendelse = models.IntegerField(
+	innovativ_anvendelse = models.BigIntegerField(
 			choices=BEHOV_FOR_DPIA_VALG,
 			default=0,
 			null=False,
 			verbose_name="Innovativ bruk eller anvendelse av ny teknologisk eller organisatorisk løsning?",
 			help_text=u'Dette kan være en kombinasjon av fingeravtrykk og ansiktsgjenkjenning for en forbedret fysisk adgangskontroll og så videre. Det går klart frem av forordningen (artikkel 35 nr. 1 og fortalepunkt 89 og 91) at bruk av ny teknologi som defineres «i samsvar med det oppnådde nivået av teknisk kunnskap» (fortalepunkt 91), kan medføre behov for å gjennomføre en vurdering av personvernkonsekvenser. Grunnen til dette er at anvendelse av ny teknologi kan medføre nye former for innsamling og bruk av personopplysninger, eventuelt med høy risiko for den enkeltes rettigheter og friheter. De personlige og sosiale konsekvensene ved anvendelsen av ny teknologi kan være ukjente. En vurdering av personvernkonsekvenser hjelper den behandlingsansvarlige å forstå og håndtere slike risikoer. For eksempel kan visse «tingenes internett»-applikasjoner få betydelige konsekvenser for den enkeltes dagligliv og privatliv, og kan derfor kreve en vurdering av personvernkonsekvenser.',
 			)
-	hinder = models.IntegerField(
+	hinder = models.BigIntegerField(
 			choices=BEHOV_FOR_DPIA_VALG,
 			default=0,
 			null=False,
@@ -6625,13 +6625,13 @@ class HRorg(models.Model):
 			default=True, # per definisjon
 			help_text=u"Settes automatisk",
 			)
-	ouid = models.IntegerField(
+	ouid = models.BigIntegerField(
 			unique=True,
 			verbose_name="OUID",
 			null=False,
 			help_text=u"Importert",
 			)
-	level = models.IntegerField(
+	level = models.BigIntegerField(
 			verbose_name="OULEVEL",
 			null=True,
 			help_text=u"Importert",
@@ -6956,7 +6956,7 @@ class AzureApplication(models.Model):
 		blank=True,
 		help_text=u"Beholdes ved synkronisering mot Azure som skjer hver natt",
 		)
-	risikonivaa = models.IntegerField(choices=RISIKO_VALG,
+	risikonivaa = models.BigIntegerField(choices=RISIKO_VALG,
 		verbose_name="UTFASET Vurdering av risiko",
 		default=0,
 		blank=False,
@@ -7234,7 +7234,7 @@ class UBWFaktura(models.Model):
 		blank=True,
 		max_length=100,
 		)
-	ubw_account = models.IntegerField(
+	ubw_account = models.BigIntegerField(
 		verbose_name="UBW Kontonr",
 		null=True,
 		blank=True,
@@ -7245,12 +7245,12 @@ class UBWFaktura(models.Model):
 		blank=True,
 		max_length=200,
 		)
-	ubw_period = models.IntegerField(
+	ubw_period = models.BigIntegerField(
 		verbose_name="UBW-periode (YYYYmm)",
 		null=True,
 		blank=True,
 		)
-	ubw_dim_1 = models.IntegerField(
+	ubw_dim_1 = models.BigIntegerField(
 		verbose_name="UBW Koststednr",
 		null=True,
 		blank=True,
@@ -7261,7 +7261,7 @@ class UBWFaktura(models.Model):
 		blank=True,
 		max_length=300,
 		)
-	ubw_dim_4 = models.IntegerField(
+	ubw_dim_4 = models.BigIntegerField(
 		verbose_name="UBW prosjektnr",
 		null=True,
 		blank=True,
@@ -7278,12 +7278,12 @@ class UBWFaktura(models.Model):
 		blank=True,
 		max_length=10,
 		)
-	ubw_voucher_no = models.IntegerField(
+	ubw_voucher_no = models.BigIntegerField(
 		verbose_name="UBW voucher_no",
 		null=True,
 		blank=True,
 		)
-	ubw_sequence_no	= models.IntegerField(
+	ubw_sequence_no	= models.BigIntegerField(
 		verbose_name="UBW sequence_no",
 		null=True,
 		blank=True,
@@ -7293,12 +7293,12 @@ class UBWFaktura(models.Model):
 		null=True,
 		blank=True,
 		)
-	ubw_order_id = models.IntegerField(
+	ubw_order_id = models.BigIntegerField(
 		verbose_name="UBW order_id",
 		null=True,
 		blank=True,
 		)
-	ubw_apar_id	= models.IntegerField(
+	ubw_apar_id	= models.BigIntegerField(
 		verbose_name="UBW leverandørnr",
 		null=True,
 		blank=True,
@@ -7339,7 +7339,7 @@ class UBWFaktura(models.Model):
 		blank=True,
 		max_length=10,
 		)
-	ubw_client = models.IntegerField(
+	ubw_client = models.BigIntegerField(
 		verbose_name="UBW Virksomhets-ID",
 		null=True,
 		blank=True,
@@ -7361,7 +7361,7 @@ class UBWFaktura(models.Model):
 		blank=True,
 		max_length=300,
 		)
-	ubw_kategori = models.IntegerField(
+	ubw_kategori = models.BigIntegerField(
 		verbose_name="UWB Kategori",
 		null=True,
 		blank=True,
@@ -7525,17 +7525,17 @@ class UBWEstimat(models.Model):
 		null=True,
 		blank=True,
 		)
-	estimat_account = models.IntegerField(
+	estimat_account = models.BigIntegerField(
 		verbose_name="Estimat Kontonr",
 		null=True,
 		blank=True,
 		)
-	estimat_dim_1 = models.IntegerField(
+	estimat_dim_1 = models.BigIntegerField(
 		verbose_name="Estimat Koststednr",
 		null=True,
 		blank=True,
 		)
-	estimat_dim_4 = models.IntegerField(
+	estimat_dim_4 = models.BigIntegerField(
 		verbose_name="Estimat Prosjektnr",
 		null=True,
 		blank=True,
@@ -7592,7 +7592,7 @@ class UBWEstimat(models.Model):
 		blank=True,
 		max_length=5,
 		)
-	ubw_kategori = models.IntegerField(
+	ubw_kategori = models.BigIntegerField(
 		verbose_name="UBW Kategori",
 		null=True,
 		blank=True,
