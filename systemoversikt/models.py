@@ -2858,7 +2858,7 @@ class CMDBbackup(models.Model):
 			)
 	source_type = models.CharField(
 			verbose_name="Source type",
-			max_length=15,
+			max_length=20,
 			blank=True,
 			null=True,
 			)
@@ -2887,13 +2887,13 @@ class CMDBbackup(models.Model):
 			)
 	backup_frequency = models.CharField(
 			verbose_name="Backup frequency",
-			max_length=10,
+			max_length=20,
 			blank=True,
 			null=True,
 			)
 	storage_policy = models.CharField(
 			verbose_name="Storage Policy",
-			max_length=100,
+			max_length=150,
 			blank=True,
 			null=True,
 			)
