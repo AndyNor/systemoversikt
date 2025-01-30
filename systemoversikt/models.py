@@ -1169,7 +1169,7 @@ class Profile(models.Model):
 			)
 	service_principal_name = models.CharField(
 			verbose_name="Service Principal Name (AD)",
-			max_length=256,
+			max_length=512,
 			blank=True,
 			null=True,
 			)
