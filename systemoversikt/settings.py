@@ -178,7 +178,7 @@ if THIS_ENVIRONMENT == "PROD":
 			'NAME': 'kartoteket',
 			'USER': os.environ["POSTGRES_USER"],
 			'PASSWORD': os.environ["POSTGRES_PASSWORD"],
-			'HOST': 'localhost',
+			'HOST': '127.0.0.1',
 			'PORT': '5432',
 		}
 	}
