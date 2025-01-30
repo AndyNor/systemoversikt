@@ -174,12 +174,15 @@ if THIS_ENVIRONMENT == "TEST":
 if THIS_ENVIRONMENT == "PROD":
 	DATABASES = {
 		'default': {
-			'ENGINE': 'django.db.backends.postgresql_psycopg2',
+			'ENGINE': 'django.db.backends.postgresql',
 			'NAME': 'kartoteket',
 			'USER': os.environ["POSTGRES_USER"],
 			'PASSWORD': os.environ["POSTGRES_PASSWORD"],
 			'HOST': 'localhost',
 			'PORT': '5432',
+			'OPTIONS': {
+				'sslmode': 'disable',
+			}
 		}
 	}
 
