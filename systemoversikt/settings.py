@@ -163,7 +163,7 @@ WSGI_APPLICATION = 'systemoversikt.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
-if THIS_ENVIRONMENT == "PROD" or THIS_ENVIRONMENT == "TEST":
+if THIS_ENVIRONMENT == "TEST":
 	DATABASES = {
 		'default': {
 			'ENGINE': 'django.db.backends.sqlite3',
@@ -171,7 +171,6 @@ if THIS_ENVIRONMENT == "PROD" or THIS_ENVIRONMENT == "TEST":
 		}
 	}
 
-"""
 if THIS_ENVIRONMENT == "PROD":
 	DATABASES = {
 		'default': {
@@ -186,7 +185,6 @@ if THIS_ENVIRONMENT == "PROD":
 			}
 		}
 	}
-"""
 
 
 
