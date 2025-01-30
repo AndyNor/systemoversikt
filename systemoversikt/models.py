@@ -109,7 +109,7 @@ class CitrixPublication(models.Model):
 			verbose_name="Visningsnavn",
 			blank=True,
 			null=True,
-			max_length=300,
+			max_length=500,
 		)
 	publikasjon_active = models.BooleanField(
 			verbose_name="Aktiv",
