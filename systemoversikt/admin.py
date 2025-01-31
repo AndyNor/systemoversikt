@@ -157,7 +157,7 @@ class DatabaseAdmin(admin.ModelAdmin):
 	search_fields = ('navn',)
 
 	def get_ordering(self, request):
-		return [Lower('navn')]
+		return ['navn']
 
 
 @admin.register(HRorg)
@@ -283,7 +283,7 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 	search_fields = ('navn',)
 
 	def get_ordering(self, request):
-		return [Lower('navn')]
+		return ['navn']
 
 
 @admin.register(Leverandortilgang)
@@ -309,7 +309,7 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 	)
 
 	def get_ordering(self, request):
-		return [Lower('navn')]
+		return ['navn']
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
@@ -529,7 +529,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 	filter_horizontal = ('overordnede_virksomheter',)
 
 	def get_ordering(self, request):
-		return [Lower('virksomhetsnavn')]
+		return ['virksomhetsnavn']
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
@@ -733,7 +733,7 @@ class LeverandorAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
-		return [Lower('leverandor_navn')]
+		return ['leverandor_navn']
 
 
 @admin.register(BehandlingInformering)
@@ -885,7 +885,7 @@ class BehandlingsgrunnlagAdmin(SimpleHistoryAdmin):
 	list_display = ('grunnlag', 'lovparagraf', 'lov')
 
 	def get_ordering(self, request):
-		return [Lower('grunnlag')]
+		return ['grunnlag']
 
 
 @admin.register(Personsonopplysningskategori)
@@ -893,7 +893,7 @@ class PersonsonopplysningskategoriAdmin(SimpleHistoryAdmin):
 	list_display = ('navn', 'artikkel', 'hovedkategori', 'eksempler')
 
 	def get_ordering(self, request):
-		return [Lower('navn')]
+		return ['navn']
 
 
 @admin.register(Registrerte)
@@ -901,7 +901,7 @@ class RegistrerteAdmin(SimpleHistoryAdmin):
 	list_display = ('kategorinavn', 'definisjon', 'saarbar_gruppe')
 
 	def get_ordering(self, request):
-		return [Lower('kategorinavn')]
+		return ['kategorinavn']
 
 
 @admin.register(IntegrasjonKonfigurasjon)
@@ -942,7 +942,7 @@ class SystemUrlAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
-		return [Lower('domene')]
+		return ['domene']
 
 
 @admin.register(SystemKategori)
@@ -952,7 +952,7 @@ class SystemKategoriAdmin(SimpleHistoryAdmin):
 	list_filter = ('systemhovedkategori_systemkategorier',)
 
 	def get_ordering(self, request):
-		return [Lower('kategorinavn')]
+		return ['kategorinavn']
 
 
 @admin.register(Systemtype)
@@ -961,7 +961,7 @@ class SystemtypeAdmin(SimpleHistoryAdmin):
 	search_fields = ('kategorinavn',)
 
 	def get_ordering(self, request):
-		return [Lower('kategorinavn')]
+		return ['kategorinavn']
 
 
 @admin.register(SystemHovedKategori)
@@ -971,7 +971,7 @@ class SystemHovedKategoriAdmin(SimpleHistoryAdmin):
 	filter_horizontal = ('subkategorier',)
 
 	def get_ordering(self, request):
-		return [Lower('hovedkategorinavn')]
+		return ['hovedkategorinavn']
 
 
 @admin.register(Ansvarlig)
@@ -1037,7 +1037,7 @@ class ProgramvareAdmin(SimpleHistoryAdmin):
 	filter_horizontal = ('programvareleverandor', 'kategorier',)
 
 	def get_ordering(self, request):
-		return [Lower('programvarenavn')]
+		return ['programvarenavn']
 
 
 	def response_add(self, request, obj, post_url_continue=None):
@@ -1217,7 +1217,7 @@ class CMDBRefAdmin(admin.ModelAdmin):
 	list_filter = ('environment', 'operational_status', 'service_classification', 'opprettet')
 
 	def get_ordering(self, request):
-		return [Lower('navn')]
+		return ['navn']
 
 
 
@@ -1242,7 +1242,7 @@ class CMDBRefAdmin(admin.ModelAdmin):
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
-		return [Lower('navn')]
+		return ['navn']
 
 @admin.register(Fellesinformasjon)
 class FellesinformasjonAdmin(admin.ModelAdmin):
@@ -1273,7 +1273,7 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
-		return [Lower('kortnavn')]
+		return ['kortnavn']
 
 	fieldsets = (
 			('Om avtalen', {
@@ -1390,7 +1390,7 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
-		return ['sort_order', Lower('navn')]
+		return ['sort_order', 'navn']
 
 	fieldsets = (
 			('Obligatorisk informasjon', {
@@ -1512,7 +1512,7 @@ class AutentiseringsteknologiAdmin(admin.ModelAdmin):
 	search_fields = ('navn', 'definisjon')
 
 	def get_ordering(self, request):
-		return [Lower('navn')]
+		return ['navn']
 
 
 @admin.register(Autentiseringsmetode)
@@ -1521,7 +1521,7 @@ class AutentiseringsmetodeAdmin(admin.ModelAdmin):
 	search_fields = ('navn', 'definisjon')
 
 	def get_ordering(self, request):
-		return [Lower('navn')]
+		return ['navn']
 
 
 @admin.register(InformasjonsKlasse)
@@ -1530,7 +1530,7 @@ class InformasjonsKlasseAdmin(admin.ModelAdmin):
 	search_fields = ('navn', 'beskrivelse')
 
 	def get_ordering(self, request):
-		return [Lower('navn')]
+		return ['navn']
 
 
 @admin.register(Definisjon)
@@ -1550,7 +1550,7 @@ class DefinisjonAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
-		return [Lower('begrep')]
+		return ['begrep']
 
 
 @admin.register(BehovForDPIA)

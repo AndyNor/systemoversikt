@@ -2935,7 +2935,7 @@ def bruker_sok(request):
 	search_term = request.GET.get('search_term', '').replace(","," ").strip().lower()
 	# vi ønsker her å søke med AND-operatør mellom alle ord mot displayname, men OR-et med første ordet mot username.
 	fields = (
-		'profile__displayName__contains',
+		'profile__displayName__icontains',
 	)
 	parts = []
 	terms = search_term.split(" ")
