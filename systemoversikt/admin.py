@@ -361,7 +361,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
-		return [Lower('systemnavn')]
+		return ['systemnavn']
 
 	filter_horizontal = ('systemkategorier', 'informasjonsklassifisering', 'kritisk_kapabilitet', 'LOSref', 'service_offerings', 'citrix_publications',)
 	autocomplete_fields = (
