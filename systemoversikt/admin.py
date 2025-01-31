@@ -992,7 +992,7 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
-		return [Lower('brukernavn')]
+		return ['brukernavn']
 
 	def brukers_brukernavn(self, obj):
 		return obj.brukernavn.username
