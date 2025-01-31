@@ -33,7 +33,7 @@ SECRET_KEY = os.environ['KARTOTEKET_SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
 if THIS_ENVIRONMENT == "PROD":
-	DEBUG = True
+	DEBUG = False
 if THIS_ENVIRONMENT == "TEST":
 	DEBUG = True
 
