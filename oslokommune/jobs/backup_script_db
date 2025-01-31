@@ -12,7 +12,7 @@ last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
 done
 
 # remove files older than 30 days
-find /var/kartoteket/backup/db/ -mindepth 1 -mtime +30 -delete
+find /var/kartoteket/backup/db/ -mindepth 1 -mtime +7 -delete
 
 #+x
 

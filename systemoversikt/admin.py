@@ -360,8 +360,8 @@ class SystemAdmin(SimpleHistoryAdmin):
 			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.pk}))
 		return super().response_change(request, obj)
 
-	def get_ordering(self, request):
-		return [Lower('systemnavn')]
+	#def get_ordering(self, request):
+	#	return [Lower('systemnavn')]
 
 	filter_horizontal = ('systemkategorier', 'informasjonsklassifisering', 'kritisk_kapabilitet', 'LOSref', 'service_offerings', 'citrix_publications',)
 	autocomplete_fields = (
