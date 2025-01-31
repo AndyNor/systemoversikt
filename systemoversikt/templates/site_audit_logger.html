@@ -43,7 +43,7 @@ Viser de siste {{antall_vist}} endringene mot databasen:
 	<tbody>
 	{% for entry in recent_admin_loggs %}
 	<tr>
-		<td>{{ entry.action_time }}</td>
+		<td>{{ entry.action_time|date:"Y-m-d" }}</td>
 		<td>{{ entry.user }}</td>
 		<td>
 			{% if entry.action_flag == 1 %}Ny{% endif %}

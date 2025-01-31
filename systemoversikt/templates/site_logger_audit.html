@@ -20,7 +20,7 @@
 	<tbody>
 	{% for entry in recent_loggs %}
 	<tr>
-		<td width="200">{{ entry.opprettet|date:"Y-m-d" }}</td>
+		<td width="200">{{ entry.opprettet|date:"Y-m-d H:i" }}</td>
 		<td width="150">{{ entry.event_type }}</td>
 		<td>{{ entry.message }}</td>
 	</tr>

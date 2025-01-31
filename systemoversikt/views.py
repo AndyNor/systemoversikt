@@ -8106,7 +8106,7 @@ def csirt_maskinlookup_api(request): #API
 
 
 def csirt_iplookup_api(request):
-	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Innkommende kall fra {get_client_ip(request)}")
+	#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Innkommende kall fra {get_client_ip(request)}")
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil: HTTP metode var ikke GET")
 		raise Http404
