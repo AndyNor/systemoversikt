@@ -70,7 +70,10 @@ ALTER ROLE django_server SET client_encoding TO 'utf8';
 ALTER ROLE django_server SET default_transaction_isolation TO 'read committed';
 ALTER ROLE django_server SET timezone TO 'UTC';
 GRANT ALL PRIVILEGES ON DATABASE mydb TO django_server;
+nano /var/lib/pgsql/data/pg_hba.conf <-- endre til md5
+#usikker på denne var nødvendig: GRANT USAGE ON SCHEMA public TO django_server;
 \q
+
 
 # lage environment inne i kildekodemappen
 python3.9 -m venv /var/kartoteket/virtualenv/py39
