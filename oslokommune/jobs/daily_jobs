@@ -2,6 +2,13 @@
 source /var/kartoteket/virtualenv/py39/bin/activate
 cd /var/kartoteket/source/systemoversikt/
 
+# run a backup
+python manage.py dbbackup --compress
+
+# clean up old backups
+find /var/kartoteket/source/systemoversikt/dbbackup/ -mindepth 1 -mtime +21 -delete
+
+
 # run batch AD/PRK
 python /var/kartoteket/source/systemoversikt/manage.py ldap_users_paged
 python /var/kartoteket/source/systemoversikt/manage.py ldap_drift_medlemskap
