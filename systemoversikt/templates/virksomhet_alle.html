@@ -74,7 +74,7 @@
 		</td>
 		<td>
 			{% for person in vir.personvernkoordinator.all %}
-				<a href="{% url 'ansvarlig' person.pk %}"
+				<a href="{% url 'bruker_detaljer' pk=person.brukernavn.pk %}"
 				{% if person.brukernavn.is_active == False  %}
 					style="text-decoration: line-through;"
 				{% endif %}
@@ -84,7 +84,7 @@
 		</td>
 		<td>
 			{% for person in vir.informasjonssikkerhetskoordinator.all %}
-				<a href="{% url 'ansvarlig' person.pk %}"
+				<a href="{% url 'bruker_detaljer' pk=person.brukernavn.pk %}"
 				{% if person.brukernavn.is_active == False  %}
 					style="text-decoration: line-through;"
 				{% endif %}
@@ -94,7 +94,7 @@
 		</td>
 		<td>
 			{% for person in vir.ikt_kontakt.all %}
-				<a href="{% url 'ansvarlig' person.pk %}"
+				<a href="{% url 'bruker_detaljer' pk=person.brukernavn.pk %}"
 				{% if person.brukernavn.is_active == False  %}
 					style="text-decoration: line-through;"
 				{% endif %}
@@ -104,7 +104,7 @@
 		</td>
 		<td>
 			{% for person in vir.arkitekturkontakter.all %}
-				<a href="{% url 'ansvarlig' person.pk %}"
+				<a href="{% url 'bruker_detaljer' pk=person.brukernavn.pk %}"
 				{% if person.brukernavn.is_active == False  %}
 					style="text-decoration: line-through;"
 				{% endif %}
@@ -114,7 +114,7 @@
 		</td>
 		<td>
 			{% for person in vir.uke_kam_referanse.all %}
-				<a href="{% url 'ansvarlig' person.pk %}"
+				<a href="{% url 'bruker_detaljer' pk=person.brukernavn.pk %}"
 				{% if person.brukernavn.is_active == False  %}
 					style="text-decoration: line-through;"
 				{% endif %}>

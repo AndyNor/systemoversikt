@@ -59,7 +59,7 @@
 
 			<td>
 				{% for autorisertbestiller in vir.autoriserte_bestillere_sertifikater.all %}
-					<a href="{% url 'ansvarlig' autorisertbestiller.person.pk %}">{{ autorisertbestiller.person }}</a>
+					<a href="{% url 'bruker_detaljer' pk=autorisertbestiller.person.brukernavn.pk %}">{{ autorisertbestiller.person }}</a>
 				{% endfor %}
 			</td>
 		</tr>

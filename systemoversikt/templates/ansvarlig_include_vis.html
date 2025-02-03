@@ -1,5 +1,5 @@
 {% for ansvarlig in ansvarlige %}
-	{% url 'ansvarlig' pk=ansvarlig.pk as url_ansvarlig %}
+	{% url 'bruker_detaljer' pk=ansvarlig.brukernavn.pk as url_ansvarlig %}
 	👤 <a href="{{ url_ansvarlig }}" style="{% if ansvarlig.brukernavn.profile.accountdisable %}text-decoration: line-through;{% endif %}">
 	{{ ansvarlig }}</a><br>
 {% empty %}

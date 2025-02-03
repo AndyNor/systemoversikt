@@ -23,7 +23,7 @@
 	</p>
 
 
-	{% url 'ansvarlig' pk=request.user.ansvarlig_brukernavn.pk as url_ansvarlig %}
+	{% url 'bruker_detaljer' pk=request.user.pk as url_ansvarlig %}
 	{% if url_ansvarlig %}
 		<a href="{{ url_ansvarlig }}" class="btn btn-sm btn-link" >Mine ansvarsområder</a>
 	{% else%}
