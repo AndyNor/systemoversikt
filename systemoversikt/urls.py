@@ -226,7 +226,7 @@ urlpatterns = [
 
 	re_path(r'^ansvarlige/alle/$', views.alle_ansvarlige, name='alle_ansvarlige'),
 	re_path(r'^ansvarlige/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),
-	re_path(r'^ansvarlige/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
+	#re_path(r'^ansvarlige/(?P<pk>\d{1,8})/$', views.ansvarlig, name='ansvarlig'),
 
 
 	re_path(r'^cmdb/firewall/$', views.cmdb_firewall, name='cmdb_firewall'),

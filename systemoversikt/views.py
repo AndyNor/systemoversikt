@@ -2885,11 +2885,11 @@ def entra_id_oppslag(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	import re
-	inndata = request.POST.get('inndata', "")
+	inndata = request.POST.get('inndata', '')
 	#message = f"{request.user} søkte på: {inndata}."
 	inndata = re.sub(r'[^A-Za-z0-9\.\@]', '', inndata) # sørge for at det kun er lovlige tegn
 
-	if inndata != "":
+	if inndata != '':
 		#ApplicationLog.objects.create(event_type="Azure AD brukersøk", message=message)
 
 		client = get_client_for_graph()
@@ -2900,7 +2900,7 @@ def entra_id_oppslag(request):
 				metadata = metadata["value"][0] # det er bare ét treff, så vi kan ta det første
 				groups = fetch_groups_for_user_id(metadata["id"])
 			else:
-				messages.info(request, f'Flere treff på: "{inndata}" i Entra ID. Sørg for at det er unikt.')
+				messages.info(request, f'Flere treff på: "{inndata}" i Entra ID. Sørg for at søket er unikt.')
 				metadata = None
 				groups = None
 
@@ -2909,6 +2909,8 @@ def entra_id_oppslag(request):
 			metadata = None
 			groups = None
 
+	if inndata == '':
+		inndata = request.GET.get('inndata', '')
 	metadata = metadata if 'metadata' in locals() else None
 	groups = groups if 'groups' in locals() else None
 
@@ -3157,10 +3159,37 @@ def bruker_detaljer(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	user = User.objects.get(pk=pk)
-	return render(request, 'brukere_brukersok_ad.html', {
+	if not user.is_active:
+		messages.warning(request, 'Denne brukeren er deaktivert!')
+
+
+	ansvarlig_detaljer = {}
+	if hasattr(user, "ansvarlig_brukernavn"):
+		ansvarlig = user.ansvarlig_brukernavn
+
+		ansvarlig_detaljer["systemeier_for"] = System.objects.filter(~Q(ibruk=False)).filter(systemeier_kontaktpersoner_referanse=ansvarlig.pk)
+		ansvarlig_detaljer["systemforvalter_for"] = System.objects.filter(~Q(ibruk=False)).filter(systemforvalter_kontaktpersoner_referanse=ansvarlig.pk)
+		ansvarlig_detaljer["systemforvalter_bruk_for"] = SystemBruk.objects.filter(systemforvalter_kontaktpersoner_referanse=ansvarlig.pk)
+		ansvarlig_detaljer["kam_for"] = Virksomhet.objects.filter(uke_kam_referanse=ansvarlig.pk)
+		ansvarlig_detaljer["avtale_ansvarlig_for"] = Avtale.objects.filter(avtaleansvarlig=ansvarlig.pk)
+		ansvarlig_detaljer["ikt_kontakt_for"] = Virksomhet.objects.filter(ikt_kontakt=ansvarlig.pk)
+		ansvarlig_detaljer["sertifikatbestiller_for"] = Virksomhet.objects.filter(autoriserte_bestillere_sertifikater__person=ansvarlig.pk)
+		ansvarlig_detaljer["virksomhetsleder_for"] = Virksomhet.objects.filter(leder=ansvarlig.pk)
+		ansvarlig_detaljer["autorisert_bestiller_for"] = Virksomhet.objects.filter(autoriserte_bestillere_tjenester=ansvarlig.pk)
+		ansvarlig_detaljer["personvernkoordinator_for"] = Virksomhet.objects.filter(personvernkoordinator=ansvarlig.pk)
+		ansvarlig_detaljer["informasjonssikkerhetskoordinator_for"] = Virksomhet.objects.filter(informasjonssikkerhetskoordinator=ansvarlig.pk)
+		#ansvarlig_detaljer["behandlinger_for"] = BehandlingerPersonopplysninger.objects.filter(oppdateringsansvarlig=ansvarlig.pk)
+		#ansvarlig_detaljer["definisjonsansvarlig_for"] = Definisjon.objects.filter(ansvarlig=ansvarlig.pk)
+		ansvarlig_detaljer["system_innsynskontakt_for"] = System.objects.filter(kontaktperson_innsyn=ansvarlig.pk)
+		ansvarlig_detaljer["autorisert_bestiller_uke_for"] = Virksomhet.objects.filter(autoriserte_bestillere_tjenester_uke=ansvarlig.pk)
+		ansvarlig_detaljer["programvarebruk_kontakt_for"] = ProgramvareBruk.objects.filter(lokal_kontakt=ansvarlig.pk)
+		ansvarlig_detaljer["kompass_godkjent_bestiller_for"] = System.objects.filter(godkjente_bestillere=ansvarlig.pk)
+
+	return render(request, 'brukere_brukerprofil.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-		'users': [user],
+		'user': user,
+		'ansvarlig_detaljer': ansvarlig_detaljer,
 	})
 
 
@@ -4219,7 +4248,7 @@ def tjenestekatalogen_systemer_api(request):
 		raise Http404
 
 
-
+"""
 def ansvarlig(request, pk):
 	#Viser informasjon om en ansvarlig
 	required_permissions = ['systemoversikt.view_system']
@@ -4270,6 +4299,7 @@ def ansvarlig(request, pk):
 		'programvarebruk_kontakt_for': programvarebruk_kontakt_for,
 		'kompass_godkjent_bestiller_for': kompass_godkjent_bestiller_for,
 	})
+"""
 
 
 

@@ -15,6 +15,14 @@
 	<p>Systemer har eier og forvaltere, avtaler har avtaleoppfølger og behandlinger har navngitte personer som er ansvarlige for å holde informasjonen oppdatert. En ansvarlig er her en form for rolle som er koblet mot en konkret person representert ved en bruker i Active Directory. Når brukeren koblet til rollen slutter eller av annne grunn får sin bruker deaktivert, vises navnet <span style="text-decoration: line-through;">gjennomstreket</span>. Status på brukere synkronieres hver natt. Dersom en annen person skal overta oppgavene kan man endre pekeren fra "ansvarlig" rollen over på en annen brukerID.<br>Viser {{ ansvarlige.count }} ansvarlige.</p>
 
 	<ul style="column-count:5;">
-		{% include "ansvarlig_include_vis.html" with ansvarlige=ansvarlige %}
+
+		{% for ansvarlig in ansvarlige %}
+			{% url 'bruker_detaljer' pk=ansvarlig.brukernavn.pk as url_ansvarlig %}
+			👤 <a href="{{ url_ansvarlig }}" style="{% if ansvarlig.brukernavn.profile.accountdisable %}text-decoration: line-through;{% endif %}">
+			{{ ansvarlig }}</a><br>
+		{% empty %}
+			<span style="background-color: #ffacac">Mangler</span><br>
+		{% endfor %}
+
 	</ul>
 {% endblock hovedinnhold %}
