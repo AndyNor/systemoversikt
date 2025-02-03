@@ -1,7 +1,14 @@
 #!/bin/sh
 
+#!/bin/sh
+source /var/kartoteket/virtualenv/py39/bin/activate
+cd /var/kartoteket/source/systemoversikt/
+
+python manage.py dumpdata > latest_full_backup.json
+
+
 # make a compressed backup of the db.sqlite3-file
-tar -zcf /var/kartoteket/backup/db/db_`date +%F_%H:%M:%S`.tar.gz /var/kartoteket/source/systemoversikt/db.sqlite3
+tar -zcf /var/kartoteket/backup/db/db_`date +%F_%H:%M:%S`.tar.gz /var/kartoteket/source/systemoversikt/latest_full_backup.json
 
 cd /var/kartoteket/backup/db/
 last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
@@ -12,7 +19,7 @@ last=-1; find . -type f -name '*.tar.gz' -printf '%f\0' | sort -nz |
 done
 
 # remove files older than 30 days
-find /var/kartoteket/backup/db/ -mindepth 1 -mtime +7 -delete
+find /var/kartoteket/backup/db/ -mindepth 1 -mtime +14 -delete
 
 #+x
 
