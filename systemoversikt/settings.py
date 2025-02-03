@@ -74,6 +74,13 @@ INSTALLED_APPS = [
 	'dbbackup',
 ]
 
+
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_STORAGE_OPTIONS = {
+	'location': os.path.join(BASE_DIR, 'dbbackup')
+}
+
+
 #if THIS_ENVIRONMENT == "TEST":
 #	INSTALLED_APPS += [
 #		'debug_permissions',
