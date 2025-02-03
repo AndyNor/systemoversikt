@@ -7,10 +7,12 @@ cffi==1.15.1
 charset-normalizer==3.1.0
 cobble==0.1.3
 contextvars==2.4
-cryptography==41.0.6
+cryptography==39.0.2
+deepdiff==8.0.1
 distlib==0.3.6
-Django==4.2.15
+Django==4.2.18
 django-csp==3.7
+django-dbbackup==4.2.1
 django-debug-permissions==1.0.0
 django-extensions==3.2.1
 django-mailer==2.2
@@ -27,12 +29,13 @@ josepy==1.13.0
 lockfile==0.12.2
 mammoth==1.5.0
 mozilla-django-oidc==3.0.0
-msal==1.24.1
+msal==1.21.0
 msal-extensions==1.0.0
 msgraph-core==0.2.2
 numpy==1.24.2
 Office365-REST-Python-Client==2.4.0
 openpyxl==3.1.0
+orderly-set==5.2.2
 packaging==23.0
 pandas==1.5.3
 pip-review==1.3.0
@@ -43,24 +46,25 @@ pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycparser==2.21
 PyJWT==2.6.0
-pyOpenSSL==23.2.0
+pyOpenSSL==23.0.0
 pyparsing==3.0.9
 python-dateutil==2.8.2
 python_ldap==3.4.3
 pytz==2022.7.1
 pywin32==305; platform_system == 'Windows'
+rdflib==7.0.0
 requests==2.31.0
 simplejson==3.18.3
 six==1.16.0
 soupsieve==2.4
 sqlparse==0.4.4
+standardjson==0.3.1
+termcolor==2.5.0
 typing_extensions==4.5.0
 tzdata==2022.7
-urllib3==1.26.18
+Unidecode==1.3.8
+urllib3==1.26.17
+wconv==1.0.2
 xlrd==2.0.1
-rdflib
-certipy-ad
+certipy-ad; platform_system == 'Linux'
 mod-wsgi; platform_system == 'Linux'
-unidecode==1.3.8
-deepdiff==8.0.1
-django-dbbackup
