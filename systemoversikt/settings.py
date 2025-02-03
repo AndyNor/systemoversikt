@@ -71,6 +71,7 @@ INSTALLED_APPS = [
 	'widget_tweaks',
 	'django_extensions',
 	'debug_permissions',
+	'dbbackup',
 ]
 
 #if THIS_ENVIRONMENT == "TEST":
