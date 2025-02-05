@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-	<h5>{{user.username}} {% if not user.profile.accountdisable %}(deaktiv){% endif%} / {{user.first_name}} {{user.last_name}}</h5>
+	<h5>{{user.username}} {% if user.profile.accountdisable %}(deaktiv){% endif%} / {{user.first_name}} {{user.last_name}}</h5>
 
 	<p><b>E-post:</b> {{ user.email }}</p>
 
@@ -178,21 +178,24 @@
 			</tbody>
 		</table>
 
-		<h6>Systemer jeg forvalter</h6>
-		<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
-		{% for system in ansvarlig_detaljer.systemforvalter_for %}
-			{% include "system_include_vis_ikon.html" with system=system %}
-		{% endfor %}
-		</div>
+		{% if ansvarlig_detaljer.systemforvalter_for %}
+			<h6>Systemer jeg forvalter</h6>
+			<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
+			{% for system in ansvarlig_detaljer.systemforvalter_for %}
+				{% include "system_include_vis_ikon.html" with system=system %}
+			{% endfor %}
+			</div>
+		{% endif %}
 
-		<hr>
-
-		<h6>Systemer jeg eier</h6>
-		<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
-		{% for system in ansvarlig_detaljer.systemeier_for %}
-			{% include "system_include_vis_ikon.html" with system=system %}
-		{% endfor %}
-		</div>
+		{% if ansvarlig_detaljer.systemeier_for %}
+			<hr>
+			<h6>Systemer jeg eier</h6>
+			<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
+			{% for system in ansvarlig_detaljer.systemeier_for %}
+				{% include "system_include_vis_ikon.html" with system=system %}
+			{% endfor %}
+			</div>
+		{% endif %}
 
 	{% endif %}
 
