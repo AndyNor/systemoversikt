@@ -58,7 +58,7 @@ class Command(BaseCommand):
 			ant_nye_valg = 0
 			ant_oppdateringer = 0
 			ant_deaktivert = 0
-			debug_file = os.path.dirname(os.path.abspath(__file__)) + "/org.csv"
+			debug_file = os.path.dirname(os.path.abspath(__file__)) + "\\org.csv"
 
 			if os.environ['THIS_ENV'] == "PROD":
 				url = os.environ["PRK_ORG_URL"]
@@ -81,9 +81,31 @@ class Command(BaseCommand):
 
 
 			if os.environ['THIS_ENV'] == "TEST":
-				with open(debug_file, 'r', encoding='latin-1') as file:
-					csv_data = list(csv.DictReader(file, delimiter=";"))
-					#headers: OU;OUSHORT;OUID;OUTYPE;OUSUBTYPE;O;ODEPARTMENTNUMBER;ODISPLAYNAME;OUBELONGSTOOUID;OULEVEL;MANAGER;MANAGEREMPLOYEENUMBER;DESCRIPTION;MAIL
+				url = os.environ["PRK_ORG_URL"]
+				apikey = os.environ["PRK_GENERELLEKSPORT_APIKEY"]
+				headers = {"apikey": apikey}
+
+				print("Kobler til %s" % url)
+				r = requests.get(url, headers=headers)
+				print("Original encoding: %s" % r.encoding)
+				r.encoding = "latin-1" # need to override
+				print("New encoding: %s" % r.encoding)
+				print("Statuskode: %s" % r.status_code)
+				filepath = 'systemoversikt/import/grp.csv'
+
+				if r.status_code == 200:
+					with open(filepath, 'w') as file_handle:
+						file_handle.write(r.text)
+					csv_data = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
+				else:
+					print(f"Error connecting: {r.status_code}.")
+
+				os.remove(filepath)
+
+
+			#	with open(debug_file, 'r', encoding='latin-1') as file:
+			#		csv_data = list(csv.DictReader(file, delimiter=";"))
+			#		#headers: OU;OUSHORT;OUID;OUTYPE;OUSUBTYPE;O;ODEPARTMENTNUMBER;ODISPLAYNAME;OUBELONGSTOOUID;OULEVEL;MANAGER;MANAGEREMPLOYEENUMBER;DESCRIPTION;MAIL
 
 			@transaction.atomic  # for speeding up database performance
 			def atomic():

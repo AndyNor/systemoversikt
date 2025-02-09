@@ -6630,6 +6630,7 @@ class HRorg(models.Model):
 			verbose_name="OUID",
 			null=False,
 			help_text=u"Importert",
+			db_index=True,
 			)
 	level = models.BigIntegerField(
 			verbose_name="OULEVEL",

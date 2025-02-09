@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-#Hensikten med denne koden er importere brukere i PRK for å kunne avdekke brukere som ikke burde være i AD.
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -12,15 +11,16 @@ from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
-import os
-import time
-import sys
-import json
-import csv
-import requests
-
+import os, time, sys, json, csv, requests
 
 class Command(BaseCommand):
+
+	antall_feilet_brukeroppslag = 0
+	antall_feilet_orgoppslag = 0
+	antall_drift_treff = 0
+	antall_profillagringer = 0
+
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "prk_users"
@@ -58,76 +58,142 @@ class Command(BaseCommand):
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 			runtime_t0 = time.time()
-			logg_hits = 0
-			logg_misses = 0
-			print("Laster inn brukere...")
-			debug_file = os.path.dirname(os.path.abspath(__file__)) + "/usr.csv"
+			print("Laster inn brukere fra PRK API...")
+
+			filepath = 'systemoversikt/import/usr.csv'
+			if os.environ['THIS_ENV'] == "PROD":
+				use_cache_data = False
+				keep_file_locally = True
+				apikey = os.environ["PRK_USERS_APIKEY"]
 
 			if os.environ['THIS_ENV'] == "TEST":
-				with open(debug_file, 'r', encoding='latin-1') as file:
+				use_cache_data = True # settes til True ved feilsøking lokalt
+				keep_file_locally = True # sett til True ved feilsøking
+				apikey = os.environ["PRK_GENERELLEKSPORT_APIKEY"]
+
+			if use_cache_data == True:
+				print("Bruker lokale data")
+				with open(filepath, 'r', encoding='latin-1') as file:
 					datastructure = list(csv.DictReader(file, delimiter=";"))
-
-
-			if os.environ['THIS_ENV'] == "PROD":
+			else:
+				print("Henter data fra API")
 				url = os.environ["PRK_USERS_URL"]
-				apikey = os.environ["PRK_USERS_APIKEY"]
 				headers = {"apikey": apikey}
-				#print(headers)
 				print("Kobler til %s" % url)
 				r = requests.get(url, headers=headers)
 				print("Original encoding: %s" % r.encoding)
 				r.encoding = "latin-1" # need to override
 				print("New encoding: %s" % r.encoding)
 				print("Statuskode: %s" % r.status_code)
+				filepath = 'systemoversikt/import/usr.csv'
 				if r.status_code == 200:
-					with open('systemoversikt/import/usr.csv', 'w') as file_handle:
-							file_handle.write(r.text)
-					print(f"Fil lastet ned")
-					datastructure = csv.DictReader(r.text.splitlines(), delimiter=";")
+					print(f"Filen er lastet inn")
+					if keep_file_locally:
+						print("Lagrer data til fil på disk")
+						with open(filepath, 'w') as file_handle:
+								file_handle.write(r.text)
+					else:
+						os.remove(filepath)
+					datastructure = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
 				else:
 					print(f"Error connecting: {r.status_code}.")
 
 
-			print("Resetting profiles")
+			def print_with_timestamp(message):
+				current_time = datetime.now()
+				print(f"{current_time.hour}:{current_time.minute} {message}")
+
+
+			print_with_timestamp("Resetter usertype...")
 			Profile.objects.all().update(usertype=None)
+			print_with_timestamp("Resetter org_unit...")
 			Profile.objects.all().update(org_unit=None)
+			print_with_timestamp("Resetter ansattnr...")
 			Profile.objects.all().update(ansattnr=None)
+			print_with_timestamp("Resetter from_prk...")
 			Profile.objects.all().update(from_prk=False)
 
-			for line in datastructure:
-				#print(line["EMPLOYEENUMBER"])
-				usertype = "%s" % (line["EMPLOYEETYPENAME"])
-				ansattnr = int(line["EMPLOYEENUMBER"])
+			print_with_timestamp("Cacher HR-organisasjonen...")
+			cache_hrorg = dict(HRorg.objects.values_list("ouid", "pk"))
+			print_with_timestamp("Cacher alle brkere...")
+			cache_users = dict(User.objects.values_list("username", "pk"))
+
+
+			def lookup_hrorg(ouid):
 				try:
-					org_unit = HRorg.objects.get(ouid=line["OUID"])
+					ouid = int(ouid)
+					pk = cache_hrorg.get(ouid)
+					return HRorg.objects.get(pk=pk)
 				except:
-					org_unit = None
+					#print(f"lookup_hrorg fant ikke {ouid}")
+					return None
 
-				usernames_str = ["%s%s" % (line["O"], line["EMPLOYEENUMBER"]),	"%s%s" % ("DRIFT", line["EMPLOYEENUMBER"])]
-				usernames = []
-				for u in usernames_str:
-					try:
-						usernames.append(User.objects.get(username__iexact=u))
-					except:
-						pass
+			def lookup_users(username):
+				try:
+					pk = cache_users.get(username)
+					return User.objects.get(pk=pk)
+				except:
+					#print(f"lookup_users fant ikke {username}")
+					return None
 
-				logg_hits += 1
-				for u in usernames:
+			#@transaction.atomic # not needed
+			def save_to_database(chunck):
+				antall_behandlet = 0
+				profiles_to_update = []
+				for line in chunck:
+					antall_behandlet += 1
+					usertype = f"{line['EMPLOYEETYPENAME']}"
+					ansattnr = line["EMPLOYEENUMBER"]
 
-					u.profile.usertype = usertype
-					u.profile.org_unit = org_unit
-					u.profile.ansattnr = ansattnr
-					u.profile.from_prk = True
-					u.save()
+					org_unit = lookup_hrorg(line["OUID"])
+					if not org_unit:
+						Command.antall_feilet_orgoppslag += 1
+
+					username_str = f"{line['O']}{line['EMPLOYEENUMBER']}"
+					u = lookup_users(username_str)
+					if u != None:
+						u.profile.usertype = usertype
+						u.profile.org_unit = org_unit
+						u.profile.ansattnr = ansattnr
+						u.profile.from_prk = True
+						profiles_to_update.append(u.profile)
+						Command.antall_profillagringer += 1
+					else:
+						Command.antall_feilet_brukeroppslag += 1
+
+					username_str = f"{'drift'}{line['EMPLOYEENUMBER']}"
+					u = lookup_users(username_str)
+					if u != None:
+						u.profile.usertype = usertype
+						u.profile.org_unit = org_unit
+						u.profile.ansattnr = ansattnr
+						u.profile.from_prk = True
+						profiles_to_update.append(u.profile)
+						Command.antall_profillagringer += 1
+						Command.antall_drift_treff += 1
+
+				Profile.objects.bulk_update(profiles_to_update, ['usertype', 'org_unit', 'ansattnr', 'from_prk'])
+
+				return antall_behandlet
 
 
+			print_with_timestamp("Processing...")
+			total_processed = 0
+			linjer_kilde = len(datastructure)
+			split_size = 5000
+
+			for i in range(0, linjer_kilde, split_size):
+				total_processed += save_to_database(datastructure[i:i + split_size])
+				message = f"Ferdig med batch {i}-{i+split_size}/{linjer_kilde}. Frem til nå er det {Command.antall_profillagringer} profillagringer, {Command.antall_feilet_brukeroppslag} feilede brukeroppslag, {Command.antall_feilet_orgoppslag} feilede HR-org oppslag og {Command.antall_drift_treff} treff på DRIFT-ident."
+				print_with_timestamp(message)
+
+
+			# logging
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
-			logg_entry_message = "Kjøretid: %s sekunder: %s treff" % (
-					round(logg_total_runtime, 1),
-					logg_hits,
-			)
-			print(logg_entry_message)
+			logg_entry_message = f"Kjøretid: {round(logg_total_runtime, 1)} sekunder: {total_processed} brukere importert, {Command.antall_feilet_orgoppslag} feilet oppslag mot HR-org, {Command.antall_feilet_brukeroppslag} feilet oppslag mot brukerID og {Command.antall_drift_treff} hadde drift-bruker knyttet til seg."
+
+			print_with_timestamp(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,

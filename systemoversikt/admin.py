@@ -163,7 +163,7 @@ class DatabaseAdmin(admin.ModelAdmin):
 @admin.register(HRorg)
 class HRorgAdmin(admin.ModelAdmin):
 	list_display = ('ou', 'level', 'leder', 'virksomhet_mor', 'direkte_mor')
-	search_fields = ('ou',)
+	search_fields = ('ou', 'ouid')
 	autocomplete_fields = ('leder', 'virksomhet_mor', 'direkte_mor')
 	list_filter = ('active', 'opprettet', 'virksomhet_mor')
 

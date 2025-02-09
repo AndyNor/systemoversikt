@@ -79,11 +79,20 @@ class Command(BaseCommand):
 					#sys.exit(message)
 
 			if os.environ['THIS_ENV'] == "TEST":
-				print(f"Opening test file {debug_file}")
-				with open(debug_file, 'r') as file:
-					import_data = file.read()
-				data = json.loads(import_data)
-
+				#print(f"Opening test file {debug_file}")
+				#with open(debug_file, 'r') as file:
+				#	import_data = file.read()
+				#data = json.loads(import_data)
+				print(f"Connecting to {url}...")
+				r = requests.get(url, headers=headers)
+				if r.status_code == 200:
+					data = r.json()
+				else:
+					message = "PRK_skjemaimport klarte ikke koble til API"
+					logg_entry = ApplicationLog.objects.create(
+							event_type=LOG_EVENT_TYPE,
+							message=message,
+					)
 
 			ant_eksisterende_valg = 0
 			ant_nye_valg = 0

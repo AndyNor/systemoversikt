@@ -179,4 +179,4 @@ class Command(BaseCommand):
 			print(logg_message)
 
 			# Push error
-			#push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet")
