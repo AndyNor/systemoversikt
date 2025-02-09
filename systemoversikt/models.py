@@ -308,6 +308,11 @@ class IntegrasjonKonfigurasjon(models.Model):
 		blank=True,
 		null=True,
 	)
+	runtime = models.BigIntegerField(
+			verbose_name="Kjøretid",
+			blank=True,
+			null=True,
+			)
 
 	def __str__(self):
 		return f'{self.kilde} {self.protokoll} {self.informasjon}'

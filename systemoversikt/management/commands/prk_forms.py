@@ -10,17 +10,16 @@ from systemoversikt.views import push_pushover
 from django.conf import settings
 from systemoversikt.models import *
 from django.db.models import Q
-import requests
-import os
-import time
-import sys
+import requests, os, time, sys
 
 class Command(BaseCommand):
-	def handle(self, **options):
 
-		#in case the need to reset all
-		#for v in PRKvalg.objects.all():
-		#	v.delete()
+	ant_eksisterende_valg = 0
+	ant_nye_valg = 0
+	ant_oppdateringer = 0
+	ant_slettet = 0
+
+	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "prk_forms"
 		LOG_EVENT_TYPE = 'PRK-skjemaimport'
@@ -61,50 +60,24 @@ class Command(BaseCommand):
 			url = os.environ["PRK_FORM_URL"]
 			apikey = os.environ["PRK_FORM_APIKEY"]
 			headers = {"apikey": apikey}
-			LOCAL_DEBUG = False
-			debug_file = os.path.dirname(os.path.abspath(__file__)) + "/lokalt/prk_forms_result.json"
-
-
-			if os.environ['THIS_ENV'] == "PROD":
-				print(f"Connecting to {url}...")
-				r = requests.get(url, headers=headers)
-				if r.status_code == 200:
-					data = r.json()
-				else:
-					message = "PRK_skjemaimport klarte ikke koble til API"
-					logg_entry = ApplicationLog.objects.create(
-							event_type=LOG_EVENT_TYPE,
-							message=message,
-					)
-					#sys.exit(message)
-
-			if os.environ['THIS_ENV'] == "TEST":
-				#print(f"Opening test file {debug_file}")
-				#with open(debug_file, 'r') as file:
-				#	import_data = file.read()
-				#data = json.loads(import_data)
-				print(f"Connecting to {url}...")
-				r = requests.get(url, headers=headers)
-				if r.status_code == 200:
-					data = r.json()
-				else:
-					message = "PRK_skjemaimport klarte ikke koble til API"
-					logg_entry = ApplicationLog.objects.create(
-							event_type=LOG_EVENT_TYPE,
-							message=message,
-					)
-
-			ant_eksisterende_valg = 0
-			ant_nye_valg = 0
-			ant_oppdateringer = 0
-			ant_slettet = 0
+			print(f"Connecting to {url}...")
+			r = requests.get(url, headers=headers)
+			if r.status_code == 200:
+				data = r.json()
+			else:
+				message = "PRK_skjemaimport klarte ikke koble til API"
+				logg_entry = ApplicationLog.objects.create(
+						event_type=LOG_EVENT_TYPE,
+						message=message,
+				)
+				sys.exit(message)
 
 
 			#alle eksisterende valg, for å kunne oppdage om valg er tatt bort mellom synkronisering
 			sjekk_alle_gruppenavn = list(PRKvalg.objects.values_list('gruppenavn', flat=True))
 
 			@transaction.atomic  # for speeding up database performance
-			def atomic():
+			def importer():
 				#print(data[0:10])
 				idx = 0
 				antall_records = len(data)
@@ -149,11 +122,10 @@ class Command(BaseCommand):
 						# betyr at dette er en "parent", bør ikke importeres og kan fjernes fra API-et.
 						continue
 
-					# PRK lager alltid et DS-prefiks. Det finnes GS-prefix i AD, men de skal vist ikke komme fra AD.
+					# PRK lager alltid et DS-prefiks. Det finnes GS-prefix i AD, men de kommer ikke fra AD.
 					helt_gruppenavn = "CN=DS-%s,%s,%s" % (item["gruppenavn"],item["relpath"],"DC=oslofelles,DC=oslo,DC=kommune,DC=no")
 					if helt_gruppenavn in sjekk_alle_gruppenavn:
 						sjekk_alle_gruppenavn.remove(helt_gruppenavn)
-
 
 
 					try:
@@ -164,20 +136,17 @@ class Command(BaseCommand):
 
 					try:
 						valg = PRKvalg.objects.get(gruppenavn=helt_gruppenavn)
-						nonlocal ant_eksisterende_valg
-						ant_eksisterende_valg += 1
+						Command.ant_eksisterende_valg += 1
 
 						if (valg.valgnavn != valgnavn) or (valg.beskrivelse != item["beskrivelse"]) or (valg.virksomhet != virksomhet):
 							valg.valgnavn = valgnavn
 							valg.beskrivelse = item["beskrivelse"]
 							valg.virksomhet = virksomhet
 							valg.save()
+							Command.ant_oppdateringer += 1
 
-							nonlocal ant_oppdateringer
-							ant_oppdateringer += 1
 					except:  # finnes ikke fra før av
-						nonlocal ant_nye_valg
-						ant_nye_valg += 1
+						Command.ant_nye_valg += 1
 
 						valg = PRKvalg.objects.create(
 								valgnavn=valgnavn,
@@ -188,7 +157,6 @@ class Command(BaseCommand):
 								virksomhet=virksomhet,
 							)
 
-			atomic()
 
 			@transaction.atomic  # for speeding up database performance
 			def opprydding():
@@ -203,51 +171,38 @@ class Command(BaseCommand):
 						ad_group.save()
 
 					valg.delete()
-					#print("x", end="")
-					nonlocal ant_slettet
-					ant_slettet += 1
+					Command.ant_slettet += 1
+
 				for skjema in PRKskjema.objects.filter(PRKvalg_skjemanavn__isnull=True): # ingen flere referanser tilbake
 					skjema.delete()
+
 				for gruppe in PRKgruppe.objects.filter(PRKvalg_gruppering__isnull=True): # ingen flere referanser tilbake
 					gruppe.delete()
 
+
+			print("Starter import til database...")
+			importer()
+			print("Rydder opp gammelt...")
 			opprydding()
 
-			message = "Import av PRK-data: %s eksisterende, %s nye, derav %s oppdateringer. %s slettet." % (
-					ant_eksisterende_valg,
-					ant_nye_valg,
-					ant_oppdateringer,
-					ant_slettet
-				)
-			print(message)
 
+			message = f"Import av PRK-data: {Command.ant_eksisterende_valg} eksisterende, {Command.ant_nye_valg} nye, derav {Command.ant_oppdateringer} oppdateringer. {Command.ant_slettet} slettet."
 			runtime_t1 = time.time()
-			logg_total_runtime = runtime_t1 - runtime_t0
-
-			logg_entry_message = "Kjøretid: %s: %s" % (
-					round(logg_total_runtime, 1),
-					message
-
-			)
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_entry_message,
-			)
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			logg_entry_message = f"Kjøretid:{logg_total_runtime}: {message}"
+			print(logg_entry_message)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message,)
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.runtime = logg_total_runtime
 			int_config.save()
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message,)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 

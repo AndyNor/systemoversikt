@@ -58,9 +58,9 @@ class Command(BaseCommand):
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 			runtime_t0 = time.time()
-			print("Laster inn brukere fra PRK API...")
 
 			filepath = 'systemoversikt/import/usr.csv'
+
 			if os.environ['THIS_ENV'] == "PROD":
 				use_cache_data = False
 				keep_file_locally = True
@@ -85,16 +85,17 @@ class Command(BaseCommand):
 				r.encoding = "latin-1" # need to override
 				print("New encoding: %s" % r.encoding)
 				print("Statuskode: %s" % r.status_code)
-				filepath = 'systemoversikt/import/usr.csv'
+
 				if r.status_code == 200:
-					print(f"Filen er lastet inn")
+					print(f"Data er lastet inn")
+					datastructure = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
 					if keep_file_locally:
 						print("Lagrer data til fil på disk")
 						with open(filepath, 'w') as file_handle:
-								file_handle.write(r.text)
+							file_handle.write(r.text)
 					else:
+						print("Sletter datafil")
 						os.remove(filepath)
-					datastructure = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
 				else:
 					print(f"Error connecting: {r.status_code}.")
 
@@ -188,30 +189,21 @@ class Command(BaseCommand):
 				print_with_timestamp(message)
 
 
-			# logging
 			runtime_t1 = time.time()
-			logg_total_runtime = runtime_t1 - runtime_t0
-			logg_entry_message = f"Kjøretid: {round(logg_total_runtime, 1)} sekunder: {total_processed} brukere importert, {Command.antall_feilet_orgoppslag} feilet oppslag mot HR-org, {Command.antall_feilet_brukeroppslag} feilet oppslag mot brukerID og {Command.antall_drift_treff} hadde drift-bruker knyttet til seg."
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			logg_entry_message = f"Kjøretid: {logg_total_runtime} sekunder: {total_processed} brukere importert, {Command.antall_feilet_orgoppslag} feilet oppslag mot HR-org, {Command.antall_feilet_brukeroppslag} feilet oppslag mot brukerID og {Command.antall_drift_treff} hadde drift-bruker knyttet til seg."
 
 			print_with_timestamp(logg_entry_message)
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_entry_message,
-			)
-			# lagre sist oppdatert tidspunkt
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message,)
+
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.runtime = logg_total_runtime
 			int_config.save()
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message,)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
-
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error

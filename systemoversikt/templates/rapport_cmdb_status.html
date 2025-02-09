@@ -17,6 +17,7 @@
 		<th>Kilde</th>
 		<th>Oppdateringsfrekvens</th>
 		<th>Sist oppdatert</th>
+		<th>Kjøretid (sekunder)</th>
 		<th width="30%">Sist status</th>
 	</thead>
 	<tbody>
@@ -26,6 +27,7 @@
 			<td>{{ i.kilde }}</td>
 			<td>{{ i.frekvensangivelse }}</td>
 			<td style="background-color: {{ i.color }};">{{i.dato_sist_oppdatert|date:"Ymd Hi"}}<br>{{ i.dato_sist_oppdatert|timesince }}</td>
+			<td>{{ i.runtime|default:"-" }}</td>
 			<td>{{ i.sist_status }}</td>
 		</tr>
 	{% endfor %}

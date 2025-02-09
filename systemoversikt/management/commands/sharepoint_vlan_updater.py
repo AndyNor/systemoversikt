@@ -6,14 +6,19 @@ from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
 from systemoversikt.models import *
 from django.db import transaction
-import os
-import json, os
+import os, json, time
 import pandas as pd
 import numpy as np
 from django.db.models import Q
+from functools import lru_cache
 import ipaddress
+from systemoversikt.views import sharepoint_get_file
+from netaddr import IPNetwork, IPAddress
 
 class Command(BaseCommand):
+
+	antall_ip_koblinger_totalt = 0
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_vlan"
@@ -50,10 +55,13 @@ class Command(BaseCommand):
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
+		def print_with_timestamp(message):
+			current_time = datetime.now()
+			print(f"{current_time.hour}:{current_time.minute} {message}")
+
 		try:
 
-			from systemoversikt.views import sharepoint_get_file
-
+			runtime_t0 = time.time()
 			infoblox_data = FILNAVN["infoblox_data"]
 			sone_design = FILNAVN["sone_design"]
 
@@ -195,33 +203,154 @@ class Command(BaseCommand):
 					if write_mode:
 						nc.save()
 
-				logg_entry_message = f'Fant {antall_records} VLAN/nettverk i {filename}.\n{antall_networkcontainer} IPv4 containere\n{antall_network} IPv4 nett:\n{antall_ipv6networkcontainer} IPv6 containere:\n{antall_ipv6network} IPv6 nettverk.\n{vlan_new} nye nettverk. {vlan_dropped} kunne ikke importeres. {vlan_deaktivert} er merket som deaktiverte.'
-				logg_entry = ApplicationLog.objects.create(
-						event_type=f'{LOG_EVENT_TYPE} {logmessage}',
-						message=logg_entry_message,
-					)
-				print(logg_entry_message)
+				logg_entry_message = f'Fant {antall_records} VLAN/nettverk i {filename}. {antall_networkcontainer} IPv4 containere, {antall_network} IPv4 nett, {antall_ipv6networkcontainer} IPv6 containere, {antall_ipv6network} IPv6 nettverk, {vlan_new} nye nettverk. {vlan_dropped} kunne ikke importeres. {vlan_deaktivert} er merket som deaktiverte.'
+				print_with_timestamp(logg_entry_message)
 				return logg_entry_message
 
 
+			@lru_cache(maxsize=128)
+			def make_network(network_str, network_ip):
+				return ipaddress.IPv4Network(network_str) if isinstance(network_ip, ipaddress.IPv4Address) else ipaddress.IPv6Network(network_str)
 
+
+			def ip_vlan_kobling():
+				alle_ip_adresser = list(NetworkIPAddress.objects.all())
+				alle_vlan = list(NetworkContainer.objects.all())
+
+				# Precompute networks and store in a dictionary
+				vlan_networks = {}
+				for vlan in alle_vlan:
+					network_str = f"{vlan.ip_address}/{vlan.subnet_mask}"
+					vlan_networks[vlan.pk] = IPNetwork(network_str)
+
+				antall_ip_adresser = len(alle_ip_adresser)
+				chunk_size = 1000
+
+				def process_chunk(chunk):
+					vlan_m2m_updates = []
+
+					for ipadr in chunk:
+						if ipadr.ip_address is None:  # skal ikke skje, men det var en feil i et tidligere importscript (klienter)
+							ipadr.delete()
+							continue
+						ip = IPAddress(ipadr.ip_address)
+						for vlan_pk, network in vlan_networks.items():
+							if ip in network:
+								Command.antall_ip_koblinger_totalt += 1
+								if write_mode:
+									vlan_m2m_updates.append((ipadr, vlan_pk))
+
+					# Handle many-to-many relationships
+					@transaction.atomic
+					def handle_m2m():
+						print("Lagrer chunk til database...")
+						for ipadr, vlan_pk in vlan_m2m_updates:
+							vlan = NetworkContainer.objects.get(pk=vlan_pk)
+							ipadr.vlan.add(vlan)
+					handle_m2m()
+
+				for i in range(0, antall_ip_adresser, chunk_size):
+					chunk = alle_ip_adresser[i:i + chunk_size]
+					print_with_timestamp(f"Processing chunk {i} to {i + chunk_size} of {antall_ip_adresser}")
+					process_chunk(chunk)
+
+				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="IP-kobling fullført")
+
+
+			"""
+			def ip_vlan_kobling():
+				alle_ip_adresser = list(NetworkIPAddress.objects.all())
+				vlan_cache = {vlan.pk: (vlan.ip_address, vlan.subnet_mask) for vlan in NetworkContainer.objects.all()}
+
+				antall_ip_adresser = len(alle_ip_adresser)
+				chunk_size = 500
+
+				def process_chunk(chunk):
+					vlan_m2m_updates = []
+
+					for ipadr in chunk:
+						if ipadr.ip_address is None:  # skal ikke skje, men det var en feil i et tidligere importscript (klienter)
+							ipadr.delete()
+							continue
+						for vlan_pk, (ip_address, subnet_mask) in vlan_cache.items():
+							network_ip = ipaddress.ip_address(ip_address)
+							network_str = ip_address + "/" + str(subnet_mask)
+							network = make_network(network_str, network_ip)
+							if ipaddress.ip_address(ipadr.ip_address) in network:
+								if write_mode:
+									vlan_m2m_updates.append((ipadr, vlan_pk))
+
+					# Handle many-to-many relationships
+					@transaction.atomic
+					def handle_m2m():
+						print("Lagrer chunk til database...")
+						for ipadr, vlan_pk in vlan_m2m_updates:
+							vlan = NetworkContainer.objects.get(pk=vlan_pk)
+							ipadr.vlan.add(vlan)
+					handle_m2m()
+
+				for i in range(0, antall_ip_adresser, chunk_size):
+					chunk = alle_ip_adresser[i:i + chunk_size]
+					print_with_timestamp(f"Processing chunk {i} to {i + chunk_size} of {antall_ip_adresser}")
+					process_chunk(chunk)
+
+				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="IP-kobling fullført")
+			"""
+
+			"""
+			#newer but old code
+			def ip_vlan_kobling():
+				alle_ip_adresser = list(NetworkIPAddress.objects.all())
+				alle_vlan = list(NetworkContainer.objects.all())
+
+
+				antall_ip_adresser = len(alle_ip_adresser)
+				chunk_size = 500
+
+
+				def process_chunk(chunk):
+					vlan_m2m_updates = []
+
+					for ipadr in chunk:
+						if ipadr.ip_address is None:  # skal ikke skje, men det var en feil i et tidligere importscript (klienter)
+							ipadr.delete()
+							continue
+						for vlan in alle_vlan:
+							network_ip = ipaddress.ip_address(vlan.ip_address)
+							network_str = vlan.ip_address + "/" + str(vlan.subnet_mask)
+							network = make_network(network_str, network_ip)
+							if ipaddress.ip_address(ipadr.ip_address) in network:
+								if write_mode:
+									vlan_m2m_updates.append((ipadr, vlan))
+
+					# Handle many-to-many relationships
+					@transaction.atomic
+					def handle_m2m():
+						print("Lagrer chunk til database...")
+						for ipadr, vlan in vlan_m2m_updates:
+							ipadr.vlan.add(vlan)
+					handle_m2m()
+
+
+				for i in range(0, antall_ip_adresser, chunk_size):
+					chunk = alle_ip_adresser[i:i + chunk_size]
+					print_with_timestamp(f"Processing chunk {i} to {i + chunk_size} of {antall_ip_adresser}")
+					process_chunk(chunk)
+
+				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="IP-kobling fullført")
+			"""
+
+			"""
+			#OLD CODE
 			@transaction.atomic
 			def ip_vlan_kobling():
-
-				ApplicationLog.objects.create(event_type=f"{LOG_EVENT_TYPE} IP-kobling", message="starter..")
-				from functools import lru_cache
-
-				@lru_cache(maxsize=128)
-				def make_network(network_str):
-					return ipaddress.IPv4Network(network_str) if isinstance(network_ip, ipaddress.IPv4Address) else ipaddress.IPv6Network(network_str)
-
 				alle_ip_adresser = NetworkIPAddress.objects.all()
 				alle_vlan = NetworkContainer.objects.all()
 
 				antall_ip_adresser = len(alle_ip_adresser)
 				for idx, ipadr in enumerate(alle_ip_adresser):
-					if idx % 200 == 0:
-						print(f"{idx} av {antall_ip_adresser}")
+					if idx % 500 == 0:
+						print_with_timestamp(f"{idx} av {antall_ip_adresser}")
 					if ipadr.ip_address == None: # skal ikke skje, men det var en feil i et tidligere importscript (klienter)
 						ipadr.delete()
 						continue
@@ -229,40 +358,47 @@ class Command(BaseCommand):
 					for vlan in alle_vlan:
 						network_ip = ipaddress.ip_address(vlan.ip_address)
 						network_str = vlan.ip_address + "/" + str(vlan.subnet_mask)
-						network = make_network(network_str)
+						network = make_network(network_str, network_ip)
 						if ipaddress.ip_address(ipadr.ip_address) in network:
+							Command.antall_ip_koblinger_totalt += 1
 							ipadr.vlan.add(vlan)
 							ant_vlan += 1
 					if write_mode:
 						ipadr.save()
 					#print("%s med %s koblinger." % (ipadr, ant_vlan))
 				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="IP-kobling fullført")
+			"""
+
 
 			#eksekver
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter prosessering..")
-			logg_entry_message = import_vlan(destination_infoblox_data, "Infoblox", infoblox_data)
-
-			print(f"Kobler sammen alle objekter med IP-adresse mot VLAN/subnet..")
+			print("Starter import til databasen...")
+			ApplicationLog.objects.create(event_type=f"{LOG_EVENT_TYPE} IP-kobling", message="starter..")
+			message = import_vlan(destination_infoblox_data, "Infoblox", infoblox_data)
 			if koble_ip:
+				print(f"Kobler sammen alle objekter med IP-adresse mot VLAN/subnet..")
 				ip_vlan_kobling()
 			print(f"Fullført")
 
+
 			# lagre sist oppdatert tidspunkt
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			logg_entry_message = f"Kjøretid:{logg_total_runtime}: write_mode: {write_mode}, koble_ip: {koble_ip}, {message}, {Command.antall_ip_koblinger_totalt} VLAN-IP koblinger"
+			print(logg_entry_message)
+			logg_entry = ApplicationLog.objects.create(event_type=f'{LOG_EVENT_TYPE}', message=logg_entry_message,)
+
 			int_config.dato_sist_oppdatert = destination_infoblox_data_modified_date # eller timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.runtime = logg_total_runtime
 			int_config.save()
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message,)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
 
 

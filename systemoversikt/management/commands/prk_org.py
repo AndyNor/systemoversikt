@@ -11,13 +11,15 @@ from systemoversikt.views import push_pushover
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Q
-import requests
-import time
-import os
-import sys
-import csv
+import requests, time, os, sys, csv
 
 class Command(BaseCommand):
+
+	ant_nye_valg = 0
+	ant_oppdateringer = 0
+	ant_deaktivert = 0
+	virksomheter_eksisterer_ikke = []
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "prk_org"
@@ -55,89 +57,76 @@ class Command(BaseCommand):
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 			runtime_t0 = time.time()
-			ant_nye_valg = 0
-			ant_oppdateringer = 0
-			ant_deaktivert = 0
-			debug_file = os.path.dirname(os.path.abspath(__file__)) + "\\org.csv"
+
+			filepath = 'systemoversikt/import/grp.csv'
 
 			if os.environ['THIS_ENV'] == "PROD":
-				url = os.environ["PRK_ORG_URL"]
+				use_cache_data = False
+				keep_file_locally = True
 				apikey = os.environ["PRK_ORG_APIKEY"]
-				headers = {"apikey": apikey}
-
-				print("Kobler til %s" % url)
-				r = requests.get(url, headers=headers)
-				print("Original encoding: %s" % r.encoding)
-				r.encoding = "latin-1" # need to override
-				print("New encoding: %s" % r.encoding)
-				print("Statuskode: %s" % r.status_code)
-
-				if r.status_code == 200:
-					with open('systemoversikt/import/grp.csv', 'w') as file_handle:
-						file_handle.write(r.text)
-					csv_data = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
-				else:
-					print(f"Error connecting: {r.status_code}.")
-
 
 			if os.environ['THIS_ENV'] == "TEST":
-				url = os.environ["PRK_ORG_URL"]
+				use_cache_data = False # settes til True ved feilsøking lokalt
+				keep_file_locally = True # sett til True ved feilsøking
 				apikey = os.environ["PRK_GENERELLEKSPORT_APIKEY"]
-				headers = {"apikey": apikey}
 
+			if use_cache_data == True:
+				print("Bruker lokale data")
+				with open(filepath, 'r', encoding='latin-1') as file:
+					datastructure = list(csv.DictReader(file, delimiter=";"))
+			else:
+				print("Henter data fra API")
+				url = os.environ["PRK_ORG_URL"]
+				headers = {"apikey": apikey}
 				print("Kobler til %s" % url)
 				r = requests.get(url, headers=headers)
 				print("Original encoding: %s" % r.encoding)
 				r.encoding = "latin-1" # need to override
 				print("New encoding: %s" % r.encoding)
 				print("Statuskode: %s" % r.status_code)
-				filepath = 'systemoversikt/import/grp.csv'
 
 				if r.status_code == 200:
-					with open(filepath, 'w') as file_handle:
-						file_handle.write(r.text)
+					print("Data er lastet inn")
 					csv_data = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
+					if keep_file_locally:
+						print("Lagrer data til fil på disk")
+						with open(filepath, 'w') as file_handle:
+							file_handle.write(r.text)
+					else:
+						print("Sletter datafil")
+						os.remove(filepath)
 				else:
 					print(f"Error connecting: {r.status_code}.")
 
-				os.remove(filepath)
 
+			def get_user(username):
+				try:
+					return User.objects.get(username=username)
+				except:
+					return None
 
-			#	with open(debug_file, 'r', encoding='latin-1') as file:
-			#		csv_data = list(csv.DictReader(file, delimiter=";"))
-			#		#headers: OU;OUSHORT;OUID;OUTYPE;OUSUBTYPE;O;ODEPARTMENTNUMBER;ODISPLAYNAME;OUBELONGSTOOUID;OULEVEL;MANAGER;MANAGEREMPLOYEENUMBER;DESCRIPTION;MAIL
+			def get_virksomhet(odepartmentnumber):
+				try:
+					return Virksomhet.objects.get(odepartmentnumber=odepartmentnumber)
+				except:
+					return None
+
+			def get_or_create(ouid):
+				if ouid == "":
+					return None
+				else:
+					try:
+						u = HRorg.objects.get(ouid=ouid)
+						Command.ant_oppdateringer += 1
+					except Exception as e:
+						u = HRorg.objects.create(ouid=ouid)
+						Command.ant_nye_valg += 1
+					return u
 
 			@transaction.atomic  # for speeding up database performance
-			def atomic():
-				def get_user(username):
-					try:
-						user = User.objects.get(username=username)
-					except:
-						user = None
-					return user
+			def eksekver():
 
-				def get_virksomhet(odepartmentnumber):
-					try:
-						v = Virksomhet.objects.get(odepartmentnumber=odepartmentnumber)
-					except:
-						v = None
-					return v
-
-				def get_or_create(ouid):
-					if ouid == "":
-						return None
-					else:
-						try:
-							u = HRorg.objects.get(ouid=ouid)
-							nonlocal ant_oppdateringer
-							ant_oppdateringer += 1
-						except Exception as e:
-							u = HRorg.objects.create(ouid=ouid)
-							nonlocal ant_nye_valg
-							ant_nye_valg += 1
-						return u
-
-				print("Det er %s enheter i datasettet" % (len(csv_data)))
+				print(f"Det er {len(csv_data)} enheter i datasettet")
 				for unit in csv_data:
 
 					if unit["OUSUBTYPE"] == "VIRK":  # virksomhet
@@ -146,7 +135,8 @@ class Command(BaseCommand):
 							v.odepartmentnumber = unit["ODEPARTMENTNUMBER"]
 							v.save()
 						except Exception as e:
-							print("%s finnes ikke. %s" % (unit["O"], e))
+							print(f"Virksomheten {unit['O']} finnes ikke")
+							Command.virksomheter_eksisterer_ikke.append(unit['O'])
 
 					u = get_or_create(unit["OUID"])
 					u.ou = unit["OU"]
@@ -156,46 +146,35 @@ class Command(BaseCommand):
 					u.virksomhet_mor = get_virksomhet(unit["ODEPARTMENTNUMBER"])
 					u.direkte_mor = get_or_create(unit["OUBELONGSTOOUID"])
 					u.save()
-					#print(unit["OU"])
 
-			atomic()
-
-			@transaction.atomic  # for speeding up database performance
 			def opprydding():
-				print("Rydder opp..")
-				###
+				tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+				inaktive_orgledd = HRorg.objects.filter(sist_oppdatert__lte=tidligere)
+				Command.ant_deaktivert = len(inaktive_orgledd)
+				print(f"Sletter {Command.ant_deaktivert} inaktive HRorg-elementer")
+				inaktive_orgledd.delete()
 
+
+			print("Starter å importere til database...")
+			eksekver()
+			print("Rydder opp...")
 			opprydding()
 
-
 			runtime_t1 = time.time()
-			logg_total_runtime = runtime_t1 - runtime_t0
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
 
-			logg_entry_message = "Import av organisatoriske enheter: Kjøretid: %s: %s nye, %s oppdaterte og %s deaktiverte" % (
-					round(logg_total_runtime, 1),
-					ant_nye_valg,
-					ant_oppdateringer,
-					ant_deaktivert
-
-			)
+			logg_entry_message = f"Import av organisatoriske enheter: Kjøretid: {logg_total_runtime}: {Command.ant_nye_valg} nye, {Command.ant_oppdateringer} oppdaterte og {Command.ant_deaktivert} deaktiverte. Følgende virksomheter finnes ikke i databasen {Command.virksomheter_eksisterer_ikke}"
 			print(logg_entry_message)
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_entry_message,
-			)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message,)
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.runtime = logg_total_runtime
 			int_config.save()
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message,)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error

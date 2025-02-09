@@ -6,7 +6,7 @@ from systemoversikt.views import push_pushover
 from systemoversikt.models import *
 from django.core.management.base import BaseCommand
 from django.db import transaction
-import json, os
+import json, os, time
 import pandas as pd
 import numpy as np
 from django.db.models import Q
@@ -50,6 +50,7 @@ class Command(BaseCommand):
 
 		try:
 
+			runtime_t0 = time.time()
 			from systemoversikt.views import sharepoint_get_file
 
 			source_filepath = FILNAVN
@@ -195,8 +196,11 @@ class Command(BaseCommand):
 
 
 			# logge resultatet
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
 			int_config.dato_sist_oppdatert = destination_file_modified_date # eller timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.runtime = logg_total_runtime
 			int_config.save()
 
 		except Exception as e:
