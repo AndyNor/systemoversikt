@@ -68,3 +68,4 @@ wconv==1.0.2
 xlrd==2.0.1
 certipy-ad; platform_system == 'Linux'
 mod-wsgi; platform_system == 'Linux'
+netaddr==1.3.0
