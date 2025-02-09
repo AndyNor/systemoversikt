@@ -10,7 +10,6 @@ import json, os, time
 import pandas as pd
 import numpy as np
 from django.db.models import Q
-from systemoversikt.views import get_ipaddr_instance
 from functools import lru_cache
 import warnings
 

@@ -2288,6 +2288,10 @@ class NetworkContainer(models.Model):
 
 
 class NetworkIPAddress(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
 	ip_address = models.GenericIPAddressField(
 		null=False,
 		unique=True,

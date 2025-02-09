@@ -20,12 +20,8 @@ from django.conf import settings
 from django.urls import reverse
 from django.db import transaction
 from django.db.models import Sum, F
-import os
-import datetime
-import json
-import re
-import time
-import struct
+import ipaddress
+import os, datetime, json, re, time, struct
 from django.utils import timezone
 
 
@@ -490,7 +486,6 @@ def get_ipaddr_instance(address):
 
 	if address == "" or address == None or address == "0.0.0.0":
 		return None
-	import ipaddress
 	try:
 		return NetworkIPAddress.objects.get(ip_address=address)
 	except:
