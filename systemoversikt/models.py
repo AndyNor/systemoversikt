@@ -10,6 +10,10 @@ import re
 from django.db.models import Sum
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.admin.models import LogEntry
+from django.utils import timezone
+from datetime import timedelta
+import ast
+from django.db.models import Q
 
 
 # som standard vises bare "self.username". Vi ønsker også å vise fult navn.
@@ -66,7 +70,7 @@ class EntraIDConditionalAccessPolicies(models.Model):
 		get_latest_by = 'timestamp'
 
 	def changes_to_json(self):
-		import ast
+		#import ast
 		try:
 			return json.dumps(ast.literal_eval(self.changes), indent=4)
 		except:
@@ -319,8 +323,8 @@ class IntegrasjonKonfigurasjon(models.Model):
 
 	def color(self):
 		if self.dato_sist_oppdatert:
-			from datetime import datetime, timedelta
-			from django.utils import timezone
+			from datetime import datetime
+			#from django.utils import timezone
 			today = timezone.now()
 			difference = today - self.dato_sist_oppdatert
 			if difference < timedelta(days=1):
@@ -855,7 +859,7 @@ class Virksomhet(models.Model):
 		return WANLokasjon.objects.filter(virksomhet=self).count()
 
 	def antall_klienter(self):
-		from django.db.models import Q
+		#from django.db.models import Q
 		return CMDBdevice.objects.filter(client_virksomhet=self).count()
 
 	def antall_brukeridenter(self):
@@ -5177,6 +5181,20 @@ class System(models.Model):
 		#print(connected_vulns)
 		return list(connected_vulns)
 
+	def vulnerabilities_old(self):
+		connected_vulns = set()
+		datetime_limit = timezone.now() - timedelta(days=45)
+		for service_offering in self.service_offerings.all():
+			#print(service_offering)
+			for server in service_offering.servers.all():
+				#print(server)
+				for vuln in server.qualys_vulnerabilities.filter(first_seen__lt=datetime_limit, severity__in=[4,5]):
+					#if vuln.severity in [4,5]:
+					vuln.tmp_offering = service_offering # brukes kun i template
+					connected_vulns.add(vuln)
+		#print(connected_vulns)
+		return list(connected_vulns)
+
 	def kontakt_forvalter(self):
 		if len(self.systemforvalter_kontaktpersoner_referanse.all()) > 0:
 			return self.systemforvalter_kontaktpersoner_referanse.all()[0].brukernavn.email
@@ -6914,14 +6932,14 @@ class AzureApplicationKeys(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 	def expire(self):
-		from django.utils import timezone
+		#from django.utils import timezone
 		return timezone.now() > self.end_date_time
 
 	def expire_soon(self):
 		if self.expire():
 			return False
-		from django.utils import timezone
-		from datetime import timedelta
+		#from django.utils import timezone
+		#from datetime import timedelta
 		return (timezone.now() + timedelta(30)) > self.end_date_time
 
 

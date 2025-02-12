@@ -932,7 +932,7 @@
 					</tr>
 				</thead>
 				<tbody>
-				{% for vuln in systemdetaljer.vulnerabilities %}
+				{% for vuln in systemdetaljer.vulnerabilities_old %}
 				<tr>
 					<td>{{ vuln.title }}</td>
 					<td>{{ vuln.first_seen|date:"Y-m-d" }}</td>
