@@ -291,7 +291,7 @@ class Command(BaseCommand):
 					except:
 						print("Kobling mot AnsattID feilet for %s" % user)
 
-				user.profile.ad_sist_oppdatert = datetime.datetime.now()
+				user.profile.ad_sist_oppdatert = timezone.now()
 				user.save()
 				return
 
