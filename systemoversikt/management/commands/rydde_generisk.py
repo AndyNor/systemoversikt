@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# sette systemforvalter og rette "ibruk" på systemer
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 from systemoversikt.views import push_pushover
@@ -9,7 +7,7 @@ from systemoversikt.models import *
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
-import os
+import os, time
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -44,6 +42,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 
@@ -92,15 +91,15 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
 			int_config.save()
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
 
 			# Push error

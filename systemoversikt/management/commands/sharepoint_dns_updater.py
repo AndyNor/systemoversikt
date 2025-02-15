@@ -9,13 +9,16 @@ from django.db.models import Q
 from systemoversikt.views import get_ipaddr_instance
 from systemoversikt.models import *
 from systemoversikt.views import push_pushover
-import json, os
+import json, os, time
 import pandas as pd
 import numpy as np
 import ipaddress
 
 
 class Command(BaseCommand):
+
+	ANTALL_IMPORTERT = 0
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_dns"
@@ -48,6 +51,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		kilde_ekstern = FILNAVN["filename1"]
 		kilde_intern = FILNAVN["filename2"]
@@ -200,10 +204,8 @@ class Command(BaseCommand):
 					entry.delete()
 
 				logg_entry_message = f'{filename_str}: Fant {antall_a_records} A-records, {antall_cname_records} alias, {antall_mx} mx og {antall_txt} txt. {cname_records_failed} alias kunne ikke slås opp. {count_new} nye A-records/CNAMES. {ip_linker} IP-referanser skrevet. {antall_slettet} slettet.'
-				logg_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE,
-						message=logg_entry_message,
-					)
+				Command.ANTALL_IMPORTERT += antall_a_records
+				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 				print(logg_entry_message)
 				return logg_entry_message
 
@@ -214,6 +216,10 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = destination_file1_modified_date
 			int_config.sist_status = f"{logg_entry_message1}\n{logg_entry_message2}"
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
+			int_config.elementer = int(Command.ANTALL_IMPORTERT)
 			int_config.save()
 
 

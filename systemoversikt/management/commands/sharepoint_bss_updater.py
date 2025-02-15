@@ -8,7 +8,7 @@ from datetime import timedelta
 from datetime import datetime
 import pandas as pd
 import numpy as np
-import os
+import os, time
 
 
 class Command(BaseCommand):
@@ -44,6 +44,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 
@@ -197,15 +198,7 @@ class Command(BaseCommand):
 					antall_slettede_bss += 1
 					cmdbref.delete()
 
-				logg_entry_message = "Antall BSS: %s. Nye BS: %s (%s satt inaktiv), nye BSS: %s (%s slettede). %s BS og %s BSS feilet." % (
-							antall_records,
-							antall_nye_bs,
-							antall_deaktiverte_bs,
-							antall_nye_bss,
-							antall_slettede_bss,
-							bs_dropped,
-							bss_dropped,
-						)
+				logg_entry_message = f"Antall BSS: {antall_records}. Nye BS: {antall_nye_bs} ({antall_deaktiverte_bs} satt inaktiv), nye BSS: {antall_nye_bss} ({antall_slettede_bss} slettede). {bs_dropped} BS og {bss_dropped} BSS feilet."
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
@@ -218,6 +211,10 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date # her setter vi filens dato, ikke dato for kjøring av script
 			int_config.sist_status = logg_entry_message
+			int_config.elementer = int(antall_records)
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
 			int_config.save()
 
 
