@@ -6,7 +6,7 @@ from systemoversikt.views import push_pushover
 from systemoversikt.models import *
 from django.core.management.base import BaseCommand
 from django.db import transaction
-import json, os
+import json, os, time
 import pandas as pd
 import numpy as np
 from django.db.models import Q
@@ -45,6 +45,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 
 		try:
@@ -150,10 +151,7 @@ class Command(BaseCommand):
 
 
 				logg_entry_message = f'Importerte {num_cisco} cisco-enheter hvor {num_cisco_new} var nye. Importerte {num_bigip} bigip-enheter hvor {num_bigip_new} var nye. Slettet {antall_ikke_oppdatert} enheter: {tekst_ikke_oppdatert}'
-				logg_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE,
-						message=logg_entry_message,
-					)
+				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 				print(logg_entry_message)
 				return logg_entry_message
 
@@ -164,17 +162,15 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = destination_file_bigip_modified_date # eller timezone.now()
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
 			int_config.save()
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
 
