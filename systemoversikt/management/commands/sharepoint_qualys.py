@@ -18,7 +18,7 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "sp_qualys"
 		LOG_EVENT_TYPE = "Qualys import"
-		KILDE = "PowerBI"
+		KILDE = "Qualys via PowerBI"
 		PROTOKOLL = "Manuelt uttrekk og SharePoint"
 		BESKRIVELSE = "Sårbarheter fra Qualys dashboard"
 		FILNAVN = "qualys.xlsx"
@@ -181,6 +181,7 @@ class Command(BaseCommand):
 					antall_fixed += return_data[2]
 					print(f"Processing batch {i}-{i+split_size}/{linjer_kilde}. Saved {antall_totalt} vulnerabilities, where {failed_server_lookups} failed server match and {antall_fixed} was fixed and not saved")
 
+				int_config.elementer = int(antall_totalt)
 				logg_entry_message = f'\nDone importing {antall_totalt} vulnerabilities, where {failed_server_lookups} of them failed server lookup'
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,

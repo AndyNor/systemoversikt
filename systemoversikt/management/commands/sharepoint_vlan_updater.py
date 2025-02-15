@@ -203,6 +203,7 @@ class Command(BaseCommand):
 					if write_mode:
 						nc.save()
 
+				int_config.elementer = int(antall_records)
 				logg_entry_message = f'Fant {antall_records} VLAN/nettverk i {filename}. {antall_networkcontainer} IPv4 containere, {antall_network} IPv4 nett, {antall_ipv6networkcontainer} IPv6 containere, {antall_ipv6network} IPv6 nettverk, {vlan_new} nye nettverk. {vlan_dropped} kunne ikke importeres. {vlan_deaktivert} er merket som deaktiverte.'
 				print_with_timestamp(logg_entry_message)
 				return logg_entry_message
@@ -372,13 +373,27 @@ class Command(BaseCommand):
 
 			#eksekver
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter prosessering..")
+
 			print("Starter import til databasen...")
 			ApplicationLog.objects.create(event_type=f"{LOG_EVENT_TYPE} IP-kobling", message="starter..")
 			message = import_vlan(destination_infoblox_data, "Infoblox", infoblox_data)
+
+			print(f"Sletter gamle innslag..")
+			for_gammelt = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+			ikke_oppdatert = NetworkContainer.objects.filter(sist_oppdatert__lte=for_gammelt)
+			batch_size = 500
+			while ikke_oppdatert.count():
+				ids = ikke_oppdatert.values_list('pk', flat=True)[:batch_size]
+				ikke_oppdatert.filter(pk__in=ids).delete()
+				print(f"Slettet ny batch på {batch_size}..")
+
 			if koble_ip:
 				print(f"Kobler sammen alle objekter med IP-adresse mot VLAN/subnet..")
 				ip_vlan_kobling()
+
 			print(f"Fullført")
+
+
 
 
 			# lagre sist oppdatert tidspunkt

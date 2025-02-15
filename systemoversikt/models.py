@@ -317,6 +317,11 @@ class IntegrasjonKonfigurasjon(models.Model):
 			blank=True,
 			null=True,
 			)
+	elementer = models.BigIntegerField(
+			verbose_name="Elementer",
+			blank=True,
+			null=True,
+			)
 
 	def __str__(self):
 		return f'{self.kilde} {self.protokoll} {self.informasjon}'
@@ -997,6 +1002,11 @@ PRIVELIGERTE_GRUPPER = [
 
 class Profile(models.Model):
 	#https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
+	ad_sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert fra AD",
+			null=True,
+			blank=True,
+			)
 	user = models.OneToOneField(
 			to=User,
 			on_delete=models.CASCADE,  # slett profilen når brukeren slettes
@@ -5182,8 +5192,9 @@ class System(models.Model):
 		return list(connected_vulns)
 
 	def vulnerabilities_old(self):
+		num_days_old = 45
 		connected_vulns = set()
-		datetime_limit = timezone.now() - timedelta(days=45)
+		datetime_limit = timezone.now() - timedelta(days=num_days_old)
 		for service_offering in self.service_offerings.all():
 			#print(service_offering)
 			for server in service_offering.servers.all():

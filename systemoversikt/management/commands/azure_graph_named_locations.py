@@ -2,8 +2,7 @@
 #Graph-klienten heter "UKE - Kartoteket - Lesetilgang MS Graph"
 
 from django.core.management.base import BaseCommand
-import io
-import os
+import io, os, time
 import simplejson as json
 from django.utils.timezone import make_aware
 from datetime import datetime
@@ -47,6 +46,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 
@@ -142,6 +142,12 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_message
+
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
+			int_config.elementer = int(antall_lagret)
+
 			int_config.save()
 
 			#print("*** Ferdig innlest")

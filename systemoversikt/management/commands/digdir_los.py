@@ -139,13 +139,9 @@ class Command(BaseCommand):
 
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
-			logg_entry_message = "Kjøretid: %s sekunder.\nImport av Digdir LOS er utført. %s totalt og %s nye. %s deaktivert." % (
-					round(logg_total_runtime, 1),
-					ant_totalt,
-					ant_nye,
-					ant_deaktivert,
-
-			)
+			int_config.runtime = logg_total_runtime
+			int_config.elementer = int(ant_totalt)
+			logg_entry_message = f"Kjøretid: {round(logg_total_runtime, 1)} sekunder.\nImport av Digdir LOS er utført. {ant_totalt} totalt og {ant_nye} nye. {ant_deaktivert} deaktivert."
 			print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,

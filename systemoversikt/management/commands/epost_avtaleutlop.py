@@ -9,6 +9,7 @@ from django.db.models import Q
 from datetime import date
 from systemoversikt.models import *
 import os
+import time
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
@@ -45,6 +46,7 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
+		runtime_t0 = time.time()
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
@@ -103,6 +105,10 @@ Hilsen Kartoteket
 			print(logg_message)
 
 			# lagre sist oppdatert tidspunkt
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			print(f"Det tok {logg_total_runtime} sekunder")
+			int_config.runtime = logg_total_runtime
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_message
 			int_config.save()

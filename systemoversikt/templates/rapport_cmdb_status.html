@@ -13,7 +13,9 @@
 
 <table class="table table-sm tablesorter excel">
 	<thead>
+		<th>Scriptnavn</th>
 		<th>Informasjon om</th>
+		<th>Antall elementer</th>
 		<th>Kilde</th>
 		<th>Oppdateringsfrekvens</th>
 		<th>Sist oppdatert</th>
@@ -23,7 +25,9 @@
 	<tbody>
 	{% for i in integrasjoner %}
 		<tr>
+			<td>{{ i.script_navn }}</td>
 			<td>{{ i.informasjon }}</td>
+			<td>{{ i.elementer|default:"-" }}</td>
 			<td>{{ i.kilde }}</td>
 			<td>{{ i.frekvensangivelse }}</td>
 			<td style="background-color: {{ i.color }};">{{i.dato_sist_oppdatert|date:"Ymd Hi"}}<br>{{ i.dato_sist_oppdatert|timesince }}</td>

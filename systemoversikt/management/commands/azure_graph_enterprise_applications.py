@@ -2,7 +2,7 @@
 #Graph-klienten heter "UKE - Kartoteket - Lesetilgang MS Graph"
 
 from django.core.management.base import BaseCommand
-import os
+import os, time
 import simplejson as json
 from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
@@ -14,6 +14,9 @@ from datetime import datetime
 from systemoversikt.views import push_pushover
 
 class Command(BaseCommand):
+
+	ANTALL_GRAPH_KALL = 0
+
 	def handle(self, **options):
 
 		# initielt oppsett
@@ -47,6 +50,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		client_credential = ClientSecretCredential(
 				tenant_id=os.environ['AZURE_TENANT_ID'],
@@ -66,6 +70,7 @@ class Command(BaseCommand):
 				query = "/servicePrincipals?filter=id eq '%s'" % (resourceAppId)
 			#print(query)
 			resp = client.get(query)
+			Command.ANTALL_GRAPH_KALL += 1
 			load_appdata = json.loads(resp.text)
 			#print(json.dumps(load_appdata, sort_keys=True, indent=4))
 			if "value" in load_appdata:
@@ -192,6 +197,8 @@ class Command(BaseCommand):
 						print(f"permissionGrantLookup() returnerte Null for app {resourceAppId} med scope_id {scope_part}")
 			return scopes
 
+
+		### Denne er tydeligvis ikke aktiv..
 		def lookup_userDisplayName(user):
 			#client = GraphClient(credential=client_credential, api_version=api_version)
 			#query = f"/users/{user}"
@@ -210,6 +217,7 @@ class Command(BaseCommand):
 
 			def load_next_response_servicePrincipals(nextLink):
 				resp = client.get(nextLink)
+				Command.ANTALL_GRAPH_KALL += 1
 				load_appdata = json.loads(resp.text)
 				#print(json.dumps(load_appdata, sort_keys=True, indent=4))
 				extract_and_store_servicePrincipals(load_appdata)
@@ -249,6 +257,7 @@ class Command(BaseCommand):
 						client = GraphClient(credential=client_credential, api_version=api_version)
 						query = f"/servicePrincipals/{object_id}/oauth2PermissionGrants"
 						#print(query)
+						Command.ANTALL_GRAPH_KALL += 1
 						return json.loads(client.get(query).text)
 
 					grant_data = getOauth2PermissionGrants(object_id)
@@ -296,6 +305,7 @@ class Command(BaseCommand):
 
 			def load_next_response_applications(nextLink):
 				resp = client.get(nextLink)
+				Command.ANTALL_GRAPH_KALL += 1
 				load_appdata = json.loads(resp.text)
 				#print(json.dumps(load_appdata, sort_keys=True, indent=4))
 				extract_and_store_applications(load_appdata)
@@ -427,6 +437,12 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_message
+
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
+			int_config.elementer = int(APPLICATIONS_FOUND_ALL) +  int(APPLICATIONS_FOUND)
+
 			int_config.save()
 
 		# eksekver

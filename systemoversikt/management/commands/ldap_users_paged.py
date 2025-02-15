@@ -12,12 +12,7 @@ from systemoversikt.models import *
 from django.utils import timezone
 import datetime
 from systemoversikt.views import push_pushover
-import json
-import re
-import hashlib
-import os
-import ldap
-import sys
+import json, re, hashlib, os, ldap, sys, time
 from systemoversikt.views import decode_sid
 
 class Command(BaseCommand):
@@ -53,6 +48,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 
@@ -295,6 +291,7 @@ class Command(BaseCommand):
 					except:
 						print("Kobling mot AnsattID feilet for %s" % user)
 
+				user.profile.ad_sist_oppdatert = datetime.datetime.now()
 				user.save()
 				return
 
@@ -407,6 +404,13 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = log_entry_message
+			int_config.elementer = int(objects_returned)
+
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
+			int_config.elementer = int(antall_totalt)
+
 			int_config.save()
 
 
