@@ -6,7 +6,7 @@ from datetime import datetime
 from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
 from django.db import transaction
-import json, os, datetime, time
+import json, os, time
 import pandas as pd
 import numpy as np
 from django.db.models import Q
@@ -332,7 +332,7 @@ class Command(BaseCommand):
 			# Her starter behandlingen
 			filename = destination_file
 			file_edit_stamp = os.path.getmtime(filename)
-			file_edit_date = datetime.datetime.fromtimestamp(file_edit_stamp).strftime('%Y-%m-%d %H:%M:%S')
+			file_edit_date = datetime.fromtimestamp(file_edit_stamp).strftime('%Y-%m-%d %H:%M:%S')
 			print(f"Filen er fra {file_edit_date}")
 
 			# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
