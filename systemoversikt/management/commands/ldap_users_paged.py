@@ -16,6 +16,9 @@ import json, re, hashlib, os, ldap, sys, time
 from systemoversikt.views import decode_sid
 
 class Command(BaseCommand):
+
+	ANT_OBJECTS = 0
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "ad_users"
@@ -391,12 +394,10 @@ class Command(BaseCommand):
 				removed = result["report_data"]["removed"],
 				user_not_deleted = result["report_data"]["user_not_deleted"],
 
+				Command.ANT_OBJECTS = objects_returned
 				log_statistics = f"Det tok {total_runtime} sekunder. {objects_returned} treff. {created} nye, {modified} oppdatert, {deaktivert} deaktivert, {reaktivert} reaktivert og {removed} slettet. {len(user_not_deleted)} kunne ikke slettes (låst)."
 				log_entry_message = f"{log_statistics} Følgende brukere kunne ikke slettes: {user_not_deleted}"
-				log_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE,
-						message=log_entry_message,
-				)
+				log_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=log_entry_message)
 				print(log_entry_message)
 				return log_statistics
 
@@ -404,7 +405,7 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = log_entry_message
-			int_config.elementer = int(objects_returned)
+			int_config.elementer = int(Command.ANT_OBJECTS)
 
 			runtime_t1 = time.time()
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
