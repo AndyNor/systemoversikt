@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-#Hensikten med denne koden er å oppdatere en lokal oversikt over alle AD-grupper, både for å kunne analysere medlemskap, f.eks. tomme grupper, kunne finne grupper som ikke stammer fra AD, kunne følge med på opprettelse av nye grupper.
-
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -12,8 +10,7 @@ from django.contrib.auth.models import User
 from systemoversikt.views import ldap_users_securitygroups
 from systemoversikt.views import push_pushover
 from django.db.models import Q
-import os
-import time
+import os, time
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -85,6 +82,8 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_message
+			int_config.runtime = int(logg_total_runtime)
+
 			int_config.save()
 
 		except Exception as e:

@@ -8,9 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
-import ldap
-import sys
-import os
+import ldap, sys, os, time
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -45,6 +43,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
@@ -115,17 +114,8 @@ class Command(BaseCommand):
 
 
 			def report(result):
-				log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s endrede og %s slettede elementer." % (
-						result["total_runtime"],
-						result["objects_returned"],
-						result["report_data"]["created"],
-						result["report_data"]["modified"],
-						result["report_data"]["removed"],
-				)
-				log_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE,
-						message=log_entry_message,
-				)
+				log_entry_message = f"Det tok {result['total_runtime']} sekunder. {result['objects_returned']} treff. {result['report_data']['created']} nye, {result['report_data']['modified']} endrede og {result['report_data']['removed']} slettede elementer."
+				log_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=log_entry_message)
 				print(log_entry_message)
 				return log_entry_message
 
@@ -137,6 +127,12 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = log_entry_message
+			int_config.elementer = int(result['objects_returned'])
+
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
+
 			int_config.save()
 
 		except Exception as e:

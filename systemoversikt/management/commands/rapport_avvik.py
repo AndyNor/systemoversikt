@@ -11,7 +11,7 @@ from msgraph.core import GraphClient
 from dateutil import parser
 from datetime import datetime
 import simplejson as json
-import os
+import os, time
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -46,6 +46,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 
@@ -128,6 +129,9 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_message
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
 			int_config.save()
 
 

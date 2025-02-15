@@ -10,11 +10,7 @@ from datetime import datetime
 from django.utils import timezone
 from systemoversikt.models import *
 from systemoversikt.views import push_pushover
-import ldap
-import os
-import sys
-
-
+import ldap, os, sys, time
 from systemoversikt.models import ApplicationLog, ADOrgUnit, ADgroup
 import json
 
@@ -51,6 +47,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 
@@ -225,12 +222,7 @@ class Command(BaseCommand):
 
 
 			def report(result):
-				log_entry_message = "Det tok %s sekunder. %s treff. %s nye, %s endrede." % ( # graf over antall grupper over tid er avhengig av denne!
-						result["total_runtime"],
-						result["objects_returned"],
-						result["report_data"]["created"],
-						result["report_data"]["modified"],
-				)
+				log_entry_message = f"Det tok{result['total_runtime']} sekunder. {result['objects_returned']} treff. {result['report_data']['created']} nye, {result['report_data']['modified']} endrede."
 				log_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=log_entry_message,
@@ -240,6 +232,13 @@ class Command(BaseCommand):
 				# lagre sist oppdatert tidspunkt
 				int_config.dato_sist_oppdatert = timezone.now()
 				int_config.sist_status = log_entry_message
+
+				runtime_t1 = time.time()
+				logg_total_runtime = int(runtime_t1 - runtime_t0)
+				int_config.runtime = logg_total_runtime
+
+				int_config.elementer = int(result['objects_returned'])
+
 				int_config.save()
 
 

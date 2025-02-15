@@ -409,7 +409,6 @@ class Command(BaseCommand):
 			runtime_t1 = time.time()
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
 			int_config.runtime = logg_total_runtime
-			int_config.elementer = int(antall_totalt)
 
 			int_config.save()
 

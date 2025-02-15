@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# Fjerne "ansvarlige" som ikke lenger har noen roller
-
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -11,12 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
-import os
-import time
-import sys
-import json
-import csv
-import requests
+import os, time, sys, json, csv, requests
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -138,6 +131,7 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.runtime = int(logg_total_runtime)
 			int_config.save()
 
 

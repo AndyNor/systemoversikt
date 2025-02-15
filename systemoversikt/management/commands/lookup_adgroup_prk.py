@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-#Hensikten med denne koden er å tagge alle AD-grupper med informasjon om de stammer fra PRK eller ikke.
-
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.db import transaction
@@ -9,10 +7,7 @@ from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
-import os
-import time
-import sys
-import json
+import os, time, sys, json
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -99,6 +94,7 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.runtime = int(logg_total_runtime)
 			int_config.save()
 
 		except Exception as e:

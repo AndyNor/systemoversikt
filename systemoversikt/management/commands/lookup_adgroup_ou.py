@@ -7,9 +7,7 @@ from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
-import sys
-import os
-import time
+import sys, os, time
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -48,8 +46,8 @@ class Command(BaseCommand):
 		try:
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
-
 			runtime_t0 = time.time()
+
 			# built in group that are needed
 			missing = [
 					{"dn": "CN=Users,DC=oslofelles,DC=oslo,DC=kommune,DC=no", "ou": "Users"},
@@ -110,6 +108,7 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.runtime = int(logg_total_runtime)
 			int_config.save()
 
 		except Exception as e:
