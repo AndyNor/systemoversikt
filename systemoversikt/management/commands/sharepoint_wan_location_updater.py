@@ -14,6 +14,9 @@ from django.core.management.base import BaseCommand
 from django.db import transaction, IntegrityError
 
 class Command(BaseCommand):
+
+	INGEN_MATCH = []
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_wan"
@@ -85,7 +88,7 @@ class Command(BaseCommand):
 						virksomhet = Virksomhet.objects.get(gamle_virksomhetsforkortelser__icontains=virksomhetsforkortelse)
 					except:
 						virksomhet = None
-						virksomhet
+						Command.INGEN_MATCH.append(lokasjons_id)
 						print(f"ingen match for {lokasjons_id}")
 
 				w, created = WANLokasjon.objects.get_or_create(lokasjons_id=lokasjons_id)
@@ -95,7 +98,7 @@ class Command(BaseCommand):
 				w.beskrivelse = line["Virksomhet"]
 				w.save()
 
-			logg_entry_message = f'Fant {antall_records} WAN-lokasjoner.'
+			logg_entry_message = f'Fant {antall_records} WAN-lokasjoner. Ingen match for {''.join(loc for loc in Command.INGEN_MATCH)}.'
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 
 			print(logg_entry_message)
