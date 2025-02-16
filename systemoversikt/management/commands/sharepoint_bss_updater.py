@@ -13,7 +13,7 @@ import os, time
 
 class Command(BaseCommand):
 
-	Command.antall_records = 0
+	antall_records = 0
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_business_services"
