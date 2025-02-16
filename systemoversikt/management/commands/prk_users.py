@@ -199,6 +199,7 @@ class Command(BaseCommand):
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
 			int_config.runtime = logg_total_runtime
+			ing_config.elementer = int(total_processed)
 			int_config.save()
 
 
