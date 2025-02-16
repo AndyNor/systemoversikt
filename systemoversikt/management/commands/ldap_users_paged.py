@@ -169,10 +169,12 @@ class Command(BaseCommand):
 					user_organization = dn.split(",")[1][3:]  # andre OU, fjerner "OU=" som er tegn 0-2.
 					try:
 						user = User.objects.get(username=username)
+						print(f"Fant eksisterende bruker {user}")
 						if username in existing_user_objects: # holde track på brukere som ikke lenger finnes
 							existing_user_objects.remove(username)
 					except:
 						user = User.objects.create_user(username=username)
+						print(f"Opprettet bruker {user}")
 						Command.SUMMARY["created"] += 1
 
 
