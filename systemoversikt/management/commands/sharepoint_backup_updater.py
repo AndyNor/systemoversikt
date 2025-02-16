@@ -10,6 +10,7 @@ from systemoversikt.views import push_pushover
 import json, os, time
 import pandas as pd
 import numpy as np
+import collections
 
 
 class Command(BaseCommand):
@@ -122,7 +123,7 @@ class Command(BaseCommand):
 				# fjerner alle registrerte innslag (finnes ingen identifikator)
 
 				names = [line["Client"] for line in data]
-				import collections
+
 				counter = collections.Counter(names)
 				flere_innslag = [k for k, v in counter.items() if v > 1]
 
@@ -132,9 +133,11 @@ class Command(BaseCommand):
 				for line in data:
 					#print(line)
 					client = line['Client']
-					if client == "": # end of content
+					if client == "Applied filters": # end of content
 						print("End of data")
 						break
+					if client == "":
+						continue # kan ikke være tom
 
 
 					device = get_cmdb_instance(client)
