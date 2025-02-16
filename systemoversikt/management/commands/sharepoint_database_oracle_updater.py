@@ -6,15 +6,16 @@ from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
 from systemoversikt.models import *
 from django.db import transaction
-import os
-import re
-import json, os
+import os, re, json, time
 import pandas as pd
 import numpy as np
 from django.db.models import Q
 
 
 class Command(BaseCommand):
+
+	ANTALL_DATABASER = 0
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_database_oracle"
@@ -47,9 +48,9 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
-
 			from systemoversikt.views import sharepoint_get_file
 			source_filepath = f"{FILNAVN}"
 			result = sharepoint_get_file(source_filepath)
@@ -68,6 +69,7 @@ class Command(BaseCommand):
 			data = dfRaw.to_dict('records')
 
 			antall_records = len(data)
+			Command.ANTALL_DATABASER = antall_records
 			all_existing_db = list(CMDBdatabase.objects.filter(Q(db_version__startswith="Oracle")))
 
 
@@ -135,25 +137,20 @@ class Command(BaseCommand):
 				item.delete()
 
 			logg_entry_message = f"Oppdaterte Orcale-databaser."
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_entry_message,
-				)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 			print(f"{logg_entry_message}")
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			int_config.runtime = int(runtime_t1 - runtime_t0)
+			int_config.elementer = int(Command.ANTALL_DATABASER)
 			int_config.save()
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
