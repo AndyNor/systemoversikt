@@ -6,9 +6,7 @@ from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
 from systemoversikt.models import *
 from django.db import transaction
-import os
-import re
-import json, os
+import os, re, time, json
 import pandas as pd
 import numpy as np
 from django.db.models import Q
@@ -47,6 +45,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 
@@ -106,6 +105,8 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
 
 

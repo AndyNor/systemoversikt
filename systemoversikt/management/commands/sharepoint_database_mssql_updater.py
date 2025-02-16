@@ -6,7 +6,7 @@ from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
 from django.db import transaction
-import json, os
+import json, os, time
 import pandas as pd
 import numpy as np
 from django.db.models import Q
@@ -44,6 +44,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 			from systemoversikt.views import sharepoint_get_file
@@ -142,36 +143,26 @@ class Command(BaseCommand):
 				for item in obsolete_devices:
 					item.delete()
 
-				logg_entry_message = 'Fant %s databaser. %s manglet navn. Slettet %s inaktive databaser.' % (
-						antall_records,
-						db_dropped,
-						len(obsolete_devices),
-					)
-				logg_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE,
-						message=logg_entry_message,
-					)
-				#print("\n")
+				logg_entry_message = f"Fant {antall_records} databaser. {db_dropped} manglet navn. Slettet {len(obsolete_devices)} inaktive databaser."
+				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 				print(logg_entry_message)
 				return logg_entry_message
 
 			#eksekver
 			logg_entry_message = import_cmdb_databases()
 			# lagre sist oppdatert tidspunkt
+			int_config.elementer = int(antall_records)
 			int_config.dato_sist_oppdatert = modified_date
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
 

@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand
 from systemoversikt.models import *
 from django.db import transaction
-import json, os
+import json, os, time
 import pandas as pd
 import numpy as np
 from django.db.models import Q
@@ -46,6 +46,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 
@@ -218,6 +219,8 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = vip_modified_date # eller timezone.now()
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
 
 
