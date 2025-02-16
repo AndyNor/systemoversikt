@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
+import os, sys, time, json
+import pandas as pd
+import numpy as np
+import warnings
+from django.db.models import Q
+from systemoversikt.views import sharepoint_get_file
 from systemoversikt.models import *
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
-from django.db import transaction
-import os, sys, time, json
-import pandas as pd
-import numpy as np
-from django.db.models import Q
+from django.db import transaction, IntegrityError
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -47,7 +49,7 @@ class Command(BaseCommand):
 		runtime_t0 = time.time()
 
 		try:
-			from systemoversikt.views import sharepoint_get_file
+
 			source_filepath = f"{FILNAVN}"
 			result = sharepoint_get_file(source_filepath)
 			destination_file = result["destination_file"]
@@ -55,23 +57,18 @@ class Command(BaseCommand):
 			print(f"Filen er datert {modified_date}")
 
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Starter..")
-
-			# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
-			import warnings
 			warnings.simplefilter("ignore")
-
 			dfRaw = pd.read_excel(destination_file)
 			dfRaw = dfRaw.replace(np.nan, '', regex=True)
 			wan_lokasjoner = dfRaw.to_dict('records')
 
 			if wan_lokasjoner == None:
 				ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Datafilen var tom..")
-				#sys.exit()
 
-			# tømmel gamle data
+			print("Sletter gammel data..")
 			WANLokasjon.objects.all().delete()
-			print(f"Slettet alle eksisterende WANLokasjon-er")
 
+			print(f"Legger til WANLokasjoner")
 			antall_records = len(wan_lokasjoner)
 			for line in wan_lokasjoner:
 
@@ -82,7 +79,6 @@ class Command(BaseCommand):
 					continue
 
 				try:
-					#print(virksomhetsforkortelse)
 					virksomhet = Virksomhet.objects.get(virksomhetsforkortelse__iexact=virksomhetsforkortelse)
 				except:
 					try:
@@ -92,17 +88,12 @@ class Command(BaseCommand):
 						virksomhet
 						print(f"ingen match for {lokasjons_id}")
 
-				from django.db import IntegrityError
-				try:
-					w = WANLokasjon.objects.create(lokasjons_id=lokasjons_id)
-					w.virksomhet = virksomhet
-					w.aksess_type = line["AksessType"]
-					w.adresse = line["Adresse"]
-					w.beskrivelse = line["Virksomhet"]
-					w.save()
-					#print(f"lagret {lokasjons_id}")
-				except IntegrityError as e:
-					print(f"Integritetsfeil {e} for {lokasjons_id}")
+				w, created = WANLokasjon.objects.get_or_create(lokasjons_id=lokasjons_id)
+				w.virksomhet = virksomhet
+				w.aksess_type = line["AksessType"]
+				w.adresse = line["Adresse"]
+				w.beskrivelse = line["Virksomhet"]
+				w.save()
 
 			logg_entry_message = f'Fant {antall_records} WAN-lokasjoner.'
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
