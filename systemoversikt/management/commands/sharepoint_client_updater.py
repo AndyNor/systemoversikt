@@ -17,6 +17,9 @@ from systemoversikt.views import sharepoint_get_file
 
 
 class Command(BaseCommand):
+
+	ANTALL_KLIENTER = 0
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_klienter"
@@ -186,6 +189,7 @@ class Command(BaseCommand):
 
 
 				# Oppsummering og logging
+				Command.ANTALL_KLIENTER = antall_records
 				logg_entry_message = f'Importerte {antall_records} klienter. {client_dropped} manglet navn. Slettet {antall_ikke_oppdatert} klienter som ikke ble sett.'
 				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 				print(logg_entry_message)
@@ -199,6 +203,7 @@ class Command(BaseCommand):
 			int_config.sist_status = logg_entry_message
 			runtime_t1 = time.time()
 			int_config.runtime = int(runtime_t1 - runtime_t0)
+			int_elements = int(Command.ANTALL_KLIENTER)
 			int_config.save()
 
 
