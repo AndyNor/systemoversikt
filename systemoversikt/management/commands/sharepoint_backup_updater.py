@@ -168,9 +168,16 @@ class Command(BaseCommand):
 					inst.bss = bss
 					inst.environment = environment
 
-					backup_size = int(line["Total Protected App Size (GB)"] * 1000 * 1000 * 1000) # fra giga bytes til bytes (antar 1000 siden dette er et diskverktøy)
+					try:
+						backup_size = int(line["Total Protected App Size (GB)"] * 1000 * 1000 * 1000) # fra giga bytes til bytes (antar 1000 siden dette er et diskverktøy)
+					except:
+						continue
 					inst.backup_size_bytes = backup_size
-					storage_size = int(line["Total Media Size (GB)"] * 1000 * 1000 * 1000) # fra giga bytes til bytes (antar 1000 siden dette er et diskverktøy)
+					try:
+						storage_size = int(line["Total Media Size (GB)"] * 1000 * 1000 * 1000) # fra giga bytes til bytes (antar 1000 siden dette er et diskverktøy)
+					except:
+						continue
+
 					inst.storage_size_bytes = storage_size
 					inst.backup_frequency = line["Backup frequency"]
 					try:
@@ -182,16 +189,10 @@ class Command(BaseCommand):
 
 
 				logg_flere_innslag = ', '.join(flere_innslag)
-				logg_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE + " duplikate",
-						message=logg_flere_innslag,
-					)
+				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE + " duplikate", message=logg_flere_innslag)
 
 				logg_entry_message = f'{antall_linjer} innslag importert. {failed_device} feilet oppslag mot server.'
-				logg_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE,
-						message=logg_entry_message,
-					)
+				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 				print(logg_entry_message)
 				return logg_entry_message
 
@@ -211,11 +212,6 @@ class Command(BaseCommand):
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
