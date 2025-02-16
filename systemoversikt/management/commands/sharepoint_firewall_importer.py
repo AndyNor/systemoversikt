@@ -486,6 +486,7 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date
 			int_config.sist_status = logg_message
+			int_config.elementer = int(len(all_openings))
 			runtime_t1 = time.time()
 			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
