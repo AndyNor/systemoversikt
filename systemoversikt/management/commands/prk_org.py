@@ -163,7 +163,7 @@ class Command(BaseCommand):
 			runtime_t1 = time.time()
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
 
-			logg_entry_message = f"Import av organisatoriske enheter: Kjøretid: {logg_total_runtime}: {Command.ant_nye_valg} nye, {Command.ant_oppdateringer} oppdaterte og {Command.ant_deaktivert} deaktiverte. Følgende virksomheter finnes ikke i databasen {Command.virksomheter_eksisterer_ikke}"
+			logg_entry_message = f"Import av organisatoriske enheter: {Command.ant_nye_valg} nye, {Command.ant_oppdateringer} oppdaterte og {Command.ant_deaktivert} deaktiverte. Følgende virksomheter finnes ikke i virksomhetsmodellen {Command.virksomheter_eksisterer_ikke}"
 			print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message,)
 
@@ -171,6 +171,7 @@ class Command(BaseCommand):
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
 			int_config.runtime = logg_total_runtime
+			int_config.elementer = int(Command.ant_oppdateringer)
 			int_config.save()
 
 		except Exception as e:
