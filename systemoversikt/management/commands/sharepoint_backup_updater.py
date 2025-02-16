@@ -13,6 +13,8 @@ import numpy as np
 
 
 class Command(BaseCommand):
+	antall_backup_linjer = 0
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_backup"
@@ -125,6 +127,7 @@ class Command(BaseCommand):
 				flere_innslag = [k for k, v in counter.items() if v > 1]
 
 				antall_linjer = len(data)
+				Command.antall_backup_linjer = antall_linjer
 
 				for line in data:
 					#print(line)
@@ -196,7 +199,7 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date
 			int_config.sist_status = logg_entry_message
-			int_config.elementer = int(antall_linjer)
+			int_config.elementer = int(Command.antall_backup_linjer)
 			runtime_t1 = time.time()
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
 			int_config.runtime = logg_total_runtime

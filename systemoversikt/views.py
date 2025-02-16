@@ -114,24 +114,36 @@ def sharepoint_get_file(filename):
 	#return {"destination_file": destination_file, "modified_date": modified_date}
 
 
-
-def decode_useraccountcontrol(code): # støttefunksjon for LDAP
+def decode_useraccountcontrol(code):
 	#https://support.microsoft.com/nb-no/help/305144/how-to-use-useraccountcontrol-to-manipulate-user-account-properties
-	active_codes = ""
+	active_codes = []
 	status_codes = {
 			"SCRIPT": 0,
 			"ACCOUNTDISABLE": 1,
-			"LOCKOUT": 3,
+			"HOMEDIR_REQUIRED": 2,
+			"LOCKOUT": 4,
 			"PASSWD_NOTREQD": 5,
 			"PASSWD_CANT_CHANGE": 6,
+			"ENCRYPTED_TEXT_PWD_ALLOWED": 7,
+			"TEMP_DUPLICATE_ACCOUNT": 8,
 			"NORMAL_ACCOUNT": 9,
+			"INTERDOMAIN_TRUST_ACCOUNT": 11,
+			"WORKSTATION_TRUST_ACCOUNT": 12,
+			"SERVER_TRUST_ACCOUNT": 13,
 			"DONT_EXPIRE_PASSWORD": 16,
-			"SMARTCARD_REQUIRED": 18,
 			"PASSWORD_EXPIRED": 23,
+			"MNS_LOGON_ACCOUNT": 17,
+			"SMARTCARD_REQUIRED": 18,
+			"TRUSTED_FOR_DELEGATION": 19,
+			"NOT_DELEGATED": 20,
+			"USE_DES_KEY_ONLY": 21,
+			"DONT_REQ_PREAUTH": 22,
+			"TRUSTED_TO_AUTH_FOR_DELEGATION": 24,
+			"PARTIAL_SECRETS_ACCOUNT": 26,
 		}
 	for key in status_codes:
 		if int(code) >> status_codes[key] & 1:
-			active_codes += " " + key
+			active_codes.append(key)
 	return active_codes
 
 

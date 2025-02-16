@@ -186,10 +186,7 @@ class Command(BaseCommand):
 
 
 				# Oppsummering og logging
-				runtime_t1 = time.time()
-				total_runtime = round(runtime_t1 - runtime_t0, 1)
-
-				logg_entry_message = f'Importerte {antall_records} klienter. {client_dropped} manglet navn. Slettet {antall_ikke_oppdatert} klienter som ikke ble sett. Import tok {total_runtime} sekunder'
+				logg_entry_message = f'Importerte {antall_records} klienter. {client_dropped} manglet navn. Slettet {antall_ikke_oppdatert} klienter som ikke ble sett.'
 				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 				print(logg_entry_message)
 				return logg_entry_message
@@ -200,6 +197,8 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = client_owner_modified_date
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			total_runtime = round(runtime_t1 - runtime_t0, 1)
 			int_config.runtime = int(total_runtime)
 			int_config.save()
 

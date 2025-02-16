@@ -14,16 +14,10 @@ import numpy as np
 from systemoversikt.views import get_ipaddr_instance
 from systemoversikt.views import sharepoint_get_file
 
-
-"""
-Nytt 2025-01-22
----------------
-Ny fil med servere uten service offering-knytning med servere som er sett de siste 30 dager (A34_CMDB_servers_without_service.xlsx)
-nytt felt i begge filer: sys_updated_on som er når server sist ble scannet av av Service Now
-nytt felt for UUID på servere fra Service Now
-"""
-
 class Command(BaseCommand):
+
+	antall_servere = 0
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_virtual_machines"
@@ -58,16 +52,16 @@ class Command(BaseCommand):
 		int_config.sp_filnavn = json.dumps(FILNAVN)
 		int_config.save()
 
-		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		try:
+			timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+			print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+			runtime_t0 = time.time()
 
 			filename_computers = FILNAVN["filename_computers"]
 			filename_computers_without_service = FILNAVN["filename_computers_without_service"]
 			filename_vmware = FILNAVN["filename_vmware"]
 
-			runtime_t0 = time.time()
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="Starter..")
 
 			# servere med kobling til offering, fra CMDB
@@ -112,8 +106,8 @@ class Command(BaseCommand):
 				antall_records += len(computers_data_without_service) # her legger vi til de servere som ikke har offering til totalen
 
 				# prøver å slå dataene sammen, slik at resten av koden kan fungere som før
-
 				computers_data = computers_data + computers_data_without_service
+				Command.antall_servere = antall_records
 
 				@lru_cache(maxsize=512)
 				def bss_cache(bss_name):
@@ -330,10 +324,7 @@ class Command(BaseCommand):
 
 
 				#oppsummering og logging
-				runtime_t1 = time.time()
-				total_runtime = round(runtime_t1 - runtime_t0, 1)
-
-				logg_entry_message = f'Importen inneholder {antall_records} servere. {nye_servere_importert} nye servere ble importert. {server_dropped} manglet navn. Slettet {antall_ikke_oppdatert} gamle serere som ikke ble sett: {tekst_ikke_oppdatert}. Det var {servere_uten_offering} servere uten knytning til service offering. Duplikater: {duplicates}. Import tok {total_runtime} sekunder.'
+				logg_entry_message = f'Importen inneholder {antall_records} servere. {nye_servere_importert} nye servere ble importert. {server_dropped} manglet navn. Slettet {antall_ikke_oppdatert} gamle serere som ikke ble sett: {tekst_ikke_oppdatert}. Det var {servere_uten_offering} servere uten knytning til service offering. Duplikater: {duplicates}.'
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
@@ -349,6 +340,10 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = computers_destination_file_modified_date # eller timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.elementer = int(Command.antall_servere)
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
 			int_config.save()
 
 
