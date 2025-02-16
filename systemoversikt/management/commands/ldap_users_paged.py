@@ -158,6 +158,9 @@ class Command(BaseCommand):
 
 
 			def result_handler(rdata, existing_user_objects):
+				users_to_update = []
+				users_to_create = []
+
 				for dn, attrs in rdata:
 					if "cn" in attrs:
 						username = attrs["sAMAccountName"][0].decode().lower()
@@ -172,8 +175,8 @@ class Command(BaseCommand):
 						if username in existing_user_objects: # holde track på brukere som ikke lenger finnes
 							existing_user_objects.remove(username)
 					except:
-						user = User.objects.create_user(username=username)
-						print(f"Skrive. Opprettet bruker {user}")
+						user = User(username=username)
+						users_to_create.append(user)
 						Command.SUMMARY["created"] += 1
 
 
@@ -394,9 +397,13 @@ class Command(BaseCommand):
 							print("Kobling mot AnsattID feilet for %s" % user)
 
 					user.profile.ad_sist_oppdatert = timezone.now()
-					print("skrive user")
-					user.save()
+					users_to_update.append(user)
+
+				print(f"Skriver oppdateringer til {len(users_to_update)} brukerobjekter")
+				User.objects.bulk_create(users_to_create)
+				User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
 				return # ferdig med loop
+
 
 
 			@transaction.atomic
