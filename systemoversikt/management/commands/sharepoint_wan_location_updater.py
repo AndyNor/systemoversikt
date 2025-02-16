@@ -6,8 +6,7 @@ from datetime import datetime
 from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
 from django.db import transaction
-import os, sys
-import json
+import os, sys, time, json
 import pandas as pd
 import numpy as np
 from django.db.models import Q
@@ -45,10 +44,9 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
-
-
 			from systemoversikt.views import sharepoint_get_file
 			source_filepath = f"{FILNAVN}"
 			result = sharepoint_get_file(source_filepath)
@@ -106,9 +104,7 @@ class Command(BaseCommand):
 				except IntegrityError as e:
 					print(f"Integritetsfeil {e} for {lokasjons_id}")
 
-			logg_entry_message = 'Fant %s WAN-lokasjoner.' % (
-					antall_records,
-				)
+			logg_entry_message = f'Fant {antall_records} WAN-lokasjoner.'
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 
 			print(logg_entry_message)
@@ -116,19 +112,16 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
 
 
