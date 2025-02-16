@@ -224,13 +224,13 @@ class Command(BaseCommand):
 
 			# klargjøre cachet data for servere
 			cmdb_server_buffer = {}
-			all_cmdb_servers = CMDBdevice.objects.filter(device_type="SERVER").values("comp_ip_address", "pk", "comp_name", "sub_name__navn")
-			for item in all_cmdb_servers:
-				server = item["comp_ip_address"]
-				if server == "":
+			all_cmdb_servers = CMDBdevice.objects.filter(device_type="SERVER") #.values("comp_ip_address", "pk", "comp_name", "tjenestenavn")
+			for server in all_cmdb_servers:
+				server_ip = server["comp_ip_address"]
+				if server_ip == "":
 					continue
-				if not server in cmdb_server_buffer:
-					cmdb_server_buffer[server] = {"pk": item["pk"], "comp_name": item['comp_name'], "sub_name": item['sub_name__navn']}
+				if not server_ip in cmdb_server_buffer:
+					cmdb_server_buffer[server_ip] = {"pk": server["pk"], "comp_name": server['comp_name'], "sub_name": server.offering_navn()}
 				else:
 					#print(f"Server {server} kunne ikke legges til flere ganger")
 					continue

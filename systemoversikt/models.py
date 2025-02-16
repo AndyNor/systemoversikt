@@ -2807,6 +2807,9 @@ class CMDBdevice(models.Model):
 	def __str__(self):
 		return u'%s' % (self.comp_name)
 
+	def offering_navn(self):
+		return ', '.join(offering.navn for offering in self.service_offerings.all())
+
 	def disk_usage_free(self):
 		if self.vm_disk_usage != None and self.vm_disk_allocation not in [None, 0]:
 			return 100 - int(self.vm_disk_usage / self.vm_disk_allocation * 100)
