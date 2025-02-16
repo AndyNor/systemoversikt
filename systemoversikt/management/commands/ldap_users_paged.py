@@ -66,6 +66,9 @@ class Command(BaseCommand):
 			runtime_t0 = time.time()
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
+			def print_with_timestamp(message):
+				current_time = datetime.now()
+				print(f"{current_time.hour}:{current_time.minute} {message}")
 
 			def microsoft_date_decode(timestamp):
 				if timestamp == b'9223372036854775807' or timestamp == b'0':
@@ -138,7 +141,7 @@ class Command(BaseCommand):
 
 					objects_start = objects_returned + 1
 					objects_returned += len(rdata)
-					print(f"Fetching page {current_round}: element {objects_start}-{objects_returned}")
+					print_with_timestamp(f"Fetching page {current_round}: element {objects_start}-{objects_returned}")
 
 					# Do stuff with results
 					result_handler(rdata, existing_user_objects)
@@ -399,9 +402,9 @@ class Command(BaseCommand):
 					user.profile.ad_sist_oppdatert = timezone.now()
 					users_to_update.append(user)
 
-				print(f"Skriver oppdateringer til {len(users_to_update)} brukerobjekter")
+				print_with_timestamp(f"Skriver oppdateringer til {len(users_to_update)} brukerobjekter")
 				AnsattID.objects.bulk_create(ansattid_to_create)
-				#User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
+				User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
 
 
 			@transaction.atomic
@@ -455,7 +458,7 @@ class Command(BaseCommand):
 			print(log_entry_message)
 
 			int_config.dato_sist_oppdatert = timezone.now()
-			int_config.elementer = int(CCommand.SUMMARY['number_of_items'])
+			int_config.elementer = int(Command.SUMMARY['number_of_items'])
 
 			runtime_t1 = time.time()
 			int_config.runtime = int(runtime_t1 - runtime_t0)

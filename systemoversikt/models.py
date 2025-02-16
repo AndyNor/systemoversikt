@@ -677,6 +677,7 @@ class Virksomhet(models.Model):
 			blank=True,
 			null=True,
 			max_length=10,
+			db_index=True,
 			help_text=u"Dette feltet brukes som standard visningsnavn, og brukes for å koble brukeridenter til virksomheten.",
 			)
 	gamle_virksomhetsforkortelser = models.CharField(
@@ -879,7 +880,9 @@ class Virksomhet(models.Model):
 
 
 class AnsattID(models.Model):
-	ansattnr = models.BigIntegerField()
+	ansattnr = models.BigIntegerField(
+			db_index=True,
+		)
 
 	def __str__(self):
 		return u'%s' % (self.ansattnr)
@@ -1015,6 +1018,7 @@ class Profile(models.Model):
 			verbose_name="Distinguishedname (AD)",
 			blank=True,
 			null=True,
+			db_index=True,
 			)
 	ou = models.ForeignKey(
 			to="ADOrgUnit",
