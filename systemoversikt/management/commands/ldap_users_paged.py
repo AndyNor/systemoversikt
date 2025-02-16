@@ -196,7 +196,7 @@ class Command(BaseCommand):
 						userAccountControl = int(attrs["userAccountControl"][0].decode())
 					else:
 						print(f"{user} mangler userAccountControl i attrs")
-						return
+						continue
 
 					userAccountControl_decoded = decode_useraccountcontrol(userAccountControl)
 					user.profile.userAccountControl = userAccountControl_decoded
@@ -441,7 +441,7 @@ class Command(BaseCommand):
 			existing_user_objects = list(User.objects.values_list("username", flat=True))
 			print(f"Det er {len(existing_user_objects)} eksisterende brukere")
 
-			print(f"Slår opp brukere direkte i AD...")
+			print(f"Starter oppslag mot Active Directory...")
 			ldap_paged_search(existing_user_objects)
 
 
