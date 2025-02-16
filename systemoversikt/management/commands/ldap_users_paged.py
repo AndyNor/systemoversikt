@@ -409,7 +409,7 @@ class Command(BaseCommand):
 					AnsattID.objects.bulk_create(ansattid_to_create)
 					User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
 
-				save_to_db()
+				save_to_db(ansattid_to_create, users_to_update)
 
 
 			@transaction.atomic
