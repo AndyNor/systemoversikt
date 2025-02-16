@@ -137,7 +137,6 @@ class Command(BaseCommand):
 					#print(f"lookup_users fant ikke {username}")
 					return None
 
-			#@transaction.atomic # not needed
 			def save_to_database(chunck):
 				antall_behandlet = 0
 				profiles_to_update = []
@@ -199,7 +198,7 @@ class Command(BaseCommand):
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
 			int_config.runtime = logg_total_runtime
-			ing_config.elementer = int(total_processed)
+			int_config.elementer = int(total_processed)
 			int_config.save()
 
 

@@ -403,8 +403,13 @@ class Command(BaseCommand):
 					users_to_update.append(user)
 
 				print_with_timestamp(f"Skriver oppdateringer til {len(users_to_update)} brukerobjekter")
-				AnsattID.objects.bulk_create(ansattid_to_create)
-				User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
+
+				@transaction.atomic
+				def save_to_db(ansattid_to_create, users_to_update):
+					AnsattID.objects.bulk_create(ansattid_to_create)
+					User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
+
+				save_to_db()
 
 
 			@transaction.atomic
