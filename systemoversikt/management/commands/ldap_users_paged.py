@@ -142,7 +142,6 @@ class Command(BaseCommand):
 
 					# Do stuff with results
 					result_handler(rdata, existing_user_objects)
-					time.sleep(10)
 
 					pctrls = get_pctrls(serverctrls)
 					if not pctrls:
