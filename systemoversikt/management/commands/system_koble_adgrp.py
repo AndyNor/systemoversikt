@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 from datetime import datetime
 from systemoversikt.models import *
 from django.db.models import Q
-import os
+import os, time
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -42,6 +42,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 
@@ -81,6 +82,8 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
 
 
