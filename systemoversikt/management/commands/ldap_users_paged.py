@@ -29,7 +29,7 @@ class Command(BaseCommand):
 	SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
 	LDAP_SCOPE = ldap.SCOPE_SUBTREE
 	ATTRLIST = ['objectSid', 'cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet', 'servicePrincipalName'] # if empty we get all attr we have access to
-	PAGESIZE = 1000
+	PAGESIZE = 2000
 
 	def handle(self, **options):
 		INTEGRASJON_KODEORD = "ad_users"
@@ -159,9 +159,7 @@ class Command(BaseCommand):
 
 
 			def result_handler(rdata, existing_user_objects):
-				print(f"Prosesserer batch med data fra AD...")
 				users_to_update = []
-				users_to_create = []
 				ansattid_to_create = []
 
 				for dn, attrs in rdata:
@@ -178,8 +176,7 @@ class Command(BaseCommand):
 						if username in existing_user_objects: # holde track på brukere som ikke lenger finnes
 							existing_user_objects.remove(username)
 					except:
-						user = User(username=username)
-						users_to_create.append(user)
+						user = User.objects.create(username=username)
 						Command.SUMMARY["created"] += 1
 
 
@@ -404,8 +401,7 @@ class Command(BaseCommand):
 
 				print(f"Skriver oppdateringer til {len(users_to_update)} brukerobjekter")
 				AnsattID.objects.bulk_create(ansattid_to_create)
-				User.objects.bulk_create(users_to_create)
-				User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
+				#User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
 
 
 			@transaction.atomic
