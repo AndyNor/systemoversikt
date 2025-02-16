@@ -12,6 +12,9 @@ import numpy as np
 from django.db.models import Q
 
 class Command(BaseCommand):
+
+	ANTALL_DATABASER = 0
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_database_mssql"
@@ -143,6 +146,7 @@ class Command(BaseCommand):
 				for item in obsolete_devices:
 					item.delete()
 
+				Command.ANTALL_DATABASER = antall_records
 				logg_entry_message = f"Fant {antall_records} databaser. {db_dropped} manglet navn. Slettet {len(obsolete_devices)} inaktive databaser."
 				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 				print(logg_entry_message)
@@ -151,7 +155,7 @@ class Command(BaseCommand):
 			#eksekver
 			logg_entry_message = import_cmdb_databases()
 			# lagre sist oppdatert tidspunkt
-			int_config.elementer = int(antall_records)
+			int_config.elementer = int(Command.ANTALL_DATABASER)
 			int_config.dato_sist_oppdatert = modified_date
 			int_config.sist_status = logg_entry_message
 			runtime_t1 = time.time()
