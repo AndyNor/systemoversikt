@@ -161,6 +161,7 @@ class Command(BaseCommand):
 			def result_handler(rdata, existing_user_objects):
 				users_to_update = []
 				users_to_create = []
+				ansattid_to_create = []
 
 				for dn, attrs in rdata:
 					if "cn" in attrs:
@@ -172,7 +173,7 @@ class Command(BaseCommand):
 					user_organization = dn.split(",")[1][3:]  # andre OU, fjerner "OU=" som er tegn 0-2.
 					try:
 						user = User.objects.get(username=username)
-						print(f"Oppslag. Fant eksisterende bruker {username}")
+						#print(f"Oppslag. Fant eksisterende bruker {username}")
 						if username in existing_user_objects: # holde track på brukere som ikke lenger finnes
 							existing_user_objects.remove(username)
 					except:
@@ -287,7 +288,7 @@ class Command(BaseCommand):
 					try:
 						virksomhet_tbf = user_organization.upper()
 						virksomhet_obj_ref = Virksomhet.objects.get(virksomhetsforkortelse=virksomhet_tbf)
-						print("Oppslag Virksomhet")
+						#print("Oppslag Virksomhet")
 						user.profile.virksomhet = virksomhet_obj_ref
 					except:
 						pass
@@ -364,7 +365,7 @@ class Command(BaseCommand):
 					parent_ou_str = ",".join(dn.split(',')[1:])
 					try:
 						parent_ou = ADOrgUnit.objects.get(distinguishedname=parent_ou_str)
-						print("oppslag ADOrgUnit")
+						#print("oppslag ADOrgUnit")
 					except:
 						parent_ou = None
 
@@ -388,10 +389,10 @@ class Command(BaseCommand):
 								ansattnr = int(ansattnr_match[0])
 								try:
 									aid = AnsattID.objects.get(ansattnr=ansattnr)
-									print("Oppslag AnsattID")
+									#print("Oppslag AnsattID")
 								except:
-									aid = AnsattID.objects.create(ansattnr=ansattnr)
-									print("Skrive AnsattID")
+									aid = AnsattID(ansattnr=ansattnr)
+									ansattid_to_create.append(aid)
 
 								user.profile.ansattnr_ref = aid
 						except:
@@ -401,6 +402,7 @@ class Command(BaseCommand):
 					users_to_update.append(user)
 
 				print(f"Skriver oppdateringer til {len(users_to_update)} brukerobjekter")
+				AnsattID.objects.bulk_create(ansattid_to_create)
 				User.objects.bulk_create(users_to_create)
 				User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
 				return # ferdig med loop
