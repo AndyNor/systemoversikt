@@ -12,6 +12,9 @@ import numpy as np
 
 
 class Command(BaseCommand):
+
+	ANTALL_DISKER = 0
+
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "sp_server_disk"
@@ -74,6 +77,7 @@ class Command(BaseCommand):
 				data = dfRaw.to_dict('records')
 
 				antall_records = len(data)
+				Command.ANTALL_DISKER = antall_records
 
 				def convertToInt(string, multiplier=1):
 					try:
@@ -131,6 +135,7 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = modified_date # eller timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.elementer = int(Command.ANTALL_DISKER)
 			runtime_t1 = time.time()
 			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
