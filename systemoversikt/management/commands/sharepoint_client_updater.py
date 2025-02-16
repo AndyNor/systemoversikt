@@ -49,6 +49,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 		try:
 
@@ -125,7 +126,6 @@ class Command(BaseCommand):
 
 
 				client_dropped = 0
-				runtime_t0 = time.time()
 
 				# Koble maskin til sluttbruker
 				print("Starter å koble maskin til sluttbruker")
@@ -198,8 +198,7 @@ class Command(BaseCommand):
 			int_config.dato_sist_oppdatert = client_owner_modified_date
 			int_config.sist_status = logg_entry_message
 			runtime_t1 = time.time()
-			total_runtime = round(runtime_t1 - runtime_t0, 1)
-			int_config.runtime = int(total_runtime)
+			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
 
 
