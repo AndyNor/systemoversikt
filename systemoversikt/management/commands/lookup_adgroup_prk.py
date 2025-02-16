@@ -10,6 +10,8 @@ from systemoversikt.views import push_pushover
 import os, time, sys, json
 
 class Command(BaseCommand):
+
+	ANTALL_PRKVALG = 0
 	def handle(self, **options):
 
 		INTEGRASJON_KODEORD = "lokal_match_grp_prk"
@@ -45,7 +47,6 @@ class Command(BaseCommand):
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		try:
-
 			runtime_t0 = time.time()
 			count_hits = 0
 			count_misses = 0
@@ -54,6 +55,7 @@ class Command(BaseCommand):
 			def perform_atomic_update():
 				tomme_prk_valg = PRKvalg.objects.filter(ad_group_ref=None)
 				antall_records = len(tomme_prk_valg)
+				Command.ANTALL_PRKVALG = antall_records
 				idx = 0
 				for valg in tomme_prk_valg:
 					#print(valg.gruppenavn)
@@ -80,16 +82,9 @@ class Command(BaseCommand):
 
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
-			logg_entry_message = "Kjøretid %s sekunder. %s var vellykket og %s feilet." % (
-					round(logg_total_runtime, 1),
-					count_hits,
-					count_misses,
-			)
+			logg_entry_message = f"Kjøretid {round(logg_total_runtime, 1)} sekunder. Av {Command.ANTALL_PRKVALG} var det {count_hits} nye koblinger og {count_misses} som ikke kunne kobles."
 			print(logg_entry_message)
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_entry_message,
-			)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
@@ -99,12 +94,7 @@ class Command(BaseCommand):
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
