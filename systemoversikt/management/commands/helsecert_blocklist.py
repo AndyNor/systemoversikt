@@ -1,18 +1,11 @@
 # -*- coding: utf-8 -*-
-
-# scriptet krever hvitlisting av utgående IP-adresse hos HelseCERT!
-
 from django.core.management.base import BaseCommand
 from systemoversikt.models import *
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
-import time
-import requests
 from requests.auth import HTTPBasicAuth
-import os
-import ipaddress
-import json
+import os, json, time, requests, ipaddress
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -156,10 +149,7 @@ class Command(BaseCommand):
 					print(f"Feilet å laste opp Azure blob. Statuskode HTTP {azure_response.status_code} og respons {azure_response.text}.")
 
 
-			runtime_t1 = time.time()
-			logg_total_runtime = round(runtime_t1 - runtime_t0, 1)
-			logg_entry_message = f"{status_hente}. {status_levere}. Antall linjer: {antall_linjer_blocklist}. Feilede linjer: {failed_lines}. Kjøretid: {logg_total_runtime} sekunder"
-			#print(logg_entry_message)
+			logg_entry_message = f"{status_hente}. {status_levere}. Antall linjer: {antall_linjer_blocklist}. Feilede linjer: {failed_lines}."
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_entry_message,
@@ -168,6 +158,8 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
 
 		except Exception as e:

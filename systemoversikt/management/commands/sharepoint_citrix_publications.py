@@ -2,7 +2,7 @@
 from django.core.management.base import BaseCommand
 from systemoversikt.models import *
 from django.db import transaction
-import json, os, io
+import json, os, io, time
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
@@ -10,6 +10,9 @@ from systemoversikt.views import push_pushover
 from systemoversikt.views import sharepoint_get_file
 
 class Command(BaseCommand):
+
+	ANTALL_PUBLISERINGER = 0
+
 	def handle(self, **options):
 
 		skip_sharepoint = False # Sett til True ved lokal testing
@@ -51,6 +54,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 
 		try:
@@ -217,7 +221,7 @@ class Command(BaseCommand):
 
 					c.save()
 
-
+				Command.ANTALL_PUBLISERINGER += antall_records
 				logg_entry_message = f'Fant {antall_records} publikasjoner datert {dato} i {filnavn}. Det er {antall_aktive} aktive hvorav {antall_nyopprettede_publikasjoner} er nye publikasjoner.\n'
 				print(logg_entry_message)
 				return logg_entry_message
@@ -282,25 +286,18 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = citrix_is_date # eller timezone.now()
 			int_config.sist_status = logg_entry_message
+			int_config.elementer = int(Command.ANTALL_PUBLISERINGER)
+			runtime_t1 = time.time()
+			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
 
-			ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_entry_message,
-					)
-
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 			print("Ferdig")
-
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
