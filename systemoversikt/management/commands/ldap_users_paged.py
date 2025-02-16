@@ -16,20 +16,20 @@ from ldap.controls import SimplePagedResultsControl
 from distutils.version import LooseVersion
 
 class Command(BaseCommand):
-		SUMMARY = {
-			"number_of_items": 0,
-			"created": 0,
-			"modified": 0,
-			"deaktivert": 0,
-			"reaktivert": 0,
-			"removed": 0,
-			"inactive_user_not_deleted": [],
-		}
-		BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
-		SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
-		LDAP_SCOPE = ldap.SCOPE_SUBTREE
-		ATTRLIST = ['objectSid', 'cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet', 'servicePrincipalName'] # if empty we get all attr we have access to
-		PAGESIZE = 200
+	SUMMARY = {
+		"number_of_items": 0,
+		"created": 0,
+		"modified": 0,
+		"deaktivert": 0,
+		"reaktivert": 0,
+		"removed": 0,
+		"inactive_user_not_deleted": [],
+	}
+	BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
+	SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
+	LDAP_SCOPE = ldap.SCOPE_SUBTREE
+	ATTRLIST = ['objectSid', 'cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet', 'servicePrincipalName'] # if empty we get all attr we have access to
+	PAGESIZE = 200
 
 	def handle(self, **options):
 		INTEGRASJON_KODEORD = "ad_users"
