@@ -29,7 +29,7 @@ class Command(BaseCommand):
 	SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
 	LDAP_SCOPE = ldap.SCOPE_SUBTREE
 	ATTRLIST = ['objectSid', 'cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet', 'servicePrincipalName'] # if empty we get all attr we have access to
-	PAGESIZE = 200
+	PAGESIZE = 1000
 
 	def handle(self, **options):
 		INTEGRASJON_KODEORD = "ad_users"
@@ -142,6 +142,7 @@ class Command(BaseCommand):
 
 					# Do stuff with results
 					result_handler(rdata, existing_user_objects)
+					time.sleep(5)
 
 					pctrls = get_pctrls(serverctrls)
 					if not pctrls:
