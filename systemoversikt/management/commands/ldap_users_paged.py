@@ -149,7 +149,7 @@ class Command(BaseCommand):
 						print('WARNING: Server ignores RFC 2696 control.')
 						break
 
-					cookie = set_cookie(lc, pctrls, PAGESIZE)
+					cookie = set_cookie(lc, pctrls, Command.PAGESIZE)
 					if not cookie:
 						break  # Done
 
