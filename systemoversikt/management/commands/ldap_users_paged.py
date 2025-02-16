@@ -168,12 +168,12 @@ class Command(BaseCommand):
 					user_organization = dn.split(",")[1][3:]  # andre OU, fjerner "OU=" som er tegn 0-2.
 					try:
 						user = User.objects.get(username=username)
-						print(f"Fant eksisterende bruker {user}")
+						print(f"Oppslag. Fant eksisterende bruker {user}")
 						if username in existing_user_objects: # holde track på brukere som ikke lenger finnes
 							existing_user_objects.remove(username)
 					except:
 						user = User.objects.create_user(username=username)
-						print(f"Opprettet bruker {user}")
+						print(f"Skrive. Opprettet bruker {user}")
 						Command.SUMMARY["created"] += 1
 
 
@@ -283,6 +283,7 @@ class Command(BaseCommand):
 					try:
 						virksomhet_tbf = user_organization.upper()
 						virksomhet_obj_ref = Virksomhet.objects.get(virksomhetsforkortelse=virksomhet_tbf)
+						print("oppslag")
 						user.profile.virksomhet = virksomhet_obj_ref
 					except:
 						pass
@@ -359,6 +360,7 @@ class Command(BaseCommand):
 					parent_ou_str = ",".join(dn.split(',')[1:])
 					try:
 						parent_ou = ADOrgUnit.objects.get(distinguishedname=parent_ou_str)
+						print("oppslag")
 					except:
 						parent_ou = None
 
@@ -382,16 +384,19 @@ class Command(BaseCommand):
 								ansattnr = int(ansattnr_match[0])
 								try:
 									aid = AnsattID.objects.get(ansattnr=ansattnr)
+									print("oppslag")
 								except:
 									aid = AnsattID.objects.create(ansattnr=ansattnr)
+									print("skrive")
 
 								user.profile.ansattnr_ref = aid
 						except:
 							print("Kobling mot AnsattID feilet for %s" % user)
 
 					user.profile.ad_sist_oppdatert = timezone.now()
+					print("skrive")
 					user.save()
-					return
+				return # ferdig med loop
 
 
 			@transaction.atomic
