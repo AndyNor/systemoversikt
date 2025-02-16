@@ -487,8 +487,7 @@ class Command(BaseCommand):
 			int_config.dato_sist_oppdatert = modified_date
 			int_config.sist_status = logg_message
 			runtime_t1 = time.time()
-			logg_total_runtime = int(runtime_t1 - runtime_t0)
-			int_config.runtime = logg_total_runtime
+			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
 
 
