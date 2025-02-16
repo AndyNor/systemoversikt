@@ -118,7 +118,7 @@ class Command(BaseCommand):
 					l.simple_bind_s(LDAPUSER, LDAPPASSWORD)
 				except ldap.LDAPError as e:
 					raise Exception(f'ERROR: LDAP bind failed: {e}')
-				lc = create_controls(PAGESIZE)
+				lc = create_controls(Command.PAGESIZE)
 
 
 				# Search and loop until no more pages
