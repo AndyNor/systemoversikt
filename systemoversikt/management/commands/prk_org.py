@@ -19,6 +19,7 @@ class Command(BaseCommand):
 	ant_oppdateringer = 0
 	ant_deaktivert = 0
 	virksomheter_eksisterer_ikke = []
+	ant_org_enheter = 0
 
 	def handle(self, **options):
 
@@ -126,7 +127,8 @@ class Command(BaseCommand):
 			@transaction.atomic  # for speeding up database performance
 			def eksekver():
 
-				print(f"Det er {len(csv_data)} enheter i datasettet")
+				Command.ant_org_enheter = len(csv_data)
+				print(f"Det er {Command.ant_org_enheter} enheter i datasettet")
 				for unit in csv_data:
 
 					if unit["OUSUBTYPE"] == "VIRK":  # virksomhet
@@ -171,7 +173,7 @@ class Command(BaseCommand):
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
 			int_config.runtime = logg_total_runtime
-			int_config.elementer = int(Command.ant_oppdateringer)
+			int_config.elementer = int(Command.ant_org_enheter)
 			int_config.save()
 
 		except Exception as e:
