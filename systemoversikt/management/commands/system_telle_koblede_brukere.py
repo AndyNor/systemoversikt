@@ -8,7 +8,7 @@ from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
-import os
+import os, time
 
 
 class Command(BaseCommand):
@@ -44,6 +44,7 @@ class Command(BaseCommand):
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		runtime_t0 = time.time()
 
 
 		try:
@@ -70,6 +71,8 @@ class Command(BaseCommand):
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
+			runtime_t1 = time.time()
+			int_config.runtime = int(runtime_t1 - runtime_t0)
 			int_config.save()
 
 
