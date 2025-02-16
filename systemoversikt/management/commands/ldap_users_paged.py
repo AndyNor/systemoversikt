@@ -67,7 +67,7 @@ class Command(BaseCommand):
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 
 			def print_with_timestamp(message):
-				current_time = datetime.now()
+				current_time = datetime.datetime.now()
 				print(f"{current_time.hour}:{current_time.minute} {message}")
 
 			def microsoft_date_decode(timestamp):
