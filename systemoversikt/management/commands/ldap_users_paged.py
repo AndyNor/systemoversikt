@@ -406,8 +406,6 @@ class Command(BaseCommand):
 				AnsattID.objects.bulk_create(ansattid_to_create)
 				User.objects.bulk_create(users_to_create)
 				User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
-				return # ferdig med loop
-
 
 
 			@transaction.atomic
