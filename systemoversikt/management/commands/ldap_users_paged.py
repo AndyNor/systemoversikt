@@ -159,6 +159,7 @@ class Command(BaseCommand):
 
 
 			def result_handler(rdata, existing_user_objects):
+				print(f"Prosesserer batch med data fra AD...")
 				users_to_update = []
 				users_to_create = []
 				ansattid_to_create = []
