@@ -98,7 +98,7 @@ class Command(BaseCommand):
 				w.beskrivelse = line["Virksomhet"]
 				w.save()
 
-			logg_entry_message = f"Fant {antall_records} WAN-lokasjoner. Ingen match for {''.join(loc for loc in Command.INGEN_MATCH)}."
+			logg_entry_message = f"Fant {antall_records} WAN-lokasjoner. Ingen match for {', '.join(loc.strip() for loc in Command.INGEN_MATCH)}."
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
 
 			print(logg_entry_message)
