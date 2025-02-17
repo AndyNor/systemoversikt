@@ -5596,7 +5596,7 @@ def tbrukere(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	brukere = User.objects.filter( Q(username__istartswith="t-") | Q(username__istartswith="t_") | Q(username__icontains="_t2") | Q(username__icontains="aks20") | Q(username__icontains="_qa") | Q(username__icontains="-qa" | Q(username__icontains="-t20") ).order_by("username")
+	brukere = User.objects.filter( Q(username__istartswith="t-") | Q(username__istartswith="t_") | Q(username__icontains="_t2") | Q(username__icontains="aks20") | Q(username__icontains="-t20") ).order_by("username")
 
 	return render(request, 'ad_tbrukere.html', {
 		"request": request,
