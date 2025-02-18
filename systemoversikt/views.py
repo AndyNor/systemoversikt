@@ -1858,6 +1858,11 @@ def azure_applications(request):
 
 	applikasjoner = AzureApplication.objects.filter(active=True).order_by('-createdDateTime')
 
+	term = request.GET.get("term", None)
+	if term:
+		applikasjoner = applikasjoner.filter(appId=term)
+
+
 	return render(request, 'cmdb_azure_applications.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -4720,33 +4725,41 @@ def search(request):
 	except:
 		pass
 
+	aktuelle_personer = None
 	if len(search_term) > 4: # det er noen få brukernavn som er identiske med systemnavn..
 		try:
 			u = User.objects.get(username__iexact=search_term)
 			return redirect('bruker_detaljer', u.pk)
 		except:
-			pass
+			aktuelle_personer = User.objects.filter(username__icontains=search_term)
 
-	if search_term != '':
+	if search_term != '' and len(search_term) > 1:
 		aktuelle_systemer = System.objects.filter(~Q(livslop_status=7)).filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
 		#Her ønsker vi å vise treff i beskrivelsesfeltet, men samtidig ikke vise systemer på nytt
 		potensielle_systemer = System.objects.filter(~Q(livslop_status=7)).filter(Q(systembeskrivelse__icontains=search_term) & ~Q(pk__in=aktuelle_systemer))
 		aktuelle_programvarer = Programvare.objects.filter(Q(programvarenavn__icontains=search_term)|Q(alias__icontains=search_term))
 		domenetreff = SystemUrl.objects.filter(domene__icontains=search_term)
 		aktuelle_leverandorer = Leverandor.objects.filter(leverandor_navn__icontains=search_term)
-		aktuelle_personer = User.objects.filter(username__iexact=search_term)
 		business_services = CMDBRef.objects.filter(navn__icontains=search_term)
 		aktuelle_adgrupper = ADgroup.objects.filter(common_name__icontains=search_term)
 		aktuelle_servere = CMDBdevice.objects.filter(comp_name__icontains=search_term)
+		aktuelle_databaser = CMDBdatabase.objects.filter(db_database__icontains=search_term)
+		enterpriseapps = AzureApplication.objects.filter(displayName__icontains=search_term, active=True)
+		aktuelle_orgledd = HRorg.objects.filter(ou__icontains=search_term)
 	else:
+		messages.info(request, 'Lengden på det du søker på må minimum være 2 tegn')
 		aktuelle_systemer = System.objects.none()
 		potensielle_systemer = System.objects.none()
 		aktuelle_programvarer = Programvare.objects.none()
 		domenetreff = SystemUrl.objects.none()
 		aktuelle_leverandorer = Leverandor.objects.none()
+		aktuelle_personer = User.objects.none()
 		business_services = CMDBRef.objects.none()
 		aktuelle_adgrupper = ADgroup.objects.none()
 		aktuelle_servere = CMDBdevice.objects.none()
+		aktuelle_databaser = CMDBdatabase.objects.none()
+		enterpriseapps = AzureApplication.objects.none()
+		aktuelle_orgledd = HRorg.objects.none()
 
 	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
 		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
@@ -4772,6 +4785,10 @@ def search(request):
 		'business_services': business_services,
 		'aktuelle_adgrupper': aktuelle_adgrupper,
 		'aktuelle_servere': aktuelle_servere,
+		'enterpriseapps': enterpriseapps,
+		'aktuelle_personer': aktuelle_personer,
+		'aktuelle_databaser': aktuelle_databaser,
+		'aktuelle_orgledd': aktuelle_orgledd,
 	})
 
 
