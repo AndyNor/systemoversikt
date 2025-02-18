@@ -78,6 +78,13 @@ class QualysVulnAdmin(admin.ModelAdmin):
 		return False
 
 
+@admin.register(QualysVulnBasisPatching)
+class QualysVulnBasisPatchingAdmin(admin.ModelAdmin):
+	list_display = ('title', 'akseptert')
+	search_fields = ('title',)
+	readonly_fields = ('opprettet', 'sist_oppdatert')
+
+
 @admin.register(IpProtocol)
 class IpProtocolAdmin(admin.ModelAdmin):
 	list_display=search_fields=readonly_fields = ('protocol', 'port', 'description')

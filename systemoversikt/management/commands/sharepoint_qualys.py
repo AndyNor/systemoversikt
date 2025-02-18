@@ -64,6 +64,7 @@ class Command(BaseCommand):
 
 			def ansvar_basisdrift(vulnerability):
 
+				"""
 				patches_av_drift = [
 						"Splunk Universal Forwarder",
 						"Microsoft Azure Connected Machine Agent",
@@ -81,11 +82,12 @@ class Command(BaseCommand):
 						"Rocky Linux Security Update for kernel",
 						"Red Hat Update for",
 					]
-
-				if any(phrase in vulnerability.title for phrase in patches_av_drift):
-					return True
-				return False
-
+				"""
+				patches_av_drift = QualysVulnBasisPatching.objects.all()
+				for basispatch in patches_av_drift:
+					if basispatch.title.lower() in vulnerability.title.lower():
+						return {"basispatch": True, "akseptert": basispatch.akseptert}
+				return {"basispatch": False, "akseptert": False}
 
 
 			ALL_EXPLOITED_CVES = list(ExploitedVulnerability.objects.values_list('cve_id', flat=True))
@@ -140,7 +142,9 @@ class Command(BaseCommand):
 							status=line['Status'],
 						)
 
-					q.ansvar_basisdrift = ansvar_basisdrift(q)
+					ab = ansvar_basisdrift(q)
+					q.ansvar_basisdrift = ab["basispatch"]
+					q.akseptert = ab["akseptert"]
 
 					server = lookup_server(line["Hostname"])
 					if not server:

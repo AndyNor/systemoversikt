@@ -2593,6 +2593,29 @@ class CMDBdatabase(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+class QualysVulnBasisPatching(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	title = models.TextField()
+	akseptert = models.BooleanField(default=False)
+
+	def __str__(self):
+		return f"{self.title}"
+
+	class Meta:
+		verbose_name_plural = "Qualys: Basispatching"
+		verbose_name = "Basispatchet"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
 class QualysVuln(models.Model):
 	source = models.TextField()
 	server = models.ForeignKey(
@@ -2612,9 +2635,10 @@ class QualysVuln(models.Model):
 	os = models.TextField()
 	status = models.TextField(null=True)
 	ansvar_basisdrift = models.BooleanField(default=False)
+	akseptert = models.BooleanField(default=False)
 
 	def __str__(self):
-		return f"{self.source} {self.title}"
+		return f"{self.title}"
 
 	def known_exploited_info(self):
 		try:
@@ -5206,12 +5230,12 @@ class System(models.Model):
 			#print(service_offering)
 			for server in service_offering.servers.all():
 				#print(server)
-				for vuln in server.qualys_vulnerabilities.filter(first_seen__lt=datetime_limit, severity__in=[4,5]):
+				for vuln in server.qualys_vulnerabilities.filter(first_seen__lt=datetime_limit, severity__in=[4,5], akseptert=False):
 					#if vuln.severity in [4,5]:
 					vuln.tmp_offering = service_offering # brukes kun i template
 					connected_vulns.add(vuln)
 		#print(connected_vulns)
-		return list(connected_vulns)
+		return connected_vulns
 
 	def kontakt_forvalter(self):
 		if len(self.systemforvalter_kontaktpersoner_referanse.all()) > 0:

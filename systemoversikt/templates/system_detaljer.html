@@ -913,43 +913,40 @@
 		Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}</p>
 
 		<div class="col-12">
-			<b>Sårbarheter eldre enn 45 dager med alvorlighetsgrad 4 eller 5 knyttet til systemets servere</b> (Vises kun for eiere og forvaltere)
+			Det ble funnet {{ total_number_vulns }} instanser av sårbarheter knyttet til dette systemet som er eldre enn 45 dager og med alvorlighetsgrad 4 eller 5. Sårbarhetene er fordelt på {{vulnerabilities|length}} unike sårbarheter.<br><i>(Denne oversikten vises kun for eiere og forvaltere)</i>
 			<table class="table table-sm tablesorter excel">
 				<thead>
 					<tr>
 						<th>Beskrivelse</th>
-						<th>Først sett</th>
-						<th>Sist oppdatert</th>
-						<th>Miljø</th>
-						<th>Server</th>
-						<th>OS</th>
-						<th>EOL?</th>
-						<th>Internett-eksponert?</th>
-						<th>Kjent utnyttet?</th>
 						<th>Alvorlighetsgrad</th>
+						<th>Kjent utnyttet?</th>
 						<th>Ansvar</th>
-						<th style="word-wrap: break-word; width: 500px;">Lokasjon</th>
+						<th style="word-wrap: break-word;">Servere</th>
 					</tr>
 				</thead>
 				<tbody>
-				{% for vuln in systemdetaljer.vulnerabilities_old %}
+				{% for v in vulnerabilities %}
 				<tr>
-					<td>{{ vuln.title }}</td>
-					<td>{{ vuln.first_seen|date:"Y-m-d" }}</td>
-					<td>{{ vuln.last_seen|date:"Y-m-d" }}</td>
-					<td>{{ vuln.tmp_offering.navn }}</td>
-					<td>{{ vuln.server }}</td>
-					<td>{{ vuln.os }}</td>
-					<td>{{ vuln.derived_os_endoflife|yesno:"🔴 End of life, 🟢 Supportert" }}</td>
-					<td>{{ vuln.public_facing|yesno:"🔴 Ja, 🟢 Nei" }}</td>
-					<td>{{ vuln.known_exploited|yesno:"🔴 Ja, 🟢 Nei" }}<br>{{vuln.known_exploited_info|safe}}</td>
+					<td>{{ v.title }}</td>
 					<td>
-						{% if vuln.severity == 4 %}🟡{% endif %}
-						{% if vuln.severity == 5 %}🔴{% endif %}
-						{{ vuln.severity }}
+						{% if v.severity == 4 %}🟡 alvorlig{% endif %}
+						{% if v.severity == 5 %}🔴 svært alvorlig{% endif %}
 					</td>
-					<td>{{ vuln.ansvar_basisdrift|yesno:"🖥️ Basisdrift, 💾 Applikasjonsdrift" }}</td>
-					<td>{{ vuln.result|truncatechars:300 }}</td>
+					<td>{{ v.known_exploited|yesno:"🔴 ja, nei" }}<br>{{vuln.known_exploited_info|safe}}</td>
+					<td>{{ v.ansvar_basisdrift|yesno:"🖥️ basisdrift, 💾 applikasjonsdrift" }}</td>
+					<td>
+						{% for vuln in v.vulnerabilities %}
+							<li>
+								<b>{{ vuln.server }}</b>
+								{{ vuln.tmp_offering.navn }}
+								({{ vuln.os }}
+								{{ vuln.derived_os_endoflife|yesno:"🔴 End of life, " }}
+								{{ vuln.public_facing|yesno:"🔴 Internett-eksponert, " }})<br>
+								{{ vuln.first_seen|date:"Y-m-d" }}:
+								{{ vuln.result|truncatechars:300 }}
+							</li>
+						{% endfor %}
+					</td>
 				</tr>
 				{% endfor %}
 				</tbody>
@@ -959,49 +956,6 @@
 			Sårbarheter vises kun for systemeier og systemforvalter
 		{% endif %}
 	</div>
-
-
-
-	{% comment %}
-	<br><hr>
-	<h3>Gammel figur med data fra gamle datafelter (utfases)</h3>
-	<div class="row">
-		<div class="col-12">
-			<a class="btn btn-sm" style="" href="?follow_count=1">+1 nivå</a>
-			<a class="btn btn-sm" href="?follow_count=2">+2 nivå</a>
-			{% explain_collapsed "Gule er vanlige systemer. Grå er infrastruktur. Grønn er programvare. Hele piler er utlevering av informasjon i pilens retning. Stiplede er systemavhengigheter. Du kan trykke på en runding for å gå til valgte systemdetaljer." %}
-
-			<h5>Gammel figur</h5>
-			<div id="cy" style="background-color: #f7f7f7; border: 1px solid #d6d4d4; width: 100%; height: {{avhengigheter_chart_size}}px;"></div>
-			{% if avhengigheter_graf.nodes|length < 2 %}
-				<p>Ingen avhengigheter registrert</p>
-			{% endif %}
-			{% if systemdetaljer.avhengigheter_referanser.all|length > 0 %}
-				Systemeravhengigheter:
-				{% for system in systemdetaljer.avhengigheter_referanser.all %}
-					{% url "systemdetaljer" system.pk as url_system %}
-					<a class="badge badge-light" href="{{ url_system }}">{{ system.systemnavn }}</a>
-				{% endfor %}
-				{% for system in avhengigheter_reverse_systemer.all %}
-					{% url "systemdetaljer" system.pk as url_system %}
-					<a class="badge badge-light" href="{{ url_system }}">{{ system.systemnavn }}</a>
-				{% endfor %}
-			{% endif %}
-
-			<br>
-			{% if systemdetaljer.avhengigheter %}
-				Beskrivelse av avhengigheter<br>
-				<a class="badge badge-light">{{ systemdetaljer.avhengigheter|default:"-"|linebreaks }}</a>
-			{% endif %}
-		</div>
-	</div>
-	{% endcomment %}
-
-
-
-
-
-
 
 
 	{% comment %}
@@ -1179,20 +1133,9 @@
 	{% endcomment %}
 
 
-
-
-
-
-
-
-
-
-
-
 {% endblock hovedinnhold %}
 
 {% block script_append %}
-
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 	var cy_ny = cytoscape({
 		zoomingEnabled: true,
@@ -1269,74 +1212,6 @@
 	});
 	cy_ny.zoomingEnabled = false
 
-
-	var cy = cytoscape({
-		zoomingEnabled: true,
-		panningEnabled: true,
-		wheelSensitivity: 0.1,
-		container: document.getElementById('cy'),
-		elements: {
-			nodes: [
-				{% for node in avhengigheter_graf.nodes %} {{ node|safe }},
-				{% endfor %}
-			],
-			edges: [
-				{% for edge in avhengigheter_graf.edges %} {{ edge|safe }},
-				{% endfor %}
-			],
-		},
-		style: [
-			{
-				selector: 'node',
-				style: {
-					'shape': 'data(shape)',
-					'background-color': 'data(color)',
-					'label': 'data(name)',
-					'font-size': '12px',
-				},
-			},
-			{
-				selector: 'node:selected',
-				style: {
-				},
-			},
-			{
-				selector: 'edge',
-				style: {
-					'target-arrow-shape': 'triangle',
-					'curve-style': 'bezier',
-					'line-style': 'data(linestyle)',
-				},
-			},
-			{
-				selector: 'edge:selected',
-				style: {
-				},
-			},
-			{
-				selector: ':parent',
-				style: {
-					'label': 'data(id)',
-					'line-style': "solid",
-					'background-color': '#ebf5fc',
-				}
-			},
-		],
-		layout: {
-			name: 'fcose',
-			animationDuration: 0, //ms
-			idealEdgeLength: 250,
-		},
-	});
-	cy.on('tap', 'node', function(){
-		if (this.data('href')) {
-			try { // your browser may block popups
-				window.open( this.data('href'), "_self" );
-			} catch(e){ // fall back on url change
-				window.location.href = this.data('href');
-			}
-		}
-	});
 
 </script>
 {% endblock script_append %}

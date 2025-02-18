@@ -23,6 +23,7 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 <table class="table tablesorter excel">
 <thead>
 <tr>
+	<th>Akseptert</th>
 	<th>Enhet</th>
 	<th>Enhetkobling</th>
 	<th>Operativsystem</th>
@@ -36,6 +37,7 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 <tbody>
 {% for vuln in data.vulnerabilities %}
 <tr>
+	<td>{{ vuln.akseptert|yesno:"Ja, Nei" }}</td>
 	<td>{{ vuln.source }}</td>
 	<td>{{ vuln.server|default:"ingen" }}</td>
 	<td>{{ vuln.os }}</td>

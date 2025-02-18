@@ -820,13 +820,13 @@ def vulnstats(request):
 	#	[data["count_unike_alvorligheter"].append({"severity": severity, "count": 0}) for severity in range(1, 6) if severity not in severities]
 	#	data["count_unike_alvorligheter"] = sorted(data["count_unike_alvorligheter"], key=lambda x: x['severity'], reverse=False)
 
-	data["count_unike_alvorligheter_eol"] = QualysVuln.objects.filter(server__derived_os_endoflife=True).values('severity').annotate(count=Count('severity'))
+	data["count_unike_alvorligheter_eol"] = list(QualysVuln.objects.filter(server__derived_os_endoflife=True).values('severity').annotate(count=Count('severity')))
 	if len(data["count_unike_alvorligheter_eol"]) > 0:
 		severities = {item['severity'] for item in data["count_unike_alvorligheter_eol"]}
 		[data["count_unike_alvorligheter_eol"].append({"severity": severity, "count": 0}) for severity in range(1, 6) if severity not in severities]
 		data["count_unike_alvorligheter_eol"] = sorted(data["count_unike_alvorligheter_eol"], key=lambda x: x['severity'], reverse=False)
 
-	data["count_unike_vulns"] = QualysVuln.objects.values('severity').annotate(unique_titles=Count('severity'))
+	data["count_unike_vulns"] = list(QualysVuln.objects.values('severity').annotate(unique_titles=Count('severity')))
 	if len(data["count_unike_vulns"]) > 0:
 		severities = {item['severity'] for item in data["count_unike_vulns"]}
 		[data["count_unike_vulns"].append({"severity": severity, "unique_titles": 0}) for severity in range(1, 6) if severity not in severities]
@@ -4502,119 +4502,6 @@ def systemdetaljer(request, pk):
 
 
 
-	def generer_graf(system, follow_count):
-		avhengigheter_graf = {"nodes": [], "edges": []}
-		observerte_driftsmodeller = set()
-		first_round = True
-		follow_count = follow_count
-		observerte_systemer = set()
-		behandlede_systemer = set()
-		aktivt_nivaa_systemer = set()  # aktiv runde
-		neste_nivaa = set() # neste runde (nye ting vi ser i aktiv runde)
-
-		def parent(system):
-			if system.driftsmodell_foreignkey is not None:
-				return system.driftsmodell_foreignkey.navn
-			else:
-				return "Ukjent"
-
-		def systemfarge(self):
-			if self.er_infrastruktur():
-				return "gray"
-			else:
-				return "#dca85a"
-
-		# initielt oppsett, registrere dette systemet som en node
-		aktivt_nivaa_systemer.add(system)
-		observerte_systemer.add(system)
-
-		def avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa):
-			for aktuelt_system in aktivt_nivaa_systemer:
-
-				avhengigheter_graf["nodes"].append({"data": { "parent": parent(aktuelt_system), "id": aktuelt_system.pk, "name": aktuelt_system.systemnavn, "shape": "ellipse", "color": "black" }},)
-				observerte_driftsmodeller.add(aktuelt_system.driftsmodell_foreignkey)
-
-				if first_round: # bare første runde. De etterkommende rundene ignorerer vi systemer som avleverer informasjon til dette systemet.
-					mottar_fra = set()  # et set har kun unike verdier
-					for s in aktuelt_system.datautveksling_mottar_fra.all():
-						mottar_fra.add(s)
-					for s in aktuelt_system.system_datautveksling_avleverer_til.all():
-						mottar_fra.add(s)
-					for s in mottar_fra:
-						if s not in observerte_systemer:
-							neste_nivaa.add(s)
-							observerte_systemer.add(s)
-						if s not in behandlede_systemer:
-							avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-							avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": aktuelt_system.pk, "linestyle": "solid" }},)
-							observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
-
-				if first_round: # bare første runde. Vi må skille på utlevering og avhengighet
-					avleverer_til = set()  # et set har kun unike verdier
-					for s in aktuelt_system.datautveksling_avleverer_til.all():
-						avleverer_til.add(s)
-					for s in aktuelt_system.system_datautveksling_mottar_fra.all():
-						avleverer_til.add(s)
-					for s in avleverer_til:
-						if s not in observerte_systemer:
-							neste_nivaa.add(s)
-							observerte_systemer.add(s)
-						if s not in behandlede_systemer:
-							avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-							avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, "target": s.pk, "linestyle": "solid" }},)
-							observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
-
-				# Dette er systemer dette systemet er avhengig av, kjøres uansett runde
-				for s in aktuelt_system.avhengigheter_referanser.all():
-					if s not in observerte_systemer:
-						neste_nivaa.add(s)
-						observerte_systemer.add(s)
-					if s not in behandlede_systemer:
-						avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-						avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, "target": s.pk, "linestyle": "dashed" }},)
-						observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
-
-				#dette er systemer som er avhengig av gitt system
-				if first_round:
-					for s in aktuelt_system.system_avhengigheter_referanser.all():
-						if s not in observerte_systemer:
-							neste_nivaa.add(s)
-							observerte_systemer.add(s)
-						if s not in behandlede_systemer:
-							avhengigheter_graf["nodes"].append({"data": { "parent": parent(s), "id": s.pk, "name": s.systemnavn, "shape": "ellipse", "color": systemfarge(s), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-							avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": aktuelt_system.pk, "linestyle": "dashed" }},)
-							observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
-
-				# programvare knyttet til dette systemet, bare første runde
-				if first_round:
-					for p in aktuelt_system.programvarer.all():
-						avhengigheter_graf["nodes"].append({"data": { "id": ("p%s" % p.pk), "name": p.programvarenavn, "shape": "ellipse", "color": "#64c14c", "href": reverse('programvaredetaljer', args=[p.pk]) }},)
-						avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, "target": ("p%s" % p.pk), "linestyle": "dashed" }},)
-
-				behandlede_systemer.add(aktuelt_system)
-
-			# legger neste nivås systemer inn i gjendende nivå, klar for neste runde
-			aktivt_nivaa_systemer = neste_nivaa
-			neste_nivaa = set()
-
-			return aktivt_nivaa_systemer, neste_nivaa
-
-		aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
-		first_round = False
-		while follow_count > 0 and aktivt_nivaa_systemer: # det må være noen systemer å gå igjennom..
-			aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
-			follow_count-=1
-
-		# legge til alle driftsmodeller som ble funnet
-		for driftsmodell in observerte_driftsmodeller:
-			if driftsmodell is not None:
-				avhengigheter_graf["nodes"].append({"data": { "id": driftsmodell.navn }},)
-
-		return avhengigheter_graf
-
-
-
-
 	siste_endringer_antall = 10
 	system_content_type = ContentType.objects.get_for_model(system)
 	siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
@@ -4633,8 +4520,6 @@ def systemdetaljer(request, pk):
 	datautveksling_avleverer_til = [i.destination_system for i in SystemIntegration.objects.filter(personopplysninger=True,source_system=system.pk).all()]
 	avhengigheter_reverse_systemer = System.objects.filter(avhengigheter_referanser=pk)
 
-	avhengigheter_graf = generer_graf(system, follow_count)
-
 	avhengigheter_graf_ny = generer_graf_ny(system, follow_count)
 
 	citrix_apps = system.citrix_publications.all()
@@ -4650,6 +4535,23 @@ def systemdetaljer(request, pk):
 	except:
 		integrasjonsstatus = None
 
+	vulnerabilities = list(system.vulnerabilities_old())
+	total_number_vulns = len(vulnerabilities)
+	unique_vulns = {}
+	for v in vulnerabilities:
+		if v.title not in unique_vulns:
+			unique_vulns[v.title] = {
+				"title": v.title,
+				"severity": v.severity,
+				"known_exploited": v.known_exploited,
+				"ansvar_basisdrift": v.ansvar_basisdrift,
+				"vulnerabilities": []
+			}
+		unique_vulns[v.title]["vulnerabilities"].append(v)
+
+	unique_vulns_list = list(unique_vulns.values())
+	sorted_unique_vulns = sorted(unique_vulns_list, key=lambda x: (not x["known_exploited"], -x["severity"]))
+
 	return render(request, 'system_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -4663,14 +4565,14 @@ def systemdetaljer(request, pk):
 		'dpia': dpia,
 		'siste_endringer': siste_endringer,
 		'siste_endringer_antall': siste_endringer_antall,
-		'avhengigheter_graf': avhengigheter_graf,
 		'avhengigheter_graf_ny': avhengigheter_graf_ny,
 		'follow_count': follow_count,
-		'avhengigheter_chart_size': 300 + len(avhengigheter_graf["nodes"])*20,
 		'avhengigheter_chart_size_ny': 300 + len(avhengigheter_graf_ny["nodes"])*20,
 		'citrix_apps': citrix_apps,
 		'current_user_is_owner': current_user_is_owner,
 		'integrasjonsstatus': integrasjonsstatus,
+		'vulnerabilities': sorted_unique_vulns,
+		'total_number_vulns': total_number_vulns,
 	})
 
 
