@@ -50,7 +50,7 @@ class Command(BaseCommand):
 
 		try:
 
-			f = io.open("systemoversikt/management/commands/iso-3166-2.json", mode="r", encoding="utf-8")
+			f = io.open("systemoversikt/management/commands/data_iso-3166-2.json", mode="r", encoding="utf-8")
 			content = f.read()
 			countrycodes = json.loads(content)
 

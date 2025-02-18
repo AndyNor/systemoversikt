@@ -2168,7 +2168,7 @@ class virtualIP(models.Model):
 		return members
 
 
-class IpProtocol(models.Model):
+class IpProtocol(models.Model): # DENNE BRUKES IKKE TIL NOE SOM HELST
 	port = models.BigIntegerField(
 		null=False,
 		)

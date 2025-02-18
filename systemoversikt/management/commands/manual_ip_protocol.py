@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
 		@transaction.atomic
 		def run():
-			with open("systemoversikt/management/commands/service-names-port-numbers.csv", 'r', encoding='latin-1') as destination_file:
+			with open("systemoversikt/management/commands/data_service-names-port-numbers.csv", 'r', encoding='latin-1') as destination_file:
 				csv_data = list(csv.DictReader(destination_file, delimiter=","))
 				print("Det er %s linjer i filen" % len(csv_data))
 
