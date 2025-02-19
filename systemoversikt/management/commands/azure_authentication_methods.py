@@ -83,6 +83,7 @@ class Command(BaseCommand):
 				batch_payload = create_batch_request(users)
 				runtime_start = time.time()
 				response = client.post('/$batch', json=batch_payload)
+				print("venter..")
 				time.sleep(1) # vent minst 1 sekund til neste spørring
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
