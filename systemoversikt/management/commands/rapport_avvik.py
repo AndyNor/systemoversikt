@@ -120,7 +120,7 @@ class Command(BaseCommand):
 
 				object_ref = s["id"]
 				object_ref.tidslinjedata = json.dumps(tidslinjedata)
-				#object_ref.save()
+				object_ref.save()
 
 			#logg dersom vellykket
 			logg_message = f"Innlasting av statistikk utført."
