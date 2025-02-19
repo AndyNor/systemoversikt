@@ -83,8 +83,9 @@ class Command(BaseCommand):
 				batch_payload = create_batch_request(users)
 				runtime_start = time.time()
 				response = client.post('/$batch', json=batch_payload)
-				print("venter..")
-				time.sleep(1) # vent minst 1 sekund til neste spørring
+				wait_len = 2
+				print(f"venter {wait_len} sekunder..")
+				time.sleep(wait_len) # vent minst 1 sekund til neste spørring
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
 				#print(f"{json.dumps(response_data, indent=2)}")
@@ -98,8 +99,8 @@ class Command(BaseCommand):
 					status = result['status']
 					if status == 429:
 						wait_sec = int(result['headers']['Retry-After'])
-						time.sleep(wait_sec)
 						print(f"Too many requests, venter {wait_sec} sekunder...")
+						time.sleep(wait_sec)
 						Command.users_with_license.extend(users)
 						print(f"La gjeldende batch med brukere tilbake i køen...")
 						break
@@ -220,7 +221,7 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			Command.users_with_license = User.objects.filter(profile__accountdisable=False).filter(profile__virksomhet__id=163).filter(~Q(profile__ny365lisens=None))
+			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(profile__virksomhet__id=163).filter(~Q(profile__ny365lisens=None)))
 			Command.ANTALL_MED_LISENS = len(Command.users_with_license)
 			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
