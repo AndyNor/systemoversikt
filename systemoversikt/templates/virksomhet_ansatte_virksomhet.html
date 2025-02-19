@@ -34,7 +34,7 @@
 			<td>{{ b.profile.account_type }}</td>
 			<td>{{ b.username }}</td>
 			<td>{{ b.profile.displayName }}</td>
-			<td>{{ b.profile.ny365lisens }}</td>
+			<td>{{ b.profile.ny365lisens|default:"Ingen" }}</td>
 			<td>{% for method in b.profile.entra_id_auth %}<li>{{method}}</li>{% endfor %}</td>
 			<td>{{ b.email }}</td>
 			{% comment %}<td>{{ b.profile.avdeling|default:"-" }}</td>{% endcomment %}
