@@ -99,7 +99,7 @@ class Command(BaseCommand):
 					#print(f"prosesserer {user}")
 					status = result['status']
 					if status == 429:
-						wait_sec = int(result['headers']['Retry-After']) + 30
+						wait_sec = int(result['headers']['Retry-After']) + 20
 						print(f"Too many requests, venter {wait_sec} sekunder...")
 						Command.ANTALL_TOO_MANY += 1
 						time.sleep(wait_sec)
