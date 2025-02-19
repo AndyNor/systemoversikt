@@ -83,18 +83,20 @@
 			<th>Brukernavn</th>
 			<th>Navn</th>
 			<th>O365-lisens</th>
+			<th>Autentiseringsmetoder</th>
 			<th>E-post</th>
 			{% comment %}<th>Avdeling</th>{% endcomment %}
 			<th>Seksjon</th>
 		</tr>
 		</thead>
 		<tbody>
-		{% for b in personer %}
+		{% for b in brukere %}
 		<tr>
 			<td>{{ b.profile.account_type }}</td>
 			<td>{{ b.username }}</td>
 			<td>{{ b.profile.displayName }}</td>
 			<td>{{ b.profile.ny365lisens }}</td>
+			<td>{% for method in b.profile.entra_id_auth %}<li>{{item}}</li>{% endfor %}</td>
 			<td>{{ b.email }}</td>
 			{% comment %}<td>{{ b.profile.avdeling|default:"-" }}</td>{% endcomment %}
 			<td>{{ b.profile.org_unit|default:"-" }}</td>

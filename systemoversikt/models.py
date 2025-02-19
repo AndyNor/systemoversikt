@@ -1232,6 +1232,27 @@ class Profile(models.Model):
 	def save_user_profile(sender, instance, **kwargs):
 		instance.profile.save()
 
+	def entra_id_auth(self):
+		metoder = []
+		if "voiceAuthenticationMethod" in self.auth_methods:
+			metoder.append("Telefon voice")
+		if "phoneAuthenticationMethod" in self.auth_methods:
+			metoder.append("Telefon SMS")
+		if "certificateBasedAuthentication" in self.auth_methods:
+			metoder.append("Sertifikat")
+		if "temporaryAccessPassAuthenticationMethod" in self.auth_methods:
+			metoder.append("TAP")
+		if "fido2AuthenticationMethod" in self.auth_methods:
+			metoder.append("FIDO2")
+		if "microsoftAuthenticatorAuthenticationMethod" in self.auth_methods:
+			metoder.append("Authenticator")
+		if "oathSoftwareTokenAuthenticationMethod" in self.auth_methods:
+			metoder.append("OAuth software")
+		if "oathHardwareTokenAuthenticationMethod" in self.auth_methods:
+			metoder.append("OAuth hardware")
+		return metoder
+
+
 
 	def levtilgangprofil(self):
 		alle_levprofiler = Leverandortilgang.objects.all()
