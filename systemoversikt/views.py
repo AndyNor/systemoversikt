@@ -5284,7 +5284,7 @@ def enhet_detaljer(request, pk):
 			'required_permissions': formater_permissions(required_permissions),
 			'unit': unit,
 			'sideenheter': sideenheter,
-			'personer': personer,
+			'brukere': personer,
 			'systemer_ansvarfor': systemer_ansvarfor,
 		})
 	else:
