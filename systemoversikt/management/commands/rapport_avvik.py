@@ -108,6 +108,7 @@ class Command(BaseCommand):
 			for s in statistikk:
 				print(f"laster inn tidsdata for {s['id'].beskrivelse}")
 				if "tidslinjedata" in s and s["tidslinjedata"] is not None:
+					print(s["tidslinjedata"])
 					tidslinjedata = json.loads(s["tidslinjedata"])
 				else:
 					print(f"Det manglet tidslinjedata for {s['id'].beskrivelse}")
