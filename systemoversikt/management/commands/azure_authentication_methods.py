@@ -84,9 +84,9 @@ class Command(BaseCommand):
 				runtime_start = time.time()
 				response = client.post('/$batch', json=batch_payload)
 				runtime_end = time.time()
-				#wait_len = 4
-				#print(f"venter {wait_len} sekunder..")
-				#time.sleep(wait_len) # vent minst 1 sekund til neste spørring
+				wait_len = 3
+				print(f"venter {wait_len} sekunder..")
+				time.sleep(wait_len) # vent minst 1 sekund til neste spørring
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
 				#print(f"{json.dumps(response_data, indent=2)}")
@@ -98,7 +98,7 @@ class Command(BaseCommand):
 					#print(f"prosesserer {user}")
 					status = result['status']
 					if status == 429:
-						wait_sec = int(result['headers']['Retry-After']) + 20
+						wait_sec = int(result['headers']['Retry-After']) + 0
 						print(f"Too many requests, venter {wait_sec} sekunder...")
 						time.sleep(wait_sec)
 						Command.users_with_license.extend(users)
