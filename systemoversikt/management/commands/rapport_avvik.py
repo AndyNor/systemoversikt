@@ -51,7 +51,6 @@ class Command(BaseCommand):
 			# forenklet logikk som kun henter ut tallene nødvendig og lagrer disse
 			innhentingsbehov = []
 			for i in RapportGruppemedlemskaper.objects.all():
-				print(f"Henter data for {i.beskrivelse}")
 				innhentingsbehov.append({
 					"id": i,
 					"grupper": [g.common_name for g in i.grupper.all()],
@@ -79,7 +78,7 @@ class Command(BaseCommand):
 
 
 			def rapport_hent_statistikk(i):
-				print(f"Henter statistikk for {i['id'].beskrivelse}")
+				print(f"Leser ut grupper for {i['id'].beskrivelse}")
 				antall = 0
 				if len(i["AND_grupper"]) == 0: # Det er bare ordinære grupper som kan slås opp direkte. Er mye raskere enn å dekode enkeltbrukere.
 					for gruppe in i["grupper"]:
