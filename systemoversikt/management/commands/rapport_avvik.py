@@ -105,7 +105,9 @@ class Command(BaseCommand):
 			for i in innhentingsbehov:
 				statistikk.append(rapport_hent_statistikk(i))
 
+
 			for s in statistikk:
+				print(f"laster inn tidsdata for {s['id'].beskrivelse}")
 				if "tidslinjedata" in s and s["tidslinjedata"] is not None:
 					tidslinjedata = json.loads(s["tidslinjedata"])
 				else:
