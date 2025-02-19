@@ -229,7 +229,7 @@ class Command(BaseCommand):
 
 			while i < len(Command.users_with_license):
 				# Process the current batch of users
-				timedelta = lookup_and_save(users_with_license[i:i + split_size])
+				timedelta = lookup_and_save(Command.users_with_license[i:i + split_size])
 				print(f"Ny batch fra {i} til {i + split_size} ferdig. Graph-kallet tok {round(timedelta, 3)} sekunder")
 
 				# Move to the next batch
