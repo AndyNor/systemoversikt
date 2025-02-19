@@ -84,9 +84,9 @@ class Command(BaseCommand):
 				runtime_start = time.time()
 				response = client.post('/$batch', json=batch_payload)
 				runtime_end = time.time()
-				wait_len = 4
-				print(f"venter {wait_len} sekunder..")
-				time.sleep(wait_len) # vent minst 1 sekund til neste spørring
+				#wait_len = 4
+				#print(f"venter {wait_len} sekunder..")
+				#time.sleep(wait_len) # vent minst 1 sekund til neste spørring
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
 				#print(f"{json.dumps(response_data, indent=2)}")
