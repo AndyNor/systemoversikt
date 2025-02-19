@@ -83,7 +83,7 @@ class Command(BaseCommand):
 				response = client.post('/$batch', json=batch_payload)
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
-				print(f"{json.dumps(response_data, indent=2)}")
+				#print(f"{json.dumps(response_data, indent=2)}")
 				runtime_end = time.time()
 				profiles_to_update = []
 
@@ -92,7 +92,9 @@ class Command(BaseCommand):
 					user = users[user_id]
 					#print(f"prosesserer {user}")
 					status = result['status']
-					print(f"HTTP {status}")
+					if status != 200:
+						print(f"HTTP {status}\n{json.dumps(result, indent=2)}")
+					#print(f"HTTP {status}")
 					body = result['body']
 					#print(f"{status}: {user}")
 					#print(f"{json.dumps(body, indent=2)}")
@@ -209,7 +211,7 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			users_with_license = User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None))[:20]
+			users_with_license = User.objects.filter(profile__accountdisable=False).filter(virksomhet__id=163).filter(~Q(profile__ny365lisens=None))
 			Command.ANTALL_MED_LISENS = len(users_with_license)
 			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
