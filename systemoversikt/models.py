@@ -1233,6 +1233,8 @@ class Profile(models.Model):
 		instance.profile.save()
 
 	def entra_id_auth(self):
+		if self.auth_methods == None:
+			return []
 		metoder = []
 		if "voiceAuthenticationMethod" in self.auth_methods:
 			metoder.append("Telefon voice")

@@ -35,7 +35,7 @@
 			<td>{{ b.username }}</td>
 			<td>{{ b.profile.displayName }}</td>
 			<td>{{ b.profile.ny365lisens }}</td>
-			<td>{% for method in b.profile.entra_id_auth %}<li>{{item}}</li>{% endfor %}</td>
+			<td>{% for method in b.profile.entra_id_auth %}<li>{{method}}</li>{% endfor %}</td>
 			<td>{{ b.email }}</td>
 			{% comment %}<td>{{ b.profile.avdeling|default:"-" }}</td>{% endcomment %}
 			<td>{{ b.profile.org_unit|default:"-" }}</td>
