@@ -15,6 +15,7 @@ class Command(BaseCommand):
 	ANTALL_LAGRET = 0
 	ANTALL_FEILET = 0
 	ANTALL_MED_LISENS = 0
+	users_with_license = []
 
 	def handle(self, **options):
 
@@ -82,6 +83,7 @@ class Command(BaseCommand):
 				batch_payload = create_batch_request(users)
 				runtime_start = time.time()
 				response = client.post('/$batch', json=batch_payload)
+				time.sleep(1) # vent minst 1 sekund til neste spørring
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
 				#print(f"{json.dumps(response_data, indent=2)}")
@@ -93,8 +95,13 @@ class Command(BaseCommand):
 					user = users[user_id]
 					#print(f"prosesserer {user}")
 					status = result['status']
-					if status != 200:
-						print(f"HTTP {status}\n{json.dumps(result, indent=2)}")
+					if status == 429:
+						wait_sec = int(result['headers']['Retry-After'])
+						time.sleep(wait_sec)
+						print(f"Too many requests, venter {wait_sec} sekunder...")
+						Command.users_with_license.extend(users)
+						print(f"La gjeldende batch med brukere tilbake i køen...")
+						break
 					#print(f"HTTP {status}")
 					body = result['body']
 					#print(f"{status}: {user}")
@@ -212,15 +219,20 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			users_with_license = User.objects.filter(profile__accountdisable=False).filter(profile__virksomhet__id=163).filter(~Q(profile__ny365lisens=None))
-			Command.ANTALL_MED_LISENS = len(users_with_license)
+			Command.users_with_license = User.objects.filter(profile__accountdisable=False).filter(profile__virksomhet__id=163).filter(~Q(profile__ny365lisens=None))
+			Command.ANTALL_MED_LISENS = len(Command.users_with_license)
 			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
 			split_size = 20
-			for i in range(0, len(users_with_license), split_size):
-				#print(f"Ny batch fra {i} til {i + split_size}")
+			i = 0
+
+			while i < len(Command.users_with_license):
+				# Process the current batch of users
 				timedelta = lookup_and_save(users_with_license[i:i + split_size])
 				print(f"Ny batch fra {i} til {i + split_size} ferdig. Graph-kallet tok {round(timedelta, 3)} sekunder")
+
+				# Move to the next batch
+				i += split_size
 
 
 			runtime_t1 = time.time()
