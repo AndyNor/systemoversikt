@@ -88,6 +88,7 @@ class Command(BaseCommand):
 				for result in response_data.get('responses', []):
 					user_id = int(result['id'])
 					user = users[user_id]
+					print(f"prosesserer {user}")
 					status = result['status']
 					body = result['body']
 					#print(f"{status}: {user}")
