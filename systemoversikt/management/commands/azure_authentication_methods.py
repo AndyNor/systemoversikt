@@ -6,6 +6,7 @@ from systemoversikt.models import *
 import os, requests, json, time
 from datetime import datetime
 from django.db.models import Q
+from systemoversikt.views import push_pushover
 
 
 class Command(BaseCommand):
@@ -211,7 +212,7 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			users_with_license = User.objects.filter(profile__accountdisable=False).filter(virksomhet__id=163).filter(~Q(profile__ny365lisens=None))
+			users_with_license = User.objects.filter(profile__accountdisable=False).filter(profile__virksomhet__id=163).filter(~Q(profile__ny365lisens=None))
 			Command.ANTALL_MED_LISENS = len(users_with_license)
 			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
