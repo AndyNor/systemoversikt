@@ -15,6 +15,7 @@ class Command(BaseCommand):
 	ANTALL_LAGRET = 0
 	ANTALL_FEILET = 0
 	ANTALL_MED_LISENS = 0
+	ANTALL_TOO_MANY = 0
 	users_with_license = []
 
 	def handle(self, **options):
@@ -84,9 +85,9 @@ class Command(BaseCommand):
 				runtime_start = time.time()
 				response = client.post('/$batch', json=batch_payload)
 				runtime_end = time.time()
-				wait_len = 15
-				print(f"venter {wait_len} sekunder..")
-				time.sleep(wait_len) # vent minst 1 sekund til neste spørring
+				#wait_len = 15
+				#print(f"venter {wait_len} sekunder..")
+				#time.sleep(wait_len) # vent minst 1 sekund til neste spørring
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
 				#print(f"{json.dumps(response_data, indent=2)}")
@@ -98,8 +99,9 @@ class Command(BaseCommand):
 					#print(f"prosesserer {user}")
 					status = result['status']
 					if status == 429:
-						wait_sec = int(result['headers']['Retry-After']) + 0
+						wait_sec = int(result['headers']['Retry-After']) + 30
 						print(f"Too many requests, venter {wait_sec} sekunder...")
+						Command.ANTALL_TOO_MANY += 1
 						time.sleep(wait_sec)
 						Command.users_with_license.extend(users)
 						print(f"La gjeldende batch med brukere tilbake i køen...")
@@ -221,7 +223,7 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(profile__virksomhet__id=163).filter(~Q(profile__ny365lisens=None)))
+			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(profile__virksomhet__id=160).filter(~Q(profile__ny365lisens=None)))
 			Command.ANTALL_MED_LISENS = len(Command.users_with_license)
 			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
@@ -239,7 +241,7 @@ class Command(BaseCommand):
 
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
-			logg_entry_message = f"Utførte {Command.ANTALL_GRAPH_KALL} kall mot MS Graph. Lagret {Command.ANTALL_LAGRET} profiler. {Command.ANTALL_FEILET} feilet."
+			logg_entry_message = f"Utførte {Command.ANTALL_GRAPH_KALL} kall mot MS Graph. Fartsbegrenset {Command.ANTALL_TOO_MANY} ganger. Lagret {Command.ANTALL_LAGRET} profiler. {Command.ANTALL_FEILET} feilet."
 
 			print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
