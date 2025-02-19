@@ -23,7 +23,7 @@
 			<th>Navn</th>
 			<th>O365-lisens</th>
 			<th>E-post</th>
-			<th>Avdeling</th>
+			{% comment %}<th>Avdeling</th>{% endcomment %}
 			<th>Seksjon</th>
 		</tr>
 		</thead>
@@ -35,7 +35,7 @@
 			<td>{{ b.profile.displayName }}</td>
 			<td>{{ b.ny365lisens }}</td>
 			<td>{{ b.email }}</td>
-			<td>{{ b.profile.avdeling|default:"-" }}</td>
+			{% comment %}<td>{{ b.profile.avdeling|default:"-" }}</td>{% endcomment %}
 			<td>{{ b.profile.org_unit|default:"-" }}</td>
 		</tr>
 		{% endfor %}

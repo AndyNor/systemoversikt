@@ -49,6 +49,7 @@ python /var/kartoteket/source/systemoversikt/manage.py rydde_generisk
 python /var/kartoteket/source/systemoversikt/manage.py rydde_sette_seksjon
 #python /var/kartoteket/source/systemoversikt/manage.py sharepoint_o365lisence_updater
 python /var/kartoteket/source/systemoversikt/manage.py rapport_avvik
+python /var/kartoteket/source/systemoversikt/manage.py lookup_user_o365lisens
 
 # digdir
 python /var/kartoteket/source/systemoversikt/manage.py digdir_los
@@ -57,6 +58,7 @@ python /var/kartoteket/source/systemoversikt/manage.py digdir_los
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_enterprise_applications
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_named_locations
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_conditional_access
+python /var/kartoteket/source/systemoversikt/manage.py azure_authentication_methods
 
 # run batch e-mail
 python /var/kartoteket/source/systemoversikt/manage.py epost_avtaleutlop

@@ -2010,10 +2010,11 @@ def o365_lisenser(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	data = []
-	data.append({"tekst": "Brukere i gruppe 1 - Tykk klient", "antall": len(User.objects.filter(profile__o365lisence=1))})
-	data.append({"tekst": "Brukere i gruppe 2 - Flerbruker", "antall": len(User.objects.filter(profile__o365lisence=2))})
-	data.append({"tekst": "Brukere i gruppe 3 - Mangler epost", "antall": len(User.objects.filter(profile__o365lisence=3))})
-	data.append({"tekst": "Brukere i gruppe 4 - Educaton", "antall": len(User.objects.filter(profile__o365lisence=4))})
+	data.append({"tekst": "Brukere i gruppe 1 - Tykk klient", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G1"))})
+	data.append({"tekst": "Brukere i gruppe 2 - Flerbruker", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G2"))})
+	data.append({"tekst": "Brukere i gruppe 3 - Mangler epost", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G3"))})
+	data.append({"tekst": "Brukere i gruppe 4 - Educaton", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G4"))})
+	data.append({"tekst": "Brukere i gruppe 5 - ???", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G5"))})
 
 	virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True)
 
@@ -3007,46 +3008,6 @@ def ansatte_virksomhet(request, pk):
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	brukere = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False)
-
-	# relevante grupper knyttet til lisens
-	nye_adgrupper = [
-		{"gruppe":"Task-OF2-Lisens-O365-G1", "navn": "G1 Standardklient"},
-		{"gruppe":"Task-OF2-Lisens-O365-G2", "navn": "G2 Flerbruker"},
-		{"gruppe":"Task-OF2-Lisens-O365-G3", "navn": "G3 Uten e-post"},
-		{"gruppe":"Task-OF2-Lisens-O365-G4", "navn": "G4 Education"},
-		{"gruppe":"Task-OF2-Lisens-O365-G5", "navn": "G5 Beskrivelse?"}
-	]
-
-	#bufre alle gruppemedlemmer direkte under nye_adgrupper
-	for idx, group in enumerate(nye_adgrupper):
-		try:
-			adgroup = ADgroup.objects.get(common_name=group["gruppe"])
-		except:
-			continue
-
-		adgroup_members = json.loads(adgroup.member)
-		adgroup_members_clean = set()
-		for m in adgroup_members:
-			try:
-				adgroup_members_clean.add(m.split(",")[0].split("=")[1].lower())
-			except:
-				pass
-		group["adgroup_members_clean"] = list(adgroup_members_clean)
-
-	# slå opp for hver bruker ny lisens
-	for bruker in brukere:
-		match = False
-		for group in nye_adgrupper:
-			try:
-				members = group["adgroup_members_clean"]
-			except:
-				members = [] # skjer dersom gruppen ikke finnes
-			if bruker.username.lower() in members:
-				bruker.ny365lisens = group["navn"]
-				match = True
-				break
-		if not match:
-			bruker.ny365lisens = "-"
 
 	return render(request, 'virksomhet_ansatte_virksomhet.html', {
 		'request': request,

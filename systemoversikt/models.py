@@ -1183,13 +1183,13 @@ class Profile(models.Model):
 			blank=True,
 			null=True,
 			)
-	o365lisence = models.BigIntegerField(
-			choices=LISENCE_VALG,
-			verbose_name="Lisenser Office365",
-			blank=True,
-			default=0,
-			help_text=u'Settes automatisk',
-			)
+	#o365lisence = models.BigIntegerField(
+	#		choices=LISENCE_VALG,
+	#		verbose_name="Lisenser Office365",
+	#		blank=True,
+	#		default=0,
+	#		help_text=u'Settes automatisk',
+	#		)
 	service_principal_name = models.CharField(
 			verbose_name="Service Principal Name (AD)",
 			max_length=1024,
@@ -1202,6 +1202,18 @@ class Profile(models.Model):
 			blank=True,
 			null=True,
 			db_index=True,
+			)
+	ny365lisens = models.CharField(
+			verbose_name="Office365-lisens",
+			max_length=256,
+			blank=True,
+			null=True,
+			db_index=True,
+			)
+	auth_methods =  models.TextField(
+			verbose_name="Autentiseringsmetoder (JSON)",
+			blank=True,
+			null=True,
 			)
 	# med vilje er det ikke HistoricalRecords() på denne
 

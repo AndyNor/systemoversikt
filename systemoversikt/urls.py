@@ -98,7 +98,7 @@ urlpatterns = [
 
 	re_path(r'^rapport/startside/$', views.rapport_startside, name='rapport_startside'),
 	re_path(r'^rapport/sikkerhetsavvik/$', views.o365_avvik, name='o365_avvik'),
-	#re_path(r'^rapport/o365_lisenser/$', views.o365_lisenser, name='o365_lisenser'),
+	re_path(r'^rapport/o365_lisenser/$', views.o365_lisenser, name='o365_lisenser'),
 	re_path(r'^rapport/ad/drifttilgang/$', views.drifttilgang, name='drifttilgang'),
 	re_path(r'^rapport/ad/tbrukere/$', views.tbrukere, name='tbrukere'),
 	re_path(r'^rapport/ad/spn/$', views.alle_spn, name='alle_spn'),

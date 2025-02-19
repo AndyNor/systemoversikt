@@ -6,13 +6,12 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	o365-lisenstildeling (forslag)
+	o365-lisenstildeling (faktisk)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-<p>Dette er totalen av tildelte lisenser basert på fordelingskriterier.<br>
-Først tildeles education-lisens for alle med "barnehage" i seksjonsnavn. Om ikke tildeles kategori 3 "uten e-post" for de som ikke har en e-postadresse. Om ikke plasseres bruker i kategori 1 "tykk klient" dersom brukerident har logget inn på en tykklient nylig. Om ikke havner resten i kategori 2 "flerbruker".</p>
+<p>Dette er tildelingen av lisenser per nå. Denne oversikten har tatt over for forslaget brukt under planlegging.</p>
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
@@ -30,11 +29,13 @@ Først tildeles education-lisens for alle med "barnehage" i seksjonsnavn. Om ikk
 	</table>
 
 <p>Se detaljer for din virksomhet. Merk at ["UDE", "BYS", "VAV", "INE", "PBE", "BBY", "KRV", "REG"] ikke tildeles lisens på denne måten.</p>
-<p>Merk også at det vil ta ganske lang tid å åpne noen av disse rapportene. Des flere ansatte en virksomhet har, desto lenger tid tar det.</p>
+<p>Merk også at det vil ta ganske lang tid å åpne noen av disse rapportene, avhengig av antall ansatte.</p>
 
+<div style="display: grid; grid-template-columns: repeat(3, 1fr)">
 {% for v in virksomheter %}
 	<li><a href="{% url 'ansatte_virksomhet' pk=v.pk %}">{{ v }}</a></li>
 {% endfor %}
+</div>
 
 
 {% endblock hovedinnhold %}
