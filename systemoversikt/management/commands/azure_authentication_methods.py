@@ -196,7 +196,7 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			users_with_license = User.objects.filter(~Q(profile__ny365lisens=None))[:200]
+			users_with_license = User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None))[:200]
 			Command.ANTALL_MED_LISENS = len(users_with_license)
 			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
 

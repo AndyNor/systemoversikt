@@ -924,7 +924,7 @@ class AnsattIDAdmin(SimpleHistoryAdmin):
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-	list_display = ('user', 'virksomhet', 'auth_methods', 'ny365lisens', 'org_unit', 'usertype', 'from_prk', 'service_principal_name', 'adgrupper_antall', 'description')
+	list_display = ('user', 'accountdisable', 'virksomhet', 'auth_methods', 'ny365lisens', 'org_unit', 'usertype', 'from_prk', 'service_principal_name', 'adgrupper_antall', 'description')
 	search_fields = ('user__username', 'user__first_name', 'user__last_name', 'description', 'user__email',)
 	autocomplete_fields = ('user', 'ou', 'virksomhet', 'virksomhet_innlogget_som', 'adgrupper', 'org_unit', 'ansattnr_ref')
 	list_filter = ('usertype', 'ny365lisens', 'trusted_for_delegation', 'from_prk', 'whenCreated')
