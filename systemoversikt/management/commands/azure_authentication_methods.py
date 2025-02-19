@@ -83,7 +83,7 @@ class Command(BaseCommand):
 				response = client.post('/$batch', json=batch_payload)
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
-				print(response_data)
+				print(f"{json.dumps(response_data, indent=2)}")
 				runtime_end = time.time()
 				profiles_to_update = []
 
