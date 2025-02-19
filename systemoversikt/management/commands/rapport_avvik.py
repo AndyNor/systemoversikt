@@ -110,7 +110,7 @@ class Command(BaseCommand):
 				try:
 					tidslinjedata = json.loads(s["tidslinjedata"])
 				except:
-					print(f"Det manglet tidslinjedata for {s['id'].beskrivelse}")
+					print(f"*** Det manglet tidslinjedata for {s['id'].beskrivelse}")
 					tidslinjedata = []
 
 				date_str = datetime.now().strftime("%d.%m")
