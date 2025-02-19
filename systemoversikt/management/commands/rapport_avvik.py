@@ -79,7 +79,7 @@ class Command(BaseCommand):
 
 
 			def rapport_hent_statistikk(i):
-				print(f"Henter statistikk for {i.beskrivelse}")
+				print(f"Henter statistikk for {i['id'].beskrivelse}")
 				antall = 0
 				if len(i["AND_grupper"]) == 0: # Det er bare ordinære grupper som kan slås opp direkte. Er mye raskere enn å dekode enkeltbrukere.
 					for gruppe in i["grupper"]:
@@ -109,15 +109,17 @@ class Command(BaseCommand):
 				if "tidslinjedata" in s and s["tidslinjedata"] is not None:
 					tidslinjedata = json.loads(s["tidslinjedata"])
 				else:
+					print(f"Det manglet tidslinjedata for {s['id'].beskrivelse}")
 					tidslinjedata = []
 
 				date_str = datetime.now().strftime("%d.%m")
-				tidslinjedata.append({"date": date_str, "count": s["medlemmer"]})
+				dagens_antall = {"date": date_str, "count": s["medlemmer"]}
+				print(f"legger til {dagens_antall}")
+				tidslinjedata.append(dagens_antall)
 
 				object_ref = s["id"]
 				object_ref.tidslinjedata = json.dumps(tidslinjedata)
-				print(f"Lagrer data for {i.beskrivelse}")
-				object_ref.save()
+				#object_ref.save()
 
 			#logg dersom vellykket
 			logg_message = f"Innlasting av statistikk utført."
