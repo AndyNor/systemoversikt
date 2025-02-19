@@ -12,6 +12,7 @@ class Command(BaseCommand):
 
 	ANTALL_GRAPH_KALL = 0
 	ANTALL_LAGRET = 0
+	ANTALL_FEILET = 0
 	ANTALL_MED_LISENS = 0
 
 	def handle(self, **options):
@@ -181,12 +182,13 @@ class Command(BaseCommand):
 								})
 						#for m in users_methods:
 						#	print(m)
-						user.profile.auth_method = json.dumps(users_methods, indent=2)
+						user.profile.auth_methods = json.dumps(users_methods, indent=2)
 						profiles_to_update.append(user.profile)
 						Command.ANTALL_LAGRET += 1
-						#user.profile.save()
 					else:
-						#print("Feilet for {user}")
+						user.profile.auth_methods = json.dumps({"status": "Oppslag feilet"}, indent=2)
+						profiles_to_update.append(user.profile)
+						Command.ANTALL_FEILET += 1
 						pass
 
 				Profile.objects.bulk_update(profiles_to_update, ["auth_methods",])
@@ -207,8 +209,7 @@ class Command(BaseCommand):
 
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
-			feilet = Command.ANTALL_MED_LISENS - Command.ANTALL_LAGRET
-			logg_entry_message = f"Utførte {Command.ANTALL_GRAPH_KALL} kall mot MS Graph. Lagret {Command.ANTALL_LAGRET} profiler. {feilet} feilet."
+			logg_entry_message = f"Utførte {Command.ANTALL_GRAPH_KALL} kall mot MS Graph. Lagret {Command.ANTALL_LAGRET} profiler. {Command.ANTALL_FEILET} feilet."
 
 			print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
