@@ -83,6 +83,7 @@ class Command(BaseCommand):
 				response = client.post('/$batch', json=batch_payload)
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
+				print(response_data)
 				runtime_end = time.time()
 				profiles_to_update = []
 
@@ -91,6 +92,7 @@ class Command(BaseCommand):
 					user = users[user_id]
 					#print(f"prosesserer {user}")
 					status = result['status']
+					print(f"HTTP {status}")
 					body = result['body']
 					#print(f"{status}: {user}")
 					#print(f"{json.dumps(body, indent=2)}")
@@ -105,6 +107,7 @@ class Command(BaseCommand):
 
 							if auth_method['@odata.type'] == "#microsoft.graph.passwordAuthenticationMethod":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.passwordAuthenticationMethod",
 									"metode": "Passord",
 									"beskrivelse": "Brukers passord for pålogging",
@@ -112,6 +115,7 @@ class Command(BaseCommand):
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.emailAuthenticationMethod":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.emailAuthenticationMethod",
 									"metode": "E-post",
 									"beskrivelse": "For tilbakestilling av passord",
@@ -119,6 +123,7 @@ class Command(BaseCommand):
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.voiceAuthenticationMethod":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.voiceAuthenticationMethod",
 									"metode": "Oppringing til telefon",
 									"beskrivelse": "Ekstra faktor ved pålogging",
@@ -126,6 +131,7 @@ class Command(BaseCommand):
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.phoneAuthenticationMethod":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.phoneAuthenticationMethod",
 									"metode": "SMS engangskode",
 									"beskrivelse": "Ekstra faktor ved pålogging og for tilbakestilling av passord",
@@ -133,6 +139,7 @@ class Command(BaseCommand):
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.certificateBasedAuthentication":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.certificateBasedAuthentication",
 									"metode": "Sertifikat",
 									"beskrivelse": f"Sertifikat med subject {auth_method['subjectName']}",
@@ -140,6 +147,7 @@ class Command(BaseCommand):
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.temporaryAccessPassAuthenticationMethod":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.temporaryAccessPassAuthenticationMethod",
 									"metode": "TAP",
 									"beskrivelse": f"Midlertidig tilgangspass med status {auth_method['methodUsabilityReason']}",
@@ -147,6 +155,7 @@ class Command(BaseCommand):
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.windowsHelloForBusinessAuthenticationMethod":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.windowsHelloForBusinessAuthenticationMethod",
 									"metode": "Windows Hello",
 									"beskrivelse": f"Maskinknyttet pålogging for {auth_method['displayName']}",
@@ -154,6 +163,7 @@ class Command(BaseCommand):
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.fido2AuthenticationMethod":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.fido2AuthenticationMethod",
 									"metode": "FIDO2",
 									"beskrivelse": f"{auth_method['displayName']} ({auth_method['model']})",
@@ -161,6 +171,7 @@ class Command(BaseCommand):
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.microsoftAuthenticatorAuthenticationMethod":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.microsoftAuthenticatorAuthenticationMethod",
 									"metode": "Authenticator",
 									"beskrivelse": f"{auth_method['displayName']} ({auth_method['deviceTag']})",
@@ -168,6 +179,7 @@ class Command(BaseCommand):
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.oathSoftwareTokenAuthenticationMethod":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.oathSoftwareTokenAuthenticationMethod",
 									"metode": "OTP software",
 									"beskrivelse": f"",
@@ -175,6 +187,7 @@ class Command(BaseCommand):
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.oathHardwareTokenAuthenticationMethod":
 								users_methods.append({
+									"status": "ok",
 									"@odata.type": "#microsoft.graph.oathHardwareTokenAuthenticationMethod",
 									"metode": "OTP hardware",
 									"beskrivelse": f"{auth_method['displayName']} {auth_method['manufacturer']} {auth_method['model']}",
@@ -196,7 +209,7 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			users_with_license = User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None))
+			users_with_license = User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None))[:20]
 			Command.ANTALL_MED_LISENS = len(users_with_license)
 			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
