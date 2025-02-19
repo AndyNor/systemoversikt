@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# Hente ut statisikk på utvalgte grupper. Kjøres normalt 1 gang per uke.
 from systemoversikt.models import *
 from django.utils import timezone
 from datetime import timedelta
@@ -49,7 +48,6 @@ class Command(BaseCommand):
 		runtime_t0 = time.time()
 
 		try:
-
 			# forenklet logikk som kun henter ut tallene nødvendig og lagrer disse
 			innhentingsbehov = []
 			for i in RapportGruppemedlemskaper.objects.all():
@@ -120,10 +118,7 @@ class Command(BaseCommand):
 
 			#logg dersom vellykket
 			logg_message = f"Innlasting av statistikk utført."
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
 
 			# lagre sist oppdatert tidspunkt
@@ -137,11 +132,12 @@ class Command(BaseCommand):
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
 
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			import traceback
+			traceback_details = traceback.format_exc()
+			print(traceback_details)
+
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
+
