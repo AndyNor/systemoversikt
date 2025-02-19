@@ -83,13 +83,13 @@ class Command(BaseCommand):
 				batch_payload = create_batch_request(users)
 				runtime_start = time.time()
 				response = client.post('/$batch', json=batch_payload)
-				wait_len = 2
+				runtime_end = time.time()
+				wait_len = 4
 				print(f"venter {wait_len} sekunder..")
 				time.sleep(wait_len) # vent minst 1 sekund til neste spørring
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
 				#print(f"{json.dumps(response_data, indent=2)}")
-				runtime_end = time.time()
 				profiles_to_update = []
 
 				for result in response_data.get('responses', []):
@@ -98,7 +98,7 @@ class Command(BaseCommand):
 					#print(f"prosesserer {user}")
 					status = result['status']
 					if status == 429:
-						wait_sec = int(result['headers']['Retry-After'])
+						wait_sec = int(result['headers']['Retry-After']) + 20
 						print(f"Too many requests, venter {wait_sec} sekunder...")
 						time.sleep(wait_sec)
 						Command.users_with_license.extend(users)
