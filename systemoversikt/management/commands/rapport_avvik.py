@@ -51,6 +51,7 @@ class Command(BaseCommand):
 			# forenklet logikk som kun henter ut tallene nødvendig og lagrer disse
 			innhentingsbehov = []
 			for i in RapportGruppemedlemskaper.objects.all():
+				print(f"Henter data for {i.beskrivelse}")
 				innhentingsbehov.append({
 					"id": i,
 					"grupper": [g.common_name for g in i.grupper.all()],
@@ -104,7 +105,7 @@ class Command(BaseCommand):
 				statistikk.append(rapport_hent_statistikk(i))
 
 			for s in statistikk:
-				if s["tidslinjedata"] != None:
+				if "tidslinjedata" in s and s["tidslinjedata"] is not None:
 					tidslinjedata = json.loads(s["tidslinjedata"])
 				else:
 					tidslinjedata = []
