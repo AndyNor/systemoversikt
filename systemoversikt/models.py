@@ -322,6 +322,11 @@ class IntegrasjonKonfigurasjon(models.Model):
 			blank=True,
 			null=True,
 			)
+	helsestatus = models.TextField(
+		verbose_name="Helsestatus",
+		blank=True,
+		null=True,
+	)
 
 	def __str__(self):
 		return f'{self.kilde} {self.protokoll} {self.informasjon}'

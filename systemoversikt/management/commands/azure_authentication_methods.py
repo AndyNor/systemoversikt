@@ -15,8 +15,11 @@ class Command(BaseCommand):
 	ANTALL_LAGRET = 0
 	ANTALL_FEILET = 0
 	ANTALL_MED_LISENS = 0
-	ANTALL_TOO_MANY = 0
+	ANTALL_TOO_MANY_CALLS = 0
 	users_with_license = []
+
+	SLEEP_BETWEEN = 0
+	SLEEP_TOO_MANY = 20
 
 	def handle(self, **options):
 
@@ -47,6 +50,7 @@ class Command(BaseCommand):
 		SCRIPT_NAVN = os.path.basename(__file__)
 		int_config.script_navn = SCRIPT_NAVN
 		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.helsestatus = "Forbereder"
 		int_config.save()
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -85,9 +89,8 @@ class Command(BaseCommand):
 				runtime_start = time.time()
 				response = client.post('/$batch', json=batch_payload)
 				runtime_end = time.time()
-				#wait_len = 15
-				#print(f"venter {wait_len} sekunder..")
-				#time.sleep(wait_len) # vent minst 1 sekund til neste spørring
+				print(f"venter {Command.SLEEP_BETWEEN} sekunder..")
+				time.sleep(Command.SLEEP_BETWEEN)
 				Command.ANTALL_GRAPH_KALL += 1
 				response_data = response.json()
 				#print(f"{json.dumps(response_data, indent=2)}")
@@ -99,9 +102,9 @@ class Command(BaseCommand):
 					#print(f"prosesserer {user}")
 					status = result['status']
 					if status == 429:
-						wait_sec = int(result['headers']['Retry-After']) + 20
+						wait_sec = int(result['headers']['Retry-After']) + Command.SLEEP_TOO_MANY
 						print(f"Too many requests, venter {wait_sec} sekunder...")
-						Command.ANTALL_TOO_MANY += 1
+						Command.ANTALL_TOO_MANY_CALLS += 1
 						time.sleep(wait_sec)
 						Command.users_with_license.extend(users)
 						print(f"La gjeldende batch med brukere tilbake i køen...")
@@ -241,7 +244,7 @@ class Command(BaseCommand):
 
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
-			logg_entry_message = f"Utførte {Command.ANTALL_GRAPH_KALL} kall mot MS Graph. Fartsbegrenset {Command.ANTALL_TOO_MANY} ganger. Lagret {Command.ANTALL_LAGRET} profiler. {Command.ANTALL_FEILET} feilet."
+			logg_entry_message = f"Utførte {Command.ANTALL_GRAPH_KALL} kall mot MS Graph med {Command.SLEEP_BETWEEN} sek mellom hvert kall og {Command.SLEEP_TOO_MANY} sek når fartsbegrenset. Ble fartsbegrenset {Command.ANTALL_TOO_MANY_CALLS} ganger. Lagret {Command.ANTALL_LAGRET} profiler. {Command.ANTALL_FEILET} feilet."
 
 			print(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message)
@@ -250,6 +253,7 @@ class Command(BaseCommand):
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_entry_message
 			int_config.runtime = int(logg_total_runtime)
+			int_config.helsestatus = "Vellykket"
 			int_config.save()
 
 
@@ -257,6 +261,9 @@ class Command(BaseCommand):
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
+			import traceback
+			int_config.helsestatus = f"Feilet\n{traceback.format_exc()}"
+			int_config.save()
 			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
 
