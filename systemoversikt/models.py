@@ -1221,6 +1221,11 @@ class Profile(models.Model):
 			blank=True,
 			null=True,
 			)
+	job_title =  models.TextField(
+			verbose_name="Jobbtittel",
+			blank=True,
+			null=True,
+			)
 	# med vilje er det ikke HistoricalRecords() på denne
 
 	def __str__(self):
