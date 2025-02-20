@@ -41,6 +41,7 @@ class Command(BaseCommand):
 		SCRIPT_NAVN = os.path.basename(__file__)
 		int_config.script_navn = SCRIPT_NAVN
 		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.helsestatus = "Forbereder"
 		int_config.save()
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -122,7 +123,7 @@ class Command(BaseCommand):
 				object_ref.tidslinjedata = json.dumps(tidslinjedata)
 				object_ref.save()
 
-			#logg dersom vellykket
+
 			logg_message = f"Innlasting av statistikk utført."
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
@@ -133,6 +134,7 @@ class Command(BaseCommand):
 			runtime_t1 = time.time()
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
 			int_config.runtime = logg_total_runtime
+			int_config.helsestatus = "Vellykket"
 			int_config.save()
 
 
@@ -140,10 +142,8 @@ class Command(BaseCommand):
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-
 			import traceback
-			traceback_details = traceback.format_exc()
-			print(traceback_details)
-
+			int_config.helsestatus = f"Feilet\n{traceback.format_exc()}"
+			int_config.save()
 			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 

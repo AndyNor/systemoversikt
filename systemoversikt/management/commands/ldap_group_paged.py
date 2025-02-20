@@ -41,6 +41,7 @@ class Command(BaseCommand):
 		SCRIPT_NAVN = os.path.basename(__file__)
 		int_config.script_navn = SCRIPT_NAVN
 		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.helsestatus = "Forbereder"
 		int_config.save()
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -218,54 +219,34 @@ class Command(BaseCommand):
 						sys.stdout.flush()
 
 
-
-			def report(result):
-				log_entry_message = f"Det tok{result['total_runtime']} sekunder. {result['objects_returned']} treff. {result['report_data']['created']} nye, {result['report_data']['modified']} endrede."
-				log_entry = ApplicationLog.objects.create(
-						event_type=LOG_EVENT_TYPE,
-						message=log_entry_message,
-				)
-				print(log_entry_message)
-
-				# lagre sist oppdatert tidspunkt
-				int_config.dato_sist_oppdatert = timezone.now()
-				int_config.sist_status = log_entry_message
-
-				runtime_t1 = time.time()
-				logg_total_runtime = int(runtime_t1 - runtime_t0)
-				int_config.runtime = logg_total_runtime
-
-				int_config.elementer = int(result['objects_returned'])
-
-				int_config.save()
-
-
 			# her kjører selve synkroniseringen
 			result = ldap_paged_search(BASEDN, SEARCHFILTER, LDAP_SCOPE, ATTRLIST, PAGESIZE, result_handler, report_data)
-			report(result)
 			remove_unseen_groups()
 
-			"""
-			@transaction.atomic  # uklart om det er behov for denne lenger. trolig noe som gikk galt første kjøringer av scripetet..
-			def cleanup():
-				from django.db.models import Count
-				duplicates = ADgroup.objects.values("distinguishedname").annotate(count=Count("distinguishedname")).filter(count__gt=1)
-				for group in duplicates:
-					group = ADgroup.objects.filter(distinguishedname=group["distinguishedname"])
-					print("rydder opp %s" % (group["distinguishedname"]))
-					group.delete()
+			#logge og fullføre
+			log_entry_message = f"Det tok{result['total_runtime']} sekunder. {result['objects_returned']} treff. {result['report_data']['created']} nye, {result['report_data']['modified']} endrede."
+			log_entry = ApplicationLog.objects.create(
+					event_type=LOG_EVENT_TYPE,
+					message=log_entry_message,
+			)
+			print(log_entry_message)
 
-			cleanup()
-			"""
+			# lagre sist oppdatert tidspunkt
+			int_config.dato_sist_oppdatert = timezone.now()
+			int_config.sist_status = log_entry_message
+			runtime_t1 = time.time()
+			logg_total_runtime = int(runtime_t1 - runtime_t0)
+			int_config.runtime = logg_total_runtime
+			int_config.elementer = int(result['objects_returned'])
+			int_config.helsestatus = "Vellykket"
+			int_config.save()
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			import traceback
+			int_config.helsestatus = f"Feilet\n{traceback.format_exc()}"
+			int_config.save()
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error

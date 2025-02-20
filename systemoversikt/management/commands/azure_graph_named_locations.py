@@ -132,16 +132,12 @@ class Command(BaseCommand):
 
 			#logg dersom vellykket
 			logg_message = f"Innlasting av {antall_lagret} named lokasjoner utført"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = timezone.now()
 			int_config.sist_status = logg_message
-
 			runtime_t1 = time.time()
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
 			int_config.runtime = logg_total_runtime

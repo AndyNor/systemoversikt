@@ -43,6 +43,7 @@ class Command(BaseCommand):
 		SCRIPT_NAVN = os.path.basename(__file__)
 		int_config.script_navn = SCRIPT_NAVN
 		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.helsestatus = "Forbereder"
 		int_config.save()
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -138,11 +139,16 @@ class Command(BaseCommand):
 			int_config.elementer = int(Command.ANTALL_DISKER)
 			runtime_t1 = time.time()
 			int_config.runtime = int(runtime_t1 - runtime_t0)
+			int_config.helsestatus = "Vellykket"
 			int_config.save()
+
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
+			import traceback
+			int_config.helsestatus = f"Feilet\n{traceback.format_exc()}"
+			int_config.save()
 			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error

@@ -8,7 +8,6 @@ from django.db import transaction
 from django.db.models import Q
 from systemoversikt.views import get_ipaddr_instance
 from systemoversikt.models import *
-from systemoversikt.views import push_pushover
 import json, os, time
 import pandas as pd
 import numpy as np
@@ -47,6 +46,7 @@ class Command(BaseCommand):
 		SCRIPT_NAVN = os.path.basename(__file__)
 		int_config.script_navn = SCRIPT_NAVN
 		int_config.sp_filnavn = json.dumps(FILNAVN)
+		int_config.helsestatus = "Forbereder"
 		int_config.save()
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -220,17 +220,16 @@ class Command(BaseCommand):
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
 			int_config.runtime = logg_total_runtime
 			int_config.elementer = int(Command.ANTALL_IMPORTERT)
+			int_config.helsestatus = "Vellykket"
 			int_config.save()
 
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
+			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+			import traceback
+			int_config.helsestatus = f"Feilet\n{traceback.format_exc()}"
+			int_config.save()
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
