@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-#Graph-klienten heter "UKE - Kartoteket - Lesetilgang MS Graph"
-
 from django.core.management.base import BaseCommand
 import os, time
 import simplejson as json

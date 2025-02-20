@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-#Vi går her igjennom alle avtaler og sjekker om- og når de går ut, slik at vi kan varsle riktige personer.
-
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.core.mail import EmailMessage

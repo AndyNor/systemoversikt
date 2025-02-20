@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# Hensikten med denne koden å laste inn offentlige begreper / LOS slik at systemer kan tagges med disse begrepene
-
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from rdflib import Graph, SKOS

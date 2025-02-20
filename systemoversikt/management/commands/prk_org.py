@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-#Hensikten med denne koden er å laste inn organisatoriske enheter og informasjon om leder.
-
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from systemoversikt.models import *

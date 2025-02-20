@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -180,7 +179,8 @@ class Command(BaseCommand):
 						Command.antall_profillagringer += 1
 						Command.antall_drift_treff += 1
 
-				Profile.objects.bulk_update(profiles_to_update, ['usertype', 'org_unit', 'ansattnr', 'from_prk'])
+				# HUSK Å OPPDATERE DENNE!
+				Profile.objects.bulk_update(profiles_to_update, ['usertype', 'org_unit', 'ansattnr', 'from_prk', 'min_leder'])
 
 				return antall_behandlet
 

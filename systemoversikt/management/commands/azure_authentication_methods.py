@@ -8,7 +8,6 @@ from datetime import datetime
 from django.db.models import Q
 from systemoversikt.views import push_pushover
 
-
 class Command(BaseCommand):
 
 	ANTALL_GRAPH_KALL = 0
@@ -223,7 +222,7 @@ class Command(BaseCommand):
 						Command.ANTALL_FEILET += 1
 						pass
 
-				Profile.objects.bulk_update(profiles_to_update, ["auth_methods",])
+				Profile.objects.bulk_update(profiles_to_update, ["auth_methods", "auth_methods_last_update"])
 				return runtime_end - runtime_start
 
 

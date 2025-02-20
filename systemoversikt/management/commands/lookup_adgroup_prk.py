@@ -16,7 +16,6 @@ class Command(BaseCommand):
 
 		INTEGRASJON_KODEORD = "lokal_match_grp_prk"
 		LOG_EVENT_TYPE = 'Oppslag ADgrp-PRKgrp'
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 		KILDE = "Lokal"
 		PROTOKOLL = "N/A"
 		BESKRIVELSE = "Matcher AD-gruppe med PRK-valg"
@@ -47,6 +46,7 @@ class Command(BaseCommand):
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 		try:
+			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 			runtime_t0 = time.time()
 			count_hits = 0
 			count_misses = 0

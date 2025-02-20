@@ -165,6 +165,7 @@ class Command(BaseCommand):
 			def result_handler(rdata, existing_user_objects):
 				users_to_update = []
 				ansattid_to_create = []
+				profiles_to_update = []
 
 				for dn, attrs in rdata:
 					if "cn" in attrs:
@@ -409,15 +410,18 @@ class Command(BaseCommand):
 
 					user.profile.ad_sist_oppdatert = timezone.now()
 					users_to_update.append(user)
+					profiles_to_update.append(user.profile)
 
 				print_with_timestamp(f"Skriver oppdateringer til {len(users_to_update)} brukerobjekter")
 
 				@transaction.atomic
-				def save_to_db(ansattid_to_create, users_to_update):
+				# HUSK Å OPPDATERE DISSE!
+				def save_to_db(ansattid_to_create, users_to_update, profiles_to_update):
 					AnsattID.objects.bulk_create(ansattid_to_create)
 					User.objects.bulk_update(users_to_update, ["first_name", "last_name", "email", "is_active"])
+					Profile.objects.bulk_update(profiles_to_update, ["service_principal_name", "userAccountControl", "accountdisable", "lockout", "passwd_notreqd", "trusted_for_delegation", "trusted_to_auth_for_delegation", "not_delegated", "dont_req_preauth", "dont_expire_password", "password_expired", "ekstern_ressurs", "account_type", "userPasswordExpiry", "virksomhet", "job_title", "object_sid", "whenCreated", "pwdLastSet", "description", "lastLogonTimestamp", "distinguishedname", "ou", "displayName", "ansattnr_ref", "ad_sist_oppdatert",])
 
-				save_to_db(ansattid_to_create, users_to_update)
+				save_to_db(ansattid_to_create, users_to_update, profiles_to_update)
 
 
 			@transaction.atomic

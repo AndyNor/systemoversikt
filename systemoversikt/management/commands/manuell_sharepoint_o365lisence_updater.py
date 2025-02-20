@@ -18,146 +18,103 @@ from django.contrib.auth.models import User
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		INTEGRASJON_KODEORD = "sp_365lisens_populator"
-		LOG_EVENT_TYPE = "Lisensforslagtildeler"
-		KILDE = "Service Now"
-		PROTOKOLL = "SMTP og SharePoint"
-		BESKRIVELSE = "Bruk av sist innlogget bruker for å fordele lisenser"
-		FILNAVN = "OK_computers.xlsx"
-		URL = ""
-		FREKVENS = "Hver natt (midlertidig)"
 
-		try:
-			int_config = IntegrasjonKonfigurasjon.objects.get(kodeord=INTEGRASJON_KODEORD)
-		except:
-			int_config = IntegrasjonKonfigurasjon.objects.create(
-					kodeord=INTEGRASJON_KODEORD,
-					kilde=KILDE,
-					protokoll=PROTOKOLL,
-					informasjon=BESKRIVELSE,
-					sp_filnavn=FILNAVN,
-					url=URL,
-					frekvensangivelse=FREKVENS,
-					log_event_type=LOG_EVENT_TYPE,
-				)
 
-		SCRIPT_NAVN = os.path.basename(__file__)
-		int_config.script_navn = SCRIPT_NAVN
-		int_config.sp_filnavn = json.dumps(FILNAVN)
-		int_config.save()
+		from systemoversikt.views import sharepoint_get_file
+		source_filepath = f"{FILNAVN}"
+		result = sharepoint_get_file(source_filepath)
+		client_owner_dest_file = result["destination_file"]
+		modified_date = result["modified_date"]
+		print(f"Filen er datert {modified_date}")
 
-		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
+		@transaction.atomic  # for speeding up database performance
+		def run():
 
-		try:
+			# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
+			import warnings
+			warnings.simplefilter("ignore")
 
-			from systemoversikt.views import sharepoint_get_file
-			source_filepath = f"{FILNAVN}"
-			result = sharepoint_get_file(source_filepath)
-			client_owner_dest_file = result["destination_file"]
-			modified_date = result["modified_date"]
-			print(f"Filen er datert {modified_date}")
+			dfRaw = pd.read_excel(client_owner_dest_file)
+			dfRaw = dfRaw.replace(np.nan, '', regex=True)
+			client_ower_data = dfRaw.to_dict('records')
 
-			@transaction.atomic  # for speeding up database performance
-			def run():
+			forloop_counter = 0
+			unike_personer_i_client_ower_data = set()
+			for row in client_ower_data:
+				if row["Type"] == "TYKKLIENT":
+					username = row["Owner"].replace("OSLOFELLES\\", "").lower()
+					unike_personer_i_client_ower_data.add(username)
+			unike_personer_i_client_ower_data = list(unike_personer_i_client_ower_data)
+			print(f"Det er {len(unike_personer_i_client_ower_data)} unike personer logget inn på maskiner.")
 
-				# https://stackoverflow.com/questions/66214951/how-to-deal-with-warning-workbook-contains-no-default-style-apply-openpyxls/66749978#66749978
-				import warnings
-				warnings.simplefilter("ignore")
+			#organisatorik_education = []
 
-				dfRaw = pd.read_excel(client_owner_dest_file)
-				dfRaw = dfRaw.replace(np.nan, '', regex=True)
-				client_ower_data = dfRaw.to_dict('records')
+			print("Opprydding")
+			for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Ekstern']):
+				if profile.o365lisence != 0:
+					profile.o365lisence = 0
+					profile.save()
 
-				forloop_counter = 0
-				unike_personer_i_client_ower_data = set()
-				for row in client_ower_data:
-					if row["Type"] == "TYKKLIENT":
-						username = row["Owner"].replace("OSLOFELLES\\", "").lower()
-						unike_personer_i_client_ower_data.add(username)
-				unike_personer_i_client_ower_data = list(unike_personer_i_client_ower_data)
-				print(f"Det er {len(unike_personer_i_client_ower_data)} unike personer logget inn på maskiner.")
+			ant_aktive_profiler = Profile.objects.filter(accountdisable=False).filter(account_type__in=['Intern']).count()
+			print("Starter gjennomgang")
+			for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Intern']):
+				forloop_counter += 1
+				if forloop_counter % 5000 == 0:
+					print(f"{forloop_counter} av {ant_aktive_profiler}")
 
-				#organisatorik_education = []
-
-				print("Opprydding")
-				for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Ekstern']):
-					if profile.o365lisence != 0:
+				# Noen virksomheter skal ikke ha lisens fra UKE
+				try:
+					if profile.virksomhet.virksomhetsforkortelse.upper() in ["UDE", "BYS", "VAV", "INE", "PBE", "BBY", "KRV", "REG"]:
 						profile.o365lisence = 0
 						profile.save()
-
-				ant_aktive_profiler = Profile.objects.filter(accountdisable=False).filter(account_type__in=['Intern']).count()
-				print("Starter gjennomgang")
-				for profile in Profile.objects.filter(accountdisable=False).filter(account_type__in=['Intern']):
-					forloop_counter += 1
-					if forloop_counter % 5000 == 0:
-						print(f"{forloop_counter} av {ant_aktive_profiler}")
-
-					# Noen virksomheter skal ikke ha lisens fra UKE
-					try:
-						if profile.virksomhet.virksomhetsforkortelse.upper() in ["UDE", "BYS", "VAV", "INE", "PBE", "BBY", "KRV", "REG"]:
-							profile.o365lisence = 0
-							profile.save()
-							#print(f"{forloop_counter} {profile} får ikke lisens fordi medlem i UDE, BYS eller VAV")
-							continue
-					except:
-						pass
-
-
-					# er i en seksjon som er knyttet til "barnehage", putt i gruppe 4
-					try:
-						if "barnehage" in profile.org_unit.ou.lower():
-							profile.o365lisence = 4
-							profile.save()
-							#print(f"{forloop_counter} {profile} i gruppe 4: education")
-							continue
-					except:
-						pass
-
-					# mangler e-post, putt i gruppe 3
-					if profile.user.email == "":
-						profile.o365lisence = 3
-						profile.save()
-						#print(f"{forloop_counter} {profile} i gruppe 3: mangler epost")
+						#print(f"{forloop_counter} {profile} får ikke lisens fordi medlem i UDE, BYS eller VAV")
 						continue
+				except:
+					pass
 
-					# har tykklient, har e-post, putt i gruppe 1
-					if profile.user.username in unike_personer_i_client_ower_data:
-						profile.o365lisence = 1
+
+				# er i en seksjon som er knyttet til "barnehage", putt i gruppe 4
+				try:
+					if "barnehage" in profile.org_unit.ou.lower():
+						profile.o365lisence = 4
 						profile.save()
-						#print(f"{forloop_counter} {profile} i gruppe 1: Tykk klient")
+						#print(f"{forloop_counter} {profile} i gruppe 4: education")
 						continue
+				except:
+					pass
 
-					# Alle andre aktive personer, putt i gruppe 2
-					profile.o365lisence = 2
+				# mangler e-post, putt i gruppe 3
+				if profile.user.email == "":
+					profile.o365lisence = 3
 					profile.save()
-					#print(f"{forloop_counter} {profile} i gruppe 2: Flerbruker")
+					#print(f"{forloop_counter} {profile} i gruppe 3: mangler epost")
 					continue
 
-				ant_1 = len(User.objects.filter(profile__o365lisence=1))
-				ant_2 = len(User.objects.filter(profile__o365lisence=2))
-				ant_3 = len(User.objects.filter(profile__o365lisence=3))
-				ant_4 = len(User.objects.filter(profile__o365lisence=4))
+				# har tykklient, har e-post, putt i gruppe 1
+				if profile.user.username in unike_personer_i_client_ower_data:
+					profile.o365lisence = 1
+					profile.save()
+					#print(f"{forloop_counter} {profile} i gruppe 1: Tykk klient")
+					continue
 
-				logg_entry_message = f"Brukere i gruppe 1 - Tykk klient: {ant_1}\nBrukere i gruppe 2 - Flerbruker: {ant_2}\nBrukere i gruppe 3 - Mangler epost: {ant_3}\nBrukere i gruppe 4 - Educaton: {ant_4}"
-				print(logg_entry_message)
-				return logg_entry_message
+				# Alle andre aktive personer, putt i gruppe 2
+				profile.o365lisence = 2
+				profile.save()
+				#print(f"{forloop_counter} {profile} i gruppe 2: Flerbruker")
+				continue
+
+			ant_1 = len(User.objects.filter(profile__o365lisence=1))
+			ant_2 = len(User.objects.filter(profile__o365lisence=2))
+			ant_3 = len(User.objects.filter(profile__o365lisence=3))
+			ant_4 = len(User.objects.filter(profile__o365lisence=4))
+
+			logg_entry_message = f"Brukere i gruppe 1 - Tykk klient: {ant_1}\nBrukere i gruppe 2 - Flerbruker: {ant_2}\nBrukere i gruppe 3 - Mangler epost: {ant_3}\nBrukere i gruppe 4 - Educaton: {ant_4}"
+			print(logg_entry_message)
+			return logg_entry_message
 
 
-			logg_entry_message = run()
-			# lagre sist oppdatert tidspunkt
-			int_config.dato_sist_oppdatert = modified_date # eller timezone.now()
-			int_config.sist_status = logg_entry_message
-			int_config.save()
-
-
-		except Exception as e:
-			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
-			logg_entry = ApplicationLog.objects.create(
-					event_type=LOG_EVENT_TYPE,
-					message=logg_message,
-					)
-			print(logg_message)
-
-			# Push error
-			push_pushover(f"{SCRIPT_NAVN} feilet")
+		logg_entry_message = run()
+		# lagre sist oppdatert tidspunkt
+		int_config.dato_sist_oppdatert = modified_date # eller timezone.now()
+		int_config.sist_status = logg_entry_message
+		int_config.save()
