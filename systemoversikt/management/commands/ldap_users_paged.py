@@ -28,8 +28,9 @@ class Command(BaseCommand):
 	BASEDN ='DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 	SEARCHFILTER = '(&(objectCategory=person)(objectClass=user))'
 	LDAP_SCOPE = ldap.SCOPE_SUBTREE
-	ATTRLIST = ['objectSid', 'cn', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet', 'servicePrincipalName'] # if empty we get all attr we have access to
+	ATTRLIST = ['objectSid', 'cn', 'title', 'givenName', 'sn', 'userAccountControl', 'mail', 'msDS-UserPasswordExpiryTimeComputed', 'description', 'displayName', 'sAMAccountName', 'lastLogonTimestamp', 'whenCreated', 'pwdLastSet', 'servicePrincipalName'] # if empty we get all attr we have access to
 	PAGESIZE = 2000
+
 
 	def handle(self, **options):
 		INTEGRASJON_KODEORD = "ad_users"
