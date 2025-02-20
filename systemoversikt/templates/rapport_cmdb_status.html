@@ -32,7 +32,13 @@
 			<td>{{ i.frekvensangivelse }}</td>
 			<td style="background-color: {{ i.color }};">{{i.dato_sist_oppdatert|date:"Ymd Hi"}}<br>{{ i.dato_sist_oppdatert|timesince }}</td>
 			<td>{{ i.runtime }}</td>
-			<td>{{ i.sist_status }}</td>
+			<td>
+				{% if i.helsestatus == "Vellykket" %}
+					{{ i.sist_status }}
+				{% else%}
+					{{ i.helsestatus }}
+				{% endif %}
+			</td>
 		</tr>
 	{% endfor %}
 	</tbody>
