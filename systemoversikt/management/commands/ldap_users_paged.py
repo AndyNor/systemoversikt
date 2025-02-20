@@ -310,6 +310,8 @@ class Command(BaseCommand):
 						last_name = hashlib.sha256(last_name.encode('utf-8')).hexdigest()[0:24]
 					user.last_name = last_name
 
+					print(attrs["title"])
+					print(attrs["title"][0].decode())
 					if "title" in attrs:
 						job_title = attrs["title"][0].decode()
 					else:
