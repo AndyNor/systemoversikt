@@ -20,6 +20,7 @@ class Command(BaseCommand):
 
 	SLEEP_BETWEEN = 0
 	SLEEP_TOO_MANY = 20
+	VIRKSOMHETER = [112,]
 
 	def handle(self, **options):
 
@@ -213,6 +214,7 @@ class Command(BaseCommand):
 						#for m in users_methods:
 						#	print(m)
 						user.profile.auth_methods = json.dumps(users_methods, indent=2)
+						user.profile.auth_methods_last_update = datetime.now()
 						profiles_to_update.append(user.profile)
 						Command.ANTALL_LAGRET += 1
 					else:
@@ -226,7 +228,7 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(profile__virksomhet__id=145).filter(~Q(profile__ny365lisens=None)))
+			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(profile__virksomhet__id__in=Command.VIRKSOMHETER).filter(~Q(profile__ny365lisens=None)))
 			Command.ANTALL_MED_LISENS = len(Command.users_with_license)
 			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
 

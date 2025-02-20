@@ -1216,10 +1216,15 @@ class Profile(models.Model):
 			null=True,
 			db_index=True,
 			)
-	auth_methods =  models.TextField(
+	auth_methods = models.TextField(
 			verbose_name="Autentiseringsmetoder (JSON)",
 			blank=True,
 			null=True,
+			)
+	auth_methods_last_update = models.DateTimeField(
+			verbose_name="Autentiseringsmetode sist synkronisert",
+			null=True,
+			blank=True,
 			)
 	job_title =  models.TextField(
 			verbose_name="Jobbtittel",

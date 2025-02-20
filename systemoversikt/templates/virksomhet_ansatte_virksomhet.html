@@ -21,6 +21,7 @@
 			<th>Type bruker</th>
 			<th>Brukernavn</th>
 			<th>Navn</th>
+			<th>Stilling</th>
 			<th>O365-lisens</th>
 			<th>Autentiseringsmetoder</th>
 			<th>E-post</th>
@@ -34,6 +35,7 @@
 			<td>{{ b.profile.account_type }}</td>
 			<td>{{ b.username }}</td>
 			<td>{{ b.profile.displayName }}</td>
+			<td>{{ b.profile.job_title }}</td>
 			<td>{{ b.profile.ny365lisens|default:"Ingen" }}</td>
 			<td>{% for method in b.profile.entra_id_auth %}<li>{{method}}</li>{% endfor %}</td>
 			<td>{{ b.email }}</td>
