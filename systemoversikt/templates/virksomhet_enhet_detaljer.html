@@ -84,10 +84,14 @@
 			<th>Navn</th>
 			<th>Stilling</th>
 			<th>O365-lisens</th>
-			<th>Autentiseringsmetoder</th>
+			<th>2-faktor sist oppdatert</th>
+			<th>SMS</th>
+			<th>FIDO2</th>
+			<th>Authenticator</th>
 			<th>E-post</th>
 			{% comment %}<th>Avdeling</th>{% endcomment %}
 			<th>Seksjon</th>
+			<th>Min leder</th>
 		</tr>
 		</thead>
 		<tbody>
@@ -98,10 +102,17 @@
 			<td>{{ b.profile.displayName }}</td>
 			<td>{{ b.profile.job_title|default:"-" }}</td>
 			<td>{{ b.profile.ny365lisens|default:"Ingen" }}</td>
-			<td>{% for method in b.profile.entra_id_auth %}<li>{{method}}</li>{% endfor %}</td>
+			<td>
+				{{ b.profile.auth_methods_last_update|date:"Y-m-d" }}<br>
+				{% for method in b.profile.entra_id_auth %}{{method}}{% if not forloop.last%}, {% endif%}{% endfor %}
+			</td>
+			<td>{{ b.profile.auth_sms|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
+			<td>{{ b.profile.auth_fido2|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
+			<td>{{ b.profile.auth_authenticator|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
 			<td>{{ b.email }}</td>
 			{% comment %}<td>{{ b.profile.avdeling|default:"-" }}</td>{% endcomment %}
 			<td>{{ b.profile.org_unit|default:"-" }}</td>
+			<td>{{ b.profile.min_leder|default:"-" }}</td>
 		</tr>
 		{% endfor %}
 	</tbody>

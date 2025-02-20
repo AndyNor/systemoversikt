@@ -116,7 +116,7 @@ class Command(BaseCommand):
 
 			print_with_timestamp("Cacher HR-organisasjonen...")
 			cache_hrorg = dict(HRorg.objects.values_list("ouid", "pk"))
-			print_with_timestamp("Cacher alle brkere...")
+			print_with_timestamp("Cacher alle brukere...")
 			cache_users = dict(User.objects.values_list("username", "pk"))
 
 
@@ -149,6 +149,11 @@ class Command(BaseCommand):
 					if not org_unit:
 						Command.antall_feilet_orgoppslag += 1
 
+					if org_unit:
+						min_leder = org_unit.leder
+					else:
+						min_leder = None
+
 					username_str = f"{line['O']}{line['EMPLOYEENUMBER']}"
 					u = lookup_users(username_str)
 					if u != None:
@@ -168,6 +173,7 @@ class Command(BaseCommand):
 						u.profile.org_unit = org_unit
 						u.profile.ansattnr = ansattnr
 						u.profile.from_prk = True
+						u.profile.min_leder = min_leder
 						profiles_to_update.append(u.profile)
 						Command.antall_profillagringer += 1
 						Command.antall_drift_treff += 1

@@ -1197,40 +1197,48 @@ class Profile(models.Model):
 	#		help_text=u'Settes automatisk',
 	#		)
 	service_principal_name = models.CharField(
-			verbose_name="Service Principal Name (AD)",
-			max_length=1024,
-			blank=True,
-			null=True,
-			)
+		verbose_name="Service Principal Name (AD)",
+		max_length=1024,
+		blank=True,
+		null=True,
+		)
 	object_sid = models.CharField(
-			verbose_name="Object SID",
-			max_length=128,
-			blank=True,
-			null=True,
-			db_index=True,
-			)
+		verbose_name="Object SID",
+		max_length=128,
+		blank=True,
+		null=True,
+		db_index=True,
+		)
 	ny365lisens = models.CharField(
-			verbose_name="Office365-lisens",
-			max_length=256,
-			blank=True,
-			null=True,
-			db_index=True,
-			)
+		verbose_name="Office365-lisens",
+		max_length=256,
+		blank=True,
+		null=True,
+		db_index=True,
+		)
 	auth_methods = models.TextField(
-			verbose_name="Autentiseringsmetoder (JSON)",
-			blank=True,
-			null=True,
-			)
+		verbose_name="Autentiseringsmetoder (JSON)",
+		blank=True,
+		null=True,
+		)
 	auth_methods_last_update = models.DateTimeField(
-			verbose_name="Autentiseringsmetode sist synkronisert",
-			null=True,
-			blank=True,
-			)
-	job_title =  models.TextField(
-			verbose_name="Jobbtittel",
-			blank=True,
-			null=True,
-			)
+		verbose_name="Autentiseringsmetode sist synkronisert",
+		null=True,
+		blank=True,
+		)
+	job_title = models.TextField(
+		verbose_name="Jobbtittel",
+		blank=True,
+		null=True,
+		)
+	min_leder = models.ForeignKey(
+		to=User,
+		on_delete=models.SET_NULL,
+		related_name='leder_for',
+		verbose_name="Leder for",
+		blank=True, null=True,
+		help_text=u"Settes basert på automatikk",
+		)
 	# med vilje er det ikke HistoricalRecords() på denne
 
 	def __str__(self):
@@ -1270,6 +1278,18 @@ class Profile(models.Model):
 			metoder.append("OAuth hardware")
 		return metoder
 
+	def auth_sms(self):
+		if self.auth_methods == None:
+			return None
+		return True if "phoneAuthenticationMethod" in self.auth_methods else False
+	def auth_fido2(self):
+		if self.auth_methods == None:
+			return None
+		return True if "fido2AuthenticationMethod" in self.auth_methods else False
+	def auth_authenticator(self):
+		if self.auth_methods == None:
+			return None
+		return True if "microsoftAuthenticatorAuthenticationMethod" in self.auth_methods else False
 
 
 	def levtilgangprofil(self):

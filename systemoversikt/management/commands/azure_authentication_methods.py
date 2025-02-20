@@ -20,7 +20,7 @@ class Command(BaseCommand):
 
 	SLEEP_BETWEEN = 0
 	SLEEP_TOO_MANY = 20
-	VIRKSOMHETER = [112,]
+	VIRKSOMHETER = [112, 163]
 
 	def handle(self, **options):
 
