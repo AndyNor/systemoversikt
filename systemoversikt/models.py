@@ -324,8 +324,9 @@ class IntegrasjonKonfigurasjon(models.Model):
 			)
 	helsestatus = models.TextField(
 		verbose_name="Helsestatus",
+		default="Vellykket",
 		blank=True,
-		null=True,
+		null=False,
 	)
 
 	def __str__(self):
