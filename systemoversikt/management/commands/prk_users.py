@@ -153,6 +153,7 @@ class Command(BaseCommand):
 						min_leder = org_unit.leder
 					else:
 						min_leder = None
+					#print(min_leder)
 
 					username_str = f"{line['O']}{line['EMPLOYEENUMBER']}"
 					u = lookup_users(username_str)
