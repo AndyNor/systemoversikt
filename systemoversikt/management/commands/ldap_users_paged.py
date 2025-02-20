@@ -316,7 +316,7 @@ class Command(BaseCommand):
 					else:
 						job_title = ""
 					user.profile.job_title = job_title
-					print(job_title)
+					#print(job_title)
 
 					try:
 						objectsid = attrs["objectSid"]
