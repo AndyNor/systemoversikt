@@ -161,6 +161,7 @@ class Command(BaseCommand):
 						u.profile.org_unit = org_unit
 						u.profile.ansattnr = ansattnr
 						u.profile.from_prk = True
+						u.profile.min_leder = min_leder
 						profiles_to_update.append(u.profile)
 						Command.antall_profillagringer += 1
 					else:
