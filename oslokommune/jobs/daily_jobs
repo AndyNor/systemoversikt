@@ -65,6 +65,7 @@ python /var/kartoteket/source/systemoversikt/manage.py graph_models systemoversi
 # run certipy-ad
 cd /var/kartoteket/source/systemoversikt/systemoversikt/pki # files need to be here
 python /var/kartoteket/source/systemoversikt/manage.py certipy-ad
+cd /var/kartoteket/source/systemoversikt/
 
 # run batch azure
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_enterprise_applications
