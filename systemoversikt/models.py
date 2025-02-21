@@ -1132,7 +1132,7 @@ class Profile(models.Model):
 	org_unit = models.ForeignKey(
 			to='HRorg',
 			related_name='profile_org_unit',
-			on_delete=models.PROTECT,
+			on_delete=models.SET_NULL,
 			verbose_name='Organisatorisk tilhørighet (PRK)',
 			null=True,
 			blank=True,
