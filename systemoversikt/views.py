@@ -5485,7 +5485,14 @@ def tbrukere(request):
 			Q(username__icontains="-copy") |
 			Q(username__iendswith="-t") |
 			Q(username__iendswith="_t")
-		).exclude(username="t-ok-wlan").order_by("username")
+		).exclude(
+			Q(username="t-ok-wlan") |
+			Q(username__istartswith="s-bfe-birk") |
+			Q(username__istartswith="s-drift-euc") |
+			Q(username__istartswith="svc-bfe") |
+			Q(username="http-sektor-sikker-t") |
+			Q(username__istartswith="bfe-birk")
+		).order_by("username")
 
 	return render(request, 'ad_tbrukere.html', {
 		"request": request,
