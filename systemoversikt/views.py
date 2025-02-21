@@ -5484,7 +5484,7 @@ def tbrukere(request):
 			Q(username__icontains="-t20") |
 			Q(username__icontains="-copy") |
 			Q(username__iendswith="-t") |
-			Q(username__iendswith="_t") |
+			Q(username__iendswith="_t")
 		).exclude(username="t-ok-wlan").order_by("username")
 
 	return render(request, 'ad_tbrukere.html', {
@@ -5492,7 +5492,6 @@ def tbrukere(request):
 		"required_permissions": required_permissions,
 		"brukere": brukere,
 	})
-
 
 
 def drifttilgang(request):
