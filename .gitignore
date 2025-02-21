@@ -5,8 +5,6 @@ secrets_dev.py
 secrets_test.py
 /static/*
 *.xlsx
-*.csv
-*.tsv
 *.exe
 */import/*
 
@@ -122,16 +120,13 @@ venv.bak/
 # Added by Github desktop
 
 pyvenv.cfg
-systemoversikt/management/commands/lokalt/scan_result_rdp.json
-systemoversikt/management/commands/lokalt/scan_result_smb.json
-systemoversikt/management/commands/lokalt/2023-06 scan_result RDP servere.json
-systemoversikt/management/commands/lokalt/RDP_scan_result_all_servers_client_network.json
-systemoversikt/management/commands/lokalt/scan_result.json
-*Certipy.json
-kritiske_kapabilitet.json
-kritiske_funksjoner.json
-systemoversikt/management/commands/manuell_sertifikat_sjekker_config.py
 *.ini
 db.sqlite3-journal
-systemoversikt/management/commands/manual_in_network.py
 /dbbackup
+systemoversikt/management/commands/data_service-names-port-numbers.csv
+/systemoversikt/management/commands/lokalt
+systemoversikt/management/commands/manual_in_network.py
+systemoversikt/management/commands/manuell_sertifikat_sjekker_config.py
+/systemoversikt/pki
+windev/kritiske_funksjoner.json
+windev/kritiske_kapabilitet.json
