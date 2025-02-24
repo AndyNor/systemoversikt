@@ -5483,6 +5483,7 @@ def tbrukere(request):
 			Q(username__icontains="aks20") |
 			Q(username__icontains="-t20") |
 			Q(username__icontains="copy") |
+			Q(username__icontains="kopi") |
 			Q(username__iendswith="-t") |
 			Q(username__iendswith="_t")
 		).exclude(

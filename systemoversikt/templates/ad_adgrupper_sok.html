@@ -31,6 +31,7 @@
 				<th>Display name</th>
 				<th>Gruppenavn</th>
 				<th>PRK-valg?</th>
+				<th>Beskrivelse</th>
 				<th>Distribusjonsadresse</th>
 				<th>Antall direkte medlemmer</th>
 			</tr>
@@ -45,6 +46,7 @@
 					{{ prk_valg.skjemanavn.skjematype }} {{ prk_valg.skjemanavn.skjemanavn }} - {{ prk_valg.valgnavn }}<br>
 				{% endfor %}
 			</td>
+			<td>{{ g.description|default:"-" }}</td>
 			<td>{{g.mail|default:"-"}}</td>
 			<td>{{g.member_count}}</td>
 		</tr>
