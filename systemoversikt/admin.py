@@ -347,6 +347,12 @@ class SystemIntegrationAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 
+@admin.register(Tjeneste)
+class TjenesteAdmin(SimpleHistoryAdmin):
+	list_display = ('navn',)
+	search_fields = ('navn',)
+	filter_horizontal = ('systemer',)
+
 
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):

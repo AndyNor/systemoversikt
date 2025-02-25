@@ -51,6 +51,11 @@
 			<ul class="nav">
 
 				<li class="hovedmeny">
+					{% url "tjenester_oversikt" as tjenester_oversikt_url %}
+					<a href="{{ tjenester_oversikt_url }}" class="nav-link {% if '/tjenester/' in request.path %} active {% endif %}">Tjenester</a>
+				</li>
+
+				<li class="hovedmeny">
 					{% url "systemklassifisering_tom" as alle_systemer_url %}
 					<a href="{{ alle_systemer_url }}" class="nav-link {% if '/systemer/' in request.path %} active {% endif %}">System</a>
 				</li>

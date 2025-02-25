@@ -1,0 +1,78 @@
+{% extends "system_index.html" %}
+{% load static %}
+
+
+{% block underoverskrift %}
+	Tjenesteoversikt
+{% endblock underoverskrift %}
+{% block main_content %}
+
+<p>Dette er første prototype av visning av et tjenestelag som overbygg på system(komponenter)</p>
+
+<table class="table table-sm tablesorter excel">
+<thead>
+<tr>
+	<th>Tjenestenavn</th>
+	<th>Beskrivelse</th>
+	<th>Systemkomponenter</th>
+	<th>Eier</th>
+	<th>Forvalter</th>
+	<th>Informasjon</th>
+	<th>Beredskap</th>
+</tr>
+</thead>
+<tbody>
+{% for t in tjenester %}
+<tr>
+	<td><a href="/admin/systemoversikt/tjeneste/{{ t.pk }}/change/">✎</a>{{ t.navn }}<br>{{ t.beskrivelse }}</td>
+	<td>
+		{{ t.beskrivelse|default:"-" }}
+	</td>
+	<td>
+	{% for s in t.systemer.all %}
+		<li>{{ s }}</li>
+	{% endfor %}</td>
+	<td>
+	<b>Virksomhet</b>:
+	{% for v in t.tjenesteeier_virksomhet %}
+		<li>{{ v }}</li>
+	{% endfor %}
+	<b>Personer</b>:
+	{% for p in t.tjenesteeier_personer %}
+		<li>{{ p }}</li>
+	{% endfor %}
+	</td>
+	<td>
+	<b>Virksomhet</b>:
+	{% for v in t.tjenesteforvalter_virksomhet %}
+		<li>{{ v }}</li>
+	{% endfor %}
+	<b>Personer</b>:
+	{% for p in t.tjenesteforvalter_personer %}
+		<li>{{ p }}</li>
+	{% endfor %}
+	<b>E-post</b>:
+	{% for e in t.tjenesteforvalter_epost %}
+		<li>{{ e|default:"-" }}</li>
+	{% empty %}
+	{% endfor %}
+	<b>Organisert under</b>:
+	{% for o in t.tjenesteforvalter_organisasjonsledd %}
+		<li>{{ o }}</li>
+	{% endfor %}
+	</td>
+	<td>
+	{% for k in t.kritisk_kapabilitet %}
+		<li>{{ t }}</li>
+	{% endfor %}
+	<td>
+	{% for o in t.los_kommunale_ord %}
+		<li>{{ o }}</li>
+	{% endfor %}
+	</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock main_content %}

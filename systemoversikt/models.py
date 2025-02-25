@@ -4328,6 +4328,94 @@ class SystemIntegration(models.Model):
 		return "black"
 
 
+class Tjeneste(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	navn = models.CharField(
+			verbose_name="Tjenestenavn",
+			max_length=100,
+			blank=False,
+			null=False,
+			help_text=u"Navn på tjenesten",
+			)
+	systemer = models.ManyToManyField(
+			to='System',
+			related_name='tjenester',
+			verbose_name="Tilhørende systemkomponenter",
+			blank=True,
+			help_text=u"Tilhørende systemkomponenter tjenesten består av",
+			)
+	beskrivelse = models.TextField(
+			verbose_name="Tjenestebeskrivelse",
+			blank=True,
+			null=True,
+			help_text=u"Tekstlig beskrivelse av hva tjenesten går ut på",
+			)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return f'{self.navn}'
+
+	class Meta:
+		verbose_name_plural = "Systemoversikt: Tjenester"
+		verbose_name = "tjeneste"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+	def tjenesteeier_virksomhet(self):
+		virksomheter = []
+		for systemkomponent in self.systemer.all():
+			virksomheter.append(systemkomponent.systemeier)
+		return set(virksomheter)
+
+	def tjenesteeier_personer(self):
+		personer = []
+		for systemkomponent in self.systemer.all():
+			personer.extend(systemkomponent.systemeier_kontaktpersoner_referanse.all())
+		return set(personer)
+
+	def tjenesteforvalter_virksomhet(self):
+		virksomheter = []
+		for systemkomponent in self.systemer.all():
+			virksomheter.append(systemkomponent.systemforvalter)
+		return set(virksomheter)
+
+	def tjenesteforvalter_personer(self):
+		personer = []
+		for systemkomponent in self.systemer.all():
+			personer.extend(systemkomponent.systemforvalter_kontaktpersoner_referanse.all())
+		return set(personer)
+
+	def tjenesteforvalter_epost(self):
+		eposter = []
+		for systemkomponent in self.systemer.all():
+			eposter.append(systemkomponent.forvaltning_epost)
+		return set(eposter)
+
+	def tjenesteforvalter_organisasjonsledd(self):
+		organisasjonsledd = []
+		for systemkomponent in self.systemer.all():
+			organisasjonsledd.append(systemkomponent.systemforvalter_avdeling_referanse)
+		return set(organisasjonsledd)
+
+	def kritisk_kapabilitet(self):
+		kapabiliteter = []
+		for systemkomponent in self.systemer.all():
+			kapabiliteter.extend(systemkomponent.kritisk_kapabilitet.all())
+		return kapabiliteter
+
+	def los_kommunale_ord(self):
+		kommunale_ord = []
+		for systemkomponent in self.systemer.all():
+			kommunale_ord.extend(systemkomponent.LOSref.all())
+		return kommunale_ord
+
 
 class System(models.Model):
 	opprettet = models.DateTimeField(

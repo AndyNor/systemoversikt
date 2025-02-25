@@ -3,10 +3,10 @@
 {% block sidemeny %}
 	<h6>Registrer nytt</h6>
 
-		<a href="/admin/systemoversikt/driftsmodell/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Nytt driftmiljø</a>
 
+		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/tjeneste/add/">{% include 'site_edit_button.html' %} Ny tjeneste</a>
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Nytt system</a>
-
+		<a href="/admin/systemoversikt/driftsmodell/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Nytt driftmiljø</a>
 		<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Ny programvare</a>
 
 		<hr>

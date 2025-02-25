@@ -4369,6 +4369,20 @@ def systemer_EOL(request):
 	})
 
 
+def tjenester_oversikt(request):
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	tjenester = Tjeneste.objects.all()
+
+	return render(request, 'tjenester_oversikt.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'tjenester': tjenester,
+	})
+
+
 def systemdetaljer(request, pk):
 	#Viser detaljer om et system
 	#Tilgangsstyring: Merk at noen informasjonselementer er begrenset i template

@@ -158,6 +158,8 @@ urlpatterns = [
 	re_path(r'^rapport/azure/conditional_access/$', views.rapport_conditional_access, name="rapport_conditional_access"),
 
 
+	re_path(r'^tjenester/oversikt/$', views.tjenester_oversikt, name="tjenester_oversikt"),
+
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
 	re_path(r'^systemer/pakket/$', views.systemer_pakket, name='systemer_pakket'),
