@@ -17,8 +17,8 @@
 	<th>Systemkomponenter</th>
 	<th>Eier</th>
 	<th>Forvalter</th>
-	<th>Informasjon</th>
 	<th>Beredskap</th>
+	<th>Informasjon</th>
 </tr>
 </thead>
 <tbody>
@@ -30,7 +30,7 @@
 	</td>
 	<td>
 	{% for s in t.systemer.all %}
-		<li>{{ s }}</li>
+		<a href="/admin/systemoversikt/system/{{ s.pk }}/change/">✎ </a><a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s }}</a><br>
 	{% endfor %}</td>
 	<td>
 	<b>Virksomhet</b>:
@@ -63,7 +63,7 @@
 	</td>
 	<td>
 	{% for k in t.kritisk_kapabilitet %}
-		<li>{{ t }}</li>
+		<li>{{ k }}</li>
 	{% endfor %}
 	<td>
 	{% for o in t.los_kommunale_ord %}
