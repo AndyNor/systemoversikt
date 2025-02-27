@@ -244,9 +244,7 @@ class Command(BaseCommand):
 
 				# Preprocess the items to make timestamps timezone-aware
 				for item in my_items:
-					if item.profile.auth_methods_last_update:
-						item.profile.auth_methods_last_update = timezone.make_aware(item.profile.auth_methods_last_update)
-					else:
+					if not item.profile.auth_methods_last_update:
 						item.profile.auth_methods_last_update = timezone.make_aware(datetime.min)
 
 				# Sort items by the preprocessed auth_methods_last_update timestamp
