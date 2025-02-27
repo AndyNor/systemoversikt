@@ -30,7 +30,8 @@
 	<tr>
 		<th>Miljø (Service Offering)</th>
 		<th>Tilknyttet system</th>
-		<th>Systemkategori</th>
+		<th>Infrastruktur?</th>
+		<th>Utbredning</th>
 		<th>Landingssone</th>
 		<th>Forvalter</th>
 		<th>Kategori (Business Service)</th>
@@ -58,11 +59,20 @@
 					{% if not forloop.last %} og {% endif %}
 				{% endfor %}
 			</td>
-			<td></td>
+			<td>
+				{% for system in item.system.all %}
+					{{ system.er_infrastruktur|yesno:"Ja, Nei" }}
+					{% if not forloop.last %} og {% endif %}
+				{% endfor %}
+			</td>
+			<td>
+				{% for system in item.system.all %}
+					{{ system.get_systemeierskapsmodell_display }}
+				{% endfor %}
+			</td>
 			<td>
 				{% for system in item.system.all %}
 					{{ system.driftsmodell_foreignkey.navn }}
-					{% if not forloop.last %} og {% endif %}
 				{% endfor %}
 			</td>
 			<td>
