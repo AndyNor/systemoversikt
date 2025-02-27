@@ -89,6 +89,7 @@ class Command(BaseCommand):
 			print(logg_message)
 			import traceback
 			int_config.helsestatus = f"Feilet\n{traceback.format_exc()}"
+			print(f"{int_config.helsestatus}")
 			int_config.save()
 			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
