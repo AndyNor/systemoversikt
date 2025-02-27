@@ -54,10 +54,8 @@ class Command(BaseCommand):
 				if antall_oppslag % 25 == 0:
 					print(f"{antall_oppslag} av {antall_brukere}")
 				#print("slår opp %s" % (bruker))
-				try:
-					bruker.profile.adgrupper.clear() # tøm alle eksisterende
-				except:
-					print(f"Kunne ikke tømme grupper for {bruker}")
+				bruker.profile.adgrupper.clear() # tøm alle eksisterende
+
 				grupper = ldap_users_securitygroups(bruker.username)
 				for g in grupper:
 					try:

@@ -60,11 +60,13 @@ class Command(BaseCommand):
 						adg = ADgroup.objects.get(distinguishedname=g)
 						if adg.mail:
 							bruker.mail_enabled_groups.add(adg)
+						print(f"Fant gruppen {adg}")
 						#bruker.profile.adgrupper.add(adg)
 						#bruker.profile.adgrupper_antall = len(grupper)
 						#bruker.profile.save() # Det er ikke behov for å lagre når en legger til ting
 					except:
 						print("Error, fant ikke %s" % (g))
+						pass
 
 			#logg dersom vellykket
 
