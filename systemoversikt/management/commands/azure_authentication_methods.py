@@ -9,7 +9,7 @@ from django.db.models import Q
 from systemoversikt.views import push_pushover
 import warnings
 
-warnings.filterwarnings("ignore", category=RuntimeWarning, message="DateTimeField received a naive datetime")
+warnings.filterwarnings("ignore")
 
 class Command(BaseCommand):
 
