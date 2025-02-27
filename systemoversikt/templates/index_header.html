@@ -85,7 +85,7 @@
 				</li>
 
 				<li class="hovedmeny">
-					{% url "cmdb_statistikk" as cmdb_statistikk_url %}
+					{% url "alle_cmdbref_sok" as cmdb_statistikk_url %}
 					<a href="{{ cmdb_statistikk_url }}" class="nav-link {% if '/cmdb/' in request.path %} active {% endif %}">CMDB</a>
 				</li>
 
