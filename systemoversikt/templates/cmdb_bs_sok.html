@@ -50,25 +50,24 @@
 
 			<td>
 				<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
-				{% if item.is_bss %}<span> (gruppe)</span>{% endif %}
 			</td>
 			<td>
 				{% for system in item.system.all %}
 					{% url 'systemdetaljer' pk=system.pk as url_system %}
-					<a href="{{ url_system }}">{{ system }}</a>
+					<a href="{{ url_system }}">{{ system.systemnavn }}</a>
 					{% if not forloop.last %} og {% endif %}
 				{% endfor %}
 			</td>
 			<td></td>
 			<td>
 				{% for system in item.system.all %}
-					{{system.driftsmodell_foreignkey}}
+					{{ system.driftsmodell_foreignkey.navn }}
 					{% if not forloop.last %} og {% endif %}
 				{% endfor %}
 			</td>
 			<td>
 				{% for system in item.system.all %}
-					{{system.systemforvalter}} ({{system.systemforvalter_avdeling_referanse}})
+					{{ system.systemforvalter.virksomhetsforkortelse }} ({{system.systemforvalter_avdeling_referanse.ou }})
 					{% if not forloop.last %} og {% endif %}
 				{% endfor %}
 			</td>
@@ -84,14 +83,14 @@
 
 			<td>{{ item.get_environment_display|default:"-" }}</td>
 
-			<td {% if not item.u_service_availability %} style="color: red;" {% endif %}>
-				{{ item.u_service_availability_text|default:"T?" }}
+			<td>
+				{{ item.u_service_availability_text|default:"-" }}
 			</td>
-			<td {% if not item.u_service_operation_factor %} style="color: red;" {% endif %}>
-				{{ item.u_service_operation_factor_text|default:"D?" }}
+			<td>
+				{{ item.u_service_operation_factor_text|default:"-" }}
 			</td>
-			<td {% if not item.u_service_complexity %} style="color: red;" {% endif %}>
-				{{ item.u_service_complexity_text|default:"K?" }}
+			<td>
+				{{ item.u_service_complexity_text|default:"-" }}
 			</td>
 
 		</tr>
