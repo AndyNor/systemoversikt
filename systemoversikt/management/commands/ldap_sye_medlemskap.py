@@ -24,7 +24,7 @@ class Command(BaseCommand):
 		URL = ""
 		FREKVENS = "Hver natt"
 
-		int_config = IntegrasjonKonfigurasjon.objects.get_or_create(kodeord=INTEGRASJON_KODEORD)
+		int_config, opprettet = IntegrasjonKonfigurasjon.objects.get_or_create(kodeord=INTEGRASJON_KODEORD)
 		int_config.kilde = KILDE
 		int_config.protokoll = PROTOKOLL
 		int_config.informasjon = BESKRIVELSE
