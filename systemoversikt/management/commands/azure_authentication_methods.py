@@ -5,6 +5,8 @@ from msgraph.core import GraphClient
 from systemoversikt.models import *
 import os, requests, json, time
 from datetime import datetime
+from django.utils import timezone
+
 from django.db.models import Q
 from systemoversikt.views import push_pushover
 
@@ -233,7 +235,7 @@ class Command(BaseCommand):
 			Command.ANTALL_MED_LISENS = len(Command.users_with_license)
 
 			def process_items_for_today(my_items):
-				sorted_items = sorted(my_items, key=lambda x: getattr(x, 'auth_methods_last_update', datetime.min) or datetime.min)
+				sorted_items = sorted(my_items, key=lambda x: getattr(x, 'auth_methods_last_update', timezone.make_aware(datetime.min)) or timezone.make_aware(datetime.min))
 				items_per_day = Command.ITEMS_PER_DAY
 				Command.users_to_be_processed = sorted_items[:items_per_day]
 
