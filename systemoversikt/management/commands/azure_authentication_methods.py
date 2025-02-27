@@ -239,7 +239,19 @@ class Command(BaseCommand):
 
 			def process_items_for_today(my_items):
 				print(f"Sorterer alle brukere med lisens...")
-				sorted_items = sorted(my_items, key=lambda x: getattr(x.profile, 'auth_methods_last_update', timezone.make_aware(datetime.min)) or timezone.make_aware(datetime.min))
+
+				#sorted_items = sorted(my_items, key=lambda x: getattr(x.profile, 'auth_methods_last_update', timezone.make_aware(datetime.min)) or timezone.make_aware(datetime.min))
+
+				# Preprocess the items to make timestamps timezone-aware
+				for item in my_items:
+					if item.profile.auth_methods_last_update:
+						item.profile.auth_methods_last_update = timezone.make_aware(item.profile.auth_methods_last_update)
+					else:
+						item.profile.auth_methods_last_update = timezone.make_aware(datetime.min)
+
+				# Sort items by the preprocessed auth_methods_last_update timestamp
+				sorted_items = sorted(my_items, key=lambda x: x.profile.auth_methods_last_update)
+
 				items_per_day = Command.ITEMS_PER_DAY
 				Command.users_to_be_processed = sorted_items[:items_per_day]
 
