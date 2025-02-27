@@ -112,7 +112,7 @@ class Command(BaseCommand):
 						print(f"Too many requests, venter {wait_sec} sekunder...")
 						Command.ANTALL_TOO_MANY_CALLS += 1
 						time.sleep(wait_sec)
-						Command.users_with_license.extend(users)
+						Command.users_to_be_processed.extend(users)
 						print(f"La gjeldende batch med brukere tilbake i køen...")
 						break
 					#print(f"HTTP {status}")
