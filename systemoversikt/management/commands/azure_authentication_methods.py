@@ -234,8 +234,8 @@ class Command(BaseCommand):
 
 			def process_items_for_today(my_items):
 				sorted_items = sorted(my_items, key=lambda x: getattr(x, 'auth_methods_last_update', datetime.min) or datetime.min)
-				items_per_day = COMMAND.ITEMS_PER_DAY
-				COMMAND.users_to_be_processed = sorted_items[:items_per_day]
+				items_per_day = Command.ITEMS_PER_DAY
+				Command.users_to_be_processed = sorted_items[:items_per_day]
 
 			# oppdatere listen over brukere som skal prosesseres nå
 			process_items_for_today(Command.users_with_license)
