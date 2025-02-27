@@ -240,7 +240,7 @@ urlpatterns = [
 	re_path(r'^cmdb/bs/mangler_kobling/$', views.cmdb_bs_aktuelle_ikke_koblet, name='cmdb_bs_aktuelle_ikke_koblet'),
 	re_path(r'^cmdb/bs/skjult_relevant/$', views.cmdb_bs_skjult_relevant, name='cmdb_bs_skjult_relevant'),
 	re_path(r'^cmdb/bs/offering_mangler_kobling/$', views.cmdb_bs_mangler_kobling, name='cmdb_bs_mangler_kobling'),
-
+	re_path(r'^cmdb/bs/servere_flere_offerings/$', views.cmdb_servere_flere_offerings, name='cmdb_servere_flere_offerings'),
 
 
 	re_path(r'^cmdb/bs/disconnect/$', views.cmdb_bs_disconnect, name='cmdb_bs_disconnect'),
@@ -264,7 +264,7 @@ urlpatterns = [
 	re_path(r'^cmdb/uten_backup/$', views.cmdb_uten_backup, name='cmdb_uten_backup'),
 	re_path(r'^cmdb/lagring/$', views.cmdb_lagring_index, name='cmdb_lagring_index'),
 	re_path(r'^cmdb/minne/$', views.cmdb_minne_index, name='cmdb_minne_index'),
-	re_path(r'^cmdb/forvaltere/$', views.cmdb_forvaltere, name='cmdb_forvaltere'),
+	#re_path(r'^cmdb/forvaltere/$', views.cmdb_forvaltere, name='cmdb_forvaltere'),
 	re_path(r'^cmdb/ad/citrix/apps/$', views.alle_citrixpub, name='alle_citrixpub'), # beholdes som redirect
 	re_path(r'^cmdb/citrix/apps/$', views.alle_citrixpub, name='alle_citrixpub'),
 	re_path(r'^cmdb/citrix/apps/(?P<pk>\d{1,8})/$', views.alle_citrixpub, name='citrixpub_for_system'),

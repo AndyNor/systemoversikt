@@ -10,27 +10,29 @@
 	{% url 'alle_cmdbref_sok' as url_alle_cmdbref %}
 	<a href="{{url_alle_cmdbref}}" class="btn btn-sm btn-link {% if url_alle_cmdbref in request.path %}fremhev{% endif %}">Business services</a><br>
 
+	{% url 'cmdb_bs_mangler_kobling' as url_cmdb_bs_mangler_kobling %}
+	<a href="{{url_cmdb_bs_mangler_kobling}}" class="btn btn-sm btn-link {% if url_cmdb_bs_mangler_kobling in request.path %}fremhev{% endif %}">Offerings uten kobling</a><br>
+
+	{% url 'cmdb_bs_aktuelle_ikke_koblet' as url_cmdb_bs_aktuelle_ikke_koblet %}
+	<a href="{{url_cmdb_bs_aktuelle_ikke_koblet}}" class="btn btn-sm btn-link {% if url_cmdb_bs_aktuelle_ikke_koblet in request.path %}fremhev{% endif %}">Feilkoblet</a><br>
+
 	{% url 'cmdb_bskobling_utfaset' as url_cmdb_bskobling_utfaset %}
 	<a href="{{url_cmdb_bskobling_utfaset}}" class="btn btn-sm btn-link {% if url_cmdb_bskobling_utfaset in request.path %}fremhev{% endif %}">Utfaset miljø</a><br>
 
 	{% url 'cmdb_bs_koblet_ukjent_plattform' as url_cmdb_bs_koblet_ukjent_plattform %}
 	<a href="{{url_cmdb_bs_koblet_ukjent_plattform}}" class="btn btn-sm btn-link {% if url_cmdb_bs_koblet_ukjent_plattform in request.path %}fremhev{% endif %}">Koblet mangler landingssone</a><br>
 
-	{% url 'cmdb_bs_aktuelle_ikke_koblet' as url_cmdb_bs_aktuelle_ikke_koblet %}
-	<a href="{{url_cmdb_bs_aktuelle_ikke_koblet}}" class="btn btn-sm btn-link {% if url_cmdb_bs_aktuelle_ikke_koblet in request.path %}fremhev{% endif %}">Mangler kobling</a><br>
 
 	{% url 'cmdb_bs_skjult_relevant' as url_cmdb_bs_skjult_relevant %}
 	<a href="{{url_cmdb_bs_skjult_relevant}}" class="btn btn-sm btn-link {% if url_cmdb_bs_skjult_relevant in request.path %}fremhev{% endif %}">Skjult ikke tom</a><br>
 
-	{% url 'cmdb_bs_mangler_kobling' as url_cmdb_bs_mangler_kobling %}
-	<a href="{{url_cmdb_bs_mangler_kobling}}" class="btn btn-sm btn-link {% if url_cmdb_bs_mangler_kobling in request.path %}fremhev{% endif %}">Offerings uten kobling</a><br>
+
+	{% url 'cmdb_servere_flere_offerings' as url_cmdb_servere_flere_offerings %}
+	<a href="{{url_cmdb_servere_flere_offerings}}" class="btn btn-sm btn-link {% if url_cmdb_servere_flere_offerings in request.path %}fremhev{% endif %}">Servere flere offerings</a><br>
 
 
 	{% url 'cmdb_per_virksomhet' as url_cmdb_per_virksomhet %}
 	<a href="{{ url_cmdb_per_virksomhet }}" class="btn btn-sm btn-link {% if url_cmdb_per_virksomhet in request.path %}fremhev{% endif %}" >Tjenester per virksomhet</a>
-
-	{% url 'cmdb_forvaltere' as url_cmdb_forvaltere %}
-	<a href="{{url_cmdb_forvaltere}}" class="btn btn-sm btn-link {% if url_cmdb_forvaltere in request.path %}fremhev{% endif %}">Forvaltere</a><br>
 
 
 	<hr><h6>Servere og klienter</h6>

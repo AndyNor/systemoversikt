@@ -6,63 +6,14 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Business Sub Services (CMDB)
+	Driftleverandørs Business Offerings og Services (ServiceNow)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-	<p>CMDB står for Configuration Management DataBase og er en som navnet antyder en database med informasjon om hva et driftsmiljø består av. Sopra Steria har organisert servere og databaser under "miljø" de kaller "service offerings", typisk et for produksjon, preproduksjon og test. I Kartoteket knytter vi nå service offerings til systemet direkte fra det enkelte system fra systemets redigeringsside.</p>
+	<p>CMDB står for Configuration Management DataBase og er en som navnet antyder en database med informasjon om hva et driftsmiljø består av. Sopra Steria har organisert servere og databaser under "miljø" de kaller "service offerings", typisk et for produksjon, preproduksjon og test. I Kartoteket knytter vi nå det enkelte system direkte til service offerings (miljø).</p>
 
 	<p>Det er knyttet tilgjengelighetskrav til hvert miljø, som igjen dikterer SLA krav knyttet til bestillinger og håndtering av feil på underliggende systemer. Ler mer om SLA-nivåene på <a href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Kontinuit--og-beredskapsarbeid.aspx" target="_blank">SharePoint</a>.</p>
-
-	<p>Importen av disse dataene skjer automatisk hver natt. Det er <b>{{servere_flere_offerings|length}}</b> servere koblet til flere service offerings, hvorav <b>{{servere_flereennto_offerings|length}}</b> har flere enn to koblinger.</p>
-
-	<div id="accordion">
-		<div class="card">
-			<div class="card-header" id="heading">
-				<h5 class="mb-0">
-					<button class="btn btn-link" data-toggle="collapse" data-target="#collapse" aria-expanded="true" aria-controls="collapse">Rå liste
-					</button>
-				</h5>
-			</div>
-			<div id="collapse" class="collapse" aria-labelledby="heading" data-parent="#accordion">
-				<div class="card-body">
-
-					<table class="table">
-					<thead>
-						<th>Server</th>
-						<th>Service Offerings</th>
-					</thead>
-					<tbody>
-					{% for server in servere_flere_offerings %}
-						<tr>
-							<td>{{ server }}</td>
-							<td>
-								{% for offering in server.service_offerings.all %}
-									{{ offering }}<br>
-								{% endfor %}
-							</td>
-						</tr>
-					{% endfor %}
-					</tbody>
-					</table>
-
-				</div>
-			</div>
-		</div>
-	</div>
-
-
-	<hr>
-	Hopp til
-	<a href="#anchor_uten_systemkobling" class="btn btn-sm btn-link">Uten systemkobling</a>
-	<a href="#anchor_skjult" class="btn btn-sm btn-link">Skjult med databaser eller servere</a>
-	<a href="#anchor_mangler" class="btn btn-sm btn-link">System uten kobling</a>
-	<a href="#anchor_ukjent" class="btn btn-sm btn-link">Koblede systemer med ukjent plattform</a>
-	<a href="#anchor_utfaset" class="btn btn-sm btn-link">Utfaset men systemkoblet</a>
-
-
-	<hr>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
@@ -74,81 +25,60 @@
 	</form>
 
 
-<table class="table table-sm tablesorter excel">
-<thead>
-<tr>
-	<th>Nivå 1 Business Service (kategori)</th>
-	<th>Nivå 2 Business Service Offering (miljø)</th>
-	<th>Tilknyttet system</th>
-	<th>Service classification</th>
-	<th>Antall servere</th>
-	<th>Antall databaser</th>
-	<th>Mengde backup</th>
-	<th>Miljø</th>
-	<th>Tilgjengelighet</th>
-	<th>Driftskompleksitet</th>
-	<th>Kritikalitet</th>
-</tr>
-</thead>
-<tbody>
-{% for item in cmdbref %}
-	<tr {% if item.operational_status == 0 %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
-
-		<td>{{ item.parent_ref.navn|default:'?' }}</td>
-		<td>
-			<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
-			{% if item.is_bss %}<span> (gruppe)</span>{% endif %}
-		</td>
-		<td>
-			{% for system in item.system.all %}
-				{% url 'systemdetaljer' pk=system.pk as url_system %}
-				<a href="{{ url_system }}">{{ system }}</a>
-				{% if not forloop.last %} og {% endif %}
-			{% endfor %}
-		</td>
-		<td>
-			{{ item.service_classification|default:"" }}
-		</td>
-		<td>{{ item.ant_devices }}</td>
-		<td>{{ item.ant_databaser }}</td>
-		<td>
-			{{ item.backup_size|filesizeformat }}
-		</td>
-
-		<td>{{ item.get_environment_display|default:"-" }}</td>
-
-		<td {% if not item.u_service_availability %} style="color: red;" {% endif %}>
-			{{ item.u_service_availability_text|default:"T?" }}
-		</td>
-		<td {% if not item.u_service_operation_factor %} style="color: red;" {% endif %}>
-			{{ item.u_service_operation_factor_text|default:"D?" }}
-		</td>
-		<td {% if not item.u_service_complexity %} style="color: red;" {% endif %}>
-			{{ item.u_service_complexity_text|default:"K?" }}
-		</td>
-
-	</tr>
-{% endfor %}
-</tbody>
-</table>
-
-
-
-	<h3 style="scroll-margin-top: 150px;" id="anchor_uten_systemkobling">Mangler systemkobling</h3>
-	<p>Søk opp system og legg til kobling til business service fra systemets redigeringsside</p>
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
-		<th>Business service</th>
+		<th>Miljø (Service Offering)</th>
+		<th>Tilknyttet system</th>
+		<th>Kategori (Business Service)</th>
+		<th>Service classification</th>
+		<th>Antall servere</th>
+		<th>Antall databaser</th>
+		<th>Mengde backup</th>
+		<th>Miljø</th>
+		<th>Tilgjengelighet</th>
+		<th>Driftskompleksitet</th>
+		<th>Kritikalitet</th>
 	</tr>
 	</thead>
 	<tbody>
-	{% for bs in bs_uten_system %}
-	<tr>
-		<td>
-			{{ bs }}
-		</td>
-	</tr>
+	{% for item in cmdbref %}
+		<tr {% if item.operational_status == 0 %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
+
+			<td>
+				<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
+				{% if item.is_bss %}<span> (gruppe)</span>{% endif %}
+			</td>
+			<td>
+				{% for system in item.system.all %}
+					{% url 'systemdetaljer' pk=system.pk as url_system %}
+					<a href="{{ url_system }}">{{ system }}</a><br>({{system.driftsmodell_foreignkey}})<br>
+					{% if not forloop.last %} og {% endif %}
+				{% endfor %}
+			</td>
+			<td>{{ item.parent_ref.navn|default:'?' }}</td>
+			<td>
+				{{ item.service_classification|default:"" }}
+			</td>
+			<td>{{ item.ant_devices }}</td>
+			<td>{{ item.ant_databaser }}</td>
+			<td>
+				{{ item.backup_size|filesizeformat }}
+			</td>
+
+			<td>{{ item.get_environment_display|default:"-" }}</td>
+
+			<td {% if not item.u_service_availability %} style="color: red;" {% endif %}>
+				{{ item.u_service_availability_text|default:"T?" }}
+			</td>
+			<td {% if not item.u_service_operation_factor %} style="color: red;" {% endif %}>
+				{{ item.u_service_operation_factor_text|default:"D?" }}
+			</td>
+			<td {% if not item.u_service_complexity %} style="color: red;" {% endif %}>
+				{{ item.u_service_complexity_text|default:"K?" }}
+			</td>
+
+		</tr>
 	{% endfor %}
 	</tbody>
 	</table>

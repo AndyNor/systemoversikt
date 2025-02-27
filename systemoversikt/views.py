@@ -1623,9 +1623,14 @@ def cmdb_per_virksomhet(request):
 
 		bs_forvalter = []
 		for system in virksomhet.systemer_systemforvalter.all():
-			if hasattr(system, 'bs_system_referanse'):
-				bs = system.bs_system_referanse
-				bs_forvalter.append(bs)
+			offerings = system.service_offerings.all()
+			for offering in offerings:
+				bs_forvalter.append(offering)
+				try:
+					bs_alle.remove(offering)
+				except:
+					pass
+
 		template_data.append({"virksomhet": virksomhet, "bs_eier": bs_eier, "bs_forvalter": bs_forvalter,})
 
 	return render(request, 'cmdb_per_virksomhet.html', {
@@ -7397,7 +7402,7 @@ def alle_databaser(request):
 	})
 
 
-
+"""
 def cmdb_forvaltere(request):
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -7410,6 +7415,7 @@ def cmdb_forvaltere(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'relevant_business_services': relevant_business_services,
 	})
+"""
 
 
 
@@ -7467,6 +7473,24 @@ def alle_cmdbref(request):
 		'bs_uten_system': bs_uten_system,
 		'system_uten_bs': system_uten_bs,
 		'skjult_server_db': skjult_server_db,
+		'servere_flere_offerings': servere_flere_offerings,
+		'servere_flereennto_offerings': servere_flereennto_offerings,
+	})
+
+
+def cmdb_servere_flere_offerings(request):
+	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	# telle servere med flere service offerings-koblinger
+	from django.db.models import Count
+	servere_flere_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=1)
+	servere_flereennto_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=2)
+
+	return render(request, 'cmdb_servere_flere_offerings.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		'servere_flere_offerings': servere_flere_offerings,
 		'servere_flereennto_offerings': servere_flereennto_offerings,
 	})

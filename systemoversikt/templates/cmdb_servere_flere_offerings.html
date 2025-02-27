@@ -1,0 +1,35 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Servere koblet til flere business offerings
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Importen av disse dataene skjer automatisk hver natt. Det er <b>{{servere_flere_offerings|length}}</b> servere koblet til flere service offerings, hvorav <b>{{servere_flereennto_offerings|length}}</b> har flere enn to koblinger.</p>
+
+	<table class="table">
+	<thead>
+		<th>Server</th>
+		<th>Service Offerings</th>
+	</thead>
+	<tbody>
+	{% for server in servere_flere_offerings %}
+		<tr>
+			<td>{{ server }}</td>
+			<td>
+				{% for offering in server.service_offerings.all %}
+					{{ offering }}<br>
+				{% endfor %}
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

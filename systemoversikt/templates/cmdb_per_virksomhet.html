@@ -6,7 +6,7 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Tjenester fordelt per virksomhet
+	Miljøer fordelt per eier (virksomhet)
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -28,10 +28,12 @@
 			<td>
 				{% for bs in item.bs_eier %}
 					<li>{{ bs }}</li>
+					{% comment %}
 					<ul>
 						<li>Ram: {{ bs.ram_allocated|filesizeformat }}, Disk: {{ bs.san_used|filesizeformat }}, Backup: {{ bs.backup_size|filesizeformat }}</li>
 						<li>Servere: {{ bs.ant_devices }}, Databaser: {{ bs.ant_databaser }}</li>
 					</ul>
+					{% endcomment %}
 				{% endfor %}
 			</td>
 			<td>
@@ -51,8 +53,7 @@
 	<ul>
 		<li>{{ bs }} {% if bs.systemreferanse %}({{ bs.systemreferanse }}){% endif %}</li>
 		<ul>
-			<li>Ram: {{ bs.ram_allocated|filesizeformat }}, Disk: {{ bs.san_used|filesizeformat }}, Backup: {{ bs.backup_size|filesizeformat }}</li>
-			<li>Servere: {{ bs.ant_devices }}, Databaser: {{ bs.ant_databaser }}</li>
+			<li>Ram: {{ bs.ram_allocated|filesizeformat }}, Disk: {{ bs.san_used|filesizeformat }}, Backup: {{ bs.backup_size|filesizeformat }} Servere: {{ bs.ant_devices }}, Databaser: {{ bs.ant_databaser }}</li>
 		</ul>
 	</ul>
 {% endfor %}
