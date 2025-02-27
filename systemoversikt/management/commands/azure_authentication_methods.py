@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
 	SLEEP_BETWEEN = 0
 	SLEEP_TOO_MANY = 20
-	ITEMS_PER_DAY = 60
+	ITEMS_PER_DAY = 10
 
 	def handle(self, **options):
 
@@ -236,7 +236,7 @@ class Command(BaseCommand):
 			Command.ANTALL_MED_LISENS = len(Command.users_with_license)
 
 			def process_items_for_today(my_items):
-				sorted_items = sorted(my_items, key=lambda x: getattr(x, 'auth_methods_last_update', datetime.min) or datetime.min)
+				sorted_items = sorted(my_items, key=lambda x: getattr(x.profile, 'auth_methods_last_update', datetime.min) or datetime.min)
 				items_per_day = Command.ITEMS_PER_DAY
 				Command.users_to_be_processed = sorted_items[:items_per_day]
 
