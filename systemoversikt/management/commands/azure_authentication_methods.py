@@ -16,10 +16,11 @@ class Command(BaseCommand):
 	ANTALL_MED_LISENS = 0
 	ANTALL_TOO_MANY_CALLS = 0
 	users_with_license = []
+	users_to_be_processed = []
 
 	SLEEP_BETWEEN = 0
 	SLEEP_TOO_MANY = 20
-	VIRKSOMHETER = [160] # SYE
+	ITEMS_PER_DAY = 60
 
 	def handle(self, **options):
 
@@ -74,6 +75,7 @@ class Command(BaseCommand):
 			def create_batch_request(users):
 				requests = []
 				for i, user in enumerate(users):
+					print(f"{user} {user.profile.auth_methods_last_update} {user.profile.entra_id_auth()}")
 					upn = user.email
 					requests.append({
 						"id": i,
@@ -227,16 +229,26 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(profile__virksomhet__id__in=Command.VIRKSOMHETER).filter(~Q(profile__ny365lisens=None)))
+			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None)))
 			Command.ANTALL_MED_LISENS = len(Command.users_with_license)
+
+			def process_items_for_today(my_items):
+				sorted_items = sorted(my_items, key=lambda x: x.get('profile__auth_methods_last_update') or datetime.min)
+				items_per_day = COMMAND.ITEMS_PER_DAY
+				COMMAND.users_to_be_processed = sorted_items[:items_per_day]
+
+			# oppdatere listen over brukere som skal prosesseres nå
+			process_items_for_today(Command.users_with_license)
+
+
 			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
 			split_size = 20
 			i = 0
 
-			while i < len(Command.users_with_license):
+			while i < len(Command.users_to_be_processed):
 				# Process the current batch of users
-				timedelta = lookup_and_save(Command.users_with_license[i:i + split_size])
+				timedelta = lookup_and_save(Command.users_to_be_processed[i:i + split_size])
 				print(f"Ny batch fra {i} til {i + split_size} ferdig. Graph-kallet tok {round(timedelta, 3)} sekunder")
 
 				# Move to the next batch

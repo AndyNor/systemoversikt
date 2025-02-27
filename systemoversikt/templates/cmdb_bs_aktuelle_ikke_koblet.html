@@ -1,0 +1,41 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Systemer angitt som felles IKT-plattform men som mangler kobling
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Viser systemer som er koblet til en landingssone UKE er ansvarlig for, men hvor det ikke er en kobling til Service Offering. Per nå kan kun SC2 og TP4 landingssonene kobles, så det vil være ting her fra AWS og Azure.</p>
+
+
+	<h3 style="scroll-margin-top: 150px;" id="anchor_mangler"></h3>
+	<p>Viser ikke infrastrukturkomponenter</p>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Systemnavn</th>
+		<th>Plattform</th>
+		<th>Systemeier</th>
+		<th>Systemforvalter</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for s in system_uten_bs %}
+	<tr>
+		<td><a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s.systemnavn }}</a></td>
+		<td>{{ s.driftsmodell_foreignkey }}</td>
+		<td>{{ s.systemeier|default:"?" }}</td>
+		<td>{{ s.systemforvalter|default:"?" }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

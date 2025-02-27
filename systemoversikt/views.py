@@ -1491,11 +1491,11 @@ def tool_csv_converter(request):
 		header = list(rows[0].keys())
 
 		#print(header)
-		#print(rows)
+		print(len(rows))
 
 	return render(request, 'tool_csv_converter.html', {
 		'request': request,
-		'rows': rows if 'rows' in locals() else None,
+		'rows': rows[0:100] if 'rows' in locals() else None,
 		'header': header if 'header' in locals() else None,
 	})
 
@@ -2014,15 +2014,28 @@ def o365_lisenser(request):
 	data.append({"tekst": "Brukere i gruppe 2 - Flerbruker", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G2"))})
 	data.append({"tekst": "Brukere i gruppe 3 - Mangler epost", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G3"))})
 	data.append({"tekst": "Brukere i gruppe 4 - Educaton", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G4"))})
-	data.append({"tekst": "Brukere i gruppe 5 - ???", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G5"))})
+	data.append({"tekst": "Brukere i gruppe 5 - IDA basis (F1)", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G5"))})
 
-	virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True)
+	full_table = User.objects.values('profile__virksomhet__virksomhetsnavn', 'profile__virksomhet__id').annotate(
+		total_count=Count('id', filter=Q(
+			Q(profile__ny365lisens__icontains="G1") |
+			Q(profile__ny365lisens__icontains="G2") |
+			Q(profile__ny365lisens__icontains="G3") |
+			Q(profile__ny365lisens__icontains="G4") |
+			Q(profile__ny365lisens__icontains="G5")
+		)),
+		G1_count=Count('id', filter=Q(profile__ny365lisens__icontains="G1")),
+		G2_count=Count('id', filter=Q(profile__ny365lisens__icontains="G2")),
+		G3_count=Count('id', filter=Q(profile__ny365lisens__icontains="G3")),
+		G4_count=Count('id', filter=Q(profile__ny365lisens__icontains="G4")),
+		G5_count=Count('id', filter=Q(profile__ny365lisens__icontains="G5"))
+	)
 
 	return render(request, 'rapport_o365_lisenser.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'data': data,
-		'virksomheter': virksomheter,
+		'full_table': full_table,
 	})
 
 
@@ -7416,7 +7429,6 @@ def alle_cmdbref(request):
 		cmdbref = CMDBRef.objects.filter(navn__icontains=search_term, parent_ref__navn__icontains=search_term)
 
 	bs_uten_system = CMDBRef.objects.filter(operational_status=True).filter(Q(system=None))
-	utfasede_bs = CMDBRef.objects.filter(operational_status=False).filter(~Q(system=None))
 
 	skjult_server_db = []
 	skjult_server_db_candidates = (CMDBbs.objects
@@ -7441,15 +7453,6 @@ def alle_cmdbref(request):
 			.distinct()
 	)
 
-	bs_utenfor_fip = (System.objects
-			.filter(~Q(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke))
-			.filter(~Q(service_offerings=None)) # må ha kobling
-			.filter(systemtyper__er_infrastruktur=False)
-			.filter(ibruk=True)
-			.order_by('driftsmodell_foreignkey')
-			.distinct()
-	)
-
 	# telle servere med flere service offerings-koblinger
 	from django.db.models import Count
 	servere_flere_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=1)
@@ -7462,14 +7465,149 @@ def alle_cmdbref(request):
 		'cmdbref': cmdbref,
 		'search_term': search_term,
 		'bs_uten_system': bs_uten_system,
-		'utfasede_bs': utfasede_bs,
 		'system_uten_bs': system_uten_bs,
-		'bs_utenfor_fip': bs_utenfor_fip,
 		'skjult_server_db': skjult_server_db,
 		'servere_flere_offerings': servere_flere_offerings,
 		'servere_flereennto_offerings': servere_flereennto_offerings,
 	})
 
+
+def cmdb_bs_aktuelle_ikke_koblet(request):
+	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
+	system_uten_bs = (System.objects
+			.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke)
+			.filter(driftsmodell_foreignkey__overordnet_plattform=None)
+			.filter(service_offerings=None) # skal ikke ha kobling
+			.filter(systemtyper__er_infrastruktur=False)
+			.filter(ibruk=True)
+			.order_by('driftsmodell_foreignkey')
+			.distinct()
+	)
+
+	return render(request, 'cmdb_bs_aktuelle_ikke_koblet.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'system_uten_bs': system_uten_bs,
+	})
+
+def cmdb_bs_skjult_relevant(request):
+	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	skjult_server_db = []
+	skjult_server_db_candidates = (CMDBbs.objects
+			.filter(operational_status=True)
+			.filter(eksponert_for_bruker=False)
+			.distinct()
+	)
+	for bs in skjult_server_db_candidates:
+		if bs.ant_devices() > 0 or bs.ant_databaser() > 0:
+			skjult_server_db.append(bs)
+
+	return render(request, 'cmdb_bs_skjult_relevant.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'skjult_server_db': skjult_server_db,
+	})
+
+
+def cmdb_bs_mangler_kobling(request):
+	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	search_term = request.GET.get('search_term', "").strip()
+
+	if search_term == "__all__":
+		cmdbref = CMDBRef.objects.all()#, parent_ref__operational_status=True)
+	elif len(search_term) < 1:
+		cmdbref = CMDBRef.objects.filter(operational_status=True).order_by("parent_ref__navn", Lower("navn"))
+	else:
+		cmdbref = CMDBRef.objects.filter(navn__icontains=search_term, parent_ref__navn__icontains=search_term)
+
+	bs_uten_system = CMDBRef.objects.filter(operational_status=True).filter(Q(system=None))
+
+	skjult_server_db = []
+	skjult_server_db_candidates = (CMDBbs.objects
+			.filter(operational_status=True)
+			.filter(eksponert_for_bruker=False)
+			.distinct()
+	)
+	for bs in skjult_server_db_candidates:
+		if bs.ant_devices() > 0 or bs.ant_databaser() > 0:
+			skjult_server_db.append(bs)
+
+	virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
+	#print(virksomhet_uke)
+	# Alle plattformer knyttet til UKE som ikke er en underplattform (overordnet er None)
+	system_uten_bs = (System.objects
+			.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke)
+			.filter(driftsmodell_foreignkey__overordnet_plattform=None)
+			.filter(service_offerings=None) # skal ikke ha kobling
+			.filter(systemtyper__er_infrastruktur=False)
+			.filter(ibruk=True)
+			.order_by('driftsmodell_foreignkey')
+			.distinct()
+	)
+
+	# telle servere med flere service offerings-koblinger
+	from django.db.models import Count
+	servere_flere_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=1)
+	servere_flereennto_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=2)
+
+
+	return render(request, 'cmdb_bs_mangler_kobling.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'cmdbref': cmdbref,
+		'search_term': search_term,
+		'bs_uten_system': bs_uten_system,
+		'system_uten_bs': system_uten_bs,
+		'skjult_server_db': skjult_server_db,
+		'servere_flere_offerings': servere_flere_offerings,
+		'servere_flereennto_offerings': servere_flereennto_offerings,
+	})
+
+
+def cmdb_bs_koblet_ukjent_plattform(request):
+	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
+
+	bs_utenfor_fip = (System.objects
+			.filter(~Q(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke))
+			.filter(~Q(service_offerings=None)) # må ha kobling
+			.filter(systemtyper__er_infrastruktur=False)
+			.filter(ibruk=True)
+			.order_by('driftsmodell_foreignkey')
+			.distinct()
+	)
+
+	return render(request, 'cmdb_bs_koblet_ukjent_plattform.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'bs_utenfor_fip': bs_utenfor_fip,
+	})
+
+def cmdb_bskobling_utfaset(request):
+	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	utfasede_bs = CMDBRef.objects.filter(operational_status=False).filter(~Q(system=None))
+
+	return render(request, 'cmdb_bskobling_utfaset.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'utfasede_bs': utfasede_bs,
+	})
 
 
 def cmdb_bss(request, pk):

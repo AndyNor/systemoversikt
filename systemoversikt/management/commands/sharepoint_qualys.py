@@ -65,25 +65,6 @@ class Command(BaseCommand):
 
 			def ansvar_basisdrift(vulnerability):
 
-				"""
-				patches_av_drift = [
-						"Splunk Universal Forwarder",
-						"Microsoft Azure Connected Machine Agent",
-						"Windows Server Security Update for",
-						"Transport Layer Security (TLS) ciphers",
-						"Microsoft Windows Security Update Registry Key Configuration Missing",
-						"SMB Signing",
-						"Cached Logon Credential",
-						"Microsoft Edge",
-						"AutoPlay Not Disabled",
-						"Citrix Workspace App",
-						"VMware Tools",
-						"Allowed Null Session",
-						"Microsoft Internet Explorer Cumulative Security Update",
-						"Rocky Linux Security Update for kernel",
-						"Red Hat Update for",
-					]
-				"""
 				patches_av_drift = QualysVulnBasisPatching.objects.all()
 				for basispatch in patches_av_drift:
 					if basispatch.title.lower() in vulnerability.title.lower():

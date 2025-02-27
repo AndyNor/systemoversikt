@@ -693,7 +693,6 @@ class Virksomhet(models.Model):
 			max_length=100,
 			help_text=u"Alternative/gamle forkortelser. Bruk mellomrom dersom flere. Brukes ved tildeling av WAN-lokasjoner og for filtrering av brukeridenter.",
 			)
-
 	virksomhetsnavn = models.CharField(
 			unique=True,
 			verbose_name="Virksomhetsnavn",

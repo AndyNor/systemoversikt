@@ -1,0 +1,39 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Oppkoblede systemer hvor oppkobling til business offering og valgt landingssone ikke stemmer
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Her vises systemkomponenter hvor systemet er koblet til en business offering, men hvor UKE ikke er ansvarlig for plattformen systemet er angitt å kjøre på. Det tyder på at noe er feilregistrert. Listen viser ikke infrastrukturkomponenter. Denne listen bør helst være tom.</p>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Systemnavn</th>
+		<th>BS</th>
+		<th>Plattform</th>
+		<th>Systemeier</th>
+		<th>Systemforvalter</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for s in bs_utenfor_fip %}
+	<tr>
+		<td><a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s.systemnavn }}</a></td>
+		<td><a href="/cmdb/bs/?search_term={{s.bs_system_referanse.navn}}">{{ s.bs_system_referanse.navn }}</a></td>
+		<td>{{ s.driftsmodell_foreignkey }}</td>
+		<td>{{ s.systemeier|default:"?" }}</td>
+		<td>{{ s.systemforvalter|default:"?" }}</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

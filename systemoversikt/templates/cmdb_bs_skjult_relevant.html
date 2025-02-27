@@ -1,0 +1,38 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Skjult men har databaser eller servere
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Her vises skjulte service offerings som har databaser eller servere. Det bør ikke skje, og listen bør være tom.</p>
+
+
+	<h3 style="scroll-margin-top: 150px;" id="anchor_skjult"></h3>
+	<table class="table table-sm tablesorter excel">
+	<thead>
+	<tr>
+		<th>Business service</th>
+		<th>Endre</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for bs in skjult_server_db %}
+	<tr>
+		<td><a href="/cmdb/bs/?search_term={{bs.navn}}">{{ bs.navn }}</a></td>
+		<td>
+			<a href="/admin/systemoversikt/cmdbbs/{{ bs.pk }}/change/">✎ rediger</a>
+		</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

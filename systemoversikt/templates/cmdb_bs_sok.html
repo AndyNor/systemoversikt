@@ -96,13 +96,6 @@
 
 		<td>{{ item.parent_ref.navn|default:'?' }}</td>
 		<td>
-			{% comment %}
-				{% if user.is_authenticated %}
-				<a href="/admin/systemoversikt/cmdbref/{{ item.pk }}/change/">
-					✎</a>
-				{% endif %}
-			{% endcomment %}
-
 			<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
 			{% if item.is_bss %}<span> (gruppe)</span>{% endif %}
 		</td>
@@ -159,110 +152,6 @@
 	{% endfor %}
 	</tbody>
 	</table>
-
-
-
-	<h3 style="scroll-margin-top: 150px;" id="anchor_skjult">Skjult men har databaser eller servere</h3>
-	<table class="table table-sm tablesorter excel">
-	<thead>
-	<tr>
-		<th>Business service</th>
-		<th>Endre</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for bs in skjult_server_db %}
-	<tr>
-		<td><a href="/cmdb/bs/?search_term={{bs.navn}}">{{ bs.navn }}</a></td>
-		<td>
-			<a href="/admin/systemoversikt/cmdbbs/{{ bs.pk }}/change/">✎ rediger</a>
-		</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-	</table>
-
-
-
-	<h3 style="scroll-margin-top: 150px;" id="anchor_mangler">Systemer angitt som felles IKT-plattform men mangler kobling</h3>
-	<p>Viser ikke infrastrukturkomponenter</p>
-	<table class="table table-sm tablesorter excel">
-	<thead>
-	<tr>
-		<th>Systemnavn</th>
-		<th>Plattform</th>
-		<th>Systemeier</th>
-		<th>Systemforvalter</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for s in system_uten_bs %}
-	<tr>
-		<td><a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s.systemnavn }}</a></td>
-		<td>{{ s.driftsmodell_foreignkey }}</td>
-		<td>{{ s.systemeier|default:"?" }}</td>
-		<td>{{ s.systemforvalter|default:"?" }}</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-	</table>
-
-
-
-	<h3 style="scroll-margin-top: 150px;" id="anchor_ukjent">Koblede systemer med ukjent plattform</h3>
-	<p>Viser ikke infrastrukturkomponenter</p>
-	<table class="table table-sm tablesorter excel">
-	<thead>
-	<tr>
-		<th>Systemnavn</th>
-		<th>BS</th>
-		<th>Plattform</th>
-		<th>Systemeier</th>
-		<th>Systemforvalter</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for s in bs_utenfor_fip %}
-	<tr>
-		<td><a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s.systemnavn }}</a></td>
-		<td><a href="/cmdb/bs/?search_term={{s.bs_system_referanse.navn}}">{{ s.bs_system_referanse.navn }}</a></td>
-		<td>{{ s.driftsmodell_foreignkey }}</td>
-		<td>{{ s.systemeier|default:"?" }}</td>
-		<td>{{ s.systemforvalter|default:"?" }}</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-	</table>
-
-
-
-	<h3 style="scroll-margin-top: 150px;" id="anchor_utfaset">Utfaset men er systemkoblet</h3>
-	<a href="{% url 'cmdb_bs_disconnect' %}">Løskoble alle</a>
-	<table class="table table-sm tablesorter excel">
-		<thead>
-		<tr>
-			<th>Business service</th>
-			<th>Koblet system</th>
-		</tr>
-		</thead>
-		<tbody>
-		{% for bs in utfasede_bs %}
-		<tr>
-			<td>{{ bs }}</td>
-			<td>
-				{% if bs.systemreferanse %}
-					{{ bs.systemreferanse.systemnavn }}
-					<a style="color: #ff2116;" href="/admin/systemoversikt/cmdbbs/{{ bs.pk }}/change/">✎ frakoble?</a>
-				{% else %}
-					Ikke koblet
-				{% endif %}
-
-			</td>
-		</tr>
-		{% endfor %}
-		</tbody>
-	</table>
-
 
 
 {% endblock hovedinnhold %}

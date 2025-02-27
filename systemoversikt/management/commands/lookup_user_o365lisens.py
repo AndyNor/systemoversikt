@@ -59,7 +59,7 @@ class Command(BaseCommand):
 				{"gruppe":"Task-OF2-Lisens-O365-G2", "navn": "G2 Flerbruker"},
 				{"gruppe":"Task-OF2-Lisens-O365-G3", "navn": "G3 Uten e-post"},
 				{"gruppe":"Task-OF2-Lisens-O365-G4", "navn": "G4 Education"},
-				{"gruppe":"Task-OF2-Lisens-O365-G5", "navn": "G5 Beskrivelse?"}
+				{"gruppe":"Task-OF2-Lisens-O365-G5", "navn": "G5 IDA basis (F1)"}
 			]
 
 			#bufre alle gruppemedlemmer direkte under nye_adgrupper

@@ -12,8 +12,9 @@
 {% block hovedinnhold %}
 
 <p>Dette er tildelingen av lisenser per nå. Denne oversikten har tatt over for forslaget brukt under planlegging.</p>
+<p>Se detaljer for din virksomhet. Merk at ["UDE", "BYS", "VAV", "INE", "PBE", "BBY", "KRV", "REG"] ikke tildeles lisens på denne måten. Denne listen er under endring i forbindelse med INV-prosjektet som pågår.</p>
 
-	<table class="table table-sm tablesorter excel">
+	<table class="table table-sm tablesorter excel" style="width: 400px;">
 	<thead>
 		<th>Beskrivelse</th>
 		<th>Antall personer</th>
@@ -28,14 +29,39 @@
 	</tbody>
 	</table>
 
-<p>Se detaljer for din virksomhet. Merk at ["UDE", "BYS", "VAV", "INE", "PBE", "BBY", "KRV", "REG"] ikke tildeles lisens på denne måten.</p>
-<p>Merk også at det vil ta ganske lang tid å åpne noen av disse rapportene, avhengig av antall ansatte.</p>
+<hr>
 
-<div style="display: grid; grid-template-columns: repeat(3, 1fr)">
-{% for v in virksomheter %}
-	<li><a href="{% url 'ansatte_virksomhet' pk=v.pk %}">{{ v }}</a></li>
-{% endfor %}
-</div>
+<h4>Nedbryting per virksomhet</h4>
+<p>Her er rapporter per virksomhet. Du kan trykke videre inn per virksomhet, men merk at det vil ta ganske lang tid å åpne noen av disse rapportene, avhengig av antall ansatte.</p>
 
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Virksomhet</th>
+		<th>Totalt antall</th>
+		<th>G1 Tykk klient</th>
+		<th>G2 Flerbruker</th>
+		<th>G3 Mangler epost</th>
+		<th>G4 Educaton</th>
+		<th>G5 IDA basis</th>
+	</thead>
+	<tbody>
+	{% for entry in full_table %}
+		<tr>
+			{% url 'ansatte_virksomhet' pk=entry.profile__virksomhet__id as url_ansatte_virksomhet %}
+			{% if url_ansatte_virksomhet %}
+			<td><a href="{{url_ansatte_virksomhet}}">{{ entry.profile__virksomhet__virksomhetsnavn|default:"Ingen virksomhet" }}</a></td>
+			{% else %}
+			<td>{{ entry.profile__virksomhet__virksomhetsnavn|default:"Ingen virksomhet" }}</td>
+			{% endif %}
+			<td>{{ entry.total_count }}</td>
+			<td>{{ entry.G1_count }}</td>
+			<td>{{ entry.G2_count }}</td>
+			<td>{{ entry.G3_count }}</td>
+			<td>{{ entry.G4_count }}</td>
+			<td>{{ entry.G5_count }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
 
 {% endblock hovedinnhold %}
