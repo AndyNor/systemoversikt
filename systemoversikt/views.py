@@ -2962,7 +2962,8 @@ def bruker_sok(request):
 	username_query = Q(**{'username__contains': terms[0]})
 	email_query = Q(**{'email': terms[0]})
 	sid_query = Q(**{'profile__object_sid__iexact': terms[0]})
-	query = reduce(or_, [query_display, username_query, email_query, sid_query])
+	desc_quert = Q(**{'profile__description': terms[0]})
+	query = reduce(or_, [query_display, username_query, email_query, sid_query, desc_quert])
 
 	if len(search_term) > 2:
 		users = User.objects.filter(query).distinct()

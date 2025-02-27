@@ -42,7 +42,7 @@
 			<td>{{ b.profile.job_title|default:"-" }}</td>
 			<td>{{ b.profile.ny365lisens|default:"Ingen" }}</td>
 			<td>
-				{{ b.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}<br>
+				Sist oppdatert: {{ b.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}<br>
 				{% for method in b.profile.entra_id_auth %}{{method}}{% if not forloop.last%}, {% endif%}{% endfor %}
 			</td>
 			<td>{{ b.profile.auth_sms|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
