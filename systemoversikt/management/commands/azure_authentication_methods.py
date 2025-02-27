@@ -24,7 +24,7 @@ class Command(BaseCommand):
 
 	SLEEP_BETWEEN = 0
 	SLEEP_TOO_MANY = 20
-	ITEMS_PER_DAY = 600
+	ITEMS_PER_DAY = 750
 
 	def handle(self, **options):
 
