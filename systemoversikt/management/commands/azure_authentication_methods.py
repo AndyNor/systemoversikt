@@ -5,6 +5,7 @@ from msgraph.core import GraphClient
 from systemoversikt.models import *
 import os, requests, json, time
 from datetime import datetime
+from django.utils import timezone
 from django.db.models import Q
 from systemoversikt.views import push_pushover
 import warnings
@@ -234,9 +235,11 @@ class Command(BaseCommand):
 			# Start oppsplitting
 			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None)))
 			Command.ANTALL_MED_LISENS = len(Command.users_with_license)
+			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
 			def process_items_for_today(my_items):
-				sorted_items = sorted(my_items, key=lambda x: getattr(x.profile, 'auth_methods_last_update', datetime.min) or datetime.min)
+				print(f"Sorterer alle brukere med lisens...")
+				sorted_items = sorted(my_items, key=lambda x: getattr(x.profile, 'auth_methods_last_update', timezone.make_aware(datetime.min)) or timezone.make_aware(datetime.min))
 				items_per_day = Command.ITEMS_PER_DAY
 				Command.users_to_be_processed = sorted_items[:items_per_day]
 
@@ -244,9 +247,8 @@ class Command(BaseCommand):
 			process_items_for_today(Command.users_with_license)
 
 
-			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
-
 			split_size = 20
+			print(f"Starter å splitte opp i bolker av {split_size}..")
 			i = 0
 
 			while i < len(Command.users_to_be_processed):
