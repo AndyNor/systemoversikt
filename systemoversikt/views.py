@@ -7428,41 +7428,11 @@ def alle_cmdbref(request):
 	search_term = request.GET.get('search_term', "").strip()
 
 	if search_term == "__all__":
-		cmdbref = CMDBRef.objects.all()#, parent_ref__operational_status=True)
+		cmdbref = CMDBRef.objects.all().order_by("parent_ref__navn", Lower("navn")) # vis også skjulte
 	elif len(search_term) < 1:
-		cmdbref = CMDBRef.objects.filter(operational_status=True).order_by("parent_ref__navn", Lower("navn"))
+		cmdbref = CMDBRef.objects.filter(operational_status=True, parent_ref__eksponert_for_bruker=True).order_by("parent_ref__navn", Lower("navn"))
 	else:
 		cmdbref = CMDBRef.objects.filter(navn__icontains=search_term, parent_ref__navn__icontains=search_term)
-
-	bs_uten_system = CMDBRef.objects.filter(operational_status=True).filter(Q(system=None))
-
-	skjult_server_db = []
-	skjult_server_db_candidates = (CMDBbs.objects
-			.filter(operational_status=True)
-			.filter(eksponert_for_bruker=False)
-			.distinct()
-	)
-	for bs in skjult_server_db_candidates:
-		if bs.ant_devices() > 0 or bs.ant_databaser() > 0:
-			skjult_server_db.append(bs)
-
-	virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
-	#print(virksomhet_uke)
-	# Alle plattformer knyttet til UKE som ikke er en underplattform (overordnet er None)
-	system_uten_bs = (System.objects
-			.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet_uke)
-			.filter(driftsmodell_foreignkey__overordnet_plattform=None)
-			.filter(service_offerings=None) # skal ikke ha kobling
-			.filter(systemtyper__er_infrastruktur=False)
-			.filter(ibruk=True)
-			.order_by('driftsmodell_foreignkey')
-			.distinct()
-	)
-
-	# telle servere med flere service offerings-koblinger
-	from django.db.models import Count
-	servere_flere_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=1)
-	servere_flereennto_offerings = CMDBdevice.objects.annotate(num_offerings=Count('service_offerings')).filter(num_offerings__gt=2)
 
 
 	return render(request, 'cmdb_bs_sok.html', {
@@ -7470,11 +7440,6 @@ def alle_cmdbref(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'cmdbref': cmdbref,
 		'search_term': search_term,
-		'bs_uten_system': bs_uten_system,
-		'system_uten_bs': system_uten_bs,
-		'skjult_server_db': skjult_server_db,
-		'servere_flere_offerings': servere_flere_offerings,
-		'servere_flereennto_offerings': servere_flereennto_offerings,
 	})
 
 

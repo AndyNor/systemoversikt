@@ -71,7 +71,7 @@
 					{% if not forloop.last %} og {% endif %}
 				{% endfor %}
 			</td>
-			<td>{{ item.parent_ref.navn|default:'?' }}</td>
+			<td><a href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ </a></a>{{ item.parent_ref.navn|default:'?' }}</td>
 			<td>
 				{{ item.service_classification|default:"" }}
 			</td>
