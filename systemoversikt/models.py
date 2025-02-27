@@ -1240,7 +1240,7 @@ class Profile(models.Model):
 		)
 	mail_enabled_groups = models.ManyToManyField(
 			to="ADgroup",
-			related_name='profile',
+			related_name='user_profile',
 			verbose_name="Medlemskap i mail enabled groups",
 			blank=True,
 			help_text=u'Settes via automatiske jobber',
