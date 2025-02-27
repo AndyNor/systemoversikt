@@ -30,6 +30,9 @@
 	<tr>
 		<th>Miljø (Service Offering)</th>
 		<th>Tilknyttet system</th>
+		<th>Systemkategori</th>
+		<th>Landingssone</th>
+		<th>Forvalter</th>
 		<th>Kategori (Business Service)</th>
 		<th>Service classification</th>
 		<th>Antall servere</th>
@@ -52,7 +55,20 @@
 			<td>
 				{% for system in item.system.all %}
 					{% url 'systemdetaljer' pk=system.pk as url_system %}
-					<a href="{{ url_system }}">{{ system }}</a><br>({{system.driftsmodell_foreignkey}})<br>
+					<a href="{{ url_system }}">{{ system }}</a>
+					{% if not forloop.last %} og {% endif %}
+				{% endfor %}
+			</td>
+			<td></td>
+			<td>
+				{% for system in item.system.all %}
+					{{system.driftsmodell_foreignkey}}
+					{% if not forloop.last %} og {% endif %}
+				{% endfor %}
+			</td>
+			<td>
+				{% for system in item.system.all %}
+					{{system.systemforvalter}} ({{system.systemforvalter_avdeling_referanse}})
 					{% if not forloop.last %} og {% endif %}
 				{% endfor %}
 			</td>
