@@ -15,11 +15,11 @@ import os, time
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		INTEGRASJON_KODEORD = "ad_drift_tilganger"
-		LOG_EVENT_TYPE = "AD gruppemedlemskap for alle aktive driftbrukere"
+		INTEGRASJON_KODEORD = "ad_sye_tilganger"
+		LOG_EVENT_TYPE = "AD gruppemedlemskap for alle aktive SYE-brukere"
 		KILDE = "Active Directory OSLOFELLES"
 		PROTOKOLL = "LDAP"
-		BESKRIVELSE = "Tilgangsgrupper for alle aktive driftbrukere"
+		BESKRIVELSE = "Tilgangsgrupper for alle aktive SYE-brukere"
 		FILNAVN = ""
 		URL = ""
 		FREKVENS = "Hver natt"
@@ -46,21 +46,23 @@ class Command(BaseCommand):
 
 		try:
 			antall_oppslag = 0
-			driftbrukere = User.objects.filter(profile__accountdisable=False).filter(Q(username__istartswith="DRIFT") | Q(profile__distinguishedname__icontains="ServiceAccounts"))
-			antall_brukere = len(driftbrukere)
-			for bruker in driftbrukere:
+			syebrukere = User.objects.filter(profile__accountdisable=False).filter(Q(username__istartswith="SYE"))
+			antall_brukere = len(syebrukere)
+			for bruker in syebrukere:
 				antall_oppslag += 1
 				if antall_oppslag % 25 == 0:
 					print(f"{antall_oppslag} av {antall_brukere}")
 				#print("slår opp %s" % (bruker))
-				bruker.profile.adgrupper.clear() # tøm alle eksisterende
+				bruker.profile.mail_enabled_groups.clear() # tøm alle eksisterende
 				grupper = ldap_users_securitygroups(bruker.username)
 				for g in grupper:
 					try:
 						adg = ADgroup.objects.get(distinguishedname=g)
-						bruker.profile.adgrupper.add(adg)
-						bruker.profile.adgrupper_antall = len(grupper)
-						bruker.profile.save()
+						if adg.mail:
+							bruker.mail_enabled_groups.add(adg)
+						#bruker.profile.adgrupper.add(adg)
+						#bruker.profile.adgrupper_antall = len(grupper)
+						#bruker.profile.save() # Det er ikke behov for å lagre når en legger til ting
 					except:
 						print("Error, fant ikke %s" % (g))
 

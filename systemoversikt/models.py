@@ -1238,6 +1238,13 @@ class Profile(models.Model):
 		blank=True, null=True,
 		help_text=u"Settes basert på automatikk",
 		)
+	mail_enabled_groups = models.ManyToManyField(
+			to="ADgroup",
+			related_name='profile',
+			verbose_name="Medlemskap i mail enabled groups",
+			blank=True,
+			help_text=u'Settes via automatiske jobber',
+			)
 	# med vilje er det ikke HistoricalRecords() på denne
 
 	def __str__(self):

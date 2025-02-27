@@ -91,6 +91,7 @@
 			<th>E-post</th>
 			{% comment %}<th>Avdeling</th>{% endcomment %}
 			<th>Seksjon</th>
+			<th>Mail enabled groups</th>
 			<th>Min leder</th>
 		</tr>
 		</thead>
@@ -104,7 +105,7 @@
 			<td>{{ b.profile.ny365lisens|default:"Ingen" }}</td>
 			<td>
 				{{ b.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}<br>
-				{% for method in b.profile.entra_id_auth %}{{method}}{% if not forloop.last%}, {% endif%}{% endfor %}
+				{% for method in b.profile.entra_id_auth %}{{ method }}{% if not forloop.last%}, {% endif%}{% endfor %}
 			</td>
 			<td>{{ b.profile.auth_sms|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
 			<td>{{ b.profile.auth_fido2|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
@@ -112,6 +113,9 @@
 			<td>{{ b.email }}</td>
 			{% comment %}<td>{{ b.profile.avdeling|default:"-" }}</td>{% endcomment %}
 			<td>{{ b.profile.org_unit|default:"-" }}</td>
+			<td>
+				{% for gruppe in b.profile.mail_enabled_groups.all %}{{ gruppe }}<br>{% endfor %}
+			</td>
 			<td>{{ b.profile.min_leder|default:"-" }}</td>
 		</tr>
 		{% endfor %}
