@@ -295,7 +295,7 @@ class Command(BaseCommand):
 			int_config.helsestatus = f"Feilet\n{traceback.format_exc()}"
 			print(int_config.helsestatus)
 			int_config.save()
-			#push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
+			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
 
 
