@@ -233,7 +233,7 @@ class Command(BaseCommand):
 			Command.ANTALL_MED_LISENS = len(Command.users_with_license)
 
 			def process_items_for_today(my_items):
-				sorted_items = sorted(my_items, key=lambda x: x.get('profile__auth_methods_last_update') or datetime.min)
+				sorted_items = sorted(my_items, key=lambda x: x.profile.get('auth_methods_last_update') or datetime.min)
 				items_per_day = COMMAND.ITEMS_PER_DAY
 				COMMAND.users_to_be_processed = sorted_items[:items_per_day]
 
@@ -278,7 +278,7 @@ class Command(BaseCommand):
 			int_config.helsestatus = f"Feilet\n{traceback.format_exc()}"
 			print(int_config.helsestatus)
 			int_config.save()
-			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
+			#push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
 
 
