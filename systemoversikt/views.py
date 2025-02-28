@@ -1492,11 +1492,13 @@ def tool_csv_converter(request):
 
 		#print(header)
 		print(len(rows))
+		antall_vist = 5000
 
 	return render(request, 'tool_csv_converter.html', {
 		'request': request,
-		'rows': rows[0:100] if 'rows' in locals() else None,
+		'rows': rows[0:antall_vist] if 'rows' in locals() else None,
 		'header': header if 'header' in locals() else None,
+		'antall_vist': antall_vist,
 	})
 
 
