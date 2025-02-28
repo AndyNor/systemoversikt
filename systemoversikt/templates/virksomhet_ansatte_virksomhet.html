@@ -30,6 +30,7 @@
 			<th>E-post</th>
 			{% comment %}<th>Avdeling</th>{% endcomment %}
 			<th>Seksjon</th>
+			<th>Mail enabled groups</th>
 			<th>Min leder</th>
 		</tr>
 		</thead>
@@ -51,6 +52,9 @@
 			<td>{{ b.email }}</td>
 			{% comment %}<td>{{ b.profile.avdeling|default:"-" }}</td>{% endcomment %}
 			<td>{{ b.profile.org_unit|default:"-" }}</td>
+			<td>
+				{% for gruppe in b.profile.mail_enabled_groups.all %}<li>{{ gruppe }}</li><br>{% endfor %}
+			</td>
 			<td>{{ b.profile.min_leder|default:"-" }}</td>
 		</tr>
 		{% endfor %}
