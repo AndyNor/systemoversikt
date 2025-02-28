@@ -114,7 +114,7 @@
 			{% comment %}<td>{{ b.profile.avdeling|default:"-" }}</td>{% endcomment %}
 			<td>{{ b.profile.org_unit|default:"-" }}</td>
 			<td>
-				{% for gruppe in b.profile.mail_enabled_groups.all %}<li>{{ gruppe }}</li><br>{% endfor %}
+				{% for gruppe in b.profile.mail_enabled_groups.all %}<li>{{ gruppe }}</li>{% endfor %}
 			</td>
 			<td>{{ b.profile.min_leder|default:"-" }}</td>
 		</tr>
