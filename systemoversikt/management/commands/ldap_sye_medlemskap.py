@@ -44,6 +44,21 @@ class Command(BaseCommand):
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
+
+		for profile in Profile.objects.all():
+			if profile.ad_sist_oppdatert == None:
+				print(f"{profile} har ad_sist_oppdatert == None")
+			if profile.lastLogonTimestamp == None:
+				print(f"{profile} har lastLogonTimestamp == None")
+			if profile.userPasswordExpiry == None:
+				print(f"{profile} har userPasswordExpiry == None")
+			if profile.whenCreated == None:
+				print(f"{profile} har whenCreated == None")
+			if profile.pwdLastSet == None:
+				print(f"{profile} har pwdLastSet == None")
+			if profile.auth_methods_last_update == None:
+				print(f"{profile} har auth_methods_last_update == None")
+
 		try:
 			antall_oppslag = 0
 			syebrukere = User.objects.filter(profile__accountdisable=False).filter(Q(username__istartswith="SYE"))
@@ -60,7 +75,7 @@ class Command(BaseCommand):
 						adg = ADgroup.objects.get(distinguishedname=g)
 						if adg.mail:
 							print(f"Legger til {adg} for {bruker}")
-							bruker.mail_enabled_groups.add(adg)
+							bruker.profile.mail_enabled_groups.add(adg)
 						#print(f"Fant gruppen {adg}")
 						#bruker.profile.adgrupper.add(adg)
 						#bruker.profile.adgrupper_antall = len(grupper)
