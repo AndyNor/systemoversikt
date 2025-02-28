@@ -45,9 +45,15 @@ class Command(BaseCommand):
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 
+		from django.core.exceptions import ValidationError
 		for profile in Profile.objects.all():
-			if profile.ad_sist_oppdatert == None:
-				print(f"{profile} har ad_sist_oppdatert == None")
+			try:
+				if profile.ad_sist_oppdatert == None:
+					print(f"{profile} har ad_sist_oppdatert == None")
+			except ValidationError as e:
+				print(f"Validation error for profile {profile.id}: {e}")
+
+			"""
 			if profile.lastLogonTimestamp == None:
 				print(f"{profile} har lastLogonTimestamp == None")
 			if profile.userPasswordExpiry == None:
@@ -58,6 +64,7 @@ class Command(BaseCommand):
 				print(f"{profile} har pwdLastSet == None")
 			if profile.auth_methods_last_update == None:
 				print(f"{profile} har auth_methods_last_update == None")
+			"""
 
 		try:
 			antall_oppslag = 0
