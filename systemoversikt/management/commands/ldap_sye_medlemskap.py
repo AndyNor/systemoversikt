@@ -64,6 +64,10 @@ class Command(BaseCommand):
 				print(f"{profile} har pwdLastSet == None")
 			if profile.auth_methods_last_update == None:
 				print(f"{profile} har auth_methods_last_update == None")
+
+
+			'ad_sist_oppdatert', 'lastLogonTimestamp', 'userPasswordExpiry','whenCreated', 'pwdLastSet', 'auth_methods_last_update'
+
 			"""
 
 		try:
