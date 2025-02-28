@@ -49,7 +49,7 @@ class Command(BaseCommand):
 			driftbrukere = User.objects.filter(profile__accountdisable=False).filter(Q(username__istartswith="DRIFT") | Q(profile__distinguishedname__icontains="ServiceAccounts"))
 			antall_brukere = len(driftbrukere)
 			for bruker in driftbrukere:
-				print(f"{bruker} {bruker.profile.userPasswordExpiry}")
+				#print(f"{bruker} {bruker.profile.userPasswordExpiry}")
 				antall_oppslag += 1
 				if antall_oppslag % 25 == 0:
 					print(f"{antall_oppslag} av {antall_brukere}")
