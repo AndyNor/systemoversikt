@@ -1483,6 +1483,7 @@ def tool_docx2html(request):
 
 
 def tool_csv_converter(request):
+	antall_vist = 5000
 	if request.method == "POST":
 		import csv
 		from io import StringIO
@@ -1491,8 +1492,7 @@ def tool_csv_converter(request):
 		header = list(rows[0].keys())
 
 		#print(header)
-		print(len(rows))
-		antall_vist = 5000
+		#print(len(rows))
 
 	return render(request, 'tool_csv_converter.html', {
 		'request': request,
