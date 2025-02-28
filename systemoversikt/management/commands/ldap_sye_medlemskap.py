@@ -45,31 +45,6 @@ class Command(BaseCommand):
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 
 
-		from django.core.exceptions import ValidationError
-		for profile in Profile.objects.all():
-			try:
-				if profile.ad_sist_oppdatert == None:
-					print(f"{profile} har ad_sist_oppdatert == None")
-			except ValidationError as e:
-				print(f"Validation error for profile {profile.id}: {e}")
-
-			"""
-			if profile.lastLogonTimestamp == None:
-				print(f"{profile} har lastLogonTimestamp == None")
-			if profile.userPasswordExpiry == None:
-				print(f"{profile} har userPasswordExpiry == None")
-			if profile.whenCreated == None:
-				print(f"{profile} har whenCreated == None")
-			if profile.pwdLastSet == None:
-				print(f"{profile} har pwdLastSet == None")
-			if profile.auth_methods_last_update == None:
-				print(f"{profile} har auth_methods_last_update == None")
-
-
-			'ad_sist_oppdatert', 'lastLogonTimestamp', 'userPasswordExpiry','whenCreated', 'pwdLastSet', 'auth_methods_last_update'
-
-			"""
-
 		try:
 			antall_oppslag = 0
 			syebrukere = User.objects.filter(profile__accountdisable=False).filter(Q(username__istartswith="SYE"))

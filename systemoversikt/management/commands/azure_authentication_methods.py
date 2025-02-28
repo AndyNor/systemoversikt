@@ -244,11 +244,13 @@ class Command(BaseCommand):
 
 				# Preprocess the items to make timestamps timezone-aware
 				for item in my_items:
-					if not item.profile.auth_methods_last_update:
-						item.profile.auth_methods_last_update = timezone.make_aware(datetime.min)
+					if item.profile.auth_methods_last_update:
+						item.profile.auth_methods_last_update_tmp = item.profile.auth_methods_last_update
+					else:
+						item.profile.auth_methods_last_update_tmp = timezone.make_aware(datetime.min)
 
 				# Sort items by the preprocessed auth_methods_last_update timestamp
-				sorted_items = sorted(my_items, key=lambda x: x.profile.auth_methods_last_update)
+				sorted_items = sorted(my_items, key=lambda x: x.profile.auth_methods_last_update_tmp)
 
 				items_per_day = Command.ITEMS_PER_DAY
 				Command.users_to_be_processed = sorted_items[:items_per_day]
