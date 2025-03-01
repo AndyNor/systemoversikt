@@ -7434,7 +7434,7 @@ def alle_cmdbref(request):
 	elif len(search_term) < 1:
 		cmdbref = CMDBRef.objects.filter(operational_status=True, parent_ref__eksponert_for_bruker=True).order_by("parent_ref__navn", Lower("navn"))
 	else:
-		cmdbref = CMDBRef.objects.filter(navn__icontains=search_term, parent_ref__navn__icontains=search_term)
+		cmdbref = CMDBRef.objects.filter(Q(navn__icontains=search_term) | Q(parent_ref__navn__icontains=search_term))
 
 
 	return render(request, 'cmdb_bs_sok.html', {
