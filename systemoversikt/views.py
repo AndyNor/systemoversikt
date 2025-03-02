@@ -23,7 +23,7 @@ from django.db.models import Sum, F
 import ipaddress
 import os, datetime, json, re, time, struct
 from django.utils import timezone
-
+from django.db.models.functions import TruncDate
 
 
 ##########################
@@ -2018,6 +2018,66 @@ def isk_ansvarlig_for_system(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'aktuelle_systemer': aktuelle_systemer,
+	})
+
+
+def rapport_entra_id_auth(request):
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	data = []
+	data.append({"tekst": "Telefon oppringing", "antall": len(User.objects.filter(profile__auth_methods__icontains="voiceAuthenticationMethod"))})
+	data.append({"tekst": "SMS", "antall": len(User.objects.filter(profile__auth_methods__icontains="phoneAuthenticationMethod"))})
+	data.append({"tekst": "Sertifikat", "antall": len(User.objects.filter(profile__auth_methods__icontains="certificateBasedAuthentication"))})
+	data.append({"tekst": "Temporary Access Pass", "antall": len(User.objects.filter(profile__auth_methods__icontains="temporaryAccessPassAuthenticationMethod"))})
+	data.append({"tekst": "FIDO2", "antall": len(User.objects.filter(profile__auth_methods__icontains="fido2AuthenticationMethod"))})
+	data.append({"tekst": "Authenticator", "antall": len(User.objects.filter(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod"))})
+	data.append({"tekst": "Oauth Software", "antall": len(User.objects.filter(profile__auth_methods__icontains="oathSoftwareTokenAuthenticationMethod"))})
+	data.append({"tekst": "Oauth Hardware", "antall": len(User.objects.filter(profile__auth_methods__icontains="oathHardwareTokenAuthenticationMethod"))})
+
+	full_table = User.objects.values('profile__virksomhet__virksomhetsnavn', 'profile__virksomhet__id').annotate(
+		total_count_lisence=Count('id', filter=Q(
+			Q(profile__ny365lisens__icontains="G1") |
+			Q(profile__ny365lisens__icontains="G2") |
+			Q(profile__ny365lisens__icontains="G3") |
+			Q(profile__ny365lisens__icontains="G4") |
+			Q(profile__ny365lisens__icontains="G5")
+		)),
+		total_count_no_auth=Count('id', filter=~Q(
+			Q(profile__auth_methods__icontains="voiceAuthenticationMethod") |
+			Q(profile__auth_methods__icontains="phoneAuthenticationMethod") |
+			#Q(profile__auth_methods__icontains="certificateBasedAuthentication") | # ikke relevant
+			#Q(profile__auth_methods__icontains="temporaryAccessPassAuthenticationMethod") | # ikke relevant
+			Q(profile__auth_methods__icontains="fido2AuthenticationMethod") |
+			Q(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod") |
+			Q(profile__auth_methods__icontains="oathSoftwareTokenAuthenticationMethod") |
+			Q(profile__auth_methods__icontains="oathHardwareTokenAuthenticationMethod")
+		) & Q(
+			Q(profile__ny365lisens__icontains="G1") |
+			Q(profile__ny365lisens__icontains="G2") |
+			Q(profile__ny365lisens__icontains="G3") |
+			Q(profile__ny365lisens__icontains="G4") |
+			Q(profile__ny365lisens__icontains="G5")
+		)),
+		voiceAuthenticationMethod=Count('id', filter=Q(profile__auth_methods__icontains="voiceAuthenticationMethod")),
+		phoneAuthenticationMethod=Count('id', filter=Q(profile__auth_methods__icontains="phoneAuthenticationMethod")),
+		certificateBasedAuthentication=Count('id', filter=Q(profile__auth_methods__icontains="certificateBasedAuthentication")),
+		temporaryAccessPassAuthenticationMethod=Count('id', filter=Q(profile__auth_methods__icontains="temporaryAccessPassAuthenticationMethod")),
+		fido2AuthenticationMethod=Count('id', filter=Q(profile__auth_methods__icontains="fido2AuthenticationMethod")),
+		microsoftAuthenticatorAuthenticationMethod=Count('id', filter=Q(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod")),
+		oathSoftwareTokenAuthenticationMethod=Count('id', filter=Q(profile__auth_methods__icontains="oathSoftwareTokenAuthenticationMethod")),
+		oathHardwareTokenAuthenticationMethod=Count('id', filter=Q(profile__auth_methods__icontains="oathHardwareTokenAuthenticationMethod")),
+	)
+
+	update_stats = Profile.objects.annotate(day=TruncDate('auth_methods_last_update')).values('day').annotate(count=Count('user')).order_by('day')
+
+	return render(request, 'rapport_entra_id_auth.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'data': data,
+		'full_table': full_table,
+		'update_stats': update_stats,
 	})
 
 

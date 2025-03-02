@@ -1,0 +1,94 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Entra ID autentiseringsmetoder
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Her vises statistikk over MFA-metoder for ulike brukergrupper. Det synkroniseres MFA hver natt for alle brukere på felles IKT-plattform som har tildelt en M365-lisens. Brukere går på rundgang slik at alle blir sjekket ca. 1 gang per uke, og det er de som har lengst tid siden oppdatering som blir oppdatert hver natt.</p>
+
+
+<h5>Totalt for alle med lisens</h5>
+<table class="table table-sm tablesorter excel" style="width: 400px;">
+<thead>
+	<th>Beskrivelse</th>
+	<th>Antall personer</th>
+</thead>
+<tbody>
+{% for d in data %}
+	<tr>
+		<td>{{d.tekst}}</td>
+		<td>{{d.antall}}</td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h5>Når sist oppdatert</h5>
+<table class="table table-sm tablesorter excel" style="width: 400px;">
+	<thead>
+		<tr>
+		<th>Dato</th>
+		<th>Antall oppdatert</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for stat in update_stats %}
+		<tr>
+			<td>{{ stat.day|default:"Aldri" }} {% if stat.day %}({{ stat.day|timesince }}) {% endif %}</td>
+			<td>{{ stat.count }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+
+<hr>
+
+<h5>Nedbryting per virksomhet</h5>
+<p>Her er rapporter per virksomhet. Du kan trykke videre inn per virksomhet, men merk at det vil ta ganske lang tid å åpne noen av disse rapportene, avhengig av antall ansatte.</p>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Virksomhet</th>
+		<th>Antall med lisens</th>
+		<th>Antall ingen metode</th>
+		<th>Telefon oppringing</th>
+		<th>SMS</th>
+		<th>Sertifikat</th>
+		<th>Temporary Access Pass</th>
+		<th>FIDO2</th>
+		<th>Authenticator</th>
+		<th>Oauth Software</th>
+		<th>Oauth Hardware</th>
+	</thead>
+	<tbody>
+	{% for entry in full_table %}
+		<tr>
+			{% url 'ansatte_virksomhet' pk=entry.profile__virksomhet__id as url_ansatte_virksomhet %}
+			{% if url_ansatte_virksomhet %}
+			<td><a href="{{url_ansatte_virksomhet}}">{{ entry.profile__virksomhet__virksomhetsnavn|default:"Ingen virksomhet" }}</a></td>
+			{% else %}
+			<td>{{ entry.profile__virksomhet__virksomhetsnavn|default:"Ingen virksomhet" }}</td>
+			{% endif %}
+			<td>{{ entry.total_count_lisence }}</td>
+			<td>{{ entry.total_count_no_auth }}</td>
+			<td>{{ entry.voiceAuthenticationMethod }}</td>
+			<td>{{ entry.phoneAuthenticationMethod }}</td>
+			<td>{{ entry.certificateBasedAuthentication }}</td>
+			<td>{{ entry.temporaryAccessPassAuthenticationMethod }}</td>
+			<td>{{ entry.fido2AuthenticationMethod }}</td>
+			<td>{{ entry.microsoftAuthenticatorAuthenticationMethod }}</td>
+			<td>{{ entry.oathSoftwareTokenAuthenticationMethod }}</td>
+			<td>{{ entry.oathHardwareTokenAuthenticationMethod }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

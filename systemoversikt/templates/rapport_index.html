@@ -93,6 +93,10 @@
 		{% url 'o365_lisenser' as url_o365_lisenser %}
 		<a href="{{ url_o365_lisenser }}" class="btn btn-sm btn-link {% if url_o365_lisenser in request.path %}fremhev{% endif %}">M365-lisenser</a><br>
 
+		{% url 'rapport_entra_id_auth' as url_rapport_entra_id_auth %}
+		<a href="{{ url_rapport_entra_id_auth }}" class="btn btn-sm btn-link {% if url_rapport_entra_id_auth in request.path %}fremhev{% endif %}">Entra ID MFA</a><br>
+
+
 		{% url 'rapport_ad_identer' as url_rapport_ad_identer %}
 		<a href="{{ url_rapport_ad_identer }}" class="btn btn-sm btn-link {% if url_rapport_ad_identer in request.path %}fremhev{% endif %}">AD-identnedbryting</a><br>
 
