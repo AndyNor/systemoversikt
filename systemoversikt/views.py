@@ -2070,7 +2070,7 @@ def rapport_entra_id_auth(request):
 		oathHardwareTokenAuthenticationMethod=Count('id', filter=Q(profile__auth_methods__icontains="oathHardwareTokenAuthenticationMethod")),
 	)
 
-	update_stats = Profile.objects.annotate(day=TruncDate('auth_methods_last_update')).values('day').annotate(count=Count('user')).order_by('day')
+	update_stats = Profile.objects.filter(~Q(ny365lisens=None)).annotate(day=TruncDate('auth_methods_last_update')).values('day').annotate(count=Count('user')).order_by('day')
 
 	return render(request, 'rapport_entra_id_auth.html', {
 		'request': request,
