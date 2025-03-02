@@ -888,8 +888,8 @@ def vulnstats(request):
 				month=TruncMonth('first_seen')
 				).values('year', 'month').annotate(count=Count('id')).order_by('year', 'month')
 
-	data["vulns_first_seen_monthly_public_facing_5"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[5]).values('title').annotate(count=Count('title')).order_by('-count')
-	data["vulns_first_seen_monthly_public_facing_4"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[4]).values('title').annotate(count=Count('title')).order_by('-count')
+	data["vulns_first_seen_monthly_public_facing_5"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[5]).values('title', 'akseptert').annotate(count=Count('title')).order_by('-count')
+	data["vulns_first_seen_monthly_public_facing_4"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[4]).values('title', 'akseptert').annotate(count=Count('title')).order_by('-count')
 
 	return render(request, 'rapport_vulnstats.html', {
 		'request': request,
@@ -1090,7 +1090,7 @@ def vulnstats_severity_known_exploited_public(request, severity):
 	antall = len(QualysVuln.objects.filter(known_exploited=True, public_facing=True, severity=severity))
 
 	data = {}
-	data["top_unike_vulns"] = QualysVuln.objects.filter(known_exploited=True, public_facing=True, severity=severity).values('title').annotate(count=Count('title')).order_by('-count')
+	data["top_unike_vulns"] = QualysVuln.objects.filter(known_exploited=True, public_facing=True, severity=severity).values('title', 'akseptert').annotate(count=Count('title')).order_by('-count')
 
 	return render(request, 'rapport_vulnstats_severity_known_exp_public.html', {
 		'request': request,
@@ -1115,7 +1115,7 @@ def vulnstats_severity_known_exploited_public_not_current(request, severity):
 	antall = len(QualysVuln.objects.filter(known_exploited=True, public_facing=True, severity=severity, first_seen__lte=for_nytt))
 
 	data = {}
-	data["top_unike_vulns"] = QualysVuln.objects.filter(known_exploited=True, public_facing=True, severity=severity, first_seen__lte=for_nytt).values('title').annotate(count=Count('title')).order_by('-count')
+	data["top_unike_vulns"] = QualysVuln.objects.filter(known_exploited=True, public_facing=True, severity=severity, first_seen__lte=for_nytt).values('title', 'akseptert').annotate(count=Count('title')).order_by('-count')
 
 	return render(request, 'rapport_vulnstats_severity_known_exp_public.html', {
 		'request': request,
@@ -1167,7 +1167,7 @@ def vulnstats_severity_known_exploited_not_current(request, severity):
 
 
 	data = {}
-	data["top_unike_vulns"] = QualysVuln.objects.filter(known_exploited=True, severity=severity, first_seen__lte=for_nytt).values('title').annotate(count=Count('title')).order_by('-count')
+	data["top_unike_vulns"] = QualysVuln.objects.filter(known_exploited=True, severity=severity, first_seen__lte=for_nytt).values('title', 'akseptert').annotate(count=Count('title')).order_by('-count')
 
 	return render(request, 'rapport_vulnstats_severity_known_exp.html', {
 		'request': request,
@@ -1193,7 +1193,7 @@ def vulnstats_severity(request, severity):
 	antall = len(QualysVuln.objects.filter(severity=severity))
 
 	data = {}
-	top_unike_vulns = QualysVuln.objects.filter(severity=severity).values('title').annotate(count=Count('title')).order_by('-count')
+	top_unike_vulns = QualysVuln.objects.filter(severity=severity).values('title', 'akseptert').annotate(count=Count('title')).order_by('-count')
 	data["top_unike_vulns"] = top_unike_vulns
 
 	return render(request, 'rapport_vulnstats_severity.html', {
@@ -1220,7 +1220,7 @@ def vulnstats_severity_not_current(request, severity):
 	antall = len(QualysVuln.objects.filter(severity=severity, first_seen__lte=for_nytt))
 
 	data = {}
-	top_unike_vulns = QualysVuln.objects.filter(severity=severity, first_seen__lte=for_nytt).values('title').annotate(count=Count('title')).order_by('-count')
+	top_unike_vulns = QualysVuln.objects.filter(severity=severity, first_seen__lte=for_nytt).values('title', 'akseptert').annotate(count=Count('title')).order_by('-count')
 	data["top_unike_vulns"] = top_unike_vulns
 
 	return render(request, 'rapport_vulnstats_severity.html', {
@@ -1772,22 +1772,33 @@ def azure_user_consents(request):
 
 
 
-def rapport_conditional_access(request):
+def rapport_conditional_access_rules(request):
 	required_permissions = ['systemoversikt.view_entraidconditionalaccesspolicies']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	antall_siste_endringer = 10
-
-	ca_regler_endringer = EntraIDConditionalAccessPolicies.objects.filter(modification=True).order_by('-timestamp')[:antall_siste_endringer]
 	ca_regler_nyeste = EntraIDConditionalAccessPolicies.objects.latest()
 
-	return render(request, 'rapport_conditional_access.html', {
+	return render(request, 'rapport_conditional_access_rules.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-		'antall_siste_endringer': antall_siste_endringer,
-		'ca_regler_endringer': ca_regler_endringer,
 		'ca_regler_nyeste': ca_regler_nyeste,
+	})
+
+
+
+def rapport_conditional_access_changes(request):
+	required_permissions = ['systemoversikt.view_entraidconditionalaccesspolicies']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	antall_siste_endringer = 15
+	ca_regler_endringer = EntraIDConditionalAccessPolicies.objects.filter(modification=True).order_by('-timestamp')[:antall_siste_endringer]
+
+	return render(request, 'rapport_conditional_access_changes.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'ca_regler_endringer': ca_regler_endringer,
 	})
 
 

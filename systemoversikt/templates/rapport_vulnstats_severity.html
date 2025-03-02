@@ -24,6 +24,7 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 <thead>
 <tr>
 	<th>Tittel</th>
+	<th>Akseptert</th>
 	<th>Antall</th>
 </tr>
 </thead>
@@ -31,6 +32,7 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 {% for vuln in data.top_unike_vulns %}
 <tr>
 	<td><a href="{% url 'vulnstats_whereis' vuln=vuln.title %}">{{ vuln.title }}</a></td>
+	<td>{{ vuln.akseptert|yesno:"Ja,Nei" }}</td>
 	<td>{{ vuln.count }}</td>
 </tr>
 {% endfor %}

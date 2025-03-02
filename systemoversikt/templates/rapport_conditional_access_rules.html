@@ -1,0 +1,36 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block overskrift %}
+	Azure felles: Conditional Access-regler
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Denne rapporten viser gjeldende Conditional Access-regler i felles Azure-tenant. Regler oppdateres hver natt.</p>
+
+<h5>CA-regler nå (sist synkronisering)</h5>
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Regelnavn</th>
+	<th>grantControls</th>
+	<th>sessionControls</th>
+	<th>conditions</th>
+</tr>
+</thead>
+<tbody>
+{% for regel in ca_regler_nyeste.json_policy_as_json.value %}
+<tr>
+	<td width="20%">{{regel.displayName}} ({{regel.state}})</td>
+	<td width="25%"><pre style="white-space: pre-wrap; overflow-wrap: anywhere;;">{{regel.grantControls|json_remove_empty|json_indent}}</pre></td>
+	<td width="25%"><pre style="white-space: pre-wrap; overflow-wrap: anywhere;;">{{regel.sessionControls|json_remove_empty|json_indent}}</pre></td>
+	<td width="30%"><pre style="white-space: pre-wrap; overflow-wrap: anywhere;;">{{regel.conditions|json_remove_empty|json_indent}}</pre></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock hovedinnhold %}

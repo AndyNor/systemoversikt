@@ -6,9 +6,12 @@ import random
 from systemoversikt.models import *
 from django.contrib.auth.models import Permission
 import datetime
+import re
 
 register = template.Library()
 
+
+### quarter
 @register.filter
 def quarter(value):
 	if isinstance(value, datetime.date):
@@ -24,6 +27,7 @@ def quarter(value):
 	return ""
 
 
+### get_odata_type
 @register.filter
 def get_odata_type(value):
 	if value.get('@odata.type') == "#microsoft.graph.administrativeUnit":
@@ -33,6 +37,7 @@ def get_odata_type(value):
 	return value.get('@odata.type', '')
 
 
+### json_indent
 @register.filter
 def json_indent(value):
 	try:
@@ -41,6 +46,28 @@ def json_indent(value):
 		'filter "json_indent" feilet'
 
 
+
+### json_remove_empty
+def filter_non_null_properties_recursive(json_obj):
+	if isinstance(json_obj, dict):
+		return {k: filter_non_null_properties_recursive(v) for k, v in json_obj.items() if v is not None and v != []}
+	elif isinstance(json_obj, list):
+		return [filter_non_null_properties_recursive(item) for item in json_obj if item is not None and item != []]
+	else:
+		return json_obj
+
+
+@register.filter
+def json_remove_empty(json_obj):
+	if isinstance(json_obj, dict):
+		return {k: filter_non_null_properties_recursive(v) for k, v in json_obj.items() if v is not None and v != []}
+	elif isinstance(json_obj, list):
+		return [filter_non_null_properties_recursive(item) for item in json_obj if item is not None and item != []]
+	else:
+		return json_obj
+
+
+### group_from_permission
 @register.simple_tag
 def group_from_permission(permission_str):
 	try:
@@ -70,6 +97,7 @@ def group_from_permission(permission_str):
 		return f'Ingen treff på rettighet "{permission_str}"'
 
 
+### fellesinformasjon
 @register.simple_tag(name='fellesinformasjon')
 def fellesinformasjon():
 

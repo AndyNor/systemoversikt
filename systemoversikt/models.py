@@ -41,6 +41,29 @@ VALG_KLARGJORT_SIKKERHETSMODELL = (
 )
 
 
+def conditional_access_replace_guid(data):
+	def lookup_azure_id(azure_id):
+		try:
+			return AzureApplication.objects.get(appId=azure_id).__str__()
+		except AzureApplication.DoesNotExist:
+			pass
+		try:
+			return AzureNamedLocations.objects.get(ipNamedLocation_id=azure_id).__str__()
+		except AzureNamedLocations.DoesNotExist:
+			pass
+		return azure_id
+
+	id_pattern = re.compile(r'\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b')
+
+	def replace_id(match):
+		azure_id = match.group(0)
+		return lookup_azure_id(azure_id)
+
+	# Replace all IDs in the data
+	data = id_pattern.sub(replace_id, data)
+	return data
+
+
 class EntraIDConditionalAccessPolicies(models.Model):
 	timestamp = models.DateTimeField(
 			verbose_name="Lastet inn",
@@ -69,16 +92,35 @@ class EntraIDConditionalAccessPolicies(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 		get_latest_by = 'timestamp'
 
+
+
 	def changes_to_json(self):
 		#import ast
 		try:
-			return json.dumps(ast.literal_eval(self.changes), indent=4)
+			data = json.dumps(ast.literal_eval(self.changes), indent=4)
+			data = conditional_access_replace_guid(data)
+			return data
 		except:
 			return {}
 
-	def json_policy_as_json(self):
-		return json.loads(self.json_policy)
 
+
+	def json_policy_as_json(self):
+		data = self.json_policy
+		data = conditional_access_replace_guid(data)
+		# Convert back to JSON object
+		return json.loads(data)
+
+
+def global_azureid_lookup(value):
+	# Regular expression to match the Azure ID format
+	id_pattern = re.compile(r'\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b')
+	# Function to replace each ID with the lookup result
+	def replace_id(match):
+		azure_id = match.group(0)
+		return lookup_azure_id(azure_id)
+	# Replace all IDs in the value
+	return id_pattern.sub(replace_id, value)
 
 
 class CitrixPublication(models.Model):

@@ -247,6 +247,7 @@ const first_seen_monthly_public_myChart_5 = new Chart(document.getElementById('v
 <thead>
 <tr>
 	<th>Tittel</th>
+	<th>Akseptert</th>
 	<th>Antall</th>
 </tr>
 </thead>
@@ -254,6 +255,7 @@ const first_seen_monthly_public_myChart_5 = new Chart(document.getElementById('v
 {% for vuln in data.vulns_first_seen_monthly_public_facing_5 %}
 <tr>
 	<td><a href="{% url 'vulnstats_whereis' vuln=vuln.title %}">{{ vuln.title }}</a></td>
+	<td>{{ vuln.akseptert|yesno:"Ja,Nei" }}</td>
 	<td>{{ vuln.count }}</td>
 </tr>
 {% endfor %}
@@ -306,6 +308,7 @@ const first_seen_monthly_public_myChart_4 = new Chart(document.getElementById('v
 <thead>
 <tr>
 	<th>Tittel</th>
+	<th>Akseptert</th>
 	<th>Antall</th>
 </tr>
 </thead>
@@ -313,6 +316,7 @@ const first_seen_monthly_public_myChart_4 = new Chart(document.getElementById('v
 {% for vuln in data.vulns_first_seen_monthly_public_facing_4 %}
 <tr>
 	<td><a href="{% url 'vulnstats_whereis' vuln=vuln.title %}">{{ vuln.title }}</a></td>
+	<td>{{ vuln.akseptert|yesno:"Ja,Nei" }}</td>
 	<td>{{ vuln.count }}</td>
 </tr>
 {% endfor %}

@@ -155,8 +155,8 @@ urlpatterns = [
 	re_path(r'^rapport/vulnstats/servere_uten_vuln/$', views.vulnstats_servere_uten_vuln, name="vulnstats_servere_uten_vuln"),
 	re_path(r'^rapport/systemer/forsomt/$', views.rapport_systemer_forsomt, name="rapport_systemer_forsomt"),
 	re_path(r'^rapport/sikkerhetstester/$', views.rapport_sikkerhetstester, name="rapport_sikkerhetstester"),
-	re_path(r'^rapport/azure/conditional_access/$', views.rapport_conditional_access, name="rapport_conditional_access"),
-
+	re_path(r'^rapport/azure/conditional_access/rules/$', views.rapport_conditional_access_rules, name="rapport_conditional_access_rules"),
+	re_path(r'^rapport/azure/conditional_access/changes/$', views.rapport_conditional_access_changes, name="rapport_conditional_access_changes"),
 
 	re_path(r'^tjenester/oversikt/$', views.tjenester_oversikt, name="tjenester_oversikt"),
 

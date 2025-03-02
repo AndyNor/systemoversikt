@@ -1,0 +1,32 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block overskrift %}
+	Endringer på Conditional Access
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Denne rapporten gir en oversikt over endringer på Conditional Access-regler i felles Azure-tenant, reglene lastes inn hver natt og sammenliknes med sist kjente regelsett.</p>
+
+<h5>De siste {{ antall_siste_endringer }} endringene på CA-regler</h5>
+<table class="table table-sm">
+<thead>
+<tr>
+	<th>Dato</th>
+	<th>Endring</th>
+</tr>
+</thead>
+<tbody>
+{% for ca in ca_regler_endringer %}
+<tr>
+	<td>{{ ca.timestamp }}</td>
+	<td><pre>{{ ca.changes_to_json }}</pre></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock hovedinnhold %}
