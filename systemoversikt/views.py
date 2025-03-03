@@ -6316,7 +6316,7 @@ def alle_driftsmodeller(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	driftsmodeller = Driftsmodell.objects.all().order_by('sort_order', 'navn')
+	driftsmodeller = Driftsmodell.objects.all().order_by('navn')
 
 	return render(request, 'driftsmodell_alle.html', {
 		'request': request,
