@@ -13,12 +13,12 @@
 		<thead>
 		<tr>
 			<th>Plattform/tenant</th>
+			<th>Antall systemer</th>
 			<th>Nivå</th>
 			<th>Bygger på</th>
 			<th>Forvaltet av</th>
 			<th>Type</th>
 			<th>Utvikling</th>
-			<th>Antall systemer</th>
 			<th>Kommentar</th>
 		</tr>
 		</thead>
@@ -30,6 +30,9 @@
 				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
 				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
 					<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
+			</td>
+			<td>
+				{{ item.antall_systemer }}
 			</td>
 			<td>{{ item.plattform_nivaa }}</td>
 			<td>
@@ -44,9 +47,6 @@
 			</td>
 			<td>
 				{{ item.utviklingsplattform|yesno:"Ja,Nei" }}
-			</td>
-			<td>
-				{{ item.antall_systemer }}
 			</td>
 			<td>
 				{{ item.kommentar }}
