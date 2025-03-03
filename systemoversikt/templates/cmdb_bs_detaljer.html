@@ -28,13 +28,13 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
+		<th>Kategori (Business Service)</th>
 		<th>Miljø (Service Offering)</th>
 		<th>Tilknyttet system</th>
 		<th>Infrastruktur?</th>
 		<th>Utbredning</th>
 		<th>Landingssone</th>
 		<th>Forvalter</th>
-		<th>Kategori (Business Service)</th>
 		<th>Service classification</th>
 		<th>Antall servere</th>
 		<th>Antall databaser</th>
@@ -49,6 +49,7 @@
 	{% for item in cmdbref %}
 		<tr {% if item.operational_status == 0 %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 
+			<td><a href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ </a></a>{{ item.parent_ref.navn|default:'?' }}</td>
 			<td>
 				<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
 			</td>
@@ -81,7 +82,6 @@
 					{% if not forloop.last %} og {% endif %}
 				{% endfor %}
 			</td>
-			<td><a href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ </a></a>{{ item.parent_ref.navn|default:'?' }}</td>
 			<td>
 				{{ item.service_classification|default:"" }}
 			</td>
