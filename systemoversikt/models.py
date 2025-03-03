@@ -2069,10 +2069,7 @@ class CMDBRef(models.Model): # BSS
 	# med vilje er det ikke HistoricalRecords() på denne da den importeres regelmessig
 
 	def __str__(self):
-		if self.is_bss():
-			return u'%s' % (self.navn)
-		else:
-			return u'%s (servergruppe)' % (self.navn)
+		return f"{self.navn}"
 
 	def er_produksjon(self):
 		if self.environment == 1:
