@@ -18,6 +18,7 @@
 	<thead>
 	<tr>
 		<th>Business service (nivå 1)</th>
+		<th>Synlig?</th>
 		<th>Business offering (nivå 2)</th>
 		<th>Service classification</th>
 		<th>Antall servere</th>
@@ -31,6 +32,7 @@
 	{% for bs in bs_uten_system %}
 	<tr>
 		<td><a href="/admin/systemoversikt/cmdbbs/{{ bs.parent_ref.pk }}/change/">✎ </a></a>{{ bs.parent_ref.navn|default:'?' }}</td>
+		<td>{{ bs.parent_ref.eksponert_for_bruker|yesno:"Ja, Nei" }}</td>
 		<td><a href="{% url 'cmdb_bss' pk=bs.pk %}">{{ bs.navn }}</a></td>
 		<td>{{ bs.service_classification|default:"" }}</td>
 		<td>{{ bs.ant_devices }}</td>
