@@ -17,8 +17,8 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
-		<th>Business offering (nivå 2)</th>
 		<th>Business service (nivå 1)</th>
+		<th>Business offering (nivå 2)</th>
 		<th>Service classification</th>
 		<th>Antall servere</th>
 		<th>Antall databaser</th>
@@ -30,8 +30,8 @@
 	<tbody>
 	{% for bs in bs_uten_system %}
 	<tr>
-		<td>{{ bs }}</td>
 		<td>{{ bs.parent_ref.navn|default:'?' }}</td>
+		<a href="{% url 'cmdb_bss' pk=bs.pk %}">{{ bs.navn }}</a>
 		<td>{{ bs.service_classification|default:"" }}</td>
 		<td>{{ bs.ant_devices }}</td>
 		<td>{{ bs.ant_databaser }}</td>
