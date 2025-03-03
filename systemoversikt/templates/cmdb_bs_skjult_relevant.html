@@ -25,7 +25,7 @@
 	<tbody>
 	{% for bs in skjult_server_db %}
 	<tr>
-		<td><a href="/cmdb/bs/?search_term={{bs.navn}}">{{ bs.navn }}</a></td>
+		<td><a href="{% url 'cmdb_bs_detaljer' %}?search_term={{bs.navn}}">{{ bs.navn }}</a></td>
 		<td>
 			<a href="/admin/systemoversikt/cmdbbs/{{ bs.pk }}/change/">✎ rediger</a>
 		</td>
