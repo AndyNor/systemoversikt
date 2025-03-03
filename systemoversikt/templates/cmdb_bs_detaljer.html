@@ -15,7 +15,7 @@
 
 	<p>Det er knyttet tilgjengelighetskrav til hvert miljø, som igjen dikterer SLA krav knyttet til bestillinger og håndtering av feil på underliggende systemer. Ler mer om SLA-nivåene på <a href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Kontinuit--og-beredskapsarbeid.aspx" target="_blank">SharePoint</a>.</p>
 
-	<form action="{% url 'cmdb_bs_detaljer' %}" autocomplete="off">
+	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
 			placeholder="Business service inneholder.." class="form-control form-control-sm">
@@ -28,18 +28,27 @@
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
-		<th>Kategori (Business Service)</th>
 		<th>Miljø (Service Offering)</th>
 		<th>Tilknyttet system</th>
+		<th>Infrastruktur?</th>
+		<th>Utbredning</th>
+		<th>Landingssone</th>
+		<th>Forvalter</th>
+		<th>Kategori (Business Service)</th>
 		<th>Service classification</th>
+		<th>Antall servere</th>
+		<th>Antall databaser</th>
+		<th>Mengde backup</th>
 		<th>Miljø</th>
+		<th>Tilgjengelighet</th>
+		<th>Driftskompleksitet</th>
+		<th>Kritikalitet</th>
 	</tr>
 	</thead>
 	<tbody>
 	{% for item in cmdbref %}
 		<tr {% if item.operational_status == 0 %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 
-			<td><a href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ </a></a>{{ item.parent_ref.navn|default:'?' }}</td>
 			<td>
 				<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
 			</td>
@@ -51,10 +60,48 @@
 				{% endfor %}
 			</td>
 			<td>
+				{% for system in item.system.all %}
+					{{ system.er_infrastruktur|yesno:"Ja, Nei" }}
+					{% if not forloop.last %} og {% endif %}
+				{% endfor %}
+			</td>
+			<td>
+				{% for system in item.system.all %}
+					{{ system.get_systemeierskapsmodell_display }}
+				{% endfor %}
+			</td>
+			<td>
+				{% for system in item.system.all %}
+					{{ system.driftsmodell_foreignkey.navn }}
+				{% endfor %}
+			</td>
+			<td>
+				{% for system in item.system.all %}
+					{{ system.systemforvalter.virksomhetsforkortelse }} ({{system.systemforvalter_avdeling_referanse.ou }})
+					{% if not forloop.last %} og {% endif %}
+				{% endfor %}
+			</td>
+			<td><a href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ </a></a>{{ item.parent_ref.navn|default:'?' }}</td>
+			<td>
 				{{ item.service_classification|default:"" }}
+			</td>
+			<td>{{ item.ant_devices }}</td>
+			<td>{{ item.ant_databaser }}</td>
+			<td>
+				{{ item.backup_size|filesizeformat }}
 			</td>
 
 			<td>{{ item.get_environment_display|default:"-" }}</td>
+
+			<td>
+				{{ item.u_service_availability_text|default:"-" }}
+			</td>
+			<td>
+				{{ item.u_service_operation_factor_text|default:"-" }}
+			</td>
+			<td>
+				{{ item.u_service_complexity_text|default:"-" }}
+			</td>
 
 		</tr>
 	{% endfor %}

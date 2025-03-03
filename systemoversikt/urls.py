@@ -237,6 +237,7 @@ urlpatterns = [
 	re_path(r'^cmdb/statistikk/$', views.cmdb_statistikk, name='cmdb_statistikk'),
 	re_path(r'^cmdb/per_virksomhet/$', views.cmdb_per_virksomhet, name='cmdb_per_virksomhet'),
 	re_path(r'^cmdb/bs/alle/$', views.alle_cmdbref, name='alle_cmdbref_sok'),
+	re_path(r'^cmdb/bs/detaljer/$', views.cmdb_bs_detaljer, name='cmdb_bs_detaljer'),
 	re_path(r'^cmdb/bs/utfaset/$', views.cmdb_bskobling_utfaset, name='cmdb_bskobling_utfaset'),
 	re_path(r'^cmdb/bs/koblet_ukjent/$', views.cmdb_bs_koblet_ukjent_plattform, name='cmdb_bs_koblet_ukjent_plattform'),
 	re_path(r'^cmdb/bs/mangler_kobling/$', views.cmdb_bs_aktuelle_ikke_koblet, name='cmdb_bs_aktuelle_ikke_koblet'),

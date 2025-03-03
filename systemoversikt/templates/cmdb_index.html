@@ -10,6 +10,9 @@
 	{% url 'alle_cmdbref_sok' as url_alle_cmdbref %}
 	<a href="{{url_alle_cmdbref}}" class="btn btn-sm btn-link {% if url_alle_cmdbref in request.path %}fremhev{% endif %}">Business services</a><br>
 
+	{% url 'cmdb_bs_detaljer' as url_cmdb_bs_detaljer %}
+	<a href="{{url_cmdb_bs_detaljer}}" class="btn btn-sm btn-link {% if url_cmdb_bs_detaljer in request.path %}fremhev{% endif %}">Business services detaljer</a><br>
+
 	{% url 'cmdb_bs_mangler_kobling' as url_cmdb_bs_mangler_kobling %}
 	<a href="{{url_cmdb_bs_mangler_kobling}}" class="btn btn-sm btn-link {% if url_cmdb_bs_mangler_kobling in request.path %}fremhev{% endif %}">Offerings uten kobling</a><br>
 

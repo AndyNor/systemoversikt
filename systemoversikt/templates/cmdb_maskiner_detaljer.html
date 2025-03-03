@@ -21,7 +21,7 @@
 
 {% block hovedinnhold %}
 
-	Tilhører service offering <a href="{% url 'alle_cmdbref_sok' %}?search_term={{cmdbref.0.parent_ref.navn}}">{{ cmdbref.0.parent_ref.navn }}</a>
+	Tilhører service offering <a href="{% url 'cmdb_bs_detaljer' %}?search_term={{cmdbref.0.parent_ref.navn}}">{{ cmdbref.0.parent_ref.navn }}</a>
 	<hr>
 	<h6>Beskrivelse fra Sopra Steria CMDB:</h6>
 	<p>{{cmdbref.0.comments|default:"-"}}</p>

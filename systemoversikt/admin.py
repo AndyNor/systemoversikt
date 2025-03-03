@@ -356,6 +356,12 @@ class TjenesteAdmin(SimpleHistoryAdmin):
 
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
+
+	def formfield_for_foreignkey(self, db_field, request, **kwargs):
+		if db_field.name == "driftsmodell_foreignkey":
+			kwargs["queryset"] = Driftsmodell.objects.order_by('navn')
+		return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('systemnavn', 'alias', 'kvalitetssikret', 'systemeierskapsmodell', 'er_arkiv', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
 	search_fields = ('systemnavn', 'alias',)

@@ -7498,6 +7498,20 @@ def alle_cmdbref(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	cmdbref = CMDBRef.objects.filter(operational_status=True, parent_ref__eksponert_for_bruker=True).order_by("service_classification", "parent_ref__navn", Lower("navn"))
+
+	return render(request, 'cmdb_bs_sok.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'cmdbref': cmdbref,
+	})
+
+
+def cmdb_bs_detaljer(request):
+	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
 	search_term = request.GET.get('search_term', "").strip()
 
 	if search_term == "__all__":
@@ -7508,13 +7522,12 @@ def alle_cmdbref(request):
 		cmdbref = CMDBRef.objects.filter(Q(navn__icontains=search_term) | Q(parent_ref__navn__icontains=search_term))
 
 
-	return render(request, 'cmdb_bs_sok.html', {
+	return render(request, 'cmdb_bs_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'cmdbref': cmdbref,
 		'search_term': search_term,
 	})
-
 
 def cmdb_servere_flere_offerings(request):
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
