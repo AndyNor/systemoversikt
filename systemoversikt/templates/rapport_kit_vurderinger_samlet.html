@@ -1,0 +1,42 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	KIT-vurderinger per systemkomponent
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p></p>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>Systemkomponent</th>
+		<th>Driftsmiljø</th>
+		<th>Eier</th>
+		<th>Forvalter</th>
+		<th>Konfidensialitet</th>
+		<th>Integritet</th>
+		<th>Tilgjengelighet</th>
+	</thead>
+	<tbody>
+	{% for system in aktuelle_systemer %}
+		<tr>
+			<td><a target="_blank" href="/admin/systemoversikt/system/{{system.pk}}/change/">{{ system }}</a></td>
+			<td>{{ system.driftsmodell_foreignkey.navn }}</td>
+			<td>{{ system.systemeier.virksomhetsforkortelse }}</td>
+			<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
+			<td>{{ system.vis_konfidensialitet }}</td>
+			<td>{{ system.vis_integritetsvurdering }}</td>
+			<td>{{ system.vis_tilgjengelighet }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

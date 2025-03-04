@@ -2021,6 +2021,21 @@ def isk_ansvarlig_for_system(request):
 	})
 
 
+def rapport_kit_vurderinger_samlet(request):
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	aktuelle_systemer = System.objects.filter(ibruk=True)
+
+	return render(request, 'rapport_kit_vurderinger_samlet.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'aktuelle_systemer': aktuelle_systemer,
+	})
+
+
+
 def rapport_entra_id_auth(request):
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -7580,7 +7595,7 @@ def cmdb_bs_mangler_kobling(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	bs_uten_system = CMDBRef.objects.filter(operational_status=True).filter(Q(system=None)).order_by("-parent_ref__eksponert_for_bruker")
+	bs_uten_system = CMDBRef.objects.filter(operational_status=True).filter(Q(system=None)).order_by("-parent_ref__eksponert_for_bruker", "service_classification")
 
 	return render(request, 'cmdb_bs_mangler_kobling.html', {
 		'request': request,

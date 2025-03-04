@@ -5458,6 +5458,48 @@ class System(models.Model):
 		system_content_type = ContentType.objects.get_for_model(self)
 		return len(LogEntry.objects.filter(content_type=system_content_type).filter(object_id=self.pk))
 
+	def vis_konfidensialitet(self):
+		VALG = {
+			4: '5 🔴 Gradert',
+			3: '4 🔴 Strengt beskyttet',
+			5: '3 🔴 Beskyttet',
+			2: '2 🟡 Intern',
+			1: '1 🟢 Åpen',
+		}
+		try:
+			return VALG[self.sikkerhetsnivaa]
+		except:
+			return "0 ?"
+
+	def vis_tilgjengelighet(self):
+		VALG = {
+			1: '5 🔴 Svært alvorlig',
+			2: '4 🔴 Alvorlig',
+			3: '3 🟡 Moderat',
+			4: '2 🟢 Lav',
+			5: '1 🟢 Ubetydelig',
+			6: '0 ?',
+		}
+		try:
+			return VALG[self.tilgjengelighetsvurdering]
+		except:
+			return "0 ?"
+
+	def vis_integritetsvurdering(self):
+		VALG = {
+			1: '5 🔴 Svært alvorlig',
+			2: '4 🔴 Alvorlig',
+			3: '3 🟡 Moderat',
+			4: '2 🟢 Lav',
+			5: '1 🟢 Ubetydelig',
+			6: '0 ?',
+		}
+		try:
+			return VALG[self.integritetsvurdering]
+		except:
+			return "0 ?"
+
+
 	class Meta:
 		verbose_name_plural = "Systemoversikt: Systemer"
 		default_permissions = ('add', 'change', 'delete', 'view')

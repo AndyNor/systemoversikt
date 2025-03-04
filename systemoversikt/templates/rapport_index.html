@@ -23,6 +23,9 @@
 		{% url 'isk_ansvarlig_for_system' as url_isk_ansvarlig_for_system %}
 		<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">ISK per system</a><br>
 
+		{% url 'rapport_kit_vurderinger_samlet' as url_rapport_kit_vurderinger_samlet %}
+		<a href="{{ url_rapport_kit_vurderinger_samlet }}" class="btn btn-sm btn-link {% if url_rapport_kit_vurderinger_samlet in request.path %}fremhev{% endif %}">KIT-vurderinger samlet</a><br>
+
 
 
 	<hr><h6>For systemforvaltere</h6>
