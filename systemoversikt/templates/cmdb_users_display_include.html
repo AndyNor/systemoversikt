@@ -11,7 +11,6 @@
 		<th>Fra PRK?</th>
 		<th>Opprettet</th>
 		<th>Sist pålogget</th>
-		<td>Passordutløp</td>
 		<th width="25%">Beskrivelse</th>
 		<th>Tilganger</th>
 	</tr>
@@ -35,30 +34,32 @@
 {% for m in member.users %}
 	<tr {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>
 		<td>👤 {{m.first_name}} {{m.last_name}}</td>
-		<td>{{m.username}}</td>
 		<td>
-			{% if member.users|length < 500 %}
+			{{m.username}}
+			{% if m.profile.accountdisable %}
+				(konto er deaktivert)
+			{% endif %}
+		</td>
+		<td>
+			{% if member.users|length < 300 %}
 				{{m.profile.avdeling}}
+			{% else %}
+				(fuksjon deaktivert)
 			{% endif %}
 		</td>
 		<td>{{ m.email }}</td>
-		<td>{{m.profile.from_prk|yesno:"Ja,Nei,Vet ikke"}}</td>
-		<td>{{m.profile.whenCreated|date:"Ym" }}<br>({{m.profile.whenCreated|timesince}})</td>
-		<td>{{m.profile.lastLogonTimestamp|date:"Ym" }}<br>({{ m.profile.lastLogonTimestamp|timesince }})</td>
-		<td>
-			{% if m.profile.accountdisable %}
-				Konto er deaktivert
-			{% else %}
-				{{m.profile.password_expired|yesno:"Passord har utløpt,Passord er gyldig,Vet ikke" }}<br>
-				{{m.profile.dont_expire_password|yesno:"Utløper aldri,Utløper som normalt,Vet ikke" }}
-			{% endif %}
-		</td>
+		<td>{{ m.profile.from_prk|yesno:"Ja,Nei,Vet ikke" }}</td>
+		<td>{{ m.profile.whenCreated|date:"Ym" }}<br>({{m.profile.whenCreated|timesince }})</td>
+		<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }}<br>({{ m.profile.lastLogonTimestamp|timesince }})</td>
 		<td>{{m.profile.description}}</td>
 		<td>
+			(fuksjon deaktivert)
+			{% comment %}
 			{% for system in m.profile.levtilgangprofil %}{{ system }}<br>{% empty %}{% endfor %}<br>
 			{% if show_access_groups %}
-				{% for gruppe in m.profile.adgrupper.all %}{{gruppe}}<br>{% endfor%}
+				{% for gruppe in m.profile.adgrupper.all %}{{ gruppe }}<br>{% endfor%}
 			{% endif %}
+			{% endcomment %}
 		</td>
 	</tr>
 {% endfor %}

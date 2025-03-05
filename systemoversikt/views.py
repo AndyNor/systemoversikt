@@ -605,13 +605,14 @@ def adgruppe_utnosting(gr): # støttefunksjon
 	return hierarki
 
 
-
+""" without caching
 def human_readable_members(items, onlygroups=False): # støttefunksjon
 	groups = []
 	users = []
 	notfound = []
 
 	for item in items:
+		print(item)
 		match = False
 		if onlygroups == False:
 			regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0]
@@ -629,7 +630,32 @@ def human_readable_members(items, onlygroups=False): # støttefunksjon
 			notfound.append(item)  # vi fant ikke noe, returner det vi fikk
 
 	return {"groups": groups, "users": users, "notfound": notfound}
+"""
 
+def human_readable_members(items, onlygroups=False): # støttefunksjon, with caching
+	groups = []
+	users = []
+	notfound = []
+
+	# Pre-fetch all users and groups
+	all_users = {user.username.lower(): user for user in User.objects.all()}
+	all_groups = {group.distinguishedname: group for group in ADgroup.objects.all()}
+
+	for item in items:
+		match = False
+		if not onlygroups:
+			regex_username = re.search(r'cn=([^\,]*)', item, re.I).groups()[0].lower()
+			if regex_username in all_users:
+				users.append(all_users[regex_username])
+				match = True
+				continue
+
+		if item in all_groups:
+			groups.append(all_groups[item])
+		else:
+			notfound.append(item)  # vi fant ikke noe, returner det vi fikk
+
+	return {"groups": groups, "users": users, "notfound": notfound}
 
 
 
@@ -6982,12 +7008,14 @@ def adgruppe_detaljer(request, pk):
 	member = {}
 	memberof = {}
 
+	print("laster medlemmer")
 	member_decoded = json.loads(gruppe.member)
 	if (len(member_decoded) <= render_limit) or render_anyway:
 		member = human_readable_members(member_decoded)
 		rendered = True
-
+	print("laster memberof")
 	memberof = human_readable_members(json.loads(gruppe.memberof))
+	print("Sender til template")
 
 	return render(request, 'ad_adgruppe_detaljer.html', {
 		"gruppe": gruppe,
