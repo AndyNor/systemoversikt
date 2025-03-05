@@ -51,6 +51,18 @@ def conditional_access_replace_guid(data):
 			return AzureNamedLocations.objects.get(ipNamedLocation_id=azure_id).__str__()
 		except AzureNamedLocations.DoesNotExist:
 			pass
+		try:
+			return AzureUser.objects.get(guid=azure_id).__str__()
+		except AzureUser.DoesNotExist:
+			pass
+		try:
+			return AzureGroup.objects.get(guid=azure_id).__str__()
+		except AzureGroup.DoesNotExist:
+			pass
+		try:
+			return AzureDirectoryRole.objects.get(guid=azure_id).__str__()
+		except AzureDirectoryRole.DoesNotExist:
+			pass
 		return azure_id
 
 	id_pattern = re.compile(r'\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b')
@@ -6246,6 +6258,75 @@ BEHANDLING_VALGFRIHET = (
 	(2, 'Middels valgfrihet'),
 	(3, 'Ingen valgfrihet'),
 )
+
+
+class AzureUser(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	guid = models.TextField(
+			verbose_name="guid",
+			unique=True,
+		)
+	userPrincipalName = models.TextField(
+			verbose_name="userPrincipalName",
+			blank=True, null=True,
+		)
+	displayName = models.TextField(
+			verbose_name="displayName",
+			blank=True, null=True,
+		)
+	mail = models.TextField(
+			verbose_name="mail",
+			blank=True, null=True
+		)
+	def __str__(self):
+		if self.displayName != "":
+			return u'%s' % (self.displayName)
+		else:
+			return self.guid
+
+
+class AzureDirectoryRole(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	guid = models.TextField(
+			verbose_name="guid",
+			unique=True,
+		)
+	def __str__(self):
+		return u'%s' % (self.guid)
+
+
+class AzureGroup(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	guid = models.TextField(
+			verbose_name="guid",
+			unique=True,
+		)
+	description = models.TextField(
+			verbose_name="description",
+			blank=True, null=True
+		)
+	displayName = models.TextField(
+			verbose_name="displayName",
+			blank=True, null=True
+		)
+	onPremisesSamAccountName = models.TextField(
+			verbose_name="onPremisesSamAccountName",
+			blank=True, null=True
+		)
+	def __str__(self):
+		if self.displayName != "":
+			return u'%s' % (self.displayName)
+		else:
+			return self.guid
 
 
 class AzureNamedLocations(models.Model):

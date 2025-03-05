@@ -90,6 +90,19 @@ class IpProtocolAdmin(admin.ModelAdmin):
 	list_display=search_fields=readonly_fields = ('protocol', 'port', 'description')
 
 
+@admin.register(AzureUser)
+class AzureUserAdmin(admin.ModelAdmin):
+	list_display=search_fields=readonly_fields = ('sist_oppdatert', 'guid', 'userPrincipalName', 'displayName', 'mail')
+
+@admin.register(AzureDirectoryRole)
+class AzureDirectoryRoleAdmin(admin.ModelAdmin):
+	list_display=search_fields=readonly_fields = ('sist_oppdatert', 'guid')
+
+@admin.register(AzureGroup)
+class AzureGroupAdmin(admin.ModelAdmin):
+	list_display=search_fields=readonly_fields = ('sist_oppdatert', 'guid', 'description', 'displayName', 'onPremisesSamAccountName')
+
+
 @admin.register(AzureUserConsents)
 class AzureUserConsentsAdmin(admin.ModelAdmin):
 	list_display=search_fields=readonly_fields = ('appId', 'appDisplayName', 'userId', 'userDisplayName', 'scopes')

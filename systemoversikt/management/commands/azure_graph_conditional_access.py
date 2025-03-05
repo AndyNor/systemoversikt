@@ -61,6 +61,9 @@ class Command(BaseCommand):
 				raise requests.ConnectionError("Failed to connect to graph API: Got HTTP {resp.status_code}")
 
 			print(f"HTTP {resp.status_code} OK")
+
+			#print(json.dumps(json.loads(resp.text), indent=4))
+
 			this_policy = EntraIDConditionalAccessPolicies.objects.create(json_policy=resp.text)
 			print(f"Opprettet policy med pk={this_policy.pk}")
 
@@ -84,8 +87,141 @@ class Command(BaseCommand):
 				this_policy.save()
 
 			except Exception as e:
-				print(f"Kan ikke sammenlikne med forrige version av policy: {e}")
+				error_message = f"Kan ikke sammenlikne med forrige version av policy: {e}"
+				print(error_message)
+				logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=error_message)
 				pass
+
+
+
+			print(f"Slår opp diverse GUIDs..")
+
+			def find_nested_keys(data, key):
+				if isinstance(data, dict):
+					for k, v in data.items():
+						if k == key:
+							yield v
+						if isinstance(v, (dict, list)):
+							yield from find_nested_keys(v, key)
+				elif isinstance(data, list):
+					for item in data:
+						yield from find_nested_keys(item, key)
+
+
+			def lookup_user(guid):
+				if guid == "None" or guid == "All" or guid == "GuestsOrExternalUsers":
+					return AzureUser.objects.none()
+				user, created = AzureUser.objects.get_or_create(guid=guid)
+				if not created: # hvis den eksisterete fra før av
+					#print(f"Fant treff på {guid}")
+					return user
+
+				user_url = f'/users/{guid}'
+				user_response = client.get(user_url)
+				time.sleep(0.5)
+
+				if user_response.status_code == 200:
+					user_data = user_response.json()
+					user.userPrincipalName = user_data.get('userPrincipalName')
+					user.displayName = user_data.get('displayName')
+					user.mail = user_data.get('mail')
+					print(f"Lagrer data om {guid}")
+					user.save()
+					return user
+				else:
+					print(f'Error: {user_response.status_code}')
+					print(user_response.json())
+					return AzureUser.objects.none()
+
+
+			def lookup_group(guid):
+				if guid == "None":
+					return AzureGroup.objects.none()
+				group, created = AzureGroup.objects.get_or_create(guid=guid)
+				if not created: # hvis den eksisterete fra før av
+					print(f"Fant treff på {guid}")
+					return group
+
+				group_url = f'/groups/{guid}'
+				group_response = client.get(group_url)
+				time.sleep(0.5)
+
+				if group_response.status_code == 200:
+					group_data = group_response.json()
+					group.description = group_data.get('description')
+					group.displayName = group_data.get('displayName')
+					group.onPremisesSamAccountName = group_data.get('onPremisesSamAccountName')
+					print(f"Lagrer data om {guid}")
+					group.save()
+					return group
+				else:
+					print(f'Error: {group_response.status_code}')
+					print(group_response.json())
+					return AzureGroup.objects.none()
+
+
+			def lookup_directory_role(guid):
+				if guid == "None" or guid == "All":
+					return AzureDirectoryRole.objects.none()
+				role, created = AzureDirectoryRole.objects.get_or_create(guid=guid)
+				if not created: # hvis den eksisterete fra før av
+					print(f"Fant treff på {guid}")
+					return role
+
+				role_url = f'/directoryRoles/{guid}'
+				role_response = client.get(role_url)
+				time.sleep(0.5)
+
+				if role_response.status_code == 200:
+					role_data = role_response.json()
+					print(role_data)
+					#role.description = role_data.get('description')
+					#role.displayName = role_data.get('displayName')
+					#role.onPremisesSamAccountName = role_data.get('onPremisesSamAccountName')
+					print(f"Lagrer data om {guid}")
+					role.save()
+					return role
+				else:
+					print(f'Error: {role_response.status_code}')
+					print(role_response.json())
+					return AzureDirectoryRole.objects.none()
+
+			policy = json.loads(resp.text)
+
+			user_fields = ["excludeUsers", "includeUsers"]
+			user_guids = []
+			for field in user_fields:
+				user_guids.extend(list(find_nested_keys(policy, field)))
+			user_guids = set([user for sublist in user_guids for user in sublist])
+			#print(f"Users: {user_guids}")
+
+
+			group_fields = ["excludeGroups", "includeGroups"]
+			group_guids = []
+			for field in group_fields:
+				group_guids.extend(list(find_nested_keys(policy, field)))
+			group_guids = set([group for sublist in group_guids for group in sublist])
+			#print(f"\n\nGroups: {group_guids}")
+
+
+			role_fields = ["includeRoles", "excludeRoles"]
+			role_guids = []
+			for field in role_fields:
+				role_guids.extend(list(find_nested_keys(policy, field)))
+			role_guids = set([role for sublist in role_guids for role in sublist])
+			#print(f"\n\nRoles: {role_guids}")
+
+			for user in user_guids:
+				print(lookup_user(user))
+
+
+			for group in group_guids:
+				print(lookup_group(group))
+
+
+			# trenger directory read først
+			#for role in role_guids:
+			#	print(lookup_directory_role(role))
 
 
 			logg_message = f"Innlasting av policy utført"
