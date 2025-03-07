@@ -233,11 +233,22 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None)).order_by('profile__auth_methods_last_update'))
+			#Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None)).order_by('profile__auth_methods_last_update'))
+
+			users_with_none = User.objects.filter(~Q(profile__ny365lisens=None)).filter(
+				profile__accountdisable=False,
+				profile__auth_methods_last_update__isnull=True
+			)
+
+			users_with_dates = User.objects.filter(~Q(profile__ny365lisens=None)).filter(
+				profile__accountdisable=False,
+				profile__auth_methods_last_update__isnull=False
+			).order_by('profile__auth_methods_last_update')
+
+			Command.users_with_license = list(users_with_none) + list(users_with_dates)
 			print(f"Fant {len(Command.users_with_license)} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
-
-			print(f"Sorterer alle brukere med lisens...")
+			#print(f"Sorterer alle brukere med lisens...")
 			# Preprocess the items to make timestamps timezone-aware
 			#for item in Command.users_with_license:
 			#	if item.profile.auth_methods_last_update:
