@@ -17,14 +17,13 @@ class Command(BaseCommand):
 	ANTALL_GRAPH_KALL = 0
 	ANTALL_LAGRET = 0
 	ANTALL_FEILET = 0
-	ANTALL_MED_LISENS = 0
 	ANTALL_TOO_MANY_CALLS = 0
 	users_with_license = []
 	users_to_be_processed = []
 
 	SLEEP_BETWEEN = 0
 	SLEEP_TOO_MANY = 20
-	ITEMS_PER_DAY = 7500
+	ITEMS_PER_DAY = 1500
 
 	def handle(self, **options):
 
@@ -79,7 +78,7 @@ class Command(BaseCommand):
 			def create_batch_request(users):
 				requests = []
 				for i, user in enumerate(users):
-					print(f"{user} {user.profile.auth_methods_last_update}")
+					#print(f"{user} {user.profile.auth_methods_last_update}")
 					upn = user.email
 					requests.append({
 						"id": i,
@@ -235,30 +234,19 @@ class Command(BaseCommand):
 
 			# Start oppsplitting
 			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None)))
-			Command.ANTALL_MED_LISENS = len(Command.users_with_license)
-			print(f"Fant {Command.ANTALL_MED_LISENS} brukere med M365-lisens for oppslag av autentiseringsmetode")
+			print(f"Fant {len(Command.users_with_license)} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
-			def process_items_for_today(my_items):
-				print(f"Sorterer alle brukere med lisens...")
 
-				#sorted_items = sorted(my_items, key=lambda x: getattr(x.profile, 'auth_methods_last_update', timezone.make_aware(datetime.min)) or timezone.make_aware(datetime.min))
-
-				# Preprocess the items to make timestamps timezone-aware
-				for item in my_items:
-					if item.profile.auth_methods_last_update:
-						item.profile.auth_methods_last_update_tmp = item.profile.auth_methods_last_update
-					else:
-						item.profile.auth_methods_last_update_tmp = timezone.make_aware(datetime.min)
-
-				# Sort items by the preprocessed auth_methods_last_update timestamp
-				sorted_items = sorted(my_items, key=lambda x: x.profile.auth_methods_last_update_tmp)
-
-				items_per_day = Command.ITEMS_PER_DAY
-				Command.users_to_be_processed = sorted_items[:items_per_day]
-
-			# oppdatere listen over brukere som skal prosesseres nå
-			process_items_for_today(Command.users_with_license)
-
+			print(f"Sorterer alle brukere med lisens...")
+			# Preprocess the items to make timestamps timezone-aware
+			for item in Command.users_with_license:
+				if item.profile.auth_methods_last_update:
+					item.profile.auth_methods_last_update_tmp = item.profile.auth_methods_last_update
+				else:
+					item.profile.auth_methods_last_update_tmp = timezone.make_aware(datetime.min)
+			# Sort items by the preprocessed auth_methods_last_update timestamp
+			sorted_items = sorted(Command.users_with_license, key=lambda x: x.profile.auth_methods_last_update_tmp)
+			Command.users_to_be_processed = sorted_items[:Command.ITEMS_PER_DAY]
 
 			split_size = 20
 			print(f"Starter å splitte opp i bolker av {split_size}..")
@@ -266,8 +254,11 @@ class Command(BaseCommand):
 
 			while i < len(Command.users_to_be_processed):
 				# Process the current batch of users
-				timedelta = lookup_and_save(Command.users_to_be_processed[i:i + split_size])
-				print(f"Ny batch fra {i} til {i + split_size} ferdig. Graph-kallet tok {round(timedelta, 3)} sekunder")
+
+				for user in Command.users_to_be_processed[i:i + split_size]:
+					print(f"{user} {user.profile.auth_methods_last_update}")
+				#timedelta = lookup_and_save(Command.users_to_be_processed[i:i + split_size])
+				#print(f"Ny batch fra {i} til {i + split_size} ferdig. Graph-kallet tok {round(timedelta, 3)} sekunder")
 
 				# Move to the next batch
 				i += split_size
