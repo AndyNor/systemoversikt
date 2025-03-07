@@ -4,13 +4,13 @@ from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
 from systemoversikt.models import *
 import os, requests, json, time
-from datetime import datetime
-from django.utils import timezone
+from datetime import datetime, timezone
+#from django.utils import timezone
 from django.db.models import Q
 from systemoversikt.views import push_pushover
 import warnings
 
-warnings.filterwarnings("ignore")
+#warnings.filterwarnings("ignore")
 
 class Command(BaseCommand):
 
@@ -245,10 +245,31 @@ class Command(BaseCommand):
 			#	else:
 			#		item.profile.auth_methods_last_update_tmp = timezone.make_aware(datetime.min)
 			# Sort items by the preprocessed auth_methods_last_update timestamp
-			def sort_key(date):
-				return (date.profile.auth_methods_last_update is not None, date.profile.auth_methods_last_update)
+			#def sort_key(date):
+			#	return (date.profile.auth_methods_last_update is not None, date.profile.auth_methods_last_update)
+			#sorted_items = sorted(Command.users_with_license, key=sort_key)
 
+
+			def make_timezone_aware(dt):
+				if dt is None:
+					return None
+				if dt.tzinfo is None:
+					return dt.replace(tzinfo=timezone.utc)
+				return dt
+
+			# Preprocess the items to make timestamps timezone-aware
+			for item in Command.users_with_license:
+				item.profile.auth_methods_last_update_tmp = make_timezone_aware(item.profile.auth_methods_last_update)
+
+			# Define a key function that handles None values
+			def sort_key(user):
+				auth_update = user.profile.auth_methods_last_update_tmp
+				return (auth_update is not None, auth_update or datetime.min.replace(tzinfo=timezone.utc))
+
+			# Sort the list using the custom key
 			sorted_items = sorted(Command.users_with_license, key=sort_key)
+
+
 			print(f"Plukker ut de {Command.ITEMS_PER_DAY} eldste for oppdatering")
 			Command.users_to_be_processed = sorted_items[:Command.ITEMS_PER_DAY]
 
