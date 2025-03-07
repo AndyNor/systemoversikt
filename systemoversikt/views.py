@@ -2067,8 +2067,16 @@ def rapport_entra_id_auth(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+
+	antall_med_lisens = len(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None)))
+	antall_med_mfa = len(User.objects.filter(profile__accountdisable=False).filter(
+						Q(profile__auth_methods__icontains="phoneAuthenticationMethod") |
+						Q(profile__auth_methods__icontains="fido2AuthenticationMethod") |
+						Q(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod")
+					))
+
 	data = []
-	data.append({"tekst": "Aktive brukere med lisens", "antall": len(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None)))})
+	data.append({"tekst": "Aktive brukere med lisens", "antall": antall_med_lisens})
 	data.append({"tekst": "Telefon oppringing", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="voiceAuthenticationMethod"))})
 	data.append({"tekst": "SMS", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="phoneAuthenticationMethod"))})
 	data.append({"tekst": "Sertifikat", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="certificateBasedAuthentication"))})
@@ -2077,18 +2085,8 @@ def rapport_entra_id_auth(request):
 	data.append({"tekst": "Authenticator", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod"))})
 	data.append({"tekst": "Oauth Software", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="oathSoftwareTokenAuthenticationMethod"))})
 	data.append({"tekst": "Oauth Hardware", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="oathHardwareTokenAuthenticationMethod"))})
-	data.append({"tekst": "SMS, FIDO2 eller Authenticator", "antall": len(User.objects.filter(profile__accountdisable=False).filter(
-				Q(profile__auth_methods__icontains="phoneAuthenticationMethod") |
-				Q(profile__auth_methods__icontains="fido2AuthenticationMethod") |
-				Q(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod")
-			)
-	)})
-	data.append({"tekst": "Uten MFA", "antall": len(User.objects.filter(profile__accountdisable=False).filter(
-				~Q(profile__auth_methods__icontains="phoneAuthenticationMethod") |
-				~Q(profile__auth_methods__icontains="fido2AuthenticationMethod") |
-				~Q(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod")
-			)
-	)})
+	data.append({"tekst": "SMS, FIDO2 eller Authenticator", "antall": antall_med_mfa})
+	data.append({"tekst": "Uten MFA", "antall": antall_med_lisens - antall_med_mfa})
 
 
 	full_table = User.objects.filter(profile__accountdisable=False).values('profile__virksomhet__virksomhetsnavn', 'profile__virksomhet__id').annotate(
