@@ -10,7 +10,7 @@ from django.db.models import Q
 from systemoversikt.views import push_pushover
 import warnings
 
-#warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore")
 
 class Command(BaseCommand):
 

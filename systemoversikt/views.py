@@ -2077,7 +2077,7 @@ def rapport_entra_id_auth(request):
 	data.append({"tekst": "Oauth Software", "antall": len(User.objects.filter(profile__auth_methods__icontains="oathSoftwareTokenAuthenticationMethod"))})
 	data.append({"tekst": "Oauth Hardware", "antall": len(User.objects.filter(profile__auth_methods__icontains="oathHardwareTokenAuthenticationMethod"))})
 
-	full_table = User.objects.values('profile__virksomhet__virksomhetsnavn', 'profile__virksomhet__id').annotate(
+	full_table = User.objects.filter(profile__accountdisable=False).values('profile__virksomhet__virksomhetsnavn', 'profile__virksomhet__id').annotate(
 		total_count_lisence=Count('id', filter=Q(
 			Q(profile__ny365lisens__icontains="G1") |
 			Q(profile__ny365lisens__icontains="G2") |
@@ -2111,7 +2111,7 @@ def rapport_entra_id_auth(request):
 		oathHardwareTokenAuthenticationMethod=Count('id', filter=Q(profile__auth_methods__icontains="oathHardwareTokenAuthenticationMethod")),
 	)
 
-	update_stats = Profile.objects.filter(~Q(ny365lisens=None)).annotate(day=TruncDate('auth_methods_last_update')).values('day').annotate(count=Count('user')).order_by('day')
+	update_stats = Profile.objects.filter(~Q(ny365lisens=None)).filter(profile__accountdisable=False).annotate(day=TruncDate('auth_methods_last_update')).values('day').annotate(count=Count('user')).order_by('day')
 
 	return render(request, 'rapport_entra_id_auth.html', {
 		'request': request,
