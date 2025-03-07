@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
 	SLEEP_BETWEEN = 0
 	SLEEP_TOO_MANY = 20
-	ITEMS_PER_DAY = 200
+	ITEMS_PER_DAY = 300
 
 	def handle(self, **options):
 
@@ -248,40 +248,6 @@ class Command(BaseCommand):
 			Command.users_with_license = list(users_with_none) + list(users_with_dates)
 			print(f"Fant {len(Command.users_with_license)} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
-			#print(f"Sorterer alle brukere med lisens...")
-			# Preprocess the items to make timestamps timezone-aware
-			#for item in Command.users_with_license:
-			#	if item.profile.auth_methods_last_update:
-			#		item.profile.auth_methods_last_update_tmp = item.profile.auth_methods_last_update
-			#	else:
-			#		item.profile.auth_methods_last_update_tmp = timezone.make_aware(datetime.min)
-			# Sort items by the preprocessed auth_methods_last_update timestamp
-			#def sort_key(date):
-			#	return (date.profile.auth_methods_last_update is not None, date.profile.auth_methods_last_update)
-			#sorted_items = sorted(Command.users_with_license, key=sort_key)
-
-
-			"""
-			def make_timezone_aware(dt):
-				if dt is None:
-					return None
-				if dt.tzinfo is None:
-					return dt.replace(tzinfo=timezone.utc)
-				return dt
-
-			# Preprocess the items to make timestamps timezone-aware
-			for item in Command.users_with_license:
-				item.profile.auth_methods_last_update_tmp = make_timezone_aware(item.profile.auth_methods_last_update)
-
-			# Define a key function that handles None values
-			def sort_key(user):
-				auth_update = user.profile.auth_methods_last_update_tmp
-				return (auth_update is not None, auth_update or datetime.min.replace(tzinfo=timezone.utc))
-
-			# Sort the list using the custom key
-			sorted_items = sorted(Command.users_with_license, key=sort_key)
-			"""
-
 
 			print(f"Plukker ut de {Command.ITEMS_PER_DAY} eldste for oppdatering")
 			Command.users_to_be_processed = Command.users_with_license[:Command.ITEMS_PER_DAY]
@@ -290,16 +256,19 @@ class Command(BaseCommand):
 			print(f"Starter å splitte opp i bolker av {split_size}..")
 			i = 0
 
-			while i < len(Command.users_to_be_processed):
+			while Command.users_to_be_processed:
 				# Process the current batch of users
 
-				for user in Command.users_to_be_processed[i:i + split_size]:
-					print(f"{user} {user.profile.auth_methods_last_update}")
-				timedelta = lookup_and_save(Command.users_to_be_processed[i:i + split_size])
-				print(f"Ny batch fra {i} til {i + split_size} ferdig. Graph-kallet tok {round(timedelta, 3)} sekunder")
+				#for user in Command.users_to_be_processed[i:i + split_size]:
+					#print(f"{user} {user.profile.auth_methods_last_update}")
+				how_many = min(split_size, len(Command.users_to_be_processed))
+				current_batch = [Command.users_to_be_processed.pop(0) for _ in range(how_many)]
+
+				timedelta = lookup_and_save(current_batch)
+				print(f"Ny batch fra {i} til {i + how_many} ferdig. Graph-kallet tok {round(timedelta, 3)} sekunder")
 
 				# Move to the next batch
-				i += split_size
+				i += how_many
 
 
 			runtime_t1 = time.time()
