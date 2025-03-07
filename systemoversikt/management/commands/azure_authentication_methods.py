@@ -23,7 +23,7 @@ class Command(BaseCommand):
 
 	SLEEP_BETWEEN = 0
 	SLEEP_TOO_MANY = 20
-	ITEMS_PER_DAY = 300
+	ITEMS_PER_DAY = 200
 
 	def handle(self, **options):
 
@@ -295,8 +295,8 @@ class Command(BaseCommand):
 
 				for user in Command.users_to_be_processed[i:i + split_size]:
 					print(f"{user} {user.profile.auth_methods_last_update}")
-				#timedelta = lookup_and_save(Command.users_to_be_processed[i:i + split_size])
-				#print(f"Ny batch fra {i} til {i + split_size} ferdig. Graph-kallet tok {round(timedelta, 3)} sekunder")
+				timedelta = lookup_and_save(Command.users_to_be_processed[i:i + split_size])
+				print(f"Ny batch fra {i} til {i + split_size} ferdig. Graph-kallet tok {round(timedelta, 3)} sekunder")
 
 				# Move to the next batch
 				i += split_size
