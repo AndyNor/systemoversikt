@@ -245,7 +245,11 @@ class Command(BaseCommand):
 			#	else:
 			#		item.profile.auth_methods_last_update_tmp = timezone.make_aware(datetime.min)
 			# Sort items by the preprocessed auth_methods_last_update timestamp
-			sorted_items = sorted(Command.users_with_license, key=lambda x: x.profile.auth_methods_last_update)
+			def sort_key(date):
+				return (date.profile.auth_methods_last_update is not None, date.profile.auth_methods_last_update)
+
+			sorted_items = sorted(Command.users_with_license, key=sort_key)
+			print(f"Plukker ut de {Command.ITEMS_PER_DAY} eldste for oppdatering")
 			Command.users_to_be_processed = sorted_items[:Command.ITEMS_PER_DAY]
 
 			split_size = 20
