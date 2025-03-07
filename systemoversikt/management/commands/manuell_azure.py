@@ -18,10 +18,15 @@ class Command(BaseCommand):
 				client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
 		)
 
-		client = GraphClient(credential=client_credential, api_version='beta')
-		resp = client.get('/Applications?$top=200')
-		print(resp.text)
+		client = GraphClient(credential=client_credential, api_version='v1.0')
 
+		resp = client.get(f"https://graph.microsoft.com/v1.0/$metadata#identity/conditionalAccess/policies(---)/grantControls/authenticationStrength/$entity")
+		print(f"Response code {resp.status_code}")
+
+		#response_show = json.dumps(json.loads(resp.text), indent=4)
+		#print(f"Response:\n {response_show}")
+
+		print(f"Response code {resp.text}")
 
 
 
