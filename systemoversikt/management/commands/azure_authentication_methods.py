@@ -233,7 +233,7 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None)))
+			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None))).order_by('profile__auth_methods_last_update')
 			print(f"Fant {len(Command.users_with_license)} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
 
@@ -250,6 +250,7 @@ class Command(BaseCommand):
 			#sorted_items = sorted(Command.users_with_license, key=sort_key)
 
 
+			"""
 			def make_timezone_aware(dt):
 				if dt is None:
 					return None
@@ -268,10 +269,11 @@ class Command(BaseCommand):
 
 			# Sort the list using the custom key
 			sorted_items = sorted(Command.users_with_license, key=sort_key)
+			"""
 
 
 			print(f"Plukker ut de {Command.ITEMS_PER_DAY} eldste for oppdatering")
-			Command.users_to_be_processed = sorted_items[:Command.ITEMS_PER_DAY]
+			Command.users_to_be_processed = Command.users_with_license[:Command.ITEMS_PER_DAY]
 
 			split_size = 20
 			print(f"Starter å splitte opp i bolker av {split_size}..")
