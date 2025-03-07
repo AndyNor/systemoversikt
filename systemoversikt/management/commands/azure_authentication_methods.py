@@ -4,8 +4,8 @@ from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
 from systemoversikt.models import *
 import os, requests, json, time
-from datetime import datetime, timezone
-#from django.utils import timezone
+from datetime import datetime
+from django.utils import timezone
 from django.db.models import Q
 from systemoversikt.views import push_pushover
 import warnings
@@ -233,7 +233,7 @@ class Command(BaseCommand):
 
 
 			# Start oppsplitting
-			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None))).order_by('profile__auth_methods_last_update')
+			Command.users_with_license = list(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None)).order_by('profile__auth_methods_last_update'))
 			print(f"Fant {len(Command.users_with_license)} brukere med M365-lisens for oppslag av autentiseringsmetode")
 
 
