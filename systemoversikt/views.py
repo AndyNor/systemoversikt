@@ -2083,6 +2083,12 @@ def rapport_entra_id_auth(request):
 				Q(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod")
 			)
 	)})
+	data.append({"tekst": "Uten MFA", "antall": len(User.objects.filter(profile__accountdisable=False).filter(
+				~Q(profile__auth_methods__icontains="phoneAuthenticationMethod") |
+				~Q(profile__auth_methods__icontains="fido2AuthenticationMethod") |
+				~Q(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod")
+			)
+	)})
 
 
 	full_table = User.objects.filter(profile__accountdisable=False).values('profile__virksomhet__virksomhetsnavn', 'profile__virksomhet__id').annotate(
@@ -2137,13 +2143,13 @@ def o365_lisenser(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	data = []
-	data.append({"tekst": "Brukere i gruppe 1 - Tykk klient", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G1"))})
-	data.append({"tekst": "Brukere i gruppe 2 - Flerbruker", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G2"))})
-	data.append({"tekst": "Brukere i gruppe 3 - Mangler epost", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G3"))})
-	data.append({"tekst": "Brukere i gruppe 4 - Educaton", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G4"))})
-	data.append({"tekst": "Brukere i gruppe 5 - IDA basis (F1)", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G5"))})
+	data.append({"tekst": "Brukere i gruppe 1 - Tykk klient", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G1", profile__accountdisable=False))})
+	data.append({"tekst": "Brukere i gruppe 2 - Flerbruker", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G2", profile__accountdisable=False))})
+	data.append({"tekst": "Brukere i gruppe 3 - Mangler epost", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G3, profile__accountdisable=False"))})
+	data.append({"tekst": "Brukere i gruppe 4 - Educaton", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G4", profile__accountdisable=False))})
+	data.append({"tekst": "Brukere i gruppe 5 - IDA basis (F1)", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G5", profile__accountdisable=False))})
 
-	full_table = User.objects.values('profile__virksomhet__virksomhetsnavn', 'profile__virksomhet__id').annotate(
+	full_table = User.objects.values('profile__virksomhet__virksomhetsnavn', 'profile__virksomhet__id').filter(profile__accountdisable=False).annotate(
 		total_count=Count('id', filter=Q(
 			Q(profile__ny365lisens__icontains="G1") |
 			Q(profile__ny365lisens__icontains="G2") |
