@@ -25,7 +25,7 @@
 <tbody>
 {% for regel in ca_regler_nyeste.json_policy_as_json.value %}
 <tr>
-	<td>{{ regel.state }}</td>
+	<td>"{{ regel.state }}"</td>
 	<td width="20%">{{regel.displayName}}<br><br>{{ regel.id }}</td>
 	<td width="25%"><pre style="white-space: pre-wrap; overflow-wrap: anywhere;;">{{regel.grantControls|json_remove_empty|json_indent}}</pre></td>
 	<td width="25%"><pre style="white-space: pre-wrap; overflow-wrap: anywhere;;">{{regel.sessionControls|json_remove_empty|json_indent}}</pre></td>
