@@ -224,6 +224,7 @@ class Command(BaseCommand):
 						Command.ANTALL_LAGRET += 1
 					else:
 						user.profile.auth_methods = json.dumps({"status": "Oppslag feilet"}, indent=2)
+						user.profile.auth_methods_last_update = datetime.now()
 						profiles_to_update.append(user.profile)
 						Command.ANTALL_FEILET += 1
 						pass
