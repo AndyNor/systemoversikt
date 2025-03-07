@@ -79,7 +79,7 @@ class Command(BaseCommand):
 			def create_batch_request(users):
 				requests = []
 				for i, user in enumerate(users):
-					#print(f"{user} {user.profile.auth_methods_last_update} {user.profile.entra_id_auth()}")
+					print(f"{user} {user.profile.auth_methods_last_update}")
 					upn = user.email
 					requests.append({
 						"id": i,
