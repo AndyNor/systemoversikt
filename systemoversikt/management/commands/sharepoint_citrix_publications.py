@@ -23,12 +23,12 @@ class Command(BaseCommand):
 		PROTOKOLL = "Manuelt"
 		BESKRIVELSE = "Citrixpubliseringer fra intern og sikker sone"
 		FILNAVN = {
-				"citrix_is": "citrix_publikasjoner_is.json",
-				"citrix_ss": "citrix_publikasjoner_ss.json",
+				"citrix_is": "citrix_App-Info_is.json",
+				"citrix_ss": "citrix_App-Info_ss.json",
 				"citrix_is_desktop_gr": "citrix_BrokerDesktopGroups_is.json",
 				"citrix_ss_desktop_gr": "citrix_BrokerDesktopGroups_ss.json",
-				"citrix_is_servers": "citrix_Machine_list_IS.json",
-				"citrix_ss_servers": "citrix_Machine_list_SS.json",
+				"citrix_is_servers": "citrix_Machine_list_is.json",
+				"citrix_ss_servers": "citrix_Machine_list_ss.json",
 			}
 		URL = ""
 		FREKVENS = "Manuelt"
