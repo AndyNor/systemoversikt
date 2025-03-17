@@ -74,8 +74,8 @@
 		<td>{{ m.profile.adgrupper_antall|default:"?" }}</td>
 		<td>{% for n in m.profile.ou_lesbar %}{{ n }}<br>{% endfor %}</td>
 		<td>{{ m.profile.from_prk|yesno:"Ja,Opprettet manuelt,Vet ikke" }}</td>
-		<td>{{m.profile.whenCreated|date:"Ym" }}<br>({{m.profile.whenCreated|timesince}})</td>
-		<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
+		<td>{{m.profile.whenCreated|date:"Ymd" }}<br>({{m.profile.whenCreated|timesince}})</td>
+		<td>{{ m.profile.lastLogonTimestamp|date:"Ymd" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
 		<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,Nei,Vet ikke" }}</td>
 		<td>{{ m.profile.dont_expire_password|yesno:"Utløper aldri,Utløper,Vet ikke" }}</td>
 		<td>{{ m.profile.description }}</td>
