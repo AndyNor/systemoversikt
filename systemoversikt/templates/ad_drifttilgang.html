@@ -35,7 +35,6 @@
 		{% endcomment %}
 		<th>Antall grupper</th>
 		<th>OU-sti</th>
-		<th>Fra PRK?</th>
 		<th>Opprettet</th>
 		<th>Sist pålogget</th>
 		<th>Passord utløpt?</th>
@@ -71,9 +70,8 @@
 
 		</td>
 		{% endcomment %}
-		<td>{{ m.profile.adgrupper_antall|default:"?" }}</td>
+		<td>{{ m.profile.adgrupper_antall|default:"-" }}</td>
 		<td>{% for n in m.profile.ou_lesbar %}{{ n }}<br>{% endfor %}</td>
-		<td>{{ m.profile.from_prk|yesno:"Ja,Opprettet manuelt,Vet ikke" }}</td>
 		<td>{{m.profile.whenCreated|date:"Ymd" }}<br>({{m.profile.whenCreated|timesince}})</td>
 		<td>{{ m.profile.lastLogonTimestamp|date:"Ymd" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
 		<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,Nei,Vet ikke" }}</td>
