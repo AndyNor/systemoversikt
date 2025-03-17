@@ -50,7 +50,7 @@
 	<tr>
 		<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>
 			👤 {{ m.first_name }} {{ m.last_name }}</td>
-		<td>{{ m.username }}</td>
+		<td><a href="{% url 'bruker_detaljer' pk=m.pk %}">{{ m.username }}</a></td>
 		{% comment %}
 		<td>
 			{% if m.serveradmin %} 💻 Server-admin<br> {% endif %}
