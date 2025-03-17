@@ -2914,7 +2914,10 @@ def cmdb_ad_flere_brukeridenter(request):
 	stat_ou = relevante_brukere.values('ou').annotate(count=Count('ou')).order_by('-count')
 	for s in stat_ou:
 		if s["count"] > 0:
-			s["ou"] = HRorg.objects.get(pk=s["ou"])
+			try:
+				s["ou"] = HRorg.objects.get(pk=s["ou"])
+			except:
+				s["ou"] = None
 
 	return render(request, 'cmdb_ad_flere_brukeridenter.html', {
 		'request': request,
