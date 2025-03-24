@@ -43,7 +43,9 @@
 		<th>Antall databaser</th>
 		{% endif %}
 		<th>Description</th>
-		<th>Spesifikasjoner</th>
+		<th>CPU-kjerner</th>
+		<th>Minne</th>
+		<th>Disk</th>
 		<th>IP</th>
 		<th>Nettverk</th>
 		<th>Operativsystem</th>
@@ -83,9 +85,13 @@
 			{{ maskin.comments|default:"-" }}
 		</td>
 		<td>
-			CPU: {{ maskin.comp_u_cpu_total|default:"-" }} Cores<br>
-			RAM: {{ maskin.comp_ram|default:"-" }} MB<br>
-			Disk: {{ maskin.comp_disk_space|filesizeformat }}<br>
+			{{ maskin.comp_u_cpu_total|default:"-" }} cores
+		</td>
+		<td>
+			{{ maskin.comp_ram|default:"-" }} MB
+		</td>
+		<td>
+			{{ maskin.comp_disk_space|filesizeformat }}<br>
 			{% if vis_detaljer %}
 			{% for disk in maskin.cmdbdisk_computer.all %}
 				{% if disk.operational_status %}
