@@ -91,8 +91,9 @@
 			{{ maskin.comp_ram|default:"-" }} MB
 		</td>
 		<td>
-			{{ maskin.comp_disk_space|filesizeformat }}<br>
-			{% if vis_detaljer %}
+			{{ maskin.comp_disk_space }} bytes<br>
+			{{ maskin.comp_disk_space|filesizeformat }}
+			{% if vis_detaljer %}<br>
 			{% for disk in maskin.cmdbdisk_computer.all %}
 				{% if disk.operational_status %}
 					<li>{{ disk.file_system}} {{disk.free_space_bytes|filesizeformat}} of {{disk.size_bytes|filesizeformat}} ({{ disk.mount_point|truncatechars:35 }})</li>
