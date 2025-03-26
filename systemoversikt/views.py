@@ -1845,7 +1845,7 @@ def admin_visitors(request): # brukerstatisikk
 
 	# hente informasjon om antall pålogginger fordelt per måned tilbake i tid
 	from django.db.models.functions import TruncMonth
-	auth_over_time = logged_in_events.annotate(year_month=TruncMonth('opprettet')).values('year_month').annotate(count=Count('id')).values('year_month', 'count')
+	auth_over_time = logged_in_events.annotate(year_month=TruncMonth('opprettet')).values('year_month').annotate(count=Count('message', distinct=True)).values('year_month', 'count')
 
 
 	# hente data om pålogginger fordelt på virksomhet for de siste x dager
