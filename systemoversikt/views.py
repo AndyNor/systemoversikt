@@ -1838,7 +1838,7 @@ def admin_visitors(request): # brukerstatisikk
 	logged_in_events = ApplicationLog.objects.filter(event_type__icontains="Brukerpålogging", message__icontains="logget inn")
 
 	# hente informasjon om antall pålogginger siste x dager
-	period = 60 # days
+	period = 90 # days
 	period_timestamp = timezone.now() - datetime.timedelta(period)
 	auth_this_period = logged_in_events.filter(opprettet__gte=period_timestamp).count()
 
