@@ -1840,7 +1840,7 @@ def admin_visitors(request): # brukerstatisikk
 	# hente informasjon om antall pålogginger siste x dager
 	period = 90 # days
 	period_timestamp = timezone.now() - datetime.timedelta(period)
-	auth_this_period = logged_in_events.filter(opprettet__gte=period_timestamp).count()
+	auth_this_period = logged_in_events.filter(opprettet__gte=period_timestamp).values_list('message', flat=True).distinct().count()
 
 
 	# hente informasjon om antall pålogginger fordelt per måned tilbake i tid
