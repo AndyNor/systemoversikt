@@ -22,7 +22,7 @@ class Command(BaseCommand):
 		KILDE = "Cisco ASA"
 		PROTOKOLL = "SharePoint"
 		BESKRIVELSE = "Brannmurregler og brannmurgrupper"
-		FILNAVN = "firewall_2023-05-24.xlsx"
+		FILNAVN = "firewall_2025-04-01.xlsx"
 		URL = ""
 		FREKVENS = "Manuelt på forespørsel"
 
@@ -352,12 +352,12 @@ class Command(BaseCommand):
 					#debug.append("* ingen relevante data")
 					continue
 
-				if sheet == "All FW network groups":
+				if sheet == "Network Groups":
 					named_network_groups = parse_firewall_named_groups(excel_file=excel_file, sheet=sheet)
 					print("* navngitte nettverk er lastet")
 					continue
 
-				if sheet == "All FW service groups":
+				if sheet == "Services":
 					named_port_groups = parse_firewall_port_groups(excel_file=excel_file, sheet=sheet)
 					print("* navngitte porter er lastet")
 					continue
