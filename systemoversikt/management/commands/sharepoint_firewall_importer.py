@@ -128,6 +128,7 @@ class Command(BaseCommand):
 				for index, row in df.iterrows():
 					alias = row["Name"]
 					description = row["Description"]
+					#print(row["Content"])
 					try:
 						named_groups[alias] = [s + " " + description for s in row["Content"].split(",")]
 					except:
@@ -344,6 +345,7 @@ class Command(BaseCommand):
 			#print("Fant følgende ark i filen: %s" % excel_file.sheet_names)
 
 			all_openings = {}
+			#antall_openings_delsummer = 0
 
 			for sheet in excel_file.sheet_names:
 				print("Åpner ark %s" % sheet)
@@ -354,20 +356,20 @@ class Command(BaseCommand):
 
 				if sheet == "Network Groups":
 					named_network_groups = parse_firewall_named_groups(excel_file=excel_file, sheet=sheet)
-					print("* navngitte nettverk er lastet")
+					print(f"* {len(named_network_groups)} navngitte nettverk er lastet")
 					continue
 
 				if sheet == "Services":
 					named_port_groups = parse_firewall_port_groups(excel_file=excel_file, sheet=sheet)
-					print("* navngitte porter er lastet")
+					print(f"* {len(named_port_groups)} navngitte porter er lastet")
 					continue
 
 				try:
 					df = excel_file.parse(sheet,
 								#skiprows=2, # de første radene er tomme
 								#usecols=[2, 3, 4, 7, 9, 10, 14],
-								skiprows=0, # de første radene er tomme
-								usecols=[0, 1, 2, 3, 4, 6, 8],
+								skiprows=2, # de første radene er tomme
+								usecols=[2, 3, 4, 5, 6, 8, 9],
 								names=['rule_id', 'permit', 'source', 'destination', 'service', 'beskrivelse', 'enabled',]
 							)
 				except:
@@ -377,14 +379,18 @@ class Command(BaseCommand):
 				df['rule_id'].ffill(inplace=True)
 				df = df.replace(np.nan, '', regex=True)
 				data = df.to_dict('records')
+				print(f"* Fant {len(data)} regler")
+				#antall_openings_delsummer += len(data)
 				for line in data:
 					try:
 						sheet_rule_id = int(line["rule_id"])
 						rule_id = f"{sheet}-{sheet_rule_id}"
 					except:
+						print(f"ID mangler")
 						rule_id = "ID mangler"
 
 					if not rule_id in all_openings:
+						#print("adding rule")
 						all_openings[rule_id] = {
 								'firewall': sheet,
 								'permit': line["permit"],
@@ -395,16 +401,19 @@ class Command(BaseCommand):
 								'enabled': line["enabled"],
 								}
 					else:
+						#print(f"Rule ID eksisterer fra før av, legger til ekstra data")
 						if line["source"] != "":
+							#print(f"legger til en ekstra source")
 							all_openings[rule_id]["source"].append(parse_target(line["source"]))
 						if line["destination"] != "":
+							#print(f"legger til en ekstra destination")
 							all_openings[rule_id]["destination"].append(parse_target(line["destination"]))
 						if line["service"] != "":
+							#print(f"legger til en ekstra service")
 							all_openings[rule_id]["service"].append(line["service"])
 
-				print(f"* Fant {len(data)} regler")
 
-			print(f"Det er {len(all_openings)} brannmurdefinisjoner i filen")
+			print(f"Det er {len(all_openings)} brannmurdefinisjoner i filen.")
 
 			# erstatte grupper med faktiske medlemmer (ip, nett og porter)
 			for rule_id in all_openings:
@@ -501,6 +510,7 @@ class Command(BaseCommand):
 			print(logg_message)
 			import traceback
 			int_config.helsestatus = f"Feilet\n{traceback.format_exc()}"
+			print(int_config.helsestatus)
 			int_config.save()
 			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
 
