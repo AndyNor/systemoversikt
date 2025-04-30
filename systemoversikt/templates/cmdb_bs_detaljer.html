@@ -85,7 +85,11 @@
 			<td>
 				{{ item.service_classification|default:"" }}
 			</td>
-			<td>{{ item.ant_devices }}</td>
+			<td>
+				{{ item.ant_devices }}<br>
+				{% for item in item.ant_devices|slice:":3" %}{{ item }}{% endfor %}
+
+			</td>
 			<td>{{ item.ant_databaser }}</td>
 			<td>
 				{{ item.backup_size|filesizeformat }}
