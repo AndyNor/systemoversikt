@@ -87,8 +87,8 @@
 			</td>
 			<td>
 				{{ item.ant_devices }}<br>
-				{% for server in item.servers.all|slice:":4" %}{{ server }}<br>{% endfor %}
-				{% if item.servers.all|length > 4 %}...{% endif %}
+				{% for server in item.servers.all|slice:":3" %}{{ server }}<br>{% endfor %}
+				{% if item.servers.all|length > 3 %}...{% endif %}
 			</td>
 			<td>{{ item.ant_databaser }}</td>
 			<td>
