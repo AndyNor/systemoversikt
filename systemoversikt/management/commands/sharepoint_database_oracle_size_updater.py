@@ -75,7 +75,7 @@ class Command(BaseCommand):
 			database_size_not_found = []
 			for idx, record in enumerate(oracle_sizes):
 				import_databasenavn = record["DATABASE NAME"].strip()
-				import_server = record["DATABASE SERVER"].strip().split(".")[0]
+				import_server = record["SERVER NAME"].strip().split(".")[0]
 				try:
 					dbinstance = CMDBdatabase.objects.get(db_database=import_databasenavn,db_server=import_server)
 				except:
