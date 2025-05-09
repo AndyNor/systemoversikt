@@ -180,10 +180,13 @@ class Command(BaseCommand):
 						server_dropped += 1
 						continue  # Det må være en verdi på denne
 
-					cmdbdevice, created = CMDBdevice.objects.get_or_create(comp_name=comp_name.lower(), device_type="SERVER")
+					#print(comp_name.lower())
+					cmdbdevice, created = CMDBdevice.objects.get_or_create(comp_name=comp_name.lower())
 
 					if created:
 						nye_servere_importert += 1
+
+					cmdbdevice.device_type = "SERVER"
 
 					# OS-håndtering
 					os = record["Operating System"]
@@ -259,6 +262,8 @@ class Command(BaseCommand):
 							ipaddr_ins.servere.add(cmdbdevice)
 							ipaddr_ins.save()
 
+					#print(cmdbdevice.pk)
+					#print(cmdbdevice.comp_name)
 					cmdbdevice.save()
 
 
