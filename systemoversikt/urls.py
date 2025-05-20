@@ -30,8 +30,8 @@ router.register(r'behandling', apiviews.VirksomhetViewSet)
 favicon_view = RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=True)
 
 urlpatterns = [
-	#path('api/', include(router.urls)),
-	#path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+	path('rest/', include(router.urls)),
+	path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 
 
 
@@ -337,6 +337,8 @@ urlpatterns = [
 	re_path(r'^ukecsirt/ipsok/api/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # IP-oppslag fra vulnapp, returnerer CMDB-data og merker device som internett-eksponert
 	re_path(r'^api/programvare/$', views.api_programvare, name='api_programvare'), # Brukes av vulnapp for å hente alle applikasjoner
 	re_path(r'^api/known_exploited/$', views.api_known_exploited, name='api_known_exploited'), # VulnApp kaller denne for å laste opp CVE known exploited
+
+	re_path(r'^api/systemer/$', views.api_systemer, name='api_systemer'), # Tjeneste- og systemoversikt
 
 	re_path(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),# UKE manuell nedlasting av PRK-data, to personer, sjeldent i bruk
 	re_path(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),# UKE manuell nedlasting av PRK-data, to personer, sjeldent i bruk

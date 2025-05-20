@@ -2900,13 +2900,11 @@ class CMDBdevice(models.Model):
 			)
 	comments = models.TextField(
 			verbose_name="Comments",
-			unique=False,
 			null=True,
 			blank=True,
 			)
 	description = models.TextField(
 			verbose_name="Description",
-			unique=False,
 			null=True,
 			blank=True,
 			)

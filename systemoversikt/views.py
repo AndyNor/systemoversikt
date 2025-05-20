@@ -8072,6 +8072,52 @@ def systemer_api(request): #API
 
 
 
+
+
+def api_systemer(request): #tjeneste- og systemoversikt
+
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	data = []
+	query = System.objects.all()
+	for system in query:
+		line = {}
+
+		line["kartotek_id"] = system.pk
+		line["systemanvn"] = system.systemnavn
+		line["alias"] = system.alias
+		line["systemeierskapsmodell"] = system.get_systemeierskapsmodell_display()
+
+		if system.systemeier:
+			line["systemeier"] = system.systemeier.virksomhetsforkortelse
+		if system.systemforvalter:
+			line["systemforvalter"] = system.systemforvalter.virksomhetsforkortelse
+		if system.driftsmodell_foreignkey:
+			line["plattform"] = system.driftsmodell_foreignkey.navn
+
+		#kategoriliste = []
+		#for kategori in system.systemkategorier.all():
+		#	kategoriliste.append(kategori.kategorinavn)
+		#line["systemkategorier"] = kategoriliste
+
+		#bruksliste = []
+		#for bruk in system.systembruk_system.all():
+		#	bruksliste.append(bruk.brukergruppe.virksomhetsnavn)
+		#line["system_brukes_av"] = bruksliste
+
+		data.append(line)
+
+	resultat = {"antall": len(query), "data": data}
+	return JsonResponse(resultat, safe=False)
+
+
+
 def system_excel_api(request, virksomhet_pk=None): #API
 
 	if not request.method == "GET":
