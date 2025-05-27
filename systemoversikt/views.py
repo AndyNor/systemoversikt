@@ -8073,6 +8073,14 @@ def systemer_api(request): #API
 
 
 
+# virksomhet med bruk
+# programvare
+# bruk
+# los
+# kritisk funksjon
+# plattform
+# systemtype
+
 
 def api_systemer(request): #tjeneste- og systemoversikt
 
@@ -8084,36 +8092,69 @@ def api_systemer(request): #tjeneste- og systemoversikt
 	if not key in list(allowed_keys):
 		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
+	ApplicationLog.objects.create(event_type="api_systemer", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
 	data = []
 	query = System.objects.all()
 	for system in query:
 		line = {}
 
 		line["kartotek_id"] = system.pk
-		line["systemanvn"] = system.systemnavn
+		line["opprettet"] = system.opprettet
+		line["sist_oppdatert"] = system.sist_oppdatert
+		line["systemnavn"] = system.systemnavn
+		line["visningsnavn"] = system.__str__()
 		line["alias"] = system.alias
+		line["systembeskrivelse"] = system.systembeskrivelse
+
+		line["livslop_status"] = system.get_livslop_status_display()
+		line["ibruk"] = system.er_ibruk()
+		line["systemurl"] = [url.domene for url in system.systemurl.all()]
+		line["systemtyper"] = [systemtype.kategorinavn for systemtype in system.systemtyper.all()]
+		line["programvarer"] = [programvare.programvarenavn for programvare in system.programvarer.all()]
+
 		line["systemeierskapsmodell"] = system.get_systemeierskapsmodell_display()
+		line["systemeier_virksomhet_id"] = system.systemeier.id if system.systemeier else None
+		line["systemeier_virksomhet_navn"] = system.systemeier.virksomhetsforkortelse if system.systemeier else None
+		line["systemeier_kontaktpersoner"] = [ansvarlig.brukernavn.email for ansvarlig in system.systemeier_kontaktpersoner_referanse.all()]
+		line["systemforvalter_virksomhet_id"] = system.systemforvalter.id if system.systemforvalter else None
+		line["systemforvalter_virksomhet_navn"] = system.systemforvalter.virksomhetsforkortelse if system.systemforvalter else None
+		line["systemforvalter_kontaktpersoner"] = [ansvarlig.brukernavn.email for ansvarlig in system.systemforvalter_kontaktpersoner_referanse.all()]
+		line["systemforvalter_orgenhet_ouid"] = system.systemforvalter_avdeling_referanse.ouid if system.systemforvalter_avdeling_referanse else None
+		line["systemforvalter_orgenhet_navn"] = system.systemforvalter_avdeling_referanse.ou if system.systemforvalter_avdeling_referanse else None
+		line["forvaltning_epost"] = system.forvaltning_epost
+		line["superbrukere"] = system.superbrukere
+		line["nokkelpersonell"] = system.nokkelpersonell
 
-		if system.systemeier:
-			line["systemeier"] = system.systemeier.virksomhetsforkortelse
-		if system.systemforvalter:
-			line["systemforvalter"] = system.systemforvalter.virksomhetsforkortelse
-		if system.driftsmodell_foreignkey:
-			line["plattform"] = system.driftsmodell_foreignkey.navn
+		line["plattform_id"] = system.driftsmodell_foreignkey.id if system.driftsmodell_foreignkey else None
+		line["plattform_navn"] = system.driftsmodell_foreignkey.navn if system.driftsmodell_foreignkey else None
 
-		#kategoriliste = []
-		#for kategori in system.systemkategorier.all():
-		#	kategoriliste.append(kategori.kategorinavn)
-		#line["systemkategorier"] = kategoriliste
+		line["konfidensialitet"] = system.vis_konfidensialitet()
+		line["tilgjengelighet"] = system.vis_tilgjengelighet()
+		line["integritetsvurdering"] = system.vis_integritetsvurdering()
 
-		#bruksliste = []
-		#for bruk in system.systembruk_system.all():
-		#	bruksliste.append(bruk.brukergruppe.virksomhetsnavn)
-		#line["system_brukes_av"] = bruksliste
+		line["teknisk_egnethet"] = system.get_teknisk_egnethet_display()
+		line["strategisk_egnethet"] = system.get_strategisk_egnethet_display()
+		line["funksjonell_egnethet"] = system.get_funksjonell_egnethet_display()
+
+		line["kommune_los"] = [word.__str__() for word in system.los_ord()]
+
+		line["systemleverandor"] = [leverandor.leverandor_navn for leverandor in system.systemleverandor.all()]
+		line["basisdriftleverandor"] = [leverandor.leverandor_navn for leverandor in system.basisdriftleverandor.all()]
+		line["applikasjonsdriftleverandor"] = [leverandor.leverandor_navn for leverandor in system.applikasjonsdriftleverandor.all()]
+		line["service_offerings_external_id"] = [offering.bss_external_ref for offering in system.service_offerings.all()]
+		line["service_offerings_navn"] = [offering.navn for offering in system.service_offerings.all()]
+
+		line["systemfarge"] = system.color()
 
 		data.append(line)
 
 	resultat = {"antall": len(query), "data": data}
+
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 2)
+	ApplicationLog.objects.create(event_type="api_systemer", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+
 	return JsonResponse(resultat, safe=False)
 
 
