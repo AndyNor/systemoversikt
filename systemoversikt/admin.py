@@ -344,6 +344,7 @@ class AutorisasjonsmetodeAdmin(SimpleHistoryAdmin):
 
 @admin.register(SystemIntegration)
 class SystemIntegrationAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('pk', 'source_system', 'destination_system', 'integration_type', 'personopplysninger', 'description',)
 	search_fields = ('source_system.systemnavn', 'destination_system.systemnavn','description',)
 	list_filter = ('integration_type', 'personopplysninger',)
