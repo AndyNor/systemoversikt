@@ -85,9 +85,9 @@ class QualysVulnBasisPatchingAdmin(admin.ModelAdmin):
 	readonly_fields = ('opprettet', 'sist_oppdatert')
 
 
-@admin.register(IpProtocol)
-class IpProtocolAdmin(admin.ModelAdmin):
-	list_display=search_fields=readonly_fields = ('protocol', 'port', 'description')
+#@admin.register(IpProtocol)
+#class IpProtocolAdmin(admin.ModelAdmin):
+#	list_display=search_fields=readonly_fields = ('protocol', 'port', 'description')
 
 
 @admin.register(AzureUser)

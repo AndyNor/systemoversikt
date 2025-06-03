@@ -16,7 +16,7 @@ import ast
 from django.db.models import Q
 
 
-# som standard vises bare "self.username". Vi ønsker også å vise fult navn.
+# Endre __str__ for User-klassen. User er innebygget i Django. User viser som standard bare "self.username". Vi ønsker å vise fult navn.
 def new_display_name(self):
 	if self.profile.displayName:
 		return(self.profile.displayName + " (" + self.username + ")")
@@ -24,21 +24,6 @@ def new_display_name(self):
 		return(self.first_name + " " + self.last_name + " (" + self.username + ")")
 User.add_to_class("__str__", new_display_name)
 
-
-VALG_KLARGJORT_SIKKERHETSMODELL = (
-	(None, "❔ Ikke vurdert"),
-	(1, "🟢 Klargjort via Azure Web Application Proxy"),
-	(2, "🟢 Klargjort som Citrix publisert applikasjon"),
-	(3, "🟢 Direkteeksponert webtjeneste med Azure AD-pålogging"),
-	(4, "🟢 Desktopapplikasjon uten avhengigheter, ferdig pakket"),
-	(9, "🟢 Publisert på dedikerte AVD-maskiner"),
-	(5, "🟡 Ikke klargjort, skal til Azure Web Application Proxy"),
-	(9, "🟡 Ikke klargjort, skal direkteeksponeres og ha Azure AD autentisering"),
-	(6, "🟡 Ikke klargjort, skal publiseres som Citrix strømmet app"),
-	(7, "🟡 Ikke klargjort, skal kun pakkes som desktop applikasjon"),
-	(10, "🟡 Ikke klargjort, skal til dedikerte AVD-maskiner"),
-	(8, "🔴 Ingen løsning klar enda"),
-)
 
 
 def conditional_access_replace_guid(data):
@@ -76,6 +61,7 @@ def conditional_access_replace_guid(data):
 	return data
 
 
+# Entra ID Conditional Access-policyer hentet ned via Graph API
 class EntraIDConditionalAccessPolicies(models.Model):
 	timestamp = models.DateTimeField(
 			verbose_name="Lastet inn",
@@ -135,6 +121,7 @@ def global_azureid_lookup(value):
 	return id_pattern.sub(replace_id, value)
 
 
+# Importering av Citrix-publikasjoner som knyttes til systemer.
 class CitrixPublication(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -230,6 +217,7 @@ class CitrixPublication(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+# Informasjon som vises øverst på siden med gul bakgrunn. Viktig informasjon som kan skrus av og på via admin-grensesnittet.
 class Fellesinformasjon(models.Model):
 	message = models.TextField(
 			verbose_name="message",
@@ -249,6 +237,7 @@ class Fellesinformasjon(models.Model):
 		default_permissions = ('view')
 
 
+# Logge endringer på brukere, basert på oppslag mot AD. Hovedsakelig aktivering og deaktivering av brukere
 class UserChangeLog(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -276,7 +265,7 @@ class UserChangeLog(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-
+# Informasjon om hva som er nytt i Kartoteket
 class NyeFunksjoner(models.Model):
 	tidspunkt = models.DateTimeField(
 			verbose_name="Tidspunkt",
@@ -305,7 +294,7 @@ class NyeFunksjoner(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-
+# Oversikt over alle integrasjoner. Alle management-script oppdaterer sin respektive instans med sist kjørt og status.
 class IntegrasjonKonfigurasjon(models.Model):
 	kodeord = models.CharField(
 		max_length=50,
@@ -404,6 +393,7 @@ class IntegrasjonKonfigurasjon(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+# Holder API-nøkler utdelt for eksport av data
 class APIKeys(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -437,7 +427,7 @@ class APIKeys(models.Model):
 
 
 
-
+# Hovedlogg over hva Kartoteket gjør. Loggen over systemendringer er utenfor, og det er noen andre utsplittede logger.
 class ApplicationLog(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -468,6 +458,8 @@ class ApplicationLog(models.Model):
 		verbose_name_plural = "System: Applikasjonslogger"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+
+# Definisjonsoversikt: kontekster
 class DefinisjonKontekster(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -499,6 +491,7 @@ DEFINISJON_STATUS_VALG = (
 	(2, 'Utfaset'),
 )
 
+# Definisjonsoversikt: hovedobjekt
 class Definisjon(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -587,6 +580,8 @@ class Definisjon(models.Model):
 		verbose_name_plural = "Definisjoner: Definisjoner"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
+
+# Hjelpeobjekt som mellomledd mellom User (brukere) og objekter som trenger å angi hvem som er ansvarlig. F.eks. System har systemforvalter --> ansvarlig --> user --> profile.
 class Ansvarlig(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -675,6 +670,7 @@ class Ansvarlig(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+#hjelpeobjekt for å forvalte sertifikatbestillere.
 class AutorisertBestiller(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -704,6 +700,7 @@ class AutorisertBestiller(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+# Valgmenyer brukt av virksomhet objektet
 RESULTATENHET_VALG = (
 	('OF', 'Felles IKT-plattform'),
 	('Egen', 'Egen drift'),
@@ -716,6 +713,7 @@ OFFICE365_VALG = (
 )
 
 
+### SENTRAL KLASSE ###
 class Virksomhet(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -840,7 +838,7 @@ class Virksomhet(models.Model):
 			blank=True,
 			null=True,
 			default=False,
-			help_text=u"Krysses av dersom virksomhet har avgitt fullmakt til driftsleverandør for å utstede digitale sertifikater sitt org.nummer.",
+			help_text=u"Krysses av dersom virksomhet har avgitt fullmakt til driftsleverandør for å utstede digitale sertifikater for sitt org.nummer.",
 			)
 	rutine_tilgangskontroll = models.URLField(
 			verbose_name="Rutiner for tilgangskontroll",
@@ -938,6 +936,7 @@ class Virksomhet(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+# hjelpeklasse for system_telle_koblede_brukere. Ved oppslag via AD/LDAP hentes det ut ansattnummer, og flere brukere kan kobles til samme nummer
 class AnsattID(models.Model):
 	ansattnr = models.BigIntegerField(
 			db_index=True,
@@ -959,6 +958,8 @@ LISENCE_VALG = (
 	(4, 'G4 A3 (Education)'),
 )
 
+
+# manuell liste over AD-grupper som anses som priveligerte
 PRIVELIGERTE_GRUPPER = [
 	"Access Control Assistance Operators",
 	"Account Operators",
@@ -1062,6 +1063,8 @@ PRIVELIGERTE_GRUPPER = [
 	"Task-OF2-EGE-JumpserverAdmin",
 ]
 
+
+# hjelpeklasse til innebygde User. For å lagre mer informasjon om bruker. Nås som user.profile
 class Profile(models.Model):
 	#https://simpleisbetterthancomplex.com/tutorial/2016/07/22/how-to-extend-django-user-model.html
 	ad_sist_oppdatert = models.DateTimeField(
@@ -1441,6 +1444,8 @@ class Profile(models.Model):
 		return "Nei"
 
 
+
+### SENTRAL KLASSE ###
 class Leverandor(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -1492,9 +1497,7 @@ class Leverandor(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-
-
-
+# Dynamisk valgmeny benyttet for System-klassen. F.eks. A personopplysninger, B sikkerhetsgradert, D lagres i norge osv.
 class InformasjonsKlasse(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -1526,6 +1529,9 @@ class InformasjonsKlasse(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['navn']
 
+
+
+# Dynamisk valgmeny for å klassifisere systemer i kommune-spesifikke kategorier
 class SystemKategori(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -1569,7 +1575,7 @@ class SystemKategori(models.Model):
 		ordering = ['kategorinavn']
 
 
-
+# Dynamisk valgmeny for å kategoriere SystemKategori-er
 class SystemHovedKategori(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -1609,7 +1615,7 @@ class SystemHovedKategori(models.Model):
 		ordering = ['hovedkategorinavn']
 
 
-
+# menyvalg for SystemUrl
 MAALGRUPPE_VALG = (
 	(1, 'Innbyggere'),
 	(2, 'Ansatte'),
@@ -1624,6 +1630,8 @@ SIKKERHETSTESTING_VALG = (
 	(5, "5 Meget aktuelt"),
 )
 
+
+# Støtteklasse for å registrere informasjon om en URL ut over selve adressen. Brukes inn mot System
 class SystemUrl(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -1711,8 +1719,8 @@ class SystemUrl(models.Model):
 		ordering = ['domene']
 
 
-
-class Personsonopplysningskategori(models.Model):
+# tidligere behandlingsoversikten, SLETTES?
+class Personsonopplysningskategori(models.Model): ### SLETTES ###
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
 			auto_now=True,
@@ -1756,7 +1764,7 @@ class Personsonopplysningskategori(models.Model):
 		ordering = ['navn']
 
 
-
+# tidligere behandlingsoversikten, SLETTES?
 class Registrerte(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -1795,7 +1803,7 @@ class Registrerte(models.Model):
 		ordering = ['kategorinavn']
 
 
-
+# tidligere behandlingsoversikten, SLETTES?
 class Behandlingsgrunnlag(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -1837,6 +1845,8 @@ class Behandlingsgrunnlag(models.Model):
 
 
 
+# statike valgmenyer for CMDB
+
 CMDB_KRITIKALITET_VALG = (
 	(1, '1: most critical'),
 	(2, '2: somewhat critical'),
@@ -1844,14 +1854,16 @@ CMDB_KRITIKALITET_VALG = (
 	(4, '4: not critical'),
 )
 
-CMDB_TYPE_VALG = (
-	(1, 'Et system'),
-	(2, 'Ukjent'),
-	(3, 'En infrastrukturkomponent'),
-	(4, 'En samlekategori (BusinessService)'),
-	(5, 'For fakturering'),
-	(6, 'Tom / ikke i bruk'),
-)
+
+#brukes ikke
+#CMDB_TYPE_VALG = (
+#	(1, 'Et system'),
+#	(2, 'Ukjent'),
+#	(3, 'En infrastrukturkomponent'),
+#	(4, 'En samlekategori (BusinessService)'),
+#	(5, 'For fakturering'),
+#	(6, 'Tom / ikke i bruk'),
+#)
 
 CMDB_ENV_VALG = (
 	(1, 'Produksjon'),
@@ -1978,8 +1990,10 @@ class CMDBbs(models.Model):
 
 
 # Dette er nivå 2 av CMDB-modellen, såkalt "Business Service Offering" i Service Now Common Service Data Model
+# Importert fra CMDB via importscript
+# representerer et "miljø", for produksjonsmiljøet for et gitt system.
 # Er koblet til nivå 1, men nivå 1 er bare en "sekkepost" eller kategori, og er derfor ikke nyttig.
-# Det er under disse servere og databaser modelleres inn.
+# Det er under disse servere og databaser kobles inn.
 # Systemer har kobling til 0, 1 eller flere slike nivå2 offerings.
 class CMDBRef(models.Model): # BSS
 	opprettet = models.DateTimeField(
@@ -2237,7 +2251,7 @@ class CMDBRef(models.Model): # BSS
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-
+# Klasse for å representere virtuell lastbalanserte endepunkter. Er igjen knyttet til pools (VirtualIPPool), importert via importscript
 class virtualIP(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -2296,27 +2310,27 @@ class virtualIP(models.Model):
 		return members
 
 
-class IpProtocol(models.Model): # DENNE BRUKES IKKE TIL NOE SOM HELST
-	port = models.BigIntegerField(
-		null=False,
-		)
-	protocol = models.CharField(
-		max_length=10,
-		null=False,
-		)
-	description = models.TextField(
-		null=True,
-		)
+#class IpProtocol(models.Model): # DENNE BRUKES IKKE TIL NOE SOM HELST
+#	port = models.BigIntegerField(
+#		null=False,
+#		)
+#	protocol = models.CharField(
+#		max_length=10,
+#		null=False,
+#		)
+#	description = models.TextField(
+#		null=True,
+#		)
+#
+#	def __str__(self):
+#		return f"IP protokoll {self.protocol} {self.port}"
+#
+#	class Meta:
+#		verbose_name_plural = "CMDB: IP-protokoller"
+#		default_permissions = ('add', 'change', 'delete', 'view')
 
-	def __str__(self):
-		return f"IP protokoll {self.protocol} {self.port}"
 
-	class Meta:
-		verbose_name_plural = "CMDB: IP-protokoller"
-		default_permissions = ('add', 'change', 'delete', 'view')
-
-
-
+# Klasse for å representere kilder (pools) for et gitt virtuell lastbalansert endepunkt
 class VirtualIPPool(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -2365,6 +2379,7 @@ class VirtualIPPool(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+# For å representere IP-nettverk fra infoblox, importert via importscript
 class NetworkContainer(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -2433,6 +2448,7 @@ class NetworkContainer(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+# Klasse med informasjon om IP-adresser. Brukes overalt hvor en IP-adresse må representeres.
 class NetworkIPAddress(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -2502,9 +2518,7 @@ class NetworkIPAddress(models.Model):
 		return []
 
 
-
-
-
+# DNS-data (kobling navn-IP), importert fra DNS via importscript
 class DNSrecord(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -2567,6 +2581,7 @@ class DNSrecord(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+# Statisk valgmeny populert fra DSB sitt rammeverk, nivå 1 hovedkategorier
 KRITISKE_KATEGORIER = (
 	(1, 'Styringsevne og suvernitet'),
 	(2, 'Befolkningens sikkerhet'),
@@ -2574,6 +2589,7 @@ KRITISKE_KATEGORIER = (
 )
 
 
+# Dynamisk valgmeny populert fra DSB sitt rammeverk, nivå 3 funksjon under kapabilitetene. Brukes for å tagge systemer.
 class KritiskFunksjon(models.Model):
 	navn = models.CharField(
 			max_length=150,
@@ -2601,6 +2617,7 @@ class KritiskFunksjon(models.Model):
 		return list(systemer)
 
 
+# Dynamisk valgmeny populert fra DSB sitt rammeverk, nivå 2 kapabiliteter under hovedkategoriene
 class KritiskKapabilitet(models.Model):
 	navn = models.CharField(
 			max_length=150,
@@ -2629,7 +2646,7 @@ class KritiskKapabilitet(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-
+# Oppbevaring av informasjon om databaser, importert fra CMDB via importscript
 class CMDBdatabase(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -2721,6 +2738,7 @@ class CMDBdatabase(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+# Dynamisk valgmeny for å manuelt kunne legge til stringer av sårbarheter som basisdrift er ansvarlig for
 class QualysVulnBasisPatching(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -2743,7 +2761,7 @@ class QualysVulnBasisPatching(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-
+# Programvaresårbarheter, importert fra Qualys, knyttet til server som igjen er knyttet indirekte til system.
 class QualysVuln(models.Model):
 	source = models.TextField()
 	server = models.ForeignKey(
@@ -2782,7 +2800,7 @@ class QualysVuln(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
-
+# Devices fra CMDB, servere eller klienter. Importeres fra CMDB. device_type angir type enhet. Koblet til service offerings som igjen er koblet til systemer
 class CMDBdevice(models.Model):
 	opprettet = models.DateTimeField( # system
 			verbose_name="Opprettet",
@@ -3018,6 +3036,7 @@ class CMDBdevice(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+# Oppbevaring av backup fra leverandørrapport. Kilde, størrelse og policy, knyttet til server.
 class CMDBbackup(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -3729,6 +3748,22 @@ class Region(models.Model):
 	class Meta:
 		verbose_name_plural = "Behandling: Regioner"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+VALG_KLARGJORT_SIKKERHETSMODELL = (
+	(None, "❔ Ikke vurdert"),
+	(1, "🟢 Klargjort via Azure Web Application Proxy"),
+	(2, "🟢 Klargjort som Citrix publisert applikasjon"),
+	(3, "🟢 Direkteeksponert webtjeneste med Azure AD-pålogging"),
+	(4, "🟢 Desktopapplikasjon uten avhengigheter, ferdig pakket"),
+	(9, "🟢 Publisert på dedikerte AVD-maskiner"),
+	(5, "🟡 Ikke klargjort, skal til Azure Web Application Proxy"),
+	(9, "🟡 Ikke klargjort, skal direkteeksponeres og ha Azure AD autentisering"),
+	(6, "🟡 Ikke klargjort, skal publiseres som Citrix strømmet app"),
+	(7, "🟡 Ikke klargjort, skal kun pakkes som desktop applikasjon"),
+	(10, "🟡 Ikke klargjort, skal til dedikerte AVD-maskiner"),
+	(8, "🔴 Ingen løsning klar enda"),
+)
 
 
 class Programvare(models.Model):
@@ -5947,11 +5982,11 @@ class SystemBruk(models.Model):
 			default=True,
 			help_text=u"Er i bruk ved kryss, og 'ikke i bruk' når kryss fjernes. Kan fjernes i stedet for å slette koblingen og lokale vurderinger.",
 			)
-	del_behandlinger = models.BooleanField(
+	del_behandlinger = models.BooleanField(			##SLETT##
 			verbose_name="Abonner på felles behandlinger i systemet",
 			blank=True,
 			default=False,
-			help_text=u"Krysser du av på denne, vil alle felles behandlinger for systemet havne i din behandlingsprotokoll",
+			help_text=u"Avviklet: Krysser du av på denne, vil alle felles behandlinger for systemet havne i din behandlingsprotokoll",
 			)
 	systemforvalter = models.ForeignKey(
 			to=Virksomhet,
@@ -5976,25 +6011,25 @@ class SystemBruk(models.Model):
 			blank=True,
 			help_text=u"Dersom fellesløsning på applikasjonshotell, hvilke roller/personer fyller rollen som lokal eier?",
 			)
-	livslop_status = models.BigIntegerField(
+	livslop_status = models.BigIntegerField(			##SLETT##
 			choices=LIVSLOEP_VALG,
 			verbose_name="Livsløpstatus",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	avhengigheter_referanser = models.ManyToManyField(
+	avhengigheter_referanser = models.ManyToManyField(			##SLETT##
 			to="System",
 			related_name='systembruk_avhengigheter_referanser',
 			verbose_name="Systemtekniske avhengigheter til andre systemer",
 			blank=True,
-			help_text=u"Andre systemer dette systemet har systemtekniske avhengigheter til.",
+			help_text=u"Avvikles: Andre systemer dette systemet har systemtekniske avhengigheter til.",
 			)
-	avhengigheter = models.TextField(
+	avhengigheter = models.TextField(			##SLETT##
 			verbose_name="Avhengigheter (fritekst)",
 			blank=True,
 			null=True,
-			help_text=u"Moduler og eksterne/interne integrasjoner som er i bruk",
+			help_text=u"Avvikles: Moduler og eksterne/interne integrasjoner som er i bruk",
 			)
 	kommentar = models.TextField(
 			verbose_name="Kommentarer til denne bruken",
@@ -6007,11 +6042,7 @@ class SystemBruk(models.Model):
 			blank=True,
 			null=True,
 			help_text=u"Hvis det er behov for å presisere eierskapet utover det som står på systemsiden.")
-	#systemleverandor = models.ManyToManyField(Leverandor, related_name='systembruk_systemleverandor',
-	#		verbose_name="Systemleverandør",
-	#		blank=True,
-	#		)
-	driftsmodell_foreignkey = models.ForeignKey(
+	driftsmodell_foreignkey = models.ForeignKey(			##SLETT##
 			to=Driftsmodell,
 			related_name='systembruk_driftsmodell',
 			on_delete=models.SET_NULL,
@@ -6047,21 +6078,21 @@ class SystemBruk(models.Model):
 			null=True,
 			help_text=u"Hvor kritisk er det om systemet ikke virker?",
 			)
-	avtaletype = models.CharField(
+	avtaletype = models.CharField(			##SLETT##
 			verbose_name="Avtaletype (fritekst)",
 			max_length=250,
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	avtalestatus = models.BigIntegerField(
+	avtalestatus = models.BigIntegerField(			##SLETT##
 			choices=VURDERING_AVTALESTATUS_VALG,
 			verbose_name="Avtalestatus",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	avtale_kan_avropes = models.BooleanField(
+	avtale_kan_avropes = models.BooleanField(			##SLETT##
 			verbose_name="Avtale kan avropes av andre virksomheter",
 			blank=True,
 			null=True,
@@ -6071,12 +6102,12 @@ class SystemBruk(models.Model):
 	#		verbose_name="For borger?",
 	#		help_text=u"",
 	#		)
-	kostnadersystem = models.BigIntegerField(
+	kostnadersystem = models.BigIntegerField(			##SLETT##
 			verbose_name="Kostnader for system",
 			blank=True,
 			null=True, help_text=u"",
 			)
-	systemeierskapsmodell = models.CharField(
+	systemeierskapsmodell = models.CharField(			##SLETT##
 			choices=SYSTEMEIERSKAPSMODELL_VALG,
 			verbose_name="Systemeierskapsmodell",
 			max_length=30,
@@ -6084,28 +6115,28 @@ class SystemBruk(models.Model):
 			null=True,
 			help_text=u"Feltet skal avvikles da dette settes på systemet, ikke bruken",
 			)
-	programvarekategori = models.BigIntegerField(
+	programvarekategori = models.BigIntegerField(			##SLETT##
 			choices=PROGRAMVAREKATEGORI_VALG,
 			verbose_name="Programvarekategori",
 			blank=True,
 			null=True,
 			help_text=u"Feltet skal avvikles. Har ikke noe her å gjøre.",
 			)
-	strategisk_egnethet = models.BigIntegerField(
+	strategisk_egnethet = models.BigIntegerField(			##SKAL VI BEHOLDE DISSE?
 			choices=VURDERINGER_STRATEGISK_VALG,
 			verbose_name="Strategisk egnethet",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	funksjonell_egnethet = models.BigIntegerField(
+	funksjonell_egnethet = models.BigIntegerField(			##SKAL VI BEHOLDE DISSE?
 			choices=VURDERINGER_FUNKSJONELL_VALG,
 			verbose_name="Funksjonell egnethet",
 			blank=True,
 			null=True,
 			help_text=u"",
 			)
-	teknisk_egnethet = models.BigIntegerField(
+	teknisk_egnethet = models.BigIntegerField(			##SKAL VI BEHOLDE DISSE?
 			choices=VURDERINGER_TEKNISK_VALG,
 			verbose_name="Teknisk egnethet",
 			blank=True,

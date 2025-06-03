@@ -334,11 +334,14 @@ urlpatterns = [
 	re_path(r'^systemer/behandlingsoversikt/api/$', views.behandlingsoversikt_api, name='behandlingsoversikt_api'), # Overføring av systemer til behandlingsoversikten
 	re_path(r'^api/vav/akva/$', views.vav_akva_api, name='vav_akva_api'), # Overføring av data om systemer til VAV sitt AKVA-system
 	re_path(r'^get-api/tilgangsgrupper/$', views.tilgangsgrupper_api, name='tilgangsgrupper_api'), # Brukes for å søke opp medlemmer av AD-grupper, flere brukere inkl. SYE
-	re_path(r'^ukecsirt/ipsok/api/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # IP-oppslag fra vulnapp, returnerer CMDB-data og merker device som internett-eksponert
-	re_path(r'^api/programvare/$', views.api_programvare, name='api_programvare'), # Brukes av vulnapp for å hente alle applikasjoner
-	re_path(r'^api/known_exploited/$', views.api_known_exploited, name='api_known_exploited'), # VulnApp kaller denne for å laste opp CVE known exploited
+	re_path(r'^api/vulnapp/ipsok/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # IP-oppslag fra vulnapp, returnerer CMDB-data og merker device som internett-eksponert
+	re_path(r'^api/vulnapp/programvare/$', views.api_programvare_vulnapp, name='api_programvare_vulnapp'), # Brukes av vulnapp for å hente alle applikasjoner
+	re_path(r'^api/vulnapp/known_exploited/$', views.api_known_exploited, name='api_known_exploited'), # VulnApp kaller denne for å laste opp CVE known exploited
 
 	re_path(r'^api/systemer/$', views.api_systemer, name='api_systemer'), # Tjeneste- og systemoversikt
+	re_path(r'^api/virksomheter/$', views.api_virksomheter, name='api_virksomheter'), # Tjeneste- og systemoversikt
+	re_path(r'^api/systembruk/$', views.api_systembruk, name='api_systembruk'), # Tjeneste- og systemoversikt
+
 
 	re_path(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),# UKE manuell nedlasting av PRK-data, to personer, sjeldent i bruk
 	re_path(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),# UKE manuell nedlasting av PRK-data, to personer, sjeldent i bruk

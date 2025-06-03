@@ -8072,14 +8072,19 @@ def systemer_api(request): #API
 
 
 
+# system: OK, ref til virksomhet,
+# virksomhet: OK, ref til systembruk,
+# systembruk:
 
-# virksomhet med bruk
+# integrasjoner
+# plattform
 # programvare
-# bruk
+# leverandor
+
+# systemtype
 # los
 # kritisk funksjon
-# plattform
-# systemtype
+
 
 
 def api_systemer(request): #tjeneste- og systemoversikt
@@ -8099,7 +8104,8 @@ def api_systemer(request): #tjeneste- og systemoversikt
 	for system in query:
 		line = {}
 
-		line["kartotek_id"] = system.pk
+		line["class"] = "System"
+		line["id"] = system.pk
 		line["opprettet"] = system.opprettet
 		line["sist_oppdatert"] = system.sist_oppdatert
 		line["systemnavn"] = system.systemnavn
@@ -8109,25 +8115,22 @@ def api_systemer(request): #tjeneste- og systemoversikt
 
 		line["livslop_status"] = system.get_livslop_status_display()
 		line["ibruk"] = system.er_ibruk()
-		line["systemurl"] = [url.domene for url in system.systemurl.all()]
-		line["systemtyper"] = [systemtype.kategorinavn for systemtype in system.systemtyper.all()]
-		line["programvarer"] = [programvare.programvarenavn for programvare in system.programvarer.all()]
+		line["systemurler"] = [url.domene for url in system.systemurl.all()]
+		line["systemtyper"] = [{"class": "Systemtype", "id": systemtype.pk} for systemtype in system.systemtyper.all()]
+		line["programvarer"] = [{"class": "Programvare", "id": programvare.pk} for programvare in system.programvarer.all()]
 
 		line["systemeierskapsmodell"] = system.get_systemeierskapsmodell_display()
-		line["systemeier_virksomhet_id"] = system.systemeier.id if system.systemeier else None
-		line["systemeier_virksomhet_navn"] = system.systemeier.virksomhetsforkortelse if system.systemeier else None
+		line["systemeier_virksomhet"] = {"class": "Virksomhet", "id": system.systemeier.id} if system.systemeier else None
 		line["systemeier_kontaktpersoner"] = [ansvarlig.brukernavn.email for ansvarlig in system.systemeier_kontaktpersoner_referanse.all()]
-		line["systemforvalter_virksomhet_id"] = system.systemforvalter.id if system.systemforvalter else None
-		line["systemforvalter_virksomhet_navn"] = system.systemforvalter.virksomhetsforkortelse if system.systemforvalter else None
+		line["systemforvalter_virksomhet"] = {"class": "Virksomhet", "id": system.systemforvalter.id} if system.systemforvalter else None
 		line["systemforvalter_kontaktpersoner"] = [ansvarlig.brukernavn.email for ansvarlig in system.systemforvalter_kontaktpersoner_referanse.all()]
-		line["systemforvalter_orgenhet_ouid"] = system.systemforvalter_avdeling_referanse.ouid if system.systemforvalter_avdeling_referanse else None
-		line["systemforvalter_orgenhet_navn"] = system.systemforvalter_avdeling_referanse.ou if system.systemforvalter_avdeling_referanse else None
+		line["systemforvalter_orgenhet_ouid"] = {"hr_ouid": system.systemforvalter_avdeling_referanse.ouid, "hr_navn": system.systemforvalter_avdeling_referanse.ou} if system.systemforvalter_avdeling_referanse else None
 		line["forvaltning_epost"] = system.forvaltning_epost
 		line["superbrukere"] = system.superbrukere
 		line["nokkelpersonell"] = system.nokkelpersonell
 
-		line["plattform_id"] = system.driftsmodell_foreignkey.id if system.driftsmodell_foreignkey else None
-		line["plattform_navn"] = system.driftsmodell_foreignkey.navn if system.driftsmodell_foreignkey else None
+		line["driftsplattform"] = {"class": "Driftsplattform", "id": system.driftsmodell_foreignkey.pk if system.driftsmodell_foreignkey else None}
+		#line["plattform_navn"] = system.driftsmodell_foreignkey.navn if system.driftsmodell_foreignkey else None
 
 		line["konfidensialitet"] = system.vis_konfidensialitet()
 		line["tilgjengelighet"] = system.vis_tilgjengelighet()
@@ -8139,22 +8142,137 @@ def api_systemer(request): #tjeneste- og systemoversikt
 
 		line["kommune_los"] = [word.__str__() for word in system.los_ord()]
 
-		line["systemleverandor"] = [leverandor.leverandor_navn for leverandor in system.systemleverandor.all()]
-		line["basisdriftleverandor"] = [leverandor.leverandor_navn for leverandor in system.basisdriftleverandor.all()]
-		line["applikasjonsdriftleverandor"] = [leverandor.leverandor_navn for leverandor in system.applikasjonsdriftleverandor.all()]
+		line["systemleverandor"] = [{"class": "Leverandor", "id": leverandor.pk} for leverandor in system.systemleverandor.all()]
+		line["basisdriftleverandor"] = [{"class": "Leverandor", "id": leverandor.pk} for leverandor in system.basisdriftleverandor.all()]
+		line["applikasjonsdriftleverandor"] = [{"class": "Leverandor", "id": leverandor.pk} for leverandor in system.applikasjonsdriftleverandor.all()]
+
 		line["service_offerings_external_id"] = [offering.bss_external_ref for offering in system.service_offerings.all()]
 		line["service_offerings_navn"] = [offering.navn for offering in system.service_offerings.all()]
 
-		line["systemfarge"] = system.color()
 
 		data.append(line)
 
-	resultat = {"antall": len(query), "data": data}
 
 	runtime_t1 = time.time()
-	delta = round(runtime_t1 - runtime_t0, 2)
-	ApplicationLog.objects.create(event_type="api_systemer", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	delta = round(runtime_t1 - runtime_t0, 3)
 
+	resultat = {"beskrivelse": "System-objekter fra Kartoteket. For oversikt over virksomheter som bruker systemet, se klassen SystemBruk. systemforvalter_orgenhet_ouid er ID fra HR. Ved integrasjon kan hr_navn ignoreres og erstattes med data rett fra HR.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_systemer", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
+
+
+#def api_systemtype(request): #tjeneste- og systemoversikt
+
+
+#def api_programvare(request): #tjeneste- og systemoversikt (duplikat, trenger annet navn)
+
+
+#def api_plattform(request): #tjeneste- og systemoversikt
+
+
+#def api_leverandor(request): #tjeneste- og systemoversikt
+
+
+def api_virksomheter(request): #tjeneste- og systemoversikt
+
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_virksomheter", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+	data = []
+	query = Virksomhet.objects.all()
+	for virksomhet in query:
+		line = {}
+
+		line["class"] = "Virksomhet"
+		line["id"] = virksomhet.pk
+		line["odepartmentnumber"] = virksomhet.odepartmentnumber
+		line["opprettet"] = virksomhet.opprettet
+		line["sist_oppdatert"] = virksomhet.sist_oppdatert
+		line["virksomhetsnavn"] = virksomhet.virksomhetsnavn
+		line["orgnummer"] = virksomhet.orgnummer
+		line["virksomhetsforkortelse"] = virksomhet.virksomhetsforkortelse
+		line["gamle_virksomhetsforkortelser"] = virksomhet.gamle_virksomhetsforkortelser
+		line["klientplattform"] = virksomhet.get_resultatenhet_display()
+		line["office365_tenant"] = virksomhet.get_office365_display()
+		line["intranett_url"] = virksomhet.intranett_url
+		line["www_url"] = virksomhet.www_url
+
+		line["rolle_virksomhetsleder"] = virksomhet.leder_hr().email if virksomhet.leder_hr() else None
+		line["rolle_uke_hovedkontakt"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.uke_kam_referanse.all()]
+		line["rolle_ikt_kontakt"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.ikt_kontakt.all()]
+		line["rolle_autoriserte_bestillere_infotorg"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.autoriserte_bestillere_tjenester.all()]
+		line["rolle_autoriserte_bestillere_uketjenester"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.autoriserte_bestillere_tjenester_uke.all()]
+		line["rolle_personvernkoordinator"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.personvernkoordinator.all()]
+		line["rolle_informasjonssikkerhetskoordinator"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.informasjonssikkerhetskoordinator.all()]
+		line["rolle_uke_kam"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.uke_kam_referanse.all()]
+		line["rolle_arkitekturkontakter"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.arkitekturkontakter.all()]
+		line["rolle_ks_fiks_admins"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.ks_fiks_admin_ref.all()]
+
+		line["overordnede_virksomheter"] = [{"class": "Virksomhet", "id": virksomhet.pk} for virksomhet in virksomhet.overordnede_virksomheter.all()]
+
+		data.append(line)
+
+
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 3)
+
+	resultat = {"beskrivelse": "Virksomhet-objekter fra Kartoteket. odepartmentnumber er ID fra HR-systemet. Sjekk klassen SystemBruk for oversikt over hvilke systemer en enkelt virksomhet bruker.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_virksomheter", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
+
+
+
+def api_systembruk(request): #tjeneste- og systemoversikt. Alle aktive systembruk (ibruk=True).
+
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_systembruk", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+	data = []
+	query = SystemBruk.objects.filter(ibruk=True)
+	for systembruk in query:
+		line = {}
+
+		line["class"] = "SystemBruk"
+		line["id"] = systembruk.pk
+		#line["ibruk"] = systembruk.ibruk
+		line["kommentar"] = systembruk.kommentar
+		line["antall_brukere"] = systembruk.antall_brukere
+		line["system"] = {"class": "System", "id": systembruk.system.pk}
+		line["virksomhet"] = {"class": "Virksomhet", "id": systembruk.brukergruppe.pk}
+
+		line["lokal_konfidensialitetsvurdering"] = systembruk.get_konfidensialitetsvurdering_display()
+		line["lokal_integritetsvurdering"] = systembruk.get_integritetsvurdering_display()
+		line["lokal_tilgjengelighetsvurdering"] = systembruk.get_tilgjengelighetsvurdering_display()
+
+		line["lokal_systemforvalter_virksomhet"] = {"class": "Virksomhet", "id": systembruk.systemforvalter.pk} if systembruk.systemforvalter else None
+		line["lokal_systemforvalter_kontaktpersoner"] = [ansvarlig.brukernavn.email for ansvarlig in systembruk.systemforvalter_kontaktpersoner_referanse.all()]
+		line["lokal_systemeier_kontaktpersoner"] = [ansvarlig.brukernavn.email for ansvarlig in systembruk.systemeier_kontaktpersoner_referanse.all()]
+
+		data.append(line)
+
+
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 3)
+
+	resultat = {"beskrivelse": "SystemBruk-objekter fra Kartoteket", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_virksomheter", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
 	return JsonResponse(resultat, safe=False)
 
 
@@ -8534,7 +8652,7 @@ def api_known_exploited(request): #API
 
 
 
-def api_programvare(request): #API
+def api_programvare_vulnapp(request): #API
 	ApplicationLog.objects.create(event_type="API programvare", message=f"Innkommende kall fra {get_client_ip(request)}")
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API programvare", message="Feil: HTTP metode var ikke GET")
