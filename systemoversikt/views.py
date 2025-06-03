@@ -8072,23 +8072,10 @@ def systemer_api(request): #API
 
 
 
-# system: OK, ref til virksomhet,
-# virksomhet: OK, ref til systembruk,
-# systembruk:
-
-# integrasjoner
-# plattform
-# programvare
-# leverandor
-
-# systemtype
-# los
-# kritisk funksjon
 
 
-
+### Her kommer API-er benyttet av ny tjeneste og systemoversikt ###
 def api_systemer(request): #tjeneste- og systemoversikt
-
 	if not request.method == "GET":
 		raise Http404
 
@@ -8106,20 +8093,21 @@ def api_systemer(request): #tjeneste- og systemoversikt
 
 		line["class"] = "System"
 		line["id"] = system.pk
+		line["kartotek_url"] = f"https://kartoteket.oslo.kommune.no/systemer/detaljer/{system.pk}/"
 		line["opprettet"] = system.opprettet
 		line["sist_oppdatert"] = system.sist_oppdatert
-		line["systemnavn"] = system.systemnavn
+		line["navn"] = system.systemnavn
 		line["visningsnavn"] = system.__str__()
 		line["alias"] = system.alias
-		line["systembeskrivelse"] = system.systembeskrivelse
+		line["beskrivelse"] = system.systembeskrivelse
 
 		line["livslop_status"] = system.get_livslop_status_display()
 		line["ibruk"] = system.er_ibruk()
-		line["systemurler"] = [url.domene for url in system.systemurl.all()]
+		line["urler"] = [url.domene for url in system.systemurl.all()]
 		line["systemtyper"] = [{"class": "Systemtype", "id": systemtype.pk} for systemtype in system.systemtyper.all()]
 		line["programvarer"] = [{"class": "Programvare", "id": programvare.pk} for programvare in system.programvarer.all()]
 
-		line["systemeierskapsmodell"] = system.get_systemeierskapsmodell_display()
+		line["eierskapsmodell"] = system.get_systemeierskapsmodell_display()
 		line["systemeier_virksomhet"] = {"class": "Virksomhet", "id": system.systemeier.id} if system.systemeier else None
 		line["systemeier_kontaktpersoner"] = [ansvarlig.brukernavn.email for ansvarlig in system.systemeier_kontaktpersoner_referanse.all()]
 		line["systemforvalter_virksomhet"] = {"class": "Virksomhet", "id": system.systemforvalter.id} if system.systemforvalter else None
@@ -8130,7 +8118,6 @@ def api_systemer(request): #tjeneste- og systemoversikt
 		line["nokkelpersonell"] = system.nokkelpersonell
 
 		line["driftsplattform"] = {"class": "Driftsplattform", "id": system.driftsmodell_foreignkey.pk if system.driftsmodell_foreignkey else None}
-		#line["plattform_navn"] = system.driftsmodell_foreignkey.navn if system.driftsmodell_foreignkey else None
 
 		line["konfidensialitet"] = system.vis_konfidensialitet()
 		line["tilgjengelighet"] = system.vis_tilgjengelighet()
@@ -8140,7 +8127,8 @@ def api_systemer(request): #tjeneste- og systemoversikt
 		line["strategisk_egnethet"] = system.get_strategisk_egnethet_display()
 		line["funksjonell_egnethet"] = system.get_funksjonell_egnethet_display()
 
-		line["kommune_los"] = [word.__str__() for word in system.los_ord()]
+		line["kommune_los"] = [{"class": "LOS", "id": los.pk} for los in system.LOSref.all()]
+		line["dsb_kapabilitet"] = [{"class": "KritiskKapabilitet", "id": kapabilitet.pk} for kapabilitet in system.kritisk_kapabilitet.all()]
 
 		line["systemleverandor"] = [{"class": "Leverandor", "id": leverandor.pk} for leverandor in system.systemleverandor.all()]
 		line["basisdriftleverandor"] = [{"class": "Leverandor", "id": leverandor.pk} for leverandor in system.basisdriftleverandor.all()]
@@ -8162,20 +8150,313 @@ def api_systemer(request): #tjeneste- og systemoversikt
 	return JsonResponse(resultat, safe=False)
 
 
-#def api_systemtype(request): #tjeneste- og systemoversikt
+
+def api_systemtyper(request): #tjeneste- og systemoversikt
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_systemtyper", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+	data = []
+	query = Systemtype.objects.all()
+	for systemtype in query:
+		line = {}
+
+		line["class"] = "Systemtype"
+		line["id"] = systemtype.pk
+		line["opprettet"] = None
+		line["sist_oppdatert"] = systemtype.sist_oppdatert
+		line["navn"] = systemtype.kategorinavn
+		line["definisjon"] = systemtype.definisjon
+		line["bool_har_url"] = systemtype.har_url
+		line["bool_er_infrastruktur"] = systemtype.er_infrastruktur
+		line["bool_er_integrasjon"] = systemtype.er_integrasjon
+
+		data.append(line)
 
 
-#def api_programvare(request): #tjeneste- og systemoversikt (duplikat, trenger annet navn)
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 3)
+
+	resultat = {"beskrivelse": "Systemtype-objekter fra Karoteket. Angir hva slags egenskaper systemer har. Kan være mange til mange mot system.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_systemtyper", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
 
 
-#def api_plattform(request): #tjeneste- og systemoversikt
+
+def api_programvarer(request): #tjeneste- og systemoversikt
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_programvarer", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+	data = []
+	query = Programvare.objects.all()
+	for program in query:
+		line = {}
+
+		line["class"] = "Programvare"
+		line["id"] = program.pk
+		line["opprettet"] = None
+		line["sist_oppdatert"] = program.sist_oppdatert
+		line["navn"] = program.programvarenavn
+		line["alias"] = program.alias
+		line["beskrivelse"] = program.programvarebeskrivelse
+		line["leverandor"] = [{"class": "Leverandor", "id": leverandor.pk} for leverandor in program.programvareleverandor.all()]
+
+		data.append(line)
 
 
-#def api_leverandor(request): #tjeneste- og systemoversikt
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 3)
+
+	resultat = {"beskrivelse": "Programvare-objekter fra Karoteket. Et system kan bestå av flere programvarer.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_programvarer", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
+
+
+
+def api_driftsplattformer(request): #tjeneste- og systemoversikt
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_driftsplattformer", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+	data = []
+	query = Driftsmodell.objects.all()
+	for plattform in query:
+		line = {}
+
+		line["class"] = "Driftsmodell"
+		line["id"] = plattform.pk
+		line["opprettet"] = None
+		line["sist_oppdatert"] = plattform.sist_oppdatert
+		line["navn"] = plattform.navn
+		line["eier_virksomhet"] = {"class": "Virksomhet", "id": plattform.ansvarlig_virksomhet.id} if plattform.ansvarlig_virksomhet else None
+		line["kommentar"] = plattform.kommentar
+		line["plattformklassifisering"] = {"id": plattform.type_plattform, "navn": plattform.get_type_plattform_display()}
+		line["overordnet_plattform"] = {"class": "Virksomhet", "id": plattform.overordnet_plattform.id} if plattform.overordnet_plattform else None
+		line["bool_utviklingsplattform"] = plattform.utviklingsplattform
+		line["bool_samarbeidspartner"] = plattform.samarbeidspartner
+
+		data.append(line)
+
+
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 3)
+
+	resultat = {"beskrivelse": "Driftsplattform-objekter fra Karoteket. Systemer kan bare være koblet til én driftsplattform.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_driftsplattformer", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
+
+
+
+def api_leverandorer(request): #tjeneste- og systemoversikt
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_leverandorer", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+	data = []
+	query = Leverandor.objects.all()
+	for lev in query:
+		line = {}
+
+		line["class"] = "Leverandor"
+		line["id"] = lev.pk
+		line["opprettet"] = None
+		line["sist_oppdatert"] = lev.sist_oppdatert
+		line["navn"] = lev.leverandor_navn
+		line["kontaktinfo"] = lev.kontaktpersoner
+		line["orgnummer"] = lev.orgnummer
+		line["notater"] = lev.notater
+
+		data.append(line)
+
+
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 3)
+
+	resultat = {"beskrivelse": "Leverandør-objekter fra Karoteket.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_leverandorer", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
+
+
+
+def api_systemintegrasjoner(request): #tjeneste- og systemoversikt
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_systemintegrasjoner", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+	data = []
+	query = SystemIntegration.objects.all()
+	for integrasjon in query:
+		line = {}
+
+		line["class"] = "SystemIntegration"
+		line["id"] = integrasjon.pk
+		line["opprettet"] = integrasjon.opprettet
+		line["sist_oppdatert"] = integrasjon.sist_oppdatert
+		line["system_kilde"] = {"class": "System", "id": integrasjon.source_system.pk}
+		line["system_destinasjon"] = {"class": "System", "id": integrasjon.destination_system.pk}
+		line["integrasjonstype"] = {"id": integrasjon.integration_type, "navn": integrasjon.get_integration_type_display()}
+		line["bool_personopplysninger"] = integrasjon.personopplysninger
+		line["beskrivelse"] = integrasjon.description
+
+		data.append(line)
+
+
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 3)
+
+	resultat = {"beskrivelse": "Systemintegrasjon-objekter fra Karoteket. Beskriver avhengigheter mellom to systemer.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_systemintegrasjoner", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
+
+
+def api_los(request): #tjeneste- og systemoversikt
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_los", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+	data = []
+	query = LOS.objects.all()
+	for term in query:
+		line = {}
+
+		line["class"] = "LOS"
+		line["id"] = term.pk
+		line["opprettet"] = None
+		line["sist_oppdatert"] = term.sist_oppdatert
+		line["los_external_id"] = term.unik_id
+		line["begrep"] = term.verdi
+		line["ontologi"] = {"class": "LOS", "id": term.kategori_ref.pk} if term.kategori_ref else None
+		line["overordnede_begreper"] = [{"class": "LOS", "id": parent.pk} for parent in term.parent_id.all()]
+		line["bool_active"] = term.active
+
+		data.append(line)
+
+
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 3)
+
+	resultat = {"beskrivelse": "LOS rammeverk-objekter fra Karoteket. Kategoribibliotek fra DigDir systemer kobles til. Se https://www.digdir.no/informasjonsforvaltning/los-felles-vokabular-klassifisering-av-offentlige-tjenester-og-ressurser/2434", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_los", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
+
+
+
+def api_kritiske_funksjoner(request): #tjeneste- og systemoversikt
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_kritiske_funksjoner", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+	data = []
+	query = KritiskFunksjon.objects.all()
+	for funksjon in query:
+		line = {}
+
+		line["class"] = "KritiskFunksjon"
+		line["id"] = funksjon.pk
+		line["opprettet"] = None
+		line["sist_oppdatert"] = None
+		line["navn"] = funksjon.navn
+		line["kategori"] = funksjon.get_kategori_display()
+
+		data.append(line)
+
+
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 3)
+
+	resultat = {"beskrivelse": "Kritisk funksjon-objekter fra Karoteket. Koblet til KritiskKapabilitet-objektet og kommer fra DSB-rammeverk manuelt skrevet inn.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_kritiske_funksjoner", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
+
+
+def api_kritiske_kapabiliteter(request): #tjeneste- og systemoversikt
+	if not request.method == "GET":
+		raise Http404
+
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if not key in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_kritiske_kapabiliteter", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+	data = []
+	query = KritiskKapabilitet.objects.all()
+	for kapabilitet in query:
+		line = {}
+
+		line["class"] = "KritiskKapabilitet"
+		line["id"] = kapabilitet.pk
+		line["opprettet"] = None
+		line["sist_oppdatert"] = None
+		line["navn"] = kapabilitet.navn
+		line["funksjon"] = {"class": "KritiskFunksjon", "id": kapabilitet.funksjon.pk} if kapabilitet.funksjon else None
+		line["kategori"] = kapabilitet.beskrivelse
+
+		data.append(line)
+
+
+	runtime_t1 = time.time()
+	delta = round(runtime_t1 - runtime_t0, 3)
+
+	resultat = {"beskrivelse": "Kritisk kapabilitet-objekter. Koblet til Systemer, og kommer fra DSB-rammeverk manuelt skrevet inn.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_kritiske_kapabiliteter", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
+
 
 
 def api_virksomheter(request): #tjeneste- og systemoversikt
-
 	if not request.method == "GET":
 		raise Http404
 
@@ -8232,7 +8513,6 @@ def api_virksomheter(request): #tjeneste- og systemoversikt
 
 
 def api_systembruk(request): #tjeneste- og systemoversikt. Alle aktive systembruk (ibruk=True).
-
 	if not request.method == "GET":
 		raise Http404
 
@@ -8250,7 +8530,7 @@ def api_systembruk(request): #tjeneste- og systemoversikt. Alle aktive systembru
 
 		line["class"] = "SystemBruk"
 		line["id"] = systembruk.pk
-		#line["ibruk"] = systembruk.ibruk
+		#line["ibruk"] = systembruk.ibruk  # ikke med fordi vi bare tar med der ibruk=true
 		line["kommentar"] = systembruk.kommentar
 		line["antall_brukere"] = systembruk.antall_brukere
 		line["system"] = {"class": "System", "id": systembruk.system.pk}
@@ -8276,6 +8556,8 @@ def api_systembruk(request): #tjeneste- og systemoversikt. Alle aktive systembru
 	return JsonResponse(resultat, safe=False)
 
 
+
+### FERDIG TJENESTE OG SYSTEMOVERSIKT-API-er ###
 
 def system_excel_api(request, virksomhet_pk=None): #API
 

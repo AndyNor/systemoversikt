@@ -334,17 +334,32 @@ urlpatterns = [
 	re_path(r'^systemer/behandlingsoversikt/api/$', views.behandlingsoversikt_api, name='behandlingsoversikt_api'), # Overføring av systemer til behandlingsoversikten
 	re_path(r'^api/vav/akva/$', views.vav_akva_api, name='vav_akva_api'), # Overføring av data om systemer til VAV sitt AKVA-system
 	re_path(r'^get-api/tilgangsgrupper/$', views.tilgangsgrupper_api, name='tilgangsgrupper_api'), # Brukes for å søke opp medlemmer av AD-grupper, flere brukere inkl. SYE
+
+
+	# Sårbarhetsoversikten / vulnapp
 	re_path(r'^api/vulnapp/ipsok/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # IP-oppslag fra vulnapp, returnerer CMDB-data og merker device som internett-eksponert
 	re_path(r'^api/vulnapp/programvare/$', views.api_programvare_vulnapp, name='api_programvare_vulnapp'), # Brukes av vulnapp for å hente alle applikasjoner
 	re_path(r'^api/vulnapp/known_exploited/$', views.api_known_exploited, name='api_known_exploited'), # VulnApp kaller denne for å laste opp CVE known exploited
 
+
+	# system og tjenesteoversikt
 	re_path(r'^api/systemer/$', views.api_systemer, name='api_systemer'), # Tjeneste- og systemoversikt
 	re_path(r'^api/virksomheter/$', views.api_virksomheter, name='api_virksomheter'), # Tjeneste- og systemoversikt
 	re_path(r'^api/systembruk/$', views.api_systembruk, name='api_systembruk'), # Tjeneste- og systemoversikt
+	re_path(r'^api/systemtyper/$', views.api_systemtyper, name='api_systemtyper'), # Tjeneste- og systemoversikt
+	re_path(r'^api/programvarer/$', views.api_programvarer, name='api_programvarer'), # Tjeneste- og systemoversikt
+	re_path(r'^api/driftsplattformer/$', views.api_driftsplattformer, name='api_driftsplattformer'), # Tjeneste- og systemoversikt
+	re_path(r'^api/leverandorer/$', views.api_leverandorer, name='api_leverandorer'), # Tjeneste- og systemoversikt
+	re_path(r'^api/systemintegrasjoner/$', views.api_systemintegrasjoner, name='api_systemintegrasjoner'), # Tjeneste- og systemoversikt
+	re_path(r'^api/los/$', views.api_los, name='api_los'), # Tjeneste- og systemoversikt
+	re_path(r'^api/kritiske_funksjoner/$', views.api_kritiske_funksjoner, name='api_kritiske_funksjoner'), # Tjeneste- og systemoversikt
+	re_path(r'^api/kritiske_kapabiliteter/$', views.api_kritiske_kapabiliteter, name='api_kritiske_kapabiliteter'), # Tjeneste- og systemoversikt
 
 
+	# PRK-proxyer
 	re_path(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),# UKE manuell nedlasting av PRK-data, to personer, sjeldent i bruk
 	re_path(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),# UKE manuell nedlasting av PRK-data, to personer, sjeldent i bruk
+
 
 	re_path(r'^tjenestekatalogen/forvaltere/$', views.tjenestekatalogen_forvalter_api, name='tjenestekatalogen_forvalter_api'), # brukes av UKE/tjenestekatalogen. må sjekkes om faktisk i bruk
 	re_path(r'^tjenestekatalogen/systemer/$', views.tjenestekatalogen_systemer_api, name='tjenestekatalogen_systemer_api'), # brukes av UKE/tjenestekatalogen. må sjekkes om faktisk i bruk
