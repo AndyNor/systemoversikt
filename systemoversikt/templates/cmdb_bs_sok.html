@@ -11,9 +11,11 @@
 
 {% block hovedinnhold %}
 
-	<p>CMDB står for Configuration Management DataBase og er en som navnet antyder en database med informasjon om hva et driftsmiljø består av. Sopra Steria har organisert servere og databaser under "miljø" de kaller "service offerings", typisk et for produksjon, preproduksjon og test. I Kartoteket knytter vi nå det enkelte system direkte til service offerings (miljø).</p>
+	<p>CMDB (Configuration Management Database) er oversikt over hva et driftsmiljø består av. Sopra Steria har organisert servere og databaser under "miljø" de kaller "service offerings" slik som produksjon, preproduksjon og test. I Kartoteket knytter vi det enkelte system direkte til service offerings (miljø).</p>
 
-	<p>Det er knyttet tilgjengelighetskrav til hvert miljø, som igjen dikterer SLA krav knyttet til bestillinger og håndtering av feil på underliggende systemer. Ler mer om SLA-nivåene på <a href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Kontinuit--og-beredskapsarbeid.aspx" target="_blank">SharePoint</a>.</p>
+	<p>Se <a href="https://steria.sharepoint.com/:b:/r/sites/Sc_kundeportal_ekstern/637269587014341894/Dokumentasjon/WikiDokumenter/Governance/Naming-Convention.pdf?csf=1&web=1&e=pMufop">konvensjon for navnngiving</a> (Kundeportal) for detaljer rundt navngiving av ting (assets).
+
+	<p>Det er tilgjengelighetskrav til hvert miljø som igjen dikterer tjenestenivå (SLA) for håndtering av bestillinger og feil (incidents) for systemet. Ler mer om SLA-nivåene på <a href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Kontinuit--og-beredskapsarbeid.aspx" target="_blank">SharePoint</a>.</p>
 
 	<form action="{% url 'cmdb_bs_detaljer' %}" autocomplete="off">
 		<div class="form-group form-inline">
