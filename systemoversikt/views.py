@@ -8552,7 +8552,7 @@ def api_systembruk(request): #tjeneste- og systemoversikt. Alle aktive systembru
 
 	resultat = {"beskrivelse": "SystemBruk-objekter fra Kartoteket", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
-	ApplicationLog.objects.create(event_type="api_virksomheter", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	ApplicationLog.objects.create(event_type="api_systembruk", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
 	return JsonResponse(resultat, safe=False)
 
 
