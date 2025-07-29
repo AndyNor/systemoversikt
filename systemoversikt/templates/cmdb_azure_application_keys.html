@@ -29,7 +29,7 @@
 	<tbody>
 	{% for k in keys %}
 		<tr>
-			<td>{{ k.applcaion_ref }}<br><span style="color: gray; font-style: italic;">{{ k.applcaion_ref.appId }}</span></td>
+			<td>{{ k.applcaion_ref }}<br><span style="color: gray; font-style: italic;"><a target="_blank" href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Credentials/appId/{{ k.applcaion_ref.appId }}">{{ k.applcaion_ref.appId }}</a></span></td>
 			<td>
 				{% for system in k.applcaion_ref.systemreferanse.all %}
 					{% include 'system_include_vis.html' with systemer=system %}
