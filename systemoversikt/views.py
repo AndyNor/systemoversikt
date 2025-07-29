@@ -1932,6 +1932,7 @@ def rapport_sikkerhetstester(request):
 AZURE_KEYS_HIDE_LIST = [
 	"CN=MS-Organization-P2P-Access",
 	"CN=Microsoft Azure Federated SSO Certificate",
+	"CWAP_AuthSecret",
 ]
 
 AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES = Q()
@@ -1945,7 +1946,7 @@ def azure_application_keys_expired(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	keys = AzureApplicationKeys.objects.filter(end_date_time__lt=timezone.now()).filter(~Q(key_type="AsymmetricX509Cert", key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
+	keys = AzureApplicationKeys.objects.filter(end_date_time__lt=timezone.now()).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
 
 	return render(request, 'cmdb_azure_application_keys.html', {
 		'request': request,
@@ -1965,7 +1966,7 @@ def azure_application_keys_soon(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	warning = (timezone.now() + datetime.timedelta(AZUREAPP_KEY_EXPIRE_WARNING))
-	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=timezone.now()).filter(end_date_time__lte=warning).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
+	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=timezone.now()).filter(end_date_time__lte=warning).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
 
 	return render(request, 'cmdb_azure_application_keys.html', {
 		'request': request,
@@ -1981,7 +1982,7 @@ def azure_application_keys_active(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	warning = (timezone.now() + datetime.timedelta(AZUREAPP_KEY_EXPIRE_WARNING))
-	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=warning).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
+	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=warning).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
 
 	return render(request, 'cmdb_azure_application_keys.html', {
 		'request': request,
