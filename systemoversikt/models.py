@@ -94,11 +94,23 @@ class EntraIDConditionalAccessPolicies(models.Model):
 
 	def changes_to_json(self):
 		#import ast
+		import re
+		policy = self.json_policy_as_json()["value"]
+
+		def ca_rule_name(number):
+			return policy[number]["displayName"]
+
 		try:
 			data = json.dumps(ast.literal_eval(self.changes), indent=4)
 			data = conditional_access_replace_guid(data)
+
+			def replacer(match):
+				number = int(match.group(1))
+				return ca_rule_name(number)
+
+			data = re.sub(r"root\['[^']+'\]\[(\d+)\]", replacer, data)
 			return data
-		except:
+		except Exception as e:
 			return {}
 
 

@@ -26,9 +26,9 @@
 {% for regel in ca_regler_nyeste.json_policy_as_json.value %}
 <tr>
 	<td>
-		{% if regel.state == "enabled" %} Ja {% endif %}
-		{% if regel.state == "enabledForReportingButNotEnforced" %} Nei, reporting {% endif %}
-		{% if regel.state == "disabled" %} Nei {% endif %}
+		{% if regel.state == "enabled" %} Active {% endif %}
+		{% if regel.state == "enabledForReportingButNotEnforced" %} Reporting {% endif %}
+		{% if regel.state == "disabled" %} Deactive {% endif %}
 	</td>
 	<td width="20%">{{regel.displayName}}<br><br>{{ regel.id }}</td>
 	<td width="25%"><pre style="white-space: pre-wrap; overflow-wrap: anywhere;;">{{regel.grantControls|json_remove_empty|json_indent}}</pre></td>
