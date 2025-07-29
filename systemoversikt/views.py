@@ -1955,10 +1955,8 @@ def azure_application_keys_expired(request):
 		'text_header': 'utgått',
 	})
 
-AZUREAPP_KEY_EXPIRE_WARNING = 30
 
-
-
+AZUREAPP_KEY_EXPIRE_WARNING = 14
 def azure_application_keys_soon(request):
 	#Vise liste over alle Azure enterprise application keys etter utløpsdato
 	required_permissions = ['systemoversikt.view_cmdbdevice']
@@ -1974,6 +1972,7 @@ def azure_application_keys_soon(request):
 		'keys': keys,
 		'text_header': 'utløper snart',
 	})
+
 
 def azure_application_keys_active(request):
 	#Vise liste over alle Azure enterprise application keys etter utløpsdato
