@@ -1929,13 +1929,23 @@ def rapport_sikkerhetstester(request):
 	})
 
 
+AZURE_KEYS_HIDE_LIST = [
+	"CN=MS-Organization-P2P-Access",
+	"CN=Microsoft Azure Federated SSO Certificate",
+]
+
+AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES = Q()
+for prefix in AZURE_KEYS_HIDE_LIST:
+	exclude_prefixes |= Q(display_name__startswith=prefix)
+
+
 def azure_application_keys_expired(request):
 	#Vise liste over alle Azure enterprise application keys etter utløpsdato
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	keys = AzureApplicationKeys.objects.filter(end_date_time__lt=timezone.now()).filter(~Q(key_type="AsymmetricX509Cert", key_usage="Verify")).filter(~Q(display_name="Microsoft Azure Federated SSO Certificate")).order_by('end_date_time')
+	keys = AzureApplicationKeys.objects.filter(end_date_time__lt=timezone.now()).filter(~Q(key_type="AsymmetricX509Cert", key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
 
 	return render(request, 'cmdb_azure_application_keys.html', {
 		'request': request,
@@ -1946,6 +1956,8 @@ def azure_application_keys_expired(request):
 
 AZUREAPP_KEY_EXPIRE_WARNING = 30
 
+
+
 def azure_application_keys_soon(request):
 	#Vise liste over alle Azure enterprise application keys etter utløpsdato
 	required_permissions = ['systemoversikt.view_cmdbdevice']
@@ -1953,7 +1965,7 @@ def azure_application_keys_soon(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	warning = (timezone.now() + datetime.timedelta(AZUREAPP_KEY_EXPIRE_WARNING))
-	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=timezone.now()).filter(end_date_time__lte=warning).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).filter(~Q(display_name="Microsoft Azure Federated SSO Certificate")).order_by('end_date_time')
+	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=timezone.now()).filter(end_date_time__lte=warning).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
 
 	return render(request, 'cmdb_azure_application_keys.html', {
 		'request': request,
@@ -1969,7 +1981,7 @@ def azure_application_keys_active(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	warning = (timezone.now() + datetime.timedelta(AZUREAPP_KEY_EXPIRE_WARNING))
-	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=warning).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).filter(~Q(display_name="Microsoft Azure Federated SSO Certificate")).order_by('end_date_time')
+	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=warning).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
 
 	return render(request, 'cmdb_azure_application_keys.html', {
 		'request': request,
