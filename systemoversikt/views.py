@@ -1936,7 +1936,7 @@ AZURE_KEYS_HIDE_LIST = [
 
 AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES = Q()
 for prefix in AZURE_KEYS_HIDE_LIST:
-	exclude_prefixes |= Q(display_name__startswith=prefix)
+	AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES |= Q(display_name__startswith=prefix)
 
 
 def azure_application_keys_expired(request):
