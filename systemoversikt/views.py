@@ -1946,7 +1946,7 @@ def azure_application_keys_expired(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	keys = AzureApplicationKeys.objects.filter(end_date_time__lt=timezone.now()).filter(~Q(key_type="AsymmetricX509Cert", key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
+	keys = AzureApplicationKeys.objects.filter(end_date_time__lt=timezone.now()).filter(~Q(key_type="AsymmetricX509Cert", key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('-end_date_time')
 
 	return render(request, 'cmdb_azure_application_keys.html', {
 		'request': request,
