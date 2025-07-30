@@ -87,7 +87,7 @@ class Command(BaseCommand):
 
 			#tilbake i tid
 			periode = (timezone.now() - datetime.timedelta(Command.ANTALL_DAGER_VARSEL))  # antall dager tilbake i tid
-			keys = AzureApplicationKeys.objects.filter(end_date_time__lt=timezone.now()).filter(end_date_time__gte=periode).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('-end_date_time')
+			keys = AzureApplicationKeys.objects.filter(end_date_time__lte=timezone.now()).filter(end_date_time__gte=periode).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('-end_date_time')
 			#Denne brukes også for visningen!!
 			keys_message_old = ""
 			for key in keys:
@@ -98,13 +98,13 @@ class Command(BaseCommand):
 				else:
 					link = f"<a href='https://portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Credentials/objectId/{key.application_ref.appId}'>{key.application_ref}</a>"
 
-				fremtidige_nokler = AzureApplicationKeys.objects.filter(application_ref=key.application_ref).filter(end_date_time__gt=periode)
+				fremtidige_nokler = AzureApplicationKeys.objects.filter(application_ref=key.application_ref).filter(end_date_time__gt=timezone.now())
 				if len(fremtidige_nokler) > 0:
 					fremtidige_nokler = f"Har {len(fremtidige_nokler)} fremtidige nøkler."
 				else:
 					fremtidige_nokler = f"<span style='color: red;'>Har ingen fremtidige nøkler</span>"
 
-				keys_message_old += f"<li>App {link}: {notes}<br>Utløper {key.end_date_time.strftime('%Y-%m-%d')}. {key.key_type} {key.display_name}. {fremtidige_nokler}</li><br>"
+				keys_message_old += f"<li>App {link}: {notes}<br>Utløpte {key.end_date_time.strftime('%Y-%m-%d')}. {key.key_type} {key.display_name}. {fremtidige_nokler}</li><br>"
 			innhold_utgaat = f"Nøkler som har utløpt de siste {Command.ANTALL_DAGER_VARSEL} dagene:\n{keys_message_old}"
 
 
