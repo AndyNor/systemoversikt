@@ -68,14 +68,14 @@ class Command(BaseCommand):
 				else:
 					link = f"<a href='https://portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Overview/objectId/{key.application_ref.appId}'>{key.application_ref}</a>"
 
-				keys_message += f"\nApp {link}: {notes}\n{key.key_type} {key.display_name} utløper {key.end_date_time.strftime('%Y-%m-%d')}\n"
+				keys_message += f"<li>App {link}: {notes}\n{key.key_type} {key.display_name} utløper {key.end_date_time.strftime('%Y-%m-%d')}</li>"
 
 
 			#print(keys_message)
 
 			innhold = f"Nøkler som utløper de neste {ANTALL_DAGER_VARSEL} dagene:\n{keys_message})"
 
-			message = f"Dette er en automatisk e-post fra Kartoteket med formål å varsle om Azure enterprise applications med nøkler eller sertifikater som snart utgår.\n\n{innhold}\n\nHilsen Kartoteket"
+			message = f"<p>Dette er en automatisk e-post fra Kartoteket med formål å varsle om Azure enterprise applications med nøkler eller sertifikater som snart utgår.</p><p>{innhold}</p><p>Hilsen Kartoteket</p>"
 			email = EmailMessage(
 					subject=subject,
 					body=message,
