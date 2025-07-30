@@ -1679,14 +1679,14 @@ def o365_avvik(request):
 	innhentingsbehov = []
 	for i in RapportGruppemedlemskaper.objects.all().order_by('kategori'):
 		try:
-		innhentingsbehov.append({
-				"kategori": i.kategori,
-				"beskrivelse": i.beskrivelse,
-				"kommentar": i.kommentar,
-				"grupper": [g.common_name for g in i.grupper.all()],
-				"AND_grupper":[g.common_name for g in i.AND_grupper.all()],
-				"tidslinjedata": json.loads(i.tidslinjedata),
-			})
+			innhentingsbehov.append({
+					"kategori": i.kategori,
+					"beskrivelse": i.beskrivelse,
+					"kommentar": i.kommentar,
+					"grupper": [g.common_name for g in i.grupper.all()],
+					"AND_grupper":[g.common_name for g in i.AND_grupper.all()],
+					"tidslinjedata": json.loads(i.tidslinjedata),
+				})
 		except:
 			messages.error(request, f"Konfigurasjon for {i.beskrivelse} er enten feil eller har ikke kjørt første gang enda.")
 
