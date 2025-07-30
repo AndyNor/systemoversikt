@@ -7409,6 +7409,10 @@ class AzureApplication(models.Model):
 	notes = models.TextField(null=True)
 	from_applications = models.BooleanField(default=False)
 	publisherName = models.CharField(max_length=300, null=True, blank=True)
+	antall_graph_rettigheter = models.BigIntegerField(
+		verbose_name="Kalkulert: Antall Graph-tilganger",
+		null=True,
+		)
 
 
 	def __str__(self):

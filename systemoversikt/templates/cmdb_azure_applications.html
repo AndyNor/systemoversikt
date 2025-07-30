@@ -11,45 +11,53 @@
 
 {% block hovedinnhold %}
 
-<p>Det er {{applikasjoner.count}} applikasjoner i databasen. Synkroniseres mot Azure Graph-API hver natt. Kobling system - EA skjer fra systemet</p>
+<p>Her vises kun integrasjoner (service principals) som har graph-rettigheter. Det er {{applikasjoner.count}} slike. Dataene synkroniseres mot Azure Graph-API hver natt. Fra et system kan du koble opp service principals, og da vises også nøkkel/sertifikatinformasjon.</p>
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
-		<th>Sist synkronisert</th>
-		<th>Dato opprettet</th>
-		<th>Kilde</th>
-		<th>Publisher</th>
+		<th>Aktiv</th>
+		<th>Opprettet</th>
 		<th>Applikasjonsnavn</th>
+		<th>Publisher</th>
 		<th>Enterprise App?</th>
-		<th>Type</th>
-		<th>Notater</th>
-		<th>Tags</th>
-		<th>System og eier</th>
+		{% comment %}<th>Type</th>{% endcomment %}
+		{% comment %}<th>Tags</th>{% endcomment %}
 		<th>Risikonivå</th>
-		<th>Vurdering</th>
+		{% comment %}<th>Vurdering</th>{% endcomment %}
 		<th>Gitte rettigheter</th>
 		<th>Antall rettigheter</th>
+		<th>Notater</th>
 	</thead>
 	<tbody>
 	{% for a in applikasjoner %}
 		<tr>
-			<td>{{a.sist_oppdatert|date:"Y-m-d"}}</td>
+			<td>{{a.active|yesno:"Aktiv,Deaktiv"}}</td>
 			<td>{{a.createdDateTime|date:"Y-m-d"}}
-			<td>{{a.from_applications|yesno:"\applications,\servicePrincipals"}}</td>
-			<td>{{a.publisherName|default:""}}</td>
-			<td><b>{{a.displayName|truncatechars:35}}</b><br>AppId: {{a.appId}}</td>
-			<td>{{a.er_enterprise_app|yesno:"Ja, Nei"}}</td>
-			<td>{{a.servicePrincipalType}}</td>
-			<td>{{a.notes|default:"-"}}</td>
-			<td>{{a.tags}}</td>
-			<td>
+			<td><b>{{a.displayName|truncatechars:35}}</b><br>
+
+				{% if a.from_applications %}
+					<a target="_blank" href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/{{a.appId}}">{{a.appId}}</a>
+				{% else %}
+					<a target="_blank" href="https://portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Overview/objectId/{{a.appId}}">{{a.appId}}</a>
+				{% endif %}
+
+
+				{% if a.systemreferanse.all|length > 0 %}
+				<br><br>Koblet til følgende system:
 				{% for system in a.systemreferanse.all %}
-					{% include 'system_include_vis.html' with systemer=system %}
-					({{ system.systemeier.virksomhetsforkortelse }})
+					<li>{{ system }}</li>
 				{% endfor %}
+				{% endif %}
 			</td>
+			<td>{{a.publisherName|default:""}}</td>
+			<td>
+				{{a.er_enterprise_app|yesno:"Ja, Nei"}}
+				<br>{{a.from_applications|yesno:"\applications,\servicePrincipals"}}
+			</td>
+			{% comment %}<td>{{a.servicePrincipalType}}<br>{{a.from_applications|yesno:"\applications,\servicePrincipals"}}</td>{% endcomment %}
+			{% comment %}<td>{{a.tags}}</td>{% endcomment %}
 			<td>{{a.risikonivaa_autofill}}</td>
-			<td>{% if a.vurdering %} {{ a.sist_oppdatert|date:"Y-m-d"}}<br>{{ a.vurdering }} {% else %} -mangler- {% endif %}</td>
+			{% comment %}<td>{% if a.vurdering %} {{ a.sist_oppdatert|date:"Y-m-d"}}<br>{{ a.vurdering }} {% else %} -mangler- {% endif %}</td>{% endcomment %}
 			<td>
 				{% for r in a.requiredResourceAccess.all %}
 
@@ -61,7 +69,8 @@
 
 				{% endfor %}
 			</td>
-			<td>{{ a.antall_permissions }}</td>
+			<td>{{ a.antall_graph_rettigheter }}</td>
+			<td style="max-width: 200px; word-wrap: break-word; white-space: normal;">{{a.notes|default:"-"}}</td>
 		</tr>
 	{% endfor %}
 	</tbody>

@@ -396,14 +396,19 @@ class Command(BaseCommand):
 
 
 			# sette applikasjoner som ikke har vært sett til deaktivt
-			print("Deaktiverer applikasjoner som ikke har blitt oppdatert denne runden")
+			print("Sletter applikasjoner som ikke har blitt oppdatert denne runden")
 			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
 			deaktive_apper = AzureApplication.objects.filter(sist_oppdatert__lte=tidligere)
 			for a in deaktive_apper:
-				if a.active:
-					a.active = False
-					a.save()
-					print("%s satt deaktiv" % a)
+				a.delete()
+				print("Slettet %s" % a)
+
+			# telle opp hvor mange graph-tilganger hver SP har
+			print("Teller opp og lagrer hvor mange graph-rettigheter hver SP har")
+			for sp in AzureApplication.objects.all():
+				sp.antall_graph_rettigheter = AzurePublishedPermissionScopes.objects.filter(azure_applications=sp).count()
+				sp.save()
+
 
 			# varsle om nye SP via pushover
 			print("Klargjør melding om nye apper til Pushover")
