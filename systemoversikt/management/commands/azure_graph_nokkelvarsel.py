@@ -83,6 +83,7 @@ class Command(BaseCommand):
 					body=message,
 					from_email=settings.DEFAULT_FROM_EMAIL,
 					to=recipients,
+					content_subtype="html"
 			)
 			email.send()
 			print("E-post er lagt til kø for utsending")
