@@ -71,9 +71,7 @@ class Command(BaseCommand):
 				keys_message += f"\nApp {link}: {notes}\n{key.key_type} {key.display_name} utløper {key.end_date_time.strftime('%Y-%m-%d')}\n"
 
 
-
-			print(keys_message)
-
+			#print(keys_message)
 
 			innhold = f"Nøkler som utløper de neste {ANTALL_DAGER_VARSEL} dagene:\n{keys_message})"
 
@@ -83,8 +81,8 @@ class Command(BaseCommand):
 					body=message,
 					from_email=settings.DEFAULT_FROM_EMAIL,
 					to=recipients,
-					content_subtype="html"
 			)
+			email.content_subtype = "html"
 			email.send()
 			print("E-post er lagt til kø for utsending")
 
