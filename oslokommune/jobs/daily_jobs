@@ -55,7 +55,14 @@ python /var/kartoteket/source/systemoversikt/manage.py lookup_user_o365lisens
 # digdir
 python /var/kartoteket/source/systemoversikt/manage.py digdir_los
 
+# run batch azure
+python /var/kartoteket/source/systemoversikt/manage.py azure_graph_enterprise_applications
+python /var/kartoteket/source/systemoversikt/manage.py azure_graph_named_locations
+python /var/kartoteket/source/systemoversikt/manage.py azure_graph_conditional_access
+python /var/kartoteket/source/systemoversikt/manage.py azure_authentication_methods
+
 # run batch e-mail
+python /var/kartoteket/source/systemoversikt/manage.py azure_graph_nokkelvarsel
 python /var/kartoteket/source/systemoversikt/manage.py epost_avtaleutlop
 python /var/kartoteket/source/systemoversikt/manage.py send_mail
 
@@ -68,10 +75,5 @@ cd /var/kartoteket/source/systemoversikt/systemoversikt/pki # files need to be h
 python /var/kartoteket/source/systemoversikt/manage.py certipy-ad
 cd /var/kartoteket/source/systemoversikt/
 
-# run batch azure
-python /var/kartoteket/source/systemoversikt/manage.py azure_graph_enterprise_applications
-python /var/kartoteket/source/systemoversikt/manage.py azure_graph_named_locations
-python /var/kartoteket/source/systemoversikt/manage.py azure_graph_conditional_access
-python /var/kartoteket/source/systemoversikt/manage.py azure_authentication_methods
 
 
