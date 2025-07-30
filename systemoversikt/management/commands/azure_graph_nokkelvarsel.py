@@ -58,9 +58,12 @@ class Command(BaseCommand):
 			if not recipients:
 				print("Det er ingen registrerte mottakere")
 
+
+
+			#frem i tid
 			periode = (timezone.now() + datetime.timedelta(Command.ANTALL_DAGER_VARSEL))  # antall dager frem i tid
 			keys = AzureApplicationKeys.objects.filter(end_date_time__gte=timezone.now()).filter(end_date_time__lte=periode).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
-
+			#Denne brukes også for visningen!!
 			keys_message = ""
 			for key in keys:
 				notes = key.application_ref.notes.replace('\n', ' ') if key.application_ref.notes else ""
@@ -76,12 +79,37 @@ class Command(BaseCommand):
 				else:
 					fremtidige_nokler = f"<span style='color: red;'>Har ingen fremtidige nøkler</span>"
 
-				keys_message += f"<li>App {link}: {notes}<br>{key.key_type} {key.display_name} utløper {key.end_date_time.strftime('%Y-%m-%d')}. {fremtidige_nokler}</li><br>"
+				keys_message += f"<li>App {link}: {notes}<br>Utløper {key.end_date_time.strftime('%Y-%m-%d')}. {key.key_type} {key.display_name}. {fremtidige_nokler}</li><br>"
 
 
 			innhold = f"Nøkler som utløper de neste {Command.ANTALL_DAGER_VARSEL} dagene:\n{keys_message}"
 
-			message = f"<p>Dette er en automatisk e-post fra Kartoteket med formål å varsle om Azure enterprise applications med nøkler eller sertifikater som snart utgår.</p><p>{innhold}</p><p>Hilsen Kartoteket</p>"
+
+			#tilbake i tid
+			periode = (timezone.now() - datetime.timedelta(Command.ANTALL_DAGER_VARSEL))  # antall dager tilbake i tid
+			keys = AzureApplicationKeys.objects.filter(end_date_time__lt=timezone.now()).filter(end_date_time__gte=periode).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('-end_date_time')
+			#Denne brukes også for visningen!!
+			keys_message_old = ""
+			for key in keys:
+				notes = key.application_ref.notes.replace('\n', ' ') if key.application_ref.notes else ""
+
+				if key.application_ref.from_applications:
+					link = f"<a href='https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Credentials/appId/{key.application_ref.appId}'>{key.application_ref}</a>"
+				else:
+					link = f"<a href='https://portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Credentials/objectId/{key.application_ref.appId}'>{key.application_ref}</a>"
+
+				fremtidige_nokler = AzureApplicationKeys.objects.filter(application_ref=key.application_ref).filter(end_date_time__gt=periode)
+				if len(fremtidige_nokler) > 0:
+					fremtidige_nokler = f"Har {len(fremtidige_nokler)} fremtidige nøkler."
+				else:
+					fremtidige_nokler = f"<span style='color: red;'>Har ingen fremtidige nøkler</span>"
+
+				keys_message_old += f"<li>App {link}: {notes}<br>Utløper {key.end_date_time.strftime('%Y-%m-%d')}. {key.key_type} {key.display_name}. {fremtidige_nokler}</li><br>"
+			innhold_utgaat = f"Nøkler som har utløpt de siste {Command.ANTALL_DAGER_VARSEL} dagene:\n{keys_message_old}"
+
+
+
+			message = f"<p>Dette er en automatisk e-post fra Kartoteket med formål å varsle om Azure enterprise applications med hemmeligheter som snart utgår.</p><p>{innhold}</p><hr><p>{innhold_utgaat}</p><p>Hilsen Kartoteket</p>"
 			email = EmailMessage(
 					subject=subject,
 					body=message,
