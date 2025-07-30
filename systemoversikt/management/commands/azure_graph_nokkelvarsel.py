@@ -64,16 +64,16 @@ class Command(BaseCommand):
 				notes = key.application_ref.notes.replace('\n', ' ') if key.application_ref.notes else ""
 
 				if key.application_ref.from_applications:
-					link = f"<a href='https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/{key.application_ref.appId}'>{key.application_ref}</a>"
+					link = f"<a href='https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Credentials/appId/{key.application_ref.appId}'>{key.application_ref}</a>"
 				else:
-					link = f"<a href='https://portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Overview/objectId/{key.application_ref.appId}'>{key.application_ref}</a>"
+					link = f"<a href='https://portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Credentials/objectId/{key.application_ref.appId}'>{key.application_ref}</a>"
 
-				keys_message += f"<li>App {link}: {notes}\n{key.key_type} {key.display_name} utløper {key.end_date_time.strftime('%Y-%m-%d')}</li>"
+				keys_message += f"<li>App {link}: {notes}<br>{key.key_type} {key.display_name} utløper {key.end_date_time.strftime('%Y-%m-%d')}</li>"
 
 
 			#print(keys_message)
 
-			innhold = f"Nøkler som utløper de neste {ANTALL_DAGER_VARSEL} dagene:\n{keys_message})"
+			innhold = f"Nøkler som utløper de neste {ANTALL_DAGER_VARSEL} dagene:\n{keys_message}"
 
 			message = f"<p>Dette er en automatisk e-post fra Kartoteket med formål å varsle om Azure enterprise applications med nøkler eller sertifikater som snart utgår.</p><p>{innhold}</p><p>Hilsen Kartoteket</p>"
 			email = EmailMessage(
