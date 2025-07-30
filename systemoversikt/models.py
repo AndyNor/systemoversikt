@@ -7345,6 +7345,13 @@ class AzureApplicationKeys(models.Model):
 		#from django.utils import timezone
 		return timezone.now() > self.end_date_time
 
+	def color(self):
+		if self.expire():
+			return "red"
+		if self.expire_soon():
+			return "orange"
+		return "green"
+
 	def expire_soon(self):
 		if self.expire():
 			return False

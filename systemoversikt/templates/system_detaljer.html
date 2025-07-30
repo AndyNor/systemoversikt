@@ -348,7 +348,7 @@
 								<th>Applikasjonsnavn (Enterprise application)</th>
 								<th>App ID</th>
 								<th>Rettigheter</th>
-								<th>Nøkler (det kan være flere)</th>
+								<th>Nøkler</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -366,8 +366,8 @@
 									{% endfor %}
 								</td>
 								<td>
-									{% for key in ea.keys.all %}
-										{{ key.key_type }} utløper {{ key.end_date_time }}<br>
+									{% for key in ea.keys.all|dictsort:"end_date_time" %}
+										<span style="color: {{ key.color }};">{{ key.key_type }} med gyldighet til {{ key.end_date_time }}</span><br>
 									{% endfor %}
 								</td>
 							</tr>
