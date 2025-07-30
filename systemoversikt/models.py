@@ -61,6 +61,25 @@ def conditional_access_replace_guid(data):
 	return data
 
 
+class EpostMottakere(models.Model):
+	epost = models.CharField(
+			verbose_name="E-postadresse",
+			blank=False,
+			null=False,
+			max_length=100,
+		)
+	utsending_id = models.CharField(
+			verbose_name="Utsending ID",
+			blank=False,
+			null=False,
+			max_length=30,
+		)
+	class Meta:
+		verbose_name_plural = "System: E-postmottakere"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		get_latest_by = 'timestamp'
+
+
 # Entra ID Conditional Access-policyer hentet ned via Graph API
 class EntraIDConditionalAccessPolicies(models.Model):
 	timestamp = models.DateTimeField(

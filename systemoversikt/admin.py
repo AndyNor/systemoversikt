@@ -68,6 +68,11 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 	return export_as_csv
 
 
+@admin.register(EpostMottakere)
+class EpostMottakereAdmin(admin.ModelAdmin):
+	list_display=('epost', 'utsending_id')
+
+
 @admin.register(QualysVuln)
 class QualysVulnAdmin(admin.ModelAdmin):
 	list_display=('source', 'server', 'title', 'status', 'severity', 'known_exploited', 'first_seen', 'last_seen', 'public_facing', 'cve_info', 'result', 'os')

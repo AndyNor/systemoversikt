@@ -12,7 +12,8 @@ from django.core.mail import EmailMessage
 
 class Command(BaseCommand):
 
-	ANTALL_GRAPH_KALL = 0
+	UTSENDING_ID = "azure_secrets_expiry"
+	ANTALL_DAGER_VARSEL = 21
 
 	def handle(self, **options):
 
@@ -53,11 +54,11 @@ class Command(BaseCommand):
 
 		try:
 			subject = "Kartoteket: Påminnelse om nøkler og sertifikater som snart utgår"
-			#recipients = ["andre.nordbo@uke.oslo.kommune.no", "azureforvaltning@uke.oslo.kommune.no"]
-			recipients = ["andre.nordbo@uke.oslo.kommune.no"]
+			recipients = [item.epost for item in EpostMottakere.objects.filter(utsending_id=Command.UTSENDING_ID)]
+			if not recipients:
+				print("Det er ingen registrerte mottakere")
 
-			ANTALL_DAGER_VARSEL = 21
-			periode = (timezone.now() + datetime.timedelta(ANTALL_DAGER_VARSEL))  # antall dager frem i tid
+			periode = (timezone.now() + datetime.timedelta(Command.ANTALL_DAGER_VARSEL))  # antall dager frem i tid
 			keys = AzureApplicationKeys.objects.filter(end_date_time__gte=timezone.now()).filter(end_date_time__lte=periode).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
 
 			keys_message = ""
@@ -78,7 +79,7 @@ class Command(BaseCommand):
 				keys_message += f"<li>App {link}: {notes}<br>{key.key_type} {key.display_name} utløper {key.end_date_time.strftime('%Y-%m-%d')}. {fremtidige_nokler}</li><br>"
 
 
-			innhold = f"Nøkler som utløper de neste {ANTALL_DAGER_VARSEL} dagene:\n{keys_message}"
+			innhold = f"Nøkler som utløper de neste {Command.ANTALL_DAGER_VARSEL} dagene:\n{keys_message}"
 
 			message = f"<p>Dette er en automatisk e-post fra Kartoteket med formål å varsle om Azure enterprise applications med nøkler eller sertifikater som snart utgår.</p><p>{innhold}</p><p>Hilsen Kartoteket</p>"
 			email = EmailMessage(
