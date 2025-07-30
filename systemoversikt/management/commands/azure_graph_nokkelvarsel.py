@@ -53,7 +53,8 @@ class Command(BaseCommand):
 
 		try:
 			subject = "Kartoteket: Påminnelse om nøkler og sertifikater som snart utgår"
-			recipients = ["andre.nordbo@uke.oslo.kommune.no", "azureforvaltning@uke.oslo.kommune.no"]
+			#recipients = ["andre.nordbo@uke.oslo.kommune.no", "azureforvaltning@uke.oslo.kommune.no"]
+			recipients = ["andre.nordbo@uke.oslo.kommune.no"]
 
 			ANTALL_DAGER_VARSEL = 21
 			periode = (timezone.now() + datetime.timedelta(ANTALL_DAGER_VARSEL))  # antall dager frem i tid
@@ -68,7 +69,13 @@ class Command(BaseCommand):
 				else:
 					link = f"<a href='https://portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Credentials/objectId/{key.application_ref.appId}'>{key.application_ref}</a>"
 
-				keys_message += f"<li>App {link}: {notes}<br>{key.key_type} {key.display_name} utløper {key.end_date_time.strftime('%Y-%m-%d')}</li>"
+				fremtidige_nokler = AzureApplicationKeys.objects.filter(application_ref=key.application_ref).filter(end_date_time__gt=periode)
+				if len(fremtidige_nokler) > 0:
+					fremtidige_nokler = f"Har {len(fremtidige_nokler)} fremtidige nøkler."
+				else:
+					fremtidige_nokler = f"<span style='color: red;'>Har ingen fremtidige nøkler</span>"
+
+				keys_message += f"<li>App {link}: {notes}<br>{key.key_type} {key.display_name} utløper {key.end_date_time.strftime('%Y-%m-%d')}. {fremtidige_nokler}</li><br>"
 
 
 			innhold = f"Nøkler som utløper de neste {ANTALL_DAGER_VARSEL} dagene:\n{keys_message}"
