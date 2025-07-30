@@ -64,7 +64,7 @@ class Command(BaseCommand):
 							adg = ADgroup.objects.get(distinguishedname=g)
 							if adg.mail:
 								bruker.profile.mail_enabled_groups.add(adg)
-								print(f"Legger til {adg} for {bruker}")
+								#print(f"Legger til {adg} for {bruker}")
 							#print(f"Fant gruppen {adg}")
 							#bruker.profile.adgrupper.add(adg)
 							#bruker.profile.adgrupper_antall = len(grupper)

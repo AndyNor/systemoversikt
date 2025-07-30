@@ -5810,7 +5810,7 @@ def drifttilgang(request):
 
 	if "kilde" in request.GET:
 		if request.GET["kilde"] == "servicekontoer":
-			brukere = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False)
+			brukere = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False).order_by("-profile__whenCreated")
 			tekst_type_konto = "service"
 	#brukere = User.objects.filter(profile__accountdisable=False).filter(Q(profile__description__icontains="Sopra") | Q(profile__description__icontains="2S"))
 
