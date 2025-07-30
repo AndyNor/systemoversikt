@@ -7297,7 +7297,7 @@ class AzureUserConsents(models.Model):
 
 
 class AzureApplicationKeys(models.Model):
-	applcaion_ref = models.ForeignKey(
+	application_ref = models.ForeignKey(
 			to="AzureApplication",
 			related_name='keys',
 			on_delete=models.CASCADE,
@@ -7332,7 +7332,7 @@ class AzureApplicationKeys(models.Model):
 			null=True,
 			blank=True,
 			)
-	unique_together = ('applcaion_ref', 'key_id')
+	unique_together = ('application_ref', 'key_id')
 
 	def __str__(self):
 		return u'%s' % (self.display_name)

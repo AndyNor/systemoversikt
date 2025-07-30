@@ -110,10 +110,10 @@ class AzureUserConsentsAdmin(admin.ModelAdmin):
 
 @admin.register(AzureApplicationKeys)
 class AzureApplicationKeysAdmin(admin.ModelAdmin):
-	list_display = ('applcaion_ref', 'key_id', 'display_name', 'key_type', 'key_usage', 'end_date_time')
+	list_display = ('application_ref', 'key_id', 'display_name', 'key_type', 'key_usage', 'end_date_time')
 	search_fields = ('key_id', 'display_name',)
-	list_filter = ('key_type', 'key_usage', 'applcaion_ref')
-	autocomplete_fields = ('applcaion_ref',)
+	list_filter = ('key_type', 'key_usage', 'application_ref')
+	autocomplete_fields = ('application_ref',)
 	readonly_fields = ["key_id",]
 
 

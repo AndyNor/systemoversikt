@@ -277,9 +277,9 @@ class Command(BaseCommand):
 					# legger til alle nøkler som identifiseres og kobler dem til riktig app
 					for keycredential in app['keyCredentials']:
 						key_end_date = parser.parse(keycredential["endDateTime"])
-						if not AzureApplicationKeys.objects.filter(key_id=keycredential["keyId"],applcaion_ref=a).exists():
+						if not AzureApplicationKeys.objects.filter(key_id=keycredential["keyId"],application_ref=a).exists():
 							k = AzureApplicationKeys.objects.create(
-									applcaion_ref=a,
+									application_ref=a,
 									key_id=keycredential["keyId"],
 									display_name=keycredential["displayName"],
 									key_type=keycredential["type"],
@@ -289,9 +289,9 @@ class Command(BaseCommand):
 
 					for passwordcredential in app['passwordCredentials']:
 						key_end_date = parser.parse(passwordcredential["endDateTime"])
-						if not AzureApplicationKeys.objects.filter(key_id=passwordcredential["keyId"],applcaion_ref=a).exists():
+						if not AzureApplicationKeys.objects.filter(key_id=passwordcredential["keyId"],application_ref=a).exists():
 							k = AzureApplicationKeys.objects.create(
-									applcaion_ref=a,
+									application_ref=a,
 									key_id=passwordcredential["keyId"],
 									display_name=passwordcredential["displayName"],
 									key_type="Client Secret",
@@ -341,9 +341,9 @@ class Command(BaseCommand):
 					# legger til alle nøkler som identifiseres og kobler dem til riktig app
 					for keycredential in app['keyCredentials']:
 						key_end_date = parser.parse(keycredential["endDateTime"])
-						if not AzureApplicationKeys.objects.filter(key_id=keycredential["keyId"],applcaion_ref=a).exists():
+						if not AzureApplicationKeys.objects.filter(key_id=keycredential["keyId"],application_ref=a).exists():
 							k = AzureApplicationKeys.objects.create(
-									applcaion_ref=a,
+									application_ref=a,
 									key_id=keycredential["keyId"],
 									display_name=keycredential["displayName"],
 									key_type=keycredential["type"],
@@ -353,9 +353,9 @@ class Command(BaseCommand):
 
 					for passwordcredential in app['passwordCredentials']:
 						key_end_date = parser.parse(passwordcredential["endDateTime"])
-						if not AzureApplicationKeys.objects.filter(key_id=passwordcredential["keyId"],applcaion_ref=a).exists():
+						if not AzureApplicationKeys.objects.filter(key_id=passwordcredential["keyId"],application_ref=a).exists():
 							k = AzureApplicationKeys.objects.create(
-									applcaion_ref=a,
+									application_ref=a,
 									key_id=passwordcredential["keyId"],
 									display_name=passwordcredential["displayName"],
 									key_type="Client Secret",
@@ -429,7 +429,10 @@ class Command(BaseCommand):
 			if antall_nye > 0:
 				push_pushover(message)
 
+			# sende e-post om nøkler og sertifikater som snart utgår skjer i eget script som må kjøre etter dette.
 
+
+			# logge og fullføre
 			logg_message = f"Fant {APPLICATIONS_FOUND_ALL} applikasjoner under /servicePrincipals og {APPLICATIONS_FOUND} under /applications."
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,

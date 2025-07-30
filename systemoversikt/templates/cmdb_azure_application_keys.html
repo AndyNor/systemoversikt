@@ -27,9 +27,9 @@
 	<tbody>
 	{% for k in keys %}
 		<tr>
-			<td>{{ k.applcaion_ref }}<br><span style="color: gray; font-style: italic;"><a target="_blank" href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Credentials/appId/{{ k.applcaion_ref.appId }}">{{ k.applcaion_ref.appId }}</a></span></td>
+			<td>{{ k.application_ref }}<br><span style="color: gray; font-style: italic;"><a target="_blank" href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Credentials/appId/{{ k.application_ref.appId }}">{{ k.application_ref.appId }}</a></span></td>
 			<td>
-				{% for system in k.applcaion_ref.systemreferanse.all %}
+				{% for system in k.application_ref.systemreferanse.all %}
 					{% include 'system_include_vis.html' with systemer=system %}
 					({{ system.systemeier.virksomhetsforkortelse }})<br>
 					{% for ansvarlig in system.systemforvalter_kontaktpersoner_referanse.all %}
