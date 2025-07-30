@@ -102,7 +102,7 @@ DEFAULT_FROM_EMAIL = "kartoteket@uke.oslo.kommune.no"
 if THIS_ENVIRONMENT == "PROD":
 	EMAIL_HOST = "indre-relay.oslo.kommune.no"
 	EMAIL_PORT = 25
-	EMAIL_USE_TLS = True
+	EMAIL_USE_TLS = False
 
 if THIS_ENVIRONMENT == "TEST":
 	EMAIL_HOST = "localhost"
