@@ -3436,12 +3436,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 		brukerobjekter = User.objects.filter(username__in=brukerliste)
 		return (brukerobjekter, logg)
 
-	#Grupper for å gi EM+S E5-lisens
-	grupper_med_emse5 = [
-		"DS-OFFICE365_OPSJON_E5SECURITY",
-	]
-	brukere_med_emse5, logg = hent_brukere(grupper_med_emse5, logg)
-
 	#Grupper for å unnta fra krav om kjent enhet
 	grupper_ikke_administrert = [
 		"DS-OFFICE365_OPSJON_IKKEADMINISTRERT",
@@ -3558,8 +3552,6 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
-		'grupper_med_emse5': grupper_med_emse5,
-		'brukere_med_emse5': brukere_med_emse5,
 		'grupper_uten_administrert_klient': grupper_ikke_administrert,
 		'brukere_uten_administrert_klient': brukere_ikke_administrert,
 		'grupper_unntak_mfa': grupper_unntak_mfa,
