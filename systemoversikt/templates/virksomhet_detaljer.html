@@ -137,6 +137,40 @@
 
 	<hr>
 
+	<h5>Kritiske funksjoner knyttet til våre systemer</h5>
+	<table class="table table-sm excel">
+	<thead>
+	<tr>
+		<th>Område</th>
+		<th>Kritisk funksjon</th>
+		<th>Systemknytninger</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for funksjon in kritiske_funksjoner %}
+	<tr>
+		<td>{{funksjon.get_kategori_display}}</td>
+		<td>{{funksjon.navn}}</td>
+		<td>
+			{% for system in funksjon.systemer %}
+				{% if system.systemforvalter == virksomhet %}
+					<li>{{system}}
+						<ul>
+						{% for kapabilitet in system.kritisk_kapabilitet.all %}
+							<li>{{kapabilitet}}</li>
+						{% endfor %}
+						</ul>
+					</li>
+				{% endif %}
+			{% endfor %}
+		</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+	<hr>
+
 	<h6>Systemstatistikk</h6>
 	Vi benytter <b>{{ant_systemer_bruk}}</b> systemer<br>
 	Vi eier <b>{{ant_systemer_eier}}</b> systemer, forvalter <b>{{ant_systemer_forvalter}}</b> systemer og drifter <b>{{systemer_drifter}}</b> systemer<br>

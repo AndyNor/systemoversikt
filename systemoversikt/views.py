@@ -6148,6 +6148,9 @@ def virksomhet(request, pk):
 	ant_systemer_forvalter = System.objects.filter(systemforvalter=pk).count()
 	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=3)
 
+	kritiske_funksjoner = KritiskFunksjon.objects.filter(funksjoner__systemer__systemforvalter=pk).distinct()
+	print(kritiske_funksjoner)
+
 
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk).filter(~Q(ibruk=False)).count()
 	from systemoversikt.models import SYSTEM_COLORS
@@ -6171,6 +6174,7 @@ def virksomhet(request, pk):
 		'nodes_tjenester': _collect_system_graph_data(pk, kilde="tjenester"),
 		'nodes_infra': _collect_system_graph_data(pk, kilde="infrastruktur"),
 		'system_colors': SYSTEM_COLORS,
+		'kritiske_funksjoner': kritiske_funksjoner,
 	})
 
 
