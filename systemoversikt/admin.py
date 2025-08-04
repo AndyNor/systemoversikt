@@ -747,7 +747,7 @@ class OppdateringAdmin(admin.ModelAdmin):
 
 @admin.register(RapportGruppemedlemskaper)
 class RapportGruppemedlemskaperAdmin(admin.ModelAdmin):
-	list_display = ('beskrivelse', 'kategori',)
+	list_display = ('kategori', 'beskrivelse', 'kommentar')
 	autocomplete_fields = ('grupper', 'AND_grupper',)
 
 
