@@ -6149,8 +6149,6 @@ def virksomhet(request, pk):
 	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=3)
 
 	kritiske_funksjoner = KritiskFunksjon.objects.filter(funksjoner__systemer__systemforvalter=pk).distinct()
-	print(kritiske_funksjoner)
-
 
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk).filter(~Q(ibruk=False)).count()
 	from systemoversikt.models import SYSTEM_COLORS
