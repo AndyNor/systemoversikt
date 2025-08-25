@@ -11,10 +11,11 @@
 
 
 {% block hovedinnhold %}
-	<p>Her vises systemer og applikasjoner som {{ virksomhet }} benytter seg av, uavhengig av hvem som forvalter og drifter systemet.</p>
+	<p>Her vises systemer {{ virksomhet }} har registrert at vi bruker. For felles- og sektorsystemer er det sentral systemeier og forvalter for systemet, men vi registrerer lokal forvalter for hver virksomhet som bruker systemet. For virksomhetssystemer er det kun én virksomhet som bruker systemet, og lokal forvalter settes da (snart) automatisk til systemets forvalter.</p>
+	<p>Når du registrerer systembruk, må du velge mellom systemer som allerede finnes. Finner du ikke systemet ditt, kan du opprette et nytt, men husk at alle nye systemer må tildeles en virksomhet.</p>
 
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer bruk av system</a>
-	<a href="/admin/systemoversikt/programvarebruk/add/?brukergruppe={{ virksomhet.pk }}" class="btn btn-sm btn-link">Registrer bruk av programvare</a>
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer bruk av et eksisterende system</a>
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">Registrer et nytt system</a>
 
 	<hr>
 
@@ -30,6 +31,8 @@
 	<h6>Systemer i bruk</h6>
 	{% include "systembruk_include.html" with all_bruk=all_systembruk %}
 
+
+	{% comment %}
 	<h6>Applikasjoner i bruk</h6>
 	<table class="tablesorter excel">
 	<thead>
@@ -74,7 +77,9 @@
 	</tbody>
 	</table>
 
-	<h4>Systemer registrert benyttet som er avviklet</h4>
+	{% endcomment %}
+
+	<h6>Systemer registrert som benyttet, men som er markert som avviklet. Disse vises ikke i tabellen over.</h6>
 	{% include "systembruk_include.html" with all_bruk=ikke_i_bruk %}
 
 {% endblock hovedinnhold %}

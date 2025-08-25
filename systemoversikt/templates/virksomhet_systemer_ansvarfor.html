@@ -14,10 +14,15 @@
 
 {% block hovedinnhold %}
 
-	<p>Systemer {{ virksomhet }} er systemeier eller systemforvalter for. Her vises alle unike eiere og forvaltere, samt basisinformasjon på tabellform samlet slik at IKT-hovedkontakt får komplett oversikt.</p>
+	<p>Systemer {{ virksomhet }} er systemeier eller systemforvalter for. Her vises basisinformasjon på tabellform samlet slik at IKT-hovedkontakt får komplett oversikt.</p>
 
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Registrer nytt system</a>
+		{% url 'virksomhet_forvalter_isk' pk=virksomhet.pk as url_virksomhet_forvalter_isk %}
+		<a href="{{ url_virksomhet_forvalter_isk }}" class="btn btn-sm btn-link {% if url_virksomhet_forvalter_isk in request.path %}fremhev{% endif %}">Se detaljerte sikkerhetsvurderinger samlet</a><br>
 
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Registrer et nytt system</a>
+
+
+	{% comment %}
 	<hr>
 
 	<div class="container">
@@ -41,6 +46,7 @@
 			</div>
 		</div>
 	</div>
+	{% endcomment %}
 
 	<hr>
 

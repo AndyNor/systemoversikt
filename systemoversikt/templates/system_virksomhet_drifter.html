@@ -21,6 +21,8 @@
 	{% endfor %}
 	<hr>
 
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Registrer et nytt system</a>
+
 	<p>Viser {{ systemer.count }} systemer.</p>
 
 	{% include "system_include_drifter.html" with systemer=systemer %}

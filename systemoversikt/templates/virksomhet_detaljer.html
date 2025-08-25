@@ -31,6 +31,11 @@
 		<a href="{{ url_vir }}">{{ vir }}</a>
 	{% endfor %}
 
+
+	<br><br>Vi benytter <b>{{ant_systemer_bruk}}</b> systemer<br>
+	Vi eier <b>{{ant_systemer_eier}}</b> systemer, forvalter <b>{{ant_systemer_forvalter}}</b> systemer og drifter <b>{{systemer_drifter}}</b> systemer<br>
+	Vi har <b>{{ antall_brukere }}</b> interne og <b>{{ antall_eksterne_brukere }}</b> ekstern brukere i brukerkatalogen<br>
+
 	<hr>
 
 	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">
@@ -48,14 +53,12 @@
 		<a class="btn btn-sm btn-link" href="{{ virksomhet.styringssystem }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s styringssystem</a>
 	{% endif %}
 
-	<hr>
 
-	<h6>Kontaktpersoner</h6>
 	<table class="table">
 	<thead>
 	<tr>
-		<th style="width: 200px;">Rolle</th>
-		<th>Personer</th>
+		<th style="width: 200px;">Sentrale roller</th>
+		<th>Kontaktpersoner</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -176,11 +179,6 @@
 	</table>
 
 	<hr>
-
-	<h6>Systemstatistikk</h6>
-	Vi benytter <b>{{ant_systemer_bruk}}</b> systemer<br>
-	Vi eier <b>{{ant_systemer_eier}}</b> systemer, forvalter <b>{{ant_systemer_forvalter}}</b> systemer og drifter <b>{{systemer_drifter}}</b> systemer<br>
-	Vi har <b>{{ antall_brukere }}</b> interne og <b>{{ antall_eksterne_brukere }}</b> ekstern brukere i brukerkatalogen<br>
 
 {% endblock hovedinnhold %}
 
