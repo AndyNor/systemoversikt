@@ -6290,9 +6290,9 @@ def alle_virksomheter(request):
 
 def alle_virksomheter_kontaktinfo(request):
 	#Vise oversikt over alle virksomheter
-	required_permissions = ['systemoversikt.view_system']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+	required_permissions = []
+	#if not any(map(request.user.has_perm, required_permissions)):
+	#	return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomheter = Virksomhet.objects.all().order_by('-ordinar_virksomhet', 'virksomhetsnavn')
 

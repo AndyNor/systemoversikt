@@ -44,7 +44,7 @@
 			{% if member.users|length < 300 %}
 				{{m.profile.avdeling}}
 			{% else %}
-				(fuksjon deaktivert)
+				(vises ikke)
 			{% endif %}
 		</td>
 		<td>{{ m.email }}</td>
@@ -53,7 +53,7 @@
 		<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }}<br>({{ m.profile.lastLogonTimestamp|timesince }})</td>
 		<td>{{m.profile.description}}</td>
 		<td>
-			(fuksjon deaktivert)
+			(vises ikke)
 			{% comment %}
 			{% for system in m.profile.levtilgangprofil %}{{ system }}<br>{% empty %}{% endfor %}<br>
 			{% if show_access_groups %}
