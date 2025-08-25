@@ -34,7 +34,19 @@
 	<hr>
 
 	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">
-	{% include 'site_edit_button.html' %} Rediger virksomhetsdetaljer</a>
+	{% include 'site_edit_button.html' %} Rediger virksomhetsdetaljer og kontaktpersoner</a>
+
+	<hr>
+
+	{% if virksomhet.intranett_url %}
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.intranett_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s intranettside</a>
+	{% endif %}
+	{% if virksomhet.www_url %}
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.www_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s nettside</a>
+	{% endif %}
+	{% if virksomhet.styringssystem %}
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.styringssystem }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s styringssystem</a>
+	{% endif %}
 
 	<hr>
 
@@ -74,6 +86,10 @@
 		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.informasjonssikkerhetskoordinator.all %}</td>
 	</tr>
 	<tr>
+		<td>Sikkerhetsrelaterte varsler sendes til</td>
+		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.varslingsmottak_sikkerhet_ref.all %}</td>
+	</tr>
+	<tr>
 		<td>Kundekontakt i UKE</td>
 		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.uke_kam_referanse.all %}</td>
 	</tr>
@@ -92,16 +108,6 @@
 	</tbody>
 	</table>
 
-
-	{% if virksomhet.intranett_url %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.intranett_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s intranettside</a>
-	{% endif %}
-	{% if virksomhet.www_url %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.www_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s nettside</a>
-	{% endif %}
-	{% if virksomhet.styringssystem %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.styringssystem }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s styringssystem</a>
-	{% endif %}
 
 	<hr>
 
