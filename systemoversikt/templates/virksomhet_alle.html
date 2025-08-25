@@ -34,6 +34,7 @@
 		<th>Leder</th>
 		<th>Personvernkoordinator (PKO)</th>
 		<th>Informasjonssikkerhetskoordinator (ISK)</th>
+		<th>Varslingsmottak sikkerhetshendelser</th>
 		<th>IKT-hovedkontakt</th>
 		<th>Arkitektur hovedkontakt</th>
 		<th>Kundeansvarlig hos intern tjenesteleverandør</th>
@@ -84,6 +85,16 @@
 		</td>
 		<td>
 			{% for person in vir.informasjonssikkerhetskoordinator.all %}
+				<a href="{% url 'bruker_detaljer' pk=person.brukernavn.pk %}"
+				{% if person.brukernavn.is_active == False  %}
+					style="text-decoration: line-through;"
+				{% endif %}
+				>
+				{{ person }}</a><br>
+			{% endfor %}
+		</td>
+		<td>
+			{% for person in vir.varslingsmottak_sikkerhet_ref.all %}
 				<a href="{% url 'bruker_detaljer' pk=person.brukernavn.pk %}"
 				{% if person.brukernavn.is_active == False  %}
 					style="text-decoration: line-through;"

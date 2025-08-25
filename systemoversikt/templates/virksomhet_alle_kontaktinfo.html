@@ -4,7 +4,7 @@
 {% block ekstrameny %}{% endblock ekstrameny %}
 
 {% block overskrift %}
-	Alle virksomheter - kontaktinformasjon ISK/PSK
+	Alle virksomheter - kontaktinformasjon IKT-relaterte roller
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -29,11 +29,9 @@
 		{% comment %}<th>Autoriserte bestillere InfoTorget</th>{% endcomment %}
 		{% comment %}<th>Autoriserte bestillere mot intern tjenesteleverandør</th>{% endcomment %}
 		<th>Personvernkoordinator (PKO)</th>
-		<th>PKO e-post</th>
 		<th>Informasjonssikkerhetskoordinator (ISK)</th>
-		<th>ISK e-post</th>
+		<th>Sikkerhetsrelaterte varsler</th>
 		<th>IKT-hovedkontakt</th>
-		<th>Hovedkontakt e-post</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -50,7 +48,7 @@
 		<td>
 			{{ vir.virksomhetsforkortelse }} <a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn|truncatewords:6 }}</a>
 			{% for vir in vir.overordnede_virksomheter.all %}
-				<i>{{ vir }}</i><br>
+				<i>({{ vir.virksomhetsforkortelse }})</i><br>
 			{% endfor %}
 		</td>
 
@@ -79,27 +77,7 @@
 		</td>{% endcomment %}
 		<td>
 			{% for person in vir.personvernkoordinator.all %}
-				<a href="{% url 'bruker_detaljer' person.brukernavn.pk %}"
-				{% if person.brukernavn.is_active == False  %}
-					style="text-decoration: line-through;"
-				{% endif %}
-				>
-				{{ person }}</a><br>
-			{% endfor %}
-		</td>
-		<td>
-			{% for person in vir.personvernkoordinator.all %}
 				{{ person.brukernavn.email }}</a><br>
-			{% endfor %}
-		</td>
-		<td>
-			{% for person in vir.informasjonssikkerhetskoordinator.all %}
-				<a href="{% url 'bruker_detaljer' person.brukernavn.pk %}"
-				{% if person.brukernavn.is_active == False  %}
-					style="text-decoration: line-through;"
-				{% endif %}
-				>
-				{{ person }}</a><br>
 			{% endfor %}
 		</td>
 		<td>
@@ -108,13 +86,8 @@
 			{% endfor %}
 		</td>
 		<td>
-			{% for person in vir.ikt_kontakt.all %}
-				<a href="{% url 'bruker_detaljer' person.brukernavn.pk %}"
-				{% if person.brukernavn.is_active == False  %}
-					style="text-decoration: line-through;"
-				{% endif %}
-				>
-				{{ person }}</a><br>
+			{% for person in vir.varslingsmottak_sikkerhet_ref.all %}
+				{{ person.brukernavn.email }}</a><br>
 			{% endfor %}
 		</td>
 		<td>

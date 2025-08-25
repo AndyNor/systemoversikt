@@ -537,10 +537,14 @@ class SystemAdmin(SimpleHistoryAdmin):
 		super().save_model(request, obj, form, change)
 
 
+
 	def has_change_permission(self, request, obj=None):
 		if obj:
 			if request.user.is_superuser:
-				messages.warning(request, 'Du er root og kan endre alt!')
+				# Avoid duplicate message
+				if not hasattr(request, '_root_warning_shown'):
+					messages.warning(request, 'Du er root og kan endre alt!')
+					request._root_warning_shown = True
 				return True
 			if is_admin(request):
 				#messages.warning(request, 'Du er superbruker')
@@ -553,6 +557,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 					return False
 			messages.warning(request, f'Du har ikke rettigheter til å endre systemer.')
 			return False
+
 
 
 @admin.register(Virksomhet)
@@ -582,6 +587,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = (
 		'leder',
 		'informasjonssikkerhetskoordinator',
+		'varslingsmottak_sikkerhet_ref',
 		'personvernkoordinator',
 		'arkitekturkontakter',
 		'ikt_kontakt',
@@ -597,7 +603,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 					('virksomhetsnavn','orgnummer',),
 					('virksomhetsforkortelse','gamle_virksomhetsforkortelser'),
 					'ordinar_virksomhet',
-					('odepartmentnumber', 'leder',),
+					('odepartmentnumber'),
 					('overordnede_virksomheter','kan_representeres',),
 					('resultatenhet',
 					'office365'),
@@ -612,11 +618,13 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 					'ikt_kontakt',
 					'personvernkoordinator',
 					'informasjonssikkerhetskoordinator',
-					'uke_kam_referanse',
+					'varslingsmottak_sikkerhet_ref',
 					'arkitekturkontakter',
+					'uke_kam_referanse',
 					'ks_fiks_admin_ref',
 					'autoriserte_bestillere_tjenester',
 					'autoriserte_bestillere_tjenester_uke',
+					'leder',
 				),
 			}),
 			('GDPR / sikkerhet', {
@@ -641,7 +649,10 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 	def has_change_permission(self, request, obj=None):
 		if obj:
 			if request.user.is_superuser:
-				messages.warning(request, 'Du er root og kan endre alt!')
+				# Avoid duplicate message
+				if not hasattr(request, '_root_warning_shown'):
+					messages.warning(request, 'Du er root og kan endre alt!')
+					request._root_warning_shown = True
 				return True
 			if is_admin(request):
 				#messages.warning(request, 'Du er superbruker')
@@ -1476,7 +1487,10 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 	def has_change_permission(self, request, obj=None):
 		if obj:
 			if request.user.is_superuser:
-				messages.warning(request, 'Du er root og kan endre alt!')
+				# Avoid duplicate message
+				if not hasattr(request, '_root_warning_shown'):
+					messages.warning(request, 'Du er root og kan endre alt!')
+					request._root_warning_shown = True
 				return True
 			if is_admin(request):
 				#messages.warning(request, 'Du er superbruker')

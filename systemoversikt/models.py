@@ -767,32 +767,32 @@ class Virksomhet(models.Model):
 			null=True,
 			max_length=10,
 			db_index=True,
-			help_text=u"Dette feltet brukes som standard visningsnavn, og brukes for å koble brukeridenter til virksomheten.",
+			help_text=u"Normalt en trebokstavsforkortelse. Forkortelsen brukes også for å koble brukeridenter fra AD automatisk til til din virksomhet.",
 			)
 	gamle_virksomhetsforkortelser = models.CharField(
 			verbose_name="Alternative virksomhetsforkortelse",
 			blank=True,
 			null=True,
 			max_length=100,
-			help_text=u"Alternative/gamle forkortelser. Bruk mellomrom dersom flere. Brukes ved tildeling av WAN-lokasjoner og for filtrering av brukeridenter.",
+			help_text=u"Alternative/gamle virksomhetsforkortelser. Bruk mellomrom dersom flere. Brukes ved tildeling av WAN-lokasjoner og for filtrering av brukeridenter.",
 			)
 	virksomhetsnavn = models.CharField(
 			unique=True,
 			verbose_name="Virksomhetsnavn",
 			max_length=250,
-			help_text=u"Fult navn på virksomheten. En virksomhet er ment å modellere en entitet med eget organisasjonsnummer.",
+			help_text=u"Fult navnet på virksomheten",
 			)
 	overordnede_virksomheter = models.ManyToManyField(
 			to="Virksomhet",
 			related_name='virksomhet_overordnede_virksomheter',
 			verbose_name="Tilhører byrådsavdeling",
 			blank=True,
-			help_text=u'Dersom aktuelt kan en annen virksomhet angis som overornet denne.',
+			help_text=u'Her angir du byråden din virksomhet er underlagt.',
 			)
 	kan_representeres = models.BooleanField(
 			verbose_name="Kan representeres",
 			default=False,
-			help_text=u'Den overordnede virksomheten kan representere ("bytte til") den underordnede dersom det krysses av her.',
+			help_text=u'Dersom huket av, kan din overordede byrådsavdeling logge inn på vegne av denne virksomheten.',
 			)
 	resultatenhet = models.CharField(
 			choices=RESULTATENHET_VALG,
@@ -801,14 +801,14 @@ class Virksomhet(models.Model):
 			blank=True,
 			null=True,
 			default='',
-			help_text=u"Dette feltet brukes for å angi om virksomheten er på sentral klientplattform, eller har lokal drift.",
+			help_text=u"Dette feltet brukes for å angi om dere er på sentral klientplattform eller om dere har lokal drift av klienter.",
 			)
 	uke_kam_referanse = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='virksomhet_uke_kam',
 			verbose_name='Kundeansvarlig fra intern tjenesteleverandør',
 			blank=True,
-			help_text=u"Dette feltet oppdateres av intern tjenesteleverandør.",
+			help_text=u"Dette er deres kundeansvarlig i UKE. Feltet bør oppdateres av UKE.",
 			)
 	intranett_url = models.URLField(
 			verbose_name="På intranett (internt)",
@@ -829,24 +829,24 @@ class Virksomhet(models.Model):
 			related_name='virksomhet_ikt_kontakt',
 			verbose_name='IKT-hovedkontakter',
 			blank=True,
-			help_text=u"Virksomhetens kontaktpunkt for IKT.",
+			help_text=u"Din virksomhets kontaktpunkt for generelle IKT-relaterte henvendelser.",
 			)
 	autoriserte_bestillere_tjenester = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='virksomhet_autoriserte_bestillere_tjenester',
 			verbose_name='Autoriserte bestillere i InfoTorg',
 			blank=True,
-			help_text=u"En autorisert bestiller InfoTorg er en person virksomheten har autorisert til å bestille brukere til data fra det sentrale folkeregistret.",
+			help_text=u"Autorisert bestiller med tilgang til InfoTorg som kan bestille tilgang til det sentrale folkeregistret for virksomheten.",
 			)
 	autoriserte_bestillere_tjenester_uke = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='virksomhet_autoriserte_bestillere_tjenester_uke',
 			verbose_name='Autoriserte bestillere av tjenester fra intern tjenesteleverandør.',
 			blank=True,
-			help_text=u"En autorisert bestiller er en person virksomheten har autorisert til å bestille tjenester via selvbetjeningsportalen (kundeportalen).",
+			help_text=u"Personer i virksomheten din autorisert til å bestille tjenester fra UKE.",
 			)
 	orgnummer = models.CharField(
-			verbose_name="Vårt organisasjonsnummer",
+			verbose_name="Virksomhetens organisasjonsnummer",
 			max_length=30,
 			blank=True,
 			null=True,
@@ -855,7 +855,7 @@ class Virksomhet(models.Model):
 	leder = models.ManyToManyField(Ansvarlig, related_name='virksomhet_leder',
 			verbose_name="Vår virksomhetsleder",
 			blank=True,
-			help_text=u"Angi hvem som er virksomhetsleder. Dette feltet benyttes bare dersom HR ikke har informasjon om leder.",
+			help_text=u"Dette feltet benyttes kun dersom HR ikke har informasjon om leder. Normalt sett trenger du ikke fylle dette ut.",
 			)
 	autoriserte_bestillere_sertifikater = models.ManyToManyField(
 			to=AutorisertBestiller,
@@ -939,7 +939,14 @@ class Virksomhet(models.Model):
 			related_name='virksomhet_ks_fiks_ansvarlig',
 			verbose_name='Administrator for søk i KS Fiks folkeregister portal',
 			blank=True,
-			help_text=u"KS Fiks folkeregister er valgt som ny standard tjeneste for modernisert folkeregister, og KS har en webportal for søk i folkeregisteret (forvaltning.fiks.ks.no). Her kan du føre opp hvem som er lokale administratorer.",
+			help_text=u"Virksomhtens lokale administratorer på KS Fiks folkeregister (forvaltning.fiks.ks.no).",
+			)
+	varslingsmottak_sikkerhet_ref = models.ManyToManyField(
+			to=Ansvarlig,
+			related_name='virksomhet_varslingsmottak_sikkerhet',
+			verbose_name='Postbokser for mottak av sikkerhetsvarsler',
+			blank=True,
+			help_text=u"Her kan du angi postmottaks dere ønsker sikkerhetsvarsler levert til. Brukes av UKE CSIRT og driftsleverandør for varslinger ved sikkerhetshendelser. Dersom ikke fylt ut, går varsler til ISK og sekundært til IKT-hovedkontakt.",
 			)
 	history = HistoricalRecords()
 
