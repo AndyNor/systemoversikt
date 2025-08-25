@@ -6,6 +6,9 @@
 	{% url 'alle_virksomheter_sidemeny' as url_alle_virksomheter %}
 	<a href="{{url_alle_virksomheter}}" class="btn btn-sm btn-link {% if url_alle_virksomheter in request.path %}fremhev{% endif %}">Vis alle virksomheter</a>
 
+	{% url 'alle_virksomheter_kontaktinfo' as kontaktinfo_url %}
+	<a href="{{ kontaktinfo_url }}" class="btn btn-sm btn-link">Vis kontaktinfo ISK/PSK</a>
+
 	{% if user.is_authenticated %}
 		{% url 'sertifikatmyndighet' as url_sertifikatmyndighet%}
 		<a href="{{ url_sertifikatmyndighet }}" class="btn btn-sm btn-link {% if url_sertifikatmyndighet in request.path %}fremhev{% endif %}">Sertifikatfullmakter</a>
