@@ -16,6 +16,9 @@
 
 		<hr>
 
+		{% url 'alle_virksomheter_kontaktinfo' as kontaktinfo_url %}
+		<a href="{{ kontaktinfo_url }}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 Oversikt over ISK/PKO</a>
+
 		{% url 'min_virksomhet' as url_min_virksomhet %}
 		<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 Min virksomhet</a>
 

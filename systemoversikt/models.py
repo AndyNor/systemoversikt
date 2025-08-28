@@ -4698,7 +4698,7 @@ class System(models.Model):
 			related_name='systemer',
 			verbose_name="Tilknyttet programvare",
 			blank=True,
-			help_text=u"Programvare benyttet av- eller knyttet til systemet. Her fører du opp navn på programvaren systemet er bygget opp av.",
+			help_text=u"Programvare benyttet av- eller knyttet til systemet. Her kan du føre opp det kommersielle navnet på programvaren som systemet er bygget på. For å bli varslet av UKE CSIRT om programvaresårbarheter i nyhetsbildet, må du registrere programvare her.",
 			)
 	avhengigheter = models.TextField(
 			verbose_name="Beskrivelse av avhengigheter (fritekst)",

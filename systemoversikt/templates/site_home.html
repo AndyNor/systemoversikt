@@ -3,24 +3,30 @@
 {% load templatetags %}
 
 {% block overskrift %}
-	Kartoteket: Oslo kommunes systemoversikt
+	Oslo kommunes systemoversikt
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-	<p>For oversikt over behandlinger må du gå til <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a>.</p>
+	<h6>Velkommen til Kartoteket!</h6>
+	<p>Her finner du Oslo kommunes systemoversikt. I tillegg finner du en del rapporter basert på data fra driftsmiljøet (CMDB) og fra Microsoft 365. I systemoversikten registrerer vi driftsplattformer, systemer og programvare. Systemer er samlinger av servere, databaser og programvare inn under et forvaltningsteam, og kjører på én eller flere driftsplattformer. Infrastruktur og integrasjoner inngår også under systembegrepet. Programvare kan kjøres på servere eller klienter, og kobles til systemet det tilhører. Brukerdokumentasjonen finner du på <a class="btn btn-sm" style="padding: 5px; font-weight: normal; margin: 5px; background-color: #d1ecf1;" target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">SharePoint</a></p>
 
 	<hr>
 
-	<p>Kartoteket er tilgangsstyrt. Se <a href="{% url 'roller' %}">oversikt over roller</a> for beskrivelse av hvordan  tilgangsstyringen fungerer. Du må logge på med knappen øverst ved siden av søkefeltet for å bli gjenkjent og få tilgang til rollene dine.</p>
+	<p>Kartoteket er tilgangsstyrt. Du må logge på "logg inn"-knappen ved siden av søkefeltet for å aktivere rollene dine. Se <a href="{% url 'roller' %}" class="btn btn-sm" style="padding: 5px; font-weight: normal; margin: 5px; background-color: #d1ecf1;">rolleoversikt</a> for nærmere beskrivelser av hvordan tilgangsstyringen fungerer.
+
+	For oversikt over behandlinger må du gå til <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no" class="btn btn-sm" style="padding: 5px; font-weight: normal; margin: 5px; background-color: #d1ecf1;">Behandlingsoversikten</a>
+
+	Det pågår nå et arbeid med å modernisere både IKT-instruksen og systemoversikten i en ny løsning som per nå går under navnet "System og tjenesteoverikt". For mer informasjon om fremdriften kan du følge med på <a target="_blank" href="https://engage.cloud.microsoft/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiI2NTU0NzAwMTg1NyJ9/all" class="btn btn-sm" style="padding: 5px; font-weight: normal; margin: 5px; background-color: #d1ecf1;">VI/SAM/System og tjenesteoversikt</a>
+
+	Frem til den nye løsningen formelt er lansert, er det her i Kartoteket vi fører systemoversikt.</p>
 
 	<hr>
 
-	Brukerdokumentasjonen finner du på <a class="btn btn-sm" style="padding: 5px; font-weight: normal; margin-left: 5px; background-color: #F8F0DD;" target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">SharePoint</a>
+	Vi har to nivåer med visualisering av systemer. Det detaljerte nivået finner du ved å gå inn på virksomheter og velge en av etatene eller bydelen. Den andre er på kommunalt nivå og ligger på <a class="btn btn-sm" style="padding: 5px; font-weight: normal; margin-left: 5px; background-color: #d1ecf1;" href="{% url 'home_chart' %}">Denne siden</a>
 
 	<hr>
 
-	<p>I systemoversikten registrerer vi driftsplattformer, systemer og programvare. Systemer er samlinger av servere, databaser og programvare inn under et forvaltningsteam, og kjører på en eller flere driftsplattformer. Programvare kan kjøres på servere eller klienter, og kobles til systemet det tilhører.</p>
 	<div class="container-fluid">
 		<div class="row">
 			<div class="col-sm-6">
@@ -39,7 +45,6 @@
 			<div class="col-sm-6">
 
 				<h6>Antall programvarer i Kartoteket</h6>
-				<i>For å bli varslet av UKE CSIRT om sårbarheter, må du registrere programvare og knytte det til ditt system.</i>
 				<h1>{{ antall_programvarer }}</h1>
 				<p>De {{nyeste_programvarer.count}} nyeste:</p>
 				<ol style="column-count: 2;">
@@ -56,11 +61,23 @@
 
 
 	<hr>
-	<p>For å få oversikt over systemer kan du enten søke opp din virksomhet, eller du kan sjekke ut den samlede grafen over alle systemer her:</p>
-	<a class="btn btn-sm" style="padding: 5px; font-weight: normal; margin-left: 5px; background-color: #F8F0DD;" href="{% url 'home_chart' %}">Visualisering av alt systemansvar i kommunen</a>
+
+	<h6>Finn system eller programvare basert på kategori</h6>
+	<ul style="column-count:3;">
+		{% for kategori in kategorier %}
+			{% url 'systemkategori' pk=kategori.pk as url_systemkategori %}
+			<li><a href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a>
+			{% for hovedkategori in kategori.systemhovedkategori_systemkategorier.all %}
+				({{hovedkategori}})
+			{% endfor %}
+			</li>
+		{% endfor %}
+	</ul>
+
+
 	<hr>
 
-	<h6>Ny funksjonalitet i Kartoteket</h6>
+	<h6>Endringslogg for Kartoteket</h6>
 	{% for nyhet in nyheter %}
 		<li>
 			<span class="badge badge-light">{{ nyhet.tidspunkt|date:"Y-m-d" }}</span> {{ nyhet.beskrivelse }}
@@ -75,18 +92,5 @@
 	{% if nyheter|length > 0 %}
 		<br><a href="{% url 'alle_nyheter' %}">Se arkiv</a>
 	{% endif %}
-	<hr>
-
-	<h6>Finn system eller programvare basert på kategori</h6>
-	<ul style="column-count:3;">
-		{% for kategori in kategorier %}
-			{% url 'systemkategori' pk=kategori.pk as url_systemkategori %}
-			<li><a href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a>
-			{% for hovedkategori in kategori.systemhovedkategori_systemkategorier.all %}
-				({{hovedkategori}})
-			{% endfor %}
-			</li>
-		{% endfor %}
-	</ul>
 
 {% endblock hovedinnhold %}
