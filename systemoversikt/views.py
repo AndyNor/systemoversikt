@@ -5047,7 +5047,7 @@ def registrer_bruk(request, system):
 		return redirect('systemdetaljer', system_instans.pk)
 
 	virksomheter_template = list()
-	for virk in Virksomhet.objects.all():
+	for virk in Virksomhet.objects.filter(ordinar_virksomhet=True):
 		try:
 			bruk = SystemBruk.objects.get(system=system_instans, brukergruppe=virk, ibruk=True)
 			virksomheter_template.append({"virksomhet": virk, "bruk": bruk})

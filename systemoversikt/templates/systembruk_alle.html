@@ -11,7 +11,7 @@
 
 
 {% block hovedinnhold %}
-	<p>Her vises systemer {{ virksomhet }} har registrert at vi bruker. For felles- og sektorsystemer er det sentral systemeier og forvalter for systemet, men vi registrerer lokal forvalter for hver virksomhet som bruker systemet. For virksomhetssystemer er det kun én virksomhet som bruker systemet, og lokal forvalter settes da (snart) automatisk til systemets forvalter.</p>
+	<p>Her vises systemer {{ virksomhet }} har registrert at vi bruker.<br>For felles- og sektorsystemer er det sentral systemeier og forvalter, men vi registrerer lokal forvalter for hver virksomhet som bruker systemet.<br>For virksomhetssystemer er det kun én virksomhet som bruker systemet, og lokal forvalter settes da (snart) automatisk til systemets forvalter.</p>
 	<p>Når du registrerer systembruk, må du velge mellom systemer som allerede finnes. Finner du ikke systemet ditt, kan du opprette et nytt, men husk at alle nye systemer må tildeles en virksomhet.</p>
 
 	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer bruk av et eksisterende system</a>
