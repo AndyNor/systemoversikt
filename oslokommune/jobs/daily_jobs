@@ -64,6 +64,7 @@ python /var/kartoteket/source/systemoversikt/manage.py azure_authentication_meth
 # run batch e-mail
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_nokkelvarsel
 python /var/kartoteket/source/systemoversikt/manage.py epost_avtaleutlop
+python /var/kartoteket/source/systemoversikt/manage.py epost_generisk_varsling
 python /var/kartoteket/source/systemoversikt/manage.py send_mail
 
 # generere grafer av datamodellen
