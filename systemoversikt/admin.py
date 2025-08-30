@@ -1025,7 +1025,7 @@ class SystemHovedKategoriAdmin(SimpleHistoryAdmin):
 
 @admin.register(Ansvarlig)
 class AnsvarligAdmin(SimpleHistoryAdmin):
-	list_display = ('brukernavn', 'vil_motta_epost_varsler', 'brukers_brukernavn', 'cache_seksjon')
+	list_display = ('brukernavn', 'brukers_brukernavn', 'cache_seksjon')
 	search_fields = ('brukernavn__username', 'brukernavn__first_name', 'brukernavn__last_name', 'brukernavn__email')
 	autocomplete_fields = ('brukernavn',)
 	readonly_fields = ('cache_seksjon',)
@@ -1055,8 +1055,6 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 		('Obligatorisk', {
 			'fields': (
 				'brukernavn',
-				'vil_motta_epost_varsler',
-				'cache_seksjon',
 				)
 			}
 		),
@@ -1064,6 +1062,7 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 			'fields': (
 				'telefon',
 				'fdato',
+				'cache_seksjon',
 				)
 			}
 		),

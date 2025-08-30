@@ -38,17 +38,17 @@
 	<hr>
 
 	{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
-	<a href="{{ url_ad_exact }}">🔍 slå opp direkte i AD</a><br>
+	<a class="btn btn-link" href="{{ url_ad_exact }}">🔍 slå opp direkte i AD</a>
 
 	{% url 'entra_id_oppslag' as url_ad_exact %}
-	<a href="{{ url_ad_exact }}?inndata={{user.email}}">🔍 slå opp direkte i Entra ID</a>
+	<a class="btn btn-link" href="{{ url_ad_exact }}?inndata={{user.email}}">🔍 slå opp direkte i Entra ID</a>
 
 	<hr>
 
 	{% if user.ansvarlig_brukernavn %}
 
 	<p>Vedkommende er registrert som en ansvarlig i Kartoteket.<br>
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/ansvarlig/{{ user.ansvarlig_brukernavn.pk }}/change/">{% include 'site_edit_button.html' %} flytt ansvaret til en annen person</a>
+	<a class="btn btn-link" href="/admin/systemoversikt/ansvarlig/{{ user.ansvarlig_brukernavn.pk }}/change/">{% include 'site_edit_button.html' %} flytt alle roller og ansvar til en annen person</a>
 
 	<hr>
 

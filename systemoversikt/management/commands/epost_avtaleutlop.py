@@ -77,8 +77,8 @@ class Command(BaseCommand):
 
 Hei,
 
-I Kartoteket er du oppgitt som mottaker av varsel når denne avtalen er i ferd med å utløpe.
-Det gjelder avtalen {avtalenavn} som du finner på https://kartoteket.oslo.kommune.no{url}
+I Kartoteket er du oppgitt som mottaker av varsel når avtalen {avtalenavn} holder på å utløpe.
+Direktelink er https://kartoteket.oslo.kommune.no{url}
 Avtalen utløper om {dager_til_utlop} dager.
 
 Hilsen Kartoteket

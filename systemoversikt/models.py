@@ -625,11 +625,12 @@ class Ansvarlig(models.Model):
 			)
 	brukernavn = models.OneToOneField(
 			to=User,
+			verbose_name="Personkobling",
 			related_name="ansvarlig_brukernavn",
 			on_delete=models.PROTECT,
 			blank=False,
 			null=False,
-			help_text=u"Her kan du søke på fornavn og/eller etternavn.",
+			help_text=u"Dette er personen roller er knyttet til. Endrer du denne, vil alle roller og ansvar flyttes over til personen du velger.",
 			)
 	telefon = models.CharField(
 			verbose_name="Primærtelefon (mobil)",
@@ -650,11 +651,6 @@ class Ansvarlig(models.Model):
 			blank=True,
 			null=True,
 			help_text=u"Fritekst",
-			)
-	vil_motta_epost_varsler = models.BooleanField(
-			verbose_name="Ønsker du å motta e-postvarsler?",
-			default=False,
-			help_text=u"",
 			)
 	cache_seksjon = models.ForeignKey(
 			to='HRorg',
