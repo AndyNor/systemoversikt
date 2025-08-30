@@ -4031,26 +4031,41 @@ def databasestatistikk(request):
 
 	from django.db import connection
 	import os
+	import sqlite3
 
 	engine = connection.vendor  # returns 'sqlite', 'postgresql', 'mysql', etc.
 
 	if engine == 'sqlite':
 		messages.info(request, 'Det benyttes SQLite som databasemotor')
 		# Hvis det brukes SQLite
+
 		database_file = settings.DATABASES['default']['NAME']
 		file_size = os.stat(database_file).st_size
-		query = f'sqlite3 {database_file} "SELECT name, SUM(pgsize) AS size FROM dbstat GROUP BY name ORDER BY -size;" ".exit"'
-		data = os.popen(query).read()
-		data = data.splitlines()
-		sum_size = 0.0
-		stats = []
 
-		for line in data:
-			line = line.strip()
-			name = line.split("|")[0]
-			size = float(line.split("|")[1])
-			sum_size += size
-			stats.append({"name": name, "size": size})
+		conn = sqlite3.connect(database_file)
+		cursor = conn.cursor()
+
+		cursor.execute("""
+			SELECT name FROM sqlite_master
+			WHERE type='table' AND name NOT LIKE 'sqlite_%';
+		""")
+		tables = cursor.fetchall()
+
+		stats = []
+		sum_size = 0
+
+		for (table_name,) in tables:
+			try:
+				cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
+				row_count = cursor.fetchone()[0]
+				stats.append({"name": table_name, "row_count": row_count})
+				sum_size += row_count
+			except Exception as e:
+				# Skip tables that can't be queried (e.g., views or locked tables)
+				stats.append({"name": table_name, "row_count": "error"})
+				continue
+
+		conn.close()
 
 		return render(request, 'site_databasestatistikk.html', {
 			'request': request,
@@ -4060,30 +4075,43 @@ def databasestatistikk(request):
 			'sum_size': sum_size,
 		})
 
+
+
+
 	elif engine == 'postgresql':
 		# Hvis det brukes postgres
 		messages.info(request, 'Det benyttes PostgreSQL som databasemotor')
+
+		with connection.cursor() as cursor:
+			cursor.execute("""
+				SELECT SUM(pg_total_relation_size(quote_ident(schemaname) || '.' || quote_ident(relname))) AS total_size_bytes
+				FROM pg_stat_user_tables;
+			""")
+			result = cursor.fetchone()
+			file_size = result[0] if result and result[0] is not None else 0
+
+
 		with connection.cursor() as cursor:
 			cursor.execute("""
 				SELECT
-					relname AS table_name,
-					pg_total_relation_size(relid) AS size_bytes
+					relname AS name,
+					n_live_tup AS row_count
 				FROM pg_catalog.pg_statio_user_tables
-				ORDER BY pg_total_relation_size(relid) DESC;
+				ORDER BY n_live_tup DESC;
 			""")
 			rows = cursor.fetchall()
 
 		stats = []
 		sum_size = 0
-		for name, size in rows:
-			stats.append({"name": name, "size": size})
-			sum_size += size
+		for name, row_count in rows:
+			stats.append({"name": name, "row_count": row_count})
+			sum_size += row_count
 
 		return render(request, 'site_databasestatistikk.html', {
 			'request': request,
 			'required_permissions': formater_permissions(required_permissions),
 			'stats': stats,
-			'file_size': None,
+			'file_size': file_size,
 			'sum_size': sum_size,
 		})
 

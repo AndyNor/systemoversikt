@@ -7,20 +7,20 @@
 
 {% block hovedinnhold %}
 
-	<p>Størrelsen på databasefilen er {{file_size|filesizeformat|default:"ikke tilgjengelig"}} og summen av alle størrelser per tabell er {{sum_size|filesizeformat}}.</p>
+	<p>Størrelsen på databasefilen er {{file_size|filesizeformat|default:"ikke tilgjengelig"}} og antall rader totalt er {{sum_size}}.</p>
 
 	<table class="tablesorter excel">
 	<thead>
 	<tr>
 		<th>Tabell</th>
-		<th>Størrelse</th>
+		<th>Antall rader</th>
 	</tr>
 	</thead>
 	<tbody>
 	{% for stat in stats %}
 	<tr>
 		<td>{{ stat.name }}</td>
-		<td>{{ stat.size }} ({{ stat.size|filesizeformat }})</td>
+		<td>{{ stat.row_count }}</td>
 	</tr>
 	{% endfor %}
 	</tbody>
