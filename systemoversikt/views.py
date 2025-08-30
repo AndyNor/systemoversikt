@@ -4983,7 +4983,7 @@ def all_bruk_for_virksomhet(request, pk):
 		bruk.antall_behandlinger = ant
 
 
-	eier_eller_forvalter = set(System.objects.filter(Q(systemeier=virksomhet_pk) or Q(systemforvalter=virksomhet_pk)))  #{1, 2, 3, 4} #systemer virksomhet eier liste
+	eier_eller_forvalter = set(System.objects.filter(~Q(livslop_status=7)).filter(Q(systemeier=virksomhet_pk) or Q(systemforvalter=virksomhet_pk)))  #{1, 2, 3, 4} #systemer virksomhet eier liste
 	systembruk = set(SystemBruk.objects.filter(brukergruppe=virksomhet_pk)) # {3, 4} #systemer virksomhet bruker liste
 	systemer_ibruk = []
 	for b in systembruk:
