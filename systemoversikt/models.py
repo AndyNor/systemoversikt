@@ -784,7 +784,7 @@ class Virksomhet(models.Model):
 			)
 	overordnede_virksomheter = models.ManyToManyField(
 			to="Virksomhet",
-			related_name='virksomhet_overordnede_virksomheter',
+			related_name='underliggende_virksomheter',
 			verbose_name="Tilhører byrådsavdeling",
 			blank=True,
 			help_text=u'Her angir du byråden din virksomhet er underlagt.',

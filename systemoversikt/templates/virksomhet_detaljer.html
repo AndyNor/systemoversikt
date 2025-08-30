@@ -26,13 +26,27 @@
 {% block hovedinnhold %}
 
 	{% if virksomhet.orgnummer %} Organisasjonsnummer {{ virksomhet.orgnummer|intcomma }} {% endif %}<br>
+	<hr>
+
+	{% if virksomhet.overordnede_virksomheter.all|length > 0 %}
+	<h6>Underlangt
 	{% for vir in virksomhet.overordnede_virksomheter.all %}
 		{% url 'virksomhet' vir.pk as url_vir %}
 		<a href="{{ url_vir }}">{{ vir }}</a>
 	{% endfor %}
+	</h6>
+	{% endif %}
 
+	{% if virksomhet.underliggende_virksomheter.all|length > 0 %}
+		<h6>Har ansvar for</h6>
+		{% for underliggende in virksomhet.underliggende_virksomheter.all %}
+			{% url 'virksomhet' underliggende.pk as url_vir %}
+			<li><a href="{{ url_vir }}">{{ underliggende }}</a></li>
+		{% endfor %}
+		<hr>
+	{% endif %}
 
-	<br><br>Vi benytter <b>{{ant_systemer_bruk}}</b> systemer<br>
+	Vi benytter <b>{{ant_systemer_bruk}}</b> systemer<br>
 	Vi eier <b>{{ant_systemer_eier}}</b> systemer, forvalter <b>{{ant_systemer_forvalter}}</b> systemer og drifter <b>{{systemer_drifter}}</b> systemer<br>
 	Vi har <b>{{ antall_brukere }}</b> interne og <b>{{ antall_eksterne_brukere }}</b> ekstern brukere i brukerkatalogen<br>
 

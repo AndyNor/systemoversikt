@@ -17,9 +17,13 @@
 
 	For virksomhetssystemer er det per definisjon kun én virksomhet som bruker systemet, og lokal forvalter settes da  automatisk til systemets første oppgitte forvalter. Dette skjer i en nattlig jobb og kun dersom ingen lokal forvalter er oppgitt. Du kan endre på lokal forvalter manuelt.</p>
 
-	<p>Når du registrerer systembruk, må du velge mellom systemer som allerede finnes. Finner du ikke systemet ditt, kan du opprette et nytt.</p>
+	<p>Når du registrerer systembruk, må du velge mellom systemer som allerede finnes. Finner du ikke systemet ditt, kan du opprette et nytt. Husk at du må registrere bruk av systemet i etterkant dersom du oppretter et nytt.</p>
 
 	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ virksomhet.pk }}">Registrer bruk av et eksisterende system</a>
+
+	<a class="btn btn-sm btn-link" href="{% url 'systembruk_bydeler' %}">Alle systemer bydeler bruker</a>
+
+
 	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">Registrer et nytt system</a>
 
 	<hr>

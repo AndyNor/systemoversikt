@@ -5064,6 +5064,24 @@ def registrer_bruk(request, system):
 	})
 
 
+def systembruk_bydeler(request):
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	din_virksomhet = request.user.profile.virksomhet
+
+	bydelssystemer = System.objects.filter(~Q(livslop_status=7)).filter(
+			systembruk_system__brukergruppe__virksomhetsnavn__istartswith="bydel").filter(~Q(
+			systembruk_system__brukergruppe=din_virksomhet)).distinct()
+
+	return render(request, 'systembruk_bydeler.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'systemer': bydelssystemer,
+		'din_virksomhet': din_virksomhet,
+	})
+
 
 def registrer_bruk_programvare(request, programvare):
 	#Forenklet metode for å legge til bruk av programvare ved avkryssing

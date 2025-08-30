@@ -1,0 +1,38 @@
+{% extends "rapport_index.html" %}
+
+{% block overskrift %}
+	Alle systemer bydeler bruker utenom {{din_virksomhet.virksomhetsforkortelse}}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Viser {{ systemer.count }} systemer som minst én annen bydel bruker, men som din virksomhet <b>{{din_virksomhet.virksomhetsforkortelse}}</b> ikke bruker.</p>
+
+	<table class="tablesorter excel">
+		<thead>
+			<tr>
+				<th>Systemnavn</th>
+				<th>Systemforvalter</th>
+				<th>Brukergrupper</th>
+			</tr>
+		</thead>
+			<tbody>
+			{% for system in systemer %}
+			<tr>
+
+				<td><h6>{% include 'system_include_vis.html' with system=system %}</h6></td>
+				<td>{{ system.systemforvalter|default:"" }}</td>
+				<td>
+					{% for bruk in system.systembruk_system.all %}
+						{% if bruk.ibruk %}
+							{{ bruk.brukergruppe.virksomhetsforkortelse }},
+						{% endif %}
+					{% endfor %}
+					<a class="btn btn-sm btn-link" target="_blank" href="/admin/systemoversikt/systembruk/add/?brukergruppe={{ din_virksomhet.pk }}&system={{ system.pk }}">Registrer bruk for {{din_virksomhet.virksomhetsforkortelse}}</a>
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock hovedinnhold %}
