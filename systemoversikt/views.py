@@ -4083,7 +4083,7 @@ def databasestatistikk(request):
 			'request': request,
 			'required_permissions': formater_permissions(required_permissions),
 			'stats': stats,
-			'file_size': "ikke tilgjengelig",
+			'file_size': None,
 			'sum_size': sum_size,
 		})
 

@@ -7,7 +7,7 @@
 
 {% block hovedinnhold %}
 
-	<p>Størrelsen på databasefilen er {{file_size|filesizeformat}} og summen av alle størrelser per tabell er {{sum_size|filesizeformat}}.</p>
+	<p>Størrelsen på databasefilen er {{file_size|filesizeformat|default:"ikke tilgjengelig"}} og summen av alle størrelser per tabell er {{sum_size|filesizeformat}}.</p>
 
 	<table class="tablesorter excel">
 	<thead>
