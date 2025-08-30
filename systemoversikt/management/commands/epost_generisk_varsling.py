@@ -79,6 +79,8 @@ class Command(BaseCommand):
 					message = f"""
 Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
 
+<p>Denne e-posten går ut en gang per måned</p>
+
 {ansvarlige_systemforvaltere_html}
 
 {ansvarlige_lokale_systemforvaltere_html}
