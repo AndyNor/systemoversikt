@@ -4094,18 +4094,22 @@ def databasestatistikk(request):
 		with connection.cursor() as cursor:
 			cursor.execute("""
 				SELECT
-					relname AS name,
-					n_live_tup AS row_count
-				FROM pg_catalog.pg_statio_user_tables
-				ORDER BY n_live_tup DESC;
+					c.relname AS table_name,
+					c.reltuples AS estimated_row_count
+				FROM pg_class c
+				JOIN pg_namespace n ON n.oid = c.relnamespace
+				WHERE c.relkind = 'r'
+				ORDER BY table_name;
 			""")
 			rows = cursor.fetchall()
 
 		stats = []
 		sum_size = 0
 		for name, row_count in rows:
-			stats.append({"name": name, "row_count": row_count})
-			sum_size += row_count
+			stats.append({"name": name, "row_count": int(row_count)})
+			sum_size += int(row_count)
+
+
 
 		return render(request, 'site_databasestatistikk.html', {
 			'request': request,
