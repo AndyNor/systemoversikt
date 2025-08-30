@@ -11,7 +11,7 @@ from django.core.mail import EmailMessage
 
 class Command(BaseCommand):
 
-	UTSENDINGSDAG = 30  # dag av måned
+	UTSENDINGSDAG = 1  # dag av måned
 
 	def handle(self, **options):
 
@@ -61,8 +61,7 @@ class Command(BaseCommand):
 
 					subject = "Kartoteket: Påminnelse om ansatte med ansvar som har sluttet"
 
-					#recipients = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.ikt_kontakt.all()]
-					recipients = ['andre.nordbo@uke.oslo.kommune.no']
+					recipients = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.ikt_kontakt.all()]
 
 					ansvarlige_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(~Q(system_systemforvalter_kontaktpersoner=None))
 					ansvarlige_systemforvaltere_html = "".join([f"\n<li><a href=\"https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/\">{ansvarlig.brukernavn}</a></li>" for ansvarlig in ansvarlige_systemforvaltere])
