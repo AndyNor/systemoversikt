@@ -4052,6 +4052,13 @@ def databasestatistikk(request):
 			sum_size += size
 			stats.append({"name": name, "size": size})
 
+		return render(request, 'site_databasestatistikk.html', {
+			'request': request,
+			'required_permissions': formater_permissions(required_permissions),
+			'stats': stats,
+			'file_size': file_size,  # total DB size
+			'sum_size': sum_size,
+		})
 
 	elif engine == 'postgresql':
 		# Hvis det brukes postgres
@@ -4072,14 +4079,13 @@ def databasestatistikk(request):
 			stats.append({"name": name, "size": size})
 			sum_size += size
 
-
-	return render(request, 'site_databasestatistikk.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'stats': stats,
-		'file_size': sum_size,  # total DB size
-		'sum_size': sum_size,
-	})
+		return render(request, 'site_databasestatistikk.html', {
+			'request': request,
+			'required_permissions': formater_permissions(required_permissions),
+			'stats': stats,
+			'file_size': "ikke tilgjengelig",
+			'sum_size': sum_size,
+		})
 
 
 
