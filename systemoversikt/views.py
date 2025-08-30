@@ -6592,7 +6592,7 @@ def systemkategori(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	kategori = SystemKategori.objects.get(pk=pk)
-	systemer = System.objects.filter(systemkategorier=pk).order_by(Lower('systemnavn'))
+	systemer = System.objects.filter(~Q(livslop_status=7)).filter(systemkategorier=pk).order_by(Lower('systemnavn'))
 	programvarer = Programvare.objects.filter(kategorier=pk).order_by(Lower('programvarenavn'))
 
 	return render(request, 'kategori_detaljer.html', {
