@@ -65,16 +65,16 @@ class Command(BaseCommand):
 					recipients = ['andre.nordbo@uke.oslo.kommune.no']
 
 					ansvarlige_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(~Q(system_systemforvalter_kontaktpersoner=None))
-					ansvarlige_systemforvaltere_html = "".join([f"\n<li>{ansvarlig.brukernavn}</li>" for ansvarlig in ansvarlige_systemforvaltere])
-					ansvarlige_systemforvaltere_html = f"\nDeaktive personer angitt som systemforvalter:\n<ol>{ansvarlige_systemforvaltere_html}\n</ol>" if len(ansvarlige_systemforvaltere) > 0 else "Dere har ingen deaktiverte systemforvaltere. Godt jobbet!"
+					ansvarlige_systemforvaltere_html = "".join([f"\n<li><a href=\"https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/\">{ansvarlig.brukernavn}</a></li>" for ansvarlig in ansvarlige_systemforvaltere])
+					ansvarlige_systemforvaltere_html = f"<p>Deaktive personer angitt som systemforvalter:\n<ol>{ansvarlige_systemforvaltere_html}\n</ol></p>" if len(ansvarlige_systemforvaltere) > 0 else "<p>Dere har ingen deaktiverte systemforvaltere. Godt jobbet!</p>"
 
 					ansvarlige_lokale_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(~Q(systembruk_systemforvalter_kontaktpersoner=None))
-					ansvarlige_lokale_systemforvaltere_html = "".join([f"\n<li>{ansvarlig.brukernavn}</li>" for ansvarlig in ansvarlige_lokale_systemforvaltere])
-					ansvarlige_lokale_systemforvaltere_html = f"\nDeaktive personer angitt som lokal systemforvalter:\n<ol>{ansvarlige_lokale_systemforvaltere_html}\n</ol>" if len(ansvarlige_lokale_systemforvaltere) > 0 else "Dere har ingen deaktiverte lokale systemforvaltere. Godt jobbet!"
+					ansvarlige_lokale_systemforvaltere_html = "".join([f"\n<li><a href=\"https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/\">{ansvarlig.brukernavn}</a></li>" for ansvarlig in ansvarlige_lokale_systemforvaltere])
+					ansvarlige_lokale_systemforvaltere_html = f"\n<p>Deaktive personer angitt som lokal systemforvalter:\n<ol>{ansvarlige_lokale_systemforvaltere_html}\n</ol></p>" if len(ansvarlige_lokale_systemforvaltere) > 0 else "<p>Dere har ingen deaktiverte lokale systemforvaltere. Godt jobbet!</p>"
 
 					antall_inaktive = len(ansvarlige_systemforvaltere) + len(ansvarlige_lokale_systemforvaltere)
 
-					forklaring = "Det kan hende at et navn listet opp her skylles en midlertidig deaktivering, men dersom det er en permanent endring ber vi deg sørge for at ansvaret flyttes over på personer som jobber fast i virksomheten. Når dere klikker på de deaktive navnene, vil dere se en oppsummeringsside med roller og ansvar vedkommende har. For å flytte alt ansvar til en ny person, kan du bruke dere linken \"flytt ansvaret til en annen person\". Dersom ansvaret  skal fordeles på nye personer, må du inn på hver enkelt rolle, system eller systembruk for å angi ansvar direkte der." if antall_inaktive > 0 else ""
+					forklaring = "<p>Det kan hende at et navn listet opp her skylles en midlertidig deaktivering, men dersom det er en permanent endring ber vi deg sørge for at ansvaret flyttes over på personer som jobber fast i virksomheten. Når dere klikker på de deaktive navnene, vil dere se en oppsummeringsside med roller og ansvar vedkommende har. For å flytte alt ansvar til en ny person, kan du bruke dere linken \"flytt ansvaret til en annen person\". Dersom ansvaret  skal fordeles på nye personer, må du inn på hver enkelt rolle, system eller systembruk for å angi ansvar direkte der.</p>" if antall_inaktive > 0 else ""
 
 					message = f"""
 Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
@@ -83,13 +83,13 @@ Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
 
 {ansvarlige_lokale_systemforvaltere_html}
 
-For en oversikt over alle ansvarlige for din virksomhet kan du gå til https://kartoteket.oslo.kommune.no/virksomhet/ansvarlige/{virksomhet.pk}/
+<p>For en oversikt over alle ansvarlige for din virksomhet kan du gå til <a href="https://kartoteket.oslo.kommune.no/virksomhet/ansvarlige/{virksomhet.pk}/">https://kartoteket.oslo.kommune.no/virksomhet/ansvarlige/{virksomhet.pk}/</a></p>
 
-Hver natt kjøres det en bakgrunnsjobb i Kartoteket for å slette ansvarlige som ikke lenger har roller eller ansvar.
+<p>Hver natt kjøres det en bakgrunnsjobb i Kartoteket for å slette ansvarlige som ikke lenger har roller eller ansvar.</p>
 
-Husk også å sjekke om virksomhetens kontaktpersoner er oppdatert på https://kartoteket.oslo.kommune.no/virksomhet/min/ via knappen "Rediger virksomhetsdetaljer og kontaktpersoner".
+<p>Husk også å sjekke om virksomhetens kontaktpersoner er oppdatert på https://kartoteket.oslo.kommune.no/virksomhet/min/ via knappen "Rediger virksomhetsdetaljer og kontaktpersoner".</p>
 
-Vennlig hilsen
+<br><br>Vennlig hilsen<br>
 Kartoteket
 """
 
