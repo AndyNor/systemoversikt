@@ -4618,7 +4618,7 @@ class System(models.Model):
 			)
 	systemforvalter_kontaktpersoner_referanse = models.ManyToManyField(
 			to=Ansvarlig,
-			related_name='system_systemforvalter_kontaktpersoner',
+			related_name='system_forvalter_for',
 			verbose_name="Systemforvalter (personer)",
 			blank=True,
 			help_text=u"Person(er) med operativt forvalteransvar. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
@@ -6033,7 +6033,7 @@ class SystemBruk(models.Model):
 			)
 	systemforvalter_kontaktpersoner_referanse = models.ManyToManyField(
 			to=Ansvarlig,
-			related_name='systembruk_systemforvalter_kontaktpersoner',
+			related_name='systembruk_forvalter_for',
 			verbose_name="Lokal forvalter (person)",
 			blank=True,
 			help_text=u"Dersom fellesløsning på applikasjonshotell, hvilke roller/personer fyller rollen som lokal forvalter?",
