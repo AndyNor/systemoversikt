@@ -11,7 +11,7 @@ from django.core.mail import EmailMessage
 
 class Command(BaseCommand):
 
-	UTSENDINGSDAG = 31  # dag av måned
+	UTSENDINGSDAG = 3  # dag av måned
 	UTSENDINGER_HOVEDKONTAKT = 0
 	UTSENDINGER_FORVALTERE = 0
 
@@ -95,7 +95,7 @@ Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
 					email.content_subtype = "html"
 					if recipients:
 						print(f"E-post er lagt til kø for utsending til {virksomhet.virksomhetsforkortelse}")
-						#email.send()
+						email.send()
 						Command.UTSENDINGER_HOVEDKONTAKT += 1
 					else:
 						print(f"Kan ikke sende e-post til {virksomhet.virksomhetsforkortelse} fordi det mangler e-post på hovedkontakt")
@@ -120,13 +120,13 @@ Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
 
 					subject = "Kartoteket: Påminnelse om dine roller i systemoversikten"
 					recipients = [ansvarlig.brukernavn.email]
-					recipients = ["andre.nordbo@uke.oslo.kommune.no"]
 					message = f"""
 Hei {ansvarlig.brukernavn.profile.displayName},
 <p>Denne e-posten går ut en gang per måned for å minne deg om dine roller i systemoversikten.</p>
 {system_forvalter_for_html}
 {systembruk_forvalter_for_html}
-<p>Hvis du ser noe du ikke kjenner deg igjen i her, ber vi deg ta kontakt med din IKT-organisasjon for å avklare ansvaret. Du kan høre med din nærmeste leder eller eventuelt med din nærmeste IKT-hovedkontakt.</p>
+<p>Hvis du ser noe du ikke kjenner deg igjen i, kan du rette dette opp direkte i Kartoteket. Hvis du ikke vet hvordan, vet hvem som har overtatt for deg, eller det eksempelvis er snakk om et system som ikke lenger er i bruk.. kan du kontakte din IKT-organisasjon for å avklare hva dere gjør videre. Dette vil typisk være IKT-hovedkontakt eller tilsvarende.</p>
+<p>Dette er første utsending av denne typen, og den vil gå ut til 500+ mottakere. Stress derfor ikke med å følge opp eventuelle feil du oppdager mot IKT-organisasjonen din med en gang. Gjør alle det, kan det bli i overkant mye på en gang.</p>
 <p>Det kan hende du har flere roller i systemoversikten enn de som er listet opp her. For full oversikt kan du gå til <a href="https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/">https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/</a>.</p>
 <br><br>Vennlig hilsen<br>Kartoteket
 """

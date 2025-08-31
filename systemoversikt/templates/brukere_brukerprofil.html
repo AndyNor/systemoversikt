@@ -48,7 +48,7 @@
 
 	<hr>
 
-		{% if user.ansvarlig_brukernavn.virksomhet_ikt_kontakt %}
+		{% if user.ansvarlig_brukernavn.virksomhet_ikt_kontakt.all %}
 			<b>IKT-hovedkontakt:</b>
 			{% for vir in user.ansvarlig_brukernavn.virksomhet_ikt_kontakt.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
@@ -56,7 +56,7 @@
 			{% endfor %}<br>
 		{% endif %}
 
-		{% if user.ansvarlig_brukernavn.virksomhet_personvernkoordinator %}
+		{% if user.ansvarlig_brukernavn.virksomhet_personvernkoordinator.all %}
 			<b>Personvernkoordinator (PKO):</b>
 			{% for vir in user.ansvarlig_brukernavn.virksomhet_personvernkoordinator.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
@@ -64,7 +64,7 @@
 			{% endfor %}<br>
 		{% endif %}
 
-		{% if user.ansvarlig_brukernavn.virksomhet_informasjonssikkerhetskoordinator %}
+		{% if user.ansvarlig_brukernavn.virksomhet_informasjonssikkerhetskoordinator.all %}
 			<b>Informasjonssikkerhetskoordinator (ISK):</b>
 			{% for vir in user.ansvarlig_brukernavn.virksomhet_informasjonssikkerhetskoordinator.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
