@@ -188,8 +188,10 @@ class DatabaseAdmin(admin.ModelAdmin):
 @admin.register(HRorg)
 class HRorgAdmin(admin.ModelAdmin):
 	list_display = ('ou', 'level', 'leder', 'virksomhet_mor', 'direkte_mor')
+	list_display = ('ou', 'level', 'virksomhet_mor', 'direkte_mor')
 	search_fields = ('ou', 'ouid')
 	autocomplete_fields = ('leder', 'virksomhet_mor', 'direkte_mor')
+	autocomplete_fields = ('virksomhet_mor', 'direkte_mor')
 	list_filter = ('active', 'opprettet', 'virksomhet_mor')
 
 
@@ -1055,13 +1057,6 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 		('Obligatorisk', {
 			'fields': (
 				'brukernavn',
-				)
-			}
-		),
-		('Fylles ut dersom rollen har fullmakt knyttet til sertifikatadministrasjon', {
-			'fields': (
-				'telefon',
-				'fdato',
 				'cache_seksjon',
 				)
 			}
@@ -1070,6 +1065,8 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 			'classes': ('collapse',),
 			'fields': (
 				'kommentar',
+				'telefon',
+				'fdato',
 				)
 			}
 		),
