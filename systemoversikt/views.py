@@ -3313,7 +3313,6 @@ def bruker_detaljer(request, pk):
 		ansvarlig_detaljer["avtale_ansvarlig_for"] = Avtale.objects.filter(avtaleansvarlig=ansvarlig.pk)
 		ansvarlig_detaljer["ikt_kontakt_for"] = Virksomhet.objects.filter(ikt_kontakt=ansvarlig.pk)
 		ansvarlig_detaljer["sertifikatbestiller_for"] = Virksomhet.objects.filter(autoriserte_bestillere_sertifikater__person=ansvarlig.pk)
-		ansvarlig_detaljer["virksomhetsleder_for"] = Virksomhet.objects.filter(leder=ansvarlig.pk)
 		ansvarlig_detaljer["autorisert_bestiller_for"] = Virksomhet.objects.filter(autoriserte_bestillere_tjenester=ansvarlig.pk)
 		ansvarlig_detaljer["personvernkoordinator_for"] = Virksomhet.objects.filter(personvernkoordinator=ansvarlig.pk)
 		ansvarlig_detaljer["informasjonssikkerhetskoordinator_for"] = Virksomhet.objects.filter(informasjonssikkerhetskoordinator=ansvarlig.pk)
@@ -4354,7 +4353,7 @@ def tjenestekatalogen_forvalter_api(request):
 			for ansvarlig in Ansvarlig.objects.all():
 
 				forvalter_for = []
-				for system in ansvarlig.system_systemforvalter_kontaktpersoner.all():
+				for system in ansvarlig.system_forvalter_for.all():
 					if system.ibruk:
 						forvalter_for.append({
 								"system_id": system.pk,
@@ -4465,7 +4464,6 @@ def ansvarlig(request, pk):
 	avtale_ansvarlig_for = Avtale.objects.filter(avtaleansvarlig=pk)
 	ikt_kontakt_for = Virksomhet.objects.filter(ikt_kontakt=pk)
 	sertifikatbestiller_for = Virksomhet.objects.filter(autoriserte_bestillere_sertifikater__person=pk)
-	virksomhetsleder_for = Virksomhet.objects.filter(leder=pk)
 	autorisert_bestiller_for = Virksomhet.objects.filter(autoriserte_bestillere_tjenester=pk)
 	personvernkoordinator_for = Virksomhet.objects.filter(personvernkoordinator=pk)
 	informasjonssikkerhetskoordinator_for = Virksomhet.objects.filter(informasjonssikkerhetskoordinator=pk)
@@ -8760,7 +8758,7 @@ def get_api_tilganger(request): #API
 		if hasattr(system, "bs_system_referanse"):
 			business_services.add(system.bs_system_referanse.navn)
 
-	for system in user.ansvarlig_brukernavn.system_systemforvalter_kontaktpersoner.all():
+	for system in user.ansvarlig_brukernavn.system_forvalter_for.all():
 		if hasattr(system, "bs_system_referanse"):
 			business_services.add(system.bs_system_referanse.navn)
 
