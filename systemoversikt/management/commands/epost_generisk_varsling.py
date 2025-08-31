@@ -105,7 +105,7 @@ Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
 				# melding til alle systemforvaltere og lokale systemforvaltere om hva er er oppgitt som ansvarlig for samt oppfordre til å oppdatere
 				for ansvarlig in Ansvarlig.objects.filter(brukernavn__profile__accountdisable=False): # alle aktive ansvarlige
 					system_forvalter_for = ansvarlig.system_forvalter_for.filter(~Q(livslop_status=7))
-					systembruk_forvalter_for = ansvarlig.systembruk_forvalter_for.filter(~Q(livslop_status=7))
+					systembruk_forvalter_for = ansvarlig.systembruk_forvalter_for.filter(~Q(system__livslop_status=7))
 
 					sum_ansvar = len(system_forvalter_for) + len(systembruk_forvalter_for)
 					if sum_ansvar < 1:
