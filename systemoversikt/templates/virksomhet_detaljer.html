@@ -82,7 +82,7 @@
 		{% if virksomhet.leder_hr %}
 			<a href="{% url 'bruker_detaljer' pk=virksomhet.leder_hr.pk %}">{{virksomhet.leder_hr.profile.displayName}}</a>
 		{% else %}
-			{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.leder.all %}
+			<i>Ingen data fra HR tilgjengelig</i>
 		{% endif %}
 		</td>
 	</tr>
