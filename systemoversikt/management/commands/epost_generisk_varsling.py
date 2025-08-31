@@ -12,6 +12,8 @@ from django.core.mail import EmailMessage
 class Command(BaseCommand):
 
 	UTSENDINGSDAG = 31  # dag av måned
+	UTSENDINGER_HOVEDKONTAKT = 0
+	UTSENDINGER_FORVALTERE = 0
 
 	def handle(self, **options):
 
@@ -93,7 +95,8 @@ Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
 					email.content_subtype = "html"
 					if recipients:
 						print(f"E-post er lagt til kø for utsending til {virksomhet.virksomhetsforkortelse}")
-						email.send()
+						#email.send()
+						Command.UTSENDINGER_HOVEDKONTAKT += 1
 					else:
 						print(f"Kan ikke sende e-post til {virksomhet.virksomhetsforkortelse} fordi det mangler e-post på hovedkontakt")
 
@@ -117,6 +120,7 @@ Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
 
 					subject = "Kartoteket: Påminnelse om dine roller i systemoversikten"
 					recipients = [ansvarlig.brukernavn.email]
+					recipients = ["andre.nordbo@uke.oslo.kommune.no"]
 					message = f"""
 Hei {ansvarlig.brukernavn.profile.displayName},
 <p>Denne e-posten går ut en gang per måned for å minne deg om dine roller i systemoversikten.</p>
@@ -137,12 +141,13 @@ Hei {ansvarlig.brukernavn.profile.displayName},
 					if recipients:
 						print(f"E-post er lagt til kø for utsending til {ansvarlig.brukernavn}")
 						email.send()
+						Command.UTSENDINGER_FORVALTERE += 1
 					else:
 						print(f"Kan ikke sende e-post til {ansvarlig.brukernavn} fordi det mangler e-postadresse")
 
 
 
-				logg_message = f"Klartgjort e-post om ansvarlige som har sluttet og melding til alle systemforvaltere."
+				logg_message = f"Klartgjort e-post om ansvarlige som har sluttet og melding til alle systemforvaltere. Klargjort {Command.UTSENDINGER_HOVEDKONTAKT} e-poster til hovedkontakter og {Command.UTSENDINGER_FORVALTERE} meldinger til forvaltere."
 
 			else:
 				logg_message = f"Det er ikke dag {Command.UTSENDINGSDAG} av måneden og dropper derfor utsending"
