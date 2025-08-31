@@ -11,7 +11,7 @@ from django.core.mail import EmailMessage
 
 class Command(BaseCommand):
 
-	UTSENDINGSDAG = 3  # dag av måned
+	UTSENDINGSDAG = 10  # dag av måned
 	UTSENDINGER_HOVEDKONTAKT = 0
 	UTSENDINGER_FORVALTERE = 0
 
