@@ -6,36 +6,32 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Detaljer for brukerident
+	{{user.profile.displayName}} {% if user.profile.accountdisable %}(deaktivert){% endif%}
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
-
-	<h5>{{user.username}} {% if user.profile.accountdisable %}(deaktiv){% endif%} / {{user.first_name}} {{user.last_name}}</h5>
-
-	<p><b>E-post:</b> {{ user.email }}</p>
-
-	<p>
+	<b>Virksomhet:</b>
 	{% if user.profile.usertype %} {{ user.profile.usertype }} {% endif %}
-		i {{user.profile.virksomhet|default:"Ukjent"}}
+		{{user.profile.virksomhet|default:"Ukjent"}}
 	{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
 	{% if url_enhet %}
 		under <a href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a>
-	{% endif %}
-	</p>
+	{% endif %}<br>
+
+	<b>Beskrivelse</b>:{{ user.profile.description|default:"Ingen beskrivelse" }}<br>
 
 	{% if url_leder%}
 	{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
-		<p>Nærmeste leder er <a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a></p>
+		<b>Nærmeste leder:</b> <a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a><br>
 	{% endif %}
 
+	<b>E-post:</b> {{ user.email }}<br>
 
-	<p><b>Beskrivelse</b>:<br>{{ user.profile.description|default:"Ingen beskrivelse" }}</p>
-
-
-	<p>Bruker ble opprettet {{ user.profile.whenCreated|date:"Y-m-d" }} ({{ user.profile.whenCreated|timesince }})</p>
+	<b>On-prem brukernavn:</b> {{ user.username }}. Opprettet {{ user.profile.whenCreated|date:"Y-m-d" }}. {{ user.profile.whenCreated|timesince }} siden<br>
 
 	<hr>
+
+	<h6>Direkteoppslag mot brkerkataloger</h6>
 
 	{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
 	<a class="btn btn-link" href="{{ url_ad_exact }}">🔍 slå opp direkte i AD</a>
@@ -47,79 +43,68 @@
 
 	{% if user.ansvarlig_brukernavn %}
 
-	<p>Vedkommende er registrert som en ansvarlig i Kartoteket.<br>
+	<h6>{{user.profile.displayName}} er registrert med følgende roller og ansvar</h6>
 	<a class="btn btn-link" href="/admin/systemoversikt/ansvarlig/{{ user.ansvarlig_brukernavn.pk }}/change/">{% include 'site_edit_button.html' %} flytt alle roller og ansvar til en annen person</a>
 
 	<hr>
 
-		{% if ansvarlig_detaljer.virksomhetsleder_for %}
-			{% for vir in ansvarlig_detaljer.virksomhetsleder_for %}
+		{% if user.ansvarlig_brukernavn.virksomhet_ikt_kontakt %}
+			<b>IKT-hovedkontakt:</b>
+			{% for vir in user.ansvarlig_brukernavn.virksomhet_ikt_kontakt.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<b>Direktør for: </b><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a>
-			{% endfor %}
-			<hr>
+				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+			{% endfor %}<br>
 		{% endif %}
 
-		{% if ansvarlig_detaljer.ikt_kontakt_for %}
-			{% for vir in ansvarlig_detaljer.ikt_kontakt_for %}
+		{% if user.ansvarlig_brukernavn.virksomhet_personvernkoordinator %}
+			<b>Personvernkoordinator (PKO):</b>
+			{% for vir in user.ansvarlig_brukernavn.virksomhet_personvernkoordinator.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<b>IKT-virksomhetskontakt for: </b><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a>
-			{% endfor %}
-			<hr>
+				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+			{% endfor %}<br>
 		{% endif %}
 
-		{% if ansvarlig_detaljer.personvernkoordinator_for %}
-			{% for vir in ansvarlig_detaljer.personvernkoordinator_for %}
+		{% if user.ansvarlig_brukernavn.virksomhet_informasjonssikkerhetskoordinator %}
+			<b>Informasjonssikkerhetskoordinator (ISK):</b>
+			{% for vir in user.ansvarlig_brukernavn.virksomhet_informasjonssikkerhetskoordinator.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<b>Personvernkoordinator for: </b><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a>
-			{% endfor %}
-			<hr>
-		{% endif %}
-
-		{% if ansvarlig_detaljer.informasjonssikkerhetskoordinator_for %}
-			{% for vir in ansvarlig_detaljer.informasjonssikkerhetskoordinator_for %}
-				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<b>Informasjonssikkerhetskoordinator for: </b><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a>
-			{% endfor %}
-			<hr>
+				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+			{% endfor %}<br>
 		{% endif %}
 
 		{% if ansvarlig_detaljer.kam_for %}
-			<b>Kundeansvarlig fra UKE for:</b>
-			<ul>
+			<b>Kundekontakt i UKE for:</b>
 			{% for vir in ansvarlig_detaljer.kam_for %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
 				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
 			{% endfor %}
-			</ul>
-			<hr>
 		{% endif %}
 
 		{% if ansvarlig_detaljer.autorisert_bestiller_for %}
+			<b>Infotorg autorisert bestiller:</b>
 			{% for vir in ansvarlig_detaljer.autorisert_bestiller_for %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<b>Autorisert bestiller for: </b><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a>
+				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
 			{% endfor %}
-			<hr>
 		{% endif %}
 
 		{% if ansvarlig_detaljer.autorisert_bestiller_uke_for %}
+			<b>Autorisert bestiller av tjenester fra intern tjenesteleverandør for:</b>
 			{% for vir in ansvarlig_detaljer.autorisert_bestiller_uke_for %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<b>Autorisert bestiller for (UKE): </b><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a>
+				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
 			{% endfor %}
 			<hr>
 		{% endif %}
 
 		{% if ansvarlig_detaljer.sertifikatbestiller_for %}
+			<b>Autorisert sertifikatbestiller:</b>
 			{% for vir in ansvarlig_detaljer.sertifikatbestiller_for %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<b>Autorisert sertifikatbestiller for: </b><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
 			{% endfor %}
 			<hr>
 		{% endif %}
-
-
 
 		<table class="tablesorter">
 			<thead>
