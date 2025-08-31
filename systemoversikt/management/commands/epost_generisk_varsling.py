@@ -93,7 +93,7 @@ Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
 					email.content_subtype = "html"
 					if recipients:
 						print(f"E-post er lagt til kø for utsending til {virksomhet.virksomhetsforkortelse}")
-						#email.send()
+						email.send()
 					else:
 						print(f"Kan ikke sende e-post til {virksomhet.virksomhetsforkortelse} fordi det mangler e-post på hovedkontakt")
 
@@ -126,7 +126,7 @@ Hei {ansvarlig.brukernavn.profile.displayName},
 <p>Det kan hende du har flere roller i systemoversikten enn de som er listet opp her. For full oversikt kan du gå til <a href="https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/">https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/</a>.</p>
 <br><br>Vennlig hilsen<br>Kartoteket
 """
-					print(message)
+					#print(message)
 					email = EmailMessage(
 							subject=subject,
 							body=message,
@@ -136,7 +136,7 @@ Hei {ansvarlig.brukernavn.profile.displayName},
 					email.content_subtype = "html"
 					if recipients:
 						print(f"E-post er lagt til kø for utsending til {ansvarlig.brukernavn}")
-						#email.send()
+						email.send()
 					else:
 						print(f"Kan ikke sende e-post til {ansvarlig.brukernavn} fordi det mangler e-postadresse")
 
