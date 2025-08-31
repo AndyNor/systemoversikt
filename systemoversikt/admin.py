@@ -587,7 +587,6 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 	autocomplete_fields = (
-		'leder',
 		'informasjonssikkerhetskoordinator',
 		'varslingsmottak_sikkerhet_ref',
 		'personvernkoordinator',
@@ -626,7 +625,6 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 					'ks_fiks_admin_ref',
 					'autoriserte_bestillere_tjenester',
 					'autoriserte_bestillere_tjenester_uke',
-					'leder',
 				),
 			}),
 			('GDPR / sikkerhet', {
@@ -1065,8 +1063,6 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 			'classes': ('collapse',),
 			'fields': (
 				'kommentar',
-				'telefon',
-				'fdato',
 				)
 			}
 		),

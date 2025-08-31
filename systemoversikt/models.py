@@ -632,20 +632,6 @@ class Ansvarlig(models.Model):
 			null=False,
 			help_text=u"Dette er personen roller er knyttet til. Endrer du denne, vil alle roller og ansvar flyttes over til personen du velger.",
 			)
-	telefon = models.CharField(
-			verbose_name="Primærtelefon (mobil)",
-			max_length=30,
-			blank=True,
-			null=True,
-			help_text=u"Nummer personen/rollen kan nås på i jobbsammenheng. Må kunne motta SMS.",
-			)
-	fdato = models.CharField(
-			verbose_name="Fødselsdato",
-			max_length=6,
-			blank=True,
-			null=True,
-			help_text=u"Dag, måned, år, f.eks. 100575 (10.mai 1975). Dette feltet fyller du bare ut dersom personen har en rolle innen sertifikatgodkjenning.",
-			)
 	kommentar = models.TextField(
 			verbose_name="Kommentar (fases ut)",
 			blank=True,
@@ -847,11 +833,6 @@ class Virksomhet(models.Model):
 			blank=True,
 			null=True,
 			help_text=u"9 siffer uten mellomrom.",
-			)
-	leder = models.ManyToManyField(Ansvarlig, related_name='virksomhet_leder',
-			verbose_name="Vår virksomhetsleder",
-			blank=True,
-			help_text=u"Dette feltet benyttes kun dersom HR ikke har informasjon om leder. Normalt sett trenger du ikke fylle dette ut.",
 			)
 	autoriserte_bestillere_sertifikater = models.ManyToManyField(
 			to=AutorisertBestiller,
