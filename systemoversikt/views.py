@@ -45,7 +45,21 @@ def auth_er_systemforvalter(user):
 	if auth_er_ansvarlig(user):
 		# nå vet vi at vedkommende er registrert som ansvarlig
 		ansvarlig = user.ansvarlig_brukernavn
-		return True if System.objects.filter(Q(systemeier_kontaktpersoner_referanse=ansvarlig) | Q(systemforvalter_kontaktpersoner_referanse=ansvarlig)) else False
+
+		if SystemBruk.objects.filter(
+			Q(systemeier_kontaktpersoner_referanse=ansvarlig) |
+			Q(systemforvalter_kontaktpersoner_referanse=ansvarlig)
+		).exists():
+			return True
+
+		if System.objects.filter(
+			Q(systemeier_kontaktpersoner_referanse=ansvarlig) |
+			Q(systemforvalter_kontaktpersoner_referanse=ansvarlig)
+		).exists():
+			return True
+
+		return False
+
 	else:
 		return False
 
