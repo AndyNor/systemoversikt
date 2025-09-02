@@ -78,12 +78,12 @@ class Command(BaseCommand):
 
 					message = f"""
 Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
-<p>Denne e-posten går ut en gang per måned</p>
+<p>Denne e-posten går ut en gang per måned.</p>
+<p>Først ønsker vi å minne om å sjekke at virksomhetens kontaktpersoner er oppdatert på https://kartoteket.oslo.kommune.no/virksomhet/min/ via knappen "Rediger virksomhetsdetaljer og kontaktpersoner".</p>
 {ansvarlige_systemforvaltere_html}
 {ansvarlige_lokale_systemforvaltere_html}
 <p>For en oversikt over alle ansvarlige for din virksomhet kan du gå til <a href="https://kartoteket.oslo.kommune.no/virksomhet/ansvarlige/{virksomhet.pk}/">https://kartoteket.oslo.kommune.no/virksomhet/ansvarlige/{virksomhet.pk}/</a></p>
-<p>Hver natt kjøres det en bakgrunnsjobb i Kartoteket for å slette ansvarlige som ikke lenger har roller eller ansvar.</p>
-<p>Husk også å sjekke om virksomhetens kontaktpersoner er oppdatert på https://kartoteket.oslo.kommune.no/virksomhet/min/ via knappen "Rediger virksomhetsdetaljer og kontaktpersoner".</p>
+<p>Hver natt kjøres det en bakgrunnsjobb i Kartoteket for å slette ansvarlige som ikke lenger har roller eller ansvar. Bakgrunnsjobben er satt til ikke å slette ansvarlige som fremdeles har tildelt ansvar. For å løse dette kan dere enten flytte alt ansvar over til en ny person, eller dere kan manuelt fjerne vedkommende som har sluttet fra de rollene vedkommende er angitt å ha og fylle ut nye navn. Dersom du har spørsmål eller innspill, må du gjerne melde deg inn i Viva-gruppen <a href="https://engage.cloud.microsoft/main/org/oslokommune.onmicrosoft.com/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiI2NTU0NzAwMTg1NyJ9">VI/SAM/System og tjenesteoversikt</a> og starte en samtale der.</p>
 <br><br>Vennlig hilsen<br>Kartoteket
 """
 					email = EmailMessage(
@@ -125,8 +125,8 @@ Hei {ansvarlig.brukernavn.profile.displayName},
 <p>Denne e-posten går ut en gang per måned for å minne deg om dine roller i systemoversikten.</p>
 {system_forvalter_for_html}
 {systembruk_forvalter_for_html}
-<p>Hvis du ser noe du ikke kjenner deg igjen i, kan du rette dette opp direkte i Kartoteket. Hvis du ikke vet hvordan, vet hvem som har overtatt for deg, eller det eksempelvis er snakk om et system som ikke lenger er i bruk.. kan du kontakte din IKT-organisasjon for å avklare hva dere gjør videre. Dette vil typisk være IKT-hovedkontakt eller tilsvarende.</p>
-<p>Dette er første utsending av denne typen, og den vil gå ut til 500+ mottakere. Stress derfor ikke med å følge opp eventuelle feil du oppdager mot IKT-organisasjonen din med en gang. Gjør alle det, kan det bli i overkant mye på en gang.</p>
+<p>Hvis du ser noe du ikke kjenner deg igjen i, kan du rette dette opp direkte i Kartoteket. Hvis du ikke vet hvordan, finner du link til brukerveiledning på forsiden av Kartoteket. Dersom du ikke vet hvem som har overtatt for deg, ber vi om at du tar kontakte med din IKT-organisasjon. Dette vil typisk være IKT-hovedkontakt.</p>
+<p>Dette er første utsending av påminnelse, og den vil gå ut til 500+ mottakere. Stress derfor ikke med å følge opp eventuelle feil du oppdager mot IKT-organisasjonen din med en gang. Gjør alle det, kan det bli i overkant mye å håndtere for dem.</p>
 <p>Det kan hende du har flere roller i systemoversikten enn de som er listet opp her. For full oversikt kan du gå til <a href="https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/">https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/</a>.</p>
 <br><br>Vennlig hilsen<br>Kartoteket
 """
