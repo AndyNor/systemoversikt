@@ -1578,9 +1578,9 @@ class InformasjonsKlasseAdmin(admin.ModelAdmin):
 
 @admin.register(Definisjon)
 class DefinisjonAdmin(SimpleHistoryAdmin):
-	list_display = ('begrep', 'status', 'ansvarlig',)
+	list_display = ('begrep', 'status',)
 	actions = [export_as_csv_action("CSV Eksport")]
-	autocomplete_fields = ('ansvarlig',)
+	#autocomplete_fields = ('',)
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
