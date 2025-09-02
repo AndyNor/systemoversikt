@@ -800,7 +800,7 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 	search_fields = ('behandlingen', 'internt_ansvarlig', 'funksjonsomraade',)
 	list_filter = ('behandlingsgrunnlag_valg', 'den_registrerte', 'kategorier_personopplysninger', 'behandlingsansvarlig')
 	filter_horizontal = ('informering_til_registrerte_valg', 'relasjon_registrerte', 'den_registrerte_hovedkateogi', 'virksomhet_blacklist', 'programvarer', 'systemer', 'navn_databehandler', 'kategorier_personopplysninger', 'den_registrerte', 'behandlingsgrunnlag_valg')
-	autocomplete_fields = ('behandlingsansvarlig', 'oppdateringsansvarlig')
+	autocomplete_fields = ('behandlingsansvarlig',)
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
@@ -817,7 +817,6 @@ class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
 			'classes': ('',),
 			'fields': (
 				'behandlingsansvarlig',
-				'oppdateringsansvarlig',
 				'behandlingen',
 				'fellesbehandling',
 				'informasjon_kvalitetssikret',

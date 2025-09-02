@@ -82,7 +82,6 @@ class BehandlingerSerializer(serializers.ModelSerializer):
 		model = models.BehandlingerPersonopplysninger
 		fields = (
 			'pk',
-			'oppdateringsansvarlig',
 			'behandlingsansvarlig',
 			'internt_ansvarlig',
 			'funksjonsomraade',
