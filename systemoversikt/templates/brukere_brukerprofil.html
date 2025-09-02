@@ -177,6 +177,7 @@
 			{% endfor %}
 
 
+			{% comment %}
 			{% for definisjon in user.ansvarlig_brukernavn.definisjon_ansvarlig.all %}
 			<tr>
 				<td>Begrepsansvarlig for</td>
@@ -184,6 +185,7 @@
 				<td></td>
 			</tr>
 			{% endfor %}
+			{% endcomment %}
 
 			{% for system in user.ansvarlig_brukernavn.system_kontaktperson_innsyn.all %}
 			<tr>
@@ -339,7 +341,7 @@
 			</tr>
 			{% endfor %}
 
-
+			{% comment %}
 			{% for behandling in user.ansvarlig_brukernavn.behandling_kontaktperson.all %}
 			<tr>
 				<td>Behandlingsansvarlig for</td>
@@ -347,6 +349,7 @@
 				<td></td>
 			</tr>
 			{% endfor %}
+			{% endcomment %}
 
 			</tbody>
 		</table>
