@@ -11,18 +11,25 @@
 
 {% block hovedinnhold %}
 	<b>Virksomhet:</b>
-	{% if user.profile.usertype %} {{ user.profile.usertype }} {% endif %}
-		{{user.profile.virksomhet|default:"Ukjent"}}
+	{% if user.profile.usertype %} {{ user.profile.usertype }} i {% endif %}
+
+	{% url 'virksomhet' pk=user.profile.virksomhet.pk as url_virksomhet %}
+	{% if user.profile.virksomhet %}
+		<a target="_blank" href="{{url_virksomhet}}">{{user.profile.virksomhet}}</a>
+	{% else %}
+		Ukjent
+	{% endif %}
+
 	{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
 	{% if url_enhet %}
-		under <a href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a>
+		under <a target="_blank" href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a>
 	{% endif %}<br>
 
 	<b>Beskrivelse</b>:{{ user.profile.description|default:"Ingen beskrivelse" }}<br>
 
 	{% if url_leder%}
 	{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
-		<b>Nærmeste leder:</b> <a href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a><br>
+		<b>Nærmeste leder:</b> <a target="_blank" href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a><br>
 	{% endif %}
 
 	<b>E-post:</b> {{ user.email }}<br>
@@ -31,7 +38,7 @@
 
 	<hr>
 
-	<h6>Direkteoppslag mot brkerkataloger</h6>
+	<h6>Direkteoppslag mot brukerkataloger</h6>
 
 	{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
 	<a class="btn btn-link" href="{{ url_ad_exact }}">🔍 slå opp direkte i AD</a>
@@ -43,16 +50,16 @@
 
 	{% if user.ansvarlig_brukernavn %}
 
-	<h6>{{user.profile.displayName}} er registrert med følgende roller og ansvar</h6>
-	<a class="btn btn-link" href="/admin/systemoversikt/ansvarlig/{{ user.ansvarlig_brukernavn.pk }}/change/">{% include 'site_edit_button.html' %} flytt alle roller og ansvar til en annen person</a>
+		<h6>{{user.profile.displayName}} er registrert med følgende roller og ansvar</h6>
+		<a class="btn btn-link" target="_blank" href="/admin/systemoversikt/ansvarlig/{{ user.ansvarlig_brukernavn.pk }}/change/">{% include 'site_edit_button.html' %} flytt alle roller og ansvar til en annen person</a>
 
-	<hr>
+		<hr>
 
 		{% if user.ansvarlig_brukernavn.virksomhet_ikt_kontakt.all %}
 			<b>IKT-hovedkontakt:</b>
 			{% for vir in user.ansvarlig_brukernavn.virksomhet_ikt_kontakt.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
 			{% endfor %}<br>
 		{% endif %}
 
@@ -60,7 +67,7 @@
 			<b>Personvernkoordinator (PKO):</b>
 			{% for vir in user.ansvarlig_brukernavn.virksomhet_personvernkoordinator.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
 			{% endfor %}<br>
 		{% endif %}
 
@@ -68,119 +75,281 @@
 			<b>Informasjonssikkerhetskoordinator (ISK):</b>
 			{% for vir in user.ansvarlig_brukernavn.virksomhet_informasjonssikkerhetskoordinator.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
 			{% endfor %}<br>
 		{% endif %}
 
-		{% if ansvarlig_detaljer.kam_for %}
-			<b>Kundekontakt i UKE for:</b>
-			{% for vir in ansvarlig_detaljer.kam_for %}
+		{% if user.ansvarlig_brukernavn.virksomhet_arkitekturkontakter.all %}
+			<b>Arkitekturkontakt for:</b>
+			{% for vir in user.ansvarlig_brukernavn.virksomhet_arkitekturkontakter.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
-			{% endfor %}
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+			{% endfor %}<br>
 		{% endif %}
 
-		{% if ansvarlig_detaljer.autorisert_bestiller_for %}
-			<b>Infotorg autorisert bestiller:</b>
-			{% for vir in ansvarlig_detaljer.autorisert_bestiller_for %}
+
+		{% if user.ansvarlig_brukernavn.virksomhet_autoriserte_bestillere_tjenester.all %}
+			<b>Administrator for søk i KS Fiks folkeregister portal for:</b>
+			{% for vir in user.ansvarlig_brukernavn.virksomhet_autoriserte_bestillere_tjenester.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
-			{% endfor %}
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+			{% endfor %}<br>
 		{% endif %}
 
-		{% if ansvarlig_detaljer.autorisert_bestiller_uke_for %}
-			<b>Autorisert bestiller av tjenester fra intern tjenesteleverandør for:</b>
-			{% for vir in ansvarlig_detaljer.autorisert_bestiller_uke_for %}
+		{% if user.ansvarlig_brukernavn.virksomhet_ks_fiks_ansvarlig.all %}
+			<b>Autorisert bestiller i Infotorget for:</b>
+			{% for vir in user.ansvarlig_brukernavn.virksomhet_ks_fiks_ansvarlig.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+			{% endfor %}<br>
+		{% endif %}
+
+
+
+		{% if user.ansvarlig_brukernavn.autorisertbestiller_person.all %}
+			<b>Autorisert bestiller av sertifikater fra Buypass via Sopra Steria for:</b>
+			{% for autorisertbestiller in user.ansvarlig_brukernavn.autorisertbestiller_person.all %}
+				{% url 'virksomhet' pk=autorisertbestiller.person.brukernavn.profile.virksomhet.pk as url_virksomhet %}
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ autorisertbestiller.person.brukernavn.profile.virksomhet.virksomhetsnavn }}</a></li>
+			{% endfor %}<br>
+		{% endif %}
+
+		{% if user.ansvarlig_brukernavn.virksomhet_autoriserte_bestillere_tjenester_uke.all %}
+			<b>Autorisert bestiller av tjenester fra UKE for:</b>
+			{% for vir in user.ansvarlig_brukernavn.virksomhet_autoriserte_bestillere_tjenester_uke.all %}
+				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+			{% endfor %}<br>
+		{% endif %}
+
+		{% if user.ansvarlig_brukernavn.virksomhet_autoriserte_bestillere_sertifikater.all %}
+			<b>Autorisert sertifikatbestiller for:</b>
+			{% for vir in user.ansvarlig_brukernavn.virksomhet_autoriserte_bestillere_sertifikater.all %}
+				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
 			{% endfor %}
 			<hr>
 		{% endif %}
 
-		{% if ansvarlig_detaljer.sertifikatbestiller_for %}
-			<b>Autorisert sertifikatbestiller:</b>
-			{% for vir in ansvarlig_detaljer.sertifikatbestiller_for %}
+		{% if user.ansvarlig_brukernavn.virksomhet_uke_kam.all %}
+			<b>Kundekontakt fra UKE for:</b>
+			{% for vir in user.ansvarlig_brukernavn.virksomhet_uke_kam.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
-				<li><a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
-			{% endfor %}
-			<hr>
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+			{% endfor %}<br>
 		{% endif %}
+
+		{% if user.ansvarlig_brukernavn.virksomhet_varslingsmottak_sikkerhet.all %}
+			<b>Mottar sikkerhetsvarsler fra UKE for:</b>
+			{% for vir in user.ansvarlig_brukernavn.virksomhet_varslingsmottak_sikkerhet.all %}
+				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
+				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
+			{% endfor %}<br>
+		{% endif %}
+
 
 		<table class="tablesorter">
 			<thead>
 			<tr>
-				<th style="width: 200px;">Ansvarlig som</th>
+				<th style="width: 200px;">Rolle</th>
 				<th>Ansvarlig for</th>
+				<th>Ytterligere detaljer</th>
 			</tr>
 			</thead>
+
 			<tbody>
-			{% for avtale in ansvarlig_detaljer.avtale_ansvarlig_for %}
+			{% for avtale in user.ansvarlig_brukernavn.databehandleravtale_avtaleansvarlig.all %}
 			<tr>
 				<td>Avtaleansvarlig</td>
 				{% url 'avtaledetaljer' pk=avtale.pk as url_avtale %}
-				<td><a href="{{ url_avtale }}">{{ avtale }}</a></td>
+				<td><a target="_blank" href="{{ url_avtale }}">{{ avtale }}</a></td>
+				<td></td>
 			</tr>
 			{% endfor %}
 
-			{% for system in ansvarlig_detaljer.system_innsynskontakt_for %}
+			{% for avtale in user.ansvarlig_brukernavn.avtale_ekstra_varsling_utlop.all %}
+			<tr>
+				<td>Mottar varsel om avtaleutløp for</td>
+				{% url 'avtaledetaljer' pk=avtale.pk as url_avtale %}
+				<td><a target="_blank" href="{{ url_avtale }}">{{ avtale }}</a></td>
+				<td></td>
+			</tr>
+			{% endfor %}
+
+
+			{% for definisjon in user.ansvarlig_brukernavn.definisjon_ansvarlig.all %}
+			<tr>
+				<td>Begrepsansvarlig for</td>
+				<td><a target="_blank" href="/admin/systemoversikt/definisjon/{{definisjon.pk}}/change/">{{ definisjon }}</a></td>
+				<td></td>
+			</tr>
+			{% endfor %}
+
+			{% for system in user.ansvarlig_brukernavn.system_kontaktperson_innsyn.all %}
 			<tr>
 				<td>Innsynskontakt for</td>
 				{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
-				<td><a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a></td>
+				<td><a target="_blank" href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a>
+					{% if system.livslop_status == 1 %}<span style="color:green;"> (under innføring)</span>{% endif %}
+					{% if system.livslop_status == 5 %}<span> (skal byttes ut)</span>{% endif %}
+					{% if system.livslop_status == 6 %}<span style="color:red;"> (under avvikling)</span>{% endif %}
+					{% if system.livslop_status == 7 %}<span style="color:red;"> (er avviklet)</span>{% endif %}
+
+					{% if system.er_infrastruktur %}
+						<br>Infrastrukturkomponent
+					{% elif system.er_integrasjon %}
+						<br>Integrasjonskomponent
+					{% endif %}
+				</td>
+				<td>
+					{% if system.driftsmodell_foreignkey %}<b>Plattform</b>: {{ system.driftsmodell_foreignkey }}{% endif %}
+					{% if system.systemforvalter_avdeling_referanse %}<br><b>Seksjon</b>: {{ system.systemforvalter_avdeling_referanse }}{% endif %}
+				</td>
 			</tr>
 			{% endfor %}
 
-			{% for bruk in ansvarlig_detaljer.systemforvalter_bruk_for %}
+			{% for bruk in user.ansvarlig_brukernavn.systembruk_forvalter_for.all %}
 			<tr>
-				<td>Lokal systemkontakt for</td>
+				<td>Lokal systemforvalter for</td>
 				{% url 'bruksdetaljer' pk=bruk.pk as url_bruksdetaljer %}
-				<td><a href="{{ url_bruksdetaljer }}">{{ bruk.system.systemnavn }}</a></td>
+				<td><a target="_blank" href="{{ url_bruksdetaljer }}">{{ bruk.system.systemnavn }}</a>
+					{% if bruk.system.livslop_status == 1 %}<span style="color:green;"> (under innføring)</span>{% endif %}
+					{% if bruk.system.livslop_status == 5 %}<span> (skal byttes ut)</span>{% endif %}
+					{% if bruk.system.livslop_status == 6 %}<span style="color:red;"> (under avvikling)</span>{% endif %}
+					{% if bruk.system.livslop_status == 7 %}<span style="color:red;"> (er avviklet)</span>{% endif %}
+
+					{% if bruk.system.er_infrastruktur %}
+						<br>Infrastrukturkomponent
+					{% elif bruk.system.er_integrasjon %}
+						<br>Integrasjonskomponent
+					{% endif %}
+				</td>
+				<td>
+					{% if bruk.system.driftsmodell_foreignkey %}<b>Plattform</b>: {{ bruk.system.driftsmodell_foreignkey }}{% endif %}
+					{% if bruk.system.systemforvalter_avdeling_referanse %}<br><b>Seksjon</b>: {{ bruk.system.systemforvalter_avdeling_referanse }}{% endif %}
+				</td>
 			</tr>
 			{% endfor %}
 
-			{% for programvarebruk in ansvarlig_detaljer.programvarebruk_kontakt_for %}
+			{% for bruk in user.ansvarlig_brukernavn.systembruk_systemeier_kontaktpersoner.all %}
+			<tr>
+				<td>Lokal systemeier for</td>
+				{% url 'bruksdetaljer' pk=bruk.pk as url_bruksdetaljer %}
+				<td><a target="_blank" href="{{ url_bruksdetaljer }}">{{ bruk.system.systemnavn }}</a>
+					{% if bruk.system.livslop_status == 1 %}<span style="color:green;"> (under innføring)</span>{% endif %}
+					{% if bruk.system.livslop_status == 5 %}<span> (skal byttes ut)</span>{% endif %}
+					{% if bruk.system.livslop_status == 6 %}<span style="color:red;"> (under avvikling)</span>{% endif %}
+					{% if bruk.system.livslop_status == 7 %}<span style="color:red;"> (er avviklet)</span>{% endif %}
+
+					{% if bruk.system.er_infrastruktur %}
+						<br>Infrastrukturkomponent
+					{% elif bruk.system.er_integrasjon %}
+						<br>Integrasjonskomponent
+					{% endif %}
+				</td>
+				<td>
+					{% if bruk.system.driftsmodell_foreignkey %}<b>Plattform</b>: {{ bruk.system.driftsmodell_foreignkey }}{% endif %}
+					{% if bruk.system.systemforvalter_avdeling_referanse %}<br><b>Seksjon</b>: {{ bruk.system.systemforvalter_avdeling_referanse }}{% endif %}
+				</td>
+			</tr>
+			{% endfor %}
+
+			{% for programvarebruk in user.ansvarlig_brukernavn.programvarebruk_lokal_kontakt.all %}
 			<tr>
 				<td>Lokal programvarekontakt for</td>
 				{% url 'programvarebruksdetaljer' pk=programvarebruk.pk as url_programvarebruk %}
 				<td>
-					<a href="{{url_programvarebruk}}">{{ programvarebruk }}</a>
+					<a target="_blank" href="{{url_programvarebruk}}">{{ programvarebruk }}</a>
 					{% if not forloop.last %}, {% endif %}
 				</td>
+				<td></td>
 			</tr>
 			{% endfor %}
 
-			{% for system in ansvarlig_detaljer.kompass_godkjent_bestiller_for %}
+			{% for system in user.ansvarlig_brukernavn.system_godkjente_bestillere.all %}
 			<tr>
 				<td>Godkjent bestiller i Kompass for</td>
+
 				{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
+				<td><a target="_blank" href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a>
+					{% if system.livslop_status == 1 %}<span style="color:green;"> (under innføring)</span>{% endif %}
+					{% if system.livslop_status == 5 %}<span> (skal byttes ut)</span>{% endif %}
+					{% if system.livslop_status == 6 %}<span style="color:red;"> (under avvikling)</span>{% endif %}
+					{% if system.livslop_status == 7 %}<span style="color:red;"> (er avviklet)</span>{% endif %}
+
+					{% if system.er_infrastruktur %}
+						<br>Infrastrukturkomponent
+					{% elif system.er_integrasjon %}
+						<br>Integrasjonskomponent
+					{% endif %}
+				</td>
 				<td>
-					<a href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a>
+					{% if system.driftsmodell_foreignkey %}<b>Plattform</b>: {{ system.driftsmodell_foreignkey }}{% endif %}
+					{% if system.systemforvalter_avdeling_referanse %}<br><b>Seksjon</b>: {{ system.systemforvalter_avdeling_referanse }}{% endif %}
 				</td>
 			</tr>
 			{% endfor %}
 
+			{% for system in user.ansvarlig_brukernavn.system_forvalter_for.all %}
+			<tr>
+				<td>Systemforvalter for</td>
+
+				{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
+				<td><a target="_blank" href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a>
+					{% if system.livslop_status == 1 %}<span style="color:green;"> (under innføring)</span>{% endif %}
+					{% if system.livslop_status == 5 %}<span> (skal byttes ut)</span>{% endif %}
+					{% if system.livslop_status == 6 %}<span style="color:red;"> (under avvikling)</span>{% endif %}
+					{% if system.livslop_status == 7 %}<span style="color:red;"> (er avviklet)</span>{% endif %}
+
+					{% if system.er_infrastruktur %}
+						<br>Infrastrukturkomponent
+					{% elif system.er_integrasjon %}
+						<br>Integrasjonskomponent
+					{% endif %}
+				</td>
+				<td>
+					{% if system.driftsmodell_foreignkey %}<b>Plattform</b>: {{ system.driftsmodell_foreignkey }}{% endif %}
+					{% if system.systemforvalter_avdeling_referanse %}<br><b>Seksjon</b>: {{ system.systemforvalter_avdeling_referanse }}{% endif %}
+				</td>
+			</tr>
+			{% endfor %}
+
+
+
+			{% for system in user.ansvarlig_brukernavn.system_eier_for.all %}
+			<tr>
+				<td>Systemeier for</td>
+
+				{% url 'systemdetaljer' pk=system.pk as url_systemdetaljer %}
+				<td><a target="_blank" href="{{ url_systemdetaljer }}">{{ system.systemnavn }}</a>
+					{% if system.livslop_status == 1 %}<span style="color:green;"> (under innføring)</span>{% endif %}
+					{% if system.livslop_status == 5 %}<span> (skal byttes ut)</span>{% endif %}
+					{% if system.livslop_status == 6 %}<span style="color:red;"> (under avvikling)</span>{% endif %}
+					{% if system.livslop_status == 7 %}<span style="color:red;"> (er avviklet)</span>{% endif %}
+
+					{% if system.er_infrastruktur %}
+						<br>Infrastrukturkomponent
+					{% elif system.er_integrasjon %}
+						<br>Integrasjonskomponent
+					{% endif %}
+				</td>
+				<td>
+					{% if system.driftsmodell_foreignkey %}<b>Plattform</b>: {{ system.driftsmodell_foreignkey }}{% endif %}
+				</td>
+			</tr>
+			{% endfor %}
+
+
+			{% for behandling in user.ansvarlig_brukernavn.behandling_kontaktperson.all %}
+			<tr>
+				<td>Behandlingsansvarlig for</td>
+				<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{behandling.pk}}/change/">{{ behandling }}</a></td>
+				<td></td>
+			</tr>
+			{% endfor %}
 
 			</tbody>
 		</table>
-
-		{% if ansvarlig_detaljer.systemforvalter_for %}
-			<h6>Systemer jeg forvalter</h6>
-			<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
-			{% for system in ansvarlig_detaljer.systemforvalter_for %}
-				{% include "system_include_vis_ikon.html" with system=system %}
-			{% endfor %}
-			</div>
-		{% endif %}
-
-		{% if ansvarlig_detaljer.systemeier_for %}
-			<hr>
-			<h6>Systemer jeg eier</h6>
-			<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
-			{% for system in ansvarlig_detaljer.systemeier_for %}
-				{% include "system_include_vis_ikon.html" with system=system %}
-			{% endfor %}
-			</div>
-		{% endif %}
 
 	{% endif %}
 

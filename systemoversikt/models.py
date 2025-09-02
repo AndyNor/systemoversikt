@@ -4583,7 +4583,7 @@ class System(models.Model):
 			)
 	systemeier_kontaktpersoner_referanse = models.ManyToManyField(
 			to=Ansvarlig,
-			related_name='system_systemeier_kontaktpersoner',
+			related_name='system_eier_for',
 			verbose_name="Systemeier (personer)",
 			blank=True,
 			help_text=u"Person(er) med operativt systemeierskap. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",

@@ -119,7 +119,11 @@
 		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.ks_fiks_admin_ref.all %}</td>
 	</tr>
 	<tr>
-		<td>Autorisert forbestilling av tjenester fra UKE</td>
+		<td>Autoriserte bestillere av sertifikater fra Buypass via Sopra Steria</td>
+		<td>Se <a href="{% url 'sertifikatmyndighet' %}">avgitte fullmakter</a></td>
+	</tr>
+	<tr>
+		<td>Autorisert for bestilling av tjenester fra UKE</td>
 		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.autoriserte_bestillere_tjenester_uke.all %}</td>
 	</tr>
 	</tbody>

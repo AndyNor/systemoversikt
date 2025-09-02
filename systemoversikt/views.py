@@ -3316,32 +3316,10 @@ def bruker_detaljer(request, pk):
 		messages.warning(request, 'Denne brukeren er deaktivert!')
 
 
-	ansvarlig_detaljer = {}
-	if hasattr(user, "ansvarlig_brukernavn"):
-		ansvarlig = user.ansvarlig_brukernavn
-
-		ansvarlig_detaljer["systemeier_for"] = System.objects.filter(~Q(ibruk=False)).filter(systemeier_kontaktpersoner_referanse=ansvarlig.pk)
-		ansvarlig_detaljer["systemforvalter_for"] = System.objects.filter(~Q(ibruk=False)).filter(systemforvalter_kontaktpersoner_referanse=ansvarlig.pk)
-		ansvarlig_detaljer["systemforvalter_bruk_for"] = SystemBruk.objects.filter(systemforvalter_kontaktpersoner_referanse=ansvarlig.pk)
-		ansvarlig_detaljer["kam_for"] = Virksomhet.objects.filter(uke_kam_referanse=ansvarlig.pk)
-		ansvarlig_detaljer["avtale_ansvarlig_for"] = Avtale.objects.filter(avtaleansvarlig=ansvarlig.pk)
-		ansvarlig_detaljer["ikt_kontakt_for"] = Virksomhet.objects.filter(ikt_kontakt=ansvarlig.pk)
-		ansvarlig_detaljer["sertifikatbestiller_for"] = Virksomhet.objects.filter(autoriserte_bestillere_sertifikater__person=ansvarlig.pk)
-		ansvarlig_detaljer["autorisert_bestiller_for"] = Virksomhet.objects.filter(autoriserte_bestillere_tjenester=ansvarlig.pk)
-		ansvarlig_detaljer["personvernkoordinator_for"] = Virksomhet.objects.filter(personvernkoordinator=ansvarlig.pk)
-		ansvarlig_detaljer["informasjonssikkerhetskoordinator_for"] = Virksomhet.objects.filter(informasjonssikkerhetskoordinator=ansvarlig.pk)
-		#ansvarlig_detaljer["behandlinger_for"] = BehandlingerPersonopplysninger.objects.filter(oppdateringsansvarlig=ansvarlig.pk)
-		#ansvarlig_detaljer["definisjonsansvarlig_for"] = Definisjon.objects.filter(ansvarlig=ansvarlig.pk)
-		ansvarlig_detaljer["system_innsynskontakt_for"] = System.objects.filter(kontaktperson_innsyn=ansvarlig.pk)
-		ansvarlig_detaljer["autorisert_bestiller_uke_for"] = Virksomhet.objects.filter(autoriserte_bestillere_tjenester_uke=ansvarlig.pk)
-		ansvarlig_detaljer["programvarebruk_kontakt_for"] = ProgramvareBruk.objects.filter(lokal_kontakt=ansvarlig.pk)
-		ansvarlig_detaljer["kompass_godkjent_bestiller_for"] = System.objects.filter(godkjente_bestillere=ansvarlig.pk)
-
 	return render(request, 'brukere_brukerprofil.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'user': user,
-		'ansvarlig_detaljer': ansvarlig_detaljer,
 	})
 
 
@@ -4380,7 +4358,7 @@ def tjenestekatalogen_forvalter_api(request):
 							})
 
 				eier_av = []
-				for system in ansvarlig.system_systemeier_kontaktpersoner.all():
+				for system in ansvarlig.system_eier_for.all():
 					if system.ibruk:
 						eier_av.append({
 								"system_id": system.pk,
@@ -8768,7 +8746,7 @@ def get_api_tilganger(request): #API
 	except:
 		return JsonResponse({"error": "No match for email address or no email address given. Please supply GET variable 'email' (?email=<>)."}, safe=False, content_type='application/json; charset=utf-8')
 
-	for system in user.ansvarlig_brukernavn.system_systemeier_kontaktpersoner.all():
+	for system in user.ansvarlig_brukernavn.system_eier_for.all():
 		if hasattr(system, "bs_system_referanse"):
 			business_services.add(system.bs_system_referanse.navn)
 
