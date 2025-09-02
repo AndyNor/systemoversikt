@@ -564,13 +564,13 @@ class Definisjon(models.Model):
 			null=True,
 			help_text=u"",
 			)
-	ansvarlig = models.ForeignKey(
-			to="Ansvarlig",
-			related_name='definisjon_ansvarlig',
-			null=True,
-			blank=True,
-			on_delete=models.PROTECT,
-			)
+#	ansvarlig = models.ForeignKey(
+#			to="Ansvarlig",
+#			related_name='definisjon_ansvarlig',
+#			null=True,
+#			blank=True,
+#			on_delete=models.PROTECT,
+#			)
 	definisjon = models.TextField(
 			verbose_name="Definisjon",
 			blank=False,
@@ -6451,15 +6451,15 @@ class BehandlingerPersonopplysninger(models.Model):
 			default=False,
 			help_text=u"Krysses av når denne behandlingen er klar i første versjon.",
 			)
-			#draftit: har ikke dette nå
-	oppdateringsansvarlig = models.ManyToManyField(
-			to=Ansvarlig,
-			related_name='behandling_kontaktperson',
-			verbose_name="Oppdateringsansvarlig",
-			blank=False,
-			help_text=u"Denne personen er ansvarlig for å holde denne behandlingen oppdatert. Dersom du ikke finner personen du leter etter i listen kan du opprette en ny ansvarlig ved å trykke på +-tegnet til høyre for boksen.",
-			)
-			#draftit: ansvarlig (epost til den som redigerer)
+#			#draftit: har ikke dette nå
+#	oppdateringsansvarlig = models.ManyToManyField(
+#			to=Ansvarlig,
+#			related_name='behandling_kontaktperson',
+#			verbose_name="Oppdateringsansvarlig",
+#			blank=False,
+#			help_text=u"Denne personen er ansvarlig for å holde denne behandlingen oppdatert. Dersom du ikke finner personen du leter etter i listen kan du opprette en ny ansvarlig ved å trykke på +-tegnet til høyre for boksen.",
+#			)
+#			#draftit: ansvarlig (epost til den som redigerer)
 	fellesbehandling = models.BooleanField(
 			verbose_name="Fellesbehandling?",
 			default=False,
