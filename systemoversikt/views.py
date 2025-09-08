@@ -4937,6 +4937,7 @@ def search(request):
 		aktuelle_databaser = CMDBdatabase.objects.filter(db_database__icontains=search_term)
 		enterpriseapps = AzureApplication.objects.filter(displayName__icontains=search_term, active=True)
 		aktuelle_orgledd = HRorg.objects.filter(ou__icontains=search_term)
+		systemer_avviklet = System.objects.filter(Q(livslop_status=7)).filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
 	else:
 		messages.info(request, 'Lengden på det du søker på må minimum være 2 tegn')
 		aktuelle_systemer = System.objects.none()
@@ -4951,6 +4952,7 @@ def search(request):
 		aktuelle_databaser = CMDBdatabase.objects.none()
 		enterpriseapps = AzureApplication.objects.none()
 		aktuelle_orgledd = HRorg.objects.none()
+		systemer_avviklet = System.objects.none()
 
 	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
 		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
@@ -4980,6 +4982,7 @@ def search(request):
 		'aktuelle_personer': aktuelle_personer,
 		'aktuelle_databaser': aktuelle_databaser,
 		'aktuelle_orgledd': aktuelle_orgledd,
+		'systemer_avviklet': systemer_avviklet,
 	})
 
 

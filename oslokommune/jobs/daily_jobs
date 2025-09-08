@@ -48,6 +48,7 @@ python /var/kartoteket/source/systemoversikt/manage.py helsecert_blocklist
 python /var/kartoteket/source/systemoversikt/manage.py rydde_ansvarlige
 python /var/kartoteket/source/systemoversikt/manage.py rydde_generisk
 python /var/kartoteket/source/systemoversikt/manage.py rydde_sette_seksjon
+python /var/kartoteket/source/systemoversikt/manage.py rydde_inaktive_systemer
 #python /var/kartoteket/source/systemoversikt/manage.py sharepoint_o365lisence_updater
 python /var/kartoteket/source/systemoversikt/manage.py rapport_avvik
 python /var/kartoteket/source/systemoversikt/manage.py lookup_user_o365lisens

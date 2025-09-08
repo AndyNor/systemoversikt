@@ -120,5 +120,15 @@
 	</div>
 
 
+	<hr>
+	<h6>Treff på avviklede systemer</h6>
+	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
+	{% for system in systemer_avviklet %}
+		{% include "system_include_vis_ikon.html" with system=system %}
+	{% endfor %}
+	</div>
+
+
+
 
 {% endblock hovedinnhold %}
