@@ -2225,7 +2225,7 @@ def systemer_citrix(request):
 		s.tmp_remotedesktop = True if any(app.type_remotedesktop for app in citrix_apps) else False
 
 		s.tmp_nhn = True if any(app.type_nhn for app in citrix_apps) else False
-		s.tmp_antall_brukere = max(app.cache_antall_publisert_til for app in citrix_apps, default=0)
+		s.tmp_antall_brukere = max((app.cache_antall_publisert_til for app in citrix_apps), default=0)
 
 		s.tmp_executable = True if any(app.type_executable for app in citrix_apps) else False
 		s.tmp_vbs = True if any(app.type_vbs for app in citrix_apps) else False
