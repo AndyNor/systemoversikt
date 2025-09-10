@@ -64,11 +64,11 @@ class Command(BaseCommand):
 					subject = "Kartoteket: Påminnelse om ansatte med ansvar som har sluttet"
 					recipients = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.ikt_kontakt.all()]
 
-					ansvarlige_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(~Q(system_forvalter_for=None).filter(brukernavn__profile__accountdisable=True))
+					ansvarlige_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(brukernavn__profile__accountdisable=True).filter(~Q(system_forvalter_for=None))
 					ansvarlige_systemforvaltere_html = "".join([f"\n<li><a href=\"https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/\">{ansvarlig.brukernavn}</a></li>" for ansvarlig in ansvarlige_systemforvaltere])
 					ansvarlige_systemforvaltere_html = f"<p>Deaktive personer angitt som systemforvalter:\n<ol>{ansvarlige_systemforvaltere_html}\n</ol></p>" if len(ansvarlige_systemforvaltere) > 0 else "<p>Dere har ingen deaktiverte systemforvaltere. Godt jobbet!</p>"
 
-					ansvarlige_lokale_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(~Q(systembruk_forvalter_for=None).filter(brukernavn__profile__accountdisable=True))
+					ansvarlige_lokale_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(brukernavn__profile__accountdisable=True).filter(~Q(systembruk_forvalter_for=None))
 					ansvarlige_lokale_systemforvaltere_html = "".join([f"\n<li><a href=\"https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/\">{ansvarlig.brukernavn}</a></li>" for ansvarlig in ansvarlige_lokale_systemforvaltere])
 					ansvarlige_lokale_systemforvaltere_html = f"\n<p>Deaktive personer angitt som lokal systemforvalter:\n<ol>{ansvarlige_lokale_systemforvaltere_html}\n</ol></p>" if len(ansvarlige_lokale_systemforvaltere) > 0 else "<p>Dere har ingen deaktiverte lokale systemforvaltere. Godt jobbet!</p>"
 
