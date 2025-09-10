@@ -555,7 +555,9 @@ class SystemAdmin(SimpleHistoryAdmin):
 				if obj.systemforvalter == request.user.profile.virksomhet:
 					return True
 				else:
-					messages.warning(request, f'Du har ikke rettigheter til å endre systemer for andre virksomheter enn {request.user.profile.virksomhet.virksomhetsforkortelse}. Kun "superbrukere" har denne tilgangen.')
+					if not hasattr(request, '_tvers_virksomhet_warning_shown'):
+						messages.warning(request, f'Du har ikke rettigheter til å endre systemer for andre virksomheter enn {request.user.profile.virksomhet.virksomhetsforkortelse}. Kun "superbrukere" har denne tilgangen.')
+						request._tvers_virksomhet_warning_shown = True
 					return False
 			messages.warning(request, f'Du har ikke rettigheter til å endre systemer.')
 			return False

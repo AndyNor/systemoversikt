@@ -64,11 +64,11 @@ class Command(BaseCommand):
 					subject = "Kartoteket: Påminnelse om ansatte med ansvar som har sluttet"
 					recipients = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.ikt_kontakt.all()]
 
-					ansvarlige_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(~Q(system_forvalter_for=None))
+					ansvarlige_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(~Q(system_forvalter_for=None).filter(brukernavn__profile__accountdisable=True))
 					ansvarlige_systemforvaltere_html = "".join([f"\n<li><a href=\"https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/\">{ansvarlig.brukernavn}</a></li>" for ansvarlig in ansvarlige_systemforvaltere])
 					ansvarlige_systemforvaltere_html = f"<p>Deaktive personer angitt som systemforvalter:\n<ol>{ansvarlige_systemforvaltere_html}\n</ol></p>" if len(ansvarlige_systemforvaltere) > 0 else "<p>Dere har ingen deaktiverte systemforvaltere. Godt jobbet!</p>"
 
-					ansvarlige_lokale_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(~Q(systembruk_forvalter_for=None))
+					ansvarlige_lokale_systemforvaltere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=virksomhet).filter(~Q(systembruk_forvalter_for=None).filter(brukernavn__profile__accountdisable=True))
 					ansvarlige_lokale_systemforvaltere_html = "".join([f"\n<li><a href=\"https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/\">{ansvarlig.brukernavn}</a></li>" for ansvarlig in ansvarlige_lokale_systemforvaltere])
 					ansvarlige_lokale_systemforvaltere_html = f"\n<p>Deaktive personer angitt som lokal systemforvalter:\n<ol>{ansvarlige_lokale_systemforvaltere_html}\n</ol></p>" if len(ansvarlige_lokale_systemforvaltere) > 0 else "<p>Dere har ingen deaktiverte lokale systemforvaltere. Godt jobbet!</p>"
 
@@ -78,6 +78,7 @@ class Command(BaseCommand):
 
 					message = f"""
 Hei IKT-hovedkontakter i {virksomhet.virksomhetsforkortelse},
+<p>Spørringen mot databasen var ikke komplett, og dermed kom alle aktive ansvarlige med i sist e-post. Her er en oppdatert utgave med deaktiverte brukere slik opprinnelig tiltenkt</p>
 <p>Denne e-posten går ut en gang per måned.</p>
 <p>Først ønsker vi å minne om å sjekke at virksomhetens kontaktpersoner er oppdatert på https://kartoteket.oslo.kommune.no/virksomhet/min/ via knappen "Rediger virksomhetsdetaljer og kontaktpersoner".</p>
 {ansvarlige_systemforvaltere_html}
@@ -140,7 +141,7 @@ Hei {ansvarlig.brukernavn.profile.displayName},
 					email.content_subtype = "html"
 					if recipients:
 						print(f"E-post er lagt til kø for utsending til {ansvarlig.brukernavn}")
-						email.send()
+						#email.send()
 						Command.UTSENDINGER_FORVALTERE += 1
 					else:
 						print(f"Kan ikke sende e-post til {ansvarlig.brukernavn} fordi det mangler e-postadresse")
