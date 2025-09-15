@@ -665,7 +665,9 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 				else:
 					messages.warning(request, f'Du har ikke rettigheter til å endre virksomhetsdetaljer for andre virksomheter enn {request.user.profile.virksomhet.virksomhetsforkortelse}. Kun "superbrukere" har denne tilgangen.')
 					return False
-			messages.warning(request, f'Du har ikke rettigheter til å endre virksomheter.')
+			if not hasattr(request, '_virksomhet_warning_shown'):
+				messages.warning(request, f'Du har ikke rettigheter til å endre virksomheter.')
+				request._virksomhet_warning_shown = True
 			return False
 
 
@@ -1033,12 +1035,12 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('ansvarlig', kwargs={'pk': obj.pk}))
+			return redirect(reverse('virksomhet_ansvarlige', kwargs={'pk': obj.pk}))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('ansvarlig', kwargs={'pk': obj.pk}))
+			return redirect(reverse('virksomhet_ansvarlige', kwargs={'pk': obj.pk}))
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
