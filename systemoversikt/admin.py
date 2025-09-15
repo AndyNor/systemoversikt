@@ -1035,12 +1035,12 @@ class AnsvarligAdmin(SimpleHistoryAdmin):
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('virksomhet_ansvarlige', kwargs={'pk': obj.pk}))
+			return redirect(reverse('virksomhet_ansvarlige'))
 		return super().response_add(request, obj, post_url_continue)
 
 	def response_change(self, request, obj):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('virksomhet_ansvarlige', kwargs={'pk': obj.pk}))
+			return redirect(reverse('virksomhet_ansvarlige'))
 		return super().response_change(request, obj)
 
 	def get_ordering(self, request):
