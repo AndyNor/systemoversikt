@@ -6129,7 +6129,7 @@ def _collect_system_graph_data(pk, kilde="tjenester"):
 
 	if kilde == "tjenester":
 		relevante_systemer = (System.objects.filter(systemforvalter=pk)
-									.filter(~Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True))
+									.exclude(Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True))
 									.filter(~Q(livslop_status__in=[6,7]))
 									.order_by('systemnavn')
 									)
