@@ -112,7 +112,7 @@ class Command(BaseCommand):
 
 				if ".xlsx" in destination_file:
 					#dfRaw = pd.read_excel(destination_file, sheet_name='CommVault Summary', skiprows=8, usecols=['Client', 'Total Protected App Size (GB)', 'Source Capture Date', 'Business Sub Service', ])
-					dfRaw = pd.read_excel(destination_file, sheet_name='Export', skiprows=0, usecols=['Client', 'Total Protected App Size (GB)', 'Total Media Size (GB)', 'Backup frequency',])
+					dfRaw = pd.read_excel(destination_file, sheet_name='Export', skiprows=0, usecols=['Client', 'Total Protected App Size (GB)', 'Total Media Size (GB)', 'Backup frequency', 'Business Service / Service Offering', 'Business Sub Service / Application Service'])
 					dfRaw = dfRaw.replace(np.nan, '', regex=True)
 					data = dfRaw.to_dict('records')
 
@@ -153,10 +153,22 @@ class Command(BaseCommand):
 						source_type = "SERVER"
 					else:
 						device = None
-						bss = None
-						environment = None
-						source_type = "OTHER"
-						failed_device += 1
+						try:
+							bss = CMDBRef.objects.get(navn=line['Business Service / Service Offering'])
+							environment = bss.environment
+							source_type = "OTHER"
+						except:
+							try:
+								bss = CMDBRef.objects.get(navn=line['Business Sub Service / Application Service'])
+								environment = bss.environment
+								source_type = "OTHER"
+							except:
+								bss = None
+								environment = None
+								source_type = "OTHER"
+								failed_device += 1
+								print(f"Feilet for {line['Client']} {line['Business Service / Service Offering']} {line['Business Sub Service / Application Service']}")
+
 
 
 					#print(device)
