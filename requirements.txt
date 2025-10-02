@@ -10,7 +10,7 @@ contextvars==2.4
 cryptography==39.0.2
 deepdiff==8.0.1
 distlib==0.3.6
-Django==4.2.18
+Django==4.2.25
 django-csp==3.7
 django-dbbackup==4.2.1
 django-debug-permissions==1.0.0
