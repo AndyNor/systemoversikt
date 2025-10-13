@@ -126,7 +126,6 @@ Hei {ansvarlig.brukernavn.profile.displayName},
 {system_forvalter_for_html}
 {systembruk_forvalter_for_html}
 <p>Hvis du ser noe du ikke kjenner deg igjen i, kan du rette dette opp direkte i Kartoteket. Hvis du ikke vet hvordan, finner du link til brukerveiledning på forsiden av Kartoteket. Dersom du ikke vet hvem som har overtatt for deg, ber vi om at du tar kontakte med din IKT-organisasjon. Dette vil typisk være IKT-hovedkontakt.</p>
-<p>Dette er første utsending av påminnelse, og den vil gå ut til 500+ mottakere. Stress derfor ikke med å følge opp eventuelle feil du oppdager mot IKT-organisasjonen din med en gang. Gjør alle det, kan det bli i overkant mye å håndtere for dem.</p>
 <p>Det kan hende du har flere roller i systemoversikten enn de som er listet opp her. For full oversikt kan du gå til <a href="https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/">https://kartoteket.oslo.kommune.no/brukere/ad/{ansvarlig.brukernavn.pk}/</a>.</p>
 <br><br>Vennlig hilsen<br>Kartoteket
 """
