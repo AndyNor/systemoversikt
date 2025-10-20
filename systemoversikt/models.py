@@ -4101,7 +4101,7 @@ class Driftsmodell(models.Model):
 		ordering = ['navn']
 
 	def antall_systemer(self):
-		return self.systemer.all().count()
+		return self.systemer.filter(~Q(livslop_status=7)).count()
 
 	def plattform_nivaa(self):
 		if self.overordnet_plattform == None:

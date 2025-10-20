@@ -6596,7 +6596,7 @@ def detaljer_driftsmodell(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	driftsmodell = Driftsmodell.objects.get(pk=pk)
-	systemer = System.objects.filter(driftsmodell_foreignkey=pk)
+	systemer = System.objects.filter(driftsmodell_foreignkey=pk).filter(~Q(livslop_status=7))
 	isolert_drift = systemer.filter(isolert_drift=True)
 
 	# gjør et oppslag for å finne kategorier som er, og ikke er anbefalt
