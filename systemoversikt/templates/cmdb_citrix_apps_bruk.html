@@ -31,8 +31,11 @@
 	<th>Mappe<br>(ClientFolder og AdminFolder)</th>
 	<th>Applikasjonsnavn<br>(Application og Browser)</th>
 	<th>Systemkoblet?</th>
-	<td>Forvalter</td>
-	<th>Totalt antall unike medlemmer</th>
+	<th>Forvalter</th>
+	<th>Antall ganger brukt</th>
+	<th>Antall unike personer bruker</th>
+	<th>Virksomheter som bruker</th>
+	<th>Antall personer med tilgang</th>
 	<th>AssociatedUserFullNames</th>
 </thead>
 <tbody>
@@ -77,6 +80,10 @@
 				-
 			{% endfor %}
 		</td>
+
+		<td>{{ app.bruk_times_opened|default:"-" }}</td>
+		<td>{{ app.bruk_unique_users|default:"-" }}</td>
+		<td>{{ app.bruk_unique_departments|default:"-" }}</td>
 
 		<td>{{app.cache_antall_publisert_til}}</td>
 
