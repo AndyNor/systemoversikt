@@ -311,7 +311,6 @@ class Command(BaseCommand):
 
 
 			# importer
-			"""
 			print(f"Importerer fra {sp_citrix_is}")
 			logg_entry_message += import_citrix(sp_citrix_is, citrix_is_lokalfil, citrix_is_date, "Intern", citrix_is_desktop_gr_lokalfil)
 			print(f"Importerer fra {sp_citrix_ss}")
@@ -336,7 +335,6 @@ class Command(BaseCommand):
 
 			logg_entry_message += import_desktop_groups(citrix_is_servers)
 			logg_entry_message += import_desktop_groups(citrix_ss_servers)
-			"""
 
 			# laste inn bruksstatistikk
 			logg_entry_message += import_bruksdata()
