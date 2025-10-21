@@ -76,6 +76,9 @@
 	{% url 'alle_citrixpub' as url_alle_citrixpub %}
 	<a href="{{url_alle_citrixpub}}" class="btn btn-sm btn-link {% if url_alle_citrixpub in request.path %}fremhev{% endif %}">Citrix apper</a><br>
 
+	{% url 'alle_citrixpub_bruk' as url_alle_citrixpub_bruk %}
+	<a href="{{url_alle_citrixpub_bruk}}" class="btn btn-sm btn-link {% if url_alle_citrixpub_bruk in request.path %}fremhev{% endif %}">Citrix bruk</a><br>
+
 	{% url 'citrix_mappings' as url_citrix_mappings %}
 	<a href="{{url_citrix_mappings}}" class="btn btn-sm btn-link {% if url_citrix_mappings in request.path %}fremhev{% endif %}">Citrix-mappinger</a><br>
 

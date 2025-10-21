@@ -2375,6 +2375,47 @@ def citrix_mappings(request):
 	})
 
 
+def alle_citrixpub_bruk(request, pk=None):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	antall_apper_totalt = CitrixPublication.objects.all().count()
+	antall_apper_koblet = CitrixPublication.objects.filter(publikasjon_active=True, systemer=None).count()
+
+	citrixapps = CitrixPublication.objects.filter(publikasjon_active=True)
+
+	if pk:
+		citrixapps = citrixapps.filter(systemer=pk)
+
+
+	for app in citrixapps:
+		app.publikasjon_json = json.loads(app.publikasjon_json)
+
+	try:
+		antall_apper_koblet_pct = antall_apper_koblet / len(citrixapps)
+	except:
+		antall_apper_koblet_pct = "?"
+
+	unike_siloer = CMDBdevice.objects.order_by().values('citrix_desktop_group').distinct()
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="citrixpubliseringer")
+	except:
+		integrasjonsstatus = None
+
+	return render(request, 'cmdb_citrix_apps_bruk.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'citrixapps': citrixapps,
+		'filter': True if pk else False,
+		'antall_apper_totalt': antall_apper_totalt,
+		'antall_apper_koblet': antall_apper_koblet,
+		'antall_apper_koblet_pct': f"{round(antall_apper_koblet_pct * 100, 1)}%" if antall_apper_koblet_pct != "?" else None,
+		'unike_siloer': unike_siloer,
+		'integrasjonsstatus': integrasjonsstatus,
+	})
+
 
 def alle_citrixpub(request, pk=None):
 	required_permissions = ['systemoversikt.view_cmdbdevice']

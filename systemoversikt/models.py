@@ -174,6 +174,12 @@ class CitrixPublication(models.Model):
 			blank=False,
 			null=False,
 		)
+	application_name = models.CharField(
+			verbose_name="Application Name",
+			blank=False,
+			null=False,
+			max_length=999,
+		)
 	publikasjon_UUID = models.CharField(
 			verbose_name="Publikasjon UUID",
 			blank=False,
@@ -238,6 +244,21 @@ class CitrixPublication(models.Model):
 	type_cmd = models.BooleanField(
 			verbose_name="BAT file?",
 			default=False,
+		)
+	bruk_times_opened = models.BigIntegerField(
+			verbose_name="Bruksdata: antall ganger åpnet",
+			blank=True,
+			null=True,
+		)
+	bruk_unique_users = models.BigIntegerField(
+			verbose_name="Bruksdata: antall unike brukere",
+			blank=True,
+			null=True,
+		)
+	bruk_unique_departments = models.TextField(
+			verbose_name="Bruksdata: unike virksomheter",
+			blank=True,
+			null=True,
 		)
 
 	def __str__(self):

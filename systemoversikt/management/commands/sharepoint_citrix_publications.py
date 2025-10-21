@@ -29,6 +29,7 @@ class Command(BaseCommand):
 				"citrix_ss_desktop_gr": "citrix_BrokerDesktopGroups_ss.json",
 				"citrix_is_servers": "citrix_MachineList_is.json",
 				"citrix_ss_servers": "citrix_MachineList_ss.json",
+				"citrix_bruksdata": "citrix_application_usage_summary_des2024_mar2025.json"
 			}
 		URL = ""
 		FREKVENS = "Manuelt"
@@ -74,6 +75,8 @@ class Command(BaseCommand):
 			sp_citrix_is_servers = FILNAVN["citrix_is_servers"]
 			sp_citrix_ss_servers = FILNAVN["citrix_ss_servers"]
 
+			sp_citrix_bruksdata = FILNAVN["citrix_bruksdata"]
+
 			if skip_sharepoint:
 				citrix_is_lokalfil, citrix_is_date = ("systemoversikt/import/citrix_publikasjoner_is.json", None)
 				citrix_ss_lokalfil, citrix_ss_date = ("systemoversikt/import/citrix_publikasjoner_ss.json", None)
@@ -81,6 +84,7 @@ class Command(BaseCommand):
 				citrix_ss_desktop_gr_lokalfil, citrix_ss_desktop_gr_date = ("systemoversikt/import/citrix_BrokerDesktopGroups_ss.json", None)
 				citrix_is_servers, citrix_is_servers_date = ("systemoversikt/import/citrix_Machine_list_IS.json.json", None)
 				citrix_ss_servers, citrix_ss_servers_date = ("systemoversikt/import/citrix_Machine_list_SS.json.json", None)
+				citrix_bruksdata, citrix_bruksdata_date = ("systemoversikt/import/citrix_application_usage_summary_des2024_mar2025.json.json", None)
 			else:
 				citrix_is_lokalfil, citrix_is_date = hent_fil(sp_citrix_is)
 				citrix_ss_lokalfil, citrix_ss_date = hent_fil(sp_citrix_ss)
@@ -88,6 +92,7 @@ class Command(BaseCommand):
 				citrix_ss_desktop_gr_lokalfil, citrix_ss_desktop_gr_date = hent_fil(sp_citrix_ss_desktop_gr)
 				citrix_is_servers, citrix_is_servers_date = hent_fil(sp_citrix_is_servers)
 				citrix_ss_servers, citrix_ss_servers_date = hent_fil(sp_citrix_ss_servers)
+				citrix_bruksdata, citrix_bruksdata_date = hent_fil(sp_citrix_bruksdata)
 
 			logg_entry_message = ""
 
@@ -128,6 +133,8 @@ class Command(BaseCommand):
 					line["AllAssociatedDesktopGroupUids_Name"] = AllAssociatedDesktopGroupUids_Name
 
 					skip_exe_checks = False
+
+					c.application_name = line["ApplicationName"]
 
 					if any(sub in line["CommandLineExecutable"].lower() for sub in ["\\appv\\", "app-v", "sfttray.exe"]):
 						c.type_vApp = True  # default False
@@ -258,7 +265,53 @@ class Command(BaseCommand):
 				return logg_entry_message
 
 
+			def import_bruksdata():
+				vellykket = 0
+				print(f"Laster inn bruksdata...")
+				with open(citrix_bruksdata, 'r', encoding="utf-8") as f:
+					bruksdata = f.read()
+
+				bruksdata_json = json.loads(bruksdata)
+
+				for line in bruksdata_json:
+					application_name = line["application_name"].split("@")[0]
+					#delivery_group_name = line["application_name"].split("@")[1]
+
+
+					def update_pub(pub, times_opened, unique_users, departments):
+						pub.bruk_times_opened = times_opened
+						pub.bruk_unique_users = unique_users
+						pub.bruk_unique_departments = ", ".join(departments)
+						pub.save()
+
+
+					citrixpubs = CitrixPublication.objects.filter(application_name=application_name)
+
+					if len(citrixpubs) == 0:
+						citrixpubs = CitrixPublication.objects.filter(application_name__startswith=application_name)
+
+						if len(citrixpubs) == 0:
+							print(f"⚠️ Publikasjonen '{application_name}' finnes ikke")
+							continue
+
+					if len(citrixpubs) > 3:
+						print(f"⚠️ Det er flere enn 2 publikasjonen som heter '{application_name}'")
+						continue
+
+					for pub in citrixpubs:
+						update_pub(pub, line["times_opened"], line["unique_users"], line["departments"])
+
+					vellykket += 1
+
+
+				logg_entry_message = f'Bruksdata for {vellykket} av {len(bruksdata_json)} applikasjoner lastet inn\n'
+				print(logg_entry_message)
+				return logg_entry_message
+
+
+
 			# importer
+			"""
 			print(f"Importerer fra {sp_citrix_is}")
 			logg_entry_message += import_citrix(sp_citrix_is, citrix_is_lokalfil, citrix_is_date, "Intern", citrix_is_desktop_gr_lokalfil)
 			print(f"Importerer fra {sp_citrix_ss}")
@@ -283,6 +336,10 @@ class Command(BaseCommand):
 
 			logg_entry_message += import_desktop_groups(citrix_is_servers)
 			logg_entry_message += import_desktop_groups(citrix_ss_servers)
+			"""
+
+			# laste inn bruksstatistikk
+			logg_entry_message += import_bruksdata()
 
 			# lagre sist oppdatert tidspunkt
 			int_config.dato_sist_oppdatert = citrix_is_date # eller timezone.now()

@@ -81,9 +81,9 @@
 
 		<td>
 			{% for system in app.systemer.all %}
-				{{ system }}<br>
+				{{ system.systemnavn }}<br>{{ system.get_livslop_status_display }}<br>
 			{% empty %}
-				Ingen
+				-
 			{% endfor %}
 		</td>
 
@@ -91,7 +91,7 @@
 			{% for system in app.systemer.all %}
 				{{ system.systemforvalter.virksomhetsforkortelse }}<br>
 			{% empty %}
-				Ingen
+				-
 			{% endfor %}
 		</td>
 
@@ -99,7 +99,7 @@
 			{% for system in app.systemer.all %}
 				{{ system.kontakt_forvalter }}<br>
 			{% empty %}
-				Ingen
+				-
 			{% endfor %}
 		</td>
 
@@ -107,7 +107,7 @@
 			{% for system in app.systemer.all %}
 				{{ system.kontakt_ikthoved }}<br>
 			{% empty %}
-				Ingen
+				-
 			{% endfor %}
 		</td>
 

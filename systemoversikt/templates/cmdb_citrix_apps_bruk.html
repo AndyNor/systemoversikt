@@ -1,0 +1,96 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Citrix-publiseringer
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	{% if not filter %}
+
+		<p>Det er {{antall_apper_totalt}} citrixapper. {{citrixapps|length}} er aktive og vises her. Av disse mangler {{antall_apper_koblet}} ({{antall_apper_koblet_pct}}) kobling til et system. Se også <a href="{% url 'systemer_citrix' %}">oversikt over systemer koblet til citrix</a>.</p>
+
+		<p style="background-color: {{ integrasjonsstatus.color }};">
+			Citrix-apper ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}</p>
+
+
+		<p style="background-color: {{ integrasjonsstatus.color }};">
+			Bruksdata er for desember 2024 til mars 2025</p>
+
+	{% endif %}
+
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Sone</th>
+	<th>Terminalservergruppe<br>(DesktopGroup)</th>
+	<th>Mappe<br>(ClientFolder og AdminFolder)</th>
+	<th>Applikasjonsnavn<br>(Application og Browser)</th>
+	<th>Systemkoblet?</th>
+	<td>Forvalter</td>
+	<th>Totalt antall unike medlemmer</th>
+	<th>AssociatedUserFullNames</th>
+</thead>
+<tbody>
+	{% for app in citrixapps %}
+	<tr>
+		<td>{{app.sone}}</td>
+
+		<td style="white-space: nowrap;">
+			{% for name in app.publikasjon_json.AllAssociatedDesktopGroupUids_Name %}
+				{{name}}<br>
+			{% endfor %}
+		</td>
+
+		<td>
+			{{app.publikasjon_json.ClientFolder|default:""}}<br>
+			<span style="color: grey;">
+
+				{{app.publikasjon_json.AdminFolderName}}
+			</span>
+		</td>
+
+		<td>
+			{{app.publikasjon_json.ApplicationName|default:"-"}}<br>
+			<span style="color: grey;">
+				{{app.publikasjon_json.BrowserName|default:"-"}}
+			</span>
+
+		</td>
+
+		<td>
+			{% for system in app.systemer.all %}
+				{{ system }}<br>{{ system.get_livslop_status_display }}<br>
+			{% empty %}
+				-
+			{% endfor %}
+		</td>
+
+		<td>
+			{% for system in app.systemer.all %}
+				{{ system.systemforvalter.virksomhetsforkortelse }}<br>
+			{% empty %}
+				-
+			{% endfor %}
+		</td>
+
+		<td>{{app.cache_antall_publisert_til}}</td>
+
+		<td>
+			{% for item in app.publikasjon_json.AssociatedUserFullNames %}
+				{% url 'ad_details' item as url_ad_details %}
+				<a href="{{url_ad_details}}">{{item}}</a><br>
+			{% endfor %}
+		</td>
+
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
+
+
+{% endblock hovedinnhold %}

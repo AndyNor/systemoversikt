@@ -139,7 +139,7 @@ class EntraIDConditionalAccessPoliciesAdmin(admin.ModelAdmin):
 
 @admin.register(CitrixPublication)
 class CitrixPublicationAdmin(admin.ModelAdmin):
-	list_display = ('publikasjon_UUID', 'sone', 'publikasjon_active',)
+	list_display = ('application_name', 'bruk_times_opened', 'bruk_unique_users', 'bruk_unique_departments', 'publikasjon_UUID', 'sone', 'publikasjon_active',)
 	search_fields = ('publikasjon_UUID', 'publikasjon_json')
 	list_filter = ('publikasjon_active', 'sone', 'type_vApp', 'type_nettleser', 'type_remotedesktop', 'type_produksjon', 'type_medlemmer')
 	readonly_fields = [field.name for field in CitrixPublication._meta.fields]
