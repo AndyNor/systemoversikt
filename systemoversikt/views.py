@@ -1917,7 +1917,8 @@ def azure_applications(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	applikasjoner = AzureApplication.objects.filter(antall_graph_rettigheter__gt=0).order_by('-createdDateTime')
+	#applikasjoner = AzureApplication.objects.filter(antall_graph_rettigheter__gt=0).order_by('-createdDateTime')
+	applikasjoner = AzureApplication.objects.all().order_by('-createdDateTime')
 
 	term = request.GET.get("term", None)
 	if term:
