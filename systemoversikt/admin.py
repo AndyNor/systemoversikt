@@ -146,9 +146,9 @@ class CitrixPublicationAdmin(admin.ModelAdmin):
 
 @admin.register(AzureApplication)
 class AzureApplicationAdmin(admin.ModelAdmin):
-	list_display = ('displayName', 'risikonivaa', 'createdDateTime', 'appId', 'sist_oppdatert',)
+	list_display = ('displayName', 'servicePrincipalType', 'assigned_to', 'owner', 'tags','risikonivaa', 'createdDateTime', 'appId', 'objectId', 'sist_oppdatert',)
 	search_fields = ('displayName', 'appId',)
-	list_filter = ('risikonivaa',)
+	list_filter = ('risikonivaa', 'servicePrincipalType')
 	autocomplete_fields = ('requiredResourceAccess',)
 	readonly_fields = [field.name for field in AzureApplication._meta.fields]
 
@@ -164,7 +164,7 @@ class AzureApplicationAdmin(admin.ModelAdmin):
 
 @admin.register(AzurePublishedPermissionScopes)
 class AzurePublishedPermissionScopesAdmin(admin.ModelAdmin):
-	list_display = ('value', 'permission_type', 'resourceAppStr', 'isEnabled', 'sist_oppdatert', 'grant_type', 'adminConsentDisplayName', 'scope_id')
+	list_display = ('value', 'permission_type', 'resourceAppId', 'resourceAppStr', 'isEnabled', 'sist_oppdatert', 'grant_type', 'adminConsentDisplayName', 'scope_id')
 	search_fields = ('value', 'scope_id', 'resourceAppId', 'resourceAppStr')
 	list_filter = ('grant_type', 'isEnabled',)
 

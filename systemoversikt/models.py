@@ -7398,10 +7398,16 @@ class AzureApplication(models.Model):
 		auto_now=True,
 		)
 	appId = models.CharField(
-		# Delegated or Application permission
+		verbose_name="app id",
 		max_length=40,
 		null=False,
 		unique=True,
+		)
+	objectId = models.CharField(
+		verbose_name="object id",
+		max_length=40,
+		null=True,
+		blank=True,
 		)
 	createdDateTime = models.DateTimeField(
 		null=True,
@@ -7432,6 +7438,12 @@ class AzureApplication(models.Model):
 		null=False,
 		help_text=u"Beholdes ved synkronisering mot Azure som skjer hver natt",
 		)
+	json_response = models.TextField(
+		verbose_name="JSON-respons fra API",
+		null=True,
+		blank=True,
+		help_text=u"Rådata for SP",
+		)
 	homepageUrl = models.TextField(null=True)
 	servicePrincipalType = models.CharField(max_length=100,null=True, blank=True)
 	tags = models.TextField(null=True)
@@ -7443,6 +7455,18 @@ class AzureApplication(models.Model):
 	antall_graph_rettigheter = models.BigIntegerField(
 		verbose_name="Kalkulert: Antall Graph-tilganger",
 		null=True,
+		)
+	owner = models.TextField(
+		verbose_name="Eier",
+		null=True,
+		blank=True,
+		help_text=u"Eier",
+		)
+	assigned_to = models.TextField(
+		verbose_name="Tildelt",
+		null=True,
+		blank=True,
+		help_text=u"Tildelt",
 		)
 
 
@@ -7473,6 +7497,17 @@ class AzureApplication(models.Model):
 				return True
 		return False
 
+	def owner_json(self):
+		try:
+			return json.loads(self.owner)
+		except:
+			return "-"
+
+	def assigned_to_json(self):
+		try:
+			return json.loads(self.assigned_to)
+		except:
+			return "-"
 
 	class Meta:
 		verbose_name_plural = "Azure: Service Principals"

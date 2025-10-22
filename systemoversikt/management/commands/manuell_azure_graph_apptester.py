@@ -24,6 +24,20 @@ class Command(BaseCommand):
 		api_version = "beta"
 		client = GraphClient(credential=client_credential, api_version=api_version)
 
+		#query = "/servicePrincipals/eaf27a8e-00ad-4070-ace7-5e06474d8287/appRoleAssignedTo"
+		#query = "/servicePrincipals/a4df79b7-738d-45eb-bd43-9027794e90f3/appRoleAssignedTo"
+
+
+
+		#for item in json.loads(client.get(query).text)["value"]:
+		#print(f"{item['principalType']} {item['principalDisplayName']}")
+
+		#client = GraphClient(credential=client_credential, api_version=api_version)
+
+		query = "/servicePrincipals/c1ef955f-5c17-4acc-a4cc-74e5f7ff5a45/owners?$select=displayName,userPrincipalName"
+		print(client.get(query).text)
+
+
 		#appId = "035644cb-58d9-40c6-b99d-ff54da8420f0"
 		#id = "f08b16ec-0cf0-49cd-b218-bea08ea89473"
 
@@ -84,11 +98,11 @@ class Command(BaseCommand):
 		#load_appdata = json.loads(resp.text)
 		#print(json.dumps(load_appdata, sort_keys=True, indent=4))
 
-		app_id = "dee03267-cbae-4d3f-bc72-95e36a634816"
-		sp_id = "4ee994db-e657-4bfe-9b4a-e00eed407b3a"
-		id_ = "ab122a5a-88ba-4aff-8faf-ca5e07973180"
-		query = f"/servicePrincipals/{id_}/"
+		#app_id = "dee03267-cbae-4d3f-bc72-95e36a634816"
+		#sp_id = "4ee994db-e657-4bfe-9b4a-e00eed407b3a"
+		#id_ = "ab122a5a-88ba-4aff-8faf-ca5e07973180"
+		#query = f"/servicePrincipals/{id_}/"
 		#print(query)
-		resp = client.get(query)
-		load_appdata = json.loads(resp.text)
-		print(json.dumps(load_appdata, sort_keys=True, indent=4))
+		#resp = client.get(query)
+		#load_appdata = json.loads(resp.text)
+		#print(json.dumps(load_appdata, sort_keys=True, indent=4))

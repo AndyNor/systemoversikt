@@ -11,14 +11,17 @@
 
 {% block hovedinnhold %}
 
-<p>Her vises kun integrasjoner (service principals) som har graph-rettigheter. Det er {{applikasjoner.count}} slike. Dataene synkroniseres mot Azure Graph-API hver natt. Fra et system kan du koble opp service principals, og da vises også nøkkel/sertifikatinformasjon.</p>
+<p>Dataene synkroniseres mot Azure Graph-API hver natt. Fra et system kan du koble opp service principals, og da vises også nøkkel/sertifikatinformasjon.</p>
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
 		<th>Aktiv</th>
 		<th>Opprettet</th>
 		<th>Applikasjonsnavn</th>
+		<th>Type</th>
 		<th>Publisher</th>
+		<th>Eier</th>
+		<th>Publisert til</th>
 		<th>Enterprise App?</th>
 		{% comment %}<th>Type</th>{% endcomment %}
 		{% comment %}<th>Tags</th>{% endcomment %}
@@ -49,7 +52,23 @@
 				{% endfor %}
 				{% endif %}
 			</td>
+
+			<td>{{a.servicePrincipalType}}</td>
+
 			<td>{{a.publisherName|default:""}}</td>
+
+			<td>
+				{% for item in a.owner_json.value %}
+					{{item.userPrincipalName}}<br>
+				{% endfor %}
+			</td>
+
+			<td>
+				{% for item in a.assigned_to_json.value %}
+					{{item.principalDisplayName}}<br>
+				{% endfor %}
+			</td>
+
 			<td>
 				{{a.er_enterprise_app|yesno:"Ja, Nei"}}
 				<br>{{a.from_applications|yesno:"\applications,\servicePrincipals"}}

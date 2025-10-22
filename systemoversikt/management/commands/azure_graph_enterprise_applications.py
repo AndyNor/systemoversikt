@@ -56,7 +56,6 @@ class Command(BaseCommand):
 				client_id=os.environ['AZURE_ENTERPRISEAPP_CLIENT'],
 				client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
 		)
-
 		api_version = "beta"
 
 		# det antas i denne implementeringen at det ikke skjer endringer på en permissionscope ID
@@ -64,10 +63,10 @@ class Command(BaseCommand):
 			# for en enkel forklaring på feltene, les https://joonasw.net/view/defining-permissions-and-roles-in-aad
 			client = GraphClient(credential=client_credential, api_version=api_version)
 			if mode == "appid":
-				query = "/servicePrincipals?filter=appId eq '%s'" % (resourceAppId)
+				query = f"/servicePrincipals?filter=appId eq '{resourceAppId}'"
 			if mode == "id":
-				query = "/servicePrincipals?filter=id eq '%s'" % (resourceAppId)
-			#print(query)
+				query = f"/servicePrincipals?filter=id eq '{resourceAppId}'"
+
 			resp = client.get(query)
 			Command.ANTALL_GRAPH_KALL += 1
 			load_appdata = json.loads(resp.text)
@@ -76,7 +75,7 @@ class Command(BaseCommand):
 				for permissionScope in load_appdata["value"][0]["publishedPermissionScopes"]: # Delegated
 					try:
 						s = AzurePublishedPermissionScopes.objects.get(scope_id=permissionScope["id"])
-						continue
+						continue # den finnes og vi gjør ingen ting
 					except:
 						s = AzurePublishedPermissionScopes.objects.create(scope_id=permissionScope["id"])
 
@@ -93,7 +92,7 @@ class Command(BaseCommand):
 					s.userConsentDescription = permissionScope["userConsentDescription"]
 					s.userConsentDisplayName = permissionScope["userConsentDisplayName"]
 					s.save()
-					#print("Added PermissionScope %s" % permissionScope["value"])
+					print(f"La til delegert tilgang {permissionScope['value']}")
 
 				for role in load_appdata["value"][0]["appRoles"]: # Application
 					try:
@@ -113,9 +112,9 @@ class Command(BaseCommand):
 					s.userConsentDescription = ""
 					s.userConsentDisplayName = ""
 					s.save()
-					#print("Added role %s" % role["value"])
+					print(f"La til applikasjonsrole {role['value']}")
 
-				for resourceSpecific in load_appdata["value"][0]["resourceSpecificApplicationPermissions"]:
+				for resourceSpecific in load_appdata["value"][0]["resourceSpecificApplicationPermissions"]:  # Application
 					try:
 						s = AzurePublishedPermissionScopes.objects.get(scope_id=resourceSpecific["id"])
 						continue
@@ -133,67 +132,56 @@ class Command(BaseCommand):
 					s.userConsentDescription = ""
 					s.userConsentDisplayName = ""
 					s.save()
-					#print("Added resourceSpecific %s" % resourceSpecific["value"])
-
+					print(f"La til applikasjonsrolle {resourceSpecific['value']}")
 
 				logg_message = "servicePrincipalsLookup() har lastet rettigheter fra %s" % (load_appdata["value"][0]["appDisplayName"])
-				#logg_entry = ApplicationLog.objects.create(
-				#		event_type=LOG_EVENT_TYPE,
-				#		message=logg_message,
-				#	)
-				#print(logg_message)
 			else:
 				# Det ble ikke funnet noen rettigheter
 				logg_message = f"servicePrincipalsLookup() fant ingen rettigheter for {resourceAppId} {mode}"
-				#logg_entry = ApplicationLog.objects.create(
-				#		event_type=LOG_EVENT_TYPE,
-				#		message=logg_message,
-				#	)
 				print(logg_message)
 				pass
 
 
-		def permissionScopeLookup(resourceAppId, scope_id, mode):
-			# finnes scope_id fra før av?
+		def permissionScopeLookup(mode, resourceAppId, scope_id):
 			try:
-				# den eksisterer, og vi kan returnere den
 				permissionScope = AzurePublishedPermissionScopes.objects.get(scope_id=scope_id)
 				return permissionScope
 			except:
-				# den eksisterer ikke, og vi må hente den ned fra Azure.
-				print(f"Fant ikke permissionScope {scope_id}. Slår opp..")
 				servicePrincipalsLookup(resourceAppId, mode)
+
 				try:
 					# vi prøver nok en gang. Nå bør den eksistere.
 					permissionScope = AzurePublishedPermissionScopes.objects.get(scope_id=scope_id)
 					return permissionScope
 				except:
-					print(f"permissionScopeLookup() returnerte Null for app {resourceAppId} med scope_id {scope_id}")
+					print(f"⚠️ Feilet oppslag på rettigheten {scope_id}")
 					return None
 
 
-		def permissionGrantLookup(resourceAppId, scope_str, mode):
-			tidligere_oppslag = False  # kun 1 oppslag per gjennomføring. Alle scopes skal være fra samme app.
+		def permissionGrantLookup(mode, grant, a):
+			resourceAppId = grant["resourceId"]
+			scope_str = grant["scope"]
 			scopes = []
 			for scope_part in scope_str.strip().split(" "):
 				try:
-					# den eksisterer, og vi kan returnere den
 					permissionScope = AzurePublishedPermissionScopes.objects.get(resourceAppId=resourceAppId, value=scope_part, permission_type="Delegated")
 					scopes.append(permissionScope)
 					continue
 				except:
-					# den eksisterer ikke, og vi må hente den ned fra Azure.
-					if tidligere_oppslag == False:
-						print(f"Fant ikke permissionScope {scope_part}. Slår opp..")
-						servicePrincipalsLookup(resourceAppId, mode)
-						tidligere_oppslag = True
-					try:
-						# vi prøver nok en gang. Nå bør den eksistere.
-						permissionScope = AzurePublishedPermissionScopes.objects.get(resourceAppId=resourceAppId, value=scope_part, permission_type="Delegated")
-						scopes.append(permissionScope)
+					servicePrincipalsLookup(resourceAppId, mode)
+
+					# vi prøver nok en gang. Nå bør den eksistere.
+					matches = AzurePublishedPermissionScopes.objects.filter(resourceAppId=resourceAppId, value=scope_part, permission_type="Delegated")
+
+					if matches.count() == 1:
+						scopes.append(matches.first())
 						continue
-					except:
-						print(f"permissionGrantLookup() returnerte Null for app {resourceAppId} med scope_id {scope_part}")
+					elif matches.count() > 1:
+						print(f"⚠️ {matches.count()} treff for rettigheten {scope_part} for {a.displayName}")
+					else:
+						print(f"⚠️ Ingen treff for rettigheten {scope_part} for {a.displayName}")
+
+			# ferdig med loop, returner
 			return scopes
 
 
@@ -203,12 +191,7 @@ class Command(BaseCommand):
 			#query = f"/users/{user}"
 			#print(query)
 			#load_appdata = json.loads(client.get(query).text)
-			return ""
-
-
-		# tester
-		#servicePrincipalsLookup("00000002-0000-0000-c000-000000000000")
-		#print(permissionScopeLookup("00000002-0000-0000-c000-000000000000", "a42657d6-7f20-40e3-b6f0-cee03008a62a"))
+			return "" # for å anonymisere i produksjon
 
 
 		def load_azure_apps():
@@ -220,6 +203,9 @@ class Command(BaseCommand):
 				load_appdata = json.loads(resp.text)
 				#print(json.dumps(load_appdata, sort_keys=True, indent=4))
 				extract_and_store_servicePrincipals(load_appdata)
+
+				#print("Ferdig med en side, sjekker om det er flere..")
+
 				try:
 					return load_appdata["@odata.nextLink"]
 				except:
@@ -241,6 +227,10 @@ class Command(BaseCommand):
 					except:
 						a = AzureApplication.objects.create(appId=appId)
 
+					object_id = app.get('id')
+
+					a.objectId = object_id
+					a.json_response = app
 					a.createdDateTime = parser.parse(app['createdDateTime']) # 2021-12-15T13:10:38Z
 					a.displayName = displayName
 					a.active = True if app.get('accountEnabled') == True else False
@@ -250,34 +240,43 @@ class Command(BaseCommand):
 					a.publisherName = app.get('publisherName')
 					a.save()
 
-					object_id = app.get('id')
 
 					def getOauth2PermissionGrants(object_id):
 						client = GraphClient(credential=client_credential, api_version=api_version)
 						query = f"/servicePrincipals/{object_id}/oauth2PermissionGrants"
-						#print(query)
+
+						#print(f"Slår opp oauth2PermissionGrants for {object_id}")
+
 						Command.ANTALL_GRAPH_KALL += 1
 						return json.loads(client.get(query).text)
 
-					grant_data = getOauth2PermissionGrants(object_id)
-					for grant in grant_data["value"]:
-						if grant["consentType"] == "AllPrincipals":
-							scopes = permissionGrantLookup(grant["resourceId"], grant["scope"], "id")
-							for scope in scopes:
-								a.requiredResourceAccess.add(scope)
-						if grant["consentType"] == "Principal":
-							user = grant["principalId"]
-							scopes = grant["scope"]
-							userDisplayName = lookup_userDisplayName(user)
-							AzureUserConsents.objects.create(appId=appId,appDisplayName=displayName,userId=user,scopes=scopes,userDisplayName=userDisplayName)
-							#print(f"User {user} has consented for app {displayName} for scopes {scopes}")
 
+					if servicePrincipalType != "ManagedIdentity":  # vi slår ikke opp for ManagedIdentity
+						grant_data = getOauth2PermissionGrants(object_id)
+						for grant in grant_data["value"]:
+
+							if grant["consentType"] == "AllPrincipals":
+								#print(f"AllPrincipals grant: {grant}")
+								scopes = permissionGrantLookup("id", grant, a)
+								for scope in scopes:
+									a.requiredResourceAccess.add(scope)
+
+							if grant["consentType"] == "Principal":
+								#print(f"Principal grant: {grant}")
+								user = grant["principalId"]
+								scopes = grant["scope"]
+								userDisplayName = lookup_userDisplayName(user)  # er anonymisert ved at den alltid returnerer ""
+								AzureUserConsents.objects.create(appId=appId,appDisplayName=displayName,userId=user,scopes=scopes,userDisplayName=userDisplayName)
+								#print(f"User {user} has consented for app {displayName} for scopes {scopes}")
+
+							if grant["consentType"] not in ["AllPrincipals", "Principal"]:
+								print(f"⚠️ Ukjent consentType {grant['consentType']}")
 
 
 					# legger til alle nøkler som identifiseres og kobler dem til riktig app
 					for keycredential in app['keyCredentials']:
 						key_end_date = parser.parse(keycredential["endDateTime"])
-						if not AzureApplicationKeys.objects.filter(key_id=keycredential["keyId"],application_ref=a).exists():
+						if not AzureApplicationKeys.objects.filter(key_id=keycredential["keyId"], application_ref=a).exists():
 							k = AzureApplicationKeys.objects.create(
 									application_ref=a,
 									key_id=keycredential["keyId"],
@@ -286,10 +285,11 @@ class Command(BaseCommand):
 									key_usage=keycredential["usage"],
 									end_date_time=key_end_date,
 									)
+							#print(f"La til keycredential for {keycredential['displayName']}")
 
 					for passwordcredential in app['passwordCredentials']:
 						key_end_date = parser.parse(passwordcredential["endDateTime"])
-						if not AzureApplicationKeys.objects.filter(key_id=passwordcredential["keyId"],application_ref=a).exists():
+						if not AzureApplicationKeys.objects.filter(key_id=passwordcredential["keyId"], application_ref=a).exists():
 							k = AzureApplicationKeys.objects.create(
 									application_ref=a,
 									key_id=passwordcredential["keyId"],
@@ -299,7 +299,25 @@ class Command(BaseCommand):
 									end_date_time=key_end_date,
 									hint=passwordcredential["hint"]
 									)
+							#print(f"La til keycredential for {keycredential['displayName']}")
 
+
+			def owner_for_sp(object_id):
+				if object_id == None:
+					return "Ugyldig object ID"
+				client = GraphClient(credential=client_credential, api_version=api_version)
+				query = f"/servicePrincipals/{object_id}/owners?$select=displayName,userPrincipalName"
+				Command.ANTALL_GRAPH_KALL += 1
+				return client.get(query).text
+
+
+			def assigned_to_for_sp(object_id):
+				if object_id == None:
+					return "Ugyldig object ID"
+				client = GraphClient(credential=client_credential, api_version=api_version)
+				query = f"/servicePrincipals/{object_id}/appRoleAssignedTo"
+				Command.ANTALL_GRAPH_KALL += 1
+				return client.get(query).text
 
 
 			def load_next_response_applications(nextLink):
@@ -308,6 +326,9 @@ class Command(BaseCommand):
 				load_appdata = json.loads(resp.text)
 				#print(json.dumps(load_appdata, sort_keys=True, indent=4))
 				extract_and_store_applications(load_appdata)
+
+				#print("Ferdig med en side, sjekker om det er flere..")
+
 				try:
 					return load_appdata["@odata.nextLink"]
 				except:
@@ -324,19 +345,22 @@ class Command(BaseCommand):
 					try:
 						a = AzureApplication.objects.get(appId=app['appId'])
 					except:
-						print(f"Fant ikke app {displayName}")
+						print(f"⚠️ Fant ikke applikasjonen {displayName}")
 						continue
 
 					a.from_applications = True
+					a.assigned_to = assigned_to_for_sp(a.objectId)
+					a.owner = owner_for_sp(a.objectId)
 					a.save()
 
-					# sett rettighetskoblinger på nytt
+					# sett rettighetskoblinger. dette kan virke redundant, men denne matcher de som feiler i steget over med service principals.
 					if 'requiredResourceAccess' in app:
 						for rra in app['requiredResourceAccess']:
 							resourceAppId = rra["resourceAppId"]
 							for ra in rra["resourceAccess"]:
 								scope_id = ra["id"]
-								a.requiredResourceAccess.add(permissionScopeLookup(resourceAppId, scope_id,  "appid"))
+								a.requiredResourceAccess.add(permissionScopeLookup("appid", resourceAppId, scope_id))
+
 
 					# legger til alle nøkler som identifiseres og kobler dem til riktig app
 					for keycredential in app['keyCredentials']:
@@ -350,6 +374,7 @@ class Command(BaseCommand):
 									key_usage=keycredential["usage"],
 									end_date_time=key_end_date,
 									)
+							#print(f"La til keycredential for {keycredential['displayName']}")
 
 					for passwordcredential in app['passwordCredentials']:
 						key_end_date = parser.parse(passwordcredential["endDateTime"])
@@ -363,30 +388,31 @@ class Command(BaseCommand):
 									end_date_time=key_end_date,
 									hint=passwordcredential["hint"]
 									)
+							#print(f"La til passwordcredential for {passwordcredential['displayName']}")
 
 
 			# fjerner alle registrerte nøkler (keys) (#1)
-			print("Sletter all nøkkelinformasjon")
+			print("☕ Sletter all nøkkelinformasjon")
 			AzureApplicationKeys.objects.all().delete()
-			print("Sletter all consent-informasjon")
+			print("☕ Sletter all consent-informasjon")
 			AzureUserConsents.objects.all().delete()
 
 			# fjerner alle tidligere rettigheter
-			print("Sletter all rettighetsinformasjon")
+			print("☕ Sletter all rettighetsinformasjon")
 			for app in AzureApplication.objects.all():
 				app.requiredResourceAccess.clear() # trenger ikke lagre eksplisitt
 
-			# henter inn alle azure apps
+			# henter inn alle service principals
 			APPLICATIONS_FOUND_ALL = 0
 			initial_query = '/servicePrincipals?$select=appId,id,notes,publisherName,displayName,accountEnabled,createdDateTime,tags,servicePrincipalType,keyCredentials,passwordCredentials'
 
-			print("Laster inn azure apps via /servicePrincipals")
+			print("☕ Laster inn azure apps via /servicePrincipals")
 			next_page = load_next_response_servicePrincipals(initial_query)
 			while(next_page):
 				next_page = load_next_response_servicePrincipals(next_page)
 
 			# henter inn mer informasjon om alle application
-			print("Laster inn alle application via /applications")
+			print("\n☕ Laster inn alle application via /applications")
 			APPLICATIONS_FOUND = 0
 			initial_query = '/applications?$select=appId,displayName,requiredResourceAccess,keyCredentials,passwordCredentials'
 
@@ -396,7 +422,7 @@ class Command(BaseCommand):
 
 
 			# sette applikasjoner som ikke har vært sett til deaktivt
-			print("Sletter applikasjoner som ikke har blitt oppdatert denne runden")
+			print("\n☕ Sletter applikasjoner som ikke har blitt oppdatert denne runden")
 			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
 			deaktive_apper = AzureApplication.objects.filter(sist_oppdatert__lte=tidligere)
 			for a in deaktive_apper:
@@ -404,14 +430,16 @@ class Command(BaseCommand):
 				print("Slettet %s" % a)
 
 			# telle opp hvor mange graph-tilganger hver SP har
-			print("Teller opp og lagrer hvor mange graph-rettigheter hver SP har")
+			print("☕ Teller opp og lagrer hvor mange graph-rettigheter hver SP har")
+			rettigheter_totalt = 0
 			for sp in AzureApplication.objects.all():
 				sp.antall_graph_rettigheter = AzurePublishedPermissionScopes.objects.filter(azure_applications=sp).count()
+				rettigheter_totalt += sp.antall_graph_rettigheter
 				sp.save()
 
 
 			# varsle om nye SP via pushover
-			print("Klargjør melding om nye apper til Pushover")
+			print("☕ Klargjør melding om nye apper til Pushover")
 			message = "Nye SP i Azure med rettigheter:\n"
 			antall_nye = 0
 			limit = 10
@@ -433,7 +461,7 @@ class Command(BaseCommand):
 
 
 			# logge og fullføre
-			logg_message = f"Fant {APPLICATIONS_FOUND_ALL} applikasjoner under /servicePrincipals og {APPLICATIONS_FOUND} under /applications."
+			logg_message = f"\n ☕ Fant {APPLICATIONS_FOUND_ALL} applikasjoner under /servicePrincipals og {APPLICATIONS_FOUND} under /applications. Utførte {Command.ANTALL_GRAPH_KALL} kall. Det er {rettigheter_totalt} rettigheter totalt."
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_message,
