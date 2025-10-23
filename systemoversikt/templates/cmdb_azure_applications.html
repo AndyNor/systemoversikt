@@ -17,7 +17,7 @@ Service principals fra Entra ID ble sist synkronisert {{ integrasjonsstatus.dato
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
-			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
+			<input size="30" style="width: 250px;" type="search" value="{% if search_term %}{{ search_term }}{% else %}{% endif %}" name="search_term"
 			placeholder="Navn, appId, objectID, beskrivelse.." class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>

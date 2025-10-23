@@ -4763,7 +4763,7 @@ class System(models.Model):
 			help_text=u"Fylles ut dersom systemet har en web-frontend. Adressen systemet nås på via nettleser. Hvis du ikke finner adressen i listen må du opprette ny med +-tegnet.",
 			)
 	systemleverandor_vedlikeholdsavtale = models.BooleanField(
-			verbose_name="Aktiv vedlikeholdsavtale med systemleverandør?",
+			verbose_name="Aktiv vedlikeholdsavtale med programvareleverandør?",
 			default=None,
 			null=True,
 			help_text=u"",
