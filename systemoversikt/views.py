@@ -786,7 +786,7 @@ def vulnstats_nettverk(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -808,7 +808,7 @@ def vulnstats_datakvalitet(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -846,7 +846,7 @@ def vulnstats(request):
 
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -946,7 +946,7 @@ def vulnstats_servere_uten_vuln(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -968,7 +968,7 @@ def vulnstats_all(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -989,7 +989,7 @@ def vulnstats_search(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1012,7 +1012,7 @@ def vulnstats_offerings(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1050,7 +1050,7 @@ def vulnstats_offering(request, pk=None):
 		pk = None
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1077,7 +1077,7 @@ def vulnstats_severity_eol(request, severity):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1100,7 +1100,7 @@ def vulnstats_ukjente_servere(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1123,7 +1123,7 @@ def vulnstats_severity_known_exploited_public(request, severity):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1147,7 +1147,7 @@ def vulnstats_severity_known_exploited_public_not_current(request, severity):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1173,7 +1173,7 @@ def vulnstats_severity_known_exploited(request, severity):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1197,7 +1197,7 @@ def vulnstats_severity_known_exploited_not_current(request, severity):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1225,7 +1225,7 @@ def vulnstats_severity(request, severity):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1252,7 +1252,7 @@ def vulnstats_severity_not_current(request, severity):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1280,7 +1280,7 @@ def vulnstats_whereis(request, vuln):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 
@@ -1917,18 +1917,30 @@ def azure_applications(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	#applikasjoner = AzureApplication.objects.filter(antall_graph_rettigheter__gt=0).order_by('-createdDateTime')
-	applikasjoner = AzureApplication.objects.all().order_by('-createdDateTime')
+
 
 	term = request.GET.get("term", None)
 	if term:
-		applikasjoner = applikasjoner.filter(appId=term)
+		ANTALL_DAGER = None
+		applikasjoner = AzureApplication.objects.filter(appId=term)
+	else:
+		ANTALL_DAGER = 14
+		days_ago = timezone.now() - timedelta(days=ANTALL_DAGER)
+		#applikasjoner = AzureApplication.objects.filter(antall_graph_rettigheter__gt=0).order_by('-createdDateTime')
+		applikasjoner = AzureApplication.objects.filter(createdDateTime__gte=days_ago).order_by('-createdDateTime')
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_enterprise_applications")
+	except:
+		integrasjonsstatus = None
 
 
 	return render(request, 'cmdb_azure_applications.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'applikasjoner': applikasjoner,
+		'integrasjonsstatus': integrasjonsstatus,
+		'dager_gammelt': ANTALL_DAGER,
 	})
 
 
@@ -2244,7 +2256,7 @@ def systemer_citrix(request):
 
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="citrixpubliseringer")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_citrix")
 	except:
 		integrasjonsstatus = None
 
@@ -2401,7 +2413,7 @@ def alle_citrixpub_bruk(request, pk=None):
 	unike_siloer = CMDBdevice.objects.order_by().values('citrix_desktop_group').distinct()
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="citrixpubliseringer")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_citrix")
 	except:
 		integrasjonsstatus = None
 
@@ -2443,7 +2455,7 @@ def alle_citrixpub(request, pk=None):
 	unike_siloer = CMDBdevice.objects.order_by().values('citrix_desktop_group').distinct()
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="citrixpubliseringer")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_citrix")
 	except:
 		integrasjonsstatus = None
 
@@ -4769,7 +4781,7 @@ def systemdetaljer(request, pk):
 		current_user_is_owner = True
 
 	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(informasjon__icontains="qualys")
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
 	except:
 		integrasjonsstatus = None
 

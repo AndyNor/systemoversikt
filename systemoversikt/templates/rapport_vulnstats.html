@@ -16,7 +16,7 @@
 {% block hovedinnhold %}
 
 <p style="background-color: {{ integrasjonsstatus.color }};">
-Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}})</p>
+Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}}) ({{integrasjonsstatus.script_navn}})</p>
 
 Dataene kommer fra <a target="_blank" href="https://app.powerbi.com/groups/me/apps/e59dca37-410f-452a-92f1-b30fe32ee3bc/reports/84624215-fc73-4b3d-a2b2-0c5e7a03ea39/ReportSection6941b31b48df6cec0635?ctid=8b87af7d-8647-4dc7-8df4-5f69a2011bb5">Sikkerhetsdashboard: trusler og sårbarheter</a>. Rapport må lastes opp på <a target="_blank" href="https://oslokommune.sharepoint.com/sites/74722">Kartotekets filområde</a>.
 

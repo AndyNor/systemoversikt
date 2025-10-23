@@ -6,10 +6,14 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Azure applications: Oversikt
+	Entra ID Service principals {% if dager_gammelt %} opprettet siste {{dager_gammelt}} dager {% endif %}
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
+
+
+<p style="background-color: {{ integrasjonsstatus.color }};">
+Service principals fra Entra ID ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}}) ({{integrasjonsstatus.script_navn}})</p>
 
 <p>Dataene synkroniseres mot Azure Graph-API hver natt. Fra et system kan du koble opp service principals, og da vises også nøkkel/sertifikatinformasjon.</p>
 
