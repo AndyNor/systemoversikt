@@ -1920,14 +1920,25 @@ def azure_applications(request):
 
 
 	term = request.GET.get("term", None)
+	search_term = request.GET.get("search_term", None)
+
 	if term:
+		vise_managed_identity = True
 		ANTALL_DAGER = None
 		applikasjoner = AzureApplication.objects.filter(appId=term)
+	elif search_term:
+		ANTALL_DAGER = None
+		vise_managed_identity = True
+		if search_term == "__all__":
+			applikasjoner = AzureApplication.objects.all().order_by('-createdDateTime')
+		else:
+			applikasjoner = AzureApplication.objects.filter(Q(appId=search_term) | Q(objectId=search_term) | Q(displayName__icontains=search_term) | Q(notes__icontains=search_term)).order_by('-createdDateTime')
 	else:
-		ANTALL_DAGER = 14
+		vise_managed_identity = False
+		ANTALL_DAGER = 28
 		days_ago = timezone.now() - timedelta(days=ANTALL_DAGER)
 		#applikasjoner = AzureApplication.objects.filter(antall_graph_rettigheter__gt=0).order_by('-createdDateTime')
-		applikasjoner = AzureApplication.objects.filter(createdDateTime__gte=days_ago).order_by('-createdDateTime')
+		applikasjoner = AzureApplication.objects.filter(createdDateTime__gte=days_ago).filter(~Q(servicePrincipalType="ManagedIdentity")).order_by('-createdDateTime')
 
 	try:
 		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_enterprise_applications")
@@ -1941,6 +1952,8 @@ def azure_applications(request):
 		'applikasjoner': applikasjoner,
 		'integrasjonsstatus': integrasjonsstatus,
 		'dager_gammelt': ANTALL_DAGER,
+		'vise_managed_identity': vise_managed_identity,
+		'search_term': search_term,
 	})
 
 
@@ -2396,7 +2409,7 @@ def alle_citrixpub_bruk(request, pk=None):
 	antall_apper_totalt = CitrixPublication.objects.all().count()
 	antall_apper_koblet = CitrixPublication.objects.filter(publikasjon_active=True, systemer=None).count()
 
-	citrixapps = CitrixPublication.objects.filter(publikasjon_active=True)
+	citrixapps = CitrixPublication.objects.filter(publikasjon_active=True).order_by('-bruk_unique_users')
 
 	if pk:
 		citrixapps = citrixapps.filter(systemer=pk)
@@ -5008,8 +5021,8 @@ def search(request):
 		aktuelle_orgledd = HRorg.objects.none()
 		systemer_avviklet = System.objects.none()
 
-	if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
-		return redirect('systemdetaljer', aktuelle_systemer[0].pk)
+	#if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
+	#	return redirect('systemdetaljer', aktuelle_systemer[0].pk)
 
 	aktuelle_systemer = aktuelle_systemer.order_by('-ibruk', Lower('systemnavn'))
 	potensielle_systemer = potensielle_systemer.order_by('ibruk', Lower('systemnavn'))

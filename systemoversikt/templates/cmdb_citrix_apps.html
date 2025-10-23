@@ -31,17 +31,15 @@
 
 <table class="table table-sm tablesorter excel">
 <thead>
+	<td>Opprettet</td>
 	<th>Sone</th>
 	<th>Terminalservergruppe<br>(DesktopGroup)</th>
-	<th>Mappe<br>(AdminFolderName og ClientFolder)</th>
-	<th>Applikasjonsnavn<br>(BrowserName og Application Name)</th>
+	<th>Mappe<br>(ClientFolder og AdminFolderName)</th>
+	<th>Applikasjonsnavn<br>(Application Name og BrowserName)</th>
 	<th>Systemkoblet?</th>
-	<th>Virksomhet</th>
-	<td>Forvalter</td>
-	<td>IKT-hovedkontakt</td>
+	<th>Ansvarlige</th>
 	<th>Totalt antall unike medlemmer</th>
 	<th>Hva som kjøres<br>(WorkingDirectory, CommandLineExecutable og CommandLineArguments)</th>
-	<th>AssociatedUserFullNames</th>
 	<th>Produksjon</th>
 	<th>NHN-nettside</th>
 	<th>vApp</th>
@@ -54,13 +52,13 @@
 	<th>CMD</th>
 	<th>Har medlemmer</th>
 	<th>Description</th>
-	<th>Desktop og startmeny<br>(ShortcutAddedToDesktop, ShortcutAddedToStartMenu og StartMenuFolder)</th>
 	<th>UserFilterEnabled</th>
-	<td>Opprettet</td>
+
 </thead>
 <tbody>
 	{% for app in citrixapps %}
 	<tr>
+		<td>{{app.opprettet|date:"Y-m-d H:i"}}</td>
 		<td>{{app.sone}}</td>
 
 		<td style="white-space: nowrap;">
@@ -70,13 +68,13 @@
 		</td>
 
 		<td>
-			<span style="color: grey;">{{app.publikasjon_json.AdminFolderName}}</span><br>
 			{{app.publikasjon_json.ClientFolder|default:""}}
+			<span style="color: grey;">{{app.publikasjon_json.AdminFolderName}}</span><br>
 		</td>
 
 		<td>
+			<b>{{app.publikasjon_json.ApplicationName|default:"-"}}</b>
 			<span style="color: grey;">{{app.publikasjon_json.BrowserName|default:"-"}}</span><br>
-			{{app.publikasjon_json.ApplicationName|default:"-"}}
 		</td>
 
 		<td>
@@ -88,22 +86,21 @@
 		</td>
 
 		<td>
+			<b>Virksomhet:</b><br>
 			{% for system in app.systemer.all %}
 				{{ system.systemforvalter.virksomhetsforkortelse }}<br>
 			{% empty %}
-				-
+				-<br>
 			{% endfor %}
-		</td>
 
-		<td>
+			<b>Forvalter:</b><br>
 			{% for system in app.systemer.all %}
 				{{ system.kontakt_forvalter }}<br>
 			{% empty %}
-				-
+				-<br>
 			{% endfor %}
-		</td>
 
-		<td>
+			<b>IKT-hovedkontakt:</b><br>
 			{% for system in app.systemer.all %}
 				{{ system.kontakt_ikthoved }}<br>
 			{% empty %}
@@ -119,12 +116,6 @@
 			{{app.publikasjon_json.CommandLineArguments|default:"-"}}
 		</td>
 
-		<td>
-			{% for item in app.publikasjon_json.AssociatedUserFullNames %}
-				{% url 'ad_details' item as url_ad_details %}
-				<a href="{{url_ad_details}}">{{item}}</a><br>
-			{% endfor %}
-		</td>
 
 		<td>{{app.type_produksjon|yesno:"🟢 Ja, 🔴 Nei"}}</td>
 
@@ -150,14 +141,8 @@
 
 		<td>{{app.publikasjon_json.Description|default:"-"}}</td>
 
-		<td>
-			{{app.publikasjon_json.ShortcutAddedToDesktop|yesno:"Ja,-"}}<br>
-			{{app.publikasjon_json.ShortcutAddedToStartMenu|yesno:"Ja,-"}}<br>
-			{{app.publikasjon_json.StartMenuFolder|default:""}}
-		</td>
-
 		<td>{{app.publikasjon_json.UserFilterEnabled|yesno:"Ja, Nei"}}</td>
-		<td>{{app.opprettet|date:"Y-m-d H:i"}}</td>
+
 
 	</tr>
 	{% endfor %}

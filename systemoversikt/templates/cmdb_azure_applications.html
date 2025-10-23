@@ -15,7 +15,23 @@
 <p style="background-color: {{ integrasjonsstatus.color }};">
 Service principals fra Entra ID ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}}) ({{integrasjonsstatus.script_navn}})</p>
 
-<p>Dataene synkroniseres mot Azure Graph-API hver natt. Fra et system kan du koble opp service principals, og da vises også nøkkel/sertifikatinformasjon.</p>
+	<form action="" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="30" style="width: 250px;" type="search" value="{{ search_term }}" name="search_term"
+			placeholder="Navn, appId, objectID, beskrivelse.." class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			<a class="btn btn-sm" href="?search_term=__all__">Vis alt</a>
+		</div>
+	</form>
+
+<p>En "applikasjon" er en registrering av en app i Entra ID med metadata som URL og tillatelser. En slags "mal". Når du oppretter en applikasjon, opprettes det automatisk også en service principal i vår tenant. En applikasjon kan opprettes slik at alle med Entra ID kan ta den i bruk. F.eks. av Microsoft, eller den kan opprettes spesifikt for én tenant, slik som for oss i Oslo kommune. Når vi tar i bruk en tredjepartsapplikasjon eller lager en selv, får de en egen kategorisering kalt "enterprise application" som da representerer "vår" instans av applikasjonen. Du kan tenke på det som vår "kopi" av malen.</p>
+<p>En "service principal" er ibruktakelsen/instansen av applikasjonen i vår tenant, og er objektet som faktisk har tillatelser og tilganger f.eks. via API-nøkler eller sertifikater knyttet til seg. Det er mulig å lage service principals uten en tilknyttet app. Dette gjøres ofte for script og automatiseringsprosesser.</p>
+<p>Her vises bare service principals, siden disse skal dekker alle applikasjoner. Du kan koble disse til systemer fra redigeringssiden for det enkelte system. Du vil da få opp detaljer om rettigheter og nøkkelutløp på systemdetaljesiden. Det finnes også andre typer service principals som f.eks. representerer managed identities.</p>
+
+{% if not vise_managed_identity %}<i>Viser ikke ManagedIdentity</i>{% endif %}
+
+{% if search_term %}<i>Du søkte på <b>{{search_term}}</b></i>{% endif %}
+
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
