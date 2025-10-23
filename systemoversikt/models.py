@@ -3821,7 +3821,7 @@ class Programvare(models.Model):
 			help_text=u"",
 			)
 	alias = models.TextField(
-			verbose_name="Alias",
+			verbose_name="Alternative navn / alias",
 			blank=True,
 			null=True,
 			help_text=u"Alternative navn på programvaren for å avhjelpe søk. Kun enkeltord. Du kan skrive inn flere alias, gjerne separert med komma eller på hver sin linje. Disse alias brukes også for å søke opp tilgangsgrupper tilhørende systemet.",
@@ -4680,7 +4680,7 @@ class System(models.Model):
 	service_offerings = models.ManyToManyField(
 			to=CMDBRef,
 			related_name='system',
-			verbose_name="service offerings (CMDB)",
+			verbose_name="Service offerings fra Sopra Steria CMDB",
 			blank=True,
 			help_text=u"Her velger du alle service offerings knyttet til dette systemet. Ta kontakt med UKE om du trenger hjelp med denne koblingen.",
 			)
@@ -4771,23 +4771,23 @@ class System(models.Model):
 	systemleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_systemleverandor',
-			verbose_name="Systemleverandør (tjenesteleverandør)",
+			verbose_name="Programvareleverandør",
 			blank=True,
-			help_text=u"Leverandør som har utviklet systemet.",
+			help_text=u"Leverandør som har utviklet systemet, eventuelt tjenesteleverandør dersom Software as a service.",
 			)
 	basisdriftleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_driftsleverandor',
-			verbose_name="Leverandør av basisdrift",
+			verbose_name="Basisdriftleverandør",
 			blank=True,
-			help_text=u"Leverandør som drifter maskinparken systmet kjører på.",
+			help_text=u"Leverandør som drifter maskinparken/plattformen systmet kjører på.",
 			)
 	applikasjonsdriftleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_applikasjonsdriftleverandor',
-			verbose_name="Leverandør av applikasjonsdrift",
+			verbose_name="Applikasjonsdriftsleverandør",
 			blank=True,
-			help_text=u"Leverandør som sørger for at systemet fungerer som det skal.",
+			help_text=u"Leverandør som sørger for at systemet fungerer som det skal på driftsplattformen, eventulet tjenesteleverandør dersom Software as a service.",
 			)
 	applikasjonsdrift_behov_databehandleravtale = models.BooleanField(
 			verbose_name="Behov for (egen) DBA mot applikasjonsdriftsleverandør?",
@@ -5130,8 +5130,8 @@ class System(models.Model):
 	enterprise_applicatons = models.ManyToManyField(
 			to="AzureApplication",
 			related_name='systemreferanse',
-			verbose_name="Tilhørende Microsoft enterprise application",
-			help_text=u"Brukes for å koble systemet til Microsoft enterprise applications (pålogging med Azure AD og andre MS Graph-tilganger).",
+			verbose_name="Tilhørende Microsoft service principals",
+			help_text=u"Brukes for å koble systemet til enterprise applications for single sign-on eller for graph-tilganger.",
 			blank=True,
 			)
 	LOSref = models.ManyToManyField(
@@ -5186,8 +5186,9 @@ class System(models.Model):
 	citrix_publications = models.ManyToManyField(
 			to="CitrixPublication",
 			related_name="systemer",
-			verbose_name="Tilkoblede citrixpubliseringer",
+			verbose_name="Tilhørende citrix-publiseringer",
 			blank=True,
+			help_text=u"Her velger du citrix-publiseringer som brukes i forbindelse med systemet."
 		)
 	history = HistoricalRecords()
 
