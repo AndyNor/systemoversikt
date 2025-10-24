@@ -1,0 +1,90 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Driftstilgang mot Felles IKT-plattform
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Her vises alle DRIFT-kontoer under "OU=DRIFT,OU=Eksterne brukere,OU=OK" og "OU=DRIFT,OU=Brukere,OU=OK".</p>
+
+<hr>
+
+<p>Fant {{ brukere.count }} brukere.</p>
+
+<ul style="column-count:3;">
+{% for kilde in leverandor_kilder %}
+	{% url 'leverandortilgang' as base_url %}
+	<li {%if kilde.gruppe == valgt_gruppe %} style="font-weight: 800; color: black";{%endif%}><a href="{{ base_url }}{{ kilde.gruppe }}/">{{ kilde.beskrivelse }} ({{ kilde.medlemmer }})</a></li>
+{% endfor %}
+</ul>
+
+<hr>
+<table class="tablesorter excel">
+<thead>
+	<tr>
+		<th>Navn</th>
+		<th>Brukernavn</th>
+		{% comment %}
+		<th>Grupper</th>
+		{% endcomment %}
+		<th>Antall grupper</th>
+		<th>OU-sti</th>
+		<th>Opprettet</th>
+		<th>Sist pålogget</th>
+		<th>Beskrivelse</th>
+		{% comment %}
+		<th>Tilganger</th>
+		{% endcomment %}
+	</tr>
+</thead>
+<tbodt>
+{% for m in brukere %}
+	<tr>
+		<td>👤{{ m.first_name }} {{ m.last_name }}</td>
+		<td><a href="{% url 'bruker_detaljer' pk=m.pk %}">{{ m.username }}</a></td>
+		{% comment %}
+		<td>
+			{% if m.serveradmin %} 💻 Server-admin<br> {% endif %}
+			{% if m.domainadmin %} ⚠️ Domain-admin<br> {% endif %}
+			{% if m.prkadmin %} 👤 PRK-admin<br> {% endif %}
+			{% if m.sqladmin %} 📚 SQL-admin<br> {% endif %}
+			{% if m.citrixadmin %} 📸 Citrix-admin<br> {% endif %}
+			{% if m.sccmadmin %} 🐛 SCCM-admin<br> {% endif %}
+			{% if m.levtilgang %} ☎ Leverandørtilgang<br> {% endif %}
+			{% if m.dcadmin %} ⚠️ DC-admin<br> {% endif %}
+			{% if m.exchangeadmin %} ☕ Exchange-admin<br> {% endif %}
+			{% if m.filsensitivt %} ⚠️ Sensitive filområder<br> {% endif %}
+
+			{% for gruppe in m.reduserte_adgrupper %}
+				{{ gruppe }}<br>
+			{% endfor %}
+
+		</td>
+		{% endcomment %}
+		<td>{{ m.profile.adgrupper_antall|default:"-" }}</td>
+		<td>{% for n in m.profile.ou_lesbar %}{{ n }}<br>{% endfor %}</td>
+		<td>{{m.profile.whenCreated|date:"Ymd" }}<br>({{m.profile.whenCreated|timesince}})</td>
+		<td>{{ m.profile.lastLogonTimestamp|date:"Ymd" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
+		<td>{{ m.profile.description }}</td>
+		{% comment %}
+		<td>
+			<b>{% for system in m.profile.levtilgangprofil %}<li>{{ system }}</li>{% empty %}Ingen knytning{% endfor %}</b><br><br>
+			{% for gruppe in m.profile.adgrupper.all %}{{gruppe}}<br>{% endfor%}
+		</td>
+		{% endcomment %}
+	</tr>
+{% endfor %}
+</tbodt>
+</table>
+
+
+
+{{ feilede_oppslag }}
+
+{% endblock hovedinnhold %}

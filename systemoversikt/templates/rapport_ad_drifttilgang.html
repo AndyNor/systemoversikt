@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-<p>Nå vises alle {{ tekst_type_konto }}-kontoer, en oppsummering av tilganger de har, samt status på brukeridenten.</p>
+<p>Her vises alle DRIFT-kontoer under "OU=DRIFT,OU=Eksterne brukere,OU=OK" og "OU=DRIFT,OU=Brukere,OU=OK".</p>
 
 <hr>
 
@@ -37,8 +37,6 @@
 		<th>OU-sti</th>
 		<th>Opprettet</th>
 		<th>Sist pålogget</th>
-		<th>Passord utløpt?</th>
-		<td>Passordutløp</td>
 		<th>Beskrivelse</th>
 		{% comment %}
 		<th>Tilganger</th>
@@ -48,8 +46,7 @@
 <tbodt>
 {% for m in brukere %}
 	<tr>
-		<td {% if m.profile.accountdisable %} style="text-decoration: line-through;"{% endif %}>
-			👤 {{ m.first_name }} {{ m.last_name }}</td>
+		<td>👤{{ m.first_name }} {{ m.last_name }}</td>
 		<td><a href="{% url 'bruker_detaljer' pk=m.pk %}">{{ m.username }}</a></td>
 		{% comment %}
 		<td>
@@ -74,8 +71,6 @@
 		<td>{% for n in m.profile.ou_lesbar %}{{ n }}<br>{% endfor %}</td>
 		<td>{{m.profile.whenCreated|date:"Ymd" }}<br>({{m.profile.whenCreated|timesince}})</td>
 		<td>{{ m.profile.lastLogonTimestamp|date:"Ymd" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
-		<td>{{ m.profile.password_expired|yesno:"Passord har utløpt,Nei,Vet ikke" }}</td>
-		<td>{{ m.profile.dont_expire_password|yesno:"Utløper aldri,Utløper,Vet ikke" }}</td>
 		<td>{{ m.profile.description }}</td>
 		{% comment %}
 		<td>

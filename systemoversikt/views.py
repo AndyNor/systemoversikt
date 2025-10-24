@@ -5819,13 +5819,62 @@ def tbrukere(request):
 		"brukere": brukere,
 	})
 
-
-def drifttilgang(request):
+def rapport_servicekontoer(request):
 	#Vise informasjon brukere som har drifttilgang
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	brukere = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer,OU=OK").filter(profile__accountdisable=False).order_by("-profile__whenCreated")
+
+	return render(request, 'rapport_ad_servicekontoer.html', {
+		"request": request,
+		"required_permissions": required_permissions,
+		"brukere": brukere,
+	})
+
+
+
+
+def rapport_ad_driftbrukere(request):
+	#Vise informasjon brukere som har drifttilgang
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	brukere = User.objects.filter(Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") | Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere")).filter(profile__accountdisable=False)
+
+	return render(request, 'rapport_ad_drifttilgang.html', {
+		"request": request,
+		"required_permissions": required_permissions,
+		"brukere": brukere,
+	})
+
+
+def rapport_ad_ukjente_brukere(request):
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	brukere = excluded_users = User.objects.exclude(
+			Q(profile__distinguishedname__icontains="OU=Brukere,OU=OK") |
+			Q(profile__distinguishedname__icontains="OU=Eksterne brukere,OU=OK") |
+			Q(profile__distinguishedname__icontains="OU=Ressurser,OU=OK") |
+			Q(profile__distinguishedname__icontains="OU=Kontakt,OU=OK") |
+			Q(profile__distinguishedname__icontains="CN=Monitoring Mailboxes") |
+			Q(profile__distinguishedname__icontains="OU=Servicekontoer,OU=OK")
+		).filter(is_active=True,profile__accountdisable=False)
+
+
+	return render(request, 'rapport_ad_ukjente_brukere.html', {
+		"request": request,
+		"required_permissions": required_permissions,
+		"brukere": brukere,
+	})
+
+
+
+def finn_roller():
 	def adgruppe_oppslag(liste):
 		oppslag = []
 		for cn in liste:
@@ -5944,27 +5993,6 @@ def drifttilgang(request):
 	]
 	filsensitivt = adgruppe_oppslag(filsensitivt)
 
-	brukere = User.objects.filter(Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") | Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere")).filter(profile__accountdisable=False)
-	tekst_type_konto = "drift"
-
-	if "kilde" in request.GET:
-		if request.GET["kilde"] == "servicekontoer":
-			brukere = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer").filter(profile__accountdisable=False).order_by("-profile__whenCreated")
-			tekst_type_konto = "service"
-	#brukere = User.objects.filter(profile__accountdisable=False).filter(Q(profile__description__icontains="Sopra") | Q(profile__description__icontains="2S"))
-
-	"""
-	driftbrukere4 = User.objects.filter(username__istartswith="T-DRIFT")
-	for u in list(set(driftbrukerex) - (set(driftbrukere))):
-		print(u.username)
-	driftbrukere2 = User.objects.filter(username__istartswith="t-")
-	driftbrukerey = User.objects.filter(username__istartswith="a-")
-	driftbrukere3 = User.objects.filter(profile__virksomhet=None)
-	"""
-
-	#adg_filter = set(serveradmins).union(set(domainadmins)).union(set(prkadmin)).union(set(sqladmins)).union(set(citrixadmin)).union(set(sccmadmin)).union(set(levtilgang)).union(set(dcadmin)).union(set(exchangeadmin)).union(set(filsensitivt))
-	#b.reduserte_adgrupper = set(b.profile.adgrupper.all()).difference(adg_filter)
-
 	"""
 	for b in brukere:
 		b.serveradmin = set(serveradmins).intersection(set(b.profile.adgrupper.all()))
@@ -5978,13 +6006,6 @@ def drifttilgang(request):
 		b.exchangeadmin = set(exchangeadmin).intersection(set(b.profile.adgrupper.all()))
 		b.filsensitivt = set(filsensitivt).intersection(set(b.profile.adgrupper.all()))
 	"""
-
-	return render(request, 'ad_drifttilgang.html', {
-		"request": request,
-		"required_permissions": required_permissions,
-		"brukere": brukere,
-		"tekst_type_konto": tekst_type_konto,
-	})
 
 
 

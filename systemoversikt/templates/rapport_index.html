@@ -128,11 +128,14 @@
 
 	<hr><h6>Leverandørtilgang</h6>
 
-		{% url 'drifttilgang' as url_drifttilgang %}
-		<a href="{{ url_drifttilgang }}" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Driftbrukere</a><br>
+		{% url 'rapport_ad_driftbrukere' as url_rapport_ad_driftbrukere %}
+		<a href="{{ url_rapport_ad_driftbrukere }}" class="btn btn-sm btn-link {% if url_rapport_ad_driftbrukere in request.path %}fremhev{% endif %}">Drift-brukere</a><br>
 
-		{% url 'drifttilgang' as url_drifttilgang %}
-		<a href="{{ url_drifttilgang }}?kilde=servicekontoer" class="btn btn-sm btn-link {% if url_drifttilgang in request.path %}fremhev{% endif %}">Servicekontoer</a><br>
+		{% url 'rapport_servicekontoer' as url_rapport_servicekontoer %}
+		<a href="{{ url_rapport_servicekontoer }}" class="btn btn-sm btn-link {% if url_rapport_servicekontoer in request.path %}fremhev{% endif %}">Servicekontoer</a><br>
+
+		{% url 'rapport_ad_ukjente_brukere' as url_rapport_ad_ukjente_brukere %}
+		<a href="{{ url_rapport_ad_ukjente_brukere }}" class="btn btn-sm btn-link {% if url_rapport_ad_ukjente_brukere in request.path %}fremhev{% endif %}">Ukjente brukere</a><br>
 
 
 	<hr><h6>Kartotekets integrasjoner</h6>
