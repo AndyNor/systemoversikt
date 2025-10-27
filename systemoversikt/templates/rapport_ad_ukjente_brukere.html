@@ -28,23 +28,19 @@
 <table class="tablesorter excel">
 <thead>
 	<tr>
-		<th>Antall grupper</th>
+		<th>Brukernavn</th>
+		<th>Navn</th>
 		<th>O365-lisens</th>
 		<th>2-faktor sist oppdatert</th>
-		<th>Seksjon</th>
-		<th>Mail enabled groups</th>
-		<th>Min leder</th>
-		<th>Navn</th>
-		<th>Brukernavn</th>
-		{% comment %}
-		<th>Grupper</th>
-		{% endcomment %}
-		<th>Antall grupper</th>
 		<th>OU-sti</th>
+		<th>Seksjon</th>
+		<th>Nærmeste leder</th>
+		<th>Antall AD-grupper</th>
 		<th>Opprettet</th>
 		<th>Sist pålogget</th>
 		<th>Beskrivelse</th>
 		{% comment %}
+		<th>Grupper</th>
 		<th>Tilganger</th>
 		{% endcomment %}
 	</tr>
@@ -52,19 +48,21 @@
 <tbodt>
 {% for m in brukere %}
 	<tr>
-		<td>{{m.adgrupper_antall}}</td>
+		<td><a href="{% url 'bruker_detaljer' pk=m.pk %}">{{ m.username }}</a></td>
+		<td>👤{{ m.first_name }} {{ m.last_name }}</td>
 		<td>{{ m.profile.ny365lisens|default:"Ingen" }}</td>
 		<td>
 			{{ m.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}<br>
 			{% for method in m.profile.entra_id_auth %}{{ method }}{% if not forloop.last%}, {% endif%}{% endfor %}
 		</td>
+		<td>{% for n in m.profile.ou_lesbar %}{{ n }}<br>{% endfor %}</td>
 		<td>{{ m.profile.org_unit|default:"-" }}</td>
-		<td>
-			{% for gruppe in m.profile.mail_enabled_groups.all %}<li>{{ gruppe }}</li>{% endfor %}
-		</td>
 		<td>{{ m.profile.min_leder|default:"-" }}</td>
-		<td>👤{{ m.first_name }} {{ m.last_name }}</td>
-		<td><a href="{% url 'bruker_detaljer' pk=m.pk %}">{{ m.username }}</a></td>
+		<td>{{ m.profile.adgrupper_antall|default:"-" }}</td>
+		<td>{{m.profile.whenCreated|date:"Ymd" }}<br>({{m.profile.whenCreated|timesince}})</td>
+		<td>{{ m.profile.lastLogonTimestamp|date:"Ymd" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
+		<td>{{ m.profile.description }}</td>
+
 		{% comment %}
 		<td>
 			{% if m.serveradmin %} 💻 Server-admin<br> {% endif %}
@@ -77,19 +75,10 @@
 			{% if m.dcadmin %} ⚠️ DC-admin<br> {% endif %}
 			{% if m.exchangeadmin %} ☕ Exchange-admin<br> {% endif %}
 			{% if m.filsensitivt %} ⚠️ Sensitive filområder<br> {% endif %}
-
 			{% for gruppe in m.reduserte_adgrupper %}
 				{{ gruppe }}<br>
 			{% endfor %}
-
 		</td>
-		{% endcomment %}
-		<td>{{ m.profile.adgrupper_antall|default:"-" }}</td>
-		<td>{% for n in m.profile.ou_lesbar %}{{ n }}<br>{% endfor %}</td>
-		<td>{{m.profile.whenCreated|date:"Ymd" }}<br>({{m.profile.whenCreated|timesince}})</td>
-		<td>{{ m.profile.lastLogonTimestamp|date:"Ymd" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
-		<td>{{ m.profile.description }}</td>
-		{% comment %}
 		<td>
 			<b>{% for system in m.profile.levtilgangprofil %}<li>{{ system }}</li>{% empty %}Ingen knytning{% endfor %}</b><br><br>
 			{% for gruppe in m.profile.adgrupper.all %}{{gruppe}}<br>{% endfor%}
