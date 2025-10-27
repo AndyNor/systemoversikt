@@ -28,6 +28,7 @@
 <table class="tablesorter excel">
 <thead>
 	<tr>
+		<th>Antall grupper</th>
 		<th>O365-lisens</th>
 		<th>2-faktor sist oppdatert</th>
 		<th>Seksjon</th>
@@ -51,8 +52,8 @@
 <tbodt>
 {% for m in brukere %}
 	<tr>
-		<th>Antall grupper</th>
-		<td>{{m.adgrupper_antall}}</td>
+
+		<td>{{m.profile.adgrupper_antall}}</td>
 		<td>{{ m.profile.ny365lisens|default:"Ingen" }}</td>
 		<td>
 			{{ m.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}<br>
