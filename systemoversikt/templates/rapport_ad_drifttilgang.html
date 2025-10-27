@@ -28,16 +28,6 @@
 <table class="tablesorter excel">
 <thead>
 	<tr>
-		<td>{{ b.profile.ny365lisens|default:"Ingen" }}</td>
-		<td>
-			{{ b.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}<br>
-			{% for method in b.profile.entra_id_auth %}{{ method }}{% if not forloop.last%}, {% endif%}{% endfor %}
-		</td>
-		<td>{{ b.profile.org_unit|default:"-" }}</td>
-		<td>
-			{% for gruppe in b.profile.mail_enabled_groups.all %}<li>{{ gruppe }}</li>{% endfor %}
-		</td>
-		<td>{{ b.profile.min_leder|default:"-" }}</td>
 		<th>O365-lisens</th>
 		<th>2-faktor sist oppdatert</th>
 		<th>Seksjon</th>
@@ -61,6 +51,16 @@
 <tbodt>
 {% for m in brukere %}
 	<tr>
+		<td>{{ b.profile.ny365lisens|default:"Ingen" }}</td>
+		<td>
+			{{ b.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}<br>
+			{% for method in b.profile.entra_id_auth %}{{ method }}{% if not forloop.last%}, {% endif%}{% endfor %}
+		</td>
+		<td>{{ b.profile.org_unit|default:"-" }}</td>
+		<td>
+			{% for gruppe in b.profile.mail_enabled_groups.all %}<li>{{ gruppe }}</li>{% endfor %}
+		</td>
+		<td>{{ b.profile.min_leder|default:"-" }}</td>
 		<td>👤{{ m.first_name }} {{ m.last_name }}</td>
 		<td><a href="{% url 'bruker_detaljer' pk=m.pk %}">{{ m.username }}</a></td>
 		{% comment %}
