@@ -1,0 +1,96 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Servicekontoer i OSLOFELLES Active Directory
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Nå vises alle aktive kontoer i AD som ligger under OU=OK, under en virksomhet og så under OU=Servicekontoer.</p>
+
+<hr>
+
+<p>Fant {{ brukere.count }} brukere.</p>
+
+<ul style="column-count:3;">
+{% for kilde in leverandor_kilder %}
+	{% url 'leverandortilgang' as base_url %}
+	<li {%if kilde.gruppe == valgt_gruppe %} style="font-weight: 800; color: black";{%endif%}><a href="{{ base_url }}{{ kilde.gruppe }}/">{{ kilde.beskrivelse }} ({{ kilde.medlemmer }})</a></li>
+{% endfor %}
+</ul>
+
+<hr>
+<table class="tablesorter excel">
+<thead>
+	<tr>
+		<th>Brukernavn</th>
+		<th>Navn</th>
+		<th>O365-lisens</th>
+		<th>2-faktor sist oppdatert</th>
+		<th>OU-sti</th>
+		<th>Seksjon</th>
+		<th>Nærmeste leder</th>
+		<th>Antall AD-grupper</th>
+		<th>Opprettet</th>
+		<th>Sist pålogget</th>
+		<th>Beskrivelse</th>
+		{% comment %}
+		<th>Grupper</th>
+		<th>Tilganger</th>
+		{% endcomment %}
+	</tr>
+</thead>
+<tbodt>
+{% for m in brukere %}
+	<tr>
+		<td><a href="{% url 'bruker_detaljer' pk=m.pk %}">{{ m.username }}</a></td>
+		<td>👤{{ m.first_name }} {{ m.last_name }}</td>
+		<td>{{ m.profile.ny365lisens|default:"Ingen" }}</td>
+		<td>
+			{{ m.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}<br>
+			{% for method in m.profile.entra_id_auth %}{{ method }}{% if not forloop.last%}, {% endif%}{% endfor %}
+		</td>
+		<td>{% for n in m.profile.ou_lesbar %}{{ n }}<br>{% endfor %}</td>
+		<td>{{ m.profile.org_unit|default:"-" }}</td>
+		<td>{{ m.profile.min_leder|default:"-" }}</td>
+		<td>{{ m.profile.adgrupper_antall|default:"-" }}</td>
+		<td>{{m.profile.whenCreated|date:"Ymd" }}<br>({{m.profile.whenCreated|timesince}})</td>
+		<td>{{ m.profile.lastLogonTimestamp|date:"Ymd" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
+		<td>{{ m.profile.description }}</td>
+
+		{% comment %}
+		<td>
+			{% if m.serveradmin %} 💻 Server-admin<br> {% endif %}
+			{% if m.domainadmin %} ⚠️ Domain-admin<br> {% endif %}
+			{% if m.prkadmin %} 👤 PRK-admin<br> {% endif %}
+			{% if m.sqladmin %} 📚 SQL-admin<br> {% endif %}
+			{% if m.citrixadmin %} 📸 Citrix-admin<br> {% endif %}
+			{% if m.sccmadmin %} 🐛 SCCM-admin<br> {% endif %}
+			{% if m.levtilgang %} ☎ Leverandørtilgang<br> {% endif %}
+			{% if m.dcadmin %} ⚠️ DC-admin<br> {% endif %}
+			{% if m.exchangeadmin %} ☕ Exchange-admin<br> {% endif %}
+			{% if m.filsensitivt %} ⚠️ Sensitive filområder<br> {% endif %}
+			{% for gruppe in m.reduserte_adgrupper %}
+				{{ gruppe }}<br>
+			{% endfor %}
+		</td>
+		<td>
+			<b>{% for system in m.profile.levtilgangprofil %}<li>{{ system }}</li>{% empty %}Ingen knytning{% endfor %}</b><br><br>
+			{% for gruppe in m.profile.adgrupper.all %}{{gruppe}}<br>{% endfor%}
+		</td>
+		{% endcomment %}
+	</tr>
+{% endfor %}
+</tbodt>
+</table>
+
+
+
+{{ feilede_oppslag }}
+
+{% endblock hovedinnhold %}

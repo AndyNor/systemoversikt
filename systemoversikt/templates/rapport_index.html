@@ -134,6 +134,10 @@
 		{% url 'rapport_servicekontoer' as url_rapport_servicekontoer %}
 		<a href="{{ url_rapport_servicekontoer }}" class="btn btn-sm btn-link {% if url_rapport_servicekontoer in request.path %}fremhev{% endif %}">Servicekontoer</a><br>
 
+		{% url 'rapport_ad_testbrukere' as url_rapport_ad_testbrukere %}
+		<a href="{{ url_rapport_ad_testbrukere }}" class="btn btn-sm btn-link {% if url_rapport_ad_testbrukere in request.path %}fremhev{% endif %}">Testkontoer</a><br>
+
+
 		{% url 'rapport_ad_ukjente_brukere' as url_rapport_ad_ukjente_brukere %}
 		<a href="{{ url_rapport_ad_ukjente_brukere }}" class="btn btn-sm btn-link {% if url_rapport_ad_ukjente_brukere in request.path %}fremhev{% endif %}">Ukjente brukere</a><br>
 

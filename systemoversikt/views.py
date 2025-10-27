@@ -5820,7 +5820,7 @@ def tbrukere(request):
 	})
 
 def rapport_servicekontoer(request):
-	#Vise informasjon brukere som har drifttilgang
+	#Vise informasjon om brukere som har drifttilgang
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -5828,6 +5828,21 @@ def rapport_servicekontoer(request):
 	brukere = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer,OU=OK").filter(profile__accountdisable=False).order_by("-profile__whenCreated")
 
 	return render(request, 'rapport_ad_servicekontoer.html', {
+		"request": request,
+		"required_permissions": required_permissions,
+		"brukere": brukere,
+	})
+
+
+def rapport_ad_testbrukere(request):
+	#Vise informasjon testkontoer IDA oppretter
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	brukere = User.objects.filter(Q(profile__distinguishedname__icontains="OU=Testkontoer,OU=OK")).filter(profile__accountdisable=False)
+
+	return render(request, 'rapport_ad_testbrukere.html', {
 		"request": request,
 		"required_permissions": required_permissions,
 		"brukere": brukere,
@@ -5862,7 +5877,8 @@ def rapport_ad_ukjente_brukere(request):
 			Q(profile__distinguishedname__icontains="OU=Ressurser,OU=OK") |
 			Q(profile__distinguishedname__icontains="OU=Kontakt,OU=OK") |
 			Q(profile__distinguishedname__icontains="CN=Monitoring Mailboxes") |
-			Q(profile__distinguishedname__icontains="OU=Servicekontoer,OU=OK")
+			Q(profile__distinguishedname__icontains="OU=Servicekontoer,OU=OK") |
+			Q(profile__distinguishedname__icontains="OU=Testkontoer,OU=OK")
 		).filter(is_active=True,profile__accountdisable=False)
 
 
