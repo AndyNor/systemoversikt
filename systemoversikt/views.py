@@ -7346,6 +7346,10 @@ def alle_adgrupper(request):
 		for g in adgrupper:
 			members = json.loads(g.member)
 			g.member_count = len(members)
+			if g.member_count < 5:
+				g.member_show = members
+			else:
+				g.member_show = ""
 	else:
 		adgrupper = ADgroup.objects.none()
 

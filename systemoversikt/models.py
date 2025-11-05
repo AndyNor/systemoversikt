@@ -3458,6 +3458,7 @@ class ADgroup(models.Model):
 		return ""
 
 
+
 AVTALETYPE_VALG = (
 	(1, 'Databehandleravtale'),
 	(2, 'Driftsavtale (SSA-D)'),
