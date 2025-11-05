@@ -7342,7 +7342,7 @@ def alle_adgrupper(request):
 		if search_term[0:3] == "CN=":
 			search_term = search_term[3:]
 		search_term = search_term.split(",")[0]
-		adgrupper = ADgroup.objects.filter(Q(common_name__icontains=search_term) | Q(display_name__icontains=search_term) | Q(description__icontains=search_term))
+		adgrupper = ADgroup.objects.filter(Q(common_name__icontains=search_term) | Q(display_name__icontains=search_term) | Q(description__icontains=search_term) | Q(distinguishedname__icontains=search_term))
 		for g in adgrupper:
 			members = json.loads(g.member)
 			g.member_count = len(members)
