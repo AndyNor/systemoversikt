@@ -7346,7 +7346,7 @@ def alle_adgrupper(request):
 		for g in adgrupper:
 			members = json.loads(g.member)
 			g.member_count = len(members)
-			if g.member_count < 5:
+			if g.member_count < 11:
 				g.member_show = ", ".join(m.split(",")[0].split("CN=")[1] for m in members)
 			else:
 				g.member_show = ""
