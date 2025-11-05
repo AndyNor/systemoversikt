@@ -3452,6 +3452,11 @@ class ADgroup(models.Model):
 			antall += g.membercount
 		return antall - (len(underliggende_grupper) - 1) # det er alltid én gruppe om det ikke er undergrupper
 
+	def ou_lesbar(self):
+		if self.distinguishedname != None:
+			return self.distinguishedname.split(",")[1:-4]
+		return ""
+
 
 AVTALETYPE_VALG = (
 	(1, 'Databehandleravtale'),

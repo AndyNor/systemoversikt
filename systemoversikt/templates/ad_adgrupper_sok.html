@@ -30,6 +30,7 @@
 			<tr>
 				<th>Display name</th>
 				<th>Gruppenavn</th>
+				<th>OU-sti</th>
 				<th>PRK-valg?</th>
 				<th>Beskrivelse</th>
 				<th>Distribusjonsadresse</th>
@@ -41,6 +42,7 @@
 		<tr>
 			<td>{{g.display_name|default:""}}</td>
 			<td><a href="{% url 'adgruppe_detaljer' pk=g.pk %}">{{ g.short }}</a></td>
+			<td>{% for n in g.ou_lesbar %}{{ n }}<br>{% endfor %}</td>
 			<td>
 				{% for prk_valg in g.prkvalg.all %}
 					{{ prk_valg.skjemanavn.skjematype }} {{ prk_valg.skjemanavn.skjemanavn }} - {{ prk_valg.valgnavn }}<br>
