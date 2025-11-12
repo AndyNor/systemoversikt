@@ -130,3 +130,4 @@ systemoversikt/management/commands/manuell_sertifikat_sjekker_config.py
 /systemoversikt/pki
 windev/kritiske_funksjoner.json
 windev/kritiske_kapabilitet.json
+systemoversikt/management/commands/manuell_proxy_bypass.py
