@@ -119,6 +119,8 @@ REST_FRAMEWORK = {
 	)
 }
 
+APPEND_SLASH = True
+
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',
 	'django.contrib.sessions.middleware.SessionMiddleware',
@@ -129,7 +131,7 @@ MIDDLEWARE = [
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'simple_history.middleware.HistoryRequestMiddleware',
 	'csp.middleware.CSPMiddleware',
-	'systemoversikt.middleware.request_logging.RequestLoggingMiddleware',
+	'systemoversikt.middleware.request_logging.RequestLoggingMiddleware', # må være etter CommonMiddleware
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
