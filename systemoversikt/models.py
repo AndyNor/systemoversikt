@@ -3939,9 +3939,9 @@ class Programvare(models.Model):
 
 
 DRIFTSTYPE_VALG = (
-	(0, 'Ukjent'),
+	(0, 'Ukjent miljø'),
 	(1, 'Privat datasenter'),
-	(2, 'Offentlig sky'),
+	(2, 'Offentlig datasenter'),
 )
 
 

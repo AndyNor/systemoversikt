@@ -35,7 +35,7 @@
 			<td>{{ system }}</td>
 			<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
 			<td>{{ system.get_livslop_status_display }}</td>
-			<td>{{ system.driftsmodell_foreignkey.ansvarlig_virksomhet }} {{ system.driftsmodell_foreignkey.navn }} ({{ system.driftsmodell_foreignkey.get_type_plattform_display }})</td>
+			<td>{{ system.driftsmodell_foreignkey.ansvarlig_virksomhet.virksomhetsforkortelse }} {{ system.driftsmodell_foreignkey.navn }} ({{ system.driftsmodell_foreignkey.get_type_plattform_display }})</td>
 			<td>{% for leverandor in system.basisdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
 			<td>{% for leverandor in system.applikasjonsdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
 			<td>{% for leverandor in system.systemleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
