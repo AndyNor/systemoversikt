@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-<p>Her vises alle systemer som Oslo kommune har registrert bruk av.</p>
+<p>Her vises alle systemer som Oslo kommune har registrert.</p>
 
 	<table class="table table-sm tablesorter excel">
 	<thead>
@@ -32,7 +32,7 @@
 	{% for system in aktuelle_systemer %}
 		<tr>
 			<td>{{ system.pk }}</td>
-			<td>{{ system.systemnavn }}</td>
+			<td>{{ system }}</td>
 			<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
 			<td>{{ system.get_livslop_status_display }}</td>
 			<td>{{ system.driftsmodell_foreignkey }} ({{ system.driftsmodell_foreignkey.get_type_plattform_display }})</td>
