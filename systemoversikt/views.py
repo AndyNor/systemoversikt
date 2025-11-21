@@ -5953,7 +5953,12 @@ def alle_spn(request):
 	brukere = User.objects.filter(~Q(profile__service_principal_name=None)).order_by("username")
 
 	for b in brukere:
-		b.spns = json.loads(b.profile.service_principal_name)
+		try:
+			b.spns = json.loads(b.profile.service_principal_name)
+			if not isinstance(b.spns, list):  # Ensure it's a list
+				b.spns = [str(b.spns)]
+		except Exception:
+			b.spns = []
 
 	return render(request, 'ad_alle_spn.html', {
 		"request": request,
