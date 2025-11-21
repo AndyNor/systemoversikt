@@ -2076,6 +2076,7 @@ def rapport_systemer_forsomt(request):
 	})
 
 
+"""
 def systemer_vis_alle(request):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -2088,6 +2089,38 @@ def systemer_vis_alle(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'aktuelle_systemer': systemer,
 	})
+"""
+
+
+
+def systemer_vis_alle_optimized(request):
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {
+			'required_permissions': required_permissions,
+			'groups': request.user.groups
+		})
+
+	systemer = (
+		System.objects.all()
+		.select_related(
+			"systemforvalter",
+			"driftsmodell_foreignkey__ansvarlig_virksomhet"
+		)
+		.prefetch_related(
+			"basisdriftleverandor",
+			"applikasjonsdriftleverandor",
+			"systemleverandor",
+			"service_offerings"
+		)
+	)
+
+	return render(request, 'systemer_vis_alle.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'aktuelle_systemer': systemer,
+	})
+
 
 
 
