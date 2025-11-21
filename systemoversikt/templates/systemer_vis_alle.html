@@ -1,0 +1,52 @@
+{% extends "system_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Oversikt over alle systemer
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Her vises alle systemer som Oslo kommune har registrert bruk av.</p>
+
+	<table class="table table-sm tablesorter excel">
+	<thead>
+		<th>System-ID</th>
+		<th>Systemnavn</th>
+		<th>Forvalter</th>
+		<th>Livssløpsstatus</th>
+		<th>Driftsmiljø</th>
+		<th>Basisdriftleverandør</th>
+		<th>Applikasjonsdriftleverandør</th>
+		<th>Utviklingsleverandør</th>
+		<th>Driftsavtalekobling</th>
+		<th>Driftsavtale tjenestenivå</th>
+		<th>Driftsavtale kompleksitet</th>
+		<th>Driftsavtale kritikalitet</th>
+	</thead>
+	<tbody>
+	{% for system in aktuelle_systemer %}
+		<tr>
+			<td>{{ system.pk }}</td>
+			<td>{{ system.systemnavn }}</td>
+			<td>{{ system.systemforvalter.virksomhetsforkortelse }}</td>
+			<td>{{ system.get_livslop_status_display }}</td>
+			<td>{{ system.driftsmodell_foreignkey }} ({{ system.driftsmodell_foreignkey.get_type_plattform_display }})</td>
+			<td>{% for leverandor in system.basisdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+			<td>{% for leverandor in system.applikasjonsdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+			<td>{% for leverandor in system.systemleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+			<td>{% for offering in system.service_offerings.all %}{{ offering }} ({{offering.get_environment_display}}){% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+			<td>{% for offering in system.service_offerings.all %}{{ offering.u_service_availability_text }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+			<td>{% for offering in system.service_offerings.all %}{{ offering.u_service_complexity_text }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+			<td>{% for offering in system.service_offerings.all %}{{ offering.u_service_operation_factor_text }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+
+{% endblock hovedinnhold %}

@@ -10,14 +10,16 @@
 		<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Ny programvare</a>
 
 		<hr>
+		{% url 'systemer_vis_alle' as systemer_vis_alle_url %}
+		<a href="{{ systemer_vis_alle_url }}" class="btn btn-sm btn-link {% if systemer_vis_alle_url in request.path %}fremhev{% endif %}">Alle systemer</a><br>
 
 		{% url "alle_systemurler" as alle_systemurler_url %}
-		<a href="{{ alle_systemurler_url }}" class="nav-link {% if '/domener/' in request.path %} active {% endif %}">Alle URLer</a>
+		<a href="{{ alle_systemurler_url }}" class="btn btn-sm btn-link {% if alle_systemurler_url in request.path %}fremhev{% endif %}">Alle URLer</a>
 
 		<hr>
 
 		{% url 'alle_virksomheter_kontaktinfo' as kontaktinfo_url %}
-		<a href="{{ kontaktinfo_url }}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 Oversikt over ISK/PKO</a>
+		<a href="{{ kontaktinfo_url }}" class="btn btn-sm btn-link {% if kontaktinfo_url in request.path %}fremhev{% endif %}">👥 Oversikt over ISK/PKO</a>
 
 		{% url 'min_virksomhet' as url_min_virksomhet %}
 		<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 Min virksomhet</a>

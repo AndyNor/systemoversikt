@@ -178,6 +178,7 @@ urlpatterns = [
 	re_path(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),
 	re_path(r'^systemer/systemtype/tom/$', views.systemtype_detaljer, name='systemtype_detaljer_mangler'),
 	re_path(r'^systemer/bydelsbruk/$', views.systembruk_bydeler, name='systembruk_bydeler'),
+	re_path(r'^systemer/vis_alle/$', views.systemer_vis_alle, name='systemer_vis_alle'),
 
 
 
