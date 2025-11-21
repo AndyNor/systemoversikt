@@ -10,7 +10,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 	def process_response(self, request, response):
 		try:
 			# ✅ Skip static files and admin
-			if request.path.startswith("/static") or request.path.startswith("/admin"):
+			if request.path.startswith("/static"): # or request.path.startswith("/admin"):
 				return response
 
 			duration = round((time.time() - request._start_time) * 1000, 2)  # ms
