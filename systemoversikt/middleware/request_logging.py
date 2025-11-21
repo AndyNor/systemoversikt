@@ -43,6 +43,18 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 			if request.path.startswith("/static"):  # or request.path.startswith("/admin"):
 				return response
 
+			if response.status_code == 404 and not request.path.endswith("/"):
+				try:
+					# If adding a slash would resolve, skip logging this 404
+					resolve(request.path + "/")
+					return response
+				except Resolver404:
+					pass
+
+			# Skip redirects
+			if response.status_code in (301, 302, 303, 307, 308):
+				return response
+
 			duration = round((time.time() - request._start_time) * 1000, 2)  # ms
 			user = request.user.username if request.user.is_authenticated else "Anonymous"
 			source_ip = get_client_ip(request)
