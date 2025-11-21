@@ -46,6 +46,8 @@ urlpatterns = [
 	re_path(r'^domener/alle/$', views.alle_systemurler, name='alle_systemurler'),
 
 
+	re_path(r'^monitoring/top-slow-pages/$', views.top_slow_pages, name='top_slow_pages'),
+
 	re_path(r'^admin/profil/', views.minside, name="minside"),
 	re_path(r'^admin/logger/database/$', views.logger, name='logger'),
 	re_path(r'^admin/logger/audit/$', views.logger_audit, name='logger_audit'),

@@ -7,23 +7,19 @@ from django.contrib.auth.decorators import login_required, user_passes_test, per
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-from django.db.models import Count
+from django.db.models import Count, Q, Sum, F, Avg, Max
 from django.template.loader import render_to_string
-from django.db.models.functions import Lower, TruncMonth, TruncYear, TruncDay
-from django.db.models import Q
-from django.http import HttpResponseBadRequest, JsonResponse
+from django.db.models.functions import Lower, TruncMonth, TruncYear, TruncDay, TruncDate
+from django.http import HttpResponseBadRequest, JsonResponse, Http404, HttpResponseRedirect, HttpResponse, HttpRequest
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
-from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from django.urls import reverse
 from django.db import transaction
-from django.db.models import Sum, F
 import ipaddress
 import os, datetime, json, re, time, struct
 from django.utils import timezone
-from django.db.models.functions import TruncDate
 
 
 ##########################
@@ -31,6 +27,74 @@ from django.db.models.functions import TruncDate
 ##########################
 
 LEVERANDORTILGANG_KJENTE_GRUPPER = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS', 'DS-DRIFT_SC2_']
+
+
+def top_slow_pages(request: HttpRequest):
+	"""
+	Prioritize endpoints that consume the most total time in the last 7 days.
+	Supports:
+	  - ?min_requests=50   (only include endpoints with at least N requests)
+	  - ?include_errors=0  (exclude status_code >= 400 by default)
+	  - ?limit=50          (limit number of rows; default 50)
+	"""
+	one_week_ago = timezone.now() - timezone.timedelta(days=7)
+
+	# Query params with defaults
+	try:
+		min_requests = int(request.GET.get("min_requests", 5))
+	except ValueError:
+		min_requests = 5
+
+	try:
+		limit = int(request.GET.get("limit", 50))
+	except ValueError:
+		limit = 50
+
+	include_errors = request.GET.get("include_errors", "0")  # "0" (default) or "1"
+
+	base_qs = RequestLogs.objects.filter(timestamp__gte=one_week_ago)
+
+	if include_errors != "1":
+		# Exclude 4xx and 5xx to focus on normal page performance
+		base_qs = base_qs.filter(status_code__lt=400)
+
+	# Aggregate by (path, method)
+	aggregated = (
+		base_qs
+		.values("path", "method")
+		.annotate(
+			requests=Count("id"),
+			avg_duration=Avg("duration_ms"),
+			max_duration=Max("duration_ms"),
+			total_duration=Sum("duration_ms"),
+			avg_sql_queries=Avg("sql_queries"),
+			total_sql_time=Sum("sql_time_ms"),
+		)
+		.filter(requests__gte=min_requests)
+		.order_by("-total_duration")  # Primary prioritization: total time consumed
+	)
+
+	# Limit rows for display
+	aggregated = list(aggregated[:limit])
+
+	# Summary (for header)
+	summary = {
+		"from": one_week_ago,
+		"to": timezone.now(),
+		"min_requests": min_requests,
+		"include_errors": include_errors == "1",
+		"limit": limit,
+		"endpoints": len(aggregated),
+		"total_requests": base_qs.count(),
+		"total_duration_ms": base_qs.aggregate(Sum("duration_ms"))["duration_ms__sum"] or 0,
+		"total_sql_time_ms": base_qs.aggregate(Sum("sql_time_ms"))["sql_time_ms__sum"] or 0,
+	}
+
+	return render(request, "top_slow_pages.html", {
+		"rows": aggregated,
+		"summary": summary,
+	})
+
 
 
 
@@ -121,8 +185,8 @@ def sharepoint_get_file(filename):
 	#destination_file = f'systemoversikt/import/{FILNAVN}'
 
 	#with open(destination_file, "wb") as local_file:
-	#	file.download(local_file)
-	#	ctx.execute_query()
+	#   file.download(local_file)
+	#   ctx.execute_query()
 	#print(f"Lastet ned fil til {destination_file} ")
 
 	#return {"destination_file": destination_file, "modified_date": modified_date}
@@ -856,9 +920,9 @@ def vulnstats(request):
 
 	#data["count_unike_alvorligheter"] = QualysVuln.objects.values('severity').annotate(count=Count('severity'))
 	#if len(data["count_unike_alvorligheter"]) > 0:
-	#	severities = {item['severity'] for item in data["count_unike_alvorligheter"]}
-	#	[data["count_unike_alvorligheter"].append({"severity": severity, "count": 0}) for severity in range(1, 6) if severity not in severities]
-	#	data["count_unike_alvorligheter"] = sorted(data["count_unike_alvorligheter"], key=lambda x: x['severity'], reverse=False)
+	#   severities = {item['severity'] for item in data["count_unike_alvorligheter"]}
+	#   [data["count_unike_alvorligheter"].append({"severity": severity, "count": 0}) for severity in range(1, 6) if severity not in severities]
+	#   data["count_unike_alvorligheter"] = sorted(data["count_unike_alvorligheter"], key=lambda x: x['severity'], reverse=False)
 
 	data["count_unike_alvorligheter_eol"] = list(QualysVuln.objects.filter(server__derived_os_endoflife=True).values('severity').annotate(count=Count('severity')))
 	if len(data["count_unike_alvorligheter_eol"]) > 0:
@@ -2120,6 +2184,7 @@ def systemer_vis_alle_optimized(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'aktuelle_systemer': systemer,
 	})
+
 
 
 
@@ -4227,23 +4292,23 @@ def databasestatistikk(request):
 
 
 #def logger_api_csirt(request):
-#	#viser der cisrt-spørringer feiler
-#	required_permissions = ['systemoversikt.view_applicationlog']
-#	if not any(map(request.user.has_perm, required_permissions)):
-#		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+#   #viser der cisrt-spørringer feiler
+#   required_permissions = ['systemoversikt.view_applicationlog']
+#   if not any(map(request.user.has_perm, required_permissions)):
+#       return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 #
-#	try:
-#		siste_kjoring = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").last().opprettet
-#		time_delta = siste_kjoring - datetime.timedelta(hours=1)
-#		recent_loggs = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").filter(message__icontains="Ingen treff").filter(opprettet__gte=time_delta).order_by('-opprettet')
-#	except:
-#		recent_loggs = None
+#   try:
+#       siste_kjoring = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").last().opprettet
+#       time_delta = siste_kjoring - datetime.timedelta(hours=1)
+#       recent_loggs = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").filter(message__icontains="Ingen treff").filter(opprettet__gte=time_delta).order_by('-opprettet')
+#   except:
+#       recent_loggs = None
 #
-#	return render(request, 'site_logger_audit.html', {
-#		'request': request,
-#		'required_permissions': formater_permissions(required_permissions),
-#		'recent_loggs': recent_loggs,
-#	})
+#   return render(request, 'site_logger_audit.html', {
+#       'request': request,
+#       'required_permissions': formater_permissions(required_permissions),
+#       'recent_loggs': recent_loggs,
+#   })
 
 
 
@@ -5069,7 +5134,7 @@ def search(request):
 		systemer_avviklet = System.objects.none()
 
 	#if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
-	#	return redirect('systemdetaljer', aktuelle_systemer[0].pk)
+	#   return redirect('systemdetaljer', aktuelle_systemer[0].pk)
 
 	aktuelle_systemer = aktuelle_systemer.order_by('-ibruk', Lower('systemnavn'))
 	potensielle_systemer = potensielle_systemer.order_by('ibruk', Lower('systemnavn'))
@@ -6522,7 +6587,7 @@ def alle_virksomheter_kontaktinfo(request):
 	#Vise oversikt over alle virksomheter
 	required_permissions = []
 	#if not any(map(request.user.has_perm, required_permissions)):
-	#	return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+	#   return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomheter = Virksomhet.objects.all().order_by('-ordinar_virksomhet', 'virksomhetsnavn')
 
@@ -7981,7 +8046,7 @@ def cmdb_bss(request, pk):
 		dbserver = CMDBdevice.objects.get(comp_name=db.db_server)
 		network_ip_address = dbserver.network_ip_address.all()
 		#except:
-		#	network_ip_address = []
+		#   network_ip_address = []
 		graf_data["nodes"].append(
 						{"data": {
 							"parent": identifiser_vlan(network_ip_address),
@@ -8020,8 +8085,8 @@ def cmdb_bs_disconnect(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	#for service in CMDBbs.objects.all():
-	#	service.systemreferanse = None
-	#	service.save()
+	#   service.systemreferanse = None
+	#   service.save()
 
 	from django.http import HttpResponseRedirect
 	return HttpResponseRedirect(reverse('alle_cmdbref_sok'))
@@ -10087,9 +10152,9 @@ def ubw_enhet(request, pk):
 					count_updated += 1
 
 				#except Exception as e:
-				#	error_message = ("Kunne ikke importere: %s" % e)
-				#	messages.warning(request, error_message)
-				#	print(error_message)
+				#   error_message = ("Kunne ikke importere: %s" % e)
+				#   messages.warning(request, error_message)
+				#   print(error_message)
 			else:
 				messages.warning(request, "Raden manglet beløp, ignorert")
 
@@ -10108,14 +10173,14 @@ def ubw_enhet(request, pk):
 			#print(file.name)
 			uploaded_file = {"name": file.name, "size": file.size,}
 			#if ".csv" in file.name:
-			#	#print("CSV")
-			#	decoded_file = file.read().decode('latin1').splitlines()
-			#	data = list(csv.DictReader(decoded_file, delimiter=";"))
-			#	# need to convert date string to date and amount to Decimal
-			#	for line in data:
-			#		line["voucher_date"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
-			#		line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
-			#		line["amount"] = Decimal((line["amount"].replace(",",".")))
+			#   #print("CSV")
+			#   decoded_file = file.read().decode('latin1').splitlines()
+			#   data = list(csv.DictReader(decoded_file, delimiter=";"))
+			#   # need to convert date string to date and amount to Decimal
+			#   for line in data:
+			#       line["voucher_date"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+			#       line["last_update"] = datetime.datetime.strptime(line["last_update"], "%d.%m.%Y").date() #DateField
+			#       line["amount"] = Decimal((line["amount"].replace(",",".")))
 
 			if ".xlsx" in file.name:
 				#print("Excel-import påstartet")
@@ -10137,9 +10202,9 @@ def ubw_enhet(request, pk):
 			import_function(data)
 
 			#except Exception as e:
-			#	error_message = ("Kunne ikke lese fil: %s" % e)
-			#	messages.warning(request, error_message)
-			#	print(error_message)
+			#   error_message = ("Kunne ikke lese fil: %s" % e)
+			#   messages.warning(request, error_message)
+			#   print(error_message)
 
 		uploaded_file = None
 		dager_gamle = int(request.GET.get("historikk", 365))

@@ -129,6 +129,7 @@ MIDDLEWARE = [
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'simple_history.middleware.HistoryRequestMiddleware',
 	'csp.middleware.CSPMiddleware',
+	'systemoversikt.middleware.request_logging.RequestLoggingMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.db"

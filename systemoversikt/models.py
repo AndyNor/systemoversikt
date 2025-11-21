@@ -14,6 +14,7 @@ from django.utils import timezone
 from datetime import timedelta
 import ast
 from django.db.models import Q
+from django.utils.timezone import now
 
 
 # Endre __str__ for User-klassen. User er innebygget i Django. User viser som standard bare "self.username". Vi ønsker å vise fult navn.
@@ -23,6 +24,24 @@ def new_display_name(self):
 	else:
 		return(self.first_name + " " + self.last_name + " (" + self.username + ")")
 User.add_to_class("__str__", new_display_name)
+
+
+
+class RequestLogs(models.Model):
+	path = models.CharField(max_length=500)
+	method = models.CharField(max_length=10)
+	user = models.CharField(max_length=150, null=True, blank=True)
+	status_code = models.IntegerField()
+	duration_ms = models.FloatField()
+	sql_queries = models.IntegerField(default=0)
+	sql_time_ms = models.FloatField(default=0)
+	timestamp = models.DateTimeField(default=now)
+
+	def __str__(self):
+		return f"{self.method} {self.path} - {self.duration_ms} ms ({self.sql_queries} queries)"
+
+	class Meta:
+		verbose_name_plural = "System: Page load statistics"
 
 
 

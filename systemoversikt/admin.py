@@ -68,6 +68,14 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 	return export_as_csv
 
 
+@admin.register(RequestLogs)
+class RequestLogsAdmin(admin.ModelAdmin):
+	list_display = ('path', 'method', 'user', 'status_code', 'duration_ms', 'sql_queries', 'sql_time_ms', 'timestamp')
+	list_filter = ('method', 'status_code', 'timestamp')
+	search_fields = ('path', 'user')
+	ordering = ('-timestamp',)
+
+
 @admin.register(EpostMottakere)
 class EpostMottakereAdmin(admin.ModelAdmin):
 	list_display=('epost', 'utsending_id')
