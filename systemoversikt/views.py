@@ -4177,7 +4177,7 @@ def roller(request):
 				unique_permissions.append({"content_type__app_label": p.content_type.app_label, "codename": p.codename})
 			export.append({"group": g.name, "permissions": unique_permissions})
 
-		return JsonResponse(export, safe=False)
+		return JsonResponse(export, safe=False, status=200)
 	else:
 		header = []
 		grupper_med_rettigheter = {}
@@ -4626,10 +4626,10 @@ def tjenestekatalogen_forvalter_api(request):
 					})
 
 			data = {"message": "OK", "data": forvaltere_eksport}
-			return JsonResponse(data, safe=False)
+			return JsonResponse(data, safe=False, status=200)
 
 		else:
-			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 	else:
 		raise Http404
 
@@ -4667,10 +4667,10 @@ def tjenestekatalogen_systemer_api(request):
 					})
 
 			data = {"message": "OK", "data": systemer_eksport}
-			return JsonResponse(data, safe=False)
+			return JsonResponse(data, safe=False, status=200)
 
 		else:
-			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 	else:
 		raise Http404
 
@@ -8435,7 +8435,7 @@ def systemer_api(request): #API
 		data.append(line)
 
 	resultat = {"antall systemer": len(query), "data": data}
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -8663,7 +8663,7 @@ def api_systemer_optimized(request):  # tjeneste- og systemoversikt
 		event_type="api_systemer",
 		message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder."
 	)
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -8703,7 +8703,7 @@ def api_systemtyper(request): #tjeneste- og systemoversikt
 	resultat = {"beskrivelse": "Systemtype-objekter fra Karoteket. Angir hva slags egenskaper systemer har. Kan være mange til mange mot system.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
 	ApplicationLog.objects.create(event_type="api_systemtyper", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -8741,7 +8741,7 @@ def api_programvarer(request): #tjeneste- og systemoversikt
 	resultat = {"beskrivelse": "Programvare-objekter fra Karoteket. Et system kan bestå av flere programvarer.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
 	ApplicationLog.objects.create(event_type="api_programvarer", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -8782,7 +8782,7 @@ def api_driftsplattformer(request): #tjeneste- og systemoversikt
 	resultat = {"beskrivelse": "Driftsplattform-objekter fra Karoteket. Systemer kan bare være koblet til én driftsplattform.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
 	ApplicationLog.objects.create(event_type="api_driftsplattformer", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -8820,7 +8820,7 @@ def api_leverandorer(request): #tjeneste- og systemoversikt
 	resultat = {"beskrivelse": "Leverandør-objekter fra Karoteket.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
 	ApplicationLog.objects.create(event_type="api_leverandorer", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 """
@@ -8918,7 +8918,7 @@ def api_systemintegrasjoner_optimized(request):  # tjeneste- og systemoversikt
 		event_type="api_systemintegrasjoner",
 		message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder."
 	)
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -8958,7 +8958,7 @@ def api_los(request): #tjeneste- og systemoversikt
 	resultat = {"beskrivelse": "LOS rammeverk-objekter fra Karoteket. Kategoribibliotek fra DigDir systemer kobles til. Se https://www.digdir.no/informasjonsforvaltning/los-felles-vokabular-klassifisering-av-offentlige-tjenester-og-ressurser/2434", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
 	ApplicationLog.objects.create(event_type="api_los", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -8994,7 +8994,7 @@ def api_kritiske_funksjoner(request): #tjeneste- og systemoversikt
 	resultat = {"beskrivelse": "Kritisk funksjon-objekter fra Karoteket. Koblet til KritiskKapabilitet-objektet og kommer fra DSB-rammeverk manuelt skrevet inn.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
 	ApplicationLog.objects.create(event_type="api_kritiske_funksjoner", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 def api_kritiske_kapabiliteter(request): #tjeneste- og systemoversikt
@@ -9030,7 +9030,7 @@ def api_kritiske_kapabiliteter(request): #tjeneste- og systemoversikt
 	resultat = {"beskrivelse": "Kritisk kapabilitet-objekter. Koblet til Systemer, og kommer fra DSB-rammeverk manuelt skrevet inn.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
 	ApplicationLog.objects.create(event_type="api_kritiske_kapabiliteter", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -9086,7 +9086,7 @@ def api_virksomheter(request): #tjeneste- og systemoversikt
 	resultat = {"beskrivelse": "Virksomhet-objekter fra Kartoteket. odepartmentnumber er ID fra HR-systemet. Sjekk klassen SystemBruk for oversikt over hvilke systemer en enkelt virksomhet bruker.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
 	ApplicationLog.objects.create(event_type="api_virksomheter", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 """
@@ -9178,7 +9178,7 @@ def api_systembruk_optimized(request):
 	resultat = {"beskrivelse": "SystemBruk-objekter fra Kartoteket", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
 	ApplicationLog.objects.create(event_type="api_systembruk", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -9192,14 +9192,14 @@ def system_excel_api(request, virksomhet_pk=None): #API
 		raise Http404
 
 	if not virksomhet_pk:
-		return JsonResponse({"status": "Ingen virksomhet valgt", "data": None}, safe=False)
+		return JsonResponse({"status": "Ingen virksomhet valgt", "data": None}, safe=False, status=200)
 
 	virksomhet = Virksomhet.objects.get(pk=virksomhet_pk)
 
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="virksomhet_").values_list("key", flat=True)
 	if not key in list(allowed_keys):
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	relevante_systemer = []
 
@@ -9236,7 +9236,7 @@ def system_excel_api(request, virksomhet_pk=None): #API
 
 	status = "OK. Data for %s." % virksomhet.virksomhetsforkortelse
 	resultat = {"status": status, "data": data}
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -9247,7 +9247,7 @@ def iga_api(request): #API
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="iga").values_list("key", flat=True)
 	if not key in list(allowed_keys):
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	data = []
 	for s in System.objects.all():
@@ -9267,7 +9267,7 @@ def iga_api(request): #API
 		systeminfo["service_offerings"] = [offering.navn for offering in s.service_offerings.all()]
 		data.append(systeminfo)
 
-	return JsonResponse(data, safe=False)
+	return JsonResponse(data, safe=False, status=200)
 
 
 
@@ -9278,7 +9278,7 @@ def get_api_tilganger(request): #API
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="get_api_tilganger").values_list("key", flat=True)
 	if not key in list(allowed_keys):
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	business_services = set()
 	email = request.GET.get('email', '').strip()
@@ -9296,7 +9296,7 @@ def get_api_tilganger(request): #API
 			business_services.add(system.bs_system_referanse.navn)
 
 	result = {"email": email, "username": user.username, "business_services": list(business_services)}
-	return JsonResponse(result, safe=False)
+	return JsonResponse(result, safe=False, status=200)
 
 
 # denne er ikke lenger i bruk
@@ -9391,7 +9391,7 @@ def csirt_iplookup_api(request):
 	allowed_keys = APIKeys.objects.filter(navn__startswith="vulnapp").values_list("key", flat=True)
 	if not key in list(allowed_keys) and not os.environ['THIS_ENV'] == "TEST":
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil eller tom API-nøkkel")
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	from django.core.exceptions import ObjectDoesNotExist
 	import ipaddress
@@ -9400,12 +9400,12 @@ def csirt_iplookup_api(request):
 	port_string = request.GET.get('port', '').strip()
 	if ip_string == '':
 		#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Ingen treff på tom IP-adresse")
-		return JsonResponse({"error": "Ingen IP-adresse oppgitt. Send som GET-variabel 'ip'"}, safe=False)
+		return JsonResponse({"error": "Ingen IP-adresse oppgitt. Send som GET-variabel 'ip'"}, safe=False, status=200)
 	try:
 		ip = ipaddress.ip_address(ip_string)
 	except ValueError:
 		#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på ugyldig IP-adresse {ip_string}")
-		return JsonResponse({"error": "Ikke en gyldig IP-adresse"}, safe=False)
+		return JsonResponse({"error": "Ikke en gyldig IP-adresse"}, safe=False, status=200)
 
 
 	if DNSrecord.objects.filter(ip_address=ip_string).count() <= 15:
@@ -9449,7 +9449,7 @@ def csirt_iplookup_api(request):
 
 	except ObjectDoesNotExist:
 		#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Ingen treff på {ip_string}")
-		return JsonResponse({"error": "Ingen treff på IP-adresse"}, safe=False)
+		return JsonResponse({"error": "Ingen treff på IP-adresse"}, safe=False, status=200)
 
 	data = {
 		"query_ip": ip_string,
@@ -9462,7 +9462,7 @@ def csirt_iplookup_api(request):
 
 	source_ip = get_client_ip(request)
 	ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Vellykket kall mot {ip_string} utført fra {source_ip}")
-	return JsonResponse(data, safe=False)
+	return JsonResponse(data, safe=False, status=200)
 
 
 
@@ -9519,7 +9519,7 @@ def vav_akva_api(request): #API
 
 	source_ip = get_client_ip(request)
 	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message=f"Vellykket kall fra {source_ip}")
-	return JsonResponse(data, safe=False)
+	return JsonResponse(data, safe=False, status=200)
 
 
 @csrf_exempt
@@ -9548,7 +9548,7 @@ def api_known_exploited(request): #API
 			print(f"Updated {count} known exploited CVEs")
 
 			ApplicationLog.objects.create(event_type=event_type, message=f"Vellykket oppdatering fra {get_client_ip(request)}")
-			return JsonResponse({'message': 'Thanks for the update!'})
+			return JsonResponse({'message': 'Thanks for the update!'}, status=200)
 		except json.JSONDecodeError:
 			ApplicationLog.objects.create(event_type=event_type, message=f"Invalid JSON fra {get_client_ip(request)}")
 			return JsonResponse({'error': 'Invalid JSON'}, status=400)
@@ -9580,7 +9580,7 @@ def api_programvare_vulnapp(request): #API
 	#leverandorer = Leverandor.objects.values_list('leverandor_navn', flat=True).distinct()
 	#systemer = System.objects.values_list('systemnavn', flat=True).distinct()
 	ApplicationLog.objects.create(event_type="API programvare", message=f"Vellykket kall fra {get_client_ip(request)}")
-	return JsonResponse(data, safe=False)
+	return JsonResponse(data, safe=False, status=200)
 
 
 
@@ -9613,7 +9613,7 @@ def behandlingsoversikt_api(request): #API
 
 	source_ip = get_client_ip(request)
 	ApplicationLog.objects.create(event_type="API Behandlingsoversikt", message=f"Vellykket kall fra {source_ip}")
-	return JsonResponse(data, safe=False)
+	return JsonResponse(data, safe=False, status=200)
 
 
 
@@ -9624,7 +9624,7 @@ def csirt_api(request): #API
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="csirt").values_list("key", flat=True)
 	if not key in list(allowed_keys):
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	data = []
 	for s in System.objects.all():
@@ -9641,7 +9641,7 @@ def csirt_api(request): #API
 		systeminfo["systemforvalter"] = s.systemforvalter.virksomhetsforkortelse if s.systemforvalter else None
 		data.append(systeminfo)
 
-	return JsonResponse(data, safe=False)
+	return JsonResponse(data, safe=False, status=200)
 
 
 
@@ -9655,7 +9655,7 @@ def cmdb_api(request): #API
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="api_cmdb").values_list("key", flat=True)
 	if not key in list(allowed_keys):
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	data = []
 	# tar ikke med tykke klienter da disse 11k per nå bare vil støye ned
@@ -9723,7 +9723,7 @@ def cmdb_api(request): #API
 		data.append(line)
 		resultat = {"antall bss": len(query), "data": data}
 
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -9735,7 +9735,7 @@ def cmdb_api_kompass(request): #API
 	key = request.headers.get("key", None)
 	allowed_keys = APIKeys.objects.filter(navn__startswith="api_cmdb_kompass").values_list("key", flat=True)
 	if not key in list(allowed_keys):
-		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False,status=403)
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 	data = []
 	query = CMDBbs.objects.filter(operational_status=True)#.filter(~Q(navn="OK-Tykklient"))
@@ -9770,7 +9770,7 @@ def cmdb_api_kompass(request): #API
 		data.append(line)
 
 	resultat = {"antall business services": len(query), "data": data}
-	return JsonResponse(resultat, safe=False)
+	return JsonResponse(resultat, safe=False, status=200)
 
 
 
@@ -10124,7 +10124,7 @@ def ubw_api(request, pk): #API
 		# ta vare på dette.
 		faktura_eksport.append(eksportdata)
 
-	return JsonResponse(faktura_eksport, safe=False)
+	return JsonResponse(faktura_eksport, safe=False, status=200)
 
 
 
