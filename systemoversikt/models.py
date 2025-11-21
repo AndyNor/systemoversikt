@@ -35,6 +35,7 @@ class RequestLogs(models.Model):
 	duration_ms = models.FloatField()
 	sql_queries = models.IntegerField(default=0)
 	sql_time_ms = models.FloatField(default=0)
+	source_ip = models.CharField(max_length=45, null=True, blank=True)  # IPv4/IPv6
 	timestamp = models.DateTimeField(default=now)
 
 	def __str__(self):
