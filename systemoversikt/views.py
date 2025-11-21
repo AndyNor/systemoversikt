@@ -29,7 +29,63 @@ from django.utils import timezone
 LEVERANDORTILGANG_KJENTE_GRUPPER = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS', 'DS-DRIFT_SC2_']
 
 
+
+def recent_errors(request):
+	required_permissions = ['systemoversikt.view_qualysvuln'] # en rettighet veldig få har
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	# Query params
+	try:
+		days = int(request.GET.get("days", 7))  # Default: last 7 days
+	except ValueError:
+		days = 7
+
+	status_filter = request.GET.get("status")  # e.g., "500" or "4xx"
+	limit = int(request.GET.get("limit", 100))  # Default: 100 rows
+
+	start_date = timezone.now() - timezone.timedelta(days=days)
+
+	# Base queryset
+	qs = RequestLogs.objects.filter(timestamp__gte=start_date).exclude(status_code=200)
+
+	# Apply status filter
+	if status_filter:
+		if status_filter.endswith("xx") and len(status_filter) == 3:
+			# e.g., "4xx" → filter 400-499
+			prefix = int(status_filter[0])
+			qs = qs.filter(status_code__gte=prefix * 100, status_code__lt=(prefix + 1) * 100)
+		else:
+			try:
+				code = int(status_filter)
+				qs = qs.filter(status_code=code)
+			except ValueError:
+				pass  # Ignore invalid status filter
+
+	errors = qs.order_by('-timestamp')[:limit]
+
+	return render(request, 'recent_errors.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'errors': errors,
+		'summary': {
+			'days': days,
+			'status_filter': status_filter,
+			'limit': limit,
+			'count': qs.count(),
+			'from': start_date,
+			'to': timezone.now(),
+		}
+	})
+
+
+
+
+
 def top_slow_pages(request: HttpRequest):
+	required_permissions = ['systemoversikt.view_qualysvuln'] # en rettighet veldig få har
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 	"""
 	Prioritize endpoints that consume the most total time in the last 7 days.
 	Supports:
@@ -91,6 +147,8 @@ def top_slow_pages(request: HttpRequest):
 	}
 
 	return render(request, "top_slow_pages.html", {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
 		"rows": aggregated,
 		"summary": summary,
 	})

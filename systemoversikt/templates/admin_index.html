@@ -11,7 +11,15 @@
 	<a href="{{ url_admin_visitors }}" class="btn btn-sm btn-link {% if url_admin_visitors in request.path %}fremhev{% endif %}">Bruksoversikt</a><br>
 
 	<hr>
+	<h6>Monitorering</h6>
+	{% url 'top_slow_pages' as url_top_slow_pages %}
+	<a href="{{ url_top_slow_pages }}" class="btn btn-sm btn-link {% if url_top_slow_pages in request.path %}fremhev{% endif %}">📖 Aksess: trege sider</a><br>
 
+	{% url 'recent_errors' as url_recent_errors %}
+	<a href="{{ url_recent_errors }}" class="btn btn-sm btn-link {% if url_recent_errors in request.path %}fremhev{% endif %}">📖 Aksess: feilsituasjoner</a><br>
+
+
+	<hr>
 	<h6>Logger</h6>
 	{% url 'logger' as url_logger %}
 	<a href="{{ url_logger }}" class="btn btn-sm btn-link {% if url_logger in request.path %}fremhev{% endif %}">📖 Redigeringslogg</a><br>

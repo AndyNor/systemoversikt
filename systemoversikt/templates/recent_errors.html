@@ -1,0 +1,61 @@
+{% extends "system_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+    Error Logs
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>
+  Showing {{ summary.count }} errors from {{ summary.from }} to {{ summary.to }}.
+</p>
+
+<form method="get" class="form-inline" style="margin-bottom: 1rem;">
+  <label>Days:&nbsp;
+    <input type="number" name="days" value="{{ summary.days }}" min="1" step="1">
+  </label>
+  &nbsp;&nbsp;
+  <label>Status:&nbsp;
+    <input type="text" name="status" value="{{ summary.status_filter }}" placeholder="e.g. 500 or 4xx">
+  </label>
+  &nbsp;&nbsp;
+  <label>Limit:&nbsp;
+    <input type="number" name="limit" value="{{ summary.limit }}" min="10" step="10">
+  </label>
+  &nbsp;&nbsp;
+  <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+</form>
+
+<table class="table table-striped table-sm">
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>Status</th>
+      <th>Path</th>
+      <th>Method</th>
+      <th>User</th>
+      <th>Duration (ms)</th>
+      <th>SQL Queries</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for e in errors %}
+    <tr>
+      <td>{{ e.timestamp }}</td>
+      <td><strong>{{ e.status_code }}</strong></td>
+      <td><code>{{ e.path }}</code></td>
+      <td>{{ e.method }}</td>
+      <td>{{ e.user }}</td>
+      <td>{{ e.duration_ms }}</td>
+      <td>{{ e.sql_queries }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock hovedinnhold %}
