@@ -8667,7 +8667,7 @@ def api_leverandorer(request): #tjeneste- og systemoversikt
 	return JsonResponse(resultat, safe=False)
 
 
-
+"""
 def api_systemintegrasjoner(request): #tjeneste- og systemoversikt
 	if not request.method == "GET":
 		raise Http404
@@ -8704,7 +8704,7 @@ def api_systemintegrasjoner(request): #tjeneste- og systemoversikt
 
 	ApplicationLog.objects.create(event_type="api_systemintegrasjoner", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
 	return JsonResponse(resultat, safe=False)
-
+"""
 
 
 
