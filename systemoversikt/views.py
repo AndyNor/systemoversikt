@@ -5932,8 +5932,11 @@ def rapport_trusted_delegation(request):
 	for b in brukere:
 		try:
 			b.spns = json.loads(b.profile.service_principal_name)
-		except:
-			b.spns = None
+			if not isinstance(b.spns, list):  # Ensure it's a list
+				b.spns = [str(b.spns)]
+		except Exception:
+			b.spns = []
+
 
 	return render(request, 'rapport_trusted_delegation.html', {
 		"request": request,
