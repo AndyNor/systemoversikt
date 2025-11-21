@@ -8284,7 +8284,7 @@ def systemer_api(request): #API
 
 
 
-
+"""
 ### Her kommer API-er benyttet av ny tjeneste og systemoversikt ###
 def api_systemer(request): #tjeneste- og systemoversikt
 	if not request.method == "GET":
@@ -8359,6 +8359,156 @@ def api_systemer(request): #tjeneste- og systemoversikt
 
 	ApplicationLog.objects.create(event_type="api_systemer", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
 	return JsonResponse(resultat, safe=False)
+"""
+
+
+
+
+def api_systemer_optimized(request):  # tjeneste- og systemoversikt
+	if request.method != "GET":
+		raise Http404
+
+	key = request.headers.get("key")
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if key not in allowed_keys:
+		return JsonResponse(
+			{"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None},
+			safe=False, status=403
+		)
+
+	ApplicationLog.objects.create(
+		event_type="api_systemer",
+		message=f"Innkommende kall fra {get_client_ip(request)}"
+	)
+	runtime_t0 = time.time()
+
+	query = (
+		System.objects.all()
+		.select_related(
+			"systemeier",
+			"systemforvalter",
+			"driftsmodell_foreignkey",
+			"systemforvalter_avdeling_referanse",
+		)
+		.prefetch_related(
+			# collections
+			"systemurl",
+			"systemtyper",
+			"programvarer",
+			"LOSref",
+			"kritisk_kapabilitet",
+			"systemleverandor",
+			"basisdriftleverandor",
+			"applikasjonsdriftleverandor",
+			"service_offerings",
+			# contact persons + their user object to get email without extra hops
+			"systemeier_kontaktpersoner_referanse__brukernavn",
+			"systemforvalter_kontaktpersoner_referanse__brukernavn",
+		)
+	)
+
+	data = []
+	for system in query:
+		# Read prefetched relations once (no extra queries)
+		systemurls = [url.domene for url in system.systemurl.all()]
+		systemtyper = [{"class": "Systemtype", "id": st.pk} for st in system.systemtyper.all()]
+		programvarer = [{"class": "Programvare", "id": pv.pk} for pv in system.programvarer.all()]
+		losref = [{"class": "LOS", "id": los.pk} for los in system.LOSref.all()]
+		kapabilitet = [{"class": "KritiskKapabilitet", "id": k.pk} for k in system.kritisk_kapabilitet.all()]
+		leverandor = [{"class": "Leverandor", "id": l.pk} for l in system.systemleverandor.all()]
+		basisdrift = [{"class": "Leverandor", "id": l.pk} for l in system.basisdriftleverandor.all()]
+		applikasjonsdrift = [{"class": "Leverandor", "id": l.pk} for l in system.applikasjonsdriftleverandor.all()]
+		offerings_external = [off.bss_external_ref for off in system.service_offerings.all()]
+		offerings_names = [off.navn for off in system.service_offerings.all()]
+
+		systemeier_kontakter = [
+			ansvarlig.brukernavn.email
+			for ansvarlig in system.systemeier_kontaktpersoner_referanse.all()
+		]
+		systemforvalter_kontakter = [
+			ansvarlig.brukernavn.email
+			for ansvarlig in system.systemforvalter_kontaktpersoner_referanse.all()
+		]
+
+		line = {
+			"class": "System",
+			"id": system.pk,
+			"kartotek_url": f"https://kartoteket.oslo.kommune.no/systemer/detaljer/{system.pk}/",
+			"opprettet": system.opprettet,
+			"sist_oppdatert": system.sist_oppdatert,
+			"navn": system.systemnavn,
+			"visningsnavn": str(system),
+			"alias": system.alias,
+			"beskrivelse": system.systembeskrivelse,
+
+			"livslop_status": system.get_livslop_status_display(),
+			"ibruk": system.er_ibruk(),
+			"urler": systemurls,
+			"systemtyper": systemtyper,
+			"programvarer": programvarer,
+
+			"eierskapsmodell": system.get_systemeierskapsmodell_display(),
+			"systemeier_virksomhet": {"class": "Virksomhet", "id": system.systemeier.id} if system.systemeier else None,
+			"systemeier_kontaktpersoner": systemeier_kontakter,
+			"systemforvalter_virksomhet": {"class": "Virksomhet", "id": system.systemforvalter.id} if system.systemforvalter else None,
+			"systemforvalter_kontaktpersoner": systemforvalter_kontakter,
+			"systemforvalter_orgenhet_ouid": (
+				{
+					"hr_ouid": system.systemforvalter_avdeling_referanse.ouid,
+					"hr_navn": system.systemforvalter_avdeling_referanse.ou,
+				}
+				if system.systemforvalter_avdeling_referanse
+				else None
+			),
+			"forvaltning_epost": system.forvaltning_epost,
+			"superbrukere": system.superbrukere,
+			"nokkelpersonell": system.nokkelpersonell,
+
+			"driftsplattform": {
+				"class": "Driftsplattform",
+				"id": system.driftsmodell_foreignkey.pk if system.driftsmodell_foreignkey else None,
+			},
+
+			"konfidensialitet": system.vis_konfidensialitet(),
+			"tilgjengelighet": system.vis_tilgjengelighet(),
+			"integritetsvurdering": system.vis_integritetsvurdering(),
+
+			"teknisk_egnethet": system.get_teknisk_egnethet_display(),
+			"strategisk_egnethet": system.get_strategisk_egnethet_display(),
+			"funksjonell_egnethet": system.get_funksjonell_egnethet_display(),
+
+			"kommune_los": losref,
+			"dsb_kapabilitet": kapabilitet,
+
+			"systemleverandor": leverandor,
+			"basisdriftleverandor": basisdrift,
+			"applikasjonsdriftleverandor": applikasjonsdrift,
+
+			"service_offerings_external_id": offerings_external,
+			"service_offerings_navn": offerings_names,
+		}
+
+		data.append(line)
+
+	delta = round(time.time() - runtime_t0, 3)
+
+	resultat = {
+		"beskrivelse": (
+			"System-objekter fra Kartoteket. For oversikt over virksomheter som bruker systemet, "
+			"se klassen SystemBruk. systemforvalter_orgenhet_ouid er ID fra HR. Ved integrasjon kan "
+			"hr_navn ignoreres og erstattes med data rett fra HR."
+		),
+		"antall": len(query),
+		"kjoretid": f"{delta}",
+		"data": data,
+	}
+
+	ApplicationLog.objects.create(
+		event_type="api_systemer",
+		message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder."
+	)
+	return JsonResponse(resultat, safe=False)
+
 
 
 
@@ -8556,6 +8706,67 @@ def api_systemintegrasjoner(request): #tjeneste- og systemoversikt
 	return JsonResponse(resultat, safe=False)
 
 
+
+
+def api_systemintegrasjoner_optimized(request):  # tjeneste- og systemoversikt
+	if request.method != "GET":
+		raise Http404
+
+	key = request.headers.get("key")
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if key not in allowed_keys:
+		return JsonResponse(
+			{"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None},
+			safe=False, status=403
+		)
+
+	ApplicationLog.objects.create(
+		event_type="api_systemintegrasjoner",
+		message=f"Innkommende kall fra {get_client_ip(request)}"
+	)
+	runtime_t0 = time.time()
+
+	query = (
+		SystemIntegration.objects.all()
+		.select_related("source_system", "destination_system")
+	)
+
+	data = []
+	for integrasjon in query:
+		line = {
+			"class": "SystemIntegration",
+			"id": integrasjon.pk,
+			"opprettet": integrasjon.opprettet,
+			"sist_oppdatert": integrasjon.sist_oppdatert,
+			"system_kilde": {"class": "System", "id": integrasjon.source_system.pk},
+			"system_destinasjon": {"class": "System", "id": integrasjon.destination_system.pk},
+			"integrasjonstype": {
+				"id": integrasjon.integration_type,
+				"navn": integrasjon.get_integration_type_display(),
+			},
+			"bool_personopplysninger": integrasjon.personopplysninger,
+			"beskrivelse": integrasjon.description,
+		}
+		data.append(line)
+
+	delta = round(time.time() - runtime_t0, 3)
+
+	resultat = {
+		"beskrivelse": "Systemintegrasjon-objekter fra Karoteket. Beskriver avhengigheter mellom to systemer.",
+		"antall": len(query),
+		"kjoretid": f"{delta}",
+		"data": data,
+	}
+
+	ApplicationLog.objects.create(
+		event_type="api_systemintegrasjoner",
+		message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder."
+	)
+	return JsonResponse(resultat, safe=False)
+
+
+
+
 def api_los(request): #tjeneste- og systemoversikt
 	if not request.method == "GET":
 		raise Http404
@@ -8722,7 +8933,7 @@ def api_virksomheter(request): #tjeneste- og systemoversikt
 	return JsonResponse(resultat, safe=False)
 
 
-
+"""
 def api_systembruk(request): #tjeneste- og systemoversikt. Alle aktive systembruk (ibruk=True).
 	if not request.method == "GET":
 		raise Http404
@@ -8765,6 +8976,55 @@ def api_systembruk(request): #tjeneste- og systemoversikt. Alle aktive systembru
 
 	ApplicationLog.objects.create(event_type="api_systembruk", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
 	return JsonResponse(resultat, safe=False)
+"""
+
+
+def api_systembruk_optimized(request):
+	if request.method != "GET":
+		raise Http404
+
+	key = request.headers.get("key")
+	allowed_keys = APIKeys.objects.filter(navn="tjenester_og_systemer").values_list("key", flat=True)
+	if key not in allowed_keys:
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	ApplicationLog.objects.create(event_type="api_systembruk", message=f"Innkommende kall fra {get_client_ip(request)}")
+	runtime_t0 = time.time()
+
+	query = (
+		SystemBruk.objects.filter(ibruk=True)
+		.select_related("system", "brukergruppe", "systemforvalter")
+		.prefetch_related(
+			"systemforvalter_kontaktpersoner_referanse__brukernavn",
+			"systemeier_kontaktpersoner_referanse__brukernavn"
+		)
+	)
+
+	data = []
+	for systembruk in query:
+		line = {
+			"class": "SystemBruk",
+			"id": systembruk.pk,
+			"kommentar": systembruk.kommentar,
+			"antall_brukere": systembruk.antall_brukere,
+			"system": {"class": "System", "id": systembruk.system.pk},
+			"virksomhet": {"class": "Virksomhet", "id": systembruk.brukergruppe.pk},
+			"lokal_konfidensialitetsvurdering": systembruk.get_konfidensialitetsvurdering_display(),
+			"lokal_integritetsvurdering": systembruk.get_integritetsvurdering_display(),
+			"lokal_tilgjengelighetsvurdering": systembruk.get_tilgjengelighetsvurdering_display(),
+			"lokal_systemforvalter_virksomhet": {"class": "Virksomhet", "id": systembruk.systemforvalter.pk} if systembruk.systemforvalter else None,
+			"lokal_systemforvalter_kontaktpersoner": [ansvarlig.brukernavn.email for ansvarlig in systembruk.systemforvalter_kontaktpersoner_referanse.all()],
+			"lokal_systemeier_kontaktpersoner": [ansvarlig.brukernavn.email for ansvarlig in systembruk.systemeier_kontaktpersoner_referanse.all()],
+		}
+		data.append(line)
+
+	delta = round(time.time() - runtime_t0, 3)
+	resultat = {"beskrivelse": "SystemBruk-objekter fra Kartoteket", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+
+	ApplicationLog.objects.create(event_type="api_systembruk", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
+	return JsonResponse(resultat, safe=False)
+
+
 
 
 

@@ -349,14 +349,14 @@ urlpatterns = [
 
 
 	# system og tjenesteoversikt
-	re_path(r'^api/systemer/$', views.api_systemer, name='api_systemer'), # Tjeneste- og systemoversikt
+	re_path(r'^api/systemer/$', views.api_systemer_optimized, name='api_systemer'), # Tjeneste- og systemoversikt
 	re_path(r'^api/virksomheter/$', views.api_virksomheter, name='api_virksomheter'), # Tjeneste- og systemoversikt
-	re_path(r'^api/systembruk/$', views.api_systembruk, name='api_systembruk'), # Tjeneste- og systemoversikt
+	re_path(r'^api/systembruk/$', views.api_systembruk_optimized, name='api_systembruk'), # Tjeneste- og systemoversikt
 	re_path(r'^api/systemtyper/$', views.api_systemtyper, name='api_systemtyper'), # Tjeneste- og systemoversikt
 	re_path(r'^api/programvarer/$', views.api_programvarer, name='api_programvarer'), # Tjeneste- og systemoversikt
 	re_path(r'^api/driftsplattformer/$', views.api_driftsplattformer, name='api_driftsplattformer'), # Tjeneste- og systemoversikt
 	re_path(r'^api/leverandorer/$', views.api_leverandorer, name='api_leverandorer'), # Tjeneste- og systemoversikt
-	re_path(r'^api/systemintegrasjoner/$', views.api_systemintegrasjoner, name='api_systemintegrasjoner'), # Tjeneste- og systemoversikt
+	re_path(r'^api/systemintegrasjoner/$', views.api_systemintegrasjoner_optimized, name='api_systemintegrasjoner'), # Tjeneste- og systemoversikt
 	re_path(r'^api/los/$', views.api_los, name='api_los'), # Tjeneste- og systemoversikt
 	re_path(r'^api/kritiske_funksjoner/$', views.api_kritiske_funksjoner, name='api_kritiske_funksjoner'), # Tjeneste- og systemoversikt
 	re_path(r'^api/kritiske_kapabiliteter/$', views.api_kritiske_kapabiliteter, name='api_kritiske_kapabiliteter'), # Tjeneste- og systemoversikt
