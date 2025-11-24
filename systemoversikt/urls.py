@@ -342,7 +342,7 @@ urlpatterns = [
 	# Alle API-er
 	re_path(r'^systemer/behandlingsoversikt/api/$', views.behandlingsoversikt_api, name='behandlingsoversikt_api'), # Overføring av systemer til behandlingsoversikten
 	re_path(r'^api/vav/akva/$', views.vav_akva_api, name='vav_akva_api'), # Overføring av data om systemer til VAV sitt AKVA-system
-	re_path(r'^get-api/tilgangsgrupper/$', views.tilgangsgrupper_api, name='tilgangsgrupper_api'), # Brukes for å søke opp medlemmer av AD-grupper, flere brukere inkl. SYE
+	re_path(r'^get-api/tilgangsgrupper/$', views.tilgangsgrupper_api_optimized, name='tilgangsgrupper_api'), # Brukes for å søke opp medlemmer av AD-grupper, flere brukere inkl. SYE
 
 
 	# Sårbarhetsoversikten / vulnapp

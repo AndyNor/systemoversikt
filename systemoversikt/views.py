@@ -8403,6 +8403,123 @@ def tilgangsgrupper_api(request): #API
 
 
 
+def tilgangsgrupper_api_optimized(request):
+	if request.method != "GET":
+		raise Http404
+
+	# --- API key logic unchanged ---
+	key = request.headers.get("key", None)
+	allowed_keys = APIKeys.objects.filter(navn__startswith="api_tilgangsgrupper").values_list("key", flat=True)
+	if key not in list(allowed_keys):
+		return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
+
+	from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
+	try:
+		owner = APIKeys.objects.get(key=key).navn
+	except MultipleObjectsReturned:
+		owner = "Flere treff på nøkkeleier"
+
+	source_ip = get_client_ip(request)
+	ApplicationLog.objects.create(event_type="API AD-grupper", message=f"Nøkkel tilhørende {owner} fra {source_ip}")
+
+	if "gruppenavn" not in request.GET:
+		return JsonResponse({"message": "Du må oppgi et gruppenavn som GET-variabel. ?gruppenavn=<navn>", "data": None}, safe=False, status=400)
+
+	sporring = request.GET["gruppenavn"]
+	try:
+		adgruppe = ADgroup.objects.get(common_name__iexact=sporring)
+	except MultipleObjectsReturned:
+		return JsonResponse({"spørring": sporring, "status": "Spørringen gav flere treff. Dette burde ikke skje og bør undersøkes.", "data": []}, safe=False, status=404)
+	except ObjectDoesNotExist:
+		return JsonResponse({"spørring": sporring, "status": "Spørringen gav ingen treff. Vennligst oppgi et gyldig gruppenavn.", "data": []}, safe=False, status=404)
+	except:
+		return JsonResponse({"spørring": sporring, "status": "Ukjent feil", "data": []}, safe=False, status=500)
+
+	# --- Extract members ---
+	try:
+		member_dns = json.loads(adgruppe.member) or []
+	except json.JSONDecodeError:
+		member_dns = []
+	try:
+		memberof_dns = json.loads(adgruppe.memberof) or []
+	except json.JSONDecodeError:
+		memberof_dns = []
+
+	# Precompile regex
+	dn_re = re.compile(r'cn=([^,]*)', re.I)
+
+	def extract_username(dn):
+		match = dn_re.search(dn)
+		return match.group(1) if match else None
+
+	member_usernames = [extract_username(dn) for dn in member_dns]
+	memberof_usernames = [extract_username(dn) for dn in memberof_dns]
+	all_usernames = {u.lower() for u in member_usernames + memberof_usernames if u}
+
+	# --- Bulk query for all users ---
+	users = (
+		User.objects
+		.annotate(username_l=Lower("username"))
+		.filter(username_l__in=all_usernames)
+		.select_related("profile__virksomhet")
+	)
+	user_map = {u.username.lower(): u for u in users}
+
+	def build_user(username):
+		if not username:
+			return {"medlem": None, "status": "Ugyldig DN", **empty_user_fields()}
+		user = user_map.get(username.lower())
+		if user:
+			p = user.profile
+			virksomhet = p.virksomhet.virksomhetsforkortelse if p.virksomhet else "Ukjent"
+			return {
+				"medlem": user.username,
+				"status": "Treff på bruker i AD",
+				"user_full_name": p.displayName,
+				"user_from_prk": p.from_prk,
+				"user_last_loggon": p.lastLogonTimestamp,
+				"user_passwd_expire": p.userPasswordExpiry,
+				"user_created": p.whenCreated,
+				"user_virksomhet": virksomhet,
+				"user_description": p.description,
+				"user_disabled": p.accountdisable,
+				"user_passwd_never_expire": p.dont_expire_password,
+			}
+		return {"medlem": username, "status": "Ingen treff på bruker i AD. Kanskje objektet er en tilgangsgruppe?", **empty_user_fields()}
+
+	def empty_user_fields():
+		return {
+			"user_full_name": None,
+			"user_from_prk": None,
+			"user_last_loggon": None,
+			"user_passwd_expire": None,
+			"user_created": None,
+			"user_virksomhet": None,
+			"user_description": None,
+			"user_disabled": None,
+			"user_passwd_never_expire": None,
+		}
+
+	medlemmer = [build_user(u) for u in member_usernames]
+	memberof = [build_user(u) for u in memberof_usernames]
+
+	data = {
+		"common_name": adgruppe.common_name,
+		"distinguishedname": adgruppe.distinguishedname,
+		"sist_oppdatert": adgruppe.sist_oppdatert,
+		"description": adgruppe.description,
+		"membercount": adgruppe.membercount,
+		"from_prk": adgruppe.from_prk,
+		"mail_enabled": adgruppe.mail,
+		"medlemmer": medlemmer,
+		"memberof": memberof,
+	}
+
+	return JsonResponse({"spørring": sporring, "data": data}, safe=False, status=200)
+
+
+
+
 def systemer_api(request): #API
 
 	if not request.method == "GET":
