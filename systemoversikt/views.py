@@ -8319,7 +8319,7 @@ def recursive_group_members(request, group):
 	})
 
 
-
+"""
 def tilgangsgrupper_api(request): #API
 	if not request.method == "GET":
 		raise Http404
@@ -8400,7 +8400,7 @@ def tilgangsgrupper_api(request): #API
 
 	resultat = {"spørring": sporring, "data": data}
 	return JsonResponse(resultat, safe=False, status=200)
-
+"""
 
 
 def tilgangsgrupper_api_optimized(request):
