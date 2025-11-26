@@ -7,11 +7,7 @@ from django.urls import resolve, Resolver404
 from functools import wraps
 
 def get_client_ip(request):
-	"""
-	Returns best-effort client IP.
-	If your app is behind a reverse proxy/load balancer, ensure it sets X-Forwarded-For.
-	The first IP in X-Forwarded-For is typically the original client.
-	"""
+	"""Returns best-effort client IP."""
 	xff = request.META.get("HTTP_X_FORWARDED_FOR")
 	if xff:
 		parts = [p.strip() for p in xff.split(",") if p.strip()]
@@ -26,7 +22,6 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 		request._query_count = 0
 		request._query_time_ms = 0.0
 
-		# ✅ Define timing wrapper with proper name
 		@wraps(self._timing_wrapper)
 		def timing_wrapper(execute, sql, params, many, context):
 			start = time.time()
@@ -37,30 +32,36 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 				request._query_count += 1
 				request._query_time_ms += duration_ms
 
-		# ✅ Attach wrapper to all DB connections
+		# Attach wrapper to all DB connections
 		for conn in connections.all():
 			conn.execute_wrappers.append(timing_wrapper)
 
 		# Store wrapper reference for cleanup
 		request._timing_wrapper = timing_wrapper
 
+	def _cleanup_wrappers(self, request):
+		"""Ensure DB wrappers are removed to prevent leaks."""
+		if hasattr(request, "_timing_wrapper"):
+			for conn in connections.all():
+				conn.execute_wrappers = [
+					w for w in conn.execute_wrappers if w is not request._timing_wrapper
+				]
+
+	def process_exception(self, request, exception):
+		# Cleanup even if an exception occurs
+		self._cleanup_wrappers(request)
+		return None
+
 	def process_response(self, request, response):
-		# ✅ Remove timing wrapper to prevent recursion buildup
-		try:
-			if hasattr(request, "_timing_wrapper"):
-				for conn in connections.all():
-					conn.execute_wrappers = [
-						w for w in conn.execute_wrappers if w is not request._timing_wrapper
-					]
-		except Exception:
-			pass
+		# Always cleanup wrappers
+		self._cleanup_wrappers(request)
 
 		try:
-			# ✅ Skip static files
+			# Skip static files
 			if request.path.startswith("/static"):
 				return response
 
-			# ✅ Skip certain 404 cases
+			# Skip certain 404 cases
 			if response.status_code == 404 and not request.path.endswith("/"):
 				try:
 					resolve(request.path + "/")
@@ -68,20 +69,20 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 				except Resolver404:
 					pass
 
-			# ✅ Skip redirects
+			# Skip redirects
 			if response.status_code in (301, 302, 303, 307, 308):
 				return response
 
-			# ✅ Calculate duration
+			# Calculate duration
 			duration = round((time.time() - request._start_time) * 1000, 2)
 			user = request.user.username if request.user.is_authenticated else "Anonymous"
 			source_ip = get_client_ip(request)
 
-			# ✅ Collect query stats
+			# Collect query stats
 			query_count = getattr(request, "_query_count", 0)
 			total_db_time = round(getattr(request, "_query_time_ms", 0.0), 2)
 
-			# ✅ Save to DB
+			# Save to DB
 			RequestLogs.objects.create(
 				path=request.path,
 				method=request.method,
@@ -93,7 +94,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 				source_ip=source_ip,
 			)
 
-			# ✅ Add debug headers
+			# Add debug headers
 			response["X-Render-Time-ms"] = str(duration)
 			response["X-SQL-Queries"] = str(query_count)
 			response["X-SQL-Time-ms"] = str(total_db_time)
