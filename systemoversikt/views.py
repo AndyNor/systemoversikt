@@ -21,6 +21,7 @@ from django.db import transaction
 import ipaddress
 import os, datetime, json, re, time, struct
 from django.utils import timezone
+from django.core.cache import cache
 
 
 ##########################
@@ -791,6 +792,59 @@ def human_readable_members(items, onlygroups=False): # støttefunksjon, with cac
 			groups.append(all_groups[item])
 		else:
 			notfound.append(item)  # vi fant ikke noe, returner det vi fikk
+
+	return {"groups": groups, "users": users, "notfound": notfound}
+
+
+
+
+def human_readable_members_optimized(items, onlygroups=False):
+	"""
+	Convert AD member DNs to human-readable objects.
+	Optimized: bulk query only needed users/groups.
+	"""
+	groups = []
+	users = []
+	notfound = []
+
+	if not items:
+		return {"groups": [], "users": [], "notfound": []}
+
+	# Extract usernames and group DNs
+	usernames = []
+	group_dns = []
+
+	for item in items:
+		if not onlygroups:
+			match = re.search(r'cn=([^,]*)', item, re.I)
+			if match:
+				usernames.append(match.group(1).lower())
+		group_dns.append(item)
+
+	# Bulk fetch users and groups
+	user_map = {}
+	if not onlygroups and usernames:
+		user_qs = User.objects.filter(username__in=usernames).only('username')
+		user_map = {u.username.lower(): u for u in user_qs}
+
+	group_qs = ADgroup.objects.filter(distinguishedname__in=group_dns).only('distinguishedname', 'common_name')
+	group_map = {g.distinguishedname: g for g in group_qs}
+
+	# Build result lists
+	for item in items:
+		added = False
+		if not onlygroups:
+			match = re.search(r'cn=([^,]*)', item, re.I)
+			if match:
+				uname = match.group(1).lower()
+				if uname in user_map:
+					users.append(user_map[uname])
+					added = True
+		if item in group_map:
+			groups.append(group_map[item])
+			added = True
+		if not added:
+			notfound.append(item)
 
 	return {"groups": groups, "users": users, "notfound": notfound}
 
@@ -7453,10 +7507,10 @@ def adgruppe_detaljer(request, pk):
 	print("laster medlemmer")
 	member_decoded = json.loads(gruppe.member)
 	if (len(member_decoded) <= render_limit) or render_anyway:
-		member = human_readable_members(member_decoded)
+		member = human_readable_members_optimized(member_decoded)
 		rendered = True
 	print("laster memberof")
-	memberof = human_readable_members(json.loads(gruppe.memberof))
+	memberof = human_readable_members_optimized(json.loads(gruppe.memberof))
 	print("Sender til template")
 
 	return render(request, 'ad_adgruppe_detaljer.html', {
@@ -7467,6 +7521,66 @@ def adgruppe_detaljer(request, pk):
 		"render_limit": render_limit,
 		"rendered": rendered,
 	})
+
+
+
+
+def adgruppe_detaljer_optimized(request, pk):
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {
+			'required_permissions': required_permissions,
+			'groups': request.user.groups
+		})
+
+	render_anyway = (request.GET.get('alt') == "ja")
+	render_limit = 600
+	rendered = False
+
+	# Load only necessary fields and optimize relations
+	gruppe = (
+		ADgroup.objects
+		.only('pk', 'common_name', 'display_name', 'distinguishedname',
+			  'description', 'from_prk', 'sist_oppdatert', 'member', 'memberof', 'parent')
+		.select_related('parent')
+		.prefetch_related('prkvalg__skjemanavn')
+		.get(pk=pk)
+	)
+
+	# Decode JSON safely
+	member_items = json.loads(gruppe.member or "[]")
+	memberof_items = json.loads(gruppe.memberof or "[]")
+
+	# Cache keys based on last sync timestamp
+	version = gruppe.sist_oppdatert.isoformat() if gruppe.sist_oppdatert else "0"
+	member_cache_key = f"adgroup:{gruppe.pk}:member:{version}:{render_limit}:{int(render_anyway)}"
+	memberof_cache_key = f"adgroup:{gruppe.pk}:memberof:{version}"
+
+	# Resolve memberof (groups only)
+	memberof = cache.get(memberof_cache_key)
+	if memberof is None:
+		memberof = human_readable_members(memberof_items, onlygroups=True)
+		cache.set(memberof_cache_key, memberof, timeout=3600)
+
+	# Resolve members if allowed
+	member = {}
+	if len(member_items) <= render_limit or render_anyway:
+		member = cache.get(member_cache_key)
+		if member is None:
+			member = human_readable_members(member_items)
+			cache.set(member_cache_key, member, timeout=3600)
+		rendered = True
+
+	return render(request, 'ad_adgruppe_detaljer.html', {
+		"gruppe": gruppe,
+		"member": member,
+		"memberof": memberof,
+		"render_anyway": render_anyway,
+		"render_limit": render_limit,
+		"rendered": rendered,
+	})
+
+
 
 
 
