@@ -8,6 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.db.models import Count, Q, Sum, F, Avg, Max
+from django.db.models import Prefetch
 from django.template.loader import render_to_string
 from django.db.models.functions import Lower, TruncMonth, TruncYear, TruncDay, TruncDate
 from django.http import HttpResponseBadRequest, JsonResponse, Http404, HttpResponseRedirect, HttpResponse, HttpRequest
@@ -5526,6 +5527,59 @@ def alle_programvarer(request):
 		'programvarer': aktuelle_programvarer,
 		'programvare_json': programvare_json,
 	})
+
+
+
+
+def alle_programvarer_optimized(request):
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {
+			'required_permissions': required_permissions,
+			'groups': request.user.groups
+		})
+
+	search_term = request.GET.get('search_term', '').strip()
+
+	if search_term in ["", "__all__"]:
+		aktuelle_programvarer = Programvare.objects.all()
+	elif len(search_term) < 2:
+		aktuelle_programvarer = Programvare.objects.none()
+	else:
+		aktuelle_programvarer = Programvare.objects.filter(programvarenavn__icontains=search_term)
+
+	# ---- KEY OPTIMIZATIONS ----
+	aktuelle_programvarer = (
+		aktuelle_programvarer
+		.only('pk', 'programvarenavn', 'programvarebeskrivelse', 'til_cveoversikt_og_nyheter')
+		.order_by(Lower('programvarenavn'))
+		.prefetch_related(
+			'programvareleverandor',
+			'kategorier',
+			Prefetch('systemer', queryset=System.objects.select_related('systemforvalter')),
+			'programvarebruk_programvare__brukergruppe'
+		)
+	)
+
+	# Cache count to avoid second query in template
+	programvarer_count = aktuelle_programvarer.count()
+
+	# Autocomplete raw list (unchanged)
+	programvare = Programvare.objects.values_list('programvarenavn', flat=True).distinct()
+	leverandorer = Leverandor.objects.values_list('leverandor_navn', flat=True).distinct()
+	systemer = System.objects.values_list('systemnavn', flat=True).distinct()
+	programvare_json = json.dumps(list(programvare) + list(leverandorer) + list(systemer))
+
+	return render(request, 'programvare_alle.html', {
+		'overskrift': "Programvarer og applikasjoner",
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'programvarer': aktuelle_programvarer,
+		'programvare_json': programvare_json,
+		'programvarer_count': programvarer_count,  # use this in template
+		'search_term': search_term,
+	})
+
 
 
 
