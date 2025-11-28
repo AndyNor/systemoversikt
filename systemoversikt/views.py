@@ -8474,19 +8474,23 @@ def tilgangsgrupper_api_optimized(request):
 		owner = "Flere treff på nøkkeleier"
 
 	source_ip = get_client_ip(request)
-	ApplicationLog.objects.create(event_type="API AD-grupper", message=f"Nøkkel tilhørende {owner} fra {source_ip}")
 
 	if "gruppenavn" not in request.GET:
+		ApplicationLog.objects.create(event_type="API AD-grupper", message=f"Nøkkel tilhørende {owner} fra {source_ip}: status 400")
 		return JsonResponse({"message": "Du må oppgi et gruppenavn som GET-variabel. ?gruppenavn=<navn>", "data": None}, safe=False, status=400)
+
 
 	sporring = request.GET["gruppenavn"]
 	try:
 		adgruppe = ADgroup.objects.get(common_name__iexact=sporring)
 	except MultipleObjectsReturned:
+		ApplicationLog.objects.create(event_type="API AD-grupper", message=f"Nøkkel tilhørende {owner} fra {source_ip}: status 404 flere treff på {sporring}")
 		return JsonResponse({"spørring": sporring, "status": "Spørringen gav flere treff. Dette burde ikke skje og bør undersøkes.", "data": []}, safe=False, status=404)
 	except ObjectDoesNotExist:
+		ApplicationLog.objects.create(event_type="API AD-grupper", message=f"Nøkkel tilhørende {owner} fra {source_ip}: status 404 ingen treff på {sporring}")
 		return JsonResponse({"spørring": sporring, "status": "Spørringen gav ingen treff. Vennligst oppgi et gyldig gruppenavn.", "data": []}, safe=False, status=404)
 	except:
+		ApplicationLog.objects.create(event_type="API AD-grupper", message=f"Nøkkel tilhørende {owner} fra {source_ip}: status 500 ukjent feil på spørring {sporring}")
 		return JsonResponse({"spørring": sporring, "status": "Ukjent feil", "data": []}, safe=False, status=500)
 
 	# --- Extract members ---
@@ -8569,6 +8573,7 @@ def tilgangsgrupper_api_optimized(request):
 		"memberof": memberof,
 	}
 
+	ApplicationLog.objects.create(event_type="API AD-grupper", message=f"Nøkkel tilhørende {owner} fra {source_ip}: status 200 OK for spørring {sporring}")
 	return JsonResponse({"spørring": sporring, "data": data}, safe=False, status=200)
 
 
