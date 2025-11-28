@@ -26,7 +26,72 @@
 
 	<p>Kartoteket inneholder {{ programvarer.count }} programvarer.</p>
 
-	{% include "programvare_include.html" %}
+
+
+	<table class="tablesorter excel">
+	<thead>
+		<tr>
+			<th class="filter-false">Endre</th>
+			<th>Programvarenavn</th>
+			<th>Leverandør</th>
+			<th>Systemkobling</th>
+			<th>Systemkobling forvalter</th>
+			<th>Programvarebruk</th>
+			<th>Beskrivelse</th>
+			<th>Kategori</th>
+			<th>Overføres systemoversikt?</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for prog in programvarer %}
+		<tr>
+			<td><a href="/admin/systemoversikt/programvare/{{ prog.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
+
+			<td>
+				{% url "programvaredetaljer" prog.pk as url_programvaredetaljer %}
+				<a href="{{ url_programvaredetaljer }}">{{ prog.programvarenavn }}</a>
+			</td>
+
+			<td>
+			{% for lev in prog.programvareleverandor.all %}
+				{% url "leverandor" lev.pk as url_leverandor %}
+				<a href="{{ url_leverandor }}">{{ lev }}</a><br>
+			{% endfor %}
+			</td>
+
+			<td>
+				{% for system in prog.systemer.all %}
+					{% include 'system_include_vis.html' with systemer=system %}
+				{% endfor %}
+			</td>
+
+			<td>
+				{% for system in prog.systemer.all %}
+					{{ system.systemforvalter.virksomhetsforkortelse }}<br>
+				{% endfor %}
+			</td>
+
+			<td>
+				{% for bruk in prog.programvarebruk_programvare.all %}
+					{{ bruk.brukergruppe.virksomhetsforkortelse }}{% if not forloop.last %}, {% endif %}
+				{% endfor %}
+			</td>
+
+			<td>{{ prog.programvarebeskrivelse }}</td>
+
+			<td>
+				{% for kategori in prog.kategorier.all %}
+					{% url "systemkategori" kategori.pk as url_systemkategori %}
+					<a href="{{ url_systemkategori }}">{{ kategori }}</a><br>
+				{% endfor %}
+			</td>
+
+			<td>{{ prog.til_cveoversikt_og_nyheter|yesno:"🟢 Ja,🔴 Nei" }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
 
 	<div id="accordion-programvare">
 		<div class="card">
