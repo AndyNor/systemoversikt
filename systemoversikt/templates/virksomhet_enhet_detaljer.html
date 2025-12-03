@@ -23,6 +23,8 @@
 
 	<p>{{ unit }} ledes av <a href="{{url_leder}}">{{ unit.leder.profile.displayName|default:"Ukjent" }}</a>, og ligger under <a href="{{url_enhet}}">{{unit.direkte_mor|default:"Ukjent"}}</a></p>
 
+	<p>Informasjon om SMS, FIDO2 og Authenticator oppdateres i puljer hver natt, og det kan ta inntil 7 dager mellom hver gang én konkret brukerkonto blir sjekket.</p>
+
 	{% if sideenheter %}
 	{{ unit }} er igjen organisert i:
 		<ul style="column-count:3;">

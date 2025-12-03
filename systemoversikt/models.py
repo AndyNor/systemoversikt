@@ -4633,7 +4633,7 @@ class System(models.Model):
 			related_name='system_eier_for',
 			verbose_name="Systemeier (personer)",
 			blank=True,
-			help_text=u"Person(er) med operativt systemeierskap. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
+			help_text=u"Person(er) med operativt systemeierskap. Legg til hovedforvalter. Dersom dere er et forvaltningsteam, kan du angi resten av teamet under \"Godkjente Kompass-bestillere\". Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
 			)
 	systemforvalter = models.ForeignKey(
 			to=Virksomhet,
@@ -4642,14 +4642,14 @@ class System(models.Model):
 			verbose_name="Organisatorisk systemforvalter",
 			blank=False,
 			null=False,
-			help_text=u"Den virksomhet som har ansvar for forvaltning av systemet. Normalt en etat underlagt byrådsavdeling som har systemeierskapet",
+			help_text=u"Virksomheten som har ansvar for forvaltning av systemet (teknologikomponenten). Normalt er dette en etat underlagt byrådsavdelingen som har systemeierskapet",
 			)
 	systemforvalter_kontaktpersoner_referanse = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='system_forvalter_for',
 			verbose_name="Systemforvalter (personer)",
 			blank=True,
-			help_text=u"Person(er) med operativt forvalteransvar. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
+			help_text=u"Person(er) med operativt forvalteransvar. Hvis du ikke finner personen du leter etter, kan du legge til med det grønne +-tegnet.",
 			)
 	systemforvalter_avdeling_referanse = models.ForeignKey(
 			to='HRorg',
@@ -4658,7 +4658,7 @@ class System(models.Model):
 			blank=True,
 			null=True,
 			on_delete=models.SET_NULL,
-			help_text=u"Seksjon forvaltning er plassert til.",
+			help_text=u"Seksjon forvaltning er plassert til. Dersom denne settes tom, vil den automatisk fylles ut basert på forvalters organisasjonstilhørighet (kjøres nattlig).",
 			)
 	forvaltning_epost = models.EmailField(
 			verbose_name="E-post til forvaltergruppen",
@@ -4722,7 +4722,7 @@ class System(models.Model):
 			related_name='systemer',
 			verbose_name="Tilknyttet programvare",
 			blank=True,
-			help_text=u"Programvare benyttet av- eller knyttet til systemet. Her kan du føre opp det kommersielle navnet på programvaren som systemet er bygget på. For å bli varslet av UKE CSIRT om programvaresårbarheter i nyhetsbildet, må du registrere programvare her.",
+			help_text=u"Programvare benyttet av- eller knyttet til systemet. Her kan du legge inn programvare som er installert på klienter og programvare systemet består av på serversiden. Bruk det kommersielle navnet på programvaren. For å bli varslet av UKE CSIRT om programvaresårbarheter i nyhetsbildet, må du registrere programvare her.",
 			)
 	avhengigheter = models.TextField(
 			verbose_name="Beskrivelse av avhengigheter (fritekst)",
@@ -4789,7 +4789,7 @@ class System(models.Model):
 			help_text=u"Fylles ut dersom systemet har en web-frontend. Adressen systemet nås på via nettleser. Hvis du ikke finner adressen i listen må du opprette ny med +-tegnet.",
 			)
 	systemleverandor_vedlikeholdsavtale = models.BooleanField(
-			verbose_name="Aktiv vedlikeholdsavtale med programvareleverandør?",
+			verbose_name="Er det gyldig vedlikeholdsavtale med programvareleverandør?",
 			default=None,
 			null=True,
 			help_text=u"",
@@ -4799,21 +4799,21 @@ class System(models.Model):
 			related_name='system_systemleverandor',
 			verbose_name="Programvareleverandør",
 			blank=True,
-			help_text=u"Leverandør som har utviklet systemet, eventuelt tjenesteleverandør dersom Software as a service.",
+			help_text=u"Leverandør som har utviklet systemet.",
 			)
 	basisdriftleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_driftsleverandor',
 			verbose_name="Basisdriftleverandør",
 			blank=True,
-			help_text=u"Leverandør som drifter maskinparken/plattformen systmet kjører på.",
+			help_text=u"Leverandør som drifter driftsplattformen systmet kjører på.",
 			)
 	applikasjonsdriftleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_applikasjonsdriftleverandor',
 			verbose_name="Applikasjonsdriftsleverandør",
 			blank=True,
-			help_text=u"Leverandør som sørger for at systemet fungerer som det skal på driftsplattformen, eventulet tjenesteleverandør dersom Software as a service.",
+			help_text=u"Leverandør som sørger for at systemet fungerer som det skal på driftsplattformen.",
 			)
 	applikasjonsdrift_behov_databehandleravtale = models.BooleanField(
 			verbose_name="Behov for (egen) DBA mot applikasjonsdriftsleverandør?",
@@ -4853,7 +4853,7 @@ class System(models.Model):
 			max_length=600,
 			blank=True,
 			null=True,
-			help_text=u"Link til gruppe på workplace eller f.eks. en intranettside.",
+			help_text=u"Link til gruppe på Viva Engage eller f.eks. en intranettside.",
 			)
 	high_level_design_url = models.URLField(
 			verbose_name="Systemdokumentasjon",
@@ -5109,7 +5109,7 @@ class System(models.Model):
 			related_name='system_godkjente_bestillere',
 			verbose_name="Godkjente Kompass-bestillere",
 			blank=True,
-			help_text=u"Forvaltere er autorisert til å bestille endringer på systemet i Kompass. I tillegg er disse personene autorisert for å bestille endringer på systemet. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
+			help_text=u"Forvaltere er autorisert til å bestille endringer på systemet i Kompass. Her kan du gjerne legge inn hele forvalterteamet rundt systemet. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
 			)
 	er_arkiv = models.BooleanField(
 			verbose_name="Er systemet et arkiv?",
@@ -5120,7 +5120,7 @@ class System(models.Model):
 			verbose_name="Antall brukere",
 			blank=True,
 			null=True,
-			help_text=u"Ca hvor mange bruker systemet totalt?",
+			help_text=u"Ca hvor mange bruker systemet totalt? Fyll ut her dersom du ikke har koblet opp AD-grupper. Kobler du opp AD-grupper, vil du få opp antall med tilgang automatisk.",
 			)
 	tilgangsgrupper_ad = models.ManyToManyField(
 			to=ADgroup,
@@ -5171,7 +5171,7 @@ class System(models.Model):
 			choices=VALG_KLARGJORT_SIKKERHETSMODELL,
 			verbose_name="Status klargjort for ny sikkerhetsmodell",
 			blank=True, null=True,
-			help_text=u"Besnyttes av UKE for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
+			help_text=u"Benyttes av UKE for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
 			)
 	kritisk_kapabilitet = models.ManyToManyField(
 			to=KritiskKapabilitet,
