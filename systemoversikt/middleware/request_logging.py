@@ -58,7 +58,7 @@ class RequestLoggingMiddleware(MiddlewareMixin):
 
 		try:
 			# Skip static files
-			if request.path.startswith("/static"):
+			if request.path.startswith("/static/") or request.path.startswith("/admin/"):
 				return response
 
 			# Skip certain 404 cases
