@@ -446,6 +446,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'fields': (
 				('systemnavn', 'programvarer'),
 				'systemforvalter',
+				('systemforvalter_avdeling_referanse', 'systemforvalter_kontaktpersoner_referanse'),
 				'godkjente_bestillere',
 				'livslop_status',
 				'systembeskrivelse',
@@ -453,7 +454,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('systemleverandor', 'systemleverandor_vedlikeholdsavtale',),
 				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
 				'basisdriftleverandor',
-				('systemforvalter_avdeling_referanse', 'systemforvalter_kontaktpersoner_referanse'),
 				('dato_etablert', 'dato_end_of_life'),
 				'alias',
 				'enterprise_applicatons',
