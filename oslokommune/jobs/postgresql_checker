@@ -1,9 +1,17 @@
 
 #!/bin/bash
-# Simple script to ensure PostgreSQL is running
+# Simple script to ensure PostgreSQL is running and show status
 
 SERVICE="postgresql"
 
-if ! systemctl is-active --quiet "$SERVICE"; then
+if systemctl is-active --quiet "$SERVICE"; then
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL is running."
+else
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL is NOT running. Restarting..."
     systemctl restart "$SERVICE"
-fi
+    if systemctl is-active --quiet "$SERVICE"; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL restarted successfully."
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL restart FAILED."
+    fi
+
