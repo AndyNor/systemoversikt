@@ -10,10 +10,9 @@
 
 	{% else %}
 
-		<p><i>Det er tilgangsstyring via Person og ressurskatalogen (PRK) via skjemaet "(F) System- og behandlingsoversikt".<br>
-		Ta kontakt med din nærmeste PRK-administrator for tildeling av tilgang</i></p>
+		<p><i>Du mangler nødvendige tilganger for å se denne siden.<br>
+		Tilgangsstyring skjer enten via IDA, eller ved at en virskomhetsadministrator har angitt deg som forvalter på et system eller angitt deg i en rolle knyttet til IKT, sikkerhet eller personvern.</i></p>
 
-		Følgende valg i PRK gav tilgang til denne siden. PRK er under utfasing.
 		{% for p in required_permissions %}
 			{% group_from_permission p as groups %}
 			{% for g in groups %}
@@ -21,7 +20,7 @@
 			{% endfor %}
 		{% endfor %}
 
-		<br><br>
+		<br>
 
 		Se <a href="{% url 'roller' %}">informasjonsside om rettigheter</a> for ytterligere detaljer om hva du trenger av tilganger i IDA.<br>
 

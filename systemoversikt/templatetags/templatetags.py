@@ -88,9 +88,9 @@ def group_from_permission(permission_str):
 				ad_group = ADgroup.objects.get(common_name=group_name)
 				if len(ad_group.prkvalg.all()) == 1:
 					prk_valg = ad_group.prkvalg.all()[0]
-					result.append(f'{prk_valg.skjemanavn}: Gruppering "{prk_valg.gruppering}" valg "{prk_valg.valgnavn}"')
+					result.append(f'AD-gruppen heter "{group_name}"')
 				else:
-					result.append(f'Ingen treff i PRK, men AD-gruppen heter "{group_name}"')
+					result.append(f'AD-gruppen heter "{group_name}"')
 		return result
 
 	except:
