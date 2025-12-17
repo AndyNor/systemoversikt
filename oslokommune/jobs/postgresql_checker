@@ -14,4 +14,4 @@ else
     else
         echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL restart FAILED."
     fi
-
+fi
