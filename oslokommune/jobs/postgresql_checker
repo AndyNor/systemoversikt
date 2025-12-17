@@ -1,0 +1,9 @@
+
+#!/bin/bash
+# Simple script to ensure PostgreSQL is running
+
+SERVICE="postgresql"
+
+if ! systemctl is-active --quiet "$SERVICE"; then
+    systemctl restart "$SERVICE"
+fi
