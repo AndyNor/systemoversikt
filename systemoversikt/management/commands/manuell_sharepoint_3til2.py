@@ -59,13 +59,15 @@ class Command(BaseCommand):
 				#print(f'Ingen treff på gammel ident {email_gammel}')
 				pass
 
-		uke = Virksomhet.objects.virksomhetsforkortelse = "UKE"
-		ooo = Virksomhet.objects.virksomhetsforkortelse = "OOO"
-		ine = Virksomhet.objects.virksomhetsforkortelse = "INE"
-		dig = Virksomhet.objects.virksomhetsforkortelse = "DIG"
-		okf = Virksomhet.objects.virksomhetsforkortelse = "OKF"
+		uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
+		ooo = Virksomhet.objects.get(virksomhetsforkortelse="OOO")
+		ine = Virksomhet.objects.get(virksomhetsforkortelse="INE")
+		dig = Virksomhet.objects.get(virksomhetsforkortelse="DIG")
+		okf = Virksomhet.objects.get(virksomhetsforkortelse="OKF")
 
 		print(f'Restanser..')
+		print(uke)
+		print(dig)
 
 		for system in System.objects.all():
 
