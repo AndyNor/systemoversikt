@@ -9,3 +9,4 @@ db.sqlite3
 .gitignore.old
 this_env.py
 secrets_test.py
+/systemoversikt/import
