@@ -10,3 +10,4 @@ db.sqlite3
 this_env.py
 secrets_test.py
 /systemoversikt/import
+/.venv
