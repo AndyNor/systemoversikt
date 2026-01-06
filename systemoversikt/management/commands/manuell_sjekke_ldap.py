@@ -8,8 +8,11 @@ from systemoversikt.views import ldap_query
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		BRUKER = "CN=DRIFT429712,OU=DRIFT,OU=Servicekontoer,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-		#BRUKER = "CN=DRIFT429712,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+		BRUKERE = 
+		[
+			"CN=DRIFT429712,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+			"CN=DRIFT429712,OU=DRIFT,OU=Servicekontoer,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+		]
 
 		def ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout, sdflags=0x07):
 			import ldap, os
@@ -47,19 +50,21 @@ class Command(BaseCommand):
 			return result
 
 
-		ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-		ldap_filter = ('(distinguishedName=%s)' % BRUKER)
-		ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn',
-				'userAccountControl', 'nTSecurityDescriptor']
+		for bruker in BRUKERE:
 
-		result = ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout=10, sdflags=0x07)
+			ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+			ldap_filter = ('(distinguishedName=%s)' % bruker)
+			ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn',
+					'userAccountControl', 'nTSecurityDescriptor']
+
+			result = ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout=10, sdflags=0x07)
 
 
-		for dn, attrs in result:
-			if not dn:
-				continue
-			has_sd = 'nTSecurityDescriptor' in attrs and attrs['nTSecurityDescriptor']
-			print("DN:", dn)
-			print("Has nTSecurityDescriptor:", bool(has_sd))
-			if has_sd:
-				print("SD bytes:", len(attrs['nTSecurityDescriptor'][0]))
+			for dn, attrs in result:
+				if not dn:
+					continue
+				has_sd = 'nTSecurityDescriptor' in attrs and attrs['nTSecurityDescriptor']
+				print("DN:", dn)
+				print("Has nTSecurityDescriptor:", bool(has_sd))
+				if has_sd:
+					print("SD bytes:", len(attrs['nTSecurityDescriptor'][0]))
