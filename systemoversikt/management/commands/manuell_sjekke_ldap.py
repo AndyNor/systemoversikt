@@ -50,6 +50,7 @@ class Command(BaseCommand):
 		result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
 
 		for item in result:
-			print(item)
+			if item[0]:
+				print(item[1])
 
 
