@@ -8,8 +8,7 @@ from systemoversikt.views import ldap_query
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		BRUKERE = 
-		[
+		BRUKERE = [
 			"CN=DRIFT429712,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
 			"CN=DRIFT429712,OU=DRIFT,OU=Servicekontoer,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 		]
