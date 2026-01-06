@@ -61,5 +61,5 @@ class Command(BaseCommand):
 			has_sd = 'nTSecurityDescriptor' in attrs and attrs['nTSecurityDescriptor']
 			print("DN:", dn)
 			print("Has nTSecurityDescriptor:", bool(has_sd))
-				if has_sd:
-			print("SD bytes:", len(attrs['nTSecurityDescriptor'][0]))
+			if has_sd:
+				print("SD bytes:", len(attrs['nTSecurityDescriptor'][0]))
