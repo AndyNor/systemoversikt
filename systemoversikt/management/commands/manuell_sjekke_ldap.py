@@ -7,52 +7,59 @@ from systemoversikt.views import ldap_query
 
 class Command(BaseCommand):
 	def handle(self, **options):
-		
-		#server = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
-		#user = os.environ["KARTOTEKET_LDAPUSER"]
-		#password = os.environ["KARTOTEKET_LDAPPASSWORD"]
 
-		#ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-		#ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
-		#ldapClient = ldap.initialize(server)
-		#ldapClient.set_option(ldap.OPT_REFERRALS, 0)
-		#ldapClient.bind_s(user, password)
-
-
-		def ldap_query(ldap_path, ldap_filter, ldap_properties, timeout): # støttefunksjon for LDAP
+		def ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout, sdflags=0x07):
 			import ldap, os
-			server = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
-			user = os.environ["KARTOTEKET_LDAPUSER"]
-			password = os.environ["KARTOTEKET_LDAPPASSWORD"]
-			ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)  # have to deactivate sertificate check
-			ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
-			ldapClient = ldap.initialize(server)
-			ldapClient.timeout = timeout
-			ldapClient.set_option(ldap.OPT_REFERRALS, 0)  # tells the server not to chase referrals
-			ldapClient.bind_s(user, password)  # synchronious
+			from ldap.controls import LDAPControl
+			import struct
 
-			result = ldapClient.search_s(
-					ldap_path,
-					ldap.SCOPE_SUBTREE,
-					ldap_filter,
-					ldap_properties
+			server = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
+			user = os.environ["KARTOTEKET_LDAPUSER"]         # e.g., 'user@domain' or full DN
+			password = os.environ["KARTOTEKET_LDAPPASSWORD"]
+
+			# TLS settings (note: disabling cert check has security implications)
+			ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+			ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+
+			ldap_client = ldap.initialize(server)
+			ldap_client.timeout = timeout
+			ldap_client.set_option(ldap.OPT_REFERRALS, 0)
+			ldap_client.bind_s(user, password)
+
+			# SD Flags control value must be BER-encoded unsigned int; python-ldap accepts raw 4-byte little-endian
+			# Equivalent to the Microsoft SD Flags control (OID 1.2.840.113556.1.4.801)
+			sd_flags_oid = '1.2.840.113556.1.4.801'
+			control_value = struct.pack('<I', sdflags)
+			sd_control = LDAPControl(sd_flags_oid, True, control_value)
+
+			# Use search_ext_s to send server controls
+			result = ldap_client.search_ext_s(
+			    ldap_path,
+			    ldap.SCOPE_SUBTREE,
+			    ldap_filter,
+			    ldap_properties,
+			    serverctrls=[sd_control]
 			)
 
-			ldapClient.unbind_s()
+			ldap_client.unbind_s()
 			return result
 
 		ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-		#ldap_filter = ('(&(objectCategory=person)(objectClass=user)(memberOf:1.2.840.113556.1.4.1941:=%s))' % group)
-		ldap_filter = ('(distinguishedName=%s)' % "CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no")
-		ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn', 'userAccountControl', 'logonCount', 'memberOf', 'lastLogonTimestamp', 'title', 'description', 'otherMobile', 'mobile', 'objectClass']
-		#['cn', 'displayName', 'description', 'nTSecurityDescriptor',]
+		ldap_filter = ('(distinguishedName=%s)' %
+		               "CN=user,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no")
+		ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn', 'userAccountControl', 'nTSecurityDescriptor']
 
+		result = ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout=10, sdflags=0x07)
 
-		result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
+		for dn, attrs in result:
+		    if dn:
+		        for key, value in attrs.items():
+		            if key == 'nTSecurityDescriptor':
+		                # AD returns raw bytes in a single-element list
+		                raw_sd = value[0]
+		                print(f'{key}: {len(raw_sd)} bytes')
+		            else:
+		                print(f'{key}: {value}\n')
 
-		for item in result:
-			if item[0]:
-				for key, value in item[1].items():
-					print(f'{key}: {value}')
 
 
