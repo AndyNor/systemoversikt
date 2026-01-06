@@ -44,11 +44,12 @@ class Command(BaseCommand):
 		ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 		#ldap_filter = ('(&(objectCategory=person)(objectClass=user)(memberOf:1.2.840.113556.1.4.1941:=%s))' % group)
 		ldap_filter = ('(distinguishedName=%s)' % "CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no")
-		ldap_properties = ['cn', 'displayName', 'description']
+		ldap_properties = ['cn', 'displayName', 'description', 'nTSecurityDescriptor',]
 
 
 		result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
 
-		print(result)
+		for item in result:
+			print(item)
 
 
