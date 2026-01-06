@@ -46,7 +46,7 @@ class Command(BaseCommand):
 
 		ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 		ldap_filter = ('(distinguishedName=%s)' %
-				"CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no")
+				"CN=DRIFT429712,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no")
 		ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn',
 				'userAccountControl', 'nTSecurityDescriptor']
 
