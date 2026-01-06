@@ -54,11 +54,12 @@ class Command(BaseCommand):
 
 		result = ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout=10, sdflags=0x07)
 
+
 		for dn, attrs in result:
-			if dn:
-				for key, value in attrs.items():
-					#if key == 'nTSecurityDescriptor':
-					#	raw_sd = value[0]
-					#	print(f'{key}: {len(raw_sd)} bytes')
-					#else:
-					print(f'{key}: {value}')
+			if not dn:
+				continue
+			has_sd = 'nTSecurityDescriptor' in attrs and attrs['nTSecurityDescriptor']
+			print("DN:", dn)
+			print("Has nTSecurityDescriptor:", bool(has_sd))
+				if has_sd:
+			print("SD bytes:", len(attrs['nTSecurityDescriptor'][0]))
