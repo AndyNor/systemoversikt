@@ -47,9 +47,9 @@ class Command(BaseCommand):
 
 	ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 	ldap_filter = ('(distinguishedName=%s)' %
-				   "CN=user,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no")
+			"CN=user,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no")
 	ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn',
-					   'userAccountControl', 'nTSecurityDescriptor']
+			'userAccountControl', 'nTSecurityDescriptor']
 
 	result = ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout=10, sdflags=0x07)
 
@@ -61,7 +61,3 @@ class Command(BaseCommand):
 					print(f'{key}: {len(raw_sd)} bytes')
 				else:
 					print(f'{key}: {value}\n')
-
-
-
-
