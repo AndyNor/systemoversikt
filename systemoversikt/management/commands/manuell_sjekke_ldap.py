@@ -57,8 +57,8 @@ class Command(BaseCommand):
 		for dn, attrs in result:
 			if dn:
 				for key, value in attrs.items():
-					if key == 'nTSecurityDescriptor':
-						raw_sd = value[0]
-						print(f'{key}: {len(raw_sd)} bytes')
-					else:
-						print(f'{key}: {value}\n')
+					#if key == 'nTSecurityDescriptor':
+					#	raw_sd = value[0]
+					#	print(f'{key}: {len(raw_sd)} bytes')
+					#else:
+					print(f'{key}: {value}')
