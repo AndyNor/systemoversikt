@@ -52,6 +52,7 @@ class Command(BaseCommand):
 
 		for item in result:
 			if item[0]:
-				print(item[1])
+				for key, value in item[1].items():
+					print(f'{key}: {value}')
 
 
