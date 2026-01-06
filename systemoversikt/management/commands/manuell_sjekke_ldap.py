@@ -48,7 +48,7 @@ class Command(BaseCommand):
 		#['cn', 'displayName', 'description', 'nTSecurityDescriptor',]
 
 
-		result = ldap_query(ldap_path=ldap_path, ldap_filter=None, ldap_properties=ldap_properties, timeout=10)
+		result = ldap_query(ldap_path=ldap_path, ldap_filter=ldap_filter, ldap_properties=ldap_properties, timeout=10)
 
 		for item in result:
 			if item[0]:
