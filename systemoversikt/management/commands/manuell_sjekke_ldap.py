@@ -52,8 +52,6 @@ class Command(BaseCommand):
 
 		for item in result:
 			if item[0]:
-				for key, value in item[1]:
-					print(f'{key}: {value}')
 				print(item[1])
 
 
