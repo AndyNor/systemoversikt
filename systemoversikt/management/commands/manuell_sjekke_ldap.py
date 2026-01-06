@@ -7,7 +7,10 @@ from systemoversikt.views import ldap_query
 
 class Command(BaseCommand):
 	def handle(self, **options):
-		
+
+		BRUKER = "CN=DRIFT429712,OU=DRIFT,OU=Servicekontoer,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+		#BRUKER = "CN=DRIFT429712,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+
 		def ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout, sdflags=0x07):
 			import ldap, os
 			from ldap.controls import LDAPControl
@@ -45,8 +48,7 @@ class Command(BaseCommand):
 
 
 		ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-		ldap_filter = ('(distinguishedName=%s)' %
-				"CN=DRIFT429712,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no")
+		ldap_filter = ('(distinguishedName=%s)' % BRUKER)
 		ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn',
 				'userAccountControl', 'nTSecurityDescriptor']
 
