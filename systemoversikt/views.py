@@ -5858,15 +5858,40 @@ def brukere_startside(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	from functools import reduce
+	from operator import or_
+	
 	antall_aktive_brukere = User.objects.filter(profile__accountdisable=False).count()
 	antall_deaktive_brukere = User.objects.filter(profile__accountdisable=True).count()
 
+
+	ou_navnliste = [
+		"OU=UKE",
+		"OU=DIG",
+		"OU=OKF",
+		"OU=INE",
+		"OU=OOO",
+	]
+
 	cutoff = timezone.make_aware(datetime.datetime(2023, 11, 23))
-	ikke_byttet = User.objects.filter(
-			profile__accountdisable=False).filter(
-    			Q(profile__pwdLastSet__isnull=True) |
-   				 Q(profile__pwdLastSet__lt=cutoff)
-			).count()
+
+	exclude_q = reduce(
+		or_,
+		(Q(profile__distinguishedname__icontains=ou) for ou in ou_navnliste)
+	)
+
+	ikke_byttet = (
+		User.objects
+		.filter(profile__accountdisable=False)
+		.filter(
+			Q(profile__pwdLastSet__isnull=True) |
+			Q(profile__pwdLastSet__lt=cutoff)
+		)
+		.exclude(exclude_q)
+		.count()
+	)
+
+
 
 	return render(request, 'brukere_startside.html', {
 		'request': request,
