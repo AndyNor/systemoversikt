@@ -5855,36 +5855,48 @@ def virksomhet_ansvarlige(request, pk=None):
 
 def brukere_startside(request):
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		return render(request, 'brukere_startside.html', {
-			'request': request,
-			'required_permissions': formater_permissions(required_permissions),
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	antall_aktive_brukere = User.objects.filter(profile__accountdisable=False).count()
+	antall_deaktive_brukere = User.objects.filter(profile__accountdisable=True).count()
+
+	cutoff = timezone.make_aware(datetime.datetime(2023, 11, 23))
+	ikke_byttet = User.objects.filter(
+			profile__accountdisable=False).filter(
+    			Q(profile__pwdLastSet__isnull=True) |
+   				 Q(profile__pwdLastSet__lt=cutoff)
+			).count()
+
+	return render(request, 'brukere_startside.html', {
+		'request': request,
+		'antall_aktive_brukere': antall_aktive_brukere,
+		'antall_deaktive_brukere': antall_deaktive_brukere,
+		'ikke_byttet': ikke_byttet,
+		'required_permissions': formater_permissions(required_permissions),
+	})
 
 
 def enhet_detaljer(request, pk):
 	#Vise informasjon om en konkret organisatorisk enhet
 	required_permissions = ['auth.view_user']
-	if any(map(request.user.has_perm, required_permissions)):
-
-		unit = HRorg.objects.get(pk=pk)
-		sideenheter = HRorg.objects.filter(direkte_mor=unit).order_by('ou')
-		personer = User.objects.filter(profile__org_unit=pk).order_by('profile__displayName')
-		systemer_ansvarfor = System.objects.filter(systemforvalter_avdeling_referanse=unit).filter(~Q(livslop_status__in=[7]))
-
-		return render(request, 'virksomhet_enhet_detaljer.html', {
-			'request': request,
-			'required_permissions': formater_permissions(required_permissions),
-			'unit': unit,
-			'sideenheter': sideenheter,
-			'brukere': personer,
-			'systemer_ansvarfor': systemer_ansvarfor,
-		})
-	else:
+	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	unit = HRorg.objects.get(pk=pk)
+	sideenheter = HRorg.objects.filter(direkte_mor=unit).order_by('ou')
+	personer = User.objects.filter(profile__org_unit=pk).order_by('profile__displayName')
+	systemer_ansvarfor = System.objects.filter(systemforvalter_avdeling_referanse=unit).filter(~Q(livslop_status__in=[7]))
+
+	return render(request, 'virksomhet_enhet_detaljer.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'unit': unit,
+		'sideenheter': sideenheter,
+		'brukere': personer,
+		'systemer_ansvarfor': systemer_ansvarfor,
+	})
+
 
 
 
