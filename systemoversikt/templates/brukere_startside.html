@@ -8,14 +8,8 @@
 
 {% block hovedinnhold %}
 
-<p>Her har vi samlet ulike oppslag mot organisering, brukeridenter og tilganger.</p>
+<p>Her finner du informasjon om organisering, brukeridenter og tilganger. Det er <b>{{ antall_aktive_brukere|intcomma }} aktive</b>, og <b>{{ antall_deaktive_brukere|intcomma }} deaktiverte</b> brukere i brukerkatelogen (AD). AD synkroniserer til Entra ID. Disse tallene kan avvike noe fra AD grunnet at de synkroniseres nattlig, og at Kartoteket ikke sletter brukere som er knyttet til en rolle før rollen er gitt til en ny person. Sistnevnte påvirker bare antall inaktive brukere.</p>
 
-<b>Aktive brukere</b>: {{ antall_aktive_brukere|intcomma }}<br>
-<b>Inaktive brukere</b>: {{ antall_deaktive_brukere|intcomma }}<br><br>
-
-<p>Disse tallene kan avvike noe fra AD grunnet at de synkroniseres nattlig, og at Kartoteket ikke sletter brukere som er knyttet til en rolle før rollen er gitt til en ny person. Sistnevnte påvirker bare antall inaktive brukere.</p>
-
-Brukere som ikke har byttet passord siden 2023.11.24 utenom ordinære brukere: {{ ikke_byttet|intcomma }}.
 
 {% endblock hovedinnhold %}
 

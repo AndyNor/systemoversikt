@@ -67,6 +67,8 @@ urlpatterns = [
 	re_path(r'^admin/bruksstatistikk/$', views.admin_visitors, name='admin_visitors'),
 	re_path(r'^admin/', admin.site.urls, name="admin"), # må stå til sist etter alle andre /admin/
 
+	re_path(r'^ikke_byttet_passord/$', views.ikke_byttet_passord, name="ikke_byttet_passord"),
+
 
 	re_path(r'^brukere/$', views.brukere_startside, name="brukere_startside"),
 	re_path(r'^brukere/organisasjon/enhet/$', views.virksomhet_enhetsok, name='virksomhet_enhetsok'),
