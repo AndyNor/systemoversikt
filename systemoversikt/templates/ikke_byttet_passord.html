@@ -29,6 +29,9 @@ Brukere som ikke har byttet passord siden 2023.11.24 utenom ordinære brukere: {
 		<th>Opprettet</th>
 		<th>Sist pålogget (ca)</th>
 		<th>Beskrivelse</th>
+		<th>SMS</th>
+		<th>FIDO2</th>
+		<th>Authenticator</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -57,6 +60,9 @@ Brukere som ikke har byttet passord siden 2023.11.24 utenom ordinære brukere: {
 		<td>{{ user.profile.whenCreated|date:"Y-m-d" }} ({{ user.profile.whenCreated|timesince }})</td>
 		<td>{{ user.profile.lastLogonTimestamp|date:"Y-m-d" }} ({{ user.profile.lastLogonTimestamp|timesince }}) </td>
 		<td>{{ user.profile.description|default:"Ingen beskrivelse" }}</td>
+		<td>{{ user.profile.auth_sms|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
+		<td>{{ user.profile.auth_fido2|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
+		<td>{{ user.profile.auth_authenticator|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
 	</tr>
 	{% endfor %}
 	</tbody>

@@ -38,6 +38,52 @@
 
 	<hr>
 
+	<table class="table table-sm tablesorter excel">
+		<thead>
+		<tr>
+			<th>Type bruker</th>
+			<th>Brukernavn</th>
+			<th>Navn</th>
+			<th>Stilling</th>
+			<th>O365-lisens</th>
+			<th>2-faktor sist oppdatert</th>
+			<th>SMS</th>
+			<th>FIDO2</th>
+			<th>Authenticator</th>
+			<th>E-post</th>
+			{% comment %}<th>Avdeling</th>{% endcomment %}
+			<th>Seksjon</th>
+			<th>Mail enabled groups</th>
+			<th>Min leder</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td>{{ user.profile.account_type }}</td>
+			<td>{{ b.username }}</td>
+			<td>{{ user.profile.displayName }}</td>
+			<td>{{ user.profile.job_title|default:"-" }}</td>
+			<td>{{ user.profile.ny365lisens|default:"Ingen" }}</td>
+			<td>
+				{{ user.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}<br>
+				{% for method in user.profile.entra_id_auth %}{{ method }}{% if not forloop.last%}, {% endif%}{% endfor %}
+			</td>
+			<td>{{ user.profile.auth_sms|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
+			<td>{{ user.profile.auth_fido2|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
+			<td>{{ user.profile.auth_authenticator|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
+			<td>{{ b.email }}</td>
+			{% comment %}<td>{{ user.profile.avdeling|default:"-" }}</td>{% endcomment %}
+			<td>{{ user.profile.org_unit|default:"-" }}</td>
+			<td>
+				{% for gruppe in user.profile.mail_enabled_groups.all %}<li>{{ gruppe }}</li>{% endfor %}
+			</td>
+			<td>{{ user.profile.min_leder|default:"-" }}</td>
+		</tr>
+	</tbody>
+	</table>
+
+	<hr>
+
 	<h6>Direkteoppslag mot brukerkataloger</h6>
 
 	{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
