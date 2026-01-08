@@ -6025,7 +6025,7 @@ def ikke_byttet_passord(request):
 			Q(profile__pwdLastSet__isnull=True) |
 			Q(profile__pwdLastSet__lt=cutoff)
 		)
-		#.exclude(exclude_q)
+		.exclude(exclude_q)
 	)
 
 
