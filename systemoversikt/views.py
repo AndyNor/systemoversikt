@@ -6009,6 +6009,8 @@ def ikke_byttet_passord(request):
 		"OU=UKE,OU=Eksterne brukere,OU=OK",
 		"OU=VAV,OU=Eksterne brukere,OU=OK",
 		"OU=VEL,OU=Eksterne brukere,OU=OK",
+		"OU=Kontakt",
+		"OU=Ressurser"
 	]
 
 	cutoff = timezone.make_aware(datetime.datetime(2023, 11, 23))
