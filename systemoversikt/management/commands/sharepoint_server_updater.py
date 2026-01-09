@@ -287,10 +287,10 @@ class Command(BaseCommand):
 
 				print("Går over til VMware-data. Setter disk allokert og brukt, samt disk tier og power consumption.")
 				dfRaw = pd.read_excel(vmware_destination_file, sheet_name='Export', skiprows=0, usecols=[
-						'Machine Name',
+						'UUID',
+						'VM',
 						'Allocated Disk Volume (GB)',
 						'Used Disk Volume (GB)',
-						'Disk Tier',
 					])
 
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
@@ -318,14 +318,14 @@ class Command(BaseCommand):
 					if idx % 300 == 0:
 						print("%s av %s" % (idx, antall_records))
 
-					if vm["Machine Name"] == "Total":
+					if vm["UUID"] == "Total":
 						break # siste linjen, stopper
 
-					cmdbdevice = get_cmdb_instance(vm["Machine Name"])
+					cmdbdevice = get_cmdb_instance(vm["VM"])
 					if cmdbdevice:
 						cmdbdevice.vm_disk_allocation = (float(vm["Allocated Disk Volume (GB)"]) * 1000 ** 3) if vm["Allocated Disk Volume (GB)"] != "" else 0
 						cmdbdevice.vm_disk_usage = (float(vm["Used Disk Volume (GB)"]) * 1000 ** 3) if vm["Used Disk Volume (GB)"] != "" else 0
-						cmdbdevice.vm_disk_tier = vm["Disk Tier"]
+						#cmdbdevice.vm_disk_tier = vm["Disk Tier"]
 						cmdbdevice.save()
 
 
