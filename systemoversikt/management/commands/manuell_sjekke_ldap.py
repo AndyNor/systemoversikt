@@ -11,7 +11,6 @@ class Command(BaseCommand):
 
 		import ssl
 		from ldap3 import Server, Connection, ALL, SUBTREE
-		from ldap3.core.tls import TLS
 		from impacket.dcerpc.v5 import samr
 		from impacket.dcerpc.v5.dtypes import RPC_SID
 
