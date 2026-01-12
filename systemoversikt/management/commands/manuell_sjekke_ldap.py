@@ -8,35 +8,63 @@ import os
 class Command(BaseCommand):
 	def handle(self, **options):
 
-		import ldap
-		from ldap.controls import LDAPControl
-		from pyasn1.type.univ import Integer
-		from pyasn1.codec.ber import encoder
 
-		server = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
-		user = os.environ["KARTOTEKET_LDAPUSER"]
-		password = os.environ["KARTOTEKET_LDAPPASSWORD"]
+		BRUKERE = [
+			"CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+		]
 
-		ldap_client = ldap.initialize(server)
-		ldap_client.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-		ldap_client.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
-		ldap_client.set_option(ldap.OPT_REFERRALS, 0)
-		ldap_client.simple_bind_s(user, password)
+		def ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout=10):
+			import ldap, os
+			from ldap.controls import LDAPControl
+			from pyasn1.type.univ import Integer
+			from pyasn1.codec.ber import encoder  # <- BER-encode ASN.1 INTEGER
 
-		dn = "CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+			server = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
+			user = os.environ["KARTOTEKET_LDAPUSER"]
+			password = os.environ["KARTOTEKET_LDAPPASSWORD"]
 
-		# SDFlags control: ASN.1 encoded integer
-		sdflags = 0x04  # DACL only
-		control_value = encoder.encode(Integer(sdflags))
-		sd_control = LDAPControl('1.2.840.113556.1.4.801', True, control_value)
+			ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+			ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
 
-		result = ldap_client.search_ext_s(
-			dn,
-			ldap.SCOPE_BASE,
-			'(objectClass=*)',
-			['nTSecurityDescriptor'],
-			serverctrls=[sd_control]
-		)
+			ldap_client = ldap.initialize(server)
+			ldap_client.timeout = timeout
+			ldap_client.set_option(ldap.OPT_REFERRALS, 0)
+			ldap_client.bind_s(user, password)
 
-		print(result)
-		ldap_client.unbind_s()
+
+			# SDFlags control: ASN.1 encoded integer
+			sdflags = 0x04  # DACL only
+			control_value = encoder.encode(Integer(sdflags))
+			sd_control = LDAPControl('1.2.840.113556.1.4.801', True, control_value)
+
+			result = ldap_client.search_ext_s(
+				"CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+				ldap.SCOPE_BASE,
+				'(objectClass=*)',
+				['nTSecurityDescriptor'],
+				serverctrls=[sd_control]
+			)
+
+			ldap_client.unbind_s()
+			return result
+
+
+		for bruker in BRUKERE:
+
+			ldap_path = "DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+			ldap_filter = ('(distinguishedName=%s)' % bruker)
+			ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn',
+					'userAccountControl', 'nTSecurityDescriptor']
+
+			result = ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout=10)
+
+
+			for dn, attrs in result:
+				if not dn:
+					continue
+				has_sd = 'nTSecurityDescriptor' in attrs and attrs['nTSecurityDescriptor']
+				print("DN:", dn)
+				print("Has nTSecurityDescriptor:", bool(has_sd))
+				if has_sd:
+					print("SD bytes:", len(attrs['nTSecurityDescriptor'][0]))
+
