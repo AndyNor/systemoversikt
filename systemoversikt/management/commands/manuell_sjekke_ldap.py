@@ -18,7 +18,7 @@ class Command(BaseCommand):
 		ldap_host = 'ldaps.oslofelles.oslo.kommune.no'
 		username = os.environ["KARTOTEKET_LDAPUSER"]
 		password = os.environ["KARTOTEKET_LDAPPASSWORD"]
-		dn = 'CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no'
+		dn = 'CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon'
 		base_dn = 'DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 
 		# --- CONNECT ---
