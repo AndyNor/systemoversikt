@@ -56,7 +56,7 @@ class Command(BaseCommand):
 			ldap_properties = ['cn', 'mail', 'givenName', 'displayName', 'sn',
 					'userAccountControl', 'nTSecurityDescriptor']
 
-			result = ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout=10, sdflags=0x07)
+			result = ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout=10)
 
 
 			for dn, attrs in result:
