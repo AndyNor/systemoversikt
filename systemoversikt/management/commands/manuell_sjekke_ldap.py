@@ -9,7 +9,7 @@ class Command(BaseCommand):
 	def handle(self, **options):
 		import ssl
 		from ldap3 import Server, Connection, ALL, SUBTREE, NTLM
-		from ldap3.core.tls import TLS
+		#from ldap3.core.tls import TLS
 		from impacket.nt_security import SECURITY_DESCRIPTOR
 		from impacket.dcerpc.v5.dtypes import RPC_SID
 
@@ -23,8 +23,8 @@ class Command(BaseCommand):
 
 		# --- LDAP / TLS ---
 		# No CA available now -> disable validation temporarily. Re-enable when you can.
-		tls = TLS(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2)
-		server = Server(LDAP_HOST, port=LDAP_PORT, use_ssl=True, get_info=ALL, tls=tls)
+		#tls = TLS(validate=ssl.CERT_NONE, version=ssl.PROTOCOL_TLSv1_2)
+		server = Server(LDAP_HOST, port=LDAP_PORT, use_ssl=True, get_info=ALL)
 
 		conn = Connection(server, user=USERNAME, password=PASSWORD, authentication=NTLM, auto_bind=True)
 
