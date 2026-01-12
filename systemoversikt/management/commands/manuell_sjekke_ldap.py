@@ -18,7 +18,7 @@ class Command(BaseCommand):
 		ldap_host = 'ldaps.oslofelles.oslo.kommune.no'
 		username = os.environ["KARTOTEKET_LDAPUSER"]
 		password = os.environ["KARTOTEKET_LDAPPASSWORD"]
-		dn = 'CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon'
+		dn = 'CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 		base_dn = 'DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 
 		# --- CONNECT ---
@@ -32,7 +32,7 @@ class Command(BaseCommand):
 		DACL_ONLY = (SDFLAGS_OID, True, b'\x04\x00\x00\x00')
 
 		conn.search(dn, '(objectClass=*)', search_scope='BASE',
-					attributes=['nTSecurityDescriptor'], controls=[DACL_ONLY])
+					attributes=['nTSecurityDescriptor'])#, controls=[DACL_ONLY])
 
 		if not conn.entries:
 			raise SystemExit("No entries returned. Check DN or permissions.")
