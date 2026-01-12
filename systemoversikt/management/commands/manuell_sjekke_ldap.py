@@ -13,7 +13,7 @@ class Command(BaseCommand):
 			"CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
 		]
 
-		def ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout, sdflags=0x07):
+		def ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout, sdflags=0x04):
 			import ldap, os
 			from ldap.controls import LDAPControl
 			from pyasn1.type.univ import Integer
