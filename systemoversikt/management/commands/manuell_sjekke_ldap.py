@@ -13,7 +13,7 @@ class Command(BaseCommand):
 			"CN=S-BRE-MSCRM-ADMIN,OU=ServiceAccounts,OU=AD,OU=Administrasjon,DC=oslofelles,DC=oslo,DC=kommune,DC=no",
 		]
 
-		def ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout, sdflags=0x04):
+		def ldap_query_with_sd(ldap_path, ldap_filter, ldap_properties, timeout=10):
 			import ldap, os
 			from ldap.controls import LDAPControl
 			from pyasn1.type.univ import Integer
@@ -31,11 +31,11 @@ class Command(BaseCommand):
 			ldap_client.set_option(ldap.OPT_REFERRALS, 0)
 			ldap_client.bind_s(user, password)
 
-			sd_flags_oid = '1.2.840.113556.1.4.801'
-			# BER-encode the integer value per ASN.1
+
+			# SDFlags control: ASN.1 encoded integer
+			sdflags = 0x04  # DACL only
 			control_value = encoder.encode(Integer(sdflags))
-			# criticality can be False; True is also fine
-			sd_control = LDAPControl(sd_flags_oid, False, control_value)
+			sd_control = LDAPControl('1.2.840.113556.1.4.801', True, control_value)
 
 			result = ldap_client.search_ext_s(
 				ldap_path,
