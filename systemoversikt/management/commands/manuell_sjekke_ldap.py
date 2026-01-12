@@ -10,6 +10,7 @@ class Command(BaseCommand):
 
 
 		from ldap3 import Server, Connection, ALL, NTLM
+		from ldap3.controls.microsoft import SDFlagsControl
 		from impacket.dcerpc.v5.dtypes import RPC_SID
 		from impacket.dcerpc.v5 import samr
 		import struct
@@ -28,7 +29,8 @@ class Command(BaseCommand):
 		    raise Exception("LDAP bind failed: " + str(conn.result))
 
 		# --- FETCH SECURITY DESCRIPTOR ---
-		conn.search(dn, '(objectClass=*)', attributes=['nTSecurityDescriptor'])
+		sd_control = SDFlagsControl(sdflags=0x04)  # 0x04 = DACL only
+		conn.search(dn, '(objectClass=*)', attributes=['nTSecurityDescriptor'], controls=[sd_control])
 		sd_data = conn.entries[0]['nTSecurityDescriptor'].raw_values[0]
 
 		# --- PARSE SECURITY DESCRIPTOR ---
