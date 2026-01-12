@@ -9,11 +9,11 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 
-		from ldap3 import Server, Connection, ALL, NTLM
-		from ldap3.controls.microsoft import SDFlagsControl
-		from impacket.dcerpc.v5.dtypes import RPC_SID
+		import ssl
+		from ldap3 import Server, Connection, ALL, SUBTREE
+		from ldap3.core.tls import TLS
 		from impacket.dcerpc.v5 import samr
-		import struct
+		from impacket.dcerpc.v5.dtypes import RPC_SID
 
 		# --- CONFIG ---
 		ldap_server = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
@@ -26,41 +26,95 @@ class Command(BaseCommand):
 		server = Server(ldap_server, get_info=ALL)
 		conn = Connection(server, user=username, password=password, authentication=NTLM)
 		if not conn.bind():
-		    raise Exception("LDAP bind failed: " + str(conn.result))
+			raise Exception("LDAP bind failed: " + str(conn.result))
 
 		# --- FETCH SECURITY DESCRIPTOR ---
-		sd_control = SDFlagsControl(sdflags=0x04)  # 0x04 = DACL only
-		conn.search(dn, '(objectClass=*)', attributes=['nTSecurityDescriptor'], controls=[sd_control])
-		sd_data = conn.entries[0]['nTSecurityDescriptor'].raw_values[0]
+		SDFLAGS_OID = '1.2.840.113556.1.4.801'
+		DACL_ONLY   = (SDFLAGS_OID, True, b'\x04\x00\x00\x00')
 
-		# --- PARSE SECURITY DESCRIPTOR ---
-		# The binary SD contains Owner, Group, DACL, SACL
-		# We'll parse the DACL using Impacket's samr.DACL
+		conn.search(
+			search_base=dn,
+			search_filter='(objectClass=*)',
+			search_scope='BASE',
+			attributes=['nTSecurityDescriptor'],
+			controls=[DACL_ONLY]
+		)
+
+		if not conn.entries:
+			raise SystemExit("No entries returned. Check DN, permissions, or controls.")
+
+		sd_attr = conn.entries[0]['nTSecurityDescriptor']
+		if not sd_attr or not sd_attr.raw_values:
+			raise SystemExit("Entry returned but nTSecurityDescriptor missing. Check SDFlags or rights.")
+
+		sd_data = sd_attr.raw_values[0]
+
+		# Parse DACL
 		dacl = samr.DACL(sd_data)
 
-		print(f"Permissions on object: {dn}")
-		print("-" * 80)
-		print(f"{'SID':<50} {'Rights':<20} {'Type':<10} {'Inherited'}")
-		print("-" * 80)
+		# Helper: SID -> sAMAccountName (or CN) via LDAP search on objectSid
+		def sid_to_name(conn: Connection, base_dn: str, sid_str: str) -> str:
+			try:
+				sid_obj = RPC_SID(); sid_obj.fromString(sid_str)
+				sid_bytes = sid_obj.getData()  # raw SID bytes for filter equality
+
+				# AD supports binary match on objectSid via '=' with raw bytes in ldap3 filter_extensible
+				# Simpler approach: use an equality filter with escaped bytes
+				# ldap3 can accept filters using escaped hex; build it:
+				esc = ''.join('\\{:02x}'.format(b) for b in sid_bytes)
+				flt = f'(objectSid={esc})'
+
+				if conn.search(base_dn, flt, SUBTREE, attributes=['sAMAccountName', 'cn', 'distinguishedName']):
+					if conn.entries:
+						e = conn.entries[0]
+						if 'sAMAccountName' in e and e['sAMAccountName'].value:
+							return str(e['sAMAccountName'].value)
+						if 'cn' in e and e['cn'].value:
+							return str(e['cn'].value)
+						if 'distinguishedName' in e and e['distinguishedName'].value:
+							return str(e['distinguishedName'].value)
+			except Exception:
+				pass
+			return sid_str  # fallback to SID string
+
+		# Basic rights decode (add more as needed)
+		RIGHTS_MAP = {
+			0x10000000: 'GenericAll',
+			0x40000000: 'GenericWrite',
+			0x80000000: 'GenericRead',
+			0x20000000: 'GenericExecute',
+			0x00000008: 'WriteDacl',
+			0x00000002: 'WriteOwner',
+		}
+
+		# Print header
+		print(f"Permissions on object: {TARGET_DN}")
+		print("-" * 100)
+		print(f"{'Identity':<35} {'RightsMask(hex)':<14} {'Rights(decoded)':<35} {'ACEType':<8} {'Inherited':<9} {'ObjectType'}")
+		print("-" * 100)
 
 		for ace in dacl.aces:
-		    sid = str(ace['Ace']['Sid'])
-		    mask = ace['Ace']['Mask']
-		    ace_type = ace['AceType']
-		    inherited = ace['AceFlags'] & 0x10 != 0  # INHERITED_ACE flag
+			# Type 0x00 = ACCESS_ALLOWED_ACE, 0x01 = ACCESS_DENIED_ACE, 0x05/0x06 = object-specific allowed/denied, etc.
+			ace_type   = ace['AceType']
+			ace_flags  = ace['AceFlags']
+			inherited  = bool(ace_flags & 0x10)  # INHERITED_ACE
+			mask       = ace['Ace']['Mask']
+			sid_str    = str(ace['Ace']['Sid'])
+			identity   = sid_to_name(conn, BASE_DN, sid_str)
 
-		    # Decode rights (basic mapping)
-		    rights_map = {
-		        0x10000000: 'GenericAll',
-		        0x40000000: 'GenericWrite',
-		        0x80000000: 'GenericRead',
-		        0x20000000: 'GenericExecute',
-		        0x00000008: 'WriteDACL',
-		        0x00000002: 'WriteOwner'
-		    }
-		    rights = [name for bit, name in rights_map.items() if mask & bit]
+			# ObjectType GUID (for property/extended-right-specific ACEs)
+			obj_type_guid = ''
+			try:
+				# Not all ACEs have ObjectType; object-specific ACEs do
+				if 'ObjectType' in ace['Ace'] and ace['Ace']['ObjectType'] is not None:
+					obj_type_guid = str(ace['Ace']['ObjectType'])
+			except Exception:
+				obj_type_guid = ''
 
-		    print(f"{sid:<50} {','.join(rights):<20} {ace_type:<10} {inherited}")
+			rights_decoded = [name for bit, name in RIGHTS_MAP.items() if (mask & bit) == bit]
+			print(f"{identity:<35} {hex(mask):<14} {','.join(rights_decoded):<35} {hex(ace_type):<8} {str(inherited):<9} {obj_type_guid}")
+
+		conn.unbind()
 
 
 		"""
