@@ -22,7 +22,7 @@ class Command(BaseCommand):
         ldap_client.bind_s(user, password)
 
         # --- FIX 1: use 0x07 instead of 0x04 ---
-        sdflags = 0x07    # Owner + Group + DACL (recommended)
+        sdflags = 0x04    # Owner + Group + DACL (recommended)
 
         control_value = encoder.encode(Integer(sdflags))
         sd_control = ldap.controls.LDAPControl(
