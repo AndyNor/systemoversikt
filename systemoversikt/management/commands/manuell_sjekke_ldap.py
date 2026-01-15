@@ -35,7 +35,7 @@ class Command(BaseCommand):
 			ldap.SCOPE_BASE,
 			'(objectClass=*)',
 			#['nTSecurityDescriptor'],
-			serverctrls=[sd_control]
+			#serverctrls=[sd_control]
 		)
 
 		ldap_client.unbind_s()
