@@ -10,7 +10,7 @@ class Command(BaseCommand):
     def handle(self, **options):
 
         cn = "CN=UKE232914,OU=UKE,OU=Brukere,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-        server = 'ldaps://DC250998.oslofelles.oslo.kommune.no:636'
+        server = 'ldaps://DC250994.oslofelles.oslo.kommune.no:636'
         user = os.environ["KARTOTEKET_LDAPUSER"]
         password = os.environ["KARTOTEKET_LDAPPASSWORD"]
 
