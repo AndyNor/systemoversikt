@@ -10,7 +10,7 @@ class Command(BaseCommand):
     def handle(self, **options):
 
         cn = "CN=UKE232914,OU=UKE,OU=Brukere,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-        server = 'ldaps://DC250993.oslofelles.oslo.kommune.no:636'
+        server = 'ldaps://DC205662.oslofelles.oslo.kommune.no:636'
         user = os.environ["KARTOTEKET_LDAPUSER"]
         password = os.environ["KARTOTEKET_LDAPPASSWORD"]
 
@@ -22,7 +22,7 @@ class Command(BaseCommand):
         ldap_client.bind_s(user, password)
 
         # --- FIX 1: use 0x07 instead of 0x04 ---
-        sdflags = 0x07    # Owner + Group + DACL (recommended)
+        sdflags = 0x04    # Owner + Group + DACL (recommended)
 
         control_value = encoder.encode(Integer(sdflags))
         sd_control = ldap.controls.LDAPControl(
