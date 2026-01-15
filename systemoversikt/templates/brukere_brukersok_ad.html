@@ -38,6 +38,7 @@
 		<th>Beskrivelse</th>
 		<th>Opprettet</th>
 		<th>Enheter</th>
+		<th>Antall grupper</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -67,6 +68,7 @@
 		<td>{{ user.profile.description|default:"Ingen beskrivelse" }}</td>
 		<td>{{ user.profile.whenCreated|date:"Y-m-d" }} ({{ user.profile.whenCreated|timesince }})</td>
 		<td>---</td>
+		<td>{{ user.profile.adgrupper_antall }}</td>
 	</tr>
 	{% endfor %}
 	</tbody>
