@@ -96,6 +96,5 @@ class Command(BaseCommand):
 				print("      Less likely : VIP pool member cannot serve SD; ask LB team to validate monitor/backends.")
 				sys.exit(9)
 
-		if __name__ == "__main__":
-			main()
+		main()
 
