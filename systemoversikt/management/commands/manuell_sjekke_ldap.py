@@ -3,6 +3,7 @@
 from django.core.management.base import BaseCommand
 import os
 import ldap
+import sys
 from pyasn1.type.univ import Integer
 from pyasn1.codec.ber import encoder  # BER encode ASN.1 INTEGER
 
