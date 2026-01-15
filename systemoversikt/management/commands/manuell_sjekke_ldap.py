@@ -26,15 +26,15 @@ class Command(BaseCommand):
 		ldap_client.bind_s(user, password)
 
 		# SDFlags control: ASN.1 encoded integer
-		sdflags = 0x04  # DACL only
-		control_value = encoder.encode(Integer(sdflags))
-		sd_control = LDAPControl('1.2.840.113556.1.4.801', True, control_value)
+		#sdflags = 0x04  # DACL only
+		#control_value = encoder.encode(Integer(sdflags))
+		#sd_control = LDAPControl('1.2.840.113556.1.4.801', True, control_value)
 
 		result = ldap_client.search_ext_s(
 			cn,
 			ldap.SCOPE_BASE,
 			'(objectClass=*)',
-			['nTSecurityDescriptor'],
+			#['nTSecurityDescriptor'],
 			serverctrls=[sd_control]
 		)
 
