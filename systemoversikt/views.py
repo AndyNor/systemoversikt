@@ -6022,7 +6022,7 @@ def ikke_byttet_passord(request):
 
 	ikke_byttet = (
 		User.objects
-		.filter(profile__accountdisable=False)
+		#.filter(profile__accountdisable=False)
 		.filter(
 			Q(profile__pwdLastSet__isnull=True) |
 			Q(profile__pwdLastSet__lt=cutoff)
