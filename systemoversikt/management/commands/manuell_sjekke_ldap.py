@@ -13,7 +13,7 @@ class Command(BaseCommand):
 
 		VIP = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
 		DN  = "CN=SVC-P-KAR-WEBLDAP01,OU=DIG,OU=Servicekontoer,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-		SDFLAGS = 0x07  # Owner|Group|DACL (0x04 is DACL only)
+		SDFLAGS = 0x04  # Owner|Group|DACL (0x04 is DACL only)
 
 		def main():
 			user = os.environ.get("KARTOTEKET_LDAPUSER")
