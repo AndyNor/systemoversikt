@@ -13,7 +13,6 @@ class Command(BaseCommand):
 		server = 'ldaps://10.134.191.228:636'
 		user = os.environ["KARTOTEKET_LDAPUSER"]
 		password = os.environ["KARTOTEKET_LDAPPASSWORD"]
-
 		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
 		ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
 
@@ -24,7 +23,7 @@ class Command(BaseCommand):
 		# SDFlags control: ASN.1 encoded integer
 		sdflags = 0x04  # DACL only
 		control_value = encoder.encode(Integer(sdflags))
-		sd_control = ldap.controls.LDAPControl('1.2.840.113556.1.4.801', True, control_value)
+		sd_control = ldap.controls.LDAPControl('1.2.840.113556.1.4.801', False, control_value)
 
 		result = ldap_client.search_ext_s(
 			cn,
