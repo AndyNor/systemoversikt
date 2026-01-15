@@ -27,7 +27,7 @@ class Command(BaseCommand):
         control_value = encoder.encode(Integer(sdflags))
         sd_control = ldap.controls.LDAPControl(
             '1.2.840.113556.1.4.801',
-            True,
+            False,
             control_value
         )
 
