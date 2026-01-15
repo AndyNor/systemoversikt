@@ -12,7 +12,7 @@ class Command(BaseCommand):
 
 
 		VIP = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
-		DN  = "CN=DIG232914,OU=DIG,OU=Brukere,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+		DN  = "CN=SVC-P-KAR-WEBLDAP01,OU=DIG,OU=Servicekontoer,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
 		SDFLAGS = 0x07  # Owner|Group|DACL (0x04 is DACL only)
 
 		def main():
