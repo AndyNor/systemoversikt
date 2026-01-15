@@ -5871,6 +5871,175 @@ def brukere_startside(request):
 
 
 
+def ikke_byttet_passord_normal_users(request):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	from functools import reduce
+	from operator import or_
+
+	ou_navnliste = [
+		"OU=BAL,OU=Brukere,OU=OK",
+		"OU=BAR,OU=Brukere,OU=OK",
+		"OU=BBJ,OU=Brukere,OU=OK",
+		"OU=BBY,OU=Brukere,OU=OK",
+		"OU=BER,OU=Brukere,OU=OK",
+		"OU=BFE,OU=Brukere,OU=OK",
+		"OU=BFR,OU=Brukere,OU=OK",
+		"OU=BGA,OU=Brukere,OU=OK",
+		"OU=BGO,OU=Brukere,OU=OK",
+		"OU=BGR,OU=Brukere,OU=OK",
+		"OU=BNA,OU=Brukere,OU=OK",
+		"OU=BNS,OU=Brukere,OU=OK",
+		"OU=BOS,OU=Brukere,OU=OK",
+		"OU=BRE,OU=Brukere,OU=OK",
+		"OU=BSA,OU=Brukere,OU=OK",
+		"OU=BSH,OU=Brukere,OU=OK",
+		"OU=BSL,OU=Brukere,OU=OK",
+		"OU=BSN,OU=Brukere,OU=OK",
+		"OU=BSR,OU=Brukere,OU=OK",
+		"OU=BUN,OU=Brukere,OU=OK",
+		"OU=BVA,OU=Brukere,OU=OK",
+		"OU=BYA,OU=Brukere,OU=OK",
+		"OU=BYM,OU=Brukere,OU=OK",
+		"OU=BYR,OU=Brukere,OU=OK",
+		"OU=BYS,OU=Brukere,OU=OK",
+		"OU=BYU,OU=Brukere,OU=OK",
+		"OU=DEB,OU=Brukere,OU=OK",
+		"OU=DIG,OU=Brukere,OU=OK",
+		"OU=EBY,OU=Brukere,OU=OK",
+		"OU=EGE,OU=Brukere,OU=OK",
+		"OU=FIL,OU=Brukere,OU=OK",
+		"OU=FOB,OU=Brukere,OU=OK",
+		"OU=GFE,OU=Brukere,OU=OK",
+		"OU=GPE,OU=Brukere,OU=OK",
+		"OU=HAV,OU=Brukere,OU=OK",
+		"OU=HEL,OU=Brukere,OU=OK",
+		"OU=HME,OU=Brukere,OU=OK",
+		"OU=HSO,OU=Brukere,OU=OK",
+		"OU=INE,OU=Brukere,OU=OK",
+		"OU=KAO,OU=Brukere,OU=OK",
+		"OU=KEM,OU=Brukere,OU=OK",
+		"OU=KID,OU=Brukere,OU=OK",
+		"OU=KLI,OU=Brukere,OU=OK",
+		"OU=KRV,OU=Brukere,OU=OK",
+		"OU=KUL,OU=Brukere,OU=OK",
+		"OU=LVA,OU=Brukere,OU=OK",
+		"OU=MAL,OU=Brukere,OU=OK",
+		"OU=MUM,OU=Brukere,OU=OK",
+		"OU=NAE,OU=Brukere,OU=OK",
+		"OU=NAV,OU=Brukere,OU=OK",
+		"OU=OBF,OU=Brukere,OU=OK",
+		"OU=OBY,OU=Brukere,OU=OK",
+		"OU=ODE,OU=Brukere,OU=OK",
+		"OU=OKF,OU=Brukere,OU=OK",
+		"OU=OOO,OU=Brukere,OU=OK",
+		"OU=PBE,OU=Brukere,OU=OK",
+		"OU=REG,OU=Brukere,OU=OK",
+		"OU=REN,OU=Brukere,OU=OK",
+		"OU=RFT,OU=Brukere,OU=OK",
+		"OU=SYE,OU=Brukere,OU=OK",
+		"OU=UBF,OU=Brukere,OU=OK",
+		"OU=UDE,OU=Brukere,OU=OK",
+		"OU=UKE,OU=Brukere,OU=OK",
+		"OU=VAV2,OU=Brukere,OU=OK",
+		"OU=VAV,OU=Brukere,OU=OK",
+		"OU=VEL,OU=Brukere,OU=OK",
+		"OU=BAL,OU=Eksterne brukere,OU=OK",
+		"OU=BAR,OU=Eksterne brukere,OU=OK",
+		"OU=BBJ,OU=Eksterne brukere,OU=OK",
+		"OU=BBY,OU=Eksterne brukere,OU=OK",
+		"OU=BER,OU=Eksterne brukere,OU=OK",
+		"OU=BFE,OU=Eksterne brukere,OU=OK",
+		"OU=BFR,OU=Eksterne brukere,OU=OK",
+		"OU=BGA,OU=Eksterne brukere,OU=OK",
+		"OU=BGO,OU=Eksterne brukere,OU=OK",
+		"OU=BGR,OU=Eksterne brukere,OU=OK",
+		"OU=BNA,OU=Eksterne brukere,OU=OK",
+		"OU=BNS,OU=Eksterne brukere,OU=OK",
+		"OU=BOS,OU=Eksterne brukere,OU=OK",
+		"OU=BRE,OU=Eksterne brukere,OU=OK",
+		"OU=BSA,OU=Eksterne brukere,OU=OK",
+		"OU=BSH,OU=Eksterne brukere,OU=OK",
+		"OU=BSL,OU=Eksterne brukere,OU=OK",
+		"OU=BSN,OU=Eksterne brukere,OU=OK",
+		"OU=BSR,OU=Eksterne brukere,OU=OK",
+		"OU=BUN,OU=Eksterne brukere,OU=OK",
+		"OU=BVA,OU=Eksterne brukere,OU=OK",
+		"OU=BYA,OU=Eksterne brukere,OU=OK",
+		"OU=BYM,OU=Eksterne brukere,OU=OK",
+		"OU=BYR,OU=Eksterne brukere,OU=OK",
+		"OU=BYS,OU=Eksterne brukere,OU=OK",
+		"OU=BYU,OU=Eksterne brukere,OU=OK",
+		"OU=DEB,OU=Eksterne brukere,OU=OK",
+		"OU=DIG,OU=Eksterne brukere,OU=OK",
+		"OU=EBY,OU=Eksterne brukere,OU=OK",
+		"OU=EGE,OU=Eksterne brukere,OU=OK",
+		"OU=FIL,OU=Eksterne brukere,OU=OK",
+		"OU=FOB,OU=Eksterne brukere,OU=OK",
+		"OU=GFE,OU=Eksterne brukere,OU=OK",
+		"OU=GPE,OU=Eksterne brukere,OU=OK",
+		"OU=HAV,OU=Eksterne brukere,OU=OK",
+		"OU=HEL,OU=Eksterne brukere,OU=OK",
+		"OU=HME,OU=Eksterne brukere,OU=OK",
+		"OU=HSO,OU=Eksterne brukere,OU=OK",
+		"OU=INE,OU=Eksterne brukere,OU=OK",
+		"OU=KAO,OU=Eksterne brukere,OU=OK",
+		"OU=KEM,OU=Eksterne brukere,OU=OK",
+		"OU=KID,OU=Eksterne brukere,OU=OK",
+		"OU=KLI,OU=Eksterne brukere,OU=OK",
+		"OU=KRV,OU=Eksterne brukere,OU=OK",
+		"OU=KUL,OU=Eksterne brukere,OU=OK",
+		"OU=MUM,OU=Eksterne brukere,OU=OK",
+		"OU=NAE,OU=Eksterne brukere,OU=OK",
+		"OU=NAV,OU=Eksterne brukere,OU=OK",
+		"OU=OBF,OU=Eksterne brukere,OU=OK",
+		"OU=OBY,OU=Eksterne brukere,OU=OK",
+		"OU=ODE,OU=Eksterne brukere,OU=OK",
+		"OU=OKF,OU=Eksterne brukere,OU=OK",
+		"OU=OOO,OU=Eksterne brukere,OU=OK",
+		"OU=PBE,OU=Eksterne brukere,OU=OK",
+		"OU=REG,OU=Eksterne brukere,OU=OK",
+		"OU=REN,OU=Eksterne brukere,OU=OK",
+		"OU=RFT,OU=Eksterne brukere,OU=OK",
+		"OU=SYE,OU=Eksterne brukere,OU=OK",
+		"OU=UBF,OU=Eksterne brukere,OU=OK",
+		"OU=UDE,OU=Eksterne brukere,OU=OK",
+		"OU=UKE,OU=Eksterne brukere,OU=OK",
+		"OU=VAV,OU=Eksterne brukere,OU=OK",
+		"OU=VEL,OU=Eksterne brukere,OU=OK",
+		"OU=Kontakt",
+		"OU=Ressurser"
+	]
+
+	cutoff = timezone.make_aware(datetime.datetime(2023, 11, 23))
+
+	exclude_q = reduce(
+		or_,
+		(Q(profile__distinguishedname__icontains=ou) for ou in ou_navnliste)
+	)
+
+	ikke_byttet = (
+		User.objects
+		#.filter(profile__accountdisable=False)
+		.filter(
+			Q(profile__pwdLastSet__isnull=True) |
+			Q(profile__pwdLastSet__lt=cutoff)
+		)
+		.exclude(exclude_q)
+	)
+
+
+	return render(request, 'ikke_byttet_passord.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'ikke_byttet': ikke_byttet,
+		'dato': cutoff,
+	})
+
+
+
 def ikke_byttet_passord(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -6036,8 +6205,8 @@ def ikke_byttet_passord(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'ikke_byttet': ikke_byttet,
+		'dato': cutoff,
 	})
-
 
 
 def enhet_detaljer(request, pk):

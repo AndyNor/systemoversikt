@@ -8,7 +8,7 @@
 
 {% block hovedinnhold %}
 
-Brukere som ikke har byttet passord siden 2023.11.24 utenom ordinære brukere: {{ ikke_byttet|length|intcomma }}.
+Brukere som ikke har byttet passord siden {{dato}} utenom ordinære brukere: {{ ikke_byttet|length|intcomma }}.
 
 
 	<table class="table table-sm tablesorter excel">
@@ -20,7 +20,7 @@ Brukere som ikke har byttet passord siden 2023.11.24 utenom ordinære brukere: {
 		<th>Brukernavn</th>
 		<th>E-post</th>
 		<th>OU-path</th>
-		<th>Priveligert?</th>
+		<th>privilegert?</th>
 		<th>Trusted for delegation?</th>
 		<th>Delegated?</th>
 		<th>Don't require preauth</th>
@@ -51,7 +51,7 @@ Brukere som ikke har byttet passord siden 2023.11.24 utenom ordinære brukere: {
 
 		<td>{{ user.profile.ou_lesbar }}</td>
 
-		<td>{{ user.profile.priveligert_bruker }}</td>
+		<td>{{ user.profile.privilegert_bruker }}</td>
 		<td>{{ user.profile.trusted_for_delegation|yesno:"Ja,Nei,?" }}</td>
 		<td>{{ user.profile.not_delegated|yesno:"Ja,Nei,?" }}</td>
 		<td>{{ user.profile.dont_req_preauth|yesno:"Ja,Nei,?" }}</td>

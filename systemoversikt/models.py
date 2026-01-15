@@ -1015,8 +1015,8 @@ LISENCE_VALG = (
 )
 
 
-# manuell liste over AD-grupper som anses som priveligerte
-PRIVELIGERTE_GRUPPER = [
+# manuell liste over AD-grupper som anses som privilegerte
+privilegertE_GRUPPER = [
 	"Access Control Assistance Operators",
 	"Account Operators",
 	"Administrators",
@@ -1515,9 +1515,9 @@ class Profile(models.Model):
 		except:
 			return  ["AD ikke tilgjengelig"]
 
-	def priveligert_bruker(self):
+	def privilegert_bruker(self):
 		for gruppe in self.adgrupper.all():
-			if any(pg.lower() in gruppe.common_name.lower() for pg in PRIVELIGERTE_GRUPPER):
+			if any(pg.lower() in gruppe.common_name.lower() for pg in privilegertE_GRUPPER):
 				return "Ja"
 		return "Nei"
 
