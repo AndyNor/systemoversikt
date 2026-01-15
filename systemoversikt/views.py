@@ -6014,7 +6014,7 @@ def ikke_byttet_passord(request):
 	]
 
 	#cutoff = timezone.make_aware(datetime.datetime(2023, 11, 23))
-	cutoff = timezone.make_aware(datetime.datetime(2023, 01, 01))
+	cutoff = timezone.make_aware(datetime.datetime(2023, 1, 1))
 
 	exclude_q = reduce(
 		or_,
