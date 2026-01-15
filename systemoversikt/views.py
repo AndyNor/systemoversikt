@@ -6013,7 +6013,8 @@ def ikke_byttet_passord(request):
 		"OU=Ressurser"
 	]
 
-	cutoff = timezone.make_aware(datetime.datetime(2023, 11, 23))
+	#cutoff = timezone.make_aware(datetime.datetime(2023, 11, 23))
+	cutoff = timezone.make_aware(datetime.datetime(2023, 01, 01))
 
 	exclude_q = reduce(
 		or_,
@@ -6027,7 +6028,7 @@ def ikke_byttet_passord(request):
 			Q(profile__pwdLastSet__isnull=True) |
 			Q(profile__pwdLastSet__lt=cutoff)
 		)
-		.exclude(exclude_q)
+		.filter(exclude_q)
 	)
 
 
