@@ -2358,7 +2358,7 @@ def rapport_entra_id_auth(request):
 
 	data = []
 	data.append({"tekst": "Aktive brukere med lisens", "antall": antall_med_lisens})
-	data.append({"tekst": "Telefon oppringing", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="voiceAuthenticationMethod"))})
+	data.append({"tekst": "Telefonoppringing", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="voiceAuthenticationMethod"))})
 	data.append({"tekst": "SMS", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="phoneAuthenticationMethod"))})
 	data.append({"tekst": "Sertifikat", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="certificateBasedAuthentication"))})
 	data.append({"tekst": "Temporary Access Pass", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="temporaryAccessPassAuthenticationMethod"))})
@@ -2406,12 +2406,43 @@ def rapport_entra_id_auth(request):
 
 	update_stats = Profile.objects.filter(~Q(ny365lisens=None)).filter(accountdisable=False).annotate(day=TruncDate('auth_methods_last_update')).values('day').annotate(count=Count('user')).order_by('day')
 
+
+	import json
+	from collections import Counter
+	from django.db.models import F
+
+	def get_top_fido2_devices(n=10):
+		qs = Profile.objects.only("auth_methods").values_list("auth_methods", flat=True)
+		counter = Counter()
+		for raw in qs:
+			
+			try:
+				items = json.loads(raw)   # list of auth method objects
+			except Exception:
+				continue  # skip invalid JSON
+
+			for item in items:
+				try:
+					if item.get("@odata.type") == "#microsoft.graph.fido2AuthenticationMethod":
+						beskrivelse = item.get("beskrivelse", "").strip()
+						if beskrivelse:
+							counter[beskrivelse] += 1
+				except:
+					pass
+
+		return counter.most_common(n)
+
+	top_devices = get_top_fido2_devices(10)
+
+
+
 	return render(request, 'rapport_entra_id_auth.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'data': data,
 		'full_table': full_table,
 		'update_stats': update_stats,
+		'top_devices': top_devices,
 	})
 
 

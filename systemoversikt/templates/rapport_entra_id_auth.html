@@ -30,6 +30,26 @@
 </tbody>
 </table>
 
+
+<h5>Type FIDO2-enhet</h5>
+<table class="table table-sm tablesorter excel" style="width: 400px;">
+    <thead>
+        <tr>
+            <th>Enhet</th>
+            <th>Antall</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for description, count in top_devices %}
+        <tr>
+            <td>{{ description }}</td>
+            <td>{{ count }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
 <h5>Når sist oppdatert</h5>
 <table class="table table-sm tablesorter excel" style="width: 400px;">
 	<thead>
