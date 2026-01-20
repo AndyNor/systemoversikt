@@ -181,6 +181,7 @@ class Command(BaseCommand):
 									"@odata.type": "#microsoft.graph.windowsHelloForBusinessAuthenticationMethod",
 									"metode": "Windows Hello",
 									"beskrivelse": f"Maskinknyttet pålogging for {auth_method['displayName']}",
+									"aaGuid": f"{auth_method['aaGuid']}",
 									"opprettet": opprettet,
 								})
 							if auth_method['@odata.type'] == "#microsoft.graph.fido2AuthenticationMethod":
