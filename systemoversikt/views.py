@@ -2443,7 +2443,7 @@ def rapport_entra_id_auth(request):
 
 		return counter.most_common(n)
 
-	top_devices = get_top_fido2_devices(10)
+	top_devices = get_top_fido2_devices(20)
 
 
 
