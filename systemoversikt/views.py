@@ -2407,15 +2407,19 @@ def rapport_entra_id_auth(request):
 	update_stats = Profile.objects.filter(~Q(ny365lisens=None)).filter(accountdisable=False).annotate(day=TruncDate('auth_methods_last_update')).values('day').annotate(count=Count('user')).order_by('day')
 
 
+
 	import json
+	import re
 	from collections import Counter
 	from django.db.models import F
+
+	PAREN_RE = re.compile(r"\((.*?)\)")   # extract inside parentheses
 
 	def get_top_fido2_devices(n=10):
 		qs = Profile.objects.only("auth_methods").values_list("auth_methods", flat=True)
 		counter = Counter()
+
 		for raw in qs:
-			
 			try:
 				items = json.loads(raw)   # list of auth method objects
 			except Exception:
@@ -2425,14 +2429,22 @@ def rapport_entra_id_auth(request):
 				try:
 					if item.get("@odata.type") == "#microsoft.graph.fido2AuthenticationMethod":
 						beskrivelse = item.get("beskrivelse", "").strip()
-						if beskrivelse:
-							counter[beskrivelse] += 1
-				except:
+						if not beskrivelse:
+							continue
+
+						# Extract only the text inside parentheses
+						match = PAREN_RE.search(beskrivelse)
+						if match:
+							device_type = match.group(1).strip()
+							counter[device_type] += 1
+
+				except Exception:
 					pass
 
 		return counter.most_common(n)
 
 	top_devices = get_top_fido2_devices(10)
+
 
 
 
