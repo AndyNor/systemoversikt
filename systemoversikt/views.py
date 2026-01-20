@@ -2408,42 +2408,45 @@ def rapport_entra_id_auth(request):
 
 
 
+
 	import json
 	import re
 	from collections import Counter
-	from django.db.models import F
 
-	PAREN_RE = re.compile(r"\((.*?)\)")   # extract inside parentheses
+	PAREN_RE = re.compile(r"\((.*?)\)")
 
-	def get_top_fido2_devices(n=10):
+	def get_fido2_devices_over_one():
 		qs = Profile.objects.only("auth_methods").values_list("auth_methods", flat=True)
 		counter = Counter()
 
 		for raw in qs:
 			try:
-				items = json.loads(raw)   # list of auth method objects
+				items = json.loads(raw)
 			except Exception:
-				continue  # skip invalid JSON
+				continue
 
 			for item in items:
-				try:
-					if item.get("@odata.type") == "#microsoft.graph.fido2AuthenticationMethod":
-						beskrivelse = item.get("beskrivelse", "").strip()
-						if not beskrivelse:
-							continue
+				if item.get("@odata.type") != "#microsoft.graph.fido2AuthenticationMethod":
+					continue
 
-						# Extract only the text inside parentheses
-						match = PAREN_RE.search(beskrivelse)
-						if match:
-							device_type = match.group(1).strip()
-							counter[device_type] += 1
+				beskrivelse = item.get("beskrivelse", "").strip()
+				if not beskrivelse:
+					continue
 
-				except Exception:
-					pass
+				match = PAREN_RE.search(beskrivelse)
+				if not match:
+					continue
 
-		return counter.most_common(n)
+				device_type = match.group(1).strip()
+				if device_type:
+					counter[device_type] += 1
 
-	top_devices = get_top_fido2_devices(20)
+		# Return only devices with >1 count, sorted by count descending
+		return [(k, v) for k, v in counter.most_common() if v > 1]
+
+
+	devices = get_fido2_devices_over_one()
+
 
 
 
@@ -2454,7 +2457,7 @@ def rapport_entra_id_auth(request):
 		'data': data,
 		'full_table': full_table,
 		'update_stats': update_stats,
-		'top_devices': top_devices,
+		'top_devices': devices,
 	})
 
 
