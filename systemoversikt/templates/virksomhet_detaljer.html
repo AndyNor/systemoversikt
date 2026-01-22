@@ -162,6 +162,16 @@
 		</tr>
 	</table>
 
+
+	<hr>
+
+	<h6>Systemavhengigheter for våre systemer</h6>
+
+	<div id="cy_avhengigheter" style="background-color: #FCFCFC; border: 1px solid #d6d4d4; width: 100%; height: 1000px;"></div>
+	{% if avhengigheter_graf_ny.nodes|length < 2 %}
+		<p>Ingen systemer å vise</p>
+	{% endif %}
+
 	<hr>
 
 	<h5>Kritiske funksjoner knyttet til våre systemer</h5>
@@ -201,6 +211,88 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
+
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	var cy_avhengigheter = cytoscape({
+		zoomingEnabled: true,
+		panningEnabled: true,
+		wheelSensitivity: 0.1,
+		container: document.getElementById('cy_avhengigheter'),
+		elements: {
+			nodes: [
+				{% for node in avhengigheter_graf_ny.nodes %} {{ node|safe }},
+				{% endfor %}
+			],
+			edges: [
+				{% for edge in avhengigheter_graf_ny.edges %} {{ edge|safe }},
+				{% endfor %}
+			],
+		},
+		style: [
+			{
+				selector: 'node',
+				style: {
+					'shape': 'data(shape)',
+					'background-color': 'data(color)',
+					'label': 'data(name)',
+					'font-size': '11px',
+				},
+			},
+			{
+				selector: 'node:selected',
+				style: {
+				},
+			},
+			{
+				selector: 'edge',
+				style: {
+					'target-arrow-shape': 'triangle',
+					'curve-style': 'bezier',
+					'line-style': 'data(linestyle)',
+					'line-color': 'data(linecolor)',
+					'target-arrow-color': 'data(linecolor)',
+					'curve-style': 'bezier',
+					'width': 'data(linewidth)',
+					'target-distance-from-node': 15,
+					'source-distance-from-node': 25,
+				},
+			},
+			{
+				selector: 'edge:selected',
+				style: {
+				},
+			},
+			{
+				selector: ':parent',
+				style: {
+					'label': 'data(name)',
+					'line-style': "solid",
+					'background-color': '#F1F9FF',
+				}
+			},
+		],
+		layout: {
+			name: 'fcose',
+			animationDuration: 0, //ms
+			idealEdgeLength: 300,
+		},
+	});
+	cy_avhengigheter.on('tap', 'node', function(){
+		if (this.data('href')) {
+			try { // your browser may block popups
+				window.open( this.data('href'), "_self" );
+			} catch(e){ // fall back on url change
+				window.location.href = this.data('href');
+			}
+		}
+	});
+	cy_avhengigheter.zoomingEnabled = false
+
+
+</script>
+
+
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 
 var cy_tjenester = cytoscape({
@@ -358,3 +450,4 @@ cy_infra.on('tap', 'node', function(){
 </script>
 
 {% endblock script_append %}
+

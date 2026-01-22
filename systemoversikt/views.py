@@ -6983,6 +6983,99 @@ def virksomhet_figur_system_seksjon(request, pk):
 
 
 
+def generer_graf_virksomhet(virksomhet_pk):
+	avhengigheter_graf = {"nodes": [], "edges": []}
+	observerte_driftsmodeller = set()
+	first_round = True
+	follow_count = 0
+	observerte_systemer = set()
+	behandlede_systemer = set()
+	aktivt_nivaa_systemer = set()  # aktiv runde
+	neste_nivaa = set() # neste runde (nye ting vi ser i aktiv runde)
+
+	def parent(system):
+		if system.driftsmodell_foreignkey is not None:
+			return f"drift_{system.driftsmodell_foreignkey.pk}"
+		else:
+			return "Ukjent"
+
+	def systemfarge(self):
+		if self.er_infrastruktur():
+			return "gray"
+		else:
+			return "#dca85a"
+
+	virksomhetens_systemer = (System.objects.filter(systemforvalter=virksomhet_pk)
+									.filter(~Q(livslop_status__in=[6,7]))
+								)
+
+	print(virksomhetens_systemer)
+	for s in virksomhetens_systemer:
+		aktivt_nivaa_systemer.add(s)
+		observerte_systemer.add(s)
+
+	def avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa):
+		for aktuelt_system in aktivt_nivaa_systemer:
+
+			avhengigheter_graf["nodes"].append({"data": {
+						"id": aktuelt_system.pk,
+						"parent": parent(aktuelt_system),
+						"name": aktuelt_system.systemnavn,
+						"shape": "ellipse",
+						"color": "#C63D3D"
+					}},)
+			observerte_driftsmodeller.add(aktuelt_system.driftsmodell_foreignkey)
+
+			for s in aktuelt_system.system_integration_source.all():
+				integrasjon = s
+				s = s.destination_system
+				if s not in observerte_systemer:
+					neste_nivaa.add(s)
+					observerte_systemer.add(s)
+				if s not in behandlede_systemer:
+					avhengigheter_graf["nodes"].append({"data": { "id": s.pk, "parent": parent(s), "name": s.systemnavn, "shape": "ellipse", "color": integrasjon.color(), "href": reverse('systemdetaljer', args=[s.pk]) }},)
+					avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, "target": s.pk, 'linewidth': 2, 'curve-style': 'bezier', "linecolor": integrasjon.color(), "linestyle": "solid" }},)
+					observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+
+			if first_round:
+				for s in aktuelt_system.system_integration_destination.all():
+					integrasjon = s
+					s = s.source_system
+					if s not in observerte_systemer:
+						neste_nivaa.add(s)
+						observerte_systemer.add(s)
+					if s not in behandlede_systemer:
+						avhengigheter_graf["nodes"].append({"data": { "id": s.pk, "parent": parent(s), "name": s.systemnavn, "shape": "ellipse", "color": integrasjon.color(), "href": reverse('systemdetaljer', args=[s.pk]) }},)
+						avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": aktuelt_system.pk, 'linewidth': 1, 'curve-style': 'bezier', "linecolor": integrasjon.color(), "linestyle": "dashed" }},)
+						observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+
+			behandlede_systemer.add(aktuelt_system)
+
+		# legger neste nivås systemer inn i gjendende nivå, klar for neste runde
+		aktivt_nivaa_systemer = neste_nivaa
+		neste_nivaa = set()
+
+		return aktivt_nivaa_systemer, neste_nivaa
+
+	aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
+	first_round = False
+	while follow_count > 0 and aktivt_nivaa_systemer: # det må være noen systemer å gå igjennom..
+		aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
+		follow_count-=1
+
+	# legge til alle driftsmodeller som ble funnet
+	for driftsmodell in observerte_driftsmodeller:
+		if driftsmodell is not None:
+			if driftsmodell.overordnet_plattform:
+				avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.pk}", "name": driftsmodell.navn, "parent": f"drift_{driftsmodell.overordnet_plattform.pk}" }},)
+				avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.overordnet_plattform.pk}", "name": driftsmodell.overordnet_plattform.navn }},)
+			else:
+				avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.pk}", "name": driftsmodell.navn }},)
+
+	return avhengigheter_graf
+
+
+
 def virksomhet(request, pk):
 	#Vise detaljer om en valgt virksomhet
 	required_permissions = ['systemoversikt.view_system']
@@ -7010,6 +7103,8 @@ def virksomhet(request, pk):
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk).filter(~Q(ibruk=False)).count()
 	from systemoversikt.models import SYSTEM_COLORS
 
+	avhengigheter_graf_ny = generer_graf_virksomhet(pk)
+
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -7030,6 +7125,9 @@ def virksomhet(request, pk):
 		'nodes_infra': _collect_system_graph_data(pk, kilde="infrastruktur"),
 		'system_colors': SYSTEM_COLORS,
 		'kritiske_funksjoner': kritiske_funksjoner,
+		'avhengigheter_graf_ny': avhengigheter_graf_ny,
+		'avhengigheter_chart_size_ny': 300 + len(avhengigheter_graf_ny["nodes"])*20,
+
 	})
 
 
