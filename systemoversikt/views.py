@@ -2437,7 +2437,7 @@ def rapport_entra_id_auth(request):
 						#match = PAREN_RE.search(beskrivelse)
 						#if match:
 						#	device_type = match.group(1).strip()
-						#	counter[device_type] += 1
+						counter[beskrivelse] += 1
 
 				except Exception:
 					pass
