@@ -7010,7 +7010,7 @@ def generer_graf_virksomhet(virksomhet_pk):
 									.filter(~Q(livslop_status__in=[6,7]))
 								)
 
-	print(virksomhetens_systemer)
+	#print(virksomhetens_systemer)
 	for s in virksomhetens_systemer:
 		aktivt_nivaa_systemer.add(s)
 		observerte_systemer.add(s)
