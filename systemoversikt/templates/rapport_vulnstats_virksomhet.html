@@ -1,0 +1,46 @@
+{% extends "rapport_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	Sårbarheter for {{ virksomhet }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+
+<a href="{% url 'vulnstats_offerings' %}" class="btn btn-sm btn-primary">Tilbake</a>
+<hr>
+
+<p style="background-color: {{ integrasjonsstatus.color }};">
+Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}}) ({{integrasjonsstatus.script_navn}})</p>
+
+
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Tittel</th>
+	<th>Server</th>
+	<th>Alvorlighetsgrad</th>
+	<th></th>
+	<th></th>
+</tr>
+</thead>
+<tbody>
+{% for vuln in data %}
+<tr>
+	<td>{{ vuln.title }}</td>
+	<td>{{ vuln.server__comp_name }}</td>
+	<td>{{ vuln.severity }}</td>
+	<td>{{ vuln.server__service_offerings__system__systemnavn }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+
+
+{% endblock hovedinnhold %}

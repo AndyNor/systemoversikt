@@ -169,6 +169,8 @@ urlpatterns = [
 	re_path(r'^rapport/azure/conditional_access/rules/$', views.rapport_conditional_access_rules, name="rapport_conditional_access_rules"),
 	re_path(r'^rapport/azure/conditional_access/changes/$', views.rapport_conditional_access_changes, name="rapport_conditional_access_changes"),
 	re_path(r'^rapport/entra_id/auth/$', views.rapport_entra_id_auth, name='rapport_entra_id_auth'),
+	re_path(r'^rapport/vulnstats/virksomhet/(?P<pk>\d{1,8})?', views.vulnstats_virksomhet, name="vulnstats_virksomhet"),
+
 
 
 	re_path(r'^tjenester/oversikt/$', views.tjenester_oversikt, name="tjenester_oversikt"),

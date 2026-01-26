@@ -1218,6 +1218,40 @@ def vulnstats_offerings(request):
 
 
 
+
+def vulnstats_virksomhet(request, pk=None):
+	required_permissions = ['systemoversikt.change_virksomhet']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
+	except:
+		integrasjonsstatus = None
+
+
+	pk = int(pk)
+	data = None
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	if pk:
+		representerer = request.user.profile.virksomhet
+		if representerer.pk == pk:
+			data = QualysVuln.objects.filter(server__service_offerings__system__systemforvalter=pk).values('title', 'severity', 'server__comp_name', 'server__service_offerings__system__systemnavn', 'server__service_offerings__system__systemforvalter').order_by('server__comp_name')
+		else:
+			messages.info(request, f"Du prøver å se sårbarheter for en virksomhet du ikke representerer. Du er logget inn som {representerer}")
+
+
+	return render(request, 'rapport_vulnstats_virksomhet.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'integrasjonsstatus': integrasjonsstatus,
+		'data': data,
+		'virksomhet': virksomhet,
+	})
+
+
+
+
 def vulnstats_offering(request, pk=None):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -2446,6 +2480,7 @@ def rapport_entra_id_auth(request):
 		#return counter.most_common(n)
 
 	top_devices = get_top_fido2_devices()
+	#print(top_devices)
 
 
 
