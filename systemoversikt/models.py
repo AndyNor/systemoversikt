@@ -3728,6 +3728,7 @@ SYSTEMEIERSKAPSMODELL_VALG = (
 	('FELLESSYSTEM', 'Fellessystem (valgfritt)'),
 	('FELLESSYSTEM_OBLIGATORISK', 'Fellessystem (obligatorisk)'),
 	('STOTTE', 'IKT-støttesystem'),
+	('NASJONALFELLESK', 'Nasjonal felleskomponent')
 )
 
 # må lage et script som inverterer verdiene i databasen 5 til 1 og 4 til 2 samtidig som disse inverteres.
