@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-<p>Her vises statistikk over MFA-metoder for ulike brukergrupper. Det synkroniseres MFA hver natt for alle brukere på felles IKT-plattform som har tildelt en M365-lisens. Brukere går på rundgang slik at alle blir sjekket ca. 1 gang per uke, og det er de som har lengst tid siden oppdatering som blir oppdatert hver natt.</p>
+<p>Her vises statistikk over MFA-metoder for ulike brukergrupper. Det synkroniseres MFA hver natt for alle brukere på felles IKT-plattform som har tildelt en M365-lisens. Gjestebrukere blir ikke inkludert, da det kun er brukere fra on-prem AD med lisens som slås opp. Siden det er veldig mange brukere med lisens, fordeles oppslag med ca. 7000 per natt, noe som sikrer at alle brukere slås opp ca. 1 gang per uke.</p>
 
 
 <h5>Totalt for alle med lisens</h5>
