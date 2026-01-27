@@ -2479,8 +2479,8 @@ def rapport_entra_id_auth(request):
 				try:
 					if item.get("@odata.type") == "#microsoft.graph.fido2AuthenticationMethod":
 						#beskrivelse = item.get("beskrivelse", "").strip()
-						beskrivelse = item.get("aaGuid")
-						if not beskrivelse:
+						aaguid = item.get("aaGuid")
+						if not aaguid:
 							continue
 
 	                    # Look up description, fall back to AAGUID if unknown
