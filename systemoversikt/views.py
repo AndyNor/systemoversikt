@@ -2450,19 +2450,19 @@ def rapport_entra_id_auth(request):
 	PAREN_RE = re.compile(r"\((.*?)\)")   # extract inside parentheses
 
 	AAGUID_LOOKUP = {
-		"e77e3c64-05e3-428b-8824-0cbeb04b829d": "Security Key NFC (Black) (USB-A, USB-C)",
-		"a4e9fc6d-4cbe-4758-b8ba-37598bb5bbaa": "Security Key NFC (Black) (USB-A, USB-C)",
+		"e77e3c64-05e3-428b-8824-0cbeb04b829d": "YubiKey Security Key NFC (Black) (USB-A, USB-C)",
+		"a4e9fc6d-4cbe-4758-b8ba-37598bb5bbaa": "YubiKey Security Key NFC (Black) (USB-A, USB-C)",
+		"b7d3f68e-88a6-471e-9ecf-2df26d041ede": "YubiKey Security Key NFC (Black) (USB-A, USB-C)",
 		"90a3ccdf-635c-4729-a248-9b709135078f": "Microsoft Authenticator for iOS",
 		"de1e552d-db1d-4423-a619-566b625cdc84": "Microsoft Authenticator for Android",
 		"2fc0579f-8113-47ea-b116-bb5a8db9202a": "YubiKey 5/5C NFC",
-		"b7d3f68e-88a6-471e-9ecf-2df26d041ede": "Security Key NFC (Black) (USB-A, USB-C)",
-		"42b4fb4a-2866-43b2-9bf7-6c6669c2e5d3": "Google Titan Security Key v2",
 		"d8522d9f-575b-4866-88a9-ba99fa02f35b": "YubiKey Bio - FIDO Edition",
 		"ee882879-721c-4913-9775-3dfcce97072a": "YubiKey 5/5C/Nano CSPN",
 		"fa2b99dc-9e39-4257-8f92-4a30d23c4118": "YubiKey 5 NFC",
-		"149a2021-8ef6-4133-96b8-81f8d5b7f1f5": "Security Key NFC (USB-A, USB-C) (Blue)",
-		"73402251-f2a8-4f03-873e-3cb6db604b03": "uTrust FIDO2 Security Key",
 		"a25342c0-3cdc-4414-8e46-f4807fca511c": "YubiKey 5/5C NFC",
+		"149a2021-8ef6-4133-96b8-81f8d5b7f1f5": "YubiKey Security Key NFC (USB-A, USB-C) (Blue)",
+		"73402251-f2a8-4f03-873e-3cb6db604b03": "uTrust FIDO2 Security Key",
+		"42b4fb4a-2866-43b2-9bf7-6c6669c2e5d3": "Google Titan Security Key v2",
 	}
 
 	def get_top_fido2_devices():
