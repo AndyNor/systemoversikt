@@ -8,7 +8,7 @@ if systemctl is-active --quiet "$SERVICE"; then
     echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL is running."
 else
     echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL is NOT running. Restarting..."
-    systemctl restart "$SERVICE"
+    sudo systemctl restart "$SERVICE"
     if systemctl is-active --quiet "$SERVICE"; then
         echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL restarted successfully."
     else
