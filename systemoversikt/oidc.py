@@ -155,10 +155,14 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					messages.info(self.request, 'Pålogging via brukernavn feilet. Prøver pålogging via e-postadresse...')
 					try:
 						print(f"mail er {email}")
-						return self.UserModel.objects.filter(email__iexact=email)
+						return self.UserModel.objects.filter(email__iexact=email)						
 					except:
-						logger.error("Auth: filter_user_by_claim: No match for %s" % email)
-						return self.UserModel.objects.none()
+						try:
+							mail = mail.replace("@vav.oslo", "@vavtemp.oslo")
+							return self.UserModel.objects.filter(email__iexact=email)	
+						except:
+							logger.error("Auth: filter_user_by_claim: No match for %s" % email)
+							return self.UserModel.objects.none()
 				except:
 					messages.info(self.request, 'Kunne ikke logge inn med e-postadresse.')
 
