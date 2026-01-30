@@ -139,9 +139,9 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			if username: # primærmetode
 				username = username.lower()
 				try:
+					message = "%s logget inn." % username
 					ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 					#messages.warning(self.request, 'Pålogging via brukernavn.')
-					message = "%s logget inn." % username
 					return self.UserModel.objects.filter(username__iexact=username)
 				except:
 					messages.warning(self.request, 'Kunne ikke logge inn med brukernavn.')
@@ -150,11 +150,11 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			if email: # sekundærmetode
 				email = email.lower()
 				try:
+					message = "%s logget inn." % email
 					ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 					messages.info(self.request, 'Pålogging via brukernavn feilet. Prøver pålogging via e-postadresse...')
 					try:
 						print(f"mail er {email}")
-						message = "%s logget inn." % email
 						return self.UserModel.objects.filter(email__iexact=email)
 					except:
 						logger.error("Auth: filter_user_by_claim: No match for %s" % email)
