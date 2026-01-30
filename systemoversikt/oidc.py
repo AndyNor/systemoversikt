@@ -158,7 +158,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 						return self.UserModel.objects.filter(email__iexact=email)						
 					except:
 						try:
-							mail = mail.replace("@vav.oslo", "@vavtemp.oslo")
+							email = email.replace("@vav.oslo", "@vavtemp.oslo")
+							print(f"Prøver med {email}")
 							return self.UserModel.objects.filter(email__iexact=email)	
 						except:
 							logger.error("Auth: filter_user_by_claim: No match for %s" % email)
