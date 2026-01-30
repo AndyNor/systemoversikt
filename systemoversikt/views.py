@@ -4364,7 +4364,7 @@ def logger(request):
 	aktive_antall_personer = 10
 	period = datetime.datetime.now() - datetime.timedelta(weeks=aktive_antall_uker)
 	top_users = LogEntry.objects.filter(action_time__gte=period).values('user_id').annotate(count=Count('user_id')).order_by('-count')[:aktive_antall_personer]
-	print(top_users)
+	#print(top_users)
 	for user in top_users:
 		user["user"] = User.objects.get(pk=user["user_id"])
 

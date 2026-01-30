@@ -147,28 +147,25 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					messages.warning(self.request, 'Kunne ikke logge inn med brukernavn.')
 
 			# siden vi ikke returnerte basert på username, prøver vi email
-			if email: # sekundærmetode
+			if email:
 				email = email.lower()
-				try:
-					message = "%s logget inn." % email
-					ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
-					messages.info(self.request, 'Pålogging via brukernavn feilet. Prøver pålogging via e-postadresse...')
-					try:
-						print(f"mail er {email}")
-						return self.UserModel.objects.filter(email__iexact=email)						
-					except:
-						try:
-							email = email.replace("@vav.oslo", "@vavtemp.oslo")
-							print(f"Prøver med {email}")
-							return self.UserModel.objects.filter(email__iexact=email)	
-						except:
-							logger.error("Auth: filter_user_by_claim: No match for %s" % email)
-							return self.UserModel.objects.none()
-				except:
-					messages.info(self.request, 'Kunne ikke logge inn med e-postadresse.')
+				print(f"Prøver først med {email}")
 
-			messages.warning(self.request, 'Det fulge ikke med et brukernavn i claim, og e-post stemmer ikke med e-post i on-prem AD. Innlogging feilet.')
-			return self.UserModel.objects.none()
+				# first attempt
+				qs = self.UserModel.objects.filter(email__iexact=email)
+				if qs.exists():
+					return qs
+
+				# fallback email rewrite
+				email2 = email.replace("@vav.oslo", "@vavtemp.oslo")
+				print(f"Prøver med {email2}")
+				qs2 = self.UserModel.objects.filter(email__iexact=email2)
+				if qs2.exists():
+					return qs2
+
+				# nothing worked
+				logger.error(f"Auth: filter_user_by_claim: No match for {email}")
+				return self.UserModel.objects.none()
 
 
 		def get_or_create_user(self, access_token, id_token, payload):
