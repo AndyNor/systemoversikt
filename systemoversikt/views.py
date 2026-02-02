@@ -8817,7 +8817,10 @@ def cmdb_bss(request, pk):
 
 	for db in databaser:
 		#try:
-		dbserver = CMDBdevice.objects.get(comp_name=db.db_server)
+		try:
+			dbserver = CMDBdevice.objects.get(comp_name=db.db_server)
+		except:
+			messages.warning(request, f"Serveren {db.db_server} for databasen {db} finnes ikke.")
 		network_ip_address = dbserver.network_ip_address.all()
 		#except:
 		#   network_ip_address = []
