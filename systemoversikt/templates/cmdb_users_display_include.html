@@ -57,7 +57,8 @@
 			{% for system in m.profile.levtilgangprofil %}{{ system }}<br>{% empty %}{% endfor %}<br>
 			{% endcomment %}
 
-			{% for gruppe in m.profile.adgrupper.all %}{{ gruppe }}<br>{% 
+			{% for gruppe in m.profile.adgrupper.all %}{{ gruppe }}<br>{% endfor%}
+
 		</td>
 	</tr>
 {% endfor %}
