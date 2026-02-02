@@ -53,13 +53,11 @@
 		<td>{{ m.profile.lastLogonTimestamp|date:"Ym" }}<br>({{ m.profile.lastLogonTimestamp|timesince }})</td>
 		<td>{{m.profile.description}}</td>
 		<td>
-			(vises ikke)
 			{% comment %}
 			{% for system in m.profile.levtilgangprofil %}{{ system }}<br>{% empty %}{% endfor %}<br>
-			{% if show_access_groups %}
-				{% for gruppe in m.profile.adgrupper.all %}{{ gruppe }}<br>{% endfor%}
-			{% endif %}
 			{% endcomment %}
+
+			{% for gruppe in m.profile.adgrupper.all %}{{ gruppe }}<br>{% 
 		</td>
 	</tr>
 {% endfor %}
