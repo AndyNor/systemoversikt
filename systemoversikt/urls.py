@@ -236,6 +236,9 @@ urlpatterns = [
 	re_path(r'^virksomhet/systemer/forvalter/sikkerhetsvurderinger/$', views.virksomhet_forvalter_isk, name='virksomhet_forvalter_isk'),
 	re_path(r'^virksomhet/systemer/forvalter/sikkerhetsvurderinger/(?P<pk>\d{1,8})/$', views.virksomhet_forvalter_isk, name='virksomhet_forvalter_isk'),
 
+	re_path(r'^graph/virksomhet/(?P<pk>\d{1,8})/$', views.save_graph_layout, name='save_graph_layout'),
+
+
 
 	re_path(r'^programvare/alle/$', views.alle_programvarer_optimized, name='alle_programvarer'),
 	re_path(r'^programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),

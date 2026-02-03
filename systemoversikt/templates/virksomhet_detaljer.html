@@ -214,90 +214,164 @@
 
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
-	var cy_avhengigheter = cytoscape({
-		zoomingEnabled: true,
-		panningEnabled: true,
-		wheelSensitivity: 0.1,
-		container: document.getElementById('cy_avhengigheter'),
-		elements: {
-			nodes: [
-				{% for node in avhengigheter_graf_ny.nodes %} {{ node|safe }},
-				{% endfor %}
-			],
-			edges: [
-				{% for edge in avhengigheter_graf_ny.edges %} {{ edge|safe }},
-				{% endfor %}
-			],
-		},
-		style: [
-			{
-				selector: 'node',
-				style: {
-					'shape': 'data(shape)',
-					'background-color': 'data(color)',
-					'label': 'data(name)',
-					'font-size': '11px',
-				},
-			},
-			{
-				selector: 'node:selected',
-				style: {
-				},
-			},
-			{
-				selector: 'edge',
-				style: {
-					'target-arrow-shape': 'triangle',
-					'curve-style': 'bezier',
-					'line-style': 'data(linestyle)',
-					'line-color': 'data(linecolor)',
-					'target-arrow-color': 'data(linecolor)',
-					'curve-style': 'bezier',
-					'width': 'data(linewidth)',
-					'target-distance-from-node': 15,
-					'source-distance-from-node': 25,
-				},
-			},
-			{
-				selector: 'edge:selected',
-				style: {
-				},
-			},
-			{
-				selector: ':parent',
-				style: {
-					'label': 'data(name)',
-					'line-style': "solid",
-					'background-color': '#F1F9FF',
-				}
-			},
-		],
-		layout: {
-			name: 'fcose',
-			animationDuration: 0, //ms
-			idealEdgeLength: 300,
-		},
-	});
-	cy_avhengigheter.on('tap', 'node', function(){
-		if (this.data('href')) {
-			try { // your browser may block popups
-				window.open( this.data('href'), "_self" );
-			} catch(e){ // fall back on url change
-				window.location.href = this.data('href');
-			}
-		}
-	});
-	//cy_avhengigheter.zoomingEnabled = false
+// ---------------------------------------------
+// INIT CYTOSCAPE
+// ---------------------------------------------
+var cy_avhengigheter = cytoscape({
+    zoomingEnabled: true,
+    panningEnabled: true,
+    wheelSensitivity: 0.1,
+	minZoom: 0.0001,
+	maxZoom: 10,
+	autolock: false,
+	autoungrabify: false,
+	boxSelectionEnabled: false,
+    container: document.getElementById('cy_avhengigheter'),
 
+    elements: {
+        nodes: [
+            {% for node in avhengigheter_graf_ny.nodes %} {{ node|safe }},
+            {% endfor %}
+        ],
+        edges: [
+            {% for edge in avhengigheter_graf_ny.edges %} {{ edge|safe }},
+            {% endfor %}
+        ],
+    },
 
+    style: [
+        {
+            selector: 'node',
+            style: {
+                'shape': 'data(shape)',
+                'background-color': 'data(color)',
+                'label': 'data(name)',
+                'font-size': '11px',
+            },
+        },
+        {
+            selector: 'edge',
+            style: {
+                'target-arrow-shape': 'triangle',
+                'curve-style': 'bezier',
+                'line-style': 'data(linestyle)',
+                'line-color': 'data(linecolor)',
+                'target-arrow-color': 'data(linecolor)',
+                'width': 'data(linewidth)',
+                'target-distance-from-node': 15,
+                'source-distance-from-node': 25,
+            },
+        },
+        {
+            selector: ':parent',
+            style: {
+                'label': 'data(name)',
+                'background-color': '#F1F9FF',
+            }
+        }
+    ],
+
+    // If positions exist → NO layout
+    layout: {% if saved_positions %}
+        null
+    {% else %}
+        {
+            name: 'fcose',
+            fit: true,
+            packComponents: true,
+            animationDuration: 0,
+            idealEdgeLength: 100,
+            quality: "proof",
+            numIter: 50000,
+            nodeSeparation: 80,
+            uniformNodeDimensions: true,
+        }
+    {% endif %}
+});
+
+// ---------------------------------------------
+// OPEN LINKS ON NODE CLICK
+// ---------------------------------------------
+cy_avhengigheter.on('tap', 'node', function(){
+    if (this.data('href')) {
+        try {
+            window.open(this.data('href'), "_self");
+        } catch(e){
+            window.location.href = this.data('href');
+        }
+    }
+});
+
+// ---------------------------------------------
+// SAVE LOGIC (debounced)
+// ---------------------------------------------
+let saveTimeout = null;
+
+function scheduleSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(saveLayout, 800);
+}
+
+cy_avhengigheter.on('position', 'node', scheduleSave);
+cy_avhengigheter.on('pan zoom', scheduleSave);
+
+function saveLayout() {
+    const layoutData = {
+        positions: {},
+        zoom: cy_avhengigheter.zoom(),
+        pan: cy_avhengigheter.pan()
+    };
+
+    cy_avhengigheter.nodes().forEach(n => {
+        layoutData.positions[n.id()] = n.position();
+    });
+
+    fetch("{% url 'save_graph_layout' virksomhet.pk %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify(layoutData)
+    });
+}
+
+// ---------------------------------------------
+// RESTORE STORED GRAPH STATE
+// Executes AFTER first render → avoids zoom bugs
+// ---------------------------------------------
+
+cy_avhengigheter.reset();  // resets zoom=1, pan={0,0} WITHOUT fitt
+// Wait for first render to ensure viewport is ready
+cy_avhengigheter.once("render", function () {
+
+    const savedLayout = {{ saved_layout_json }};
+
+    if (!savedLayout) return;
+
+    // Restore positions
+    Object.entries(savedLayout.positions).forEach(([id, pos]) => {
+        cy_avhengigheter.getElementById(id).position(pos);
+    });
+
+    // Restore zoom
+    cy_avhengigheter.zoom(savedLayout.zoom);
+
+    // Restore pan
+    cy_avhengigheter.pan(savedLayout.pan);
+
+});
 </script>
+
+
+
 
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 
 var cy_tjenester = cytoscape({
 	zoomingEnabled: true,
-	userZoomingEnabled: false,
+	userZoomingEnabled: true,
 	panningEnabled: true,
 	container: document.getElementById('cy_tjenester'),
 	elements: {
@@ -369,6 +443,8 @@ cy_tjenester.on('tap', 'node', function(){
 		}
 	}
 });
+
+
 
 
 var cy_infra = cytoscape({

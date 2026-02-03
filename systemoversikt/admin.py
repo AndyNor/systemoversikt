@@ -1828,3 +1828,8 @@ class KritiskKapabilitetAdmin(admin.ModelAdmin):
 	list_display = ('navn', 'funksjon', 'beskrivelse')
 	search_fields = ('navn', 'beskrivelse')
 	#list_filter = ('')
+
+
+@admin.register(GraphLayout)
+class GraphLayoutAdmin(admin.ModelAdmin):
+	list_display = ('virksomhet', 'zoom', 'pan_x', 'pan_y', 'updated_at')

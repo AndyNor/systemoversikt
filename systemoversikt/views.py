@@ -2483,7 +2483,7 @@ def rapport_entra_id_auth(request):
 						if not aaguid:
 							continue
 
-	                    # Look up description, fall back to AAGUID if unknown
+						# Look up description, fall back to AAGUID if unknown
 						device = AAGUID_LOOKUP.get(aaguid, aaguid) # returnerer seg selv om ingen treff
 						# Extract only the text inside parentheses
 						#match = PAREN_RE.search(beskrivelse)
@@ -7087,8 +7087,23 @@ def generer_graf_virksomhet(virksomhet_pk):
 					neste_nivaa.add(s)
 					observerte_systemer.add(s)
 				if s not in behandlede_systemer:
-					avhengigheter_graf["nodes"].append({"data": { "id": s.pk, "parent": parent(s), "name": s.systemnavn, "shape": "ellipse", "color": integrasjon.color(), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-					avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, "target": s.pk, 'linewidth': 2, 'curve-style': 'bezier', "linecolor": integrasjon.color(), "linestyle": "solid" }},)
+					avhengigheter_graf["nodes"].append({"data": { 
+							"id": s.pk, 
+							"parent": parent(s), 
+							"name": s.systemnavn, 
+							"shape": "ellipse", 
+							"color": integrasjon.color(), 
+							"href": reverse('systemdetaljer', args=[s.pk]) 
+						}},)
+					avhengigheter_graf["edges"].append({"data": { 
+							"source": aktuelt_system.pk, 
+							"target": s.pk, 
+							"linewidth": 2,
+							"shape": "ellipse", 
+							"curve-style": 'bezier', 
+							"linecolor": integrasjon.color(), 
+							"linestyle": "solid"
+						}},)
 					observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
 
 			if first_round:
@@ -7099,8 +7114,23 @@ def generer_graf_virksomhet(virksomhet_pk):
 						neste_nivaa.add(s)
 						observerte_systemer.add(s)
 					if s not in behandlede_systemer:
-						avhengigheter_graf["nodes"].append({"data": { "id": s.pk, "parent": parent(s), "name": s.systemnavn, "shape": "ellipse", "color": integrasjon.color(), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-						avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": aktuelt_system.pk, 'linewidth': 1, 'curve-style': 'bezier', "linecolor": integrasjon.color(), "linestyle": "dashed" }},)
+						avhengigheter_graf["nodes"].append({"data": { 
+								"id": s.pk, 
+								"parent": parent(s), 
+								"name": s.systemnavn, 
+								"shape": "ellipse", 
+								"color": integrasjon.color(), 
+								"href": reverse('systemdetaljer', args=[s.pk]) 
+							}},)
+						avhengigheter_graf["edges"].append({"data": { 
+								"source": s.pk, 
+								"target": aktuelt_system.pk, 
+								"linewidth": 1, 
+								"curve-style": 'bezier', 
+								"linecolor": integrasjon.color(), 
+								"linestyle": "dashed",
+								"shape": "ellipse", 
+							}},)
 						observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
 
 			behandlede_systemer.add(aktuelt_system)
@@ -7121,10 +7151,23 @@ def generer_graf_virksomhet(virksomhet_pk):
 	for driftsmodell in observerte_driftsmodeller:
 		if driftsmodell is not None:
 			if driftsmodell.overordnet_plattform:
-				avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.pk}", "name": driftsmodell.navn, "parent": f"drift_{driftsmodell.overordnet_plattform.pk}" }},)
-				avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.overordnet_plattform.pk}", "name": driftsmodell.overordnet_plattform.navn }},)
+				avhengigheter_graf["nodes"].append({"data": { 
+						"id": f"drift_{driftsmodell.pk}", 
+						"name": driftsmodell.navn, 
+						"parent": f"drift_{driftsmodell.overordnet_plattform.pk}",
+						"shape": "ellipse", 
+					}},)
+				avhengigheter_graf["nodes"].append({"data": { 
+						"id": f"drift_{driftsmodell.overordnet_plattform.pk}", 
+						"name": driftsmodell.overordnet_plattform.navn,
+						"shape": "ellipse", 
+					}},)
 			else:
-				avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.pk}", "name": driftsmodell.navn }},)
+				avhengigheter_graf["nodes"].append({"data": { 
+						"id": f"drift_{driftsmodell.pk}", 
+						"name": driftsmodell.navn,
+						"shape": "ellipse", 
+					}},)
 
 	return avhengigheter_graf
 
@@ -7159,6 +7202,21 @@ def virksomhet(request, pk):
 
 	avhengigheter_graf_ny = generer_graf_virksomhet(pk)
 
+	try:
+		layout = GraphLayout.objects.get(virksomhet=virksomhet)
+		saved_layout = {
+			"positions": layout.positions_json,
+			"zoom": layout.zoom,
+			"pan": {"x": layout.pan_x, "y": layout.pan_y},
+		}
+	except GraphLayout.DoesNotExist:
+		saved_layout = None
+
+	# Prepare JSON (safe, with dot-decimals)
+	from django.utils.safestring import mark_safe
+	saved_layout_json = mark_safe(json.dumps(saved_layout))
+
+
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -7181,8 +7239,37 @@ def virksomhet(request, pk):
 		'kritiske_funksjoner': kritiske_funksjoner,
 		'avhengigheter_graf_ny': avhengigheter_graf_ny,
 		'avhengigheter_chart_size_ny': 300 + len(avhengigheter_graf_ny["nodes"])*20,
-
+		"virksomhet": virksomhet,
+		"saved_layout_json": saved_layout_json,
 	})
+
+
+
+def save_graph_layout(request, pk):
+	from django.http import JsonResponse
+	import json
+
+	if request.method != "POST":
+		return JsonResponse({"error": "POST only"}, status=400)
+
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return JsonResponse({"error": "User has not the right permissions"}, status=403)
+
+	data = json.loads(request.body)
+	virksomhet = Virksomhet.objects.get(pk=pk)
+
+	layout, created = GraphLayout.objects.update_or_create(
+		virksomhet=virksomhet,
+		defaults={
+			"positions_json": data.get("positions", {}),
+			"zoom": float(data.get("zoom", 1)),
+			"pan_x": float(data.get("pan", {}).get("x", 0)),
+			"pan_y": float(data.get("pan", {}).get("y", 0)),
+		}
+	)
+
+	return JsonResponse({"ok": True})
 
 
 

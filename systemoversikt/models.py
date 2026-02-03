@@ -8434,3 +8434,18 @@ class Brannmurregel(models.Model):
 	def protocol_items(self):
 		return json.loads(self.protocol)
 
+
+class GraphLayout(models.Model):
+	virksomhet = models.ForeignKey(Virksomhet, on_delete=models.CASCADE)
+	positions_json = models.JSONField()
+	zoom = models.FloatField(default=1)
+	pan_x = models.FloatField(default=0)
+	pan_y = models.FloatField(default=0)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	def __str__(self):
+		return f"Layout for {self.virksomhet.virksomhetsforkortelse}"
+
+	class Meta:
+		verbose_name_plural = "Visualisering: Graphlayouts"
+		default_permissions = ('add', 'change', 'delete', 'view')
