@@ -8442,6 +8442,7 @@ class GraphLayout(models.Model):
 	pan_x = models.FloatField(default=0)
 	pan_y = models.FloatField(default=0)
 	updated_at = models.DateTimeField(auto_now=True)
+	locked = models.BooleanField(default=False)
 
 	def __str__(self):
 		return f"Layout for {self.virksomhet.virksomhetsforkortelse}"

@@ -7209,6 +7209,7 @@ def virksomhet(request, pk):
 			"positions": layout.positions_json,
 			"zoom": layout.zoom,
 			"pan": {"x": layout.pan_x, "y": layout.pan_y},
+			"locked": layout.locked,
 		}
 	except GraphLayout.DoesNotExist:
 		saved_layout = None
@@ -7248,6 +7249,25 @@ def virksomhet(request, pk):
 	})
 
 
+@require_POST
+def virksomhet_toggle_graph_lock(request, pk):
+	required_permissions = ['systemoversikt.change_virksomhet']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return HttpResponseForbidden(f'Manglende brukertilganger. Krever {required_permissions}.')
+		
+	layout = get_object_or_404(GraphLayout, virksomhet_id=pk)
+	
+	try:
+		body = json.loads(request.body)
+	except:
+		return JsonResponse({"ok": False, "error": "Invalid JSON"}, status=400)
+
+	lock = bool(body.get("locked"))
+	layout.locked = lock
+	layout.save()
+
+	return JsonResponse({"ok": True, "locked": layout.locked})
+
 
 @require_POST
 def virksomhet_save_graph_layout(request, pk):
@@ -7270,6 +7290,9 @@ def virksomhet_save_graph_layout(request, pk):
 	virksomhet = get_object_or_404(Virksomhet, pk=pk)
 
 	layout, created = GraphLayout.objects.get_or_create(virksomhet=virksomhet)
+	if layout.locked:
+		return JsonResponse({"ok": False, "error": "Layout is locked"}, status=423)
+
 	layout.positions_json = positions
 	layout.zoom = float(zoom)
 	layout.pan_x = pan_x
@@ -7278,7 +7301,8 @@ def virksomhet_save_graph_layout(request, pk):
 
 	response = {
 		'ok': True,
-		'created': created,
+		'created': created, # om den ble opprettet nå, ikke tidspunkt opprettet
+		'locked': layout.locked,
 		'nodes': len(positions),
 		'zoom': layout.zoom,
 		'pan': {'x': layout.pan_x, 'y': layout.pan_y},

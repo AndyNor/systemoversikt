@@ -172,6 +172,11 @@
 
 	<br>
 	<button id="graph-reset" class="btn btn-sm btn-outline-secondary">Tilbakestill visning</button>
+	<button id="graph-download" class="btn btn-secondary">Last ned layout</button>
+	<button id="graph-upload" class="btn btn-secondary">Last inn layout</button>
+	<input id="graph-upload-input" type="file" accept="application/json" style="display:none;">
+	<button id="graph-lock"></button>
+
 
 
 	{% if avhengigheter_graf_ny.nodes|length < 2 %}
@@ -331,7 +336,7 @@ var cy_avhengigheter = cytoscape({
     }
   ],
 
-  // Use PRESET iff we have saved positions; else deterministic fCoSE
+  // Use PRESET if we have saved positions; else deterministic fCoSE
   layout: hasSaved
     ? {
         name: 'preset',
@@ -355,6 +360,7 @@ var cy_avhengigheter = cytoscape({
 
 groupEnd(); // Cytoscape init
 
+
 // ---------------------------------------------
 // OPEN LINKS ON NODE CLICK
 // ---------------------------------------------
@@ -368,6 +374,7 @@ cy_avhengigheter.on('tap', 'node', function(){
     log('Node tap (no href)', { id: this.id() });
   }
 });
+
 
 // ---------------------------------------------
 // SAVE / RESTORE STATE
@@ -447,6 +454,7 @@ cy_avhengigheter.on('position', 'node', () => scheduleSave('node:position'));
 cy_avhengigheter.on('pan', () => scheduleSave('viewport:pan'));
 cy_avhengigheter.on('zoom', () => scheduleSave('viewport:zoom'));
 
+
 // ---------------------------------------------
 // RESTORE VIEWPORT (positions via preset)
 // ---------------------------------------------
@@ -482,6 +490,8 @@ if (hasSaved) {
 
   // Safety net
   const timeoutId = setTimeout(() => endRestore('timeout-1500ms'), 1500);
+
+
 
   // Apply after preset positions settle
   cy_avhengigheter.once('idle', () => {
@@ -526,7 +536,120 @@ if (hasSaved) {
 </script>
 
 
+
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
+let isGraphLocked = {{ saved_layout_json.locked|yesno:"true,false" }};
+
+// ---------------------------------------------------------
+// Helper: update UI + cytoscape interaction states
+// ---------------------------------------------------------
+function applyLockStateUI(locked) {
+    const btn = document.getElementById("graph-lock");
+    if (!btn) return;
+
+    // Text
+    btn.textContent = locked ? "🔒 Lås opp" : "Lås";
+
+    // Always ensure base class is present
+    // (the original HTML was: <button class="btn">)
+    btn.classList.add("btn");
+
+    // Toggle locked visual state
+    if (locked) {
+        btn.classList.add("btn-danger");     // Add red when locked
+    } else {
+        btn.classList.remove("btn-danger");  // Remove red when unlocked
+    }
+
+    // Lock interactions
+    cy_avhengigheter.autolock(locked);
+    cy_avhengigheter.autoungrabify(locked);
+
+    // Allow pan/zoom during initial restore always
+    if (isRestoring) {
+        // Defer disabling until restore has ended
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                cy_avhengigheter.zoomingEnabled(!locked);
+                cy_avhengigheter.panningEnabled(!locked);
+            });
+        });
+    } else {
+        // Normal behavior
+        cy_avhengigheter.zoomingEnabled(!locked);
+        cy_avhengigheter.panningEnabled(!locked);
+    }
+
+    log(locked ? "Graph is LOCKED. Edits disabled."
+               : "Graph UNLOCKED. Editing enabled.");
+}
+
+// ---------------------------------------------------------
+// Disable saving when locked
+// ---------------------------------------------------------
+function scheduleSaveLockedSafe(source) {
+    if (isGraphLocked) {
+        log("Save ignored, graph locked.", { source });
+        return;
+    }
+    scheduleSave(source);
+}
+
+// ---------------------------------------------------------
+// REMOVE ORIGINAL SAVE LISTENERS
+// (Critical! Prevents double events)
+// ---------------------------------------------------------
+cy_avhengigheter.off('position');
+cy_avhengigheter.off('pan');
+cy_avhengigheter.off('zoom');
+
+// ---------------------------------------------------------
+// REPLACE WITH LOCK-AWARE SAVE LISTENERS
+// ---------------------------------------------------------
+cy_avhengigheter.on('position', 'node', () => scheduleSaveLockedSafe('node:position'));
+cy_avhengigheter.on('pan', () => scheduleSaveLockedSafe('viewport:pan'));
+cy_avhengigheter.on('zoom', () => scheduleSaveLockedSafe('viewport:zoom'));
+
+
+// ---------------------------------------------------------
+// Toggle lock (frontend + backend)
+// ---------------------------------------------------------
+document.getElementById("graph-lock")?.addEventListener("click", async () => {
+    const newState = !isGraphLocked;
+
+    try {
+        const r = await fetch("{% url 'virksomhet_toggle_graph_lock' virksomhet.pk %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": CSRF
+            },
+            body: JSON.stringify({ locked: newState }),
+            credentials: "same-origin"
+        });
+
+        const result = await r.json();
+        if (result.ok) {
+            isGraphLocked = result.locked;
+            applyLockStateUI(isGraphLocked);
+        } else {
+            alert("Kunne ikke endre låsestatus.");
+        }
+    } catch (e) {
+        alert("Nettverksfeil ved toggling av lås.");
+    }
+});
+
+// Initial setup on load
+applyLockStateUI(isGraphLocked);
+</script>
+
+
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+// ---------------------------------------------
+// RESET LAYOUT
+// ---------------------------------------------
 document.getElementById('graph-reset')?.addEventListener('click', () => {
   // Guard saving during reset
   isRestoring = true;
@@ -563,9 +686,142 @@ document.getElementById('graph-reset')?.addEventListener('click', () => {
 </script>
 
 
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+// ---------------------------------------------
+// DOWNLOAD LAYOUT AS FILE
+// ---------------------------------------------
+function downloadLayoutAsFile() {
+    // Collect positions (only childless visible nodes, like your save logic)
+    const positions = {};
+    cy_avhengigheter.nodes(':childless:visible').forEach(n => {
+        const p = n.position();
+        positions[n.id()] = { x: p.x, y: p.y };
+    });
+
+    // Collect viewport
+    const zoom = cy_avhengigheter.zoom();
+    const pan = cy_avhengigheter.pan();
+
+    const payload = {
+        positions,
+        zoom,
+        pan
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: "application/json"
+    });
+
+    // Create filename with timestamp
+    const filename = `graph_layout_${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+
+    // Auto-click
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+}
+
+// Bind to button
+document.getElementById('graph-download')?.addEventListener('click', () => {
+    downloadLayoutAsFile();
+});
+</script>
+
+
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
+// -------------------------------------------------------------
+// LOAD LAYOUT FROM FILE
+// -------------------------------------------------------------
+function applyImportedLayout(data) {
+    if (!data || typeof data !== "object") {
+        alert("Ugyldig layoutfil.");
+        return;
+    }
 
+    const { positions, zoom, pan } = data;
+
+    if (!positions || typeof positions !== "object") {
+        alert("Layoutfil mangler 'positions'.");
+        return;
+    }
+
+    console.groupCollapsed("Import layout");
+
+    // Disable auto-save while restoring
+    isRestoring = true;
+
+    cy_avhengigheter.startBatch();
+
+    // Apply node positions to childless nodes only
+    cy_avhengigheter.nodes(':childless').forEach(n => {
+        const pos = positions[n.id()];
+        if (pos && Number.isFinite(pos.x) && Number.isFinite(pos.y)) {
+            n.position({ x: pos.x, y: pos.y });
+        }
+    });
+
+    // Apply viewport
+    if (Number.isFinite(zoom)) {
+        cy_avhengigheter.zoom(zoom);
+    }
+    if (pan && Number.isFinite(pan.x) && Number.isFinite(pan.y)) {
+        cy_avhengigheter.pan(pan);
+    }
+
+    cy_avhengigheter.endBatch();
+
+    // Force style/layout update
+    cy_avhengigheter.resize();
+    cy_avhengigheter.style().update();
+
+    // Re-enable saving after a short grace
+    setTimeout(() => {
+        isRestoring = false;
+        restoreGraceUntil = Date.now() + 300;
+    }, 100);
+
+    console.groupEnd();
+}
+
+document.getElementById("graph-upload").addEventListener("click", () => {
+    document.getElementById("graph-upload-input").click();
+});
+
+document.getElementById("graph-upload-input").addEventListener("change", (evt) => {
+    const file = evt.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+        try {
+            const data = JSON.parse(reader.result);
+            applyImportedLayout(data);
+        } catch (e) {
+            alert("Kunne ikke lese JSON fra filen.");
+        }
+    };
+
+    reader.readAsText(file);
+});
+</script>
+
+
+
+
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+// -------------------------------------------------------------
+// SYSTEMER FORDELT PÅ AVDELINGER
+// -------------------------------------------------------------
 var cy_tjenester = cytoscape({
 	zoomingEnabled: true,
 	userZoomingEnabled: true,
@@ -631,6 +887,7 @@ var cy_tjenester = cytoscape({
 		idealEdgeLength: 150,
 	},
 });
+
 cy_tjenester.on('tap', 'node', function(){
 	if (this.data('href')) {
 		try { // your browser may block popups
@@ -640,10 +897,13 @@ cy_tjenester.on('tap', 'node', function(){
 		}
 	}
 });
+</script>
 
 
-
-
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+// -------------------------------------------------------------
+// INFRASTRUKTUR FORDELT PÅ AVDELINGER
+// -------------------------------------------------------------
 var cy_infra = cytoscape({
 	zoomingEnabled: true,
 	userZoomingEnabled: false,
@@ -709,6 +969,7 @@ var cy_infra = cytoscape({
 		idealEdgeLength: 150,
 	},
 });
+
 cy_infra.on('tap', 'node', function(){
 	if (this.data('href')) {
 		try { // your browser may block popups
@@ -718,8 +979,6 @@ cy_infra.on('tap', 'node', function(){
 		}
 	}
 });
-
-
 </script>
 
 {% endblock script_append %}
