@@ -8437,7 +8437,7 @@ class Brannmurregel(models.Model):
 
 class GraphLayout(models.Model):
 	virksomhet = models.ForeignKey(Virksomhet, on_delete=models.CASCADE)
-	positions_json = models.JSONField()
+	positions_json = models.JSONField(null=True)
 	zoom = models.FloatField(default=1)
 	pan_x = models.FloatField(default=0)
 	pan_y = models.FloatField(default=0)

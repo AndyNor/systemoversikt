@@ -312,7 +312,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 
 			lokal_rettighetstest = False  # denne skal normalt stå til False når testing ikke pågår lokalt
-			lokal_rolle = "root" # velg mellom "ingen", "lese", "systemforvalter", "virksomhetsforvalter", "superbruker", "sikkerhetsanalytiker" og "root"
+			lokal_rolle = "lese" # velg mellom "ingen", "lese", "systemforvalter", "virksomhetsforvalter", "superbruker", "sikkerhetsanalytiker" og "root"
 			if os.environ['THIS_ENV'] == "TEST" and lokal_rettighetstest:
 				messages.warning(self.request, 'Rettigheter er manuelt styrt for testformål')
 

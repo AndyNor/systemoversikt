@@ -166,8 +166,14 @@
 	<hr>
 
 	<h6>Systemavhengigheter for våre systemer</h6>
+	<p>Virksomhetsforvaltere og superbrukere kan flytte rundt på nodene i grafen og nye lokasjoner vil bli lagret for alle.</p>
 
 	<div id="cy_avhengigheter" style="background-color: #FCFCFC; border: 1px solid #d6d4d4; width: 100%; height: 1000px;"></div>
+
+	<br>
+	<button id="graph-reset" class="btn btn-sm btn-outline-secondary">Tilbakestill visning</button>
+
+
 	{% if avhengigheter_graf_ny.nodes|length < 2 %}
 		<p>Ingen systemer å vise</p>
 	{% endif %}
@@ -213,157 +219,348 @@
 {% block script_append %}
 
 
+{{ saved_layout_json|json_script:"savedLayoutData" }}
+
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
-// ---------------------------------------------
+// -------------------------------
+// Debug helpers
+// -------------------------------
+const DEBUG = true;
+const log = (...args) => { if (DEBUG) console.log('[Graph]', ...args); };
+const group = (label) => { if (DEBUG) console.group(label); };
+const groupCollapsed = (label) => { if (DEBUG) console.groupCollapsed(label); };
+const groupEnd = () => { if (DEBUG) console.groupEnd(); };
+
+// -------------------------------
+// CSRF helpers: prefer server token, fallback to cookie
+// -------------------------------
+function getCookie(name){
+  const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return m ? m.pop() : '';
+}
+const CSRF_TEMPLATE = "{{ csrf_js_token|default:'' }}";
+const CSRF = (CSRF_TEMPLATE && CSRF_TEMPLATE.length === 64) ? CSRF_TEMPLATE : getCookie('csrftoken');
+
+// -------------------------------
+// Saved layout from server
+// -------------------------------
+
+const savedLayout = JSON.parse(
+    document.getElementById('savedLayoutData').textContent
+);
+
+
+const hasSaved = !!(savedLayout && savedLayout.positions && Object.keys(savedLayout.positions).length);
+log('Init: hasSaved =', hasSaved, savedLayout ? {
+  zoom: savedLayout.zoom,
+  pan: savedLayout.pan,
+  positionsCount: Object.keys(savedLayout.positions || {}).length
+} : 'no savedLayout');
+
+// Pre-sanitize saved positions (numbers only)
+const savedPositionsRaw = {};
+if (hasSaved) {
+  for (const [id, p] of Object.entries(savedLayout.positions)) {
+    const x = p && Number.isFinite(+p.x) ? +p.x : null;
+    const y = p && Number.isFinite(+p.y) ? +p.y : null;
+    if (x !== null && y !== null) savedPositionsRaw[id] = { x, y };
+  }
+}
+
+// -------------------------------
 // INIT CYTOSCAPE
-// ---------------------------------------------
+// -------------------------------
+groupCollapsed('Cytoscape init');
+log('Mounting cytoscape with layout =', hasSaved ? 'preset' : 'fcose');
+
 var cy_avhengigheter = cytoscape({
-    zoomingEnabled: true,
-    panningEnabled: true,
-    wheelSensitivity: 0.1,
-	minZoom: 0.0001,
-	maxZoom: 10,
-	autolock: false,
-	autoungrabify: false,
-	boxSelectionEnabled: false,
-    container: document.getElementById('cy_avhengigheter'),
+  container: document.getElementById('cy_avhengigheter'),
 
-    elements: {
-        nodes: [
-            {% for node in avhengigheter_graf_ny.nodes %} {{ node|safe }},
-            {% endfor %}
-        ],
-        edges: [
-            {% for edge in avhengigheter_graf_ny.edges %} {{ edge|safe }},
-            {% endfor %}
-        ],
-    },
+  zoomingEnabled: true,
+  panningEnabled: true,
+  wheelSensitivity: 0.1,
+  minZoom: 0.01,
+  maxZoom: 10,
+  autolock: false,
+  autoungrabify: false,
+  boxSelectionEnabled: false,
 
-    style: [
-        {
-            selector: 'node',
-            style: {
-                'shape': 'data(shape)',
-                'background-color': 'data(color)',
-                'label': 'data(name)',
-                'font-size': '11px',
-            },
-        },
-        {
-            selector: 'edge',
-            style: {
-                'target-arrow-shape': 'triangle',
-                'curve-style': 'bezier',
-                'line-style': 'data(linestyle)',
-                'line-color': 'data(linecolor)',
-                'target-arrow-color': 'data(linecolor)',
-                'width': 'data(linewidth)',
-                'target-distance-from-node': 15,
-                'source-distance-from-node': 25,
-            },
-        },
-        {
-            selector: ':parent',
-            style: {
-                'label': 'data(name)',
-                'background-color': '#F1F9FF',
-            }
-        }
+  elements: {
+    nodes: [
+      {% for node in avhengigheter_graf_ny.nodes %} {{ node|safe }},
+      {% endfor %}
     ],
+    edges: [
+      {% for edge in avhengigheter_graf_ny.edges %} {{ edge|safe }},
+      {% endfor %}
+    ],
+  },
 
-    // If positions exist → NO layout
-    layout: {% if saved_positions %}
-        null
-    {% else %}
-        {
-            name: 'fcose',
-            fit: true,
-            packComponents: true,
-            animationDuration: 0,
-            idealEdgeLength: 100,
-            quality: "proof",
-            numIter: 50000,
-            nodeSeparation: 80,
-            uniformNodeDimensions: true,
-        }
-    {% endif %}
+  style: [
+    {
+      selector: 'node',
+      style: {
+        'shape': 'data(shape)',
+        'background-color': 'data(color)',
+        'label': 'data(name)',
+        'font-size': '11px',
+      },
+    },
+    {
+      selector: 'edge',
+      style: {
+        'target-arrow-shape': 'triangle',
+        'curve-style': 'bezier',
+        'line-style': 'data(linestyle)',
+        'line-color': 'data(linecolor)',
+        'target-arrow-color': 'data(linecolor)',
+        'width': 'data(linewidth)',
+        'target-distance-from-node': 15,
+        'source-distance-from-node': 25,
+      },
+    },
+    {
+      selector: ':parent',
+      style: {
+        'label': 'data(name)',
+        'background-color': '#F1F9FF',
+        'padding': 10,
+        // Avoid parent bbox changing due to label metrics after render
+        'compound-sizing-wrt-labels': 'exclude'
+      }
+    }
+  ],
+
+  // Use PRESET iff we have saved positions; else deterministic fCoSE
+  layout: hasSaved
+    ? {
+        name: 'preset',
+        positions: savedPositionsRaw, // initial map; we’ll refine to :childless after init
+        fit: false                     // viewport restored separately
+      }
+    : {
+        name: 'fcose',
+        fit: true,
+        packComponents: true,
+        animationDuration: 0,
+        idealEdgeLength: 100,
+        quality: "proof",
+        numIter: 50000,
+        nodeSeparation: 80,
+        uniformNodeDimensions: true,
+        randomize: false
+        // seed: 42 // optional for strict repeatability
+      }
 });
+
+groupEnd(); // Cytoscape init
 
 // ---------------------------------------------
 // OPEN LINKS ON NODE CLICK
 // ---------------------------------------------
 cy_avhengigheter.on('tap', 'node', function(){
-    if (this.data('href')) {
-        try {
-            window.open(this.data('href'), "_self");
-        } catch(e){
-            window.location.href = this.data('href');
-        }
-    }
+  const href = this.data('href');
+  if (href) {
+    log('Node tap → navigating', { id: this.id(), href });
+    try { window.open(href, "_self"); }
+    catch(e){ log('window.open failed, fallback to location.href', e); window.location.href = href; }
+  } else {
+    log('Node tap (no href)', { id: this.id() });
+  }
 });
 
 // ---------------------------------------------
-// SAVE LOGIC (debounced)
+// SAVE / RESTORE STATE
 // ---------------------------------------------
 let saveTimeout = null;
+let isRestoring = false;
+let restoreGraceUntil = 0; // ms timestamp; avoid saving mid-restore
 
-function scheduleSave() {
-    clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(saveLayout, 800);
+function scheduleSave(source) {
+  const now = Date.now();
+  if (isRestoring || now < restoreGraceUntil) {
+    log('scheduleSave ignored (restoring/grace)…', { source });
+    return;
+  }
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => saveLayout(source), 800);
 }
 
-cy_avhengigheter.on('position', 'node', scheduleSave);
-cy_avhengigheter.on('pan zoom', scheduleSave);
-
-function saveLayout() {
-    const layoutData = {
-        positions: {},
-        zoom: cy_avhengigheter.zoom(),
-        pan: cy_avhengigheter.pan()
-    };
-
-    cy_avhengigheter.nodes().forEach(n => {
-        layoutData.positions[n.id()] = n.position();
-    });
-
-    fetch("{% url 'save_graph_layout' virksomhet.pk %}", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": "{{ csrf_token }}"
-        },
-        body: JSON.stringify(layoutData)
-    });
+// Clamp & sanitize viewport
+function clampViewportForCy(cy, z, pan) {
+  const minZ = Math.max(0.02, cy.minZoom() || 0.01);
+  const maxZ = Math.min(8, cy.maxZoom() || 10);
+  const zoom = Math.min(maxZ, Math.max(minZ, Number.isFinite(z) ? z : 1));
+  const safePan = {
+    x: Number.isFinite(pan && pan.x) ? pan.x : 0,
+    y: Number.isFinite(pan && pan.y) ? pan.y : 0
+  };
+  return { zoom, pan: safePan };
 }
 
-// ---------------------------------------------
-// RESTORE STORED GRAPH STATE
-// Executes AFTER first render → avoids zoom bugs
-// ---------------------------------------------
+async function saveLayout(source) {
+  saveTimeout = null;
 
-cy_avhengigheter.reset();  // resets zoom=1, pan={0,0} WITHOUT fitt
-// Wait for first render to ensure viewport is ready
-cy_avhengigheter.once("render", function () {
+  const rawZoom = cy_avhengigheter.zoom();
+  const rawPan = cy_avhengigheter.pan();
+  const v = clampViewportForCy(cy_avhengigheter, rawZoom, rawPan);
 
-    const savedLayout = {{ saved_layout_json }};
+  // Save only childless, visible nodes (avoid compounds & hidden)
+  const positions = {};
+  cy_avhengigheter.nodes(':childless:visible').forEach(n => {
+    const p = n.position();
+    positions[n.id()] = { x: p.x, y: p.y };
+  });
 
-    if (!savedLayout) return;
+  groupCollapsed('SaveLayout → start');
+  log('Source:', source);
+  log('Counts:', { nodesAll: cy_avhengigheter.nodes().length, nodesSaved: Object.keys(positions).length, edges: cy_avhengigheter.edges().length });
+  log('Viewport (clamped):', v);
 
-    // Restore positions
-    Object.entries(savedLayout.positions).forEach(([id, pos]) => {
-        cy_avhengigheter.getElementById(id).position(pos);
+  try {
+    const resp = await fetch("{% url 'virksomhet_save_graph_layout' virksomhet.pk %}", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": CSRF
+      },
+      credentials: "same-origin",
+      body: JSON.stringify({ positions, zoom: v.zoom, pan: v.pan })
     });
 
-    // Restore zoom
-    cy_avhengigheter.zoom(savedLayout.zoom);
+    const text = await resp.text();
+    if (!resp.ok) {
+      log('SaveLayout → non-OK', { status: resp.status, statusText: resp.statusText, bodyStart: text.slice(0, 200) });
+    } else if (!text.startsWith('{"ok":')) {
+      log('SaveLayout → unexpected body (not JSON starting with {"ok":)', { bodyStart: text.slice(0, 200) });
+    } else {
+      log('SaveLayout → success');
+    }
+  } catch (err) {
+    log('SaveLayout → fetch error', err);
+  } finally {
+    groupEnd();
+  }
+}
 
-    // Restore pan
-    cy_avhengigheter.pan(savedLayout.pan);
+cy_avhengigheter.on('position', 'node', () => scheduleSave('node:position'));
+cy_avhengigheter.on('pan', () => scheduleSave('viewport:pan'));
+cy_avhengigheter.on('zoom', () => scheduleSave('viewport:zoom'));
 
-});
+// ---------------------------------------------
+// RESTORE VIEWPORT (positions via preset)
+// ---------------------------------------------
+function endRestore(reason = 'unknown') {
+  if (!isRestoring) return;
+  isRestoring = false;
+  restoreGraceUntil = Date.now() + 200; // small grace so we don’t save mid-frame
+  log('Restore → complete; saving re-enabled (reason:', reason, ')');
+  try { groupEnd(); } catch(_) {}
+}
+
+function applyViewportOnce(zoom, pan) {
+  const v = clampViewportForCy(cy_avhengigheter, zoom, pan);
+  cy_avhengigheter.startBatch();
+  // Re-apply saved positions strictly for childless nodes only
+  if (hasSaved) {
+    cy_avhengigheter.nodes(':childless').forEach(n => {
+      const sp = savedPositionsRaw[n.id()];
+      if (sp) n.position(sp);
+    });
+  }
+  cy_avhengigheter.zoom(v.zoom);
+  cy_avhengigheter.pan(v.pan);
+  cy_avhengigheter.endBatch();
+  // Keep style/layout synced with actual container size
+  cy_avhengigheter.resize();
+  cy_avhengigheter.style().update();
+}
+
+if (hasSaved) {
+  isRestoring = true;
+  group('Restore → start');
+
+  // Safety net
+  const timeoutId = setTimeout(() => endRestore('timeout-1500ms'), 1500);
+
+  // Apply after preset positions settle
+  cy_avhengigheter.once('idle', () => {
+    log('Restore: idle → apply viewport');
+    applyViewportOnce(savedLayout.zoom, savedLayout.pan);
+
+    // End restore when painted / next frame
+    cy_avhengigheter.once('render', () => endRestore('render'));
+    cy_avhengigheter.once('layoutstop', () => endRestore('layoutstop'));
+    requestAnimationFrame(() => endRestore('rAF-after-viewport'));
+  });
+
+  // One-time re-apply if container size changes after mount (flex/grid/fonts)
+  let resizeHandled = false;
+  const onFirstResize = () => {
+    if (resizeHandled) return;
+    resizeHandled = true;
+    log('Restore: first resize → re-apply viewport');
+    applyViewportOnce(savedLayout.zoom, savedLayout.pan);
+    cy_avhengigheter.off('resize', onFirstResize);
+    requestAnimationFrame(() => endRestore('first-resize'));
+  };
+  cy_avhengigheter.on('resize', onFirstResize);
+
+  // Backup if 'ready' fires later in your environment
+  cy_avhengigheter.once('ready', () => {
+    if (!isRestoring) return;
+    log('Restore: ready → backup apply');
+    applyViewportOnce(savedLayout.zoom, savedLayout.pan);
+    requestAnimationFrame(() => endRestore('rAF-after-ready'));
+  });
+
+  // User interaction ends restore (prevents guard from blocking saves)
+  const endOnUserAction = () => endRestore('user-action');
+  cy_avhengigheter.once('grab', endOnUserAction);
+  cy_avhengigheter.once('dragfree', endOnUserAction);
+  cy_avhengigheter.once('pan', endOnUserAction);
+  cy_avhengigheter.once('zoom', endOnUserAction);
+} else {
+  log('No saved layout → deterministic fcose');
+}
 </script>
 
 
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+document.getElementById('graph-reset')?.addEventListener('click', () => {
+  // Guard saving during reset
+  isRestoring = true;
+
+  // Clear positions only for childless nodes (parents autosize)
+  cy_avhengigheter.startBatch();
+  cy_avhengigheter.nodes(':childless').forEach(n => n.removeData('position'));
+  cy_avhengigheter.endBatch();
+
+  // Run deterministic fcose once
+  const layout = cy_avhengigheter.layout({
+    name: 'fcose',
+    fit: true,
+    packComponents: true,
+    animationDuration: 0,
+    idealEdgeLength: 100,
+    quality: 'proof',
+    numIter: 50000,
+    nodeSeparation: 80,
+    uniformNodeDimensions: true,
+    randomize: false
+    // seed: 42
+  });
+  layout.run();
+
+  // Re-enable saving after layout completes (with tiny grace)
+  cy_avhengigheter.once('layoutstop', () => {
+    setTimeout(() => {
+      isRestoring = false;
+      restoreGraceUntil = Date.now() + 200;
+    }, 0);
+  });
+});
+</script>
 
 
 

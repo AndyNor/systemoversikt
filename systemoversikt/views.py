@@ -6,15 +6,15 @@ from systemoversikt.models import *
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.db.models import Count, Q, Sum, F, Avg, Max
 from django.db.models import Prefetch
 from django.template.loader import render_to_string
 from django.db.models.functions import Lower, TruncMonth, TruncYear, TruncDay, TruncDate
-from django.http import HttpResponseBadRequest, JsonResponse, Http404, HttpResponseRedirect, HttpResponse, HttpRequest
+from django.http import HttpResponseBadRequest, JsonResponse, Http404, HttpResponseRedirect, HttpResponse, HttpRequest, HttpResponseForbidden
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied
 from django.conf import settings
 from django.urls import reverse
 from django.db import transaction
@@ -27,10 +27,6 @@ from django.core.cache import cache
 ##########################
 # Fellesvariabler #
 ##########################
-
-LEVERANDORTILGANG_KJENTE_GRUPPER = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS', 'DS-DRIFT_SC2_']
-
-
 
 def recent_errors(request):
 	required_permissions = ['systemoversikt.view_qualysvuln'] # en rettighet veldig få har
@@ -5328,6 +5324,7 @@ def search(request):
 		enterpriseapps = AzureApplication.objects.filter(displayName__icontains=search_term, active=True)
 		aktuelle_orgledd = HRorg.objects.filter(ou__icontains=search_term)
 		systemer_avviklet = System.objects.filter(Q(livslop_status=7)).filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
+		aktuelle_citrixapper = CitrixPublication.objects.filter(application_name__icontains=search_term)
 	else:
 		messages.info(request, 'Lengden på det du søker på må minimum være 2 tegn')
 		aktuelle_systemer = System.objects.none()
@@ -5343,6 +5340,7 @@ def search(request):
 		enterpriseapps = AzureApplication.objects.none()
 		aktuelle_orgledd = HRorg.objects.none()
 		systemer_avviklet = System.objects.none()
+		aktuelle_citrixapper = CitrixPublication.objects.none()
 
 	#if (len(aktuelle_systemer) == 1) and (len(aktuelle_programvarer) == 0) and (len(domenetreff) == 0):  # bare ét systemtreff og ingen programvaretreff.
 	#   return redirect('systemdetaljer', aktuelle_systemer[0].pk)
@@ -5373,6 +5371,7 @@ def search(request):
 		'aktuelle_databaser': aktuelle_databaser,
 		'aktuelle_orgledd': aktuelle_orgledd,
 		'systemer_avviklet': systemer_avviklet,
+		'aktuelle_citrixapper': aktuelle_citrixapper,
 	})
 
 
@@ -6449,6 +6448,8 @@ def leverandortilgang(request, valgt_gruppe=None):
 			connected_groups.extend([getattr(adgruppe, 'distinguishedname') if adgruppe else "" for adgruppe in lt.adgrupper.all()])
 
 		manglende_grupper = []
+		LEVERANDORTILGANG_KJENTE_GRUPPER = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS', 'DS-DRIFT_SC2_']
+
 
 		for levtilganggruppe in LEVERANDORTILGANG_KJENTE_GRUPPER:
 			dml_grupper = ADgroup.objects.filter(distinguishedname__icontains=levtilganggruppe).exclude(distinguishedname__in=[o for o in connected_groups])
@@ -7213,9 +7214,11 @@ def virksomhet(request, pk):
 		saved_layout = None
 
 	# Prepare JSON (safe, with dot-decimals)
-	from django.utils.safestring import mark_safe
-	saved_layout_json = mark_safe(json.dumps(saved_layout))
+	#from django.utils.safestring import mark_safe
+	#saved_layout_json = mark_safe(json.dumps(saved_layout))
 
+	from django.middleware.csrf import get_token
+	csrf = get_token(request)
 
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
@@ -7240,36 +7243,51 @@ def virksomhet(request, pk):
 		'avhengigheter_graf_ny': avhengigheter_graf_ny,
 		'avhengigheter_chart_size_ny': 300 + len(avhengigheter_graf_ny["nodes"])*20,
 		"virksomhet": virksomhet,
-		"saved_layout_json": saved_layout_json,
+		"saved_layout_json": saved_layout,
+		"csrf_js_token": csrf,
 	})
 
 
 
-def save_graph_layout(request, pk):
-	from django.http import JsonResponse
-	import json
-
-	if request.method != "POST":
-		return JsonResponse({"error": "POST only"}, status=400)
-
-	required_permissions = ['systemoversikt.view_system']
+@require_POST
+def virksomhet_save_graph_layout(request, pk):
+	required_permissions = ['systemoversikt.change_virksomhet']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return JsonResponse({"error": "User has not the right permissions"}, status=403)
+		return HttpResponseForbidden(f'Manglende brukertilganger. Krever {required_permissions}.')
 
-	data = json.loads(request.body)
-	virksomhet = Virksomhet.objects.get(pk=pk)
+	"""Persist node positions + viewport for a virksomhet. Returns diagnostics."""
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+	except json.JSONDecodeError:
+		return HttpResponseBadRequest('Ugyldig JSON')
 
-	layout, created = GraphLayout.objects.update_or_create(
-		virksomhet=virksomhet,
-		defaults={
-			"positions_json": data.get("positions", {}),
-			"zoom": float(data.get("zoom", 1)),
-			"pan_x": float(data.get("pan", {}).get("x", 0)),
-			"pan_y": float(data.get("pan", {}).get("y", 0)),
-		}
-	)
+	positions = data.get('positions') or {}
+	zoom = data.get('zoom', 1.0)
+	pan = data.get('pan') or {}
+	pan_x = float(pan.get('x', 0.0))
+	pan_y = float(pan.get('y', 0.0))
 
-	return JsonResponse({"ok": True})
+	virksomhet = get_object_or_404(Virksomhet, pk=pk)
+
+	layout, created = GraphLayout.objects.get_or_create(virksomhet=virksomhet)
+	layout.positions_json = positions
+	layout.zoom = float(zoom)
+	layout.pan_x = pan_x
+	layout.pan_y = pan_y
+	layout.save()
+
+	response = {
+		'ok': True,
+		'created': created,
+		'nodes': len(positions),
+		'zoom': layout.zoom,
+		'pan': {'x': layout.pan_x, 'y': layout.pan_y},
+		'updated_at': layout.updated_at.isoformat(),
+	}
+	print(response)
+	
+	return JsonResponse(response, status=201 if created else 200)
+
 
 
 

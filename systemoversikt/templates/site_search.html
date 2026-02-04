@@ -10,6 +10,7 @@
 
 {% block hovedinnhold %}
 
+	{% if systemer or  aktuelle_programvarer %}
 	<h6>Treff på system- og programvarenavn</h6>
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
 	{% for system in systemer %}
@@ -25,8 +26,10 @@
 		{% endfor %}
 	{% endif %}
 	</div>
+	{% endif %}
 
 
+	{% if domenetreff %}
 	<hr>
 	<h6>Treff på URL-er</h6>
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
@@ -38,8 +41,10 @@
 			</div>
 		{% endfor %}
 	</div>
+	{% endif %}
 
 
+	{% if aktuelle_leverandorer %}
 	<hr>
 	<h6>Treff på leverandører</h6>
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr);">
@@ -50,8 +55,10 @@
 			</div>
 		{% endfor %}
 	</div>
+	{% endif %}
 
 
+	{% if potensielle_systemer %}
 	<hr>
 	<h6>Treff på tekst i systembeskrivelser</h6>
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
@@ -59,8 +66,10 @@
 		{% include "system_include_vis_ikon.html" with system=system %}
 	{% endfor %}
 	</div>
+	{% endif %}
 
 
+	{% if aktuelle_orgledd %}
 	<hr>
 	<h6>Treff på organisasjonsstukturen</h6>
 	<div style="display: grid; grid-template-columns: repeat(3, 1fr)">
@@ -68,7 +77,10 @@
 		<a href="{% url 'enhet_detaljer' pk=org.pk %}">{{ org.ou }} ({{ org.virksomhet_mor.virksomhetsforkortelse }})</a>
 	{% endfor %}
 	</div>
+	{% endif %}
 
+
+	{% if enterpriseapps %}
 	<hr>
 	<h6>Treff på Azure enterprise applications</h6>
 	<div style="display: grid; grid-template-columns: repeat(3, 1fr)">
@@ -76,7 +88,10 @@
 		<a href="{% url 'azure_applications' %}?term={{app.appId}}">{{ app.displayName }} ({{app.antall_permissions}} graph-tilganger)</a>
 	{% endfor %}
 	</div>
+	{% endif %}
 
+
+	{% if business_services %}
 	<hr>
 	<h6>Treff på business sub services</h6>
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
@@ -84,8 +99,10 @@
 		<a href="{% url 'cmdb_bss' bss.pk %}">{{ bss }}</a>
 	{% endfor %}
 	</div>
+	{% endif %}
 
 
+	{% if aktuelle_personer %}
 	<hr>
 	<h6>Treff på brukeridenter</h6>
 	<div style="display: grid; grid-template-columns: repeat(3, 1fr)">
@@ -93,8 +110,21 @@
 		<a href="{% url 'bruker_detaljer' bruker.pk %}">{{ bruker }}</a>
 	{% endfor %}
 	</div>
+	{% endif %}
 
 
+	{% if aktuelle_citrixapper %}
+	<hr>
+	<h6>Treff på citrix-apper</h6>
+	<div style="display: grid; grid-template-columns: repeat(3, 1fr)">
+	{% for app in aktuelle_citrixapper %}
+		<li>{{ app }}</li>
+	{% endfor %}
+	</div>
+	{% endif %}
+
+
+	{% if aktuelle_adgrupper %}
 	<hr>
 	<h6>Treff på tilgangsgrupper</h6>
 	<div style="display: grid; grid-template-columns: repeat(3, 1fr)">
@@ -102,7 +132,10 @@
 		<a href="{% url 'adgruppe_detaljer' adgr.pk %}">{{ adgr }}</a>
 	{% endfor %}
 	</div>
+	{% endif %}
 
+
+	{% if aktuelle_servere %}
 	<hr>
 	<h6>Treff på servere</h6>
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
@@ -110,7 +143,10 @@
 		<a href="{% url 'cmdb_devicedetails' server.pk %}">{{ server }}</a>
 	{% endfor %}
 	</div>
+	{% endif %}
 
+
+	{% if aktuelle_databaser %}
 	<hr>
 	<h6>Treff på databaser</h6>
 	<div style="display: grid; grid-template-columns: repeat(4, 1fr)">
@@ -118,8 +154,10 @@
 		<li>{{ db.db_database }} på {{ db.db_server }}</li>
 	{% endfor %}
 	</div>
+	{% endif %}
 
 
+	{% if systemer_avviklet %}
 	<hr>
 	<h6>Treff på avviklede systemer</h6>
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">
@@ -127,6 +165,7 @@
 		{% include "system_include_vis_ikon.html" with system=system %}
 	{% endfor %}
 	</div>
+	{% endif %}
 
 
 
