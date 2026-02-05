@@ -7077,7 +7077,8 @@ def generer_graf_virksomhet(virksomhet_pk):
 						"parent": parent(aktuelt_system),
 						"name": aktuelt_system.systemnavn,
 						"shape": "ellipse",
-						"color": "#C63D3D"
+						"color": "#C63D3D",
+						"href": reverse('systemdetaljer', args=[aktuelt_system.pk]) 
 					}},)
 			observerte_driftsmodeller.add(aktuelt_system.driftsmodell_foreignkey)
 
@@ -7173,6 +7174,7 @@ def generer_graf_virksomhet(virksomhet_pk):
 	return avhengigheter_graf
 
 
+REQUIRED_PERMISSIONS_SAVE_GRAPH_VIRKSOMHET = ['systemoversikt.change_virksomhet']
 
 def virksomhet(request, pk):
 	#Vise detaljer om en valgt virksomhet
@@ -7221,6 +7223,8 @@ def virksomhet(request, pk):
 	from django.middleware.csrf import get_token
 	csrf = get_token(request)
 
+	save_rettigheter = True if any(map(request.user.has_perm, REQUIRED_PERMISSIONS_SAVE_GRAPH_VIRKSOMHET)) else False
+
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -7246,12 +7250,13 @@ def virksomhet(request, pk):
 		"virksomhet": virksomhet,
 		"saved_layout_json": saved_layout,
 		"csrf_js_token": csrf,
+		"save_rettigheter": save_rettigheter,
 	})
 
 
 @require_POST
 def virksomhet_toggle_graph_lock(request, pk):
-	required_permissions = ['systemoversikt.change_virksomhet']
+	required_permissions = REQUIRED_PERMISSIONS_SAVE_GRAPH_VIRKSOMHET
 	if not any(map(request.user.has_perm, required_permissions)):
 		return HttpResponseForbidden(f'Manglende brukertilganger. Krever {required_permissions}.')
 		
@@ -7271,7 +7276,7 @@ def virksomhet_toggle_graph_lock(request, pk):
 
 @require_POST
 def virksomhet_save_graph_layout(request, pk):
-	required_permissions = ['systemoversikt.change_virksomhet']
+	required_permissions = REQUIRED_PERMISSIONS_SAVE_GRAPH_VIRKSOMHET
 	if not any(map(request.user.has_perm, required_permissions)):
 		return HttpResponseForbidden(f'Manglende brukertilganger. Krever {required_permissions}.')
 
