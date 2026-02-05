@@ -485,64 +485,46 @@ function applyViewportOnce(zoom, pan) {
 }
 
 if (hasSaved) {
-  isRestoring = true;
-  group('Restore → start');
+    isRestoring = true;
+    group("Restore → start");
 
-  // Safety net
-  const timeoutId = setTimeout(() => endRestore('timeout-1500ms'), 1500);
+    let viewportApplied = false;
 
+    function applyOnce(reason) {
+        if (viewportApplied) return;
+        viewportApplied = true;
 
+        log("Restore → applying viewport (" + reason + ")");
+        applyViewportOnce(savedLayout.zoom, savedLayout.pan);
+        endRestore(reason);
+    }
 
-  // Apply after preset positions settle
-  cy_avhengigheter.once('idle', () => {
-    log('Restore: idle → apply viewport');
-    applyViewportOnce(savedLayout.zoom, savedLayout.pan);
+    // 1) Wait for the FIRST render after preset is applied
+    cy_avhengigheter.once("render", () => {
+        log("Restore: first render fired");
 
-    // End restore when painted / next frame
-    cy_avhengigheter.once('render', () => endRestore('render'));
-    cy_avhengigheter.once('layoutstop', () => endRestore('layoutstop'));
-    requestAnimationFrame(() => endRestore('rAF-after-viewport'));
-  });
+        // 2) Wait one animation frame for browser to paint fully
+        requestAnimationFrame(() => {
+            // 3) Now the graph is fully stable → safe to apply viewport
+            applyOnce("after-first-render-rAF");
+        });
+    });
 
-  // One-time re-apply if container size changes after mount (flex/grid/fonts)
-  let resizeHandled = false;
-  const onFirstResize = () => {
-    if (resizeHandled) return;
-    resizeHandled = true;
-    log('Restore: first resize → re-apply viewport');
-    applyViewportOnce(savedLayout.zoom, savedLayout.pan);
-    cy_avhengigheter.off('resize', onFirstResize);
-    requestAnimationFrame(() => endRestore('first-resize'));
-  };
-  cy_avhengigheter.on('resize', onFirstResize);
-
-  // Backup if 'ready' fires later in your environment
-  cy_avhengigheter.once('ready', () => {
-    if (!isRestoring) return;
-    log('Restore: ready → backup apply');
-    applyViewportOnce(savedLayout.zoom, savedLayout.pan);
-    requestAnimationFrame(() => endRestore('rAF-after-ready'));
-  });
-
-  // User interaction ends restore (prevents guard from blocking saves)
-  const endOnUserAction = () => endRestore('user-action');
-  cy_avhengigheter.once('grab', endOnUserAction);
-  cy_avhengigheter.once('dragfree', endOnUserAction);
-  cy_avhengigheter.once('pan', endOnUserAction);
-  cy_avhengigheter.once('zoom', endOnUserAction);
+    // 4) Fallback after 1 second if render does not fire
+    setTimeout(() => applyOnce("fallback-timeout"), 1000);
 } else {
-  log('No saved layout → deterministic fcose');
+    log("No saved layout → deterministic fcose");
 }
+
 </script>
 
 
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
-let isGraphLocked = {{ saved_layout_json.locked|yesno:"true,false" }};
-
 // ---------------------------------------------------------
 // Helper: update UI + cytoscape interaction states
 // ---------------------------------------------------------
+let isGraphLocked = {{ saved_layout_json.locked|yesno:"true,false" }};
 function applyLockStateUI(locked) {
     const btn = document.getElementById("graph-lock");
     if (!btn) return;
@@ -657,12 +639,15 @@ document.getElementById('graph-reset')?.addEventListener('click', () => {
   // Clear positions only for childless nodes (parents autosize)
   cy_avhengigheter.startBatch();
   cy_avhengigheter.nodes(':childless').forEach(n => n.removeData('position'));
+  // ---> RESET VIEWPORT <---
+  cy_avhengigheter.zoom(1);
+  cy_avhengigheter.pan({ x: 0, y: 0 });
   cy_avhengigheter.endBatch();
 
   // Run deterministic fcose once
   const layout = cy_avhengigheter.layout({
     name: 'fcose',
-    fit: true,
+    fit: false,
     packComponents: true,
     animationDuration: 0,
     idealEdgeLength: 100,
@@ -675,14 +660,20 @@ document.getElementById('graph-reset')?.addEventListener('click', () => {
   });
   layout.run();
 
-  // Re-enable saving after layout completes (with tiny grace)
+
+  // After fcose finishes, center the graph
   cy_avhengigheter.once('layoutstop', () => {
+    // Fit the entire graph nicely inside the viewport
+    cy_avhengigheter.fit(undefined, 50);   // padding 50px looks good
+
+    // Re-enable saving after a tiny grace
     setTimeout(() => {
       isRestoring = false;
       restoreGraceUntil = Date.now() + 200;
     }, 0);
   });
-});
+})
+
 </script>
 
 
