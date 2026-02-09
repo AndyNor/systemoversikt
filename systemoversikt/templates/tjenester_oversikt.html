@@ -24,7 +24,7 @@
 <tbody>
 {% for t in tjenester %}
 <tr>
-	<td><a href="/admin/systemoversikt/tjeneste/{{ t.pk }}/change/">✎</a>{{ t.navn }}<br>{{ t.beskrivelse }}</td>
+	<td><a href="/admin/systemoversikt/tjeneste/{{ t.pk }}/change/">✎</a>{{ t.navn }}</td>
 	<td>
 		{{ t.beskrivelse|default:"-" }}
 	</td>
