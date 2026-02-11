@@ -7183,8 +7183,8 @@ def virksomhet(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
-	antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
+	#antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
+	#antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
 
 	systemforvalter_ikke_kvalitetssikret = System.objects.filter(systemforvalter=pk).filter(informasjon_kvalitetssikret=False).count()
 	systemeier_ikke_kvalitetssikret = System.objects.filter(systemeier=pk).filter(informasjon_kvalitetssikret=False).count()
@@ -7229,8 +7229,8 @@ def virksomhet(request, pk):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
-		'antall_brukere': antall_brukere,
-		'antall_eksterne_brukere': antall_eksterne_brukere,
+		#'antall_brukere': antall_brukere,
+		#'antall_eksterne_brukere': antall_eksterne_brukere,
 		'systemforvalter_ikke_kvalitetssikret': systemforvalter_ikke_kvalitetssikret,
 		'systemeier_ikke_kvalitetssikret': systemeier_ikke_kvalitetssikret,
 		'deaktiverte_brukere': deaktiverte_brukere,
