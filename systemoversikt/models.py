@@ -984,6 +984,13 @@ class Virksomhet(models.Model):
 	def antall_brukeridenter(self):
 		return Profile.objects.filter(virksomhet=self).count()
 
+	def antall_interne_brukeridenter(self):
+		return Profile.objects.filter(virksomhet=self.pk).filter(ekstern_ressurs=False).filter(accountdisable=False).count()
+
+	def antall_eksterne_brukeridenter(self):
+		return Profile.objects.filter(virksomhet=self.pk).filter(ekstern_ressurs=True).filter(accountdisable=False).count()
+
+
 	def __str__(self):
 		return u'%s (%s)' % (self.virksomhetsnavn, self.virksomhetsforkortelse)
 

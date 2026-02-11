@@ -27,7 +27,8 @@
 		<th>Byråd</th>
 		<th>Nettverk lokasjoner</th>
 		<th>Forvalter for systemer</th>
-		<th>Antall brukeridenter</th>
+		<th>Antall interne brukeridenter</th>
+		<th>Antall eksterne brukeridenter</th>
 		<th>Antall klienter</th>
 		<th>Klientplattform</th>
 		<th>Kontorstøtte</th>
@@ -58,7 +59,8 @@
 		{% url 'lokasjoner_hos_virksomhet' pk=vir.pk as url_lokasjoner %}
 		<td><a href="{{url_lokasjoner}}">{{ vir.antall_lokasjoner }}</a></td>
 		<td>{{ vir.systemer_systemforvalter.all.count }}</td>
-		<td>{{ vir.antall_brukeridenter|default:"-" }}</td>
+		<td>{{ vir.antall_interne_brukeridenter|default:"-" }}</td>
+		<td>{{ vir.antall_eksterne_brukeridenter|default:"-" }}</td>
 		<td>{{ vir.antall_klienter }}</td>
 		<td>
 			{{ vir.get_resultatenhet_display|default:"-" }}
