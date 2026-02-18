@@ -2867,6 +2867,7 @@ class QualysVuln(models.Model):
 	status = models.TextField(null=True)
 	ansvar_basisdrift = models.BooleanField(default=False)
 	akseptert = models.BooleanField(default=False)
+	raw = models.JSONField(null=True)
 
 	def __str__(self):
 		return f"{self.title}"

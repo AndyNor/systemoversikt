@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
-from django.utils import timezone
-from datetime import timedelta
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from systemoversikt.views import push_pushover
 from systemoversikt.models import *
 from django.core.management.base import BaseCommand
 from django.db import transaction
-import json, os, time
+import json, os, time, warnings
 import pandas as pd
 import numpy as np
 from django.db.models import Q
 from functools import lru_cache
-import warnings
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -21,7 +18,7 @@ class Command(BaseCommand):
 		KILDE = "Qualys via PowerBI"
 		PROTOKOLL = "Manuelt uttrekk og SharePoint"
 		BESKRIVELSE = "Sårbarheter fra Qualys dashboard"
-		FILNAVN = "qualys.xlsx"
+		FILNAVN = "Scan_Report_All_Vulnerabilities_skmmu5bh_20260217.csv"
 		URL = ""
 		FREKVENS = "Manuell"
 
@@ -91,58 +88,78 @@ class Command(BaseCommand):
 				return matches[0]
 
 
-			@transaction.atomic
+			def parse_dt(s):
+				"""Parse 'MM/DD/YYYY HH:MM:SS' → timezone‑aware UTC datetime"""
+				if not s or (isinstance(s, float) and pd.isna(s)):
+					return None
+				s = str(s).strip().strip('"').strip("'")
+				return datetime.strptime(s, "%m/%d/%Y %H:%M:%S").replace(tzinfo=timezone.utc)
+
+
+			batch_size = 10000
+
 			def save_to_database(data):
 				processed = 0
 				fixed = 0
 				failed_server_lookups = 0
-				for line in data:
-					try:
-						item_id = int(line['ID'])
-					except:
-						item_id = None
-					if not item_id:
-						continue
 
-					if line["Status"] == "Fixed": # dropper de som er rettet
+				objs = []   # <‑‑ we accumulate model instances her
+
+				for line in data:
+
+					if line["Vuln Status"] == "Fixed": # dropper de som er rettet
 						fixed += 1
 						continue
 
-					source = f"{line['Hostname']} {line['IP']}"
 					processed += 1
 
-					q = QualysVuln.objects.create(
-							source=source,
-							title=line['Title'],
-							severity=int(line['Severity']),
-							first_seen=line['First detected'],
-							last_seen=line['Last detected'],
-							public_facing=line['Public Facing'],
-							cve_info=line['CVE ID'],
-							result=line['Results'],
-							os=line['OS'],
-							status=line['Status'],
-						)
+					source = f"{line['DNS']} {line['IP']}"
+					public_facing = True if "Internet Exposed Assets New" in line["Associated Tags"] else False
 
+					first_seen = parse_dt(line["First Detected"])
+					last_seen = parse_dt(line["Last Detected"])
+
+
+					# prepare model
+					q = QualysVuln(
+						source=source,
+						title=line['Title'],
+						severity=int(line['Severity']),
+						first_seen=first_seen,
+						last_seen=last_seen,
+						public_facing=public_facing,
+						cve_info=line['CVE ID'],
+						result=line['Results'],
+						os=line['OS'],
+						status=line['Vuln Status'],
+						raw=line,
+					)
+
+					# ansvar basisdrift
 					ab = ansvar_basisdrift(q)
 					q.ansvar_basisdrift = ab["basispatch"]
 					q.akseptert = ab["akseptert"]
 
-					server = lookup_server(line["Hostname"])
+					# lookup server
+					server = lookup_server(line["NetBIOS"])
 					if not server:
 						server = lookup_ip(line["IP"])
 					if not server:
 						failed_server_lookups += 1
-						serer = None
+
 					q.server = server
 
-					# sette known exploited
+					# exploited
 					for cve in q.cve_info.split(","):
 						if cve in ALL_EXPLOITED_CVES:
 							q.known_exploited = True
+							break
 
-					q.save()
+					objs.append(q)
 
+
+				# ---- BULK INSERT HERE ----
+				QualysVuln.objects.bulk_create(objs, batch_size=batch_size)
 				return (processed, failed_server_lookups, fixed)
 
 
@@ -150,12 +167,12 @@ class Command(BaseCommand):
 
 				print("Åpner filen...")
 				warnings.simplefilter("ignore")
-				dfRaw = pd.read_excel(destination_file)
+				dfRaw = pd.read_csv(destination_file) # CSV
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				data = dfRaw.to_dict('records')
 
 				linjer_kilde = len(data)
-				split_size = 1000
+				split_size = batch_size
 				antall_totalt = 0
 				failed_server_lookups = 0
 				antall_fixed = 0
@@ -184,7 +201,7 @@ class Command(BaseCommand):
 			# logge resultatet
 			runtime_t1 = time.time()
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
-			int_config.dato_sist_oppdatert = destination_file_modified_date # eller timezone.now()
+			int_config.dato_sist_oppdatert = destination_file_modified_date
 			int_config.sist_status = logg_entry_message
 			int_config.runtime = logg_total_runtime
 			int_config.helsestatus = "Vellykket"
