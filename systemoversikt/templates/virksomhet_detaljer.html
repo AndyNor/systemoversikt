@@ -153,11 +153,11 @@
 		<tr>
 			<td>
 				<a href="{% url 'virksomhet_figur_system_seksjon' pk=virksomhet.pk %}?kilde=tjenester" style="margin-left: 50px;">Tjenester: åpne i større vindu</a>
-				<div id="cy_tjenester" style="width: 400px; height: 300px;"></div>
+				<div id="cy_tjenester" style="width: 500px; height: 500px;"></div>
 			</td>
 			<td>
 				<a href="{% url 'virksomhet_figur_system_seksjon' pk=virksomhet.pk %}?kilde=infrastruktur" style="margin-left: 50px;">Infrastruktur: åpne i større vindu</a>
-				<div id="cy_infra" style="width: 400px; height: 300px;"></div>
+				<div id="cy_infra" style="width: 500px; height: 500px;"></div>
 			</td>
 		</tr>
 	</table>
@@ -224,7 +224,7 @@
 {% block script_append %}
 
 
-{{ saved_layout_json|json_script:"savedLayoutData" }}
+{{ saved_layout_json|json_script:"systemavhengigheter_savedLayoutData" }}
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 // -------------------------------
@@ -237,21 +237,15 @@ const groupCollapsed = (label) => { if (DEBUG) console.groupCollapsed(label); };
 const groupEnd = () => { if (DEBUG) console.groupEnd(); };
 
 // -------------------------------
-// CSRF helpers: prefer server token, fallback to cookie
+// CSRF
 // -------------------------------
-function getCookie(name){
-  const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
-  return m ? m.pop() : '';
-}
-const CSRF_TEMPLATE = "{{ csrf_js_token|default:'' }}";
-const CSRF = (CSRF_TEMPLATE && CSRF_TEMPLATE.length === 64) ? CSRF_TEMPLATE : getCookie('csrftoken');
+const CSRF = "{{ csrf_js_token|default:'' }}";
 
 // -------------------------------
 // Saved layout from server
 // -------------------------------
-
 const savedLayout = JSON.parse(
-    document.getElementById('savedLayoutData').textContent
+    document.getElementById('systemavhengigheter_savedLayoutData').textContent
 );
 
 
@@ -284,8 +278,8 @@ var cy_avhengigheter = cytoscape({
   zoomingEnabled: true,
   panningEnabled: true,
   wheelSensitivity: 0.1,
-  minZoom: 0.01,
-  maxZoom: 10,
+  minZoom: 0.5,
+  maxZoom: 5,
   autolock: false,
   autoungrabify: false,
   boxSelectionEnabled: false,
@@ -815,8 +809,9 @@ document.getElementById("graph-upload-input").addEventListener("change", (evt) =
 // -------------------------------------------------------------
 var cy_tjenester = cytoscape({
 	zoomingEnabled: true,
-	userZoomingEnabled: true,
+	userZoomingEnabled: false,
 	panningEnabled: true,
+	userPanningEnabled: false,
 	container: document.getElementById('cy_tjenester'),
 	elements: {
 		nodes: [
@@ -888,6 +883,7 @@ cy_tjenester.on('tap', 'node', function(){
 		}
 	}
 });
+cy_tjenester.nodes().lock();
 </script>
 
 
@@ -899,6 +895,7 @@ var cy_infra = cytoscape({
 	zoomingEnabled: true,
 	userZoomingEnabled: false,
 	panningEnabled: true,
+	userPanningEnabled: false,
 	container: document.getElementById('cy_infra'),
 	elements: {
 		nodes: [
@@ -970,7 +967,11 @@ cy_infra.on('tap', 'node', function(){
 		}
 	}
 });
+
+cy_infra.nodes().lock();
+
 </script>
+
 
 {% endblock script_append %}
 
