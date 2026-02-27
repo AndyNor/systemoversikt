@@ -30,6 +30,7 @@
 		<th>Disk</th>
 		<th>Nettverk</th>
 		<th>Beskrivelse</th>
+		<th>OS</th>
 	</thead>
 	<tbody>
 	{% for server in hits %}
@@ -61,6 +62,7 @@
 				{{ server.description|default:"-" }} <br>
 				{{ server.comments|default:"-" }}
 			</td>
+			<td>{{ server.comp_os_readable|default:"-" }}</td>
 		</tr>
 	{% endfor %}
 	</tbody>
