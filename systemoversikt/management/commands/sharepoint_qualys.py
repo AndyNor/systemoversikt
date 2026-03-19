@@ -18,7 +18,7 @@ class Command(BaseCommand):
 		KILDE = "Qualys via PowerBI"
 		PROTOKOLL = "Manuelt uttrekk og SharePoint"
 		BESKRIVELSE = "Sårbarheter fra Qualys dashboard"
-		FILNAVN = "Scan_Report_All_Vulnerabilities_skmmu5bh_20260217.csv"
+		FILNAVN = "qualys.csv"
 		URL = ""
 		FREKVENS = "Manuell"
 
