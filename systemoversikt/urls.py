@@ -25,7 +25,7 @@ router.register(r'avtale', apiviews.AvtaleViewSet)
 router.register(r'leverandor', apiviews.LeverandorViewSet)
 #router.register(r'systembruk', apiviews.SystemBrukViewSet)
 #router.register(r'systemkateogri', apiviews.SystemktegoriViewSet)
-router.register(r'behandling', apiviews.VirksomhetViewSet)
+#router.register(r'behandling', apiviews.VirksomhetViewSet)
 
 favicon_view = RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=True)
 
