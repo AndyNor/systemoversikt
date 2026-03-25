@@ -30,7 +30,7 @@
 		<th>Basisdriftleverandør</th>
 		<th>Applikasjonsdriftleverandør</th>
 		<th>Utviklingsleverandør</th>
-		<th>Systemdriftsavtale?</th>
+		<th>Kobling CMDB (systemdriftsavtale)</th>
 		<th>Driftsavtale tjenestenivå</th>
 		<th>Driftsavtale kompleksitet</th>
 		<th>Driftsavtale kritikalitet</th>
@@ -42,7 +42,7 @@
 			<td>{{ system }}</td>
 			<td>{{ system.systembruk_system.all|length }}</td>
 			<td>{{ system.system_integration_source.all|length }}</td>
-			<td>{{ system.systemforvalter }}<br><i>{{ system.systemforvalter_avdeling_referanse|default:"Ukjent" }}</i></td>
+			<td>{{ system.systemforvalter }}<br><i>{{ system.systemforvalter_avdeling_referanse|default:"-" }}</i></td>
 			<td>{{ system.get_livslop_status_display }}</td>
 			<td>{{ system.get_systemeierskapsmodell_display }}</td>
 			<td>{% for kat in system.systemtyper.all %}<i>{{ kat }}</i><br>{% endfor %}</td>
@@ -50,9 +50,37 @@
 			<td>{{ system.driftsmodell_foreignkey.ansvarlig_virksomhet.virksomhetsforkortelse }} {{ system.driftsmodell_foreignkey.navn }} ({{ system.driftsmodell_foreignkey.get_type_plattform_display }})</td>
 			<td>{{ system.driftsmodell_foreignkey.get_type_plattform_display }}</td>
 			<td>{% if system.driftsmodell_foreignkey.utviklingsplattform %} Egenutvikling {% else %} Generisk {% endif %}</td>
-			<td>{% for leverandor in system.basisdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
-			<td>{% for leverandor in system.applikasjonsdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
-			<td>{% for leverandor in system.systemleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
+			<td>
+				{% if not system.leverandor.all %}
+					{% for leverandor in system.driftsmodell_foreignkey.basisdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}
+						{% empty%}-
+					{% endfor %}
+					<br><i>(hentet fra driftsmodell)</i>
+
+				{% else %}
+
+					{% for leverandor in system.basisdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+					<br><i>(hentet fra systemet)</i>
+
+				{% endif %}
+			</td>
+			<td>
+				{% if not system.applikasjonsdriftleverandor.all %}
+					{{ system.driftsmodell_foreignkey.applikasjonsdriftleverandor|default:"-" }}
+					<br><i>(hentet fra driftsmodell)</i>
+
+				{% else %}
+
+					{% for leverandor in system.applikasjonsdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+					<br><i>(hentet fra systemet)</i>
+
+				{% endif %}
+			</td>
+			<td>
+				{% for leverandor in system.systemleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}
+					{% empty%}-
+				{% endfor %}				
+			</td>
 			<td>{% for offering in system.service_offerings.all %}{{ offering }} ({{offering.get_environment_display}}){% if not forloop.last %}<br>{% endif %}{% empty %} <i>ingen</i> {% endfor %}</td>
 			<td>{% for offering in system.service_offerings.all %}{{ offering.u_service_availability_text }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
 			<td>{% for offering in system.service_offerings.all %}{{ offering.u_service_complexity_text }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</td>

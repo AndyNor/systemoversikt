@@ -1429,7 +1429,7 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 	list_display = ('navn', 'sikkerhetsnivaa', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform')
 	search_fields = ('navn',)
 	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler', 'anbefalte_kategorier_personopplysninger')
-	autocomplete_fields = ('ansvarlig_virksomhet',)
+	autocomplete_fields = ('ansvarlig_virksomhet', 'leverandor', 'applikasjonsdriftleverandor',)
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
@@ -1449,6 +1449,9 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 				'fields': (
 					('navn', 'sort_order'),
 					'ansvarlig_virksomhet',
+					'leverandor',
+					'underleverandorer',
+					'applikasjonsdriftleverandor',
 					'overordnet_plattform',
 					'type_plattform',
 					('utviklingsplattform','samarbeidspartner'),
@@ -1459,8 +1462,6 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 			('Tilleggsinformasjon', {
 				'classes': ('collapse',),
 				'fields': (
-					'leverandor',
-					'underleverandorer',
 					'risikovurdering',
 					'anbefalte_kategorier_personopplysninger',
 					'sikkerhetsnivaa',

@@ -4027,7 +4027,7 @@ class Driftsmodell(models.Model):
 	leverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='driftsmodell_leverandor',
-			verbose_name="Driftsleverandør",
+			verbose_name="Leverandør som drifter driftsplattformen",
 			blank=True,
 			)
 	underleverandorer = models.ManyToManyField(
@@ -4164,6 +4164,15 @@ class Driftsmodell(models.Model):
 			blank=False,
 			null=False,
 			help_text=u'Lavere tall vises først.',
+			)
+	applikasjonsdriftleverandor = models.ForeignKey(
+			to=Leverandor,
+			related_name='driftsmodell_standard_applikasjonsleverandor',
+			verbose_name="Plattformens standard applikasjonsdriftsleverandør",
+			blank=True,
+			null=True,
+			on_delete=models.PROTECT,
+			help_text=u"Hovedleverandør som sørger for at systemer fungerer som de skal på driftsplattformen.",
 			)
 	history = HistoricalRecords()
 
@@ -4837,7 +4846,7 @@ class System(models.Model):
 			related_name='system_driftsleverandor',
 			verbose_name="Basisdriftleverandør",
 			blank=True,
-			help_text=u"Leverandør som drifter driftsplattformen systmet kjører på.",
+			help_text=u"Fylles automatisk ut basert på valg av driftsplattform, men kan manuelt overstyres her. Leverandør som drifter driftsplattformen systmet kjører på.",
 			)
 	applikasjonsdriftleverandor = models.ManyToManyField(
 			to=Leverandor,
