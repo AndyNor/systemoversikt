@@ -47,11 +47,11 @@
 
 
 			<td>				
-				{% for leverandor in item.leverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+				{% for leverandor in item.leverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% empty %} - {% endfor %}
 			</td>
 
 			<td>
-				{{ item.applikasjonsdriftleverandor|default:"Ukjent" }}
+				{{ item.applikasjonsdriftleverandor|default:"-" }}
 			</td>
 
 			<td>
