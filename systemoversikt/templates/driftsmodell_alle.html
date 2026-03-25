@@ -17,6 +17,8 @@
 			<th>Nivå</th>
 			<th>Bygger på</th>
 			<th>Forvaltet av</th>
+			<th>Driftet av</th>
+			<th>Appdrift standard av</th>
 			<th>Type</th>
 			<th>Utvikling</th>
 			<th>Kommentar</th>
@@ -42,6 +44,16 @@
 				{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
 					<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet|default:"-" }}</a>
 			</td>
+
+
+			<td>				
+				{% for leverandor in item.leverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+			</td>
+
+			<td>
+				{% for leverandor in item.applikasjonsdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+			</td>
+
 			<td>
 				{{ item.get_type_plattform_display }}
 			</td>
