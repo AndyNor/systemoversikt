@@ -65,7 +65,7 @@ INSTALLED_APPS = [
 	'django.contrib.humanize',
 	'mozilla_django_oidc',
 	'systemoversikt',
-	'rest_framework',
+	#'rest_framework',
 	'mailer',
 	'simple_history',
 	'widget_tweaks',
@@ -110,6 +110,7 @@ if THIS_ENVIRONMENT == "TEST":
 	EMAIL_USE_TLS = True
 
 
+"""
 # django rest framework
 REST_FRAMEWORK = {
 	#'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
@@ -118,6 +119,7 @@ REST_FRAMEWORK = {
 		'rest_framework.permissions.DjangoModelPermissions',
 	)
 }
+"""
 
 APPEND_SLASH = True
 

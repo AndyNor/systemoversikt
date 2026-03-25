@@ -11,6 +11,7 @@ from django.views.generic.base import RedirectView
 import systemoversikt.views as views
 import systemoversikt.views_import as views_import
 
+"""
 from rest_framework import routers
 from systemoversikt.restapi import views as apiviews
 
@@ -26,12 +27,13 @@ router.register(r'leverandor', apiviews.LeverandorViewSet)
 #router.register(r'systembruk', apiviews.SystemBrukViewSet)
 #router.register(r'systemkateogri', apiviews.SystemktegoriViewSet)
 #router.register(r'behandling', apiviews.VirksomhetViewSet)
+"""
 
 favicon_view = RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=True)
 
 urlpatterns = [
-	path('rest/', include(router.urls)),
-	path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
+	#path('rest/', include(router.urls)),
+	#path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 
 
 
