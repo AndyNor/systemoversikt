@@ -51,7 +51,7 @@
 			</td>
 
 			<td>
-				{% for leverandor in item.applikasjonsdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+				{{ item.applikasjonsdriftleverandor|default:"Ukjent" }}
 			</td>
 
 			<td>
