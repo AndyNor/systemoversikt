@@ -51,7 +51,7 @@
 			<td>{{ system.driftsmodell_foreignkey.get_type_plattform_display }}</td>
 			<td>{% if system.driftsmodell_foreignkey.utviklingsplattform %} Egenutvikling {% else %} Generisk {% endif %}</td>
 			<td>
-				{% if not system.leverandor.all %}
+				{% if not system.basisdriftleverandor.all %}
 					{% for leverandor in system.driftsmodell_foreignkey.leverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}
 						{% empty%}-
 					{% endfor %}
@@ -59,7 +59,7 @@
 
 				{% else %}
 
-					{% for leverandor in system.leverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+					{% for leverandor in system.basisdriftleverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
 					<br><i>(hentet fra systemet)</i>
 
 				{% endif %}
