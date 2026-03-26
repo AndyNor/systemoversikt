@@ -33,9 +33,9 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 {% for vuln in data %}
 <tr>
 	<td>{{ vuln.title }}</td>
-	<td>{{ vuln.server__comp_name }}</td>
+	<td>{{ vuln.server.comp_name }}</td>
 	<td>{{ vuln.severity }}</td>
-	<td>{{ vuln.server__service_offerings__system__systemnavn }}</td>
+	<td>{{ vuln.server.service_offerings.system.systemnavn }}</td>
 	<td>{{ vuln.csv_readable }}</td>
 </tr>
 {% endfor %}
