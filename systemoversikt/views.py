@@ -1235,11 +1235,57 @@ def vulnstats_virksomhet(request, pk=None):
 	data = None
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	if pk:
+
+		representerer = request.user.profile.virksomhet
+		if (representerer.pk == pk) or request.user.has_perm("systemoversikt.view_qualysvuln"):
+		    # 1. Fast DB query for base fields
+		    base_values = list(
+		        QualysVuln.objects.filter(
+		            server__service_offerings__system__systemforvalter=pk
+		        ).values(
+		            "id",
+		            "title",
+		            "severity",
+		            "server__comp_name",
+		            "server__service_offerings__system__systemnavn",
+		            #"server__service_offerings__system__systemforvalter",
+		        ).order_by("-severity")
+		    )
+		    # 2. Load objects once (only IDs from result set)
+		    objs = {
+		        obj.id: obj
+		        for obj in QualysVuln.objects.filter(id__in=[v["id"] for v in base_values])
+		    }
+		    # 3. Inject class method result
+		    for row in base_values:
+		        obj = objs[row["id"]]
+		        row["csv_readable"] = obj.csv_readable()
+		    data = base_values  # your final enriched result
+		else:
+		    messages.info(
+		        request,
+		        f"Du prøver å se sårbarheter for en virksomhet du ikke representerer."
+		        f"Du er logget inn som {representerer}"
+		    )	
+
+
+
+		"""
 		representerer = request.user.profile.virksomhet
 		if ((representerer.pk == pk) or (request.user.has_perm("systemoversikt.view_qualysvuln"))):
-			data = QualysVuln.objects.filter(server__service_offerings__system__systemforvalter=pk).order_by('server__comp_name')
+			data = QualysVuln.objects.filter(server__service_offerings__system__systemforvalter=pk).values(
+					'title', 
+					'severity', 
+					'server__comp_name', 
+					'server__service_offerings__system__systemnavn', 
+					'server__service_offerings__system__systemforvalter'
+					'item.csv_readable()'
+				).order_by('server__comp_name')
+			for item in data:
+				item["cvss"] = 
 		else:
 			messages.info(request, f"Du prøver å se sårbarheter for en virksomhet du ikke representerer. Du er logget inn som {representerer}")
+		"""
 
 
 	return render(request, 'rapport_vulnstats_virksomhet.html', {
