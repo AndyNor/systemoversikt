@@ -1221,7 +1221,7 @@ def vulnstats_offerings(request):
 
 
 def vulnstats_virksomhet(request, pk=None):
-	required_permissions = ['systemoversikt.change_virksomhet']
+	required_permissions = ['systemoversikt.change_virksomhet', 'systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
