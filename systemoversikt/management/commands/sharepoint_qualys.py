@@ -167,7 +167,7 @@ class Command(BaseCommand):
 
 				print("Åpner filen...")
 				warnings.simplefilter("ignore")
-				dfRaw = pd.read_csv(destination_file, skiprows=4) # CSV
+				dfRaw = pd.read_csv(destination_file, skiprows=1) # CSV
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				data = dfRaw.to_dict('records')
 
