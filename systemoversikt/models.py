@@ -2880,6 +2880,20 @@ class QualysVuln(models.Model):
 		except:
 			return f"known_exploited_info() feilet"
 
+	def source_readable(self):
+		return self.source
+
+	def csv_readable(self):
+		if "CVSS3.1" in self.raw:
+			return f"{self.raw['CVSS3.1']}"
+		#if "CVSS" in self.raw:
+		#		return f"{self.raw['CVSS']} (CVSS)"
+		return "-"
+
+	def raw_readable(self):
+		return json.dumps(self.raw, indent=4)
+
+
 	class Meta:
 		verbose_name_plural = "Qualys: Sårbarheter"
 		verbose_name = "sårbarhet"

@@ -25,8 +25,8 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 	<th>Tittel</th>
 	<th>Server</th>
 	<th>Alvorlighetsgrad</th>
-	<th></th>
-	<th></th>
+	<th>Systemkobling</th>
+	<th>CVSS</th>
 </tr>
 </thead>
 <tbody>
@@ -36,6 +36,7 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 	<td>{{ vuln.server__comp_name }}</td>
 	<td>{{ vuln.severity }}</td>
 	<td>{{ vuln.server__service_offerings__system__systemnavn }}</td>
+	<td>{{ vuln.csv_readable }}</td>
 </tr>
 {% endfor %}
 </tbody>

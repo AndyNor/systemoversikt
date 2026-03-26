@@ -1167,7 +1167,12 @@ def vulnstats_search(request):
 		integrasjonsstatus = None
 
 	search_term = request.GET.get("query", None)
-	vulns = QualysVuln.objects.filter(Q(title__icontains=search_term) | Q(cve_info__icontains=search_term) | Q(result__icontains=search_term)).values('title', 'severity').annotate(count=Count('title')).order_by('-count')
+	vulns = QualysVuln.objects.filter(
+				Q(source__icontains=search_term) | 
+				Q(title__icontains=search_term) | 
+				Q(cve_info__icontains=search_term) | 
+				Q(result__icontains=search_term)
+			)#.values('title', 'severity')#.annotate(count=Count('title')).order_by('-count')
 
 
 	return render(request, 'rapport_vulnstats_search.html', {
@@ -1232,7 +1237,7 @@ def vulnstats_virksomhet(request, pk=None):
 	if pk:
 		representerer = request.user.profile.virksomhet
 		if representerer.pk == pk:
-			data = QualysVuln.objects.filter(server__service_offerings__system__systemforvalter=pk).values('title', 'severity', 'server__comp_name', 'server__service_offerings__system__systemnavn', 'server__service_offerings__system__systemforvalter').order_by('server__comp_name')
+			data = QualysVuln.objects.filter(server__service_offerings__system__systemforvalter=pk).order_by('server__comp_name')
 		else:
 			messages.info(request, f"Du prøver å se sårbarheter for en virksomhet du ikke representerer. Du er logget inn som {representerer}")
 

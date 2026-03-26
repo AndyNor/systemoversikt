@@ -27,16 +27,18 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 <thead>
 <tr>
 	<th>Tittel</th>
+	<th>Enhet</th>
 	<th>Severity</th>
-	<th>Antall</th>
+	<th>CVSS</th>
 </tr>
 </thead>
 <tbody>
 {% for vuln in vulns %}
 <tr>
 	<td><a href="{% url 'vulnstats_whereis' vuln=vuln.title %}">{{ vuln.title }}</a></td>
+	<td>{{ vuln.source_readable }}</td>
 	<td>{{ vuln.severity }}</td>
-	<td>{{ vuln.count }}</td>
+	<td>{{ vuln.csv_readable }}</td>
 </tr>
 {% endfor %}
 </tbody>
