@@ -1236,7 +1236,7 @@ def vulnstats_virksomhet(request, pk=None):
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	if pk:
 		representerer = request.user.profile.virksomhet
-		if representerer.pk == pk:
+		if ((representerer.pk == pk) or (request.user.has_perm("systemoversikt.view_qualysvuln"))):
 			data = QualysVuln.objects.filter(server__service_offerings__system__systemforvalter=pk).order_by('server__comp_name')
 		else:
 			messages.info(request, f"Du prøver å se sårbarheter for en virksomhet du ikke representerer. Du er logget inn som {representerer}")
