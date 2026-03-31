@@ -145,6 +145,9 @@ class Command(BaseCommand):
 					usertype = f"{line['EMPLOYEETYPENAME']}"
 					ansattnr = line["EMPLOYEENUMBER"]
 
+					if ansattnr == 232914:
+						print(line)
+
 					org_unit = lookup_hrorg(line["OUID"])
 					if not org_unit:
 						Command.antall_feilet_orgoppslag += 1
