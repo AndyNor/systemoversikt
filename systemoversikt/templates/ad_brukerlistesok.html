@@ -33,6 +33,7 @@
 		<th>Brukernavn</th>
 		<th>E-post</th>
 		<th>OU-path</th>
+		<th>Nærmeste leder</th>
 		<th>privilegert?</th>
 		<th>Trusted for delegation?</th>
 		<th>Delegated?</th>
@@ -60,6 +61,8 @@
 		<td>{{user.email }}</td>
 
 		<td>{{ user.profile.ou_lesbar }}</td>
+
+		<td>{{ user.profile.min_leder }}</td>
 
 		<td>{{ user.profile.privilegert_bruker }}</td>
 		<td>{{ user.profile.trusted_for_delegation|yesno:"Ja,Nei,?" }}</td>
