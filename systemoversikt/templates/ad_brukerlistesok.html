@@ -33,7 +33,7 @@
 		<th>Brukernavn</th>
 		<th>E-post</th>
 		<th>OU-path</th>
-		<th>Nærmeste leder</th>
+		<th>HR-org</th>
 		<th>privilegert?</th>
 		<th>Trusted for delegation?</th>
 		<th>Delegated?</th>
@@ -62,7 +62,7 @@
 
 		<td>{{ user.profile.ou_lesbar }}</td>
 
-		<td>{{ user.profile.min_leder }}</td>
+		<td>{{ user.profile.org_unit }}</td>
 
 		<td>{{ user.profile.privilegert_bruker }}</td>
 		<td>{{ user.profile.trusted_for_delegation|yesno:"Ja,Nei,?" }}</td>
