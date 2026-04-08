@@ -1,3 +1,4 @@
 5 1 * * * /var/kartoteket/source/systemoversikt/oslokommune/jobs/backup_script_db >> /var/kartoteket/jobs/backup_log.txt
 5 2 * * * /var/kartoteket/source/systemoversikt/oslokommune/jobs/daily_jobs >> /var/kartoteket/jobs/job_log.txt
+*/5 * * * * /var/kartoteket/source/systemoversikt/oslokommune/jobs/postgresql_checker >> /var/kartoteket/jobs/job_log.txt
 

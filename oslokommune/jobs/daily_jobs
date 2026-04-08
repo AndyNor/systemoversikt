@@ -1,5 +1,5 @@
 #!/bin/sh
-source /var/kartoteket/virtualenv/py39/bin/activate
+source /var/kartoteket/virtualenv/py311/bin/activate
 cd /var/kartoteket/source/systemoversikt/
 
 # run a backup
