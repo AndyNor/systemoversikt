@@ -877,50 +877,71 @@ def tools_index(request):
 
 
 def debug_info(request):
-    """
-    Denne funksjonen viser debug-informasjon ifm. feilsøking av bibliotek og moduler
-    Tilgjengelig for personer som kan se logger
-    """
-    required_permissions = ['auth.view_logentry']
-    if not any(map(request.user.has_perm, required_permissions)):
-        return render(
-            request,
-            '403.html',
-            {
-                'required_permissions': required_permissions,
-                'groups': request.user.groups
-            }
-        )
+	"""
+	Denne funksjonen viser debug-informasjon ifm. feilsøking av bibliotek og moduler
+	Tilgjengelig for personer som kan se logger
+	"""
+	required_permissions = ['auth.view_logentry']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(
+			request,
+			'403.html',
+			{
+				'required_permissions': required_permissions,
+				'groups': request.user.groups
+			}
+		)
 
-    import sqlite3
-    sqlite_info = "SQLite: %s %s" % (sqlite3.version, sqlite3.__path__)
 
-    import sys
-    python_info = "Python: %s %s" % (sys.version, sys.executable)
+	# --- PostgreSQL / database info ---
+	try:
+		with connection.cursor() as cursor:
+			cursor.execute("SELECT version()")
+			pg_version = cursor.fetchone()[0]
 
-    import django
-    django_info = "Django: %s %s" % (django.VERSION, django.__path__)
+		db_settings = connection.settings_dict
+		db_info = {
+			"engine": db_settings.get("ENGINE"),
+			"name": db_settings.get("NAME"),
+			"user": db_settings.get("USER"),
+			"host": db_settings.get("HOST"),
+			"port": db_settings.get("PORT"),
+			"server_version": pg_version,
+		}
+	except Exception as e:
+		db_info = {"error": str(e)}
 
-    # --- NEW: pip modules ---
-    import subprocess
 
-    try:
-        pip_output = subprocess.check_output(
-            [sys.executable, "-m", "pip", "freeze"],
-            text=True
-        )
-        pip_modules = pip_output.splitlines()
-    except Exception as e:
-        pip_modules = ["Could not list pip packages: %s" % e]
+	#import sqlite3
+	#sqlite_info = "SQLite: %s %s" % (sqlite3.version, sqlite3.__path__)
 
-    return render(request, 'system_debug_info.html', {
-        'request': request,
-        'required_permissions': formater_permissions(required_permissions),
-        'sqlite_info': sqlite_info,
-        'python_info': python_info,
-        'django_info': django_info,
-        'pip_modules': pip_modules,
-    })
+	import sys
+	python_info = "Python: %s %s" % (sys.version, sys.executable)
+
+	import django
+	django_info = "Django: %s %s" % (django.VERSION, django.__path__)
+
+	# --- NEW: pip modules ---
+	import subprocess
+
+	try:
+		pip_output = subprocess.check_output(
+			[sys.executable, "-m", "pip", "freeze"],
+			text=True
+		)
+		pip_modules = pip_output.splitlines()
+	except Exception as e:
+		pip_modules = ["Could not list pip packages: %s" % e]
+
+	return render(request, 'system_debug_info.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		#'sqlite_info': sqlite_info,
+		'db_info': db_info,
+		'python_info': python_info,
+		'django_info': django_info,
+		'pip_modules': pip_modules,
+	})
 
 
 def tool_ntfs(request):
