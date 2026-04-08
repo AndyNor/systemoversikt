@@ -1,0 +1,29 @@
+sudo nano /etc/systemd/system/gunicorn-mysite.service
+
+
+<<<
+[Unit]
+Description=Gunicorn for systemoversikt
+After=network.target
+
+[Service]
+User=apache
+Group=apache
+WorkingDirectory=/var/kartoteket/source/systemoversikt
+Environment="PATH=/var/kartoteket/virtualenv/py311/bin"
+ExecStart=/var/kartoteket/virtualenv/py311/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 systemoversikt.wsgi:application
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+>>>
+
+## activate on boot
+sudo systemctl daemon-reload
+sudo systemctl enable gunicorn-mysite.service
+
+## daily use
+sudo systemctl restart gunicorn-mysite
+sudo systemctl stop gunicorn-mysite
+sudo systemctl status gunicorn-mysite
+journalctl -u gunicorn-mysite -f
