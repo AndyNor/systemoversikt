@@ -8,7 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from django.db.models import Count, Q, Sum, F, Avg, Max, FloatField, ExpressionWrapper
+from django.db.models import Count, Q, Sum, F, Avg, Max, FloatField, ExpressionWrapper, Case, When, Value
 from django.db.models import Prefetch
 from django.template.loader import render_to_string
 from django.db.models.functions import Lower, TruncMonth, TruncYear, TruncDay, TruncDate
@@ -1107,47 +1107,34 @@ def vulnstats(request):
 
 	data["antall_servere_per_datasenter"] = (
 		CMDBdevice.objects
-		.filter(device_type="SERVER")
-		.values("comp_location")
-		.annotate(
-			antall_servere=Count("id", distinct=True),
-			antall_servere_med_saarbarheter=Count(
-				"id",
-				filter=Q(qualys_vulnerabilities__isnull=False),
-				distinct=True
-			),
-		)
-	)
-
-
-	data["antall_servere_per_datasenter"] = (
-		CMDBdevice.objects
 		.filter(device_type__in=["SERVER", "NETWORK"])
 		.values("comp_location")
 		.annotate(
-			# Unike servere totalt
 			antall_servere=Count("id", distinct=True),
 
-			# Servere med ≥ 1 sårbarhet
 			antall_servere_med_saarbarheter=Count(
 				"id",
 				filter=Q(qualys_vulnerabilities__isnull=False),
 				distinct=True
 			),
 
-			# Totalt antall sårbarheter
 			antall_saarbarheter=Count("qualys_vulnerabilities"),
 		)
 		.annotate(
-			# Snitt sårbarheter per sårbar server
-			snitt_saarbarheter_per_server=ExpressionWrapper(
-				F("antall_saarbarheter") * 1.0
-				/ F("antall_servere_med_saarbarheter"),
+			snitt_saarbarheter_per_server=Case(
+				When(
+					antall_servere_med_saarbarheter__gt=0,
+					then=ExpressionWrapper(
+						F("antall_saarbarheter") * 1.0
+						/ F("antall_servere_med_saarbarheter"),
+						output_field=FloatField()
+					)
+				),
+				default=Value(None),
 				output_field=FloatField(),
 			)
 		)
 	)
-
 
 	return render(request, 'rapport_vulnstats.html', {
 		'request': request,
