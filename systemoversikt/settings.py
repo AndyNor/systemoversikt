@@ -38,7 +38,7 @@ if THIS_ENVIRONMENT == "TEST":
 	DEBUG = True
 
 if THIS_ENVIRONMENT == "PROD":
-	hosts = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "okkartoteket-oslokommune.msappproxy.net", "kartoteket.sc2test.oslo.kommune.no", "10.218.240.59", "localhost:8000"]
+	hosts = ["kartoteket.oslo.kommune.no", "systemoversikt.oslo.kommune.no", "okkartoteket-oslokommune.msappproxy.net", "kartoteket.sc2test.oslo.kommune.no", "10.218.240.59", "127.0.0.1"]
 	ALLOWED_HOSTS = SECRET_ALLOWED_HOSTS + hosts
 	CSRF_TRUSTED_ORIGINS = ["https://kartoteket.oslo.kommune.no", "https://systemoversikt.oslo.kommune.no", "https://okkartoteket-oslokommune.msappproxy.net"]
 	TEST_ENV_NAME = "" # brukes ikke i produksjon
