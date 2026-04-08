@@ -46,7 +46,7 @@ Antall sårbarheter totalt <h4>{{ data.count_all }}</h4>
 
 <hr>
 
-<ul style="column-count: 5; list-style-type: none; ">
+<ul style="column-count: 6; list-style-type: none; ">
 {% for item in data.antall_servere_per_datasenter %}
 	<li style="padding: 0px; margin-bottom: 25px;">
 		<h6>{{item.comp_location|default_if_none:"(None)"|default:"(Tom)"}}</h6>
