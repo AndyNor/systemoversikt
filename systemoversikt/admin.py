@@ -1543,7 +1543,7 @@ class CMDBdeviceAdmin(admin.ModelAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('comp_name', 'device_type', 'sist_oppdatert', 'client_model_id', 'client_sist_sett', 'client_last_loggedin_user', 'comp_ip_address', 'comp_os_readable', 'comp_ram', 'dns', 'vlan')
 	search_fields = ('comp_name', 'comments', 'description')
-	list_filter = ('device_type', 'comp_os_readable', 'client_sist_sett',)
+	list_filter = ('comp_location', 'device_type', 'comp_os_readable', 'client_sist_sett',)
 	autocomplete_fields = ('client_last_loggedin_user',)
 	filter_horizontal = ('service_offerings',)
 	#readonly_fields = [f.name for f in CMDBdevice._meta.get_fields()] # virker ikke

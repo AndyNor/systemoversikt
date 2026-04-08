@@ -12,7 +12,7 @@
 	<hr><h6>For ISK og PKO</h6>
 
 		{% url 'o365_avvik' as url_o365_avvik %}
-		<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}">Sikkerhetsavvik</a><br>
+		<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}">Sikkerhetsunntak</a><br>
 
 		{% url 'system_kritisk_funksjon' as url_system_kritisk_funksjon %}
 		<a href="{{url_system_kritisk_funksjon}}" class="btn btn-sm btn-link {% if url_system_kritisk_funksjon in request.path %}fremhev{% endif %}">Kritiske samfunnsfunksjoner</a><br>

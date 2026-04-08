@@ -8,7 +8,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from django.db.models import Count, Q, Sum, F, Avg, Max
+from django.db.models import Count, Q, Sum, F, Avg, Max, FloatField, ExpressionWrapper
 from django.db.models import Prefetch
 from django.template.loader import render_to_string
 from django.db.models.functions import Lower, TruncMonth, TruncYear, TruncDay, TruncDate
@@ -1104,6 +1104,51 @@ def vulnstats(request):
 	data["vulns_first_seen_monthly_public_facing_5"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[5]).values('title', 'akseptert').annotate(count=Count('title')).order_by('-count')
 	data["vulns_first_seen_monthly_public_facing_4"] = QualysVuln.objects.filter(known_exploited=True, severity__in=[4]).values('title', 'akseptert').annotate(count=Count('title')).order_by('-count')
 
+
+	data["antall_servere_per_datasenter"] = (
+		CMDBdevice.objects
+		.filter(device_type="SERVER")
+		.values("comp_location")
+		.annotate(
+			antall_servere=Count("id", distinct=True),
+			antall_servere_med_saarbarheter=Count(
+				"id",
+				filter=Q(qualys_vulnerabilities__isnull=False),
+				distinct=True
+			),
+		)
+	)
+
+
+	data["antall_servere_per_datasenter"] = (
+		CMDBdevice.objects
+		.filter(device_type__in=["SERVER", "NETWORK"])
+		.values("comp_location")
+		.annotate(
+			# Unike servere totalt
+			antall_servere=Count("id", distinct=True),
+
+			# Servere med ≥ 1 sårbarhet
+			antall_servere_med_saarbarheter=Count(
+				"id",
+				filter=Q(qualys_vulnerabilities__isnull=False),
+				distinct=True
+			),
+
+			# Totalt antall sårbarheter
+			antall_saarbarheter=Count("qualys_vulnerabilities"),
+		)
+		.annotate(
+			# Snitt sårbarheter per sårbar server
+			snitt_saarbarheter_per_server=ExpressionWrapper(
+				F("antall_saarbarheter") * 1.0
+				/ F("antall_servere_med_saarbarheter"),
+				output_field=FloatField(),
+			)
+		)
+	)
+
+
 	return render(request, 'rapport_vulnstats.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -1238,35 +1283,35 @@ def vulnstats_virksomhet(request, pk=None):
 
 		representerer = request.user.profile.virksomhet
 		if (representerer.pk == pk) or request.user.has_perm("systemoversikt.view_qualysvuln"):
-		    # 1. Fast DB query for base fields
-		    base_values = list(
-		        QualysVuln.objects.filter(
-		            server__service_offerings__system__systemforvalter=pk
-		        ).values(
-		            "id",
-		            "title",
-		            "severity",
-		            "server__comp_name",
-		            "server__service_offerings__system__systemnavn",
-		            #"server__service_offerings__system__systemforvalter",
-		        ).order_by("-severity")
-		    )
-		    # 2. Load objects once (only IDs from result set)
-		    objs = {
-		        obj.id: obj
-		        for obj in QualysVuln.objects.filter(id__in=[v["id"] for v in base_values])
-		    }
-		    # 3. Inject class method result
-		    for row in base_values:
-		        obj = objs[row["id"]]
-		        row["csv_readable"] = obj.csv_readable()
-		    data = base_values  # your final enriched result
+			# 1. Fast DB query for base fields
+			base_values = list(
+				QualysVuln.objects.filter(
+					server__service_offerings__system__systemforvalter=pk
+				).values(
+					"id",
+					"title",
+					"severity",
+					"server__comp_name",
+					"server__service_offerings__system__systemnavn",
+					#"server__service_offerings__system__systemforvalter",
+				).order_by("-severity")
+			)
+			# 2. Load objects once (only IDs from result set)
+			objs = {
+				obj.id: obj
+				for obj in QualysVuln.objects.filter(id__in=[v["id"] for v in base_values])
+			}
+			# 3. Inject class method result
+			for row in base_values:
+				obj = objs[row["id"]]
+				row["csv_readable"] = obj.csv_readable()
+			data = base_values  # your final enriched result
 		else:
-		    messages.info(
-		        request,
-		        f"Du prøver å se sårbarheter for en virksomhet du ikke representerer."
-		        f"Du er logget inn som {representerer}"
-		    )	
+			messages.info(
+				request,
+				f"Du prøver å se sårbarheter for en virksomhet du ikke representerer."
+				f"Du er logget inn som {representerer}"
+			)	
 
 
 
