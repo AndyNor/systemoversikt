@@ -894,6 +894,7 @@ def debug_info(request):
 
 
 	# --- PostgreSQL / database info ---
+	from django.db import connection
 	try:
 		with connection.cursor() as cursor:
 			cursor.execute("SELECT version()")
