@@ -53,7 +53,9 @@ Antall sårbarheter totalt <h4>{{ data.count_all }}</h4>
 		<b>{{ item.antall_servere }}</b> servere totalt<br>
 		<b>{{ item.antall_servere_med_saarbarheter }}</b> servere med sårbarheter<br>
 		<b>{{ item.antall_saarbarheter }}</b> sårbarheter totalt<br>
-		<b>{{ item.snitt_saarbarheter_per_server|floatformat:1 }}</b> sårbarheter snitt<br>
+		{% if item.snitt_saarbarheter_per_server %}
+			<b>{{ item.snitt_saarbarheter_per_server|floatformat:1 }}</b> sårbarheter snitt<br>
+		{% endif %}
 	</li>
 {% endfor %}
 </ul>
