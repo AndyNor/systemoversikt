@@ -14,8 +14,10 @@ python /var/kartoteket/source/systemoversikt/manage.py migrate
 echo "Collecting static files.."
 python /var/kartoteket/source/systemoversikt/manage.py collectstatic --noinput
 
+echo "Restarting gunicorn.."
+sudo systemctl restart gunicorn-mysite.service
+
 echo "Restarting webserver.."
-#sudo service httpd restart
 sudo systemctl restart httpd.service
 
 echo "Server is now updated!"
