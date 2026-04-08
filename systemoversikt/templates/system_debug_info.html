@@ -12,4 +12,14 @@
 {{ python_info }}<br>
 {{ django_info }}<br>
 
+
+<hr>
+
+<h2>Pip packages</h2>
+<ul>
+  {% for pkg in pip_modules %}
+    <li><code>{{ pkg }}</code></li>
+  {% endfor %}
+</ul>
+
 {% endblock hovedinnhold %}

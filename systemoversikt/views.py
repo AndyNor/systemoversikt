@@ -28,6 +28,7 @@ from django.core.cache import cache
 # Fellesvariabler #
 ##########################
 
+
 def recent_errors(request):
 	required_permissions = ['systemoversikt.view_qualysvuln'] # en rettighet veldig få har
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -876,31 +877,50 @@ def tools_index(request):
 
 
 def debug_info(request):
-	"""
-	Denne funksjonen viser debug-informasjon ifm. feilsøking av bibliotek og moduler
-	Tilgjengelig for personer som kan se logger
-	"""
-	required_permissions = ['auth.view_logentry']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+    """
+    Denne funksjonen viser debug-informasjon ifm. feilsøking av bibliotek og moduler
+    Tilgjengelig for personer som kan se logger
+    """
+    required_permissions = ['auth.view_logentry']
+    if not any(map(request.user.has_perm, required_permissions)):
+        return render(
+            request,
+            '403.html',
+            {
+                'required_permissions': required_permissions,
+                'groups': request.user.groups
+            }
+        )
 
-	import sqlite3
-	sqlite_info = "SQLite: %s %s" % (sqlite3.version, sqlite3.__path__)
+    import sqlite3
+    sqlite_info = "SQLite: %s %s" % (sqlite3.version, sqlite3.__path__)
 
-	import sys
-	python_info = "Python: %s %s" % (sys.version, sys.executable)
+    import sys
+    python_info = "Python: %s %s" % (sys.version, sys.executable)
 
-	import django
-	django_info = "Django: %s %s" % (django.VERSION, django.__path__)
+    import django
+    django_info = "Django: %s %s" % (django.VERSION, django.__path__)
 
-	return render(request, 'system_debug_info.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'sqlite_info': sqlite_info,
-		'python_info': python_info,
-		'django_info': django_info,
+    # --- NEW: pip modules ---
+    import subprocess
 
-	})
+    try:
+        pip_output = subprocess.check_output(
+            [sys.executable, "-m", "pip", "freeze"],
+            text=True
+        )
+        pip_modules = pip_output.splitlines()
+    except Exception as e:
+        pip_modules = ["Could not list pip packages: %s" % e]
+
+    return render(request, 'system_debug_info.html', {
+        'request': request,
+        'required_permissions': formater_permissions(required_permissions),
+        'sqlite_info': sqlite_info,
+        'python_info': python_info,
+        'django_info': django_info,
+        'pip_modules': pip_modules,
+    })
 
 
 def tool_ntfs(request):
