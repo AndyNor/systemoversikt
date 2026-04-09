@@ -968,6 +968,7 @@ class Virksomhet(models.Model):
 		except:
 			return None
 
+
 	def antall_lokasjoner(self):
 		return WANLokasjon.objects.filter(virksomhet=self).count()
 
