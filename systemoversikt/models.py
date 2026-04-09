@@ -966,6 +966,10 @@ class Virksomhet(models.Model):
 		try:
 			return HRorg.objects.filter(virksomhet_mor=self.pk).filter(level=3)[0].leder
 		except:
+			pass
+		try:
+			return HRorg.objects.filter(virksomhet_mor=self.pk).filter(level=2)[0].leder
+		except:
 			return None
 
 
