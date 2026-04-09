@@ -17,9 +17,11 @@ python /var/kartoteket/source/systemoversikt/manage.py ldap_sye_medlemskap
 python /var/kartoteket/source/systemoversikt/manage.py grunndatabasen_org
 python /var/kartoteket/source/systemoversikt/manage.py ldap_group_paged
 python /var/kartoteket/source/systemoversikt/manage.py ldap_ou_paged
-python /var/kartoteket/source/systemoversikt/manage.py prk_users
+#python /var/kartoteket/source/systemoversikt/manage.py prk_users
+# ny grunndatabasen_users
+
 #python /var/kartoteket/source/systemoversikt/manage.py prk_maskinadm
-python /var/kartoteket/source/systemoversikt/manage.py prk_forms
+#python /var/kartoteket/source/systemoversikt/manage.py prk_forms
 python /var/kartoteket/source/systemoversikt/manage.py lookup_adgroup_prk
 python /var/kartoteket/source/systemoversikt/manage.py lookup_adgroup_ou
 python /var/kartoteket/source/systemoversikt/manage.py system_koble_adgrp

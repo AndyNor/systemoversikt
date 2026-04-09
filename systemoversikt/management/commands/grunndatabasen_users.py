@@ -22,9 +22,9 @@ class Command(BaseCommand):
 
 	def handle(self, **options):
 
-		INTEGRASJON_KODEORD = "prk_users"
-		LOG_EVENT_TYPE = 'PRK user import'
-		KILDE = "PRK"
+		INTEGRASJON_KODEORD = "grunndatabase_users"
+		LOG_EVENT_TYPE = 'HR-brukerimport'
+		KILDE = "Grunndatabasen"
 		PROTOKOLL = "REST"
 		BESKRIVELSE = "Brukere"
 		FILNAVN = ""
@@ -59,39 +59,36 @@ class Command(BaseCommand):
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 			runtime_t0 = time.time()
 
-			apikey = os.environ["PRK_USERS_APIKEY"]
-			filepath = 'systemoversikt/import/usr.csv'
-			url = os.environ["PRK_USERS_URL"]
+			apikey = os.environ["GDB_BRUKER_APIKEY_PROD"]
+			url = os.environ["GDB_BRUKER_URL_PROD"]
+			filepath = 'systemoversikt/import/hr_users.json'
 
 			if os.environ['THIS_ENV'] == "PROD":
 				use_cache_data = False
 				keep_file_locally = False
 
 			if os.environ['THIS_ENV'] == "TEST":
-				use_cache_data = True # settes til True ved feilsøking lokalt
+				use_cache_data = False # settes til True ved feilsøking lokalt
 				keep_file_locally = True # sett til True ved feilsøking
 
 			if use_cache_data == True:
 				print("Bruker lokale data")
-				with open(filepath, 'r', encoding='latin-1') as file:
-					datastructure = list(csv.DictReader(file, delimiter=";"))
+				with open(filepath, 'r') as file:
+					user_datastructure = json.load(file)
 			else:
-				print("Henter data fra API")
 				headers = {"apikey": apikey}
 				print("Kobler til %s" % url)
-				r = requests.get(url, headers=headers)
-				print("Original encoding: %s" % r.encoding)
-				r.encoding = "latin-1" # need to override
-				print("New encoding: %s" % r.encoding)
-				print("Statuskode: %s" % r.status_code)
+				api_response = requests.get(url, headers=headers)
+				print("Original encoding: %s" % api_response.encoding)
+				print("Statuskode: %s" % api_response.status_code)
 
-				if r.status_code == 200:
-					print(f"Data er lastet inn")
-					datastructure = list(csv.DictReader(r.text.splitlines(), delimiter=";"))
+				if api_response.status_code == 200:
+					print(f"Data er lastet inn fra API")
+					user_datastructure = json.loads(api_response.text)
 					if keep_file_locally:
 						print("Lagrer data til fil på disk")
 						with open(filepath, 'w') as file_handle:
-							file_handle.write(r.text)
+							file_handle.write(api_response.text)
 					else:
 						print("Sletter datafil")
 						try:
@@ -99,7 +96,7 @@ class Command(BaseCommand):
 						except:
 							print("Kunne ikke slette fil")
 				else:
-					print(f"Error connecting: {r.status_code}.")
+					print(f"Feil med tilkobling: {api_response.status_code}: {api_response.text}")
 
 
 			def print_with_timestamp(message):
@@ -170,6 +167,7 @@ class Command(BaseCommand):
 					else:
 						Command.antall_feilet_brukeroppslag += 1
 
+					# trolig fjerne denne?
 					username_str = f"{'drift'}{line['EMPLOYEENUMBER']}"
 					u = lookup_users(username_str)
 					if u != None:
@@ -190,13 +188,15 @@ class Command(BaseCommand):
 
 			print_with_timestamp("Processing...")
 			total_processed = 0
-			linjer_kilde = len(datastructure)
+			linjer_kilde = len(user_datastructure)
 			split_size = 5000
 
+			"""
 			for i in range(0, linjer_kilde, split_size):
-				total_processed += save_to_database(datastructure[i:i + split_size])
+				total_processed += save_to_database(user_datastructure[i:i + split_size])
 				message = f"Ferdig med batch {i}-{i+split_size}/{linjer_kilde}. Frem til nå er det {Command.antall_profillagringer} profillagringer, {Command.antall_feilet_brukeroppslag} feilede brukeroppslag, {Command.antall_feilet_orgoppslag} feilede HR-org oppslag og {Command.antall_drift_treff} treff på DRIFT-ident."
 				print_with_timestamp(message)
+			"""
 
 
 			runtime_t1 = time.time()
