@@ -101,7 +101,7 @@ class Command(BaseCommand):
 
 			def get_user(username):
 				try:
-					return Useapi_response.objects.get(username=username)
+					return User.objects.get(username=username)
 				except:
 					return None
 
