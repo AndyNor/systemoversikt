@@ -193,14 +193,12 @@ class DatabaseAdmin(admin.ModelAdmin):
 		return ['navn']
 
 
-@admin.register(HRorg)
+@admin.register(HRorg) 
 class HRorgAdmin(admin.ModelAdmin):
-	list_display = ('ou', 'level', 'leder', 'virksomhet_mor', 'direkte_mor')
-	list_display = ('ou', 'level', 'virksomhet_mor', 'direkte_mor')
+	list_display = ('ou', 'hr_status', 'level', 'leder', 'virksomhet_mor', 'direkte_mor', 'virksomhetId', 'gateNavn', 'postnr')
+	list_filter = ('level', 'hr_status', 'opprettet', 'virksomhet_mor')
 	search_fields = ('ou', 'ouid')
 	autocomplete_fields = ('leder', 'virksomhet_mor', 'direkte_mor')
-	autocomplete_fields = ('virksomhet_mor', 'direkte_mor')
-	list_filter = ('active', 'opprettet', 'virksomhet_mor')
 
 
 @admin.register(NyeFunksjoner)
@@ -578,10 +576,19 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 	list_display = ('virksomhetsforkortelse', 'virksomhetsnavn', 'resultatenhet', 'kan_representeres', 'ordinar_virksomhet', 'orgnummer')
 	search_fields = ('virksomhetsnavn', 'virksomhetsforkortelse')
 	list_filter = ('resultatenhet', 'ordinar_virksomhet')
-
-	readonly_fields = ["odepartmentnumber"]
-
 	filter_horizontal = ('overordnede_virksomheter',)
+	autocomplete_fields = (
+		'informasjonssikkerhetskoordinator',
+		'varslingsmottak_sikkerhet_ref',
+		'personvernkoordinator',
+		'arkitekturkontakter',
+		'ikt_kontakt',
+		'uke_kam_referanse',
+		'autoriserte_bestillere_sertifikater',
+		'autoriserte_bestillere_tjenester',
+		'autoriserte_bestillere_tjenester_uke',
+		'ks_fiks_admin_ref',
+	)
 
 	def get_ordering(self, request):
 		return ['virksomhetsnavn']
@@ -596,25 +603,12 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 			return redirect(reverse('virksomhet', kwargs={'pk': obj.pk}))
 		return super().response_change(request, obj)
 
-	autocomplete_fields = (
-		'informasjonssikkerhetskoordinator',
-		'varslingsmottak_sikkerhet_ref',
-		'personvernkoordinator',
-		'arkitekturkontakter',
-		'ikt_kontakt',
-		'uke_kam_referanse',
-		'autoriserte_bestillere_sertifikater',
-		'autoriserte_bestillere_tjenester',
-		'autoriserte_bestillere_tjenester_uke',
-		'ks_fiks_admin_ref',
-	)
 	fieldsets = (
 			('Initiell registrering', {
 				'fields': (
 					('virksomhetsnavn','orgnummer',),
 					('virksomhetsforkortelse','gamle_virksomhetsforkortelser'),
 					'ordinar_virksomhet',
-					('odepartmentnumber'),
 					('overordnede_virksomheter','kan_representeres',),
 					('resultatenhet',
 					'office365'),

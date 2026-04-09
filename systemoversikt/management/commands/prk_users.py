@@ -74,7 +74,8 @@ class Command(BaseCommand):
 			if use_cache_data == True:
 				print("Bruker lokale data")
 				with open(filepath, 'r', encoding='latin-1') as file:
-					datastructure = list(csv.DictReader(file, delimiter=";"))
+					#datastructure = list(csv.DictReader(file, delimiter=";"))
+					datastructure = ""
 			else:
 				print("Henter data fra API")
 				url = os.environ["PRK_USERS_URL"]
@@ -82,8 +83,8 @@ class Command(BaseCommand):
 				print("Kobler til %s" % url)
 				r = requests.get(url, headers=headers)
 				print("Original encoding: %s" % r.encoding)
-				r.encoding = "latin-1" # need to override
-				print("New encoding: %s" % r.encoding)
+				#r.encoding = "latin-1" # need to override
+				#print("New encoding: %s" % r.encoding)
 				print("Statuskode: %s" % r.status_code)
 
 				if r.status_code == 200:

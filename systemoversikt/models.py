@@ -924,12 +924,6 @@ class Virksomhet(models.Model):
 			blank=True,
 			help_text=u"Person(er) i rollen som informasjonssikkerhetskoordinator.",
 			)
-	odepartmentnumber = models.BigIntegerField(
-			verbose_name="Organisasjonens department-nummer",
-			blank=True,
-			null=True,
-			help_text=u"Settes automatisk fra PRK/HR-import",
-			)
 	styringssystem = models.URLField(
 			verbose_name="Styringssystem (URL)",
 			max_length=600,
@@ -7170,13 +7164,13 @@ class HRorg(models.Model):
 			)
 	ouid = models.BigIntegerField(
 			unique=True,
-			verbose_name="OUID",
+			verbose_name="organisasjonId",
 			null=False,
 			help_text=u"Importert",
 			db_index=True,
 			)
 	level = models.BigIntegerField(
-			verbose_name="OULEVEL",
+			verbose_name="nivaa",
 			null=True,
 			help_text=u"Importert",
 			)
@@ -7189,7 +7183,7 @@ class HRorg(models.Model):
 			help_text=u"Importert",
 			)
 	ou = models.CharField(
-			verbose_name="OU",
+			verbose_name="navn",
 			max_length=200,
 			null=True,
 			help_text=u"Importert",
@@ -7210,13 +7204,33 @@ class HRorg(models.Model):
 			null=True,
 			help_text=u"Importert",
 			)
+	hrouid = models.BigIntegerField(
+			unique=True,
+			verbose_name="hrOrganisasjonId",
+			null=True,
+			help_text=u"Importert",
+			db_index=True,
+			)
+	hr_status = models.CharField(
+			verbose_name="hr_status",
+			max_length=1,
+			null=True,
+			help_text=u"Importert",
+			)
+	virksomhetId = models.BigIntegerField(
+			verbose_name="virksomhetId",
+			null=True,
+			help_text=u"Importert",
+			)
+	gateNavn = models.TextField(null=True)
+	postnr = models.TextField(null=True)
 	#ikke behov for historikk
 
 	def __str__(self):
 		if self.virksomhet_mor:
-			return u'%s (%s)' % (self.ou, self.virksomhet_mor.virksomhetsforkortelse)
+			return f"{self.ou} ({self.virksomhet_mor.virksomhetsforkortelse})"
 		else:
-			return u'%s (ukjent)' % (self.ou)
+			return f"{self.ou}"
 
 	class Meta:
 		verbose_name_plural = "Organisasjon: Organisasjonsledd"

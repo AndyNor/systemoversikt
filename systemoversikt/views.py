@@ -7321,7 +7321,7 @@ def virksomhet(request, pk):
 	ant_systemer_bruk = SystemBruk.objects.filter(brukergruppe=pk).count()
 	ant_systemer_eier = System.objects.filter(systemeier=pk).count()
 	ant_systemer_forvalter = System.objects.filter(systemforvalter=pk).count()
-	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=3)
+	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=4)
 
 	kritiske_funksjoner = KritiskFunksjon.objects.filter(funksjoner__systemer__systemforvalter=pk).distinct()
 
@@ -10153,7 +10153,6 @@ def api_virksomheter(request): #tjeneste- og systemoversikt
 
 		line["class"] = "Virksomhet"
 		line["id"] = virksomhet.pk
-		line["odepartmentnumber"] = virksomhet.odepartmentnumber
 		line["opprettet"] = virksomhet.opprettet
 		line["sist_oppdatert"] = virksomhet.sist_oppdatert
 		line["virksomhetsnavn"] = virksomhet.virksomhetsnavn
@@ -10184,7 +10183,7 @@ def api_virksomheter(request): #tjeneste- og systemoversikt
 	runtime_t1 = time.time()
 	delta = round(runtime_t1 - runtime_t0, 3)
 
-	resultat = {"beskrivelse": "Virksomhet-objekter fra Kartoteket. odepartmentnumber er ID fra HR-systemet. Sjekk klassen SystemBruk for oversikt over hvilke systemer en enkelt virksomhet bruker.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
+	resultat = {"beskrivelse": "Virksomhet-objekter fra Kartoteket. Sjekk klassen SystemBruk for oversikt over hvilke systemer en enkelt virksomhet bruker.", "antall": len(query), "kjoretid": f"{delta}", "data": data}
 
 	ApplicationLog.objects.create(event_type="api_virksomheter", message=f"kallet fra {get_client_ip(request)} tok {delta} sekunder.")
 	return JsonResponse(resultat, safe=False, status=200)
