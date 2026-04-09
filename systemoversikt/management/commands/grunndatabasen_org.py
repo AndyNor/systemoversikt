@@ -67,8 +67,8 @@ class Command(BaseCommand):
 				keep_file_locally = False
 
 			if os.environ['THIS_ENV'] == "TEST":
-				use_cache_data = True # settes til True ved feilsøking lokalt
-				keep_file_locally = True # sett til True ved feilsøking
+				use_cache_data = False # settes til True ved feilsøking lokalt
+				keep_file_locally = False # sett til True ved feilsøking
 
 			if use_cache_data == True:
 				print("Bruker lokale cachede data")
@@ -91,7 +91,10 @@ class Command(BaseCommand):
 							file_handle.write(api_response.text)
 					else:
 						print("Sletter datafil")
-						os.remove(filepath)
+						try:
+							os.remove(filepath)
+						except:
+							print("Kunne ikke slette filen.")
 				else:
 					print(f"Feil med tilkobling: {api_response.status_code}: {api_response.text}")
 
