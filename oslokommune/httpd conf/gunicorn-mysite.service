@@ -1,7 +1,5 @@
-sudo nano /etc/systemd/system/gunicorn-mysite.service
+>> /etc/systemd/system/gunicorn-mysite.service
 
-
-<<<
 [Unit]
 Description=Gunicorn for systemoversikt
 After=network.target
@@ -16,8 +14,9 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
->>>
 
+
+>>
 ## activate on boot
 sudo systemctl daemon-reload
 sudo systemctl enable gunicorn-mysite.service

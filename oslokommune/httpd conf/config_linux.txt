@@ -29,7 +29,7 @@ rpm -qi dnf-automatic
 # installere bibliotek
 sudo dnf install epel-release -y
 sudo dnf install dnf-automatic
-sudo dnf install python39, python39-devel, git, openldap-devel, gcc, httpd
+sudo dnf install python311, python311-devel, git, openldap-devel, gcc, httpd
 
 # starte httpd
 sudo systemctl enable httpd.service
@@ -76,7 +76,7 @@ nano /var/lib/pgsql/data/pg_hba.conf <-- endre til md5
 
 
 # lage environment inne i kildekodemappen
-python3.9 -m venv /var/kartoteket/virtualenv/py39
+python3.11 -m venv /var/kartoteket/virtualenv/py311
 touch /var/kartoteket/start
 chmod +x /var/kartoteket/start
 nano /var/kartoteket/start <-- innhold fra fil inn hit
@@ -103,12 +103,13 @@ chmod +x build
 
 # endre slik at sudo passord ikke er nødvendig for kartotekbruker
 visudo /etc/sudoers.d/xhttpd <-- "%kartoteket ALL=NOPASSWD: /bin/systemctl restart httpd.service"
+samme for systemctl restart gunicorn-mysite.service
+samme for systemctl restart postgresql.service
 
-mod_wsgi-express module-config <-- LoadModule wsgi_module "/var/kartoteket/virtualenv/py39/lib64/python3.9/site-packages/mod_wsgi/server/mod_wsgi-py39.cpython-39-x86_64-linux-gnu.so"
-WSGIPythonHome "/var/kartoteket/virtualenv/py39"
+#mod_wsgi-express module-config <-- LoadModule wsgi_module "/var/kartoteket/virtualenv/py39/lib64/python3.9/site-packages/mod_wsgi/server/mod_wsgi-py39.cpython-39-x86_64-linux-gnu.so"
+#WSGIPythonHome "/var/kartoteket/virtualenv/py39"
 
 sudo nano /etc/httpd/conf.d/django.conf <-- last inn config her
-
 sudo nano /etc/httpd/conf/httpd.conf  <-- last inn config her
 
 # sette opp con-jobber for backup og nattlige jobber
