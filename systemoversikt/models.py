@@ -964,7 +964,7 @@ class Virksomhet(models.Model):
 
 	def leder_hr(self):
 		try:
-			return HRorg.objects.filter(virksomhet_mor=self.pk).filter(level=2)[0].leder
+			return HRorg.objects.filter(virksomhet_mor=self.pk).filter(level=3)[0].leder
 		except:
 			return None
 
