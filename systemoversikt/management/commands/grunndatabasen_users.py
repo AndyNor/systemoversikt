@@ -18,6 +18,7 @@ class Command(BaseCommand):
 	antall_feilet_orgoppslag = 0
 	antall_drift_treff = 0
 	antall_profillagringer = 0
+	antall_deaktive = 0
 
 
 	def handle(self, **options):
@@ -59,8 +60,8 @@ class Command(BaseCommand):
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
 			runtime_t0 = time.time()
 
-			apikey = os.environ["GDB_BRUKER_APIKEY_PROD"]
 			url = os.environ["GDB_BRUKER_URL_PROD"]
+			apikey = os.environ["GDB_BRUKER_APIKEY_PROD"]
 			filepath = 'systemoversikt/import/hr_users.json'
 
 			if os.environ['THIS_ENV'] == "PROD":
@@ -68,16 +69,19 @@ class Command(BaseCommand):
 				keep_file_locally = False
 
 			if os.environ['THIS_ENV'] == "TEST":
-				use_cache_data = False # settes til True ved feilsøking lokalt
+				use_cache_data = True # settes til True ved feilsøking lokalt
 				keep_file_locally = True # sett til True ved feilsøking
 
 			if use_cache_data == True:
 				print("Bruker lokale data")
-				with open(filepath, 'r') as file:
+				with open(filepath, 'r', encoding='utf-8') as file:
 					user_datastructure = json.load(file)
 			else:
-				headers = {"apikey": apikey}
-				print("Kobler til %s" % url)
+				headers = {
+						"apikey": apikey,
+						"Accept": "application/json",
+					}
+				print("Kobler til %s (GET-request)" % url)
 				api_response = requests.get(url, headers=headers)
 				print("Original encoding: %s" % api_response.encoding)
 				print("Statuskode: %s" % api_response.status_code)
@@ -87,7 +91,7 @@ class Command(BaseCommand):
 					user_datastructure = json.loads(api_response.text)
 					if keep_file_locally:
 						print("Lagrer data til fil på disk")
-						with open(filepath, 'w') as file_handle:
+						with open(filepath, 'w', encoding='utf-8') as file_handle:
 							file_handle.write(api_response.text)
 					else:
 						print("Sletter datafil")
@@ -102,21 +106,6 @@ class Command(BaseCommand):
 			def print_with_timestamp(message):
 				current_time = datetime.now()
 				print(f"{current_time.hour}:{current_time.minute} {message}")
-
-
-			print_with_timestamp("Resetter usertype...")
-			Profile.objects.all().update(usertype=None)
-			print_with_timestamp("Resetter org_unit...")
-			Profile.objects.all().update(org_unit=None)
-			print_with_timestamp("Resetter ansattnr...")
-			Profile.objects.all().update(ansattnr=None)
-			print_with_timestamp("Resetter from_prk...")
-			Profile.objects.all().update(from_prk=False)
-
-			print_with_timestamp("Cacher HR-organisasjonen...")
-			cache_hrorg = dict(HRorg.objects.values_list("ouid", "pk"))
-			print_with_timestamp("Cacher alle brukere...")
-			cache_users = dict(User.objects.values_list("username", "pk"))
 
 
 			def lookup_hrorg(ouid):
@@ -141,10 +130,15 @@ class Command(BaseCommand):
 				profiles_to_update = []
 				for line in chunck:
 					antall_behandlet += 1
-					usertype = f"{line['EMPLOYEETYPENAME']}"
-					ansattnr = line["EMPLOYEENUMBER"]
 
-					org_unit = lookup_hrorg(line["OUID"])
+					if not line['aktiv']:
+						Command.antall_deaktive += 1
+						continue
+
+					usertype = f"{line['ansattType']}"
+					ansattnr = int(re.sub(r"[^0-9]", "", line["brukernavn"]))
+
+					org_unit = lookup_hrorg(line["organisasjonId"])
 					if not org_unit:
 						Command.antall_feilet_orgoppslag += 1
 
@@ -152,23 +146,23 @@ class Command(BaseCommand):
 						min_leder = org_unit.leder
 					else:
 						min_leder = None
-					#print(min_leder)
 
-					username_str = f"{line['O']}{line['EMPLOYEENUMBER']}"
+
+					username_str = line["brukernavn"].lower()
 					u = lookup_users(username_str)
 					if u != None:
 						u.profile.usertype = usertype
 						u.profile.org_unit = org_unit
 						u.profile.ansattnr = ansattnr
-						u.profile.from_prk = True
+						u.profile.from_prk = True  # TODO endre til from_hr?
 						u.profile.min_leder = min_leder
 						profiles_to_update.append(u.profile)
 						Command.antall_profillagringer += 1
 					else:
+						#print(line["brukernavn"].lower())
 						Command.antall_feilet_brukeroppslag += 1
 
-					# trolig fjerne denne?
-					username_str = f"{'drift'}{line['EMPLOYEENUMBER']}"
+					username_str = f"{'drift'}{ansattnr}"
 					u = lookup_users(username_str)
 					if u != None:
 						u.profile.usertype = usertype
@@ -186,22 +180,34 @@ class Command(BaseCommand):
 				return antall_behandlet
 
 
-			print_with_timestamp("Processing...")
-			total_processed = 0
-			linjer_kilde = len(user_datastructure)
-			split_size = 5000
 
-			"""
-			for i in range(0, linjer_kilde, split_size):
-				total_processed += save_to_database(user_datastructure[i:i + split_size])
-				message = f"Ferdig med batch {i}-{i+split_size}/{linjer_kilde}. Frem til nå er det {Command.antall_profillagringer} profillagringer, {Command.antall_feilet_brukeroppslag} feilede brukeroppslag, {Command.antall_feilet_orgoppslag} feilede HR-org oppslag og {Command.antall_drift_treff} treff på DRIFT-ident."
-				print_with_timestamp(message)
-			"""
+			if user_datastructure:
+
+				print_with_timestamp("Resetter usertype, org_unit, ansattnr og from_prk...")
+				Profile.objects.all().update(usertype=None)
+				Profile.objects.all().update(org_unit=None)
+				Profile.objects.all().update(ansattnr=None)
+				Profile.objects.all().update(from_prk=False)
+
+				print_with_timestamp("Cacher HR-organisasjonen og alle eksisterende brukeridenter...")
+				cache_hrorg = dict(HRorg.objects.values_list("ouid", "pk"))
+				cache_users = dict(User.objects.values_list("username", "pk"))
+
+
+				print_with_timestamp("Prosesserer batcher med brukere...")
+				total_processed = 0
+				linjer_kilde = len(user_datastructure)
+				split_size = 10000
+
+				for i in range(0, linjer_kilde, split_size):
+					total_processed += save_to_database(user_datastructure[i:i + split_size])
+					message = f"Ferdig med batch {i}-{i+split_size}/{linjer_kilde}. Frem til nå er det {Command.antall_profillagringer} profillagringer, {Command.antall_deaktive} deaktive, {Command.antall_feilet_brukeroppslag} feilede brukeroppslag, {Command.antall_feilet_orgoppslag} feilede HR-org oppslag og {Command.antall_drift_treff} treff på DRIFT-ident."
+					print_with_timestamp(message)
 
 
 			runtime_t1 = time.time()
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
-			logg_entry_message = f"Kjøretid: {logg_total_runtime} sekunder: {total_processed} brukere importert, {Command.antall_feilet_orgoppslag} feilet oppslag mot HR-org, {Command.antall_feilet_brukeroppslag} feilet oppslag mot brukerID og {Command.antall_drift_treff} hadde drift-bruker knyttet til seg."
+			logg_entry_message = f"Kjøretid: {logg_total_runtime} sekunder. {total_processed} brukere prosessert, {Command.antall_profillagringer} profillagringer, {Command.antall_deaktive} deaktive, {Command.antall_feilet_orgoppslag} feilet oppslag mot HR-org, {Command.antall_feilet_brukeroppslag} feilet oppslag mot brukerID og {Command.antall_drift_treff} hadde drift-bruker knyttet til seg."
 
 			print_with_timestamp(logg_entry_message)
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_entry_message,)

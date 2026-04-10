@@ -87,7 +87,7 @@ class Command(BaseCommand):
 
 					if keep_file_locally:
 						print("Lagrer data til fil på disk")
-						with open(filepath, 'w') as file_handle:
+						with open(filepath, 'w', encoding='utf-8') as file_handle:
 							file_handle.write(api_response.text)
 					else:
 						print("Sletter datafil")

@@ -1218,7 +1218,7 @@ class Profile(models.Model):
 			null=True,
 			)
 	from_prk = models.BooleanField(
-			verbose_name="Fra PRK?",
+			verbose_name="Fra HR-systemet?",
 			default=False,
 			)
 	ekstern_ressurs = models.BooleanField(
@@ -1228,7 +1228,7 @@ class Profile(models.Model):
 			default=None,
 			)
 	usertype = models.CharField(
-			verbose_name="Brukertype (PRK)",
+			verbose_name="Brukertype (HR)",
 			max_length=20,
 			null=True,
 			blank=True,

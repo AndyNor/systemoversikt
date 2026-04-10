@@ -1,8 +1,7 @@
 {% extends "index.html" %}
 
 {% block sidemeny %}
-	<h6>Registrer nytt</h6>
-
+	<h6>Opprett</h6>
 
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/tjeneste/add/">{% include 'site_edit_button.html' %} Ny tjeneste</a>
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/system/add/?systemeier={{ virksomhet.pk }}">{% include 'site_edit_button.html' %} Nytt system</a>
@@ -10,8 +9,15 @@
 		<a href="/admin/systemoversikt/programvare/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Ny programvare</a>
 
 		<hr>
+		{% url "tjenester_oversikt" as tjenester_oversikt_url %}
+		<a href="{{ tjenester_oversikt_url }}" class="btn btn-sm btn-link {% if tjenester_oversikt_url in request.path %}fremhev{% endif %}">Alle tjenesteområder</a>
+
 		{% url 'systemer_vis_alle' as systemer_vis_alle_url %}
 		<a href="{{ systemer_vis_alle_url }}" class="btn btn-sm btn-link {% if systemer_vis_alle_url in request.path %}fremhev{% endif %}">Alle systemer</a><br>
+
+		{% url "alle_programvarer" as alle_programvarer_url %}
+		<a href="{{ alle_programvarer_url }}" class="btn btn-sm btn-link {% if alle_programvarer_url in request.path %}fremhev{% endif %}">All programvare</a>
+
 
 		{% url "alle_systemurler" as alle_systemurler_url %}
 		<a href="{{ alle_systemurler_url }}" class="btn btn-sm btn-link {% if alle_systemurler_url in request.path %}fremhev{% endif %}">Alle URLer</a>

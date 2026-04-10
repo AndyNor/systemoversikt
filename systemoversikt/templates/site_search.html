@@ -10,6 +10,17 @@
 
 {% block hovedinnhold %}
 
+	<p>Det er flere måter å søke på i Kartoteket:
+		<ol>
+			<li>Hovedsøkelinjen øverst ved siden av Oslo-logoen igjennom de fleste, men ikke alle kilder i databasen. Søker du på virksomheters trebokstavsforkortelse kommer du rett til virksomhetens hovedside. Du kan også søke på systemer, brukernavn, tilgangsgrupper, databaser, nettadresser (URL-er), servernavn, service principals fra Entra ID, service offerings fra driftsleverandør, leverandører, avdelinger, seksjoner og team.</li>
+			<li>Noen temasider har egne søkeboker. Disse er mer spesialiserte og søker kun igjennom data knyttet til temasiden. Eksempelvis kan du søke på fornavn og etternavn via <a href="{% url 'bruker_sok' %}">brukersøk</a>, og du kan søke på sårbarheter (CVE-er) via <a href="{% url 'vulnstats' %}">sårbarhetsoversikten</a>.</li>
+			<li>I tillegg har de fleste tabeller aktivert filtrering. "Søk" i tabeller filtrerer bare vekk det du ser, men finner ikke ny informasjon som ikke allerede er vist i tabellen. Merk at denne informasjonen allerede kan være filtrert.</li>
+		</ol>
+	
+	</p>
+
+	<hr>
+
 	{% if systemer or  aktuelle_programvarer %}
 	<h6>Treff på system- og programvarenavn</h6>
 	<div style="display: grid; grid-template-columns: repeat(6, 1fr)">

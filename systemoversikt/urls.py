@@ -45,7 +45,7 @@ urlpatterns = [
 	re_path(r'^login/$', admin.site.login, name='login'),
 	re_path(r'^logout/$', admin.site.logout, name='logout'),
 	re_path(r'^sok/$', views.search, name='search'),
-	re_path(r'^domener/alle/$', views.alle_systemurler, name='alle_systemurler'),
+	re_path(r'^systemer/domener/alle/$', views.alle_systemurler, name='alle_systemurler'),
 
 
 	re_path(r'^monitoring/top-slow-pages/$', views.top_slow_pages, name='top_slow_pages'),
@@ -175,7 +175,7 @@ urlpatterns = [
 
 
 
-	re_path(r'^tjenester/oversikt/$', views.tjenester_oversikt, name="tjenester_oversikt"),
+	re_path(r'^systemer/tjenester/oversikt/$', views.tjenester_oversikt, name="tjenester_oversikt"),
 
 
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
@@ -243,10 +243,10 @@ urlpatterns = [
 
 
 
-	re_path(r'^programvare/alle/$', views.alle_programvarer_optimized, name='alle_programvarer'),
-	re_path(r'^programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
-	re_path(r'^programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
-	re_path(r'^programvare/bruk/registrer_bruk/(?P<programvare>\d{1,8})/$', views.registrer_bruk_programvare, name='registrer_bruk_programvare'),
+	re_path(r'^systemer/programvare/alle/$', views.alle_programvarer_optimized, name='alle_programvarer'),
+	re_path(r'^systemer/programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
+	re_path(r'^systemer/programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
+	re_path(r'^systemer/programvare/bruk/registrer_bruk/(?P<programvare>\d{1,8})/$', views.registrer_bruk_programvare, name='registrer_bruk_programvare'),
 
 
 	re_path(r'^ansvarlige/alle/$', views.alle_ansvarlige, name='alle_ansvarlige'),

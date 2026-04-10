@@ -3,38 +3,20 @@
 {% load templatetags %}
 
 {% block overskrift %}
-	Oslo kommunes systemoversikt
+	Velkommen til Kartoteket
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-	<h6>Velkommen til Kartoteket!</h6>
-	<p>Her finner du Oslo kommunes systemoversikt. I tillegg finner du en del rapporter basert på data fra driftsmiljøet (CMDB) og fra Microsoft 365. I systemoversikten registrerer vi driftsplattformer, systemer og programvare. Systemer er samlinger av servere, databaser og programvare inn under et forvaltningsteam, og kjører på én eller flere driftsplattformer. Infrastruktur og integrasjoner inngår også under systembegrepet. Programvare kan kjøres på servere eller klienter, og kobles til systemet det tilhører. Brukerdokumentasjonen finner du på <a class="btn-sm" style="padding: 5px; font-weight: normal; margin: 5px; background-color: #d1ecf1;" target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">SharePoint</a></p>
+	<p>Kartoteket inneholder Oslo kommunes systemoversikt. I tillegg finner du en del rapporter basert på data fra driftsmiljøet (CMDB) og fra Microsoft 365. I systemoversikten registrerer vi driftsplattformer, systemer og programvare. Brukerdokumentasjonen finner du på <a target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">SharePoint</a>. For oversikt over behandlinger av personopplysninger må du gå til <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a>.</p>
 
-	<hr>
+	{% url 'min_virksomhet' as url_min_virksomhet %}
+	<p>	For å finne et system kan du enten <b>søke</b> eller gå til <a href="{{url_min_virksomhet}}" class="btn btn-sm {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 min virksomhet</a>. Du kan også se <a href="{% url 'home_chart' %}">oversikt over alle systemer fordelt på virksomhet</a>.</p>
 
-	<p>Kartoteket er tilgangsstyrt. Du må logge inn med "logg inn"-knappen ved siden av søkefeltet for å aktivere rollene dine. Se <a href="{% url 'roller' %}" class="btn-sm" style="padding: 5px; font-weight: normal; margin: 5px; background-color: #d1ecf1;">rolleoversikt</a> for nærmere beskrivelser av hvordan tilgangsstyringen fungerer.</p>
+	<p>Det pågår nå et arbeid med å modernisere både IKT-instruksen og systemoversikten i en ny løsning som heter Yggdrasil. For mer informasjon om fremdriften, kan du følge med på <a target="_blank" href="https://engage.cloud.microsoft/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiI2NTU0NzAwMTg1NyJ9/all">VI/SAM/System og tjenesteoversikt</a>. Inntil til den nye løsningen formelt er lansert er det her i Kartoteket vi fører systemoversikt.</p>
 
-	<p>For oversikt over behandlinger må du gå til <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no" class="btn-sm" style="padding: 5px; font-weight: normal; margin: 5px; background-color: #d1ecf1;">Behandlingsoversikten</a></p>
-
-	<p>Det er to måter å søke på i Kartoteket:
-		<ol>
-			<li>Hovedsøkelinjen øverst ved siden av logoen søker igjennom veldig mange (men ikke alle) kilder. Søker du på virksomheters trebokstavsforkortelse kommer du rett til virksomhetens hovedside. Du kan også søke på systemer, brukernavn, tilgangsgrupper, databaser, nettadresser (URL-er), servernavn, service offerings (CMDB), leverandører, organisasjonsstrukturen (avdelinger, seksjoner og team) og service principals fra Entra ID.</li>
-			<li>Noen undersider har egne søkemenyer. Disse er mer spesialiserte og søker kun innenfor dataene knyttet til denne siden. Disse finner du hovedsakelig under "Rapporter", "CMDB" og "Brukere". F.eks. kan du under Brukersøk AD søke på fornavn og etternavn, og ikke bare brukernavn som i hovedsøkelinjen.</li>
-		</ol>
-	I tillegg er det mulig å filtrere eller "søke" i tabeller. Søk i disse feltene søker bare i dataene som vises på skjermen, og kan allerede være filtrert før de vises til deg.
-	</p>
-
-	<hr>
-
-	<p>Det pågår nå et arbeid med å modernisere både IKT-instruksen og systemoversikten i en ny løsning som går under arbeidsnavnet "System- og tjenesteoversikten". For mer informasjon om fremdriften, kan du følge med på <a target="_blank" href="https://engage.cloud.microsoft/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiI2NTU0NzAwMTg1NyJ9/all" class="btn-sm" style="padding: 5px; font-weight: normal; margin: 5px; background-color: #d1ecf1;">VI/SAM/System og tjenesteoversikt</a></p>
-
-	<p>Inntil til den nye løsningen formelt er lansert er det her i Kartoteket vi fører systemoversikt.</p>
-
-	<hr>
-
-	Vi har to nivåer med visualisering av systemer. Det detaljerte nivået finner du ved å gå inn på virksomheter og velge en av etatene eller bydelen. Den andre er på kommunalt nivå og ligger på <a class="btn btn-sm" style="padding: 5px; font-weight: normal; margin-left: 5px; background-color: #d1ecf1;" href="{% url 'home_chart' %}">Denne siden</a>
-
+	<p>Kartoteket er tilgangsstyrt. Du må logge inn med "logg inn"-knappen ved siden av søkefeltet for å aktivere rollene dine. Se <a href="{% url 'roller' %}">rolleoversikt</a> for nærmere beskrivelser av hvordan tilgangsstyringen fungerer.</p>
+	
 	<hr>
 
 	<div class="container-fluid">
@@ -68,7 +50,6 @@
 
 		</div>
 	</div>
-
 
 	<hr>
 
