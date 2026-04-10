@@ -69,8 +69,8 @@ class Command(BaseCommand):
 				keep_file_locally = False
 
 			if os.environ['THIS_ENV'] == "TEST":
-				use_cache_data = True # settes til True ved feilsøking lokalt
-				keep_file_locally = True # sett til True ved feilsøking
+				use_cache_data = False # settes til True ved feilsøking lokalt
+				keep_file_locally = False # sett til True ved feilsøking
 
 			if use_cache_data == True:
 				print("Bruker lokale data")
