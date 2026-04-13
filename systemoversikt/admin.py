@@ -960,7 +960,7 @@ class RegistrerteAdmin(SimpleHistoryAdmin):
 
 @admin.register(IntegrasjonKonfigurasjon)
 class IntegrasjonKonfigurasjonAdmin(admin.ModelAdmin):
-	list_display = ('kodeord', 'kilde', 'protokoll', 'informasjon', 'dato_sist_oppdatert', 'log_event_type', 'sp_filnavn', 'script_navn', 'url', 'frekvensangivelse', 'sist_status')
+	list_display = ('kodeord', 'kilde', 'helsestatus', 'protokoll', 'informasjon', 'dato_sist_oppdatert', 'log_event_type', 'sp_filnavn', 'script_navn', 'url', 'frekvensangivelse', 'sist_status')
 	readonly_fields = ('dato_sist_oppdatert', 'script_navn', 'sist_status')
 
 @admin.register(AnsattID)

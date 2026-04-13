@@ -1,4 +1,4 @@
-{% extends "rapport_index.html" %}
+{% extends "admin_index.html" %}
 {% load humanize %}
 {% load static %}
 
@@ -36,7 +36,7 @@
 				{% if i.helsestatus == "Vellykket" %}
 					{{ i.sist_status }}
 				{% else %}
-					{{ i.helsestatus }}
+					<span style="background-color: yellow;">{{ i.helsestatus }}</span>
 				{% endif %}
 			</td>
 		</tr>

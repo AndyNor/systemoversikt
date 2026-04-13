@@ -1,4 +1,4 @@
-{% extends "rapport_index.html" %}
+{% extends "system_index.html" %}
 {% load humanize %}
 {% load static %}
 
@@ -12,9 +12,11 @@
 {% block hovedinnhold %}
 
 	<p>Her vises systemer som:
+	<ul>
 		<li>Ikke har blitt oppdatert på {{ oppdatert_siden }} dager, og er ikke levert av en samarbeidspartner</li>
 		<li>Ikke har gyldig eierskap satt eller ikke har angitt livssyklusstatus</li>
 		<li>Har færre enn {{ minimum_oppdateringer }} oppdateringer siden opprettelse</li>
+	</ul>
 
 	</p>
 

@@ -2,21 +2,41 @@
 
 {% block sidemeny %}
 
-	<a href="/admin/" class="btn btn-sm btn-link" >Adminpanelet</a><br>
+	<h6>Tilgangsstyring</h6>
+	{% url 'minside' as url_minside %}
+	<a href="{{ url_minside }}" class="btn btn-sm btn-link {% if url_minside in request.path %}fremhev{% endif %}">👤 Min pålogging</a><br>
 
-	{% url 'databasestatistikk' as url_databasestatistikk %}
-	<a href="{{ url_databasestatistikk }}" class="btn btn-sm btn-link {% if url_databasestatistikk in request.path %}fremhev{% endif %}">Tabellstørrelser</a><br>
+	{% url 'roller' as url_roller %}
+	<a href="{{ url_roller }}" class="btn btn-sm btn-link {% if url_roller in request.path %}fremhev{% endif %}">📖 Tilgangsstyring</a>
+
+	{% url 'permissions' as url_permissions %}
+	<a href="{{ url_permissions }}" class="btn btn-sm btn-link {% if url_permissions in request.path %}fremhev{% endif %}">📖 Ansvarlige</a>
+
+
+	<hr>
+	<h6>Generelt</h6>
+	<a href="/admin/" class="btn btn-sm btn-link">✎ Adminpanelet</a><br>
 
 	{% url 'admin_visitors' as url_admin_visitors %}
-	<a href="{{ url_admin_visitors }}" class="btn btn-sm btn-link {% if url_admin_visitors in request.path %}fremhev{% endif %}">Bruksoversikt</a><br>
+	<a href="{{ url_admin_visitors }}" class="btn btn-sm btn-link {% if url_admin_visitors in request.path %}fremhev{% endif %}">📖 Statistikk over besøk</a><br>
+
+	{% url 'api_overview' as url_api_overview %}
+	<a href="{{ url_api_overview }}" class="btn btn-sm btn-link {% if url_api_overview in request.path %}fremhev{% endif %}">📖 Kartotekets API-er</a><br>
 
 	<hr>
 	<h6>Monitorering</h6>
+	{% url 'databasestatistikk' as url_databasestatistikk %}
+	<a href="{{ url_databasestatistikk }}" class="btn btn-sm btn-link {% if url_databasestatistikk in request.path %}fremhev{% endif %}">📖 Tabellstørrelser</a><br>
+
 	{% url 'top_slow_pages' as url_top_slow_pages %}
-	<a href="{{ url_top_slow_pages }}" class="btn btn-sm btn-link {% if url_top_slow_pages in request.path %}fremhev{% endif %}">📖 Aksess: trege sider</a><br>
+	<a href="{{ url_top_slow_pages }}" class="btn btn-sm btn-link {% if url_top_slow_pages in request.path %}fremhev{% endif %}">📖 Trege sider</a><br>
 
 	{% url 'recent_errors' as url_recent_errors %}
-	<a href="{{ url_recent_errors }}" class="btn btn-sm btn-link {% if url_recent_errors in request.path %}fremhev{% endif %}">📖 Aksess: feilsituasjoner</a><br>
+	<a href="{{ url_recent_errors }}" class="btn btn-sm btn-link {% if url_recent_errors in request.path %}fremhev{% endif %}">📖 Feilsituasjoner</a><br>
+
+	{% url 'rapport_cmdb_status' as url_rapport_cmdb_status %}
+	<a href="{{ url_rapport_cmdb_status }}" class="btn btn-sm btn-link {% if url_rapport_cmdb_status in request.path %}fremhev{% endif %}">📖 Status integrasjoner</a><br>
+
 
 
 	<hr>
@@ -36,19 +56,7 @@
 	<hr>
 	<h6>Kategorier</h6>
 	{% url 'valgbarekategorier' as url_valgbarekategorier %}
-	<a href="{{ url_valgbarekategorier }}" class="btn btn-sm btn-link {% if url_valgbarekategorier in request.path %}fremhev{% endif %}">Valgbare kategorier</a><br>
-
-
-	<hr>
-	<h6>Tilgangsstyring</h6>
-	{% url 'minside' as url_minside %}
-	<a href="{{ url_minside }}" class="btn btn-sm btn-link {% if url_minside in request.path %}fremhev{% endif %}">👤 Min pålogging</a><br>
-
-	{% url 'roller' as url_roller %}
-	<a href="{{ url_roller }}" class="btn btn-sm btn-link {% if url_roller in request.path %}fremhev{% endif %}">Kartotekets tilgangsstyring</a>
-
-	{% url 'permissions' as url_permissions %}
-	<a href="{{ url_permissions }}" class="btn btn-sm btn-link {% if url_permissions in request.path %}fremhev{% endif %}">Kartotekbrukere</a>
+	<a href="{{ url_valgbarekategorier }}" class="btn btn-sm btn-link {% if url_valgbarekategorier in request.path %}fremhev{% endif %}">✎ Valgbare kategorier</a><br>
 
 
 	<hr>
@@ -60,10 +68,7 @@
 	<a href="{{url_system_til_programvare_indeks}}" class="btn btn-sm btn-link {% if url_system_til_programvare_indeks in request.path %}fremhev{% endif %}">⚙️ System til programvare</a>
 
 	{% url 'alle_ansvarlige_eksport' as url_alle_ansvarlige_eksport %}
-	<a class="btn btn-sm btn-link {% if url_alle_ansvarlige_eksport in request.path %}fremhev{% endif %}" href="{{ url_alle_ansvarlige_eksport }}">Eksporter ansvarlige</a>
-
-	{% url 'alle_ansvarlige' as url_alle_ansvarlige %}
-	<a href="{{url_alle_ansvarlige}}" class="btn btn-sm btn-link {% if url_alle_ansvarlige in request.path %}fremhev{% endif %}">Vis alle ansvarlige</a>
+	<a class="btn btn-sm btn-link {% if url_alle_ansvarlige_eksport in request.path %}fremhev{% endif %}" href="{{ url_alle_ansvarlige_eksport }}">⚙️ Eksporter ansvarlige</a>
 
 
 

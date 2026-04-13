@@ -12,7 +12,7 @@
 	<a href="{{url_tool_compare_items}}" class="btn btn-sm btn-link {% if url_tool_compare_items in request.path %}fremhev{% endif %}">Union og snitt</a><br>
 
 	{% url 'tool_docx2html' as url_tool_docx2html %}
-	<a href="{{url_tool_docx2html}}" class="btn btn-sm btn-link {% if url_tool_docx2html in request.path %}fremhev{% endif %}">Word > HTML</a><br>
+	<a href="{{url_tool_docx2html}}" class="btn btn-sm btn-link {% if url_tool_docx2html in request.path %}fremhev{% endif %}">Word til HTML</a><br>
 
 	{% url 'tool_systemimport' as url_tool_systemimport %}
 	<a href="{{url_tool_systemimport}}" class="btn btn-sm btn-link {% if url_tool_systemimport in request.path %}fremhev{% endif %}">Importer systemer</a><br>

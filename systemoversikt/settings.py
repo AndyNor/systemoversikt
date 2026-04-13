@@ -166,6 +166,7 @@ TEMPLATES = [
 				'django.contrib.messages.context_processors.messages',
 				'django.template.context_processors.request',
 				'systemoversikt.context_processors.global_settings',
+				'systemoversikt.context_processors.integration_health',
 			],
 		},
 	},

@@ -8,7 +8,7 @@
 
 {% block hovedinnhold %}
 
-	<p>Kartoteket inneholder Oslo kommunes systemoversikt. I tillegg finner du en del rapporter basert på data fra driftsmiljøet (CMDB) og fra Microsoft 365. I systemoversikten registrerer vi driftsplattformer, systemer og programvare. Brukerdokumentasjonen finner du på <a target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">SharePoint</a>. For oversikt over behandlinger av personopplysninger må du gå til <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a>.</p>
+	<p>Kartoteket inneholder Oslo kommunes systemoversikt. I tillegg finner du en del rapporter basert på data fra driftsmiljøet (CMDB) og fra Microsoft 365. I systemoversikten registrerer vi driftsplattformer, systemer og programvare. Brukerdokumentasjonen finner du på <a target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">SharePoint</a>. For oversikt over behandlinger av personopplysninger må du gå til <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a> og oversikt over tjenester finner du i <a href="https://tjenestekatalog.k8s.oslo.kommune.no/katalog" target="_blank">Oslo kommunes interne tjenestekatalog</a>.</p>
 
 	{% url 'min_virksomhet' as url_min_virksomhet %}
 	<p>	For å finne et system kan du enten <b>søke</b> eller gå til <a href="{{url_min_virksomhet}}" class="btn btn-sm {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 min virksomhet</a>. Du kan også se <a href="{% url 'home_chart' %}">oversikt over alle systemer fordelt på virksomhet</a>.</p>

@@ -58,8 +58,8 @@
 
 			{% if user.is_authenticated %}
 				<li class="hovedmeny">
-					{% url "rapport_startside" as rapport_startside_url %}
-					<a href="{{ rapport_startside_url }}" class="nav-link {% if '/rapport/' in request.path %} active {% endif %}">Rapporter</a>
+					{% url "virksomhet_enhetsok" as brukere_startside_url %}
+					<a href="{{ brukere_startside_url }}" class="nav-link {% if '/brukere/' in request.path %} active {% endif %}">Brukerkatalog</a>
 				</li>
 
 				<li class="hovedmeny">
@@ -68,23 +68,33 @@
 				</li>
 
 				<li class="hovedmeny">
-					{% url "brukere_startside" as brukere_startside_url %}
-					<a href="{{ brukere_startside_url }}" class="nav-link {% if '/brukere/' in request.path %} active {% endif %}">Brukerkatalog</a>
+					{% url "rapport_sikkerhetstester" as rapport_sikkerhetstester_url %}
+					<a href="{{ rapport_sikkerhetstester_url }}" class="nav-link {% if '/sikkerhet/' in request.path %} active {% endif %}">IKT-sikkerhet</a>
 				</li>
-			{% endif %}
 
-
-			{% if user.is_authenticated %}
 				<li class="hovedmeny">
-					{% url 'logger' as url_logger %}
-					<a href="{{ url_logger }}" class="nav-link {% if '/admin/' in request.path %} active {% endif %}">Administrasjon</a>
+					{% url "azure_applications" as azure_url %}
+					<a href="{{ azure_url }}" class="nav-link {% if '/rapport/' in request.path %} active {% endif %}">Azure</a>
 				</li>
-			{% endif %}
 
 				<li class="hovedmeny">
 					{% url 'tools_index' as url_tools %}
 					<a href="{{ url_tools }}" class="nav-link {% if '/tools/' in request.path %} active {% endif %}">Verktøy</a>
 				</li>
+
+				<li class="hovedmeny">
+					{% url 'rapport_cmdb_status' as url_logger %}
+					<a href="{{ url_logger }}" class="nav-link {% if '/admin/' in request.path %} active {% endif %}">
+
+						{% if integrations_ok %}
+						  🟢
+						{% else %}
+						  🔴
+						{% endif %}
+
+					Administrasjon</a>
+				</li>
+			{% endif %}
 
 			</ul>
 		</div>

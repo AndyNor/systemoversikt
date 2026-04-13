@@ -9,3 +9,18 @@ def global_settings(request):
 		'TEST_ENV_NAME': settings.TEST_ENV_NAME,
 
 	}
+
+
+from .models import IntegrasjonKonfigurasjon
+SUCCESS = "Vellykket"
+def all_integrations_ok():
+    return not IntegrasjonKonfigurasjon.objects.exclude(
+        helsestatus=SUCCESS
+    ).exists()
+
+
+def integration_health(request):
+    return {
+        "integrations_ok": all_integrations_ok(),
+    }
+    

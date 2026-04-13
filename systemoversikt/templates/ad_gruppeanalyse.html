@@ -8,7 +8,7 @@
 {% endblock ekstrajavascript %}
 
 {% block overskrift %}
-	AD gruppetilhørighetsanalyse
+	Analsye av gruppetilhørighet
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -26,6 +26,8 @@
 		<br>
 		<input type="submit" value="Analyser" class="btn btn-primary btn-sm">
 	</form>
+
+	{% if brukers_unike_grupper %}
 
 	<hr>
 	<h5>Det er følgende overlapp mellom bruker og nevnte grupper (med nøsting)</h5>
@@ -57,5 +59,7 @@
 			</td>
 		</tr>
 	</table>
+
+	{% endif %}
 
 {% endblock hovedinnhold %}

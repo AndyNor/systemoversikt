@@ -3588,7 +3588,7 @@ def entra_id_oppslag(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	import re
-	inndata = request.POST.get('inndata', '')
+	inndata = request.POST.get('search_term_user_entraId', '')
 	#message = f"{request.user} søkte på: {inndata}."
 	inndata = re.sub(r'[^A-Za-z0-9\.\@]', '', inndata) # sørge for at det kun er lovlige tegn
 
@@ -3613,7 +3613,7 @@ def entra_id_oppslag(request):
 			groups = None
 
 	if inndata == '':
-		inndata = request.GET.get('inndata', '')
+		inndata = request.GET.get('search_term_user_entraId', '')
 	metadata = metadata if 'metadata' in locals() else None
 	groups = groups if 'groups' in locals() else None
 
@@ -3621,7 +3621,7 @@ def entra_id_oppslag(request):
 		'request': request,
 		'metadata': metadata,
 		'groups': groups,
-		'inndata': inndata,
+		'search_term_user_entraId': inndata,
 		'raw_groups': json.dumps(groups, sort_keys=True, indent=4),
 		'raw_metadata': json.dumps(metadata, sort_keys=True, indent=4),
 	})
@@ -3637,7 +3637,7 @@ def bruker_sok(request):
 	from functools import reduce
 	from operator import or_, and_
 	#from unidecode import unidecode
-	search_term = request.GET.get('search_term', '').replace(","," ").strip().lower()
+	search_term = request.GET.get('search_term_user', '').replace(","," ").strip().lower()
 	# vi ønsker her å søke med AND-operatør mellom alle ord mot displayname, men OR-et med første ordet mot username.
 	fields = (
 		'profile__displayName__icontains',
@@ -3664,7 +3664,7 @@ def bruker_sok(request):
 	return render(request, 'brukere_brukersok_ad.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-		'search_term': search_term,
+		'search_term_user': search_term,
 		'users': users,
 	})
 
@@ -6460,17 +6460,28 @@ def virksomhet_enhetsok(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	search_term = request.GET.get('search_term', "").strip()
+	search_term = request.GET.get('search_term_org', "").strip()
 	if len(search_term) > 1:
 		units = HRorg.objects.filter(ou__icontains=search_term).filter(active=True).order_by('virksomhet_mor')
 	else:
 		units = HRorg.objects.none()
 
+
+	antall_aktive_brukere = User.objects.filter(profile__accountdisable=False).count()
+	antall_deaktive_brukere = User.objects.filter(profile__accountdisable=True).count()
+	antall_organisasjonsledd = HRorg.objects.all().count()
+	antall_adgrupper = ADgroup.objects.all().count()
+
+
 	return render(request, 'virksomhet_enhetsok.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'units': units,
-		'search_term': search_term,
+		'search_term_org': search_term,
+		'antall_aktive_brukere': antall_aktive_brukere,
+		'antall_deaktive_brukere': antall_deaktive_brukere,
+		'antall_organisasjonsledd': antall_organisasjonsledd,
+		'antall_adgrupper': antall_adgrupper,
 	})
 
 
@@ -6496,7 +6507,10 @@ def virksomhet_enheter(request, pk):
 			6: "#3300cc",
 			7: "#0000ff",
 		}
-		return palett[unit.level]
+		try:
+			return palett[unit.level]
+		except:
+			return "black"
 
 	"""
 	def size(unit):
@@ -7989,6 +8003,7 @@ def bytt_kategori(request, fra, til):
 
 
 
+"""
 def bytt_leverandor(request, fra, til):
 	#Funksjon for å bytte all bruk av én leverandør til en annen leverandør
 	required_permissions = ['systemoversikt.change_system']
@@ -8023,6 +8038,7 @@ def bytt_leverandor(request, fra, til):
 	bytt("Systemebruk",SystemBruk.objects.filter(systemleverandor=fra), leverandor_fra, leverandor_til)
 
 	return redirect('alle_leverandorer')
+"""
 
 
 
@@ -8443,7 +8459,7 @@ def ad_analyse(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	antall_alle_grupper = ADgroup.objects.all().count()
-	maks = int(request.GET.get('antall', 0))
+	maks = int(request.GET.get('antall', 1))
 	adgrupper_tomme = ADgroup.objects.filter(membercount__lte=maks)
 	antall_tomme = len(adgrupper_tomme)
 
@@ -8482,7 +8498,7 @@ def alle_adgrupper(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+	search_term = request.GET.get('search_term_adgrp', '').strip()  # strip removes trailing and leading space
 	if len(search_term) > 1:
 		if search_term[0:3] == "CN=":
 			search_term = search_term[3:]
@@ -8502,7 +8518,7 @@ def alle_adgrupper(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		"adgrupper": adgrupper,
-		"search_term": search_term,
+		"search_term_adgrp": search_term,
 	})
 
 

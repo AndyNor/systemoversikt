@@ -3,20 +3,62 @@
 {% load static %}
 
 {% block overskrift %}
-	Organisatoriske enheter i Oslo kommune
+	Brukerkatalog Oslo kommune
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-<p>Data om organisatoriske enheter synkroniseres hver natt mot HR via grunndatabasen.</p>
+<p>Her finner du informasjon om organisering, brukeridenter og tilganger.<p>
 
-	<form action="" autocomplete="off">
+<p>Det er <b>{{ antall_aktive_brukere|intcomma }} aktive brukere</b> og <b>{{ antall_deaktive_brukere|intcomma }} inaktive</b> brukere i brukerkatelogen (AD). AD synkroniserer til Entra ID. Disse tallene kan avvike noe fra AD grunnet at de synkroniseres nattlig, og at Kartoteket ikke sletter brukere som er knyttet til en rolle før rollen er gitt til en ny person. Sistnevnte påvirker bare antall inaktive brukere.<br>
+
+Det er <b>{{antall_organisasjonsledd|intcomma}}</b> organisasjonsledd. Data om organisatoriske enheter synkroniseres hver natt mot HR via grunndatabasen.<br>
+Det er <b>{{antall_adgrupper|intcomma}}</b> tilgangsgrupper i AD.</p>
+
+
+
+	<form action="{% url 'virksomhet_enhetsok' %}" autocomplete="off">
+		{% csrf_token %}
 		<div class="form-group form-inline">
-			<input size="30" style="width: 340px;" type="search" value="{{ search_term }}" name="search_term"
-			placeholder="Søk etter seksjoner, avdelinger, team.." class="form-control form-control-sm">
-			<input type="submit" value="Filtrer" class="btn btn-primary btn-sm">
+			<input size="40" style="width: 250;" type="search" value="{{ search_term_org }}" name="search_term_org"
+			placeholder="Seksjoner, avdelinger, team" class="form-control form-control-sm">
+			<input type="submit" value="Organisasjonssøk" class="btn btn-primary btn-sm">
 		</div>
 	</form>
+
+	{% if not units %}
+
+	<form action="{% url 'bruker_sok' %}" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group form-inline">
+			<input size="40" style="width: 250px;" type="search" value="{{ search_term_user }}" name="search_term_user"
+			placeholder="Brukernavn, navn, e-post, SID" class="form-control form-control-sm">
+			<input type="submit" value="Brukersøk Active Directory" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	<form action="{% url 'entra_id_oppslag' %}" method="POST" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group form-inline">
+			<input size="40" style="width: 250px;" type="search" value="{{ search_term_user_entraId }}" name="search_term_user_entraId"
+				placeholder="E-postadresse, brukernavn" class="form-control form-control-sm">
+			<input type="submit" value="Brukersøk Entra ID" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	<form action="{% url 'alle_adgrupper' %}" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group form-inline">
+			<input size="40" style="width: 350px;" type="search" value="{{ search_term_adgrp }}" name="search_term_adgrp"
+			placeholder="Gruppenavn" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	{% endif %}
+
+
+	{% if units %}
 
 	<p>Viser {{ units.count }} enheter</p>
 	<hr>
@@ -43,5 +85,7 @@
 		{% endfor %}
 		</tbody>
 	</table>
+
+	{% endif %}
 
 {% endblock hovedinnhold %}

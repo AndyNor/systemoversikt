@@ -9,64 +9,9 @@
 
 
 
-	<hr><h6>For ISK og PKO</h6>
-
-		{% url 'o365_avvik' as url_o365_avvik %}
-		<a href="{{ url_o365_avvik }}" class="btn btn-sm btn-link {% if url_o365_avvik in request.path %}fremhev{% endif %}">Sikkerhetsunntak</a><br>
-
-		{% url 'system_kritisk_funksjon' as url_system_kritisk_funksjon %}
-		<a href="{{url_system_kritisk_funksjon}}" class="btn btn-sm btn-link {% if url_system_kritisk_funksjon in request.path %}fremhev{% endif %}">Kritiske samfunnsfunksjoner</a><br>
-
-		{% url 'system_informasjonsbehandling' as url_system_informasjonsbehandling %}
-		<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if url_system_informasjonsbehandling in request.path %}fremhev{% endif %}">Informasjonsklassifisering</a><br>
-
-		{% url 'isk_ansvarlig_for_system' as url_isk_ansvarlig_for_system %}
-		<a href="{{ url_isk_ansvarlig_for_system }}" class="btn btn-sm btn-link {% if url_isk_ansvarlig_for_system in request.path %}fremhev{% endif %}">ISK per system</a><br>
-
-		{% url 'rapport_kit_vurderinger_samlet' as url_rapport_kit_vurderinger_samlet %}
-		<a href="{{ url_rapport_kit_vurderinger_samlet }}" class="btn btn-sm btn-link {% if url_rapport_kit_vurderinger_samlet in request.path %}fremhev{% endif %}">KIT-vurderinger samlet</a><br>
 
 
-
-	<hr><h6>For systemforvaltere</h6>
-
-		{% url 'rapport_prioriteringer' as url_rapport_prioriteringer %}
-		<a href="{{ url_rapport_prioriteringer }}" class="btn btn-sm btn-link {% if url_rapport_prioriteringer in request.path %}fremhev{% endif %}">Prioriteringer</a><br>
-
-		{% url 'systemer_utfaset' as url_systemer_utfaset %}
-		<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfaset</a><br>
-
-		{% url 'systemer_EOL' as url_systemer_EOL %}
-		<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if url_systemer_EOL in request.path %}fremhev{% endif %}">End of life</a><br>
-
-
-	<hr><h6>Systemperspektiver</h6>
-
-
-		{% url 'rapport_systemer_forsomt' as url_rapport_systemer_forsomt %}
-		<a href="{{url_rapport_systemer_forsomt}}" class="btn btn-sm btn-link {% if url_rapport_systemer_forsomt in request.path %}fremhev{% endif %}">Forsømte systemer</a><br>
-
-		{% url 'systemer_citrix' as url_systemer_citrix %}
-		<a href="{{url_systemer_citrix}}" class="btn btn-sm btn-link {% if url_systemer_citrix in request.path %}fremhev{% endif %}">Systemer på Citrix</a><br>
-
-		{% url 'systemer_uten_driftsmodell' as url_systemer_uten_driftsmodell %}
-		<a href="{{url_systemer_uten_driftsmodell}}" class="btn btn-sm btn-link {% if url_systemer_uten_driftsmodell in request.path %}fremhev{% endif %}">Systemer uten driftmiljø</a><br>
-
-		{% url 'alle_hovedkategorier' as url_alle_hovedkategorier %}
-		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Systemkategorier</a><br>
-
-		{% url 'alle_systemer_forvaltere' as url_systemforvaltere %}
-		<a href="{{ url_systemforvaltere }}" class="btn btn-sm btn-link {% if url_systemforvaltere in request.path %}fremhev{% endif %}">Kontaktpersoner</a><br>
-
-		{% url 'systemer_vurderinger' as url_systemer_vurderinger %}
-		<a href="{{ url_systemer_vurderinger }}" class="btn btn-sm btn-link {% if url_systemer_vurderinger in request.path %}fremhev{% endif %}">Systemvurderinger</a><br>
-
-		{% url 'alle_leverandorer' as alle_leverandorer_url %}
-		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Leverandører</a><br>
-
-
-
-	<hr><h6>For Azure forvaltningen</h6>
+	<hr><h6>Enterprise applications</h6>
 
 		{% url 'azure_applications' as url_azure_applications %}
 		<a href="{{ url_azure_applications }}" class="btn btn-sm btn-link {% if url_azure_applications in request.path %}fremhev{% endif %}">Service principals</a><br>
@@ -83,72 +28,17 @@
 		{% url 'azure_application_keys_active' as url_azure_application_keys_active %}
 		<a href="{{ url_azure_application_keys_active }}" class="btn btn-sm btn-link {% if url_azure_application_keys_active in request.path %}fremhev{% endif %}">Aktive nøkler</a><br>
 
+	<hr><h6>Conditional access</h6>
+
 		{% url 'rapport_conditional_access_rules' as url_rapport_conditional_access_rules %}
-		<a href="{{ url_rapport_conditional_access_rules }}" class="btn btn-sm btn-link {% if url_rapport_conditional_access_rules in request.path %}fremhev{% endif %}">Conditional Access: Regler</a><br>
+		<a href="{{ url_rapport_conditional_access_rules }}" class="btn btn-sm btn-link {% if url_rapport_conditional_access_rules in request.path %}fremhev{% endif %}">CA-regler</a><br>
 
 		{% url 'rapport_conditional_access_changes' as url_rapport_conditional_access_changes %}
-		<a href="{{ url_rapport_conditional_access_changes }}" class="btn btn-sm btn-link {% if url_rapport_conditional_access_changes in request.path %}fremhev{% endif %}">Conditional Access: Endringer</a><br>
+		<a href="{{ url_rapport_conditional_access_changes }}" class="btn btn-sm btn-link {% if url_rapport_conditional_access_changes in request.path %}fremhev{% endif %}">CA-endringer</a><br>
 
 
 
-	<hr><h6>Active Directory</h6>
 
-		{% url 'o365_lisenser' as url_o365_lisenser %}
-		<a href="{{ url_o365_lisenser }}" class="btn btn-sm btn-link {% if url_o365_lisenser in request.path %}fremhev{% endif %}">M365-lisenser</a><br>
-
-		{% url 'rapport_entra_id_auth' as url_rapport_entra_id_auth %}
-		<a href="{{ url_rapport_entra_id_auth }}" class="btn btn-sm btn-link {% if url_rapport_entra_id_auth in request.path %}fremhev{% endif %}">Entra ID MFA</a><br>
-
-
-		{% url 'rapport_ad_identer' as url_rapport_ad_identer %}
-		<a href="{{ url_rapport_ad_identer }}" class="btn btn-sm btn-link {% if url_rapport_ad_identer in request.path %}fremhev{% endif %}">AD-identnedbryting</a><br>
-
-		{% url 'tbrukere' as url_tbrukere %}
-		<a href="{{ url_tbrukere }}" class="btn btn-sm btn-link {% if url_tbrukere in request.path %}fremhev{% endif %}">Kopibrukere</a><br>
-
-		{% url 'rapport_ukjente_identer' as url_rapport_ukjente_identer %}
-		<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Manuelt opprettet</a><br>
-
-		{% url 'alle_spn' as url_alle_spn %}
-		<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">Med SPN</a><br>
-
-		{% url 'rapport_trusted_delegation' as url_rapport_trusted_delegation %}
-		<a href="{{ url_rapport_trusted_delegation }}" class="btn btn-sm btn-link {% if url_rapport_trusted_delegation in request.path %}fremhev{% endif %}">Trusted delegation</a><br>
-
-		{% url 'rapport_ad_adgrupper' as url_rapport_ad_adgrupper %}
-		<a href="{{ url_rapport_ad_adgrupper }}" class="btn btn-sm btn-link {% if url_rapport_ad_adgrupper in request.path %}fremhev{% endif %}">Grupper over tid</a><br>
-
-
-	<hr><h6>Sikkerhetsanalytiker</h6>
-		{% url 'vulnstats' as url_vulnstats %}
-		<a href="{{ url_vulnstats }}" class="btn btn-sm btn-link {% if url_vulnstats in request.path %}fremhev{% endif %}">Sårbarhetsstatistikk</a><br>
-
-		{% url 'rapport_sikkerhetstester' as url_sikkerhetstester %}
-		<a href="{{ url_sikkerhetstester }}" class="btn btn-sm btn-link {% if url_sikkerhetstester in request.path %}fremhev{% endif %}">Sikkerhetstester</a><br>
-
-	<hr><h6>Leverandørtilgang</h6>
-
-		{% url 'rapport_ad_driftbrukere' as url_rapport_ad_driftbrukere %}
-		<a href="{{ url_rapport_ad_driftbrukere }}" class="btn btn-sm btn-link {% if url_rapport_ad_driftbrukere in request.path %}fremhev{% endif %}">Drift-brukere</a><br>
-
-		{% url 'rapport_servicekontoer' as url_rapport_servicekontoer %}
-		<a href="{{ url_rapport_servicekontoer }}" class="btn btn-sm btn-link {% if url_rapport_servicekontoer in request.path %}fremhev{% endif %}">Servicekontoer</a><br>
-
-		{% url 'rapport_ad_testbrukere' as url_rapport_ad_testbrukere %}
-		<a href="{{ url_rapport_ad_testbrukere }}" class="btn btn-sm btn-link {% if url_rapport_ad_testbrukere in request.path %}fremhev{% endif %}">Testkontoer</a><br>
-
-
-		{% url 'rapport_ad_ukjente_brukere' as url_rapport_ad_ukjente_brukere %}
-		<a href="{{ url_rapport_ad_ukjente_brukere }}" class="btn btn-sm btn-link {% if url_rapport_ad_ukjente_brukere in request.path %}fremhev{% endif %}">Ukjente brukere</a><br>
-
-
-	<hr><h6>Kartotekets integrasjoner</h6>
-
-		{% url 'rapport_cmdb_status' as url_rapport_cmdb_status %}
-		<a href="{{ url_rapport_cmdb_status }}" class="btn btn-sm btn-link {% if url_rapport_cmdb_status in request.path %}fremhev{% endif %}">CMDB integrasjonsstatus</a><br>
-
-		{% url 'api_overview' as url_api_overview %}
-		<a href="{{ url_api_overview }}" class="btn btn-sm btn-link {% if url_api_overview in request.path %}fremhev{% endif %}">Kartotekets API-er</a><br>
 
 
 {% endblock sidemeny %}

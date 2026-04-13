@@ -106,10 +106,6 @@
 	<a href="{{url_alle_ip}}" class="btn btn-sm btn-link {% if url_alle_ip in request.path %}fremhev{% endif %}">IP-søk</a><br>
 
 
-	<hr><h6>Diverse</h6>
-	{% url 'cmdb_adcs_index' as url_cmdb_adcs_index %}
-	<a href="{{url_cmdb_adcs_index}}" class="btn btn-sm btn-link {% if url_cmdb_adcs_index in request.path %}fremhev{% endif %}">ADCS certifikatmaler</a><br>
-
 
 	{% block ekstrameny_business_service %}{% endblock ekstrameny_business_service %}
 

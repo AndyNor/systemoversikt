@@ -22,6 +22,8 @@
 		</div>
 	</form>
 
+{% if users %}
+
 	<hr>
 
 	<table class="table table-sm tablesorter excel">
@@ -85,6 +87,8 @@
 	{% for user in not_users %}
 		<li>{{ user }}</li>
 	{% endfor %}
+
+{% endif %}
 
 
 {% endblock hovedinnhold %}

@@ -15,23 +15,21 @@
 		{% url "tjenester_oversikt" as tjenester_oversikt_url %}
 		<a href="{{ tjenester_oversikt_url }}" class="btn btn-sm btn-link {% if tjenester_oversikt_url in request.path %}fremhev{% endif %}">Alle tjenesteområder</a>
 
-		{% url 'systemklassifisering_tom' as systemklassifisering_tom_url %}
-		<a href="{{ systemklassifisering_tom_url }}" class="btn btn-sm btn-link {% if systemklassifisering_tom_url in request.path %}fremhev{% endif %}">Fellessystemer</a><br>
-
 		{% url 'systemer_vis_alle' as systemer_vis_alle_url %}
 		<a href="{{ systemer_vis_alle_url }}" class="btn btn-sm btn-link {% if systemer_vis_alle_url in request.path %}fremhev{% endif %}">Alle systemer</a><br>
 
-		{% url 'systembruk_bydeler' as systembruk_bydeler_url %}
-		<a href="{{ systembruk_bydeler_url }}" class="btn btn-sm btn-link {% if systembruk_bydeler_url in request.path %}fremhev{% endif %}">Bydelsbruk</a><br>
-
 		{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
-		<a href="{{ alle_driftsmodeller_url }}" class="btn btn-sm btn-link {% if alle_driftsmodeller_url in request.path %}fremhev{% endif %}">Alle driftsplattformer</a>
+		<a href="{{ alle_driftsmodeller_url }}" class="btn btn-sm btn-link {% if alle_driftsmodeller_url in request.path %}fremhev{% endif %}">Alle driftsplattformer</a><br>
+
+		{% url 'alle_leverandorer' as alle_leverandorer_url %}
+		<a href="{{ alle_leverandorer_url }}" class="btn btn-sm {% if alle_leverandorer_url in request.path %}fremhev{% endif %}">Alle leverandører</a><br>
 
 		{% url "alle_programvarer" as alle_programvarer_url %}
-		<a href="{{ alle_programvarer_url }}" class="btn btn-sm btn-link {% if alle_programvarer_url in request.path %}fremhev{% endif %}">All programvare</a>
+		<a href="{{ alle_programvarer_url }}" class="btn btn-sm btn-link {% if alle_programvarer_url in request.path %}fremhev{% endif %}">All programvare</a><br>
 
 		{% url "alle_systemurler" as alle_systemurler_url %}
-		<a href="{{ alle_systemurler_url }}" class="btn btn-sm btn-link {% if alle_systemurler_url in request.path %}fremhev{% endif %}">Alle URLer</a>
+		<a href="{{ alle_systemurler_url }}" class="btn btn-sm btn-link {% if alle_systemurler_url in request.path %}fremhev{% endif %}">Alle URLer</a><br>
+
 
 		<hr>
 
@@ -42,6 +40,47 @@
 			{% url 'all_bruk_for_virksomhet' pk=request.user.profile.virksomhet.pk as url_systembruk %}
 			<a href="{{ url_systembruk }}" class="btn btn-sm btn-link {% if url_systembruk in request.path %}fremhev{% endif %}">👥 Vår systembruk</a>
 		{% endif %}
+
+		<hr>
+		<h6>Rapporter</h6>
+
+		{% url 'systemklassifisering_tom' as systemklassifisering_tom_url %}
+		<a href="{{ systemklassifisering_tom_url }}" class="btn btn-sm btn-link {% if systemklassifisering_tom_url in request.path %}fremhev{% endif %}">Fellessystemer</a><br>
+
+		{% url 'systembruk_bydeler' as systembruk_bydeler_url %}
+		<a href="{{ systembruk_bydeler_url }}" class="btn btn-sm btn-link {% if systembruk_bydeler_url in request.path %}fremhev{% endif %}">Bydelsbruk</a><br>
+
+		{% url 'systemer_EOL' as url_systemer_EOL %}
+		<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if url_systemer_EOL in request.path %}fremhev{% endif %}">End of life</a><br>
+
+		{% url 'rapport_prioriteringer' as url_rapport_prioriteringer %}
+		<a href="{{ url_rapport_prioriteringer }}" class="btn btn-sm btn-link {% if url_rapport_prioriteringer in request.path %}fremhev{% endif %}">Systemprioriteringer</a><br>
+
+		{% url 'systemer_utfaset' as url_systemer_utfaset %}
+		<a href="{{url_systemer_utfaset}}" class="btn btn-sm btn-link {% if url_systemer_utfaset in request.path %}fremhev{% endif %}">Utfasede systemer</a><br>
+
+		{% url 'rapport_systemer_forsomt' as url_rapport_systemer_forsomt %}
+		<a href="{{url_rapport_systemer_forsomt}}" class="btn btn-sm btn-link {% if url_rapport_systemer_forsomt in request.path %}fremhev{% endif %}">Forsømte systemer</a><br>
+
+		{% url 'systemer_citrix' as url_systemer_citrix %}
+		<a href="{{url_systemer_citrix}}" class="btn btn-sm btn-link {% if url_systemer_citrix in request.path %}fremhev{% endif %}">Systemer på Citrix</a><br>
+
+		{% url 'systemer_uten_driftsmodell' as url_systemer_uten_driftsmodell %}
+		<a href="{{url_systemer_uten_driftsmodell}}" class="btn btn-sm btn-link {% if url_systemer_uten_driftsmodell in request.path %}fremhev{% endif %}">Systemer uten driftmiljø</a><br>
+
+		{% url 'alle_hovedkategorier' as url_alle_hovedkategorier %}
+		<a href="{{url_alle_hovedkategorier}}" class="btn btn-sm btn-link {% if url_alle_hovedkategorier in request.path %}fremhev{% endif %}">Systemkategorier</a><br>
+
+		{% url 'alle_systemer_forvaltere' as url_systemforvaltere %}
+		<a href="{{ url_systemforvaltere }}" class="btn btn-sm btn-link {% if url_systemforvaltere in request.path %}fremhev{% endif %}">Samlede kontaktpersoner</a><br>
+
+		{% url 'system_informasjonsbehandling' as url_system_informasjonsbehandling %}
+		<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if url_system_informasjonsbehandling in request.path %}fremhev{% endif %}">Informasjonsklassifisering</a><br>
+
+		{% url 'systemer_vurderinger' as url_systemer_vurderinger %}
+		<a href="{{ url_systemer_vurderinger }}" class="btn btn-sm btn-link {% if url_systemer_vurderinger in request.path %}fremhev{% endif %}">Samlede systemvurderinger</a><br>
+
+
 
 
 	{% block ekstrameny_system %}{% endblock ekstrameny_system %}

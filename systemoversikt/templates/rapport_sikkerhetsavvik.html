@@ -1,4 +1,4 @@
-{% extends "rapport_index.html" %}
+{% extends "sikkerhet_index.html" %}
 {% load humanize %}
 {% load static %}
 
@@ -17,60 +17,64 @@
 
 <p>Her vises utvalgte statistikker på sikkerhetsavvik knyttet til enkeltpersoner og servicekontoer. Nye grupper legges inn via <a href="/admin/systemoversikt/rapportgruppemedlemskaper/">Admin: rapport gruppemedlem</a>.</p>
 
-	<table class="table table-sm tablesorter excel">
-	<thead>
-		<th>Område</th>
-		<th>Unntakskategori</th>
-		<th>Antall personer</th>
-		<th>Kommentarer</th>
-		<th>Historikk</th>
-	</thead>
-	<tbody>
-	{% for s in statistikk %}
-		<tr>
-			<td>{{s.kategori}}</td>
-			<td>{{s.beskrivelse}}</td>
-			<td>{{s.medlemmer}}</td>
-			<td>
-				{{s.kommentar|default:""}}
-				<br><br>
-				definert som medlemskap i følgende grupper:<br>
-				{% for gruppe in s.grupper %}
-					<li><a href="{% url 'alle_adgrupper'%}?search_term={{gruppe}}">{{ gruppe }}</a></li>
+<hr>
+
+<h5>Detaljer per virksomhet</h5>
+<ol style="column-count: 3;">
+{% for v in virksomheter %}
+	<li><a href="{% url 'virksomhet_sikkerhetsavvik' pk=v.pk %}">{{ v }}</a></li>
+{% endfor %}
+</ol>
+
+
+<table class="table table-sm tablesorter excel">
+<thead>
+	<th>Område</th>
+	<th>Unntakskategori</th>
+	<th>Antall personer</th>
+	<th>Kommentarer</th>
+	<th>Historikk</th>
+</thead>
+<tbody>
+{% for s in statistikk %}
+	<tr>
+		<td>{{s.kategori}}</td>
+		<td>{{s.beskrivelse}}</td>
+		<td>{{s.medlemmer}}</td>
+		<td>
+			{{s.kommentar|default:""}}
+			<br><br>
+			definert som medlemskap i følgende grupper:<br>
+			{% for gruppe in s.grupper %}
+				<li><a href="{% url 'alle_adgrupper'%}?search_term={{gruppe}}">{{ gruppe }}</a></li>
+			{% endfor %}
+
+			{% if s.AND_grupper %}
+			samtidig som bruker også er medlem i:<br>
+				{% for gruppe in s.AND_grupper %}
+				<li><a href="{% url 'alle_adgrupper'%}?search_term={{gruppe}}">{{ gruppe }}</a></li>
 				{% endfor %}
+			{% endif %}
 
-				{% if s.AND_grupper %}
-				samtidig som bruker også er medlem i:<br>
-					{% for gruppe in s.AND_grupper %}
-					<li><a href="{% url 'alle_adgrupper'%}?search_term={{gruppe}}">{{ gruppe }}</a></li>
+
+			{% if s.konkrete_medlemmer|length > 0 %}
+				<hr>
+				<button class="btn btn-sm" type="button" data-toggle="collapse" data-target="#collapse{{forloop.counter}}" aria-expanded="false" aria-controls="collapse{{forloop.counter}}">Vis brukeridenter</button>
+				<div class="collapse" id="collapse{{forloop.counter}}">
+					<div class="card card-body">
+					{% for b in s.konkrete_medlemmer %}
+						<li>{{ b }}</li>
 					{% endfor %}
-				{% endif %}
-
-
-				{% if s.konkrete_medlemmer|length > 0 %}
-					<hr>
-					<button class="btn btn-sm" type="button" data-toggle="collapse" data-target="#collapse{{forloop.counter}}" aria-expanded="false" aria-controls="collapse{{forloop.counter}}">Vis brukeridenter</button>
-					<div class="collapse" id="collapse{{forloop.counter}}">
-						<div class="card card-body">
-						{% for b in s.konkrete_medlemmer %}
-							<li>{{ b }}</li>
-						{% endfor %}
-						</div>
 					</div>
-				{% endif %}
-			</td>
-			<td><div><canvas height="100" id="adgr_chart_{{forloop.counter}}"></canvas></div></td>
-		</tr>
-	{% endfor %}
-	</tbody>
-	</table>
+				</div>
+			{% endif %}
+		</td>
+		<td><div><canvas height="100" id="adgr_chart_{{forloop.counter}}"></canvas></div></td>
+	</tr>
+{% endfor %}
+</tbody>
+</table>
 
-	<h5>Detaljer per virksomhet</h5>
-	<ol style="column-count: 3;">
-	{% for v in virksomheter %}
-		<li><a href="{% url 'virksomhet_sikkerhetsavvik' pk=v.pk %}">{{ v }}</a></li>
-	{% endfor %}
-	</ol>
 
 {% for s in statistikk %}
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
