@@ -173,7 +173,13 @@ urlpatterns = [
 	re_path(r'^rapport/entra_id/auth/$', views.rapport_entra_id_auth, name='rapport_entra_id_auth'),
 	re_path(r'^rapport/vulnstats/virksomhet/(?P<pk>\d{1,8})?', views.vulnstats_virksomhet, name="vulnstats_virksomhet"),
 
+	re_path(r'^systemer/driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
+	re_path(r'^systemer/driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
 
+	re_path(r'^systemer/programvare/alle/$', views.alle_programvarer_optimized, name='alle_programvarer'),
+	re_path(r'^systemer/programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
+	re_path(r'^systemer/programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
+	re_path(r'^systemer/programvare/bruk/registrer_bruk/(?P<programvare>\d{1,8})/$', views.registrer_bruk_programvare, name='registrer_bruk_programvare'),
 
 	re_path(r'^systemer/tjenester/oversikt/$', views.tjenester_oversikt, name="tjenester_oversikt"),
 
@@ -190,7 +196,6 @@ urlpatterns = [
 	re_path(r'^systemer/systemtype/tom/$', views.systemtype_detaljer, name='systemtype_detaljer_mangler'),
 	re_path(r'^systemer/bydelsbruk/$', views.systembruk_bydeler, name='systembruk_bydeler'),
 	re_path(r'^systemer/vis_alle/$', views.systemer_vis_alle_optimized, name='systemer_vis_alle'),
-
 
 
 	re_path(r'^behandlinger/user/$', views.mine_behandlinger, name='mine_behandlinger'),
@@ -214,7 +219,7 @@ urlpatterns = [
 	re_path(r'^virksomhet/graph_layout/(?P<pk>\d{1,8})/$', views.virksomhet_save_graph_layout, name='virksomhet_save_graph_layout'),
 	re_path(r'^virksomhet/graph_lock/(?P<pk>\d{1,8})/$', views.virksomhet_toggle_graph_lock, name='virksomhet_toggle_graph_lock'),	
 	re_path(r'^virksomhet/figur/system_seksjon/(?P<pk>\d{1,8})/$', views.virksomhet_figur_system_seksjon, name='virksomhet_figur_system_seksjon'),
-	re_path(r'^virksomhet/passwdexpire/(?P<pk>\d{1,8})/$', views.passwordexpire, name='passwordexpire'),
+	#re_path(r'^virksomhet/passwdexpire/(?P<pk>\d{1,8})/$', views.passwordexpire, name='passwordexpire'),
 	re_path(r'^virksomhet/tomepost/(?P<pk>\d{1,8})/$', views.tom_epost, name='tom_epost'),
 	re_path(r'^virksomhet/vanlige_brukere/(?P<pk>\d{1,8})/$', views.ansatte_virksomhet, name='ansatte_virksomhet'),
 	re_path(r'^virksomhet/passwdneverexpire/(?P<pk>\d{1,8})/$', views.passwdneverexpire, name='passwdneverexpire'),
@@ -226,27 +231,19 @@ urlpatterns = [
 	re_path(r'^virksomhet/innsyn/(?P<pk>\d{1,8})/$', views.innsyn_virksomhet, name='innsyn_virksomhet'),
 	re_path(r'^virksomhet/systemkvalitet/(?P<pk>\d{1,8})/$', views.systemkvalitet_virksomhet, name='systemkvalitet_virksomhet'),
 	re_path(r'^virksomhet/enhet/graf/(?P<pk>\d{1,8})/$', views.virksomhet_enheter, name='virksomhet_enheter'),
-	re_path(r'^virksomhet/prkadmin/(?P<pk>\d{1,8})/$', views.virksomhet_prkadmin, name='virksomhet_prkadmin'),
-	re_path(r'^virksomhet/systemer/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
-	re_path(r'^virksomhet/systemer/forvalter/basis/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
-	re_path(r'^virksomhet/systemer/forvalter/basis/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
-	re_path(r'^virksomhet/systemer/ansvarligfor/fip/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for_fip, name='systemer_virksomhet_ansvarlig_for_fip'),
+	#re_path(r'^virksomhet/prkadmin/(?P<pk>\d{1,8})/$', views.virksomhet_prkadmin, name='virksomhet_prkadmin'),
+	re_path(r'^virksomhet/systembruk/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
+	re_path(r'^virksomhet/systemeforvalter/basis/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
+	re_path(r'^virksomhet/systemeforvalter/basis/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
+	re_path(r'^virksomhet/systemeransvarligfor/fip/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for_fip, name='systemer_virksomhet_ansvarlig_for_fip'),
 	re_path(r'^virksomhet/klienter/(?P<pk>\d{1,8})/$', views.klienter_hos_virksomhet, name='klienter_hos_virksomhet'),
 	re_path(r'^virksomhet/sikkerhetsavvik/$', views.virksomhet_sikkerhetsavvik, name='virksomhet_sikkerhetsavvik'),
 	re_path(r'^virksomhet/sikkerhetsavvik/(?P<pk>\d{1,8})/$', views.virksomhet_sikkerhetsavvik, name='virksomhet_sikkerhetsavvik'),
 	re_path(r'^virksomhet/leverandortilgang/(?P<pk>\d{1,8})/$', views.virksomhet_leverandortilgang, name='virksomhet_leverandortilgang'),
 	re_path(r'^virksomhet/lokasjoner/(?P<pk>\d{1,8})/$', views.lokasjoner_hos_virksomhet, name='lokasjoner_hos_virksomhet'),
-	re_path(r'^virksomhet/tilgangsgrupper/$', views.virksomhet_adgruppe_detaljer, name='virksomhet_adgruppe_detaljer'),
+	#re_path(r'^virksomhet/tilgangsgrupper/$', views.virksomhet_adgruppe_detaljer, name='virksomhet_adgruppe_detaljer'),
 	re_path(r'^virksomhet/systemer/forvalter/sikkerhetsvurderinger/$', views.virksomhet_forvalter_isk, name='virksomhet_forvalter_isk'),
 	re_path(r'^virksomhet/systemer/forvalter/sikkerhetsvurderinger/(?P<pk>\d{1,8})/$', views.virksomhet_forvalter_isk, name='virksomhet_forvalter_isk'),
-
-
-
-
-	re_path(r'^systemer/programvare/alle/$', views.alle_programvarer_optimized, name='alle_programvarer'),
-	re_path(r'^systemer/programvare/(?P<pk>\d{1,8})/$', views.programvaredetaljer, name='programvaredetaljer'),
-	re_path(r'^systemer/programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
-	re_path(r'^systemer/programvare/bruk/registrer_bruk/(?P<programvare>\d{1,8})/$', views.registrer_bruk_programvare, name='registrer_bruk_programvare'),
 
 
 	re_path(r'^ansvarlige/alle/$', views.alle_ansvarlige, name='alle_ansvarlige'),
@@ -265,8 +262,6 @@ urlpatterns = [
 	re_path(r'^cmdb/bs/skjult_relevant/$', views.cmdb_bs_skjult_relevant, name='cmdb_bs_skjult_relevant'),
 	re_path(r'^cmdb/bs/offering_mangler_kobling/$', views.cmdb_bs_mangler_kobling, name='cmdb_bs_mangler_kobling'),
 	re_path(r'^cmdb/bs/servere_flere_offerings/$', views.cmdb_servere_flere_offerings, name='cmdb_servere_flere_offerings'),
-
-
 	re_path(r'^cmdb/bs/disconnect/$', views.cmdb_bs_disconnect, name='cmdb_bs_disconnect'),
 	re_path(r'^cmdb/(?P<pk>\d{1,8})/$', views.cmdb_bss, name='cmdb_bss'),
 	re_path(r'^cmdb/server_sok/$', views.alle_servere, name='alle_servere'),
@@ -313,16 +308,11 @@ urlpatterns = [
 	re_path(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),
 
 
-	re_path(r'^driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
-	re_path(r'^driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
-
-
-
 	re_path(r'^virksomhet/drift/prioriteringer/$', views.drift_beredskap_redirect, name='drift_beredskap_redirect'),
 	re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/$', views.drift_beredskap, name='drift_beredskap'),
 	#re_path(r'^virksomhet/drift/prioriteringer/(?P<pk>\d{1,8})/(?P<eier>\d{1,8})$', views.drift_beredskap, name='drift_beredskap_for_eier'),
-	re_path(r'^virksomhet/systemer/drifter/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
-	re_path(r'^virksomhet/systemer/drifter/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
+	re_path(r'^virksomhet/systemerdrifter/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
+	re_path(r'^virksomhet/systemerdrifter/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet, name='driftsmodell_virksomhet'),
 	re_path(r'^virksomhet/driftsmodell/klassifisering/(?P<pk>\d{1,8})/$', views.driftsmodell_virksomhet_klassifisering, name='driftsmodell_virksomhet_klassifisering'),
 
 

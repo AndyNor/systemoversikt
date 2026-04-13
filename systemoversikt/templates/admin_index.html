@@ -59,6 +59,12 @@
 	{% url 'system_til_programvare_indeks' as url_system_til_programvare_indeks %}
 	<a href="{{url_system_til_programvare_indeks}}" class="btn btn-sm btn-link {% if url_system_til_programvare_indeks in request.path %}fremhev{% endif %}">⚙️ System til programvare</a>
 
+	{% url 'alle_ansvarlige_eksport' as url_alle_ansvarlige_eksport %}
+	<a class="btn btn-sm btn-link {% if url_alle_ansvarlige_eksport in request.path %}fremhev{% endif %}" href="{{ url_alle_ansvarlige_eksport }}">Eksporter ansvarlige</a>
+
+	{% url 'alle_ansvarlige' as url_alle_ansvarlige %}
+	<a href="{{url_alle_ansvarlige}}" class="btn btn-sm btn-link {% if url_alle_ansvarlige in request.path %}fremhev{% endif %}">Vis alle ansvarlige</a>
+
 
 
 {% endblock sidemeny %}

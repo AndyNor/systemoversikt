@@ -26,6 +26,10 @@
 {% block hovedinnhold %}
 
 	{% if virksomhet.orgnummer %} Organisasjonsnummer {{ virksomhet.orgnummer|intcomma }} {% endif %}<br>
+
+	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">
+	{% include 'site_edit_button.html' %} Rediger virksomhetsdetaljer og kontaktpersoner</a>
+
 	<hr>
 
 	{% if virksomhet.overordnede_virksomheter.all|length > 0 %}
@@ -39,10 +43,12 @@
 
 	{% if virksomhet.underliggende_virksomheter.all|length > 0 %}
 		<h6>Har ansvar for</h6>
+		<ul>
 		{% for underliggende in virksomhet.underliggende_virksomheter.all %}
 			{% url 'virksomhet' underliggende.pk as url_vir %}
 			<li><a href="{{ url_vir }}">{{ underliggende }}</a></li>
 		{% endfor %}
+		</ul>
 		<hr>
 	{% endif %}
 
@@ -50,10 +56,6 @@
 	Vi eier <b>{{ant_systemer_eier}}</b> systemer, forvalter <b>{{ant_systemer_forvalter}}</b> systemer og drifter <b>{{systemer_drifter}}</b> systemer<br>
 	Vi har <b>{{ virksomhet.antall_interne_brukeridenter }}</b> interne og <b>{{ virksomhet.antall_eksterne_brukeridenter }}</b> ekstern brukere i brukerkatalogen<br>
 
-	<hr>
-
-	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">
-	{% include 'site_edit_button.html' %} Rediger virksomhetsdetaljer og kontaktpersoner</a>
 
 	<hr>
 
@@ -66,6 +68,22 @@
 	{% if virksomhet.styringssystem %}
 		<a class="btn btn-sm btn-link" href="{{ virksomhet.styringssystem }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s styringssystem</a>
 	{% endif %}
+
+<hr>
+
+	<h6>Avdelinger</h6>
+	<div class="row" style="width: 100%;">
+		<div class="col-sm-12">
+			<ul style="column-count: 3;">
+			{% for u in enheter %}
+				{% url 'enhet_detaljer' pk=u.pk as url_enhet %}
+				<li><a href="{{url_enhet}}">{{ u }}</a></li>
+			{% empty %}
+				<li>Ingen</li>
+			{% endfor %}
+			</ul>
+		</div>
+	</div>
 
 
 	<table class="table">
@@ -129,22 +147,6 @@
 	</tbody>
 	</table>
 
-
-	<hr>
-
-	<h6>Avdelinger</h6>
-	<div class="row" style="width: 800px;">
-		<div class="col-sm-12">
-			<ul style="column-count: 2;">
-			{% for u in enheter %}
-				{% url 'enhet_detaljer' pk=u.pk as url_enhet %}
-				<li><a href="{{url_enhet}}">{{ u }}</a></li>
-			{% empty %}
-				<li>Ingen</li>
-			{% endfor %}
-			</ul>
-		</div>
-	</div>
 
 	<hr>
 

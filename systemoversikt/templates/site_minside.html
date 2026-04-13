@@ -1,34 +1,32 @@
 {% extends "admin_index.html" %}
 
 {% block overskrift %}
-	Administrasjon
+	Påloggingsøkt
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-<p>
-	Du er logget inn som <b>{{ request.user.first_name }} {{ request.user.last_name }}</b><br>
+	<p>
+		Du er logget inn som <b>{{ request.user.first_name }} {{ request.user.last_name }}</b><br>
 
-	{% if TEST_ENV_NAME == 'test' %}
-		{% url "logout" as url_logout %}
-	{% else %}
-		{% url "oidc_logout" as url_logout %}
-	{% endif %}
+		{% if TEST_ENV_NAME == 'test' %}
+			{% url "logout" as url_logout %}
+		{% else %}
+			{% url "oidc_logout" as url_logout %}
+		{% endif %}
 
-	<form method="post" action="{{ url_logout }}">
-		{% csrf_token %}
-		<input class="btn btn-sm" style="color: black; background-color: #d1ecf1; padding: 5px 10px 5px 10px;" type="submit" name="Logg av" value="Logg av" />
-	</form>
+		<form method="post" action="{{ url_logout }}">
+			{% csrf_token %}
+			<input class="btn btn-sm" style="color: black; background-color: #d1ecf1; padding: 5px 10px 5px 10px;" type="submit" name="Logg av" value="Logg av" />
+		</form>
 
-	<hr>
+		<hr>
 
-	Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b>
-	{% url 'bruker_detaljer' pk=request.user.pk as url_user_details %}
-	<a href="{{url_user_details}}" class="btn btn-sm btn-link">Informasjon om din bruker</a><br>
+		Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b><br>
 
-	Du representerer <b>{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</b>
-	<a href="{% url 'bytt_virksomhet' %}" class="btn btn-sm btn-link">Bytt virksomhet jeg representerer</a>
-</p>
+		Du representerer <b>{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</b>
+		<a href="{% url 'bytt_virksomhet' %}" class="btn btn-sm btn-link">Bytt virksomhet jeg representerer</a>
+	</p>
 
 
 	<p>Du er medlem i følgende grupper:<br>
@@ -48,9 +46,11 @@
 
 	<p>Alle endringer utført via administrasjonssidene blir loggført. På systemer vises det hvem som har utført de siste endringene direkte på detaljesiden. For de fleste typer informasjon lages det en ny versjon av informasjonen for hver gang du lagrer. Gamle versjoner kan gjenopprettes dersom du har nødvendige tilganger via knappen "Historikk" på den enkelte redigeringsside.</p>
 
+	{% comment %}
 	{% if oidctoken %}
 	<h6>Debug OIDC-token</h6>
 		<p>{{ oidctoken }}</p>
 	{% endif %}
+	{% endcomment %}
 
 {% endblock hovedinnhold %}

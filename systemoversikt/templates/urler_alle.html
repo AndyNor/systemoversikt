@@ -1,12 +1,13 @@
-{% extends "system_index.html" %}
+{% extends "virksomhet_index.html" %}
 {% load humanize %}
 {% load static %}
 
 {% block ekstrameny %}
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
 {% endblock ekstrameny %}
 
 {% block overskrift %}
-	Oslo kommunes domener {% if virksomhet %}tilhørende {{virksomhet.virksomhetsforkortelse}}{% endif %}
+	Webdomener {% if virksomhet %}tilhørende {{virksomhet.virksomhetsforkortelse}}{% endif %}
 {% endblock overskrift %}
 
 

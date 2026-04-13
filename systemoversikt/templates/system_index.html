@@ -1,6 +1,9 @@
 {% extends "index.html" %}
 
 {% block sidemeny %}
+
+
+{% if user.is_authenticated %}
 	<h6>Opprett</h6>
 
 		<a class="btn btn-sm btn-link" href="/admin/systemoversikt/tjeneste/add/">{% include 'site_edit_button.html' %} Ny tjeneste</a>
@@ -12,20 +15,25 @@
 		{% url "tjenester_oversikt" as tjenester_oversikt_url %}
 		<a href="{{ tjenester_oversikt_url }}" class="btn btn-sm btn-link {% if tjenester_oversikt_url in request.path %}fremhev{% endif %}">Alle tjenesteområder</a>
 
+		{% url 'systemklassifisering_tom' as systemklassifisering_tom_url %}
+		<a href="{{ systemklassifisering_tom_url }}" class="btn btn-sm btn-link {% if systemklassifisering_tom_url in request.path %}fremhev{% endif %}">Fellessystemer</a><br>
+
 		{% url 'systemer_vis_alle' as systemer_vis_alle_url %}
 		<a href="{{ systemer_vis_alle_url }}" class="btn btn-sm btn-link {% if systemer_vis_alle_url in request.path %}fremhev{% endif %}">Alle systemer</a><br>
 
+		{% url 'systembruk_bydeler' as systembruk_bydeler_url %}
+		<a href="{{ systembruk_bydeler_url }}" class="btn btn-sm btn-link {% if systembruk_bydeler_url in request.path %}fremhev{% endif %}">Bydelsbruk</a><br>
+
+		{% url "alle_driftsmodeller" as alle_driftsmodeller_url %}
+		<a href="{{ alle_driftsmodeller_url }}" class="btn btn-sm btn-link {% if alle_driftsmodeller_url in request.path %}fremhev{% endif %}">Alle driftsplattformer</a>
+
 		{% url "alle_programvarer" as alle_programvarer_url %}
 		<a href="{{ alle_programvarer_url }}" class="btn btn-sm btn-link {% if alle_programvarer_url in request.path %}fremhev{% endif %}">All programvare</a>
-
 
 		{% url "alle_systemurler" as alle_systemurler_url %}
 		<a href="{{ alle_systemurler_url }}" class="btn btn-sm btn-link {% if alle_systemurler_url in request.path %}fremhev{% endif %}">Alle URLer</a>
 
 		<hr>
-
-		{% url 'alle_virksomheter_kontaktinfo' as kontaktinfo_url %}
-		<a href="{{ kontaktinfo_url }}" class="btn btn-sm btn-link {% if kontaktinfo_url in request.path %}fremhev{% endif %}">👥 Oversikt over ISK/PKO</a>
 
 		{% url 'min_virksomhet' as url_min_virksomhet %}
 		<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 Min virksomhet</a>
@@ -35,13 +43,11 @@
 			<a href="{{ url_systembruk }}" class="btn btn-sm btn-link {% if url_systembruk in request.path %}fremhev{% endif %}">👥 Vår systembruk</a>
 		{% endif %}
 
-	<hr>
-
-	<i>Se <a href="{% url 'rapport_startside' %}">rapporter</a> for ulike systemperspektiv</i>
-
 
 	{% block ekstrameny_system %}{% endblock ekstrameny_system %}
 	{% block ekstrameny_leverandor %}{% endblock ekstrameny_leverandor %}
+
+	{% endif %}
 
 {% endblock sidemeny %}
 

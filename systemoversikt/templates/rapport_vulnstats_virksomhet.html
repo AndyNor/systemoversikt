@@ -1,9 +1,10 @@
-{% extends "rapport_index.html" %}
+{% extends "virksomhet_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block ekstrameny_business_service %}
-{% endblock ekstrameny_business_service %}
+{% block ekstrameny %}
+	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+{% endblock ekstrameny %}
 
 {% block overskrift %}
 	Sårbarheter for {{ virksomhet }}

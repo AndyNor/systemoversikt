@@ -4,17 +4,13 @@
 {% block ekstrameny %}{% endblock ekstrameny %}
 
 {% block overskrift %}
-	Alle virksomheter - kontaktinformasjon IKT-relaterte roller
+	Virksomheter: Kontaktinformasjon sikkerhetsrelaterte roller
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
 
 	<a href="/admin/systemoversikt/virksomhet/add/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Ny virksomhet</a>
-
-	{% url 'alle_virksomheter' as alle_virksomheter_url %}
-	<a href="{{ alle_virksomheter_url }}" class="btn btn-sm btn-link">Ordinær visning</a>
-
 
 	<table id="alle_virksomheter" class="tablesorter excel">
 	<thead>
