@@ -8508,3 +8508,63 @@ class GraphLayout(models.Model):
 	class Meta:
 		verbose_name_plural = "Visualisering: Graphlayouts"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+
+class AzureDevice(models.Model):
+	device_id = models.CharField(max_length=64, primary_key=True)
+	aad_device_id = models.UUIDField(null=True, blank=True)
+	hostname = models.CharField(max_length=255)
+	os_platform = models.CharField(max_length=64)
+	exposure_level = models.CharField(max_length=32, null=True, blank=True)
+	risk_score = models.CharField(max_length=32, null=True, blank=True)
+
+	last_seen = models.DateTimeField(null=True, blank=True)
+	first_seen = models.DateTimeField(null=True, blank=True)
+
+	last_metadata_sync = models.DateTimeField(auto_now=True)
+
+	def __str__(self):
+		return self.hostname
+
+
+class CVE(models.Model):
+	cve_id = models.CharField(max_length=32, primary_key=True)
+	severity = models.CharField(max_length=16)
+	cvss_score = models.FloatField(null=True, blank=True)
+
+	description = models.TextField(null=True, blank=True)
+	published_at = models.DateTimeField(null=True, blank=True)
+
+	def __str__(self):
+		return self.cve_id
+
+
+class AzureDeviceVulnerability(models.Model):
+	device = models.ForeignKey(AzureDevice, on_delete=models.CASCADE)
+	cve = models.ForeignKey(CVE, on_delete=models.CASCADE)
+
+	product_name = models.CharField(max_length=128)
+	product_vendor = models.CharField(max_length=64)
+	product_version = models.CharField(max_length=64)
+
+	fixing_kb = models.CharField(max_length=32, null=True, blank=True)
+	severity = models.CharField(max_length=16)
+
+	STATUS_CHOICES = [
+		("active", "Active"),
+		("resolved", "Resolved"),
+	]
+	status = models.CharField(
+		max_length=16, choices=STATUS_CHOICES, default="active"
+	)
+
+	first_seen = models.DateTimeField()
+	last_seen = models.DateTimeField()
+
+	class Meta:
+		unique_together = ("device", "cve")
+		indexes = [
+			models.Index(fields=["status"]),
+			models.Index(fields=["severity"]),
+		]
