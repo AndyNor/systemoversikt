@@ -1828,3 +1828,110 @@ class KritiskKapabilitetAdmin(admin.ModelAdmin):
 @admin.register(GraphLayout)
 class GraphLayoutAdmin(admin.ModelAdmin):
 	list_display = ('virksomhet', 'zoom', 'pan_x', 'pan_y', 'updated_at')
+
+
+@admin.register(CVE)
+class CVEAdmin(admin.ModelAdmin):
+	list_display = (
+		"cve_id",
+		"severity",
+		"cvss_score",
+		"published_at",
+	)
+	search_fields = (
+		"cve_id",
+		"description",
+	)
+	list_filter = (
+		"severity",
+		"published_at",
+	)
+	readonly_fields = (
+		"cve_id",
+	)
+
+	def has_add_permission(self, request):
+		return False
+
+	def has_change_permission(self, request, obj=None):
+		return False
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@admin.register(AzureDeviceVulnerability)
+class AzureDeviceVulnerabilityAdmin(admin.ModelAdmin):
+	list_display = (
+		"device",
+		"cve",
+		"severity",
+		"status",
+		"product_name",
+		"product_vendor",
+		"product_version",
+		"first_seen",
+		"last_seen",
+	)
+	list_filter = (
+		"severity",
+		"status",
+		"product_vendor",
+		"first_seen",
+		"last_seen",
+	)
+	search_fields = (
+		"device__hostname",
+		"device__device_id",
+		"cve__cve_id",
+		"product_name",
+		"product_version",
+	)
+	autocomplete_fields = (
+		"device",
+		"cve",
+	)
+
+	def has_add_permission(self, request):
+		return False
+
+	def has_change_permission(self, request, obj=None):
+		return False
+
+	def has_delete_permission(self, request, obj=None):
+		return False
+
+@admin.register(AzureDevice)
+class AzureDeviceAdmin(admin.ModelAdmin):
+	list_display = (
+		"device_id",
+		"hostname",
+		"os_platform",
+		"exposure_level",
+		"risk_score",
+		"first_seen",
+		"last_seen",
+	)
+	search_fields = (
+		"device_id",
+		"hostname",
+		"aad_device_id",
+	)
+	list_filter = (
+		"os_platform",
+		"exposure_level",
+		"risk_score",
+		"first_seen",
+		"last_seen",
+	)
+	readonly_fields = (
+		"last_metadata_sync",
+	)
+
+	def has_add_permission(self, request):
+		return False
+
+	def has_change_permission(self, request, obj=None):
+		return False
+
+	def has_delete_permission(self, request, obj=None):
+		return False

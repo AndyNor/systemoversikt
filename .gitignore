@@ -11,3 +11,4 @@ this_env.py
 secrets_test.py
 /systemoversikt/import
 /.venv
+/systemoversikt/management/import

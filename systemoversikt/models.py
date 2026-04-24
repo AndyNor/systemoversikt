@@ -8527,6 +8527,9 @@ class AzureDevice(models.Model):
 	def __str__(self):
 		return self.hostname
 
+	class Meta:
+		verbose_name_plural = "Azure: Devices"
+
 
 class CVE(models.Model):
 	cve_id = models.CharField(max_length=32, primary_key=True)
@@ -8538,6 +8541,9 @@ class CVE(models.Model):
 
 	def __str__(self):
 		return self.cve_id
+
+	class Meta:
+		verbose_name_plural = "Azure: CVEs"
 
 
 class AzureDeviceVulnerability(models.Model):
@@ -8568,3 +8574,6 @@ class AzureDeviceVulnerability(models.Model):
 			models.Index(fields=["status"]),
 			models.Index(fields=["severity"]),
 		]
+
+	class Meta:
+		verbose_name_plural = "Azure: Device vulnerabilities"
