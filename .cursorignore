@@ -1,0 +1,14 @@
+/Lib
+/systemoversikt/__pycache__
+*.pyc
+/systemoversikt/migrations
+systemoversikt/static/tablesorter/desktop.ini
+/Scripts
+pyvenv.cfg
+db.sqlite3
+.gitignore.old
+this_env.py
+secrets_test.py
+/systemoversikt/import
+/.venv
+/systemoversikt/management/import
