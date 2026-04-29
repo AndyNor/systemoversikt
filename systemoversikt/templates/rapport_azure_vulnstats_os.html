@@ -1,0 +1,121 @@
+{% extends "sikkerhet_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrajavascript %}
+	<script src="{% static 'chart.js@2.8.0' %}"></script>
+{% endblock ekstrajavascript %}
+
+{% block overskrift %}
+	Azure: sårbarheter – {{ os }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>
+Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}}) ({{integrasjonsstatus.script_navn}})</p>
+
+<a class="btn btn-sm btn-primary" href="{% url 'azure_vulnstats' %}">Tilbake til oversikt</a>
+
+<hr>
+
+Antall aktive sårbarheter totalt <h4>{{ data.count_active|intcomma }}</h4>
+
+<hr>
+
+<h4>Aktive sårbarheter per CVE-år og alvorlighetsgrad</h4>
+<div><canvas height="70" id="azure_vuln_by_cve_year_severity"></canvas></div>
+{{ data.cve_year_chart|json_script:"azureVulnByCveYearSeverityData" }}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const azureVulnByCveYearSeverity = JSON.parse(
+	document.getElementById('azureVulnByCveYearSeverityData').textContent
+);
+const azureVulnByCveYearSeverityConfig = {
+	type: 'bar',
+	data: azureVulnByCveYearSeverity,
+	options: {
+		responsive: true,
+		legend: { position: 'top' },
+		tooltips: { mode: 'index', intersect: false },
+		scales: {
+			xAxes: [{
+				stacked: false,
+			}],
+			yAxes: [{
+				stacked: false,
+				type: 'logarithmic',
+				ticks: {
+					min: 1,
+					callback: function(value) {
+						if (value === 0) return '0';
+						const v = Number(value);
+						if (!Number.isFinite(v)) return value;
+						const pow10 = Math.pow(10, Math.round(Math.log10(v)));
+						if (Math.abs(v - pow10) > 1e-9) return null;
+						return v.toLocaleString('nb-NO');
+					},
+				},
+			}],
+		},
+	},
+};
+new Chart(
+	document.getElementById('azure_vuln_by_cve_year_severity'),
+	azureVulnByCveYearSeverityConfig
+);
+</script>
+
+<hr>
+
+<h4>Aktive sårbarheter per leverandør / produkt</h4>
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Leverandør / produkt</th>
+	<th>Critical</th>
+	<th>High</th>
+	<th>Medium</th>
+	<th>Low</th>
+</tr>
+</thead>
+<tbody>
+{% for row in data.vendor_summary %}
+<tr>
+	<td>
+		<a href="{% url 'azure_vulnstats_product' vendor=row.product_vendor product=row.product_name %}">
+			{{ row.product_vendor|default:"(Tom)" }} / {{ row.product_name|default:"(Tom)" }}
+		</a>
+	</td>
+	<td>{{ row.critical|intcomma }}</td>
+	<td>{{ row.high|intcomma }}</td>
+	<td>{{ row.medium|intcomma }}</td>
+	<td>{{ row.low|intcomma }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<hr>
+
+<h4>Unike CVE-er (aktive)</h4>
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>CVE</th>
+	<th>Severity</th>
+	<th>Antall</th>
+</tr>
+</thead>
+<tbody>
+{% for row in data.unique_cves %}
+<tr>
+	<td>{{ row.cve__cve_id }}</td>
+	<td>{{ row.severity }}</td>
+	<td>{{ row.instance_count|intcomma }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock hovedinnhold %}
+

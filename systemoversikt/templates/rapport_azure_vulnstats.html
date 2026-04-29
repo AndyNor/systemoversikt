@@ -1,0 +1,142 @@
+{% extends "sikkerhet_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrajavascript %}
+	<script src="{% static 'chart.js@2.8.0' %}"></script>
+{% endblock ekstrajavascript %}
+
+{% block overskrift %}
+	Azure: sårbarheter
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>
+Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}}) ({{integrasjonsstatus.script_navn}})</p>
+
+<hr>
+
+Antall aktive sårbarheter totalt <h4>{{ data.count_active|intcomma }}</h4>
+<p><i>En sårbarhet telles for hver kombinasjon av enhet og CVE.</i></p>
+
+<hr>
+
+<h4>Aktive sårbarheter per CVE-år og alvorlighetsgrad</h4>
+<div><canvas height="70" id="azure_vuln_by_cve_year_severity"></canvas></div>
+{{ data.cve_year_chart|json_script:"azureVulnByCveYearSeverityData" }}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const azureVulnByCveYearSeverity = JSON.parse(
+	document.getElementById('azureVulnByCveYearSeverityData').textContent
+);
+const azureVulnByCveYearSeverityConfig = {
+	type: 'bar',
+	data: azureVulnByCveYearSeverity,
+	options: {
+		responsive: true,
+		legend: { position: 'top' },
+		tooltips: { mode: 'index', intersect: false },
+		// Chart.js 2.8 syntax (we load chart.js@2.8.0 from static)
+		scales: {
+			xAxes: [{
+				stacked: false,
+			}],
+			yAxes: [{
+				stacked: false,
+				type: 'logarithmic',
+				ticks: {
+					min: 1,
+					callback: function(value) {
+						// Show 10, 100, 1000... (avoid scientific notation)
+						if (value === 0) return '0';
+						const v = Number(value);
+						if (!Number.isFinite(v)) return value;
+						const pow10 = Math.pow(10, Math.round(Math.log10(v)));
+						if (Math.abs(v - pow10) > 1e-9) return null; // only label powers of 10
+						return v.toLocaleString('nb-NO');
+					},
+				},
+			}],
+		},
+	},
+};
+new Chart(
+	document.getElementById('azure_vuln_by_cve_year_severity'),
+	azureVulnByCveYearSeverityConfig
+);
+</script>
+
+<hr>
+
+<div class="row">
+	<div class="col-md-6">
+		<h4>Aktive sårbarheter per leverandør</h4>
+		<table class="table tablesorter">
+		<thead>
+		<tr>
+			<th>Leverandør / produkt</th>
+			<th>Critical</th>
+			<th>High</th>
+			<th>Medium</th>
+			<th>Low</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for row in data.vendor_summary %}
+		<tr>
+			<td>
+				<a href="{% url 'azure_vulnstats_product' vendor=row.product_vendor product=row.product_name %}">
+					{{ row.product_vendor|default:"(Tom)" }} / {{ row.product_name|default:"(Tom)" }}
+				</a>
+			</td>
+			<td>{{ row.critical|intcomma }}</td>
+			<td>{{ row.high|intcomma }}</td>
+			<td>{{ row.medium|intcomma }}</td>
+			<td>{{ row.low|intcomma }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	</div>
+
+	<div class="col-md-6">
+		<h4>Enheter per operativsystem og sårbarheter per enhet (aktive)</h4>
+		<table class="table tablesorter">
+		<thead>
+		<tr>
+			<th>Operativsystem</th>
+			<th>Antall enheter</th>
+			<th>Aktive sårbarheter</th>
+			<th>Snitt per enhet</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for row in data.os_device_summary %}
+		<tr>
+			<td>
+				{% if row.device__os_platform %}
+					<a href="{% url 'azure_vulnstats_os' os=row.device__os_platform %}">
+						{{ row.device__os_platform }}
+					</a>
+				{% else %}
+					{{ row.device__os_platform|default:"(Tom)" }}
+				{% endif %}
+			</td>
+			<td>{{ row.device_count|intcomma }}</td>
+			<td>{{ row.vuln_count|intcomma }}</td>
+			<td>
+				{% if row.avg_vulns_per_device %}
+					{{ row.avg_vulns_per_device|floatformat:1 }}
+				{% else %}
+					-
+				{% endif %}
+			</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	</div>
+</div>
+
+{% endblock hovedinnhold %}
+

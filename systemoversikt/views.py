@@ -11,7 +11,7 @@ from django.contrib import messages
 from django.db.models import Count, Q, Sum, F, Avg, Max, FloatField, ExpressionWrapper, Case, When, Value
 from django.db.models import Prefetch
 from django.template.loader import render_to_string
-from django.db.models.functions import Lower, TruncMonth, TruncYear, TruncDay, TruncDate
+from django.db.models.functions import Lower, TruncMonth, TruncYear, TruncDay, TruncDate, Substr
 from django.http import HttpResponseBadRequest, JsonResponse, Http404, HttpResponseRedirect, HttpResponse, HttpRequest, HttpResponseForbidden
 from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
@@ -19,7 +19,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.db import transaction
 import ipaddress
-import os, datetime, json, re, time, struct
+import os, datetime, json, re, time, struct, hashlib
 from django.utils import timezone
 from django.core.cache import cache
 
@@ -27,6 +27,21 @@ from django.core.cache import cache
 ##########################
 # Fellesvariabler #
 ##########################
+
+
+def _azure_vulnstats_cache_ts_token(integrasjonsstatus):
+	dt = getattr(integrasjonsstatus, "dato_sist_oppdatert", None)
+	if not dt:
+		return "ukjent"
+	# Memcached keys must avoid spaces/colons/etc in values we embed in keys.
+	return hashlib.md5(str(dt).encode("utf-8")).hexdigest()
+
+
+def _azure_vulnstats_cache_slug(value):
+	if value is None:
+		return "none"
+	return hashlib.md5(str(value).encode("utf-8")).hexdigest()
+
 
 
 def recent_errors(request):
@@ -1184,6 +1199,298 @@ def vulnstats(request):
 		'data': data,
 		'for_nytt_dager': for_nytt_dager,
 		'integrasjonsstatus': integrasjonsstatus,
+	})
+
+
+def azure_vulnstats(request):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
+	except:
+		integrasjonsstatus = None
+
+	cache_version = "v9"
+	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
+	cache_key = f"azure_vulnstats:overview:{cache_version}:{cache_ts}"
+	data = cache.get(cache_key)
+
+	if data is None:
+		active = AzureDeviceVulnerability.objects.filter(status="active")
+
+		severity_order = ["Critical", "High"]
+		severity_colors = {
+			"Critical": "rgb(220, 53, 69)",   # bootstrap danger-ish
+			"High": "rgb(255, 193, 7)",       # warning-ish
+		}
+
+		year_severity_rows = list(
+			active.annotate(cve_year=Substr("cve__cve_id", 5, 4))
+			.values("cve_year", "severity")
+			.annotate(count=Count("id"))
+			.order_by("cve_year", "severity")
+		)
+
+		years = sorted({r["cve_year"] for r in year_severity_rows if r.get("cve_year")})
+		year_index = {y: i for i, y in enumerate(years)}
+
+		# Build datasets for chart.js (stacked bars).
+		counts = {sev: [0] * len(years) for sev in severity_order}
+		for r in year_severity_rows:
+			y = r.get("cve_year")
+			if not y or y not in year_index:
+				continue
+			sev = r.get("severity")
+			if sev not in counts:
+				continue
+			counts[sev][year_index[y]] = r.get("count") or 0
+
+		severities_present = [s for s in severity_order if any(counts[s])]
+
+		cve_year_chart = {
+			"labels": years,
+			"datasets": [
+				{
+					"label": sev,
+					"data": counts[sev],
+					"backgroundColor": severity_colors.get(sev, "rgb(0, 123, 255)"),
+				}
+				for sev in severities_present
+			],
+		}
+
+		os_device_summary = list(
+			active.values("device__os_platform")
+			.annotate(
+				device_count=Count("device", distinct=True),
+				vuln_count=Count("id"),
+			)
+			.order_by("-vuln_count", "device__os_platform")
+		)
+		for row in os_device_summary:
+			devices = row.get("device_count") or 0
+			vulns = row.get("vuln_count") or 0
+			row["avg_vulns_per_device"] = (vulns / devices) if devices else None
+
+		data = {
+			"count_active": active.count(),
+			"vendor_summary": list(
+				active.values("product_vendor", "product_name")
+				.annotate(
+					critical=Count(Case(When(severity="Critical", then=1))),
+					high=Count(Case(When(severity="High", then=1))),
+					medium=Count(Case(When(severity="Medium", then=1))),
+					low=Count(Case(When(severity="Low", then=1))),
+				)
+				.order_by("-critical", "-high", "-medium", "-low", "product_vendor", "product_name")
+			),
+			"os_device_summary": os_device_summary,
+			"cve_year_chart": cve_year_chart,
+		}
+
+		# Aggregeringene over stor tabell er dyre – cache kort for å avlaste.
+		cache.set(cache_key, data, timeout=60 * 15)
+
+	return render(request, 'rapport_azure_vulnstats.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'integrasjonsstatus': integrasjonsstatus,
+		'data': data,
+	})
+
+
+def azure_vulnstats_product(request, vendor, product):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
+	except:
+		integrasjonsstatus = None
+
+	cache_version = "v5"
+	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
+	cache_key = (
+		f"azure_vulnstats:product:{cache_version}:{cache_ts}:"
+		f"{_azure_vulnstats_cache_slug(vendor)}:{_azure_vulnstats_cache_slug(product)}"
+	)
+	data = cache.get(cache_key)
+
+	if data is None:
+		active = AzureDeviceVulnerability.objects.filter(
+			status="active",
+			product_vendor=vendor,
+			product_name=product,
+		)
+
+		severity_order = ["Critical", "High"]
+		severity_colors = {
+			"Critical": "rgb(220, 53, 69)",
+			"High": "rgb(255, 193, 7)",
+		}
+
+		year_severity_rows = list(
+			active.annotate(cve_year=Substr("cve__cve_id", 5, 4))
+			.values("cve_year", "severity")
+			.annotate(count=Count("id"))
+			.order_by("cve_year", "severity")
+		)
+
+		years = sorted({r["cve_year"] for r in year_severity_rows if r.get("cve_year")})
+		year_index = {y: i for i, y in enumerate(years)}
+
+		counts = {sev: [0] * len(years) for sev in severity_order}
+		for r in year_severity_rows:
+			y = r.get("cve_year")
+			if not y or y not in year_index:
+				continue
+			sev = r.get("severity")
+			if sev not in counts:
+				continue
+			counts[sev][year_index[y]] = r.get("count") or 0
+
+		severities_present = [s for s in severity_order if any(counts[s])]
+		cve_year_chart = {
+			"labels": years,
+			"datasets": [
+				{
+					"label": sev,
+					"data": counts[sev],
+					"backgroundColor": severity_colors.get(sev, "rgb(0, 123, 255)"),
+				}
+				for sev in severities_present
+			],
+		}
+
+		os_device_summary = list(
+			active.values("device__os_platform")
+			.annotate(
+				device_count=Count("device", distinct=True),
+				vuln_count=Count("id"),
+			)
+			.order_by("-vuln_count", "device__os_platform")
+		)
+		for row in os_device_summary:
+			devices = row.get("device_count") or 0
+			vulns = row.get("vuln_count") or 0
+			row["avg_vulns_per_device"] = (vulns / devices) if devices else None
+
+		data = {
+			"count_active": active.count(),
+			"os_device_summary": os_device_summary,
+			"cve_year_chart": cve_year_chart,
+			"unique_cves": list(
+				active.values("cve__cve_id", "severity")
+				.annotate(instance_count=Count("id"))
+				.order_by("-instance_count", "cve__cve_id")
+			),
+		}
+
+		cache.set(cache_key, data, timeout=60 * 15)
+
+	return render(request, 'rapport_azure_vulnstats_product.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'integrasjonsstatus': integrasjonsstatus,
+		'vendor': vendor,
+		'product': product,
+		'data': data,
+	})
+
+
+def azure_vulnstats_os(request, os):
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
+	except:
+		integrasjonsstatus = None
+
+	cache_version = "v4"
+	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
+	cache_key = f"azure_vulnstats:os:{cache_version}:{cache_ts}:{_azure_vulnstats_cache_slug(os)}"
+	data = cache.get(cache_key)
+
+	if data is None:
+		active = AzureDeviceVulnerability.objects.filter(
+			status="active",
+			device__os_platform=os,
+		)
+
+		severity_order = ["Critical", "High"]
+		severity_colors = {
+			"Critical": "rgb(220, 53, 69)",
+			"High": "rgb(255, 193, 7)",
+		}
+
+		year_severity_rows = list(
+			active.annotate(cve_year=Substr("cve__cve_id", 5, 4))
+			.values("cve_year", "severity")
+			.annotate(count=Count("id"))
+			.order_by("cve_year", "severity")
+		)
+
+		years = sorted({r["cve_year"] for r in year_severity_rows if r.get("cve_year")})
+		year_index = {y: i for i, y in enumerate(years)}
+
+		counts = {sev: [0] * len(years) for sev in severity_order}
+		for r in year_severity_rows:
+			y = r.get("cve_year")
+			if not y or y not in year_index:
+				continue
+			sev = r.get("severity")
+			if sev not in counts:
+				continue
+			counts[sev][year_index[y]] = r.get("count") or 0
+
+		severities_present = [s for s in severity_order if any(counts[s])]
+		cve_year_chart = {
+			"labels": years,
+			"datasets": [
+				{
+					"label": sev,
+					"data": counts[sev],
+					"backgroundColor": severity_colors.get(sev, "rgb(0, 123, 255)"),
+				}
+				for sev in severities_present
+			],
+		}
+
+		vendor_summary = list(
+			active.values("product_vendor", "product_name")
+			.annotate(
+				critical=Count(Case(When(severity="Critical", then=1))),
+				high=Count(Case(When(severity="High", then=1))),
+				medium=Count(Case(When(severity="Medium", then=1))),
+				low=Count(Case(When(severity="Low", then=1))),
+			)
+			.order_by("-critical", "-high", "-medium", "-low", "product_vendor", "product_name")
+		)
+
+		data = {
+			"count_active": active.count(),
+			"cve_year_chart": cve_year_chart,
+			"vendor_summary": vendor_summary,
+			"unique_cves": list(
+				active.values("cve__cve_id", "severity")
+				.annotate(instance_count=Count("id"))
+				.order_by("-instance_count", "cve__cve_id")
+			),
+		}
+
+		cache.set(cache_key, data, timeout=60 * 15)
+
+	return render(request, 'rapport_azure_vulnstats_os.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'integrasjonsstatus': integrasjonsstatus,
+		'os': os,
+		'data': data,
 	})
 
 

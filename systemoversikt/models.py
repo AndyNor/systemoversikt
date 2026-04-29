@@ -8529,6 +8529,9 @@ class AzureDevice(models.Model):
 
 	class Meta:
 		verbose_name_plural = "Azure: Devices"
+		indexes = [
+			models.Index(fields=["os_platform"]),
+		]
 
 
 class CVE(models.Model):
@@ -8569,11 +8572,11 @@ class AzureDeviceVulnerability(models.Model):
 	last_seen = models.DateTimeField()
 
 	class Meta:
+		verbose_name_plural = "Azure: Device vulnerabilities"
 		unique_together = ("device", "cve")
 		indexes = [
 			models.Index(fields=["status"]),
 			models.Index(fields=["severity"]),
+			models.Index(fields=["status", "product_vendor"]),
+			models.Index(fields=["status", "device"]),
 		]
-
-	class Meta:
-		verbose_name_plural = "Azure: Device vulnerabilities"

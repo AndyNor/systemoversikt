@@ -12,3 +12,4 @@ secrets_test.py
 /systemoversikt/import
 /.venv
 /systemoversikt/management/import
+db.sqlite3-journal

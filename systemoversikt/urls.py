@@ -106,6 +106,9 @@ urlpatterns = [
 
 
 	re_path(r'^sikkerhet/vulnstats/overview/$', views.vulnstats, name="vulnstats"),
+	re_path(r'^sikkerhet/azure_vulnstats/overview/$', views.azure_vulnstats, name="azure_vulnstats"),
+	re_path(r'^sikkerhet/azure_vulnstats/product/(?P<vendor>[^/]+)/(?P<product>[^/]+)/$', views.azure_vulnstats_product, name="azure_vulnstats_product"),
+	re_path(r'^sikkerhet/azure_vulnstats/os/(?P<os>[^/]+)/$', views.azure_vulnstats_os, name="azure_vulnstats_os"),
 	re_path(r'^sikkerhet/vulnstats/severity/(?P<severity>\d{1})/$', views.vulnstats_severity, name="vulnstats_severity"),
 	re_path(r'^sikkerhet/vulnstats/severity/exploited/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited, name="vulnstats_severity_known_exploited"),
 	re_path(r'^sikkerhet/vulnstats/severity/exploited/public_facing/(?P<severity>\d{1})/$', views.vulnstats_severity_known_exploited_public, name="vulnstats_severity_known_exploited_public"),
