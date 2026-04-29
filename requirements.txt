@@ -81,7 +81,7 @@ Werkzeug==3.1.8
 xlrd==2.0.2
 
 pywin32==305; platform_system == 'Windows'
-certipy-ad==4.8.2; platform_system == 'Linux'
+certipy-ad>=4.8.2; platform_system == 'Linux'
 gunicorn==25.3.0; platform_system == 'Linux'
 python_ldap==3.4.5; platform_system == 'Linux'
 psycopg2-binary==2.9.11; platform_system == 'Linux'
