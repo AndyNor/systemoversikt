@@ -25,6 +25,30 @@ from systemoversikt.models import (
 class Command(BaseCommand):
     help = "Import of Defender for Endpoint vulnerabilities (defender API or local disk)"
 
+    @staticmethod
+    def _defender_import_dir():
+        base_dir = os.path.dirname(os.path.dirname(__file__))
+        return os.path.join(base_dir, "import", "defender")
+
+    @staticmethod
+    def _export_urls_from_api_payload(payload):
+        """Microsoft documents exportFiles; some responses use value."""
+        if not isinstance(payload, dict):
+            return []
+        return payload.get("exportFiles") or payload.get("value") or []
+
+    @staticmethod
+    def _clear_previous_snapshot_exports(local_dir):
+        """Remove prior vulnerabilities_NNN.json.gz so each API run replaces disk snapshot."""
+        if not os.path.isdir(local_dir):
+            return
+        for name in os.listdir(local_dir):
+            if name.startswith("vulnerabilities_") and name.endswith(".json.gz"):
+                try:
+                    os.remove(os.path.join(local_dir, name))
+                except OSError:
+                    pass
+
     def add_arguments(self, parser):
         parser.add_argument(
             "--source",
@@ -120,45 +144,66 @@ class Command(BaseCommand):
                         time.sleep(5)
                         poll = requests.get(poll_url, headers=headers, timeout=60)
                         if poll.status_code == 200:
-                            files = poll.json().get("value", [])
+                            files = self._export_urls_from_api_payload(poll.json())
                             break
                     else:
                         raise TimeoutError("Tidsavbrudd ved Defender-eksport")
                 elif start.status_code == 200:
-                    files = start.json().get("exportFiles", [])
+                    files = self._export_urls_from_api_payload(start.json())
                 else:
                     raise RuntimeError(start.text)
 
+                local_dir = self._defender_import_dir()
+                os.makedirs(local_dir, exist_ok=True)
+                self._clear_previous_snapshot_exports(local_dir)
+
             else:
-                base_dir = os.path.dirname(os.path.dirname(__file__))
-                local_dir = os.path.join(base_dir, "import", "defender")
+                local_dir = self._defender_import_dir()
 
                 if not os.path.isdir(local_dir):
                     raise RuntimeError(f"Local import directory mangler: {local_dir}")
 
                 for name in sorted(os.listdir(local_dir)):
-                    if name.endswith(".json"):
+                    lower = name.lower()
+                    if lower.endswith(".json.gz") or lower.endswith(".gz"):
+                        files.append(os.path.join(local_dir, name))
+                    elif name.endswith(".json"):
                         files.append(os.path.join(local_dir, name))
 
             print(f"Antall filer å prosessere: {len(files)}")
 
-            for idx, source in enumerate(files, start=1):
+            for idx, item in enumerate(files, start=1):
                 print(f"Prosesserer fil {idx}/{len(files)}")
 
                 if SOURCE == "defender":
-                    resp = requests.get(source, stream=True, timeout=300)
+                    resp = requests.get(item, stream=True, timeout=300)
                     resp.raise_for_status()
+                    save_name = f"vulnerabilities_{idx:03d}.json.gz"
+                    save_path = os.path.join(local_dir, save_name)
+                    with open(save_path, "wb") as out:
+                        for chunk in resp.iter_content(chunk_size=1024 * 1024):
+                            if chunk:
+                                out.write(chunk)
+                    print(f"  Lagret: {save_path}")
                     record_iter = (
                         json.loads(line.decode("utf-8"))
-                        for line in gzip.GzipFile(fileobj=resp.raw)
+                        for line in gzip.open(save_path, "rb")
                     )
+                    use_graph_json = False
                 else:
-                    with open(source, "r", encoding="utf-8") as fh:
-                        payload = json.load(fh)
-                    record_iter = payload.get("value", [])
+                    use_graph_json = item.lower().endswith(".gz")
+                    if use_graph_json:
+                        record_iter = (
+                            json.loads(line.decode("utf-8"))
+                            for line in gzip.open(item, "rb")
+                        )
+                    else:
+                        with open(item, "r", encoding="utf-8") as fh:
+                            payload = json.load(fh)
+                        record_iter = payload.get("value", [])
 
                 for r in record_iter:
-                    if SOURCE == "local":
+                    if SOURCE == "local" and not use_graph_json:
                         device_id = r.get("DeviceId")
                         hostname = r.get("DeviceName", "")
                         os_platform = r.get("OSPlatform", "")
@@ -172,18 +217,47 @@ class Command(BaseCommand):
                         first_seen = self._parse_ts(r.get("FirstSeenTimestamp"), start_ts)
                         last_seen = self._parse_ts(r.get("LastSeenTimestamp"), start_ts)
                     else:
-                        device_id = r.get("machineId")
-                        hostname = r.get("machineName", "")
-                        os_platform = r.get("osPlatform", "")
-                        cve_id = r.get("cveId")
-                        severity = r.get("severity", "Unknown")
-                        cvss_score = None
-                        product_vendor = r.get("productVendor", "")
-                        product_name = r.get("productName", "")
-                        product_version = r.get("productVersion", "")
-                        fixing_kb = r.get("fixingKbId")
-                        first_seen = start_ts
-                        last_seen = start_ts
+                        # Defender export / gzip lines: documented JSON uses deviceId, cveId (see Learn).
+                        device_id = (
+                            r.get("deviceId")
+                            or r.get("DeviceId")
+                            or r.get("machineId")
+                        )
+                        hostname = (
+                            r.get("deviceName")
+                            or r.get("DeviceName")
+                            or r.get("machineName")
+                            or ""
+                        )
+                        os_platform = r.get("osPlatform") or r.get("OSPlatform") or ""
+                        cve_id = r.get("cveId") or r.get("CveId")
+                        severity = (
+                            r.get("vulnerabilitySeverityLevel")
+                            or r.get("VulnerabilitySeverityLevel")
+                            or r.get("severity")
+                            or "Unknown"
+                        )
+                        cvss_score = r.get("CvssScore") or r.get("cvssScore")
+                        product_vendor = (
+                            r.get("softwareVendor") or r.get("SoftwareVendor") or ""
+                        )
+                        product_name = r.get("softwareName") or r.get("SoftwareName") or ""
+                        product_version = (
+                            r.get("softwareVersion") or r.get("SoftwareVersion") or ""
+                        )
+                        fixing_kb = (
+                            r.get("recommendedSecurityUpdateId")
+                            or r.get("RecommendedSecurityUpdateId")
+                            or r.get("fixingKbId")
+                        )
+                        first_seen = self._parse_ts(
+                            r.get("firstSeenTimestamp") or r.get("FirstSeenTimestamp"),
+                            start_ts,
+                        )
+                        last_seen = self._parse_ts(
+                            r.get("lastSeenTimestamp") or r.get("LastSeenTimestamp"),
+                            start_ts,
+                        )
 
                     if not device_id or not cve_id:
                         continue
@@ -277,6 +351,9 @@ class Command(BaseCommand):
     def _parse_ts(self, value, default):
         if not value:
             return default
+        if isinstance(value, str) and len(value) >= 19:
+            # e.g. "2020-11-03 10:13:34.8476880" -> parse first 19 chars
+            value = value[:19]
         try:
             return timezone.make_aware(
                 datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
