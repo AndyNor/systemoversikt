@@ -1,0 +1,22 @@
+## Security
+- Never introduce secrets, tokens, credentials, or sensitive identifiers.
+- Never weaken authentication, authorization, or encryption.
+- Treat all external input as untrusted.
+- Never disable security checks unless explicitly instructed.
+- Security requirements override existing project patterns when in conflict.
+
+## Boundaries
+- Do not modify .cursorignore unless explicitly instructed to do so for that purpose.
+- Do not create, modify, or suggest Git commits unless explicitly requested.
+- Do not add new dependencies unless explicitly requested or approved.
+- Do not delete files unless explicitly asked.
+- Do not refactor unrelated code.
+- Do not perform refactors, cleanups, or optimizations unless required to achieve the stated goal.
+- If it is unclear whether a change is required or allowed by these rules, ask for clarification before proceeding.
+
+## Style & Changes
+- Follow existing project patterns and conventions.
+- Prefer explicit, readable code over clever or implicit behavior.
+- Match existing formatting and idioms.
+- Keep changes minimal, localized, and targeted to the stated goal.
+- Avoid large or wide‑ranging diffs unless explicitly requested.
