@@ -68,8 +68,8 @@ class Command(BaseCommand):
         print(f"  Ignore schedule : {IGNORE_SCHEDULE}")
 
         try:
-            if SOURCE == "defender" and not IGNORE_SCHEDULE and start_ts.weekday() != 4:
-                msg = "Avbrutt: Defender-kjøring kun tillatt fredag"
+            if SOURCE == "defender" and not IGNORE_SCHEDULE and start_ts.weekday() != 2:
+                msg = "Avbrutt: Defender-kjøring kun tillatt onsdag"
                 print(msg)
                 ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=msg)
                 int_config.helsestatus = "Avbrutt"

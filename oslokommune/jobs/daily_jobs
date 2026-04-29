@@ -59,6 +59,7 @@ python /var/kartoteket/source/systemoversikt/manage.py azure_graph_enterprise_ap
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_named_locations
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_conditional_access
 python /var/kartoteket/source/systemoversikt/manage.py azure_authentication_methods
+python /var/kartoteket/source/systemoversikt/manage.py azure_graph_vulnerabilities
 
 # run batch e-mail
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_nokkelvarsel
