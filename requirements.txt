@@ -32,7 +32,6 @@ isodate==0.6.1
 itsdangerous==2.2.0
 Jinja2==3.1.6
 josepy==1.13.0
-ldap3==2.9.1
 ldapdomaindump==0.10.0
 lockfile==0.12.2
 mammoth==1.11.0
@@ -84,6 +83,6 @@ xlrd==2.0.2
 pywin32==305; platform_system == 'Windows'
 certipy-ad==4.8.2; platform_system == 'Linux'
 gunicorn==25.3.0; platform_system == 'Linux'
-python_ldap==3.4.15; platform_system == 'Linux'
+python_ldap==3.4.5; platform_system == 'Linux'
 psycopg2-binary==2.9.11; platform_system == 'Linux'
 impacket==0.13.0; platform_system == 'Linux'
