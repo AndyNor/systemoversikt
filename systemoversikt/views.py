@@ -6748,7 +6748,20 @@ def api_overview(request):
 	})
 
 
-LEVERANDORTILGANG_KJENTE_GRUPPER = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS', 'DS-DRIFT_SC2_']
+LEVERANDORTILGANG_KJENTE_GRUPPER = [
+		'DS-UVALEVTILGANG', 
+		'DS-DRIFT_DML_', 
+		'DS-DRIFT_SC2_',
+		'DS-DRIFT_TREDJE'
+		'DS-KEM_RPA', 
+		'DS-LEV_TREDJEPARTSDRIFT', 
+		'DS-DIG_FELL_DELT_TASK_DRIFT',
+		'DS-DIG_APP_OS_',
+		'TASK-OF2-Levtilgang', 
+		'TASK-OF2-DRIFT',
+		'TASK-OF2-GEN',
+		'DS-HAVLEV',
+	]
 
 def leverandortilgang(request, valgt_gruppe=None):
 	#Vise informasjon brukere som har leverandørtilgang
