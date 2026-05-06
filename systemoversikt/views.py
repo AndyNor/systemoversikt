@@ -6748,6 +6748,7 @@ def api_overview(request):
 	})
 
 
+LEVERANDORTILGANG_KJENTE_GRUPPER = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS', 'DS-DRIFT_SC2_']
 
 def leverandortilgang(request, valgt_gruppe=None):
 	#Vise informasjon brukere som har leverandørtilgang
@@ -6763,8 +6764,6 @@ def leverandortilgang(request, valgt_gruppe=None):
 			connected_groups.extend([getattr(adgruppe, 'distinguishedname') if adgruppe else "" for adgruppe in lt.adgrupper.all()])
 
 		manglende_grupper = []
-		LEVERANDORTILGANG_KJENTE_GRUPPER = ['DS-UVALEVTILGANG', 'DS-DRIFT_DML_', 'TASK-OF2-LevtilgangWTS', 'DS-KEM_RPA', 'DS-LEV_TREDJEPARTSDRIFT', 'TASK-OF2-DRIFTWTS', 'DS-DRIFT_SC2_']
-
 
 		for levtilganggruppe in LEVERANDORTILGANG_KJENTE_GRUPPER:
 			dml_grupper = ADgroup.objects.filter(distinguishedname__icontains=levtilganggruppe).exclude(distinguishedname__in=[o for o in connected_groups])
