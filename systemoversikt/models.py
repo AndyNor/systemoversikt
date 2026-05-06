@@ -5181,7 +5181,7 @@ class System(models.Model):
 			verbose_name="Antall brukere",
 			blank=True,
 			null=True,
-			help_text=u"Ca hvor mange bruker systemet totalt? Fyll ut her dersom du ikke har koblet opp AD-grupper. Kobler du opp AD-grupper, vil du få opp antall med tilgang automatisk.",
+			help_text=u"Hvor mange bruker systemet totalt? (Manuell angivelse. Mulig vi i fremtiden vil kalkulere denne automatisk dersom AD-grupper er angitt)",
 			)
 	tilgangsgrupper_ad = models.ManyToManyField(
 			to=ADgroup,

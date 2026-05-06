@@ -2749,6 +2749,7 @@ def systemer_vis_alle_optimized(request):
 			"driftsmodell_foreignkey__ansvarlig_virksomhet"
 		)
 		.prefetch_related(
+			"systembruk_system",
 			"basisdriftleverandor",
 			"applikasjonsdriftleverandor",
 			"systemleverandor",

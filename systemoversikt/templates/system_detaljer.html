@@ -123,10 +123,10 @@
 	{% endif %}
 	<a href="#anchor_eierskap" class="btn btn-sm btn-link">Eierskap og forvaltning</a>
 	<a href="#anchor_bruk" class="btn btn-sm btn-link">Virksomheters bruk av systemet</a>
+	<a href="#anchor_tilgang" class="btn btn-sm btn-link">Tilgangsstyring</a>
 	<a href="#anchor_systemav" class="btn btn-sm btn-link">Figur og systemavhengigheter</a>
 	<a href="#anchor_livslop" class="btn btn-sm btn-link">Livsløpsvurderinger</a>
 	<a href="#anchor_sikkerhet" class="btn btn-sm btn-link">Sikkerhet og personvern</a>
-	<a href="#anchor_tilgang" class="btn btn-sm btn-link">Tilgangsstyring</a>
 	<a href="#anchor_citrix" class="btn btn-sm btn-link">Citrix-publiseringer</a>
 	<a href="#anchor_servere_database" class="btn btn-sm btn-link">Servere og databaser</a>
 	<a href="#anchor_leverandor" class="btn btn-sm btn-link">Leverandører</a>
@@ -276,6 +276,68 @@
 			{% else %}
 				<p>Ingen virksomheter registrert</p>
 			{% endif %}
+		</div>
+	</div>
+
+
+	<br><hr>
+	<h3 style="scroll-margin-top: 150px;" id="anchor_tilgang">Tilgangsstyring</h3>
+	<div class="row">
+		<div class="col-6">
+			<p class="mb-3">
+				<b>Manuelt angitt antall brukere:</b>
+				{% if systemdetaljer.antall_brukere is not None %}
+					{{ systemdetaljer.antall_brukere }}
+				{% else %}
+					Ikke oppgitt
+				{% endif %}
+			</p>
+			<b>Bekreftede tilgangsgrupper</b><br>
+			{% for adgroup in systemdetaljer.tilgangsgrupper_ad.all %}
+				<a href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">{{ adgroup }}</a>
+				({{ adgroup.membercount }} medlemmer)<br>
+			{% endfor %}
+		</div>
+		<div class="col-3">
+			<div id="accordion-prkgrp">
+				<div class="card">
+					<div class="card-header" id="heading-prkgrp">
+						<h5 class="mb-0">
+							<button class="btn btn-link" data-toggle="collapse" data-target="#collapse-prk" aria-expanded="true" aria-controls="collapse-prk">PRK-valg basert på automatisk søk
+							</button>
+						</h5>
+					</div>
+					<div id="collapse-prk" class="collapse" aria-labelledby="heading-prkgrp" data-parent="#accordion-prkgrp">
+						<div class="card-body">
+							{% for prkvalg in systemdetaljer.prkvalg.all %}
+								<br><a style="font-size: 85%;" href="{% url 'prk_skjema' skjema_id=prkvalg.skjemanavn.pk %}">📂 {{ prkvalg.valgnavn }}</a>
+								({{ prkvalg.ad_group_ref.membercount }} medlemmer)
+								<br><span style="font-size: 75%;">{{ prkvalg.ad_group_ref.short }}</span>
+							{% endfor %}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="col-3">
+			<div id="accordion-adgrp">
+				<div class="card">
+					<div class="card-header" id="heading-adgrp">
+						<h5 class="mb-0">
+							<button class="btn btn-link" data-toggle="collapse" data-target="#collapse-ad" aria-expanded="true" aria-controls="collapse-ad">AD-grupper basert på automatisk søk
+							</button>
+						</h5>
+					</div>
+					<div id="collapse-ad" class="collapse" aria-labelledby="heading-adgrp" data-parent="#accordion-adgrp">
+						<div class="card-body">
+							{% for adgroup in systemdetaljer.adgrupper.all %}
+							<a style="font-size: 75%;" href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">📂 {{ adgroup.short }}</a>
+							({{ adgroup.membercount }} medlemmer)<br>
+							{% endfor %}
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 
@@ -744,60 +806,6 @@
 
 
 
-
-
-	<br><hr>
-	<h3 style="scroll-margin-top: 150px;" id="anchor_tilgang">Tilgangsstyring</h3>
-	<div class="row">
-		<div class="col-6">
-			<b>Bekreftede tilgangsgrupper</b><br>
-			{% for adgroup in systemdetaljer.tilgangsgrupper_ad.all %}
-				<a href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">{{ adgroup }}</a>
-				({{ adgroup.membercount }} medlemmer)<br>
-			{% endfor %}
-		</div>
-		<div class="col-3">
-			<div id="accordion-prkgrp">
-				<div class="card">
-					<div class="card-header" id="heading-prkgrp">
-						<h5 class="mb-0">
-							<button class="btn btn-link" data-toggle="collapse" data-target="#collapse-prk" aria-expanded="true" aria-controls="collapse-prk">PRK-valg basert på automatisk søk
-							</button>
-						</h5>
-					</div>
-					<div id="collapse-prk" class="collapse" aria-labelledby="heading-prkgrp" data-parent="#accordion-prkgrp">
-						<div class="card-body">
-							{% for prkvalg in systemdetaljer.prkvalg.all %}
-								<br><a style="font-size: 85%;" href="{% url 'prk_skjema' skjema_id=prkvalg.skjemanavn.pk %}">📂 {{ prkvalg.valgnavn }}</a>
-								({{ prkvalg.ad_group_ref.membercount }} medlemmer)
-								<br><span style="font-size: 75%;">{{ prkvalg.ad_group_ref.short }}</span>
-							{% endfor %}
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="col-3">
-			<div id="accordion-adgrp">
-				<div class="card">
-					<div class="card-header" id="heading-adgrp">
-						<h5 class="mb-0">
-							<button class="btn btn-link" data-toggle="collapse" data-target="#collapse-ad" aria-expanded="true" aria-controls="collapse-ad">AD-grupper basert på automatisk søk
-							</button>
-						</h5>
-					</div>
-					<div id="collapse-ad" class="collapse" aria-labelledby="heading-adgrp" data-parent="#accordion-adgrp">
-						<div class="card-body">
-							{% for adgroup in systemdetaljer.adgrupper.all %}
-							<a style="font-size: 75%;" href="{% url 'adgruppe_detaljer' pk=adgroup.pk %}">📂 {{ adgroup.short }}</a>
-							({{ adgroup.membercount }} medlemmer)<br>
-							{% endfor %}
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
 
 
 	<br><hr>

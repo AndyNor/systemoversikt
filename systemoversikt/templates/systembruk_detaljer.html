@@ -104,12 +104,7 @@
 
 			<tr>
 				<td>{% get_verbose_field_name bruk "antall_brukere" %}</td>
-				<td>{{ bruk.antall_brukere|default:"-" }}
-				{% if bruk.system.antall_brukere %}
-					({{ bruk.system.antall_brukere|default:"-" }} totalt)
-				{% endif %}
-
-				</td>
+				<td>{{ bruk.antall_brukere|default:"-" }}</td>
 			</tr>
 
 			<tr>
