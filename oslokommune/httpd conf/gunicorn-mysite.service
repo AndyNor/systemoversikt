@@ -1,4 +1,15 @@
->> /etc/systemd/system/gunicorn-mysite.service
+# link denne til /etc/systemd/system/gunicorn-mysite.service
+
+## activate on boot
+# sudo systemctl daemon-reload
+# sudo systemctl enable gunicorn-mysite.service
+
+## daily use
+# sudo systemctl restart gunicorn-mysite
+# sudo systemctl stop gunicorn-mysite
+# sudo systemctl status gunicorn-mysite
+# journalctl -u gunicorn-mysite -f
+
 
 [Unit]
 Description=Gunicorn for systemoversikt
@@ -19,13 +30,3 @@ StandardError=append:/etc/httpd/logs/error_log
 WantedBy=multi-user.target
 
 
->>
-## activate on boot
-sudo systemctl daemon-reload
-sudo systemctl enable gunicorn-mysite.service
-
-## daily use
-sudo systemctl restart gunicorn-mysite
-sudo systemctl stop gunicorn-mysite
-sudo systemctl status gunicorn-mysite
-journalctl -u gunicorn-mysite -f
