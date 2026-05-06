@@ -5188,7 +5188,9 @@ class System(models.Model):
 			related_name='system_referanse',
 			verbose_name="Tilhørende tilgangsgrupper (AD)",
 			blank=True,
-			help_text=u'Velg en eller flere sikkerhetsgrupper i AD tilhørende systemet. Brukes for å linke opp grupper og personer med tilgang.',
+			help_text=u"Her velger du hvilke AD-grupper som hører til systemet, slik at vi kan holde oversikt over tilganger og hvem som ligger i gruppene. "
+			u"Som regel én gang i døgnet oppdateres automatisk hvilke virksomheter som står registrert som brukere av systemet — ut fra medlemmene i gruppene og opplysningene som finnes i Kartoteket. "
+			u"Nye virksomheter kan da komme med på lista. Har en virksomhet vært markert som «ikke i bruk», men har fortsatt folk i gruppene, vil den bli satt i bruk igjen automatisk.",
 			)
 	legacy_klient_krever_smb = models.BooleanField(
 			verbose_name="Direkte kommunikasjon med filområder?",

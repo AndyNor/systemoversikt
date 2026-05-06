@@ -21,6 +21,7 @@ python /var/kartoteket/source/systemoversikt/manage.py grunndatabasen_users
 python /var/kartoteket/source/systemoversikt/manage.py lookup_adgroup_ou
 python /var/kartoteket/source/systemoversikt/manage.py system_koble_adgrp
 python /var/kartoteket/source/systemoversikt/manage.py system_telle_koblede_brukere
+python /var/kartoteket/source/systemoversikt/manage.py systembruk_opprett_fra_ad_tilgangsgrupper
 
 # run batch SharePoint
 python /var/kartoteket/source/systemoversikt/manage.py sharepoint_bss_updater
