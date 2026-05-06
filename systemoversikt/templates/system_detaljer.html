@@ -54,14 +54,15 @@
 	{% if systemdetaljer.programvarer.count > 0 %}
 		<hr>
 		Programvare benyttet av systemet<br>
-		<div>
+		<div style="display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: flex-start;">
 		{% for programvare in systemdetaljer.programvarer.all %}
-			<div style="float: left; margin-left: 20px; min-width: 150px;">
+			<div style="flex: 0 1 200px; min-width: 150px; max-width: 320px;">
 
 				{% url "programvaredetaljer" programvare.pk as url_programvare %}
 				<a href="{{ url_programvare }}"><b>{{ programvare }}</b></a>
 
-				<img src="{% static 'programvare.png' %}" style="height: 40px; float: left;">
+				<div style="display: flex; align-items: flex-start; gap: 8px; margin-top: 4px;">
+				<img src="{% static 'programvare.png' %}" alt="" style="height: 40px; flex-shrink: 0;">
 				<div>
 					{% for programvareleverandor in programvare.programvareleverandor.all %}
 						{% url 'leverandor' programvareleverandor.pk as url_programvareleverandor %}
@@ -69,10 +70,10 @@
 						{% if not forloop.last %}, {% endif %}
 					{% endfor %}
 				</div>
+				</div>
 			</div>
 		{% endfor %}
 		</div>
-		<br style="clear: both;">
 	{% endif %}
 
 	{% if systemdetaljer.systemurl.count > 0 %}

@@ -5505,14 +5505,32 @@ def systemdetaljer(request, pk):
 			aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
 			follow_count-=1
 
-		# legge til alle driftsmodeller som ble funnet
+		# legge til alle driftsmodeller som ble funnet (shape/color kreves av cytoscape data()-mapping på alle noder)
+		drift_gruppe_shape = "roundrectangle"
+		drift_gruppe_color = "#F1F9FF"
 		for driftsmodell in observerte_driftsmodeller:
 			if driftsmodell is not None:
 				if driftsmodell.overordnet_plattform:
-					avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.pk}", "name": driftsmodell.navn, "parent": f"drift_{driftsmodell.overordnet_plattform.pk}" }},)
-					avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.overordnet_plattform.pk}", "name": driftsmodell.overordnet_plattform.navn }},)
+					avhengigheter_graf["nodes"].append({"data": {
+						"id": f"drift_{driftsmodell.pk}",
+						"name": driftsmodell.navn,
+						"parent": f"drift_{driftsmodell.overordnet_plattform.pk}",
+						"shape": drift_gruppe_shape,
+						"color": drift_gruppe_color,
+					}},)
+					avhengigheter_graf["nodes"].append({"data": {
+						"id": f"drift_{driftsmodell.overordnet_plattform.pk}",
+						"name": driftsmodell.overordnet_plattform.navn,
+						"shape": drift_gruppe_shape,
+						"color": drift_gruppe_color,
+					}},)
 				else:
-					avhengigheter_graf["nodes"].append({"data": { "id": f"drift_{driftsmodell.pk}", "name": driftsmodell.navn }},)
+					avhengigheter_graf["nodes"].append({"data": {
+						"id": f"drift_{driftsmodell.pk}",
+						"name": driftsmodell.navn,
+						"shape": drift_gruppe_shape,
+						"color": drift_gruppe_color,
+					}},)
 
 		return avhengigheter_graf
 
@@ -7476,7 +7494,8 @@ def generer_graf_virksomhet(virksomhet_pk):
 		aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
 		follow_count-=1
 
-	# legge til alle driftsmodeller som ble funnet
+	# legge til alle driftsmodeller som ble funnet (color kreves av cytoscape data()-mapping på alle noder)
+	drift_gruppe_color = "#F1F9FF"
 	for driftsmodell in observerte_driftsmodeller:
 		if driftsmodell is not None:
 			if driftsmodell.overordnet_plattform:
@@ -7485,17 +7504,20 @@ def generer_graf_virksomhet(virksomhet_pk):
 						"name": driftsmodell.navn, 
 						"parent": f"drift_{driftsmodell.overordnet_plattform.pk}",
 						"shape": "ellipse", 
+						"color": drift_gruppe_color,
 					}},)
 				avhengigheter_graf["nodes"].append({"data": { 
 						"id": f"drift_{driftsmodell.overordnet_plattform.pk}", 
 						"name": driftsmodell.overordnet_plattform.navn,
 						"shape": "ellipse", 
+						"color": drift_gruppe_color,
 					}},)
 			else:
 				avhengigheter_graf["nodes"].append({"data": { 
 						"id": f"drift_{driftsmodell.pk}", 
 						"name": driftsmodell.navn,
 						"shape": "ellipse", 
+						"color": drift_gruppe_color,
 					}},)
 
 	return avhengigheter_graf
