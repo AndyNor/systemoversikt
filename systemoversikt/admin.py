@@ -532,6 +532,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'tjenestenivaa',
 				'leveransemodell_fip',
 				'informasjon_kvalitetssikret',
+				'ibruk',
 			),
 		}),
 	)

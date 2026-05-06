@@ -20,6 +20,7 @@ from django.urls import reverse
 from django.db import transaction
 import ipaddress
 import os, datetime, json, re, time, struct, hashlib
+from collections import Counter
 from django.utils import timezone
 from django.core.cache import cache
 
@@ -5561,6 +5562,22 @@ def systemdetaljer(request, pk):
 	for app in citrix_apps:
 		app.publikasjon_json = json.loads(app.publikasjon_json)
 
+	tilgangs_ad_grupper = list(system.tilgangsgrupper_ad.all())
+	vir_telling_ad_brukere = None
+	if tilgangs_ad_grupper:
+		ad_brukere_set = adgruppe_transitive_users_db_only(tilgangs_ad_grupper)
+		automatisk_brukere_antall_fra_ad = len(ad_brukere_set)
+		if ad_brukere_set:
+			vir_telling_ad_brukere = Counter(
+				User.objects.filter(pk__in=[u.pk for u in ad_brukere_set]).values_list(
+					"profile__virksomhet_id", flat=True
+				)
+			)
+		else:
+			vir_telling_ad_brukere = Counter()
+	else:
+		automatisk_brukere_antall_fra_ad = None
+
 	current_user_is_owner = True if request.user.username in system.eiere() else False
 	if request.user.groups.filter(name='/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER').exists():
 		current_user_is_owner = True
@@ -5587,6 +5604,13 @@ def systemdetaljer(request, pk):
 	unique_vulns_list = list(unique_vulns.values())
 	sorted_unique_vulns = sorted(unique_vulns_list, key=lambda x: (not x["known_exploited"], -x["severity"]))
 
+	systembruk = list(systembruk)
+	for bruk in systembruk:
+		if vir_telling_ad_brukere is not None:
+			bruk.automatisk_ad_antall_for_virksomhet = vir_telling_ad_brukere.get(bruk.brukergruppe_id, 0)
+		else:
+			bruk.automatisk_ad_antall_for_virksomhet = None
+
 	return render(request, 'system_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -5608,6 +5632,7 @@ def systemdetaljer(request, pk):
 		'integrasjonsstatus': integrasjonsstatus,
 		'vulnerabilities': sorted_unique_vulns,
 		'total_number_vulns': total_number_vulns,
+		'automatisk_brukere_antall_fra_ad': automatisk_brukere_antall_fra_ad,
 	})
 
 
@@ -11872,3 +11897,87 @@ def ubw_estimat_copy(request, pk): #API
 ###########
 # UBW end #
 ###########
+
+
+###############################################
+# AD-gruppemedlemskap (kun lokale databaseverdier)
+###############################################
+
+
+def adgruppe_transitive_users_db_only(start_groups, collect_unresolved_dns=False, for_virksomhet=None):
+	"""
+	Finn unike brukerkontoer (User) som er medlem av minst én av de oppgitte AD-gruppene,
+	inkludert medlemmer via nestede grupper, uten LDAP-kall.
+
+	Basert utelukkende på feltet ADgroup.member (JSON med medlems-DN-er) og oppslag mot
+	ADgroup (undergrupper) og User (samsvar med CN i DN og username, samme logikk som
+	human_readable_members_optimized).
+
+	Undergrupper som ikke finnes som ADgroup-rad (ikke synket inn) følges ikke.
+	Medlemmer som verken matcher en kjent gruppe eller en User, hopper over (eller samles
+	i unresolved-listen).
+
+	Args:
+		start_groups: iterable av ADgroup (f.eks. liste eller QuerySet).
+		collect_unresolved_dns: hvis True, returner (users, unresolved) der unresolved
+			er en liste av medlems-DN som ikke ble tolket som gruppe eller bruker.
+		for_virksomhet: valgfritt Virksomhet-objekt eller primærnøkkel (int). Når satt,
+			velges kun brukere der Profile.virksomhet matcher (representasjons-feltet).
+
+	Returns:
+		set[User] hvis collect_unresolved_dns er False.
+		(set[User], list[str]) hvis collect_unresolved_dns er True.
+	"""
+	from collections import deque
+
+	queue = deque()
+	visited_group_dns = set()
+	unresolved = []
+
+	for g in start_groups:
+		if g is None:
+			continue
+		queue.append(g)
+
+	users_by_id = {}
+
+	while queue:
+		g = queue.popleft()
+		gdn = g.distinguishedname
+		if gdn in visited_group_dns:
+			continue
+		visited_group_dns.add(gdn)
+
+		try:
+			raw_members = json.loads(g.member or "[]")
+		except (json.JSONDecodeError, TypeError):
+			raw_members = []
+
+		if not raw_members:
+			continue
+
+		resolved = human_readable_members_optimized(raw_members, onlygroups=False)
+
+		for u in resolved["users"]:
+			users_by_id[u.pk] = u
+
+		for child in resolved["groups"]:
+			if child.distinguishedname not in visited_group_dns:
+				queue.append(child)
+
+		if collect_unresolved_dns:
+			unresolved.extend(resolved["notfound"])
+
+	out_users = set(users_by_id.values())
+	if for_virksomhet is not None and users_by_id:
+		v_pk = for_virksomhet.pk if hasattr(for_virksomhet, "pk") else for_virksomhet
+		allowed_pks = set(
+			User.objects.filter(pk__in=users_by_id.keys(), profile__virksomhet_id=v_pk).values_list(
+				"pk", flat=True
+			)
+		)
+		out_users = {users_by_id[pk] for pk in allowed_pks}
+
+	if collect_unresolved_dns:
+		return out_users, unresolved
+	return out_users

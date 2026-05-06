@@ -220,7 +220,7 @@
 					<thead>
 						<tr>
 							<th>Virksomhet</th>
-							<th>Ca. antall brukere</th>
+							<th>Antall brukere</th>
 							{% if perms.systemoversikt.view_system %}
 							<th>Lokal KIT-vurdering {% explain_collapsed "Konfidensialitet, integritet og tilgjengelighet" %}</th>
 							{% endif %}
@@ -242,7 +242,16 @@
 								<a href="{{ url_bruk }}">{{ bruk.brukergruppe.virksomhetsforkortelse }}</a>
 							</td>
 
-							<td>{{ bruk.antall_brukere|default:"Ikke oppgitt" }}</td>
+							<td>
+								{% if bruk.antall_brukere is not None %}
+									{{ bruk.antall_brukere }} <small class="text-muted">(manuelt angitt)</small>
+								{% else %}
+									Ikke oppgitt <small class="text-muted">(manuelt angitt)</small>
+								{% endif %}
+								{% if bruk.automatisk_ad_antall_for_virksomhet is not None %}
+									<br>{{ bruk.automatisk_ad_antall_for_virksomhet }} <small class="text-muted">(automatisk beregnet for {{ bruk.brukergruppe.virksomhetsforkortelse }})</small>
+								{% endif %}
+							</td>
 
 							{% if perms.systemoversikt.view_system %}
 							<td>
@@ -290,6 +299,16 @@
 					{{ systemdetaljer.antall_brukere }}
 				{% else %}
 					Ikke oppgitt
+				{% endif %}
+			</p>
+			<p class="mb-3">
+				<b>Automatisk beregnet antall brukere:</b>
+				{% if automatisk_brukere_antall_fra_ad is not None %}
+					{{ automatisk_brukere_antall_fra_ad }}
+					<br><small class="text-muted">Unike brukerkontoer i Kartoteket som matcher medlemskap i valgte «Tilhørende tilgangsgrupper (AD)» (inkl. nestede grupper), basert på synkede gruppedata i databasen.</small>
+				{% else %}
+					<span class="text-muted">–</span>
+					<br><small class="text-muted">Knytt minst én AD-gruppe til systemet under «Tilhørende tilgangsgrupper (AD)» for å beregne.</small>
 				{% endif %}
 			</p>
 			<b>Bekreftede tilgangsgrupper</b><br>
