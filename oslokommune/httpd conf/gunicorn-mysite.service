@@ -11,6 +11,9 @@ WorkingDirectory=/var/kartoteket/source/systemoversikt
 Environment="PATH=/var/kartoteket/virtualenv/py311/bin"
 ExecStart=/var/kartoteket/virtualenv/py311/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 systemoversikt.wsgi:application
 Restart=always
+StandardOutput=append:/etc/httpd/logs/error_log
+StandardError=append:/etc/httpd/logs/error_log
+
 
 [Install]
 WantedBy=multi-user.target
