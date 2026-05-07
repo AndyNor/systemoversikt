@@ -93,11 +93,15 @@ class Command(BaseCommand):
 
         try:
             if SOURCE == "defender" and not IGNORE_SCHEDULE and start_ts.weekday() != 6:
-                msg = "Avbrutt: Defender-kjøring kun tillatt søndag"
+                msg = "Skippet: Defender-kjøring kun tillatt søndag"
                 print(msg)
                 ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=msg)
-                int_config.helsestatus = "Avbrutt"
+                # This is not an error; the job is intentionally only scheduled weekly.
+                # Keep health green so admin status doesn't flap on skipped days.
+                int_config.helsestatus = "Vellykket"
                 int_config.sist_status = msg
+                int_config.runtime = 0
+                int_config.elementer = 0
                 int_config.save()
                 return
 
