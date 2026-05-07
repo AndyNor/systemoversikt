@@ -98,6 +98,27 @@ new Chart(
 <hr>
 
 <h4>Unike CVE-er (aktive)</h4>
+
+<div id="device-names" class="mb-3">
+	<p class="mb-1"><b>Unike enhetsnavn (aktive)</b> (viser {{ device_names|length }}):</p>
+	<ul id="device-names-list" style="column-count: 3;">
+		{% for name in device_names %}
+			<li>{{ name }}</li>
+		{% empty %}
+			<li>(Ingen)</li>
+		{% endfor %}
+	</ul>
+	{% if device_names_more_available %}
+		<button
+			id="device-names-load-more"
+			class="btn btn-sm btn-outline-primary"
+			type="button"
+			data-next-offset="{{ devices_next_offset }}"
+			data-chunk="{{ devices_chunk }}"
+		>Last inn flere</button>
+	{% endif %}
+</div>
+
 <table class="table tablesorter">
 <thead>
 <tr>
@@ -116,6 +137,53 @@ new Chart(
 {% endfor %}
 </tbody>
 </table>
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	(function () {
+		var $btn = $("#device-names-load-more");
+		if (!$btn.length) return;
+
+		function escapeHtml(text) {
+			return $("<div>").text(text).html();
+		}
+
+		$btn.on("click", function () {
+			var nextOffset = parseInt($btn.attr("data-next-offset") || "0", 10);
+			var chunk = parseInt($btn.attr("data-chunk") || "200", 10);
+
+			$btn.prop("disabled", true).text("Laster …");
+
+			$.get(window.location.pathname, {
+				devices_ajax: 1,
+				devices_offset: nextOffset,
+				devices_chunk: chunk
+			})
+			.done(function (resp) {
+				var names = (resp && resp.device_names) ? resp.device_names : [];
+				var $list = $("#device-names-list");
+
+				// If we previously had "(Ingen)" placeholder, remove it when real data arrives
+				if ($list.find("li").length === 1 && $list.text().trim() === "(Ingen)") {
+					$list.empty();
+				}
+
+				for (var i = 0; i < names.length; i++) {
+					$list.append("<li>" + escapeHtml(names[i]) + "</li>");
+				}
+
+				if (resp && resp.has_more) {
+					$btn.attr("data-next-offset", String(resp.next_offset || (nextOffset + names.length)));
+					$btn.prop("disabled", false).text("Last inn flere");
+				} else {
+					$btn.remove();
+				}
+			})
+			.fail(function () {
+				$btn.prop("disabled", false).text("Last inn flere");
+			});
+		});
+	})();
+</script>
 
 {% endblock hovedinnhold %}
 

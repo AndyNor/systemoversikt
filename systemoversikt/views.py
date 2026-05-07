@@ -1312,6 +1312,19 @@ def azure_vulnstats_product(request, vendor, product):
 	except:
 		integrasjonsstatus = None
 
+	# Device list pagination (AJAX-friendly; no new library needed)
+	try:
+		devices_chunk = int(request.GET.get("devices_chunk", 200))
+	except ValueError:
+		devices_chunk = 200
+	devices_chunk = max(1, min(devices_chunk, 500))
+
+	try:
+		devices_offset = int(request.GET.get("devices_offset", 0))
+	except ValueError:
+		devices_offset = 0
+	devices_offset = max(0, devices_offset)
+
 	cache_version = "v5"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = (
@@ -1392,6 +1405,34 @@ def azure_vulnstats_product(request, vendor, product):
 
 		cache.set(cache_key, data, timeout=60 * 15)
 
+	# Unique device names for this product (active vulns). Not cached since it is UI-paged.
+	active_devices_qs = (
+		AzureDeviceVulnerability.objects.filter(
+			status="active",
+			product_vendor=vendor,
+			product_name=product,
+		)
+		.exclude(device__hostname__isnull=True)
+		.exclude(device__hostname__exact="")
+		.values_list("device__hostname", flat=True)
+		.distinct()
+		.order_by("device__hostname")
+	)
+	device_names = list(active_devices_qs[devices_offset : devices_offset + devices_chunk + 1])
+	device_names_more_available = len(device_names) > devices_chunk
+	if device_names_more_available:
+		device_names = device_names[:devices_chunk]
+
+	devices_next_offset = devices_offset + len(device_names)
+
+	# AJAX endpoint (returns next chunk as JSON; used by product template)
+	if request.GET.get("devices_ajax") == "1":
+		return JsonResponse({
+			"device_names": device_names,
+			"next_offset": devices_next_offset,
+			"has_more": device_names_more_available,
+		})
+
 	return render(request, 'rapport_azure_vulnstats_product.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -1399,6 +1440,11 @@ def azure_vulnstats_product(request, vendor, product):
 		'vendor': vendor,
 		'product': product,
 		'data': data,
+		'device_names': device_names,
+		'device_names_more_available': device_names_more_available,
+		'devices_offset': devices_offset,
+		'devices_chunk': devices_chunk,
+		'devices_next_offset': devices_next_offset,
 	})
 
 
