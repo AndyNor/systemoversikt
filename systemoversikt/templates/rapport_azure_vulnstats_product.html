@@ -98,27 +98,6 @@ new Chart(
 <hr>
 
 <h4>Unike CVE-er (aktive)</h4>
-
-<div id="device-names" class="mb-3">
-	<p class="mb-1"><b>Unike enhetsnavn (aktive)</b> (viser {{ device_names|length }}):</p>
-	<ul id="device-names-list" style="column-count: 3;">
-		{% for name in device_names %}
-			<li>{{ name }}</li>
-		{% empty %}
-			<li>(Ingen)</li>
-		{% endfor %}
-	</ul>
-	{% if device_names_more_available %}
-		<button
-			id="device-names-load-more"
-			class="btn btn-sm btn-outline-primary"
-			type="button"
-			data-next-offset="{{ devices_next_offset }}"
-			data-chunk="{{ devices_chunk }}"
-		>Last inn flere</button>
-	{% endif %}
-</div>
-
 <table class="table tablesorter">
 <thead>
 <tr>
@@ -138,9 +117,51 @@ new Chart(
 </tbody>
 </table>
 
+<hr>
+
+<h4 id="device-names">Unike enhetsnavn (aktive)</h4>
+<div class="mb-3">
+	<p class="mb-1">(viser {{ device_names|length }}):</p>
+	<ul id="device-names-list" style="column-count: 3;">
+		{% for name in device_names %}
+			<li data-full="{{ name }}">{{ name }}</li>
+		{% empty %}
+			<li>(Ingen)</li>
+		{% endfor %}
+	</ul>
+	{% if device_names_more_available %}
+		<button
+			id="device-names-load-more"
+			class="btn btn-sm btn-outline-primary"
+			type="button"
+			data-next-offset="{{ devices_next_offset }}"
+			data-chunk="{{ devices_chunk }}"
+		>Last inn flere</button>
+	{% endif %}
+</div>
+
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 	(function () {
 		var $btn = $("#device-names-load-more");
+		var suffixRe = /\.oslofelles\.oslo\.kommune\.no$/i;
+
+		function stripSuffix(name) {
+			if (!name) return name;
+			return String(name).replace(suffixRe, "");
+		}
+
+		function applyHostnameStripping($root) {
+			$root.find("#device-names-list li").each(function () {
+				var $li = $(this);
+				var full = $li.attr("data-full") || $li.text();
+				if (!full || full.trim() === "(Ingen)") return;
+				$li.attr("data-full", full);
+				$li.text(stripSuffix(full));
+			});
+		}
+
+		applyHostnameStripping($(document));
+
 		if (!$btn.length) return;
 
 		function escapeHtml(text) {
@@ -168,7 +189,9 @@ new Chart(
 				}
 
 				for (var i = 0; i < names.length; i++) {
-					$list.append("<li>" + escapeHtml(names[i]) + "</li>");
+					var full = String(names[i]);
+					var shown = stripSuffix(full);
+					$list.append("<li data-full=\"" + escapeHtml(full) + "\">" + escapeHtml(shown) + "</li>");
 				}
 
 				if (resp && resp.has_more) {
