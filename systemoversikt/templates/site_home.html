@@ -8,14 +8,23 @@
 
 {% block hovedinnhold %}
 
-	<p>Kartoteket inneholder Oslo kommunes systemoversikt. I tillegg finner du en del rapporter basert på data fra driftsmiljøet (CMDB) og fra Microsoft 365. I systemoversikten registrerer vi driftsplattformer, systemer og programvare. Brukerdokumentasjonen finner du på <a target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">SharePoint</a>. For oversikt over behandlinger av personopplysninger må du gå til <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a> og oversikt over tjenester finner du i <a href="https://tjenestekatalog.k8s.oslo.kommune.no/katalog" target="_blank">Oslo kommunes interne tjenestekatalog</a>.</p>
+	<p>Kartoteket inneholder Oslo kommunes systemoversikt. I tillegg finner du en del rapporter basert på data fra driftsmiljøet (CMDB) og fra Microsoft 365. I systemoversikten registrerer vi driftsplattformer, systemer og programvare. For oversikt over behandlinger av personopplysninger må du gå til <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a> og oversikt over tjenester finner du i <a href="https://tjenestekatalog.k8s.oslo.kommune.no/katalog" target="_blank">Oslo kommunes interne tjenestekatalog</a>.</p>
+
+	<div class="alert alert-primary py-2" role="note" style="display:flex; align-items:center; gap:0.5rem;">
+		<span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em; flex:0 0 auto;"><path d="M2 2.5A1.5 1.5 0 0 1 3.5 1h8A1.5 1.5 0 0 1 13 2.5v11a.5.5 0 0 1-.757.429L8 11.5l-4.243 2.429A.5.5 0 0 1 3 13.5v-11z"/></svg></span>
+		<div><a target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx"><b>Brukerdokumentasjonen</b></a> finner du på SharePoint.</div>
+	</div>
 
 	{% url 'min_virksomhet' as url_min_virksomhet %}
-	<p>	For å finne et system kan du enten <b>søke</b> eller gå til <a href="{{url_min_virksomhet}}" class="btn btn-sm {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 min virksomhet</a>. Du kan også se <a href="{% url 'home_chart' %}">oversikt over alle systemer fordelt på virksomhet</a>.</p>
+	<p>
+		For å finne et system kan du enten <b><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg></span> søke</b>
+		eller gå til <a href="{{url_min_virksomhet}}" class="btn btn-sm {% if url_min_virksomhet in request.path %}fremhev{% endif %}" style="padding-left:0.4rem; padding-right:0.4rem; vertical-align:baseline;"><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/><path d="M14 14s-1-4-6-4-6 4-6 4 1 1 6 1 6-1 6-1"/></svg></span> min virksomhet</a>
+		<br>Du kan også se <a href="{% url 'home_chart' %}"><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M0 0h1v15h15v1H0z"/><path d="M2 13h1V6H2zm3 0h1V2H5zm3 0h1V9H8zm3 0h1V4h-1z"/></svg></span> oversikt over alle systemer fordelt på virksomhet</a>.
+	</p>
 
 	<p>Det pågår nå et arbeid med å modernisere både IKT-instruksen og systemoversikten i en ny løsning som heter Yggdrasil. For mer informasjon om fremdriften, kan du følge med på <a target="_blank" href="https://engage.cloud.microsoft/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiI2NTU0NzAwMTg1NyJ9/all">VI/SAM/System og tjenesteoversikt</a>. Inntil til den nye løsningen formelt er lansert er det her i Kartoteket vi fører systemoversikt.</p>
 
-	<p>Kartoteket er tilgangsstyrt. Du må logge inn med "logg inn"-knappen ved siden av søkefeltet for å aktivere rollene dine. Se <a href="{% url 'roller' %}">rolleoversikt</a> for nærmere beskrivelser av hvordan tilgangsstyringen fungerer.</p>
+	<p><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M8 1a3 3 0 0 0-3 3v3h6V4a3 3 0 0 0-3-3M4 7V4a4 4 0 1 1 8 0v3h.5A1.5 1.5 0 0 1 14 8.5v5A1.5 1.5 0 0 1 12.5 15h-9A1.5 1.5 0 0 1 2 13.5v-5A1.5 1.5 0 0 1 3.5 7z"/></svg></span> Kartoteket er tilgangsstyrt. Du må logge inn med "logg inn"-knappen ved siden av søkefeltet for å aktivere rollene dine. Se <a href="{% url 'roller' %}">rolleoversikt</a> for nærmere beskrivelser av hvordan tilgangsstyringen fungerer.</p>
 	
 	<hr>
 
@@ -53,22 +62,7 @@
 
 	<hr>
 
-	<h6>Finn system eller programvare basert på kategori</h6>
-	<ul style="column-count:3;">
-		{% for kategori in kategorier %}
-			{% url 'systemkategori' pk=kategori.pk as url_systemkategori %}
-			<li><a href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a>
-			{% for hovedkategori in kategori.systemhovedkategori_systemkategorier.all %}
-				({{hovedkategori}})
-			{% endfor %}
-			</li>
-		{% endfor %}
-	</ul>
-
-
-	<hr>
-
-	<h6>Endringslogg for Kartoteket</h6>
+	<h6><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M7.5 1.5a.5.5 0 0 1 1 0V4a.5.5 0 0 1-1 0z"/><path d="M7.5 12a.5.5 0 0 1 1 0v2.5a.5.5 0 0 1-1 0z"/><path d="M1.5 7.5a.5.5 0 0 1 0-1H4a.5.5 0 0 1 0 1z"/><path d="M12 7.5a.5.5 0 0 1 0-1h2.5a.5.5 0 0 1 0 1z"/><path d="M3.222 3.222a.5.5 0 0 1 .707 0L5.1 4.393a.5.5 0 1 1-.707.707L3.222 3.93a.5.5 0 0 1 0-.707"/><path d="M10.9 10.9a.5.5 0 0 1 .707 0l1.171 1.171a.5.5 0 0 1-.707.707L10.9 11.607a.5.5 0 0 1 0-.707"/><path d="M12.778 3.222a.5.5 0 0 1 0 .707L11.607 5.1a.5.5 0 1 1-.707-.707l1.171-1.171a.5.5 0 0 1 .707 0"/><path d="M5.1 10.9a.5.5 0 0 1 0 .707L3.93 12.778a.5.5 0 0 1-.707-.707L4.393 10.9a.5.5 0 0 1 .707 0"/><path d="M9.81 6.19a.5.5 0 0 1 .09.7L8.6 8.5l1.3 1.61a.5.5 0 1 1-.78.63l-1.5-1.86a.5.5 0 0 1 0-.63l1.5-1.86a.5.5 0 0 1 .69-.09"/></svg></span> Endringslogg for Kartoteket</h6>
 	{% for nyhet in nyheter %}
 		<li>
 			<span class="badge badge-light">{{ nyhet.tidspunkt|date:"Y-m-d" }}</span> {{ nyhet.beskrivelse }}
@@ -83,5 +77,19 @@
 	{% if nyheter|length > 0 %}
 		<br><a href="{% url 'alle_nyheter' %}">Se arkiv</a>
 	{% endif %}
+
+	<hr>
+
+	<h6><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M6.502 1a1 1 0 0 0-.708.293L4.586 2.5H1.5A1.5 1.5 0 0 0 0 4v9a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a1.5 1.5 0 0 0-1.5-1.5H8.414L7.206 1.293A1 1 0 0 0 6.502 1M1.5 3.5h3.293l.854-.854a.5.5 0 0 1 .353-.146h.5a.5.5 0 0 1 .354.146l.854.854H14.5a.5.5 0 0 1 .5.5v.5H1v-.5a.5.5 0 0 1 .5-.5"/></svg></span> Finn system eller programvare basert på kategori</h6>
+	<ul style="column-count:3;">
+		{% for kategori in kategorier %}
+			{% url 'systemkategori' pk=kategori.pk as url_systemkategori %}
+			<li><a href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a>
+			{% for hovedkategori in kategori.systemhovedkategori_systemkategorier.all %}
+				({{hovedkategori}})
+			{% endfor %}
+			</li>
+		{% endfor %}
+	</ul>
 
 {% endblock hovedinnhold %}
