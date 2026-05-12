@@ -20,7 +20,7 @@ from django.urls import reverse
 from django.db import transaction
 import ipaddress
 import os, datetime, json, re, time, struct, hashlib
-from collections import Counter
+from collections import Counter, defaultdict
 from django.utils import timezone
 from django.core.cache import cache
 
@@ -8836,82 +8836,167 @@ def maskin_sok(request):
 
 
 def alle_ip(request):
-	#Søke opp IP-adresser, både mot CMDB maskiner og via live dns-query
+	# Søke opp IPv4-adresser mot CMDB (host-IP, DNS-koblinger i CMDB) og VLAN-/nettverksdata.
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	import ipaddress
+	MAX_IP_LOOKUPS = 1000
 
-	search_term = request.POST.get('search_term', '').strip()  # strip removes trailing and leading space
+	if request.method == 'POST':
+		show_hosts = request.POST.get('show_hosts') == 'on'
+		show_networks = request.POST.get('show_networks') == 'on'
+		show_unique_vlans = request.POST.get('show_unique_vlans') == 'on'
+		search_term_display = request.POST.get('search_term', '').strip()
+	else:
+		show_hosts = True
+		show_networks = True
+		show_unique_vlans = False
+		search_term_display = ''
+
 	host_matches = []
 	network_matches = []
+	unique_vlan_networks = []
 	not_ip_addresses = []
+	ipv6_terms = set()
 
-	cache_networks = list(NetworkContainer.objects.values_list('ip_address', 'subnet_mask', 'id'))
-	networks_with_id = []
-	for ip, mask, id in cache_networks:
+	search_term = search_term_display
+
+	def find_matching_networks_ipv4(ip_string, networks_with_id):
 		try:
-			if ':' in ip:
-				network = ipaddress.IPv6Network(f"{ip}/{mask}", strict=False)
-			else:
-				network = ipaddress.IPv4Network(f"{ip}/{mask}", strict=False)
-			networks_with_id.append((network, mask, id))
-		except ValueError as e:
-			print(f"Error processing {ip}/{mask}: {e}")
-
-
-	def find_matching_networks(ip_address, networks_with_id):
-		try:
-			ip = ipaddress.ip_address(ip_address) # HVSI IKKE IP-adresse?
-			matching_ids = [id for network, mask, id in networks_with_id if ip in network]
-			if len(matching_ids) > 0:
-				matching_objects = NetworkContainer.objects.filter(id__in=matching_ids)
-				return [o for o in matching_objects if o.subnet_mask > 16]  # we don't want networks too broad
-			else:
+			ip = ipaddress.ip_address(ip_string)
+			if not isinstance(ip, ipaddress.IPv4Address):
 				return None
-		except:
+			matching_ids = [nid for network, mask, nid in networks_with_id if ip in network]
+			if not matching_ids:
+				return None
+			matching_objects = NetworkContainer.objects.filter(id__in=matching_ids)
+			return [o for o in matching_objects if o.subnet_mask > 16]
+		except ValueError:
 			return None
 
+	if search_term != '':
+		if not show_hosts and not show_networks and not show_unique_vlans:
+			messages.warning(
+				request,
+				'Velg minst én av «Vis host-treff», «Vis nettverkstreff» eller «Unike VLAN».',
+			)
+		else:
+			search_term = search_term.replace('"', '').replace("'", '').replace(':', ' ').replace('/', ' ').replace('\\', ' ')
+			search_terms = re.findall(r'([^,;\t\s\n\r]+)', search_term)
+			unique_terms = list(dict.fromkeys(search_terms))
 
-
-	def ipnetwork_search(ip_string):
-		matching_ids = find_matching_networks(ip_address, networks_with_id)
-
-	if search_term != "":
-		search_term = search_term.replace('\"','').replace('\'','').replace(':',' ').replace('/', ' ').replace('\\', ' ') # dette vil feile for IPv6, som kommer på formatet [xxxx:xxxx::xxxx]:port
-		search_terms = re.findall(r"([^,;\t\s\n\r]+)", search_term)
-
-		for term in set(search_terms):
-
-			machine_match = False
-			matches = NetworkIPAddress.objects.filter(ip_address=term)
-			if matches:
-				host_matches.extend(matches)
-				machine_match = True
-
-			vlan_match = False
-			matches = NetworkContainer.objects.filter(ip_address=term)
-			if matches:
-				network_matches.append({"term": term, "matches": matches})
-				vlan_match = True
+			if len(unique_terms) > MAX_IP_LOOKUPS:
+				messages.error(
+					request,
+					f'For mange unike oppføringer ({len(unique_terms)}). Maksimum er {MAX_IP_LOOKUPS} adresser per søk.',
+				)
 			else:
-				matches = find_matching_networks(term, networks_with_id)
-				if matches:
-					network_matches.append({"term": term, "matches": matches})
-					vlan_match = True
+				ipv4_by_term = {}
+				for term in unique_terms:
+					try:
+						ip = ipaddress.ip_address(term.strip())
+						if isinstance(ip, ipaddress.IPv6Address):
+							ipv6_terms.add(term)
+						else:
+							ipv4_by_term[term] = str(ip)
+					except ValueError:
+						ipv4_by_term[term] = None
 
-			if (not machine_match) and (not vlan_match):
-				not_ip_addresses.append(term)
+				ipv4_norm_set = {n for n in ipv4_by_term.values() if n is not None}
 
+				matched_host_norms = set()
+				if show_hosts and ipv4_norm_set:
+					host_matches = list(
+						NetworkIPAddress.objects.filter(ip_address__in=ipv4_norm_set).prefetch_related(
+							'servere__service_offerings__system',
+							'dns',
+							'vlan',
+							'viper',
+							'vip_pools',
+						)
+					)
+					matched_host_norms = {str(h.ip_address) for h in host_matches}
+
+				network_hit_terms = set()
+				vlan_objects_by_id = {}
+				vlan_unique_ips = defaultdict(set)
+				if show_networks or show_unique_vlans:
+					exact_by_ip = defaultdict(list)
+					if ipv4_norm_set:
+						for row in NetworkContainer.objects.filter(ip_address__in=list(ipv4_norm_set)):
+							exact_by_ip[str(row.ip_address)].append(row)
+
+					networks_with_id = None
+					for term in unique_terms:
+						norm = ipv4_by_term.get(term)
+						if not norm:
+							continue
+						if exact_by_ip[norm]:
+							term_matches = exact_by_ip[norm]
+						else:
+							if networks_with_id is None:
+								networks_with_id = []
+								for nip, mask, nid in NetworkContainer.objects.values_list(
+									'ip_address', 'subnet_mask', 'id'
+								):
+									try:
+										if ':' in nip:
+											continue
+										networks_with_id.append(
+											(ipaddress.IPv4Network(f'{nip}/{mask}', strict=False), mask, nid)
+										)
+									except ValueError:
+										pass
+							term_matches = find_matching_networks_ipv4(norm, networks_with_id) or []
+
+						if term_matches:
+							network_hit_terms.add(term)
+							if show_unique_vlans:
+								for n in term_matches:
+									vlan_unique_ips[n.id].add(norm)
+									if n.id not in vlan_objects_by_id:
+										vlan_objects_by_id[n.id] = n
+							if show_networks:
+								network_matches.append({'term': term, 'matches': term_matches})
+
+					if show_unique_vlans and vlan_objects_by_id:
+						unique_vlan_networks = sorted(
+							(
+								{
+									'vlan': vlan_objects_by_id[vid],
+									'unique_ip_count': len(vlan_unique_ips[vid]),
+								}
+								for vid in vlan_objects_by_id
+							),
+							key=lambda row: (
+								(row['vlan'].comment or '').lower(),
+								str(row['vlan'].ip_address),
+								row['vlan'].subnet_mask,
+							),
+						)
+
+				for term in unique_terms:
+					if term in ipv6_terms:
+						continue
+					norm = ipv4_by_term.get(term)
+					host_hit = bool(show_hosts and norm and norm in matched_host_norms)
+					net_hit = bool((show_networks or show_unique_vlans) and term in network_hit_terms)
+					if not host_hit and not net_hit:
+						not_ip_addresses.append(term)
 
 	return render(request, 'cmdb_ip_sok.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'host_matches': host_matches,
 		'network_matches': network_matches,
-		'search_term': search_term,
+		'search_term': search_term_display,
 		'not_ip_addresses': not_ip_addresses,
+		'show_hosts': show_hosts,
+		'show_networks': show_networks,
+		'show_unique_vlans': show_unique_vlans,
+		'unique_vlan_networks': unique_vlan_networks,
+		'ipv6_terms': sorted(ipv6_terms),
 	})
 
 

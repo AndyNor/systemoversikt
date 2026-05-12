@@ -11,21 +11,43 @@
 
 {% block hovedinnhold %}
 
-	<p>Oversikt over ulike nettverksdata på felles IKT-plattform: VLAN, VIP-er i BigIP, NAT-adresser, samt sonefil fra DNS lastes inn i databasen. Alt dette skjer manuelt, men det jobbes med å automatisere.<br>Her kan du søke på IP-adresser, og du vil få treff fra de ulike kildene.</p>
+	<p>Oversikt over ulike nettverksdata på felles IKT-plattform: VLAN, VIP-er i BigIP, NAT-adresser, samt sonefil fra DNS lastes inn i databasen. Alt dette skjer manuelt, men det jobbes med å automatisere.<br>Her kan du søke på IPv4-adresser, og du vil få treff fra de ulike kildene. Kun IPv4 støttes (intern bruk).</p>
 
-	<p>Du kan lime inn tekst her og IP-adresser vil identifiseres automatisk.</p>
+	<p>Du kan lime inn tekst her og IP-adresser vil identifiseres automatisk. Maksimum 1000 unike adresser per søk.</p>
 
 	<form action="{% url 'alle_ip' %}" method="POST" autocomplete="off">
 		{% csrf_token %}
 		<div class="form-group form-inline">
 			<textarea rows="3" cols="50" style="width: 500px; height: 150px;" name="search_term"
-			placeholder="Liste med IP-adresser, separert med space, semikolon eller komma. Annen tekst ignoreres..." class="form-control form-control-sm">{{ search_term }}</textarea>
+			placeholder="Liste med IPv4-adresser, separert med space, semikolon eller komma. Annen tekst ignoreres..." class="form-control form-control-sm">{{ search_term }}</textarea>
 			<input style="margin-left: 10px;" type="submit" value="Slå opp" class="btn btn-primary btn-sm">
+		</div>
+		<div class="form-group" style="margin-top: 8px;">
+			<label class="checkbox-inline" style="margin-right: 16px;">
+				<input type="checkbox" name="show_hosts" {% if show_hosts %}checked{% endif %}> Vis host-treff (servere, DNS-koblinger i CMDB, VIP)
+			</label>
+			<label class="checkbox-inline" style="margin-right: 16px;">
+				<input type="checkbox" name="show_networks" {% if show_networks %}checked{% endif %}> Vis nettverkstreff (VLAN / subnet)
+			</label>
+			<label class="checkbox-inline">
+				<input type="checkbox" name="show_unique_vlans" {% if show_unique_vlans %}checked{% endif %}> Unike VLAN (samlet liste per søk)
+			</label>
 		</div>
 	</form>
 
 	<hr>
-	{% if host_matches|length > 0 %}
+	{% if ipv6_terms %}
+		<h5>IPv6 (støttes ikke)</h5>
+		<p>Følgende ble tolket som IPv6 og er ikke slått opp:</p>
+		<ul style="column-count:10;">
+			{% for item in ipv6_terms %}
+				<li>{{ item }}</li>
+			{% endfor %}
+		</ul>
+		<hr>
+	{% endif %}
+
+	{% if show_hosts and host_matches|length > 0 %}
 		<h5>Treff på hoster</h5>
 		<table class="table table-sm tablesorter excel">
 		<thead>
@@ -79,14 +101,27 @@
 		</table>
 	{% endif %}
 
-	{% if network_matches|length > 0 %}
+	{% if show_networks and network_matches|length > 0 %}
 	<h5>Treff på nettverk</h5>
 	{% for network in network_matches %}
 		{{ network.term }} gav treff i
 		{% for n in network.matches %}
-			<li>{{ n.ip_address }}/{{ n.subnet_mask }} som er <b>{{n.comment}}</b> ({{n.network_zone|default:"ukjent"}})</li>
+			<li>{{ n.ip_address }}/{{ n.subnet_mask }} som er <b>{{n.comment}}</b> ({{n.network_zone|default:"ukjent sone"}})</li>
 		{% endfor%}
 	{% endfor %}
+	{% endif %}
+
+	{% if show_unique_vlans and unique_vlan_networks %}
+		<hr>
+		<h5>Unike VLAN / nettverk</h5>
+		<p>Alle distinkte nettverk som minst én av IPv4-adressene dine tilhører (samme logikk som nettverkstreff over). Tallet er antall <em>unike</em> IPv4-adresser i søket som havnet i nettverket.</p>
+		<ul>
+			{% for row in unique_vlan_networks %}
+				{% with n=row.vlan %}
+				<li>{{ n.ip_address }}/{{ n.subnet_mask }} — <b>{{ n.comment }}</b> ({{ n.network_zone|default:"ukjent sone" }}){% if n.disabled %} <em>(deaktivert)</em>{% endif %} — {% if row.unique_ip_count == 1 %}<strong>1</strong> unik IPv4-adresse{% else %}<strong>{{ row.unique_ip_count }}</strong> unike IPv4-adresser{% endif %} i søket</li>
+				{% endwith %}
+			{% endfor %}
+		</ul>
 	{% endif %}
 
 {% if not_ip_addresses %}
