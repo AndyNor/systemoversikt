@@ -1,10 +1,12 @@
-{% extends "virksomhet_index.html" %}
+{% extends "system_index.html" %}
 {% load humanize %}
 {% load static %}
 
-{% block ekstrameny %}
-	{% include 'virksomhet_detaljer_ekstrameny.html' %}
-{% endblock ekstrameny %}
+{% block ekstrameny_system %}
+	{% if virksomhet %}
+		{% include 'virksomhet_detaljer_ekstrameny.html' %}
+	{% endif %}
+{% endblock ekstrameny_system %}
 
 {% block overskrift %}
 	Webdomener {% if virksomhet %}tilhørende {{virksomhet.virksomhetsforkortelse}}{% endif %}

@@ -1,25 +1,27 @@
 {% extends "index.html" %}
 
 {% block sidemeny %}
+	{% with rn=request.resolver_match %}
 	<h6>Virksomhetsmeny</h6>
 
 	{% url 'alle_virksomheter_sidemeny' as url_alle_virksomheter %}
-	<a href="{{url_alle_virksomheter}}" class="btn btn-sm btn-link {% if url_alle_virksomheter in request.path %}fremhev{% endif %}">Alle virksomheter</a>
+	<a href="{{url_alle_virksomheter}}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'alle_virksomheter_sidemeny' or rn and rn.url_name == 'alle_virksomheter' %}fremhev{% endif %}">Alle virksomheter</a>
 
 	{% url 'min_virksomhet' as url_min_virksomhet %}
-	<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if url_min_virksomhet in request.path %}fremhev{% endif %}">👥 Min virksomhet</a>
+	<a href="{{url_min_virksomhet}}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'min_virksomhet' %}fremhev{% endif %}">👥 Min virksomhet</a>
 
 
 	{% url 'alle_virksomheter_kontaktinfo' as kontaktinfo_url %}
-	<a href="{{ kontaktinfo_url }}" class="btn btn-sm btn-link {% if kontaktinfo_url in request.path %}fremhev{% endif %}" >Vis kontaktinfo ISK/PSK</a>
+	<a href="{{ kontaktinfo_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'alle_virksomheter_kontaktinfo' %}fremhev{% endif %}" >Vis kontaktinfo ISK/PSK</a>
 
 	{% if user.is_authenticated %}
 		{% url 'sertifikatmyndighet' as url_sertifikatmyndighet%}
-		<a href="{{ url_sertifikatmyndighet }}" class="btn btn-sm btn-link {% if url_sertifikatmyndighet in request.path %}fremhev{% endif %}">Vis sertifikatfullmakter</a>
+		<a href="{{ url_sertifikatmyndighet }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'sertifikatmyndighet' %}fremhev{% endif %}">Vis sertifikatfullmakter</a>
 	{% endif %}
 
 
 	{% block ekstrameny %}{% endblock ekstrameny %}
+	{% endwith %}
 {% endblock sidemeny %}
 
 {% block main_content %}
