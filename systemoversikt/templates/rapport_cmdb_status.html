@@ -26,6 +26,7 @@
 		<th>Sist oppdatert</th>
 		<th>Kjøretid (sekunder)</th>
 		<th width="30%">Sist status</th>
+		<th>Rediger</th>
 	</thead>
 	<tbody>
 	{% for i in integrasjoner %}
@@ -43,6 +44,9 @@
 				{% else %}
 					<span style="background-color: yellow;">{{ i.helsestatus }}</span>
 				{% endif %}
+			</td>
+			<td>
+				<a href="{% url 'admin:systemoversikt_integrasjonkonfigurasjon_change' i.pk %}" class="btn btn-sm btn-link">✎ Rediger</a>
 			</td>
 		</tr>
 	{% endfor %}
