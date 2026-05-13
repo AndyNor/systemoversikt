@@ -152,5 +152,93 @@
 </table>
 {% endif %}
 
+<br><hr>
+<h5 style="scroll-margin-top: 150px;" id="anchor_vuln">Sårbarheter</h5>
+{% if may_view_vulnerabilities %}
+	<div class="row">
+		<div class="col-12">
+			{% if integrasjonsstatus_qualys %}
+			<p style="background-color: {{ integrasjonsstatus_qualys.color }};">
+				Qualys-sårbarheter ble sist synkronisert {{ integrasjonsstatus_qualys.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}
+			</p>
+			{% endif %}
+			<p>
+				Qualys ({{ qualys_vulns_total }} registrert{% if qualys_vulns_total > 500 %}, viser de 500 med høyest alvorlighetsgrad{% endif %}).
+			</p>
+			{% if qualys_vulns %}
+			<table class="table table-sm tablesorter excel">
+				<thead>
+					<tr>
+						<th>Beskrivelse</th>
+						<th>Alvorlighetsgrad</th>
+						<th>Kjent utnyttet?</th>
+						<th>Ansvar</th>
+						<th>Først sett</th>
+						<th>Resultat</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for v in qualys_vulns %}
+				<tr>
+					<td>{{ v.title }}</td>
+					<td>
+						{% if v.severity == 4 %}🟡 alvorlig (4){% elif v.severity == 5 %}🔴 svært alvorlig (5){% else %}{{ v.severity }}{% endif %}
+					</td>
+					<td>{{ v.known_exploited|yesno:"🔴 ja, nei" }}<br>{{ v.known_exploited_info|default:"" }}</td>
+					<td>{{ v.ansvar_basisdrift|yesno:"🖥️ basisdrift, 💾 applikasjonsdrift" }}</td>
+					<td>{{ v.first_seen|date:"Y-m-d"|default:"—" }}</td>
+					<td>{{ v.result|truncatechars:400 }}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+			{% else %}
+			<p>Ingen Qualys-sårbarheter er knyttet til denne enheten.</p>
+			{% endif %}
+
+			{% if integrasjonsstatus_azure %}
+			<p style="background-color: {{ integrasjonsstatus_azure.color }};">
+				Azure Defender-enhetssårbarheter ble sist synkronisert {{ integrasjonsstatus_azure.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}
+			</p>
+			{% endif %}
+			<p>
+				Azure Defender ({{ azure_device_vulns_total }} treff på vertsnavn som matcher «{{ device.comp_name }}»{% if azure_device_vulns_total > 500 %}, viser 500 nyeste etter sist sett{% endif %}).
+			</p>
+			{% if azure_device_vulns %}
+			<table class="table table-sm tablesorter excel">
+				<thead>
+					<tr>
+						<th>CVE</th>
+						<th>Produkt</th>
+						<th>Leverandør</th>
+						<th>Versjon</th>
+						<th>Alvorlighetsgrad</th>
+						<th>Først sett</th>
+						<th>Sist sett</th>
+					</tr>
+				</thead>
+				<tbody>
+				{% for av in azure_device_vulns %}
+				<tr>
+					<td>{{ av.cve.cve_id }}</td>
+					<td>{{ av.product_name }}</td>
+					<td>{{ av.product_vendor }}</td>
+					<td>{{ av.product_version }}</td>
+					<td>{{ av.severity }}</td>
+					<td>{{ av.first_seen|date:"Y-m-d" }}</td>
+					<td>{{ av.last_seen|date:"Y-m-d" }}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+			{% else %}
+			<p>Ingen Azure Defender-sårbarheter funnet for dette vertsnavnet.</p>
+			{% endif %}
+			<p><i>(Denne oversikten vises kun for medlemmer av AD-gruppen /DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER.)</i></p>
+		</div>
+	</div>
+{% else %}
+	<p>Sårbarheter vises kun for medlemmer av AD-gruppen /DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER.</p>
+{% endif %}
 
 {% endblock hovedinnhold %}

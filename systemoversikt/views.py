@@ -3489,12 +3489,53 @@ def cmdb_devicedetails(request, pk):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	device = CMDBdevice.objects.get(pk=pk)
+	device = get_object_or_404(CMDBdevice, pk=pk)
+
+	may_view_vulnerabilities = request.user.groups.filter(
+		name="/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER"
+	).exists()
+
+	integrasjonsstatus_qualys = None
+	integrasjonsstatus_azure = None
+	qualys_vulns = []
+	qualys_vulns_total = 0
+	azure_device_vulns = []
+	azure_device_vulns_total = 0
+	if may_view_vulnerabilities:
+		try:
+			integrasjonsstatus_qualys = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
+		except IntegrasjonKonfigurasjon.DoesNotExist:
+			pass
+		try:
+			integrasjonsstatus_azure = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
+		except IntegrasjonKonfigurasjon.DoesNotExist:
+			pass
+		qualys_qs = device.qualys_vulnerabilities.order_by("-severity", "-first_seen")
+		qualys_vulns_total = qualys_qs.count()
+		qualys_vulns = list(qualys_qs[:500])
+		comp = (device.comp_name or "").strip()
+		azure_filter = Q(device__hostname__iexact=comp)
+		if "." in comp:
+			azure_filter |= Q(device__hostname__iexact=comp.split(".", 1)[0])
+		azure_qs = (
+			AzureDeviceVulnerability.objects.filter(azure_filter)
+			.select_related("cve", "device")
+			.order_by("-last_seen")
+		)
+		azure_device_vulns_total = azure_qs.count()
+		azure_device_vulns = list(azure_qs[:500])
 
 	return render(request, 'cmdb_devicedetails.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'device': device,
+		'may_view_vulnerabilities': may_view_vulnerabilities,
+		'integrasjonsstatus_qualys': integrasjonsstatus_qualys,
+		'integrasjonsstatus_azure': integrasjonsstatus_azure,
+		'qualys_vulns': qualys_vulns,
+		'qualys_vulns_total': qualys_vulns_total,
+		'azure_device_vulns': azure_device_vulns,
+		'azure_device_vulns_total': azure_device_vulns_total,
 	})
 
 
