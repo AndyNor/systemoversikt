@@ -6,6 +6,7 @@ import json, os, io, time
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
+import traceback
 from systemoversikt.views import push_pushover
 from systemoversikt.views import sharepoint_get_file
 
@@ -60,9 +61,16 @@ class Command(BaseCommand):
 
 
 		try:
-			def hent_fil(filnavn):
-				source_filepath = f"{filnavn}"
-				result = sharepoint_get_file(source_filepath)
+			def hent_fil(filnavn, data_beskrivelse):
+				"""Henter én fil fra SharePoint via Graph. Ved feil: tydelig kontekst for logger og helsestatus."""
+				try:
+					result = sharepoint_get_file(filnavn)
+				except Exception as exc:
+					raise RuntimeError(
+						f"SharePoint ({INTEGRASJON_KODEORD}): {data_beskrivelse}. "
+						f'Forventet fil i dokumentbiblioteket: «{filnavn}». '
+						f"Teknisk årsak: {exc}"
+					) from exc
 				destination_file = result["destination_file"]
 				modified_date = result["modified_date"]
 				print(f"{filnavn} er datert {modified_date}")
@@ -86,13 +94,27 @@ class Command(BaseCommand):
 				citrix_ss_servers, citrix_ss_servers_date = ("systemoversikt/import/citrix_Machine_list_SS.json.json", None)
 				citrix_bruksdata, citrix_bruksdata_date = ("systemoversikt/import/citrix_application_usage_summary_des2024_mar2025.json.json", None)
 			else:
-				citrix_is_lokalfil, citrix_is_date = hent_fil(sp_citrix_is)
-				citrix_ss_lokalfil, citrix_ss_date = hent_fil(sp_citrix_ss)
-				citrix_is_desktop_gr_lokalfil, citrix_is_desktop_gr_date = hent_fil(sp_citrix_is_desktop_gr)
-				citrix_ss_desktop_gr_lokalfil, citrix_ss_desktop_gr_date = hent_fil(sp_citrix_ss_desktop_gr)
-				citrix_is_servers, citrix_is_servers_date = hent_fil(sp_citrix_is_servers)
-				citrix_ss_servers, citrix_ss_servers_date = hent_fil(sp_citrix_ss_servers)
-				citrix_bruksdata, citrix_bruksdata_date = hent_fil(sp_citrix_bruksdata)
+				citrix_is_lokalfil, citrix_is_date = hent_fil(
+					sp_citrix_is, "Citrix AppInfo-publikasjoner (intern sone / IS)"
+				)
+				citrix_ss_lokalfil, citrix_ss_date = hent_fil(
+					sp_citrix_ss, "Citrix AppInfo-publikasjoner (sikker sone / SS)"
+				)
+				citrix_is_desktop_gr_lokalfil, citrix_is_desktop_gr_date = hent_fil(
+					sp_citrix_is_desktop_gr, "Citrix BrokerDesktopGroups (intern sone / IS)"
+				)
+				citrix_ss_desktop_gr_lokalfil, citrix_ss_desktop_gr_date = hent_fil(
+					sp_citrix_ss_desktop_gr, "Citrix BrokerDesktopGroups (sikker sone / SS)"
+				)
+				citrix_is_servers, citrix_is_servers_date = hent_fil(
+					sp_citrix_is_servers, "Citrix MachineList / servere (intern sone / IS)"
+				)
+				citrix_ss_servers, citrix_ss_servers_date = hent_fil(
+					sp_citrix_ss_servers, "Citrix MachineList / servere (sikker sone / SS)"
+				)
+				citrix_bruksdata, citrix_bruksdata_date = hent_fil(
+					sp_citrix_bruksdata, "Citrix bruksdata / applikasjonsstatistikk"
+				)
 
 			logg_entry_message = ""
 
@@ -354,11 +376,23 @@ class Command(BaseCommand):
 
 
 		except Exception as e:
-			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"
+			tb = traceback.format_exc()
+			logg_message = (
+				f"{SCRIPT_NAVN} feilet.\n"
+				f"Årsak: {e}\n"
+				f"(Integrasjon: {INTEGRASJON_KODEORD}, hendelse: {LOG_EVENT_TYPE}.)"
+			)
 			logg_entry = ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
 			print(logg_message)
-			import traceback
-			int_config.helsestatus = f"Feilet\n{traceback.format_exc()}"
+			print(tb)
+			int_config.helsestatus = (
+				f"Feilet — {e}\n\n"
+				f"Full sporing:\n{tb}"
+			)
 			int_config.save()
-			push_pushover(f"{SCRIPT_NAVN} feilet") # Push error
+			push_body = str(e).replace("\n", " ").strip()
+			if len(push_body) > 400:
+				push_body = push_body[:400] + "…"
+			push_pushover(f"{SCRIPT_NAVN} feilet: {push_body}") # Push error
+			raise
 
