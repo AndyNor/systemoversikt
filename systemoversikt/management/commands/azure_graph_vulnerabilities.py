@@ -3,6 +3,7 @@ import os
 import time
 import json
 import gzip
+import gc
 import requests
 from datetime import timedelta, datetime
 from urllib.parse import urljoin, urlparse
@@ -291,6 +292,10 @@ class Command(BaseCommand):
                             if chunk:
                                 out.write(chunk)
                     self._say(f"  Lagret: {save_path}")
+                    self._say(
+                        "  Leser gzip (JSONL) og matcher mot minne-cache — "
+                        "ved OOM («Killed») trengs ofte mer RAM eller oftere flush til DB."
+                    )
                     record_iter = (
                         json.loads(line.decode("utf-8"))
                         for line in gzip.open(save_path, "rb")
@@ -308,7 +313,15 @@ class Command(BaseCommand):
                             payload = json.load(fh)
                         record_iter = payload.get("value", [])
 
+                self._say(f"  Prosesserer innhold for fil {idx}/{len(files)} …")
+                lines_seen = 0
                 for r in record_iter:
+                    lines_seen += 1
+                    if lines_seen % 100_000 == 0:
+                        self._say(
+                            f"  … {lines_seen} JSON-linjer lest i fil {idx}, "
+                            f"{processed} poster behandlet så langt i kjøringen …"
+                        )
                     if SOURCE == "local" and not use_graph_json:
                         device_id = r.get("DeviceId")
                         hostname = r.get("DeviceName", "")
@@ -416,8 +429,17 @@ class Command(BaseCommand):
 
                     processed += 1
 
-                    if len(dvs_to_create) >= 5000:
+                    if (
+                        len(dvs_to_create) >= 5000
+                        or len(dvs_to_update) >= 5000
+                    ):
                         self.flush(devices_to_create, cves_to_create, dvs_to_create, dvs_to_update)
+
+                self._say(
+                    f"  Ferdig med fil {idx}/{len(files)}: {lines_seen} linjer, "
+                    f"{processed} poster totalt i kjøringen til nå."
+                )
+                gc.collect()
 
             self.flush(devices_to_create, cves_to_create, dvs_to_create, dvs_to_update)
 
