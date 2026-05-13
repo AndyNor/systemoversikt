@@ -8878,6 +8878,33 @@ def maskin_sok(request):
 
 
 
+_IPV4_CIDR_TOKEN_RE = re.compile(
+	r'(?<![0-9.])(?:\d{1,3}\.){3}\d{1,3}\s*/\s*(?:3[0-2]|[12]?\d)(?![0-9.])'
+)
+
+
+def _extract_ipv4_cidr_tokens(text):
+	"""Plukk ut IPv4 CIDR (f.eks. 10.130.0.0/21) før øvrig splitting — må skje før '/' erstattes."""
+	subnets = []
+	parts = []
+	pos = 0
+	for m in _IPV4_CIDR_TOKEN_RE.finditer(text):
+		parts.append(text[pos:m.start()])
+		raw_display = m.group(0).strip()
+		raw_parse = re.sub(r'\s*/\s*', '/', raw_display)
+		try:
+			net = ipaddress.ip_network(raw_parse, strict=False)
+			if isinstance(net, ipaddress.IPv4Network):
+				subnets.append((raw_parse, net))
+			else:
+				parts.append(raw_display)
+		except ValueError:
+			parts.append(raw_display)
+		pos = m.end()
+	parts.append(text[pos:])
+	return subnets, ''.join(parts)
+
+
 def alle_ip(request):
 	# Søke opp IPv4-adresser mot CMDB (host-IP, DNS-koblinger i CMDB) og VLAN-/nettverksdata.
 	required_permissions = ['systemoversikt.view_cmdbdevice']
@@ -8918,6 +8945,13 @@ def alle_ip(request):
 		except ValueError:
 			return None
 
+	def find_overlapping_networks_ipv4(user_network, networks_with_id):
+		matching_ids = [nid for network, mask, nid in networks_with_id if user_network.overlaps(network)]
+		if not matching_ids:
+			return None
+		matching_objects = NetworkContainer.objects.filter(id__in=matching_ids)
+		return [o for o in matching_objects if o.subnet_mask > 16]
+
 	if search_term != '':
 		if not show_hosts and not show_networks and not show_unique_vlans:
 			messages.warning(
@@ -8925,14 +8959,24 @@ def alle_ip(request):
 				'Velg minst én av «Vis host-treff», «Vis nettverkstreff» eller «Unike VLAN».',
 			)
 		else:
-			search_term = search_term.replace('"', '').replace("'", '').replace(':', ' ').replace('/', ' ').replace('\\', ' ')
+			subnet_tokens, search_term_no_cidr = _extract_ipv4_cidr_tokens(search_term)
+			subnet_by_norm = {}
+			for raw, net in subnet_tokens:
+				key = str(net)
+				if key not in subnet_by_norm:
+					subnet_by_norm[key] = (raw, net)
+			subnet_entries = list(subnet_by_norm.values())
+
+			search_term = search_term_no_cidr
+			search_term = search_term.replace('"', '').replace("'", '').replace(':', ' ')
 			search_terms = re.findall(r'([^,;\t\s\n\r]+)', search_term)
 			unique_terms = list(dict.fromkeys(search_terms))
 
-			if len(unique_terms) > MAX_IP_LOOKUPS:
+			total_lookups = len(unique_terms) + len(subnet_entries)
+			if total_lookups > MAX_IP_LOOKUPS:
 				messages.error(
 					request,
-					f'For mange unike oppføringer ({len(unique_terms)}). Maksimum er {MAX_IP_LOOKUPS} adresser per søk.',
+					f'For mange unike oppføringer ({total_lookups}). Maksimum er {MAX_IP_LOOKUPS} oppslag per søk.',
 				)
 			else:
 				ipv4_by_term = {}
@@ -9003,6 +9047,31 @@ def alle_ip(request):
 							if show_networks:
 								network_matches.append({'term': term, 'matches': term_matches})
 
+					for cidr_display, user_net in subnet_entries:
+						if networks_with_id is None:
+							networks_with_id = []
+							for nip, mask, nid in NetworkContainer.objects.values_list(
+								'ip_address', 'subnet_mask', 'id'
+							):
+								try:
+									if ':' in nip:
+										continue
+									networks_with_id.append(
+										(ipaddress.IPv4Network(f'{nip}/{mask}', strict=False), mask, nid)
+									)
+								except ValueError:
+									pass
+						term_matches = find_overlapping_networks_ipv4(user_net, networks_with_id) or []
+						if term_matches:
+							network_hit_terms.add(cidr_display)
+							if show_unique_vlans:
+								for n in term_matches:
+									vlan_unique_ips[n.id].add(str(user_net))
+									if n.id not in vlan_objects_by_id:
+										vlan_objects_by_id[n.id] = n
+							if show_networks:
+								network_matches.append({'term': cidr_display, 'matches': term_matches})
+
 					if show_unique_vlans and vlan_objects_by_id:
 						unique_vlan_networks = sorted(
 							(
@@ -9027,6 +9096,11 @@ def alle_ip(request):
 					net_hit = bool((show_networks or show_unique_vlans) and term in network_hit_terms)
 					if not host_hit and not net_hit:
 						not_ip_addresses.append(term)
+
+				for cidr_display, user_net in subnet_entries:
+					net_hit = bool((show_networks or show_unique_vlans) and cidr_display in network_hit_terms)
+					if not net_hit:
+						not_ip_addresses.append(cidr_display)
 
 	return render(request, 'cmdb_ip_sok.html', {
 		'request': request,
