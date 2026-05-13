@@ -25,7 +25,7 @@ class Command(BaseCommand):
 		LOG_EVENT_TYPE = "CMDB server import"
 		FILNAVN = {
 			"filename_computers": "A34_CMDB_servers_to_service.xlsx",
-			"filename_computers_without_service": "A34_CMDB_servers_without_service.xlsx",
+			"filename_computers_without_service": "A34_CMDB_servers_without_service.xls",
 			"filename_vmware": "vmware_data.xlsx",
 			}
 		KILDE = "Service Now og VMware"
@@ -101,8 +101,12 @@ class Command(BaseCommand):
 				computers_data = dfRaw.to_dict('records')
 				antall_records = len(computers_data)
 
-				# konvertere: servere uten offering
-				dfRaw = pd.read_excel(computers_without_service_destination_file)
+				# konvertere: servere uten offering (.xls bruker xlrd; .xlsx openpyxl)
+				_ws_path = str(computers_without_service_destination_file).lower()
+				if _ws_path.endswith(".xls") and not _ws_path.endswith(".xlsx"):
+					dfRaw = pd.read_excel(computers_without_service_destination_file, engine="xlrd")
+				else:
+					dfRaw = pd.read_excel(computers_without_service_destination_file)
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				computers_data_without_service = dfRaw.to_dict('records')
 				antall_records += len(computers_data_without_service) # her legger vi til de servere som ikke har offering til totalen
