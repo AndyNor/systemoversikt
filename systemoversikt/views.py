@@ -3515,6 +3515,8 @@ def cmdb_devicedetails(request, pk):
 		qualys_vulns = list(qualys_qs[:500])
 		comp = (device.comp_name or "").strip()
 		azure_filter = Q(device__hostname__iexact=comp)
+		if comp:
+			azure_filter |= Q(device__hostname__istartswith=f"{comp}.")
 		if "." in comp:
 			azure_filter |= Q(device__hostname__iexact=comp.split(".", 1)[0])
 		azure_qs = (

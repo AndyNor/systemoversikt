@@ -202,7 +202,7 @@
 			</p>
 			{% endif %}
 			<p>
-				Azure Defender ({{ azure_device_vulns_total }} treff på vertsnavn som matcher «{{ device.comp_name }}»{% if azure_device_vulns_total > 500 %}, viser 500 nyeste etter sist sett{% endif %}).
+				Azure Defender ({{ azure_device_vulns_total }} treff der vertsnavn matcher enhetsnavn som kort navn eller som FQDN som starter med «{{ device.comp_name }}.»{% if azure_device_vulns_total > 500 %}; viser 500 nyeste etter sist sett{% endif %}).
 			</p>
 			{% if azure_device_vulns %}
 			<table class="table table-sm tablesorter excel">
