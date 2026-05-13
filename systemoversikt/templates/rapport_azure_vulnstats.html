@@ -20,6 +20,10 @@ Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|dat
 
 Antall aktive sårbarheter totalt <h4>{{ data.count_active|intcomma }}</h4>
 <p><i>En sårbarhet telles for hver kombinasjon av enhet og CVE.</i></p>
+<p>
+	Antall enheter (med minst én registrert sårbarhet): <strong>{{ data.count_devices_with_vuln|intcomma }}</strong><br>
+	Antall unike CVE-er: <strong>{{ data.count_distinct_cves|intcomma }}</strong>
+</p>
 
 <hr>
 

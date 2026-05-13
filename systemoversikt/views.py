@@ -1256,7 +1256,7 @@ def azure_vulnstats(request):
 	except:
 		integrasjonsstatus = None
 
-	cache_version = "v11"
+	cache_version = "v12"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = f"azure_vulnstats:overview:{cache_version}:{cache_ts}"
 	data = cache.get(cache_key)
@@ -1318,8 +1318,15 @@ def azure_vulnstats(request):
 			vulns = row.get("vuln_count") or 0
 			row["avg_vulns_per_device"] = (vulns / devices) if devices else None
 
+		distinct_counts = active.aggregate(
+			devices_with_vuln=Count("device", distinct=True),
+			distinct_cves=Count("cve", distinct=True),
+		)
+
 		data = {
 			"count_active": active.count(),
+			"count_devices_with_vuln": distinct_counts["devices_with_vuln"] or 0,
+			"count_distinct_cves": distinct_counts["distinct_cves"] or 0,
 			"vendor_summary": list(
 				active.values("product_vendor", "product_name")
 				.annotate(
