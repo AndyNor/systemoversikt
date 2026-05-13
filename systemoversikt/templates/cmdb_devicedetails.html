@@ -153,90 +153,78 @@
 {% endif %}
 
 <br><hr>
-<h5 style="scroll-margin-top: 150px;" id="anchor_vuln">Sårbarheter</h5>
+<h5 style="scroll-margin-top: 150px;" id="anchor_vuln">Sårbarheter (CVE)</h5>
 {% if may_view_vulnerabilities %}
 	<div class="row">
-		<div class="col-12">
+		<div class="col-lg-6 pr-lg-3">
+			<h6>Qualys</h6>
 			{% if integrasjonsstatus_qualys %}
-			<p style="background-color: {{ integrasjonsstatus_qualys.color }};">
-				Qualys-sårbarheter ble sist synkronisert {{ integrasjonsstatus_qualys.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}
+			<p class="small mb-2" style="background-color: {{ integrasjonsstatus_qualys.color }};">
+				Sist synkronisert {{ integrasjonsstatus_qualys.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}
 			</p>
 			{% endif %}
-			<p>
-				Qualys ({{ qualys_vulns_total }} registrert{% if qualys_vulns_total > 500 %}, viser de 500 med høyest alvorlighetsgrad{% endif %}).
+			<p class="small text-muted mb-2">
+				{{ qualys_unique_cve_count }} unike CVE
+				{% if qualys_packages_total > 500 %}
+				(blant de {{ qualys_packages|length }} Qualys-funnene med høyest alvorlighetsgrad som vises; totalt {{ qualys_packages_total }} funn).
+				{% else %}
+				({{ qualys_packages_total }} Qualys-funn / «pakker»).
+				{% endif %}
 			</p>
-			{% if qualys_vulns %}
+			{% if qualys_packages %}
+			<div class="table-responsive">
 			<table class="table table-sm tablesorter excel">
 				<thead>
 					<tr>
-						<th>Beskrivelse</th>
-						<th>Alvorlighetsgrad</th>
-						<th>Kjent utnyttet?</th>
-						<th>Ansvar</th>
-						<th>Først sett</th>
-						<th>Resultat</th>
+						<th>Pakke (Qualys)</th>
+						<th class="text-end">Antall CVE</th>
+						<th>CVE-er (fra cve_info)</th>
 					</tr>
 				</thead>
 				<tbody>
-				{% for v in qualys_vulns %}
+				{% for row in qualys_packages %}
 				<tr>
-					<td>{{ v.title }}</td>
-					<td>
-						{% if v.severity == 4 %}🟡 alvorlig (4){% elif v.severity == 5 %}🔴 svært alvorlig (5){% else %}{{ v.severity }}{% endif %}
+					<td class="small">{{ row.title }}</td>
+					<td class="text-end">{{ row.cve_count }}</td>
+					<td class="small">
+						{% if row.cve_list %}
+						<ul class="mb-0 ps-3">
+							{% for c in row.cve_list %}<li>{{ c }}</li>{% endfor %}
+						</ul>
+						{% else %}
+						<span class="text-muted">—</span>
+						{% endif %}
 					</td>
-					<td>{{ v.known_exploited|yesno:"🔴 ja, nei" }}<br>{{ v.known_exploited_info|default:"" }}</td>
-					<td>{{ v.ansvar_basisdrift|yesno:"🖥️ basisdrift, 💾 applikasjonsdrift" }}</td>
-					<td>{{ v.first_seen|date:"Y-m-d"|default:"—" }}</td>
-					<td>{{ v.result|truncatechars:400 }}</td>
 				</tr>
 				{% endfor %}
 				</tbody>
 			</table>
+			</div>
 			{% else %}
-			<p>Ingen Qualys-sårbarheter er knyttet til denne enheten.</p>
+			<p class="small">Ingen Qualys-funn for denne enheten.</p>
 			{% endif %}
-
+		</div>
+		<div class="col-lg-6 pl-lg-3 mt-4 mt-lg-0">
+			<h6>Azure Defender</h6>
 			{% if integrasjonsstatus_azure %}
-			<p style="background-color: {{ integrasjonsstatus_azure.color }};">
-				Azure Defender-enhetssårbarheter ble sist synkronisert {{ integrasjonsstatus_azure.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}
+			<p class="small mb-2" style="background-color: {{ integrasjonsstatus_azure.color }};">
+				Sist synkronisert {{ integrasjonsstatus_azure.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}
 			</p>
 			{% endif %}
-			<p>
-				Azure Defender ({{ azure_device_vulns_total }} treff der vertsnavn matcher enhetsnavn som kort navn eller som FQDN som starter med «{{ device.comp_name }}.»{% if azure_device_vulns_total > 500 %}; viser 500 nyeste etter sist sett{% endif %}).
+			<p class="small text-muted mb-2">
+				{{ azure_cve_ids|length }} unike CVE
+				({{ azure_device_vulns_total }} rader; vertsnavn matcher «{{ device.comp_name }}» som kort navn eller FQDN som starter med «{{ device.comp_name }}.»).
 			</p>
-			{% if azure_device_vulns %}
-			<table class="table table-sm tablesorter excel">
-				<thead>
-					<tr>
-						<th>CVE</th>
-						<th>Produkt</th>
-						<th>Leverandør</th>
-						<th>Versjon</th>
-						<th>Alvorlighetsgrad</th>
-						<th>Først sett</th>
-						<th>Sist sett</th>
-					</tr>
-				</thead>
-				<tbody>
-				{% for av in azure_device_vulns %}
-				<tr>
-					<td>{{ av.cve.cve_id }}</td>
-					<td>{{ av.product_name }}</td>
-					<td>{{ av.product_vendor }}</td>
-					<td>{{ av.product_version }}</td>
-					<td>{{ av.severity }}</td>
-					<td>{{ av.first_seen|date:"Y-m-d" }}</td>
-					<td>{{ av.last_seen|date:"Y-m-d" }}</td>
-				</tr>
-				{% endfor %}
-				</tbody>
-			</table>
+			{% if azure_cve_ids %}
+			<ul class="small mb-0 ps-3">
+				{% for c in azure_cve_ids %}<li>{{ c }}</li>{% endfor %}
+			</ul>
 			{% else %}
-			<p>Ingen Azure Defender-sårbarheter funnet for dette vertsnavnet.</p>
+			<p class="small">Ingen Azure Defender-CVE for dette vertsnavnet.</p>
 			{% endif %}
-			<p><i>(Denne oversikten vises kun for medlemmer av AD-gruppen /DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER.)</i></p>
 		</div>
 	</div>
+	<p class="small mt-3 mb-0"><i>Denne oversikten vises kun for medlemmer av AD-gruppen /DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER.</i></p>
 {% else %}
 	<p>Sårbarheter vises kun for medlemmer av AD-gruppen /DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER.</p>
 {% endif %}

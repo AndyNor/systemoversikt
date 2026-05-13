@@ -44,6 +44,13 @@ def _azure_vulnstats_cache_slug(value):
 	return hashlib.md5(str(value).encode("utf-8")).hexdigest()
 
 
+def _cves_from_qualys_cve_info(cve_info):
+	"""Unique CVE IDs from Qualys cve_info (comma-separated and/or embedded in text)."""
+	if not cve_info:
+		return []
+	found = re.findall(r"CVE-\d{4}-\d+", str(cve_info), flags=re.IGNORECASE)
+	return sorted({m.upper() for m in found})
+
 
 def recent_errors(request):
 	required_permissions = ['systemoversikt.view_qualysvuln'] # en rettighet veldig få har
@@ -3497,9 +3504,10 @@ def cmdb_devicedetails(request, pk):
 
 	integrasjonsstatus_qualys = None
 	integrasjonsstatus_azure = None
-	qualys_vulns = []
-	qualys_vulns_total = 0
-	azure_device_vulns = []
+	qualys_packages = []
+	qualys_packages_total = 0
+	qualys_unique_cve_count = 0
+	azure_cve_ids = []
 	azure_device_vulns_total = 0
 	if may_view_vulnerabilities:
 		try:
@@ -3511,21 +3519,26 @@ def cmdb_devicedetails(request, pk):
 		except IntegrasjonKonfigurasjon.DoesNotExist:
 			pass
 		qualys_qs = device.qualys_vulnerabilities.order_by("-severity", "-first_seen")
-		qualys_vulns_total = qualys_qs.count()
-		qualys_vulns = list(qualys_qs[:500])
+		qualys_packages_total = qualys_qs.count()
+		qualys_unique = set()
+		for v in qualys_qs[:500]:
+			cves = _cves_from_qualys_cve_info(v.cve_info)
+			qualys_unique.update(cves)
+			qualys_packages.append({
+				"title": v.title,
+				"cve_count": len(cves),
+				"cve_list": cves,
+			})
+		qualys_unique_cve_count = len(qualys_unique)
 		comp = (device.comp_name or "").strip()
 		azure_filter = Q(device__hostname__iexact=comp)
 		if comp:
 			azure_filter |= Q(device__hostname__istartswith=f"{comp}.")
 		if "." in comp:
 			azure_filter |= Q(device__hostname__iexact=comp.split(".", 1)[0])
-		azure_qs = (
-			AzureDeviceVulnerability.objects.filter(azure_filter)
-			.select_related("cve", "device")
-			.order_by("-last_seen")
-		)
-		azure_device_vulns_total = azure_qs.count()
-		azure_device_vulns = list(azure_qs[:500])
+		azure_base = AzureDeviceVulnerability.objects.filter(azure_filter)
+		azure_device_vulns_total = azure_base.count()
+		azure_cve_ids = sorted(set(azure_base.values_list("cve__cve_id", flat=True)))
 
 	return render(request, 'cmdb_devicedetails.html', {
 		'request': request,
@@ -3534,9 +3547,10 @@ def cmdb_devicedetails(request, pk):
 		'may_view_vulnerabilities': may_view_vulnerabilities,
 		'integrasjonsstatus_qualys': integrasjonsstatus_qualys,
 		'integrasjonsstatus_azure': integrasjonsstatus_azure,
-		'qualys_vulns': qualys_vulns,
-		'qualys_vulns_total': qualys_vulns_total,
-		'azure_device_vulns': azure_device_vulns,
+		'qualys_packages': qualys_packages,
+		'qualys_packages_total': qualys_packages_total,
+		'qualys_unique_cve_count': qualys_unique_cve_count,
+		'azure_cve_ids': azure_cve_ids,
 		'azure_device_vulns_total': azure_device_vulns_total,
 	})
 
