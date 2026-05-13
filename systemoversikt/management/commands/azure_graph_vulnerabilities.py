@@ -5,8 +5,14 @@ import json
 import gzip
 import gc
 import requests
+from functools import reduce
+from operator import or_
 from datetime import timedelta, datetime
 from urllib.parse import urljoin, urlparse
+
+from collections import OrderedDict
+
+from django.db.models import Q
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -24,12 +30,74 @@ from systemoversikt.models import (
 )
 
 
+class _BoundedLRUDeviceVulnCache:
+    """
+    Holder (device_id, cve_id) -> AzureDeviceVulnerability med øvre grense.
+    Mest nylig brukte nøkler beholdes (LRU via OrderedDict); sjeldnere par kastes
+    ut av minnet og hentes igjen fra DB ved behov.
+    Nøkler i pinned_keys evikteres ikke (typisk nye rader før bulk_create).
+    """
+
+    __slots__ = ("_max", "_pinned", "_od")
+
+    def __init__(self, max_entries, pinned_keys):
+        self._max = max_entries
+        self._pinned = pinned_keys
+        self._od = OrderedDict()
+
+    def __contains__(self, key):
+        return key in self._od
+
+    def __len__(self):
+        return len(self._od)
+
+    def get(self, key, default=None):
+        if key not in self._od:
+            return default
+        self._od.move_to_end(key)
+        return self._od[key]
+
+    def __getitem__(self, key):
+        val = self._od[key]
+        self._od.move_to_end(key)
+        return val
+
+    def __setitem__(self, key, value):
+        if key in self._od:
+            del self._od[key]
+        self._od[key] = value
+        self._od.move_to_end(key)
+        self._evict_excess()
+
+    def merge_fetch_results(self, queryset_or_iterable):
+        for obj in queryset_or_iterable:
+            k = (obj.device_id, obj.cve_id)
+            if k in self._od:
+                del self._od[k]
+            self._od[k] = obj
+            self._od.move_to_end(k)
+        self._evict_excess()
+
+    def _evict_excess(self):
+        while len(self._od) > self._max:
+            victim = None
+            for k in self._od:
+                if k not in self._pinned:
+                    victim = k
+                    break
+            if victim is None:
+                break
+            del self._od[victim]
+
+
 class Command(BaseCommand):
     help = (
         "Import av Defender for Endpoint-sårbarheter. "
         "Med --source defender: først nedlasting av alle eksportfiler til disk, "
         "deretter innlasting av database og parsing (spar RAM under nedlasting). "
-        "Med --source local: les fra import/defender uten API-kall (nyttig etter feil)."
+        "Med --source local: les fra import/defender uten API-kall (nyttig etter feil). "
+        "AzureDeviceVulnerability slås opp i batch mot DB (mer CPU, mindre RAM enn full preload). "
+        "Oppslag caches i LRU (mest brukte par i RAM); eldre par hentes igjen fra DB ved behov."
     )
 
     _DEFENDER_TOKEN_SCOPE = "https://api.securitycenter.microsoft.com/.default"
@@ -73,6 +141,35 @@ class Command(BaseCommand):
         if host.endswith(".blob.storage.azure.net"):
             return False
         return True
+
+    _DV_LOOKUP_BATCH = 2000
+    _DV_OR_CHUNK = 300
+    _DV_CACHE_MAX_ENTRIES = 50_000
+
+    @classmethod
+    def _bulk_fetch_device_vulnerabilities(cls, dvs, keys):
+        """
+        Last inn eksisterende AzureDeviceVulnerability-rader for oppgitte nøkler.
+        Bruker OR-spørringer i mindre biter (CPU/DB) i stedet for å holde hele
+        tabellen i RAM.
+        """
+        if not keys:
+            return
+        seen = [k for k in dict.fromkeys(keys) if k not in dvs]
+        if not seen:
+            return
+        for i in range(0, len(seen), cls._DV_OR_CHUNK):
+            chunk = seen[i : i + cls._DV_OR_CHUNK]
+            q = reduce(or_, (Q(device_id=d, cve_id=c) for d, c in chunk))
+            qs = AzureDeviceVulnerability.objects.filter(q).only(
+                "id",
+                "device_id",
+                "cve_id",
+                "last_seen",
+                "severity",
+                "status",
+            )
+            dvs.merge_fetch_results(qs)
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -294,18 +391,17 @@ class Command(BaseCommand):
                         file_paths.append(os.path.join(local_dir, name))
 
             self._say(
-                "Fase 2 — database: henter AzureDevice, CVE og "
-                "AzureDeviceVulnerability (kan ta lang tid ved store tabeller)…"
+                "Fase 2 — database: henter AzureDevice og CVE. "
+                "AzureDeviceVulnerability hentes i batch under import (mer CPU/DB, mindre RAM)."
             )
             devices = {d.device_id: d for d in AzureDevice.objects.all()}
-            cves = {c.cve_id: c for c in CVE.objects.all()}
-            dvs = {
-                (dv.device_id, dv.cve_id): dv
-                for dv in AzureDeviceVulnerability.objects.all()
-            }
+            cves = {c.cve_id: c for c in CVE.objects.defer("description")}
+            dv_pin_keys = set()
+            dvs = _BoundedLRUDeviceVulnCache(self._DV_CACHE_MAX_ENTRIES, dv_pin_keys)
             self._say(
-                f"DB-oppslag ferdig: {len(devices)} enheter, {len(cves)} CVE, "
-                f"{len(dvs)} eksisterende enhet+sårbarhet-koblinger."
+                f"DB-grunnlag: {len(devices)} enheter, {len(cves)} CVE; "
+                f"koblinger i LRU-cache (maks {self._DV_CACHE_MAX_ENTRIES} oppslag i RAM, "
+                f"batch-henting ca {self._DV_LOOKUP_BATCH} nøkler)."
             )
 
             devices_to_create = []
@@ -314,6 +410,7 @@ class Command(BaseCommand):
             dvs_to_update = []
 
             processed = 0
+            dv_pending = set()
 
             self._say(f"Fase 3 — import: {len(file_paths)} fil(er) fra disk…")
 
@@ -344,7 +441,8 @@ class Command(BaseCommand):
                     if lines_seen % 100_000 == 0:
                         self._say(
                             f"  … {lines_seen} JSON-linjer lest i fil {idx}, "
-                            f"{processed} poster behandlet så langt i kjøringen …"
+                            f"{processed} poster behandlet så langt i kjøringen "
+                            f"(dv-cache {len(dvs)}/{self._DV_CACHE_MAX_ENTRIES}) …"
                         )
                     if SOURCE == "local" and not use_graph_json:
                         device_id = r.get("DeviceId")
@@ -428,6 +526,16 @@ class Command(BaseCommand):
                         cves_to_create.append(cve)
 
                     key = (device_id, cve_id)
+                    if key not in dvs:
+                        dv_pending.add(key)
+                    if len(dv_pending) >= self._DV_LOOKUP_BATCH:
+                        self._bulk_fetch_device_vulnerabilities(dvs, list(dv_pending))
+                        dv_pending.clear()
+                    if key not in dvs:
+                        self._bulk_fetch_device_vulnerabilities(
+                            dvs, list(dv_pending | {key})
+                        )
+                        dv_pending.clear()
                     dv = dvs.get(key)
 
                     if not dv:
@@ -444,6 +552,7 @@ class Command(BaseCommand):
                             last_seen=last_seen,
                         )
                         dvs_to_create.append(new_dv)
+                        dv_pin_keys.add(key)
                         dvs[key] = new_dv   # ✅ CRITICAL FIX
                     else:
                         dv.last_seen = last_seen
@@ -457,7 +566,17 @@ class Command(BaseCommand):
                         len(dvs_to_create) >= 5000
                         or len(dvs_to_update) >= 5000
                     ):
-                        self.flush(devices_to_create, cves_to_create, dvs_to_create, dvs_to_update)
+                        self.flush(
+                            devices_to_create,
+                            cves_to_create,
+                            dvs_to_create,
+                            dvs_to_update,
+                            dv_pin_keys,
+                        )
+
+                if dv_pending:
+                    self._bulk_fetch_device_vulnerabilities(dvs, list(dv_pending))
+                    dv_pending.clear()
 
                 self._say(
                     f"  Ferdig med fil {idx}/{len(file_paths)}: {lines_seen} linjer, "
@@ -465,7 +584,17 @@ class Command(BaseCommand):
                 )
                 gc.collect()
 
-            self.flush(devices_to_create, cves_to_create, dvs_to_create, dvs_to_update)
+            if dv_pending:
+                self._bulk_fetch_device_vulnerabilities(dvs, list(dv_pending))
+                dv_pending.clear()
+
+            self.flush(
+                devices_to_create,
+                cves_to_create,
+                dvs_to_create,
+                dvs_to_update,
+                dv_pin_keys,
+            )
 
             resolved = AzureDeviceVulnerability.objects.filter(
                 status="active",
@@ -514,7 +643,7 @@ class Command(BaseCommand):
         except Exception:
             return default
 
-    def flush(self, devices, cves, create, update):
+    def flush(self, devices, cves, create, update, dv_pin_keys=None):
         with transaction.atomic():
             if devices:
                 AzureDevice.objects.bulk_create(
@@ -529,9 +658,13 @@ class Command(BaseCommand):
                 cves.clear()
 
             if create:
+                to_create = list(create)
                 AzureDeviceVulnerability.objects.bulk_create(
-                    create, batch_size=2000
+                    to_create, batch_size=2000
                 )
+                if dv_pin_keys is not None:
+                    for obj in to_create:
+                        dv_pin_keys.discard((obj.device_id, obj.cve_id))
                 create.clear()
 
             if update:
