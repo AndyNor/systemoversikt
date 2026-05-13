@@ -25,7 +25,12 @@ from systemoversikt.models import (
 
 
 class Command(BaseCommand):
-    help = "Import of Defender for Endpoint vulnerabilities (defender API or local disk)"
+    help = (
+        "Import av Defender for Endpoint-sårbarheter. "
+        "Med --source defender: først nedlasting av alle eksportfiler til disk, "
+        "deretter innlasting av database og parsing (spar RAM under nedlasting). "
+        "Med --source local: les fra import/defender uten API-kall (nyttig etter feil)."
+    )
 
     _DEFENDER_TOKEN_SCOPE = "https://api.securitycenter.microsoft.com/.default"
 
@@ -74,6 +79,7 @@ class Command(BaseCommand):
             "--source",
             choices=["defender", "local"],
             default="defender",
+            help="defender: API + lagre alle filer lokalt før import. local: kun filer under import/defender.",
         )
         parser.add_argument(
             "--ignore-schedule",
@@ -145,28 +151,7 @@ class Command(BaseCommand):
                 int_config.save()
                 return
 
-            self._say(
-                "Henter AzureDevice, CVE og AzureDeviceVulnerability fra databasen "
-                "(store tabeller kan gjøre dette stille i mange minutter uten annen utskrift)…"
-            )
-            devices = {d.device_id: d for d in AzureDevice.objects.all()}
-            cves = {c.cve_id: c for c in CVE.objects.all()}
-            dvs = {
-                (dv.device_id, dv.cve_id): dv
-                for dv in AzureDeviceVulnerability.objects.all()
-            }
-            self._say(
-                f"DB-oppslag ferdig: {len(devices)} enheter, {len(cves)} CVE, "
-                f"{len(dvs)} eksisterende enhet+sårbarhet-koblinger."
-            )
-
-            devices_to_create = []
-            cves_to_create = []
-            dvs_to_create = []
-            dvs_to_update = []
-
-            processed = 0
-            files = []
+            file_paths = []
 
             if SOURCE == "defender":
                 self._say("Defender API: henter applikasjonstoken…")
@@ -221,7 +206,7 @@ class Command(BaseCommand):
                             poll_url, headers=poll_headers, timeout=60
                         )
                         if poll.status_code == 200:
-                            files = self._export_urls_from_api_payload(poll.json())
+                            export_urls = self._export_urls_from_api_payload(poll.json())
                             self._say(f"  Eksport klar (HTTP 200) etter {attempt + 1} forsøk.")
                             break
                         if poll.status_code in (401, 403):
@@ -242,7 +227,7 @@ class Command(BaseCommand):
                     else:
                         raise TimeoutError("Tidsavbrudd ved Defender-eksport")
                 elif start.status_code == 200:
-                    files = self._export_urls_from_api_payload(start.json())
+                    export_urls = self._export_urls_from_api_payload(start.json())
                     self._say("Eksport klar umiddelbart (HTTP 200).")
                 else:
                     raise RuntimeError(start.text)
@@ -251,34 +236,25 @@ class Command(BaseCommand):
                 os.makedirs(local_dir, exist_ok=True)
                 self._clear_previous_snapshot_exports(local_dir)
 
-            else:
-                local_dir = self._defender_import_dir()
-                self._say(f"Lokal kilde: leser katalog {local_dir} …")
+                if not export_urls:
+                    raise RuntimeError(
+                        "Defender-eksport ga ingen fil-URL-er (exportFiles/value er tom). "
+                        "Ingenting å laste ned."
+                    )
 
-                if not os.path.isdir(local_dir):
-                    raise RuntimeError(f"Local import directory mangler: {local_dir}")
-
-                for name in sorted(os.listdir(local_dir)):
-                    lower = name.lower()
-                    if lower.endswith(".json.gz") or lower.endswith(".gz"):
-                        files.append(os.path.join(local_dir, name))
-                    elif name.endswith(".json"):
-                        files.append(os.path.join(local_dir, name))
-
-            self._say(f"Antall filer å prosessere: {len(files)}")
-
-            for idx, item in enumerate(files, start=1):
-                self._say(f"Prosesserer fil {idx}/{len(files)}")
-
-                if SOURCE == "defender":
-                    self._say(f"  Nedlasting fra eksport-URL (kan ta lang tid) …")
-                    resp = requests.get(item, stream=True, timeout=300)
+                self._say(
+                    f"Fase 1 — nedlasting: {len(export_urls)} fil(er) til {local_dir} "
+                    "(ingen database-cache i RAM ennå)…"
+                )
+                for idx, url in enumerate(export_urls, start=1):
+                    self._say(f"  Nedlasting {idx}/{len(export_urls)} …")
+                    resp = requests.get(url, stream=True, timeout=300)
                     try:
                         resp.raise_for_status()
                     except requests.HTTPError as exc:
-                        host = (urlparse(item).hostname or "") if item else ""
+                        host = (urlparse(url).hostname or "") if url else ""
                         raise RuntimeError(
-                            f"Nedlasting feilet for fil {idx}/{len(files)} (HTTP {resp.status_code}). "
+                            f"Nedlasting feilet for fil {idx}/{len(export_urls)} (HTTP {resp.status_code}). "
                             f"Vert: {host!r}. "
                             "Eksport-URL-er er tidsbegrensede SAS fra Microsoft; ved mange filer eller "
                             "lang total nedlasting kan de utløpe — kjør kommandoen på nytt (sasValidHours=6 "
@@ -291,29 +267,77 @@ class Command(BaseCommand):
                         for chunk in resp.iter_content(chunk_size=1024 * 1024):
                             if chunk:
                                 out.write(chunk)
+                    file_paths.append(save_path)
                     self._say(f"  Lagret: {save_path}")
+
+                if not file_paths:
+                    raise RuntimeError(
+                        "Defender-eksport inneholdt ingen nedlastbare fil-URL-er "
+                        "(sjekk exportFiles/value i API-svaret)."
+                    )
+
+            else:
+                local_dir = self._defender_import_dir()
+                self._say(
+                    f"Lokal kilde (--source local): leser katalog {local_dir} "
+                    "(ingen API-kall til Microsoft)…"
+                )
+
+                if not os.path.isdir(local_dir):
+                    raise RuntimeError(f"Local import directory mangler: {local_dir}")
+
+                for name in sorted(os.listdir(local_dir)):
+                    lower = name.lower()
+                    if lower.endswith(".json.gz") or lower.endswith(".gz"):
+                        file_paths.append(os.path.join(local_dir, name))
+                    elif name.endswith(".json"):
+                        file_paths.append(os.path.join(local_dir, name))
+
+            self._say(
+                "Fase 2 — database: henter AzureDevice, CVE og "
+                "AzureDeviceVulnerability (kan ta lang tid ved store tabeller)…"
+            )
+            devices = {d.device_id: d for d in AzureDevice.objects.all()}
+            cves = {c.cve_id: c for c in CVE.objects.all()}
+            dvs = {
+                (dv.device_id, dv.cve_id): dv
+                for dv in AzureDeviceVulnerability.objects.all()
+            }
+            self._say(
+                f"DB-oppslag ferdig: {len(devices)} enheter, {len(cves)} CVE, "
+                f"{len(dvs)} eksisterende enhet+sårbarhet-koblinger."
+            )
+
+            devices_to_create = []
+            cves_to_create = []
+            dvs_to_create = []
+            dvs_to_update = []
+
+            processed = 0
+
+            self._say(f"Fase 3 — import: {len(file_paths)} fil(er) fra disk…")
+
+            for idx, item in enumerate(file_paths, start=1):
+                self._say(
+                    f"Prosesserer fil {idx}/{len(file_paths)} — {os.path.basename(item)}"
+                )
+
+                use_graph_json = item.lower().endswith(".gz")
+                if use_graph_json:
                     self._say(
-                        "  Leser gzip (JSONL) og matcher mot minne-cache — "
-                        "ved OOM («Killed») trengs ofte mer RAM eller oftere flush til DB."
+                        "  Leser gzip (JSONL) — ved OOM («Killed») trengs ofte mer RAM "
+                        "eller færre rader i DB-cache."
                     )
                     record_iter = (
                         json.loads(line.decode("utf-8"))
-                        for line in gzip.open(save_path, "rb")
+                        for line in gzip.open(item, "rb")
                     )
-                    use_graph_json = False
                 else:
-                    use_graph_json = item.lower().endswith(".gz")
-                    if use_graph_json:
-                        record_iter = (
-                            json.loads(line.decode("utf-8"))
-                            for line in gzip.open(item, "rb")
-                        )
-                    else:
-                        with open(item, "r", encoding="utf-8") as fh:
-                            payload = json.load(fh)
-                        record_iter = payload.get("value", [])
+                    with open(item, "r", encoding="utf-8") as fh:
+                        payload = json.load(fh)
+                    record_iter = payload.get("value", [])
 
-                self._say(f"  Prosesserer innhold for fil {idx}/{len(files)} …")
+                self._say(f"  Prosesserer innhold …")
                 lines_seen = 0
                 for r in record_iter:
                     lines_seen += 1
@@ -436,7 +460,7 @@ class Command(BaseCommand):
                         self.flush(devices_to_create, cves_to_create, dvs_to_create, dvs_to_update)
 
                 self._say(
-                    f"  Ferdig med fil {idx}/{len(files)}: {lines_seen} linjer, "
+                    f"  Ferdig med fil {idx}/{len(file_paths)}: {lines_seen} linjer, "
                     f"{processed} poster totalt i kjøringen til nå."
                 )
                 gc.collect()
@@ -452,7 +476,7 @@ class Command(BaseCommand):
 
             msg = (
                 f"source={SOURCE}, ignore_schedule={IGNORE_SCHEDULE}, "
-                f"files={len(files)}, processed={processed}, "
+                f"files={len(file_paths)}, processed={processed}, "
                 f"resolved={resolved}, runtime={runtime}s"
             )
 
