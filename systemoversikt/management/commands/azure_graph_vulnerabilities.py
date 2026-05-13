@@ -5,6 +5,7 @@ import json
 import gzip
 import requests
 from datetime import timedelta, datetime
+from urllib.parse import urljoin, urlparse
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -24,6 +25,8 @@ from systemoversikt.models import (
 
 class Command(BaseCommand):
     help = "Import of Defender for Endpoint vulnerabilities (defender API or local disk)"
+
+    _DEFENDER_TOKEN_SCOPE = "https://api.securitycenter.microsoft.com/.default"
 
     @staticmethod
     def _defender_import_dir():
@@ -48,6 +51,22 @@ class Command(BaseCommand):
                     os.remove(os.path.join(local_dir, name))
                 except OSError:
                     pass
+
+    @staticmethod
+    def _defender_url_needs_bearer_only(url):
+        """
+        Azure Storage-URLer (Blob/DFS) bruker ofte SAS i query-strengen.
+        Da skal man ikke sende Authorization: Bearer — Azure svarer da typisk
+        HTTP 403 «Server failed to authenticate the request».
+        """
+        host = (urlparse(url).hostname or "").lower()
+        if ".blob.core.windows.net" in host:
+            return False
+        if ".dfs.core.windows.net" in host:
+            return False
+        if host.endswith(".blob.storage.azure.net"):
+            return False
+        return True
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -156,9 +175,7 @@ class Command(BaseCommand):
                     client_secret=os.environ["AZURE_ENTERPRISEAPP_SECRET"],
                 )
 
-                token = credential.get_token(
-                    "https://api.securitycenter.microsoft.com/.default"
-                ).token
+                token = credential.get_token(self._DEFENDER_TOKEN_SCOPE).token
 
                 headers = {
                     "Authorization": f"Bearer {token}",
@@ -172,6 +189,7 @@ class Command(BaseCommand):
                 start = requests.get(
                     "https://api.security.microsoft.com/api/machines/SoftwareVulnerabilitiesExport",
                     headers=headers,
+                    params={"sasValidHours": 6},
                     timeout=60,
                 )
                 self._say(f"Defender API: første svar HTTP {start.status_code}.")
@@ -180,17 +198,46 @@ class Command(BaseCommand):
                     poll_url = start.headers.get("Location")
                     if not poll_url:
                         raise RuntimeError("HTTP 202 men mangler Location-header for polling")
+                    if poll_url.startswith("/"):
+                        poll_url = urljoin(start.url, poll_url)
                     self._say(
                         "Eksport er satt i kø (202). Poller hvert 5. sekund, inntil 60 forsøk (~5 min)…"
                     )
                     for attempt in range(60):
                         self._say(f"  Poller eksport, forsøk {attempt + 1}/60 …")
                         time.sleep(5)
-                        poll = requests.get(poll_url, headers=headers, timeout=60)
+                        if self._defender_url_needs_bearer_only(poll_url):
+                            token = credential.get_token(
+                                self._DEFENDER_TOKEN_SCOPE
+                            ).token
+                            poll_headers = {
+                                "Authorization": f"Bearer {token}",
+                                "Accept": "application/json",
+                            }
+                        else:
+                            poll_headers = None
+                        poll = requests.get(
+                            poll_url, headers=poll_headers, timeout=60
+                        )
                         if poll.status_code == 200:
                             files = self._export_urls_from_api_payload(poll.json())
                             self._say(f"  Eksport klar (HTTP 200) etter {attempt + 1} forsøk.")
                             break
+                        if poll.status_code in (401, 403):
+                            if self._defender_url_needs_bearer_only(poll_url):
+                                hint = (
+                                    "Sjekk app-tilgang (Vulnerability.Read.All), utløpt token eller rate limits."
+                                )
+                            else:
+                                hint = (
+                                    "Blob-URL med SAS: sjekk utløpt signatur (se), nettverk eller IP-restriksjoner."
+                                )
+                            raise RuntimeError(
+                                "Defender-eksport: HTTP "
+                                f"{poll.status_code} under polling. Vert: "
+                                f"{(urlparse(poll_url).hostname or '?')!r}. {hint} "
+                                f"Svar (utdrag): {poll.text[:800]!r}"
+                            )
                     else:
                         raise TimeoutError("Tidsavbrudd ved Defender-eksport")
                 elif start.status_code == 200:
@@ -225,7 +272,18 @@ class Command(BaseCommand):
                 if SOURCE == "defender":
                     self._say(f"  Nedlasting fra eksport-URL (kan ta lang tid) …")
                     resp = requests.get(item, stream=True, timeout=300)
-                    resp.raise_for_status()
+                    try:
+                        resp.raise_for_status()
+                    except requests.HTTPError as exc:
+                        host = (urlparse(item).hostname or "") if item else ""
+                        raise RuntimeError(
+                            f"Nedlasting feilet for fil {idx}/{len(files)} (HTTP {resp.status_code}). "
+                            f"Vert: {host!r}. "
+                            "Eksport-URL-er er tidsbegrensede SAS fra Microsoft; ved mange filer eller "
+                            "lang total nedlasting kan de utløpe — kjør kommandoen på nytt (sasValidHours=6 "
+                            "er satt for å forlenge vinduet). "
+                            f"Detalj: {exc}"
+                        ) from exc
                     save_name = f"vulnerabilities_{idx:03d}.json.gz"
                     save_path = os.path.join(local_dir, save_name)
                     with open(save_path, "wb") as out:
