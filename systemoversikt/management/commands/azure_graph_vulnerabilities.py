@@ -60,20 +60,25 @@ class Command(BaseCommand):
             action="store_true",
         )
 
+    def _say(self, message):
+        """Skriv til stdout og tøm buffer med én gang (viktig når stdout ikke er TTY)."""
+        self.stdout.write(message)
+        self.stdout.flush()
+
     def _print_run_options(self, script_navn, start_ts, options):
         """Skriv CLI-valg til stdout ved hver kjøring (også ved tidlig avbrudd/feil)."""
-        self.stdout.write(f"[{start_ts}] Starter {script_navn}")
-        self.stdout.write("Kjøreparametere:")
-        self.stdout.write(
+        self._say(f"[{start_ts}] Starter {script_navn}")
+        self._say("Kjøreparametere:")
+        self._say(
             f"  --source={options['source']!r}   "
             f"(defender=hent fra API, local=les fra import/defender på disk; default: defender)"
         )
-        self.stdout.write(
+        self._say(
             f"  --ignore-schedule={options['ignore_schedule']!r}   "
             f"(True=kjør uansett ukedag; False=Defender-kilde følger søndagsregel)"
         )
         if "verbosity" in options:
-            self.stdout.write(f"  verbosity={options['verbosity']!r}")
+            self._say(f"  verbosity={options['verbosity']!r}")
 
     def handle(self, **options):
         SCRIPT_NAVN = os.path.basename(__file__)
@@ -104,10 +109,12 @@ class Command(BaseCommand):
         int_config.sist_status = f"source={SOURCE}, ignore_schedule={IGNORE_SCHEDULE}"
         int_config.save()
 
+        self._say("Integrasjonskonfigurasjon oppdatert. Fortsetter…")
+
         try:
             if SOURCE == "defender" and not IGNORE_SCHEDULE and start_ts.weekday() != 6:
                 msg = "Skippet: Defender-kjøring kun tillatt søndag"
-                self.stdout.write(msg)
+                self._say(msg)
                 ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=msg)
                 # This is not an error; the job is intentionally only scheduled weekly.
                 # Keep health green so admin status doesn't flap on skipped days.
@@ -118,12 +125,20 @@ class Command(BaseCommand):
                 int_config.save()
                 return
 
+            self._say(
+                "Henter AzureDevice, CVE og AzureDeviceVulnerability fra databasen "
+                "(store tabeller kan gjøre dette stille i mange minutter uten annen utskrift)…"
+            )
             devices = {d.device_id: d for d in AzureDevice.objects.all()}
             cves = {c.cve_id: c for c in CVE.objects.all()}
             dvs = {
                 (dv.device_id, dv.cve_id): dv
                 for dv in AzureDeviceVulnerability.objects.all()
             }
+            self._say(
+                f"DB-oppslag ferdig: {len(devices)} enheter, {len(cves)} CVE, "
+                f"{len(dvs)} eksisterende enhet+sårbarhet-koblinger."
+            )
 
             devices_to_create = []
             cves_to_create = []
@@ -134,6 +149,7 @@ class Command(BaseCommand):
             files = []
 
             if SOURCE == "defender":
+                self._say("Defender API: henter applikasjonstoken…")
                 credential = ClientSecretCredential(
                     tenant_id=os.environ["AZURE_TENANT_ID"],
                     client_id=os.environ["AZURE_ENTERPRISEAPP_CLIENT"],
@@ -149,24 +165,37 @@ class Command(BaseCommand):
                     "Accept": "application/json",
                 }
 
+                self._say(
+                    "Defender API: kaller SoftwareVulnerabilitiesExport "
+                    "(første svar kan ta tid)…"
+                )
                 start = requests.get(
                     "https://api.security.microsoft.com/api/machines/SoftwareVulnerabilitiesExport",
                     headers=headers,
                     timeout=60,
                 )
+                self._say(f"Defender API: første svar HTTP {start.status_code}.")
 
                 if start.status_code == 202:
                     poll_url = start.headers.get("Location")
-                    for _ in range(60):
+                    if not poll_url:
+                        raise RuntimeError("HTTP 202 men mangler Location-header for polling")
+                    self._say(
+                        "Eksport er satt i kø (202). Poller hvert 5. sekund, inntil 60 forsøk (~5 min)…"
+                    )
+                    for attempt in range(60):
+                        self._say(f"  Poller eksport, forsøk {attempt + 1}/60 …")
                         time.sleep(5)
                         poll = requests.get(poll_url, headers=headers, timeout=60)
                         if poll.status_code == 200:
                             files = self._export_urls_from_api_payload(poll.json())
+                            self._say(f"  Eksport klar (HTTP 200) etter {attempt + 1} forsøk.")
                             break
                     else:
                         raise TimeoutError("Tidsavbrudd ved Defender-eksport")
                 elif start.status_code == 200:
                     files = self._export_urls_from_api_payload(start.json())
+                    self._say("Eksport klar umiddelbart (HTTP 200).")
                 else:
                     raise RuntimeError(start.text)
 
@@ -176,6 +205,7 @@ class Command(BaseCommand):
 
             else:
                 local_dir = self._defender_import_dir()
+                self._say(f"Lokal kilde: leser katalog {local_dir} …")
 
                 if not os.path.isdir(local_dir):
                     raise RuntimeError(f"Local import directory mangler: {local_dir}")
@@ -187,12 +217,13 @@ class Command(BaseCommand):
                     elif name.endswith(".json"):
                         files.append(os.path.join(local_dir, name))
 
-            print(f"Antall filer å prosessere: {len(files)}")
+            self._say(f"Antall filer å prosessere: {len(files)}")
 
             for idx, item in enumerate(files, start=1):
-                print(f"Prosesserer fil {idx}/{len(files)}")
+                self._say(f"Prosesserer fil {idx}/{len(files)}")
 
                 if SOURCE == "defender":
+                    self._say(f"  Nedlasting fra eksport-URL (kan ta lang tid) …")
                     resp = requests.get(item, stream=True, timeout=300)
                     resp.raise_for_status()
                     save_name = f"vulnerabilities_{idx:03d}.json.gz"
@@ -201,7 +232,7 @@ class Command(BaseCommand):
                         for chunk in resp.iter_content(chunk_size=1024 * 1024):
                             if chunk:
                                 out.write(chunk)
-                    print(f"  Lagret: {save_path}")
+                    self._say(f"  Lagret: {save_path}")
                     record_iter = (
                         json.loads(line.decode("utf-8"))
                         for line in gzip.open(save_path, "rb")
@@ -354,7 +385,7 @@ class Command(BaseCommand):
             int_config.dato_sist_oppdatert = start_ts
             int_config.save()
 
-            print(msg)
+            self._say(msg)
 
         except Exception as e:
             msg = f"{SCRIPT_NAVN} feilet: {e}"
@@ -363,6 +394,7 @@ class Command(BaseCommand):
             int_config.sist_status = msg
             int_config.save()
             push_pushover(msg)
+            self._say(msg)
             raise
 
     def _parse_ts(self, value, default):
