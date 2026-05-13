@@ -51,7 +51,7 @@
 	{% for item in cmdbref %}
 		<tr {% if item.operational_status == 0 %} style="text-decoration: line-through; opacity: 30%;" {% endif %}>
 
-			<td><a href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ </a></a>{{ item.parent_ref.navn|default:'?' }}</td>
+			<td><a href="/admin/systemoversikt/cmdbbs/{{ item.parent_ref.pk }}/change/">✎ </a>{{ item.parent_ref.navn|default:'?' }}</td>
 			<td>
 				<a href="{% url 'cmdb_bss' pk=item.pk %}">{{ item.navn }}</a>
 			</td>
@@ -88,11 +88,19 @@
 				{{ item.service_classification|default:"" }}
 			</td>
 			<td>
-				{{ item.ant_devices }}<br>
-				{% for server in item.servers.all|slice:":3" %}{{ server }}<br>{% endfor %}
-				{% if item.servers.all|length > 3 %}...{% endif %}
+				<p class="mb-1"><strong>{{ item.server_count|intcomma }}</strong></p>
+				{% if item.server_count %}
+				<ul class="mb-0 ps-3 small">
+					{% for server in item.servers.all|slice:":3" %}
+					<li>{{ server }}</li>
+					{% endfor %}
+				</ul>
+				{% if item.server_count > 3 %}
+				<p class="small text-muted mb-0">…</p>
+				{% endif %}
+				{% endif %}
 			</td>
-			<td>{{ item.ant_databaser }}</td>
+			<td>{{ item.database_count|intcomma }}</td>
 			<td>
 				{{ item.backup_size|filesizeformat }}
 			</td>

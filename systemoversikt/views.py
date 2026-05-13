@@ -9404,13 +9404,39 @@ def cmdb_bs_detaljer(request):
 
 	search_term = request.GET.get('search_term', "").strip()
 
-	if search_term == "__all__":
-		cmdbref = CMDBRef.objects.all().order_by("parent_ref__navn", Lower("navn")) # vis også skjulte
-	elif len(search_term) < 1:
-		cmdbref = CMDBRef.objects.filter(operational_status=True, parent_ref__eksponert_for_bruker=True).order_by("parent_ref__navn", Lower("navn"))
-	else:
-		cmdbref = CMDBRef.objects.filter(Q(navn__icontains=search_term) | Q(parent_ref__navn__icontains=search_term))
+	cmdbref_qs = CMDBRef.objects.select_related("parent_ref").prefetch_related(
+		Prefetch(
+			"system",
+			queryset=System.objects.select_related(
+				"systemforvalter",
+				"systemforvalter_avdeling_referanse",
+				"driftsmodell_foreignkey",
+			).prefetch_related("systemtyper"),
+		),
+		Prefetch(
+			"servers",
+			queryset=CMDBdevice.objects.only("id", "comp_name").order_by("comp_name"),
+		),
+	).annotate(
+		server_count=Count("servers", distinct=True),
+		database_count=Count(
+			"cmdbdatabase_sub_name",
+			filter=Q(cmdbdatabase_sub_name__db_operational_status=True),
+			distinct=True,
+		),
+	)
 
+	if search_term == "__all__":
+		cmdbref = cmdbref_qs.order_by("parent_ref__navn", Lower("navn"))
+	elif len(search_term) < 1:
+		cmdbref = cmdbref_qs.filter(
+			operational_status=True,
+			parent_ref__eksponert_for_bruker=True,
+		).order_by("parent_ref__navn", Lower("navn"))
+	else:
+		cmdbref = cmdbref_qs.filter(
+			Q(navn__icontains=search_term) | Q(parent_ref__navn__icontains=search_term)
+		).order_by("parent_ref__navn", Lower("navn"))
 
 	return render(request, 'cmdb_bs_detaljer.html', {
 		'request': request,
