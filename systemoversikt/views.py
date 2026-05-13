@@ -49,7 +49,21 @@ def _cves_from_qualys_cve_info(cve_info):
 	if not cve_info:
 		return []
 	found = re.findall(r"CVE-\d{4}-\d+", str(cve_info), flags=re.IGNORECASE)
-	return sorted({m.upper() for m in found})
+	return {m.upper() for m in found}
+
+
+_CVE_YEAR_NUM = re.compile(r"^CVE-(\d{4})-(\d+)$", re.IGNORECASE)
+
+
+def _cve_sort_key_newest_first(cve_id):
+	m = _CVE_YEAR_NUM.match((cve_id or "").strip())
+	if m:
+		return (int(m.group(1)), int(m.group(2)))
+	return (0, 0)
+
+
+def _sort_cve_ids_newest_first(cve_ids):
+	return sorted(cve_ids, key=_cve_sort_key_newest_first, reverse=True)
 
 
 def recent_errors(request):
@@ -3504,11 +3518,11 @@ def cmdb_devicedetails(request, pk):
 
 	integrasjonsstatus_qualys = None
 	integrasjonsstatus_azure = None
-	qualys_packages = []
-	qualys_packages_total = 0
-	qualys_unique_cve_count = 0
+	qualys_cve_ids = []
+	qualys_funn_total = 0
 	azure_cve_ids = []
 	azure_device_vulns_total = 0
+	cve_both_sources = frozenset()
 	if may_view_vulnerabilities:
 		try:
 			integrasjonsstatus_qualys = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
@@ -3518,18 +3532,10 @@ def cmdb_devicedetails(request, pk):
 			integrasjonsstatus_azure = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
 		except IntegrasjonKonfigurasjon.DoesNotExist:
 			pass
-		qualys_qs = device.qualys_vulnerabilities.order_by("-severity", "-first_seen")
-		qualys_packages_total = qualys_qs.count()
+		qualys_funn_total = device.qualys_vulnerabilities.count()
 		qualys_unique = set()
-		for v in qualys_qs[:500]:
-			cves = _cves_from_qualys_cve_info(v.cve_info)
-			qualys_unique.update(cves)
-			qualys_packages.append({
-				"title": v.title,
-				"cve_count": len(cves),
-				"cve_list": cves,
-			})
-		qualys_unique_cve_count = len(qualys_unique)
+		for cve_info in device.qualys_vulnerabilities.values_list("cve_info", flat=True):
+			qualys_unique.update(_cves_from_qualys_cve_info(cve_info))
 		comp = (device.comp_name or "").strip()
 		azure_filter = Q(device__hostname__iexact=comp)
 		if comp:
@@ -3538,7 +3544,10 @@ def cmdb_devicedetails(request, pk):
 			azure_filter |= Q(device__hostname__iexact=comp.split(".", 1)[0])
 		azure_base = AzureDeviceVulnerability.objects.filter(azure_filter)
 		azure_device_vulns_total = azure_base.count()
-		azure_cve_ids = sorted(set(azure_base.values_list("cve__cve_id", flat=True)))
+		azure_unique = {x.upper() for x in azure_base.values_list("cve__cve_id", flat=True) if x}
+		cve_both_sources = frozenset(qualys_unique & azure_unique)
+		qualys_cve_ids = _sort_cve_ids_newest_first(qualys_unique)
+		azure_cve_ids = _sort_cve_ids_newest_first(azure_unique)
 
 	return render(request, 'cmdb_devicedetails.html', {
 		'request': request,
@@ -3547,11 +3556,11 @@ def cmdb_devicedetails(request, pk):
 		'may_view_vulnerabilities': may_view_vulnerabilities,
 		'integrasjonsstatus_qualys': integrasjonsstatus_qualys,
 		'integrasjonsstatus_azure': integrasjonsstatus_azure,
-		'qualys_packages': qualys_packages,
-		'qualys_packages_total': qualys_packages_total,
-		'qualys_unique_cve_count': qualys_unique_cve_count,
+		'qualys_cve_ids': qualys_cve_ids,
+		'qualys_funn_total': qualys_funn_total,
 		'azure_cve_ids': azure_cve_ids,
 		'azure_device_vulns_total': azure_device_vulns_total,
+		'cve_both_sources': cve_both_sources,
 	})
 
 

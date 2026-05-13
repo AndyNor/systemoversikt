@@ -164,44 +164,16 @@
 			</p>
 			{% endif %}
 			<p class="small text-muted mb-2">
-				{{ qualys_unique_cve_count }} unike CVE
-				{% if qualys_packages_total > 500 %}
-				(blant de {{ qualys_packages|length }} Qualys-funnene med høyest alvorlighetsgrad som vises; totalt {{ qualys_packages_total }} funn).
-				{% else %}
-				({{ qualys_packages_total }} Qualys-funn / «pakker»).
-				{% endif %}
+				{{ qualys_cve_ids|length }} unike CVE (parsert fra cve_info på {{ qualys_funn_total }} Qualys-funn).
 			</p>
-			{% if qualys_packages %}
-			<div class="table-responsive">
-			<table class="table table-sm tablesorter excel">
-				<thead>
-					<tr>
-						<th>Pakke (Qualys)</th>
-						<th class="text-end">Antall CVE</th>
-						<th>CVE-er (fra cve_info)</th>
-					</tr>
-				</thead>
-				<tbody>
-				{% for row in qualys_packages %}
-				<tr>
-					<td class="small">{{ row.title }}</td>
-					<td class="text-end">{{ row.cve_count }}</td>
-					<td class="small">
-						{% if row.cve_list %}
-						<ul class="mb-0 ps-3">
-							{% for c in row.cve_list %}<li>{{ c }}</li>{% endfor %}
-						</ul>
-						{% else %}
-						<span class="text-muted">—</span>
-						{% endif %}
-					</td>
-				</tr>
+			{% if qualys_cve_ids %}
+			<ul class="small mb-0 pl-3">
+				{% for c in qualys_cve_ids %}
+				<li class="py-1">{% if c in cve_both_sources %}<span style="background-color: #e8f5e9; padding: 0.12em 0.35em;">{{ c }}</span>{% else %}{{ c }}{% endif %}</li>
 				{% endfor %}
-				</tbody>
-			</table>
-			</div>
+			</ul>
 			{% else %}
-			<p class="small">Ingen Qualys-funn for denne enheten.</p>
+			<p class="small">Ingen CVE-ID-er funnet i Qualys cve_info for denne enheten.</p>
 			{% endif %}
 		</div>
 		<div class="col-lg-6 pl-lg-3 mt-4 mt-lg-0">
@@ -216,14 +188,17 @@
 				({{ azure_device_vulns_total }} rader; vertsnavn matcher «{{ device.comp_name }}» som kort navn eller FQDN som starter med «{{ device.comp_name }}.»).
 			</p>
 			{% if azure_cve_ids %}
-			<ul class="small mb-0 ps-3">
-				{% for c in azure_cve_ids %}<li>{{ c }}</li>{% endfor %}
+			<ul class="small mb-0 pl-3">
+				{% for c in azure_cve_ids %}
+				<li class="py-1">{% if c in cve_both_sources %}<span style="background-color: #e8f5e9; padding: 0.12em 0.35em;">{{ c }}</span>{% else %}{{ c }}{% endif %}</li>
+				{% endfor %}
 			</ul>
 			{% else %}
 			<p class="small">Ingen Azure Defender-CVE for dette vertsnavnet.</p>
 			{% endif %}
 		</div>
 	</div>
+	<p class="small mt-2 mb-0 text-muted">Lysegrønn bakgrunn markerer CVE som finnes i både Qualys og Azure.</p>
 	<p class="small mt-3 mb-0"><i>Denne oversikten vises kun for medlemmer av AD-gruppen /DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER.</i></p>
 {% else %}
 	<p>Sårbarheter vises kun for medlemmer av AD-gruppen /DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER.</p>
