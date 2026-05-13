@@ -1,6 +1,7 @@
 {% extends "sikkerhet_index.html" %}
 {% load humanize %}
 {% load static %}
+{% load templatetags %}
 
 {% block ekstrajavascript %}
 	<script src="{% static 'chart.js@2.8.0' %}"></script>
@@ -85,7 +86,7 @@ new Chart(
 		{% for row in data.vendor_summary %}
 		<tr>
 			<td>
-				<a href="{% url 'azure_vulnstats_product' vendor=row.product_vendor product=row.product_name %}">
+				<a href="{% url 'azure_vulnstats_product' vendor=row.product_vendor|url_path_segment product=row.product_name|url_path_segment %}">
 					{{ row.product_vendor|default:"(Tom)" }} / {{ row.product_name|default:"(Tom)" }}
 				</a>
 			</td>
@@ -115,7 +116,7 @@ new Chart(
 		<tr>
 			<td>
 				{% if row.device__os_platform %}
-					<a href="{% url 'azure_vulnstats_os' os=row.device__os_platform %}">
+					<a href="{% url 'azure_vulnstats_os' os=row.device__os_platform|url_path_segment %}">
 						{{ row.device__os_platform }}
 					</a>
 				{% else %}

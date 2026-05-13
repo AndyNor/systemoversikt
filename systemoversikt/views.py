@@ -1256,7 +1256,7 @@ def azure_vulnstats(request):
 	except:
 		integrasjonsstatus = None
 
-	cache_version = "v10"
+	cache_version = "v11"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = f"azure_vulnstats:overview:{cache_version}:{cache_ts}"
 	data = cache.get(cache_key)
@@ -1368,7 +1368,7 @@ def azure_vulnstats_product(request, vendor, product):
 		devices_offset = 0
 	devices_offset = max(0, devices_offset)
 
-	cache_version = "v6"
+	cache_version = "v7"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = (
 		f"azure_vulnstats:product:{cache_version}:{cache_ts}:"
@@ -1499,7 +1499,7 @@ def azure_vulnstats_os(request, os):
 	except:
 		integrasjonsstatus = None
 
-	cache_version = "v5"
+	cache_version = "v6"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = f"azure_vulnstats:os:{cache_version}:{cache_ts}:{_azure_vulnstats_cache_slug(os)}"
 	data = cache.get(cache_key)

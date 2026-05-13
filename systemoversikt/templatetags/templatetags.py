@@ -7,8 +7,17 @@ from systemoversikt.models import *
 from django.contrib.auth.models import Permission
 import datetime
 import re
+from urllib.parse import quote
 
 register = template.Library()
+
+
+### url_path_segment — for {% url %} path kwargs that may contain /, ?, @, etc.
+@register.filter
+def url_path_segment(value):
+	if value is None:
+		return ""
+	return quote(str(value), safe="")
 
 
 ### quarter
