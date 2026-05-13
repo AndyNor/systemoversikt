@@ -8562,14 +8562,6 @@ class AzureDeviceVulnerability(models.Model):
 	fixing_kb = models.CharField(max_length=32, null=True, blank=True)
 	severity = models.CharField(max_length=16)
 
-	STATUS_CHOICES = [
-		("active", "Active"),
-		("resolved", "Resolved"),
-	]
-	status = models.CharField(
-		max_length=16, choices=STATUS_CHOICES, default="active"
-	)
-
 	first_seen = models.DateTimeField()
 	last_seen = models.DateTimeField()
 
@@ -8577,8 +8569,7 @@ class AzureDeviceVulnerability(models.Model):
 		verbose_name_plural = "Azure: Device vulnerabilities"
 		unique_together = ("device", "cve")
 		indexes = [
-			models.Index(fields=["status"]),
 			models.Index(fields=["severity"]),
-			models.Index(fields=["status", "product_vendor"]),
-			models.Index(fields=["status", "device"]),
+			models.Index(fields=["product_vendor"]),
+			models.Index(fields=["device"]),
 		]

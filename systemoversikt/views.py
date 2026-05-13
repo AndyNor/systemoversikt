@@ -1256,13 +1256,13 @@ def azure_vulnstats(request):
 	except:
 		integrasjonsstatus = None
 
-	cache_version = "v9"
+	cache_version = "v10"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = f"azure_vulnstats:overview:{cache_version}:{cache_ts}"
 	data = cache.get(cache_key)
 
 	if data is None:
-		active = AzureDeviceVulnerability.objects.filter(status="active")
+		active = AzureDeviceVulnerability.objects.all()
 
 		severity_order = ["Critical", "High"]
 		severity_colors = {
@@ -1368,7 +1368,7 @@ def azure_vulnstats_product(request, vendor, product):
 		devices_offset = 0
 	devices_offset = max(0, devices_offset)
 
-	cache_version = "v5"
+	cache_version = "v6"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = (
 		f"azure_vulnstats:product:{cache_version}:{cache_ts}:"
@@ -1378,7 +1378,6 @@ def azure_vulnstats_product(request, vendor, product):
 
 	if data is None:
 		active = AzureDeviceVulnerability.objects.filter(
-			status="active",
 			product_vendor=vendor,
 			product_name=product,
 		)
@@ -1451,7 +1450,6 @@ def azure_vulnstats_product(request, vendor, product):
 	# Unique device names for this product (active vulns). Not cached since it is UI-paged.
 	active_devices_qs = (
 		AzureDeviceVulnerability.objects.filter(
-			status="active",
 			product_vendor=vendor,
 			product_name=product,
 		)
@@ -1501,14 +1499,13 @@ def azure_vulnstats_os(request, os):
 	except:
 		integrasjonsstatus = None
 
-	cache_version = "v4"
+	cache_version = "v5"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = f"azure_vulnstats:os:{cache_version}:{cache_ts}:{_azure_vulnstats_cache_slug(os)}"
 	data = cache.get(cache_key)
 
 	if data is None:
 		active = AzureDeviceVulnerability.objects.filter(
-			status="active",
 			device__os_platform=os,
 		)
 

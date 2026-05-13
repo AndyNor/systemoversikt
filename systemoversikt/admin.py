@@ -1866,7 +1866,6 @@ class AzureDeviceVulnerabilityAdmin(admin.ModelAdmin):
 		"device",
 		"cve",
 		"severity",
-		"status",
 		"product_name",
 		"product_vendor",
 		"product_version",
@@ -1875,7 +1874,6 @@ class AzureDeviceVulnerabilityAdmin(admin.ModelAdmin):
 	)
 	list_filter = (
 		"severity",
-		"status",
 		"product_vendor",
 		"first_seen",
 		"last_seen",
