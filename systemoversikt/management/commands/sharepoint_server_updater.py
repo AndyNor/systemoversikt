@@ -241,9 +241,15 @@ class Command(BaseCommand):
 
 					if 'Service' in record:
 						sub_name = bss_cache(record["Service"])
-						if sub_name == None:
-							print(f'Business sub service {record["Service"]} for {comp_name} finnes ikke')
-						cmdbdevice.service_offerings.add(sub_name) # det er OK at den er None
+						if sub_name is None:
+							print(
+								f"[sharepoint_server_updater] CMDBRef finnes ikke for "
+								f"Service={record['Service']!r} på server {comp_name!r} "
+								f"(cmdbdevice_pk={cmdbdevice.pk}). "
+								f"service_offerings.add utelatt (ellers NOT NULL på cmdbref_id)."
+							)
+						else:
+							cmdbdevice.service_offerings.add(sub_name)
 					else:
 						servere_uten_offering += 1
 
