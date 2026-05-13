@@ -325,6 +325,7 @@ class Command(BaseCommand):
             dvs_to_create = []
 
             processed = 0
+            import_stats = {"dv_dup_collapsed": 0}
 
             self._say(f"Fase 3 — import: {len(file_paths)} fil(er) fra disk…")
 
@@ -426,7 +427,12 @@ class Command(BaseCommand):
                         devices[device_id] = device
                         devices_to_create.append(device)
                         if dvs_to_create:
-                            self.flush(devices_to_create, cves_to_create, dvs_to_create)
+                            self.flush(
+                                devices_to_create,
+                                cves_to_create,
+                                dvs_to_create,
+                                import_stats,
+                            )
 
                     cve = cves.get(cve_id)
                     if not cve:
@@ -438,7 +444,12 @@ class Command(BaseCommand):
                         cves[cve_id] = cve
                         cves_to_create.append(cve)
                         if dvs_to_create:
-                            self.flush(devices_to_create, cves_to_create, dvs_to_create)
+                            self.flush(
+                                devices_to_create,
+                                cves_to_create,
+                                dvs_to_create,
+                                import_stats,
+                            )
 
                     dvs_to_create.append(
                         AzureDeviceVulnerability(
@@ -460,7 +471,12 @@ class Command(BaseCommand):
                         or len(devices_to_create) >= 1000
                         or len(cves_to_create) >= 1000
                     ):
-                        self.flush(devices_to_create, cves_to_create, dvs_to_create)
+                        self.flush(
+                            devices_to_create,
+                            cves_to_create,
+                            dvs_to_create,
+                            import_stats,
+                        )
 
                 self._say(
                     f"  Ferdig med fil {idx}/{len(file_paths)}: {lines_seen} linjer, "
@@ -468,13 +484,14 @@ class Command(BaseCommand):
                 )
                 gc.collect()
 
-            self.flush(devices_to_create, cves_to_create, dvs_to_create)
+            self.flush(devices_to_create, cves_to_create, dvs_to_create, import_stats)
 
             runtime = int(time.time() - start_time)
 
             msg = (
                 f"source={SOURCE}, ignore_schedule={IGNORE_SCHEDULE}, "
-                f"files={len(file_paths)}, rows={processed}, runtime={runtime}s "
+                f"files={len(file_paths)}, lines={processed}, runtime={runtime}s, "
+                f"dup_collapsed={import_stats['dv_dup_collapsed']} "
                 f"(full replace av AzureDeviceVulnerability)"
             )
 
@@ -511,7 +528,7 @@ class Command(BaseCommand):
         except Exception:
             return default
 
-    def flush(self, devices, cves, dv_creates):
+    def flush(self, devices, cves, dv_creates, import_stats=None):
         with transaction.atomic():
             if devices:
                 AzureDevice.objects.bulk_create(
@@ -526,7 +543,19 @@ class Command(BaseCommand):
                 cves.clear()
 
             if dv_creates:
-                AzureDeviceVulnerability.objects.bulk_create(
-                    dv_creates, batch_size=2000
-                )
+                # Eksport kan inneholde samme (device_id, cve_id) flere ganger; én rad per par.
+                n_raw = len(dv_creates)
+                by_key = {}
+                for obj in dv_creates:
+                    by_key[(obj.device_id, obj.cve_id)] = obj
+                rows = list(by_key.values())
+                if import_stats is not None and n_raw > len(rows):
+                    import_stats["dv_dup_collapsed"] += n_raw - len(rows)
+                for i in range(0, len(rows), 2000):
+                    chunk = rows[i : i + 2000]
+                    AzureDeviceVulnerability.objects.bulk_create(
+                        chunk,
+                        batch_size=2000,
+                        ignore_conflicts=True,
+                    )
                 dv_creates.clear()
