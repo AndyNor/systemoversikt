@@ -60,16 +60,33 @@ class Command(BaseCommand):
             action="store_true",
         )
 
+    def _print_run_options(self, script_navn, start_ts, options):
+        """Skriv CLI-valg til stdout ved hver kjøring (også ved tidlig avbrudd/feil)."""
+        self.stdout.write(f"[{start_ts}] Starter {script_navn}")
+        self.stdout.write("Kjøreparametere:")
+        self.stdout.write(
+            f"  --source={options['source']!r}   "
+            f"(defender=hent fra API, local=les fra import/defender på disk; default: defender)"
+        )
+        self.stdout.write(
+            f"  --ignore-schedule={options['ignore_schedule']!r}   "
+            f"(True=kjør uansett ukedag; False=Defender-kilde følger søndagsregel)"
+        )
+        if "verbosity" in options:
+            self.stdout.write(f"  verbosity={options['verbosity']!r}")
+
     def handle(self, **options):
+        SCRIPT_NAVN = os.path.basename(__file__)
+        start_ts = timezone.now()
+        start_time = time.time()
+
+        self._print_run_options(SCRIPT_NAVN, start_ts, options)
+
         SOURCE = options["source"]
         IGNORE_SCHEDULE = options["ignore_schedule"]
 
         INTEGRASJON_KODEORD = "azure_vulnerabilities"
         LOG_EVENT_TYPE = "Azure defender vulnerabilities"
-
-        SCRIPT_NAVN = os.path.basename(__file__)
-        start_ts = timezone.now()
-        start_time = time.time()
 
         int_config, _ = IntegrasjonKonfigurasjon.objects.get_or_create(
             kodeord=INTEGRASJON_KODEORD,
@@ -87,14 +104,10 @@ class Command(BaseCommand):
         int_config.sist_status = f"source={SOURCE}, ignore_schedule={IGNORE_SCHEDULE}"
         int_config.save()
 
-        print(f"[{start_ts}] Starter {SCRIPT_NAVN}")
-        print(f"  Source          : {SOURCE}")
-        print(f"  Ignore schedule : {IGNORE_SCHEDULE}")
-
         try:
             if SOURCE == "defender" and not IGNORE_SCHEDULE and start_ts.weekday() != 6:
                 msg = "Skippet: Defender-kjøring kun tillatt søndag"
-                print(msg)
+                self.stdout.write(msg)
                 ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=msg)
                 # This is not an error; the job is intentionally only scheduled weekly.
                 # Keep health green so admin status doesn't flap on skipped days.
