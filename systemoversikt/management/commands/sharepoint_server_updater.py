@@ -115,22 +115,21 @@ class Command(BaseCommand):
 				computers_data = computers_data + computers_data_without_service
 				Command.antall_servere = antall_records
 
-				# Tjenestenavn fra kilde (f.eks. «Gerica») som ikke ga treff i CMDBRef
+				# Tjenestenavn fra kilde som ikke kunne kobles til nøyaktig én CMDBRef
 				service_offering_ikke_importert = Counter()
+				service_offering_duplikat_navn = Counter()
 
 				@lru_cache(maxsize=512)
 				def bss_cache(bss_name):
+					"""Returner (CMDBRef eller None, årsak: None ved treff, ellers 'tom'|'mangler'|'duplikat')."""
 					if not bss_name:
-						return None
+						return (None, 'tom')
 					try:
-						return CMDBRef.objects.get(navn=bss_name)
+						return (CMDBRef.objects.get(navn=bss_name), None)
 					except CMDBRef.DoesNotExist:
-						return None
+						return (None, 'mangler')
 					except MultipleObjectsReturned:
-						raise ValueError(
-							f"Flere CMDBRef-rader har samme navn {bss_name!r}; "
-							f"serverimport kan ikke velge én. Rydd duplikater i CMDB / BSS-kilden."
-						) from None
+						return (None, 'duplikat')
 
 				def convertToInt(string, multiplier=1):
 					try:
@@ -255,14 +254,28 @@ class Command(BaseCommand):
 
 					if 'Service' in record:
 						service_navn = record["Service"]
-						sub_name = bss_cache(service_navn)
+						sub_name, bss_feil = bss_cache(service_navn)
 						if sub_name is None:
-							service_offering_ikke_importert[service_navn] += 1
-							print(
-								f"[sharepoint_server_updater] Tjenestenavn {service_navn!r} ble ikke importert "
-								f"som service offering (ingen CMDBRef med dette navnet) for server {comp_name!r} "
-								f"(cmdbdevice_pk={cmdbdevice.pk})."
-							)
+							if bss_feil == 'duplikat':
+								service_offering_duplikat_navn[service_navn] += 1
+								print(
+									f"[sharepoint_server_updater] Tjenestenavn {service_navn!r} ble ikke koblet "
+									f"(flere CMDBRef med samme navn) for server {comp_name!r} "
+									f"(cmdbdevice_pk={cmdbdevice.pk})."
+								)
+							elif bss_feil == 'mangler':
+								service_offering_ikke_importert[service_navn] += 1
+								print(
+									f"[sharepoint_server_updater] Tjenestenavn {service_navn!r} ble ikke importert "
+									f"som service offering (ingen CMDBRef med dette navnet) for server {comp_name!r} "
+									f"(cmdbdevice_pk={cmdbdevice.pk})."
+								)
+							elif bss_feil == 'tom':
+								service_offering_ikke_importert[service_navn] += 1
+								print(
+									f"[sharepoint_server_updater] Tomt tjenestenavn i «Service» for server "
+									f"{comp_name!r} (cmdbdevice_pk={cmdbdevice.pk})."
+								)
 						else:
 							cmdbdevice.service_offerings.add(sub_name)
 					else:
@@ -351,6 +364,7 @@ class Command(BaseCommand):
 
 
 				#oppsummering og logging
+				offering_tekst = ""
 				if service_offering_ikke_importert:
 					offering_oppsummering = "; ".join(
 						f"{(navn if navn else '(tomt tjenestenavn)')!r}: {antall} server(e)"
@@ -359,11 +373,17 @@ class Command(BaseCommand):
 							key=lambda x: (x[0] or ""),
 						)
 					)
-					offering_tekst = (
-						f" Tjenestenavn som ikke ble koblet til CMDBRef (ikke importert som offering): {offering_oppsummering}."
+					offering_tekst += (
+						f" Tjenestenavn uten treff i CMDBRef (offering ikke koblet): {offering_oppsummering}."
 					)
-				else:
-					offering_tekst = ""
+				if service_offering_duplikat_navn:
+					dup_oppsummering = "; ".join(
+						f"{navn!r}: {antall} server(e)"
+						for navn, antall in sorted(service_offering_duplikat_navn.items())
+					)
+					offering_tekst += (
+						f" Tjenestenavn med flere CMDBRef-rader (offering ikke koblet): {dup_oppsummering}."
+					)
 
 				logg_entry_message = (
 					f'Importen inneholder {antall_records} servere. {nye_servere_importert} nye servere ble importert. '
