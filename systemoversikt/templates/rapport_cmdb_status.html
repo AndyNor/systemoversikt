@@ -11,6 +11,11 @@
 
 {% block hovedinnhold %}
 
+<p>
+	{% url 'admin:systemoversikt_integrasjonkonfigurasjon_changelist' as url_integrasjonkonfigurasjon %}
+	<a href="{{ url_integrasjonkonfigurasjon }}" class="btn btn-sm btn-link">✎ Rediger integrasjonskonfigurasjon (Django admin)</a>
+</p>
+
 <table class="table table-sm tablesorter excel">
 	<thead>
 		<th>Scriptnavn</th>
