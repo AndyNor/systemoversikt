@@ -6,6 +6,7 @@ from datetime import datetime
 from systemoversikt.views import push_pushover
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.core.exceptions import MultipleObjectsReturned
 from functools import lru_cache
 import json, os, re, socket, time
 from collections import Counter
@@ -110,13 +111,22 @@ class Command(BaseCommand):
 				computers_data = computers_data + computers_data_without_service
 				Command.antall_servere = antall_records
 
+				# Tjenestenavn fra kilde (f.eks. «Gerica») som ikke ga treff i CMDBRef
+				service_offering_ikke_importert = Counter()
+
 				@lru_cache(maxsize=512)
 				def bss_cache(bss_name):
-					try:
-						sub_name = CMDBRef.objects.get(navn=record["Service"])
-						return sub_name
-					except:
+					if not bss_name:
 						return None
+					try:
+						return CMDBRef.objects.get(navn=bss_name)
+					except CMDBRef.DoesNotExist:
+						return None
+					except MultipleObjectsReturned:
+						raise ValueError(
+							f"Flere CMDBRef-rader har samme navn {bss_name!r}; "
+							f"serverimport kan ikke velge én. Rydd duplikater i CMDB / BSS-kilden."
+						) from None
 
 				def convertToInt(string, multiplier=1):
 					try:
@@ -240,13 +250,14 @@ class Command(BaseCommand):
 					cmdbdevice.derived_os_endoflife = derived_os_endoflife
 
 					if 'Service' in record:
-						sub_name = bss_cache(record["Service"])
+						service_navn = record["Service"]
+						sub_name = bss_cache(service_navn)
 						if sub_name is None:
+							service_offering_ikke_importert[service_navn] += 1
 							print(
-								f"[sharepoint_server_updater] CMDBRef finnes ikke for "
-								f"Service={record['Service']!r} på server {comp_name!r} "
-								f"(cmdbdevice_pk={cmdbdevice.pk}). "
-								f"service_offerings.add utelatt (ellers NOT NULL på cmdbref_id)."
+								f"[sharepoint_server_updater] Tjenestenavn {service_navn!r} ble ikke importert "
+								f"som service offering (ingen CMDBRef med dette navnet) for server {comp_name!r} "
+								f"(cmdbdevice_pk={cmdbdevice.pk})."
 							)
 						else:
 							cmdbdevice.service_offerings.add(sub_name)
@@ -336,7 +347,25 @@ class Command(BaseCommand):
 
 
 				#oppsummering og logging
-				logg_entry_message = f'Importen inneholder {antall_records} servere. {nye_servere_importert} nye servere ble importert. {server_dropped} manglet navn. Slettet {antall_ikke_oppdatert} gamle serere som ikke ble sett: {tekst_ikke_oppdatert}. Det var {servere_uten_offering} servere uten knytning til service offering. Duplikater: {duplicates}.'
+				if service_offering_ikke_importert:
+					offering_oppsummering = "; ".join(
+						f"{(navn if navn else '(tomt tjenestenavn)')!r}: {antall} server(e)"
+						for navn, antall in sorted(
+							service_offering_ikke_importert.items(),
+							key=lambda x: (x[0] or ""),
+						)
+					)
+					offering_tekst = (
+						f" Tjenestenavn som ikke ble koblet til CMDBRef (ikke importert som offering): {offering_oppsummering}."
+					)
+				else:
+					offering_tekst = ""
+
+				logg_entry_message = (
+					f'Importen inneholder {antall_records} servere. {nye_servere_importert} nye servere ble importert. '
+					f'{server_dropped} manglet navn. Slettet {antall_ikke_oppdatert} gamle serere som ikke ble sett: {tekst_ikke_oppdatert}. '
+					f'Det var {servere_uten_offering} servere uten knytning til service offering.{offering_tekst} Duplikater: {duplicates}.'
+				)
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,
