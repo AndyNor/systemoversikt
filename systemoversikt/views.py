@@ -210,7 +210,7 @@ def auth_er_virksomhetsrolle(user):
 def sharepoint_get_file(filename):
 	from azure.identity import ClientSecretCredential
 	from msgraph.core import GraphClient
-	from django.utils.timezone import make_aware
+	from django.utils.timezone import make_aware, is_aware
 	import os
 	import requests
 
@@ -229,13 +229,56 @@ def sharepoint_get_file(filename):
 	query = f"/sites/{site_id}/drives/{library_id}/items/root:/{filename}"
 	#print(f"Spørring: {query}")
 	resp = client.get(query)
-	file_metadata = json.loads(resp.text)
+	try:
+		file_metadata = json.loads(resp.text)
+	except json.JSONDecodeError as e:
+		raise RuntimeError(
+			f'Ugyldig JSON fra Microsoft Graph for "{filename}": {e}. '
+			f'Svar (start): {resp.text[:800]!r}'
+		) from e
 
-	#print(file_metadata["lastModifiedDateTime"])
-	modified_date = make_aware(datetime.datetime.strptime(file_metadata["lastModifiedDateTime"], "%Y-%m-%dT%H:%M:%SZ"))
+	if not isinstance(file_metadata, dict):
+		raise RuntimeError(
+			f'Uventet Graph-svar for "{filename}": forventet objekt, fikk {type(file_metadata).__name__}'
+		)
+
+	if 'error' in file_metadata:
+		err = file_metadata['error']
+		code = err.get('code', '') if isinstance(err, dict) else ''
+		msg = err.get('message', json.dumps(err)) if isinstance(err, dict) else repr(err)
+		raise RuntimeError(
+			f'Microsoft Graph feilet for "{filename}" (kode {code!r}): {msg}. '
+			f'Sjekk filsti, SHAREPOINT_SITE_ID / SHAREPOINT_LIBRARY_ID og tilganger.'
+		)
+
+	last_modified_raw = file_metadata.get('lastModifiedDateTime')
+	if not last_modified_raw:
+		raise RuntimeError(
+			f'Mangler lastModifiedDateTime i Graph-svar for "{filename}". '
+			f'Toppnøkler i svaret: {list(file_metadata.keys())}. '
+			f'Dette skjer ofte ved fil ikke funnet eller feil i stedet for drive-item.'
+		)
+
+	# ISO 8601 fra Graph (ev. med brøkdeler): 2024-01-15T12:00:00Z eller ...00.1234567Z
+	ts = last_modified_raw.replace('Z', '+00:00') if last_modified_raw.endswith('Z') else last_modified_raw
+	try:
+		modified_dt = datetime.datetime.fromisoformat(ts)
+	except ValueError:
+		modified_dt = datetime.datetime.strptime(last_modified_raw, '%Y-%m-%dT%H:%M:%SZ')
+	if not is_aware(modified_dt):
+		modified_date = make_aware(modified_dt)
+	else:
+		modified_date = modified_dt
+
+	download_url = file_metadata.get('@microsoft.graph.downloadUrl')
+	if not download_url:
+		raise RuntimeError(
+			f'Mangler @microsoft.graph.downloadUrl for "{filename}". Toppnøkler: {list(file_metadata.keys())}'
+		)
+
 	destination_file = f'systemoversikt/import/{filename}'
 
-	response = requests.get(file_metadata["@microsoft.graph.downloadUrl"])
+	response = requests.get(download_url)
 	with open(destination_file, "wb") as f:
 		f.write(response.content)
 	#print(f"Lastet ned fil til {destination_file} ")
