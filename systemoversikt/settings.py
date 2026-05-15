@@ -331,6 +331,11 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 20480
 
+# DNS suffixes stripped for display and CMDB hostname matching (longest match wins).
+CMDB_HOSTNAME_DOMAIN_SUFFIXES = [
+	".oslofelles.oslo.kommune.no",
+]
+
 
 LOGGING = {
 	'version': 1,

@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core import serializers
 from systemoversikt.models import *
+from systemoversikt.hostname_utils import azure_device_q_for_comp_name, device_name_rows_for_hostnames
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
@@ -1362,8 +1363,8 @@ def azure_vulnstats(request):
 			"cve_year_chart": cve_year_chart,
 		}
 
-		# Aggregeringene over stor tabell er dyre – cache kort for å avlaste.
-		cache.set(cache_key, data, timeout=60 * 15)
+		# Aggregeringene over stor tabell er dyre – cache for å avlaste.
+		cache.set(cache_key, data, timeout=60 * 60 * 24)
 
 	return render(request, 'rapport_azure_vulnstats.html', {
 		'request': request,
@@ -1473,7 +1474,7 @@ def azure_vulnstats_product(request, vendor, product):
 			),
 		}
 
-		cache.set(cache_key, data, timeout=60 * 15)
+		cache.set(cache_key, data, timeout=60 * 60 * 24)
 
 	# Unique device names for this product (active vulns). Not cached since it is UI-paged.
 	active_devices_qs = (
@@ -1487,12 +1488,13 @@ def azure_vulnstats_product(request, vendor, product):
 		.distinct()
 		.order_by("device__hostname")
 	)
-	device_names = list(active_devices_qs[devices_offset : devices_offset + devices_chunk + 1])
-	device_names_more_available = len(device_names) > devices_chunk
+	device_hostnames = list(active_devices_qs[devices_offset : devices_offset + devices_chunk + 1])
+	device_names_more_available = len(device_hostnames) > devices_chunk
 	if device_names_more_available:
-		device_names = device_names[:devices_chunk]
+		device_hostnames = device_hostnames[:devices_chunk]
 
-	devices_next_offset = devices_offset + len(device_names)
+	devices_next_offset = devices_offset + len(device_hostnames)
+	device_names = device_name_rows_for_hostnames(device_hostnames)
 
 	# AJAX endpoint (returns next chunk as JSON; used by product template)
 	if request.GET.get("devices_ajax") == "1":
@@ -1598,7 +1600,7 @@ def azure_vulnstats_os(request, os):
 			),
 		}
 
-		cache.set(cache_key, data, timeout=60 * 15)
+		cache.set(cache_key, data, timeout=60 * 60 * 24)
 
 	return render(request, 'rapport_azure_vulnstats_os.html', {
 		'request': request,
@@ -3537,12 +3539,7 @@ def cmdb_devicedetails(request, pk):
 		for cve_info in device.qualys_vulnerabilities.values_list("cve_info", flat=True):
 			qualys_unique.update(_cves_from_qualys_cve_info(cve_info))
 		comp = (device.comp_name or "").strip()
-		azure_filter = Q(device__hostname__iexact=comp)
-		if comp:
-			azure_filter |= Q(device__hostname__istartswith=f"{comp}.")
-		if "." in comp:
-			azure_filter |= Q(device__hostname__iexact=comp.split(".", 1)[0])
-		azure_base = AzureDeviceVulnerability.objects.filter(azure_filter)
+		azure_base = AzureDeviceVulnerability.objects.filter(azure_device_q_for_comp_name(comp))
 		azure_device_vulns_total = azure_base.count()
 		azure_unique = {x.upper() for x in azure_base.values_list("cve__cve_id", flat=True) if x}
 		cve_both_sources = frozenset(qualys_unique & azure_unique)

@@ -123,8 +123,14 @@ new Chart(
 <div class="mb-3">
 	<p class="mb-1">(viser {{ device_names|length }}):</p>
 	<ul id="device-names-list" style="column-count: 3;">
-		{% for name in device_names %}
-			<li data-full="{{ name }}">{{ name }}</li>
+		{% for device in device_names %}
+			<li>
+				{% if device.cmdb_pk %}
+					<a href="{% url 'cmdb_devicedetails' device.cmdb_pk %}">{{ device.display_name }}</a>
+				{% else %}
+					<span>{{ device.display_name }}</span>
+				{% endif %}
+			</li>
 		{% empty %}
 			<li>(Ingen)</li>
 		{% endfor %}
@@ -143,30 +149,26 @@ new Chart(
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 	(function () {
 		var $btn = $("#device-names-load-more");
-		var suffixRe = /\.oslofelles\.oslo\.kommune\.no$/i;
-
-		function stripSuffix(name) {
-			if (!name) return name;
-			return String(name).replace(suffixRe, "");
-		}
-
-		function applyHostnameStripping($root) {
-			$root.find("#device-names-list li").each(function () {
-				var $li = $(this);
-				var full = $li.attr("data-full") || $li.text();
-				if (!full || full.trim() === "(Ingen)") return;
-				$li.attr("data-full", full);
-				$li.text(stripSuffix(full));
-			});
-		}
-
-		applyHostnameStripping($(document));
-
-		if (!$btn.length) return;
-
 		function escapeHtml(text) {
 			return $("<div>").text(text).html();
 		}
+
+		function deviceListItemHtml(device) {
+			var shown = String(device.display_name || device.hostname || "");
+			var inner;
+			if (device.cmdb_pk) {
+				inner = '<a href="' + escapeHtml(cmdbDeviceDetailsUrl(device.cmdb_pk)) + '">' + escapeHtml(shown) + '</a>';
+			} else {
+				inner = '<span>' + escapeHtml(shown) + '</span>';
+			}
+			return "<li>" + inner + "</li>";
+		}
+
+		function cmdbDeviceDetailsUrl(pk) {
+			return "{% url 'cmdb_devicedetails' 0 %}".replace("/0/", "/" + String(pk) + "/");
+		}
+
+		if (!$btn.length) return;
 
 		$btn.on("click", function () {
 			var nextOffset = parseInt($btn.attr("data-next-offset") || "0", 10);
@@ -189,9 +191,7 @@ new Chart(
 				}
 
 				for (var i = 0; i < names.length; i++) {
-					var full = String(names[i]);
-					var shown = stripSuffix(full);
-					$list.append("<li data-full=\"" + escapeHtml(full) + "\">" + escapeHtml(shown) + "</li>");
+					$list.append(deviceListItemHtml(names[i]));
 				}
 
 				if (resp && resp.has_more) {
