@@ -6,5 +6,5 @@ sudo systemctl restart gunicorn-mysite.service
 echo "Restarting webserver.."
 sudo systemctl restart httpd.service
 echo "Restarting database.."
-sudo systemctl restart postgrsql.service
+sudo systemctl restart postgrsql
 echo "Complete"
