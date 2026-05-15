@@ -1,17 +1,43 @@
-
 #!/bin/bash
-# Simple script to ensure PostgreSQL is running and show status
+# Ensure core systemd services are running (e.g. after reboot or failed starts).
+# Reloads unit definitions first so yum/dnf-updated .service files are picked up.
 
-SERVICE="postgresql"
+SERVICES=(
+	"postgresql.service"
+	"gunicorn-mysite.service"
+	"httpd.service"
+)
 
-if systemctl is-active --quiet "$SERVICE"; then
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL is running."
+log() {
+	echo "$(date '+%Y-%m-%d %H:%M:%S') - $*"
+}
+
+log "Running systemctl daemon-reload..."
+if sudo systemctl daemon-reload; then
+	log "daemon-reload OK."
 else
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL is NOT running. Restarting..."
-    sudo systemctl restart "$SERVICE"
-    if systemctl is-active --quiet "$SERVICE"; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL restarted successfully."
-    else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - PostgreSQL restart FAILED."
-    fi
+	log "daemon-reload FAILED."
 fi
+
+ensure_service() {
+	local service="$1"
+	if systemctl is-active --quiet "$service"; then
+		log "$service is running."
+		return 0
+	fi
+	log "$service is NOT running. Restarting..."
+	if ! sudo systemctl restart "$service"; then
+		log "$service restart command FAILED."
+		return 1
+	fi
+	if systemctl is-active --quiet "$service"; then
+		log "$service restarted successfully."
+		return 0
+	fi
+	log "$service restart FAILED (still not active)."
+	return 1
+}
+
+for service in "${SERVICES[@]}"; do
+	ensure_service "$service"
+done

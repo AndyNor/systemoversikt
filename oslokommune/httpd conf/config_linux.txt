@@ -105,6 +105,7 @@ chmod +x build
 visudo /etc/sudoers.d/xhttpd <-- "%kartoteket ALL=NOPASSWD: /bin/systemctl restart httpd.service"
 samme for systemctl restart gunicorn-mysite.service
 samme for systemctl restart postgresql.service
+samme for systemctl daemon-reload
 
 #mod_wsgi-express module-config <-- LoadModule wsgi_module "/var/kartoteket/virtualenv/py39/lib64/python3.9/site-packages/mod_wsgi/server/mod_wsgi-py39.cpython-39-x86_64-linux-gnu.so"
 #WSGIPythonHome "/var/kartoteket/virtualenv/py39"
