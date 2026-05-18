@@ -33,7 +33,7 @@
 	<hr>
 
 	{% if virksomhet.overordnede_virksomheter.all|length > 0 %}
-	<h6>Underlangt
+	<h6>Underlagt
 	{% for vir in virksomhet.overordnede_virksomheter.all %}
 		{% url 'virksomhet' vir.pk as url_vir %}
 		<a href="{{ url_vir }}">{{ vir }}</a>
