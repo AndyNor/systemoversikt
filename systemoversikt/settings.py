@@ -97,7 +97,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 # django SMTP-settings
 EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
 EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
-DEFAULT_FROM_EMAIL = "kartoteket@uke.oslo.kommune.no"
+DEFAULT_FROM_EMAIL = "kartoteket@dig.oslo.kommune.no"
 
 if THIS_ENVIRONMENT == "PROD":
 	EMAIL_HOST = "indre-relay.oslo.kommune.no"
