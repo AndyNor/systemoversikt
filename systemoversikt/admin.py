@@ -1934,3 +1934,7 @@ class AzureDeviceAdmin(admin.ModelAdmin):
 
 	def has_delete_permission(self, request, obj=None):
 		return False
+
+
+# django-mailer: utvidet søk på To/Cc/Bcc i MessageLog
+from systemoversikt import mailer_admin  # noqa: E402, F401
