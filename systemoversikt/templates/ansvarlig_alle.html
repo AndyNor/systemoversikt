@@ -11,7 +11,7 @@
 
 {% block hovedinnhold %}
 
-	<p>Systemer har eier og forvaltere, avtaler har avtaleoppfølger og behandlinger har navngitte personer som er ansvarlige for å holde informasjonen oppdatert. En ansvarlig er her en form for rolle som er koblet mot en konkret person representert ved en bruker i Active Directory. Når brukeren koblet til rollen slutter eller av annne grunn får sin bruker deaktivert, vises navnet <span style="text-decoration: line-through;">gjennomstreket</span>. Status på brukere synkronieres hver natt. Dersom en annen person skal overta oppgavene kan man endre pekeren fra "ansvarlig" rollen over på en annen brukerID.<br>Viser {{ ansvarlige.count }} ansvarlige.</p>
+	<p>Systemer har eier og forvaltere, avtaler har avtaleoppfølger og behandlinger har navngitte personer som er ansvarlige for å holde informasjonen oppdatert. En ansvarlig er her en form for rolle som er koblet mot en konkret person representert ved en bruker i Active Directory. Når brukeren som er koblet til rollen slutter eller av annen grunn får sin bruker deaktivert, vises navnet <span style="text-decoration: line-through;">gjennomstreket</span>. Status på brukere synkroniseres hver natt. Dersom en annen person skal overta oppgavene, kan man endre pekeren fra "ansvarlig"-rollen over på en annen bruker-ID.<br>Viser {{ ansvarlige.count }} ansvarlige.</p>
 
 	<table class="tablesorter excel">
 	<thead>

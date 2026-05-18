@@ -9,7 +9,7 @@
 {% endblock ekstrameny %}
 
 {% block overskrift %}
-	Brukere uten registert e-postadresse for {{ virksomhet.virksomhetsforkortelse }}
+	Brukere uten registrert e-postadresse for {{ virksomhet.virksomhetsforkortelse }}
 {% endblock overskrift %}
 
 
@@ -18,7 +18,7 @@
 	<p>Fant {{ brukere_uten_epost|length }} av {{ count_brukere_i_virksomhet }} brukere uten e-post i {{ virksomhet.virksomhetsforkortelse }}. Merk at deaktive kontoer ikke er inkludert eller vises.</p>
 
 	<p>Ved overgang til ny klientplattform benyttes Azure AD for pålogging. Siden Azure AD benytter e-post som "brukernavn" har det vært stilt spørsmål rundt hvilke brukere som faktisk ikke har blitt tildelt e-post.
-	Det er også slik at personer i andre Micorosft tenants skal få tilgang til fellessystemer som gjestebruker. For at dette skal fungere må vi kunne koble vedkommendes e-post fra deres hjemmetenant med brukernavn i Oslofelles. Dette løses ved at det er satt opp automatikk som oppretter gjestekontoer i felles tenant basert på registrert e-post på brukeropjektet i on-premise AD.</p>
+	Det er også slik at personer i andre Microsoft-tenants skal få tilgang til fellessystemer som gjestebruker. For at dette skal fungere må vi kunne koble vedkommendes e-post fra deres hjemmetenant med brukernavn i Oslofelles. Dette løses ved at det er satt opp automatikk som oppretter gjestekontoer i felles tenant basert på registrert e-post på brukerobjektet i on-premise AD.</p>
 
 	<table class="table table-sm tablesorter">
 		<thead>
