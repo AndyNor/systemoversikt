@@ -1,4 +1,4 @@
-#!/bin/sh
+IKKE I BRUK
 
 #!/bin/sh
 source /var/kartoteket/virtualenv/py311/bin/activate
