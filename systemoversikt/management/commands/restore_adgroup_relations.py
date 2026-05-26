@@ -2,26 +2,22 @@
 """
 Restore M2M and FK relationships to ADgroup after accidental deletion.
 
-Prerequisites:
-  1. Restore the pre-incident backup into a temporary database:
-     createdb kartoteket_restore
-     pg_restore -d kartoteket_restore <backup-file>.psql
+Usage:
+  python manage.py restore_adgroup_relations --backup-file /path/to/backup.psql.bin
+  python manage.py restore_adgroup_relations --backup-file /path/to/backup.psql.bin --dry-run
 
-  2. The live database must already have the ADgroup objects recreated
-     (by running ldap_group_paged_v2 with the sist_oppdatert fix).
-
-  3. Run this command:
-     python manage.py restore_adgroup_relations
-
-  4. After successful restore, drop the temporary database:
-     dropdb kartoteket_restore
+The script will:
+  1. Create a temporary database 'kartoteket_restore'
+  2. Load the backup into it
+  3. Remap ADgroup relationships using distinguishedname
+  4. Drop the temporary database when done
 
 The script maps old adgroup IDs to new ones via distinguishedname.
 """
 from django.core.management.base import BaseCommand
-from django.db import transaction
+from django.db import transaction, connection
 from systemoversikt.models import ADgroup, PRKvalg, PRKgruppe, PRKskjema
-import psycopg2, os, time
+import psycopg2, os, time, subprocess, glob
 from datetime import datetime
 
 
@@ -35,13 +31,91 @@ class Command(BaseCommand):
 			help='Name of the temporary restore database (default: kartoteket_restore)',
 		)
 		parser.add_argument(
+			'--backup-file',
+			default=None,
+			help='Path to the backup file (.psql.bin). If not provided, uses the latest in dbbackup/',
+		)
+		parser.add_argument(
 			'--dry-run',
 			action='store_true',
 			help='Show what would be restored without making changes',
 		)
 
+	def _setup_restore_db(self, restore_db_name, backup_file):
+		"""Create temporary database and load backup into it."""
+		db_user = os.environ["POSTGRES_USER"]
+		db_password = os.environ["POSTGRES_PASSWORD"]
+		db_host = "localhost"
+		db_port = "5432"
+
+		env = os.environ.copy()
+		env["PGPASSWORD"] = db_password
+
+		# Find backup file if not specified
+		if not backup_file:
+			backup_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'dbbackup')
+			candidates = sorted(glob.glob(os.path.join(backup_dir, '*.psql.bin')))
+			if not candidates:
+				candidates = sorted(glob.glob(os.path.join(backup_dir, '*.psql')))
+			if not candidates:
+				raise Exception(f"Fant ingen backup-filer i {backup_dir}")
+			backup_file = candidates[-1]
+			print(f"Bruker backup-fil: {backup_file}")
+
+		# Create database using Django's existing connection (which works)
+		print(f"Oppretter midlertidig database '{restore_db_name}'...")
+		conn = psycopg2.connect(
+			dbname='kartoteket',
+			user=db_user,
+			password=db_password,
+			host=db_host,
+			port=db_port,
+		)
+		conn.autocommit = True
+		cur = conn.cursor()
+		# Drop if exists from a previous failed run
+		cur.execute(f"DROP DATABASE IF EXISTS {restore_db_name}")
+		cur.execute(f"CREATE DATABASE {restore_db_name}")
+		cur.close()
+		conn.close()
+		print("  Database opprettet.")
+
+		# Load backup using pg_restore
+		print(f"Laster backup inn i '{restore_db_name}'...")
+		result = subprocess.run(
+			["pg_restore", "-h", db_host, "-p", db_port, "-U", db_user, "-d", restore_db_name, "--no-owner", "--no-acl", backup_file],
+			env=env,
+			capture_output=True,
+			text=True,
+		)
+		if result.returncode != 0 and "ERROR" in result.stderr:
+			# pg_restore often returns non-zero for warnings, only fail on real errors
+			print(f"  pg_restore advarsler: {result.stderr[:500]}")
+		print("  Backup lastet inn.")
+
+	def _drop_restore_db(self, restore_db_name):
+		"""Drop the temporary restore database."""
+		db_user = os.environ["POSTGRES_USER"]
+		db_password = os.environ["POSTGRES_PASSWORD"]
+
+		print(f"\nSletter midlertidig database '{restore_db_name}'...")
+		conn = psycopg2.connect(
+			dbname='kartoteket',
+			user=db_user,
+			password=db_password,
+			host='localhost',
+			port='5432',
+		)
+		conn.autocommit = True
+		cur = conn.cursor()
+		cur.execute(f"DROP DATABASE IF EXISTS {restore_db_name}")
+		cur.close()
+		conn.close()
+		print("  Slettet.")
+
 	def handle(self, **options):
 		restore_db_name = options['restore_db']
+		backup_file = options['backup_file']
 		dry_run = options['dry_run']
 
 		timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -50,6 +124,13 @@ class Command(BaseCommand):
 			print("*** DRY RUN - ingen endringer vil bli gjort ***")
 
 		runtime_t0 = time.time()
+
+		# Setup: create and populate restore database
+		try:
+			self._setup_restore_db(restore_db_name, backup_file)
+		except Exception as e:
+			print(f"FEIL under oppretting av restore-database: {e}")
+			return
 
 		# Connect to the restore database
 		try:
@@ -64,7 +145,7 @@ class Command(BaseCommand):
 			restore_cur = restore_conn.cursor()
 		except Exception as e:
 			print(f"FEIL: Kunne ikke koble til restore-databasen '{restore_db_name}': {e}")
-			print("Sørg for at du har kjørt: createdb kartoteket_restore && pg_restore -d kartoteket_restore <backup>.psql")
+			self._drop_restore_db(restore_db_name)
 			return
 
 		# Build mapping: old adgroup_id -> distinguishedname (from backup)
@@ -142,6 +223,9 @@ class Command(BaseCommand):
 
 		restore_cur.close()
 		restore_conn.close()
+
+		# Cleanup: drop the temporary database
+		self._drop_restore_db(restore_db_name)
 
 		runtime_t1 = time.time()
 		print(f"\nFerdig. Total kjøretid: {round(runtime_t1 - runtime_t0, 1)} sekunder")
