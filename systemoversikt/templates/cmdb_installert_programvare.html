@@ -36,7 +36,7 @@
 			<td>{{ row.SoftwareName }}</td>
 			<td>{{ row.SoftwareVersion }}</td>
 			<td>{{ row.DiskPaths }}</td>
-			<td>{{ row.LastSeen }}</td>
+			<td data-text="{{ row.LastSeenSort }}">{{ row.LastSeenDisplay }}</td>
 		</tr>
 		{% endfor %}
 		</tbody>

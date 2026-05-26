@@ -9375,9 +9375,11 @@ def cmdb_installert_programvare(request):
 				if row.get("LastSeen"):
 					try:
 						dt = datetime.datetime.fromisoformat(row["LastSeen"].replace("Z", "+00:00"))
-						row["LastSeen"] = dt.strftime("%d.%m.%Y %H:%M")
+						row["LastSeenDisplay"] = dt.strftime("%d.%m.%Y %H:%M")
+						row["LastSeenSort"] = dt.strftime("%Y-%m-%d %H:%M")
 					except (ValueError, AttributeError):
-						pass
+						row["LastSeenDisplay"] = row["LastSeen"]
+						row["LastSeenSort"] = row["LastSeen"]
 		else:
 			error_message = f"API-kall feilet med HTTP {response.status_code}: {response.text[:500]}"
 
