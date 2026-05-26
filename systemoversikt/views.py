@@ -9326,6 +9326,67 @@ def alle_klienter(request):
 
 
 
+def cmdb_installert_programvare(request):
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	import requests as api_requests
+	from azure.identity import ClientSecretCredential
+
+	results = []
+	error_message = None
+	columns = []
+
+	try:
+		credential = ClientSecretCredential(
+			tenant_id=os.environ['AZURE_TENANT_ID'],
+			client_id=os.environ['AZURE_ENTERPRISEAPP_CLIENT'],
+			client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
+		)
+		token = credential.get_token("https://api.securitycenter.microsoft.com/.default").token
+
+		kql_query = (
+			'let LatestDeviceInfo = DeviceInfo | summarize arg_max(Timestamp, *) by DeviceId;'
+			'let OracleInventory = DeviceTvmSoftwareInventory'
+			' | where SoftwareVendor =~ "oracle"'
+			' | join kind=leftouter LatestDeviceInfo on DeviceId'
+			' | project DeviceId, DeviceName, DeviceType, OSPlatform, SoftwareVendor, SoftwareName, SoftwareVersion, JoinType, OnboardingStatus;'
+			'OracleInventory'
+			' | join kind=leftouter DeviceTvmSoftwareEvidenceBeta on DeviceId, SoftwareVendor, SoftwareName'
+			' | project DeviceName, OSPlatform, SoftwareVendor, SoftwareName, SoftwareVersion, DiskPaths'
+		)
+
+		response = api_requests.post(
+			"https://api.security.microsoft.com/api/advancedqueries/run",
+			headers={
+				"Authorization": f"Bearer {token}",
+				"Content-Type": "application/json",
+			},
+			json={"Query": kql_query},
+			timeout=120,
+		)
+
+		if response.status_code == 200:
+			data = response.json()
+			columns = [col["Name"] for col in data.get("Schema", [])]
+			results = data.get("Results", [])
+		else:
+			error_message = f"API-kall feilet med HTTP {response.status_code}: {response.text[:500]}"
+
+	except Exception as e:
+		error_message = f"Feil ved henting av data: {e}"
+
+	return render(request, 'cmdb_installert_programvare.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'results': results,
+		'columns': columns,
+		'error_message': error_message,
+		'antall_resultater': len(results),
+	})
+
+
 def cmdb_internetteksponerte_servere(request):
 	#Søke og vise alle maskiner
 	required_permissions = ['systemoversikt.view_cmdbdevice']

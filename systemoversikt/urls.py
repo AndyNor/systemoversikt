@@ -272,6 +272,7 @@ urlpatterns = [
 	re_path(r'^cmdb/server_sok/$', views.alle_servere, name='alle_servere'),
 	re_path(r'^cmdb/eksponerte_servere/$', views.cmdb_internetteksponerte_servere, name='cmdb_internetteksponerte_servere'),
 	re_path(r'^cmdb/klienter/$', views.alle_klienter, name='alle_klienter'),
+	re_path(r'^cmdb/installert_programvare/$', views.cmdb_installert_programvare, name='cmdb_installert_programvare'),
 	re_path(r'^cmdb/devicedetails/(?P<pk>\d{1,8})/$', views.cmdb_devicedetails, name='cmdb_devicedetails'),
 	re_path(r'^cmdb/databaser/$', views.alle_databaser, name='alle_databaser'),
 	re_path(r'^cmdb/ip/$', views.alle_ip, name='alle_ip'),

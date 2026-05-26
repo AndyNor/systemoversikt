@@ -1,0 +1,46 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+
+{% block overskrift %}
+	Installert programvare
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Denne siden viser Oracle-programvare funnet på Defender for Endpoint-innrullerte klienter og servere. Data hentes i sanntid fra Microsoft Defender Advanced Hunting.</p>
+
+	{% if error_message %}
+		<div class="alert alert-danger">{{ error_message }}</div>
+	{% endif %}
+
+	{% if results %}
+		<p>Fant {{ antall_resultater }} treff.</p>
+		<table class="table table-sm tablesorter excel">
+		<thead>
+		<tr>
+			<th>DeviceName</th>
+			<th>OSPlatform</th>
+			<th>SoftwareVendor</th>
+			<th>SoftwareName</th>
+			<th>SoftwareVersion</th>
+			<th>DiskPaths</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for row in results %}
+		<tr>
+			<td>{{ row.DeviceName }}</td>
+			<td>{{ row.OSPlatform }}</td>
+			<td>{{ row.SoftwareVendor }}</td>
+			<td>{{ row.SoftwareName }}</td>
+			<td>{{ row.SoftwareVersion }}</td>
+			<td>{{ row.DiskPaths }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	{% elif not error_message %}
+		<p>Ingen resultater.</p>
+	{% endif %}
+
+{% endblock hovedinnhold %}
