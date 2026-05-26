@@ -65,6 +65,7 @@ class Command(BaseCommand):
 			print("Bygger oppslagstabell for eksisterende grupper...")
 			existing_groups = {g.distinguishedname: g for g in ADgroup.objects.all()}
 			print(f"Fant {len(existing_groups)} eksisterende grupper")
+			now = timezone.now()
 
 			# Track which groups we see during this run
 			seen_dns = set()
@@ -201,6 +202,7 @@ class Command(BaseCommand):
 					g.memberofcount = memberofcount
 					g.display_name = displayname
 					g.mail = mail
+					g.sist_oppdatert = now
 
 					if g.pk:
 						groups_to_update.append(g)
@@ -213,7 +215,7 @@ class Command(BaseCommand):
 				if groups_to_update:
 					ADgroup.objects.bulk_update(
 						groups_to_update,
-						["common_name", "description", "member", "membercount", "memberof", "memberofcount", "display_name", "mail"],
+						["common_name", "description", "member", "membercount", "memberof", "memberofcount", "display_name", "mail", "sist_oppdatert"],
 						batch_size=1000
 					)
 
