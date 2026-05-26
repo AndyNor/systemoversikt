@@ -12,17 +12,13 @@ log() {
 	echo "$(date '+%Y-%m-%d %H:%M:%S') - $*"
 }
 
-log "Running systemctl daemon-reload..."
-if sudo systemctl daemon-reload; then
-	log "daemon-reload OK."
-else
+if ! sudo systemctl daemon-reload; then
 	log "daemon-reload FAILED."
 fi
 
 ensure_service() {
 	local service="$1"
 	if systemctl is-active --quiet "$service"; then
-		log "$service is running."
 		return 0
 	fi
 	log "$service is NOT running. Restarting..."
