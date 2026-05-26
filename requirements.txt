@@ -1,3 +1,9 @@
+pywin32==305; platform_system == 'Windows'
+certipy-ad==4.8.2; platform_system == 'Linux'
+gunicorn==25.3.0; platform_system == 'Linux'
+python_ldap==3.4.3; platform_system == 'Linux'
+psycopg2-binary==2.9.11; platform_system == 'Linux'
+
 asgiref==3.11.1
 azure-core==1.41.0
 azure-identity==1.25.3
@@ -45,7 +51,6 @@ pyparsing==3.3.2
 pyproject_hooks==1.2.0
 python-dateutil==2.8.2
 pytz==2026.2
-pywin32==305
 rdflib==7.0.0
 requests==2.33.0
 simplejson==3.18.3
