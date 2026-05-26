@@ -1,0 +1,11 @@
+---
+description: Development environment configuration for this project
+alwaysApply: true
+---
+
+# Development Environment
+
+- Windows development environment uses a virtual environment at `.venv\Scripts\activate`
+- Activate before running Python/pip commands: `.venv\Scripts\activate`
+- Use `py -m pip` or `.venv\Scripts\python` if activation is not possible in the shell
+- Production environment is Linux
