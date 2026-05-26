@@ -9371,6 +9371,13 @@ def cmdb_installert_programvare(request):
 			data = response.json()
 			columns = [col["Name"] for col in data.get("Schema", [])]
 			results = data.get("Results", [])
+			for row in results:
+				if row.get("LastSeen"):
+					try:
+						dt = datetime.datetime.fromisoformat(row["LastSeen"].replace("Z", "+00:00"))
+						row["LastSeen"] = dt.strftime("%d.%m.%Y %H:%M")
+					except (ValueError, AttributeError):
+						pass
 		else:
 			error_message = f"API-kall feilet med HTTP {response.status_code}: {response.text[:500]}"
 
