@@ -9351,10 +9351,10 @@ def cmdb_installert_programvare(request):
 			'let OracleInventory = DeviceTvmSoftwareInventory'
 			' | where SoftwareVendor =~ "oracle"'
 			' | join kind=leftouter LatestDeviceInfo on DeviceId'
-			' | project DeviceId, DeviceName, DeviceType, OSPlatform, SoftwareVendor, SoftwareName, SoftwareVersion, JoinType, OnboardingStatus;'
+			' | project DeviceId, DeviceName, DeviceType, OSPlatform, SoftwareVendor, SoftwareName, SoftwareVersion, JoinType, OnboardingStatus, LastSeen=Timestamp;'
 			'OracleInventory'
 			' | join kind=leftouter DeviceTvmSoftwareEvidenceBeta on DeviceId, SoftwareVendor, SoftwareName'
-			' | project DeviceName, OSPlatform, SoftwareVendor, SoftwareName, SoftwareVersion, DiskPaths'
+			' | project DeviceName, OSPlatform, SoftwareVendor, SoftwareName, SoftwareVersion, DiskPaths, LastSeen'
 		)
 
 		response = api_requests.post(
