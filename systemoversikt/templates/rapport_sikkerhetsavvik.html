@@ -44,15 +44,16 @@
 		<td>
 			{{s.kommentar|default:""}}
 			<br><br>
+			{# 2026-05-27: Link to adgruppe detail page by pk instead of group search. #}
 			definert som medlemskap i følgende grupper:<br>
 			{% for gruppe in s.grupper %}
-				<li><a href="{% url 'alle_adgrupper'%}?search_term={{gruppe}}">{{ gruppe }}</a></li>
+				<li><a href="{% url 'adgruppe_detaljer' pk=gruppe.pk %}">{{ gruppe.common_name }}</a></li>
 			{% endfor %}
 
 			{% if s.AND_grupper %}
 			samtidig som bruker også er medlem i:<br>
 				{% for gruppe in s.AND_grupper %}
-				<li><a href="{% url 'alle_adgrupper'%}?search_term={{gruppe}}">{{ gruppe }}</a></li>
+				<li><a href="{% url 'adgruppe_detaljer' pk=gruppe.pk %}">{{ gruppe.common_name }}</a></li>
 				{% endfor %}
 			{% endif %}
 

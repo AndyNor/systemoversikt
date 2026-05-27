@@ -2441,6 +2441,7 @@ def cmdb_per_virksomhet(request):
 
 
 def o365_avvik(request):
+	# 2026-05-27: Pass ADgroup objects to template – detail links use pk, not search.
 	#Viser alle avvik per virksomhet (cisco, bigip..)
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -2453,8 +2454,8 @@ def o365_avvik(request):
 					"kategori": i.kategori,
 					"beskrivelse": i.beskrivelse,
 					"kommentar": i.kommentar,
-					"grupper": [g.common_name for g in i.grupper.all()],
-					"AND_grupper":[g.common_name for g in i.AND_grupper.all()],
+					"grupper": list(i.grupper.all()),
+					"AND_grupper": list(i.AND_grupper.all()),
 					"tidslinjedata": json.loads(i.tidslinjedata),
 				})
 		except:
@@ -2463,12 +2464,6 @@ def o365_avvik(request):
 	def rapport_konkrete_brukere(grupper):
 		gruppeemdlemmer = set()
 		for gruppe in grupper:
-			try:
-				gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
-			except:
-				messages.error(request, f"fant ikke gruppen {gruppe}")
-				continue
-
 			brukere = json.loads(gruppe.member)
 			for bruker in brukere:
 				try:
@@ -2483,12 +2478,7 @@ def o365_avvik(request):
 		antall = 0
 		if len(i["AND_grupper"]) == 0: # Det er bare ordinære grupper som kan slås opp direkte. Er mye raskere enn å dekode enkeltbrukere.
 			for gruppe in i["grupper"]:
-				try:
-					gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
-					antall += gruppe.membercount
-				except:
-					messages.error(request, f"fant ikke gruppen {gruppe}")
-					pass
+				antall += gruppe.membercount
 		else: # Det er 1 eller flere grupper som skal AND-es sammen. Vi må derfor lese ut faktiske identer.
 			gruppeemdlemmer = rapport_konkrete_brukere(i["grupper"])
 			AND_gruppemedlemmer = rapport_konkrete_brukere(i["AND_grupper"])
