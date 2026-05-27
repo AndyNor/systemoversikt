@@ -8,9 +8,10 @@
 
 {% block hovedinnhold %}
 
+	{# 2026-05-27: search_term_adgrp matches alle_adgrupper GET param (was search_term). #}
 	<form action="{% url 'alle_adgrupper' %}" autocomplete="off">
 		<div class="form-group form-inline">
-			<input size="30" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			<input size="30" style="width: 350px;" type="search" value="{{ search_term_adgrp }}" name="search_term_adgrp"
 			placeholder="AD-gruppe starter med (husk 'DS-')" class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 		</div>
