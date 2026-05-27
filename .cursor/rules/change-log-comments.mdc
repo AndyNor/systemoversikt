@@ -1,0 +1,56 @@
+---
+description: Timestamped comments documenting why code was changed
+alwaysApply: true
+---
+
+# Change log comments
+
+When you change project code, add one or more short comments with a **timestamp** and **reason** so future readers can trace why the change was made.
+
+## When to add
+
+- Add comments for every intentional code change you make (not for typo-only fixes in comments/docs unless they clarify behavior).
+- Use the date of the change in `YYYY-MM-DD` format.
+
+## Where to put them
+
+| File type | Placement |
+|-----------|-----------|
+| Most Python modules, templates, etc. | Near the **top of the file**, after encoding/shebang and before imports if possible, or in a dedicated block immediately after imports |
+| `systemoversikt/views.py` (and similar large view modules) | Prefer **inside the view (or helper) function** you changed; use a file-top block only when the change spans many views or is global |
+
+Keep new entries **newest first** when using a file-top block.
+
+## Format
+
+Single change (inline or above the changed block):
+
+```python
+# 2026-05-27: Exclude archived systems – avoids duplicates in the overview (ticket #1234).
+```
+
+File-top block (other modules):
+
+```python
+# -*- coding: utf-8 -*-
+# Change log:
+# 2026-05-27: Exclude archived systems – avoids duplicates in the overview.
+# 2026-04-10: Added vulnstats cache to reduce Azure API calls.
+```
+
+Inside a view function:
+
+```python
+@login_required
+def system_oversikt(request):
+    # 2026-05-27: Sort by last updated – order requested by operations owners.
+    ...
+```
+
+## Content
+
+- Write change-log comments in **English** by default.
+- State **what** changed and **why** (bugfix, requirement, performance, security, user clarification, etc.).
+- Reference ticket/issue numbers when the user provides them; do not invent IDs.
+- Do not remove older change-log comments unless the user asks to clean them up.
+- Use Norwegian only when the surrounding file consistently uses Norwegian for comments and mixing languages would look out of place.
