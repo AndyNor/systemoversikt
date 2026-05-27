@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-05-27: Use rapport_gruppemedlemskaper_antall_brukere – same unique transitive count as sikkerhetsavvik page.
 from systemoversikt.models import *
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
-from systemoversikt.views import push_pushover
+from systemoversikt.views import push_pushover, rapport_gruppemedlemskaper_antall_brukere
 from django.core.management.base import BaseCommand
 from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
@@ -54,49 +56,14 @@ class Command(BaseCommand):
 			for i in RapportGruppemedlemskaper.objects.all():
 				innhentingsbehov.append({
 					"id": i,
-					"grupper": [g.common_name for g in i.grupper.all()],
-					"AND_grupper":[g.common_name for g in i.AND_grupper.all()],
+					"grupper": list(i.grupper.all()),
+					"AND_grupper": list(i.AND_grupper.all()),
 					"tidslinjedata": i.tidslinjedata,
 				})
 
-
-			def rapport_konkrete_brukere(grupper):
-				gruppeemdlemmer = set()
-				for gruppe in grupper:
-					try:
-						gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
-					except:
-						print(f"fant ikke gruppen {gruppe}")
-						continue
-					brukere = json.loads(gruppe.member)
-					for bruker in brukere:
-						try:
-							gruppeemdlemmer.add(bruker.split(',')[0].split('CN=')[1])
-						except:
-							print(f"fant ikke bruker {bruker}")
-							pass
-				return gruppeemdlemmer
-
-
 			def rapport_hent_statistikk(i):
 				print(f"Leser ut grupper for {i['id'].beskrivelse}")
-				antall = 0
-				if len(i["AND_grupper"]) == 0: # Det er bare ordinære grupper som kan slås opp direkte. Er mye raskere enn å dekode enkeltbrukere.
-					for gruppe in i["grupper"]:
-						try:
-							gruppe = ADgroup.objects.get(common_name__iexact=gruppe)
-							antall += gruppe.membercount
-						except:
-							print(f"fant ikke gruppen {gruppe}")
-							pass
-				else: # Det er 1 eller flere grupper som skal AND-es sammen. Vi må derfor lese ut faktiske identer.
-					gruppeemdlemmer = rapport_konkrete_brukere(i["grupper"])
-					AND_gruppemedlemmer = rapport_konkrete_brukere(i["AND_grupper"])
-					medlemmer_snitt = gruppeemdlemmer.intersection(AND_gruppemedlemmer)
-
-					antall = len(medlemmer_snitt)
-					i["konkrete_medlemmer"] = list(medlemmer_snitt)
-
+				antall, _ = rapport_gruppemedlemskaper_antall_brukere(i["grupper"], i["AND_grupper"] or None)
 				i["medlemmer"] = antall
 				return i
 

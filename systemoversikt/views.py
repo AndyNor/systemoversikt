@@ -2441,6 +2441,7 @@ def cmdb_per_virksomhet(request):
 
 
 def o365_avvik(request):
+	# 2026-05-27: Count unique transitive Kartoteket users (same as system detail page).
 	# 2026-05-27: Include rapportgruppemedlemskaper pk – admin links per table row.
 	# 2026-05-27: Pass ADgroup objects to template – detail links use pk, not search.
 	#Viser alle avvik per virksomhet (cisco, bigip..)
@@ -2463,33 +2464,11 @@ def o365_avvik(request):
 		except:
 			messages.error(request, f"Konfigurasjon for {i.beskrivelse} er enten feil eller har ikke kjørt første gang enda.")
 
-	def rapport_konkrete_brukere(grupper):
-		gruppeemdlemmer = set()
-		for gruppe in grupper:
-			brukere = json.loads(gruppe.member)
-			for bruker in brukere:
-				try:
-					gruppeemdlemmer.add(bruker.split(',')[0].split('CN=')[1])
-				except:
-					messages.error(request, f"Kunne ikke splitte opp {bruker}")
-
-		return gruppeemdlemmer
-
-
 	def rapport_hent_statistikk(i):
-		antall = 0
-		if len(i["AND_grupper"]) == 0: # Det er bare ordinære grupper som kan slås opp direkte. Er mye raskere enn å dekode enkeltbrukere.
-			for gruppe in i["grupper"]:
-				antall += gruppe.membercount
-		else: # Det er 1 eller flere grupper som skal AND-es sammen. Vi må derfor lese ut faktiske identer.
-			gruppeemdlemmer = rapport_konkrete_brukere(i["grupper"])
-			AND_gruppemedlemmer = rapport_konkrete_brukere(i["AND_grupper"])
-			medlemmer_snitt = gruppeemdlemmer.intersection(AND_gruppemedlemmer)
-
-			antall = len(medlemmer_snitt)
-			i["konkrete_medlemmer"] = list(medlemmer_snitt)
-
+		antall, usernames = rapport_gruppemedlemskaper_antall_brukere(i["grupper"], i["AND_grupper"] or None)
 		i["medlemmer"] = antall
+		if i["AND_grupper"]:
+			i["konkrete_medlemmer"] = usernames
 		return i
 
 	statistikk = []
@@ -12305,6 +12284,16 @@ def ubw_estimat_copy(request, pk): #API
 ###############################################
 # AD-gruppemedlemskap (kun lokale databaseverdier)
 ###############################################
+
+
+def rapport_gruppemedlemskaper_antall_brukere(grupper, and_grupper=None):
+	# 2026-05-27: Unique transitive Kartoteket users for sikkerhetsavvik / rapport_avvik counts.
+	"""Return (count, sorted usernames) for RapportGruppemedlemskaper-style group rules."""
+	users = adgruppe_transitive_users_db_only(grupper) if grupper else set()
+	if and_grupper:
+		users &= adgruppe_transitive_users_db_only(and_grupper)
+	usernames = sorted(u.username for u in users)
+	return len(users), usernames
 
 
 def adgruppe_transitive_users_db_only(start_groups, collect_unresolved_dns=False, for_virksomhet=None):
