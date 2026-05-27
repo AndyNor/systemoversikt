@@ -59,7 +59,8 @@ python /var/kartoteket/source/systemoversikt/manage.py digdir_los
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_enterprise_applications
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_named_locations
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_conditional_access
-python /var/kartoteket/source/systemoversikt/manage.py azure_authentication_methods
+# 2026-05-27: Use v2 Azure auth methods job (requested replacement of default command).
+python /var/kartoteket/source/systemoversikt/manage.py azure_authentication_methods_v2
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_vulnerabilities
 
 # run batch e-mail
