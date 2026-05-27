@@ -162,8 +162,8 @@ class Command(BaseCommand):
                 int_config.helsestatus = "Vellykket"
                 int_config.sist_status = msg
                 int_config.runtime = 0
-                int_config.elementer = 0
-                int_config.save()
+                # Behold elementer fra siste faktiske import (ikke nullstill ved skip).
+                int_config.save(update_fields=["helsestatus", "sist_status", "runtime"])
                 return
 
             file_paths = []
