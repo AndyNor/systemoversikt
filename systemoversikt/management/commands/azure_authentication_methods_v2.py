@@ -4,7 +4,7 @@ from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
 from systemoversikt.models import *
 import os, requests, json, time
-from datetime import datetime
+from datetime import datetime, timezone as dt_timezone
 from django.utils import timezone
 from django.db.models import Q
 from systemoversikt.views import push_pushover
@@ -115,7 +115,8 @@ class Command(BaseCommand):
 				dt_string = dt_string.rstrip("Z")
 				if "." in dt_string:
 					dt_string = dt_string.split(".")[0]
-				return datetime.strptime(dt_string, "%Y-%m-%dT%H:%M:%S")
+				parsed = datetime.strptime(dt_string, "%Y-%m-%dT%H:%M:%S")
+				return parsed.replace(tzinfo=dt_timezone.utc)
 
 
 			# --- Phase 3: Batch fetch detailed methods (same as v1) ---
@@ -252,12 +253,12 @@ class Command(BaseCommand):
 									"opprettet": opprettet,
 								})
 						user.profile.auth_methods = json.dumps(users_methods, indent=2)
-						user.profile.auth_methods_last_update = datetime.now()
+						user.profile.auth_methods_last_update = timezone.now()
 						profiles_to_update.append(user.profile)
 						Command.ANTALL_LAGRET += 1
 					else:
 						user.profile.auth_methods = json.dumps({"status": "Oppslag feilet"}, indent=2)
-						user.profile.auth_methods_last_update = datetime.now()
+						user.profile.auth_methods_last_update = timezone.now()
 						profiles_to_update.append(user.profile)
 						Command.ANTALL_FEILET += 1
 
