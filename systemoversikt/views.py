@@ -2441,6 +2441,7 @@ def cmdb_per_virksomhet(request):
 
 
 def o365_avvik(request):
+	# 2026-05-27: Include rapportgruppemedlemskaper pk – admin links per table row.
 	# 2026-05-27: Pass ADgroup objects to template – detail links use pk, not search.
 	#Viser alle avvik per virksomhet (cisco, bigip..)
 	required_permissions = ['auth.view_user']
@@ -2451,6 +2452,7 @@ def o365_avvik(request):
 	for i in RapportGruppemedlemskaper.objects.all().order_by('kategori'):
 		try:
 			innhentingsbehov.append({
+					"pk": i.pk,
 					"kategori": i.kategori,
 					"beskrivelse": i.beskrivelse,
 					"kommentar": i.kommentar,

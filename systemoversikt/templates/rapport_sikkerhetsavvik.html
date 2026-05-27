@@ -39,7 +39,7 @@
 {% for s in statistikk %}
 	<tr>
 		<td>{{s.kategori}}</td>
-		<td>{{s.beskrivelse}}</td>
+		<td><a href="/admin/systemoversikt/rapportgruppemedlemskaper/{{ s.pk }}/change/">{{ s.beskrivelse }}</a></td>
 		<td>{{s.medlemmer}}</td>
 		<td>
 			{{s.kommentar|default:""}}
