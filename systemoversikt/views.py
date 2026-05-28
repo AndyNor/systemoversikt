@@ -10345,8 +10345,9 @@ def api_systemer_optimized(request):  # tjeneste- og systemoversikt
 			"systemforvalter_kontaktpersoner": systemforvalter_kontakter,
 			"systemforvalter_orgenhet_ouid": (
 				{
-					"hr_ouid": system.systemforvalter_avdeling_referanse.ouid,
+					"prk_ouid": system.systemforvalter_avdeling_referanse.ouid,
 					"hr_navn": system.systemforvalter_avdeling_referanse.ou,
+					"hr_ouid": system.systemforvalter_avdeling_referanse.hrouid,
 				}
 				if system.systemforvalter_avdeling_referanse
 				else None
