@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-01: Log runtime in ApplicationLog message; cap detailed fetches at 7500/night.
 from django.core.management.base import BaseCommand
 from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
@@ -23,7 +25,7 @@ class Command(BaseCommand):
 
 	SLEEP_BETWEEN = 0
 	SLEEP_TOO_MANY = 20
-	MAX_DETAILED_FETCHES = 15000
+	MAX_DETAILED_FETCHES = 7500
 
 	def handle(self, **options):
 
@@ -339,11 +341,13 @@ class Command(BaseCommand):
 
 			runtime_t1 = time.time()
 			logg_total_runtime = runtime_t1 - runtime_t0
+			runtime_sec = int(logg_total_runtime)
 			logg_entry_message = (
 				f"Hybrid v2: {Command.ANTALL_GRAPH_KALL} batch-kall mot MS Graph. "
 				f"Fartsbegrenset {Command.ANTALL_TOO_MANY_CALLS} ganger. "
 				f"Lagret {Command.ANTALL_LAGRET}, feilet {Command.ANTALL_FEILET}, "
-				f"uendret (hoppet over) {Command.ANTALL_UENDRET}."
+				f"uendret (hoppet over) {Command.ANTALL_UENDRET}. "
+				f"Kjøretid: {runtime_sec} sek."
 			)
 
 			print(logg_entry_message)
