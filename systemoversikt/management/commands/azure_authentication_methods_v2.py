@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-06-01: Log runtime in ApplicationLog message; cap detailed fetches at 7500/night.
+# 2026-06-01: Log runtime in ApplicationLog message; cap detailed fetches at 21000/night.
 from django.core.management.base import BaseCommand
 from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
@@ -25,7 +25,7 @@ class Command(BaseCommand):
 
 	SLEEP_BETWEEN = 0
 	SLEEP_TOO_MANY = 20
-	MAX_DETAILED_FETCHES = 7500
+	MAX_DETAILED_FETCHES = 21000
 
 	def handle(self, **options):
 
