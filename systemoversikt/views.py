@@ -8184,6 +8184,7 @@ def leverandor(request, pk):
 
 def alle_leverandorer(request):
 	#Vise liste over alle leverandører
+	# 2026-06-07: Annotate system counts per supplier role for overview table columns.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -8196,12 +8197,18 @@ def alle_leverandorer(request):
 	else:
 		leverandorer = Leverandor.objects.filter(leverandor_navn__icontains=search_term)
 
-	leverandorer = leverandorer.order_by(Lower('leverandor_navn'))
+	leverandorer = leverandorer.annotate(
+		antall_systemleverandor=Count('system_systemleverandor', distinct=True),
+		antall_basisdriftleverandor=Count('system_driftsleverandor', distinct=True),
+		antall_applikasjonsdriftleverandor=Count('system_applikasjonsdriftleverandor', distinct=True),
+	).order_by(Lower('leverandor_navn'))
 
 	return render(request, 'leverandor_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'leverandorer': leverandorer,
+		'system_felt_referanse': System(),
+		'search_term': search_term,
 	})
 
 

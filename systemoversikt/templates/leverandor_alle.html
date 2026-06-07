@@ -1,5 +1,6 @@
 {% extends "system_index.html" %}
 {% load static %}
+{% load templatetags %}
 
 {% block overskrift %}
 	Leverandører
@@ -27,12 +28,9 @@
 		{% endif %}
 		<th>Leverandør</th>
 		<th>Land</th>
-		{# <th>Programvarer for</th> #}
-		{# <th>Systemer for</th> #}
-		{# <th>Systembruk for</th> #}
-		{# <th>Basisdrift for</th> #}
-		{# <th>Applikasjonsdrift for</th> #}
-		{# <th>Databehandler for</th> #}
+		<th>{% get_verbose_field_name system_felt_referanse "systemleverandor" %}</th>
+		<th>{% get_verbose_field_name system_felt_referanse "basisdriftleverandor" %}</th>
+		<th>{% get_verbose_field_name system_felt_referanse "applikasjonsdriftleverandor" %}</th>
 		<th>Kontaktpersoner</th>
 		<th>Organisasjonsnummer</th>
 		<th>Notater</th>
@@ -50,12 +48,9 @@
 		{% url 'leverandor' pk=item.pk as url_leverandor %}
 		<td><a href="{{ url_leverandor }}">{{ item.leverandor_navn }}</a></td>
 		<td>{{ item.get_land_display|default:'' }}</td>
-		{# <td>{{ item.programvare_programvareleverandor.count }}</td> #}
-		{# <td>{{ item.system_systemleverandor.count }}</td> #}
-		{# <td>{{ item.systembruk_systemleverandor.count }}</td> #}
-		{# <td>{{ item.system_systemleverandor.count }}</td> #}
-		{# <td>{{ item.system_applikasjonsdriftleverandor.count }}</td> #}
-		{# <td>{{ item.behandling_navn_databehandler.count }}</td> #}
+		<td>{{ item.antall_systemleverandor }}</td>
+		<td>{{ item.antall_basisdriftleverandor }}</td>
+		<td>{{ item.antall_applikasjonsdriftleverandor }}</td>
 		<td>{{ item.kontaktpersoner|default:'' }}</td>
 		<td>{{ item.orgnummer|default:'' }}</td>
 		<td>{{ item.notater|default:'' }}</td>
