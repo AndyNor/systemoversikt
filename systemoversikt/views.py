@@ -8249,11 +8249,13 @@ def driftsmodell_virksomhet_klassifisering(request, pk):
 
 def rapport_systemer_leverandor_land(request):
 	# 2026-06-07: Report of systems with supplier country data – three supplier roles per system.
+	# 2026-06-07: Country summary with system counts per observed country.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	land_codes = [code for code, _ in LEVERANDOR_LAND_VALG]
+	land_navn = dict(LEVERANDOR_LAND_VALG)
 	har_leverandor_land = (
 		Q(systemleverandor__land__in=land_codes) |
 		Q(basisdriftleverandor__land__in=land_codes) |
@@ -8265,10 +8267,40 @@ def rapport_systemer_leverandor_land(request):
 		'applikasjonsdriftleverandor',
 	).order_by(Lower('systemnavn'))
 
+	land_til_systemer = defaultdict(set)
+	for system in systemer:
+		system_lands = set()
+		for lev in system.systemleverandor.all():
+			if lev.land:
+				system_lands.add(lev.land)
+		for lev in system.basisdriftleverandor.all():
+			if lev.land:
+				system_lands.add(lev.land)
+		for lev in system.applikasjonsdriftleverandor.all():
+			if lev.land:
+				system_lands.add(lev.land)
+		for land in system_lands:
+			land_til_systemer[land].add(system.pk)
+
+	land_oppsummering = sorted(
+		[
+			{
+				'land_kode': land_kode,
+				'land_navn': land_navn.get(land_kode, land_kode),
+				'antall_systemer': len(system_ids),
+			}
+			for land_kode, system_ids in land_til_systemer.items()
+		],
+		key=lambda row: (-row['antall_systemer'], row['land_navn']),
+	)
+
 	return render(request, 'rapport_systemer_leverandor_land.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
+		'land_oppsummering': land_oppsummering,
+		'antall_unike_land': len(land_oppsummering),
+		'antall_systemer': systemer.count(),
 	})
 
 
