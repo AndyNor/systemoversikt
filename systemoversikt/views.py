@@ -45,6 +45,17 @@ def _azure_vulnstats_cache_slug(value):
 	return hashlib.md5(str(value).encode("utf-8")).hexdigest()
 
 
+# Overview-only: client OS platforms hidden from /sikkerhet/azure_vulnstats/overview/.
+_AZURE_VULNSTATS_OVERVIEW_EXCLUDED_OS = ("Windows11",)
+
+
+def _azure_vulnstats_overview_active():
+	qs = AzureDeviceVulnerability.objects.all()
+	for os_platform in _AZURE_VULNSTATS_OVERVIEW_EXCLUDED_OS:
+		qs = qs.exclude(device__os_platform__iexact=os_platform)
+	return qs
+
+
 def _cves_from_qualys_cve_info(cve_info):
 	"""Unique CVE IDs from Qualys cve_info (comma-separated and/or embedded in text)."""
 	if not cve_info:
@@ -1269,6 +1280,7 @@ def vulnstats(request):
 
 
 def azure_vulnstats(request):
+	# 2026-06-07: Exclude Windows 11 client OS from overview aggregates – faster page, easy to revert.
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -1278,13 +1290,13 @@ def azure_vulnstats(request):
 	except:
 		integrasjonsstatus = None
 
-	cache_version = "v12"
+	cache_version = "v13"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = f"azure_vulnstats:overview:{cache_version}:{cache_ts}"
 	data = cache.get(cache_key)
 
 	if data is None:
-		active = AzureDeviceVulnerability.objects.all()
+		active = _azure_vulnstats_overview_active()
 
 		severity_order = ["Critical", "High"]
 		severity_colors = {
