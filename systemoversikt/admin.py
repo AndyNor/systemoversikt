@@ -774,7 +774,8 @@ class RapportGruppemedlemskaperAdmin(admin.ModelAdmin):
 @admin.register(Leverandor)
 class LeverandorAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('leverandor_navn', 'kontaktpersoner', 'orgnummer')
+	list_display = ('leverandor_navn', 'land', 'kontaktpersoner', 'orgnummer')
+	list_filter = ('land',)
 	search_fields = ('leverandor_navn', 'orgnummer', 'notater')
 
 

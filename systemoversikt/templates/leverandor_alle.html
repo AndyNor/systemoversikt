@@ -26,6 +26,7 @@
 		<th class="filter-false">Endre</th>
 		{% endif %}
 		<th>Leverandør</th>
+		<th>Land</th>
 		{# <th>Programvarer for</th> #}
 		{# <th>Systemer for</th> #}
 		{# <th>Systembruk for</th> #}
@@ -48,6 +49,7 @@
 		{% endif %}
 		{% url 'leverandor' pk=item.pk as url_leverandor %}
 		<td><a href="{{ url_leverandor }}">{{ item.leverandor_navn }}</a></td>
+		<td>{{ item.get_land_display|default:'' }}</td>
 		{# <td>{{ item.programvare_programvareleverandor.count }}</td> #}
 		{# <td>{{ item.system_systemleverandor.count }}</td> #}
 		{# <td>{{ item.systembruk_systemleverandor.count }}</td> #}

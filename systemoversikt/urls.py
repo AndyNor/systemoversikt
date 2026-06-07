@@ -177,6 +177,7 @@ urlpatterns = [
 	re_path(r'^systemer/mangler_system/$', views.systemer_uten_driftsmodell, name='systemer_uten_driftsmodell'),
 	re_path(r'^systemer/via_citrix/$', views.systemer_citrix, name='systemer_citrix'),
 	re_path(r'^systemer/systemer/forsomt/$', views.rapport_systemer_forsomt, name="rapport_systemer_forsomt"),
+	re_path(r'^systemer/leverandorland/$', views.rapport_systemer_leverandor_land, name='rapport_systemer_leverandor_land'),
 	re_path(r'^systemer/leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
 	#re_path(r'^systemer/leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
 	re_path(r'^systemer/leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),

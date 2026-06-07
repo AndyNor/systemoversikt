@@ -45,6 +45,9 @@
 		<hr>
 		<h6>Rapporter</h6>
 
+		{% url 'rapport_systemer_leverandor_land' as url_rapport_systemer_leverandor_land %}
+		<a href="{{ url_rapport_systemer_leverandor_land }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'rapport_systemer_leverandor_land' %}fremhev{% endif %}">Leverandørland</a><br>
+
 		{% url 'systemklassifisering_tom' as systemklassifisering_tom_url %}
 		<a href="{{ systemklassifisering_tom_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'systemklassifisering_tom' or rn and rn.url_name == 'systemklassifisering_detaljer' %}fremhev{% endif %}">Fellessystemer</a><br>
 

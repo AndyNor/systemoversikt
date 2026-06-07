@@ -175,6 +175,7 @@ class LeverandorSerializer(serializers.HyperlinkedModelSerializer):
 		fields = ('pk',
 			'url',
 			'leverandor_navn',
+			'land',
 			'orgnummer',
 			'kontaktpersoner',
 			'godkjent_opptaks_sertifiseringsordning',

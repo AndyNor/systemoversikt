@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-07: Added land field to Leverandor – country of operation for supplier overview.
 from django.db import models
 from django.contrib.auth.models import User
 from django.dispatch import receiver
@@ -1537,6 +1539,40 @@ class Profile(models.Model):
 
 
 
+LEVERANDOR_LAND_VALG = (
+	('AU', 'Australia'),
+	('BE', 'Belgia'),
+	('BR', 'Brasil'),
+	('CA', 'Canada'),
+	('CN', 'Kina'),
+	('CZ', 'Tsjekkia'),
+	('DK', 'Danmark'),
+	('EE', 'Estland'),
+	('ES', 'Spania'),
+	('FI', 'Finland'),
+	('FR', 'Frankrike'),
+	('GB', 'Storbritannia'),
+	('DE', 'Tyskland'),
+	('IN', 'India'),
+	('IE', 'Irland'),
+	('IS', 'Island'),
+	('IL', 'Israel'),
+	('JP', 'Japan'),
+	('KR', 'Sør-Korea'),
+	('NL', 'Nederland'),
+	('NO', 'Norge'),
+	('PL', 'Polen'),
+	('PT', 'Portugal'),
+	('RO', 'Romania'),
+	('SE', 'Sverige'),
+	('CH', 'Sveits'),
+	('SG', 'Singapore'),
+	('UA', 'Ukraina'),
+	('US', 'USA'),
+	('VN', 'Vietnam'),
+)
+
+
 ### SENTRAL KLASSE ###
 class Leverandor(models.Model):
 	opprettet = models.DateTimeField(
@@ -1566,6 +1602,14 @@ class Leverandor(models.Model):
 			blank=True,
 			null=True,
 			help_text=u"",
+			)
+	land = models.CharField(
+			verbose_name="Land",
+			max_length=2,
+			choices=LEVERANDOR_LAND_VALG,
+			blank=True,
+			null=True,
+			help_text=u"Land leverandøren opererer fra",
 			)
 	notater = models.TextField(
 			verbose_name="Notater",

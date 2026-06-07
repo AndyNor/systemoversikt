@@ -1,0 +1,66 @@
+{% extends "system_index.html" %}
+{% load static %}
+{% load templatetags %}
+
+{% block overskrift %}
+	Leverandørland
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Systemer der minst én leverandør har registrert land. Kun leverandører med land vises i tabellen.</p>
+	<p>Fant {{ systemer|length }} systemer med landdata.</p>
+
+	<table class="tablesorter excel">
+		<thead>
+			<tr>
+				<th>System</th>
+				{% if systemer %}
+				<th>{% get_verbose_field_name systemer.0 "systemleverandor" %}</th>
+				<th>{% get_verbose_field_name systemer.0 "basisdriftleverandor" %}</th>
+				<th>{% get_verbose_field_name systemer.0 "applikasjonsdriftleverandor" %}</th>
+				{% else %}
+				<th>Programvareleverandør</th>
+				<th>Basisdriftleverandør</th>
+				<th>Applikasjonsdriftsleverandør</th>
+				{% endif %}
+			</tr>
+		</thead>
+		<tbody>
+			{% for system in systemer %}
+			<tr>
+				<td>{% include 'system_include_vis.html' with system=system %}</td>
+				<td>
+					{% for lev in system.systemleverandor.all %}
+						{% if lev.land %}
+							{% url "leverandor" lev.pk as url_leverandor %}
+							<div><a href="{{ url_leverandor }}">{{ lev }}</a> ({{ lev.get_land_display }})</div>
+						{% endif %}
+					{% endfor %}
+				</td>
+				<td>
+					{% for lev in system.basisdriftleverandor.all %}
+						{% if lev.land %}
+							{% url "leverandor" lev.pk as url_leverandor %}
+							<div><a href="{{ url_leverandor }}">{{ lev }}</a> ({{ lev.get_land_display }})</div>
+						{% endif %}
+					{% endfor %}
+				</td>
+				<td>
+					{% for lev in system.applikasjonsdriftleverandor.all %}
+						{% if lev.land %}
+							{% url "leverandor" lev.pk as url_leverandor %}
+							<div><a href="{{ url_leverandor }}">{{ lev }}</a> ({{ lev.get_land_display }})</div>
+						{% endif %}
+					{% endfor %}
+				</td>
+			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="4">Ingen systemer med registrert leverandørland.</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock hovedinnhold %}

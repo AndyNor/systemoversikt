@@ -18,6 +18,7 @@
 	<div class="card-body">
 		<h6>{{ leverandor.notater|default:'Ingen notater' }}</h6>
 		<b>{% get_verbose_field_name leverandor "orgnummer" %}:</b> {{ leverandor.orgnummer|default:'Ukjent' }}<br><br>
+		<b>{% get_verbose_field_name leverandor "land" %}:</b> {{ leverandor.get_land_display|default:'Ukjent' }}<br><br>
 		<b>{% get_verbose_field_name leverandor "kontaktpersoner" %}:</b> {{ leverandor.kontaktpersoner|default:'Ukjent' }}<br><br>
 		<b>Avtaler med leverandøren</b>
 			<ul>

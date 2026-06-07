@@ -8240,6 +8240,31 @@ def driftsmodell_virksomhet_klassifisering(request, pk):
 	})
 
 
+def rapport_systemer_leverandor_land(request):
+	# 2026-06-07: Report of systems with supplier country data – three supplier roles per system.
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	land_codes = [code for code, _ in LEVERANDOR_LAND_VALG]
+	har_leverandor_land = (
+		Q(systemleverandor__land__in=land_codes) |
+		Q(basisdriftleverandor__land__in=land_codes) |
+		Q(applikasjonsdriftleverandor__land__in=land_codes)
+	)
+	systemer = System.objects.filter(har_leverandor_land).distinct().prefetch_related(
+		'systemleverandor',
+		'basisdriftleverandor',
+		'applikasjonsdriftleverandor',
+	).order_by(Lower('systemnavn'))
+
+	return render(request, 'rapport_systemer_leverandor_land.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'systemer': systemer,
+	})
+
+
 def rapport_prioriteringer(request):
 	#Vise indeks over systemprioritering
 	required_permissions = ['systemoversikt.view_system']
