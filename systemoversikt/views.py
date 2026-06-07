@@ -56,6 +56,83 @@ def _azure_vulnstats_overview_active():
 	return qs
 
 
+def _azure_vulnstats_qualys_defender_comparison():
+	"""Unique CVE sets per CMDB machine: Qualys-only, overlap, Defender-only."""
+	qualys_by_pk = defaultdict(set)
+	for server_id, cve_info in QualysVuln.objects.filter(
+		server_id__isnull=False,
+	).values_list("server_id", "cve_info"):
+		qualys_by_pk[server_id].update(_cves_from_qualys_cve_info(cve_info))
+
+	azure_by_pk = defaultdict(set)
+	azure_rows = list(
+		_azure_vulnstats_overview_active().values_list("device__hostname", "cve__cve_id")
+	)
+	hostnames = {hostname for hostname, cve_id in azure_rows if hostname and cve_id}
+	pk_by_hostname = cmdb_pk_lookup_for_hostnames(hostnames)
+	for hostname, cve_id in azure_rows:
+		if not cve_id:
+			continue
+		pk = pk_by_hostname.get(hostname)
+		if pk:
+			azure_by_pk[pk].add(cve_id.upper())
+
+	all_pks = set(qualys_by_pk.keys()) | set(azure_by_pk.keys())
+	if not all_pks:
+		return {
+			"rows": [],
+			"summary": {
+				"machine_count": 0,
+				"qualys_only": 0,
+				"overlap": 0,
+				"defender_only": 0,
+			},
+		}
+
+	comp_names = dict(
+		CMDBdevice.objects.filter(pk__in=all_pks).values_list("pk", "comp_name")
+	)
+
+	rows = []
+	summary = {
+		"machine_count": 0,
+		"qualys_only": 0,
+		"overlap": 0,
+		"defender_only": 0,
+	}
+	for pk in all_pks:
+		qualys = qualys_by_pk.get(pk, set())
+		azure = azure_by_pk.get(pk, set())
+		if not qualys and not azure:
+			continue
+		overlap = qualys & azure
+		qualys_only = qualys - azure
+		defender_only = azure - qualys
+		rows.append({
+			"cmdb_pk": pk,
+			"comp_name": (comp_names.get(pk) or "").strip() or f"(pk {pk})",
+			"qualys_only": len(qualys_only),
+			"overlap": len(overlap),
+			"defender_only": len(defender_only),
+			"qualys_total": len(qualys),
+			"defender_total": len(azure),
+		})
+
+	rows.sort(
+		key=lambda row: (
+			-(row["qualys_only"] + row["defender_only"]),
+			row["comp_name"].lower(),
+		)
+	)
+	summary["machine_count"] = len(rows)
+	for row in rows:
+		summary["qualys_only"] += row["qualys_only"]
+		summary["overlap"] += row["overlap"]
+		summary["defender_only"] += row["defender_only"]
+
+	return {"rows": rows, "summary": summary}
+
+
 def _cves_from_qualys_cve_info(cve_info):
 	"""Unique CVE IDs from Qualys cve_info (comma-separated and/or embedded in text)."""
 	if not cve_info:
@@ -1279,6 +1356,41 @@ def vulnstats(request):
 	})
 
 
+def azure_vulnstats_qualys_compare(request):
+	# 2026-06-07: Qualys vs Defender CVE comparison on dedicated URL (moved off overview).
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	try:
+		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
+	except:
+		integrasjonsstatus = None
+
+	try:
+		integrasjonsstatus_qualys = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
+	except:
+		integrasjonsstatus_qualys = None
+
+	cache_version = "v1"
+	azure_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
+	qualys_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus_qualys)
+	cache_key = f"azure_vulnstats:qualys_compare:{cache_version}:{azure_ts}:{qualys_ts}"
+	data = cache.get(cache_key)
+
+	if data is None:
+		data = _azure_vulnstats_qualys_defender_comparison()
+		cache.set(cache_key, data, timeout=60 * 60 * 24)
+
+	return render(request, 'rapport_azure_vulnstats_qualys_compare.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'integrasjonsstatus': integrasjonsstatus,
+		'integrasjonsstatus_qualys': integrasjonsstatus_qualys,
+		'data': data,
+	})
+
+
 def azure_vulnstats(request):
 	# 2026-06-07: Exclude Windows 11 client OS from overview aggregates – faster page, easy to revert.
 	required_permissions = ['systemoversikt.view_qualysvuln']
@@ -1290,7 +1402,7 @@ def azure_vulnstats(request):
 	except:
 		integrasjonsstatus = None
 
-	cache_version = "v13"
+	cache_version = "v15"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = f"azure_vulnstats:overview:{cache_version}:{cache_ts}"
 	data = cache.get(cache_key)

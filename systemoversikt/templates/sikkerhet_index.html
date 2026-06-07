@@ -7,7 +7,9 @@
 	{% url 'vulnstats' as url_vulnstats %}
 	<a href="{{ url_vulnstats }}" class="btn btn-sm btn-link {% if url_vulnstats in request.path %}fremhev{% endif %}">Programvaresårbarheter</a><br>
 
-	<a href="{% url 'azure_vulnstats' %}" class="btn btn-sm btn-link {% if '/sikkerhet/azure_vulnstats/' in request.path %}fremhev{% endif %}">Azure: sårbarheter</a><br>
+	<a href="{% url 'azure_vulnstats' %}" class="btn btn-sm btn-link {% if '/sikkerhet/azure_vulnstats/' in request.path and '/qualys_compare/' not in request.path %}fremhev{% endif %}">Azure: sårbarheter</a><br>
+
+	<a href="{% url 'azure_vulnstats_qualys_compare' %}" class="btn btn-sm btn-link {% if '/sikkerhet/azure_vulnstats/qualys_compare/' in request.path %}fremhev{% endif %}">Qualys vs Defender</a><br>
 
 	{% url 'rapport_sikkerhetstester' as url_sikkerhetstester %}
 	<a href="{{ url_sikkerhetstester }}" class="btn btn-sm btn-link {% if url_sikkerhetstester in request.path %}fremhev{% endif %}">Gjennomførte pentester</a><br>

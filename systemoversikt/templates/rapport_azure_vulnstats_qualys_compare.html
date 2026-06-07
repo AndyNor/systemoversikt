@@ -1,0 +1,75 @@
+{% extends "sikkerhet_index.html" %}
+{% load humanize %}
+
+{% block overskrift %}
+	Qualys vs Azure Defender
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p class="small text-muted mb-2">
+	Sammenligner unike CVE-ID-er per CMDB-maskin. Qualys parses fra <code>cve_info</code> (samme som på enhetsdetaljer).
+	Defender matches vertsnavn mot <code>comp_name</code> (kort navn eller FQDN som starter med «comp_name.»).
+	Windows 11-klienter er utelatt fra Defender-tallene.
+</p>
+{% if integrasjonsstatus_qualys or integrasjonsstatus %}
+<p class="small mb-2">
+	{% if integrasjonsstatus_qualys %}
+	Qualys sist synkronisert {{ integrasjonsstatus_qualys.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}.
+	{% endif %}
+	{% if integrasjonsstatus_qualys and integrasjonsstatus %} · {% endif %}
+	{% if integrasjonsstatus %}
+	Defender sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}.
+	{% endif %}
+</p>
+{% endif %}
+
+{% with summary=data.summary %}
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Maskin</th>
+	<th>Kun Qualys</th>
+	<th>I begge</th>
+	<th>Kun Defender</th>
+	<th>Qualys totalt</th>
+	<th>Defender totalt</th>
+</tr>
+</thead>
+<tbody>
+{% for row in data.rows %}
+<tr>
+	<td>
+		<a href="{% url 'cmdb_devicedetails' row.cmdb_pk %}">{{ row.comp_name }}</a>
+	</td>
+	<td>{{ row.qualys_only|intcomma }}</td>
+	<td>{{ row.overlap|intcomma }}</td>
+	<td>{{ row.defender_only|intcomma }}</td>
+	<td>{{ row.qualys_total|intcomma }}</td>
+	<td>{{ row.defender_total|intcomma }}</td>
+</tr>
+{% empty %}
+<tr>
+	<td colspan="6">Ingen maskiner med Qualys- eller Defender-data funnet.</td>
+</tr>
+{% endfor %}
+</tbody>
+{% if summary.machine_count %}
+<tfoot>
+<tr>
+	<th>Totalt ({{ summary.machine_count|intcomma }} maskiner)</th>
+	<th>{{ summary.qualys_only|intcomma }}</th>
+	<th>{{ summary.overlap|intcomma }}</th>
+	<th>{{ summary.defender_only|intcomma }}</th>
+	<th colspan="2"></th>
+</tr>
+</tfoot>
+{% endif %}
+</table>
+<p class="small text-muted mb-0">
+	Totalt-raden summerer per-maskin-tall (samme CVE på to maskiner telles to ganger).
+	Sorter tabellen ved å klikke på kolonneoverskrifter.
+</p>
+{% endwith %}
+
+{% endblock hovedinnhold %}
