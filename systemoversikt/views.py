@@ -61,7 +61,21 @@ def _azure_vulnstats_overview_active():
 
 
 def _azure_vulnstats_qualys_defender_comparison():
-	"""Unique CVE sets per CMDB machine: Qualys-only, overlap, Defender-only."""
+	# 2026-06-07: Fleet-wide unique CVE union/agreement plus per-machine breakdown for qualys_compare.
+	"""Unique CVE sets per CMDB machine plus fleet-wide unique CVE aggregates."""
+	empty_fleet = {
+		"qualys_total": 0,
+		"defender_total": 0,
+		"qualys_only": 0,
+		"overlap": 0,
+		"defender_only": 0,
+		"union": 0,
+		"agreement_pct": None,
+		"machine_count": 0,
+		"machines_both_sources": 0,
+		"machines_qualys_only": 0,
+		"machines_defender_only": 0,
+	}
 	qualys_by_pk = defaultdict(set)
 	for server_id, cve_info in QualysVuln.objects.filter(
 		server_id__isnull=False,
@@ -91,6 +105,7 @@ def _azure_vulnstats_qualys_defender_comparison():
 				"overlap": 0,
 				"defender_only": 0,
 			},
+			"fleet": empty_fleet,
 		}
 
 	comp_names = dict(
@@ -104,14 +119,28 @@ def _azure_vulnstats_qualys_defender_comparison():
 		"overlap": 0,
 		"defender_only": 0,
 	}
+	fleet_qualys = set()
+	fleet_azure = set()
+	machines_both_sources = 0
+	machines_qualys_only = 0
+	machines_defender_only = 0
 	for pk in all_pks:
 		qualys = qualys_by_pk.get(pk, set())
 		azure = azure_by_pk.get(pk, set())
 		if not qualys and not azure:
 			continue
+		fleet_qualys |= qualys
+		fleet_azure |= azure
+		if qualys and azure:
+			machines_both_sources += 1
+		elif qualys:
+			machines_qualys_only += 1
+		else:
+			machines_defender_only += 1
 		overlap = qualys & azure
 		qualys_only = qualys - azure
 		defender_only = azure - qualys
+		union = qualys | azure
 		rows.append({
 			"cmdb_pk": pk,
 			"comp_name": (comp_names.get(pk) or "").strip() or f"(pk {pk})",
@@ -120,6 +149,10 @@ def _azure_vulnstats_qualys_defender_comparison():
 			"defender_only": len(defender_only),
 			"qualys_total": len(qualys),
 			"defender_total": len(azure),
+			"union": len(union),
+			"agreement_pct": (
+				round(100 * len(overlap) / len(union), 1) if union else None
+			),
 		})
 
 	rows.sort(
@@ -134,7 +167,29 @@ def _azure_vulnstats_qualys_defender_comparison():
 		summary["overlap"] += row["overlap"]
 		summary["defender_only"] += row["defender_only"]
 
-	return {"rows": rows, "summary": summary}
+	fleet_overlap = fleet_qualys & fleet_azure
+	fleet_qualys_only = fleet_qualys - fleet_azure
+	fleet_defender_only = fleet_azure - fleet_qualys
+	fleet_union = fleet_qualys | fleet_azure
+	fleet = {
+		"qualys_total": len(fleet_qualys),
+		"defender_total": len(fleet_azure),
+		"qualys_only": len(fleet_qualys_only),
+		"overlap": len(fleet_overlap),
+		"defender_only": len(fleet_defender_only),
+		"union": len(fleet_union),
+		"agreement_pct": (
+			round(100 * len(fleet_overlap) / len(fleet_union), 1)
+			if fleet_union
+			else None
+		),
+		"machine_count": len(rows),
+		"machines_both_sources": machines_both_sources,
+		"machines_qualys_only": machines_qualys_only,
+		"machines_defender_only": machines_defender_only,
+	}
+
+	return {"rows": rows, "summary": summary, "fleet": fleet}
 
 
 def _cves_from_qualys_cve_info(cve_info):
@@ -1376,7 +1431,7 @@ def azure_vulnstats_qualys_compare(request):
 	except:
 		integrasjonsstatus_qualys = None
 
-	cache_version = "v1"
+	cache_version = "v2"
 	azure_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	qualys_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus_qualys)
 	cache_key = f"azure_vulnstats:qualys_compare:{cache_version}:{azure_ts}:{qualys_ts}"

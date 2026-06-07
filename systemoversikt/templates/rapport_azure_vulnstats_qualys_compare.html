@@ -10,7 +10,7 @@
 <p class="small text-muted mb-2">
 	Sammenligner unike CVE-ID-er per CMDB-maskin. Qualys parses fra <code>cve_info</code> (samme som på enhetsdetaljer).
 	Defender matches vertsnavn mot <code>comp_name</code> (kort navn eller FQDN som starter med «comp_name.»).
-	Windows 11-klienter er utelatt fra Defender-tallene.
+	Windows 10- og 11-klienter er utelatt fra Defender-tallene.
 </p>
 {% if integrasjonsstatus_qualys or integrasjonsstatus %}
 <p class="small mb-2">
@@ -24,11 +24,95 @@
 </p>
 {% endif %}
 
-{% with summary=data.summary %}
+{% with fleet=data.fleet summary=data.summary %}
+{% if fleet.machine_count %}
+<hr>
+<h4>Samlet på tvers av servere (unike CVE-ID-er)</h4>
+<p class="small text-muted mb-2">
+	Hver CVE telles én gang uansett hvor mange maskiner som har den.
+	<strong>Union</strong> er totalt unike CVE på tvers av begge kilder.
+	<strong>Enighet</strong> er andelen av union som begge kilder rapporterer (Jaccard: overlap ÷ union).
+</p>
+<div class="row mb-3">
+	<div class="col-md-6">
+		<table class="table table-sm mb-0">
+		<thead>
+		<tr>
+			<th colspan="2">CVE-fordeling (fleet)</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td>Kun Qualys</td>
+			<td class="text-right"><strong>{{ fleet.qualys_only|intcomma }}</strong></td>
+		</tr>
+		<tr>
+			<td>I begge</td>
+			<td class="text-right"><strong>{{ fleet.overlap|intcomma }}</strong></td>
+		</tr>
+		<tr>
+			<td>Kun Defender</td>
+			<td class="text-right"><strong>{{ fleet.defender_only|intcomma }}</strong></td>
+		</tr>
+		<tr>
+			<td><strong>Union (totalt unike)</strong></td>
+			<td class="text-right"><strong>{{ fleet.union|intcomma }}</strong></td>
+		</tr>
+		<tr>
+			<td>Enighet (overlap ÷ union)</td>
+			<td class="text-right">
+				<strong>{% if fleet.agreement_pct is not None %}{{ fleet.agreement_pct }} %{% else %}–{% endif %}</strong>
+			</td>
+		</tr>
+		</tbody>
+		</table>
+	</div>
+	<div class="col-md-6">
+		<table class="table table-sm mb-0">
+		<thead>
+		<tr>
+			<th colspan="2">Kilder og maskiner</th>
+		</tr>
+		</thead>
+		<tbody>
+		<tr>
+			<td>Unike CVE i Qualys (fleet)</td>
+			<td class="text-right">{{ fleet.qualys_total|intcomma }}</td>
+		</tr>
+		<tr>
+			<td>Unike CVE i Defender (fleet)</td>
+			<td class="text-right">{{ fleet.defender_total|intcomma }}</td>
+		</tr>
+		<tr>
+			<td>Maskiner med data i begge</td>
+			<td class="text-right">{{ fleet.machines_both_sources|intcomma }}</td>
+		</tr>
+		<tr>
+			<td>Maskiner kun Qualys</td>
+			<td class="text-right">{{ fleet.machines_qualys_only|intcomma }}</td>
+		</tr>
+		<tr>
+			<td>Maskiner kun Defender</td>
+			<td class="text-right">{{ fleet.machines_defender_only|intcomma }}</td>
+		</tr>
+		<tr>
+			<td>Maskiner totalt i tabellen</td>
+			<td class="text-right">{{ fleet.machine_count|intcomma }}</td>
+		</tr>
+		</tbody>
+		</table>
+	</div>
+</div>
+<hr>
+{% endif %}
+
+<h4>Per maskin</h4>
 <table class="table tablesorter">
 <thead>
 <tr>
 	<th>Maskin</th>
+	<th>Union</th>
+	<th>Enighet %</th>
 	<th>Kun Qualys</th>
 	<th>I begge</th>
 	<th>Kun Defender</th>
@@ -42,6 +126,8 @@
 	<td>
 		<a href="{% url 'cmdb_devicedetails' row.cmdb_pk %}">{{ row.comp_name }}</a>
 	</td>
+	<td>{{ row.union|intcomma }}</td>
+	<td>{% if row.agreement_pct is not None %}{{ row.agreement_pct }}{% else %}–{% endif %}</td>
 	<td>{{ row.qualys_only|intcomma }}</td>
 	<td>{{ row.overlap|intcomma }}</td>
 	<td>{{ row.defender_only|intcomma }}</td>
@@ -50,14 +136,15 @@
 </tr>
 {% empty %}
 <tr>
-	<td colspan="6">Ingen maskiner med Qualys- eller Defender-data funnet.</td>
+	<td colspan="8">Ingen maskiner med Qualys- eller Defender-data funnet.</td>
 </tr>
 {% endfor %}
 </tbody>
 {% if summary.machine_count %}
 <tfoot>
 <tr>
-	<th>Totalt ({{ summary.machine_count|intcomma }} maskiner)</th>
+	<th>Sum per maskin ({{ summary.machine_count|intcomma }} maskiner)</th>
+	<th colspan="2"></th>
 	<th>{{ summary.qualys_only|intcomma }}</th>
 	<th>{{ summary.overlap|intcomma }}</th>
 	<th>{{ summary.defender_only|intcomma }}</th>
@@ -67,7 +154,8 @@
 {% endif %}
 </table>
 <p class="small text-muted mb-0">
-	Totalt-raden summerer per-maskin-tall (samme CVE på to maskiner telles to ganger).
+	Sum-raden nederst summerer per-maskin-kolonner (samme CVE på to maskiner telles to ganger).
+	Fleet-tallene over dedupliserer CVE på tvers av alle servere.
 	Sorter tabellen ved å klikke på kolonneoverskrifter.
 </p>
 {% endwith %}
