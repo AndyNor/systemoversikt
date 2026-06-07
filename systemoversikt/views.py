@@ -3,7 +3,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core import serializers
 from systemoversikt.models import *
-from systemoversikt.hostname_utils import azure_device_q_for_comp_name, device_name_rows_for_hostnames
+from systemoversikt.hostname_utils import (
+	azure_device_q_for_comp_name,
+	cmdb_pk_lookup_for_hostnames,
+	device_name_rows_for_hostnames,
+)
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
