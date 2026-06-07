@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-07: Refresh AzureDevice os_platform/hostname from export each run – overview client-OS filter depends on it.
 import os
 import time
 import json
@@ -323,6 +325,7 @@ class Command(BaseCommand):
             devices_to_create = []
             cves_to_create = []
             dvs_to_create = []
+            devices_touched = set()
 
             processed = 0
             import_stats = {"dv_dup_collapsed": 0}
@@ -433,6 +436,13 @@ class Command(BaseCommand):
                                 dvs_to_create,
                                 import_stats,
                             )
+                    else:
+                        if os_platform:
+                            device.os_platform = os_platform
+                        if hostname:
+                            device.hostname = hostname
+                        device.last_seen = last_seen
+                    devices_touched.add(device_id)
 
                     cve = cves.get(cve_id)
                     if not cve:
@@ -485,6 +495,7 @@ class Command(BaseCommand):
                 gc.collect()
 
             self.flush(devices_to_create, cves_to_create, dvs_to_create, import_stats)
+            self._bulk_update_devices_from_export(devices, devices_touched)
 
             runtime = int(time.time() - start_time)
 
@@ -527,6 +538,24 @@ class Command(BaseCommand):
             )
         except Exception:
             return default
+
+    @staticmethod
+    def _bulk_update_devices_from_export(devices, devices_touched):
+        """Persist os_platform/hostname/last_seen refreshed while streaming the export."""
+        if not devices_touched:
+            return
+        to_update = [
+            devices[device_id]
+            for device_id in devices_touched
+            if device_id in devices
+        ]
+        for i in range(0, len(to_update), 1000):
+            chunk = to_update[i : i + 1000]
+            AzureDevice.objects.bulk_update(
+                chunk,
+                ["hostname", "os_platform", "last_seen"],
+                batch_size=1000,
+            )
 
     def flush(self, devices, cves, dv_creates, import_stats=None):
         with transaction.atomic():
