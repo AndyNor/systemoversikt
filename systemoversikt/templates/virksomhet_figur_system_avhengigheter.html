@@ -1,0 +1,72 @@
+{% load static %}
+{% load templatetags %}
+
+{% block ekstrajavascript %}
+
+	<!-- CSS includes-->
+	<link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
+
+	<!-- JavaScript includes -->
+	<script src="{% static 'jquery/jquery-3.3.1.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'bootstrap/bootstrap.min.js' %}" nonce="{{request.csp_nonce}}"></script>
+
+	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-svg.js@0.4.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'virksomhet_systemavhengigheter_graph.js' %}" nonce="{{request.csp_nonce}}"></script>
+
+{% endblock ekstrajavascript %}
+
+
+{% block hovedinnhold %}
+
+	<h3>Systemavhengigheter for {{ virksomhet }}</h3>
+
+	<p>Virksomhetsforvaltere og superbrukere kan flytte rundt på nodene i grafen og nye lokasjoner vil bli lagret for alle. Du {% if save_rettigheter %} har {% else %} har <b>ikke</b> {% endif %} nødvendige rettigheter.</p>
+
+	<div id="cy_avhengigheter" style="background-color: #FCFCFC; border: 1px solid #d6d4d4; width: 100%; height: calc(100vh - 180px);"></div>
+
+	<br>
+	<button id="btn-avhengighetergraph-graph-reset" class="btn btn-sm btn-outline-secondary">Tilbakestill visning</button>
+	<button id="btn-avhengighetergraph-download" class="btn btn-secondary">Last ned layout</button>
+	<button id="btn-avhengighetergraph-download-svg" class="btn btn-success">Last ned SVG</button>
+	<button id="btn-avhengigheter-graph-upload" class="btn btn-secondary">Last inn layout</button>
+	<input id="btn-avhengigheter-btn-avhengigheter-graph-upload-input" type="file" accept="application/json" style="display:none;">
+	<button id="btn-avhengigheter-graph-lock"></button>
+
+	{% if avhengigheter_graf_ny.nodes|length < 2 %}
+		<p>Ingen systemer å vise</p>
+	{% endif %}
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+{{ avhengigheter_graf_ny|json_script:"systemavhengigheter_graphElements" }}
+{{ saved_layout_json|json_script:"systemavhengigheter_savedLayoutData" }}
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+document.addEventListener('DOMContentLoaded', function () {
+  const graphData = JSON.parse(
+    document.getElementById('systemavhengigheter_graphElements').textContent
+  );
+  const savedLayoutEl = document.getElementById('systemavhengigheter_savedLayoutData');
+  const savedLayout = savedLayoutEl ? JSON.parse(savedLayoutEl.textContent) : null;
+
+  window.initVirksomhetAvhengigheterGraph({
+    csrf: "{{ csrf_js_token|default:'' }}",
+    urlSave: "{% url 'virksomhet_save_graph_layout' virksomhet.pk %}",
+    urlToggleLock: "{% url 'virksomhet_toggle_graph_lock' virksomhet.pk %}",
+    virksomhetPk: {{ virksomhet.pk }},
+    graphElements: {
+      nodes: graphData.nodes || [],
+      edges: graphData.edges || [],
+    },
+    savedLayout: savedLayout,
+  });
+});
+</script>
+{% endblock script_append %}

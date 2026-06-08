@@ -43,7 +43,7 @@
 		<div style="float: left; border: solid 1px black; margin-left: 5px; padding: 8px; font-size: 10px; background-color: {{system_colors.ukjent}}; text-align: center;">Ukjent drift</div>
 		<div style="float: left; border: solid 1px black; margin-left: 5px; padding: 8px; font-size: 10px; background-color: {{system_colors.infrastruktur_chart}}; text-align: center;">🛠️ Infrastruktur/integrasjon</div>
 
-		<br><hr>
+		<br style="clear: both;"><hr>
 
 		<div id="cy" style="width: 100%; height: 100%;"></div>
 
@@ -117,11 +117,9 @@ var cy = cytoscape({
 	],
 });
 
-// Apply the layout and then fit the graph
 cy.layout({ name: 'fcose' }).run();
 cy.fit();
 
-// Function to adjust the zoom and pan to move the graph to the top
 function adjustZoomAndPan() {
 	let boundingBox = cy.elements().boundingBox();
 	let cyHeight = cy.container().clientHeight;
@@ -130,7 +128,6 @@ function adjustZoomAndPan() {
 	cy.pan({ x: 0, y: 0 });
 }
 
-// Call the function to adjust the zoom and pan
 adjustZoomAndPan();
 
 cy.on('tap', 'node', function(){

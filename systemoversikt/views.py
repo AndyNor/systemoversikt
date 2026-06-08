@@ -7767,6 +7767,45 @@ def virksomhet_figur_system_seksjon(request, pk):
 	})
 
 
+def _virksomhet_graph_layout_context(virksomhet):
+	try:
+		layout = GraphLayout.objects.get(virksomhet=virksomhet)
+		return {
+			"positions": layout.positions_json,
+			"zoom": layout.zoom,
+			"pan": {"x": layout.pan_x, "y": layout.pan_y},
+			"locked": layout.locked,
+		}
+	except GraphLayout.DoesNotExist:
+		return None
+
+
+def virksomhet_figur_system_avhengigheter(request, pk):
+	# 2026-06-08: Dedicated dependency graph page – keeps /virksomhet/<pk>/ fast to load.
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	avhengigheter_graf_ny = generer_graf_virksomhet(pk)
+	saved_layout = _virksomhet_graph_layout_context(virksomhet)
+
+	from django.middleware.csrf import get_token
+	csrf = get_token(request)
+
+	save_rettigheter = True if any(map(request.user.has_perm, REQUIRED_PERMISSIONS_SAVE_GRAPH_VIRKSOMHET)) else False
+
+	return render(request, 'virksomhet_figur_system_avhengigheter.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': virksomhet,
+		'avhengigheter_graf_ny': avhengigheter_graf_ny,
+		'saved_layout_json': saved_layout,
+		'csrf_js_token': csrf,
+		'save_rettigheter': save_rettigheter,
+	})
+
+
 
 def generer_graf_virksomhet(virksomhet_pk):
 	avhengigheter_graf = {"nodes": [], "edges": []}
@@ -7935,29 +7974,6 @@ def virksomhet(request, pk):
 	kritiske_funksjoner = KritiskFunksjon.objects.filter(funksjoner__systemer__systemforvalter=pk).distinct()
 
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk).filter(~Q(ibruk=False)).count()
-	from systemoversikt.models import SYSTEM_COLORS
-
-	avhengigheter_graf_ny = generer_graf_virksomhet(pk)
-
-	try:
-		layout = GraphLayout.objects.get(virksomhet=virksomhet)
-		saved_layout = {
-			"positions": layout.positions_json,
-			"zoom": layout.zoom,
-			"pan": {"x": layout.pan_x, "y": layout.pan_y},
-			"locked": layout.locked,
-		}
-	except GraphLayout.DoesNotExist:
-		saved_layout = None
-
-	# Prepare JSON (safe, with dot-decimals)
-	#from django.utils.safestring import mark_safe
-	#saved_layout_json = mark_safe(json.dumps(saved_layout))
-
-	from django.middleware.csrf import get_token
-	csrf = get_token(request)
-
-	save_rettigheter = True if any(map(request.user.has_perm, REQUIRED_PERMISSIONS_SAVE_GRAPH_VIRKSOMHET)) else False
 
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
@@ -7975,15 +7991,8 @@ def virksomhet(request, pk):
 		'ant_systemer_eier': ant_systemer_eier,
 		'ant_systemer_forvalter': ant_systemer_forvalter,
 		'systemer_drifter': systemer_drifter,
-		'nodes_systemer': _collect_system_graph_data(pk, kilde="alle"),
-		'system_colors': SYSTEM_COLORS,
 		'kritiske_funksjoner': kritiske_funksjoner,
-		'avhengigheter_graf_ny': avhengigheter_graf_ny,
-		'avhengigheter_chart_size_ny': 300 + len(avhengigheter_graf_ny["nodes"])*20,
 		"virksomhet": virksomhet,
-		"saved_layout_json": saved_layout,
-		"csrf_js_token": csrf,
-		"save_rettigheter": save_rettigheter,
 	})
 
 
