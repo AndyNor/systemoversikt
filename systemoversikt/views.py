@@ -7659,15 +7659,19 @@ def systemer_virksomhet_ansvarlig_for_fip(request, pk):
 	})
 
 
-def _collect_system_graph_data(pk, kilde="tjenester"):
+def _collect_system_graph_data(pk, kilde="alle"):
+	# 2026-06-08: Combined tjenester+infrastruktur chart; 🛠️ prefix + light red marks infrastructure on kilde=alle.
+	infra_chart_color = SYSTEM_COLORS['infrastruktur_chart']
 	nodes = []
 	parents = []
 
-	def systemnavn_forkortet(system):
+	def systemnavn_forkortet(system, mark_infrastruktur=False):
+		prefix = '🛠️ ' if mark_infrastruktur else ''
 		maximum = 20
-		if len(system.systemnavn) > maximum:
-			return system.systemnavn[:maximum]
-		return system.systemnavn
+		navn = system.systemnavn
+		if len(navn) > maximum:
+			navn = navn[:maximum]
+		return prefix + navn
 
 	def system_seksjon(system):
 		if system.systemforvalter_avdeling_referanse:
@@ -7684,29 +7688,31 @@ def _collect_system_graph_data(pk, kilde="tjenester"):
 		parents.append('Ukjent')
 		return 'Ukjent'
 
-	if kilde == "tjenester":
-		relevante_systemer = (System.objects.filter(systemforvalter=pk)
-									.exclude(Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True))
-									.filter(~Q(livslop_status__in=[6,7]))
-									.order_by('systemnavn')
-									)
+	base_qs = (System.objects.filter(systemforvalter=pk)
+					.filter(~Q(livslop_status__in=[6,7]))
+					.order_by('systemnavn'))
 
-	if kilde == "infrastruktur":
-		relevante_systemer = (System.objects.filter(systemforvalter=pk)
-									.filter(Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True))
-									.filter(~Q(livslop_status__in=[6,7]))
-									.order_by('systemnavn')
-									)
+	if kilde == "tjenester":
+		relevante_systemer = base_qs.exclude(
+			Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True)
+		)
+	elif kilde == "infrastruktur":
+		relevante_systemer = base_qs.filter(
+			Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True)
+		)
+	else:
+		relevante_systemer = base_qs
 
 	for system in relevante_systemer:
 		if system.er_ibruk():
+			mark_infrastruktur = kilde == "alle" and (system.er_infrastruktur() or system.er_integrasjon())
 			nodes.append({
 				'data': {
 					'id': system.pk,
-					'name': systemnavn_forkortet(system),
+					'name': systemnavn_forkortet(system, mark_infrastruktur=mark_infrastruktur),
 					'parent': system_seksjon(system),
 					'shape': 'rectangle',
-					'color': system.color(),
+					'color': infra_chart_color if mark_infrastruktur else system.color(),
 					'href': f'/systemer/detaljer/{system.pk}/',
 				}
 			})
@@ -7748,7 +7754,7 @@ def virksomhet_figur_system_seksjon(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	kilde = request.GET.get('kilde', None)
+	kilde = request.GET.get('kilde', 'alle')
 	from systemoversikt.models import SYSTEM_COLORS
 
 	return render(request, 'virksomhet_figur_system_seksjon.html', {
@@ -7969,8 +7975,7 @@ def virksomhet(request, pk):
 		'ant_systemer_eier': ant_systemer_eier,
 		'ant_systemer_forvalter': ant_systemer_forvalter,
 		'systemer_drifter': systemer_drifter,
-		'nodes_tjenester': _collect_system_graph_data(pk, kilde="tjenester"),
-		'nodes_infra': _collect_system_graph_data(pk, kilde="infrastruktur"),
+		'nodes_systemer': _collect_system_graph_data(pk, kilde="alle"),
 		'system_colors': SYSTEM_COLORS,
 		'kritiske_funksjoner': kritiske_funksjoner,
 		'avhengigheter_graf_ny': avhengigheter_graf_ny,

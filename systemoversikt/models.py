@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-08: Swapped ukjent (light red) and infrastruktur_chart (light gray) in SYSTEM_COLORS.
+# 2026-06-08: Added infrastruktur_chart color for combined seksjon chart legend.
 # 2026-06-07: Added land field to Leverandor – country of operation for supplier overview.
 from django.db import models
 from django.contrib.auth.models import User
@@ -4488,13 +4490,14 @@ class Database(models.Model):
 
 SYSTEM_COLORS = {
 	"samarbeidspartner": "#ffde76",
-	"ukjent": '#E0E0E0',
+	"ukjent": '#FFD6D6',
 	"saas": '#c89df9',
 	"drift_uke_privat": '#b7eb95',
 	"drift_uke_sky": '#aac1ff',
 	"drift_virksomhet_privat": '#b7eb95',
 	"drift_virksomhet_sky": '#aac1ff',
 	"infrastruktur": '#d2b5d9',
+	"infrastruktur_chart": '#E0E0E0',
 	"integrasjon": '#b189bb',
 	"egenutviklet": '#e3b27f',
 }
