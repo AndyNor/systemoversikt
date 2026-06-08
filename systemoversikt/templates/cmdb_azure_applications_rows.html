@@ -1,0 +1,57 @@
+{% for a in applikasjoner %}
+	<tr>
+		<td>{{a.active|yesno:"Aktiv,Deaktiv"}}</td>
+		<td>{{a.createdDateTime|date:"Y-m-d"}}
+		<td><b>{{a.displayName|truncatechars:35}}</b><br>
+
+			{% if a.from_applications %}
+				<a target="_blank" href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/{{a.appId}}">{{a.appId}}</a>
+			{% else %}
+				<a target="_blank" href="https://portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Overview/objectId/{{a.appId}}">{{a.appId}}</a>
+			{% endif %}
+
+
+			{% if a.systemreferanse.all|length > 0 %}
+			<br><br>Koblet til følgende system:
+			{% for system in a.systemreferanse.all %}
+				<li>{{ system }}</li>
+			{% endfor %}
+			{% endif %}
+		</td>
+
+		<td>{{a.servicePrincipalType}}</td>
+
+		<td>{{a.publisherName|default:""}}</td>
+
+		<td>
+			{% for item in a.owner_json.value %}
+				{{item.userPrincipalName}}<br>
+			{% endfor %}
+		</td>
+
+		<td>
+			{% for item in a.assigned_to_json.value %}
+				{{item.principalDisplayName}}<br>
+			{% endfor %}
+		</td>
+
+		<td>
+			{{a.er_enterprise_app|yesno:"Ja, Nei"}}
+			<br>{{a.from_applications|yesno:"\applications,\servicePrincipals"}}
+		</td>
+		<td>{{a.risikonivaa_autofill}}</td>
+		<td>
+			{% for r in a.requiredResourceAccess.all %}
+
+			<li>
+				<span style="color: {{ r.risk_color }};">
+					{{ r.permission_type }} {{ r.resourceAppStr }} {{ r.adminConsentDisplayName }} ({{ r }})
+				</span>
+			</li>
+
+			{% endfor %}
+		</td>
+		<td>{{ a.antall_graph_rettigheter }}</td>
+		<td style="max-width: 200px; word-wrap: break-word; white-space: normal;">{{a.notes|default:"-"}}</td>
+	</tr>
+{% endfor %}

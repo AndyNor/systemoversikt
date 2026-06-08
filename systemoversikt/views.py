@@ -2821,40 +2821,78 @@ def admin_visitors(request): # brukerstatisikk
 	})
 
 
+def _azure_applications_queryset(term, search_term):
+	"""Build queryset for azure_applications based on GET params."""
+	if term:
+		vise_managed_identity = True
+		antall_dager = None
+		applikasjoner = AzureApplication.objects.filter(appId=term)
+	elif search_term:
+		antall_dager = None
+		vise_managed_identity = True
+		if search_term == "__all__":
+			applikasjoner = AzureApplication.objects.all().order_by('-createdDateTime')
+		else:
+			applikasjoner = AzureApplication.objects.filter(
+				Q(appId=search_term) | Q(objectId=search_term) | Q(displayName__icontains=search_term) | Q(notes__icontains=search_term)
+			).order_by('-createdDateTime')
+	else:
+		vise_managed_identity = False
+		antall_dager = 28
+		days_ago = timezone.now() - datetime.timedelta(days=antall_dager)
+		applikasjoner = AzureApplication.objects.filter(
+			createdDateTime__gte=days_ago
+		).filter(~Q(servicePrincipalType="ManagedIdentity")).order_by('-createdDateTime')
+	return applikasjoner, vise_managed_identity, antall_dager
+
+
+def _azure_applications_optimize_queryset(qs):
+	# 2026-06-08: Prefetch/defer for chunked async load – avoids N+1 and large json_response reads.
+	return qs.prefetch_related(
+		'requiredResourceAccess',
+		'systemreferanse',
+	).defer('json_response')
+
+
 def azure_applications(request):
 	#Vise liste over alle Azure enterprise applications med rettigheter de har fått tildelt
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-
-
 	term = request.GET.get("term", None)
 	search_term = request.GET.get("search_term", None)
+	applikasjoner, vise_managed_identity, ANTALL_DAGER = _azure_applications_queryset(term, search_term)
+	load_applications_async = bool(search_term)
 
-	if term:
-		vise_managed_identity = True
-		ANTALL_DAGER = None
-		applikasjoner = AzureApplication.objects.filter(appId=term)
-	elif search_term:
-		ANTALL_DAGER = None
-		vise_managed_identity = True
-		if search_term == "__all__":
-			applikasjoner = AzureApplication.objects.all().order_by('-createdDateTime')
-		else:
-			applikasjoner = AzureApplication.objects.filter(Q(appId=search_term) | Q(objectId=search_term) | Q(displayName__icontains=search_term) | Q(notes__icontains=search_term)).order_by('-createdDateTime')
-	else:
-		vise_managed_identity = False
-		ANTALL_DAGER = 28
-		days_ago = timezone.now() - timedelta(days=ANTALL_DAGER)
-		#applikasjoner = AzureApplication.objects.filter(antall_graph_rettigheter__gt=0).order_by('-createdDateTime')
-		applikasjoner = AzureApplication.objects.filter(createdDateTime__gte=days_ago).filter(~Q(servicePrincipalType="ManagedIdentity")).order_by('-createdDateTime')
+	# 2026-06-08: Chunked AJAX for search results – prevents gunicorn worker timeout on __all__.
+	if request.GET.get("applications_ajax") == "1":
+		if not load_applications_async:
+			return JsonResponse({"html": "", "next_offset": 0, "has_more": False})
+		try:
+			offset = max(0, int(request.GET.get("offset", 0)))
+			chunk = min(max(1, int(request.GET.get("chunk", 50))), 100)
+		except (TypeError, ValueError):
+			return HttpResponseBadRequest("Invalid offset or chunk")
+		qs = _azure_applications_optimize_queryset(applikasjoner)
+		rows = list(qs[offset:offset + chunk + 1])
+		has_more = len(rows) > chunk
+		if has_more:
+			rows = rows[:chunk]
+		html = render_to_string('cmdb_azure_applications_rows.html', {'applikasjoner': rows})
+		return JsonResponse({
+			"html": html,
+			"next_offset": offset + len(rows),
+			"has_more": has_more,
+		})
 
 	try:
 		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_enterprise_applications")
 	except:
 		integrasjonsstatus = None
 
+	if not load_applications_async:
+		applikasjoner = _azure_applications_optimize_queryset(applikasjoner)
 
 	return render(request, 'cmdb_azure_applications.html', {
 		'request': request,
@@ -2864,6 +2902,8 @@ def azure_applications(request):
 		'dager_gammelt': ANTALL_DAGER,
 		'vise_managed_identity': vise_managed_identity,
 		'search_term': search_term,
+		'load_applications_async': load_applications_async,
+		'applications_chunk': 50,
 	})
 
 

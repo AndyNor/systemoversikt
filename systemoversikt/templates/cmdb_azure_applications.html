@@ -51,68 +51,81 @@ Service principals fra Entra ID ble sist synkronisert {{ integrasjonsstatus.dato
 		<th>Antall rettigheter</th>
 		<th>Notater</th>
 	</thead>
-	<tbody>
-	{% for a in applikasjoner %}
-		<tr>
-			<td>{{a.active|yesno:"Aktiv,Deaktiv"}}</td>
-			<td>{{a.createdDateTime|date:"Y-m-d"}}
-			<td><b>{{a.displayName|truncatechars:35}}</b><br>
-
-				{% if a.from_applications %}
-					<a target="_blank" href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Overview/appId/{{a.appId}}">{{a.appId}}</a>
-				{% else %}
-					<a target="_blank" href="https://portal.azure.com/#view/Microsoft_AAD_IAM/ManagedAppMenuBlade/~/Overview/objectId/{{a.appId}}">{{a.appId}}</a>
-				{% endif %}
-
-
-				{% if a.systemreferanse.all|length > 0 %}
-				<br><br>Koblet til følgende system:
-				{% for system in a.systemreferanse.all %}
-					<li>{{ system }}</li>
-				{% endfor %}
-				{% endif %}
-			</td>
-
-			<td>{{a.servicePrincipalType}}</td>
-
-			<td>{{a.publisherName|default:""}}</td>
-
-			<td>
-				{% for item in a.owner_json.value %}
-					{{item.userPrincipalName}}<br>
-				{% endfor %}
-			</td>
-
-			<td>
-				{% for item in a.assigned_to_json.value %}
-					{{item.principalDisplayName}}<br>
-				{% endfor %}
-			</td>
-
-			<td>
-				{{a.er_enterprise_app|yesno:"Ja, Nei"}}
-				<br>{{a.from_applications|yesno:"\applications,\servicePrincipals"}}
-			</td>
-			{% comment %}<td>{{a.servicePrincipalType}}<br>{{a.from_applications|yesno:"\applications,\servicePrincipals"}}</td>{% endcomment %}
-			{% comment %}<td>{{a.tags}}</td>{% endcomment %}
-			<td>{{a.risikonivaa_autofill}}</td>
-			{% comment %}<td>{% if a.vurdering %} {{ a.sist_oppdatert|date:"Y-m-d"}}<br>{{ a.vurdering }} {% else %} -mangler- {% endif %}</td>{% endcomment %}
-			<td>
-				{% for r in a.requiredResourceAccess.all %}
-
-				<li>
-					<span style="color: {{ r.risk_color }};">
-						{{ r.permission_type }} {{ r.resourceAppStr }} {{ r.adminConsentDisplayName }} ({{ r }})
-					</span>
-				</li>
-
-				{% endfor %}
-			</td>
-			<td>{{ a.antall_graph_rettigheter }}</td>
-			<td style="max-width: 200px; word-wrap: break-word; white-space: normal;">{{a.notes|default:"-"}}</td>
-		</tr>
-	{% endfor %}
+	<tbody id="azure-applications-tbody">
+	{% if not load_applications_async %}
+		{% include "cmdb_azure_applications_rows.html" %}
+	{% endif %}
 	</tbody>
 	</table>
+
+{% if load_applications_async %}
+<p id="azure-applications-status" class="text-muted"><i>Laster service principals …</i></p>
+<button
+	id="azure-applications-load-more"
+	class="btn btn-sm btn-outline-primary"
+	type="button"
+	style="display: none;"
+	data-next-offset="0"
+	data-chunk="{{ applications_chunk }}"
+>Last inn flere</button>
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	(function () {
+		var $tbody = $("#azure-applications-tbody");
+		var $status = $("#azure-applications-status");
+		var $btn = $("#azure-applications-load-more");
+		if (!$tbody.length) return;
+
+		function searchParams() {
+			var params = new URLSearchParams(window.location.search);
+			return {
+				applications_ajax: 1,
+				search_term: params.get("search_term") || "",
+				offset: parseInt($btn.attr("data-next-offset") || "0", 10),
+				chunk: parseInt($btn.attr("data-chunk") || "50", 10),
+			};
+		}
+
+		var $table = $tbody.closest("table");
+
+		function refreshTableWidgets() {
+			if ($table.data("tablesorter")) {
+				$table.trigger("update", [false]);
+			}
+			if ($.fn.floatThead) {
+				$table.floatThead("reflow");
+			}
+		}
+
+		function loadChunk() {
+			$btn.prop("disabled", true);
+			$.get(window.location.pathname, searchParams())
+				.done(function (resp) {
+					var html = (resp && resp.html) ? resp.html : "";
+					if (html) {
+						$tbody.append(html);
+						refreshTableWidgets();
+					}
+					if (resp && resp.has_more) {
+						$btn.attr("data-next-offset", String(resp.next_offset || 0));
+						$btn.show().prop("disabled", false).text("Last inn flere");
+						$status.text("Viser " + $tbody.find("tr").length + " service principals (flere tilgjengelig) …");
+					} else {
+						$btn.hide();
+						var count = $tbody.find("tr").length;
+						$status.text(count ? ("Viser " + count + " service principals.") : "Ingen treff.");
+					}
+				})
+				.fail(function () {
+					$status.text("Kunne ikke laste service principals. Prøv å laste siden på nytt.");
+					$btn.prop("disabled", false).show().text("Prøv igjen");
+				});
+		}
+
+		loadChunk();
+		$btn.on("click", loadChunk);
+	})();
+</script>
+{% endif %}
 
 {% endblock hovedinnhold %}
