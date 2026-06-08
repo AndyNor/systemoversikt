@@ -8140,6 +8140,7 @@ def sertifikatmyndighet(request):
 
 def alle_virksomheter(request):
 	#Vise oversikt over alle virksomheter
+	# 2026-06-08: Annotate counts, prefetch M2M, batch leder_hr – avoids N+1 queries on overview page.
 	required_permissions = None
 
 	search_term = request.GET.get('search_term', "").strip()
@@ -8149,12 +8150,59 @@ def alle_virksomheter(request):
 	else:
 		virksomheter = Virksomhet.objects.filter(Q(virksomhetsnavn__icontains=search_term) | Q(virksomhetsforkortelse__iexact=search_term))
 
-	virksomheter = virksomheter.order_by('-ordinar_virksomhet', 'virksomhetsnavn')
+	ansvarlig_qs = Ansvarlig.objects.select_related('brukernavn')
+	virksomheter = (
+		virksomheter
+		.annotate(
+			antall_lokasjoner=Count('wanlokasjon', distinct=True),
+			antall_klienter=Count('cmdbdevice_virksomhet', distinct=True),
+			antall_systemforvalter=Count('systemer_systemforvalter', distinct=True),
+			antall_interne_brukeridenter=Count(
+				'brukers_virksomhet',
+				filter=Q(brukers_virksomhet__ekstern_ressurs=False, brukers_virksomhet__accountdisable=False),
+				distinct=True,
+			),
+			antall_eksterne_brukeridenter=Count(
+				'brukers_virksomhet',
+				filter=Q(brukers_virksomhet__ekstern_ressurs=True, brukers_virksomhet__accountdisable=False),
+				distinct=True,
+			),
+		)
+		.prefetch_related(
+			'overordnede_virksomheter',
+			Prefetch('ikt_kontakt', queryset=ansvarlig_qs),
+			Prefetch('arkitekturkontakter', queryset=ansvarlig_qs),
+			Prefetch('uke_kam_referanse', queryset=ansvarlig_qs),
+		)
+		.only(
+			'pk', 'virksomhetsnavn', 'virksomhetsforkortelse', 'ordinar_virksomhet',
+			'resultatenhet', 'office365',
+		)
+		.order_by('-ordinar_virksomhet', 'virksomhetsnavn')
+	)
+
+	virksomheter_list = list(virksomheter)
+	virksomheter_count = len(virksomheter_list)
+
+	leder_hr_by_virksomhet = {}
+	if virksomheter_list:
+		for hrorg in (
+			HRorg.objects
+			.filter(virksomhet_mor_id__in=[v.pk for v in virksomheter_list], level__in=[2, 3])
+			.select_related('leder', 'leder__profile')
+			.order_by('virksomhet_mor_id', '-level')
+		):
+			if hrorg.virksomhet_mor_id not in leder_hr_by_virksomhet:
+				leder_hr_by_virksomhet[hrorg.virksomhet_mor_id] = hrorg.leder
+
+	for vir in virksomheter_list:
+		vir.leder_hr_cached = leder_hr_by_virksomhet.get(vir.pk)
 
 	return render(request, 'virksomhet_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-		'virksomheter': virksomheter,
+		'virksomheter': virksomheter_list,
+		'virksomheter_count': virksomheter_count,
 	})
 
 

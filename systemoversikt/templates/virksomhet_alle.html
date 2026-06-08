@@ -13,7 +13,7 @@
 	<a href="/admin/systemoversikt/virksomhet/add/" class="btn btn-sm">{% include 'site_edit_button.html' %} Ny virksomhet</a>
 	<hr>
 
-	<p>Virksomheter er her definert som organisatoriske enheter fra Active Directory, og kan derfor ha noen flere registreringer enn i offisielle organisasjonskart. Det er {{ virksomheter.count }} virksomheter registrert.</p>
+	<p>Virksomheter er her definert som organisatoriske enheter fra Active Directory, og kan derfor ha noen flere registreringer enn i offisielle organisasjonskart. Det er {{ virksomheter_count }} virksomheter registrert.</p>
 
 	<table id="alle_virksomheter" class="tablesorter excel">
 	<thead>
@@ -45,13 +45,13 @@
 			<a href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn|truncatewords:6 }}</a> ({{ vir.virksomhetsforkortelse }})
 		</td>
 		<td>
-			{% for vir in vir.overordnede_virksomheter.all %}
-				{{ vir.virksomhetsforkortelse }}<br>
+			{% for overordnet in vir.overordnede_virksomheter.all %}
+				{{ overordnet.virksomhetsforkortelse }}<br>
 			{% endfor %}
 		</td>
 		{% url 'lokasjoner_hos_virksomhet' pk=vir.pk as url_lokasjoner %}
 		<td><a href="{{url_lokasjoner}}">{{ vir.antall_lokasjoner }}</a></td>
-		<td>{{ vir.systemer_systemforvalter.all.count }}</td>
+		<td>{{ vir.antall_systemforvalter }}</td>
 		<td>{{ vir.antall_interne_brukeridenter|default:"-" }}</td>
 		<td>{{ vir.antall_eksterne_brukeridenter|default:"-" }}</td>
 		<td>{{ vir.antall_klienter }}</td>
@@ -62,8 +62,8 @@
 			{{ vir.get_office365_display|default:"-" }}
 		</td>
 		<td>
-			{% if vir.leder_hr %}
-				<a href="{% url 'bruker_detaljer' pk=vir.leder_hr.pk %}">{{vir.leder_hr.profile.displayName}}</a>
+			{% if vir.leder_hr_cached %}
+				<a href="{% url 'bruker_detaljer' pk=vir.leder_hr_cached.pk %}">{{ vir.leder_hr_cached.profile.displayName }}</a>
 			{% else %}
 				<i>Ingen data fra HR</i>
 			{% endif %}
