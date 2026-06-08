@@ -161,7 +161,7 @@
 		{% endif %}
 
 		{% if user.ansvarlig_brukernavn.virksomhet_autoriserte_bestillere_tjenester_uke.all %}
-			<b>Autorisert bestiller av tjenester fra UKE for:</b>
+			<b>Autorisert bestiller av tjenester fra DIG for:</b>
 			{% for vir in user.ansvarlig_brukernavn.virksomhet_autoriserte_bestillere_tjenester_uke.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
 				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
@@ -178,7 +178,7 @@
 		{% endif %}
 
 		{% if user.ansvarlig_brukernavn.virksomhet_uke_kam.all %}
-			<b>Kundekontakt fra UKE for:</b>
+			<b>Kundekontakt fra DIG for:</b>
 			{% for vir in user.ansvarlig_brukernavn.virksomhet_uke_kam.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
 				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
@@ -186,7 +186,7 @@
 		{% endif %}
 
 		{% if user.ansvarlig_brukernavn.virksomhet_varslingsmottak_sikkerhet.all %}
-			<b>Mottar sikkerhetsvarsler fra UKE for:</b>
+			<b>Mottar sikkerhetsvarsler fra DIG for:</b>
 			{% for vir in user.ansvarlig_brukernavn.virksomhet_varslingsmottak_sikkerhet.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
 				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
