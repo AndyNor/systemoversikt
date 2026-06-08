@@ -8138,9 +8138,61 @@ def sertifikatmyndighet(request):
 
 
 
+def _group_count_by_fk(queryset, fk_field):
+	# 2026-06-08: Simple GROUP BY counts – avoids multi-join annotate on virksomhet overview.
+	return {
+		fk_id: count
+		for fk_id, count in queryset.values(fk_field).annotate(count=Count('pk')).values_list(fk_field, 'count')
+		if fk_id is not None
+	}
+
+
+def _virksomhet_alle_row_counts(virksomhet_ids):
+	"""Per-virksomhet counts for /virksomhet/alle/ – one indexed query per metric."""
+	if not virksomhet_ids:
+		return {}
+
+	lokasjoner = _group_count_by_fk(
+		WANLokasjon.objects.filter(virksomhet_id__in=virksomhet_ids),
+		'virksomhet_id',
+	)
+	klienter = _group_count_by_fk(
+		CMDBdevice.objects.filter(client_virksomhet_id__in=virksomhet_ids),
+		'client_virksomhet_id',
+	)
+	systemforvalter = _group_count_by_fk(
+		System.objects.filter(systemforvalter_id__in=virksomhet_ids),
+		'systemforvalter_id',
+	)
+	profile_counts = {
+		row['virksomhet_id']: row
+		for row in (
+			Profile.objects
+			.filter(virksomhet_id__in=virksomhet_ids, accountdisable=False)
+			.values('virksomhet_id')
+			.annotate(
+				interne=Count('pk', filter=Q(ekstern_ressurs=False)),
+				eksterne=Count('pk', filter=Q(ekstern_ressurs=True)),
+			)
+		)
+		if row['virksomhet_id'] is not None
+	}
+
+	return {
+		pk: {
+			'antall_lokasjoner': lokasjoner.get(pk, 0),
+			'antall_klienter': klienter.get(pk, 0),
+			'antall_systemforvalter': systemforvalter.get(pk, 0),
+			'antall_interne_brukeridenter': profile_counts.get(pk, {}).get('interne', 0),
+			'antall_eksterne_brukeridenter': profile_counts.get(pk, {}).get('eksterne', 0),
+		}
+		for pk in virksomhet_ids
+	}
+
+
 def alle_virksomheter(request):
 	#Vise oversikt over alle virksomheter
-	# 2026-06-08: Annotate counts, prefetch M2M, batch leder_hr – avoids N+1 queries on overview page.
+	# 2026-06-08: Batch counts, prefetch M2M, batch leder_hr – avoids N+1 without join-heavy annotate.
 	required_permissions = None
 
 	search_term = request.GET.get('search_term', "").strip()
@@ -8153,21 +8205,6 @@ def alle_virksomheter(request):
 	ansvarlig_qs = Ansvarlig.objects.select_related('brukernavn')
 	virksomheter = (
 		virksomheter
-		.annotate(
-			antall_lokasjoner=Count('wanlokasjon', distinct=True),
-			antall_klienter=Count('cmdbdevice_virksomhet', distinct=True),
-			antall_systemforvalter=Count('systemer_systemforvalter', distinct=True),
-			antall_interne_brukeridenter=Count(
-				'brukers_virksomhet',
-				filter=Q(brukers_virksomhet__ekstern_ressurs=False, brukers_virksomhet__accountdisable=False),
-				distinct=True,
-			),
-			antall_eksterne_brukeridenter=Count(
-				'brukers_virksomhet',
-				filter=Q(brukers_virksomhet__ekstern_ressurs=True, brukers_virksomhet__accountdisable=False),
-				distinct=True,
-			),
-		)
 		.prefetch_related(
 			'overordnede_virksomheter',
 			Prefetch('ikt_kontakt', queryset=ansvarlig_qs),
@@ -8183,12 +8220,14 @@ def alle_virksomheter(request):
 
 	virksomheter_list = list(virksomheter)
 	virksomheter_count = len(virksomheter_list)
+	virksomhet_ids = [v.pk for v in virksomheter_list]
+	row_counts = _virksomhet_alle_row_counts(virksomhet_ids)
 
 	leder_hr_by_virksomhet = {}
-	if virksomheter_list:
+	if virksomhet_ids:
 		for hrorg in (
 			HRorg.objects
-			.filter(virksomhet_mor_id__in=[v.pk for v in virksomheter_list], level__in=[2, 3])
+			.filter(virksomhet_mor_id__in=virksomhet_ids, level__in=[2, 3])
 			.select_related('leder', 'leder__profile')
 			.order_by('virksomhet_mor_id', '-level')
 		):
@@ -8196,6 +8235,12 @@ def alle_virksomheter(request):
 				leder_hr_by_virksomhet[hrorg.virksomhet_mor_id] = hrorg.leder
 
 	for vir in virksomheter_list:
+		counts = row_counts.get(vir.pk, {})
+		vir.antall_lokasjoner = counts.get('antall_lokasjoner', 0)
+		vir.antall_klienter = counts.get('antall_klienter', 0)
+		vir.antall_systemforvalter = counts.get('antall_systemforvalter', 0)
+		vir.antall_interne_brukeridenter = counts.get('antall_interne_brukeridenter', 0)
+		vir.antall_eksterne_brukeridenter = counts.get('antall_eksterne_brukeridenter', 0)
 		vir.leder_hr_cached = leder_hr_by_virksomhet.get(vir.pk)
 
 	return render(request, 'virksomhet_alle.html', {
