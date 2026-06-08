@@ -82,7 +82,7 @@ Service principals fra Entra ID ble sist synkronisert {{ integrasjonsstatus.dato
 				applications_ajax: 1,
 				search_term: params.get("search_term") || "",
 				offset: parseInt($btn.attr("data-next-offset") || "0", 10),
-				chunk: parseInt($btn.attr("data-chunk") || "50", 10),
+				chunk: parseInt($btn.attr("data-chunk") || "200", 10),
 			};
 		}
 

@@ -2874,7 +2874,7 @@ def azure_applications(request):
 			return JsonResponse({"html": "", "next_offset": 0, "has_more": False})
 		try:
 			offset = max(0, int(request.GET.get("offset", 0)))
-			chunk = min(max(1, int(request.GET.get("chunk", 50))), 100)
+			chunk = min(max(1, int(request.GET.get("chunk", 200))), 500)
 		except (TypeError, ValueError):
 			return HttpResponseBadRequest("Invalid offset or chunk")
 		qs = _azure_applications_optimize_queryset(applikasjoner)
@@ -2906,7 +2906,7 @@ def azure_applications(request):
 		'vise_managed_identity': vise_managed_identity,
 		'search_term': search_term,
 		'load_applications_async': load_applications_async,
-		'applications_chunk': 50,
+		'applications_chunk': 200,
 	})
 
 
