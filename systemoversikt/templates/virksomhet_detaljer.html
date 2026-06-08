@@ -60,25 +60,74 @@
 
 <hr>
 
-	<h6>Avdelinger</h6>
-	<div class="row" style="width: 100%;">
-		<div class="col-sm-12">
-			<ul style="column-count: 3;">
-			{% for u in enheter %}
-				{% url 'enhet_detaljer' pk=u.pk as url_enhet %}
-				<li><a href="{{url_enhet}}">{{ u }}</a></li>
-			{% empty %}
-				<li>Ingen</li>
-			{% endfor %}
-			</ul>
+	{# 2026-06-08: System figure links side by side; org/roles moved to page bottom. #}
+	<div class="row">
+		<div class="col-sm-6">
+			<h6>Systemansvar fordelt på seksjoner</h6>
+			<a href="{% url 'virksomhet_figur_system_seksjon' pk=virksomhet.pk %}" class="btn btn-primary btn-sm">Åpne i større vindu</a>
+		</div>
+		<div class="col-sm-6">
+			<h6>Systemavhengigheter for våre systemer</h6>
+			<a href="{% url 'virksomhet_figur_system_avhengigheter' pk=virksomhet.pk %}" class="btn btn-primary btn-sm">Åpne i større vindu</a>
 		</div>
 	</div>
 
+	<hr>
 
-	<table class="table">
+	{# 2026-06-08: Split systemknytninger into System/Kapabilitet columns; rowspan for shared Område/funksjon. #}
+	<h5>Kritiske funksjoner knyttet til våre systemer</h5>
+	<table class="table table-sm excel">
 	<thead>
 	<tr>
-		<th style="width: 200px;">Sentrale roller</th>
+		<th>Område</th>
+		<th>Kritisk funksjon</th>
+		<th>System</th>
+		<th>Kapabilitet</th>
+	</tr>
+	</thead>
+	<tbody>
+	{% for gruppe in kritiske_funksjoner_rader %}
+		{% for system in gruppe.systemer %}
+	<tr>
+		{% if forloop.first %}
+		<td rowspan="{{ gruppe.systemer|length }}">{{ gruppe.funksjon.get_kategori_display }}</td>
+		<td rowspan="{{ gruppe.systemer|length }}">{{ gruppe.funksjon.navn }}</td>
+		{% endif %}
+		<td>{% url "systemdetaljer" system.pk as url_system %}<a href="{{ url_system }}">{{ system }}</a></td>
+		<td>
+			{% for kapabilitet in system.kritisk_kapabilitet.all %}
+				<li>{{kapabilitet}}</li>
+			{% endfor %}
+		</td>
+	</tr>
+		{% endfor %}
+	{% endfor %}
+	</tbody>
+	</table>
+
+	<hr>
+
+	{# 2026-06-08: Avdelinger 2/3 width (two columns), sentrale roller 1/3 width. #}
+	<div class="row">
+		<div class="col-sm-8">
+			<h6>Avdelinger</h6>
+			<div class="row">
+				<div class="col-6">
+					{% include "virksomhet_enheter_tre.html" with enheter_tre=enheter_tre_kol1 %}
+				</div>
+				{% if enheter_tre_kol2 %}
+				<div class="col-6">
+					{% include "virksomhet_enheter_tre.html" with enheter_tre=enheter_tre_kol2 %}
+				</div>
+				{% endif %}
+			</div>
+		</div>
+		<div class="col-sm-4">
+			<h6>Sentrale roller</h6>
+	<table class="table table-sm">
+	<thead>
+	<tr>
+		<th>Rolle</th>
 		<th>Kontaktpersoner</th>
 	</tr>
 	</thead>
@@ -135,53 +184,8 @@
 	</tr>
 	</tbody>
 	</table>
-
-
-	<hr>
-
-	<h6>Systemansvar fordelt på seksjoner</h6>
-	<a href="{% url 'virksomhet_figur_system_seksjon' pk=virksomhet.pk %}" class="btn btn-primary btn-sm">Åpne i større vindu</a>
-
-	<hr>
-
-	<h6>Systemavhengigheter for våre systemer</h6>
-	<a href="{% url 'virksomhet_figur_system_avhengigheter' pk=virksomhet.pk %}" class="btn btn-primary btn-sm">Åpne i større vindu</a>
-
-	<hr>
-
-	<h5>Kritiske funksjoner knyttet til våre systemer</h5>
-	<table class="table table-sm excel">
-	<thead>
-	<tr>
-		<th>Område</th>
-		<th>Kritisk funksjon</th>
-		<th>Systemknytninger</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for funksjon in kritiske_funksjoner %}
-	<tr>
-		<td>{{funksjon.get_kategori_display}}</td>
-		<td>{{funksjon.navn}}</td>
-		<td>
-			{% for system in funksjon.systemer %}
-				{% if system.systemforvalter == virksomhet %}
-					<li>{{system}}
-						<ul>
-						{% for kapabilitet in system.kritisk_kapabilitet.all %}
-							<li>{{kapabilitet}}</li>
-						{% endfor %}
-						</ul>
-					</li>
-				{% endif %}
-			{% endfor %}
-		</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-	</table>
-
-	<hr>
+		</div>
+	</div>
 
 {% endblock hovedinnhold %}
 

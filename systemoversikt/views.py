@@ -7949,6 +7949,26 @@ def generer_graf_virksomhet(virksomhet_pk):
 
 REQUIRED_PERMISSIONS_SAVE_GRAPH_VIRKSOMHET = ['systemoversikt.change_virksomhet']
 
+
+def _hrorg_enheter_tre(virksomhet_pk, max_child_depth=3):
+	"""Nested tree of level-4 units (avdelinger) and child org units below."""
+	alle_enheter = list(HRorg.objects.filter(virksomhet_mor=virksomhet_pk).order_by('ou'))
+	children_by_parent = {}
+	for enhet in alle_enheter:
+		children_by_parent.setdefault(enhet.direkte_mor_id, []).append(enhet)
+
+	def build_node(enhet, remaining_depth):
+		return {
+			'enhet': enhet,
+			'children': [
+				build_node(child, remaining_depth - 1)
+				for child in children_by_parent.get(enhet.pk, [])
+			] if remaining_depth > 0 else [],
+		}
+
+	return [build_node(enhet, max_child_depth) for enhet in alle_enheter if enhet.level == 4]
+
+
 def virksomhet(request, pk):
 	#Vise detaljer om en valgt virksomhet
 	required_permissions = ['systemoversikt.view_system']
@@ -7969,9 +7989,27 @@ def virksomhet(request, pk):
 	ant_systemer_bruk = SystemBruk.objects.filter(brukergruppe=pk).count()
 	ant_systemer_eier = System.objects.filter(systemeier=pk).count()
 	ant_systemer_forvalter = System.objects.filter(systemforvalter=pk).count()
-	enheter = HRorg.objects.filter(virksomhet_mor=pk).filter(level=4)
+	# 2026-06-08: Avdelinger tree with three child levels for virksomhet_detaljer.
+	enheter_tre = _hrorg_enheter_tre(virksomhet.pk)
+	enheter_tre_mid = (len(enheter_tre) + 1) // 2
+	enheter_tre_kol1 = enheter_tre[:enheter_tre_mid]
+	enheter_tre_kol2 = enheter_tre[enheter_tre_mid:]
 
-	kritiske_funksjoner = KritiskFunksjon.objects.filter(funksjoner__systemer__systemforvalter=pk).distinct()
+	# 2026-06-08: Group systems per kritisk funksjon for rowspan in virksomhet_detaljer table.
+	kritiske_funksjoner = KritiskFunksjon.objects.filter(
+		funksjoner__systemer__systemforvalter=pk,
+	).distinct().prefetch_related('funksjoner__systemer__kritisk_kapabilitet')
+	kritiske_funksjoner_rader = []
+	for funksjon in kritiske_funksjoner:
+		systemer = [
+			system for system in funksjon.systemer()
+			if system.systemforvalter_id == virksomhet.pk
+		]
+		if systemer:
+			kritiske_funksjoner_rader.append({
+				'funksjon': funksjon,
+				'systemer': systemer,
+			})
 
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk).filter(~Q(ibruk=False)).count()
 
@@ -7986,12 +8024,13 @@ def virksomhet(request, pk):
 		'deaktiverte_brukere': deaktiverte_brukere,
 		'ant_behandlinger': ant_behandlinger,
 		'behandling_ikke_kvalitetssikret': behandling_ikke_kvalitetssikret,
-		'enheter': enheter,
+		'enheter_tre_kol1': enheter_tre_kol1,
+		'enheter_tre_kol2': enheter_tre_kol2,
 		'ant_systemer_bruk': ant_systemer_bruk,
 		'ant_systemer_eier': ant_systemer_eier,
 		'ant_systemer_forvalter': ant_systemer_forvalter,
 		'systemer_drifter': systemer_drifter,
-		'kritiske_funksjoner': kritiske_funksjoner,
+		'kritiske_funksjoner_rader': kritiske_funksjoner_rader,
 		"virksomhet": virksomhet,
 	})
 

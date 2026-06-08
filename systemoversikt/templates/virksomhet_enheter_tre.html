@@ -1,0 +1,14 @@
+{# 2026-06-08: Recursive org-unit tree for virksomhet_detaljer Avdelinger section. #}
+<ul>
+{% for node in enheter_tre %}
+	<li>
+		{% url 'enhet_detaljer' pk=node.enhet.pk as url_enhet %}
+		<a href="{{ url_enhet }}">{{ node.enhet }}</a>
+		{% if node.children %}
+			{% include "virksomhet_enheter_tre.html" with enheter_tre=node.children %}
+		{% endif %}
+	</li>
+{% empty %}
+	<li>Ingen</li>
+{% endfor %}
+</ul>
