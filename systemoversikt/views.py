@@ -2833,9 +2833,12 @@ def _azure_applications_queryset(term, search_term):
 		if search_term == "__all__":
 			applikasjoner = AzureApplication.objects.all().order_by('-createdDateTime')
 		else:
+			# 2026-06-08: Also match permission scope value/display name (e.g. User.Read → User.Read.All).
 			applikasjoner = AzureApplication.objects.filter(
 				Q(appId=search_term) | Q(objectId=search_term) | Q(displayName__icontains=search_term) | Q(notes__icontains=search_term)
-			).order_by('-createdDateTime')
+				| Q(requiredResourceAccess__value__icontains=search_term)
+				| Q(requiredResourceAccess__adminConsentDisplayName__icontains=search_term)
+			).distinct().order_by('-createdDateTime')
 	else:
 		vise_managed_identity = False
 		antall_dager = 28
