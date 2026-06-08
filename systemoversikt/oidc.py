@@ -250,7 +250,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			#CN=DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE,ou=Systemoversikt,ou=Felles,...
 			# Gir lesetilgang
 			# Gis direkte ved pålogging dersom innlogget bruker har en "ansvarlig"-rolle
-			# gis til UKE systemutvikling
+			# gis til DIG systemutvikling
 			# kan tildeles via IDA.
 
 			#CN=DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER,ou=Systemoversikt,ou=Felles,...

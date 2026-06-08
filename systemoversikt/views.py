@@ -376,6 +376,22 @@ def auth_er_virksomhetsrolle(user):
 	else:
 		return False
 
+
+def user_can_change_virksomhet(user, virksomhet):
+	# 2026-06-08: Mirror VirksomhetAdmin.has_change_permission for front-end virksomhet edits.
+	if not user.is_authenticated:
+		return False
+	if user.is_superuser:
+		return True
+	if user.groups.filter(name="/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR").exists():
+		return True
+	if user.has_perm('systemoversikt.change_virksomhet'):
+		try:
+			return user.profile.virksomhet_id == virksomhet.pk
+		except AttributeError:
+			return False
+	return False
+
 def sharepoint_get_file(filename):
 	from azure.identity import ClientSecretCredential
 	from msgraph.core import GraphClient
@@ -7949,6 +7965,89 @@ def generer_graf_virksomhet(virksomhet_pk):
 
 REQUIRED_PERMISSIONS_SAVE_GRAPH_VIRKSOMHET = ['systemoversikt.change_virksomhet']
 
+# 2026-06-08: Editable sentrale roller on virksomhet detail page (field name, display label).
+SENTRALE_ROLLER_EDITABLE = (
+	('arkitekturkontakter', 'Aktitekturkontakter'),
+	('ikt_kontakt', 'IKT-kontakter'),
+	('personvernkoordinator', 'Personvernkoordinator'),
+	('informasjonssikkerhetskoordinator', 'Informasjonvernkoordinator'),
+	('varslingsmottak_sikkerhet_ref', 'Sikkerhetsrelaterte varsler sendes til'),
+	('uke_kam_referanse', 'Kundekontakt i DIG'),
+	('autoriserte_bestillere_tjenester', 'Infotorg autorisert bestiller'),
+	('ks_fiks_admin_ref', 'Folkeregisteradministrator i KS Fiks'),
+	('autoriserte_bestillere_tjenester_uke', 'Autorisert for bestilling av tjenester fra DIG'),
+)
+SENTRALE_ROLLER_FIELD_NAMES = frozenset(field for field, _label in SENTRALE_ROLLER_EDITABLE)
+
+
+def _ansvarlig_display_list(ansvarlig):
+	return {
+		'id': ansvarlig.pk,
+		'label': str(ansvarlig),
+		'bruker_pk': ansvarlig.brukernavn_id,
+		'url': reverse('bruker_detaljer', kwargs={'pk': ansvarlig.brukernavn_id}),
+		'deaktivert': bool(getattr(ansvarlig.brukernavn.profile, 'accountdisable', False)),
+	}
+
+
+def _sentrale_roller_redigerbare(virksomhet):
+	return [{
+		'field': field,
+		'label': label,
+		'ansvarlige': [_ansvarlig_display_list(a) for a in getattr(virksomhet, field).all()],
+	} for field, label in SENTRALE_ROLLER_EDITABLE]
+
+
+SENTRALE_ROLLER_DIG_KAM_FIELD = 'uke_kam_referanse'
+DIG_KUNDEKONTAKT_VIRKSOMHET_FORKORTELSE = 'DIG'
+
+
+def _dig_kundekontakt_virksomhet():
+	try:
+		return Virksomhet.objects.get(virksomhetsforkortelse=DIG_KUNDEKONTAKT_VIRKSOMHET_FORKORTELSE)
+	except Virksomhet.DoesNotExist:
+		return None
+
+
+def _sentrale_roller_ansvarlig_virksomhet(field, edited_virksomhet):
+	# 2026-06-08: Kundekontakt i DIG uses DIG staff only; other roles use the edited virksomhet.
+	if field == SENTRALE_ROLLER_DIG_KAM_FIELD:
+		return _dig_kundekontakt_virksomhet()
+	return edited_virksomhet
+
+
+def _ansvarlig_q_for_virksomhet(virksomhet):
+	if virksomhet is None:
+		return Q(pk__in=[])
+	return Q(brukernavn__profile__virksomhet=virksomhet)
+
+
+def _virksomhet_ansvarlig_sok_queryset(q, scope_virksomhet):
+	from functools import reduce
+	from operator import or_
+	if scope_virksomhet is None:
+		return Ansvarlig.objects.none()
+	terms = q.split()
+	if not terms:
+		return Ansvarlig.objects.none()
+	field_queries = []
+	for term in terms:
+		field_queries.append(
+			Q(brukernavn__username__icontains=term)
+			| Q(brukernavn__first_name__icontains=term)
+			| Q(brukernavn__last_name__icontains=term)
+			| Q(brukernavn__email__icontains=term)
+			| Q(brukernavn__profile__displayName__icontains=term)
+		)
+	query = reduce(or_, field_queries)
+	return (
+		Ansvarlig.objects.filter(query)
+		.filter(_ansvarlig_q_for_virksomhet(scope_virksomhet))
+		.select_related('brukernavn', 'brukernavn__profile')
+		.distinct()
+		.order_by('brukernavn__first_name', 'brukernavn__last_name')[:15]
+	)
+
 
 def _hrorg_enheter_tre(virksomhet_pk, max_child_depth=3):
 	"""Nested tree of level-4 units (avdelinger) and child org units below."""
@@ -7975,7 +8074,11 @@ def virksomhet(request, pk):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	virksomhet = Virksomhet.objects.get(pk=pk)
+	ansvarlig_qs = Ansvarlig.objects.select_related('brukernavn', 'brukernavn__profile')
+	virksomhet = Virksomhet.objects.prefetch_related(*[
+		Prefetch(field, queryset=ansvarlig_qs)
+		for field in SENTRALE_ROLLER_FIELD_NAMES
+	]).get(pk=pk)
 	#antall_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=False).filter(is_active=True).count()
 	#antall_eksterne_brukere = User.objects.filter(profile__virksomhet=pk).filter(profile__ekstern_ressurs=True).filter(is_active=True).count()
 
@@ -8013,9 +8116,14 @@ def virksomhet(request, pk):
 
 	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=pk).filter(~Q(ibruk=False)).count()
 
+	sentrale_roller_redigerbare = _sentrale_roller_redigerbare(virksomhet)
+
 	return render(request, 'virksomhet_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
+		'can_change_virksomhet': user_can_change_virksomhet(request.user, virksomhet),
+		'sentrale_roller_redigerbare': sentrale_roller_redigerbare,
+		'sentrale_roller_redigerbare_json': json.dumps(sentrale_roller_redigerbare),
 		'virksomhet': virksomhet,
 		#'antall_brukere': antall_brukere,
 		#'antall_eksterne_brukere': antall_eksterne_brukere,
@@ -8033,6 +8141,152 @@ def virksomhet(request, pk):
 		'kritiske_funksjoner_rader': kritiske_funksjoner_rader,
 		"virksomhet": virksomhet,
 	})
+
+
+def virksomhet_ansvarlig_sok(request, pk):
+	# 2026-06-08: JSON search for ansvarlige when editing sentrale roller inline.
+	virksomhet = get_object_or_404(Virksomhet, pk=pk)
+	if not user_can_change_virksomhet(request.user, virksomhet):
+		return JsonResponse({'error': 'forbidden'}, status=403)
+
+	q = request.GET.get('q', '').strip()
+	if len(q) < 2:
+		return JsonResponse({'results': []})
+
+	role_field = request.GET.get('exclude_field', '').strip()
+	exclude_ids = set()
+	if role_field in SENTRALE_ROLLER_FIELD_NAMES:
+		exclude_ids.update(getattr(virksomhet, role_field).values_list('pk', flat=True))
+		scope_virksomhet = _sentrale_roller_ansvarlig_virksomhet(role_field, virksomhet)
+	else:
+		scope_virksomhet = virksomhet
+	for raw in request.GET.get('exclude_ids', '').split(','):
+		raw = raw.strip()
+		if raw.isdigit():
+			exclude_ids.add(int(raw))
+
+	results = []
+	for ansvarlig in _virksomhet_ansvarlig_sok_queryset(q, scope_virksomhet):
+		if ansvarlig.pk not in exclude_ids:
+			results.append(_ansvarlig_display_list(ansvarlig))
+
+	user_terms = q.split()
+	if user_terms and scope_virksomhet is not None:
+		from functools import reduce
+		from operator import or_
+		user_parts = []
+		for term in user_terms:
+			user_parts.append(
+				Q(username__icontains=term)
+				| Q(first_name__icontains=term)
+				| Q(last_name__icontains=term)
+				| Q(email__icontains=term)
+				| Q(profile__displayName__icontains=term)
+			)
+		user_q = reduce(or_, user_parts)
+		users = (
+			User.objects.filter(user_q)
+			.filter(profile__virksomhet=scope_virksomhet)
+			.filter(ansvarlig_brukernavn__isnull=True)
+			.select_related('profile')
+			.distinct()
+			.order_by('first_name', 'last_name')[:5]
+		)
+		for user in users:
+			results.append({
+				'id': None,
+				'user_pk': user.pk,
+				'label': str(user),
+				'create': True,
+			})
+
+	return JsonResponse({'results': results})
+
+
+@require_POST
+def virksomhet_ansvarlig_opprett(request, pk):
+	# 2026-06-08: Create Ansvarlig from User when adding via inline role search.
+	virksomhet = get_object_or_404(Virksomhet, pk=pk)
+	if not user_can_change_virksomhet(request.user, virksomhet):
+		return JsonResponse({'error': 'forbidden'}, status=403)
+	if not request.user.has_perm('systemoversikt.add_ansvarlig'):
+		return JsonResponse({'error': 'forbidden'}, status=403)
+
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+	except json.JSONDecodeError:
+		return JsonResponse({'error': 'invalid_json'}, status=400)
+
+	user_pk = data.get('user_pk')
+	field = data.get('field', '').strip()
+	if not user_pk:
+		return JsonResponse({'error': 'missing_user'}, status=400)
+	if field not in SENTRALE_ROLLER_FIELD_NAMES:
+		return JsonResponse({'error': 'invalid_field'}, status=400)
+
+	scope_virksomhet = _sentrale_roller_ansvarlig_virksomhet(field, virksomhet)
+	user = get_object_or_404(User, pk=user_pk)
+	if scope_virksomhet is None or getattr(user.profile, 'virksomhet_id', None) != scope_virksomhet.pk:
+		return JsonResponse({'error': 'wrong_virksomhet'}, status=400)
+	ansvarlig, _created = Ansvarlig.objects.get_or_create(brukernavn=user)
+	return JsonResponse(_ansvarlig_display_list(ansvarlig))
+
+
+@require_POST
+def virksomhet_lagre_roller(request, pk):
+	# 2026-06-08: Save sentrale roller from inline editor on virksomhet detail page.
+	virksomhet = get_object_or_404(Virksomhet, pk=pk)
+	if not user_can_change_virksomhet(request.user, virksomhet):
+		return JsonResponse({'error': 'forbidden'}, status=403)
+
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+	except json.JSONDecodeError:
+		return JsonResponse({'error': 'invalid_json'}, status=400)
+
+	roles = data.get('roles')
+	if not isinstance(roles, dict):
+		return JsonResponse({'error': 'invalid_roles'}, status=400)
+
+	for field_name in roles:
+		if field_name not in SENTRALE_ROLLER_FIELD_NAMES:
+			return JsonResponse({'error': 'invalid_field', 'field': field_name}, status=400)
+
+	for field_name, ids in roles.items():
+		if not isinstance(ids, list):
+			return JsonResponse({'error': 'invalid_ids', 'field': field_name}, status=400)
+		try:
+			field_ids = [int(i) for i in ids]
+		except (TypeError, ValueError):
+			return JsonResponse({'error': 'invalid_ids', 'field': field_name}, status=400)
+
+		scope_virksomhet = _sentrale_roller_ansvarlig_virksomhet(field_name, virksomhet)
+		valid_ids = set(
+			Ansvarlig.objects.filter(pk__in=field_ids)
+			.filter(_ansvarlig_q_for_virksomhet(scope_virksomhet))
+			.values_list('pk', flat=True)
+		)
+		if set(field_ids) - valid_ids:
+			return JsonResponse({'error': 'unknown_ansvarlig', 'field': field_name}, status=400)
+
+	with transaction.atomic():
+		for field_name, ids in roles.items():
+			getattr(virksomhet, field_name).set([int(i) for i in ids])
+
+	virksomhet = Virksomhet.objects.prefetch_related(*[
+		Prefetch(field, queryset=Ansvarlig.objects.select_related('brukernavn', 'brukernavn__profile'))
+		for field in SENTRALE_ROLLER_FIELD_NAMES
+	]).get(pk=pk)
+
+	return JsonResponse({
+		'ok': True,
+		'roller': _sentrale_roller_redigerbare(virksomhet),
+	})
+
+
+def virksomhet_rediger_roller(request, pk):
+	# 2026-06-08: Legacy URL – redirect to virksomhet detail (inline editor).
+	return redirect('virksomhet', pk=pk)
 
 
 @require_POST

@@ -1,192 +1,453 @@
 {% extends "virksomhet_index.html" %}
+
 {% load humanize %}
+
+{% load static %}
+
 {% load templatetags %}
+
+
 
 {% block ekstrameny %}
 
+
+
 	{% include 'virksomhet_detaljer_ekstrameny.html' %}
+
+
 
 {% endblock ekstrameny %}
 
+
+
 {% block overskrift %}
+
 	{{ virksomhet.virksomhetsnavn }} ({{ virksomhet.virksomhetsforkortelse }})
+
 {% endblock overskrift %}
+
+
 
 {% block hovedinnhold %}
 
+
+
 	{% if virksomhet.orgnummer %} Organisasjonsnummer {{ virksomhet.orgnummer|intcomma }} {% endif %}<br>
 
+
+
 	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/virksomhet/{{ virksomhet.pk }}/change/">
+
 	{% include 'site_edit_button.html' %} Rediger virksomhetsdetaljer og kontaktpersoner</a>
 
+
+
 	<hr>
+
+
 
 	{% if virksomhet.overordnede_virksomheter.all|length > 0 %}
+
 	<h6>Underlagt
+
 	{% for vir in virksomhet.overordnede_virksomheter.all %}
+
 		{% url 'virksomhet' vir.pk as url_vir %}
+
 		<a href="{{ url_vir }}">{{ vir }}</a>
+
 	{% endfor %}
+
 	</h6>
+
 	{% endif %}
+
+
 
 	{% if virksomhet.underliggende_virksomheter.all|length > 0 %}
+
 		<h6>Har ansvar for</h6>
+
 		<ul>
+
 		{% for underliggende in virksomhet.underliggende_virksomheter.all %}
+
 			{% url 'virksomhet' underliggende.pk as url_vir %}
+
 			<li><a href="{{ url_vir }}">{{ underliggende }}</a></li>
+
 		{% endfor %}
+
 		</ul>
+
 		<hr>
+
 	{% endif %}
+
+
 
 	Vi benytter <b>{{ant_systemer_bruk}}</b> systemer<br>
+
 	Vi eier <b>{{ant_systemer_eier}}</b> systemer, forvalter <b>{{ant_systemer_forvalter}}</b> systemer og drifter <b>{{systemer_drifter}}</b> systemer<br>
+
 	Vi har <b>{{ virksomhet.antall_interne_brukeridenter }}</b> interne og <b>{{ virksomhet.antall_eksterne_brukeridenter }}</b> ekstern brukere i brukerkatalogen<br>
 
+
+
 	{# 2026-06-08: Avoid double <hr> when virksomhet has no external URL links. #}
+
 	{% if virksomhet.intranett_url or virksomhet.www_url or virksomhet.styringssystem %}
-	<hr>
-	{% if virksomhet.intranett_url %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.intranett_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s intranettside</a>
-	{% endif %}
-	{% if virksomhet.www_url %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.www_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s nettside</a>
-	{% endif %}
-	{% if virksomhet.styringssystem %}
-		<a class="btn btn-sm btn-link" href="{{ virksomhet.styringssystem }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s styringssystem</a>
-	{% endif %}
-	{% endif %}
 
 	<hr>
+
+	{% if virksomhet.intranett_url %}
+
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.intranett_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s intranettside</a>
+
+	{% endif %}
+
+	{% if virksomhet.www_url %}
+
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.www_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s nettside</a>
+
+	{% endif %}
+
+	{% if virksomhet.styringssystem %}
+
+		<a class="btn btn-sm btn-link" href="{{ virksomhet.styringssystem }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s styringssystem</a>
+
+	{% endif %}
+
+	{% endif %}
+
+
+
+	<hr>
+
+
 
 	{# 2026-06-08: System figure links side by side; org/roles moved to page bottom. #}
+
 	<div class="row">
+
 		<div class="col-sm-6">
+
 			<h6>Systemansvar fordelt på seksjoner</h6>
+
 			<a href="{% url 'virksomhet_figur_system_seksjon' pk=virksomhet.pk %}" class="btn btn-primary btn-sm">Åpne i større vindu</a>
+
 		</div>
+
 		<div class="col-sm-6">
+
 			<h6>Systemavhengigheter for våre systemer</h6>
+
 			<a href="{% url 'virksomhet_figur_system_avhengigheter' pk=virksomhet.pk %}" class="btn btn-primary btn-sm">Åpne i større vindu</a>
+
 		</div>
+
 	</div>
 
+
+
 	<hr>
+
+
 
 	{# 2026-06-08: Split systemknytninger into System/Kapabilitet columns; rowspan for shared Område/funksjon. #}
+
 	<h5>Kritiske funksjoner knyttet til våre systemer</h5>
+
 	<table class="table table-sm excel">
+
 	<thead>
+
 	<tr>
+
 		<th>Område</th>
+
 		<th>Kritisk funksjon</th>
+
 		<th>System</th>
+
 		<th>Kapabilitet</th>
+
 	</tr>
+
 	</thead>
+
 	<tbody>
+
 	{% for gruppe in kritiske_funksjoner_rader %}
+
 		{% for system in gruppe.systemer %}
+
 	<tr>
+
 		{% if forloop.first %}
+
 		<td rowspan="{{ gruppe.systemer|length }}">{{ gruppe.funksjon.get_kategori_display }}</td>
+
 		<td rowspan="{{ gruppe.systemer|length }}">{{ gruppe.funksjon.navn }}</td>
+
 		{% endif %}
+
 		<td>{% url "systemdetaljer" system.pk as url_system %}<a href="{{ url_system }}">{{ system }}</a></td>
+
 		<td>
+
 			{% for kapabilitet in system.kritisk_kapabilitet.all %}
+
 				<li>{{kapabilitet}}</li>
+
 			{% endfor %}
+
 		</td>
+
 	</tr>
+
 		{% endfor %}
+
 	{% endfor %}
+
 	</tbody>
+
 	</table>
+
+
 
 	<hr>
 
-	{# 2026-06-08: Avdelinger 2/3 width (two columns), sentrale roller 1/3 width. #}
+
+
+	{# 2026-06-08: Avdelinger 2/3 width; sentrale roller 1/3 with inline search editor. #}
+
 	<div class="row">
+
 		<div class="col-sm-8">
+
 			<h6>Avdelinger</h6>
+
 			<div class="row">
+
 				<div class="col-6">
+
 					{% include "virksomhet_enheter_tre.html" with enheter_tre=enheter_tre_kol1 %}
+
 				</div>
+
 				{% if enheter_tre_kol2 %}
+
 				<div class="col-6">
+
 					{% include "virksomhet_enheter_tre.html" with enheter_tre=enheter_tre_kol2 %}
+
 				</div>
+
 				{% endif %}
+
 			</div>
+
 		</div>
+
 		<div class="col-sm-4">
-			<h6>Sentrale roller</h6>
-	<table class="table table-sm">
-	<thead>
-	<tr>
-		<th>Rolle</th>
-		<th>Kontaktpersoner</th>
-	</tr>
-	</thead>
-	<tbody>
-	<tr>
-		<td>Etatsdirektør</td>
-		<td>
-		{% if virksomhet.leder_hr %}
-			<a href="{% url 'bruker_detaljer' pk=virksomhet.leder_hr.pk %}">{{virksomhet.leder_hr.profile.displayName}}</a>
-		{% else %}
-			<i>Ingen data fra HR tilgjengelig</i>
-		{% endif %}
-		</td>
-	</tr>
-	<tr>
-		<td>Aktitekturkontakter</td>
-		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.arkitekturkontakter.all %}</td>
-	</tr>
-	<tr>
-		<td>IKT-kontakter</td>
-		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.ikt_kontakt.all %}</td>
-	</tr>
-	<tr>
-		<td>Personvernkoordinator</td>
-		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.personvernkoordinator.all %}</td>
-	</tr>
-	<tr>
-		<td>Informasjonvernkoordinator</td>
-		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.informasjonssikkerhetskoordinator.all %}</td>
-	</tr>
-	<tr>
-		<td>Sikkerhetsrelaterte varsler sendes til</td>
-		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.varslingsmottak_sikkerhet_ref.all %}</td>
-	</tr>
-	<tr>
-		<td>Kundekontakt i UKE</td>
-		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.uke_kam_referanse.all %}</td>
-	</tr>
-	<tr>
-		<td>Infotorg autorisert bestiller</td>
-		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.autoriserte_bestillere_tjenester.all %}</td>
-	</tr>
-	<tr>
-		<td>Folkeregisteradministrator i KS Fiks</td>
-		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.ks_fiks_admin_ref.all %}</td>
-	</tr>
-	<tr>
-		<td>Autoriserte bestillere av sertifikater fra Buypass via Sopra Steria</td>
-		<td>Se <a href="{% url 'sertifikatmyndighet' %}">avgitte fullmakter</a></td>
-	</tr>
-	<tr>
-		<td>Autorisert for bestilling av tjenester fra UKE</td>
-		<td>{% include "ansvarlig_include_vis.html" with ansvarlige=virksomhet.autoriserte_bestillere_tjenester_uke.all %}</td>
-	</tr>
-	</tbody>
-	</table>
+
+			<div id="sentrale-roller-panel">
+
+				<h6>Sentrale roller
+
+				{% if can_change_virksomhet %}
+
+					<button type="button" id="sentrale-roller-toggle" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Rediger</button>
+
+				{% endif %}
+
+				</h6>
+
+				<span id="sentrale-roller-status" class="small"></span>
+
+
+
+				<div id="sentrale-roller-view">
+
+					<table class="table table-sm">
+
+					<thead>
+
+					<tr>
+
+						<th>Rolle</th>
+
+						<th>Kontaktpersoner</th>
+
+					</tr>
+
+					</thead>
+
+					<tbody>
+
+					<tr>
+
+						<td>Etatsdirektør</td>
+
+						<td>
+
+						{% if virksomhet.leder_hr %}
+
+							<a href="{% url 'bruker_detaljer' pk=virksomhet.leder_hr.pk %}">{{virksomhet.leder_hr.profile.displayName}}</a>
+
+						{% else %}
+
+							<i>Ingen data fra HR tilgjengelig</i>
+
+						{% endif %}
+
+						</td>
+
+					</tr>
+
+					{% for rolle in sentrale_roller_redigerbare %}
+
+					<tr>
+
+						<td>{{ rolle.label }}</td>
+
+						<td>
+
+						{% for ansvarlig in rolle.ansvarlige %}
+
+							{% url 'bruker_detaljer' pk=ansvarlig.bruker_pk as url_ansvarlig %}
+
+							👤 <a href="{{ url_ansvarlig }}" {% if ansvarlig.deaktivert %}style="text-decoration: line-through;"{% endif %}>{{ ansvarlig.label }}</a><br>
+
+						{% empty %}
+
+							<span style="background-color: #ffacac">Mangler</span><br>
+
+						{% endfor %}
+
+						</td>
+
+					</tr>
+
+					{% endfor %}
+
+					<tr>
+
+						<td>Autoriserte bestillere av sertifikater fra Buypass via Sopra Steria</td>
+
+						<td>Se <a href="{% url 'sertifikatmyndighet' %}">avgitte fullmakter</a></td>
+
+					</tr>
+
+					</tbody>
+
+					</table>
+
+				</div>
+
+
+
+				{% if can_change_virksomhet %}
+
+				<div id="sentrale-roller-edit" hidden>
+
+					{% csrf_token %}
+
+					<p class="small text-muted">Søk på navn, brukernavn eller e-post. De fleste roller: kun personer fra {{ virksomhet.virksomhetsforkortelse }}. Kundekontakt i DIG: kun personer fra DIG. Etatsdirektør hentes fra HR. Sertifikatfullmakter redigeres via <a href="{% url 'sertifikatmyndighet' %}">sertifikatmyndighet</a>.</p>
+
+					<table class="table table-sm">
+
+					<tbody>
+
+					{% for rolle in sentrale_roller_redigerbare %}
+
+					<tr class="rolle-edit" data-field="{{ rolle.field }}">
+
+						<td style="width: 40%;">{{ rolle.label }}</td>
+
+						<td>
+
+							<div class="rolle-ansvarlige-list mb-1">
+
+							{% for ansvarlig in rolle.ansvarlige %}
+
+								<span class="badge badge-light rolle-chip mr-1 mb-1" data-id="{{ ansvarlig.id }}">
+
+									<a href="{% url 'bruker_detaljer' pk=ansvarlig.bruker_pk %}" {% if ansvarlig.deaktivert %}style="text-decoration: line-through;"{% endif %}>{{ ansvarlig.label }}</a>
+
+									<button type="button" class="btn btn-link btn-sm p-0 ml-1 rolle-fjern" aria-label="Fjern">&times;</button>
+
+								</span>
+
+							{% endfor %}
+
+							</div>
+
+							<input type="search" class="form-control form-control-sm rolle-sok" placeholder="Søk person…" autocomplete="off">
+
+							<div class="rolle-sok-treff"></div>
+
+						</td>
+
+					</tr>
+
+					{% endfor %}
+
+					</tbody>
+
+					</table>
+
+					<button type="button" id="sentrale-roller-lagre" class="btn btn-primary btn-sm">Lagre</button>
+
+					<button type="button" id="sentrale-roller-avbryt" class="btn btn-secondary btn-sm">Avbryt</button>
+
+				</div>
+
+				{% endif %}
+
+			</div>
+
 		</div>
+
 	</div>
 
+
+
 {% endblock hovedinnhold %}
+
+
+
+{% block script_append %}
+
+{% if can_change_virksomhet %}
+
+<script src="{% static 'virksomhet_roller_edit.js' %}" nonce="{{request.csp_nonce}}"></script>
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+
+	initVirksomhetRollerEdit({
+
+		csrf: '{{ csrf_token }}',
+
+		urlSearch: '{% url "virksomhet_ansvarlig_sok" pk=virksomhet.pk %}',
+
+		urlCreate: '{% url "virksomhet_ansvarlig_opprett" pk=virksomhet.pk %}',
+
+		urlSave: '{% url "virksomhet_lagre_roller" pk=virksomhet.pk %}',
+
+		sertifikatUrl: '{% url "sertifikatmyndighet" %}',
+
+		etatsdirektorHtml: {% if virksomhet.leder_hr %}'<a href="{% url "bruker_detaljer" pk=virksomhet.leder_hr.pk %}">{{ virksomhet.leder_hr.profile.displayName|escapejs }}</a>'{% else %}'<i>Ingen data fra HR tilgjengelig</i>'{% endif %},
+
+		initialRoller: {{ sentrale_roller_redigerbare_json|safe }}
+
+	});
+
+</script>
+
+{% endif %}
+
+{% endblock script_append %}
+
 

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-08: User-facing UKE labels on Virksomhet/System fields renamed to DIG.
+# 2026-06-08: VirksomhetRollerForm – edit sentrale roller from virksomhet detail page.
 # 2026-06-08: Swapped ukjent (light red) and infrastruktur_chart (light gray) in SYSTEM_COLORS.
 # 2026-06-08: Added infrastruktur_chart color for combined seksjon chart legend.
 # 2026-06-07: Added land field to Leverandor – country of operation for supplier overview.
@@ -740,7 +742,7 @@ class AutorisertBestiller(models.Model):
 			verbose_name="Autoriserte sertifikatbestillere",
 			blank=True,
 			on_delete=models.PROTECT,
-			help_text=u"Personer i virksomheten som er autorisert til å bestille sertifikater via UKE. Det må da foreligge en fullmakt gitt til UKEs driftsleverandør.",
+			help_text=u"Personer i virksomheten som er autorisert til å bestille sertifikater via DIG. Det må da foreligge en fullmakt gitt til DIGs driftsleverandør.",
 			)
 	dato_fullmakt = models.DateField(
 			verbose_name="Dato fullmakt gitt",
@@ -835,7 +837,7 @@ class Virksomhet(models.Model):
 			related_name='virksomhet_uke_kam',
 			verbose_name='Kundeansvarlig fra intern tjenesteleverandør',
 			blank=True,
-			help_text=u"Dette er deres kundeansvarlig i UKE. Feltet bør oppdateres av UKE.",
+			help_text=u"Dette er deres kundeansvarlig i DIG. Feltet bør oppdateres av DIG.",
 			)
 	intranett_url = models.URLField(
 			verbose_name="På intranett (internt)",
@@ -870,7 +872,7 @@ class Virksomhet(models.Model):
 			related_name='virksomhet_autoriserte_bestillere_tjenester_uke',
 			verbose_name='Autoriserte bestillere av tjenester fra intern tjenesteleverandør.',
 			blank=True,
-			help_text=u"Personer i virksomheten din autorisert til å bestille tjenester fra UKE.",
+			help_text=u"Personer i virksomheten din autorisert til å bestille tjenester fra DIG.",
 			)
 	orgnummer = models.CharField(
 			verbose_name="Virksomhetens organisasjonsnummer",
@@ -962,7 +964,7 @@ class Virksomhet(models.Model):
 			related_name='virksomhet_varslingsmottak_sikkerhet',
 			verbose_name='Postbokser for mottak av sikkerhetsvarsler',
 			blank=True,
-			help_text=u"Her kan du angi postmottaks dere ønsker sikkerhetsvarsler levert til. Brukes av UKE CSIRT og driftsleverandør for varslinger ved sikkerhetshendelser. Dersom ikke fylt ut, går varsler til ISK og sekundært til IKT-hovedkontakt.",
+			help_text=u"Her kan du angi postmottaks dere ønsker sikkerhetsvarsler levert til. Brukes av DIG CSIRT og driftsleverandør for varslinger ved sikkerhetshendelser. Dersom ikke fylt ut, går varsler til ISK og sekundært til IKT-hovedkontakt.",
 			)
 	history = HistoricalRecords()
 
@@ -1000,6 +1002,27 @@ class Virksomhet(models.Model):
 	class Meta:
 		verbose_name_plural = "Organisasjon: Virksomheter"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class VirksomhetRollerForm(forms.ModelForm):
+	# 2026-06-08: Scoped form for sentrale roller – same fields as VirksomhetAdmin "Organisatorisk" fieldset.
+	class Meta:
+		model = Virksomhet
+		fields = (
+			'arkitekturkontakter',
+			'ikt_kontakt',
+			'personvernkoordinator',
+			'informasjonssikkerhetskoordinator',
+			'varslingsmottak_sikkerhet_ref',
+			'uke_kam_referanse',
+			'autoriserte_bestillere_tjenester',
+			'ks_fiks_admin_ref',
+			'autoriserte_bestillere_tjenester_uke',
+		)
+		widgets = {
+			field: forms.SelectMultiple(attrs={'class': 'form-control', 'size': '6'})
+			for field in fields
+		}
 
 
 # hjelpeklasse for system_telle_koblede_brukere. Ved oppslag via AD/LDAP hentes det ut ansattnummer, og flere brukere kan kobles til samme nummer
@@ -4804,7 +4827,7 @@ class System(models.Model):
 			help_text=u'Brukes ifm migreringsprosjektet. Dette datafeltet bør splittes og brukes ned mot programvare.',
 			)
 	tjenestenivaa = models.CharField(
-			verbose_name="Tjenestenivå med UKE (gamle tjenesteavtaler)",
+			verbose_name="Tjenestenivå med DIG (gamle tjenesteavtaler)",
 			choices=TJENESTENIVAA_VALG,
 			max_length=50,
 			blank=True,
@@ -4816,7 +4839,7 @@ class System(models.Model):
 			related_name='system',
 			verbose_name="Service offerings fra Sopra Steria CMDB",
 			blank=True,
-			help_text=u"Her velger du alle service offerings knyttet til dette systemet. Ta kontakt med UKE om du trenger hjelp med denne koblingen.",
+			help_text=u"Her velger du alle service offerings knyttet til dette systemet. Ta kontakt med DIG om du trenger hjelp med denne koblingen.",
 			)
 	sikkerhetsnivaa = models.BigIntegerField(
 			choices=SIKKERHETSNIVAA_VALG,
@@ -4830,7 +4853,7 @@ class System(models.Model):
 			related_name='systemer',
 			verbose_name="Tilknyttet programvare",
 			blank=True,
-			help_text=u"Programvare benyttet av- eller knyttet til systemet. Her kan du legge inn programvare som er installert på klienter og programvare systemet består av på serversiden. Bruk det kommersielle navnet på programvaren. For å bli varslet av UKE CSIRT om programvaresårbarheter i nyhetsbildet, må du registrere programvare her.",
+			help_text=u"Programvare benyttet av- eller knyttet til systemet. Her kan du legge inn programvare som er installert på klienter og programvare systemet består av på serversiden. Bruk det kommersielle navnet på programvaren. For å bli varslet av DIG CSIRT om programvaresårbarheter i nyhetsbildet, må du registrere programvare her.",
 			)
 	avhengigheter = models.TextField(
 			verbose_name="Beskrivelse av avhengigheter (fritekst)",
@@ -4886,7 +4909,7 @@ class System(models.Model):
 			related_name='system_systemkategorier',
 			verbose_name="Systemkategorier",
 			blank=True,
-			help_text=u"Dette er et sett med kategorier som forvaltes av UKE ved seksjon for information management (IM). Velg det som passer best.",
+			help_text=u"Dette er et sett med kategorier som forvaltes av DIG ved seksjon for information management (IM). Velg det som passer best.",
 			)
 	systemurl = models.ManyToManyField(
 			to=SystemUrl,
@@ -5281,7 +5304,7 @@ class System(models.Model):
 			choices=VALG_KLARGJORT_SIKKERHETSMODELL,
 			verbose_name="Status klargjort for ny sikkerhetsmodell",
 			blank=True, null=True,
-			help_text=u"Benyttes av UKE for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
+			help_text=u"Benyttes av DIG for å kartlegge hvilke virksomheter som er klare for ny klientmodell uten permanent VPN.",
 			)
 	kritisk_kapabilitet = models.ManyToManyField(
 			to=KritiskKapabilitet,
