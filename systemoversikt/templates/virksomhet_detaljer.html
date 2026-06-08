@@ -45,9 +45,9 @@
 	Vi eier <b>{{ant_systemer_eier}}</b> systemer, forvalter <b>{{ant_systemer_forvalter}}</b> systemer og drifter <b>{{systemer_drifter}}</b> systemer<br>
 	Vi har <b>{{ virksomhet.antall_interne_brukeridenter }}</b> interne og <b>{{ virksomhet.antall_eksterne_brukeridenter }}</b> ekstern brukere i brukerkatalogen<br>
 
-
+	{# 2026-06-08: Avoid double <hr> when virksomhet has no external URL links. #}
+	{% if virksomhet.intranett_url or virksomhet.www_url or virksomhet.styringssystem %}
 	<hr>
-
 	{% if virksomhet.intranett_url %}
 		<a class="btn btn-sm btn-link" href="{{ virksomhet.intranett_url }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s intranettside</a>
 	{% endif %}
@@ -57,8 +57,9 @@
 	{% if virksomhet.styringssystem %}
 		<a class="btn btn-sm btn-link" href="{{ virksomhet.styringssystem }}" target="_blank">🌍 {{virksomhet.virksomhetsforkortelse}}s styringssystem</a>
 	{% endif %}
+	{% endif %}
 
-<hr>
+	<hr>
 
 	{# 2026-06-08: System figure links side by side; org/roles moved to page bottom. #}
 	<div class="row">
