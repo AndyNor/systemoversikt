@@ -10,6 +10,8 @@
 	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+	{# 2026-06-08: cytoscape-svg – vector export for locked dependency graph offline viewing. #}
+	<script src="{% static 'cytoscape/cytoscape-svg.js@0.4.0' %}" nonce="{{request.csp_nonce}}"></script>
 {% endblock ekstrajavascript %}
 
 
@@ -175,6 +177,7 @@
 	<br>
 	<button id="btn-avhengighetergraph-graph-reset" class="btn btn-sm btn-outline-secondary">Tilbakestill visning</button>
 	<button id="btn-avhengighetergraph-download" class="btn btn-secondary">Last ned layout</button>
+	<button id="btn-avhengighetergraph-download-svg" class="btn btn-secondary">Last ned SVG</button>
 	<button id="btn-avhengigheter-graph-upload" class="btn btn-secondary">Last inn layout</button>
 	<input id="btn-avhengigheter-btn-avhengigheter-graph-upload-input" type="file" accept="application/json" style="display:none;">
 	<button id="btn-avhengigheter-graph-lock"></button>
@@ -626,6 +629,39 @@ function downloadLayoutAsFile() {
 
 document.getElementById('btn-avhengighetergraph-download')
   ?.addEventListener('click', downloadLayoutAsFile);
+
+
+// ==========================================================
+// SVG EXPORT (vector, for offline zoom/pan when graph is locked)
+// ==========================================================
+// 2026-06-08: Export full graph as SVG – lets users explore offline without unlocking pan/zoom.
+function downloadGraphAsSvg() {
+  if (typeof cy_avhengigheter.svg !== 'function') {
+    alert('SVG-eksport er ikke tilgjengelig.');
+    return;
+  }
+
+  const svgContent = cy_avhengigheter.svg({
+    full: true,
+    scale: 1,
+    bg: '#FCFCFC',
+  });
+
+  const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+  const filename = `systemavhengigheter_{{ virksomhet.pk }}_${new Date().toISOString().replace(/[:.]/g, '-')}.svg`;
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('btn-avhengighetergraph-download-svg')
+  ?.addEventListener('click', downloadGraphAsSvg);
 
 
 // ==========================================================
