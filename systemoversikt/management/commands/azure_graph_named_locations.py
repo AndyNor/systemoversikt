@@ -10,6 +10,7 @@ from azure.identity import ClientSecretCredential
 from msgraph.core import GraphClient
 from systemoversikt.views import push_pushover
 from systemoversikt.models import *
+from systemoversikt.import_cleanup_guard import IMPORT_CLEANUP_MIN_AGE_HOURS
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -122,7 +123,7 @@ class Command(BaseCommand):
 
 			# sjekke om noe ikke ble oppdatert og sette deaktivert
 
-			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+			tidligere = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
 			deaktive = AzureNamedLocations.objects.filter(sist_oppdatert__lte=tidligere)
 			for d in deaktive:
 				d.active = False

@@ -12,6 +12,7 @@ import json, os, time
 import pandas as pd
 import numpy as np
 import ipaddress
+from systemoversikt.import_cleanup_guard import IMPORT_CLEANUP_MIN_AGE_HOURS
 
 
 class Command(BaseCommand):
@@ -197,7 +198,7 @@ class Command(BaseCommand):
 				# slette alle innslag som ikke ble oppdatert
 				from django.utils import timezone
 				from datetime import timedelta
-				tidligere = timezone.now() - timedelta(hours=1) # 6 timer gammelt
+				tidligere = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
 				gamle_dnsinnslag = DNSrecord.objects.filter(sist_oppdatert__lte=tidligere)
 				antall_slettet = len(gamle_dnsinnslag)
 				for entry in gamle_dnsinnslag:

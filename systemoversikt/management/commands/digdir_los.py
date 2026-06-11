@@ -9,6 +9,7 @@ from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
+from systemoversikt.import_cleanup_guard import IMPORT_CLEANUP_MIN_AGE_HOURS
 import os
 import time
 import sys
@@ -126,7 +127,7 @@ class Command(BaseCommand):
 
 
 			#opprydding
-			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+			tidligere = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
 			deaktive_begrep = LOS.objects.filter(sist_oppdatert__lte=tidligere)
 			for b in deaktive_begrep:
 				b.active = False

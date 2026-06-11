@@ -10,6 +10,7 @@ from systemoversikt.models import *
 from systemoversikt.views import push_pushover
 import ldap, os, sys, time
 from systemoversikt.models import ApplicationLog, ADOrgUnit, ADgroup
+from systemoversikt.import_cleanup_guard import IMPORT_CLEANUP_MIN_AGE_HOURS
 import json
 
 class Command(BaseCommand):
@@ -120,7 +121,9 @@ class Command(BaseCommand):
 
 			@transaction.atomic
 			def remove_unseen_groups():
-				old_groups = ADgroup.objects.filter(sist_oppdatert__lte=timezone.now()-timedelta(hours=12)) # det vil aldri gå mer enn noen få minutter, men for å være sikker..
+				old_groups = ADgroup.objects.filter(
+					sist_oppdatert__lte=timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
+				)
 				print("sletter %s utgåtte grupper" % len(old_groups))
 				for g in old_groups:
 					g.delete()

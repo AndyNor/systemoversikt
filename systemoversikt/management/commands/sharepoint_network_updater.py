@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 from django.db.models import Q
 from systemoversikt.views import get_ipaddr_instance
+from systemoversikt.import_cleanup_guard import IMPORT_CLEANUP_MIN_AGE_HOURS
 
 class Command(BaseCommand):
 	def handle(self, **options):
@@ -144,7 +145,7 @@ class Command(BaseCommand):
 
 
 				#opprydding alle nettverksenheter som ikke er sett ved oppdatering
-				for_gammelt = timezone.now() - timedelta(hours=12) # 12 timer gammelt, scriptet bruker bare noen minutter..
+				for_gammelt = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
 				ikke_oppdatert = CMDBdevice.objects.filter(device_type="NETWORK").filter(sist_oppdatert__lte=for_gammelt)
 				tekst_ikke_oppdatert = ",".join(device.comp_name for device in ikke_oppdatert)
 				antall_ikke_oppdatert = ikke_oppdatert.count()

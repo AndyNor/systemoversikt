@@ -14,6 +14,7 @@ from functools import lru_cache
 import ipaddress
 from systemoversikt.views import sharepoint_get_file
 from netaddr import IPNetwork, IPAddress
+from systemoversikt.import_cleanup_guard import IMPORT_CLEANUP_MIN_AGE_HOURS
 
 class Command(BaseCommand):
 
@@ -380,7 +381,7 @@ class Command(BaseCommand):
 			message = import_vlan(destination_infoblox_data, "Infoblox", infoblox_data)
 
 			print(f"Sletter gamle innslag..")
-			for_gammelt = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+			for_gammelt = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
 			ikke_oppdatert = NetworkContainer.objects.filter(sist_oppdatert__lte=for_gammelt)
 			batch_size = 500
 			while ikke_oppdatert.count():

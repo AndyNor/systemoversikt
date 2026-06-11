@@ -6,6 +6,7 @@ from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
+from systemoversikt.import_cleanup_guard import IMPORT_CLEANUP_MIN_AGE_HOURS
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Q
@@ -162,7 +163,7 @@ class Command(BaseCommand):
 						u.save()
 
 			def opprydding():
-				tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
+				tidligere = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
 				inaktive_orgledd = HRorg.objects.filter(sist_oppdatert__lte=tidligere)
 				Command.ant_deaktivert = len(inaktive_orgledd)
 				print(f"Sletter {Command.ant_deaktivert} inaktive HRorg-elementer")

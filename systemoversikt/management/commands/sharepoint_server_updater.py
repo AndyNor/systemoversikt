@@ -14,6 +14,7 @@ import pandas as pd
 import numpy as np
 from systemoversikt.views import get_ipaddr_instance
 from systemoversikt.views import sharepoint_get_file
+from systemoversikt.import_cleanup_guard import IMPORT_CLEANUP_MIN_AGE_HOURS
 
 class Command(BaseCommand):
 
@@ -302,9 +303,8 @@ class Command(BaseCommand):
 
 
 				#opprydding alle servere ikke sett fra hovedimport
-				antall_timer_slett = 12
-				print(f"Rydder bort gamle servere som ikke er oppdatert på {antall_timer_slett} timer.")
-				for_gammelt = timezone.now() - timedelta(hours=antall_timer_slett) # 12 timer gammelt, scriptet bruker bare noen minutter..
+				print(f"Rydder bort gamle servere som ikke er oppdatert på {IMPORT_CLEANUP_MIN_AGE_HOURS} timer.")
+				for_gammelt = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
 				ikke_oppdatert = CMDBdevice.objects.filter(device_type="SERVER").filter(sist_oppdatert__lte=for_gammelt)
 				tekst_ikke_oppdatert = ",".join([device.comp_name for device in ikke_oppdatert.all()])
 				if tekst_ikke_oppdatert == "":

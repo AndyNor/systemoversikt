@@ -14,6 +14,7 @@ import pandas as pd
 import numpy as np
 import warnings
 from systemoversikt.views import sharepoint_get_file
+from systemoversikt.import_cleanup_guard import IMPORT_CLEANUP_MIN_AGE_HOURS
 
 
 class Command(BaseCommand):
@@ -176,7 +177,7 @@ class Command(BaseCommand):
 
 
 				#opprydding alle klienter ikke sett fra hovedimport
-				for_gammelt = timezone.now() - timedelta(hours=12) # 12 timer gammelt, scriptet bruker bare noen minutter..
+				for_gammelt = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
 				ikke_oppdatert = CMDBdevice.objects.filter(device_type="KLIENT").filter(sist_oppdatert__lte=for_gammelt)
 				antall_ikke_oppdatert = ikke_oppdatert.count()
 
