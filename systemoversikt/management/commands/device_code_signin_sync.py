@@ -2,7 +2,8 @@
 # Change log:
 # 2026-06-19: Nightly sync of device code sign-in combos from Graph (3-day window).
 # 2026-06-19: Set helsestatus Advarsel when Graph max_results cap is reached.
-from django.core.management.base import BaseCommand
+# 2026-06-19: Optional --dager for manual backfill (e.g. 30 days).
+from django.core.management.base import BaseCommand, CommandError
 import datetime
 import os
 import time
@@ -24,6 +25,14 @@ class Command(BaseCommand):
 
 	SYNC_DAYS = 3
 	MAX_RESULTS = 500
+
+	def add_arguments(self, parser):
+		parser.add_argument(
+			'--dager',
+			type=int,
+			default=Command.SYNC_DAYS,
+			help=f'Antall dager tilbake i tid å hente fra Graph (standard: {Command.SYNC_DAYS}).',
+		)
 
 	def handle(self, **options):
 		INTEGRASJON_KODEORD = "device_code_signins"
@@ -55,10 +64,13 @@ class Command(BaseCommand):
 		timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 		print(f"\n\n{timestamp} ------ Starter {SCRIPT_NAVN} ------")
 		runtime_t0 = time.time()
+		sync_days = options['dager']
+		if sync_days < 1:
+			raise CommandError('--dager må være minst 1')
 
 		try:
 			sign_ins, truncated, error_message = fetch_device_code_signins_from_graph(
-				dager=Command.SYNC_DAYS,
+				dager=sync_days,
 				max_results=Command.MAX_RESULTS,
 			)
 			if error_message:
@@ -72,7 +84,7 @@ class Command(BaseCommand):
 				push_pushover(f"Device code: {new_noteworthy_count} nye kombinasjoner")
 
 			logg_message = (
-				f"Hentet {len(sign_ins)} sign-ins ({Command.SYNC_DAYS} dager). "
+				f"Hentet {len(sign_ins)} sign-ins ({sync_days} dager). "
 				f"Nye merkverdige kombinasjoner: {new_noteworthy_count}. "
 				f"Slettet {pruned_count} gamle rader. Totalt {total_combos} kombinasjoner."
 			)
