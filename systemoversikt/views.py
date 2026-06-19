@@ -6361,7 +6361,112 @@ def registrer_bruk(request, system):
 	})
 
 
-def systembruk_bydeler(request):
+def bydel_virksomheter():
+	# 2026-06-19: Shared bydel filter – virksomhetsnavn starting with "bydel", ordinær only.
+	return Virksomhet.objects.filter(
+		virksomhetsnavn__istartswith="bydel",
+		ordinar_virksomhet=True,
+	).order_by("virksomhetsforkortelse")
+
+
+def _systembruk_bydeler_cell_symbol(bruk_set, forvalt_set, system_id, virksomhet_id):
+	has_bruk = (system_id, virksomhet_id) in bruk_set
+	has_forvalt = (system_id, virksomhet_id) in forvalt_set
+	if has_bruk and has_forvalt:
+		return "BF"
+	if has_bruk:
+		return "B"
+	if has_forvalt:
+		return "F"
+	return ""
+
+
+def _systembruk_bydeler_cell(bruk_set, forvalt_set, system_id, virksomhet_id):
+	# 2026-06-19: Cell dict for template – inline background beats tablesorter zebra striping.
+	symbol = _systembruk_bydeler_cell_symbol(bruk_set, forvalt_set, system_id, virksomhet_id)
+	if symbol == "B":
+		cell_style = "background-color: #d4edda;"
+	elif symbol in ("F", "BF"):
+		cell_style = "background-color: #f8d7da;"
+	else:
+		cell_style = ""
+	return {"symbol": symbol, "cell_style": cell_style}
+
+
+def systembruk_bydeler_oversikt(request):
+	# 2026-06-19: Cross-bydel matrix – same report for all users; no logged-in virksomhet column.
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	bydeler = list(bydel_virksomheter())
+	bydel_ids = {b.pk for b in bydeler}
+
+	klassifisering = request.GET.get('klassifisering', '').strip()
+
+	brukt_ids = set(SystemBruk.objects.filter(
+		brukergruppe__in=bydeler,
+		ibruk=True,
+	).exclude(system__livslop_status__in=[6, 7]).values_list('system_id', flat=True))
+
+	forvalt_ids = set(System.objects.filter(
+		Q(systemeier__in=bydeler) | Q(systemforvalter__in=bydeler),
+	).exclude(livslop_status__in=[6, 7]).values_list('pk', flat=True))
+
+	all_system_ids = brukt_ids | forvalt_ids
+
+	systemer_qs = System.objects.filter(pk__in=all_system_ids).select_related(
+		'systemforvalter',
+	).order_by(Lower('systemnavn'))
+
+	if klassifisering:
+		systemer_qs = systemer_qs.filter(systemeierskapsmodell=klassifisering)
+
+	systemer = list(systemer_qs)
+	system_ids = [s.pk for s in systemer]
+
+	bruk_set = set(SystemBruk.objects.filter(
+		system_id__in=system_ids,
+		brukergruppe_id__in=bydel_ids,
+		ibruk=True,
+	).values_list('system_id', 'brukergruppe_id'))
+
+	forvalt_set = set()
+	for system in systemer:
+		if system.systemeier_id and system.systemeier_id in bydel_ids:
+			forvalt_set.add((system.pk, system.systemeier_id))
+		if system.systemforvalter_id and system.systemforvalter_id in bydel_ids:
+			forvalt_set.add((system.pk, system.systemforvalter_id))
+
+	columns = [{'virksomhet': b} for b in bydeler]
+
+	system_rows = []
+	for system in systemer:
+		cells = []
+		for col in columns:
+			cells.append(_systembruk_bydeler_cell(
+				bruk_set, forvalt_set, system.pk, col['virksomhet'].pk,
+			))
+		system_rows.append({
+			'system': system,
+			'cells': cells,
+		})
+
+	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
+
+	return render(request, 'systembruk_bydeler_oversikt.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'system_rows': system_rows,
+		'columns': columns,
+		'klassifisering': klassifisering,
+		'systemklassifisering_valg': SYSTEMEIERSKAPSMODELL_VALG,
+		'antall_systemer': len(system_rows),
+	})
+
+
+def systembruk_bydeler_ekskludert(request):
+	# 2026-06-19: Moved from /systemer/bydelsbruk/ – gap report for systems bydeler use that we do not.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -6369,7 +6474,7 @@ def systembruk_bydeler(request):
 	din_virksomhet = request.user.profile.virksomhet
 
 	bydelssystemer = System.objects.filter(~Q(livslop_status=7)).filter(
-			systembruk_system__brukergruppe__virksomhetsnavn__istartswith="bydel").filter(~Q(
+			systembruk_system__brukergruppe__in=bydel_virksomheter()).filter(~Q(
 			systembruk_system__brukergruppe=din_virksomhet)).distinct()
 
 	return render(request, 'systembruk_bydeler.html', {

@@ -1,0 +1,71 @@
+{# 2026-06-19: Cross-bydel matrix – system use (B) and organisatorisk forvaltning (F) per bydel. #}
+{% extends "system_index.html" %}
+
+{% block overskrift %}
+	Bydelsbruk – oversikt
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<style>
+		.bydelsbruk-cell-b { background-color: #d4edda; }
+		.bydelsbruk-cell-f { background-color: #f8d7da; }
+		.bydelsbruk-legend-b { display: inline-block; padding: 0 0.4em; background-color: #d4edda; }
+		.bydelsbruk-legend-f { display: inline-block; padding: 0 0.4em; background-color: #f8d7da; }
+	</style>
+
+	<p>Viser {{ antall_systemer }} systemer som minst én ordinær bydel bruker eller forvalter organisatorisk.</p>
+
+	<p>
+		<span class="bydelsbruk-legend-b"><b>B</b></span> = aktiv bruk &nbsp;
+		<span class="bydelsbruk-legend-f"><b>F</b></span> = organisatorisk forvaltning (systemeier eller systemforvalter) &nbsp;
+		<span class="bydelsbruk-legend-f"><b>BF</b></span> = begge deler
+	</p>
+
+	<form method="get" class="form-inline" style="margin-bottom: 1rem;">
+		<label for="klassifisering" class="mr-2">Systemklassifisering:</label>
+		<select name="klassifisering" id="klassifisering" class="form-control form-control-sm mr-2">
+			<option value="">Alle</option>
+			{% for value, label in systemklassifisering_valg %}
+				<option value="{{ value }}" {% if klassifisering == value %}selected{% endif %}>{{ label }}</option>
+			{% endfor %}
+		</select>
+		<button type="submit" class="btn btn-sm btn-primary">Filtrer</button>
+	</form>
+
+	<p>
+		<a class="btn btn-sm btn-link" href="{% url 'systembruk_bydeler_ekskludert' %}">Se gap-rapport for din virksomhet →</a>
+	</p>
+
+	<div style="overflow-x: auto;">
+	<table class="tablesorter excel">
+		<thead>
+			<tr>
+				<th>Systemnavn</th>
+				<th>Systemklassifisering</th>
+				<th>Sentral forvalter</th>
+				{% for col in columns %}
+					<th title="{{ col.virksomhet.virksomhetsnavn }}">{{ col.virksomhet.virksomhetsforkortelse }}</th>
+				{% endfor %}
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in system_rows %}
+			<tr>
+				<td><h6>{% include 'system_include_vis.html' with system=row.system %}</h6></td>
+				<td>{{ row.system.get_systemeierskapsmodell_display|default:"-" }}</td>
+				<td>{{ row.system.systemforvalter.virksomhetsforkortelse|default:"-" }}</td>
+				{% for cell in row.cells %}
+					<td style="text-align: center; {{ cell.cell_style }}">{{ cell.symbol }}</td>
+				{% endfor %}
+			</tr>
+			{% empty %}
+			<tr>
+				<td colspan="{{ columns|length|add:3 }}">Ingen systemer matcher filteret.</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	</div>
+
+{% endblock hovedinnhold %}

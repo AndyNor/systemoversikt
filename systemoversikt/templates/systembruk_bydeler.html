@@ -1,3 +1,4 @@
+{# 2026-06-19: Gap report moved to bydelsbruk_ekskludert_oss; link back to cross-bydel overview. #}
 {% extends "system_index.html" %}
 
 {% block overskrift %}
@@ -5,6 +6,8 @@
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
+
+	<p><a class="btn btn-sm btn-link" href="{% url 'systembruk_bydeler' %}">← Tilbake til bydelsbruk-oversikt</a></p>
 
 	<p>Viser {{ systemer.count }} systemer som minst én annen bydel bruker, men som din virksomhet <b>{{din_virksomhet.virksomhetsforkortelse}}</b> ikke bruker.</p>
 

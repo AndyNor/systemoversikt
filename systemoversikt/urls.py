@@ -198,7 +198,9 @@ urlpatterns = [
 	re_path(r'^systemer/systemklassifisering/(?P<kriterie>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	re_path(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),
 	re_path(r'^systemer/systemtype/tom/$', views.systemtype_detaljer, name='systemtype_detaljer_mangler'),
-	re_path(r'^systemer/bydelsbruk/$', views.systembruk_bydeler, name='systembruk_bydeler'),
+	# 2026-06-19: bydelsbruk → cross-bydel matrix; gap report moved to bydelsbruk_ekskludert_oss.
+	re_path(r'^systemer/bydelsbruk/$', views.systembruk_bydeler_oversikt, name='systembruk_bydeler'),
+	re_path(r'^systemer/bydelsbruk_ekskludert_oss/$', views.systembruk_bydeler_ekskludert, name='systembruk_bydeler_ekskludert'),
 	re_path(r'^systemer/vis_alle/$', views.systemer_vis_alle_optimized, name='systemer_vis_alle'),
 	re_path(r'^systemer/ansvarlige/alle/$', views.alle_ansvarlige, name='alle_ansvarlige'),
 	re_path(r'^systemer/ansvarlige/eksport/$', views.alle_ansvarlige_eksport, name='alle_ansvarlige_eksport'),

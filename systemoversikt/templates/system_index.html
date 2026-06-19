@@ -52,7 +52,7 @@
 		<a href="{{ systemklassifisering_tom_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'systemklassifisering_tom' or rn and rn.url_name == 'systemklassifisering_detaljer' %}fremhev{% endif %}">Fellessystemer</a><br>
 
 		{% url 'systembruk_bydeler' as systembruk_bydeler_url %}
-		<a href="{{ systembruk_bydeler_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'systembruk_bydeler' %}fremhev{% endif %}">Bydelsbruk</a><br>
+		<a href="{{ systembruk_bydeler_url }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'systembruk_bydeler' or rn and rn.url_name == 'systembruk_bydeler_ekskludert' %}fremhev{% endif %}">Bydelsbruk</a><br>
 
 		{% url 'systemer_EOL' as url_systemer_EOL %}
 		<a href="{{ url_systemer_EOL }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'systemer_EOL' %}fremhev{% endif %}">End of life</a><br>
