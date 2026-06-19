@@ -1,0 +1,101 @@
+{% extends "sikkerhet_index.html" %}
+{% load humanize %}
+
+{% block ekstrastyle %}
+	<style>
+		table.device-code-logins tr.device-code-merket > td {
+			background-color: #ffb3b3 !important;
+		}
+		table.device-code-logins tr.device-code-merket:hover > td {
+			background-color: #ff9999 !important;
+		}
+	</style>
+{% endblock ekstrastyle %}
+
+{% block overskrift %}
+	Device code-innlogginger
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	<p>Denne siden viser vellykkede Entra ID-innlogginger via device code-flyt de siste {{ dager }} dagene. Data hentes i sanntid fra Microsoft Graph (sign-in logs).</p>
+
+	<p>Rader med lys rød bakgrunn er innlogginger utenfor standardverktøy (Azure CLI, Graph PowerShell m.m.) og interne DIG-apper{% if internal_ip_prefixes %}, samt IP-adresser med prefiks {{ internal_ip_prefixes|join:", " }}{% endif %}.</p>
+
+	{% if truncated %}
+		<p><em>Viser maks {{ max_results|intcomma }} nyeste treff.</em></p>
+	{% endif %}
+
+	{% if error_message %}
+		<div class="alert alert-danger">{{ error_message }}</div>
+	{% endif %}
+
+	{% if results %}
+		<p>
+			Fant {{ antall_resultater|intcomma }} innlogginger fra {{ unike_brukere|intcomma }} brukere.
+			{% if truncated %}<em>(Viser maks {{ max_results|intcomma }} nyeste treff.)</em>{% endif %}
+		</p>
+
+		{% if app_counts %}
+		<h5>Mest brukte apper</h5>
+		<table class="table table-sm table-bordered" style="max-width: 40rem;">
+		<thead>
+		<tr>
+			<th>App</th>
+			<th>Antall</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for app, count in app_counts %}
+		<tr>
+			<td>{{ app }}</td>
+			<td>{{ count|intcomma }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+		{% endif %}
+
+		<table class="table table-sm tablesorter excel device-code-logins">
+		<thead>
+		<tr>
+			<th>Tidspunkt</th>
+			<th>Bruker</th>
+			<th>IP-adresse</th>
+			<th>Land</th>
+			<th>App</th>
+			<th>Ressurs</th>
+			<th>Klient</th>
+			<th>Innloggingsrisiko</th>
+			<th>Brukerrisiko</th>
+			<th>Enhet</th>
+			<th>Compliant</th>
+			<th>Managed</th>
+			<th>CorrelationId</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for row in results %}
+		<tr{% if row.merk_interessant %} class="device-code-merket"{% endif %}>
+			<td data-text="{{ row.TimeGeneratedSort }}">{{ row.TimeGeneratedDisplay }}</td>
+			<td>{{ row.UserPrincipalName }}</td>
+			<td>{{ row.IPAddress }}</td>
+			<td>{{ row.CountryCode }}</td>
+			<td>{{ row.AppDisplayName }}</td>
+			<td>{{ row.Resource }}</td>
+			<td>{{ row.ClientAppUsed }}</td>
+			<td>{{ row.SignInRisk }}</td>
+			<td>{{ row.UserRisk }}</td>
+			<td>{{ row.DeviceName }}</td>
+			<td>{{ row.IsCompliant }}</td>
+			<td>{{ row.IsManaged }}</td>
+			<td>{{ row.CorrelationId }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	{% elif not error_message %}
+		<p>Ingen resultater.</p>
+	{% endif %}
+
+{% endblock hovedinnhold %}

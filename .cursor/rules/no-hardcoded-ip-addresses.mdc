@@ -1,0 +1,36 @@
+---
+description: Do not hardcode IP addresses or network ranges in application code
+alwaysApply: true
+---
+
+# No hardcoded IP addresses
+
+Do not put IP addresses, CIDR ranges, or network prefixes directly in Python, templates, or config committed to the repo.
+
+## Use environment variables instead
+
+- Read prefixes/ranges from `os.environ` (e.g. via `secrets_test.py` / deployment secrets).
+- Comma-separated lists are fine when multiple prefixes are needed.
+- Pass display text to templates from the view when users need to see what is configured—do not duplicate literals in HTML.
+
+## Example
+
+```python
+# ❌ BAD
+if ip_address.startswith("171.23."):
+    ...
+
+# ✅ GOOD
+for prefix in _internal_ip_prefixes_from_env():
+    if ip_address.startswith(prefix):
+        ...
+```
+
+```python
+os.environ['DEVICE_CODE_INTERNAL_IP_PREFIXES'] = "171.23."
+```
+
+## Exceptions
+
+- Third-party documentation, comments describing external services, or user-provided query examples in chat—not production code paths.
+- Tests may use obviously fake IPs (e.g. `192.0.2.1` from RFC 5737) when required.

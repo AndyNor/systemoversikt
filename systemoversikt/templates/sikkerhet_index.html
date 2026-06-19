@@ -17,6 +17,9 @@
 	{% url 'cmdb_adcs_index' as url_cmdb_adcs_index %}
 	<a href="{{url_cmdb_adcs_index}}" class="btn btn-sm btn-link {% if url_cmdb_adcs_index in request.path %}fremhev{% endif %}">ADCS certifikatmaler</a><br>
 
+	{% url 'sikkerhet_device_code_logins' as url_sikkerhet_device_code_logins %}
+	<a href="{{ url_sikkerhet_device_code_logins }}" class="btn btn-sm btn-link {% if url_sikkerhet_device_code_logins in request.path %}fremhev{% endif %}">Device code-innlogginger ⏱️</a><br>
+
 	{% url 'rapport_ukjente_identer' as url_rapport_ukjente_identer %}
 	<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Kontoer utenfor OK</a><br>
 

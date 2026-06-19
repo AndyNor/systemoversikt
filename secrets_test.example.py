@@ -30,6 +30,8 @@ def load_secrets():
 	os.environ['AZURE_ENTERPRISEAPP_CLIENT'] = ""
 	os.environ['AZURE_ENTERPRISEAPP_SECRET'] = ""
 
+	os.environ['DEVICE_CODE_INTERNAL_IP_PREFIXES'] = ""
+
 	os.environ['PROXY_HTTPS'] = ""
 
 	os.environ['AZURE_AUTH_SECRET'] = ""

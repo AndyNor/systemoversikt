@@ -141,6 +141,7 @@ urlpatterns = [
 	re_path(r'^sikkerhet/ad/spn/$', views.alle_spn, name='alle_spn'),
 	re_path(r'^sikkerhet/ad/ukjente_identer/$', views.rapport_ukjente_identer, name='rapport_ukjente_identer'),
 	re_path(r'^sikkerhet/ad/trustedfordelegation/$', views.rapport_trusted_delegation, name="rapport_trusted_delegation"),
+	re_path(r'^sikkerhet/device_code_logins/$', views.sikkerhet_device_code_logins, name='sikkerhet_device_code_logins'),
 
 
 
