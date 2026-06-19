@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-19: Pushover only for new SP with medium/high autofill risk – skip low.
 # 2026-06-19: elementer tracks service-principal count only – matches validate_import_volume input.
 # 2026-06-11: Skip Azure SP cleanup when Graph import volume is suspiciously low.
 from django.core.management.base import BaseCommand
@@ -468,17 +469,24 @@ class Command(BaseCommand):
 				sp.save()
 
 
-			# varsle om nye SP via pushover
+			# varsle om nye SP via pushover (kun middels/høy autorisasjonsnivå)
 			print("Klargjør melding om nye apper til Pushover")
 			message = "Nye SP i Azure med rettigheter:\n"
 			antall_nye = 0
 			limit = 10
 			for sp in AzureApplication.objects.filter(opprettet__gte=nye_sp_siden):
+				if sp.antall_permissions() == 0:
+					continue
+				risk_level = max(
+					(perm.risk_level() for perm in sp.requiredResourceAccess.all()),
+					default=0,
+				)
+				if risk_level < 2:
+					continue
 				if limit > 0:
-					if sp.antall_permissions() > 0:
-						message += f"{sp.displayName} autonivå {sp.risikonivaa_autofill()}\n"
-						antall_nye += 1
-						limit -= 1
+					message += f"{sp.displayName} autonivå {sp.risikonivaa_autofill()}\n"
+					antall_nye += 1
+					limit -= 1
 				else:
 					message += f"Det er flere..\n"
 					break
