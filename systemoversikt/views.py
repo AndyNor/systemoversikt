@@ -6393,8 +6393,16 @@ def _systembruk_bydeler_cell(bruk_set, forvalt_set, system_id, virksomhet_id):
 	return {"symbol": symbol, "cell_style": cell_style}
 
 
+def _programvare_bydeler_cell(bruk_set, programvare_id, virksomhet_id):
+	# 2026-06-19: Programvare has no organisatorisk forvaltning – only active use (B).
+	if (programvare_id, virksomhet_id) in bruk_set:
+		return {"symbol": "B", "cell_style": "background-color: #d1ecf1;"}
+	return {"symbol": "", "cell_style": ""}
+
+
 def systembruk_bydeler_oversikt(request):
 	# 2026-06-19: Cross-bydel matrix – same report for all users; no logged-in virksomhet column.
+	# 2026-06-19: Added programvare section – bruk only, separate table, shared vis filter.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -6403,6 +6411,11 @@ def systembruk_bydeler_oversikt(request):
 	bydel_ids = {b.pk for b in bydeler}
 
 	klassifisering = request.GET.get('klassifisering', '').strip()
+	vis = request.GET.get('vis', 'alle').strip()
+	if vis not in ('alle', 'systemer', 'programvare'):
+		vis = 'alle'
+	vis_systemer = vis in ('alle', 'systemer')
+	vis_programvare = vis in ('alle', 'programvare')
 
 	brukt_ids = set(SystemBruk.objects.filter(
 		brukergruppe__in=bydeler,
@@ -6452,16 +6465,48 @@ def systembruk_bydeler_oversikt(request):
 			'cells': cells,
 		})
 
+	prog_brukt_ids = set(ProgramvareBruk.objects.filter(
+		brukergruppe__in=bydeler,
+		ibruk=True,
+	).exclude(programvare__livslop_status__in=[6, 7]).values_list('programvare_id', flat=True))
+
+	programvarer = list(Programvare.objects.filter(
+		pk__in=prog_brukt_ids,
+	).prefetch_related('programvareleverandor').order_by(Lower('programvarenavn')))
+
+	prog_bruk_set = set(ProgramvareBruk.objects.filter(
+		programvare_id__in=prog_brukt_ids,
+		brukergruppe_id__in=bydel_ids,
+		ibruk=True,
+	).values_list('programvare_id', 'brukergruppe_id'))
+
+	programvare_rows = []
+	for programvare in programvarer:
+		cells = []
+		for col in columns:
+			cells.append(_programvare_bydeler_cell(
+				prog_bruk_set, programvare.pk, col['virksomhet'].pk,
+			))
+		programvare_rows.append({
+			'programvare': programvare,
+			'cells': cells,
+		})
+
 	from systemoversikt.models import SYSTEMEIERSKAPSMODELL_VALG
 
 	return render(request, 'systembruk_bydeler_oversikt.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'system_rows': system_rows,
+		'programvare_rows': programvare_rows,
 		'columns': columns,
 		'klassifisering': klassifisering,
+		'vis': vis,
+		'vis_systemer': vis_systemer,
+		'vis_programvare': vis_programvare,
 		'systemklassifisering_valg': SYSTEMEIERSKAPSMODELL_VALG,
 		'antall_systemer': len(system_rows),
+		'antall_programvare': len(programvare_rows),
 	})
 
 

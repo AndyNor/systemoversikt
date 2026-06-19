@@ -1,4 +1,5 @@
 {# 2026-06-19: Cross-bydel matrix – system use (B) and organisatorisk forvaltning (F) per bydel. #}
+{# 2026-06-19: Separate programvare section – bruk only (B), filterable via vis GET param. #}
 {% extends "system_index.html" %}
 
 {% block overskrift %}
@@ -8,21 +9,30 @@
 {% block hovedinnhold %}
 
 	<style>
-		.bydelsbruk-cell-b { background-color: #d4edda; }
-		.bydelsbruk-cell-f { background-color: #f8d7da; }
 		.bydelsbruk-legend-b { display: inline-block; padding: 0 0.4em; background-color: #d4edda; }
 		.bydelsbruk-legend-f { display: inline-block; padding: 0 0.4em; background-color: #f8d7da; }
+		.bydelsbruk-legend-prog-b { display: inline-block; padding: 0 0.4em; background-color: #d1ecf1; }
+		.bydelsbruk-programvare-section { border-left: 4px solid #17a2b8; padding-left: 0.75rem; margin-top: 2rem; }
+		.bydelsbruk-programvare-badge { font-size: 0.7em; vertical-align: middle; margin-right: 0.25rem; }
 	</style>
 
-	<p>Viser {{ antall_systemer }} systemer som minst én ordinær bydel bruker eller forvalter organisatorisk.</p>
-
 	<p>
-		<span class="bydelsbruk-legend-b"><b>B</b></span> = aktiv bruk &nbsp;
-		<span class="bydelsbruk-legend-f"><b>F</b></span> = organisatorisk forvaltning (systemeier eller systemforvalter) &nbsp;
-		<span class="bydelsbruk-legend-f"><b>BF</b></span> = begge deler
+		{% if vis == 'alle' %}
+			Viser {{ antall_systemer }} systemer og {{ antall_programvare }} programvarer som minst én ordinær bydel har registrert bruk av{% if antall_systemer %}, eller som en bydel forvalter organisatorisk (kun systemer){% endif %}.
+		{% elif vis == 'systemer' %}
+			Viser {{ antall_systemer }} systemer som minst én ordinær bydel bruker eller forvalter organisatorisk.
+		{% else %}
+			Viser {{ antall_programvare }} programvarer som minst én ordinær bydel bruker.
+		{% endif %}
 	</p>
 
 	<form method="get" class="form-inline" style="margin-bottom: 1rem;">
+		<label for="vis" class="mr-2">Vis:</label>
+		<select name="vis" id="vis" class="form-control form-control-sm mr-2">
+			<option value="alle" {% if vis == 'alle' %}selected{% endif %}>Systemer og programvare</option>
+			<option value="systemer" {% if vis == 'systemer' %}selected{% endif %}>Kun systemer</option>
+			<option value="programvare" {% if vis == 'programvare' %}selected{% endif %}>Kun programvare</option>
+		</select>
 		<label for="klassifisering" class="mr-2">Systemklassifisering:</label>
 		<select name="klassifisering" id="klassifisering" class="form-control form-control-sm mr-2">
 			<option value="">Alle</option>
@@ -35,6 +45,15 @@
 
 	<p>
 		<a class="btn btn-sm btn-link" href="{% url 'systembruk_bydeler_ekskludert' %}">Se gap-rapport for din virksomhet →</a>
+	</p>
+
+	{% if vis_systemer %}
+	<h6>Systemer</h6>
+
+	<p>
+		<span class="bydelsbruk-legend-b"><b>B</b></span> = aktiv bruk &nbsp;
+		<span class="bydelsbruk-legend-f"><b>F</b></span> = organisatorisk forvaltning (systemeier eller systemforvalter) &nbsp;
+		<span class="bydelsbruk-legend-f"><b>BF</b></span> = begge deler
 	</p>
 
 	<div style="overflow-x: auto;">
@@ -67,5 +86,60 @@
 		</tbody>
 	</table>
 	</div>
+	{% endif %}
+
+	{% if vis_programvare %}
+	<div class="bydelsbruk-programvare-section">
+		<h6>Programvare</h6>
+
+		<p>
+			<span class="bydelsbruk-legend-prog-b"><b>B</b></span> = aktiv bruk.
+			Programvare har ikke organisatorisk forvaltning på tvers av bydeler.
+		</p>
+
+		<div style="overflow-x: auto;">
+		<table class="tablesorter excel">
+			<thead>
+				<tr>
+					<th>Programvarenavn</th>
+					<th>Tilpassing</th>
+					<th>Leverandør</th>
+					{% for col in columns %}
+						<th title="{{ col.virksomhet.virksomhetsnavn }}">{{ col.virksomhet.virksomhetsforkortelse }}</th>
+					{% endfor %}
+				</tr>
+			</thead>
+			<tbody>
+				{% for row in programvare_rows %}
+				<tr class="bydelsbruk-row-programvare">
+					<td>
+						<h6>
+							<span class="badge badge-info bydelsbruk-programvare-badge">P</span>
+							{% url "programvaredetaljer" row.programvare.pk as url_programvaredetaljer %}
+							<a href="{{ url_programvaredetaljer }}">{{ row.programvare.programvarenavn }}</a>
+						</h6>
+					</td>
+					<td>{{ row.programvare.get_programvarekategori_display|default:"-" }}</td>
+					<td>
+						{% for lev in row.programvare.programvareleverandor.all %}
+							{{ lev }}{% if not forloop.last %}, {% endif %}
+						{% empty %}
+							-
+						{% endfor %}
+					</td>
+					{% for cell in row.cells %}
+						<td style="text-align: center; {{ cell.cell_style }}">{{ cell.symbol }}</td>
+					{% endfor %}
+				</tr>
+				{% empty %}
+				<tr>
+					<td colspan="{{ columns|length|add:3 }}">Ingen programvare matcher filteret.</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		</div>
+	</div>
+	{% endif %}
 
 {% endblock hovedinnhold %}
