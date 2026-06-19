@@ -1,5 +1,6 @@
 {# 2026-06-19: Cross-bydel matrix – system use (B) and organisatorisk forvaltning (F) per bydel. #}
 {# 2026-06-19: Separate programvare section – bruk only (B), filterable via vis GET param. #}
+{# 2026-06-19: S/P section badges and colored left borders – visual distinction between types. #}
 {% extends "system_index.html" %}
 
 {% block overskrift %}
@@ -12,8 +13,11 @@
 		.bydelsbruk-legend-b { display: inline-block; padding: 0 0.4em; background-color: #d4edda; }
 		.bydelsbruk-legend-f { display: inline-block; padding: 0 0.4em; background-color: #f8d7da; }
 		.bydelsbruk-legend-prog-b { display: inline-block; padding: 0 0.4em; background-color: #d1ecf1; }
+		.bydelsbruk-system-section { border-left: 4px solid #dc3545; padding-left: 0.75rem; }
 		.bydelsbruk-programvare-section { border-left: 4px solid #17a2b8; padding-left: 0.75rem; margin-top: 2rem; }
-		.bydelsbruk-programvare-badge { font-size: 0.7em; vertical-align: middle; margin-right: 0.25rem; }
+		.bydelsbruk-type-badge { font-size: 0.7em; vertical-align: middle; margin-right: 0.25rem; }
+		.bydelsbruk-row-system td:first-child h6,
+		.bydelsbruk-row-programvare td:first-child h6 { display: inline; margin-bottom: 0; }
 	</style>
 
 	<p>
@@ -48,43 +52,48 @@
 	</p>
 
 	{% if vis_systemer %}
-	<h6>Systemer</h6>
+	<div class="bydelsbruk-system-section">
+		<h6>Systemer</h6>
 
-	<p>
-		<span class="bydelsbruk-legend-b"><b>B</b></span> = aktiv bruk &nbsp;
-		<span class="bydelsbruk-legend-f"><b>F</b></span> = organisatorisk forvaltning (systemeier eller systemforvalter) &nbsp;
-		<span class="bydelsbruk-legend-f"><b>BF</b></span> = begge deler
-	</p>
+		<p>
+			<span class="bydelsbruk-legend-b"><b>B</b></span> = aktiv bruk &nbsp;
+			<span class="bydelsbruk-legend-f"><b>F</b></span> = organisatorisk forvaltning (systemeier eller systemforvalter) &nbsp;
+			<span class="bydelsbruk-legend-f"><b>BF</b></span> = begge deler
+		</p>
 
-	<div style="overflow-x: auto;">
-	<table class="tablesorter excel">
-		<thead>
-			<tr>
-				<th>Systemnavn</th>
-				<th>Systemklassifisering</th>
-				<th>Sentral forvalter</th>
-				{% for col in columns %}
-					<th title="{{ col.virksomhet.virksomhetsnavn }}">{{ col.virksomhet.virksomhetsforkortelse }}</th>
+		<div style="overflow-x: auto;">
+		<table class="tablesorter excel">
+			<thead>
+				<tr>
+					<th>Systemnavn</th>
+					<th>Systemklassifisering</th>
+					<th>Sentral forvalter</th>
+					{% for col in columns %}
+						<th title="{{ col.virksomhet.virksomhetsnavn }}">{{ col.virksomhet.virksomhetsforkortelse }}</th>
+					{% endfor %}
+				</tr>
+			</thead>
+			<tbody>
+				{% for row in system_rows %}
+				<tr class="bydelsbruk-row-system">
+					<td>
+						<span class="badge badge-danger bydelsbruk-type-badge">S</span>
+						{% include 'system_include_vis.html' with system=row.system %}
+					</td>
+					<td>{{ row.system.get_systemeierskapsmodell_display|default:"-" }}</td>
+					<td>{{ row.system.systemforvalter.virksomhetsforkortelse|default:"-" }}</td>
+					{% for cell in row.cells %}
+						<td style="text-align: center; {{ cell.cell_style }}">{{ cell.symbol }}</td>
+					{% endfor %}
+				</tr>
+				{% empty %}
+				<tr>
+					<td colspan="{{ columns|length|add:3 }}">Ingen systemer matcher filteret.</td>
+				</tr>
 				{% endfor %}
-			</tr>
-		</thead>
-		<tbody>
-			{% for row in system_rows %}
-			<tr>
-				<td><h6>{% include 'system_include_vis.html' with system=row.system %}</h6></td>
-				<td>{{ row.system.get_systemeierskapsmodell_display|default:"-" }}</td>
-				<td>{{ row.system.systemforvalter.virksomhetsforkortelse|default:"-" }}</td>
-				{% for cell in row.cells %}
-					<td style="text-align: center; {{ cell.cell_style }}">{{ cell.symbol }}</td>
-				{% endfor %}
-			</tr>
-			{% empty %}
-			<tr>
-				<td colspan="{{ columns|length|add:3 }}">Ingen systemer matcher filteret.</td>
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+			</tbody>
+		</table>
+		</div>
 	</div>
 	{% endif %}
 
@@ -113,11 +122,9 @@
 				{% for row in programvare_rows %}
 				<tr class="bydelsbruk-row-programvare">
 					<td>
-						<h6>
-							<span class="badge badge-info bydelsbruk-programvare-badge">P</span>
-							{% url "programvaredetaljer" row.programvare.pk as url_programvaredetaljer %}
-							<a href="{{ url_programvaredetaljer }}">{{ row.programvare.programvarenavn }}</a>
-						</h6>
+						<span class="badge badge-info bydelsbruk-type-badge">P</span>
+						{% url "programvaredetaljer" row.programvare.pk as url_programvaredetaljer %}
+						<h6><a href="{{ url_programvaredetaljer }}">{{ row.programvare.programvarenavn }}</a></h6>
 					</td>
 					<td>{{ row.programvare.get_programvarekategori_display|default:"-" }}</td>
 					<td>
