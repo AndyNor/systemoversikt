@@ -9,6 +9,12 @@
 		table.device-code-logins tr.device-code-merket:hover > td {
 			background-color: #ff9999 !important;
 		}
+		table.device-code-history tr.device-code-merket > td {
+			background-color: #ffb3b3 !important;
+		}
+		table.device-code-history tr.device-code-merket:hover > td {
+			background-color: #ff9999 !important;
+		}
 	</style>
 {% endblock ekstrastyle %}
 
@@ -22,12 +28,50 @@
 
 	<p>Rader med lys rød bakgrunn er innlogginger utenfor standardverktøy (Azure CLI, Graph PowerShell m.m.) og interne DIG-apper{% if internal_ip_prefixes %}, samt IP-adresser med prefiks {{ internal_ip_prefixes|join:", " }}{% endif %}.</p>
 
-	{% if truncated %}
-		<p><em>Viser maks {{ max_results|intcomma }} nyeste treff.</em></p>
-	{% endif %}
-
 	{% if error_message %}
 		<div class="alert alert-danger">{{ error_message }}</div>
+	{% endif %}
+
+	<h5>Historikk (siste {{ history_dager }} dager)</h5>
+	<p>Aggregert fra nattlig synkronisering mot Graph. Sanntidsdata fra Graph vises lenger ned på siden.</p>
+	{% if integrasjon and integrasjon.dato_sist_oppdatert %}
+		<p><em>Sist synkronisert: {{ integrasjon.dato_sist_oppdatert|date:"d.m.Y H:i" }}.</em></p>
+	{% endif %}
+
+	{% if history_rows %}
+		<p>Fant {{ history_rows|length|intcomma }} brukere med device code-innlogginger i perioden.</p>
+		<table class="table table-sm tablesorter excel device-code-history">
+		<thead>
+		<tr>
+			<th>Bruker</th>
+			<th>IP-adresser</th>
+			<th>Apper</th>
+			<th>Første sett</th>
+			<th>Sist sett</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for row in history_rows %}
+		<tr{% if row.merk_interessant %} class="device-code-merket"{% endif %}>
+			<td>{{ row.user_principal_name }}</td>
+			<td>{{ row.ip_addresses }}</td>
+			<td>{{ row.apps }}</td>
+			<td data-text="{{ row.first_seen_sort }}">{{ row.first_seen_display }}</td>
+			<td data-text="{{ row.last_seen_sort }}">{{ row.last_seen_display }}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+		</table>
+	{% else %}
+		<p>Ingen historikk ennå. Kjør <code>device_code_signin_sync</code> for å fylle databasen.</p>
+	{% endif %}
+
+	<hr>
+
+	<h5>Sanntid (siste {{ dager }} dager)</h5>
+
+	{% if truncated %}
+		<p><em>Viser maks {{ max_results|intcomma }} nyeste treff.</em></p>
 	{% endif %}
 
 	{% if results %}

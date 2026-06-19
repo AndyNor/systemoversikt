@@ -10207,138 +10207,26 @@ def cmdb_installert_programvare(request):
 	})
 
 
-_DEVICE_CODE_EXCLUDED_APPS = frozenset({
-	"Microsoft Graph Command Line Tools",
-	"Microsoft Exchange REST API Based Powershell",
-	"Microsoft Azure CLI",
-	"MS Teams Powershell Cmdlets",
-})
-_DEVICE_CODE_SIGNIN_SELECT = (
-	"createdDateTime,userPrincipalName,ipAddress,location,appDisplayName,"
-	"resourceDisplayName,clientAppUsed,correlationId,riskLevelDuringSignIn,"
-	"riskLevelAggregated,deviceDetail"
-)
-
-
-def _device_code_internal_ip_prefixes():
-	# 2026-06-19: IP prefixes from env – do not hardcode tenant network ranges in code.
-	raw = os.environ.get('DEVICE_CODE_INTERNAL_IP_PREFIXES', '')
-	return [prefix.strip() for prefix in raw.split(',') if prefix.strip()]
-
-
-def _device_code_signin_is_noteworthy(sign_in):
-	"""True for sign-ins outside routine tooling, DIG apps and internal IP range."""
-	ip_address = sign_in.get("ipAddress") or ""
-	for prefix in _device_code_internal_ip_prefixes():
-		if ip_address.startswith(prefix):
-			return False
-	app_display_name = sign_in.get("appDisplayName") or ""
-	if app_display_name.startswith("DIG"):
-		return False
-	if app_display_name in _DEVICE_CODE_EXCLUDED_APPS:
-		return False
-	return True
-
-
-def _device_code_signin_to_row(sign_in):
-	device = sign_in.get("deviceDetail") or {}
-	location = sign_in.get("location") or {}
-	created = sign_in.get("createdDateTime")
-	row = {
-		"TimeGenerated": created,
-		"UserPrincipalName": sign_in.get("userPrincipalName"),
-		"IPAddress": sign_in.get("ipAddress"),
-		"CountryCode": location.get("countryOrRegion"),
-		"AppDisplayName": sign_in.get("appDisplayName"),
-		"Resource": sign_in.get("resourceDisplayName"),
-		"ClientAppUsed": sign_in.get("clientAppUsed"),
-		"CorrelationId": sign_in.get("correlationId"),
-		"SignInRisk": sign_in.get("riskLevelDuringSignIn"),
-		"UserRisk": sign_in.get("riskLevelAggregated"),
-		"DeviceName": device.get("displayName"),
-		"DeviceId": device.get("deviceId"),
-		"IsCompliant": device.get("isCompliant"),
-		"IsManaged": device.get("isManaged"),
-		"merk_interessant": _device_code_signin_is_noteworthy(sign_in),
-	}
-	if created:
-		try:
-			dt = datetime.datetime.fromisoformat(str(created).replace("Z", "+00:00"))
-			row["TimeGeneratedDisplay"] = dt.strftime("%d.%m.%Y %H:%M")
-			row["TimeGeneratedSort"] = dt.strftime("%Y-%m-%d %H:%M")
-		except (ValueError, AttributeError):
-			row["TimeGeneratedDisplay"] = created
-			row["TimeGeneratedSort"] = created
-	return row
-
-
-def _fetch_device_code_signins_from_graph(dager=30, page_size=100, max_results=200):
-	# 2026-06-19: Minimal OData filter + $select; noteworthy rows flagged in template.
-	import requests as api_requests
-	from azure.identity import ClientSecretCredential
-	from urllib.parse import quote
-
-	results = []
-	truncated = False
-	error_message = None
-
-	credential = ClientSecretCredential(
-		tenant_id=os.environ['AZURE_TENANT_ID'],
-		client_id=os.environ['AZURE_ENTERPRISEAPP_CLIENT'],
-		client_secret=os.environ['AZURE_ENTERPRISEAPP_SECRET'],
-	)
-	token = credential.get_token("https://graph.microsoft.com/.default").token
-	headers = {"Authorization": f"Bearer {token}"}
-
-	since = (datetime.datetime.utcnow() - datetime.timedelta(days=dager)).strftime("%Y-%m-%dT%H:%M:%SZ")
-	filter_expr = (
-		f"authenticationProtocol eq 'deviceCode' and createdDateTime ge {since} "
-		f"and status/errorCode eq 0"
-	)
-	url = (
-		"https://graph.microsoft.com/beta/auditLogs/signIns"
-		f"?$filter={quote(filter_expr)}"
-		f"&$select={quote(_DEVICE_CODE_SIGNIN_SELECT)}"
-		f"&$top={page_size}"
-	)
-
-	while url and len(results) < max_results:
-		response = api_requests.get(url, headers=headers, timeout=120)
-		if response.status_code == 429:
-			retry_after = int(response.headers.get("Retry-After", 30))
-			time.sleep(retry_after)
-			continue
-		if response.status_code != 200:
-			error_message = f"Microsoft Graph-kall feilet med HTTP {response.status_code}: {response.text[:500]}"
-			break
-
-		data = response.json()
-		for sign_in in data.get("value", []):
-			results.append(_device_code_signin_to_row(sign_in))
-			if len(results) >= max_results:
-				break
-
-		next_link = data.get("@odata.nextLink")
-		if len(results) >= max_results and next_link:
-			truncated = True
-		url = next_link if len(results) < max_results else None
-
-	if not error_message:
-		results.sort(key=lambda row: row.get("TimeGeneratedSort") or "", reverse=True)
-
-	return results, truncated, error_message
-
-
 def sikkerhet_device_code_logins(request):
 	# 2026-06-19: Device code sign-ins via Microsoft Graph auditLogs/signIns (AuditLog.Read.All).
-	# 2026-06-19: Server-side deviceCode filter on Graph beta; noteworthy rows highlighted in template.
+	# 2026-06-19: History summary from DeviceCodeSignInCombo (nightly sync).
+	from systemoversikt.device_code_signins import (
+		DEVICE_CODE_HISTORY_DAYS,
+		build_device_code_history_summary,
+		device_code_internal_ip_prefixes,
+		fetch_device_code_signins_from_graph,
+		signin_to_display_row,
+	)
+
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	dager = 30
 	try:
-		results, truncated, error_message = _fetch_device_code_signins_from_graph(dager=dager)
+		sign_ins, truncated, error_message = fetch_device_code_signins_from_graph(dager=dager)
+		results = [signin_to_display_row(sign_in) for sign_in in sign_ins]
+		results.sort(key=lambda row: row.get("TimeGeneratedSort") or "", reverse=True)
 	except Exception as e:
 		results = []
 		truncated = False
@@ -10347,7 +10235,16 @@ def sikkerhet_device_code_logins(request):
 	unike_brukere = len({row.get("UserPrincipalName") for row in results if row.get("UserPrincipalName")})
 	app_counter = Counter(row.get("AppDisplayName") or "(ukjent)" for row in results)
 	app_counts = app_counter.most_common(15)
-	internal_ip_prefixes = _device_code_internal_ip_prefixes()
+	internal_ip_prefixes = device_code_internal_ip_prefixes()
+
+	since_history = timezone.now() - datetime.timedelta(days=DEVICE_CODE_HISTORY_DAYS)
+	history_combos = DeviceCodeSignInCombo.objects.filter(last_seen__gte=since_history)
+	history_rows = build_device_code_history_summary(history_combos)
+
+	try:
+		integrasjon = IntegrasjonKonfigurasjon.objects.get(kodeord="device_code_signins")
+	except IntegrasjonKonfigurasjon.DoesNotExist:
+		integrasjon = None
 
 	return render(request, 'rapport_device_code_logins.html', {
 		'request': request,
@@ -10361,6 +10258,9 @@ def sikkerhet_device_code_logins(request):
 		'truncated': truncated,
 		'max_results': 200,
 		'internal_ip_prefixes': internal_ip_prefixes,
+		'history_rows': history_rows,
+		'history_dager': DEVICE_CODE_HISTORY_DAYS,
+		'integrasjon': integrasjon,
 	})
 
 

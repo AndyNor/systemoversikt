@@ -8643,3 +8643,23 @@ class AzureDeviceVulnerability(models.Model):
 			models.Index(fields=["product_vendor"]),
 			models.Index(fields=["device"]),
 		]
+
+
+class DeviceCodeSignInCombo(models.Model):
+	# 2026-06-19: Unique user+IP+app device code combos for nightly sync and 3-month history.
+	user_principal_name = models.CharField(max_length=255, db_index=True)
+	ip_address = models.CharField(max_length=45, db_index=True)
+	app_display_name = models.CharField(max_length=255, db_index=True)
+	is_noteworthy = models.BooleanField(default=False)
+	first_seen = models.DateTimeField()
+	last_seen = models.DateTimeField()
+
+	def __str__(self):
+		return f"{self.user_principal_name} / {self.ip_address} / {self.app_display_name}"
+
+	class Meta:
+		verbose_name_plural = "Device code: kombinasjoner"
+		unique_together = ("user_principal_name", "ip_address", "app_display_name")
+		indexes = [
+			models.Index(fields=["last_seen"]),
+		]
