@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-11: Abort BSS import when SharePoint file volume is suspiciously low.
 from django.core.management.base import BaseCommand
 from systemoversikt.views import push_pushover
 from systemoversikt.models import *
+from systemoversikt.import_cleanup_guard import ImportCleanupAborted, validate_import_volume
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
@@ -95,6 +98,8 @@ class Command(BaseCommand):
 
 			@transaction.atomic
 			def import_business_services():
+				previous_import_count = int_config.elementer
+				existing_bss_count = CMDBRef.objects.count()
 
 				print(f"Åpner filen..")
 
@@ -105,6 +110,14 @@ class Command(BaseCommand):
 				dfRaw = pd.read_excel(destination_file)
 				dfRaw = dfRaw.replace(np.nan, '', regex=True)
 				data = dfRaw.to_dict('records')
+				antall_records = len(data)
+
+				validate_import_volume(
+					antall_records,
+					label="CMDB BSS",
+					existing_count=existing_bss_count,
+					previous_count=previous_import_count,
+				)
 
 				# Gå igjennom alle eksisterende business services, dersom ikke i ny fil, merk med "utgått"
 				alle_eksisterende_cmdbref = list(CMDBRef.objects.all()) #bss
@@ -115,8 +128,6 @@ class Command(BaseCommand):
 				antall_deaktiverte_bs = 0
 				antall_nye_bss = 0
 				antall_slettede_bss = 0
-
-				antall_records = len(data)
 
 				for record in data:
 
@@ -222,6 +233,15 @@ class Command(BaseCommand):
 			int_config.helsestatus = "Vellykket"
 			int_config.save()
 
+
+		except ImportCleanupAborted as e:
+			logg_message = str(e)
+			ApplicationLog.objects.create(event_type="Import cleanup avbrutt", message=logg_message)
+			print(logg_message)
+			int_config.helsestatus = f"Avbrutt: {logg_message}"
+			int_config.sist_status = logg_message
+			int_config.save()
+			push_pushover(logg_message)
 
 		except Exception as e:
 			logg_message = f"{SCRIPT_NAVN} feilet med meldingen {e}"

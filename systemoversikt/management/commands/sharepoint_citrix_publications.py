@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-11: Skip Citrix publication cleanup when import volume is suspiciously low.
 from django.core.management.base import BaseCommand
 from systemoversikt.models import *
 from django.db import transaction
@@ -9,6 +11,11 @@ from datetime import datetime
 import traceback
 from systemoversikt.views import push_pushover
 from systemoversikt.views import sharepoint_get_file
+from systemoversikt.import_cleanup_guard import (
+	ImportCleanupAborted,
+	IMPORT_CLEANUP_MIN_AGE_HOURS,
+	validate_import_volume,
+)
 
 class Command(BaseCommand):
 
@@ -61,6 +68,9 @@ class Command(BaseCommand):
 
 
 		try:
+			previous_import_count = int_config.elementer
+			existing_publication_count = CitrixPublication.objects.count()
+
 			def hent_fil(filnavn, data_beskrivelse):
 				"""Henter én fil fra SharePoint via Graph. Ved feil: tydelig kontekst for logger og helsestatus."""
 				try:
@@ -341,14 +351,35 @@ class Command(BaseCommand):
 
 			# slette gamle
 			print("Sletter gamle data.")
-			#CitrixPublication.objects.all().delete() # ved behov
-			for_gammelt = timezone.now() - timedelta(hours=6) # 6 timer gammelt
-			deaktive = CitrixPublication.objects.filter(sist_oppdatert__lte=for_gammelt)
-			print(f"Sletter {len(deaktive)} gamle publikasjoner.")
-			logg_entry_message += f"Sletter {len(deaktive)} gamle publikasjoner."
-			for pub in deaktive:
-				print(f"** Slettet: {pub.display_name}")
-				pub.delete()
+			cleanup_skipped = False
+			cleanup_skip_reason = ""
+			try:
+				validate_import_volume(
+					Command.ANTALL_PUBLISERINGER,
+					label="Citrix-publikasjoner",
+					existing_count=existing_publication_count,
+					previous_count=previous_import_count,
+				)
+			except ImportCleanupAborted as e:
+				cleanup_skipped = True
+				cleanup_skip_reason = str(e)
+				print(cleanup_skip_reason)
+				ApplicationLog.objects.create(
+					event_type="Import cleanup avbrutt",
+					message=cleanup_skip_reason,
+				)
+				push_pushover(cleanup_skip_reason)
+			else:
+				#CitrixPublication.objects.all().delete() # ved behov
+				for_gammelt = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
+				deaktive = CitrixPublication.objects.filter(sist_oppdatert__lte=for_gammelt)
+				print(f"Sletter {len(deaktive)} gamle publikasjoner.")
+				logg_entry_message += f"Sletter {len(deaktive)} gamle publikasjoner."
+				for pub in deaktive:
+					print(f"** Slettet: {pub.display_name}")
+					pub.delete()
+			if cleanup_skipped:
+				logg_entry_message += f" Cleanup avbrutt: {cleanup_skip_reason}"
 
 
 			# laste inn DesktopGroups til servere
@@ -367,7 +398,7 @@ class Command(BaseCommand):
 			int_config.elementer = int(Command.ANTALL_PUBLISERINGER)
 			runtime_t1 = time.time()
 			int_config.runtime = int(runtime_t1 - runtime_t0)
-			int_config.helsestatus = "Vellykket"
+			int_config.helsestatus = "Advarsel: cleanup avbrutt" if cleanup_skipped else "Vellykket"
 			int_config.save()
 
 

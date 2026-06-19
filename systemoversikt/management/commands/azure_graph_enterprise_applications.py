@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-19: elementer tracks service-principal count only – matches validate_import_volume input.
+# 2026-06-11: Skip Azure SP cleanup when Graph import volume is suspiciously low.
 from django.core.management.base import BaseCommand
 import os, time
 import simplejson as json
@@ -10,6 +13,11 @@ from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
 from systemoversikt.views import push_pushover
+from systemoversikt.import_cleanup_guard import (
+	ImportCleanupAborted,
+	IMPORT_CLEANUP_MIN_AGE_HOURS,
+	validate_import_volume,
+)
 
 class Command(BaseCommand):
 
@@ -195,6 +203,10 @@ class Command(BaseCommand):
 
 
 		def load_azure_apps():
+			previous_import_count = int_config.elementer
+			existing_application_count = AzureApplication.objects.count()
+			cleanup_skipped = False
+			cleanup_skip_reason = ""
 			client = GraphClient(credential=client_credential, api_version=api_version)
 
 			def load_next_response_servicePrincipals(nextLink):
@@ -423,11 +435,29 @@ class Command(BaseCommand):
 
 			# sette applikasjoner som ikke har vært sett til deaktivt
 			print("\nSletter applikasjoner som ikke har blitt oppdatert denne runden")
-			tidligere = timezone.now() - timedelta(hours=6) # 6 timer gammelt
-			deaktive_apper = AzureApplication.objects.filter(sist_oppdatert__lte=tidligere)
-			for a in deaktive_apper:
-				a.delete()
-				print("Slettet %s" % a)
+			cleanup_cutoff = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
+			nye_sp_siden = timezone.now() - timedelta(hours=6)  # varsling om nylig opprettede SP
+			try:
+				validate_import_volume(
+					APPLICATIONS_FOUND_ALL,
+					label="Azure service principals",
+					existing_count=existing_application_count,
+					previous_count=previous_import_count,
+				)
+			except ImportCleanupAborted as e:
+				cleanup_skipped = True
+				cleanup_skip_reason = str(e)
+				print(cleanup_skip_reason)
+				ApplicationLog.objects.create(
+					event_type="Import cleanup avbrutt",
+					message=cleanup_skip_reason,
+				)
+				push_pushover(cleanup_skip_reason)
+			else:
+				deaktive_apper = AzureApplication.objects.filter(sist_oppdatert__lte=cleanup_cutoff)
+				for a in deaktive_apper:
+					a.delete()
+					print("Slettet %s" % a)
 
 			# telle opp hvor mange graph-tilganger hver SP har
 			print("Teller opp og lagrer hvor mange graph-rettigheter hver SP har")
@@ -443,7 +473,7 @@ class Command(BaseCommand):
 			message = "Nye SP i Azure med rettigheter:\n"
 			antall_nye = 0
 			limit = 10
-			for sp in AzureApplication.objects.filter(opprettet__gte=tidligere):
+			for sp in AzureApplication.objects.filter(opprettet__gte=nye_sp_siden):
 				if limit > 0:
 					if sp.antall_permissions() > 0:
 						message += f"{sp.displayName} autonivå {sp.risikonivaa_autofill()}\n"
@@ -462,6 +492,8 @@ class Command(BaseCommand):
 
 			# logge og fullføre
 			logg_message = f"\nFant {APPLICATIONS_FOUND_ALL} applikasjoner under /servicePrincipals og {APPLICATIONS_FOUND} under /applications. Utførte {Command.ANTALL_GRAPH_KALL} kall. Det er {rettigheter_totalt} rettigheter totalt."
+			if cleanup_skipped:
+				logg_message += f" Cleanup avbrutt: {cleanup_skip_reason}"
 			logg_entry = ApplicationLog.objects.create(
 					event_type=LOG_EVENT_TYPE,
 					message=logg_message,
@@ -475,8 +507,8 @@ class Command(BaseCommand):
 			runtime_t1 = time.time()
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
 			int_config.runtime = logg_total_runtime
-			int_config.elementer = int(APPLICATIONS_FOUND_ALL) +  int(APPLICATIONS_FOUND)
-			int_config.helsestatus = "Vellykket"
+			int_config.elementer = int(APPLICATIONS_FOUND_ALL)
+			int_config.helsestatus = "Advarsel: cleanup avbrutt" if cleanup_skipped else "Vellykket"
 			int_config.save()
 
 		# eksekver

@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-11: Skip AD group cleanup when LDAP import volume is suspiciously low.
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from datetime import timedelta, datetime
@@ -6,6 +8,11 @@ from django.utils import timezone
 from systemoversikt.models import *
 from systemoversikt.views import push_pushover
 from systemoversikt.models import ApplicationLog, ADgroup
+from systemoversikt.import_cleanup_guard import (
+	ImportCleanupAborted,
+	IMPORT_CLEANUP_MIN_AGE_HOURS,
+	validate_import_volume,
+)
 import ldap, os, sys, time, json
 from ldap.controls import SimplePagedResultsControl
 from distutils.version import LooseVersion
@@ -48,6 +55,7 @@ class Command(BaseCommand):
 
 		try:
 			ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message="starter..")
+			previous_import_count = int_config.elementer
 
 			BASEDN = 'DC=oslofelles,DC=oslo,DC=kommune,DC=no'
 			SEARCHFILTER = '(objectclass=group)'
@@ -296,29 +304,52 @@ class Command(BaseCommand):
 			l.unbind()
 
 			# Remove groups not seen in this run
-			@transaction.atomic
-			def remove_unseen_groups():
-				old_groups = ADgroup.objects.filter(sist_oppdatert__lte=timezone.now() - timedelta(hours=12))
-				group_names = list(old_groups.values_list('common_name', flat=True))
-				count = old_groups.count()
-				print(f"Sletter {count} utgåtte grupper")
-				old_groups.delete()
-				log_entry_message = ', '.join([str(n) for n in group_names[:100]])
-				if count > 100:
-					log_entry_message += f" ... og {count - 100} til"
-				ApplicationLog.objects.create(
-					event_type="AD-grupper slettet",
-					message=log_entry_message,
+			cleanup_skipped = False
+			cleanup_skip_reason = ""
+			try:
+				validate_import_volume(
+					objects_returned,
+					label="AD-grupper",
+					existing_count=len(existing_groups),
+					previous_count=previous_import_count,
 				)
-				report_data["removed"] = count
-				print(log_entry_message)
+			except ImportCleanupAborted as e:
+				cleanup_skipped = True
+				cleanup_skip_reason = str(e)
+				print(cleanup_skip_reason)
+				ApplicationLog.objects.create(
+					event_type="Import cleanup avbrutt",
+					message=cleanup_skip_reason,
+				)
+				push_pushover(cleanup_skip_reason)
+			else:
+				@transaction.atomic
+				def remove_unseen_groups():
+					old_groups = ADgroup.objects.filter(
+						sist_oppdatert__lte=timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
+					)
+					group_names = list(old_groups.values_list('common_name', flat=True))
+					count = old_groups.count()
+					print(f"Sletter {count} utgåtte grupper")
+					old_groups.delete()
+					log_entry_message = ', '.join([str(n) for n in group_names[:100]])
+					if count > 100:
+						log_entry_message += f" ... og {count - 100} til"
+					ApplicationLog.objects.create(
+						event_type="AD-grupper slettet",
+						message=log_entry_message,
+					)
+					report_data["removed"] = count
+					print(log_entry_message)
 
-			remove_unseen_groups()
+				remove_unseen_groups()
 
 			runtime_t1 = time.time()
 			logg_total_runtime = int(runtime_t1 - runtime_t0)
 
 			log_entry_message = f"Det tok {logg_total_runtime} sekunder. {objects_returned} treff. {report_data['created']} nye, {report_data['modified']} endrede, {report_data['removed']} slettet."
+			if cleanup_skipped:
+				log_entry_message += f" Cleanup avbrutt: {cleanup_skip_reason}"
 			ApplicationLog.objects.create(
 				event_type=LOG_EVENT_TYPE,
 				message=log_entry_message,
@@ -329,7 +360,7 @@ class Command(BaseCommand):
 			int_config.sist_status = log_entry_message
 			int_config.runtime = logg_total_runtime
 			int_config.elementer = objects_returned
-			int_config.helsestatus = "Vellykket"
+			int_config.helsestatus = "Advarsel: cleanup avbrutt" if cleanup_skipped else "Vellykket"
 			int_config.save()
 
 
