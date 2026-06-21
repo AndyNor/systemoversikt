@@ -19,7 +19,6 @@
 		{% endif %}
 		<th>Systemnavn</th>
 		<th>Brukes av</th>
-		<th>Antall behandlinger</th>
 		<th>Systemkategori</th>
 		<th>Systemtype</th>
 		<th>Systemeier</th>
@@ -50,9 +49,6 @@
 		</td>
 
 		<td>{{ item.systembruk_system.count }}</td>
-
-		<td>{{ item.behandling_systemer.count }}</td>
-
 
 		<td>
 			{% for kategori in item.systemkategorier.all %}

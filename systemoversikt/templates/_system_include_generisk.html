@@ -48,11 +48,6 @@
 		<a href="{{ url_systemdetaljer }}">{{ item }}</a>
 	</td>
 
-
-	{% comment %}
-	<td>{{ item.behandling_systemer.count }}</td>
-	{% endcomment %}
-
 	<td>
 		{% for kategori in item.systemkategorier.all %}
 			{% url 'systemkategori' kategori.pk as url_systemkategorier %}

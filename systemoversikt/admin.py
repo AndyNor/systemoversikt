@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related admin registrations.
 from __future__ import unicode_literals
 from django.contrib import admin
 from django.contrib.admin.widgets import FilteredSelectMultiple
@@ -714,7 +716,6 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 		('Avvikles', {
 			'classes': ('collapse',),
 			'fields': (
-				'del_behandlinger',
 				'avtaletype',
 				'avtalestatus',
 				'kostnadersystem',
@@ -791,173 +792,6 @@ class LeverandorAdmin(SimpleHistoryAdmin):
 
 	def get_ordering(self, request):
 		return ['leverandor_navn']
-
-
-@admin.register(BehandlingInformering)
-class BehandlingInformeringAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('navn', 'beskrivelse')
-	search_fields = ('navn', 'beskrivelse')
-
-
-
-@admin.register(BehandlingerPersonopplysninger)
-class BehandlingerPersonopplysningerAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('behandlingsansvarlig', 'internt_ansvarlig', 'funksjonsomraade', 'behandlingen')
-	search_fields = ('behandlingen', 'internt_ansvarlig', 'funksjonsomraade',)
-	list_filter = ('behandlingsgrunnlag_valg', 'den_registrerte', 'kategorier_personopplysninger', 'behandlingsansvarlig')
-	filter_horizontal = ('informering_til_registrerte_valg', 'relasjon_registrerte', 'den_registrerte_hovedkateogi', 'virksomhet_blacklist', 'programvarer', 'systemer', 'navn_databehandler', 'kategorier_personopplysninger', 'den_registrerte', 'behandlingsgrunnlag_valg')
-	autocomplete_fields = ('behandlingsansvarlig',)
-
-	def response_add(self, request, obj, post_url_continue=None):
-		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.pk}))
-		return super().response_add(request, obj, post_url_continue)
-
-	def response_change(self, request, obj):
-		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.pk}))
-		return super().response_change(request, obj)
-
-	fieldsets = (
-		('Organisatorisk', {
-			'classes': ('',),
-			'fields': (
-				'behandlingsansvarlig',
-				'behandlingen',
-				'fellesbehandling',
-				'informasjon_kvalitetssikret',
-				'ekstern_DPIA_url',
-			),
-		}),
-		('Obligatorisk registrering', {
-			'classes': ('',),
-			'fields': (
-				'systemer',
-				'den_registrerte',
-				'kategorier_personopplysninger',
-				'personopplysninger_utdyping',
-				'formaal',
-				'planlagte_slettefrister',
-				('utlevering_ekstern_myndighet', 'utlevering_ekstern_myndighet_utdyping'),
-				('utlevering_utenfor_EU', 'garantier_overforing'),
-				# Dersom det er mulig, en generell beskrivelse av de tekniske og organisatoriske sikkerhetstiltakene nevnt i artikkel 32 nr. 1.
-			),
-		}),
-		('Ekstraopplysninger', {
-			'classes': ('collapse',),
-			'fields': (
-				'informering_til_registrerte_valg',
-				'krav_slettefrister',
-				'den_registrerte_detaljer',
-				'oppbevaringsplikt',
-				'opplysningskilde',
-				'behandlingsgrunnlag_valg',
-				'behandlingsgrunnlag_utdyping',
-				'behandlingsgrunnlag_saerlige_kategorier',
-				'navn_databehandler',
-				'databehandleravtale_status',
-				'databehandleravtale_status_boolean',
-				'tjenesteleveranse_land',
-				'sikre_dataminimalisering',
-				'begrensning_tilgang',
-				'informering_til_registrerte',
-				'innsyn_egenkontroll',
-				'rette_opplysninger',
-				'programvarer',
-			),
-		}),
-		('Ekstraopplysninger dersom DPIA er nødvendig', {
-			'classes': ('collapse',),
-			'fields': (
-				'dpia_unnga_hoy_risiko',
-				'dpia_dekker_formal',
-				'dpia_effekt_enkelte',
-				'dpia_effekt_samfunnet',
-				'dpia_proporsjonalitet_enkelte_samfunnet',
-				'forventet_bruk',
-				'ny_endret_prosess',
-				'antall_registrerte',
-				'tilgang_opplysninger',
-				'dpia_dba_ivaretakelse_sikkerhet',
-				'dpia_prosess_godkjenne_underleverandor',
-				'dpia_tidligere_bekymringer_risikoer',
-				'dpia_tidligere_avdekket_sikkerhetsbrudd',
-				'sikkerhetstiltak'
-			),
-		}),
-		('Utfases', {
-			'classes': ('collapse',),
-			'fields': (
-				'internt_ansvarlig',
-				'hoy_personvernrisiko',
-				'virksomhet_blacklist',
-				'krav_sikkerhetsnivaa',
-				('innhenting_ekstern_myndighet', 'innhenting_ekstern_myndighet_utdyping'),
-				('utlevering_registrerte_samtykke', 'utlevering_registrerte_samtykke_utdyping'),
-				'relasjon_registrerte',
-				('valgfriget_registrerte', 'den_registrerte_sarbare_grupper'),
-				'funksjonsomraade',
-				'den_registrerte_hovedkateogi',
-				('kommunens_maler', 'kommunens_maler_hvis_nei'),
-				'frekvens_automatisert_innsamling',
-				'frekvens_innsamling_manuelt',
-			),
-		}),
-	)
-
-	def save_model(self, request, obj, form, change):
-		# vi ønsker å begrense tilgang til å opprette behandlinger for andre virksomheter
-		if not request.user.is_superuser:
-			obj.behandlingsansvarlig = request.user.profile.virksomhet  # uansett hva en ikke-superbruker gjør vil behandlingen knyttes til innlogget brukers virksomhet
-		super().save_model(request, obj, form, change)
-
-	def has_change_permission(self, request, obj=None):
-		if obj:
-			if request.user.is_superuser:
-				return True
-			if obj.behandlingsansvarlig == request.user.profile.virksomhet:
-				if request.user.has_perm('systemoversikt.change_behandlingerpersonopplysninger'):
-					return True
-			else:
-				messages.error(request, 'Du får ikke endre behandlinger for andre virksomheter')
-				return False
-
-	def has_delete_permission(self, request, obj=None):
-		if obj:
-			if request.user.is_superuser:
-				return True
-			if obj.behandlingsansvarlig == request.user.profile.virksomhet:
-				if request.user.has_perm('systemoversikt.delete_behandlingerpersonopplysninger'):
-					return True
-			else:
-				messages.error(request, 'Du får ikke slette behandlinger for andre virksomheter')
-				return False
-
-
-@admin.register(Behandlingsgrunnlag)
-class BehandlingsgrunnlagAdmin(SimpleHistoryAdmin):
-	list_display = ('grunnlag', 'lovparagraf', 'lov')
-
-	def get_ordering(self, request):
-		return ['grunnlag']
-
-
-@admin.register(Personsonopplysningskategori)
-class PersonsonopplysningskategoriAdmin(SimpleHistoryAdmin):
-	list_display = ('navn', 'artikkel', 'hovedkategori', 'eksempler')
-
-	def get_ordering(self, request):
-		return ['navn']
-
-
-@admin.register(Registrerte)
-class RegistrerteAdmin(SimpleHistoryAdmin):
-	list_display = ('kategorinavn', 'definisjon', 'saarbar_gruppe')
-
-	def get_ordering(self, request):
-		return ['kategorinavn']
 
 
 @admin.register(IntegrasjonKonfigurasjon)
@@ -1358,73 +1192,12 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 		)
 
 
-@admin.register(DPIA)
-class DPIAAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('for_system', 'sist_gjennomforing_dpia', 'url_dpia', 'kommentar',)
-	search_fields = ('for_system',)
-
-	fieldsets = (
-		('Initiell registrering', {
-			'fields': (
-				'informasjon_kvalitetssikret',
-				'for_system',
-				'sist_gjennomforing_dpia',
-				'url_dpia',
-				'kommentar'
-			),
-		}),
-		('Trinn 2: Beskriv prosessene', {
-			'fields': (
-				'knyttning_identifiserbare_personer',
-				'innhentet_dpia',
-				'teknologi',
-				'ny_endret_teknologi',
-				'kjente_problemer_teknologien',
-			),
-		}),
-		('Trinn 3: Konsultasjon brukergrupper', {
-			'fields': (
-				('konsultasjon_registrerte', 'konsultasjon_registrerte_oppsummering'),
-				('konsultasjon_internt', 'konsultasjon_internt_oppsummering'),
-				('konsultasjon_databehandlere', 'konsultasjon_databehandlere_oppsummering'),
-				('konsultasjon_eksterne', 'konsultasjon_eksterne_oppsummering')
-			),
-		}),
-		('Trinn 4: Vurdering av nødvendighet og proporsjonalitet', {
-			'fields': (
-				'hoveddatabehandler',
-			),
-		}),
-
-		('Trinn 5: Godkjenning', {
-			'fields': (
-				'personvern_i_risikovurdering',
-			),
-		}),
-		('Trinn 6: Risikoreduserende tiltak', {
-			'fields': (
-				'tiltak_innledende_ros',
-				'tiltak_etter_ytterligere_tiltak',
-				'tiltak_forhandsdroftelser',
-			),
-		}),
-		('Trinn 7: Godkjenning', {
-			'fields': (
-				'godkjenning_personvernombudets_raad',
-				'godkjenning_tiltak_restrisiko',
-				'godkjenning_datatilsynet',
-			),
-		}),
-	)
-
-
 @admin.register(Driftsmodell)
 class DriftsmodellAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('navn', 'sikkerhetsnivaa', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform')
 	search_fields = ('navn',)
-	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler', 'anbefalte_kategorier_personopplysninger')
+	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler')
 	autocomplete_fields = ('ansvarlig_virksomhet', 'leverandor', 'applikasjonsdriftleverandor',)
 
 	def response_add(self, request, obj, post_url_continue=None):
@@ -1459,7 +1232,6 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 				'classes': ('collapse',),
 				'fields': (
 					'risikovurdering',
-					'anbefalte_kategorier_personopplysninger',
 					'sikkerhetsnivaa',
 					'databehandleravtale_notater',
 					'lokasjon_lagring_valgmeny',
@@ -1605,33 +1377,7 @@ class DefinisjonAdmin(SimpleHistoryAdmin):
 		return ['begrep']
 
 
-@admin.register(BehovForDPIA)
-class BehovForDPIAAdmin(SimpleHistoryAdmin):
-	actions = [export_as_csv_action("CSV Eksport")]
-	from django.forms.widgets import NullBooleanSelect
-	formfield_overrides = {
-		models.NullBooleanField: {'widget': NullBooleanSelect},
-	}
-
-	def response_add(self, request, obj, post_url_continue=None):
-		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.behandling.pk}))
-		return super().response_add(request, obj, post_url_continue)
-
-	def response_change(self, request, obj):
-		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('behandlingsdetaljer', kwargs={'pk': obj.behandling.pk}))
-		return super().response_change(request, obj)
-
-
 admin.site.register(Region)
-
-
-admin.site.register(RegistrertKlassifisering)
-
-
-admin.site.register(RelasjonRegistrert)
-
 
 
 @admin.register(ApplicationLog)

@@ -387,16 +387,6 @@
 			</tr>
 			{% endfor %}
 
-			{% comment %}
-			{% for behandling in user.ansvarlig_brukernavn.behandling_kontaktperson.all %}
-			<tr>
-				<td>Behandlingsansvarlig for</td>
-				<td><a target="_blank" href="/admin/systemoversikt/behandlingerpersonopplysninger/{{behandling.pk}}/change/">{{ behandling }}</a></td>
-				<td></td>
-			</tr>
-			{% endfor %}
-			{% endcomment %}
-
 			</tbody>
 		</table>
 

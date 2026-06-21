@@ -53,22 +53,6 @@
 		<a href="{{ url_systemer_virksomhet_ansvarlig_for_fip }}" class="btn btn-sm btn-link {% if url_systemer_virksomhet_ansvarlig_for_fip in request.path %}fremhev{% endif %}">Vi eier/forvalter (kun FIP)</a><br>
 	{% endcomment %}
 
-
-
-
-	{% comment %}
-	<hr><p style="color: grey;">Personvern</p>
-
-	{% url 'alle_behandlinger_virksomhet' pk=virksomhet.pk as url_alle_behandlinger_virksomhet %}
-		<a href="{{ url_alle_behandlinger_virksomhet }}" class="btn btn-sm btn-link {% if url_alle_behandlinger_virksomhet in request.path %}fremhev{% endif %}">Behandlingsprotokoll</a><br>
-
-	{% url 'innsyn_virksomhet' pk=virksomhet.pk as url_innsyn_virksomhet %}
-		<a href="{{ url_innsyn_virksomhet }}" class="btn btn-sm btn-link {% if url_innsyn_virksomhet in request.path %}fremhev{% endif %}">Innsyn</a><br>
-	{% endcomment %}
-
-
-
-
 	{% comment %}
 	{% url 'systemkvalitet_virksomhet' pk=virksomhet.pk as url_systemkvalitet_virksomhet %}
 		<a href="{{ url_systemkvalitet_virksomhet }}" class="btn btn-sm btn-link {% if url_systemkvalitet_virksomhet in request.path %}fremhev{% endif %}">Datakvalitet</a><br>

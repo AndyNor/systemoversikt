@@ -99,20 +99,6 @@
 		</tr>
 		{% endfor %}
 
-		{% for item in databehandler_for %}
-		<tr>
-			<td>Databehandler</td>
-			<td>
-			{% if perms.systemoversikt.view_behandlingerpersonopplysninger %}
-				{% url 'behandlingsdetaljer' pk=item.pk as url_behandlingsdetaljer %}
-				<a href="{{ url_behandlingsdetaljer }}">{{ item.behandlingen }} for {{ item.behandlingsansvarlig }}</a>
-			{% else %}
-				<p>Du mangler tilgangen "view_behandlingerpersonopplysninger".</p>
-			{% endif %}
-			</td>
-		</tr>
-		{% endfor %}
-
 		{% for item in registrar_for %}
 		<tr>
 			<td>Domeneregistrar</td>

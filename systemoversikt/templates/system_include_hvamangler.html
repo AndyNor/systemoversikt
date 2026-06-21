@@ -21,7 +21,6 @@
 		<th>Systemleverandør</th>
 		<th>Risikovurdering dato</th>
 		<th>Risikovurdering link</th>
-		<th>Behandlinger</th>
 		<th>Databehandleravtale system | appdrift</th>
 		<th>Databehandleravtale drift</th>
 		<th>URL</th>
@@ -129,10 +128,7 @@
 				{% endif %}
 			</td>
 			<td>
-				{{ system.antall_behandlinger }}
-			</td>
-			<td>
-				{% if system.antall_behandlinger > 0 and system.applikasjonsdrift_behov_databehandleravtale %}
+				{% if system.applikasjonsdrift_behov_databehandleravtale %}
 					{% if system.databehandleravtaler_system %}
 					<span style="color: green; font-size: 18px;">✓</span> Ja
 					{% else %}

@@ -56,26 +56,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "delete_behandlingerpersonopplysninger"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_behandlingerpersonopplysninger"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_behovfordpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_behovfordpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_cmdbref"
             },
             {
@@ -116,22 +96,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "add_dpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_dpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "delete_dpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_dpia"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_driftsmodell"
             },
             {
@@ -153,10 +117,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_loggkategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_personsonopplysningskategori"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -185,18 +145,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrertklassifisering"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_relasjonregistrert"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -317,10 +265,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "view_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_brannmurregel"
             },
             {
@@ -417,10 +361,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "view_personsonopplysningskategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "add_programvare"
             },
             {
@@ -450,14 +390,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrertklassifisering"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -590,14 +522,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "view_behandlingerpersonopplysninger"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_behandlingsgrunnlag"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_databehandleravtale"
             },
             {
@@ -634,10 +558,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "view_personsonopplysningskategori"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_programvare"
             },
             {
@@ -659,14 +579,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrerte"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_registrertklassifisering"
             },
             {
                 "content_type__app_label": "systemoversikt",

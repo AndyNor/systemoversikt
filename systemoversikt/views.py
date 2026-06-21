@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Removed BehandlingerPersonopplysninger and DPIA views/URLs – functionality moved to Behandlingsoversikten.
 # 2026-06-21: Pass system_colors to systemdetaljer – legend matches dependency chart palette.
 # 2026-06-21: System dependency chart – layout save/lock endpoints and generer_graf_ny extraction.
 # 2026-06-21: System dependency graph – URL, CMDB BSS and parent BS nodes on system detail.
@@ -901,33 +902,6 @@ def virksomhet_til_bruker(request):
 	except:
 		vir = False
 	return vir
-
-def behandlingsprotokoll_egne(virksomhet):
-	"""
-	finne alle egne behandlinger
-	"""
-	virksomhetens_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet)
-	return virksomhetens_behandlinger
-
-def behandlingsprotokoll_felles(virksomhet):
-	"""
-	finne systemer virksomheten abonnerer på behandlinger for
-	"""
-	systembruk_virksomhet = []
-	virksomhetens_relevante_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet).filter(del_behandlinger=True)
-	for bruk in virksomhetens_relevante_bruk:
-		systembruk_virksomhet.append(bruk.system)
-	# finne alle behandlinger for identifiserte systemer merket fellesbehandling
-	delte_behandlinger = BehandlingerPersonopplysninger.objects.filter(systemer__in=systembruk_virksomhet).filter(fellesbehandling=True)
-	return delte_behandlinger
-
-def behandlingsprotokoll(virksomhet):
-	#slå sammen felles og egne behandlinger til et sett med behandlinger
-	virksomhetens_behandlinger = behandlingsprotokoll_egne(virksomhet)
-	delte_behandlinger = behandlingsprotokoll_felles(virksomhet)
-	alle_relevante_behandlinger = virksomhetens_behandlinger.union(delte_behandlinger).order_by('internt_ansvarlig')
-	return alle_relevante_behandlinger
-
 
 """
 def csrf403(request):
@@ -5203,7 +5177,6 @@ def home(request):
 	nyeste_systemer = System.objects.filter(~Q(ibruk=False)).order_by('-pk')[:10]
 	antall_programvarer = Programvare.objects.count()
 	nyeste_programvarer = Programvare.objects.order_by('-pk')[:10]
-	antall_behandlinger = BehandlingerPersonopplysninger.objects.count()
 	kategorier = SystemKategori.objects.all()
 	nyheter = NyeFunksjoner.objects.all().order_by('-tidspunkt')[:3]
 
@@ -5279,7 +5252,6 @@ def home(request):
 		'nyeste_systemer': nyeste_systemer,
 		'antall_programvarer': antall_programvarer,
 		'nyeste_programvarer': nyeste_programvarer,
-		'antall_behandlinger': antall_behandlinger,
 		'nyheter': nyheter,
 		'chart_livslop': chart_livslop,
 		'chart_systemklassifisering': chart_systemklassifisering,
@@ -5510,60 +5482,6 @@ def tjenestekatalogen_systemer_api(request):
 			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 	else:
 		raise Http404
-
-
-"""
-def ansvarlig(request, pk):
-	#Viser informasjon om en ansvarlig
-	required_permissions = ['systemoversikt.view_system']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	ansvarlig = Ansvarlig.objects.get(pk=pk)
-	if not ansvarlig.brukernavn.is_active:
-		messages.warning(request, 'Denne brukeren er deaktivert!')
-
-	systemeier_for = System.objects.filter(~Q(ibruk=False)).filter(systemeier_kontaktpersoner_referanse=pk)
-	systemforvalter_for = System.objects.filter(~Q(ibruk=False)).filter(systemforvalter_kontaktpersoner_referanse=pk)
-	systemforvalter_bruk_for = SystemBruk.objects.filter(systemforvalter_kontaktpersoner_referanse=pk)
-	kam_for = Virksomhet.objects.filter(uke_kam_referanse=pk)
-	avtale_ansvarlig_for = Avtale.objects.filter(avtaleansvarlig=pk)
-	ikt_kontakt_for = Virksomhet.objects.filter(ikt_kontakt=pk)
-	sertifikatbestiller_for = Virksomhet.objects.filter(autoriserte_bestillere_sertifikater__person=pk)
-	autorisert_bestiller_for = Virksomhet.objects.filter(autoriserte_bestillere_tjenester=pk)
-	personvernkoordinator_for = Virksomhet.objects.filter(personvernkoordinator=pk)
-	informasjonssikkerhetskoordinator_for = Virksomhet.objects.filter(informasjonssikkerhetskoordinator=pk)
-	behandlinger_for = BehandlingerPersonopplysninger.objects.filter(oppdateringsansvarlig=pk)
-	definisjonsansvarlig_for = Definisjon.objects.filter(ansvarlig=pk)
-	system_innsynskontakt_for = System.objects.filter(kontaktperson_innsyn=pk)
-	autorisert_bestiller_uke_for = Virksomhet.objects.filter(autoriserte_bestillere_tjenester_uke=pk)
-	programvarebruk_kontakt_for = ProgramvareBruk.objects.filter(lokal_kontakt=pk)
-	kompass_godkjent_bestiller_for = System.objects.filter(godkjente_bestillere=pk)
-
-	return render(request, 'ansvarlig_detaljer.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'ansvarlig': ansvarlig,
-		'systemeier_for': systemeier_for,
-		'systemforvalter_for': systemforvalter_for,
-		'systemforvalter_bruk_for': systemforvalter_bruk_for,
-		'kam_for': kam_for,
-		'avtale_ansvarlig_for': avtale_ansvarlig_for,
-		'ikt_kontakt_for': ikt_kontakt_for,
-		'sertifikatbestiller_for': sertifikatbestiller_for,
-		'virksomhetsleder_for': virksomhetsleder_for,
-		'autorisert_bestiller_for': autorisert_bestiller_for,
-		'personvernkoordinator_for': personvernkoordinator_for,
-		'informasjonssikkerhetskoordinator_for': informasjonssikkerhetskoordinator_for,
-		'behandlinger_for': behandlinger_for,
-		'definisjonsansvarlig_for': definisjonsansvarlig_for,
-		'system_innsynskontakt_for': system_innsynskontakt_for,
-		'autorisert_bestiller_uke_for': autorisert_bestiller_uke_for,
-		'programvarebruk_kontakt_for': programvarebruk_kontakt_for,
-		'kompass_godkjent_bestiller_for': kompass_godkjent_bestiller_for,
-	})
-"""
-
 
 
 def alle_ansvarlige(request):
@@ -5871,13 +5789,6 @@ def systemdetaljer(request, pk):
 	siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
 
 	systembruk = SystemBruk.objects.filter(system=pk).filter(ibruk=True).order_by("brukergruppe")
-	behandlinger = BehandlingerPersonopplysninger.objects.filter(systemer=pk).order_by("funksjonsomraade")
-	try:
-		dpia = DPIA.objects.get(for_system=pk)
-	except:
-		dpia = None
-
-	hoy_risiko = behandlinger.filter(hoy_personvernrisiko=True)
 
 	# "avleverer til" fra et annet system tilsvarer "mottar fra" dette systemet
 	datautveksling_mottar_fra = [i.source_system for i in SystemIntegration.objects.filter(personopplysninger=True,destination_system=system.pk).all()]
@@ -5949,12 +5860,9 @@ def systemdetaljer(request, pk):
 		'required_permissions': formater_permissions(required_permissions),
 		'systemdetaljer': system,
 		'systembruk': systembruk,
-		'behandlinger': behandlinger,
 		'datautveksling_mottar_fra': datautveksling_mottar_fra,
 		'datautveksling_avleverer_til': datautveksling_avleverer_til,
 		'avhengigheter_reverse_systemer': avhengigheter_reverse_systemer,
-		'hoy_risiko': hoy_risiko,
-		'dpia': dpia,
 		'siste_endringer': siste_endringer,
 		'siste_endringer_antall': siste_endringer_antall,
 		'avhengigheter_graf_ny': avhengigheter_graf_ny,
@@ -6193,7 +6101,7 @@ def search(request):
 
 def bruksdetaljer(request, pk):
 	#Vise detaljer om systembruk
-	required_permissions = ['systemoversikt.view_behandlingerpersonopplysninger']
+	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
@@ -6231,11 +6139,6 @@ def all_bruk_for_virksomhet(request, pk):
 	all_systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk, ibruk=True).exclude(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 	ikke_i_bruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk).filter(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
 
-	# ser ut til at excel 2016+ støtter dette..
-	for bruk in all_systembruk:
-		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(systemer=bruk.system.pk).count()
-		bruk.antall_behandlinger = ant
-
 	try:
 		virksomhet = Virksomhet.objects.get(pk=pk)
 	except:
@@ -6243,10 +6146,6 @@ def all_bruk_for_virksomhet(request, pk):
 		virksomhet = Virksomhet.objects.none()
 
 	all_programvarebruk = ProgramvareBruk.objects.filter(brukergruppe=virksomhet_pk).order_by(Lower('programvare__programvarenavn'))
-	for bruk in all_programvarebruk:
-		ant = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet_pk).filter(programvarer=bruk.programvare.pk).count()
-		bruk.antall_behandlinger = ant
-
 
 	eier_eller_forvalter = set(System.objects.filter(~Q(livslop_status=7)).filter(Q(systemeier=virksomhet_pk) or Q(systemforvalter=virksomhet_pk)))  #{1, 2, 3, 4} #systemer virksomhet eier liste
 	systembruk = set(SystemBruk.objects.filter(brukergruppe=virksomhet_pk)) # {3, 4} #systemer virksomhet bruker liste
@@ -6600,14 +6499,12 @@ def programvaredetaljer(request, pk):
 	siste_endringer = LogEntry.objects.filter(content_type=content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
 	programvare = Programvare.objects.get(pk=pk)
 	programvarebruk = ProgramvareBruk.objects.filter(programvare=pk, ibruk=True).order_by("brukergruppe")
-	behandlinger = BehandlingerPersonopplysninger.objects.filter(programvarer=pk).order_by("funksjonsomraade")
 
 	return render(request, "programvare_detaljer.html", {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'programvare': programvare,
 		'programvarebruk': programvarebruk,
-		'behandlinger': behandlinger,
 		'siste_endringer': siste_endringer,
 		'siste_endringer_antall': siste_endringer_antall,
 	})
@@ -6736,157 +6633,6 @@ def tjenestedetaljer(request, pk):
 		'tjeneste': tjeneste,
 	})
 """
-
-
-def alle_behandlinger(request):
-	#Vise alle behandlinger (av personopplysninger) registrert for kommunen
-	required_permissions = ['systemoversikt.view_behandlingerpersonopplysninger']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	behandlinger = BehandlingerPersonopplysninger.objects.all()
-
-	return render(request, 'behandling_alle.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'behandlinger': behandlinger,
-	})
-
-
-
-def behandlingsdetaljer(request, pk):
-	#Vise detaljer for en behandling av personopplysninger
-	required_permissions = ['systemoversikt.view_behandlingerpersonopplysninger']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	behandling = BehandlingerPersonopplysninger.objects.get(pk=pk)
-
-	siste_endringer_antall = 10
-	system_content_type = ContentType.objects.get_for_model(BehandlingerPersonopplysninger)
-	siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
-
-	return render(request, 'behandling_detaljer.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'behandling': behandling,
-		'siste_endringer': siste_endringer,
-		'siste_endringer_antall': siste_endringer_antall,
-	})
-
-
-
-def mine_behandlinger(request):
-	#Vise alle behandling av personopplysninger for innlogget brukers virksomhet
-	required_permissions = None # kun redirect
-	try:
-		brukers_virksomhet = virksomhet_til_bruker(request)
-		pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
-		return redirect('alle_behandlinger_virksomhet', pk)
-	except:
-		messages.warning(request, 'Din bruker er ikke knyttet til en virksomhet. Velg en virksomhet fra listen, og velg så "Våre behandlinger".')
-		return redirect('alle_virksomheter')
-
-
-
-def alle_behandlinger_virksomhet(request, pk, internt_ansvarlig=False):
-	#Vise alle behandling av personopplysninger for en valgt virksomhet
-	#Tilgangsstyring: Merk at noe informasjon i tillegg er tilgangsstyrt i template
-	required_permissions = ['systemoversikt.view_behandlingerpersonopplysninger']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	# internt_ansvarlig benyttes for å filtrere ut på underavdeling/seksjon/
-	vir = Virksomhet.objects.get(pk=pk)
-
-	# finne behandlinger virksomheten abonnerer på
-	delte_behandlinger = behandlingsprotokoll_felles(pk)
-
-	# finne alle egne behandlinger
-	virksomhetens_behandlinger = behandlingsprotokoll_egne(pk)
-
-	# generere en liste med unike avdelinger
-	virksomhetens_behandlinger_avdelinger = list(virksomhetens_behandlinger.values('internt_ansvarlig').distinct())
-	delte_behandlinger_avdelinger = list(delte_behandlinger.values('internt_ansvarlig').distinct())
-	for item in delte_behandlinger_avdelinger:
-		if item not in virksomhetens_behandlinger_avdelinger:
-			virksomhetens_behandlinger_avdelinger.append(item)
-
-	# filter for å fjerne alt utenom en valgt avdeling
-	if internt_ansvarlig:
-		if internt_ansvarlig == "None": # denne kommer som en string
-			virksomhetens_behandlinger = virksomhetens_behandlinger.filter(internt_ansvarlig=None)
-		else:
-			virksomhetens_behandlinger = virksomhetens_behandlinger.filter(internt_ansvarlig=internt_ansvarlig)
-		delte_behandlinger = delte_behandlinger.filter(internt_ansvarlig=internt_ansvarlig)
-
-	# slå sammen felles og egne behandlinger til et sett
-	behandlinger = virksomhetens_behandlinger.union(delte_behandlinger).order_by('internt_ansvarlig')
-
-	return render(request, "behandling_behandlingsprotokoll.html", {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'behandlinger': behandlinger,
-		'virksomhet': vir,
-		'interne_avdelinger': virksomhetens_behandlinger_avdelinger,
-		'internt_ansvarlig_valgt': internt_ansvarlig,
-	})
-
-
-
-def behandling_kopier(request, system_pk):
-	#Funksjon for å kunne velge og kopiere en behandling til innlogget brukers virksomhet
-	#Tilgangsstyring: Legge til behandling (begrenset til egen virksomhet i kode)
-	required_permissions = ['systemoversikt.add_behandlingerpersonopplysninger']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	din_virksomhet = request.user.profile.virksomhet
-	dette_systemet = System.objects.get(pk=system_pk)
-	kandidatbehandlinger = BehandlingerPersonopplysninger.objects.filter(systemer=dette_systemet).order_by("-fellesbehandling")
-	valgte_behandlinger = request.POST.getlist("behandling", "")
-	#messages.success(request, 'Du valgte: %s' % valgte_behandlinger)
-
-	if valgte_behandlinger != "":
-		for behandling_pk in valgte_behandlinger:
-			behandling = BehandlingerPersonopplysninger.objects.get(pk=int(behandling_pk))
-			behandling.behandlingsansvarlig = din_virksomhet
-			behandling.internt_ansvarlig = "Må endres (kopi)"
-			behandling.fellesbehandling = False  # en kopi er ikke en fellesbehandling
-
-			opprinnelig_kategorier_personopplysninger = behandling.kategorier_personopplysninger.all()
-			opprinnelig_den_registrerte = behandling.den_registrerte.all()
-			opprinnelig_den_registrerte_hovedkateogi = behandling.den_registrerte_hovedkateogi.all()
-			opprinnelig_behandlingsgrunnlag_valg = behandling.behandlingsgrunnlag_valg.all()
-			opprinnelig_systemer = behandling.systemer.all()
-			opprinnelig_programvarer = behandling.programvarer.all()
-			opprinnelig_navn_databehandler = behandling.navn_databehandler.all()
-
-			behandling.pk = None  # dette er nå en ny instans av objektet, og den gamle er uberørt
-			behandling.save()
-
-			behandling.kategorier_personopplysninger.set(opprinnelig_kategorier_personopplysninger)
-			behandling.den_registrerte.set(opprinnelig_den_registrerte)
-			behandling.den_registrerte_hovedkateogi.set(opprinnelig_den_registrerte_hovedkateogi)
-			behandling.behandlingsgrunnlag_valg.set(opprinnelig_behandlingsgrunnlag_valg)
-			behandling.systemer.set(opprinnelig_systemer)
-			behandling.programvarer.set(opprinnelig_programvarer)
-			behandling.navn_databehandler.set(opprinnelig_navn_databehandler)
-
-			messages.success(request, 'Lagret ny kopi av %s med id %s' % (behandling_pk, behandling.pk))
-
-	#TODO Denne mangler behandler virksomheten "abonnerer på". Må vurdere å lage en metode som returnerer virksomhetens aktive behandlinger og gjenbruke denne
-	dine_eksisterende_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=din_virksomhet).filter(systemer=dette_systemet)
-
-	return render(request, 'system_kopier_behandling.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'system': dette_systemet,
-		'dine_eksisterende_behandlinger': dine_eksisterende_behandlinger,
-		'kandidatbehandlinger': kandidatbehandlinger,
-		'din_virksomhet': din_virksomhet,
-	})
-
 
 
 def virksomhet_ansvarlige(request, pk=None):
@@ -8204,8 +7950,6 @@ def virksomhet(request, pk):
 	systemeier_ikke_kvalitetssikret = System.objects.filter(systemeier=pk).filter(informasjon_kvalitetssikret=False).count()
 
 	deaktiverte_brukere = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).filter(brukernavn__profile__accountdisable=True).count()
-	ant_behandlinger = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).count()
-	behandling_ikke_kvalitetssikret = BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=virksomhet).filter(informasjon_kvalitetssikret=False).count()
 
 	ant_systemer_bruk = SystemBruk.objects.filter(brukergruppe=pk).count()
 	ant_systemer_eier = System.objects.filter(systemeier=pk).count()
@@ -8248,8 +7992,6 @@ def virksomhet(request, pk):
 		'systemforvalter_ikke_kvalitetssikret': systemforvalter_ikke_kvalitetssikret,
 		'systemeier_ikke_kvalitetssikret': systemeier_ikke_kvalitetssikret,
 		'deaktiverte_brukere': deaktiverte_brukere,
-		'ant_behandlinger': ant_behandlinger,
-		'behandling_ikke_kvalitetssikret': behandling_ikke_kvalitetssikret,
 		'enheter_tre_kol1': enheter_tre_kol1,
 		'enheter_tre_kol2': enheter_tre_kol2,
 		'ant_systemer_bruk': ant_systemer_bruk,
@@ -8663,29 +8405,6 @@ def min_virksomhet(request):
 		return redirect('alle_virksomheter')
 
 
-def innsyn_virksomhet(request, pk):
-	#Vise informasjon om kontaktpersoner for innsyn for en valgt virksomhet (for systemer virksomhet behandler personopplysninger i)
-	required_permissions = ['systemoversikt.view_behandlingerpersonopplysninger']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	virksomhet = Virksomhet.objects.get(pk=pk)
-	virksomhets_behandlingsprotokoll = behandlingsprotokoll(pk)
-	systemer = []
-	for behandling in virksomhets_behandlingsprotokoll:
-		for system in behandling.systemer.all():
-			if (system not in systemer) and (system.innsyn_innbygger or system.innsyn_ansatt) and (system.ibruk != False):
-				systemer.append(system)
-
-	return render(request, 'virksomhet_innsyn.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'virksomhet': virksomhet,
-		'systemer': systemer,
-	})
-
-
-
 def bytt_virksomhet(request):
 	#Tilgangsstyring: Innlogget og avhengig av virksomhet innlogget bruker er logget inn som
 	#returnere en liste over virksomheter som gjeldende bruker kan representere
@@ -8893,7 +8612,6 @@ def leverandor(request, pk):
 
 	leverandor = Leverandor.objects.get(pk=pk)
 	systemleverandor_for = System.objects.filter(systemleverandor=pk)
-	databehandler_for = BehandlingerPersonopplysninger.objects.filter(navn_databehandler=pk)
 	programvareleverandor_for = Programvare.objects.filter(programvareleverandor=pk)
 	basisdriftleverandor_for = System.objects.filter(basisdriftleverandor=pk)
 	applikasjonsdriftleverandor_for = System.objects.filter(applikasjonsdriftleverandor=pk)
@@ -8907,7 +8625,6 @@ def leverandor(request, pk):
 		'required_permissions': formater_permissions(required_permissions),
 		'leverandor': leverandor,
 		'systemleverandor_for': systemleverandor_for,
-		'databehandler_for': databehandler_for,
 		'programvareleverandor_for': programvareleverandor_for,
 		'basisdriftleverandor_for': basisdriftleverandor_for,
 		'applikasjonsdriftleverandor_for': applikasjonsdriftleverandor_for,
@@ -9149,17 +8866,12 @@ def detaljer_driftsmodell(request, pk):
 	systemer = System.objects.filter(driftsmodell_foreignkey=pk).filter(~Q(livslop_status=7))
 	isolert_drift = systemer.filter(isolert_drift=True)
 
-	# gjør et oppslag for å finne kategorier som er, og ikke er anbefalt
-	anbefalte_personoppl_kategorier = driftsmodell.anbefalte_kategorier_personopplysninger.all()
-	ikke_anbefalte_personoppl_kategorier = Personsonopplysningskategori.objects.filter(~Q(pk__in=anbefalte_personoppl_kategorier)).all()
-
 	return render(request, 'driftsmodell_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'driftsmodell': driftsmodell,
 		'systemer': systemer,
 		'isolert_drift': isolert_drift,
-		'ikke_anbefalte_personoppl_kategorier': ikke_anbefalte_personoppl_kategorier,
 	})
 
 
@@ -9430,7 +9142,7 @@ def system_til_programvare(request, system_id=None):
 
 				#nye programvarebruk per systembruk
 				for systembruk in kildesystem.systembruk_system.all():
-					ny_programvarebruk = ProgramvareBruk.objects.create(
+					ProgramvareBruk.objects.create(
 							brukergruppe=systembruk.brukergruppe,
 							programvare=ny_programvare,
 							livslop_status=systembruk.livslop_status,
@@ -9439,11 +9151,6 @@ def system_til_programvare(request, system_id=None):
 							funksjonell_egnethet=systembruk.funksjonell_egnethet,
 							teknisk_egnethet=systembruk.teknisk_egnethet,
 						)
-
-				#registrere behandlinger på programvaren fra systemet
-				for behandling in kildesystem.behandling_systemer.all():
-					behandling.programvarer.add(ny_programvare)
-					behandling.save()
 
 				messages.success(request, 'Konvertere system til programvare. Ny programvare %s er opprettet' % ny_programvare.programvarenavn)
 
@@ -10855,38 +10562,6 @@ def databehandleravtaler_virksomhet(request, pk):
 		'required_permissions': formater_permissions(required_permissions),
 		'avtaler': avtaler,
 		'utdypende_beskrivelse': utdypende_beskrivelse,
-	})
-
-
-
-def alle_dpia(request):
-	#Under utvikling: Vise alle DPIA-vurderinger
-	required_permissions = ['systemoversikt.view_system']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	alle_dpia = DPIA.objects.all()
-
-	return render(request, 'dpia_alle.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'alle_dpia': alle_dpia,
-	})
-
-
-
-def detaljer_dpia(request, pk):
-	#Under utvikling: Vise metadata om en DPIA-vurdering
-	required_permissions = ['systemoversikt.view_system']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	dpia = DPIA.objects.get(pk=pk)
-
-	return render(request, 'detaljer_dpia.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'dpia': dpia,
 	})
 
 

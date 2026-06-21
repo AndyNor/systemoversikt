@@ -45,12 +45,6 @@ class Command(BaseCommand):
 			#skrive over kommentarer og andre relevante felt
 
 
-		#for behandling in BehandlingerPersonopplysninger.objects.filter(behandlingsansvarlig=gammel_virksomhet):
-		#	print("Flytter behandlingen %s fra %s til %s" % (behandling.behandlingen, gammel_virksomhet, ny_virksomhet))
-		#	behandling.behandlingsansvarlig = ny_virksomhet
-		#	behandling.save()
-
-
 		# samme for avtale
 
 		# samme for plattformer

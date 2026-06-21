@@ -77,26 +77,6 @@ class VirksomhetViewSet(viewsets.ModelViewSet):
 
 
 
-class BehandlingerSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = models.BehandlingerPersonopplysninger
-		fields = (
-			'pk',
-			'behandlingsansvarlig',
-			'internt_ansvarlig',
-			'funksjonsomraade',
-			'behandlingen',
-			'formaal',
-			'kategorier_personopplysninger',
-			'behandlingsgrunnlag_valg',
-			'systemer',
-			'navn_databehandler'
-			)
-class VirksomhetViewSet(viewsets.ModelViewSet):
-	queryset = models.BehandlingerPersonopplysninger.objects.all()
-	serializer_class = BehandlingerSerializer
-
-
 class DriftsmodellSerializer(serializers.HyperlinkedModelSerializer):
 	class Meta:
 		model = models.Driftsmodell

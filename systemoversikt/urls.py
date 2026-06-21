@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-06-21: Removed behandlinger and DPIA URL routes – functionality moved to Behandlingsoversikten.
 from django.contrib import admin
 from django.conf.urls import include
 from django.conf import settings
@@ -212,14 +213,7 @@ urlpatterns = [
 	re_path(r'^systemer/avtaler/databehandleravtale/virksomhet/(?P<pk>\d{1,8})/$', views.databehandleravtaler_virksomhet, name='databehandleravtaler_virksomhet'),
 
 
-	#re_path(r'^behandlinger/user/$', views.mine_behandlinger, name='mine_behandlinger'),
-	#re_path(r'^behandlinger/alle/$', views.alle_behandlinger, name='alle_behandlinger'),
-	#re_path(r'^behandlinger/kopier/(?P<system_pk>\d{1,8})/$', views.behandling_kopier, name='behandling_kopier'),
-	#re_path(r'^behandlinger/detaljer/(?P<pk>\d{1,8})/$', views.behandlingsdetaljer, name='behandlingsdetaljer'),
-
-
 	re_path(r'^virksomhet/$', views.alle_virksomheter, name='alle_virksomheter'),
-	re_path(r'^virksomhet/behandlinger/(?P<pk>\d{1,8})/$', views.alle_behandlinger_virksomhet, name='alle_behandlinger_virksomhet'),
 	re_path(r'^virksomhet/avtaler/(?P<virksomhet>\d{1,8})/$', views.alle_avtaler, name='avtalervirksomhet'),
 	re_path(r'^virksomhet/domener/(?P<pk>\d{1,8})/$', views.virksomhet_urler, name='virksomhet_urler'),
 	re_path(r'^virksomhet/alle_avtaler/$', views.alle_avtaler, name='alle_avtaler'),
@@ -244,7 +238,6 @@ urlpatterns = [
 	re_path(r'^virksomhet/min/$', views.min_virksomhet, name='min_virksomhet'),
 	re_path(r'^virksomhet/arkivplan/(?P<pk>\d{1,8})/$', views.virksomhet_arkivplan, name='virksomhet_arkivplan'),
 	re_path(r'^virksomhet/sertifikatmyndighet/$', views.sertifikatmyndighet, name='sertifikatmyndighet'),
-	re_path(r'^virksomhet/innsyn/(?P<pk>\d{1,8})/$', views.innsyn_virksomhet, name='innsyn_virksomhet'),
 	re_path(r'^virksomhet/systemkvalitet/(?P<pk>\d{1,8})/$', views.systemkvalitet_virksomhet, name='systemkvalitet_virksomhet'),
 	re_path(r'^virksomhet/enhet/graf/(?P<pk>\d{1,8})/$', views.virksomhet_enheter, name='virksomhet_enheter'),
 	#re_path(r'^virksomhet/prkadmin/(?P<pk>\d{1,8})/$', views.virksomhet_prkadmin, name='virksomhet_prkadmin'),
@@ -323,8 +316,6 @@ urlpatterns = [
 	re_path(r'^tools/', views.tools_index, name="tools_index"),
 
 
-	#re_path(r'^dpia/$', views.alle_dpia, name='alle_dpia'),
-	#re_path(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),
 	#re_path(r'^definisjon/alle/$', views.alle_definisjoner, name='alle_definisjoner'),
 	#re_path(r'^definisjon/(?P<begrep>[-_a-zA-Z0-9\s]{1,150})/$', views.definisjon, name='definisjon'),
 
