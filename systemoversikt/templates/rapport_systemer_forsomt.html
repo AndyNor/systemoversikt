@@ -1,50 +1,116 @@
 {% extends "system_index.html" %}
+
 {% load humanize %}
+
 {% load static %}
 
+{# 2026-06-21: Criteria text aligned with simplified forsømt rules, plain language. #}
+
+
+
 {% block ekstrameny_business_service %}
+
 {% endblock ekstrameny_business_service %}
 
+
+
 {% block overskrift %}
+
 	Forsømte systemer
+
 {% endblock overskrift %}
+
+
 
 {% block hovedinnhold %}
 
-	<p>Her vises systemer som:</p>
+
+
+	<p>Listen viser systemer som kan trenge oppmerksomhet. Et system regnes som <b>forsømt</b> hvis det er i Kartoteket (med unntakene under) og <b>minst én</b> av disse situasjonene gjelder:</p>
+
 	<ul>
-		<li>Ikke har blitt oppdatert på {{ oppdatert_siden }} dager, og er ikke levert av en samarbeidspartner</li>
-		<li>Ikke har gyldig eierskap satt eller ikke har angitt livssyklusstatus</li>
-		<li>Har færre enn {{ minimum_oppdateringer }} oppdateringer siden opprettelse</li>
+
+		<li>Det er minst 2 år siden sist noen oppdaterte systemet i Kartoteket</li>
+
+		<li>Livsløpstatus mangler</li>
+
+		<li>Systemforvalter mangler, eller forvalteren er ikke en ordinær virksomhet i Kartoteket</li>
+
 	</ul>
+
+
+
+	<p><b>Ikke med i listen</b> (telles heller ikke i vedlikeholdsdiagrammet på startsiden):</p>
+
+	<ul>
+
+		<li>Systemer levert av samarbeidspartner (jf. angitt driftsplattform)</li>
+
+		<li>Systemer under innføring/utvikling</li>
+
+		<li>Systemer som er ute av bruk eller fullstendig avviklet</li>
+
+	</ul>
+
+
 
 	<hr>
 
+
+
 	<p>Fant {{systemer|length}} potensielt forsømte systemer</p>
 
+
+
 	<table class="tablesorter excel">
+
 		<thead>
+
 			<tr>
+
 				<th>Systemnavn</th>
+
 				<th>Driftsplattform</th>
+
 				<th>Livsløpstatus</th>
+
 				<th>Sist oppdatert</th>
+
 				<th>Systemforvalter</th>
+
 				<th>Antall ganger oppdatert</th>
+
 			</tr>
+
 		</thead>
+
 			<tbody>
+
 			{% for system in systemer %}
+
 			<tr>
+
 				<td><h6>{% include 'system_include_vis.html' with system=system %}</h6></td>
+
 				<td>{{ system.driftsmodell_foreignkey }}</td>
+
 				<td>{{ system.get_livslop_status_display|default:"" }}</td>
+
 				<td>{{ system.sist_oppdatert|date:"Y-m-d" }} ({{ system.sist_oppdatert|timesince }})</td>
+
 				<td>{{ system.systemforvalter|default:"" }}</td>
+
 				<td>{{ system.antall_oppdateringer }}</td>
+
 			</tr>
+
 			{% endfor %}
+
 		</tbody>
+
 	</table>
 
+
+
 {% endblock hovedinnhold %}
+

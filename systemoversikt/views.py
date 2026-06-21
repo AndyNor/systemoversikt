@@ -3016,24 +3016,19 @@ def rapport_startside(request):
 
 
 
-def _systemer_forsomt_queryset(oppdatert_siden=365, minimum_oppdateringer=3):
-	# 2026-06-21: Shared queryset for forsømte systemer (report + home chart).
+def _systemer_forsomt_queryset(oppdatert_siden=730):
+	# 2026-06-21: Forsømt = not updated in 2 years OR missing livsløp/forvalter (within exclusions).
 	tidsgrense = timezone.now() - datetime.timedelta(days=oppdatert_siden)
-	systemer_oppdatert_nylig = (
-		System.objects.filter(sist_oppdatert__lte=tidsgrense)
-		.filter(~Q(driftsmodell_foreignkey__id=11))
-		.filter(~Q(livslop_status__in=[1, 7]))
+	base = (
+		System.objects.filter(~Q(driftsmodell_foreignkey__id=11))
+		.filter(~Q(livslop_status__in=[1, 6, 7]))
 	)
-	systemer_ukjent_livslop = systemer_oppdatert_nylig.filter(livslop_status__in=[None, 8])
-	systemer_ukjent_systemforvalter = systemer_oppdatert_nylig.filter(
+	stale = base.filter(sist_oppdatert__lte=tidsgrense)
+	mangler_livslop = base.filter(Q(livslop_status=None) | Q(livslop_status=0))
+	mangler_forvalter = base.filter(
 		Q(systemforvalter=None) | Q(systemforvalter__ordinar_virksomhet=False)
 	)
-	combined_queryset = systemer_ukjent_livslop | systemer_ukjent_systemforvalter
-	for s in combined_queryset:
-		s.antall_oppdateringer = s.antall_oppdateringer()
-		if s.antall_oppdateringer >= minimum_oppdateringer:
-			combined_queryset = combined_queryset.exclude(pk=s.pk)
-	return combined_queryset
+	return (stale | mangler_livslop | mangler_forvalter).distinct()
 
 
 def rapport_systemer_forsomt(request):
@@ -3042,9 +3037,8 @@ def rapport_systemer_forsomt(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-	oppdatert_siden = 365 # dager
-	minimum_oppdateringer = 3 # ganger
-	combined_queryset = _systemer_forsomt_queryset(oppdatert_siden, minimum_oppdateringer)
+	oppdatert_siden = 730 # dager (2 år)
+	combined_queryset = _systemer_forsomt_queryset(oppdatert_siden)
 
 
 	return render(request, 'rapport_systemer_forsomt.html', {
@@ -3052,7 +3046,6 @@ def rapport_systemer_forsomt(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'oppdatert_siden': oppdatert_siden,
 		'systemer': combined_queryset,
-		'minimum_oppdateringer': minimum_oppdateringer,
 	})
 
 
@@ -5271,6 +5264,7 @@ def home(request):
 		'labels': ['Forsømt', 'Vedlikeholdt'],
 		'data': [antall_forsomt, antall_vedlikehold_grunnlag - antall_forsomt],
 		'urls': [reverse('rapport_systemer_forsomt'), None],
+		'colors': ['rgb(248, 165, 165)', 'rgb(140, 210, 140)'],
 	}
 
 	return render(request, 'site_home.html', {
