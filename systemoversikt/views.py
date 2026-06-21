@@ -9520,19 +9520,39 @@ def maskin_sok(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	# 2026-06-21: Also match exact IP addresses (comp_ip_address and linked NetworkIPAddress).
 	hits = []
+	seen_hit_pks = set()
 	misses = []
 	query = request.POST.get('search_term', '').strip()
 	if query != "":
-		#servers = re.findall(r'\w+',search_term)
 		servers = query.split("\n")
 		for server in servers:
-			try:
-				match = CMDBdevice.objects.filter(comp_name__iexact=server.strip())
-				for m in match.all():
+			term = server.strip()
+			if term == "":
+				continue
+			matched = False
+			for m in CMDBdevice.objects.filter(comp_name__iexact=term):
+				if m.pk not in seen_hit_pks:
+					seen_hit_pks.add(m.pk)
 					hits.append(m)
-			except:
-				misses.append(server.strip())
+				matched = True
+			try:
+				ip_str = str(ipaddress.ip_address(term))
+			except ValueError:
+				ip_str = None
+			if ip_str is not None:
+				ip_matches = CMDBdevice.objects.filter(
+					Q(comp_ip_address__iexact=ip_str)
+					| Q(network_ip_address__ip_address=ip_str)
+				).distinct()
+				for m in ip_matches:
+					if m.pk not in seen_hit_pks:
+						seen_hit_pks.add(m.pk)
+						hits.append(m)
+					matched = True
+			if not matched:
+				misses.append(term)
 
 	return render(request, 'cmdb_maskin_sok.html', {
 		'request': request,

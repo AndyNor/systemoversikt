@@ -6,7 +6,7 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Søk på hostnavn på felles IKT-plattform
+	Søk på hostnavn eller IP-adresse på felles IKT-plattform
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -15,7 +15,7 @@
 		{% csrf_token %}
 		<div class="form-group form-inline">
 			<textarea rows="3" cols="50" style="width: 500px; height: 250px;" name="search_term"
-			placeholder="Liste med server, en per linje" class="form-control form-control-sm">{{ query }}</textarea>
+			placeholder="Liste med server eller IP-adresse, en per linje" class="form-control form-control-sm">{{ query }}</textarea>
 			<input style="margin-left: 10px;" type="submit" value="Slå opp" class="btn btn-primary btn-sm">
 		</div>
 	</form>
@@ -69,7 +69,7 @@
 	</table>
 
 {% if misses %}
-	<p>Fant ikke disse serverne:</p>
+	<p>Fant ikke disse oppføringene:</p>
 	<ul>
 	{% for miss in misses %}
 		<li>{{miss}}</li>
