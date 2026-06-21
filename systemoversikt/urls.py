@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-06-21: Removed commented UBW URL routes – module retired.
 # 2026-06-21: Removed behandlinger and DPIA URL routes – functionality moved to Behandlingsoversikten.
 from django.contrib import admin
 from django.conf.urls import include
@@ -319,21 +320,6 @@ urlpatterns = [
 	#re_path(r'^definisjon/alle/$', views.alle_definisjoner, name='alle_definisjoner'),
 	#re_path(r'^definisjon/(?P<begrep>[-_a-zA-Z0-9\s]{1,150})/$', views.definisjon, name='definisjon'),
 
-
-	# ubw
-	#re_path(r'^ubw/alle/$', views.ubw_home, name='ubw_home'),
-	#re_path(r'^ubw/faktura/(?P<pk>\d+)/$', views.ubw_enhet, name='ubw_enhet'),
-	#re_path(r'^ubw/api/(?P<pk>\d+)/$', views.ubw_api, name='ubw_api'), # brukes av UKE/POS
-	#re_path(r'^ubw/ekstra/(?P<faktura_id>\d+)/$', views.ubw_ekstra, name='ubw_ekstra_new'),
-	#re_path(r'^ubw/ekstra/(?P<faktura_id>\d+)/(?P<pk>\d+)/$', views.ubw_ekstra, name='ubw_ekstra_edit'),
-	#re_path(r'^ubw/kategori/(?P<belongs_to>\d+)/$', views.ubw_kategori, name='ubw_kategori'),
-	#re_path(r'^ubw/endreenhet/(?P<belongs_to>\d+)/$', views.ubw_endreenhet, name='ubw_endreenhet'),
-	#re_path(r'^ubw/(?P<belongs_to>\d+)/estimat/$', views.ubw_estimat_list, name='ubw_estimat_list'),
-	#re_path(r'^ubw/(?P<belongs_to>\d+)/estimat/create/$', views.ubw_estimat_create, name='ubw_estimat_create'),
-	#re_path(r'^ubw/(?P<belongs_to>\d+)/estimat/(?P<pk>\d+)/update/$', views.ubw_estimat_update, name='ubw_estimat_update'),
-	#re_path(r'^ubw/estimat/(?P<pk>\d+)/delete/$', views.ubw_estimat_delete, name='ubw_estimat_delete'),
-	#re_path(r'^ubw/estimat/(?P<pk>\d+)/copy/$', views.ubw_estimat_copy, name='ubw_estimat_copy'),
-	#re_path(r'^ubw/multiselect/$', views.ubw_multiselect, name='ubw_multiselect'),
 
 
 

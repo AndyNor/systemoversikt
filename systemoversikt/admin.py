@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Removed UBW module admin registrations – feature retired.
 # 2026-06-21: Removed ProgramvareBruk.programvareleverandor from admin – field removed from model.
 # 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related admin registrations.
 from __future__ import unicode_literals
@@ -1522,42 +1523,6 @@ class LogEntryAdmin(admin.ModelAdmin):
 	def action_description(self, obj):
 		return action_names[obj.action_flag]
 	action_description.short_description = 'Action'
-
-
-@admin.register(UBWRapporteringsenhet)
-class UBWRapporteringsenhetAdmin(admin.ModelAdmin):
-	list_display = ('name',)
-	search_fields = ('name',)
-	#list_filter = ('users',)
-	autocomplete_fields = ('users',)
-
-@admin.register(UBWFakturaKategori)
-class UBWFakturaKategoriAdmin(admin.ModelAdmin):
-	list_display = ('name', 'belongs_to',)
-	search_fields = ('name',)
-	list_filter = ('belongs_to',)
-
-@admin.register(UBWMetode)
-class UBWMetodeAdmin(admin.ModelAdmin):
-	list_display = ('name', 'belongs_to',)
-	search_fields = ('name',)
-	list_filter = ('belongs_to',)
-
-@admin.register(UBWFaktura)
-class UBWFakturaAdmin(admin.ModelAdmin):
-	list_display = ('belongs_to', 'ubw_amount', 'ubw_xaccount', 'ubw_period', 'ubw_xdim_1', 'ubw_xdim_4', 'ubw_voucher_date', 'ubw_xapar_id', 'ubw_description', 'ubw_artsgr2', 'ubw_artsgr2_text', 'ubw_kategori', 'ubw_kategori_text')
-	search_fields = ('event_type', 'message')
-	list_filter = ('ubw_account', 'ubw_dim_1', 'ubw_dim_4', 'ubw_apar_id')
-
-@admin.register(UBWMetadata)
-class UBWMetadataAdmin(admin.ModelAdmin):
-	list_display = ('belongs_to', 'periode_paalopt', 'kategori')
-	#search_fields = ('',)
-	#list_filter = ('',)
-
-@admin.register(UBWEstimat)
-class UBWEstimatAdmin(admin.ModelAdmin):
-	list_display = ('belongs_to', 'aktiv', 'prognose_kategori', 'estimat_account', 'estimat_dim_1', 'estimat_dim_4', 'estimat_amount', 'budsjett_amount', 'periode_paalopt')
 
 
 @admin.register(KritiskFunksjon)

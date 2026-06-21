@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-21: Removed OKONOMI_FULLTILGANG from OIDC group mapping – UBW module retired.
 import unicodedata
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from .models import Virksomhet, ApplicationLog
@@ -367,7 +370,6 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR",
 					"/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER",
 					"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR",
-					"/DS-SYSTEMOVERSIKT_OKONOMI_FULLTILGANG", #midlertidig så lenge UBW-modulen kjører her
 					"/DS-SYSTEMOVERSIKT_FORVALTER_BEHANDLINGSANSVARLIG", #midlertidig frem til modulen avvikles helt
 				]
 
