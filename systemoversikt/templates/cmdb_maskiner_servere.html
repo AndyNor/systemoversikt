@@ -22,7 +22,7 @@
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 450px;" type="search" value="{{ device_search_term }}" name="device_search_term"
-			placeholder="Hostnavn, operativsystem eller business service" class="form-control form-control-sm">
+			placeholder="Hostnavn, IP, operativsystem eller business service" class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 			<a class="btn btn-sm" href="?device_search_term=__all__">Vis alt</a>
 			{% if not vis_detaljer %}
@@ -30,6 +30,10 @@
 			{% endif %}
 		</div>
 	</form>
+
+	{# 2026-06-21: Point readers to alle_ip for broader IP lookup. #}
+	{% url 'alle_ip' as url_alle_ip %}
+	<p class="small text-muted">Du kan også søke på IP-adresse her (delvis, f.eks. 10.20.). For mer omfattende IP-oppslag mot VLAN, VIP, NAT og DNS, bruk <a href="{{ url_alle_ip }}">IP-søk</a>.</p>
 
 	{% if maskiner %}
 		<p>Fant {{ maskiner.count }} maskiner.</p>
@@ -146,19 +150,48 @@
 	</tbody>
 	</table>
 
-	<table class="table table-sm tablesorter">
-	<thead>
-		<th>OS</th>
-		<th>Antall</th>
-	</thead>
-	<tbody>
-	{% for os in maskiner_stats %}
-		<tr>
-			<td><a href="{% url 'alle_servere' %}?device_search_term={{os.comp_os_readable}}">{{ os.comp_os_readable|default:"Ukjent" }}</a></td>
-			<td>{{ os.comp_os_readable__count }}</td>
-		</tr>
-	{% endfor %}
-	</tbody>
-	</table>
+	{# 2026-06-21: OS and business-service statistics only on initial page load, not after search. #}
+	{% if not device_search_term %}
+	<div class="container">
+		<div class="row">
+			<div class="col">
+
+				<table class="table table-sm tablesorter">
+				<thead>
+					<th>OS</th>
+					<th>Antall</th>
+				</thead>
+				<tbody>
+				{% for os in maskiner_stats %}
+					<tr>
+						<td><a href="{% url 'alle_servere' %}?device_search_term={{os.comp_os_readable}}">{{ os.comp_os_readable|default:"Ukjent" }}</a></td>
+						<td>{{ os.comp_os_readable__count }}</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+
+			</div>
+			<div class="col">
+
+				<table class="table table-sm tablesorter">
+				<thead>
+					<th>Business service</th>
+					<th>Antall</th>
+				</thead>
+				<tbody>
+				{% for bss in bss_stats %}
+					<tr>
+						<td><a href="{% url 'alle_servere' %}?device_search_term={{ bss.navn }}">{{ bss.navn }}</a></td>
+						<td>{{ bss.server_count }}</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+				</table>
+
+			</div>
+		</div>
+	</div>
+	{% endif %}
 
 {% endblock hovedinnhold %}

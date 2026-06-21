@@ -9784,22 +9784,27 @@ def alle_klienter(request):
 	elif search_term == '__all__':
 		maskiner = CMDBdevice.objects.filter(device_type="KLIENT")
 	else:
-		maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__icontains=search_term) | Q(client_model_id__icontains=search_term) )
+		# 2026-06-21: Search hostname, OS fields, and client model – matches visible columns and stats links.
+		maskiner = CMDBdevice.objects.filter(device_type="KLIENT").filter(
+			Q(comp_name__icontains=search_term)
+			| Q(comp_os_readable__icontains=search_term)
+			| Q(comp_os__icontains=search_term)
+			| Q(comp_os_version__icontains=search_term)
+			| Q(client_model_id__icontains=search_term)
+		)
 
 	alle_cmdb_klienter = CMDBdevice.objects.filter(device_type="KLIENT").count()
 
 
-	# klargjøring for statistikk
-	if maskiner == None:
-		stat_maskiner = CMDBdevice.objects.all()
-	else:
-		stat_maskiner = maskiner
-
-	maskiner_os_stats = stat_maskiner.filter(device_type="KLIENT").values('comp_os_readable').annotate(Count('comp_os_readable'))
-	maskiner_os_stats = sorted(maskiner_os_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
-
-	maskiner_model_stats = stat_maskiner.filter(device_type="KLIENT").values('client_model_id').annotate(Count('client_model_id'))
-	maskiner_model_stats = sorted(maskiner_model_stats, key=lambda os: os['client_model_id__count'], reverse=True)
+	# 2026-06-21: OS/model stats only when no search – avoids misleading aggregates on filtered results.
+	maskiner_os_stats = []
+	maskiner_model_stats = []
+	if search_term == '':
+		stat_maskiner = CMDBdevice.objects.filter(device_type="KLIENT")
+		maskiner_os_stats = stat_maskiner.values('comp_os_readable').annotate(Count('comp_os_readable'))
+		maskiner_os_stats = sorted(maskiner_os_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
+		maskiner_model_stats = stat_maskiner.values('client_model_id').annotate(Count('client_model_id'))
+		maskiner_model_stats = sorted(maskiner_model_stats, key=lambda os: os['client_model_id__count'], reverse=True)
 
 	if maskiner != None:
 		maskiner = maskiner.order_by('comp_name')
@@ -9973,10 +9978,28 @@ def alle_servere(request):
 	elif search_term == '__all__':
 		maskiner = CMDBdevice.objects.filter(device_type="SERVER")
 	else:
-		maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(Q(comp_name__icontains=search_term) | Q(comp_os_readable__iexact=search_term) | Q(service_offerings__navn__icontains=search_term)).order_by('comp_name')
+		# 2026-06-21: Also match primary and linked CMDB IP addresses (partial, e.g. 10.20.).
+		maskiner = CMDBdevice.objects.filter(device_type="SERVER").filter(
+			Q(comp_name__icontains=search_term)
+			| Q(comp_os_readable__iexact=search_term)
+			| Q(service_offerings__navn__icontains=search_term)
+			| Q(comp_ip_address__icontains=search_term)
+			| Q(network_ip_address__ip_address__icontains=search_term)
+		).distinct().order_by('comp_name')
 
-	maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").values('comp_os_readable').annotate(Count('comp_os_readable'))
-	maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
+	# 2026-06-21: OS/BSS stats only when no search – avoids full-fleet breakdown alongside filtered results.
+	maskiner_stats = []
+	bss_stats = []
+	if search_term == '':
+		maskiner_stats = CMDBdevice.objects.filter(device_type="SERVER").values('comp_os_readable').annotate(Count('comp_os_readable'))
+		maskiner_stats = sorted(maskiner_stats, key=lambda os: os['comp_os_readable__count'], reverse=True)
+		bss_stats = list(
+			CMDBRef.objects.filter(servers__device_type="SERVER")
+			.exclude(navn='')
+			.values('navn')
+			.annotate(server_count=Count('servers', filter=Q(servers__device_type="SERVER"), distinct=True))
+		)
+		bss_stats = sorted(bss_stats, key=lambda row: row['server_count'], reverse=True)
 
 	vis_detaljer = True if request.GET.get('details') == "show" else False
 
@@ -9986,6 +10009,7 @@ def alle_servere(request):
 		'maskiner': maskiner,
 		'device_search_term': search_term,
 		'maskiner_stats': maskiner_stats,
+		'bss_stats': bss_stats,
 		'vis_detaljer': vis_detaljer,
 		'integrasjonsstatus': _integrasjonsstatus("sp_virtual_machines"),
 	})

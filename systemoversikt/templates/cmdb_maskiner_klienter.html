@@ -25,7 +25,7 @@
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">
 			<input size="30" style="width: 350px;" type="search" value="{{ device_search_term }}" name="device_search_term"
-			placeholder="Hostnavn" class="form-control form-control-sm">
+			placeholder="Hostnavn, operativsystem eller klientmodell" class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 			<a class="btn btn-sm" href="?device_search_term=__all__">Vis alt</a>
 		</div>
@@ -33,46 +33,49 @@
 
 	<p>Viser {{ maskiner.count }} maskiner.</p>
 
-<div class="container">
-	<div class="row">
-		<div class="col">
+	{# 2026-06-21: OS and model statistics only on initial page load, not after search. #}
+	{% if not device_search_term %}
+	<div class="container">
+		<div class="row">
+			<div class="col">
 
-			<table class="table table-sm tablesorter">
-			<thead>
-				<th>Operativsystem</th>
-				<th>Antall</th>
-			</thead>
-			<tbody>
-			{% for os in maskiner_os_stats %}
-				<tr>
-					<td><a href="{% url 'alle_klienter' %}?device_search_term={{os.comp_os_readable}}">{{ os.comp_os_readable|default:"Ukjent" }}</a></td>
-					<td>{{ os.comp_os_readable__count }}</td>
-				</tr>
-			{% endfor %}
-			</tbody>
-			</table>
+				<table class="table table-sm tablesorter">
+				<thead>
+					<th>Operativsystem</th>
+					<th>Antall</th>
+				</thead>
+				<tbody>
+				{% for os in maskiner_os_stats %}
+					<tr>
+						<td><a href="{% url 'alle_klienter' %}?device_search_term={{os.comp_os_readable}}">{{ os.comp_os_readable|default:"Ukjent" }}</a></td>
+						<td>{{ os.comp_os_readable__count }}</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+				</table>
 
-		</div>
-		<div class="col">
+			</div>
+			<div class="col">
 
-			<table class="table table-sm tablesorter">
-			<thead>
-				<th>Klientmodell</th>
-				<th>Antall</th>
-			</thead>
-			<tbody>
-			{% for modell in maskiner_model_stats %}
-				<tr>
-					<td>{{ modell.client_model_id|default:"Ukjent" }}</td>
-					<td>{{ modell.client_model_id__count }}</td>
-				</tr>
-			{% endfor %}
-			</tbody>
-			</table>
+				<table class="table table-sm tablesorter">
+				<thead>
+					<th>Klientmodell</th>
+					<th>Antall</th>
+				</thead>
+				<tbody>
+				{% for modell in maskiner_model_stats %}
+					<tr>
+						<td><a href="{% url 'alle_klienter' %}?device_search_term={{ modell.client_model_id }}">{{ modell.client_model_id|default:"Ukjent" }}</a></td>
+						<td>{{ modell.client_model_id__count }}</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+				</table>
 
+			</div>
 		</div>
 	</div>
-</div>
+	{% endif %}
 
 
 	<table class="table table-sm tablesorter excel">
