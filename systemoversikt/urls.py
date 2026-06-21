@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-06-21: Removed Definisjon URL routes and organisasjon import – feature retired.
 # 2026-06-21: Removed commented UBW URL routes – module retired.
 # 2026-06-21: Removed behandlinger and DPIA URL routes – functionality moved to Behandlingsoversikten.
 from django.contrib import admin
@@ -317,12 +318,6 @@ urlpatterns = [
 	re_path(r'^tools/', views.tools_index, name="tools_index"),
 
 
-	#re_path(r'^definisjon/alle/$', views.alle_definisjoner, name='alle_definisjoner'),
-	#re_path(r'^definisjon/(?P<begrep>[-_a-zA-Z0-9\s]{1,150})/$', views.definisjon, name='definisjon'),
-
-
-
-
 	# Alle API-er
 	re_path(r'^systemer/behandlingsoversikt/api/$', views.behandlingsoversikt_api, name='behandlingsoversikt_api'), # Overføring av systemer til behandlingsoversikten
 	re_path(r'^api/vav/akva/$', views.vav_akva_api, name='vav_akva_api'), # Overføring av data om systemer til VAV sitt AKVA-system
@@ -359,5 +354,4 @@ urlpatterns = [
 
 	# import og konvertering
 	re_path(r'^import/groups/permissions/$', views_import.import_group_permissions, name='import_group_permissions'),
-	re_path(r'^import/definisjon/organisasjon/$', views_import.import_organisatorisk_forkortelser, name='import_organisatorisk_forkortelser'),
 ]

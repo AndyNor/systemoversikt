@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-21: Removed import_organisatorisk_forkortelser – Definisjon feature retired.
 from django.shortcuts import render, redirect
 from django.core.exceptions import ObjectDoesNotExist
 from django.core import serializers
@@ -70,44 +72,6 @@ def import_group_permissions(request):
 
 	else:
 		return render(request, 'admin_import.html', {'request': request,})
-
-
-def import_organisatorisk_forkortelser(request):
-	required_permissions = 'systemoversikt.add_definisjon'
-	if request.user.has_perm(required_permissions):
-
-		antall_importert = 0
-
-		try:
-			definisjonskontekst = DefinisjonKontekster.objects.get(navn="Organisatorisk forkortelse")
-		except:
-			definisjonskontekst = DefinisjonKontekster.objects.create(navn="Organisatorisk forkortelse")
-
-		alle_virksomheter = Virksomhet.objects.all()
-		for v in alle_virksomheter:
-			virksomhetsforkortelse = v.virksomhetsforkortelse
-			virksomhetsnavn = v.virksomhetsnavn
-			try:
-				d = Definisjon.objects.get(begrep=v.virksomhetsforkortelse)
-				#messages.info(request, "Forkortelsen %s eksisterer fra før av, går til neste" % v.virksomhetsforkortelse)
-			except:
-				if v.virksomhetsforkortelse:
-					d = Definisjon.objects.create(
-						status=1,
-						begrep=v.virksomhetsforkortelse,
-						definisjon=v.virksomhetsnavn)
-					d.kontekst_ref = definisjonskontekst
-					d.save()
-					antall_importert += 1
-					messages.success(request, "Importerte begrepet %s" % v.virksomhetsforkortelse)
-				else:
-					messages.warning(request, "Hopper over %s" % v.virksomhetsnavn)
-
-		messages.success(request, "Alle virksomhetsforkortelser er nå lagt til")
-		return HttpResponseRedirect(reverse('alle_definisjoner'))
-	else:
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
 
 
 def load_dns_sonefile(filename, domain):

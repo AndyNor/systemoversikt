@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Removed Definisjon views – feature retired, URLs already disabled.
 # 2026-06-21: Removed UBW module views – feature retired, URLs already disabled.
 # 2026-06-21: Nightly rydde_leverandorer job – shared reference logic in leverandor_referanser.py.
 # 2026-06-21: Fast leverandør stats via through/FK tables – avoids slow reverse JOINs on Leverandor.
@@ -5334,49 +5335,6 @@ def home_chart(request):
 		'system_colors': SYSTEM_COLORS,
 		'virksomheter': virksomheter,
 	})
-
-
-def alle_definisjoner(request):
-	#Viser definisjoner
-	required_permissions = None
-	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-
-	if (search_term == ""):
-		definisjoner = Definisjon.objects.all()
-
-	elif len(search_term) < 2: # if one or less, return nothing
-		definisjoner = Definisjon.objects.none()
-
-	else:
-		definisjoner = Definisjon.objects.filter(
-				Q(begrep__icontains=search_term) |
-				Q(engelsk_begrep__icontains=search_term) |
-				Q(definisjon__icontains=search_term) |
-				Q(eksempel__icontains=search_term) |
-				Q(legaldefinisjon__icontains=search_term)
-		)
-	definisjoner.order_by('begrep')
-
-	return render(request, 'definisjon_alle.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'definisjoner': definisjoner,
-		'search_term': search_term,
-	})
-
-
-
-def definisjon(request, begrep):
-	#Viser en definisjon
-	required_permissions = None
-	passende_definisjoner = Definisjon.objects.filter(begrep=begrep)
-	return render(request, 'definisjon_detaljer.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'begrep': begrep,
-		'definisjoner': passende_definisjoner,
-	})
-
 
 
 def tjenestekatalogen_forvalter_api(request):

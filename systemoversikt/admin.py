@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Removed Definisjon admin registrations – feature retired.
 # 2026-06-21: Removed UBW module admin registrations – feature retired.
 # 2026-06-21: Removed ProgramvareBruk.programvareleverandor from admin – field removed from model.
 # 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related admin registrations.
@@ -1359,26 +1360,6 @@ class InformasjonsKlasseAdmin(admin.ModelAdmin):
 		return ['navn']
 
 
-@admin.register(Definisjon)
-class DefinisjonAdmin(SimpleHistoryAdmin):
-	list_display = ('begrep', 'status',)
-	actions = [export_as_csv_action("CSV Eksport")]
-	#autocomplete_fields = ('',)
-
-	def response_add(self, request, obj, post_url_continue=None):
-		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('alle_definisjoner'))
-		return super().response_add(request, obj, post_url_continue)
-
-	def response_change(self, request, obj):
-		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
-			return redirect(reverse('alle_definisjoner'))
-		return super().response_change(request, obj)
-
-	def get_ordering(self, request):
-		return ['begrep']
-
-
 admin.site.register(Region)
 
 
@@ -1387,9 +1368,6 @@ class ApplicationLogAdmin(admin.ModelAdmin):
 	list_display = ('event_type', 'message', 'opprettet')
 	search_fields = ('event_type', 'message')
 	list_filter = ('opprettet',)
-
-
-admin.site.register(DefinisjonKontekster)
 
 
 @admin.register(CMDBdatabase)

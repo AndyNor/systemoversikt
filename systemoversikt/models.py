@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Removed Definisjon and DefinisjonKontekster models – feature retired.
 # 2026-06-21: Removed UBW module models/forms – feature retired, URLs already disabled.
 # 2026-06-21: Removed ProgramvareBruk.programvareleverandor – supplier belongs on Programvare only.
 # 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related lookup models – migrated to Behandlingsoversikten.
@@ -540,128 +541,6 @@ class ApplicationLog(models.Model):
 
 	class Meta:
 		verbose_name_plural = "System: Applikasjonslogger"
-		default_permissions = ('add', 'change', 'delete', 'view')
-
-
-# Definisjonsoversikt: kontekster
-class DefinisjonKontekster(models.Model):
-	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
-	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
-	navn = models.TextField(
-			verbose_name="Kontekstnavn",
-			blank=True,
-			null=True,
-			help_text=u"Navn på kontekst som kan velges for defininsjoner",
-			)
-
-	def __str__(self):
-		return u'%s' % (self.navn)
-
-	class Meta:
-		verbose_name_plural = "Definisjoner: Definisjonskontekster"
-		default_permissions = ('add', 'change', 'delete', 'view')
-
-
-DEFINISJON_STATUS_VALG = (
-	(0, 'Forslag'),
-	(1, 'Aktiv'),
-	(2, 'Utfaset'),
-)
-
-# Definisjonsoversikt: hovedobjekt
-class Definisjon(models.Model):
-	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
-	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
-	status = models.BigIntegerField(
-			choices=DEFINISJON_STATUS_VALG,
-			verbose_name="Status på definisjon",
-			blank=False,
-			null=False,
-			default=0,
-			help_text=u"Livsløp på definisjonen",
-			)
-	begrep = models.CharField(
-			verbose_name="Begrep / term",
-			max_length=300,
-			blank=False,
-			null=False,
-			help_text=u"",
-			)
-	kontekst_ref = models.ForeignKey(
-			to=DefinisjonKontekster,
-			related_name='defininsjon_kontekst_ref',
-			verbose_name="Definisjonens kontekst (valgmeny)",
-			blank=True,
-			null=True,
-			on_delete=models.PROTECT,
-			help_text=u"Konteksten eller domenet definisjonen angår",
-			)
-	engelsk_begrep = models.CharField(
-			verbose_name="Engelsk begrep / term",
-			max_length=300,
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-#	ansvarlig = models.ForeignKey(
-#			to="Ansvarlig",
-#			related_name='definisjon_ansvarlig',
-#			null=True,
-#			blank=True,
-#			on_delete=models.PROTECT,
-#			)
-	definisjon = models.TextField(
-			verbose_name="Definisjon",
-			blank=False,
-			null=False,
-			help_text=u"Definisjon slik folk flest kan forstå den",
-			)
-	eksempel = models.TextField(
-			verbose_name="Eksempel",
-			blank=True,
-			null=True,
-			help_text=u"Eksemplifiser definisjonen dersom mulig.",
-			)
-	legaldefinisjon = models.TextField(
-			verbose_name="Legaldefinisjon",
-			blank=True,
-			null=True,
-			help_text=u"Formell/legal definisjonstekst",
-			)
-	kilde = models.URLField(
-			verbose_name="Kilde eller opphav (URL)",
-			max_length=600,
-			blank=True,
-			null=True,
-			help_text=u"En URI til original definisjon.",
-			)
-	kontekst = models.TextField(
-			verbose_name="Gammel kontekst (fases ut)",
-			blank=True,
-			null=True,
-			help_text=u"Konteksten eller domenet definisjonen angår",
-			)
-	history = HistoricalRecords()
-
-	def __str__(self):
-		return u'%s' % (self.begrep)
-
-	class Meta:
-		verbose_name_plural = "Definisjoner: Definisjoner"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

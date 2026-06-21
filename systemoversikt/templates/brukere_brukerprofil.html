@@ -223,16 +223,6 @@
 			{% endfor %}
 
 
-			{% comment %}
-			{% for definisjon in user.ansvarlig_brukernavn.definisjon_ansvarlig.all %}
-			<tr>
-				<td>Begrepsansvarlig for</td>
-				<td><a target="_blank" href="/admin/systemoversikt/definisjon/{{definisjon.pk}}/change/">{{ definisjon }}</a></td>
-				<td></td>
-			</tr>
-			{% endfor %}
-			{% endcomment %}
-
 			{% for system in user.ansvarlig_brukernavn.system_kontaktperson_innsyn.all %}
 			<tr>
 				<td>Innsynskontakt for</td>

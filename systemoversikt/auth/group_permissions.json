@@ -76,26 +76,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "add_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "change_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_definisjon"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "add_definisjonkontekster"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_definisjonkontekster"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_driftsmodell"
             },
             {
