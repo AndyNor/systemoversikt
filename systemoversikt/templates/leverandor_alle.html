@@ -9,7 +9,63 @@
 {% block hovedinnhold %}
 
 	<a class="btn btn-sm btn-link" href="/admin/systemoversikt/leverandor/add/">{% include 'site_edit_button.html' %} Registrer ny leverandør</a>
-	<p>Det er {{ leverandorer.count }} leverandører.</p>
+
+	<h5>Statistikk</h5>
+	<table class="tablesorter excel" style="max-width: 720px;">
+		<thead>
+			<tr>
+				<th>Kategori</th>
+				<th>Antall leverandører</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Totalt registrert</td>
+				<td>{{ leverandor_statistikk.totalt }}</td>
+			</tr>
+			<tr>
+				<td>Med land satt</td>
+				<td>{{ leverandor_statistikk.med_land }}</td>
+			</tr>
+			<tr>
+				<td>Uten land</td>
+				<td>{{ leverandor_statistikk.uten_land }}</td>
+			</tr>
+			<tr>
+				<td>Koblet til minst én referanse</td>
+				<td>{{ leverandor_statistikk.med_kobling }}</td>
+			</tr>
+			<tr>
+				<td><strong>Ikke koblet til noe</strong></td>
+				<td><strong>{{ leverandor_statistikk.uten_kobling }}</strong></td>
+			</tr>
+		</tbody>
+	</table>
+
+	<h5>Referanser per modell</h5>
+	<p>Antall unike leverandører som er knyttet via hvert felt (samme leverandør kan telles i flere rader).</p>
+	<table class="tablesorter excel" style="max-width: 960px;">
+		<thead>
+			<tr>
+				<th>Modell</th>
+				<th>Felt</th>
+				<th>Antall leverandører</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for rad in leverandor_statistikk.referanser %}
+			<tr>
+				<td>{{ rad.modell }}</td>
+				<td>{{ rad.felt }}</td>
+				<td>{{ rad.antall_leverandorer }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<hr>
+
+	<p>Viser {{ leverandorer.count }} leverandører{% if search_term %} som matcher søket{% endif %}.</p>
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">

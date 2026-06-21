@@ -9,3 +9,10 @@ alwaysApply: true
 - Activate before running Python/pip commands: `.venv\Scripts\activate`
 - Use `py -m pip` or `.venv\Scripts\python` if activation is not possible in the shell
 - Production environment is Linux
+
+## Shell commands (Windows dev)
+
+- Default shell is **Windows PowerShell 5.1** — do **not** use `&&` or `||` (those require PowerShell 7+).
+- Chain commands with `;`, or run separate commands. Prefer the shell tool's `working_directory` instead of `cd ... && ...`.
+- Use Windows paths and backslashes for venv binaries (e.g. `.venv\Scripts\python`), not bash-style `source .venv/bin/activate && python`.
+- Linux/bash syntax applies only when editing deployment scripts or docs explicitly targeting production Linux.

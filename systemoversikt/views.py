@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Nightly rydde_leverandorer job – shared reference logic in leverandor_referanser.py.
+# 2026-06-21: Fast leverandør stats via through/FK tables – avoids slow reverse JOINs on Leverandor.
 # 2026-06-21: Removed BehandlingerPersonopplysninger and DPIA views/URLs – functionality moved to Behandlingsoversikten.
 # 2026-06-21: Pass system_colors to systemdetaljer – legend matches dependency chart palette.
 # 2026-06-21: System dependency chart – layout save/lock endpoints and generer_graf_ny extraction.
@@ -35,6 +37,7 @@ import os, datetime, json, re, time, struct, hashlib
 from collections import Counter, defaultdict
 from django.utils import timezone
 from django.core.cache import cache
+from systemoversikt.leverandor_referanser import leverandor_referanse_statistikk
 
 
 ##########################
@@ -8639,6 +8642,7 @@ def leverandor(request, pk):
 def alle_leverandorer(request):
 	#Vise liste over alle leverandører
 	# 2026-06-07: Annotate system counts per supplier role for overview table columns.
+	# 2026-06-21: Leverandør reference statistics table at top of overview page.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -8663,6 +8667,7 @@ def alle_leverandorer(request):
 		'leverandorer': leverandorer,
 		'system_felt_referanse': System(),
 		'search_term': search_term,
+		'leverandor_statistikk': leverandor_referanse_statistikk(),
 	})
 
 
