@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Tjeneste detail page with separate ecosystem graph – not shared with systemdetaljer.
 # 2026-06-21: Page perf – prefetch/select_related on forvalteroversikt, servicebrukere, Citrix app pages.
 # 2026-06-21: CSIRT immediate virksomhet security alert page for sikkerhetsanalytikere.
 # 2026-06-21: Removed Definisjon views – feature retired, URLs already disabled.
@@ -5486,16 +5487,76 @@ def systemer_EOL(request):
 
 
 def tjenester_oversikt(request):
+	# 2026-06-21: Tile overview – prefetch and counts for tjeneste cards without N+1 queries.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	tjenester = Tjeneste.objects.all()
+	tjenester = (
+		Tjeneste.objects
+		.prefetch_related(
+			'systemer',
+			'systemer__systemeier',
+			'systemer__systemforvalter',
+		)
+		.annotate(system_count=Count('systemer', distinct=True))
+		.order_by('navn')
+	)
 
 	return render(request, 'tjenester_oversikt.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'tjenester': tjenester,
+	})
+
+
+def tjeneste_detaljer(request, pk):
+	# 2026-06-21: Tjeneste detail with ecosystem chart – separate code path from systemdetaljer.
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	tjeneste = get_object_or_404(
+		Tjeneste.objects.prefetch_related(
+			'systemer',
+			'systemer__systemeier',
+			'systemer__systemforvalter',
+			'systemer__systemforvalter_kontaktpersoner_referanse',
+			'systemer__systemeier_kontaktpersoner_referanse',
+			'systemer__kritisk_kapabilitet',
+			'systemer__LOSref',
+			'systemer__system_integration_source',
+			'systemer__system_integration_source__destination_system',
+			'systemer__system_integration_destination',
+			'systemer__system_integration_destination__source_system',
+		),
+		pk=pk,
+	)
+
+	from systemoversikt.tjeneste_okosystem_graf import generer_tjeneste_okosystem_graf
+	okosystem_graf = generer_tjeneste_okosystem_graf(tjeneste)
+
+	integrasjoner = []
+	seen_integration_ids = set()
+	for system in tjeneste.systemer.all():
+		for integrasjon in system.system_integration_source.all():
+			if integrasjon.pk not in seen_integration_ids:
+				seen_integration_ids.add(integrasjon.pk)
+				integrasjoner.append(integrasjon)
+		for integrasjon in system.system_integration_destination.all():
+			if integrasjon.pk not in seen_integration_ids:
+				seen_integration_ids.add(integrasjon.pk)
+				integrasjoner.append(integrasjon)
+	integrasjoner.sort(key=lambda i: (i.source_system.systemnavn.lower(), i.destination_system.systemnavn.lower()))
+
+	return render(request, 'tjeneste_detaljer.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'tjeneste': tjeneste,
+		'okosystem_graf': okosystem_graf,
+		'integrasjoner': integrasjoner,
+		'system_colors': SYSTEM_COLORS,
+		'okosystem_chart_size': 320 + len(okosystem_graf["nodes"]) * 22,
 	})
 
 

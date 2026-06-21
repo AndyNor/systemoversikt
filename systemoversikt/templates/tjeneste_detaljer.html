@@ -1,0 +1,263 @@
+{# 2026-06-21: Direct dependencies only; draggable chart without level expansion. #}
+{# 2026-06-21: Tjeneste detail page with ecosystem chart – separate from system_detaljer.html. #}
+{% extends "system_index.html" %}
+{% load static %}
+{% load templatetags %}
+
+
+{% block overskrift %}
+	<span style="display: inline-flex; align-items: center; gap: 0.65rem;">
+		<span class="tjeneste-detalj-ikon" style="--tile-accent: {{ tjeneste.navn|tjeneste_ikon_farge }};" aria-hidden="true">
+			{% tjeneste_ikon_svg tjeneste.navn %}
+		</span>
+		{{ tjeneste.navn }}
+	</span>
+{% endblock overskrift %}
+
+{% block ekstrajavascript %}
+	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-svg.js@0.4.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tjeneste_okosystem_graph.js' %}?v=20260621-drag" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block ekstrastyle %}
+<style nonce="{{ request.csp_nonce }}">
+.tjeneste-detalj-ikon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 42px;
+	height: 42px;
+	border-radius: 50%;
+	background: var(--tile-accent, #2A2859);
+}
+.tjeneste-detalj-ikon .tjeneste-ikon-svg {
+	width: 26px;
+	height: 26px;
+}
+.tjeneste-detalj-beskrivelse {
+	color: #444;
+	font-size: 1rem;
+	line-height: 1.5;
+	margin: 0.75rem 0 1.25rem;
+	max-width: 900px;
+}
+.tjeneste-detalj-panel {
+	background: #fff;
+	border: 1px solid #e4e2ef;
+	border-radius: 12px;
+	padding: 1rem 1.1rem;
+	margin-bottom: 1rem;
+}
+.tjeneste-detalj-panel h5 {
+	margin-bottom: 0.75rem;
+	font-size: 0.95rem;
+	color: #2A2859;
+}
+.tjeneste-detalj-meta dt {
+	font-size: 0.75rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #888;
+	margin-bottom: 0.15rem;
+}
+.tjeneste-detalj-meta dd {
+	margin: 0 0 0.75rem;
+}
+#tjeneste_cy {
+	background-color: #FCFCFC;
+	border: 1px solid #d6d4d4;
+	width: 100%;
+}
+.tjeneste-legend span {
+	margin-right: 1rem;
+	font-size: 0.88rem;
+}
+.tjeneste-legend-dot {
+	height: 14px;
+	width: 14px;
+	border-radius: 50%;
+	display: inline-block;
+	vertical-align: middle;
+	margin-right: 0.25rem;
+}
+</style>
+{% endblock ekstrastyle %}
+
+{% block hovedinnhold %}
+
+<p>
+	<a href="{% url 'tjenester_oversikt' %}" class="btn btn-sm btn-link">← Alle tjenesteområder</a>
+	<a href="/admin/systemoversikt/tjeneste/{{ tjeneste.pk }}/change/" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Rediger tjeneste</a>
+</p>
+
+<p class="tjeneste-detalj-beskrivelse">{{ tjeneste.beskrivelse|default:"Ingen beskrivelse registrert."|linebreaksbr }}</p>
+
+<div class="row">
+	<div class="col-md-4">
+		<div class="tjeneste-detalj-panel">
+			<h5>Tjenesteeier</h5>
+			<dl class="tjeneste-detalj-meta">
+				<dt>Virksomhet</dt>
+				<dd>
+					{% for v in tjeneste.tjenesteeier_virksomhet %}
+						<span class="badge badge-light">{{ v }}</span>
+					{% empty %}–{% endfor %}
+				</dd>
+				<dt>Personer</dt>
+				<dd>
+					{% for p in tjeneste.tjenesteeier_personer %}
+						<div>{{ p }}</div>
+					{% empty %}–{% endfor %}
+				</dd>
+			</dl>
+		</div>
+	</div>
+	<div class="col-md-4">
+		<div class="tjeneste-detalj-panel">
+			<h5>Tjenesteforvalter</h5>
+			<dl class="tjeneste-detalj-meta">
+				<dt>Virksomhet</dt>
+				<dd>
+					{% for v in tjeneste.tjenesteforvalter_virksomhet %}
+						<span class="badge badge-light">{{ v }}</span>
+					{% empty %}–{% endfor %}
+				</dd>
+				<dt>Personer</dt>
+				<dd>
+					{% for p in tjeneste.tjenesteforvalter_personer %}
+						<div>{{ p }}</div>
+					{% empty %}–{% endfor %}
+				</dd>
+				<dt>E-post</dt>
+				<dd>
+					{% for e in tjeneste.tjenesteforvalter_epost %}
+						<div>{{ e|default:"-" }}</div>
+					{% empty %}–{% endfor %}
+				</dd>
+			</dl>
+		</div>
+	</div>
+	<div class="col-md-4">
+		<div class="tjeneste-detalj-panel">
+			<h5>Beredskap og LOS</h5>
+			<dl class="tjeneste-detalj-meta">
+				<dt>Kritisk kapabilitet</dt>
+				<dd>
+					{% for k in tjeneste.kritisk_kapabilitet %}
+						<span class="badge badge-light">{{ k }}</span>
+					{% empty %}–{% endfor %}
+				</dd>
+				<dt>LOS-begreper</dt>
+				<dd>
+					{% for o in tjeneste.los_kommunale_ord %}
+						<span class="badge badge-light">{{ o }}</span>
+					{% empty %}–{% endfor %}
+				</dd>
+			</dl>
+		</div>
+	</div>
+</div>
+
+<div class="tjeneste-detalj-panel">
+	<h5>Systemkomponenter i tjenesten</h5>
+	<table class="table table-sm tablesorter excel">
+		<thead>
+			<tr>
+				<th>System</th>
+				<th>Eier</th>
+				<th>Forvalter</th>
+				<th>Driftsplattform</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for s in tjeneste.systemer.all %}
+			<tr>
+				<td><a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s }}</a></td>
+				<td>{{ s.systemeier|default:"-" }}</td>
+				<td>{{ s.systemforvalter|default:"-" }}</td>
+				<td>{{ s.driftsmodell_foreignkey|default:"-" }}</td>
+			</tr>
+		{% empty %}
+			<tr><td colspan="4">Ingen systemkomponenter er koblet til tjenesten ennå.</td></tr>
+		{% endfor %}
+		</tbody>
+	</table>
+</div>
+
+<hr>
+<h4 style="scroll-margin-top: 150px;" id="anchor_tjeneste_okosystem">Økosystemkart</h4>
+
+<p class="tjeneste-legend">
+	<span><span class="tjeneste-legend-dot" style="background-color: #F8F0DD; border: 1px solid #ccc;"></span>Tjenesteområde</span>
+	<span><span class="tjeneste-legend-dot" style="background-color: {{ system_colors.chart_service_component }};"></span>Systemkomponent i tjenesten</span>
+	<span><span class="tjeneste-legend-dot" style="background-color: {{ system_colors.chart_external_system }};"></span>Eksterne systemer</span>
+	<span><span class="tjeneste-legend-dot" style="background-color: {{ system_colors.chart_integration }};"></span>Integrasjon</span>
+</p>
+
+<p>Dra nodene for å flytte dem rundt (lagres ikke). Klikk på noder og linjer for å åpne detaljer. Kun direkte avhengigheter til tjenestens systemkomponenter vises.</p>
+
+<div id="tjeneste_cy" style="height: {{ okosystem_chart_size }}px;"></div>
+{% if okosystem_graf.nodes|length < 2 %}
+	<p>Ingen økosystemdata å vise – koble minst én systemkomponent til tjenesten.</p>
+{% endif %}
+
+<br>
+<button id="btn-tjeneste-okosystem-graph-reset" class="btn btn-sm btn-outline-secondary">Tilbakestill visning</button>
+<button id="btn-tjeneste-okosystem-download-svg" class="btn btn-success btn-sm">Last ned SVG</button>
+
+<div class="tjeneste-detalj-panel mt-3">
+	<h5>Integrasjoner involverende tjenestens komponenter</h5>
+	<table class="table table-sm tablesorter" style="font-size: 12px;">
+		<thead>
+			<tr>
+				<th class="filter-false"></th>
+				<th>Type</th>
+				<th>Kilde</th>
+				<th>Destinasjon</th>
+				<th>Personopplysninger?</th>
+				<th>Kommentar</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for avhengighet in integrasjoner %}
+			<tr>
+				<td><a href="/admin/systemoversikt/systemintegration/{{ avhengighet.pk }}/change/">✎</a></td>
+				<td style="background-color: {{ avhengighet.color }};">{{ avhengighet.get_integration_type_display }}</td>
+				<td><a href="{% url 'systemdetaljer' pk=avhengighet.source_system.pk %}">{{ avhengighet.source_system }}</a></td>
+				<td><a href="{% url 'systemdetaljer' pk=avhengighet.destination_system.pk %}">{{ avhengighet.destination_system }}</a></td>
+				<td>{{ avhengighet.personopplysninger|yesno:"Ja,Nei,Vet ikke" }}</td>
+				<td>{{ avhengighet.description|default:"-" }}</td>
+			</tr>
+		{% empty %}
+			<tr><td colspan="6">Ingen integrasjoner registrert på tjenestens komponenter.</td></tr>
+		{% endfor %}
+		</tbody>
+	</table>
+</div>
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+{{ okosystem_graf|json_script:"tjeneste_okosystem_graphElements" }}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+document.addEventListener('DOMContentLoaded', function () {
+	const graphData = JSON.parse(
+		document.getElementById('tjeneste_okosystem_graphElements').textContent
+	);
+
+	window.initTjenesteOkosystemGraph({
+		tjenestePk: {{ tjeneste.pk }},
+		graphElements: {
+			nodes: graphData.nodes || [],
+			edges: graphData.edges || [],
+		},
+	});
+});
+</script>
+{% endblock script_append %}

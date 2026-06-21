@@ -379,11 +379,12 @@ class SystemIntegrationAdmin(SimpleHistoryAdmin):
 		return super().response_change(request, obj)
 
 
+# 2026-06-21: Tjeneste.systemer autocomplete – dynamic search instead of loading full M2M widget.
 @admin.register(Tjeneste)
 class TjenesteAdmin(SimpleHistoryAdmin):
 	list_display = ('navn',)
 	search_fields = ('navn',)
-	filter_horizontal = ('systemer',)
+	autocomplete_fields = ('systemer',)
 
 
 @admin.register(System)

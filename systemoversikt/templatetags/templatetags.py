@@ -1,3 +1,5 @@
+# Change log:
+# 2026-06-21: tjeneste_ikon_* – SVG glyphs and accent colours for tjeneste tile overview.
 from django import template
 from django.conf import settings
 from django.utils.html import format_html
@@ -10,6 +12,123 @@ import re
 from urllib.parse import quote
 
 register = template.Library()
+
+_TJENESTE_IKON_FARGER = ('#2A2859', '#28277e', '#5c5a8a', '#925900', '#c45c52')
+
+_TJENESTE_IKON_REGLER = (
+	(re.compile(r'data|database|register|arkiv|lagring|datalake', re.I), 'data'),
+	(re.compile(r'sky|cloud|azure|saas', re.I), 'sky'),
+	(re.compile(r'bruker|saks|innbygg|borger|personal|hr|ansatt', re.I), 'people'),
+	(re.compile(r'sikker|tilgang|identitet|pålogg|login|auth', re.I), 'shield'),
+	(re.compile(r'bygg|eiendom|plan|byggesak', re.I), 'building'),
+	(re.compile(r'rapport|statistikk|analyse|dashboard|innsikt', re.I), 'chart'),
+	(re.compile(r'post|e-post|epost|melding|varsel|sms', re.I), 'mail'),
+	(re.compile(r'drift|infrastruktur|plattform|server|cmdb', re.I), 'gear'),
+	(re.compile(r'kart|geo|sted|lokasjon|adresse', re.I), 'map'),
+	(re.compile(r'helse|lege|pasient|omsorg', re.I), 'health'),
+	(re.compile(r'skole|barnehage|barn|utdanning|læring', re.I), 'education'),
+	(re.compile(r'økonomi|regnskap|faktura|betaling|budsjett|ubw', re.I), 'money'),
+	(re.compile(r'nettverk|integrasjon|api|kobling|utveksling', re.I), 'network'),
+)
+
+_TJENESTE_IKON_SVG = {
+	'data': (
+		'<ellipse cx="32" cy="18" rx="16" ry="6" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<path d="M16 18v28c0 3.3 7.2 6 16 6s16-2.7 16-6V18" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<ellipse cx="32" cy="32" rx="16" ry="6" fill="none" stroke="white" stroke-width="2"/>'
+	),
+	'sky': (
+		'<path d="M18 40h30a10 10 0 0 0-2-19.8A14 14 0 0 0 20 24a9 9 0 0 0-2 16z" '
+		'fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>'
+	),
+	'people': (
+		'<circle cx="24" cy="24" r="6" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<path d="M12 46c0-7 5.4-12 12-12s12 5 12 12" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<circle cx="44" cy="26" r="5" fill="none" stroke="white" stroke-width="2"/>'
+		'<path d="M36 46c0-5 3.6-9 8-9s8 4 8 9" fill="none" stroke="white" stroke-width="2"/>'
+	),
+	'shield': (
+		'<path d="M32 10L14 18v16c0 12 8 18 18 22 10-4 18-10 18-22V18L32 10z" '
+		'fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>'
+		'<path d="M24 32l6 6 12-14" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>'
+	),
+	'building': (
+		'<rect x="16" y="14" width="32" height="36" rx="2" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<rect x="22" y="22" width="8" height="8" fill="none" stroke="white" stroke-width="2"/>'
+		'<rect x="34" y="22" width="8" height="8" fill="none" stroke="white" stroke-width="2"/>'
+		'<rect x="22" y="36" width="8" height="8" fill="none" stroke="white" stroke-width="2"/>'
+		'<rect x="34" y="36" width="8" height="8" fill="none" stroke="white" stroke-width="2"/>'
+		'<path d="M28 50h8" stroke="white" stroke-width="2.5" stroke-linecap="round"/>'
+	),
+	'chart': (
+		'<path d="M14 48V28M26 48V20M38 48V32M50 48V14" stroke="white" stroke-width="4" stroke-linecap="round"/>'
+		'<path d="M10 50h48" stroke="white" stroke-width="2.5" stroke-linecap="round"/>'
+	),
+	'mail': (
+		'<rect x="12" y="18" width="40" height="28" rx="3" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<path d="M12 22l20 14 20-14" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>'
+	),
+	'gear': (
+		'<circle cx="32" cy="32" r="10" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<circle cx="32" cy="32" r="4" fill="white"/>'
+		'<path d="M32 12v8M32 44v8M12 32h8M44 32h8M18.3 18.3l5.7 5.7M40 40l5.7 5.7M45.7 18.3 40 24M24 40l-5.7 5.7" '
+		'stroke="white" stroke-width="2.5" stroke-linecap="round"/>'
+	),
+	'map': (
+		'<path d="M32 12c-8 0-14 6-14 14 0 11 14 24 14 24s14-13 14-24c0-8-6-14-14-14z" '
+		'fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>'
+		'<circle cx="32" cy="26" r="5" fill="none" stroke="white" stroke-width="2.5"/>'
+	),
+	'health': (
+		'<rect x="28" y="14" width="8" height="36" rx="2" fill="white"/>'
+		'<rect x="14" y="28" width="36" height="8" rx="2" fill="white"/>'
+	),
+	'education': (
+		'<path d="M10 24l22-10 22 10-22 10-22-10z" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>'
+		'<path d="M18 30v12c0 4 8 8 14 8s14-4 14-8V30" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<path d="M54 26v16" stroke="white" stroke-width="2.5" stroke-linecap="round"/>'
+	),
+	'money': (
+		'<circle cx="32" cy="32" r="18" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<path d="M32 20v24M26 24h10a4 4 0 1 1 0 8h-6a4 4 0 1 0 0 8h12" '
+		'fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"/>'
+	),
+	'network': (
+		'<circle cx="18" cy="32" r="6" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<circle cx="46" cy="18" r="6" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<circle cx="46" cy="46" r="6" fill="none" stroke="white" stroke-width="2.5"/>'
+		'<path d="M24 30l16-8M24 34l16 8" stroke="white" stroke-width="2.5"/>'
+	),
+	'service': (
+		'<path d="M32 8l18 10v16L32 54 14 34V18z" fill="none" stroke="white" stroke-width="2.5" stroke-linejoin="round"/>'
+		'<path d="M32 22v20M22 28h20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>'
+	),
+}
+
+
+def _tjeneste_ikon_meta(navn):
+	navn_lower = (navn or '').lower()
+	for pattern, slug in _TJENESTE_IKON_REGLER:
+		if pattern.search(navn_lower):
+			farge = _TJENESTE_IKON_FARGER[sum(ord(c) for c in navn_lower) % len(_TJENESTE_IKON_FARGER)]
+			return slug, farge
+	farge = _TJENESTE_IKON_FARGER[sum(ord(c) for c in navn_lower) % len(_TJENESTE_IKON_FARGER)]
+	return 'service', farge
+
+
+@register.filter
+def tjeneste_ikon_farge(navn):
+	return _tjeneste_ikon_meta(navn)[1]
+
+
+@register.simple_tag
+def tjeneste_ikon_svg(navn):
+	slug, _ = _tjeneste_ikon_meta(navn)
+	inner = _TJENESTE_IKON_SVG.get(slug, _TJENESTE_IKON_SVG['service'])
+	return format_html(
+		'<svg class="tjeneste-ikon-svg" viewBox="0 0 64 64" aria-hidden="true" focusable="false">{}</svg>',
+		format_html(inner),
+	)
 
 
 ### url_path_segment — for {% url %} path kwargs that may contain /, ?, @, etc.

@@ -190,6 +190,7 @@ urlpatterns = [
 	re_path(r'^systemer/programvare/bruk/(?P<pk>\d{1,8})/$', views.programvarebruksdetaljer, name='programvarebruksdetaljer'),
 	re_path(r'^systemer/programvare/bruk/registrer_bruk/(?P<programvare>\d{1,8})/$', views.registrer_bruk_programvare, name='registrer_bruk_programvare'),
 	re_path(r'^systemer/tjenester/oversikt/$', views.tjenester_oversikt, name="tjenester_oversikt"),
+	re_path(r'^systemer/tjenester/detaljer/(?P<pk>\d{1,8})/$', views.tjeneste_detaljer, name="tjeneste_detaljer"),
 	re_path(r'^systemer/alle/$', views.alle_systemer, name='alle_systemer'),
 	re_path(r'^systemer/pakket/$', views.systemer_pakket, name='systemer_pakket'),
 	re_path(r'^systemer/graph_layout/(?P<pk>\d{1,8})/$', views.system_save_graph_layout, name='system_save_graph_layout'),

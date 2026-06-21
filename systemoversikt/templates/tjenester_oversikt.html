@@ -1,78 +1,205 @@
+{# 2026-06-21: Equal-width CSS grid tiles; component list removed – count only on card. #}
+{# 2026-06-21: Tile grid (3 per row) with keyword-based service icons – replaces table prototype. #}
 {% extends "system_index.html" %}
 {% load static %}
+{% load templatetags %}
 
 
 {% block underoverskrift %}
 	Tjenesteoversikt
 {% endblock underoverskrift %}
+
+{% block ekstrastyle %}
+<style nonce="{{ request.csp_nonce }}">
+.tjeneste-intro {
+	color: #555;
+	margin-bottom: 1.25rem;
+}
+
+.tjeneste-grid {
+	margin-top: 0.5rem;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1rem;
+}
+
+.tjeneste-grid__item {
+	min-width: 0;
+	display: flex;
+}
+
+.tjeneste-tile {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-height: 100%;
+	background: #fff;
+	border: 1px solid #e4e2ef;
+	border-radius: 14px;
+	overflow: hidden;
+	box-shadow: 0 2px 8px rgba(42, 40, 89, 0.06);
+	transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.tjeneste-tile:hover {
+	transform: translateY(-3px);
+	border-color: var(--tile-accent, #2A2859);
+	box-shadow: 0 8px 22px rgba(42, 40, 89, 0.12);
+}
+
+.tjeneste-tile__header {
+	display: flex;
+	align-items: center;
+	gap: 0.85rem;
+	padding: 1rem 1rem 0.85rem;
+	background: linear-gradient(135deg, var(--tile-accent, #2A2859) 0%, rgba(42, 40, 89, 0.82) 100%);
+	color: #fff;
+}
+
+.tjeneste-tile__icon {
+	flex: 0 0 56px;
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.14);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tjeneste-ikon-svg {
+	width: 38px;
+	height: 38px;
+	display: block;
+}
+
+.tjeneste-tile__title {
+	margin: 0;
+	font-size: 1.05rem;
+	font-weight: 600;
+	line-height: 1.25;
+	color: #fff;
+}
+
+.tjeneste-tile__title a.tjeneste-tile__name {
+	color: inherit;
+}
+
+.tjeneste-tile__title a.tjeneste-tile__name:hover {
+	color: #F9C66B;
+}
+
+.tjeneste-tile__edit {
+	font-size: 0.85rem;
+	opacity: 0.85;
+	margin-left: 0.25rem;
+}
+
+.tjeneste-tile__edit .edit_button {
+	color: #fff;
+}
+
+.tjeneste-tile__body {
+	padding: 0.9rem 1rem 1rem;
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
+}
+
+.tjeneste-tile__beskrivelse {
+	color: #444;
+	font-size: 0.92rem;
+	line-height: 1.45;
+	margin-bottom: 0.75rem;
+	min-height: 2.9rem;
+}
+
+.tjeneste-tile__meta {
+	margin-bottom: 0.75rem;
+}
+
+.tjeneste-tile__badge {
+	display: inline-block;
+	background: #f4f3fa;
+	color: #2A2859;
+	border: 1px solid #e0ddee;
+	border-radius: 999px;
+	padding: 0.15rem 0.55rem;
+	font-size: 0.78rem;
+	margin: 0 0.35rem 0.35rem 0;
+}
+
+.tjeneste-tile__badge--accent {
+	background: #fff4df;
+	border-color: #F9C66B;
+	color: #5a4200;
+}
+
+.tjeneste-tile__footer {
+	margin-top: auto;
+	padding-top: 0.5rem;
+	border-top: 1px solid #f0eef8;
+	font-size: 0.8rem;
+	color: #666;
+}
+</style>
+{% endblock ekstrastyle %}
+
 {% block main_content %}
 
-<p>Dette er første prototype av visning av et tjenestelag som overbygg på system(komponenter)</p>
+<p class="tjeneste-intro">
+	{{ tjenester|length }} tjenesteområder – et overbygg på systemkomponenter. Klikk på et kort for detaljer og økosystemkart.
+</p>
 
-<table class="table table-sm tablesorter excel">
-<thead>
-<tr>
-	<th>Tjenestenavn</th>
-	<th>Beskrivelse</th>
-	<th>Systemkomponenter</th>
-	<th>Eier</th>
-	<th>Forvalter</th>
-	<th>Beredskap</th>
-	<th>Informasjon</th>
-</tr>
-</thead>
-<tbody>
+<div class="tjeneste-grid">
 {% for t in tjenester %}
-<tr>
-	<td><a href="/admin/systemoversikt/tjeneste/{{ t.pk }}/change/">✎</a>{{ t.navn }}</td>
-	<td>
-		{{ t.beskrivelse|default:"-" }}
-	</td>
-	<td>
-	{% for s in t.systemer.all %}
-		<a href="/admin/systemoversikt/system/{{ s.pk }}/change/">✎ </a><a href="{% url 'systemdetaljer' pk=s.pk %}">{{ s }}</a><br>
-	{% endfor %}</td>
-	<td>
-	<b>Virksomhet</b>:
-	{% for v in t.tjenesteeier_virksomhet %}
-		<li>{{ v }}</li>
-	{% endfor %}
-	<b>Personer</b>:
-	{% for p in t.tjenesteeier_personer %}
-		<li>{{ p }}</li>
-	{% endfor %}
-	</td>
-	<td>
-	<b>Virksomhet</b>:
-	{% for v in t.tjenesteforvalter_virksomhet %}
-		<li>{{ v }}</li>
-	{% endfor %}
-	<b>Personer</b>:
-	{% for p in t.tjenesteforvalter_personer %}
-		<li>{{ p }}</li>
-	{% endfor %}
-	<b>E-post</b>:
-	{% for e in t.tjenesteforvalter_epost %}
-		<li>{{ e|default:"-" }}</li>
-	{% empty %}
-	{% endfor %}
-	<b>Organisert under</b>:
-	{% for o in t.tjenesteforvalter_organisasjonsledd %}
-		<li>{{ o }}</li>
-	{% endfor %}
-	</td>
-	<td>
-	{% for k in t.kritisk_kapabilitet %}
-		<li>{{ k }}</li>
-	{% endfor %}
-	<td>
-	{% for o in t.los_kommunale_ord %}
-		<li>{{ o }}</li>
-	{% endfor %}
-	</td>
-</tr>
+	<div class="tjeneste-grid__item">
+		<article class="tjeneste-tile" style="--tile-accent: {{ t.navn|tjeneste_ikon_farge }};">
+			<header class="tjeneste-tile__header">
+				<div class="tjeneste-tile__icon" aria-hidden="true">
+					{% tjeneste_ikon_svg t.navn %}
+				</div>
+				<h4 class="tjeneste-tile__title">
+					<a class="tjeneste-tile__name" href="{% url 'tjeneste_detaljer' pk=t.pk %}">{{ t.navn }}</a>
+					<a class="tjeneste-tile__edit" href="/admin/systemoversikt/tjeneste/{{ t.pk }}/change/" title="Rediger tjeneste">{% include 'site_edit_button.html' %}</a>
+				</h4>
+			</header>
+
+			<div class="tjeneste-tile__body">
+				<p class="tjeneste-tile__beskrivelse">
+					{{ t.beskrivelse|default:"Ingen beskrivelse registrert."|truncatechars:140 }}
+				</p>
+
+				<div class="tjeneste-tile__meta">
+					<span class="tjeneste-tile__badge tjeneste-tile__badge--accent">
+						{{ t.system_count }} systemkomponent{{ t.system_count|pluralize:"er" }}
+					</span>
+					{% for v in t.tjenesteeier_virksomhet %}
+						<span class="tjeneste-tile__badge" title="Tjenesteeier">{{ v.virksomhetsforkortelse|default:v }}</span>
+					{% endfor %}
+					{% for k in t.kritisk_kapabilitet %}
+						<span class="tjeneste-tile__badge" title="Beredskap">{{ k }}</span>
+					{% endfor %}
+				</div>
+
+				<div class="tjeneste-tile__footer">
+					{% with forvaltere=t.tjenesteforvalter_virksomhet %}
+						{% if forvaltere %}
+							Forvalter:
+							{% for v in forvaltere %}
+								{{ v.virksomhetsforkortelse|default:v }}{% if not forloop.last %}, {% endif %}
+							{% endfor %}
+						{% endif %}
+					{% endwith %}
+				</div>
+			</div>
+		</article>
+	</div>
+{% empty %}
+	<div class="tjeneste-grid__item" style="grid-column: 1 / -1;">
+		<p>Ingen tjenester er registrert ennå. <a href="/admin/systemoversikt/tjeneste/add/">Opprett den første</a>.</p>
+	</div>
 {% endfor %}
-</tbody>
-</table>
+</div>
 
 {% endblock main_content %}

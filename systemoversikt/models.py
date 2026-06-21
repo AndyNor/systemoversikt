@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: chart_service_component, chart_external_system – tjeneste ecosystem graph palette.
 # 2026-06-21: Removed PRKvalg, PRKgruppe, PRKskjema – PRK form import retired; AD groups hold access metadata.
 # 2026-06-21: Removed UBW module models/forms – feature retired, URLs already disabled.
 # 2026-06-21: Removed ProgramvareBruk.programvareleverandor – supplier belongs on Programvare only.
@@ -4283,6 +4284,8 @@ SYSTEM_COLORS = {
 	"chart_url": '#7B9FD6',
 	"chart_cmdb_bss": '#F2B26E',
 	"chart_cmdb_bs": '#DE9655',
+	"chart_service_component": '#2A2859',
+	"chart_external_system": '#9AAFC9',
 }
 
 
