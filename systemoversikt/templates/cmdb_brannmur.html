@@ -11,6 +11,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_banner.html" with label="Brannmurregler ble sist synkronisert" %}
+
 	<p>Fant {{ all_openings.count }} brannmurregler i databasen som passet med ditt søk.</p>
 
 	<form action="{% url 'cmdb_firewall' %}" autocomplete="off">

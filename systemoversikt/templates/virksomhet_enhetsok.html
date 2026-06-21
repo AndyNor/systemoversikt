@@ -8,11 +8,15 @@
 
 {% block hovedinnhold %}
 
+{% for integrasjonsstatus in integrasjonsstatus_list %}
+{% include "includes/integrasjon_freshness_line.html" %}
+{% endfor %}
+
 <p>Her finner du informasjon om organisering, brukeridenter og tilganger.</p>
 
-<p>Det er <b>{{ antall_aktive_brukere|intcomma }} aktive brukere</b> og <b>{{ antall_deaktive_brukere|intcomma }} inaktive</b> brukere i brukerkatelogen (AD). AD synkroniserer til Entra ID. Disse tallene kan avvike noe fra AD grunnet at de synkroniseres nattlig, og at Kartoteket ikke sletter brukere som er knyttet til en rolle før rollen er gitt til en ny person. Sistnevnte påvirker bare antall inaktive brukere.<br>
+<p>Det er <b>{{ antall_aktive_brukere|intcomma }} aktive brukere</b> og <b>{{ antall_deaktive_brukere|intcomma }} inaktive</b> brukere i brukerkatelogen (AD). AD synkroniserer til Entra ID. Disse tallene kan avvike noe fra AD grunnet synkroniseringsfrekvens, og at Kartoteket ikke sletter brukere som er knyttet til en rolle før rollen er gitt til en ny person. Sistnevnte påvirker bare antall inaktive brukere.<br>
 
-Det er <b>{{antall_organisasjonsledd|intcomma}}</b> organisasjonsledd. Data om organisatoriske enheter synkroniseres hver natt mot HR via grunndatabasen.<br>
+Det er <b>{{antall_organisasjonsledd|intcomma}}</b> organisasjonsledd.<br>
 Det er <b>{{antall_adgrupper|intcomma}}</b> tilgangsgrupper i AD.</p>
 
 

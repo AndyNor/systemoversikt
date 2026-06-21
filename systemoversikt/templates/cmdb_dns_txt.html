@@ -11,6 +11,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_line.html" with label="DNS-data ble sist synkronisert" %}
+
 	<p>Det er {{ txt_records.count }} txt-records i databasen.</p>
 
 	<hr>

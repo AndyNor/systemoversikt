@@ -11,6 +11,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_banner.html" with label="AD-brukere ble sist synkronisert" %}
+
 <p>Dette er en rapport med oversikt over alle kontoer som ikke er knyttet til en virksomhet. Dette er kontoer som per design ikke skal opprettes, men som trolig henger igjen fra da domenet ble opprettet.</p>
 
 Det er {{ identer|length }} slike kontoer i domenet.

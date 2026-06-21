@@ -11,6 +11,7 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_banner.html" with label="Sårbarheter ble sist synkronisert" %}
 
 <ol style="column-count: 3;">
 {% for unique_source in data.unique_source_no_server %}

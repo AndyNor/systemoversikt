@@ -11,6 +11,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_line.html" %}
+
 	<p>Her vises miljøer (offerings) som er satt deaktiv av Sopra Steria, men som fremdeles er koblet til en systemkomponent. Denne listen skal helst være tom.</p>
 
 	<a href="{% url 'cmdb_bs_disconnect' %}">Løskoble alle</a>

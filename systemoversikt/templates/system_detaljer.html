@@ -935,8 +935,7 @@
 	<div class="row">
 	{% if current_user_is_owner %}
 
-		<p style="background-color: {{ integrasjonsstatus.color }};">
-		Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}</p>
+		{% include "includes/integrasjon_freshness_line.html" with label="Sårbarheter ble sist synkronisert" %}
 
 		<div class="col-12">
 			Det ble funnet {{ total_number_vulns }} instanser av sårbarheter knyttet til dette systemet som er eldre enn 45 dager og med alvorlighetsgrad 4 eller 5. Sårbarhetene er fordelt på {{vulnerabilities|length}} unike sårbarheter.<br><i>(Denne oversikten vises kun for eiere og forvaltere)</i>

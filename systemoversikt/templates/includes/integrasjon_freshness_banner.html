@@ -1,0 +1,10 @@
+{# 2026-06-21: Reusable import freshness banner for source-dedicated overview pages. #}
+{% load humanize %}
+{% if integrasjonsstatus %}
+<p style="background-color: {{ integrasjonsstatus.color }};">
+	{% if label %}{{ label }}{% else %}{{ integrasjonsstatus.informasjon }} ble sist synkronisert{% endif %}
+	{{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}
+	({{ integrasjonsstatus.dato_sist_oppdatert|timesince }})
+	({{ integrasjonsstatus.script_navn }})
+</p>
+{% endif %}

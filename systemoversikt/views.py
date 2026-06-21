@@ -9,6 +9,7 @@
 # 2026-06-21: System dependency chart – layout save/lock endpoints and generer_graf_ny extraction.
 # 2026-06-21: System dependency graph – URL, CMDB BSS and parent BS nodes on system detail.
 # 2026-06-21: Removed phased-out virksomhet dashboard (template, view, URLs).
+# 2026-06-21: _integrasjonsstatus helpers – shared lookup for import freshness on source pages.
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core import serializers
@@ -45,6 +46,21 @@ from systemoversikt.leverandor_referanser import leverandor_referanse_statistikk
 ##########################
 # Fellesvariabler #
 ##########################
+
+
+def _integrasjonsstatus(kodeord):
+	try:
+		return IntegrasjonKonfigurasjon.objects.get(kodeord=kodeord)
+	except IntegrasjonKonfigurasjon.DoesNotExist:
+		return None
+
+
+def _integrasjonsstatus_flere(*kodeord):
+	return [s for k in kodeord if (s := _integrasjonsstatus(k))]
+
+
+def _integrasjonsstatus_auth_methods():
+	return _integrasjonsstatus("azure_ad_auth_methods_v2") or _integrasjonsstatus("azure_ad_auth_methods")
 
 
 def _azure_vulnstats_cache_ts_token(integrasjonsstatus):
@@ -1229,10 +1245,7 @@ def vulnstats_nettverk(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	data = {}
 	data["nettverksenheter"] = CMDBdevice.objects.filter(device_type="NETWORK")
@@ -1251,10 +1264,7 @@ def vulnstats_datakvalitet(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	data = {}
 	data["count_uten_server"] = QualysVuln.objects.filter(server=None).count()
@@ -1289,10 +1299,7 @@ def vulnstats(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	data = {}
 
@@ -1422,15 +1429,9 @@ def azure_vulnstats_qualys_compare(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("azure_vulnerabilities")
 
-	try:
-		integrasjonsstatus_qualys = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus_qualys = None
+	integrasjonsstatus_qualys = _integrasjonsstatus("sp_qualys")
 
 	cache_version = "v2"
 	azure_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
@@ -1457,10 +1458,7 @@ def azure_vulnstats(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("azure_vulnerabilities")
 
 	cache_version = "v16"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
@@ -1563,10 +1561,7 @@ def azure_vulnstats_product(request, vendor, product):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("azure_vulnerabilities")
 
 	# Device list pagination (AJAX-friendly; no new library needed)
 	try:
@@ -1708,10 +1703,7 @@ def azure_vulnstats_os(request, os):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("azure_vulnerabilities")
 
 	cache_version = "v6"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
@@ -1800,10 +1792,7 @@ def vulnstats_servere_uten_vuln(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	data = {}
 	data["servere_uten_vuln"] = CMDBdevice.objects.filter(device_type="SERVER").filter(qualys_vulnerabilities=None)
@@ -1822,10 +1811,7 @@ def vulnstats_all(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	data = {}
 	data["vulns"] = QualysVuln.objects.values('title', 'severity', 'ansvar_basisdrift').annotate(num_vulns=Count('title')).order_by('-num_vulns')
@@ -1843,10 +1829,7 @@ def vulnstats_search(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	search_term = request.GET.get("query", None)
 	vulns = QualysVuln.objects.filter(
@@ -1871,10 +1854,7 @@ def vulnstats_offerings(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	from collections import defaultdict
 	data = {}
@@ -1907,10 +1887,7 @@ def vulnstats_virksomhet(request, pk=None):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 
 	pk = int(pk)
@@ -1989,10 +1966,7 @@ def vulnstats_offering(request, pk=None):
 	if pk == "None":
 		pk = None
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	data = {}
 	if pk != None:
@@ -2016,10 +1990,7 @@ def vulnstats_severity_eol(request, severity):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	data = {}
 
@@ -2039,10 +2010,7 @@ def vulnstats_ukjente_servere(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	data = {}
 	data["unique_source_no_server"] = QualysVuln.objects.filter(server=None).values('source').annotate(count=Count('source')).order_by("source")
@@ -2062,10 +2030,7 @@ def vulnstats_severity_known_exploited_public(request, severity):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	antall = len(QualysVuln.objects.filter(known_exploited=True, public_facing=True, severity=severity))
 
@@ -2086,10 +2051,7 @@ def vulnstats_severity_known_exploited_public_not_current(request, severity):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	for_nytt = timezone.now() - datetime.timedelta(days=30)
 	antall = len(QualysVuln.objects.filter(known_exploited=True, public_facing=True, severity=severity, first_seen__lte=for_nytt))
@@ -2112,10 +2074,7 @@ def vulnstats_severity_known_exploited(request, severity):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	antall = len(QualysVuln.objects.filter(known_exploited=True, severity=severity))
 
@@ -2136,10 +2095,7 @@ def vulnstats_severity_known_exploited_not_current(request, severity):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 
 	for_nytt = timezone.now() - datetime.timedelta(days=30)
@@ -2164,10 +2120,7 @@ def vulnstats_severity(request, severity):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 
 	antall = len(QualysVuln.objects.filter(severity=severity))
@@ -2191,10 +2144,7 @@ def vulnstats_severity_not_current(request, severity):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	for_nytt = timezone.now() - datetime.timedelta(days=30)
 	antall = len(QualysVuln.objects.filter(severity=severity, first_seen__lte=for_nytt))
@@ -2219,10 +2169,7 @@ def vulnstats_whereis(request, vuln):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	data = {}
 
@@ -2581,6 +2528,7 @@ def cmdb_adcs_index(request):
 		"filelist": filelist_readable,
 		"selected_file": json.dumps(selected_file, indent=4),
 		"summary": summary,
+		'integrasjonsstatus': _integrasjonsstatus("ad_certificate_templates"),
 	})
 
 
@@ -2666,6 +2614,7 @@ def o365_avvik(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'statistikk': statistikk,
 		'virksomheter': alle_virskomhet,
+		'integrasjonsstatus': _integrasjonsstatus("ad_graph_sikkerhetsavvik"),
 	})
 
 
@@ -2717,11 +2666,13 @@ def azure_user_consents(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	userconsents = AzureUserConsents.objects.all()
+	integrasjonsstatus = _integrasjonsstatus("azure_enterprise_applications")
 
 	return render(request, 'rapport_azure_user_consents.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'userconsents': userconsents,
+		'integrasjonsstatus': integrasjonsstatus,
 	})
 
 
@@ -2732,11 +2683,13 @@ def rapport_conditional_access_rules(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	ca_regler_nyeste = EntraIDConditionalAccessPolicies.objects.latest()
+	integrasjonsstatus = _integrasjonsstatus("azure_ad_conditional_access")
 
 	return render(request, 'rapport_conditional_access_rules.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'ca_regler_nyeste': ca_regler_nyeste,
+		'integrasjonsstatus': integrasjonsstatus,
 	})
 
 
@@ -2748,11 +2701,14 @@ def rapport_conditional_access_changes(request):
 
 	antall_siste_endringer = 15
 	ca_regler_endringer = EntraIDConditionalAccessPolicies.objects.filter(modification=True).order_by('-timestamp')[:antall_siste_endringer]
+	integrasjonsstatus = _integrasjonsstatus("azure_ad_conditional_access")
 
 	return render(request, 'rapport_conditional_access_changes.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'ca_regler_endringer': ca_regler_endringer,
+		'antall_siste_endringer': antall_siste_endringer,
+		'integrasjonsstatus': integrasjonsstatus,
 	})
 
 
@@ -2890,10 +2846,7 @@ def azure_applications(request):
 			"has_more": has_more,
 		})
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_enterprise_applications")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("azure_enterprise_applications")
 
 	if not load_applications_async:
 		applikasjoner = _azure_applications_optimize_queryset(applikasjoner)
@@ -2953,6 +2906,7 @@ def azure_application_keys_expired(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'keys': keys,
 		'text_header': 'utgått',
+		'integrasjonsstatus': _integrasjonsstatus("azure_enterprise_applications"),
 	})
 
 
@@ -2971,6 +2925,7 @@ def azure_application_keys_soon(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'keys': keys,
 		'text_header': 'utløper snart',
+		'integrasjonsstatus': _integrasjonsstatus("azure_enterprise_applications"),
 	})
 
 
@@ -2988,6 +2943,7 @@ def azure_application_keys_active(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'keys': keys,
 		'text_header': 'aktive',
+		'integrasjonsstatus': _integrasjonsstatus("azure_enterprise_applications"),
 	})
 
 def rapport_startside(request):
@@ -3256,6 +3212,7 @@ def rapport_entra_id_auth(request):
 		'full_table': full_table,
 		'update_stats': update_stats,
 		'top_devices': top_devices,
+		'integrasjonsstatus': _integrasjonsstatus_auth_methods(),
 	})
 
 
@@ -3337,10 +3294,7 @@ def systemer_citrix(request):
 		s.tmp_desktop_groups = set(unike_desktop_groups)
 
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_citrix")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_citrix")
 
 	return render(request, 'systemer_citrix.html', {
 		'request': request,
@@ -3433,6 +3387,7 @@ def system_los_struktur(request, pk=None):
 		'required_permissions': formater_permissions(required_permissions),
 		'los_graf': los_graf,
 		'nodes': nodes,
+		'integrasjonsstatus': _integrasjonsstatus("los_begreper"),
 	})
 
 def citrix_desktop_group(request):
@@ -3448,6 +3403,7 @@ def citrix_desktop_group(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'citrix_desktop_group_members': citrix_desktop_group_members,
 		'group_name': group_name,
+		'integrasjonsstatus': _integrasjonsstatus("sp_citrix"),
 	})
 
 
@@ -3467,6 +3423,7 @@ def citrix_mappings(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'citrix_mappings': citrix_mappings,
+		'integrasjonsstatus': _integrasjonsstatus("sp_citrix"),
 	})
 
 
@@ -3494,10 +3451,7 @@ def alle_citrixpub_bruk(request, pk=None):
 
 	unike_siloer = CMDBdevice.objects.order_by().values('citrix_desktop_group').distinct()
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_citrix")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_citrix")
 
 	return render(request, 'cmdb_citrix_apps_bruk.html', {
 		'request': request,
@@ -3536,10 +3490,7 @@ def alle_citrixpub(request, pk=None):
 
 	unike_siloer = CMDBdevice.objects.order_by().values('citrix_desktop_group').distinct()
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_citrix")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_citrix")
 
 	return render(request, 'cmdb_citrix_apps.html', {
 		'request': request,
@@ -3565,6 +3516,7 @@ def alle_nettverksenheter(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'nettverksenehter': nettverksenehter,
+		'integrasjonsstatus': _integrasjonsstatus("sp_network_eq"),
 	})
 
 
@@ -3608,6 +3560,7 @@ def rapport_ad_identer(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'ad_brukere_per_virksomhet': ad_brukere_per_virksomhet,
+		'integrasjonsstatus': _integrasjonsstatus("ad_users"),
 	})
 
 
@@ -3696,6 +3649,7 @@ def detaljer_vip(request, pk):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'alle_viper': [vip],
+		'integrasjonsstatus': _integrasjonsstatus("sp_lastbalansering"),
 	})
 
 
@@ -3720,14 +3674,8 @@ def cmdb_devicedetails(request, pk):
 	azure_device_vulns_total = 0
 	cve_both_sources = frozenset()
 	if may_view_vulnerabilities:
-		try:
-			integrasjonsstatus_qualys = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-		except IntegrasjonKonfigurasjon.DoesNotExist:
-			pass
-		try:
-			integrasjonsstatus_azure = IntegrasjonKonfigurasjon.objects.get(kodeord="azure_vulnerabilities")
-		except IntegrasjonKonfigurasjon.DoesNotExist:
-			pass
+		integrasjonsstatus_qualys = _integrasjonsstatus("sp_qualys")
+		integrasjonsstatus_azure = _integrasjonsstatus("azure_vulnerabilities")
 		qualys_funn_total = device.qualys_vulnerabilities.count()
 		qualys_unique = set()
 		for cve_info in device.qualys_vulnerabilities.values_list("cve_info", flat=True):
@@ -3767,6 +3715,7 @@ def alle_dns(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'alle_dnsnavn': alle_dnsnavn,
+		'integrasjonsstatus': _integrasjonsstatus("sp_dns"),
 	})
 
 
@@ -3783,6 +3732,7 @@ def dns_txt(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'txt_records': txt_records,
+		'integrasjonsstatus': _integrasjonsstatus("sp_dns"),
 	})
 
 
@@ -3817,6 +3767,7 @@ def alle_vip(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'alle_viper': alle_viper,
 		'vip_search_term': search_term_raw,
+		'integrasjonsstatus': _integrasjonsstatus("sp_lastbalansering"),
 	})
 
 
@@ -3838,6 +3789,7 @@ def nettverk_detaljer(request, pk):
 		'network_ip_addresses': network_ip_addresses,
 		'firewall_openings': firewall_openings,
 		'config_maximum_mark_server': 100,
+		'integrasjonsstatus': _integrasjonsstatus("sp_network_eq"),
 	})
 
 
@@ -3887,6 +3839,7 @@ def alle_nettverk(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'alle_nettverk': nettverk,
 		'vlan_search_term': search_term_raw,
+		'integrasjonsstatus': _integrasjonsstatus("sp_network_eq"),
 	})
 
 
@@ -3902,6 +3855,7 @@ def cmdb_uten_backup(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'uten_backup': uten_backup,
+		'integrasjonsstatus': _integrasjonsstatus("sp_backup"),
 	})
 
 
@@ -4028,6 +3982,7 @@ def cmdb_backup_index(request):
 		'pct_kontroll': pct_kontroll,
 		'num_offerings_show': num_offerings_show,
 		'backup_uten_kobling': backup_uten_kobling,
+		'integrasjonsstatus': _integrasjonsstatus("sp_backup"),
 	})
 
 
@@ -4054,6 +4009,7 @@ def cmdb_lagring_index(request):
 		'count_san_missing_bs': count_san_missing_bs,
 		'count_not_active': count_not_active,
 		'bs_all': bs_all,
+		'integrasjonsstatus': _integrasjonsstatus("sp_server_disk"),
 
 	})
 
@@ -4081,6 +4037,7 @@ def cmdb_minne_index(request):
 		'count_ram_allocated': count_ram_allocated,
 		'count_ram_missing_bs': count_ram_missing_bs,
 		'bs_all': bs_all,
+		'integrasjonsstatus': _integrasjonsstatus("sp_server_disk"),
 
 	})
 
@@ -4162,6 +4119,7 @@ def ad_brukerlistesok(request):
 		'user_search_term': search_raw,
 		'users': users,
 		'not_users': not_users,
+		'integrasjonsstatus': _integrasjonsstatus("ad_users"),
 	})
 
 
@@ -4754,6 +4712,7 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 		'grupper_nettleserutvidelser': grupper_nettleserutvidelser,
 		'brukere_nettleserutvidelser': brukere_nettleserutvidelser,
 		'logging': logg,
+		'integrasjonsstatus': _integrasjonsstatus("ad_sye_tilganger"),
 	})
 
 
@@ -5784,10 +5743,7 @@ def systemdetaljer(request, pk):
 	if request.user.groups.filter(name='/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER').exists():
 		current_user_is_owner = True
 
-	try:
-		integrasjonsstatus = IntegrasjonKonfigurasjon.objects.get(kodeord="sp_qualys")
-	except:
-		integrasjonsstatus = None
+	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	vulnerabilities = list(system.vulnerabilities_old())
 	total_number_vulns = len(vulnerabilities)
@@ -6442,6 +6398,7 @@ def rapport_named_locations(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'color_table': color_table,
 		'color_table_display': color_table_display,
+		'integrasjonsstatus': _integrasjonsstatus("azure_named_locations"),
 	})
 
 
@@ -6893,6 +6850,7 @@ def virksomhet_enhetsok(request):
 		'antall_deaktive_brukere': antall_deaktive_brukere,
 		'antall_organisasjonsledd': antall_organisasjonsledd,
 		'antall_adgrupper': antall_adgrupper,
+		'integrasjonsstatus_list': _integrasjonsstatus_flere("grunndatabase_org", "ad_users"),
 	})
 
 
@@ -7055,6 +7013,7 @@ def rapport_trusted_delegation(request):
 		"request": request,
 		"required_permissions": required_permissions,
 		"brukere": brukere,
+		'integrasjonsstatus': _integrasjonsstatus("ad_users"),
 	})
 
 def alle_spn(request):
@@ -7077,6 +7036,7 @@ def alle_spn(request):
 		"request": request,
 		"required_permissions": required_permissions,
 		"brukere": brukere,
+		'integrasjonsstatus': _integrasjonsstatus("ad_users"),
 	})
 
 def tbrukere(request):
@@ -7122,6 +7082,7 @@ def rapport_servicekontoer(request):
 		"request": request,
 		"required_permissions": required_permissions,
 		"brukere": brukere,
+		'integrasjonsstatus': _integrasjonsstatus("ad_users"),
 	})
 
 
@@ -7137,6 +7098,7 @@ def rapport_ad_testbrukere(request):
 		"request": request,
 		"required_permissions": required_permissions,
 		"brukere": brukere,
+		'integrasjonsstatus': _integrasjonsstatus("ad_users"),
 	})
 
 
@@ -7154,6 +7116,7 @@ def rapport_ad_driftbrukere(request):
 		"request": request,
 		"required_permissions": required_permissions,
 		"brukere": brukere,
+		'integrasjonsstatus': _integrasjonsstatus("ad_drift_tilganger"),
 	})
 
 
@@ -7177,6 +7140,7 @@ def rapport_ad_ukjente_brukere(request):
 		"request": request,
 		"required_permissions": required_permissions,
 		"brukere": brukere,
+		'integrasjonsstatus': _integrasjonsstatus("ad_users"),
 	})
 
 
@@ -8743,6 +8707,7 @@ def rapport_ukjente_identer(request):
 	return render(request, 'rapport_ukjente_identer.html', {
 		'request': request,
 		'identer': identer,
+		'integrasjonsstatus': _integrasjonsstatus("ad_users"),
 	})
 
 
@@ -9501,6 +9466,7 @@ def rapport_ad_adgrupper(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'antall_adgr_tid': antall_adgr_tid,
+		'integrasjonsstatus': _integrasjonsstatus("ad_groups"),
 	})
 
 
@@ -9846,7 +9812,7 @@ def alle_klienter(request):
 		'alle_cmdb_klienter': alle_cmdb_klienter,
 		'maskiner_os_stats': maskiner_os_stats,
 		'maskiner_model_stats': maskiner_model_stats,
-
+		'integrasjonsstatus': _integrasjonsstatus("sp_klienter"),
 	})
 
 
@@ -9955,10 +9921,7 @@ def sikkerhet_device_code_logins(request):
 	history_combos = DeviceCodeSignInCombo.objects.filter(last_seen__gte=since_history)
 	history_rows = build_device_code_history_summary(history_combos)
 
-	try:
-		integrasjon = IntegrasjonKonfigurasjon.objects.get(kodeord="device_code_signins")
-	except IntegrasjonKonfigurasjon.DoesNotExist:
-		integrasjon = None
+	integrasjon = _integrasjonsstatus("device_code_signins")
 
 	return render(request, 'rapport_device_code_logins.html', {
 		'request': request,
@@ -9992,6 +9955,7 @@ def cmdb_internetteksponerte_servere(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'servere': servere,
+		'integrasjonsstatus': _integrasjonsstatus("sp_network_eq"),
 	})
 
 
@@ -10023,6 +9987,7 @@ def alle_servere(request):
 		'device_search_term': search_term,
 		'maskiner_stats': maskiner_stats,
 		'vis_detaljer': vis_detaljer,
+		'integrasjonsstatus': _integrasjonsstatus("sp_virtual_machines"),
 	})
 
 
@@ -10093,6 +10058,7 @@ def alle_databaser(request):
 		'databaser': databaser,
 		'search_term': search_term,
 		'databasestatistikk': databasestatistikk,
+		'integrasjonsstatus_list': _integrasjonsstatus_flere("sp_database_mssql", "sp_database_oracle"),
 	})
 
 
@@ -10109,6 +10075,7 @@ def alle_cmdbref(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'cmdbref': cmdbref,
+		'integrasjonsstatus': _integrasjonsstatus("sp_business_services"),
 	})
 
 
@@ -10158,6 +10125,7 @@ def cmdb_bs_detaljer(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'cmdbref': cmdbref,
 		'search_term': search_term,
+		'integrasjonsstatus': _integrasjonsstatus("sp_business_services"),
 	})
 
 def cmdb_servere_flere_offerings(request):
@@ -10175,6 +10143,7 @@ def cmdb_servere_flere_offerings(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'servere_flere_offerings': servere_flere_offerings,
 		'servere_flereennto_offerings': servere_flereennto_offerings,
+		'integrasjonsstatus': _integrasjonsstatus("sp_business_services"),
 	})
 
 
@@ -10198,6 +10167,7 @@ def cmdb_bs_aktuelle_ikke_koblet(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'system_uten_bs': system_uten_bs,
+		'integrasjonsstatus': _integrasjonsstatus("sp_business_services"),
 	})
 
 def cmdb_bs_skjult_relevant(request):
@@ -10219,6 +10189,7 @@ def cmdb_bs_skjult_relevant(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'skjult_server_db': skjult_server_db,
+		'integrasjonsstatus': _integrasjonsstatus("sp_business_services"),
 	})
 
 
@@ -10233,6 +10204,7 @@ def cmdb_bs_mangler_kobling(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'bs_uten_system': bs_uten_system,
+		'integrasjonsstatus': _integrasjonsstatus("sp_business_services"),
 	})
 
 
@@ -10257,6 +10229,7 @@ def cmdb_bs_koblet_ukjent_plattform(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'bs_utenfor_fip': bs_utenfor_fip,
+		'integrasjonsstatus': _integrasjonsstatus("sp_business_services"),
 	})
 
 def cmdb_bskobling_utfaset(request):
@@ -10270,6 +10243,7 @@ def cmdb_bskobling_utfaset(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'utfasede_bs': utfasede_bs,
+		'integrasjonsstatus': _integrasjonsstatus("sp_business_services"),
 	})
 
 
@@ -10357,6 +10331,7 @@ def cmdb_bss(request, pk):
 		'databaser': databaser,
 		'graf_data': graf_data,
 		'backup_inst': backup_inst,
+		'integrasjonsstatus': _integrasjonsstatus("sp_business_services"),
 	})
 
 
@@ -12118,6 +12093,7 @@ def cmdb_firewall(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'all_openings': firewall_openings,
 		'brannmur_search_term': search_term_raw,
+		'integrasjonsstatus': _integrasjonsstatus("sp_firewall"),
 	})
 
 

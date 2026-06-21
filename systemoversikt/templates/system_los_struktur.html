@@ -18,6 +18,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_banner.html" with label="LOS-begreper ble sist synkronisert" %}
+
 	<p>Klikk på boblene for flere nivåer. <a href="{% url 'system_los_struktur_indeks' %}" class="btn btn-sm btn-link ">Tilbake til oversikt</a></p>
 
 	<div id="cy" style="width: 100%; height: 1000px;"></div>

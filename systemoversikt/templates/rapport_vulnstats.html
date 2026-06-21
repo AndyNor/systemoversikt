@@ -15,8 +15,7 @@
 
 {% block hovedinnhold %}
 
-<p style="background-color: {{ integrasjonsstatus.color }};">
-Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}}) ({{integrasjonsstatus.script_navn}})</p>
+{% include "includes/integrasjon_freshness_banner.html" with label="Sårbarheter ble sist synkronisert" %}
 
 Dataene kommer fra Qualys i en rapport som genereres annen hver uke. Rapporten må lastes ned manuelt og legges over på <a target="_blank" href="https://oslokommune.sharepoint.com/sites/74722">Kartotekets filområde</a>.
 

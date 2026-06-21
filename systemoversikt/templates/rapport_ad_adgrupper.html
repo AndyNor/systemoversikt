@@ -14,6 +14,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_banner.html" with label="AD-grupper ble sist synkronisert" %}
+
 	{% url 'ad_analyse' as url_ad_analyse %}
 	<a href="{{ url_ad_analyse }}?antall=0" class="btn btn-sm btn-link {% if url_ad_analyse in request.path %}fremhev{% endif %}">Tomme sikkerhetsgrupper</a>
 

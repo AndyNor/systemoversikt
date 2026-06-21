@@ -11,6 +11,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_banner.html" with label="Backup-data ble sist synkronisert" %}
+
 <h6>{{ uten_backup|length }} servere uten backup fordelt på Business Service</h6>
 <table class="table table-sm tablesorter excel">
 	<thead>

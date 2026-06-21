@@ -12,16 +12,11 @@
 	Defender matches vertsnavn mot <code>comp_name</code> (kort navn eller FQDN som starter med «comp_name.»).
 	Windows 10- og 11-klienter er utelatt fra Defender-tallene.
 </p>
-{% if integrasjonsstatus_qualys or integrasjonsstatus %}
-<p class="small mb-2">
-	{% if integrasjonsstatus_qualys %}
-	Qualys sist synkronisert {{ integrasjonsstatus_qualys.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}.
-	{% endif %}
-	{% if integrasjonsstatus_qualys and integrasjonsstatus %} · {% endif %}
-	{% if integrasjonsstatus %}
-	Defender sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}.
-	{% endif %}
-</p>
+{% if integrasjonsstatus_qualys %}
+{% include "includes/integrasjon_freshness_banner.html" with integrasjonsstatus=integrasjonsstatus_qualys label="Qualys sist synkronisert" %}
+{% endif %}
+{% if integrasjonsstatus %}
+{% include "includes/integrasjon_freshness_banner.html" with label="Defender sist synkronisert" %}
 {% endif %}
 
 {% with fleet=data.fleet summary=data.summary %}

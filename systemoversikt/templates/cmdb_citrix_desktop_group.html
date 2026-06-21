@@ -11,6 +11,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_line.html" with label="Citrix-data ble sist synkronisert" %}
+
 	{% for server in citrix_desktop_group_members %}
 	<li>{{ server }} -
 		{% for ip in server.network_ip_address.all %}

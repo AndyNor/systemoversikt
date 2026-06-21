@@ -12,8 +12,7 @@
 
 {% block hovedinnhold %}
 
-<p>
-Sårbarheter ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}}) ({{integrasjonsstatus.script_navn}})</p>
+{% include "includes/integrasjon_freshness_banner.html" with label="Sårbarheter ble sist synkronisert" %}
 
 <a class="btn btn-sm btn-primary" href="{% url 'azure_vulnstats' %}">Tilbake til oversikt</a>
 

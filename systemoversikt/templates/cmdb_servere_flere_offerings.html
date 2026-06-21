@@ -11,7 +11,9 @@
 
 {% block hovedinnhold %}
 
-	<p>Importen av disse dataene skjer automatisk hver natt. Det er <b>{{servere_flere_offerings|length}}</b> servere koblet til flere service offerings, hvorav <b>{{servere_flereennto_offerings|length}}</b> har flere enn to koblinger.</p>
+{% include "includes/integrasjon_freshness_line.html" with label="Business services ble sist synkronisert" %}
+
+	<p>Det er <b>{{servere_flere_offerings|length}}</b> servere koblet til flere service offerings, hvorav <b>{{servere_flereennto_offerings|length}}</b> har flere enn to koblinger.</p>
 
 	<table class="table">
 	<thead>

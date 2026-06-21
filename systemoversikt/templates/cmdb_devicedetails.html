@@ -159,9 +159,7 @@
 		<div class="col-lg-6 pr-lg-3">
 			<h6>Qualys</h6>
 			{% if integrasjonsstatus_qualys %}
-			<p class="small mb-2" style="background-color: {{ integrasjonsstatus_qualys.color }};">
-				Sist synkronisert {{ integrasjonsstatus_qualys.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}
-			</p>
+			{% include "includes/integrasjon_freshness_line.html" with integrasjonsstatus=integrasjonsstatus_qualys %}
 			{% endif %}
 			<p class="small text-muted mb-2">
 				{{ qualys_cve_ids|length }} unike CVE (parsert fra cve_info på {{ qualys_funn_total }} Qualys-funn).
@@ -179,9 +177,7 @@
 		<div class="col-lg-6 pl-lg-3 mt-4 mt-lg-0">
 			<h6>Azure Defender</h6>
 			{% if integrasjonsstatus_azure %}
-			<p class="small mb-2" style="background-color: {{ integrasjonsstatus_azure.color }};">
-				Sist synkronisert {{ integrasjonsstatus_azure.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}
-			</p>
+			{% include "includes/integrasjon_freshness_line.html" with integrasjonsstatus=integrasjonsstatus_azure %}
 			{% endif %}
 			<p class="small text-muted mb-2">
 				{{ azure_cve_ids|length }} unike CVE

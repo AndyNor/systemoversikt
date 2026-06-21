@@ -34,9 +34,7 @@
 
 	<h5>Historikk (siste {{ history_dager }} dager)</h5>
 	<p>Aggregert fra nattlig synkronisering mot Graph. Sanntidsdata fra Graph vises lenger ned på siden.</p>
-	{% if integrasjon and integrasjon.dato_sist_oppdatert %}
-		<p><em>Sist synkronisert: {{ integrasjon.dato_sist_oppdatert|date:"d.m.Y H:i" }}.</em></p>
-	{% endif %}
+	{% include "includes/integrasjon_freshness_line.html" with integrasjonsstatus=integrasjon label="Sist synkronisert:" %}
 
 	{% if history_rows %}
 		<p>Fant {{ history_rows|length|intcomma }} brukere med device code-innlogginger i perioden.</p>

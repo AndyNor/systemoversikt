@@ -11,6 +11,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_banner.html" with label="Nettverksdata ble sist synkronisert" %}
+
 <p>Nettverksdata fra Infoblox. Her kan du finne detaljer på nettverkssegmenter. Dataene oppdateres ved manuell import</p>
 
 	<form action="{% url 'alle_nettverk' %}" autocomplete="off">

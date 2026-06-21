@@ -11,7 +11,9 @@
 
 {% block hovedinnhold %}
 
-<p>Merk at disse listene har en del unntak som ikke vises. Disse er knyttet til automatikk hvor det ikke er nyttig å se nøklene. I tillegg har vi valgt å ikke vise AsymmetricX509Cert for bruksområdet Verify. Disse er i all hovedsak servere. Det er {{keys.count}} treff på nøkler/sertifikater på denne siden.<br>Data synkroniseres mot Azure Graph-API hver natt.<br>Du kan koble systemer til applikasjoner fra systemredigeringssiden.</p>
+{% include "includes/integrasjon_freshness_banner.html" with label="Applikasjonsnøkler ble sist synkronisert" %}
+
+<p>Merk at disse listene har en del unntak som ikke vises. Disse er knyttet til automatikk hvor det ikke er nyttig å se nøklene. I tillegg har vi valgt å ikke vise AsymmetricX509Cert for bruksområdet Verify. Disse er i all hovedsak servere. Det er {{keys.count}} treff på nøkler/sertifikater på denne siden.<br>Du kan koble systemer til applikasjoner fra systemredigeringssiden.</p>
 
 	<table class="table table-sm tablesorter excel">
 	<thead>

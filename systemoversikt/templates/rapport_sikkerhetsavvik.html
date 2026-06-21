@@ -15,6 +15,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_banner.html" with label="Sikkerhetsavvik-statistikk ble sist oppdatert" %}
+
 <p>Her vises utvalgte statistikker på sikkerhetsavvik knyttet til enkeltpersoner og servicekontoer. Nye grupper legges inn via <a href="/admin/systemoversikt/rapportgruppemedlemskaper/">Admin: rapport gruppemedlem</a>. Antall personer er unike brukerkontoer i Kartoteket med medlemskap i angitte grupper (inkl. nestede grupper).</p>
 
 <hr>

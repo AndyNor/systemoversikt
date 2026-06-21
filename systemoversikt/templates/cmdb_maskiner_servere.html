@@ -11,7 +11,9 @@
 
 {% block hovedinnhold %}
 
-	<p>Servere importeres fra Sopra Sterias CMDB automatisk hver natt. Sopra Steria knytter servere til business sub services. Servere oppdages og oppdateres med auto-discovery som samler inn IP-adresse, operativsystem, samt informasjon om disk, minne og cpu.</p>
+	{% include "includes/integrasjon_freshness_banner.html" with label="Servere ble sist synkronisert" %}
+
+
 
 	<p>Gå til <a href="{{url_maskin_sok}}" class="btn btn-sm btn-link {% if url_maskin_sok in request.path %}fremhev{% endif %}">Massesøk på servere</a> dersom du ønsker å søke på mange servere samtidig</p>
 

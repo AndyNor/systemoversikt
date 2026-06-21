@@ -12,8 +12,7 @@
 {% block hovedinnhold %}
 
 
-<p style="background-color: {{ integrasjonsstatus.color }};">
-Service principals fra Entra ID ble sist synkronisert {{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }} ({{integrasjonsstatus.dato_sist_oppdatert|timesince}}) ({{integrasjonsstatus.script_navn}})</p>
+{% include "includes/integrasjon_freshness_banner.html" with label="Service principals fra Entra ID ble sist synkronisert" %}
 
 	<form action="" autocomplete="off">
 		<div class="form-group form-inline">

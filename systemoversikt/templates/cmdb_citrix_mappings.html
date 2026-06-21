@@ -11,6 +11,8 @@
 
 {% block hovedinnhold %}
 
+{% include "includes/integrasjon_freshness_line.html" with label="Citrix-data ble sist synkronisert" %}
+
 <pre style="height: 450px; word-wrap: break-word; white-space: pre-wrap;">{{ citrix_mappings }}</pre>
 
 {% endblock hovedinnhold %}

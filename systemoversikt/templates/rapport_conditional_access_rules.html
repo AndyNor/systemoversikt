@@ -9,7 +9,9 @@
 
 {% block hovedinnhold %}
 
-<p>Denne rapporten viser gjeldende Conditional Access-regler i felles Azure-tenant. Regler oppdateres hver natt.</p>
+{% include "includes/integrasjon_freshness_banner.html" with label="Conditional Access-regler ble sist synkronisert" %}
+
+<p>Denne rapporten viser gjeldende Conditional Access-regler i felles Azure-tenant.</p>
 
 <h5>CA-regler nå (sist synkronisering)</h5>
 <table class="table tablesorter">

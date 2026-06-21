@@ -21,6 +21,8 @@
 
 {% block hovedinnhold %}
 
+	{% include "includes/integrasjon_freshness_banner.html" with label="Business services ble sist synkronisert" %}
+
 	Tilhører service offering <a href="{% url 'cmdb_bs_detaljer' %}?search_term={{cmdbref.0.parent_ref.navn}}">{{ cmdbref.0.parent_ref.navn }}</a>
 	<hr>
 	<h6>Beskrivelse fra Sopra Steria CMDB:</h6>
