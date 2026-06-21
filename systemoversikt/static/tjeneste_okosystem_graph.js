@@ -1,3 +1,4 @@
+// 2026-06-21: Draggable virksomhet compound boxes – move grouped systems together.
 // 2026-06-21: Draggable nodes without persistence – autoungrabify false.
 // 2026-06-21: Tjeneste detail ecosystem chart – separate from system_systemavhengigheter_graph.js.
 
@@ -108,9 +109,12 @@
             'background-color': 'data(color)',
             'padding': 14,
             'compound-sizing-wrt-labels': 'exclude',
-            'events': 'no',
             'font-size': '12px',
             'font-weight': 'bold',
+            'cursor': 'grab',
+            'text-valign': 'top',
+            'text-halign': 'center',
+            'text-margin-y': -6,
           },
         },
       ],
@@ -145,7 +149,7 @@
     }
 
     cy.on('tap', 'node', function () {
-      if (suppressNodeTap) {
+      if (suppressNodeTap || this.isParent()) {
         return;
       }
       navigateFromElement(this);
@@ -161,7 +165,7 @@
     document.getElementById(BTN_RESET)
       ?.addEventListener('click', () => {
         cy.startBatch();
-        cy.nodes(':childless').forEach(n => n.removeData('position'));
+        cy.nodes().forEach(n => n.removeData('position'));
         cy.zoom(1);
         cy.pan({ x: 0, y: 0 });
         cy.endBatch();
