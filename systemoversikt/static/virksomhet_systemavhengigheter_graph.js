@@ -1,4 +1,5 @@
 // Change log:
+// 2026-06-21: Disable fcose layout animation on initial render and reset.
 // 2026-06-08: Extracted from virksomhet_detaljer – dedicated page for dependency graph rendering.
 
 (function () {
@@ -95,6 +96,7 @@
             name: 'fcose',
             fit: true,
             packComponents: true,
+            animate: false,
             animationDuration: 0,
             idealEdgeLength: 100,
             quality: 'proof',
@@ -309,6 +311,7 @@
           name: 'fcose',
           fit: false,
           packComponents: true,
+          animate: false,
           animationDuration: 0,
           idealEdgeLength: 100,
           quality: 'proof',

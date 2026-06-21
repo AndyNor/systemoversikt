@@ -220,10 +220,13 @@ urlpatterns = [
 	re_path(r'^virksomhet/alle_avtaler/$', views.alle_avtaler, name='alle_avtaler'),
 	re_path(r'^virksomhet/kontaktinfo/$', views.alle_virksomheter_kontaktinfo, name='alle_virksomheter_kontaktinfo'),
 	re_path(r'^virksomhet/alle/$', views.alle_virksomheter, name='alle_virksomheter_sidemeny'),
+	# 2026-06-21: Added system_plattform and systembruk_forvalter figur routes.
 	# 2026-06-08: Graph/figur routes before virksomhet/<pk>/ – specific paths must match first.
 	re_path(r'^virksomhet/graph_layout/(?P<pk>\d{1,8})/$', views.virksomhet_save_graph_layout, name='virksomhet_save_graph_layout'),
 	re_path(r'^virksomhet/graph_lock/(?P<pk>\d{1,8})/$', views.virksomhet_toggle_graph_lock, name='virksomhet_toggle_graph_lock'),
 	re_path(r'^virksomhet/figur/system_seksjon/(?P<pk>\d{1,8})/$', views.virksomhet_figur_system_seksjon, name='virksomhet_figur_system_seksjon'),
+	re_path(r'^virksomhet/figur/system_plattform/(?P<pk>\d{1,8})/$', views.virksomhet_figur_system_plattform, name='virksomhet_figur_system_plattform'),
+	re_path(r'^virksomhet/figur/systembruk_forvalter/(?P<pk>\d{1,8})/$', views.virksomhet_figur_systembruk_forvalter, name='virksomhet_figur_systembruk_forvalter'),
 	re_path(r'^virksomhet/figur/system_avhengigheter/(?P<pk>\d{1,8})/$', views.virksomhet_figur_system_avhengigheter, name='virksomhet_figur_system_avhengigheter'),
 	re_path(r'^virksomhet/(?P<pk>\d{1,8})/rediger-roller/$', views.virksomhet_rediger_roller, name='virksomhet_rediger_roller'),
 	re_path(r'^virksomhet/(?P<pk>\d{1,8})/ansvarlig-sok/$', views.virksomhet_ansvarlig_sok, name='virksomhet_ansvarlig_sok'),

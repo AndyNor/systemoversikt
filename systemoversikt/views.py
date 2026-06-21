@@ -7534,6 +7534,23 @@ def systemer_virksomhet_ansvarlig_for_fip(request, pk):
 	})
 
 
+def _forvalter_systemer_queryset(pk, kilde="alle"):
+	# 2026-06-21: Shared queryset for virksomhet forvalter-system figur charts (seksjon + plattform).
+	base_qs = (System.objects.filter(systemforvalter=pk)
+					.filter(~Q(livslop_status__in=[6,7]))
+					.order_by('systemnavn'))
+
+	if kilde == "tjenester":
+		return base_qs.exclude(
+			Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True)
+		)
+	if kilde == "infrastruktur":
+		return base_qs.filter(
+			Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True)
+		)
+	return base_qs
+
+
 def _collect_system_graph_data(pk, kilde="alle"):
 	# 2026-06-08: Combined tjenester+infrastruktur chart; 🛠️ prefix + light red marks infrastructure on kilde=alle.
 	infra_chart_color = SYSTEM_COLORS['infrastruktur_chart']
@@ -7563,20 +7580,7 @@ def _collect_system_graph_data(pk, kilde="alle"):
 		parents.append('Ukjent')
 		return 'Ukjent'
 
-	base_qs = (System.objects.filter(systemforvalter=pk)
-					.filter(~Q(livslop_status__in=[6,7]))
-					.order_by('systemnavn'))
-
-	if kilde == "tjenester":
-		relevante_systemer = base_qs.exclude(
-			Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True)
-		)
-	elif kilde == "infrastruktur":
-		relevante_systemer = base_qs.filter(
-			Q(systemtyper__er_infrastruktur=True) | Q(systemtyper__er_integrasjon=True)
-		)
-	else:
-		relevante_systemer = base_qs
+	relevante_systemer = _forvalter_systemer_queryset(pk, kilde)
 
 	for system in relevante_systemer:
 		if system.er_ibruk():
@@ -7622,6 +7626,120 @@ def _collect_system_graph_data(pk, kilde="alle"):
 	return nodes
 
 
+def _collect_system_graph_data_by_plattform(pk, kilde="alle"):
+	# 2026-06-21: Forvalter-systemer grouped by driftsplattform – no dependency edges.
+	infra_chart_color = SYSTEM_COLORS['infrastruktur_chart']
+	nodes = []
+	observerte_driftsmodeller = set()
+	har_ukjent_plattform = False
+	drift_gruppe_color = "#F1F9FF"
+
+	def systemnavn_forkortet(system, mark_infrastruktur=False):
+		prefix = '🛠️ ' if mark_infrastruktur else ''
+		maximum = 20
+		navn = system.systemnavn
+		if len(navn) > maximum:
+			navn = navn[:maximum]
+		return prefix + navn
+
+	def system_plattform_parent(system):
+		nonlocal har_ukjent_plattform
+		if system.driftsmodell_foreignkey is not None:
+			observerte_driftsmodeller.add(system.driftsmodell_foreignkey)
+			return f"drift_{system.driftsmodell_foreignkey.pk}"
+		har_ukjent_plattform = True
+		return "Ukjent"
+
+	relevante_systemer = _forvalter_systemer_queryset(pk, kilde)
+
+	for system in relevante_systemer:
+		if system.er_ibruk():
+			mark_infrastruktur = kilde == "alle" and (system.er_infrastruktur() or system.er_integrasjon())
+			nodes.append({
+				'data': {
+					'id': system.pk,
+					'name': systemnavn_forkortet(system, mark_infrastruktur=mark_infrastruktur),
+					'parent': system_plattform_parent(system),
+					'shape': 'rectangle',
+					'color': infra_chart_color if mark_infrastruktur else system.color(),
+					'href': f'/systemer/detaljer/{system.pk}/',
+				}
+			})
+
+	for driftsmodell in observerte_driftsmodeller:
+		if driftsmodell is not None:
+			if driftsmodell.overordnet_plattform:
+				nodes.append({'data': {
+					'id': f"drift_{driftsmodell.pk}",
+					'name': driftsmodell.navn,
+					'parent': f"drift_{driftsmodell.overordnet_plattform.pk}",
+					'shape': 'rectangle',
+					'color': drift_gruppe_color,
+				}})
+				nodes.append({'data': {
+					'id': f"drift_{driftsmodell.overordnet_plattform.pk}",
+					'name': driftsmodell.overordnet_plattform.navn,
+					'shape': 'rectangle',
+					'color': drift_gruppe_color,
+				}})
+			else:
+				nodes.append({'data': {
+					'id': f"drift_{driftsmodell.pk}",
+					'name': driftsmodell.navn,
+					'shape': 'rectangle',
+					'color': drift_gruppe_color,
+				}})
+
+	if har_ukjent_plattform:
+		nodes.append({'data': {'id': 'Ukjent', 'name': 'Ukjent', 'color': 'white', 'shape': 'rectangle'}})
+
+	return nodes
+
+
+def _collect_systembruk_graph_data_by_forvalter(pk):
+	# 2026-06-21: Active systembruk grouped flat by organisatorisk systemforvalter.
+	nodes = []
+	forvaltere = set()
+
+	def systemnavn_forkortet(system):
+		maximum = 20
+		navn = system.systemnavn
+		if len(navn) > maximum:
+			navn = navn[:maximum]
+		return navn
+
+	all_systembruk = (SystemBruk.objects.filter(brukergruppe=pk, ibruk=True)
+		.exclude(system__livslop_status__in=[6, 7])
+		.select_related('system', 'system__systemforvalter', 'system__driftsmodell_foreignkey')
+		.order_by(Lower('system__systemnavn')))
+
+	for bruk in all_systembruk:
+		system = bruk.system
+		forvalter = system.systemforvalter
+		forvaltere.add(forvalter)
+		nodes.append({
+			'data': {
+				'id': system.pk,
+				'name': systemnavn_forkortet(system),
+				'parent': f"vir_{forvalter.pk}",
+				'shape': 'rectangle',
+				'color': system.color(),
+				'href': f'/systemer/detaljer/{system.pk}/',
+			}
+		})
+
+	for forvalter in forvaltere:
+		nodes.append({
+			'data': {
+				'id': f"vir_{forvalter.pk}",
+				'name': forvalter.virksomhetsnavn,
+				'color': 'white',
+				'shape': 'rectangle',
+			}
+		})
+
+	return nodes
+
 
 def virksomhet_figur_system_seksjon(request, pk):
 	required_permissions = ['systemoversikt.view_system']
@@ -7639,6 +7757,44 @@ def virksomhet_figur_system_seksjon(request, pk):
 		'nodes': _collect_system_graph_data(pk, kilde=kilde),
 		'system_colors': SYSTEM_COLORS,
 		'kilde': kilde,
+	})
+
+
+def virksomhet_figur_system_plattform(request, pk):
+	# 2026-06-21: Dedicated plattform grouping chart for forvalter-systemer.
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	kilde = request.GET.get('kilde', 'alle')
+	from systemoversikt.models import SYSTEM_COLORS
+
+	return render(request, 'virksomhet_figur_system_plattform.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': virksomhet,
+		'nodes': _collect_system_graph_data_by_plattform(pk, kilde=kilde),
+		'system_colors': SYSTEM_COLORS,
+		'kilde': kilde,
+	})
+
+
+def virksomhet_figur_systembruk_forvalter(request, pk):
+	# 2026-06-21: Active systembruk grouped by organisatorisk systemforvalter.
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	virksomhet = Virksomhet.objects.get(pk=pk)
+	from systemoversikt.models import SYSTEM_COLORS
+
+	return render(request, 'virksomhet_figur_systembruk_forvalter.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomhet': virksomhet,
+		'nodes': _collect_systembruk_graph_data_by_forvalter(pk),
+		'system_colors': SYSTEM_COLORS,
 	})
 
 

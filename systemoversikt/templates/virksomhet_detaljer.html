@@ -169,10 +169,11 @@
 
 
 	{# 2026-06-08: System figure links side by side; org/roles moved to page bottom. #}
+	{# 2026-06-21: Four figur links in one row (seksjon, plattform, avhengigheter, systembruk). #}
 
 	<div class="row">
 
-		<div class="col-sm-6">
+		<div class="col-sm-3">
 
 			<h6>Systemansvar fordelt på seksjoner</h6>
 
@@ -180,11 +181,27 @@
 
 		</div>
 
-		<div class="col-sm-6">
+		<div class="col-sm-3">
+
+			<h6>Systemansvar fordelt på plattform</h6>
+
+			<a href="{% url 'virksomhet_figur_system_plattform' pk=virksomhet.pk %}" class="btn btn-primary btn-sm">Åpne i større vindu</a>
+
+		</div>
+
+		<div class="col-sm-3">
 
 			<h6>Systemavhengigheter for våre systemer</h6>
 
 			<a href="{% url 'virksomhet_figur_system_avhengigheter' pk=virksomhet.pk %}" class="btn btn-primary btn-sm">Åpne i større vindu</a>
+
+		</div>
+
+		<div class="col-sm-3">
+
+			<h6>Vår systembruk fordelt på ansvarlig virksomhet</h6>
+
+			<a href="{% url 'virksomhet_figur_systembruk_forvalter' pk=virksomhet.pk %}" class="btn btn-primary btn-sm">Åpne i større vindu</a>
 
 		</div>
 
