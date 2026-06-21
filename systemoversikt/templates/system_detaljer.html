@@ -14,6 +14,8 @@
 	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-svg.js@0.4.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'system_systemavhengigheter_graph.js' %}" nonce="{{request.csp_nonce}}"></script>
 
 {% endblock ekstrajavascript %}
 
@@ -364,15 +366,27 @@
 	<br><hr>
 	<h3 style="scroll-margin-top: 150px;" id="anchor_systemav">Systemavhengigheter</h3>
 
-	<span style="height: 15px; width: 15px; background-color: #C63D3D; border-radius: 50%; display: inline-block;"></span>Valgt system
-	<span style="height: 15px; width: 15px; background-color: #A6B4F3; border-radius: 50%; display: inline-block;"></span>Integrasjon
-	<span style="height: 15px; width: 15px; background-color: #DCA7A7; border-radius: 50%; display: inline-block;"></span>Autentisering
-	<span style="height: 15px; width: 15px; background-color: #A7BD64; border-radius: 50%; display: inline-block;"></span>Publisering
-	<span style="height: 15px; width: 15px; background-color: #C6C6C6; border-radius: 50%; display: inline-block;"></span>Systemkomponent
+	<span style="height: 15px; width: 15px; background-color: {{ system_colors.chart_current_system }}; border-radius: 50%; display: inline-block;"></span>Valgt system
+	<span style="height: 15px; width: 15px; background-color: {{ system_colors.chart_integration }}; border-radius: 50%; display: inline-block;"></span>Integrasjon
+	<span style="height: 15px; width: 15px; background-color: {{ system_colors.chart_authentication }}; border-radius: 50%; display: inline-block;"></span>Autentisering
+	<span style="height: 15px; width: 15px; background-color: {{ system_colors.chart_publication }}; border-radius: 50%; display: inline-block;"></span>Publisering
+	<span style="height: 15px; width: 15px; background-color: {{ system_colors.chart_component }}; border-radius: 50%; display: inline-block;"></span>Systemkomponent
+	<span style="height: 15px; width: 15px; background-color: {{ system_colors.chart_url }}; border-radius: 50%; display: inline-block;"></span>URL
+	<span style="height: 15px; width: 15px; background-color: {{ system_colors.chart_cmdb_bss }}; border-radius: 50%; display: inline-block;"></span>Service offering (BSS)
+	<span style="height: 15px; width: 15px; background-color: {{ system_colors.chart_cmdb_bs }}; border-radius: 50%; display: inline-block;"></span>Business service (BS)
+
+	<p>Systemforvaltere og superbrukere kan flytte rundt på nodene i grafen og nye lokasjoner vil bli lagret for alle. Du {% if save_rettigheter %} har {% else %} har <b>ikke</b> {% endif %} nødvendige rettigheter.</p>
 
 	<div id="cy_ny" style="background-color: #FCFCFC; border: 1px solid #d6d4d4; width: 100%; height: {{avhengigheter_chart_size_ny}}px;"></div>
 	{% if avhengigheter_graf_ny.nodes|length < 2 %}
 		<p>Ingen avhengigheter registrert</p>
+	{% endif %}
+
+	<br>
+	<button id="btn-system-avhengigheter-graph-reset" class="btn btn-sm btn-outline-secondary">Tilbakestill visning</button>
+	<button id="btn-system-avhengigheter-download-svg" class="btn btn-success btn-sm">Last ned SVG</button>
+	{% if save_rettigheter %}
+	<button id="btn-system-avhengigheter-graph-lock" class="btn btn-sm"></button>
 	{% endif %}
 
 	<br>
@@ -1164,82 +1178,29 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
+{{ avhengigheter_graf_ny|json_script:"systemdetaljer_graphElements" }}
+{% if saved_layout_json %}{{ saved_layout_json|json_script:"systemdetaljer_savedLayoutData" }}{% endif %}
+
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
-	var cy_ny = cytoscape({
-		zoomingEnabled: true,
-		panningEnabled: true,
-		wheelSensitivity: 0.1,
-		container: document.getElementById('cy_ny'),
-		elements: {
-			nodes: [
-				{% for node in avhengigheter_graf_ny.nodes %} {{ node|safe }},
-				{% endfor %}
-			],
-			edges: [
-				{% for edge in avhengigheter_graf_ny.edges %} {{ edge|safe }},
-				{% endfor %}
-			],
-		},
-		style: [
-			{
-				selector: 'node',
-				style: {
-					'shape': 'data(shape)',
-					'background-color': 'data(color)',
-					'label': 'data(name)',
-					'font-size': '11px',
-				},
-			},
-			{
-				selector: 'node:selected',
-				style: {
-				},
-			},
-			{
-				selector: 'edge',
-				style: {
-					'target-arrow-shape': 'triangle',
-					'curve-style': 'bezier',
-					'line-style': 'data(linestyle)',
-					'line-color': 'data(linecolor)',
-					'target-arrow-color': 'data(linecolor)',
-					'curve-style': 'bezier',
-					'width': 'data(linewidth)',
-					'target-distance-from-node': 15,
-					'source-distance-from-node': 25,
-				},
-			},
-			{
-				selector: 'edge:selected',
-				style: {
-				},
-			},
-			{
-				selector: ':parent',
-				style: {
-					'label': 'data(name)',
-					'line-style': "solid",
-					'background-color': '#F1F9FF',
-				}
-			},
-		],
-		layout: {
-			name: 'fcose',
-			animationDuration: 0, //ms
-			idealEdgeLength: 300,
-		},
-	});
-	cy_ny.on('tap', 'node', function(){
-		if (this.data('href')) {
-			try { // your browser may block popups
-				window.open( this.data('href'), "_self" );
-			} catch(e){ // fall back on url change
-				window.location.href = this.data('href');
-			}
-		}
-	});
-	cy_ny.zoomingEnabled = false
+document.addEventListener('DOMContentLoaded', function () {
+	const graphData = JSON.parse(
+		document.getElementById('systemdetaljer_graphElements').textContent
+	);
+	const savedLayoutEl = document.getElementById('systemdetaljer_savedLayoutData');
+	const savedLayout = savedLayoutEl ? JSON.parse(savedLayoutEl.textContent) : null;
 
-
+	window.initSystemAvhengigheterGraph({
+		csrf: "{{ csrf_js_token|default:'' }}",
+		urlSave: "{% url 'system_save_graph_layout' systemdetaljer.pk %}?follow_count={{ follow_count }}",
+		urlToggleLock: "{% url 'system_toggle_graph_lock' systemdetaljer.pk %}",
+		systemPk: {{ systemdetaljer.pk }},
+		canSave: {{ save_rettigheter|yesno:"true,false" }},
+		graphElements: {
+			nodes: graphData.nodes || [],
+			edges: graphData.edges || [],
+		},
+		savedLayout: savedLayout,
+	});
+});
 </script>
 {% endblock script_append %}

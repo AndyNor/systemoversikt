@@ -1832,6 +1832,13 @@ class GraphLayoutAdmin(admin.ModelAdmin):
 	list_display = ('virksomhet', 'zoom', 'pan_x', 'pan_y', 'updated_at')
 
 
+@admin.register(SystemGraphLayout)
+class SystemGraphLayoutAdmin(admin.ModelAdmin):
+	list_display = ('system', 'zoom', 'pan_x', 'pan_y', 'locked', 'updated_at')
+	list_filter = ('locked',)
+	search_fields = ('system__systemnavn',)
+
+
 @admin.register(CVE)
 class CVEAdmin(admin.ModelAdmin):
 	list_display = (

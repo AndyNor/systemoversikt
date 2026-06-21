@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Pass system_colors to systemdetaljer – legend matches dependency chart palette.
+# 2026-06-21: System dependency chart – layout save/lock endpoints and generer_graf_ny extraction.
+# 2026-06-21: System dependency graph – URL, CMDB BSS and parent BS nodes on system detail.
 # 2026-06-21: Removed phased-out virksomhet dashboard (template, view, URLs).
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -24,6 +27,7 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.contenttypes.models import ContentType
 from django.conf import settings
 from django.urls import reverse
+from django.utils.http import urlencode
 from django.db import transaction
 import ipaddress
 import os, datetime, json, re, time, struct, hashlib
@@ -5669,6 +5673,183 @@ def tjenester_oversikt(request):
 	})
 
 
+def generer_graf_ny(system, follow_count):
+	avhengigheter_graf = {"nodes": [], "edges": []}
+	observerte_driftsmodeller = set()
+	first_round = True
+	observerte_systemer = set()
+	behandlede_systemer = set()
+	aktivt_nivaa_systemer = set()
+	neste_nivaa = set()
+
+	def parent(system):
+		if system.driftsmodell_foreignkey is not None:
+			return f"drift_{system.driftsmodell_foreignkey.pk}"
+		return "Ukjent"
+
+	aktivt_nivaa_systemer.add(system)
+	observerte_systemer.add(system)
+
+	def avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa):
+		for aktuelt_system in aktivt_nivaa_systemer:
+			avhengigheter_graf["nodes"].append({"data": {
+				"id": aktuelt_system.pk,
+				"parent": parent(aktuelt_system),
+				"name": aktuelt_system.systemnavn,
+				"shape": "ellipse",
+				"color": SYSTEM_COLORS["chart_current_system"]
+			}})
+			observerte_driftsmodeller.add(aktuelt_system.driftsmodell_foreignkey)
+
+			for s in aktuelt_system.system_integration_source.all():
+				integrasjon = s
+				s = s.destination_system
+				if s not in observerte_systemer:
+					neste_nivaa.add(s)
+					observerte_systemer.add(s)
+				if s not in behandlede_systemer:
+					avhengigheter_graf["nodes"].append({"data": {
+						"id": s.pk,
+						"parent": parent(s),
+						"name": s.systemnavn,
+						"shape": "ellipse",
+						"color": integrasjon.color(),
+						"href": reverse('systemdetaljer', args=[s.pk])
+					}})
+					avhengigheter_graf["edges"].append({"data": {
+						"source": aktuelt_system.pk,
+						"target": s.pk,
+						'linewidth': 2,
+						'curve-style': 'bezier',
+						"linecolor": integrasjon.color(),
+						"linestyle": "solid"
+					}})
+					observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+
+			if first_round:
+				for s in aktuelt_system.system_integration_destination.all():
+					integrasjon = s
+					s = s.source_system
+					if s not in observerte_systemer:
+						neste_nivaa.add(s)
+						observerte_systemer.add(s)
+					if s not in behandlede_systemer:
+						avhengigheter_graf["nodes"].append({"data": {
+							"id": s.pk,
+							"parent": parent(s),
+							"name": s.systemnavn,
+							"shape": "ellipse",
+							"color": integrasjon.color(),
+							"href": reverse('systemdetaljer', args=[s.pk])
+						}})
+						avhengigheter_graf["edges"].append({"data": {
+							"source": s.pk,
+							"target": aktuelt_system.pk,
+							'linewidth': 1,
+							'curve-style': 'bezier',
+							"linecolor": integrasjon.color(),
+							"linestyle": "dashed"
+						}})
+						observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+
+			behandlede_systemer.add(aktuelt_system)
+
+		aktivt_nivaa_systemer = neste_nivaa
+		neste_nivaa = set()
+		return aktivt_nivaa_systemer, neste_nivaa
+
+	aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
+	first_round = False
+	remaining_follow = follow_count
+	while remaining_follow > 0 and aktivt_nivaa_systemer:
+		aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
+		remaining_follow -= 1
+
+	drift_gruppe_shape = "roundrectangle"
+	drift_gruppe_color = "#F1F9FF"
+	for driftsmodell in observerte_driftsmodeller:
+		if driftsmodell is not None:
+			if driftsmodell.overordnet_plattform:
+				avhengigheter_graf["nodes"].append({"data": {
+					"id": f"drift_{driftsmodell.pk}",
+					"name": driftsmodell.navn,
+					"parent": f"drift_{driftsmodell.overordnet_plattform.pk}",
+					"shape": drift_gruppe_shape,
+					"color": drift_gruppe_color,
+				}})
+				avhengigheter_graf["nodes"].append({"data": {
+					"id": f"drift_{driftsmodell.overordnet_plattform.pk}",
+					"name": driftsmodell.overordnet_plattform.navn,
+					"shape": drift_gruppe_shape,
+					"color": drift_gruppe_color,
+				}})
+			else:
+				avhengigheter_graf["nodes"].append({"data": {
+					"id": f"drift_{driftsmodell.pk}",
+					"name": driftsmodell.navn,
+					"shape": drift_gruppe_shape,
+					"color": drift_gruppe_color,
+				}})
+
+	url_color = SYSTEM_COLORS["chart_url"]
+	bss_color = SYSTEM_COLORS["chart_cmdb_bss"]
+	bs_color = SYSTEM_COLORS["chart_cmdb_bs"]
+	observerte_cmdb_bs = set()
+
+	def graf_node_navn(tekst, maximum=40):
+		if len(tekst) > maximum:
+			return tekst[:maximum] + "…"
+		return tekst
+
+	def graf_kant(kilde, mal, farge):
+		avhengigheter_graf["edges"].append({"data": {
+			"source": kilde,
+			"target": mal,
+			"linewidth": 1,
+			"curve-style": "bezier",
+			"linecolor": farge,
+			"linestyle": "dotted",
+		}})
+
+	for url in system.systemurl.all():
+		node_id = f"url_{url.pk}"
+		avhengigheter_graf["nodes"].append({"data": {
+			"id": node_id,
+			"name": graf_node_navn(url.domene),
+			"shape": "round-rectangle",
+			"color": url_color,
+			"href": url.domene,
+		}})
+		graf_kant(system.pk, node_id, url_color)
+
+	for bss in system.service_offerings.select_related("parent_ref").all():
+		bss_node_id = f"bss_{bss.pk}"
+		avhengigheter_graf["nodes"].append({"data": {
+			"id": bss_node_id,
+			"name": graf_node_navn(bss.navn),
+			"shape": "diamond",
+			"color": bss_color,
+			"href": reverse("cmdb_bss", args=[bss.pk]),
+		}})
+		graf_kant(system.pk, bss_node_id, bss_color)
+
+		bs = bss.parent_ref
+		if bs is not None and bs.pk not in observerte_cmdb_bs:
+			observerte_cmdb_bs.add(bs.pk)
+			bs_node_id = f"bs_{bs.pk}"
+			avhengigheter_graf["nodes"].append({"data": {
+				"id": bs_node_id,
+				"name": graf_node_navn(bs.navn),
+				"shape": "hexagon",
+				"color": bs_color,
+				"href": f"{reverse('cmdb_bs_detaljer')}?{urlencode({'search_term': bs.navn})}",
+			}})
+		if bs is not None:
+			graf_kant(bss_node_id, f"bs_{bs.pk}", bs_color)
+
+	return avhengigheter_graf
+
+
 def systemdetaljer(request, pk):
 	#Viser detaljer om et system
 	#Tilgangsstyring: Merk at noen informasjonselementer er begrenset i template
@@ -5679,112 +5860,6 @@ def systemdetaljer(request, pk):
 	system = System.objects.get(pk=pk)
 
 	follow_count = int(request.GET.get("follow_count", 0))
-
-	def generer_graf_ny(system, follow_count):
-		avhengigheter_graf = {"nodes": [], "edges": []}
-		observerte_driftsmodeller = set()
-		first_round = True
-		follow_count = follow_count
-		observerte_systemer = set()
-		behandlede_systemer = set()
-		aktivt_nivaa_systemer = set()  # aktiv runde
-		neste_nivaa = set() # neste runde (nye ting vi ser i aktiv runde)
-
-		def parent(system):
-			if system.driftsmodell_foreignkey is not None:
-				return f"drift_{system.driftsmodell_foreignkey.pk}"
-			else:
-				return "Ukjent"
-
-		def systemfarge(self):
-			if self.er_infrastruktur():
-				return "gray"
-			else:
-				return "#dca85a"
-
-		# initielt oppsett, registrere dette systemet som en node
-		aktivt_nivaa_systemer.add(system)
-		observerte_systemer.add(system)
-
-		def avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa):
-			for aktuelt_system in aktivt_nivaa_systemer:
-
-				avhengigheter_graf["nodes"].append({"data": {
-							"id": aktuelt_system.pk,
-							"parent": parent(aktuelt_system),
-							"name": aktuelt_system.systemnavn,
-							"shape": "ellipse",
-							"color": "#C63D3D"
-						}},)
-				observerte_driftsmodeller.add(aktuelt_system.driftsmodell_foreignkey)
-
-				for s in aktuelt_system.system_integration_source.all():
-					integrasjon = s
-					s = s.destination_system
-					if s not in observerte_systemer:
-						neste_nivaa.add(s)
-						observerte_systemer.add(s)
-					if s not in behandlede_systemer:
-						avhengigheter_graf["nodes"].append({"data": { "id": s.pk, "parent": parent(s), "name": s.systemnavn, "shape": "ellipse", "color": integrasjon.color(), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-						avhengigheter_graf["edges"].append({"data": { "source": aktuelt_system.pk, "target": s.pk, 'linewidth': 2, 'curve-style': 'bezier', "linecolor": integrasjon.color(), "linestyle": "solid" }},)
-						observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
-
-				if first_round:
-					for s in aktuelt_system.system_integration_destination.all():
-						integrasjon = s
-						s = s.source_system
-						if s not in observerte_systemer:
-							neste_nivaa.add(s)
-							observerte_systemer.add(s)
-						if s not in behandlede_systemer:
-							avhengigheter_graf["nodes"].append({"data": { "id": s.pk, "parent": parent(s), "name": s.systemnavn, "shape": "ellipse", "color": integrasjon.color(), "href": reverse('systemdetaljer', args=[s.pk]) }},)
-							avhengigheter_graf["edges"].append({"data": { "source": s.pk, "target": aktuelt_system.pk, 'linewidth': 1, 'curve-style': 'bezier', "linecolor": integrasjon.color(), "linestyle": "dashed" }},)
-							observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
-
-				behandlede_systemer.add(aktuelt_system)
-
-			# legger neste nivås systemer inn i gjendende nivå, klar for neste runde
-			aktivt_nivaa_systemer = neste_nivaa
-			neste_nivaa = set()
-
-			return aktivt_nivaa_systemer, neste_nivaa
-
-		aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
-		first_round = False
-		while follow_count > 0 and aktivt_nivaa_systemer: # det må være noen systemer å gå igjennom..
-			aktivt_nivaa_systemer, neste_nivaa = avhengighetsrunde(aktivt_nivaa_systemer, neste_nivaa)
-			follow_count-=1
-
-		# legge til alle driftsmodeller som ble funnet (shape/color kreves av cytoscape data()-mapping på alle noder)
-		drift_gruppe_shape = "roundrectangle"
-		drift_gruppe_color = "#F1F9FF"
-		for driftsmodell in observerte_driftsmodeller:
-			if driftsmodell is not None:
-				if driftsmodell.overordnet_plattform:
-					avhengigheter_graf["nodes"].append({"data": {
-						"id": f"drift_{driftsmodell.pk}",
-						"name": driftsmodell.navn,
-						"parent": f"drift_{driftsmodell.overordnet_plattform.pk}",
-						"shape": drift_gruppe_shape,
-						"color": drift_gruppe_color,
-					}},)
-					avhengigheter_graf["nodes"].append({"data": {
-						"id": f"drift_{driftsmodell.overordnet_plattform.pk}",
-						"name": driftsmodell.overordnet_plattform.navn,
-						"shape": drift_gruppe_shape,
-						"color": drift_gruppe_color,
-					}},)
-				else:
-					avhengigheter_graf["nodes"].append({"data": {
-						"id": f"drift_{driftsmodell.pk}",
-						"name": driftsmodell.navn,
-						"shape": drift_gruppe_shape,
-						"color": drift_gruppe_color,
-					}},)
-
-		return avhengigheter_graf
-
-
 
 	siste_endringer_antall = 10
 	system_content_type = ContentType.objects.get_for_model(system)
@@ -5805,6 +5880,11 @@ def systemdetaljer(request, pk):
 	avhengigheter_reverse_systemer = System.objects.filter(avhengigheter_referanser=pk)
 
 	avhengigheter_graf_ny = generer_graf_ny(system, follow_count)
+
+	from django.middleware.csrf import get_token
+	saved_layout_json = _system_graph_layout_context(system)
+	csrf_js_token = get_token(request)
+	save_rettigheter = _user_can_save_system_graph_layout(request.user, system)
 
 	citrix_apps = system.citrix_publications.all()
 	for app in citrix_apps:
@@ -5873,8 +5953,12 @@ def systemdetaljer(request, pk):
 		'siste_endringer': siste_endringer,
 		'siste_endringer_antall': siste_endringer_antall,
 		'avhengigheter_graf_ny': avhengigheter_graf_ny,
+		'system_colors': SYSTEM_COLORS,
 		'follow_count': follow_count,
 		'avhengigheter_chart_size_ny': 300 + len(avhengigheter_graf_ny["nodes"])*20,
+		'saved_layout_json': saved_layout_json,
+		'csrf_js_token': csrf_js_token,
+		'save_rettigheter': save_rettigheter,
 		'citrix_apps': citrix_apps,
 		'current_user_is_owner': current_user_is_owner,
 		'integrasjonsstatus': integrasjonsstatus,
@@ -8380,6 +8464,182 @@ def virksomhet_save_graph_layout(request, pk):
 	print(response)
 	
 	return JsonResponse(response, status=201 if created else 200)
+
+
+REQUIRED_PERMISSIONS_SAVE_GRAPH_SYSTEM = ['systemoversikt.change_system']
+
+GRAPH_LAYOUT_MAX_POSITIONS = 500
+GRAPH_LAYOUT_COORD_BOUND = 50000
+GRAPH_LAYOUT_PAN_BOUND = 100000
+GRAPH_LAYOUT_ZOOM_MIN = 0.02
+GRAPH_LAYOUT_ZOOM_MAX = 8
+GRAPH_LAYOUT_MAX_FOLLOW_COUNT = 20
+
+
+def _finite_float(value):
+	try:
+		number = float(value)
+	except (TypeError, ValueError):
+		return None
+	if number != number or number in (float('inf'), float('-inf')):
+		return None
+	return number
+
+
+def _user_can_save_system_graph_layout(user, system):
+	if any(map(user.has_perm, REQUIRED_PERMISSIONS_SAVE_GRAPH_SYSTEM)):
+		return True
+	forvalter_usernames = {
+		ansvarlig.brukernavn.username
+		for ansvarlig in system.systemforvalter_kontaktpersoner_referanse.all()
+	}
+	return user.username in forvalter_usernames
+
+
+def _system_graph_layout_context(system):
+	try:
+		layout = SystemGraphLayout.objects.get(system=system)
+		return {
+			"positions": layout.positions_json,
+			"zoom": layout.zoom,
+			"pan": {"x": layout.pan_x, "y": layout.pan_y},
+			"locked": layout.locked,
+		}
+	except SystemGraphLayout.DoesNotExist:
+		return None
+
+
+def _system_graph_node_ids(graf):
+	node_ids = set()
+	for node in graf.get("nodes", []):
+		data = node.get("data", {})
+		node_id = data.get("id")
+		if node_id is not None:
+			node_ids.add(str(node_id))
+	return node_ids
+
+
+def _sanitize_system_graph_layout_payload(data, allowed_node_ids):
+	if not isinstance(data, dict):
+		return None, "Ugyldig JSON"
+
+	extra_keys = set(data.keys()) - {"positions", "zoom", "pan"}
+	if extra_keys:
+		return None, "Ugyldige felt i forespørselen"
+
+	positions = data.get("positions")
+	if not isinstance(positions, dict):
+		return None, "positions må være et objekt"
+	if len(positions) > GRAPH_LAYOUT_MAX_POSITIONS:
+		return None, "For mange noder i layout"
+
+	clean_positions = {}
+	for key, value in positions.items():
+		key_str = str(key)
+		if key_str not in allowed_node_ids:
+			continue
+		if not isinstance(value, dict):
+			return None, "Ugyldig posisjon"
+		x = _finite_float(value.get("x"))
+		y = _finite_float(value.get("y"))
+		if x is None or y is None:
+			return None, "Ugyldige koordinater"
+		if not (-GRAPH_LAYOUT_COORD_BOUND <= x <= GRAPH_LAYOUT_COORD_BOUND):
+			return None, "Koordinat utenfor tillatt område"
+		if not (-GRAPH_LAYOUT_COORD_BOUND <= y <= GRAPH_LAYOUT_COORD_BOUND):
+			return None, "Koordinat utenfor tillatt område"
+		clean_positions[key_str] = {"x": x, "y": y}
+
+	zoom = _finite_float(data.get("zoom", 1.0))
+	if zoom is None:
+		return None, "Ugyldig zoom"
+	zoom = min(GRAPH_LAYOUT_ZOOM_MAX, max(GRAPH_LAYOUT_ZOOM_MIN, zoom))
+
+	pan = data.get("pan") or {}
+	if not isinstance(pan, dict):
+		return None, "Ugyldig pan"
+	pan_x = _finite_float(pan.get("x", 0.0))
+	pan_y = _finite_float(pan.get("y", 0.0))
+	if pan_x is None or pan_y is None:
+		return None, "Ugyldig pan"
+	pan_x = min(GRAPH_LAYOUT_PAN_BOUND, max(-GRAPH_LAYOUT_PAN_BOUND, pan_x))
+	pan_y = min(GRAPH_LAYOUT_PAN_BOUND, max(-GRAPH_LAYOUT_PAN_BOUND, pan_y))
+
+	return {
+		"positions": clean_positions,
+		"zoom": zoom,
+		"pan_x": pan_x,
+		"pan_y": pan_y,
+	}, None
+
+
+@require_POST
+def system_toggle_graph_lock(request, pk):
+	system = get_object_or_404(System, pk=pk)
+	if not _user_can_save_system_graph_layout(request.user, system):
+		return HttpResponseForbidden(
+			f'Manglende brukertilganger. Krever systemforvalter for dette systemet eller {REQUIRED_PERMISSIONS_SAVE_GRAPH_SYSTEM}.'
+		)
+
+	try:
+		body = json.loads(request.body)
+	except json.JSONDecodeError:
+		return JsonResponse({"ok": False, "error": "Invalid JSON"}, status=400)
+
+	if not isinstance(body, dict) or set(body.keys()) - {"locked"}:
+		return JsonResponse({"ok": False, "error": "Ugyldig forespørsel"}, status=400)
+
+	layout, _created = SystemGraphLayout.objects.get_or_create(system=system)
+	layout.locked = bool(body.get("locked"))
+	layout.save(update_fields=["locked", "updated_at"])
+
+	return JsonResponse({"ok": True, "locked": layout.locked})
+
+
+@require_POST
+def system_save_graph_layout(request, pk):
+	system = get_object_or_404(System, pk=pk)
+	if not _user_can_save_system_graph_layout(request.user, system):
+		return HttpResponseForbidden(
+			f'Manglende brukertilganger. Krever systemforvalter for dette systemet eller {REQUIRED_PERMISSIONS_SAVE_GRAPH_SYSTEM}.'
+		)
+
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+	except json.JSONDecodeError:
+		return HttpResponseBadRequest('Ugyldig JSON')
+
+	try:
+		follow_count = int(request.GET.get("follow_count", 0))
+	except (TypeError, ValueError):
+		return HttpResponseBadRequest('Ugyldig follow_count')
+	follow_count = max(0, min(follow_count, GRAPH_LAYOUT_MAX_FOLLOW_COUNT))
+
+	graf = generer_graf_ny(system, follow_count)
+	allowed_node_ids = _system_graph_node_ids(graf)
+	sanitized, error = _sanitize_system_graph_layout_payload(data, allowed_node_ids)
+	if sanitized is None:
+		return HttpResponseBadRequest(error)
+
+	layout, created = SystemGraphLayout.objects.get_or_create(system=system)
+	if layout.locked:
+		return JsonResponse({"ok": False, "error": "Layout is locked"}, status=423)
+
+	layout.positions_json = sanitized["positions"]
+	layout.zoom = sanitized["zoom"]
+	layout.pan_x = sanitized["pan_x"]
+	layout.pan_y = sanitized["pan_y"]
+	layout.save()
+
+	return JsonResponse({
+		'ok': True,
+		'created': created,
+		'locked': layout.locked,
+		'nodes': len(sanitized["positions"]),
+		'zoom': layout.zoom,
+		'pan': {'x': layout.pan_x, 'y': layout.pan_y},
+		'updated_at': layout.updated_at.isoformat(),
+	}, status=201 if created else 200)
 
 
 

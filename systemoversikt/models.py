@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Softer chart palette; component uses muted lavender instead of cyan.
+# 2026-06-21: SystemGraphLayout model – per-system dependency chart layout persistence.
+# 2026-06-21: chart_url, chart_cmdb_bss, chart_cmdb_bs colors for system dependency graph.
 # 2026-06-08: User-facing UKE labels on Virksomhet/System fields renamed to DIG.
 # 2026-06-08: VirksomhetRollerForm – edit sentrale roller from virksomhet detail page.
 # 2026-06-08: Swapped ukjent (light red) and infrastruktur_chart (light gray) in SYSTEM_COLORS.
@@ -4523,6 +4526,14 @@ SYSTEM_COLORS = {
 	"infrastruktur_chart": '#E0E0E0',
 	"integrasjon": '#b189bb',
 	"egenutviklet": '#e3b27f',
+	"chart_current_system": '#D97070',
+	"chart_integration": '#72A872',
+	"chart_authentication": '#C988C4',
+	"chart_publication": '#DCC468',
+	"chart_component": '#A39ABB',
+	"chart_url": '#7B9FD6',
+	"chart_cmdb_bss": '#F2B26E',
+	"chart_cmdb_bs": '#DE9655',
 }
 
 
@@ -4600,13 +4611,13 @@ class SystemIntegration(models.Model):
 
 	def color(self):
 		if self.integration_type == "INTEGRATION":
-			return "#A6B4F3"
+			return SYSTEM_COLORS["chart_integration"]
 		if self.integration_type == "AUTHENTICATION":
-			return "#DCA7A7"
+			return SYSTEM_COLORS["chart_authentication"]
 		if self.integration_type == "PUBLICATION":
-			return "#A7BD64"
+			return SYSTEM_COLORS["chart_publication"]
 		if self.integration_type == "COMPONENT":
-			return "#C6C6C6"
+			return SYSTEM_COLORS["chart_component"]
 
 		return "black"
 
@@ -8579,6 +8590,27 @@ class GraphLayout(models.Model):
 
 	class Meta:
 		verbose_name_plural = "Visualisering: Graphlayouts"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class SystemGraphLayout(models.Model):
+	system = models.OneToOneField(
+			System,
+			on_delete=models.CASCADE,
+			related_name='graph_layout',
+			)
+	positions_json = models.JSONField(null=True, blank=True)
+	zoom = models.FloatField(default=1)
+	pan_x = models.FloatField(default=0)
+	pan_y = models.FloatField(default=0)
+	updated_at = models.DateTimeField(auto_now=True)
+	locked = models.BooleanField(default=False)
+
+	def __str__(self):
+		return f"Layout for system {self.system_id}"
+
+	class Meta:
+		verbose_name_plural = "Visualisering: System graph layouts"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
