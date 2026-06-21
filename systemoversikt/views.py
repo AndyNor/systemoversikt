@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-21: Removed phased-out virksomhet dashboard (template, view, URLs).
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core import serializers
@@ -3014,6 +3016,26 @@ def rapport_startside(request):
 
 
 
+def _systemer_forsomt_queryset(oppdatert_siden=365, minimum_oppdateringer=3):
+	# 2026-06-21: Shared queryset for forsømte systemer (report + home chart).
+	tidsgrense = timezone.now() - datetime.timedelta(days=oppdatert_siden)
+	systemer_oppdatert_nylig = (
+		System.objects.filter(sist_oppdatert__lte=tidsgrense)
+		.filter(~Q(driftsmodell_foreignkey__id=11))
+		.filter(~Q(livslop_status__in=[1, 7]))
+	)
+	systemer_ukjent_livslop = systemer_oppdatert_nylig.filter(livslop_status__in=[None, 8])
+	systemer_ukjent_systemforvalter = systemer_oppdatert_nylig.filter(
+		Q(systemforvalter=None) | Q(systemforvalter__ordinar_virksomhet=False)
+	)
+	combined_queryset = systemer_ukjent_livslop | systemer_ukjent_systemforvalter
+	for s in combined_queryset:
+		s.antall_oppdateringer = s.antall_oppdateringer()
+		if s.antall_oppdateringer >= minimum_oppdateringer:
+			combined_queryset = combined_queryset.exclude(pk=s.pk)
+	return combined_queryset
+
+
 def rapport_systemer_forsomt(request):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -3022,20 +3044,7 @@ def rapport_systemer_forsomt(request):
 
 	oppdatert_siden = 365 # dager
 	minimum_oppdateringer = 3 # ganger
-
-	tidsgrense = timezone.now() - datetime.timedelta(days=oppdatert_siden)
-
-	systemer_oppdatert_nylig = System.objects.filter(sist_oppdatert__lte=tidsgrense).filter(~Q(driftsmodell_foreignkey__id=11)).filter(~Q(livslop_status__in=[1, 7])) # under innføring, avviklet
-
-	systemer_ukjent_livslop = systemer_oppdatert_nylig.filter(livslop_status__in=[None, 8])
-	systemer_ukjent_systemforvalter = systemer_oppdatert_nylig.filter(Q(systemforvalter=None) | Q(systemforvalter__ordinar_virksomhet=False))
-
-	combined_queryset = systemer_ukjent_livslop | systemer_ukjent_systemforvalter
-
-	for s in combined_queryset:
-		s.antall_oppdateringer = s.antall_oppdateringer()
-		if s.antall_oppdateringer >= minimum_oppdateringer:
-			combined_queryset = combined_queryset.exclude(pk=s.pk)
+	combined_queryset = _systemer_forsomt_queryset(oppdatert_siden, minimum_oppdateringer)
 
 
 	return render(request, 'rapport_systemer_forsomt.html', {
@@ -4796,196 +4805,6 @@ def minside(request):
 
 
 
-def dashboard_all(request, virksomhet=None):
-	# UTFASET
-	#Generere virksomhets dashboard med statistikk over systmemer
-	required_permissions = ['systemoversikt.view_system']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	try:
-		virksomhet = Virksomhet.objects.get(pk=virksomhet)
-	except:
-		raise Http404("Virksomhet med angitt ID finnes ikke.")
-
-	alle_virksomheter = Virksomhet.objects.all()
-
-	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
-	systemer_eier = System.objects.filter(systemeier=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
-	systemer_forvalter = System.objects.filter(systemforvalter=virksomhet).filter(~Q(ibruk=False)).order_by('systemnavn')
-	systemer_felles = System.objects.filter(systemeierskapsmodell="FELLESSYSTEM").filter(~Q(ibruk=False)).order_by('systemnavn')
-
-	alle_relevante_behandlinger = behandlingsprotokoll(virksomhet)
-
-	systemer_behandler_i = []
-	for behandling in alle_relevante_behandlinger:
-		for system in behandling.systemer.all():
-			if system not in systemer_behandler_i:
-				systemer_behandler_i.append(system.pk)
-	systemer_behandler_i = System.objects.filter(pk__in=systemer_behandler_i).order_by('systemnavn')
-
-	antall_systemer_uten_driftsmodell = len(System.objects.filter(driftsmodell_foreignkey=None).filter(~Q(ibruk=False)).all())
-
-	def systemeierPerVirksomhet(systemer):
-		#print(type(systemer))
-		resultat = []
-		for virksomhet in alle_virksomheter:
-			resultat.append(systemer.filter(systemeier=virksomhet).count())
-		resultat.append(systemer.filter(systemeier=None).count())
-		return resultat
-
-	def systemforvalterPerVirksomhet(systemer):
-		resultat = []
-		for virksomhet in alle_virksomheter:
-			resultat.append(systemer.filter(systemforvalter=virksomhet).count())
-		resultat.append(systemer.filter(systemforvalter=None).count())
-		return resultat
-
-	def statusRoS(systemer):
-		minus_six_months = datetime.date.today() - datetime.timedelta(days=182)
-		minus_twelve_months = minus_six_months - datetime.timedelta(days=183)
-
-		ros_seks_mnd_siden = systemer.filter(dato_sist_ros__gt=minus_six_months).count()
-		ros_et_aar_siden = systemer.filter(dato_sist_ros__gt=minus_twelve_months).filter(dato_sist_ros__lte=minus_six_months).count()
-		ros_gammel = systemer.filter(dato_sist_ros__lte=minus_twelve_months).count()
-		ros_mangler_prioritert = systemer.filter(Q(dato_sist_ros=None) & Q(risikovurdering_behovsvurdering=2)).count()
-		ros_mangler_ikke_prioritert = systemer.filter(Q(dato_sist_ros=None) & Q(risikovurdering_behovsvurdering=1)).count()
-		ros_ikke_behov = systemer.filter(Q(dato_sist_ros=None) & Q(risikovurdering_behovsvurdering=0)).count() # 0 er "Ikke behov / inngår i annet systems risikovurdering"
-		return [ros_ikke_behov,ros_seks_mnd_siden,ros_et_aar_siden,ros_gammel,ros_mangler_prioritert,ros_mangler_ikke_prioritert]
-
-	def statusDPIA(systemer):
-		#['Utført', 'Ikke utført', 'Ikke behov',]
-		dpia_ok = systemer.filter(~Q(DPIA_for_system=None)).count()
-		dpia_mangler = systemer.filter(Q(DPIA_for_system=None))
-		dpia_ikke_behov = 0
-		for system in dpia_mangler:
-			behandlinger = BehandlingerPersonopplysninger.objects.filter(systemer=system)
-			behandlinger.filter(hoy_personvernrisiko=True)
-			if behandlinger.count() > 0:
-				dpia_ikke_behov += 1
-		dpia_mangler_antall = dpia_mangler.count()
-		return [dpia_ok, dpia_mangler_antall - dpia_ikke_behov, dpia_ikke_behov]
-
-	def statusSikkerhetsnivaa(systemer):
-		#['Gradert', 'Sikret', 'Internt', 'Eksternt', 'Ukjent']
-		gradert = systemer.filter(sikkerhetsnivaa=4).count()
-		sikret = systemer.filter(sikkerhetsnivaa=3).count()
-		internt = systemer.filter(sikkerhetsnivaa=2).count()
-		eksternt = systemer.filter(sikkerhetsnivaa=1).count()
-		ukjent = systemer.filter(sikkerhetsnivaa=None).count()
-		return [gradert,sikret,internt,eksternt,ukjent]
-
-	def statusTjenestenivaa(systemer):
-		kritikalitet = []
-		for s in systemer:
-			kritikalitet.append(s.fip_kritikalitet())
-
-		t_one = sum(x == 1 for x in kritikalitet)
-		t_two = sum(x == 2 for x in kritikalitet)
-		t_tree = sum(x == 3 for x in kritikalitet)
-		t_four = sum(x == 4 for x in kritikalitet)
-		t_unknown = sum(x == None for x in kritikalitet)
-		#['T1', 'T2', 'T3', 'T4','Ukjent']
-		return [t_one,t_two,t_tree,t_four,t_unknown]
-
-	def statusKvalitet(systemer):
-		kvalitetssikret = systemer.filter(informasjon_kvalitetssikret=True).count()
-		ikke = systemer.filter(informasjon_kvalitetssikret=False).count()
-		return[kvalitetssikret, ikke]
-
-	def statusLivslop(systemer):
-		anskaffelse = systemer.filter(livslop_status=1).count()
-		nytt = systemer.filter(livslop_status=2).count()
-		moderne = systemer.filter(livslop_status=3).count()
-		modent = systemer.filter(livslop_status=4).count()
-		byttes = systemer.filter(livslop_status=5).count()
-		ukjent = systemer.filter(livslop_status=None).count()
-		return [anskaffelse,nytt,moderne,modent,byttes,ukjent]
-
-	systemlister = [
-		{
-			"id": "systemer_eier",
-			"beskrivelse": "Systemer angitt med valgt virksomhet som eier.",
-			"tittel": "Systemer %s eier" % virksomhet.virksomhetsforkortelse,
-			"systemer": systemer_eier,
-			"systemeiere_per_virksomhet": systemeierPerVirksomhet(systemer_eier),
-			"systemforvaltere_per_virksomhet":systemforvalterPerVirksomhet(systemer_eier),
-			"status_ros": statusRoS(systemer_eier),
-			"status_dpia": statusDPIA(systemer_eier),
-			"status_sikkerhetsnivaa": statusSikkerhetsnivaa(systemer_eier),
-			"status_tjenestenivaa": statusTjenestenivaa(systemer_eier),
-			'status_kvalitetssikret': statusKvalitet(systemer_eier),
-			'status_livslop': statusLivslop(systemer_eier),
-		},
-		{
-			"id": "systemer_forvalter",
-			"beskrivelse": "Systemer angitt med valgt virksomhet som forvalter.",
-			"tittel": "Systemer %s forvalter" % virksomhet.virksomhetsforkortelse,
-			"systemer": systemer_forvalter,
-			"systemeiere_per_virksomhet": systemeierPerVirksomhet(systemer_forvalter),
-			"systemforvaltere_per_virksomhet": systemforvalterPerVirksomhet(systemer_forvalter),
-			"status_ros": statusRoS(systemer_forvalter),
-			"status_dpia": statusDPIA(systemer_forvalter),
-			"status_sikkerhetsnivaa": statusSikkerhetsnivaa(systemer_forvalter),
-			"status_tjenestenivaa": statusTjenestenivaa(systemer_forvalter),
-			'status_kvalitetssikret': statusKvalitet(systemer_forvalter),
-			'status_livslop': statusLivslop(systemer_forvalter),
-		},
-		{
-			"id": "systemer_behandler_i",
-			"beskrivelse": "Systemer virksomheten har registrert behandling på direkte, samt systemer virksomheten har registrert bruk av (git at abonnering av behandlinger er aktivert).",
-			"tittel": "Systemer %s behandler personopplysninger i" % virksomhet.virksomhetsforkortelse,
-			"systemer": systemer_behandler_i,
-			"systemeiere_per_virksomhet": systemeierPerVirksomhet(systemer_behandler_i),
-			"systemforvaltere_per_virksomhet": systemforvalterPerVirksomhet(systemer_behandler_i),
-			"status_ros": statusRoS(systemer_behandler_i),
-			"status_dpia": statusDPIA(systemer_behandler_i),
-			"status_sikkerhetsnivaa": statusSikkerhetsnivaa(systemer_behandler_i),
-			"status_tjenestenivaa": statusTjenestenivaa(systemer_behandler_i),
-			'status_kvalitetssikret': statusKvalitet(systemer_behandler_i),
-			'status_livslop': statusLivslop(systemer_behandler_i),
-		},
-		{
-			"id": "systemer_drifter",
-			"beskrivelse": "Systemer angitt med en driftsplattform forvaltet av valgt virksomhet. Merk at det er %s systemer uten angivelse av driftsplattform." % (antall_systemer_uten_driftsmodell),
-			"tittel": "Systemer %s drifter" % (virksomhet.virksomhetsforkortelse),
-			"systemer": systemer_drifter,
-			"systemeiere_per_virksomhet": systemeierPerVirksomhet(systemer_drifter),
-			"systemforvaltere_per_virksomhet": systemforvalterPerVirksomhet(systemer_drifter),
-			"status_ros": statusRoS(systemer_drifter),
-			"status_dpia": statusDPIA(systemer_drifter),
-			"status_sikkerhetsnivaa": statusSikkerhetsnivaa(systemer_drifter),
-			"status_tjenestenivaa": statusTjenestenivaa(systemer_drifter),
-			'status_kvalitetssikret': statusKvalitet(systemer_drifter),
-			'status_livslop': statusLivslop(systemer_drifter),
-
-		},
-		{
-			"id": "systemer_felles",
-			"beskrivelse": "Systemer angitt som fellessystemer",
-			"tittel": "Fellessystemer (hele Oslo kommune)",
-			"systemer": systemer_felles,
-			"systemeiere_per_virksomhet": systemeierPerVirksomhet(systemer_felles),
-			"systemforvaltere_per_virksomhet": systemforvalterPerVirksomhet(systemer_felles),
-			"status_ros": statusRoS(systemer_felles),
-			"status_dpia": statusDPIA(systemer_felles),
-			"status_sikkerhetsnivaa": statusSikkerhetsnivaa(systemer_felles),
-			"status_tjenestenivaa": statusTjenestenivaa(systemer_felles),
-			'status_kvalitetssikret': statusKvalitet(systemer_felles),
-			'status_livslop': statusLivslop(systemer_felles),
-		},
-	]
-
-	return render(request, 'virksomhet_dashboard.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'systemlister': systemlister,
-		'alle_virksomheter': alle_virksomheter,
-		'virksomhet': virksomhet,
-	})
-
-
-
 def ansvarlig_bytte(request):
 	required_permissions = ['systemoversikt.change_ansvarlig']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -5391,6 +5210,67 @@ def home(request):
 	kategorier = SystemKategori.objects.all()
 	nyheter = NyeFunksjoner.objects.all().order_by('-tidspunkt')[:3]
 
+	# 2026-06-21: Home page charts – all systems (incl. disabled), grouped by livsløp and systemklassifisering.
+	# 2026-06-21: Short livsløp labels for chart legend; vedlikehold chart reuses forsømt-report logic.
+	# 2026-06-21: Custom light palette for livsløp chart segments.
+	# 2026-06-21: Clickable chart segments link to detail pages (forsømt, systemklassifisering).
+	HOME_LIVSLOEP_CHART_LABELS = {
+		None: 'Ikke vurdert',
+		1: 'Under anskaffelse/utvikling',
+		2: 'Nytt og umodent',
+		3: 'Moderne og modent',
+		4: 'Modent, ikke moderne',
+		5: 'Bør/skal byttes ut',
+		6: 'Ute av bruk',
+		7: 'Fullstendig avviklet',
+		8: 'Ukjent',
+	}
+	HOME_LIVSLOEP_CHART_COLORS = {
+		None: 'rgb(103, 103, 103)',
+		1: 'rgb(225, 225, 225)',
+		2: 'rgb(215, 235, 175)',
+		3: 'rgb(140, 210, 140)',
+		4: 'rgb(165, 208, 135)',
+		5: 'rgb(255, 159, 64)',
+		6: 'rgb(200, 200, 200)',
+		7: 'rgb(175, 175, 175)',
+		8: 'rgb(200, 175, 255)',
+	}
+	alle_systemer = System.objects.all()
+	livslop_count_by_status = {}
+	for row in alle_systemer.values('livslop_status').annotate(count=Count('pk')):
+		status = None if row['livslop_status'] in (None, 0) else row['livslop_status']
+		livslop_count_by_status[status] = livslop_count_by_status.get(status, 0) + row['count']
+	chart_livslop = {
+		'labels': [HOME_LIVSLOEP_CHART_LABELS[value] for value, _label in LIVSLOEP_VALG],
+		'data': [livslop_count_by_status.get(value, 0) for value, _label in LIVSLOEP_VALG],
+		'colors': [HOME_LIVSLOEP_CHART_COLORS[value] for value, _label in LIVSLOEP_VALG],
+	}
+	klassifisering_count_by_value = {}
+	for row in alle_systemer.values('systemeierskapsmodell').annotate(count=Count('pk')):
+		klassifisering = row['systemeierskapsmodell'] or None
+		klassifisering_count_by_value[klassifisering] = (
+			klassifisering_count_by_value.get(klassifisering, 0) + row['count']
+		)
+	chart_systemklassifisering = {
+		'labels': [label for _value, label in SYSTEMEIERSKAPSMODELL_VALG] + ['Mangler'],
+		'data': (
+			[klassifisering_count_by_value.get(value, 0) for value, _label in SYSTEMEIERSKAPSMODELL_VALG]
+			+ [klassifisering_count_by_value.get(None, 0)]
+		),
+		'urls': [
+			reverse('systemklassifisering_detaljer', kwargs={'kriterie': value})
+			for value, _label in SYSTEMEIERSKAPSMODELL_VALG
+		] + [reverse('systemklassifisering_detaljer', kwargs={'kriterie': '__NONE__'})],
+	}
+	antall_forsomt = _systemer_forsomt_queryset().count()
+	antall_totalt_alle_systemer = alle_systemer.count()
+	chart_vedlikehold = {
+		'labels': ['Forsømt', 'Vedlikeholdt'],
+		'data': [antall_forsomt, antall_totalt_alle_systemer - antall_forsomt],
+		'urls': [reverse('rapport_systemer_forsomt'), None],
+	}
+
 	return render(request, 'site_home.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -5401,6 +5281,9 @@ def home(request):
 		'nyeste_programvarer': nyeste_programvarer,
 		'antall_behandlinger': antall_behandlinger,
 		'nyheter': nyheter,
+		'chart_livslop': chart_livslop,
+		'chart_systemklassifisering': chart_systemklassifisering,
+		'chart_vedlikehold': chart_vedlikehold,
 	})
 
 

@@ -2,6 +2,11 @@
 {% load static %}
 {% load templatetags %}
 
+{% block ekstrajavascript %}
+	{# 2026-06-21: Chart.js for home page system statistics (static bundle, not CDN). #}
+	<script src="{% static 'chart.js@2.8.0' %}"></script>
+{% endblock ekstrajavascript %}
+
 {% block overskrift %}
 	Velkommen til Kartoteket
 {% endblock overskrift %}
@@ -29,6 +34,33 @@
 	<hr>
 
 	<div class="container-fluid">
+		<div class="row mb-4">
+			<div class="col-lg-3 col-md-6 mb-3">
+				<h6 class="text-center">Livsløpstatus</h6>
+				<div style="position: relative; height: 220px;">
+					<canvas id="home_chart_livslop"></canvas>
+				</div>
+			</div>
+			<div class="col-lg-3 col-md-6 mb-3">
+				<h6 class="text-center">Systemklassifisering</h6>
+				<div style="position: relative; height: 220px;">
+					<canvas id="home_chart_systemklassifisering"></canvas>
+				</div>
+			</div>
+			<div class="col-lg-3 col-md-6 mb-3">
+				<h6 class="text-center">Vedlikehold</h6>
+				<div style="position: relative; height: 220px;">
+					<canvas id="home_chart_vedlikehold"></canvas>
+				</div>
+			</div>
+			<div class="col-lg-3 col-md-6 mb-3">
+				<h6 class="text-center text-muted">—</h6>
+				<div class="d-flex align-items-center justify-content-center border rounded text-muted" style="height: 220px;">
+					Plass reservert
+				</div>
+			</div>
+		</div>
+
 		<div class="row">
 			<div class="col-sm-6">
 
@@ -92,4 +124,89 @@
 		{% endfor %}
 	</ul>
 
+	{{ chart_livslop|json_script:"home-chart-livslop" }}
+	{{ chart_systemklassifisering|json_script:"home-chart-systemklassifisering" }}
+	{{ chart_vedlikehold|json_script:"home-chart-vedlikehold" }}
+
 {% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+(function () {
+	const livslop = JSON.parse(document.getElementById('home-chart-livslop').textContent);
+	const klassifisering = JSON.parse(document.getElementById('home-chart-systemklassifisering').textContent);
+	const vedlikehold = JSON.parse(document.getElementById('home-chart-vedlikehold').textContent);
+	const chartColors = [
+		'rgb(103, 103, 103)',
+		'rgb(206, 119, 107)',
+		'rgb(218, 209, 119)',
+		'rgb(185, 218, 119)',
+		'rgb(195, 218, 119)',
+		'rgb(255, 159, 64)',
+		'rgb(255, 99, 132)',
+		'rgb(201, 203, 207)',
+		'rgb(153, 102, 255)',
+		'rgb(54, 162, 235)',
+		'rgb(75, 192, 192)',
+		'rgb(255, 205, 86)',
+		'rgb(151, 187, 205)',
+		'rgb(220, 220, 220)',
+		'rgb(255, 99, 71)',
+		'rgb(100, 149, 237)',
+	];
+
+	function chartSegmentIndex(elements) {
+		if (!elements || !elements.length) {
+			return -1;
+		}
+		var element = elements[0];
+		return element._index !== undefined ? element._index : element.index;
+	}
+
+	function homeDoughnutChart(canvasId, chartData, colors) {
+		// Chart.js 2.8 syntax (chart.js@2.8.0 from static)
+		var options = {
+			maintainAspectRatio: false,
+			legend: {
+				position: 'bottom',
+				labels: {
+					fontSize: 10,
+					boxWidth: 12,
+				},
+			},
+		};
+		if (chartData.urls) {
+			options.onClick = function(evt, elements) {
+				var index = chartSegmentIndex(elements);
+				if (index < 0) {
+					return;
+				}
+				var url = chartData.urls[index];
+				if (url) {
+					window.location.href = url;
+				}
+			};
+			options.onHover = function(evt, elements) {
+				var index = chartSegmentIndex(elements);
+				evt.target.style.cursor = index >= 0 && chartData.urls[index] ? 'pointer' : 'default';
+			};
+		}
+		new Chart(document.getElementById(canvasId), {
+			type: 'doughnut',
+			data: {
+				labels: chartData.labels,
+				datasets: [{
+					data: chartData.data,
+					backgroundColor: colors || chartData.colors || chartColors.slice(0, chartData.labels.length),
+				}],
+			},
+			options: options,
+		});
+	}
+
+	homeDoughnutChart('home_chart_livslop', livslop);
+	homeDoughnutChart('home_chart_systemklassifisering', klassifisering);
+	homeDoughnutChart('home_chart_vedlikehold', vedlikehold, ['rgb(255, 99, 132)', 'rgb(75, 192, 192)']);
+})();
+</script>
+{% endblock script_append %}

@@ -5,7 +5,7 @@
 
 <h6>For sikkerhetsanalytikere</h6>
 	{% url 'vulnstats' as url_vulnstats %}
-	<a href="{{ url_vulnstats }}" class="btn btn-sm btn-link {% if url_vulnstats in request.path %}fremhev{% endif %}">Programvaresårbarheter</a><br>
+	<a href="{{ url_vulnstats }}" class="btn btn-sm btn-link {% if url_vulnstats in request.path %}fremhev{% endif %}">Qualys: sårbarheter</a><br>
 
 	<a href="{% url 'azure_vulnstats' %}" class="btn btn-sm btn-link {% if '/sikkerhet/azure_vulnstats/' in request.path and '/qualys_compare/' not in request.path %}fremhev{% endif %}">Azure: sårbarheter</a><br>
 
