@@ -142,6 +142,7 @@ urlpatterns = [
 	re_path(r'^sikkerhet/ad/ukjente_identer/$', views.rapport_ukjente_identer, name='rapport_ukjente_identer'),
 	re_path(r'^sikkerhet/ad/trustedfordelegation/$', views.rapport_trusted_delegation, name="rapport_trusted_delegation"),
 	re_path(r'^sikkerhet/device_code_logins/$', views.sikkerhet_device_code_logins, name='sikkerhet_device_code_logins'),
+	re_path(r'^sikkerhet/varsling_virksomheter/$', views.sikkerhet_varsling_virksomheter, name='sikkerhet_varsling_virksomheter'),
 
 
 

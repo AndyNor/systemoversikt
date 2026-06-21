@@ -76,8 +76,9 @@
 			<span style="color: grey;">{{app.publikasjon_json.BrowserName|default:"-"}}</span><br>
 		</td>
 
+		{% with systemer=app.systemer.all %}
 		<td>
-			{% for system in app.systemer.all %}
+			{% for system in systemer %}
 				{{ system.systemnavn }}<br>{{ system.get_livslop_status_display }}<br>
 			{% empty %}
 				-
@@ -86,26 +87,27 @@
 
 		<td>
 			<b>Virksomhet:</b><br>
-			{% for system in app.systemer.all %}
+			{% for system in systemer %}
 				{{ system.systemforvalter.virksomhetsforkortelse }}<br>
 			{% empty %}
 				-<br>
 			{% endfor %}
 
 			<b>Forvalter:</b><br>
-			{% for system in app.systemer.all %}
+			{% for system in systemer %}
 				{{ system.kontakt_forvalter }}<br>
 			{% empty %}
 				-<br>
 			{% endfor %}
 
 			<b>IKT-hovedkontakt:</b><br>
-			{% for system in app.systemer.all %}
+			{% for system in systemer %}
 				{{ system.kontakt_ikthoved }}<br>
 			{% empty %}
 				-
 			{% endfor %}
 		</td>
+		{% endwith %}
 
 		<td>{{app.cache_antall_publisert_til}}</td>
 

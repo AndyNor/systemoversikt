@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Page perf – prefetch/select_related on forvalteroversikt, servicebrukere, Citrix app pages.
+# 2026-06-21: CSIRT immediate virksomhet security alert page for sikkerhetsanalytikere.
 # 2026-06-21: Removed Definisjon views – feature retired, URLs already disabled.
 # 2026-06-21: Removed UBW module views – feature retired, URLs already disabled.
 # 2026-06-21: Nightly rydde_leverandorer job – shared reference logic in leverandor_referanser.py.
@@ -3427,42 +3429,55 @@ def citrix_mappings(request):
 	})
 
 
+def _citrixpub_queryset(pk=None, order_by_bruk=False):
+	# 2026-06-21: Prefetch linked systems – avoids N+1 on Citrix app list pages.
+	system_qs = System.objects.select_related("systemforvalter").prefetch_related(
+		"systemforvalter_kontaktpersoner_referanse__brukernavn",
+		"systemforvalter__ikt_kontakt__brukernavn",
+	)
+	citrixapps = CitrixPublication.objects.filter(publikasjon_active=True).prefetch_related(
+		Prefetch("systemer", queryset=system_qs),
+	)
+	if pk:
+		citrixapps = citrixapps.filter(systemer=pk)
+	if order_by_bruk:
+		citrixapps = citrixapps.order_by("-bruk_unique_users")
+	citrixapps = list(citrixapps)
+	for app in citrixapps:
+		app.publikasjon_json = json.loads(app.publikasjon_json)
+	return citrixapps
+
+
+def _citrixpub_stats(citrixapps):
+	antall_apper_totalt = CitrixPublication.objects.all().count()
+	antall_apper_koblet = CitrixPublication.objects.filter(publikasjon_active=True, systemer=None).count()
+	try:
+		antall_apper_koblet_pct = antall_apper_koblet / len(citrixapps)
+	except ZeroDivisionError:
+		antall_apper_koblet_pct = "?"
+	return {
+		"antall_apper_totalt": antall_apper_totalt,
+		"antall_apper_koblet": antall_apper_koblet,
+		"antall_apper_koblet_pct": (
+			f"{round(antall_apper_koblet_pct * 100, 1)}%" if antall_apper_koblet_pct != "?" else None
+		),
+	}
+
+
 def alle_citrixpub_bruk(request, pk=None):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	antall_apper_totalt = CitrixPublication.objects.all().count()
-	antall_apper_koblet = CitrixPublication.objects.filter(publikasjon_active=True, systemer=None).count()
-
-	citrixapps = CitrixPublication.objects.filter(publikasjon_active=True).order_by('-bruk_unique_users')
-
-	if pk:
-		citrixapps = citrixapps.filter(systemer=pk)
-
-
-	for app in citrixapps:
-		app.publikasjon_json = json.loads(app.publikasjon_json)
-
-	try:
-		antall_apper_koblet_pct = antall_apper_koblet / len(citrixapps)
-	except:
-		antall_apper_koblet_pct = "?"
-
-	unike_siloer = CMDBdevice.objects.order_by().values('citrix_desktop_group').distinct()
-
-	integrasjonsstatus = _integrasjonsstatus("sp_citrix")
+	citrixapps = _citrixpub_queryset(pk=pk, order_by_bruk=True)
 
 	return render(request, 'cmdb_citrix_apps_bruk.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'citrixapps': citrixapps,
 		'filter': True if pk else False,
-		'antall_apper_totalt': antall_apper_totalt,
-		'antall_apper_koblet': antall_apper_koblet,
-		'antall_apper_koblet_pct': f"{round(antall_apper_koblet_pct * 100, 1)}%" if antall_apper_koblet_pct != "?" else None,
-		'unike_siloer': unike_siloer,
-		'integrasjonsstatus': integrasjonsstatus,
+		'integrasjonsstatus': _integrasjonsstatus("sp_citrix"),
+		**_citrixpub_stats(citrixapps),
 	})
 
 
@@ -3471,37 +3486,17 @@ def alle_citrixpub(request, pk=None):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	antall_apper_totalt = CitrixPublication.objects.all().count()
-	antall_apper_koblet = CitrixPublication.objects.filter(publikasjon_active=True, systemer=None).count()
-
-	citrixapps = CitrixPublication.objects.filter(publikasjon_active=True)
-
-	if pk:
-		citrixapps = citrixapps.filter(systemer=pk)
-
-
-	for app in citrixapps:
-		app.publikasjon_json = json.loads(app.publikasjon_json)
-
-	try:
-		antall_apper_koblet_pct = antall_apper_koblet / len(citrixapps)
-	except:
-		antall_apper_koblet_pct = "?"
-
+	citrixapps = _citrixpub_queryset(pk=pk)
 	unike_siloer = CMDBdevice.objects.order_by().values('citrix_desktop_group').distinct()
-
-	integrasjonsstatus = _integrasjonsstatus("sp_citrix")
 
 	return render(request, 'cmdb_citrix_apps.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'citrixapps': citrixapps,
 		'filter': True if pk else False,
-		'antall_apper_totalt': antall_apper_totalt,
-		'antall_apper_koblet': antall_apper_koblet,
-		'antall_apper_koblet_pct': f"{round(antall_apper_koblet_pct * 100, 1)}%" if antall_apper_koblet_pct != "?" else None,
 		'unike_siloer': unike_siloer,
-		'integrasjonsstatus': integrasjonsstatus,
+		'integrasjonsstatus': _integrasjonsstatus("sp_citrix"),
+		**_citrixpub_stats(citrixapps),
 	})
 
 def alle_nettverksenheter(request):
@@ -5876,7 +5871,20 @@ def alle_systemer_forvaltere(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	systemer = System.objects.all()
+	# 2026-06-21: Prefetch contact persons – avoids N+1 on forvalteroversikt table.
+	def _ansvarlig_prefetch_qs():
+		return Ansvarlig.objects.select_related(
+			"brukernavn", "brukernavn__profile", "brukernavn__profile__virksomhet"
+		)
+
+	systemer = (
+		System.objects.all()
+		.select_related("systemeier", "systemforvalter", "driftsmodell_foreignkey")
+		.prefetch_related(
+			Prefetch("systemeier_kontaktpersoner_referanse", queryset=_ansvarlig_prefetch_qs()),
+			Prefetch("systemforvalter_kontaktpersoner_referanse", queryset=_ansvarlig_prefetch_qs()),
+		)
+	)
 
 	return render(request, 'system_forvalteroversikt.html', {
 		'request': request,
@@ -7076,12 +7084,20 @@ def rapport_servicekontoer(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	brukere = User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer,OU=OK").filter(profile__accountdisable=False).order_by("-profile__whenCreated")
+	# 2026-06-21: select_related on profile relations – avoids N+1 on servicebrukere table.
+	brukere = (
+		User.objects.filter(profile__distinguishedname__icontains="OU=Servicekontoer,OU=OK")
+		.filter(profile__accountdisable=False)
+		.select_related("profile", "profile__org_unit", "profile__min_leder")
+		.order_by("-profile__whenCreated")
+	)
+	brukere_count = brukere.count()
 
 	return render(request, 'rapport_ad_servicekontoer.html', {
 		"request": request,
 		"required_permissions": required_permissions,
 		"brukere": brukere,
+		"brukere_count": brukere_count,
 		'integrasjonsstatus': _integrasjonsstatus("ad_users"),
 	})
 
@@ -9943,6 +9959,156 @@ def sikkerhet_device_code_logins(request):
 		'history_rows': history_rows,
 		'history_dager': DEVICE_CODE_HISTORY_DAYS,
 		'integrasjon': integrasjon,
+	})
+
+
+def sikkerhet_varsling_virksomheter(request):
+	# 2026-06-21: CSIRT alert to virksomhet security contacts (sikkerhetsanalytiker only).
+	# 2026-06-21: Only log to ApplicationLog after successful live send (not on SMTP failure).
+	from systemoversikt.csirt_varsling import (
+		CSIRT_VARSLING_DRY_RUN,
+		SIKKERHETSANALYTIKER_GROUP,
+		csirt_email_address,
+		append_varsling_page_footer,
+		log_csirt_varsling_to_application_log,
+		plan_security_alert_to_virksomheter,
+		security_contact_emails_for_virksomhet,
+		send_security_alert_to_virksomheter,
+		user_is_sikkerhetsanalytiker,
+	)
+
+	if not user_is_sikkerhetsanalytiker(request.user):
+		return render(request, '403.html', {
+			'required_permissions': [SIKKERHETSANALYTIKER_GROUP],
+			'groups': request.user.groups,
+		})
+
+	virksomheter = (
+		Virksomhet.objects
+		.filter(ordinar_virksomhet=True)
+		.order_by('virksomhetsforkortelse')
+		.prefetch_related(
+			'varslingsmottak_sikkerhet_ref__brukernavn__profile',
+			'informasjonssikkerhetskoordinator__brukernavn__profile',
+			'ikt_kontakt__brukernavn__profile',
+		)
+	)
+
+	virksomhet_rows = []
+	for virksomhet in virksomheter:
+		contact_emails, contact_source = security_contact_emails_for_virksomhet(virksomhet)
+		virksomhet_rows.append({
+			'virksomhet': virksomhet,
+			'contact_count': len(contact_emails),
+			'contact_emails': contact_emails,
+			'contact_source': contact_source,
+		})
+
+	subject = ''
+	body = ''
+	# 2026-06-21: No virksomheter pre-selected – user must opt in (e.g. Velg alle).
+	selected_pks = set()
+	delivery_preview = None
+	send_succeeded = False
+	send_failed = False
+	send_error = ''
+
+	if request.method == 'POST':
+		subject = request.POST.get('subject', '').strip()
+		body = request.POST.get('body', '').strip()
+		selected_pks = set(request.POST.getlist('virksomheter'))
+		errors = []
+
+		if not subject:
+			errors.append('Tittel er påkrevd.')
+		elif len(subject) > 200:
+			errors.append('Tittel kan være maks 200 tegn.')
+		if not body:
+			errors.append('Meldingstekst er påkrevd.')
+		if not selected_pks:
+			errors.append('Velg minst én virksomhet.')
+
+		if not CSIRT_VARSLING_DRY_RUN:
+			try:
+				csirt_email_address()
+			except KeyError:
+				errors.append('CSIRT-avsenderadresse er ikke konfigurert (CSIRT_EMAIL_ADDR).')
+
+		if not errors:
+			selected_virksomheter = [
+				row['virksomhet']
+				for row in virksomhet_rows
+				if str(row['virksomhet'].pk) in selected_pks
+			]
+			try:
+				page_url = request.build_absolute_uri(reverse('sikkerhet_varsling_virksomheter'))
+				sender = request.user.get_full_name() or request.user.username
+				delivery_body = append_varsling_page_footer(body, page_url, sender)
+				delivery_preview = plan_security_alert_to_virksomheter(
+					selected_virksomheter,
+					subject,
+					delivery_body,
+				)
+				if CSIRT_VARSLING_DRY_RUN:
+					log_csirt_varsling_to_application_log(
+						request.user.username,
+						subject,
+						delivery_body,
+						delivery_preview,
+						dry_run=True,
+					)
+					messages.info(
+						request,
+						f'Tørrkjøring: {delivery_preview["mail_count"]} e-post(er) ville blitt sendt '
+						f'til {delivery_preview["recipient_total"]} mottaker(e). Ingen e-post ble sendt.',
+					)
+				else:
+					send_security_alert_to_virksomheter(
+						selected_virksomheter,
+						subject,
+						delivery_body,
+					)
+					log_csirt_varsling_to_application_log(
+						request.user.username,
+						subject,
+						delivery_body,
+						delivery_preview,
+						dry_run=False,
+					)
+					send_succeeded = True
+					messages.success(
+						request,
+						f'Sendte {delivery_preview["mail_count"]} e-post(er) til '
+						f'{delivery_preview["recipient_total"]} mottaker(e). '
+						f'{len(delivery_preview["skipped"])} virksomhet(er) hoppet over (ingen sikkerhetskontakter).',
+					)
+			except Exception as exc:
+				delivery_preview = None
+				send_failed = True
+				send_error = str(exc)
+		else:
+			for error in errors:
+				messages.error(request, error)
+
+	csirt_configured = True
+	try:
+		csirt_email_address()
+	except KeyError:
+		csirt_configured = False
+
+	return render(request, 'sikkerhet_varsling_virksomheter.html', {
+		'request': request,
+		'required_permissions': [SIKKERHETSANALYTIKER_GROUP],
+		'virksomhet_rows': virksomhet_rows,
+		'subject': subject,
+		'body': body,
+		'selected_pks': selected_pks,
+		'delivery_preview': delivery_preview,
+		'send_succeeded': send_succeeded,
+		'send_failed': send_failed,
+		'send_error': send_error,
+		'csirt_configured': csirt_configured,
+		'dry_run': CSIRT_VARSLING_DRY_RUN,
 	})
 
 

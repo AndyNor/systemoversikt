@@ -13,6 +13,7 @@ def load_secrets():
 
 	os.environ['EMAIL_HOST_USER'] = ''
 	os.environ['EMAIL_HOST_PASSWORD'] = ''
+	os.environ['CSIRT_EMAIL_ADDR'] = ''
 
 	os.environ['PRK_USERS_URL'] = ''
 	os.environ['PRK_ORG_URL'] = ''

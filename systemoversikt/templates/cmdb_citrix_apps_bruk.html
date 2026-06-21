@@ -88,8 +88,7 @@
 
 		<td>
 			{% for item in app.publikasjon_json.AssociatedUserFullNames %}
-				{% url 'ad_details' item as url_ad_details %}
-				<a href="{{url_ad_details}}">{{item}}</a><br>
+				<a href="/brukere/ad_lookup/{{ item }}/">{{ item }}</a><br>
 			{% endfor %}
 		</td>
 

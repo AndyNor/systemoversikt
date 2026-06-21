@@ -20,6 +20,9 @@
 	{% url 'sikkerhet_device_code_logins' as url_sikkerhet_device_code_logins %}
 	<a href="{{ url_sikkerhet_device_code_logins }}" class="btn btn-sm btn-link {% if url_sikkerhet_device_code_logins in request.path %}fremhev{% endif %}">Device code-innlogginger ⏱️</a><br>
 
+	{% url 'sikkerhet_varsling_virksomheter' as url_sikkerhet_varsling_virksomheter %}
+	<a href="{{ url_sikkerhet_varsling_virksomheter }}" class="btn btn-sm btn-link {% if url_sikkerhet_varsling_virksomheter in request.path %}fremhev{% endif %}">Varsling til virksomheter</a><br>
+
 	{% url 'rapport_ukjente_identer' as url_rapport_ukjente_identer %}
 	<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Kontoer utenfor OK</a><br>
 

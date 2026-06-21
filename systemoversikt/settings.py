@@ -90,6 +90,13 @@ DBBACKUP_STORAGE_OPTIONS = {
 # django-mailer
 EMAIL_BACKEND = "mailer.backend.DbBackend"
 
+# Bootstrap 4 alert classes (Django default message tag "error" → "danger").
+# 2026-06-21: Map message ERROR to Bootstrap danger – fixes unstyled error toasts.
+from django.contrib.messages import constants as message_constants
+MESSAGE_TAGS = {
+	message_constants.ERROR: 'danger',
+}
+
 
 #overgang til django 4 har innført "BigAutoField"
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

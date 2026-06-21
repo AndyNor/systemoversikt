@@ -1,0 +1,233 @@
+{% extends "sikkerhet_index.html" %}
+
+{% block overskrift %}
+	Varsling til virksomheter
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+	{% if send_succeeded %}
+		<div class="alert alert-success">
+			<p><strong>Meldingen er sendt</strong></p>
+			<p>Sendte {{ delivery_preview.mail_count }} e-post(er) til {{ delivery_preview.recipient_total }} mottaker(e).
+			{% if delivery_preview.skipped %}
+				{{ delivery_preview.skipped|length }} virksomhet(er) hoppet over (ingen sikkerhetskontakter).
+			{% endif %}
+			</p>
+		</div>
+
+		<table class="table table-sm table-bordered" style="max-width: 900px;">
+		<tbody>
+			<tr>
+				<th style="width: 120px;">Fra</th>
+				<td>{{ delivery_preview.from_email|default:"(CSIRT_EMAIL_ADDR ikke satt)" }}</td>
+			</tr>
+			<tr>
+				<th>Kopi</th>
+				<td>{% if delivery_preview.cc %}{{ delivery_preview.cc|join:", " }}{% else %}(ingen){% endif %}</td>
+			</tr>
+			<tr>
+				<th>Tittel</th>
+				<td>{{ delivery_preview.subject }}</td>
+			</tr>
+			<tr>
+				<th>Melding</th>
+				<td><pre style="white-space: pre-wrap; margin: 0;">{{ delivery_preview.body }}</pre></td>
+			</tr>
+		</tbody>
+		</table>
+
+		{% if delivery_preview.messages %}
+			<p class="mb-1"><strong>E-post per virksomhet</strong></p>
+			<table class="table table-sm table-bordered" style="max-width: 900px;">
+			<thead>
+				<tr>
+					<th>Virksomhet</th>
+					<th>Kilde</th>
+					<th>Til (To)</th>
+				</tr>
+			</thead>
+			<tbody>
+			{% for item in delivery_preview.messages %}
+				<tr>
+					<td>{{ item.virksomhet.virksomhetsforkortelse }} – {{ item.virksomhet.virksomhetsnavn }}</td>
+					<td>{{ item.source }}</td>
+					<td>{{ item.to|join:", " }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+			</table>
+		{% endif %}
+
+		{% if delivery_preview.skipped %}
+			<p class="mb-1"><strong>Hoppet over (ingen sikkerhetskontakter)</strong></p>
+			<ul>
+			{% for vir in delivery_preview.skipped %}
+				<li>{{ vir.virksomhetsforkortelse }} – {{ vir.virksomhetsnavn }}</li>
+			{% endfor %}
+			</ul>
+		{% endif %}
+
+		<p class="mt-3">
+			<a href="{% url 'sikkerhet_varsling_virksomheter' %}" class="btn btn-primary btn-sm">Send ny melding</a>
+		</p>
+
+	{% else %}
+
+		{% if send_failed %}
+			<div class="alert alert-danger" style="max-width: 900px;">
+				<p class="mb-1"><strong>Sending mislyktes – ingen e-post ble sendt</strong></p>
+				<p>Meldingen ble ikke levert til noen mottakere. Kontroller at e-post (SMTP) er tilgjengelig, og prøv igjen.</p>
+				{% if send_error %}
+					<p class="mb-0 small"><strong>Teknisk feil:</strong> {{ send_error }}</p>
+				{% endif %}
+			</div>
+		{% endif %}
+
+		{% if dry_run %}
+			<p class="alert alert-warning">
+				<strong>Tørrkjøring.</strong> Skjemaet viser hva som ville blitt sendt. Ingen e-post sendes.
+			</p>
+		{% else %}
+			<p>Send en e-postmelding til sikkerhetskontakter for valgte virksomheter. Meldingen sendes umiddelbart (ikke via nattkø). Avsender og kopi går til CSIRT.</p>
+		{% endif %}
+
+		<p class="small text-muted">
+			Kun ordinære virksomheter vises. Mottakere velges i denne rekkefølgen:
+			sikkerhetsvarsler, deretter ISK, deretter IKT-hovedkontakt.
+			Se også <a href="{% url 'alle_virksomheter_kontaktinfo' %}">kontaktinfo for sikkerhetsroller</a>.
+		</p>
+
+		{% if not dry_run and not csirt_configured %}
+			<p class="text-danger"><strong>CSIRT-avsenderadresse er ikke konfigurert (miljøvariabel CSIRT_EMAIL_ADDR).</strong></p>
+		{% endif %}
+
+		{% if delivery_preview and dry_run %}
+			<div class="alert alert-info">
+				<p><strong>Forhåndsvisning – ingen e-post sendt</strong></p>
+				<p>Ville sendt {{ delivery_preview.mail_count }} e-post(er) til {{ delivery_preview.recipient_total }} mottaker(e).</p>
+
+				<table class="table table-sm table-bordered" style="background: #fff; max-width: 900px;">
+				<tbody>
+					<tr>
+						<th style="width: 120px;">Fra</th>
+						<td>{{ delivery_preview.from_email|default:"(CSIRT_EMAIL_ADDR ikke satt)" }}</td>
+					</tr>
+					<tr>
+						<th>Kopi</th>
+						<td>{% if delivery_preview.cc %}{{ delivery_preview.cc|join:", " }}{% else %}(ingen){% endif %}</td>
+					</tr>
+					<tr>
+						<th>Tittel</th>
+						<td>{{ delivery_preview.subject }}</td>
+					</tr>
+					<tr>
+						<th>Melding</th>
+						<td><pre style="white-space: pre-wrap; margin: 0;">{{ delivery_preview.body }}</pre></td>
+					</tr>
+				</tbody>
+				</table>
+
+				{% if delivery_preview.messages %}
+					<p class="mb-1"><strong>E-post per virksomhet</strong></p>
+					<table class="table table-sm table-bordered" style="background: #fff; max-width: 900px;">
+					<thead>
+						<tr>
+							<th>Virksomhet</th>
+							<th>Kilde</th>
+							<th>Til (To)</th>
+						</tr>
+					</thead>
+					<tbody>
+					{% for item in delivery_preview.messages %}
+						<tr>
+							<td>{{ item.virksomhet.virksomhetsforkortelse }} – {{ item.virksomhet.virksomhetsnavn }}</td>
+							<td>{{ item.source }}</td>
+							<td>{{ item.to|join:", " }}</td>
+						</tr>
+					{% endfor %}
+					</tbody>
+					</table>
+				{% endif %}
+
+				{% if delivery_preview.skipped %}
+					<p class="mb-1"><strong>Hoppet over (ingen sikkerhetskontakter)</strong></p>
+					<ul>
+					{% for vir in delivery_preview.skipped %}
+						<li>{{ vir.virksomhetsforkortelse }} – {{ vir.virksomhetsnavn }}</li>
+					{% endfor %}
+					</ul>
+				{% endif %}
+			</div>
+		{% endif %}
+
+		<form action="" method="post" autocomplete="off">
+			{% csrf_token %}
+
+			<div class="form-group">
+				<label for="subject"><strong>Tittel</strong></label>
+				<input type="text" class="form-control form-control-sm" id="subject" name="subject" maxlength="200"
+					value="{{ subject }}" required style="max-width: 600px;">
+			</div>
+
+			<div class="form-group">
+				<label for="body"><strong>Melding</strong></label>
+				<textarea class="form-control form-control-sm" id="body" name="body" rows="12" required
+					style="max-width: 700px;">{{ body }}</textarea>
+			</div>
+
+			<hr>
+
+			<p><strong>Virksomheter</strong> (velg hvem som skal motta varslet)</p>
+			<input type="button" class="btn btn-sm" value="Velg alle" id="select_all">
+			<input type="button" class="btn btn-sm" value="Fjern alle" id="select_none">
+			<input type="button" class="btn btn-sm" value="Inverter valg" id="select_invert">
+			<input type="submit" class="btn btn-primary btn-sm"
+				value="{% if dry_run %}Forhåndsvis sending{% else %}Send nå{% endif %}"
+				style="margin-left: 1rem;"
+				{% if not dry_run and not csirt_configured %}disabled{% endif %}>
+
+			<div style="max-height: 400px; overflow-y: auto; margin-top: 1rem; border: 1px solid #dee2e6; padding: 0.5rem;">
+			{% for row in virksomhet_rows %}
+				{% with vir=row.virksomhet %}
+				<div>
+					<input type="checkbox" name="virksomheter" value="{{ vir.pk }}" id="vir_{{ vir.pk }}"
+						{% if vir.pk|stringformat:"s" in selected_pks %}checked{% endif %}>
+					<label for="vir_{{ vir.pk }}">
+						{{ vir.virksomhetsforkortelse }} – {{ vir.virksomhetsnavn }}
+						<span class="text-muted small">
+							({{ row.contact_count }} mottaker{{ row.contact_count|pluralize:"e" }}{% if row.contact_source %}, {{ row.contact_source }}{% endif %})
+						</span>
+					</label>
+					{% if row.contact_emails %}
+						<span class="text-muted small"> – {{ row.contact_emails|join:", " }}</span>
+					{% else %}
+						<span class="text-danger small"> – ingen kontakter</span>
+					{% endif %}
+					<br>
+				</div>
+				{% endwith %}
+			{% endfor %}
+			</div>
+		</form>
+
+		<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+		(function () {
+			function virksomhetCheckboxes() {
+				return document.querySelectorAll('input[name="virksomheter"]');
+			}
+			document.getElementById('select_all').onclick = function () {
+				virksomhetCheckboxes().forEach(function (cb) { cb.checked = true; });
+			};
+			document.getElementById('select_none').onclick = function () {
+				virksomhetCheckboxes().forEach(function (cb) { cb.checked = false; });
+			};
+			document.getElementById('select_invert').onclick = function () {
+				virksomhetCheckboxes().forEach(function (cb) { cb.checked = !cb.checked; });
+			};
+		})();
+		</script>
+
+	{% endif %}
+
+{% endblock hovedinnhold %}
