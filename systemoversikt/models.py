@@ -2659,7 +2659,6 @@ class QualysVulnBasisPatching(models.Model):
 			auto_now=True,
 			)
 	title = models.TextField()
-	akseptert = models.BooleanField(default=False)
 
 	def __str__(self):
 		return f"{self.title}"
@@ -2667,6 +2666,28 @@ class QualysVulnBasisPatching(models.Model):
 	class Meta:
 		verbose_name_plural = "Qualys: Basispatching"
 		verbose_name = "Basispatchet"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+# 2026-06-21: Title substring rules for accepted risk – independent of basisdrift patching ownership.
+class QualysVulnRiskAcceptance(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	title = models.TextField()
+
+	def __str__(self):
+		return f"{self.title}"
+
+	class Meta:
+		verbose_name = "Akseptert risiko"
+		verbose_name_plural = "Qualys: Aksepterte risikoer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

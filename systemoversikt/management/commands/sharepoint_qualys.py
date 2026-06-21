@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-21: Apply basisdrift and risk-acceptance flags from separate rule tables.
 from datetime import datetime, timezone, timedelta
 from systemoversikt.views import push_pushover
 from systemoversikt.models import *
+from systemoversikt.qualys_vuln_rules import qualys_vuln_flags
 from django.core.management.base import BaseCommand
 from django.db import transaction
 import json, os, time, warnings
@@ -59,15 +62,8 @@ class Command(BaseCommand):
 			# tømme alle gamle innslag og starte på nytt
 			QualysVuln.objects.all().delete()
 
-
-			def ansvar_basisdrift(vulnerability):
-
-				patches_av_drift = QualysVulnBasisPatching.objects.all()
-				for basispatch in patches_av_drift:
-					if basispatch.title.lower() in vulnerability.title.lower():
-						return {"basispatch": True, "akseptert": basispatch.akseptert}
-				return {"basispatch": False, "akseptert": False}
-
+			basis_rules = list(QualysVulnBasisPatching.objects.all())
+			acceptance_rules = list(QualysVulnRiskAcceptance.objects.all())
 
 			ALL_EXPLOITED_CVES = list(ExploitedVulnerability.objects.values_list('cve_id', flat=True))
 
@@ -135,10 +131,12 @@ class Command(BaseCommand):
 						raw=line,
 					)
 
-					# ansvar basisdrift
-					ab = ansvar_basisdrift(q)
-					q.ansvar_basisdrift = ab["basispatch"]
-					q.akseptert = ab["akseptert"]
+					# ansvar basisdrift / akseptert risiko
+					q.ansvar_basisdrift, q.akseptert = qualys_vuln_flags(
+						q.title,
+						basis_rules=basis_rules,
+						acceptance_rules=acceptance_rules,
+					)
 
 					# lookup server
 					server = lookup_server(line["NetBIOS"])
