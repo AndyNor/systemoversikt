@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-06-21: Removed commented dead URL routes (smartkartlegging, prk API, passwdexpire, etc.).
 # 2026-06-21: Removed Definisjon URL routes and organisasjon import – feature retired.
 # 2026-06-21: Removed commented UBW URL routes – module retired.
 # 2026-06-21: Removed behandlinger and DPIA URL routes – functionality moved to Behandlingsoversikten.
@@ -58,7 +59,6 @@ urlpatterns = [
 	re_path(r'^admin/logger/audit/$', views.logger_audit, name='logger_audit'),
 	re_path(r'^admin/logger/autentisering/$', views.logger_autentisering, name='logger_autentisering'),
 	re_path(r'^admin/logger/api/$', views.logger_api, name='logger_api'),
-	#re_path(r'^admin/logger/api_csirt/$', views.logger_api_csirt, name='logger_api_csirt'),
 	re_path(r'^admin/roller/$', views.roller, name='roller'),
 	re_path(r'^admin/rettigheter/$', views.permissions, name='permissions'),
 	re_path(r'^admin/erstattansvarlig/$', views.ansvarlig_bytte, name='ansvarlig_bytte'),
@@ -159,7 +159,6 @@ urlpatterns = [
 	re_path(r'^rapport/hovedkategorier/subkategorier/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
 	re_path(r'^rapport/hovedkategorier/subkategorier/uten_kategori/$', views.uten_systemkategori, name='uten_systemkategorier'),
 	re_path(r'^rapport/hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
-	#re_path(r'^rapport/smartkartlegging/$', views.alle_systemer_smart, name='alle_systemer_smart'),
 	re_path(r'^rapport/azure/conditional_access/rules/$', views.rapport_conditional_access_rules, name="rapport_conditional_access_rules"),
 	re_path(r'^rapport/azure/conditional_access/changes/$', views.rapport_conditional_access_changes, name="rapport_conditional_access_changes"),
 
@@ -181,7 +180,6 @@ urlpatterns = [
 	re_path(r'^systemer/systemer/forsomt/$', views.rapport_systemer_forsomt, name="rapport_systemer_forsomt"),
 	re_path(r'^systemer/leverandorland/$', views.rapport_systemer_leverandor_land, name='rapport_systemer_leverandor_land'),
 	re_path(r'^systemer/leverandor/$', views.alle_leverandorer, name='alle_leverandorer'),
-	#re_path(r'^systemer/leverandor/bytt_leverandor/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_leverandor, name='bytt_leverandor'),
 	re_path(r'^systemer/leverandor/(?P<pk>\d{1,8})/$', views.leverandor, name='leverandor'),
 	re_path(r'^systemer/driftsmodell/(?P<pk>\d{1,8})/$', views.detaljer_driftsmodell, name='detaljer_driftsmodell'),
 	re_path(r'^systemer/driftsmodell/alle/$', views.alle_driftsmodeller, name='alle_driftsmodeller'),
@@ -233,7 +231,6 @@ urlpatterns = [
 	re_path(r'^virksomhet/(?P<pk>\d{1,8})/ansvarlig-opprett/$', views.virksomhet_ansvarlig_opprett, name='virksomhet_ansvarlig_opprett'),
 	re_path(r'^virksomhet/(?P<pk>\d{1,8})/lagre-roller/$', views.virksomhet_lagre_roller, name='virksomhet_lagre_roller'),
 	re_path(r'^virksomhet/(?P<pk>\d{1,8})/$', views.virksomhet, name='virksomhet'),
-	#re_path(r'^virksomhet/passwdexpire/(?P<pk>\d{1,8})/$', views.passwordexpire, name='passwordexpire'),
 	re_path(r'^virksomhet/tomepost/(?P<pk>\d{1,8})/$', views.tom_epost, name='tom_epost'),
 	re_path(r'^virksomhet/vanlige_brukere/(?P<pk>\d{1,8})/$', views.ansatte_virksomhet, name='ansatte_virksomhet'),
 	re_path(r'^virksomhet/passwdneverexpire/(?P<pk>\d{1,8})/$', views.passwdneverexpire, name='passwdneverexpire'),
@@ -244,7 +241,6 @@ urlpatterns = [
 	re_path(r'^virksomhet/sertifikatmyndighet/$', views.sertifikatmyndighet, name='sertifikatmyndighet'),
 	re_path(r'^virksomhet/systemkvalitet/(?P<pk>\d{1,8})/$', views.systemkvalitet_virksomhet, name='systemkvalitet_virksomhet'),
 	re_path(r'^virksomhet/enhet/graf/(?P<pk>\d{1,8})/$', views.virksomhet_enheter, name='virksomhet_enheter'),
-	#re_path(r'^virksomhet/prkadmin/(?P<pk>\d{1,8})/$', views.virksomhet_prkadmin, name='virksomhet_prkadmin'),
 	re_path(r'^virksomhet/systembruk/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
 	re_path(r'^virksomhet/systemeforvalter/basis/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
 	re_path(r'^virksomhet/systemeforvalter/basis/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
@@ -299,7 +295,6 @@ urlpatterns = [
 	re_path(r'^cmdb/uten_backup/$', views.cmdb_uten_backup, name='cmdb_uten_backup'),
 	re_path(r'^cmdb/lagring/$', views.cmdb_lagring_index, name='cmdb_lagring_index'),
 	re_path(r'^cmdb/minne/$', views.cmdb_minne_index, name='cmdb_minne_index'),
-	#re_path(r'^cmdb/forvaltere/$', views.cmdb_forvaltere, name='cmdb_forvaltere'),
 	re_path(r'^cmdb/ad/citrix/apps/$', views.alle_citrixpub, name='alle_citrixpub'), # beholdes som redirect
 	re_path(r'^cmdb/citrix/apps/detaljer/$', views.alle_citrixpub, name='alle_citrixpub'),
 	re_path(r'^cmdb/citrix/apps/bruk/$', views.alle_citrixpub_bruk, name='alle_citrixpub_bruk'),
@@ -340,9 +335,6 @@ urlpatterns = [
 	re_path(r'^api/los/$', views.api_los, name='api_los'), # Tjeneste- og systemoversikt
 	re_path(r'^api/kritiske_funksjoner/$', views.api_kritiske_funksjoner, name='api_kritiske_funksjoner'), # Tjeneste- og systemoversikt
 	re_path(r'^api/kritiske_kapabiliteter/$', views.api_kritiske_kapabiliteter, name='api_kritiske_kapabiliteter'), # Tjeneste- og systemoversikt
-	# PRK-proxyer
-	#re_path(r'^prk/api/usr/$', views.prk_api_usr, name='prk_api_usr'),# UKE manuell nedlasting av PRK-data, to personer, sjeldent i bruk
-	#re_path(r'^prk/api/grp/$', views.prk_api_grp, name='prk_api_grp'),# UKE manuell nedlasting av PRK-data, to personer, sjeldent i bruk
 	re_path(r'^tjenestekatalogen/forvaltere/$', views.tjenestekatalogen_forvalter_api, name='tjenestekatalogen_forvalter_api'), # brukes av UKE/tjenestekatalogen. må sjekkes om faktisk i bruk
 	re_path(r'^tjenestekatalogen/systemer/$', views.tjenestekatalogen_systemer_api, name='tjenestekatalogen_systemer_api'), # brukes av UKE/tjenestekatalogen. må sjekkes om faktisk i bruk
 	re_path(r'^cmdb/api/$', views.cmdb_api, name='cmdb_api'), # UKE innhenting til faktureringsgrunnlag. Sporadisk bruk 2023/2024

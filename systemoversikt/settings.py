@@ -304,7 +304,6 @@ if THIS_ENVIRONMENT == "TEST":
 #session security
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SAMESITE = "Strict"
-#CSRF_FAILURE_VIEW = "systemoversikt.views.csrf403"
 
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax" # må endre fra strict grunnet at Firefox og Edge dropper session cookie dersom initiert fra andre domener

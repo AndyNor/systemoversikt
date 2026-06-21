@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Dead code cleanup – removed unreachable views, prk_api, SharePoint legacy block, csrf403 stub.
+# 2026-06-21: decode_ad_timestamp helper – consolidates AD FILETIME decoding in LDAP lookups.
 # 2026-06-21: Tjeneste detail page with separate ecosystem graph – not shared with systemdetaljer.
 # 2026-06-21: Page perf – prefetch/select_related on forvalteroversikt, servicebrukere, Citrix app pages.
 # 2026-06-21: CSIRT immediate virksomhet security alert page for sikkerhetsanalytikere.
@@ -501,27 +503,11 @@ def sharepoint_get_file(filename):
 
 	return {"destination_file": destination_file, "modified_date": modified_date}
 
-	#gammelt
-	#from office365.runtime.auth.authentication_context import AuthenticationContext
-	#from office365.sharepoint.client_context import ClientContext
-	#from office365.sharepoint.files.file import File
 
-	#ctx_auth = AuthenticationContext(os.environ['SHAREPOINT_SITE'])
-	#ctx_auth.acquire_token_for_app(os.environ['SHAREPOINT_CLIENT_ID'], os.environ['SHAREPOINT_CLIENT_SECRET'])
-	#ctx = ClientContext(os.environ['SHAREPOINT_SITE'], ctx_auth)
-
-	#file = ctx.web.get_file_by_server_relative_path(source_filepath).get().execute_query()
-	#modified_date = make_aware(datetime.datetime.strptime(file.time_last_modified, "%Y-%m-%dT%H:%M:%SZ"))
-	#print(file.length)
-	#FILNAVN = source_filepath.split("/")[-1] # last element of split
-	#destination_file = f'systemoversikt/import/{FILNAVN}'
-
-	#with open(destination_file, "wb") as local_file:
-	#   file.download(local_file)
-	#   ctx.execute_query()
-	#print(f"Lastet ned fil til {destination_file} ")
-
-	#return {"destination_file": destination_file, "modified_date": modified_date}
+def decode_ad_timestamp(raw_value):
+	"""Convert AD FILETIME attribute bytes to datetime (100 ns since 1601-01-01)."""
+	ms_timestamp = int(raw_value[:-1].decode())
+	return datetime.datetime(1601, 1, 1) + datetime.timedelta(microseconds=ms_timestamp)
 
 
 def decode_useraccountcontrol(code):
@@ -780,10 +766,7 @@ def ldap_get_details(name, ldap_filter, request): # støttefunksjon
 							attrs_decoded[key] = []
 							if key == "lastLogonTimestamp":
 								# always just one timestamp, hence item 0 hardcoded
-								## TODO flere steder
-								ms_timestamp = int(attrs[key][0][:-1].decode())  # removing one trailing digit converting 100ns to microsec.
-								converted_date = datetime.datetime(1601,1,1) + datetime.timedelta(microseconds=ms_timestamp)
-								attrs_decoded[key].append(converted_date)
+								attrs_decoded[key].append(decode_ad_timestamp(attrs[key][0]))
 
 							elif key == "objectGUID":
 								import uuid
@@ -896,14 +879,6 @@ def ldap_exact(name): # støttefunksjon for LDAP
 """
 
 
-def prk_api(filename): # støttefunksjon
-	path = "/var/kartoteket/source/systemoversikt/systemoversikt/import/" + filename
-	with open(path, 'rt', encoding='utf-8') as file:
-		response = HttpResponse(file, content_type='text/csv; charset=utf-8')
-		response['Content-Disposition'] = 'attachment; filename="' + filename + '"'
-	return response
-
-
 def get_ipaddr_instance(address):
 
 	if address == "" or address == None or address == "0.0.0.0":
@@ -915,26 +890,6 @@ def get_ipaddr_instance(address):
 		n.ip_address_integer = int(ipaddress.ip_address(n.ip_address))
 		n.save()
 		return n
-
-def virksomhet_til_bruker(request):
-	"""
-	Slå opp brukers virksomhet
-	TODO: flytte til en modell-metode
-	"""
-	try:
-		vir = request.user.profile.virksomhet.virksomhetsforkortelse
-	except:
-		vir = False
-	return vir
-
-"""
-def csrf403(request):
-	#Støttefunksjon for å vise feilmelding
-	return render(request, 'csrf403.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-	})
-"""
 
 def login(request):
 	"""
@@ -2620,46 +2575,6 @@ def o365_avvik(request):
 		'integrasjonsstatus': _integrasjonsstatus("ad_graph_sikkerhetsavvik"),
 	})
 
-
-
-def prk_api_usr(request): #API
-	if request.method == "GET":
-
-		key = request.headers.get("key", None)
-		if key == None:
-			key = request.GET.get("key", None)
-
-		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
-		if key in list(allowed_keys):
-			owner = APIKeys.objects.get(key=key).navn
-			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
-			return prk_api("usr.csv")
-
-		else:
-			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
-
-
-
-def prk_api_grp(request): #API
-	if request.method == "GET":
-
-		key = request.headers.get("key", None)
-		if key == None:
-			key = request.GET.get("key", None)
-
-		allowed_keys = APIKeys.objects.filter(navn__startswith="prk_").values_list("key", flat=True)
-		if key in list(allowed_keys):
-			from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-			try:
-				owner = APIKeys.objects.get(key=key).navn
-			except MultipleObjectsReturned:
-				owner = "Flere treff på nøkkeleier"
-
-			ApplicationLog.objects.create(event_type="PRK API download", message="Nøkkel %s" %(owner))
-			return prk_api("grp.csv")
-
-		else:
-			return JsonResponse({"message": "Missing or wrong key. Supply HTTP header 'key'", "data": None}, safe=False, status=403)
 
 
 def azure_user_consents(request):
@@ -4388,49 +4303,6 @@ def cmdb_uten_epost_stat(request):
 	})
 
 
-def passwordexpire(request, pk):
-	#Denne funksjonen viser alle personer som har passordutløp kommende periode
-	required_permissions = ['auth.view_user']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	periode = 14 ## dager
-	innaktiv = 182 ## dager
-	now = timezone.now()
-	virksomhet = Virksomhet.objects.get(pk=pk)
-
-	if request.GET.get('alt') == "ja":
-		users = User.objects.filter(profile__userPasswordExpiry__gte=now)
-	else:
-		users = User.objects.filter(profile__virksomhet=pk)
-
-	users = users.filter(profile__usertype__in=["Ansatt", "Ekstern"]).filter(profile__accountdisable=False).filter(profile__userPasswordExpiry__lte=now+datetime.timedelta(days=periode)).order_by('profile__userPasswordExpiry')
-
-	for u in users:
-		if u.profile.lastLogonTimestamp:
-			if u.profile.lastLogonTimestamp < (now - datetime.timedelta(days=innaktiv)):
-				u.inactive = True
-			else:
-				u.inactive = False
-		else:
-			u.inactive = False
-
-		if u.profile.userPasswordExpiry < now:
-			u.expired = True
-		else:
-			u.expired = False
-
-	return render(request, 'virksomhet_passwordexpire.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'virksomhet': virksomhet,
-		'users': users,
-		'periode': periode,
-		'innaktiv': innaktiv,
-	})
-
-
-
 def bruker_detaljer(request, pk):
 	#Denne funksjonen viser detaljer om en bruker lastet inn i kartoteket
 	required_permissions = ['auth.view_user']
@@ -5042,27 +4914,6 @@ def databasestatistikk(request):
 			'file_size': file_size,
 			'sum_size': sum_size,
 		})
-
-
-
-#def logger_api_csirt(request):
-#   #viser der cisrt-spørringer feiler
-#   required_permissions = ['systemoversikt.view_applicationlog']
-#   if not any(map(request.user.has_perm, required_permissions)):
-#       return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-#
-#   try:
-#       siste_kjoring = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").last().opprettet
-#       time_delta = siste_kjoring - datetime.timedelta(hours=1)
-#       recent_loggs = ApplicationLog.objects.filter(event_type__icontains="API CSIRT").filter(message__icontains="Ingen treff").filter(opprettet__gte=time_delta).order_by('-opprettet')
-#   except:
-#       recent_loggs = None
-#
-#   return render(request, 'site_logger_audit.html', {
-#       'request': request,
-#       'required_permissions': formater_permissions(required_permissions),
-#       'recent_loggs': recent_loggs,
-#   })
 
 
 
@@ -5951,21 +5802,6 @@ def alle_systemer_forvaltere(request):
 
 
 
-def alle_systemer_smart(request):
-	required_permissions = ['systemoversikt.view_system']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	systemer = System.objects.all() #filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
-
-	return render(request, 'system_smart.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'systemer': systemer,
-	})
-
-
-
 def alle_systemer(request):
 	#Vise alle systemer
 	required_permissions = ['systemoversikt.view_system']
@@ -6099,7 +5935,7 @@ def mine_systembruk(request):
 	required_permissions = None
 
 	try:
-		brukers_virksomhet = virksomhet_til_bruker(request)
+		brukers_virksomhet = request.user.profile.virksomhet_forkortelse
 		pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
 		return redirect('all_bruk_for_virksomhet', pk)
 	except:
@@ -6619,7 +6455,7 @@ def virksomhet_ansvarlige(request, pk=None):
 
 	if pk == None:
 		try:
-			brukers_virksomhet = virksomhet_til_bruker(request)
+			brukers_virksomhet = request.user.profile.virksomhet_forkortelse
 			pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
 			return redirect('virksomhet_ansvarlige', pk)
 		except:
@@ -7389,64 +7225,11 @@ def prk_userlookup(request):
 
 
 
-def virksomhet_prkadmin(request, pk):
-	#Vise alle PRK-administratorer for angitt virksomhet
-
-	required_permissions = ['auth.view_user']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	from functools import lru_cache
-
-	@lru_cache(maxsize=2048)
-	def lookup_user(username):
-		try:
-			user = User.objects.get(username__iexact=username)
-			return user
-		except:
-			return username
-	try:
-		vir = Virksomhet.objects.get(pk=pk)
-	except:
-		vir = None
-
-	skjema_grupper = ADgroup.objects.filter(distinguishedname__icontains="gkat")
-	prk_admins = {}
-
-	for g in skjema_grupper:
-		group_name = g.distinguishedname[6:].split(",")[0]
-		if group_name == "GKAT":
-			continue
-
-		members = json.loads(g.member)
-		users = []
-		for m in members:
-			match = re.search(r'CN=(' + re.escape(vir.virksomhetsforkortelse) + '\d{2,8}),', m, re.IGNORECASE)
-			if match:
-				user = lookup_user(match[1])
-				users.append(user)
-			else:
-				pass
-
-		prk_admins[group_name] = users
-
-	user_set = set(a for b in prk_admins.values() for a in b)
-	prk_admins_inverted = dict((new_key, [key for key,value in prk_admins.items() if new_key in value]) for new_key in user_set)
-
-	return render(request, 'virksomhet_prkadm.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'virksomhet': vir,
-		'prk_admins': prk_admins_inverted,
-	})
-
-
-
 def systemer_virksomhet_ansvarlig_for(request, pk=None):
 
 	if pk == None:
 		try:
-			brukers_virksomhet = virksomhet_til_bruker(request)
+			brukers_virksomhet = request.user.profile.virksomhet_forkortelse
 			pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
 			return redirect('systemer_virksomhet_ansvarlig_for', pk)
 		except:
@@ -7483,7 +7266,7 @@ def virksomhet_forvalter_isk(request, pk=None):
 
 	if pk == None:
 		try:
-			brukers_virksomhet = virksomhet_til_bruker(request)
+			brukers_virksomhet = request.user.profile.virksomhet_forkortelse
 			pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
 			return redirect('virksomhet_forvalter_isk', pk)
 		except:
@@ -8547,7 +8330,7 @@ def min_virksomhet(request):
 	required_permissions = None # kun redirect
 
 	try:
-		brukers_virksomhet = virksomhet_til_bruker(request)
+		brukers_virksomhet = request.user.profile.virksomhet_forkortelse
 		pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
 		return redirect('virksomhet', pk)
 
@@ -8983,7 +8766,7 @@ def driftsmodell_virksomhet(request, pk=None):
 
 	if pk == None:
 		try:
-			brukers_virksomhet = virksomhet_til_bruker(request)
+			brukers_virksomhet = request.user.profile.virksomhet_forkortelse
 			pk = Virksomhet.objects.get(virksomhetsforkortelse=brukers_virksomhet).pk
 			return redirect('driftsmodell_virksomhet', pk)
 		except:
@@ -9213,45 +8996,6 @@ def bytt_kategori(request, fra, til):
 				error,
 			))
 	return redirect('alle_virksomheter')
-
-
-
-"""
-def bytt_leverandor(request, fra, til):
-	#Funksjon for å bytte all bruk av én leverandør til en annen leverandør
-	required_permissions = ['systemoversikt.change_system']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	try:
-		leverandor_fra = Leverandor.objects.get(pk=fra)
-		leverandor_til = Leverandor.objects.get(pk=til)
-	except:
-		messages.warning(request, 'Erstatte leverandør feilet. Enten "fra" eller "til"-leverandør finnes ikke.')
-		return redirect('alle_leverandorer')
-
-	def bytt(message, kildesystemer, fra, til):
-		error = ok = 0
-		for kilde in kildesystemer:
-			try:
-				kilde.systemleverandor.remove(leverandor_fra)
-				kilde.systemleverandor.add(leverandor_til)
-				ok += 1
-			except:
-				error += 1
-		messages.success(request, '%s: Byttet fra %s til %s (ok: %s, error: %s)'% (
-					message,
-					leverandor_fra.leverandor_navn,
-					leverandor_til.leverandor_navn,
-					ok,
-					error,
-				))
-
-	bytt("Systemer",System.objects.filter(systemleverandor=fra), leverandor_fra, leverandor_til)
-	bytt("Systemebruk",SystemBruk.objects.filter(systemleverandor=fra), leverandor_fra, leverandor_til)
-
-	return redirect('alle_leverandorer')
-"""
 
 
 

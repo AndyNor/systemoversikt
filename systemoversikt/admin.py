@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Removed commented IpProtocol admin – model retired.
 # 2026-06-21: Removed PRKvalg/PRKgruppe/PRKskjema admin – PRK form import retired.
 # 2026-06-21: Removed UBW module admin registrations – feature retired.
 # 2026-06-21: Removed ProgramvareBruk.programvareleverandor from admin – field removed from model.
@@ -101,11 +102,6 @@ class QualysVulnBasisPatchingAdmin(admin.ModelAdmin):
 	list_display = ('title', 'akseptert')
 	search_fields = ('title',)
 	readonly_fields = ('opprettet', 'sist_oppdatert')
-
-
-#@admin.register(IpProtocol)
-#class IpProtocolAdmin(admin.ModelAdmin):
-#	list_display=search_fields=readonly_fields = ('protocol', 'port', 'description')
 
 
 @admin.register(AzureUser)

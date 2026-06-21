@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Removed commented IpProtocol model – never used in production.
+# 2026-06-21: Profile.virksomhet_forkortelse – replaces virksomhet_til_bruker view helper.
 # 2026-06-21: chart_service_component, chart_external_system – tjeneste ecosystem graph palette.
 # 2026-06-21: Removed PRKvalg, PRKgruppe, PRKskjema – PRK form import retired; AD groups hold access metadata.
 # 2026-06-21: Removed UBW module models/forms – feature retired, URLs already disabled.
@@ -1309,6 +1311,12 @@ class Profile(models.Model):
 		)
 	# med vilje er det ikke HistoricalRecords() på denne
 
+	def virksomhet_forkortelse(self):
+		try:
+			return self.virksomhet.virksomhetsforkortelse
+		except:
+			return False
+
 	def __str__(self):
 		return u'%s' % (self.user)
 
@@ -2229,26 +2237,6 @@ class virtualIP(models.Model):
 					candidates.append(candidate)
 
 		return members
-
-
-#class IpProtocol(models.Model): # DENNE BRUKES IKKE TIL NOE SOM HELST
-#	port = models.BigIntegerField(
-#		null=False,
-#		)
-#	protocol = models.CharField(
-#		max_length=10,
-#		null=False,
-#		)
-#	description = models.TextField(
-#		null=True,
-#		)
-#
-#	def __str__(self):
-#		return f"IP protokoll {self.protocol} {self.port}"
-#
-#	class Meta:
-#		verbose_name_plural = "CMDB: IP-protokoller"
-#		default_permissions = ('add', 'change', 'delete', 'view')
 
 
 # Klasse for å representere kilder (pools) for et gitt virtuell lastbalansert endepunkt
