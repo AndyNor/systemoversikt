@@ -5674,6 +5674,7 @@ def tjenester_oversikt(request):
 
 
 def generer_graf_ny(system, follow_count):
+	# 2026-06-21: Integration edges carry admin edit href – clickable in dependency chart.
 	avhengigheter_graf = {"nodes": [], "edges": []}
 	observerte_driftsmodeller = set()
 	first_round = True
@@ -5716,15 +5717,17 @@ def generer_graf_ny(system, follow_count):
 						"color": integrasjon.color(),
 						"href": reverse('systemdetaljer', args=[s.pk])
 					}})
-					avhengigheter_graf["edges"].append({"data": {
-						"source": aktuelt_system.pk,
-						"target": s.pk,
-						'linewidth': 2,
-						'curve-style': 'bezier',
-						"linecolor": integrasjon.color(),
-						"linestyle": "solid"
-					}})
 					observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+				avhengigheter_graf["edges"].append({"data": {
+					"id": f"integration_{integrasjon.pk}",
+					"source": aktuelt_system.pk,
+					"target": s.pk,
+					'linewidth': 2,
+					'curve-style': 'bezier',
+					"linecolor": integrasjon.color(),
+					"linestyle": "solid",
+					"href": reverse('admin:systemoversikt_systemintegration_change', args=[integrasjon.pk]),
+				}})
 
 			if first_round:
 				for s in aktuelt_system.system_integration_destination.all():
@@ -5742,15 +5745,17 @@ def generer_graf_ny(system, follow_count):
 							"color": integrasjon.color(),
 							"href": reverse('systemdetaljer', args=[s.pk])
 						}})
-						avhengigheter_graf["edges"].append({"data": {
-							"source": s.pk,
-							"target": aktuelt_system.pk,
-							'linewidth': 1,
-							'curve-style': 'bezier',
-							"linecolor": integrasjon.color(),
-							"linestyle": "dashed"
-						}})
 						observerte_driftsmodeller.add(s.driftsmodell_foreignkey)
+					avhengigheter_graf["edges"].append({"data": {
+						"id": f"integration_{integrasjon.pk}",
+						"source": s.pk,
+						"target": aktuelt_system.pk,
+						'linewidth': 1,
+						'curve-style': 'bezier',
+						"linecolor": integrasjon.color(),
+						"linestyle": "dashed",
+						"href": reverse('admin:systemoversikt_systemintegration_change', args=[integrasjon.pk]),
+					}})
 
 			behandlede_systemer.add(aktuelt_system)
 

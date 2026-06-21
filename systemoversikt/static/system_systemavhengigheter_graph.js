@@ -1,4 +1,5 @@
 // Change log:
+// 2026-06-21: Wider edge hit targets and parent events:no – integration edges clickable in chart.
 // 2026-06-21: Apply lock UI after saved viewport restore – fixes pan shift on locked reload.
 // 2026-06-21: System detail dependency chart – separate from virksomhet graph JS.
 // 2026-06-21: Defer fcose until container is sized; randomize true – fixes diagonal node line.
@@ -119,12 +120,22 @@
           },
         },
         {
+          selector: 'edge[?href]',
+          style: {
+            'cursor': 'pointer',
+            'overlay-opacity': 0,
+            'overlay-padding': 12,
+            'z-index': 10,
+          },
+        },
+        {
           selector: ':parent',
           style: {
             'label': 'data(name)',
             'background-color': '#F1F9FF',
             'padding': 10,
             'compound-sizing-wrt-labels': 'exclude',
+            'events': 'no',
           },
         },
       ],
@@ -141,11 +152,21 @@
       });
     }
 
-    cy.on('tap', 'node', function () {
-      const href = this.data('href');
+    function navigateFromElement(ele) {
+      const href = ele.data('href');
       if (href) {
-        try { window.open(href, '_self'); }
-        catch (e) { window.location.href = href; }
+        window.location.href = href;
+      }
+    }
+
+    cy.on('tap', 'node', function () {
+      navigateFromElement(this);
+    });
+
+    cy.on('tap', function (evt) {
+      const ele = evt.target;
+      if (ele.isEdge()) {
+        navigateFromElement(ele);
       }
     });
 

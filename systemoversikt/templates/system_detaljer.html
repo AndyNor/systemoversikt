@@ -15,7 +15,7 @@
 	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-svg.js@0.4.0' %}" nonce="{{request.csp_nonce}}"></script>
-	<script src="{% static 'system_systemavhengigheter_graph.js' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'system_systemavhengigheter_graph.js' %}?v=20260621-edge-click" nonce="{{request.csp_nonce}}"></script>
 
 {% endblock ekstrajavascript %}
 
@@ -390,6 +390,7 @@
 	{% endif %}
 
 	<br>
+	{# 2026-06-21: Add COMPONENT create link and per-row delete – matches other integration actions on this page. #}
 	<h5>Registrerte integrasjoner</h5>
 	<div class="row">
 		<div class="col-12">
@@ -402,6 +403,7 @@
 						<th>Destinasjon</th>
 						<th>Personopplysninger?</th>
 						<th>Kommentar</th>
+						<th class="filter-false">Slett</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -413,6 +415,7 @@
 					<td>{{ avhengighet.destination_system }}</td>
 					<td>{{ avhengighet.personopplysninger|yesno:"Ja,Nei,Vet ikke" }}</td>
 					<td>{{ avhengighet.description|default:"-" }}</td>
+					<td><a href="/admin/systemoversikt/systemintegration/{{ avhengighet.pk }}/delete/">❌</a></td>
 				</tr>
 				{% endfor %}
 				{% for avhengighet in systemdetaljer.system_integration_destination.all %}
@@ -423,6 +426,7 @@
 					<td>{{ avhengighet.destination_system }}</td>
 					<td>{{ avhengighet.personopplysninger|yesno:"Ja,Nei,Vet ikke" }}</td>
 					<td>{{ avhengighet.description|default:"-" }}</td>
+					<td><a href="/admin/systemoversikt/systemintegration/{{ avhengighet.pk }}/delete/">❌</a></td>
 				</tr>
 				{% endfor %}
 				</tbody>
@@ -432,6 +436,7 @@
 			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?destination_system={{systemdetaljer.pk}}&integration_type=INTEGRATION">Ny integrasjon mottak</a>
 			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?source_system={{systemdetaljer.pk}}&integration_type=PUBLICATION">Ny applikasjonspublisering</a>
 			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?source_system={{systemdetaljer.pk}}&integration_type=AUTHENTICATION">Ny påloggingsmetode</a>
+			<a class="btn btn-sm btn-link" href="/admin/systemoversikt/systemintegration/add/?source_system={{systemdetaljer.pk}}&integration_type=COMPONENT">Ny tilhørende systemkomponent</a>
 
 
 			<br><br><b>Azure graph-integrasjoner</b>
