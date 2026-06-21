@@ -9,7 +9,7 @@
 	{% if send_succeeded %}
 		<div class="alert alert-success">
 			<p><strong>Meldingen er sendt</strong></p>
-			<p>Sendte {{ delivery_preview.mail_count }} e-post(er) til {{ delivery_preview.recipient_total }} mottaker(e).
+			<p>Sendte 1 e-post til {{ delivery_preview.recipient_total }} mottaker(e).
 			{% if delivery_preview.skipped %}
 				{{ delivery_preview.skipped|length }} virksomhet(er) hoppet over (ingen sikkerhetskontakter).
 			{% endif %}
@@ -27,6 +27,10 @@
 				<td>{% if delivery_preview.cc %}{{ delivery_preview.cc|join:", " }}{% else %}(ingen){% endif %}</td>
 			</tr>
 			<tr>
+				<th>Til</th>
+				<td>{{ delivery_preview.all_to|join:", " }}</td>
+			</tr>
+			<tr>
 				<th>Tittel</th>
 				<td>{{ delivery_preview.subject }}</td>
 			</tr>
@@ -38,7 +42,7 @@
 		</table>
 
 		{% if delivery_preview.messages %}
-			<p class="mb-1"><strong>E-post per virksomhet</strong></p>
+			<p class="mb-1"><strong>Mottakere per virksomhet</strong></p>
 			<table class="table table-sm table-bordered" style="max-width: 900px;">
 			<thead>
 				<tr>
@@ -89,7 +93,7 @@
 				<strong>Tørrkjøring.</strong> Skjemaet viser hva som ville blitt sendt. Ingen e-post sendes.
 			</p>
 		{% else %}
-			<p>Send en e-postmelding til sikkerhetskontakter for valgte virksomheter. Meldingen sendes umiddelbart (ikke via nattkø). Avsender og kopi går til CSIRT.</p>
+			<p>Send en e-postmelding til sikkerhetskontakter for valgte virksomheter. Én e-post sendes med alle mottakere i Til-feltet. Meldingen sendes umiddelbart (ikke via nattkø). Avsender og kopi går til CSIRT.</p>
 		{% endif %}
 
 		<p class="small text-muted">
@@ -105,7 +109,7 @@
 		{% if delivery_preview and dry_run %}
 			<div class="alert alert-info">
 				<p><strong>Forhåndsvisning – ingen e-post sendt</strong></p>
-				<p>Ville sendt {{ delivery_preview.mail_count }} e-post(er) til {{ delivery_preview.recipient_total }} mottaker(e).</p>
+				<p>Ville sendt 1 e-post til {{ delivery_preview.recipient_total }} mottaker(e).</p>
 
 				<table class="table table-sm table-bordered" style="background: #fff; max-width: 900px;">
 				<tbody>
@@ -116,6 +120,10 @@
 					<tr>
 						<th>Kopi</th>
 						<td>{% if delivery_preview.cc %}{{ delivery_preview.cc|join:", " }}{% else %}(ingen){% endif %}</td>
+					</tr>
+					<tr>
+						<th>Til</th>
+						<td>{{ delivery_preview.all_to|join:", " }}</td>
 					</tr>
 					<tr>
 						<th>Tittel</th>
@@ -129,7 +137,7 @@
 				</table>
 
 				{% if delivery_preview.messages %}
-					<p class="mb-1"><strong>E-post per virksomhet</strong></p>
+					<p class="mb-1"><strong>Mottakere per virksomhet</strong></p>
 					<table class="table table-sm table-bordered" style="background: #fff; max-width: 900px;">
 					<thead>
 						<tr>

@@ -9969,7 +9969,7 @@ def sikkerhet_varsling_virksomheter(request):
 		CSIRT_VARSLING_DRY_RUN,
 		SIKKERHETSANALYTIKER_GROUP,
 		csirt_email_address,
-		append_varsling_page_footer,
+		append_varsling_footer,
 		log_csirt_varsling_to_application_log,
 		plan_security_alert_to_virksomheter,
 		security_contact_emails_for_virksomhet,
@@ -10041,9 +10041,8 @@ def sikkerhet_varsling_virksomheter(request):
 				if str(row['virksomhet'].pk) in selected_pks
 			]
 			try:
-				page_url = request.build_absolute_uri(reverse('sikkerhet_varsling_virksomheter'))
 				sender = request.user.get_full_name() or request.user.username
-				delivery_body = append_varsling_page_footer(body, page_url, sender)
+				delivery_body = append_varsling_footer(body, sender)
 				delivery_preview = plan_security_alert_to_virksomheter(
 					selected_virksomheter,
 					subject,
@@ -10059,8 +10058,8 @@ def sikkerhet_varsling_virksomheter(request):
 					)
 					messages.info(
 						request,
-						f'Tørrkjøring: {delivery_preview["mail_count"]} e-post(er) ville blitt sendt '
-						f'til {delivery_preview["recipient_total"]} mottaker(e). Ingen e-post ble sendt.',
+						f'Tørrkjøring: Ville sendt 1 e-post til '
+						f'{delivery_preview["recipient_total"]} mottaker(e). Ingen e-post ble sendt.',
 					)
 				else:
 					send_security_alert_to_virksomheter(
@@ -10078,8 +10077,7 @@ def sikkerhet_varsling_virksomheter(request):
 					send_succeeded = True
 					messages.success(
 						request,
-						f'Sendte {delivery_preview["mail_count"]} e-post(er) til '
-						f'{delivery_preview["recipient_total"]} mottaker(e). '
+						f'Sendte 1 e-post til {delivery_preview["recipient_total"]} mottaker(e). '
 						f'{len(delivery_preview["skipped"])} virksomhet(er) hoppet over (ingen sikkerhetskontakter).',
 					)
 			except Exception as exc:

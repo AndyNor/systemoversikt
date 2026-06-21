@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Single e-mail with all recipients in To; CSIRT once on Cc.
 # 2026-06-21: Live e-mail sending enabled (dry-run off).
 # 2026-06-21: Include sender name in varsling e-mail footer.
 # 2026-06-21: Full ApplicationLog audit entry for each varsling (user, recipients, title, body).
-# 2026-06-21: Append Kartoteket footer with page URL to outbound varsling body.
 # 2026-06-21: Dry-run mode – preview planned mail without sending until explicitly enabled.
 
 import os
@@ -58,12 +58,12 @@ def security_contact_emails_for_virksomhet(virksomhet):
 	return [], ''
 
 
-def append_varsling_page_footer(body, page_url, sender):
-	"""Append Kartoteket attribution, page URL and sender to outbound message body."""
+def append_varsling_footer(body, sender):
+	"""Append Kartoteket attribution and sender to outbound message body."""
 	return (
 		f"{body.rstrip()}\n\n"
 		f"---\n"
-		f"Meldingen ble sendt fra Kartoteket: {page_url}\n"
+		f"Meldingen ble sendt fra Kartoteket.\n"
 		f"Sendt av: {sender}"
 	)
 
@@ -75,7 +75,8 @@ def log_csirt_varsling_to_application_log(username, subject, body, delivery_prev
 	lines = [
 		f'Tørrkjøring av {username}' if dry_run else f'Sendt av {username}',
 		f'Tittel: {subject}',
-		'Til:',
+		f"Til ({len(delivery_preview['all_to'])} mottakere): {', '.join(delivery_preview['all_to'])}",
+		'Mottakere per virksomhet:',
 	]
 	for item in delivery_preview['messages']:
 		vir = item['virksomhet']
@@ -109,7 +110,7 @@ def _dedupe_preserve_order(emails):
 
 
 def plan_security_alert_to_virksomheter(virksomheter, subject, body):
-	"""Build per-virksomhet mail plan without sending. Used for dry-run preview."""
+	"""Build mail plan: one message, all recipients combined in To. Used for preview and send."""
 	try:
 		csirt_addr = csirt_email_address()
 	except KeyError:
@@ -117,6 +118,7 @@ def plan_security_alert_to_virksomheter(virksomheter, subject, body):
 
 	planned_messages = []
 	skipped = []
+	all_to = []
 	for virksomhet in virksomheter:
 		recipients, source = security_contact_emails_for_virksomhet(virksomhet)
 		if not recipients:
@@ -127,16 +129,20 @@ def plan_security_alert_to_virksomheter(virksomheter, subject, body):
 			'to': recipients,
 			'source': source,
 		})
+		all_to.extend(recipients)
+
+	all_to = _dedupe_preserve_order(all_to)
 
 	return {
 		'from_email': csirt_addr,
 		'cc': [csirt_addr] if csirt_addr else [],
 		'subject': subject,
 		'body': body,
+		'all_to': all_to,
 		'messages': planned_messages,
 		'skipped': skipped,
-		'mail_count': len(planned_messages),
-		'recipient_total': sum(len(message['to']) for message in planned_messages),
+		'mail_count': 1 if all_to else 0,
+		'recipient_total': len(all_to),
 	}
 
 
@@ -163,28 +169,21 @@ def send_immediate_csirt_email(subject, body, to, cc=None):
 
 def send_security_alert_to_virksomheter(virksomheter, subject, body):
 	"""
-	Send one immediate e-mail per virksomhet to its security contacts.
-	Always CC CSIRT. Returns (sent_mail_count, skipped_virksomheter).
-	Raises if CSIRT_VARSLING_DRY_RUN is enabled.
+	Send one immediate e-mail with all security contacts in To and CSIRT on Cc.
+	Returns skipped virksomheter (no contacts). Raises if no recipients or dry-run.
 	"""
 	if CSIRT_VARSLING_DRY_RUN:
 		raise RuntimeError('CSIRT varsling is in dry-run mode; use plan_security_alert_to_virksomheter().')
 
+	delivery_plan = plan_security_alert_to_virksomheter(virksomheter, subject, body)
+	if not delivery_plan['all_to']:
+		raise ValueError('Ingen mottakere med gyldig e-postadresse blant valgte virksomheter.')
+
 	csirt_addr = csirt_email_address()
-	sent_mail_count = 0
-	skipped = []
-
-	for virksomhet in virksomheter:
-		recipients, _source = security_contact_emails_for_virksomhet(virksomhet)
-		if not recipients:
-			skipped.append(virksomhet)
-			continue
-		send_immediate_csirt_email(
-			subject=subject,
-			body=body,
-			to=recipients,
-			cc=[csirt_addr],
-		)
-		sent_mail_count += 1
-
-	return sent_mail_count, skipped
+	send_immediate_csirt_email(
+		subject=subject,
+		body=body,
+		to=delivery_plan['all_to'],
+		cc=[csirt_addr],
+	)
+	return delivery_plan['skipped']
