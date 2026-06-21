@@ -16,7 +16,7 @@ The script maps old adgroup IDs to new ones via distinguishedname.
 """
 from django.core.management.base import BaseCommand
 from django.db import transaction, connection
-from systemoversikt.models import ADgroup, PRKvalg, PRKgruppe, PRKskjema
+from systemoversikt.models import ADgroup
 import psycopg2, os, time, subprocess, glob
 from datetime import datetime
 
@@ -217,10 +217,6 @@ class Command(BaseCommand):
 			print(f"  Hopper over (tabell finnes kanskje ikke): {e}")
 			restore_conn.rollback()
 
-		# --- Restore PRKvalg objects (CASCADE deleted) ---
-		print("\n--- Restoring PRKvalg (CASCADE-slettet) ---")
-		self._restore_prkvalg(restore_cur, old_to_new, dry_run)
-
 		restore_cur.close()
 		restore_conn.close()
 
@@ -258,101 +254,3 @@ class Command(BaseCommand):
 				)
 
 		return len(remapped_rows), skipped
-
-
-	def _restore_prkvalg(self, restore_cur, old_to_new, dry_run):
-		"""Restore PRKvalg objects that were CASCADE-deleted."""
-		restore_cur.execute("""
-			SELECT id, valgnavn, gruppenavn, beskrivelse, virksomhet_id,
-			       gruppering_id, skjemanavn_id, ad_group_ref_id, in_active_directory
-			FROM systemoversikt_prkvalg
-		""")
-		old_prkvalg_rows = restore_cur.fetchall()
-		print(f"  Fant {len(old_prkvalg_rows)} PRKvalg i backup")
-
-		# Also get PRKvalg.systemer M2M
-		restore_cur.execute("SELECT prkvalg_id, system_id FROM systemoversikt_prkvalg_systemer")
-		old_prkvalg_systemer = restore_cur.fetchall()
-
-		# Check which PRKvalg still exist in live DB (by gruppenavn which is unique)
-		existing_gruppenavn = set(PRKvalg.objects.values_list('gruppenavn', flat=True))
-
-		# Check which PRKgruppe and PRKskjema IDs exist in live DB
-		existing_gruppering_ids = set(PRKgruppe.objects.values_list('id', flat=True))
-		existing_skjema_ids = set(PRKskjema.objects.values_list('id', flat=True))
-
-		created = 0
-		skipped_exists = 0
-		skipped_missing_dep = 0
-		prkvalg_id_mapping = {}  # old_id -> new PRKvalg object
-
-		if dry_run:
-			for row in old_prkvalg_rows:
-				old_id, valgnavn, gruppenavn = row[0], row[1], row[2]
-				if gruppenavn in existing_gruppenavn:
-					skipped_exists += 1
-				else:
-					created += 1
-			print(f"  Ville gjenopprettet {created}, hoppet over {skipped_exists} (eksisterer allerede)")
-			return
-
-		with transaction.atomic():
-			for row in old_prkvalg_rows:
-				old_id = row[0]
-				valgnavn = row[1]
-				gruppenavn = row[2]
-				beskrivelse = row[3]
-				virksomhet_id = row[4]
-				gruppering_id = row[5]
-				skjemanavn_id = row[6]
-				old_ad_group_ref_id = row[7]
-				in_active_directory = row[8]
-
-				if gruppenavn in existing_gruppenavn:
-					skipped_exists += 1
-					# Map existing PRKvalg for M2M restore
-					try:
-						existing = PRKvalg.objects.get(gruppenavn=gruppenavn)
-						prkvalg_id_mapping[old_id] = existing
-					except:
-						pass
-					continue
-
-				# Check dependencies exist
-				if gruppering_id not in existing_gruppering_ids:
-					skipped_missing_dep += 1
-					continue
-				if skjemanavn_id not in existing_skjema_ids:
-					skipped_missing_dep += 1
-					continue
-
-				# Map ad_group_ref to new ID
-				new_ad_group_ref_id = None
-				if old_ad_group_ref_id and old_ad_group_ref_id in old_to_new:
-					new_ad_group_ref_id = old_to_new[old_ad_group_ref_id]
-
-				new_prkvalg = PRKvalg(
-					valgnavn=valgnavn,
-					gruppenavn=gruppenavn,
-					beskrivelse=beskrivelse,
-					virksomhet_id=virksomhet_id,
-					gruppering_id=gruppering_id,
-					skjemanavn_id=skjemanavn_id,
-					ad_group_ref_id=new_ad_group_ref_id,
-					in_active_directory=in_active_directory,
-				)
-				new_prkvalg.save()
-				prkvalg_id_mapping[old_id] = new_prkvalg
-				created += 1
-
-			# Restore PRKvalg.systemer M2M
-			systemer_restored = 0
-			for old_prkvalg_id, system_id in old_prkvalg_systemer:
-				if old_prkvalg_id in prkvalg_id_mapping:
-					prkvalg_obj = prkvalg_id_mapping[old_prkvalg_id]
-					prkvalg_obj.systemer.add(system_id)
-					systemer_restored += 1
-
-		print(f"  Gjenopprettet {created} PRKvalg-objekter")
-		print(f"  Hoppet over {skipped_exists} (eksisterte allerede), {skipped_missing_dep} (manglende avhengigheter)")
-		print(f"  Gjenopprettet {systemer_restored} PRKvalg-system-koblinger")

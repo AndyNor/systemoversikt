@@ -25,9 +25,6 @@
 		{% if gruppe.parent %}
 		📁<a href="{% url 'adorgunit_detaljer' pk=gruppe.parent.pk %}"> {{ gruppe.parent }}</a><br>
 		{% endif %}
-		{% for prkvalg in gruppe.prkvalg.all %}
-			📖<a href="{% url 'prk_skjema' skjema_id=prkvalg.skjemanavn.pk %}"> {{ prkvalg.skjemanavn.skjemanavn }} --> {{ prkvalg.valgnavn }}</a><br>
-		{% endfor%}
 	</p>
 	<hr>
 		<i>"{{ gruppe.description }}"</i> (Fra PRK {% include 'site_janeivetikke.html' with boolean=gruppe.from_prk %})

@@ -715,14 +715,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "view_prkgruppe"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_prkvalg"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_profile"
             },
             {
@@ -940,19 +932,7 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "view_prkgruppe"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_prkskjema"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "view_prkuser"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_prkvalg"
             },
             {
                 "content_type__app_label": "systemoversikt",

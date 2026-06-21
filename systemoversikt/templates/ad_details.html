@@ -95,7 +95,7 @@
 			<h3>Gruppe</h3>
 			{# 2026-05-27: search_term_adgrp matches alle_adgrupper GET param. #}
 			<h5><a href="{% url 'alle_adgrupper' %}?search_term_adgrp={{group.attrs.cn.0}}">{{ group.attrs.cn.0 }}</a></h5>
-			<p>Canonical Name: (<a href="{% url 'alle_prk' %}?search_term={{group.attrs.cn.0}}">Søk i PRK</a>)<br>{{ group.cn }}</p>
+			<p>Canonical Name: <br>{{ group.cn }}</p>
 			<p>Member Of (parent group): <br>
 			{% for item in group.attrs.memberOf %}
 				{% url 'ad_exact' name=item as url_details %}

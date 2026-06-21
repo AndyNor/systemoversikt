@@ -3622,8 +3622,6 @@ def cmdb_statistikk(request):
 	count_office_ea_keys = AzureApplicationKeys.objects.all().count()
 	count_ad_users = User.objects.all().count()
 	count_prk_users = User.objects.filter(profile__from_prk=True).count()
-	count_prk_skjema = PRKskjema.objects.all().count()
-	count_prk_skjema_valg = PRKvalg.objects.all().count()
 	count_ad_grupper = ADgroup.objects.all().count()
 	count_bs = CMDBbs.objects.filter(operational_status=True).count()
 	count_bss = CMDBRef.objects.filter(operational_status=1).count()
@@ -3658,8 +3656,6 @@ def cmdb_statistikk(request):
 		'count_office_ea_keys': count_office_ea_keys,
 		'count_ad_users': count_ad_users,
 		'count_prk_users': count_prk_users,
-		'count_prk_skjema': count_prk_skjema,
-		'count_prk_skjema_valg': count_prk_skjema_valg,
 		'count_ad_grupper': count_ad_grupper,
 		'count_bs': count_bs,
 		'count_bss': count_bss,
@@ -9376,7 +9372,6 @@ def adgruppe_detaljer_optimized(request, pk):
 		.only('pk', 'common_name', 'display_name', 'distinguishedname',
 			  'description', 'from_prk', 'sist_oppdatert', 'member', 'memberof', 'parent')
 		.select_related('parent')
-		.prefetch_related('prkvalg__skjemanavn')
 		.get(pk=pk)
 	)
 
@@ -9808,102 +9803,6 @@ def alle_ip(request):
 		'unique_vlan_networks': unique_vlan_networks,
 		'ipv6_terms': sorted(ipv6_terms),
 	})
-
-
-"""
-def ad_prk_sok(request):
-		search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-		search_term = search_term.replace(",DC=oslofelles,DC=oslo,DC=kommune,DC=no","")
-
-
-		"CN=DS-BRE_OKNMI_BUDSJ_BUDSJFELL_IS,OU=BRE,OU=Tilgangsgrupper,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-		"ou=DS-BRE_OKNMI_BUDSJ_BUDSJFELL_IS,ou=BRE,ou=Tilgangsgrupper,ou=OK"
-
-		return render(request, 'ad_prk_sok.html', {
-			'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-			'search_term': search_term,
-		})
-"""
-
-
-def prk_skjema(request, skjema_id):
-	#Bla i PRK-skjemaer, vise et konkret skjema
-	required_permissions = ['systemoversikt.view_prkvalg']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-	skjema = PRKskjema.objects.get(pk=skjema_id)
-
-	if search_term:
-		valg = PRKvalg.objects.filter(skjemanavn=skjema).filter(virksomhet__virksomhetsforkortelse=search_term).order_by("gruppering")
-	else:
-		valg = PRKvalg.objects.filter(skjemanavn=skjema).order_by("gruppering")
-
-	return render(request, 'prk_vis_skjema.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'skjema': skjema,
-		'valg': valg,
-	})
-
-
-
-def prk_browse(request):
-	#Bla i PRK-skjemaer
-	required_permissions = ['systemoversikt.view_prkvalg']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-
-	if search_term:
-		skjema = PRKskjema.objects.filter(skjemanavn__icontains=search_term)
-	else:
-		skjema = PRKskjema.objects.all()
-
-	skjema = skjema.order_by('skjematype', 'skjemanavn')
-
-	return render(request, 'prk_bla.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'skjema': skjema,
-		'search_term': search_term,
-	})
-
-
-
-def alle_prk(request):
-	#Søke og vise PRK-skjemaer
-	required_permissions = ['systemoversikt.view_prkvalg']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
-
-	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
-
-	if (search_term == "__all__"):
-		skjemavalg = PRKvalg.objects
-	elif len(search_term) < 2: # if one or less, return nothing
-		skjemavalg = PRKvalg.objects.none()
-	else:
-		skjemavalg = PRKvalg.objects.filter(
-				Q(valgnavn__icontains=search_term) |
-				Q(beskrivelse__icontains=search_term) |
-				Q(gruppering__feltnavn__icontains=search_term) |
-				Q(skjemanavn__skjemanavn__icontains=search_term) |
-				Q(gruppenavn__icontains=search_term)
-		)
-
-	skjemavalg = skjemavalg.order_by('skjemanavn__skjemanavn', 'gruppering__feltnavn')
-
-	return render(request, 'prk_skjema_sok.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'search_term': search_term,
-		'skjemavalg': skjemavalg,
-	})
-
 
 
 def alle_klienter(request):

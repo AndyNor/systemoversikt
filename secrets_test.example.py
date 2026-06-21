@@ -14,8 +14,6 @@ def load_secrets():
 	os.environ['EMAIL_HOST_USER'] = ''
 	os.environ['EMAIL_HOST_PASSWORD'] = ''
 
-	os.environ['PRK_FORM_APIKEY'] = ''
-	os.environ['PRK_FORM_URL'] = ''
 	os.environ['PRK_USERS_URL'] = ''
 	os.environ['PRK_ORG_URL'] = ''
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-06-21: Removed Definisjon admin registrations – feature retired.
+# 2026-06-21: Removed PRKvalg/PRKgruppe/PRKskjema admin – PRK form import retired.
 # 2026-06-21: Removed UBW module admin registrations – feature retired.
 # 2026-06-21: Removed ProgramvareBruk.programvareleverandor from admin – field removed from model.
 # 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related admin registrations.
@@ -734,29 +734,6 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 			),
 		})
 	)
-
-
-@admin.register(PRKvalg)
-class PRKvalgAdmin(admin.ModelAdmin):
-	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('skjemanavn', 'gruppering', 'valgnavn', 'ad_group_ref', 'virksomhet', 'in_active_directory', 'beskrivelse', 'sist_oppdatert')
-	search_fields = ('skjemanavn__skjemanavn', 'gruppenavn', 'ad_group_ref__common_name')
-	list_filter = ('sist_oppdatert', 'in_active_directory')
-	autocomplete_fields = ('ad_group_ref',)
-
-
-@admin.register(PRKgruppe)
-class PRKgruppeAdmin(admin.ModelAdmin):
-	list_display = ('feltnavn', 'sist_oppdatert', 'opprettet')
-	search_fields = ('feltnavn',)
-	list_filter = ('sist_oppdatert', 'opprettet')
-
-
-@admin.register(PRKskjema)
-class PRKskjemaAdmin(admin.ModelAdmin):
-	list_display = ('skjemanavn', 'skjematype', 'sist_oppdatert', 'opprettet')
-	search_fields = ('skjemanavn',)
-	list_filter = ('sist_oppdatert', 'opprettet')
 
 
 @admin.register(Oppdatering)

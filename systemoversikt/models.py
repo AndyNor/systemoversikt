@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-06-21: Removed Definisjon and DefinisjonKontekster models – feature retired.
+# 2026-06-21: Removed PRKvalg, PRKgruppe, PRKskjema – PRK form import retired; AD groups hold access metadata.
 # 2026-06-21: Removed UBW module models/forms – feature retired, URLs already disabled.
 # 2026-06-21: Removed ProgramvareBruk.programvareleverandor – supplier belongs on Programvare only.
 # 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related lookup models – migrated to Behandlingsoversikten.
@@ -3288,7 +3288,7 @@ class ADgroup(models.Model):
 	from_prk = models.BooleanField(
 			verbose_name="Finnes i PRK?",
 			default=False,
-			help_text=u"Slås opp mot 'PRKvalg' automatisk",
+			help_text=u"Historical flag: group was provisioned via PRK (no longer updated).",
 			)
 	mail = models.TextField(
 			verbose_name="Mail",
@@ -6171,163 +6171,6 @@ class HRorg(models.Model):
 	class Meta:
 		verbose_name_plural = "Organisasjon: Organisasjonsledd"
 		verbose_name  = "HR-organisasjonsledd"
-		default_permissions = ('add', 'change', 'delete', 'view')
-
-
-class PRKvalg(models.Model):
-	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
-	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
-	valgnavn = models.CharField(
-			verbose_name="Valg",
-			max_length=300,
-			blank=False, null=False,
-			help_text=u"Importert",
-			db_index=True,
-			)
-	gruppenavn = models.CharField(
-			unique=True,
-			verbose_name="Gruppenavn i AD",
-			max_length=1000,
-			blank=False, null=False,
-			help_text=u"Importert",
-			db_index=True,
-			)
-	beskrivelse = models.CharField(
-			verbose_name="Beskrivelse",
-			max_length=600,
-			blank=True,
-			null=True,
-			help_text=u"Importert",
-			)
-	virksomhet = models.ForeignKey(
-			to=Virksomhet,
-			related_name='prkvalg_virksomhet',
-			verbose_name="Virksomhetstilknytning",
-			null=True,
-			on_delete=models.SET_NULL,
-			help_text=u"Importert",
-			)
-	gruppering = models.ForeignKey(
-			to="PRKgruppe",
-			related_name='PRKvalg_gruppering',
-			verbose_name="Gruppering",
-			on_delete=models.PROTECT,
-			help_text=u"Importert",
-			)
-	skjemanavn = models.ForeignKey(
-			to="PRKskjema",
-			related_name='PRKvalg_skjemanavn',
-			verbose_name="Skjemanavn",
-			on_delete=models.PROTECT,
-			help_text=u"Importert",
-			db_index=True,
-			)
-	ad_group_ref = models.ForeignKey(
-			to="ADgroup",
-			on_delete=models.CASCADE,
-			related_name='prkvalg',
-			verbose_name="Kobling PRK-valg mot AD gruppe",
-			null=True,
-			blank=True,
-			help_text=u'Settes automatisk',
-			)
-	in_active_directory = models.BooleanField(
-			verbose_name="Finnes i AD?",
-			default=True, # per definisjon
-			help_text=u"Settes automatisk",
-			)
-	systemer = models.ManyToManyField(
-		to="System",
-		related_name='prkvalg',
-		verbose_name="Systemer basert på navneoppslag",
-		)
-	#ikke behov for historikk
-
-	def __str__(self):
-		return u'PRK-valg %s' % (self.valgnavn)
-
-	def full_benevning(self):
-		return u'Skjema %s, gruppering %s, valg %s' % (self.skjemanavn, self.gruppering, self.valgnavn)
-
-	class Meta:
-		verbose_name_plural = "PRK: PRK-valg"
-		verbose_name = "PRK-valg"
-		default_permissions = ('add', 'change', 'delete', 'view')
-
-
-class PRKgruppe(models.Model):
-	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
-	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
-	feltnavn = models.CharField(
-			unique=True,
-			verbose_name="Feltnavn (PRK-gruppering)",
-			max_length=200,
-			blank=False, null=False,
-			help_text=u"Importert",
-			)
-	#ikke behov for historikk
-
-	def __str__(self):
-		return u'%s' % (self.feltnavn)
-
-	class Meta:
-		verbose_name_plural = "PRK: PRK-grupper"
-		default_permissions = ('add', 'change', 'delete', 'view')
-
-
-class PRKskjema(models.Model):
-	opprettet = models.DateTimeField(
-			verbose_name="Opprettet",
-			auto_now_add=True,
-			null=True,
-			)
-	sist_oppdatert = models.DateTimeField(
-			verbose_name="Sist oppdatert",
-			auto_now=True,
-			)
-	skjemanavn = models.CharField(
-			verbose_name="Skjemanavn",
-			max_length=200,
-			blank=False,
-			null=False,
-			help_text=u"Importert",
-			)
-	skjematype = models.CharField(
-			verbose_name="Skjematype",
-			max_length=200,
-			blank=False,
-			null=False,
-			help_text=u"Importert",
-			)
-	er_lokalt = models.BooleanField(
-			verbose_name="Er feltet lokalt?",
-			default=None,
-			null=True,
-			help_text=u"Importert",
-			)
-	#ikke behov for historikk
-
-	unique_together = ('skjemanavn', 'skjematype')
-
-	def __str__(self):
-		return u'%s (%s)' % (self.skjemanavn, self.skjematype)
-
-	class Meta:
-		verbose_name_plural = "PRK: PRK-skjemaer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

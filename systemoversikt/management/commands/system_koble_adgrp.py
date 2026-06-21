@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-06-21: Removed PRKvalg branch – system–AD linking uses ADgroup.systemer only.
 from django.utils import timezone
 from datetime import timedelta
 from systemoversikt.views import push_pushover
@@ -64,14 +66,6 @@ class Command(BaseCommand):
 						for word in lookup_words:
 							adgrp = ADgroup.objects.filter(Q(common_name__icontains=word) | Q(display_name__icontains=word))
 							for grp in adgrp:
-								# Aktive PRK-valg
-								if len(grp.prkvalg.all()) > 0:
-									for prkvalg in grp.prkvalg.all():
-										#print("   PRK:%s: %s - %s" % (grp.common_name, prkvalg.skjemanavn, prkvalg))
-										if s not in prkvalg.systemer.all():
-											prkvalg.systemer.add(s)
-											prkvalg.save()
-								#print("   ADgruppe:%s (%s)" % (grp.common_name, grp.display_name))
 								if s not in grp.systemer.all():
 									grp.systemer.add(s)
 									grp.save()
