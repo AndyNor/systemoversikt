@@ -70,9 +70,6 @@
 
 
 	{% comment %}
-	{% url 'dashboard_all' virksomhet=virksomhet.pk as url_dashboard %}
-		<a href="{{ url_dashboard }}" class="btn btn-sm btn-link {% if url_dashboard in request.path %}fremhev{% endif %}">Dashboard</a><br>
-
 	{% url 'systemkvalitet_virksomhet' pk=virksomhet.pk as url_systemkvalitet_virksomhet %}
 		<a href="{{ url_systemkvalitet_virksomhet }}" class="btn btn-sm btn-link {% if url_systemkvalitet_virksomhet in request.path %}fremhev{% endif %}">Datakvalitet</a><br>
 	{% endcomment %}

@@ -325,8 +325,6 @@ urlpatterns = [
 	#re_path(r'^dpia/(?P<pk>\d{1,8})/$', views.detaljer_dpia, name='detaljer_dpia'),
 	#re_path(r'^definisjon/alle/$', views.alle_definisjoner, name='alle_definisjoner'),
 	#re_path(r'^definisjon/(?P<begrep>[-_a-zA-Z0-9\s]{1,150})/$', views.definisjon, name='definisjon'),
-	#re_path(r'^dashboard/$', views.dashboard_all, name='dashboard_all'),
-	#re_path(r'^dashboard/(?P<virksomhet>\d+)/$', views.dashboard_all, name='dashboard_all'),
 
 
 	# ubw
