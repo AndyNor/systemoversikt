@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Removed @vav.oslo email rewrite and oidc-token session storage – legacy debug paths retired.
 # 2026-06-21: Removed OKONOMI_FULLTILGANG from OIDC group mapping – UBW module retired.
 import unicodedata
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
@@ -130,14 +131,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 	class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
 		def filter_users_by_claims(self, claims):
 			# Return all users matching the specified username
-			# messages.info(self.request, 'Prøver å logge inn')
-			self.request.session['oidc-token'] = claims
-			#logger.error("Auth: filter_user_by_claim: %s" % claims)
-			#messages.info(self.request, '%s' % claims)
 			username = claims.get('samAccountName')
 			email = claims.get('email')
-			#print(f"username {username}, email {email}")
-
 
 			if username:  # primærmetode
 				username = username.lower()
@@ -154,24 +149,14 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			# siden vi ikke returnerte basert på username, prøver vi email
 			if email:
 				email = email.lower()
-				print(f"Prøver epostmatch med {email}")
-
-				# first attempt
 				qs = self.UserModel.objects.filter(email__iexact=email)
 				if qs.exists():
+					message = f"{email} logget inn (epostmatch)."
+					ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
 					return qs
 
-				# fallback email rewrite
-				email2 = email.replace("@vav.oslo", "@vavtemp.oslo")
-				print(f"Prøver epostmatch med {email2}")
-				qs2 = self.UserModel.objects.filter(email__iexact=email2)
-				if qs2.exists():
-					return qs2
-
 			# nothing worked
-			logger.error(f"Auth: filter_user_by_claim: No match for {email}")
-			print("Feilet pålogging for {email} og {email2}")
-			
+			logger.error(f"Auth: filter_user_by_claim: No match for username={username!r} email={email!r}")
 			return self.UserModel.objects.none()
 
 

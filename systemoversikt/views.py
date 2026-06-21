@@ -4713,18 +4713,14 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 
 
 def minside(request):
+	# 2026-06-21: Removed oidc-token session lookup – profile page uses request.user only.
 	#Når innlogget, vise informasjon om innlogget bruker
 	required_permissions = None
-	try:
-		oidctoken = request.session['oidc-token']
-	except:
-		oidctoken = "OIDC er ikke i bruk"
 
 	if request.user.is_authenticated:
 		return render(request, 'site_minside.html', {
 			'request': request,
 			'required_permissions': formater_permissions(required_permissions),
-			'oidctoken': oidctoken,
 		})
 	else:
 		return redirect("/")
