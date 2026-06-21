@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Removed ProgramvareBruk.programvareleverandor from admin – field removed from model.
 # 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related admin registrations.
 from __future__ import unicode_literals
 from django.contrib import admin
@@ -1042,7 +1043,7 @@ class ProgramvareBrukAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('brukergruppe', 'programvare', 'kommentar')
 	search_fields = ('programvare', 'kommentar')
-	autocomplete_fields = ('brukergruppe', 'programvare', 'programvareleverandor', 'lokal_kontakt')
+	autocomplete_fields = ('brukergruppe', 'programvare', 'lokal_kontakt')
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):

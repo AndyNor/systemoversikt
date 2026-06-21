@@ -57,15 +57,6 @@
 				<td>{{ bruksdetaljer.sist_oppdatert|date:"Y-m-d" }} ({{ bruksdetaljer.sist_oppdatert|naturaltime }})</td>
 			</tr>
 			<tr>
-				<td>{% get_verbose_field_name bruksdetaljer "programvareleverandor" %}</td>
-				<td>
-					{% for leverandor in bruksdetaljer.programvareleverandor.all %}
-						{% url "leverandor" leverandor.pk as url_leverandor %}
-						<li><a href="{{ url_leverandor }}">{{ leverandor }}</a></li>
-					{% endfor %}
-				</td>
-			</tr>
-			<tr>
 				<td>{% get_verbose_field_name bruksdetaljer "antall_brukere" %}</td>
 				<td>{{ bruksdetaljer.antall_brukere|default:"-" }}</td>
 			</tr>

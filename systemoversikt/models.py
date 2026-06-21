@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-21: Removed ProgramvareBruk.programvareleverandor – supplier belongs on Programvare only.
 # 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related lookup models – migrated to Behandlingsoversikten.
 # 2026-06-21: Softer chart palette; component uses muted lavender instead of cyan.
 # 2026-06-21: SystemGraphLayout model – per-system dependency chart layout persistence.
@@ -5811,12 +5812,6 @@ class ProgramvareBruk(models.Model):
 			blank=True,
 			null=True,
 			help_text=u"",
-			)
-	programvareleverandor = models.ManyToManyField(
-			to=Leverandor,
-			related_name='programvarebruk_programvareleverandor',
-			verbose_name="Programvareleverandør",
-			blank=True,
 			)
 	lokal_kontakt = models.ManyToManyField(
 			to=Ansvarlig,
