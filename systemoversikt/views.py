@@ -5237,6 +5237,8 @@ def home(request):
 		8: 'rgb(200, 175, 255)',
 	}
 	alle_systemer = System.objects.all()
+	# 2026-06-21: Klassifisering/vedlikehold charts exclude systems no longer in use (livsløp 6–7).
+	systemer_for_status_charts = alle_systemer.exclude(livslop_status__in=[6, 7])
 	livslop_count_by_status = {}
 	for row in alle_systemer.values('livslop_status').annotate(count=Count('pk')):
 		status = None if row['livslop_status'] in (None, 0) else row['livslop_status']
@@ -5247,7 +5249,7 @@ def home(request):
 		'colors': [HOME_LIVSLOEP_CHART_COLORS[value] for value, _label in LIVSLOEP_VALG],
 	}
 	klassifisering_count_by_value = {}
-	for row in alle_systemer.values('systemeierskapsmodell').annotate(count=Count('pk')):
+	for row in systemer_for_status_charts.values('systemeierskapsmodell').annotate(count=Count('pk')):
 		klassifisering = row['systemeierskapsmodell'] or None
 		klassifisering_count_by_value[klassifisering] = (
 			klassifisering_count_by_value.get(klassifisering, 0) + row['count']
@@ -5263,11 +5265,11 @@ def home(request):
 			for value, _label in SYSTEMEIERSKAPSMODELL_VALG
 		] + [reverse('systemklassifisering_detaljer', kwargs={'kriterie': '__NONE__'})],
 	}
-	antall_forsomt = _systemer_forsomt_queryset().count()
-	antall_totalt_alle_systemer = alle_systemer.count()
+	antall_forsomt = _systemer_forsomt_queryset().filter(pk__in=systemer_for_status_charts).count()
+	antall_vedlikehold_grunnlag = systemer_for_status_charts.count()
 	chart_vedlikehold = {
 		'labels': ['Forsømt', 'Vedlikeholdt'],
-		'data': [antall_forsomt, antall_totalt_alle_systemer - antall_forsomt],
+		'data': [antall_forsomt, antall_vedlikehold_grunnlag - antall_forsomt],
 		'urls': [reverse('rapport_systemer_forsomt'), None],
 	}
 
