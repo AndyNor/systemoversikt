@@ -27,7 +27,8 @@
 
 	<hr>
 	<h6>Underliggende objekter</h6>
-	<p><span style="color: #dc3545;">Rød</span> bakgrunn indikerer at gruppen eller brukeren ikke kommer fra PRK. Viser ikke maskinobjekter.</p>
+	{# 2026-06-21: PRK discontinued – clarify red highlighting and lack of IDA integration. #}
+	<p><span style="color: #dc3545;">Rød</span> bakgrunn viser grupper og brukere som ikke er merket som kommet fra PRK (historisk flagg). PRK er avviklet, og det er ikke etablert tilsvarende integrasjoner for IDA. Viser ikke maskinobjekter.</p>
 	<ul style="column-count:3;">
 	{% for c in children %}
 		<li><a href="{% url 'adorgunit_detaljer' pk=c.pk %}">📁 {{c.cn}}</a></li>
