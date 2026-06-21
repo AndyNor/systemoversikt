@@ -49,14 +49,10 @@
 			</div>
 			<div class="col-lg-3 col-md-6 mb-3">
 				<h6 class="text-center">Vedlikehold</h6>
+				{# 2026-06-21: No forsømt criteria text under chart – full explanation on rapport page. #}
 				<div style="position: relative; height: 220px;">
 					<canvas id="home_chart_vedlikehold"></canvas>
 				</div>
-				<p class="small text-muted text-center mb-0" style="font-size: 0.72rem; line-height: 1.3;">
-					Viser systemer som ikke er ute av bruk eller avviklet.
-					Forsømt = ikke oppdatert på 2 år, eller mangler livsløpstatus/systemforvalter.
-					<a href="{% url 'rapport_systemer_forsomt' %}">Detaljer og unntak</a>.
-				</p>
 			</div>
 			<div class="col-lg-3 col-md-6 mb-3">
 				<h6 class="text-center text-muted">—</h6>
