@@ -1,0 +1,214 @@
+{% extends "admin_index.html" %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block ekstrajavascript %}
+	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block overskrift %}
+	API-dokumentasjon: Tjeneste- og systemoversikt
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>
+	Dokumentasjon for utviklere av ny tjeneste- og systemoversikt som henter data fra Kartoteket.
+	Feltnavn og JSON-struktur følger API-et uendret (engelsk/technisk).
+	<a href="{% url 'api_overview' %}">← Tilbake til API-oversikten</a>
+</p>
+
+<h6>Autentisering</h6>
+<p>{{ auth_info.description_no }}</p>
+<ul>
+	<li>Header: <code>{{ auth_info.header_name }}</code></li>
+	<li>API-nøkkelnavn i Kartoteket: <code>{{ auth_info.api_key_name }}</code></li>
+	<li>Base-URL: <code>{{ base_url }}</code></li>
+	<li>Ved manglende/feil nøkkel (403): <code>{{ auth_info.error_403 }}</code></li>
+</ul>
+
+<h6>Felles responsformat</h6>
+<p>Alle endepunktene returnerer JSON med denne strukturen:</p>
+<table class="table table-sm table-bordered">
+	<thead><tr><th>Felt</th><th>Type</th></tr></thead>
+	<tbody>
+		{% for key, val in response_wrapper.items %}
+		<tr><td><code>{{ key }}</code></td><td>{{ val }}</td></tr>
+		{% endfor %}
+	</tbody>
+</table>
+<p>Referanser til andre objekter:</p>
+<table class="table table-sm table-bordered">
+	<thead><tr><th>Felt</th><th>Type</th></tr></thead>
+	<tbody>
+		{% for key, val in reference_pattern.items %}
+		<tr><td><code>{{ key }}</code></td><td>{{ val }}</td></tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+<hr>
+
+<h6>Relasjoner mellom klasser</h6>
+<p>Klikk på en node for å hoppe til dokumentasjon for tilhørende endepunkt. Zoom og pan med musehjul og dra.</p>
+<div id="cy" style="width: 100%; height: 588px; border: 1px solid #ccc; margin-bottom: 1em;"></div>
+
+<hr>
+
+<h6>Anbefalt synk-rekkefølge</h6>
+<p>{{ sync_notes_no }}</p>
+<ol>
+	{% for item in sync_guide %}
+	<li>
+		<strong>{{ item.path }}</strong> – {{ item.description_no }}
+	</li>
+	{% endfor %}
+</ol>
+
+<hr>
+
+<h6>Begrensninger og kjente issues</h6>
+<ul>
+	{% for item in limitations %}
+	<li><strong>{{ item.title }}:</strong> {{ item.description_no }}</li>
+	{% endfor %}
+</ul>
+
+<hr>
+
+<h6>Innhold</h6>
+<ul>
+	{% for ep in endpoints %}
+	<li><a href="#api-{{ ep.slug }}">{{ ep.path }}</a> – {{ ep.name }} (<code>{{ ep.api_class }}</code>)</li>
+	{% endfor %}
+</ul>
+
+<hr>
+
+{% for ep in endpoints %}
+<section id="api-{{ ep.slug }}" style="margin-bottom: 2.5em;">
+	<h4>{{ ep.name }} – <code>{{ ep.path }}</code></h4>
+	<p>{{ ep.beskrivelse_no }}</p>
+	<p>
+		<strong>API-klasse:</strong> <code>{{ ep.api_class }}</code>
+		&nbsp;|&nbsp;
+		<strong>Django-modell:</strong> <code>{{ ep.django_model }}</code>
+		&nbsp;|&nbsp;
+		<strong>Metode:</strong> GET
+	</p>
+
+	<h6>Felter i <code>data[]</code></h6>
+	<table class="table table-sm table-bordered table-striped">
+		<thead>
+			<tr>
+				<th>Felt</th>
+				<th>Type</th>
+				<th>Nullable</th>
+				<th>Beskrivelse</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for f in ep.fields %}
+			<tr>
+				<td><code>{{ f.name }}</code></td>
+				<td><code>{{ f.type }}</code></td>
+				<td>{% if f.nullable %}ja{% else %}nei{% endif %}</td>
+				<td>{{ f.description_no }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	{% if ep.references %}
+	<h6>Relasjoner / oppslag</h6>
+	<ul>
+		{% for ref in ep.references %}
+		<li>{{ ref }}</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+
+	<h6>curl-eksempel</h6>
+	<pre class="bg-light p-2"><code>{{ ep.curl_example }}</code></pre>
+
+	<h6>Eksempel-respons</h6>
+	<pre class="bg-light p-2" style="max-height: 400px; overflow: auto;"><code>{{ ep.example_json }}</code></pre>
+</section>
+{% if not forloop.last %}<hr>{% endif %}
+{% endfor %}
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+var cy = cytoscape({
+	zoomingEnabled: true,
+	panningEnabled: true,
+	wheelSensitivity: 0.2,
+	container: document.getElementById('cy'),
+	elements: {
+		nodes: [
+			{% for node in entity_graph.nodes %}{{ node|safe }},
+			{% endfor %}
+		],
+		edges: [
+			{% for edge in entity_graph.edges %}{{ edge|safe }},
+			{% endfor %}
+		],
+	},
+	style: [
+		{
+			selector: 'node',
+			style: {
+				'shape': 'data(shape)',
+				'background-color': 'data(color)',
+				'label': 'data(name)',
+				'font-size': '11px',
+				'text-wrap': 'wrap',
+				'text-max-width': '80px',
+				'width': 'data(size)',
+				'height': 'data(size)',
+				'color': '#ffffff',
+				'text-outline-color': '#2A2859',
+				'text-outline-width': 1,
+			},
+		},
+		{
+			selector: 'edge',
+			style: {
+				'target-arrow-shape': 'triangle',
+				'curve-style': 'bezier',
+				'line-style': 'data(linestyle)',
+				'width': 1.5,
+				'arrow-scale': 0.8,
+				'label': 'data(label)',
+				'font-size': '9px',
+				'text-rotation': 'autorotate',
+				'text-margin-y': -8,
+			},
+		},
+	],
+	layout: {
+		name: 'fcose',
+		quality: 'default',
+		animate: true,
+		animationDuration: 800,
+		nodeDimensionsIncludeLabels: true,
+	},
+});
+cy.on('tap', 'node', function(){
+	var href = this.data('href');
+	if (href) {
+		var el = document.querySelector(href);
+		if (el) {
+			el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}
+	}
+});
+</script>
+
+{% endblock hovedinnhold %}

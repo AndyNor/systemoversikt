@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-06-23: Developer docs URL for Tjeneste- og systemoversikt API.
 # 2026-06-21: Removed commented dead URL routes (smartkartlegging, prk API, passwdexpire, etc.).
 # 2026-06-22: Removed commented DRF restapi router – retired, APIs live in views.py.
 # 2026-06-21: Removed Definisjon URL routes and organisasjon import – feature retired.
@@ -51,6 +52,7 @@ urlpatterns = [
 	re_path(r'^admin/bruksstatistikk/$', views.admin_visitors, name='admin_visitors'),
 	re_path(r'^admin/integrasjoner/status/$', views.rapport_cmdb_status, name='rapport_cmdb_status'),
 	re_path(r'^admin/api_oversikt/$', views.api_overview, name="api_overview"),
+	re_path(r'^admin/api_oversikt/tjeneste_og_systemoversikt/$', views.api_tjeneste_systemoversikt_docs, name='api_tjeneste_systemoversikt_docs'),
 	# må stå til sist etter alle andre /admin/
 	re_path(r'^admin/', admin.site.urls, name="admin"),
 

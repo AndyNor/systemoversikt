@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Developer docs page for Tjeneste- og systemoversikt API (login_required).
 # 2026-06-23: Home page – fifth chart for egenutviklet vs generisk (replaces text under drift chart).
 # 2026-06-22: Home page drift chart – Driftsplattform segment counts via drift_color_segment().
 # 2026-06-22: Tjenestekatalog API – bool_er_saas, bool_egenutviklet, bool_saas; removed dead non-optimized API blocks.
@@ -6914,6 +6915,33 @@ def api_overview(request):
 	})
 
 
+@login_required
+def api_tjeneste_systemoversikt_docs(request):
+	from systemoversikt.api_tjeneste_systemoversikt_docs import (
+		AUTH_INFO,
+		BASE_URL,
+		ENDPOINTS,
+		LIMITATIONS,
+		RESPONSE_WRAPPER,
+		REFERENCE_PATTERN,
+		SYNC_GUIDE,
+		SYNC_NOTES_NO,
+		build_entity_graph,
+	)
+	return render(request, 'rapport_api_tjeneste_systemoversikt_docs.html', {
+		'request': request,
+		'auth_info': AUTH_INFO,
+		'base_url': BASE_URL,
+		'endpoints': ENDPOINTS,
+		'entity_graph': build_entity_graph(),
+		'sync_guide': SYNC_GUIDE,
+		'sync_notes_no': SYNC_NOTES_NO,
+		'limitations': LIMITATIONS,
+		'response_wrapper': RESPONSE_WRAPPER,
+		'reference_pattern': REFERENCE_PATTERN,
+	})
+
+
 LEVERANDORTILGANG_KJENTE_GRUPPER = [
 		'DS-UVALEVTILGANG', 
 		'DS-DRIFT_DML_', 
@@ -10980,7 +11008,9 @@ def systemer_api(request): #API
 
 
 # Her kommer API-er benyttet av ny tjeneste og systemoversikt
+# Developer docs: api_tjeneste_systemoversikt_docs.py (url name: api_tjeneste_systemoversikt_docs).
 def api_systemer_optimized(request):  # tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/systemer/ or System JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if request.method != "GET":
 		raise Http404
 
@@ -11136,6 +11166,7 @@ def api_systemer_optimized(request):  # tjeneste- og systemoversikt
 
 
 def api_systemtyper(request): #tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/systemtyper/ or Systemtype JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if not request.method == "GET":
 		raise Http404
 
@@ -11175,6 +11206,7 @@ def api_systemtyper(request): #tjeneste- og systemoversikt
 
 
 def api_programvarer(request): #tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/programvarer/ or Programvare JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if not request.method == "GET":
 		raise Http404
 
@@ -11213,6 +11245,7 @@ def api_programvarer(request): #tjeneste- og systemoversikt
 
 
 def api_driftsplattformer(request): #tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/driftsplattformer/ or Driftsmodell JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if not request.method == "GET":
 		raise Http404
 
@@ -11255,6 +11288,7 @@ def api_driftsplattformer(request): #tjeneste- og systemoversikt
 
 
 def api_leverandorer(request): #tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/leverandorer/ or Leverandor JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if not request.method == "GET":
 		raise Http404
 
@@ -11293,6 +11327,7 @@ def api_leverandorer(request): #tjeneste- og systemoversikt
 
 
 def api_systemintegrasjoner_optimized(request):  # tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/systemintegrasjoner/ or SystemIntegration JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if request.method != "GET":
 		raise Http404
 
@@ -11352,6 +11387,7 @@ def api_systemintegrasjoner_optimized(request):  # tjeneste- og systemoversikt
 
 
 def api_los(request): #tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/los/ or LOS JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if not request.method == "GET":
 		raise Http404
 
@@ -11391,6 +11427,7 @@ def api_los(request): #tjeneste- og systemoversikt
 
 
 def api_kritiske_funksjoner(request): #tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/kritiske_funksjoner/ or KritiskFunksjon JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if not request.method == "GET":
 		raise Http404
 
@@ -11426,6 +11463,7 @@ def api_kritiske_funksjoner(request): #tjeneste- og systemoversikt
 
 
 def api_kritiske_kapabiliteter(request): #tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/kritiske_kapabiliteter/ or KritiskKapabilitet JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if not request.method == "GET":
 		raise Http404
 
@@ -11463,6 +11501,7 @@ def api_kritiske_kapabiliteter(request): #tjeneste- og systemoversikt
 
 
 def api_virksomheter(request): #tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/virksomheter/ or Virksomhet JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if not request.method == "GET":
 		raise Http404
 
@@ -11516,7 +11555,8 @@ def api_virksomheter(request): #tjeneste- og systemoversikt
 	return JsonResponse(resultat, safe=False, status=200)
 
 
-def api_systembruk_optimized(request):
+def api_systembruk_optimized(request):  # tjeneste- og systemoversikt
+	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/systembruk/ or SystemBruk JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if request.method != "GET":
 		raise Http404
 

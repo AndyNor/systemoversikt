@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Tjeneste/systemoversikt API – update api_tjeneste_systemoversikt_docs.py when model fields affect API JSON (url name: api_tjeneste_systemoversikt_docs).
 # 2026-06-22: drift_dimensjoner(), driftes_av_dig (DIG forkortelse), home drift chart support.
 # 2026-06-22: Driftsmodell.er_saas and System.er_egenutviklet – explicit SaaS and self-developed flags.
 # 2026-06-21: Removed commented IpProtocol model – never used in production.
@@ -667,6 +668,7 @@ OFFICE365_VALG = (
 
 
 ### SENTRAL KLASSE ###
+# 2026-06-23: Exposed via /api/virksomheter/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class Virksomhet(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -1498,6 +1500,7 @@ LEVERANDOR_LAND_VALG = (
 
 
 ### SENTRAL KLASSE ###
+# 2026-06-23: Exposed via /api/leverandorer/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class Leverandor(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -2504,6 +2507,7 @@ KRITISKE_KATEGORIER = (
 
 
 # Dynamisk valgmeny populert fra DSB sitt rammeverk, nivå 3 funksjon under kapabilitetene. Brukes for å tagge systemer.
+# 2026-06-23: Exposed via /api/kritiske_funksjoner/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class KritiskFunksjon(models.Model):
 	navn = models.CharField(
 			max_length=150,
@@ -2532,6 +2536,7 @@ class KritiskFunksjon(models.Model):
 
 
 # Dynamisk valgmeny populert fra DSB sitt rammeverk, nivå 2 kapabiliteter under hovedkategoriene
+# 2026-06-23: Exposed via /api/kritiske_kapabiliteter/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class KritiskKapabilitet(models.Model):
 	navn = models.CharField(
 			max_length=150,
@@ -3527,6 +3532,7 @@ class Avtale(models.Model):
 
 
 
+# 2026-06-23: Exposed via /api/systemtyper/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class Systemtype(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -3698,6 +3704,7 @@ VALG_KLARGJORT_SIKKERHETSMODELL = (
 )
 
 
+# 2026-06-23: Exposed via /api/programvarer/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class Programvare(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -3835,6 +3842,7 @@ DRIFTSTYPE_VALG = (
 )
 
 
+# 2026-06-23: Exposed via /api/driftsplattformer/ (JSON class Driftsmodell) – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class Driftsmodell(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -4221,6 +4229,7 @@ VALG_SYSTEM_INTEGRATION_TYPE = (
 )
 
 
+# 2026-06-23: Exposed via /api/systemintegrasjoner/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class SystemIntegration(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -4381,6 +4390,7 @@ class Tjeneste(models.Model):
 		return kommunale_ord
 
 
+# 2026-06-23: Exposed via /api/systemer/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class System(models.Model):
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
@@ -5656,6 +5666,7 @@ class ProgramvareBruk(models.Model):
 
 
 
+# 2026-06-23: Exposed via /api/systembruk/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class SystemBruk(models.Model):
 	sist_oppdatert = models.DateTimeField(
 			verbose_name="Sist oppdatert",
@@ -6463,6 +6474,7 @@ class AzurePublishedPermissionScopes(models.Model):
 
 
 
+# 2026-06-23: Exposed via /api/los/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class LOS(models.Model):
 	sist_oppdatert = models.DateTimeField(
 		verbose_name="Sist oppdatert",
