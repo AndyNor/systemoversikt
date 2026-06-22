@@ -35,34 +35,36 @@
 
 	<div class="container-fluid">
 		<div class="row mb-4">
-			<div class="col-lg-3 col-md-6 mb-3">
+			<div class="col-lg col-md-6 mb-3">
 				<h6 class="text-center">Livsløpstatus</h6>
 				<div style="position: relative; height: 220px;">
 					<canvas id="home_chart_livslop"></canvas>
 				</div>
 			</div>
-			<div class="col-lg-3 col-md-6 mb-3">
+			<div class="col-lg col-md-6 mb-3">
 				<h6 class="text-center">Systemklassifisering</h6>
 				<div style="position: relative; height: 220px;">
 					<canvas id="home_chart_systemklassifisering"></canvas>
 				</div>
 			</div>
-			<div class="col-lg-3 col-md-6 mb-3">
+			<div class="col-lg col-md-6 mb-3">
 				<h6 class="text-center">Vedlikehold</h6>
 				{# 2026-06-21: No forsømt criteria text under chart – full explanation on rapport page. #}
 				<div style="position: relative; height: 220px;">
 					<canvas id="home_chart_vedlikehold"></canvas>
 				</div>
 			</div>
-			<div class="col-lg-3 col-md-6 mb-3">
+			<div class="col-lg col-md-6 mb-3">
 				<h6 class="text-center">Driftsplattform</h6>
 				<div style="position: relative; height: 220px;">
 					<canvas id="home_chart_driftsplattform"></canvas>
 				</div>
-				<p class="text-center small mb-0">
-					Egenutviklet:
-					<a href="/admin/systemoversikt/system/?er_egenutviklet__exact=1">{{ antall_egenutviklet }}</a> systemer
-				</p>
+			</div>
+			<div class="col-lg col-md-6 mb-3">
+				<h6 class="text-center">Egenutviklet</h6>
+				<div style="position: relative; height: 220px;">
+					<canvas id="home_chart_egenutviklet"></canvas>
+				</div>
 			</div>
 		</div>
 
@@ -133,6 +135,7 @@
 	{{ chart_systemklassifisering|json_script:"home-chart-systemklassifisering" }}
 	{{ chart_vedlikehold|json_script:"home-chart-vedlikehold" }}
 	{{ chart_driftsplattform|json_script:"home-chart-driftsplattform" }}
+	{{ chart_egenutviklet|json_script:"home-chart-egenutviklet" }}
 
 {% endblock hovedinnhold %}
 
@@ -143,6 +146,7 @@
 	const klassifisering = JSON.parse(document.getElementById('home-chart-systemklassifisering').textContent);
 	const vedlikehold = JSON.parse(document.getElementById('home-chart-vedlikehold').textContent);
 	const driftsplattform = JSON.parse(document.getElementById('home-chart-driftsplattform').textContent);
+	const egenutviklet = JSON.parse(document.getElementById('home-chart-egenutviklet').textContent);
 	const chartColors = [
 		'rgb(103, 103, 103)',
 		'rgb(206, 119, 107)',
@@ -215,6 +219,7 @@
 	homeDoughnutChart('home_chart_systemklassifisering', klassifisering);
 	homeDoughnutChart('home_chart_vedlikehold', vedlikehold);
 	homeDoughnutChart('home_chart_driftsplattform', driftsplattform);
+	homeDoughnutChart('home_chart_egenutviklet', egenutviklet);
 })();
 </script>
 {% endblock script_append %}

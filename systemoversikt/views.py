@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Home page – fifth chart for egenutviklet vs generisk (replaces text under drift chart).
 # 2026-06-22: Home page drift chart – Driftsplattform segment counts via drift_color_segment().
 # 2026-06-22: Tjenestekatalog API – bool_er_saas, bool_egenutviklet, bool_saas; removed dead non-optimized API blocks.
 # 2026-06-21: Dead code cleanup – removed unreachable views, prk_api, SharePoint legacy block, csrf403 stub.
@@ -5092,6 +5093,16 @@ def home(request):
 		"colors": [SYSTEM_COLORS[key] for key, _label in HOME_DRIFT_CHART_SEGMENTS],
 	}
 	antall_egenutviklet = systemer_for_status_charts.filter(er_egenutviklet=True).count()
+	antall_generisk = systemer_for_status_charts.filter(er_egenutviklet=False).count()
+	chart_egenutviklet = {
+		"labels": ["Egenutviklet", "Generisk"],
+		"data": [antall_egenutviklet, antall_generisk],
+		"urls": [
+			"/admin/systemoversikt/system/?er_egenutviklet__exact=1",
+			"/admin/systemoversikt/system/?er_egenutviklet__exact=0",
+		],
+		"colors": [SYSTEM_COLORS["egenutviklet"], "rgb(201, 203, 207)"],
+	}
 
 	return render(request, 'site_home.html', {
 		'request': request,
@@ -5106,7 +5117,7 @@ def home(request):
 		'chart_systemklassifisering': chart_systemklassifisering,
 		'chart_vedlikehold': chart_vedlikehold,
 		'chart_driftsplattform': chart_driftsplattform,
-		'antall_egenutviklet': antall_egenutviklet,
+		'chart_egenutviklet': chart_egenutviklet,
 	})
 
 
