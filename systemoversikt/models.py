@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-22: drift_dimensjoner(), driftes_av_dig (DIG forkortelse), home drift chart support.
 # 2026-06-22: Driftsmodell.er_saas and System.er_egenutviklet – explicit SaaS and self-developed flags.
 # 2026-06-21: Removed commented IpProtocol model – never used in production.
 # 2026-06-21: Profile.virksomhet_forkortelse – replaces virksomhet_til_bruker view helper.
@@ -3739,14 +3740,14 @@ class Programvare(models.Model):
 			verbose_name="Programvarebeskrivelse",
 			blank=True,
 			null=True,
-			help_text=u"Beskriv gjerne lisensmodell og hvilken periode lisens er skaffet for. Kommenter gjerne også om det er noe spesielt med måten applikasjonen er publisert på.",
+			help_text=u"Beskriv lisensmodell, leveranseform (on-prem/SaaS) og eventuelle spesielle publiseringsforhold.",
 			)
 	programvareleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='programvare_programvareleverandor',
 			verbose_name="Programvareleverandør",
 			blank=True,
-			help_text=u"Leverandør av programvaren. Det vil ofte være en SSA-V (vedlikeholdsavtale) eller en SSA-B (bistandsavtale) knyttet til programvaren, men det kan også være en SSA-K (kjøpsavtale).",
+			help_text=u"Primær registrering av programvareleverandør. System som bruker programvaren arver denne via kobling.",
 			)
 	kategorier = models.ManyToManyField(
 			to=SystemKategori,
@@ -3845,7 +3846,7 @@ class Driftsmodell(models.Model):
 			max_length=100,
 			blank=False,
 			null=False,
-			help_text=u"",
+			help_text=u"Navn på kjøremiljøet eller tenanten, f.eks. OpenShift PROD, Azure AKS eller SaaS-Visma.",
 			)
 	ansvarlig_virksomhet = models.ForeignKey(
 			to=Virksomhet,
@@ -3854,7 +3855,7 @@ class Driftsmodell(models.Model):
 			verbose_name="Forvalter (virksomhet)",
 			blank=True,
 			null=True,
-			help_text=u"",
+			help_text=u"Virksomhet som forvalter driftsplattformen (f.eks. DIG eller sektor/virksomhet).",
 			)
 	kommentar = models.TextField(
 			verbose_name="Kommentarer til modellen",
@@ -3867,12 +3868,14 @@ class Driftsmodell(models.Model):
 			related_name='driftsmodell_leverandor',
 			verbose_name="Leverandør som drifter driftsplattformen",
 			blank=True,
+			help_text=u"Basisdriftsleverandør for plattformen (f.eks. hyperscaler eller intern drift).",
 			)
 	underleverandorer = models.ManyToManyField(
 			to=Leverandor,
 			related_name='driftsmodell_underleverandorer',
 			verbose_name="Underleverandører av driftsleverandør",
 			blank=True,
+			help_text=u"Underleverandører knyttet til plattformens basisdrift.",
 			)
 	avtaler = models.ManyToManyField(
 			to=Avtale,
@@ -3886,7 +3889,7 @@ class Driftsmodell(models.Model):
 			default=0,
 			blank=False,
 			null=False,
-			help_text=u'',
+			help_text=u"Privat eller offentlig datasenter. Uavhengig av om plattformen er SaaS.",
 			)
 	overordnet_plattform = models.ForeignKey(
 			to="Driftsmodell",
@@ -3907,13 +3910,13 @@ class Driftsmodell(models.Model):
 			verbose_name="Er samarbeidspartner?",
 			blank=True, null=False,
 			default=False,
-			help_text=u"For å vise systemer som er fra samarbeidspartnere",
+			help_text=u"Plattform for systemer levert av samarbeidspartnere (f.eks. KS, PIT).",
 			)
 	er_saas = models.BooleanField(
 			verbose_name="Er SaaS-plattform?",
 			blank=True, null=False,
 			default=False,
-			help_text=u"Leverandør leverer full stack (Software as a Service).",
+			help_text=u"Leverandør leverer full stack (Software as a Service). Det kan finnes flere SaaS-plattformer.",
 			)
 	sort_order = models.BigIntegerField(
 			verbose_name="Sorteringsrekkefølge",
@@ -4495,13 +4498,13 @@ class System(models.Model):
 			verbose_name="Driftsplattform",
 			blank=True,
 			null=True,
-			help_text=u"Driftsplattform systemet kjører på. Brukes blant annet for å tegne opp avhengighetsfiguren. Merk at kommunen kan ha flere instanser av samme system driftet ulike steder. Det er derfor svært viktig at denne blir satt riktig.",
+			help_text=u"Kjøremiljø for denne systemkomponenten. Flere miljøer = flere systemer koblet med integrasjon.",
 			)
 	er_egenutviklet = models.BooleanField(
 			verbose_name="Er egenutviklet?",
 			blank=True, null=False,
 			default=False,
-			help_text=u"Systemet er utviklet av kommunen (uavhengig av kjøremiljø).",
+			help_text=u"Systemet er utviklet av kommunen, uavhengig av hvilken driftsplattform det kjører på.",
 			)
 	leveransemodell_fip = models.BigIntegerField(
 			choices=LEVERANSEMODELL_VALG,
@@ -4614,26 +4617,26 @@ class System(models.Model):
 			related_name='system_systemleverandor',
 			verbose_name="Programvareleverandør",
 			blank=True,
-			help_text=u"Leverandør som har utviklet systemet.",
+			help_text=u"Leverandør som har utviklet systemet. Registrer helst programvareleverandør på tilknyttet programvare.",
 			)
 	basisdriftleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_driftsleverandor',
 			verbose_name="Basisdriftleverandør",
 			blank=True,
-			help_text=u"Fylles automatisk ut basert på valg av driftsplattform, men kan manuelt overstyres her. Leverandør som drifter driftsplattformen systmet kjører på.",
+			help_text=u"Leverandør som drifter plattformen systemet kjører på. Normalt tom for ren SaaS.",
 			)
 	applikasjonsdriftleverandor = models.ManyToManyField(
 			to=Leverandor,
 			related_name='system_applikasjonsdriftleverandor',
 			verbose_name="Applikasjonsdriftsleverandør",
 			blank=True,
-			help_text=u"Leverandør som sørger for at systemet fungerer som det skal på driftsplattformen.",
+			help_text=u"Leverandør som sørger for at systemet fungerer på plattformen. For SaaS er dette typisk tjenesteleverandøren.",
 			)
 	applikasjonsdrift_behov_databehandleravtale = models.BooleanField(
 			verbose_name="Behov for (egen) DBA mot applikasjonsdriftsleverandør?",
 			default=True,
-			help_text=u"Krysses av dersom det er aktuelt å ha databehandleravtale med applikasjonsdriftsleverandør. Er f.eks. ikke nødvendig når det er samme leverandør som for basisdrift og det er etablert DBA mot denne.",
+			help_text=u"Kryss av når egen databehandleravtale trengs mot applikasjonsdriftsleverandør. Ofte ikke nødvendig ved SaaS dersom DBA allerede finnes.",
 			)
 	datamodell_url = models.URLField(
 			verbose_name="Datamodell",
@@ -5133,12 +5136,52 @@ class System(models.Model):
 		if self.driftsmodell_foreignkey == None:
 			return True
 
-	def driftes_av_uke(self):
+	def driftes_av_dig(self):
 		try:
-			if self.driftsmodell_foreignkey.ansvarlig_virksomhet.pk == 163:
+			virksomhet = self.driftsmodell_foreignkey.ansvarlig_virksomhet
+			if virksomhet and virksomhet.virksomhetsforkortelse == "DIG":
 				return True
 		except:
-			return False
+			pass
+		return False
+
+	def drift_dimensjoner(self):
+		dm = self.driftsmodell_foreignkey
+		if dm is None:
+			return {
+				"ukjent": True,
+				"saas": False,
+				"samarbeidspartner": False,
+				"egenutviklet": self.er_egenutviklet,
+				"privat_datasenter": False,
+				"offentlig_datasenter": False,
+				"driftes_av_dig": False,
+			}
+		return {
+			"ukjent": False,
+			"saas": bool(dm.er_saas),
+			"samarbeidspartner": bool(dm.samarbeidspartner),
+			"egenutviklet": self.er_egenutviklet,
+			"privat_datasenter": dm.type_plattform == 1,
+			"offentlig_datasenter": dm.type_plattform == 2,
+			"driftes_av_dig": self.driftes_av_dig(),
+		}
+
+	def drift_color_segment(self):
+		d = self.drift_dimensjoner()
+		if d["ukjent"]:
+			return "ukjent"
+		if d["samarbeidspartner"]:
+			return "samarbeidspartner"
+		if d["saas"]:
+			return "saas"
+		if d["privat_datasenter"]:
+			if d["driftes_av_dig"]:
+				return "drift_uke_privat"
+			return "drift_virksomhet_privat"
+		if d["driftes_av_dig"]:
+			return "drift_uke_sky"
+		return "drift_virksomhet_sky"
 
 	def er_saas(self):
 		try:
@@ -5167,25 +5210,7 @@ class System(models.Model):
 		return True
 
 	def color(self):
-
-		if self.mangler_driftsmodell():
-			return SYSTEM_COLORS["ukjent"]
-
-		if self.er_samarbeidspartner():
-			return SYSTEM_COLORS["samarbeidspartner"]
-
-		if self.er_saas():
-			return SYSTEM_COLORS["saas"]
-
-		if self.er_privat_sky():
-			if self.driftes_av_uke():
-				return SYSTEM_COLORS["drift_uke_privat"]
-			return SYSTEM_COLORS["drift_virksomhet_privat"]
-
-		else: # er ikke privat sky
-			if self.driftes_av_uke():
-				return SYSTEM_COLORS["drift_uke_sky"]
-			return SYSTEM_COLORS["drift_virksomhet_sky"]
+		return SYSTEM_COLORS[self.drift_color_segment()]
 
 
 	# brukes bare av dashboard, flyttes dit? ("def statusTjenestenivaa(systemer)")

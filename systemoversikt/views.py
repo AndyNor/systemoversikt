@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-22: Home page drift chart – Driftsplattform segment counts via drift_color_segment().
 # 2026-06-22: Tjenestekatalog API – bool_er_saas, bool_egenutviklet, bool_saas; removed dead non-optimized API blocks.
 # 2026-06-21: Dead code cleanup – removed unreachable views, prk_api, SharePoint legacy block, csrf403 stub.
 # 2026-06-21: decode_ad_timestamp helper – consolidates AD FILETIME decoding in LDAP lookups.
@@ -5071,6 +5072,27 @@ def home(request):
 		'colors': ['rgb(248, 165, 165)', 'rgb(140, 210, 140)'],
 	}
 
+	HOME_DRIFT_CHART_SEGMENTS = (
+		("saas", "SaaS"),
+		("samarbeidspartner", "Samarbeidspartner"),
+		("drift_uke_privat", "DIG privat datasenter"),
+		("drift_uke_sky", "DIG offentlig sky"),
+		("drift_virksomhet_privat", "Virksomhet privat datasenter"),
+		("drift_virksomhet_sky", "Virksomhet offentlig sky"),
+		("ukjent", "Ukjent drift"),
+	)
+	drift_segment_counts = {key: 0 for key, _label in HOME_DRIFT_CHART_SEGMENTS}
+	for system in systemer_for_status_charts.select_related(
+		"driftsmodell_foreignkey__ansvarlig_virksomhet"
+	):
+		drift_segment_counts[system.drift_color_segment()] += 1
+	chart_driftsplattform = {
+		"labels": [label for _key, label in HOME_DRIFT_CHART_SEGMENTS],
+		"data": [drift_segment_counts[key] for key, _label in HOME_DRIFT_CHART_SEGMENTS],
+		"colors": [SYSTEM_COLORS[key] for key, _label in HOME_DRIFT_CHART_SEGMENTS],
+	}
+	antall_egenutviklet = systemer_for_status_charts.filter(er_egenutviklet=True).count()
+
 	return render(request, 'site_home.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -5083,6 +5105,8 @@ def home(request):
 		'chart_livslop': chart_livslop,
 		'chart_systemklassifisering': chart_systemklassifisering,
 		'chart_vedlikehold': chart_vedlikehold,
+		'chart_driftsplattform': chart_driftsplattform,
+		'antall_egenutviklet': antall_egenutviklet,
 	})
 
 
@@ -11201,7 +11225,7 @@ def api_driftsplattformer(request): #tjeneste- og systemoversikt
 		line["eier_virksomhet"] = {"class": "Virksomhet", "id": plattform.ansvarlig_virksomhet.id} if plattform.ansvarlig_virksomhet else None
 		line["kommentar"] = plattform.kommentar
 		line["plattformklassifisering"] = {"id": plattform.type_plattform, "navn": plattform.get_type_plattform_display()}
-		line["overordnet_plattform"] = {"class": "Virksomhet", "id": plattform.overordnet_plattform.id} if plattform.overordnet_plattform else None
+		line["overordnet_plattform"] = {"class": "Driftsmodell", "id": plattform.overordnet_plattform.id} if plattform.overordnet_plattform else None
 		line["bool_utviklingsplattform"] = plattform.utviklingsplattform
 		line["bool_samarbeidspartner"] = plattform.samarbeidspartner
 		line["bool_er_saas"] = plattform.er_saas

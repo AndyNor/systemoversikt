@@ -55,10 +55,14 @@
 				</div>
 			</div>
 			<div class="col-lg-3 col-md-6 mb-3">
-				<h6 class="text-center text-muted">—</h6>
-				<div class="d-flex align-items-center justify-content-center border rounded text-muted" style="height: 220px;">
-					Plass reservert
+				<h6 class="text-center">Driftsplattform</h6>
+				<div style="position: relative; height: 220px;">
+					<canvas id="home_chart_driftsplattform"></canvas>
 				</div>
+				<p class="text-center small mb-0">
+					Egenutviklet:
+					<a href="/admin/systemoversikt/system/?er_egenutviklet__exact=1">{{ antall_egenutviklet }}</a> systemer
+				</p>
 			</div>
 		</div>
 
@@ -128,6 +132,7 @@
 	{{ chart_livslop|json_script:"home-chart-livslop" }}
 	{{ chart_systemklassifisering|json_script:"home-chart-systemklassifisering" }}
 	{{ chart_vedlikehold|json_script:"home-chart-vedlikehold" }}
+	{{ chart_driftsplattform|json_script:"home-chart-driftsplattform" }}
 
 {% endblock hovedinnhold %}
 
@@ -137,6 +142,7 @@
 	const livslop = JSON.parse(document.getElementById('home-chart-livslop').textContent);
 	const klassifisering = JSON.parse(document.getElementById('home-chart-systemklassifisering').textContent);
 	const vedlikehold = JSON.parse(document.getElementById('home-chart-vedlikehold').textContent);
+	const driftsplattform = JSON.parse(document.getElementById('home-chart-driftsplattform').textContent);
 	const chartColors = [
 		'rgb(103, 103, 103)',
 		'rgb(206, 119, 107)',
@@ -208,6 +214,7 @@
 	homeDoughnutChart('home_chart_livslop', livslop);
 	homeDoughnutChart('home_chart_systemklassifisering', klassifisering);
 	homeDoughnutChart('home_chart_vedlikehold', vedlikehold);
+	homeDoughnutChart('home_chart_driftsplattform', driftsplattform);
 })();
 </script>
 {% endblock script_append %}
