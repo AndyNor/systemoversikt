@@ -50,7 +50,7 @@
 			<td>{% for app in system.programvarer.all %}<i>{{ app }}</i> fra {% for applev in app.programvareleverandor.all %} {{ applev }} {% empty %} ukjent leverandør {% endfor %} {% if not forloop.last %}<br>{% endif %}{% endfor %}</td>
 			<td>{{ system.driftsmodell_foreignkey.ansvarlig_virksomhet.virksomhetsforkortelse }} {{ system.driftsmodell_foreignkey.navn }} ({{ system.driftsmodell_foreignkey.get_type_plattform_display }})</td>
 			<td>{{ system.driftsmodell_foreignkey.get_type_plattform_display }}</td>
-			<td>{% if system.driftsmodell_foreignkey.utviklingsplattform %} Egenutvikling {% else %} Generisk {% endif %}</td>
+			<td>{% if system.er_egenutviklet %} Egenutvikling {% else %} Generisk {% endif %}</td>
 			<td>
 				{% if not system.basisdriftleverandor.all %}
 					{% for leverandor in system.driftsmodell_foreignkey.leverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}

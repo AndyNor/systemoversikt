@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-22: Driftsmodell.er_saas and System.er_egenutviklet in admin fieldsets.
 # 2026-06-21: Separate admin for Qualys risk acceptance rules (decoupled from basisdrift patching).
 # 2026-06-21: Removed commented IpProtocol admin – model retired.
 # 2026-06-21: Removed PRKvalg/PRKgruppe/PRKskjema admin – PRK form import retired.
@@ -403,7 +404,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('systemnavn', 'alias', 'kvalitetssikret', 'systemeierskapsmodell', 'er_arkiv', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
 	search_fields = ('systemnavn', 'alias',)
-	list_filter = ('autentiseringsteknologi', 'autentiseringsalternativer', 'database_in_use', 'database_supported', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift')
+	list_filter = ('autentiseringsteknologi', 'autentiseringsalternativer', 'database_in_use', 'database_supported', 'systemeier', 'systemforvalter', 'sikkerhetsnivaa', 'systemtyper', 'livslop_status', 'driftsmodell_foreignkey', 'systemeierskapsmodell', 'strategisk_egnethet', 'funksjonell_egnethet', 'teknisk_egnethet', 'isolert_drift', 'er_egenutviklet')
 
 	#readonly_fields = ['inv_konklusjon', 'inv_konklusjon_beskrivelse']
 
@@ -459,7 +460,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'godkjente_bestillere',
 				'livslop_status',
 				'systembeskrivelse',
-				('driftsmodell_foreignkey', 'systemeierskapsmodell'),
+				('driftsmodell_foreignkey', 'er_egenutviklet', 'systemeierskapsmodell'),
 				('systemleverandor', 'systemleverandor_vedlikeholdsavtale',),
 				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
 				'basisdriftleverandor',
@@ -1209,7 +1210,7 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 					'applikasjonsdriftleverandor',
 					'overordnet_plattform',
 					'type_plattform',
-					('utviklingsplattform','samarbeidspartner'),
+					('er_saas', 'utviklingsplattform', 'samarbeidspartner'),
 					'avtaler',
 					'kommentar',
 				),

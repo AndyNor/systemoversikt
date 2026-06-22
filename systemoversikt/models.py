@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-22: Driftsmodell.er_saas and System.er_egenutviklet – explicit SaaS and self-developed flags.
 # 2026-06-21: Removed commented IpProtocol model – never used in production.
 # 2026-06-21: Profile.virksomhet_forkortelse – replaces virksomhet_til_bruker view helper.
 # 2026-06-21: chart_service_component, chart_external_system – tjeneste ecosystem graph palette.
@@ -3900,13 +3901,19 @@ class Driftsmodell(models.Model):
 			verbose_name="Er utviklingsplattform?",
 			blank=True, null=False,
 			default=False,
-			help_text=u"For å vise systemer som er selvutviklet",
+			help_text=u"Legacy-felt. Egenutvikling registreres på System.er_egenutviklet.",
 			)
 	samarbeidspartner = models.BooleanField(
 			verbose_name="Er samarbeidspartner?",
 			blank=True, null=False,
 			default=False,
 			help_text=u"For å vise systemer som er fra samarbeidspartnere",
+			)
+	er_saas = models.BooleanField(
+			verbose_name="Er SaaS-plattform?",
+			blank=True, null=False,
+			default=False,
+			help_text=u"Leverandør leverer full stack (Software as a Service).",
 			)
 	sort_order = models.BigIntegerField(
 			verbose_name="Sorteringsrekkefølge",
@@ -4489,6 +4496,12 @@ class System(models.Model):
 			blank=True,
 			null=True,
 			help_text=u"Driftsplattform systemet kjører på. Brukes blant annet for å tegne opp avhengighetsfiguren. Merk at kommunen kan ha flere instanser av samme system driftet ulike steder. Det er derfor svært viktig at denne blir satt riktig.",
+			)
+	er_egenutviklet = models.BooleanField(
+			verbose_name="Er egenutviklet?",
+			blank=True, null=False,
+			default=False,
+			help_text=u"Systemet er utviklet av kommunen (uavhengig av kjøremiljø).",
 			)
 	leveransemodell_fip = models.BigIntegerField(
 			choices=LEVERANSEMODELL_VALG,
@@ -5098,13 +5111,7 @@ class System(models.Model):
 			return False
 
 	def er_selvutviklet(self):
-		try:
-			if self.driftsmodell_foreignkey.utviklingsplattform:
-				return True
-		except:
-			pass
-
-		return False
+		return self.er_egenutviklet
 
 	def er_samarbeidspartner(self):
 		try:
@@ -5135,10 +5142,11 @@ class System(models.Model):
 
 	def er_saas(self):
 		try:
-			if self.driftsmodell_foreignkey.pk == 2:
+			if self.driftsmodell_foreignkey.er_saas:
 				return True
 		except:
-			return False
+			pass
+		return False
 
 	def forventet_url(self):
 		for systemtype in self.systemtyper.all():
