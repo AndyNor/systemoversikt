@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: System admin fieldset order – forvalter personer/avdeling swap; CMDB/citrix fields below forvaltning_epost.
 # 2026-06-23: System admin requires systemforvalter (personer), livsløpstatus, driftsplattform – admin-only validation.
 # 2026-06-22: Driftsmodell.er_saas and System.er_egenutviklet in admin fieldsets.
 # 2026-06-21: Separate admin for Qualys risk acceptance rules (decoupled from basisdrift patching).
@@ -472,7 +473,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'fields': (
 				('systemnavn', 'programvarer'),
 				'systemforvalter',
-				('systemforvalter_avdeling_referanse', 'systemforvalter_kontaktpersoner_referanse'),
+				('systemforvalter_kontaktpersoner_referanse', 'systemforvalter_avdeling_referanse'),
 				'godkjente_bestillere',
 				'livslop_status',
 				'systembeskrivelse',
@@ -482,12 +483,12 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'basisdriftleverandor',
 				('dato_etablert', 'dato_end_of_life'),
 				'alias',
-				'enterprise_applicatons',
-				'service_offerings',
-				'citrix_publications',
 				('systemtyper', 'systemurl'),
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
 				'forvaltning_epost',
+				'enterprise_applicatons',
+				'service_offerings',
+				'citrix_publications',
 			),
 		}),
 		('Informasjonsbehandling og andre vurderinger', {
