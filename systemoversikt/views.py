@@ -5597,7 +5597,7 @@ def generer_graf_ny(system, follow_count):
 		avhengigheter_graf["nodes"].append({"data": {
 			"id": node_id,
 			"name": graf_node_navn(pv.programvarenavn),
-			"shape": "tag",
+			"shape": "ellipse",
 			"color": programvare_color,
 			"href": reverse("programvaredetaljer", args=[pv.pk]),
 		}})

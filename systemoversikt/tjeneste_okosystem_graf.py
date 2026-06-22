@@ -167,7 +167,7 @@ def generer_tjeneste_okosystem_graf(tjeneste):
 				graf["nodes"].append({"data": {
 					"id": node_id,
 					"name": _graf_node_navn(pv.programvarenavn),
-					"shape": "tag",
+					"shape": "ellipse",
 					"color": programvare_color,
 					"href": reverse("programvaredetaljer", args=[pv.pk]),
 				}})

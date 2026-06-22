@@ -1,5 +1,5 @@
 // Change log:
-// 2026-06-22: White label text on dark programvare tag nodes.
+// 2026-06-22: Programvare nodes use ellipse shape – same black label text as other nodes.
 // 2026-06-21: Wider edge hit targets and parent events:no – integration edges clickable in chart.
 // 2026-06-21: Apply lock UI after saved viewport restore – fixes pan shift on locked reload.
 // 2026-06-21: System detail dependency chart – separate from virksomhet graph JS.
@@ -105,12 +105,6 @@
             'background-color': 'data(color)',
             'label': 'data(name)',
             'font-size': '11px',
-          },
-        },
-        {
-          selector: 'node[id ^= "programvare_"]',
-          style: {
-            'color': '#ffffff',
           },
         },
         {
