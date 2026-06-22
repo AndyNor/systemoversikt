@@ -5,6 +5,7 @@
 # 2026-06-21: Removed PRKvalg/PRKgruppe/PRKskjema admin – PRK form import retired.
 # 2026-06-21: Removed UBW module admin registrations – feature retired.
 # 2026-06-21: Removed ProgramvareBruk.programvareleverandor from admin – field removed from model.
+# 2026-06-22: Removed Region admin and obsolete Driftsmodell fieldsets – model fields retired.
 # 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related admin registrations.
 from __future__ import unicode_literals
 from django.contrib import admin
@@ -1180,9 +1181,9 @@ class AvtaleAdmin(SimpleHistoryAdmin):
 @admin.register(Driftsmodell)
 class DriftsmodellAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('navn', 'sikkerhetsnivaa', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform')
+	list_display = ('navn', 'kommentar', 'ansvarlig_virksomhet', 'type_plattform')
 	search_fields = ('navn',)
-	filter_horizontal = ('lokasjon_lagring_valgmeny', 'leverandor', 'underleverandorer', 'avtaler')
+	filter_horizontal = ('leverandor', 'underleverandorer', 'avtaler')
 	autocomplete_fields = ('ansvarlig_virksomhet', 'leverandor', 'applikasjonsdriftleverandor',)
 
 	def response_add(self, request, obj, post_url_continue=None):
@@ -1211,24 +1212,6 @@ class DriftsmodellAdmin(SimpleHistoryAdmin):
 					('utviklingsplattform','samarbeidspartner'),
 					'avtaler',
 					'kommentar',
-				),
-			}),
-			('Tilleggsinformasjon', {
-				'classes': ('collapse',),
-				'fields': (
-					'risikovurdering',
-					'sikkerhetsnivaa',
-					'databehandleravtale_notater',
-					'lokasjon_lagring_valgmeny',
-					'lokasjon_lagring',
-					'Tilgangsstyring_driftspersonell',
-					'nettverk_segmentering',
-					'nettverk_sammenkobling_fip',
-					'sikkerhet_patching',
-					'sikkerhet_antiskadevare',
-					'sikkerhet_backup',
-					'sikkerhet_logging',
-					'sikkerhet_fysisk_sikring',
 				),
 			}),
 	)
@@ -1340,9 +1323,6 @@ class InformasjonsKlasseAdmin(admin.ModelAdmin):
 
 	def get_ordering(self, request):
 		return ['navn']
-
-
-admin.site.register(Region)
 
 
 @admin.register(ApplicationLog)

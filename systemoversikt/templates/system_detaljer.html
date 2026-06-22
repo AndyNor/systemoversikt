@@ -655,11 +655,6 @@
 				<hr>
 				<p style="background-color: #f8f9fa;">{{ systemdetaljer.risikovurdering_tekst|default:"-" }}</p>
 			{% endif %}
-
-			{% if systemdetaljer.driftsmodell_foreignkey.risikovurdering %}
-				<hr>
-				<a target="_blank" href="{{ systemdetaljer.driftsmodell_foreignkey.risikovurdering }}">Risikovurdering for {{systemdetaljer.driftsmodell_foreignkey}}</a>
-			{% endif %}
 		</div>
 	</div>
 

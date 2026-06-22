@@ -27,19 +27,6 @@
 			<th>{% get_verbose_field_name driftsmodell_felt_referanse "applikasjonsdriftleverandor" %}</th>
 			<th>{% get_verbose_field_name driftsmodell_felt_referanse "avtaler" %}</th>
 			<th>{% get_verbose_field_name driftsmodell_felt_referanse "kommentar" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhetsnivaa" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "risikovurdering" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "databehandleravtale_notater" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "lokasjon_lagring_valgmeny" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "lokasjon_lagring" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "Tilgangsstyring_driftspersonell" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "nettverk_segmentering" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "nettverk_sammenkobling_fip" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhet_patching" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhet_antiskadevare" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhet_backup" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhet_logging" %}</th>
-			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhet_fysisk_sikring" %}</th>
 			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sist_oppdatert" %}</th>
 		</tr>
 		</thead>
@@ -101,29 +88,6 @@
 				{% empty %}-{% endfor %}
 			</td>
 			<td>{{ item.kommentar|default:"-"|linebreaksbr }}</td>
-			<td>{{ item.get_sikkerhetsnivaa_display|default:"-" }}</td>
-			<td>
-				{% if item.risikovurdering %}
-					<a href="{{ item.risikovurdering }}">{{ item.risikovurdering|truncatechars:60 }}</a>
-				{% else %}
-					-
-				{% endif %}
-			</td>
-			<td>{{ item.databehandleravtale_notater|default:"-"|linebreaksbr }}</td>
-			<td>
-				{% for region in item.lokasjon_lagring_valgmeny.all %}
-					{{ region }}{% if not forloop.last %}<br>{% endif %}
-				{% empty %}-{% endfor %}
-			</td>
-			<td>{{ item.lokasjon_lagring|default:"-"|linebreaksbr }}</td>
-			<td>{{ item.Tilgangsstyring_driftspersonell|default:"-"|linebreaksbr }}</td>
-			<td>{{ item.nettverk_segmentering|default:"-"|linebreaksbr }}</td>
-			<td>{{ item.nettverk_sammenkobling_fip|default:"-"|linebreaksbr }}</td>
-			<td>{{ item.sikkerhet_patching|default:"-"|linebreaksbr }}</td>
-			<td>{{ item.sikkerhet_antiskadevare|default:"-"|linebreaksbr }}</td>
-			<td>{{ item.sikkerhet_backup|default:"-"|linebreaksbr }}</td>
-			<td>{{ item.sikkerhet_logging|default:"-"|linebreaksbr }}</td>
-			<td>{{ item.sikkerhet_fysisk_sikring|default:"-"|linebreaksbr }}</td>
 			<td>{{ item.sist_oppdatert|naturaltime }}</td>
 
 		</tr>

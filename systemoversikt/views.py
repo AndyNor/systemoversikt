@@ -8642,6 +8642,7 @@ def alle_leverandorer(request):
 def alle_driftsmodeller(request):
 	#Vise liste over alle driftsmodeller
 	# 2026-06-22: Prefetch related fields and annotate system count – full model data on alle-page.
+	# 2026-06-22: Dropped lokasjon_lagring_valgmeny prefetch – field removed from model.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -8656,7 +8657,6 @@ def alle_driftsmodeller(request):
 		'leverandor',
 		'underleverandorer',
 		'avtaler',
-		'lokasjon_lagring_valgmeny',
 	).order_by('sort_order', 'navn')
 
 	return render(request, 'driftsmodell_alle.html', {

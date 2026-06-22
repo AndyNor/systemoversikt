@@ -3,6 +3,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
 # 2026-06-21: Removed commented dead URL routes (smartkartlegging, prk API, passwdexpire, etc.).
+# 2026-06-22: Removed commented DRF restapi router – retired, APIs live in views.py.
 # 2026-06-21: Removed Definisjon URL routes and organisasjon import – feature retired.
 # 2026-06-21: Removed commented UBW URL routes – module retired.
 # 2026-06-21: Removed behandlinger and DPIA URL routes – functionality moved to Behandlingsoversikten.
@@ -15,30 +16,9 @@ from django.views.generic.base import RedirectView
 import systemoversikt.views as views
 import systemoversikt.views_import as views_import
 
-"""
-from rest_framework import routers
-from systemoversikt.restapi import views as apiviews
-
-router = routers.DefaultRouter()
-router.register(r'systemer', apiviews.SystemViewSet, 'systemer')
-router.register(r'systemer_HEL', apiviews.HELSystemViewSet, 'systemer_HEL')
-router.register(r'virksomhet', apiviews.VirksomhetViewSet)
-router.register(r'driftsmodell', apiviews.DriftsmodellViewSet)
-router.register(r'ansvarlig', apiviews.AnsvarligViewSet)
-#router.register(r'user', apiviews.UserViewSet)
-router.register(r'avtale', apiviews.AvtaleViewSet)
-router.register(r'leverandor', apiviews.LeverandorViewSet)
-#router.register(r'systembruk', apiviews.SystemBrukViewSet)
-#router.register(r'systemkateogri', apiviews.SystemktegoriViewSet)
-#router.register(r'behandling', apiviews.VirksomhetViewSet)
-"""
-
 favicon_view = RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=True)
 
 urlpatterns = [
-	#path('rest/', include(router.urls)),
-	#path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-
 	re_path(r'^favicon\.ico$', favicon_view),
 	re_path(r'^debug_info$', views.debug_info, name='debug_info'),
 	re_path(r'^$', views.home, name='home'),

@@ -10,6 +10,7 @@
 # 2026-06-21: Softer chart palette; component uses muted lavender instead of cyan.
 # 2026-06-21: SystemGraphLayout model – per-system dependency chart layout persistence.
 # 2026-06-22: Leverandor.land blank=False, null=True – required in forms, no Ukjent choice; NULL kept in DB.
+# 2026-06-22: Removed obsolete Driftsmodell security/location fields and Region model – unused in production.
 # 2026-06-22: chart_programvare – dark black leaf nodes in system/tjeneste dependency graphs.
 # 2026-06-21: chart_url, chart_cmdb_bss, chart_cmdb_bs colors for system dependency graph.
 # 2026-06-08: User-facing UKE labels on Virksomhet/System fields renamed to DIG.
@@ -3679,31 +3680,6 @@ LEVERANSEMODELL_VALG = (
 	(6, 'Snarvei')
 )
 
-class Region(models.Model):
-	navn = models.CharField(
-			unique=True,
-			verbose_name="Navn på region",
-			max_length=100,
-			blank=False,
-			null=False,
-			help_text=u"F.eks. Norge, Norden, Europa/EØS, USA, Resten av verden",
-			)
-	definisjon = models.TextField(
-			verbose_name="Definisjon",
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	history = HistoricalRecords()
-
-	def __str__(self):
-		return u'%s' % (self.navn)
-
-	class Meta:
-		verbose_name_plural = "Behandling: Regioner"
-		default_permissions = ('add', 'change', 'delete', 'view')
-
-
 VALG_KLARGJORT_SIKKERHETSMODELL = (
 	(None, "❔ Ikke vurdert"),
 	(1, "🟢 Klargjort via Azure Web Application Proxy"),
@@ -3902,86 +3878,6 @@ class Driftsmodell(models.Model):
 			related_name='driftsmodell_avtaler',
 			verbose_name="Avtalereferanser",
 			blank=True,
-			)
-	databehandleravtale_notater = models.TextField(
-			verbose_name="Status databehandleravtale",
-			blank=True,
-			null=True,
-			help_text=u"Tilleggsinformasjon databehandleravtale, inkludert beskrivelse av eventuelle avvik fra Oslo kommunes standard databehandleravtale.",
-			)
-	risikovurdering = models.URLField(
-			verbose_name="Link til risikovurdering",
-			max_length=600,
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	sikkerhetsnivaa = models.BigIntegerField(
-			choices=SIKKERHETSNIVAA_VALG,
-			verbose_name="Høyeste tillate sikkerhetsnivå",
-			blank=True,
-			null=True,
-			help_text=u'Det høyeste sikkerhetsnivået modellen er godkjent for i hht <a target="_blank" href="https://confluence.oslo.kommune.no/x/y8seAw">Informasjonstyper og behandlingskrav</a>',
-			)
-	Tilgangsstyring_driftspersonell = models.TextField(
-			verbose_name="Tilgangsstyring for driftspersonell og utviklere",
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	lokasjon_lagring_valgmeny = models.ManyToManyField(
-			to=Region,
-			related_name='driftsmodell_lokasjon_lagring_valgmeny',
-			verbose_name="Lokasjon for lagring (valg)",
-			blank=True,
-			)
-	lokasjon_lagring = models.TextField(
-			verbose_name="Lokasjon for prosessering og lagring (utdyping)",
-			blank=True,
-			null=True,
-			help_text=u"Hvilke land og soner prosessering og lagring finner sted.",
-			)
-	nettverk_segmentering = models.TextField(
-			verbose_name="Designprinsipper for nettverkssegmentering",
-			blank=True,
-			null=True,
-			help_text=u"Typisk ulike sikkerhetsnivå med regler for informasjonsflyt.",
-			)
-	nettverk_sammenkobling_fip = models.TextField(
-			verbose_name="Kobling mot felles IKT-plattform",
-			blank=True,
-			null=True,
-			help_text=u"Hvordan trafikk rutes backend fra plattformen til andre tjenester på felles IKT-plattform.",
-			)
-	sikkerhet_patching = models.TextField(
-			verbose_name="Designprinsipper for patching",
-			blank=True,
-			null=True,
-			help_text=u"Der aktuelt",
-			)
-	sikkerhet_antiskadevare = models.TextField(
-			verbose_name="Designprinsipper for anti-skadevare (antivirus)",
-			blank=True,
-			null=True,
-			help_text=u"Der aktuelt",
-			)
-	sikkerhet_backup = models.TextField(
-			verbose_name="Designprinsipper for sikkerhetskopiering",
-			blank=True,
-			null=True,
-			help_text=u"Der aktuelt",
-			)
-	sikkerhet_logging = models.TextField(
-			verbose_name="Designprinsipper for logginnsamling",
-			blank=True,
-			null=True,
-			help_text=u"",
-			)
-	sikkerhet_fysisk_sikring = models.TextField(
-			verbose_name="Fysiske sikringstiltak",
-			blank=True,
-			null=True,
-			help_text=u"Beskyttelse mot innbrudd, brann, oversvømmelse..",
 			)
 	type_plattform = models.BigIntegerField(
 			choices=DRIFTSTYPE_VALG,

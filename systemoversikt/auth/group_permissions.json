@@ -124,10 +124,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "view_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "add_sikkerhetstester"
             },
             {
@@ -369,10 +365,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "view_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "add_system"
             },
             {
@@ -555,10 +547,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_programvarebruk"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_region"
             },
             {
                 "content_type__app_label": "systemoversikt",
@@ -751,14 +739,6 @@
             },
             {
                 "content_type__app_label": "systemoversikt",
-                "codename": "add_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_region"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
                 "codename": "add_sikkerhetstester"
             },
             {
@@ -941,10 +921,6 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_programvarebruk"
-            },
-            {
-                "content_type__app_label": "systemoversikt",
-                "codename": "view_region"
             },
             {
                 "content_type__app_label": "systemoversikt",
