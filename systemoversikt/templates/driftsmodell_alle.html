@@ -1,72 +1,135 @@
-{% extends "system_index.html" %}
-{% load humanize %}
-{% load static %}
-
-{% block overskrift %}
-	Driftsplattformer (landingssoner)
-{% endblock overskrift %}
-
-{% block hovedinnhold %}
-	<p>En driftsplattform er en spesifikk infrastruktur hvor systemkomponenter kan driftes. Alle driftsplattformer skal kobles til ansvarlig virksomhet i kommunen, og alle systemer skal kobles mot en av disse driftsplattformene. Dersom systemet tilhører flere driftsmodeller, kan du velge den som er mest fremtredende, eller splitte systemregistreringen inn i flere systemkomponenter fordelt riktig på driftsplattform. Trykk på en driftsplattform for å se alle systemer som er tilknyttet.</p>
-
-	<table class="tablesorter excel">
-		<thead>
-		<tr>
-			<th>Plattform/tenant</th>
-			<th>Antall systemer</th>
-			<th>Nivå</th>
-			<th>Bygger på</th>
-			<th>Forvaltet av</th>
-			<th>Driftet av</th>
-			<th>Appdrift standard av</th>
-			<th>Type</th>
-			<th>Utvikling</th>
-			<th>Kommentar</th>
-		</tr>
-		</thead>
-		<tbody>
-		{% for item in driftsmodeller %}
-		<tr {% if item.own_domain %} style="background-color: #fffee6;" {% endif %}>
-
-			<td>
-				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
-				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
-					<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
-			</td>
-			<td>
-				{{ item.antall_systemer }}
-			</td>
-			<td>{{ item.plattform_nivaa }}</td>
-			<td>
-				{{ item.overordnet_plattform|default:"" }}
-			</td>
-			<td>
-				{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
-					<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet|default:"-" }}</a>
-			</td>
-
-
-			<td>				
-				{% for leverandor in item.leverandor.all %}{{ leverandor }}{% if not forloop.last %}<br>{% endif %}{% empty %} - {% endfor %}
-			</td>
-
-			<td>
-				{{ item.applikasjonsdriftleverandor|default:"-" }}
-			</td>
-
-			<td>
-				{{ item.get_type_plattform_display }}
-			</td>
-			<td>
-				{{ item.utviklingsplattform|yesno:"Ja,Nei" }}
-			</td>
-			<td>
-				{{ item.kommentar }}
-			</td>
-
-		</tr>
-		{% endfor %}
-		</tbody>
-	</table>
-
-{% endblock hovedinnhold %}
+{% extends "system_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load templatetags %}
+
+{% block overskrift %}
+	Driftsplattformer (landingssoner)
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+	<p>En driftsplattform er en spesifikk infrastruktur hvor systemkomponenter kan driftes. Alle driftsplattformer skal kobles til ansvarlig virksomhet i kommunen, og alle systemer skal kobles mot en av disse driftsplattformene. Dersom systemet tilhører flere driftsmodeller, kan du velge den som er mest fremtredende, eller splitte systemregistreringen inn i flere systemkomponenter fordelt riktig på driftsplattform. Trykk på en driftsplattform for å se alle systemer som er tilknyttet.</p>
+
+	<table class="tablesorter excel">
+		<thead>
+		<tr>
+			<th>Plattform/tenant</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sort_order" %}</th>
+			<th>Antall systemer</th>
+			<th>Nivå</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "ansvarlig_virksomhet" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "overordnet_plattform" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "type_plattform" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "utviklingsplattform" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "samarbeidspartner" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "leverandor" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "underleverandorer" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "applikasjonsdriftleverandor" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "avtaler" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "kommentar" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhetsnivaa" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "risikovurdering" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "databehandleravtale_notater" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "lokasjon_lagring_valgmeny" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "lokasjon_lagring" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "Tilgangsstyring_driftspersonell" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "nettverk_segmentering" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "nettverk_sammenkobling_fip" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhet_patching" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhet_antiskadevare" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhet_backup" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhet_logging" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sikkerhet_fysisk_sikring" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "sist_oppdatert" %}</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for item in driftsmodeller %}
+		<tr>
+
+			<td>
+				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
+				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
+				<a href="{{ url_detaljer_driftsmodell }}">{{ item }}</a>
+			</td>
+			<td>{{ item.sort_order }}</td>
+			<td>{{ item.antall_systemer }}</td>
+			<td>{{ item.plattform_nivaa }}</td>
+			<td>
+				{% if item.ansvarlig_virksomhet %}
+					{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
+					<a href="{{ url_detaljer_virksomhet }}">{{ item.ansvarlig_virksomhet }}</a>
+				{% else %}
+					-
+				{% endif %}
+			</td>
+			<td>
+				{% if item.overordnet_plattform %}
+					{% url 'detaljer_driftsmodell' pk=item.overordnet_plattform.pk as url_overordnet %}
+					<a href="{{ url_overordnet }}">{{ item.overordnet_plattform }}</a>
+				{% else %}
+					-
+				{% endif %}
+			</td>
+			<td>{{ item.get_type_plattform_display }}</td>
+			<td>{{ item.utviklingsplattform|yesno:"Ja,Nei" }}</td>
+			<td>{{ item.samarbeidspartner|yesno:"Ja,Nei" }}</td>
+			<td>
+				{% for leverandor in item.leverandor.all %}
+					{% url 'leverandor' leverandor.pk as url_leverandor %}
+					<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}<br>{% endif %}
+				{% empty %}-{% endfor %}
+			</td>
+			<td>
+				{% for leverandor in item.underleverandorer.all %}
+					{% url 'leverandor' leverandor.pk as url_leverandor %}
+					<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}<br>{% endif %}
+				{% empty %}-{% endfor %}
+			</td>
+			<td>
+				{% if item.applikasjonsdriftleverandor %}
+					{% url 'leverandor' item.applikasjonsdriftleverandor.pk as url_leverandor %}
+					<a href="{{ url_leverandor }}">{{ item.applikasjonsdriftleverandor }}</a>
+				{% else %}
+					-
+				{% endif %}
+			</td>
+			<td>
+				{% for avtale in item.avtaler.all %}
+					{% url 'avtaledetaljer' avtale.pk as avtale_url %}
+					<a href="{{ avtale_url }}">{{ avtale }}</a>{% if not forloop.last %}<br>{% endif %}
+				{% empty %}-{% endfor %}
+			</td>
+			<td>{{ item.kommentar|default:"-"|linebreaksbr }}</td>
+			<td>{{ item.get_sikkerhetsnivaa_display|default:"-" }}</td>
+			<td>
+				{% if item.risikovurdering %}
+					<a href="{{ item.risikovurdering }}">{{ item.risikovurdering|truncatechars:60 }}</a>
+				{% else %}
+					-
+				{% endif %}
+			</td>
+			<td>{{ item.databehandleravtale_notater|default:"-"|linebreaksbr }}</td>
+			<td>
+				{% for region in item.lokasjon_lagring_valgmeny.all %}
+					{{ region }}{% if not forloop.last %}<br>{% endif %}
+				{% empty %}-{% endfor %}
+			</td>
+			<td>{{ item.lokasjon_lagring|default:"-"|linebreaksbr }}</td>
+			<td>{{ item.Tilgangsstyring_driftspersonell|default:"-"|linebreaksbr }}</td>
+			<td>{{ item.nettverk_segmentering|default:"-"|linebreaksbr }}</td>
+			<td>{{ item.nettverk_sammenkobling_fip|default:"-"|linebreaksbr }}</td>
+			<td>{{ item.sikkerhet_patching|default:"-"|linebreaksbr }}</td>
+			<td>{{ item.sikkerhet_antiskadevare|default:"-"|linebreaksbr }}</td>
+			<td>{{ item.sikkerhet_backup|default:"-"|linebreaksbr }}</td>
+			<td>{{ item.sikkerhet_logging|default:"-"|linebreaksbr }}</td>
+			<td>{{ item.sikkerhet_fysisk_sikring|default:"-"|linebreaksbr }}</td>
+			<td>{{ item.sist_oppdatert|naturaltime }}</td>
+
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+{% endblock hovedinnhold %}
+
