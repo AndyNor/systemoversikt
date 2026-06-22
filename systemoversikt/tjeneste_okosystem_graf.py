@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-22: Programvare leaf nodes on service components – dark black tag shape.
 # 2026-06-21: Group by systemforvalter virksomhet – replaces driftsplattform compound boxes.
 # 2026-06-21: Direct dependencies only – no multi-level expansion or URL/CMDB nodes.
 # 2026-06-21: Tjeneste ecosystem graph – separate from system detail generer_graf_ny.
@@ -19,6 +20,23 @@ def _virksomhet_visningsnavn(virksomhet):
 	if virksomhet is None:
 		return "Ukjent virksomhet"
 	return virksomhet.virksomhetsforkortelse or virksomhet.virksomhetsnavn
+
+
+def _graf_node_navn(tekst, maximum=40):
+	if len(tekst) > maximum:
+		return tekst[:maximum] + "…"
+	return tekst
+
+
+def _graf_kant(graf, kilde, mal, farge):
+	graf["edges"].append({"data": {
+		"source": kilde,
+		"target": mal,
+		"linewidth": 1,
+		"curve-style": "bezier",
+		"linecolor": farge,
+		"linestyle": "dotted",
+	}})
 
 
 def _legg_til_system_node(graf, system, *, er_komponent, observerte_virksomheter, observerte_systemer):
@@ -43,6 +61,7 @@ def generer_tjeneste_okosystem_graf(tjeneste):
 		tjeneste.systemer
 		.select_related('systemforvalter')
 		.prefetch_related(
+			'programvarer',
 			Prefetch(
 				'system_integration_source',
 				queryset=SystemIntegration.objects.select_related(
@@ -137,5 +156,21 @@ def generer_tjeneste_okosystem_graf(tjeneste):
 				"shape": virksomhet_gruppe_shape,
 				"color": virksomhet_gruppe_color,
 			}})
+
+	programvare_color = SYSTEM_COLORS["chart_programvare"]
+	observerte_programvare = set()
+	for system in komponenter:
+		for pv in system.programvarer.all():
+			node_id = f"programvare_{pv.pk}"
+			if pv.pk not in observerte_programvare:
+				observerte_programvare.add(pv.pk)
+				graf["nodes"].append({"data": {
+					"id": node_id,
+					"name": _graf_node_navn(pv.programvarenavn),
+					"shape": "tag",
+					"color": programvare_color,
+					"href": reverse("programvaredetaljer", args=[pv.pk]),
+				}})
+			_graf_kant(graf, system.pk, node_id, programvare_color)
 
 	return graf

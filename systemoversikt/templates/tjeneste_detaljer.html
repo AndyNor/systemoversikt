@@ -23,7 +23,7 @@
 	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-svg.js@0.4.0' %}" nonce="{{request.csp_nonce}}"></script>
-	<script src="{% static 'tjeneste_okosystem_graph.js' %}?v=20260621-virksomhet" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'tjeneste_okosystem_graph.js' %}?v=20260622-programvare" nonce="{{request.csp_nonce}}"></script>
 {% endblock ekstrajavascript %}
 
 {% block ekstrastyle %}
@@ -199,6 +199,7 @@
 	<span><span class="tjeneste-legend-dot" style="background-color: {{ system_colors.chart_service_component }};"></span>Systemkomponent i tjenesten</span>
 	<span><span class="tjeneste-legend-dot" style="background-color: {{ system_colors.chart_external_system }};"></span>Eksterne systemer</span>
 	<span><span class="tjeneste-legend-dot" style="background-color: {{ system_colors.chart_integration }};"></span>Integrasjon</span>
+	<span><span class="tjeneste-legend-dot" style="background-color: {{ system_colors.chart_programvare }};"></span>Programvare</span>
 </p>
 
 <p>Dra virksomhetsboksene for å flytte alle systemer i gruppen. Enkeltnoder kan også flyttes (lagres ikke). Klikk på systemer og linjer for detaljer. Kun direkte avhengigheter vises.</p>

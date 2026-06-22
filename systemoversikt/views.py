@@ -5590,6 +5590,19 @@ def generer_graf_ny(system, follow_count):
 		if bs is not None:
 			graf_kant(bss_node_id, f"bs_{bs.pk}", bs_color)
 
+	# 2026-06-22: Programvare leaf nodes on focal system – same pattern as URL/BSS/BS.
+	programvare_color = SYSTEM_COLORS["chart_programvare"]
+	for pv in system.programvarer.all():
+		node_id = f"programvare_{pv.pk}"
+		avhengigheter_graf["nodes"].append({"data": {
+			"id": node_id,
+			"name": graf_node_navn(pv.programvarenavn),
+			"shape": "tag",
+			"color": programvare_color,
+			"href": reverse("programvaredetaljer", args=[pv.pk]),
+		}})
+		graf_kant(system.pk, node_id, programvare_color)
+
 	return avhengigheter_graf
 
 

@@ -9,6 +9,7 @@
 # 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related lookup models – migrated to Behandlingsoversikten.
 # 2026-06-21: Softer chart palette; component uses muted lavender instead of cyan.
 # 2026-06-21: SystemGraphLayout model – per-system dependency chart layout persistence.
+# 2026-06-22: chart_programvare – dark black leaf nodes in system/tjeneste dependency graphs.
 # 2026-06-21: chart_url, chart_cmdb_bss, chart_cmdb_bs colors for system dependency graph.
 # 2026-06-08: User-facing UKE labels on Virksomhet/System fields renamed to DIG.
 # 2026-06-08: VirksomhetRollerForm – edit sentrale roller from virksomhet detail page.
@@ -4293,6 +4294,7 @@ SYSTEM_COLORS = {
 	"chart_url": '#7B9FD6',
 	"chart_cmdb_bss": '#F2B26E',
 	"chart_cmdb_bs": '#DE9655',
+	"chart_programvare": '#1a1a1a',
 	"chart_service_component": '#2A2859',
 	"chart_external_system": '#9AAFC9',
 }

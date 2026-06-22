@@ -1,3 +1,4 @@
+// 2026-06-22: White label text on dark programvare tag nodes.
 // 2026-06-21: Draggable virksomhet compound boxes – move grouped systems together.
 // 2026-06-21: Draggable nodes without persistence – autoungrabify false.
 // 2026-06-21: Tjeneste detail ecosystem chart – separate from system_systemavhengigheter_graph.js.
@@ -78,6 +79,12 @@
             'label': 'data(name)',
             'font-size': '11px',
             'color': '#222',
+          },
+        },
+        {
+          selector: 'node[id ^= "programvare_"]',
+          style: {
+            'color': '#ffffff',
           },
         },
         {
