@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Developer docs page for Sårbarhetsoversikten (vulnapp) API (login_required).
 # 2026-06-23: Fix api_virksomheter overordnede_virksomheter – use parent.pk not shadowed loop variable.
 # 2026-06-23: Developer docs page for Tjeneste- og systemoversikt API (login_required).
 # 2026-06-23: Home page – fifth chart for egenutviklet vs generisk (replaces text under drift chart).
@@ -6943,6 +6944,27 @@ def api_tjeneste_systemoversikt_docs(request):
 	})
 
 
+@login_required
+def api_vulnapp_docs(request):
+	from systemoversikt.api_vulnapp_docs import (
+		AUTH_INFO,
+		BASE_URL,
+		ENDPOINTS,
+		FLOW_NOTES_NO,
+		LIMITATIONS,
+		build_entity_graph,
+	)
+	return render(request, 'rapport_api_vulnapp_docs.html', {
+		'request': request,
+		'auth_info': AUTH_INFO,
+		'base_url': BASE_URL,
+		'endpoints': ENDPOINTS,
+		'entity_graph': build_entity_graph(),
+		'flow_notes_no': FLOW_NOTES_NO,
+		'limitations': LIMITATIONS,
+	})
+
+
 LEVERANDORTILGANG_KJENTE_GRUPPER = [
 		'DS-UVALEVTILGANG', 
 		'DS-DRIFT_DML_', 
@@ -11804,6 +11826,7 @@ def csirt_maskinlookup_api(request): #API
 
 
 def csirt_iplookup_api(request):
+	# 2026-06-23: Update api_vulnapp_docs.py when changing /api/vulnapp/ipsok/ (url name: api_vulnapp_docs).
 	#ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message=f"Innkommende kall fra {get_client_ip(request)}")
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API CSIRT IP-søk", message="Feil: HTTP metode var ikke GET")
@@ -11946,6 +11969,7 @@ def vav_akva_api(request): #API
 
 @csrf_exempt
 def api_known_exploited(request): #API
+	# 2026-06-23: Update api_vulnapp_docs.py when changing /api/vulnapp/known_exploited/ (url name: api_vulnapp_docs).
 	event_type = "API known exploited"
 	ApplicationLog.objects.create(event_type=event_type, message=f"Innkommende kall fra {get_client_ip(request)}")
 
@@ -11984,6 +12008,7 @@ def api_known_exploited(request): #API
 
 
 def api_programvare_vulnapp(request): #API
+	# 2026-06-23: Update api_vulnapp_docs.py when changing /api/vulnapp/programvare/ (url name: api_vulnapp_docs).
 	ApplicationLog.objects.create(event_type="API programvare", message=f"Innkommende kall fra {get_client_ip(request)}")
 	if not request.method == "GET":
 		ApplicationLog.objects.create(event_type="API programvare", message="Feil: HTTP metode var ikke GET")

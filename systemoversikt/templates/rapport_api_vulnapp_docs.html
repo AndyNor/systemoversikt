@@ -1,0 +1,205 @@
+{% extends "admin_index.html" %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block ekstrajavascript %}
+	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/numeric.min.js@1.2.6' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/layout-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block overskrift %}
+	API-dokumentasjon: Sårbarhetsoversikten
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>
+	Dokumentasjon for utviklere av sårbarhetsoversikten (VulnApp) som integrerer mot Kartoteket.
+	Feltnavn og JSON-struktur følger API-et uendret.
+	<a href="{% url 'api_overview' %}">← Tilbake til API-oversikten</a>
+</p>
+
+<h6>Autentisering</h6>
+<p>{{ auth_info.description_no }}</p>
+<ul>
+	<li>Header: <code>key</code></li>
+	<li>Base-URL: <code>{{ base_url }}</code></li>
+	<li>Ved manglende/feil nøkkel (403): <code>{{ auth_info.error_403 }}</code></li>
+</ul>
+
+<p>{{ flow_notes_no }}</p>
+
+<hr>
+
+<h6>Dataflyt og endepunkter</h6>
+<p>Klikk på en node for å hoppe til dokumentasjon for tilhørende endepunkt.</p>
+<div id="cy" style="width: 100%; height: 588px; border: 1px solid #ccc; margin-bottom: 1em;"></div>
+
+<hr>
+
+<h6>Begrensninger og kjente forhold</h6>
+<ul>
+	{% for item in limitations %}
+	<li><strong>{{ item.title }}:</strong> {{ item.description_no }}</li>
+	{% endfor %}
+</ul>
+
+<hr>
+
+<h6>Innhold</h6>
+<ul>
+	{% for ep in endpoints %}
+	<li><a href="#api-{{ ep.slug }}">{{ ep.path }}</a> – {{ ep.name }} ({{ ep.method }})</li>
+	{% endfor %}
+</ul>
+
+<hr>
+
+{% for ep in endpoints %}
+<section id="api-{{ ep.slug }}" style="margin-bottom: 2.5em;">
+	<h4>{{ ep.name }} – <code>{{ ep.path }}</code></h4>
+	<p>{{ ep.beskrivelse_no }}</p>
+	<p>
+		<strong>Metode:</strong> {{ ep.method }}
+		&nbsp;|&nbsp;
+		<strong>View:</strong> <code>{{ ep.view_name }}</code>
+		{% if ep.django_model %}
+		&nbsp;|&nbsp;
+		<strong>Modell(er):</strong> <code>{{ ep.django_model }}</code>
+		{% endif %}
+	</p>
+
+	<h6>Autentisering</h6>
+	<p>{{ ep.auth_no }}</p>
+
+	{% if ep.query_params %}
+	<h6>Query-parametre</h6>
+	<table class="table table-sm table-bordered table-striped">
+		<thead><tr><th>Param</th><th>Påkrevd</th><th>Beskrivelse</th></tr></thead>
+		<tbody>
+			{% for p in ep.query_params %}
+			<tr>
+				<td><code>{{ p.name }}</code></td>
+				<td>{% if p.required %}ja{% else %}nei{% endif %}</td>
+				<td>{{ p.description_no }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+
+	{% if ep.request_body_no %}
+	<h6>Request body</h6>
+	<p>{{ ep.request_body_no }}</p>
+	{% endif %}
+
+	{% if ep.response_note_no %}
+	<h6>Respons</h6>
+	<p>{{ ep.response_note_no }}</p>
+	{% endif %}
+
+	{% if ep.side_effects_no %}
+	<h6>Sideeffekter</h6>
+	<p>{{ ep.side_effects_no }}</p>
+	{% endif %}
+
+	<h6>Felter{% if ep.method == "GET" %} i respons{% else %} (ExploitedVulnerability){% endif %}</h6>
+	<table class="table table-sm table-bordered table-striped">
+		<thead>
+			<tr><th>Felt</th><th>Type</th><th>Nullable</th><th>Beskrivelse</th></tr>
+		</thead>
+		<tbody>
+			{% for f in ep.fields %}
+			<tr>
+				<td><code>{{ f.name }}</code></td>
+				<td><code>{{ f.type }}</code></td>
+				<td>{% if f.nullable %}ja{% else %}nei{% endif %}</td>
+				<td>{{ f.description_no }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h6>curl-eksempel</h6>
+	<pre class="bg-light p-2"><code>{{ ep.curl_example }}</code></pre>
+
+	<h6>Eksempel{% if ep.method == "POST" %} (request/response){% else %}-respons{% endif %}</h6>
+	<pre class="bg-light p-2" style="max-height: 400px; overflow: auto;"><code>{{ ep.example_json }}</code></pre>
+</section>
+{% if not forloop.last %}<hr>{% endif %}
+{% endfor %}
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+var cy = cytoscape({
+	zoomingEnabled: true,
+	panningEnabled: true,
+	wheelSensitivity: 0.2,
+	container: document.getElementById('cy'),
+	elements: {
+		nodes: [
+			{% for node in entity_graph.nodes %}{{ node|safe }},
+			{% endfor %}
+		],
+		edges: [
+			{% for edge in entity_graph.edges %}{{ edge|safe }},
+			{% endfor %}
+		],
+	},
+	style: [
+		{
+			selector: 'node',
+			style: {
+				'shape': 'data(shape)',
+				'background-color': 'data(color)',
+				'label': 'data(name)',
+				'font-size': '11px',
+				'text-wrap': 'wrap',
+				'text-max-width': '90px',
+				'width': 'data(size)',
+				'height': 'data(size)',
+				'color': '#ffffff',
+				'text-outline-color': '#2A2859',
+				'text-outline-width': 1,
+			},
+		},
+		{
+			selector: 'edge',
+			style: {
+				'target-arrow-shape': 'triangle',
+				'curve-style': 'bezier',
+				'line-style': 'data(linestyle)',
+				'width': 1.5,
+				'arrow-scale': 0.8,
+				'label': 'data(label)',
+				'font-size': '9px',
+				'text-rotation': 'autorotate',
+				'text-margin-y': -8,
+			},
+		},
+	],
+	layout: {
+		name: 'fcose',
+		quality: 'default',
+		animate: true,
+		animationDuration: 800,
+		nodeDimensionsIncludeLabels: true,
+	},
+});
+cy.on('tap', 'node', function(){
+	var href = this.data('href');
+	if (href) {
+		var el = document.querySelector(href);
+		if (el) {
+			el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}
+	}
+});
+</script>
+
+{% endblock hovedinnhold %}

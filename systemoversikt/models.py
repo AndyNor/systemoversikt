@@ -3704,6 +3704,7 @@ VALG_KLARGJORT_SIKKERHETSMODELL = (
 )
 
 
+# 2026-06-23: Exposed via /api/vulnapp/programvare/ – update api_vulnapp_docs.py when changing til_cveoversikt_og_nyheter output (url name: api_vulnapp_docs).
 # 2026-06-23: Exposed via /api/programvarer/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class Programvare(models.Model):
 	opprettet = models.DateTimeField(
@@ -6603,6 +6604,7 @@ class LOS(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 
+# 2026-06-23: Exposed via /api/vulnapp/known_exploited/ – update api_vulnapp_docs.py when changing relevant API output (url name: api_vulnapp_docs).
 class ExploitedVulnerability(models.Model):
 	# Model to keep track of exploited vulnerabilities (CISA)
 	cve_id = models.CharField(max_length=20, primary_key=True)
