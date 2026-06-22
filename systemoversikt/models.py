@@ -9,6 +9,7 @@
 # 2026-06-21: Removed BehandlingerPersonopplysninger, DPIA, and related lookup models – migrated to Behandlingsoversikten.
 # 2026-06-21: Softer chart palette; component uses muted lavender instead of cyan.
 # 2026-06-21: SystemGraphLayout model – per-system dependency chart layout persistence.
+# 2026-06-22: Leverandor.land blank=False, null=True – required in forms, no Ukjent choice; NULL kept in DB.
 # 2026-06-22: chart_programvare – dark black leaf nodes in system/tjeneste dependency graphs.
 # 2026-06-21: chart_url, chart_cmdb_bss, chart_cmdb_bs colors for system dependency graph.
 # 2026-06-08: User-facing UKE labels on Virksomhet/System fields renamed to DIG.
@@ -1527,7 +1528,7 @@ class Leverandor(models.Model):
 			verbose_name="Land",
 			max_length=2,
 			choices=LEVERANDOR_LAND_VALG,
-			blank=True,
+			blank=False,
 			null=True,
 			help_text=u"Land leverandøren opererer fra",
 			)
