@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Fix api_virksomheter overordnede_virksomheter – use parent.pk not shadowed loop variable.
 # 2026-06-23: Developer docs page for Tjeneste- og systemoversikt API (login_required).
 # 2026-06-23: Home page – fifth chart for egenutviklet vs generisk (replaces text under drift chart).
 # 2026-06-22: Home page drift chart – Driftsplattform segment counts via drift_color_segment().
@@ -11541,7 +11542,7 @@ def api_virksomheter(request): #tjeneste- og systemoversikt
 		line["rolle_arkitekturkontakter"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.arkitekturkontakter.all()]
 		line["rolle_ks_fiks_admins"] = [ansvarlig.brukernavn.email for ansvarlig in virksomhet.ks_fiks_admin_ref.all()]
 
-		line["overordnede_virksomheter"] = [{"class": "Virksomhet", "id": virksomhet.pk} for virksomhet in virksomhet.overordnede_virksomheter.all()]
+		line["overordnede_virksomheter"] = [{"class": "Virksomhet", "id": parent.pk} for parent in virksomhet.overordnede_virksomheter.all()]
 
 		data.append(line)
 

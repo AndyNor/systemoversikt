@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Remove overordnede_virksomheter known-bug note – fixed in api_virksomheter.
 # 2026-06-23: Developer docs reminder – keep ENDPOINTS in sync when API/model output changes (url name: api_tjeneste_systemoversikt_docs).
 # 2026-06-23: API documentation metadata for Tjeneste- og systemoversikt developer page.
 import json
@@ -136,10 +137,6 @@ LIMITATIONS = [
 		"description_no": "api_programvarer, api_los og api_virksomheter gjør DB-kall per rad (ikke optimalisert som api_systemer_optimized).",
 	},
 	{
-		"title": "Kjent feil: overordnede_virksomheter",
-		"description_no": "/api/virksomheter/ returnerer feil id i overordnede_virksomheter (bruker egen pk i stedet for forelder). Verifiser mot Kartotek-UI inntil fikset.",
-	},
-	{
 		"title": "service_offerings",
 		"description_no": "Eksponeres som lister på System (service_offerings_external_id, service_offerings_navn), men finnes ikke som eget endepunkt.",
 	},
@@ -199,7 +196,7 @@ ENDPOINTS = [
 			_field("rolle_uke_kam", "array of string (email)", False, "UKE KAM-kontakter"),
 			_field("rolle_arkitekturkontakter", "array of string (email)", False, "Arkitekturkontakter"),
 			_field("rolle_ks_fiks_admins", "array of string (email)", False, "KS Fiks-administratorer"),
-			_field("overordnede_virksomheter", REF_LIST, False, "Foreldre i virksomhetshierarki (se kjent feil)"),
+			_field("overordnede_virksomheter", REF_LIST, False, "Foreldre i virksomhetshierarki"),
 		],
 		"references": [
 			"overordnede_virksomheter → /api/virksomheter/ (self-reference)",
