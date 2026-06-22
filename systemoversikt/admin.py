@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: System admin requires systemforvalter (personer), livsløpstatus, driftsplattform – admin-only validation.
 # 2026-06-22: Driftsmodell.er_saas and System.er_egenutviklet in admin fieldsets.
 # 2026-06-21: Separate admin for Qualys risk acceptance rules (decoupled from basisdrift patching).
 # 2026-06-21: Removed commented IpProtocol admin – model retired.
@@ -399,7 +400,22 @@ class SystemAdmin(SimpleHistoryAdmin):
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "driftsmodell_foreignkey":
 			kwargs["queryset"] = Driftsmodell.objects.order_by('navn')
+			# 2026-06-23: Required in admin only – model still allows null for legacy data.
+			kwargs["required"] = True
 		return super().formfield_for_foreignkey(db_field, request, **kwargs)
+
+	def formfield_for_manytomany(self, db_field, request, **kwargs):
+		if db_field.name == "systemforvalter_kontaktpersoner_referanse":
+			# 2026-06-23: Required in admin only – model still allows blank for legacy data.
+			kwargs["required"] = True
+		return super().formfield_for_manytomany(db_field, request, **kwargs)
+
+	def formfield_for_dbfield(self, db_field, request, **kwargs):
+		formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+		if db_field.name == "livslop_status":
+			# 2026-06-23: Required in admin only – model still allows null for legacy data.
+			formfield.required = True
+		return formfield
 
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('systemnavn', 'alias', 'kvalitetssikret', 'systemeierskapsmodell', 'er_arkiv', 'livslop_status', 'systemeier', 'systemforvalter', 'driftsmodell_foreignkey')
