@@ -1,6 +1,120 @@
+{# 2026-06-22: Drop M/ sårbarh. row; rename Totalt to Sårbarheter totalt. #}
+{# 2026-06-22: Gray bars for servere count and server share; servere count as bar. #}
+{# 2026-06-22: Solid snitt bar color by tier – green ≤33%, yellow ≤66%, red above. #}
+{# 2026-06-22: Smaller tile text + relative bars for snitt and server share. #}
+{# 2026-06-22: Left accent + shadow on environment stat tiles for better visibility. #}
+{# 2026-06-22: Responsive tile grid for per-environment stats – replaces fixed column-count layout. #}
 {% extends "sikkerhet_index.html" %}
 {% load humanize %}
 {% load static %}
+
+{% block ekstrastyle %}
+<style nonce="{{ request.csp_nonce }}">
+.vulnstats-loc-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	gap: 0.75rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.vulnstats-loc-tile {
+	min-width: 0;
+	padding: 0.6rem 0.75rem 0.65rem 0.8rem;
+	border: 1px solid #e4e2ef;
+	border-left: 4px solid #2A2859;
+	border-radius: 0.35rem;
+	background: #fff;
+	box-shadow: 0 2px 8px rgba(42, 40, 89, 0.08);
+	font-size: 0.75rem;
+	line-height: 1.3;
+	color: #444;
+}
+
+.vulnstats-loc-tile h6 {
+	margin: 0 0 0.45rem;
+	font-size: 0.8rem;
+	font-weight: 600;
+	word-break: break-word;
+	color: #2A2859;
+}
+
+.vulnstats-loc-tile__stats {
+	margin: 0 0 0.55rem;
+}
+
+.vulnstats-loc-tile__row {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.35rem;
+	margin-bottom: 0.15rem;
+}
+
+.vulnstats-loc-tile__row-label {
+	color: #666;
+}
+
+.vulnstats-loc-tile__row-value {
+	font-weight: 600;
+	color: #333;
+	white-space: nowrap;
+}
+
+.vulnstats-loc-bar-block {
+	margin-top: 0.35rem;
+}
+
+.vulnstats-loc-bar-block:first-of-type {
+	margin-top: 0;
+}
+
+.vulnstats-loc-bar-block__label {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.35rem;
+	margin-bottom: 0.15rem;
+	font-size: 0.7rem;
+	color: #666;
+}
+
+.vulnstats-loc-bar-block__value {
+	font-weight: 600;
+	color: #333;
+	white-space: nowrap;
+}
+
+.vulnstats-loc-bar {
+	height: 0.45rem;
+	border-radius: 999px;
+	background: #eef0f6;
+	overflow: hidden;
+}
+
+.vulnstats-loc-bar__fill {
+	display: block;
+	height: 100%;
+	border-radius: 999px;
+	min-width: 0;
+}
+
+.vulnstats-loc-bar__fill--snitt-low {
+	background: #2e9e5b;
+}
+
+.vulnstats-loc-bar__fill--snitt-mid {
+	background: #f0b429;
+}
+
+.vulnstats-loc-bar__fill--snitt-high {
+	background: #dc3545;
+}
+
+.vulnstats-loc-bar__fill--gray {
+	background: #9aa3b2;
+}
+</style>
+{% endblock ekstrastyle %}
 
 {% block ekstrajavascript %}
 	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
@@ -45,16 +159,45 @@ Antall sårbarheter totalt <h4>{{ data.count_all }}</h4>
 
 <hr>
 
-<ul style="column-count: 6; list-style-type: none; ">
+<ul class="vulnstats-loc-grid">
 {% for item in data.antall_servere_per_datasenter %}
-	<li style="padding: 0px; margin-bottom: 25px;">
-		<h6>{{item.comp_location|default_if_none:"(None)"|default:"(Tom)"}}</h6>
-		<b>{{ item.antall_servere }}</b> servere totalt<br>
-		<b>{{ item.antall_servere_med_saarbarheter }}</b> servere med sårbarheter<br>
-		<b>{{ item.antall_saarbarheter }}</b> sårbarheter totalt<br>
+	<li class="vulnstats-loc-tile">
+		<h6>{{ item.comp_location|default_if_none:"(None)"|default:"(Tom)" }}</h6>
+		<div class="vulnstats-loc-bar-block">
+			<div class="vulnstats-loc-bar-block__label">
+				<span>Servere</span>
+				<span class="vulnstats-loc-bar-block__value">{{ item.antall_servere }}</span>
+			</div>
+			<div class="vulnstats-loc-bar" role="img" aria-label="Antall servere relativt til største miljø: {{ item.servere_bar_pct }} prosent">
+				<span class="vulnstats-loc-bar__fill vulnstats-loc-bar__fill--gray" style="width: {{ item.servere_bar_pct }}%;"></span>
+			</div>
+		</div>
+		<div class="vulnstats-loc-tile__stats">
+			<div class="vulnstats-loc-tile__row">
+				<span class="vulnstats-loc-tile__row-label">Sårbarheter totalt</span>
+				<span class="vulnstats-loc-tile__row-value">{{ item.antall_saarbarheter }}</span>
+			</div>
+		</div>
 		{% if item.snitt_saarbarheter_per_server %}
-			<b>{{ item.snitt_saarbarheter_per_server|floatformat:1 }}</b> sårbarheter snitt<br>
+			<div class="vulnstats-loc-bar-block">
+				<div class="vulnstats-loc-bar-block__label">
+					<span>Snitt per server</span>
+					<span class="vulnstats-loc-bar-block__value">{{ item.snitt_saarbarheter_per_server|floatformat:1 }}</span>
+				</div>
+				<div class="vulnstats-loc-bar" role="img" aria-label="Snitt sårbarheter relativt til høyeste miljø: {{ item.snitt_bar_pct }} prosent">
+					<span class="vulnstats-loc-bar__fill {% if item.snitt_bar_pct <= 33 %}vulnstats-loc-bar__fill--snitt-low{% elif item.snitt_bar_pct <= 66 %}vulnstats-loc-bar__fill--snitt-mid{% else %}vulnstats-loc-bar__fill--snitt-high{% endif %}" style="width: {{ item.snitt_bar_pct }}%;"></span>
+				</div>
+			</div>
 		{% endif %}
+		<div class="vulnstats-loc-bar-block">
+			<div class="vulnstats-loc-bar-block__label">
+				<span>Andel servere m/ sårbarh.</span>
+				<span class="vulnstats-loc-bar-block__value">{{ item.servere_med_vuln_pct }}%</span>
+			</div>
+			<div class="vulnstats-loc-bar" role="img" aria-label="Andel servere med sårbarheter: {{ item.servere_med_vuln_pct }} prosent">
+				<span class="vulnstats-loc-bar__fill vulnstats-loc-bar__fill--gray" style="width: {{ item.servere_med_vuln_pct }}%;"></span>
+			</div>
+		</div>
 	</li>
 {% endfor %}
 </ul>

@@ -1372,6 +1372,29 @@ def vulnstats(request):
 		)
 	)
 
+	# 2026-06-22: Bar widths for per-environment tiles – relative to max servere / snitt / server share.
+	loc_stats = list(data["antall_servere_per_datasenter"])
+	max_servere = max(
+		(row.get("antall_servere") or 0) for row in loc_stats
+	) if loc_stats else 0
+	max_snitt = max(
+		(row.get("snitt_saarbarheter_per_server") or 0) for row in loc_stats
+	) if loc_stats else 0
+	for row in loc_stats:
+		servers = row.get("antall_servere") or 0
+		if servers and max_servere:
+			row["servere_bar_pct"] = round(100 * servers / max_servere)
+		else:
+			row["servere_bar_pct"] = 0
+		snitt = row.get("snitt_saarbarheter_per_server")
+		if snitt and max_snitt:
+			row["snitt_bar_pct"] = round(100 * snitt / max_snitt)
+		else:
+			row["snitt_bar_pct"] = 0
+		affected = row.get("antall_servere_med_saarbarheter") or 0
+		row["servere_med_vuln_pct"] = round(100 * affected / servers) if servers else 0
+	data["antall_servere_per_datasenter"] = loc_stats
+
 	return render(request, 'rapport_vulnstats.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
