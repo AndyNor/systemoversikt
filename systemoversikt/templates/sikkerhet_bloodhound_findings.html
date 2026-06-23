@@ -13,7 +13,7 @@
 
 {% include "includes/integrasjon_freshness_banner.html" with label="BloodHound AD-data ble sist mottatt" %}
 
-<p>Preventive funn (BH-01–BH-07) fra nattlig eller manuell kjøring av <code>bloodhound_analyze</code>.</p>
+<p>Preventive funn (BH-01–BH-07) fra nattlig eller manuell kjøring av <code>bloodhound_analyze</code>. Tallene under er rå treff – les beskrivelsene for å vurdere reell risiko og prioritere opprydding.</p>
 
 <p>
 	<a href="{% url 'sikkerhet_bloodhound_status' %}{% if selected %}?snapshot={{ selected.snapshot_id }}{% endif %}">Tilbake til BloodHound-status</a>
@@ -43,6 +43,42 @@
 			{% endif %}
 		</div>
 	{% endif %}
+
+	<h5>Om analysene (BH-01–BH-07)</h5>
+	<p class="text-muted small">Hva hver sjekk ser etter i AD-grafen, og hvorfor treff kan være risikofylte. Dette er preventive indikatorer – ikke bekreftede angrep.</p>
+
+	{% if active_check_meta %}
+	<div class="alert alert-info">
+		<strong>{{ check_filter }} – {{ active_check_meta.title }}</strong>
+		({{ active_check_meta.severity }})<br>
+		<b>Ser etter:</b> {{ active_check_meta.looks_for|safe }}<br>
+		<b>Risiko:</b> {{ active_check_meta.risk|safe }}
+	</div>
+	{% endif %}
+
+	<div class="accordion mb-4" id="bhCheckAccordion">
+		{% for check in bh_check_catalog %}
+		<div class="card">
+			<div class="card-header py-2" id="heading-{{ check.check_id }}">
+				<h6 class="mb-0">
+					<button class="btn btn-link btn-sm p-0 text-left {% if check_filter and check_filter != check.check_id %}collapsed{% elif not check_filter and not forloop.first %}collapsed{% endif %}" type="button" data-toggle="collapse" data-target="#collapse-{{ check.check_id }}" aria-expanded="{% if check_filter == check.check_id or not check_filter and forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse-{{ check.check_id }}">
+						{{ check.check_id }} – {{ check.title }}
+						<span class="badge badge-{% if check.severity == 'critical' %}danger{% elif check.severity == 'high' %}warning{% else %}secondary{% endif %}">{{ check.severity }}</span>
+					</button>
+				</h6>
+			</div>
+			<div id="collapse-{{ check.check_id }}" class="collapse {% if check_filter == check.check_id or not check_filter and forloop.first %}show{% endif %}" aria-labelledby="heading-{{ check.check_id }}" data-parent="#bhCheckAccordion">
+				<div class="card-body small">
+					<p><b>Ser etter:</b> {{ check.looks_for|safe }}</p>
+					<p class="mb-0"><b>Risiko:</b> {{ check.risk|safe }}</p>
+					{% if selected %}
+					<p class="mb-0 mt-2"><a href="?snapshot={{ selected.snapshot_id }}&check={{ check.check_id }}">Vis funn for {{ check.check_id }}</a></p>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+		{% endfor %}
+	</div>
 
 	{% if summary_by_severity %}
 	<h5>Oppsummering per alvorlighetsgrad</h5>

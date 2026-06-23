@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: BloodHound views require systemoversikt.view_qualysvuln (same as vulnstats).
+# 2026-06-23: Findings page – check catalog with looks_for/risk descriptions.
 # 2026-06-23: BloodHound preventive findings page (BH-01–BH-07).
 # 2026-06-23: BloodHound snapshot status page – object counts from latest upload.
 import re
@@ -9,7 +11,7 @@ from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import render
 
-from systemoversikt.bloodhound.constants import BH_CHECK_META
+from systemoversikt.bloodhound.constants import BH_CHECK_META, bh_check_catalog
 from systemoversikt.models import BloodHoundFinding, BloodHoundSnapshot
 from systemoversikt.views import _integrasjonsstatus, formater_permissions
 
@@ -20,7 +22,7 @@ FINDINGS_PAGE_SIZE = 100
 
 
 def sikkerhet_bloodhound_status(request):
-	required_permissions = ['auth.view_user']
+	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {
 			'required_permissions': required_permissions,
@@ -55,7 +57,7 @@ def sikkerhet_bloodhound_status(request):
 
 def sikkerhet_bloodhound_findings(request):
 	# 2026-06-23: Preventive findings from bloodhound_analyze batch job.
-	required_permissions = ['auth.view_user']
+	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {
 			'required_permissions': required_permissions,
@@ -131,6 +133,8 @@ def sikkerhet_bloodhound_findings(request):
 		query_parts.append(f'severity={severity_filter}')
 	filter_query = '&'.join(query_parts)
 
+	active_check_meta = BH_CHECK_META.get(check_filter) if check_filter else None
+
 	return render(request, 'sikkerhet_bloodhound_findings.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -142,5 +146,7 @@ def sikkerhet_bloodhound_findings(request):
 		'check_filter': check_filter,
 		'severity_filter': severity_filter,
 		'filter_query': filter_query,
+		'bh_check_catalog': bh_check_catalog(),
+		'active_check_meta': active_check_meta,
 		'integrasjonsstatus': _integrasjonsstatus('bloodhound_ad'),
 	})
