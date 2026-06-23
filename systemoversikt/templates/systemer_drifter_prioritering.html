@@ -15,7 +15,47 @@
 
 {% block hovedinnhold %}
 
-<p>Her vises systemer {{virksomhet}} har ansvar for applikasjonsdrift av. Prioriteten settes som produktet av tilgjengelighetsvurderingen til forvalter (1-5), tjenestenivået med driftsleverandør (T1-4), kritikalitetsklasse hos driftsleverandør (D1-5) og om systemet er samfunnskritisk (1) eller ikke (2).</p>
+{# 2026-06-23: Expanded priority score explanation – forvalter must keep Kartotek registrations correct, including service offering links. #}
+
+<p>Her vises systemer {{ virksomhet }} har ansvar for applikasjonsdrift av, sortert etter poengsum for systemgjenoppretting. <strong>Lavest poengsum betyr høyest prioritet</strong> (gjenopprettes først).</p>
+
+<div class="alert alert-info" style="max-width: 960px;">
+	<p class="mb-2"><strong>Forvalter må sørge for at registreringene i Kartoteket er riktige</strong></p>
+	<p class="mb-2">Poengsummen beregnes automatisk ut fra data på hvert system. Manglende eller feil registrering gir feil plassering på listen. Sjekk spesielt at systemet er koblet til riktig <em>service offering</em> (driftsmiljø i CMDB) – uten slik kobling brukes faste antakelser for tjenestenivå og kritikalitet, som ofte ikke stemmer med det faktiske driftsnivået.</p>
+	<p class="mb-0 small">Rediger systemet i Kartoteket (systemdetaljer) eller kontakt DIG dersom du trenger hjelp med kobling mot service offerings. Tjenestenivå og kritikalitet mot driftsleverandør hentes fra CMDB etter at koblingen er på plass.</p>
+</div>
+
+<h6>Beregning av poengsum</h6>
+
+<p>Poengsummen er <strong>produktet av fire faktorer</strong>. I tabellen under vises beregningen i kolonnen <em>Prioritet</em>, for eksempel <code>1*2*3*1=6</code>:</p>
+
+<dl class="mb-3" style="max-width: 960px;">
+	<dt>Tilgjengelighetsvurdering (1–5)</dt>
+	<dd>Registreres av forvalter i Kartoteket. <strong>1 = svært alvorlig</strong>, <strong>5 = ubetydelig</strong>. Manglende vurdering telles som 5.</dd>
+
+	<dt>Tjenestenivå (T1–T4)</dt>
+	<dd>
+		Hentes fra driftsleverandørs CMDB via koblede service offerings med status <em>Operational</em>:
+		T1 (24/7/365), T2 (07–20 alle dager), T3 (07–16 virkedager), T4 (best effort).
+		Ved flere koblinger brukes <strong>laveste T-verdi</strong> (strengeste nivå).
+		<strong>Uten koblet service offering antas T2.</strong>
+		Er systemet koblet, men ingen operative offerings har gyldig T-verdi, brukes T4.
+	</dd>
+
+	<dt>Kritikalitetsklasse (D1–D5)</dt>
+	<dd>
+		Hentes fra samme CMDB-kobling:
+		D1 (liv og helse), D2 (virksomhetskritisk), D3 (kritisk), D4 (periodisk kritisk), D5 (ikke kritisk).
+		Ved flere koblinger brukes <strong>laveste D-verdi</strong> (høyest kritikalitet).
+		<strong>Uten koblet service offering antas D2.</strong>
+		Er systemet koblet, men ingen operative offerings har gyldig D-verdi, brukes D5.
+	</dd>
+
+	<dt>Samfunnskritisk funksjon (1 eller 2)</dt>
+	<dd><strong>1</strong> dersom systemet er knyttet til minst én samfunnskritisk kapabilitet i Kartoteket, ellers <strong>2</strong>.</dd>
+</dl>
+
+<p class="small text-muted mb-4">Kolonnen <em>Kompleksitet</em> viser tilleggsinformasjon fra CMDB, men inngår ikke i poengsummen. Infrastruktursystemer vises ikke i den detaljerte tabellen.</p>
 
 
 <h5>Forenklet liste top {{antall_top_x}}</h5>
@@ -94,6 +134,8 @@
 
 					{% comment %}{% endif %}{% endcomment %}
 				{% endif %}
+			{% empty %}
+				<em class="text-warning">Ingen service offering koblet</em>
 			{% endfor %}
 			</td>
 
@@ -109,6 +151,8 @@
 
 					{% comment %}{% endif %}{% endcomment %}
 				{% endif %}
+			{% empty %}
+				<em class="text-warning">Ingen service offering koblet</em>
 			{% endfor %}
 			</td>
 
