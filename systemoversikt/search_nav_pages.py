@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Navigation page registry for global search – BloodHound findings link.
 # 2026-06-23: Navigation page registry for global search – BloodHound status link.
 # 2026-06-23: Navigation page registry for global search – theme/report links before entity hits.
 #
@@ -75,6 +76,7 @@ NAV_PAGES = [
 	_entry('Gjennomførte pentester', 'rapport_sikkerhetstester', 'Sikkerhet', ['pentester', 'pentest', 'sikkerhetstester']),
 	_entry('ADCS certifikatmaler', 'cmdb_adcs_index', 'Sikkerhet', ['adcs', 'certifikatmaler'], permissions=['systemoversikt.view_cmdbdevice']),
 	_entry('AD: BloodHound-status', 'sikkerhet_bloodhound_status', 'Sikkerhet', ['bloodhound', 'ad attack paths'], permissions=['auth.view_user']),
+	_entry('AD: BloodHound-funn', 'sikkerhet_bloodhound_findings', 'Sikkerhet', ['bloodhound funn', 'bloodhound findings', 'dcsync', 'kerberoast'], permissions=['auth.view_user']),
 	_entry('Device code-innlogginger', 'sikkerhet_device_code_logins', 'Sikkerhet', ['device code', 'devicecode'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Varsling til virksomheter', 'sikkerhet_varsling_virksomheter', 'Sikkerhet', ['varsling virksomheter', 'csirt varsling']),
 	_entry('Kontoer utenfor OK', 'rapport_ukjente_identer', 'Sikkerhet', ['utenfor ok', 'ukjente identer'], permissions=['auth.view_user']),

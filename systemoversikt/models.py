@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
 # 2026-06-23: CA named locations – show IP ranges on rules report; exact displayName match; skip countries.
+# 2026-06-23: BloodHoundFinding + snapshot analysis fields for preventive checks.
 # 2026-06-23: BloodHoundSnapshot – metadata and object counts from bloodhound-python JSON uploads.
 # 2026-06-23: Batch GUID lookup for Conditional Access – fixes N+1 queries on CA changes report.
 # 2026-06-23: Removed cache_systemprioritet – priority is computed on demand only.
@@ -6965,6 +6966,10 @@ class BloodHoundSnapshot(models.Model):
 	collection_methods = models.BigIntegerField(null=True, blank=True)
 	meta_version = models.IntegerField(null=True, blank=True)
 	source_ip = models.GenericIPAddressField(null=True, blank=True)
+	analysis_status = models.CharField(max_length=16, default='pending', db_index=True)
+	analysis_completed_at = models.DateTimeField(null=True, blank=True)
+	finding_count = models.IntegerField(default=0)
+	analysis_error = models.TextField(blank=True)
 
 	def snapshot_id_readable(self):
 		from systemoversikt.bloodhound.ingest import snapshot_id_readable
@@ -6988,3 +6993,39 @@ class BloodHoundSnapshot(models.Model):
 		verbose_name_plural = "BloodHound: snapshots"
 		ordering = ['-snapshot_id']
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class BloodHoundFinding(models.Model):
+	# 2026-06-23: One preventive finding from bloodhound_analyze (BH-01–BH-07).
+	snapshot = models.ForeignKey(
+		BloodHoundSnapshot,
+		on_delete=models.CASCADE,
+		related_name='findings',
+	)
+	check_id = models.CharField(max_length=8, db_index=True)
+	severity = models.CharField(max_length=16, db_index=True)
+	title = models.CharField(max_length=256)
+	principal_sid = models.CharField(max_length=128, blank=True, db_index=True)
+	principal_name = models.CharField(max_length=512)
+	target_sid = models.CharField(max_length=128, blank=True, db_index=True)
+	target_name = models.CharField(max_length=512, blank=True)
+	right_name = models.CharField(max_length=64, blank=True)
+	detail = models.JSONField(default=dict, blank=True)
+	user = models.ForeignKey(
+		User,
+		on_delete=models.SET_NULL,
+		null=True,
+		blank=True,
+		related_name='bloodhound_findings',
+	)
+
+	def __str__(self):
+		return f'{self.check_id} {self.principal_name}'
+
+	class Meta:
+		verbose_name_plural = "BloodHound: funn"
+		ordering = ['check_id', 'principal_name']
+		default_permissions = ('add', 'change', 'delete', 'view')
+		indexes = [
+			models.Index(fields=['snapshot', 'check_id']),
+		]

@@ -1,0 +1,184 @@
+{% extends "sikkerhet_index.html" %}
+{% load humanize %}
+{% load static %}
+
+{% block ekstrameny_business_service %}
+{% endblock ekstrameny_business_service %}
+
+{% block overskrift %}
+	AD: BloodHound-funn
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+{% include "includes/integrasjon_freshness_banner.html" with label="BloodHound AD-data ble sist mottatt" %}
+
+<p>Preventive funn (BH-01–BH-07) fra nattlig eller manuell kjøring av <code>bloodhound_analyze</code>.</p>
+
+<p>
+	<a href="{% url 'sikkerhet_bloodhound_status' %}{% if selected %}?snapshot={{ selected.snapshot_id }}{% endif %}">Tilbake til BloodHound-status</a>
+</p>
+
+{% if not selected %}
+	<p><i>Ingen BloodHound-snapshot er mottatt ennå.</i></p>
+{% else %}
+
+	<h5>Snapshot {{ selected.snapshot_id }} ({{ selected.snapshot_id_readable }})</h5>
+	<ul>
+		<li><b>Analysestatus:</b> {{ selected.analysis_status }}
+			{% if selected.analysis_completed_at %}
+				– ferdig {{ selected.analysis_completed_at|date:"d.m.Y H:i" }}
+			{% endif %}
+		</li>
+		<li><b>Antall funn:</b> {{ selected.finding_count|intcomma }}</li>
+	</ul>
+
+	{% if selected.analysis_status != 'completed' %}
+		<div class="alert alert-warning">
+			Analyse er ikke fullført for dette snapshotet.
+			{% if selected.analysis_status == 'failed' and selected.analysis_error %}
+				Feil: {{ selected.analysis_error|truncatechars:500 }}
+			{% else %}
+				Kjør <code>python manage.py bloodhound_analyze{% if selected %} --snapshot-id {{ selected.snapshot_id }}{% endif %}</code> på serveren.
+			{% endif %}
+		</div>
+	{% endif %}
+
+	{% if summary_by_severity %}
+	<h5>Oppsummering per alvorlighetsgrad</h5>
+	<table class="table table-sm tablesorter excel">
+		<thead>
+			<tr>
+				<th>Alvorlighetsgrad</th>
+				<th>Antall</th>
+				<th>Filter</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in summary_by_severity %}
+			<tr>
+				<td>{{ row.severity }}</td>
+				<td>{{ row.count|intcomma }}</td>
+				<td>
+					{% if severity_filter == row.severity %}
+						<i>aktivt filter</i>
+					{% else %}
+						<a href="?snapshot={{ selected.snapshot_id }}&severity={{ row.severity }}">vis</a>
+					{% endif %}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+
+	{% if summary_by_check %}
+	<h5>Oppsummering per sjekk</h5>
+	<table class="table table-sm tablesorter excel">
+		<thead>
+			<tr>
+				<th>Sjekk</th>
+				<th>Beskrivelse</th>
+				<th>Alvorlighetsgrad</th>
+				<th>Antall</th>
+				<th>Filter</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in summary_by_check %}
+			<tr>
+				<td>{{ row.check_id }}</td>
+				<td>{{ row.title }}</td>
+				<td>{{ row.severity }}</td>
+				<td>{{ row.count|intcomma }}</td>
+				<td>
+					{% if check_filter == row.check_id %}
+						<i>aktivt filter</i>
+					{% else %}
+						<a href="?snapshot={{ selected.snapshot_id }}&check={{ row.check_id }}">vis</a>
+					{% endif %}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% endif %}
+
+	{% if check_filter or severity_filter %}
+	<p>
+		<a href="?snapshot={{ selected.snapshot_id }}">Fjern filter</a>
+		{% if check_filter %}<span class="badge badge-secondary">{{ check_filter }}</span>{% endif %}
+		{% if severity_filter %}<span class="badge badge-secondary">{{ severity_filter }}</span>{% endif %}
+	</p>
+	{% endif %}
+
+	<h5>Funn</h5>
+	{% if page_obj.paginator.count == 0 %}
+		<p><i>Ingen funn{% if check_filter or severity_filter %} med valgt filter{% endif %}.</i></p>
+	{% else %}
+	<table class="table table-sm tablesorter excel">
+		<thead>
+			<tr>
+				<th>Sjekk</th>
+				<th>Alvorlighetsgrad</th>
+				<th>Principal</th>
+				<th>Mål</th>
+				<th>Rettighet</th>
+				<th>Bruker i kartoteket</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for finding in page_obj %}
+			<tr>
+				<td>{{ finding.check_id }}</td>
+				<td>{{ finding.severity }}</td>
+				<td title="{{ finding.principal_sid }}">{{ finding.principal_name }}</td>
+				<td title="{{ finding.target_sid }}">{{ finding.target_name }}</td>
+				<td>{{ finding.right_name }}</td>
+				<td>
+					{% if finding.user %}
+						<a href="{% url 'bruker_detaljer' pk=finding.user.pk %}">{{ finding.user.username }}</a>
+					{% else %}
+						–
+					{% endif %}
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	{% if page_obj.paginator.num_pages > 1 %}
+	<nav>
+		<ul class="pagination pagination-sm">
+			{% if page_obj.has_previous %}
+			<li class="page-item"><a class="page-link" href="?{{ filter_query }}&page={{ page_obj.previous_page_number }}">Forrige</a></li>
+			{% endif %}
+			<li class="page-item disabled"><span class="page-link">Side {{ page_obj.number }} av {{ page_obj.paginator.num_pages }}</span></li>
+			{% if page_obj.has_next %}
+			<li class="page-item"><a class="page-link" href="?{{ filter_query }}&page={{ page_obj.next_page_number }}">Neste</a></li>
+			{% endif %}
+		</ul>
+	</nav>
+	{% endif %}
+	{% endif %}
+
+	{% if snapshots|length > 1 %}
+	<hr>
+	<h5>Andre snapshots</h5>
+	<ul>
+		{% for snap in snapshots %}
+		<li>
+			{% if snap.snapshot_id == selected.snapshot_id %}
+				<b>{{ snap.snapshot_id_readable }}</b> – {{ snap.finding_count|intcomma }} funn
+			{% else %}
+				<a href="?snapshot={{ snap.snapshot_id }}">{{ snap.snapshot_id_readable }}</a>
+				– {{ snap.finding_count|intcomma }} funn
+			{% endif %}
+		</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+
+{% endif %}
+
+{% endblock hovedinnhold %}

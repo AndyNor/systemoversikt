@@ -80,5 +80,7 @@ cd /var/kartoteket/source/systemoversikt/systemoversikt/pki # files need to be h
 python /var/kartoteket/source/systemoversikt/manage.py certipy-ad
 cd /var/kartoteket/source/systemoversikt/
 
+# 2026-06-23: BloodHound preventive analysis (BH-01–BH-07). Collector should upload JSON before this runs.
+python /var/kartoteket/source/systemoversikt/manage.py bloodhound_analyze
 
 

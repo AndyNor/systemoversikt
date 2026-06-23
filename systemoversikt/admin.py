@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: BloodHoundFinding admin + snapshot analysis fields in list display.
 # 2026-06-23: VirksomhetAdmin – intern_tjenesteleverandor list/filter/fieldset for manual flagging.
 # 2026-06-23: System admin fieldset order – forvalter personer/avdeling swap; CMDB/citrix fields below forvaltning_epost.
 # 2026-06-23: System admin requires systemforvalter (personer), livsløpstatus, driftsplattform – admin-only validation.
@@ -1147,6 +1148,8 @@ class BloodHoundSnapshotAdmin(admin.ModelAdmin):
 	list_display = (
 		'snapshot_id',
 		'received_at',
+		'analysis_status',
+		'finding_count',
 		'count_users',
 		'count_computers',
 		'count_groups',
@@ -1154,7 +1157,23 @@ class BloodHoundSnapshotAdmin(admin.ModelAdmin):
 		'status',
 	)
 	search_fields = ('snapshot_id',)
-	list_filter = ('status',)
+	list_filter = ('status', 'analysis_status')
+
+
+@admin.register(BloodHoundFinding)
+class BloodHoundFindingAdmin(admin.ModelAdmin):
+	list_display = (
+		'check_id',
+		'severity',
+		'principal_name',
+		'target_name',
+		'right_name',
+		'snapshot',
+		'user',
+	)
+	search_fields = ('principal_name', 'target_name', 'principal_sid', 'check_id')
+	list_filter = ('check_id', 'severity', 'snapshot')
+	raw_id_fields = ('snapshot', 'user')
 
 
 @admin.register(Avtale)
