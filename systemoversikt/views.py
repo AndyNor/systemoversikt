@@ -7,6 +7,7 @@
 # 2026-06-23: Developer docs page for Sårbarhetsoversikten (vulnapp) API (login_required).
 # 2026-06-23: Fix api_virksomheter overordnede_virksomheter – use parent.pk not shadowed loop variable.
 # 2026-06-23: Developer docs page for Tjeneste- og systemoversikt API (login_required).
+# 2026-06-23: tool_ntfs – SDDL/NTFS ACL decoder (no permission gate).
 # 2026-06-23: Home page – fifth chart for egenutviklet vs generisk (replaces text under drift chart).
 # 2026-06-22: Home page drift chart – Driftsplattform segment counts via drift_color_segment().
 # 2026-06-22: Tjenestekatalog API – bool_er_saas, bool_egenutviklet, bool_saas; removed dead non-optimized API blocks.
@@ -1159,31 +1160,27 @@ def debug_info(request):
 
 
 def tool_ntfs(request):
-	required_permissions = ['systemoversikt.auth.view_user']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+	from systemoversikt.sddl_parser import SddlParseError, parse_sddl
 
+	required_permissions = None
+	sddl_input = request.POST.get('sddl_input', '')
+	permission_type = request.POST.get('permission_type', 'file')
+	parsed = None
+	error = None
 
-	#GENERIC_READ            = 0x80000000
-	#GENERIC_WRITE           = 0x40000000
-	#GENERIC_EXECUTE         = 0x20000000
-	#GENERIC_ALL             = 0x10000000
-	#MAXIMUM_ALLOWED         = 0x02000000
-	#ACCESS_SYSTEM_SECURITY  = 0x01000000
-	#SYNCHRONIZE             = 0x00100000
-	#WRITE_OWNER             = 0x00080000
-	#WRITE_DACL              = 0x00040000
-	#READ_CONTROL            = 0x00020000
-	#DELETE                  = 0x00010000
-
-
-	#sddl_string = "D:AI(A;OICI;FA;;;S-1-5-21-1123878227-590538075-4181424053-65398)(A;OICI;FA;;;BA)(A;OICI;FA;;;SY)(A;OICI;FA;;;S-1-5-21-1123878227-590538075-4181424053-48099)(A;OICI;0x1200a9;;;S-1-5-21-1123878227-590538075-4181424053-73462)(A;OICI;0x1301bf;;;S-1-5-21-1123878227-590538075-4181424053-73463)(A;OICIID;0x1200a9;;;S-1-5-21-1123878227-590538075-4181424053-64527)(A;OICIID;0x1301bf;;;S-1-5-21-1123878227-590538075-4181424053-64528)(A;OICIID;FA;;;S-1-5-21-1123878227-590538075-4181424053-65398)(A;OICIID;FA;;;BA)(A;CIID;0x1200a9;;;S-1-5-21-1123878227-590538075-4181424053-304757)(A;OICIID;FA;;;SY)(A;OICIID;FA;;;S-1-5-21-1123878227-590538075-4181424053-48099)(A;OICIID;FA;;;S-1-5-21-1123878227-590538075-4181424053-442325)(A;OICIID;FA;;;S-1-5-21-1123878227-590538075-4181424053-167812)"
-	#https://github.com/qtc-de/wconv?tab=readme-ov-file#parse-sddl
-
+	if request.method == 'POST' and sddl_input.strip():
+		try:
+			parsed = parse_sddl(sddl_input, permission_type=permission_type)
+		except SddlParseError as exc:
+			error = str(exc)
 
 	return render(request, 'tool_ntfs.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
+		'sddl_input': sddl_input,
+		'permission_type': permission_type,
+		'parsed': parsed,
+		'error': error,
 	})
 
 

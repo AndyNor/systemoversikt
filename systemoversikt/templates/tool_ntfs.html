@@ -6,10 +6,150 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	NTFS
+	NTFS / SDDL
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
+<p>Lim inn en SDDL-streng (Security Descriptor Definition Language) fra f.eks. <code>icacls /save</code>, PowerShell <code>Get-Acl</code> eller Active Directory. Verktøyet oversetter DACL/SACL til lesbare tillatelser, arv og SID-er.</p>
+
+	<form action="{% url 'tool_ntfs' %}" method="POST" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group">
+			<label for="permission_type">Objekttype</label>
+			<select name="permission_type" id="permission_type" class="form-control form-control-sm" style="width: 200px;">
+				<option value="file" {% if permission_type == 'file' %}selected{% endif %}>Fil</option>
+				<option value="directory" {% if permission_type == 'directory' %}selected{% endif %}>Mappe</option>
+				<option value="registry" {% if permission_type == 'registry' %}selected{% endif %}>Register</option>
+				<option value="service" {% if permission_type == 'service' %}selected{% endif %}>Tjeneste</option>
+			</select>
+		</div>
+		<div class="form-group form-inline">
+			<textarea style="width: 700px; height: 200px;" name="sddl_input" id="sddl_input"
+			placeholder="D:AI(A;OICI;FA;;;BA)(A;OICI;0x1200a9;;;S-1-5-21-...)" class="form-control form-control-sm">{{ sddl_input }}</textarea>
+			<input style="margin-left: 10px;" type="submit" value="Tolk SDDL" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+	{% if error %}
+		<div class="alert alert-warning" role="alert">{{ error }}</div>
+	{% endif %}
+
+	{% if parsed %}
+		<hr>
+		<h5>Oppsummering</h5>
+		<table class="table table-sm table-bordered" style="max-width: 900px;">
+			<tbody>
+				<tr>
+					<th style="width: 140px;">Eier</th>
+					<td>
+						{% if parsed.owner.name %}{{ parsed.owner.name }} {% endif %}
+						<code>{{ parsed.owner.sid }}</code>
+					</td>
+				</tr>
+				{% if parsed.group.sid %}
+				<tr>
+					<th>Primær gruppe</th>
+					<td>
+						{% if parsed.group.name %}{{ parsed.group.name }} {% endif %}
+						<code>{{ parsed.group.sid }}</code>
+					</td>
+				</tr>
+				{% endif %}
+			</tbody>
+		</table>
+
+		{% if parsed.dacl.aces %}
+			<h5>DACL (tillatelser)</h5>
+			{% if parsed.dacl.flags %}
+				<p>
+					<strong>ACL-flagg:</strong>
+					{% for flag in parsed.dacl.flags %}
+						<span class="badge badge-secondary">{{ flag.label }}</span>
+					{% endfor %}
+				</p>
+			{% endif %}
+			<table class="table table-sm table-striped table-bordered">
+				<thead>
+					<tr>
+						<th>Type</th>
+						<th>Arv</th>
+						<th>Rettigheter</th>
+						<th>Trustee</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for ace in parsed.dacl.aces %}
+						<tr>
+							<td>{{ ace.type }}</td>
+							<td>
+								{% for flag in ace.flags %}
+									{{ flag.label }}{% if not forloop.last %}, {% endif %}
+								{% empty %}
+									<span class="text-muted">—</span>
+								{% endfor %}
+							</td>
+							<td>
+								<code>{{ ace.rights.raw }}</code>
+								{% if ace.rights.labels %}
+									<br>{{ ace.rights.labels|join:", " }}
+								{% endif %}
+							</td>
+							<td>
+								{% if ace.trustee.name %}<strong>{{ ace.trustee.name }}</strong><br>{% endif %}
+								<code>{{ ace.trustee.sid }}</code>
+							</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		{% endif %}
+
+		{% if parsed.sacl.aces %}
+			<h5>SACL (revisjon)</h5>
+			{% if parsed.sacl.flags %}
+				<p>
+					<strong>ACL-flagg:</strong>
+					{% for flag in parsed.sacl.flags %}
+						<span class="badge badge-secondary">{{ flag.label }}</span>
+					{% endfor %}
+				</p>
+			{% endif %}
+			<table class="table table-sm table-striped table-bordered">
+				<thead>
+					<tr>
+						<th>Type</th>
+						<th>Arv</th>
+						<th>Rettigheter</th>
+						<th>Trustee</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for ace in parsed.sacl.aces %}
+						<tr>
+							<td>{{ ace.type }}</td>
+							<td>
+								{% for flag in ace.flags %}
+									{{ flag.label }}{% if not forloop.last %}, {% endif %}
+								{% empty %}
+									<span class="text-muted">—</span>
+								{% endfor %}
+							</td>
+							<td>
+								<code>{{ ace.rights.raw }}</code>
+								{% if ace.rights.labels %}
+									<br>{{ ace.rights.labels|join:", " }}
+								{% endif %}
+							</td>
+							<td>
+								{% if ace.trustee.name %}<strong>{{ ace.trustee.name }}</strong><br>{% endif %}
+								<code>{{ ace.trustee.sid }}</code>
+							</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		{% endif %}
+	{% endif %}
 
 {% endblock hovedinnhold %}

@@ -20,6 +20,9 @@
 	{% url 'tool_csv_converter' as url_tool_csv_converter %}
 	<a href="{{url_tool_csv_converter}}" class="btn btn-sm btn-link {% if url_tool_csv_converter in request.path %}fremhev{% endif %}">CSV-konverter</a><br>
 
+	{% url 'tool_ntfs' as url_tool_ntfs %}
+	<a href="{{url_tool_ntfs}}" class="btn btn-sm btn-link {% if url_tool_ntfs in request.path %}fremhev{% endif %}">NTFS / SDDL</a><br>
+
 
 {% endblock sidemeny %}
 
