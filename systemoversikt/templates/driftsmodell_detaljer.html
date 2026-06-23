@@ -1,66 +1,131 @@
-{% extends "system_index.html" %}
-{% load humanize %}
-{% load static %}
-{% load templatetags %}
-
-{% block underoverskrift %}
-	{{ driftsmodell.navn }}
-{% endblock underoverskrift %}
-
-{% block main_content %}
-
-<p>
-	{% if user.is_authenticated %}
-	<a class="btn btn-sm btn-primary"href="/admin/systemoversikt/driftsmodell/{{ driftsmodell.pk }}/change/">Rediger detaljer</a>
-	{% endif %}
-</p>
-
-<div class="card">
-	<div class="card-body">
-		<h6>{{ driftsmodell.kommentar|default:"-"|linebreaks }}</h6>
-	</div>
-</div>
-
-<hr>
-
-<h6>Systemer registrert på driftsmodellen ({{ systemer.count }})</h6>
-{% include "system_include_hurtigvisning.html" with systemer=systemer %}
-
-<h6>Systemer på isolert drift ({{ isolert_drift.count|default:0 }})</h6>
-{% include "system_include_hurtigvisning.html" with systemer=isolert_drift %}
-
-<hr>
-
-<h6>Generelt</h6>
-<table class="tablesorter">
-	<tr>
-		<td width="30%">{% get_verbose_field_name driftsmodell "leverandor" %}</td>
-		<td>
-			{% for leverandor in driftsmodell.leverandor.all %}
-				{% url 'leverandor' leverandor.pk as url_leverandor %}
-				<a href="{{ url_leverandor }}">{{ leverandor }}</a><br>
-			{% endfor %}
-		</td>
-	</tr>
-	<tr>
-		<td width="30%">{% get_verbose_field_name driftsmodell "underleverandorer" %}</td>
-		<td>
-			{% for leverandor in driftsmodell.underleverandorer.all %}
-				{% url 'leverandor' leverandor.pk as url_leverandor %}
-				<a href="{{ url_leverandor }}">{{ leverandor }}</a><br>
-			{% endfor %}
-		</td>
-	</tr>
-	<tr>
-		<td>{% get_verbose_field_name driftsmodell "avtaler" %}</td>
-		<td>
-			{% for avtale in driftsmodell.avtaler.all %}
-				{% url 'avtaledetaljer' avtale.pk as avtale_url %}
-				<a href="{{ avtale_url }}">{{ avtale }}</a><br>
-			{% endfor %}
-		</td>
-	</tr>
-</table>
-
-{% endblock main_content %}
-
+{% extends "system_index.html" %}
+
+{% load humanize %}
+
+{% load static %}
+
+{% load templatetags %}
+
+
+
+{% block underoverskrift %}
+
+	{{ driftsmodell.navn }}
+
+{% endblock underoverskrift %}
+
+
+
+{% block main_content %}
+
+
+
+<p>
+
+	{% if user.is_authenticated %}
+
+	<a class="btn btn-sm btn-primary"href="/admin/systemoversikt/driftsmodell/{{ driftsmodell.pk }}/change/">Rediger detaljer</a>
+
+	{% endif %}
+
+</p>
+
+
+
+<div class="card">
+
+	<div class="card-body">
+
+		<h6>{{ driftsmodell.kommentar|default:"-"|linebreaks }}</h6>
+
+	</div>
+
+</div>
+
+
+
+<hr>
+
+
+
+<h6>Systemer registrert på driftsmodellen ({{ systemer.count }})</h6>
+
+{% include "system_include_hurtigvisning.html" with systemer=systemer %}
+
+
+
+<h6>Systemer på isolert drift ({{ isolert_drift.count|default:0 }})</h6>
+
+{% include "system_include_hurtigvisning.html" with systemer=isolert_drift %}
+
+
+
+<hr>
+
+
+
+<h6>Generelt</h6>
+
+<table class="tablesorter">
+
+	<tr>
+
+		<td width="30%">{% get_verbose_field_name driftsmodell "leverandor" %}</td>
+
+		<td>
+
+			{% for leverandor in driftsmodell.leverandor.all %}
+
+				{% url 'leverandor' leverandor.pk as url_leverandor %}
+
+				<a href="{{ url_leverandor }}">{{ leverandor }}</a><br>
+
+			{% endfor %}
+
+		</td>
+
+	</tr>
+
+	<tr>
+
+		<td width="30%">{% get_verbose_field_name driftsmodell "underleverandorer" %}</td>
+
+		<td>
+
+			{% for leverandor in driftsmodell.underleverandorer.all %}
+
+				{% url 'leverandor' leverandor.pk as url_leverandor %}
+
+				<a href="{{ url_leverandor }}">{{ leverandor }}</a><br>
+
+			{% endfor %}
+
+		</td>
+
+	</tr>
+
+	<tr>
+
+		<td>{% get_verbose_field_name driftsmodell "avtaler" %}</td>
+
+		<td>
+
+			{% for avtale in driftsmodell.avtaler.all %}
+
+				{% url 'avtaledetaljer' avtale.pk as avtale_url %}
+
+				<a href="{{ avtale_url }}">{{ avtale }}</a><br>
+
+			{% endfor %}
+
+		</td>
+
+	</tr>
+
+</table>
+
+
+
+{% endblock main_content %}
+
+

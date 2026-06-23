@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: systemprioritet() – use service_offerings.exists() so systems without CMDB link get T2/D2 defaults.
 # 2026-06-23: Tjeneste/systemoversikt API – update api_tjeneste_systemoversikt_docs.py when model fields affect API JSON (url name: api_tjeneste_systemoversikt_docs).
 # 2026-06-22: drift_dimensjoner(), driftes_av_dig (DIG forkortelse), home drift chart support.
 # 2026-06-22: Driftsmodell.er_saas and System.er_egenutviklet – explicit SaaS and self-developed flags.
@@ -5286,7 +5287,8 @@ class System(models.Model):
 			tilgjengelighet = 5
 
 
-		if self.service_offerings != None:
+		# 2026-06-23: M2M manager is never None – exists() distinguishes linked vs unlinked offerings.
+		if self.service_offerings.exists():
 
 			tjenestenivaa = 4
 			for bss in self.service_offerings.all():
