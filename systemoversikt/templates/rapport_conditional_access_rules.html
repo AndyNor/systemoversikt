@@ -25,7 +25,7 @@
 </tr>
 </thead>
 <tbody>
-{% for regel in ca_regler_nyeste.json_policy_as_json.value %}
+{% for regel in ca_policy.value %}
 <tr>
 	<td>
 		{% if regel.state == "enabled" %} Active {% endif %}

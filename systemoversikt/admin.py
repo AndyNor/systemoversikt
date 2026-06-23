@@ -1142,6 +1142,21 @@ class APIKeysAdmin(admin.ModelAdmin):
 	list_display = ('navn', 'kommentar', 'key', 'sist_oppdatert')
 
 
+@admin.register(BloodHoundSnapshot)
+class BloodHoundSnapshotAdmin(admin.ModelAdmin):
+	list_display = (
+		'snapshot_id',
+		'received_at',
+		'count_users',
+		'count_computers',
+		'count_groups',
+		'file_count',
+		'status',
+	)
+	search_fields = ('snapshot_id',)
+	list_filter = ('status',)
+
+
 @admin.register(Avtale)
 class AvtaleAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]

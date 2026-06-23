@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: CA named locations – show IP ranges on rules report; exact displayName match; skip countries.
+# 2026-06-23: BloodHoundSnapshot – metadata and object counts from bloodhound-python JSON uploads.
 # 2026-06-23: Batch GUID lookup for Conditional Access – fixes N+1 queries on CA changes report.
 # 2026-06-23: Removed cache_systemprioritet – priority is computed on demand only.
 # 2026-06-23: systemprioritet_poeng() – numeric score for sorting.
@@ -84,6 +86,53 @@ def conditional_access_guids_in_text(data):
 	return _CONDITIONAL_ACCESS_GUID_PATTERN.findall(str(data))
 
 
+def azure_named_location_ca_label(nl):
+	"""CA report label: display name plus IP ranges when cached (not countries/regions)."""
+	name = nl.displayName or nl.ipNamedLocation_id
+	if not nl.ipRanges:
+		return name
+	try:
+		ranges = json.loads(nl.ipRanges)
+	except (TypeError, ValueError):
+		return name
+	if not ranges:
+		return name
+	return '%s (%s)' % (name, ', '.join(str(r) for r in ranges))
+
+
+def azure_named_location_display_name_cache():
+	"""Map exact displayName to CA label for includeLocations/excludeLocations enrichment."""
+	cache = {}
+	for nl in AzureNamedLocations.objects.exclude(displayName__isnull=True).exclude(displayName=''):
+		cache[nl.displayName] = azure_named_location_ca_label(nl)
+	return cache
+
+
+def conditional_access_enrich_policy_locations(policy_data, display_name_cache=None):
+	"""Enrich includeLocations/excludeLocations with IP ranges via exact displayName match."""
+	if display_name_cache is None:
+		display_name_cache = azure_named_location_display_name_cache()
+
+	def enrich_list(items):
+		if not isinstance(items, list):
+			return items
+		return [display_name_cache.get(item, item) for item in items]
+
+	policies = policy_data.get('value')
+	if not isinstance(policies, list):
+		return policy_data
+
+	for policy in policies:
+		conditions = policy.get('conditions') or {}
+		locations = conditions.get('locations') or {}
+		if 'includeLocations' in locations:
+			locations['includeLocations'] = enrich_list(locations['includeLocations'])
+		if 'excludeLocations' in locations:
+			locations['excludeLocations'] = enrich_list(locations['excludeLocations'])
+
+	return policy_data
+
+
 def conditional_access_guid_lookup_cache(guids):
 	"""Map Azure object GUIDs to display strings using batched DB lookups."""
 	guids = {g for g in guids if g}
@@ -97,7 +146,7 @@ def conditional_access_guid_lookup_cache(guids):
 	remaining = guids.difference(cache)
 	if remaining:
 		for obj in AzureNamedLocations.objects.filter(ipNamedLocation_id__in=remaining):
-			cache[obj.ipNamedLocation_id] = str(obj)
+			cache[obj.ipNamedLocation_id] = azure_named_location_ca_label(obj)
 
 	remaining = guids.difference(cache)
 	if remaining:
@@ -126,7 +175,9 @@ def conditional_access_replace_guid(data, guid_lookup=None):
 		except AzureApplication.DoesNotExist:
 			pass
 		try:
-			return AzureNamedLocations.objects.get(ipNamedLocation_id=azure_id).__str__()
+			return azure_named_location_ca_label(
+				AzureNamedLocations.objects.get(ipNamedLocation_id=azure_id)
+			)
 		except AzureNamedLocations.DoesNotExist:
 			pass
 		try:
@@ -224,11 +275,14 @@ class EntraIDConditionalAccessPolicies(models.Model):
 
 
 
-	def json_policy_as_json(self, guid_lookup=None):
+	def json_policy_as_json(self, guid_lookup=None, display_name_cache=None):
 		data = self.json_policy
 		data = conditional_access_replace_guid(data, guid_lookup=guid_lookup)
-		# Convert back to JSON object
-		return json.loads(data)
+		policy_data = json.loads(data)
+		return conditional_access_enrich_policy_locations(
+			policy_data,
+			display_name_cache=display_name_cache,
+		)
 
 
 def global_azureid_lookup(value):
@@ -6887,4 +6941,50 @@ class DeviceCodeSignInCombo(models.Model):
 		unique_together = ("user_principal_name", "ip_address", "app_display_name")
 		indexes = [
 			models.Index(fields=["last_seen"]),
+			models.Index(fields=["is_noteworthy", "last_seen"]),
 		]
+
+
+class BloodHoundSnapshot(models.Model):
+	# 2026-06-23: One row per bloodhound-python collection upload (object counts from meta, not full graph).
+	snapshot_id = models.CharField(max_length=14, unique=True, db_index=True)
+	received_at = models.DateTimeField(auto_now_add=True)
+	storage_path = models.CharField(max_length=512)
+	status = models.CharField(max_length=32, default='indexed')
+	error_message = models.TextField(blank=True)
+	count_users = models.BigIntegerField(default=0)
+	count_computers = models.BigIntegerField(default=0)
+	count_groups = models.BigIntegerField(default=0)
+	count_gpos = models.BigIntegerField(default=0)
+	count_ous = models.BigIntegerField(default=0)
+	count_domains = models.BigIntegerField(default=0)
+	count_containers = models.BigIntegerField(default=0)
+	shard_counts = models.JSONField(default=dict, blank=True)
+	file_count = models.IntegerField(default=0)
+	total_bytes = models.BigIntegerField(default=0)
+	collection_methods = models.BigIntegerField(null=True, blank=True)
+	meta_version = models.IntegerField(null=True, blank=True)
+	source_ip = models.GenericIPAddressField(null=True, blank=True)
+
+	def snapshot_id_readable(self):
+		from systemoversikt.bloodhound.ingest import snapshot_id_readable
+		return snapshot_id_readable(self.snapshot_id)
+
+	def counts_table(self):
+		return [
+			('users', self.count_users, self.shard_counts.get('users', 0)),
+			('computers', self.count_computers, self.shard_counts.get('computers', 0)),
+			('groups', self.count_groups, self.shard_counts.get('groups', 0)),
+			('gpos', self.count_gpos, self.shard_counts.get('gpos', 0)),
+			('ous', self.count_ous, self.shard_counts.get('ous', 0)),
+			('domains', self.count_domains, self.shard_counts.get('domains', 0)),
+			('containers', self.count_containers, self.shard_counts.get('containers', 0)),
+		]
+
+	def __str__(self):
+		return f'BloodHound {self.snapshot_id}'
+
+	class Meta:
+		verbose_name_plural = "BloodHound: snapshots"
+		ordering = ['-snapshot_id']
+		default_permissions = ('add', 'change', 'delete', 'view')

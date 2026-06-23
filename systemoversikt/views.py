@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: rapport_conditional_access_rules – batch GUID lookup and named-location IP ranges in conditions.
 # 2026-06-23: rapport_conditional_access_changes – batch GUID lookups for CA changes report performance.
 # 2026-06-23: drift_beredskap – sort by computed priority score; attach prioritet_poeng for template sort key.
 # 2026-06-23: rapport_prioriteringer – quick links from intern_tjenesteleverandor flag, not hardcoded DIG id.
@@ -2630,13 +2631,22 @@ def rapport_conditional_access_rules(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
+	# 2026-06-23: Batch GUID/displayName lookups – show IP ranges for named locations in conditions.
 	ca_regler_nyeste = EntraIDConditionalAccessPolicies.objects.latest()
+	guids = set(conditional_access_guids_in_text(ca_regler_nyeste.json_policy))
+	guid_lookup = conditional_access_guid_lookup_cache(guids)
+	display_name_cache = azure_named_location_display_name_cache()
+	ca_policy = ca_regler_nyeste.json_policy_as_json(
+		guid_lookup=guid_lookup,
+		display_name_cache=display_name_cache,
+	)
 	integrasjonsstatus = _integrasjonsstatus("azure_ad_conditional_access")
 
 	return render(request, 'rapport_conditional_access_rules.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'ca_regler_nyeste': ca_regler_nyeste,
+		'ca_policy': ca_policy,
 		'integrasjonsstatus': integrasjonsstatus,
 	})
 

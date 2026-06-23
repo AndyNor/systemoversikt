@@ -2,7 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
-# 2026-06-23: Developer docs URL for Sårbarhetsoversikten (vulnapp) API.
+# 2026-06-23: BloodHound upload API and status page.
 # 2026-06-23: Developer docs URL for Tjeneste- og systemoversikt API.
 # 2026-06-21: Removed commented dead URL routes (smartkartlegging, prk API, passwdexpire, etc.).
 # 2026-06-22: Removed commented DRF restapi router – retired, APIs live in views.py.
@@ -17,6 +17,8 @@ from django.views.generic.base import RedirectView
 
 import systemoversikt.views as views
 import systemoversikt.views_import as views_import
+import systemoversikt.api_bloodhound as api_bloodhound
+import systemoversikt.views_bloodhound as views_bloodhound
 
 favicon_view = RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=True)
 
@@ -125,6 +127,7 @@ urlpatterns = [
 	re_path(r'^sikkerhet/ad/spn/$', views.alle_spn, name='alle_spn'),
 	re_path(r'^sikkerhet/ad/ukjente_identer/$', views.rapport_ukjente_identer, name='rapport_ukjente_identer'),
 	re_path(r'^sikkerhet/ad/trustedfordelegation/$', views.rapport_trusted_delegation, name="rapport_trusted_delegation"),
+	re_path(r'^sikkerhet/bloodhound/status/$', views_bloodhound.sikkerhet_bloodhound_status, name='sikkerhet_bloodhound_status'),
 	re_path(r'^sikkerhet/device_code_logins/$', views.sikkerhet_device_code_logins, name='sikkerhet_device_code_logins'),
 	re_path(r'^sikkerhet/varsling_virksomheter/$', views.sikkerhet_varsling_virksomheter, name='sikkerhet_varsling_virksomheter'),
 
@@ -307,6 +310,7 @@ urlpatterns = [
 	re_path(r'^api/vulnapp/ipsok/$', views.csirt_iplookup_api, name='csirt_iplookup_api'), # IP-oppslag fra vulnapp, returnerer CMDB-data og merker device som internett-eksponert
 	re_path(r'^api/vulnapp/programvare/$', views.api_programvare_vulnapp, name='api_programvare_vulnapp'), # Brukes av vulnapp for å hente alle applikasjoner
 	re_path(r'^api/vulnapp/known_exploited/$', views.api_known_exploited, name='api_known_exploited'), # VulnApp kaller denne for å laste opp CVE known exploited
+	re_path(r'^api/bloodhound/upload/$', api_bloodhound.api_bloodhound_upload, name='api_bloodhound_upload'), # BloodHound collector tar.gz upload
 	# system og tjenesteoversikt
 	re_path(r'^api/systemer/$', views.api_systemer_optimized, name='api_systemer'), # Tjeneste- og systemoversikt
 	re_path(r'^api/virksomheter/$', views.api_virksomheter, name='api_virksomheter'), # Tjeneste- og systemoversikt
