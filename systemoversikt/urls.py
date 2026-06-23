@@ -148,6 +148,7 @@ urlpatterns = [
 	re_path(r'^rapport/hovedkategorier/subkategorier/uten_kategori/$', views.uten_systemkategori, name='uten_systemkategorier'),
 	re_path(r'^rapport/hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
 	re_path(r'^rapport/azure/conditional_access/rules/$', views.rapport_conditional_access_rules, name="rapport_conditional_access_rules"),
+	re_path(r'^rapport/azure/conditional_access/overview/$', views.rapport_conditional_access_overview, name="rapport_conditional_access_overview"),
 	re_path(r'^rapport/azure/conditional_access/changes/$', views.rapport_conditional_access_changes, name="rapport_conditional_access_changes"),
 
 

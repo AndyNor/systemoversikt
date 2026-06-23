@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: CA overview roles – count tags only (no directory role lookup).
+# 2026-06-23: CA overview conditions – included/excluded tags with GUID lookup like rules report.
+# 2026-06-23: CA overview – app tags for filtering; include/exclude roles counted only.
+# 2026-06-23: CA overview tiles – filter tags, exclude counts, skip termsOfUse policies.
+# 2026-06-23: conditional_access_build_overview_tiles – tile summaries for CA overview (replaces graph).
+# 2026-06-23: conditional_access_build_overview_graph – Cytoscape nodes/edges for CA overview prototype.
 # 2026-06-23: CA named locations – show IP ranges on rules report; exact displayName match; skip countries.
 # 2026-06-23: BloodHoundFinding + snapshot analysis fields for preventive checks.
 # 2026-06-23: BloodHoundSnapshot – metadata and object counts from bloodhound-python JSON uploads.
@@ -202,6 +208,508 @@ def conditional_access_replace_guid(data, guid_lookup=None):
 	# Replace all IDs in the data
 	data = _CONDITIONAL_ACCESS_GUID_PATTERN.sub(replace_id, data)
 	return data
+
+
+_CA_GRANT_LABELS = {
+	'block': 'Block',
+	'mfa': 'MFA',
+	'compliantDevice': 'Compliant',
+	'domainJoinedDevice': 'Domain joined',
+	'approvedApplication': 'Approved app',
+	'compliantApplication': 'Compliant app',
+	'passwordChange': 'Password change',
+	'unknownFutureValue': 'Unknown',
+}
+
+_CA_GRANT_FILTER_TAGS = {
+	'mfa': 'mfa',
+	'compliantDevice': 'compliant',
+	'domainJoinedDevice': 'domain-joined',
+}
+
+_CA_APP_LITERAL_LABELS = {
+	'Office365': 'Office 365',
+}
+
+_CA_PLATFORM_LABELS = {
+	'android': 'Android',
+	'androidForWork': 'Android for work',
+	'iOS': 'iOS',
+	'macOS': 'macOS',
+	'windows': 'Windows',
+	'windowsPhone': 'Windows Phone',
+	'linux': 'Linux',
+	'all': 'All platforms',
+}
+
+_CA_CLIENT_APP_LABELS = {
+	'all': 'All client apps',
+	'browser': 'Browser',
+	'mobileAppsAndDesktopClients': 'Mobile & desktop',
+	'exchangeActiveSync': 'Exchange ActiveSync',
+	'other': 'Other',
+}
+
+_CA_FILTER_GROUPS = (
+	('grant_mode', 'Grant'),
+	('grant_control', 'Grant controls'),
+	('scope', 'Scope'),
+	('groups', 'Groups'),
+	('apps', 'Apps'),
+	('platform', 'Platforms'),
+	('client', 'Client apps'),
+)
+
+_CA_CLOUD_APP_SECURITY_LABELS = {
+	'blockDownloads': 'Block downloads',
+	'mcasConfigured': 'Defender for Cloud Apps',
+	'monitorOnly': 'Monitor only',
+}
+
+
+def conditional_access_is_terms_of_use_policy(policy):
+	grant_controls = policy.get('grantControls') or {}
+	return bool(grant_controls.get('termsOfUse'))
+
+
+def conditional_access_rule_short_name(display_name):
+	if not display_name:
+		return 'Unnamed rule'
+	if ' - ' in display_name:
+		return display_name.split(' - ', 1)[0].strip()
+	return display_name.strip()
+
+
+def conditional_access_summarize_grant(grant_controls):
+	empty = {
+		'mode': 'unknown',
+		'summary': 'No grant',
+		'operator': None,
+		'labels': [],
+		'filter_tags': [],
+	}
+	if not grant_controls:
+		return empty
+
+	controls = [
+		c for c in (grant_controls.get('builtInControls') or [])
+		if c and c != 'unknownFutureValue'
+	]
+	operator = (grant_controls.get('operator') or 'AND').upper()
+
+	if 'block' in controls:
+		return {
+			'mode': 'block',
+			'summary': 'Block',
+			'operator': None,
+			'labels': ['Block'],
+			'filter_tags': ['block'],
+		}
+
+	labels = [_CA_GRANT_LABELS.get(c, c) for c in controls]
+	filter_tags = ['allow']
+	for control in controls:
+		tag = _CA_GRANT_FILTER_TAGS.get(control)
+		if tag:
+			filter_tags.append(tag)
+
+	auth_strength = grant_controls.get('authenticationStrength') or {}
+	strength_name = auth_strength.get('displayName')
+	if strength_name:
+		labels.append(strength_name)
+
+	if not labels:
+		return {
+			'mode': 'allow',
+			'summary': 'Allow',
+			'operator': operator,
+			'labels': [],
+			'filter_tags': filter_tags,
+		}
+
+	joined = (' %s ' % operator).join(labels)
+	return {
+		'mode': 'allow',
+		'summary': joined,
+		'operator': operator,
+		'labels': labels,
+		'filter_tags': filter_tags,
+	}
+
+
+def conditional_access_summarize_session(session_controls):
+	if not session_controls:
+		return []
+
+	lines = []
+	aer = session_controls.get('applicationEnforcedRestrictions') or {}
+	if aer.get('isEnabled'):
+		lines.append('App enforced restrictions')
+
+	cas = session_controls.get('cloudAppSecurity') or {}
+	if cas.get('isEnabled'):
+		ctype = cas.get('cloudAppSecurityType') or 'configured'
+		lines.append(_CA_CLOUD_APP_SECURITY_LABELS.get(ctype, ctype))
+
+	pb = session_controls.get('persistentBrowser') or {}
+	if pb.get('isEnabled'):
+		mode = pb.get('mode') or 'never'
+		lines.append('Persistent browser: %s' % mode)
+
+	sif = session_controls.get('signInFrequency') or {}
+	if sif.get('isEnabled'):
+		value = sif.get('value')
+		period = sif.get('type') or 'hours'
+		if value is not None:
+			lines.append('Sign-in frequency: every %s %s' % (value, period))
+		else:
+			lines.append('Sign-in frequency')
+
+	if session_controls.get('disableResilienceDefaults'):
+		lines.append('Disable resilience defaults')
+
+	return lines
+
+
+def _ca_app_display_name(app_id, guid_lookup, enriched_name=None):
+	if enriched_name is not None:
+		return enriched_name
+	if app_id in _CA_APP_LITERAL_LABELS:
+		return _CA_APP_LITERAL_LABELS[app_id]
+	return guid_lookup.get(app_id, app_id)
+
+
+def _ca_display_at(items_raw, items_enriched, index, guid_lookup):
+	if items_enriched is not None and index < len(items_enriched):
+		return items_enriched[index]
+	raw = items_raw[index]
+	return guid_lookup.get(raw, raw)
+
+
+def _ca_append_entity_tags(target, items_raw, items_enriched, tag_prefix, kind, guid_lookup):
+	for index, raw in enumerate(items_raw or []):
+		if not raw:
+			continue
+		text = _ca_display_at(items_raw, items_enriched, index, guid_lookup)
+		target.append({
+			'text': text,
+			'filter': '%s:%s' % (tag_prefix, raw),
+			'kind': kind,
+		})
+
+
+def _ca_append_role_count_tag(target, roles):
+	count = len([role for role in (roles or []) if role])
+	if not count:
+		return
+	word = 'role' if count == 1 else 'roles'
+	target.append({
+		'text': '%d %s' % (count, word),
+		'filter': None,
+		'kind': 'role',
+	})
+
+
+def conditional_access_tile_conditions(enriched_conditions, raw_conditions=None, guid_lookup=None):
+	"""Included/excluded condition tags; display names from enriched JSON (same as rules report)."""
+	guid_lookup = guid_lookup or {}
+	raw = raw_conditions if raw_conditions is not None else (enriched_conditions or {})
+	enriched = enriched_conditions or {}
+
+	included_labels = []
+	excluded_labels = []
+	filter_tags = []
+
+	users_raw = raw.get('users') or {}
+	users_enriched = enriched.get('users') or {}
+
+	if 'All' in (users_raw.get('includeUsers') or []):
+		included_labels.append({'text': 'All users', 'filter': 'all-users', 'kind': 'scope'})
+		filter_tags.append('all-users')
+	else:
+		_ca_append_entity_tags(
+			included_labels,
+			users_raw.get('includeUsers'),
+			users_enriched.get('includeUsers'),
+			'user', 'user', guid_lookup,
+		)
+
+	_ca_append_entity_tags(
+		included_labels,
+		users_raw.get('includeGroups'),
+		users_enriched.get('includeGroups'),
+		'group', 'group', guid_lookup,
+	)
+	_ca_append_role_count_tag(included_labels, users_raw.get('includeRoles'))
+
+	_ca_append_entity_tags(
+		excluded_labels,
+		users_raw.get('excludeUsers'),
+		users_enriched.get('excludeUsers'),
+		'user', 'user', guid_lookup,
+	)
+	_ca_append_entity_tags(
+		excluded_labels,
+		users_raw.get('excludeGroups'),
+		users_enriched.get('excludeGroups'),
+		'group', 'group', guid_lookup,
+	)
+	_ca_append_role_count_tag(excluded_labels, users_raw.get('excludeRoles'))
+
+	applications_raw = raw.get('applications') or {}
+	applications_enriched = enriched.get('applications') or {}
+	include_apps_raw = applications_raw.get('includeApplications') or []
+	include_apps_enriched = applications_enriched.get('includeApplications') or []
+
+	if 'All' in include_apps_raw:
+		included_labels.append({'text': 'All apps', 'filter': 'all-apps', 'kind': 'app'})
+		filter_tags.append('all-apps')
+	for index, app_id in enumerate(include_apps_raw):
+		if not app_id or app_id == 'All':
+			continue
+		text = _ca_app_display_name(
+			app_id,
+			guid_lookup,
+			enriched_name=_ca_display_at(include_apps_raw, include_apps_enriched, index, guid_lookup),
+		)
+		included_labels.append({
+			'text': text,
+			'filter': 'app:%s' % app_id,
+			'kind': 'app',
+		})
+
+	_ca_append_entity_tags(
+		excluded_labels,
+		applications_raw.get('excludeApplications'),
+		applications_enriched.get('excludeApplications'),
+		'app', 'app', guid_lookup,
+	)
+
+	for index, action in enumerate(applications_raw.get('includeUserActions') or []):
+		if not action:
+			continue
+		text = _ca_display_at(
+			applications_raw.get('includeUserActions'),
+			applications_enriched.get('includeUserActions'),
+			index,
+			guid_lookup,
+		)
+		included_labels.append({
+			'text': text,
+			'filter': 'action:%s' % action,
+			'kind': 'action',
+		})
+
+	locations_raw = raw.get('locations') or {}
+	locations_enriched = enriched.get('locations') or {}
+	if 'All' in (locations_raw.get('includeLocations') or []):
+		included_labels.append({'text': 'All locations', 'filter': 'all-locations', 'kind': 'scope'})
+		filter_tags.append('all-locations')
+	else:
+		_ca_append_entity_tags(
+			included_labels,
+			locations_raw.get('includeLocations'),
+			locations_enriched.get('includeLocations'),
+			'location', 'location', guid_lookup,
+		)
+
+	_ca_append_entity_tags(
+		excluded_labels,
+		locations_raw.get('excludeLocations'),
+		locations_enriched.get('excludeLocations'),
+		'location', 'location', guid_lookup,
+	)
+
+	platforms_raw = raw.get('platforms') or {}
+	platforms_enriched = enriched.get('platforms') or {}
+	for platform in platforms_raw.get('includePlatforms') or []:
+		text = _CA_PLATFORM_LABELS.get(platform, platform)
+		tag = 'platform:%s' % platform
+		included_labels.append({'text': text, 'filter': tag, 'kind': 'platform'})
+		filter_tags.append(tag)
+
+	for platform in platforms_raw.get('excludePlatforms') or []:
+		text = _CA_PLATFORM_LABELS.get(platform, platform)
+		excluded_labels.append({
+			'text': text,
+			'filter': 'platform:%s' % platform,
+			'kind': 'platform',
+		})
+
+	for client_type in raw.get('clientAppTypes') or []:
+		text = _CA_CLIENT_APP_LABELS.get(client_type, client_type)
+		tag = 'client:%s' % client_type
+		included_labels.append({'text': text, 'filter': tag, 'kind': 'client'})
+		filter_tags.append(tag)
+
+	for level in raw.get('signInRiskLevels') or []:
+		included_labels.append({'text': 'Sign-in risk: %s' % level, 'filter': 'signin-risk:%s' % level, 'kind': 'risk'})
+
+	for level in raw.get('userRiskLevels') or []:
+		included_labels.append({'text': 'User risk: %s' % level, 'filter': 'user-risk:%s' % level, 'kind': 'risk'})
+
+	devices_raw = raw.get('devices') or {}
+	devices_enriched = enriched.get('devices') or {}
+	_ca_append_entity_tags(
+		included_labels,
+		devices_raw.get('includeDevices'),
+		devices_enriched.get('includeDevices'),
+		'device', 'device', guid_lookup,
+	)
+	_ca_append_entity_tags(
+		excluded_labels,
+		devices_raw.get('excludeDevices'),
+		devices_enriched.get('excludeDevices'),
+		'device', 'device', guid_lookup,
+	)
+
+	device_filter = devices_raw.get('deviceFilter')
+	if device_filter:
+		included_labels.append({
+			'text': 'Device filter',
+			'filter': 'device-filter',
+			'kind': 'device',
+		})
+
+	for label in included_labels:
+		tag = label.get('filter')
+		if tag and tag not in filter_tags and _ca_filter_group_for_tag(tag):
+			filter_tags.append(tag)
+
+	return {
+		'included_labels': included_labels,
+		'excluded_labels': excluded_labels,
+		'filter_tags': filter_tags,
+	}
+
+
+def _ca_filter_group_for_tag(tag):
+	if tag in ('block', 'allow'):
+		return 'grant_mode'
+	if tag in ('mfa', 'compliant', 'domain-joined'):
+		return 'grant_control'
+	if tag in ('all-users', 'all-locations'):
+		return 'scope'
+	if tag == 'all-apps' or tag.startswith('app:'):
+		return 'apps'
+	if tag.startswith('group:'):
+		return 'groups'
+	if tag.startswith('platform:'):
+		return 'platform'
+	if tag.startswith('client:'):
+		return 'client'
+	return None
+
+
+def conditional_access_collect_overview_filters(tiles):
+	"""Build filter chip definitions from tile tags, grouped for the overview UI."""
+	seen = {group_id: {} for group_id, _ in _CA_FILTER_GROUPS}
+	static_filters = {
+		'grant_mode': [
+			('allow', 'Allow'),
+			('block', 'Block'),
+		],
+		'grant_control': [
+			('mfa', 'MFA'),
+			('compliant', 'Compliant'),
+			('domain-joined', 'Domain joined'),
+		],
+		'scope': [
+			('all-users', 'All users'),
+			('all-locations', 'All locations'),
+		],
+		'apps': [
+			('all-apps', 'All apps'),
+		],
+	}
+	for group_id, options in static_filters.items():
+		for tag, label in options:
+			seen[group_id][tag] = label
+
+	for tile in tiles:
+		for label in tile.get('conditions_included') or []:
+			tag = label.get('filter')
+			if not tag:
+				continue
+			group_id = _ca_filter_group_for_tag(tag)
+			if group_id:
+				seen[group_id][tag] = label['text']
+
+	for tile in tiles:
+		for tag in tile.get('filter_tags') or []:
+			group_id = _ca_filter_group_for_tag(tag)
+			if not group_id:
+				continue
+			if tag in seen[group_id]:
+				continue
+			if group_id == 'platform':
+				seen[group_id][tag] = tag.split(':', 1)[1]
+			elif group_id == 'client':
+				key = tag.split(':', 1)[1]
+				seen[group_id][tag] = _CA_CLIENT_APP_LABELS.get(key, key)
+			else:
+				seen[group_id][tag] = tag
+
+	groups = []
+	for group_id, title in _CA_FILTER_GROUPS:
+		options = seen.get(group_id) or {}
+		if not options:
+			continue
+		groups.append({
+			'id': group_id,
+			'title': title,
+			'options': [
+				{'tag': tag, 'label': label}
+				for tag, label in sorted(options.items(), key=lambda item: item[1].lower())
+			],
+		})
+	return groups
+
+
+def conditional_access_build_overview_tiles(policies, rules_detail_url, guid_lookup=None, raw_policies_by_id=None):
+	"""Build overview tile data for active CA policies (state == enabled, not terms of use)."""
+	guid_lookup = guid_lookup or {}
+	raw_policies_by_id = raw_policies_by_id or {}
+	tiles = []
+	if not isinstance(policies, list):
+		return tiles
+
+	for policy in policies:
+		if policy.get('state') != 'enabled':
+			continue
+		if conditional_access_is_terms_of_use_policy(policy):
+			continue
+
+		policy_id = policy.get('id')
+		if not policy_id:
+			continue
+
+		raw_policy = raw_policies_by_id.get(policy_id) or policy
+		display_name = policy.get('displayName') or policy_id
+		grant = conditional_access_summarize_grant(policy.get('grantControls'))
+		conditions = conditional_access_tile_conditions(
+			policy.get('conditions'),
+			raw_conditions=raw_policy.get('conditions'),
+			guid_lookup=guid_lookup,
+		)
+		filter_tags = list(dict.fromkeys(
+			(grant.get('filter_tags') or []) + (conditions.get('filter_tags') or [])
+		))
+
+		tiles.append({
+			'id': policy_id,
+			'short_name': conditional_access_rule_short_name(display_name),
+			'full_name': display_name,
+			'detail_url': '%s#ca-rule-%s' % (rules_detail_url, policy_id),
+			'grant': grant,
+			'session_lines': conditional_access_summarize_session(policy.get('sessionControls')),
+			'conditions_included': conditions['included_labels'],
+			'conditions_excluded': conditions['excluded_labels'],
+			'filter_tags': filter_tags,
+		})
+
+	tiles.sort(key=lambda tile: tile['short_name'].lower())
+	return tiles
 
 
 class EpostMottakere(models.Model):

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: rapport_conditional_access_overview – tile view of active CA rules (replaces graph prototype).
 # 2026-06-23: rapport_conditional_access_rules – batch GUID lookup and named-location IP ranges in conditions.
 # 2026-06-23: rapport_conditional_access_changes – batch GUID lookups for CA changes report performance.
 # 2026-06-23: drift_beredskap – sort by computed priority score; attach prioritet_poeng for template sort key.
@@ -2647,6 +2648,44 @@ def rapport_conditional_access_rules(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'ca_regler_nyeste': ca_regler_nyeste,
 		'ca_policy': ca_policy,
+		'integrasjonsstatus': integrasjonsstatus,
+	})
+
+
+def rapport_conditional_access_overview(request):
+	required_permissions = ['systemoversikt.view_entraidconditionalaccesspolicies']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	ca_regler_nyeste = EntraIDConditionalAccessPolicies.objects.latest()
+	guids = set(conditional_access_guids_in_text(ca_regler_nyeste.json_policy))
+	guid_lookup = conditional_access_guid_lookup_cache(guids)
+	display_name_cache = azure_named_location_display_name_cache()
+	ca_policy = ca_regler_nyeste.json_policy_as_json(
+		guid_lookup=guid_lookup,
+		display_name_cache=display_name_cache,
+	)
+	raw_policies_by_id = {
+		policy['id']: policy
+		for policy in json.loads(ca_regler_nyeste.json_policy).get('value') or []
+		if policy.get('id')
+	}
+	rules_detail_url = reverse('rapport_conditional_access_rules')
+	ca_tiles = conditional_access_build_overview_tiles(
+		ca_policy.get('value') or [],
+		rules_detail_url,
+		guid_lookup=guid_lookup,
+		raw_policies_by_id=raw_policies_by_id,
+	)
+	ca_filters = conditional_access_collect_overview_filters(ca_tiles)
+	integrasjonsstatus = _integrasjonsstatus("azure_ad_conditional_access")
+
+	return render(request, 'rapport_conditional_access_overview.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'ca_tiles': ca_tiles,
+		'ca_filters': ca_filters,
+		'rules_detail_url': rules_detail_url,
 		'integrasjonsstatus': integrasjonsstatus,
 	})
 

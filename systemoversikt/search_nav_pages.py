@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Navigation page registry for global search – CA overview graph link.
 # 2026-06-23: BloodHound nav entries require view_qualysvuln (same as vulnstats).
 # 2026-06-23: Navigation page registry for global search – BloodHound findings link.
 # 2026-06-23: Navigation page registry for global search – BloodHound status link.
@@ -153,6 +154,7 @@ NAV_PAGES = [
 	_entry('Nøkler snart utgår', 'azure_application_keys_soon', 'Rapport', ['nøkler snart', 'nokler snart'], permissions=['systemoversikt.view_cmdbdevice']),
 	_entry('Aktive nøkler', 'azure_application_keys_active', 'Rapport', ['aktive nøkler', 'aktive nokler'], permissions=['systemoversikt.view_cmdbdevice']),
 	_entry('CA-regler', 'rapport_conditional_access_rules', 'Rapport', ['ca-regler', 'conditional access'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
+	_entry('CA-oversikt', 'rapport_conditional_access_overview', 'Rapport', ['ca-oversikt', 'conditional access oversikt', 'ca fliser'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
 	_entry('CA-endringer', 'rapport_conditional_access_changes', 'Rapport', ['ca-endringer', 'conditional access endringer'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
 ]
 

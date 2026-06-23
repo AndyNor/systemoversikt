@@ -11,7 +11,9 @@
 
 {% include "includes/integrasjon_freshness_banner.html" with label="Conditional Access-regler ble sist synkronisert" %}
 
-<p>Denne rapporten viser gjeldende Conditional Access-regler i felles Azure-tenant.</p>
+<p>Denne rapporten viser gjeldende Conditional Access-regler i felles Azure-tenant.
+	<a href="{% url 'rapport_conditional_access_overview' %}">Se CA-oversikt med graf</a>.
+</p>
 
 <h5>CA-regler nå (sist synkronisering)</h5>
 <table class="table tablesorter">
@@ -26,7 +28,7 @@
 </thead>
 <tbody>
 {% for regel in ca_policy.value %}
-<tr>
+<tr id="ca-rule-{{ regel.id }}">
 	<td>
 		{% if regel.state == "enabled" %} Active {% endif %}
 		{% if regel.state == "enabledForReportingButNotEnforced" %} Reporting {% endif %}
@@ -42,3 +44,24 @@
 </table>
 
 {% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+(function () {
+	var hash = window.location.hash;
+	if (!hash || hash.indexOf('#ca-rule-') !== 0) {
+		return;
+	}
+	var row = document.querySelector(hash);
+	if (!row) {
+		return;
+	}
+	row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	row.style.transition = 'background-color 0.3s';
+	row.style.backgroundColor = '#fff3cd';
+	setTimeout(function () {
+		row.style.backgroundColor = '';
+	}, 3000);
+})();
+</script>
+{% endblock script_append %}
