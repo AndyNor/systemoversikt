@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-06-23: drift_beredskap – sort by computed priority score, not stale cache_systemprioritet.
+# 2026-06-23: drift_beredskap – sort by computed priority score; attach prioritet_poeng for template sort key.
 # 2026-06-23: rapport_prioriteringer – quick links from intern_tjenesteleverandor flag, not hardcoded DIG id.
 # 2026-06-23: drift_beredskap – bar chart data for priority score distribution per virksomhet.
 # 2026-06-23: Developer docs page for Sårbarhetsoversikten (vulnapp) API (login_required).
@@ -8892,13 +8892,15 @@ def drift_beredskap(request, pk):
 		driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet,
 	).filter(ibruk=True)
 
-	# 2026-06-23: Exclude infra and sort by live score – cache_systemprioritet can be stale until rendered.
+	# 2026-06-23: Exclude infra and sort by live score (lowest = highest recovery priority).
 	systemer_med_poeng = [
 		(s, s.systemprioritet_poeng())
 		for s in systemer_drifter
 		if not s.er_infrastruktur()
 	]
 	systemer_med_poeng.sort(key=lambda item: (item[1], item[0].systemnavn.lower()))
+	for s, score in systemer_med_poeng:
+		s.prioritet_poeng = score
 	systemer_drifter = [s for s, _ in systemer_med_poeng]
 
 	antall_top_x = 30

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-06-23: systemprioritet_poeng() – numeric score for sorting; drift_beredskap was ordering on stale cache.
+# 2026-06-23: Removed cache_systemprioritet – priority is computed on demand only.
+# 2026-06-23: systemprioritet_poeng() – numeric score for sorting.
 # 2026-06-23: Virksomhet.intern_tjenesteleverandor – replaces hardcoded DIG virksomhet id in prioriteringer links.
 # 2026-06-23: systemprioritet() – use service_offerings.exists() so systems without CMDB link get T2/D2 defaults.
 # 2026-06-23: Tjeneste/systemoversikt API – update api_tjeneste_systemoversikt_docs.py when model fields affect API JSON (url name: api_tjeneste_systemoversikt_docs).
@@ -5045,9 +5046,6 @@ class System(models.Model):
 			blank=True,
 			null=True,
 			)
-	cache_systemprioritet = models.BigIntegerField(
-			default=240,
-			) # Denne blir kalkulert ved hver visning
 	citrix_publications = models.ManyToManyField(
 			to="CitrixPublication",
 			related_name="systemer",
@@ -5325,19 +5323,12 @@ class System(models.Model):
 		score = tilgjengelighet * tjenestenivaa * kritikalitet * sammfunnskritisk
 		return tilgjengelighet, tjenestenivaa, kritikalitet, sammfunnskritisk, score
 
-	def _oppdater_cache_systemprioritet(self, score):
-		if self.cache_systemprioritet != score:
-			self.cache_systemprioritet = score
-			self.save()
-
 	def systemprioritet_poeng(self):
 		*_, score = self._beregn_systemprioritet()
-		self._oppdater_cache_systemprioritet(score)
 		return score
 
 	def systemprioritet(self):
 		tilgjengelighet, tjenestenivaa, kritikalitet, sammfunnskritisk, score = self._beregn_systemprioritet()
-		self._oppdater_cache_systemprioritet(score)
 		return f"{tilgjengelighet}*{tjenestenivaa}*{kritikalitet}*{sammfunnskritisk}={score}"
 
 	def citrix_publiseringer_pk(self):
