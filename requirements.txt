@@ -15,7 +15,7 @@ charset-normalizer==3.4.7
 click==8.4.1
 cobble==0.1.4
 colorama==0.4.6
-cryptography==48.0.0
+cryptography==48.0.1
 deepdiff==8.6.2
 Django==4.2.30
 django-csp==3.7
