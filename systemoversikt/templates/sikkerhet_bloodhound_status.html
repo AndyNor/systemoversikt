@@ -23,7 +23,8 @@
 	<ul>
 		<li><b>Snapshot-ID:</b> {{ selected.snapshot_id }} ({{ selected.snapshot_id_readable }})</li>
 		<li><b>Mottatt:</b> {{ selected.received_at|date:"d.m.Y H:i" }} ({{ selected.received_at|timesince }} siden)</li>
-		<li><b>Filer:</b> {{ selected.file_count }}</li>
+		<li><b>Lagringsmappe:</b> {{ selected.storage_path }}</li>
+		<li><b>JSON-filer:</b> {{ selected.file_count }}</li>
 		<li><b>Total størrelse:</b> {{ selected.total_bytes|intcomma }} byte</li>
 		{% if selected.meta_version %}<li><b>JSON-formatversjon:</b> {{ selected.meta_version }}</li>{% endif %}
 		{% if selected.collection_methods %}<li><b>Collection methods (bitmask):</b> {{ selected.collection_methods }}</li>{% endif %}

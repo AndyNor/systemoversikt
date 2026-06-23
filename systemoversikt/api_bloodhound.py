@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Keep one BloodHoundSnapshot row – flat files on disk per upload.
+# 2026-06-23: Verbose ApplicationLog + JSON debug on upload failures.
 # 2026-06-23: BloodHound tar.gz upload API for collector server.
+import json
 import os
 import tempfile
 import time
@@ -11,8 +14,10 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from systemoversikt.bloodhound.ingest import (
+	BloodHoundIngestError,
 	bloodhound_upload_max_bytes,
 	ingest_tar_gz_archive,
+	list_tar_member_names,
 )
 from systemoversikt.models import APIKeys, ApplicationLog, BloodHoundSnapshot, IntegrasjonKonfigurasjon
 from systemoversikt.views import get_client_ip
@@ -22,6 +27,42 @@ INTEGRASJON_KODEORD = 'bloodhound_ad'
 INTEGRASJON_KILDE = 'Active Directory OSLOFELLES'
 INTEGRASJON_PROTOKOLL = 'bloodhound-python'
 INTEGRASJON_BESKRIVELSE = 'BloodHound AD-snapshot (preventiv analyse)'
+_LOG_MESSAGE_LIMIT = 8000
+
+
+def _log_upload(source_ip, message):
+	"""Write to ApplicationLog; truncate very long diagnostics."""
+	if len(message) > _LOG_MESSAGE_LIMIT:
+		message = message[:_LOG_MESSAGE_LIMIT] + '… (truncated)'
+	ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=message)
+	print(f'{LOG_EVENT_TYPE}: {message}')
+
+
+def _format_debug(debug):
+	if not debug:
+		return ''
+	try:
+		return json.dumps(debug, ensure_ascii=False, default=str)
+	except TypeError:
+		return str(debug)
+
+
+def _error_response(source_ip, status, error, phase=None, debug=None, log_extra=''):
+	body = {'error': error}
+	if phase:
+		body['phase'] = phase
+	if debug:
+		body['debug'] = debug
+	log_parts = [f'Feilet fra {source_ip}']
+	if phase:
+		log_parts.append(f'phase={phase}')
+	log_parts.append(str(error))
+	if log_extra:
+		log_parts.append(log_extra)
+	if debug:
+		log_parts.append(f'debug={_format_debug(debug)}')
+	_log_upload(source_ip, ' | '.join(log_parts))
+	return JsonResponse(body, status=status)
 
 
 def _allowed_upload_keys():
@@ -77,6 +118,7 @@ def _persist_snapshot(ingest_result, source_ip):
 			'source_ip': source_ip,
 		},
 	)
+	BloodHoundSnapshot.objects.exclude(snapshot_id=snapshot.snapshot_id).delete()
 	return snapshot
 
 
@@ -99,28 +141,56 @@ def _update_integrasjon_failure(exc_text):
 @csrf_exempt
 def api_bloodhound_upload(request):
 	source_ip = get_client_ip(request)
-	ApplicationLog.objects.create(
-		event_type=LOG_EVENT_TYPE,
-		message=f'Innkommende kall fra {source_ip}',
-	)
+	_log_upload(source_ip, f'Innkommende kall fra {source_ip} method={request.method}')
 
 	if request.method != 'POST':
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=f'Ugyldig metode fra {source_ip}')
-		return JsonResponse({'error': 'Invalid request method'}, status=405)
+		return _error_response(source_ip, 405, 'Invalid request method', phase='request')
 
 	if not _api_key_ok(request):
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=f'Feil eller tom API-nøkkel fra {source_ip}')
-		return JsonResponse(
-			{'message': "Missing or wrong key. Supply HTTP header 'key'", 'data': None},
-			status=403,
+		has_key = bool(request.headers.get('key'))
+		return _error_response(
+			source_ip,
+			403,
+			"Missing or wrong key. Supply HTTP header 'key'",
+			phase='auth',
+			debug={'key_header_present': has_key},
 		)
 
 	upload = request.FILES.get('archive')
 	if not upload:
-		return JsonResponse({'error': "Missing multipart field 'archive' (tar.gz)"}, status=400)
+		return _error_response(
+			source_ip,
+			400,
+			"Missing multipart field 'archive' (tar.gz)",
+			phase='upload',
+			debug={
+				'files_fields': sorted(request.FILES.keys()),
+				'content_type': request.content_type,
+			},
+		)
 
-	if upload.size > bloodhound_upload_max_bytes():
-		return JsonResponse({'error': 'Archive exceeds maximum allowed size'}, status=413)
+	upload_name = getattr(upload, 'name', '') or ''
+	upload_size = upload.size
+	upload_content_type = getattr(upload, 'content_type', '') or ''
+	max_bytes = bloodhound_upload_max_bytes()
+	_log_upload(
+		source_ip,
+		f'Mottatt archive name={upload_name!r} size={upload_size} content_type={upload_content_type!r} '
+		f'max_bytes={max_bytes}',
+	)
+
+	if upload_size > max_bytes:
+		return _error_response(
+			source_ip,
+			413,
+			'Archive exceeds maximum allowed size',
+			phase='upload',
+			debug={
+				'upload_size': upload_size,
+				'max_bytes': max_bytes,
+				'upload_name': upload_name,
+			},
+		)
 
 	runtime_t0 = time.time()
 	tmp_path = None
@@ -130,14 +200,16 @@ def api_bloodhound_upload(request):
 				tmp.write(chunk)
 			tmp_path = tmp.name
 
+		_log_upload(source_ip, f'Lagret midlertidig arkiv {tmp_path} ({upload_size} byte), starter ingest')
 		ingest_result = ingest_tar_gz_archive(tmp_path)
 		snapshot = _persist_snapshot(ingest_result, source_ip)
 		runtime = time.time() - runtime_t0
 		logg_message = (
 			f'Snapshot {snapshot.snapshot_id} mottatt ({snapshot.file_count} filer, '
-			f'{snapshot.count_users} brukere, {snapshot.count_computers} maskiner)'
+			f'{snapshot.count_users} brukere, {snapshot.count_computers} maskiner) '
+			f'runtime={int(runtime)}s'
 		)
-		ApplicationLog.objects.create(event_type=LOG_EVENT_TYPE, message=logg_message)
+		_log_upload(source_ip, logg_message)
 		_update_integrasjon_success(runtime, logg_message)
 
 		return JsonResponse({
@@ -147,17 +219,34 @@ def api_bloodhound_upload(request):
 			'shards': ingest_result.get('shards', {}),
 			'files': snapshot.file_count,
 			'total_bytes': snapshot.total_bytes,
-			'removed_snapshots': ingest_result.get('removed_snapshots', []),
+			'removed_files': ingest_result.get('removed_files', []),
 		}, status=200)
+
+	except BloodHoundIngestError as exc:
+		tb = traceback.format_exc()
+		_update_integrasjon_failure(tb)
+		debug = dict(exc.debug)
+		if tmp_path and os.path.isfile(tmp_path) and 'tar_members' not in debug:
+			debug['tar_members'] = list_tar_member_names(tmp_path)
+		return _error_response(
+			source_ip,
+			400,
+			str(exc),
+			phase=exc.phase,
+			debug=debug,
+		)
 
 	except Exception as exc:
 		tb = traceback.format_exc()
-		ApplicationLog.objects.create(
-			event_type=LOG_EVENT_TYPE,
-			message=f'Feilet fra {source_ip}: {exc}',
-		)
 		_update_integrasjon_failure(tb)
-		return JsonResponse({'error': str(exc)}, status=400)
+		debug = {}
+		if tmp_path and os.path.isfile(tmp_path):
+			debug['tar_members'] = list_tar_member_names(tmp_path)
+		_log_upload(source_ip, f'Uventet feil fra {source_ip}: {exc}\n{tb}')
+		body = {'error': str(exc), 'phase': 'unexpected'}
+		if debug:
+			body['debug'] = debug
+		return JsonResponse(body, status=400)
 
 	finally:
 		if tmp_path and os.path.isfile(tmp_path):

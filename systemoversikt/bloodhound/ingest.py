@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Flat storage in import/bloodhound – wipe previous JSON before each upload.
+# 2026-06-23: Writable-check helpers; import stays under systemoversikt/import/bloodhound.
+# 2026-06-23: Richer ingest errors (phase + debug) for upload API troubleshooting.
 # 2026-06-23: BloodHound tar.gz ingest – extract, shard-aware meta.count summary, snapshot retention.
 import gc
 import json
@@ -21,6 +24,33 @@ OBJECT_TYPES = (
 	'containers',
 )
 
+_DEBUG_LIST_LIMIT = 40
+
+
+class BloodHoundIngestError(Exception):
+	"""Ingest failure with structured detail for API logging and responses."""
+
+	def __init__(self, message, phase='ingest', debug=None):
+		self.phase = phase
+		self.debug = debug or {}
+		super().__init__(message)
+
+
+def _truncate_list(items, limit=_DEBUG_LIST_LIMIT):
+	items = list(items)
+	if len(items) <= limit:
+		return items
+	return items[:limit] + [f'… and {len(items) - limit} more']
+
+
+def list_tar_member_names(archive_path, limit=_DEBUG_LIST_LIMIT):
+	"""List member paths inside a tar.gz without extracting (for error diagnostics)."""
+	try:
+		with tarfile.open(str(archive_path), 'r:gz') as tar:
+			return _truncate_list(m.name for m in tar.getmembers() if m.isfile())
+	except Exception as exc:
+		return [f'(could not read tar: {exc})']
+
 
 def bloodhound_import_root():
 	"""Directory for extracted BloodHound snapshots."""
@@ -31,12 +61,43 @@ def bloodhound_import_root():
 	return os.path.join(pkg_dir, 'import', 'bloodhound')
 
 
+def _storage_permission_hint(import_root=None):
+	root = import_root or bloodhound_import_root()
+	return (
+		f'Ensure {root} is owned by apache and writable (gunicorn user). '
+		f'Example: sudo chown -R apache:apache {root} && sudo chmod 775 {root}'
+	)
+
+
+def ensure_writable_import_root(import_root=None):
+	"""Create import root if missing; raise BloodHoundIngestError when not writable."""
+	root = import_root or bloodhound_import_root()
+	try:
+		os.makedirs(root, mode=0o775, exist_ok=True)
+	except PermissionError as exc:
+		raise BloodHoundIngestError(
+			f'Cannot create BloodHound import directory: {root}',
+			phase='storage',
+			debug={
+				'import_root': root,
+				'hint': _storage_permission_hint(root),
+				'errno': exc.errno,
+			},
+		) from exc
+	if not os.access(root, os.W_OK):
+		raise BloodHoundIngestError(
+			f'BloodHound import directory is not writable: {root}',
+			phase='storage',
+			debug={
+				'import_root': root,
+				'hint': _storage_permission_hint(root),
+			},
+		)
+	return root
+
+
 def bloodhound_upload_max_bytes():
 	return int(os.environ.get('BLOODHOUND_UPLOAD_MAX_BYTES', 2 * 1024 * 1024 * 1024))
-
-
-def bloodhound_snapshot_retention():
-	return int(os.environ.get('BLOODHOUND_SNAPSHOT_RETENTION', 3))
 
 
 def snapshot_id_from_filename(filename):
@@ -76,7 +137,11 @@ def _safe_extract_tar(tar, dest_dir):
 	for member in tar.getmembers():
 		target = (dest / member.name).resolve()
 		if not str(target).startswith(str(dest)):
-			raise ValueError(f'Unsafe path in archive: {member.name}')
+			raise BloodHoundIngestError(
+				f'Unsafe path in archive: {member.name}',
+				phase='extract',
+				debug={'member': member.name},
+			)
 		tar.extract(member, path=dest_dir)
 
 
@@ -140,7 +205,18 @@ def summarize_json_files(json_paths_by_basename):
 		gc.collect()
 
 	if counts.get('domains', 0) == 0 and file_count > 0:
-		raise ValueError('No domains.json found in archive – not a valid BloodHound export')
+		raise BloodHoundIngestError(
+			'No domains.json found in archive – not a valid BloodHound export',
+			phase='summarize',
+			debug={
+				'file_count': file_count,
+				'object_types_seen': sorted(t for t, n in counts.items() if n > 0),
+				'domain_shard_files': [
+					name for name in json_paths_by_basename
+					if BH_FILE_RE.match(name) and BH_FILE_RE.match(name).group(2) == 'domains'
+				],
+			},
+		)
 
 	return {
 		'counts': counts,
@@ -152,35 +228,57 @@ def summarize_json_files(json_paths_by_basename):
 	}
 
 
-def stage_snapshot_files(json_paths_by_basename, snapshot_id, import_root=None):
-	"""Move JSON files into import_root/snapshot_id/."""
-	root = import_root or bloodhound_import_root()
-	dest_dir = os.path.join(root, snapshot_id)
-	os.makedirs(dest_dir, exist_ok=True)
-	for basename, src in json_paths_by_basename.items():
-		if not snapshot_id_from_filename(basename) == snapshot_id:
-			continue
-		shutil.copy2(src, os.path.join(dest_dir, basename))
-	return dest_dir
-
-
-def apply_snapshot_retention(import_root=None, keep=None):
-	"""Delete oldest snapshot directories beyond retention limit."""
-	root = import_root or bloodhound_import_root()
+def clear_bloodhound_import_dir(import_root=None):
+	"""Remove previous BloodHound JSON, logs, and legacy snapshot subdirs."""
+	root = ensure_writable_import_root(import_root)
+	removed = []
 	if not os.path.isdir(root):
-		return []
-	keep = keep if keep is not None else bloodhound_snapshot_retention()
-	snapshot_dirs = []
+		return removed
 	for name in os.listdir(root):
 		path = os.path.join(root, name)
-		if os.path.isdir(path) and len(name) == 14 and name.isdigit():
-			snapshot_dirs.append(name)
-	snapshot_dirs.sort(reverse=True)
-	removed = []
-	for old_id in snapshot_dirs[keep:]:
-		shutil.rmtree(os.path.join(root, old_id), ignore_errors=True)
-		removed.append(old_id)
+		try:
+			if os.path.isdir(path):
+				shutil.rmtree(path)
+				removed.append(name + '/')
+			elif BH_FILE_RE.match(name) or name == 'output.log':
+				os.remove(path)
+				removed.append(name)
+		except OSError as exc:
+			raise BloodHoundIngestError(
+				f'Cannot remove old BloodHound file: {path}',
+				phase='storage',
+				debug={
+					'path': path,
+					'import_root': root,
+					'hint': _storage_permission_hint(root),
+					'errno': getattr(exc, 'errno', None),
+				},
+			) from exc
 	return removed
+
+
+def stage_snapshot_files(json_paths_by_basename, snapshot_id, import_root=None):
+	"""Replace import dir contents with the new snapshot JSON files (flat layout)."""
+	root = ensure_writable_import_root(import_root)
+	removed = clear_bloodhound_import_dir(import_root=root)
+	for basename, src in json_paths_by_basename.items():
+		if snapshot_id_from_filename(basename) != snapshot_id:
+			continue
+		dest = os.path.join(root, basename)
+		try:
+			shutil.copy2(src, dest)
+		except OSError as exc:
+			raise BloodHoundIngestError(
+				f'Cannot write BloodHound file: {dest}',
+				phase='storage',
+				debug={
+					'path': dest,
+					'import_root': root,
+					'hint': _storage_permission_hint(root),
+					'errno': getattr(exc, 'errno', None),
+				},
+			) from exc
+	return root, removed
 
 
 def ingest_tar_gz_archive(archive_path):
@@ -189,25 +287,53 @@ def ingest_tar_gz_archive(archive_path):
 	Returns dict suitable for API response and DB persist.
 	"""
 	work_dir = tempfile.mkdtemp(prefix='bloodhound_upload_')
+	tar_members = []
 	try:
+		tar_members = list_tar_member_names(archive_path)
 		extract_archive(archive_path, work_dir)
 		json_files = collect_bloodhound_json_files(work_dir)
+		all_extracted = []
+		for root, _dirs, files in os.walk(work_dir):
+			for name in files:
+				all_extracted.append(name)
+
 		if not json_files:
-			raise ValueError('No BloodHound JSON files found in archive')
+			raise BloodHoundIngestError(
+				'No BloodHound JSON files found in archive',
+				phase='collect',
+				debug={
+					'tar_members': tar_members,
+					'extracted_files': _truncate_list(sorted(all_extracted)),
+					'expected_filename_pattern': r'^\d{14}_[a-z]+(_\d+)?\.json$',
+				},
+			)
 
 		snapshot_id = detect_snapshot_id(json_files.keys())
 		if not snapshot_id:
-			raise ValueError('Could not determine snapshot id from filenames')
+			raise BloodHoundIngestError(
+				'Could not determine snapshot id from filenames',
+				phase='snapshot_id',
+				debug={
+					'bloodhound_json_files': _truncate_list(sorted(json_files.keys())),
+				},
+			)
 
 		summary = summarize_json_files(json_files)
-		storage_path = stage_snapshot_files(json_files, snapshot_id)
-		removed = apply_snapshot_retention()
+		storage_path, removed_files = stage_snapshot_files(json_files, snapshot_id)
 
 		return {
 			'snapshot_id': snapshot_id,
 			'storage_path': storage_path,
-			'removed_snapshots': removed,
+			'removed_files': removed_files,
 			**summary,
 		}
+	except BloodHoundIngestError:
+		raise
+	except Exception as exc:
+		raise BloodHoundIngestError(
+			str(exc),
+			phase='ingest',
+			debug={'tar_members': tar_members},
+		) from exc
 	finally:
 		shutil.rmtree(work_dir, ignore_errors=True)

@@ -96,6 +96,9 @@ cp this_env.example.py this_env.py <-- sette opp riktig miljø i filen
 cp secrets_test.example.py secrets_prod.py
 
 mkdir /var/kartoteket/source/systemoversikt/systemoversikt/pki/
+mkdir -p /var/kartoteket/source/systemoversikt/systemoversikt/import/bloodhound
+chown -R apache:apache /var/kartoteket/source/systemoversikt/systemoversikt/import/bloodhound
+chmod 775 /var/kartoteket/source/systemoversikt/systemoversikt/import/bloodhound
 
 nano build <-- kopier inn fra kildefil
 
