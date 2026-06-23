@@ -2,6 +2,13 @@
 {% load static %}
 {% load humanize %}
 
+{% block ekstrajavascript %}
+	{% if chart_prioritet_fordeling %}
+	{# 2026-06-23: Chart.js bar chart for priority score distribution. #}
+	<script src="{% static 'chart.js@2.8.0' %}"></script>
+	{% endif %}
+{% endblock ekstrajavascript %}
+
 {% block ekstrameny %}
 
 	{% include 'virksomhet_detaljer_ekstrameny.html' %}
@@ -57,6 +64,64 @@
 
 <p class="small text-muted mb-4">Kolonnen <em>Kompleksitet</em> viser tilleggsinformasjon fra CMDB, men inngår ikke i poengsummen. Infrastruktursystemer vises ikke i den detaljerte tabellen.</p>
 
+{% if chart_prioritet_fordeling %}
+<h5>Fordeling av poengsum</h5>
+<p class="small text-muted">Antall systemer per beregnet poengsum (ekskl. infrastruktur). Lavere poengsum betyr høyere prioritet ved gjenoppretting.</p>
+<div style="max-width: 960px;">
+	<canvas id="prioritet_fordeling_chart" height="90"></canvas>
+</div>
+{{ chart_prioritet_fordeling|json_script:"prioritet-fordeling-data" }}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+(function() {
+	const chartData = JSON.parse(document.getElementById('prioritet-fordeling-data').textContent);
+	new Chart(document.getElementById('prioritet_fordeling_chart'), {
+		type: 'bar',
+		data: {
+			labels: chartData.labels,
+			datasets: [{
+				label: 'Antall systemer',
+				data: chartData.data,
+				backgroundColor: '#5B8DB8',
+			}],
+		},
+		options: {
+			responsive: true,
+			legend: { display: false },
+			tooltips: {
+				callbacks: {
+					title: function(items) {
+						return 'Poengsum ' + items[0].xLabel;
+					},
+					label: function(item) {
+						return item.yLabel + ' system' + (item.yLabel === 1 ? '' : 'er');
+					},
+				},
+			},
+			scales: {
+				xAxes: [{
+					scaleLabel: {
+						display: true,
+						labelString: 'Poengsum',
+					},
+				}],
+				yAxes: [{
+					ticks: {
+						beginAtZero: true,
+						precision: 0,
+					},
+					scaleLabel: {
+						display: true,
+						labelString: 'Antall systemer',
+					},
+				}],
+			},
+		},
+	});
+})();
+</script>
+
+<hr>
+{% endif %}
 
 <h5>Forenklet liste top {{antall_top_x}}</h5>
 <table class="excel table">

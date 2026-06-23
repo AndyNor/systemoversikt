@@ -1,0 +1,19 @@
+---
+description: Keep global search navigation registry in sync with sidemeny links
+globs:
+  - systemoversikt/templates/*_index.html
+  - systemoversikt/urls.py
+  - systemoversikt/search_nav_pages.py
+---
+
+# Navigation search registry
+
+When you add, rename, or remove a **sidemeny link** in `*_index.html` (system, sikkerhet, brukere, cmdb, virksomhet, rapport), update the matching entry in [`systemoversikt/search_nav_pages.py`](systemoversikt/search_nav_pages.py):
+
+- `label` – link text shown in the sidemeny
+- `url_name` – Django URL name (must `reverse()` successfully)
+- `keywords` – extra search terms (avoid bare generic words like `systemer` alone)
+- `permissions` – match the target view's access requirements; use `[]` when the page has no permission check
+- `url_for_user` – when the URL needs the current user's virksomhet or similar
+
+Run `pytest systemoversikt/tests/test_search_nav_pages.py` after changes.

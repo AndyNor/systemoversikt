@@ -12,7 +12,7 @@
 
 	<p>Det er flere måter å søke på i Kartoteket:
 		<ol>
-			<li>Hovedsøkelinjen øverst ved siden av Oslo-logoen gjennom de fleste, men ikke alle kilder i databasen. Søker du på virksomheters trebokstavsforkortelse kommer du rett til virksomhetens hovedside. Du kan også søke på systemer, brukernavn, tilgangsgrupper, databaser, nettadresser (URL-er), servernavn, service principals fra Entra ID, service offerings fra driftsleverandør, leverandører, avdelinger, seksjoner og team.</li>
+			<li>Hovedsøkelinjen øverst ved siden av Oslo-logoen gjennom de fleste, men ikke alle kilder i databasen. Søker du på virksomheters trebokstavsforkortelse kommer du rett til virksomhetens hovedside. Du kan også søke på temasider og rapporter (f.eks. «prioriteringer» eller «sårbarheter»), systemer, brukernavn, tilgangsgrupper, databaser, nettadresser (URL-er), servernavn, service principals fra Entra ID, service offerings fra driftsleverandør, leverandører, avdelinger, seksjoner og team.</li>
 			<li>Noen temasider har egne søkebokser. Disse er mer spesialiserte og søker kun gjennom data knyttet til temasiden. Eksempelvis kan du søke på fornavn og etternavn via <a href="{% url 'bruker_sok' %}">brukersøk</a>, og du kan søke på sårbarheter (CVE-er) via <a href="{% url 'vulnstats' %}">sårbarhetsoversikten</a>.</li>
 			<li>I tillegg har de fleste tabeller aktivert filtrering. "Søk" i tabeller filtrerer bare vekk det du ser, men finner ikke ny informasjon som ikke allerede er vist i tabellen. Merk at denne informasjonen allerede kan være filtrert.</li>
 		</ol>
@@ -20,6 +20,16 @@
 	</p>
 
 	<hr>
+
+	{% if navigasjonstreff %}
+	<h6>Sider og rapporter</h6>
+	<ul>
+	{% for treff in navigasjonstreff %}
+		<li><a href="{{ treff.url }}">{{ treff.label }}</a>{% if treff.section %} <span class="text-muted">({{ treff.section }})</span>{% endif %}</li>
+	{% endfor %}
+	</ul>
+	<hr>
+	{% endif %}
 
 	{% if systemer or  aktuelle_programvarer %}
 	<h6>Treff på system- og programvarenavn</h6>

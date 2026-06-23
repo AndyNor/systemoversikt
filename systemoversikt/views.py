@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: drift_beredskap – bar chart data for priority score distribution per virksomhet.
 # 2026-06-23: Developer docs page for Sårbarhetsoversikten (vulnapp) API (login_required).
 # 2026-06-23: Fix api_virksomheter overordnede_virksomheter – use parent.pk not shadowed loop variable.
 # 2026-06-23: Developer docs page for Tjeneste- og systemoversikt API (login_required).
@@ -5908,6 +5909,7 @@ def search(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
+	navigasjonstreff = []
 
 	try:
 		v = Virksomhet.objects.get(virksomhetsforkortelse__iexact=search_term)
@@ -5924,6 +5926,9 @@ def search(request):
 			aktuelle_personer = User.objects.filter(username__icontains=search_term)
 
 	if search_term != '' and len(search_term) > 1:
+		# 2026-06-23: Navigation/theme pages before entity hits in search results.
+		from systemoversikt.search_nav_pages import match_nav_pages
+		navigasjonstreff = match_nav_pages(search_term, request.user)
 		aktuelle_systemer = System.objects.filter(~Q(livslop_status=7)).filter(Q(systemnavn__icontains=search_term)|Q(alias__icontains=search_term))
 		#Her ønsker vi å vise treff i beskrivelsesfeltet, men samtidig ikke vise systemer på nytt
 		potensielle_systemer = System.objects.filter(~Q(livslop_status=7)).filter(Q(systembeskrivelse__icontains=search_term) & ~Q(pk__in=aktuelle_systemer))
@@ -5940,6 +5945,7 @@ def search(request):
 		aktuelle_citrixapper = CitrixPublication.objects.filter(application_name__icontains=search_term)
 	else:
 		messages.info(request, 'Lengden på det du søker på må minimum være 2 tegn')
+		navigasjonstreff = []
 		aktuelle_systemer = System.objects.none()
 		potensielle_systemer = System.objects.none()
 		aktuelle_programvarer = Programvare.objects.none()
@@ -5985,6 +5991,7 @@ def search(request):
 		'aktuelle_orgledd': aktuelle_orgledd,
 		'systemer_avviklet': systemer_avviklet,
 		'aktuelle_citrixapper': aktuelle_citrixapper,
+		'navigasjonstreff': navigasjonstreff,
 	})
 
 
@@ -8887,6 +8894,17 @@ def drift_beredskap(request, pk):
 			ikke_infra.append(s)
 	systemer_drifter = ikke_infra
 
+	# 2026-06-23: Bar chart – count per priority score so forvalter can see spread across poengsum.
+	# 2026-06-23: Omit chart when all systems share one score – nothing to compare.
+	priority_score_counts = Counter(s.cache_systemprioritet for s in systemer_drifter)
+	sorted_scores = sorted(priority_score_counts.keys())
+	chart_prioritet_fordeling = None
+	if len(sorted_scores) > 1:
+		chart_prioritet_fordeling = {
+			'labels': [str(score) for score in sorted_scores],
+			'data': [priority_score_counts[score] for score in sorted_scores],
+		}
+
 	return render(request, 'systemer_drifter_prioritering.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -8894,6 +8912,7 @@ def drift_beredskap(request, pk):
 		'systemer': systemer_drifter,
 		'systemer_drifter_top_x': systemer_drifter_top_x,
 		'antall_top_x': antall_top_x,
+		'chart_prioritet_fordeling': chart_prioritet_fordeling,
 	})
 
 
