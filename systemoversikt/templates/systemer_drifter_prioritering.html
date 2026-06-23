@@ -152,7 +152,7 @@
 	<thead>
 		<tr>
 			<th class="filter-false"></th>
-			<th>Prioritet</th>
+			<th class="filter-false" data-sorter="digit">Prioritet</th>
 			<th>System</th>
 			<th>Driftsplattform</th>
 			<th>Tilgjengelighetsvurdering</th>
@@ -170,7 +170,7 @@
 				<a href="/admin/systemoversikt/system/{{ system.pk }}/change/">{% include 'site_edit_button.html' %}
 			</td>
 
-			<td>
+			<td data-text="{{ system.cache_systemprioritet }}">
 				{{ system.systemprioritet }}
 			</td>
 

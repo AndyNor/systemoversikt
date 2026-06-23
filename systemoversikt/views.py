@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: drift_beredskap – sort by computed priority score, not stale cache_systemprioritet.
+# 2026-06-23: rapport_prioriteringer – quick links from intern_tjenesteleverandor flag, not hardcoded DIG id.
 # 2026-06-23: drift_beredskap – bar chart data for priority score distribution per virksomhet.
 # 2026-06-23: Developer docs page for Sårbarhetsoversikten (vulnapp) API (login_required).
 # 2026-06-23: Fix api_virksomheter overordnede_virksomheter – use parent.pk not shadowed loop variable.
@@ -8844,11 +8846,14 @@ def rapport_prioriteringer(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True).filter(~Q(driftsmodell_ansvarlig_virksomhet=None))
-
+	intern_tjenesteleverandorer = Virksomhet.objects.filter(
+		intern_tjenesteleverandor=True,
+	).order_by('virksomhetsforkortelse', 'virksomhetsnavn')
 
 	return render(request, 'rapport_prioriteringer.html', {
 		'request': request,
 		'virksomheter': virksomheter,
+		'intern_tjenesteleverandorer': intern_tjenesteleverandorer,
 	})
 
 
@@ -8883,20 +8888,25 @@ def drift_beredskap(request, pk):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	systemer_drifter = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(ibruk=True).order_by('cache_systemprioritet')
+	systemer_drifter = System.objects.filter(
+		driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet,
+	).filter(ibruk=True)
+
+	# 2026-06-23: Exclude infra and sort by live score – cache_systemprioritet can be stale until rendered.
+	systemer_med_poeng = [
+		(s, s.systemprioritet_poeng())
+		for s in systemer_drifter
+		if not s.er_infrastruktur()
+	]
+	systemer_med_poeng.sort(key=lambda item: (item[1], item[0].systemnavn.lower()))
+	systemer_drifter = [s for s, _ in systemer_med_poeng]
 
 	antall_top_x = 30
-	systemer_drifter_top_x = systemer_drifter[0:antall_top_x]
-
-	ikke_infra = []
-	for s in systemer_drifter:
-		if not s.er_infrastruktur():
-			ikke_infra.append(s)
-	systemer_drifter = ikke_infra
+	systemer_drifter_top_x = systemer_drifter[:antall_top_x]
 
 	# 2026-06-23: Bar chart – count per priority score so forvalter can see spread across poengsum.
 	# 2026-06-23: Omit chart when all systems share one score – nothing to compare.
-	priority_score_counts = Counter(s.cache_systemprioritet for s in systemer_drifter)
+	priority_score_counts = Counter(score for _, score in systemer_med_poeng)
 	sorted_scores = sorted(priority_score_counts.keys())
 	chart_prioritet_fordeling = None
 	if len(sorted_scores) > 1:

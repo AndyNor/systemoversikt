@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: VirksomhetAdmin – intern_tjenesteleverandor list/filter/fieldset for manual flagging.
 # 2026-06-23: System admin fieldset order – forvalter personer/avdeling swap; CMDB/citrix fields below forvaltning_epost.
 # 2026-06-23: System admin requires systemforvalter (personer), livsløpstatus, driftsplattform – admin-only validation.
 # 2026-06-22: Driftsmodell.er_saas and System.er_egenutviklet in admin fieldsets.
@@ -603,9 +604,9 @@ class SystemAdmin(SimpleHistoryAdmin):
 @admin.register(Virksomhet)
 class VirksomhetAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('virksomhetsforkortelse', 'virksomhetsnavn', 'resultatenhet', 'kan_representeres', 'ordinar_virksomhet', 'orgnummer')
+	list_display = ('virksomhetsforkortelse', 'virksomhetsnavn', 'resultatenhet', 'kan_representeres', 'ordinar_virksomhet', 'intern_tjenesteleverandor', 'orgnummer')
 	search_fields = ('virksomhetsnavn', 'virksomhetsforkortelse')
-	list_filter = ('resultatenhet', 'ordinar_virksomhet')
+	list_filter = ('resultatenhet', 'ordinar_virksomhet', 'intern_tjenesteleverandor')
 	filter_horizontal = ('overordnede_virksomheter',)
 	autocomplete_fields = (
 		'informasjonssikkerhetskoordinator',
@@ -639,6 +640,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 					('virksomhetsnavn','orgnummer',),
 					('virksomhetsforkortelse','gamle_virksomhetsforkortelser'),
 					'ordinar_virksomhet',
+					'intern_tjenesteleverandor',
 					('overordnede_virksomheter','kan_representeres',),
 					('resultatenhet',
 					'office365'),

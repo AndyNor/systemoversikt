@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: systemprioritet_poeng() – numeric score for sorting; drift_beredskap was ordering on stale cache.
+# 2026-06-23: Virksomhet.intern_tjenesteleverandor – replaces hardcoded DIG virksomhet id in prioriteringer links.
 # 2026-06-23: systemprioritet() – use service_offerings.exists() so systems without CMDB link get T2/D2 defaults.
 # 2026-06-23: Tjeneste/systemoversikt API – update api_tjeneste_systemoversikt_docs.py when model fields affect API JSON (url name: api_tjeneste_systemoversikt_docs).
 # 2026-06-22: drift_dimensjoner(), driftes_av_dig (DIG forkortelse), home drift chart support.
@@ -684,6 +686,11 @@ class Virksomhet(models.Model):
 			verbose_name="Er dette en ordinær virksomhet?",
 			default=True,
 			help_text=u'Hvis du tar bort dette valget, vises ikke virksomheten i virksomhetsoversikten eller i dashboard. Brukes i forbindelse med import av driftsbrukere og i forbindelse med forvaltning av sertifikater.',
+			)
+	intern_tjenesteleverandor = models.BooleanField(
+			verbose_name="Intern tjenesteleverandør",
+			default=False,
+			help_text=u'Krysses av for virksomheter som leverer interne IKT-tjenester (f.eks. DIG). Brukes bl.a. for hurtiglenker til systemprioriteringer.',
 			)
 	virksomhetsforkortelse = models.CharField(
 			unique=True,
@@ -5280,16 +5287,14 @@ class System(models.Model):
 				databehandleravtaler.append(avtale)
 		return databehandleravtaler
 
-	def systemprioritet(self):
+	def _beregn_systemprioritet(self):
 		import re
 		tilgjengelighet = self.tilgjengelighetsvurdering
-		if tilgjengelighet == None:
+		if tilgjengelighet is None:
 			tilgjengelighet = 5
-
 
 		# 2026-06-23: M2M manager is never None – exists() distinguishes linked vs unlinked offerings.
 		if self.service_offerings.exists():
-
 			tjenestenivaa = 4
 			for bss in self.service_offerings.all():
 				if bss.operational_status == 1:# and bss.er_produksjon:
@@ -5309,7 +5314,6 @@ class System(models.Model):
 							kritikalitet = bss_kritikalitet
 					except:
 						pass
-
 		else: # ingen CMDB-kobling finnes
 			tjenestenivaa = 2
 			kritikalitet = 2 # balanse mellom å la ikke-kritiske systemer havne for høyt på prioritet og at kritiske systemer havner for langt ned på listen dersom ikke koblet til tjeneste
@@ -5319,14 +5323,22 @@ class System(models.Model):
 			sammfunnskritisk = 1
 
 		score = tilgjengelighet * tjenestenivaa * kritikalitet * sammfunnskritisk
+		return tilgjengelighet, tjenestenivaa, kritikalitet, sammfunnskritisk, score
 
+	def _oppdater_cache_systemprioritet(self, score):
 		if self.cache_systemprioritet != score:
-			#print(f"{self} cache {self.cache_systemprioritet} var ikke lik score {score}, oppdaterer..")
 			self.cache_systemprioritet = score
 			self.save()
 
-		tekst = f"{tilgjengelighet}*{tjenestenivaa}*{kritikalitet}*{sammfunnskritisk}={score}"
-		return tekst
+	def systemprioritet_poeng(self):
+		*_, score = self._beregn_systemprioritet()
+		self._oppdater_cache_systemprioritet(score)
+		return score
+
+	def systemprioritet(self):
+		tilgjengelighet, tjenestenivaa, kritikalitet, sammfunnskritisk, score = self._beregn_systemprioritet()
+		self._oppdater_cache_systemprioritet(score)
+		return f"{tilgjengelighet}*{tjenestenivaa}*{kritikalitet}*{sammfunnskritisk}={score}"
 
 	def citrix_publiseringer_pk(self):
 		navn = self.systemnavn.split()
