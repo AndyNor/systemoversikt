@@ -22,10 +22,10 @@
 </tr>
 </thead>
 <tbody>
-{% for ca in ca_regler_endringer %}
+{% for ca in ca_endringer %}
 <tr>
 	<td>{{ ca.timestamp }}</td>
-	<td><pre>{{ ca.changes_to_json }}</pre></td>
+	<td><pre>{{ ca.changes }}</pre></td>
 </tr>
 {% endfor %}
 </tbody>

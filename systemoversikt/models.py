@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: Batch GUID lookup for Conditional Access – fixes N+1 queries on CA changes report.
 # 2026-06-23: Removed cache_systemprioritet – priority is computed on demand only.
 # 2026-06-23: systemprioritet_poeng() – numeric score for sorting.
 # 2026-06-23: Virksomhet.intern_tjenesteleverandor – replaces hardcoded DIG virksomhet id in prioriteringer links.
@@ -72,8 +73,54 @@ class RequestLogs(models.Model):
 
 
 
-def conditional_access_replace_guid(data):
+_CONDITIONAL_ACCESS_GUID_PATTERN = re.compile(
+	r'\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b'
+)
+
+
+def conditional_access_guids_in_text(data):
+	if not data:
+		return ()
+	return _CONDITIONAL_ACCESS_GUID_PATTERN.findall(str(data))
+
+
+def conditional_access_guid_lookup_cache(guids):
+	"""Map Azure object GUIDs to display strings using batched DB lookups."""
+	guids = {g for g in guids if g}
+	if not guids:
+		return {}
+
+	cache = {}
+	for obj in AzureApplication.objects.filter(appId__in=guids):
+		cache[obj.appId] = str(obj)
+
+	remaining = guids.difference(cache)
+	if remaining:
+		for obj in AzureNamedLocations.objects.filter(ipNamedLocation_id__in=remaining):
+			cache[obj.ipNamedLocation_id] = str(obj)
+
+	remaining = guids.difference(cache)
+	if remaining:
+		for obj in AzureUser.objects.filter(guid__in=remaining):
+			cache[obj.guid] = str(obj)
+
+	remaining = guids.difference(cache)
+	if remaining:
+		for obj in AzureGroup.objects.filter(guid__in=remaining):
+			cache[obj.guid] = str(obj)
+
+	remaining = guids.difference(cache)
+	if remaining:
+		for obj in AzureDirectoryRole.objects.filter(guid__in=remaining):
+			cache[obj.guid] = str(obj)
+
+	return cache
+
+
+def conditional_access_replace_guid(data, guid_lookup=None):
 	def lookup_azure_id(azure_id):
+		if guid_lookup is not None:
+			return guid_lookup.get(azure_id, azure_id)
 		try:
 			return AzureApplication.objects.get(appId=azure_id).__str__()
 		except AzureApplication.DoesNotExist:
@@ -96,14 +143,12 @@ def conditional_access_replace_guid(data):
 			pass
 		return azure_id
 
-	id_pattern = re.compile(r'\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b')
-
 	def replace_id(match):
 		azure_id = match.group(0)
 		return lookup_azure_id(azure_id)
 
 	# Replace all IDs in the data
-	data = id_pattern.sub(replace_id, data)
+	data = _CONDITIONAL_ACCESS_GUID_PATTERN.sub(replace_id, data)
 	return data
 
 
@@ -157,17 +202,16 @@ class EntraIDConditionalAccessPolicies(models.Model):
 
 
 
-	def changes_to_json(self):
-		#import ast
+	def changes_to_json(self, guid_lookup=None):
 		import re
-		policy = self.json_policy_as_json()["value"]
+		policy = json.loads(self.json_policy)["value"]
 
 		def ca_rule_name(number):
 			return policy[number]["displayName"]
 
 		try:
 			data = json.dumps(ast.literal_eval(self.changes), indent=4)
-			data = conditional_access_replace_guid(data)
+			data = conditional_access_replace_guid(data, guid_lookup=guid_lookup)
 
 			def replacer(match):
 				number = int(match.group(1))
@@ -180,9 +224,9 @@ class EntraIDConditionalAccessPolicies(models.Model):
 
 
 
-	def json_policy_as_json(self):
+	def json_policy_as_json(self, guid_lookup=None):
 		data = self.json_policy
-		data = conditional_access_replace_guid(data)
+		data = conditional_access_replace_guid(data, guid_lookup=guid_lookup)
 		# Convert back to JSON object
 		return json.loads(data)
 

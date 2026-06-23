@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-23: rapport_conditional_access_changes – batch GUID lookups for CA changes report performance.
 # 2026-06-23: drift_beredskap – sort by computed priority score; attach prioritet_poeng for template sort key.
 # 2026-06-23: rapport_prioriteringer – quick links from intern_tjenesteleverandor flag, not hardcoded DIG id.
 # 2026-06-23: drift_beredskap – bar chart data for priority score distribution per virksomhet.
@@ -2650,13 +2651,24 @@ def rapport_conditional_access_changes(request):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	antall_siste_endringer = 15
-	ca_regler_endringer = EntraIDConditionalAccessPolicies.objects.filter(modification=True).order_by('-timestamp')[:antall_siste_endringer]
+	ca_regler_endringer = list(
+		EntraIDConditionalAccessPolicies.objects.filter(modification=True).order_by('-timestamp')[:antall_siste_endringer]
+	)
+	guids = set()
+	for ca in ca_regler_endringer:
+		guids.update(conditional_access_guids_in_text(ca.json_policy))
+		guids.update(conditional_access_guids_in_text(ca.changes))
+	guid_lookup = conditional_access_guid_lookup_cache(guids)
+	ca_endringer = [
+		{'timestamp': ca.timestamp, 'changes': ca.changes_to_json(guid_lookup=guid_lookup)}
+		for ca in ca_regler_endringer
+	]
 	integrasjonsstatus = _integrasjonsstatus("azure_ad_conditional_access")
 
 	return render(request, 'rapport_conditional_access_changes.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-		'ca_regler_endringer': ca_regler_endringer,
+		'ca_endringer': ca_endringer,
 		'antall_siste_endringer': antall_siste_endringer,
 		'integrasjonsstatus': integrasjonsstatus,
 	})
