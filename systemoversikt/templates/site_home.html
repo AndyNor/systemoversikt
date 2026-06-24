@@ -34,33 +34,34 @@
 	<hr>
 
 	<div class="container-fluid">
+		{# 2026-06-24: Home charts 3 per row on large screens (3+2 layout) instead of 5 in one row. #}
 		<div class="row mb-4">
-			<div class="col-lg col-md-6 mb-3">
+			<div class="col-lg-4 col-md-6 mb-3">
 				<h6 class="text-center">Livsløpstatus</h6>
 				<div style="position: relative; height: 220px;">
 					<canvas id="home_chart_livslop"></canvas>
 				</div>
 			</div>
-			<div class="col-lg col-md-6 mb-3">
+			<div class="col-lg-4 col-md-6 mb-3">
 				<h6 class="text-center">Systemklassifisering</h6>
 				<div style="position: relative; height: 220px;">
 					<canvas id="home_chart_systemklassifisering"></canvas>
 				</div>
 			</div>
-			<div class="col-lg col-md-6 mb-3">
+			<div class="col-lg-4 col-md-6 mb-3">
 				<h6 class="text-center">Vedlikehold</h6>
 				{# 2026-06-21: No forsømt criteria text under chart – full explanation on rapport page. #}
 				<div style="position: relative; height: 220px;">
 					<canvas id="home_chart_vedlikehold"></canvas>
 				</div>
 			</div>
-			<div class="col-lg col-md-6 mb-3">
+			<div class="col-lg-4 col-md-6 mb-3">
 				<h6 class="text-center">Driftsplattform</h6>
 				<div style="position: relative; height: 220px;">
 					<canvas id="home_chart_driftsplattform"></canvas>
 				</div>
 			</div>
-			<div class="col-lg col-md-6 mb-3">
+			<div class="col-lg-4 col-md-6 mb-3">
 				<h6 class="text-center">Egenutviklet</h6>
 				<div style="position: relative; height: 220px;">
 					<canvas id="home_chart_egenutviklet"></canvas>

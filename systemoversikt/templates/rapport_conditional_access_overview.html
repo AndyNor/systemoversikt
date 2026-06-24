@@ -2,6 +2,7 @@
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
+{# 2026-06-24: User tag black text; role brown palette. #}
 
 {% block overskrift %}
 	Azure felles: Conditional Access-oversikt
@@ -75,14 +76,37 @@
 	list-style: none;
 }
 
+.ca-overview-legend {
+	margin-bottom: 0.75rem;
+	padding: 0.55rem 0.65rem;
+	border: 1px solid #e4e2ef;
+	border-radius: 0.35rem;
+	background: #fafafa;
+}
+
+.ca-overview-legend__title {
+	margin: 0 0 0.35rem;
+	font-size: 0.7rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: #666;
+}
+
+.ca-overview-legend__items {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+}
+
 .ca-overview-tile {
 	min-width: 0;
 	padding: 0.65rem 0.8rem 0.75rem;
 	border: 1px solid #e4e2ef;
-	border-left: 4px solid #1976d2;
+	border-left: 4px solid #43a047;
 	border-radius: 0.35rem;
 	background: #fff;
-	box-shadow: 0 2px 8px rgba(25, 118, 210, 0.08);
+	box-shadow: 0 2px 8px rgba(67, 160, 71, 0.08);
 	font-size: 0.78rem;
 	line-height: 1.35;
 	color: #444;
@@ -108,8 +132,30 @@
 	text-decoration: none;
 }
 
+.ca-overview-label--filter {
+	cursor: pointer;
+	border: none;
+	font-family: inherit;
+}
+
+.ca-overview-label--filter:hover {
+	filter: brightness(0.95);
+}
+
+.ca-overview-label--filter.is-active {
+	outline: 2px solid #1976d2;
+	outline-offset: 1px;
+}
+
 .ca-overview-tile h6 a:hover {
 	text-decoration: underline;
+}
+
+.ca-overview-tile__title-suffix {
+	font-size: 0.72rem;
+	font-weight: 400;
+	color: #888;
+	line-height: 1.3;
 }
 
 .ca-overview-tile__section {
@@ -132,12 +178,22 @@
 }
 
 .ca-overview-label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.22rem;
 	font-size: 0.68rem;
 	font-weight: 600;
 	padding: 0.12rem 0.4rem;
 	border-radius: 0.25rem;
 	background: #eef2fb;
 	color: #2A2859;
+}
+
+.ca-overview-label__icon {
+	width: 0.72em;
+	height: 0.72em;
+	flex-shrink: 0;
+	opacity: 0.9;
 }
 
 .ca-overview-label--grant {
@@ -150,15 +206,19 @@
 	color: #b71c1c;
 }
 
-.ca-overview-label--group {
-	background: #e8f5e9;
-	color: #2e7d32;
+.ca-overview-label--user {
+	background: #eef6ff;
+	color: #1a1a1a;
 }
 
-.ca-overview-label--user,
+.ca-overview-label--group {
+	background: #c5d9f7;
+	color: #0d47a1;
+}
+
 .ca-overview-label--role {
-	background: #e3f2fd;
-	color: #1565c0;
+	background: #efebe9;
+	color: #5d4037;
 }
 
 .ca-overview-label--location {
@@ -167,8 +227,8 @@
 }
 
 .ca-overview-label--scope {
-	background: #e3f2fd;
-	color: #0d47a1;
+	background: #eceff1;
+	color: #546e7a;
 }
 
 .ca-overview-label--app {
@@ -177,14 +237,27 @@
 }
 
 .ca-overview-label--platform,
-.ca-overview-label--client {
+.ca-overview-label--client,
+.ca-overview-label--device {
 	background: #fff3e0;
 	color: #e65100;
 }
 
-.ca-overview-tile__labels--excluded .ca-overview-label {
-	background: #ffebee;
-	color: #b71c1c;
+.ca-overview-label--action {
+	background: #f1f8e9;
+	color: #558b2f;
+}
+
+.ca-overview-label--risk {
+	background: #fbe9e7;
+	color: #bf360c;
+}
+
+.ca-overview-tile__section--excluded {
+	padding: 0.45rem 0.5rem;
+	border: 1px dashed #ef9a9a;
+	border-radius: 0.35rem;
+	background: #fffbfb;
 }
 
 .ca-overview-tile ul {
@@ -214,7 +287,7 @@
 
 <p>
 	Denne siden viser <strong>aktive</strong> Conditional Access-regler som fliser (terms of use og inaktive regler er utelatt).
-	Regelnavn er forkortet til teksten før første « - ».
+	Hoveddelen av regelnavnet (ID) vises som tittel; resten av navnet vises etterpå i mindre grå skrift.
 	<a href="{{ rules_detail_url }}">Se full regeltabell med JSON-detaljer</a>.
 </p>
 
@@ -242,23 +315,37 @@
 	<span id="ca-overview-visible-count">{{ ca_tiles|length }}</span> av {{ ca_tiles|length }} regler vises
 </p>
 
+<div class="ca-overview-legend" aria-label="Fargeforklaring for betingelser">
+	<p class="ca-overview-legend__title">Legend</p>
+	<div class="ca-overview-legend__items">
+		<span class="ca-overview-label ca-overview-label--grant">Allow</span>
+		<span class="ca-overview-label ca-overview-label--grant-block">Block</span>
+		<span class="ca-overview-label ca-overview-label--user">{% ca_condition_label_icon 'user' %}User</span>
+		<span class="ca-overview-label ca-overview-label--group">{% ca_condition_label_icon 'group' %}Group</span>
+		<span class="ca-overview-label ca-overview-label--role">{% ca_condition_label_icon 'role' %}Role</span>
+		<span class="ca-overview-label ca-overview-label--location">{% ca_condition_label_icon 'location' %}Location</span>
+		<span class="ca-overview-label ca-overview-label--app">{% ca_condition_label_icon 'app' %}App</span>
+		<span class="ca-overview-label ca-overview-label--platform">Platform</span>
+		<span class="ca-overview-label ca-overview-label--client">Client app</span>
+		<span class="ca-overview-label ca-overview-label--device">Device</span>
+		<span class="ca-overview-label ca-overview-label--risk">Risk</span>
+	</div>
+</div>
+
 <ul class="ca-overview-grid" id="ca-overview-grid">
 {% for tile in ca_tiles %}
 	<li class="ca-overview-tile{% if tile.grant.mode == 'block' %} ca-overview-tile--block{% endif %}"
 		data-filter-tags="{{ tile.filter_tags|join:' ' }}">
 		<h6>
-			<a href="{{ tile.detail_url }}" title="{{ tile.full_name }}">{{ tile.short_name }}</a>
+			<a href="{{ tile.detail_url }}" title="{{ tile.full_name }}">{{ tile.short_name }}</a>{% if tile.title_suffix %}<span class="ca-overview-tile__title-suffix"> {{ tile.title_suffix }}</span>{% endif %}
 		</h6>
 
 		<div class="ca-overview-tile__section">
 			<p class="ca-overview-tile__section-title">Grant</p>
 			<div class="ca-overview-tile__labels">
-				{% if tile.grant.mode == 'block' %}
-					<span class="ca-overview-label ca-overview-label--grant-block">Block</span>
-				{% elif tile.grant.mode == 'allow' %}
-					<span class="ca-overview-label ca-overview-label--grant">Allow</span>
+				{% if tile.grant.mode == 'block' or tile.grant.mode == 'allow' %}
 					{% for label in tile.grant.labels %}
-						<span class="ca-overview-label ca-overview-label--grant">{{ label }}</span>
+						{% ca_overview_label label %}
 					{% endfor %}
 				{% else %}
 					<span class="ca-overview-tile__empty">{{ tile.grant.summary }}</span>
@@ -284,7 +371,7 @@
 			{% if tile.conditions_included %}
 				<div class="ca-overview-tile__labels">
 					{% for label in tile.conditions_included %}
-						<span class="ca-overview-label ca-overview-label--{{ label.kind }}">{{ label.text }}</span>
+						{% ca_overview_label label %}
 					{% endfor %}
 				</div>
 			{% else %}
@@ -292,12 +379,12 @@
 			{% endif %}
 		</div>
 
-		<div class="ca-overview-tile__section">
+		<div class="ca-overview-tile__section ca-overview-tile__section--excluded">
 			<p class="ca-overview-tile__section-title">Conditions excluded</p>
 			{% if tile.conditions_excluded %}
-				<div class="ca-overview-tile__labels ca-overview-tile__labels--excluded">
+				<div class="ca-overview-tile__labels">
 					{% for label in tile.conditions_excluded %}
-						<span class="ca-overview-label ca-overview-label--{{ label.kind }}">{{ label.text }}</span>
+						{% ca_overview_label label %}
 					{% endfor %}
 				</div>
 			{% else %}
@@ -350,6 +437,45 @@
 		});
 	}
 
+	function syncChipState(groupId, tag, active) {
+		if (!filterRoot) {
+			return;
+		}
+		var chip = filterRoot.querySelector(
+			'.ca-overview-filter-chip[data-filter-group="' + groupId + '"][data-filter-tag="' + CSS.escape(tag) + '"]'
+		);
+		if (chip) {
+			chip.classList.toggle('is-active', active);
+		}
+	}
+
+	function syncLabelStates() {
+		grid.querySelectorAll('.ca-overview-label--filter').forEach(function (label) {
+			var groupId = label.getAttribute('data-filter-group');
+			var tag = label.getAttribute('data-filter-tag');
+			var active = !!(groupId && tag && activeByGroup[groupId] && activeByGroup[groupId].indexOf(tag) !== -1);
+			label.classList.toggle('is-active', active);
+		});
+	}
+
+	function toggleFilter(groupId, tag) {
+		if (!groupId || !tag) {
+			return;
+		}
+		if (!activeByGroup[groupId]) {
+			activeByGroup[groupId] = [];
+		}
+		var idx = activeByGroup[groupId].indexOf(tag);
+		if (idx === -1) {
+			activeByGroup[groupId].push(tag);
+			syncChipState(groupId, tag, true);
+		} else {
+			activeByGroup[groupId].splice(idx, 1);
+			syncChipState(groupId, tag, false);
+		}
+		applyFilters();
+	}
+
 	function applyFilters() {
 		var grouped = groupSelections();
 		var visible = 0;
@@ -363,6 +489,7 @@
 		if (countEl) {
 			countEl.textContent = String(visible);
 		}
+		syncLabelStates();
 	}
 
 	if (filterRoot) {
@@ -373,23 +500,18 @@
 			}
 			var groupId = chip.getAttribute('data-filter-group');
 			var tag = chip.getAttribute('data-filter-tag');
-			if (!groupId || !tag) {
-				return;
-			}
-			if (!activeByGroup[groupId]) {
-				activeByGroup[groupId] = [];
-			}
-			var idx = activeByGroup[groupId].indexOf(tag);
-			if (idx === -1) {
-				activeByGroup[groupId].push(tag);
-				chip.classList.add('is-active');
-			} else {
-				activeByGroup[groupId].splice(idx, 1);
-				chip.classList.remove('is-active');
-			}
-			applyFilters();
+			toggleFilter(groupId, tag);
 		});
 	}
+
+	grid.addEventListener('click', function (event) {
+		var label = event.target.closest('.ca-overview-label--filter');
+		if (!label) {
+			return;
+		}
+		event.preventDefault();
+		toggleFilter(label.getAttribute('data-filter-group'), label.getAttribute('data-filter-tag'));
+	});
 
 	applyFilters();
 })();

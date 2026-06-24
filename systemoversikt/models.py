@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-24: CA location filter chips – display name only, no IP range suffix.
+# 2026-06-24: CA overview filters – Locations group for named and all-locations tags.
+# 2026-06-24: CA app display names – strip leading «OK - » prefix on overview tags.
+# 2026-06-24: CA overview filters – risk group, excluded conditions in filter_tags; clickable tile tags.
+# 2026-06-24: CA overview – flexible rule title split (ID + gray suffix); grant labels as filter dicts.
+# 2026-06-24: CA overview – user tags collapsed to count; Breakglass singled out; All users/locations use entity kinds.
 # 2026-06-23: CA overview roles – count tags only (no directory role lookup).
 # 2026-06-23: CA overview conditions – included/excluded tags with GUID lookup like rules report.
 # 2026-06-23: CA overview – app tags for filtering; include/exclude roles counted only.
 # 2026-06-23: CA overview tiles – filter tags, exclude counts, skip termsOfUse policies.
-# 2026-06-23: conditional_access_build_overview_tiles – tile summaries for CA overview (replaces graph).
-# 2026-06-23: conditional_access_build_overview_graph – Cytoscape nodes/edges for CA overview prototype.
+# 2026-06-23: conditional_access_build_overview_tiles – tile summaries for CA overview.
 # 2026-06-23: CA named locations – show IP ranges on rules report; exact displayName match; skip countries.
 # 2026-06-23: BloodHoundFinding + snapshot analysis fields for preventive checks.
 # 2026-06-23: BloodHoundSnapshot – metadata and object counts from bloodhound-python JSON uploads.
@@ -231,6 +236,26 @@ _CA_APP_LITERAL_LABELS = {
 	'Office365': 'Office 365',
 }
 
+# Leading «OK - » on enterprise app display names (stripped on CA overview tags).
+_CA_APP_DISPLAY_PREFIX_RE = re.compile(r'^OK\s*-\s+', re.IGNORECASE)
+
+
+def _ca_normalize_app_display_name(name):
+	if not name:
+		return name
+	stripped = _CA_APP_DISPLAY_PREFIX_RE.sub('', str(name), count=1).strip()
+	return stripped or name
+
+
+def _ca_location_filter_label(text):
+	"""Filter chip label for a named location – name only, without appended IP ranges."""
+	if not text or text == 'All locations':
+		return text
+	if ' (' in text and text.endswith(')'):
+		name = text.rsplit(' (', 1)[0].strip()
+		return name or text
+	return text
+
 _CA_PLATFORM_LABELS = {
 	'android': 'Android',
 	'androidForWork': 'Android for work',
@@ -256,9 +281,14 @@ _CA_FILTER_GROUPS = (
 	('scope', 'Scope'),
 	('groups', 'Groups'),
 	('apps', 'Apps'),
+	('locations', 'Locations'),
 	('platform', 'Platforms'),
 	('client', 'Client apps'),
+	('risk', 'Risk'),
 )
+
+# Splits «ID - description» rule names; accepts hyphen, en-dash and em-dash with surrounding spaces.
+_CA_RULE_NAME_SPLIT_RE = re.compile(r'\s+[-–—]\s+')
 
 _CA_CLOUD_APP_SECURITY_LABELS = {
 	'blockDownloads': 'Block downloads',
@@ -272,12 +302,48 @@ def conditional_access_is_terms_of_use_policy(policy):
 	return bool(grant_controls.get('termsOfUse'))
 
 
-def conditional_access_rule_short_name(display_name):
+def conditional_access_split_rule_display_name(display_name):
+	"""Split a CA rule display name into ID (before dash) and descriptive suffix."""
 	if not display_name:
-		return 'Unnamed rule'
-	if ' - ' in display_name:
-		return display_name.split(' - ', 1)[0].strip()
-	return display_name.strip()
+		return 'Unnamed rule', ''
+	display_name = display_name.strip()
+	parts = _CA_RULE_NAME_SPLIT_RE.split(display_name, maxsplit=1)
+	if len(parts) == 1:
+		return parts[0], ''
+	return parts[0].strip(), parts[1].strip()
+
+
+def conditional_access_rule_short_name(display_name):
+	short_name, _suffix = conditional_access_split_rule_display_name(display_name)
+	return short_name
+
+
+def conditional_access_rule_title_suffix(display_name):
+	"""Text after the rule ID separator (shown in smaller gray on overview tiles)."""
+	_short_name, suffix = conditional_access_split_rule_display_name(display_name)
+	return suffix
+
+
+def _ca_overview_grant_label(text, filter_tag=None, kind='grant'):
+	return {
+		'text': text,
+		'filter': filter_tag,
+		'kind': kind,
+	}
+
+
+def _ca_prepare_overview_label(label):
+	label = dict(label)
+	tag = label.get('filter')
+	if tag:
+		group = _ca_filter_group_for_tag(tag)
+		if group:
+			label['filter_group'] = group
+	return label
+
+
+def _ca_prepare_overview_labels(labels):
+	return [_ca_prepare_overview_label(label) for label in (labels or [])]
 
 
 def conditional_access_summarize_grant(grant_controls):
@@ -302,11 +368,15 @@ def conditional_access_summarize_grant(grant_controls):
 			'mode': 'block',
 			'summary': 'Block',
 			'operator': None,
-			'labels': ['Block'],
+			'labels': [_ca_overview_grant_label('Block', 'block', 'grant-block')],
 			'filter_tags': ['block'],
 		}
 
-	labels = [_CA_GRANT_LABELS.get(c, c) for c in controls]
+	grant_labels = [_ca_overview_grant_label('Allow', 'allow', 'grant')]
+	for control in controls:
+		text = _CA_GRANT_LABELS.get(control, control)
+		tag = _CA_GRANT_FILTER_TAGS.get(control)
+		grant_labels.append(_ca_overview_grant_label(text, tag, 'grant'))
 	filter_tags = ['allow']
 	for control in controls:
 		tag = _CA_GRANT_FILTER_TAGS.get(control)
@@ -316,23 +386,24 @@ def conditional_access_summarize_grant(grant_controls):
 	auth_strength = grant_controls.get('authenticationStrength') or {}
 	strength_name = auth_strength.get('displayName')
 	if strength_name:
-		labels.append(strength_name)
+		grant_labels.append(_ca_overview_grant_label(strength_name, None, 'grant'))
 
-	if not labels:
+	if len(grant_labels) == 1:
 		return {
 			'mode': 'allow',
 			'summary': 'Allow',
 			'operator': operator,
-			'labels': [],
+			'labels': grant_labels,
 			'filter_tags': filter_tags,
 		}
 
-	joined = (' %s ' % operator).join(labels)
+	label_texts = [label['text'] for label in grant_labels[1:]]
+	joined = (' %s ' % operator).join(label_texts)
 	return {
 		'mode': 'allow',
 		'summary': joined,
 		'operator': operator,
-		'labels': labels,
+		'labels': grant_labels,
 		'filter_tags': filter_tags,
 	}
 
@@ -373,10 +444,12 @@ def conditional_access_summarize_session(session_controls):
 
 def _ca_app_display_name(app_id, guid_lookup, enriched_name=None):
 	if enriched_name is not None:
-		return enriched_name
-	if app_id in _CA_APP_LITERAL_LABELS:
-		return _CA_APP_LITERAL_LABELS[app_id]
-	return guid_lookup.get(app_id, app_id)
+		name = enriched_name
+	elif app_id in _CA_APP_LITERAL_LABELS:
+		name = _CA_APP_LITERAL_LABELS[app_id]
+	else:
+		name = guid_lookup.get(app_id, app_id)
+	return _ca_normalize_app_display_name(name)
 
 
 def _ca_display_at(items_raw, items_enriched, index, guid_lookup):
@@ -391,10 +464,45 @@ def _ca_append_entity_tags(target, items_raw, items_enriched, tag_prefix, kind, 
 		if not raw:
 			continue
 		text = _ca_display_at(items_raw, items_enriched, index, guid_lookup)
+		if kind == 'app':
+			text = _ca_normalize_app_display_name(text)
 		target.append({
 			'text': text,
 			'filter': '%s:%s' % (tag_prefix, raw),
 			'kind': kind,
+		})
+
+
+def _ca_user_display_is_breakglass(display_name):
+	return 'breakglass' in (display_name or '').lower()
+
+
+def _ca_append_user_tags(target, items_raw, items_enriched, guid_lookup):
+	"""Overview tags for users: Breakglass by name, others as a single count tag."""
+	entries = []
+	for index, raw in enumerate(items_raw or []):
+		if not raw:
+			continue
+		text = _ca_display_at(items_raw, items_enriched, index, guid_lookup)
+		entries.append((raw, text))
+
+	breakglass_entries = [entry for entry in entries if _ca_user_display_is_breakglass(entry[1])]
+	other_entries = [entry for entry in entries if not _ca_user_display_is_breakglass(entry[1])]
+
+	if breakglass_entries:
+		target.append({
+			'text': 'Breakglass',
+			'filter': 'user:%s' % breakglass_entries[0][0],
+			'kind': 'user',
+		})
+
+	if other_entries:
+		count = len(other_entries)
+		word = 'user' if count == 1 else 'users'
+		target.append({
+			'text': '%d %s' % (count, word),
+			'filter': None,
+			'kind': 'user',
 		})
 
 
@@ -424,14 +532,14 @@ def conditional_access_tile_conditions(enriched_conditions, raw_conditions=None,
 	users_enriched = enriched.get('users') or {}
 
 	if 'All' in (users_raw.get('includeUsers') or []):
-		included_labels.append({'text': 'All users', 'filter': 'all-users', 'kind': 'scope'})
+		included_labels.append({'text': 'All users', 'filter': 'all-users', 'kind': 'user'})
 		filter_tags.append('all-users')
 	else:
-		_ca_append_entity_tags(
+		_ca_append_user_tags(
 			included_labels,
 			users_raw.get('includeUsers'),
 			users_enriched.get('includeUsers'),
-			'user', 'user', guid_lookup,
+			guid_lookup,
 		)
 
 	_ca_append_entity_tags(
@@ -442,11 +550,11 @@ def conditional_access_tile_conditions(enriched_conditions, raw_conditions=None,
 	)
 	_ca_append_role_count_tag(included_labels, users_raw.get('includeRoles'))
 
-	_ca_append_entity_tags(
+	_ca_append_user_tags(
 		excluded_labels,
 		users_raw.get('excludeUsers'),
 		users_enriched.get('excludeUsers'),
-		'user', 'user', guid_lookup,
+		guid_lookup,
 	)
 	_ca_append_entity_tags(
 		excluded_labels,
@@ -503,7 +611,7 @@ def conditional_access_tile_conditions(enriched_conditions, raw_conditions=None,
 	locations_raw = raw.get('locations') or {}
 	locations_enriched = enriched.get('locations') or {}
 	if 'All' in (locations_raw.get('includeLocations') or []):
-		included_labels.append({'text': 'All locations', 'filter': 'all-locations', 'kind': 'scope'})
+		included_labels.append({'text': 'All locations', 'filter': 'all-locations', 'kind': 'location'})
 		filter_tags.append('all-locations')
 	else:
 		_ca_append_entity_tags(
@@ -576,6 +684,11 @@ def conditional_access_tile_conditions(enriched_conditions, raw_conditions=None,
 		if tag and tag not in filter_tags and _ca_filter_group_for_tag(tag):
 			filter_tags.append(tag)
 
+	for label in excluded_labels:
+		tag = label.get('filter')
+		if tag and tag not in filter_tags and _ca_filter_group_for_tag(tag):
+			filter_tags.append(tag)
+
 	return {
 		'included_labels': included_labels,
 		'excluded_labels': excluded_labels,
@@ -588,8 +701,10 @@ def _ca_filter_group_for_tag(tag):
 		return 'grant_mode'
 	if tag in ('mfa', 'compliant', 'domain-joined'):
 		return 'grant_control'
-	if tag in ('all-users', 'all-locations'):
+	if tag in ('all-users',):
 		return 'scope'
+	if tag in ('all-locations',) or tag.startswith('location:'):
+		return 'locations'
 	if tag == 'all-apps' or tag.startswith('app:'):
 		return 'apps'
 	if tag.startswith('group:'):
@@ -598,6 +713,8 @@ def _ca_filter_group_for_tag(tag):
 		return 'platform'
 	if tag.startswith('client:'):
 		return 'client'
+	if tag.startswith('signin-risk:') or tag.startswith('user-risk:'):
+		return 'risk'
 	return None
 
 
@@ -616,10 +733,12 @@ def conditional_access_collect_overview_filters(tiles):
 		],
 		'scope': [
 			('all-users', 'All users'),
-			('all-locations', 'All locations'),
 		],
 		'apps': [
 			('all-apps', 'All apps'),
+		],
+		'locations': [
+			('all-locations', 'All locations'),
 		],
 	}
 	for group_id, options in static_filters.items():
@@ -633,7 +752,22 @@ def conditional_access_collect_overview_filters(tiles):
 				continue
 			group_id = _ca_filter_group_for_tag(tag)
 			if group_id:
-				seen[group_id][tag] = label['text']
+				label_text = label['text']
+				if group_id == 'locations':
+					label_text = _ca_location_filter_label(label_text)
+				seen[group_id][tag] = label_text
+
+	for tile in tiles:
+		for label in tile.get('conditions_excluded') or []:
+			tag = label.get('filter')
+			if not tag:
+				continue
+			group_id = _ca_filter_group_for_tag(tag)
+			if group_id:
+				label_text = label['text']
+				if group_id == 'locations':
+					label_text = _ca_location_filter_label(label_text)
+				seen[group_id][tag] = label_text
 
 	for tile in tiles:
 		for tag in tile.get('filter_tags') or []:
@@ -647,6 +781,8 @@ def conditional_access_collect_overview_filters(tiles):
 			elif group_id == 'client':
 				key = tag.split(':', 1)[1]
 				seen[group_id][tag] = _CA_CLIENT_APP_LABELS.get(key, key)
+			elif group_id == 'locations':
+				seen[group_id][tag] = _ca_location_filter_label(tag.split(':', 1)[-1])
 			else:
 				seen[group_id][tag] = tag
 
@@ -687,6 +823,7 @@ def conditional_access_build_overview_tiles(policies, rules_detail_url, guid_loo
 		raw_policy = raw_policies_by_id.get(policy_id) or policy
 		display_name = policy.get('displayName') or policy_id
 		grant = conditional_access_summarize_grant(policy.get('grantControls'))
+		grant['labels'] = _ca_prepare_overview_labels(grant.get('labels'))
 		conditions = conditional_access_tile_conditions(
 			policy.get('conditions'),
 			raw_conditions=raw_policy.get('conditions'),
@@ -699,12 +836,13 @@ def conditional_access_build_overview_tiles(policies, rules_detail_url, guid_loo
 		tiles.append({
 			'id': policy_id,
 			'short_name': conditional_access_rule_short_name(display_name),
+			'title_suffix': conditional_access_rule_title_suffix(display_name),
 			'full_name': display_name,
 			'detail_url': '%s#ca-rule-%s' % (rules_detail_url, policy_id),
 			'grant': grant,
 			'session_lines': conditional_access_summarize_session(policy.get('sessionControls')),
-			'conditions_included': conditions['included_labels'],
-			'conditions_excluded': conditions['excluded_labels'],
+			'conditions_included': _ca_prepare_overview_labels(conditions['included_labels']),
+			'conditions_excluded': _ca_prepare_overview_labels(conditions['excluded_labels']),
 			'filter_tags': filter_tags,
 		})
 

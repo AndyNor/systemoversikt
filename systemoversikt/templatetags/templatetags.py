@@ -1,4 +1,6 @@
 # Change log:
+# 2026-06-24: ca_overview_label – filterable CA overview tag markup (button or span).
+# 2026-06-24: ca_condition_label_icon – leading SVG icons on CA overview condition tags.
 # 2026-06-21: tjeneste_ikon_* – SVG glyphs and accent colours for tjeneste tile overview.
 from django import template
 from django.conf import settings
@@ -129,6 +131,75 @@ def tjeneste_ikon_svg(navn):
 		'<svg class="tjeneste-ikon-svg" viewBox="0 0 64 64" aria-hidden="true" focusable="false">{}</svg>',
 		format_html(inner),
 	)
+
+
+# Bootstrap Icons paths (16×16) for CA overview condition tag kinds.
+_CA_CONDITION_LABEL_ICONS = {
+	'user': (
+		'<path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>'
+		'<path d="M14 14s-1-4-6-4-6 4-6 4 1 1 6 1 6-1 6-1"/>'
+	),
+	'group': (
+		'<path d="M7 14s-1 0-1-1 1-4 5-4 5 2 5 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>'
+	),
+	'location': (
+		'<path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/>'
+	),
+	'app': (
+		'<path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h2A1.5 1.5 0 0 1 6 2.5v2A1.5 1.5 0 0 1 4.5 6h-2A1.5 1.5 0 0 1 1 4.5zm8 0A1.5 1.5 0 0 1 10.5 1h2A1.5 1.5 0 0 1 14 2.5v2A1.5 1.5 0 0 1 12.5 6h-2A1.5 1.5 0 0 1 9 4.5zm-8 8A1.5 1.5 0 0 1 2.5 9h2A1.5 1.5 0 0 1 6 10.5v2A1.5 1.5 0 0 1 4.5 14h-2A1.5 1.5 0 0 1 1 12.5zm8 0A1.5 1.5 0 0 1 10.5 9h2a1.5 1.5 0 0 1 1.5 1.5v2a1.5 1.5 0 0 1-1.5 1.5h-2A1.5 1.5 0 0 1 9 12.5v-2z"/>'
+	),
+	'role': (
+		'<path d="M8 0l1.669.864 1.858.282-.842 1.68L11.5 5l-1.715 1.174.842 1.68-1.858.282L8 7.864 6.336 8.136l-1.858-.282.842-1.68L4.5 5l1.715-1.174-.842-1.68 1.858-.282zM6.5 5a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0"/>'
+	),
+}
+
+
+@register.simple_tag
+def ca_condition_label_icon(kind):
+	"""Small leading icon for a CA overview condition tag (user, group, location, app, role)."""
+	paths = _CA_CONDITION_LABEL_ICONS.get(kind)
+	if not paths:
+		return ''
+	return format_html(
+		'<svg class="ca-overview-label__icon" xmlns="http://www.w3.org/2000/svg" '
+		'viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">{}</svg>',
+		format_html(paths),
+	)
+
+
+def _ca_condition_label_icon_html(kind):
+	paths = _CA_CONDITION_LABEL_ICONS.get(kind)
+	if not paths:
+		return ''
+	return format_html(
+		'<svg class="ca-overview-label__icon" xmlns="http://www.w3.org/2000/svg" '
+		'viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">{}</svg>',
+		format_html(paths),
+	)
+
+
+@register.simple_tag
+def ca_overview_label(label):
+	"""Render a CA overview tag; filterable labels become toggle buttons."""
+	if not isinstance(label, dict):
+		label = {'text': label, 'kind': 'grant', 'filter': None}
+	text = label.get('text', '')
+	kind = label.get('kind', '')
+	tag = label.get('filter')
+	group = label.get('filter_group')
+	classes = 'ca-overview-label ca-overview-label--%s' % kind
+	icon_html = _ca_condition_label_icon_html(kind)
+	content = format_html('{}{}', icon_html, text)
+	if tag and group:
+		return format_html(
+			'<button type="button" class="{} ca-overview-label--filter" '
+			'data-filter-group="{}" data-filter-tag="{}">{}</button>',
+			classes,
+			group,
+			tag,
+			content,
+		)
+	return format_html('<span class="{}">{}</span>', classes, content)
 
 
 ### url_path_segment — for {% url %} path kwargs that may contain /, ?, @, etc.

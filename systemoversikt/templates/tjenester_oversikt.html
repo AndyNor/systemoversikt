@@ -1,3 +1,4 @@
+{# 2026-06-24: Whole tile clickable via stretched link; admin edit stays above overlay. #}
 {# 2026-06-21: Equal-width CSS grid tiles; component list removed – count only on card. #}
 {# 2026-06-21: Tile grid (3 per row) with keyword-based service icons – replaces table prototype. #}
 {% extends "system_index.html" %}
@@ -29,6 +30,7 @@
 }
 
 .tjeneste-tile {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	width: 100%;
@@ -39,6 +41,14 @@
 	overflow: hidden;
 	box-shadow: 0 2px 8px rgba(42, 40, 89, 0.06);
 	transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+	cursor: pointer;
+}
+
+.tjeneste-tile__stretched-link::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 1;
 }
 
 .tjeneste-tile:hover {
@@ -81,15 +91,17 @@
 	color: #fff;
 }
 
-.tjeneste-tile__title a.tjeneste-tile__name {
+.tjeneste-tile__title .tjeneste-tile__name {
 	color: inherit;
 }
 
-.tjeneste-tile__title a.tjeneste-tile__name:hover {
+.tjeneste-tile:hover .tjeneste-tile__name {
 	color: #F9C66B;
 }
 
 .tjeneste-tile__edit {
+	position: relative;
+	z-index: 2;
 	font-size: 0.85rem;
 	opacity: 0.85;
 	margin-left: 0.25rem;
@@ -155,12 +167,13 @@
 {% for t in tjenester %}
 	<div class="tjeneste-grid__item">
 		<article class="tjeneste-tile" style="--tile-accent: {{ t.navn|tjeneste_ikon_farge }};">
+			<a class="tjeneste-tile__stretched-link" href="{% url 'tjeneste_detaljer' pk=t.pk %}" aria-label="{{ t.navn }} – vis detaljer"></a>
 			<header class="tjeneste-tile__header">
 				<div class="tjeneste-tile__icon" aria-hidden="true">
 					{% tjeneste_ikon_svg t.navn %}
 				</div>
 				<h4 class="tjeneste-tile__title">
-					<a class="tjeneste-tile__name" href="{% url 'tjeneste_detaljer' pk=t.pk %}">{{ t.navn }}</a>
+					<span class="tjeneste-tile__name">{{ t.navn }}</span>
 					<a class="tjeneste-tile__edit" href="/admin/systemoversikt/tjeneste/{{ t.pk }}/change/" title="Rediger tjeneste">{% include 'site_edit_button.html' %}</a>
 				</h4>
 			</header>
