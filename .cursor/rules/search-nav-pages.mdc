@@ -16,4 +16,4 @@ When you add, rename, or remove a **sidemeny link** in `*_index.html` (system, s
 - `permissions` – match the target view's access requirements; use `[]` when the page has no permission check
 - `url_for_user` – when the URL needs the current user's virksomhet or similar
 
-Run `pytest systemoversikt/tests/test_search_nav_pages.py` after changes.
+When you change sidemeny links or URL names, mention if a test would help catch broken `reverse()` calls — but do not add or run tests unless the user agrees.

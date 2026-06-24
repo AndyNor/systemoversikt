@@ -1,0 +1,13 @@
+---
+description: When to suggest tests — never add or run by default
+alwaysApply: true
+---
+
+# Testing
+
+- Do **not** add tests or run the test suite unless the user explicitly asks.
+- After completing a change, you **may** briefly suggest a test **only if** it would catch a real regression the user would likely miss manually.
+- When suggesting, explain in 2–3 sentences: what would break, how likely it is, and what manual check would replace the test.
+- Do not argue for tests on cosmetic/UI-only changes or one-off reports.
+- If the user approves, prefer `SimpleTestCase` (no DB) over `TestCase` unless the database is essential.
+- Never run `manage.py test` or `pytest` during normal feature work unless asked.
