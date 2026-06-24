@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-06-24: CA rules detail URL – /rules/<pk>/ for single Azure policy; list stays at /rules/.
 # 2026-06-23: BloodHound upload API and status page.
 # 2026-06-23: Developer docs URL for Tjeneste- og systemoversikt API.
 # 2026-06-21: Removed commented dead URL routes (smartkartlegging, prk API, passwdexpire, etc.).
@@ -147,6 +148,7 @@ urlpatterns = [
 	re_path(r'^rapport/hovedkategorier/subkategorier/bytt_kategori/(?P<fra>\d{1,8})/(?P<til>\d{1,8})/$', views.bytt_kategori, name='bytt_kategori'),
 	re_path(r'^rapport/hovedkategorier/subkategorier/uten_kategori/$', views.uten_systemkategori, name='uten_systemkategorier'),
 	re_path(r'^rapport/hovedkategorier/subkategorier/(?P<pk>\d{1,8})/$', views.systemkategori, name='systemkategori'),
+	re_path(r'^rapport/azure/conditional_access/rules/(?P<pk>[0-9a-fA-F-]{36})/$', views.rapport_conditional_access_rules, name="rapport_conditional_access_rule"),
 	re_path(r'^rapport/azure/conditional_access/rules/$', views.rapport_conditional_access_rules, name="rapport_conditional_access_rules"),
 	re_path(r'^rapport/azure/conditional_access/overview/$', views.rapport_conditional_access_overview, name="rapport_conditional_access_overview"),
 	re_path(r'^rapport/azure/conditional_access/changes/$', views.rapport_conditional_access_changes, name="rapport_conditional_access_changes"),

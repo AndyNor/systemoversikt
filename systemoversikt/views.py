@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-24: rapport_conditional_access_rules – single rule at /rules/<pk>/; list at /rules/.
 # 2026-06-23: rapport_conditional_access_overview – tile view of active CA rules (replaces graph prototype).
 # 2026-06-23: rapport_conditional_access_rules – batch GUID lookup and named-location IP ranges in conditions.
 # 2026-06-23: rapport_conditional_access_changes – batch GUID lookups for CA changes report performance.
@@ -2627,7 +2628,7 @@ def azure_user_consents(request):
 
 
 
-def rapport_conditional_access_rules(request):
+def rapport_conditional_access_rules(request, pk=None):
 	required_permissions = ['systemoversikt.view_entraidconditionalaccesspolicies']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -2641,6 +2642,15 @@ def rapport_conditional_access_rules(request):
 		guid_lookup=guid_lookup,
 		display_name_cache=display_name_cache,
 	)
+	if pk:
+		matched = [
+			regel for regel in (ca_policy.get('value') or [])
+			if regel.get('id') == pk
+		]
+		if not matched:
+			raise Http404
+		ca_policy = dict(ca_policy)
+		ca_policy['value'] = matched
 	integrasjonsstatus = _integrasjonsstatus("azure_ad_conditional_access")
 
 	return render(request, 'rapport_conditional_access_rules.html', {
@@ -2648,6 +2658,7 @@ def rapport_conditional_access_rules(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'ca_regler_nyeste': ca_regler_nyeste,
 		'ca_policy': ca_policy,
+		'pk': pk,
 		'integrasjonsstatus': integrasjonsstatus,
 	})
 
@@ -2673,7 +2684,6 @@ def rapport_conditional_access_overview(request):
 	rules_detail_url = reverse('rapport_conditional_access_rules')
 	ca_tiles = conditional_access_build_overview_tiles(
 		ca_policy.get('value') or [],
-		rules_detail_url,
 		guid_lookup=guid_lookup,
 		raw_policies_by_id=raw_policies_by_id,
 	)

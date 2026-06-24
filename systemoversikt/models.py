@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-24: CA overview tile detail_url – path /rules/<pk>/ for single Azure policy.
 # 2026-06-24: CA location filter chips – display name only, no IP range suffix.
 # 2026-06-24: CA overview filters – Locations group for named and all-locations tags.
 # 2026-06-24: CA app display names – strip leading «OK - » prefix on overview tags.
@@ -41,6 +42,7 @@
 # 2026-06-08: Added infrastruktur_chart color for combined seksjon chart legend.
 # 2026-06-07: Added land field to Leverandor – country of operation for supplier overview.
 from django.db import models
+from django.urls import reverse
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save
@@ -802,7 +804,7 @@ def conditional_access_collect_overview_filters(tiles):
 	return groups
 
 
-def conditional_access_build_overview_tiles(policies, rules_detail_url, guid_lookup=None, raw_policies_by_id=None):
+def conditional_access_build_overview_tiles(policies, guid_lookup=None, raw_policies_by_id=None):
 	"""Build overview tile data for active CA policies (state == enabled, not terms of use)."""
 	guid_lookup = guid_lookup or {}
 	raw_policies_by_id = raw_policies_by_id or {}
@@ -838,7 +840,7 @@ def conditional_access_build_overview_tiles(policies, rules_detail_url, guid_loo
 			'short_name': conditional_access_rule_short_name(display_name),
 			'title_suffix': conditional_access_rule_title_suffix(display_name),
 			'full_name': display_name,
-			'detail_url': '%s#ca-rule-%s' % (rules_detail_url, policy_id),
+			'detail_url': reverse('rapport_conditional_access_rule', kwargs={'pk': policy_id}),
 			'grant': grant,
 			'session_lines': conditional_access_summarize_session(policy.get('sessionControls')),
 			'conditions_included': _ca_prepare_overview_labels(conditions['included_labels']),
