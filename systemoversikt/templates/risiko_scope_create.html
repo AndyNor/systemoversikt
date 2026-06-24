@@ -1,0 +1,29 @@
+{% extends "sikkerhet_index.html" %}
+
+{% block overskrift %}
+	Ny risikosamling
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Opprett en tom risikosamling og legg til scenarioer manuelt på neste side.</p>
+
+<form method="post">
+	{% csrf_token %}
+	<div class="form-group">
+		<label for="title">Navn</label>
+		<input type="text" name="title" id="title" class="form-control" value="{{ title }}" maxlength="300" required>
+	</div>
+	<div class="form-group">
+		<label for="beskrivelse">Beskrivelse</label>
+		<textarea name="beskrivelse" id="beskrivelse" class="form-control" rows="3">{{ beskrivelse }}</textarea>
+	</div>
+	<div class="form-group">
+		<label for="sist_revidert">Sist revidert</label>
+		<input type="date" name="sist_revidert" id="sist_revidert" class="form-control" value="{{ sist_revidert }}">
+	</div>
+	<button type="submit" class="btn btn-primary">Opprett</button>
+	<a href="{% url 'risiko_scope_list' %}" class="btn btn-link">Avbryt</a>
+</form>
+
+{% endblock hovedinnhold %}

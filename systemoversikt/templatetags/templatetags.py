@@ -1,10 +1,13 @@
 # Change log:
+# 2026-06-25: risiko_level_tag – level label as colored tag in scenario table.
+# 2026-06-25: risiko_kit_tags – K/I/T dimension badges with icons for risk scenario table.
 # 2026-06-24: ca_overview_label – filterable CA overview tag markup (button or span).
 # 2026-06-24: ca_condition_label_icon – leading SVG icons on CA overview condition tags.
 # 2026-06-21: tjeneste_ikon_* – SVG glyphs and accent colours for tjeneste tile overview.
 from django import template
 from django.conf import settings
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 import string
 import random
 from systemoversikt.models import *
@@ -348,4 +351,67 @@ def explain_collapsed(text):
 @register.simple_tag
 def get_aduser_count_for(adgruppe, virksomhet):
 	return adgruppe.brukere_for_virksomhet(virksomhet)
+
+
+_RISIKO_KIT_META = {
+	'K': ('Konfidensialitet', 'risiko-kit-k'),
+	'I': ('Integritet', 'risiko-kit-i'),
+	'T': ('Tilgjengelighet', 'risiko-kit-t'),
+}
+
+_RISIKO_KIT_ICON_PATHS = {
+	'K': (
+		'<path d="M8 1a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2V3a2 2 0 0 0-2-2zM7 3a1 1 0 0 1 2 0v2H7V3z"/>'
+	),
+	'I': (
+		'<path d="M8 1 2 3.5v5A6 6 0 0 0 8 15a6 6 0 0 0 6-6.5v-5L8 1zm0 1.5 4 1.7v3.3a4 4 0 0 1-8 0V4.2l4-1.7z"/>'
+		'<path d="M6.2 8.2 7.5 9.5 10 7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'
+	),
+	'T': (
+		'<path d="M8 3.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9zM2 8a6 6 0 1 1 12 0A6 6 0 0 1 2 8z"/>'
+		'<path d="M8 5.5V8l1.8 1.2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>'
+	),
+}
+
+
+def _risiko_kit_icon_svg(code):
+	paths = _RISIKO_KIT_ICON_PATHS.get(code)
+	if not paths:
+		return ''
+	return format_html(
+		'<svg class="risiko-kit-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" '
+		'fill="currentColor" aria-hidden="true" focusable="false">{}</svg>',
+		format_html(paths),
+	)
+
+
+@register.simple_tag
+def risiko_level_tag(label, css_class):
+	if not label:
+		return '-'
+	cls = css_class or 'risk-cell-empty'
+	return mark_safe(format_html(
+		'<span class="risiko-level-tag {}">{}</span>',
+		cls,
+		label,
+	))
+
+
+@register.simple_tag
+def risiko_kit_tags(kit_dimensjoner):
+	from systemoversikt.risk_criteria import parse_kit_dimensjoner
+	tags = parse_kit_dimensjoner(kit_dimensjoner)
+	if not tags:
+		return '-'
+	parts = []
+	for code in tags:
+		label, css = _RISIKO_KIT_META[code]
+		parts.append(format_html(
+			'<span class="risiko-kit-tag {}" title="{}">{}{}</span>',
+			css,
+			label,
+			_risiko_kit_icon_svg(code),
+			label,
+		))
+	return mark_safe(' '.join(str(part) for part in parts))
 

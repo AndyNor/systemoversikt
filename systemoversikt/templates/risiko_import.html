@@ -1,0 +1,21 @@
+{% extends "sikkerhet_index.html" %}
+
+{% block overskrift %}
+	Importer risikomatrise
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Last opp en Excel-fil med arkene <em>Risikoanalyse</em> og eventuelt <em>Tiltak</em>. Tittel hentes fra filnavnet og sist revidert settes til dagens dato.</p>
+
+<form method="post" enctype="multipart/form-data">
+	{% csrf_token %}
+	<div class="form-group">
+		<label for="risikofil">Excel-fil (.xlsx)</label>
+		<input type="file" name="risikofil" id="risikofil" class="form-control-file" accept=".xlsx,.xlsm" required>
+	</div>
+	<button type="submit" class="btn btn-primary">Importer</button>
+	<a href="{% url 'risiko_scope_list' %}" class="btn btn-link">Avbryt</a>
+</form>
+
+{% endblock hovedinnhold %}

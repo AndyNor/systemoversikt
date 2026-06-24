@@ -1,0 +1,322 @@
+{% extends "sikkerhet_index.html" %}
+{% load static %}
+{% load templatetags %}
+
+{% block overskrift %}
+	{{ scope.title }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<div id="risiko-scope-editor" data-can-edit="{% if can_edit_scope %}true{% else %}false{% endif %}">
+
+<p>
+	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til oversikt</a>
+	<a class="btn btn-outline-primary btn-sm" href="#akseptkriterier">Akseptkriterier</a>
+</p>
+
+<div class="row mb-4" id="risikomatriser">
+	<div class="col-lg-4 mb-3 mb-lg-0">
+		<div id="risiko-scope-meta-view" class="mb-3">
+			{% if scope.beskrivelse %}
+			<div class="mb-3">
+				<strong>Beskrivelse</strong>
+				<p id="risiko-scope-beskrivelse-view" style="background-color: #f8f9fa; padding: 0.75rem 1rem;">{{ scope.beskrivelse|linebreaksbr }}</p>
+			</div>
+			{% else %}
+			<p id="risiko-scope-beskrivelse-view" class="text-muted small" style="display:none;"></p>
+			{% endif %}
+
+			<p>
+				<strong>Sist revidert:</strong> <span id="risiko-scope-revidert-view">{{ scope.sist_revidert|date:"Y-m-d" }}</span>
+				&middot; <strong>Eier:</strong> {{ scope.eier.get_full_name|default:scope.eier.username }}
+				{% if scope.source_filename %} &middot; <strong>Kilde:</strong> {{ scope.source_filename }}{% endif %}
+			</p>
+		</div>
+
+		{% if can_edit_scope %}
+		<div class="card" id="risiko-scope-meta-edit">
+			<div class="card-body">
+				<h6 class="card-title">Rediger samling</h6>
+				<div class="form-group">
+					<label for="risiko-scope-title">Navn</label>
+					<input type="text" id="risiko-scope-title" class="form-control" value="{{ scope.title }}" maxlength="300">
+				</div>
+				<div class="form-group">
+					<label for="risiko-scope-beskrivelse">Beskrivelse</label>
+					<textarea id="risiko-scope-beskrivelse" class="form-control" rows="3">{{ scope.beskrivelse }}</textarea>
+				</div>
+				<div class="form-group">
+					<label for="risiko-scope-revidert">Sist revidert</label>
+					<input type="date" id="risiko-scope-revidert" class="form-control" value="{{ scope.sist_revidert|date:'Y-m-d' }}">
+				</div>
+				<button type="button" class="btn btn-primary btn-sm" id="risiko-scope-save">Lagre samling</button>
+				<span id="risiko-scope-status" class="text-muted small ml-2"></span>
+			</div>
+		</div>
+		{% endif %}
+	</div>
+
+	<div class="col-lg-8">
+		<h5 class="mt-0">Risikomatriser</h5>
+		<div class="row">
+			<div class="col-md-6">
+				<h6>Nåværende risiko</h6>
+				<p class="text-muted small">Etter eksisterende tiltak</p>
+				{% include "risiko_matrise_grid.html" with matrix=matrix_current scope=scope konsekvens_labels=konsekvens_labels %}
+			</div>
+			<div class="col-md-6">
+				<h6>Risiko etter tiltak</h6>
+				<p class="text-muted small">Etter foreslåtte tiltak er implementert</p>
+				{% include "risiko_matrise_grid.html" with matrix=matrix_residual scope=scope konsekvens_labels=konsekvens_labels %}
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="d-flex align-items-center mt-2 mb-2">
+	<h5 class="mb-0">Uønskede hendelser</h5>{% if can_edit_scope %}<button type="button" class="btn btn-outline-primary btn-sm ml-2" id="risiko-new-scenario">Nytt scenario</button>{% endif %}
+</div>
+<table class="table tablesorter excel table-sm" id="risiko-scenarios-table">
+<thead>
+<tr>
+	<th>ID</th>
+	<th>Uønsket hendelse</th>
+	<th>Systemer</th>
+	<th>KIT</th>
+	<th>Konsekvens</th>
+	<th>Sannsynlighet</th>
+	<th>Risiko</th>
+	<th>Tiltak</th>
+	<th>Risiko etter tiltak</th>
+</tr>
+</thead>
+<tbody id="risiko-scenarios-tbody">
+{% for scenario in scenarios %}
+<tr class="{% if can_edit_scope %}risiko-scenario-row{% endif %}" data-scenario-id="{{ scenario.pk }}" {% if can_edit_scope %}style="cursor:pointer"{% endif %}>
+	<td>{{ scenario.risk_id }}</td>
+	<td>{{ scenario.uonsket_hendelse|truncatechars:80 }}</td>
+	<td class="risiko-systemer-cell">
+		{% for system in scenario.systemer.all %}
+			<a href="{% url 'systemdetaljer' pk=system.pk %}" onclick="event.stopPropagation();">{{ system.systemnavn }}</a>{% if not forloop.last %}, {% endif %}
+		{% empty %}-{% endfor %}
+	</td>
+	<td class="risiko-kit-cell">{% risiko_kit_tags scenario.kit_dimensjoner %}</td>
+	<td class="risiko-level-cell">{% risiko_level_tag scenario.konsekvens_label scenario.konsekvens_css %}</td>
+	<td class="risiko-level-cell">{% risiko_level_tag scenario.sannsynlighet_label scenario.sannsynlighet_css %}</td>
+	<td class="{{ scenario.risiko_css }}">{{ scenario.risiko_etikett|default:"-" }}</td>
+	<td>{{ scenario.actions.count }}</td>
+	<td class="{{ scenario.restrisiko_css }}">{{ scenario.restrisiko_etikett|default:"-" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% include "risiko_scope_tiltak_list.html" %}
+
+{% include "risiko_akseptkriterier_content.html" %}
+
+</div>
+
+{% if can_edit_scope %}
+<div class="modal fade" id="risiko-scenario-modal" tabindex="-1" role="dialog" aria-labelledby="risiko-scenario-modal-title" aria-hidden="true">
+	<div class="modal-dialog modal-xl risiko-scenario-modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="risiko-scenario-modal-title">Scenario</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Lukk"><span aria-hidden="true">&times;</span></button>
+			</div>
+			<div class="modal-body">
+				<div id="risiko-modal-status" class="small mb-2"></div>
+				<input type="hidden" id="risiko-modal-scenario-id" value="">
+
+				<div class="row">
+					<div class="col-lg-4 risiko-modal-col">
+						<div class="form-group">
+							<label for="risiko-f-risk-id">RiskID</label>
+							<input type="text" class="form-control form-control-sm" id="risiko-f-risk-id" maxlength="20">
+						</div>
+						<div class="form-group">
+							<label for="risiko-f-uonsket">Uønsket hendelse</label>
+							<textarea class="form-control form-control-sm" id="risiko-f-uonsket" rows="4"></textarea>
+						</div>
+						<div class="form-group">
+							<label for="risiko-f-arsaker">Årsaker/svakheter</label>
+							<textarea class="form-control form-control-sm" id="risiko-f-arsaker" rows="4"></textarea>
+						</div>
+						<div class="form-group">
+							<label for="risiko-f-eksisterende">Eksisterende tiltak</label>
+							<textarea class="form-control form-control-sm" id="risiko-f-eksisterende" rows="3"></textarea>
+						</div>
+						<h6>Systemer (Kartoteket)</h6>
+						<div id="risiko-system-chips" class="mb-2"></div>
+						<div class="form-group">
+							<input type="text" class="form-control form-control-sm" id="risiko-system-sok" placeholder="Søk systemnavn (min. 2 tegn)">
+						</div>
+						<div id="risiko-system-sok-treff" class="mb-3"></div>
+						<div class="form-group mb-0">
+							<label for="risiko-f-kit">K, I, T</label>
+							<input type="text" class="form-control form-control-sm" id="risiko-f-kit" placeholder="f.eks. K, T">
+						</div>
+					</div>
+
+					<div class="col-lg-4 risiko-modal-col">
+						<div class="form-group">
+							<label for="risiko-f-konsekvens-begrunnelse">Konsekvensbegrunnelse</label>
+							<textarea class="form-control form-control-sm" id="risiko-f-konsekvens-begrunnelse" rows="5"></textarea>
+						</div>
+						<div class="form-group">
+							<label for="risiko-f-sannsynlighet-begrunnelse">Sannsynlighetsbegrunnelse</label>
+							<textarea class="form-control form-control-sm" id="risiko-f-sannsynlighet-begrunnelse" rows="5"></textarea>
+						</div>
+						<h6>Nåværende risiko</h6>
+						<div class="form-row">
+							<div class="form-group col-6">
+								<label for="risiko-f-konsekvens">Konsekvens</label>
+								<select class="form-control form-control-sm risiko-level-select" id="risiko-f-konsekvens" data-risk-kind="current"></select>
+							</div>
+							<div class="form-group col-6">
+								<label for="risiko-f-sannsynlighet">Sannsynlighet</label>
+								<select class="form-control form-control-sm risiko-level-select" id="risiko-f-sannsynlighet" data-risk-kind="current"></select>
+							</div>
+						</div>
+						<p>Risiko: <span id="risiko-badge-current" class="badge badge-secondary">–</span></p>
+						<div class="form-group mb-0">
+							<label for="risiko-f-risikobehandling">Risikobehandling</label>
+							<select class="form-control form-control-sm" id="risiko-f-risikobehandling">
+								<option value="">–</option>
+							</select>
+						</div>
+					</div>
+
+					<div class="col-lg-4 risiko-modal-col">
+						<h6>Risiko etter tiltak</h6>
+						<div class="form-row">
+							<div class="form-group col-6">
+								<label for="risiko-f-konsekvens-etter">Konsekvens etter</label>
+								<select class="form-control form-control-sm risiko-level-select" id="risiko-f-konsekvens-etter" data-risk-kind="residual"></select>
+							</div>
+							<div class="form-group col-6">
+								<label for="risiko-f-sannsynlighet-etter">Sannsynlighet etter</label>
+								<select class="form-control form-control-sm risiko-level-select" id="risiko-f-sannsynlighet-etter" data-risk-kind="residual"></select>
+							</div>
+						</div>
+						<p>Risiko etter tiltak: <span id="risiko-badge-residual" class="badge badge-secondary">–</span></p>
+
+						<h6 class="mt-3">Foreslåtte tiltak</h6>
+						<table class="table table-sm table-bordered mb-2" id="risiko-actions-table">
+							<thead>
+								<tr>
+									<th style="width:3rem">#</th>
+									<th>Tiltak</th>
+									<th style="width:7rem">Ansvarlig</th>
+									<th style="width:8rem">Frist</th>
+									<th style="width:7rem">Status</th>
+									<th style="width:2rem"></th>
+								</tr>
+							</thead>
+							<tbody id="risiko-actions-tbody"></tbody>
+						</table>
+						<button type="button" class="btn btn-outline-secondary btn-sm" id="risiko-add-action">Legg til tiltak</button>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-outline-danger btn-sm mr-auto" id="risiko-delete-scenario" style="display:none;">Slett scenario</button>
+				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
+				<button type="button" class="btn btn-primary btn-sm" id="risiko-save-scenario">Lagre</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endif %}
+
+{{ editor_urls|json_script:"risiko-editor-urls" }}
+<script id="risiko-editor-config" type="application/json">
+{
+	"scopeId": {{ scope.pk }},
+	"editScenarioId": {% if edit_scenario_id %}{{ edit_scenario_id }}{% else %}null{% endif %},
+	"csrf": "{{ csrf_token }}"
+}
+</script>
+
+{% endblock hovedinnhold %}
+
+{% block ekstrajavascript %}
+<style nonce="{{ request.csp_nonce }}">
+.risk-matrix { border-collapse: collapse; width: 100%; max-width: 520px; margin-bottom: 1rem; border: 2px solid #5a6268; }
+.risk-matrix th, .risk-matrix td { border: 1px solid #5a6268; text-align: center; vertical-align: middle; padding: 4px; min-width: 48px; min-height: 40px; font-size: 0.85rem; }
+.risk-matrix .axis-label { background: #f8f9fa; font-weight: 600; font-size: 0.8rem; }
+.risk-matrix .corner { background: #f8f9fa; }
+.risk-cell-lav { background-color: #c0eb96; }
+.risk-cell-middels { background-color: #ffecb2; }
+.risk-cell-hoy { background-color: #ffc8cd; }
+.risk-cell-empty { background-color: #fff; }
+.risk-level-1 { background-color: #c0eb96; }
+.risk-level-2 { background-color: #e4f5ad; }
+.risk-level-3 { background-color: #ffecb2; }
+.risk-level-4 { background-color: #ffd997; }
+.risk-level-5 { background-color: #ffc8cd; }
+.risk-badge { display: inline-block; margin: 1px; padding: 1px 4px; font-size: 0.75rem; background: rgba(0,0,0,0.08); border-radius: 3px; text-decoration: none; color: inherit; }
+.risk-badge:hover { background: rgba(0,0,0,0.15); text-decoration: none; }
+#risiko-scenarios-table tbody tr.risiko-scenario-row:hover td {
+	box-shadow: inset 0 0 0 9999px rgba(200, 230, 255, 0.55);
+}
+.risiko-scenario-modal-dialog { max-width: 96%; }
+.risiko-modal-col { border-right: 1px solid #dee2e6; }
+.risiko-modal-col:last-child { border-right: none; }
+#risiko-actions-table .risiko-action-beskrivelse { min-height: 4.5rem; }
+#akseptkriterier tbody tr.risk-level-1 > th,
+#akseptkriterier tbody tr.risk-level-1 > td { background-color: #c0eb96; }
+#akseptkriterier tbody tr.risk-level-2 > th,
+#akseptkriterier tbody tr.risk-level-2 > td { background-color: #e4f5ad; }
+#akseptkriterier tbody tr.risk-level-3 > th,
+#akseptkriterier tbody tr.risk-level-3 > td { background-color: #ffecb2; }
+#akseptkriterier tbody tr.risk-level-4 > th,
+#akseptkriterier tbody tr.risk-level-4 > td { background-color: #ffd997; }
+#akseptkriterier tbody tr.risk-level-5 > th,
+#akseptkriterier tbody tr.risk-level-5 > td { background-color: #ffc8cd; }
+#risiko-scenarios-table td.risk-cell-lav { background-color: #c0eb96; }
+#risiko-scenarios-table td.risk-cell-middels { background-color: #ffecb2; }
+#risiko-scenarios-table td.risk-cell-hoy { background-color: #ffc8cd; }
+.risiko-level-cell { text-align: center; white-space: normal; }
+.risiko-level-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 2px 6px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+.risiko-level-tag.risk-level-1 { background-color: #c0eb96; }
+.risiko-level-tag.risk-level-2 { background-color: #e4f5ad; }
+.risiko-level-tag.risk-level-3 { background-color: #ffecb2; }
+.risiko-level-tag.risk-level-4 { background-color: #ffd997; }
+.risiko-level-tag.risk-level-5 { background-color: #ffc8cd; }
+.risiko-kit-cell { min-width: 8rem; white-space: normal; }
+.risiko-kit-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	margin: 1px 2px 1px 0;
+	padding: 2px 5px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+.risiko-kit-icon { width: 11px; height: 11px; flex-shrink: 0; }
+/* 2026-06-25: K/I/T tag colors – purple, brown, gray (distinct from risk green/yellow/red). */
+.risiko-kit-k { background-color: #ede7f6; color: #5e35b1; }
+.risiko-kit-i { background-color: #efebe9; color: #6d4c41; }
+.risiko-kit-t { background-color: #eceff1; color: #546e7a; }
+#risiko-scenarios-table td.risk-cell-lav,
+#risiko-scenarios-table td.risk-cell-middels,
+#risiko-scenarios-table td.risk-cell-hoy { text-align: center; font-weight: 600; }
+</style>
+{% if can_edit_scope %}
+<script src="{% static 'risiko_edit.js' %}" nonce="{{request.csp_nonce}}"></script>
+{% endif %}
+{% endblock ekstrajavascript %}

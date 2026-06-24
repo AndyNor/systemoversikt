@@ -978,6 +978,34 @@
             {
                 "content_type__app_label": "systemoversikt",
                 "codename": "view_sikkerhetstester"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_riskscope"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "add_riskscope"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "change_riskscope"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_riskscenario"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "change_riskscenario"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "view_riskaction"
+            },
+            {
+                "content_type__app_label": "systemoversikt",
+                "codename": "change_riskaction"
             }
         ]
     }

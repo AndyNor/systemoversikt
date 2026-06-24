@@ -1,0 +1,31 @@
+<div id="risiko-tiltak-section" class="mt-4">
+<h5>Tiltak</h5>
+{% if tiltak_rows %}
+<table class="table table-sm table-bordered excel mb-0">
+<thead>
+<tr>
+	<th style="width:4rem">RiskID</th>
+	<th style="width:3rem">#</th>
+	<th>Tiltak</th>
+	<th style="width:8rem">Ansvarlig</th>
+	<th style="width:7rem">Frist</th>
+	<th style="width:8rem">Status</th>
+</tr>
+</thead>
+<tbody id="risiko-tiltak-tbody">
+{% for row in tiltak_rows %}
+<tr>
+	<td><a href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ row.scenario_pk }}">{{ row.risk_id }}</a></td>
+	<td>{{ row.action.tiltak_nr }}</td>
+	<td>{{ row.action.beskrivelse|linebreaksbr }}</td>
+	<td>{{ row.action.ansvarlig|default:"-" }}</td>
+	<td>{{ row.action.frist|date:"Y-m-d"|default:"-" }}</td>
+	<td>{{ row.action.get_status_display }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p class="text-muted mb-0">Ingen tiltak registrert.</p>
+{% endif %}
+</div>

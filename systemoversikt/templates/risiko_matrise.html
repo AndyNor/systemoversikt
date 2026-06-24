@@ -1,0 +1,41 @@
+{% extends "sikkerhet_index.html" %}
+
+{% block overskrift %}
+	Risikomatriser – {{ scope.title }}
+{% endblock overskrift %}
+
+{% block ekstrajavascript %}
+<style nonce="{{ request.csp_nonce }}">
+.risk-matrix { border-collapse: collapse; width: 100%; max-width: 520px; margin-bottom: 2rem; border: 2px solid #5a6268; }
+.risk-matrix th, .risk-matrix td { border: 1px solid #5a6268; text-align: center; vertical-align: middle; padding: 4px; min-width: 72px; min-height: 48px; }
+.risk-matrix .axis-label { background: #f8f9fa; font-weight: 600; font-size: 0.85rem; }
+.risk-matrix .corner { background: #f8f9fa; }
+.risk-cell-lav { background-color: #c0eb96; }
+.risk-cell-middels { background-color: #ffecb2; }
+.risk-cell-hoy { background-color: #ffc8cd; }
+.risk-cell-empty { background-color: #fff; }
+.risk-badge { display: inline-block; margin: 1px; padding: 1px 4px; font-size: 0.75rem; background: rgba(0,0,0,0.08); border-radius: 3px; text-decoration: none; color: inherit; }
+.risk-badge:hover { background: rgba(0,0,0,0.15); text-decoration: none; }
+</style>
+{% endblock ekstrajavascript %}
+
+{% block hovedinnhold %}
+
+<p>
+	<a href="{% url 'risiko_scope_detail' pk=scope.pk %}">&larr; Tilbake til scenariooversikt</a>
+</p>
+
+<div class="row">
+	<div class="col-lg-6">
+		<h5>Nåværende risiko</h5>
+		<p class="text-muted small">Etter eksisterende tiltak</p>
+		{% include "risiko_matrise_grid.html" with matrix=matrix_current scope=scope konsekvens_labels=konsekvens_labels %}
+	</div>
+	<div class="col-lg-6">
+		<h5>Risiko etter tiltak</h5>
+		<p class="text-muted small">Etter foreslåtte tiltak er implementert</p>
+		{% include "risiko_matrise_grid.html" with matrix=matrix_residual scope=scope konsekvens_labels=konsekvens_labels %}
+	</div>
+</div>
+
+{% endblock hovedinnhold %}

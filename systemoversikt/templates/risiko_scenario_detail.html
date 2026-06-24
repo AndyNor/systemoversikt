@@ -1,0 +1,90 @@
+{% extends "sikkerhet_index.html" %}
+
+{% block overskrift %}
+	{{ scenario.risk_id }} – {{ scope.title }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>
+	<a href="{% url 'risiko_scope_detail' pk=scope.pk %}">&larr; Tilbake til {{ scope.title }}</a>
+	{% if can_edit %}
+	<a class="btn btn-primary btn-sm" href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ scenario.pk }}">Rediger</a>
+	{% endif %}
+</p>
+
+<h5>Uønsket hendelse</h5>
+<p>{{ scenario.uonsket_hendelse|linebreaksbr }}</p>
+
+<div class="row">
+	<div class="col-md-6">
+		<h6>Nåværende risiko</h6>
+		<table class="table table-sm">
+			<tr><th>K, I, T</th><td>{{ scenario.kit_dimensjoner|default:"-" }}</td></tr>
+			<tr><th>Konsekvens</th><td>{{ scenario.konsekvens_nivaa|default:"-" }} ({{ scenario.risiko_etikett|default:"-" }})</td></tr>
+			<tr><th>Sannsynlighet</th><td>{{ scenario.sannsynlighet_nivaa|default:"-" }}</td></tr>
+			<tr><th>Risikobehandling</th><td>{{ scenario.get_risikobehandling_display|default:"-" }}</td></tr>
+		</table>
+	</div>
+	<div class="col-md-6">
+		<h6>Restrisiko (etter tiltak)</h6>
+		<table class="table table-sm">
+			<tr><th>Konsekvens etter</th><td>{{ scenario.konsekvens_etter|default:"-" }}</td></tr>
+			<tr><th>Sannsynlighet etter</th><td>{{ scenario.sannsynlighet_etter|default:"-" }}</td></tr>
+			<tr><th>Restrisiko</th><td>{{ scenario.restrisiko_etikett|default:"-" }}</td></tr>
+		</table>
+	</div>
+</div>
+
+<h6>Årsaker/svakheter</h6>
+<p>{{ scenario.arsaker_svakheter|linebreaksbr|default:"-" }}</p>
+
+<h6>Eksisterende tiltak</h6>
+<p>{{ scenario.eksisterende_tiltak|linebreaksbr|default:"-" }}</p>
+
+<h6>Konsekvensbegrunnelse</h6>
+<p>{{ scenario.konsekvens_begrunnelse|linebreaksbr|default:"-" }}</p>
+
+<h6>Sannsynlighetsbegrunnelse</h6>
+<p>{{ scenario.sannsynlighetsbegrunnelse|linebreaksbr|default:"-" }}</p>
+
+<h5>Foreslåtte tiltak</h5>
+{% if actions %}
+<table class="table table-sm excel">
+<thead>
+<tr>
+	<th>#</th>
+	<th>Tiltak</th>
+	<th>Ansvarlig</th>
+	<th>Frist</th>
+	<th>Status</th>
+</tr>
+</thead>
+<tbody>
+{% for action in actions %}
+<tr>
+	<td>{{ action.tiltak_nr }}</td>
+	<td>{{ action.beskrivelse|linebreaksbr }}</td>
+	<td>{{ action.ansvarlig|default:"-" }}</td>
+	<td>{{ action.frist|date:"Y-m-d"|default:"-" }}</td>
+	<td>{{ action.get_status_display }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>Ingen tiltak registrert.</p>
+{% endif %}
+
+<h5>Systemer (Kartoteket)</h5>
+{% if scenario.systemer.all %}
+<ul>
+{% for system in scenario.systemer.all %}
+	<li><a href="{% url 'systemdetaljer' pk=system.pk %}">{{ system }}</a></li>
+{% endfor %}
+</ul>
+{% else %}
+<p>Ingen systemer knyttet.</p>
+{% endif %}
+
+{% endblock hovedinnhold %}

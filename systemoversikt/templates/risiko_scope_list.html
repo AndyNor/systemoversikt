@@ -1,0 +1,67 @@
+{% extends "sikkerhet_index.html" %}
+
+{% block overskrift %}
+	Risikovurderinger
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<div class="mb-4" style="background-color: #f8f9fa; padding: 1rem 1.25rem; border-radius: 4px;">
+	<h5 class="mt-0">Om modelleringen</h5>
+	<p>
+		Risikovurderinger organiseres i tre nivåer som speiler Excel-malen for risikoanalyse:
+	</p>
+	<ul>
+		<li><strong>Risikosamling</strong> – en hel vurdering som hører sammen (samme eier og revisjonsdato). Eksempel: «AV-utstyr 2025».</li>
+		<li><strong>Scenario</strong> – én uønsket hendelse med vurdering av konsekvens og sannsynlighet, eksisterende tiltak og foreslåtte tiltak. Kan knyttes til systemer i Kartoteket.</li>
+		<li><strong>Tiltak</strong> – konkrete grep for å redusere risiko, med ansvarlig, frist og status der det er utfylt.</li>
+	</ul>
+	<p class="mb-0">
+		Alle risikosamlinger er synlige i oversikten. Redigering og detaljer er begrenset til eieren som opprettet eller importerte vurderingen.
+		For hvert scenario vises <strong>nåværende risiko</strong> (etter eksisterende tiltak) og
+		<strong>risiko etter tiltak</strong> (etter foreslåtte tiltak er implementert).
+		K/I/T-kolonnen angir hvilke konfidensialitets-, integritets- og tilgjengelighetsdimensjoner som er relevante.
+	</p>
+</div>
+
+<p>
+	{% if can_create %}
+	<a class="btn btn-success btn-sm" href="{% url 'risiko_scope_create' %}">Ny samling</a>
+	{% endif %}
+	{% if can_import %}
+	<a class="btn btn-primary btn-sm" href="{% url 'risiko_import' %}">Importer Excel</a>
+	{% endif %}
+</p>
+
+<h5 class="mt-4">Risikosamlinger</h5>
+
+{% if scopes %}
+<table class="table tablesorter excel">
+<thead>
+<tr>
+	<th>Navn</th>
+	<th>Beskrivelse</th>
+	<th>Eier</th>
+	<th>Sist revidert</th>
+	<th>Scenarioer</th>
+	<th>Opprettet</th>
+</tr>
+</thead>
+<tbody>
+{% for scope in scopes %}
+<tr>
+	<td><a href="{% url 'risiko_scope_detail' pk=scope.pk %}">{{ scope.title }}</a></td>
+	<td>{{ scope.beskrivelse|truncatechars:120|default:"-" }}</td>
+	<td>{{ scope.eier.get_full_name|default:scope.eier.username }}</td>
+	<td>{{ scope.sist_revidert|date:"Y-m-d" }}</td>
+	<td>{{ scope.scenario_count }}</td>
+	<td>{{ scope.opprettet|date:"Y-m-d" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>Ingen risikosamlinger ennå.{% if can_create %} <a href="{% url 'risiko_scope_create' %}">Opprett en ny samling</a>{% elif can_import %} <a href="{% url 'risiko_import' %}">Importer en Excel-fil</a>{% endif %} for å komme i gang.</p>
+{% endif %}
+
+{% endblock hovedinnhold %}

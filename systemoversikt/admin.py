@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-24: RiskScope/RiskScenario/RiskAction admin for security risk module MVP.
 # 2026-06-23: BloodHoundFinding admin + snapshot analysis fields in list display.
 # 2026-06-23: VirksomhetAdmin – intern_tjenesteleverandor list/filter/fieldset for manual flagging.
 # 2026-06-23: System admin fieldset order – forvalter personer/avdeling swap; CMDB/citrix fields below forvaltning_epost.
@@ -1648,6 +1649,40 @@ class AzureDeviceAdmin(admin.ModelAdmin):
 
 	def has_delete_permission(self, request, obj=None):
 		return False
+
+
+class RiskActionInline(admin.TabularInline):
+	model = RiskAction
+	extra = 0
+	fields = ('tiltak_nr', 'beskrivelse', 'ansvarlig', 'frist', 'status', 'kilde')
+
+
+@admin.register(RiskScope)
+class RiskScopeAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Eksport")]
+	list_display = ('title', 'eier', 'sist_revidert', 'opprettet')
+	list_filter = ('sist_revidert', 'eier')
+	search_fields = ('title', 'beskrivelse', 'source_filename')
+	autocomplete_fields = ('eier',)
+
+
+@admin.register(RiskScenario)
+class RiskScenarioAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Eksport")]
+	list_display = ('risk_id', 'scope', 'konsekvens_nivaa', 'sannsynlighet_nivaa', 'konsekvens_etter', 'sannsynlighet_etter')
+	list_filter = ('scope',)
+	search_fields = ('risk_id', 'uonsket_hendelse')
+	autocomplete_fields = ('scope', 'systemer')
+	inlines = [RiskActionInline]
+
+
+@admin.register(RiskAction)
+class RiskActionAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Eksport")]
+	list_display = ('tiltak_nr', 'scenario', 'status', 'frist', 'ansvarlig')
+	list_filter = ('status', 'kilde')
+	search_fields = ('beskrivelse', 'ansvarlig')
+	autocomplete_fields = ('scenario',)
 
 
 # django-mailer: utvidet søk på To/Cc/Bcc i MessageLog

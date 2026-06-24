@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-24: Risiko nav search – view_qualysvuln fallback (same as views_risiko / BloodHound).
+# 2026-06-24: Risikovurderinger list open to all users (no permission filter).
+# 2026-06-24: Navigation search – risikovurderinger links (view_riskscope).
 # 2026-06-23: Navigation page registry for global search – CA overview graph link.
 # 2026-06-23: BloodHound nav entries require view_qualysvuln (same as vulnstats).
 # 2026-06-23: Navigation page registry for global search – BloodHound findings link.
@@ -76,6 +79,9 @@ NAV_PAGES = [
 	_entry('Azure: sårbarheter', 'azure_vulnstats', 'Sikkerhet', ['azure sårbarheter', 'defender'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Qualys vs Defender', 'azure_vulnstats_qualys_compare', 'Sikkerhet', ['qualys vs defender', 'defender compare'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Gjennomførte pentester', 'rapport_sikkerhetstester', 'Sikkerhet', ['pentester', 'pentest', 'sikkerhetstester']),
+	_entry('Risikovurderinger', 'risiko_scope_list', 'Sikkerhet', ['risiko', 'risikovurdering', 'risikomatrise'], permissions=[]),
+	_entry('Ny risikosamling', 'risiko_scope_create', 'Sikkerhet', ['ny risikosamling', 'risiko opprett'], permissions=['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']),
+	_entry('Importer risikomatrise', 'risiko_import', 'Sikkerhet', ['risiko import', 'risikomatrise import'], permissions=['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']),
 	_entry('ADCS certifikatmaler', 'cmdb_adcs_index', 'Sikkerhet', ['adcs', 'certifikatmaler'], permissions=['systemoversikt.view_cmdbdevice']),
 	_entry('AD: BloodHound-status', 'sikkerhet_bloodhound_status', 'Sikkerhet', ['bloodhound', 'ad attack paths'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('AD: BloodHound-funn', 'sikkerhet_bloodhound_findings', 'Sikkerhet', ['bloodhound funn', 'bloodhound findings', 'dcsync', 'kerberoast'], permissions=['systemoversikt.view_qualysvuln']),

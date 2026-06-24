@@ -2,6 +2,8 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-06-24: Risk scenario/tiltak AJAX API routes.
+# 2026-06-24: Security risk module URLs under /sikkerhet/risiko/.
 # 2026-06-24: CA rules detail URL – /rules/<pk>/ for single Azure policy; list stays at /rules/.
 # 2026-06-23: BloodHound upload API and status page.
 # 2026-06-23: Developer docs URL for Tjeneste- og systemoversikt API.
@@ -20,6 +22,8 @@ import systemoversikt.views as views
 import systemoversikt.views_import as views_import
 import systemoversikt.api_bloodhound as api_bloodhound
 import systemoversikt.views_bloodhound as views_bloodhound
+import systemoversikt.views_risiko as views_risiko
+import systemoversikt.api_risiko as api_risiko
 
 favicon_view = RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=True)
 
@@ -115,6 +119,24 @@ urlpatterns = [
 	re_path(r'^sikkerhet/vulnstats/servere_uten_vuln/$', views.vulnstats_servere_uten_vuln, name="vulnstats_servere_uten_vuln"),
 	re_path(r'^sikkerhet/sikkerhetsavvik/$', views.o365_avvik, name='o365_avvik'),
 	re_path(r'^sikkerhet/sikkerhetstester/$', views.rapport_sikkerhetstester, name="rapport_sikkerhetstester"),
+	re_path(r'^sikkerhet/risiko/$', views_risiko.risiko_scope_list, name='risiko_scope_list'),
+	re_path(r'^sikkerhet/risiko/ny/$', views_risiko.risiko_scope_create, name='risiko_scope_create'),
+	re_path(r'^sikkerhet/risiko/import/$', views_risiko.risiko_import, name='risiko_import'),
+	re_path(r'^sikkerhet/risiko/akseptkriterier/$', views_risiko.risiko_akseptkriterier, name='risiko_akseptkriterier'),
+	re_path(r'^sikkerhet/risiko/api/systemer/sok/$', api_risiko.api_risiko_systemer_sok, name='api_risiko_systemer_sok'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/meta/$', api_risiko.api_risiko_meta, name='api_risiko_meta'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/$', api_risiko.api_risiko_scenarios_list, name='api_risiko_scenarios_list'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/create/$', api_risiko.api_risiko_scenario_create, name='api_risiko_scenario_create'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/$', api_risiko.api_risiko_scenario_detail, name='api_risiko_scenario_detail'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/update/$', api_risiko.api_risiko_scenario_update, name='api_risiko_scenario_update'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/delete/$', api_risiko.api_risiko_scenario_delete, name='api_risiko_scenario_delete'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/actions/create/$', api_risiko.api_risiko_action_create, name='api_risiko_action_create'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/actions/(?P<aid>\d{1,8})/update/$', api_risiko.api_risiko_action_update, name='api_risiko_action_update'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/actions/(?P<aid>\d{1,8})/delete/$', api_risiko.api_risiko_action_delete, name='api_risiko_action_delete'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scope/$', api_risiko.api_risiko_scope_update, name='api_risiko_scope_update'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/$', views_risiko.risiko_scope_detail, name='risiko_scope_detail'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/matrise/$', views_risiko.risiko_matrise, name='risiko_matrise'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/scenario/(?P<sid>\d{1,8})/$', views_risiko.risiko_scenario_detail, name='risiko_scenario_detail'),
 	re_path(r'^sikkerhet/system_per_isk/$', views.isk_ansvarlig_for_system, name='isk_ansvarlig_for_system'),
 	re_path(r'^sikkerhet/system_kit_vurderinger/$', views.rapport_kit_vurderinger_samlet, name='rapport_kit_vurderinger_samlet'),
 	re_path(r'^sikkerhet/kritiske_funksjoner/$', views.system_kritisk_funksjon, name='system_kritisk_funksjon'),

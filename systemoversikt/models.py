@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-24: RiskScope.beskrivelse – named collections with description on public list page.
+# 2026-06-24: RiskScope, RiskScenario, RiskAction – security risk module MVP.
 # 2026-06-24: CA overview tile detail_url – path /rules/<pk>/ for single Azure policy.
 # 2026-06-24: CA location filter chips – display name only, no IP range suffix.
 # 2026-06-24: CA overview filters – Locations group for named and all-locations tags.
@@ -7677,3 +7679,244 @@ class BloodHoundFinding(models.Model):
 		indexes = [
 			models.Index(fields=['snapshot', 'check_id']),
 		]
+
+
+RISIKOBEHANDLING_VALG = (
+	('godta', 'Godta/Akseptere'),
+	('redusere', 'Redusere'),
+	('dele', 'Dele/Overføre'),
+	('unnga', 'Unngå'),
+)
+
+RISK_ACTION_STATUS_VALG = (
+	('ikke_startet', 'Ikke startet'),
+	('under_arbeid', 'Under arbeid'),
+	('utfort', 'Utført'),
+)
+
+RISK_ACTION_KILDE_VALG = (
+	('parsed', 'Parsed fra foreslåtte tiltak'),
+	('tiltak_sheet', 'Tiltak-ark'),
+	('manual', 'Manuell'),
+)
+
+
+class RiskScope(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	title = models.CharField(
+		verbose_name="Tittel",
+		max_length=300,
+	)
+	beskrivelse = models.TextField(
+		verbose_name="Beskrivelse",
+		blank=True,
+		default='',
+		help_text="Kort beskrivelse av hva risikovurderingen dekker.",
+	)
+	eier = models.ForeignKey(
+		to=User,
+		on_delete=models.PROTECT,
+		related_name='risk_scopes_owned',
+		verbose_name="Eier",
+	)
+	sist_revidert = models.DateField(
+		verbose_name="Sist revidert",
+	)
+	source_filename = models.CharField(
+		verbose_name="Kildefil",
+		max_length=300,
+		blank=True,
+		default='',
+	)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return self.title
+
+	class Meta:
+		verbose_name = "risikoomfang"
+		verbose_name_plural = "Risiko: omfang"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['-sist_revidert', '-opprettet']
+
+
+class RiskScenario(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	scope = models.ForeignKey(
+		to=RiskScope,
+		on_delete=models.CASCADE,
+		related_name='scenarios',
+		verbose_name="Risikoomfang",
+	)
+	risk_id = models.CharField(
+		verbose_name="RiskID",
+		max_length=20,
+	)
+	uonsket_hendelse = models.TextField(
+		verbose_name="Uønsket hendelse",
+		blank=True,
+		default='',
+	)
+	kit_dimensjoner = models.CharField(
+		verbose_name="K, I, T",
+		max_length=50,
+		blank=True,
+		default='',
+	)
+	arsaker_svakheter = models.TextField(
+		verbose_name="Årsaker/svakheter",
+		blank=True,
+		default='',
+	)
+	eksisterende_tiltak = models.TextField(
+		verbose_name="Eksisterende tiltak",
+		blank=True,
+		default='',
+	)
+	konsekvens_nivaa = models.PositiveSmallIntegerField(
+		verbose_name="Konsekvens (nivå)",
+		null=True,
+		blank=True,
+	)
+	sannsynlighet_nivaa = models.PositiveSmallIntegerField(
+		verbose_name="Sannsynlighet (nivå)",
+		null=True,
+		blank=True,
+	)
+	konsekvens_begrunnelse = models.TextField(
+		verbose_name="Konsekvensbegrunnelse",
+		blank=True,
+		default='',
+	)
+	sannsynlighetsbegrunnelse = models.TextField(
+		verbose_name="Sannsynlighetsbegrunnelse",
+		blank=True,
+		default='',
+	)
+	risikobehandling = models.CharField(
+		verbose_name="Risikobehandling",
+		max_length=20,
+		choices=RISIKOBEHANDLING_VALG,
+		blank=True,
+		default='',
+	)
+	konsekvens_etter = models.PositiveSmallIntegerField(
+		verbose_name="Konsekvens etter tiltak (nivå)",
+		null=True,
+		blank=True,
+	)
+	sannsynlighet_etter = models.PositiveSmallIntegerField(
+		verbose_name="Sannsynlighet etter tiltak (nivå)",
+		null=True,
+		blank=True,
+	)
+	rekkefolge = models.PositiveIntegerField(
+		verbose_name="Rekkefølge",
+		default=0,
+	)
+	systemer = models.ManyToManyField(
+		to='System',
+		related_name='risk_scenarios',
+		verbose_name="Systemer",
+		blank=True,
+	)
+	history = HistoricalRecords()
+
+	@property
+	def risiko_etikett(self):
+		from systemoversikt.risk_criteria import risk_label
+		return risk_label(self.sannsynlighet_nivaa, self.konsekvens_nivaa)
+
+	@property
+	def restrisiko_etikett(self):
+		from systemoversikt.risk_criteria import risk_label
+		return risk_label(self.sannsynlighet_etter, self.konsekvens_etter)
+
+	def scenario_nummer(self):
+		"""Excel Tiltak-ark refererer ofte til tall uten R-prefiks (R1 -> 1)."""
+		digits = ''.join(c for c in self.risk_id if c.isdigit())
+		return int(digits) if digits else self.rekkefolge
+
+	def __str__(self):
+		return '%s: %s' % (self.risk_id, self.uonsket_hendelse[:60])
+
+	class Meta:
+		verbose_name = "risikoscenario"
+		verbose_name_plural = "Risiko: scenarioer"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['rekkefolge', 'risk_id']
+		unique_together = ('scope', 'risk_id')
+
+
+class RiskAction(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	scenario = models.ForeignKey(
+		to=RiskScenario,
+		on_delete=models.CASCADE,
+		related_name='actions',
+		verbose_name="Risikoscenario",
+	)
+	tiltak_nr = models.PositiveIntegerField(
+		verbose_name="Tiltak-ID",
+		default=0,
+	)
+	beskrivelse = models.TextField(
+		verbose_name="Tiltak",
+	)
+	ansvarlig = models.CharField(
+		verbose_name="Ansvarlig",
+		max_length=200,
+		blank=True,
+		default='',
+	)
+	frist = models.DateField(
+		verbose_name="Frist",
+		null=True,
+		blank=True,
+	)
+	status = models.CharField(
+		verbose_name="Status",
+		max_length=20,
+		choices=RISK_ACTION_STATUS_VALG,
+		default='ikke_startet',
+	)
+	kilde = models.CharField(
+		verbose_name="Kilde",
+		max_length=20,
+		choices=RISK_ACTION_KILDE_VALG,
+		default='parsed',
+	)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return '%s) %s' % (self.tiltak_nr, self.beskrivelse[:50])
+
+	class Meta:
+		verbose_name = "risikotiltak"
+		verbose_name_plural = "Risiko: tiltak"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['tiltak_nr', 'pk']

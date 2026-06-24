@@ -1,0 +1,29 @@
+<table class="risk-matrix">
+<thead>
+<tr>
+	<th class="corner" colspan="2"></th>
+	<th colspan="5" class="axis-label">KONSEKVENS</th>
+</tr>
+<tr>
+	<th class="corner" colspan="2"></th>
+	{% for level, label in konsekvens_labels.items %}
+	<th class="axis-label">{{ label }}<br><small>({{ level }})</small></th>
+	{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for row in matrix %}
+<tr>
+	<th class="axis-label">SANNS.</th>
+	<th class="axis-label">{{ row.sannsynlighet_label }}<br><small>({{ row.sannsynlighet }})</small></th>
+	{% for cell in row.cells %}
+	<td class="{{ cell.css_class }}">
+		{% for scenario in cell.scenarios %}
+			<a class="risk-badge" href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ scenario.pk }}" title="{{ scenario.uonsket_hendelse|truncatechars:120 }}">{{ scenario.risk_id }}</a>
+		{% endfor %}
+	</td>
+	{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>

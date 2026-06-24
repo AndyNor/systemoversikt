@@ -1,0 +1,97 @@
+{% extends "sikkerhet_index.html" %}
+
+{% block overskrift %}
+	Akseptkriterier
+{% endblock overskrift %}
+
+{% block ekstrajavascript %}
+<style nonce="{{ request.csp_nonce }}">
+.risk-matrix { border-collapse: collapse; width: 100%; max-width: 520px; margin-bottom: 2rem; }
+.risk-matrix th, .risk-matrix td { border: 1px solid #dee2e6; text-align: center; padding: 4px; }
+.risk-matrix .axis-label { background: #f8f9fa; font-weight: 600; font-size: 0.85rem; }
+.risk-cell-lav { background-color: #d4edda; }
+.risk-cell-middels { background-color: #fff3cd; }
+.risk-cell-hoy { background-color: #f8d7da; }
+</style>
+{% endblock ekstrajavascript %}
+
+{% block hovedinnhold %}
+
+<p><a href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a></p>
+
+<h5>Risikomatrise (referanse)</h5>
+<table class="risk-matrix">
+<thead>
+<tr>
+	<th colspan="2"></th>
+	<th colspan="5" class="axis-label">KONSEKVENS</th>
+</tr>
+<tr>
+	<th colspan="2"></th>
+	{% for level, label in konsekvens_labels.items %}
+	<th class="axis-label">{{ label }} ({{ level }})</th>
+	{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for row in matrix_rows %}
+<tr>
+	<th class="axis-label">SANNS.</th>
+	<th class="axis-label">{{ row.sannsynlighet_label }} ({{ row.sannsynlighet }})</th>
+	{% for cell in row.cells %}
+	<td class="{{ cell.css_class }}">{{ cell.label }}</td>
+	{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h5>Konsekvensmatrise</h5>
+<table class="table table-sm table-bordered">
+<thead>
+<tr>
+	<th>Nivå</th>
+	{% for dim in konsekvens_rows.0.dimensjoner %}
+	<th>{{ dim.navn }}</th>
+	{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for row in konsekvens_rows %}
+<tr>
+	<th>{{ row.label }} ({{ row.level }})</th>
+	{% for dim in row.dimensjoner %}
+	<td>{{ dim.tekst }}</td>
+	{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h5>Sannsynlighetskategorier</h5>
+<table class="table table-sm table-bordered">
+<thead>
+<tr>
+	<th>Nivå</th>
+	<th>Forventning</th>
+	<th>Estimert sannsynlighet</th>
+	<th>Sårbarhet</th>
+	<th>Kapasitet og evne</th>
+	<th>Intensjon</th>
+</tr>
+</thead>
+<tbody>
+{% for row in sannsynlighet_rows %}
+<tr>
+	<th>{{ row.label }} ({{ row.level }})</th>
+	<td>{{ row.beskrivelse.forventning }}</td>
+	<td>{{ row.beskrivelse.estimert }}</td>
+	<td>{{ row.beskrivelse.sarbarhet }}</td>
+	<td>{{ row.beskrivelse.kapasitet }}</td>
+	<td>{{ row.beskrivelse.intensjon }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock hovedinnhold %}
