@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-26: Eksisterende tiltak column → RiskAction per paragraph (status utfort).
+# 2026-06-26: Scope-level tiltak linked to scenarios via M2M (reuse across scenarios).
 # 2026-06-24: Excel import for security risk module (Risikoanalyse + Tiltak sheets).
 
 import re
@@ -85,6 +87,18 @@ def _parse_foreslatte_tiltak(text):
 	return actions
 
 
+def _parse_eksisterende_tiltak(text):
+	"""Split cell text into one tiltak per paragraph (blank line); fallback: whole cell."""
+	if not text or not str(text).strip():
+		return []
+	text = str(text).strip()
+	parts = re.split(r'\n\s*\n+', text)
+	paragraphs = [p.strip() for p in parts if p.strip()]
+	if paragraphs:
+		return paragraphs
+	return [text]
+
+
 def _parse_tiltak_sheet(wb, warnings):
 	"""Return dict scenario_num -> list of action dicts."""
 	if 'Tiltak' not in wb.sheetnames:
@@ -106,9 +120,9 @@ def _parse_tiltak_sheet(wb, warnings):
 			continue
 		tiltak_id = _cell(ws, row, headers, 'Tiltak-ID')
 		try:
-			tiltak_nr = int(tiltak_id) if tiltak_id is not None else 0
+			int(tiltak_id) if tiltak_id is not None else 0
 		except (TypeError, ValueError):
-			tiltak_nr = 0
+			pass
 		frist_val = _cell(ws, row, headers, 'Frist')
 		frist = None
 		if isinstance(frist_val, datetime):
@@ -117,7 +131,6 @@ def _parse_tiltak_sheet(wb, warnings):
 			frist = frist_val
 		status_text = _cell(ws, row, headers, 'Status')
 		result.setdefault(scenario_num, []).append({
-			'tiltak_nr': tiltak_nr or len(result.get(scenario_num, [])) + 1,
 			'beskrivelse': str(beskrivelse).strip(),
 			'ansvarlig': str(_cell(ws, row, headers, 'Ansvarlig') or '').strip(),
 			'frist': frist,
@@ -200,7 +213,6 @@ def import_risk_workbook(workbook, user, source_filename):
 				uonsket_hendelse=str(_cell(ws, row, headers, 'Uønsket hendelse') or '').strip(),
 				kit_dimensjoner=str(_cell(ws, row, headers, 'K, I, T') or '').strip(),
 				arsaker_svakheter=str(_cell(ws, row, headers, 'Årsaker/svakheter') or '').strip(),
-				eksisterende_tiltak=str(_cell(ws, row, headers, 'Eksisterende tiltak') or '').strip(),
 				konsekvens_nivaa=konsekvens,
 				sannsynlighet_nivaa=sannsynlighet,
 				konsekvens_begrunnelse=str(_cell(ws, row, headers, 'Konsekvensbegrunnelse') or '').strip(),
@@ -212,22 +224,34 @@ def import_risk_workbook(workbook, user, source_filename):
 			)
 			scenario_count += 1
 
+			eksisterende = _cell(ws, row, headers, 'Eksisterende tiltak')
+			for beskrivelse in _parse_eksisterende_tiltak(eksisterende):
+				action = RiskAction.objects.create(
+					scope=scope,
+					beskrivelse=beskrivelse,
+					kilde='parsed',
+					status='utfort',
+				)
+				action.scenarios.add(scenario)
+				action_count += 1
+
 			scenario_num = scenario.scenario_nummer()
 			sheet_actions = tiltak_by_scenario.get(scenario_num, [])
 			if sheet_actions:
 				for action_data in sheet_actions:
-					RiskAction.objects.create(scenario=scenario, **action_data)
+					action = RiskAction.objects.create(scope=scope, **action_data)
+					action.scenarios.add(scenario)
 					action_count += 1
 			else:
 				foreslatt = _cell(ws, row, headers, 'Foreslåtte tiltak')
-				for nr, beskrivelse in _parse_foreslatte_tiltak(foreslatt):
-					RiskAction.objects.create(
-						scenario=scenario,
-						tiltak_nr=nr,
+				for _nr, beskrivelse in _parse_foreslatte_tiltak(foreslatt):
+					action = RiskAction.objects.create(
+						scope=scope,
 						beskrivelse=beskrivelse,
 						kilde='parsed',
 						status='ikke_startet',
 					)
+					action.scenarios.add(scenario)
 					action_count += 1
 
 	return ImportResult(

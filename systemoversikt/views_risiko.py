@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-26: Scenario-scoped action URLs for tiltak editing inside scenario modal.
+# 2026-06-26: Editor URLs for scope-level tiltak CRUD API.
+# 2026-06-26: Scenario table Tiltak column shows T# IDs instead of action count.
+# 2026-06-26: Display-time R/T IDs; scope-level tiltak rows; «Tilknyttede systemer» label.
 # 2026-06-25: Scenario detail URL redirects to scope page edit modal.
 # 2026-06-25: Akseptkriterier on detail – reference matrix table removed from partial.
 # 2026-06-25: List all scopes; 403 on non-owner detail; manual create; akseptkriterier on detail page.
@@ -33,6 +37,11 @@ from systemoversikt.risk_criteria import (
 	risk_cell_css_class,
 	risk_label,
 	sannsynlighet_lookup_label,
+)
+from systemoversikt.risk_display import (
+	annotate_scenario_display_ids,
+	annotate_scenarios_tiltak_ids,
+	build_scope_tiltak_rows,
 )
 from systemoversikt.risk_import import import_risk_workbook
 from systemoversikt.views import formater_permissions
@@ -88,6 +97,12 @@ def _risiko_editor_urls(scope_pk):
 		'scenarioDetail': reverse('api_risiko_scenario_detail', kwargs={'pk': pk, 'sid': 0}).replace('/0/', '/{id}/'),
 		'scenarioUpdate': reverse('api_risiko_scenario_update', kwargs={'pk': pk, 'sid': 0}).replace('/0/', '/{id}/'),
 		'scenarioDelete': reverse('api_risiko_scenario_delete', kwargs={'pk': pk, 'sid': 0}).replace('/0/', '/{id}/'),
+		'scenarioActionCreate': reverse('api_risiko_action_create', kwargs={'pk': pk, 'sid': 0}).replace('/scenarios/0/', '/scenarios/{scenarioId}/'),
+		'scenarioActionUpdate': reverse('api_risiko_action_update', kwargs={'pk': pk, 'sid': 0, 'aid': 0}).replace('/scenarios/0/', '/scenarios/{scenarioId}/').replace('/actions/0/', '/actions/{id}/'),
+		'scenarioActionDelete': reverse('api_risiko_action_delete', kwargs={'pk': pk, 'sid': 0, 'aid': 0}).replace('/scenarios/0/', '/scenarios/{scenarioId}/').replace('/actions/0/', '/actions/{id}/'),
+		'actionCreate': reverse('api_risiko_scope_action_create', kwargs={'pk': pk}),
+		'actionUpdate': reverse('api_risiko_scope_action_update', kwargs={'pk': pk, 'aid': 0}).replace('/0/', '/{id}/'),
+		'actionDelete': reverse('api_risiko_scope_action_delete', kwargs={'pk': pk, 'aid': 0}).replace('/0/', '/{id}/'),
 		'scopeUpdate': reverse('api_risiko_scope_update', kwargs={'pk': pk}),
 		'systemSearch': reverse('api_risiko_systemer_sok'),
 		'scopePage': reverse('risiko_scope_detail', kwargs={'pk': pk}),
@@ -196,16 +211,10 @@ def _annotate_scenario_display(scenario):
 	return scenario
 
 
-def _build_tiltak_rows(scenarios):
-	rows = []
-	for scenario in scenarios:
-		for action in scenario.actions.all():
-			rows.append({
-				'risk_id': scenario.risk_id,
-				'scenario_pk': scenario.pk,
-				'action': action,
-			})
-	return rows
+def _build_tiltak_rows(scope, scenarios):
+	actions = list(scope.actions.prefetch_related('scenarios').order_by('pk'))
+	risk_id_by_pk = annotate_scenario_display_ids(scenarios)
+	return build_scope_tiltak_rows(scenarios, actions, risk_id_by_pk)
 
 
 def risiko_scope_detail(request, pk):
@@ -215,6 +224,8 @@ def risiko_scope_detail(request, pk):
 	can_edit_scope = True
 
 	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
+	annotate_scenario_display_ids(scenarios)
+	annotate_scenarios_tiltak_ids(scenarios, list(scope.actions.order_by('pk')))
 	for scenario in scenarios:
 		_annotate_scenario_display(scenario)
 
@@ -230,7 +241,7 @@ def risiko_scope_detail(request, pk):
 		'required_permissions': [],
 		'scope': scope,
 		'scenarios': scenarios,
-		'tiltak_rows': _build_tiltak_rows(scenarios),
+		'tiltak_rows': _build_tiltak_rows(scope, scenarios),
 		'can_edit_scope': can_edit_scope,
 		'editor_urls': _risiko_editor_urls(pk),
 		'edit_scenario_id': edit_scenario_id,

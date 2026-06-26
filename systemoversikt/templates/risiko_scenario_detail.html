@@ -40,7 +40,17 @@
 <p>{{ scenario.arsaker_svakheter|linebreaksbr|default:"-" }}</p>
 
 <h6>Eksisterende tiltak</h6>
-<p>{{ scenario.eksisterende_tiltak|linebreaksbr|default:"-" }}</p>
+{% if actions %}
+<ul>
+{% for action in actions %}
+{% if action.status == 'utfort' %}
+	<li>{{ action.beskrivelse|linebreaksbr }}</li>
+{% endif %}
+{% endfor %}
+</ul>
+{% else %}
+<p>-</p>
+{% endif %}
 
 <h6>Konsekvensbegrunnelse</h6>
 <p>{{ scenario.konsekvens_begrunnelse|linebreaksbr|default:"-" }}</p>
@@ -53,7 +63,6 @@
 <table class="table table-sm excel">
 <thead>
 <tr>
-	<th>#</th>
 	<th>Tiltak</th>
 	<th>Ansvarlig</th>
 	<th>Frist</th>
@@ -62,13 +71,14 @@
 </thead>
 <tbody>
 {% for action in actions %}
+{% if action.status != 'utfort' %}
 <tr>
-	<td>{{ action.tiltak_nr }}</td>
 	<td>{{ action.beskrivelse|linebreaksbr }}</td>
 	<td>{{ action.ansvarlig|default:"-" }}</td>
 	<td>{{ action.frist|date:"Y-m-d"|default:"-" }}</td>
 	<td>{{ action.get_status_display }}</td>
 </tr>
+{% endif %}
 {% endfor %}
 </tbody>
 </table>

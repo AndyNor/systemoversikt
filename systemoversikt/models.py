@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-26: Drop RiskScenario.eksisterende_tiltak – eksisterende tiltak are RiskAction rows (status utfort).
 # 2026-06-24: RiskScope.beskrivelse – named collections with description on public list page.
+# 2026-06-26: RiskAction scope-level with M2M scenarios – reuse tiltak across scenarios.
 # 2026-06-24: RiskScope, RiskScenario, RiskAction – security risk module MVP.
 # 2026-06-24: CA overview tile detail_url – path /rules/<pk>/ for single Azure policy.
 # 2026-06-24: CA location filter chips – display name only, no IP range suffix.
@@ -7784,11 +7786,6 @@ class RiskScenario(models.Model):
 		blank=True,
 		default='',
 	)
-	eksisterende_tiltak = models.TextField(
-		verbose_name="Eksisterende tiltak",
-		blank=True,
-		default='',
-	)
 	konsekvens_nivaa = models.PositiveSmallIntegerField(
 		verbose_name="Konsekvens (nivå)",
 		null=True,
@@ -7874,15 +7871,17 @@ class RiskAction(models.Model):
 		verbose_name="Sist oppdatert",
 		auto_now=True,
 	)
-	scenario = models.ForeignKey(
-		to=RiskScenario,
+	scope = models.ForeignKey(
+		to=RiskScope,
 		on_delete=models.CASCADE,
 		related_name='actions',
-		verbose_name="Risikoscenario",
+		verbose_name="Risikoomfang",
 	)
-	tiltak_nr = models.PositiveIntegerField(
-		verbose_name="Tiltak-ID",
-		default=0,
+	scenarios = models.ManyToManyField(
+		to=RiskScenario,
+		related_name='actions',
+		verbose_name="Risikoscenarioer",
+		blank=True,
 	)
 	beskrivelse = models.TextField(
 		verbose_name="Tiltak",
@@ -7913,10 +7912,10 @@ class RiskAction(models.Model):
 	history = HistoricalRecords()
 
 	def __str__(self):
-		return '%s) %s' % (self.tiltak_nr, self.beskrivelse[:50])
+		return self.beskrivelse[:60]
 
 	class Meta:
 		verbose_name = "risikotiltak"
 		verbose_name_plural = "Risiko: tiltak"
 		default_permissions = ('add', 'change', 'delete', 'view')
-		ordering = ['tiltak_nr', 'pk']
+		ordering = ['pk']

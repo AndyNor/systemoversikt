@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-26: Scope-level tiltak API; scenario save no longer syncs actions; drop eksisterende_tiltak.
+# 2026-06-26: Scenario summary includes display_tiltak_ids for scenario table Tiltak column.
+# 2026-06-26: Display-time R/T IDs; scope-level tiltak reused across scenarios via M2M.
 # 2026-06-25: Scenario summary includes konsekvens/sannsynlighet lookup labels for table display.
 # 2026-06-25: Scenario summary includes CSS classes for colored table cells.
 # 2026-06-24: Scenario list API includes actions for tiltak section refresh.
@@ -30,6 +33,12 @@ from systemoversikt.risk_criteria import (
 	parse_kit_dimensjoner,
 	risk_cell_css_class,
 	sannsynlighet_lookup_label,
+)
+from systemoversikt.risk_display import (
+	annotate_scenario_display_ids,
+	build_scope_tiltak_rows,
+	scenario_display_tiltak_ids,
+	tiltak_display_id_map,
 )
 from systemoversikt.views_risiko import _get_owned_scope, _get_owned_scenario
 
@@ -81,10 +90,10 @@ def _system_to_dict(system):
 	}
 
 
-def _action_to_dict(action):
-	return {
+def _action_to_dict(action, display_tiltak_id=None, risk_ids=None, scenario_ids=None):
+	data = {
 		'id': action.pk,
-		'tiltak_nr': action.tiltak_nr,
+		'display_tiltak_id': display_tiltak_id or '',
 		'beskrivelse': action.beskrivelse,
 		'ansvarlig': action.ansvarlig,
 		'frist': action.frist.isoformat() if action.frist else None,
@@ -92,13 +101,44 @@ def _action_to_dict(action):
 		'status_display': action.get_status_display(),
 		'kilde': action.kilde,
 	}
+	if risk_ids is not None:
+		data['risk_ids'] = risk_ids
+	if scenario_ids is not None:
+		data['scenario_ids'] = scenario_ids
+	return data
 
 
-def _scenario_summary_dict(scenario):
+def _load_scope_scenarios(scope):
+	return list(
+		scope.scenarios.prefetch_related('systemer', 'actions')
+		.order_by('rekkefolge', 'risk_id')
+	)
+
+
+def _load_scope_actions(scope):
+	return list(
+		scope.actions.prefetch_related('scenarios')
+		.order_by('pk')
+	)
+
+
+def _scenario_summary_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None):
 	systems = [_system_to_dict(s) for s in scenario.systemer.all()]
+	display_risk_id = getattr(scenario, 'display_risk_id', None)
+	if not display_risk_id and risk_id_by_pk:
+		display_risk_id = risk_id_by_pk.get(scenario.pk, '')
+	actions = list(scenario.actions.all())
+	action_dicts = []
+	for action in actions:
+		tid = (tiltak_id_map or {}).get(action.pk, '')
+		action_dicts.append(_action_to_dict(action, display_tiltak_id=tid))
+	display_tiltak_ids = (
+		scenario_display_tiltak_ids(scenario, tiltak_id_map)
+		if tiltak_id_map else '–'
+	)
 	return {
 		'id': scenario.pk,
-		'risk_id': scenario.risk_id,
+		'display_risk_id': display_risk_id or '',
 		'uonsket_hendelse': scenario.uonsket_hendelse,
 		'kit_dimensjoner': scenario.kit_dimensjoner,
 		'kit_tags': parse_kit_dimensjoner(scenario.kit_dimensjoner),
@@ -112,17 +152,17 @@ def _scenario_summary_dict(scenario):
 		'restrisiko_etikett': scenario.restrisiko_etikett,
 		'risiko_css': risk_cell_css_class(scenario.risiko_etikett),
 		'restrisiko_css': risk_cell_css_class(scenario.restrisiko_etikett),
-		'action_count': len(list(scenario.actions.all())),
-		'actions': [_action_to_dict(a) for a in scenario.actions.all()],
+		'action_count': len(actions),
+		'display_tiltak_ids': display_tiltak_ids,
+		'actions': action_dicts,
 		'systemer': systems,
 	}
 
 
-def _scenario_to_dict(scenario):
-	data = _scenario_summary_dict(scenario)
+def _scenario_to_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None):
+	data = _scenario_summary_dict(scenario, tiltak_id_map, risk_id_by_pk)
 	data.update({
 		'arsaker_svakheter': scenario.arsaker_svakheter,
-		'eksisterende_tiltak': scenario.eksisterende_tiltak,
 		'konsekvens_begrunnelse': scenario.konsekvens_begrunnelse,
 		'sannsynlighetsbegrunnelse': scenario.sannsynlighetsbegrunnelse,
 		'risikobehandling': scenario.risikobehandling,
@@ -130,9 +170,26 @@ def _scenario_to_dict(scenario):
 		'konsekvens_etter': scenario.konsekvens_etter,
 		'sannsynlighet_etter': scenario.sannsynlighet_etter,
 		'rekkefolge': scenario.rekkefolge,
-		'actions': [_action_to_dict(a) for a in scenario.actions.all()],
 	})
 	return data
+
+
+def _tiltak_list_dict(scope, scenarios, actions):
+	risk_id_by_pk = annotate_scenario_display_ids(scenarios)
+	tiltak_map = tiltak_display_id_map(actions)
+	rows = build_scope_tiltak_rows(scenarios, actions, risk_id_by_pk)
+	result = []
+	for row in rows:
+		action = row['action']
+		entry = _action_to_dict(
+			action,
+			display_tiltak_id=row['display_tiltak_id'],
+			risk_ids=[link['risk_id'] for link in row['risk_links']],
+			scenario_ids=[link['scenario_pk'] for link in row['risk_links']],
+		)
+		entry['risk_links'] = row['risk_links']
+		result.append(entry)
+	return result, tiltak_map, risk_id_by_pk
 
 
 def _level_counts(scenarios):
@@ -148,28 +205,14 @@ def _level_counts(scenarios):
 	return {'current': current, 'residual': residual}
 
 
-def _suggest_next_risk_id(scope):
-	max_num = 0
-	for risk_id in scope.scenarios.values_list('risk_id', flat=True):
-		digits = ''.join(c for c in risk_id if c.isdigit())
-		if digits:
-			max_num = max(max_num, int(digits))
-	return 'R%d' % (max_num + 1)
+def _auto_risk_id(scope):
+	"""Internal uniquifier for DB; display uses position-based R# instead."""
+	count = scope.scenarios.count()
+	return 'R%d' % (count + 1)
 
 
 def _validate_scenario_fields(data, scope, scenario=None):
 	errors = []
-	risk_id = (data.get('risk_id') or '').strip()
-	if not risk_id:
-		errors.append('RiskID er påkrevd.')
-	elif len(risk_id) > 20:
-		errors.append('RiskID er for lang.')
-	else:
-		qs = RiskScenario.objects.filter(scope=scope, risk_id=risk_id)
-		if scenario:
-			qs = qs.exclude(pk=scenario.pk)
-		if qs.exists():
-			errors.append('RiskID %s finnes allerede i denne samlingen.' % risk_id)
 
 	uonsket = (data.get('uonsket_hendelse') or '').strip()
 	if not uonsket:
@@ -212,11 +255,9 @@ def _validate_scenario_fields(data, scope, scenario=None):
 		return None, errors
 
 	return {
-		'risk_id': risk_id,
 		'uonsket_hendelse': uonsket,
 		'kit_dimensjoner': (data.get('kit_dimensjoner') or '').strip(),
 		'arsaker_svakheter': (data.get('arsaker_svakheter') or '').strip(),
-		'eksisterende_tiltak': (data.get('eksisterende_tiltak') or '').strip(),
 		'konsekvens_begrunnelse': (data.get('konsekvens_begrunnelse') or '').strip(),
 		'sannsynlighetsbegrunnelse': (data.get('sannsynlighetsbegrunnelse') or '').strip(),
 		'risikobehandling': risikobehandling,
@@ -235,10 +276,9 @@ def _validate_action_item(item, index):
 		errors.append('Tiltak %d: beskrivelse er påkrevd.' % index)
 
 	try:
-		tiltak_nr = int(item.get('tiltak_nr') or index)
+		int(item.get('tiltak_nr') or 0)
 	except (TypeError, ValueError):
-		errors.append('Tiltak %d: ugyldig nummer.' % index)
-		tiltak_nr = index
+		pass
 
 	status = item.get('status') or 'ikke_startet'
 	if status not in TILTAK_STATUS_VALUES:
@@ -262,7 +302,6 @@ def _validate_action_item(item, index):
 
 	return {
 		'id': action_id,
-		'tiltak_nr': tiltak_nr,
 		'beskrivelse': beskrivelse,
 		'ansvarlig': (item.get('ansvarlig') or '').strip(),
 		'frist': frist,
@@ -270,41 +309,64 @@ def _validate_action_item(item, index):
 	}, []
 
 
-def _sync_actions(scenario, actions_data):
-	existing = {a.pk: a for a in scenario.actions.all()}
-	keep_ids = set()
-	for index, item in enumerate(actions_data, start=1):
-		parsed, errors = _validate_action_item(item, index)
-		if errors:
-			raise ValueError('; '.join(errors))
-		if parsed['id'] and parsed['id'] in existing:
-			action = existing[parsed['id']]
-			keep_ids.add(action.pk)
-			action.tiltak_nr = parsed['tiltak_nr']
-			action.beskrivelse = parsed['beskrivelse']
-			action.ansvarlig = parsed['ansvarlig']
-			action.frist = parsed['frist']
-			action.status = parsed['status']
-			action.save()
-		else:
-			RiskAction.objects.create(
-				scenario=scenario,
-				tiltak_nr=parsed['tiltak_nr'],
-				beskrivelse=parsed['beskrivelse'],
-				ansvarlig=parsed['ansvarlig'],
-				frist=parsed['frist'],
-				status=parsed['status'],
-				kilde='manual',
-			)
-	for pk, action in existing.items():
-		if pk not in keep_ids:
+def _parse_scenario_ids(raw):
+	if raw is None:
+		return None
+	if not isinstance(raw, (list, tuple)):
+		return 'invalid'
+	ids = []
+	for value in raw:
+		try:
+			ids.append(int(value))
+		except (TypeError, ValueError):
+			return 'invalid'
+	return ids
+
+
+def _validate_scenario_ids(scope, scenario_ids):
+	if scenario_ids == 'invalid':
+		return None, ['Ugyldige scenario-IDer.']
+	if not scenario_ids:
+		return [], []
+	found = set(
+		RiskScenario.objects.filter(scope=scope, pk__in=scenario_ids).values_list('pk', flat=True)
+	)
+	unknown = set(scenario_ids) - found
+	if unknown:
+		return None, ['Ukjente scenario-IDer: %s' % ', '.join(map(str, sorted(unknown)))]
+	return scenario_ids, []
+
+
+def _apply_action_scenarios(action, scope, scenario_ids):
+	if scenario_ids is None:
+		return
+	valid, errors = _validate_scenario_ids(scope, scenario_ids)
+	if errors:
+		raise ValueError('; '.join(errors))
+	action.scenarios.set(valid)
+
+
+def _tiltak_refresh_payload(scope):
+	scenarios = _load_scope_scenarios(scope)
+	actions = _load_scope_actions(scope)
+	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions)
+	return {
+		'scenarios': [_scenario_summary_dict(s, tiltak_map, risk_map) for s in scenarios],
+		'tiltak': tiltak_list,
+		'level_counts': _level_counts(scenarios),
+	}
+
+
+def _cleanup_orphan_actions(scope):
+	for action in scope.actions.prefetch_related('scenarios'):
+		if not action.scenarios.exists():
 			action.delete()
 
 
 def _apply_scenario_fields(scenario, fields):
 	for attr in (
-		'risk_id', 'uonsket_hendelse', 'kit_dimensjoner', 'arsaker_svakheter',
-		'eksisterende_tiltak', 'konsekvens_begrunnelse', 'sannsynlighetsbegrunnelse',
+		'uonsket_hendelse', 'kit_dimensjoner', 'arsaker_svakheter',
+		'konsekvens_begrunnelse', 'sannsynlighetsbegrunnelse',
 		'risikobehandling', 'konsekvens_nivaa', 'sannsynlighet_nivaa',
 		'konsekvens_etter', 'sannsynlighet_etter',
 	):
@@ -325,6 +387,19 @@ def _reload_scenario(scenario_id):
 	return RiskScenario.objects.prefetch_related('systemer', 'actions').get(pk=scenario_id)
 
 
+def _scenario_response(scope, scenario):
+	scenarios = _load_scope_scenarios(scope)
+	actions = _load_scope_actions(scope)
+	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions)
+	scenario = _reload_scenario(scenario.pk)
+	return {
+		'scenario': _scenario_to_dict(scenario, tiltak_map, risk_map),
+		'scenarios': [_scenario_summary_dict(s, tiltak_map, risk_map) for s in scenarios],
+		'tiltak': tiltak_list,
+		'level_counts': _level_counts(scenarios),
+	}
+
+
 @require_GET
 def api_risiko_meta(request, pk):
 	scope, err = _require_owner_json(request, pk)
@@ -338,13 +413,13 @@ def api_risiko_scenarios_list(request, pk):
 	scope, err = _require_owner_json(request, pk)
 	if err:
 		return err
-	scenarios = list(
-		scope.scenarios.prefetch_related('systemer', 'actions')
-		.order_by('rekkefolge', 'risk_id')
-	)
+	scenarios = _load_scope_scenarios(scope)
+	actions = _load_scope_actions(scope)
+	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions)
 	return JsonResponse({
 		'ok': True,
-		'scenarios': [_scenario_summary_dict(s) for s in scenarios],
+		'scenarios': [_scenario_summary_dict(s, tiltak_map, risk_map) for s in scenarios],
+		'tiltak': tiltak_list,
 		'level_counts': _level_counts(scenarios),
 	})
 
@@ -356,7 +431,13 @@ def api_risiko_scenario_detail(request, pk, sid):
 	except Http404:
 		return _json_error('forbidden', status=403)
 	scenario = _reload_scenario(scenario.pk)
-	return JsonResponse({'ok': True, 'scenario': _scenario_to_dict(scenario)})
+	scenarios = _load_scope_scenarios(scope)
+	actions = _load_scope_actions(scope)
+	_, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions)
+	return JsonResponse({
+		'ok': True,
+		'scenario': _scenario_to_dict(scenario, tiltak_map, risk_map),
+	})
 
 
 @require_http_methods(['POST'])
@@ -367,9 +448,6 @@ def api_risiko_scenario_create(request, pk):
 	data = _parse_json_body(request)
 	if data is None:
 		return _json_error('invalid_json')
-
-	if not data.get('risk_id'):
-		data['risk_id'] = _suggest_next_risk_id(scope)
 
 	fields, errors = _validate_scenario_fields(data, scope)
 	if errors:
@@ -382,11 +460,10 @@ def api_risiko_scenario_create(request, pk):
 			scenario = RiskScenario.objects.create(
 				scope=scope,
 				rekkefolge=max_rekke + 1,
-				risk_id=fields['risk_id'],
+				risk_id=_auto_risk_id(scope),
 				uonsket_hendelse=fields['uonsket_hendelse'],
 				kit_dimensjoner=fields['kit_dimensjoner'],
 				arsaker_svakheter=fields['arsaker_svakheter'],
-				eksisterende_tiltak=fields['eksisterende_tiltak'],
 				konsekvens_begrunnelse=fields['konsekvens_begrunnelse'],
 				sannsynlighetsbegrunnelse=fields['sannsynlighetsbegrunnelse'],
 				risikobehandling=fields['risikobehandling'],
@@ -397,18 +474,11 @@ def api_risiko_scenario_create(request, pk):
 			)
 			if fields.get('system_ids') is not None:
 				scenario.systemer.set(fields['system_ids'])
-			if 'actions' in data:
-				_sync_actions(scenario, data.get('actions') or [])
 	except ValueError as exc:
 		return _json_error(str(exc))
 
-	scenario = _reload_scenario(scenario.pk)
-	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
-	return JsonResponse({
-		'ok': True,
-		'scenario': _scenario_to_dict(scenario),
-		'level_counts': _level_counts(scenarios),
-	}, status=201)
+	resp = _scenario_response(scope, scenario)
+	return JsonResponse({'ok': True, **resp}, status=201)
 
 
 @require_http_methods(['PATCH', 'POST'])
@@ -429,18 +499,11 @@ def api_risiko_scenario_update(request, pk, sid):
 	try:
 		with transaction.atomic():
 			_apply_scenario_fields(scenario, fields)
-			if 'actions' in data:
-				_sync_actions(scenario, data.get('actions') or [])
 	except ValueError as exc:
 		return _json_error(str(exc))
 
-	scenario = _reload_scenario(scenario.pk)
-	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
-	return JsonResponse({
-		'ok': True,
-		'scenario': _scenario_to_dict(scenario),
-		'level_counts': _level_counts(scenarios),
-	})
+	resp = _scenario_response(scope, scenario)
+	return JsonResponse({'ok': True, **resp})
 
 
 @require_http_methods(['DELETE', 'POST'])
@@ -456,9 +519,14 @@ def api_risiko_scenario_delete(request, pk, sid):
 			return _json_error('invalid_method', status=405)
 
 	scenario.delete()
-	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
+	_cleanup_orphan_actions(scope)
+	scenarios = _load_scope_scenarios(scope)
+	actions = _load_scope_actions(scope)
+	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions)
 	return JsonResponse({
 		'ok': True,
+		'scenarios': [_scenario_summary_dict(s, tiltak_map, risk_map) for s in scenarios],
+		'tiltak': tiltak_list,
 		'level_counts': _level_counts(scenarios),
 	})
 
@@ -536,15 +604,21 @@ def api_risiko_action_create(request, pk, sid):
 		return _json_error('; '.join(errors))
 
 	action = RiskAction.objects.create(
-		scenario=scenario,
-		tiltak_nr=parsed['tiltak_nr'],
+		scope=scope,
 		beskrivelse=parsed['beskrivelse'],
 		ansvarlig=parsed['ansvarlig'],
 		frist=parsed['frist'],
 		status=parsed['status'],
 		kilde='manual',
 	)
-	return JsonResponse({'ok': True, 'action': _action_to_dict(action)}, status=201)
+	action.scenarios.add(scenario)
+	scenarios = _load_scope_scenarios(scope)
+	actions = _load_scope_actions(scope)
+	tiltak_map = tiltak_display_id_map(actions)
+	return JsonResponse({
+		'ok': True,
+		'action': _action_to_dict(action, tiltak_map.get(action.pk, '')),
+	}, status=201)
 
 
 @require_http_methods(['PATCH', 'POST'])
@@ -554,7 +628,7 @@ def api_risiko_action_update(request, pk, sid, aid):
 	except Http404:
 		return _json_error('forbidden', status=403)
 
-	action = get_object_or_404(RiskAction, pk=aid, scenario=scenario)
+	action = get_object_or_404(RiskAction, pk=aid, scope=scope)
 	data = _parse_json_body(request)
 	if data is None:
 		return _json_error('invalid_json')
@@ -564,14 +638,25 @@ def api_risiko_action_update(request, pk, sid, aid):
 	if errors:
 		return _json_error('; '.join(errors))
 
-	action.tiltak_nr = parsed['tiltak_nr']
 	action.beskrivelse = parsed['beskrivelse']
 	action.ansvarlig = parsed['ansvarlig']
 	action.frist = parsed['frist']
 	action.status = parsed['status']
 	action.save()
 
-	return JsonResponse({'ok': True, 'action': _action_to_dict(action)})
+	scenarios = _load_scope_scenarios(scope)
+	actions = _load_scope_actions(scope)
+	tiltak_map = tiltak_display_id_map(actions)
+	risk_map = annotate_scenario_display_ids(scenarios)
+	risk_ids = [
+		risk_map.get(sc.pk, '')
+		for sc in action.scenarios.all()
+		if risk_map.get(sc.pk)
+	]
+	return JsonResponse({
+		'ok': True,
+		'action': _action_to_dict(action, tiltak_map.get(action.pk, ''), risk_ids),
+	})
 
 
 @require_http_methods(['DELETE', 'POST'])
@@ -581,7 +666,7 @@ def api_risiko_action_delete(request, pk, sid, aid):
 	except Http404:
 		return _json_error('forbidden', status=403)
 
-	action = get_object_or_404(RiskAction, pk=aid, scenario=scenario)
+	action = get_object_or_404(RiskAction, pk=aid, scope=scope)
 
 	if request.method == 'POST':
 		data = _parse_json_body(request) or {}
@@ -590,3 +675,119 @@ def api_risiko_action_delete(request, pk, sid, aid):
 
 	action.delete()
 	return JsonResponse({'ok': True})
+
+
+@require_http_methods(['POST'])
+def api_risiko_scope_action_create(request, pk):
+	scope, err = _require_owner_json(request, pk)
+	if err:
+		return err
+
+	data = _parse_json_body(request)
+	if data is None:
+		return _json_error('invalid_json')
+
+	parsed, errors = _validate_action_item(data, 1)
+	if errors:
+		return _json_error('; '.join(errors))
+
+	scenario_ids = _parse_scenario_ids(data.get('scenario_ids'))
+	if scenario_ids == 'invalid':
+		return _json_error('Ugyldige scenario-IDer.')
+
+	try:
+		with transaction.atomic():
+			action = RiskAction.objects.create(
+				scope=scope,
+				beskrivelse=parsed['beskrivelse'],
+				ansvarlig=parsed['ansvarlig'],
+				frist=parsed['frist'],
+				status=parsed['status'],
+				kilde='manual',
+			)
+			_apply_action_scenarios(action, scope, scenario_ids if scenario_ids is not None else [])
+	except ValueError as exc:
+		return _json_error(str(exc))
+
+	payload = _tiltak_refresh_payload(scope)
+	tiltak_map = tiltak_display_id_map(_load_scope_actions(scope))
+	return JsonResponse({
+		'ok': True,
+		'action': _action_to_dict(
+			action,
+			tiltak_map.get(action.pk, ''),
+			scenario_ids=list(action.scenarios.values_list('pk', flat=True)),
+		),
+		**payload,
+	}, status=201)
+
+
+@require_http_methods(['PATCH', 'POST'])
+def api_risiko_scope_action_update(request, pk, aid):
+	scope, err = _require_owner_json(request, pk)
+	if err:
+		return err
+
+	action = get_object_or_404(RiskAction, pk=aid, scope=scope)
+	data = _parse_json_body(request)
+	if data is None:
+		return _json_error('invalid_json')
+
+	data['id'] = action.pk
+	parsed, errors = _validate_action_item(data, 1)
+	if errors:
+		return _json_error('; '.join(errors))
+
+	scenario_ids = None
+	if 'scenario_ids' in data:
+		scenario_ids = _parse_scenario_ids(data.get('scenario_ids'))
+		if scenario_ids == 'invalid':
+			return _json_error('Ugyldige scenario-IDer.')
+
+	try:
+		with transaction.atomic():
+			action.beskrivelse = parsed['beskrivelse']
+			action.ansvarlig = parsed['ansvarlig']
+			action.frist = parsed['frist']
+			action.status = parsed['status']
+			action.save()
+			_apply_action_scenarios(action, scope, scenario_ids)
+	except ValueError as exc:
+		return _json_error(str(exc))
+
+	payload = _tiltak_refresh_payload(scope)
+	tiltak_map = tiltak_display_id_map(_load_scope_actions(scope))
+	risk_map = annotate_scenario_display_ids(_load_scope_scenarios(scope))
+	risk_ids = [
+		risk_map.get(sc.pk, '')
+		for sc in action.scenarios.all()
+		if risk_map.get(sc.pk)
+	]
+	return JsonResponse({
+		'ok': True,
+		'action': _action_to_dict(
+			action,
+			tiltak_map.get(action.pk, ''),
+			risk_ids,
+			list(action.scenarios.values_list('pk', flat=True)),
+		),
+		**payload,
+	})
+
+
+@require_http_methods(['DELETE', 'POST'])
+def api_risiko_scope_action_delete(request, pk, aid):
+	scope, err = _require_owner_json(request, pk)
+	if err:
+		return err
+
+	action = get_object_or_404(RiskAction, pk=aid, scope=scope)
+
+	if request.method == 'POST':
+		data = _parse_json_body(request) or {}
+		if data.get('_method') != 'DELETE':
+			return _json_error('invalid_method', status=405)
+
+	action.delete()
+	payload = _tiltak_refresh_payload(scope)
+	return JsonResponse({'ok': True, **payload})

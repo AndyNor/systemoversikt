@@ -1,4 +1,14 @@
 // Change log:
+// 2026-06-26: Debounced auto-save for scenario fields and tiltak cards in modal.
+// 2026-06-26: Browser back / mouse back closes scenario modal via history.pushState.
+// 2026-06-26: Compact modal tiltak cards; unlink vs delete when shared across scenarios.
+// 2026-06-26: Link existing scope tiltak; RiskID multi-select on modal action cards.
+// 2026-06-26: Tiltak edited in scenario modal; scope tiltak table is read-only overview.
+// 2026-06-26: Pause floatThead before scenario tbody rebuild; keep server rows on first load.
+// 2026-06-26: Refresh tablesorter/floatThead after AJAX table rebuild – fixes empty scenario list.
+// 2026-06-26: Tiltak edited in scope list; scenario modal no longer manages tiltak.
+// 2026-06-26: Display-time R/T IDs; scope-level tiltak reuse; «Tilknyttede systemer».
+// 2026-06-26: Scope meta edit toggled via Rediger button; exit edit mode after save/cancel.
 // 2026-06-25: Konsekvens/sannsynlighet as colored tags, not full cell backgrounds.
 // 2026-06-25: KIT tags with icons; column reorder; explicit risk cell backgrounds in table.
 // 2026-06-25: Konsekvens/sannsynlighet cells show lookup labels with 1–5 color scale.
@@ -47,17 +57,204 @@
 
     let meta = null;
     let draftSystems = [];
-    let draftActions = [];
+    let scopeTiltak = [];
+    let scopeScenarios = [];
     let searchTimer = null;
+    let scenarioAutosaveTimer = null;
+    let scenarioSaveInFlight = null;
+    let scenarioSnapshot = '';
+    let modalAutosavePaused = false;
+    let modalCloseAllowed = false;
+    let modalSavedStatusTimer = null;
+    const actionAutosaveTimers = new WeakMap();
+    const actionSaveInFlight = new WeakMap();
+    const actionSnapshots = new WeakMap();
+
+    const AUTOSAVE_DELAY_MS = 800;
 
     const modal = $('#risiko-scenario-modal');
     const modalStatus = document.getElementById('risiko-modal-status');
     const scopeStatus = document.getElementById('risiko-scope-status');
 
+    let modalHistoryActive = false;
+    let suppressModalHistoryPop = false;
+
+    modal.on('show.bs.modal', function () {
+      history.pushState({ risikoScenarioModal: true }, '', window.location.href);
+      modalHistoryActive = true;
+    });
+
+    modal.on('hidden.bs.modal', function () {
+      if (modalHistoryActive) {
+        modalHistoryActive = false;
+        suppressModalHistoryPop = true;
+        history.back();
+      }
+      clearTimeout(scenarioAutosaveTimer);
+      scenarioAutosaveTimer = null;
+    });
+
+    modal.on('hide.bs.modal', function (e) {
+      if (modalCloseAllowed) {
+        modalCloseAllowed = false;
+        return;
+      }
+      e.preventDefault();
+      Promise.all([flushScenarioAutosave(), flushAllActionAutosaves()])
+        .then(function () {
+          modalCloseAllowed = true;
+          modal.modal('hide');
+        })
+        .catch(function (err) {
+          setModalStatus(err.message, true);
+        });
+    });
+
+    window.addEventListener('popstate', function () {
+      if (suppressModalHistoryPop) {
+        suppressModalHistoryPop = false;
+        return;
+      }
+      if (modal.hasClass('show')) {
+        modalHistoryActive = false;
+        modal.modal('hide');
+      }
+    });
+
     function setModalStatus(msg, isError) {
       if (!modalStatus) return;
       modalStatus.textContent = msg || '';
       modalStatus.className = isError ? 'small mb-2 text-danger' : 'small mb-2 text-muted';
+    }
+
+    function showModalSavedStatus() {
+      setModalStatus('Lagret');
+      clearTimeout(modalSavedStatusTimer);
+      modalSavedStatusTimer = setTimeout(function () {
+        if (modalStatus && modalStatus.textContent === 'Lagret') {
+          setModalStatus('');
+        }
+      }, 2000);
+    }
+
+    function scenarioPayloadJson() {
+      return JSON.stringify(collectScenarioPayload());
+    }
+
+    function captureScenarioSnapshot() {
+      scenarioSnapshot = scenarioPayloadJson();
+    }
+
+    function captureActionSnapshot(card) {
+      actionSnapshots.set(card, JSON.stringify(collectModalActionPayload(card)));
+    }
+
+    function actionPayloadJson(card) {
+      return JSON.stringify(collectModalActionPayload(card));
+    }
+
+    function scheduleScenarioAutosave() {
+      if (modalAutosavePaused) return;
+      clearTimeout(scenarioAutosaveTimer);
+      scenarioAutosaveTimer = setTimeout(function () {
+        flushScenarioAutosave().catch(function (err) {
+          setModalStatus(err.message, true);
+        });
+      }, AUTOSAVE_DELAY_MS);
+    }
+
+    function scheduleActionAutosave(card) {
+      if (modalAutosavePaused || !card) return;
+      const existing = actionAutosaveTimers.get(card);
+      if (existing) clearTimeout(existing);
+      actionAutosaveTimers.set(card, setTimeout(function () {
+        actionAutosaveTimers.delete(card);
+        persistActionCard(card).catch(function (err) {
+          setModalStatus(err.message, true);
+        });
+      }, AUTOSAVE_DELAY_MS));
+    }
+
+    function flushScenarioAutosave() {
+      clearTimeout(scenarioAutosaveTimer);
+      scenarioAutosaveTimer = null;
+      if (scenarioSaveInFlight) return scenarioSaveInFlight;
+      if (scenarioPayloadJson() === scenarioSnapshot) return Promise.resolve();
+      scenarioSaveInFlight = persistScenario()
+        .finally(function () {
+          scenarioSaveInFlight = null;
+        });
+      return scenarioSaveInFlight;
+    }
+
+    function flushAllActionAutosaves() {
+      const cards = document.querySelectorAll('#risiko-actions-list .risiko-action-card');
+      const jobs = [];
+      cards.forEach(function (card) {
+        const timer = actionAutosaveTimers.get(card);
+        if (timer) {
+          clearTimeout(timer);
+          actionAutosaveTimers.delete(card);
+        }
+        const inFlight = actionSaveInFlight.get(card);
+        if (inFlight) {
+          jobs.push(inFlight);
+          return;
+        }
+        if (actionPayloadJson(card) !== (actionSnapshots.get(card) || '')) {
+          jobs.push(persistActionCard(card));
+        }
+      });
+      return Promise.all(jobs);
+    }
+
+    function applyScenarioCreateResult(scenario) {
+      if (!scenario || !scenario.id) return;
+      document.getElementById('risiko-modal-scenario-id').value = scenario.id;
+      document.getElementById('risiko-delete-scenario').style.display = '';
+      const riskLabel = scenario.display_risk_id || '';
+      document.getElementById('risiko-scenario-modal-title').textContent =
+        riskLabel ? 'Rediger ' + riskLabel : 'Rediger scenario';
+      updateModalTiltakToolbar(true);
+    }
+
+    function refreshScopeTablesOnly() {
+      return fetchJson(config.urls.scenarios).then(function (data) {
+        scopeTiltak = data.tiltak || [];
+        scopeScenarios = data.scenarios || [];
+        const hasServerRows = document.querySelector('#risiko-scenarios-tbody tr[data-scenario-id]');
+        if (hasServerRows) {
+          updateScenarioTiltakColumn(scopeScenarios);
+        } else {
+          renderScenariosTable(scopeScenarios);
+        }
+        renderTiltakSection(scopeTiltak);
+      });
+    }
+
+    function persistScenario() {
+      const scenarioId = document.getElementById('risiko-modal-scenario-id').value;
+      const payload = collectScenarioPayload();
+      const isCreate = !scenarioId;
+      if (isCreate && !payload.uonsket_hendelse) {
+        return Promise.resolve();
+      }
+
+      const url = isCreate
+        ? config.urls.scenarioCreate
+        : urlWithId(config.urls.scenarioUpdate, scenarioId);
+      const method = isCreate ? 'POST' : 'PATCH';
+
+      setModalStatus('Lagrer…');
+      return fetchJson(url, { method: method, body: JSON.stringify(payload) })
+        .then(function (data) {
+          if (isCreate && data.scenario) {
+            applyScenarioCreateResult(data.scenario);
+          }
+          captureScenarioSnapshot();
+          showModalSavedStatus();
+          return refreshScopeTablesOnly();
+        });
     }
 
     function setScopeStatus(msg, isError) {
@@ -175,58 +372,15 @@
       return html;
     }
 
-    function renderActionRows() {
-      const tbody = document.getElementById('risiko-actions-tbody');
-      tbody.innerHTML = '';
-      draftActions.forEach(function (action, index) {
-        const tr = document.createElement('tr');
-        tr.innerHTML =
-          '<td><input type="number" class="form-control form-control-sm risiko-action-nr" min="1" value="' +
-          escapeHtml(action.tiltak_nr || (index + 1)) + '"></td>' +
-          '<td><textarea class="form-control form-control-sm risiko-action-beskrivelse" rows="3">' +
-          escapeHtml(action.beskrivelse || '') + '</textarea></td>' +
-          '<td><input type="text" class="form-control form-control-sm risiko-action-ansvarlig" value="' +
-          escapeHtml(action.ansvarlig || '') + '"></td>' +
-          '<td><input type="date" class="form-control form-control-sm risiko-action-frist" value="' +
-          escapeHtml(action.frist || '') + '"></td>' +
-          '<td><select class="form-control form-control-sm risiko-action-status">' +
-          statusOptionsHtml(action.status || 'ikke_startet') + '</select></td>' +
-          '<td><button type="button" class="btn btn-link btn-sm text-danger risiko-action-fjern">&times;</button></td>';
-        if (action.id) {
-          tr.setAttribute('data-action-id', action.id);
-        }
-        tbody.appendChild(tr);
-      });
-    }
-
-    function collectActionsFromDom() {
-      const rows = document.querySelectorAll('#risiko-actions-tbody tr');
-      const actions = [];
-      rows.forEach(function (row, index) {
-        const id = row.getAttribute('data-action-id');
-        actions.push({
-          id: id ? parseInt(id, 10) : null,
-          tiltak_nr: parseInt(row.querySelector('.risiko-action-nr').value, 10) || (index + 1),
-          beskrivelse: row.querySelector('.risiko-action-beskrivelse').value.trim(),
-          ansvarlig: row.querySelector('.risiko-action-ansvarlig').value.trim(),
-          frist: row.querySelector('.risiko-action-frist').value || null,
-          status: row.querySelector('.risiko-action-status').value,
-        });
-      });
-      return actions;
-    }
-
     function collectScenarioPayload() {
       function levelVal(id) {
         const v = document.getElementById(id).value;
         return v === '' ? null : parseInt(v, 10);
       }
       return {
-        risk_id: document.getElementById('risiko-f-risk-id').value.trim(),
         uonsket_hendelse: document.getElementById('risiko-f-uonsket').value.trim(),
         kit_dimensjoner: document.getElementById('risiko-f-kit').value.trim(),
         arsaker_svakheter: document.getElementById('risiko-f-arsaker').value.trim(),
-        eksisterende_tiltak: document.getElementById('risiko-f-eksisterende').value.trim(),
         konsekvens_nivaa: levelVal('risiko-f-konsekvens'),
         sannsynlighet_nivaa: levelVal('risiko-f-sannsynlighet'),
         konsekvens_etter: levelVal('risiko-f-konsekvens-etter'),
@@ -235,17 +389,15 @@
         sannsynlighetsbegrunnelse: document.getElementById('risiko-f-sannsynlighet-begrunnelse').value.trim(),
         risikobehandling: document.getElementById('risiko-f-risikobehandling').value,
         system_ids: draftSystems.map(function (s) { return s.id; }),
-        actions: collectActionsFromDom(),
       };
     }
 
     function fillScenarioForm(scenario) {
+      modalAutosavePaused = true;
       document.getElementById('risiko-modal-scenario-id').value = scenario ? scenario.id : '';
-      document.getElementById('risiko-f-risk-id').value = scenario ? scenario.risk_id : '';
       document.getElementById('risiko-f-kit').value = scenario ? (scenario.kit_dimensjoner || '') : '';
       document.getElementById('risiko-f-uonsket').value = scenario ? (scenario.uonsket_hendelse || '') : '';
       document.getElementById('risiko-f-arsaker').value = scenario ? (scenario.arsaker_svakheter || '') : '';
-      document.getElementById('risiko-f-eksisterende').value = scenario ? (scenario.eksisterende_tiltak || '') : '';
       document.getElementById('risiko-f-konsekvens').value = scenario && scenario.konsekvens_nivaa ? scenario.konsekvens_nivaa : '';
       document.getElementById('risiko-f-sannsynlighet').value = scenario && scenario.sannsynlighet_nivaa ? scenario.sannsynlighet_nivaa : '';
       document.getElementById('risiko-f-konsekvens-etter').value = scenario && scenario.konsekvens_etter ? scenario.konsekvens_etter : '';
@@ -254,23 +406,18 @@
       document.getElementById('risiko-f-sannsynlighet-begrunnelse').value = scenario ? (scenario.sannsynlighetsbegrunnelse || '') : '';
       document.getElementById('risiko-f-risikobehandling').value = scenario ? (scenario.risikobehandling || '') : '';
       draftSystems = scenario ? (scenario.systemer || []).slice() : [];
-      draftActions = scenario ? (scenario.actions || []).map(function (a) {
-        return {
-          id: a.id,
-          tiltak_nr: a.tiltak_nr,
-          beskrivelse: a.beskrivelse,
-          ansvarlig: a.ansvarlig,
-          frist: a.frist,
-          status: a.status,
-        };
-      }) : [];
       renderSystemChips();
-      renderActionRows();
+      setModalStatus('');
+      renderModalActionCards(scenario ? (scenario.actions || []) : []);
+      updateModalTiltakToolbar(!!scenario);
       updateRiskBadges();
       document.getElementById('risiko-delete-scenario').style.display = scenario ? '' : 'none';
+      const riskLabel = scenario ? (scenario.display_risk_id || '') : '';
       document.getElementById('risiko-scenario-modal-title').textContent = scenario
-        ? 'Rediger ' + scenario.risk_id
+        ? (riskLabel ? 'Rediger ' + riskLabel : 'Rediger scenario')
         : 'Nytt scenario';
+      captureScenarioSnapshot();
+      modalAutosavePaused = false;
     }
 
     function openModalForCreate() {
@@ -327,42 +474,481 @@
       }).join(' ');
     }
 
-    function scenarioEditUrl(scenarioId) {
-      return config.urls.scopePage + '?edit=' + encodeURIComponent(String(scenarioId));
+    function updateModalTiltakToolbar(hasScenario) {
+      const addBtn = document.getElementById('risiko-add-action');
+      const linkBtn = document.getElementById('risiko-link-action');
+      const needSave = document.getElementById('risiko-modal-tiltak-need-save');
+      if (addBtn) addBtn.disabled = !hasScenario;
+      if (linkBtn) linkBtn.disabled = !hasScenario;
+      if (needSave) needSave.classList.toggle('d-none', !!hasScenario);
+      if (!hasScenario) hideLinkActionPicker();
     }
 
-    function renderTiltakSection(scenarios) {
-      const section = document.getElementById('risiko-tiltak-section');
-      if (!section) return;
+    function hideLinkActionPicker() {
+      const picker = document.getElementById('risiko-link-action-picker');
+      if (picker) picker.style.display = 'none';
+    }
 
-      const rows = [];
-      scenarios.forEach(function (scenario) {
-        (scenario.actions || []).forEach(function (action) {
-          rows.push({ scenario: scenario, action: action });
-        });
+    function actionScenarioIds(action) {
+      if (action.scenario_ids && action.scenario_ids.length) {
+        return action.scenario_ids.slice();
+      }
+      const fromScope = scopeTiltak.find(function (a) { return a.id === action.id; });
+      if (fromScope) {
+        if (fromScope.scenario_ids && fromScope.scenario_ids.length) {
+          return fromScope.scenario_ids.slice();
+        }
+        return (fromScope.risk_links || []).map(function (link) { return link.scenario_pk; });
+      }
+      return (action.risk_links || []).map(function (link) { return link.scenario_pk; });
+    }
+
+    function actionSharesWithOtherScenarios(action, currentScenarioId) {
+      const ids = actionScenarioIds(action);
+      if (!currentScenarioId) return ids.length > 1;
+      return ids.some(function (id) { return id !== currentScenarioId; });
+    }
+
+    function buildModalActionCardHtml(action, defaultScenarioId) {
+      const displayId = escapeHtml(action.display_tiltak_id || '–');
+      let scenarioIds = actionScenarioIds(action);
+      if (!scenarioIds.length && defaultScenarioId) {
+        scenarioIds = [defaultScenarioId];
+      }
+      const shared = action.id && actionSharesWithOtherScenarios(action, defaultScenarioId);
+      const removeBtn = shared
+        ? '<button type="button" class="btn btn-outline-secondary btn-sm risiko-action-unlink">Koble fra</button>'
+        : '<button type="button" class="btn btn-outline-danger btn-sm risiko-action-delete">Slett</button>';
+
+      return '<div class="risiko-action-desc-row">' +
+          '<span class="risiko-action-card-id">' + displayId + '</span>' +
+          '<textarea class="form-control form-control-sm risiko-action-beskrivelse" rows="2">' +
+          escapeHtml(action.beskrivelse || '') + '</textarea>' +
+        '</div>' +
+        '<div class="form-row risiko-action-meta-row no-gutters align-items-end">' +
+          '<div class="col risiko-action-meta-col">' +
+            '<label class="risiko-action-label">Ansvarlig</label>' +
+            '<input type="text" class="form-control form-control-sm risiko-action-ansvarlig" value="' +
+            escapeHtml(action.ansvarlig || '') + '">' +
+          '</div>' +
+          '<div class="col risiko-action-meta-col">' +
+            '<label class="risiko-action-label">Frist</label>' +
+            '<input type="date" class="form-control form-control-sm risiko-action-frist" value="' +
+            escapeHtml(action.frist || '') + '">' +
+          '</div>' +
+          '<div class="col risiko-action-meta-col">' +
+            '<label class="risiko-action-label">Status</label>' +
+            '<select class="form-control form-control-sm risiko-action-status">' +
+            statusOptionsHtml(action.status || 'ikke_startet') + '</select>' +
+          '</div>' +
+          '<div class="col-auto risiko-action-btn-col">' +
+            removeBtn +
+          '</div>' +
+        '</div>';
+    }
+
+    function setCardScenarioIds(card, scenarioIds) {
+      card.setAttribute('data-scenario-ids', (scenarioIds || []).join(','));
+    }
+
+    function cardScenarioIds(card) {
+      const raw = card.getAttribute('data-scenario-ids');
+      if (!raw) return [];
+      return raw.split(',').map(function (part) {
+        return parseInt(part, 10);
+      }).filter(function (id) { return !isNaN(id); });
+    }
+
+    function renderModalActionCards(actions) {
+      const container = document.getElementById('risiko-actions-list');
+      if (!container) return;
+
+      modalAutosavePaused = true;
+      const scenarioIdRaw = document.getElementById('risiko-modal-scenario-id').value;
+      const defaultScenarioId = scenarioIdRaw ? parseInt(scenarioIdRaw, 10) : null;
+
+      const list = (actions || []).slice().sort(function (a, b) {
+        const aNum = parseInt((a.display_tiltak_id || 'T0').slice(1), 10);
+        const bNum = parseInt((b.display_tiltak_id || 'T0').slice(1), 10);
+        return aNum - bNum;
       });
 
-      if (!rows.length) {
-        section.innerHTML = '<h5>Tiltak</h5><p class="text-muted mb-0">Ingen tiltak registrert.</p>';
+      container.innerHTML = '';
+      list.forEach(function (action) {
+        const card = document.createElement('div');
+        card.className = 'risiko-action-card';
+        if (action.id) {
+          card.setAttribute('data-action-id', action.id);
+        }
+        const scenarioIds = actionScenarioIds(action);
+        if (!scenarioIds.length && defaultScenarioId) {
+          scenarioIds.push(defaultScenarioId);
+        }
+        setCardScenarioIds(card, scenarioIds);
+        card.innerHTML = buildModalActionCardHtml(action, defaultScenarioId);
+        container.appendChild(card);
+        captureActionSnapshot(card);
+      });
+      hideLinkActionPicker();
+      modalAutosavePaused = false;
+    }
+
+    function showLinkActionPicker() {
+      const scenarioIdRaw = document.getElementById('risiko-modal-scenario-id').value;
+      if (!scenarioIdRaw) {
+        flushScenarioAutosave().then(function () {
+          if (document.getElementById('risiko-modal-scenario-id').value) {
+            showLinkActionPicker();
+          } else {
+            setModalStatus('Skriv uønsket hendelse – scenarioet opprettes automatisk.', true);
+          }
+        });
+        return;
+      }
+      const currentScenarioId = parseInt(scenarioIdRaw, 10);
+      const select = document.getElementById('risiko-link-action-select');
+      const picker = document.getElementById('risiko-link-action-picker');
+      if (!select || !picker) return;
+
+      select.innerHTML = '<option value="">Velg tiltak…</option>';
+      scopeTiltak.forEach(function (action) {
+        const linkedIds = actionScenarioIds(action);
+        if (linkedIds.indexOf(currentScenarioId) !== -1) return;
+        const label = (action.display_tiltak_id || 'T?') + ' – ' +
+          (action.beskrivelse || '').substring(0, 80);
+        select.insertAdjacentHTML('beforeend',
+          '<option value="' + action.id + '">' + escapeHtml(label) + '</option>'
+        );
+      });
+
+      if (select.options.length <= 1) {
+        setModalStatus('Ingen flere tiltak å koble – opprett et nytt.', true);
+        return;
+      }
+      picker.style.display = '';
+      setModalStatus('');
+    }
+
+    function linkExistingAction() {
+      const select = document.getElementById('risiko-link-action-select');
+      const scenarioIdRaw = document.getElementById('risiko-modal-scenario-id').value;
+      if (!select || !scenarioIdRaw) return;
+
+      const actionId = parseInt(select.value, 10);
+      const currentScenarioId = parseInt(scenarioIdRaw, 10);
+      if (!actionId) {
+        setModalStatus('Velg et tiltak.', true);
         return;
       }
 
-      let html = '<h5>Tiltak</h5><table class="table table-sm table-bordered excel mb-0"><thead><tr>' +
-        '<th style="width:4rem">RiskID</th><th style="width:3rem">#</th><th>Tiltak</th>' +
-        '<th style="width:8rem">Ansvarlig</th><th style="width:7rem">Frist</th><th style="width:8rem">Status</th>' +
-        '</tr></thead><tbody id="risiko-tiltak-tbody">';
+      const action = scopeTiltak.find(function (a) { return a.id === actionId; });
+      if (!action) return;
 
-      rows.forEach(function (row) {
-        const editUrl = scenarioEditUrl(row.scenario.id);
-        html += '<tr><td><a href="' + escapeHtml(editUrl) + '">' + escapeHtml(row.scenario.risk_id) + '</a></td>' +
-          '<td>' + escapeHtml(row.action.tiltak_nr) + '</td><td>' +
-          escapeHtml(row.action.beskrivelse).replace(/\n/g, '<br>') + '</td><td>' +
-          escapeHtml(row.action.ansvarlig || '-') + '</td><td>' +
-          escapeHtml(row.action.frist || '-') + '</td><td>' +
-          escapeHtml(row.action.status_display || row.action.status) + '</td></tr>';
+      const scenarioIds = actionScenarioIds(action);
+      if (scenarioIds.indexOf(currentScenarioId) === -1) {
+        scenarioIds.push(currentScenarioId);
+      }
+
+      setModalStatus('Kobler…');
+      fetchJson(urlWithId(config.urls.actionUpdate, actionId), {
+        method: 'PATCH',
+        body: JSON.stringify({
+          beskrivelse: action.beskrivelse,
+          ansvarlig: action.ansvarlig,
+          frist: action.frist,
+          status: action.status,
+          scenario_ids: scenarioIds,
+        }),
+      })
+        .then(function () {
+          setModalStatus('');
+          hideLinkActionPicker();
+          return refreshAfterModalTiltakChange();
+        })
+        .catch(function (err) {
+          setModalStatus(err.message, true);
+        });
+    }
+
+    function collectModalActionPayload(card) {
+      const scenarioIdRaw = document.getElementById('risiko-modal-scenario-id').value;
+      const currentScenarioId = scenarioIdRaw ? parseInt(scenarioIdRaw, 10) : null;
+      let scenarioIds = cardScenarioIds(card);
+      if (currentScenarioId && scenarioIds.indexOf(currentScenarioId) === -1) {
+        scenarioIds.push(currentScenarioId);
+      }
+      if (!scenarioIds.length && currentScenarioId) {
+        scenarioIds = [currentScenarioId];
+      }
+      return {
+        beskrivelse: card.querySelector('.risiko-action-beskrivelse').value.trim(),
+        ansvarlig: card.querySelector('.risiko-action-ansvarlig').value.trim(),
+        frist: card.querySelector('.risiko-action-frist').value || null,
+        status: card.querySelector('.risiko-action-status').value,
+        scenario_ids: scenarioIds,
+      };
+    }
+
+    function refreshAfterModalTiltakChange() {
+      const scenarioId = document.getElementById('risiko-modal-scenario-id').value;
+      return refreshTable().then(function () {
+        if (!scenarioId) return;
+        return fetchJson(urlWithId(config.urls.scenarioDetail, scenarioId))
+          .then(function (data) {
+            renderModalActionCards(data.scenario.actions || []);
+          });
       });
-      html += '</tbody></table>';
-      section.innerHTML = html;
+    }
+
+    function persistActionCard(card) {
+      const scenarioId = document.getElementById('risiko-modal-scenario-id').value;
+      if (!scenarioId) {
+        return flushScenarioAutosave().then(function () {
+          if (!document.getElementById('risiko-modal-scenario-id').value) {
+            return Promise.resolve();
+          }
+          return persistActionCard(card);
+        });
+      }
+
+      const actionId = card.getAttribute('data-action-id');
+      const payload = collectModalActionPayload(card);
+      if (!payload.beskrivelse) {
+        if (!actionId) return Promise.resolve();
+        return Promise.reject(new Error('Beskrivelse er påkrevd.'));
+      }
+      if (actionPayloadJson(card) === (actionSnapshots.get(card) || '')) {
+        return Promise.resolve();
+      }
+
+      const inFlight = actionSaveInFlight.get(card);
+      if (inFlight) return inFlight;
+
+      const isCreate = !actionId;
+      const url = isCreate
+        ? config.urls.actionCreate
+        : urlWithId(config.urls.actionUpdate, actionId);
+      const method = isCreate ? 'POST' : 'PATCH';
+
+      setModalStatus('Lagrer…');
+      const job = fetchJson(url, { method: method, body: JSON.stringify(payload) })
+        .then(function (data) {
+          if (isCreate && data.action) {
+            card.setAttribute('data-action-id', data.action.id);
+            const idSpan = card.querySelector('.risiko-action-card-id');
+            if (idSpan && data.action.display_tiltak_id) {
+              idSpan.textContent = data.action.display_tiltak_id;
+            }
+            if (data.action.id) {
+              const shared = actionSharesWithOtherScenarios(
+                data.action,
+                parseInt(document.getElementById('risiko-modal-scenario-id').value, 10)
+              );
+              const btnCol = card.querySelector('.risiko-action-btn-col');
+              if (btnCol) {
+                btnCol.innerHTML = shared
+                  ? '<button type="button" class="btn btn-outline-secondary btn-sm risiko-action-unlink">Koble fra</button>'
+                  : '<button type="button" class="btn btn-outline-danger btn-sm risiko-action-delete">Slett</button>';
+              }
+            }
+          }
+          captureActionSnapshot(card);
+          showModalSavedStatus();
+          return refreshScopeTablesOnly();
+        })
+        .finally(function () {
+          actionSaveInFlight.delete(card);
+        });
+      actionSaveInFlight.set(card, job);
+      return job;
+    }
+
+    function unlinkModalActionCard(card) {
+      const actionId = card.getAttribute('data-action-id');
+      const scenarioIdRaw = document.getElementById('risiko-modal-scenario-id').value;
+      if (!actionId || !scenarioIdRaw) {
+        return Promise.resolve();
+      }
+      const currentScenarioId = parseInt(scenarioIdRaw, 10);
+      if (!window.confirm('Fjerne koblingen til dette scenarioet? Tiltaket beholdes på andre scenarioer.')) {
+        return Promise.resolve();
+      }
+
+      const action = scopeTiltak.find(function (a) { return a.id === parseInt(actionId, 10); });
+      const payload = collectModalActionPayload(card);
+      const scenarioIds = actionScenarioIds(action || {}).filter(function (id) {
+        return id !== currentScenarioId;
+      });
+
+      setModalStatus('Kobler fra…');
+      card.querySelectorAll('button').forEach(function (btn) { btn.disabled = true; });
+
+      return fetchJson(urlWithId(config.urls.actionUpdate, actionId), {
+        method: 'PATCH',
+        body: JSON.stringify({
+          beskrivelse: payload.beskrivelse,
+          ansvarlig: payload.ansvarlig,
+          frist: payload.frist,
+          status: payload.status,
+          scenario_ids: scenarioIds,
+        }),
+      })
+        .then(function () {
+          setModalStatus('');
+          return refreshAfterModalTiltakChange();
+        })
+        .catch(function (err) {
+          setModalStatus(err.message, true);
+          card.querySelectorAll('button').forEach(function (btn) { btn.disabled = false; });
+        });
+    }
+
+    function deleteModalActionCard(card) {
+      const actionId = card.getAttribute('data-action-id');
+      if (!actionId) {
+        card.remove();
+        return Promise.resolve();
+      }
+      if (!window.confirm('Slette dette tiltaket?')) {
+        return Promise.resolve();
+      }
+
+      setModalStatus('Sletter…');
+      return fetchJson(urlWithId(config.urls.actionDelete, actionId), {
+        method: 'POST',
+        body: JSON.stringify({ _method: 'DELETE' }),
+      })
+        .then(function () {
+          setModalStatus('');
+          return refreshAfterModalTiltakChange();
+        })
+        .catch(function (err) {
+          setModalStatus(err.message, true);
+        });
+    }
+
+    function addModalActionCard() {
+      const scenarioIdRaw = document.getElementById('risiko-modal-scenario-id').value;
+      if (!scenarioIdRaw) {
+        flushScenarioAutosave().then(function () {
+          if (document.getElementById('risiko-modal-scenario-id').value) {
+            addModalActionCard();
+          } else {
+            setModalStatus('Skriv uønsket hendelse – scenarioet opprettes automatisk.', true);
+          }
+        });
+        return;
+      }
+      const container = document.getElementById('risiko-actions-list');
+      if (!container) return;
+      const card = document.createElement('div');
+      card.className = 'risiko-action-card';
+      setCardScenarioIds(card, [parseInt(scenarioIdRaw, 10)]);
+      card.innerHTML = buildModalActionCardHtml({
+        beskrivelse: '',
+        ansvarlig: '',
+        frist: null,
+        status: 'ikke_startet',
+        scenario_ids: [parseInt(scenarioIdRaw, 10)],
+      }, parseInt(scenarioIdRaw, 10));
+      container.appendChild(card);
+      captureActionSnapshot(card);
+      card.querySelector('.risiko-action-beskrivelse').focus();
+      hideLinkActionPicker();
+      setModalStatus('');
+    }
+
+    function buildTiltakReadOnlyRowHtml(action) {
+      const displayId = escapeHtml(action.display_tiltak_id || '–');
+      let riskHtml = '-';
+      const links = action.risk_links || [];
+      if (links.length) {
+        riskHtml = links.map(function (link) {
+          return '<a href="' + escapeHtml(config.urls.scopePage) + '?edit=' + link.scenario_pk + '">' +
+            escapeHtml(link.risk_id) + '</a>';
+        }).join(', ');
+      }
+      return '<td>' + displayId + '</td>' +
+        '<td>' + escapeHtml(action.beskrivelse || '').replace(/\n/g, '<br>') + '</td>' +
+        '<td>' + riskHtml + '</td>' +
+        '<td>' + escapeHtml(action.ansvarlig || '-') + '</td>' +
+        '<td>' + escapeHtml(action.frist || '-') + '</td>' +
+        '<td>' + escapeHtml(action.status_display || action.status || '-') + '</td>';
+    }
+
+    function renderTiltakSection(tiltak) {
+      const tbody = document.getElementById('risiko-tiltak-tbody');
+      const table = document.getElementById('risiko-tiltak-table');
+      const section = document.getElementById('risiko-tiltak-section');
+      if (!tbody) return;
+
+      tbody.innerHTML = '';
+      (tiltak || []).forEach(function (action) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = buildTiltakReadOnlyRowHtml(action);
+        tbody.appendChild(tr);
+      });
+
+      if (table) {
+        table.style.display = (tiltak && tiltak.length) ? '' : 'none';
+      }
+      if (section) {
+        let emptyMsg = section.querySelector('.risiko-tiltak-empty-msg');
+        if (!tiltak || !tiltak.length) {
+          if (!emptyMsg) {
+            emptyMsg = document.createElement('p');
+            emptyMsg.className = 'text-muted mb-0 risiko-tiltak-empty-msg';
+            emptyMsg.textContent = 'Ingen tiltak registrert.';
+            section.appendChild(emptyMsg);
+          }
+          emptyMsg.style.display = '';
+        } else if (emptyMsg) {
+          emptyMsg.style.display = 'none';
+        }
+      }
+    }
+
+    function pauseFloatThead(tableId) {
+      const table = $('#' + tableId);
+      if (!table.length || !$.fn.floatThead) {
+        return function () {};
+      }
+      const attached = table.data('floatThead-attached');
+      if (attached) {
+        table.floatThead('destroy');
+      }
+      return function () {
+        if (attached) {
+          table.floatThead({ top: 135 });
+        }
+      };
+    }
+
+    function updateScenarioTiltakColumn(scenarios) {
+      const byId = {};
+      (scenarios || []).forEach(function (scenario) {
+        byId[scenario.id] = scenario.display_tiltak_ids || '–';
+      });
+      document.querySelectorAll('#risiko-scenarios-tbody tr[data-scenario-id]').forEach(function (row) {
+        const id = parseInt(row.getAttribute('data-scenario-id'), 10);
+        if (!byId[id]) return;
+        const cell = row.cells[7];
+        if (cell) cell.textContent = byId[id];
+      });
+    }
+
+    function applyRefreshData(data, opts) {
+      opts = opts || {};
+      scopeTiltak = data.tiltak || [];
+      scopeScenarios = data.scenarios || [];
+      const hasServerRows = document.querySelector('#risiko-scenarios-tbody tr[data-scenario-id]');
+      if (opts.keepScenarioRows && hasServerRows) {
+        bindScenarioRows();
+        updateScenarioTiltakColumn(scopeScenarios);
+      } else {
+        renderScenariosTable(scopeScenarios);
+      }
+      renderTiltakSection(scopeTiltak);
     }
 
     function levelTagHtml(label, cssClass) {
@@ -372,7 +958,12 @@
     }
 
     function renderScenariosTable(scenarios) {
+      const resumeFloatThead = pauseFloatThead('risiko-scenarios-table');
       const tbody = document.getElementById('risiko-scenarios-tbody');
+      if (!tbody) {
+        resumeFloatThead();
+        return;
+      }
       tbody.innerHTML = '';
       scenarios.forEach(function (scenario) {
         let systemsHtml = '-';
@@ -395,65 +986,49 @@
 
         tbody.insertAdjacentHTML('beforeend',
           '<tr class="risiko-scenario-row" data-scenario-id="' + scenario.id + '" style="cursor:pointer">' +
-          '<td>' + escapeHtml(scenario.risk_id) + '</td>' +
+          '<td>' + escapeHtml(scenario.display_risk_id || '') + '</td>' +
           '<td>' + escapeHtml((scenario.uonsket_hendelse || '').substring(0, 80)) + '</td>' +
           '<td class="risiko-systemer-cell">' + systemsHtml + '</td>' +
           '<td class="risiko-kit-cell">' + kitHtml + '</td>' +
           '<td class="risiko-level-cell">' + levelTagHtml(kVal, kCss) + '</td>' +
           '<td class="risiko-level-cell">' + levelTagHtml(sVal, sCss) + '</td>' +
           '<td class="' + escapeHtml(rCss) + '">' + escapeHtml(scenario.risiko_etikett || '-') + '</td>' +
-          '<td>' + escapeHtml(scenario.action_count) + '</td>' +
+          '<td>' + escapeHtml(scenario.display_tiltak_ids || '–') + '</td>' +
           '<td class="' + escapeHtml(resCss) + '">' + escapeHtml(scenario.restrisiko_etikett || '-') + '</td></tr>'
         );
       });
       bindScenarioRows();
+      resumeFloatThead();
     }
 
     function refreshTable() {
       return fetchJson(config.urls.scenarios).then(function (data) {
-        renderScenariosTable(data.scenarios);
-        renderTiltakSection(data.scenarios);
+        applyRefreshData(data);
       });
     }
 
     function bindScenarioRows() {
-      document.querySelectorAll('.risiko-scenario-row').forEach(function (row) {
-        row.addEventListener('click', function () {
-          const id = row.getAttribute('data-scenario-id');
-          if (id) openModalForEdit(parseInt(id, 10));
-        });
+      const tbody = document.getElementById('risiko-scenarios-tbody');
+      if (!tbody || tbody.getAttribute('data-rows-bound') === 'true') {
+        return;
+      }
+      tbody.setAttribute('data-rows-bound', 'true');
+      tbody.addEventListener('click', function (e) {
+        const row = e.target.closest('.risiko-scenario-row');
+        if (!row) return;
+        const id = row.getAttribute('data-scenario-id');
+        if (id) openModalForEdit(parseInt(id, 10));
       });
-    }
-
-    function saveScenario() {
-      const scenarioId = document.getElementById('risiko-modal-scenario-id').value;
-      const payload = collectScenarioPayload();
-      const isCreate = !scenarioId;
-      const url = isCreate
-        ? config.urls.scenarioCreate
-        : urlWithId(config.urls.scenarioUpdate, scenarioId);
-      const method = isCreate ? 'POST' : 'PATCH';
-
-      setModalStatus('Lagrer…');
-      document.getElementById('risiko-save-scenario').disabled = true;
-
-      fetchJson(url, { method: method, body: JSON.stringify(payload) })
-        .then(function () {
-          setModalStatus('');
-          modal.modal('hide');
-          return refreshTable();
-        })
-        .catch(function (err) {
-          setModalStatus(err.message, true);
-        })
-        .finally(function () {
-          document.getElementById('risiko-save-scenario').disabled = false;
-        });
     }
 
     function deleteScenario() {
       const scenarioId = document.getElementById('risiko-modal-scenario-id').value;
-      if (!scenarioId || !window.confirm('Slette dette scenarioet og alle tilhørende tiltak?')) {
+      if (!scenarioId) {
+        return;
+      }
+      const displayId = document.getElementById('risiko-scenario-modal-title').textContent.replace(/^Rediger\s+/, '');
+      const label = displayId || 'dette scenarioet';
+      if (!window.confirm('Er du sikker på at du vil slette ' + label + '?\n\nTiltak som deles med andre scenarioer beholdes.')) {
         return;
       }
       setModalStatus('Sletter…');
@@ -462,12 +1037,58 @@
         body: JSON.stringify({ _method: 'DELETE' }),
       })
         .then(function () {
+          modalCloseAllowed = true;
           modal.modal('hide');
           return refreshTable();
         })
         .catch(function (err) {
           setModalStatus(err.message, true);
         });
+    }
+
+    const scopeMetaView = document.getElementById('risiko-scope-meta-view');
+    const scopeMetaEdit = document.getElementById('risiko-scope-meta-edit');
+    let scopeMetaSnapshot = null;
+
+    function captureScopeMetaSnapshot() {
+      scopeMetaSnapshot = {
+        title: document.getElementById('risiko-scope-title').value,
+        beskrivelse: document.getElementById('risiko-scope-beskrivelse').value,
+        sist_revidert: document.getElementById('risiko-scope-revidert').value,
+      };
+    }
+
+    function restoreScopeMetaSnapshot() {
+      if (!scopeMetaSnapshot) return;
+      document.getElementById('risiko-scope-title').value = scopeMetaSnapshot.title;
+      document.getElementById('risiko-scope-beskrivelse').value = scopeMetaSnapshot.beskrivelse;
+      document.getElementById('risiko-scope-revidert').value = scopeMetaSnapshot.sist_revidert;
+    }
+
+    function showScopeMetaView() {
+      if (scopeMetaView) scopeMetaView.style.display = '';
+      if (scopeMetaEdit) scopeMetaEdit.style.display = 'none';
+      setScopeStatus('');
+    }
+
+    function showScopeMetaEdit() {
+      captureScopeMetaSnapshot();
+      if (scopeMetaView) scopeMetaView.style.display = 'none';
+      if (scopeMetaEdit) scopeMetaEdit.style.display = '';
+      setScopeStatus('');
+    }
+
+    function updateScopeMetaView(scope) {
+      const pageTitle = document.getElementById('risiko-page-title');
+      if (pageTitle) pageTitle.textContent = scope.title;
+
+      document.getElementById('risiko-scope-revidert-view').textContent = scope.sist_revidert;
+      const beskBlock = document.getElementById('risiko-scope-beskrivelse-block');
+      const beskView = document.getElementById('risiko-scope-beskrivelse-view');
+      if (beskBlock && beskView) {
+        beskBlock.style.display = scope.beskrivelse ? '' : 'none';
+        beskView.innerHTML = escapeHtml(scope.beskrivelse || '').replace(/\n/g, '<br>');
+      }
     }
 
     function saveScopeMeta() {
@@ -479,13 +1100,9 @@
       setScopeStatus('Lagrer…');
       fetchJson(config.urls.scopeUpdate, { method: 'PATCH', body: JSON.stringify(payload) })
         .then(function (data) {
-          setScopeStatus('Lagret.');
-          document.getElementById('risiko-scope-revidert-view').textContent = data.scope.sist_revidert;
-          const beskView = document.getElementById('risiko-scope-beskrivelse-view');
-          if (beskView) {
-            beskView.style.display = data.scope.beskrivelse ? '' : 'none';
-            beskView.textContent = data.scope.beskrivelse;
-          }
+          updateScopeMetaView(data.scope);
+          captureScopeMetaSnapshot();
+          showScopeMetaView();
         })
         .catch(function (err) {
           setScopeStatus(err.message, true);
@@ -493,31 +1110,69 @@
     }
 
     document.querySelectorAll('.risiko-level-select').forEach(function (el) {
-      el.addEventListener('change', updateRiskBadges);
+      el.addEventListener('change', function () {
+        updateRiskBadges();
+        scheduleScenarioAutosave();
+      });
     });
+
+    const modalEl = document.getElementById('risiko-scenario-modal');
+    if (modalEl) {
+      modalEl.addEventListener('input', function (e) {
+        if (e.target.closest('.risiko-action-card')) return;
+        if (e.target.id === 'risiko-system-sok') return;
+        scheduleScenarioAutosave();
+      });
+      modalEl.addEventListener('change', function (e) {
+        if (e.target.closest('.risiko-action-card')) return;
+        if (e.target.id === 'risiko-system-sok') return;
+        scheduleScenarioAutosave();
+      });
+    }
 
     document.getElementById('risiko-new-scenario').addEventListener('click', openModalForCreate);
-    document.getElementById('risiko-save-scenario').addEventListener('click', saveScenario);
     document.getElementById('risiko-delete-scenario').addEventListener('click', deleteScenario);
-    document.getElementById('risiko-add-action').addEventListener('click', function () {
-      draftActions.push({
-        tiltak_nr: draftActions.length + 1,
-        beskrivelse: '',
-        ansvarlig: '',
-        frist: null,
-        status: 'ikke_startet',
-      });
-      renderActionRows();
-    });
 
-    document.getElementById('risiko-actions-tbody').addEventListener('click', function (e) {
-      if (e.target.classList.contains('risiko-action-fjern')) {
-        const row = e.target.closest('tr');
-        const idx = Array.prototype.indexOf.call(row.parentNode.children, row);
-        draftActions.splice(idx, 1);
-        renderActionRows();
-      }
-    });
+    const addActionBtn = document.getElementById('risiko-add-action');
+    if (addActionBtn) {
+      addActionBtn.addEventListener('click', addModalActionCard);
+    }
+
+    const linkActionBtn = document.getElementById('risiko-link-action');
+    if (linkActionBtn) {
+      linkActionBtn.addEventListener('click', showLinkActionPicker);
+    }
+
+    const linkActionConfirm = document.getElementById('risiko-link-action-confirm');
+    if (linkActionConfirm) {
+      linkActionConfirm.addEventListener('click', linkExistingAction);
+    }
+
+    const linkActionCancel = document.getElementById('risiko-link-action-cancel');
+    if (linkActionCancel) {
+      linkActionCancel.addEventListener('click', hideLinkActionPicker);
+    }
+
+    const actionsList = document.getElementById('risiko-actions-list');
+    if (actionsList) {
+      actionsList.addEventListener('input', function (e) {
+        const card = e.target.closest('.risiko-action-card');
+        if (card) scheduleActionAutosave(card);
+      });
+      actionsList.addEventListener('change', function (e) {
+        const card = e.target.closest('.risiko-action-card');
+        if (card) scheduleActionAutosave(card);
+      });
+      actionsList.addEventListener('click', function (e) {
+        const card = e.target.closest('.risiko-action-card');
+        if (!card) return;
+        if (e.target.classList.contains('risiko-action-unlink')) {
+          unlinkModalActionCard(card);
+        } else if (e.target.classList.contains('risiko-action-delete')) {
+          deleteModalActionCard(card);
+        }
+      });
+    }
 
     document.getElementById('risiko-system-chips').addEventListener('click', function (e) {
       if (e.target.classList.contains('risiko-system-fjern')) {
@@ -525,6 +1180,7 @@
         const id = parseInt(chip.getAttribute('data-id'), 10);
         draftSystems = draftSystems.filter(function (s) { return s.id !== id; });
         renderSystemChips();
+        scheduleScenarioAutosave();
       }
     });
 
@@ -551,6 +1207,7 @@
                 renderSystemChips();
                 document.getElementById('risiko-system-sok').value = '';
                 treff.innerHTML = '';
+                scheduleScenarioAutosave();
               });
               treff.appendChild(btn);
             });
@@ -558,19 +1215,39 @@
       }, 250);
     });
 
+    const scopeEditBtn = document.getElementById('risiko-scope-edit');
+    if (scopeEditBtn) {
+      scopeEditBtn.addEventListener('click', showScopeMetaEdit);
+    }
+
+    const scopeCancelBtn = document.getElementById('risiko-scope-cancel');
+    if (scopeCancelBtn) {
+      scopeCancelBtn.addEventListener('click', function () {
+        restoreScopeMetaSnapshot();
+        showScopeMetaView();
+      });
+    }
+
     const scopeSaveBtn = document.getElementById('risiko-scope-save');
     if (scopeSaveBtn) {
       scopeSaveBtn.addEventListener('click', saveScopeMeta);
     }
+
+    captureScopeMetaSnapshot();
 
     bindScenarioRows();
 
     fetchJson(config.urls.meta).then(function (data) {
       meta = data.meta;
       populateMetaChoices();
+      return fetchJson(config.urls.scenarios);
+    }).then(function (data) {
+      applyRefreshData(data, { keepScenarioRows: true });
       if (config.editScenarioId) {
         openModalForEdit(config.editScenarioId);
       }
+    }).catch(function (err) {
+      setScopeStatus('Kunne ikke laste tabellene: ' + err.message, true);
     });
   }
 

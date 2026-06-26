@@ -1,3 +1,4 @@
+{# 2026-06-26: SANNS. rowspan once; drop level numbers from axis labels. #}
 <table class="risk-matrix">
 <thead>
 <tr>
@@ -7,19 +8,21 @@
 <tr>
 	<th class="corner" colspan="2"></th>
 	{% for level, label in konsekvens_labels.items %}
-	<th class="axis-label">{{ label }}<br><small>({{ level }})</small></th>
+	<th class="axis-label">{{ label }}</th>
 	{% endfor %}
 </tr>
 </thead>
 <tbody>
 {% for row in matrix %}
 <tr>
-	<th class="axis-label">SANNS.</th>
-	<th class="axis-label">{{ row.sannsynlighet_label }}<br><small>({{ row.sannsynlighet }})</small></th>
+	{% if forloop.first %}
+	<th class="axis-label" rowspan="{{ matrix|length }}">SANNS.</th>
+	{% endif %}
+	<th class="axis-label">{{ row.sannsynlighet_label }}</th>
 	{% for cell in row.cells %}
 	<td class="{{ cell.css_class }}">
 		{% for scenario in cell.scenarios %}
-			<a class="risk-badge" href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ scenario.pk }}" title="{{ scenario.uonsket_hendelse|truncatechars:120 }}">{{ scenario.risk_id }}</a>
+			<a class="risk-badge" href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ scenario.pk }}" title="{{ scenario.uonsket_hendelse|truncatechars:120 }}">{{ scenario.display_risk_id }}</a>
 		{% endfor %}
 	</td>
 	{% endfor %}

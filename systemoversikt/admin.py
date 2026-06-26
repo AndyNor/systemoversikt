@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-26: RiskScope eier list_filter uses RelatedOnlyFieldListFilter – avoids loading all ~85k users.
+# 2026-06-26: RiskAction admin on scope; M2M scenarios for shared tiltak.
 # 2026-06-24: RiskScope/RiskScenario/RiskAction admin for security risk module MVP.
 # 2026-06-23: BloodHoundFinding admin + snapshot analysis fields in list display.
 # 2026-06-23: VirksomhetAdmin – intern_tjenesteleverandor list/filter/fieldset for manual flagging.
@@ -1654,16 +1656,19 @@ class AzureDeviceAdmin(admin.ModelAdmin):
 class RiskActionInline(admin.TabularInline):
 	model = RiskAction
 	extra = 0
-	fields = ('tiltak_nr', 'beskrivelse', 'ansvarlig', 'frist', 'status', 'kilde')
+	fields = ('beskrivelse', 'ansvarlig', 'frist', 'status', 'kilde')
+	filter_horizontal = ('scenarios',)
 
 
 @admin.register(RiskScope)
 class RiskScopeAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
 	list_display = ('title', 'eier', 'sist_revidert', 'opprettet')
-	list_filter = ('sist_revidert', 'eier')
+	list_filter = ('sist_revidert', ('eier', admin.RelatedOnlyFieldListFilter))
+	list_select_related = ('eier',)
 	search_fields = ('title', 'beskrivelse', 'source_filename')
 	autocomplete_fields = ('eier',)
+	inlines = [RiskActionInline]
 
 
 @admin.register(RiskScenario)
@@ -1673,16 +1678,16 @@ class RiskScenarioAdmin(SimpleHistoryAdmin):
 	list_filter = ('scope',)
 	search_fields = ('risk_id', 'uonsket_hendelse')
 	autocomplete_fields = ('scope', 'systemer')
-	inlines = [RiskActionInline]
 
 
 @admin.register(RiskAction)
 class RiskActionAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('tiltak_nr', 'scenario', 'status', 'frist', 'ansvarlig')
-	list_filter = ('status', 'kilde')
+	list_display = ('beskrivelse', 'scope', 'status', 'frist', 'ansvarlig')
+	list_filter = ('status', 'kilde', 'scope')
 	search_fields = ('beskrivelse', 'ansvarlig')
-	autocomplete_fields = ('scenario',)
+	autocomplete_fields = ('scope',)
+	filter_horizontal = ('scenarios',)
 
 
 # django-mailer: utvidet søk på To/Cc/Bcc i MessageLog
