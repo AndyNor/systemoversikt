@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-29: Idempotent sign_in_count – only count sign-ins newer than combo last_seen.
+# 2026-06-29: sign_in_count on combos – per-user totals in history view.
 # 2026-06-19: Shared Graph fetch and combo sync for device code sign-in page and nightly job.
 import datetime
 import os
@@ -157,8 +159,25 @@ def fetch_device_code_signins_from_graph(dager=30, page_size=100, max_results=20
 	return sign_ins, truncated, error_message
 
 
+def _combo_summary_from_events(events):
+	"""Min/max time, count and noteworthy flag from a list of sign-in event dicts."""
+	if not events:
+		return None
+	times = [event["sign_in_time"] for event in events]
+	return {
+		"sign_in_time_min": min(times),
+		"sign_in_time_max": max(times),
+		"batch_count": len(events),
+		"is_noteworthy": any(event["is_noteworthy"] for event in events),
+	}
+
+
 def upsert_device_code_combos(sign_ins):
-	"""Persist unique user+IP+app combos; return count of newly created noteworthy combos."""
+	"""Persist unique user+IP+app combos; return count of newly created noteworthy combos.
+
+	Repeated sync runs are safe: sign_in_count only increases for sign-ins with
+	createdDateTime strictly after the combo's last_seen watermark.
+	"""
 	from systemoversikt.models import DeviceCodeSignInCombo
 
 	new_noteworthy_count = 0
@@ -173,38 +192,60 @@ def upsert_device_code_combos(sign_ins):
 			fields["ip_address"],
 			fields["app_display_name"],
 		)
-		existing = combos_by_key.get(key)
-		if existing is None or fields["sign_in_time"] > existing["sign_in_time"]:
-			combos_by_key[key] = fields
+		if key not in combos_by_key:
+			combos_by_key[key] = {
+				"user_principal_name": fields["user_principal_name"],
+				"ip_address": fields["ip_address"],
+				"app_display_name": fields["app_display_name"],
+				"events": [],
+			}
+		combos_by_key[key]["events"].append({
+			"sign_in_time": fields["sign_in_time"],
+			"is_noteworthy": fields["is_noteworthy"],
+		})
 
-	for fields in combos_by_key.values():
+	for agg in combos_by_key.values():
+		summary = _combo_summary_from_events(agg["events"])
+		if summary is None:
+			continue
+
 		obj, created = DeviceCodeSignInCombo.objects.get_or_create(
-			user_principal_name=fields["user_principal_name"],
-			ip_address=fields["ip_address"],
-			app_display_name=fields["app_display_name"],
+			user_principal_name=agg["user_principal_name"],
+			ip_address=agg["ip_address"],
+			app_display_name=agg["app_display_name"],
 			defaults={
-				"first_seen": fields["sign_in_time"],
-				"last_seen": fields["sign_in_time"],
-				"is_noteworthy": fields["is_noteworthy"],
+				"first_seen": summary["sign_in_time_min"],
+				"last_seen": summary["sign_in_time_max"],
+				"is_noteworthy": summary["is_noteworthy"],
+				"sign_in_count": summary["batch_count"],
 			},
 		)
 		if created:
-			if fields["is_noteworthy"]:
+			if summary["is_noteworthy"]:
 				new_noteworthy_count += 1
 			continue
 
+		new_events = [
+			event for event in agg["events"]
+			if event["sign_in_time"] > obj.last_seen
+		]
+		new_summary = _combo_summary_from_events(new_events)
+		if new_summary is None:
+			continue
+
 		updated_fields = []
-		if fields["sign_in_time"] and fields["sign_in_time"] > obj.last_seen:
-			obj.last_seen = fields["sign_in_time"]
+		if new_summary["sign_in_time_max"] > obj.last_seen:
+			obj.last_seen = new_summary["sign_in_time_max"]
 			updated_fields.append("last_seen")
-		if fields["sign_in_time"] and fields["sign_in_time"] < obj.first_seen:
-			obj.first_seen = fields["sign_in_time"]
+		if new_summary["sign_in_time_min"] < obj.first_seen:
+			obj.first_seen = new_summary["sign_in_time_min"]
 			updated_fields.append("first_seen")
-		if fields["is_noteworthy"] and not obj.is_noteworthy:
+		if new_summary["is_noteworthy"] and not obj.is_noteworthy:
 			obj.is_noteworthy = True
 			updated_fields.append("is_noteworthy")
-		if updated_fields:
-			obj.save(update_fields=updated_fields)
+		obj.sign_in_count += new_summary["batch_count"]
+		updated_fields.append("sign_in_count")
+		obj.save(update_fields=updated_fields)
 
 	return new_noteworthy_count
 
@@ -225,6 +266,7 @@ def build_device_code_history_summary(combos_queryset):
 		"first_seen": None,
 		"last_seen": None,
 		"merk_interessant": False,
+		"sign_in_count": 0,
 	})
 
 	for combo in combos_queryset:
@@ -240,6 +282,7 @@ def build_device_code_history_summary(combos_queryset):
 			entry["last_seen"] = combo.last_seen
 		if combo.is_noteworthy:
 			entry["merk_interessant"] = True
+		entry["sign_in_count"] += combo.sign_in_count
 
 	rows = []
 	for user_principal_name, entry in by_user.items():
@@ -247,6 +290,7 @@ def build_device_code_history_summary(combos_queryset):
 		last_seen = entry["last_seen"]
 		rows.append({
 			"user_principal_name": user_principal_name,
+			"sign_in_count": entry["sign_in_count"],
 			"ip_addresses": ", ".join(sorted(entry["ip_addresses"])),
 			"apps": ", ".join(sorted(entry["apps"])),
 			"first_seen_display": first_seen.strftime("%d.%m.%Y %H:%M") if first_seen else "",

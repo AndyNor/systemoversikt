@@ -36,6 +36,7 @@
 		<thead>
 		<tr>
 			<th>Bruker</th>
+			<th>Innlogginger</th>
 			<th>IP-adresser</th>
 			<th>Apper</th>
 			<th>Første sett</th>
@@ -46,6 +47,7 @@
 		{% for row in history_rows %}
 		<tr{% if row.merk_interessant %} class="device-code-merket"{% endif %}>
 			<td>{{ row.user_principal_name }}</td>
+			<td data-text="{{ row.sign_in_count }}">{{ row.sign_in_count|intcomma }}</td>
 			<td>{{ row.ip_addresses }}</td>
 			<td>{{ row.apps }}</td>
 			<td data-text="{{ row.first_seen_sort }}">{{ row.first_seen_display }}</td>

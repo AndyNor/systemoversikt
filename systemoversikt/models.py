@@ -7579,12 +7579,14 @@ class AzureDeviceVulnerability(models.Model):
 
 class DeviceCodeSignInCombo(models.Model):
 	# 2026-06-19: Unique user+IP+app device code combos for nightly sync and 3-month history.
+	# 2026-06-29: sign_in_count – total observed sign-ins for this combo (incremented by nightly sync).
 	user_principal_name = models.CharField(max_length=255, db_index=True)
 	ip_address = models.CharField(max_length=45, db_index=True)
 	app_display_name = models.CharField(max_length=255, db_index=True)
 	is_noteworthy = models.BooleanField(default=False)
 	first_seen = models.DateTimeField()
 	last_seen = models.DateTimeField()
+	sign_in_count = models.PositiveIntegerField(default=1)
 
 	def __str__(self):
 		return f"{self.user_principal_name} / {self.ip_address} / {self.app_display_name}"
