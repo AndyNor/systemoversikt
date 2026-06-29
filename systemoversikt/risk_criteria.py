@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-29: effective_residual_levels() – empty etter fields inherit current risk for matrix/label.
 # 2026-06-25: parse_kit_dimensjoner() for K/I/T dimension tags in scenario table.
 # 2026-06-25: lookup labels for konsekvens/sannsynlighet table cells; 1–5 color scale aligned to risk colors.
 # 2026-06-25: level_cell_css_class() for konsekvens/sannsynlighet table cell backgrounds.
@@ -298,12 +299,19 @@ def parse_kit_dimensjoner(text):
 	return result
 
 
+def effective_residual_levels(scenario):
+	"""Residual konsekvens/sannsynlighet; unset etter fields inherit current risk."""
+	k = scenario.konsekvens_etter or scenario.konsekvens_nivaa
+	s = scenario.sannsynlighet_etter or scenario.sannsynlighet_nivaa
+	return s, k
+
+
 def matrix_placements(scenarios, use_residual=False):
 	"""Group scenarios by (sannsynlighet, konsekvens) for matrix rendering."""
 	cells = {}
 	for scenario in scenarios:
 		if use_residual:
-			s, k = scenario.sannsynlighet_etter, scenario.konsekvens_etter
+			s, k = effective_residual_levels(scenario)
 		else:
 			s, k = scenario.sannsynlighet_nivaa, scenario.konsekvens_nivaa
 		if not s or not k:

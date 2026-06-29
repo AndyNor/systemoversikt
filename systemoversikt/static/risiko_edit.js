@@ -1,4 +1,5 @@
 // Change log:
+// 2026-06-29: Residual risk badge falls back to current konsekvens/sannsynlighet when etter empty.
 // 2026-06-29: Full scenario table rebuild when API has new/missing rows – fixes new risk invisible until refresh.
 // 2026-06-26: Debounced auto-save for scenario fields and tiltak cards in modal.
 // 2026-06-26: Browser back / mouse back closes scenario modal via history.pushState.
@@ -330,8 +331,8 @@
     function updateRiskBadges() {
       const k = parseInt(document.getElementById('risiko-f-konsekvens').value, 10);
       const s = parseInt(document.getElementById('risiko-f-sannsynlighet').value, 10);
-      const ke = parseInt(document.getElementById('risiko-f-konsekvens-etter').value, 10);
-      const se = parseInt(document.getElementById('risiko-f-sannsynlighet-etter').value, 10);
+      const ke = parseInt(document.getElementById('risiko-f-konsekvens-etter').value, 10) || k;
+      const se = parseInt(document.getElementById('risiko-f-sannsynlighet-etter').value, 10) || s;
       const curLabel = riskLabel(s, k);
       const resLabel = riskLabel(se, ke);
       const curBadge = document.getElementById('risiko-badge-current');

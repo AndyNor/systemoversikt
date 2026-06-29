@@ -7842,8 +7842,10 @@ class RiskScenario(models.Model):
 
 	@property
 	def restrisiko_etikett(self):
-		from systemoversikt.risk_criteria import risk_label
-		return risk_label(self.sannsynlighet_etter, self.konsekvens_etter)
+		# 2026-06-29: Empty etter fields inherit current risk via effective_residual_levels().
+		from systemoversikt.risk_criteria import effective_residual_levels, risk_label
+		s, k = effective_residual_levels(self)
+		return risk_label(s, k)
 
 	def scenario_nummer(self):
 		"""Excel Tiltak-ark refererer ofte til tall uten R-prefiks (R1 -> 1)."""
