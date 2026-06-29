@@ -1,4 +1,5 @@
 // Change log:
+// 2026-06-29: Full scenario table rebuild when API has new/missing rows – fixes new risk invisible until refresh.
 // 2026-06-26: Debounced auto-save for scenario fields and tiltak cards in modal.
 // 2026-06-26: Browser back / mouse back closes scenario modal via history.pushState.
 // 2026-06-26: Compact modal tiltak cards; unlink vs delete when shared across scenarios.
@@ -218,16 +219,31 @@
       updateModalTiltakToolbar(true);
     }
 
-    function refreshScopeTablesOnly() {
+    function scenarioTableNeedsRebuild(scenarios) {
+      const rows = document.querySelectorAll('#risiko-scenarios-tbody tr[data-scenario-id]');
+      if (!rows.length) return true;
+      if ((scenarios || []).length !== rows.length) return true;
+      const domIds = new Set(Array.from(rows).map(function (r) {
+        return parseInt(r.getAttribute('data-scenario-id'), 10);
+      }));
+      return (scenarios || []).some(function (s) { return !domIds.has(s.id); });
+    }
+
+    function refreshScenarioTableSection(scenarios, opts) {
+      opts = opts || {};
+      if (opts.rebuildScenarios || scenarioTableNeedsRebuild(scenarios)) {
+        renderScenariosTable(scenarios);
+      } else {
+        updateScenarioTiltakColumn(scenarios);
+      }
+    }
+
+    function refreshScopeTablesOnly(opts) {
+      opts = opts || {};
       return fetchJson(config.urls.scenarios).then(function (data) {
         scopeTiltak = data.tiltak || [];
         scopeScenarios = data.scenarios || [];
-        const hasServerRows = document.querySelector('#risiko-scenarios-tbody tr[data-scenario-id]');
-        if (hasServerRows) {
-          updateScenarioTiltakColumn(scopeScenarios);
-        } else {
-          renderScenariosTable(scopeScenarios);
-        }
+        refreshScenarioTableSection(scopeScenarios, opts);
         renderTiltakSection(scopeTiltak);
       });
     }
@@ -236,6 +252,7 @@
       const scenarioId = document.getElementById('risiko-modal-scenario-id').value;
       const payload = collectScenarioPayload();
       const isCreate = !scenarioId;
+      const wasCreate = isCreate;
       if (isCreate && !payload.uonsket_hendelse) {
         return Promise.resolve();
       }
@@ -253,7 +270,7 @@
           }
           captureScenarioSnapshot();
           showModalSavedStatus();
-          return refreshScopeTablesOnly();
+          return refreshScopeTablesOnly({ rebuildScenarios: wasCreate });
         });
     }
 
@@ -942,7 +959,7 @@
       scopeTiltak = data.tiltak || [];
       scopeScenarios = data.scenarios || [];
       const hasServerRows = document.querySelector('#risiko-scenarios-tbody tr[data-scenario-id]');
-      if (opts.keepScenarioRows && hasServerRows) {
+      if (opts.keepScenarioRows && hasServerRows && !scenarioTableNeedsRebuild(scopeScenarios)) {
         bindScenarioRows();
         updateScenarioTiltakColumn(scopeScenarios);
       } else {
