@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-29: Anonymous Pushover alert when new noteworthy combos are found (no PII).
 # 2026-06-29: Adaptive lookback – 3h when last success ≤2h ago, else 3 days (offline catch-up).
 # 2026-06-29: Hourly sync – 3-hour Graph lookback; --dager kept for manual backfill.
 # 2026-06-19: Nightly sync of device code sign-in combos from Graph (3-day window).
@@ -88,6 +89,18 @@ class Command(BaseCommand):
 			return f"{hours} t {minutes} min"
 		return f"{hours} t"
 
+	@staticmethod
+	def _anonymous_noteworthy_pushover_message(count):
+		if count == 1:
+			return (
+				"Advarsel: Ny merkverdig device code-innlogging oppdaget. "
+				"Se Sikkerhet → Device code-innlogginger."
+			)
+		return (
+			f"Advarsel: {count} nye merkverdige device code-innlogginger oppdaget. "
+			"Se Sikkerhet → Device code-innlogginger."
+		)
+
 	def handle(self, **options):
 		INTEGRASJON_KODEORD = "device_code_signins"
 		LOG_EVENT_TYPE = "Device code sign-in sync"
@@ -147,7 +160,7 @@ class Command(BaseCommand):
 			total_combos = DeviceCodeSignInCombo.objects.count()
 
 			if new_noteworthy_count > 0:
-				push_pushover(f"Device code: {new_noteworthy_count} nye kombinasjoner")
+				push_pushover(self._anonymous_noteworthy_pushover_message(new_noteworthy_count))
 
 			logg_message = (
 				f"Hentet {len(sign_ins)} sign-ins ({lookback_label}). "
