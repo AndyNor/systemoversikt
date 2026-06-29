@@ -10122,8 +10122,8 @@ def cmdb_installert_programvare(request):
 
 def sikkerhet_device_code_logins(request):
 	# 2026-06-19: Device code sign-ins via Microsoft Graph auditLogs/signIns (AuditLog.Read.All).
-	# 2026-06-19: History summary from DeviceCodeSignInCombo (nightly sync).
-	# 2026-06-29: Overview only (nightly history); live Graph search moved to sikkerhet_device_code_logins_sanntid.
+	# 2026-06-19: History summary from DeviceCodeSignInCombo (hourly sync).
+	# 2026-06-29: Overview only (hourly history); live Graph search moved to sikkerhet_device_code_logins_sanntid.
 	from systemoversikt.device_code_signins import (
 		DEVICE_CODE_HISTORY_DAYS,
 		build_device_code_history_summary,
@@ -10153,8 +10153,10 @@ def sikkerhet_device_code_logins(request):
 
 
 def sikkerhet_device_code_logins_sanntid(request):
-	# 2026-06-29: Live Graph search (slow); linked from sikkerhet_device_code_logins overview.
+	# 2026-06-29: Live Graph search (slow); always 30 days – independent of hourly sync lookback.
 	from systemoversikt.device_code_signins import (
+		DEVICE_CODE_LIVE_SEARCH_DAYS,
+		DEVICE_CODE_LIVE_SEARCH_MAX_RESULTS,
 		device_code_internal_ip_prefixes,
 		fetch_device_code_signins_from_graph,
 		signin_to_display_row,
@@ -10164,9 +10166,12 @@ def sikkerhet_device_code_logins_sanntid(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	dager = 30
+	dager = DEVICE_CODE_LIVE_SEARCH_DAYS
 	try:
-		sign_ins, truncated, error_message = fetch_device_code_signins_from_graph(dager=dager)
+		sign_ins, truncated, error_message = fetch_device_code_signins_from_graph(
+			dager=dager,
+			max_results=DEVICE_CODE_LIVE_SEARCH_MAX_RESULTS,
+		)
 		results = [signin_to_display_row(sign_in) for sign_in in sign_ins]
 		results.sort(key=lambda row: row.get("TimeGeneratedSort") or "", reverse=True)
 	except Exception as e:
@@ -10189,7 +10194,7 @@ def sikkerhet_device_code_logins_sanntid(request):
 		'app_counts': app_counts,
 		'dager': dager,
 		'truncated': truncated,
-		'max_results': 200,
+		'max_results': DEVICE_CODE_LIVE_SEARCH_MAX_RESULTS,
 		'internal_ip_prefixes': internal_ip_prefixes,
 	})
 

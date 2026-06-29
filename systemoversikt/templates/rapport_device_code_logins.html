@@ -18,7 +18,7 @@
 
 {% block hovedinnhold %}
 
-	<p>Denne siden viser aggregert historikk for vellykkede Entra ID-innlogginger via device code-flyt, basert på nattlig synkronisering mot Microsoft Graph.</p>
+	<p>Denne siden viser aggregert historikk for vellykkede Entra ID-innlogginger via device code-flyt, basert på timevis synkronisering mot Microsoft Graph.</p>
 
 	<p>Rader med lys rød bakgrunn er innlogginger utenfor standardverktøy (Azure CLI, Graph PowerShell m.m.) og interne DIG-apper{% if internal_ip_prefixes %}, samt IP-adresser med prefiks {{ internal_ip_prefixes|join:", " }}{% endif %}.</p>
 

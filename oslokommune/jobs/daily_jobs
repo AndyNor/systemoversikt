@@ -62,8 +62,6 @@ python /var/kartoteket/source/systemoversikt/manage.py azure_graph_conditional_a
 # 2026-05-27: Use v2 Azure auth methods job (requested replacement of default command).
 python /var/kartoteket/source/systemoversikt/manage.py azure_authentication_methods_v2
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_vulnerabilities
-# 2026-06-19: Nightly device code sign-in combo sync (3-day overlap, Pushover on new noteworthy).
-python /var/kartoteket/source/systemoversikt/manage.py device_code_signin_sync
 
 # run batch e-mail
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_nokkelvarsel

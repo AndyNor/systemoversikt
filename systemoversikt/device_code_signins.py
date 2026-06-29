@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-29: DEVICE_CODE_LIVE_SEARCH_MAX_RESULTS raised to 1000 for sanntid view.
+# 2026-06-29: DEVICE_CODE_LIVE_SEARCH_DAYS – fixed 30-day window for sanntid view (not hourly sync).
+# 2026-06-29: fetch_device_code_signins_from_graph – optional timer (hours) for hourly sync.
 # 2026-06-29: Idempotent sign_in_count – only count sign-ins newer than combo last_seen.
 # 2026-06-29: sign_in_count on combos – per-user totals in history view.
-# 2026-06-19: Shared Graph fetch and combo sync for device code sign-in page and nightly job.
+# 2026-06-19: Shared Graph fetch and combo sync for device code sign-in page and hourly job.
 import datetime
 import os
 import time
@@ -24,6 +27,8 @@ DEVICE_CODE_SIGNIN_SELECT = (
 	"riskLevelAggregated,deviceDetail"
 )
 DEVICE_CODE_HISTORY_DAYS = 90
+DEVICE_CODE_LIVE_SEARCH_DAYS = 30
+DEVICE_CODE_LIVE_SEARCH_MAX_RESULTS = 1000
 
 
 def device_code_internal_ip_prefixes():
@@ -106,7 +111,7 @@ def signin_to_display_row(sign_in):
 	return row
 
 
-def fetch_device_code_signins_from_graph(dager=30, page_size=100, max_results=200):
+def fetch_device_code_signins_from_graph(dager=30, page_size=100, max_results=200, timer=None):
 	# 2026-06-19: Minimal OData filter + $select; deviceCode filtered server-side on Graph beta.
 	import requests as api_requests
 	from azure.identity import ClientSecretCredential
@@ -123,7 +128,15 @@ def fetch_device_code_signins_from_graph(dager=30, page_size=100, max_results=20
 	token = credential.get_token("https://graph.microsoft.com/.default").token
 	headers = {"Authorization": f"Bearer {token}"}
 
-	since = (datetime.datetime.utcnow() - datetime.timedelta(days=dager)).strftime("%Y-%m-%dT%H:%M:%SZ")
+	if timer is not None:
+		if timer < 1:
+			return sign_ins, truncated, "timer må være minst 1 time"
+		since_dt = datetime.datetime.utcnow() - datetime.timedelta(hours=timer)
+	else:
+		if dager < 1:
+			return sign_ins, truncated, "dager må være minst 1"
+		since_dt = datetime.datetime.utcnow() - datetime.timedelta(days=dager)
+	since = since_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 	filter_expr = (
 		f"authenticationProtocol eq 'deviceCode' and createdDateTime ge {since} "
 		f"and status/errorCode eq 0"
