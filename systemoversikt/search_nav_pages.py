@@ -86,6 +86,7 @@ NAV_PAGES = [
 	_entry('AD: BloodHound-status', 'sikkerhet_bloodhound_status', 'Sikkerhet', ['bloodhound', 'ad attack paths'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('AD: BloodHound-funn', 'sikkerhet_bloodhound_findings', 'Sikkerhet', ['bloodhound funn', 'bloodhound findings', 'dcsync', 'kerberoast'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Device code-innlogginger', 'sikkerhet_device_code_logins', 'Sikkerhet', ['device code', 'devicecode'], permissions=['systemoversikt.view_qualysvuln']),
+	_entry('Device code-innlogginger (sanntid)', 'sikkerhet_device_code_logins_sanntid', 'Sikkerhet', ['device code sanntid', 'devicecode live'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Varsling til virksomheter', 'sikkerhet_varsling_virksomheter', 'Sikkerhet', ['varsling virksomheter', 'csirt varsling']),
 	_entry('Kontoer utenfor OK', 'rapport_ukjente_identer', 'Sikkerhet', ['utenfor ok', 'ukjente identer'], permissions=['auth.view_user']),
 	_entry('Kontoer med SPN', 'alle_spn', 'Sikkerhet', ['spn', 'service principal name'], permissions=['auth.view_user']),

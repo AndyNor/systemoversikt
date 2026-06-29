@@ -156,6 +156,7 @@ urlpatterns = [
 	re_path(r'^sikkerhet/bloodhound/status/$', views_bloodhound.sikkerhet_bloodhound_status, name='sikkerhet_bloodhound_status'),
 	re_path(r'^sikkerhet/bloodhound/findings/$', views_bloodhound.sikkerhet_bloodhound_findings, name='sikkerhet_bloodhound_findings'),
 	re_path(r'^sikkerhet/device_code_logins/$', views.sikkerhet_device_code_logins, name='sikkerhet_device_code_logins'),
+	re_path(r'^sikkerhet/device_code_logins/sanntid/$', views.sikkerhet_device_code_logins_sanntid, name='sikkerhet_device_code_logins_sanntid'),
 	re_path(r'^sikkerhet/varsling_virksomheter/$', views.sikkerhet_varsling_virksomheter, name='sikkerhet_varsling_virksomheter'),
 
 

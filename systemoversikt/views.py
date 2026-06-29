@@ -10123,9 +10123,38 @@ def cmdb_installert_programvare(request):
 def sikkerhet_device_code_logins(request):
 	# 2026-06-19: Device code sign-ins via Microsoft Graph auditLogs/signIns (AuditLog.Read.All).
 	# 2026-06-19: History summary from DeviceCodeSignInCombo (nightly sync).
+	# 2026-06-29: Overview only (nightly history); live Graph search moved to sikkerhet_device_code_logins_sanntid.
 	from systemoversikt.device_code_signins import (
 		DEVICE_CODE_HISTORY_DAYS,
 		build_device_code_history_summary,
+		device_code_internal_ip_prefixes,
+	)
+
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	internal_ip_prefixes = device_code_internal_ip_prefixes()
+
+	since_history = timezone.now() - datetime.timedelta(days=DEVICE_CODE_HISTORY_DAYS)
+	history_combos = DeviceCodeSignInCombo.objects.filter(last_seen__gte=since_history)
+	history_rows = build_device_code_history_summary(history_combos)
+
+	integrasjon = _integrasjonsstatus("device_code_signins")
+
+	return render(request, 'rapport_device_code_logins.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'internal_ip_prefixes': internal_ip_prefixes,
+		'history_rows': history_rows,
+		'history_dager': DEVICE_CODE_HISTORY_DAYS,
+		'integrasjon': integrasjon,
+	})
+
+
+def sikkerhet_device_code_logins_sanntid(request):
+	# 2026-06-29: Live Graph search (slow); linked from sikkerhet_device_code_logins overview.
+	from systemoversikt.device_code_signins import (
 		device_code_internal_ip_prefixes,
 		fetch_device_code_signins_from_graph,
 		signin_to_display_row,
@@ -10150,13 +10179,7 @@ def sikkerhet_device_code_logins(request):
 	app_counts = app_counter.most_common(15)
 	internal_ip_prefixes = device_code_internal_ip_prefixes()
 
-	since_history = timezone.now() - datetime.timedelta(days=DEVICE_CODE_HISTORY_DAYS)
-	history_combos = DeviceCodeSignInCombo.objects.filter(last_seen__gte=since_history)
-	history_rows = build_device_code_history_summary(history_combos)
-
-	integrasjon = _integrasjonsstatus("device_code_signins")
-
-	return render(request, 'rapport_device_code_logins.html', {
+	return render(request, 'rapport_device_code_logins_sanntid.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'results': results,
@@ -10168,9 +10191,6 @@ def sikkerhet_device_code_logins(request):
 		'truncated': truncated,
 		'max_results': 200,
 		'internal_ip_prefixes': internal_ip_prefixes,
-		'history_rows': history_rows,
-		'history_dager': DEVICE_CODE_HISTORY_DAYS,
-		'integrasjon': integrasjon,
 	})
 
 
