@@ -1,4 +1,9 @@
 // Change log:
+// 2026-06-30: Scenario table columns – Konsekvenstype, Konsekvens, Sannsynlighetstype, Sannsynlighet.
+// 2026-06-30: Full scenario table rebuild on refresh – fixes stale konsekvenstype/sannsynlighetstype columns.
+// 2026-06-30: Modal close refreshes scope tables; Lukk button left of Slett scenario.
+// 2026-06-30: Reflow floatThead when scope meta edit opens/closes; detach floatThead from risk-matrix grids.
+// 2026-06-30: under_revurdering status – arrow-clockwise-circle icon (repeat/review).
 // 2026-06-30: Scope status icons – inline Bootstrap Icons SVGs (replaces open-iconic).
 // 2026-06-30: Scope status workflow save; sannsynlighetstype tags in scenario table/modal.
 // 2026-06-30: Tilgang card – add/remove owners/participants and change virksomhet.
@@ -107,6 +112,9 @@
       }
       e.preventDefault();
       Promise.all([flushScenarioAutosave(), flushAllActionAutosaves()])
+        .then(function () {
+          return refreshScopeTablesOnly();
+        })
         .then(function () {
           modalCloseAllowed = true;
           modal.modal('hide');
@@ -234,22 +242,17 @@
       return (scenarios || []).some(function (s) { return !domIds.has(s.id); });
     }
 
-    function refreshScenarioTableSection(scenarios, opts) {
-      opts = opts || {};
-      if (opts.rebuildScenarios || scenarioTableNeedsRebuild(scenarios)) {
-        renderScenariosTable(scenarios);
-      } else {
-        updateScenarioTiltakColumn(scenarios);
-      }
+    function refreshScenarioTableSection(scenarios) {
+      renderScenariosTable(scenarios);
     }
 
-    function refreshScopeTablesOnly(opts) {
-      opts = opts || {};
+    function refreshScopeTablesOnly() {
       return fetchJson(config.urls.scenarios).then(function (data) {
         scopeTiltak = data.tiltak || [];
         scopeScenarios = data.scenarios || [];
-        refreshScenarioTableSection(scopeScenarios, opts);
+        refreshScenarioTableSection(scopeScenarios);
         renderTiltakSection(scopeTiltak);
+        scheduleFloatTheadReflow();
       });
     }
 
@@ -257,7 +260,6 @@
       const scenarioId = document.getElementById('risiko-modal-scenario-id').value;
       const payload = collectScenarioPayload();
       const isCreate = !scenarioId;
-      const wasCreate = isCreate;
       if (isCreate && !payload.uonsket_hendelse) {
         return Promise.resolve();
       }
@@ -275,7 +277,7 @@
           }
           captureScenarioSnapshot();
           showModalSavedStatus();
-          return refreshScopeTablesOnly({ rebuildScenarios: wasCreate });
+          return refreshScopeTablesOnly();
         });
     }
 
@@ -1025,6 +1027,36 @@
       }
     }
 
+    function detachRiskMatrixFloatThead() {
+      if (!$.fn.floatThead) {
+        return;
+      }
+      $('table.risk-matrix').each(function () {
+        const $t = $(this);
+        if ($t.data('floatThead-attached')) {
+          $t.floatThead('destroy');
+        }
+      });
+    }
+
+    function reflowPageFloatTheads() {
+      if (!$.fn.floatThead) {
+        return;
+      }
+      $('table').not('.risk-matrix').each(function () {
+        const $t = $(this);
+        if ($t.data('floatThead-attached')) {
+          $t.floatThead('reflow');
+        }
+      });
+    }
+
+    function scheduleFloatTheadReflow() {
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(reflowPageFloatTheads);
+      });
+    }
+
     function pauseFloatThead(tableId) {
       const table = $('#' + tableId);
       if (!table.length || !$.fn.floatThead) {
@@ -1041,19 +1073,6 @@
       };
     }
 
-    function updateScenarioTiltakColumn(scenarios) {
-      const byId = {};
-      (scenarios || []).forEach(function (scenario) {
-        byId[scenario.id] = scenario.display_tiltak_ids || '–';
-      });
-      document.querySelectorAll('#risiko-scenarios-tbody tr[data-scenario-id]').forEach(function (row) {
-        const id = parseInt(row.getAttribute('data-scenario-id'), 10);
-        if (!byId[id]) return;
-        const cell = row.cells[7];
-        if (cell) cell.textContent = byId[id];
-      });
-    }
-
     function applyRefreshData(data, opts) {
       opts = opts || {};
       scopeTiltak = data.tiltak || [];
@@ -1061,11 +1080,11 @@
       const hasServerRows = document.querySelector('#risiko-scenarios-tbody tr[data-scenario-id]');
       if (opts.keepScenarioRows && hasServerRows && !scenarioTableNeedsRebuild(scopeScenarios)) {
         bindScenarioRows();
-        updateScenarioTiltakColumn(scopeScenarios);
       } else {
         renderScenariosTable(scopeScenarios);
       }
       renderTiltakSection(scopeTiltak);
+      scheduleFloatTheadReflow();
     }
 
     function levelTagHtml(label, cssClass) {
@@ -1114,8 +1133,8 @@
           '<td class="risiko-systemer-cell">' + systemsHtml + '</td>' +
           '<td class="risiko-kit-cell">' + kitHtml + '</td>' +
           '<td class="risiko-konsekvenstype-cell">' + konsekvenstypeHtml + '</td>' +
-          '<td class="risiko-sannsynlighetstype-cell">' + sannsynlighetstypeHtml + '</td>' +
           '<td class="risiko-level-cell">' + levelTagHtml(kVal, kCss) + '</td>' +
+          '<td class="risiko-sannsynlighetstype-cell">' + sannsynlighetstypeHtml + '</td>' +
           '<td class="risiko-level-cell">' + levelTagHtml(sVal, sCss) + '</td>' +
           '<td class="' + escapeHtml(rCss) + '">' + escapeHtml(scenario.risiko_etikett || '-') + '</td>' +
           '<td>' + escapeHtml(scenario.display_tiltak_ids || '–') + '</td>' +
@@ -1177,14 +1196,14 @@
 
     const SCOPE_STATUS_ICON_PATHS = {
       file: '<path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zM9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>',
-      'arrow-repeat': '<path d="M5.854 4.646a.5.5 0 1 0-.708.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L3.707 8.5H11.5A3.5 3.5 0 0 0 8 5.5V4a.5.5 0 1 0-1 0v1.5a2.5 2.5 0 0 1 2.5 2.5H3.707zM8 4a4 4 0 1 0 3.732 2.553H6.5A3.5 3.5 0 1 1 12 11V9.5A4.5 4.5 0 0 0 8 4z"/>',
+      'arrow-clockwise-circle': '<path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14m0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/><path d="M8 4a.5.5 0 0 1 .5.5v3.207l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 7.707V4.5A.5.5 0 0 1 8 4"/>',
       clock: '<path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>',
       'check-circle': '<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>',
     };
 
     const SCOPE_STATUS_META = {
       forsteutkast: { icon: 'file', css: 'risiko-scope-status-forsteutkast' },
-      under_revurdering: { icon: 'arrow-repeat', css: 'risiko-scope-status-under-revurdering' },
+      under_revurdering: { icon: 'arrow-clockwise-circle', css: 'risiko-scope-status-under-revurdering' },
       til_godkjenning: { icon: 'clock', css: 'risiko-scope-status-til-godkjenning' },
       godkjent: { icon: 'check-circle', css: 'risiko-scope-status-godkjent' },
     };
@@ -1229,6 +1248,7 @@
       if (scopeMetaView) scopeMetaView.style.display = '';
       if (scopeMetaEdit) scopeMetaEdit.style.display = 'none';
       setScopeStatus('');
+      scheduleFloatTheadReflow();
     }
 
     function showScopeMetaEdit() {
@@ -1236,6 +1256,7 @@
       if (scopeMetaView) scopeMetaView.style.display = 'none';
       if (scopeMetaEdit) scopeMetaEdit.style.display = '';
       setScopeStatus('');
+      scheduleFloatTheadReflow();
     }
 
     function updateScopeMetaView(scope) {
@@ -1422,6 +1443,11 @@
     }
 
     captureScopeMetaSnapshot();
+
+    $(function () {
+      detachRiskMatrixFloatThead();
+      scheduleFloatTheadReflow();
+    });
 
     bindScenarioRows();
 

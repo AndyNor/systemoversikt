@@ -267,7 +267,8 @@
 			}
 		})
 
-		$("table").floatThead({top: 135});
+		// 2026-06-30: Skip risk-matrix grids – floatThead breaks layout when edit panels expand above them.
+		$("table").not('.risk-matrix').floatThead({top: 135});
 
 	});
 </script>

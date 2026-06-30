@@ -5,6 +5,7 @@
 {# 2026-06-26: Editable tiltak cards in scenario modal; scope tiltak table is read-only. #}
 {# 2026-06-26: No tablesorter on scenario table – tbody replaced via AJAX (tablesorter hid rows). #}
 {% extends "sikkerhet_index.html" %}
+{# 2026-06-30: Modal footer – Slett scenario left, Lukk right. #}
 {# 2026-06-30: Scope status workflow; sannsynlighetstype tags – table column and modal checkboxes. #}
 {# 2026-06-30: Modal mid column order – konsekvens/sannsynlighet, konsekvenstype grid, begrunnelser, risikobehandling. #}
 {# 2026-06-30: Konsekvenstype tags on scenarios – table column and modal checkboxes. #}
@@ -166,10 +167,10 @@
 	<th>Tilknyttede systemer</th>
 	<th>KIT</th>
 	<th>Konsekvenstype</th>
-	<th>Sannsynlighetstype</th>
 	<th>Konsekvens</th>
+	<th>Sannsynlighetstype</th>
 	<th>Sannsynlighet</th>
-	<th>Risiko</th>
+	<th>Risiko nå</th>
 	<th>Tiltak</th>
 	<th>Risiko etter tiltak</th>
 </tr>
@@ -186,8 +187,8 @@
 	</td>
 	<td class="risiko-kit-cell">{% risiko_kit_tags scenario.kit_dimensjoner %}</td>
 	<td class="risiko-konsekvenstype-cell">{% risiko_konsekvenstype_tags scenario.konsekvenstyper %}</td>
-	<td class="risiko-sannsynlighetstype-cell">{% risiko_sannsynlighetstype_tags scenario.sannsynlighetstyper %}</td>
 	<td class="risiko-level-cell">{% risiko_level_tag scenario.konsekvens_label scenario.konsekvens_css %}</td>
+	<td class="risiko-sannsynlighetstype-cell">{% risiko_sannsynlighetstype_tags scenario.sannsynlighetstyper %}</td>
 	<td class="risiko-level-cell">{% risiko_level_tag scenario.sannsynlighet_label scenario.sannsynlighet_css %}</td>
 	<td class="{{ scenario.risiko_css }}">{{ scenario.risiko_etikett|default:"-" }}</td>
 	<td>{{ scenario.display_tiltak_ids|default:"–" }}</td>
@@ -235,8 +236,9 @@
 						</div>
 						<div id="risiko-system-sok-treff" class="mb-2"></div>
 						<div class="form-group mb-0">
-							<label for="risiko-f-kit">K, I, T</label>
-							<input type="text" class="form-control form-control-sm" id="risiko-f-kit" placeholder="f.eks. K, T">
+							{# 2026-06-30: Spell out K/I/T dimension names on modal input label. #}
+							<label for="risiko-f-kit">Konfidensialitet (K), Integritet (I), Tilgjengelighet (T)</label>
+							<input type="text" class="form-control form-control-sm" id="risiko-f-kit" placeholder="f.eks. K, I eller K, T">
 						</div>
 						</div>
 					</div>
@@ -325,11 +327,9 @@
 					</div>
 				</div>
 			</div>
-			<div class="modal-footer">
-				<div class="mr-auto">
-					<button type="button" class="btn btn-outline-danger btn-sm" id="risiko-delete-scenario" style="display:none;">Slett scenario</button>
-					<button type="button" class="btn btn-outline-secondary btn-sm ml-1" data-dismiss="modal">Lukk</button>
-				</div>
+			<div class="modal-footer risiko-scenario-modal-footer">
+				<button type="button" class="btn btn-outline-danger btn-sm" id="risiko-delete-scenario" style="display:none;">Slett scenario</button>
+				<button type="button" class="btn btn-outline-secondary btn-sm ml-auto" data-dismiss="modal">Lukk</button>
 			</div>
 		</div>
 	</div>
@@ -387,6 +387,11 @@
 }
 #risiko-scenario-modal .modal-header,
 #risiko-scenario-modal .modal-footer { padding: 0.5rem 0.85rem; flex-shrink: 0; }
+#risiko-scenario-modal .risiko-scenario-modal-footer {
+	display: flex;
+	width: 100%;
+	align-items: center;
+}
 #risiko-scenario-modal .modal-body {
 	padding: 0.65rem 0.85rem;
 	font-size: 0.85rem;

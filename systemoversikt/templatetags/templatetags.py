@@ -1,4 +1,6 @@
 # Change log:
+# 2026-06-30: under_revurdering status – arrow-clockwise-circle icon (repeat/review).
+# 2026-06-30: access_denied_icon – red 🛇 for missing read permission.
 # 2026-06-30: bootstrap_icon – inline Bootstrap Icons SVGs (replaces open-iconic static files).
 # 2026-06-30: risiko_scope_status – workflow status icon + label on collection list.
 # 2026-06-30: risiko_sannsynlighetstype_tags – probability dimension badges on scenario table.
@@ -190,8 +192,9 @@ _BOOTSTRAP_ICON_PATHS = {
 	'file': (
 		'<path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zM9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>'
 	),
-	'arrow-repeat': (
-		'<path d="M5.854 4.646a.5.5 0 1 0-.708.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L3.707 8.5H11.5A3.5 3.5 0 0 0 8 5.5V4a.5.5 0 1 0-1 0v1.5a2.5 2.5 0 0 1 2.5 2.5H3.707zM8 4a4 4 0 1 0 3.732 2.553H6.5A3.5 3.5 0 1 1 12 11V9.5A4.5 4.5 0 0 0 8 4z"/>'
+	'arrow-clockwise-circle': (
+		'<path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14m0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16z"/>'
+		'<path d="M8 4a.5.5 0 0 1 .5.5v3.207l1.146-1.147a.5.5 0 0 1 .708.708l-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 7.707V4.5A.5.5 0 0 1 8 4"/>'
 	),
 	'clock': (
 		'<path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>'
@@ -236,6 +239,15 @@ def bootstrap_icon(name, css_class='', width='1em', height='1em'):
 	"""Inline Bootstrap Icons SVG (same style as site_home.html)."""
 	html = _bootstrap_icon_svg(name, css_class=css_class, width=width, height=height)
 	return mark_safe(html) if html else ''
+
+
+@register.simple_tag
+def access_denied_icon(size='1em'):
+	"""Red prohibition sign (🛇) when the user lacks read permission."""
+	return mark_safe(format_html(
+		'<span class="access-denied-icon" style="font-size: {}" aria-hidden="true">🛇</span>',
+		size,
+	))
 
 
 @register.simple_tag
@@ -517,7 +529,7 @@ _SCOPE_STATUS_META = {
 		'css': 'risiko-scope-status-forsteutkast',
 	},
 	'under_revurdering': {
-		'icon': 'arrow-repeat',
+		'icon': 'arrow-clockwise-circle',
 		'css': 'risiko-scope-status-under-revurdering',
 	},
 	'til_godkjenning': {
