@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: RiskCriteriaConfig – global editable akseptkriterier shared by all risikosamlinger.
 # 2026-06-30: RiskScenario.konsekvenstyper – multi-select consequence dimension tags.
 # 2026-06-30: RiskAction default status forslag for new manual tiltak.
 # 2026-06-30: RiskAction status forslag + besluttet (replaces ikke_startet) – proposal vs committed workflow.
@@ -7717,6 +7718,52 @@ RISK_SCOPE_MEMBER_ROLE_OWNER = 'owner'
 RISK_SCOPE_MEMBER_ROLE_PARTICIPANT = 'participant'
 
 
+class RiskCriteriaConfig(models.Model):
+	title = models.CharField(
+		verbose_name="Tittel",
+		max_length=200,
+		default='Standard akseptkriterier',
+	)
+	is_active = models.BooleanField(
+		verbose_name="Aktiv",
+		default=False,
+		db_index=True,
+	)
+	criteria = models.JSONField(
+		verbose_name="Kriterier",
+		default=dict,
+	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	oppdatert_av = models.ForeignKey(
+		to=User,
+		on_delete=models.SET_NULL,
+		related_name='risk_criteria_updates',
+		verbose_name="Oppdatert av",
+		blank=True,
+		null=True,
+	)
+	history = HistoricalRecords()
+
+	def save(self, *args, **kwargs):
+		if self.is_active:
+			RiskCriteriaConfig.objects.filter(is_active=True).exclude(pk=self.pk).update(is_active=False)
+		super().save(*args, **kwargs)
+		from systemoversikt.risk_criteria import invalidate_criteria_cache
+		invalidate_criteria_cache()
+
+	def __str__(self):
+		return self.title
+
+	class Meta:
+		verbose_name = "risikokriterier"
+		verbose_name_plural = "Risiko: akseptkriterier"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['-is_active', '-sist_oppdatert']
+
+
 class RiskScope(models.Model):
 	opprettet = models.DateTimeField(
 		verbose_name="Opprettet",
@@ -7929,15 +7976,15 @@ class RiskScenario(models.Model):
 
 	@property
 	def risiko_etikett(self):
-		from systemoversikt.risk_criteria import risk_label
-		return risk_label(self.sannsynlighet_nivaa, self.konsekvens_nivaa)
+		from systemoversikt.risk_criteria import get_active_criteria
+		return get_active_criteria().risk_label(self.sannsynlighet_nivaa, self.konsekvens_nivaa)
 
 	@property
 	def restrisiko_etikett(self):
 		# 2026-06-29: Empty etter fields inherit current risk via effective_residual_levels().
-		from systemoversikt.risk_criteria import effective_residual_levels, risk_label
+		from systemoversikt.risk_criteria import effective_residual_levels, get_active_criteria
 		s, k = effective_residual_levels(self)
-		return risk_label(s, k)
+		return get_active_criteria().risk_label(s, k)
 
 	def scenario_nummer(self):
 		"""Excel Tiltak-ark refererer ofte til tall uten R-prefiks (R1 -> 1)."""

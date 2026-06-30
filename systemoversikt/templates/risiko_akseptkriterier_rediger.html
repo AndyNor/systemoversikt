@@ -1,0 +1,234 @@
+{% extends "sikkerhet_index.html" %}
+{# 2026-06-30: Superuser editor for global akseptkriterier. #}
+
+{% block overskrift %}
+	Rediger akseptkriterier
+{% endblock overskrift %}
+
+{% block ekstrajavascript %}
+<style nonce="{{ request.csp_nonce }}">
+.risiko-criteria-matrix select { min-width: 5.5rem; font-size: 0.85rem; }
+.risiko-criteria-matrix th, .risiko-criteria-matrix td { vertical-align: middle; padding: 0.35rem; }
+.risiko-criteria-textarea { width: 100%; min-height: 4rem; font-size: 0.85rem; }
+.risiko-criteria-input { width: 100%; font-size: 0.85rem; }
+</style>
+{% endblock ekstrajavascript %}
+
+{% block hovedinnhold %}
+
+<p>
+	<a href="{% url 'risiko_akseptkriterier' %}">&larr; Tilbake til akseptkriterier</a>
+</p>
+
+<p class="alert alert-warning">
+	Endringer gjelder <strong>alle</strong> risikosamlinger. Konsekvenstype-slugs som er i bruk kan ikke fjernes.
+</p>
+
+<form method="post" action="">
+{% csrf_token %}
+
+<h5 class="mt-3">Nivåetiketter</h5>
+<div class="row">
+	<div class="col-md-6">
+		<h6>Konsekvens</h6>
+		{% for level in levels_desc %}
+		<div class="form-group">
+			<label for="konsekvens_label_{{ level }}">Nivå {{ level }}</label>
+			<input class="form-control form-control-sm risiko-criteria-input" type="text"
+				id="konsekvens_label_{{ level }}" name="konsekvens_label_{{ level }}" value="">
+		</div>
+		{% endfor %}
+	</div>
+	<div class="col-md-6">
+		<h6>Sannsynlighet</h6>
+		{% for level in levels_desc %}
+		<div class="form-group">
+			<label for="sannsynlighet_label_{{ level }}">Nivå {{ level }}</label>
+			<input class="form-control form-control-sm risiko-criteria-input" type="text"
+				id="sannsynlighet_label_{{ level }}" name="sannsynlighet_label_{{ level }}"
+				value="">
+		</div>
+		{% endfor %}
+	</div>
+</div>
+
+<h5 class="mt-4">Risikomatrise</h5>
+<table class="table table-sm table-bordered risiko-criteria-matrix">
+<thead>
+<tr>
+	<th colspan="2"></th>
+	<th colspan="5">Konsekvens →</th>
+</tr>
+<tr>
+	<th colspan="2"></th>
+	{% for k in "12345" %}
+	<th>{{ k }}</th>
+	{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for s in levels_desc %}
+<tr>
+	<th rowspan="1">{% if forloop.first %}Sanns. ↓{% endif %}</th>
+	<th>{{ s }}</th>
+	{% for k in "12345" %}
+	<td>
+		<select class="form-control form-control-sm" name="matrix_{{ s }}_{{ k }}">
+			{% for val in risk_levels %}
+			<option value="{{ val }}">{{ val }}</option>
+			{% endfor %}
+		</select>
+	</td>
+	{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h5 class="mt-4">Konsekvensdimensjoner</h5>
+{% for index in "01234" %}
+<div class="form-group">
+	<label for="konsekvens_dim_{{ index }}">Dimensjon {{ index|add:1 }}</label>
+	<input class="form-control form-control-sm risiko-criteria-input" type="text"
+		id="konsekvens_dim_{{ index }}" name="konsekvens_dim_{{ index }}" value="">
+</div>
+{% endfor %}
+
+<h5 class="mt-4">Konsekvensmatrise</h5>
+<table class="table table-sm table-bordered">
+<thead>
+<tr>
+	<th>Nivå</th>
+	{% for index in "01234" %}
+	<th>Dim. {{ index|add:1 }}</th>
+	{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for level in levels_desc %}
+<tr>
+	<th>{{ level }}</th>
+	{% for dim in "01234" %}
+	<td>
+		<textarea class="form-control risiko-criteria-textarea" rows="3"
+			name="konsekvens_besk_{{ level }}_{{ dim }}"></textarea>
+	</td>
+	{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h5 class="mt-4">Sannsynlighetskategorier</h5>
+<table class="table table-sm table-bordered">
+<thead>
+<tr>
+	<th>Nivå</th>
+	{% for key, label in sannsynlighet_keys %}
+	<th>{{ label }}</th>
+	{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for level in levels_desc %}
+<tr>
+	<th>{{ level }}</th>
+	{% for key, label in sannsynlighet_keys %}
+	<td>
+		<textarea class="form-control risiko-criteria-textarea" rows="2"
+			name="sannsynlighet_{{ level }}_{{ key }}"></textarea>
+	</td>
+	{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h5 class="mt-4">Konsekvenstyper (scenario-tagger)</h5>
+<table class="table table-sm table-bordered">
+<thead>
+<tr>
+	<th>Slug</th>
+	<th>Etikett</th>
+</tr>
+</thead>
+<tbody>
+{% for index in "01234" %}
+<tr>
+	<td>
+		<input class="form-control form-control-sm" type="text"
+			name="konsekvenstype_slug_{{ index }}" value="">
+	</td>
+	<td>
+		<input class="form-control form-control-sm" type="text"
+			name="konsekvenstype_label_{{ index }}" value="">
+	</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<p class="mt-4">
+	<button type="submit" class="btn btn-primary">Lagre akseptkriterier</button>
+	<a class="btn btn-secondary" href="{% url 'risiko_akseptkriterier' %}">Avbryt</a>
+</p>
+</form>
+
+{{ edit_data|json_script:"criteria-edit-data" }}
+<script nonce="{{ request.csp_nonce }}">
+(function () {
+	var el = document.getElementById('criteria-edit-data');
+	if (!el) return;
+	var data = JSON.parse(el.textContent);
+
+	function setVal(name, value) {
+		var el = document.querySelector('[name="' + name + '"]');
+		if (el && value != null) el.value = value;
+	}
+
+	var kl = data.konsekvens_labels || {};
+	var sl = data.sannsynlighet_labels || {};
+	Object.keys(kl).forEach(function (level) {
+		setVal('konsekvens_label_' + level, kl[level]);
+	});
+	Object.keys(sl).forEach(function (level) {
+		setVal('sannsynlighet_label_' + level, sl[level]);
+	});
+
+	var matrix = data.risk_matrix || {};
+	Object.keys(matrix).forEach(function (s) {
+		var row = matrix[s];
+		Object.keys(row).forEach(function (k) {
+			setVal('matrix_' + s + '_' + k, row[k]);
+		});
+	});
+
+	var dims = data.konsekvens_dimensjoner || [];
+	dims.forEach(function (name, index) {
+		setVal('konsekvens_dim_' + index, name);
+	});
+
+	var kb = data.konsekvens_beskrivelser || {};
+	Object.keys(kb).forEach(function (level) {
+		(kb[level] || []).forEach(function (text, dim) {
+			setVal('konsekvens_besk_' + level + '_' + dim, text);
+		});
+	});
+
+	var sb = data.sannsynlighet_beskrivelser || {};
+	Object.keys(sb).forEach(function (level) {
+		var desc = sb[level] || {};
+		Object.keys(desc).forEach(function (key) {
+			setVal('sannsynlighet_' + level + '_' + key, desc[key]);
+		});
+	});
+
+	var kt = data.konsekvenstyper || [];
+	kt.forEach(function (item, index) {
+		setVal('konsekvenstype_slug_' + index, item.slug);
+		setVal('konsekvenstype_label_' + index, item.label);
+	});
+})();
+</script>
+
+{% endblock hovedinnhold %}

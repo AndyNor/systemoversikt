@@ -15,7 +15,10 @@
 	<a href="{{ url_sikkerhetstester }}" class="btn btn-sm btn-link {% if url_sikkerhetstester in request.path %}fremhev{% endif %}">Gjennomførte pentester</a><br>
 
 	{% url 'risiko_scope_list' as url_risiko_scope_list %}
-	<a href="{{ url_risiko_scope_list }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/' in request.path %}fremhev{% endif %}">Risikovurderinger</a><br>
+	<a href="{{ url_risiko_scope_list }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/' in request.path and '/akseptkriterier/' not in request.path %}fremhev{% endif %}">Risikovurderinger</a><br>
+
+	{% url 'risiko_akseptkriterier' as url_risiko_akseptkriterier %}
+	<a href="{{ url_risiko_akseptkriterier }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/akseptkriterier/' in request.path %}fremhev{% endif %}">Akseptkriterier</a><br>
 
 	{% url 'cmdb_adcs_index' as url_cmdb_adcs_index %}
 	<a href="{{url_cmdb_adcs_index}}" class="btn btn-sm btn-link {% if url_cmdb_adcs_index in request.path %}fremhev{% endif %}">ADCS certifikatmaler</a><br>

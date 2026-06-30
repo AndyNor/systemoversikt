@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: api_risiko_meta uses global get_active_criteria() for editor dropdowns and matrix.
 # 2026-06-30: Scenario konsekvenstyper – validate, save, serialize in scenario API.
 # 2026-06-30: Tiltak status forslag/besluttet – default forslag for new tiltak; accept ikke_startet alias.
 # 2026-06-30: Member vs owner API gates; membership and virksomhet management endpoints.
@@ -38,12 +39,11 @@ from systemoversikt.models import (
 	Virksomhet,
 )
 from systemoversikt.risk_criteria import (
-	KONSEKVENSTYPE_SLUGS,
+	get_active_criteria,
 	konsekvens_lookup_label,
 	konsekvenstype_tag_dicts,
 	konsekvenstype_to_storage,
 	level_cell_css_class,
-	meta_choices,
 	parse_kit_dimensjoner,
 	parse_konsekvenstyper,
 	risk_cell_css_class,
@@ -268,7 +268,7 @@ def _validate_scenario_fields(data, scope, scenario=None):
 	else:
 		errors.append('konsekvenstyper må være en liste.')
 		konsekvenstyper_parts = []
-	unknown_konsekvenstyper = sorted({p for p in konsekvenstyper_parts if p not in KONSEKVENSTYPE_SLUGS})
+	unknown_konsekvenstyper = sorted({p for p in konsekvenstyper_parts if p not in get_active_criteria().konsekvenstype_slugs})
 	if unknown_konsekvenstyper:
 		errors.append('Ugyldige konsekvenstyper: %s' % ', '.join(unknown_konsekvenstyper))
 
@@ -456,7 +456,7 @@ def api_risiko_meta(request, pk):
 	scope, err = _require_owner_json(request, pk)
 	if err:
 		return err
-	return JsonResponse({'ok': True, 'meta': meta_choices()})
+	return JsonResponse({'ok': True, 'meta': get_active_criteria().meta_choices()})
 
 
 @require_GET

@@ -1,4 +1,6 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-06-30: Superuser export/import buttons for moving akseptkriterier between environments. #}
+{# 2026-06-30: Global read-only akseptkriterier – shared by all risikosamlinger. #}
 
 {% block overskrift %}
 	Akseptkriterier
@@ -6,20 +8,60 @@
 
 {% block ekstrajavascript %}
 <style nonce="{{ request.csp_nonce }}">
-.risk-matrix { border-collapse: collapse; width: 100%; max-width: 520px; margin-bottom: 2rem; }
-.risk-matrix th, .risk-matrix td { border: 1px solid #dee2e6; text-align: center; padding: 4px; }
-.risk-matrix .axis-label { background: #f8f9fa; font-weight: 600; font-size: 0.85rem; }
-.risk-cell-lav { background-color: #d4edda; }
-.risk-cell-middels { background-color: #fff3cd; }
-.risk-cell-hoy { background-color: #f8d7da; }
+.risk-matrix { border-collapse: collapse; width: 100%; max-width: 520px; margin-bottom: 2rem; border: 2px solid #5a6268; }
+.risk-matrix th, .risk-matrix td { border: 1px solid #5a6268; text-align: center; padding: 4px; min-width: 48px; font-size: 0.85rem; }
+.risk-matrix .axis-label { background: #f8f9fa; font-weight: 600; font-size: 0.8rem; }
+.risk-cell-lav { background-color: #c0eb96; }
+.risk-cell-middels { background-color: #ffecb2; }
+.risk-cell-hoy { background-color: #ffc8cd; }
+#akseptkriterier tbody tr.risk-level-1 > th,
+#akseptkriterier tbody tr.risk-level-1 > td { background-color: #c0eb96; }
+#akseptkriterier tbody tr.risk-level-2 > th,
+#akseptkriterier tbody tr.risk-level-2 > td { background-color: #e4f5ad; }
+#akseptkriterier tbody tr.risk-level-3 > th,
+#akseptkriterier tbody tr.risk-level-3 > td { background-color: #ffecb2; }
+#akseptkriterier tbody tr.risk-level-4 > th,
+#akseptkriterier tbody tr.risk-level-4 > td { background-color: #ffd997; }
+#akseptkriterier tbody tr.risk-level-5 > th,
+#akseptkriterier tbody tr.risk-level-5 > td { background-color: #ffc8cd; }
 </style>
 {% endblock ekstrajavascript %}
 
 {% block hovedinnhold %}
 
-<p><a href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a></p>
+<p>
+	<a href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
+	{% if can_edit_criteria %}
+	&nbsp;|&nbsp;
+	<a href="{% url 'risiko_akseptkriterier_rediger' %}">Rediger akseptkriterier</a>
+	&nbsp;|&nbsp;
+	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_akseptkriterier_eksporter' %}">Eksporter JSON</a>
+	{% endif %}
+</p>
 
-<h5>Risikomatrise (referanse)</h5>
+{% if can_edit_criteria %}
+<p class="mb-3">
+	<form class="form-inline" method="post" action="{% url 'risiko_akseptkriterier_importer' %}" enctype="multipart/form-data">
+		{% csrf_token %}
+		<label class="mr-2" for="kriteriefil">Importer JSON:</label>
+		<input type="file" name="kriteriefil" id="kriteriefil" class="form-control-file mr-2" accept=".json,application/json" required>
+		<div class="form-check mr-2">
+			<input class="form-check-input" type="checkbox" name="confirm_import" id="confirm_import" value="1" required>
+			<label class="form-check-label" for="confirm_import">
+				Jeg forstår at dette erstatter aktive akseptkriterier for alle risikosamlinger
+			</label>
+		</div>
+		<button type="submit" class="btn btn-warning btn-sm">Importer</button>
+	</form>
+	<small class="text-muted d-block mt-1">Eksporter fra test, importer på produksjon.</small>
+</p>
+{% endif %}
+
+<p class="text-muted">
+	Disse kriteriene gjelder for alle risikosamlinger. Endringer i risikomatrisen påvirker klassifisering (Lav/Middels/Høy) for alle scenarioer.
+</p>
+
+<h5>Risikomatrise</h5>
 <table class="risk-matrix">
 <thead>
 <tr>
@@ -46,52 +88,6 @@
 </tbody>
 </table>
 
-<h5>Konsekvensmatrise</h5>
-<table class="table table-sm table-bordered">
-<thead>
-<tr>
-	<th>Nivå</th>
-	{% for dim in konsekvens_rows.0.dimensjoner %}
-	<th>{{ dim.navn }}</th>
-	{% endfor %}
-</tr>
-</thead>
-<tbody>
-{% for row in konsekvens_rows %}
-<tr>
-	<th>{{ row.label }} ({{ row.level }})</th>
-	{% for dim in row.dimensjoner %}
-	<td>{{ dim.tekst }}</td>
-	{% endfor %}
-</tr>
-{% endfor %}
-</tbody>
-</table>
-
-<h5>Sannsynlighetskategorier</h5>
-<table class="table table-sm table-bordered">
-<thead>
-<tr>
-	<th>Nivå</th>
-	<th>Forventning</th>
-	<th>Estimert sannsynlighet</th>
-	<th>Sårbarhet</th>
-	<th>Kapasitet og evne</th>
-	<th>Intensjon</th>
-</tr>
-</thead>
-<tbody>
-{% for row in sannsynlighet_rows %}
-<tr>
-	<th>{{ row.label }} ({{ row.level }})</th>
-	<td>{{ row.beskrivelse.forventning }}</td>
-	<td>{{ row.beskrivelse.estimert }}</td>
-	<td>{{ row.beskrivelse.sarbarhet }}</td>
-	<td>{{ row.beskrivelse.kapasitet }}</td>
-	<td>{{ row.beskrivelse.intensjon }}</td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
+{% include "risiko_akseptkriterier_content.html" %}
 
 {% endblock hovedinnhold %}

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Global DB-backed CriteriaBundle + get_active_criteria() – editable akseptkriterier.
 # 2026-06-30: Konsekvenstype slugs + parse helpers for scenario tagging.
 # 2026-06-30: Tiltak status forslag + besluttet (replaces ikke_startet) for Excel import and editor.
 # 2026-06-29: effective_residual_levels() – empty etter fields inherit current risk for matrix/label.
@@ -11,6 +12,8 @@
 
 import re
 import unicodedata
+
+from django.core.cache import cache
 
 # 5×5 matrix: RISK_MATRIX[sannsynlighet][konsekvens] -> Lav|Middels|Høy
 # From Akseptkriterier sheet rows 33–37 (sannsynlighet 5..1, konsekvens 1..5).
@@ -66,7 +69,6 @@ TILTAK_STATUS_FROM_TEXT = {
 	'utfort': 'utfort',
 }
 
-# Konsekvens dimension descriptions (Akseptkriterier konsekvensmatrise).
 KONSEKVENS_DIMENSJONER = [
 	'Liv og helse',
 	'Økonomi',
@@ -162,22 +164,468 @@ SANNSYNLIGHET_BESKRIVELSER = {
 	},
 }
 
-_LABEL_ALIASES = {
-	# Konsekvens
-	'ubetydelig': (1, 'konsekvens'),
-	'lav': (2, 'konsekvens'),
-	'moderat': (3, 'konsekvens'),
-	'alvorlig': (4, 'konsekvens'),
-	'svært alvorlig': (5, 'konsekvens'),
-	'svaert alvorlig': (5, 'konsekvens'),
-	# Sannsynlighet
-	'meget liten': (1, 'sannsynlighet'),
-	'meget liten.': (1, 'sannsynlighet'),
-	'liten': (2, 'sannsynlighet'),
-	'stor': (4, 'sannsynlighet'),
-	'svært stor': (5, 'sannsynlighet'),
-	'svaert stor': (5, 'sannsynlighet'),
-}
+SANNSYNLIGHET_KEYS = ('forventning', 'estimert', 'sarbarhet', 'kapasitet', 'intensjon')
+RISK_LEVEL_VALUES = ('Lav', 'Middels', 'Høy')
+LEVELS = (1, 2, 3, 4, 5)
+CRITERIA_CACHE_KEY = 'risk_criteria_active_v1'
+
+
+def _int_key_dict(raw, label):
+	if not isinstance(raw, dict):
+		raise ValueError('%s må være et objekt.' % label)
+	result = {}
+	for key, value in raw.items():
+		try:
+			n = int(key)
+		except (TypeError, ValueError):
+			raise ValueError('%s: ugyldig nøkkel %r.' % (label, key))
+		result[n] = value
+	return result
+
+
+def build_default_criteria_dict():
+	"""Serialize module defaults to JSON-storable dict (string keys)."""
+	return {
+		'risk_matrix': {
+			str(s): {str(k): v for k, v in row.items()}
+			for s, row in RISK_MATRIX.items()
+		},
+		'konsekvens_labels': {str(k): v for k, v in KONSEKVENS_LABELS.items()},
+		'sannsynlighet_labels': {str(k): v for k, v in SANNSYNLIGHET_LABELS.items()},
+		'konsekvens_dimensjoner': list(KONSEKVENS_DIMENSJONER),
+		'konsekvens_beskrivelser': {
+			str(level): list(texts) for level, texts in KONSEKVENS_BESKRIVELSER.items()
+		},
+		'sannsynlighet_beskrivelser': {
+			str(level): dict(desc) for level, desc in SANNSYNLIGHET_BESKRIVELSER.items()
+		},
+		'konsekvenstyper': [
+			{'slug': slug, 'label': label} for slug, label in KONSEKVENSTYPE_VALG
+		],
+	}
+
+
+def validate_criteria(data):
+	"""Return list of human-readable validation errors (empty if valid)."""
+	errors = []
+	if not isinstance(data, dict):
+		return ['Kriterier må være et objekt.']
+
+	try:
+		matrix_raw = data.get('risk_matrix')
+		if not isinstance(matrix_raw, dict):
+			errors.append('Risikomatrise mangler.')
+		else:
+			matrix = _int_key_dict(matrix_raw, 'Risikomatrise')
+			for s in LEVELS:
+				if s not in matrix:
+					errors.append('Risikomatrise mangler sannsynlighet %d.' % s)
+					continue
+				row = matrix[s]
+				if not isinstance(row, dict):
+					errors.append('Risikomatrise rad %d er ugyldig.' % s)
+					continue
+				row_int = _int_key_dict(row, 'Risikomatrise rad %d' % s)
+				for k in LEVELS:
+					val = row_int.get(k)
+					if val not in RISK_LEVEL_VALUES:
+						errors.append('Risikomatrise [%d][%d] må være Lav, Middels eller Høy.' % (s, k))
+
+		for field, label in (
+			('konsekvens_labels', 'Konsekvensetiketter'),
+			('sannsynlighet_labels', 'Sannsynlighetsetiketter'),
+		):
+			raw = data.get(field)
+			if not isinstance(raw, dict):
+				errors.append('%s mangler.' % label)
+				continue
+			labels = _int_key_dict(raw, label)
+			for level in LEVELS:
+				text = (labels.get(level) or '').strip()
+				if not text:
+					errors.append('%s nivå %d kan ikke være tom.' % (label, level))
+
+		dims = data.get('konsekvens_dimensjoner')
+		if not isinstance(dims, list) or len(dims) != 5:
+			errors.append('Konsekvensdimensjoner må være en liste med 5 elementer.')
+		else:
+			for index, name in enumerate(dims):
+				if not str(name).strip():
+					errors.append('Konsekvensdimensjon %d kan ikke være tom.' % (index + 1))
+
+		kb = data.get('konsekvens_beskrivelser')
+		if not isinstance(kb, dict):
+			errors.append('Konsekvensbeskrivelser mangler.')
+		else:
+			kb_int = _int_key_dict(kb, 'Konsekvensbeskrivelser')
+			for level in LEVELS:
+				texts = kb_int.get(level)
+				if not isinstance(texts, list) or len(texts) != 5:
+					errors.append('Konsekvensbeskrivelser nivå %d må ha 5 tekster.' % level)
+				else:
+					for index, text in enumerate(texts):
+						if not str(text).strip():
+							errors.append('Konsekvensbeskrivelse nivå %d dimensjon %d kan ikke være tom.' % (level, index + 1))
+
+		sb = data.get('sannsynlighet_beskrivelser')
+		if not isinstance(sb, dict):
+			errors.append('Sannsynlighetsbeskrivelser mangler.')
+		else:
+			sb_int = _int_key_dict(sb, 'Sannsynlighetsbeskrivelser')
+			for level in LEVELS:
+				desc = sb_int.get(level)
+				if not isinstance(desc, dict):
+					errors.append('Sannsynlighetsbeskrivelser nivå %d mangler.' % level)
+					continue
+				for key in SANNSYNLIGHET_KEYS:
+					if not str(desc.get(key) or '').strip():
+						errors.append('Sannsynlighet nivå %d: %s kan ikke være tom.' % (level, key))
+
+		kt = data.get('konsekvenstyper')
+		if not isinstance(kt, list) or len(kt) != 5:
+			errors.append('Konsekvenstyper må være en liste med 5 elementer.')
+		else:
+			slugs = []
+			for index, item in enumerate(kt):
+				if not isinstance(item, dict):
+					errors.append('Konsekvenstype %d er ugyldig.' % (index + 1))
+					continue
+				slug = str(item.get('slug') or '').strip()
+				label = str(item.get('label') or '').strip()
+				if not slug or not re.match(r'^[a-z][a-z0-9_]*$', slug):
+					errors.append('Konsekvenstype %d har ugyldig slug.' % (index + 1))
+				if not label:
+					errors.append('Konsekvenstype %d mangler etikett.' % (index + 1))
+				slugs.append(slug)
+			if len(set(slugs)) != len(slugs):
+				errors.append('Konsekvenstype-slugs må være unike.')
+	except ValueError as exc:
+		errors.append(str(exc))
+
+	return errors
+
+
+class CriteriaBundle:
+	"""Runtime view of validated acceptance criteria."""
+
+	def __init__(self, data):
+		errors = validate_criteria(data)
+		if errors:
+			raise ValueError(errors[0])
+		self._data = data
+		self.risk_matrix = {}
+		matrix_src = data['risk_matrix']
+		for s in LEVELS:
+			row_src = matrix_src.get(str(s), matrix_src.get(s))
+			self.risk_matrix[s] = _int_key_dict(row_src, 'matrix')
+
+		self.konsekvens_labels = _int_key_dict(data['konsekvens_labels'], 'konsekvens_labels')
+		self.sannsynlighet_labels = _int_key_dict(data['sannsynlighet_labels'], 'sannsynlighet_labels')
+		self.konsekvens_dimensjoner = list(data['konsekvens_dimensjoner'])
+		kb = _int_key_dict(data['konsekvens_beskrivelser'], 'konsekvens_beskrivelser')
+		self.konsekvens_beskrivelser = {level: list(kb[level]) for level in LEVELS}
+		sb = _int_key_dict(data['sannsynlighet_beskrivelser'], 'sannsynlighet_beskrivelser')
+		self.sannsynlighet_beskrivelser = {level: dict(sb[level]) for level in LEVELS}
+		self.konsekvenstyper = list(data['konsekvenstyper'])
+		self.konsekvenstype_slugs = {item['slug'] for item in self.konsekvenstyper}
+		self.konsekvenstype_labels = {item['slug']: item['label'] for item in self.konsekvenstyper}
+		self.konsekvenstype_order = [item['slug'] for item in self.konsekvenstyper]
+		self._label_aliases = self._build_label_aliases()
+
+	@classmethod
+	def from_defaults(cls):
+		return cls(build_default_criteria_dict())
+
+	@classmethod
+	def from_dict(cls, data):
+		return cls(data)
+
+	def to_storage_dict(self):
+		"""JSON-serializable dict with string keys."""
+		return {
+			'risk_matrix': {
+				str(s): {str(k): self.risk_matrix[s][k] for k in LEVELS}
+				for s in LEVELS
+			},
+			'konsekvens_labels': {str(k): v for k, v in self.konsekvens_labels.items()},
+			'sannsynlighet_labels': {str(k): v for k, v in self.sannsynlighet_labels.items()},
+			'konsekvens_dimensjoner': list(self.konsekvens_dimensjoner),
+			'konsekvens_beskrivelser': {
+				str(level): list(self.konsekvens_beskrivelser[level]) for level in LEVELS
+			},
+			'sannsynlighet_beskrivelser': {
+				str(level): dict(self.sannsynlighet_beskrivelser[level]) for level in LEVELS
+			},
+			'konsekvenstyper': [
+				{'slug': item['slug'], 'label': item['label']} for item in self.konsekvenstyper
+			],
+		}
+
+	def _build_label_aliases(self):
+		aliases = {}
+		for level, label in self.konsekvens_labels.items():
+			norm = _normalize_label(label)
+			if norm:
+				aliases[norm] = (level, 'konsekvens')
+		for level, label in self.sannsynlighet_labels.items():
+			norm = _normalize_label(label)
+			if norm:
+				aliases[norm] = (level, 'sannsynlighet')
+		# Disambiguation for overlapping words
+		aliases['lav'] = (2, 'konsekvens')
+		aliases['liten'] = (2, 'sannsynlighet')
+		aliases['moderat'] = (3, 'konsekvens')
+		for level, label in self.sannsynlighet_labels.items():
+			if _normalize_label(label) == 'moderat':
+				aliases['moderat'] = (level, 'sannsynlighet')
+				break
+		return aliases
+
+	def label_to_level(self, text, kind=None):
+		norm = _normalize_label(text)
+		if not norm:
+			return None
+		if norm in self._label_aliases:
+			level, alias_kind = self._label_aliases[norm]
+			if kind and alias_kind != kind:
+				if kind == 'konsekvens' and norm == 'lav':
+					return 2
+				if kind == 'sannsynlighet' and norm == 'liten':
+					return 2
+				if kind == 'konsekvens' and norm == 'moderat':
+					return 3
+				if kind == 'sannsynlighet' and norm == 'moderat':
+					return 3
+			return level
+		for alias, (level, alias_kind) in sorted(self._label_aliases.items(), key=lambda x: -len(x[0])):
+			if alias in norm or norm in alias:
+				if kind and alias_kind != kind:
+					continue
+				return level
+		return None
+
+	def risk_label(self, sannsynlighet, konsekvens):
+		if not sannsynlighet or not konsekvens:
+			return ''
+		try:
+			s = int(sannsynlighet)
+			k = int(konsekvens)
+		except (TypeError, ValueError):
+			return ''
+		row = self.risk_matrix.get(s)
+		if not row:
+			return ''
+		return row.get(k, '')
+
+	def konsekvens_lookup_label(self, level):
+		return _lookup_level_label(level, self.konsekvens_labels)
+
+	def sannsynlighet_lookup_label(self, level):
+		return _lookup_level_label(level, self.sannsynlighet_labels)
+
+	def parse_konsekvenstyper(self, raw):
+		if raw is None:
+			return []
+		if isinstance(raw, (list, tuple)):
+			parts = [str(item).strip() for item in raw if str(item).strip()]
+		elif isinstance(raw, str):
+			parts = [part.strip() for part in raw.split(',') if part.strip()]
+		else:
+			parts = [str(raw).strip()] if str(raw).strip() else []
+		seen = set()
+		result = []
+		for slug in parts:
+			if slug in self.konsekvenstype_slugs and slug not in seen:
+				seen.add(slug)
+				result.append(slug)
+		order = {slug: index for index, slug in enumerate(self.konsekvenstype_order)}
+		result.sort(key=lambda slug: order.get(slug, 99))
+		return result
+
+	def konsekvenstype_to_storage(self, raw):
+		return ','.join(self.parse_konsekvenstyper(raw))
+
+	def konsekvenstype_tag_dicts(self, raw):
+		return [
+			{'slug': slug, 'label': self.konsekvenstype_labels[slug]}
+			for slug in self.parse_konsekvenstyper(raw)
+		]
+
+	def build_akseptkriterier_context(self):
+		konsekvens_rows = []
+		for level in range(5, 0, -1):
+			konsekvens_rows.append({
+				'level': level,
+				'label': self.konsekvens_labels[level],
+				'level_css': level_cell_css_class(level),
+				'dimensjoner': [
+					{'navn': navn, 'tekst': tekst}
+					for navn, tekst in zip(self.konsekvens_dimensjoner, self.konsekvens_beskrivelser[level])
+				],
+			})
+		sannsynlighet_rows = []
+		for level in range(5, 0, -1):
+			sannsynlighet_rows.append({
+				'level': level,
+				'label': self.sannsynlighet_labels[level],
+				'level_css': level_cell_css_class(level),
+				'beskrivelse': self.sannsynlighet_beskrivelser[level],
+			})
+		return {
+			'konsekvens_rows': konsekvens_rows,
+			'sannsynlighet_rows': sannsynlighet_rows,
+		}
+
+	def build_matrix_reference_context(self):
+		grid = []
+		for sannsynlighet in range(5, 0, -1):
+			row_cells = []
+			for konsekvens in range(1, 6):
+				label = self.risk_label(sannsynlighet, konsekvens)
+				row_cells.append({
+					'sannsynlighet': sannsynlighet,
+					'konsekvens': konsekvens,
+					'label': label,
+					'css_class': risk_cell_css_class(label),
+				})
+			grid.append({
+				'sannsynlighet': sannsynlighet,
+				'sannsynlighet_label': self.sannsynlighet_labels[sannsynlighet],
+				'cells': row_cells,
+			})
+		return grid
+
+	def build_matrix_context(self, scenarios, use_residual=False):
+		cells = matrix_placements(scenarios, use_residual=use_residual, criteria=self)
+		grid = []
+		for sannsynlighet in range(5, 0, -1):
+			row_cells = []
+			for konsekvens in range(1, 6):
+				label = self.risk_label(sannsynlighet, konsekvens)
+				row_cells.append({
+					'sannsynlighet': sannsynlighet,
+					'konsekvens': konsekvens,
+					'label': label,
+					'css_class': risk_cell_css_class(label),
+					'scenarios': cells.get((sannsynlighet, konsekvens), []),
+				})
+			grid.append({
+				'sannsynlighet': sannsynlighet,
+				'sannsynlighet_label': self.sannsynlighet_labels[sannsynlighet],
+				'cells': row_cells,
+			})
+		return grid
+
+	def meta_choices(self):
+		from systemoversikt.models import RISIKOBEHANDLING_VALG, RISK_ACTION_STATUS_VALG
+		return {
+			'konsekvens_labels': self.konsekvens_labels,
+			'sannsynlighet_labels': self.sannsynlighet_labels,
+			'risk_matrix': self.risk_matrix,
+			'risikobehandling': [{'value': v, 'label': l} for v, l in RISIKOBEHANDLING_VALG],
+			'tiltak_status': [{'value': v, 'label': l} for v, l in RISK_ACTION_STATUS_VALG],
+			'konsekvenstyper': [
+				{'value': item['slug'], 'label': item['label']} for item in self.konsekvenstyper
+			],
+		}
+
+
+def invalidate_criteria_cache():
+	cache.delete(CRITERIA_CACHE_KEY)
+
+
+def get_active_criteria():
+	cached = cache.get(CRITERIA_CACHE_KEY)
+	if cached is not None:
+		return cached
+	try:
+		from systemoversikt.models import RiskCriteriaConfig
+		row = RiskCriteriaConfig.objects.filter(is_active=True).first()
+		if row and row.criteria:
+			bundle = CriteriaBundle.from_dict(row.criteria)
+		else:
+			bundle = CriteriaBundle.from_defaults()
+	except Exception:
+		bundle = CriteriaBundle.from_defaults()
+	cache.set(CRITERIA_CACHE_KEY, bundle, timeout=3600)
+	return bundle
+
+
+def get_or_create_active_config(user=None):
+	from systemoversikt.models import RiskCriteriaConfig
+	row = RiskCriteriaConfig.objects.filter(is_active=True).first()
+	if row:
+		return row
+	defaults = build_default_criteria_dict()
+	return RiskCriteriaConfig.objects.create(
+		title='Standard akseptkriterier',
+		is_active=True,
+		criteria=defaults,
+		oppdatert_av=user,
+	)
+
+
+def criteria_from_post(post):
+	"""Build criteria dict from superuser edit form POST data."""
+	data = {
+		'risk_matrix': {},
+		'konsekvens_labels': {},
+		'sannsynlighet_labels': {},
+		'konsekvens_dimensjoner': [],
+		'konsekvens_beskrivelser': {},
+		'sannsynlighet_beskrivelser': {},
+		'konsekvenstyper': [],
+	}
+	for s in LEVELS:
+		row = {}
+		for k in LEVELS:
+			row[str(k)] = (post.get('matrix_%d_%d' % (s, k)) or '').strip()
+		data['risk_matrix'][str(s)] = row
+	for level in LEVELS:
+		data['konsekvens_labels'][str(level)] = (post.get('konsekvens_label_%d' % level) or '').strip()
+		data['sannsynlighet_labels'][str(level)] = (post.get('sannsynlighet_label_%d' % level) or '').strip()
+	for index in range(5):
+		data['konsekvens_dimensjoner'].append((post.get('konsekvens_dim_%d' % index) or '').strip())
+	for level in LEVELS:
+		data['konsekvens_beskrivelser'][str(level)] = [
+			(post.get('konsekvens_besk_%d_%d' % (level, dim)) or '').strip()
+			for dim in range(5)
+		]
+	for level in LEVELS:
+		data['sannsynlighet_beskrivelser'][str(level)] = {
+			key: (post.get('sannsynlighet_%d_%s' % (level, key)) or '').strip()
+			for key in SANNSYNLIGHET_KEYS
+		}
+	for index in range(5):
+		data['konsekvenstyper'].append({
+			'slug': (post.get('konsekvenstype_slug_%d' % index) or '').strip(),
+			'label': (post.get('konsekvenstype_label_%d' % index) or '').strip(),
+		})
+	return data
+
+
+def validate_slug_changes(old_bundle, new_data):
+	"""Block removal/rename of konsekvenstype slugs still referenced in scenarios."""
+	errors = []
+	try:
+		new_bundle = CriteriaBundle.from_dict(new_data)
+	except ValueError as exc:
+		return [str(exc)]
+	old_slugs = old_bundle.konsekvenstype_slugs
+	new_slugs = new_bundle.konsekvenstype_slugs
+	removed = old_slugs - new_slugs
+	if not removed:
+		return errors
+	from systemoversikt.models import RiskScenario
+	used = set()
+	for raw in RiskScenario.objects.exclude(konsekvenstyper='').values_list('konsekvenstyper', flat=True):
+		used.update(old_bundle.parse_konsekvenstyper(raw))
+	blocked = sorted(removed & used)
+	if blocked:
+		errors.append(
+			'Kan ikke fjerne konsekvenstyper som er i bruk: %s' % ', '.join(blocked)
+		)
+	return errors
 
 
 def _normalize_label(text):
@@ -192,30 +640,7 @@ def _normalize_label(text):
 
 
 def label_to_level(text, kind=None):
-	"""Map Excel label to 1–5. kind: 'konsekvens' or 'sannsynlighet' (optional disambiguator)."""
-	norm = _normalize_label(text)
-	if not norm:
-		return None
-	if norm in _LABEL_ALIASES:
-		level, alias_kind = _LABEL_ALIASES[norm]
-		if kind and alias_kind != kind:
-			# 'lav' and 'liten' overlap – use kind hint
-			if kind == 'konsekvens' and norm == 'lav':
-				return 2
-			if kind == 'sannsynlighet' and norm == 'liten':
-				return 2
-			if kind == 'konsekvens' and norm == 'moderat':
-				return 3
-			if kind == 'sannsynlighet' and norm == 'moderat':
-				return 3
-		return level
-	# Fallback: partial match on longer phrases
-	for alias, (level, alias_kind) in sorted(_LABEL_ALIASES.items(), key=lambda x: -len(x[0])):
-		if alias in norm or norm in alias:
-			if kind and alias_kind != kind:
-				continue
-			return level
-	return None
+	return get_active_criteria().label_to_level(text, kind=kind)
 
 
 def risikobehandling_from_text(text):
@@ -231,16 +656,7 @@ def tiltak_status_from_text(text):
 
 
 def risk_label(sannsynlighet, konsekvens):
-	if not sannsynlighet or not konsekvens:
-		return ''
-	try:
-		s = int(sannsynlighet)
-		k = int(konsekvens)
-	except (TypeError, ValueError):
-		return ''
-	if s not in RISK_MATRIX or k not in RISK_MATRIX[s]:
-		return ''
-	return RISK_MATRIX[s][k]
+	return get_active_criteria().risk_label(sannsynlighet, konsekvens)
 
 
 def risk_cell_css_class(label):
@@ -254,7 +670,6 @@ def risk_cell_css_class(label):
 	return 'risk-cell-empty'
 
 
-# 2026-06-25: Level 1–5 and Lav/Middels/Høy background hex scale (scope detail CSS).
 RISK_LEVEL_BACKGROUNDS = {
 	1: '#c0eb96',
 	2: '#e4f5ad',
@@ -271,7 +686,6 @@ RISK_LABEL_BACKGROUNDS = {
 
 
 def level_cell_css_class(level):
-	"""Background class for konsekvens/sannsynlighet level cells (1–5)."""
 	if level is None or level == '':
 		return 'risk-cell-empty'
 	try:
@@ -284,11 +698,11 @@ def level_cell_css_class(level):
 
 
 def konsekvens_lookup_label(level):
-	return _lookup_level_label(level, KONSEKVENS_LABELS)
+	return get_active_criteria().konsekvens_lookup_label(level)
 
 
 def sannsynlighet_lookup_label(level):
-	return _lookup_level_label(level, SANNSYNLIGHET_LABELS)
+	return get_active_criteria().sannsynlighet_lookup_label(level)
 
 
 def _lookup_level_label(level, labels):
@@ -302,7 +716,6 @@ def _lookup_level_label(level, labels):
 
 
 def parse_kit_dimensjoner(text):
-	"""Parse K/I/T text (e.g. 'K, T') into ordered dimension codes."""
 	if not text or not str(text).strip():
 		return []
 	seen = set()
@@ -315,49 +728,26 @@ def parse_kit_dimensjoner(text):
 
 
 def parse_konsekvenstyper(raw):
-	"""Parse stored comma-string or API list into ordered konsekvenstype slugs."""
-	if raw is None:
-		return []
-	if isinstance(raw, (list, tuple)):
-		parts = [str(item).strip() for item in raw if str(item).strip()]
-	elif isinstance(raw, str):
-		parts = [part.strip() for part in raw.split(',') if part.strip()]
-	else:
-		parts = [str(raw).strip()] if str(raw).strip() else []
-	seen = set()
-	result = []
-	for slug in parts:
-		if slug in KONSEKVENSTYPE_SLUGS and slug not in seen:
-			seen.add(slug)
-			result.append(slug)
-	# Stable display order regardless of input order
-	order = {slug: index for index, slug in enumerate(KONSEKVENSTYPE_ORDER)}
-	result.sort(key=lambda slug: order.get(slug, 99))
-	return result
+	return get_active_criteria().parse_konsekvenstyper(raw)
 
 
 def konsekvenstype_to_storage(raw):
-	"""Normalize API input to comma-separated slug string for DB."""
-	return ','.join(parse_konsekvenstyper(raw))
+	return get_active_criteria().konsekvenstype_to_storage(raw)
 
 
 def konsekvenstype_tag_dicts(raw):
-	"""List of {slug, label} for API/template display."""
-	return [
-		{'slug': slug, 'label': KONSEKVENSTYPE_LABELS[slug]}
-		for slug in parse_konsekvenstyper(raw)
-	]
+	return get_active_criteria().konsekvenstype_tag_dicts(raw)
 
 
 def effective_residual_levels(scenario):
-	"""Residual konsekvens/sannsynlighet; unset etter fields inherit current risk."""
 	k = scenario.konsekvens_etter or scenario.konsekvens_nivaa
 	s = scenario.sannsynlighet_etter or scenario.sannsynlighet_nivaa
 	return s, k
 
 
-def matrix_placements(scenarios, use_residual=False):
-	"""Group scenarios by (sannsynlighet, konsekvens) for matrix rendering."""
+def matrix_placements(scenarios, use_residual=False, criteria=None):
+	if criteria is None:
+		criteria = get_active_criteria()
 	cells = {}
 	for scenario in scenarios:
 		if use_residual:
@@ -372,13 +762,4 @@ def matrix_placements(scenarios, use_residual=False):
 
 
 def meta_choices():
-	"""Reference data for risk editor UI (dropdowns and live matrix lookup)."""
-	from systemoversikt.models import RISIKOBEHANDLING_VALG, RISK_ACTION_STATUS_VALG
-	return {
-		'konsekvens_labels': KONSEKVENS_LABELS,
-		'sannsynlighet_labels': SANNSYNLIGHET_LABELS,
-		'risk_matrix': RISK_MATRIX,
-		'risikobehandling': [{'value': v, 'label': l} for v, l in RISIKOBEHANDLING_VALG],
-		'tiltak_status': [{'value': v, 'label': l} for v, l in RISK_ACTION_STATUS_VALG],
-		'konsekvenstyper': [{'value': v, 'label': l} for v, l in KONSEKVENSTYPE_VALG],
-	}
+	return get_active_criteria().meta_choices()

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Akseptkriterier nav search – global criteria reference page.
 # 2026-06-24: Risiko nav search – view_qualysvuln fallback (same as views_risiko / BloodHound).
 # 2026-06-24: Risikovurderinger list open to all users (no permission filter).
 # 2026-06-24: Navigation search – risikovurderinger links (view_riskscope).
@@ -80,6 +81,7 @@ NAV_PAGES = [
 	_entry('Qualys vs Defender', 'azure_vulnstats_qualys_compare', 'Sikkerhet', ['qualys vs defender', 'defender compare'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Gjennomførte pentester', 'rapport_sikkerhetstester', 'Sikkerhet', ['pentester', 'pentest', 'sikkerhetstester']),
 	_entry('Risikovurderinger', 'risiko_scope_list', 'Sikkerhet', ['risiko', 'risikovurdering', 'risikomatrise'], permissions=[]),
+	_entry('Akseptkriterier', 'risiko_akseptkriterier', 'Sikkerhet', ['akseptkriterier', 'risikomatrise', 'konsekvens', 'sannsynlighet'], permissions=[]),
 	_entry('Ny risikosamling', 'risiko_scope_create', 'Sikkerhet', ['ny risikosamling', 'risiko opprett'], permissions=['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']),
 	_entry('Importer risikomatrise', 'risiko_import', 'Sikkerhet', ['risiko import', 'risikomatrise import'], permissions=['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']),
 	_entry('ADCS certifikatmaler', 'cmdb_adcs_index', 'Sikkerhet', ['adcs', 'certifikatmaler'], permissions=['systemoversikt.view_cmdbdevice']),

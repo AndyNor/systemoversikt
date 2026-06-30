@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: RiskCriteriaConfig oppdatert_av autocomplete – avoid loading all users in admin dropdown.
+# 2026-06-30: RiskCriteriaConfig admin – emergency JSON fallback for global akseptkriterier.
 # 2026-06-30: RiskScopeMember inline; virksomhet on RiskScope replaces single eier.
 # 2026-06-26: RiskScope eier list_filter uses RelatedOnlyFieldListFilter – avoids loading all ~85k users.
 # 2026-06-26: RiskAction admin on scope; M2M scenarios for shared tiltak.
@@ -1666,6 +1668,15 @@ class RiskActionInline(admin.TabularInline):
 	extra = 0
 	fields = ('beskrivelse', 'ansvarlig', 'frist', 'status', 'kilde')
 	filter_horizontal = ('scenarios',)
+
+
+@admin.register(RiskCriteriaConfig)
+class RiskCriteriaConfigAdmin(SimpleHistoryAdmin):
+	list_display = ('title', 'is_active', 'sist_oppdatert', 'oppdatert_av')
+	list_filter = ('is_active',)
+	search_fields = ('title',)
+	readonly_fields = ('sist_oppdatert',)
+	autocomplete_fields = ('oppdatert_av',)
 
 
 @admin.register(RiskScope)

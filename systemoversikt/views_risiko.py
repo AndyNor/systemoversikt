@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Akseptkriterier JSON export/import – superuser page buttons for dev → prod.
+# 2026-06-30: Global akseptkriterier – read-only page and superuser editor.
 # 2026-06-30: risiko_scope_delete – owner-only POST delete from list page.
 # 2026-06-30: Multiple owners/participants + virksomhet – member vs owner access checks.
 # 2026-06-26: Scenario-scoped action URLs for tiltak editing inside scenario modal.
@@ -17,10 +19,12 @@
 # 2026-06-24: Security risk module views – list, import, detail, matrix, akseptkriterier.
 
 from datetime import date
+import json
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Exists, OuterRef, Prefetch
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_http_methods
@@ -29,28 +33,30 @@ from openpyxl import load_workbook
 from systemoversikt.models import (
 	RISK_SCOPE_MEMBER_ROLE_OWNER,
 	RISK_SCOPE_MEMBER_ROLE_PARTICIPANT,
+	RiskCriteriaConfig,
 	RiskScope,
 	RiskScopeMember,
 	RiskScenario,
 )
 from systemoversikt.risk_criteria import (
-	KONSEKVENS_BESKRIVELSER,
-	KONSEKVENS_DIMENSJONER,
-	KONSEKVENS_LABELS,
-	RISK_MATRIX,
-	SANNSYNLIGHET_BESKRIVELSER,
-	SANNSYNLIGHET_LABELS,
+	criteria_from_post,
+	get_active_criteria,
+	get_or_create_active_config,
+	invalidate_criteria_cache,
 	level_cell_css_class,
-	konsekvens_lookup_label,
-	matrix_placements,
 	risk_cell_css_class,
-	risk_label,
-	sannsynlighet_lookup_label,
+	validate_criteria,
+	validate_slug_changes,
 )
 from systemoversikt.risk_display import (
 	annotate_scenario_display_ids,
 	annotate_scenarios_tiltak_ids,
 	build_scope_tiltak_rows,
+)
+from systemoversikt.risk_criteria_transfer import (
+	apply_imported_criteria,
+	build_export_payload,
+	parse_import_payload,
 )
 from systemoversikt.risk_import import import_risk_workbook
 from systemoversikt.risk_membership import create_risk_scope
@@ -287,11 +293,11 @@ def risiko_scope_create(request):
 	})
 
 
-def _annotate_scenario_display(scenario):
+def _annotate_scenario_display(scenario, criteria):
 	scenario.konsekvens_css = level_cell_css_class(scenario.konsekvens_nivaa)
 	scenario.sannsynlighet_css = level_cell_css_class(scenario.sannsynlighet_nivaa)
-	scenario.konsekvens_label = konsekvens_lookup_label(scenario.konsekvens_nivaa)
-	scenario.sannsynlighet_label = sannsynlighet_lookup_label(scenario.sannsynlighet_nivaa)
+	scenario.konsekvens_label = criteria.konsekvens_lookup_label(scenario.konsekvens_nivaa)
+	scenario.sannsynlighet_label = criteria.sannsynlighet_lookup_label(scenario.sannsynlighet_nivaa)
 	scenario.risiko_css = risk_cell_css_class(scenario.risiko_etikett)
 	scenario.restrisiko_css = risk_cell_css_class(scenario.restrisiko_etikett)
 	return scenario
@@ -317,19 +323,20 @@ def risiko_scope_detail(request, pk):
 		return _deny_scope_access(request)
 	can_edit_scope = True
 	can_manage_scope = _is_scope_owner(request, scope)
+	criteria = get_active_criteria()
 
 	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
 	annotate_scenario_display_ids(scenarios)
 	annotate_scenarios_tiltak_ids(scenarios, list(scope.actions.order_by('pk')))
 	for scenario in scenarios:
-		_annotate_scenario_display(scenario)
+		_annotate_scenario_display(scenario, criteria)
 
 	edit_scenario_id = None
 	raw = request.GET.get('edit', '').strip()
 	if raw.isdigit():
 		edit_scenario_id = int(raw)
 
-	aksept = _build_akseptkriterier_context()
+	aksept = criteria.build_akseptkriterier_context()
 
 	owner_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER]
 	participant_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]
@@ -346,9 +353,9 @@ def risiko_scope_detail(request, pk):
 		'participant_memberships': participant_memberships,
 		'editor_urls': _risiko_editor_urls(pk),
 		'edit_scenario_id': edit_scenario_id,
-		'matrix_current': _build_matrix_context(scenarios, use_residual=False),
-		'matrix_residual': _build_matrix_context(scenarios, use_residual=True),
-		'konsekvens_labels': KONSEKVENS_LABELS,
+		'matrix_current': criteria.build_matrix_context(scenarios, use_residual=False),
+		'matrix_residual': criteria.build_matrix_context(scenarios, use_residual=True),
+		'konsekvens_labels': criteria.konsekvens_labels,
 		**aksept,
 	})
 
@@ -362,26 +369,131 @@ def risiko_scenario_detail(request, pk, sid):
 	return redirect(reverse('risiko_scope_detail', kwargs={'pk': pk}) + '?edit=%s' % sid)
 
 
-def _build_matrix_context(scenarios, use_residual):
-	cells = matrix_placements(scenarios, use_residual=use_residual)
-	grid = []
-	for sannsynlighet in range(5, 0, -1):
-		row_cells = []
-		for konsekvens in range(1, 6):
-			label = risk_label(sannsynlighet, konsekvens)
-			row_cells.append({
-				'sannsynlighet': sannsynlighet,
-				'konsekvens': konsekvens,
-				'label': label,
-				'css_class': risk_cell_css_class(label),
-				'scenarios': cells.get((sannsynlighet, konsekvens), []),
-			})
-		grid.append({
-			'sannsynlighet': sannsynlighet,
-			'sannsynlighet_label': SANNSYNLIGHET_LABELS[sannsynlighet],
-			'cells': row_cells,
-		})
-	return grid
+def risiko_akseptkriterier(request):
+	# 2026-06-30: Global read-only akseptkriterier – shared by all risikosamlinger.
+	criteria = get_active_criteria()
+	aksept = criteria.build_akseptkriterier_context()
+	return render(request, 'risiko_akseptkriterier.html', {
+		'request': request,
+		'required_permissions': [],
+		'konsekvens_labels': criteria.konsekvens_labels,
+		'matrix_rows': criteria.build_matrix_reference_context(),
+		'can_edit_criteria': request.user.is_authenticated and request.user.is_superuser,
+		**aksept,
+	})
+
+
+def _criteria_editor_context(criteria, form_data=None):
+	edit_data = form_data if form_data is not None else criteria.to_storage_dict()
+	return {
+		'criteria': criteria,
+		'edit_data': edit_data,
+		'risk_levels': ('Lav', 'Middels', 'Høy'),
+		'levels_desc': list(range(5, 0, -1)),
+		'sannsynlighet_keys': [
+			('forventning', 'Forventning'),
+			('estimert', 'Estimert sannsynlighet'),
+			('sarbarhet', 'Sårbarhet'),
+			('kapasitet', 'Kapasitet og evne'),
+			('intensjon', 'Intensjon'),
+		],
+	}
+
+
+def _require_superuser_criteria(request):
+	if not request.user.is_authenticated or not request.user.is_superuser:
+		raise PermissionDenied
+
+
+@require_http_methods(['GET'])
+def risiko_akseptkriterier_eksporter(request):
+	# 2026-06-30: Superuser JSON download for moving criteria between environments.
+	_require_superuser_criteria(request)
+	criteria = get_active_criteria()
+	row = RiskCriteriaConfig.objects.filter(is_active=True).first()
+	title = row.title if row else 'Standard akseptkriterier'
+	payload = build_export_payload(criteria, request.user, title=title)
+	filename = 'akseptkriterier-%s.json' % date.today().isoformat()
+	response = HttpResponse(
+		json.dumps(payload, ensure_ascii=False, indent=2),
+		content_type='application/json; charset=utf-8',
+	)
+	response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+	return response
+
+
+@require_http_methods(['POST'])
+def risiko_akseptkriterier_importer(request):
+	# 2026-06-30: Superuser JSON upload – replaces active akseptkriterier after validation.
+	_require_superuser_criteria(request)
+	if not request.POST.get('confirm_import'):
+		messages.error(request, 'Bekreft at du vil erstatte aktive akseptkriterier.')
+		return redirect('risiko_akseptkriterier')
+
+	upload = request.FILES.get('kriteriefil')
+	if not upload:
+		messages.error(request, 'Velg en JSON-fil å laste opp.')
+		return redirect('risiko_akseptkriterier')
+
+	try:
+		raw_text = upload.read().decode('utf-8')
+		raw_dict = json.loads(raw_text)
+	except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+		messages.error(request, 'Ugyldig JSON-fil: %s' % exc)
+		return redirect('risiko_akseptkriterier')
+
+	try:
+		title, criteria_dict = parse_import_payload(raw_dict)
+	except ValueError as exc:
+		messages.error(request, str(exc))
+		return redirect('risiko_akseptkriterier')
+
+	errors = apply_imported_criteria(criteria_dict, request.user, title=title)
+	if errors:
+		for err in errors:
+			messages.error(request, err)
+		return redirect('risiko_akseptkriterier')
+
+	messages.success(request, 'Akseptkriterier er importert. Endringene gjelder alle risikosamlinger.')
+	return redirect('risiko_akseptkriterier')
+
+
+@require_http_methods(['GET', 'POST'])
+def risiko_akseptkriterier_rediger(request):
+	# 2026-06-30: Superuser-only editor for global akseptkriterier.
+	_require_superuser_criteria(request)
+
+	get_or_create_active_config(request.user)
+	criteria = get_active_criteria()
+
+	if request.method == 'POST':
+		new_data = criteria_from_post(request.POST)
+		errors = validate_criteria(new_data)
+		errors.extend(validate_slug_changes(criteria, new_data))
+		if errors:
+			for err in errors:
+				messages.error(request, err)
+			ctx = _criteria_editor_context(criteria, form_data=new_data)
+			ctx['request'] = request
+			ctx['required_permissions'] = []
+			return render(request, 'risiko_akseptkriterier_rediger.html', ctx)
+
+		row = RiskCriteriaConfig.objects.filter(is_active=True).first()
+		if row is None:
+			row = RiskCriteriaConfig(title='Standard akseptkriterier', is_active=True)
+		row.criteria = new_data
+		row.oppdatert_av = request.user
+		row.is_active = True
+		row.save()
+		invalidate_criteria_cache()
+		messages.success(request, 'Akseptkriterier er oppdatert. Endringene gjelder alle risikosamlinger.')
+		return redirect('risiko_akseptkriterier')
+
+	return render(request, 'risiko_akseptkriterier_rediger.html', {
+		'request': request,
+		'required_permissions': [],
+		**_criteria_editor_context(criteria),
+	})
 
 
 def risiko_matrise(request, pk):
@@ -391,35 +503,3 @@ def risiko_matrise(request, pk):
 		return _deny_scope_access(request)
 	return redirect(reverse('risiko_scope_detail', kwargs={'pk': pk}) + '#risikomatriser')
 
-
-def _build_akseptkriterier_context():
-	konsekvens_rows = []
-	for level in range(5, 0, -1):
-		konsekvens_rows.append({
-			'level': level,
-			'label': KONSEKVENS_LABELS[level],
-			'level_css': level_cell_css_class(level),
-			'dimensjoner': [
-				{'navn': navn, 'tekst': tekst}
-				for navn, tekst in zip(KONSEKVENS_DIMENSJONER, KONSEKVENS_BESKRIVELSER[level])
-			],
-		})
-
-	sannsynlighet_rows = []
-	for level in range(5, 0, -1):
-		sannsynlighet_rows.append({
-			'level': level,
-			'label': SANNSYNLIGHET_LABELS[level],
-			'level_css': level_cell_css_class(level),
-			'beskrivelse': SANNSYNLIGHET_BESKRIVELSER[level],
-		})
-
-	return {
-		'konsekvens_rows': konsekvens_rows,
-		'sannsynlighet_rows': sannsynlighet_rows,
-	}
-
-
-def risiko_akseptkriterier(request):
-	# 2026-06-25: Reference content moved to scope detail page – redirect legacy URL.
-	return redirect('risiko_scope_list')
