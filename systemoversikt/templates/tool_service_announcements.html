@@ -1,0 +1,50 @@
+{% extends "tools_index.html" %}
+{% load humanize %}
+
+{% block overskrift %}
+	Service announcements
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>De 10 siste meldingene fra Microsoft Graph <code>/admin/serviceAnnouncement/messages</code>.</p>
+
+{% if error %}
+	<div class="alert alert-danger" style="white-space: pre-wrap;">{{ error }}</div>
+{% endif %}
+
+{% if messages %}
+	<p>{{ messages|length }} melding{{ messages|length|pluralize:"er" }} hentet.</p>
+
+	<table class="excel tablesorter" style="width: 100%;">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Tittel</th>
+				<th>Sist endret</th>
+				<th>Kategori</th>
+				<th>Alvorlighet</th>
+				<th>Tjenester</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for message in messages %}
+			<tr>
+				<td>{{ message.id }}</td>
+				<td>{{ message.title }}</td>
+				<td>{{ message.lastModifiedDateTime }}</td>
+				<td>{{ message.category }}</td>
+				<td>{{ message.severity }}</td>
+				<td>{{ message.services|join:", " }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	<h4 style="margin-top: 2em;">Rådata</h4>
+	<pre style="max-height: 600px; overflow: auto;">{{ messages_json }}</pre>
+{% elif not error %}
+	<p>Ingen meldinger returnert.</p>
+{% endif %}
+
+{% endblock hovedinnhold %}

@@ -5,6 +5,7 @@
 {# 2026-06-26: Editable tiltak cards in scenario modal; scope tiltak table is read-only. #}
 {# 2026-06-26: No tablesorter on scenario table – tbody replaced via AJAX (tablesorter hid rows). #}
 {% extends "sikkerhet_index.html" %}
+{# 2026-06-30: Tilgang left of beskrivelse; risikomatriser on dedicated row below. #}
 {# 2026-06-26: Compact scope meta edit form; toggled via Rediger; removed Kilde and Akseptkriterier nav link. #}
 {% load static %}
 {% load templatetags %}
@@ -15,14 +16,54 @@
 
 {% block hovedinnhold %}
 
-<div id="risiko-scope-editor" data-can-edit="{% if can_edit_scope %}true{% else %}false{% endif %}">
+<div id="risiko-scope-editor" data-can-edit="{% if can_edit_scope %}true{% else %}false{% endif %}" data-can-manage="{% if can_manage_scope %}true{% else %}false{% endif %}">
 
 <p>
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til oversikt</a>
 </p>
 
-<div class="row mb-4" id="risikomatriser">
+<div class="row mb-4">
+	{% if can_manage_scope %}
 	<div class="col-lg-4 mb-3 mb-lg-0">
+		<div class="card" id="risiko-scope-tilgang">
+			<div class="card-body">
+				<h6 class="card-title">Tilgang</h6>
+				<div class="mb-2">
+					<strong class="d-block small">Virksomhet</strong>
+					<div class="d-flex align-items-start mb-1">
+						<span id="risiko-virksomhet-current" class="small flex-grow-1">{% if scope.virksomhet %}{{ scope.virksomhet.virksomhetsforkortelse }} – {{ scope.virksomhet.virksomhetsnavn }}{% else %}Ikke angitt{% endif %}</span>
+					</div>
+					<input type="search" id="risiko-virksomhet-sok" class="form-control form-control-sm mb-1" placeholder="Søk virksomhet…" autocomplete="off">
+					<div id="risiko-virksomhet-sok-treff" class="small"></div>
+				</div>
+				<div class="mb-2">
+					<strong class="d-block small">Eiere</strong>
+					<ul id="risiko-owners-list" class="list-unstyled small mb-1">
+						{% for m in owner_memberships %}
+						<li data-user-id="{{ m.user_id }}">{{ m.user.get_full_name|default:m.user.username }} <button type="button" class="btn btn-link btn-sm p-0 risiko-member-remove" data-role="owner">Fjern</button></li>
+						{% endfor %}
+					</ul>
+					<input type="search" id="risiko-owner-sok" class="form-control form-control-sm mb-1" placeholder="Legg til eier…" autocomplete="off">
+					<div id="risiko-owner-sok-treff" class="small"></div>
+				</div>
+				<div class="mb-0">
+					<strong class="d-block small">Deltakere</strong>
+					<ul id="risiko-participants-list" class="list-unstyled small mb-1">
+						{% for m in participant_memberships %}
+						<li data-user-id="{{ m.user_id }}">{{ m.user.get_full_name|default:m.user.username }} <button type="button" class="btn btn-link btn-sm p-0 risiko-member-remove" data-role="participant">Fjern</button></li>
+						{% endfor %}
+					</ul>
+					<input type="search" id="risiko-participant-sok" class="form-control form-control-sm mb-1" placeholder="Legg til deltaker…" autocomplete="off">
+					<div id="risiko-participant-sok-treff" class="small"></div>
+				</div>
+				<span id="risiko-tilgang-status" class="text-muted small"></span>
+			</div>
+		</div>
+	</div>
+	<div class="col-lg-8">
+	{% else %}
+	<div class="col-12">
+	{% endif %}
 		<div id="risiko-scope-meta-view" class="mb-3">
 			<div class="mb-3" id="risiko-scope-beskrivelse-block"{% if not scope.beskrivelse %} style="display:none;"{% endif %}>
 				<strong>Beskrivelse</strong>
@@ -31,7 +72,15 @@
 
 			<p>
 				<strong>Sist revidert:</strong> <span id="risiko-scope-revidert-view">{{ scope.sist_revidert|date:"Y-m-d" }}</span>
-				&middot; <strong>Eier:</strong> {{ scope.eier.get_full_name|default:scope.eier.username }}
+			</p>
+			<p>
+				<strong>Virksomhet:</strong> <span id="risiko-scope-virksomhet-view">{% if scope.virksomhet %}{{ scope.virksomhet.virksomhetsforkortelse }} – {{ scope.virksomhet.virksomhetsnavn }}{% else %}-{% endif %}</span>
+			</p>
+			<p>
+				<strong>Eiere:</strong> <span id="risiko-scope-owners-view">{% for m in owner_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% empty %}-{% endfor %}</span>
+			</p>
+			<p>
+				<strong>Deltakere:</strong> <span id="risiko-scope-participants-view">{% for m in participant_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% empty %}-{% endfor %}</span>
 			</p>
 			{% if can_edit_scope %}
 			<button type="button" class="btn btn-outline-primary btn-sm" id="risiko-scope-edit">Rediger</button>
@@ -63,8 +112,10 @@
 		</div>
 		{% endif %}
 	</div>
+</div>
 
-	<div class="col-lg-8">
+<div class="row mb-4" id="risikomatriser">
+	<div class="col-12">
 		<h5 class="mt-0">Risikomatriser</h5>
 		<div class="row">
 			<div class="col-md-6">
@@ -461,6 +512,25 @@
 .risiko-level-tag.risk-level-3 { background-color: #ffecb2; }
 .risiko-level-tag.risk-level-4 { background-color: #ffd997; }
 .risiko-level-tag.risk-level-5 { background-color: #ffc8cd; }
+/* 2026-06-30: Tiltak table – Risk ID tags use nåværende risiko colors; status tags green/yellow/red. */
+.risiko-level-tag.risk-cell-lav { background-color: #c0eb96; }
+.risiko-level-tag.risk-cell-middels { background-color: #ffecb2; }
+.risiko-level-tag.risk-cell-hoy { background-color: #ffc8cd; }
+a.risiko-risk-id-tag { color: inherit; text-decoration: none; }
+a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
+.risiko-tiltak-status-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 2px 6px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+.risiko-tiltak-status-utfort { background-color: #c0eb96; }
+.risiko-tiltak-status-under-arbeid { background-color: #ffecb2; }
+.risiko-tiltak-status-ikke-startet { background-color: #ffc8cd; }
+.risiko-tiltak-status-unknown { background-color: #e9ecef; }
 .risiko-kit-cell { min-width: 8rem; white-space: normal; }
 .risiko-kit-tag {
 	display: inline-flex;

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Tiltak risk_links include nåværende risiko CSS for colored Risk ID tags.
 # 2026-06-26: Scenario Tiltak column lists all linked actions (all statuses).
 # 2026-06-26: Scenario tiltak ID list (T7, T8) for scenario table Tiltak column.
 # 2026-06-26: Display-time R/T IDs and scope-level tiltak rows for risk module.
@@ -47,8 +48,12 @@ def build_scope_tiltak_rows(scenarios, actions, risk_id_by_scenario_pk=None):
 	One row per scope-level tiltak: T#, description, linked Risk ID(s).
 	actions should be ordered consistently (e.g. by pk).
 	"""
+	from systemoversikt.risk_criteria import risk_cell_css_class
+
 	if risk_id_by_scenario_pk is None:
 		risk_id_by_scenario_pk = annotate_scenario_display_ids(scenarios)
+
+	scenario_by_pk = {scenario.pk: scenario for scenario in scenarios}
 
 	rows = []
 	for index, action in enumerate(actions, start=1):
@@ -56,9 +61,13 @@ def build_scope_tiltak_rows(scenarios, actions, risk_id_by_scenario_pk=None):
 		for scenario in action.scenarios.all():
 			risk_id = risk_id_by_scenario_pk.get(scenario.pk)
 			if risk_id:
+				full = scenario_by_pk.get(scenario.pk, scenario)
+				etikett = full.risiko_etikett or ''
 				risk_links.append({
 					'risk_id': risk_id,
 					'scenario_pk': scenario.pk,
+					'risiko_etikett': etikett,
+					'risiko_css': risk_cell_css_class(etikett),
 				})
 		risk_links.sort(key=lambda link: int(link['risk_id'][1:]))
 

@@ -3,6 +3,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
 # 2026-06-24: Risk scenario/tiltak AJAX API routes.
+# 2026-06-30: Membership and virksomhet API routes for risikosamling access control.
 # 2026-06-24: Security risk module URLs under /sikkerhet/risiko/.
 # 2026-06-24: CA rules detail URL – /rules/<pk>/ for single Azure policy; list stays at /rules/.
 # 2026-06-23: BloodHound upload API and status page.
@@ -136,6 +137,12 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/actions/create/$', api_risiko.api_risiko_scope_action_create, name='api_risiko_scope_action_create'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/actions/(?P<aid>\d{1,8})/update/$', api_risiko.api_risiko_scope_action_update, name='api_risiko_scope_action_update'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/actions/(?P<aid>\d{1,8})/delete/$', api_risiko.api_risiko_scope_action_delete, name='api_risiko_scope_action_delete'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scope/virksomhet/$', api_risiko.api_risiko_scope_virksomhet, name='api_risiko_scope_virksomhet'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/members/add/$', api_risiko.api_risiko_member_add, name='api_risiko_member_add'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/members/(?P<user_id>\d{1,8})/remove/$', api_risiko.api_risiko_member_remove, name='api_risiko_member_remove'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/members/$', api_risiko.api_risiko_members_list, name='api_risiko_members_list'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/brukere/sok/$', api_risiko.api_risiko_brukere_sok, name='api_risiko_brukere_sok'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/virksomheter/sok/$', api_risiko.api_risiko_virksomheter_sok, name='api_risiko_virksomheter_sok'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scope/$', api_risiko.api_risiko_scope_update, name='api_risiko_scope_update'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/$', views_risiko.risiko_scope_detail, name='risiko_scope_detail'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/matrise/$', views_risiko.risiko_matrise, name='risiko_matrise'),
@@ -328,6 +335,7 @@ urlpatterns = [
 	re_path(r'^tools/systemimport$', views.tool_systemimport, name='tool_systemimport'),
 	re_path(r'^tools/csv_converter$', views.tool_csv_converter, name='tool_csv_converter'),
 	re_path(r'^tools/ntfs$', views.tool_ntfs, name='tool_ntfs'),
+	re_path(r'^tools/service_announcements$', views.tool_service_announcements, name='tool_service_announcements'),
 	# Last tool-entry here
 	re_path(r'^tools/', views.tools_index, name="tools_index"),
 

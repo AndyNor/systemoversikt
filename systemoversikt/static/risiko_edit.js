@@ -1,4 +1,6 @@
 // Change log:
+// 2026-06-30: Tilgang card – add/remove owners/participants and change virksomhet.
+// 2026-06-30: Tiltak table – colored status tags and Risk ID tags by nåværende risiko level.
 // 2026-06-29: Residual risk badge falls back to current konsekvens/sannsynlighet when etter empty.
 // 2026-06-29: Full scenario table rebuild when API has new/missing rows – fixes new risk invisible until refresh.
 // 2026-06-26: Debounced auto-save for scenario fields and tiltak cards in modal.
@@ -876,22 +878,39 @@
       setModalStatus('');
     }
 
+    function tiltakStatusTagHtml(status, statusDisplay) {
+      const label = statusDisplay || status || '';
+      if (!label || label === '-') return '-';
+      const cssByStatus = {
+        utfort: 'risiko-tiltak-status-utfort',
+        ikke_startet: 'risiko-tiltak-status-ikke-startet',
+        under_arbeid: 'risiko-tiltak-status-under-arbeid',
+      };
+      const cls = cssByStatus[status] || 'risiko-tiltak-status-unknown';
+      return '<span class="risiko-tiltak-status-tag ' + escapeHtml(cls) + '">' + escapeHtml(label) + '</span>';
+    }
+
+    function riskIdTagHtml(link) {
+      const cls = link.risiko_css || riskCellClass(link.risiko_etikett);
+      const title = link.risiko_etikett ? ' title="' + escapeHtml(link.risiko_etikett) + '"' : '';
+      return '<a href="' + escapeHtml(config.urls.scopePage) + '?edit=' + link.scenario_pk + '"' +
+        ' class="risiko-level-tag risiko-risk-id-tag ' + escapeHtml(cls) + '"' + title + '>' +
+        escapeHtml(link.risk_id) + '</a>';
+    }
+
     function buildTiltakReadOnlyRowHtml(action) {
       const displayId = escapeHtml(action.display_tiltak_id || '–');
       let riskHtml = '-';
       const links = action.risk_links || [];
       if (links.length) {
-        riskHtml = links.map(function (link) {
-          return '<a href="' + escapeHtml(config.urls.scopePage) + '?edit=' + link.scenario_pk + '">' +
-            escapeHtml(link.risk_id) + '</a>';
-        }).join(', ');
+        riskHtml = links.map(riskIdTagHtml).join(' ');
       }
       return '<td>' + displayId + '</td>' +
         '<td>' + escapeHtml(action.beskrivelse || '').replace(/\n/g, '<br>') + '</td>' +
         '<td>' + riskHtml + '</td>' +
         '<td>' + escapeHtml(action.ansvarlig || '-') + '</td>' +
         '<td>' + escapeHtml(action.frist || '-') + '</td>' +
-        '<td>' + escapeHtml(action.status_display || action.status || '-') + '</td>';
+        '<td>' + tiltakStatusTagHtml(action.status, action.status_display) + '</td>';
     }
 
     function renderTiltakSection(tiltak) {
@@ -1255,6 +1274,10 @@
 
     bindScenarioRows();
 
+    if (root.getAttribute('data-can-manage') === 'true') {
+      initTilgangManagement();
+    }
+
     fetchJson(config.urls.meta).then(function (data) {
       meta = data.meta;
       populateMetaChoices();
@@ -1267,6 +1290,174 @@
     }).catch(function (err) {
       setScopeStatus('Kunne ikke laste tabellene: ' + err.message, true);
     });
+
+    function setTilgangStatus(msg, isError) {
+      const el = document.getElementById('risiko-tilgang-status');
+      if (!el) return;
+      el.textContent = msg || '';
+      el.className = isError ? 'text-danger small' : 'text-muted small';
+    }
+
+    function memberNames(members) {
+      if (!members || !members.length) return '-';
+      return members.map(function (m) { return m.name; }).join(', ');
+    }
+
+    function renderMemberList(listEl, members, role) {
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      (members || []).forEach(function (m) {
+        const li = document.createElement('li');
+        li.setAttribute('data-user-id', String(m.user_id));
+        li.appendChild(document.createTextNode(m.name + ' '));
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-link btn-sm p-0 risiko-member-remove';
+        btn.setAttribute('data-role', role);
+        btn.textContent = 'Fjern';
+        li.appendChild(btn);
+        listEl.appendChild(li);
+      });
+    }
+
+    function applyMembersData(data) {
+      renderMemberList(document.getElementById('risiko-owners-list'), data.owners, 'owner');
+      renderMemberList(document.getElementById('risiko-participants-list'), data.participants, 'participant');
+      const ownersView = document.getElementById('risiko-scope-owners-view');
+      const participantsView = document.getElementById('risiko-scope-participants-view');
+      if (ownersView) ownersView.textContent = memberNames(data.owners);
+      if (participantsView) participantsView.textContent = memberNames(data.participants);
+      if (data.virksomhet) {
+        const vLabel = data.virksomhet.label;
+        const vCurrent = document.getElementById('risiko-virksomhet-current');
+        const vView = document.getElementById('risiko-scope-virksomhet-view');
+        if (vCurrent) vCurrent.textContent = vLabel;
+        if (vView) vView.textContent = vLabel;
+      }
+    }
+
+    function addMember(userId, role, inputEl, treffEl) {
+      setTilgangStatus('Lagrer…');
+      fetchJson(config.urls.memberAdd, {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId, role: role }),
+      }).then(function (data) {
+        applyMembersData(data);
+        if (inputEl) inputEl.value = '';
+        if (treffEl) treffEl.innerHTML = '';
+        setTilgangStatus('');
+      }).catch(function (err) {
+        setTilgangStatus(err.message, true);
+      });
+    }
+
+    function removeMember(userId) {
+      setTilgangStatus('Lagrer…');
+      const url = config.urls.memberRemove.replace('{userId}', String(userId));
+      fetchJson(url, { method: 'DELETE' }).then(function (data) {
+        applyMembersData(data);
+        setTilgangStatus('');
+      }).catch(function (err) {
+        setTilgangStatus(err.message, true);
+      });
+    }
+
+    function bindUserSearch(inputId, treffId, role) {
+      const inputEl = document.getElementById(inputId);
+      const treffEl = document.getElementById(treffId);
+      if (!inputEl || !treffEl) return;
+      let timer = null;
+      inputEl.addEventListener('input', function () {
+        const q = inputEl.value.trim();
+        clearTimeout(timer);
+        if (q.length < 2) {
+          treffEl.innerHTML = '';
+          return;
+        }
+        timer = setTimeout(function () {
+          fetchJson(config.urls.brukerSearch + '?q=' + encodeURIComponent(q))
+            .then(function (data) {
+              treffEl.innerHTML = '';
+              (data.results || []).forEach(function (user) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-link btn-sm d-block text-left p-0';
+                btn.textContent = user.label;
+                btn.addEventListener('click', function () {
+                  addMember(user.id, role, inputEl, treffEl);
+                });
+                treffEl.appendChild(btn);
+              });
+            })
+            .catch(function (err) {
+              setTilgangStatus(err.message, true);
+            });
+        }, 250);
+      });
+    }
+
+    function initTilgangManagement() {
+      bindUserSearch('risiko-owner-sok', 'risiko-owner-sok-treff', 'owner');
+      bindUserSearch('risiko-participant-sok', 'risiko-participant-sok-treff', 'participant');
+
+      const tilgangCard = document.getElementById('risiko-scope-tilgang');
+      if (tilgangCard) {
+        tilgangCard.addEventListener('click', function (e) {
+          if (e.target.classList.contains('risiko-member-remove')) {
+            const li = e.target.closest('[data-user-id]');
+            if (li) removeMember(li.getAttribute('data-user-id'));
+          }
+        });
+      }
+
+      const virksomhetInput = document.getElementById('risiko-virksomhet-sok');
+      const virksomhetTreff = document.getElementById('risiko-virksomhet-sok-treff');
+      if (virksomhetInput && virksomhetTreff) {
+        let vTimer = null;
+        virksomhetInput.addEventListener('input', function () {
+          const q = virksomhetInput.value.trim();
+          clearTimeout(vTimer);
+          if (q.length < 2) {
+            virksomhetTreff.innerHTML = '';
+            return;
+          }
+          vTimer = setTimeout(function () {
+            fetchJson(config.urls.virksomhetSearch + '?q=' + encodeURIComponent(q))
+              .then(function (data) {
+                virksomhetTreff.innerHTML = '';
+                (data.results || []).forEach(function (v) {
+                  const btn = document.createElement('button');
+                  btn.type = 'button';
+                  btn.className = 'btn btn-link btn-sm d-block text-left p-0';
+                  btn.textContent = v.label;
+                  btn.addEventListener('click', function () {
+                    setTilgangStatus('Lagrer…');
+                    fetchJson(config.urls.scopeVirksomhet, {
+                      method: 'PATCH',
+                      body: JSON.stringify({ virksomhet_id: v.id }),
+                    }).then(function (resp) {
+                      const vLabel = resp.virksomhet.label;
+                      const vCurrent = document.getElementById('risiko-virksomhet-current');
+                      const vView = document.getElementById('risiko-scope-virksomhet-view');
+                      if (vCurrent) vCurrent.textContent = vLabel;
+                      if (vView) vView.textContent = vLabel;
+                      virksomhetInput.value = '';
+                      virksomhetTreff.innerHTML = '';
+                      setTilgangStatus('');
+                    }).catch(function (err) {
+                      setTilgangStatus(err.message, true);
+                    });
+                  });
+                  virksomhetTreff.appendChild(btn);
+                });
+              })
+              .catch(function (err) {
+                setTilgangStatus(err.message, true);
+              });
+          }, 250);
+        });
+      }
+    }
   }
 
   if (document.readyState === 'loading') {

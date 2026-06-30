@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: RiskScopeMember inline; virksomhet on RiskScope replaces single eier.
 # 2026-06-26: RiskScope eier list_filter uses RelatedOnlyFieldListFilter – avoids loading all ~85k users.
 # 2026-06-26: RiskAction admin on scope; M2M scenarios for shared tiltak.
 # 2026-06-24: RiskScope/RiskScenario/RiskAction admin for security risk module MVP.
@@ -1653,6 +1654,13 @@ class AzureDeviceAdmin(admin.ModelAdmin):
 		return False
 
 
+class RiskScopeMemberInline(admin.TabularInline):
+	model = RiskScopeMember
+	extra = 0
+	fields = ('user', 'role', 'added_by')
+	autocomplete_fields = ('user', 'added_by')
+
+
 class RiskActionInline(admin.TabularInline):
 	model = RiskAction
 	extra = 0
@@ -1663,12 +1671,21 @@ class RiskActionInline(admin.TabularInline):
 @admin.register(RiskScope)
 class RiskScopeAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('title', 'eier', 'sist_revidert', 'opprettet')
-	list_filter = ('sist_revidert', ('eier', admin.RelatedOnlyFieldListFilter))
-	list_select_related = ('eier',)
+	list_display = ('title', 'virksomhet', 'sist_revidert', 'opprettet')
+	list_filter = ('sist_revidert', ('virksomhet', admin.RelatedOnlyFieldListFilter))
+	list_select_related = ('virksomhet',)
 	search_fields = ('title', 'beskrivelse', 'source_filename')
-	autocomplete_fields = ('eier',)
-	inlines = [RiskActionInline]
+	autocomplete_fields = ('virksomhet',)
+	inlines = [RiskScopeMemberInline, RiskActionInline]
+
+
+@admin.register(RiskScopeMember)
+class RiskScopeMemberAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Eksport")]
+	list_display = ('scope', 'user', 'role', 'opprettet')
+	list_filter = ('role',)
+	search_fields = ('scope__title', 'user__username', 'user__first_name', 'user__last_name')
+	autocomplete_fields = ('scope', 'user', 'added_by')
 
 
 @admin.register(RiskScenario)

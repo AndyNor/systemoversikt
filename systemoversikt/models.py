@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: RiskScopeMember + virksomhet on RiskScope – multiple owners/participants replace single eier.
 # 2026-06-26: Drop RiskScenario.eksisterende_tiltak – eksisterende tiltak are RiskAction rows (status utfort).
 # 2026-06-24: RiskScope.beskrivelse – named collections with description on public list page.
 # 2026-06-26: RiskAction scope-level with M2M scenarios – reuse tiltak across scenarios.
@@ -7704,6 +7705,13 @@ RISK_ACTION_KILDE_VALG = (
 	('manual', 'Manuell'),
 )
 
+RISK_SCOPE_MEMBER_ROLE_VALG = (
+	('owner', 'Eier'),
+	('participant', 'Deltaker'),
+)
+RISK_SCOPE_MEMBER_ROLE_OWNER = 'owner'
+RISK_SCOPE_MEMBER_ROLE_PARTICIPANT = 'participant'
+
 
 class RiskScope(models.Model):
 	opprettet = models.DateTimeField(
@@ -7725,11 +7733,13 @@ class RiskScope(models.Model):
 		default='',
 		help_text="Kort beskrivelse av hva risikovurderingen dekker.",
 	)
-	eier = models.ForeignKey(
-		to=User,
+	virksomhet = models.ForeignKey(
+		to='Virksomhet',
 		on_delete=models.PROTECT,
-		related_name='risk_scopes_owned',
-		verbose_name="Eier",
+		related_name='risk_scopes',
+		verbose_name="Virksomhet",
+		blank=True,
+		null=True,
 	)
 	sist_revidert = models.DateField(
 		verbose_name="Sist revidert",
@@ -7742,6 +7752,28 @@ class RiskScope(models.Model):
 	)
 	history = HistoricalRecords()
 
+	def membership_for(self, user):
+		if user is None or not getattr(user, 'is_authenticated', False):
+			return None
+		return self.memberships.filter(user_id=user.pk).first()
+
+	def is_owner(self, user):
+		membership = self.membership_for(user)
+		return membership is not None and membership.role == RISK_SCOPE_MEMBER_ROLE_OWNER
+
+	def is_participant(self, user):
+		membership = self.membership_for(user)
+		return membership is not None and membership.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT
+
+	def is_member(self, user):
+		return self.membership_for(user) is not None
+
+	def owner_memberships(self):
+		return self.memberships.filter(role=RISK_SCOPE_MEMBER_ROLE_OWNER).select_related('user')
+
+	def participant_memberships(self):
+		return self.memberships.filter(role=RISK_SCOPE_MEMBER_ROLE_PARTICIPANT).select_related('user')
+
 	def __str__(self):
 		return self.title
 
@@ -7750,6 +7782,54 @@ class RiskScope(models.Model):
 		verbose_name_plural = "Risiko: omfang"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['-sist_revidert', '-opprettet']
+
+
+class RiskScopeMember(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	scope = models.ForeignKey(
+		to=RiskScope,
+		on_delete=models.CASCADE,
+		related_name='memberships',
+		verbose_name="Risikoomfang",
+	)
+	user = models.ForeignKey(
+		to=User,
+		on_delete=models.CASCADE,
+		related_name='risk_scope_memberships',
+		verbose_name="Bruker",
+	)
+	role = models.CharField(
+		verbose_name="Rolle",
+		max_length=20,
+		choices=RISK_SCOPE_MEMBER_ROLE_VALG,
+	)
+	added_by = models.ForeignKey(
+		to=User,
+		on_delete=models.SET_NULL,
+		related_name='risk_scope_memberships_added',
+		verbose_name="Lagt til av",
+		blank=True,
+		null=True,
+	)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return '%s – %s (%s)' % (self.scope, self.user, self.role)
+
+	class Meta:
+		verbose_name = "risikoomfang-medlem"
+		verbose_name_plural = "Risiko: omfang-medlemmer"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		constraints = [
+			models.UniqueConstraint(
+				fields=['scope', 'user'],
+				name='risk_scope_member_unique_scope_user',
+			),
+		]
 
 
 class RiskScenario(models.Model):

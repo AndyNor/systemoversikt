@@ -1,4 +1,5 @@
 # Change log:
+# 2026-06-30: risiko_tiltak_status_tag – colored status badge in scope tiltak table.
 # 2026-06-25: risiko_level_tag – level label as colored tag in scenario table.
 # 2026-06-25: risiko_kit_tags – K/I/T dimension badges with icons for risk scenario table.
 # 2026-06-24: ca_overview_label – filterable CA overview tag markup (button or span).
@@ -383,6 +384,25 @@ def _risiko_kit_icon_svg(code):
 		'fill="currentColor" aria-hidden="true" focusable="false">{}</svg>',
 		format_html(paths),
 	)
+
+
+_TILTAK_STATUS_TAG_CSS = {
+	'utfort': 'risiko-tiltak-status-utfort',
+	'ikke_startet': 'risiko-tiltak-status-ikke-startet',
+	'under_arbeid': 'risiko-tiltak-status-under-arbeid',
+}
+
+
+@register.simple_tag
+def risiko_tiltak_status_tag(status, status_display):
+	if not status_display:
+		return '-'
+	css = _TILTAK_STATUS_TAG_CSS.get(status, 'risiko-tiltak-status-unknown')
+	return mark_safe(format_html(
+		'<span class="risiko-tiltak-status-tag {}">{}</span>',
+		css,
+		status_display,
+	))
 
 
 @register.simple_tag

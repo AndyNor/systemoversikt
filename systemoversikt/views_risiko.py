@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Multiple owners/participants + virksomhet – member vs owner access checks.
 # 2026-06-26: Scenario-scoped action URLs for tiltak editing inside scenario modal.
 # 2026-06-26: Editor URLs for scope-level tiltak CRUD API.
 # 2026-06-26: Scenario table Tiltak column shows T# IDs instead of action count.
@@ -17,13 +18,19 @@
 from datetime import date
 
 from django.contrib import messages
-from django.db.models import Count
+from django.db.models import Count, Exists, OuterRef, Prefetch
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from openpyxl import load_workbook
 
-from systemoversikt.models import RiskScope, RiskScenario
+from systemoversikt.models import (
+	RISK_SCOPE_MEMBER_ROLE_OWNER,
+	RISK_SCOPE_MEMBER_ROLE_PARTICIPANT,
+	RiskScope,
+	RiskScopeMember,
+	RiskScenario,
+)
 from systemoversikt.risk_criteria import (
 	KONSEKVENS_BESKRIVELSER,
 	KONSEKVENS_DIMENSJONER,
@@ -44,30 +51,65 @@ from systemoversikt.risk_display import (
 	build_scope_tiltak_rows,
 )
 from systemoversikt.risk_import import import_risk_workbook
+from systemoversikt.risk_membership import create_risk_scope
 from systemoversikt.views import formater_permissions
 
-# Import restricted to security analysts; data visible only to scope owner.
+# Import restricted to security analysts; detail restricted to scope members.
 RISK_WRITE_PERMISSIONS = ['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']
 
 
+def _scope_membership(request, scope):
+	if not request.user.is_authenticated:
+		return None
+	if hasattr(scope, '_user_membership'):
+		return scope._user_membership
+	membership = scope.memberships.filter(user_id=request.user.id).first()
+	scope._user_membership = membership
+	return membership
+
+
 def _is_scope_owner(request, scope):
-	return scope.eier_id == request.user.id
+	membership = _scope_membership(request, scope)
+	return membership is not None and membership.role == RISK_SCOPE_MEMBER_ROLE_OWNER
 
 
-def _get_owned_scope(request, scope_id):
+def _is_scope_member(request, scope):
+	return _scope_membership(request, scope) is not None
+
+
+def _get_member_scope(request, scope_id):
 	scope = get_object_or_404(
-		RiskScope.objects.select_related('eier'),
+		RiskScope.objects.select_related('virksomhet').prefetch_related(
+			Prefetch(
+				'memberships',
+				queryset=RiskScopeMember.objects.select_related('user').order_by('role', 'user__first_name', 'user__username'),
+			),
+		),
 		pk=scope_id,
 	)
+	if not _is_scope_member(request, scope):
+		raise Http404
+	return scope
+
+
+def _get_managed_scope(request, scope_id):
+	scope = _get_member_scope(request, scope_id)
 	if not _is_scope_owner(request, scope):
 		raise Http404
 	return scope
 
 
-def _get_owned_scenario(request, scope_id, scenario_id):
-	scope = _get_owned_scope(request, scope_id)
+# Backward-compatible aliases used by api_risiko imports.
+_get_owned_scope = _get_member_scope
+
+
+def _get_member_scenario(request, scope_id, scenario_id):
+	scope = _get_member_scope(request, scope_id)
 	scenario = get_object_or_404(RiskScenario, pk=scenario_id, scope=scope)
 	return scope, scenario
+
+
+_get_owned_scenario = _get_member_scenario
 
 
 def _deny_scope_access(request):
@@ -105,15 +147,37 @@ def _risiko_editor_urls(scope_pk):
 		'actionDelete': reverse('api_risiko_scope_action_delete', kwargs={'pk': pk, 'aid': 0}).replace('/0/', '/{id}/'),
 		'scopeUpdate': reverse('api_risiko_scope_update', kwargs={'pk': pk}),
 		'systemSearch': reverse('api_risiko_systemer_sok'),
+		'members': reverse('api_risiko_members_list', kwargs={'pk': pk}),
+		'memberAdd': reverse('api_risiko_member_add', kwargs={'pk': pk}),
+		'memberRemove': reverse('api_risiko_member_remove', kwargs={'pk': pk, 'user_id': 0}).replace('/0/', '/{userId}/'),
+		'scopeVirksomhet': reverse('api_risiko_scope_virksomhet', kwargs={'pk': pk}),
+		'brukerSearch': reverse('api_risiko_brukere_sok', kwargs={'pk': pk}),
+		'virksomhetSearch': reverse('api_risiko_virksomheter_sok', kwargs={'pk': pk}),
 		'scopePage': reverse('risiko_scope_detail', kwargs={'pk': pk}),
 	}
 
 
 def risiko_scope_list(request):
-	# 2026-06-25: Open landing page lists all collections; detail remains owner-only.
+	# 2026-06-30: Green checkmark on list when current user is owner or participant.
+	# 2026-06-25: Open landing page lists all collections; detail remains member-only.
+	member_qs = RiskScopeMember.objects.filter(
+		scope=OuterRef('pk'),
+		user=request.user,
+	)
 	scopes = (
-		RiskScope.objects.select_related('eier')
-		.annotate(scenario_count=Count('scenarios'))
+		RiskScope.objects.select_related('virksomhet')
+		.prefetch_related(
+			Prefetch(
+				'memberships',
+				queryset=RiskScopeMember.objects.filter(
+					role=RISK_SCOPE_MEMBER_ROLE_OWNER,
+				).select_related('user'),
+			),
+		)
+		.annotate(
+			scenario_count=Count('scenarios'),
+			current_user_is_member=Exists(member_qs),
+		)
 		.order_by('-sist_revidert', '-opprettet')
 	)
 	can_write = any(map(request.user.has_perm, RISK_WRITE_PERMISSIONS))
@@ -183,10 +247,10 @@ def risiko_scope_create(request):
 						'beskrivelse': beskrivelse,
 						'sist_revidert': sist_revidert_raw,
 					})
-			scope = RiskScope.objects.create(
+			scope = create_risk_scope(
+				request.user,
 				title=title,
 				beskrivelse=beskrivelse,
-				eier=request.user,
 				sist_revidert=sist_revidert,
 			)
 			messages.success(request, 'Risikosamling opprettet.')
@@ -218,10 +282,19 @@ def _build_tiltak_rows(scope, scenarios):
 
 
 def risiko_scope_detail(request, pk):
-	scope = get_object_or_404(RiskScope.objects.select_related('eier'), pk=pk)
-	if not _is_scope_owner(request, scope):
+	scope = get_object_or_404(
+		RiskScope.objects.select_related('virksomhet').prefetch_related(
+			Prefetch(
+				'memberships',
+				queryset=RiskScopeMember.objects.select_related('user').order_by('role', 'user__first_name', 'user__username'),
+			),
+		),
+		pk=pk,
+	)
+	if not _is_scope_member(request, scope):
 		return _deny_scope_access(request)
 	can_edit_scope = True
+	can_manage_scope = _is_scope_owner(request, scope)
 
 	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
 	annotate_scenario_display_ids(scenarios)
@@ -236,6 +309,9 @@ def risiko_scope_detail(request, pk):
 
 	aksept = _build_akseptkriterier_context()
 
+	owner_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER]
+	participant_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]
+
 	return render(request, 'risiko_scope_detail.html', {
 		'request': request,
 		'required_permissions': [],
@@ -243,6 +319,9 @@ def risiko_scope_detail(request, pk):
 		'scenarios': scenarios,
 		'tiltak_rows': _build_tiltak_rows(scope, scenarios),
 		'can_edit_scope': can_edit_scope,
+		'can_manage_scope': can_manage_scope,
+		'owner_memberships': owner_memberships,
+		'participant_memberships': participant_memberships,
 		'editor_urls': _risiko_editor_urls(pk),
 		'edit_scenario_id': edit_scenario_id,
 		'matrix_current': _build_matrix_context(scenarios, use_residual=False),
@@ -255,7 +334,7 @@ def risiko_scope_detail(request, pk):
 def risiko_scenario_detail(request, pk, sid):
 	# 2026-06-25: Scenario editing is in scope-detail modal – redirect legacy URLs.
 	scope = get_object_or_404(RiskScope, pk=pk)
-	if not _is_scope_owner(request, scope):
+	if not _is_scope_member(request, scope):
 		return _deny_scope_access(request)
 	get_object_or_404(RiskScenario, pk=sid, scope=scope)
 	return redirect(reverse('risiko_scope_detail', kwargs={'pk': pk}) + '?edit=%s' % sid)
@@ -286,7 +365,7 @@ def _build_matrix_context(scenarios, use_residual):
 def risiko_matrise(request, pk):
 	# 2026-06-24: Matrices moved to scope detail page top.
 	scope = get_object_or_404(RiskScope, pk=pk)
-	if not _is_scope_owner(request, scope):
+	if not _is_scope_member(request, scope):
 		return _deny_scope_access(request)
 	return redirect(reverse('risiko_scope_detail', kwargs={'pk': pk}) + '#risikomatriser')
 

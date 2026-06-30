@@ -1,4 +1,6 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-06-30: Green checkmark when current user is owner or participant. #}
+{# 2026-06-30: Eiere + virksomhet columns; members can edit, owners manage access. #}
 
 {% block overskrift %}
 	Risikovurderinger
@@ -12,12 +14,13 @@
 		Risikovurderinger organiseres i tre nivåer som speiler Excel-malen for risikoanalyse:
 	</p>
 	<ul>
-		<li><strong>Risikosamling</strong> – en hel vurdering som hører sammen (samme eier og revisjonsdato). Eksempel: «AV-utstyr 2025».</li>
+		<li><strong>Risikosamling</strong> – en hel vurdering som hører sammen (samme virksomhet og revisjonsdato). Eksempel: «AV-utstyr 2025».</li>
 		<li><strong>Scenario</strong> – én uønsket hendelse med vurdering av konsekvens og sannsynlighet, eksisterende tiltak og foreslåtte tiltak. Kan knyttes til systemer i Kartoteket.</li>
 		<li><strong>Tiltak</strong> – konkrete grep for å redusere risiko, med ansvarlig, frist og status der det er utfylt.</li>
 	</ul>
 	<p class="mb-0">
-		Alle risikosamlinger er synlige i oversikten. Redigering og detaljer er begrenset til eieren som opprettet eller importerte vurderingen.
+		Alle risikosamlinger er synlige i oversikten. Redigering og detaljer er begrenset til eiere og deltakere.
+		Eiere kan legge til eller fjerne andre eiere og deltakere, og endre tilknyttet virksomhet.
 		For hvert scenario vises <strong>nåværende risiko</strong> (etter eksisterende tiltak) og
 		<strong>risiko etter tiltak</strong> (etter foreslåtte tiltak er implementert).
 		K/I/T-kolonnen angir hvilke konfidensialitets-, integritets- og tilgjengelighetsdimensjoner som er relevante.
@@ -41,7 +44,8 @@
 <tr>
 	<th>Navn</th>
 	<th>Beskrivelse</th>
-	<th>Eier</th>
+	<th>Virksomhet</th>
+	<th>Eiere</th>
 	<th>Sist revidert</th>
 	<th>Scenarioer</th>
 	<th>Opprettet</th>
@@ -50,9 +54,10 @@
 <tbody>
 {% for scope in scopes %}
 <tr>
-	<td><a href="{% url 'risiko_scope_detail' pk=scope.pk %}">{{ scope.title }}</a></td>
+	<td>{% if scope.current_user_is_member %}<span style="color: green; font-size: 18px;" title="Du har tilgang">✓</span> {% endif %}<a href="{% url 'risiko_scope_detail' pk=scope.pk %}">{{ scope.title }}</a></td>
 	<td>{{ scope.beskrivelse|truncatechars:120|default:"-" }}</td>
-	<td>{{ scope.eier.get_full_name|default:scope.eier.username }}</td>
+	<td>{% if scope.virksomhet %}{{ scope.virksomhet.virksomhetsforkortelse }}{% else %}-{% endif %}</td>
+	<td>{% for m in scope.memberships.all %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% empty %}-{% endfor %}</td>
 	<td>{{ scope.sist_revidert|date:"Y-m-d" }}</td>
 	<td>{{ scope.scenario_count }}</td>
 	<td>{{ scope.opprettet|date:"Y-m-d" }}</td>

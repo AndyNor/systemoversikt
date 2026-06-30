@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Member vs owner API gates; membership and virksomhet management endpoints.
 # 2026-06-26: Scope-level tiltak API; scenario save no longer syncs actions; drop eksisterende_tiltak.
 # 2026-06-26: Scenario summary includes display_tiltak_ids for scenario table Tiltak column.
 # 2026-06-26: Display-time R/T IDs; scope-level tiltak reused across scenarios via M2M.
@@ -11,8 +12,12 @@
 import json
 from datetime import datetime
 
+from functools import reduce
+from operator import or_
+
+from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -21,10 +26,14 @@ from django.views.decorators.http import require_GET, require_http_methods
 from systemoversikt.models import (
 	RISIKOBEHANDLING_VALG,
 	RISK_ACTION_STATUS_VALG,
+	RISK_SCOPE_MEMBER_ROLE_OWNER,
+	RISK_SCOPE_MEMBER_ROLE_PARTICIPANT,
 	RiskAction,
 	RiskScenario,
 	RiskScope,
+	RiskScopeMember,
 	System,
+	Virksomhet,
 )
 from systemoversikt.risk_criteria import (
 	konsekvens_lookup_label,
@@ -40,7 +49,12 @@ from systemoversikt.risk_display import (
 	scenario_display_tiltak_ids,
 	tiltak_display_id_map,
 )
-from systemoversikt.views_risiko import _get_owned_scope, _get_owned_scenario
+from systemoversikt.risk_membership import user_display_name
+from systemoversikt.views_risiko import (
+	_get_managed_scope,
+	_get_member_scope,
+	_get_member_scenario,
+)
 
 RISIKOBEHANDLING_VALUES = {v for v, _ in RISIKOBEHANDLING_VALG}
 TILTAK_STATUS_VALUES = {v for v, _ in RISK_ACTION_STATUS_VALG}
@@ -376,11 +390,23 @@ def _apply_scenario_fields(scenario, fields):
 		scenario.systemer.set(fields['system_ids'])
 
 
-def _require_owner_json(request, scope_id):
+def _require_member_json(request, scope_id):
 	try:
-		return _get_owned_scope(request, scope_id), None
+		return _get_member_scope(request, scope_id), None
 	except Http404:
 		return None, _json_error('forbidden', status=403)
+
+
+def _require_managed_json(request, scope_id):
+	try:
+		return _get_managed_scope(request, scope_id), None
+	except Http404:
+		return None, _json_error('forbidden', status=403)
+
+
+def _require_owner_json(request, scope_id):
+	# Legacy name – content APIs use member access.
+	return _require_member_json(request, scope_id)
 
 
 def _reload_scenario(scenario_id):
@@ -427,7 +453,7 @@ def api_risiko_scenarios_list(request, pk):
 @require_GET
 def api_risiko_scenario_detail(request, pk, sid):
 	try:
-		scope, scenario = _get_owned_scenario(request, pk, sid)
+		scope, scenario = _get_member_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 	scenario = _reload_scenario(scenario.pk)
@@ -484,7 +510,7 @@ def api_risiko_scenario_create(request, pk):
 @require_http_methods(['PATCH', 'POST'])
 def api_risiko_scenario_update(request, pk, sid):
 	try:
-		scope, scenario = _get_owned_scenario(request, pk, sid)
+		scope, scenario = _get_member_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 
@@ -509,7 +535,7 @@ def api_risiko_scenario_update(request, pk, sid):
 @require_http_methods(['DELETE', 'POST'])
 def api_risiko_scenario_delete(request, pk, sid):
 	try:
-		scope, scenario = _get_owned_scenario(request, pk, sid)
+		scope, scenario = _get_member_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 
@@ -591,7 +617,7 @@ def api_risiko_systemer_sok(request):
 @require_http_methods(['POST'])
 def api_risiko_action_create(request, pk, sid):
 	try:
-		scope, scenario = _get_owned_scenario(request, pk, sid)
+		scope, scenario = _get_member_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 
@@ -624,7 +650,7 @@ def api_risiko_action_create(request, pk, sid):
 @require_http_methods(['PATCH', 'POST'])
 def api_risiko_action_update(request, pk, sid, aid):
 	try:
-		scope, scenario = _get_owned_scenario(request, pk, sid)
+		scope, scenario = _get_member_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 
@@ -662,7 +688,7 @@ def api_risiko_action_update(request, pk, sid, aid):
 @require_http_methods(['DELETE', 'POST'])
 def api_risiko_action_delete(request, pk, sid, aid):
 	try:
-		scope, scenario = _get_owned_scenario(request, pk, sid)
+		scope, scenario = _get_member_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 
@@ -791,3 +817,201 @@ def api_risiko_scope_action_delete(request, pk, aid):
 	action.delete()
 	payload = _tiltak_refresh_payload(scope)
 	return JsonResponse({'ok': True, **payload})
+
+
+def _member_to_dict(membership):
+	return {
+		'user_id': membership.user_id,
+		'name': user_display_name(membership.user),
+		'username': membership.user.username,
+		'role': membership.role,
+	}
+
+
+def _members_payload(scope):
+	memberships = list(
+		scope.memberships.select_related('user').order_by('role', 'user__first_name', 'user__username')
+	)
+	owners = [_member_to_dict(m) for m in memberships if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER]
+	participants = [_member_to_dict(m) for m in memberships if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]
+	virksomhet = None
+	if scope.virksomhet_id:
+		v = scope.virksomhet
+		virksomhet = {
+			'id': v.pk,
+			'label': '%s – %s' % (v.virksomhetsforkortelse or '-', v.virksomhetsnavn or ''),
+		}
+	return {
+		'owners': owners,
+		'participants': participants,
+		'virksomhet': virksomhet,
+	}
+
+
+def _bruker_sok_queryset(q):
+	terms = q.split()
+	if not terms:
+		return User.objects.none()
+	field_queries = []
+	for term in terms:
+		field_queries.append(
+			Q(username__icontains=term)
+			| Q(first_name__icontains=term)
+			| Q(last_name__icontains=term)
+			| Q(email__icontains=term)
+			| Q(profile__displayName__icontains=term)
+		)
+	query = reduce(or_, field_queries)
+	return (
+		User.objects.filter(query)
+		.filter(is_active=True)
+		.select_related('profile')
+		.distinct()
+		.order_by('first_name', 'last_name', 'username')[:15]
+	)
+
+
+@require_GET
+def api_risiko_members_list(request, pk):
+	scope, err = _require_member_json(request, pk)
+	if err:
+		return err
+	return JsonResponse({'ok': True, **_members_payload(scope)})
+
+
+@require_http_methods(['POST'])
+def api_risiko_member_add(request, pk):
+	scope, err = _require_managed_json(request, pk)
+	if err:
+		return err
+
+	data = _parse_json_body(request)
+	if data is None:
+		return _json_error('invalid_json')
+
+	role = (data.get('role') or '').strip()
+	if role not in (RISK_SCOPE_MEMBER_ROLE_OWNER, RISK_SCOPE_MEMBER_ROLE_PARTICIPANT):
+		return _json_error('Ugyldig rolle.')
+
+	try:
+		user_id = int(data.get('user_id'))
+	except (TypeError, ValueError):
+		return _json_error('Ugyldig bruker.')
+
+	target_user = get_object_or_404(User, pk=user_id, is_active=True)
+	existing = RiskScopeMember.objects.filter(scope=scope, user=target_user).first()
+	if existing:
+		if existing.role == role:
+			return JsonResponse({'ok': True, **_members_payload(scope)})
+		if role == RISK_SCOPE_MEMBER_ROLE_OWNER:
+			existing.role = RISK_SCOPE_MEMBER_ROLE_OWNER
+			existing.added_by = request.user
+			existing.save(update_fields=['role', 'added_by'])
+		else:
+			return _json_error('Brukeren er allerede eier.')
+	else:
+		RiskScopeMember.objects.create(
+			scope=scope,
+			user=target_user,
+			role=role,
+			added_by=request.user,
+		)
+
+	return JsonResponse({'ok': True, **_members_payload(scope)}, status=201)
+
+
+@require_http_methods(['DELETE', 'POST'])
+def api_risiko_member_remove(request, pk, user_id):
+	scope, err = _require_managed_json(request, pk)
+	if err:
+		return err
+
+	if request.method == 'POST':
+		data = _parse_json_body(request) or {}
+		if data.get('_method') != 'DELETE':
+			return _json_error('invalid_method', status=405)
+
+	membership = get_object_or_404(RiskScopeMember, scope=scope, user_id=user_id)
+	if membership.role == RISK_SCOPE_MEMBER_ROLE_OWNER:
+		owner_count = scope.memberships.filter(role=RISK_SCOPE_MEMBER_ROLE_OWNER).count()
+		if owner_count <= 1:
+			return _json_error('Kan ikke fjerne siste eier.')
+
+	membership.delete()
+	return JsonResponse({'ok': True, **_members_payload(scope)})
+
+
+@require_http_methods(['PATCH', 'POST'])
+def api_risiko_scope_virksomhet(request, pk):
+	scope, err = _require_managed_json(request, pk)
+	if err:
+		return err
+
+	data = _parse_json_body(request)
+	if data is None:
+		return _json_error('invalid_json')
+
+	try:
+		virksomhet_id = int(data.get('virksomhet_id'))
+	except (TypeError, ValueError):
+		return _json_error('Ugyldig virksomhet.')
+
+	virksomhet = get_object_or_404(Virksomhet, pk=virksomhet_id)
+	scope.virksomhet = virksomhet
+	scope.save(update_fields=['virksomhet', 'sist_oppdatert'])
+
+	v = scope.virksomhet
+	return JsonResponse({
+		'ok': True,
+		'virksomhet': {
+			'id': v.pk,
+			'label': '%s – %s' % (v.virksomhetsforkortelse or '-', v.virksomhetsnavn or ''),
+		},
+	})
+
+
+@require_GET
+def api_risiko_brukere_sok(request, pk):
+	_, err = _require_managed_json(request, pk)
+	if err:
+		return err
+
+	q = request.GET.get('q', '').strip()
+	if len(q) < 2:
+		return JsonResponse({'ok': True, 'results': []})
+
+	results = []
+	for user in _bruker_sok_queryset(q):
+		results.append({
+			'id': user.pk,
+			'label': '%s (%s)' % (user_display_name(user), user.username),
+		})
+	return JsonResponse({'ok': True, 'results': results})
+
+
+@require_GET
+def api_risiko_virksomheter_sok(request, pk):
+	_, err = _require_managed_json(request, pk)
+	if err:
+		return err
+
+	q = request.GET.get('q', '').strip()
+	if len(q) < 2:
+		return JsonResponse({'ok': True, 'results': []})
+
+	virksomheter = (
+		Virksomhet.objects.filter(
+			Q(virksomhetsforkortelse__icontains=q) | Q(virksomhetsnavn__icontains=q)
+		)
+		.order_by('virksomhetsforkortelse', 'virksomhetsnavn')[:15]
+	)
+	return JsonResponse({
+		'ok': True,
+		'results': [
+			{
+				'id': v.pk,
+				'label': '%s – %s' % (v.virksomhetsforkortelse or '-', v.virksomhetsnavn or ''),
+			}
+			for v in virksomheter
+		],
+	})

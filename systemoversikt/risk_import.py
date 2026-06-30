@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: create_risk_scope helper – membership + virksomhet instead of eier FK.
 # 2026-06-26: Eksisterende tiltak column → RiskAction per paragraph (status utfort).
 # 2026-06-26: Scope-level tiltak linked to scenarios via M2M (reuse across scenarios).
 # 2026-06-24: Excel import for security risk module (Risikoanalyse + Tiltak sheets).
@@ -11,6 +12,7 @@ from datetime import date, datetime
 from django.db import transaction
 
 from systemoversikt.models import RiskAction, RiskScenario, RiskScope
+from systemoversikt.risk_membership import create_risk_scope
 from systemoversikt.risk_criteria import (
 	label_to_level,
 	risikobehandling_from_text,
@@ -163,9 +165,9 @@ def import_risk_workbook(workbook, user, source_filename):
 	tiltak_by_scenario = _parse_tiltak_sheet(workbook, warnings)
 
 	with transaction.atomic():
-		scope = RiskScope.objects.create(
+		scope = create_risk_scope(
+			user,
 			title=_title_from_filename(source_filename),
-			eier=user,
 			sist_revidert=date.today(),
 			source_filename=source_filename or '',
 		)

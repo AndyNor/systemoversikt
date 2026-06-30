@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: tool_service_announcements – latest MS Graph service announcement messages (no permission gate).
 # 2026-06-24: rapport_conditional_access_rules – single rule at /rules/<pk>/; list at /rules/.
 # 2026-06-23: rapport_conditional_access_overview – tile view of active CA rules (replaces graph prototype).
 # 2026-06-23: rapport_conditional_access_rules – batch GUID lookup and named-location IP ranges in conditions.
@@ -1183,6 +1184,22 @@ def tool_ntfs(request):
 		'sddl_input': sddl_input,
 		'permission_type': permission_type,
 		'parsed': parsed,
+		'error': error,
+	})
+
+
+def tool_service_announcements(request):
+	import json
+	from systemoversikt.graph_service_announcements import fetch_latest_service_announcement_messages
+
+	required_permissions = None
+	messages, error = fetch_latest_service_announcement_messages(limit=10)
+
+	return render(request, 'tool_service_announcements.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'messages': messages,
+		'messages_json': json.dumps(messages, indent=2, ensure_ascii=False),
 		'error': error,
 	})
 

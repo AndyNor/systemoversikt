@@ -1,5 +1,7 @@
+{# 2026-06-30: Status and Risk ID columns use colored tags (status + nåværende risiko level). #}
 {# 2026-06-26: Read-only scope tiltak overview; edit tiltak in scenario modal. #}
 {# 2026-06-26: One row per scope tiltak – T#, beskrivelse, Risk ID(s); display-time IDs. #}
+{% load templatetags %}
 
 <div id="risiko-tiltak-section" class="mt-4">
 
@@ -27,12 +29,12 @@
 	<td>{{ row.action.beskrivelse|linebreaksbr }}</td>
 	<td>
 		{% for link in row.risk_links %}
-			<a href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ link.scenario_pk }}">{{ link.risk_id }}</a>{% if not forloop.last %}, {% endif %}
+			<a href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ link.scenario_pk }}" class="risiko-level-tag risiko-risk-id-tag {{ link.risiko_css }}" title="{{ link.risiko_etikett }}">{{ link.risk_id }}</a>{% if not forloop.last %} {% endif %}
 		{% empty %}-{% endfor %}
 	</td>
 	<td>{{ row.action.ansvarlig|default:"-" }}</td>
 	<td>{{ row.action.frist|date:"Y-m-d"|default:"-" }}</td>
-	<td>{{ row.action.get_status_display }}</td>
+	<td>{% risiko_tiltak_status_tag row.action.status row.action.get_status_display %}</td>
 </tr>
 {% endfor %}
 </tbody>

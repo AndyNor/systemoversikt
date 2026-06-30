@@ -23,6 +23,9 @@
 	{% url 'tool_ntfs' as url_tool_ntfs %}
 	<a href="{{url_tool_ntfs}}" class="btn btn-sm btn-link {% if url_tool_ntfs in request.path %}fremhev{% endif %}">NTFS / SDDL</a><br>
 
+	{% url 'tool_service_announcements' as url_tool_service_announcements %}
+	<a href="{{url_tool_service_announcements}}" class="btn btn-sm btn-link {% if url_tool_service_announcements in request.path %}fremhev{% endif %}">Service announcements</a><br>
+
 
 {% endblock sidemeny %}
 
