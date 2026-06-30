@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{% load templatetags %}
 
 {% block overskrift %}
 	{{ scenario.risk_id }} – {{ scope.title }}
@@ -21,6 +22,7 @@
 		<h6>Nåværende risiko</h6>
 		<table class="table table-sm">
 			<tr><th>K, I, T</th><td>{{ scenario.kit_dimensjoner|default:"-" }}</td></tr>
+			<tr><th>Konsekvenstype</th><td>{% risiko_konsekvenstype_tags scenario.konsekvenstyper %}</td></tr>
 			<tr><th>Konsekvens</th><td>{{ scenario.konsekvens_nivaa|default:"-" }} ({{ scenario.risiko_etikett|default:"-" }})</td></tr>
 			<tr><th>Sannsynlighet</th><td>{{ scenario.sannsynlighet_nivaa|default:"-" }}</td></tr>
 			<tr><th>Risikobehandling</th><td>{{ scenario.get_risikobehandling_display|default:"-" }}</td></tr>

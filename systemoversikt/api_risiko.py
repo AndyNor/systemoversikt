@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Scenario konsekvenstyper – validate, save, serialize in scenario API.
 # 2026-06-30: Tiltak status forslag/besluttet – default forslag for new tiltak; accept ikke_startet alias.
 # 2026-06-30: Member vs owner API gates; membership and virksomhet management endpoints.
 # 2026-06-26: Scope-level tiltak API; scenario save no longer syncs actions; drop eksisterende_tiltak.
@@ -37,10 +38,14 @@ from systemoversikt.models import (
 	Virksomhet,
 )
 from systemoversikt.risk_criteria import (
+	KONSEKVENSTYPE_SLUGS,
 	konsekvens_lookup_label,
+	konsekvenstype_tag_dicts,
+	konsekvenstype_to_storage,
 	level_cell_css_class,
 	meta_choices,
 	parse_kit_dimensjoner,
+	parse_konsekvenstyper,
 	risk_cell_css_class,
 	sannsynlighet_lookup_label,
 )
@@ -157,6 +162,8 @@ def _scenario_summary_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None):
 		'uonsket_hendelse': scenario.uonsket_hendelse,
 		'kit_dimensjoner': scenario.kit_dimensjoner,
 		'kit_tags': parse_kit_dimensjoner(scenario.kit_dimensjoner),
+		'konsekvenstyper': parse_konsekvenstyper(scenario.konsekvenstyper),
+		'konsekvenstype_tags': konsekvenstype_tag_dicts(scenario.konsekvenstyper),
 		'konsekvens_nivaa': scenario.konsekvens_nivaa,
 		'sannsynlighet_nivaa': scenario.sannsynlighet_nivaa,
 		'konsekvens_label': konsekvens_lookup_label(scenario.konsekvens_nivaa),
@@ -251,6 +258,20 @@ def _validate_scenario_fields(data, scope, scenario=None):
 	if risikobehandling and risikobehandling not in RISIKOBEHANDLING_VALUES:
 		errors.append('Ugyldig risikobehandling.')
 
+	raw_konsekvenstyper = data.get('konsekvenstyper', [])
+	if raw_konsekvenstyper is None:
+		konsekvenstyper_parts = []
+	elif isinstance(raw_konsekvenstyper, str):
+		konsekvenstyper_parts = [p.strip() for p in raw_konsekvenstyper.split(',') if p.strip()]
+	elif isinstance(raw_konsekvenstyper, list):
+		konsekvenstyper_parts = [str(p).strip() for p in raw_konsekvenstyper if str(p).strip()]
+	else:
+		errors.append('konsekvenstyper må være en liste.')
+		konsekvenstyper_parts = []
+	unknown_konsekvenstyper = sorted({p for p in konsekvenstyper_parts if p not in KONSEKVENSTYPE_SLUGS})
+	if unknown_konsekvenstyper:
+		errors.append('Ugyldige konsekvenstyper: %s' % ', '.join(unknown_konsekvenstyper))
+
 	system_ids = data.get('system_ids')
 	if system_ids is not None:
 		if not isinstance(system_ids, list):
@@ -272,6 +293,7 @@ def _validate_scenario_fields(data, scope, scenario=None):
 	return {
 		'uonsket_hendelse': uonsket,
 		'kit_dimensjoner': (data.get('kit_dimensjoner') or '').strip(),
+		'konsekvenstyper': konsekvenstype_to_storage(konsekvenstyper_parts),
 		'arsaker_svakheter': (data.get('arsaker_svakheter') or '').strip(),
 		'konsekvens_begrunnelse': (data.get('konsekvens_begrunnelse') or '').strip(),
 		'sannsynlighetsbegrunnelse': (data.get('sannsynlighetsbegrunnelse') or '').strip(),
@@ -382,7 +404,7 @@ def _cleanup_orphan_actions(scope):
 
 def _apply_scenario_fields(scenario, fields):
 	for attr in (
-		'uonsket_hendelse', 'kit_dimensjoner', 'arsaker_svakheter',
+		'uonsket_hendelse', 'kit_dimensjoner', 'konsekvenstyper', 'arsaker_svakheter',
 		'konsekvens_begrunnelse', 'sannsynlighetsbegrunnelse',
 		'risikobehandling', 'konsekvens_nivaa', 'sannsynlighet_nivaa',
 		'konsekvens_etter', 'sannsynlighet_etter',
@@ -492,6 +514,7 @@ def api_risiko_scenario_create(request, pk):
 				risk_id=_auto_risk_id(scope),
 				uonsket_hendelse=fields['uonsket_hendelse'],
 				kit_dimensjoner=fields['kit_dimensjoner'],
+				konsekvenstyper=fields['konsekvenstyper'],
 				arsaker_svakheter=fields['arsaker_svakheter'],
 				konsekvens_begrunnelse=fields['konsekvens_begrunnelse'],
 				sannsynlighetsbegrunnelse=fields['sannsynlighetsbegrunnelse'],

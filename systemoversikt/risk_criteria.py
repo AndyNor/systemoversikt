@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Konsekvenstype slugs + parse helpers for scenario tagging.
 # 2026-06-30: Tiltak status forslag + besluttet (replaces ikke_startet) for Excel import and editor.
 # 2026-06-29: effective_residual_levels() – empty etter fields inherit current risk for matrix/label.
 # 2026-06-25: parse_kit_dimensjoner() for K/I/T dimension tags in scenario table.
@@ -73,6 +74,17 @@ KONSEKVENS_DIMENSJONER = [
 	'Etterlevelse av lover og regler',
 	'Måloppnåelse',
 ]
+
+KONSEKVENSTYPE_VALG = (
+	('liv_helse', 'Liv og helse'),
+	('okonomi', 'Økonomi'),
+	('tillit', 'Tillit'),
+	('etterlevelse', 'Etterlevelse av lover og regler'),
+	('maaloppnaelse', 'Måloppnåelse'),
+)
+KONSEKVENSTYPE_SLUGS = {slug for slug, _ in KONSEKVENSTYPE_VALG}
+KONSEKVENSTYPE_LABELS = dict(KONSEKVENSTYPE_VALG)
+KONSEKVENSTYPE_ORDER = [slug for slug, _ in KONSEKVENSTYPE_VALG]
 
 KONSEKVENS_BESKRIVELSER = {
 	5: [
@@ -302,6 +314,41 @@ def parse_kit_dimensjoner(text):
 	return result
 
 
+def parse_konsekvenstyper(raw):
+	"""Parse stored comma-string or API list into ordered konsekvenstype slugs."""
+	if raw is None:
+		return []
+	if isinstance(raw, (list, tuple)):
+		parts = [str(item).strip() for item in raw if str(item).strip()]
+	elif isinstance(raw, str):
+		parts = [part.strip() for part in raw.split(',') if part.strip()]
+	else:
+		parts = [str(raw).strip()] if str(raw).strip() else []
+	seen = set()
+	result = []
+	for slug in parts:
+		if slug in KONSEKVENSTYPE_SLUGS and slug not in seen:
+			seen.add(slug)
+			result.append(slug)
+	# Stable display order regardless of input order
+	order = {slug: index for index, slug in enumerate(KONSEKVENSTYPE_ORDER)}
+	result.sort(key=lambda slug: order.get(slug, 99))
+	return result
+
+
+def konsekvenstype_to_storage(raw):
+	"""Normalize API input to comma-separated slug string for DB."""
+	return ','.join(parse_konsekvenstyper(raw))
+
+
+def konsekvenstype_tag_dicts(raw):
+	"""List of {slug, label} for API/template display."""
+	return [
+		{'slug': slug, 'label': KONSEKVENSTYPE_LABELS[slug]}
+		for slug in parse_konsekvenstyper(raw)
+	]
+
+
 def effective_residual_levels(scenario):
 	"""Residual konsekvens/sannsynlighet; unset etter fields inherit current risk."""
 	k = scenario.konsekvens_etter or scenario.konsekvens_nivaa
@@ -333,4 +380,5 @@ def meta_choices():
 		'risk_matrix': RISK_MATRIX,
 		'risikobehandling': [{'value': v, 'label': l} for v, l in RISIKOBEHANDLING_VALG],
 		'tiltak_status': [{'value': v, 'label': l} for v, l in RISK_ACTION_STATUS_VALG],
+		'konsekvenstyper': [{'value': v, 'label': l} for v, l in KONSEKVENSTYPE_VALG],
 	}

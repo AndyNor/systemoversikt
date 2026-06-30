@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: RiskScenario.konsekvenstyper – multi-select consequence dimension tags.
 # 2026-06-30: RiskAction default status forslag for new manual tiltak.
 # 2026-06-30: RiskAction status forslag + besluttet (replaces ikke_startet) – proposal vs committed workflow.
 # 2026-06-30: RiskScopeMember + virksomhet on RiskScope – multiple owners/participants replace single eier.
@@ -7863,6 +7864,12 @@ class RiskScenario(models.Model):
 	kit_dimensjoner = models.CharField(
 		verbose_name="K, I, T",
 		max_length=50,
+		blank=True,
+		default='',
+	)
+	konsekvenstyper = models.CharField(
+		verbose_name="Konsekvenstyper",
+		max_length=120,
 		blank=True,
 		default='',
 	)

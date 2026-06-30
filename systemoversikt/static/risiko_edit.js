@@ -369,6 +369,19 @@
         opt.textContent = item.label;
         behSelect.appendChild(opt);
       });
+      const kcContainer = document.getElementById('risiko-konsekvenstype-checks');
+      if (kcContainer && meta.konsekvenstyper) {
+        kcContainer.innerHTML = '';
+        meta.konsekvenstyper.forEach(function (item) {
+          const inputId = 'risiko-kct-' + item.value;
+          kcContainer.insertAdjacentHTML('beforeend',
+            '<div class="form-check risiko-konsekvenstype-check">' +
+            '<input class="form-check-input" type="checkbox" id="' + escapeHtml(inputId) + '" value="' + escapeHtml(item.value) + '">' +
+            '<label class="form-check-label" for="' + escapeHtml(inputId) + '">' + escapeHtml(item.label) + '</label>' +
+            '</div>'
+          );
+        });
+      }
     }
 
     function renderSystemChips() {
@@ -400,6 +413,9 @@
       return {
         uonsket_hendelse: document.getElementById('risiko-f-uonsket').value.trim(),
         kit_dimensjoner: document.getElementById('risiko-f-kit').value.trim(),
+        konsekvenstyper: Array.from(
+          document.querySelectorAll('#risiko-konsekvenstype-checks input[type=checkbox]:checked')
+        ).map(function (cb) { return cb.value; }),
         arsaker_svakheter: document.getElementById('risiko-f-arsaker').value.trim(),
         konsekvens_nivaa: levelVal('risiko-f-konsekvens'),
         sannsynlighet_nivaa: levelVal('risiko-f-sannsynlighet'),
@@ -425,6 +441,10 @@
       document.getElementById('risiko-f-konsekvens-begrunnelse').value = scenario ? (scenario.konsekvens_begrunnelse || '') : '';
       document.getElementById('risiko-f-sannsynlighet-begrunnelse').value = scenario ? (scenario.sannsynlighetsbegrunnelse || '') : '';
       document.getElementById('risiko-f-risikobehandling').value = scenario ? (scenario.risikobehandling || '') : '';
+      const selectedKonsekvenstyper = scenario ? (scenario.konsekvenstyper || []) : [];
+      document.querySelectorAll('#risiko-konsekvenstype-checks input[type=checkbox]').forEach(function (cb) {
+        cb.checked = selectedKonsekvenstyper.indexOf(cb.value) !== -1;
+      });
       draftSystems = scenario ? (scenario.systemer || []).slice() : [];
       renderSystemChips();
       setModalStatus('');
@@ -491,6 +511,24 @@
         if (!meta) return '';
         return '<span class="risiko-kit-tag ' + escapeHtml(meta.css) + '" title="' + escapeHtml(meta.label) + '">' +
           kitIconSvg(code) + escapeHtml(meta.label) + '</span>';
+      }).join(' ');
+    }
+
+    function renderKonsekvenstypeTags(tagsOrSlugs) {
+      if (!tagsOrSlugs || !tagsOrSlugs.length) return '-';
+      let tags = tagsOrSlugs;
+      if (typeof tags[0] === 'string') {
+        tags = tags.map(function (slug) {
+          const item = (meta && meta.konsekvenstyper || []).find(function (entry) {
+            return entry.value === slug;
+          });
+          return { slug: slug, label: item ? item.label : slug };
+        });
+      }
+      return tags.map(function (tag) {
+        const label = tag.label || tag.slug || '';
+        return '<span class="risiko-konsekvenstype-tag" title="' + escapeHtml(label) + '">' +
+          escapeHtml(label) + '</span>';
       }).join(' ');
     }
 
@@ -1022,6 +1060,9 @@
           || levelLabel(scenario.sannsynlighet_nivaa, meta && meta.sannsynlighet_labels);
 
         const kitHtml = renderKitTags(scenario.kit_tags);
+        const konsekvenstypeHtml = renderKonsekvenstypeTags(
+          scenario.konsekvenstype_tags || scenario.konsekvenstyper
+        );
 
         tbody.insertAdjacentHTML('beforeend',
           '<tr class="risiko-scenario-row" data-scenario-id="' + scenario.id + '" style="cursor:pointer">' +
@@ -1029,6 +1070,7 @@
           '<td>' + escapeHtml((scenario.uonsket_hendelse || '').substring(0, 80)) + '</td>' +
           '<td class="risiko-systemer-cell">' + systemsHtml + '</td>' +
           '<td class="risiko-kit-cell">' + kitHtml + '</td>' +
+          '<td class="risiko-konsekvenstype-cell">' + konsekvenstypeHtml + '</td>' +
           '<td class="risiko-level-cell">' + levelTagHtml(kVal, kCss) + '</td>' +
           '<td class="risiko-level-cell">' + levelTagHtml(sVal, sCss) + '</td>' +
           '<td class="' + escapeHtml(rCss) + '">' + escapeHtml(scenario.risiko_etikett || '-') + '</td>' +

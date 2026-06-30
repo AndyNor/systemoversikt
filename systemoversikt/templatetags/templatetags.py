@@ -1,4 +1,5 @@
 # Change log:
+# 2026-06-30: risiko_konsekvenstype_tags – consequence dimension badges on scenario table.
 # 2026-06-30: risiko_tiltak_status_tag – forslag/besluttet status badge colors.
 # 2026-06-30: risiko_tiltak_status_tag – colored status badge in scope tiltak table.
 # 2026-06-25: risiko_level_tag – level label as colored tag in scenario table.
@@ -435,6 +436,22 @@ def risiko_kit_tags(kit_dimensjoner):
 			label,
 			_risiko_kit_icon_svg(code),
 			label,
+		))
+	return mark_safe(' '.join(str(part) for part in parts))
+
+
+@register.simple_tag
+def risiko_konsekvenstype_tags(konsekvenstyper):
+	from systemoversikt.risk_criteria import konsekvenstype_tag_dicts
+	tags = konsekvenstype_tag_dicts(konsekvenstyper)
+	if not tags:
+		return '-'
+	parts = []
+	for tag in tags:
+		parts.append(format_html(
+			'<span class="risiko-konsekvenstype-tag" title="{}">{}</span>',
+			tag['label'],
+			tag['label'],
 		))
 	return mark_safe(' '.join(str(part) for part in parts))
 

@@ -5,6 +5,8 @@
 {# 2026-06-26: Editable tiltak cards in scenario modal; scope tiltak table is read-only. #}
 {# 2026-06-26: No tablesorter on scenario table – tbody replaced via AJAX (tablesorter hid rows). #}
 {% extends "sikkerhet_index.html" %}
+{# 2026-06-30: Modal mid column order – konsekvens/sannsynlighet, konsekvenstype grid, begrunnelser, risikobehandling. #}
+{# 2026-06-30: Konsekvenstype tags on scenarios – table column and modal checkboxes. #}
 {# 2026-06-30: Tiltak status badge CSS – forslag (gray) and besluttet (pink). #}
 {# 2026-06-30: Tilgang left of beskrivelse; risikomatriser on dedicated row below. #}
 {# 2026-06-26: Compact scope meta edit form; toggled via Rediger; removed Kilde and Akseptkriterier nav link. #}
@@ -143,6 +145,7 @@
 	<th>Uønsket hendelse</th>
 	<th>Tilknyttede systemer</th>
 	<th>KIT</th>
+	<th>Konsekvenstype</th>
 	<th>Konsekvens</th>
 	<th>Sannsynlighet</th>
 	<th>Risiko</th>
@@ -161,6 +164,7 @@
 		{% empty %}-{% endfor %}
 	</td>
 	<td class="risiko-kit-cell">{% risiko_kit_tags scenario.kit_dimensjoner %}</td>
+	<td class="risiko-konsekvenstype-cell">{% risiko_konsekvenstype_tags scenario.konsekvenstyper %}</td>
 	<td class="risiko-level-cell">{% risiko_level_tag scenario.konsekvens_label scenario.konsekvens_css %}</td>
 	<td class="risiko-level-cell">{% risiko_level_tag scenario.sannsynlighet_label scenario.sannsynlighet_css %}</td>
 	<td class="{{ scenario.risiko_css }}">{{ scenario.risiko_etikett|default:"-" }}</td>
@@ -216,6 +220,24 @@
 					</div>
 
 					<div class="col-6 risiko-modal-col risiko-modal-col-mid">
+						<div class="risiko-modal-risk-top">
+							<h6 class="mb-2">Nåværende risiko</h6>
+							<div class="form-row">
+								<div class="form-group col-6 mb-1">
+									<label for="risiko-f-konsekvens">Konsekvens</label>
+									<select class="form-control form-control-sm risiko-level-select" id="risiko-f-konsekvens" data-risk-kind="current"></select>
+								</div>
+								<div class="form-group col-6 mb-1">
+									<label for="risiko-f-sannsynlighet">Sannsynlighet</label>
+									<select class="form-control form-control-sm risiko-level-select" id="risiko-f-sannsynlighet" data-risk-kind="current"></select>
+								</div>
+							</div>
+							<p class="risiko-modal-risk-line mb-2">Risiko: <span id="risiko-badge-current" class="badge badge-secondary">–</span></p>
+						</div>
+						<div class="form-group risiko-konsekvenstype-block mb-2">
+							<label class="d-block mb-1">Konsekvenstype</label>
+							<div id="risiko-konsekvenstype-checks" class="risiko-konsekvenstype-checks"></div>
+						</div>
 						<div class="form-group risiko-modal-textarea-field">
 							<label for="risiko-f-konsekvens-begrunnelse">Konsekvensbegrunnelse</label>
 							<textarea class="form-control form-control-sm risiko-modal-stretch-textarea" id="risiko-f-konsekvens-begrunnelse" rows="3"></textarea>
@@ -224,25 +246,11 @@
 							<label for="risiko-f-sannsynlighet-begrunnelse">Sannsynlighetsbegrunnelse</label>
 							<textarea class="form-control form-control-sm risiko-modal-stretch-textarea" id="risiko-f-sannsynlighet-begrunnelse" rows="3"></textarea>
 						</div>
-						<div class="risiko-modal-col-footer">
-						<h6>Nåværende risiko</h6>
-						<div class="form-row">
-							<div class="form-group col-6 mb-1">
-								<label for="risiko-f-konsekvens">Konsekvens</label>
-								<select class="form-control form-control-sm risiko-level-select" id="risiko-f-konsekvens" data-risk-kind="current"></select>
-							</div>
-							<div class="form-group col-6 mb-1">
-								<label for="risiko-f-sannsynlighet">Sannsynlighet</label>
-								<select class="form-control form-control-sm risiko-level-select" id="risiko-f-sannsynlighet" data-risk-kind="current"></select>
-							</div>
-						</div>
-						<p class="risiko-modal-risk-line mb-1">Risiko: <span id="risiko-badge-current" class="badge badge-secondary">–</span></p>
-						<div class="form-group mb-0">
+						<div class="form-group mb-0 risiko-modal-risk-bottom">
 							<label for="risiko-f-risikobehandling">Risikobehandling</label>
 							<select class="form-control form-control-sm" id="risiko-f-risikobehandling">
 								<option value="">–</option>
 							</select>
-						</div>
 						</div>
 					</div>
 						</div>
@@ -432,6 +440,14 @@
 	resize: vertical;
 }
 .risiko-modal-col-footer { flex-shrink: 0; }
+.risiko-modal-risk-top,
+.risiko-konsekvenstype-block,
+.risiko-modal-risk-bottom { flex-shrink: 0; }
+.risiko-konsekvenstype-checks {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.2rem 0.75rem;
+}
 .risiko-modal-tiltak-heading { margin-top: 0.5rem !important; flex-shrink: 0; }
 .risiko-actions-list {
 	flex: 1 1 auto;
@@ -534,6 +550,28 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 .risiko-tiltak-status-besluttet { background-color: #ffc8cd; }
 .risiko-tiltak-status-unknown { background-color: #e9ecef; }
 .risiko-kit-cell { min-width: 8rem; white-space: normal; }
+.risiko-konsekvenstype-cell { min-width: 8rem; max-width: 12rem; white-space: normal; }
+.risiko-konsekvenstype-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	margin: 1px 2px 1px 0;
+	padding: 2px 5px;
+	border-radius: 3px;
+	white-space: nowrap;
+	max-width: 7.5rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: top;
+	background-color: #dee2e6;
+	color: #343a40;
+}
+.risiko-konsekvenstype-checks .form-check { margin-bottom: 0; }
+.risiko-konsekvenstype-checks .form-check-label {
+	font-size: 0.82rem;
+	line-height: 1.25;
+}
 .risiko-kit-tag {
 	display: inline-flex;
 	align-items: center;
