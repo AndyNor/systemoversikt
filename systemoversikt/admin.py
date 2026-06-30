@@ -1682,8 +1682,8 @@ class RiskCriteriaConfigAdmin(SimpleHistoryAdmin):
 @admin.register(RiskScope)
 class RiskScopeAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('title', 'virksomhet', 'sist_revidert', 'opprettet')
-	list_filter = ('sist_revidert', ('virksomhet', admin.RelatedOnlyFieldListFilter))
+	list_display = ('title', 'status', 'virksomhet', 'sist_revidert', 'opprettet')
+	list_filter = ('status', 'sist_revidert', ('virksomhet', admin.RelatedOnlyFieldListFilter))
 	list_select_related = ('virksomhet',)
 	search_fields = ('title', 'beskrivelse', 'source_filename')
 	autocomplete_fields = ('virksomhet',)

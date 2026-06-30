@@ -5,6 +5,7 @@
 {# 2026-06-26: Editable tiltak cards in scenario modal; scope tiltak table is read-only. #}
 {# 2026-06-26: No tablesorter on scenario table – tbody replaced via AJAX (tablesorter hid rows). #}
 {% extends "sikkerhet_index.html" %}
+{# 2026-06-30: Scope status workflow; sannsynlighetstype tags – table column and modal checkboxes. #}
 {# 2026-06-30: Modal mid column order – konsekvens/sannsynlighet, konsekvenstype grid, begrunnelser, risikobehandling. #}
 {# 2026-06-30: Konsekvenstype tags on scenarios – table column and modal checkboxes. #}
 {# 2026-06-30: Tiltak status badge CSS – forslag (gray) and besluttet (pink). #}
@@ -74,6 +75,9 @@
 			</div>
 
 			<p>
+				<strong>Status:</strong> <span id="risiko-scope-status-view">{% risiko_scope_status scope.status scope.get_status_display %}</span>
+			</p>
+			<p>
 				<strong>Sist revidert:</strong> <span id="risiko-scope-revidert-view">{{ scope.sist_revidert|date:"Y-m-d" }}</span>
 			</p>
 			<p>
@@ -101,6 +105,22 @@
 				<div class="form-group risiko-scope-meta-field">
 					<label for="risiko-scope-beskrivelse">Beskrivelse</label>
 					<textarea id="risiko-scope-beskrivelse" class="form-control form-control-sm risiko-scope-beskrivelse-input" rows="10">{{ scope.beskrivelse }}</textarea>
+				</div>
+				<div class="form-group risiko-scope-meta-field">
+					<label for="risiko-scope-status">Status</label>
+					<select id="risiko-scope-status-select" class="form-control form-control-sm">
+						{% if can_manage_scope %}
+						<option value="forsteutkast"{% if scope.status == 'forsteutkast' %} selected{% endif %}>Førsteutkast</option>
+						<option value="under_revurdering"{% if scope.status == 'under_revurdering' %} selected{% endif %}>Under revurdering</option>
+						<option value="til_godkjenning"{% if scope.status == 'til_godkjenning' %} selected{% endif %}>Til godkjenning</option>
+						<option value="godkjent"{% if scope.status == 'godkjent' %} selected{% endif %}>Godkjent</option>
+						{% else %}
+						<option value="forsteutkast"{% if scope.status == 'forsteutkast' %} selected{% endif %}>Førsteutkast</option>
+						<option value="under_revurdering"{% if scope.status == 'under_revurdering' %} selected{% endif %}>Under revurdering</option>
+						{% if scope.status == 'til_godkjenning' %}<option value="til_godkjenning" selected>Til godkjenning</option>{% endif %}
+						{% if scope.status == 'godkjent' %}<option value="godkjent" selected>Godkjent</option>{% endif %}
+						{% endif %}
+					</select>
 				</div>
 				<div class="form-group risiko-scope-meta-field risiko-scope-meta-field-date">
 					<label for="risiko-scope-revidert">Sist revidert</label>
@@ -146,6 +166,7 @@
 	<th>Tilknyttede systemer</th>
 	<th>KIT</th>
 	<th>Konsekvenstype</th>
+	<th>Sannsynlighetstype</th>
 	<th>Konsekvens</th>
 	<th>Sannsynlighet</th>
 	<th>Risiko</th>
@@ -165,6 +186,7 @@
 	</td>
 	<td class="risiko-kit-cell">{% risiko_kit_tags scenario.kit_dimensjoner %}</td>
 	<td class="risiko-konsekvenstype-cell">{% risiko_konsekvenstype_tags scenario.konsekvenstyper %}</td>
+	<td class="risiko-sannsynlighetstype-cell">{% risiko_sannsynlighetstype_tags scenario.sannsynlighetstyper %}</td>
 	<td class="risiko-level-cell">{% risiko_level_tag scenario.konsekvens_label scenario.konsekvens_css %}</td>
 	<td class="risiko-level-cell">{% risiko_level_tag scenario.sannsynlighet_label scenario.sannsynlighet_css %}</td>
 	<td class="{{ scenario.risiko_css }}">{{ scenario.risiko_etikett|default:"-" }}</td>
@@ -237,6 +259,10 @@
 						<div class="form-group risiko-konsekvenstype-block mb-2">
 							<label class="d-block mb-1">Konsekvenstype</label>
 							<div id="risiko-konsekvenstype-checks" class="risiko-konsekvenstype-checks"></div>
+						</div>
+						<div class="form-group risiko-sannsynlighetstype-block mb-2">
+							<label class="d-block mb-1">Sannsynlighetstype</label>
+							<div id="risiko-sannsynlighetstype-checks" class="risiko-sannsynlighetstype-checks"></div>
 						</div>
 						<div class="form-group risiko-modal-textarea-field">
 							<label for="risiko-f-konsekvens-begrunnelse">Konsekvensbegrunnelse</label>
@@ -314,6 +340,9 @@
 <script id="risiko-editor-config" type="application/json">
 {
 	"scopeId": {{ scope.pk }},
+	"scopeStatus": "{{ scope.status }}",
+	"canManageScope": {% if can_manage_scope %}true{% else %}false{% endif %},
+	"staticPrefix": "{% get_static_prefix %}",
 	"editScenarioId": {% if edit_scenario_id %}{{ edit_scenario_id }}{% else %}null{% endif %},
 	"csrf": "{{ csrf_token }}"
 }
@@ -442,8 +471,10 @@
 .risiko-modal-col-footer { flex-shrink: 0; }
 .risiko-modal-risk-top,
 .risiko-konsekvenstype-block,
+.risiko-sannsynlighetstype-block,
 .risiko-modal-risk-bottom { flex-shrink: 0; }
-.risiko-konsekvenstype-checks {
+.risiko-konsekvenstype-checks,
+.risiko-sannsynlighetstype-checks {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 0.2rem 0.75rem;
@@ -572,6 +603,40 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 	font-size: 0.82rem;
 	line-height: 1.25;
 }
+.risiko-sannsynlighetstype-cell { min-width: 8rem; max-width: 12rem; white-space: normal; }
+.risiko-sannsynlighetstype-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	margin: 1px 2px 1px 0;
+	padding: 2px 5px;
+	border-radius: 3px;
+	white-space: nowrap;
+	max-width: 7.5rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: top;
+	background-color: #dee2e6;
+	color: #343a40;
+}
+.risiko-sannsynlighetstype-checks .form-check { margin-bottom: 0; }
+.risiko-sannsynlighetstype-checks .form-check-label {
+	font-size: 0.82rem;
+	line-height: 1.25;
+}
+.risiko-scope-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	white-space: nowrap;
+}
+.risiko-scope-status-icon { flex-shrink: 0; opacity: 0.85; }
+.risiko-scope-status-label { font-size: 0.85rem; }
+.risiko-scope-status-forsteutkast .risiko-scope-status-label { color: #6c757d; }
+.risiko-scope-status-under-revurdering .risiko-scope-status-label { color: #0d6efd; }
+.risiko-scope-status-til-godkjenning .risiko-scope-status-label { color: #b8860b; }
+.risiko-scope-status-godkjent .risiko-scope-status-label { color: #198754; }
 .risiko-kit-tag {
 	display: inline-flex;
 	align-items: center;

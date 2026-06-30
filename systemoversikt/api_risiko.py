@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: RiskScope status – workflow validation; sannsynlighetstyper on scenarios.
 # 2026-06-30: api_risiko_meta uses global get_active_criteria() for editor dropdowns and matrix.
 # 2026-06-30: Scenario konsekvenstyper – validate, save, serialize in scenario API.
 # 2026-06-30: Tiltak status forslag/besluttet – default forslag for new tiltak; accept ikke_startet alias.
@@ -31,6 +32,8 @@ from systemoversikt.models import (
 	RISK_ACTION_STATUS_VALG,
 	RISK_SCOPE_MEMBER_ROLE_OWNER,
 	RISK_SCOPE_MEMBER_ROLE_PARTICIPANT,
+	RISK_SCOPE_STATUS_OWNER_ONLY,
+	RISK_SCOPE_STATUS_VALG,
 	RiskAction,
 	RiskScenario,
 	RiskScope,
@@ -46,8 +49,12 @@ from systemoversikt.risk_criteria import (
 	level_cell_css_class,
 	parse_kit_dimensjoner,
 	parse_konsekvenstyper,
+	parse_sannsynlighetstyper,
 	risk_cell_css_class,
+	SANNSYNLIGHETSTYPE_SLUGS,
 	sannsynlighet_lookup_label,
+	sannsynlighetstype_tag_dicts,
+	sannsynlighetstype_to_storage,
 )
 from systemoversikt.risk_display import (
 	annotate_scenario_display_ids,
@@ -60,10 +67,12 @@ from systemoversikt.views_risiko import (
 	_get_managed_scope,
 	_get_member_scope,
 	_get_member_scenario,
+	_is_scope_owner,
 )
 
 RISIKOBEHANDLING_VALUES = {v for v, _ in RISIKOBEHANDLING_VALG}
 TILTAK_STATUS_VALUES = {v for v, _ in RISK_ACTION_STATUS_VALG}
+RISK_SCOPE_STATUS_VALUES = {v for v, _ in RISK_SCOPE_STATUS_VALG}
 
 
 def _json_error(message, status=400):
@@ -164,6 +173,8 @@ def _scenario_summary_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None):
 		'kit_tags': parse_kit_dimensjoner(scenario.kit_dimensjoner),
 		'konsekvenstyper': parse_konsekvenstyper(scenario.konsekvenstyper),
 		'konsekvenstype_tags': konsekvenstype_tag_dicts(scenario.konsekvenstyper),
+		'sannsynlighetstyper': parse_sannsynlighetstyper(scenario.sannsynlighetstyper),
+		'sannsynlighetstype_tags': sannsynlighetstype_tag_dicts(scenario.sannsynlighetstyper),
 		'konsekvens_nivaa': scenario.konsekvens_nivaa,
 		'sannsynlighet_nivaa': scenario.sannsynlighet_nivaa,
 		'konsekvens_label': konsekvens_lookup_label(scenario.konsekvens_nivaa),
@@ -272,6 +283,22 @@ def _validate_scenario_fields(data, scope, scenario=None):
 	if unknown_konsekvenstyper:
 		errors.append('Ugyldige konsekvenstyper: %s' % ', '.join(unknown_konsekvenstyper))
 
+	raw_sannsynlighetstyper = data.get('sannsynlighetstyper', [])
+	if raw_sannsynlighetstyper is None:
+		sannsynlighetstyper_parts = []
+	elif isinstance(raw_sannsynlighetstyper, str):
+		sannsynlighetstyper_parts = [p.strip() for p in raw_sannsynlighetstyper.split(',') if p.strip()]
+	elif isinstance(raw_sannsynlighetstyper, list):
+		sannsynlighetstyper_parts = [str(p).strip() for p in raw_sannsynlighetstyper if str(p).strip()]
+	else:
+		errors.append('sannsynlighetstyper må være en liste.')
+		sannsynlighetstyper_parts = []
+	unknown_sannsynlighetstyper = sorted({
+		p for p in sannsynlighetstyper_parts if p not in SANNSYNLIGHETSTYPE_SLUGS
+	})
+	if unknown_sannsynlighetstyper:
+		errors.append('Ugyldige sannsynlighetstyper: %s' % ', '.join(unknown_sannsynlighetstyper))
+
 	system_ids = data.get('system_ids')
 	if system_ids is not None:
 		if not isinstance(system_ids, list):
@@ -294,6 +321,7 @@ def _validate_scenario_fields(data, scope, scenario=None):
 		'uonsket_hendelse': uonsket,
 		'kit_dimensjoner': (data.get('kit_dimensjoner') or '').strip(),
 		'konsekvenstyper': konsekvenstype_to_storage(konsekvenstyper_parts),
+		'sannsynlighetstyper': sannsynlighetstype_to_storage(sannsynlighetstyper_parts),
 		'arsaker_svakheter': (data.get('arsaker_svakheter') or '').strip(),
 		'konsekvens_begrunnelse': (data.get('konsekvens_begrunnelse') or '').strip(),
 		'sannsynlighetsbegrunnelse': (data.get('sannsynlighetsbegrunnelse') or '').strip(),
@@ -404,7 +432,8 @@ def _cleanup_orphan_actions(scope):
 
 def _apply_scenario_fields(scenario, fields):
 	for attr in (
-		'uonsket_hendelse', 'kit_dimensjoner', 'konsekvenstyper', 'arsaker_svakheter',
+		'uonsket_hendelse', 'kit_dimensjoner', 'konsekvenstyper', 'sannsynlighetstyper',
+		'arsaker_svakheter',
 		'konsekvens_begrunnelse', 'sannsynlighetsbegrunnelse',
 		'risikobehandling', 'konsekvens_nivaa', 'sannsynlighet_nivaa',
 		'konsekvens_etter', 'sannsynlighet_etter',
@@ -515,6 +544,7 @@ def api_risiko_scenario_create(request, pk):
 				uonsket_hendelse=fields['uonsket_hendelse'],
 				kit_dimensjoner=fields['kit_dimensjoner'],
 				konsekvenstyper=fields['konsekvenstyper'],
+				sannsynlighetstyper=fields['sannsynlighetstyper'],
 				arsaker_svakheter=fields['arsaker_svakheter'],
 				konsekvens_begrunnelse=fields['konsekvens_begrunnelse'],
 				sannsynlighetsbegrunnelse=fields['sannsynlighetsbegrunnelse'],
@@ -606,9 +636,23 @@ def api_risiko_scope_update(request, pk):
 			return _json_error('Ugyldig dato – bruk format ÅÅÅÅ-MM-DD.')
 		sist_revidert = parsed
 
+	new_status = scope.status
+	if 'status' in data:
+		status = (data.get('status') or '').strip()
+		if status not in RISK_SCOPE_STATUS_VALUES:
+			return _json_error('Ugyldig status.')
+		if not _is_scope_owner(request, scope):
+			if status != scope.status:
+				if scope.status in RISK_SCOPE_STATUS_OWNER_ONLY:
+					return _json_error('Kun eiere kan endre status etter at samlingen er sendt til godkjenning.', status=403)
+				if status in RISK_SCOPE_STATUS_OWNER_ONLY:
+					return _json_error('Kun eiere kan sette denne statusen.', status=403)
+		new_status = status
+
 	scope.title = title
 	scope.beskrivelse = beskrivelse
 	scope.sist_revidert = sist_revidert
+	scope.status = new_status
 	scope.save()
 
 	return JsonResponse({
@@ -617,7 +661,14 @@ def api_risiko_scope_update(request, pk):
 			'title': scope.title,
 			'beskrivelse': scope.beskrivelse,
 			'sist_revidert': scope.sist_revidert.isoformat(),
+			'status': scope.status,
+			'status_display': scope.get_status_display(),
 		},
+		'scope_status_choices': [
+			{'value': value, 'label': label}
+			for value, label in RISK_SCOPE_STATUS_VALG
+			if value not in RISK_SCOPE_STATUS_OWNER_ONLY or _is_scope_owner(request, scope)
+		],
 	})
 
 

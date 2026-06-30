@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: RiskScope.status – workflow state for risikosamling approval.
+# 2026-06-30: RiskScenario.sannsynlighetstyper – multi-select probability dimension tags.
 # 2026-06-30: RiskCriteriaConfig – global editable akseptkriterier shared by all risikosamlinger.
 # 2026-06-30: RiskScenario.konsekvenstyper – multi-select consequence dimension tags.
 # 2026-06-30: RiskAction default status forslag for new manual tiltak.
@@ -7717,6 +7719,14 @@ RISK_SCOPE_MEMBER_ROLE_VALG = (
 RISK_SCOPE_MEMBER_ROLE_OWNER = 'owner'
 RISK_SCOPE_MEMBER_ROLE_PARTICIPANT = 'participant'
 
+RISK_SCOPE_STATUS_VALG = (
+	('forsteutkast', 'Førsteutkast'),
+	('under_revurdering', 'Under revurdering'),
+	('til_godkjenning', 'Til godkjenning'),
+	('godkjent', 'Godkjent'),
+)
+RISK_SCOPE_STATUS_OWNER_ONLY = frozenset(('til_godkjenning', 'godkjent'))
+
 
 class RiskCriteriaConfig(models.Model):
 	title = models.CharField(
@@ -7794,6 +7804,12 @@ class RiskScope(models.Model):
 	)
 	sist_revidert = models.DateField(
 		verbose_name="Sist revidert",
+	)
+	status = models.CharField(
+		verbose_name="Status",
+		max_length=30,
+		choices=RISK_SCOPE_STATUS_VALG,
+		default='forsteutkast',
 	)
 	source_filename = models.CharField(
 		verbose_name="Kildefil",
@@ -7916,6 +7932,12 @@ class RiskScenario(models.Model):
 	)
 	konsekvenstyper = models.CharField(
 		verbose_name="Konsekvenstyper",
+		max_length=120,
+		blank=True,
+		default='',
+	)
+	sannsynlighetstyper = models.CharField(
+		verbose_name="Sannsynlighetstyper",
 		max_length=120,
 		blank=True,
 		default='',

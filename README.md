@@ -27,7 +27,7 @@ floatThead https://mkoryak.github.io/floatThead/
 
 cytoscape https://cytoscape.org/
 
-open-iconic https://useiconic.com/open
+Bootstrap Icons (inline SVG paths in templates/JS, same style as site home page)
 
 
 

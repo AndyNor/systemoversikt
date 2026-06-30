@@ -23,6 +23,7 @@
 		<table class="table table-sm">
 			<tr><th>K, I, T</th><td>{{ scenario.kit_dimensjoner|default:"-" }}</td></tr>
 			<tr><th>Konsekvenstype</th><td>{% risiko_konsekvenstype_tags scenario.konsekvenstyper %}</td></tr>
+			<tr><th>Sannsynlighetstype</th><td>{% risiko_sannsynlighetstype_tags scenario.sannsynlighetstyper %}</td></tr>
 			<tr><th>Konsekvens</th><td>{{ scenario.konsekvens_nivaa|default:"-" }} ({{ scenario.risiko_etikett|default:"-" }})</td></tr>
 			<tr><th>Sannsynlighet</th><td>{{ scenario.sannsynlighet_nivaa|default:"-" }}</td></tr>
 			<tr><th>Risikobehandling</th><td>{{ scenario.get_risikobehandling_display|default:"-" }}</td></tr>

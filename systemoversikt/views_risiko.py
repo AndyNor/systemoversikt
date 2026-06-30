@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: List page – status column and lock icon for collections without access.
 # 2026-06-30: Akseptkriterier JSON export/import – superuser page buttons for dev → prod.
 # 2026-06-30: Global akseptkriterier – read-only page and superuser editor.
 # 2026-06-30: risiko_scope_delete – owner-only POST delete from list page.
@@ -166,8 +167,8 @@ def _risiko_editor_urls(scope_pk):
 
 
 def risiko_scope_list(request):
+	# 2026-06-30: Lock icon on list when user is not owner/participant; status column with workflow icons.
 	# 2026-06-30: Delete button on list for owners only (current_user_is_owner).
-	# 2026-06-30: Green checkmark on list when current user is owner or participant.
 	# 2026-06-25: Open landing page lists all collections; detail remains member-only.
 	member_qs = RiskScopeMember.objects.filter(
 		scope=OuterRef('pk'),

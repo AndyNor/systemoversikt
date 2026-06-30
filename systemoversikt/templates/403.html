@@ -3,7 +3,7 @@
 
 {% block main_content %}
 
-	<h4><img style="width: 25px;" src="/static/open-iconic/svg/circle-x.svg" alt="Kvalitet verifisert"> Denne informasjonen er beskyttet</h4>
+	<h4>{% bootstrap_icon 'x-circle' width='25px' height='25px' %} Denne informasjonen er beskyttet</h4>
 
 	{% if not request.user.is_authenticated %}
 		<p>Du er ikke logget inn. Fint om du logger på, så skal vi se om du har tilgang til dette!</p>

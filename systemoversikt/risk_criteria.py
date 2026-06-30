@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Sannsynlighetstype slugs + parse helpers – fixed five probability dimensions per scenario.
 # 2026-06-30: Global DB-backed CriteriaBundle + get_active_criteria() – editable akseptkriterier.
 # 2026-06-30: Konsekvenstype slugs + parse helpers for scenario tagging.
 # 2026-06-30: Tiltak status forslag + besluttet (replaces ikke_startet) for Excel import and editor.
@@ -165,6 +166,18 @@ SANNSYNLIGHET_BESKRIVELSER = {
 }
 
 SANNSYNLIGHET_KEYS = ('forventning', 'estimert', 'sarbarhet', 'kapasitet', 'intensjon')
+
+SANNSYNLIGHETSTYPE_VALG = (
+	('forventning', 'Forventning'),
+	('estimert', 'Estimert sannsynlighet'),
+	('sarbarhet', 'Sårbarhet'),
+	('kapasitet', 'Kapasitet og evne'),
+	('intensjon', 'Intensjon'),
+)
+SANNSYNLIGHETSTYPE_SLUGS = {slug for slug, _ in SANNSYNLIGHETSTYPE_VALG}
+SANNSYNLIGHETSTYPE_LABELS = dict(SANNSYNLIGHETSTYPE_VALG)
+SANNSYNLIGHETSTYPE_ORDER = [slug for slug, _ in SANNSYNLIGHETSTYPE_VALG]
+
 RISK_LEVEL_VALUES = ('Lav', 'Middels', 'Høy')
 LEVELS = (1, 2, 3, 4, 5)
 CRITERIA_CACHE_KEY = 'risk_criteria_active_v1'
@@ -527,6 +540,9 @@ class CriteriaBundle:
 			'konsekvenstyper': [
 				{'value': item['slug'], 'label': item['label']} for item in self.konsekvenstyper
 			],
+			'sannsynlighetstyper': [
+				{'value': slug, 'label': label} for slug, label in SANNSYNLIGHETSTYPE_VALG
+			],
 		}
 
 
@@ -737,6 +753,37 @@ def konsekvenstype_to_storage(raw):
 
 def konsekvenstype_tag_dicts(raw):
 	return get_active_criteria().konsekvenstype_tag_dicts(raw)
+
+
+def parse_sannsynlighetstyper(raw):
+	if raw is None:
+		return []
+	if isinstance(raw, (list, tuple)):
+		parts = [str(item).strip() for item in raw if str(item).strip()]
+	elif isinstance(raw, str):
+		parts = [part.strip() for part in raw.split(',') if part.strip()]
+	else:
+		parts = [str(raw).strip()] if str(raw).strip() else []
+	seen = set()
+	result = []
+	for slug in parts:
+		if slug in SANNSYNLIGHETSTYPE_SLUGS and slug not in seen:
+			seen.add(slug)
+			result.append(slug)
+	order = {slug: index for index, slug in enumerate(SANNSYNLIGHETSTYPE_ORDER)}
+	result.sort(key=lambda slug: order.get(slug, 99))
+	return result
+
+
+def sannsynlighetstype_to_storage(raw):
+	return ','.join(parse_sannsynlighetstyper(raw))
+
+
+def sannsynlighetstype_tag_dicts(raw):
+	return [
+		{'slug': slug, 'label': SANNSYNLIGHETSTYPE_LABELS[slug]}
+		for slug in parse_sannsynlighetstyper(raw)
+	]
 
 
 def effective_residual_levels(scenario):

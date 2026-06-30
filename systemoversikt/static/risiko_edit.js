@@ -1,4 +1,6 @@
 // Change log:
+// 2026-06-30: Scope status icons – inline Bootstrap Icons SVGs (replaces open-iconic).
+// 2026-06-30: Scope status workflow save; sannsynlighetstype tags in scenario table/modal.
 // 2026-06-30: Tilgang card – add/remove owners/participants and change virksomhet.
 // 2026-06-30: Tiltak table – colored status tags and Risk ID tags by nåværende risiko level.
 // 2026-06-29: Residual risk badge falls back to current konsekvens/sannsynlighet when etter empty.
@@ -382,6 +384,19 @@
           );
         });
       }
+      const stContainer = document.getElementById('risiko-sannsynlighetstype-checks');
+      if (stContainer && meta.sannsynlighetstyper) {
+        stContainer.innerHTML = '';
+        meta.sannsynlighetstyper.forEach(function (item) {
+          const inputId = 'risiko-st-' + item.value;
+          stContainer.insertAdjacentHTML('beforeend',
+            '<div class="form-check risiko-sannsynlighetstype-check">' +
+            '<input class="form-check-input" type="checkbox" id="' + escapeHtml(inputId) + '" value="' + escapeHtml(item.value) + '">' +
+            '<label class="form-check-label" for="' + escapeHtml(inputId) + '">' + escapeHtml(item.label) + '</label>' +
+            '</div>'
+          );
+        });
+      }
     }
 
     function renderSystemChips() {
@@ -416,6 +431,9 @@
         konsekvenstyper: Array.from(
           document.querySelectorAll('#risiko-konsekvenstype-checks input[type=checkbox]:checked')
         ).map(function (cb) { return cb.value; }),
+        sannsynlighetstyper: Array.from(
+          document.querySelectorAll('#risiko-sannsynlighetstype-checks input[type=checkbox]:checked')
+        ).map(function (cb) { return cb.value; }),
         arsaker_svakheter: document.getElementById('risiko-f-arsaker').value.trim(),
         konsekvens_nivaa: levelVal('risiko-f-konsekvens'),
         sannsynlighet_nivaa: levelVal('risiko-f-sannsynlighet'),
@@ -444,6 +462,10 @@
       const selectedKonsekvenstyper = scenario ? (scenario.konsekvenstyper || []) : [];
       document.querySelectorAll('#risiko-konsekvenstype-checks input[type=checkbox]').forEach(function (cb) {
         cb.checked = selectedKonsekvenstyper.indexOf(cb.value) !== -1;
+      });
+      const selectedSannsynlighetstyper = scenario ? (scenario.sannsynlighetstyper || []) : [];
+      document.querySelectorAll('#risiko-sannsynlighetstype-checks input[type=checkbox]').forEach(function (cb) {
+        cb.checked = selectedSannsynlighetstyper.indexOf(cb.value) !== -1;
       });
       draftSystems = scenario ? (scenario.systemer || []).slice() : [];
       renderSystemChips();
@@ -528,6 +550,24 @@
       return tags.map(function (tag) {
         const label = tag.label || tag.slug || '';
         return '<span class="risiko-konsekvenstype-tag" title="' + escapeHtml(label) + '">' +
+          escapeHtml(label) + '</span>';
+      }).join(' ');
+    }
+
+    function renderSannsynlighetstypeTags(tagsOrSlugs) {
+      if (!tagsOrSlugs || !tagsOrSlugs.length) return '-';
+      let tags = tagsOrSlugs;
+      if (typeof tags[0] === 'string') {
+        tags = tags.map(function (slug) {
+          const item = (meta && meta.sannsynlighetstyper || []).find(function (entry) {
+            return entry.value === slug;
+          });
+          return { slug: slug, label: item ? item.label : slug };
+        });
+      }
+      return tags.map(function (tag) {
+        const label = tag.label || tag.slug || '';
+        return '<span class="risiko-sannsynlighetstype-tag" title="' + escapeHtml(label) + '">' +
           escapeHtml(label) + '</span>';
       }).join(' ');
     }
@@ -1063,6 +1103,9 @@
         const konsekvenstypeHtml = renderKonsekvenstypeTags(
           scenario.konsekvenstype_tags || scenario.konsekvenstyper
         );
+        const sannsynlighetstypeHtml = renderSannsynlighetstypeTags(
+          scenario.sannsynlighetstype_tags || scenario.sannsynlighetstyper
+        );
 
         tbody.insertAdjacentHTML('beforeend',
           '<tr class="risiko-scenario-row" data-scenario-id="' + scenario.id + '" style="cursor:pointer">' +
@@ -1071,6 +1114,7 @@
           '<td class="risiko-systemer-cell">' + systemsHtml + '</td>' +
           '<td class="risiko-kit-cell">' + kitHtml + '</td>' +
           '<td class="risiko-konsekvenstype-cell">' + konsekvenstypeHtml + '</td>' +
+          '<td class="risiko-sannsynlighetstype-cell">' + sannsynlighetstypeHtml + '</td>' +
           '<td class="risiko-level-cell">' + levelTagHtml(kVal, kCss) + '</td>' +
           '<td class="risiko-level-cell">' + levelTagHtml(sVal, sCss) + '</td>' +
           '<td class="' + escapeHtml(rCss) + '">' + escapeHtml(scenario.risiko_etikett || '-') + '</td>' +
@@ -1131,11 +1175,42 @@
     const scopeMetaEdit = document.getElementById('risiko-scope-meta-edit');
     let scopeMetaSnapshot = null;
 
+    const SCOPE_STATUS_ICON_PATHS = {
+      file: '<path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zM9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>',
+      'arrow-repeat': '<path d="M5.854 4.646a.5.5 0 1 0-.708.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L3.707 8.5H11.5A3.5 3.5 0 0 0 8 5.5V4a.5.5 0 1 0-1 0v1.5a2.5 2.5 0 0 1 2.5 2.5H3.707zM8 4a4 4 0 1 0 3.732 2.553H6.5A3.5 3.5 0 1 1 12 11V9.5A4.5 4.5 0 0 0 8 4z"/>',
+      clock: '<path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>',
+      'check-circle': '<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>',
+    };
+
+    const SCOPE_STATUS_META = {
+      forsteutkast: { icon: 'file', css: 'risiko-scope-status-forsteutkast' },
+      under_revurdering: { icon: 'arrow-repeat', css: 'risiko-scope-status-under-revurdering' },
+      til_godkjenning: { icon: 'clock', css: 'risiko-scope-status-til-godkjenning' },
+      godkjent: { icon: 'check-circle', css: 'risiko-scope-status-godkjent' },
+    };
+
+    function scopeStatusIconSvg(iconName) {
+      const paths = SCOPE_STATUS_ICON_PATHS[iconName];
+      if (!paths) return '';
+      return '<svg class="risiko-scope-status-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" ' +
+        'viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">' + paths + '</svg>';
+    }
+
+    function renderScopeStatusHtml(status, label) {
+      const meta = SCOPE_STATUS_META[status];
+      if (!meta) return escapeHtml(label || '');
+      return '<span class="risiko-scope-status ' + escapeHtml(meta.css) + '" title="' + escapeHtml(label) + '">' +
+        scopeStatusIconSvg(meta.icon) +
+        '<span class="risiko-scope-status-label">' + escapeHtml(label) + '</span></span>';
+    }
+
     function captureScopeMetaSnapshot() {
+      const statusEl = document.getElementById('risiko-scope-status-select');
       scopeMetaSnapshot = {
         title: document.getElementById('risiko-scope-title').value,
         beskrivelse: document.getElementById('risiko-scope-beskrivelse').value,
         sist_revidert: document.getElementById('risiko-scope-revidert').value,
+        status: statusEl ? statusEl.value : (config.scopeStatus || 'forsteutkast'),
       };
     }
 
@@ -1144,6 +1219,10 @@
       document.getElementById('risiko-scope-title').value = scopeMetaSnapshot.title;
       document.getElementById('risiko-scope-beskrivelse').value = scopeMetaSnapshot.beskrivelse;
       document.getElementById('risiko-scope-revidert').value = scopeMetaSnapshot.sist_revidert;
+      const statusEl = document.getElementById('risiko-scope-status-select');
+      if (statusEl && scopeMetaSnapshot.status) {
+        statusEl.value = scopeMetaSnapshot.status;
+      }
     }
 
     function showScopeMetaView() {
@@ -1164,6 +1243,25 @@
       if (pageTitle) pageTitle.textContent = scope.title;
 
       document.getElementById('risiko-scope-revidert-view').textContent = scope.sist_revidert;
+      const statusView = document.getElementById('risiko-scope-status-view');
+      if (statusView && scope.status) {
+        statusView.innerHTML = renderScopeStatusHtml(scope.status, scope.status_display || scope.status);
+      }
+      const statusEl = document.getElementById('risiko-scope-status-select');
+      if (statusEl && scope.status) {
+        statusEl.value = scope.status;
+      }
+      if (scope.scope_status_choices && statusEl) {
+        const current = scope.status || statusEl.value;
+        statusEl.innerHTML = '';
+        scope.scope_status_choices.forEach(function (item) {
+          const opt = document.createElement('option');
+          opt.value = item.value;
+          opt.textContent = item.label;
+          if (item.value === current) opt.selected = true;
+          statusEl.appendChild(opt);
+        });
+      }
       const beskBlock = document.getElementById('risiko-scope-beskrivelse-block');
       const beskView = document.getElementById('risiko-scope-beskrivelse-view');
       if (beskBlock && beskView) {
@@ -1173,15 +1271,24 @@
     }
 
     function saveScopeMeta() {
+      const statusEl = document.getElementById('risiko-scope-status-select');
       const payload = {
         title: document.getElementById('risiko-scope-title').value.trim(),
         beskrivelse: document.getElementById('risiko-scope-beskrivelse').value.trim(),
         sist_revidert: document.getElementById('risiko-scope-revidert').value,
+        status: statusEl ? statusEl.value : (config.scopeStatus || 'forsteutkast'),
       };
       setScopeStatus('Lagrer…');
       fetchJson(config.urls.scopeUpdate, { method: 'PATCH', body: JSON.stringify(payload) })
         .then(function (data) {
-          updateScopeMetaView(data.scope);
+          const scope = data.scope || {};
+          if (data.scope_status_choices) {
+            scope.scope_status_choices = data.scope_status_choices;
+          }
+          updateScopeMetaView(scope);
+          if (scope.status) {
+            config.scopeStatus = scope.status;
+          }
           captureScopeMetaSnapshot();
           showScopeMetaView();
         })

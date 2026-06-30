@@ -1,8 +1,9 @@
 {% extends "sikkerhet_index.html" %}
+{% load templatetags %}
+{# 2026-06-30: Status column with workflow icons; lock icon when user lacks access. #}
 {# 2026-06-30: Delete confirm script in script_append with CSP nonce (inline scripts blocked otherwise). #}
 {# 2026-06-30: Bootstrap confirm modal before deleting a risikosamling. #}
 {# 2026-06-30: Slett button per row – owners only. #}
-{# 2026-06-30: Green checkmark when current user is owner or participant. #}
 {# 2026-06-30: Eiere + virksomhet columns; members can edit, owners manage access. #}
 
 {% block overskrift %}
@@ -23,6 +24,8 @@
 	</ul>
 	<p class="mb-0">
 		Alle risikosamlinger er synlige i oversikten. Redigering og detaljer er begrenset til eiere og deltakere.
+		<span class="risiko-scope-access-lock-inline" title="Du har ikke tilgang">{% bootstrap_icon 'lock' css_class='risiko-scope-access-lock-icon' width='14px' height='14px' %}</span>
+		angir at du ikke har tilgang til samlingen.
 		Eiere kan legge til eller fjerne andre eiere og deltakere, og endre tilknyttet virksomhet.
 		For hvert scenario vises <strong>nåværende risiko</strong> (etter eksisterende tiltak) og
 		<strong>risiko etter tiltak</strong> (etter foreslåtte tiltak er implementert).
@@ -47,6 +50,7 @@
 <thead>
 <tr>
 	<th>Navn</th>
+	<th>Status</th>
 	<th>Beskrivelse</th>
 	<th>Virksomhet</th>
 	<th>Eiere</th>
@@ -59,7 +63,8 @@
 <tbody>
 {% for scope in scopes %}
 <tr>
-	<td>{% if scope.current_user_is_member %}<span style="color: green; font-size: 18px;" title="Du har tilgang">✓</span> {% endif %}<a href="{% url 'risiko_scope_detail' pk=scope.pk %}">{{ scope.title }}</a></td>
+	<td>{% if not scope.current_user_is_member %}<span class="risiko-scope-access-lock" title="Du har ikke tilgang">{% bootstrap_icon 'lock' css_class='risiko-scope-access-lock-icon' width='16px' height='16px' %}</span> {% endif %}<a href="{% url 'risiko_scope_detail' pk=scope.pk %}">{{ scope.title }}</a></td>
+	<td>{% risiko_scope_status scope.status scope.get_status_display %}</td>
 	<td>{{ scope.beskrivelse|truncatechars:120|default:"-" }}</td>
 	<td>{% if scope.virksomhet %}{{ scope.virksomhet.virksomhetsforkortelse }}{% else %}-{% endif %}</td>
 	<td>{% for m in scope.memberships.all %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% empty %}-{% endfor %}</td>
@@ -110,6 +115,16 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
+<style nonce="{{ request.csp_nonce }}">
+.risiko-scope-access-lock-icon { opacity: 0.55; vertical-align: text-bottom; }
+.risiko-scope-status { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+.risiko-scope-status-icon { flex-shrink: 0; opacity: 0.85; }
+.risiko-scope-status-label { font-size: 0.85rem; }
+.risiko-scope-status-forsteutkast .risiko-scope-status-label { color: #6c757d; }
+.risiko-scope-status-under-revurdering .risiko-scope-status-label { color: #0d6efd; }
+.risiko-scope-status-til-godkjenning .risiko-scope-status-label { color: #b8860b; }
+.risiko-scope-status-godkjent .risiko-scope-status-label { color: #198754; }
+</style>
 <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 $(function () {
 	var form = document.getElementById('risiko-scope-delete-form');

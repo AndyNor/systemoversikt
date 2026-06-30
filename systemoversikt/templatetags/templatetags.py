@@ -1,4 +1,7 @@
 # Change log:
+# 2026-06-30: bootstrap_icon – inline Bootstrap Icons SVGs (replaces open-iconic static files).
+# 2026-06-30: risiko_scope_status – workflow status icon + label on collection list.
+# 2026-06-30: risiko_sannsynlighetstype_tags – probability dimension badges on scenario table.
 # 2026-06-30: risiko_konsekvenstype_tags – consequence dimension badges on scenario table.
 # 2026-06-30: risiko_tiltak_status_tag – forslag/besluttet status badge colors.
 # 2026-06-30: risiko_tiltak_status_tag – colored status badge in scope tiltak table.
@@ -8,7 +11,6 @@
 # 2026-06-24: ca_condition_label_icon – leading SVG icons on CA overview condition tags.
 # 2026-06-21: tjeneste_ikon_* – SVG glyphs and accent colours for tjeneste tile overview.
 from django import template
-from django.conf import settings
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 import string
@@ -163,25 +165,77 @@ _CA_CONDITION_LABEL_ICONS = {
 @register.simple_tag
 def ca_condition_label_icon(kind):
 	"""Small leading icon for a CA overview condition tag (user, group, location, app, role)."""
-	paths = _CA_CONDITION_LABEL_ICONS.get(kind)
-	if not paths:
-		return ''
-	return format_html(
-		'<svg class="ca-overview-label__icon" xmlns="http://www.w3.org/2000/svg" '
-		'viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">{}</svg>',
-		format_html(paths),
-	)
+	html = _bootstrap_icon_svg('ca-' + kind, css_class='ca-overview-label__icon')
+	return mark_safe(html) if html else ''
 
 
 def _ca_condition_label_icon_html(kind):
 	paths = _CA_CONDITION_LABEL_ICONS.get(kind)
 	if not paths:
 		return ''
+	return _bootstrap_icon_svg('ca-' + kind, css_class='ca-overview-label__icon')
+
+
+# Bootstrap Icons paths (16×16) – same inline style as site_home.html.
+_BOOTSTRAP_ICON_PATHS = {
+	'search': (
+		'<path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>'
+	),
+	'lock': (
+		'<path d="M8 1a2 2 0 0 0-2 2v4H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2V3a2 2 0 0 0-2-2z"/>'
+	),
+	'pencil': (
+		'<path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>'
+	),
+	'file': (
+		'<path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zM9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>'
+	),
+	'arrow-repeat': (
+		'<path d="M5.854 4.646a.5.5 0 1 0-.708.708l-3 3a.5.5 0 0 0 0 .708l3 3a.5.5 0 0 0 .708-.708L3.707 8.5H11.5A3.5 3.5 0 0 0 8 5.5V4a.5.5 0 1 0-1 0v1.5a2.5 2.5 0 0 1 2.5 2.5H3.707zM8 4a4 4 0 1 0 3.732 2.553H6.5A3.5 3.5 0 1 1 12 11V9.5A4.5 4.5 0 0 0 8 4z"/>'
+	),
+	'clock': (
+		'<path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>'
+		'<path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>'
+	),
+	'check-circle': (
+		'<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0m-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>'
+	),
+	'x-circle': (
+		'<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 0 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>'
+	),
+}
+# CA overview icons share the same SVG helper (keys prefixed with ca-).
+for _ca_kind, _ca_paths in _CA_CONDITION_LABEL_ICONS.items():
+	_BOOTSTRAP_ICON_PATHS['ca-' + _ca_kind] = _ca_paths
+
+
+def _bootstrap_icon_svg(name, css_class='', width='1em', height='1em'):
+	paths = _BOOTSTRAP_ICON_PATHS.get(name)
+	if not paths:
+		return ''
+	if css_class:
+		return format_html(
+			'<svg class="{}" xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" '
+			'viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">{}</svg>',
+			css_class,
+			width,
+			height,
+			format_html(paths),
+		)
 	return format_html(
-		'<svg class="ca-overview-label__icon" xmlns="http://www.w3.org/2000/svg" '
+		'<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" '
 		'viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false">{}</svg>',
+		width,
+		height,
 		format_html(paths),
 	)
+
+
+@register.simple_tag
+def bootstrap_icon(name, css_class='', width='1em', height='1em'):
+	"""Inline Bootstrap Icons SVG (same style as site_home.html)."""
+	html = _bootstrap_icon_svg(name, css_class=css_class, width=width, height=height)
+	return mark_safe(html) if html else ''
 
 
 @register.simple_tag
@@ -339,13 +393,14 @@ def id_generator(size=8, chars=string.ascii_uppercase):
 @register.simple_tag()
 def explain_collapsed(text):
 	random_id = id_generator()
+	search_icon = _bootstrap_icon_svg('search', width='10px', height='10px')
 	html = format_html('''
 		<a data-toggle="collapse" href="#{}" role="button" aria-expanded="false" aria-controls="collapseExample">
-		<img style="width: 10px; margin: 0px 4px;" src="{}open-iconic/svg/magnifying-glass.svg" alt="rediger"></a>
+		<span style="margin: 0px 4px;">{}</span></a>
 		<div class="collapse" style="background-color: #ffffe2;" id="{}">{}</div>
 		''',
 		random_id,
-		settings.STATIC_URL,
+		search_icon,
 		random_id,
 		text,
 	)
@@ -450,6 +505,61 @@ def risiko_konsekvenstype_tags(konsekvenstyper):
 	for tag in tags:
 		parts.append(format_html(
 			'<span class="risiko-konsekvenstype-tag" title="{}">{}</span>',
+			tag['label'],
+			tag['label'],
+		))
+	return mark_safe(' '.join(str(part) for part in parts))
+
+
+_SCOPE_STATUS_META = {
+	'forsteutkast': {
+		'icon': 'file',
+		'css': 'risiko-scope-status-forsteutkast',
+	},
+	'under_revurdering': {
+		'icon': 'arrow-repeat',
+		'css': 'risiko-scope-status-under-revurdering',
+	},
+	'til_godkjenning': {
+		'icon': 'clock',
+		'css': 'risiko-scope-status-til-godkjenning',
+	},
+	'godkjent': {
+		'icon': 'check-circle',
+		'css': 'risiko-scope-status-godkjent',
+	},
+}
+
+
+@register.simple_tag
+def risiko_scope_status(status, status_display):
+	if not status_display:
+		return '-'
+	meta = _SCOPE_STATUS_META.get(status)
+	if not meta:
+		return status_display
+	icon_html = _bootstrap_icon_svg(meta['icon'], css_class='risiko-scope-status-icon', width='16px', height='16px')
+	return mark_safe(format_html(
+		'<span class="risiko-scope-status {}" title="{}">'
+		'{}'
+		'<span class="risiko-scope-status-label">{}</span></span>',
+		meta['css'],
+		status_display,
+		icon_html,
+		status_display,
+	))
+
+
+@register.simple_tag
+def risiko_sannsynlighetstype_tags(sannsynlighetstyper):
+	from systemoversikt.risk_criteria import sannsynlighetstype_tag_dicts
+	tags = sannsynlighetstype_tag_dicts(sannsynlighetstyper)
+	if not tags:
+		return '-'
+	parts = []
+	for tag in tags:
+		parts.append(format_html(
+			'<span class="risiko-sannsynlighetstype-tag" title="{}">{}</span>',
 			tag['label'],
 			tag['label'],
 		))

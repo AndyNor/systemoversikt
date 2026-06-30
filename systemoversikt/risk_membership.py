@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: create_risk_scope – explicit forsteutkast status on new collections.
 # 2026-06-30: create_risk_scope – creator as first owner with virksomhet from profile.
 
 from django.db import transaction
@@ -28,6 +29,7 @@ def user_display_name(user):
 
 def create_risk_scope(user, **scope_kwargs):
 	virksomhet = creator_virksomhet(user)
+	scope_kwargs.setdefault('status', 'forsteutkast')
 	with transaction.atomic():
 		scope = RiskScope.objects.create(
 			virksomhet=virksomhet,
