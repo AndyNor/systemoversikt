@@ -5,6 +5,7 @@
 {# 2026-06-26: Editable tiltak cards in scenario modal; scope tiltak table is read-only. #}
 {# 2026-06-26: No tablesorter on scenario table – tbody replaced via AJAX (tablesorter hid rows). #}
 {% extends "sikkerhet_index.html" %}
+{# 2026-06-30: Tiltak status badge CSS – forslag (gray) and besluttet (pink). #}
 {# 2026-06-30: Tilgang left of beskrivelse; risikomatriser on dedicated row below. #}
 {# 2026-06-26: Compact scope meta edit form; toggled via Rediger; removed Kilde and Akseptkriterier nav link. #}
 {% load static %}
@@ -529,7 +530,8 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 }
 .risiko-tiltak-status-utfort { background-color: #c0eb96; }
 .risiko-tiltak-status-under-arbeid { background-color: #ffecb2; }
-.risiko-tiltak-status-ikke-startet { background-color: #ffc8cd; }
+.risiko-tiltak-status-forslag { background-color: #e9ecef; }
+.risiko-tiltak-status-besluttet { background-color: #ffc8cd; }
 .risiko-tiltak-status-unknown { background-color: #e9ecef; }
 .risiko-kit-cell { min-width: 8rem; white-space: normal; }
 .risiko-kit-tag {

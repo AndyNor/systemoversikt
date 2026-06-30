@@ -1,4 +1,5 @@
 # Change log:
+# 2026-06-30: risiko_tiltak_status_tag – forslag/besluttet status badge colors.
 # 2026-06-30: risiko_tiltak_status_tag – colored status badge in scope tiltak table.
 # 2026-06-25: risiko_level_tag – level label as colored tag in scenario table.
 # 2026-06-25: risiko_kit_tags – K/I/T dimension badges with icons for risk scenario table.
@@ -387,9 +388,11 @@ def _risiko_kit_icon_svg(code):
 
 
 _TILTAK_STATUS_TAG_CSS = {
-	'utfort': 'risiko-tiltak-status-utfort',
-	'ikke_startet': 'risiko-tiltak-status-ikke-startet',
+	'forslag': 'risiko-tiltak-status-forslag',
+	'besluttet': 'risiko-tiltak-status-besluttet',
+	'ikke_startet': 'risiko-tiltak-status-besluttet',
 	'under_arbeid': 'risiko-tiltak-status-under-arbeid',
+	'utfort': 'risiko-tiltak-status-utfort',
 }
 
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Tiltak status forslag/besluttet – default forslag for new tiltak; accept ikke_startet alias.
 # 2026-06-30: Member vs owner API gates; membership and virksomhet management endpoints.
 # 2026-06-26: Scope-level tiltak API; scenario save no longer syncs actions; drop eksisterende_tiltak.
 # 2026-06-26: Scenario summary includes display_tiltak_ids for scenario table Tiltak column.
@@ -294,7 +295,9 @@ def _validate_action_item(item, index):
 	except (TypeError, ValueError):
 		pass
 
-	status = item.get('status') or 'ikke_startet'
+	status = item.get('status') or 'forslag'
+	if status == 'ikke_startet':
+		status = 'besluttet'
 	if status not in TILTAK_STATUS_VALUES:
 		errors.append('Tiltak %d: ugyldig status.' % index)
 

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Header normalize – collapse whitespace around hyphens (Risiko-\nbehandling).
+# 2026-06-30: Import Foreslåtte tiltak (forslag) and Tiltak sheet; skip placeholder rows on Tiltak sheet.
 # 2026-06-30: create_risk_scope helper – membership + virksomhet instead of eier FK.
 # 2026-06-26: Eksisterende tiltak column → RiskAction per paragraph (status utfort).
 # 2026-06-26: Scope-level tiltak linked to scenarios via M2M (reuse across scenarios).
@@ -31,7 +33,10 @@ class ImportResult:
 def _normalize_header(value):
 	if value is None:
 		return ''
-	return re.sub(r'\s+', ' ', str(value).replace('\n', ' ')).strip()
+	s = re.sub(r'\s+', ' ', str(value).replace('\n', ' ')).strip()
+	# Excel line breaks after hyphen: "Risiko-\nbehandling" → "Risiko-behandling"
+	s = re.sub(r'\s*-\s*', '-', s)
+	return s
 
 
 def _header_map(ws):
@@ -89,6 +94,29 @@ def _parse_foreslatte_tiltak(text):
 	return actions
 
 
+_PLACEHOLDER_TILTAK_EXACT = frozenset({
+	'x', 'xx', 'xxx', 'xxxx',
+	'-', '–', '—',
+	'...', '…',
+	'tbd', 'n/a', 'na',
+})
+
+
+def _is_placeholder_tiltak(beskrivelse):
+	"""True when Tiltak sheet cell is an empty/placeholder stub (e.g. xx)."""
+	if beskrivelse is None:
+		return True
+	text = str(beskrivelse).strip()
+	if not text:
+		return True
+	norm = text.lower()
+	if norm in _PLACEHOLDER_TILTAK_EXACT:
+		return True
+	if len(text) <= 4 and re.fullmatch(r'[xX\-\–—\.]+', text):
+		return True
+	return False
+
+
 def _parse_eksisterende_tiltak(text):
 	"""Split cell text into one tiltak per paragraph (blank line); fallback: whole cell."""
 	if not text or not str(text).strip():
@@ -111,6 +139,9 @@ def _parse_tiltak_sheet(wb, warnings):
 	for row in range(2, ws.max_row + 1):
 		beskrivelse = _cell(ws, row, headers, 'Tiltak')
 		if not beskrivelse or not str(beskrivelse).strip():
+			continue
+		if _is_placeholder_tiltak(beskrivelse):
+			warnings.append('Tiltak rad %d: hoppet over plassholder %r' % (row, str(beskrivelse).strip()))
 			continue
 		scenario_ref = _cell(ws, row, headers, 'Risikoscenario')
 		if scenario_ref is None:
@@ -238,23 +269,22 @@ def import_risk_workbook(workbook, user, source_filename):
 				action_count += 1
 
 			scenario_num = scenario.scenario_nummer()
-			sheet_actions = tiltak_by_scenario.get(scenario_num, [])
-			if sheet_actions:
-				for action_data in sheet_actions:
-					action = RiskAction.objects.create(scope=scope, **action_data)
-					action.scenarios.add(scenario)
-					action_count += 1
-			else:
-				foreslatt = _cell(ws, row, headers, 'Foreslåtte tiltak')
-				for _nr, beskrivelse in _parse_foreslatte_tiltak(foreslatt):
-					action = RiskAction.objects.create(
-						scope=scope,
-						beskrivelse=beskrivelse,
-						kilde='parsed',
-						status='ikke_startet',
-					)
-					action.scenarios.add(scenario)
-					action_count += 1
+
+			foreslatt = _cell(ws, row, headers, 'Foreslåtte tiltak')
+			for _nr, beskrivelse in _parse_foreslatte_tiltak(foreslatt):
+				action = RiskAction.objects.create(
+					scope=scope,
+					beskrivelse=beskrivelse,
+					kilde='parsed',
+					status='forslag',
+				)
+				action.scenarios.add(scenario)
+				action_count += 1
+
+			for action_data in tiltak_by_scenario.get(scenario_num, []):
+				action = RiskAction.objects.create(scope=scope, **action_data)
+				action.scenarios.add(scenario)
+				action_count += 1
 
 	return ImportResult(
 		scope=scope,

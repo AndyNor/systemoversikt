@@ -1,4 +1,7 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-06-30: Delete confirm script in script_append with CSP nonce (inline scripts blocked otherwise). #}
+{# 2026-06-30: Bootstrap confirm modal before deleting a risikosamling. #}
+{# 2026-06-30: Slett button per row – owners only. #}
 {# 2026-06-30: Green checkmark when current user is owner or participant. #}
 {# 2026-06-30: Eiere + virksomhet columns; members can edit, owners manage access. #}
 
@@ -49,6 +52,7 @@
 	<th>Sist revidert</th>
 	<th>Scenarioer</th>
 	<th>Opprettet</th>
+	<th></th>
 </tr>
 </thead>
 <tbody>
@@ -61,6 +65,14 @@
 	<td>{{ scope.sist_revidert|date:"Y-m-d" }}</td>
 	<td>{{ scope.scenario_count }}</td>
 	<td>{{ scope.opprettet|date:"Y-m-d" }}</td>
+	<td class="text-nowrap">
+		{% if scope.current_user_is_owner %}
+		<button type="button"
+			class="btn btn-outline-danger btn-sm risiko-scope-delete-btn"
+			data-delete-url="{% url 'risiko_scope_delete' pk=scope.pk %}"
+			data-scope-title="{{ scope.title }}">Slett</button>
+		{% endif %}
+	</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -69,4 +81,51 @@
 <p>Ingen risikosamlinger ennå.{% if can_create %} <a href="{% url 'risiko_scope_create' %}">Opprett en ny samling</a>{% elif can_import %} <a href="{% url 'risiko_import' %}">Importer en Excel-fil</a>{% endif %} for å komme i gang.</p>
 {% endif %}
 
+<form id="risiko-scope-delete-form" method="post" class="d-none">
+	{% csrf_token %}
+</form>
+
+<div class="modal fade" id="risiko-scope-delete-modal" tabindex="-1" role="dialog" aria-labelledby="risiko-scope-delete-modal-title" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="risiko-scope-delete-modal-title">Slett risikosamling</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Lukk">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p class="mb-2">Er du sikker på at du vil slette risikosamlingen <strong id="risiko-scope-delete-title"></strong>?</p>
+				<p class="text-muted mb-0">Dette kan ikke angres. Alle scenarioer og tiltak i samlingen slettes.</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
+				<button type="button" class="btn btn-danger btn-sm" id="risiko-scope-delete-confirm">Slett</button>
+			</div>
+		</div>
+	</div>
+</div>
+
 {% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+$(function () {
+	var form = document.getElementById('risiko-scope-delete-form');
+	var modal = $('#risiko-scope-delete-modal');
+	var titleEl = document.getElementById('risiko-scope-delete-title');
+	var confirmBtn = document.getElementById('risiko-scope-delete-confirm');
+	if (!form || !modal.length || !titleEl || !confirmBtn) {
+		return;
+	}
+	$(document).on('click', '.risiko-scope-delete-btn', function () {
+		form.action = this.getAttribute('data-delete-url');
+		titleEl.textContent = this.getAttribute('data-scope-title') || '';
+		modal.modal('show');
+	});
+	confirmBtn.addEventListener('click', function () {
+		form.submit();
+	});
+});
+</script>
+{% endblock script_append %}

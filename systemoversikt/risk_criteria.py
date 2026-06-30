@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: Tiltak status forslag + besluttet (replaces ikke_startet) for Excel import and editor.
 # 2026-06-29: effective_residual_levels() – empty etter fields inherit current risk for matrix/label.
 # 2026-06-25: parse_kit_dimensjoner() for K/I/T dimension tags in scenario table.
 # 2026-06-25: lookup labels for konsekvens/sannsynlighet table cells; 1–5 color scale aligned to risk colors.
@@ -56,7 +57,9 @@ RISIKOBEHANDLING_FROM_TEXT = {
 }
 
 TILTAK_STATUS_FROM_TEXT = {
-	'ikke startet': 'ikke_startet',
+	'forslag': 'forslag',
+	'besluttet': 'besluttet',
+	'ikke startet': 'besluttet',
 	'under arbeid': 'under_arbeid',
 	'utført': 'utfort',
 	'utfort': 'utfort',
@@ -211,8 +214,8 @@ def risikobehandling_from_text(text):
 
 def tiltak_status_from_text(text):
 	if not text:
-		return 'ikke_startet'
-	return TILTAK_STATUS_FROM_TEXT.get(_normalize_label(text), 'ikke_startet')
+		return 'besluttet'
+	return TILTAK_STATUS_FROM_TEXT.get(_normalize_label(text), 'besluttet')
 
 
 def risk_label(sannsynlighet, konsekvens):

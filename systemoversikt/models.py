@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: RiskAction default status forslag for new manual tiltak.
+# 2026-06-30: RiskAction status forslag + besluttet (replaces ikke_startet) – proposal vs committed workflow.
 # 2026-06-30: RiskScopeMember + virksomhet on RiskScope – multiple owners/participants replace single eier.
 # 2026-06-26: Drop RiskScenario.eksisterende_tiltak – eksisterende tiltak are RiskAction rows (status utfort).
 # 2026-06-24: RiskScope.beskrivelse – named collections with description on public list page.
@@ -7694,7 +7696,8 @@ RISIKOBEHANDLING_VALG = (
 )
 
 RISK_ACTION_STATUS_VALG = (
-	('ikke_startet', 'Ikke startet'),
+	('forslag', 'Forslag'),
+	('besluttet', 'Besluttet'),
 	('under_arbeid', 'Under arbeid'),
 	('utfort', 'Utført'),
 )
@@ -7985,7 +7988,7 @@ class RiskAction(models.Model):
 		verbose_name="Status",
 		max_length=20,
 		choices=RISK_ACTION_STATUS_VALG,
-		default='ikke_startet',
+		default='forslag',
 	)
 	kilde = models.CharField(
 		verbose_name="Kilde",

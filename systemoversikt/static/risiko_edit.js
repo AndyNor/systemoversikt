@@ -559,7 +559,7 @@
           '<div class="col risiko-action-meta-col">' +
             '<label class="risiko-action-label">Status</label>' +
             '<select class="form-control form-control-sm risiko-action-status">' +
-            statusOptionsHtml(action.status || 'ikke_startet') + '</select>' +
+            statusOptionsHtml(action.status || 'forslag') + '</select>' +
           '</div>' +
           '<div class="col-auto risiko-action-btn-col">' +
             removeBtn +
@@ -868,7 +868,7 @@
         beskrivelse: '',
         ansvarlig: '',
         frist: null,
-        status: 'ikke_startet',
+        status: 'forslag',
         scenario_ids: [parseInt(scenarioIdRaw, 10)],
       }, parseInt(scenarioIdRaw, 10));
       container.appendChild(card);
@@ -882,9 +882,11 @@
       const label = statusDisplay || status || '';
       if (!label || label === '-') return '-';
       const cssByStatus = {
-        utfort: 'risiko-tiltak-status-utfort',
-        ikke_startet: 'risiko-tiltak-status-ikke-startet',
+        forslag: 'risiko-tiltak-status-forslag',
+        besluttet: 'risiko-tiltak-status-besluttet',
+        ikke_startet: 'risiko-tiltak-status-besluttet',
         under_arbeid: 'risiko-tiltak-status-under-arbeid',
+        utfort: 'risiko-tiltak-status-utfort',
       };
       const cls = cssByStatus[status] || 'risiko-tiltak-status-unknown';
       return '<span class="risiko-tiltak-status-tag ' + escapeHtml(cls) + '">' + escapeHtml(label) + '</span>';

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-06-30: risiko_scope_delete – owner-only POST delete from list page.
 # 2026-06-30: Multiple owners/participants + virksomhet – member vs owner access checks.
 # 2026-06-26: Scenario-scoped action URLs for tiltak editing inside scenario modal.
 # 2026-06-26: Editor URLs for scope-level tiltak CRUD API.
@@ -22,6 +23,7 @@ from django.db.models import Count, Exists, OuterRef, Prefetch
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_http_methods
 from openpyxl import load_workbook
 
 from systemoversikt.models import (
@@ -158,11 +160,17 @@ def _risiko_editor_urls(scope_pk):
 
 
 def risiko_scope_list(request):
+	# 2026-06-30: Delete button on list for owners only (current_user_is_owner).
 	# 2026-06-30: Green checkmark on list when current user is owner or participant.
 	# 2026-06-25: Open landing page lists all collections; detail remains member-only.
 	member_qs = RiskScopeMember.objects.filter(
 		scope=OuterRef('pk'),
 		user=request.user,
+	)
+	owner_qs = RiskScopeMember.objects.filter(
+		scope=OuterRef('pk'),
+		user=request.user,
+		role=RISK_SCOPE_MEMBER_ROLE_OWNER,
 	)
 	scopes = (
 		RiskScope.objects.select_related('virksomhet')
@@ -177,6 +185,7 @@ def risiko_scope_list(request):
 		.annotate(
 			scenario_count=Count('scenarios'),
 			current_user_is_member=Exists(member_qs),
+			current_user_is_owner=Exists(owner_qs),
 		)
 		.order_by('-sist_revidert', '-opprettet')
 	)
@@ -188,6 +197,19 @@ def risiko_scope_list(request):
 		'can_import': can_write,
 		'can_create': can_write,
 	})
+
+
+@require_http_methods(['POST'])
+def risiko_scope_delete(request, pk):
+	# 2026-06-30: Only scope owners may delete a risikosamling.
+	try:
+		scope = _get_managed_scope(request, pk)
+	except Http404:
+		return _deny_scope_access(request)
+	title = scope.title
+	scope.delete()
+	messages.success(request, 'Risikosamling «%s» er slettet.' % title)
+	return redirect('risiko_scope_list')
 
 
 def risiko_import(request):

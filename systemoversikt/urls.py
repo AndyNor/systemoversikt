@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-06-30: risikosamling delete URL – owner-only POST from list page.
 # 2026-06-24: Risk scenario/tiltak AJAX API routes.
 # 2026-06-30: Membership and virksomhet API routes for risikosamling access control.
 # 2026-06-24: Security risk module URLs under /sikkerhet/risiko/.
@@ -144,6 +145,7 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/brukere/sok/$', api_risiko.api_risiko_brukere_sok, name='api_risiko_brukere_sok'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/virksomheter/sok/$', api_risiko.api_risiko_virksomheter_sok, name='api_risiko_virksomheter_sok'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scope/$', api_risiko.api_risiko_scope_update, name='api_risiko_scope_update'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/delete/$', views_risiko.risiko_scope_delete, name='risiko_scope_delete'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/$', views_risiko.risiko_scope_detail, name='risiko_scope_detail'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/matrise/$', views_risiko.risiko_matrise, name='risiko_matrise'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/scenario/(?P<sid>\d{1,8})/$', views_risiko.risiko_scenario_detail, name='risiko_scenario_detail'),
