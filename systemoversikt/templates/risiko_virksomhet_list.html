@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-01: Virksomhet nav highlights selected virksomhet among all virksomheter. #}
 {# 2026-07-01: Virksomhet-specific risk collection viewpoint. #}
 
 {% block overskrift %}
@@ -28,6 +29,8 @@
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_virksomhet_tilgangsgrupper' vid=virksomhet.pk %}">Tilgangsgrupper</a>
 	{% endif %}
 </p>
+
+{% include "risiko_virksomhet_nav.html" %}
 
 <h5 class="mt-4">Risikosamlinger for {{ virksomhet.virksomhetsforkortelse }}</h5>
 

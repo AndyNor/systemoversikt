@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: nav_ordinary_virksomheter – all nav links sorted by virksomhetsforkortelse.
 # 2026-07-01: Superuser cross-virksomhet read-group admin – temporary for testing; remove later.
 # 2026-07-01: Virksomhet-scoped list helpers and read-group access checks for risk MVP.
 # 2026-06-30: create_risk_scope – explicit forsteutkast status on new collections.
@@ -146,11 +147,8 @@ def scopes_for_user_membership(user, exclude_virksomhet_id=None):
 	return qs
 
 
-def other_ordinary_virksomheter(profile_virksomhet_obj):
-	qs = Virksomhet.objects.filter(ordinar_virksomhet=True).order_by('virksomhetsnavn')
-	if profile_virksomhet_obj is not None:
-		qs = qs.exclude(pk=profile_virksomhet_obj.pk)
-	return qs
+def nav_ordinary_virksomheter():
+	return Virksomhet.objects.filter(ordinar_virksomhet=True).order_by('virksomhetsforkortelse')
 
 
 def create_risk_scope(user, **scope_kwargs):

@@ -1,0 +1,22 @@
+{# 2026-07-01: All virksomhet nav links sorted by virksomhetsforkortelse. #}
+{# 2026-07-01: Virksomhet switcher – highlight selected virksomhet on risk list pages. #}
+{% if nav_virksomheter %}
+<div class="mb-3">
+	<strong class="d-block small text-muted mb-1">Virksomheter</strong>
+	<p class="mb-0">
+		{% for v in nav_virksomheter %}
+			{% if profile_virksomhet and v.pk == profile_virksomhet.pk %}
+				{% if is_root_list or list_virksomhet.pk == v.pk %}
+				<span class="btn btn-secondary btn-sm mb-1 fremhev" aria-current="page">{{ v.virksomhetsforkortelse }}</span>
+				{% else %}
+				<a class="btn btn-outline-secondary btn-sm mb-1" href="{% url 'risiko_scope_list' %}">{{ v.virksomhetsforkortelse }}</a>
+				{% endif %}
+			{% elif not is_root_list and list_virksomhet.pk == v.pk %}
+			<span class="btn btn-secondary btn-sm mb-1 fremhev" aria-current="page">{{ v.virksomhetsforkortelse }}</span>
+			{% else %}
+			<a class="btn btn-outline-secondary btn-sm mb-1" href="{% url 'risiko_virksomhet_list' vid=v.pk %}">{{ v.virksomhetsforkortelse }}</a>
+			{% endif %}
+		{% endfor %}
+	</p>
+</div>
+{% endif %}

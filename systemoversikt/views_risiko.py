@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: Risk list context – nav virksomheter sorted by virksomhetsforkortelse.
 # 2026-07-01: Custom risiko_access_denied page – explains owner/participant/read-group access.
 # 2026-07-01: Dropped legacy /sikkerhet/risiko/<pk>/ redirect routes.
 # 2026-07-01: Virksomhet viewpoints, collection URL prefix, read-group access on detail/list.
@@ -68,7 +69,7 @@ from systemoversikt.risk_criteria_transfer import (
 from systemoversikt.risk_import import import_risk_workbook
 from systemoversikt.risk_membership import (
 	create_risk_scope,
-	other_ordinary_virksomheter,
+	nav_ordinary_virksomheter,
 	profile_virksomhet,
 	scopes_for_user_membership,
 	scopes_for_virksomhet,
@@ -232,7 +233,7 @@ def _risiko_editor_urls(scope_pk):
 	}
 
 
-def _risiko_list_context(request, scopes, list_virksomhet=None, show_other_virksomheter=False):
+def _risiko_list_context(request, scopes, list_virksomhet=None):
 	can_write = any(map(request.user.has_perm, RISK_WRITE_PERMISSIONS))
 	profile_v = profile_virksomhet(request.user)
 	ctx = {
@@ -248,8 +249,7 @@ def _risiko_list_context(request, scopes, list_virksomhet=None, show_other_virks
 			and user_can_manage_risk_virksomhet_groups(request.user, list_virksomhet)
 		),
 	}
-	if show_other_virksomheter:
-		ctx['other_virksomheter'] = other_ordinary_virksomheter(profile_v)
+	ctx['nav_virksomheter'] = nav_ordinary_virksomheter()
 	return ctx
 
 
@@ -265,7 +265,7 @@ def risiko_scope_list(request):
 		exclude_virksomhet_id=profile_v.pk if profile_v else None,
 	)
 	return render(request, 'risiko_scope_list.html', {
-		**_risiko_list_context(request, virksomhet_scopes, list_virksomhet=profile_v, show_other_virksomheter=True),
+		**_risiko_list_context(request, virksomhet_scopes, list_virksomhet=profile_v),
 		'virksomhet_scopes': virksomhet_scopes,
 		'my_scopes': my_scopes,
 		'is_root_list': True,
