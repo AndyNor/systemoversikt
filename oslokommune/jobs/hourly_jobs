@@ -2,5 +2,6 @@
 source /var/kartoteket/virtualenv/py311/bin/activate
 cd /var/kartoteket/source/systemoversikt/
 
+# 2026-07-01: Executable in git (100755) – production cron runs this script directly.
 # 2026-06-29: Adaptive lookback (3h / 3 days); Pushover on new noteworthy.
 python /var/kartoteket/source/systemoversikt/manage.py device_code_signin_sync
