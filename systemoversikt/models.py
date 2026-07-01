@@ -7726,6 +7726,7 @@ RISK_SCOPE_STATUS_VALG = (
 	('godkjent', 'Godkjent'),
 )
 RISK_SCOPE_STATUS_OWNER_ONLY = frozenset(('til_godkjenning', 'godkjent'))
+RISK_SCOPE_STATUS_CONTENT_LOCKED = 'godkjent'
 
 
 class RiskCriteriaConfig(models.Model):
@@ -7834,6 +7835,9 @@ class RiskScope(models.Model):
 
 	def is_member(self, user):
 		return self.membership_for(user) is not None
+
+	def is_content_locked(self):
+		return self.status == RISK_SCOPE_STATUS_CONTENT_LOCKED
 
 	def owner_memberships(self):
 		return self.memberships.filter(role=RISK_SCOPE_MEMBER_ROLE_OWNER).select_related('user')

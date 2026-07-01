@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: Godkjent status locks collection read-only; owner may change status to unlock.
 # 2026-07-01: Editor URL for virksomhet-scoped tiltak ansvarlig user search.
 # 2026-06-30: List page – status column and lock icon for collections without access.
 # 2026-06-30: Akseptkriterier JSON export/import – superuser page buttons for dev → prod.
@@ -215,6 +216,10 @@ def risiko_scope_delete(request, pk):
 		scope = _get_managed_scope(request, pk)
 	except Http404:
 		return _deny_scope_access(request)
+	# 2026-07-01: Godkjent collections cannot be deleted until status is changed.
+	if scope.is_content_locked():
+		messages.error(request, 'Godkjente risikosamlinger kan ikke slettes. Endre status først.')
+		return redirect('risiko_scope_list')
 	title = scope.title
 	scope.delete()
 	messages.success(request, 'Risikosamling «%s» er slettet.' % title)
@@ -324,8 +329,12 @@ def risiko_scope_detail(request, pk):
 	)
 	if not _is_scope_member(request, scope):
 		return _deny_scope_access(request)
-	can_edit_scope = True
-	can_manage_scope = _is_scope_owner(request, scope)
+	# 2026-07-01: Godkjent status locks content for everyone; owners may change status to unlock.
+	scope_is_locked = scope.is_content_locked()
+	is_owner = _is_scope_owner(request, scope)
+	can_edit_scope = not scope_is_locked
+	can_manage_scope = is_owner and not scope_is_locked
+	can_change_locked_status = is_owner and scope_is_locked
 	criteria = get_active_criteria()
 
 	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
@@ -352,6 +361,7 @@ def risiko_scope_detail(request, pk):
 		'tiltak_rows': _build_tiltak_rows(scope, scenarios),
 		'can_edit_scope': can_edit_scope,
 		'can_manage_scope': can_manage_scope,
+		'can_change_locked_status': can_change_locked_status,
 		'owner_memberships': owner_memberships,
 		'participant_memberships': participant_memberships,
 		'editor_urls': _risiko_editor_urls(pk),

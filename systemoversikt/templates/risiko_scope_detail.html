@@ -12,6 +12,7 @@
 {# 2026-06-30: Tiltak status badge CSS – forslag (gray) and besluttet (pink). #}
 {# 2026-06-30: Tilgang left of beskrivelse; risikomatriser on dedicated row below. #}
 {# 2026-06-26: Compact scope meta edit form; toggled via Rediger; removed Kilde and Akseptkriterier nav link. #}
+{# 2026-07-01: Godkjent status – read-only lock; owner status-unlock control. #}
 {% load static %}
 {% load templatetags %}
 
@@ -21,11 +22,15 @@
 
 {% block hovedinnhold %}
 
-<div id="risiko-scope-editor" data-can-edit="{% if can_edit_scope %}true{% else %}false{% endif %}" data-can-manage="{% if can_manage_scope %}true{% else %}false{% endif %}">
+<div id="risiko-scope-editor" data-can-edit="{% if can_edit_scope %}true{% else %}false{% endif %}" data-can-manage="{% if can_manage_scope %}true{% else %}false{% endif %}" data-can-change-status="{% if can_change_locked_status %}true{% else %}false{% endif %}">
 
 <p>
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til oversikt</a>
 </p>
+
+{% if scope.is_content_locked and not can_change_locked_status %}
+<div class="alert alert-info py-2" role="status">Denne samlingen er godkjent og skrivebeskyttet.</div>
+{% endif %}
 
 <div class="row mb-4">
 	{% if can_manage_scope %}
@@ -78,6 +83,26 @@
 			<p>
 				<strong>Status:</strong> <span id="risiko-scope-status-view">{% risiko_scope_status scope.status scope.get_status_display %}</span>
 			</p>
+			{% if can_change_locked_status %}
+			<div class="card mb-3" id="risiko-scope-status-unlock">
+				<div class="card-body py-2">
+					<p class="small text-muted mb-2 mb-md-1">Samlingen er godkjent og skrivebeskyttet. Endre status for å åpne for redigering.</p>
+					<input type="hidden" id="risiko-unlock-title" value="{{ scope.title }}">
+					<input type="hidden" id="risiko-unlock-beskrivelse" value="{{ scope.beskrivelse }}">
+					<input type="hidden" id="risiko-unlock-revidert" value="{{ scope.sist_revidert|date:'Y-m-d' }}">
+					<div class="d-flex flex-wrap align-items-center">
+						<label for="risiko-unlock-status-select" class="small mb-0 mr-2">Ny status</label>
+						<select id="risiko-unlock-status-select" class="form-control form-control-sm mr-2" style="max-width: 14rem;">
+							<option value="forsteutkast">Førsteutkast</option>
+							<option value="under_revurdering" selected>Under revurdering</option>
+							<option value="til_godkjenning">Til godkjenning</option>
+						</select>
+						<button type="button" class="btn btn-outline-primary btn-sm" id="risiko-unlock-status-save">Lagre status</button>
+						<span id="risiko-unlock-status-msg" class="text-muted small ml-2"></span>
+					</div>
+				</div>
+			</div>
+			{% endif %}
 			<p>
 				<strong>Sist revidert:</strong> <span id="risiko-scope-revidert-view">{{ scope.sist_revidert|date:"Y-m-d" }}</span>
 			</p>
@@ -742,7 +767,7 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 	margin-top: 0.15rem;
 }
 </style>
-{% if can_edit_scope %}
+{% if can_edit_scope or can_change_locked_status %}
 <script src="{% static 'risiko_edit.js' %}" nonce="{{request.csp_nonce}}"></script>
 {% endif %}
 {% endblock ekstrajavascript %}

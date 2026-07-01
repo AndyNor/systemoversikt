@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: Godkjent status locks collection – reject content mutations; owner may change status only.
 # 2026-07-01: Tiltak ansvarlig search (virksomhet-scoped) and ansvarlig_display in action payloads.
 # 2026-06-30: RiskScope status – workflow validation; sannsynlighetstyper on scenarios.
 # 2026-06-30: api_risiko_meta uses global get_active_criteria() for editor dropdowns and matrix.
@@ -490,6 +491,15 @@ def _require_owner_json(request, scope_id):
 	return _require_member_json(request, scope_id)
 
 
+def _reject_if_content_locked(scope):
+	if scope.is_content_locked():
+		return _json_error(
+			'Risikosamlingen er godkjent og kan ikke redigeres. En eier må endre status for å åpne for redigering.',
+			status=403,
+		)
+	return None
+
+
 def _reload_scenario(scenario_id):
 	return RiskScenario.objects.prefetch_related('systemer', 'actions').get(pk=scenario_id)
 
@@ -565,6 +575,9 @@ def api_risiko_scenario_create(request, pk):
 	scope, err = _require_owner_json(request, pk)
 	if err:
 		return err
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
 	data = _parse_json_body(request)
 	if data is None:
 		return _json_error('invalid_json')
@@ -610,6 +623,10 @@ def api_risiko_scenario_update(request, pk, sid):
 	except Http404:
 		return _json_error('forbidden', status=403)
 
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
+
 	data = _parse_json_body(request)
 	if data is None:
 		return _json_error('invalid_json')
@@ -634,6 +651,10 @@ def api_risiko_scenario_delete(request, pk, sid):
 		scope, scenario = _get_member_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
+
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
 
 	if request.method == 'POST':
 		data = _parse_json_body(request) or {}
@@ -681,6 +702,20 @@ def api_risiko_scope_update(request, pk):
 		if parsed == 'invalid':
 			return _json_error('Ugyldig dato – bruk format ÅÅÅÅ-MM-DD.')
 		sist_revidert = parsed
+
+	# 2026-07-01: Godkjent – only owners may change status; other fields must stay unchanged.
+	if scope.is_content_locked():
+		if not _is_scope_owner(request, scope):
+			return _json_error(
+				'Risikosamlingen er godkjent og kan ikke redigeres. En eier må endre status for å åpne for redigering.',
+				status=403,
+			)
+		if (
+			title != scope.title
+			or beskrivelse != scope.beskrivelse
+			or sist_revidert != scope.sist_revidert
+		):
+			return _json_error('Godkjente samlinger kan kun ha status endret.', status=403)
 
 	new_status = scope.status
 	if 'status' in data:
@@ -744,6 +779,10 @@ def api_risiko_action_create(request, pk, sid):
 	except Http404:
 		return _json_error('forbidden', status=403)
 
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
+
 	data = _parse_json_body(request)
 	if data is None:
 		return _json_error('invalid_json')
@@ -776,6 +815,10 @@ def api_risiko_action_update(request, pk, sid, aid):
 		scope, scenario = _get_member_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
+
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
 
 	action = get_object_or_404(RiskAction, pk=aid, scope=scope)
 	data = _parse_json_body(request)
@@ -815,6 +858,10 @@ def api_risiko_action_delete(request, pk, sid, aid):
 	except Http404:
 		return _json_error('forbidden', status=403)
 
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
+
 	action = get_object_or_404(RiskAction, pk=aid, scope=scope)
 
 	if request.method == 'POST':
@@ -829,6 +876,9 @@ def api_risiko_action_delete(request, pk, sid, aid):
 @require_http_methods(['POST'])
 def api_risiko_scope_action_create(request, pk):
 	scope, err = _require_owner_json(request, pk)
+	if err:
+		return err
+	err = _reject_if_content_locked(scope)
 	if err:
 		return err
 
@@ -874,6 +924,9 @@ def api_risiko_scope_action_create(request, pk):
 @require_http_methods(['PATCH', 'POST'])
 def api_risiko_scope_action_update(request, pk, aid):
 	scope, err = _require_owner_json(request, pk)
+	if err:
+		return err
+	err = _reject_if_content_locked(scope)
 	if err:
 		return err
 
@@ -927,6 +980,9 @@ def api_risiko_scope_action_update(request, pk, aid):
 @require_http_methods(['DELETE', 'POST'])
 def api_risiko_scope_action_delete(request, pk, aid):
 	scope, err = _require_owner_json(request, pk)
+	if err:
+		return err
+	err = _reject_if_content_locked(scope)
 	if err:
 		return err
 
@@ -1033,6 +1089,9 @@ def api_risiko_member_add(request, pk):
 	scope, err = _require_managed_json(request, pk)
 	if err:
 		return err
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
 
 	data = _parse_json_body(request)
 	if data is None:
@@ -1074,6 +1133,9 @@ def api_risiko_member_remove(request, pk, user_id):
 	scope, err = _require_managed_json(request, pk)
 	if err:
 		return err
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
 
 	if request.method == 'POST':
 		data = _parse_json_body(request) or {}
@@ -1093,6 +1155,9 @@ def api_risiko_member_remove(request, pk, user_id):
 @require_http_methods(['PATCH', 'POST'])
 def api_risiko_scope_virksomhet(request, pk):
 	scope, err = _require_managed_json(request, pk)
+	if err:
+		return err
+	err = _reject_if_content_locked(scope)
 	if err:
 		return err
 

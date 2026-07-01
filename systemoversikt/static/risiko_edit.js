@@ -1,4 +1,5 @@
 // Change log:
+// 2026-07-01: Godkjent lock – initRisikoStatusUnlock for owner-only status change when read-only.
 // 2026-06-30: Scenario table columns – Konsekvenstype, Konsekvens, Sannsynlighetstype, Sannsynlighet.
 // 2026-06-30: Full scenario table rebuild on refresh – fixes stale konsekvenstype/sannsynlighetstype columns.
 // 2026-06-30: Modal close refreshes scope tables; Lukk button left of Slett scenario.
@@ -53,6 +54,79 @@
 
   function urlWithId(template, id) {
     return template.replace('{id}', String(id));
+  }
+
+  function fetchJson(url, options) {
+    const config = getConfig();
+    const opts = options || {};
+    opts.credentials = 'same-origin';
+    opts.headers = opts.headers || {};
+    if (opts.body && !opts.headers['Content-Type']) {
+      opts.headers['Content-Type'] = 'application/json';
+    }
+    if (opts.method && opts.method !== 'GET') {
+      opts.headers['X-CSRFToken'] = config ? config.csrf : '';
+    }
+    return fetch(url, opts).then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok) {
+          const err = new Error((data && data.error) || 'Forespørsel feilet');
+          err.data = data;
+          throw err;
+        }
+        return data;
+      });
+    });
+  }
+
+  function initRisikoStatusUnlock() {
+    const root = document.getElementById('risiko-scope-editor');
+    if (!root || root.getAttribute('data-can-change-status') !== 'true') {
+      return;
+    }
+    const config = getConfig();
+    if (!config || !config.urls || !config.urls.scopeUpdate) {
+      return;
+    }
+    const saveBtn = document.getElementById('risiko-unlock-status-save');
+    const statusSelect = document.getElementById('risiko-unlock-status-select');
+    const msgEl = document.getElementById('risiko-unlock-status-msg');
+    const titleEl = document.getElementById('risiko-unlock-title');
+    const beskEl = document.getElementById('risiko-unlock-beskrivelse');
+    const revEl = document.getElementById('risiko-unlock-revidert');
+    if (!saveBtn || !statusSelect) {
+      return;
+    }
+
+    function setMsg(msg, isError) {
+      if (!msgEl) {
+        return;
+      }
+      msgEl.textContent = msg || '';
+      msgEl.className = isError ? 'text-danger small ml-2' : 'text-muted small ml-2';
+    }
+
+    saveBtn.addEventListener('click', function () {
+      const newStatus = statusSelect.value;
+      if (!newStatus || newStatus === 'godkjent') {
+        setMsg('Velg en annen status enn Godkjent.', true);
+        return;
+      }
+      const payload = {
+        title: titleEl ? titleEl.value.trim() : '',
+        beskrivelse: beskEl ? beskEl.value : '',
+        sist_revidert: revEl ? revEl.value : '',
+        status: newStatus,
+      };
+      setMsg('Lagrer…');
+      fetchJson(config.urls.scopeUpdate, { method: 'PATCH', body: JSON.stringify(payload) })
+        .then(function () {
+          window.location.reload();
+        })
+        .catch(function (err) {
+          setMsg(err.message, true);
+        });
+    });
   }
 
   function initRisikoEditor() {
@@ -285,28 +359,6 @@
       if (!scopeStatus) return;
       scopeStatus.textContent = msg || '';
       scopeStatus.className = isError ? 'text-danger small ml-2' : 'text-muted small ml-2';
-    }
-
-    function fetchJson(url, options) {
-      const opts = options || {};
-      opts.credentials = 'same-origin';
-      opts.headers = opts.headers || {};
-      if (opts.body && !opts.headers['Content-Type']) {
-        opts.headers['Content-Type'] = 'application/json';
-      }
-      if (opts.method && opts.method !== 'GET') {
-        opts.headers['X-CSRFToken'] = config.csrf;
-      }
-      return fetch(url, opts).then(function (response) {
-        return response.json().then(function (data) {
-          if (!response.ok) {
-            const err = new Error((data && data.error) || 'Forespørsel feilet');
-            err.data = data;
-            throw err;
-          }
-          return data;
-        });
-      });
     }
 
     function riskLabel(sannsynlighet, konsekvens) {
@@ -1779,9 +1831,14 @@
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initRisikoEditor);
-  } else {
+  function initRisiko() {
+    initRisikoStatusUnlock();
     initRisikoEditor();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRisiko);
+  } else {
+    initRisiko();
   }
 })();

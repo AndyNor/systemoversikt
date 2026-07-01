@@ -72,7 +72,7 @@
 	<td>{{ scope.scenario_count }}</td>
 	<td>{{ scope.opprettet|date:"Y-m-d" }}</td>
 	<td class="text-nowrap">
-		{% if scope.current_user_is_owner %}
+		{% if scope.current_user_is_owner and scope.status != 'godkjent' %}
 		<button type="button"
 			class="btn btn-outline-danger btn-sm risiko-scope-delete-btn"
 			data-delete-url="{% url 'risiko_scope_delete' pk=scope.pk %}"
