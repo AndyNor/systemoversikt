@@ -1,0 +1,86 @@
+{% extends "sikkerhet_index.html" %}
+{% load templatetags %}
+{# 2026-07-01: Risk MVP access denied – explains owner/participant/read-group model, not Django CRUD perms. #}
+
+{% block overskrift %}
+	{% access_denied_icon '25px' %} Denne informasjonen er beskyttet
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+{% if not request.user.is_authenticated %}
+<p>Du er ikke logget inn. Logg på for å se om du har tilgang til denne risikosamlingen.</p>
+
+{% elif risk_access_reason == 'collection_owner' %}
+<p>Du har ikke eierrettigheter til denne handlingen.</p>
+{% if scope %}
+<p class="mb-2">Risikosamling: <strong>{{ scope.title }}</strong></p>
+{% endif %}
+<p>
+	Kun <strong>eiere</strong> kan slette samlingen, administrere tilgang (eiere og deltakere) og endre tilknyttet virksomhet.
+	Deltakere kan redigere innhold, men ikke administrere tilgang.
+</p>
+{% if owner_names %}
+<p>Kontakt en av eierne for å få eierrolle eller utføre handlingen:</p>
+<ul>
+	{% for name in owner_names %}<li>{{ name }}</li>{% endfor %}
+</ul>
+{% else %}
+<p>Kontakt en eier av samlingen for å få tilgang.</p>
+{% endif %}
+
+{% elif risk_access_reason == 'read_groups_manage' %}
+<p>Du kan ikke administrere lesetilgangsgrupper for denne virksomheten.</p>
+{% if virksomhet %}
+<p class="mb-2">Virksomhet: <strong>{{ virksomhet.virksomhetsforkortelse }}</strong> – {{ virksomhet.virksomhetsnavn }}</p>
+{% endif %}
+<p>
+	Administrasjon av lesetilgangsgrupper er begrenset til <strong>systemforvalter</strong> i virksomheten
+	(AD-gruppen for systemforvalter-tilgang), og du må representere samme virksomhet i din brukerprofil.
+</p>
+<p>Systemforvalteren kan opprette grupper som gir lesetilgang til alle risikosamlinger for virksomheten.</p>
+
+{% elif risk_access_reason == 'create_collection' %}
+<p>Du har ikke tilgang til å opprette eller importere risikosamlinger.</p>
+<p>
+	Oppretting og Excel-import er begrenset til brukere med tilgang til sikkerhetsmodulen
+	(typisk sikkerhetsanalytikere). Be om tilgang via IDA eller kontakt sikkerhetsansvarlig i din virksomhet.
+</p>
+
+{% else %}
+{# collection_read – default #}
+<p>Du har ikke tilgang til å se denne risikosamlingen.</p>
+{% if scope %}
+<p class="mb-2">Risikosamling: <strong>{{ scope.title }}</strong>
+	{% if scope.virksomhet %} ({{ scope.virksomhet.virksomhetsforkortelse }}){% endif %}
+</p>
+{% endif %}
+
+<div class="mb-4" style="background-color: #f8f9fa; padding: 1rem 1.25rem; border-radius: 4px;">
+	<h5 class="mt-0">Slik får du tilgang i risikovurderinger</h5>
+	<p class="mb-2">Tilgang styres per risikosamling – ikke via vanlige IDA-roller for Kartoteket.</p>
+	<ul class="mb-0">
+		<li><strong>Eier</strong> – kan lese og redigere, administrere tilgang og endre virksomhet.</li>
+		<li><strong>Deltaker</strong> – kan lese og redigere innhold i samlingen.</li>
+		<li><strong>Lesetilgang via gruppe</strong> – gir leseadgang til alle samlinger for en virksomhet. Grupper opprettes av systemforvalter for virksomheten under <em>Tilgangsgrupper</em> på risikooversikten.</li>
+	</ul>
+</div>
+
+{% if owner_names %}
+<p>Be en <strong>eier</strong> om å legge deg til som eier eller deltaker:</p>
+<ul>
+	{% for name in owner_names %}<li>{{ name }}</li>{% endfor %}
+</ul>
+{% elif scope and scope.virksomhet %}
+<p>Du kan også be systemforvalter i <strong>{{ scope.virksomhet.virksomhetsforkortelse }}</strong> om å legge deg i en lesetilgangsgruppe.</p>
+{% else %}
+<p>Be en eier av samlingen om tilgang, eller systemforvalter i virksomheten om lesetilgang via tilgangsgruppe.</p>
+{% endif %}
+
+{% endif %}
+
+<p class="mt-4 mb-0">
+	<a href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
+</p>
+
+{% endblock hovedinnhold %}

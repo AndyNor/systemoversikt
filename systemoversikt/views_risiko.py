@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: Custom risiko_access_denied page – explains owner/participant/read-group access.
 # 2026-07-01: Dropped legacy /sikkerhet/risiko/<pk>/ redirect routes.
 # 2026-07-01: Virksomhet viewpoints, collection URL prefix, read-group access on detail/list.
 # 2026-07-01: Godkjent status locks collection read-only; owner may change status to unlock.
@@ -72,6 +73,7 @@ from systemoversikt.risk_membership import (
 	scopes_for_user_membership,
 	scopes_for_virksomhet,
 	user_can_manage_risk_virksomhet_groups,
+	user_display_name,
 	user_has_scope_read_access,
 	user_has_scope_write_access,
 )
@@ -154,21 +156,51 @@ def _get_writable_scenario(request, scope_id, scenario_id):
 _get_owned_scenario = _get_member_scenario
 
 
-def _deny_scope_access(request):
-	# 2026-06-25: 403 (not 404) when list shows all collections – existence is already public.
-	return render(request, '403.html', {
+def _scope_owner_names(scope):
+	if scope is None:
+		return []
+	names = []
+	for m in scope.memberships.all():
+		if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER:
+			names.append(user_display_name(m.user))
+	return names
+
+
+def _scope_for_access_message(pk):
+	return (
+		RiskScope.objects.select_related('virksomhet')
+		.prefetch_related(
+			Prefetch(
+				'memberships',
+				queryset=RiskScopeMember.objects.filter(
+					role=RISK_SCOPE_MEMBER_ROLE_OWNER,
+				).select_related('user'),
+			),
+		)
+		.filter(pk=pk)
+		.first()
+	)
+
+
+def _render_risk_access_denied(request, reason, scope=None, virksomhet=None):
+	# 2026-07-01: Risk-specific 403 – module uses owner/participant/read-group, not Django model perms.
+	return render(request, 'risiko_access_denied.html', {
 		'request': request,
 		'required_permissions': [],
-		'groups': request.user.groups,
-	})
+		'risk_access_reason': reason,
+		'scope': scope,
+		'virksomhet': virksomhet or (scope.virksomhet if scope else None),
+		'owner_names': _scope_owner_names(scope),
+	}, status=403)
+
+
+def _deny_scope_access(request, scope=None, reason='collection_read'):
+	return _render_risk_access_denied(request, reason, scope=scope)
 
 
 def _check_permissions(request, required_permissions):
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {
-			'required_permissions': required_permissions,
-			'groups': request.user.groups,
-		})
+		return _render_risk_access_denied(request, 'create_collection')
 	return None
 
 
@@ -252,11 +284,7 @@ def risiko_virksomhet_list(request, vid):
 def risiko_virksomhet_tilgangsgrupper(request, vid):
 	virksomhet = get_object_or_404(Virksomhet, pk=vid)
 	if not user_can_manage_risk_virksomhet_groups(request.user, virksomhet):
-		return render(request, '403.html', {
-			'request': request,
-			'required_permissions': [],
-			'groups': request.user.groups,
-		})
+		return _render_risk_access_denied(request, 'read_groups_manage', virksomhet=virksomhet)
 	api_urls = {
 		'groups': reverse('api_risiko_read_groups_list', kwargs={'vid': vid}),
 		'groupCreate': reverse('api_risiko_read_group_create', kwargs={'vid': vid}),
@@ -281,7 +309,10 @@ def risiko_scope_delete(request, pk):
 	try:
 		scope = _get_managed_scope(request, pk)
 	except Http404:
-		return _deny_scope_access(request)
+		scope = _scope_for_access_message(pk)
+		if scope and user_has_scope_read_access(request.user, scope):
+			return _render_risk_access_denied(request, 'collection_owner', scope=scope)
+		return _deny_scope_access(request, scope=scope)
 	# 2026-07-01: Godkjent collections cannot be deleted until status is changed.
 	if scope.is_content_locked():
 		messages.error(request, 'Godkjente risikosamlinger kan ikke slettes. Endre status først.')
@@ -394,7 +425,7 @@ def risiko_scope_detail(request, pk):
 		pk=pk,
 	)
 	if not _has_scope_read_access(request, scope):
-		return _deny_scope_access(request)
+		return _deny_scope_access(request, scope=scope)
 	# 2026-07-01: Godkjent status locks content; read-group viewers never get write access.
 	scope_is_locked = scope.is_content_locked()
 	is_owner = _is_scope_owner(request, scope)
@@ -447,7 +478,7 @@ def risiko_scenario_detail(request, pk, sid):
 	# 2026-06-25: Scenario editing is in scope-detail modal – redirect legacy URLs.
 	scope = get_object_or_404(RiskScope, pk=pk)
 	if not _has_scope_read_access(request, scope):
-		return _deny_scope_access(request)
+		return _deny_scope_access(request, scope=scope)
 	get_object_or_404(RiskScenario, pk=sid, scope=scope)
 	return redirect(reverse('risiko_scope_detail', kwargs={'pk': pk}) + '?edit=%s' % sid)
 
@@ -583,6 +614,6 @@ def risiko_matrise(request, pk):
 	# 2026-06-24: Matrices moved to scope detail page top.
 	scope = get_object_or_404(RiskScope, pk=pk)
 	if not _has_scope_read_access(request, scope):
-		return _deny_scope_access(request)
+		return _deny_scope_access(request, scope=scope)
 	return redirect(reverse('risiko_scope_detail', kwargs={'pk': pk}) + '#risikomatriser')
 
