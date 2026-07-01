@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: Read-group access – GET APIs use readable scope; writes still require membership.
 # 2026-07-01: Godkjent status locks collection – reject content mutations; owner may change status only.
 # 2026-07-01: Tiltak ansvarlig search (virksomhet-scoped) and ansvarlig_display in action payloads.
 # 2026-06-30: RiskScope status – workflow validation; sannsynlighetstyper on scenarios.
@@ -72,6 +73,8 @@ from systemoversikt.views_risiko import (
 	_get_managed_scope,
 	_get_member_scope,
 	_get_member_scenario,
+	_get_readable_scope,
+	_get_writable_scenario,
 	_is_scope_owner,
 )
 
@@ -479,6 +482,13 @@ def _require_member_json(request, scope_id):
 		return None, _json_error('forbidden', status=403)
 
 
+def _require_read_json(request, scope_id):
+	try:
+		return _get_readable_scope(request, scope_id), None
+	except Http404:
+		return None, _json_error('forbidden', status=403)
+
+
 def _require_managed_json(request, scope_id):
 	try:
 		return _get_managed_scope(request, scope_id), None
@@ -525,7 +535,7 @@ def _scenario_response(scope, scenario):
 
 @require_GET
 def api_risiko_meta(request, pk):
-	scope, err = _require_owner_json(request, pk)
+	scope, err = _require_read_json(request, pk)
 	if err:
 		return err
 	return JsonResponse({'ok': True, 'meta': get_active_criteria().meta_choices()})
@@ -533,7 +543,7 @@ def api_risiko_meta(request, pk):
 
 @require_GET
 def api_risiko_scenarios_list(request, pk):
-	scope, err = _require_owner_json(request, pk)
+	scope, err = _require_read_json(request, pk)
 	if err:
 		return err
 	scenarios = _load_scope_scenarios(scope)
@@ -619,7 +629,7 @@ def api_risiko_scenario_create(request, pk):
 @require_http_methods(['PATCH', 'POST'])
 def api_risiko_scenario_update(request, pk, sid):
 	try:
-		scope, scenario = _get_member_scenario(request, pk, sid)
+		scope, scenario = _get_writable_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 
@@ -648,7 +658,7 @@ def api_risiko_scenario_update(request, pk, sid):
 @require_http_methods(['DELETE', 'POST'])
 def api_risiko_scenario_delete(request, pk, sid):
 	try:
-		scope, scenario = _get_member_scenario(request, pk, sid)
+		scope, scenario = _get_writable_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 
@@ -775,7 +785,7 @@ def api_risiko_systemer_sok(request):
 @require_http_methods(['POST'])
 def api_risiko_action_create(request, pk, sid):
 	try:
-		scope, scenario = _get_member_scenario(request, pk, sid)
+		scope, scenario = _get_writable_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 
@@ -812,7 +822,7 @@ def api_risiko_action_create(request, pk, sid):
 @require_http_methods(['PATCH', 'POST'])
 def api_risiko_action_update(request, pk, sid, aid):
 	try:
-		scope, scenario = _get_member_scenario(request, pk, sid)
+		scope, scenario = _get_writable_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 
@@ -854,7 +864,7 @@ def api_risiko_action_update(request, pk, sid, aid):
 @require_http_methods(['DELETE', 'POST'])
 def api_risiko_action_delete(request, pk, sid, aid):
 	try:
-		scope, scenario = _get_member_scenario(request, pk, sid)
+		scope, scenario = _get_writable_scenario(request, pk, sid)
 	except Http404:
 		return _json_error('forbidden', status=403)
 
@@ -1078,7 +1088,7 @@ def _tiltak_ansvarlig_sok_queryset(q, virksomhet):
 
 @require_GET
 def api_risiko_members_list(request, pk):
-	scope, err = _require_member_json(request, pk)
+	scope, err = _require_read_json(request, pk)
 	if err:
 		return err
 	return JsonResponse({'ok': True, **_members_payload(scope)})

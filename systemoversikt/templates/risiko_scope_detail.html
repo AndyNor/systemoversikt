@@ -28,7 +28,9 @@
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til oversikt</a>
 </p>
 
-{% if scope.is_content_locked and not can_change_locked_status %}
+{% if is_read_only_viewer %}
+<div class="alert alert-secondary py-2" role="status">Du har lesetilgang til denne samlingen via tilgangsgruppe for virksomheten. Redigering krever at du er eier eller deltaker.</div>
+{% elif scope.is_content_locked and not can_change_locked_status %}
 <div class="alert alert-info py-2" role="status">Denne samlingen er godkjent og skrivebeskyttet.</div>
 {% endif %}
 

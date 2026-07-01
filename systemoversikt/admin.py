@@ -2,6 +2,7 @@
 # Change log:
 # 2026-06-30: RiskCriteriaConfig oppdatert_av autocomplete – avoid loading all users in admin dropdown.
 # 2026-06-30: RiskCriteriaConfig admin – emergency JSON fallback for global akseptkriterier.
+# 2026-07-01: RiskVirksomhetReadGroup admin for superuser fallback.
 # 2026-06-30: RiskScopeMember inline; virksomhet on RiskScope replaces single eier.
 # 2026-06-26: RiskScope eier list_filter uses RelatedOnlyFieldListFilter – avoids loading all ~85k users.
 # 2026-06-26: RiskAction admin on scope; M2M scenarios for shared tiltak.
@@ -1697,6 +1698,30 @@ class RiskScopeMemberAdmin(SimpleHistoryAdmin):
 	list_filter = ('role',)
 	search_fields = ('scope__title', 'user__username', 'user__first_name', 'user__last_name')
 	autocomplete_fields = ('scope', 'user', 'added_by')
+
+
+class RiskVirksomhetReadGroupMemberInline(admin.TabularInline):
+	model = RiskVirksomhetReadGroupMember
+	extra = 0
+	fields = ('user', 'added_by')
+	autocomplete_fields = ('user', 'added_by')
+
+
+@admin.register(RiskVirksomhetReadGroup)
+class RiskVirksomhetReadGroupAdmin(SimpleHistoryAdmin):
+	list_display = ('title', 'virksomhet', 'opprettet', 'sist_oppdatert', 'created_by')
+	list_filter = ('virksomhet',)
+	search_fields = ('title', 'beskrivelse', 'virksomhet__virksomhetsforkortelse')
+	autocomplete_fields = ('virksomhet', 'created_by')
+	inlines = [RiskVirksomhetReadGroupMemberInline]
+
+
+@admin.register(RiskVirksomhetReadGroupMember)
+class RiskVirksomhetReadGroupMemberAdmin(SimpleHistoryAdmin):
+	list_display = ('group', 'user', 'opprettet')
+	list_filter = ('group__virksomhet',)
+	search_fields = ('group__title', 'user__username')
+	autocomplete_fields = ('group', 'user', 'added_by')
 
 
 @admin.register(RiskScenario)

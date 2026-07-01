@@ -1,0 +1,87 @@
+{% extends "sikkerhet_index.html" %}
+{# 2026-07-01: Virksomhet-specific risk collection viewpoint. #}
+
+{% block overskrift %}
+	Risikovurderinger – {{ virksomhet.virksomhetsforkortelse }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p class="mb-3">
+	<a href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
+</p>
+
+<p class="text-muted">
+	Visning for virksomheten <strong>{{ virksomhet.virksomhetsnavn }}</strong> ({{ virksomhet.virksomhetsforkortelse }}).
+	Alle risikosamlinger knyttet til denne virksomheten vises nedenfor.
+</p>
+
+<p>
+	{% if can_create %}
+	<a class="btn btn-success btn-sm" href="{% url 'risiko_scope_create' %}">Ny samling</a>
+	{% endif %}
+	{% if can_import %}
+	<a class="btn btn-primary btn-sm" href="{% url 'risiko_import' %}">Importer Excel</a>
+	{% endif %}
+	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_akseptkriterier' %}">Akseptkriterier</a>
+	{% if can_manage_read_groups %}
+	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_virksomhet_tilgangsgrupper' vid=virksomhet.pk %}">Tilgangsgrupper</a>
+	{% endif %}
+</p>
+
+<h5 class="mt-4">Risikosamlinger for {{ virksomhet.virksomhetsforkortelse }}</h5>
+
+{% include "risiko_scope_list_table.html" with scopes=scopes %}
+
+{% if not scopes %}
+<p class="mt-2">Ingen risikosamlinger for denne virksomheten ennå.</p>
+{% endif %}
+
+<form id="risiko-scope-delete-form" method="post" class="d-none">
+	{% csrf_token %}
+</form>
+
+<div class="modal fade" id="risiko-scope-delete-modal" tabindex="-1" role="dialog" aria-labelledby="risiko-scope-delete-modal-title" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="risiko-scope-delete-modal-title">Slett risikosamling</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Lukk">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p class="mb-2">Er du sikker på at du vil slette risikosamlingen <strong id="risiko-scope-delete-title"></strong>?</p>
+				<p class="text-muted mb-0">Dette kan ikke angres. Alle scenarioer og tiltak i samlingen slettes.</p>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
+				<button type="button" class="btn btn-danger btn-sm" id="risiko-scope-delete-confirm">Slett</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+$(function () {
+	var form = document.getElementById('risiko-scope-delete-form');
+	var modal = $('#risiko-scope-delete-modal');
+	var titleEl = document.getElementById('risiko-scope-delete-title');
+	var confirmBtn = document.getElementById('risiko-scope-delete-confirm');
+	if (!form || !modal.length || !titleEl || !confirmBtn) {
+		return;
+	}
+	$(document).on('click', '.risiko-scope-delete-btn', function () {
+		form.action = this.getAttribute('data-delete-url');
+		titleEl.textContent = this.getAttribute('data-scope-title') || '';
+		modal.modal('show');
+	});
+	confirmBtn.addEventListener('click', function () {
+		form.submit();
+	});
+});
+</script>
+{% endblock script_append %}

@@ -1,0 +1,264 @@
+{% extends "sikkerhet_index.html" %}
+{# 2026-07-01: Manage per-virksomhet read-access groups for risk collections. #}
+
+{% block overskrift %}
+	Lesetilgangsgrupper – {{ virksomhet.virksomhetsforkortelse }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p class="mb-3">
+	<a href="{% url 'risiko_virksomhet_list' vid=virksomhet.pk %}">&larr; Tilbake til {{ virksomhet.virksomhetsforkortelse }}</a>
+</p>
+
+<p class="text-muted">
+	Grupper her gir <strong>lesetilgang</strong> til alle risikosamlinger som tilhører {{ virksomhet.virksomhetsnavn }}.
+	Medlemmer kan åpne og lese samlinger, men ikke redigere.
+</p>
+
+{% csrf_token %}
+
+<div class="mb-3">
+	<button type="button" class="btn btn-success btn-sm" id="risiko-read-group-new">Ny gruppe</button>
+</div>
+
+<div id="risiko-read-groups-list" class="mb-4"></div>
+
+<div class="card d-none" id="risiko-read-group-editor">
+	<div class="card-body">
+		<h6 class="card-title" id="risiko-read-group-editor-title">Gruppe</h6>
+		<div class="form-group">
+			<label for="risiko-read-group-title">Tittel</label>
+			<input type="text" id="risiko-read-group-title" class="form-control form-control-sm" maxlength="200">
+		</div>
+		<div class="form-group">
+			<label for="risiko-read-group-beskrivelse">Beskrivelse</label>
+			<textarea id="risiko-read-group-beskrivelse" class="form-control form-control-sm" rows="2"></textarea>
+		</div>
+		<button type="button" class="btn btn-primary btn-sm" id="risiko-read-group-save">Lagre</button>
+		<button type="button" class="btn btn-outline-secondary btn-sm" id="risiko-read-group-cancel">Avbryt</button>
+		<span id="risiko-read-group-status" class="text-muted small ml-2"></span>
+	</div>
+</div>
+
+<div class="card d-none mt-4" id="risiko-read-group-members-card">
+	<div class="card-body">
+		<h6 class="card-title">Medlemmer i <span id="risiko-read-group-members-title"></span></h6>
+		<ul id="risiko-read-group-members-list" class="list-unstyled small mb-2"></ul>
+		<input type="search" id="risiko-read-group-member-sok" class="form-control form-control-sm mb-1" placeholder="Legg til bruker…" autocomplete="off">
+		<div id="risiko-read-group-member-sok-treff" class="small"></div>
+	</div>
+</div>
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+(function () {
+	var apiUrls = {{ api_urls_json|safe }};
+	var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+	csrfToken = csrfToken ? csrfToken.value : '';
+	var groupsListEl = document.getElementById('risiko-read-groups-list');
+	var editorCard = document.getElementById('risiko-read-group-editor');
+	var membersCard = document.getElementById('risiko-read-group-members-card');
+	var editingGroupId = null;
+	var selectedGroupId = null;
+
+	function apiFetch(url, options) {
+		options = options || {};
+		options.headers = options.headers || {};
+		if (options.body && !options.headers['Content-Type']) {
+			options.headers['Content-Type'] = 'application/json';
+		}
+		if (csrfToken && options.method && options.method !== 'GET') {
+			options.headers['X-CSRFToken'] = csrfToken;
+		}
+		return fetch(url, options).then(function (r) { return r.json(); });
+	}
+
+	function renderGroups(groups) {
+		if (!groups.length) {
+			groupsListEl.innerHTML = '<p class="text-muted">Ingen grupper ennå.</p>';
+			return;
+		}
+		var html = '<table class="table table-sm"><thead><tr><th>Tittel</th><th>Beskrivelse</th><th>Medlemmer</th><th></th></tr></thead><tbody>';
+		groups.forEach(function (g) {
+			html += '<tr data-group-id="' + g.id + '">';
+			html += '<td><a href="#" class="risiko-read-group-select">' + escapeHtml(g.title) + '</a></td>';
+			html += '<td>' + escapeHtml(g.beskrivelse || '-') + '</td>';
+			html += '<td>' + (g.member_count || 0) + '</td>';
+			html += '<td class="text-nowrap">';
+			html += '<button type="button" class="btn btn-link btn-sm p-0 risiko-read-group-edit">Rediger</button> ';
+			html += '<button type="button" class="btn btn-link btn-sm p-0 text-danger risiko-read-group-delete">Slett</button>';
+			html += '</td></tr>';
+		});
+		html += '</tbody></table>';
+		groupsListEl.innerHTML = html;
+	}
+
+	function escapeHtml(s) {
+		return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+	}
+
+	function loadGroups() {
+		return apiFetch(apiUrls.groups).then(function (data) {
+			if (data.ok) {
+				renderGroups(data.groups || []);
+			}
+		});
+	}
+
+	function showEditor(group) {
+		editingGroupId = group ? group.id : null;
+		document.getElementById('risiko-read-group-editor-title').textContent = group ? 'Rediger gruppe' : 'Ny gruppe';
+		document.getElementById('risiko-read-group-title').value = group ? group.title : '';
+		document.getElementById('risiko-read-group-beskrivelse').value = group ? (group.beskrivelse || '') : '';
+		editorCard.classList.remove('d-none');
+	}
+
+	function hideEditor() {
+		editingGroupId = null;
+		editorCard.classList.add('d-none');
+	}
+
+	function loadMembers(groupId) {
+		selectedGroupId = groupId;
+		var url = apiUrls.members.replace('{id}', groupId);
+		return apiFetch(url).then(function (data) {
+			if (!data.ok) {
+				return;
+			}
+			document.getElementById('risiko-read-group-members-title').textContent = data.group.title;
+			var list = document.getElementById('risiko-read-group-members-list');
+			list.innerHTML = '';
+			(data.members || []).forEach(function (m) {
+				var li = document.createElement('li');
+				li.innerHTML = escapeHtml(m.name) + ' <button type="button" class="btn btn-link btn-sm p-0 risiko-read-group-member-remove" data-user-id="' + m.user_id + '">Fjern</button>';
+				list.appendChild(li);
+			});
+			membersCard.classList.remove('d-none');
+		});
+	}
+
+	document.getElementById('risiko-read-group-new').addEventListener('click', function () {
+		showEditor(null);
+	});
+
+	document.getElementById('risiko-read-group-cancel').addEventListener('click', hideEditor);
+
+	document.getElementById('risiko-read-group-save').addEventListener('click', function () {
+		var title = document.getElementById('risiko-read-group-title').value.trim();
+		var beskrivelse = document.getElementById('risiko-read-group-beskrivelse').value.trim();
+		if (!title) {
+			document.getElementById('risiko-read-group-status').textContent = 'Tittel er påkrevd.';
+			return;
+		}
+		var url = editingGroupId
+			? apiUrls.groupDetail.replace('{id}', editingGroupId)
+			: apiUrls.groupCreate;
+		var method = editingGroupId ? 'PATCH' : 'POST';
+		apiFetch(url, {
+			method: method,
+			body: JSON.stringify({ title: title, beskrivelse: beskrivelse }),
+		}).then(function (data) {
+			if (data.ok) {
+				hideEditor();
+				loadGroups();
+			} else {
+				document.getElementById('risiko-read-group-status').textContent = data.error || 'Feil ved lagring.';
+			}
+		});
+	});
+
+	groupsListEl.addEventListener('click', function (e) {
+		var row = e.target.closest('tr[data-group-id]');
+		if (!row) {
+			return;
+		}
+		var gid = row.getAttribute('data-group-id');
+		if (e.target.classList.contains('risiko-read-group-select')) {
+			e.preventDefault();
+			loadMembers(gid);
+		} else if (e.target.classList.contains('risiko-read-group-edit')) {
+			e.preventDefault();
+			var title = row.cells[0].textContent.trim();
+			var besk = row.cells[1].textContent.trim();
+			showEditor({ id: parseInt(gid, 10), title: title, beskrivelse: besk === '-' ? '' : besk });
+		} else if (e.target.classList.contains('risiko-read-group-delete')) {
+			e.preventDefault();
+			if (!confirm('Slette denne gruppen?')) {
+				return;
+			}
+			var delUrl = apiUrls.groupDelete.replace('{id}', gid);
+			apiFetch(delUrl, { method: 'DELETE' }).then(function (data) {
+				if (data.ok) {
+					if (selectedGroupId === gid) {
+						membersCard.classList.add('d-none');
+						selectedGroupId = null;
+					}
+					loadGroups();
+				}
+			});
+		}
+	});
+
+	document.getElementById('risiko-read-group-members-list').addEventListener('click', function (e) {
+		if (!e.target.classList.contains('risiko-read-group-member-remove')) {
+			return;
+		}
+		var userId = e.target.getAttribute('data-user-id');
+		var url = apiUrls.memberRemove
+			.replace('{groupId}', selectedGroupId)
+			.replace('{userId}', userId);
+		apiFetch(url, { method: 'DELETE' }).then(function (data) {
+			if (data.ok) {
+				loadMembers(selectedGroupId);
+				loadGroups();
+			}
+		});
+	});
+
+	var searchTimer = null;
+	document.getElementById('risiko-read-group-member-sok').addEventListener('input', function () {
+		var q = this.value.trim();
+		var treff = document.getElementById('risiko-read-group-member-sok-treff');
+		clearTimeout(searchTimer);
+		if (q.length < 2 || !selectedGroupId) {
+			treff.innerHTML = '';
+			return;
+		}
+		searchTimer = setTimeout(function () {
+			apiFetch(apiUrls.brukerSearch + '?q=' + encodeURIComponent(q)).then(function (data) {
+				if (!data.ok) {
+					return;
+				}
+				treff.innerHTML = '';
+				(data.results || []).forEach(function (r) {
+					var btn = document.createElement('button');
+					btn.type = 'button';
+					btn.className = 'btn btn-link btn-sm p-0 d-block text-left';
+					btn.textContent = r.label;
+					btn.addEventListener('click', function () {
+						var addUrl = apiUrls.memberAdd.replace('{id}', selectedGroupId);
+						apiFetch(addUrl, {
+							method: 'POST',
+							body: JSON.stringify({ user_id: r.id }),
+						}).then(function (res) {
+							if (res.ok) {
+								document.getElementById('risiko-read-group-member-sok').value = '';
+								treff.innerHTML = '';
+								loadMembers(selectedGroupId);
+								loadGroups();
+							}
+						});
+					});
+					treff.appendChild(btn);
+				});
+			});
+		}, 250);
+	});
+
+	loadGroups();
+})();
+</script>
+{% endblock script_append %}

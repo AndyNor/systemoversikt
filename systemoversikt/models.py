@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: RiskVirksomhetReadGroup + member – per-virksomhet read-only access groups for risk collections.
 # 2026-06-30: RiskScope.status – workflow state for risikosamling approval.
 # 2026-06-30: RiskScenario.sannsynlighetstyper – multi-select probability dimension tags.
 # 2026-06-30: RiskCriteriaConfig – global editable akseptkriterier shared by all risikosamlinger.
@@ -7899,6 +7900,100 @@ class RiskScopeMember(models.Model):
 			models.UniqueConstraint(
 				fields=['scope', 'user'],
 				name='risk_scope_member_unique_scope_user',
+			),
+		]
+
+
+class RiskVirksomhetReadGroup(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	virksomhet = models.ForeignKey(
+		to='Virksomhet',
+		on_delete=models.CASCADE,
+		related_name='risk_read_groups',
+		verbose_name="Virksomhet",
+	)
+	title = models.CharField(
+		verbose_name="Tittel",
+		max_length=200,
+	)
+	beskrivelse = models.TextField(
+		verbose_name="Beskrivelse",
+		blank=True,
+		default='',
+	)
+	created_by = models.ForeignKey(
+		to=User,
+		on_delete=models.SET_NULL,
+		related_name='risk_read_groups_created',
+		verbose_name="Opprettet av",
+		blank=True,
+		null=True,
+	)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return '%s – %s' % (self.virksomhet, self.title)
+
+	class Meta:
+		verbose_name = "risiko lesetilgangsgruppe"
+		verbose_name_plural = "Risiko: lesetilgangsgrupper"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		constraints = [
+			models.UniqueConstraint(
+				fields=['virksomhet', 'title'],
+				name='risk_virksomhet_read_group_unique_title',
+			),
+		]
+		ordering = ['virksomhet__virksomhetsnavn', 'title']
+
+
+class RiskVirksomhetReadGroupMember(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	group = models.ForeignKey(
+		to=RiskVirksomhetReadGroup,
+		on_delete=models.CASCADE,
+		related_name='memberships',
+		verbose_name="Gruppe",
+	)
+	user = models.ForeignKey(
+		to=User,
+		on_delete=models.CASCADE,
+		related_name='risk_virksomhet_read_group_memberships',
+		verbose_name="Bruker",
+	)
+	added_by = models.ForeignKey(
+		to=User,
+		on_delete=models.SET_NULL,
+		related_name='risk_virksomhet_read_group_memberships_added',
+		verbose_name="Lagt til av",
+		blank=True,
+		null=True,
+	)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return '%s – %s' % (self.group, self.user)
+
+	class Meta:
+		verbose_name = "risiko lesetilgangsgruppe-medlem"
+		verbose_name_plural = "Risiko: lesetilgangsgruppe-medlemmer"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		constraints = [
+			models.UniqueConstraint(
+				fields=['group', 'user'],
+				name='risk_virksomhet_read_group_member_unique',
 			),
 		]
 

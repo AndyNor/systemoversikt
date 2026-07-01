@@ -2,6 +2,8 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-07-01: Removed legacy /sikkerhet/risiko/<pk>/ routes – collection/ prefix only.
+# 2026-07-01: Virksomhet viewpoints, collection URL prefix, read-access API gates.
 # 2026-06-30: risikosamling delete URL – owner-only POST from list page.
 # 2026-06-24: Risk scenario/tiltak AJAX API routes.
 # 2026-06-30: Membership and virksomhet API routes for risikosamling access control.
@@ -26,6 +28,7 @@ import systemoversikt.api_bloodhound as api_bloodhound
 import systemoversikt.views_bloodhound as views_bloodhound
 import systemoversikt.views_risiko as views_risiko
 import systemoversikt.api_risiko as api_risiko
+import systemoversikt.api_risiko_virksomhet as api_risiko_virksomhet
 
 favicon_view = RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=True)
 
@@ -129,30 +132,40 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/akseptkriterier/rediger/$', views_risiko.risiko_akseptkriterier_rediger, name='risiko_akseptkriterier_rediger'),
 	re_path(r'^sikkerhet/risiko/akseptkriterier/$', views_risiko.risiko_akseptkriterier, name='risiko_akseptkriterier'),
 	re_path(r'^sikkerhet/risiko/api/systemer/sok/$', api_risiko.api_risiko_systemer_sok, name='api_risiko_systemer_sok'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/meta/$', api_risiko.api_risiko_meta, name='api_risiko_meta'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/$', api_risiko.api_risiko_scenarios_list, name='api_risiko_scenarios_list'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/create/$', api_risiko.api_risiko_scenario_create, name='api_risiko_scenario_create'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/$', api_risiko.api_risiko_scenario_detail, name='api_risiko_scenario_detail'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/update/$', api_risiko.api_risiko_scenario_update, name='api_risiko_scenario_update'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/delete/$', api_risiko.api_risiko_scenario_delete, name='api_risiko_scenario_delete'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/actions/create/$', api_risiko.api_risiko_action_create, name='api_risiko_action_create'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/actions/(?P<aid>\d{1,8})/update/$', api_risiko.api_risiko_action_update, name='api_risiko_action_update'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/actions/(?P<aid>\d{1,8})/delete/$', api_risiko.api_risiko_action_delete, name='api_risiko_action_delete'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/actions/create/$', api_risiko.api_risiko_scope_action_create, name='api_risiko_scope_action_create'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/actions/(?P<aid>\d{1,8})/update/$', api_risiko.api_risiko_scope_action_update, name='api_risiko_scope_action_update'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/actions/(?P<aid>\d{1,8})/delete/$', api_risiko.api_risiko_scope_action_delete, name='api_risiko_scope_action_delete'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scope/virksomhet/$', api_risiko.api_risiko_scope_virksomhet, name='api_risiko_scope_virksomhet'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/members/add/$', api_risiko.api_risiko_member_add, name='api_risiko_member_add'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/members/(?P<user_id>\d{1,8})/remove/$', api_risiko.api_risiko_member_remove, name='api_risiko_member_remove'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/members/$', api_risiko.api_risiko_members_list, name='api_risiko_members_list'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/brukere/sok/$', api_risiko.api_risiko_brukere_sok, name='api_risiko_brukere_sok'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/tiltak/ansvarlig/sok/$', api_risiko.api_risiko_tiltak_ansvarlig_sok, name='api_risiko_tiltak_ansvarlig_sok'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/virksomheter/sok/$', api_risiko.api_risiko_virksomheter_sok, name='api_risiko_virksomheter_sok'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scope/$', api_risiko.api_risiko_scope_update, name='api_risiko_scope_update'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/delete/$', views_risiko.risiko_scope_delete, name='risiko_scope_delete'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/$', views_risiko.risiko_scope_detail, name='risiko_scope_detail'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/matrise/$', views_risiko.risiko_matrise, name='risiko_matrise'),
-	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/scenario/(?P<sid>\d{1,8})/$', views_risiko.risiko_scenario_detail, name='risiko_scenario_detail'),
+	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/$', api_risiko_virksomhet.api_risiko_read_groups_list, name='api_risiko_read_groups_list'),
+	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/create/$', api_risiko_virksomhet.api_risiko_read_group_create, name='api_risiko_read_group_create'),
+	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/(?P<gid>\d{1,8})/members/(?P<user_id>\d{1,8})/remove/$', api_risiko_virksomhet.api_risiko_read_group_member_remove, name='api_risiko_read_group_member_remove'),
+	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/(?P<gid>\d{1,8})/members/add/$', api_risiko_virksomhet.api_risiko_read_group_member_add, name='api_risiko_read_group_member_add'),
+	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/(?P<gid>\d{1,8})/members/$', api_risiko_virksomhet.api_risiko_read_group_members, name='api_risiko_read_group_members'),
+	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/(?P<gid>\d{1,8})/$', api_risiko_virksomhet.api_risiko_read_group_update, name='api_risiko_read_group_update'),
+	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/(?P<gid>\d{1,8})/delete/$', api_risiko_virksomhet.api_risiko_read_group_delete, name='api_risiko_read_group_delete'),
+	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/brukere/sok/$', api_risiko_virksomhet.api_risiko_read_group_brukere_sok, name='api_risiko_read_group_brukere_sok'),
+	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/$', views_risiko.risiko_virksomhet_tilgangsgrupper, name='risiko_virksomhet_tilgangsgrupper'),
+	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/$', views_risiko.risiko_virksomhet_list, name='risiko_virksomhet_list'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/meta/$', api_risiko.api_risiko_meta, name='api_risiko_meta'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scenarios/$', api_risiko.api_risiko_scenarios_list, name='api_risiko_scenarios_list'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scenarios/create/$', api_risiko.api_risiko_scenario_create, name='api_risiko_scenario_create'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/$', api_risiko.api_risiko_scenario_detail, name='api_risiko_scenario_detail'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/update/$', api_risiko.api_risiko_scenario_update, name='api_risiko_scenario_update'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/delete/$', api_risiko.api_risiko_scenario_delete, name='api_risiko_scenario_delete'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/actions/create/$', api_risiko.api_risiko_action_create, name='api_risiko_action_create'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/actions/(?P<aid>\d{1,8})/update/$', api_risiko.api_risiko_action_update, name='api_risiko_action_update'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scenarios/(?P<sid>\d{1,8})/actions/(?P<aid>\d{1,8})/delete/$', api_risiko.api_risiko_action_delete, name='api_risiko_action_delete'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/actions/create/$', api_risiko.api_risiko_scope_action_create, name='api_risiko_scope_action_create'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/actions/(?P<aid>\d{1,8})/update/$', api_risiko.api_risiko_scope_action_update, name='api_risiko_scope_action_update'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/actions/(?P<aid>\d{1,8})/delete/$', api_risiko.api_risiko_scope_action_delete, name='api_risiko_scope_action_delete'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scope/virksomhet/$', api_risiko.api_risiko_scope_virksomhet, name='api_risiko_scope_virksomhet'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/members/add/$', api_risiko.api_risiko_member_add, name='api_risiko_member_add'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/members/(?P<user_id>\d{1,8})/remove/$', api_risiko.api_risiko_member_remove, name='api_risiko_member_remove'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/members/$', api_risiko.api_risiko_members_list, name='api_risiko_members_list'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/brukere/sok/$', api_risiko.api_risiko_brukere_sok, name='api_risiko_brukere_sok'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/tiltak/ansvarlig/sok/$', api_risiko.api_risiko_tiltak_ansvarlig_sok, name='api_risiko_tiltak_ansvarlig_sok'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/virksomheter/sok/$', api_risiko.api_risiko_virksomheter_sok, name='api_risiko_virksomheter_sok'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scope/$', api_risiko.api_risiko_scope_update, name='api_risiko_scope_update'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/delete/$', views_risiko.risiko_scope_delete, name='risiko_scope_delete'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/matrise/$', views_risiko.risiko_matrise, name='risiko_matrise'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/scenario/(?P<sid>\d{1,8})/$', views_risiko.risiko_scenario_detail, name='risiko_scenario_detail'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/$', views_risiko.risiko_scope_detail, name='risiko_scope_detail'),
 	re_path(r'^sikkerhet/system_per_isk/$', views.isk_ansvarlig_for_system, name='isk_ansvarlig_for_system'),
 	re_path(r'^sikkerhet/system_kit_vurderinger/$', views.rapport_kit_vurderinger_samlet, name='rapport_kit_vurderinger_samlet'),
 	re_path(r'^sikkerhet/kritiske_funksjoner/$', views.system_kritisk_funksjon, name='system_kritisk_funksjon'),

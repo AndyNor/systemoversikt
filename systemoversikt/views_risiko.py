@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: Dropped legacy /sikkerhet/risiko/<pk>/ redirect routes.
+# 2026-07-01: Virksomhet viewpoints, collection URL prefix, read-group access on detail/list.
 # 2026-07-01: Godkjent status locks collection read-only; owner may change status to unlock.
 # 2026-07-01: Editor URL for virksomhet-scoped tiltak ansvarlig user search.
 # 2026-06-30: List page – status column and lock icon for collections without access.
@@ -26,7 +28,7 @@ import json
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Exists, OuterRef, Prefetch
+from django.db.models import Prefetch
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -40,6 +42,7 @@ from systemoversikt.models import (
 	RiskScope,
 	RiskScopeMember,
 	RiskScenario,
+	Virksomhet,
 )
 from systemoversikt.risk_criteria import (
 	criteria_from_post,
@@ -62,7 +65,16 @@ from systemoversikt.risk_criteria_transfer import (
 	parse_import_payload,
 )
 from systemoversikt.risk_import import import_risk_workbook
-from systemoversikt.risk_membership import create_risk_scope
+from systemoversikt.risk_membership import (
+	create_risk_scope,
+	other_ordinary_virksomheter,
+	profile_virksomhet,
+	scopes_for_user_membership,
+	scopes_for_virksomhet,
+	user_can_manage_risk_virksomhet_groups,
+	user_has_scope_read_access,
+	user_has_scope_write_access,
+)
 from systemoversikt.views import formater_permissions
 
 # Import restricted to security analysts; detail restricted to scope members.
@@ -88,7 +100,13 @@ def _is_scope_member(request, scope):
 	return _scope_membership(request, scope) is not None
 
 
-def _get_member_scope(request, scope_id):
+def _has_scope_read_access(request, scope):
+	if not request.user.is_authenticated:
+		return False
+	return user_has_scope_read_access(request.user, scope)
+
+
+def _get_readable_scope(request, scope_id):
 	scope = get_object_or_404(
 		RiskScope.objects.select_related('virksomhet').prefetch_related(
 			Prefetch(
@@ -98,6 +116,13 @@ def _get_member_scope(request, scope_id):
 		),
 		pk=scope_id,
 	)
+	if not _has_scope_read_access(request, scope):
+		raise Http404
+	return scope
+
+
+def _get_member_scope(request, scope_id):
+	scope = _get_readable_scope(request, scope_id)
 	if not _is_scope_member(request, scope):
 		raise Http404
 	return scope
@@ -115,6 +140,12 @@ _get_owned_scope = _get_member_scope
 
 
 def _get_member_scenario(request, scope_id, scenario_id):
+	scope = _get_readable_scope(request, scope_id)
+	scenario = get_object_or_404(RiskScenario, pk=scenario_id, scope=scope)
+	return scope, scenario
+
+
+def _get_writable_scenario(request, scope_id, scenario_id):
 	scope = _get_member_scope(request, scope_id)
 	scenario = get_object_or_404(RiskScenario, pk=scenario_id, scope=scope)
 	return scope, scenario
@@ -169,43 +200,78 @@ def _risiko_editor_urls(scope_pk):
 	}
 
 
-def risiko_scope_list(request):
-	# 2026-06-30: Lock icon on list when user is not owner/participant; status column with workflow icons.
-	# 2026-06-30: Delete button on list for owners only (current_user_is_owner).
-	# 2026-06-25: Open landing page lists all collections; detail remains member-only.
-	member_qs = RiskScopeMember.objects.filter(
-		scope=OuterRef('pk'),
-		user=request.user,
-	)
-	owner_qs = RiskScopeMember.objects.filter(
-		scope=OuterRef('pk'),
-		user=request.user,
-		role=RISK_SCOPE_MEMBER_ROLE_OWNER,
-	)
-	scopes = (
-		RiskScope.objects.select_related('virksomhet')
-		.prefetch_related(
-			Prefetch(
-				'memberships',
-				queryset=RiskScopeMember.objects.filter(
-					role=RISK_SCOPE_MEMBER_ROLE_OWNER,
-				).select_related('user'),
-			),
-		)
-		.annotate(
-			scenario_count=Count('scenarios'),
-			current_user_is_member=Exists(member_qs),
-			current_user_is_owner=Exists(owner_qs),
-		)
-		.order_by('-sist_revidert', '-opprettet')
-	)
+def _risiko_list_context(request, scopes, list_virksomhet=None, show_other_virksomheter=False):
 	can_write = any(map(request.user.has_perm, RISK_WRITE_PERMISSIONS))
-	return render(request, 'risiko_scope_list.html', {
+	profile_v = profile_virksomhet(request.user)
+	ctx = {
 		'request': request,
 		'required_permissions': [],
 		'scopes': scopes,
 		'can_import': can_write,
 		'can_create': can_write,
+		'profile_virksomhet': profile_v,
+		'list_virksomhet': list_virksomhet,
+		'can_manage_read_groups': (
+			list_virksomhet is not None
+			and user_can_manage_risk_virksomhet_groups(request.user, list_virksomhet)
+		),
+	}
+	if show_other_virksomheter:
+		ctx['other_virksomheter'] = other_ordinary_virksomheter(profile_v)
+	return ctx
+
+
+def risiko_scope_list(request):
+	# 2026-07-01: Root list – profile virksomhet collections plus cross-virksomhet memberships.
+	profile_v = profile_virksomhet(request.user)
+	virksomhet_scopes = scopes_for_virksomhet(
+		request.user,
+		profile_v.pk if profile_v else None,
+	)
+	my_scopes = scopes_for_user_membership(
+		request.user,
+		exclude_virksomhet_id=profile_v.pk if profile_v else None,
+	)
+	return render(request, 'risiko_scope_list.html', {
+		**_risiko_list_context(request, virksomhet_scopes, list_virksomhet=profile_v, show_other_virksomheter=True),
+		'virksomhet_scopes': virksomhet_scopes,
+		'my_scopes': my_scopes,
+		'is_root_list': True,
+	})
+
+
+def risiko_virksomhet_list(request, vid):
+	virksomhet = get_object_or_404(Virksomhet, pk=vid)
+	scopes = scopes_for_virksomhet(request.user, virksomhet.pk)
+	return render(request, 'risiko_virksomhet_list.html', {
+		**_risiko_list_context(request, scopes, list_virksomhet=virksomhet),
+		'virksomhet': virksomhet,
+	})
+
+
+def risiko_virksomhet_tilgangsgrupper(request, vid):
+	virksomhet = get_object_or_404(Virksomhet, pk=vid)
+	if not user_can_manage_risk_virksomhet_groups(request.user, virksomhet):
+		return render(request, '403.html', {
+			'request': request,
+			'required_permissions': [],
+			'groups': request.user.groups,
+		})
+	api_urls = {
+		'groups': reverse('api_risiko_read_groups_list', kwargs={'vid': vid}),
+		'groupCreate': reverse('api_risiko_read_group_create', kwargs={'vid': vid}),
+		'groupDetail': reverse('api_risiko_read_group_update', kwargs={'vid': vid, 'gid': 0}).replace('/0/', '/{id}/'),
+		'groupDelete': reverse('api_risiko_read_group_delete', kwargs={'vid': vid, 'gid': 0}).replace('/0/', '/{id}/'),
+		'members': reverse('api_risiko_read_group_members', kwargs={'vid': vid, 'gid': 0}).replace('/groups/0/', '/groups/{id}/'),
+		'memberAdd': reverse('api_risiko_read_group_member_add', kwargs={'vid': vid, 'gid': 0}).replace('/groups/0/', '/groups/{id}/'),
+		'memberRemove': reverse('api_risiko_read_group_member_remove', kwargs={'vid': vid, 'gid': 0, 'user_id': 0}).replace('/groups/0/', '/groups/{groupId}/').replace('/members/0/', '/members/{userId}/'),
+		'brukerSearch': reverse('api_risiko_read_group_brukere_sok', kwargs={'vid': vid}),
+	}
+	return render(request, 'risiko_virksomhet_tilgangsgrupper.html', {
+		'request': request,
+		'required_permissions': [],
+		'virksomhet': virksomhet,
+		'api_urls_json': json.dumps(api_urls),
 	})
 
 
@@ -327,14 +393,17 @@ def risiko_scope_detail(request, pk):
 		),
 		pk=pk,
 	)
-	if not _is_scope_member(request, scope):
+	if not _has_scope_read_access(request, scope):
 		return _deny_scope_access(request)
-	# 2026-07-01: Godkjent status locks content for everyone; owners may change status to unlock.
+	# 2026-07-01: Godkjent status locks content; read-group viewers never get write access.
 	scope_is_locked = scope.is_content_locked()
 	is_owner = _is_scope_owner(request, scope)
-	can_edit_scope = not scope_is_locked
+	is_member = _is_scope_member(request, scope)
+	can_write = user_has_scope_write_access(request.user, scope)
+	can_edit_scope = can_write and not scope_is_locked
 	can_manage_scope = is_owner and not scope_is_locked
 	can_change_locked_status = is_owner and scope_is_locked
+	is_read_only_viewer = not is_member and _has_scope_read_access(request, scope)
 	criteria = get_active_criteria()
 
 	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
@@ -362,6 +431,7 @@ def risiko_scope_detail(request, pk):
 		'can_edit_scope': can_edit_scope,
 		'can_manage_scope': can_manage_scope,
 		'can_change_locked_status': can_change_locked_status,
+		'is_read_only_viewer': is_read_only_viewer,
 		'owner_memberships': owner_memberships,
 		'participant_memberships': participant_memberships,
 		'editor_urls': _risiko_editor_urls(pk),
@@ -376,7 +446,7 @@ def risiko_scope_detail(request, pk):
 def risiko_scenario_detail(request, pk, sid):
 	# 2026-06-25: Scenario editing is in scope-detail modal – redirect legacy URLs.
 	scope = get_object_or_404(RiskScope, pk=pk)
-	if not _is_scope_member(request, scope):
+	if not _has_scope_read_access(request, scope):
 		return _deny_scope_access(request)
 	get_object_or_404(RiskScenario, pk=sid, scope=scope)
 	return redirect(reverse('risiko_scope_detail', kwargs={'pk': pk}) + '?edit=%s' % sid)
@@ -512,7 +582,7 @@ def risiko_akseptkriterier_rediger(request):
 def risiko_matrise(request, pk):
 	# 2026-06-24: Matrices moved to scope detail page top.
 	scope = get_object_or_404(RiskScope, pk=pk)
-	if not _is_scope_member(request, scope):
+	if not _has_scope_read_access(request, scope):
 		return _deny_scope_access(request)
 	return redirect(reverse('risiko_scope_detail', kwargs={'pk': pk}) + '#risikomatriser')
 
