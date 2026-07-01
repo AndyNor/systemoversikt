@@ -146,6 +146,7 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/members/(?P<user_id>\d{1,8})/remove/$', api_risiko.api_risiko_member_remove, name='api_risiko_member_remove'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/members/$', api_risiko.api_risiko_members_list, name='api_risiko_members_list'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/brukere/sok/$', api_risiko.api_risiko_brukere_sok, name='api_risiko_brukere_sok'),
+	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/tiltak/ansvarlig/sok/$', api_risiko.api_risiko_tiltak_ansvarlig_sok, name='api_risiko_tiltak_ansvarlig_sok'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/virksomheter/sok/$', api_risiko.api_risiko_virksomheter_sok, name='api_risiko_virksomheter_sok'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/api/scope/$', api_risiko.api_risiko_scope_update, name='api_risiko_scope_update'),
 	re_path(r'^sikkerhet/risiko/(?P<pk>\d{1,8})/delete/$', views_risiko.risiko_scope_delete, name='risiko_scope_delete'),

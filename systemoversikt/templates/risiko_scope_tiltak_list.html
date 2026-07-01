@@ -1,3 +1,4 @@
+{# 2026-07-01: Ansvarlig column resolves email/UPN to display name via risiko_ansvarlig_display. #}
 {# 2026-06-30: Status and Risk ID columns use colored tags (status + nåværende risiko level). #}
 {# 2026-06-26: Read-only scope tiltak overview; edit tiltak in scenario modal. #}
 {# 2026-06-26: One row per scope tiltak – T#, beskrivelse, Risk ID(s); display-time IDs. #}
@@ -32,7 +33,7 @@
 			<a href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ link.scenario_pk }}" class="risiko-level-tag risiko-risk-id-tag {{ link.risiko_css }}" title="{{ link.risiko_etikett }}">{{ link.risk_id }}</a>{% if not forloop.last %} {% endif %}
 		{% empty %}-{% endfor %}
 	</td>
-	<td>{{ row.action.ansvarlig|default:"-" }}</td>
+	<td>{% if row.action.ansvarlig %}{{ row.action.ansvarlig|risiko_ansvarlig_display }}{% else %}-{% endif %}</td>
 	<td>{{ row.action.frist|date:"Y-m-d"|default:"-" }}</td>
 	<td>{% risiko_tiltak_status_tag row.action.status row.action.get_status_display %}</td>
 </tr>

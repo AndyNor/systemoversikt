@@ -236,9 +236,13 @@
 						</div>
 						<div id="risiko-system-sok-treff" class="mb-2"></div>
 						<div class="form-group mb-0">
-							{# 2026-06-30: Spell out K/I/T dimension names on modal input label. #}
-							<label for="risiko-f-kit">Konfidensialitet (K), Integritet (I), Tilgjengelighet (T)</label>
-							<input type="text" class="form-control form-control-sm" id="risiko-f-kit" placeholder="f.eks. K, I eller K, T">
+							{# 2026-07-01: K/I/T toggle buttons – still stored as kit_dimensjoner string. #}
+							<label class="d-block mb-1">Konfidensialitet (K), Integritet (I), Tilgjengelighet (T)</label>
+							<div id="risiko-kit-toggles" class="risiko-kit-toggle-group" role="group" aria-label="KIT dimensjoner">
+								<button type="button" class="btn btn-sm risiko-kit-toggle risiko-kit-k" data-kit="K" aria-pressed="false" title="Konfidensialitet">K</button>
+								<button type="button" class="btn btn-sm risiko-kit-toggle risiko-kit-i" data-kit="I" aria-pressed="false" title="Integritet">I</button>
+								<button type="button" class="btn btn-sm risiko-kit-toggle risiko-kit-t" data-kit="T" aria-pressed="false" title="Tilgjengelighet">T</button>
+							</div>
 						</div>
 						</div>
 					</div>
@@ -659,6 +663,48 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 .risiko-kit-k { background-color: #ede7f6; color: #5e35b1; }
 .risiko-kit-i { background-color: #efebe9; color: #6d4c41; }
 .risiko-kit-t { background-color: #eceff1; color: #546e7a; }
+/* 2026-07-01: KIT modal toggles – muted when off, solid fill + white text when active. */
+.risiko-kit-toggle-group { display: flex; flex-wrap: wrap; gap: 4px; }
+.risiko-kit-toggle {
+	border: 2px solid;
+	background: #f8f9fa;
+	font-weight: 600;
+	font-size: 0.75rem;
+	padding: 2px 10px;
+	line-height: 1.4;
+}
+.risiko-kit-toggle.risiko-kit-k:not(.active) {
+	border-color: #b39ddb;
+	color: #7e57c2;
+	background: #fafafa;
+}
+.risiko-kit-toggle.active.risiko-kit-k {
+	border-color: #4527a0;
+	background-color: #5e35b1;
+	color: #fff;
+}
+.risiko-kit-toggle.risiko-kit-i:not(.active) {
+	border-color: #bcaaa4;
+	color: #8d6e63;
+	background: #fafafa;
+}
+.risiko-kit-toggle.active.risiko-kit-i {
+	border-color: #4e342e;
+	background-color: #6d4c41;
+	color: #fff;
+}
+.risiko-kit-toggle.risiko-kit-t:not(.active) {
+	border-color: #b0bec5;
+	color: #78909c;
+	background: #fafafa;
+}
+.risiko-kit-toggle.active.risiko-kit-t {
+	border-color: #37474f;
+	background-color: #546e7a;
+	color: #fff;
+}
+.risiko-action-ansvarlig-wrap { position: relative; }
+.risiko-action-ansvarlig-treff { position: relative; z-index: 2; }
 #risiko-scenarios-table td.risk-cell-lav,
 #risiko-scenarios-table td.risk-cell-middels,
 #risiko-scenarios-table td.risk-cell-hoy { text-align: center; font-weight: 600; }

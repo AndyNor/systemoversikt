@@ -1,4 +1,5 @@
 # Change log:
+# 2026-07-01: risiko_ansvarlig_display – show Profile displayName for tiltak ansvarlig email/UPN.
 # 2026-06-30: under_revurdering status – arrow-clockwise-circle icon (repeat/review).
 # 2026-06-30: access_denied_icon – red 🛇 for missing read permission.
 # 2026-06-30: bootstrap_icon – inline Bootstrap Icons SVGs (replaces open-iconic static files).
@@ -486,6 +487,14 @@ def risiko_level_tag(label, css_class):
 		cls,
 		label,
 	))
+
+
+@register.filter
+def risiko_ansvarlig_display(value):
+	from systemoversikt.risk_display import resolve_ansvarlig_display
+	if not value:
+		return ''
+	return resolve_ansvarlig_display(value)
 
 
 @register.simple_tag

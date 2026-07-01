@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: Tiltak ansvarlig search (virksomhet-scoped) and ansvarlig_display in action payloads.
 # 2026-06-30: RiskScope status – workflow validation; sannsynlighetstyper on scenarios.
 # 2026-06-30: api_risiko_meta uses global get_active_criteria() for editor dropdowns and matrix.
 # 2026-06-30: Scenario konsekvenstyper – validate, save, serialize in scenario API.
@@ -58,9 +59,12 @@ from systemoversikt.risk_criteria import (
 )
 from systemoversikt.risk_display import (
 	annotate_scenario_display_ids,
+	build_ansvarlig_display_map,
 	build_scope_tiltak_rows,
+	resolve_ansvarlig_display,
 	scenario_display_tiltak_ids,
 	tiltak_display_id_map,
+	user_ansvarlig_display_name,
 )
 from systemoversikt.risk_membership import user_display_name
 from systemoversikt.views_risiko import (
@@ -119,12 +123,22 @@ def _system_to_dict(system):
 	}
 
 
-def _action_to_dict(action, display_tiltak_id=None, risk_ids=None, scenario_ids=None):
+def _ansvarlig_display_map_for_actions(actions):
+	return build_ansvarlig_display_map(
+		[a.ansvarlig for a in actions if getattr(a, 'ansvarlig', None)]
+	)
+
+
+def _action_to_dict(action, display_tiltak_id=None, risk_ids=None, scenario_ids=None, ansvarlig_display_map=None):
+	ansvarlig_display = ''
+	if action.ansvarlig:
+		ansvarlig_display = resolve_ansvarlig_display(action.ansvarlig, ansvarlig_display_map)
 	data = {
 		'id': action.pk,
 		'display_tiltak_id': display_tiltak_id or '',
 		'beskrivelse': action.beskrivelse,
 		'ansvarlig': action.ansvarlig,
+		'ansvarlig_display': ansvarlig_display,
 		'frist': action.frist.isoformat() if action.frist else None,
 		'status': action.status,
 		'status_display': action.get_status_display(),
@@ -151,7 +165,7 @@ def _load_scope_actions(scope):
 	)
 
 
-def _scenario_summary_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None):
+def _scenario_summary_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None, ansvarlig_display_map=None):
 	systems = [_system_to_dict(s) for s in scenario.systemer.all()]
 	display_risk_id = getattr(scenario, 'display_risk_id', None)
 	if not display_risk_id and risk_id_by_pk:
@@ -160,7 +174,11 @@ def _scenario_summary_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None):
 	action_dicts = []
 	for action in actions:
 		tid = (tiltak_id_map or {}).get(action.pk, '')
-		action_dicts.append(_action_to_dict(action, display_tiltak_id=tid))
+		action_dicts.append(_action_to_dict(
+			action,
+			display_tiltak_id=tid,
+			ansvarlig_display_map=ansvarlig_display_map,
+		))
 	display_tiltak_ids = (
 		scenario_display_tiltak_ids(scenario, tiltak_id_map)
 		if tiltak_id_map else '–'
@@ -192,8 +210,8 @@ def _scenario_summary_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None):
 	}
 
 
-def _scenario_to_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None):
-	data = _scenario_summary_dict(scenario, tiltak_id_map, risk_id_by_pk)
+def _scenario_to_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None, ansvarlig_display_map=None):
+	data = _scenario_summary_dict(scenario, tiltak_id_map, risk_id_by_pk, ansvarlig_display_map)
 	data.update({
 		'arsaker_svakheter': scenario.arsaker_svakheter,
 		'konsekvens_begrunnelse': scenario.konsekvens_begrunnelse,
@@ -207,7 +225,9 @@ def _scenario_to_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None):
 	return data
 
 
-def _tiltak_list_dict(scope, scenarios, actions):
+def _tiltak_list_dict(scope, scenarios, actions, ansvarlig_display_map=None):
+	if ansvarlig_display_map is None:
+		ansvarlig_display_map = _ansvarlig_display_map_for_actions(actions)
 	risk_id_by_pk = annotate_scenario_display_ids(scenarios)
 	tiltak_map = tiltak_display_id_map(actions)
 	rows = build_scope_tiltak_rows(scenarios, actions, risk_id_by_pk)
@@ -219,6 +239,7 @@ def _tiltak_list_dict(scope, scenarios, actions):
 			display_tiltak_id=row['display_tiltak_id'],
 			risk_ids=[link['risk_id'] for link in row['risk_links']],
 			scenario_ids=[link['scenario_pk'] for link in row['risk_links']],
+			ansvarlig_display_map=ansvarlig_display_map,
 		)
 		entry['risk_links'] = row['risk_links']
 		result.append(entry)
@@ -416,9 +437,15 @@ def _apply_action_scenarios(action, scope, scenario_ids):
 def _tiltak_refresh_payload(scope):
 	scenarios = _load_scope_scenarios(scope)
 	actions = _load_scope_actions(scope)
-	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions)
+	ansvarlig_display_map = _ansvarlig_display_map_for_actions(actions)
+	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(
+		scope, scenarios, actions, ansvarlig_display_map
+	)
 	return {
-		'scenarios': [_scenario_summary_dict(s, tiltak_map, risk_map) for s in scenarios],
+		'scenarios': [
+			_scenario_summary_dict(s, tiltak_map, risk_map, ansvarlig_display_map)
+			for s in scenarios
+		],
 		'tiltak': tiltak_list,
 		'level_counts': _level_counts(scenarios),
 	}
@@ -470,11 +497,17 @@ def _reload_scenario(scenario_id):
 def _scenario_response(scope, scenario):
 	scenarios = _load_scope_scenarios(scope)
 	actions = _load_scope_actions(scope)
-	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions)
+	ansvarlig_display_map = _ansvarlig_display_map_for_actions(actions)
+	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(
+		scope, scenarios, actions, ansvarlig_display_map
+	)
 	scenario = _reload_scenario(scenario.pk)
 	return {
-		'scenario': _scenario_to_dict(scenario, tiltak_map, risk_map),
-		'scenarios': [_scenario_summary_dict(s, tiltak_map, risk_map) for s in scenarios],
+		'scenario': _scenario_to_dict(scenario, tiltak_map, risk_map, ansvarlig_display_map),
+		'scenarios': [
+			_scenario_summary_dict(s, tiltak_map, risk_map, ansvarlig_display_map)
+			for s in scenarios
+		],
 		'tiltak': tiltak_list,
 		'level_counts': _level_counts(scenarios),
 	}
@@ -495,10 +528,16 @@ def api_risiko_scenarios_list(request, pk):
 		return err
 	scenarios = _load_scope_scenarios(scope)
 	actions = _load_scope_actions(scope)
-	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions)
+	ansvarlig_display_map = _ansvarlig_display_map_for_actions(actions)
+	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(
+		scope, scenarios, actions, ansvarlig_display_map
+	)
 	return JsonResponse({
 		'ok': True,
-		'scenarios': [_scenario_summary_dict(s, tiltak_map, risk_map) for s in scenarios],
+		'scenarios': [
+			_scenario_summary_dict(s, tiltak_map, risk_map, ansvarlig_display_map)
+			for s in scenarios
+		],
 		'tiltak': tiltak_list,
 		'level_counts': _level_counts(scenarios),
 	})
@@ -513,10 +552,11 @@ def api_risiko_scenario_detail(request, pk, sid):
 	scenario = _reload_scenario(scenario.pk)
 	scenarios = _load_scope_scenarios(scope)
 	actions = _load_scope_actions(scope)
-	_, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions)
+	ansvarlig_display_map = _ansvarlig_display_map_for_actions(actions)
+	_, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions, ansvarlig_display_map)
 	return JsonResponse({
 		'ok': True,
-		'scenario': _scenario_to_dict(scenario, tiltak_map, risk_map),
+		'scenario': _scenario_to_dict(scenario, tiltak_map, risk_map, ansvarlig_display_map),
 	})
 
 
@@ -604,10 +644,16 @@ def api_risiko_scenario_delete(request, pk, sid):
 	_cleanup_orphan_actions(scope)
 	scenarios = _load_scope_scenarios(scope)
 	actions = _load_scope_actions(scope)
-	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions)
+	ansvarlig_display_map = _ansvarlig_display_map_for_actions(actions)
+	tiltak_list, tiltak_map, risk_map = _tiltak_list_dict(
+		scope, scenarios, actions, ansvarlig_display_map
+	)
 	return JsonResponse({
 		'ok': True,
-		'scenarios': [_scenario_summary_dict(s, tiltak_map, risk_map) for s in scenarios],
+		'scenarios': [
+			_scenario_summary_dict(s, tiltak_map, risk_map, ansvarlig_display_map)
+			for s in scenarios
+		],
 		'tiltak': tiltak_list,
 		'level_counts': _level_counts(scenarios),
 	})
@@ -948,6 +994,32 @@ def _bruker_sok_queryset(q):
 	)
 
 
+def _tiltak_ansvarlig_sok_queryset(q, virksomhet):
+	if virksomhet is None:
+		return User.objects.none()
+	terms = q.split()
+	if not terms:
+		return User.objects.none()
+	field_queries = []
+	for term in terms:
+		field_queries.append(
+			Q(username__icontains=term)
+			| Q(first_name__icontains=term)
+			| Q(last_name__icontains=term)
+			| Q(email__icontains=term)
+			| Q(profile__displayName__icontains=term)
+		)
+	query = reduce(or_, field_queries)
+	return (
+		User.objects.filter(query)
+		.filter(is_active=True)
+		.filter(profile__virksomhet=virksomhet)
+		.select_related('profile')
+		.distinct()
+		.order_by('first_name', 'last_name', 'username')[:15]
+	)
+
+
 @require_GET
 def api_risiko_members_list(request, pk):
 	scope, err = _require_member_json(request, pk)
@@ -1062,6 +1134,28 @@ def api_risiko_brukere_sok(request, pk):
 		results.append({
 			'id': user.pk,
 			'label': '%s (%s)' % (user_display_name(user), user.username),
+		})
+	return JsonResponse({'ok': True, 'results': results})
+
+
+@require_GET
+def api_risiko_tiltak_ansvarlig_sok(request, pk):
+	scope, err = _require_member_json(request, pk)
+	if err:
+		return err
+
+	scope = RiskScope.objects.select_related('virksomhet').get(pk=scope.pk)
+	q = request.GET.get('q', '').strip()
+	if len(q) < 2:
+		return JsonResponse({'ok': True, 'results': []})
+
+	results = []
+	for user in _tiltak_ansvarlig_sok_queryset(q, scope.virksomhet):
+		email = (user.email or '').strip() or user.username
+		display = user_ansvarlig_display_name(user)
+		results.append({
+			'email': email,
+			'label': '%s (%s)' % (display, email),
 		})
 	return JsonResponse({'ok': True, 'results': results})
 

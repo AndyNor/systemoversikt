@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: Editor URL for virksomhet-scoped tiltak ansvarlig user search.
 # 2026-06-30: List page – status column and lock icon for collections without access.
 # 2026-06-30: Akseptkriterier JSON export/import – superuser page buttons for dev → prod.
 # 2026-06-30: Global akseptkriterier – read-only page and superuser editor.
@@ -161,6 +162,7 @@ def _risiko_editor_urls(scope_pk):
 		'memberRemove': reverse('api_risiko_member_remove', kwargs={'pk': pk, 'user_id': 0}).replace('/0/', '/{userId}/'),
 		'scopeVirksomhet': reverse('api_risiko_scope_virksomhet', kwargs={'pk': pk}),
 		'brukerSearch': reverse('api_risiko_brukere_sok', kwargs={'pk': pk}),
+		'tiltakAnsvarligSearch': reverse('api_risiko_tiltak_ansvarlig_sok', kwargs={'pk': pk}),
 		'virksomhetSearch': reverse('api_risiko_virksomheter_sok', kwargs={'pk': pk}),
 		'scopePage': reverse('risiko_scope_detail', kwargs={'pk': pk}),
 	}

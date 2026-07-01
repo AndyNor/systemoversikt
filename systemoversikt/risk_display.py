@@ -1,9 +1,79 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-01: Ansvarlig display resolution – map email/UPN to Profile displayName for tiltak UI.
 # 2026-06-30: Tiltak risk_links include nåværende risiko CSS for colored Risk ID tags.
 # 2026-06-26: Scenario Tiltak column lists all linked actions (all statuses).
 # 2026-06-26: Scenario tiltak ID list (T7, T8) for scenario table Tiltak column.
 # 2026-06-26: Display-time R/T IDs and scope-level tiltak rows for risk module.
+
+from django.contrib.auth.models import User
+from django.db.models import Q
+
+
+def looks_like_email_upn(value):
+	return bool(value and '@' in str(value))
+
+
+def user_ansvarlig_display_name(user):
+	profile = getattr(user, 'profile', None)
+	if profile and profile.displayName:
+		name = profile.displayName.strip()
+		if name:
+			return name
+	full = user.get_full_name()
+	if full and full.strip():
+		return full.strip()
+	return user.username
+
+
+def build_ansvarlig_display_map(raw_values):
+	candidates = []
+	seen = set()
+	for raw in raw_values or []:
+		if not raw:
+			continue
+		val = str(raw).strip()
+		if not looks_like_email_upn(val):
+			continue
+		key = val.lower()
+		if key not in seen:
+			seen.add(key)
+			candidates.append(val)
+	if not candidates:
+		return {}
+
+	query = Q()
+	for val in candidates:
+		query |= Q(email__iexact=val) | Q(username__iexact=val)
+
+	by_key = {}
+	for user in User.objects.filter(query).select_related('profile'):
+		display = user_ansvarlig_display_name(user)
+		if user.email:
+			by_key[user.email.lower()] = display
+		by_key[user.username.lower()] = display
+
+	result = {}
+	for raw in raw_values or []:
+		if not raw:
+			continue
+		val = str(raw).strip()
+		if not looks_like_email_upn(val):
+			result[val] = val
+		else:
+			result[val] = by_key.get(val.lower(), val)
+	return result
+
+
+def resolve_ansvarlig_display(value, lookup=None):
+	if not value:
+		return ''
+	val = str(value).strip()
+	if not looks_like_email_upn(val):
+		return val
+	if lookup is not None:
+		return lookup.get(val, lookup.get(val.lower(), val))
+	return build_ansvarlig_display_map([val]).get(val, val)
 
 
 def annotate_scenario_display_ids(scenarios):

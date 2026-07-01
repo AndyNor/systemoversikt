@@ -429,7 +429,7 @@
       }
       return {
         uonsket_hendelse: document.getElementById('risiko-f-uonsket').value.trim(),
-        kit_dimensjoner: document.getElementById('risiko-f-kit').value.trim(),
+        kit_dimensjoner: getKitDimensjonerFromToggles(),
         konsekvenstyper: Array.from(
           document.querySelectorAll('#risiko-konsekvenstype-checks input[type=checkbox]:checked')
         ).map(function (cb) { return cb.value; }),
@@ -451,7 +451,7 @@
     function fillScenarioForm(scenario) {
       modalAutosavePaused = true;
       document.getElementById('risiko-modal-scenario-id').value = scenario ? scenario.id : '';
-      document.getElementById('risiko-f-kit').value = scenario ? (scenario.kit_dimensjoner || '') : '';
+      setKitTogglesFromString(scenario ? (scenario.kit_dimensjoner || '') : '');
       document.getElementById('risiko-f-uonsket').value = scenario ? (scenario.uonsket_hendelse || '') : '';
       document.getElementById('risiko-f-arsaker').value = scenario ? (scenario.arsaker_svakheter || '') : '';
       document.getElementById('risiko-f-konsekvens').value = scenario && scenario.konsekvens_nivaa ? scenario.konsekvens_nivaa : '';
@@ -514,6 +514,47 @@
       I: { label: 'Integritet', css: 'risiko-kit-i' },
       T: { label: 'Tilgjengelighet', css: 'risiko-kit-t' },
     };
+    const KIT_ORDER = ['K', 'I', 'T'];
+
+    function parseKitDimensjoner(text) {
+      const seen = {};
+      const result = [];
+      const str = String(text || '').toUpperCase();
+      let match;
+      const re = /[KIT]/g;
+      while ((match = re.exec(str)) !== null) {
+        if (!seen[match[0]]) {
+          seen[match[0]] = true;
+          result.push(match[0]);
+        }
+      }
+      return result;
+    }
+
+    function getKitDimensjonerFromToggles() {
+      const selected = [];
+      KIT_ORDER.forEach(function (code) {
+        const btn = document.querySelector('#risiko-kit-toggles [data-kit="' + code + '"]');
+        if (btn && btn.classList.contains('active')) {
+          selected.push(code);
+        }
+      });
+      return selected.join(', ');
+    }
+
+    function setKitTogglesFromString(text) {
+      const active = {};
+      parseKitDimensjoner(text).forEach(function (code) {
+        active[code] = true;
+      });
+      KIT_ORDER.forEach(function (code) {
+        const btn = document.querySelector('#risiko-kit-toggles [data-kit="' + code + '"]');
+        if (!btn) return;
+        const on = !!active[code];
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+    }
 
     const RISIKO_KIT_ICON_PATHS = {
       K: '<path d="M8 1a2 2 0 0 0-2 2v2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2V3a2 2 0 0 0-2-2zM7 3a1 1 0 0 1 2 0v2H7V3z"/>',
@@ -619,6 +660,11 @@
       const removeBtn = shared
         ? '<button type="button" class="btn btn-outline-secondary btn-sm risiko-action-unlink">Koble fra</button>'
         : '<button type="button" class="btn btn-outline-danger btn-sm risiko-action-delete">Slett</button>';
+      const storedAnsvarlig = action.ansvarlig || '';
+      const visibleAnsvarlig = action.ansvarlig_display || storedAnsvarlig;
+      const ansvarligLabelAttr = (action.ansvarlig_display && action.ansvarlig_display !== storedAnsvarlig)
+        ? ' data-ansvarlig-label="' + escapeHtml(visibleAnsvarlig) + '"'
+        : '';
 
       return '<div class="risiko-action-desc-row">' +
           '<span class="risiko-action-card-id">' + displayId + '</span>' +
@@ -627,9 +673,14 @@
         '</div>' +
         '<div class="form-row risiko-action-meta-row no-gutters align-items-end">' +
           '<div class="col risiko-action-meta-col">' +
+            '<div class="risiko-action-ansvarlig-wrap">' +
             '<label class="risiko-action-label">Ansvarlig</label>' +
-            '<input type="text" class="form-control form-control-sm risiko-action-ansvarlig" value="' +
-            escapeHtml(action.ansvarlig || '') + '">' +
+            '<input type="search" class="form-control form-control-sm risiko-action-ansvarlig-input" ' +
+            'value="' + escapeHtml(visibleAnsvarlig) + '" ' +
+            'data-ansvarlig-value="' + escapeHtml(storedAnsvarlig) + '"' + ansvarligLabelAttr + ' ' +
+            'placeholder="Søk navn eller e-post">' +
+            '<div class="risiko-action-ansvarlig-treff"></div>' +
+            '</div>' +
           '</div>' +
           '<div class="col risiko-action-meta-col">' +
             '<label class="risiko-action-label">Frist</label>' +
@@ -770,6 +821,57 @@
         });
     }
 
+    function collectAnsvarligFromCard(card) {
+      const input = card.querySelector('.risiko-action-ansvarlig-input');
+      if (!input) return '';
+      return (input.getAttribute('data-ansvarlig-value') || input.value || '').trim();
+    }
+
+    function syncAnsvarligStoredValue(input) {
+      const trimmed = input.value.trim();
+      const pickedLabel = input.getAttribute('data-ansvarlig-label');
+      if (pickedLabel && trimmed === pickedLabel) {
+        return;
+      }
+      input.setAttribute('data-ansvarlig-value', trimmed);
+      input.removeAttribute('data-ansvarlig-label');
+    }
+
+    const ansvarligSearchTimers = new WeakMap();
+
+    function scheduleAnsvarligSearch(input) {
+      const wrap = input.closest('.risiko-action-ansvarlig-wrap');
+      if (!wrap || !config.urls.tiltakAnsvarligSearch) return;
+      const treff = wrap.querySelector('.risiko-action-ansvarlig-treff');
+      const q = input.value.trim();
+      const existing = ansvarligSearchTimers.get(input);
+      if (existing) clearTimeout(existing);
+      if (q.length < 2) {
+        if (treff) treff.innerHTML = '';
+        return;
+      }
+      ansvarligSearchTimers.set(input, setTimeout(function () {
+        ansvarligSearchTimers.delete(input);
+        fetchJson(config.urls.tiltakAnsvarligSearch + '?q=' + encodeURIComponent(q))
+          .then(function (data) {
+            if (!treff) return;
+            treff.innerHTML = '';
+            (data.results || []).forEach(function (hit) {
+              const btn = document.createElement('button');
+              btn.type = 'button';
+              btn.className = 'btn btn-link btn-sm d-block text-left p-0 risiko-tiltak-ansvarlig-pick';
+              btn.setAttribute('data-email', hit.email || '');
+              btn.setAttribute('data-label', hit.label || hit.email || '');
+              btn.textContent = hit.label || hit.email || '';
+              treff.appendChild(btn);
+            });
+          })
+          .catch(function (err) {
+            setModalStatus(err.message, true);
+          });
+      }, 250));
+    }
+
     function collectModalActionPayload(card) {
       const scenarioIdRaw = document.getElementById('risiko-modal-scenario-id').value;
       const currentScenarioId = scenarioIdRaw ? parseInt(scenarioIdRaw, 10) : null;
@@ -782,7 +884,7 @@
       }
       return {
         beskrivelse: card.querySelector('.risiko-action-beskrivelse').value.trim(),
-        ansvarlig: card.querySelector('.risiko-action-ansvarlig').value.trim(),
+        ansvarlig: collectAnsvarligFromCard(card),
         frist: card.querySelector('.risiko-action-frist').value || null,
         status: card.querySelector('.risiko-action-status').value,
         scenario_ids: scenarioIds,
@@ -987,10 +1089,16 @@
       if (links.length) {
         riskHtml = links.map(riskIdTagHtml).join(' ');
       }
+      const ansvarligRaw = action.ansvarlig || '';
+      const ansvarligShow = action.ansvarlig_display || ansvarligRaw || '-';
+      let ansvarligHtml = escapeHtml(ansvarligShow);
+      if (ansvarligRaw && ansvarligShow !== ansvarligRaw) {
+        ansvarligHtml = '<span title="' + escapeHtml(ansvarligRaw) + '">' + escapeHtml(ansvarligShow) + '</span>';
+      }
       return '<td>' + displayId + '</td>' +
         '<td>' + escapeHtml(action.beskrivelse || '').replace(/\n/g, '<br>') + '</td>' +
         '<td>' + riskHtml + '</td>' +
-        '<td>' + escapeHtml(action.ansvarlig || '-') + '</td>' +
+        '<td>' + ansvarligHtml + '</td>' +
         '<td>' + escapeHtml(action.frist || '-') + '</td>' +
         '<td>' + tiltakStatusTagHtml(action.status, action.status_display) + '</td>';
     }
@@ -1325,6 +1433,18 @@
       });
     });
 
+    const kitToggles = document.getElementById('risiko-kit-toggles');
+    if (kitToggles) {
+      kitToggles.addEventListener('click', function (e) {
+        const btn = e.target.closest('.risiko-kit-toggle');
+        if (!btn) return;
+        const on = !btn.classList.contains('active');
+        btn.classList.toggle('active', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        scheduleScenarioAutosave();
+      });
+    }
+
     const modalEl = document.getElementById('risiko-scenario-modal');
     if (modalEl) {
       modalEl.addEventListener('input', function (e) {
@@ -1366,7 +1486,12 @@
     if (actionsList) {
       actionsList.addEventListener('input', function (e) {
         const card = e.target.closest('.risiko-action-card');
-        if (card) scheduleActionAutosave(card);
+        if (!card) return;
+        if (e.target.classList.contains('risiko-action-ansvarlig-input')) {
+          syncAnsvarligStoredValue(e.target);
+          scheduleAnsvarligSearch(e.target);
+        }
+        scheduleActionAutosave(card);
       });
       actionsList.addEventListener('change', function (e) {
         const card = e.target.closest('.risiko-action-card');
@@ -1374,6 +1499,23 @@
       });
       actionsList.addEventListener('click', function (e) {
         const card = e.target.closest('.risiko-action-card');
+        if (e.target.classList.contains('risiko-tiltak-ansvarlig-pick')) {
+          const wrap = e.target.closest('.risiko-action-ansvarlig-wrap');
+          if (wrap && card) {
+            const input = wrap.querySelector('.risiko-action-ansvarlig-input');
+            const label = e.target.getAttribute('data-label') || '';
+            const email = e.target.getAttribute('data-email') || '';
+            if (input) {
+              input.setAttribute('data-ansvarlig-value', email);
+              input.setAttribute('data-ansvarlig-label', label);
+              input.value = label;
+            }
+            const treff = wrap.querySelector('.risiko-action-ansvarlig-treff');
+            if (treff) treff.innerHTML = '';
+            scheduleActionAutosave(card);
+          }
+          return;
+        }
         if (!card) return;
         if (e.target.classList.contains('risiko-action-unlink')) {
           unlinkModalActionCard(card);
