@@ -1,17 +1,25 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-02: Normalize group title to virksomhetsforkortelse/name (e.g. DIG/JIPPI).
+# 2026-07-02: Include member names in groups list payload for inline table display.
+# 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in API imports and queries.
 # 2026-07-01: JSON API for per-virksomhet risk read-access groups – systemforvalter + own virksomhet only.
 
 import json
 
 from django.contrib.auth.models import User
-from django.db.models import Count, Q
+from django.db.models import Count, Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET, require_http_methods
 
-from systemoversikt.models import RiskVirksomhetReadGroup, RiskVirksomhetReadGroupMember, Virksomhet
-from systemoversikt.risk_membership import user_can_manage_risk_virksomhet_groups, user_display_name
+from systemoversikt.models import RiskVirksomhetGroup, RiskVirksomhetGroupMember, Virksomhet
+from systemoversikt.risk_membership import (
+	normalize_risk_group_title,
+	risk_group_title_conflict,
+	user_can_manage_risk_virksomhet_groups,
+	user_display_name,
+)
 
 
 def _json_error(message, status=400):
@@ -34,11 +42,13 @@ def _require_group_admin_json(request, vid):
 	return virksomhet, None, None
 
 
-def _group_to_dict(group):
+def _group_to_dict(group, virksomhet=None):
+	virksomhet = virksomhet or group.virksomhet
 	return {
 		'id': group.pk,
-		'title': group.title,
+		'title': normalize_risk_group_title(virksomhet, group.title),
 		'beskrivelse': group.beskrivelse,
+		'virksomhet_read_only': group.virksomhet_read_only,
 		'member_count': getattr(group, 'member_count', group.memberships.count()),
 	}
 
@@ -52,12 +62,21 @@ def _member_to_dict(membership):
 
 
 def _groups_payload(virksomhet):
+	member_qs = RiskVirksomhetGroupMember.objects.select_related('user').order_by(
+		'user__first_name', 'user__username',
+	)
 	groups = (
-		RiskVirksomhetReadGroup.objects.filter(virksomhet=virksomhet)
+		RiskVirksomhetGroup.objects.filter(virksomhet=virksomhet)
 		.annotate(member_count=Count('memberships'))
+		.prefetch_related(Prefetch('memberships', queryset=member_qs))
 		.order_by('title')
 	)
-	return {'groups': [_group_to_dict(g) for g in groups]}
+	payload = []
+	for group in groups:
+		data = _group_to_dict(group, virksomhet=virksomhet)
+		data['members'] = [_member_to_dict(m) for m in group.memberships.all()]
+		payload.append(data)
+	return {'groups': payload}
 
 
 def _group_members_payload(group):
@@ -111,18 +130,20 @@ def api_risiko_read_group_create(request, vid):
 	if data is None:
 		return _json_error('invalid_json')
 
-	title = (data.get('title') or '').strip()
+	title = normalize_risk_group_title(virksomhet, data.get('title') or '')
 	if not title:
-		return _json_error('Tittel er påkrevd.')
+		return _json_error('Gruppenavn er påkrevd.')
 
 	beskrivelse = (data.get('beskrivelse') or '').strip()
-	if RiskVirksomhetReadGroup.objects.filter(virksomhet=virksomhet, title=title).exists():
-		return _json_error('Det finnes allerede en gruppe med denne tittelen.')
+	virksomhet_read_only = bool(data.get('virksomhet_read_only', False))
+	if risk_group_title_conflict(virksomhet, title):
+		return _json_error('Det finnes allerede en gruppe med dette gruppenavnet.')
 
-	group = RiskVirksomhetReadGroup.objects.create(
+	group = RiskVirksomhetGroup.objects.create(
 		virksomhet=virksomhet,
 		title=title,
 		beskrivelse=beskrivelse,
+		virksomhet_read_only=virksomhet_read_only,
 		created_by=request.user,
 	)
 	group.member_count = 0
@@ -130,27 +151,29 @@ def api_risiko_read_group_create(request, vid):
 
 
 @require_http_methods(['PATCH', 'POST'])
-@require_http_methods(['PATCH', 'POST'])
 def api_risiko_read_group_update(request, vid, gid):
 	virksomhet, _, err = _require_group_admin_json(request, vid)
 	if err:
 		return err
 
-	group = get_object_or_404(RiskVirksomhetReadGroup, pk=gid, virksomhet=virksomhet)
+	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
 	data = _parse_json_body(request)
 	if data is None:
 		return _json_error('invalid_json')
 
 	if 'title' in data:
-		title = (data.get('title') or '').strip()
+		title = normalize_risk_group_title(virksomhet, data.get('title') or '')
 		if not title:
-			return _json_error('Tittel er påkrevd.')
-		if RiskVirksomhetReadGroup.objects.filter(virksomhet=virksomhet, title=title).exclude(pk=group.pk).exists():
-			return _json_error('Det finnes allerede en gruppe med denne tittelen.')
+			return _json_error('Gruppenavn er påkrevd.')
+		if risk_group_title_conflict(virksomhet, title, exclude_pk=group.pk):
+			return _json_error('Det finnes allerede en gruppe med dette gruppenavnet.')
 		group.title = title
 
 	if 'beskrivelse' in data:
 		group.beskrivelse = (data.get('beskrivelse') or '').strip()
+
+	if 'virksomhet_read_only' in data:
+		group.virksomhet_read_only = bool(data.get('virksomhet_read_only'))
 
 	group.save()
 	return JsonResponse({'ok': True, 'group': _group_to_dict(group)})
@@ -162,7 +185,7 @@ def api_risiko_read_group_delete(request, vid, gid):
 	if err:
 		return err
 
-	group = get_object_or_404(RiskVirksomhetReadGroup, pk=gid, virksomhet=virksomhet)
+	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
 	if request.method == 'POST':
 		data = _parse_json_body(request) or {}
 		if data.get('_method') != 'DELETE':
@@ -178,7 +201,7 @@ def api_risiko_read_group_members(request, vid, gid):
 	if err:
 		return err
 
-	group = get_object_or_404(RiskVirksomhetReadGroup, pk=gid, virksomhet=virksomhet)
+	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
 	return JsonResponse({'ok': True, **_group_members_payload(group)})
 
 
@@ -188,7 +211,7 @@ def api_risiko_read_group_member_add(request, vid, gid):
 	if err:
 		return err
 
-	group = get_object_or_404(RiskVirksomhetReadGroup, pk=gid, virksomhet=virksomhet)
+	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
 	data = _parse_json_body(request)
 	if data is None:
 		return _json_error('invalid_json')
@@ -199,7 +222,7 @@ def api_risiko_read_group_member_add(request, vid, gid):
 		return _json_error('Ugyldig bruker.')
 
 	target_user = get_object_or_404(User, pk=user_id, is_active=True)
-	RiskVirksomhetReadGroupMember.objects.get_or_create(
+	RiskVirksomhetGroupMember.objects.get_or_create(
 		group=group,
 		user=target_user,
 		defaults={'added_by': request.user},
@@ -213,13 +236,13 @@ def api_risiko_read_group_member_remove(request, vid, gid, user_id):
 	if err:
 		return err
 
-	group = get_object_or_404(RiskVirksomhetReadGroup, pk=gid, virksomhet=virksomhet)
+	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
 	if request.method == 'POST':
 		data = _parse_json_body(request) or {}
 		if data.get('_method') != 'DELETE':
 			return _json_error('invalid_method', status=405)
 
-	membership = get_object_or_404(RiskVirksomhetReadGroupMember, group=group, user_id=user_id)
+	membership = get_object_or_404(RiskVirksomhetGroupMember, group=group, user_id=user_id)
 	membership.delete()
 	return JsonResponse({'ok': True, **_group_members_payload(group)})
 

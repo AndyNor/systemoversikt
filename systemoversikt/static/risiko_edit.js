@@ -1,4 +1,6 @@
 // Change log:
+// 2026-07-02: Deltakergruppe search shows first 5 groups on focus before typing.
+// 2026-07-02: Deltakergrupper in Tilgang card – add/remove/search participant groups on collection.
 // 2026-07-02: Modal status in header; confirm discard when godkjent blocks save on close.
 // 2026-07-01: Godkjent lock – initRisikoStatusUnlock for owner-only status change when read-only.
 // 2026-06-30: Scenario table columns – Konsekvenstype, Konsekvens, Sannsynlighetstype, Sannsynlighet.
@@ -1768,6 +1770,29 @@
       return members.map(function (m) { return m.name; }).join(', ');
     }
 
+    function participantDisplayNames(participants, groups) {
+      const parts = [];
+      (participants || []).forEach(function (m) { parts.push(m.name); });
+      (groups || []).forEach(function (g) { parts.push(g.title + ' (gruppe)'); });
+      return parts.length ? parts.join(', ') : '-';
+    }
+
+    function renderParticipantGroupList(listEl, groups) {
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      (groups || []).forEach(function (g) {
+        const li = document.createElement('li');
+        li.setAttribute('data-group-id', String(g.id));
+        li.appendChild(document.createTextNode(g.title + ' '));
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-link btn-sm p-0 risiko-participant-group-remove';
+        btn.textContent = 'Fjern';
+        li.appendChild(btn);
+        listEl.appendChild(li);
+      });
+    }
+
     function renderMemberList(listEl, members, role) {
       if (!listEl) return;
       listEl.innerHTML = '';
@@ -1788,10 +1813,13 @@
     function applyMembersData(data) {
       renderMemberList(document.getElementById('risiko-owners-list'), data.owners, 'owner');
       renderMemberList(document.getElementById('risiko-participants-list'), data.participants, 'participant');
+      renderParticipantGroupList(document.getElementById('risiko-participant-groups-list'), data.participant_groups);
       const ownersView = document.getElementById('risiko-scope-owners-view');
       const participantsView = document.getElementById('risiko-scope-participants-view');
       if (ownersView) ownersView.textContent = memberNames(data.owners);
-      if (participantsView) participantsView.textContent = memberNames(data.participants);
+      if (participantsView) {
+        participantsView.textContent = participantDisplayNames(data.participants, data.participant_groups);
+      }
       if (data.virksomhet) {
         const vLabel = data.virksomhet.label;
         const vCurrent = document.getElementById('risiko-virksomhet-current');
@@ -1824,6 +1852,77 @@
         setTilgangStatus('');
       }).catch(function (err) {
         setTilgangStatus(err.message, true);
+      });
+    }
+
+    function addParticipantGroup(groupId, inputEl, treffEl) {
+      if (!config.urls.participantGroupAdd) return;
+      setTilgangStatus('Lagrer…');
+      fetchJson(config.urls.participantGroupAdd, {
+        method: 'POST',
+        body: JSON.stringify({ group_id: groupId }),
+      }).then(function (data) {
+        applyMembersData(data);
+        if (inputEl) inputEl.value = '';
+        if (treffEl) treffEl.innerHTML = '';
+        setTilgangStatus('');
+      }).catch(function (err) {
+        setTilgangStatus(err.message, true);
+      });
+    }
+
+    function removeParticipantGroup(groupId) {
+      if (!config.urls.participantGroupRemove) return;
+      setTilgangStatus('Lagrer…');
+      const url = config.urls.participantGroupRemove.replace('{groupId}', String(groupId));
+      fetchJson(url, { method: 'DELETE' }).then(function (data) {
+        applyMembersData(data);
+        setTilgangStatus('');
+      }).catch(function (err) {
+        setTilgangStatus(err.message, true);
+      });
+    }
+
+    function bindParticipantGroupSearch() {
+      const inputEl = document.getElementById('risiko-participant-group-sok');
+      const treffEl = document.getElementById('risiko-participant-group-sok-treff');
+      if (!inputEl || !treffEl || !config.urls.participantGroupSearch) return;
+      let timer = null;
+
+      function renderParticipantGroupResults(results) {
+        treffEl.innerHTML = '';
+        (results || []).forEach(function (group) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn btn-link btn-sm d-block text-left p-0';
+          btn.textContent = group.label;
+          btn.addEventListener('click', function () {
+            addParticipantGroup(group.id, inputEl, treffEl);
+          });
+          treffEl.appendChild(btn);
+        });
+      }
+
+      function loadParticipantGroupResults() {
+        const q = inputEl.value.trim();
+        const url = config.urls.participantGroupSearch + (q ? '?q=' + encodeURIComponent(q) : '');
+        fetchJson(url)
+          .then(function (data) {
+            renderParticipantGroupResults(data.results);
+          })
+          .catch(function (err) {
+            setTilgangStatus(err.message, true);
+          });
+      }
+
+      inputEl.addEventListener('focus', function () {
+        if (!inputEl.value.trim()) {
+          loadParticipantGroupResults();
+        }
+      });
+      inputEl.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(loadParticipantGroupResults, 250);
       });
     }
 
@@ -1864,6 +1963,7 @@
     function initTilgangManagement() {
       bindUserSearch('risiko-owner-sok', 'risiko-owner-sok-treff', 'owner');
       bindUserSearch('risiko-participant-sok', 'risiko-participant-sok-treff', 'participant');
+      bindParticipantGroupSearch();
 
       const tilgangCard = document.getElementById('risiko-scope-tilgang');
       if (tilgangCard) {
@@ -1871,6 +1971,9 @@
           if (e.target.classList.contains('risiko-member-remove')) {
             const li = e.target.closest('[data-user-id]');
             if (li) removeMember(li.getAttribute('data-user-id'));
+          } else if (e.target.classList.contains('risiko-participant-group-remove')) {
+            const li = e.target.closest('[data-group-id]');
+            if (li) removeParticipantGroup(li.getAttribute('data-group-id'));
           }
         });
       }
@@ -1908,6 +2011,11 @@
                       if (vView) vView.textContent = vLabel;
                       virksomhetInput.value = '';
                       virksomhetTreff.innerHTML = '';
+                      if (config.urls.members) {
+                        fetchJson(config.urls.members).then(function (membersData) {
+                          if (membersData.ok) applyMembersData(membersData);
+                        }).catch(function () {});
+                      }
                       setTilgangStatus('');
                     }).catch(function (err) {
                       setTilgangStatus(err.message, true);

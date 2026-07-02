@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup admin classes.
+# 2026-07-02: virksomhet_read_only on group admin; participant_groups on RiskScope admin.
 # 2026-06-30: RiskCriteriaConfig oppdatert_av autocomplete – avoid loading all users in admin dropdown.
 # 2026-06-30: RiskCriteriaConfig admin – emergency JSON fallback for global akseptkriterier.
 # 2026-07-01: RiskVirksomhetReadGroup admin for superuser fallback.
@@ -1688,6 +1690,7 @@ class RiskScopeAdmin(SimpleHistoryAdmin):
 	list_select_related = ('virksomhet',)
 	search_fields = ('title', 'beskrivelse', 'source_filename')
 	autocomplete_fields = ('virksomhet',)
+	filter_horizontal = ('participant_groups',)
 	inlines = [RiskScopeMemberInline, RiskActionInline]
 
 
@@ -1700,24 +1703,24 @@ class RiskScopeMemberAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('scope', 'user', 'added_by')
 
 
-class RiskVirksomhetReadGroupMemberInline(admin.TabularInline):
-	model = RiskVirksomhetReadGroupMember
+class RiskVirksomhetGroupMemberInline(admin.TabularInline):
+	model = RiskVirksomhetGroupMember
 	extra = 0
 	fields = ('user', 'added_by')
 	autocomplete_fields = ('user', 'added_by')
 
 
-@admin.register(RiskVirksomhetReadGroup)
-class RiskVirksomhetReadGroupAdmin(SimpleHistoryAdmin):
-	list_display = ('title', 'virksomhet', 'opprettet', 'sist_oppdatert', 'created_by')
-	list_filter = ('virksomhet',)
+@admin.register(RiskVirksomhetGroup)
+class RiskVirksomhetGroupAdmin(SimpleHistoryAdmin):
+	list_display = ('title', 'virksomhet', 'virksomhet_read_only', 'opprettet', 'sist_oppdatert', 'created_by')
+	list_filter = ('virksomhet', 'virksomhet_read_only')
 	search_fields = ('title', 'beskrivelse', 'virksomhet__virksomhetsforkortelse')
 	autocomplete_fields = ('virksomhet', 'created_by')
-	inlines = [RiskVirksomhetReadGroupMemberInline]
+	inlines = [RiskVirksomhetGroupMemberInline]
 
 
-@admin.register(RiskVirksomhetReadGroupMember)
-class RiskVirksomhetReadGroupMemberAdmin(SimpleHistoryAdmin):
+@admin.register(RiskVirksomhetGroupMember)
+class RiskVirksomhetGroupMemberAdmin(SimpleHistoryAdmin):
 	list_display = ('group', 'user', 'opprettet')
 	list_filter = ('group__virksomhet',)
 	search_fields = ('group__title', 'user__username')

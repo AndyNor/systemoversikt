@@ -1,4 +1,6 @@
 {% load templatetags %}
+{# 2026-07-02: Tilgangsgrupper column as colored tags. #}
+{# 2026-07-02: Tilgangsgrupper column replaces beskrivelse on scope list tables. #}
 {# 2026-07-01: Shared scope table for root and virksomhet risk list pages. #}
 {% if scopes %}
 <table class="table tablesorter excel">
@@ -6,7 +8,7 @@
 <tr>
 	<th>Navn</th>
 	<th>Status</th>
-	<th>Beskrivelse</th>
+	<th>Tilgangsgrupper</th>
 	<th>Virksomhet</th>
 	<th>Eiere</th>
 	<th>Sist revidert</th>
@@ -20,11 +22,11 @@
 <tr>
 	<td>
 		{% if not scope.current_user_has_read_access %}<span class="risiko-scope-access-lock" title="Du har ikke tilgang">{% access_denied_icon '16px' %}</span> {% endif %}
-		{% if scope.current_user_has_read_access and not scope.current_user_is_member %}<span class="badge badge-light border text-muted mr-1" title="Lesetilgang via tilgangsgruppe">Lesetilgang</span>{% endif %}
+		{% if scope.current_user_has_read_access and not scope.current_user_is_member %}<span class="badge badge-light border text-muted mr-1" title="Lesetilgang via tilgangsgruppe med virksomhetslesing">Lesetilgang</span>{% endif %}
 		<a href="{% url 'risiko_scope_detail' pk=scope.pk %}">{{ scope.title }}</a>
 	</td>
 	<td>{% risiko_scope_status scope.status scope.get_status_display %}</td>
-	<td>{{ scope.beskrivelse|truncatechars:120|default:"-" }}</td>
+	<td class="risiko-tilgangsgruppe-cell">{% risiko_tilgangsgruppe_tags scope.participant_groups.all %}</td>
 	<td>{% if scope.virksomhet %}{{ scope.virksomhet.virksomhetsforkortelse }}{% else %}-{% endif %}</td>
 	<td>{% for m in scope.memberships.all %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% empty %}-{% endfor %}</td>
 	<td>{{ scope.sist_revidert|date:"Y-m-d" }}</td>

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-07-01: RiskVirksomhetReadGroup + member – per-virksomhet read-only access groups for risk collections.
+# 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup (and member model).
+# 2026-07-02: virksomhet_read_only on RiskVirksomhetGroup; participant_groups M2M on RiskScope.
+# 2026-07-01: RiskVirksomhetGroup + member – per-virksomhet access groups for risk collections.
 # 2026-06-30: RiskScope.status – workflow state for risikosamling approval.
 # 2026-06-30: RiskScenario.sannsynlighetstyper – multi-select probability dimension tags.
 # 2026-06-30: RiskCriteriaConfig – global editable akseptkriterier shared by all risikosamlinger.
@@ -7819,6 +7821,12 @@ class RiskScope(models.Model):
 		blank=True,
 		default='',
 	)
+	participant_groups = models.ManyToManyField(
+		to='RiskVirksomhetGroup',
+		related_name='participant_scopes',
+		verbose_name="Deltakergrupper",
+		blank=True,
+	)
 	history = HistoricalRecords()
 
 	def membership_for(self, user):
@@ -7904,7 +7912,7 @@ class RiskScopeMember(models.Model):
 		]
 
 
-class RiskVirksomhetReadGroup(models.Model):
+class RiskVirksomhetGroup(models.Model):
 	opprettet = models.DateTimeField(
 		verbose_name="Opprettet",
 		auto_now_add=True,
@@ -7917,7 +7925,7 @@ class RiskVirksomhetReadGroup(models.Model):
 	virksomhet = models.ForeignKey(
 		to='Virksomhet',
 		on_delete=models.CASCADE,
-		related_name='risk_read_groups',
+		related_name='risk_groups',
 		verbose_name="Virksomhet",
 	)
 	title = models.CharField(
@@ -7929,10 +7937,15 @@ class RiskVirksomhetReadGroup(models.Model):
 		blank=True,
 		default='',
 	)
+	virksomhet_read_only = models.BooleanField(
+		verbose_name="Lesetilgang til hele virksomheten",
+		default=False,
+		help_text="Når aktivert får medlemmer lesetilgang til alle risikosamlinger for virksomheten.",
+	)
 	created_by = models.ForeignKey(
 		to=User,
 		on_delete=models.SET_NULL,
-		related_name='risk_read_groups_created',
+		related_name='risk_groups_created',
 		verbose_name="Opprettet av",
 		blank=True,
 		null=True,
@@ -7942,27 +7955,33 @@ class RiskVirksomhetReadGroup(models.Model):
 	def __str__(self):
 		return '%s – %s' % (self.virksomhet, self.title)
 
+	@property
+	def display_title(self):
+		# 2026-07-02: Gruppenavn as virksomhetsforkortelse/name for list and detail views.
+		from systemoversikt.risk_membership import normalize_risk_group_title
+		return normalize_risk_group_title(self.virksomhet, self.title)
+
 	class Meta:
-		verbose_name = "risiko lesetilgangsgruppe"
-		verbose_name_plural = "Risiko: lesetilgangsgrupper"
+		verbose_name = "risiko virksomhetsgruppe"
+		verbose_name_plural = "Risiko: virksomhetsgrupper"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		constraints = [
 			models.UniqueConstraint(
 				fields=['virksomhet', 'title'],
-				name='risk_virksomhet_read_group_unique_title',
+				name='risk_virksomhet_group_unique_title',
 			),
 		]
 		ordering = ['virksomhet__virksomhetsnavn', 'title']
 
 
-class RiskVirksomhetReadGroupMember(models.Model):
+class RiskVirksomhetGroupMember(models.Model):
 	opprettet = models.DateTimeField(
 		verbose_name="Opprettet",
 		auto_now_add=True,
 		null=True,
 	)
 	group = models.ForeignKey(
-		to=RiskVirksomhetReadGroup,
+		to=RiskVirksomhetGroup,
 		on_delete=models.CASCADE,
 		related_name='memberships',
 		verbose_name="Gruppe",
@@ -7970,13 +7989,13 @@ class RiskVirksomhetReadGroupMember(models.Model):
 	user = models.ForeignKey(
 		to=User,
 		on_delete=models.CASCADE,
-		related_name='risk_virksomhet_read_group_memberships',
+		related_name='risk_virksomhet_group_memberships',
 		verbose_name="Bruker",
 	)
 	added_by = models.ForeignKey(
 		to=User,
 		on_delete=models.SET_NULL,
-		related_name='risk_virksomhet_read_group_memberships_added',
+		related_name='risk_virksomhet_group_memberships_added',
 		verbose_name="Lagt til av",
 		blank=True,
 		null=True,
@@ -7987,13 +8006,13 @@ class RiskVirksomhetReadGroupMember(models.Model):
 		return '%s – %s' % (self.group, self.user)
 
 	class Meta:
-		verbose_name = "risiko lesetilgangsgruppe-medlem"
-		verbose_name_plural = "Risiko: lesetilgangsgruppe-medlemmer"
+		verbose_name = "risiko virksomhetsgruppe-medlem"
+		verbose_name_plural = "Risiko: virksomhetsgruppe-medlemmer"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		constraints = [
 			models.UniqueConstraint(
 				fields=['group', 'user'],
-				name='risk_virksomhet_read_group_member_unique',
+				name='risk_virksomhet_group_member_unique',
 			),
 		]
 

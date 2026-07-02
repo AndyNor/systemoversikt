@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-02: risk_group_tag_colors – deterministic HSL tag colors from group pk.
+# 2026-07-02: Prefetch participant_groups on scope list tables.
+# 2026-07-02: normalize_risk_group_title – shared gruppenavn prefix for API and templates.
+# 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in imports and queries.
 # 2026-07-01: nav_ordinary_virksomheter – all nav links sorted by virksomhetsforkortelse.
 # 2026-07-01: Superuser cross-virksomhet read-group admin – temporary for testing; remove later.
 # 2026-07-01: Virksomhet-scoped list helpers and read-group access checks for risk MVP.
@@ -13,11 +17,45 @@ from systemoversikt.models import (
 	RISK_SCOPE_MEMBER_ROLE_OWNER,
 	RiskScope,
 	RiskScopeMember,
-	RiskVirksomhetReadGroupMember,
+	RiskVirksomhetGroup,
+	RiskVirksomhetGroupMember,
 	Virksomhet,
 )
 
 RISK_VIRKSOMHET_GROUP_ADMIN_AD_GROUP = '/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER'
+
+
+def risk_group_title_prefix(virksomhet):
+	return '%s/' % virksomhet.virksomhetsforkortelse
+
+
+def normalize_risk_group_title(virksomhet, title):
+	title = (title or '').strip()
+	if not title or virksomhet is None:
+		return title
+	prefix = risk_group_title_prefix(virksomhet)
+	if title.lower().startswith(prefix.lower()):
+		return prefix + title[len(prefix):].lstrip('/')
+	return prefix + title
+
+
+def risk_group_title_conflict(virksomhet, title, exclude_pk=None):
+	normalized = normalize_risk_group_title(virksomhet, title)
+	qs = RiskVirksomhetGroup.objects.filter(virksomhet=virksomhet)
+	if exclude_pk is not None:
+		qs = qs.exclude(pk=exclude_pk)
+	for group in qs:
+		if normalize_risk_group_title(virksomhet, group.title) == normalized:
+			return True
+	return False
+
+
+def risk_group_tag_colors(group_id):
+	hue = (int(group_id) * 137.508) % 360
+	return {
+		'background': 'hsl(%d, 45%%, 88%%)' % hue,
+		'color': 'hsl(%d, 50%%, 25%%)' % hue,
+	}
 
 
 def creator_virksomhet(user):
@@ -44,18 +82,30 @@ def user_display_name(user):
 	return full.strip() if full else user.username
 
 
+def user_is_scope_participant_via_group(user, scope):
+	if not user.is_authenticated:
+		return False
+	return RiskVirksomhetGroupMember.objects.filter(
+		user_id=user.id,
+		group__participant_scopes=scope,
+	).exists()
+
+
 def user_is_scope_member(user, scope):
 	if not user.is_authenticated:
 		return False
-	return scope.memberships.filter(user_id=user.id).exists()
+	if scope.memberships.filter(user_id=user.id).exists():
+		return True
+	return user_is_scope_participant_via_group(user, scope)
 
 
 def user_has_virksomhet_read_group_access(user, virksomhet_id):
 	if not user.is_authenticated or virksomhet_id is None:
 		return False
-	return RiskVirksomhetReadGroupMember.objects.filter(
+	return RiskVirksomhetGroupMember.objects.filter(
 		user_id=user.id,
 		group__virksomhet_id=virksomhet_id,
+		group__virksomhet_read_only=True,
 	).exists()
 
 
@@ -95,17 +145,31 @@ def annotate_scope_list(qs, user):
 		user=user,
 		role=RISK_SCOPE_MEMBER_ROLE_OWNER,
 	)
-	read_group_qs = RiskVirksomhetReadGroupMember.objects.filter(
+	group_participant_qs = RiskVirksomhetGroupMember.objects.filter(
+		user=user,
+		group__participant_scopes=OuterRef('pk'),
+	)
+	read_group_qs = RiskVirksomhetGroupMember.objects.filter(
 		user=user,
 		group__virksomhet_id=OuterRef('virksomhet_id'),
+		group__virksomhet_read_only=True,
 	)
 	qs = qs.annotate(
 		scenario_count=Count('scenarios'),
-		current_user_is_member=Exists(member_qs),
+		current_user_is_direct_member=Exists(member_qs),
+		current_user_is_group_participant=Exists(group_participant_qs),
 		current_user_is_owner=Exists(owner_qs),
 		current_user_has_read_group_access=Exists(read_group_qs),
 	)
 	return qs.annotate(
+		current_user_is_member=Case(
+			When(
+				Q(current_user_is_direct_member=True) | Q(current_user_is_group_participant=True),
+				then=Value(True),
+			),
+			default=Value(False),
+			output_field=BooleanField(),
+		),
 		current_user_has_read_access=Case(
 			When(
 				Q(current_user_is_member=True) | Q(current_user_has_read_group_access=True),
@@ -126,6 +190,10 @@ def scope_list_base_queryset(user):
 					role=RISK_SCOPE_MEMBER_ROLE_OWNER,
 				).select_related('user'),
 			),
+			Prefetch(
+				'participant_groups',
+				queryset=RiskVirksomhetGroup.objects.select_related('virksomhet').order_by('title'),
+			),
 		),
 		user,
 	).order_by('-sist_revidert', '-opprettet')
@@ -140,7 +208,8 @@ def scopes_for_virksomhet(user, virksomhet_id):
 
 def scopes_for_user_membership(user, exclude_virksomhet_id=None):
 	qs = scope_list_base_queryset(user).filter(
-		memberships__user=user,
+		Q(memberships__user=user)
+		| Q(participant_groups__memberships__user=user),
 	).distinct()
 	if exclude_virksomhet_id is not None:
 		qs = qs.exclude(virksomhet_id=exclude_virksomhet_id)

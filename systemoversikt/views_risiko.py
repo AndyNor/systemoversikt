@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in imports and prefetch.
+# 2026-07-02: Group participants count as members; participant_groups in scope detail context.
 # 2026-07-01: Risk list context – nav virksomheter sorted by virksomhetsforkortelse.
 # 2026-07-01: Custom risiko_access_denied page – explains owner/participant/read-group access.
 # 2026-07-01: Dropped legacy /sikkerhet/risiko/<pk>/ redirect routes.
@@ -43,6 +45,7 @@ from systemoversikt.models import (
 	RiskCriteriaConfig,
 	RiskScope,
 	RiskScopeMember,
+	RiskVirksomhetGroup,
 	RiskScenario,
 	Virksomhet,
 )
@@ -77,6 +80,7 @@ from systemoversikt.risk_membership import (
 	user_display_name,
 	user_has_scope_read_access,
 	user_has_scope_write_access,
+	user_is_scope_member,
 )
 from systemoversikt.views import formater_permissions
 
@@ -100,7 +104,7 @@ def _is_scope_owner(request, scope):
 
 
 def _is_scope_member(request, scope):
-	return _scope_membership(request, scope) is not None
+	return user_is_scope_member(request.user, scope)
 
 
 def _has_scope_read_access(request, scope):
@@ -225,6 +229,9 @@ def _risiko_editor_urls(scope_pk):
 		'members': reverse('api_risiko_members_list', kwargs={'pk': pk}),
 		'memberAdd': reverse('api_risiko_member_add', kwargs={'pk': pk}),
 		'memberRemove': reverse('api_risiko_member_remove', kwargs={'pk': pk, 'user_id': 0}).replace('/0/', '/{userId}/'),
+		'participantGroupAdd': reverse('api_risiko_participant_group_add', kwargs={'pk': pk}),
+		'participantGroupRemove': reverse('api_risiko_participant_group_remove', kwargs={'pk': pk, 'gid': 0}).replace('/0/', '/{groupId}/'),
+		'participantGroupSearch': reverse('api_risiko_participant_groups_sok', kwargs={'pk': pk}),
 		'scopeVirksomhet': reverse('api_risiko_scope_virksomhet', kwargs={'pk': pk}),
 		'brukerSearch': reverse('api_risiko_brukere_sok', kwargs={'pk': pk}),
 		'tiltakAnsvarligSearch': reverse('api_risiko_tiltak_ansvarlig_sok', kwargs={'pk': pk}),
@@ -421,6 +428,10 @@ def risiko_scope_detail(request, pk):
 				'memberships',
 				queryset=RiskScopeMember.objects.select_related('user').order_by('role', 'user__first_name', 'user__username'),
 			),
+			Prefetch(
+				'participant_groups',
+				queryset=RiskVirksomhetGroup.objects.select_related('virksomhet').order_by('title'),
+			),
 		),
 		pk=pk,
 	)
@@ -452,6 +463,7 @@ def risiko_scope_detail(request, pk):
 
 	owner_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER]
 	participant_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]
+	participant_groups = list(scope.participant_groups.all())
 
 	return render(request, 'risiko_scope_detail.html', {
 		'request': request,
@@ -465,6 +477,7 @@ def risiko_scope_detail(request, pk):
 		'is_read_only_viewer': is_read_only_viewer,
 		'owner_memberships': owner_memberships,
 		'participant_memberships': participant_memberships,
+		'participant_groups': participant_groups,
 		'editor_urls': _risiko_editor_urls(pk),
 		'edit_scenario_id': edit_scenario_id,
 		'matrix_current': criteria.build_matrix_context(scenarios, use_residual=False),

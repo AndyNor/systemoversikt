@@ -68,6 +68,9 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
+<style nonce="{{ request.csp_nonce }}">
+{% include "risiko_tilgangsgruppe_tag_styles.html" %}
+</style>
 <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 $(function () {
 	var form = document.getElementById('risiko-scope-delete-form');

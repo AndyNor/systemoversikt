@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
 {% load templatetags %}
+{# 2026-07-02: Document virksomhet read-only groups and collection deltakergrupper. #}
 {# 2026-07-01: Risk MVP access denied – explains owner/participant/read-group model, not Django CRUD perms. #}
 
 {% block overskrift %}
@@ -30,15 +31,15 @@
 {% endif %}
 
 {% elif risk_access_reason == 'read_groups_manage' %}
-<p>Du kan ikke administrere lesetilgangsgrupper for denne virksomheten.</p>
+<p>Du kan ikke administrere tilgangsgrupper for denne virksomheten.</p>
 {% if virksomhet %}
 <p class="mb-2">Virksomhet: <strong>{{ virksomhet.virksomhetsforkortelse }}</strong> – {{ virksomhet.virksomhetsnavn }}</p>
 {% endif %}
 <p>
-	Administrasjon av lesetilgangsgrupper er begrenset til <strong>systemforvalter</strong> i virksomheten
+	Administrasjon av tilgangsgrupper er begrenset til <strong>systemforvalter</strong> i virksomheten
 	(AD-gruppen for systemforvalter-tilgang), og du må representere samme virksomhet i din brukerprofil.
 </p>
-<p>Systemforvalteren kan opprette grupper som gir lesetilgang til alle risikosamlinger for virksomheten.</p>
+<p>Systemforvalteren kan opprette tilgangsgrupper for virksomheten – med eller uten lesetilgang til alle samlinger.</p>
 
 {% elif risk_access_reason == 'create_collection' %}
 <p>Du har ikke tilgang til å opprette eller importere risikosamlinger.</p>
@@ -62,12 +63,13 @@
 	<ul class="mb-0">
 		<li><strong>Eier</strong> – kan lese og redigere, administrere tilgang og endre virksomhet.</li>
 		<li><strong>Deltaker</strong> – kan lese og redigere innhold i samlingen.</li>
-		<li><strong>Lesetilgang via gruppe</strong> – gir leseadgang til alle samlinger for en virksomhet. Grupper opprettes av systemforvalter for virksomheten under <em>Tilgangsgrupper</em> på risikooversikten.</li>
+		<li><strong>Deltakergruppe</strong> – eier kan tildele en tilgangsgruppe til samlingen; medlemmer får samme redigeringstilgang som individuelle deltakere på den samlingen.</li>
+		<li><strong>Lesetilgang via gruppe</strong> – når gruppen har «lesetilgang til hele virksomheten», får medlemmer leseadgang til alle samlinger for virksomheten. Grupper opprettes av systemforvalter under <em>Tilgangsgrupper</em> på risikooversikten.</li>
 	</ul>
 </div>
 
 {% if owner_names %}
-<p>Be en <strong>eier</strong> om å legge deg til som eier eller deltaker:</p>
+<p>Be en <strong>eier</strong> om å legge deg til som eier eller deltaker, eller om å tildele en deltakergruppe du er medlem av:</p>
 <ul>
 	{% for name in owner_names %}<li>{{ name }}</li>{% endfor %}
 </ul>

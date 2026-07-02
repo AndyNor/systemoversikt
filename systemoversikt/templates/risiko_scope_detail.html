@@ -58,7 +58,7 @@
 					<input type="search" id="risiko-owner-sok" class="form-control form-control-sm mb-1" placeholder="Legg til eier…" autocomplete="off">
 					<div id="risiko-owner-sok-treff" class="small"></div>
 				</div>
-				<div class="mb-0">
+				<div class="mb-2">
 					<strong class="d-block small">Deltakere</strong>
 					<ul id="risiko-participants-list" class="list-unstyled small mb-1">
 						{% for m in participant_memberships %}
@@ -67,6 +67,16 @@
 					</ul>
 					<input type="search" id="risiko-participant-sok" class="form-control form-control-sm mb-1" placeholder="Legg til deltaker…" autocomplete="off">
 					<div id="risiko-participant-sok-treff" class="small"></div>
+				</div>
+				<div class="mb-0">
+					<strong class="d-block small">Deltakergrupper</strong>
+					<ul id="risiko-participant-groups-list" class="list-unstyled small mb-1">
+						{% for g in participant_groups %}
+						<li data-group-id="{{ g.pk }}">{{ g.display_title }} <button type="button" class="btn btn-link btn-sm p-0 risiko-participant-group-remove">Fjern</button></li>
+						{% endfor %}
+					</ul>
+					<input type="search" id="risiko-participant-group-sok" class="form-control form-control-sm mb-1" placeholder="Legg til deltakergruppe…" autocomplete="off">
+					<div id="risiko-participant-group-sok-treff" class="small"></div>
 				</div>
 				<span id="risiko-tilgang-status" class="text-muted small"></span>
 			</div>
@@ -115,7 +125,7 @@
 				<strong>Eiere:</strong> <span id="risiko-scope-owners-view">{% for m in owner_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% empty %}-{% endfor %}</span>
 			</p>
 			<p>
-				<strong>Deltakere:</strong> <span id="risiko-scope-participants-view">{% for m in participant_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% empty %}-{% endfor %}</span>
+				<strong>Deltakere:</strong> <span id="risiko-scope-participants-view">{% for m in participant_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% endfor %}{% for g in participant_groups %}{% if participant_memberships or not forloop.first %}, {% endif %}{{ g.display_title }} (gruppe){% endfor %}{% if not participant_memberships and not participant_groups %}-{% endif %}</span>
 			</p>
 			{% if can_edit_scope %}
 			<button type="button" class="btn btn-outline-primary btn-sm" id="risiko-scope-edit">Rediger</button>

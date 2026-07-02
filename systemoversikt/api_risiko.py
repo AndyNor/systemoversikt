@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-02: Participant group search returns first 5 without query; display normalized gruppenavn.
+# 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in participant group APIs.
 # 2026-07-01: Read-group access – GET APIs use readable scope; writes still require membership.
 # 2026-07-01: Godkjent status locks collection – reject content mutations; owner may change status only.
 # 2026-07-01: Tiltak ansvarlig search (virksomhet-scoped) and ansvarlig_display in action payloads.
@@ -24,7 +26,7 @@ from operator import or_
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Max, Q
+from django.db.models import Max, Q, Count
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -41,6 +43,7 @@ from systemoversikt.models import (
 	RiskScenario,
 	RiskScope,
 	RiskScopeMember,
+	RiskVirksomhetGroup,
 	System,
 	Virksomhet,
 )
@@ -68,7 +71,7 @@ from systemoversikt.risk_display import (
 	tiltak_display_id_map,
 	user_ansvarlig_display_name,
 )
-from systemoversikt.risk_membership import user_display_name
+from systemoversikt.risk_membership import normalize_risk_group_title, user_display_name
 from systemoversikt.views_risiko import (
 	_get_managed_scope,
 	_get_member_scope,
@@ -1017,12 +1020,26 @@ def _member_to_dict(membership):
 	}
 
 
+def _participant_group_to_dict(group):
+	virksomhet = group.virksomhet
+	return {
+		'id': group.pk,
+		'title': normalize_risk_group_title(virksomhet, group.title),
+		'member_count': getattr(group, 'member_count', group.memberships.count()),
+	}
+
+
 def _members_payload(scope):
 	memberships = list(
 		scope.memberships.select_related('user').order_by('role', 'user__first_name', 'user__username')
 	)
 	owners = [_member_to_dict(m) for m in memberships if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER]
 	participants = [_member_to_dict(m) for m in memberships if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]
+	participant_groups = list(
+		scope.participant_groups.select_related('virksomhet').annotate(
+			member_count=Count('memberships'),
+		).order_by('title')
+	)
 	virksomhet = None
 	if scope.virksomhet_id:
 		v = scope.virksomhet
@@ -1033,6 +1050,7 @@ def _members_payload(scope):
 	return {
 		'owners': owners,
 		'participants': participants,
+		'participant_groups': [_participant_group_to_dict(g) for g in participant_groups],
 		'virksomhet': virksomhet,
 	}
 
@@ -1162,6 +1180,96 @@ def api_risiko_member_remove(request, pk, user_id):
 	return JsonResponse({'ok': True, **_members_payload(scope)})
 
 
+@require_http_methods(['POST'])
+def api_risiko_participant_group_add(request, pk):
+	scope, err = _require_managed_json(request, pk)
+	if err:
+		return err
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
+
+	if scope.virksomhet_id is None:
+		return _json_error('Samlingen må ha virksomhet for å tildele deltakergrupper.')
+
+	data = _parse_json_body(request)
+	if data is None:
+		return _json_error('invalid_json')
+
+	try:
+		group_id = int(data.get('group_id'))
+	except (TypeError, ValueError):
+		return _json_error('Ugyldig gruppe.')
+
+	group = get_object_or_404(
+		RiskVirksomhetGroup,
+		pk=group_id,
+		virksomhet_id=scope.virksomhet_id,
+	)
+	if scope.participant_groups.filter(pk=group.pk).exists():
+		return JsonResponse({'ok': True, **_members_payload(scope)})
+
+	scope.participant_groups.add(group)
+	return JsonResponse({'ok': True, **_members_payload(scope)}, status=201)
+
+
+@require_http_methods(['DELETE', 'POST'])
+def api_risiko_participant_group_remove(request, pk, gid):
+	scope, err = _require_managed_json(request, pk)
+	if err:
+		return err
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
+
+	if request.method == 'POST':
+		data = _parse_json_body(request) or {}
+		if data.get('_method') != 'DELETE':
+			return _json_error('invalid_method', status=405)
+
+	group = get_object_or_404(RiskVirksomhetGroup, pk=gid)
+	if not scope.participant_groups.filter(pk=group.pk).exists():
+		return JsonResponse({'ok': True, **_members_payload(scope)})
+
+	scope.participant_groups.remove(group)
+	return JsonResponse({'ok': True, **_members_payload(scope)})
+
+
+@require_GET
+def api_risiko_participant_groups_sok(request, pk):
+	scope, err = _require_managed_json(request, pk)
+	if err:
+		return err
+
+	if scope.virksomhet_id is None:
+		return JsonResponse({'ok': True, 'results': []})
+
+	q = request.GET.get('q', '').strip()
+	qs = RiskVirksomhetGroup.objects.filter(
+		virksomhet_id=scope.virksomhet_id,
+	).exclude(
+		participant_scopes=scope,
+	).select_related('virksomhet').annotate(member_count=Count('memberships')).order_by('title')
+
+	if q:
+		qs = qs.filter(title__icontains=q)
+		limit = 15
+	else:
+		limit = 5
+
+	results = []
+	for group in qs[:limit]:
+		display_title = normalize_risk_group_title(group.virksomhet, group.title)
+		label = display_title
+		if group.member_count:
+			label = '%s (%d medlemmer)' % (display_title, group.member_count)
+		results.append({
+			'id': group.pk,
+			'label': label,
+		})
+	return JsonResponse({'ok': True, 'results': results})
+
+
 @require_http_methods(['PATCH', 'POST'])
 def api_risiko_scope_virksomhet(request, pk):
 	scope, err = _require_managed_json(request, pk)
@@ -1181,6 +1289,8 @@ def api_risiko_scope_virksomhet(request, pk):
 		return _json_error('Ugyldig virksomhet.')
 
 	virksomhet = get_object_or_404(Virksomhet, pk=virksomhet_id)
+	if scope.virksomhet_id != virksomhet.pk:
+		scope.participant_groups.clear()
 	scope.virksomhet = virksomhet
 	scope.save(update_fields=['virksomhet', 'sist_oppdatert'])
 

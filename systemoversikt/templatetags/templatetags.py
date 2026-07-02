@@ -1,4 +1,5 @@
 # Change log:
+# 2026-07-02: risiko_tilgangsgruppe_tags – colored tags for assigned groups on collection list tables.
 # 2026-07-01: risiko_ansvarlig_display – show Profile displayName for tiltak ansvarlig email/UPN.
 # 2026-06-30: under_revurdering status – arrow-clockwise-circle icon (repeat/review).
 # 2026-06-30: access_denied_icon – red 🛇 for missing read permission.
@@ -528,6 +529,26 @@ def risiko_konsekvenstype_tags(konsekvenstyper):
 			'<span class="risiko-konsekvenstype-tag" title="{}">{}</span>',
 			tag['label'],
 			tag['label'],
+		))
+	return mark_safe(' '.join(str(part) for part in parts))
+
+
+@register.simple_tag
+def risiko_tilgangsgruppe_tags(groups):
+	from systemoversikt.risk_membership import risk_group_tag_colors
+	group_list = list(groups)
+	if not group_list:
+		return '-'
+	parts = []
+	for group in group_list:
+		colors = risk_group_tag_colors(group.pk)
+		label = group.display_title
+		parts.append(format_html(
+			'<span class="risiko-tilgangsgruppe-tag" style="background-color: {}; color: {};" title="{}">{}</span>',
+			colors['background'],
+			colors['color'],
+			label,
+			label,
 		))
 	return mark_safe(' '.join(str(part) for part in parts))
 
