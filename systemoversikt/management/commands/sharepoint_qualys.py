@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-06-21: Apply basisdrift and risk-acceptance flags from separate rule tables.
-from datetime import datetime, timezone, timedelta
+# 2026-07-02: Log Alvorlighet 1–5 counts on successful Qualys import for landing-page chart.
+# 2026-06-21: Apply basisdrift and risk-acceptance flags from separate rule tables.from datetime import datetime, timezone, timedelta
 from systemoversikt.views import push_pushover
 from systemoversikt.models import *
 from systemoversikt.qualys_vuln_rules import qualys_vuln_flags
@@ -98,6 +98,7 @@ class Command(BaseCommand):
 				processed = 0
 				fixed = 0
 				failed_server_lookups = 0
+				severity_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
 
 				objs = []   # <‑‑ we accumulate model instances her
 
@@ -108,6 +109,9 @@ class Command(BaseCommand):
 						continue
 
 					processed += 1
+					severity = int(line['Severity'])
+					if severity in severity_counts:
+						severity_counts[severity] += 1
 
 					source = f"{line['DNS']} {line['IP']}"
 					public_facing = True if "Internet Exposed Assets New" in line["Associated Tags"] else False
@@ -120,7 +124,7 @@ class Command(BaseCommand):
 					q = QualysVuln(
 						source=source,
 						title=line['Title'],
-						severity=int(line['Severity']),
+						severity=severity,
 						first_seen=first_seen,
 						last_seen=last_seen,
 						public_facing=public_facing,
@@ -158,7 +162,7 @@ class Command(BaseCommand):
 
 				# ---- BULK INSERT HERE ----
 				QualysVuln.objects.bulk_create(objs, batch_size=batch_size)
-				return (processed, failed_server_lookups, fixed)
+				return (processed, failed_server_lookups, fixed, severity_counts)
 
 
 			def import_qualys():
@@ -174,16 +178,26 @@ class Command(BaseCommand):
 				antall_totalt = 0
 				failed_server_lookups = 0
 				antall_fixed = 0
+				severity_totals = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
 
 				for i in range(0, len(data), split_size):
 					return_data = save_to_database(data[i:i + split_size])
 					antall_totalt += return_data[0]
 					failed_server_lookups += return_data[1]
 					antall_fixed += return_data[2]
+					for severity, count in return_data[3].items():
+						severity_totals[severity] += count
 					print(f"Processing batch {i}-{i+split_size}/{linjer_kilde}. Saved {antall_totalt} vulnerabilities, where {failed_server_lookups} failed server match and {antall_fixed} was fixed and not saved")
 
 				int_config.elementer = int(antall_totalt)
-				logg_entry_message = f'\nDone importing {antall_totalt} vulnerabilities, where {failed_server_lookups} of them failed server lookup'
+				severity_parts = ", ".join(
+					f"Alvorlighet {severity}: {severity_totals[severity]}"
+					for severity in range(1, 6)
+				)
+				logg_entry_message = (
+					f'\nDone importing {antall_totalt} vulnerabilities, where {failed_server_lookups} of them failed server lookup. '
+					f'{severity_parts}'
+				)
 				logg_entry = ApplicationLog.objects.create(
 						event_type=LOG_EVENT_TYPE,
 						message=logg_entry_message,

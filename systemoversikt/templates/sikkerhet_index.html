@@ -3,51 +3,6 @@
 {% block sidemeny %}
 
 
-<h6>For sikkerhetsanalytikere</h6>
-	{% url 'vulnstats' as url_vulnstats %}
-	<a href="{{ url_vulnstats }}" class="btn btn-sm btn-link {% if url_vulnstats in request.path %}fremhev{% endif %}">Qualys: sårbarheter</a><br>
-
-	<a href="{% url 'azure_vulnstats' %}" class="btn btn-sm btn-link {% if '/sikkerhet/azure_vulnstats/' in request.path and '/qualys_compare/' not in request.path %}fremhev{% endif %}">Azure: sårbarheter</a><br>
-
-	<a href="{% url 'azure_vulnstats_qualys_compare' %}" class="btn btn-sm btn-link {% if '/sikkerhet/azure_vulnstats/qualys_compare/' in request.path %}fremhev{% endif %}">Qualys vs Defender</a><br>
-
-	{% url 'rapport_sikkerhetstester' as url_sikkerhetstester %}
-	<a href="{{ url_sikkerhetstester }}" class="btn btn-sm btn-link {% if url_sikkerhetstester in request.path %}fremhev{% endif %}">Gjennomførte pentester</a><br>
-
-	{% url 'risiko_scope_list' as url_risiko_scope_list %}
-	<a href="{{ url_risiko_scope_list }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/' in request.path and '/akseptkriterier/' not in request.path %}fremhev{% endif %}">Risikovurderinger</a><br>
-
-	{% url 'risiko_akseptkriterier' as url_risiko_akseptkriterier %}
-	<a href="{{ url_risiko_akseptkriterier }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/akseptkriterier/' in request.path %}fremhev{% endif %}">Akseptkriterier</a><br>
-
-	{% url 'cmdb_adcs_index' as url_cmdb_adcs_index %}
-	<a href="{{url_cmdb_adcs_index}}" class="btn btn-sm btn-link {% if url_cmdb_adcs_index in request.path %}fremhev{% endif %}">ADCS certifikatmaler</a><br>
-
-	{% url 'sikkerhet_bloodhound_status' as url_sikkerhet_bloodhound_status %}
-	<a href="{{ url_sikkerhet_bloodhound_status }}" class="btn btn-sm btn-link {% if url_sikkerhet_bloodhound_status in request.path %}fremhev{% endif %}">AD: BloodHound-status</a><br>
-
-	{% url 'sikkerhet_bloodhound_findings' as url_sikkerhet_bloodhound_findings %}
-	<a href="{{ url_sikkerhet_bloodhound_findings }}" class="btn btn-sm btn-link {% if url_sikkerhet_bloodhound_findings in request.path %}fremhev{% endif %}">AD: BloodHound-funn</a><br>
-
-	{% url 'sikkerhet_device_code_logins' as url_sikkerhet_device_code_logins %}
-	<a href="{{ url_sikkerhet_device_code_logins }}" class="btn btn-sm btn-link {% if url_sikkerhet_device_code_logins in request.path %}fremhev{% endif %}">Device code-innlogginger ⏱️</a><br>
-
-	{% url 'sikkerhet_varsling_virksomheter' as url_sikkerhet_varsling_virksomheter %}
-	<a href="{{ url_sikkerhet_varsling_virksomheter }}" class="btn btn-sm btn-link {% if url_sikkerhet_varsling_virksomheter in request.path %}fremhev{% endif %}">Varsling til virksomheter</a><br>
-
-	{% url 'rapport_ukjente_identer' as url_rapport_ukjente_identer %}
-	<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Kontoer utenfor OK</a><br>
-
-	{% url 'alle_spn' as url_alle_spn %}
-	<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">Kontoer med SPN</a><br>
-
-	{% url 'rapport_trusted_delegation' as url_rapport_trusted_delegation %}
-	<a href="{{ url_rapport_trusted_delegation }}" class="btn btn-sm btn-link {% if url_rapport_trusted_delegation in request.path %}fremhev{% endif %}">Delegerte kontoer</a><br>
-
-	{% url 'rapport_ad_ukjente_brukere' as url_rapport_ad_ukjente_brukere %}
-	<a href="{{ url_rapport_ad_ukjente_brukere }}" class="btn btn-sm btn-link {% if url_rapport_ad_ukjente_brukere in request.path %}fremhev{% endif %}">Manuelt opprettede brukere</a><br>
-
-<hr>
 <h6>For ISK og PKO</h6>
 
 	{% url 'rapport_prioriteringer' as url_rapport_prioriteringer %}
@@ -65,6 +20,40 @@
 	{% url 'rapport_kit_vurderinger_samlet' as url_rapport_kit_vurderinger_samlet %}
 	<a href="{{ url_rapport_kit_vurderinger_samlet }}" class="btn btn-sm btn-link {% if url_rapport_kit_vurderinger_samlet in request.path %}fremhev{% endif %}">KIT-vurderinger samlet</a><br>
 
+	{% url 'risiko_scope_list' as url_risiko_scope_list %}
+	<a href="{{ url_risiko_scope_list }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/' in request.path %}fremhev{% endif %}">Risikovurderinger</a><br>
+
+<hr>
+<h6>For sikkerhetsanalytikere</h6>
+	{% url 'sikkerhet_sarbarheter' as url_sikkerhet_sarbarheter %}
+	<a href="{{ url_sikkerhet_sarbarheter }}" class="btn btn-sm btn-link {% if '/sikkerhet/sarbarheter/' in request.path or '/sikkerhet/vulnstats/' in request.path or '/sikkerhet/azure_vulnstats/' in request.path %}fremhev{% endif %}">Sårbarheter</a><br>
+
+	{% url 'rapport_sikkerhetstester' as url_sikkerhetstester %}
+	<a href="{{ url_sikkerhetstester }}" class="btn btn-sm btn-link {% if url_sikkerhetstester in request.path %}fremhev{% endif %}">Gjennomførte pentester</a><br>
+
+	{% url 'cmdb_adcs_index' as url_cmdb_adcs_index %}
+	<a href="{{url_cmdb_adcs_index}}" class="btn btn-sm btn-link {% if url_cmdb_adcs_index in request.path %}fremhev{% endif %}">ADCS certifikatmaler</a><br>
+
+	{% url 'sikkerhet_bloodhound' as url_sikkerhet_bloodhound %}
+	<a href="{{ url_sikkerhet_bloodhound }}" class="btn btn-sm btn-link {% if '/sikkerhet/bloodhound/' in request.path %}fremhev{% endif %}">Bloodhound</a><br>
+
+	{% url 'sikkerhet_device_code_logins' as url_sikkerhet_device_code_logins %}
+	<a href="{{ url_sikkerhet_device_code_logins }}" class="btn btn-sm btn-link {% if url_sikkerhet_device_code_logins in request.path %}fremhev{% endif %}">Device code-innlogginger</a><br>
+
+	{% url 'sikkerhet_varsling_virksomheter' as url_sikkerhet_varsling_virksomheter %}
+	<a href="{{ url_sikkerhet_varsling_virksomheter }}" class="btn btn-sm btn-link {% if url_sikkerhet_varsling_virksomheter in request.path %}fremhev{% endif %}">Varsling til virksomheter</a><br>
+
+	{% url 'rapport_ukjente_identer' as url_rapport_ukjente_identer %}
+	<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Kontoer utenfor OK</a><br>
+
+	{% url 'alle_spn' as url_alle_spn %}
+	<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">Kontoer med SPN</a><br>
+
+	{% url 'rapport_trusted_delegation' as url_rapport_trusted_delegation %}
+	<a href="{{ url_rapport_trusted_delegation }}" class="btn btn-sm btn-link {% if url_rapport_trusted_delegation in request.path %}fremhev{% endif %}">Delegerte kontoer</a><br>
+
+	{% url 'rapport_ad_ukjente_brukere' as url_rapport_ad_ukjente_brukere %}
+	<a href="{{ url_rapport_ad_ukjente_brukere }}" class="btn btn-sm btn-link {% if url_rapport_ad_ukjente_brukere in request.path %}fremhev{% endif %}">Manuelt opprettede brukere</a><br>
 
 <hr><h6>Leverandørtilgang</h6>
 

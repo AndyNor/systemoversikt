@@ -2,6 +2,8 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-07-02: BloodHound – single /sikkerhet/bloodhound/ page; legacy status/findings URLs redirect.
+# 2026-07-02: sikkerhet/sarbarheter/ – landing page for Qualys, Defender and compare reports.
 # 2026-07-01: Removed legacy /sikkerhet/risiko/<pk>/ routes – collection/ prefix only.
 # 2026-07-01: Virksomhet viewpoints, collection URL prefix, read-access API gates.
 # 2026-06-30: risikosamling delete URL – owner-only POST from list page.
@@ -101,6 +103,7 @@ urlpatterns = [
 	re_path(r'^brukere/azure/uten_epost/$', views.cmdb_uten_epost_stat, name='cmdb_uten_epost_stat'),
 
 
+	re_path(r'^sikkerhet/sarbarheter/$', views.sikkerhet_sarbarheter, name="sikkerhet_sarbarheter"),
 	re_path(r'^sikkerhet/vulnstats/overview/$', views.vulnstats, name="vulnstats"),
 	re_path(r'^sikkerhet/azure_vulnstats/overview/$', views.azure_vulnstats, name="azure_vulnstats"),
 	re_path(r'^sikkerhet/azure_vulnstats/qualys_compare/$', views.azure_vulnstats_qualys_compare, name="azure_vulnstats_qualys_compare"),
@@ -179,8 +182,9 @@ urlpatterns = [
 	re_path(r'^sikkerhet/ad/spn/$', views.alle_spn, name='alle_spn'),
 	re_path(r'^sikkerhet/ad/ukjente_identer/$', views.rapport_ukjente_identer, name='rapport_ukjente_identer'),
 	re_path(r'^sikkerhet/ad/trustedfordelegation/$', views.rapport_trusted_delegation, name="rapport_trusted_delegation"),
-	re_path(r'^sikkerhet/bloodhound/status/$', views_bloodhound.sikkerhet_bloodhound_status, name='sikkerhet_bloodhound_status'),
-	re_path(r'^sikkerhet/bloodhound/findings/$', views_bloodhound.sikkerhet_bloodhound_findings, name='sikkerhet_bloodhound_findings'),
+	re_path(r'^sikkerhet/bloodhound/$', views_bloodhound.sikkerhet_bloodhound, name='sikkerhet_bloodhound'),
+	re_path(r'^sikkerhet/bloodhound/status/$', views_bloodhound.sikkerhet_bloodhound_legacy_redirect),
+	re_path(r'^sikkerhet/bloodhound/findings/$', views_bloodhound.sikkerhet_bloodhound_legacy_redirect),
 	re_path(r'^sikkerhet/device_code_logins/$', views.sikkerhet_device_code_logins, name='sikkerhet_device_code_logins'),
 	re_path(r'^sikkerhet/device_code_logins/sanntid/$', views.sikkerhet_device_code_logins_sanntid, name='sikkerhet_device_code_logins_sanntid'),
 	re_path(r'^sikkerhet/varsling_virksomheter/$', views.sikkerhet_varsling_virksomheter, name='sikkerhet_varsling_virksomheter'),

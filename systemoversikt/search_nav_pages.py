@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-02: Merge BloodHound status + findings into one sidemeny entry.
+# 2026-07-02: Remove Akseptkriterier nav search – link removed from sikkerhet sidemeny (available in risk app).
+# 2026-07-02: Sårbarheter landing page – replaces three separate sidemeny search entries.
 # 2026-06-30: Akseptkriterier nav search – global criteria reference page.
 # 2026-06-24: Risiko nav search – view_qualysvuln fallback (same as views_risiko / BloodHound).
 # 2026-06-24: Risikovurderinger list open to all users (no permission filter).
@@ -76,17 +79,13 @@ NAV_PAGES = [
 	_entry('Samlede systemvurderinger', 'systemer_vurderinger', 'System', ['systemvurderinger', 'vurderinger samlet']),
 
 	# --- Sikkerhet (sikkerhet_index.html) ---
-	_entry('Qualys: sårbarheter', 'vulnstats', 'Sikkerhet', ['qualys', 'sårbarheter', 'sarbarheter', 'cve'], permissions=['systemoversikt.view_qualysvuln']),
-	_entry('Azure: sårbarheter', 'azure_vulnstats', 'Sikkerhet', ['azure sårbarheter', 'defender'], permissions=['systemoversikt.view_qualysvuln']),
-	_entry('Qualys vs Defender', 'azure_vulnstats_qualys_compare', 'Sikkerhet', ['qualys vs defender', 'defender compare'], permissions=['systemoversikt.view_qualysvuln']),
+	_entry('Sårbarheter', 'sikkerhet_sarbarheter', 'Sikkerhet', ['qualys', 'sårbarheter', 'sarbarheter', 'cve', 'defender', 'azure sårbarheter', 'qualys vs defender'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Gjennomførte pentester', 'rapport_sikkerhetstester', 'Sikkerhet', ['pentester', 'pentest', 'sikkerhetstester']),
 	_entry('Risikovurderinger', 'risiko_scope_list', 'Sikkerhet', ['risiko', 'risikovurdering', 'risikomatrise'], permissions=[]),
-	_entry('Akseptkriterier', 'risiko_akseptkriterier', 'Sikkerhet', ['akseptkriterier', 'risikomatrise', 'konsekvens', 'sannsynlighet'], permissions=[]),
 	_entry('Ny risikosamling', 'risiko_scope_create', 'Sikkerhet', ['ny risikosamling', 'risiko opprett'], permissions=['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']),
 	_entry('Importer risikomatrise', 'risiko_import', 'Sikkerhet', ['risiko import', 'risikomatrise import'], permissions=['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']),
 	_entry('ADCS certifikatmaler', 'cmdb_adcs_index', 'Sikkerhet', ['adcs', 'certifikatmaler'], permissions=['systemoversikt.view_cmdbdevice']),
-	_entry('AD: BloodHound-status', 'sikkerhet_bloodhound_status', 'Sikkerhet', ['bloodhound', 'ad attack paths'], permissions=['systemoversikt.view_qualysvuln']),
-	_entry('AD: BloodHound-funn', 'sikkerhet_bloodhound_findings', 'Sikkerhet', ['bloodhound funn', 'bloodhound findings', 'dcsync', 'kerberoast'], permissions=['systemoversikt.view_qualysvuln']),
+	_entry('Bloodhound', 'sikkerhet_bloodhound', 'Sikkerhet', ['bloodhound', 'ad attack paths', 'bloodhound funn', 'bloodhound findings', 'dcsync', 'kerberoast'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Device code-innlogginger', 'sikkerhet_device_code_logins', 'Sikkerhet', ['device code', 'devicecode'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Device code-innlogginger (sanntid)', 'sikkerhet_device_code_logins_sanntid', 'Sikkerhet', ['device code sanntid', 'devicecode live'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Varsling til virksomheter', 'sikkerhet_varsling_virksomheter', 'Sikkerhet', ['varsling virksomheter', 'csirt varsling']),

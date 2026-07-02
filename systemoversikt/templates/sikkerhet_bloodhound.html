@@ -6,32 +6,56 @@
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	AD: BloodHound-funn
+	Bloodhound
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
 {% include "includes/integrasjon_freshness_banner.html" with label="BloodHound AD-data ble sist mottatt" %}
 
-<p>Preventive funn (BH-01–BH-07) fra nattlig eller manuell kjøring av <code>bloodhound_analyze</code>. Tallene under er rå treff – les beskrivelsene for å vurdere reell risiko og prioritere opprydding.</p>
-
-<p>
-	<a href="{% url 'sikkerhet_bloodhound_status' %}{% if selected %}?snapshot={{ selected.snapshot_id }}{% endif %}">Tilbake til BloodHound-status</a>
-</p>
+<p>Oppsummering av objektantall fra bloodhound-python-snapshot og preventive funn (BH-01–BH-07) fra nattlig eller manuell kjøring av <code>bloodhound_analyze</code>. Tallene under er rå treff – les beskrivelsene for å vurdere reell risiko og prioritere opprydding.</p>
 
 {% if not selected %}
-	<p><i>Ingen BloodHound-snapshot er mottatt ennå.</i></p>
+	<p><i>Ingen BloodHound-snapshot er mottatt ennå. Collector kan laste opp med <code>POST /api/bloodhound/upload/</code>.</i></p>
 {% else %}
 
-	<h5>Snapshot {{ selected.snapshot_id }} ({{ selected.snapshot_id_readable }})</h5>
+	<h5>Valgt snapshot</h5>
 	<ul>
+		<li><b>Snapshot-ID:</b> {{ selected.snapshot_id }} ({{ selected.snapshot_id_readable }})</li>
+		<li><b>Mottatt:</b> {{ selected.received_at|date:"d.m.Y H:i" }} ({{ selected.received_at|timesince }} siden)</li>
+		<li><b>Lagringsmappe:</b> {{ selected.storage_path }}</li>
+		<li><b>JSON-filer:</b> {{ selected.file_count }}</li>
+		<li><b>Total størrelse:</b> {{ selected.total_bytes|intcomma }} byte</li>
+		{% if selected.meta_version %}<li><b>JSON-formatversjon:</b> {{ selected.meta_version }}</li>{% endif %}
+		{% if selected.collection_methods %}<li><b>Collection methods (bitmask):</b> {{ selected.collection_methods }}</li>{% endif %}
+		{% if selected.source_ip %}<li><b>Opplastet fra:</b> {{ selected.source_ip }}</li>{% endif %}
 		<li><b>Analysestatus:</b> {{ selected.analysis_status }}
 			{% if selected.analysis_completed_at %}
-				– ferdig {{ selected.analysis_completed_at|date:"d.m.Y H:i" }}
+				– {{ selected.analysis_completed_at|date:"d.m.Y H:i" }}
 			{% endif %}
+			(<a href="#funn">{{ selected.finding_count|intcomma }} funn</a>)
 		</li>
-		<li><b>Antall funn:</b> {{ selected.finding_count|intcomma }}</li>
 	</ul>
+
+	<h5>Objektantall</h5>
+	<table class="table table-sm tablesorter excel">
+		<thead>
+			<tr>
+				<th>Objekttype</th>
+				<th>Antall</th>
+				<th>JSON-filer (shards)</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for obj_type, count, shard_count in selected.counts_table %}
+			<tr>
+				<td>{{ obj_type }}</td>
+				<td>{{ count|intcomma }}</td>
+				<td>{% if shard_count %}{{ shard_count }}{% else %}–{% endif %}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
 
 	{% if selected.analysis_status != 'completed' %}
 		<div class="alert alert-warning">
@@ -39,7 +63,7 @@
 			{% if selected.analysis_status == 'failed' and selected.analysis_error %}
 				Feil: {{ selected.analysis_error|truncatechars:500 }}
 			{% else %}
-				Kjør <code>python manage.py bloodhound_analyze{% if selected %} --snapshot-id {{ selected.snapshot_id }}{% endif %}</code> på serveren.
+				Kjør <code>python manage.py bloodhound_analyze --snapshot-id {{ selected.snapshot_id }}</code> på serveren.
 			{% endif %}
 		</div>
 	{% endif %}
@@ -71,9 +95,7 @@
 				<div class="card-body small">
 					<p><b>Ser etter:</b> {{ check.looks_for|safe }}</p>
 					<p class="mb-0"><b>Risiko:</b> {{ check.risk|safe }}</p>
-					{% if selected %}
-					<p class="mb-0 mt-2"><a href="?snapshot={{ selected.snapshot_id }}&check={{ check.check_id }}">Vis funn for {{ check.check_id }}</a></p>
-					{% endif %}
+					<p class="mb-0 mt-2"><a href="?snapshot={{ selected.snapshot_id }}&check={{ check.check_id }}#funn">Vis funn for {{ check.check_id }}</a></p>
 				</div>
 			</div>
 		</div>
@@ -99,7 +121,7 @@
 					{% if severity_filter == row.severity %}
 						<i>aktivt filter</i>
 					{% else %}
-						<a href="?snapshot={{ selected.snapshot_id }}&severity={{ row.severity }}">vis</a>
+						<a href="?snapshot={{ selected.snapshot_id }}&severity={{ row.severity }}#funn">vis</a>
 					{% endif %}
 				</td>
 			</tr>
@@ -131,7 +153,7 @@
 					{% if check_filter == row.check_id %}
 						<i>aktivt filter</i>
 					{% else %}
-						<a href="?snapshot={{ selected.snapshot_id }}&check={{ row.check_id }}">vis</a>
+						<a href="?snapshot={{ selected.snapshot_id }}&check={{ row.check_id }}#funn">vis</a>
 					{% endif %}
 				</td>
 			</tr>
@@ -142,13 +164,13 @@
 
 	{% if check_filter or severity_filter %}
 	<p>
-		<a href="?snapshot={{ selected.snapshot_id }}">Fjern filter</a>
+		<a href="?snapshot={{ selected.snapshot_id }}#funn">Fjern filter</a>
 		{% if check_filter %}<span class="badge badge-secondary">{{ check_filter }}</span>{% endif %}
 		{% if severity_filter %}<span class="badge badge-secondary">{{ severity_filter }}</span>{% endif %}
 	</p>
 	{% endif %}
 
-	<h5>Funn</h5>
+	<h5 id="funn">Funn</h5>
 	{% if page_obj.paginator.count == 0 %}
 		<p><i>Ingen funn{% if check_filter or severity_filter %} med valgt filter{% endif %}.</i></p>
 	{% else %}
@@ -187,11 +209,11 @@
 	<nav>
 		<ul class="pagination pagination-sm">
 			{% if page_obj.has_previous %}
-			<li class="page-item"><a class="page-link" href="?{{ filter_query }}&page={{ page_obj.previous_page_number }}">Forrige</a></li>
+			<li class="page-item"><a class="page-link" href="?{{ filter_query }}&page={{ page_obj.previous_page_number }}#funn">Forrige</a></li>
 			{% endif %}
 			<li class="page-item disabled"><span class="page-link">Side {{ page_obj.number }} av {{ page_obj.paginator.num_pages }}</span></li>
 			{% if page_obj.has_next %}
-			<li class="page-item"><a class="page-link" href="?{{ filter_query }}&page={{ page_obj.next_page_number }}">Neste</a></li>
+			<li class="page-item"><a class="page-link" href="?{{ filter_query }}&page={{ page_obj.next_page_number }}#funn">Neste</a></li>
 			{% endif %}
 		</ul>
 	</nav>
@@ -200,15 +222,16 @@
 
 	{% if snapshots|length > 1 %}
 	<hr>
-	<h5>Andre snapshots</h5>
+	<h5>Tidligere snapshots</h5>
 	<ul>
 		{% for snap in snapshots %}
 		<li>
 			{% if snap.snapshot_id == selected.snapshot_id %}
-				<b>{{ snap.snapshot_id_readable }}</b> – {{ snap.finding_count|intcomma }} funn
+				<b>{{ snap.snapshot_id_readable }}</b> – {{ snap.received_at|date:"d.m.Y H:i" }} ({{ snap.finding_count|intcomma }} funn)
 			{% else %}
 				<a href="?snapshot={{ snap.snapshot_id }}">{{ snap.snapshot_id_readable }}</a>
-				– {{ snap.finding_count|intcomma }} funn
+				– {{ snap.received_at|date:"d.m.Y H:i" }}
+				({{ snap.count_users|intcomma }} brukere, {{ snap.count_computers|intcomma }} maskiner, {{ snap.finding_count|intcomma }} funn)
 			{% endif %}
 		</li>
 		{% endfor %}

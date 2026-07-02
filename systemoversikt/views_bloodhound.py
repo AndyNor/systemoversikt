@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-02: Merge status + findings into one Bloodhound page; legacy URLs redirect here.
 # 2026-06-23: BloodHound views require systemoversikt.view_qualysvuln (same as vulnstats).
 # 2026-06-23: Findings page – check catalog with looks_for/risk descriptions.
 # 2026-06-23: BloodHound preventive findings page (BH-01–BH-07).
@@ -9,7 +10,7 @@ import re
 from django.core.paginator import Paginator
 from django.db.models import Count
 from django.http import Http404
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 
 from systemoversikt.bloodhound.constants import BH_CHECK_META, bh_check_catalog
 from systemoversikt.models import BloodHoundFinding, BloodHoundSnapshot
@@ -21,52 +22,39 @@ VALID_SEVERITIES = frozenset({'critical', 'high', 'medium'})
 FINDINGS_PAGE_SIZE = 100
 
 
-def sikkerhet_bloodhound_status(request):
-	required_permissions = ['systemoversikt.view_qualysvuln']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {
-			'required_permissions': required_permissions,
-			'groups': request.user.groups,
-		})
+def _bloodhound_required_permissions():
+	return ['systemoversikt.view_qualysvuln']
 
-	selected_id = request.GET.get('snapshot', '').strip()
-	if selected_id and not SNAPSHOT_ID_RE.match(selected_id):
-		raise Http404
 
-	snapshots = list(
-		BloodHoundSnapshot.objects.filter(status='indexed').order_by('-snapshot_id')[:20]
-	)
-	if not snapshots:
-		selected = None
-	else:
-		if selected_id:
-			selected = BloodHoundSnapshot.objects.filter(snapshot_id=selected_id).first()
-			if not selected:
-				raise Http404
-		else:
-			selected = snapshots[0]
-
-	return render(request, 'sikkerhet_bloodhound_status.html', {
-		'request': request,
-		'required_permissions': formater_permissions(required_permissions),
-		'snapshots': snapshots,
-		'selected': selected,
-		'integrasjonsstatus': _integrasjonsstatus('bloodhound_ad'),
+def _bloodhound_permission_denied(request, required_permissions):
+	return render(request, '403.html', {
+		'required_permissions': required_permissions,
+		'groups': request.user.groups,
 	})
 
 
-def sikkerhet_bloodhound_findings(request):
-	# 2026-06-23: Preventive findings from bloodhound_analyze batch job.
-	required_permissions = ['systemoversikt.view_qualysvuln']
-	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {
-			'required_permissions': required_permissions,
-			'groups': request.user.groups,
-		})
-
+def _selected_bloodhound_snapshot(request, snapshots):
 	selected_id = request.GET.get('snapshot', '').strip()
 	if selected_id and not SNAPSHOT_ID_RE.match(selected_id):
 		raise Http404
+
+	if not snapshots:
+		return None
+
+	if selected_id:
+		selected = BloodHoundSnapshot.objects.filter(snapshot_id=selected_id).first()
+		if not selected:
+			raise Http404
+		return selected
+
+	return snapshots[0]
+
+
+def sikkerhet_bloodhound(request):
+	# 2026-07-02: Combined snapshot status and preventive findings on one page.
+	required_permissions = _bloodhound_required_permissions()
+	if not any(map(request.user.has_perm, required_permissions)):
+		return _bloodhound_permission_denied(request, required_permissions)
 
 	check_filter = request.GET.get('check', '').strip().upper()
 	if check_filter and check_filter not in VALID_CHECKS:
@@ -79,26 +67,18 @@ def sikkerhet_bloodhound_findings(request):
 	snapshots = list(
 		BloodHoundSnapshot.objects.filter(status='indexed').order_by('-snapshot_id')[:20]
 	)
-	if not snapshots:
-		selected = None
-		findings_qs = BloodHoundFinding.objects.none()
-	else:
-		if selected_id:
-			selected = BloodHoundSnapshot.objects.filter(snapshot_id=selected_id).first()
-			if not selected:
-				raise Http404
-		else:
-			selected = snapshots[0]
+	selected = _selected_bloodhound_snapshot(request, snapshots)
 
+	findings_qs = BloodHoundFinding.objects.none()
+	summary_by_check = []
+	summary_by_severity = []
+	if selected:
 		findings_qs = BloodHoundFinding.objects.filter(snapshot=selected).select_related('user')
 		if check_filter:
 			findings_qs = findings_qs.filter(check_id=check_filter)
 		if severity_filter:
 			findings_qs = findings_qs.filter(severity=severity_filter)
 
-	summary_by_check = []
-	summary_by_severity = []
-	if selected:
 		raw_by_check = list(
 			BloodHoundFinding.objects.filter(snapshot=selected)
 			.values('check_id', 'severity')
@@ -135,7 +115,7 @@ def sikkerhet_bloodhound_findings(request):
 
 	active_check_meta = BH_CHECK_META.get(check_filter) if check_filter else None
 
-	return render(request, 'sikkerhet_bloodhound_findings.html', {
+	return render(request, 'sikkerhet_bloodhound.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'snapshots': snapshots,
@@ -150,3 +130,11 @@ def sikkerhet_bloodhound_findings(request):
 		'active_check_meta': active_check_meta,
 		'integrasjonsstatus': _integrasjonsstatus('bloodhound_ad'),
 	})
+
+
+def sikkerhet_bloodhound_legacy_redirect(request):
+	# 2026-07-02: Preserve bookmarks to old status/findings URLs.
+	target = '/sikkerhet/bloodhound/'
+	if request.GET:
+		target = f'{target}?{request.GET.urlencode()}'
+	return redirect(target, permanent=True)

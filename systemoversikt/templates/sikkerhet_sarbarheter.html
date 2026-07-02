@@ -1,0 +1,147 @@
+{# 2026-07-02: Landing page for Qualys, Defender and compare reports. #}
+{# 2026-07-02: Qualys import chart – severities, total vulns, CMDB server count from audit log. #}
+{% extends "sikkerhet_index.html" %}
+
+{% block ekstrajavascript %}
+	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block overskrift %}
+	Sårbarheter
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p class="text-muted mb-3">
+	Sårbarhetsdata fra Qualys og Microsoft Defender for Endpoint.
+</p>
+
+<ul class="list-unstyled mb-0">
+	<li class="mb-2">
+		<a href="{% url 'vulnstats' %}" class="btn btn-sm btn-primary">Qualys: sårbarheter</a>
+	</li>
+	<li class="mb-2">
+		<a href="{% url 'azure_vulnstats' %}" class="btn btn-sm btn-primary">Azure Defender: sårbarheter</a>
+	</li>
+	<li class="mb-2">
+		<a href="{% url 'azure_vulnstats_qualys_compare' %}" class="btn btn-sm btn-primary">Qualys vs Defender</a>
+	</li>
+</ul>
+
+<hr>
+
+<h4>Qualys-import og servere over tid</h4>
+<p class="small text-muted mb-2">
+	Qualys-import (<code>Qualys import</code>): stablede søyler for alvorlighetsgrad 1–5 og linje for totalt antall sårbarheter.
+	CMDB server-import (<code>CMDB server import</code>): linje for antall servere i importen (høyre akse).
+</p>
+
+{% if integrasjonsstatus_qualys %}
+{% include "includes/integrasjon_freshness_banner.html" with integrasjonsstatus=integrasjonsstatus_qualys label="Qualys sist synkronisert" %}
+{% endif %}
+
+{% if qualys_import_chart %}
+<div><canvas height="80" id="qualys_import_chart"></canvas></div>
+{{ qualys_import_chart|json_script:"qualysImportChartData" }}
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const qualysImportChartData = JSON.parse(
+	document.getElementById('qualysImportChartData').textContent
+);
+const qualysSeverityColors = {
+	1: 'rgba(108, 117, 125, 0.9)',
+	2: 'rgba(40, 167, 69, 0.9)',
+	3: 'rgba(255, 193, 7, 0.9)',
+	4: 'rgba(253, 126, 20, 0.9)',
+	5: 'rgba(220, 53, 69, 0.9)',
+};
+const qualysImportDatasets = [];
+for (let severity = 1; severity <= 5; severity += 1) {
+	qualysImportDatasets.push({
+		type: 'bar',
+		label: `Alvorlighet ${severity}`,
+		data: qualysImportChartData.severities[String(severity)],
+		stack: 'severity',
+		backgroundColor: qualysSeverityColors[severity],
+		borderColor: qualysSeverityColors[severity],
+		borderWidth: 1,
+		order: 3,
+		yAxisID: 'y',
+	});
+}
+qualysImportDatasets.push({
+	type: 'line',
+	label: 'Totalt importert',
+	data: qualysImportChartData.total,
+	borderColor: 'rgb(42, 40, 89)',
+	backgroundColor: 'rgba(42, 40, 89, 0.08)',
+	borderWidth: 2,
+	pointRadius: 3,
+	pointBackgroundColor: 'rgb(42, 40, 89)',
+	fill: false,
+	order: 2,
+	yAxisID: 'y',
+	spanGaps: false,
+});
+qualysImportDatasets.push({
+	type: 'line',
+	label: 'CMDB servere',
+	data: qualysImportChartData.servers,
+	borderColor: 'rgb(23, 162, 184)',
+	backgroundColor: 'rgba(23, 162, 184, 0.08)',
+	borderWidth: 2,
+	borderDash: [6, 4],
+	pointRadius: 3,
+	pointBackgroundColor: 'rgb(23, 162, 184)',
+	fill: false,
+	order: 1,
+	yAxisID: 'y1',
+	spanGaps: false,
+});
+new Chart(document.getElementById('qualys_import_chart'), {
+	type: 'bar',
+	data: {
+		labels: qualysImportChartData.labels,
+		datasets: qualysImportDatasets,
+	},
+	options: {
+		plugins: {
+			legend: {
+				position: 'top',
+			},
+		},
+		scales: {
+			x: {
+				stacked: true,
+			},
+			y: {
+				type: 'linear',
+				position: 'left',
+				beginAtZero: true,
+				stacked: true,
+				title: {
+					display: true,
+					text: 'Sårbarheter',
+				},
+			},
+			y1: {
+				type: 'linear',
+				position: 'right',
+				beginAtZero: true,
+				grid: {
+					drawOnChartArea: false,
+				},
+				title: {
+					display: true,
+					text: 'Servere',
+				},
+			},
+		},
+	},
+});
+</script>
+{% else %}
+<p class="text-muted mb-0">Ingen Qualys- eller CMDB server-importlogger funnet ennå.</p>
+{% endif %}
+
+{% endblock hovedinnhold %}

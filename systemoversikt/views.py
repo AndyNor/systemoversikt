@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-02: Qualys landing chart – CMDB server count line from audit log on dual y-axis.
+# 2026-07-02: Qualys import chart – stacked severity bars plus total line from audit log.
+# 2026-07-02: sikkerhet_sarbarheter – landing page with links; Qualys import chart from audit log.
 # 2026-06-30: tool_service_announcements – latest MS Graph service announcement messages (no permission gate).
 # 2026-06-24: rapport_conditional_access_rules – single rule at /rules/<pk>/; list at /rules/.
 # 2026-06-23: rapport_conditional_access_overview – tile view of active CA rules (replaces graph prototype).
@@ -1275,6 +1278,88 @@ def vulnstats_datakvalitet(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'integrasjonsstatus': integrasjonsstatus,
 		'data': data,
+	})
+
+
+def _qualys_import_chart_from_audit_log():
+	# 2026-07-02: Qualys import + CMDB server import timeline from ApplicationLog.
+	qualys_import_total_pattern = re.compile(
+		r'importing\s+(\d+)\s+vulnerabilities,\s+where\s+(\d+)\s+of them failed server lookup',
+		re.I,
+	)
+	qualys_severity_pattern = re.compile(r'Alvorlighet\s+([1-5]):\s*(\d+)', re.I)
+	cmdb_server_import_pattern = re.compile(r'Importen inneholder\s+(\d+)\s+servere', re.I)
+	points = []
+
+	for log in ApplicationLog.objects.filter(
+		event_type="Qualys import",
+		message__icontains="Done importing",
+	).order_by('opprettet'):
+		match = qualys_import_total_pattern.search(log.message)
+		if not match:
+			continue
+		severities = {severity: 0 for severity in range(1, 6)}
+		for severity_match in qualys_severity_pattern.finditer(log.message):
+			severities[int(severity_match.group(1))] = int(severity_match.group(2))
+		points.append({
+			"dt": log.opprettet,
+			"qualys_total": int(match.group(1)),
+			"severities": severities,
+			"servers": None,
+		})
+
+	for log in ApplicationLog.objects.filter(
+		event_type="CMDB server import",
+		message__icontains="Importen inneholder",
+	).order_by('opprettet'):
+		match = cmdb_server_import_pattern.search(log.message)
+		if not match:
+			continue
+		points.append({
+			"dt": log.opprettet,
+			"qualys_total": None,
+			"severities": None,
+			"servers": int(match.group(1)),
+		})
+
+	if not points:
+		return None
+
+	points.sort(key=lambda point: point["dt"])
+	labels = []
+	total = []
+	servers = []
+	severity_series = {severity: [] for severity in range(1, 6)}
+	for point in points:
+		labels.append(point["dt"].strftime("%d %b %y"))
+		total.append(point["qualys_total"])
+		servers.append(point["servers"])
+		if point["severities"]:
+			for severity in range(1, 6):
+				severity_series[severity].append(point["severities"][severity])
+		else:
+			for severity in range(1, 6):
+				severity_series[severity].append(None)
+
+	return {
+		"labels": labels,
+		"total": total,
+		"servers": servers,
+		"severities": severity_series,
+	}
+
+
+def sikkerhet_sarbarheter(request):
+	# 2026-07-02: Landing page for Qualys, Defender and compare reports; Qualys import chart from audit log.
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	return render(request, 'sikkerhet_sarbarheter.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'qualys_import_chart': _qualys_import_chart_from_audit_log(),
+		'integrasjonsstatus_qualys': _integrasjonsstatus("sp_qualys"),
 	})
 
 
