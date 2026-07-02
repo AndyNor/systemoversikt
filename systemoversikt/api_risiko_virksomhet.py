@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-07-02: Normalize group title to virksomhetsforkortelse/name (e.g. DIG/JIPPI).
+# 2026-07-02: API returns display_title (forkortelse/name) and bare title for editing.
 # 2026-07-02: Include member names in groups list payload for inline table display.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in API imports and queries.
 # 2026-07-01: JSON API for per-virksomhet risk read-access groups – systemforvalter + own virksomhet only.
@@ -17,6 +17,7 @@ from systemoversikt.models import RiskVirksomhetGroup, RiskVirksomhetGroupMember
 from systemoversikt.risk_membership import (
 	normalize_risk_group_title,
 	risk_group_title_conflict,
+	storage_risk_group_title,
 	user_can_manage_risk_virksomhet_groups,
 	user_display_name,
 )
@@ -46,7 +47,8 @@ def _group_to_dict(group, virksomhet=None):
 	virksomhet = virksomhet or group.virksomhet
 	return {
 		'id': group.pk,
-		'title': normalize_risk_group_title(virksomhet, group.title),
+		'title': storage_risk_group_title(virksomhet, group.title),
+		'display_title': normalize_risk_group_title(virksomhet, group.title),
 		'beskrivelse': group.beskrivelse,
 		'virksomhet_read_only': group.virksomhet_read_only,
 		'member_count': getattr(group, 'member_count', group.memberships.count()),
@@ -130,7 +132,7 @@ def api_risiko_read_group_create(request, vid):
 	if data is None:
 		return _json_error('invalid_json')
 
-	title = normalize_risk_group_title(virksomhet, data.get('title') or '')
+	title = storage_risk_group_title(virksomhet, data.get('title') or '')
 	if not title:
 		return _json_error('Gruppenavn er påkrevd.')
 
@@ -162,7 +164,7 @@ def api_risiko_read_group_update(request, vid, gid):
 		return _json_error('invalid_json')
 
 	if 'title' in data:
-		title = normalize_risk_group_title(virksomhet, data.get('title') or '')
+		title = storage_risk_group_title(virksomhet, data.get('title') or '')
 		if not title:
 			return _json_error('Gruppenavn er påkrevd.')
 		if risk_group_title_conflict(virksomhet, title, exclude_pk=group.pk):

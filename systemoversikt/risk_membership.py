@@ -2,7 +2,8 @@
 # Change log:
 # 2026-07-02: risk_group_tag_colors – deterministic HSL tag colors from group pk.
 # 2026-07-02: Prefetch participant_groups on scope list tables.
-# 2026-07-02: normalize_risk_group_title – shared gruppenavn prefix for API and templates.
+# 2026-07-02: storage_risk_group_title – store given name without forced virksomhetsforkortelse prefix.
+# 2026-07-02: normalize_risk_group_title – display-only virksomhetsforkortelse/name formatting.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in imports and queries.
 # 2026-07-01: nav_ordinary_virksomheter – all nav links sorted by virksomhetsforkortelse.
 # 2026-07-01: Superuser cross-virksomhet read-group admin – temporary for testing; remove later.
@@ -29,23 +30,34 @@ def risk_group_title_prefix(virksomhet):
 	return '%s/' % virksomhet.virksomhetsforkortelse
 
 
-def normalize_risk_group_title(virksomhet, title):
+def storage_risk_group_title(virksomhet, title):
+	"""Return the given name stored in DB (no forced virksomhetsforkortelse prefix)."""
 	title = (title or '').strip()
 	if not title or virksomhet is None:
 		return title
 	prefix = risk_group_title_prefix(virksomhet)
 	if title.lower().startswith(prefix.lower()):
-		return prefix + title[len(prefix):].lstrip('/')
-	return prefix + title
+		return title[len(prefix):].lstrip('/')
+	return title
+
+
+def normalize_risk_group_title(virksomhet, title):
+	"""Display title as virksomhetsforkortelse/given-name."""
+	bare = storage_risk_group_title(virksomhet, title)
+	if not bare or virksomhet is None:
+		return bare
+	return risk_group_title_prefix(virksomhet) + bare
 
 
 def risk_group_title_conflict(virksomhet, title, exclude_pk=None):
-	normalized = normalize_risk_group_title(virksomhet, title)
+	stored = storage_risk_group_title(virksomhet, title)
+	if not stored:
+		return False
 	qs = RiskVirksomhetGroup.objects.filter(virksomhet=virksomhet)
 	if exclude_pk is not None:
 		qs = qs.exclude(pk=exclude_pk)
 	for group in qs:
-		if normalize_risk_group_title(virksomhet, group.title) == normalized:
+		if storage_risk_group_title(virksomhet, group.title) == stored:
 			return True
 	return False
 

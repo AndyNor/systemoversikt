@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-02: Empty name on new group; display_title shows forkortelse/given-name in lists. #}
 {# 2026-07-02: Gruppenavn (forkortelse/navn), inline medlemmer, editor/members as modals. #}
 {# 2026-07-02: virksomhet_read_only flag; groups usable for collection deltakergrupper. #}
 {# 2026-07-01: Manage per-virksomhet read-access groups for risk collections. #}
@@ -37,7 +38,7 @@
 				<div class="form-group">
 					<label for="risiko-read-group-title">Gruppenavn</label>
 					<input type="text" id="risiko-read-group-title" class="form-control form-control-sm" maxlength="200">
-					<small class="form-text text-muted">Format: {{ virksomhet.virksomhetsforkortelse }}/navn (f.eks. {{ virksomhet.virksomhetsforkortelse }}/{{ virksomhet.virksomhetsnavn }})</small>
+					<small class="form-text text-muted">Visningsnavn blir {{ virksomhet.virksomhetsforkortelse }}/&lt;navn&gt; (f.eks. {{ virksomhet.virksomhetsforkortelse }}/mitt-team). Du trenger ikke skrive inn forkortelsen.</small>
 				</div>
 				<div class="form-group">
 					<label for="risiko-read-group-beskrivelse">Beskrivelse</label>
@@ -85,7 +86,6 @@ $(function () {
 	var apiUrls = {{ api_urls_json|safe }};
 	var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
 	csrfToken = csrfToken ? csrfToken.value : '';
-	var groupNamePrefix = '{{ virksomhet.virksomhetsforkortelse|escapejs }}/';
 	var groupsListEl = document.getElementById('risiko-read-groups-list');
 	var editorModal = $('#risiko-read-group-editor-modal');
 	var membersModal = $('#risiko-read-group-members-modal');
@@ -130,7 +130,7 @@ $(function () {
 		var html = '<table class="table table-sm"><thead><tr><th>Gruppenavn</th><th>Type</th><th>Beskrivelse</th><th>Medlemmer</th><th></th></tr></thead><tbody>';
 		groups.forEach(function (g) {
 			html += '<tr data-group-id="' + g.id + '">';
-			html += '<td>' + escapeHtml(g.title) + '</td>';
+			html += '<td>' + escapeHtml(g.display_title || g.title) + '</td>';
 			html += '<td>' + groupTypeBadge(g) + '</td>';
 			html += '<td>' + escapeHtml(g.beskrivelse || '-') + '</td>';
 			html += '<td class="small">' + renderMemberNames(g) + '</td>';
@@ -157,14 +157,10 @@ $(function () {
 		});
 	}
 
-	function defaultGroupName() {
-		return groupNamePrefix + '{{ virksomhet.virksomhetsnavn|escapejs }}';
-	}
-
 	function showEditor(group) {
 		editingGroupId = group ? group.id : null;
 		document.getElementById('risiko-read-group-editor-title').textContent = group ? 'Rediger gruppe' : 'Ny gruppe';
-		document.getElementById('risiko-read-group-title').value = group ? group.title : defaultGroupName();
+		document.getElementById('risiko-read-group-title').value = group ? (group.title || '') : '';
 		document.getElementById('risiko-read-group-beskrivelse').value = group ? (group.beskrivelse || '') : '';
 		document.getElementById('risiko-read-group-virksomhet-read-only').checked = group ? !!group.virksomhet_read_only : false;
 		document.getElementById('risiko-read-group-status').textContent = '';
@@ -193,7 +189,7 @@ $(function () {
 			if (!data.ok) {
 				return;
 			}
-			document.getElementById('risiko-read-group-members-title').textContent = data.group.title;
+			document.getElementById('risiko-read-group-members-title').textContent = data.group.display_title || data.group.title;
 			populateMembersList(data.members);
 			document.getElementById('risiko-read-group-member-sok').value = '';
 			document.getElementById('risiko-read-group-member-sok-treff').innerHTML = '';
