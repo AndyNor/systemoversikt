@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
 # 2026-07-02: Log Alvorlighet 1–5 counts on successful Qualys import for landing-page chart.
-# 2026-06-21: Apply basisdrift and risk-acceptance flags from separate rule tables.from datetime import datetime, timezone, timedelta
+# 2026-06-21: Apply basisdrift and risk-acceptance flags from separate rule tables.
+from datetime import datetime, timezone, timedelta
 from systemoversikt.views import push_pushover
 from systemoversikt.models import *
 from systemoversikt.qualys_vuln_rules import qualys_vuln_flags
