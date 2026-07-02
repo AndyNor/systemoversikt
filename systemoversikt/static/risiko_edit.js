@@ -1,4 +1,5 @@
 // Change log:
+// 2026-07-02: Modal status in header; confirm discard when godkjent blocks save on close.
 // 2026-07-01: Godkjent lock – initRisikoStatusUnlock for owner-only status change when read-only.
 // 2026-06-30: Scenario table columns – Konsekvenstype, Konsekvens, Sannsynlighetstype, Sannsynlighet.
 // 2026-06-30: Full scenario table rebuild on refresh – fixes stale konsekvenstype/sannsynlighetstype columns.
@@ -72,6 +73,7 @@
         if (!response.ok) {
           const err = new Error((data && data.error) || 'Forespørsel feilet');
           err.data = data;
+          err.status = response.status;
           throw err;
         }
         return data;
@@ -150,6 +152,7 @@
     let scenarioSnapshot = '';
     let modalAutosavePaused = false;
     let modalCloseAllowed = false;
+    let modalContentLocked = false;
     let modalSavedStatusTimer = null;
     const actionAutosaveTimers = new WeakMap();
     const actionSaveInFlight = new WeakMap();
@@ -177,7 +180,81 @@
       }
       clearTimeout(scenarioAutosaveTimer);
       scenarioAutosaveTimer = null;
+      modalContentLocked = false;
+      setModalInputsReadOnly(false);
     });
+
+    function isContentLockedError(err) {
+      if (!err) return false;
+      const msg = err.message || '';
+      return msg.indexOf('godkjent') !== -1 && msg.indexOf('kan ikke redigeres') !== -1;
+    }
+
+    function setModalInputsReadOnly(locked) {
+      const modalEl = document.getElementById('risiko-scenario-modal');
+      if (!modalEl) return;
+      modalEl.querySelectorAll('input, textarea, select, button').forEach(function (el) {
+        if (el.classList.contains('close') || el.getAttribute('data-dismiss') === 'modal') {
+          return;
+        }
+        if (el.id === 'risiko-delete-scenario') {
+          el.disabled = locked;
+          return;
+        }
+        if (el.tagName === 'BUTTON') {
+          el.disabled = locked;
+        } else if (el.type === 'checkbox' || el.type === 'radio') {
+          el.disabled = locked;
+        } else {
+          el.readOnly = locked;
+          if (el.tagName === 'SELECT') {
+            el.disabled = locked;
+          }
+        }
+      });
+    }
+
+    function markModalContentLocked(msg) {
+      modalContentLocked = true;
+      modalAutosavePaused = true;
+      clearTimeout(scenarioAutosaveTimer);
+      scenarioAutosaveTimer = null;
+      setModalInputsReadOnly(true);
+      setModalStatus(msg || 'Risikosamlingen er godkjent og kan ikke redigeres.', true);
+    }
+
+    function discardModalPendingChanges() {
+      captureScenarioSnapshot();
+      document.querySelectorAll('#risiko-actions-list .risiko-action-card').forEach(function (card) {
+        captureActionSnapshot(card);
+      });
+    }
+
+    function closeModalAllowingDiscard() {
+      discardModalPendingChanges();
+      modalCloseAllowed = true;
+      modal.modal('hide');
+    }
+
+    function handleModalSaveError(err) {
+      if (isContentLockedError(err)) {
+        markModalContentLocked(err.message);
+      } else {
+        setModalStatus(err.message, true);
+      }
+    }
+
+    function offerDiscardOnLockClose(err) {
+      const msg = (err && err.message) || '';
+      const prompt = msg
+        ? msg + '\n\nLukke og forkaste endringer?'
+        : 'Risikosamlingen er godkjent. Endringene kan ikke lagres. Lukke og forkaste endringer?';
+      if (window.confirm(prompt)) {
+        closeModalAllowingDiscard();
+      } else if (err && err.message) {
+        markModalContentLocked(err.message);
+      }
+    }
 
     modal.on('hide.bs.modal', function (e) {
       if (modalCloseAllowed) {
@@ -194,7 +271,11 @@
           modal.modal('hide');
         })
         .catch(function (err) {
-          setModalStatus(err.message, true);
+          if (modalContentLocked || isContentLockedError(err)) {
+            offerDiscardOnLockClose(err);
+          } else {
+            setModalStatus(err.message, true);
+          }
         });
     });
 
@@ -212,7 +293,9 @@
     function setModalStatus(msg, isError) {
       if (!modalStatus) return;
       modalStatus.textContent = msg || '';
-      modalStatus.className = isError ? 'small mb-2 text-danger' : 'small mb-2 text-muted';
+      modalStatus.className = isError
+        ? 'risiko-modal-status small text-danger'
+        : 'risiko-modal-status small text-muted';
     }
 
     function showModalSavedStatus() {
@@ -246,7 +329,7 @@
       clearTimeout(scenarioAutosaveTimer);
       scenarioAutosaveTimer = setTimeout(function () {
         flushScenarioAutosave().catch(function (err) {
-          setModalStatus(err.message, true);
+          handleModalSaveError(err);
         });
       }, AUTOSAVE_DELAY_MS);
     }
@@ -258,7 +341,7 @@
       actionAutosaveTimers.set(card, setTimeout(function () {
         actionAutosaveTimers.delete(card);
         persistActionCard(card).catch(function (err) {
-          setModalStatus(err.message, true);
+          handleModalSaveError(err);
         });
       }, AUTOSAVE_DELAY_MS));
     }
@@ -501,6 +584,8 @@
     }
 
     function fillScenarioForm(scenario) {
+      modalContentLocked = false;
+      setModalInputsReadOnly(false);
       modalAutosavePaused = true;
       document.getElementById('risiko-modal-scenario-id').value = scenario ? scenario.id : '';
       setKitTogglesFromString(scenario ? (scenario.kit_dimensjoner || '') : '');
@@ -869,7 +954,7 @@
           return refreshAfterModalTiltakChange();
         })
         .catch(function (err) {
-          setModalStatus(err.message, true);
+          handleModalSaveError(err);
         });
     }
 
@@ -1052,8 +1137,10 @@
           return refreshAfterModalTiltakChange();
         })
         .catch(function (err) {
-          setModalStatus(err.message, true);
-          card.querySelectorAll('button').forEach(function (btn) { btn.disabled = false; });
+          handleModalSaveError(err);
+          if (!isContentLockedError(err)) {
+            card.querySelectorAll('button').forEach(function (btn) { btn.disabled = false; });
+          }
         });
     }
 
@@ -1077,7 +1164,7 @@
           return refreshAfterModalTiltakChange();
         })
         .catch(function (err) {
-          setModalStatus(err.message, true);
+          handleModalSaveError(err);
         });
     }
 
@@ -1090,6 +1177,8 @@
           } else {
             setModalStatus('Skriv uønsket hendelse – scenarioet opprettes automatisk.', true);
           }
+        }).catch(function (err) {
+          handleModalSaveError(err);
         });
         return;
       }
@@ -1346,7 +1435,7 @@
           return refreshTable();
         })
         .catch(function (err) {
-          setModalStatus(err.message, true);
+          handleModalSaveError(err);
         });
     }
 
@@ -1469,6 +1558,11 @@
           updateScopeMetaView(scope);
           if (scope.status) {
             config.scopeStatus = scope.status;
+          }
+          if (scope.status === 'godkjent' && modal.hasClass('show')) {
+            markModalContentLocked(
+              'Risikosamlingen er godkjent og kan ikke redigeres. En eier må endre status for å åpne for redigering.'
+            );
           }
           captureScopeMetaSnapshot();
           showScopeMetaView();

@@ -235,12 +235,14 @@
 <div class="modal fade" id="risiko-scenario-modal" tabindex="-1" role="dialog" aria-labelledby="risiko-scenario-modal-title" aria-hidden="true">
 	<div class="modal-dialog modal-xl risiko-scenario-modal-dialog" role="document">
 		<div class="modal-content">
-			<div class="modal-header">
-				<h5 class="modal-title" id="risiko-scenario-modal-title">Scenario</h5>
+			<div class="modal-header risiko-scenario-modal-header">
+				<div class="risiko-modal-header-main">
+					<h5 class="modal-title" id="risiko-scenario-modal-title">Scenario</h5>
+					<span id="risiko-modal-status" class="risiko-modal-status small text-muted" aria-live="polite"></span>
+				</div>
 				<button type="button" class="close" data-dismiss="modal" aria-label="Lukk"><span aria-hidden="true">&times;</span></button>
 			</div>
 			<div class="modal-body">
-				<div id="risiko-modal-status" class="small mb-2"></div>
 				<input type="hidden" id="risiko-modal-scenario-id" value="">
 
 				<div class="risiko-modal-layout">
@@ -418,6 +420,25 @@
 }
 #risiko-scenario-modal .modal-header,
 #risiko-scenario-modal .modal-footer { padding: 0.5rem 0.85rem; flex-shrink: 0; }
+/* 2026-07-02: Status beside modal title – fixed line avoids body layout shift on autosave. */
+#risiko-scenario-modal .risiko-scenario-modal-header {
+	display: flex;
+	align-items: center;
+}
+#risiko-scenario-modal .risiko-modal-header-main {
+	display: flex;
+	align-items: baseline;
+	flex: 1 1 auto;
+	min-width: 0;
+	gap: 0.5rem;
+}
+#risiko-scenario-modal .risiko-modal-status {
+	flex-shrink: 0;
+	min-width: 4.5rem;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 #risiko-scenario-modal .risiko-scenario-modal-footer {
 	display: flex;
 	width: 100%;
@@ -447,7 +468,6 @@
 	padding: 0.2rem 0.4rem;
 }
 #risiko-scenario-modal .risiko-modal-risk-line { font-size: 0.8rem; }
-#risiko-scenario-modal #risiko-modal-status { flex-shrink: 0; }
 .risiko-modal-layout {
 	display: flex;
 	align-items: stretch;
