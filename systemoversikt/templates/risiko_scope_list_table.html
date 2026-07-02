@@ -1,4 +1,5 @@
 {% load templatetags %}
+{# 2026-07-02: data-group-ids on rows for client-side tilgangsgruppe filtering. #}
 {# 2026-07-02: Tilgangsgrupper column as colored tags. #}
 {# 2026-07-02: Tilgangsgrupper column replaces beskrivelse on scope list tables. #}
 {# 2026-07-01: Shared scope table for root and virksomhet risk list pages. #}
@@ -19,7 +20,7 @@
 </thead>
 <tbody>
 {% for scope in scopes %}
-<tr>
+<tr data-group-ids="{% for g in scope.participant_groups.all %}{{ g.pk }}{% if not forloop.last %},{% endif %}{% endfor %}">
 	<td>
 		{% if not scope.current_user_has_read_access %}<span class="risiko-scope-access-lock" title="Du har ikke tilgang">{% access_denied_icon '16px' %}</span> {% endif %}
 		{% if scope.current_user_has_read_access and not scope.current_user_is_member %}<span class="badge badge-light border text-muted mr-1" title="Lesetilgang via tilgangsgruppe med virksomhetslesing">Lesetilgang</span>{% endif %}

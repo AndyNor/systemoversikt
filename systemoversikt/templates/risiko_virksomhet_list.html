@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
-{# 2026-07-01: Virksomhet nav highlights selected virksomhet among all virksomheter. #}
+{% load templatetags %}
+{# 2026-07-02: Tilgangsgruppe filter bar above virksomhet collection table. #}
 {# 2026-07-01: Virksomhet-specific risk collection viewpoint. #}
 
 {% block overskrift %}
@@ -34,7 +35,12 @@
 
 <h5 class="mt-4">Risikosamlinger for {{ virksomhet.virksomhetsforkortelse }}</h5>
 
+<div class="risiko-scope-table-block" data-risiko-scope-table>
+{% if virksomhet_tilgangsgrupper %}
+{% risiko_tilgangsgruppe_filter_buttons virksomhet_tilgangsgrupper %}
+{% endif %}
 {% include "risiko_scope_list_table.html" with scopes=scopes %}
+</div>
 
 {% if not scopes %}
 <p class="mt-2">Ingen risikosamlinger for denne virksomheten ennå.</p>
@@ -57,9 +63,9 @@
 				<p class="mb-2">Er du sikker på at du vil slette risikosamlingen <strong id="risiko-scope-delete-title"></strong>?</p>
 				<p class="text-muted mb-0">Dette kan ikke angres. Alle scenarioer og tiltak i samlingen slettes.</p>
 			</div>
-			<div class="modal-footer">
-				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
+			<div class="modal-footer justify-content-between w-100">
 				<button type="button" class="btn btn-danger btn-sm" id="risiko-scope-delete-confirm">Slett</button>
+				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
 			</div>
 		</div>
 	</div>
@@ -90,4 +96,5 @@ $(function () {
 	});
 });
 </script>
+{% include "risiko_tilgangsgruppe_filter_script.html" %}
 {% endblock script_append %}

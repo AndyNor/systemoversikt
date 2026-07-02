@@ -1,4 +1,5 @@
 # Change log:
+# 2026-07-02: risiko_tilgangsgruppe_filter_buttons – filter bar for collection list tables.
 # 2026-07-02: risiko_tilgangsgruppe_tags – colored tags for assigned groups on collection list tables.
 # 2026-07-01: risiko_ansvarlig_display – show Profile displayName for tiltak ansvarlig email/UPN.
 # 2026-06-30: under_revurdering status – arrow-clockwise-circle icon (repeat/review).
@@ -533,24 +534,56 @@ def risiko_konsekvenstype_tags(konsekvenstyper):
 	return mark_safe(' '.join(str(part) for part in parts))
 
 
-@register.simple_tag
-def risiko_tilgangsgruppe_tags(groups):
+def _risiko_tilgangsgruppe_tag_html(group, filterable=False):
 	from systemoversikt.risk_membership import risk_group_tag_colors
-	group_list = list(groups)
-	if not group_list:
-		return '-'
-	parts = []
-	for group in group_list:
-		colors = risk_group_tag_colors(group.pk)
-		label = group.display_title
-		parts.append(format_html(
-			'<span class="risiko-tilgangsgruppe-tag" style="background-color: {}; color: {};" title="{}">{}</span>',
+	colors = risk_group_tag_colors(group.pk)
+	label = group.display_title
+	if filterable:
+		return format_html(
+			'<button type="button" class="risiko-tilgangsgruppe-tag risiko-tilgangsgruppe-filter-tag risiko-tilgangsgruppe-filter-btn"'
+			' data-group-id="{}" style="background-color: {}; color: {};" title="{}">{}</button>',
+			group.pk,
 			colors['background'],
 			colors['color'],
 			label,
 			label,
-		))
+		)
+	return format_html(
+		'<span class="risiko-tilgangsgruppe-tag" style="background-color: {}; color: {};" title="{}">{}</span>',
+		colors['background'],
+		colors['color'],
+		label,
+		label,
+	)
+
+
+@register.simple_tag
+def risiko_tilgangsgruppe_tags(groups):
+	group_list = list(groups)
+	if not group_list:
+		return '-'
+	parts = [_risiko_tilgangsgruppe_tag_html(group, filterable=True) for group in group_list]
 	return mark_safe(' '.join(str(part) for part in parts))
+
+
+@register.simple_tag
+def risiko_tilgangsgruppe_filter_buttons(groups):
+	group_list = list(groups)
+	if not group_list:
+		return ''
+	parts = [
+		format_html(
+			'<button type="button" class="btn btn-sm btn-outline-secondary risiko-tilgangsgruppe-filter-btn risiko-tilgangsgruppe-filter-all active" data-group-id="">Alle</button>',
+		),
+	]
+	for group in group_list:
+		parts.append(_risiko_tilgangsgruppe_tag_html(group, filterable=True))
+	return mark_safe(
+		'<div class="risiko-tilgangsgruppe-filter-bar mb-2">'
+		'<span class="risiko-tilgangsgruppe-filter-bar-label">Filtrer:</span>'
+		+ ' '.join(str(part) for part in parts)
+		+ '</div>'
+	)
 
 
 _SCOPE_STATUS_META = {

@@ -107,7 +107,12 @@
 
 
 
+<div class="risiko-scope-table-block" data-risiko-scope-table>
+{% if virksomhet_tilgangsgrupper %}
+{% risiko_tilgangsgruppe_filter_buttons virksomhet_tilgangsgrupper %}
+{% endif %}
 {% include "risiko_scope_list_table.html" with scopes=virksomhet_scopes %}
+</div>
 
 
 
@@ -163,11 +168,11 @@
 
 			</div>
 
-			<div class="modal-footer">
-
-				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
+			<div class="modal-footer justify-content-between w-100">
 
 				<button type="button" class="btn btn-danger btn-sm" id="risiko-scope-delete-confirm">Slett</button>
+
+				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
 
 			</div>
 
@@ -242,6 +247,8 @@ $(function () {
 });
 
 </script>
+
+{% include "risiko_tilgangsgruppe_filter_script.html" %}
 
 {% endblock script_append %}
 

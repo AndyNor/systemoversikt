@@ -1,0 +1,49 @@
+{# 2026-07-02: Client-side tilgangsgruppe filter for collection list tables. #}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+(function () {
+	function parseGroupIds(raw) {
+		if (!raw) {
+			return [];
+		}
+		return raw.split(',').filter(Boolean);
+	}
+
+	function setActiveFilter(tableBlock, groupId) {
+		var buttons = tableBlock.querySelectorAll('.risiko-tilgangsgruppe-filter-tag, .risiko-tilgangsgruppe-filter-btn');
+		buttons.forEach(function (btn) {
+			var btnGroupId = btn.getAttribute('data-group-id') || '';
+			btn.classList.toggle('active', btnGroupId === groupId);
+		});
+	}
+
+	function applyGroupFilter(tableBlock, groupId) {
+		var rows = tableBlock.querySelectorAll('tbody tr[data-group-ids]');
+		rows.forEach(function (row) {
+			if (!groupId) {
+				row.style.display = '';
+				return;
+			}
+			var ids = parseGroupIds(row.getAttribute('data-group-ids'));
+			row.style.display = ids.indexOf(groupId) !== -1 ? '' : 'none';
+		});
+		setActiveFilter(tableBlock, groupId);
+	}
+
+	function activateFilter(target, groupId) {
+		var tableBlock = target.closest('[data-risiko-scope-table]');
+		if (!tableBlock) {
+			return;
+		}
+		applyGroupFilter(tableBlock, groupId || '');
+	}
+
+	document.addEventListener('click', function (e) {
+		var filterTag = e.target.closest('.risiko-tilgangsgruppe-filter-tag, .risiko-tilgangsgruppe-filter-btn');
+		if (!filterTag) {
+			return;
+		}
+		e.preventDefault();
+		activateFilter(filterTag, filterTag.getAttribute('data-group-id') || '');
+	});
+})();
+</script>

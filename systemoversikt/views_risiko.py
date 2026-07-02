@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-02: virksomhet_tilgangsgrupper in list context for collection table filters.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in imports and prefetch.
 # 2026-07-02: Group participants count as members; participant_groups in scope detail context.
 # 2026-07-01: Risk list context – nav virksomheter sorted by virksomhetsforkortelse.
@@ -257,6 +258,14 @@ def _risiko_list_context(request, scopes, list_virksomhet=None):
 		),
 	}
 	ctx['nav_virksomheter'] = nav_ordinary_virksomheter()
+	if list_virksomhet is not None:
+		ctx['virksomhet_tilgangsgrupper'] = list(
+			RiskVirksomhetGroup.objects.filter(virksomhet=list_virksomhet)
+			.select_related('virksomhet')
+			.order_by('title')
+		)
+	else:
+		ctx['virksomhet_tilgangsgrupper'] = []
 	return ctx
 
 
