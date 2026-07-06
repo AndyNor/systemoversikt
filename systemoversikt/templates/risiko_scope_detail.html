@@ -1,3 +1,4 @@
+{# 2026-07-06: Removed excel class – no table export on scenario table. #}
 {# 2026-06-29: Hint that empty etter tiltak fields inherit nåværende risiko levels. #}
 {# 2026-06-26: Modal auto-save – no per-field Lagre buttons in footer or tiltak cards. #}
 {# 2026-06-26: Compact modal tiltak cards – T# inline with text; unlink when shared. #}
@@ -196,7 +197,7 @@
 <div class="d-flex align-items-center mt-2 mb-2">
 	<h5 class="mb-0">Uønskede hendelser</h5>{% if can_edit_scope %}<button type="button" class="btn btn-outline-primary btn-sm ml-2" id="risiko-new-scenario">Nytt scenario</button>{% endif %}
 </div>
-<table class="table excel table-sm" id="risiko-scenarios-table">
+<table class="table table-sm" id="risiko-scenarios-table">
 <thead>
 <tr>
 	<th>ID</th>

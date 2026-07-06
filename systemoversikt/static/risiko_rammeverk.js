@@ -1,4 +1,5 @@
-// 2026-07-06: Client logic for risk framework rollup, mapping workspace, and taxonomy editor.
+// 2026-07-06: Automatic category numbering in mal editor – no manual nummer input.
+// 2026-07-06: Client logic for sammenstilling rollup, mapping, and superuser mal editor.
 (function (window) {
   'use strict';
 
@@ -33,11 +34,10 @@
     return fetch(url, { credentials: 'same-origin' }).then(function (r) { return r.json(); });
   }
 
-  function labelCss(label) {
-    if (label === 'Lav') return 'risk-cell-lav';
-    if (label === 'Middels') return 'risk-cell-middels';
-    if (label === 'Høy') return 'risk-cell-hoy';
-    return 'risk-cell-empty';
+  function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
   }
 
   function initRollup(root) {
@@ -142,9 +142,9 @@
     function search() {
       if (!urls.scenarioSearch || !tbody) return;
       var params = new URLSearchParams();
-      var vid = document.getElementById('kartlegging-virksomhet').value;
+      var virksomhetEl = document.getElementById('kartlegging-virksomhet');
       var q = document.getElementById('kartlegging-q').value;
-      if (vid) params.set('virksomhet_id', vid);
+      if (virksomhetEl && virksomhetEl.value) params.set('virksomhet_id', virksomhetEl.value);
       if (q) params.set('q', q);
       if (document.getElementById('kartlegging-unmapped').checked) params.set('unmapped_only', '1');
       tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Laster…</td></tr>';
@@ -164,7 +164,7 @@
           tr.innerHTML =
             '<td><input type="checkbox" class="kartlegging-scenario-cb" value="' + s.pk + '"></td>' +
             '<td>' + escapeHtml(s.display_id) + '</td>' +
-            '<td>' + escapeHtml(s.virksomhet) + ' – ' + escapeHtml(s.scope_title) + '</td>' +
+            '<td>' + escapeHtml((s.virksomhet ? s.virksomhet + ' – ' : '') + s.scope_title) + '</td>' +
             '<td>' + escapeHtml(s.uonsket_hendelse.substring(0, 100)) + '</td>' +
             '<td>' + escapeHtml(mapped) + '</td>';
           tbody.appendChild(tr);
@@ -209,8 +209,8 @@
     if (!root) return;
     var urls = parseUrls(root);
     var treeRoot = document.getElementById('rammeverk-tree-root');
-    var editingPk = null;
-    var retirePk = null;
+    var cachedTree = [];
+    var cachedCategories = [];
 
     function renderTree(tree) {
       if (!treeRoot) return;
@@ -218,9 +218,8 @@
       tree.forEach(function (cat) {
         var card = document.createElement('div');
         card.className = 'card mb-2';
-        var archived = cat.status === 'archived' ? ' text-muted' : '';
         card.innerHTML =
-          '<div class="card-header py-2 d-flex justify-content-between' + archived + '">' +
+          '<div class="card-header py-2 d-flex justify-content-between">' +
           '<strong>' + cat.display_code + '. ' + escapeHtml(cat.title) + '</strong>' +
           '<span><button type="button" class="btn btn-outline-secondary btn-sm js-edit-node" data-pk="' + cat.pk + '">Rediger</button> ' +
           '<button type="button" class="btn btn-outline-success btn-sm js-add-child" data-parent="' + cat.pk + '">+ Underkategori</button></span></div>' +
@@ -228,7 +227,7 @@
         var ul = card.querySelector('ul');
         (cat.children || []).forEach(function (child) {
           var li = document.createElement('li');
-          li.className = 'list-group-item py-2 d-flex justify-content-between' + (child.status === 'archived' ? ' text-muted' : '');
+          li.className = 'list-group-item py-2 d-flex justify-content-between';
           li.innerHTML =
             '<span><strong>' + child.display_code + '</strong> ' + escapeHtml(child.title) +
             ' <span class="badge badge-light border">' + child.link_count + ' koblinger</span></span>' +
@@ -239,24 +238,23 @@
       });
     }
 
-    function loadTree() {
-      if (!urls.taxonomy) return;
-      var inc = document.getElementById('rammeverk-show-archived');
-      var q = inc && inc.checked ? '?include_archived=1' : '';
-      getJson(urls.taxonomy + q).then(function (data) {
-        if (data.ok) renderTree(data.tree || []);
+    function loadCategories() {
+      if (!urls.activeNodes) return Promise.resolve();
+      return getJson(urls.activeNodes).then(function (data) {
+        if (data.ok) {
+          cachedCategories = data.categories || [];
+        }
       });
     }
 
-    function openNodeModal(node, parentPk) {
-      editingPk = node ? node.pk : null;
-      document.getElementById('rammeverk-node-pk').value = node ? node.pk : '';
-      document.getElementById('rammeverk-node-parent-pk').value = parentPk || (node ? node.parent_pk : '') || '';
-      document.getElementById('rammeverk-node-nummer').value = node ? node.nummer : '';
-      document.getElementById('rammeverk-node-title').value = node ? node.title : '';
-      document.getElementById('rammeverk-node-forklaring').value = node ? node.forklaring : '';
-      document.getElementById('rammeverk-node-modal-title').textContent = node ? 'Rediger node' : 'Ny node';
-      window.jQuery('#rammeverk-node-modal').modal('show');
+    function loadTree() {
+      if (!urls.taxonomy) return;
+      getJson(urls.taxonomy).then(function (data) {
+        if (data.ok) {
+          cachedTree = data.tree || [];
+          renderTree(cachedTree);
+        }
+      });
     }
 
     function findNode(pk, tree) {
@@ -270,7 +268,46 @@
       return null;
     }
 
-    var cachedTree = [];
+    function populateMoveSelect(currentParentPk) {
+      var section = document.getElementById('rammeverk-move-section');
+      var sel = document.getElementById('rammeverk-node-move-parent');
+      if (!section || !sel) return;
+      sel.innerHTML = '';
+      cachedCategories.forEach(function (cat) {
+        if (String(cat.pk) === String(currentParentPk)) return;
+        var opt = document.createElement('option');
+        opt.value = cat.pk;
+        opt.textContent = cat.display_code + ' ' + cat.title;
+        sel.appendChild(opt);
+      });
+      section.style.display = cachedCategories.length > 1 ? '' : 'none';
+    }
+
+    function openNodeModal(node, parentPk) {
+      document.getElementById('rammeverk-node-pk').value = node ? node.pk : '';
+      document.getElementById('rammeverk-node-parent-pk').value = parentPk || (node ? node.parent_pk : '') || '';
+      document.getElementById('rammeverk-node-title').value = node ? node.title : '';
+      document.getElementById('rammeverk-node-forklaring').value = node ? node.forklaring : '';
+      var numberInfo = document.getElementById('rammeverk-node-number-info');
+      if (numberInfo) {
+        if (node) {
+          numberInfo.textContent = 'Nummer: ' + node.display_code;
+        } else {
+          numberInfo.textContent = 'Nummer tildeles automatisk ved lagring.';
+        }
+      }
+      document.getElementById('rammeverk-node-modal-title').textContent = node ? 'Rediger node' : 'Ny node';
+      var moveSection = document.getElementById('rammeverk-move-section');
+      if (moveSection) {
+        if (node && node.parent_pk) {
+          populateMoveSelect(node.parent_pk);
+          moveSection.style.display = '';
+        } else {
+          moveSection.style.display = 'none';
+        }
+      }
+      window.jQuery('#rammeverk-node-modal').modal('show');
+    }
 
     root.addEventListener('click', function (ev) {
       var editBtn = ev.target.closest('.js-edit-node');
@@ -289,14 +326,11 @@
       openNodeModal(null, null);
     });
 
-    document.getElementById('rammeverk-show-archived').addEventListener('change', loadTree);
-
     document.getElementById('rammeverk-node-save').addEventListener('click', function () {
       var pk = document.getElementById('rammeverk-node-pk').value;
       var body = {
         title: document.getElementById('rammeverk-node-title').value,
         forklaring: document.getElementById('rammeverk-node-forklaring').value,
-        nummer: parseInt(document.getElementById('rammeverk-node-nummer').value, 10) || undefined,
         parent_pk: document.getElementById('rammeverk-node-parent-pk').value || null,
       };
       var url = pk ? urls.nodeUpdate.replace('{id}', pk) : urls.nodeCreate;
@@ -306,73 +340,28 @@
           return;
         }
         window.jQuery('#rammeverk-node-modal').modal('hide');
-        loadTree();
+        loadCategories().then(loadTree);
       });
     });
 
-    document.getElementById('rammeverk-node-archive').addEventListener('click', function () {
-      var pk = document.getElementById('rammeverk-node-pk').value;
-      if (!pk) return;
-      postJson(urls.nodeArchive.replace('{id}', pk), {}).then(function (data) {
-        if (!data.ok) {
-          alert(data.error || 'Kunne ikke arkivere');
-          return;
-        }
-        window.jQuery('#rammeverk-node-modal').modal('hide');
-        loadTree();
-      });
-    });
-
-    document.getElementById('rammeverk-node-retire').addEventListener('click', function () {
-      retirePk = document.getElementById('rammeverk-node-pk').value;
-      if (!retirePk || !urls.activeNodes) return;
-      getJson(urls.activeNodes).then(function (data) {
-        var sel = document.getElementById('rammeverk-retire-successor');
-        sel.innerHTML = '';
-        (data.nodes || []).forEach(function (n) {
-          if (String(n.pk) === String(retirePk)) return;
-          var opt = document.createElement('option');
-          opt.value = n.pk;
-          opt.textContent = n.display_code + ' ' + n.title;
-          sel.appendChild(opt);
+    var moveBtn = document.getElementById('rammeverk-node-move-btn');
+    if (moveBtn) {
+      moveBtn.addEventListener('click', function () {
+        var pk = document.getElementById('rammeverk-node-pk').value;
+        var parentId = document.getElementById('rammeverk-node-move-parent').value;
+        if (!pk || !parentId || !urls.nodeMove) return;
+        postJson(urls.nodeMove.replace('{id}', pk), { parent_id: parseInt(parentId, 10) }).then(function (data) {
+          if (!data.ok) {
+            alert(data.error || 'Kunne ikke flytte');
+            return;
+          }
+          window.jQuery('#rammeverk-node-modal').modal('hide');
+          loadCategories().then(loadTree);
         });
-        window.jQuery('#rammeverk-retire-modal').modal('show');
       });
-    });
+    }
 
-    document.getElementById('rammeverk-retire-confirm').addEventListener('click', function () {
-      var successor = document.getElementById('rammeverk-retire-successor').value;
-      if (!retirePk || !successor) return;
-      postJson(urls.nodeRetire.replace('{id}', retirePk), { successor_pk: parseInt(successor, 10) }).then(function (data) {
-        if (!data.ok) {
-          alert(data.error || 'Kunne ikke omfordele');
-          return;
-        }
-        window.jQuery('#rammeverk-retire-modal').modal('hide');
-        window.jQuery('#rammeverk-node-modal').modal('hide');
-        loadTree();
-      });
-    });
-
-    var origLoad = loadTree;
-    loadTree = function () {
-      if (!urls.taxonomy) return;
-      var inc = document.getElementById('rammeverk-show-archived');
-      var q = inc && inc.checked ? '?include_archived=1' : '';
-      getJson(urls.taxonomy + q).then(function (data) {
-        if (data.ok) {
-          cachedTree = data.tree || [];
-          renderTree(cachedTree);
-        }
-      });
-    };
-    loadTree();
-  }
-
-  function escapeHtml(text) {
-    var div = document.createElement('div');
-    div.textContent = text || '';
-    return div.innerHTML;
+    loadCategories().then(loadTree);
   }
 
   window.RisikoRammeverk = {

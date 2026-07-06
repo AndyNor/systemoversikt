@@ -1,110 +1,138 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: Templates + group-owned sammenstillinger – mal editor superuser-only.
+# 2026-07-06: Rollup/tilgangsgrupper links – fall back to framework virksomhet for superuser testers.
+# 2026-07-06: Reuse virksomhet tilgangsgrupper – link to /virksomhet/<vid>/tilgangsgrupper/ for group admin.
+# 2026-07-06: Framework tilgangsgrupper – per-framework access; virksomhet nav scoped to risk border.
 # 2026-07-06: Risk framework pages – list, virksomhet rollup, mapping workspace, taxonomy editor.
 
 import json
 
+from django.contrib.auth.decorators import login_required
 from django.http import Http404
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render
 from django.urls import reverse
 
-from systemoversikt.models import RiskFramework, Virksomhet
-from systemoversikt.risk_framework import (
-	build_rollup_tree,
-	get_active_framework,
-	user_can_edit_framework,
-	user_can_view_virksomhet_framework,
+from systemoversikt.risk_framework import build_rollup_tree, get_active_framework
+from systemoversikt.risk_sammenstilling import (
+	active_templates_queryset,
+	groups_user_can_own_sammenstilling,
+	sammenstillinger_visible_to_user,
+	user_can_edit_template,
+	user_can_map_sammenstilling,
 )
-from systemoversikt.risk_membership import nav_ordinary_virksomheter, profile_virksomhet
 from systemoversikt.views_risiko import _render_risk_access_denied
 
 
-def _framework_or_404(slug):
+def _mal_api_urls(slug):
+	return {
+		'taxonomy': reverse('api_risiko_mal_taxonomy', kwargs={'slug': slug}),
+		'nodeCreate': reverse('api_risiko_mal_node_create', kwargs={'slug': slug}),
+		'nodeUpdate': reverse('api_risiko_mal_node_update', kwargs={'slug': slug, 'nid': 0}).replace('/0/', '/{id}/'),
+		'nodeMove': reverse('api_risiko_mal_node_move', kwargs={'slug': slug, 'nid': 0}).replace('/0/', '/{id}/'),
+		'activeNodes': reverse('api_risiko_mal_active_nodes', kwargs={'slug': slug}),
+	}
+
+
+def _sammenstilling_api_urls(pk):
+	return {
+		'taxonomy': reverse('api_risiko_sammenstilling_taxonomy', kwargs={'pk': pk}),
+		'activeNodes': reverse('api_risiko_sammenstilling_active_nodes', kwargs={'pk': pk}),
+		'scenarioSearch': reverse('api_risiko_sammenstilling_scenarios', kwargs={'pk': pk}),
+		'linkCreate': reverse('api_risiko_sammenstilling_link_create', kwargs={'pk': pk}),
+		'linkDelete': reverse('api_risiko_sammenstilling_link_delete', kwargs={'pk': pk, 'lid': 0}).replace('/0/', '/{id}/'),
+		'rollup': reverse('api_risiko_sammenstilling_rollup', kwargs={'pk': pk}),
+		'nodeScenarios': reverse('api_risiko_sammenstilling_node_scenarios', kwargs={'pk': pk, 'nid': 0}).replace('/nodes/0/', '/nodes/{id}/'),
+		'assessmentSave': reverse('api_risiko_sammenstilling_assessment_save', kwargs={'pk': pk, 'nid': 0}).replace('/nodes/0/', '/nodes/{id}/'),
+		'assessmentApply': reverse('api_risiko_sammenstilling_assessment_apply', kwargs={'pk': pk, 'nid': 0}).replace('/nodes/0/', '/nodes/{id}/'),
+	}
+
+
+def _sammenstilling_or_404(pk):
+	from systemoversikt.risk_sammenstilling import get_active_sammenstilling
+	sammenstilling = get_active_sammenstilling(pk)
+	if sammenstilling is None:
+		raise Http404('Sammenstillingen finnes ikke eller er deaktivert.')
+	return sammenstilling
+
+
+@login_required
+def risiko_rammeverk_list(request):
+	templates = active_templates_queryset()
+	sammenstillinger = sammenstillinger_visible_to_user(request.user)
+	owner_groups = groups_user_can_own_sammenstilling(request.user)
+	return render(request, 'risiko_rammeverk_list.html', {
+		'request': request,
+		'required_permissions': [],
+		'templates': templates,
+		'sammenstillinger': sammenstillinger,
+		'can_edit_template': user_can_edit_template(request.user),
+		'can_create_sammenstilling': owner_groups.exists(),
+	})
+
+
+@login_required
+def risiko_mal_rediger(request, slug):
 	framework = get_active_framework(slug)
 	if framework is None:
-		raise Http404('Rammeverket finnes ikke eller er deaktivert.')
-	return framework
-
-
-def _framework_context(request, framework, slug):
-	can_edit = user_can_edit_framework(request.user)
-	return {
+		raise Http404('Malen finnes ikke eller er deaktivert.')
+	if not user_can_edit_template(request.user):
+		return _render_risk_access_denied(request, 'template_edit', framework=framework)
+	return render(request, 'risiko_mal_rediger.html', {
 		'request': request,
 		'required_permissions': [],
 		'framework': framework,
 		'framework_slug': slug,
-		'can_edit_framework': can_edit,
-		'nav_virksomheter': nav_ordinary_virksomheter(),
-		'profile_virksomhet': profile_virksomhet(request.user),
-	}
+		'api_urls_json': json.dumps(_mal_api_urls(slug)),
+	})
 
 
-def _rammeverk_api_urls(slug, vid=None):
-	urls = {
-		'taxonomy': reverse('api_risiko_rammeverk_taxonomy', kwargs={'slug': slug}),
-		'nodeCreate': reverse('api_risiko_rammeverk_node_create', kwargs={'slug': slug}),
-		'nodeUpdate': reverse('api_risiko_rammeverk_node_update', kwargs={'slug': slug, 'nid': 0}).replace('/0/', '/{id}/'),
-		'nodeArchive': reverse('api_risiko_rammeverk_node_archive', kwargs={'slug': slug, 'nid': 0}).replace('/0/', '/{id}/'),
-		'nodeRetire': reverse('api_risiko_rammeverk_node_retire', kwargs={'slug': slug, 'nid': 0}).replace('/0/', '/{id}/'),
-		'scenarioSearch': reverse('api_risiko_rammeverk_scenarios', kwargs={'slug': slug}),
-		'linkCreate': reverse('api_risiko_rammeverk_link_create', kwargs={'slug': slug}),
-		'linkDelete': reverse('api_risiko_rammeverk_link_delete', kwargs={'slug': slug, 'lid': 0}).replace('/0/', '/{id}/'),
-		'activeNodes': reverse('api_risiko_rammeverk_active_nodes', kwargs={'slug': slug}),
-	}
-	if vid is not None:
-		urls['rollup'] = reverse('api_risiko_rammeverk_rollup', kwargs={'slug': slug, 'vid': vid})
-		urls['assessmentSave'] = reverse('api_risiko_rammeverk_assessment_save', kwargs={'slug': slug, 'vid': vid, 'nid': 0}).replace('/nodes/0/', '/nodes/{id}/')
-		urls['assessmentApply'] = reverse('api_risiko_rammeverk_assessment_apply', kwargs={'slug': slug, 'vid': vid, 'nid': 0}).replace('/nodes/0/', '/nodes/{id}/')
-		urls['nodeScenarios'] = reverse('api_risiko_rammeverk_node_scenarios', kwargs={'slug': slug, 'vid': vid, 'nid': 0}).replace('/nodes/0/', '/nodes/{id}/')
-	return urls
-
-
-def risiko_rammeverk_list(request):
-	frameworks = RiskFramework.objects.filter(is_active=True).order_by('title')
-	return render(request, 'risiko_rammeverk_list.html', {
+@login_required
+def risiko_sammenstilling_create(request):
+	owner_groups = list(groups_user_can_own_sammenstilling(request.user))
+	if not owner_groups:
+		return _render_risk_access_denied(request, 'sammenstilling_create')
+	templates = list(active_templates_queryset())
+	if not templates:
+		return _render_risk_access_denied(request, 'sammenstilling_no_templates')
+	return render(request, 'risiko_sammenstilling_create.html', {
 		'request': request,
 		'required_permissions': [],
-		'frameworks': frameworks,
-		'can_edit_framework': user_can_edit_framework(request.user),
-		'profile_virksomhet': profile_virksomhet(request.user),
+		'templates': templates,
+		'owner_groups': owner_groups,
+		'api_urls_json': json.dumps({
+			'create': reverse('api_risiko_sammenstilling_create'),
+			'options': reverse('api_risiko_sammenstilling_create_options'),
+		}),
 	})
 
 
-def risiko_rammeverk_virksomhet(request, slug, vid):
-	framework = _framework_or_404(slug)
-	virksomhet = get_object_or_404(Virksomhet, pk=vid)
-	if not user_can_view_virksomhet_framework(request.user, virksomhet.pk):
-		return _render_risk_access_denied(request, 'collection_read', virksomhet=virksomhet)
-
-	rollup_tree = build_rollup_tree(framework, virksomhet.pk)
-	ctx = _framework_context(request, framework, slug)
-	ctx.update({
-		'virksomhet': virksomhet,
-		'list_virksomhet': virksomhet,
+@login_required
+def risiko_sammenstilling_detail(request, pk):
+	sammenstilling = _sammenstilling_or_404(pk)
+	if not user_can_view_sammenstilling(request.user, sammenstilling):
+		return _render_risk_access_denied(request, 'sammenstilling_view', sammenstilling=sammenstilling)
+	rollup_tree = build_rollup_tree(sammenstilling)
+	return render(request, 'risiko_sammenstilling_detail.html', {
+		'request': request,
+		'required_permissions': [],
+		'sammenstilling': sammenstilling,
+		'framework': sammenstilling.framework,
+		'can_map': user_can_map_sammenstilling(request.user, sammenstilling),
 		'rollup_tree': rollup_tree,
-		'api_urls_json': json.dumps(_rammeverk_api_urls(slug, vid=virksomhet.pk)),
+		'api_urls_json': json.dumps(_sammenstilling_api_urls(pk)),
 	})
-	return render(request, 'risiko_rammeverk_virksomhet.html', ctx)
 
 
-def risiko_rammeverk_kartlegging(request, slug):
-	framework = _framework_or_404(slug)
-	if not user_can_edit_framework(request.user):
-		return _render_risk_access_denied(request, 'create_collection')
-
-	ctx = _framework_context(request, framework, slug)
-	ctx.update({
-		'api_urls_json': json.dumps(_rammeverk_api_urls(slug)),
-		'nav_virksomheter': nav_ordinary_virksomheter(),
+@login_required
+def risiko_sammenstilling_kartlegging(request, pk):
+	sammenstilling = _sammenstilling_or_404(pk)
+	if not user_can_map_sammenstilling(request.user, sammenstilling):
+		return _render_risk_access_denied(request, 'sammenstilling_map', sammenstilling=sammenstilling)
+	return render(request, 'risiko_sammenstilling_kartlegging.html', {
+		'request': request,
+		'required_permissions': [],
+		'sammenstilling': sammenstilling,
+		'framework': sammenstilling.framework,
+		'api_urls_json': json.dumps(_sammenstilling_api_urls(pk)),
 	})
-	return render(request, 'risiko_rammeverk_kartlegging.html', ctx)
-
-
-def risiko_rammeverk_rediger(request, slug):
-	framework = _framework_or_404(slug)
-	if not user_can_edit_framework(request.user):
-		return _render_risk_access_denied(request, 'create_collection')
-
-	ctx = _framework_context(request, framework, slug)
-	ctx['api_urls_json'] = json.dumps(_rammeverk_api_urls(slug))
-	return render(request, 'risiko_rammeverk_rediger.html', ctx)

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: Removed framework_owner_for / framework_read_for – sammenstilling ownership replaces framework M2M.
 # 2026-07-02: API returns display_title (forkortelse/name) and bare title for editing.
 # 2026-07-02: Include member names in groups list payload for inline table display.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in API imports and queries.
@@ -119,7 +120,10 @@ def api_risiko_read_groups_list(request, vid):
 	virksomhet, _, err = _require_group_admin_json(request, vid)
 	if err:
 		return err
-	return JsonResponse({'ok': True, **_groups_payload(virksomhet)})
+	return JsonResponse({
+		'ok': True,
+		**_groups_payload(virksomhet),
+	})
 
 
 @require_http_methods(['POST'])

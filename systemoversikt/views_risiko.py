@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: _render_risk_access_denied – sammenstilling context for group-owned access denied pages.
+# 2026-07-06: _render_risk_access_denied – framework context for rammeverk access denied pages.
+# 2026-07-06: risiko_scope_list – login_required; list is no longer open to anonymous users.
 # 2026-07-02: virksomhet_tilgangsgrupper in list context for collection table filters.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in imports and prefetch.
 # 2026-07-02: Group participants count as members; participant_groups in scope detail context.
@@ -32,6 +35,7 @@ from datetime import date
 import json
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
 from django.http import Http404, HttpResponse
@@ -188,7 +192,8 @@ def _scope_for_access_message(pk):
 	)
 
 
-def _render_risk_access_denied(request, reason, scope=None, virksomhet=None):
+def _render_risk_access_denied(request, reason, scope=None, virksomhet=None, framework=None, sammenstilling=None):
+	# 2026-07-06: sammenstilling context for group-owned risikosammenstilling access denied pages.
 	# 2026-07-01: Risk-specific 403 – module uses owner/participant/read-group, not Django model perms.
 	return render(request, 'risiko_access_denied.html', {
 		'request': request,
@@ -196,6 +201,8 @@ def _render_risk_access_denied(request, reason, scope=None, virksomhet=None):
 		'risk_access_reason': reason,
 		'scope': scope,
 		'virksomhet': virksomhet or (scope.virksomhet if scope else None),
+		'framework': framework or (sammenstilling.framework if sammenstilling else None),
+		'sammenstilling': sammenstilling,
 		'owner_names': _scope_owner_names(scope),
 	}, status=403)
 
@@ -269,6 +276,7 @@ def _risiko_list_context(request, scopes, list_virksomhet=None):
 	return ctx
 
 
+@login_required
 def risiko_scope_list(request):
 	# 2026-07-01: Root list – profile virksomhet collections plus cross-virksomhet memberships.
 	profile_v = profile_virksomhet(request.user)

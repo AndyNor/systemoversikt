@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-06: Removed excel class – no table export on scenario detail. #}
 {% load templatetags %}
 
 {% block overskrift %}
@@ -63,7 +64,7 @@
 
 <h5>Foreslåtte tiltak</h5>
 {% if actions %}
-<table class="table table-sm excel">
+<table class="table table-sm">
 <thead>
 <tr>
 	<th>Tiltak</th>

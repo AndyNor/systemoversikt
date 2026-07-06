@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-06: Sammenstillinger eies via gruppe ved opprettelse – ikke lenger rammeverk-M2M her. #}
 {# 2026-07-02: Empty name on new group; display_title shows forkortelse/given-name in lists. #}
 {# 2026-07-02: Gruppenavn (forkortelse/navn), inline medlemmer, editor/members as modals. #}
 {# 2026-07-02: virksomhet_read_only flag; groups usable for collection deltakergrupper. #}
@@ -15,8 +16,9 @@
 </p>
 
 <p class="text-muted">
-	Tilgangsgrupper kan brukes på to måter: med <strong>lesetilgang til hele virksomheten</strong> får medlemmer lesetilgang til alle risikosamlinger for {{ virksomhet.virksomhetsnavn }}.
-	Uten dette kan gruppen tildeles enkeltvise samlinger som <strong>deltakergruppe</strong> av eier – medlemmer får da samme redigeringstilgang som individuelle deltakere på den samlingen.
+	Tilgangsgrupper kan brukes på flere måter: med <strong>lesetilgang til hele virksomheten</strong> får medlemmer lesetilgang til alle risikosamlinger for {{ virksomhet.virksomhetsnavn }}.
+	Uten dette kan gruppen tildeles enkeltvise samlinger som <strong>deltakergruppe</strong> av eier,
+	eller velges som <strong>eiergruppe</strong> når medlemmer oppretter en risikosammenstilling.
 </p>
 
 {% csrf_token %}
@@ -44,7 +46,7 @@
 					<label for="risiko-read-group-beskrivelse">Beskrivelse</label>
 					<textarea id="risiko-read-group-beskrivelse" class="form-control form-control-sm" rows="2"></textarea>
 				</div>
-				<div class="form-group form-check mb-0">
+				<div class="form-group form-check">
 					<input type="checkbox" class="form-check-input" id="risiko-read-group-virksomhet-read-only">
 					<label class="form-check-label" for="risiko-read-group-virksomhet-read-only">Lesetilgang til hele virksomheten</label>
 					<small class="form-text text-muted">Medlemmer kan lese alle risikosamlinger for virksomheten. Grupper uten dette kan tildeles enkeltvise samlinger som deltakergrupper.</small>
@@ -127,7 +129,7 @@ $(function () {
 			groupsListEl.innerHTML = '<p class="text-muted">Ingen grupper ennå.</p>';
 			return;
 		}
-		var html = '<table class="table table-sm"><thead><tr><th>Gruppenavn</th><th>Type</th><th>Beskrivelse</th><th>Medlemmer</th><th></th></tr></thead><tbody>';
+		var html = '<table class="table table-sm"><thead><tr><th>Gruppenavn</th><th>Samlinger</th><th>Beskrivelse</th><th>Medlemmer</th><th></th></tr></thead><tbody>';
 		groups.forEach(function (g) {
 			html += '<tr data-group-id="' + g.id + '">';
 			html += '<td>' + escapeHtml(g.display_title || g.title) + '</td>';

@@ -9,6 +9,8 @@
 # 2026-06-26: RiskScope eier list_filter uses RelatedOnlyFieldListFilter – avoids loading all ~85k users.
 # 2026-06-26: RiskAction admin on scope; M2M scenarios for shared tiltak.
 # 2026-06-24: RiskScope/RiskScenario/RiskAction admin for security risk module MVP.
+# 2026-07-06: RiskSammenstilling admin; templates without virksomhet; removed framework M2M on groups.
+# 2026-07-06: RiskFramework.virksomhet; framework M2M on RiskVirksomhetGroup admin.
 # 2026-07-06: Risk framework admin for aggregation layer emergency access.
 # 2026-06-23: BloodHoundFinding admin + snapshot analysis fields in list display.
 # 2026-06-23: VirksomhetAdmin – intern_tjenesteleverandor list/filter/fieldset for manual flagging.
@@ -1762,20 +1764,28 @@ class RiskFrameworkNodeAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('framework', 'parent')
 
 
-@admin.register(RiskScenarioFrameworkLink)
-class RiskScenarioFrameworkLinkAdmin(SimpleHistoryAdmin):
-	list_display = ('scenario', 'framework_node', 'mapped_by', 'mapped_at')
-	list_filter = ('framework_node__framework',)
+@admin.register(RiskSammenstilling)
+class RiskSammenstillingAdmin(SimpleHistoryAdmin):
+	list_display = ('title', 'framework', 'owner_group', 'is_active', 'sist_oppdatert')
+	list_filter = ('is_active', 'framework')
+	search_fields = ('title', 'beskrivelse')
+	autocomplete_fields = ('framework', 'owner_group', 'created_by')
+
+
+@admin.register(RiskSammenstillingScenarioLink)
+class RiskSammenstillingScenarioLinkAdmin(SimpleHistoryAdmin):
+	list_display = ('sammenstilling', 'scenario', 'framework_node', 'mapped_by', 'mapped_at')
+	list_filter = ('sammenstilling__framework',)
 	search_fields = ('scenario__uonsket_hendelse', 'framework_node__title')
-	autocomplete_fields = ('scenario', 'framework_node', 'mapped_by')
+	autocomplete_fields = ('sammenstilling', 'scenario', 'framework_node', 'mapped_by')
 
 
-@admin.register(RiskVirksomhetNodeAssessment)
-class RiskVirksomhetNodeAssessmentAdmin(SimpleHistoryAdmin):
-	list_display = ('virksomhet', 'framework_node', 'konsekvens_nivaa', 'sannsynlighet_nivaa', 'sist_revidert')
-	list_filter = ('framework_node__framework', 'virksomhet')
+@admin.register(RiskSammenstillingNodeAssessment)
+class RiskSammenstillingNodeAssessmentAdmin(SimpleHistoryAdmin):
+	list_display = ('sammenstilling', 'framework_node', 'konsekvens_nivaa', 'sannsynlighet_nivaa', 'sist_revidert')
+	list_filter = ('sammenstilling__framework',)
 	search_fields = ('framework_node__title', 'begrunnelse')
-	autocomplete_fields = ('virksomhet', 'framework_node', 'revidert_av')
+	autocomplete_fields = ('sammenstilling', 'framework_node', 'revidert_av')
 
 
 # django-mailer: utvidet søk på To/Cc/Bcc i MessageLog

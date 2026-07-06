@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: Superuser bypass in user_has_risk_virksomhet_read_access – testers can open framework rollup pages.
+# 2026-07-06: user_has_risk_virksomhet_read_access – scope/participant/read-group border for framework mapping.
+# 2026-07-06: annotate_scope_list – anonymous users get false membership flags (no user FK in queries).
 # 2026-07-02: risk_group_tag_colors – deterministic HSL tag colors from group pk.
 # 2026-07-02: Prefetch participant_groups on scope list tables.
 # 2026-07-02: storage_risk_group_title – store given name without forced virksomhetsforkortelse prefix.
@@ -121,6 +124,47 @@ def user_has_virksomhet_read_group_access(user, virksomhet_id):
 	).exists()
 
 
+def user_has_risk_virksomhet_read_access(user, virksomhet_id):
+	if not user.is_authenticated or virksomhet_id is None:
+		return False
+	# TODO: Remove superuser bypass – temporary so testers can open virksomhet rollup and mapping pages.
+	if user.is_superuser:
+		return True
+	if user_has_virksomhet_read_group_access(user, virksomhet_id):
+		return True
+	return RiskScope.objects.filter(
+		virksomhet_id=virksomhet_id,
+	).filter(
+		Q(memberships__user_id=user.id)
+		| Q(participant_groups__memberships__user_id=user.id)
+	).exists()
+
+
+def virksomheter_with_risk_read_access(user, as_queryset=True):
+	if not user.is_authenticated:
+		if as_queryset:
+			return Virksomhet.objects.none()
+		return []
+	if user.is_superuser:
+		qs = Virksomhet.objects.filter(ordinar_virksomhet=True).order_by('virksomhetsforkortelse')
+		return qs if as_queryset else list(qs)
+	read_group_ids = RiskVirksomhetGroupMember.objects.filter(
+		user_id=user.id,
+		group__virksomhet_read_only=True,
+	).values_list('group__virksomhet_id', flat=True)
+	scope_virksomhet_ids = RiskScope.objects.filter(
+		Q(memberships__user_id=user.id)
+		| Q(participant_groups__memberships__user_id=user.id)
+	).values_list('virksomhet_id', flat=True)
+	accessible_ids = set(read_group_ids) | set(scope_virksomhet_ids)
+	accessible_ids.discard(None)
+	qs = Virksomhet.objects.filter(
+		pk__in=accessible_ids,
+		ordinar_virksomhet=True,
+	).order_by('virksomhetsforkortelse')
+	return qs if as_queryset else list(qs)
+
+
 def user_has_scope_read_access(user, scope):
 	if user_is_scope_member(user, scope):
 		return True
@@ -148,21 +192,32 @@ def user_can_manage_risk_virksomhet_groups(user, virksomhet):
 
 
 def annotate_scope_list(qs, user):
+	if not user.is_authenticated:
+		return qs.annotate(
+			scenario_count=Count('scenarios'),
+			current_user_is_direct_member=Value(False, output_field=BooleanField()),
+			current_user_is_group_participant=Value(False, output_field=BooleanField()),
+			current_user_is_owner=Value(False, output_field=BooleanField()),
+			current_user_has_read_group_access=Value(False, output_field=BooleanField()),
+			current_user_is_member=Value(False, output_field=BooleanField()),
+			current_user_has_read_access=Value(False, output_field=BooleanField()),
+		)
+	user_id = user.pk
 	member_qs = RiskScopeMember.objects.filter(
 		scope=OuterRef('pk'),
-		user=user,
+		user_id=user_id,
 	)
 	owner_qs = RiskScopeMember.objects.filter(
 		scope=OuterRef('pk'),
-		user=user,
+		user_id=user_id,
 		role=RISK_SCOPE_MEMBER_ROLE_OWNER,
 	)
 	group_participant_qs = RiskVirksomhetGroupMember.objects.filter(
-		user=user,
+		user_id=user_id,
 		group__participant_scopes=OuterRef('pk'),
 	)
 	read_group_qs = RiskVirksomhetGroupMember.objects.filter(
-		user=user,
+		user_id=user_id,
 		group__virksomhet_id=OuterRef('virksomhet_id'),
 		group__virksomhet_read_only=True,
 	)
@@ -219,9 +274,11 @@ def scopes_for_virksomhet(user, virksomhet_id):
 
 
 def scopes_for_user_membership(user, exclude_virksomhet_id=None):
+	if not user.is_authenticated:
+		return RiskScope.objects.none()
 	qs = scope_list_base_queryset(user).filter(
-		Q(memberships__user=user)
-		| Q(participant_groups__memberships__user=user),
+		Q(memberships__user_id=user.pk)
+		| Q(participant_groups__memberships__user_id=user.pk),
 	).distinct()
 	if exclude_virksomhet_id is not None:
 		qs = qs.exclude(virksomhet_id=exclude_virksomhet_id)

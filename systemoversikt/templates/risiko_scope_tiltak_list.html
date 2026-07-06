@@ -1,3 +1,4 @@
+{# 2026-07-06: Removed excel class – no table export on risk tiltak list. #}
 {# 2026-07-01: Ansvarlig column resolves email/UPN to display name via risiko_ansvarlig_display. #}
 {# 2026-06-30: Status and Risk ID columns use colored tags (status + nåværende risiko level). #}
 {# 2026-06-26: Read-only scope tiltak overview; edit tiltak in scenario modal. #}
@@ -12,7 +13,7 @@
 
 {% if tiltak_rows %}
 
-<table class="table table-sm table-bordered excel mb-0" id="risiko-tiltak-table">
+<table class="table table-sm table-bordered mb-0" id="risiko-tiltak-table">
 <thead>
 <tr>
 	<th style="width:3rem">ID</th>

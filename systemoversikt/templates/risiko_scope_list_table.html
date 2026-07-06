@@ -1,10 +1,11 @@
 {% load templatetags %}
+{# 2026-07-06: Removed excel class – no table export on risk scope lists. #}
 {# 2026-07-02: data-group-ids on rows for client-side tilgangsgruppe filtering. #}
 {# 2026-07-02: Tilgangsgrupper column as colored tags. #}
 {# 2026-07-02: Tilgangsgrupper column replaces beskrivelse on scope list tables. #}
 {# 2026-07-01: Shared scope table for root and virksomhet risk list pages. #}
 {% if scopes %}
-<table class="table tablesorter excel">
+<table class="table tablesorter">
 <thead>
 <tr>
 	<th>Navn</th>

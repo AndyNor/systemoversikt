@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: RiskSammenstilling + group-owned links/assessments – templates independent of virksomhet.
+# 2026-07-06: RiskFramework.virksomhet + M2M on RiskVirksomhetGroup – reuse virksomhet tilgangsgrupper for rammeverk.
+# 2026-07-06: RiskFrameworkGroup + member – per-framework owner/read tilgangsgrupper.
+# 2026-07-06: framework_owner_for / framework_read_for M2M – rammeverk-tilgang via virksomhet tilgangsgrupper.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup (and member model).
 # 2026-07-02: virksomhet_read_only on RiskVirksomhetGroup; participant_groups M2M on RiskScope.
 # 2026-07-01: RiskVirksomhetGroup + member – per-virksomhet access groups for risk collections.
@@ -8245,8 +8249,8 @@ class RiskFramework(models.Model):
 		return self.title
 
 	class Meta:
-		verbose_name = "risikorammeverk"
-		verbose_name_plural = "Risiko: rammeverk"
+		verbose_name = "risikorammeverk-mal"
+		verbose_name_plural = "Risiko: rammeverk-maler"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['title']
 
@@ -8302,7 +8306,7 @@ class RiskFrameworkNode(models.Model):
 	history = HistoricalRecords()
 
 	def is_leaf(self):
-		return not self.children.filter(status=RISK_FRAMEWORK_NODE_STATUS_ACTIVE).exists()
+		return self.parent_id is not None
 
 	def display_code(self):
 		if self.parent_id:
@@ -8322,28 +8326,96 @@ class RiskFrameworkNode(models.Model):
 		)
 
 
-class RiskScenarioFrameworkLink(models.Model):
+class RiskSammenstilling(models.Model):
 	opprettet = models.DateTimeField(
 		verbose_name="Opprettet",
 		auto_now_add=True,
 		null=True,
 	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	title = models.CharField(
+		verbose_name="Tittel",
+		max_length=200,
+	)
+	beskrivelse = models.TextField(
+		verbose_name="Beskrivelse",
+		blank=True,
+		default='',
+	)
+	is_active = models.BooleanField(
+		verbose_name="Aktiv",
+		default=True,
+		db_index=True,
+	)
+	framework = models.ForeignKey(
+		to=RiskFramework,
+		on_delete=models.PROTECT,
+		related_name='sammenstillinger',
+		verbose_name="Mal",
+	)
+	owner_group = models.ForeignKey(
+		to=RiskVirksomhetGroup,
+		on_delete=models.PROTECT,
+		related_name='sammenstillinger',
+		verbose_name="Eiergruppe",
+	)
+	created_by = models.ForeignKey(
+		to=User,
+		on_delete=models.SET_NULL,
+		related_name='risk_sammenstillinger_created',
+		verbose_name="Opprettet av",
+		blank=True,
+		null=True,
+	)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return self.title
+
+	class Meta:
+		verbose_name = "risikosammenstilling"
+		verbose_name_plural = "Risiko: sammenstillinger"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		constraints = [
+			models.UniqueConstraint(
+				fields=['owner_group', 'title'],
+				name='risk_sammenstilling_unique_title_per_group',
+			),
+		]
+		ordering = ['-sist_oppdatert', 'title']
+
+
+class RiskSammenstillingScenarioLink(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	sammenstilling = models.ForeignKey(
+		to=RiskSammenstilling,
+		on_delete=models.CASCADE,
+		related_name='scenario_links',
+		verbose_name="Sammenstilling",
+	)
 	scenario = models.ForeignKey(
 		to=RiskScenario,
 		on_delete=models.CASCADE,
-		related_name='framework_links',
+		related_name='sammenstilling_links',
 		verbose_name="Risikoscenario",
 	)
 	framework_node = models.ForeignKey(
 		to=RiskFrameworkNode,
 		on_delete=models.CASCADE,
-		related_name='scenario_links',
+		related_name='sammenstilling_links',
 		verbose_name="Rammeverk-node",
 	)
 	mapped_by = models.ForeignKey(
 		to=User,
 		on_delete=models.SET_NULL,
-		related_name='risk_framework_links_created',
+		related_name='risk_sammenstilling_links_created',
 		verbose_name="Kartlagt av",
 		blank=True,
 		null=True,
@@ -8363,13 +8435,13 @@ class RiskScenarioFrameworkLink(models.Model):
 		return '%s → %s' % (self.scenario_id, self.framework_node_id)
 
 	class Meta:
-		verbose_name = "risikoscenario-rammeverk-kobling"
-		verbose_name_plural = "Risiko: scenario-rammeverk-koblinger"
+		verbose_name = "risikosammenstilling-scenario-kobling"
+		verbose_name_plural = "Risiko: sammenstilling-scenario-koblinger"
 		default_permissions = ('add', 'change', 'delete', 'view')
-		unique_together = ('scenario', 'framework_node')
+		unique_together = ('sammenstilling', 'scenario', 'framework_node')
 
 
-class RiskVirksomhetNodeAssessment(models.Model):
+class RiskSammenstillingNodeAssessment(models.Model):
 	opprettet = models.DateTimeField(
 		verbose_name="Opprettet",
 		auto_now_add=True,
@@ -8379,16 +8451,16 @@ class RiskVirksomhetNodeAssessment(models.Model):
 		verbose_name="Sist oppdatert",
 		auto_now=True,
 	)
-	virksomhet = models.ForeignKey(
-		to='Virksomhet',
+	sammenstilling = models.ForeignKey(
+		to=RiskSammenstilling,
 		on_delete=models.CASCADE,
-		related_name='risk_framework_assessments',
-		verbose_name="Virksomhet",
+		related_name='node_assessments',
+		verbose_name="Sammenstilling",
 	)
 	framework_node = models.ForeignKey(
 		to=RiskFrameworkNode,
 		on_delete=models.CASCADE,
-		related_name='virksomhet_assessments',
+		related_name='sammenstilling_assessments',
 		verbose_name="Rammeverk-node",
 	)
 	konsekvens_nivaa = models.PositiveSmallIntegerField(
@@ -8414,7 +8486,7 @@ class RiskVirksomhetNodeAssessment(models.Model):
 	revidert_av = models.ForeignKey(
 		to=User,
 		on_delete=models.SET_NULL,
-		related_name='risk_framework_assessments_revised',
+		related_name='risk_sammenstilling_assessments_revised',
 		verbose_name="Revidert av",
 		blank=True,
 		null=True,
@@ -8422,10 +8494,10 @@ class RiskVirksomhetNodeAssessment(models.Model):
 	history = HistoricalRecords()
 
 	def __str__(self):
-		return '%s / %s' % (self.virksomhet_id, self.framework_node_id)
+		return '%s / %s' % (self.sammenstilling_id, self.framework_node_id)
 
 	class Meta:
-		verbose_name = "risikovurdering rammeverk-node"
-		verbose_name_plural = "Risiko: virksomhetsvurderinger rammeverk"
+		verbose_name = "risikosammenstilling-nodevurdering"
+		verbose_name_plural = "Risiko: sammenstilling-nodevurderinger"
 		default_permissions = ('add', 'change', 'delete', 'view')
-		unique_together = ('virksomhet', 'framework_node')
+		unique_together = ('sammenstilling', 'framework_node')

@@ -1,0 +1,91 @@
+{% extends "sikkerhet_index.html" %}
+{# 2026-07-06: Create sammenstilling – pick template and owner tilgangsgruppe. #}
+
+{% block overskrift %}
+	Ny sammenstilling
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p class="mb-3">
+	<a href="{% url 'risiko_rammeverk_list' %}">&larr; Risikosammenstilling</a>
+</p>
+
+<p class="text-muted">
+	Opprett en ny sammenstilling basert på en mal. Du må være medlem av eiergruppen du velger.
+	Flere grupper kan ha egne sammenstillinger på samme mal uten å påvirke hverandre.
+</p>
+
+{% csrf_token %}
+
+<div class="card" style="max-width: 32rem;">
+	<div class="card-body">
+		<div class="form-group">
+			<label for="sammenstilling-title">Tittel</label>
+			<input type="text" class="form-control form-control-sm" id="sammenstilling-title" maxlength="200">
+		</div>
+		<div class="form-group">
+			<label for="sammenstilling-beskrivelse">Beskrivelse</label>
+			<textarea class="form-control form-control-sm" id="sammenstilling-beskrivelse" rows="2"></textarea>
+		</div>
+		<div class="form-group">
+			<label for="sammenstilling-framework">Mal</label>
+			<select class="form-control form-control-sm" id="sammenstilling-framework">
+				{% for fw in templates %}
+				<option value="{{ fw.pk }}">{{ fw.title }}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div class="form-group mb-0">
+			<label for="sammenstilling-owner-group">Eiergruppe</label>
+			<select class="form-control form-control-sm" id="sammenstilling-owner-group">
+				{% for g in owner_groups %}
+				<option value="{{ g.pk }}">{{ g.display_title }}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<span id="sammenstilling-status" class="text-muted small d-block mt-2"></span>
+		<button type="button" class="btn btn-success btn-sm mt-3" id="sammenstilling-save">Opprett</button>
+	</div>
+</div>
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+$(function () {
+	var apiUrls = {{ api_urls_json|safe }};
+	var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+	csrfToken = csrfToken ? csrfToken.value : '';
+
+	document.getElementById('sammenstilling-save').addEventListener('click', function () {
+		var title = document.getElementById('sammenstilling-title').value.trim();
+		var statusEl = document.getElementById('sammenstilling-status');
+		if (!title) {
+			statusEl.textContent = 'Tittel er påkrevd.';
+			return;
+		}
+		fetch(apiUrls.create, {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-CSRFToken': csrfToken,
+			},
+			body: JSON.stringify({
+				title: title,
+				beskrivelse: document.getElementById('sammenstilling-beskrivelse').value.trim(),
+				framework_id: parseInt(document.getElementById('sammenstilling-framework').value, 10),
+				owner_group_id: parseInt(document.getElementById('sammenstilling-owner-group').value, 10),
+			}),
+		}).then(function (r) { return r.json(); }).then(function (data) {
+			if (data.ok && data.pk) {
+				window.location.href = '/sikkerhet/risiko/rammeverk/sammenstilling/' + data.pk + '/';
+				return;
+			}
+			statusEl.textContent = data.error || 'Kunne ikke opprette.';
+		});
+	});
+});
+</script>
+{% endblock script_append %}

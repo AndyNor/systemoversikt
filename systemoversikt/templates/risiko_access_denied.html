@@ -41,6 +41,74 @@
 </p>
 <p>Systemforvalteren kan opprette tilgangsgrupper for virksomheten – med eller uten lesetilgang til alle samlinger.</p>
 
+{% elif risk_access_reason == 'template_edit' %}
+<p>Du har ikke tilgang til å redigere maler.</p>
+{% if framework %}
+<p class="mb-2">Mal: <strong>{{ framework.title }}</strong></p>
+{% endif %}
+<p>Redigering av risikomal krever <strong>systemadministrator</strong> (Django superbruker).</p>
+
+{% elif risk_access_reason == 'sammenstilling_view' %}
+<p>Du har ikke tilgang til denne sammenstillingen.</p>
+{% if sammenstilling %}
+<p class="mb-2">Sammenstilling: <strong>{{ sammenstilling.title }}</strong></p>
+<p class="mb-2">Eiergruppe: <strong>{{ sammenstilling.owner_group.display_title }}</strong></p>
+{% endif %}
+<p>Kun medlemmer av eiergruppen kan se sammenstillingen.</p>
+
+{% elif risk_access_reason == 'sammenstilling_map' %}
+<p>Du har ikke tilgang til å kartlegge i denne sammenstillingen.</p>
+{% if sammenstilling %}
+<p class="mb-2">Sammenstilling: <strong>{{ sammenstilling.title }}</strong></p>
+{% endif %}
+<p>Kun medlemmer av eiergruppen kan knytte scenarioer.</p>
+
+{% elif risk_access_reason == 'sammenstilling_create' %}
+<p>Du kan ikke opprette sammenstillinger ennå.</p>
+<p>Du må være medlem av minst én tilgangsgruppe for å opprette en sammenstilling med den gruppen som eier.</p>
+
+{% elif risk_access_reason == 'sammenstilling_no_templates' %}
+<p>Det finnes ingen aktive maler å bygge sammenstillinger på.</p>
+<p>Be systemadministrator om å opprette en risikomal.</p>
+
+{% elif risk_access_reason == 'framework_edit' %}
+<p>Du har ikke redigeringstilgang til dette rammeverket.</p>
+{% if framework %}
+<p class="mb-2">Rammeverk: <strong>{{ framework.title }}</strong></p>
+{% endif %}
+<p>
+	Redigering krever medlemskap i en tilgangsgruppe med <strong>eier tilgang</strong> til rammeverket.
+	{% if framework and framework.virksomhet_id %}
+	Be systemforvalter om å tildele dette under
+	<a href="{% url 'risiko_virksomhet_tilgangsgrupper' vid=framework.virksomhet_id %}">tilgangsgrupper for {{ framework.virksomhet.virksomhetsforkortelse }}</a>.
+	{% else %}
+	Be systemforvalter om å tildele dette via virksomhetens tilgangsgrupper.
+	{% endif %}
+</p>
+
+{% elif risk_access_reason == 'framework_read' %}
+<p>Du har ikke tilgang til sammenstillingen for denne virksomheten i rammeverket.</p>
+{% if framework %}
+<p class="mb-2">Rammeverk: <strong>{{ framework.title }}</strong></p>
+{% endif %}
+{% if virksomhet %}
+<p class="mb-2">Virksomhet: <strong>{{ virksomhet.virksomhetsforkortelse }}</strong></p>
+{% endif %}
+<p>
+	Du trenger tilgang til rammeverket via tilgangsgruppe, og lesetilgang til virksomheten i risikovurderinger
+	(samlingseier/deltaker, deltakergruppe eller virksomhetslesing).
+</p>
+
+{% elif risk_access_reason == 'framework_groups_manage' %}
+<p>Du kan ikke administrere tilgangsgrupper for dette rammeverket.</p>
+{% if framework %}
+<p class="mb-2">Rammeverk: <strong>{{ framework.title }}</strong></p>
+{% endif %}
+<p>
+	Administrasjon av tilgangsgrupper for rammeverk skjer via virksomhetens
+	<strong>tilgangsgrupper</strong>-side (systemforvalter i virksomheten).
+</p>
+
 {% elif risk_access_reason == 'create_collection' %}
 <p>Du har ikke tilgang til å opprette eller importere risikosamlinger.</p>
 <p>

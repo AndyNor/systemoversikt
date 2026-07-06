@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: Templates only – removed virksomhet link from seed command.
 # 2026-07-06: Seed IT-plattform risk framework – 8 categories and 24 subcategories for aggregation layer.
 
 from django.core.management.base import BaseCommand
@@ -10,6 +11,7 @@ from systemoversikt.models import (
 	RiskFramework,
 	RiskFrameworkNode,
 )
+
 
 IT_PLATTFORM_TAXONOMY = [
 	{
@@ -285,7 +287,7 @@ IT_PLATTFORM_TAXONOMY = [
 
 
 class Command(BaseCommand):
-	help = 'Seed or update the IT-plattform risk framework taxonomy (8+24 nodes).'
+	help = 'Seed or update the IT-plattform risk framework template taxonomy (8+24 nodes).'
 
 	def handle(self, *args, **options):
 		with transaction.atomic():
@@ -294,8 +296,8 @@ class Command(BaseCommand):
 				defaults={
 					'title': 'IT-plattform',
 					'beskrivelse': (
-						'Høynivå risikoscenarioer for IT-plattformen – brukes til å aggregere operative '
-						'risikovurderinger opp mot ledelsen.'
+						'Høynivå risikoscenarioer for IT-plattformen – brukes som mal for '
+						'gruppe-eide risikosammenstillinger.'
 					),
 					'is_active': True,
 				},

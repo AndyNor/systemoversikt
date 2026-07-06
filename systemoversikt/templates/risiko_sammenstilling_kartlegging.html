@@ -1,9 +1,9 @@
 {% extends "sikkerhet_index.html" %}
 {# 2026-07-06: Removed excel class – no table export on kartlegging. #}
-{# 2026-07-06: Cross-collection mapping workspace for security analysts. #}
+{# 2026-07-06: Sammenstilling-scoped mapping – scope-level scenario access. #}
 
 {% block overskrift %}
-	Kartlegging – {{ framework.title }}
+	Kartlegging – {{ sammenstilling.title }}
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -11,30 +11,26 @@
 {% csrf_token %}
 
 <p class="mb-3">
-	<a href="{% url 'risiko_rammeverk_list' %}">&larr; Risikorammeverk</a>
-	| <a href="{% url 'risiko_rammeverk_rediger' slug=framework_slug %}">Rediger rammeverk</a>
+	<a href="{% url 'risiko_sammenstilling_detail' pk=sammenstilling.pk %}">&larr; {{ sammenstilling.title }}</a>
+	| <a href="{% url 'risiko_rammeverk_list' %}">Oversikt</a>
+</p>
+
+<p class="text-muted mb-3">
+	Mal: <strong>{{ framework.title }}</strong>.
+	Eiergruppe: <strong>{{ sammenstilling.owner_group.display_title }}</strong>.
 </p>
 
 <div id="risiko-rammeverk-kartlegging" data-api-urls="{{ api_urls_json|escape }}">
 	<div class="card mb-3">
 		<div class="card-body py-2">
 			<div class="form-row align-items-end">
-				<div class="col-md-3">
-					<label class="small mb-0">Virksomhet</label>
-					<select class="form-control form-control-sm" id="kartlegging-virksomhet">
-						<option value="">Alle mine virksomheter</option>
-						{% for v in nav_virksomheter %}
-						<option value="{{ v.pk }}" {% if profile_virksomhet and v.pk == profile_virksomhet.pk %}selected{% endif %}>{{ v.virksomhetsforkortelse }}</option>
-						{% endfor %}
-					</select>
-				</div>
 				<div class="col-md-4">
 					<label class="small mb-0">Søk</label>
 					<input type="search" class="form-control form-control-sm" id="kartlegging-q" placeholder="Hendelse, R-id, samling…">
 				</div>
-				<div class="col-md-3">
+				<div class="col-md-4">
 					<label class="small mb-0 d-block">&nbsp;</label>
-					<label class="mb-0 small"><input type="checkbox" id="kartlegging-unmapped"> Kun ukartlagte</label>
+					<label class="mb-0 small"><input type="checkbox" id="kartlegging-unmapped"> Kun ukartlagte i denne sammenstillingen</label>
 				</div>
 				<div class="col-md-2">
 					<button type="button" class="btn btn-primary btn-sm btn-block" id="kartlegging-search">Søk</button>
@@ -69,7 +65,7 @@
 				<option value="">Velg underkategori…</option>
 			</select>
 			<button type="button" class="btn btn-success btn-sm" id="kartlegging-link-btn">Knytt valgte</button>
-			<p class="small text-muted mt-2 mb-0">Valgte scenarioer knyttes til valgt underkategori. Kun scenarioer fra virksomheter du har tilgang til i risikovurderinger vises.</p>
+			<p class="small text-muted mt-2 mb-0">Kun scenarioer fra risikosamlinger du har lesetilgang til vises og kan knyttes.</p>
 		</div>
 	</div>
 </div>

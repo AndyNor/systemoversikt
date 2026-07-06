@@ -1,9 +1,9 @@
 {% extends "sikkerhet_index.html" %}
 {# 2026-07-06: Automatic category numbering – manual nummer field removed from editor. #}
-{# 2026-07-06: Framework taxonomy editor with archive and reallocation. #}
+{# 2026-07-06: Superuser-only mal editor – no archive/retire; move subcategories between categories. #}
 
 {% block overskrift %}
-	Rediger rammeverk – {{ framework.title }}
+	Rediger mal – {{ framework.title }}
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -11,15 +11,13 @@
 {% csrf_token %}
 
 <p class="mb-3">
-	<a href="{% url 'risiko_rammeverk_list' %}">&larr; Risikorammeverk</a>
-	| <a href="{% url 'risiko_rammeverk_kartlegging' slug=framework_slug %}">Kartlegging</a>
+	<a href="{% url 'risiko_rammeverk_list' %}">&larr; Risikosammenstilling</a>
 </p>
 
 <div id="risiko-rammeverk-editor" data-api-urls="{{ api_urls_json|escape }}">
-	<p class="text-muted">Endre ordlyd, legg til noder, eller arkiver med omfordeling av eksisterende koblinger.</p>
+	<p class="text-muted">Endre ordlyd, legg til hovedkategorier og underkategorier, eller flytt underkategorier mellom kategorier.</p>
 	<div class="mb-2">
 		<button type="button" class="btn btn-outline-success btn-sm" id="rammeverk-add-category">Ny hovedkategori</button>
-		<label class="ml-3 small mb-0"><input type="checkbox" id="rammeverk-show-archived"> Vis arkiverte</label>
 	</div>
 	<div id="rammeverk-tree-root"></div>
 </div>
@@ -41,34 +39,14 @@
 				</div>
 				<label class="small">Forklaring</label>
 				<textarea class="form-control form-control-sm" id="rammeverk-node-forklaring" rows="5"></textarea>
-			</div>
-			<div class="modal-footer justify-content-between w-100 py-2">
-				<div>
-					<button type="button" class="btn btn-outline-warning btn-sm" id="rammeverk-node-archive">Arkiver</button>
-					<button type="button" class="btn btn-outline-danger btn-sm" id="rammeverk-node-retire">Arkiver og omfordel…</button>
+				<div class="form-group mt-2 mb-0" id="rammeverk-move-section" style="display:none">
+					<label class="small">Flytt til hovedkategori</label>
+					<select class="form-control form-control-sm" id="rammeverk-node-move-parent"></select>
+					<button type="button" class="btn btn-outline-primary btn-sm mt-2" id="rammeverk-node-move-btn">Flytt underkategori</button>
 				</div>
-				<div>
-					<button type="button" class="btn btn-primary btn-sm" id="rammeverk-node-save">Lagre</button>
-					<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
-				</div>
-			</div>
-		</div>
-	</div>
-</div>
-
-<div class="modal fade" id="rammeverk-retire-modal" tabindex="-1" role="dialog" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content">
-			<div class="modal-header py-2">
-				<h5 class="modal-title">Omfordel til etterfølger</h5>
-				<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-			</div>
-			<div class="modal-body">
-				<p class="small text-muted">Alle koblinger og vurderinger flyttes til valgt node før arkivering.</p>
-				<select class="form-control form-control-sm" id="rammeverk-retire-successor"></select>
 			</div>
 			<div class="modal-footer py-2">
-				<button type="button" class="btn btn-danger btn-sm" id="rammeverk-retire-confirm">Arkiver og omfordel</button>
+				<button type="button" class="btn btn-primary btn-sm" id="rammeverk-node-save">Lagre</button>
 				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
 			</div>
 		</div>

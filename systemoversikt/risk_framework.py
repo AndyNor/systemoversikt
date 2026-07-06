@@ -1,32 +1,27 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-07-06: Risk framework aggregation – suggested levels, roll-up, retire/reallocate helpers.
+# 2026-07-06: Rollup/mapping keyed by RiskSammenstilling; scope-level scenario search for kartlegging.
+# 2026-07-06: Template taxonomy helpers – superuser-managed maler independent of virksomhet.
 
 from datetime import date
 
-from django.db import transaction
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Exists, Max, OuterRef, Q
 
 from systemoversikt.models import (
 	RISK_FRAMEWORK_NODE_STATUS_ACTIVE,
-	RISK_FRAMEWORK_NODE_STATUS_ARCHIVED,
 	RiskFramework,
 	RiskFrameworkNode,
 	RiskScenario,
-	RiskScenarioFrameworkLink,
-	RiskVirksomhetNodeAssessment,
+	RiskSammenstillingNodeAssessment,
+	RiskSammenstillingScenarioLink,
+	RiskScopeMember,
+	RiskVirksomhetGroupMember,
 )
 from systemoversikt.risk_criteria import (
 	effective_residual_levels,
 	risk_cell_css_class,
 	risk_label,
 )
-from systemoversikt.risk_membership import user_has_virksomhet_read_group_access
-
-RISK_FRAMEWORK_WRITE_PERMISSIONS = [
-	'systemoversikt.add_riskscope',
-	'systemoversikt.view_qualysvuln',
-]
 
 RISK_LABEL_RANK = {
 	'': 0,
@@ -34,20 +29,6 @@ RISK_LABEL_RANK = {
 	'Middels': 2,
 	'Høy': 3,
 }
-
-
-def user_can_edit_framework(user):
-	if not user.is_authenticated:
-		return False
-	return any(user.has_perm(perm) for perm in RISK_FRAMEWORK_WRITE_PERMISSIONS)
-
-
-def user_can_view_virksomhet_framework(user, virksomhet_id):
-	if not user.is_authenticated or virksomhet_id is None:
-		return False
-	if user_can_edit_framework(user):
-		return True
-	return user_has_virksomhet_read_group_access(user, virksomhet_id)
 
 
 def get_active_framework(slug):
@@ -58,29 +39,17 @@ def framework_nodes_queryset(framework, include_archived=False):
 	qs = RiskFrameworkNode.objects.filter(framework=framework).select_related('parent')
 	if not include_archived:
 		qs = qs.filter(status=RISK_FRAMEWORK_NODE_STATUS_ACTIVE)
-	return qs.order_by('parent__rekkefolge', 'parent__nummer', 'rekkefolge', 'nummer')
+	return qs.order_by('parent__nummer', 'nummer')
 
 
 def leaf_nodes_for_framework(framework, include_archived=False):
 	nodes = list(framework_nodes_queryset(framework, include_archived=include_archived))
-	active_children = {}
-	for node in nodes:
-		if node.parent_id:
-			active_children.setdefault(node.parent_id, 0)
-			if node.status == RISK_FRAMEWORK_NODE_STATUS_ACTIVE:
-				active_children[node.parent_id] += 1
 	leaves = []
 	for node in nodes:
 		if node.parent_id is None:
 			continue
 		if include_archived or node.status == RISK_FRAMEWORK_NODE_STATUS_ACTIVE:
-			if active_children.get(node.parent_id, 0) == 0 or node.parent_id:
-				parent_child_count = sum(
-					1 for n in nodes
-					if n.parent_id == node.parent_id and n.status == RISK_FRAMEWORK_NODE_STATUS_ACTIVE
-				)
-				if parent_child_count > 0:
-					leaves.append(node)
+			leaves.append(node)
 	return leaves
 
 
@@ -110,14 +79,11 @@ def _worst_label(labels):
 	return best
 
 
-def scenarios_for_node(virksomhet_id, node, include_archived_links=False):
-	qs = RiskScenario.objects.filter(
-		framework_links__framework_node=node,
-		scope__virksomhet_id=virksomhet_id,
-	).select_related('scope').distinct()
-	if not include_archived_links and node.status == RISK_FRAMEWORK_NODE_STATUS_ARCHIVED:
-		pass
-	return qs
+def scenarios_for_node(sammenstilling, node):
+	return RiskScenario.objects.filter(
+		sammenstilling_links__sammenstilling=sammenstilling,
+		sammenstilling_links__framework_node=node,
+	).select_related('scope', 'scope__virksomhet').distinct()
 
 
 def level_counts_for_scenarios(scenarios):
@@ -133,8 +99,8 @@ def level_counts_for_scenarios(scenarios):
 	return {'current': current, 'residual': residual}
 
 
-def suggested_level_for_node(virksomhet_id, node):
-	scenarios = list(scenarios_for_node(virksomhet_id, node))
+def suggested_level_for_node(sammenstilling, node):
+	scenarios = list(scenarios_for_node(sammenstilling, node))
 	if not scenarios:
 		return {
 			'label': '',
@@ -155,10 +121,10 @@ def suggested_level_for_node(virksomhet_id, node):
 	}
 
 
-def assessment_for_node(virksomhet_id, node, assessments_by_node=None):
+def assessment_for_node(sammenstilling, node, assessments_by_node=None):
 	if assessments_by_node is None:
-		assessment = RiskVirksomhetNodeAssessment.objects.filter(
-			virksomhet_id=virksomhet_id,
+		assessment = RiskSammenstillingNodeAssessment.objects.filter(
+			sammenstilling=sammenstilling,
 			framework_node=node,
 		).first()
 	else:
@@ -179,29 +145,29 @@ def assessment_for_node(virksomhet_id, node, assessments_by_node=None):
 	}
 
 
-def effective_node_level(virksomhet_id, node, assessments_by_node=None):
-	manual = assessment_for_node(virksomhet_id, node, assessments_by_node)
+def effective_node_level(sammenstilling, node, assessments_by_node=None):
+	manual = assessment_for_node(sammenstilling, node, assessments_by_node)
 	if manual and manual['manual_label']:
 		return manual['manual_label'], 'manual'
-	suggested = suggested_level_for_node(virksomhet_id, node)
+	suggested = suggested_level_for_node(sammenstilling, node)
 	if suggested['label']:
 		return suggested['label'], 'suggested'
 	return '', 'none'
 
 
-def category_suggested_level(virksomhet_id, category, children, assessments_by_node=None):
+def category_suggested_level(sammenstilling, category, children, assessments_by_node=None):
 	labels = []
 	for child in children:
-		label, _source = effective_node_level(virksomhet_id, child, assessments_by_node)
+		label, _source = effective_node_level(sammenstilling, child, assessments_by_node)
 		if label:
 			labels.append(label)
 	return _worst_label(labels)
 
 
-def build_node_payload(virksomhet_id, node, assessments_by_node=None):
-	suggested = suggested_level_for_node(virksomhet_id, node)
-	manual = assessment_for_node(virksomhet_id, node, assessments_by_node)
-	effective_label, effective_source = effective_node_level(virksomhet_id, node, assessments_by_node)
+def build_node_payload(sammenstilling, node, assessments_by_node=None):
+	suggested = suggested_level_for_node(sammenstilling, node)
+	manual = assessment_for_node(sammenstilling, node, assessments_by_node)
+	effective_label, effective_source = effective_node_level(sammenstilling, node, assessments_by_node)
 	return {
 		'pk': node.pk,
 		'nummer': node.nummer,
@@ -223,9 +189,10 @@ def build_node_payload(virksomhet_id, node, assessments_by_node=None):
 	}
 
 
-def build_rollup_tree(framework, virksomhet_id, include_archived=False):
-	assessments = RiskVirksomhetNodeAssessment.objects.filter(
-		virksomhet_id=virksomhet_id,
+def build_rollup_tree(sammenstilling, include_archived=False):
+	framework = sammenstilling.framework
+	assessments = RiskSammenstillingNodeAssessment.objects.filter(
+		sammenstilling=sammenstilling,
 		framework_node__framework=framework,
 	)
 	assessments_by_node = {a.framework_node_id: a for a in assessments}
@@ -241,10 +208,10 @@ def build_rollup_tree(framework, virksomhet_id, include_archived=False):
 	for category in categories:
 		children = children_by_parent.get(category.pk, [])
 		child_payloads = [
-			build_node_payload(virksomhet_id, child, assessments_by_node)
+			build_node_payload(sammenstilling, child, assessments_by_node)
 			for child in children
 		]
-		cat_suggested = category_suggested_level(virksomhet_id, category, children, assessments_by_node)
+		cat_suggested = category_suggested_level(sammenstilling, category, children, assessments_by_node)
 		mapped_count = sum(c['suggested']['scenario_count'] for c in child_payloads)
 		tree.append({
 			'pk': category.pk,
@@ -261,9 +228,9 @@ def build_rollup_tree(framework, virksomhet_id, include_archived=False):
 	return tree
 
 
-def save_node_assessment(virksomhet, node, user, konsekvens_nivaa, sannsynlighet_nivaa, begrunnelse=''):
-	assessment, _created = RiskVirksomhetNodeAssessment.objects.get_or_create(
-		virksomhet=virksomhet,
+def save_node_assessment(sammenstilling, node, user, konsekvens_nivaa, sannsynlighet_nivaa, begrunnelse=''):
+	assessment, _created = RiskSammenstillingNodeAssessment.objects.get_or_create(
+		sammenstilling=sammenstilling,
 		framework_node=node,
 	)
 	assessment.konsekvens_nivaa = konsekvens_nivaa
@@ -275,12 +242,12 @@ def save_node_assessment(virksomhet, node, user, konsekvens_nivaa, sannsynlighet
 	return assessment
 
 
-def apply_suggestion_to_assessment(virksomhet, node, user):
-	suggested = suggested_level_for_node(virksomhet.pk, node)
+def apply_suggestion_to_assessment(sammenstilling, node, user):
+	suggested = suggested_level_for_node(sammenstilling, node)
 	if not suggested['sannsynlighet'] or not suggested['konsekvens']:
 		return None
 	return save_node_assessment(
-		virksomhet,
+		sammenstilling,
 		node,
 		user,
 		suggested['konsekvens'],
@@ -289,79 +256,50 @@ def apply_suggestion_to_assessment(virksomhet, node, user):
 	)
 
 
-def archive_framework_node(node):
-	if node.children.filter(status=RISK_FRAMEWORK_NODE_STATUS_ACTIVE).exists():
-		raise ValueError('Arkiver underkategorier først.')
-	node.status = RISK_FRAMEWORK_NODE_STATUS_ARCHIVED
-	node.save(update_fields=['status', 'sist_oppdatert'])
+def move_framework_node(node, new_parent):
+	if new_parent is not None:
+		if new_parent.framework_id != node.framework_id:
+			raise ValueError('Ny kategori må tilhøre samme mal.')
+		if new_parent.parent_id is not None:
+			raise ValueError('Underkategori kan bare flyttes til en hovedkategori.')
+	if node.parent_id is None:
+		raise ValueError('Hovedkategorier kan ikke flyttes.')
+	siblings = RiskFrameworkNode.objects.filter(
+		framework=node.framework,
+		parent=new_parent,
+	).exclude(pk=node.pk)
+	max_nummer = siblings.aggregate(m=Max('nummer'))['m'] or 0
+	node.parent = new_parent
+	node.nummer = max_nummer + 1
+	node.save(update_fields=['parent', 'nummer', 'sist_oppdatert'])
 	return node
 
 
-def _merge_assessments(source_assessment, target_assessment, user):
-	if source_assessment is None:
-		return target_assessment
-	if target_assessment is None:
-		return source_assessment
-
-	source_label = risk_label(source_assessment.sannsynlighet_nivaa, source_assessment.konsekvens_nivaa) or ''
-	target_label = risk_label(target_assessment.sannsynlighet_nivaa, target_assessment.konsekvens_nivaa) or ''
-	if RISK_LABEL_RANK.get(source_label, 0) > RISK_LABEL_RANK.get(target_label, 0):
-		target_assessment.konsekvens_nivaa = source_assessment.konsekvens_nivaa
-		target_assessment.sannsynlighet_nivaa = source_assessment.sannsynlighet_nivaa
-	notes = []
-	if target_assessment.begrunnelse:
-		notes.append(target_assessment.begrunnelse)
-	if source_assessment.begrunnelse:
-		notes.append(source_assessment.begrunnelse)
-	target_assessment.begrunnelse = '\n\n'.join(notes)
-	target_assessment.sist_revidert = date.today()
-	target_assessment.revidert_av = user
-	target_assessment.save()
-	source_assessment.delete()
-	return target_assessment
+def _scenarios_with_scope_read_access_qs(user):
+	if not user.is_authenticated:
+		return RiskScenario.objects.none()
+	direct_member = RiskScopeMember.objects.filter(
+		scope_id=OuterRef('scope_id'),
+		user_id=user.id,
+	)
+	group_participant = RiskVirksomhetGroupMember.objects.filter(
+		user_id=user.id,
+		group__participant_scopes=OuterRef('scope_id'),
+	)
+	read_group = RiskVirksomhetGroupMember.objects.filter(
+		user_id=user.id,
+		group__virksomhet_id=OuterRef('scope__virksomhet_id'),
+		group__virksomhet_read_only=True,
+	)
+	return RiskScenario.objects.filter(
+		Exists(direct_member) | Exists(group_participant) | Exists(read_group),
+	)
 
 
-@transaction.atomic
-def retire_node_with_reallocation(node, successor):
-	if node.framework_id != successor.framework_id:
-		raise ValueError('Etterfølger må tilhøre samme rammeverk.')
-	if successor.status != RISK_FRAMEWORK_NODE_STATUS_ACTIVE:
-		raise ValueError('Etterfølger må være aktiv.')
-	if node.pk == successor.pk:
-		raise ValueError('Etterfølger kan ikke være samme node.')
-
-	for link in RiskScenarioFrameworkLink.objects.filter(framework_node=node):
-		exists = RiskScenarioFrameworkLink.objects.filter(
-			scenario_id=link.scenario_id,
-			framework_node=successor,
-		).exists()
-		if exists:
-			link.delete()
-		else:
-			link.framework_node = successor
-			link.save(update_fields=['framework_node'])
-
-	for assessment in RiskVirksomhetNodeAssessment.objects.filter(framework_node=node):
-		target = RiskVirksomhetNodeAssessment.objects.filter(
-			virksomhet_id=assessment.virksomhet_id,
-			framework_node=successor,
-		).first()
-		if target is None:
-			assessment.framework_node = successor
-			assessment.save(update_fields=['framework_node', 'sist_oppdatert'])
-		else:
-			_merge_assessments(assessment, target, assessment.revidert_av)
-
-	for child in node.children.filter(status=RISK_FRAMEWORK_NODE_STATUS_ACTIVE):
-		retire_node_with_reallocation(child, successor)
-
-	node.status = RISK_FRAMEWORK_NODE_STATUS_ARCHIVED
-	node.save(update_fields=['status', 'sist_oppdatert'])
-	return node
-
-
-def search_scenarios_for_mapping(framework, virksomhet_id=None, scope_id=None, unmapped_only=False, q=''):
-	qs = RiskScenario.objects.select_related('scope', 'scope__virksomhet').order_by(
+def search_scenarios_for_mapping(sammenstilling, user, virksomhet_id=None, scope_id=None, unmapped_only=False, q=''):
+	qs = _scenarios_with_scope_read_access_qs(user).select_related(
+		'scope', 'scope__virksomhet',
+	).order_by(
 		'scope__virksomhet__virksomhetsforkortelse',
 		'scope__title',
 		'rekkefolge',
@@ -373,7 +311,7 @@ def search_scenarios_for_mapping(framework, virksomhet_id=None, scope_id=None, u
 		qs = qs.filter(scope_id=scope_id)
 	if unmapped_only:
 		qs = qs.filter(
-			~Q(framework_links__framework_node__framework=framework)
+			~Q(sammenstilling_links__sammenstilling=sammenstilling),
 		)
 	if q:
 		qs = qs.filter(
@@ -384,9 +322,9 @@ def search_scenarios_for_mapping(framework, virksomhet_id=None, scope_id=None, u
 	return qs.distinct()
 
 
-def scenario_mapping_summary(scenario, framework):
-	links = scenario.framework_links.filter(
-		framework_node__framework=framework,
+def scenario_mapping_summary(scenario, sammenstilling):
+	links = scenario.sammenstilling_links.filter(
+		sammenstilling=sammenstilling,
 	).select_related('framework_node', 'framework_node__parent')
 	return [
 		{
@@ -400,10 +338,10 @@ def scenario_mapping_summary(scenario, framework):
 	]
 
 
-def mapped_scenarios_detail(virksomhet_id, node):
+def mapped_scenarios_detail(sammenstilling, node):
 	from systemoversikt.risk_display import annotate_scenario_display_ids
 
-	scenarios = list(scenarios_for_node(virksomhet_id, node))
+	scenarios = list(scenarios_for_node(sammenstilling, node))
 	annotate_scenario_display_ids(scenarios)
 	rows = []
 	for scenario in scenarios:

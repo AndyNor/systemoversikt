@@ -1,8 +1,9 @@
 {% extends "sikkerhet_index.html" %}
-{# 2026-07-06: List of shared risk frameworks for leadership aggregation. #}
+{# 2026-07-06: Removed excel class – no table export on rammeverk list. #}
+{# 2026-07-06: Templates (maler) + group-owned sammenstillinger list. #}
 
 {% block overskrift %}
-	Risikorammeverk
+	Risikosammenstilling
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -14,45 +15,67 @@
 <div class="mb-4" style="background-color: #f8f9fa; padding: 1rem 1.25rem; border-radius: 4px;">
 	<h5 class="mt-0">Om sammenstilling</h5>
 	<p class="mb-0">
-		Risikorammeverk lar dere aggregere operative risikoscenarioer fra risikosamlinger opp til
-		høynivåscenarioer for ledelsen. Kartlegging er valgfri – mange operative scenarioer trenger ikke
-		knyttes til rammeverket.
+		<strong>Maler</strong> er felles taksonomier (kun systemadministrator kan redigere dem).
+		<strong>Sammenstillinger</strong> er gruppe-eide instanser på en mal – hver med egne kartlegginger og vurderinger.
+		Du kan bare søke og knytte scenarioer fra risikosamlinger du har tilgang til.
 	</p>
 </div>
 
-{% if can_edit_framework %}
-<p>
-	<a class="btn btn-outline-primary btn-sm" href="{% url 'risiko_rammeverk_kartlegging' slug='it-plattform' %}">Kartlegging</a>
+{% if can_create_sammenstilling %}
+<p class="mb-3">
+	<a class="btn btn-success btn-sm" href="{% url 'risiko_sammenstilling_create' %}">Ny sammenstilling</a>
 </p>
 {% endif %}
 
-<table class="table table-sm table-striped excel">
+<h5 class="mt-4">Dine sammenstillinger</h5>
+<table class="table table-sm table-striped">
 	<thead>
 		<tr>
-			<th>Rammeverk</th>
+			<th>Tittel</th>
+			<th>Mal</th>
+			<th>Eiergruppe</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for sam in sammenstillinger %}
+		<tr>
+			<td><strong>{{ sam.title }}</strong></td>
+			<td>{{ sam.framework.title }}</td>
+			<td>{{ sam.owner_group.display_title }}</td>
+			<td class="text-nowrap">
+				<a class="btn btn-primary btn-sm" href="{% url 'risiko_sammenstilling_detail' pk=sam.pk %}">Åpne</a>
+				<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_sammenstilling_kartlegging' pk=sam.pk %}">Kartlegg</a>
+			</td>
+		</tr>
+		{% empty %}
+		<tr><td colspan="4">Ingen sammenstillinger du har tilgang til.</td></tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+<h5 class="mt-4">Maler</h5>
+<table class="table table-sm table-striped">
+	<thead>
+		<tr>
+			<th>Mal</th>
 			<th>Beskrivelse</th>
 			<th></th>
 		</tr>
 	</thead>
 	<tbody>
-		{% for fw in frameworks %}
+		{% for fw in templates %}
 		<tr>
 			<td><strong>{{ fw.title }}</strong></td>
 			<td>{{ fw.beskrivelse|truncatewords:30 }}</td>
 			<td class="text-nowrap">
-				{% if profile_virksomhet %}
-				<a class="btn btn-primary btn-sm" href="{% url 'risiko_rammeverk_virksomhet' slug=fw.slug vid=profile_virksomhet.pk %}">
-					{{ profile_virksomhet.virksomhetsforkortelse }}
-				</a>
-				{% endif %}
-				{% if can_edit_framework %}
-				<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_rammeverk_kartlegging' slug=fw.slug %}">Kartlegg</a>
-				<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_rammeverk_rediger' slug=fw.slug %}">Rediger</a>
+				{% if can_edit_template %}
+				<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_mal_rediger' slug=fw.slug %}">Rediger mal</a>
 				{% endif %}
 			</td>
 		</tr>
 		{% empty %}
-		<tr><td colspan="3">Ingen aktive rammeverk. Kjør <code>seed_risk_framework_it_plattform</code>.</td></tr>
+		<tr><td colspan="3">Ingen aktive maler.</td></tr>
 		{% endfor %}
 	</tbody>
 </table>
