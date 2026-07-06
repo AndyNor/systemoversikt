@@ -1,0 +1,39 @@
+{# 2026-07-06: axis-label-level class for equal-width wrapping axis labels. #}
+{# 2026-07-06: Full category title in matrix cells instead of display code. #}
+{# 2026-07-06: Risk matrix for sammenstilling main categories (nåværende risiko). #}
+<table class="risk-matrix risk-matrix-sammenstilling">
+<colgroup>
+	<col class="risk-matrix-corner-col">
+	<col class="risk-matrix-axis-col">
+	<col class="risk-matrix-data-col" span="5">
+</colgroup>
+<thead>
+<tr>
+	<th class="corner" colspan="2"></th>
+	<th colspan="5" class="axis-label">KONSEKVENS</th>
+</tr>
+<tr>
+	<th class="corner" colspan="2"></th>
+	{% for level, label in konsekvens_labels.items %}
+	<th class="axis-label axis-label-level">{{ label }}</th>
+	{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for row in matrix %}
+<tr>
+	{% if forloop.first %}
+	<th class="axis-label axis-label-sanns" rowspan="{{ matrix|length }}">SANNS.</th>
+	{% endif %}
+	<th class="axis-label axis-label-level">{{ row.sannsynlighet_label }}</th>
+	{% for cell in row.cells %}
+	<td class="{{ cell.css_class }}{% if not cell.categories %} risk-matrix-cell-empty{% endif %}">
+		{% for cat in cell.categories %}
+			<a class="risk-badge" href="#rammeverk-cat-{{ cat.pk }}" title="{{ cat.display_code }}. {{ cat.title }}">{{ cat.title }}</a>
+		{% endfor %}
+	</td>
+	{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>

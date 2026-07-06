@@ -1,4 +1,7 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-06: risiko-level-tag styles – colored Lav/Middels/Høy tags in scenario table. #}
+{# 2026-07-06: data-risk-meta – client can derive risk labels from konsekvens/sannsynlighet levels. #}
+{# 2026-07-06: Kartlegging layout – link block above scenarios; risk columns; unmapped default on. #}
 {# 2026-07-06: Removed excel class – no table export on kartlegging. #}
 {# 2026-07-06: Sammenstilling-scoped mapping – scope-level scenario access. #}
 
@@ -10,6 +13,22 @@
 
 {% csrf_token %}
 
+<style nonce="{{ request.csp_nonce }}">
+.risiko-level-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 2px 6px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+.risiko-level-tag.risk-cell-lav { background-color: #c0eb96; }
+.risiko-level-tag.risk-cell-middels { background-color: #ffecb2; }
+.risiko-level-tag.risk-cell-hoy { background-color: #ffc8cd; }
+#kartlegging-scenarios-table td.kartlegging-risk-cell { text-align: center; }
+</style>
+
 <p class="mb-3">
 	<a href="{% url 'risiko_sammenstilling_detail' pk=sammenstilling.pk %}">&larr; {{ sammenstilling.title }}</a>
 	| <a href="{% url 'risiko_rammeverk_list' %}">Oversikt</a>
@@ -20,17 +39,17 @@
 	Eiergruppe: <strong>{{ sammenstilling.owner_group.display_title }}</strong>.
 </p>
 
-<div id="risiko-rammeverk-kartlegging" data-api-urls="{{ api_urls_json|escape }}">
+<div id="risiko-rammeverk-kartlegging" data-api-urls="{{ api_urls_json|escape }}" data-risk-meta="{{ risk_meta_json|escape }}">
 	<div class="card mb-3">
 		<div class="card-body py-2">
 			<div class="form-row align-items-end">
 				<div class="col-md-4">
 					<label class="small mb-0">Søk</label>
-					<input type="search" class="form-control form-control-sm" id="kartlegging-q" placeholder="Hendelse, R-id, samling…">
+					<input type="search" class="form-control form-control-sm" id="kartlegging-q" placeholder="Hendelse, samling…">
 				</div>
 				<div class="col-md-4">
 					<label class="small mb-0 d-block">&nbsp;</label>
-					<label class="mb-0 small"><input type="checkbox" id="kartlegging-unmapped"> Kun ukartlagte i denne sammenstillingen</label>
+					<label class="mb-0 small"><input type="checkbox" id="kartlegging-unmapped" checked> Kun ukartlagte i denne sammenstillingen</label>
 				</div>
 				<div class="col-md-2">
 					<button type="button" class="btn btn-primary btn-sm btn-block" id="kartlegging-search">Søk</button>
@@ -39,34 +58,39 @@
 		</div>
 	</div>
 
-	<div class="row">
-		<div class="col-lg-7">
-			<h5>Operative scenarioer</h5>
-			<div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
-				<table class="table table-sm table-striped" id="kartlegging-scenarios-table">
-					<thead>
-						<tr>
-							<th style="width:2rem"><input type="checkbox" id="kartlegging-select-all"></th>
-							<th>R#</th>
-							<th>Samling</th>
-							<th>Hendelse</th>
-							<th>Kartlagt</th>
-						</tr>
-					</thead>
-					<tbody id="kartlegging-scenarios-body">
-						<tr><td colspan="5" class="text-muted">Søk for å vise scenarioer.</td></tr>
-					</tbody>
-				</table>
+	<div class="mb-3">
+		<h5>Knytt til underkategori</h5>
+		<div class="form-row align-items-end">
+			<div class="col-md-6 col-lg-5">
+				<select class="form-control form-control-sm" id="kartlegging-target-node">
+					<option value="">Velg underkategori…</option>
+				</select>
+			</div>
+			<div class="col-md-auto mb-2 mb-md-0">
+				<button type="button" class="btn btn-success btn-sm" id="kartlegging-link-btn">Knytt valgte</button>
 			</div>
 		</div>
-		<div class="col-lg-5">
-			<h5>Knytt til underkategori</h5>
-			<select class="form-control form-control-sm mb-2" id="kartlegging-target-node">
-				<option value="">Velg underkategori…</option>
-			</select>
-			<button type="button" class="btn btn-success btn-sm" id="kartlegging-link-btn">Knytt valgte</button>
-			<p class="small text-muted mt-2 mb-0">Kun scenarioer fra risikosamlinger du har lesetilgang til vises og kan knyttes.</p>
-		</div>
+		<p class="small text-muted mt-2 mb-0">Kun scenarioer fra risikosamlinger du har lesetilgang til vises og kan knyttes.</p>
+	</div>
+
+	<h5>Operative scenarioer</h5>
+	<div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+		<table class="table table-sm table-striped" id="kartlegging-scenarios-table">
+			<thead>
+				<tr>
+					<th style="width:2rem"><input type="checkbox" id="kartlegging-select-all"></th>
+					<th>R#</th>
+					<th>Samling</th>
+					<th>Hendelse</th>
+					<th>Nåværende</th>
+					<th>Etter tiltak</th>
+					<th>Kartlagt</th>
+				</tr>
+			</thead>
+			<tbody id="kartlegging-scenarios-body">
+				<tr><td colspan="7" class="text-muted">Laster…</td></tr>
+			</tbody>
+		</table>
 	</div>
 </div>
 

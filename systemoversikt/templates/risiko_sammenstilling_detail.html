@@ -1,9 +1,49 @@
 {% extends "sikkerhet_index.html" %}
-{# 2026-07-06: Group-owned sammenstilling rollup with manual assessments. #}
+{% load templatetags %}
+{# 2026-07-06: Risk badge padding and per-cell-tone borders in matrix. #}
+{# 2026-07-06: Uniform row height and vertical SANNS. axis label. #}
+{# 2026-07-06: Equal-width axis labels with wrapping at ~18 characters. #}
+{# 2026-07-06: Category cards show manual risk only; matrix uses full category titles. #}
+{# 2026-07-06: Subcategory scenario/tiltak breakdown + per-category risk matrix. #}
+{# 2026-07-06: Category-level manual assessment + nåværende-risiko matrix at top. #}
 
 {% block overskrift %}
 	{{ sammenstilling.title }}
 {% endblock overskrift %}
+
+{% block ekstrajavascript %}
+<style nonce="{{ request.csp_nonce }}">
+.risk-matrix { border-collapse: collapse; width: 100%; margin-bottom: 1rem; border: 2px solid #5a6268; table-layout: fixed; }
+.risk-matrix th, .risk-matrix td { border: 1px solid #5a6268; text-align: center; vertical-align: middle; padding: 4px; min-width: 0; }
+.risk-matrix tbody tr { height: 3.25rem; }
+.risk-matrix tbody td { padding: 8px 6px; }
+.risk-matrix tbody th.axis-label-level { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.risk-matrix tbody td.risk-matrix-cell-empty { height: 3.25rem; }
+.risk-matrix col.risk-matrix-corner-col { width: 1.75rem; }
+.risk-matrix col.risk-matrix-axis-col { width: 18ch; }
+.risk-matrix col.risk-matrix-data-col { width: auto; }
+.risk-matrix .axis-label-sanns { writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap; padding: 0.5rem 0.15rem; font-size: 0.75rem; letter-spacing: 0.05em; overflow: hidden; line-height: 1; vertical-align: middle; }
+.risk-matrix .axis-label-level { white-space: normal; overflow-wrap: break-word; word-break: break-word; hyphens: auto; line-height: 1.25; font-size: 0.8rem; padding: 6px 4px; }
+.risk-matrix .risk-badge { display: block; margin: 4px 0; padding: 6px 10px; font-size: 0.8rem; white-space: normal; text-align: left; border: 1px solid transparent; border-radius: 4px; text-decoration: none; color: inherit; background: rgba(255, 255, 255, 0.2); }
+.risk-matrix td.risk-cell-lav .risk-badge { border-color: #8fb866; }
+.risk-matrix td.risk-cell-middels .risk-badge { border-color: #ddb870; }
+.risk-matrix td.risk-cell-hoy .risk-badge { border-color: #d99aa2; }
+.risk-matrix td.risk-cell-empty .risk-badge { border-color: #ced4da; background: rgba(0, 0, 0, 0.04); }
+.risk-matrix .risk-badge:hover { background: rgba(255, 255, 255, 0.35); text-decoration: none; }
+.risk-matrix .axis-label { background: #f8f9fa; font-weight: 600; font-size: 0.85rem; }
+.risk-matrix .corner { background: #f8f9fa; }
+.risk-cell-lav { background-color: #c0eb96; }
+.risk-cell-middels { background-color: #ffecb2; }
+.risk-cell-hoy { background-color: #ffc8cd; }
+.risk-cell-empty { background-color: #fff; }
+.risiko-rammeverk-subsection { border-left: 3px solid #dee2e6; padding-left: 0.75rem; }
+.risiko-tiltak-status-forslag { background-color: #e9ecef; }
+.risiko-tiltak-status-besluttet { background-color: #f8d7da; }
+.risiko-tiltak-status-under-arbeid { background-color: #fff3cd; }
+.risiko-tiltak-status-utfort { background-color: #d4edda; }
+.risiko-tiltak-status-tag { display: inline-block; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.75rem; }
+</style>
+{% endblock ekstrajavascript %}
 
 {% block hovedinnhold %}
 
@@ -19,61 +59,121 @@
 <p class="text-muted">
 	Mal: <strong>{{ framework.title }}</strong>.
 	Eiergruppe: <strong>{{ sammenstilling.owner_group.display_title }}</strong>.
-	Manuelt nivå settes per underkategori; veiledende nivå beregnes fra kartlagte operative scenarioer.
+	Manuelt nivå settes per hovedkategori. Kartlagte operative scenarioer vises under hver kategori.
 </p>
+
+<div class="mb-4" id="risikomatriser">
+	<h5 class="mt-0">Nåværende risiko</h5>
+	<p class="text-muted small">Hovedkategorier plassert etter manuelt satt nivå</p>
+	{% include "risiko_sammenstilling_matrise_grid.html" with matrix=matrix_current konsekvens_labels=konsekvens_labels %}
+</div>
 
 <div id="risiko-rammeverk-rollup" data-api-urls="{{ api_urls_json|escape }}">
 	{% for cat in rollup_tree %}
-	<div class="card mb-3">
-		<div class="card-header d-flex justify-content-between align-items-center py-2">
+	<div class="card mb-3" id="rammeverk-cat-wrap-{{ cat.pk }}">
+		<div class="card-header d-flex justify-content-between align-items-center py-2 {% if cat.differs_from_suggested %}table-warning{% endif %}">
 			<button type="button" class="btn btn-link btn-sm p-0 text-left font-weight-bold" data-toggle="collapse" data-target="#rammeverk-cat-{{ cat.pk }}">
 				{{ cat.display_code }}. {{ cat.title }}
 			</button>
-			<span class="badge {{ cat.suggested_css }} px-2 py-1" title="Veiledende nivå (høyeste underkategori)">
-				{{ cat.suggested_label|default:"—" }}
-			</span>
+			<div class="text-nowrap">
+				<span class="badge {{ cat.manual.manual_css|default:'risk-cell-empty' }} px-2 py-1 mr-1 js-category-effective-label" title="Manuelt satt risikonivå">
+					{% if cat.manual and cat.manual.manual_label %}{{ cat.manual.manual_label }}{% else %}—{% endif %}
+				</span>
+				{% if can_map %}
+				<button type="button" class="btn btn-outline-primary btn-sm js-edit-rating"
+					data-node-pk="{{ cat.pk }}"
+					data-s="{% if cat.manual and cat.manual.sannsynlighet_nivaa %}{{ cat.manual.sannsynlighet_nivaa }}{% endif %}"
+					data-k="{% if cat.manual and cat.manual.konsekvens_nivaa %}{{ cat.manual.konsekvens_nivaa }}{% endif %}"
+					data-begrunnelse="{% if cat.manual %}{{ cat.manual.begrunnelse }}{% endif %}">Sett nivå</button>
+				{% endif %}
+			</div>
 		</div>
 		<div id="rammeverk-cat-{{ cat.pk }}" class="collapse show">
 			<div class="card-body py-2">
-				<p class="small text-muted mb-2">{{ cat.forklaring }}</p>
-				<table class="table table-sm table-bordered mb-0 risiko-rammeverk-subtable">
-					<thead>
-						<tr>
-							<th style="width:4rem">Nr</th>
-							<th>Underkategori</th>
-							<th style="width:6rem">Kartlagt</th>
-							<th style="width:7rem">Veiledende</th>
-							<th style="width:7rem">Manuelt</th>
-							<th style="width:8rem"></th>
-						</tr>
-					</thead>
-					<tbody>
-						{% for child in cat.children %}
-						<tr data-node-pk="{{ child.pk }}" class="{% if child.differs_from_suggested %}table-warning{% endif %}">
-							<td>{{ child.display_code }}</td>
-							<td>
-								<strong>{{ child.title }}</strong>
-								<div class="small text-muted">{{ child.forklaring|truncatewords:25 }}</div>
-							</td>
-							<td>{{ child.suggested.scenario_count }}</td>
-							<td>
-								<span class="badge {{ child.suggested_css }} px-2 py-1">{{ child.suggested.label|default:"—" }}</span>
-							</td>
-							<td>
-								<span class="badge {{ child.manual.manual_css|default:'risk-cell-empty' }} px-2 py-1 js-manual-label">
-									{% if child.manual and child.manual.manual_label %}{{ child.manual.manual_label }}{% else %}—{% endif %}
-								</span>
-							</td>
-							<td class="text-nowrap">
-								<button type="button" class="btn btn-outline-secondary btn-sm js-drilldown" data-node-pk="{{ child.pk }}">Detaljer</button>
-								{% if can_map %}
-								<button type="button" class="btn btn-outline-primary btn-sm js-edit-rating" data-node-pk="{{ child.pk }}">Sett nivå</button>
-								{% endif %}
-							</td>
-						</tr>
-						{% endfor %}
-					</tbody>
-				</table>
+				<p class="small text-muted mb-3">{{ cat.forklaring }}</p>
+
+				<div class="row mb-3">
+					<div class="col-lg-6">
+						<h6 class="mb-1">Nåværende risiko – kartlagte scenarioer</h6>
+						<p class="text-muted small mb-2">Scenarioer knyttet til underkategorier i denne hovedkategorien</p>
+						{% include "risiko_sammenstilling_scenario_matrise_grid.html" with matrix=cat.scenario_matrix konsekvens_labels=konsekvens_labels %}
+					</div>
+				</div>
+
+				{% for child in cat.children %}
+				<div class="risiko-rammeverk-subsection mb-4">
+					<h6 class="mb-1">{{ child.display_code }}. {{ child.title }}</h6>
+					{% if child.forklaring %}
+					<p class="small text-muted mb-2">{{ child.forklaring }}</p>
+					{% endif %}
+
+					<strong class="small d-block mb-1">Kartlagte scenarioer</strong>
+					{% if child.scenarios %}
+					<table class="table table-sm table-bordered mb-2">
+						<thead>
+							<tr>
+								<th style="width:4rem">ID</th>
+								<th style="width:12rem">Samling</th>
+								<th>Uønsket hendelse</th>
+								<th style="width:6rem">Nå</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for scenario in child.scenarios %}
+							<tr>
+								<td>
+									<a href="{% url 'risiko_scope_detail' pk=scenario.scope_pk %}?edit={{ scenario.pk }}" class="risiko-level-tag {{ scenario.current_css }}" title="{{ scenario.current_label }}">{{ scenario.display_id }}</a>
+								</td>
+								<td class="small">
+									<a href="{% url 'risiko_scope_detail' pk=scenario.scope_pk %}">{% if scenario.virksomhet %}{{ scenario.virksomhet }} – {% endif %}{{ scenario.scope_title }}</a>
+								</td>
+								<td>{{ scenario.uonsket_hendelse|truncatewords:30 }}</td>
+								<td>{% risiko_level_tag scenario.current_label scenario.current_css %}</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+					{% else %}
+					<p class="text-muted small mb-2">Ingen kartlagte scenarioer.</p>
+					{% endif %}
+
+					<strong class="small d-block mb-1">Tiltak (besluttet og under arbeid)</strong>
+					{% if child.actions %}
+					<table class="table table-sm table-bordered mb-0">
+						<thead>
+							<tr>
+								<th style="width:3rem">ID</th>
+								<th style="width:10rem">Samling</th>
+								<th>Tiltak</th>
+								<th style="width:6rem">RiskID</th>
+								<th style="width:8rem">Ansvarlig</th>
+								<th style="width:7rem">Frist</th>
+								<th style="width:8rem">Status</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for row in child.actions %}
+							<tr>
+								<td>{{ row.display_tiltak_id }}</td>
+								<td class="small"><a href="{% url 'risiko_scope_detail' pk=row.scope_pk %}">{{ row.scope_title }}</a></td>
+								<td>{{ row.beskrivelse|linebreaksbr }}</td>
+								<td>
+									{% for link in row.risk_links %}
+										<a href="{% url 'risiko_scope_detail' pk=row.scope_pk %}?edit={{ link.scenario_pk }}" class="risiko-level-tag risiko-risk-id-tag {{ link.risiko_css }}" title="{{ link.risiko_etikett }}">{{ link.risk_id }}</a>{% if not forloop.last %} {% endif %}
+									{% empty %}-{% endfor %}
+								</td>
+								<td>{% if row.ansvarlig %}{{ row.ansvarlig }}{% else %}-{% endif %}</td>
+								<td>{{ row.frist|date:"Y-m-d"|default:"-" }}</td>
+								<td>{% risiko_tiltak_status_tag row.status row.status_display %}</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+					{% else %}
+					<p class="text-muted small mb-0">Ingen aktive tiltak.</p>
+					{% endif %}
+				</div>
+				{% endfor %}
 			</div>
 		</div>
 	</div>
@@ -84,7 +184,7 @@
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header py-2">
-				<h5 class="modal-title">Sett manuelt risikonivå</h5>
+				<h5 class="modal-title">Sett manuelt risikonivå for hovedkategori</h5>
 				<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
 			</div>
 			<div class="modal-body">
@@ -111,20 +211,6 @@
 					<button type="button" class="btn btn-primary btn-sm" id="rammeverk-save-rating">Lagre</button>
 					<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
 				</div>
-			</div>
-		</div>
-	</div>
-</div>
-
-<div class="modal fade" id="rammeverk-drilldown-modal" tabindex="-1" role="dialog" aria-hidden="true">
-	<div class="modal-dialog modal-lg" role="document">
-		<div class="modal-content">
-			<div class="modal-header py-2">
-				<h5 class="modal-title">Kartlagte scenarioer</h5>
-				<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-			</div>
-			<div class="modal-body p-0" id="rammeverk-drilldown-body">
-				<p class="p-3 mb-0 text-muted">Laster…</p>
 			</div>
 		</div>
 	</div>

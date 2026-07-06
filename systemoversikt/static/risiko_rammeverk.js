@@ -1,3 +1,8 @@
+// 2026-07-06: Kartlegging risk cells use risiko-level-tag (colored tags like scope table).
+// 2026-07-06: Kartlegging – derive risk labels from matrix when API omits precomputed labels.
+// 2026-07-06: Kartlegging table – nåværende and etter-tiltak risk badges.
+// 2026-07-06: Category-level rating modal – prefill from data attributes on hovedkategori.
+// 2026-07-06: Mal editor – hide koblinger count on taxonomy nodes (template has no live mappings).
 // 2026-07-06: Automatic category numbering in mal editor – no manual nummer input.
 // 2026-07-06: Client logic for sammenstilling rollup, mapping, and superuser mal editor.
 (function (window) {
@@ -51,6 +56,12 @@
       var editBtn = ev.target.closest('.js-edit-rating');
       if (editBtn) {
         currentNodePk = editBtn.getAttribute('data-node-pk');
+        var sEl = document.getElementById('rammeverk-rating-s');
+        var kEl = document.getElementById('rammeverk-rating-k');
+        var bEl = document.getElementById('rammeverk-rating-begrunnelse');
+        if (sEl) sEl.value = editBtn.getAttribute('data-s') || '';
+        if (kEl) kEl.value = editBtn.getAttribute('data-k') || '';
+        if (bEl) bEl.value = editBtn.getAttribute('data-begrunnelse') || '';
         if (modal) window.jQuery(modal).modal('show');
         return;
       }
@@ -122,8 +133,48 @@
   function initKartlegging(root) {
     if (!root) return;
     var urls = parseUrls(root);
+    var riskMeta = {};
+    try {
+      riskMeta = JSON.parse(root.getAttribute('data-risk-meta') || '{}');
+    } catch (e) {
+      riskMeta = {};
+    }
+    var riskMatrix = riskMeta.risk_matrix || {};
     var tbody = document.getElementById('kartlegging-scenarios-body');
     var nodeSelect = document.getElementById('kartlegging-target-node');
+
+    function riskCellClass(label) {
+      if (label === 'Lav') return 'risk-cell-lav';
+      if (label === 'Middels') return 'risk-cell-middels';
+      if (label === 'Høy') return 'risk-cell-hoy';
+      return 'risk-cell-empty';
+    }
+
+    function matrixRiskLabel(sannsynlighet, konsekvens) {
+      if (!sannsynlighet || !konsekvens) return '';
+      var row = riskMatrix[sannsynlighet] || riskMatrix[String(sannsynlighet)];
+      if (!row) return '';
+      return row[konsekvens] || row[String(konsekvens)] || '';
+    }
+
+    function scenarioCurrentLabel(scenario) {
+      return scenario.current_label || scenario.risiko_etikett
+        || matrixRiskLabel(scenario.sannsynlighet_nivaa, scenario.konsekvens_nivaa);
+    }
+
+    function scenarioResidualLabel(scenario) {
+      var direct = scenario.residual_label || scenario.restrisiko_etikett;
+      if (direct) return direct;
+      var konsekvens = scenario.konsekvens_etter || scenario.konsekvens_nivaa;
+      var sannsynlighet = scenario.sannsynlighet_etter || scenario.sannsynlighet_nivaa;
+      return matrixRiskLabel(sannsynlighet, konsekvens);
+    }
+
+    function riskLevelTag(label, css) {
+      if (!label) return '—';
+      var cls = css || riskCellClass(label) || 'risk-cell-empty';
+      return '<span class="risiko-level-tag ' + escapeHtml(cls) + '">' + escapeHtml(label) + '</span>';
+    }
 
     function loadNodes() {
       if (!urls.activeNodes || !nodeSelect) return;
@@ -141,31 +192,36 @@
 
     function search() {
       if (!urls.scenarioSearch || !tbody) return;
+      var colCount = 7;
       var params = new URLSearchParams();
       var virksomhetEl = document.getElementById('kartlegging-virksomhet');
       var q = document.getElementById('kartlegging-q').value;
       if (virksomhetEl && virksomhetEl.value) params.set('virksomhet_id', virksomhetEl.value);
       if (q) params.set('q', q);
       if (document.getElementById('kartlegging-unmapped').checked) params.set('unmapped_only', '1');
-      tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Laster…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="' + colCount + '" class="text-muted">Laster…</td></tr>';
       getJson(urls.scenarioSearch + '?' + params.toString()).then(function (data) {
         if (!data.ok) {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-danger">' + (data.error || 'Feil') + '</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="' + colCount + '" class="text-danger">' + (data.error || 'Feil') + '</td></tr>';
           return;
         }
         if (!data.scenarios.length) {
-          tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Ingen treff.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="' + colCount + '" class="text-muted">Ingen treff.</td></tr>';
           return;
         }
         tbody.innerHTML = '';
         data.scenarios.forEach(function (s) {
           var tr = document.createElement('tr');
           var mapped = (s.mappings || []).map(function (m) { return m.display_code; }).join(', ');
+          var curLabel = scenarioCurrentLabel(s);
+          var resLabel = scenarioResidualLabel(s);
           tr.innerHTML =
             '<td><input type="checkbox" class="kartlegging-scenario-cb" value="' + s.pk + '"></td>' +
             '<td>' + escapeHtml(s.display_id) + '</td>' +
             '<td>' + escapeHtml((s.virksomhet ? s.virksomhet + ' – ' : '') + s.scope_title) + '</td>' +
             '<td>' + escapeHtml(s.uonsket_hendelse.substring(0, 100)) + '</td>' +
+            '<td class="kartlegging-risk-cell">' + riskLevelTag(curLabel, s.current_css || s.risiko_css) + '</td>' +
+            '<td class="kartlegging-risk-cell">' + riskLevelTag(resLabel, s.residual_css || s.restrisiko_css) + '</td>' +
             '<td>' + escapeHtml(mapped) + '</td>';
           tbody.appendChild(tr);
         });
@@ -229,8 +285,7 @@
           var li = document.createElement('li');
           li.className = 'list-group-item py-2 d-flex justify-content-between';
           li.innerHTML =
-            '<span><strong>' + child.display_code + '</strong> ' + escapeHtml(child.title) +
-            ' <span class="badge badge-light border">' + child.link_count + ' koblinger</span></span>' +
+            '<span><strong>' + child.display_code + '</strong> ' + escapeHtml(child.title) + '</span>' +
             '<button type="button" class="btn btn-outline-secondary btn-sm js-edit-node" data-pk="' + child.pk + '">Rediger</button>';
           ul.appendChild(li);
         });

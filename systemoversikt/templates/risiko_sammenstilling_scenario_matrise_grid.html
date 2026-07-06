@@ -1,0 +1,38 @@
+{# 2026-07-06: axis-label-level class for equal-width wrapping axis labels. #}
+{# 2026-07-06: Per-category scenario matrix for sammenstilling (nåværende risiko). #}
+<table class="risk-matrix">
+<colgroup>
+	<col class="risk-matrix-corner-col">
+	<col class="risk-matrix-axis-col">
+	<col class="risk-matrix-data-col" span="5">
+</colgroup>
+<thead>
+<tr>
+	<th class="corner" colspan="2"></th>
+	<th colspan="5" class="axis-label">KONSEKVENS</th>
+</tr>
+<tr>
+	<th class="corner" colspan="2"></th>
+	{% for level, label in konsekvens_labels.items %}
+	<th class="axis-label axis-label-level">{{ label }}</th>
+	{% endfor %}
+</tr>
+</thead>
+<tbody>
+{% for row in matrix %}
+<tr>
+	{% if forloop.first %}
+	<th class="axis-label axis-label-sanns" rowspan="{{ matrix|length }}">SANNS.</th>
+	{% endif %}
+	<th class="axis-label axis-label-level">{{ row.sannsynlighet_label }}</th>
+	{% for cell in row.cells %}
+	<td class="{{ cell.css_class }}{% if not cell.scenarios %} risk-matrix-cell-empty{% endif %}">
+		{% for scenario in cell.scenarios %}
+			<a class="risk-badge" href="{% url 'risiko_scope_detail' pk=scenario.scope_pk %}?edit={{ scenario.pk }}" title="{{ scenario.uonsket_hendelse|truncatechars:120 }}">{{ scenario.display_id }}</a>
+		{% endfor %}
+	</td>
+	{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>

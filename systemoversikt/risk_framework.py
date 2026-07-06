@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: Sammenstilling category matrix uses manual assessment only (no suggested fallback).
+# 2026-07-06: Subcategory scenario/tiltak breakdown and per-category scenario matrix on detail view.
+# 2026-07-06: Category-level manual assessment + nåværende-risiko matrix for sammenstilling.
+# 2026-07-06: Kartlegging API rows – per-scope display ids and explicit risk level fields.
+# 2026-07-06: Kartlegging search – hendelse and samling only (not R-id).
 # 2026-07-06: Rollup/mapping keyed by RiskSammenstilling; scope-level scenario search for kartlegging.
 # 2026-07-06: Template taxonomy helpers – superuser-managed maler independent of virksomhet.
 
@@ -17,11 +22,15 @@ from systemoversikt.models import (
 	RiskScopeMember,
 	RiskVirksomhetGroupMember,
 )
+from systemoversikt.risk_display import annotate_scenario_display_ids, resolve_ansvarlig_display, tiltak_display_id_map
+
 from systemoversikt.risk_criteria import (
 	effective_residual_levels,
 	risk_cell_css_class,
 	risk_label,
 )
+
+SAMMENSTILLING_ACTIVE_TILTAK_STATUSES = frozenset(('besluttet', 'under_arbeid'))
 
 RISK_LABEL_RANK = {
 	'': 0,
@@ -51,6 +60,10 @@ def leaf_nodes_for_framework(framework, include_archived=False):
 		if include_archived or node.status == RISK_FRAMEWORK_NODE_STATUS_ACTIVE:
 			leaves.append(node)
 	return leaves
+
+
+def _scenario_current_label(scenario):
+	return scenario.risiko_etikett or ''
 
 
 def _scenario_residual_label(scenario):
@@ -109,7 +122,36 @@ def suggested_level_for_node(sammenstilling, node):
 			'scenario_count': 0,
 			'level_counts': level_counts_for_scenarios([]),
 		}
-	labels = [_scenario_residual_label(s) for s in scenarios]
+	labels = [_scenario_current_label(s) for s in scenarios]
+	worst = _worst_label(labels)
+	s, k = _levels_from_label(worst)
+	return {
+		'label': worst,
+		'sannsynlighet': s,
+		'konsekvens': k,
+		'scenario_count': len(scenarios),
+		'level_counts': level_counts_for_scenarios(scenarios),
+	}
+
+
+def suggested_level_for_category(sammenstilling, children):
+	scenario_pks = set()
+	scenarios = []
+	for child in children:
+		for scenario in scenarios_for_node(sammenstilling, child):
+			if scenario.pk in scenario_pks:
+				continue
+			scenario_pks.add(scenario.pk)
+			scenarios.append(scenario)
+	if not scenarios:
+		return {
+			'label': '',
+			'sannsynlighet': None,
+			'konsekvens': None,
+			'scenario_count': 0,
+			'level_counts': level_counts_for_scenarios([]),
+		}
+	labels = [_scenario_current_label(s) for s in scenarios]
 	worst = _worst_label(labels)
 	s, k = _levels_from_label(worst)
 	return {
@@ -155,13 +197,14 @@ def effective_node_level(sammenstilling, node, assessments_by_node=None):
 	return '', 'none'
 
 
-def category_suggested_level(sammenstilling, category, children, assessments_by_node=None):
-	labels = []
-	for child in children:
-		label, _source = effective_node_level(sammenstilling, child, assessments_by_node)
-		if label:
-			labels.append(label)
-	return _worst_label(labels)
+def effective_category_level(sammenstilling, category, children, assessments_by_node=None):
+	manual = assessment_for_node(sammenstilling, category, assessments_by_node)
+	if manual and manual['manual_label']:
+		return manual['manual_label'], 'manual'
+	suggested = suggested_level_for_category(sammenstilling, children)
+	if suggested['label']:
+		return suggested['label'], 'suggested'
+	return '', 'none'
 
 
 def build_node_payload(sammenstilling, node, assessments_by_node=None):
@@ -211,7 +254,11 @@ def build_rollup_tree(sammenstilling, include_archived=False):
 			build_node_payload(sammenstilling, child, assessments_by_node)
 			for child in children
 		]
-		cat_suggested = category_suggested_level(sammenstilling, category, children, assessments_by_node)
+		cat_suggested = suggested_level_for_category(sammenstilling, children)
+		cat_manual = assessment_for_node(sammenstilling, category, assessments_by_node)
+		cat_effective_label, cat_effective_source = effective_category_level(
+			sammenstilling, category, children, assessments_by_node,
+		)
 		mapped_count = sum(c['suggested']['scenario_count'] for c in child_payloads)
 		tree.append({
 			'pk': category.pk,
@@ -220,12 +267,231 @@ def build_rollup_tree(sammenstilling, include_archived=False):
 			'title': category.title,
 			'forklaring': category.forklaring,
 			'status': category.status,
-			'suggested_label': cat_suggested,
-			'suggested_css': risk_cell_css_class(cat_suggested),
+			'suggested': cat_suggested,
+			'suggested_label': cat_suggested['label'],
+			'suggested_css': risk_cell_css_class(cat_suggested['label']),
+			'manual': cat_manual,
+			'effective_label': cat_effective_label,
+			'effective_css': risk_cell_css_class(cat_effective_label),
+			'effective_source': cat_effective_source,
+			'differs_from_suggested': bool(
+				cat_manual and cat_manual['manual_label'] and cat_suggested['label']
+				and cat_manual['manual_label'] != cat_suggested['label']
+			),
 			'mapped_scenario_count': mapped_count,
 			'children': child_payloads,
 		})
 	return tree
+
+
+def build_sammenstilling_category_matrix(rollup_tree, criteria=None):
+	from systemoversikt.risk_criteria import get_active_criteria
+
+	if criteria is None:
+		criteria = get_active_criteria()
+	placements = {}
+	for cat in rollup_tree:
+		manual = cat.get('manual')
+		if not manual or not manual.get('sannsynlighet_nivaa') or not manual.get('konsekvens_nivaa'):
+			continue
+		s, k = manual['sannsynlighet_nivaa'], manual['konsekvens_nivaa']
+		placements.setdefault((int(s), int(k)), []).append(cat)
+	grid = []
+	for sannsynlighet in range(5, 0, -1):
+		row_cells = []
+		for konsekvens in range(1, 6):
+			label = criteria.risk_label(sannsynlighet, konsekvens)
+			row_cells.append({
+				'sannsynlighet': sannsynlighet,
+				'konsekvens': konsekvens,
+				'label': label,
+				'css_class': risk_cell_css_class(label),
+				'categories': placements.get((sannsynlighet, konsekvens), []),
+			})
+		grid.append({
+			'sannsynlighet': sannsynlighet,
+			'sannsynlighet_label': criteria.sannsynlighet_labels[sannsynlighet],
+			'cells': row_cells,
+		})
+	return grid
+
+
+def _risk_id_map_for_scenarios(scenarios):
+	by_scope = {}
+	for scenario in scenarios:
+		by_scope.setdefault(scenario.scope_id, []).append(scenario)
+	risk_id_by_pk = {}
+	for scope_scenarios in by_scope.values():
+		scope_scenarios.sort(key=lambda s: (s.rekkefolge, s.risk_id))
+		risk_id_by_pk.update(annotate_scenario_display_ids(scope_scenarios))
+	return risk_id_by_pk
+
+
+def _scenario_row_dict(scenario, risk_id_by_pk):
+	virksomhet = ''
+	if scenario.scope.virksomhet_id:
+		virksomhet = scenario.scope.virksomhet.virksomhetsforkortelse or ''
+	return {
+		'pk': scenario.pk,
+		'display_id': risk_id_by_pk.get(scenario.pk, scenario.risk_id),
+		'scope_pk': scenario.scope_id,
+		'scope_title': scenario.scope.title,
+		'virksomhet': virksomhet,
+		'uonsket_hendelse': scenario.uonsket_hendelse,
+		'current_label': scenario.risiko_etikett or '',
+		'current_css': risk_cell_css_class(scenario.risiko_etikett or ''),
+	}
+
+
+def _tiltak_rows_for_node_scenarios(scenarios, actions, risk_id_by_pk, ansvarlig_lookup):
+	scenario_pks = {s.pk for s in scenarios}
+	if not scenario_pks:
+		return []
+	relevant = [
+		action for action in actions
+		if any(s.pk in scenario_pks for s in action.scenarios.all())
+	]
+	if not relevant:
+		return []
+	by_scope = {}
+	for action in relevant:
+		by_scope.setdefault(action.scope_id, []).append(action)
+	rows = []
+	for scope_id in sorted(by_scope.keys()):
+		scope_actions = sorted(by_scope[scope_id], key=lambda a: a.pk)
+		tiltak_map = tiltak_display_id_map(scope_actions)
+		scope_title = scope_actions[0].scope.title
+		for action in scope_actions:
+			risk_links = []
+			for scenario in action.scenarios.all():
+				if scenario.pk not in scenario_pks:
+					continue
+				risk_id = risk_id_by_pk.get(scenario.pk)
+				if not risk_id:
+					continue
+				etikett = scenario.risiko_etikett or ''
+				risk_links.append({
+					'risk_id': risk_id,
+					'scenario_pk': scenario.pk,
+					'risiko_etikett': etikett,
+					'risiko_css': risk_cell_css_class(etikett),
+				})
+			risk_links.sort(key=lambda link: int(link['risk_id'][1:]))
+			rows.append({
+				'display_tiltak_id': tiltak_map[action.pk],
+				'scope_pk': action.scope_id,
+				'scope_title': scope_title,
+				'beskrivelse': action.beskrivelse,
+				'ansvarlig': resolve_ansvarlig_display(action.ansvarlig, ansvarlig_lookup),
+				'frist': action.frist,
+				'status': action.status,
+				'status_display': action.get_status_display(),
+				'risk_links': risk_links,
+			})
+	return rows
+
+
+def build_scenario_matrix_for_scenarios(scenarios, risk_id_by_pk, criteria=None):
+	from systemoversikt.risk_criteria import get_active_criteria, matrix_placements
+
+	if criteria is None:
+		criteria = get_active_criteria()
+	placements = matrix_placements(scenarios, use_residual=False, criteria=criteria)
+	enriched = {}
+	for key, scenario_list in placements.items():
+		enriched[key] = [
+			_scenario_row_dict(scenario, risk_id_by_pk)
+			for scenario in scenario_list
+		]
+	grid = []
+	for sannsynlighet in range(5, 0, -1):
+		row_cells = []
+		for konsekvens in range(1, 6):
+			label = criteria.risk_label(sannsynlighet, konsekvens)
+			cell_scenarios = enriched.get((sannsynlighet, konsekvens), [])
+			cell_scenarios.sort(key=lambda row: (row['scope_title'], row['display_id']))
+			row_cells.append({
+				'sannsynlighet': sannsynlighet,
+				'konsekvens': konsekvens,
+				'label': label,
+				'css_class': risk_cell_css_class(label),
+				'scenarios': cell_scenarios,
+			})
+		grid.append({
+			'sannsynlighet': sannsynlighet,
+			'sannsynlighet_label': criteria.sannsynlighet_labels[sannsynlighet],
+			'cells': row_cells,
+		})
+	return grid
+
+
+def enrich_rollup_tree_detail(sammenstilling, rollup_tree, criteria=None):
+	from collections import defaultdict
+
+	from systemoversikt.models import RiskAction, RiskSammenstillingScenarioLink
+	from systemoversikt.risk_criteria import get_active_criteria
+	from systemoversikt.risk_display import build_ansvarlig_display_map
+
+	if criteria is None:
+		criteria = get_active_criteria()
+
+	child_pks = [child['pk'] for cat in rollup_tree for child in cat.get('children', [])]
+	if not child_pks:
+		for cat in rollup_tree:
+			cat['scenario_matrix'] = build_scenario_matrix_for_scenarios([], {}, criteria)
+		return rollup_tree
+
+	links = RiskSammenstillingScenarioLink.objects.filter(
+		sammenstilling=sammenstilling,
+		framework_node_id__in=child_pks,
+	).select_related(
+		'scenario', 'scenario__scope', 'scenario__scope__virksomhet',
+	)
+
+	scenarios_by_node = defaultdict(list)
+	all_scenarios = {}
+	for link in links:
+		scenario = link.scenario
+		all_scenarios.setdefault(scenario.pk, scenario)
+		scenarios_by_node[link.framework_node_id].append(scenario)
+
+	all_scenario_list = list(all_scenarios.values())
+	risk_id_by_pk = _risk_id_map_for_scenarios(all_scenario_list)
+
+	actions = []
+	if all_scenarios:
+		actions = list(
+			RiskAction.objects.filter(
+				scenarios__pk__in=all_scenarios.keys(),
+				status__in=SAMMENSTILLING_ACTIVE_TILTAK_STATUSES,
+			).select_related('scope').prefetch_related('scenarios').order_by('scope_id', 'pk').distinct(),
+		)
+	ansvarlig_lookup = build_ansvarlig_display_map([a.ansvarlig for a in actions if a.ansvarlig])
+
+	def _scenario_sort_key(scenario):
+		virk = ''
+		if scenario.scope.virksomhet_id:
+			virk = scenario.scope.virksomhet.virksomhetsforkortelse or ''
+		return (virk, scenario.scope.title, scenario.rekkefolge, scenario.risk_id)
+
+	for cat in rollup_tree:
+		category_scenarios = []
+		category_scenario_pks = set()
+		for child in cat.get('children', []):
+			node_scenarios = sorted(scenarios_by_node.get(child['pk'], []), key=_scenario_sort_key)
+			child['scenarios'] = [_scenario_row_dict(s, risk_id_by_pk) for s in node_scenarios]
+			child['actions'] = _tiltak_rows_for_node_scenarios(
+				node_scenarios, actions, risk_id_by_pk, ansvarlig_lookup,
+			)
+			for scenario in node_scenarios:
+				if scenario.pk in category_scenario_pks:
+					continue
+				category_scenario_pks.add(scenario.pk)
+				category_scenarios.append(scenario)
+		cat['scenario_matrix'] = build_scenario_matrix_for_scenarios(
+			category_scenarios, risk_id_by_pk, criteria,
+		)
+	return rollup_tree
 
 
 def save_node_assessment(sammenstilling, node, user, konsekvens_nivaa, sannsynlighet_nivaa, begrunnelse=''):
@@ -243,7 +509,16 @@ def save_node_assessment(sammenstilling, node, user, konsekvens_nivaa, sannsynli
 
 
 def apply_suggestion_to_assessment(sammenstilling, node, user):
-	suggested = suggested_level_for_node(sammenstilling, node)
+	if node.parent_id is None:
+		children = list(
+			RiskFrameworkNode.objects.filter(
+				parent=node,
+				status=RISK_FRAMEWORK_NODE_STATUS_ACTIVE,
+			),
+		)
+		suggested = suggested_level_for_category(sammenstilling, children)
+	else:
+		suggested = suggested_level_for_node(sammenstilling, node)
 	if not suggested['sannsynlighet'] or not suggested['konsekvens']:
 		return None
 	return save_node_assessment(
@@ -316,7 +591,6 @@ def search_scenarios_for_mapping(sammenstilling, user, virksomhet_id=None, scope
 	if q:
 		qs = qs.filter(
 			Q(uonsket_hendelse__icontains=q)
-			| Q(risk_id__icontains=q)
 			| Q(scope__title__icontains=q)
 		)
 	return qs.distinct()
@@ -336,6 +610,37 @@ def scenario_mapping_summary(scenario, sammenstilling):
 		}
 		for link in links
 	]
+
+
+def kartlegging_scenario_rows(sammenstilling, scenarios):
+	"""Serialize scenarios for sammenstilling kartlegging search API."""
+	risk_id_by_pk = _risk_id_map_for_scenarios(scenarios)
+	rows = []
+	for scenario in scenarios:
+		current_label = scenario.risiko_etikett or ''
+		residual_label = scenario.restrisiko_etikett or ''
+		rows.append({
+			'pk': scenario.pk,
+			'display_id': risk_id_by_pk.get(scenario.pk, scenario.risk_id),
+			'uonsket_hendelse': scenario.uonsket_hendelse,
+			'scope_pk': scenario.scope_id,
+			'scope_title': scenario.scope.title,
+			'virksomhet': scenario.scope.virksomhet.virksomhetsforkortelse if scenario.scope.virksomhet_id else '',
+			'konsekvens_nivaa': scenario.konsekvens_nivaa,
+			'sannsynlighet_nivaa': scenario.sannsynlighet_nivaa,
+			'konsekvens_etter': scenario.konsekvens_etter,
+			'sannsynlighet_etter': scenario.sannsynlighet_etter,
+			'current_label': current_label,
+			'residual_label': residual_label,
+			'risiko_etikett': current_label,
+			'restrisiko_etikett': residual_label,
+			'current_css': risk_cell_css_class(current_label),
+			'residual_css': risk_cell_css_class(residual_label),
+			'risiko_css': risk_cell_css_class(current_label),
+			'restrisiko_css': risk_cell_css_class(residual_label),
+			'mappings': scenario_mapping_summary(scenario, sammenstilling),
+		})
+	return rows
 
 
 def mapped_scenarios_detail(sammenstilling, node):

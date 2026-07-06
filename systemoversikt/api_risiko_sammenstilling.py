@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+# 2026-07-06: Manual assessment restricted to main categories (hovedkategori).
 # Change log:
+# 2026-07-06: Kartlegging scenario search includes nåværende and etter-tiltak risk labels.
 # 2026-07-06: Group-owned sammenstilling APIs – mapping, rollup, assessments with scope-level access.
 
 from django.db import transaction
@@ -14,13 +16,12 @@ from systemoversikt.models import (
 	RiskSammenstillingScenarioLink,
 	RiskScenario,
 )
-from systemoversikt.risk_display import annotate_scenario_display_ids
 from systemoversikt.risk_framework import (
 	apply_suggestion_to_assessment,
 	build_rollup_tree,
+	kartlegging_scenario_rows,
 	mapped_scenarios_detail,
 	save_node_assessment,
-	scenario_mapping_summary,
 	search_scenarios_for_mapping,
 )
 from systemoversikt.api_risiko_rammeverk import _taxonomy_tree as mal_taxonomy_tree
@@ -161,19 +162,7 @@ def api_risiko_sammenstilling_scenarios(request, pk):
 		unmapped_only=unmapped_only,
 		q=q,
 	)[:200]
-	scenarios = list(qs)
-	annotate_scenario_display_ids(scenarios)
-	rows = []
-	for scenario in scenarios:
-		rows.append({
-			'pk': scenario.pk,
-			'display_id': getattr(scenario, 'display_id', scenario.risk_id),
-			'uonsket_hendelse': scenario.uonsket_hendelse,
-			'scope_pk': scenario.scope_id,
-			'scope_title': scenario.scope.title,
-			'virksomhet': scenario.scope.virksomhet.virksomhetsforkortelse if scenario.scope.virksomhet_id else '',
-			'mappings': scenario_mapping_summary(scenario, sammenstilling),
-		})
+	rows = kartlegging_scenario_rows(sammenstilling, list(qs))
 	return _json_ok({'scenarios': rows})
 
 
@@ -262,6 +251,8 @@ def api_risiko_sammenstilling_assessment_save(request, pk, nid):
 	if denied:
 		return denied
 	node = get_object_or_404(RiskFrameworkNode, pk=nid, framework=sammenstilling.framework)
+	if node.parent_id is not None:
+		return _json_error('Risikonivå settes kun på hovedkategori.')
 	body = _parse_json_body(request)
 	if body is None:
 		return _json_error('Ugyldig JSON.')
@@ -290,6 +281,8 @@ def api_risiko_sammenstilling_assessment_apply(request, pk, nid):
 	if denied:
 		return denied
 	node = get_object_or_404(RiskFrameworkNode, pk=nid, framework=sammenstilling.framework)
+	if node.parent_id is not None:
+		return _json_error('Risikonivå settes kun på hovedkategori.')
 	assessment = apply_suggestion_to_assessment(sammenstilling, node, request.user)
 	if assessment is None:
 		return _json_error('Ingen veiledende nivå å overføre.')

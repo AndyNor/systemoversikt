@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+# 2026-07-06: Kartlegging view passes risk matrix for client-side label fallback.
+# 2026-07-06: Enrich rollup with subcategory scenario/tiltak breakdown for detail view.
+# 2026-07-06: Category-level matrix on sammenstilling detail – nåværende risiko only.
 # Change log:
+# 2026-07-06: Import user_can_view_sammenstilling – fixes NameError on sammenstilling detail.
 # 2026-07-06: Templates + group-owned sammenstillinger – mal editor superuser-only.
 # 2026-07-06: Rollup/tilgangsgrupper links – fall back to framework virksomhet for superuser testers.
 # 2026-07-06: Reuse virksomhet tilgangsgrupper – link to /virksomhet/<vid>/tilgangsgrupper/ for group admin.
@@ -13,13 +17,20 @@ from django.http import Http404
 from django.shortcuts import render
 from django.urls import reverse
 
-from systemoversikt.risk_framework import build_rollup_tree, get_active_framework
+from systemoversikt.risk_criteria import get_active_criteria
+from systemoversikt.risk_framework import (
+	build_rollup_tree,
+	build_sammenstilling_category_matrix,
+	enrich_rollup_tree_detail,
+	get_active_framework,
+)
 from systemoversikt.risk_sammenstilling import (
 	active_templates_queryset,
 	groups_user_can_own_sammenstilling,
 	sammenstillinger_visible_to_user,
 	user_can_edit_template,
 	user_can_map_sammenstilling,
+	user_can_view_sammenstilling,
 )
 from systemoversikt.views_risiko import _render_risk_access_denied
 
@@ -112,7 +123,8 @@ def risiko_sammenstilling_detail(request, pk):
 	sammenstilling = _sammenstilling_or_404(pk)
 	if not user_can_view_sammenstilling(request.user, sammenstilling):
 		return _render_risk_access_denied(request, 'sammenstilling_view', sammenstilling=sammenstilling)
-	rollup_tree = build_rollup_tree(sammenstilling)
+	rollup_tree = enrich_rollup_tree_detail(sammenstilling, build_rollup_tree(sammenstilling))
+	criteria = get_active_criteria()
 	return render(request, 'risiko_sammenstilling_detail.html', {
 		'request': request,
 		'required_permissions': [],
@@ -120,6 +132,8 @@ def risiko_sammenstilling_detail(request, pk):
 		'framework': sammenstilling.framework,
 		'can_map': user_can_map_sammenstilling(request.user, sammenstilling),
 		'rollup_tree': rollup_tree,
+		'matrix_current': build_sammenstilling_category_matrix(rollup_tree, criteria),
+		'konsekvens_labels': criteria.konsekvens_labels,
 		'api_urls_json': json.dumps(_sammenstilling_api_urls(pk)),
 	})
 
@@ -135,4 +149,7 @@ def risiko_sammenstilling_kartlegging(request, pk):
 		'sammenstilling': sammenstilling,
 		'framework': sammenstilling.framework,
 		'api_urls_json': json.dumps(_sammenstilling_api_urls(pk)),
+		'risk_meta_json': json.dumps({
+			'risk_matrix': get_active_criteria().risk_matrix,
+		}),
 	})
