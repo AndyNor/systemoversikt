@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: user_can_edit_template – Django superuser only (mal editor + mal APIs).
 # 2026-07-06: Access helpers for group-owned risikosammenstillinger on shared templates.
 
 from systemoversikt.models import (

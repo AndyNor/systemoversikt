@@ -11,6 +11,7 @@
 # 2026-06-30: RiskScenario.sannsynlighetstyper – multi-select probability dimension tags.
 # 2026-06-30: RiskCriteriaConfig – global editable akseptkriterier shared by all risikosamlinger.
 # 2026-06-30: RiskScenario.konsekvenstyper – multi-select consequence dimension tags.
+# 2026-07-06: RiskAction.eskaleres – tiltak cannot be resolved at local level (kartlegging filter).
 # 2026-06-30: RiskAction default status forslag for new manual tiltak.
 # 2026-06-30: RiskAction status forslag + besluttet (replaces ikke_startet) – proposal vs committed workflow.
 # 2026-06-30: RiskScopeMember + virksomhet on RiskScope – multiple owners/participants replace single eier.
@@ -8193,6 +8194,11 @@ class RiskAction(models.Model):
 		max_length=20,
 		choices=RISK_ACTION_KILDE_VALG,
 		default='parsed',
+	)
+	eskaleres = models.BooleanField(
+		verbose_name="Må eskaleres",
+		default=False,
+		help_text="Tiltaket kan ikke løses på lokalt nivå.",
 	)
 	history = HistoricalRecords()
 

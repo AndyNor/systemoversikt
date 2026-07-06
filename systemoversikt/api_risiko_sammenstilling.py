@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # 2026-07-06: Manual assessment restricted to main categories (hovedkategori).
 # Change log:
+# 2026-07-06: Kartlegging scenario search – eskaleres_only filter parameter.
 # 2026-07-06: Kartlegging scenario search includes nåværende and etter-tiltak risk labels.
 # 2026-07-06: Group-owned sammenstilling APIs – mapping, rollup, assessments with scope-level access.
 
@@ -153,6 +154,7 @@ def api_risiko_sammenstilling_scenarios(request, pk):
 	virksomhet_id = request.GET.get('virksomhet_id')
 	scope_id = request.GET.get('scope_id')
 	unmapped_only = request.GET.get('unmapped_only') == '1'
+	eskaleres_only = request.GET.get('eskaleres_only') == '1'
 	q = (request.GET.get('q') or '').strip()
 	qs = search_scenarios_for_mapping(
 		sammenstilling,
@@ -160,6 +162,7 @@ def api_risiko_sammenstilling_scenarios(request, pk):
 		virksomhet_id=int(virksomhet_id) if virksomhet_id else None,
 		scope_id=int(scope_id) if scope_id else None,
 		unmapped_only=unmapped_only,
+		eskaleres_only=eskaleres_only,
 		q=q,
 	)[:200]
 	rows = kartlegging_scenario_rows(sammenstilling, list(qs))

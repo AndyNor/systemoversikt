@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-06: Eskaleres-filter checkbox – default on for kartlegging scenario search. #}
 {# 2026-07-06: risiko-level-tag styles – colored Lav/Middels/Høy tags in scenario table. #}
 {# 2026-07-06: data-risk-meta – client can derive risk labels from konsekvens/sannsynlighet levels. #}
 {# 2026-07-06: Kartlegging layout – link block above scenarios; risk columns; unmapped default on. #}
@@ -43,13 +44,17 @@
 	<div class="card mb-3">
 		<div class="card-body py-2">
 			<div class="form-row align-items-end">
-				<div class="col-md-4">
+				<div class="col-md-3">
 					<label class="small mb-0">Søk</label>
 					<input type="search" class="form-control form-control-sm" id="kartlegging-q" placeholder="Hendelse, samling…">
 				</div>
-				<div class="col-md-4">
+				<div class="col-md-3">
 					<label class="small mb-0 d-block">&nbsp;</label>
 					<label class="mb-0 small"><input type="checkbox" id="kartlegging-unmapped" checked> Kun ukartlagte i denne sammenstillingen</label>
+				</div>
+				<div class="col-md-4">
+					<label class="small mb-0 d-block">&nbsp;</label>
+					<label class="mb-0 small"><input type="checkbox" id="kartlegging-eskaleres" checked> Kun scenarioer med tiltak som må eskaleres</label>
 				</div>
 				<div class="col-md-2">
 					<button type="button" class="btn btn-primary btn-sm btn-block" id="kartlegging-search">Søk</button>

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: Mal taxonomy APIs require superuser for all methods – editor-only endpoints.
 # 2026-07-06: Automatic category numbering – create always assigns next nummer; update ignores nummer.
 # 2026-07-06: Superuser-only template taxonomy APIs – maler independent of virksomhet.
 
+from django.contrib.auth.decorators import login_required
 from django.db.models import Max
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -17,7 +19,7 @@ from systemoversikt.risk_framework import (
 	get_active_framework,
 	move_framework_node,
 )
-from systemoversikt.risk_sammenstilling import user_can_edit_template, user_can_view_template
+from systemoversikt.risk_sammenstilling import user_can_edit_template
 from systemoversikt.api_risiko import _json_error, _parse_json_body
 
 
@@ -37,12 +39,6 @@ def _framework_or_404(slug):
 
 def _require_template_edit(request):
 	if not user_can_edit_template(request.user):
-		return _json_error('Ingen tilgang.', status=403)
-	return None
-
-
-def _require_template_view(request, framework):
-	if not user_can_view_template(request.user, framework):
 		return _json_error('Ingen tilgang.', status=403)
 	return None
 
@@ -82,20 +78,22 @@ def _taxonomy_tree(framework, include_archived=False):
 	]
 
 
+@login_required
 @require_GET
 def api_risiko_mal_taxonomy(request, slug):
 	framework = _framework_or_404(slug)
-	denied = _require_template_view(request, framework)
+	denied = _require_template_edit(request)
 	if denied:
 		return denied
 	include_archived = request.GET.get('include_archived') == '1'
 	return _json_ok({'tree': _taxonomy_tree(framework, include_archived=include_archived)})
 
 
+@login_required
 @require_GET
 def api_risiko_mal_active_nodes(request, slug):
 	framework = _framework_or_404(slug)
-	denied = _require_template_view(request, framework)
+	denied = _require_template_edit(request)
 	if denied:
 		return denied
 	leaves = RiskFrameworkNode.objects.filter(
@@ -125,6 +123,7 @@ def api_risiko_mal_active_nodes(request, slug):
 	})
 
 
+@login_required
 @require_http_methods(['POST'])
 def api_risiko_mal_node_create(request, slug):
 	framework = _framework_or_404(slug)
@@ -153,6 +152,7 @@ def api_risiko_mal_node_create(request, slug):
 	return _json_ok({'node': _node_payload(node)})
 
 
+@login_required
 @require_http_methods(['POST'])
 def api_risiko_mal_node_update(request, slug, nid):
 	framework = _framework_or_404(slug)
@@ -172,6 +172,7 @@ def api_risiko_mal_node_update(request, slug, nid):
 	return _json_ok({'node': _node_payload(node)})
 
 
+@login_required
 @require_http_methods(['POST'])
 def api_risiko_mal_node_move(request, slug, nid):
 	framework = _framework_or_404(slug)

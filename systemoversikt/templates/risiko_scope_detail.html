@@ -1,3 +1,4 @@
+{# 2026-07-06: «Må eskaleres» toggle button on tiltak description row in scenario modal. #}
 {# 2026-07-06: Removed excel class – no table export on scenario table. #}
 {# 2026-06-29: Hint that empty etter tiltak fields inherit nåværende risiko levels. #}
 {# 2026-06-26: Modal auto-save – no per-field Lagre buttons in footer or tiltak cards. #}
@@ -578,6 +579,12 @@
 	flex: 1 1 auto;
 	min-height: 2.25rem;
 	resize: vertical;
+}
+.risiko-action-desc-row .risiko-action-eskaleres {
+	flex: 0 0 auto;
+	align-self: flex-start;
+	margin-top: 0.1rem;
+	white-space: nowrap;
 }
 .risiko-action-meta-row { margin-left: 0; margin-right: 0; }
 .risiko-action-meta-col {

@@ -4,6 +4,7 @@
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in participant group APIs.
 # 2026-07-01: Read-group access – GET APIs use readable scope; writes still require membership.
 # 2026-07-01: Godkjent status locks collection – reject content mutations; owner may change status only.
+# 2026-07-06: RiskAction.eskaleres in tiltak API payloads and validation.
 # 2026-07-01: Tiltak ansvarlig search (virksomhet-scoped) and ansvarlig_display in action payloads.
 # 2026-06-30: RiskScope status – workflow validation; sannsynlighetstyper on scenarios.
 # 2026-06-30: api_risiko_meta uses global get_active_criteria() for editor dropdowns and matrix.
@@ -150,6 +151,7 @@ def _action_to_dict(action, display_tiltak_id=None, risk_ids=None, scenario_ids=
 		'status': action.status,
 		'status_display': action.get_status_display(),
 		'kilde': action.kilde,
+		'eskaleres': action.eskaleres,
 	}
 	if risk_ids is not None:
 		data['risk_ids'] = risk_ids
@@ -401,6 +403,7 @@ def _validate_action_item(item, index):
 		'ansvarlig': (item.get('ansvarlig') or '').strip(),
 		'frist': frist,
 		'status': status,
+		'eskaleres': bool(item.get('eskaleres')),
 	}, []
 
 
@@ -810,6 +813,7 @@ def api_risiko_action_create(request, pk, sid):
 		ansvarlig=parsed['ansvarlig'],
 		frist=parsed['frist'],
 		status=parsed['status'],
+		eskaleres=parsed['eskaleres'],
 		kilde='manual',
 	)
 	action.scenarios.add(scenario)
@@ -847,6 +851,7 @@ def api_risiko_action_update(request, pk, sid, aid):
 	action.ansvarlig = parsed['ansvarlig']
 	action.frist = parsed['frist']
 	action.status = parsed['status']
+	action.eskaleres = parsed['eskaleres']
 	action.save()
 
 	scenarios = _load_scope_scenarios(scope)
@@ -915,6 +920,7 @@ def api_risiko_scope_action_create(request, pk):
 				ansvarlig=parsed['ansvarlig'],
 				frist=parsed['frist'],
 				status=parsed['status'],
+				eskaleres=parsed['eskaleres'],
 				kilde='manual',
 			)
 			_apply_action_scenarios(action, scope, scenario_ids if scenario_ids is not None else [])
@@ -965,6 +971,7 @@ def api_risiko_scope_action_update(request, pk, aid):
 			action.ansvarlig = parsed['ansvarlig']
 			action.frist = parsed['frist']
 			action.status = parsed['status']
+			action.eskaleres = parsed['eskaleres']
 			action.save()
 			_apply_action_scenarios(action, scope, scenario_ids)
 	except ValueError as exc:

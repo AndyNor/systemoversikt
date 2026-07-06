@@ -1,3 +1,5 @@
+// 2026-07-06: Detail page – unlink scenario from subcategory via linkDelete API.
+// 2026-07-06: Kartlegging eskaleres_only filter – scenarios linked to flagged tiltak.
 // 2026-07-06: Kartlegging risk cells use risiko-level-tag (colored tags like scope table).
 // 2026-07-06: Kartlegging – derive risk labels from matrix when API omits precomputed labels.
 // 2026-07-06: Kartlegging table – nåværende and etter-tiltak risk badges.
@@ -53,6 +55,20 @@
     var drillModal = document.getElementById('rammeverk-drilldown-modal');
 
     root.addEventListener('click', function (ev) {
+      var unlinkBtn = ev.target.closest('.js-unlink-scenario');
+      if (unlinkBtn) {
+        var linkId = unlinkBtn.getAttribute('data-link-pk');
+        if (!linkId || !urls.linkDelete) return;
+        if (!window.confirm('Fjerne koblingen mellom dette scenarioet og underkategorien?')) return;
+        postJson(urls.linkDelete.replace('{id}', linkId), {}).then(function (data) {
+          if (!data.ok) {
+            alert(data.error || 'Kunne ikke fjerne kobling');
+            return;
+          }
+          window.location.reload();
+        });
+        return;
+      }
       var editBtn = ev.target.closest('.js-edit-rating');
       if (editBtn) {
         currentNodePk = editBtn.getAttribute('data-node-pk');
@@ -199,6 +215,8 @@
       if (virksomhetEl && virksomhetEl.value) params.set('virksomhet_id', virksomhetEl.value);
       if (q) params.set('q', q);
       if (document.getElementById('kartlegging-unmapped').checked) params.set('unmapped_only', '1');
+      var eskaleresEl = document.getElementById('kartlegging-eskaleres');
+      if (eskaleresEl && eskaleresEl.checked) params.set('eskaleres_only', '1');
       tbody.innerHTML = '<tr><td colspan="' + colCount + '" class="text-muted">Laster…</td></tr>';
       getJson(urls.scenarioSearch + '?' + params.toString()).then(function (data) {
         if (!data.ok) {

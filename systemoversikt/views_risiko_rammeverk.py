@@ -3,6 +3,7 @@
 # 2026-07-06: Enrich rollup with subcategory scenario/tiltak breakdown for detail view.
 # 2026-07-06: Category-level matrix on sammenstilling detail – nåværende risiko only.
 # Change log:
+# 2026-07-06: risiko_mal_rediger – superuser-only via user_can_edit_template.
 # 2026-07-06: Import user_can_view_sammenstilling – fixes NameError on sammenstilling detail.
 # 2026-07-06: Templates + group-owned sammenstillinger – mal editor superuser-only.
 # 2026-07-06: Rollup/tilgangsgrupper links – fall back to framework virksomhet for superuser testers.

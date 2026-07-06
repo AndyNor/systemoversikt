@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
 {% load templatetags %}
+{# 2026-07-06: Unlink scenario from subcategory on detail page (kartlegging still creates links). #}
 {# 2026-07-06: Risk badge padding and per-cell-tone borders in matrix. #}
 {# 2026-07-06: Uniform row height and vertical SANNS. axis label. #}
 {# 2026-07-06: Equal-width axis labels with wrapping at ~18 characters. #}
@@ -116,6 +117,7 @@
 								<th style="width:12rem">Samling</th>
 								<th>Uønsket hendelse</th>
 								<th style="width:6rem">Nå</th>
+								{% if can_map %}<th style="width:5rem"></th>{% endif %}
 							</tr>
 						</thead>
 						<tbody>
@@ -129,6 +131,11 @@
 								</td>
 								<td>{{ scenario.uonsket_hendelse|truncatewords:30 }}</td>
 								<td>{% risiko_level_tag scenario.current_label scenario.current_css %}</td>
+								{% if can_map %}
+								<td class="text-nowrap">
+									<button type="button" class="btn btn-outline-secondary btn-sm js-unlink-scenario" data-link-pk="{{ scenario.link_pk }}" title="Fjern kobling til denne underkategorien">Fjern</button>
+								</td>
+								{% endif %}
 							</tr>
 							{% endfor %}
 						</tbody>

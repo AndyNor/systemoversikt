@@ -9,6 +9,7 @@
 # 2026-06-26: RiskScope eier list_filter uses RelatedOnlyFieldListFilter – avoids loading all ~85k users.
 # 2026-06-26: RiskAction admin on scope; M2M scenarios for shared tiltak.
 # 2026-06-24: RiskScope/RiskScenario/RiskAction admin for security risk module MVP.
+# 2026-07-06: RiskFramework/Node admin – superuser-only; maler edited via UI or admin by systemadministrator.
 # 2026-07-06: RiskSammenstilling admin; templates without virksomhet; removed framework M2M on groups.
 # 2026-07-06: RiskFramework.virksomhet; framework M2M on RiskVirksomhetGroup admin.
 # 2026-07-06: Risk framework admin for aggregation layer emergency access.
@@ -1742,7 +1743,7 @@ class RiskScenarioAdmin(SimpleHistoryAdmin):
 @admin.register(RiskAction)
 class RiskActionAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('beskrivelse', 'scope', 'status', 'frist', 'ansvarlig')
+	list_display = ('beskrivelse', 'scope', 'status', 'eskaleres', 'frist', 'ansvarlig')
 	list_filter = ('status', 'kilde', 'scope')
 	search_fields = ('beskrivelse', 'ansvarlig')
 	autocomplete_fields = ('scope',)
@@ -1755,6 +1756,21 @@ class RiskFrameworkAdmin(SimpleHistoryAdmin):
 	list_filter = ('is_active',)
 	search_fields = ('title', 'slug', 'beskrivelse')
 
+	def has_module_permission(self, request):
+		return request.user.is_superuser
+
+	def has_view_permission(self, request, obj=None):
+		return request.user.is_superuser
+
+	def has_add_permission(self, request):
+		return request.user.is_superuser
+
+	def has_change_permission(self, request, obj=None):
+		return request.user.is_superuser
+
+	def has_delete_permission(self, request, obj=None):
+		return request.user.is_superuser
+
 
 @admin.register(RiskFrameworkNode)
 class RiskFrameworkNodeAdmin(SimpleHistoryAdmin):
@@ -1762,6 +1778,21 @@ class RiskFrameworkNodeAdmin(SimpleHistoryAdmin):
 	list_filter = ('framework', 'status', 'parent')
 	search_fields = ('title', 'forklaring')
 	autocomplete_fields = ('framework', 'parent')
+
+	def has_module_permission(self, request):
+		return request.user.is_superuser
+
+	def has_view_permission(self, request, obj=None):
+		return request.user.is_superuser
+
+	def has_add_permission(self, request):
+		return request.user.is_superuser
+
+	def has_change_permission(self, request, obj=None):
+		return request.user.is_superuser
+
+	def has_delete_permission(self, request, obj=None):
+		return request.user.is_superuser
 
 
 @admin.register(RiskSammenstilling)

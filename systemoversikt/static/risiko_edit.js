@@ -1,4 +1,5 @@
 // Change log:
+// 2026-07-06: Tiltak «Må eskaleres» toggle per action card in scenario modal.
 // 2026-07-02: Deltakergruppe search shows first 5 groups on focus before typing.
 // 2026-07-02: Deltakergrupper in Tilgang card – add/remove/search participant groups on collection.
 // 2026-07-02: Modal status in header; confirm discard when godkjent blocks save on close.
@@ -804,11 +805,17 @@
       const ansvarligLabelAttr = (action.ansvarlig_display && action.ansvarlig_display !== storedAnsvarlig)
         ? ' data-ansvarlig-label="' + escapeHtml(visibleAnsvarlig) + '"'
         : '';
+      const eskaleresOn = !!action.eskaleres;
+      const eskaleresBtnClass = eskaleresOn
+        ? 'btn btn-sm risiko-action-eskaleres btn-warning active'
+        : 'btn btn-outline-secondary btn-sm risiko-action-eskaleres';
 
       return '<div class="risiko-action-desc-row">' +
           '<span class="risiko-action-card-id">' + displayId + '</span>' +
           '<textarea class="form-control form-control-sm risiko-action-beskrivelse" rows="2">' +
           escapeHtml(action.beskrivelse || '') + '</textarea>' +
+          '<button type="button" class="' + eskaleresBtnClass + '" ' +
+          'title="Tiltaket kan ikke løses på lokalt nivå">Må eskaleres</button>' +
         '</div>' +
         '<div class="form-row risiko-action-meta-row no-gutters align-items-end">' +
           '<div class="col risiko-action-meta-col">' +
@@ -1026,6 +1033,7 @@
         ansvarlig: collectAnsvarligFromCard(card),
         frist: card.querySelector('.risiko-action-frist').value || null,
         status: card.querySelector('.risiko-action-status').value,
+        eskaleres: card.querySelector('.risiko-action-eskaleres').classList.contains('active'),
         scenario_ids: scenarioIds,
       };
     }
@@ -1669,6 +1677,12 @@
           unlinkModalActionCard(card);
         } else if (e.target.classList.contains('risiko-action-delete')) {
           deleteModalActionCard(card);
+        } else if (e.target.classList.contains('risiko-action-eskaleres')) {
+          const on = !e.target.classList.contains('active');
+          e.target.classList.toggle('btn-warning', on);
+          e.target.classList.toggle('btn-outline-secondary', !on);
+          e.target.classList.toggle('active', on);
+          scheduleActionAutosave(card);
         }
       });
     }

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: Scenario rows on detail view include link_pk for unlink from sammenstilling page.
 # 2026-07-06: Sammenstilling category matrix uses manual assessment only (no suggested fallback).
 # 2026-07-06: Subcategory scenario/tiltak breakdown and per-category scenario matrix on detail view.
 # 2026-07-06: Category-level manual assessment + nåværende-risiko matrix for sammenstilling.
+# 2026-07-06: Kartlegging filter – scenarios with tiltak where eskaleres=True.
 # 2026-07-06: Kartlegging API rows – per-scope display ids and explicit risk level fields.
 # 2026-07-06: Kartlegging search – hendelse and samling only (not R-id).
 # 2026-07-06: Rollup/mapping keyed by RiskSammenstilling; scope-level scenario search for kartlegging.
@@ -327,11 +329,11 @@ def _risk_id_map_for_scenarios(scenarios):
 	return risk_id_by_pk
 
 
-def _scenario_row_dict(scenario, risk_id_by_pk):
+def _scenario_row_dict(scenario, risk_id_by_pk, link_pk=None):
 	virksomhet = ''
 	if scenario.scope.virksomhet_id:
 		virksomhet = scenario.scope.virksomhet.virksomhetsforkortelse or ''
-	return {
+	row = {
 		'pk': scenario.pk,
 		'display_id': risk_id_by_pk.get(scenario.pk, scenario.risk_id),
 		'scope_pk': scenario.scope_id,
@@ -341,6 +343,9 @@ def _scenario_row_dict(scenario, risk_id_by_pk):
 		'current_label': scenario.risiko_etikett or '',
 		'current_css': risk_cell_css_class(scenario.risiko_etikett or ''),
 	}
+	if link_pk is not None:
+		row['link_pk'] = link_pk
+	return row
 
 
 def _tiltak_rows_for_node_scenarios(scenarios, actions, risk_id_by_pk, ansvarlig_lookup):
@@ -453,7 +458,7 @@ def enrich_rollup_tree_detail(sammenstilling, rollup_tree, criteria=None):
 	for link in links:
 		scenario = link.scenario
 		all_scenarios.setdefault(scenario.pk, scenario)
-		scenarios_by_node[link.framework_node_id].append(scenario)
+		scenarios_by_node[link.framework_node_id].append((link.pk, scenario))
 
 	all_scenario_list = list(all_scenarios.values())
 	risk_id_by_pk = _risk_id_map_for_scenarios(all_scenario_list)
@@ -478,8 +483,12 @@ def enrich_rollup_tree_detail(sammenstilling, rollup_tree, criteria=None):
 		category_scenarios = []
 		category_scenario_pks = set()
 		for child in cat.get('children', []):
-			node_scenarios = sorted(scenarios_by_node.get(child['pk'], []), key=_scenario_sort_key)
-			child['scenarios'] = [_scenario_row_dict(s, risk_id_by_pk) for s in node_scenarios]
+			node_links = sorted(scenarios_by_node.get(child['pk'], []), key=lambda item: _scenario_sort_key(item[1]))
+			node_scenarios = [scenario for _link_pk, scenario in node_links]
+			child['scenarios'] = [
+				_scenario_row_dict(scenario, risk_id_by_pk, link_pk=link_pk)
+				for link_pk, scenario in node_links
+			]
 			child['actions'] = _tiltak_rows_for_node_scenarios(
 				node_scenarios, actions, risk_id_by_pk, ansvarlig_lookup,
 			)
@@ -571,7 +580,7 @@ def _scenarios_with_scope_read_access_qs(user):
 	)
 
 
-def search_scenarios_for_mapping(sammenstilling, user, virksomhet_id=None, scope_id=None, unmapped_only=False, q=''):
+def search_scenarios_for_mapping(sammenstilling, user, virksomhet_id=None, scope_id=None, unmapped_only=False, eskaleres_only=False, q=''):
 	qs = _scenarios_with_scope_read_access_qs(user).select_related(
 		'scope', 'scope__virksomhet',
 	).order_by(
@@ -588,6 +597,8 @@ def search_scenarios_for_mapping(sammenstilling, user, virksomhet_id=None, scope
 		qs = qs.filter(
 			~Q(sammenstilling_links__sammenstilling=sammenstilling),
 		)
+	if eskaleres_only:
+		qs = qs.filter(actions__eskaleres=True)
 	if q:
 		qs = qs.filter(
 			Q(uonsket_hendelse__icontains=q)
