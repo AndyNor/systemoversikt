@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: Risikosammenstilling nav search – framework aggregation layer.
 # 2026-07-02: Merge BloodHound status + findings into one sidemeny entry.
 # 2026-07-02: Remove Akseptkriterier nav search – link removed from sikkerhet sidemeny (available in risk app).
 # 2026-07-02: Sårbarheter landing page – replaces three separate sidemeny search entries.
@@ -82,6 +83,7 @@ NAV_PAGES = [
 	_entry('Sårbarheter', 'sikkerhet_sarbarheter', 'Sikkerhet', ['qualys', 'sårbarheter', 'sarbarheter', 'cve', 'defender', 'azure sårbarheter', 'qualys vs defender'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Gjennomførte pentester', 'rapport_sikkerhetstester', 'Sikkerhet', ['pentester', 'pentest', 'sikkerhetstester']),
 	_entry('Risikovurderinger', 'risiko_scope_list', 'Sikkerhet', ['risiko', 'risikovurdering', 'risikomatrise'], permissions=[]),
+	_entry('Risikosammenstilling', 'risiko_rammeverk_list', 'Sikkerhet', ['risikosammenstilling', 'risikorammeverk', 'it-plattform', 'høynivå risiko'], permissions=[]),
 	_entry('Ny risikosamling', 'risiko_scope_create', 'Sikkerhet', ['ny risikosamling', 'risiko opprett'], permissions=['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']),
 	_entry('Importer risikomatrise', 'risiko_import', 'Sikkerhet', ['risiko import', 'risikomatrise import'], permissions=['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']),
 	_entry('ADCS certifikatmaler', 'cmdb_adcs_index', 'Sikkerhet', ['adcs', 'certifikatmaler'], permissions=['systemoversikt.view_cmdbdevice']),

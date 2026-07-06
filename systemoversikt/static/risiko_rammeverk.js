@@ -1,0 +1,383 @@
+// 2026-07-06: Client logic for risk framework rollup, mapping workspace, and taxonomy editor.
+(function (window) {
+  'use strict';
+
+  function getCsrfToken() {
+    var el = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (el) return el.value;
+    var match = document.cookie.match(/csrftoken=([^;]+)/);
+    return match ? match[1] : '';
+  }
+
+  function parseUrls(root) {
+    try {
+      return JSON.parse(root.getAttribute('data-api-urls') || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function postJson(url, body) {
+    return fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCsrfToken(),
+      },
+      body: JSON.stringify(body || {}),
+    }).then(function (r) { return r.json(); });
+  }
+
+  function getJson(url) {
+    return fetch(url, { credentials: 'same-origin' }).then(function (r) { return r.json(); });
+  }
+
+  function labelCss(label) {
+    if (label === 'Lav') return 'risk-cell-lav';
+    if (label === 'Middels') return 'risk-cell-middels';
+    if (label === 'Høy') return 'risk-cell-hoy';
+    return 'risk-cell-empty';
+  }
+
+  function initRollup(root) {
+    if (!root) return;
+    var urls = parseUrls(root);
+    var currentNodePk = null;
+    var modal = document.getElementById('rammeverk-rating-modal');
+    var drillModal = document.getElementById('rammeverk-drilldown-modal');
+
+    root.addEventListener('click', function (ev) {
+      var editBtn = ev.target.closest('.js-edit-rating');
+      if (editBtn) {
+        currentNodePk = editBtn.getAttribute('data-node-pk');
+        if (modal) window.jQuery(modal).modal('show');
+        return;
+      }
+      var drillBtn = ev.target.closest('.js-drilldown');
+      if (drillBtn) {
+        var nid = drillBtn.getAttribute('data-node-pk');
+        var body = document.getElementById('rammeverk-drilldown-body');
+        if (!urls.nodeScenarios || !body) return;
+        body.innerHTML = '<p class="p-3 mb-0 text-muted">Laster…</p>';
+        window.jQuery(drillModal).modal('show');
+        getJson(urls.nodeScenarios.replace('{id}', nid)).then(function (data) {
+          if (!data.ok) {
+            body.innerHTML = '<p class="p-3 text-danger">' + (data.error || 'Feil') + '</p>';
+            return;
+          }
+          if (!data.scenarios.length) {
+            body.innerHTML = '<p class="p-3 mb-0 text-muted">Ingen kartlagte scenarioer.</p>';
+            return;
+          }
+          var html = '<table class="table table-sm mb-0"><thead><tr><th>R#</th><th>Samling</th><th>Hendelse</th><th>Nå</th><th>Rest</th></tr></thead><tbody>';
+          data.scenarios.forEach(function (s) {
+            html += '<tr><td>' + s.display_id + '</td><td><a href="/sikkerhet/risiko/collection/' + s.scope_pk + '/">' + escapeHtml(s.scope_title) + '</a></td>';
+            html += '<td>' + escapeHtml(s.uonsket_hendelse.substring(0, 120)) + '</td>';
+            html += '<td><span class="badge ' + s.current_css + '">' + (s.current_label || '—') + '</span></td>';
+            html += '<td><span class="badge ' + s.residual_css + '">' + (s.residual_label || '—') + '</span></td></tr>';
+          });
+          html += '</tbody></table>';
+          body.innerHTML = html;
+        });
+      }
+    });
+
+    var saveBtn = document.getElementById('rammeverk-save-rating');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function () {
+        if (!currentNodePk || !urls.assessmentSave) return;
+        var s = parseInt(document.getElementById('rammeverk-rating-s').value, 10);
+        var k = parseInt(document.getElementById('rammeverk-rating-k').value, 10);
+        var begrunnelse = document.getElementById('rammeverk-rating-begrunnelse').value;
+        postJson(urls.assessmentSave.replace('{id}', currentNodePk), {
+          sannsynlighet_nivaa: s,
+          konsekvens_nivaa: k,
+          begrunnelse: begrunnelse,
+        }).then(function (data) {
+          if (!data.ok) {
+            alert(data.error || 'Kunne ikke lagre');
+            return;
+          }
+          window.location.reload();
+        });
+      });
+    }
+
+    var applyBtn = document.getElementById('rammeverk-apply-suggestion');
+    if (applyBtn) {
+      applyBtn.addEventListener('click', function () {
+        if (!currentNodePk || !urls.assessmentApply) return;
+        postJson(urls.assessmentApply.replace('{id}', currentNodePk), {}).then(function (data) {
+          if (!data.ok) {
+            alert(data.error || 'Kunne ikke overføre');
+            return;
+          }
+          window.location.reload();
+        });
+      });
+    }
+  }
+
+  function initKartlegging(root) {
+    if (!root) return;
+    var urls = parseUrls(root);
+    var tbody = document.getElementById('kartlegging-scenarios-body');
+    var nodeSelect = document.getElementById('kartlegging-target-node');
+
+    function loadNodes() {
+      if (!urls.activeNodes || !nodeSelect) return;
+      getJson(urls.activeNodes).then(function (data) {
+        if (!data.ok) return;
+        nodeSelect.innerHTML = '<option value="">Velg underkategori…</option>';
+        data.nodes.forEach(function (n) {
+          var opt = document.createElement('option');
+          opt.value = n.pk;
+          opt.textContent = n.display_code + ' ' + n.title;
+          nodeSelect.appendChild(opt);
+        });
+      });
+    }
+
+    function search() {
+      if (!urls.scenarioSearch || !tbody) return;
+      var params = new URLSearchParams();
+      var vid = document.getElementById('kartlegging-virksomhet').value;
+      var q = document.getElementById('kartlegging-q').value;
+      if (vid) params.set('virksomhet_id', vid);
+      if (q) params.set('q', q);
+      if (document.getElementById('kartlegging-unmapped').checked) params.set('unmapped_only', '1');
+      tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Laster…</td></tr>';
+      getJson(urls.scenarioSearch + '?' + params.toString()).then(function (data) {
+        if (!data.ok) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-danger">' + (data.error || 'Feil') + '</td></tr>';
+          return;
+        }
+        if (!data.scenarios.length) {
+          tbody.innerHTML = '<tr><td colspan="5" class="text-muted">Ingen treff.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = '';
+        data.scenarios.forEach(function (s) {
+          var tr = document.createElement('tr');
+          var mapped = (s.mappings || []).map(function (m) { return m.display_code; }).join(', ');
+          tr.innerHTML =
+            '<td><input type="checkbox" class="kartlegging-scenario-cb" value="' + s.pk + '"></td>' +
+            '<td>' + escapeHtml(s.display_id) + '</td>' +
+            '<td>' + escapeHtml(s.virksomhet) + ' – ' + escapeHtml(s.scope_title) + '</td>' +
+            '<td>' + escapeHtml(s.uonsket_hendelse.substring(0, 100)) + '</td>' +
+            '<td>' + escapeHtml(mapped) + '</td>';
+          tbody.appendChild(tr);
+        });
+      });
+    }
+
+    document.getElementById('kartlegging-search').addEventListener('click', search);
+    document.getElementById('kartlegging-link-btn').addEventListener('click', function () {
+      var nodePk = nodeSelect.value;
+      var ids = Array.prototype.map.call(
+        document.querySelectorAll('.kartlegging-scenario-cb:checked'),
+        function (cb) { return parseInt(cb.value, 10); }
+      );
+      if (!nodePk || !ids.length) {
+        alert('Velg scenarioer og underkategori.');
+        return;
+      }
+      postJson(urls.linkCreate, { node_pk: parseInt(nodePk, 10), scenario_ids: ids }).then(function (data) {
+        if (!data.ok) {
+          alert(data.error || 'Kunne ikke knytte');
+          return;
+        }
+        search();
+      });
+    });
+
+    var selectAll = document.getElementById('kartlegging-select-all');
+    if (selectAll) {
+      selectAll.addEventListener('change', function () {
+        document.querySelectorAll('.kartlegging-scenario-cb').forEach(function (cb) {
+          cb.checked = selectAll.checked;
+        });
+      });
+    }
+
+    loadNodes();
+    search();
+  }
+
+  function initEditor(root) {
+    if (!root) return;
+    var urls = parseUrls(root);
+    var treeRoot = document.getElementById('rammeverk-tree-root');
+    var editingPk = null;
+    var retirePk = null;
+
+    function renderTree(tree) {
+      if (!treeRoot) return;
+      treeRoot.innerHTML = '';
+      tree.forEach(function (cat) {
+        var card = document.createElement('div');
+        card.className = 'card mb-2';
+        var archived = cat.status === 'archived' ? ' text-muted' : '';
+        card.innerHTML =
+          '<div class="card-header py-2 d-flex justify-content-between' + archived + '">' +
+          '<strong>' + cat.display_code + '. ' + escapeHtml(cat.title) + '</strong>' +
+          '<span><button type="button" class="btn btn-outline-secondary btn-sm js-edit-node" data-pk="' + cat.pk + '">Rediger</button> ' +
+          '<button type="button" class="btn btn-outline-success btn-sm js-add-child" data-parent="' + cat.pk + '">+ Underkategori</button></span></div>' +
+          '<ul class="list-group list-group-flush"></ul>';
+        var ul = card.querySelector('ul');
+        (cat.children || []).forEach(function (child) {
+          var li = document.createElement('li');
+          li.className = 'list-group-item py-2 d-flex justify-content-between' + (child.status === 'archived' ? ' text-muted' : '');
+          li.innerHTML =
+            '<span><strong>' + child.display_code + '</strong> ' + escapeHtml(child.title) +
+            ' <span class="badge badge-light border">' + child.link_count + ' koblinger</span></span>' +
+            '<button type="button" class="btn btn-outline-secondary btn-sm js-edit-node" data-pk="' + child.pk + '">Rediger</button>';
+          ul.appendChild(li);
+        });
+        treeRoot.appendChild(card);
+      });
+    }
+
+    function loadTree() {
+      if (!urls.taxonomy) return;
+      var inc = document.getElementById('rammeverk-show-archived');
+      var q = inc && inc.checked ? '?include_archived=1' : '';
+      getJson(urls.taxonomy + q).then(function (data) {
+        if (data.ok) renderTree(data.tree || []);
+      });
+    }
+
+    function openNodeModal(node, parentPk) {
+      editingPk = node ? node.pk : null;
+      document.getElementById('rammeverk-node-pk').value = node ? node.pk : '';
+      document.getElementById('rammeverk-node-parent-pk').value = parentPk || (node ? node.parent_pk : '') || '';
+      document.getElementById('rammeverk-node-nummer').value = node ? node.nummer : '';
+      document.getElementById('rammeverk-node-title').value = node ? node.title : '';
+      document.getElementById('rammeverk-node-forklaring').value = node ? node.forklaring : '';
+      document.getElementById('rammeverk-node-modal-title').textContent = node ? 'Rediger node' : 'Ny node';
+      window.jQuery('#rammeverk-node-modal').modal('show');
+    }
+
+    function findNode(pk, tree) {
+      var pkStr = String(pk);
+      for (var i = 0; i < tree.length; i++) {
+        if (String(tree[i].pk) === pkStr) return tree[i];
+        for (var j = 0; j < (tree[i].children || []).length; j++) {
+          if (String(tree[i].children[j].pk) === pkStr) return tree[i].children[j];
+        }
+      }
+      return null;
+    }
+
+    var cachedTree = [];
+
+    root.addEventListener('click', function (ev) {
+      var editBtn = ev.target.closest('.js-edit-node');
+      if (editBtn) {
+        var pk = parseInt(editBtn.getAttribute('data-pk'), 10);
+        openNodeModal(findNode(pk, cachedTree), null);
+        return;
+      }
+      var addChild = ev.target.closest('.js-add-child');
+      if (addChild) {
+        openNodeModal(null, addChild.getAttribute('data-parent'));
+      }
+    });
+
+    document.getElementById('rammeverk-add-category').addEventListener('click', function () {
+      openNodeModal(null, null);
+    });
+
+    document.getElementById('rammeverk-show-archived').addEventListener('change', loadTree);
+
+    document.getElementById('rammeverk-node-save').addEventListener('click', function () {
+      var pk = document.getElementById('rammeverk-node-pk').value;
+      var body = {
+        title: document.getElementById('rammeverk-node-title').value,
+        forklaring: document.getElementById('rammeverk-node-forklaring').value,
+        nummer: parseInt(document.getElementById('rammeverk-node-nummer').value, 10) || undefined,
+        parent_pk: document.getElementById('rammeverk-node-parent-pk').value || null,
+      };
+      var url = pk ? urls.nodeUpdate.replace('{id}', pk) : urls.nodeCreate;
+      postJson(url, body).then(function (data) {
+        if (!data.ok) {
+          alert(data.error || 'Kunne ikke lagre');
+          return;
+        }
+        window.jQuery('#rammeverk-node-modal').modal('hide');
+        loadTree();
+      });
+    });
+
+    document.getElementById('rammeverk-node-archive').addEventListener('click', function () {
+      var pk = document.getElementById('rammeverk-node-pk').value;
+      if (!pk) return;
+      postJson(urls.nodeArchive.replace('{id}', pk), {}).then(function (data) {
+        if (!data.ok) {
+          alert(data.error || 'Kunne ikke arkivere');
+          return;
+        }
+        window.jQuery('#rammeverk-node-modal').modal('hide');
+        loadTree();
+      });
+    });
+
+    document.getElementById('rammeverk-node-retire').addEventListener('click', function () {
+      retirePk = document.getElementById('rammeverk-node-pk').value;
+      if (!retirePk || !urls.activeNodes) return;
+      getJson(urls.activeNodes).then(function (data) {
+        var sel = document.getElementById('rammeverk-retire-successor');
+        sel.innerHTML = '';
+        (data.nodes || []).forEach(function (n) {
+          if (String(n.pk) === String(retirePk)) return;
+          var opt = document.createElement('option');
+          opt.value = n.pk;
+          opt.textContent = n.display_code + ' ' + n.title;
+          sel.appendChild(opt);
+        });
+        window.jQuery('#rammeverk-retire-modal').modal('show');
+      });
+    });
+
+    document.getElementById('rammeverk-retire-confirm').addEventListener('click', function () {
+      var successor = document.getElementById('rammeverk-retire-successor').value;
+      if (!retirePk || !successor) return;
+      postJson(urls.nodeRetire.replace('{id}', retirePk), { successor_pk: parseInt(successor, 10) }).then(function (data) {
+        if (!data.ok) {
+          alert(data.error || 'Kunne ikke omfordele');
+          return;
+        }
+        window.jQuery('#rammeverk-retire-modal').modal('hide');
+        window.jQuery('#rammeverk-node-modal').modal('hide');
+        loadTree();
+      });
+    });
+
+    var origLoad = loadTree;
+    loadTree = function () {
+      if (!urls.taxonomy) return;
+      var inc = document.getElementById('rammeverk-show-archived');
+      var q = inc && inc.checked ? '?include_archived=1' : '';
+      getJson(urls.taxonomy + q).then(function (data) {
+        if (data.ok) {
+          cachedTree = data.tree || [];
+          renderTree(cachedTree);
+        }
+      });
+    };
+    loadTree();
+  }
+
+  function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+  }
+
+  window.RisikoRammeverk = {
+    initRollup: initRollup,
+    initKartlegging: initKartlegging,
+    initEditor: initEditor,
+  };
+})(window);

@@ -1,0 +1,15 @@
+{# 2026-07-06: Virksomhet switcher for framework rollup pages. #}
+{% if nav_virksomheter %}
+<div class="mb-3">
+	<strong class="d-block small text-muted mb-1">Virksomheter</strong>
+	<p class="mb-0">
+		{% for v in nav_virksomheter %}
+			{% if list_virksomhet.pk == v.pk %}
+			<span class="btn btn-secondary btn-sm mb-1 fremhev" aria-current="page">{{ v.virksomhetsforkortelse }}</span>
+			{% else %}
+			<a class="btn btn-outline-secondary btn-sm mb-1" href="{% url 'risiko_rammeverk_virksomhet' slug=framework_slug vid=v.pk %}">{{ v.virksomhetsforkortelse }}</a>
+			{% endif %}
+		{% endfor %}
+	</p>
+</div>
+{% endif %}

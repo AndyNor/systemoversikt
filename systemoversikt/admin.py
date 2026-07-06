@@ -9,6 +9,7 @@
 # 2026-06-26: RiskScope eier list_filter uses RelatedOnlyFieldListFilter – avoids loading all ~85k users.
 # 2026-06-26: RiskAction admin on scope; M2M scenarios for shared tiltak.
 # 2026-06-24: RiskScope/RiskScenario/RiskAction admin for security risk module MVP.
+# 2026-07-06: Risk framework admin for aggregation layer emergency access.
 # 2026-06-23: BloodHoundFinding admin + snapshot analysis fields in list display.
 # 2026-06-23: VirksomhetAdmin – intern_tjenesteleverandor list/filter/fieldset for manual flagging.
 # 2026-06-23: System admin fieldset order – forvalter personer/avdeling swap; CMDB/citrix fields below forvaltning_epost.
@@ -1744,6 +1745,37 @@ class RiskActionAdmin(SimpleHistoryAdmin):
 	search_fields = ('beskrivelse', 'ansvarlig')
 	autocomplete_fields = ('scope',)
 	filter_horizontal = ('scenarios',)
+
+
+@admin.register(RiskFramework)
+class RiskFrameworkAdmin(SimpleHistoryAdmin):
+	list_display = ('title', 'slug', 'is_active', 'sist_oppdatert')
+	list_filter = ('is_active',)
+	search_fields = ('title', 'slug', 'beskrivelse')
+
+
+@admin.register(RiskFrameworkNode)
+class RiskFrameworkNodeAdmin(SimpleHistoryAdmin):
+	list_display = ('display_code', 'title', 'framework', 'parent', 'status', 'nummer')
+	list_filter = ('framework', 'status', 'parent')
+	search_fields = ('title', 'forklaring')
+	autocomplete_fields = ('framework', 'parent')
+
+
+@admin.register(RiskScenarioFrameworkLink)
+class RiskScenarioFrameworkLinkAdmin(SimpleHistoryAdmin):
+	list_display = ('scenario', 'framework_node', 'mapped_by', 'mapped_at')
+	list_filter = ('framework_node__framework',)
+	search_fields = ('scenario__uonsket_hendelse', 'framework_node__title')
+	autocomplete_fields = ('scenario', 'framework_node', 'mapped_by')
+
+
+@admin.register(RiskVirksomhetNodeAssessment)
+class RiskVirksomhetNodeAssessmentAdmin(SimpleHistoryAdmin):
+	list_display = ('virksomhet', 'framework_node', 'konsekvens_nivaa', 'sannsynlighet_nivaa', 'sist_revidert')
+	list_filter = ('framework_node__framework', 'virksomhet')
+	search_fields = ('framework_node__title', 'begrunnelse')
+	autocomplete_fields = ('virksomhet', 'framework_node', 'revidert_av')
 
 
 # django-mailer: utvidet søk på To/Cc/Bcc i MessageLog

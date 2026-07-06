@@ -1,0 +1,60 @@
+{% extends "sikkerhet_index.html" %}
+{# 2026-07-06: List of shared risk frameworks for leadership aggregation. #}
+
+{% block overskrift %}
+	Risikorammeverk
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p class="mb-3">
+	<a href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
+</p>
+
+<div class="mb-4" style="background-color: #f8f9fa; padding: 1rem 1.25rem; border-radius: 4px;">
+	<h5 class="mt-0">Om sammenstilling</h5>
+	<p class="mb-0">
+		Risikorammeverk lar dere aggregere operative risikoscenarioer fra risikosamlinger opp til
+		høynivåscenarioer for ledelsen. Kartlegging er valgfri – mange operative scenarioer trenger ikke
+		knyttes til rammeverket.
+	</p>
+</div>
+
+{% if can_edit_framework %}
+<p>
+	<a class="btn btn-outline-primary btn-sm" href="{% url 'risiko_rammeverk_kartlegging' slug='it-plattform' %}">Kartlegging</a>
+</p>
+{% endif %}
+
+<table class="table table-sm table-striped excel">
+	<thead>
+		<tr>
+			<th>Rammeverk</th>
+			<th>Beskrivelse</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for fw in frameworks %}
+		<tr>
+			<td><strong>{{ fw.title }}</strong></td>
+			<td>{{ fw.beskrivelse|truncatewords:30 }}</td>
+			<td class="text-nowrap">
+				{% if profile_virksomhet %}
+				<a class="btn btn-primary btn-sm" href="{% url 'risiko_rammeverk_virksomhet' slug=fw.slug vid=profile_virksomhet.pk %}">
+					{{ profile_virksomhet.virksomhetsforkortelse }}
+				</a>
+				{% endif %}
+				{% if can_edit_framework %}
+				<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_rammeverk_kartlegging' slug=fw.slug %}">Kartlegg</a>
+				<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_rammeverk_rediger' slug=fw.slug %}">Rediger</a>
+				{% endif %}
+			</td>
+		</tr>
+		{% empty %}
+		<tr><td colspan="3">Ingen aktive rammeverk. Kjør <code>seed_risk_framework_it_plattform</code>.</td></tr>
+		{% endfor %}
+	</tbody>
+</table>
+
+{% endblock hovedinnhold %}

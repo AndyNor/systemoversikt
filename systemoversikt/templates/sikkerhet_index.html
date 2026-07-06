@@ -21,7 +21,10 @@
 	<a href="{{ url_rapport_kit_vurderinger_samlet }}" class="btn btn-sm btn-link {% if url_rapport_kit_vurderinger_samlet in request.path %}fremhev{% endif %}">KIT-vurderinger samlet</a><br>
 
 	{% url 'risiko_scope_list' as url_risiko_scope_list %}
-	<a href="{{ url_risiko_scope_list }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/' in request.path %}fremhev{% endif %}">Risikovurderinger</a><br>
+	<a href="{{ url_risiko_scope_list }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/' in request.path and '/sikkerhet/risiko/rammeverk/' not in request.path %}fremhev{% endif %}">Risikovurderinger</a><br>
+
+	{% url 'risiko_rammeverk_list' as url_risiko_rammeverk_list %}
+	<a href="{{ url_risiko_rammeverk_list }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/rammeverk/' in request.path %}fremhev{% endif %}">Risikosammenstilling</a><br>
 
 <hr>
 <h6>For sikkerhetsanalytikere</h6>

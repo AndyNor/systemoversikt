@@ -1,0 +1,153 @@
+{% extends "sikkerhet_index.html" %}
+{% load templatetags %}
+{# 2026-07-06: Per-virksomhet rollup of framework nodes with manual ratings and guidance. #}
+
+{% block overskrift %}
+	{{ framework.title }} – {{ virksomhet.virksomhetsforkortelse }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+{% csrf_token %}
+
+<p class="mb-3">
+	<a href="{% url 'risiko_rammeverk_list' %}">&larr; Risikorammeverk</a>
+	{% if can_edit_framework %}
+	| <a href="{% url 'risiko_rammeverk_kartlegging' slug=framework_slug %}">Kartlegging</a>
+	| <a href="{% url 'risiko_rammeverk_rediger' slug=framework_slug %}">Rediger rammeverk</a>
+	{% endif %}
+</p>
+
+<p class="text-muted">
+	Sammenstilling for <strong>{{ virksomhet.virksomhetsnavn }}</strong>.
+	Manuelt nivå settes per underkategori; veiledende nivå beregnes fra kartlagte operative scenarioer.
+</p>
+
+{% include "risiko_rammeverk_virksomhet_nav.html" with list_virksomhet=virksomhet %}
+
+<div id="risiko-rammeverk-rollup" data-api-urls="{{ api_urls_json|escape }}">
+	{% for cat in rollup_tree %}
+	<div class="card mb-3">
+		<div class="card-header d-flex justify-content-between align-items-center py-2">
+			<button type="button" class="btn btn-link btn-sm p-0 text-left font-weight-bold" data-toggle="collapse" data-target="#rammeverk-cat-{{ cat.pk }}">
+				{{ cat.display_code }}. {{ cat.title }}
+			</button>
+			<span class="badge {{ cat.suggested_css }} px-2 py-1" title="Veiledende nivå (høyeste underkategori)">
+				{{ cat.suggested_label|default:"—" }}
+			</span>
+		</div>
+		<div id="rammeverk-cat-{{ cat.pk }}" class="collapse show">
+			<div class="card-body py-2">
+				<p class="small text-muted mb-2">{{ cat.forklaring }}</p>
+				<table class="table table-sm table-bordered mb-0 risiko-rammeverk-subtable">
+					<thead>
+						<tr>
+							<th style="width:4rem">Nr</th>
+							<th>Underkategori</th>
+							<th style="width:6rem">Kartlagt</th>
+							<th style="width:7rem">Veiledende</th>
+							<th style="width:7rem">Manuelt</th>
+							<th style="width:8rem"></th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for child in cat.children %}
+						<tr data-node-pk="{{ child.pk }}" class="{% if child.differs_from_suggested %}table-warning{% endif %}">
+							<td>{{ child.display_code }}</td>
+							<td>
+								<strong>{{ child.title }}</strong>
+								<div class="small text-muted">{{ child.forklaring|truncatewords:25 }}</div>
+							</td>
+							<td>{{ child.suggested.scenario_count }}</td>
+							<td>
+								<span class="badge {{ child.suggested_css }} px-2 py-1">{{ child.suggested.label|default:"—" }}</span>
+							</td>
+							<td>
+								<span class="badge {{ child.manual.manual_css|default:'risk-cell-empty' }} px-2 py-1 js-manual-label">
+									{% if child.manual and child.manual.manual_label %}{{ child.manual.manual_label }}{% else %}—{% endif %}
+								</span>
+							</td>
+							<td class="text-nowrap">
+								<button type="button" class="btn btn-outline-secondary btn-sm js-drilldown" data-node-pk="{{ child.pk }}">Detaljer</button>
+								{% if can_edit_framework %}
+								<button type="button" class="btn btn-outline-primary btn-sm js-edit-rating" data-node-pk="{{ child.pk }}">Sett nivå</button>
+								{% endif %}
+							</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+	{% endfor %}
+</div>
+
+<div class="modal fade" id="rammeverk-rating-modal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header py-2">
+				<h5 class="modal-title">Sett manuelt risikonivå</h5>
+				<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+			</div>
+			<div class="modal-body">
+				<div class="form-row">
+					<div class="col">
+						<label class="small">Sannsynlighet (1–5)</label>
+						<input type="number" min="1" max="5" class="form-control form-control-sm" id="rammeverk-rating-s">
+					</div>
+					<div class="col">
+						<label class="small">Konsekvens (1–5)</label>
+						<input type="number" min="1" max="5" class="form-control form-control-sm" id="rammeverk-rating-k">
+					</div>
+				</div>
+				<div class="mt-2">
+					<label class="small">Begrunnelse</label>
+					<textarea class="form-control form-control-sm" id="rammeverk-rating-begrunnelse" rows="3"></textarea>
+				</div>
+			</div>
+			<div class="modal-footer justify-content-between w-100 py-2">
+				<div>
+					<button type="button" class="btn btn-outline-secondary btn-sm" id="rammeverk-apply-suggestion">Bruk veiledende</button>
+				</div>
+				<div>
+					<button type="button" class="btn btn-primary btn-sm" id="rammeverk-save-rating">Lagre</button>
+					<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="modal fade" id="rammeverk-drilldown-modal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header py-2">
+				<h5 class="modal-title">Kartlagte scenarioer</h5>
+				<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+			</div>
+			<div class="modal-body p-0" id="rammeverk-drilldown-body">
+				<p class="p-3 mb-0 text-muted">Laster…</p>
+			</div>
+		</div>
+	</div>
+</div>
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+<style nonce="{{ request.csp_nonce }}">
+.risk-cell-lav { background-color: #c0eb96; }
+.risk-cell-middels { background-color: #ffecb2; }
+.risk-cell-hoy { background-color: #ffc8cd; }
+.risk-cell-empty { background-color: #f1f3f5; color: #6c757d; }
+</style>
+<script src="/static/risiko_rammeverk.js" nonce="{{ request.csp_nonce }}"></script>
+<script nonce="{{ request.csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function () {
+	if (window.RisikoRammeverk) {
+		window.RisikoRammeverk.initRollup(document.getElementById('risiko-rammeverk-rollup'));
+	}
+});
+</script>
+{% endblock script_append %}

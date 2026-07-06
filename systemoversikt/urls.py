@@ -10,6 +10,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 # 2026-06-24: Risk scenario/tiltak AJAX API routes.
 # 2026-06-30: Membership and virksomhet API routes for risikosamling access control.
 # 2026-06-24: Security risk module URLs under /sikkerhet/risiko/.
+# 2026-07-06: Risk framework aggregation URLs under /sikkerhet/risiko/rammeverk/.
 # 2026-06-24: CA rules detail URL – /rules/<pk>/ for single Azure policy; list stays at /rules/.
 # 2026-06-23: BloodHound upload API and status page.
 # 2026-06-23: Developer docs URL for Tjeneste- og systemoversikt API.
@@ -29,7 +30,9 @@ import systemoversikt.views_import as views_import
 import systemoversikt.api_bloodhound as api_bloodhound
 import systemoversikt.views_bloodhound as views_bloodhound
 import systemoversikt.views_risiko as views_risiko
+import systemoversikt.views_risiko_rammeverk as views_risiko_rammeverk
 import systemoversikt.api_risiko as api_risiko
+import systemoversikt.api_risiko_rammeverk as api_risiko_rammeverk
 import systemoversikt.api_risiko_virksomhet as api_risiko_virksomhet
 
 favicon_view = RedirectView.as_view(url='/static/favicon/favicon.ico', permanent=True)
@@ -134,6 +137,23 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/akseptkriterier/importer/$', views_risiko.risiko_akseptkriterier_importer, name='risiko_akseptkriterier_importer'),
 	re_path(r'^sikkerhet/risiko/akseptkriterier/rediger/$', views_risiko.risiko_akseptkriterier_rediger, name='risiko_akseptkriterier_rediger'),
 	re_path(r'^sikkerhet/risiko/akseptkriterier/$', views_risiko.risiko_akseptkriterier, name='risiko_akseptkriterier'),
+	re_path(r'^sikkerhet/risiko/rammeverk/$', views_risiko_rammeverk.risiko_rammeverk_list, name='risiko_rammeverk_list'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/rediger/$', views_risiko_rammeverk.risiko_rammeverk_rediger, name='risiko_rammeverk_rediger'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/kartlegging/$', views_risiko_rammeverk.risiko_rammeverk_kartlegging, name='risiko_rammeverk_kartlegging'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/virksomhet/(?P<vid>\d{1,8})/$', views_risiko_rammeverk.risiko_rammeverk_virksomhet, name='risiko_rammeverk_virksomhet'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/api/taxonomy/$', api_risiko_rammeverk.api_risiko_rammeverk_taxonomy, name='api_risiko_rammeverk_taxonomy'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/api/nodes/active/$', api_risiko_rammeverk.api_risiko_rammeverk_active_nodes, name='api_risiko_rammeverk_active_nodes'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/api/nodes/create/$', api_risiko_rammeverk.api_risiko_rammeverk_node_create, name='api_risiko_rammeverk_node_create'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/api/nodes/(?P<nid>\d{1,8})/update/$', api_risiko_rammeverk.api_risiko_rammeverk_node_update, name='api_risiko_rammeverk_node_update'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/api/nodes/(?P<nid>\d{1,8})/archive/$', api_risiko_rammeverk.api_risiko_rammeverk_node_archive, name='api_risiko_rammeverk_node_archive'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/api/nodes/(?P<nid>\d{1,8})/retire/$', api_risiko_rammeverk.api_risiko_rammeverk_node_retire, name='api_risiko_rammeverk_node_retire'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/api/scenarios/$', api_risiko_rammeverk.api_risiko_rammeverk_scenarios, name='api_risiko_rammeverk_scenarios'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/api/links/create/$', api_risiko_rammeverk.api_risiko_rammeverk_link_create, name='api_risiko_rammeverk_link_create'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/api/links/(?P<lid>\d{1,8})/delete/$', api_risiko_rammeverk.api_risiko_rammeverk_link_delete, name='api_risiko_rammeverk_link_delete'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/virksomhet/(?P<vid>\d{1,8})/api/rollup/$', api_risiko_rammeverk.api_risiko_rammeverk_rollup, name='api_risiko_rammeverk_rollup'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/virksomhet/(?P<vid>\d{1,8})/api/nodes/(?P<nid>\d{1,8})/scenarios/$', api_risiko_rammeverk.api_risiko_rammeverk_node_scenarios, name='api_risiko_rammeverk_node_scenarios'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/virksomhet/(?P<vid>\d{1,8})/api/nodes/(?P<nid>\d{1,8})/assessment/$', api_risiko_rammeverk.api_risiko_rammeverk_assessment_save, name='api_risiko_rammeverk_assessment_save'),
+	re_path(r'^sikkerhet/risiko/rammeverk/(?P<slug>[-a-z0-9]+)/virksomhet/(?P<vid>\d{1,8})/api/nodes/(?P<nid>\d{1,8})/assessment/apply/$', api_risiko_rammeverk.api_risiko_rammeverk_assessment_apply, name='api_risiko_rammeverk_assessment_apply'),
 	re_path(r'^sikkerhet/risiko/api/systemer/sok/$', api_risiko.api_risiko_systemer_sok, name='api_risiko_systemer_sok'),
 	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/$', api_risiko_virksomhet.api_risiko_read_groups_list, name='api_risiko_read_groups_list'),
 	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/create/$', api_risiko_virksomhet.api_risiko_read_group_create, name='api_risiko_read_group_create'),

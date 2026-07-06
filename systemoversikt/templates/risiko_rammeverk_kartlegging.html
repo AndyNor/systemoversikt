@@ -1,0 +1,87 @@
+{% extends "sikkerhet_index.html" %}
+{# 2026-07-06: Cross-collection mapping workspace for security analysts. #}
+
+{% block overskrift %}
+	Kartlegging – {{ framework.title }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+{% csrf_token %}
+
+<p class="mb-3">
+	<a href="{% url 'risiko_rammeverk_list' %}">&larr; Risikorammeverk</a>
+	| <a href="{% url 'risiko_rammeverk_rediger' slug=framework_slug %}">Rediger rammeverk</a>
+</p>
+
+<div id="risiko-rammeverk-kartlegging" data-api-urls="{{ api_urls_json|escape }}">
+	<div class="card mb-3">
+		<div class="card-body py-2">
+			<div class="form-row align-items-end">
+				<div class="col-md-3">
+					<label class="small mb-0">Virksomhet</label>
+					<select class="form-control form-control-sm" id="kartlegging-virksomhet">
+						<option value="">Alle</option>
+						{% for v in nav_virksomheter %}
+						<option value="{{ v.pk }}" {% if profile_virksomhet and v.pk == profile_virksomhet.pk %}selected{% endif %}>{{ v.virksomhetsforkortelse }}</option>
+						{% endfor %}
+					</select>
+				</div>
+				<div class="col-md-4">
+					<label class="small mb-0">Søk</label>
+					<input type="search" class="form-control form-control-sm" id="kartlegging-q" placeholder="Hendelse, R-id, samling…">
+				</div>
+				<div class="col-md-3">
+					<label class="small mb-0 d-block">&nbsp;</label>
+					<label class="mb-0 small"><input type="checkbox" id="kartlegging-unmapped"> Kun ukartlagte</label>
+				</div>
+				<div class="col-md-2">
+					<button type="button" class="btn btn-primary btn-sm btn-block" id="kartlegging-search">Søk</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-lg-7">
+			<h5>Operative scenarioer</h5>
+			<div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+				<table class="table table-sm table-striped excel" id="kartlegging-scenarios-table">
+					<thead>
+						<tr>
+							<th style="width:2rem"><input type="checkbox" id="kartlegging-select-all"></th>
+							<th>R#</th>
+							<th>Samling</th>
+							<th>Hendelse</th>
+							<th>Kartlagt</th>
+						</tr>
+					</thead>
+					<tbody id="kartlegging-scenarios-body">
+						<tr><td colspan="5" class="text-muted">Søk for å vise scenarioer.</td></tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<div class="col-lg-5">
+			<h5>Knytt til underkategori</h5>
+			<select class="form-control form-control-sm mb-2" id="kartlegging-target-node">
+				<option value="">Velg underkategori…</option>
+			</select>
+			<button type="button" class="btn btn-success btn-sm" id="kartlegging-link-btn">Knytt valgte</button>
+			<p class="small text-muted mt-2 mb-0">Valgte scenarioer knyttes til valgt underkategori. Eksisterende koblinger beholdes.</p>
+		</div>
+	</div>
+</div>
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+<script src="/static/risiko_rammeverk.js" nonce="{{ request.csp_nonce }}"></script>
+<script nonce="{{ request.csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function () {
+	if (window.RisikoRammeverk) {
+		window.RisikoRammeverk.initKartlegging(document.getElementById('risiko-rammeverk-kartlegging'));
+	}
+});
+</script>
+{% endblock script_append %}

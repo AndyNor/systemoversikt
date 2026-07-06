@@ -8200,3 +8200,232 @@ class RiskAction(models.Model):
 		verbose_name_plural = "Risiko: tiltak"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['pk']
+
+
+RISK_FRAMEWORK_NODE_STATUS_VALG = (
+	('active', 'Aktiv'),
+	('archived', 'Arkivert'),
+)
+RISK_FRAMEWORK_NODE_STATUS_ACTIVE = 'active'
+RISK_FRAMEWORK_NODE_STATUS_ARCHIVED = 'archived'
+
+
+class RiskFramework(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	title = models.CharField(
+		verbose_name="Tittel",
+		max_length=200,
+	)
+	slug = models.SlugField(
+		verbose_name="Slug",
+		max_length=80,
+		unique=True,
+	)
+	beskrivelse = models.TextField(
+		verbose_name="Beskrivelse",
+		blank=True,
+		default='',
+	)
+	is_active = models.BooleanField(
+		verbose_name="Aktiv",
+		default=True,
+		db_index=True,
+	)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return self.title
+
+	class Meta:
+		verbose_name = "risikorammeverk"
+		verbose_name_plural = "Risiko: rammeverk"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['title']
+
+
+class RiskFrameworkNode(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	framework = models.ForeignKey(
+		to=RiskFramework,
+		on_delete=models.CASCADE,
+		related_name='nodes',
+		verbose_name="Rammeverk",
+	)
+	parent = models.ForeignKey(
+		to='self',
+		on_delete=models.CASCADE,
+		related_name='children',
+		verbose_name="Overordnet kategori",
+		blank=True,
+		null=True,
+	)
+	nummer = models.PositiveSmallIntegerField(
+		verbose_name="Nummer",
+		default=1,
+	)
+	title = models.CharField(
+		verbose_name="Tittel",
+		max_length=300,
+	)
+	forklaring = models.TextField(
+		verbose_name="Forklaring",
+		blank=True,
+		default='',
+	)
+	status = models.CharField(
+		verbose_name="Status",
+		max_length=20,
+		choices=RISK_FRAMEWORK_NODE_STATUS_VALG,
+		default=RISK_FRAMEWORK_NODE_STATUS_ACTIVE,
+		db_index=True,
+	)
+	rekkefolge = models.PositiveIntegerField(
+		verbose_name="Rekkefølge",
+		default=0,
+	)
+	history = HistoricalRecords()
+
+	def is_leaf(self):
+		return not self.children.filter(status=RISK_FRAMEWORK_NODE_STATUS_ACTIVE).exists()
+
+	def display_code(self):
+		if self.parent_id:
+			return '%d.%d' % (self.parent.nummer, self.nummer)
+		return str(self.nummer)
+
+	def __str__(self):
+		return '%s %s' % (self.display_code(), self.title)
+
+	class Meta:
+		verbose_name = "risikorammeverk-node"
+		verbose_name_plural = "Risiko: rammeverk-noder"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['framework', 'parent__rekkefolge', 'parent__nummer', 'rekkefolge', 'nummer']
+		unique_together = (
+			('framework', 'parent', 'nummer'),
+		)
+
+
+class RiskScenarioFrameworkLink(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	scenario = models.ForeignKey(
+		to=RiskScenario,
+		on_delete=models.CASCADE,
+		related_name='framework_links',
+		verbose_name="Risikoscenario",
+	)
+	framework_node = models.ForeignKey(
+		to=RiskFrameworkNode,
+		on_delete=models.CASCADE,
+		related_name='scenario_links',
+		verbose_name="Rammeverk-node",
+	)
+	mapped_by = models.ForeignKey(
+		to=User,
+		on_delete=models.SET_NULL,
+		related_name='risk_framework_links_created',
+		verbose_name="Kartlagt av",
+		blank=True,
+		null=True,
+	)
+	mapped_at = models.DateTimeField(
+		verbose_name="Kartlagt",
+		auto_now_add=True,
+	)
+	note = models.TextField(
+		verbose_name="Notat",
+		blank=True,
+		default='',
+	)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return '%s → %s' % (self.scenario_id, self.framework_node_id)
+
+	class Meta:
+		verbose_name = "risikoscenario-rammeverk-kobling"
+		verbose_name_plural = "Risiko: scenario-rammeverk-koblinger"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		unique_together = ('scenario', 'framework_node')
+
+
+class RiskVirksomhetNodeAssessment(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	virksomhet = models.ForeignKey(
+		to='Virksomhet',
+		on_delete=models.CASCADE,
+		related_name='risk_framework_assessments',
+		verbose_name="Virksomhet",
+	)
+	framework_node = models.ForeignKey(
+		to=RiskFrameworkNode,
+		on_delete=models.CASCADE,
+		related_name='virksomhet_assessments',
+		verbose_name="Rammeverk-node",
+	)
+	konsekvens_nivaa = models.PositiveSmallIntegerField(
+		verbose_name="Konsekvens",
+		blank=True,
+		null=True,
+	)
+	sannsynlighet_nivaa = models.PositiveSmallIntegerField(
+		verbose_name="Sannsynlighet",
+		blank=True,
+		null=True,
+	)
+	begrunnelse = models.TextField(
+		verbose_name="Begrunnelse",
+		blank=True,
+		default='',
+	)
+	sist_revidert = models.DateField(
+		verbose_name="Sist revidert",
+		blank=True,
+		null=True,
+	)
+	revidert_av = models.ForeignKey(
+		to=User,
+		on_delete=models.SET_NULL,
+		related_name='risk_framework_assessments_revised',
+		verbose_name="Revidert av",
+		blank=True,
+		null=True,
+	)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return '%s / %s' % (self.virksomhet_id, self.framework_node_id)
+
+	class Meta:
+		verbose_name = "risikovurdering rammeverk-node"
+		verbose_name_plural = "Risiko: virksomhetsvurderinger rammeverk"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		unique_together = ('virksomhet', 'framework_node')

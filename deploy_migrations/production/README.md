@@ -1,39 +1,29 @@
-# Production migration transfer
+# Production migration transfer (archived)
 
-These files are **not** used by local `manage.py migrate`. Copy all four to the server:
+**As of 2026-07-06:** Test and production have been squashed to `systemoversikt/migrations/0001_initial.py`. New schema changes are normal Django migrations in `systemoversikt/migrations/` — deploy with `manage.py migrate` (see `oslokommune/build.sh`). Do **not** copy files from this folder for new features.
 
-`systemoversikt/migrations/`
+## Current migrations (post-squash)
 
-## When
+| File | Purpose |
+|------|---------|
+| `0001_initial.py` | Squashed baseline (all models through risk virksomhet groups, etc.) |
+| `0002_risk_framework_layer.py` | Risk framework aggregation layer (`RiskFramework`, nodes, links, assessments) |
 
-- `0457_riskvirksomhetreadgroup_and_more` is applied (create read-group tables only)
-- Broken `0458_historical…` file is deleted
-- Current application code (RiskVirksomhetGroup, participant_groups, etc.) is deployed
-
-## Files (apply in order)
-
-| File | Dev equivalent | Purpose |
-|------|----------------|---------|
-| `0458_risk_participant_groups.py` | 0220 | `virksomhet_read_only`, `participant_groups`, data migration |
-| `0459_rename_risk_virksomhet_group.py` | 0221 | Rename all four models, constraints, M2M target |
-| `0460_alter_risk_virksomhet_group_related_names.py` | 0222 | `related_name` on FK fields |
-| `0461_risk_virksomhet_group_historical_meta.py` | 0223 | Historical model verbose names |
-
-## Commands on server
+After deploy, on server:
 
 ```bash
-python manage.py migrate --plan
 python manage.py migrate systemoversikt
-python manage.py makemigrations systemoversikt --dry-run
+python manage.py seed_risk_framework_it_plattform   # first time only
+python manage.py makemigrations systemoversikt --dry-run   # should report no changes
 ```
 
-After migrate, `makemigrations --dry-run` should report **No changes detected**.
+## Archived files below (pre-squash transfer only)
 
-## Verify before migrate
+The `0458`–`0461` files were a one-off transfer when production migration history diverged from dev. They are kept for reference only if an environment still lists those numbers in `django_migrations`. Environments that have run the squash should **not** apply these.
 
-```bash
-python manage.py sqlmigrate systemoversikt 0458
-python manage.py sqlmigrate systemoversikt 0459
-```
-
-0458 should add columns/M2M; 0459 should rename tables (no DROP of group tables).
+| File | Purpose (historical) |
+|------|----------------------|
+| `0458_risk_participant_groups.py` | `virksomhet_read_only`, `participant_groups` |
+| `0459_rename_risk_virksomhet_group.py` | Rename read-group models |
+| `0460_alter_risk_virksomhet_group_related_names.py` | `related_name` on FK fields |
+| `0461_risk_virksomhet_group_historical_meta.py` | Historical model verbose names |
