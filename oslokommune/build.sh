@@ -8,7 +8,7 @@ pip install -q -r /var/kartoteket/source/systemoversikt/requirements.txt
 
 
 echo "Migrating database.."
-python /var/kartoteket/source/systemoversikt/manage.py makemigrations
+#python /var/kartoteket/source/systemoversikt/manage.py makemigrations
 python /var/kartoteket/source/systemoversikt/manage.py migrate
 
 echo "Collecting static files.."
