@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 # 2026-07-06: Manual assessment restricted to main categories (hovedkategori).
 # Change log:
+# 2026-07-06: Active nodes API – parent display code for kartlegging dropdown grouping.
+# 2026-07-06: Kartlegging scenario search – q also matches linked tiltak beskrivelse.
 # 2026-07-06: Kartlegging scenario search – eskaleres_only filter parameter.
 # 2026-07-06: Kartlegging scenario search includes nåværende and etter-tiltak risk labels.
 # 2026-07-06: Group-owned sammenstilling APIs – mapping, rollup, assessments with scope-level access.
@@ -138,6 +140,8 @@ def api_risiko_sammenstilling_active_nodes(request, pk):
 				'pk': n.pk,
 				'display_code': n.display_code(),
 				'title': n.title,
+				'parent_pk': n.parent_id,
+				'parent_display_code': n.parent.display_code() if n.parent_id else '',
 				'parent_title': n.parent.title if n.parent_id else '',
 			}
 			for n in leaves

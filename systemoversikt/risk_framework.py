@@ -6,6 +6,7 @@
 # 2026-07-06: Category-level manual assessment + nåværende-risiko matrix for sammenstilling.
 # 2026-07-06: Kartlegging filter – scenarios with tiltak where eskaleres=True.
 # 2026-07-06: Kartlegging API rows – per-scope display ids and explicit risk level fields.
+# 2026-07-06: Kartlegging search – also match linked tiltak beskrivelse (scope read access only).
 # 2026-07-06: Kartlegging search – hendelse and samling only (not R-id).
 # 2026-07-06: Rollup/mapping keyed by RiskSammenstilling; scope-level scenario search for kartlegging.
 # 2026-07-06: Template taxonomy helpers – superuser-managed maler independent of virksomhet.
@@ -603,6 +604,7 @@ def search_scenarios_for_mapping(sammenstilling, user, virksomhet_id=None, scope
 		qs = qs.filter(
 			Q(uonsket_hendelse__icontains=q)
 			| Q(scope__title__icontains=q)
+			| Q(actions__beskrivelse__icontains=q)
 		)
 	return qs.distinct()
 

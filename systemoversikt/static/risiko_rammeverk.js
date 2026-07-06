@@ -1,3 +1,5 @@
+// 2026-07-06: Kartlegging node select – optgroup per hovedkategori for easier navigation.
+// 2026-07-06: Sammenstilling kartlegging – optional hide R# column via data-hide-risk-id.
 // 2026-07-06: Detail page – unlink scenario from subcategory via linkDelete API.
 // 2026-07-06: Kartlegging eskaleres_only filter – scenarios linked to flagged tiltak.
 // 2026-07-06: Kartlegging risk cells use risiko-level-tag (colored tags like scope table).
@@ -157,7 +159,10 @@
     }
     var riskMatrix = riskMeta.risk_matrix || {};
     var tbody = document.getElementById('kartlegging-scenarios-body');
+    var table = document.getElementById('kartlegging-scenarios-table');
     var nodeSelect = document.getElementById('kartlegging-target-node');
+    var hideRiskId = root.getAttribute('data-hide-risk-id') === '1';
+    var colCount = table ? table.querySelectorAll('thead th').length : (hideRiskId ? 6 : 7);
 
     function riskCellClass(label) {
       if (label === 'Lav') return 'risk-cell-lav';
@@ -192,23 +197,38 @@
       return '<span class="risiko-level-tag ' + escapeHtml(cls) + '">' + escapeHtml(label) + '</span>';
     }
 
+    function kartleggingParentLabel(node) {
+      var code = node.parent_display_code || '';
+      var title = node.parent_title || '';
+      if (code && title) return code + ' ' + title;
+      return title || code || 'Kategori';
+    }
+
     function loadNodes() {
       if (!urls.activeNodes || !nodeSelect) return;
       getJson(urls.activeNodes).then(function (data) {
         if (!data.ok) return;
         nodeSelect.innerHTML = '<option value="">Velg underkategori…</option>';
+        var currentGroup = null;
+        var currentParentPk = null;
         data.nodes.forEach(function (n) {
+          var parentPk = n.parent_pk != null ? String(n.parent_pk) : '';
+          if (parentPk !== currentParentPk) {
+            currentParentPk = parentPk;
+            currentGroup = document.createElement('optgroup');
+            currentGroup.label = kartleggingParentLabel(n);
+            nodeSelect.appendChild(currentGroup);
+          }
           var opt = document.createElement('option');
           opt.value = n.pk;
           opt.textContent = n.display_code + ' ' + n.title;
-          nodeSelect.appendChild(opt);
+          currentGroup.appendChild(opt);
         });
       });
     }
 
     function search() {
       if (!urls.scenarioSearch || !tbody) return;
-      var colCount = 7;
       var params = new URLSearchParams();
       var virksomhetEl = document.getElementById('kartlegging-virksomhet');
       var q = document.getElementById('kartlegging-q').value;
@@ -235,7 +255,7 @@
           var resLabel = scenarioResidualLabel(s);
           tr.innerHTML =
             '<td><input type="checkbox" class="kartlegging-scenario-cb" value="' + s.pk + '"></td>' +
-            '<td>' + escapeHtml(s.display_id) + '</td>' +
+            (hideRiskId ? '' : '<td>' + escapeHtml(s.display_id) + '</td>') +
             '<td>' + escapeHtml((s.virksomhet ? s.virksomhet + ' – ' : '') + s.scope_title) + '</td>' +
             '<td>' + escapeHtml(s.uonsket_hendelse.substring(0, 100)) + '</td>' +
             '<td class="kartlegging-risk-cell">' + riskLevelTag(curLabel, s.current_css || s.risiko_css) + '</td>' +

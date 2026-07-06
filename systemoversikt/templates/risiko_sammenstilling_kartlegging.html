@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
-{# 2026-07-06: Eskaleres-filter checkbox – default on for kartlegging scenario search. #}
+{# 2026-07-06: Hide R# column – not useful when mapping scenarios to subcategories. #}
+{# 2026-07-06: Eskaleres-filter checkbox – default off for kartlegging scenario search. #}
 {# 2026-07-06: risiko-level-tag styles – colored Lav/Middels/Høy tags in scenario table. #}
 {# 2026-07-06: data-risk-meta – client can derive risk labels from konsekvens/sannsynlighet levels. #}
 {# 2026-07-06: Kartlegging layout – link block above scenarios; risk columns; unmapped default on. #}
@@ -40,13 +41,13 @@
 	Eiergruppe: <strong>{{ sammenstilling.owner_group.display_title }}</strong>.
 </p>
 
-<div id="risiko-rammeverk-kartlegging" data-api-urls="{{ api_urls_json|escape }}" data-risk-meta="{{ risk_meta_json|escape }}">
+<div id="risiko-rammeverk-kartlegging" data-api-urls="{{ api_urls_json|escape }}" data-risk-meta="{{ risk_meta_json|escape }}" data-hide-risk-id="1">
 	<div class="card mb-3">
 		<div class="card-body py-2">
 			<div class="form-row align-items-end">
 				<div class="col-md-3">
 					<label class="small mb-0">Søk</label>
-					<input type="search" class="form-control form-control-sm" id="kartlegging-q" placeholder="Hendelse, samling…">
+					<input type="search" class="form-control form-control-sm" id="kartlegging-q" placeholder="Hendelse, samling, tiltak…">
 				</div>
 				<div class="col-md-3">
 					<label class="small mb-0 d-block">&nbsp;</label>
@@ -54,7 +55,7 @@
 				</div>
 				<div class="col-md-4">
 					<label class="small mb-0 d-block">&nbsp;</label>
-					<label class="mb-0 small"><input type="checkbox" id="kartlegging-eskaleres" checked> Kun scenarioer med tiltak som må eskaleres</label>
+					<label class="mb-0 small"><input type="checkbox" id="kartlegging-eskaleres"> Kun scenarioer med tiltak som må eskaleres</label>
 				</div>
 				<div class="col-md-2">
 					<button type="button" class="btn btn-primary btn-sm btn-block" id="kartlegging-search">Søk</button>
@@ -84,7 +85,6 @@
 			<thead>
 				<tr>
 					<th style="width:2rem"><input type="checkbox" id="kartlegging-select-all"></th>
-					<th>R#</th>
 					<th>Samling</th>
 					<th>Hendelse</th>
 					<th>Nåværende</th>
@@ -93,7 +93,7 @@
 				</tr>
 			</thead>
 			<tbody id="kartlegging-scenarios-body">
-				<tr><td colspan="7" class="text-muted">Laster…</td></tr>
+				<tr><td colspan="6" class="text-muted">Laster…</td></tr>
 			</tbody>
 		</table>
 	</div>

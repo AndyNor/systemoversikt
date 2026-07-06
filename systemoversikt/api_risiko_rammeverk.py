@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-06: Active nodes API – parent display code for kartlegging dropdown grouping.
 # 2026-07-06: Mal taxonomy APIs require superuser for all methods – editor-only endpoints.
 # 2026-07-06: Automatic category numbering – create always assigns next nummer; update ignores nummer.
 # 2026-07-06: Superuser-only template taxonomy APIs – maler independent of virksomhet.
@@ -108,6 +109,7 @@ def api_risiko_mal_active_nodes(request, slug):
 				'display_code': n.display_code(),
 				'title': n.title,
 				'parent_pk': n.parent_id,
+				'parent_display_code': n.parent.display_code() if n.parent_id else '',
 				'parent_title': n.parent.title if n.parent_id else '',
 			}
 			for n in leaves
