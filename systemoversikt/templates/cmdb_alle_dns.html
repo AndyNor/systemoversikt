@@ -13,26 +13,51 @@
 
 {% include "includes/integrasjon_freshness_banner.html" with label="DNS-data ble sist synkronisert" %}
 
-	<p>Det er {{ alle_dnsnavn.count }} navn/alias/mx/txt i databasen.</p>
+	<p>
+		{% if dns_search_term %}
+			Fant {{ total_count|intcomma }} navn/alias/mx/txt som passer med søket.
+		{% else %}
+			Det er {{ total_count|intcomma }} navn/alias/mx/txt i databasen.
+		{% endif %}
+		{% if page_obj.paginator.num_pages > 1 %}
+			Viser {{ page_obj.start_index }}–{{ page_obj.end_index }}.
+		{% endif %}
+	</p>
+
+	<form action="{% url 'alle_dns' %}" autocomplete="off">
+		<div class="form-group form-inline">
+			<input size="55" style="width: 450px;" type="search" value="{{ dns_search_term }}" name="search_term"
+			placeholder="Søk på DNS-navn, fullt domenenavn, alias, type, IP eller kilde" class="form-control form-control-sm">
+			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
+			{% if dns_search_term %}
+			<a class="btn btn-sm" href="{% url 'alle_dns' %}">Tøm søk</a>
+			{% endif %}
+		</div>
+	</form>
 
 	<hr>
 
 	{% url 'dns_txt' as url_dns_txt %}
 	<a href="{{url_dns_txt}}" class="btn btn-sm btn-link {% if url_dns_txt in request.path %}fremhev{% endif %}">Vis alle TXT-records</a>
 
+	{% if total_count == 0 %}
+		<p><i>Ingen DNS-innslag{% if dns_search_term %} som passer med søket{% endif %}.</i></p>
+	{% else %}
 	<table class="table table-sm tablesorter excel">
 	<thead>
-		<th>DNS-navn</th>
-		<th>Alias mot</th>
-		<th>DNS-type</th>
-		<th>IP adresse</th>
-		<th>Time to live (TTL)</th>
-		<th>Kilde</th>
+		<tr>
+			<th>DNS-navn</th>
+			<th>Alias mot</th>
+			<th>DNS-type</th>
+			<th>IP adresse</th>
+			<th>Time to live (TTL)</th>
+			<th>Kilde</th>
+		</tr>
 	</thead>
 	<tbody>
-	{% for dns in alle_dnsnavn %}
+	{% for dns in dns_records %}
 		<tr>
-			<td>{{ dns.dns_name }}</td>
+			<td>{{ dns.dns_name }}{% if dns.dns_domain %}.{{ dns.dns_domain }}{% endif %}</td>
 			<td>{{ dns.dns_target|default:"" }}</td>
 			<td>{{ dns.dns_type }}</td>
 			<td>{{ dns.ip_address }}</td>
@@ -42,5 +67,20 @@
 	{% endfor %}
 	</tbody>
 	</table>
+
+	{% if page_obj.paginator.num_pages > 1 %}
+	<nav>
+		<ul class="pagination pagination-sm">
+			{% if page_obj.has_previous %}
+			<li class="page-item"><a class="page-link" href="?{{ filter_query }}{% if filter_query %}&{% endif %}page={{ page_obj.previous_page_number }}">Forrige</a></li>
+			{% endif %}
+			<li class="page-item disabled"><span class="page-link">Side {{ page_obj.number }} av {{ page_obj.paginator.num_pages }}</span></li>
+			{% if page_obj.has_next %}
+			<li class="page-item"><a class="page-link" href="?{{ filter_query }}{% if filter_query %}&{% endif %}page={{ page_obj.next_page_number }}">Neste</a></li>
+			{% endif %}
+		</ul>
+	</nav>
+	{% endif %}
+	{% endif %}
 
 {% endblock hovedinnhold %}

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: alle_dns – fix search (FQDN/IP) and explicit template context.
+# 2026-07-07: alle_dns – search and pagination for 46k+ DNS records.
+# 2026-07-07: Global /sok/ redirects IPv4/CIDR terms to alle_ip when user has CMDB access.
 # 2026-07-02: Qualys landing chart – CMDB server count line from audit log on dual y-axis.
 # 2026-07-02: Qualys import chart – stacked severity bars plus total line from audit log.
 # 2026-07-02: sikkerhet_sarbarheter – landing page with links; Qualys import chart from audit log.
@@ -34,6 +37,7 @@
 # 2026-06-21: Removed phased-out virksomhet dashboard (template, view, URLs).
 # 2026-06-21: _integrasjonsstatus helpers – shared lookup for import freshness on source pages.
 from django.shortcuts import render, redirect, get_object_or_404
+from django.core.paginator import Paginator
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core import serializers
 from systemoversikt.models import *
@@ -47,7 +51,8 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.contrib import messages
-from django.db.models import Count, Q, Sum, F, Avg, Max, FloatField, ExpressionWrapper, Case, When, Value
+from django.db.models.functions import Concat, Cast
+from django.db.models import CharField, Count, Q, Sum, F, Avg, Max, FloatField, ExpressionWrapper, Case, When, Value
 from django.db.models import Prefetch
 from django.template.loader import render_to_string
 from django.db.models.functions import Lower, TruncMonth, TruncYear, TruncDay, TruncDate, Substr
@@ -3817,17 +3822,57 @@ def cmdb_devicedetails(request, pk):
 
 
 
+def _dns_record_search_queryset(search_term):
+	"""Filter DNS records by hostname, alias, type, source, domain, FQDN or IP."""
+	term = (search_term or '').strip()
+	if not term or term == '__ALL__':
+		return DNSrecord.objects.all()
+
+	text_filters = (
+		Q(dns_name__icontains=term) |
+		Q(dns_target__icontains=term) |
+		Q(dns_type__icontains=term) |
+		Q(source__icontains=term) |
+		Q(dns_domain__icontains=term)
+	)
+	qs = DNSrecord.objects.annotate(
+		dns_full=Concat('dns_name', Value('.'), 'dns_domain', output_field=CharField()),
+		ip_text=Cast('ip_address', CharField()),
+	).filter(text_filters | Q(dns_full__icontains=term) | Q(ip_text__icontains=term))
+	return qs
+
+
 def alle_dns(request):
-	#Vise alle DNS navn og alias
+	# 2026-07-07: Search and pagination – avoid loading 46k+ DNS rows in one response.
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	alle_dnsnavn = DNSrecord.objects.all()
+	DNS_PAGE_SIZE = 100
+
+	search_term_raw = request.GET.get('search_term', '')
+	search_term = search_term_raw.strip()
+
+	qs = _dns_record_search_queryset(search_term).order_by('dns_name', 'dns_type', 'pk')
+
+	paginator = Paginator(qs, DNS_PAGE_SIZE)
+	page_number = request.GET.get('page', '1')
+	page_obj = paginator.get_page(page_number)
+	total_count = paginator.count
+
+	query_parts = {}
+	if search_term_raw:
+		query_parts['search_term'] = search_term_raw
+	filter_query = urlencode(query_parts)
+
 	return render(request, 'cmdb_alle_dns.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-		'alle_dnsnavn': alle_dnsnavn,
+		'page_obj': page_obj,
+		'dns_records': page_obj.object_list,
+		'total_count': total_count,
+		'dns_search_term': search_term_raw,
+		'filter_query': filter_query,
 		'integrasjonsstatus': _integrasjonsstatus("sp_dns"),
 	})
 
@@ -6086,6 +6131,14 @@ def search(request):
 
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 	navigasjonstreff = []
+
+	# 2026-07-07: Route pure IPv4/CIDR lookups to IP search instead of generic entity search.
+	if (
+		search_term
+		and request.user.has_perm('systemoversikt.view_cmdbdevice')
+		and _search_term_is_ip_lookup(search_term)
+	):
+		return redirect(f"{reverse('alle_ip')}?{urlencode({'search_term': search_term})}")
 
 	try:
 		v = Virksomhet.objects.get(virksomhetsforkortelse__iexact=search_term)
@@ -9871,6 +9924,30 @@ _IPV4_CIDR_TOKEN_RE = re.compile(
 )
 
 
+def _search_term_is_ip_lookup(search_term):
+	"""True when the whole search string is only IPv4 address(es) and/or IPv4 CIDR."""
+	term = search_term.strip()
+	if len(term) <= 1:
+		return False
+
+	subnet_tokens, remainder = _extract_ipv4_cidr_tokens(term)
+	remainder = remainder.replace('"', '').replace("'", '').replace(':', ' ')
+	tokens = re.findall(r'([^,;\t\s\n\r]+)', remainder.strip())
+
+	if not tokens:
+		return bool(subnet_tokens)
+
+	for token in tokens:
+		try:
+			ip = ipaddress.ip_address(token.strip())
+			if not isinstance(ip, ipaddress.IPv4Address):
+				return False
+		except ValueError:
+			return False
+
+	return True
+
+
 def _extract_ipv4_cidr_tokens(text):
 	"""Plukk ut IPv4 CIDR (f.eks. 10.130.0.0/21) før øvrig splitting — må skje før '/' erstattes."""
 	subnets = []
@@ -9894,6 +9971,7 @@ def _extract_ipv4_cidr_tokens(text):
 
 
 def alle_ip(request):
+	# 2026-07-07: GET search_term – linked from global /sok/ redirect for IPv4/CIDR lookups.
 	# 2026-07-07: Include /16 VLANs in host-IP containment lookup (threshold lowered from /17 to /16).
 	# 2026-07-07: Prefetch infoblox_hosts for Infoblox host/fixed metadata on IP lookup.
 	# Søke opp IPv4-adresser mot CMDB (host-IP, DNS-koblinger i CMDB) og VLAN-/nettverksdata.
@@ -9908,6 +9986,11 @@ def alle_ip(request):
 		show_networks = request.POST.get('show_networks') == 'on'
 		show_unique_vlans = request.POST.get('show_unique_vlans') == 'on'
 		search_term_display = request.POST.get('search_term', '').strip()
+	elif request.GET.get('search_term', '').strip():
+		show_hosts = True
+		show_networks = True
+		show_unique_vlans = False
+		search_term_display = request.GET.get('search_term', '').strip()
 	else:
 		show_hosts = True
 		show_networks = True
