@@ -9890,6 +9890,7 @@ def _extract_ipv4_cidr_tokens(text):
 
 
 def alle_ip(request):
+	# 2026-07-07: Include /16 VLANs in host-IP containment lookup (threshold lowered from /17 to /16).
 	# Søke opp IPv4-adresser mot CMDB (host-IP, DNS-koblinger i CMDB) og VLAN-/nettverksdata.
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -9915,6 +9916,8 @@ def alle_ip(request):
 	ipv6_terms = set()
 
 	search_term = search_term_display
+	# Skip summary nets broader than /16 when resolving a host IP or CIDR overlap (include /16 and smaller).
+	MIN_VLAN_SUBNET_MASK_EXCLUSIVE = 15
 
 	def find_matching_networks_ipv4(ip_string, networks_with_id):
 		try:
@@ -9925,7 +9928,7 @@ def alle_ip(request):
 			if not matching_ids:
 				return None
 			matching_objects = NetworkContainer.objects.filter(id__in=matching_ids)
-			return [o for o in matching_objects if o.subnet_mask > 16]
+			return [o for o in matching_objects if o.subnet_mask > MIN_VLAN_SUBNET_MASK_EXCLUSIVE]
 		except ValueError:
 			return None
 
@@ -9934,7 +9937,7 @@ def alle_ip(request):
 		if not matching_ids:
 			return None
 		matching_objects = NetworkContainer.objects.filter(id__in=matching_ids)
-		return [o for o in matching_objects if o.subnet_mask > 16]
+		return [o for o in matching_objects if o.subnet_mask > MIN_VLAN_SUBNET_MASK_EXCLUSIVE]
 
 	if search_term != '':
 		if not show_hosts and not show_networks and not show_unique_vlans:
