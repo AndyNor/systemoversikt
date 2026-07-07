@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: AD sikkerhetsrapporter nav search – view_qualysvuln (matches view access).
 # 2026-07-06: Risikosammenstilling nav search – framework aggregation layer.
 # 2026-07-02: Merge BloodHound status + findings into one sidemeny entry.
 # 2026-07-02: Remove Akseptkriterier nav search – link removed from sikkerhet sidemeny (available in risk app).
@@ -91,10 +92,10 @@ NAV_PAGES = [
 	_entry('Device code-innlogginger', 'sikkerhet_device_code_logins', 'Sikkerhet', ['device code', 'devicecode'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Device code-innlogginger (sanntid)', 'sikkerhet_device_code_logins_sanntid', 'Sikkerhet', ['device code sanntid', 'devicecode live'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Varsling til virksomheter', 'sikkerhet_varsling_virksomheter', 'Sikkerhet', ['varsling virksomheter', 'csirt varsling']),
-	_entry('Kontoer utenfor OK', 'rapport_ukjente_identer', 'Sikkerhet', ['utenfor ok', 'ukjente identer'], permissions=['auth.view_user']),
-	_entry('Kontoer med SPN', 'alle_spn', 'Sikkerhet', ['spn', 'service principal name'], permissions=['auth.view_user']),
-	_entry('Delegerte kontoer', 'rapport_trusted_delegation', 'Sikkerhet', ['delegerte kontoer', 'trusted delegation'], permissions=['auth.view_user']),
-	_entry('Manuelt opprettede brukere', 'rapport_ad_ukjente_brukere', 'Sikkerhet', ['manuelt opprettede', 'ukjente brukere'], permissions=['auth.view_user']),
+	_entry('Kontoer utenfor OK', 'rapport_ukjente_identer', 'Sikkerhet', ['utenfor ok', 'ukjente identer'], permissions=['systemoversikt.view_qualysvuln']),
+	_entry('Kontoer med SPN', 'alle_spn', 'Sikkerhet', ['spn', 'service principal name'], permissions=['systemoversikt.view_qualysvuln']),
+	_entry('Delegerte kontoer', 'rapport_trusted_delegation', 'Sikkerhet', ['delegerte kontoer', 'trusted delegation'], permissions=['systemoversikt.view_qualysvuln']),
+	_entry('Manuelt opprettede brukere', 'rapport_ad_ukjente_brukere', 'Sikkerhet', ['manuelt opprettede', 'ukjente brukere'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Sikkerhetsunntak', 'o365_avvik', 'Sikkerhet', ['sikkerhetsunntak', 'o365 avvik']),
 	_entry('Kritiske samfunnsfunksjoner', 'system_kritisk_funksjon', 'Sikkerhet', ['kritiske samfunnsfunksjoner', 'samfunnsfunksjoner']),
 	_entry('ISK per system', 'isk_ansvarlig_for_system', 'Sikkerhet', ['isk per system', 'informasjonssikkerhet system']),

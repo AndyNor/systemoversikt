@@ -7712,7 +7712,8 @@ def leverandortilgang(request, valgt_gruppe=None):
 
 
 def rapport_trusted_delegation(request):
-	required_permissions = ['auth.view_user']
+	# 2026-07-07: Restrict to view_qualysvuln – same audience as other sikkerhetsanalytiker AD reports.
+	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
@@ -7736,7 +7737,8 @@ def rapport_trusted_delegation(request):
 
 def alle_spn(request):
 	#Vise informasjon brukere som er opprettet for å teste noe (og ikke har blitt slettet i etterkant)
-	required_permissions = ['auth.view_user']
+	# 2026-07-07: Restrict to view_qualysvuln – same audience as other sikkerhetsanalytiker AD reports.
+	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
@@ -7847,7 +7849,8 @@ def rapport_ad_driftbrukere(request):
 
 
 def rapport_ad_ukjente_brukere(request):
-	required_permissions = ['auth.view_user']
+	# 2026-07-07: Restrict to view_qualysvuln – same audience as other sikkerhetsanalytiker AD reports.
+	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
@@ -9543,7 +9546,8 @@ def rapport_prioriteringer(request):
 
 
 def rapport_ukjente_identer(request):
-	required_permissions = ['auth.view_user']
+	# 2026-07-07: Restrict to view_qualysvuln – same audience as other sikkerhetsanalytiker AD reports.
+	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 

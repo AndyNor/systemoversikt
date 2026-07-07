@@ -1,4 +1,5 @@
 # Change log:
+# 2026-07-07: group_from_permission – always return list; handle AD group names (403 page bullet-per-char bug).
 # 2026-07-02: risiko_tilgangsgruppe_filter_buttons – filter bar for collection list tables.
 # 2026-07-02: risiko_tilgangsgruppe_tags – colored tags for assigned groups on collection list tables.
 # 2026-07-01: risiko_ansvarlig_display – show Profile displayName for tiltak ansvarlig email/UPN.
@@ -344,6 +345,11 @@ def json_remove_empty(json_obj):
 ### group_from_permission
 @register.simple_tag
 def group_from_permission(permission_str):
+	# 2026-07-07: AD group names (e.g. CSIRT varsling) and error paths must return a list –
+	# 403.html iterates the result; a bare string renders one bullet per character.
+	if permission_str.startswith('/'):
+		group_name = permission_str.replace('/', '')
+		return [f'AD-gruppen heter "{group_name}"']
 	try:
 		permission_parts = permission_str.split(".")
 		app_label = permission_parts[0]
@@ -363,7 +369,7 @@ def group_from_permission(permission_str):
 		return result
 
 	except:
-		return f'Ingen treff på rettighet "{permission_str}"'
+		return [f'Ingen treff på rettighet "{permission_str}"']
 
 
 ### fellesinformasjon
