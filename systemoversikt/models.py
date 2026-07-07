@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: RiskSammenstilling.reader_groups M2M – optional read-only tilgangsgrupper per sammenstilling.
 # 2026-07-07: InfobloxHost + NetworkContainer vlan_name/location_name/ip_helper – Infoblox IP search enrichment.
 # 2026-07-07: RiskScopeOmfangFil – scope figure/original bytes in DB for archive-friendly rapport.
 # 2026-07-06: RiskSammenstilling + group-owned links/assessments – templates independent of virksomhet.
@@ -8527,6 +8528,12 @@ class RiskSammenstilling(models.Model):
 		on_delete=models.PROTECT,
 		related_name='sammenstillinger',
 		verbose_name="Eiergruppe",
+	)
+	reader_groups = models.ManyToManyField(
+		to=RiskVirksomhetGroup,
+		related_name='reader_sammenstillinger',
+		verbose_name="Lesergrupper",
+		blank=True,
 	)
 	created_by = models.ForeignKey(
 		to=User,

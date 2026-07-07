@@ -11,6 +11,7 @@
 # 2026-06-26: RiskAction admin on scope; M2M scenarios for shared tiltak.
 # 2026-06-24: RiskScope/RiskScenario/RiskAction admin for security risk module MVP.
 # 2026-07-06: RiskFramework/Node admin – superuser-only; maler edited via UI or admin by systemadministrator.
+# 2026-07-07: RiskSammenstilling.reader_groups in admin filter_horizontal.
 # 2026-07-06: RiskSammenstilling admin; templates without virksomhet; removed framework M2M on groups.
 # 2026-07-06: RiskFramework.virksomhet; framework M2M on RiskVirksomhetGroup admin.
 # 2026-07-06: Risk framework admin for aggregation layer emergency access.
@@ -1809,6 +1810,7 @@ class RiskSammenstillingAdmin(SimpleHistoryAdmin):
 	list_filter = ('is_active', 'framework')
 	search_fields = ('title', 'beskrivelse')
 	autocomplete_fields = ('framework', 'owner_group', 'created_by')
+	filter_horizontal = ('reader_groups',)
 
 
 @admin.register(RiskSammenstillingScenarioLink)

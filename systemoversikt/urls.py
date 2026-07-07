@@ -11,6 +11,8 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 # 2026-06-30: Membership and virksomhet API routes for risikosamling access control.
 # 2026-06-24: Security risk module URLs under /sikkerhet/risiko/.
 # 2026-07-06: Sammenstilling URLs – group-owned instances on shared templates.
+# 2026-07-07: Sammenstilling reader_groups admin APIs – superuser assign lesergrupper from list.
+# 2026-07-07: Sammenstilling owner-group admin APIs – superuser reassign eiergruppe from list.
 # 2026-07-07: Mal JSON export/import URLs – superuser transfer between environments.
 # 2026-07-06: Risk framework aggregation URLs under /sikkerhet/risiko/rammeverk/.
 # 2026-06-24: CA rules detail URL – /rules/<pk>/ for single Azure policy; list stays at /rules/.
@@ -153,6 +155,10 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/ny/$', views_risiko_rammeverk.risiko_sammenstilling_create, name='risiko_sammenstilling_create'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/api/create/$', api_risiko_sammenstilling.api_risiko_sammenstilling_create, name='api_risiko_sammenstilling_create'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/api/create-options/$', api_risiko_sammenstilling.api_risiko_sammenstilling_create_options, name='api_risiko_sammenstilling_create_options'),
+	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/api/owner-group-options/$', api_risiko_sammenstilling.api_risiko_sammenstilling_owner_group_options, name='api_risiko_sammenstilling_owner_group_options'),
+	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/owner-group/$', api_risiko_sammenstilling.api_risiko_sammenstilling_owner_group_update, name='api_risiko_sammenstilling_owner_group_update'),
+	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/reader-groups/$', api_risiko_sammenstilling.api_risiko_sammenstilling_reader_groups, name='api_risiko_sammenstilling_reader_groups'),
+	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/reader-groups/update/$', api_risiko_sammenstilling.api_risiko_sammenstilling_reader_groups_update, name='api_risiko_sammenstilling_reader_groups_update'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/$', views_risiko_rammeverk.risiko_sammenstilling_detail, name='risiko_sammenstilling_detail'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/kartlegging/$', views_risiko_rammeverk.risiko_sammenstilling_kartlegging, name='risiko_sammenstilling_kartlegging'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/taxonomy/$', api_risiko_sammenstilling.api_risiko_sammenstilling_taxonomy, name='api_risiko_sammenstilling_taxonomy'),

@@ -55,7 +55,7 @@
 <p class="mb-2">Sammenstilling: <strong>{{ sammenstilling.title }}</strong></p>
 <p class="mb-2">Eiergruppe: <strong>{{ sammenstilling.owner_group.display_title }}</strong></p>
 {% endif %}
-<p>Kun medlemmer av eiergruppen kan se sammenstillingen.</p>
+<p>Du må være medlem av eiergruppen, eller av en tilordnet lesergruppe, for å se sammenstillingen.</p>
 
 {% elif risk_access_reason == 'sammenstilling_map' %}
 <p>Du har ikke tilgang til å kartlegge i denne sammenstillingen.</p>

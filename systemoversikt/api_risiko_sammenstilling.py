@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 # 2026-07-06: Manual assessment restricted to main categories (hovedkategori).
 # Change log:
+# 2026-07-07: Superuser API to get/set reader_groups on sammenstilling.
+# 2026-07-07: Superuser API to list owner groups and reassign sammenstilling eiergruppe.
 # 2026-07-06: Active nodes API – parent display code for kartlegging dropdown grouping.
 # 2026-07-06: Kartlegging scenario search – q also matches linked tiltak beskrivelse.
 # 2026-07-06: Kartlegging scenario search – eskaleres_only filter parameter.
 # 2026-07-06: Kartlegging scenario search includes nåværende and etter-tiltak risk labels.
 # 2026-07-06: Group-owned sammenstilling APIs – mapping, rollup, assessments with scope-level access.
 
+from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -30,8 +33,11 @@ from systemoversikt.risk_framework import (
 from systemoversikt.api_risiko_rammeverk import _taxonomy_tree as mal_taxonomy_tree
 from systemoversikt.api_risiko import _json_error, _parse_json_body
 from systemoversikt.risk_sammenstilling import (
+	all_owner_groups_queryset,
 	get_active_sammenstilling,
 	groups_user_can_own_sammenstilling,
+	user_can_change_sammenstilling_owner_group,
+	user_can_change_sammenstilling_reader_groups,
 	user_can_create_sammenstilling,
 	user_can_map_scenario,
 	user_can_map_sammenstilling,
@@ -63,6 +69,135 @@ def _require_sammenstilling_map(request, sammenstilling):
 	if not user_can_map_sammenstilling(request.user, sammenstilling):
 		return _json_error('Ingen tilgang.', status=403)
 	return None
+
+
+def _require_owner_group_admin(request):
+	if not user_can_change_sammenstilling_owner_group(request.user):
+		return _json_error('Ingen tilgang.', status=403)
+	return None
+
+
+def _require_reader_groups_admin(request):
+	if not user_can_change_sammenstilling_reader_groups(request.user):
+		return _json_error('Ingen tilgang.', status=403)
+	return None
+
+
+def _owner_group_option_payload(group):
+	return {
+		'id': group.pk,
+		'title': group.display_title,
+		'virksomhet': group.virksomhet.virksomhetsforkortelse if group.virksomhet_id else '',
+	}
+
+
+@login_required
+@require_GET
+def api_risiko_sammenstilling_owner_group_options(request):
+	denied = _require_owner_group_admin(request)
+	if denied:
+		return denied
+	return _json_ok({
+		'groups': [
+			_owner_group_option_payload(group)
+			for group in all_owner_groups_queryset()
+		],
+	})
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_risiko_sammenstilling_owner_group_update(request, pk):
+	denied = _require_owner_group_admin(request)
+	if denied:
+		return denied
+	sammenstilling = _sammenstilling_or_404(pk)
+	body = _parse_json_body(request)
+	if body is None:
+		return _json_error('Ugyldig JSON.')
+	owner_group_id = body.get('owner_group_id')
+	if not owner_group_id:
+		return _json_error('Eiergruppe er påkrevd.')
+	from systemoversikt.models import RiskVirksomhetGroup
+	group = get_object_or_404(RiskVirksomhetGroup, pk=owner_group_id)
+	if sammenstilling.owner_group_id == group.pk:
+		return _json_ok({
+			'owner_group': _owner_group_option_payload(group),
+		})
+	if RiskSammenstilling.objects.filter(
+		owner_group=group,
+		title=sammenstilling.title,
+	).exclude(pk=sammenstilling.pk).exists():
+		return _json_error(
+			'Den valgte gruppen har allerede en sammenstilling med samme tittel.',
+		)
+	sammenstilling.owner_group = group
+	sammenstilling.save(update_fields=['owner_group', 'sist_oppdatert'])
+	return _json_ok({
+		'owner_group': _owner_group_option_payload(group),
+	})
+
+
+def _reader_groups_payload(sammenstilling):
+	groups = sammenstilling.reader_groups.select_related('virksomhet').order_by(
+		'virksomhet__virksomhetsforkortelse',
+		'title',
+	)
+	return [_owner_group_option_payload(group) for group in groups]
+
+
+def _parse_reader_group_ids(body):
+	raw_ids = body.get('reader_group_ids')
+	if raw_ids is None:
+		return None
+	if not isinstance(raw_ids, list):
+		raise ValueError('reader_group_ids må være en liste.')
+	parsed = []
+	for raw_id in raw_ids:
+		try:
+			parsed.append(int(raw_id))
+		except (TypeError, ValueError):
+			raise ValueError('Ugyldig gruppe-ID i reader_group_ids.')
+	return parsed
+
+
+@login_required
+@require_GET
+def api_risiko_sammenstilling_reader_groups(request, pk):
+	denied = _require_reader_groups_admin(request)
+	if denied:
+		return denied
+	sammenstilling = _sammenstilling_or_404(pk)
+	return _json_ok({
+		'reader_groups': _reader_groups_payload(sammenstilling),
+	})
+
+
+@login_required
+@require_http_methods(['POST'])
+def api_risiko_sammenstilling_reader_groups_update(request, pk):
+	denied = _require_reader_groups_admin(request)
+	if denied:
+		return denied
+	sammenstilling = _sammenstilling_or_404(pk)
+	body = _parse_json_body(request)
+	if body is None:
+		return _json_error('Ugyldig JSON.')
+	try:
+		reader_group_ids = _parse_reader_group_ids(body)
+	except ValueError as exc:
+		return _json_error(str(exc))
+	if reader_group_ids is None:
+		return _json_error('reader_group_ids er påkrevd.')
+	unique_ids = list(dict.fromkeys(reader_group_ids))
+	from systemoversikt.models import RiskVirksomhetGroup
+	groups = list(RiskVirksomhetGroup.objects.filter(pk__in=unique_ids).select_related('virksomhet'))
+	if len(groups) != len(unique_ids):
+		return _json_error('En eller flere grupper finnes ikke.')
+	sammenstilling.reader_groups.set(groups)
+	return _json_ok({
+		'reader_groups': _reader_groups_payload(sammenstilling),
+	})
 
 
 @require_http_methods(['POST'])

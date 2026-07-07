@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-07-07: List rows expose can_map; superuser modal for reader_groups on sammenstilling.
+# 2026-07-07: Superuser owner-group modal on rammeverk list – reassign sammenstilling eiergruppe.
 # 2026-07-07: Mal JSON export/import – superuser-only transfer between environments.
-# 2026-07-06: Kartlegging view passes risk matrix for client-side label fallback.
 # 2026-07-06: Enrich rollup with subcategory scenario/tiltak breakdown for detail view.
 # 2026-07-06: Category-level matrix on sammenstilling detail – nåværende risiko only.
 # Change log:
@@ -36,8 +38,11 @@ from systemoversikt.risk_framework_transfer import (
 )
 from systemoversikt.risk_sammenstilling import (
 	active_templates_queryset,
+	all_owner_groups_queryset,
 	groups_user_can_own_sammenstilling,
 	sammenstillinger_visible_to_user,
+	user_can_change_sammenstilling_owner_group,
+	user_can_change_sammenstilling_reader_groups,
 	user_can_edit_template,
 	user_can_map_sammenstilling,
 	user_can_view_sammenstilling,
@@ -93,16 +98,37 @@ def _sammenstilling_or_404(pk):
 @login_required
 def risiko_rammeverk_list(request):
 	templates = active_templates_queryset()
-	sammenstillinger = sammenstillinger_visible_to_user(request.user)
+	sammenstillinger = sammenstillinger_visible_to_user(request.user).prefetch_related(
+		'reader_groups',
+		'reader_groups__virksomhet',
+	)
 	owner_groups = groups_user_can_own_sammenstilling(request.user)
-	return render(request, 'risiko_rammeverk_list.html', {
+	can_admin_access = user_can_change_sammenstilling_owner_group(request.user)
+	sammenstilling_rows = [
+		{
+			'sam': sam,
+			'can_map': user_can_map_sammenstilling(request.user, sam),
+		}
+		for sam in sammenstillinger
+	]
+	context = {
 		'request': request,
 		'required_permissions': [],
 		'templates': templates,
-		'sammenstillinger': sammenstillinger,
+		'sammenstilling_rows': sammenstilling_rows,
 		'can_edit_template': user_can_edit_template(request.user),
 		'can_create_sammenstilling': owner_groups.exists(),
-	})
+		'can_change_sammenstilling_owner_group': can_admin_access,
+		'can_change_sammenstilling_reader_groups': user_can_change_sammenstilling_reader_groups(request.user),
+	}
+	if can_admin_access:
+		context['owner_group_options'] = list(all_owner_groups_queryset())
+		context['sammenstilling_admin_api_urls_json'] = json.dumps({
+			'ownerGroupUpdate': reverse('api_risiko_sammenstilling_owner_group_update', kwargs={'pk': 0}).replace('/0/', '/{id}/'),
+			'readerGroupsGet': reverse('api_risiko_sammenstilling_reader_groups', kwargs={'pk': 0}).replace('/0/', '/{id}/'),
+			'readerGroupsUpdate': reverse('api_risiko_sammenstilling_reader_groups_update', kwargs={'pk': 0}).replace('/0/', '/{id}/'),
+		})
+	return render(request, 'risiko_rammeverk_list.html', context)
 
 
 @login_required
@@ -248,6 +274,10 @@ def risiko_sammenstilling_detail(request, pk):
 		'sammenstilling': sammenstilling,
 		'framework': sammenstilling.framework,
 		'can_map': user_can_map_sammenstilling(request.user, sammenstilling),
+		'is_reader_only': (
+			user_can_view_sammenstilling(request.user, sammenstilling)
+			and not user_can_map_sammenstilling(request.user, sammenstilling)
+		),
 		'rollup_tree': rollup_tree,
 		'matrix_current': build_sammenstilling_category_matrix(rollup_tree, criteria),
 		'konsekvens_labels': criteria.konsekvens_labels,

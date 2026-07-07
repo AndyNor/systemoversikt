@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
 {% load templatetags %}
+{# 2026-07-07: Reader-only banner when user has lesergruppe access but is not in eiergruppe. #}
 {# 2026-07-06: Unlink scenario from subcategory on detail page (kartlegging still creates links). #}
 {# 2026-07-06: Risk badge padding and per-cell-tone borders in matrix. #}
 {# 2026-07-06: Uniform row height and vertical SANNS. axis label. #}
@@ -49,6 +50,10 @@
 {% block hovedinnhold %}
 
 {% csrf_token %}
+
+{% if is_reader_only %}
+<div class="alert alert-secondary py-2" role="status">Du har lesetilgang til denne sammenstillingen via lesergruppe. Kartlegging og endring av vurderinger krever medlemskap i eiergruppen.</div>
+{% endif %}
 
 <p class="mb-3">
 	<a class="btn btn-back btn-sm" href="{% url 'risiko_rammeverk_list' %}">&larr; Risikosammenstilling</a>

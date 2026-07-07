@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: reader_groups M2M – view access for group members; map still owner-group only.
+# 2026-07-07: Superuser can reassign sammenstilling owner_group from rammeverk list UI.
 # 2026-07-06: user_can_edit_template – Django superuser only (mal editor + mal APIs).
 # 2026-07-06: Access helpers for group-owned risikosammenstillinger on shared templates.
+
+from django.db.models import Q
 
 from systemoversikt.models import (
 	RiskFramework,
@@ -14,6 +18,21 @@ from systemoversikt.risk_membership import user_has_scope_read_access
 
 def user_can_edit_template(user):
 	return user.is_authenticated and user.is_superuser
+
+
+def user_can_change_sammenstilling_owner_group(user):
+	return user_can_edit_template(user)
+
+
+def user_can_change_sammenstilling_reader_groups(user):
+	return user_can_change_sammenstilling_owner_group(user)
+
+
+def all_owner_groups_queryset():
+	return RiskVirksomhetGroup.objects.select_related('virksomhet').order_by(
+		'virksomhet__virksomhetsforkortelse',
+		'title',
+	)
 
 
 def user_can_view_template(user, framework):
@@ -33,6 +52,15 @@ def user_is_group_member(user, group):
 	).exists()
 
 
+def user_is_sammenstilling_reader(user, sammenstilling):
+	if not user.is_authenticated or sammenstilling is None:
+		return False
+	return RiskVirksomhetGroupMember.objects.filter(
+		user_id=user.id,
+		group__reader_sammenstillinger=sammenstilling,
+	).exists()
+
+
 def user_can_create_sammenstilling(user, group):
 	return user_is_group_member(user, group)
 
@@ -40,11 +68,15 @@ def user_can_create_sammenstilling(user, group):
 def user_can_view_sammenstilling(user, sammenstilling):
 	if not user.is_authenticated or sammenstilling is None or not sammenstilling.is_active:
 		return False
-	return user_is_group_member(user, sammenstilling.owner_group)
+	if user_is_group_member(user, sammenstilling.owner_group):
+		return True
+	return user_is_sammenstilling_reader(user, sammenstilling)
 
 
 def user_can_map_sammenstilling(user, sammenstilling):
-	return user_can_view_sammenstilling(user, sammenstilling)
+	if not user.is_authenticated or sammenstilling is None or not sammenstilling.is_active:
+		return False
+	return user_is_group_member(user, sammenstilling.owner_group)
 
 
 def sammenstillinger_visible_to_user(user):
@@ -58,7 +90,8 @@ def sammenstillinger_visible_to_user(user):
 	if user.is_superuser:
 		return qs
 	return qs.filter(
-		owner_group__memberships__user_id=user.id,
+		Q(owner_group__memberships__user_id=user.id)
+		| Q(reader_groups__memberships__user_id=user.id),
 	).distinct()
 
 

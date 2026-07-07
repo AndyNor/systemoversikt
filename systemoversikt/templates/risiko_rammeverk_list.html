@@ -1,4 +1,6 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-07: Superuser modal for lesergrupper (0..n tilgangsgrupper with read access). #}
+{# 2026-07-07: Superuser modal to change sammenstilling eiergruppe from list. #}
 {# 2026-07-07: Superuser create-mal-from-file on rammeverk list. #}
 {# 2026-07-07: Outline button for back navigation. #}
 {# 2026-07-06: Removed excel class – no table export on rammeverk list. #}
@@ -19,6 +21,7 @@
 	<p class="mb-0">
 		<strong>Maler</strong> er felles taksonomier (kun systemadministrator kan redigere dem).
 		<strong>Sammenstillinger</strong> er gruppe-eide instanser på en mal – hver med egne kartlegginger og vurderinger.
+		Eiergruppe styrer redigering; valgfrie lesergrupper gir lesetilgang uten kartlegging.
 		Du kan bare søke og knytte scenarioer fra risikosamlinger du har tilgang til.
 	</p>
 </div>
@@ -36,25 +39,121 @@
 			<th>Tittel</th>
 			<th>Mal</th>
 			<th>Eiergruppe</th>
+			<th>Lesergrupper</th>
 			<th></th>
 		</tr>
 	</thead>
 	<tbody>
-		{% for sam in sammenstillinger %}
-		<tr>
+		{% for row in sammenstilling_rows %}
+		{% with sam=row.sam %}
+		<tr data-sammenstilling-pk="{{ sam.pk }}">
 			<td><strong>{{ sam.title }}</strong></td>
 			<td>{{ sam.framework.title }}</td>
-			<td>{{ sam.owner_group.display_title }}</td>
+			<td class="js-owner-group-cell">{{ sam.owner_group.display_title }}</td>
+			<td class="js-reader-groups-cell small">
+				{% for g in sam.reader_groups.all %}
+					{{ g.display_title }}{% if not forloop.last %}, {% endif %}
+				{% empty %}
+					<span class="text-muted">—</span>
+				{% endfor %}
+			</td>
 			<td class="text-nowrap">
 				<a class="btn btn-primary btn-sm" href="{% url 'risiko_sammenstilling_detail' pk=sam.pk %}">Åpne</a>
+				{% if row.can_map %}
 				<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_sammenstilling_kartlegging' pk=sam.pk %}">Kartlegg</a>
+				{% endif %}
+				{% if can_change_sammenstilling_owner_group %}
+				<button type="button" class="btn btn-outline-warning btn-sm js-change-owner-group"
+					data-pk="{{ sam.pk }}"
+					data-title="{{ sam.title|escape }}"
+					data-owner-group-id="{{ sam.owner_group_id }}"
+					data-owner-group-title="{{ sam.owner_group.display_title|escape }}">Endre eiergruppe</button>
+				{% endif %}
+				{% if can_change_sammenstilling_reader_groups %}
+				<button type="button" class="btn btn-outline-info btn-sm js-change-reader-groups"
+					data-pk="{{ sam.pk }}"
+					data-title="{{ sam.title|escape }}">Lesergrupper</button>
+				{% endif %}
 			</td>
 		</tr>
+		{% endwith %}
 		{% empty %}
-		<tr><td colspan="4">Ingen sammenstillinger du har tilgang til.</td></tr>
+		<tr><td colspan="5">Ingen sammenstillinger du har tilgang til.</td></tr>
 		{% endfor %}
 	</tbody>
 </table>
+
+{% if can_change_sammenstilling_owner_group or can_change_sammenstilling_reader_groups %}
+{% csrf_token %}
+{% endif %}
+
+{% if can_change_sammenstilling_owner_group %}
+<div class="modal fade" id="sammenstilling-owner-group-modal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header py-2">
+				<h5 class="modal-title">Endre eiergruppe</h5>
+				<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+			</div>
+			<div class="modal-body">
+				<p class="small text-muted mb-2">
+					Sammenstilling: <strong id="owner-group-modal-title"></strong>
+				</p>
+				<p class="small text-muted mb-3">
+					Nåværende eiergruppe: <strong id="owner-group-modal-current"></strong>
+				</p>
+				<div class="form-group mb-0">
+					<label for="owner-group-modal-select">Ny eiergruppe</label>
+					<select class="form-control form-control-sm" id="owner-group-modal-select">
+						{% for g in owner_group_options %}
+						<option value="{{ g.pk }}">{{ g.display_title }}</option>
+						{% endfor %}
+					</select>
+				</div>
+				<span id="owner-group-modal-status" class="text-muted small d-block mt-2"></span>
+			</div>
+			<div class="modal-footer py-2">
+				<button type="button" class="btn btn-primary btn-sm" id="owner-group-modal-save">Lagre</button>
+				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endif %}
+
+{% if can_change_sammenstilling_reader_groups %}
+<div class="modal fade" id="sammenstilling-reader-groups-modal" tabindex="-1" role="dialog" aria-hidden="true">
+	<div class="modal-dialog modal-lg" role="document">
+		<div class="modal-content">
+			<div class="modal-header py-2">
+				<h5 class="modal-title">Lesergrupper</h5>
+				<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+			</div>
+			<div class="modal-body">
+				<p class="small text-muted mb-2">
+					Sammenstilling: <strong id="reader-groups-modal-title"></strong>
+				</p>
+				<p class="small text-muted mb-3">
+					Medlemmer av valgte grupper kan åpne sammenstillingen, men ikke kartlegge eller endre vurderinger.
+				</p>
+				<div id="reader-groups-modal-list" class="border rounded p-2" style="max-height: 18rem; overflow-y: auto;">
+					{% for g in owner_group_options %}
+					<div class="form-check">
+						<input class="form-check-input js-reader-group-checkbox" type="checkbox" value="{{ g.pk }}" id="reader-group-opt-{{ g.pk }}">
+						<label class="form-check-label" for="reader-group-opt-{{ g.pk }}">{{ g.display_title }}</label>
+					</div>
+					{% endfor %}
+				</div>
+				<span id="reader-groups-modal-status" class="text-muted small d-block mt-2"></span>
+			</div>
+			<div class="modal-footer py-2">
+				<button type="button" class="btn btn-primary btn-sm" id="reader-groups-modal-save">Lagre</button>
+				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
+			</div>
+		</div>
+	</div>
+</div>
+{% endif %}
 
 {% if can_edit_template %}
 <div class="mb-4" style="background-color: #f8f9fa; padding: 1rem 1.25rem; border-radius: 4px;">
@@ -109,3 +208,182 @@
 </table>
 
 {% endblock hovedinnhold %}
+
+{% block script_append %}
+{% if can_change_sammenstilling_owner_group or can_change_sammenstilling_reader_groups %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+document.addEventListener('DOMContentLoaded', function () {
+	var apiUrls = {{ sammenstilling_admin_api_urls_json|safe }};
+	var csrfTokenEl = document.querySelector('[name=csrfmiddlewaretoken]');
+	var csrfToken = csrfTokenEl ? csrfTokenEl.value : '';
+
+	function formatReaderGroups(groups) {
+		if (!groups || !groups.length) {
+			return '<span class="text-muted">—</span>';
+		}
+		return groups.map(function (g) { return g.title; }).join(', ');
+	}
+
+	{% if can_change_sammenstilling_owner_group %}
+	var ownerModalEl = document.getElementById('sammenstilling-owner-group-modal');
+	var ownerTitleEl = document.getElementById('owner-group-modal-title');
+	var ownerCurrentEl = document.getElementById('owner-group-modal-current');
+	var ownerSelectEl = document.getElementById('owner-group-modal-select');
+	var ownerStatusEl = document.getElementById('owner-group-modal-status');
+	var ownerSaveBtn = document.getElementById('owner-group-modal-save');
+	var activeOwnerPk = null;
+
+	function showOwnerModal(pk, title, ownerGroupId, ownerGroupTitle) {
+		activeOwnerPk = pk;
+		ownerTitleEl.textContent = title;
+		ownerCurrentEl.textContent = ownerGroupTitle;
+		ownerSelectEl.value = String(ownerGroupId);
+		ownerStatusEl.textContent = '';
+		if (window.jQuery) {
+			window.jQuery(ownerModalEl).modal('show');
+		}
+	}
+
+	document.querySelectorAll('.js-change-owner-group').forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			showOwnerModal(
+				btn.getAttribute('data-pk'),
+				btn.getAttribute('data-title'),
+				btn.getAttribute('data-owner-group-id'),
+				btn.getAttribute('data-owner-group-title')
+			);
+		});
+	});
+
+	ownerSaveBtn.addEventListener('click', function () {
+		if (!activeOwnerPk) {
+			return;
+		}
+		var ownerGroupId = parseInt(ownerSelectEl.value, 10);
+		if (!ownerGroupId) {
+			ownerStatusEl.textContent = 'Velg en eiergruppe.';
+			return;
+		}
+		ownerStatusEl.textContent = 'Lagrer…';
+		fetch(apiUrls.ownerGroupUpdate.replace('{id}', activeOwnerPk), {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-CSRFToken': csrfToken,
+			},
+			body: JSON.stringify({ owner_group_id: ownerGroupId }),
+		}).then(function (r) { return r.json(); }).then(function (data) {
+			if (!data.ok) {
+				ownerStatusEl.textContent = data.error || 'Kunne ikke lagre.';
+				return;
+			}
+			var row = document.querySelector('tr[data-sammenstilling-pk="' + activeOwnerPk + '"]');
+			if (row) {
+				var cell = row.querySelector('.js-owner-group-cell');
+				if (cell && data.owner_group) {
+					cell.textContent = data.owner_group.title;
+				}
+				var btn = row.querySelector('.js-change-owner-group');
+				if (btn && data.owner_group) {
+					btn.setAttribute('data-owner-group-id', String(data.owner_group.id));
+					btn.setAttribute('data-owner-group-title', data.owner_group.title);
+				}
+			}
+			if (window.jQuery) {
+				window.jQuery(ownerModalEl).modal('hide');
+			}
+		}).catch(function () {
+			ownerStatusEl.textContent = 'Kunne ikke lagre.';
+		});
+	});
+	{% endif %}
+
+	{% if can_change_sammenstilling_reader_groups %}
+	var readerModalEl = document.getElementById('sammenstilling-reader-groups-modal');
+	var readerTitleEl = document.getElementById('reader-groups-modal-title');
+	var readerStatusEl = document.getElementById('reader-groups-modal-status');
+	var readerSaveBtn = document.getElementById('reader-groups-modal-save');
+	var readerCheckboxes = document.querySelectorAll('.js-reader-group-checkbox');
+	var activeReaderPk = null;
+
+	function setReaderCheckboxes(selectedIds) {
+		var selected = {};
+		(selectedIds || []).forEach(function (id) { selected[String(id)] = true; });
+		readerCheckboxes.forEach(function (cb) {
+			cb.checked = !!selected[cb.value];
+		});
+	}
+
+	function showReaderModal(pk, title) {
+		activeReaderPk = pk;
+		readerTitleEl.textContent = title;
+		readerStatusEl.textContent = 'Henter…';
+		setReaderCheckboxes([]);
+		if (window.jQuery) {
+			window.jQuery(readerModalEl).modal('show');
+		}
+		fetch(apiUrls.readerGroupsGet.replace('{id}', pk), {
+			credentials: 'same-origin',
+		}).then(function (r) { return r.json(); }).then(function (data) {
+			if (!data.ok) {
+				readerStatusEl.textContent = data.error || 'Kunne ikke hente lesergrupper.';
+				return;
+			}
+			setReaderCheckboxes((data.reader_groups || []).map(function (g) { return g.id; }));
+			readerStatusEl.textContent = '';
+		}).catch(function () {
+			readerStatusEl.textContent = 'Kunne ikke hente lesergrupper.';
+		});
+	}
+
+	document.querySelectorAll('.js-change-reader-groups').forEach(function (btn) {
+		btn.addEventListener('click', function () {
+			showReaderModal(btn.getAttribute('data-pk'), btn.getAttribute('data-title'));
+		});
+	});
+
+	readerSaveBtn.addEventListener('click', function () {
+		if (!activeReaderPk) {
+			return;
+		}
+		var readerGroupIds = [];
+		readerCheckboxes.forEach(function (cb) {
+			if (cb.checked) {
+				readerGroupIds.push(parseInt(cb.value, 10));
+			}
+		});
+		readerStatusEl.textContent = 'Lagrer…';
+		fetch(apiUrls.readerGroupsUpdate.replace('{id}', activeReaderPk), {
+			method: 'POST',
+			credentials: 'same-origin',
+			headers: {
+				'Content-Type': 'application/json',
+				'X-CSRFToken': csrfToken,
+			},
+			body: JSON.stringify({ reader_group_ids: readerGroupIds }),
+		}).then(function (r) { return r.json(); }).then(function (data) {
+			if (!data.ok) {
+				readerStatusEl.textContent = data.error || 'Kunne ikke lagre.';
+				return;
+			}
+			var row = document.querySelector('tr[data-sammenstilling-pk="' + activeReaderPk + '"]');
+			if (row) {
+				var cell = row.querySelector('.js-reader-groups-cell');
+				if (cell) {
+					cell.innerHTML = formatReaderGroups(data.reader_groups);
+				}
+			}
+			readerStatusEl.textContent = '';
+			if (window.jQuery) {
+				window.jQuery(readerModalEl).modal('hide');
+			}
+		}).catch(function () {
+			readerStatusEl.textContent = 'Kunne ikke lagre.';
+		});
+	});
+	{% endif %}
+});
+</script>
+{% endif %}
+{% endblock script_append %}
