@@ -1,4 +1,5 @@
 # Change log:
+# 2026-07-07: linebreaks_bullets – compact bullet list for multiline report text (skip blank lines).
 # 2026-07-07: risiko_member_display – show virksomhetsforkortelse with member names on collection pages.
 # 2026-07-07: group_from_permission – always return list; handle AD group names (403 page bullet-per-char bug).
 # 2026-07-02: risiko_tilgangsgruppe_filter_buttons – filter bar for collection list tables.
@@ -18,7 +19,7 @@
 # 2026-06-24: ca_condition_label_icon – leading SVG icons on CA overview condition tags.
 # 2026-06-21: tjeneste_ikon_* – SVG glyphs and accent colours for tjeneste tile overview.
 from django import template
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 import string
 import random
@@ -277,6 +278,21 @@ def ca_overview_label(label):
 			content,
 		)
 	return format_html('<span class="{}">{}</span>', classes, content)
+
+
+### linebreaks_bullets — multiline text as compact bullet list (blank lines ignored)
+@register.filter
+def linebreaks_bullets(value):
+	if value is None:
+		return ''
+	text = str(value).replace('\r\n', '\n').replace('\r', '\n')
+	lines = [line.strip() for line in text.split('\n') if line.strip()]
+	if not lines:
+		return ''
+	if len(lines) == 1:
+		return format_html('{}', lines[0])
+	items = format_html_join('', '<li>{}</li>', ((line,) for line in lines))
+	return format_html('<ul class="risiko-rapport-lines mb-0">{}</ul>', items)
 
 
 ### url_path_segment — for {% url %} path kwargs that may contain /, ?, @, etc.

@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Split scenario tiltak by status; exclude forslag; summary only under_arbeid+besluttet.
 # 2026-07-07: Report helpers – scenario/tiltak sorting and scope system aggregation for godkjent rapport.
 
 from systemoversikt.risk_display import tiltak_display_id_map
 
 TILTAK_STATUS_ORDER = ('utfort', 'under_arbeid', 'besluttet', 'forslag')
-BESLUTTET_TILTAK_STATUSES = frozenset(('besluttet', 'under_arbeid', 'utfort'))
+BESLUTTET_TILTAK_STATUSES = frozenset(('besluttet', 'under_arbeid'))
+REPORT_TILTAK_STATUSES = frozenset(('utfort', 'under_arbeid', 'besluttet'))
 TILTAK_STATUS_RANK = {status: index for index, status in enumerate(TILTAK_STATUS_ORDER)}
 
 
@@ -54,6 +56,17 @@ def besluttede_tiltak(actions, tiltak_map=None):
 	return sort_tiltak_for_report(filtered, tiltak_map)
 
 
+def _tiltak_entries_for_statuses(actions, tiltak_map, statuses):
+	filtered = [action for action in actions if action.status in statuses]
+	return [
+		{
+			'action': action,
+			'display_tiltak_id': tiltak_map.get(action.pk, ''),
+		}
+		for action in sort_tiltak_for_report(filtered, tiltak_map)
+	]
+
+
 def build_scenario_report_sections(scenarios, tiltak_map=None):
 	if tiltak_map is None:
 		all_actions = []
@@ -63,15 +76,13 @@ def build_scenario_report_sections(scenarios, tiltak_map=None):
 
 	sections = []
 	for scenario in sort_scenarios_for_report(scenarios):
-		actions = sort_tiltak_for_report(list(scenario.actions.all()), tiltak_map)
+		actions = [
+			action for action in scenario.actions.all()
+			if action.status in REPORT_TILTAK_STATUSES
+		]
 		sections.append({
 			'scenario': scenario,
-			'tiltak_entries': [
-				{
-					'action': action,
-					'display_tiltak_id': tiltak_map.get(action.pk, ''),
-				}
-				for action in actions
-			],
+			'tiltak_utfort_entries': _tiltak_entries_for_statuses(actions, tiltak_map, frozenset(('utfort',))),
+			'tiltak_pending_entries': _tiltak_entries_for_statuses(actions, tiltak_map, BESLUTTET_TILTAK_STATUSES),
 		})
 	return sections

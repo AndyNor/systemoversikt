@@ -1,0 +1,81 @@
+{# 2026-07-07: Minimal document shell – no Kartoteket header/sidemeny (print-friendly reports). #}
+{% load static %}
+<!DOCTYPE html>
+<html lang="no">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="x-ua-compatible" content="ie=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	{% include 'index_favicon.html' %}
+
+	<link rel="stylesheet" href="{% static 'bootstrap/bootstrap.min.css' %}">
+
+	{% block css_append %}{% endblock css_append %}
+	{% block ekstrajavascript %}{% endblock ekstrajavascript %}
+
+	<style nonce="{{ request.csp_nonce }}">
+		body.document-minimal {
+			margin: 0;
+			padding: 1.5rem;
+			background: #fff;
+			color: #212529;
+		}
+		.document-minimal-content {
+			max-width: 960px;
+			margin: 0 auto;
+		}
+		.btn-primary {
+			border-color: #acacbf;
+			background-color: #acacbf;
+			color: #000;
+		}
+		.btn-primary:hover, .btn-primary:focus {
+			border-color: #fff;
+			background-color: #2A2859;
+			color: #fff;
+		}
+		.btn-back {
+			border-color: #a8dbff;
+			background-color: #d1ecf1;
+			color: #28277e;
+		}
+		.btn-back:hover, .btn-back:focus {
+			border-color: #28277e;
+			background-color: #b8e4f0;
+			color: #28277e;
+			text-decoration: none;
+		}
+		a {
+			color: #28277e;
+		}
+		a:hover {
+			color: #FF8274;
+			text-decoration: none;
+		}
+	</style>
+
+	<title>{% block title %}Kartoteket{% endblock title %}</title>
+</head>
+<body class="document-minimal">
+
+	<div class="document-minimal-content">
+		{% if DEBUG %}
+		<div class="alert alert-info">
+			Du er på en testinstans som heter <b>{{ TEST_ENV_NAME }}</b>.
+		</div>
+		{% endif %}
+
+		{% if messages %}
+			{% for message in messages %}
+			<div class="alert alert-{{ message.tags }}">{{ message }}</div>
+			{% endfor %}
+		{% endif %}
+
+		{% block content %}{% endblock content %}
+	</div>
+
+	{% block script_append %}{% endblock script_append %}
+
+</body>
+</html>

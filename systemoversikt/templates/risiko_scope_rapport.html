@@ -1,15 +1,19 @@
+{# 2026-07-07: Report layout – combined risk matrices (5), tiltak summary (6), scenarios (7). #}
+{# 2026-07-07: Per-scenario besluttet/pågår tiltak after Risiko nå, before Risiko etter tiltak. #}
+{# 2026-07-07: Stack konsekvens/sannsynlighet type above level in paired columns. #}
+{# 2026-07-07: Multiline fields use linebreaks_bullets – compact lists without blank-line gaps. #}
+{# 2026-07-07: Scenario tiltak split by status; wider scenario layout; larger section headings. #}
+{# 2026-07-07: Standalone report layout – no Kartoteket header/sidemeny. #}
 {# 2026-07-07: Print button uses script_append + nonce – inline onclick blocked by CSP. #}
 {# 2026-07-07: Member names include virksomhetsforkortelse – disambiguate duplicate names. #}
-{# 2026-07-07: Print-friendly godkjent risikovurderingsrapport – 8 sections for archive. #}
-{% extends "sikkerhet_index.html" %}
+{# 2026-07-07: Print-friendly godkjent risikovurderingsrapport – 7 sections for archive. #}
+{% extends "document_minimal.html" %}
 {% load static %}
 {% load templatetags %}
 
-{% block overskrift %}
-	Risikovurderingsrapport: {{ scope.title }}
-{% endblock overskrift %}
+{% block title %}Risikovurderingsrapport: {{ scope.title }}{% endblock title %}
 
-{% block hovedinnhold %}
+{% block content %}
 
 <div class="risiko-rapport no-print mb-3">
 	<p>
@@ -19,6 +23,8 @@
 </div>
 
 <article class="risiko-rapport">
+
+<h1 class="risiko-rapport-title h3 mb-4">Risikovurderingsrapport: {{ scope.title }}</h1>
 
 <section class="risiko-rapport-section">
 	<h2>1. Vurderingsdetaljer</h2>
@@ -48,7 +54,7 @@
 <section class="risiko-rapport-section">
 	<h2>3. Omfangsbeskrivelse</h2>
 	{% if scope.beskrivelse %}
-	<div class="risiko-rapport-prose">{{ scope.beskrivelse|linebreaksbr }}</div>
+	<div class="risiko-rapport-prose">{{ scope.beskrivelse|linebreaks_bullets }}</div>
 	{% else %}
 	<p class="text-muted mb-0">Ingen omfangsbeskrivelse er registrert.</p>
 	{% endif %}
@@ -67,66 +73,21 @@
 	{% endif %}
 </section>
 
-<section class="risiko-rapport-section">
-	<h2>5. Dagens risikobilde</h2>
-	{% include "risiko_matrise_grid.html" with matrix=matrix_current scope=scope konsekvens_labels=konsekvens_labels report_mode=True %}
-</section>
-
-<section class="risiko-rapport-section">
-	<h2>6. Risikoscenarier</h2>
-	{% for section in scenario_sections %}
-	{% with scenario=section.scenario %}
-	<div class="risiko-rapport-scenario">
-		<h3>{{ scenario.display_risk_id }} – {{ scenario.uonsket_hendelse|default:"(uten beskrivelse)" }}</h3>
-		{% if scenario.arsaker_svakheter %}
-		<p><strong>Årsaker/svakheter:</strong><br>{{ scenario.arsaker_svakheter|linebreaksbr }}</p>
-		{% endif %}
-		<p><strong>KIT:</strong> {% risiko_kit_tags scenario.kit_dimensjoner %}</p>
-		<p><strong>Konsekvenstype:</strong> {% risiko_konsekvenstype_tags scenario.konsekvenstyper %}</p>
-		<p><strong>Sannsynlighetstype:</strong> {% risiko_sannsynlighetstype_tags scenario.sannsynlighetstyper %}</p>
-		<p>
-			<strong>Konsekvens:</strong> {% risiko_level_tag scenario.konsekvens_label scenario.konsekvens_css %}
-			{% if scenario.konsekvens_begrunnelse %}<br><span class="text-muted small">{{ scenario.konsekvens_begrunnelse|linebreaksbr }}</span>{% endif %}
-		</p>
-		<p>
-			<strong>Sannsynlighet:</strong> {% risiko_level_tag scenario.sannsynlighet_label scenario.sannsynlighet_css %}
-			{% if scenario.sannsynlighetsbegrunnelse %}<br><span class="text-muted small">{{ scenario.sannsynlighetsbegrunnelse|linebreaksbr }}</span>{% endif %}
-		</p>
-		<p><strong>Risiko nå:</strong> <span class="{{ scenario.risiko_css }}">{{ scenario.risiko_etikett|default:"–" }}</span></p>
-		{% if scenario.risikobehandling %}
-		<p><strong>Risikobehandling:</strong> {{ scenario.get_risikobehandling_display }}</p>
-		{% endif %}
-		<p><strong>Risiko etter tiltak:</strong> <span class="{{ scenario.restrisiko_css }}">{{ scenario.restrisiko_etikett|default:"–" }}</span></p>
-		<p><strong>Tilknyttede systemer:</strong>
-			{% for system in scenario.systemer.all %}
-				<span class="screen-only"><a href="{% url 'systemdetaljer' pk=system.pk %}">{{ system.systemnavn }}</a>{% if not forloop.last %}, {% endif %}</span><span class="print-only">{{ system.systemnavn }}{% if not forloop.last %}, {% endif %}</span>
-			{% empty %}–{% endfor %}
-		</p>
-		{% if section.tiltak_entries %}
-		<div class="risiko-rapport-tiltak-list">
-			<strong>Tiltak:</strong>
-			<ul class="mb-0">
-				{% for entry in section.tiltak_entries %}
-				<li>
-					<strong>{{ entry.display_tiltak_id }}</strong>
-					{{ entry.action.beskrivelse }}
-					– {% risiko_tiltak_status_tag entry.action.status entry.action.get_status_display %}
-					{% if entry.action.ansvarlig %} ({{ entry.action.ansvarlig|risiko_ansvarlig_display }}){% endif %}
-					{% if entry.action.frist %} – frist {{ entry.action.frist|date:"Y-m-d" }}{% endif %}
-				</li>
-				{% endfor %}
-			</ul>
+<section class="risiko-rapport-section risiko-rapport-section--matriser">
+	<div class="risiko-rapport-matriser-row">
+		<div class="risiko-rapport-matrise-col">
+			<h2 class="risiko-rapport-matrise-title">5. Dagens risikobilde</h2>
+			{% include "risiko_matrise_grid.html" with matrix=matrix_current scope=scope konsekvens_labels=konsekvens_labels report_mode=True %}
 		</div>
-		{% endif %}
+		<div class="risiko-rapport-matrise-col">
+			<h2 class="risiko-rapport-matrise-title">Risiko etter planlagte tiltak</h2>
+			{% include "risiko_matrise_grid.html" with matrix=matrix_residual scope=scope konsekvens_labels=konsekvens_labels report_mode=True %}
+		</div>
 	</div>
-	{% endwith %}
-	{% empty %}
-	<p class="text-muted mb-0">Ingen scenarioer registrert.</p>
-	{% endfor %}
 </section>
 
 <section class="risiko-rapport-section">
-	<h2>7. Oppsummering besluttede tiltak</h2>
+	<h2>6. Oppsummering besluttede tiltak</h2>
 	{% if besluttede_tiltak_rows %}
 	<table class="table table-sm table-bordered risiko-rapport-table">
 		<thead>
@@ -143,7 +104,7 @@
 			{% for row in besluttede_tiltak_rows %}
 			<tr>
 				<td>{{ row.display_tiltak_id }}</td>
-				<td>{{ row.action.beskrivelse|linebreaksbr }}</td>
+				<td>{{ row.action.beskrivelse|linebreaks_bullets }}</td>
 				<td>
 					{% for link in row.risk_links %}
 						<span class="risiko-level-tag risiko-risk-id-tag {{ link.risiko_css }}">{{ link.risk_id }}</span>{% if not forloop.last %} {% endif %}
@@ -157,22 +118,129 @@
 		</tbody>
 	</table>
 	{% else %}
-	<p class="text-muted mb-0">Ingen besluttede tiltak er registrert.</p>
+	<p class="text-muted mb-0">Ingen tiltak under arbeid eller besluttet er registrert.</p>
 	{% endif %}
 </section>
 
-<section class="risiko-rapport-section">
-	<h2>8. Risiko etter etablerte tiltak</h2>
-	{% include "risiko_matrise_grid.html" with matrix=matrix_residual scope=scope konsekvens_labels=konsekvens_labels report_mode=True %}
+<section class="risiko-rapport-section risiko-rapport-section--scenarios">
+	<h2>7. Risikoscenarier</h2>
+	{% for section in scenario_sections %}
+	{% with scenario=section.scenario %}
+	<div class="risiko-rapport-scenario">
+		<h3>{{ scenario.display_risk_id }} – {{ scenario.uonsket_hendelse|default:"(uten beskrivelse)" }}</h3>
+		<div class="risiko-rapport-scenario-grid">
+			{% if scenario.arsaker_svakheter %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>Årsaker/svakheter:</strong>
+				{{ scenario.arsaker_svakheter|linebreaks_bullets }}
+			</div>
+			{% endif %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>KIT:</strong> {% risiko_kit_tags scenario.kit_dimensjoner %}
+			</div>
+			{% if section.tiltak_utfort_entries %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full risiko-rapport-tiltak-block">
+				<strong>Utførte tiltak:</strong>
+				<ul class="mb-0">
+					{% for entry in section.tiltak_utfort_entries %}
+					<li>
+						<strong>{{ entry.display_tiltak_id }}</strong>
+						{{ entry.action.beskrivelse|linebreaks_bullets }}
+						– {% risiko_tiltak_status_tag entry.action.status entry.action.get_status_display %}
+						{% if entry.action.ansvarlig %} ({{ entry.action.ansvarlig|risiko_ansvarlig_display }}){% endif %}
+						{% if entry.action.frist %} – frist {{ entry.action.frist|date:"Y-m-d" }}{% endif %}
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full risiko-rapport-scenario-pairs">
+				<div class="risiko-rapport-scenario-pair">
+					<div class="risiko-rapport-scenario-field">
+						<strong>Konsekvenstype:</strong> {% risiko_konsekvenstype_tags scenario.konsekvenstyper %}
+					</div>
+					<div class="risiko-rapport-scenario-field">
+						<strong>Konsekvens:</strong> {% risiko_level_tag scenario.konsekvens_label scenario.konsekvens_css %}
+						{% if scenario.konsekvens_begrunnelse %}
+						<div class="text-muted small">{{ scenario.konsekvens_begrunnelse|linebreaks_bullets }}</div>
+						{% endif %}
+					</div>
+				</div>
+				<div class="risiko-rapport-scenario-pair">
+					<div class="risiko-rapport-scenario-field">
+						<strong>Sannsynlighetstype:</strong> {% risiko_sannsynlighetstype_tags scenario.sannsynlighetstyper %}
+					</div>
+					<div class="risiko-rapport-scenario-field">
+						<strong>Sannsynlighet:</strong> {% risiko_level_tag scenario.sannsynlighet_label scenario.sannsynlighet_css %}
+						{% if scenario.sannsynlighetsbegrunnelse %}
+						<div class="text-muted small">{{ scenario.sannsynlighetsbegrunnelse|linebreaks_bullets }}</div>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>Risiko nå:</strong> <span class="{{ scenario.risiko_css }}">{{ scenario.risiko_etikett|default:"–" }}</span>
+			</div>
+			{% if scenario.risikobehandling %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>Risikobehandling:</strong> {{ scenario.get_risikobehandling_display }}
+			</div>
+			{% endif %}
+			{% if section.tiltak_pending_entries %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full risiko-rapport-tiltak-block">
+				<strong>Tiltak (besluttet / pågår):</strong>
+				<ul class="mb-0">
+					{% for entry in section.tiltak_pending_entries %}
+					<li>
+						<strong>{{ entry.display_tiltak_id }}</strong>
+						{{ entry.action.beskrivelse|linebreaks_bullets }}
+						– {% risiko_tiltak_status_tag entry.action.status entry.action.get_status_display %}
+						{% if entry.action.ansvarlig %} ({{ entry.action.ansvarlig|risiko_ansvarlig_display }}){% endif %}
+						{% if entry.action.frist %} – frist {{ entry.action.frist|date:"Y-m-d" }}{% endif %}
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>Risiko etter tiltak:</strong> <span class="{{ scenario.restrisiko_css }}">{{ scenario.restrisiko_etikett|default:"–" }}</span>
+			</div>
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>Tilknyttede systemer:</strong>
+				{% for system in scenario.systemer.all %}
+					<span class="screen-only"><a href="{% url 'systemdetaljer' pk=system.pk %}">{{ system.systemnavn }}</a>{% if not forloop.last %}, {% endif %}</span><span class="print-only">{{ system.systemnavn }}{% if not forloop.last %}, {% endif %}</span>
+				{% empty %}–{% endfor %}
+			</div>
+		</div>
+	</div>
+	{% endwith %}
+	{% empty %}
+	<p class="text-muted mb-0">Ingen scenarioer registrert.</p>
+	{% endfor %}
 </section>
 
 </article>
 
-{% endblock hovedinnhold %}
+{% endblock content %}
 
 {% block ekstrajavascript %}
 <style nonce="{{ request.csp_nonce }}">
+.document-minimal-content { max-width: 1200px; }
 .risk-matrix { border-collapse: collapse; width: 100%; max-width: 520px; margin-bottom: 1rem; border: 2px solid #5a6268; }
+.risiko-rapport-matriser-row .risk-matrix { max-width: 100%; }
+.risiko-rapport-matriser-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.5rem 2rem;
+	align-items: start;
+}
+.risiko-rapport-matrise-title {
+	font-size: 1.5rem;
+	margin-bottom: 0.75rem;
+	border-bottom: 2px solid #ced4da;
+	padding-bottom: 0.35rem;
+}
+.risiko-rapport-section--matriser { margin-bottom: 2rem; }
 .risk-matrix th, .risk-matrix td { border: 1px solid #5a6268; text-align: center; vertical-align: middle; padding: 4px; min-width: 48px; font-size: 0.85rem; }
 .risk-matrix .axis-label { background: #f8f9fa; font-weight: 600; font-size: 0.8rem; }
 .risk-cell-lav { background-color: #c0eb96; }
@@ -180,19 +248,123 @@
 .risk-cell-hoy { background-color: #ffc8cd; }
 .risk-cell-empty { background-color: #fff; }
 .risk-badge { display: inline-block; margin: 1px; padding: 1px 4px; font-size: 0.75rem; background: rgba(0,0,0,0.08); border-radius: 3px; }
+.risiko-level-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 2px 6px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+.risiko-level-tag.risk-level-1 { background-color: #c0eb96; }
+.risiko-level-tag.risk-level-2 { background-color: #e4f5ad; }
+.risiko-level-tag.risk-level-3 { background-color: #ffecb2; }
+.risiko-level-tag.risk-level-4 { background-color: #ffd997; }
+.risiko-level-tag.risk-level-5 { background-color: #ffc8cd; }
+.risiko-level-tag.risk-cell-lav { background-color: #c0eb96; }
+.risiko-level-tag.risk-cell-middels { background-color: #ffecb2; }
+.risiko-level-tag.risk-cell-hoy { background-color: #ffc8cd; }
+.risiko-tiltak-status-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 2px 6px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+.risiko-tiltak-status-utfort { background-color: #c0eb96; }
+.risiko-tiltak-status-under-arbeid { background-color: #ffecb2; }
+.risiko-tiltak-status-forslag { background-color: #e9ecef; }
+.risiko-tiltak-status-besluttet { background-color: #ffc8cd; }
+.risiko-tiltak-status-unknown { background-color: #e9ecef; }
+.risiko-kit-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	margin: 1px 2px 1px 0;
+	padding: 2px 5px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+.risiko-kit-icon { width: 11px; height: 11px; flex-shrink: 0; }
+.risiko-kit-k { background-color: #ede7f6; color: #5e35b1; }
+.risiko-kit-i { background-color: #efebe9; color: #6d4c41; }
+.risiko-kit-t { background-color: #eceff1; color: #546e7a; }
+.risiko-konsekvenstype-tag,
+.risiko-sannsynlighetstype-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	margin: 1px 2px 1px 0;
+	padding: 2px 5px;
+	border-radius: 3px;
+	white-space: nowrap;
+	background-color: #dee2e6;
+	color: #343a40;
+}
+.risiko-scope-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	white-space: nowrap;
+}
+.risiko-scope-status-icon { flex-shrink: 0; opacity: 0.85; }
+.risiko-scope-status-label { font-size: 0.85rem; }
+.risiko-scope-status-forsteutkast .risiko-scope-status-label { color: #6c757d; }
+.risiko-scope-status-under-revurdering .risiko-scope-status-label { color: #0d6efd; }
+.risiko-scope-status-til-godkjenning .risiko-scope-status-label { color: #b8860b; }
+.risiko-scope-status-godkjent .risiko-scope-status-label { color: #198754; }
 .risiko-rapport-section { margin-bottom: 2rem; page-break-inside: avoid; }
-.risiko-rapport-section h2 { font-size: 1.15rem; margin-bottom: 0.75rem; border-bottom: 1px solid #dee2e6; padding-bottom: 0.25rem; }
-.risiko-rapport-scenario { margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; page-break-inside: avoid; }
-.risiko-rapport-scenario h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+.risiko-rapport-section h2 { font-size: 1.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid #ced4da; padding-bottom: 0.35rem; }
+.risiko-rapport-scenario {
+	margin-bottom: 1.5rem;
+	padding: 1rem 1.25rem;
+	border: 1px solid #ced4da;
+	border-radius: 4px;
+	background: #f8f9fa;
+	page-break-inside: avoid;
+}
+.risiko-rapport-scenario h3 { font-size: 1.1rem; margin-bottom: 0.75rem; padding-bottom: 0.35rem; border-bottom: 1px solid #dee2e6; }
+.risiko-rapport-scenario-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.65rem 2rem;
+}
+.risiko-rapport-scenario-field { margin: 0; }
+.risiko-rapport-scenario-field--full { grid-column: 1 / -1; }
+.risiko-rapport-scenario-pairs {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.65rem 2rem;
+}
+.risiko-rapport-scenario-pair {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+}
+.risiko-rapport-lines { margin-top: 0.25rem; padding-left: 1.25rem; list-style-type: disc; }
+.risiko-rapport-lines li { margin-bottom: 0.15rem; }
+.risiko-rapport-lines li:last-child { margin-bottom: 0; }
+.risiko-rapport-tiltak-block > .risiko-rapport-lines { margin-top: 0.35rem; }
+.risiko-rapport-tiltak-block ul:not(.risiko-rapport-lines) { margin-top: 0.35rem; padding-left: 1.25rem; }
+.risiko-rapport-tiltak-block li { margin-bottom: 0.25rem; }
 .risiko-rapport-meta th { width: 11rem; font-weight: 600; vertical-align: top; }
 .risiko-rapport-figur { max-height: 480px; width: auto; }
 .risiko-rapport-prose { background: #f8f9fa; padding: 0.75rem 1rem; }
 .print-only { display: none; }
 @media print {
-	.no-print, nav, .sidemeny, .navbar, footer { display: none !important; }
+	.no-print { display: none !important; }
 	.screen-only { display: none !important; }
 	.print-only { display: inline !important; }
+	body.document-minimal { padding: 0; }
 	.risiko-rapport-section { page-break-inside: avoid; }
+	.risiko-rapport-section--matriser { page-break-inside: avoid; }
 	.risiko-rapport-scenario { page-break-inside: avoid; }
 	body { font-size: 11pt; }
 	a[href]::after { content: none !important; }
