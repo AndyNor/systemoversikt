@@ -1,4 +1,5 @@
 // Change log:
+// 2026-07-07: Omfang card – beskrivelse save, multipart figur/original upload via FormData.
 // 2026-07-06: Tiltak «Må eskaleres» toggle per action card in scenario modal.
 // 2026-07-02: Deltakergruppe search shows first 5 groups on focus before typing.
 // 2026-07-02: Deltakergrupper in Tilgang card – add/remove/search participant groups on collection.
@@ -82,6 +83,248 @@
         return data;
       });
     });
+  }
+
+  function fetchFormData(url, formData, method) {
+    const config = getConfig();
+    return fetch(url, {
+      method: method || 'POST',
+      credentials: 'same-origin',
+      headers: { 'X-CSRFToken': config ? config.csrf : '' },
+      body: formData,
+    }).then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok) {
+          const err = new Error((data && data.error) || 'Forespørsel feilet');
+          err.data = data;
+          err.status = response.status;
+          throw err;
+        }
+        return data;
+      });
+    });
+  }
+
+  function currentOmfangBeskrivelse() {
+    const textarea = document.getElementById('risiko-omfang-beskrivelse');
+    if (textarea) {
+      return textarea.value.trim();
+    }
+    const unlock = document.getElementById('risiko-unlock-beskrivelse');
+    if (unlock) {
+      return unlock.value.trim();
+    }
+    return '';
+  }
+
+  function syncOmfangBeskrivelseFields(beskrivelse) {
+    const text = beskrivelse || '';
+    const textarea = document.getElementById('risiko-omfang-beskrivelse');
+    const view = document.getElementById('risiko-omfang-beskrivelse-view');
+    const unlock = document.getElementById('risiko-unlock-beskrivelse');
+    if (textarea) {
+      textarea.value = text;
+    }
+    if (view) {
+      view.innerHTML = text
+        ? escapeHtml(text).replace(/\n/g, '<br>')
+        : '<span class="text-muted">Ingen omfangsbeskrivelse.</span>';
+    }
+    if (unlock) {
+      unlock.value = text;
+    }
+  }
+
+  function renderOmfangFigurPreview(omfangFil, cacheBust) {
+    const preview = document.getElementById('risiko-omfang-figur-preview');
+    const removeBtn = document.getElementById('risiko-omfang-figur-remove');
+    if (!preview) return;
+    preview.innerHTML = '';
+    if (omfangFil && omfangFil.has_figur) {
+      const img = document.createElement('img');
+      img.className = 'img-fluid risiko-omfang-figur-preview';
+      img.style.maxHeight = '240px';
+      img.alt = 'Omfangsfigur';
+      img.src = getConfig().urls.omfangFigurFile + '?v=' + (cacheBust || Date.now());
+      preview.appendChild(img);
+      if (omfangFil.figur_filnavn) {
+        const name = document.createElement('p');
+        name.className = 'small text-muted mb-0';
+        name.id = 'risiko-omfang-figur-filnavn';
+        name.textContent = omfangFil.figur_filnavn;
+        preview.appendChild(name);
+      }
+      if (removeBtn) removeBtn.style.display = '';
+    } else {
+      const empty = document.createElement('p');
+      empty.className = 'text-muted small mb-0';
+      empty.id = 'risiko-omfang-figur-empty';
+      empty.textContent = 'Ingen figur lastet opp.';
+      preview.appendChild(empty);
+      if (removeBtn) removeBtn.style.display = 'none';
+    }
+  }
+
+  function renderOmfangOriginalInfo(omfangFil) {
+    const info = document.getElementById('risiko-omfang-original-info');
+    const removeBtn = document.getElementById('risiko-omfang-original-remove');
+    if (!info) return;
+    info.innerHTML = '';
+    if (omfangFil && omfangFil.has_original) {
+      const link = document.createElement('a');
+      link.id = 'risiko-omfang-original-link';
+      link.href = getConfig().urls.omfangOriginalFile;
+      link.textContent = omfangFil.original_filnavn || 'Last ned originalfil';
+      info.appendChild(link);
+      if (removeBtn) removeBtn.style.display = '';
+    } else {
+      const empty = document.createElement('p');
+      empty.className = 'text-muted small mb-0';
+      empty.id = 'risiko-omfang-original-empty';
+      empty.textContent = 'Ingen originalfil lastet opp.';
+      info.appendChild(empty);
+      if (removeBtn) removeBtn.style.display = 'none';
+    }
+  }
+
+  function initOmfangManagement() {
+    const beskSaveBtn = document.getElementById('risiko-omfang-beskrivelse-save');
+    if (beskSaveBtn) {
+      beskSaveBtn.addEventListener('click', function () {
+        const statusEl = document.getElementById('risiko-omfang-beskrivelse-status');
+        const statusSelect = document.getElementById('risiko-scope-status-select');
+        const payload = {
+          title: document.getElementById('risiko-scope-title')
+            ? document.getElementById('risiko-scope-title').value.trim()
+            : document.getElementById('risiko-page-title').textContent.trim(),
+          beskrivelse: currentOmfangBeskrivelse(),
+          sist_revidert: document.getElementById('risiko-scope-revidert')
+            ? document.getElementById('risiko-scope-revidert').value
+            : document.getElementById('risiko-scope-revidert-view').textContent.trim(),
+          status: statusSelect ? statusSelect.value : (getConfig().scopeStatus || 'forsteutkast'),
+        };
+        if (statusEl) statusEl.textContent = 'Lagrer…';
+        fetchJson(getConfig().urls.scopeUpdate, { method: 'PATCH', body: JSON.stringify(payload) })
+          .then(function (data) {
+            const scope = data.scope || {};
+            syncOmfangBeskrivelseFields(scope.beskrivelse || '');
+            if (statusEl) {
+              statusEl.textContent = 'Lagret.';
+              statusEl.className = 'text-muted small ml-2';
+            }
+          })
+          .catch(function (err) {
+            if (statusEl) {
+              statusEl.textContent = err.message;
+              statusEl.className = 'text-danger small ml-2';
+            }
+          });
+      });
+    }
+
+    const figurUploadBtn = document.getElementById('risiko-omfang-figur-upload');
+    if (figurUploadBtn) {
+      figurUploadBtn.addEventListener('click', function () {
+        const input = document.getElementById('risiko-omfang-figur-input');
+        const statusEl = document.getElementById('risiko-omfang-figur-status');
+        if (!input || !input.files || !input.files.length) {
+          if (statusEl) {
+            statusEl.textContent = 'Velg en fil først.';
+            statusEl.className = 'text-danger small d-block';
+          }
+          return;
+        }
+        const formData = new FormData();
+        formData.append('fil', input.files[0]);
+        if (statusEl) {
+          statusEl.textContent = 'Laster opp…';
+          statusEl.className = 'text-muted small d-block';
+        }
+        fetchFormData(getConfig().urls.omfangFigur, formData, 'POST')
+          .then(function (data) {
+            renderOmfangFigurPreview(data.omfang_fil, Date.now());
+            input.value = '';
+            if (statusEl) {
+              statusEl.textContent = 'Figur lastet opp.';
+              statusEl.className = 'text-muted small d-block';
+            }
+          })
+          .catch(function (err) {
+            if (statusEl) {
+              statusEl.textContent = err.message;
+              statusEl.className = 'text-danger small d-block';
+            }
+          });
+      });
+    }
+
+    const figurRemoveBtn = document.getElementById('risiko-omfang-figur-remove');
+    if (figurRemoveBtn) {
+      figurRemoveBtn.addEventListener('click', function () {
+        const statusEl = document.getElementById('risiko-omfang-figur-status');
+        if (statusEl) statusEl.textContent = 'Fjerner…';
+        fetchJson(getConfig().urls.omfangFigur, { method: 'DELETE' })
+          .then(function (data) {
+            renderOmfangFigurPreview(data.omfang_fil);
+            if (statusEl) statusEl.textContent = 'Figur fjernet.';
+          })
+          .catch(function (err) {
+            if (statusEl) {
+              statusEl.textContent = err.message;
+              statusEl.className = 'text-danger small d-block';
+            }
+          });
+      });
+    }
+
+    const originalUploadBtn = document.getElementById('risiko-omfang-original-upload');
+    if (originalUploadBtn) {
+      originalUploadBtn.addEventListener('click', function () {
+        const input = document.getElementById('risiko-omfang-original-input');
+        const statusEl = document.getElementById('risiko-omfang-original-status');
+        if (!input || !input.files || !input.files.length) {
+          if (statusEl) {
+            statusEl.textContent = 'Velg en fil først.';
+            statusEl.className = 'text-danger small d-block';
+          }
+          return;
+        }
+        const formData = new FormData();
+        formData.append('fil', input.files[0]);
+        if (statusEl) statusEl.textContent = 'Laster opp…';
+        fetchFormData(getConfig().urls.omfangFigurOriginal, formData, 'POST')
+          .then(function (data) {
+            renderOmfangOriginalInfo(data.omfang_fil);
+            input.value = '';
+            if (statusEl) statusEl.textContent = 'Originalfil lastet opp.';
+          })
+          .catch(function (err) {
+            if (statusEl) {
+              statusEl.textContent = err.message;
+              statusEl.className = 'text-danger small d-block';
+            }
+          });
+      });
+    }
+
+    const originalRemoveBtn = document.getElementById('risiko-omfang-original-remove');
+    if (originalRemoveBtn) {
+      originalRemoveBtn.addEventListener('click', function () {
+        const statusEl = document.getElementById('risiko-omfang-original-status');
+        if (statusEl) statusEl.textContent = 'Fjerner…';
+        fetchJson(getConfig().urls.omfangFigurOriginal, { method: 'DELETE' })
+          .then(function (data) {
+            renderOmfangOriginalInfo(data.omfang_fil);
+            if (statusEl) statusEl.textContent = 'Originalfil fjernet.';
+          })
+          .catch(function (err) {
+            if (statusEl) {
+              statusEl.textContent = err.message;
+              statusEl.className = 'text-danger small d-block';
+            }
+          });
+      });
+    }
   }
 
   function initRisikoStatusUnlock() {
@@ -1486,7 +1729,7 @@
       const statusEl = document.getElementById('risiko-scope-status-select');
       scopeMetaSnapshot = {
         title: document.getElementById('risiko-scope-title').value,
-        beskrivelse: document.getElementById('risiko-scope-beskrivelse').value,
+        beskrivelse: currentOmfangBeskrivelse(),
         sist_revidert: document.getElementById('risiko-scope-revidert').value,
         status: statusEl ? statusEl.value : (config.scopeStatus || 'forsteutkast'),
       };
@@ -1495,7 +1738,7 @@
     function restoreScopeMetaSnapshot() {
       if (!scopeMetaSnapshot) return;
       document.getElementById('risiko-scope-title').value = scopeMetaSnapshot.title;
-      document.getElementById('risiko-scope-beskrivelse').value = scopeMetaSnapshot.beskrivelse;
+      syncOmfangBeskrivelseFields(scopeMetaSnapshot.beskrivelse);
       document.getElementById('risiko-scope-revidert').value = scopeMetaSnapshot.sist_revidert;
       const statusEl = document.getElementById('risiko-scope-status-select');
       if (statusEl && scopeMetaSnapshot.status) {
@@ -1548,13 +1791,14 @@
         beskBlock.style.display = scope.beskrivelse ? '' : 'none';
         beskView.innerHTML = escapeHtml(scope.beskrivelse || '').replace(/\n/g, '<br>');
       }
+      syncOmfangBeskrivelseFields(scope.beskrivelse || '');
     }
 
     function saveScopeMeta() {
       const statusEl = document.getElementById('risiko-scope-status-select');
       const payload = {
         title: document.getElementById('risiko-scope-title').value.trim(),
-        beskrivelse: document.getElementById('risiko-scope-beskrivelse').value.trim(),
+        beskrivelse: currentOmfangBeskrivelse(),
         sist_revidert: document.getElementById('risiko-scope-revidert').value,
         status: statusEl ? statusEl.value : (config.scopeStatus || 'forsteutkast'),
       };
@@ -1758,6 +2002,8 @@
     if (root.getAttribute('data-can-manage') === 'true') {
       initTilgangManagement();
     }
+
+    initOmfangManagement();
 
     fetchJson(config.urls.meta).then(function (data) {
       meta = data.meta;

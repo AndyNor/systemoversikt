@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: RiskScopeOmfangFil – scope figure/original bytes in DB for archive-friendly rapport.
 # 2026-07-06: RiskSammenstilling + group-owned links/assessments – templates independent of virksomhet.
 # 2026-07-06: RiskFramework.virksomhet + M2M on RiskVirksomhetGroup – reuse virksomhet tilgangsgrupper for rammeverk.
 # 2026-07-06: RiskFrameworkGroup + member – per-framework owner/read tilgangsgrupper.
@@ -7801,7 +7802,7 @@ class RiskScope(models.Model):
 		verbose_name="Beskrivelse",
 		blank=True,
 		default='',
-		help_text="Kort beskrivelse av hva risikovurderingen dekker.",
+		help_text="Omfangsbeskrivelse som inngår i den arkiverte risikovurderingsrapporten.",
 	)
 	virksomhet = models.ForeignKey(
 		to='Virksomhet',
@@ -7867,6 +7868,63 @@ class RiskScope(models.Model):
 		verbose_name_plural = "Risiko: omfang"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['-sist_revidert', '-opprettet']
+
+
+class RiskScopeOmfangFil(models.Model):
+	scope = models.OneToOneField(
+		to=RiskScope,
+		on_delete=models.CASCADE,
+		related_name='omfang_fil',
+		verbose_name="Risikoomfang",
+	)
+	figur_data = models.BinaryField(
+		verbose_name="Omfangsfigur",
+		null=True,
+		blank=True,
+	)
+	figur_content_type = models.CharField(
+		verbose_name="Omfangsfigur MIME-type",
+		max_length=100,
+		blank=True,
+		default='',
+	)
+	figur_filnavn = models.CharField(
+		verbose_name="Omfangsfigur filnavn",
+		max_length=300,
+		blank=True,
+		default='',
+	)
+	original_data = models.BinaryField(
+		verbose_name="Originalfil for figur",
+		null=True,
+		blank=True,
+	)
+	original_content_type = models.CharField(
+		verbose_name="Originalfil MIME-type",
+		max_length=100,
+		blank=True,
+		default='',
+	)
+	original_filnavn = models.CharField(
+		verbose_name="Originalfil filnavn",
+		max_length=300,
+		blank=True,
+		default='',
+	)
+
+	def has_figur(self):
+		return bool(self.figur_data)
+
+	def has_original(self):
+		return bool(self.original_data)
+
+	def __str__(self):
+		return 'Omfangsfiler for %s' % self.scope_id
+
+	class Meta:
+		verbose_name = "risikoomfang fil"
+		verbose_name_plural = "Risiko: omfangsfiler"
+		default_permissions = ('add', 'change', 'delete', 'view')
 
 
 class RiskScopeMember(models.Model):

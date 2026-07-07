@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Omfang figur/original multipart upload APIs – bytes stored on RiskScopeOmfangFil.
 # 2026-07-02: Participant group search returns first 5 without query; display normalized gruppenavn.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in participant group APIs.
 # 2026-07-01: Read-group access – GET APIs use readable scope; writes still require membership.
@@ -25,6 +26,7 @@ from datetime import datetime
 from functools import reduce
 from operator import or_
 
+from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Max, Q, Count
@@ -44,6 +46,7 @@ from systemoversikt.models import (
 	RiskScenario,
 	RiskScope,
 	RiskScopeMember,
+	RiskScopeOmfangFil,
 	RiskVirksomhetGroup,
 	System,
 	Virksomhet,
@@ -62,6 +65,14 @@ from systemoversikt.risk_criteria import (
 	sannsynlighet_lookup_label,
 	sannsynlighetstype_tag_dicts,
 	sannsynlighetstype_to_storage,
+)
+from systemoversikt.risk_files import (
+	clear_figur_fields,
+	clear_original_fields,
+	guess_content_type,
+	read_upload_bytes,
+	validate_omfang_figur,
+	validate_omfang_original,
 )
 from systemoversikt.risk_display import (
 	annotate_scenario_display_ids,
@@ -1378,3 +1389,83 @@ def api_risiko_virksomheter_sok(request, pk):
 			for v in virksomheter
 		],
 	})
+
+
+def _get_or_create_omfang_fil(scope):
+	omfang_fil, _created = RiskScopeOmfangFil.objects.get_or_create(scope=scope)
+	return omfang_fil
+
+
+def _omfang_fil_payload(omfang_fil):
+	if omfang_fil is None:
+		return {
+			'has_figur': False,
+			'figur_filnavn': '',
+			'has_original': False,
+			'original_filnavn': '',
+		}
+	return {
+		'has_figur': omfang_fil.has_figur(),
+		'figur_filnavn': omfang_fil.figur_filnavn or '',
+		'has_original': omfang_fil.has_original(),
+		'original_filnavn': omfang_fil.original_filnavn or '',
+	}
+
+
+@require_http_methods(['POST', 'DELETE'])
+def api_risiko_omfang_figur(request, pk):
+	scope, err = _require_member_json(request, pk)
+	if err:
+		return err
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
+
+	omfang_fil = _get_or_create_omfang_fil(scope)
+	if request.method == 'DELETE':
+		clear_figur_fields(omfang_fil)
+		omfang_fil.save(update_fields=['figur_data', 'figur_content_type', 'figur_filnavn'])
+		return JsonResponse({'ok': True, 'omfang_fil': _omfang_fil_payload(omfang_fil)})
+
+	upload = request.FILES.get('fil')
+	try:
+		data = read_upload_bytes(upload, validate_omfang_figur)
+	except ValidationError as exc:
+		return _json_error(exc.messages[0] if exc.messages else str(exc))
+
+	filename = (upload.name or '').strip()
+	omfang_fil.figur_data = data
+	omfang_fil.figur_content_type = guess_content_type(filename, 'image/png')
+	omfang_fil.figur_filnavn = filename[:300]
+	omfang_fil.save(update_fields=['figur_data', 'figur_content_type', 'figur_filnavn'])
+	return JsonResponse({'ok': True, 'omfang_fil': _omfang_fil_payload(omfang_fil)})
+
+
+@require_http_methods(['POST', 'DELETE'])
+def api_risiko_omfang_figur_original(request, pk):
+	scope, err = _require_member_json(request, pk)
+	if err:
+		return err
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
+
+	omfang_fil = _get_or_create_omfang_fil(scope)
+	if request.method == 'DELETE':
+		clear_original_fields(omfang_fil)
+		omfang_fil.save(update_fields=['original_data', 'original_content_type', 'original_filnavn'])
+		return JsonResponse({'ok': True, 'omfang_fil': _omfang_fil_payload(omfang_fil)})
+
+	upload = request.FILES.get('fil')
+	try:
+		data = read_upload_bytes(upload, validate_omfang_original)
+	except ValidationError as exc:
+		return _json_error(exc.messages[0] if exc.messages else str(exc))
+
+	filename = (upload.name or '').strip()
+	omfang_fil.original_data = data
+	omfang_fil.original_content_type = guess_content_type(filename)
+	omfang_fil.original_filnavn = filename[:300]
+	omfang_fil.save(update_fields=['original_data', 'original_content_type', 'original_filnavn'])
+	return JsonResponse({'ok': True, 'omfang_fil': _omfang_fil_payload(omfang_fil)})
+

@@ -1,3 +1,4 @@
+{# 2026-07-07: Omfang card – beskrivelse, figur upload, rapport link when godkjent. #}
 {# 2026-07-06: «Må eskaleres» toggle button on tiltak description row in scenario modal. #}
 {# 2026-07-06: Removed excel class – no table export on scenario table. #}
 {# 2026-06-29: Hint that empty etter tiltak fields inherit nåværende risiko levels. #}
@@ -28,6 +29,9 @@
 
 <p>
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til oversikt</a>
+	{% if show_scope_report %}
+	<a class="btn btn-outline-primary btn-sm ml-2" href="{% url 'risiko_scope_rapport' pk=scope.pk %}">Åpne rapport</a>
+	{% endif %}
 </p>
 
 {% if is_read_only_viewer %}
@@ -89,10 +93,6 @@
 	<div class="col-12">
 	{% endif %}
 		<div id="risiko-scope-meta-view" class="mb-3">
-			<div class="mb-3" id="risiko-scope-beskrivelse-block"{% if not scope.beskrivelse %} style="display:none;"{% endif %}>
-				<strong>Beskrivelse</strong>
-				<p id="risiko-scope-beskrivelse-view" style="background-color: #f8f9fa; padding: 0.75rem 1rem;">{{ scope.beskrivelse|linebreaksbr }}</p>
-			</div>
 
 			<p>
 				<strong>Status:</strong> <span id="risiko-scope-status-view">{% risiko_scope_status scope.status scope.get_status_display %}</span>
@@ -143,10 +143,6 @@
 					<input type="text" id="risiko-scope-title" class="form-control form-control-sm" value="{{ scope.title }}" maxlength="300">
 				</div>
 				<div class="form-group risiko-scope-meta-field">
-					<label for="risiko-scope-beskrivelse">Beskrivelse</label>
-					<textarea id="risiko-scope-beskrivelse" class="form-control form-control-sm risiko-scope-beskrivelse-input" rows="10">{{ scope.beskrivelse }}</textarea>
-				</div>
-				<div class="form-group risiko-scope-meta-field">
 					<label for="risiko-scope-status">Status</label>
 					<select id="risiko-scope-status-select" class="form-control form-control-sm">
 						{% if can_manage_scope %}
@@ -174,6 +170,65 @@
 			</div>
 		</div>
 		{% endif %}
+	</div>
+</div>
+
+<div class="card mb-4" id="risiko-scope-omfang">
+	<div class="card-body">
+		<h5 class="card-title">Omfang</h5>
+		<div class="mb-3">
+			<strong class="d-block">Omfangsbeskrivelse</strong>
+			{% if can_edit_scope %}
+			<textarea id="risiko-omfang-beskrivelse" class="form-control form-control-sm risiko-omfang-beskrivelse-input" rows="8">{{ scope.beskrivelse }}</textarea>
+			<div class="mt-2">
+				<button type="button" class="btn btn-outline-primary btn-sm" id="risiko-omfang-beskrivelse-save">Lagre omfangsbeskrivelse</button>
+				<span id="risiko-omfang-beskrivelse-status" class="text-muted small ml-2"></span>
+			</div>
+			{% else %}
+			<div id="risiko-omfang-beskrivelse-view" class="risiko-omfang-beskrivelse-view">{% if scope.beskrivelse %}{{ scope.beskrivelse|linebreaksbr }}{% else %}<span class="text-muted">Ingen omfangsbeskrivelse.</span>{% endif %}</div>
+			{% endif %}
+		</div>
+
+		<div class="mb-3" id="risiko-omfang-figur-block">
+			<strong class="d-block">Omfangsfigur</strong>
+			<p class="text-muted small mb-2">Visningsfigur som inngår i rapporten (PNG, JPG, WebP, SVG).</p>
+			<div id="risiko-omfang-figur-preview" class="mb-2">
+				{% if omfang_fil and omfang_fil.has_figur %}
+				<img src="{% url 'risiko_scope_fil_omfang' pk=scope.pk %}?v={{ scope.sist_oppdatert|date:'U' }}" alt="Omfangsfigur" class="img-fluid risiko-omfang-figur-preview" style="max-height: 240px;">
+				<p class="small text-muted mb-0" id="risiko-omfang-figur-filnavn">{{ omfang_fil.figur_filnavn }}</p>
+				{% else %}
+				<p class="text-muted small mb-0" id="risiko-omfang-figur-empty">Ingen figur lastet opp.</p>
+				{% endif %}
+			</div>
+			{% if can_edit_scope %}
+			<div class="d-flex flex-wrap align-items-center">
+				<input type="file" id="risiko-omfang-figur-input" class="form-control-file form-control-sm mr-2 mb-1" accept=".png,.jpg,.jpeg,.gif,.webp,.svg,image/*">
+				<button type="button" class="btn btn-outline-primary btn-sm mb-1" id="risiko-omfang-figur-upload">Last opp figur</button>
+				<button type="button" class="btn btn-outline-danger btn-sm mb-1 ml-1" id="risiko-omfang-figur-remove"{% if not omfang_fil or not omfang_fil.has_figur %} style="display:none;"{% endif %}>Fjern figur</button>
+			</div>
+			<span id="risiko-omfang-figur-status" class="text-muted small d-block"></span>
+			{% endif %}
+		</div>
+
+		<div id="risiko-omfang-original-block">
+			<strong class="d-block">Originalfil for figur</strong>
+			<p class="text-muted small mb-2">Valgfri kildefil (f.eks. Visio, draw.io, PPTX).</p>
+			<div id="risiko-omfang-original-info" class="mb-2">
+				{% if omfang_fil and omfang_fil.has_original %}
+				<a href="{% url 'risiko_scope_fil_omfang_original' pk=scope.pk %}" id="risiko-omfang-original-link">{{ omfang_fil.original_filnavn }}</a>
+				{% else %}
+				<p class="text-muted small mb-0" id="risiko-omfang-original-empty">Ingen originalfil lastet opp.</p>
+				{% endif %}
+			</div>
+			{% if can_edit_scope %}
+			<div class="d-flex flex-wrap align-items-center">
+				<input type="file" id="risiko-omfang-original-input" class="form-control-file form-control-sm mr-2 mb-1">
+				<button type="button" class="btn btn-outline-primary btn-sm mb-1" id="risiko-omfang-original-upload">Last opp originalfil</button>
+				<button type="button" class="btn btn-outline-danger btn-sm mb-1 ml-1" id="risiko-omfang-original-remove"{% if not omfang_fil or not omfang_fil.has_original %} style="display:none;"{% endif %}>Fjern originalfil</button>
+			</div>
+			<span id="risiko-omfang-original-status" class="text-muted small d-block"></span>
+			{% endif %}
+		</div>
 	</div>
 </div>
 
@@ -805,6 +860,11 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 }
 #risiko-scope-meta-edit .risiko-scope-meta-actions {
 	margin-top: 0.15rem;
+}
+.risiko-omfang-beskrivelse-input { min-height: 10rem; resize: vertical; }
+.risiko-omfang-beskrivelse-view {
+	background-color: #f8f9fa;
+	padding: 0.75rem 1rem;
 }
 </style>
 {% if can_edit_scope or can_change_locked_status %}

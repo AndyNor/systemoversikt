@@ -1,3 +1,4 @@
+{# 2026-07-07: report_mode – static R# badges without edit links for archive rapport. #}
 {# 2026-06-26: SANNS. rowspan once; drop level numbers from axis labels. #}
 <table class="risk-matrix">
 <thead>
@@ -22,7 +23,11 @@
 	{% for cell in row.cells %}
 	<td class="{{ cell.css_class }}">
 		{% for scenario in cell.scenarios %}
+			{% if report_mode %}
+			<span class="risk-badge" title="{{ scenario.uonsket_hendelse|truncatechars:120 }}">{{ scenario.display_risk_id }}</span>
+			{% else %}
 			<a class="risk-badge" href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ scenario.pk }}" title="{{ scenario.uonsket_hendelse|truncatechars:120 }}">{{ scenario.display_risk_id }}</a>
+			{% endif %}
 		{% endfor %}
 	</td>
 	{% endfor %}

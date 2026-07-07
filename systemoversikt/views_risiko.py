@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: risiko_scope_rapport + omfang file serve views for godkjent archive report.
 # 2026-07-06: _render_risk_access_denied – sammenstilling context for group-owned access denied pages.
 # 2026-07-06: _render_risk_access_denied – framework context for rammeverk access denied pages.
 # 2026-07-06: risiko_scope_list – login_required; list is no longer open to anonymous users.
@@ -31,7 +32,7 @@
 # 2026-06-24: Accept view_qualysvuln for risk views – same audience as vulnstats/BloodHound until group_permissions import.
 # 2026-06-24: Security risk module views – list, import, detail, matrix, akseptkriterier.
 
-from datetime import date
+from datetime import date, datetime
 import json
 
 from django.contrib import messages
@@ -41,7 +42,8 @@ from django.db.models import Prefetch
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.decorators.http import require_http_methods
+from django.utils.http import content_disposition_header
+from django.views.decorators.http import require_GET, require_http_methods
 from openpyxl import load_workbook
 
 from systemoversikt.models import (
@@ -50,6 +52,7 @@ from systemoversikt.models import (
 	RiskCriteriaConfig,
 	RiskScope,
 	RiskScopeMember,
+	RiskScopeOmfangFil,
 	RiskVirksomhetGroup,
 	RiskScenario,
 	Virksomhet,
@@ -68,6 +71,12 @@ from systemoversikt.risk_display import (
 	annotate_scenario_display_ids,
 	annotate_scenarios_tiltak_ids,
 	build_scope_tiltak_rows,
+	tiltak_display_id_map,
+)
+from systemoversikt.risk_report import (
+	besluttede_tiltak,
+	build_scenario_report_sections,
+	collect_scope_systems,
 )
 from systemoversikt.risk_criteria_transfer import (
 	apply_imported_criteria,
@@ -244,7 +253,12 @@ def _risiko_editor_urls(scope_pk):
 		'brukerSearch': reverse('api_risiko_brukere_sok', kwargs={'pk': pk}),
 		'tiltakAnsvarligSearch': reverse('api_risiko_tiltak_ansvarlig_sok', kwargs={'pk': pk}),
 		'virksomhetSearch': reverse('api_risiko_virksomheter_sok', kwargs={'pk': pk}),
+		'omfangFigur': reverse('api_risiko_omfang_figur', kwargs={'pk': pk}),
+		'omfangFigurOriginal': reverse('api_risiko_omfang_figur_original', kwargs={'pk': pk}),
+		'omfangFigurFile': reverse('risiko_scope_fil_omfang', kwargs={'pk': pk}),
+		'omfangOriginalFile': reverse('risiko_scope_fil_omfang_original', kwargs={'pk': pk}),
 		'scopePage': reverse('risiko_scope_detail', kwargs={'pk': pk}),
+		'scopeReport': reverse('risiko_scope_rapport', kwargs={'pk': pk}),
 	}
 
 
@@ -438,6 +452,57 @@ def _build_tiltak_rows(scope, scenarios):
 	return build_scope_tiltak_rows(scenarios, actions, risk_id_by_pk)
 
 
+def _scope_omfang_fil(scope):
+	try:
+		return scope.omfang_fil
+	except RiskScopeOmfangFil.DoesNotExist:
+		return None
+
+
+def _besluttede_rapport_tiltak_rows(scenarios, actions):
+	from systemoversikt.risk_report import BESLUTTET_TILTAK_STATUSES, besluttede_tiltak
+
+	risk_id_by_pk = annotate_scenario_display_ids(scenarios)
+	tiltak_map = tiltak_display_id_map(actions)
+	ordered = besluttede_tiltak(actions, tiltak_map)
+	order_index = {action.pk: index for index, action in enumerate(ordered)}
+	all_rows = build_scope_tiltak_rows(scenarios, actions, risk_id_by_pk)
+	rows = [row for row in all_rows if row['action'].status in BESLUTTET_TILTAK_STATUSES]
+	rows.sort(key=lambda row: order_index.get(row['action'].pk, 9999))
+	return rows
+
+
+def _build_rapport_context(scope, criteria):
+	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
+	annotate_scenario_display_ids(scenarios)
+	actions = list(scope.actions.prefetch_related('scenarios').order_by('pk'))
+	annotate_scenarios_tiltak_ids(scenarios, actions)
+	for scenario in scenarios:
+		_analyze_scenario_display(scenario, criteria)
+
+	owner_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER]
+	participant_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]
+	participant_groups = list(scope.participant_groups.all())
+	tiltak_map = tiltak_display_id_map(actions)
+
+	return {
+		'scope': scope,
+		'omfang_fil': _scope_omfang_fil(scope),
+		'scenarios': scenarios,
+		'scenario_sections': build_scenario_report_sections(scenarios, tiltak_map),
+		'scope_systems': collect_scope_systems(scenarios),
+		'besluttede_tiltak_rows': _besluttede_rapport_tiltak_rows(scenarios, actions),
+		'matrix_current': criteria.build_matrix_context(scenarios, use_residual=False),
+		'matrix_residual': criteria.build_matrix_context(scenarios, use_residual=True),
+		'konsekvens_labels': criteria.konsekvens_labels,
+		'owner_memberships': owner_memberships,
+		'participant_memberships': participant_memberships,
+		'participant_groups': participant_groups,
+		'generated_at': datetime.now(),
+		'report_mode': True,
+	}
+
+
 def risiko_scope_detail(request, pk):
 	scope = get_object_or_404(
 		RiskScope.objects.select_related('virksomhet').prefetch_related(
@@ -481,11 +546,14 @@ def risiko_scope_detail(request, pk):
 	owner_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER]
 	participant_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]
 	participant_groups = list(scope.participant_groups.all())
+	omfang_fil = _scope_omfang_fil(scope)
 
 	return render(request, 'risiko_scope_detail.html', {
 		'request': request,
 		'required_permissions': [],
 		'scope': scope,
+		'omfang_fil': omfang_fil,
+		'show_scope_report': scope.status == 'godkjent',
 		'scenarios': scenarios,
 		'tiltak_rows': _build_tiltak_rows(scope, scenarios),
 		'can_edit_scope': can_edit_scope,
@@ -646,4 +714,72 @@ def risiko_matrise(request, pk):
 	if not _has_scope_read_access(request, scope):
 		return _deny_scope_access(request, scope=scope)
 	return redirect(reverse('risiko_scope_detail', kwargs={'pk': pk}) + '#risikomatriser')
+
+
+def _serve_scope_omfang_file(request, pk, kind):
+	scope = _get_readable_scope(request, pk)
+	omfang_fil = _scope_omfang_fil(scope)
+	if omfang_fil is None:
+		raise Http404
+
+	if kind == 'figur':
+		if not omfang_fil.has_figur():
+			raise Http404
+		content = bytes(omfang_fil.figur_data)
+		content_type = omfang_fil.figur_content_type or 'application/octet-stream'
+		disposition = 'inline'
+		filename = omfang_fil.figur_filnavn or 'omfang-figur'
+	else:
+		if not omfang_fil.has_original():
+			raise Http404
+		content = bytes(omfang_fil.original_data)
+		content_type = omfang_fil.original_content_type or 'application/octet-stream'
+		disposition = 'attachment'
+		filename = omfang_fil.original_filnavn or 'omfang-original'
+
+	response = HttpResponse(content, content_type=content_type)
+	response['Content-Disposition'] = content_disposition_header(disposition, filename)
+	return response
+
+
+@require_GET
+def risiko_scope_fil_omfang(request, pk):
+	# 2026-07-07: Authenticated inline serve of scope figure bytes from DB.
+	return _serve_scope_omfang_file(request, pk, 'figur')
+
+
+@require_GET
+def risiko_scope_fil_omfang_original(request, pk):
+	# 2026-07-07: Authenticated download of scope figure source file from DB.
+	return _serve_scope_omfang_file(request, pk, 'original')
+
+
+@require_GET
+def risiko_scope_rapport(request, pk):
+	# 2026-07-07: Print-friendly HTML report for godkjent risikosamling.
+	scope = get_object_or_404(
+		RiskScope.objects.select_related('virksomhet').prefetch_related(
+			Prefetch(
+				'memberships',
+				queryset=RiskScopeMember.objects.select_related('user').order_by('role', 'user__first_name', 'user__username'),
+			),
+			Prefetch(
+				'participant_groups',
+				queryset=RiskVirksomhetGroup.objects.select_related('virksomhet').order_by('title'),
+			),
+		),
+		pk=pk,
+	)
+	if not _has_scope_read_access(request, scope):
+		return _deny_scope_access(request, scope=scope)
+	if scope.status != 'godkjent':
+		messages.info(request, 'Rapporten er kun tilgjengelig for godkjente risikosamlinger.')
+		return redirect('risiko_scope_detail', pk=pk)
+
+	criteria = get_active_criteria()
+	return render(request, 'risiko_scope_rapport.html', {
+		'request': request,
+		'required_permissions': [],
+		**_build_rapport_context(scope, criteria),
+	})
 

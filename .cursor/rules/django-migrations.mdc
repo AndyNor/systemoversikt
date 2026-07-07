@@ -1,0 +1,21 @@
+---
+description: Django migrations live in git under systemoversikt/migrations — never deploy_migrations.
+alwaysApply: true
+---
+
+# Django migrations
+
+Test and production share the same migration history via **git**.
+
+## Do
+
+- Add new migrations only under [`systemoversikt/migrations/`](systemoversikt/migrations/) (next sequential `000N_*.py` after the latest file).
+- Run `manage.py makemigrations systemoversikt` when appropriate, or hand-write migrations that depend on the current head (e.g. `0006_riskaction_eskaleres`).
+- Deploy with `manage.py migrate systemoversikt` on each environment.
+
+## Do not
+
+- **Do not** create or update files under `deploy_migrations/` for new features.
+- **Do not** tell the user to copy migrations from `deploy_migrations/production/` to the server.
+
+The `deploy_migrations/` folder is **archived** (pre-squash transfer only). See [`deploy_migrations/production/README.md`](deploy_migrations/production/README.md).

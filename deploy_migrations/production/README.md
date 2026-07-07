@@ -9,6 +9,8 @@
 | `0001_initial.py` | Squashed baseline (all models through risk virksomhet groups, etc.) |
 | `0002_risk_framework_layer.py` | Risk framework aggregation layer (`RiskFramework`, nodes, links, assessments) |
 
+New migrations continue as `0007_…`, `0008_…`, etc. in the same folder (committed via git). **Do not** add new files here in `deploy_migrations/production/`.
+
 After deploy, on server:
 
 ```bash
