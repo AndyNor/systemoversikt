@@ -27,7 +27,7 @@
 	<a class="btn btn-success btn-sm" href="{% url 'risiko_import' %}">Ny fra excelmal</a>
 	{% endif %}
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_akseptkriterier' %}">Akseptkriterier</a>
-	{% if can_manage_read_groups %}
+	{% if can_access_tilgangsgrupper %}
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_virksomhet_tilgangsgrupper' vid=virksomhet.pk %}">Tilgangsgrupper</a>
 	{% endif %}
 </p>

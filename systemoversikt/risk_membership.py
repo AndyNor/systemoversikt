@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Granular tilgangsgruppe helpers – view_riskscope create, member-gated edit, change_riskvirksomhetgroup for virksomhet_read_only.
 # 2026-07-07: user_member_display_name – disambiguate same-name users with virksomhetsforkortelse on collection pages.
 # 2026-07-06: Superuser bypass in user_has_risk_virksomhet_read_access – testers can open framework rollup pages.
 # 2026-07-06: user_has_risk_virksomhet_read_access – scope/participant/read-group border for framework mapping.
@@ -27,7 +28,8 @@ from systemoversikt.models import (
 	Virksomhet,
 )
 
-RISK_VIRKSOMHET_GROUP_ADMIN_AD_GROUP = '/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER'
+RISK_CREATE_PERMISSION = 'systemoversikt.view_riskscope'
+RISK_VIRKSOMHET_GROUP_CHANGE_PERMISSION = 'systemoversikt.change_riskvirksomhetgroup'
 
 
 def risk_group_title_prefix(virksomhet):
@@ -199,18 +201,45 @@ def user_has_scope_write_access(user, scope):
 	return user_is_scope_member(user, scope)
 
 
-def user_can_manage_risk_virksomhet_groups(user, virksomhet):
+def user_can_create_risk_collection(user):
+	return user.is_authenticated and user.has_perm(RISK_CREATE_PERMISSION)
+
+
+def user_can_create_risk_virksomhet_group(user, virksomhet):
+	if not user_can_create_risk_collection(user) or virksomhet is None:
+		return False
+	profile_v = profile_virksomhet(user)
+	return profile_v is not None and profile_v.pk == virksomhet.pk
+
+
+def user_is_risk_virksomhet_group_member(user, group):
+	if not user.is_authenticated or group is None:
+		return False
+	return RiskVirksomhetGroupMember.objects.filter(
+		user_id=user.id,
+		group_id=group.pk,
+	).exists()
+
+
+def user_is_risk_virksomhet_group_member_in_virksomhet(user, virksomhet):
 	if not user.is_authenticated or virksomhet is None:
 		return False
-	# TODO: Remove superuser bypass – temporary so testers can manage read groups for any virksomhet.
-	if user.is_superuser:
+	return RiskVirksomhetGroupMember.objects.filter(
+		user_id=user.id,
+		group__virksomhet_id=virksomhet.pk,
+	).exists()
+
+
+def user_can_access_risk_virksomhet_groups_page(user, virksomhet):
+	if not user.is_authenticated or virksomhet is None:
+		return False
+	if user_can_create_risk_virksomhet_group(user, virksomhet):
 		return True
-	if not user.groups.filter(name=RISK_VIRKSOMHET_GROUP_ADMIN_AD_GROUP).exists():
-		return False
-	try:
-		return user.profile.virksomhet_id == virksomhet.pk
-	except AttributeError:
-		return False
+	return user_is_risk_virksomhet_group_member_in_virksomhet(user, virksomhet)
+
+
+def user_can_set_virksomhet_read_only_flag(user):
+	return user.is_authenticated and user.has_perm(RISK_VIRKSOMHET_GROUP_CHANGE_PERMISSION)
 
 
 def annotate_scope_list(qs, user):

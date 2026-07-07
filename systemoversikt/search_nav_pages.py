@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Risiko create/import nav search – view_riskscope only (no qualys fallback).
 # 2026-07-07: AD sikkerhetsrapporter nav search – view_qualysvuln (matches view access).
 # 2026-07-06: Risikosammenstilling nav search – framework aggregation layer.
 # 2026-07-02: Merge BloodHound status + findings into one sidemeny entry.
@@ -85,8 +86,8 @@ NAV_PAGES = [
 	_entry('Gjennomførte pentester', 'rapport_sikkerhetstester', 'Sikkerhet', ['pentester', 'pentest', 'sikkerhetstester']),
 	_entry('Risikovurderinger', 'risiko_scope_list', 'Sikkerhet', ['risiko', 'risikovurdering', 'risikomatrise'], permissions=[]),
 	_entry('Risikosammenstilling', 'risiko_rammeverk_list', 'Sikkerhet', ['risikosammenstilling', 'risikorammeverk', 'it-plattform', 'høynivå risiko'], permissions=[]),
-	_entry('Ny risikosamling', 'risiko_scope_create', 'Sikkerhet', ['ny risikosamling', 'risiko opprett'], permissions=['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']),
-	_entry('Importer risikomatrise', 'risiko_import', 'Sikkerhet', ['risiko import', 'risikomatrise import'], permissions=['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']),
+	_entry('Ny risikosamling', 'risiko_scope_create', 'Sikkerhet', ['ny risikosamling', 'risiko opprett'], permissions=['systemoversikt.view_riskscope']),
+	_entry('Importer risikomatrise', 'risiko_import', 'Sikkerhet', ['risiko import', 'risikomatrise import'], permissions=['systemoversikt.view_riskscope']),
 	_entry('ADCS certifikatmaler', 'cmdb_adcs_index', 'Sikkerhet', ['adcs', 'certifikatmaler'], permissions=['systemoversikt.view_cmdbdevice']),
 	_entry('Bloodhound', 'sikkerhet_bloodhound', 'Sikkerhet', ['bloodhound', 'ad attack paths', 'bloodhound funn', 'bloodhound findings', 'dcsync', 'kerberoast'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Device code-innlogginger', 'sikkerhet_device_code_logins', 'Sikkerhet', ['device code', 'devicecode'], permissions=['systemoversikt.view_qualysvuln']),

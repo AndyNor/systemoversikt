@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: view_riskscope gates collection create/import; tilgangsgrupper page uses granular membership helpers.
 # 2026-07-07: Editor context sannsynlighet_keys from editable sannsynlighetstyper; import redirects to rediger.
 # 2026-07-07: Membership prefetch includes profile virksomhet for member display names.
 # 2026-07-07: Report available for all statuses; godkjent-only gate removed from detail link and rapport view.
@@ -91,9 +92,12 @@ from systemoversikt.risk_membership import (
 	create_risk_scope,
 	nav_ordinary_virksomheter,
 	profile_virksomhet,
+	RISK_CREATE_PERMISSION,
 	scopes_for_user_membership,
 	scopes_for_virksomhet,
-	user_can_manage_risk_virksomhet_groups,
+	user_can_access_risk_virksomhet_groups_page,
+	user_can_create_risk_virksomhet_group,
+	user_can_set_virksomhet_read_only_flag,
 	user_member_display_name,
 	user_has_scope_read_access,
 	user_has_scope_write_access,
@@ -101,8 +105,8 @@ from systemoversikt.risk_membership import (
 )
 from systemoversikt.views import formater_permissions
 
-# Import restricted to security analysts; detail restricted to scope members.
-RISK_WRITE_PERMISSIONS = ['systemoversikt.add_riskscope', 'systemoversikt.view_qualysvuln']
+# Create/import gated by view_riskscope only; collection detail restricted to scope members.
+RISK_CREATE_PERMISSIONS = [RISK_CREATE_PERMISSION]
 
 
 def _scope_membership(request, scope):
@@ -270,7 +274,7 @@ def _risiko_editor_urls(scope_pk):
 
 
 def _risiko_list_context(request, scopes, list_virksomhet=None):
-	can_write = any(map(request.user.has_perm, RISK_WRITE_PERMISSIONS))
+	can_write = request.user.has_perm(RISK_CREATE_PERMISSION)
 	profile_v = profile_virksomhet(request.user)
 	ctx = {
 		'request': request,
@@ -280,9 +284,9 @@ def _risiko_list_context(request, scopes, list_virksomhet=None):
 		'can_create': can_write,
 		'profile_virksomhet': profile_v,
 		'list_virksomhet': list_virksomhet,
-		'can_manage_read_groups': (
+		'can_access_tilgangsgrupper': (
 			list_virksomhet is not None
-			and user_can_manage_risk_virksomhet_groups(request.user, list_virksomhet)
+			and user_can_access_risk_virksomhet_groups_page(request.user, list_virksomhet)
 		),
 	}
 	ctx['nav_virksomheter'] = nav_ordinary_virksomheter()
@@ -328,7 +332,7 @@ def risiko_virksomhet_list(request, vid):
 
 def risiko_virksomhet_tilgangsgrupper(request, vid):
 	virksomhet = get_object_or_404(Virksomhet, pk=vid)
-	if not user_can_manage_risk_virksomhet_groups(request.user, virksomhet):
+	if not user_can_access_risk_virksomhet_groups_page(request.user, virksomhet):
 		return _render_risk_access_denied(request, 'read_groups_manage', virksomhet=virksomhet)
 	api_urls = {
 		'groups': reverse('api_risiko_read_groups_list', kwargs={'vid': vid}),
@@ -338,12 +342,14 @@ def risiko_virksomhet_tilgangsgrupper(request, vid):
 		'members': reverse('api_risiko_read_group_members', kwargs={'vid': vid, 'gid': 0}).replace('/groups/0/', '/groups/{id}/'),
 		'memberAdd': reverse('api_risiko_read_group_member_add', kwargs={'vid': vid, 'gid': 0}).replace('/groups/0/', '/groups/{id}/'),
 		'memberRemove': reverse('api_risiko_read_group_member_remove', kwargs={'vid': vid, 'gid': 0, 'user_id': 0}).replace('/groups/0/', '/groups/{groupId}/').replace('/members/0/', '/members/{userId}/'),
-		'brukerSearch': reverse('api_risiko_read_group_brukere_sok', kwargs={'vid': vid}),
+		'brukerSearch': reverse('api_risiko_read_group_brukere_sok', kwargs={'vid': vid, 'gid': 0}).replace('/groups/0/', '/groups/{id}/'),
 	}
 	return render(request, 'risiko_virksomhet_tilgangsgrupper.html', {
 		'request': request,
 		'required_permissions': [],
 		'virksomhet': virksomhet,
+		'can_create_group': user_can_create_risk_virksomhet_group(request.user, virksomhet),
+		'can_set_virksomhet_read_only': user_can_set_virksomhet_read_only_flag(request.user),
 		'api_urls_json': json.dumps(api_urls),
 	})
 
@@ -369,7 +375,7 @@ def risiko_scope_delete(request, pk):
 
 
 def risiko_import(request):
-	denied = _check_permissions(request, RISK_WRITE_PERMISSIONS)
+	denied = _check_permissions(request, RISK_CREATE_PERMISSIONS)
 	if denied:
 		return denied
 
@@ -395,13 +401,13 @@ def risiko_import(request):
 
 	return render(request, 'risiko_import.html', {
 		'request': request,
-		'required_permissions': formater_permissions(RISK_WRITE_PERMISSIONS),
+		'required_permissions': formater_permissions(RISK_CREATE_PERMISSIONS),
 	})
 
 
 def risiko_scope_create(request):
 	# 2026-06-25: Manual collection create – same audience as Excel import.
-	denied = _check_permissions(request, RISK_WRITE_PERMISSIONS)
+	denied = _check_permissions(request, RISK_CREATE_PERMISSIONS)
 	if denied:
 		return denied
 
@@ -420,7 +426,7 @@ def risiko_scope_create(request):
 					messages.error(request, 'Ugyldig dato – bruk format ÅÅÅÅ-MM-DD.')
 					return render(request, 'risiko_scope_create.html', {
 						'request': request,
-						'required_permissions': formater_permissions(RISK_WRITE_PERMISSIONS),
+						'required_permissions': formater_permissions(RISK_CREATE_PERMISSIONS),
 						'title': title,
 						'beskrivelse': beskrivelse,
 						'sist_revidert': sist_revidert_raw,
@@ -436,7 +442,7 @@ def risiko_scope_create(request):
 
 	return render(request, 'risiko_scope_create.html', {
 		'request': request,
-		'required_permissions': formater_permissions(RISK_WRITE_PERMISSIONS),
+		'required_permissions': formater_permissions(RISK_CREATE_PERMISSIONS),
 		'title': '',
 		'beskrivelse': '',
 		'sist_revidert': date.today().isoformat(),

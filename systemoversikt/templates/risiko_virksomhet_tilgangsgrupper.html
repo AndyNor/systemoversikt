@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-07: Conditional create/edit/delete and virksomhet_read_only checkbox from permission flags. #}
 {# 2026-07-07: Outline button for back navigation. #}
 {# 2026-07-06: Clearer group-type badges – «Lese alt for virksomheten» / «Kun enkeltsamlinger». #}
 {# 2026-07-06: Sammenstillinger eies via gruppe ved opprettelse – ikke lenger rammeverk-M2M her. #}
@@ -25,9 +26,11 @@
 
 {% csrf_token %}
 
+{% if can_create_group %}
 <div class="mb-3">
 	<button type="button" class="btn btn-success btn-sm" id="risiko-read-group-new">Ny gruppe</button>
 </div>
+{% endif %}
 
 <div id="risiko-read-groups-list" class="mb-4"></div>
 
@@ -48,11 +51,13 @@
 					<label for="risiko-read-group-beskrivelse">Beskrivelse</label>
 					<textarea id="risiko-read-group-beskrivelse" class="form-control form-control-sm" rows="2"></textarea>
 				</div>
+				{% if can_set_virksomhet_read_only %}
 				<div class="form-group form-check">
 					<input type="checkbox" class="form-check-input" id="risiko-read-group-virksomhet-read-only">
 					<label class="form-check-label" for="risiko-read-group-virksomhet-read-only">Lesetilgang til hele virksomheten</label>
 					<small class="form-text text-muted">Medlemmer kan lese alle risikosamlinger for virksomheten. Grupper uten dette kan tildeles enkeltvise samlinger som deltakergrupper.</small>
 				</div>
+				{% endif %}
 				<span id="risiko-read-group-status" class="text-muted small d-block mt-2"></span>
 			</div>
 			<div class="modal-footer">
@@ -88,6 +93,8 @@
 <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 $(function () {
 	var apiUrls = {{ api_urls_json|safe }};
+	var canCreateGroup = {{ can_create_group|yesno:"true,false" }};
+	var canSetVirksomhetReadOnly = {{ can_set_virksomhet_read_only|yesno:"true,false" }};
 	var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
 	csrfToken = csrfToken ? csrfToken.value : '';
 	var groupsListEl = document.getElementById('risiko-read-groups-list');
@@ -139,9 +146,15 @@ $(function () {
 			html += '<td>' + escapeHtml(g.beskrivelse || '-') + '</td>';
 			html += '<td class="small">' + renderMemberNames(g) + '</td>';
 			html += '<td class="text-nowrap">';
-			html += '<button type="button" class="btn btn-link btn-sm p-0 risiko-read-group-edit">Rediger</button> ';
-			html += '<button type="button" class="btn btn-link btn-sm p-0 risiko-read-group-members">Medlemmer</button> ';
-			html += '<button type="button" class="btn btn-link btn-sm p-0 text-danger risiko-read-group-delete">Slett</button>';
+			if (g.can_edit) {
+				html += '<button type="button" class="btn btn-link btn-sm p-0 risiko-read-group-edit">Rediger</button> ';
+			}
+			if (g.can_manage_members) {
+				html += '<button type="button" class="btn btn-link btn-sm p-0 risiko-read-group-members">Medlemmer</button> ';
+			}
+			if (g.can_delete) {
+				html += '<button type="button" class="btn btn-link btn-sm p-0 text-danger risiko-read-group-delete">Slett</button>';
+			}
 			html += '</td></tr>';
 		});
 		html += '</tbody></table>';
@@ -156,6 +169,12 @@ $(function () {
 		return apiFetch(apiUrls.groups).then(function (data) {
 			if (data.ok) {
 				loadedGroups = data.groups || [];
+				if (typeof data.can_create_group === 'boolean') {
+					canCreateGroup = data.can_create_group;
+				}
+				if (typeof data.can_set_virksomhet_read_only === 'boolean') {
+					canSetVirksomhetReadOnly = data.can_set_virksomhet_read_only;
+				}
 				renderGroups(loadedGroups);
 			}
 		});
@@ -166,7 +185,10 @@ $(function () {
 		document.getElementById('risiko-read-group-editor-title').textContent = group ? 'Rediger gruppe' : 'Ny gruppe';
 		document.getElementById('risiko-read-group-title').value = group ? (group.title || '') : '';
 		document.getElementById('risiko-read-group-beskrivelse').value = group ? (group.beskrivelse || '') : '';
-		document.getElementById('risiko-read-group-virksomhet-read-only').checked = group ? !!group.virksomhet_read_only : false;
+		var readOnlyCheckbox = document.getElementById('risiko-read-group-virksomhet-read-only');
+		if (readOnlyCheckbox) {
+			readOnlyCheckbox.checked = group ? !!group.virksomhet_read_only : false;
+		}
 		document.getElementById('risiko-read-group-status').textContent = '';
 		editorModal.modal('show');
 	}
@@ -179,11 +201,21 @@ $(function () {
 	function populateMembersList(members) {
 		var list = document.getElementById('risiko-read-group-members-list');
 		list.innerHTML = '';
+		var selectedGroup = loadedGroups.find(function (g) { return String(g.id) === String(selectedGroupId); });
+		var canManageMembers = selectedGroup && selectedGroup.can_manage_members;
 		(members || []).forEach(function (m) {
 			var li = document.createElement('li');
-			li.innerHTML = escapeHtml(m.name) + ' <button type="button" class="btn btn-link btn-sm p-0 risiko-read-group-member-remove" data-user-id="' + m.user_id + '">Fjern</button>';
+			if (canManageMembers) {
+				li.innerHTML = escapeHtml(m.name) + ' <button type="button" class="btn btn-link btn-sm p-0 risiko-read-group-member-remove" data-user-id="' + m.user_id + '">Fjern</button>';
+			} else {
+				li.textContent = m.name;
+			}
 			list.appendChild(li);
 		});
+		var memberSearch = document.getElementById('risiko-read-group-member-sok');
+		if (memberSearch) {
+			memberSearch.style.display = canManageMembers ? '' : 'none';
+		}
 	}
 
 	function loadMembers(groupId) {
@@ -201,14 +233,24 @@ $(function () {
 		});
 	}
 
-	document.getElementById('risiko-read-group-new').addEventListener('click', function () {
-		showEditor(null);
-	});
+	var newGroupBtn = document.getElementById('risiko-read-group-new');
+	if (newGroupBtn) {
+		newGroupBtn.addEventListener('click', function () {
+			showEditor(null);
+		});
+	}
 
 	document.getElementById('risiko-read-group-save').addEventListener('click', function () {
 		var title = document.getElementById('risiko-read-group-title').value.trim();
 		var beskrivelse = document.getElementById('risiko-read-group-beskrivelse').value.trim();
-		var virksomhetReadOnly = document.getElementById('risiko-read-group-virksomhet-read-only').checked;
+		var readOnlyCheckbox = document.getElementById('risiko-read-group-virksomhet-read-only');
+		var payload = {
+			title: title,
+			beskrivelse: beskrivelse,
+		};
+		if (readOnlyCheckbox) {
+			payload.virksomhet_read_only = readOnlyCheckbox.checked;
+		}
 		if (!title) {
 			document.getElementById('risiko-read-group-status').textContent = 'Gruppenavn er påkrevd.';
 			return;
@@ -219,11 +261,7 @@ $(function () {
 		var method = editingGroupId ? 'PATCH' : 'POST';
 		apiFetch(url, {
 			method: method,
-			body: JSON.stringify({
-				title: title,
-				beskrivelse: beskrivelse,
-				virksomhet_read_only: virksomhetReadOnly,
-			}),
+			body: JSON.stringify(payload),
 		}).then(function (data) {
 			if (data.ok) {
 				hideEditor();
@@ -293,7 +331,8 @@ $(function () {
 			return;
 		}
 		searchTimer = setTimeout(function () {
-			apiFetch(apiUrls.brukerSearch + '?q=' + encodeURIComponent(q)).then(function (data) {
+			var searchUrl = apiUrls.brukerSearch.replace('{id}', selectedGroupId);
+			apiFetch(searchUrl + '?q=' + encodeURIComponent(q)).then(function (data) {
 				if (!data.ok) {
 					return;
 				}

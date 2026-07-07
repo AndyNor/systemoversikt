@@ -84,7 +84,7 @@
 
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_akseptkriterier' %}">Akseptkriterier</a>
 
-	{% if can_manage_read_groups and profile_virksomhet %}
+	{% if can_access_tilgangsgrupper and profile_virksomhet %}
 
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_virksomhet_tilgangsgrupper' vid=profile_virksomhet.pk %}">Tilgangsgrupper</a>
 

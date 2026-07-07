@@ -32,15 +32,15 @@
 {% endif %}
 
 {% elif risk_access_reason == 'read_groups_manage' %}
-<p>Du kan ikke administrere tilgangsgrupper for denne virksomheten.</p>
+<p>Du har ikke tilgang til tilgangsgrupper for denne virksomheten.</p>
 {% if virksomhet %}
 <p class="mb-2">Virksomhet: <strong>{{ virksomhet.virksomhetsforkortelse }}</strong> – {{ virksomhet.virksomhetsnavn }}</p>
 {% endif %}
 <p>
-	Administrasjon av tilgangsgrupper er begrenset til <strong>systemforvalter</strong> i virksomheten
-	(AD-gruppen for systemforvalter-tilgang), og du må representere samme virksomhet i din brukerprofil.
+	Siden er tilgjengelig for brukere med <strong>tilgang til risikoomfang</strong> i egen virksomhet
+	(rolle med rettigheten «can view risikoomfang»), eller for deg som allerede er medlem av en tilgangsgruppe her.
 </p>
-<p>Systemforvalteren kan opprette tilgangsgrupper for virksomheten – med eller uten lesetilgang til alle samlinger.</p>
+<p>Medlemmer av en gruppe kan redigere gruppen, administrere medlemmer og slette gruppen. Flagg for lesetilgang til hele virksomheten krever egen rettighet.</p>
 
 {% elif risk_access_reason == 'template_edit' %}
 <p>Du har ikke tilgang til å redigere maler.</p>
@@ -113,8 +113,8 @@
 {% elif risk_access_reason == 'create_collection' %}
 <p>Du har ikke tilgang til å opprette eller importere risikosamlinger.</p>
 <p>
-	Oppretting og Excel-import er begrenset til brukere med tilgang til sikkerhetsmodulen
-	(typisk sikkerhetsanalytikere). Be om tilgang via IDA eller kontakt sikkerhetsansvarlig i din virksomhet.
+	Oppretting og Excel-import krever tilgang til risikoomfang
+	(rettigheten «can view risikoomfang» / <code>view_riskscope</code>). Be om tilgang via IDA eller kontakt sikkerhetsansvarlig i din virksomhet.
 </p>
 
 {% else %}
@@ -133,7 +133,7 @@
 		<li><strong>Eier</strong> – kan lese og redigere, administrere tilgang og endre virksomhet.</li>
 		<li><strong>Deltaker</strong> – kan lese og redigere innhold i samlingen.</li>
 		<li><strong>Deltakergruppe</strong> – eier kan tildele en tilgangsgruppe til samlingen; medlemmer får samme redigeringstilgang som individuelle deltakere på den samlingen.</li>
-		<li><strong>Lesetilgang via gruppe</strong> – når gruppen har «lesetilgang til hele virksomheten», får medlemmer leseadgang til alle samlinger for virksomheten. Grupper opprettes av systemforvalter under <em>Tilgangsgrupper</em> på risikooversikten.</li>
+		<li><strong>Lesetilgang via gruppe</strong> – når gruppen har «lesetilgang til hele virksomheten», får medlemmer leseadgang til alle samlinger for virksomheten. Grupper opprettes under <em>Tilgangsgrupper</em> på risikooversikten av brukere med tilgang til risikoomfang.</li>
 	</ul>
 </div>
 

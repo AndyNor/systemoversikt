@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Granular tilgangsgruppe API – open list, member-gated mutations, creator auto-join, change_riskvirksomhetgroup for virksomhet_read_only.
 # 2026-07-06: Removed framework_owner_for / framework_read_for – sammenstilling ownership replaces framework M2M.
 # 2026-07-02: API returns display_title (forkortelse/name) and bare title for editing.
 # 2026-07-02: Include member names in groups list payload for inline table display.
@@ -19,8 +20,11 @@ from systemoversikt.risk_membership import (
 	normalize_risk_group_title,
 	risk_group_title_conflict,
 	storage_risk_group_title,
-	user_can_manage_risk_virksomhet_groups,
+	user_can_access_risk_virksomhet_groups_page,
+	user_can_create_risk_virksomhet_group,
+	user_can_set_virksomhet_read_only_flag,
 	user_display_name,
+	user_is_risk_virksomhet_group_member,
 )
 
 
@@ -37,16 +41,33 @@ def _parse_json_body(request):
 		return None
 
 
-def _require_group_admin_json(request, vid):
+def _require_page_access_json(request, vid):
 	virksomhet = get_object_or_404(Virksomhet, pk=vid)
-	if not user_can_manage_risk_virksomhet_groups(request.user, virksomhet):
-		return None, None, _json_error('forbidden', status=403)
-	return virksomhet, None, None
+	if not user_can_access_risk_virksomhet_groups_page(request.user, virksomhet):
+		return None, _json_error('forbidden', status=403)
+	return virksomhet, None
 
 
-def _group_to_dict(group, virksomhet=None):
-	virksomhet = virksomhet or group.virksomhet
+def _require_group_member_json(request, virksomhet, gid):
+	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
+	if not user_is_risk_virksomhet_group_member(request.user, group):
+		return None, _json_error('forbidden', status=403)
+	return group, None
+
+
+def _group_mutation_flags(user, group):
+	is_member = user_is_risk_virksomhet_group_member(user, group)
 	return {
+		'can_edit': is_member,
+		'can_manage_members': is_member,
+		'can_delete': is_member,
+		'can_set_virksomhet_read_only': user_can_set_virksomhet_read_only_flag(user),
+	}
+
+
+def _group_to_dict(group, virksomhet=None, user=None):
+	virksomhet = virksomhet or group.virksomhet
+	data = {
 		'id': group.pk,
 		'title': storage_risk_group_title(virksomhet, group.title),
 		'display_title': normalize_risk_group_title(virksomhet, group.title),
@@ -54,6 +75,9 @@ def _group_to_dict(group, virksomhet=None):
 		'virksomhet_read_only': group.virksomhet_read_only,
 		'member_count': getattr(group, 'member_count', group.memberships.count()),
 	}
+	if user is not None:
+		data.update(_group_mutation_flags(user, group))
+	return data
 
 
 def _member_to_dict(membership):
@@ -64,7 +88,7 @@ def _member_to_dict(membership):
 	}
 
 
-def _groups_payload(virksomhet):
+def _groups_payload(virksomhet, user):
 	member_qs = RiskVirksomhetGroupMember.objects.select_related('user').order_by(
 		'user__first_name', 'user__username',
 	)
@@ -76,20 +100,35 @@ def _groups_payload(virksomhet):
 	)
 	payload = []
 	for group in groups:
-		data = _group_to_dict(group, virksomhet=virksomhet)
+		data = _group_to_dict(group, virksomhet=virksomhet, user=user)
 		data['members'] = [_member_to_dict(m) for m in group.memberships.all()]
 		payload.append(data)
-	return {'groups': payload}
+	return {
+		'groups': payload,
+		'can_create_group': user_can_create_risk_virksomhet_group(user, virksomhet),
+		'can_set_virksomhet_read_only': user_can_set_virksomhet_read_only_flag(user),
+	}
 
 
-def _group_members_payload(group):
+def _group_members_payload(group, user=None):
 	memberships = list(
 		group.memberships.select_related('user').order_by('user__first_name', 'user__username')
 	)
-	return {
-		'group': _group_to_dict(group),
+	payload = {
+		'group': _group_to_dict(group, user=user),
 		'members': [_member_to_dict(m) for m in memberships],
 	}
+	if user is not None:
+		payload.update(_group_mutation_flags(user, group))
+	return payload
+
+
+def _validate_virksomhet_read_only_change(user, group, new_value):
+	if new_value == group.virksomhet_read_only:
+		return None
+	if not user_can_set_virksomhet_read_only_flag(user):
+		return _json_error('forbidden', status=403)
+	return None
 
 
 def _bruker_sok_queryset(q):
@@ -117,20 +156,20 @@ def _bruker_sok_queryset(q):
 
 @require_GET
 def api_risiko_read_groups_list(request, vid):
-	virksomhet, _, err = _require_group_admin_json(request, vid)
+	virksomhet, err = _require_page_access_json(request, vid)
 	if err:
 		return err
 	return JsonResponse({
 		'ok': True,
-		**_groups_payload(virksomhet),
+		**_groups_payload(virksomhet, request.user),
 	})
 
 
 @require_http_methods(['POST'])
 def api_risiko_read_group_create(request, vid):
-	virksomhet, _, err = _require_group_admin_json(request, vid)
-	if err:
-		return err
+	virksomhet = get_object_or_404(Virksomhet, pk=vid)
+	if not user_can_create_risk_virksomhet_group(request.user, virksomhet):
+		return _json_error('forbidden', status=403)
 
 	data = _parse_json_body(request)
 	if data is None:
@@ -142,6 +181,8 @@ def api_risiko_read_group_create(request, vid):
 
 	beskrivelse = (data.get('beskrivelse') or '').strip()
 	virksomhet_read_only = bool(data.get('virksomhet_read_only', False))
+	if virksomhet_read_only and not user_can_set_virksomhet_read_only_flag(request.user):
+		return _json_error('forbidden', status=403)
 	if risk_group_title_conflict(virksomhet, title):
 		return _json_error('Det finnes allerede en gruppe med dette gruppenavnet.')
 
@@ -152,17 +193,25 @@ def api_risiko_read_group_create(request, vid):
 		virksomhet_read_only=virksomhet_read_only,
 		created_by=request.user,
 	)
-	group.member_count = 0
-	return JsonResponse({'ok': True, 'group': _group_to_dict(group)}, status=201)
+	RiskVirksomhetGroupMember.objects.create(
+		group=group,
+		user=request.user,
+		added_by=request.user,
+	)
+	group.member_count = 1
+	return JsonResponse({'ok': True, 'group': _group_to_dict(group, user=request.user)}, status=201)
 
 
 @require_http_methods(['PATCH', 'POST'])
 def api_risiko_read_group_update(request, vid, gid):
-	virksomhet, _, err = _require_group_admin_json(request, vid)
+	virksomhet, err = _require_page_access_json(request, vid)
 	if err:
 		return err
 
-	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
+	group, err = _require_group_member_json(request, virksomhet, gid)
+	if err:
+		return err
+
 	data = _parse_json_body(request)
 	if data is None:
 		return _json_error('invalid_json')
@@ -179,45 +228,55 @@ def api_risiko_read_group_update(request, vid, gid):
 		group.beskrivelse = (data.get('beskrivelse') or '').strip()
 
 	if 'virksomhet_read_only' in data:
-		group.virksomhet_read_only = bool(data.get('virksomhet_read_only'))
+		new_read_only = bool(data.get('virksomhet_read_only'))
+		err = _validate_virksomhet_read_only_change(request.user, group, new_read_only)
+		if err:
+			return err
+		group.virksomhet_read_only = new_read_only
 
 	group.save()
-	return JsonResponse({'ok': True, 'group': _group_to_dict(group)})
+	return JsonResponse({'ok': True, 'group': _group_to_dict(group, user=request.user)})
 
 
 @require_http_methods(['DELETE', 'POST'])
 def api_risiko_read_group_delete(request, vid, gid):
-	virksomhet, _, err = _require_group_admin_json(request, vid)
+	virksomhet, err = _require_page_access_json(request, vid)
 	if err:
 		return err
 
-	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
+	group, err = _require_group_member_json(request, virksomhet, gid)
+	if err:
+		return err
+
 	if request.method == 'POST':
 		data = _parse_json_body(request) or {}
 		if data.get('_method') != 'DELETE':
 			return _json_error('invalid_method', status=405)
 
 	group.delete()
-	return JsonResponse({'ok': True, **_groups_payload(virksomhet)})
+	return JsonResponse({'ok': True, **_groups_payload(virksomhet, request.user)})
 
 
 @require_GET
 def api_risiko_read_group_members(request, vid, gid):
-	virksomhet, _, err = _require_group_admin_json(request, vid)
+	virksomhet, err = _require_page_access_json(request, vid)
 	if err:
 		return err
 
 	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
-	return JsonResponse({'ok': True, **_group_members_payload(group)})
+	return JsonResponse({'ok': True, **_group_members_payload(group, user=request.user)})
 
 
 @require_http_methods(['POST'])
 def api_risiko_read_group_member_add(request, vid, gid):
-	virksomhet, _, err = _require_group_admin_json(request, vid)
+	virksomhet, err = _require_page_access_json(request, vid)
 	if err:
 		return err
 
-	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
+	group, err = _require_group_member_json(request, virksomhet, gid)
+	if err:
+		return err
+
 	data = _parse_json_body(request)
 	if data is None:
 		return _json_error('invalid_json')
@@ -233,16 +292,19 @@ def api_risiko_read_group_member_add(request, vid, gid):
 		user=target_user,
 		defaults={'added_by': request.user},
 	)
-	return JsonResponse({'ok': True, **_group_members_payload(group)}, status=201)
+	return JsonResponse({'ok': True, **_group_members_payload(group, user=request.user)}, status=201)
 
 
 @require_http_methods(['DELETE', 'POST'])
 def api_risiko_read_group_member_remove(request, vid, gid, user_id):
-	virksomhet, _, err = _require_group_admin_json(request, vid)
+	virksomhet, err = _require_page_access_json(request, vid)
 	if err:
 		return err
 
-	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
+	group, err = _require_group_member_json(request, virksomhet, gid)
+	if err:
+		return err
+
 	if request.method == 'POST':
 		data = _parse_json_body(request) or {}
 		if data.get('_method') != 'DELETE':
@@ -250,12 +312,16 @@ def api_risiko_read_group_member_remove(request, vid, gid, user_id):
 
 	membership = get_object_or_404(RiskVirksomhetGroupMember, group=group, user_id=user_id)
 	membership.delete()
-	return JsonResponse({'ok': True, **_group_members_payload(group)})
+	return JsonResponse({'ok': True, **_group_members_payload(group, user=request.user)})
 
 
 @require_GET
-def api_risiko_read_group_brukere_sok(request, vid):
-	_, _, err = _require_group_admin_json(request, vid)
+def api_risiko_read_group_brukere_sok(request, vid, gid):
+	virksomhet, err = _require_page_access_json(request, vid)
+	if err:
+		return err
+
+	_, err = _require_group_member_json(request, virksomhet, gid)
 	if err:
 		return err
 
