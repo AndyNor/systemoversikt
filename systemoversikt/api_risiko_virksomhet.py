@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Member API names use user_member_display_name – show virksomhetsforkortelse like collection pages.
 # 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator may mutate any group in profile virksomhet.
 # 2026-07-07: Granular tilgangsgruppe API – open list, member-gated mutations, creator auto-join, change_riskvirksomhetgroup for virksomhet_read_only.
 # 2026-07-06: Removed framework_owner_for / framework_read_for – sammenstilling ownership replaces framework M2M.
@@ -26,6 +27,7 @@ from systemoversikt.risk_membership import (
 	user_can_mutate_risk_virksomhet_group,
 	user_can_set_virksomhet_read_only_flag,
 	user_display_name,
+	user_member_display_name,
 )
 
 
@@ -87,15 +89,17 @@ def _group_to_dict(group, virksomhet=None, user=None):
 def _member_to_dict(membership):
 	return {
 		'user_id': membership.user_id,
-		'name': user_display_name(membership.user),
+		'name': user_member_display_name(membership.user),
 		'username': membership.user.username,
 	}
 
 
 def _groups_payload(virksomhet, user):
-	member_qs = RiskVirksomhetGroupMember.objects.select_related('user').order_by(
-		'user__first_name', 'user__username',
-	)
+	member_qs = RiskVirksomhetGroupMember.objects.select_related(
+		'user',
+		'user__profile',
+		'user__profile__virksomhet',
+	).order_by('user__first_name', 'user__username')
 	groups = (
 		RiskVirksomhetGroup.objects.filter(virksomhet=virksomhet)
 		.annotate(member_count=Count('memberships'))
@@ -116,7 +120,11 @@ def _groups_payload(virksomhet, user):
 
 def _group_members_payload(group, user=None):
 	memberships = list(
-		group.memberships.select_related('user').order_by('user__first_name', 'user__username')
+		group.memberships.select_related(
+			'user',
+			'user__profile',
+			'user__profile__virksomhet',
+		).order_by('user__first_name', 'user__username')
 	)
 	payload = {
 		'group': _group_to_dict(group, user=user),
