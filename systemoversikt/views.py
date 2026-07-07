@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: alle_nettverk – pagination, stats (lokasjon, IP-enheter, sone) and exclude filter.
 # 2026-07-07: alle_dns – exclude box for IP addresses and alias mot (CNAME targets).
 # 2026-07-07: alle_dns – top 20 alias mot only; IP and TTL remain top 10.
 # 2026-07-07: alle_dns – alias stats from dns_target column, not only dns_type=CNAME.
@@ -4196,55 +4197,238 @@ def nettverk_detaljer(request, pk):
 
 
 
+NETTVERK_EXCLUDE_MAX_TERMS = 100
+
+
+def _network_parse_exclude_terms(exclude_raw):
+	"""Split exclude box input into unique network search terms."""
+	if not exclude_raw or not exclude_raw.strip():
+		return []
+	terms = []
+	seen = set()
+	for part in re.findall(r'([^,;\t\s\n\r]+)', exclude_raw.strip()):
+		term = part.strip()
+		if not term:
+			continue
+		key = term.lower()
+		if key in seen:
+			continue
+		seen.add(key)
+		terms.append(term)
+		if len(terms) >= NETTVERK_EXCLUDE_MAX_TERMS:
+			break
+	return terms
+
+
+def _network_exclude_q_for_term(term):
+	"""Build OR-filters for one excluded network value (IP, CIDR, lokasjon, sone, etc.)."""
+	term_q = (
+		Q(ip_address__icontains=term) |
+		Q(comment__icontains=term) |
+		Q(locationid__icontains=term) |
+		Q(network_zone__icontains=term) |
+		Q(orgname__icontains=term) |
+		Q(vlan_name__icontains=term) |
+		Q(vlanid__icontains=term) |
+		Q(vrfname__icontains=term) |
+		Q(location_name__icontains=term) |
+		Q(netcategory__icontains=term)
+	)
+	if '/' in term:
+		ip_part, mask_part = term.split('/', 1)
+		term_q |= Q(ip_address=ip_part.strip(), subnet_mask=mask_part.strip())
+	try:
+		search_ip = ipaddress.ip_address(term.split('/')[0])
+		term_q |= Q(ip_address=str(search_ip))
+	except ValueError:
+		pass
+	return term_q
+
+
+def _network_apply_excludes(qs, exclude_terms):
+	if not exclude_terms:
+		return qs
+	exclude_q = Q()
+	for term in exclude_terms:
+		term_q = _network_exclude_q_for_term(term)
+		if term_q:
+			exclude_q |= term_q
+	if exclude_q:
+		qs = qs.exclude(exclude_q)
+	return qs
+
+
+def _network_page_query_parts(search_term_raw='', exclude_raw=''):
+	query_parts = {}
+	if search_term_raw:
+		query_parts['search_term'] = search_term_raw
+	if exclude_raw:
+		query_parts['exclude'] = exclude_raw
+	return query_parts
+
+
+def _network_build_filter_query(search_term_raw='', exclude_raw=''):
+	return urlencode(_network_page_query_parts(search_term_raw, exclude_raw))
+
+
+def _network_search_href(search_term, current_search_term='', exclude_raw=''):
+	"""Link that sets search_term; clicking the active term again clears the search."""
+	term = (search_term or '').strip()
+	current = (current_search_term or '').strip()
+	if term and term == current:
+		query_parts = _network_page_query_parts(exclude_raw=exclude_raw)
+		return '?' + urlencode(query_parts) if query_parts else '?'
+	if not term:
+		query_parts = _network_page_query_parts(exclude_raw=exclude_raw)
+		return '?' + urlencode(query_parts) if query_parts else '?'
+	query_parts = _network_page_query_parts(search_term_raw=term, exclude_raw=exclude_raw)
+	return '?' + urlencode(query_parts)
+
+
+def _network_display_cidr(ip_address, subnet_mask):
+	return f'{ip_address}/{subnet_mask}'
+
+
+def _network_overview_stats(exclude_terms=None):
+	base = _network_apply_excludes(NetworkContainer.objects.all(), exclude_terms or [])
+	return {
+		'top_locationids': list(
+			base.exclude(locationid__isnull=True)
+			.exclude(locationid='')
+			.values('locationid')
+			.annotate(count=Count('id'))
+			.order_by('-count')[:20]
+		),
+		'top_by_ip_devices': list(
+			base.annotate(ip_device_count=Count('network_ip_address'))
+			.order_by('-ip_device_count', 'ip_address')[:10]
+		),
+		'zones': list(
+			base.exclude(network_zone__isnull=True)
+			.exclude(network_zone='')
+			.values('network_zone')
+			.annotate(count=Count('id'))
+			.order_by('-count')
+		),
+	}
+
+
+def _network_search_queryset(search_term):
+	"""Filter network containers by IP, CIDR, description, lokasjon, sone or org fields."""
+	term = (search_term or '').strip()
+	if not term or term == '__ALL__':
+		return NetworkContainer.objects.all()
+
+	term_ip = term.split('/')[0]
+	text_filters = (
+		Q(ip_address__icontains=term_ip) |
+		Q(orgname__icontains=term) |
+		Q(comment__icontains=term) |
+		Q(vrfname__icontains=term) |
+		Q(locationid__icontains=term) |
+		Q(vlan_name__icontains=term) |
+		Q(location_name__icontains=term) |
+		Q(netcategory__icontains=term) |
+		Q(network_zone__icontains=term) |
+		Q(vlanid__icontains=term)
+	)
+	if '/' in term:
+		ip_part, mask_part = term.split('/', 1)
+		text_filters |= Q(ip_address=ip_part.strip(), subnet_mask=mask_part.strip())
+
+	qs = NetworkContainer.objects.filter(text_filters)
+	if qs.exists() or len(term) <= 1:
+		return qs
+
+	try:
+		search_ip = ipaddress.ip_address(term_ip)
+	except ValueError:
+		return qs
+
+	matching_pks = []
+	for vlan in NetworkContainer.objects.all():
+		try:
+			vlan_network = ipaddress.ip_network(f'{vlan.ip_address}/{vlan.subnet_mask}', strict=False)
+		except ValueError:
+			continue
+		if search_ip in vlan_network:
+			matching_pks.append(vlan.pk)
+	if matching_pks:
+		return NetworkContainer.objects.filter(pk__in=matching_pks)
+	return qs
+
+
 def alle_nettverk(request):
-	# 2026-07-07: Search vlan_name, location_name, netcategory – extra Infoblox EA fields.
-	#Vise alle nettverk
+	# 2026-07-07: Pagination, stats, exclude filter and default list (like alle_dns).
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
-	def network_loopup(term):
-		return NetworkContainer.objects.filter(
-				Q(ip_address__icontains=search_term) |
-				Q(orgname__icontains=search_term) |
-				Q(comment__icontains=search_term) |
-				Q(vrfname__icontains=search_term) |
-				Q(locationid__icontains=search_term) |
-				Q(vlan_name__icontains=search_term) |
-				Q(location_name__icontains=search_term) |
-				Q(netcategory__icontains=search_term)
-			)
+	NETTVERK_PAGE_SIZE = 100
 
 	search_term_raw = request.GET.get('search_term', '')
-	search_term = search_term_raw.strip().split('/')[0]
+	search_term = search_term_raw.strip()
+	exclude_raw = request.GET.get('exclude', '')
+	exclude_terms = _network_parse_exclude_terms(exclude_raw)
+	has_filters = bool(search_term and search_term != '__ALL__' or exclude_terms)
 
-	if search_term == "__ALL__":
-		nettverk = NetworkContainer.objects.all()
+	qs = _network_search_queryset(search_term)
+	qs = _network_apply_excludes(qs, exclude_terms)
+	qs = qs.annotate(ip_device_count=Count('network_ip_address')).order_by('ip_address', 'subnet_mask', 'pk')
 
-	elif len(search_term) > 1:
-		nettverk = network_loopup(search_term)
+	paginator = Paginator(qs, NETTVERK_PAGE_SIZE)
+	page_number = request.GET.get('page', '1')
+	page_obj = paginator.get_page(page_number)
+	total_count = paginator.count
+	filter_query = _network_build_filter_query(search_term_raw, exclude_raw)
 
-		if len(nettverk) == 0: # ingen treff, kan være søk på en IP i et nettverk
-			try:
-				import ipaddress
-				nettverk = []
-				search_ip = ipaddress.ip_address(search_term)
-				alle_vlan = NetworkContainer.objects.all()
-				for vlan in alle_vlan:
-					vlan_network = ipaddress.ip_network(vlan.ip_address + "/" + str(vlan.subnet_mask))
-					if search_ip in vlan_network:
-						nettverk.append(vlan)
-			except:
-				pass
-
-	else:
-		nettverk = []
+	raw_stats = _network_overview_stats(exclude_terms)
+	network_stats = {
+		'top_locationids': [
+			{
+				'locationid': row['locationid'],
+				'count': row['count'],
+				'search_href': _network_search_href(row['locationid'], search_term_raw, exclude_raw),
+				'active': search_term == row['locationid'],
+			}
+			for row in raw_stats['top_locationids']
+		],
+		'top_by_ip_devices': [
+			{
+				'cidr': _network_display_cidr(row['ip_address'], row['subnet_mask']),
+				'ip_device_count': row['ip_device_count'],
+				'search_href': _network_search_href(
+					_network_display_cidr(row['ip_address'], row['subnet_mask']),
+					search_term_raw,
+					exclude_raw,
+				),
+				'active': search_term == _network_display_cidr(row['ip_address'], row['subnet_mask']),
+			}
+			for row in raw_stats['top_by_ip_devices']
+		],
+		'zones': [
+			{
+				'network_zone': row['network_zone'],
+				'count': row['count'],
+				'search_href': _network_search_href(row['network_zone'], search_term_raw, exclude_raw),
+				'active': search_term == row['network_zone'],
+			}
+			for row in raw_stats['zones']
+		],
+	}
 
 	return render(request, 'cmdb_alle_nettverk.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-		'alle_nettverk': nettverk,
+		'page_obj': page_obj,
+		'alle_nettverk': page_obj.object_list,
+		'total_count': total_count,
 		'vlan_search_term': search_term_raw,
+		'exclude': exclude_raw,
+		'exclude_term_count': len(exclude_terms),
+		'has_filters': has_filters,
+		'filter_query': filter_query,
+		'network_stats': network_stats,
 		'integrasjonsstatus': _integrasjonsstatus("sp_network_eq"),
 	})
 
