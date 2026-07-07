@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-07: btn-back (light blue) for back navigation; outline for edit link. #}
 {# 2026-07-07: Export/import moved to rediger page – read-only view links to editor only. #}
 {# 2026-06-30: Global read-only akseptkriterier – shared by all risikosamlinger. #}
 
@@ -29,11 +30,10 @@
 
 {% block hovedinnhold %}
 
-<p>
-	<a href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
+<p class="mb-3">
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
 	{% if can_edit_criteria %}
-	&nbsp;|&nbsp;
-	<a href="{% url 'risiko_akseptkriterier_rediger' %}">Rediger akseptkriterier</a>
+	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_akseptkriterier_rediger' %}">Rediger akseptkriterier</a>
 	{% endif %}
 </p>
 

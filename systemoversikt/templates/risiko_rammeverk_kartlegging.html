@@ -11,7 +11,7 @@
 {% csrf_token %}
 
 <p class="mb-3">
-	<a href="{% url 'risiko_rammeverk_list' %}">&larr; Risikorammeverk</a>
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_rammeverk_list' %}">&larr; Risikorammeverk</a>
 	| <a href="{% url 'risiko_rammeverk_rediger' slug=framework_slug %}">Rediger rammeverk</a>
 </p>
 

@@ -2,6 +2,7 @@
 
 {% load templatetags %}
 
+{# 2026-07-07: «Ny fra excelmal» green like Ny samling; outline buttons for nav links. #}
 {# 2026-07-01: Tilgangsgrupper in action toolbar; virksomhet nav highlights current virksomhet. #}
 {# 2026-07-01: Root list – profile virksomhet filter, cross-virksomhet memberships, virksomhet links. #}
 
@@ -77,7 +78,7 @@
 
 	{% if can_import %}
 
-	<a class="btn btn-primary btn-sm" href="{% url 'risiko_import' %}">Importer Excel</a>
+	<a class="btn btn-success btn-sm" href="{% url 'risiko_import' %}">Ny fra excelmal</a>
 
 	{% endif %}
 

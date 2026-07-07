@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-07: btn-back (light blue) for back navigation. #}
 {# 2026-07-07: JSON export/import at top of editor – export left, import right. #}
 {# 2026-07-07: JSON export/import on editor page (moved from read-only akseptkriterier view). #}
 {# 2026-06-30: Superuser editor for global akseptkriterier. #}
@@ -18,8 +19,8 @@
 
 {% block hovedinnhold %}
 
-<p>
-	<a href="{% url 'risiko_akseptkriterier' %}">&larr; Tilbake til akseptkriterier</a>
+<p class="mb-3">
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_akseptkriterier' %}">&larr; Tilbake til akseptkriterier</a>
 </p>
 
 <p class="alert alert-warning">

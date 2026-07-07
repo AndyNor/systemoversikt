@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
 {% load templatetags %}
+{# 2026-07-07: «Ny fra excelmal» green like Ny samling; outline button for back link. #}
 {# 2026-07-02: Tilgangsgruppe filter bar above virksomhet collection table. #}
 {# 2026-07-01: Virksomhet-specific risk collection viewpoint. #}
 
@@ -10,7 +11,7 @@
 {% block hovedinnhold %}
 
 <p class="mb-3">
-	<a href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
 </p>
 
 <p class="text-muted">
@@ -23,7 +24,7 @@
 	<a class="btn btn-success btn-sm" href="{% url 'risiko_scope_create' %}">Ny samling</a>
 	{% endif %}
 	{% if can_import %}
-	<a class="btn btn-primary btn-sm" href="{% url 'risiko_import' %}">Importer Excel</a>
+	<a class="btn btn-success btn-sm" href="{% url 'risiko_import' %}">Ny fra excelmal</a>
 	{% endif %}
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_akseptkriterier' %}">Akseptkriterier</a>
 	{% if can_manage_read_groups %}

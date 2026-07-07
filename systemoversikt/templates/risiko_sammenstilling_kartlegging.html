@@ -32,7 +32,7 @@
 </style>
 
 <p class="mb-3">
-	<a href="{% url 'risiko_sammenstilling_detail' pk=sammenstilling.pk %}">&larr; {{ sammenstilling.title }}</a>
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_sammenstilling_detail' pk=sammenstilling.pk %}">&larr; {{ sammenstilling.title }}</a>
 	| <a href="{% url 'risiko_rammeverk_list' %}">Oversikt</a>
 </p>
 

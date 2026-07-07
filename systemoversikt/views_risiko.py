@@ -484,7 +484,7 @@ def _build_rapport_context(scope, criteria):
 	actions = list(scope.actions.prefetch_related('scenarios').order_by('pk'))
 	annotate_scenarios_tiltak_ids(scenarios, actions)
 	for scenario in scenarios:
-		_analyze_scenario_display(scenario, criteria)
+		_annotate_scenario_display(scenario, criteria)
 
 	owner_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER]
 	participant_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]

@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-07: Outline button for back navigation. #}
 {# 2026-07-06: Clearer group-type badges – «Lese alt for virksomheten» / «Kun enkeltsamlinger». #}
 {# 2026-07-06: Sammenstillinger eies via gruppe ved opprettelse – ikke lenger rammeverk-M2M her. #}
 {# 2026-07-02: Empty name on new group; display_title shows forkortelse/given-name in lists. #}
@@ -13,7 +14,7 @@
 {% block hovedinnhold %}
 
 <p class="mb-3">
-	<a href="{% url 'risiko_virksomhet_list' vid=virksomhet.pk %}">&larr; Tilbake til {{ virksomhet.virksomhetsforkortelse }}</a>
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_virksomhet_list' vid=virksomhet.pk %}">&larr; Tilbake til {{ virksomhet.virksomhetsforkortelse }}</a>
 </p>
 
 <p class="text-muted">

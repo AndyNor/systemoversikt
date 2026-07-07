@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
 {% load templatetags %}
+{# 2026-07-07: Outline button for back navigation. #}
 {# 2026-07-02: Document virksomhet read-only groups and collection deltakergrupper. #}
 {# 2026-07-01: Risk MVP access denied – explains owner/participant/read-group model, not Django CRUD perms. #}
 
@@ -150,7 +151,7 @@
 {% endif %}
 
 <p class="mt-4 mb-0">
-	<a href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
 </p>
 
 {% endblock hovedinnhold %}

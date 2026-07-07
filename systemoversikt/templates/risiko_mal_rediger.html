@@ -11,7 +11,7 @@
 {% csrf_token %}
 
 <p class="mb-3">
-	<a href="{% url 'risiko_rammeverk_list' %}">&larr; Risikosammenstilling</a>
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_rammeverk_list' %}">&larr; Risikosammenstilling</a>
 </p>
 
 <div id="risiko-rammeverk-editor" data-api-urls="{{ api_urls_json|escape }}">

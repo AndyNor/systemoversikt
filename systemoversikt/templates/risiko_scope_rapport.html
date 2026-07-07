@@ -1,3 +1,4 @@
+{# 2026-07-07: Print button uses script_append + nonce – inline onclick blocked by CSP. #}
 {# 2026-07-07: Member names include virksomhetsforkortelse – disambiguate duplicate names. #}
 {# 2026-07-07: Print-friendly godkjent risikovurderingsrapport – 8 sections for archive. #}
 {% extends "sikkerhet_index.html" %}
@@ -12,8 +13,8 @@
 
 <div class="risiko-rapport no-print mb-3">
 	<p>
-		<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_scope_detail' pk=scope.pk %}">&larr; Tilbake til samling</a>
-		<button type="button" class="btn btn-primary btn-sm ml-2" onclick="window.print();">Skriv ut / Lagre som PDF</button>
+		<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_detail' pk=scope.pk %}">&larr; Tilbake til samling</a>
+		<button type="button" id="risiko-rapport-print-btn" class="btn btn-primary btn-sm ml-2">Skriv ut / Lagre som PDF</button>
 	</p>
 </div>
 
@@ -198,3 +199,11 @@
 }
 </style>
 {% endblock ekstrajavascript %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+document.getElementById('risiko-rapport-print-btn').addEventListener('click', function () {
+	window.print();
+});
+</script>
+{% endblock script_append %}

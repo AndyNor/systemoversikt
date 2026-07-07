@@ -1,4 +1,5 @@
 // Change log:
+// 2026-07-07: Bootstrap confirm modal for scenario/tiltak/omfang delete – shared module helper.
 // 2026-07-07: Omfang card – beskrivelse save, multipart figur/original upload via FormData.
 // 2026-07-06: Tiltak «Må eskaleres» toggle per action card in scenario modal.
 // 2026-07-02: Deltakergruppe search shows first 5 groups on focus before typing.
@@ -102,6 +103,72 @@
         }
         return data;
       });
+    });
+  }
+
+  let confirmModalResolve = null;
+  let confirmModalConfirmed = false;
+  let confirmModalInitialized = false;
+
+  function initRisikoConfirmModal() {
+    if (confirmModalInitialized) {
+      return;
+    }
+    const confirmModalEl = document.getElementById('risiko-confirm-modal');
+    const confirmModal = confirmModalEl ? $(confirmModalEl) : null;
+    const confirmModalConfirmBtn = document.getElementById('risiko-confirm-modal-confirm');
+    if (!confirmModal || !confirmModal.length || !confirmModalConfirmBtn) {
+      return;
+    }
+    confirmModalConfirmBtn.addEventListener('click', function () {
+      confirmModalConfirmed = true;
+      confirmModal.modal('hide');
+    });
+    confirmModal.on('hidden.bs.modal', function () {
+      if (confirmModalResolve) {
+        confirmModalResolve(confirmModalConfirmed);
+        confirmModalResolve = null;
+      }
+      confirmModalConfirmed = false;
+    });
+    confirmModalInitialized = true;
+  }
+
+  function showConfirmModal(options) {
+    initRisikoConfirmModal();
+    const confirmModalEl = document.getElementById('risiko-confirm-modal');
+    const confirmModal = confirmModalEl ? $(confirmModalEl) : null;
+    const confirmModalTitleEl = document.getElementById('risiko-confirm-modal-title');
+    const confirmModalMessageEl = document.getElementById('risiko-confirm-modal-message');
+    const confirmModalDetailEl = document.getElementById('risiko-confirm-modal-detail');
+    const confirmModalConfirmBtn = document.getElementById('risiko-confirm-modal-confirm');
+    if (!confirmModal || !confirmModal.length) {
+      return Promise.resolve(window.confirm((options && options.message) || 'Er du sikker?'));
+    }
+    return new Promise(function (resolve) {
+      confirmModalResolve = resolve;
+      confirmModalConfirmed = false;
+      const opts = options || {};
+      if (confirmModalTitleEl) {
+        confirmModalTitleEl.textContent = opts.title || 'Bekreft';
+      }
+      if (confirmModalMessageEl) {
+        confirmModalMessageEl.textContent = opts.message || '';
+      }
+      if (confirmModalDetailEl) {
+        if (opts.detail) {
+          confirmModalDetailEl.textContent = opts.detail;
+          confirmModalDetailEl.classList.remove('d-none');
+        } else {
+          confirmModalDetailEl.textContent = '';
+          confirmModalDetailEl.classList.add('d-none');
+        }
+      }
+      if (confirmModalConfirmBtn) {
+        confirmModalConfirmBtn.textContent = opts.confirmLabel || 'Bekreft';
+        confirmModalConfirmBtn.className = 'btn btn-sm ' + (opts.confirmClass || 'btn-danger');
+      }
+      confirmModal.modal('show');
     });
   }
 
@@ -262,18 +329,32 @@
     if (figurRemoveBtn) {
       figurRemoveBtn.addEventListener('click', function () {
         const statusEl = document.getElementById('risiko-omfang-figur-status');
-        if (statusEl) statusEl.textContent = 'Fjerner…';
-        fetchJson(getConfig().urls.omfangFigur, { method: 'DELETE' })
-          .then(function (data) {
-            renderOmfangFigurPreview(data.omfang_fil);
-            if (statusEl) statusEl.textContent = 'Figur fjernet.';
-          })
-          .catch(function (err) {
-            if (statusEl) {
-              statusEl.textContent = err.message;
-              statusEl.className = 'text-danger small d-block';
-            }
-          });
+        const filnavnEl = document.getElementById('risiko-omfang-figur-filnavn');
+        const filnavn = filnavnEl ? filnavnEl.textContent.trim() : '';
+        showConfirmModal({
+          title: 'Fjern omfangsfigur',
+          message: filnavn
+            ? 'Er du sikker på at du vil fjerne omfangsfiguren «' + filnavn + '»?'
+            : 'Er du sikker på at du vil fjerne omfangsfiguren?',
+          detail: 'Dette kan ikke angres.',
+          confirmLabel: 'Fjern',
+        }).then(function (confirmed) {
+          if (!confirmed) {
+            return;
+          }
+          if (statusEl) statusEl.textContent = 'Fjerner…';
+          fetchJson(getConfig().urls.omfangFigur, { method: 'DELETE' })
+            .then(function (data) {
+              renderOmfangFigurPreview(data.omfang_fil);
+              if (statusEl) statusEl.textContent = 'Figur fjernet.';
+            })
+            .catch(function (err) {
+              if (statusEl) {
+                statusEl.textContent = err.message;
+                statusEl.className = 'text-danger small d-block';
+              }
+            });
+        });
       });
     }
 
@@ -311,18 +392,32 @@
     if (originalRemoveBtn) {
       originalRemoveBtn.addEventListener('click', function () {
         const statusEl = document.getElementById('risiko-omfang-original-status');
-        if (statusEl) statusEl.textContent = 'Fjerner…';
-        fetchJson(getConfig().urls.omfangFigurOriginal, { method: 'DELETE' })
-          .then(function (data) {
-            renderOmfangOriginalInfo(data.omfang_fil);
-            if (statusEl) statusEl.textContent = 'Originalfil fjernet.';
-          })
-          .catch(function (err) {
-            if (statusEl) {
-              statusEl.textContent = err.message;
-              statusEl.className = 'text-danger small d-block';
-            }
-          });
+        const linkEl = document.getElementById('risiko-omfang-original-link');
+        const filnavn = linkEl ? linkEl.textContent.trim() : '';
+        showConfirmModal({
+          title: 'Fjern originalfil',
+          message: filnavn
+            ? 'Er du sikker på at du vil fjerne originalfilen «' + filnavn + '»?'
+            : 'Er du sikker på at du vil fjerne originalfilen?',
+          detail: 'Dette kan ikke angres.',
+          confirmLabel: 'Fjern',
+        }).then(function (confirmed) {
+          if (!confirmed) {
+            return;
+          }
+          if (statusEl) statusEl.textContent = 'Fjerner…';
+          fetchJson(getConfig().urls.omfangFigurOriginal, { method: 'DELETE' })
+            .then(function (data) {
+              renderOmfangOriginalInfo(data.omfang_fil);
+              if (statusEl) statusEl.textContent = 'Originalfil fjernet.';
+            })
+            .catch(function (err) {
+              if (statusEl) {
+                statusEl.textContent = err.message;
+                statusEl.className = 'text-danger small d-block';
+              }
+            });
+        });
       });
     }
   }
@@ -1362,9 +1457,6 @@
         return Promise.resolve();
       }
       const currentScenarioId = parseInt(scenarioIdRaw, 10);
-      if (!window.confirm('Fjerne koblingen til dette scenarioet? Tiltaket beholdes på andre scenarioer.')) {
-        return Promise.resolve();
-      }
 
       const action = scopeTiltak.find(function (a) { return a.id === parseInt(actionId, 10); });
       const payload = collectModalActionPayload(card);
@@ -1372,29 +1464,41 @@
         return id !== currentScenarioId;
       });
 
-      setModalStatus('Kobler fra…');
-      card.querySelectorAll('button').forEach(function (btn) { btn.disabled = true; });
+      return showConfirmModal({
+        title: 'Koble fra scenario',
+        message: 'Fjerne koblingen til dette scenarioet?',
+        detail: 'Tiltaket beholdes på andre scenarioer.',
+        confirmLabel: 'Koble fra',
+        confirmClass: 'btn-outline-danger',
+      }).then(function (confirmed) {
+        if (!confirmed) {
+          return;
+        }
 
-      return fetchJson(urlWithId(config.urls.actionUpdate, actionId), {
-        method: 'PATCH',
-        body: JSON.stringify({
-          beskrivelse: payload.beskrivelse,
-          ansvarlig: payload.ansvarlig,
-          frist: payload.frist,
-          status: payload.status,
-          scenario_ids: scenarioIds,
-        }),
-      })
-        .then(function () {
-          setModalStatus('');
-          return refreshAfterModalTiltakChange();
+        setModalStatus('Kobler fra…');
+        card.querySelectorAll('button').forEach(function (btn) { btn.disabled = true; });
+
+        return fetchJson(urlWithId(config.urls.actionUpdate, actionId), {
+          method: 'PATCH',
+          body: JSON.stringify({
+            beskrivelse: payload.beskrivelse,
+            ansvarlig: payload.ansvarlig,
+            frist: payload.frist,
+            status: payload.status,
+            scenario_ids: scenarioIds,
+          }),
         })
-        .catch(function (err) {
-          handleModalSaveError(err);
-          if (!isContentLockedError(err)) {
-            card.querySelectorAll('button').forEach(function (btn) { btn.disabled = false; });
-          }
-        });
+          .then(function () {
+            setModalStatus('');
+            return refreshAfterModalTiltakChange();
+          })
+          .catch(function (err) {
+            handleModalSaveError(err);
+            if (!isContentLockedError(err)) {
+              card.querySelectorAll('button').forEach(function (btn) { btn.disabled = false; });
+            }
+          });
+      });
     }
 
     function deleteModalActionCard(card) {
@@ -1403,22 +1507,27 @@
         card.remove();
         return Promise.resolve();
       }
-      if (!window.confirm('Slette dette tiltaket?')) {
-        return Promise.resolve();
-      }
-
-      setModalStatus('Sletter…');
-      return fetchJson(urlWithId(config.urls.actionDelete, actionId), {
-        method: 'POST',
-        body: JSON.stringify({ _method: 'DELETE' }),
-      })
-        .then(function () {
-          setModalStatus('');
-          return refreshAfterModalTiltakChange();
+      return showConfirmModal({
+        title: 'Slett tiltak',
+        message: 'Slette dette tiltaket?',
+        confirmLabel: 'Slett',
+      }).then(function (confirmed) {
+        if (!confirmed) {
+          return;
+        }
+        setModalStatus('Sletter…');
+        return fetchJson(urlWithId(config.urls.actionDelete, actionId), {
+          method: 'POST',
+          body: JSON.stringify({ _method: 'DELETE' }),
         })
-        .catch(function (err) {
-          handleModalSaveError(err);
-        });
+          .then(function () {
+            setModalStatus('');
+            return refreshAfterModalTiltakChange();
+          })
+          .catch(function (err) {
+            handleModalSaveError(err);
+          });
+      });
     }
 
     function addModalActionCard() {
@@ -1674,22 +1783,29 @@
       }
       const displayId = document.getElementById('risiko-scenario-modal-title').textContent.replace(/^Rediger\s+/, '');
       const label = displayId || 'dette scenarioet';
-      if (!window.confirm('Er du sikker på at du vil slette ' + label + '?\n\nTiltak som deles med andre scenarioer beholdes.')) {
-        return;
-      }
-      setModalStatus('Sletter…');
-      fetchJson(urlWithId(config.urls.scenarioDelete, scenarioId), {
-        method: 'POST',
-        body: JSON.stringify({ _method: 'DELETE' }),
-      })
-        .then(function () {
-          modalCloseAllowed = true;
-          modal.modal('hide');
-          return refreshTable();
+      showConfirmModal({
+        title: 'Slett scenario',
+        message: 'Er du sikker på at du vil slette ' + label + '?',
+        detail: 'Tiltak som deles med andre scenarioer beholdes.',
+        confirmLabel: 'Slett',
+      }).then(function (confirmed) {
+        if (!confirmed) {
+          return;
+        }
+        setModalStatus('Sletter…');
+        fetchJson(urlWithId(config.urls.scenarioDelete, scenarioId), {
+          method: 'POST',
+          body: JSON.stringify({ _method: 'DELETE' }),
         })
-        .catch(function (err) {
-          handleModalSaveError(err);
-        });
+          .then(function () {
+            modalCloseAllowed = true;
+            modal.modal('hide');
+            return refreshTable();
+          })
+          .catch(function (err) {
+            handleModalSaveError(err);
+          });
+      });
     }
 
     const scopeMetaView = document.getElementById('risiko-scope-meta-view');
@@ -2294,6 +2410,7 @@
   }
 
   function initRisiko() {
+    initRisikoConfirmModal();
     initRisikoStatusUnlock();
     initRisikoEditor();
   }

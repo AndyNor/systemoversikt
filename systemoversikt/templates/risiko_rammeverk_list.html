@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-07: Outline button for back navigation. #}
 {# 2026-07-06: Removed excel class – no table export on rammeverk list. #}
 {# 2026-07-06: Templates (maler) + group-owned sammenstillinger list. #}
 
@@ -9,7 +10,7 @@
 {% block hovedinnhold %}
 
 <p class="mb-3">
-	<a href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til risikovurderinger</a>
 </p>
 
 <div class="mb-4" style="background-color: #f8f9fa; padding: 1rem 1.25rem; border-radius: 4px;">

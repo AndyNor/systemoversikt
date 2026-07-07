@@ -9,7 +9,7 @@
 {% block hovedinnhold %}
 
 <p>
-	<a href="{% url 'risiko_scope_detail' pk=scope.pk %}">&larr; Tilbake til {{ scope.title }}</a>
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_detail' pk=scope.pk %}">&larr; Tilbake til {{ scope.title }}</a>
 	{% if can_edit %}
 	<a class="btn btn-primary btn-sm" href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ scenario.pk }}">Rediger</a>
 	{% endif %}
