@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Membership prefetch includes profile virksomhet for member display names.
 # 2026-07-07: risiko_scope_rapport + omfang file serve views for godkjent archive report.
 # 2026-07-06: _render_risk_access_denied – sammenstilling context for group-owned access denied pages.
 # 2026-07-06: _render_risk_access_denied – framework context for rammeverk access denied pages.
@@ -91,7 +92,7 @@ from systemoversikt.risk_membership import (
 	scopes_for_user_membership,
 	scopes_for_virksomhet,
 	user_can_manage_risk_virksomhet_groups,
-	user_display_name,
+	user_member_display_name,
 	user_has_scope_read_access,
 	user_has_scope_write_access,
 	user_is_scope_member,
@@ -132,7 +133,11 @@ def _get_readable_scope(request, scope_id):
 		RiskScope.objects.select_related('virksomhet').prefetch_related(
 			Prefetch(
 				'memberships',
-				queryset=RiskScopeMember.objects.select_related('user').order_by('role', 'user__first_name', 'user__username'),
+				queryset=RiskScopeMember.objects.select_related(
+					'user',
+					'user__profile',
+					'user__profile__virksomhet',
+				).order_by('role', 'user__first_name', 'user__username'),
 			),
 		),
 		pk=scope_id,
@@ -181,7 +186,7 @@ def _scope_owner_names(scope):
 	names = []
 	for m in scope.memberships.all():
 		if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER:
-			names.append(user_display_name(m.user))
+			names.append(user_member_display_name(m.user))
 	return names
 
 
@@ -193,7 +198,7 @@ def _scope_for_access_message(pk):
 				'memberships',
 				queryset=RiskScopeMember.objects.filter(
 					role=RISK_SCOPE_MEMBER_ROLE_OWNER,
-				).select_related('user'),
+				).select_related('user', 'user__profile', 'user__profile__virksomhet'),
 			),
 		)
 		.filter(pk=pk)
@@ -508,7 +513,11 @@ def risiko_scope_detail(request, pk):
 		RiskScope.objects.select_related('virksomhet').prefetch_related(
 			Prefetch(
 				'memberships',
-				queryset=RiskScopeMember.objects.select_related('user').order_by('role', 'user__first_name', 'user__username'),
+				queryset=RiskScopeMember.objects.select_related(
+					'user',
+					'user__profile',
+					'user__profile__virksomhet',
+				).order_by('role', 'user__first_name', 'user__username'),
 			),
 			Prefetch(
 				'participant_groups',
@@ -761,7 +770,11 @@ def risiko_scope_rapport(request, pk):
 		RiskScope.objects.select_related('virksomhet').prefetch_related(
 			Prefetch(
 				'memberships',
-				queryset=RiskScopeMember.objects.select_related('user').order_by('role', 'user__first_name', 'user__username'),
+				queryset=RiskScopeMember.objects.select_related(
+					'user',
+					'user__profile',
+					'user__profile__virksomhet',
+				).order_by('role', 'user__first_name', 'user__username'),
 			),
 			Prefetch(
 				'participant_groups',

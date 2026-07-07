@@ -1,4 +1,5 @@
 # Change log:
+# 2026-07-07: risiko_member_display – show virksomhetsforkortelse with member names on collection pages.
 # 2026-07-07: group_from_permission – always return list; handle AD group names (403 page bullet-per-char bug).
 # 2026-07-02: risiko_tilgangsgruppe_filter_buttons – filter bar for collection list tables.
 # 2026-07-02: risiko_tilgangsgruppe_tags – colored tags for assigned groups on collection list tables.
@@ -495,6 +496,14 @@ def risiko_level_tag(label, css_class):
 		cls,
 		label,
 	))
+
+
+@register.filter
+def risiko_member_display(user):
+	from systemoversikt.risk_membership import user_member_display_name
+	if not user:
+		return ''
+	return user_member_display_name(user)
 
 
 @register.filter

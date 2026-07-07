@@ -1,4 +1,4 @@
-{# 2026-07-07: Omfang card – beskrivelse, figur upload, rapport link when godkjent. #}
+{# 2026-07-07: Member names include virksomhetsforkortelse – disambiguate duplicate names. #}
 {# 2026-07-06: «Må eskaleres» toggle button on tiltak description row in scenario modal. #}
 {# 2026-07-06: Removed excel class – no table export on scenario table. #}
 {# 2026-06-29: Hint that empty etter tiltak fields inherit nåværende risiko levels. #}
@@ -58,7 +58,7 @@
 					<strong class="d-block small">Eiere</strong>
 					<ul id="risiko-owners-list" class="list-unstyled small mb-1">
 						{% for m in owner_memberships %}
-						<li data-user-id="{{ m.user_id }}">{{ m.user.get_full_name|default:m.user.username }} <button type="button" class="btn btn-link btn-sm p-0 risiko-member-remove" data-role="owner">Fjern</button></li>
+						<li data-user-id="{{ m.user_id }}">{{ m.user|risiko_member_display }} <button type="button" class="btn btn-link btn-sm p-0 risiko-member-remove" data-role="owner">Fjern</button></li>
 						{% endfor %}
 					</ul>
 					<input type="search" id="risiko-owner-sok" class="form-control form-control-sm mb-1" placeholder="Legg til eier…" autocomplete="off">
@@ -68,7 +68,7 @@
 					<strong class="d-block small">Deltakere</strong>
 					<ul id="risiko-participants-list" class="list-unstyled small mb-1">
 						{% for m in participant_memberships %}
-						<li data-user-id="{{ m.user_id }}">{{ m.user.get_full_name|default:m.user.username }} <button type="button" class="btn btn-link btn-sm p-0 risiko-member-remove" data-role="participant">Fjern</button></li>
+						<li data-user-id="{{ m.user_id }}">{{ m.user|risiko_member_display }} <button type="button" class="btn btn-link btn-sm p-0 risiko-member-remove" data-role="participant">Fjern</button></li>
 						{% endfor %}
 					</ul>
 					<input type="search" id="risiko-participant-sok" class="form-control form-control-sm mb-1" placeholder="Legg til deltaker…" autocomplete="off">
@@ -124,10 +124,10 @@
 				<strong>Virksomhet:</strong> <span id="risiko-scope-virksomhet-view">{% if scope.virksomhet %}{{ scope.virksomhet.virksomhetsforkortelse }} – {{ scope.virksomhet.virksomhetsnavn }}{% else %}-{% endif %}</span>
 			</p>
 			<p>
-				<strong>Eiere:</strong> <span id="risiko-scope-owners-view">{% for m in owner_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% empty %}-{% endfor %}</span>
+				<strong>Eiere:</strong> <span id="risiko-scope-owners-view">{% for m in owner_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user|risiko_member_display }}{% empty %}-{% endfor %}</span>
 			</p>
 			<p>
-				<strong>Deltakere:</strong> <span id="risiko-scope-participants-view">{% for m in participant_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% endfor %}{% for g in participant_groups %}{% if participant_memberships or not forloop.first %}, {% endif %}{{ g.display_title }} (gruppe){% endfor %}{% if not participant_memberships and not participant_groups %}-{% endif %}</span>
+				<strong>Deltakere:</strong> <span id="risiko-scope-participants-view">{% for m in participant_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user|risiko_member_display }}{% endfor %}{% for g in participant_groups %}{% if participant_memberships or not forloop.first %}, {% endif %}{{ g.display_title }} (gruppe){% endfor %}{% if not participant_memberships and not participant_groups %}-{% endif %}</span>
 			</p>
 			{% if can_edit_scope %}
 			<button type="button" class="btn btn-outline-primary btn-sm" id="risiko-scope-edit">Rediger</button>

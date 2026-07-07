@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: user_member_display_name – disambiguate same-name users with virksomhetsforkortelse on collection pages.
 # 2026-07-06: Superuser bypass in user_has_risk_virksomhet_read_access – testers can open framework rollup pages.
 # 2026-07-06: user_has_risk_virksomhet_read_access – scope/participant/read-group border for framework mapping.
 # 2026-07-06: annotate_scope_list – anonymous users get false membership flags (no user FK in queries).
@@ -95,6 +96,27 @@ def user_display_name(user):
 		return ''
 	full = user.get_full_name()
 	return full.strip() if full else user.username
+
+
+def user_virksomhetsforkortelse(user):
+	if user is None:
+		return ''
+	try:
+		virksomhet = user.profile.virksomhet
+	except Exception:
+		return ''
+	if virksomhet is None:
+		return ''
+	return (virksomhet.virksomhetsforkortelse or '').strip()
+
+
+def user_member_display_name(user):
+	"""Display name with virksomhetsforkortelse when set – disambiguates duplicate names."""
+	name = user_display_name(user)
+	fork = user_virksomhetsforkortelse(user)
+	if fork:
+		return '%s (%s)' % (name, fork)
+	return name
 
 
 def user_is_scope_participant_via_group(user, scope):

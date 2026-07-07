@@ -1,3 +1,4 @@
+{# 2026-07-07: Member names include virksomhetsforkortelse – disambiguate duplicate names. #}
 {# 2026-07-07: Print-friendly godkjent risikovurderingsrapport – 8 sections for archive. #}
 {% extends "sikkerhet_index.html" %}
 {% load static %}
@@ -26,8 +27,8 @@
 			<tr><th scope="row">Virksomhet</th><td>{% if scope.virksomhet %}{{ scope.virksomhet.virksomhetsforkortelse }} – {{ scope.virksomhet.virksomhetsnavn }}{% else %}–{% endif %}</td></tr>
 			<tr><th scope="row">Status</th><td>{% risiko_scope_status scope.status scope.get_status_display %}</td></tr>
 			<tr><th scope="row">Sist revidert</th><td>{{ scope.sist_revidert|date:"Y-m-d" }}</td></tr>
-			<tr><th scope="row">Eiere</th><td>{% for m in owner_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% empty %}–{% endfor %}</td></tr>
-			<tr><th scope="row">Deltakere</th><td>{% for m in participant_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user.get_full_name|default:m.user.username }}{% endfor %}{% for g in participant_groups %}{% if participant_memberships or not forloop.first %}, {% endif %}{{ g.display_title }} (gruppe){% endfor %}{% if not participant_memberships and not participant_groups %}–{% endif %}</td></tr>
+			<tr><th scope="row">Eiere</th><td>{% for m in owner_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user|risiko_member_display }}{% empty %}–{% endfor %}</td></tr>
+			<tr><th scope="row">Deltakere</th><td>{% for m in participant_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user|risiko_member_display }}{% endfor %}{% for g in participant_groups %}{% if participant_memberships or not forloop.first %}, {% endif %}{{ g.display_title }} (gruppe){% endfor %}{% if not participant_memberships and not participant_groups %}–{% endif %}</td></tr>
 			<tr><th scope="row">Rapport generert</th><td>{{ generated_at|date:"Y-m-d H:i" }}</td></tr>
 		</tbody>
 	</table>

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Member and bruker search labels include virksomhetsforkortelse – disambiguate same-name users.
 # 2026-07-07: Omfang figur/original multipart upload APIs – bytes stored on RiskScopeOmfangFil.
 # 2026-07-02: Participant group search returns first 5 without query; display normalized gruppenavn.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup in participant group APIs.
@@ -83,7 +84,12 @@ from systemoversikt.risk_display import (
 	tiltak_display_id_map,
 	user_ansvarlig_display_name,
 )
-from systemoversikt.risk_membership import normalize_risk_group_title, user_display_name
+from systemoversikt.risk_membership import (
+	normalize_risk_group_title,
+	user_display_name,
+	user_member_display_name,
+	user_virksomhetsforkortelse,
+)
 from systemoversikt.views_risiko import (
 	_get_managed_scope,
 	_get_member_scope,
@@ -1032,7 +1038,7 @@ def api_risiko_scope_action_delete(request, pk, aid):
 def _member_to_dict(membership):
 	return {
 		'user_id': membership.user_id,
-		'name': user_display_name(membership.user),
+		'name': user_member_display_name(membership.user),
 		'username': membership.user.username,
 		'role': membership.role,
 	}
@@ -1049,7 +1055,11 @@ def _participant_group_to_dict(group):
 
 def _members_payload(scope):
 	memberships = list(
-		scope.memberships.select_related('user').order_by('role', 'user__first_name', 'user__username')
+		scope.memberships.select_related(
+			'user',
+			'user__profile',
+			'user__profile__virksomhet',
+		).order_by('role', 'user__first_name', 'user__username')
 	)
 	owners = [_member_to_dict(m) for m in memberships if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER]
 	participants = [_member_to_dict(m) for m in memberships if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]
@@ -1090,7 +1100,7 @@ def _bruker_sok_queryset(q):
 	return (
 		User.objects.filter(query)
 		.filter(is_active=True)
-		.select_related('profile')
+		.select_related('profile', 'profile__virksomhet')
 		.distinct()
 		.order_by('first_name', 'last_name', 'username')[:15]
 	)
@@ -1334,9 +1344,11 @@ def api_risiko_brukere_sok(request, pk):
 
 	results = []
 	for user in _bruker_sok_queryset(q):
+		fork = user_virksomhetsforkortelse(user)
+		suffix = fork or user.username
 		results.append({
 			'id': user.pk,
-			'label': '%s (%s)' % (user_display_name(user), user.username),
+			'label': '%s (%s)' % (user_display_name(user), suffix),
 		})
 	return JsonResponse({'ok': True, 'results': results})
 
