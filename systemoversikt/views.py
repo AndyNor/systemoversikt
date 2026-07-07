@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: alle_dns – exclude box for IP addresses and alias mot (CNAME targets).
+# 2026-07-07: alle_dns – top 20 alias mot only; IP and TTL remain top 10.
+# 2026-07-07: alle_dns – alias stats from dns_target column, not only dns_type=CNAME.
+# 2026-07-07: alle_dns – top 10 CNAME alias targets in overview stats.
+# 2026-07-07: alle_dns – stat badges trigger search_term instead of facet filters.
+# 2026-07-07: alle_dns – overview stats without cache (fast enough at ~46k rows).
+# 2026-07-07: alle_dns – overview stats modules with IP/TTL/type/source filters.
 # 2026-07-07: alle_dns – fix search (FQDN/IP) and explicit template context.
 # 2026-07-07: alle_dns – search and pagination for 46k+ DNS records.
 # 2026-07-07: Global /sok/ redirects IPv4/CIDR terms to alle_ip when user has CMDB access.
@@ -3822,6 +3829,179 @@ def cmdb_devicedetails(request, pk):
 
 
 
+def _dns_source_label(source):
+	if not source:
+		return '–'
+	if source.endswith('_intern'):
+		return 'Intern'
+	if source.endswith('_ekstern'):
+		return 'Ekstern'
+	return source.rsplit('/', 1)[-1]
+
+
+def _dns_normalize_alias_target(value):
+	return (value or '').strip().rstrip('.')
+
+
+def _dns_alias_target_variants(value):
+	normalized = _dns_normalize_alias_target(value)
+	if not normalized:
+		return []
+	variants = {value.strip(), normalized, normalized + '.'}
+	return [variant for variant in variants if variant]
+
+
+def _dns_filter_by_alias_target(qs, alias_target):
+	variants = _dns_alias_target_variants(alias_target)
+	if not variants:
+		return qs
+	return qs.filter(dns_target__in=variants)
+
+
+DNS_EXCLUDE_MAX_TERMS = 100
+
+
+def _dns_parse_exclude_terms(exclude_raw):
+	"""Split exclude box input into unique IP or hostname/CNAME terms."""
+	if not exclude_raw or not exclude_raw.strip():
+		return []
+	terms = []
+	seen = set()
+	for part in re.findall(r'([^,;\t\s\n\r]+)', exclude_raw.strip()):
+		term = part.strip()
+		if not term:
+			continue
+		key = term.lower().rstrip('.')
+		if key in seen:
+			continue
+		seen.add(key)
+		terms.append(term)
+		if len(terms) >= DNS_EXCLUDE_MAX_TERMS:
+			break
+	return terms
+
+
+def _dns_exclude_q_for_term(term):
+	"""Build OR-filters for one excluded IP or alias/CNAME value."""
+	try:
+		ip = ipaddress.ip_address(term)
+		return Q(ip_address=str(ip))
+	except ValueError:
+		pass
+
+	normalized = _dns_normalize_alias_target(term)
+	term_q = Q()
+	variants = _dns_alias_target_variants(term)
+	if variants:
+		term_q |= Q(dns_target__in=variants)
+	if normalized:
+		term_q |= Q(dns_name__iexact=normalized)
+		if '.' in normalized:
+			name, domain = normalized.split('.', 1)
+			term_q |= Q(dns_name__iexact=name, dns_domain__iexact=domain)
+	return term_q
+
+
+def _dns_apply_excludes(qs, exclude_terms):
+	if not exclude_terms:
+		return qs
+	exclude_q = Q()
+	for term in exclude_terms:
+		term_q = _dns_exclude_q_for_term(term)
+		if term_q:
+			exclude_q |= term_q
+	if exclude_q:
+		qs = qs.exclude(exclude_q)
+	return qs
+
+
+def _dns_page_query_parts(search_term_raw='', alias_mot_raw='', exclude_raw=''):
+	query_parts = {}
+	if search_term_raw:
+		query_parts['search_term'] = search_term_raw
+	if alias_mot_raw:
+		query_parts['alias_mot'] = alias_mot_raw
+	if exclude_raw:
+		query_parts['exclude'] = exclude_raw
+	return query_parts
+
+
+def _dns_build_filter_query(search_term_raw='', alias_mot_raw='', exclude_raw=''):
+	return urlencode(_dns_page_query_parts(search_term_raw, alias_mot_raw, exclude_raw))
+
+
+def _dns_search_href(search_term, current_search_term='', alias_mot_raw='', exclude_raw=''):
+	"""Link that sets search_term; clicking the active term again clears the search."""
+	term = (search_term or '').strip()
+	current = (current_search_term or '').strip()
+	if term and term == current:
+		query_parts = _dns_page_query_parts(alias_mot_raw=alias_mot_raw, exclude_raw=exclude_raw)
+		return '?' + urlencode(query_parts) if query_parts else '?'
+	if not term:
+		query_parts = _dns_page_query_parts(alias_mot_raw=alias_mot_raw, exclude_raw=exclude_raw)
+		return '?' + urlencode(query_parts) if query_parts else '?'
+	query_parts = _dns_page_query_parts(search_term_raw=term, alias_mot_raw=alias_mot_raw, exclude_raw=exclude_raw)
+	return '?' + urlencode(query_parts)
+
+
+def _dns_alias_mot_href(alias_target, current_alias_mot='', search_term_raw='', exclude_raw=''):
+	"""Link that filters the table on alias mot (dns_target); click again to clear."""
+	target = (alias_target or '').strip()
+	current = (current_alias_mot or '').strip()
+	if target and _dns_normalize_alias_target(target) == _dns_normalize_alias_target(current):
+		query_parts = _dns_page_query_parts(search_term_raw=search_term_raw, exclude_raw=exclude_raw)
+		return '?' + urlencode(query_parts) if query_parts else '?'
+	if not target:
+		query_parts = _dns_page_query_parts(search_term_raw=search_term_raw, exclude_raw=exclude_raw)
+		return '?' + urlencode(query_parts) if query_parts else '?'
+	query_parts = _dns_page_query_parts(
+		search_term_raw=search_term_raw,
+		alias_mot_raw=target,
+		exclude_raw=exclude_raw,
+	)
+	return '?' + urlencode(query_parts)
+
+
+def _dns_overview_stats(exclude_terms=None):
+	base = _dns_apply_excludes(DNSrecord.objects.all(), exclude_terms or [])
+	return {
+		'top_ips': list(
+			base.exclude(ip_address__isnull=True)
+			.values('ip_address')
+			.annotate(count=Count('id'))
+			.order_by('-count')[:10]
+		),
+		'top_alias_targets': list(
+			base.filter(dns_type__icontains='CNAME')
+			.exclude(dns_target__isnull=True)
+			.exclude(dns_target='')
+			.values('dns_target')
+			.annotate(count=Count('id'))
+			.order_by('-count')[:20]
+		),
+		'top_ttls': list(
+			base.exclude(ttl__isnull=True)
+			.values('ttl')
+			.annotate(count=Count('id'))
+			.order_by('-count')[:10]
+		),
+		'dns_types': list(
+			base.exclude(dns_type__isnull=True)
+			.exclude(dns_type='')
+			.values('dns_type')
+			.annotate(count=Count('id'))
+			.order_by('-count')
+		),
+		'sources': list(
+			base.exclude(source__isnull=True)
+			.exclude(source='')
+			.values('source')
+			.annotate(count=Count('id'))
+			.order_by('-count')
+		),
+	}
+
+
 def _dns_record_search_queryset(search_term):
 	"""Filter DNS records by hostname, alias, type, source, domain, FQDN or IP."""
 	term = (search_term or '').strip()
@@ -3835,6 +4015,8 @@ def _dns_record_search_queryset(search_term):
 		Q(source__icontains=term) |
 		Q(dns_domain__icontains=term)
 	)
+	if term.isdigit():
+		text_filters |= Q(ttl=int(term))
 	qs = DNSrecord.objects.annotate(
 		dns_full=Concat('dns_name', Value('.'), 'dns_domain', output_field=CharField()),
 		ip_text=Cast('ip_address', CharField()),
@@ -3843,7 +4025,7 @@ def _dns_record_search_queryset(search_term):
 
 
 def alle_dns(request):
-	# 2026-07-07: Search and pagination – avoid loading 46k+ DNS rows in one response.
+	# 2026-07-07: Search, exclude list, alias filter and pagination for large DNS tables.
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -3852,18 +4034,74 @@ def alle_dns(request):
 
 	search_term_raw = request.GET.get('search_term', '')
 	search_term = search_term_raw.strip()
+	alias_mot_raw = request.GET.get('alias_mot', '')
+	alias_mot = alias_mot_raw.strip()
+	exclude_raw = request.GET.get('exclude', '')
+	exclude_terms = _dns_parse_exclude_terms(exclude_raw)
+	has_filters = bool(search_term or alias_mot or exclude_terms)
 
-	qs = _dns_record_search_queryset(search_term).order_by('dns_name', 'dns_type', 'pk')
+	qs = _dns_record_search_queryset(search_term)
+	if alias_mot:
+		qs = _dns_filter_by_alias_target(qs, alias_mot)
+	qs = _dns_apply_excludes(qs, exclude_terms)
+	qs = qs.order_by('dns_name', 'dns_type', 'pk')
 
 	paginator = Paginator(qs, DNS_PAGE_SIZE)
 	page_number = request.GET.get('page', '1')
 	page_obj = paginator.get_page(page_number)
 	total_count = paginator.count
+	filter_query = _dns_build_filter_query(search_term_raw, alias_mot_raw, exclude_raw)
 
-	query_parts = {}
-	if search_term_raw:
-		query_parts['search_term'] = search_term_raw
-	filter_query = urlencode(query_parts)
+	raw_stats = _dns_overview_stats(exclude_terms)
+	dns_stats = {
+		'top_ips': [
+			{
+				'ip_address': row['ip_address'],
+				'count': row['count'],
+				'search_href': _dns_search_href(row['ip_address'], search_term_raw, alias_mot_raw, exclude_raw),
+				'active': search_term == row['ip_address'],
+			}
+			for row in raw_stats['top_ips']
+		],
+		'top_alias_targets': [
+			{
+				'dns_target': row['dns_target'],
+				'dns_target_display': _dns_normalize_alias_target(row['dns_target']),
+				'count': row['count'],
+				'search_href': _dns_alias_mot_href(row['dns_target'], alias_mot_raw, search_term_raw, exclude_raw),
+				'active': _dns_normalize_alias_target(alias_mot) == _dns_normalize_alias_target(row['dns_target']),
+			}
+			for row in raw_stats['top_alias_targets']
+		],
+		'top_ttls': [
+			{
+				'ttl': row['ttl'],
+				'count': row['count'],
+				'search_href': _dns_search_href(str(row['ttl']), search_term_raw, alias_mot_raw, exclude_raw),
+				'active': search_term == str(row['ttl']),
+			}
+			for row in raw_stats['top_ttls']
+		],
+		'dns_types': [
+			{
+				'dns_type': row['dns_type'],
+				'count': row['count'],
+				'search_href': _dns_search_href(row['dns_type'], search_term_raw, alias_mot_raw, exclude_raw),
+				'active': search_term == row['dns_type'],
+			}
+			for row in raw_stats['dns_types']
+		],
+		'sources': [
+			{
+				'source': row['source'],
+				'label': _dns_source_label(row['source']),
+				'count': row['count'],
+				'search_href': _dns_search_href(row['source'], search_term_raw, alias_mot_raw, exclude_raw),
+				'active': search_term == row['source'],
+			}
+			for row in raw_stats['sources']
+		],
+	}
 
 	return render(request, 'cmdb_alle_dns.html', {
 		'request': request,
@@ -3872,7 +4110,13 @@ def alle_dns(request):
 		'dns_records': page_obj.object_list,
 		'total_count': total_count,
 		'dns_search_term': search_term_raw,
+		'alias_mot': alias_mot_raw,
+		'alias_mot_display': _dns_normalize_alias_target(alias_mot_raw),
+		'exclude': exclude_raw,
+		'exclude_term_count': len(exclude_terms),
+		'has_filters': has_filters,
 		'filter_query': filter_query,
+		'dns_stats': dns_stats,
 		'integrasjonsstatus': _integrasjonsstatus("sp_dns"),
 	})
 

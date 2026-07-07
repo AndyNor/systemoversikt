@@ -14,8 +14,8 @@
 {% include "includes/integrasjon_freshness_banner.html" with label="DNS-data ble sist synkronisert" %}
 
 	<p>
-		{% if dns_search_term %}
-			Fant {{ total_count|intcomma }} navn/alias/mx/txt som passer med søket.
+		{% if has_filters %}
+			Fant {{ total_count|intcomma }} navn/alias/mx/txt som passer med valgt filter.
 		{% else %}
 			Det er {{ total_count|intcomma }} navn/alias/mx/txt i databasen.
 		{% endif %}
@@ -24,16 +24,125 @@
 		{% endif %}
 	</p>
 
-	<form action="{% url 'alle_dns' %}" autocomplete="off">
-		<div class="form-group form-inline">
-			<input size="55" style="width: 450px;" type="search" value="{{ dns_search_term }}" name="search_term"
-			placeholder="Søk på DNS-navn, fullt domenenavn, alias, type, IP eller kilde" class="form-control form-control-sm">
-			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
-			{% if dns_search_term %}
-			<a class="btn btn-sm" href="{% url 'alle_dns' %}">Tøm søk</a>
+	<div class="row mb-3">
+		<div class="col-xl-2 col-lg-4 col-md-6 mb-2">
+			<div class="card h-100">
+				<div class="card-header py-1"><small><b>Top 10 IP-adresser</b></small></div>
+				<div class="card-body py-2 small">
+					{% for row in dns_stats.top_ips %}
+						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Søk på denne IP-adressen">
+							{{ row.ip_address }} ({{ row.count|intcomma }})
+						</a>
+					{% empty %}
+						<i>Ingen IP-adresser</i>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+		<div class="col-xl-2 col-lg-4 col-md-6 mb-2">
+			<div class="card h-100">
+				<div class="card-header py-1"><small><b>Top 20 «Alias mot»</b></small></div>
+				<div class="card-body py-2 small">
+					{% for row in dns_stats.top_alias_targets %}
+						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Vis CNAME-er med alias mot {{ row.dns_target }}">
+							{{ row.dns_target_display|truncatechars:30 }} ({{ row.count|intcomma }})
+						</a>
+					{% empty %}
+						<i>Ingen alias-mål</i>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+		<div class="col-xl-2 col-lg-4 col-md-6 mb-2">
+			<div class="card h-100">
+				<div class="card-header py-1"><small><b>Mest brukte TTL</b></small></div>
+				<div class="card-body py-2 small">
+					{% for row in dns_stats.top_ttls %}
+						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Søk på denne TTL-verdien">
+							{{ row.ttl|intcomma }} s ({{ row.count|intcomma }})
+						</a>
+					{% empty %}
+						<i>Ingen TTL-verdier</i>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+		<div class="col-xl-2 col-lg-4 col-md-6 mb-2">
+			<div class="card h-100">
+				<div class="card-header py-1"><small><b>DNS-typer</b></small></div>
+				<div class="card-body py-2 small">
+					{% for row in dns_stats.dns_types %}
+						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Søk på denne DNS-typen">
+							{{ row.dns_type }} ({{ row.count|intcomma }})
+						</a>
+					{% empty %}
+						<i>Ingen DNS-typer</i>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+		<div class="col-xl-2 col-lg-4 col-md-6 mb-2">
+			<div class="card h-100">
+				<div class="card-header py-1"><small><b>Kilde</b></small></div>
+				<div class="card-body py-2 small">
+					{% for row in dns_stats.sources %}
+						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Søk på {{ row.source }}">
+							{{ row.label }} ({{ row.count|intcomma }})
+						</a>
+					{% empty %}
+						<i>Ingen kilder</i>
+					{% endfor %}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="card mb-3">
+		<div class="card-header py-2"><small><b>Filtrer DNS-innslag</b></small></div>
+		<div class="card-body py-3">
+			<form action="{% url 'alle_dns' %}" autocomplete="off">
+				{% if alias_mot %}<input type="hidden" name="alias_mot" value="{{ alias_mot }}">{% endif %}
+				<div class="row">
+					<div class="col-lg-7 mb-3 mb-lg-0">
+						<label class="small mb-1" for="dns_search"><b>Inkluder</b> – søk i navn, domene, alias, type, IP eller kilde</label>
+						<input id="dns_search" type="search" value="{{ dns_search_term }}" name="search_term"
+						placeholder="Søkeord…" class="form-control form-control-sm">
+					</div>
+					<div class="col-lg-5">
+						<label class="small mb-1" for="dns_exclude"><b>Ekskluder</b> – IP eller alias/CNAME-mål (skjult fra resultat og statistikk)</label>
+						<textarea id="dns_exclude" rows="2" name="exclude"
+						placeholder="Én eller flere verdier, separert med mellomrom, komma, semikolon eller linjeskift"
+						class="form-control form-control-sm">{{ exclude }}</textarea>
+					</div>
+				</div>
+				<div class="d-flex flex-wrap align-items-center mt-2">
+					<input type="submit" value="Søk" class="btn btn-primary btn-sm mr-2 mb-1">
+					{% if has_filters %}
+					<a class="btn btn-sm btn-outline-secondary mr-3 mb-1" href="{% url 'alle_dns' %}">Tøm filter</a>
+					{% endif %}
+				</div>
+				<div class="mt-2">
+					<div class="small text-muted mb-1"><b>Hurtigsøk</b></div>
+					<a href="?search_term=msappproxy.net{% if exclude %}&amp;exclude={{ exclude|urlencode }}{% endif %}{% if alias_mot %}&amp;alias_mot={{ alias_mot|urlencode }}{% endif %}"
+						class="btn btn-sm btn-outline-primary mr-1 mb-1{% if dns_search_term == 'msappproxy.net' %} active{% endif %}"
+						title="Søk på msappproxy.net">msappproxy.net</a>
+					<a href="?search_term=amazonaws.com{% if exclude %}&amp;exclude={{ exclude|urlencode }}{% endif %}{% if alias_mot %}&amp;alias_mot={{ alias_mot|urlencode }}{% endif %}"
+						class="btn btn-sm btn-outline-primary mr-1 mb-1{% if dns_search_term == 'amazonaws.com' %} active{% endif %}"
+						title="Søk på amazonaws.com">amazonaws.com</a>
+				</div>
+			</form>
+			{% if alias_mot or exclude_term_count %}
+			<div class="small text-muted mt-2 mb-0">
+				{% if alias_mot %}
+				<span class="mr-3">Alias mot: <span class="badge badge-primary">{{ alias_mot_display }}</span></span>
+				{% endif %}
+				{% if exclude_term_count %}
+				<span>Ekskluderer {{ exclude_term_count }} IP/alias-verdi{{ exclude_term_count|pluralize:"er" }}.</span>
+				{% endif %}
+			</div>
 			{% endif %}
 		</div>
-	</form>
+	</div>
 
 	<hr>
 
@@ -41,7 +150,7 @@
 	<a href="{{url_dns_txt}}" class="btn btn-sm btn-link {% if url_dns_txt in request.path %}fremhev{% endif %}">Vis alle TXT-records</a>
 
 	{% if total_count == 0 %}
-		<p><i>Ingen DNS-innslag{% if dns_search_term %} som passer med søket{% endif %}.</i></p>
+		<p><i>Ingen DNS-innslag{% if has_filters %} som passer med valgt filter{% endif %}.</i></p>
 	{% else %}
 	<table class="table table-sm tablesorter excel">
 	<thead>
