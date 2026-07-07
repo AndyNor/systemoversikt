@@ -6,6 +6,8 @@
 {# 2026-07-07: Standalone report layout – no Kartoteket header/sidemeny. #}
 {# 2026-07-07: Print button uses script_append + nonce – inline onclick blocked by CSP. #}
 {# 2026-07-07: Member names include virksomhetsforkortelse – disambiguate duplicate names. #}
+{# 2026-07-07: Shorter draft banner text – removed archive disclaimer sentence. #}
+{# 2026-07-07: Draft status banner when not godkjent – report available for all statuses. #}
 {# 2026-07-07: Print-friendly godkjent risikovurderingsrapport – 7 sections for archive. #}
 {% extends "document_minimal.html" %}
 {% load static %}
@@ -26,13 +28,20 @@
 
 <h1 class="risiko-rapport-title h3 mb-4">Risikovurderingsrapport: {{ scope.title }}</h1>
 
+{% if scope.status != 'godkjent' %}
+<div class="risiko-rapport-status-banner" role="status">
+	<p class="risiko-rapport-status-banner-title mb-1">Ikke godkjent utkast</p>
+	<p class="mb-0">Denne rapporten viser nåværende arbeidsversjon. Status er <strong>{% risiko_scope_status scope.status scope.get_status_display %}</strong>.</p>
+</div>
+{% endif %}
+
 <section class="risiko-rapport-section">
 	<h2>1. Vurderingsdetaljer</h2>
 	<table class="table table-sm table-borderless risiko-rapport-meta mb-0">
 		<tbody>
 			<tr><th scope="row">Tittel</th><td>{{ scope.title }}</td></tr>
 			<tr><th scope="row">Virksomhet</th><td>{% if scope.virksomhet %}{{ scope.virksomhet.virksomhetsforkortelse }} – {{ scope.virksomhet.virksomhetsnavn }}{% else %}–{% endif %}</td></tr>
-			<tr><th scope="row">Status</th><td>{% risiko_scope_status scope.status scope.get_status_display %}</td></tr>
+			<tr><th scope="row">Status</th><td>{% if scope.status != 'godkjent' %}<span class="risiko-rapport-status-cell risiko-rapport-status-cell--draft">{% endif %}{% risiko_scope_status scope.status scope.get_status_display %}{% if scope.status != 'godkjent' %}</span>{% endif %}</td></tr>
 			<tr><th scope="row">Sist revidert</th><td>{{ scope.sist_revidert|date:"Y-m-d" }}</td></tr>
 			<tr><th scope="row">Eiere</th><td>{% for m in owner_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user|risiko_member_display }}{% empty %}–{% endfor %}</td></tr>
 			<tr><th scope="row">Deltakere</th><td>{% for m in participant_memberships %}{% if not forloop.first %}, {% endif %}{{ m.user|risiko_member_display }}{% endfor %}{% for g in participant_groups %}{% if participant_memberships or not forloop.first %}, {% endif %}{{ g.display_title }} (gruppe){% endfor %}{% if not participant_memberships and not participant_groups %}–{% endif %}</td></tr>
@@ -320,6 +329,35 @@
 .risiko-scope-status-under-revurdering .risiko-scope-status-label { color: #0d6efd; }
 .risiko-scope-status-til-godkjenning .risiko-scope-status-label { color: #b8860b; }
 .risiko-scope-status-godkjent .risiko-scope-status-label { color: #198754; }
+.risiko-rapport-status-banner {
+	border: 2px solid #ffc107;
+	background: #fff3cd;
+	color: #664d03;
+	padding: 0.85rem 1rem;
+	margin-bottom: 1.5rem;
+	border-radius: 4px;
+	page-break-inside: avoid;
+}
+.risiko-rapport-status-banner-title {
+	font-size: 1.1rem;
+	font-weight: 700;
+	margin: 0;
+}
+.risiko-rapport-status-banner .risiko-scope-status-label {
+	font-size: 1rem;
+	font-weight: 700;
+}
+.risiko-rapport-status-cell--draft {
+	display: inline-flex;
+	padding: 0.35rem 0.65rem;
+	border-radius: 4px;
+	background: #fff3cd;
+	border: 1px solid #ffc107;
+}
+.risiko-rapport-status-cell--draft .risiko-scope-status-label {
+	font-weight: 700;
+	font-size: 1rem;
+}
 .risiko-rapport-section { margin-bottom: 2rem; page-break-inside: avoid; }
 .risiko-rapport-section h2 { font-size: 1.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid #ced4da; padding-bottom: 0.35rem; }
 .risiko-rapport-scenario {

@@ -2,6 +2,7 @@
 # Change log:
 # 2026-07-07: Editor context sannsynlighet_keys from editable sannsynlighetstyper; import redirects to rediger.
 # 2026-07-07: Membership prefetch includes profile virksomhet for member display names.
+# 2026-07-07: Report available for all statuses; godkjent-only gate removed from detail link and rapport view.
 # 2026-07-07: risiko_scope_rapport + omfang file serve views for godkjent archive report.
 # 2026-07-06: _render_risk_access_denied – sammenstilling context for group-owned access denied pages.
 # 2026-07-06: _render_risk_access_denied – framework context for rammeverk access denied pages.
@@ -563,7 +564,6 @@ def risiko_scope_detail(request, pk):
 		'required_permissions': [],
 		'scope': scope,
 		'omfang_fil': omfang_fil,
-		'show_scope_report': scope.status == 'godkjent',
 		'scenarios': scenarios,
 		'tiltak_rows': _build_tiltak_rows(scope, scenarios),
 		'can_edit_scope': can_edit_scope,
@@ -766,7 +766,7 @@ def risiko_scope_fil_omfang_original(request, pk):
 
 @require_GET
 def risiko_scope_rapport(request, pk):
-	# 2026-07-07: Print-friendly HTML report for godkjent risikosamling.
+	# 2026-07-07: Print-friendly HTML report; available for all statuses (draft banner when not godkjent).
 	scope = get_object_or_404(
 		RiskScope.objects.select_related('virksomhet').prefetch_related(
 			Prefetch(
@@ -786,9 +786,6 @@ def risiko_scope_rapport(request, pk):
 	)
 	if not _has_scope_read_access(request, scope):
 		return _deny_scope_access(request, scope=scope)
-	if scope.status != 'godkjent':
-		messages.info(request, 'Rapporten er kun tilgjengelig for godkjente risikosamlinger.')
-		return redirect('risiko_scope_detail', pk=pk)
 
 	criteria = get_active_criteria()
 	return render(request, 'risiko_scope_rapport.html', {

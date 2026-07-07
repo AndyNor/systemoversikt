@@ -1,3 +1,4 @@
+{# 2026-07-07: Report link always visible – no longer limited to godkjent status. #}
 {# 2026-07-07: Bootstrap confirm modal before deleting scenarios/tiltak/omfang files on collection detail. #}
 {# 2026-07-07: Member names include virksomhetsforkortelse – disambiguate duplicate names. #}
 {# 2026-07-06: «Må eskaleres» toggle button on tiltak description row in scenario modal. #}
@@ -30,9 +31,7 @@
 
 <p>
 	<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til oversikt</a>
-	{% if show_scope_report %}
 	<a class="btn btn-outline-primary btn-sm ml-2" href="{% url 'risiko_scope_rapport' pk=scope.pk %}">Åpne rapport</a>
-	{% endif %}
 </p>
 
 {% if is_read_only_viewer %}
