@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator scoped to profile virksomhet on tilgangsgrupper page.
 # 2026-07-07: view_riskscope gates collection create/import; tilgangsgrupper page uses granular membership helpers.
 # 2026-07-07: Editor context sannsynlighet_keys from editable sannsynlighetstyper; import redirects to rediger.
 # 2026-07-07: Membership prefetch includes profile virksomhet for member display names.
@@ -349,7 +350,7 @@ def risiko_virksomhet_tilgangsgrupper(request, vid):
 		'required_permissions': [],
 		'virksomhet': virksomhet,
 		'can_create_group': user_can_create_risk_virksomhet_group(request.user, virksomhet),
-		'can_set_virksomhet_read_only': user_can_set_virksomhet_read_only_flag(request.user),
+		'can_set_virksomhet_read_only': user_can_set_virksomhet_read_only_flag(request.user, virksomhet),
 		'api_urls_json': json.dumps(api_urls),
 	})
 

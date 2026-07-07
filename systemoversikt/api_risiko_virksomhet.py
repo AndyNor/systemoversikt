@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator may mutate any group in profile virksomhet.
 # 2026-07-07: Granular tilgangsgruppe API – open list, member-gated mutations, creator auto-join, change_riskvirksomhetgroup for virksomhet_read_only.
 # 2026-07-06: Removed framework_owner_for / framework_read_for – sammenstilling ownership replaces framework M2M.
 # 2026-07-02: API returns display_title (forkortelse/name) and bare title for editing.
@@ -22,9 +23,9 @@ from systemoversikt.risk_membership import (
 	storage_risk_group_title,
 	user_can_access_risk_virksomhet_groups_page,
 	user_can_create_risk_virksomhet_group,
+	user_can_mutate_risk_virksomhet_group,
 	user_can_set_virksomhet_read_only_flag,
 	user_display_name,
-	user_is_risk_virksomhet_group_member,
 )
 
 
@@ -48,20 +49,23 @@ def _require_page_access_json(request, vid):
 	return virksomhet, None
 
 
-def _require_group_member_json(request, virksomhet, gid):
+def _require_group_mutation_json(request, virksomhet, gid):
 	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
-	if not user_is_risk_virksomhet_group_member(request.user, group):
+	if not user_can_mutate_risk_virksomhet_group(request.user, group):
 		return None, _json_error('forbidden', status=403)
 	return group, None
 
 
 def _group_mutation_flags(user, group):
-	is_member = user_is_risk_virksomhet_group_member(user, group)
+	can_mutate = user_can_mutate_risk_virksomhet_group(user, group)
 	return {
-		'can_edit': is_member,
-		'can_manage_members': is_member,
-		'can_delete': is_member,
-		'can_set_virksomhet_read_only': user_can_set_virksomhet_read_only_flag(user),
+		'can_edit': can_mutate,
+		'can_manage_members': can_mutate,
+		'can_delete': can_mutate,
+		'can_set_virksomhet_read_only': user_can_set_virksomhet_read_only_flag(
+			user,
+			group.virksomhet,
+		),
 	}
 
 
@@ -106,7 +110,7 @@ def _groups_payload(virksomhet, user):
 	return {
 		'groups': payload,
 		'can_create_group': user_can_create_risk_virksomhet_group(user, virksomhet),
-		'can_set_virksomhet_read_only': user_can_set_virksomhet_read_only_flag(user),
+		'can_set_virksomhet_read_only': user_can_set_virksomhet_read_only_flag(user, virksomhet),
 	}
 
 
@@ -126,7 +130,7 @@ def _group_members_payload(group, user=None):
 def _validate_virksomhet_read_only_change(user, group, new_value):
 	if new_value == group.virksomhet_read_only:
 		return None
-	if not user_can_set_virksomhet_read_only_flag(user):
+	if not user_can_set_virksomhet_read_only_flag(user, group.virksomhet):
 		return _json_error('forbidden', status=403)
 	return None
 
@@ -181,7 +185,7 @@ def api_risiko_read_group_create(request, vid):
 
 	beskrivelse = (data.get('beskrivelse') or '').strip()
 	virksomhet_read_only = bool(data.get('virksomhet_read_only', False))
-	if virksomhet_read_only and not user_can_set_virksomhet_read_only_flag(request.user):
+	if virksomhet_read_only and not user_can_set_virksomhet_read_only_flag(request.user, virksomhet):
 		return _json_error('forbidden', status=403)
 	if risk_group_title_conflict(virksomhet, title):
 		return _json_error('Det finnes allerede en gruppe med dette gruppenavnet.')
@@ -208,7 +212,7 @@ def api_risiko_read_group_update(request, vid, gid):
 	if err:
 		return err
 
-	group, err = _require_group_member_json(request, virksomhet, gid)
+	group, err = _require_group_mutation_json(request, virksomhet, gid)
 	if err:
 		return err
 
@@ -244,7 +248,7 @@ def api_risiko_read_group_delete(request, vid, gid):
 	if err:
 		return err
 
-	group, err = _require_group_member_json(request, virksomhet, gid)
+	group, err = _require_group_mutation_json(request, virksomhet, gid)
 	if err:
 		return err
 
@@ -273,7 +277,7 @@ def api_risiko_read_group_member_add(request, vid, gid):
 	if err:
 		return err
 
-	group, err = _require_group_member_json(request, virksomhet, gid)
+	group, err = _require_group_mutation_json(request, virksomhet, gid)
 	if err:
 		return err
 
@@ -301,7 +305,7 @@ def api_risiko_read_group_member_remove(request, vid, gid, user_id):
 	if err:
 		return err
 
-	group, err = _require_group_member_json(request, virksomhet, gid)
+	group, err = _require_group_mutation_json(request, virksomhet, gid)
 	if err:
 		return err
 
@@ -321,7 +325,7 @@ def api_risiko_read_group_brukere_sok(request, vid, gid):
 	if err:
 		return err
 
-	_, err = _require_group_member_json(request, virksomhet, gid)
+	_, err = _require_group_mutation_json(request, virksomhet, gid)
 	if err:
 		return err
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator may change/delete any group in profile virksomhet.
 # 2026-07-07: Granular tilgangsgruppe helpers – view_riskscope create, member-gated edit, change_riskvirksomhetgroup for virksomhet_read_only.
 # 2026-07-07: user_member_display_name – disambiguate same-name users with virksomhetsforkortelse on collection pages.
 # 2026-07-06: Superuser bypass in user_has_risk_virksomhet_read_access – testers can open framework rollup pages.
@@ -235,11 +236,31 @@ def user_can_access_risk_virksomhet_groups_page(user, virksomhet):
 		return False
 	if user_can_create_risk_virksomhet_group(user, virksomhet):
 		return True
+	if user_can_manage_risk_virksomhet_groups(user, virksomhet):
+		return True
 	return user_is_risk_virksomhet_group_member_in_virksomhet(user, virksomhet)
 
 
-def user_can_set_virksomhet_read_only_flag(user):
-	return user.is_authenticated and user.has_perm(RISK_VIRKSOMHET_GROUP_CHANGE_PERMISSION)
+def user_can_manage_risk_virksomhet_groups(user, virksomhet):
+	"""Virksomhetsadministrator: change/delete any tilgangsgruppe in profile virksomhet."""
+	if not user.is_authenticated or virksomhet is None:
+		return False
+	if not user.has_perm(RISK_VIRKSOMHET_GROUP_CHANGE_PERMISSION):
+		return False
+	profile_v = profile_virksomhet(user)
+	return profile_v is not None and profile_v.pk == virksomhet.pk
+
+
+def user_can_mutate_risk_virksomhet_group(user, group):
+	if group is None:
+		return False
+	if user_is_risk_virksomhet_group_member(user, group):
+		return True
+	return user_can_manage_risk_virksomhet_groups(user, group.virksomhet)
+
+
+def user_can_set_virksomhet_read_only_flag(user, virksomhet):
+	return user_can_manage_risk_virksomhet_groups(user, virksomhet)
 
 
 def annotate_scope_list(qs, user):
