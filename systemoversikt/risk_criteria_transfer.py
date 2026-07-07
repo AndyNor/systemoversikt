@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-06-30: JSON export/import payload helpers for global akseptkriterier (dev → prod).
+# 2026-07-07: Normalize imported criteria – backfill sannsynlighetstyper on older export files.
 
 from django.utils import timezone
 
 from systemoversikt.risk_criteria import (
 	get_active_criteria,
 	invalidate_criteria_cache,
+	normalize_criteria_dict,
 	validate_criteria,
 	validate_slug_changes,
 )
@@ -52,12 +53,14 @@ def apply_imported_criteria(criteria_dict, user, title='Standard akseptkriterier
 	Validate and persist imported criteria as the active config.
 	Returns a list of error messages (empty on success).
 	"""
-	errors = list(validate_criteria(criteria_dict))
+	errors = list(validate_criteria(normalize_criteria_dict(criteria_dict)))
 	if errors:
 		return errors
-	errors = list(validate_slug_changes(get_active_criteria(), criteria_dict))
+	errors = list(validate_slug_changes(get_active_criteria(), normalize_criteria_dict(criteria_dict)))
 	if errors:
 		return errors
+
+	criteria_dict = normalize_criteria_dict(criteria_dict)
 
 	from systemoversikt.models import RiskCriteriaConfig
 

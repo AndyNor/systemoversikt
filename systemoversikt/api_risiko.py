@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Scenario sannsynlighetstyper validated against active criteria slugs (editable in akseptkriterier).
 # 2026-07-07: Member and bruker search labels include virksomhetsforkortelse – disambiguate same-name users.
 # 2026-07-07: Omfang figur/original multipart upload APIs – bytes stored on RiskScopeOmfangFil.
 # 2026-07-02: Participant group search returns first 5 without query; display normalized gruppenavn.
@@ -62,7 +63,6 @@ from systemoversikt.risk_criteria import (
 	parse_konsekvenstyper,
 	parse_sannsynlighetstyper,
 	risk_cell_css_class,
-	SANNSYNLIGHETSTYPE_SLUGS,
 	sannsynlighet_lookup_label,
 	sannsynlighetstype_tag_dicts,
 	sannsynlighetstype_to_storage,
@@ -341,7 +341,7 @@ def _validate_scenario_fields(data, scope, scenario=None):
 		errors.append('sannsynlighetstyper må være en liste.')
 		sannsynlighetstyper_parts = []
 	unknown_sannsynlighetstyper = sorted({
-		p for p in sannsynlighetstyper_parts if p not in SANNSYNLIGHETSTYPE_SLUGS
+		p for p in sannsynlighetstyper_parts if p not in get_active_criteria().sannsynlighetstype_slugs
 	})
 	if unknown_sannsynlighetstyper:
 		errors.append('Ugyldige sannsynlighetstyper: %s' % ', '.join(unknown_sannsynlighetstyper))

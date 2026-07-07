@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Editor context sannsynlighet_keys from editable sannsynlighetstyper; import redirects to rediger.
 # 2026-07-07: Membership prefetch includes profile virksomhet for member display names.
 # 2026-07-07: risiko_scope_rapport + omfang file serve views for godkjent archive report.
 # 2026-07-06: _render_risk_access_denied – sammenstilling context for group-owned access denied pages.
@@ -606,18 +607,17 @@ def risiko_akseptkriterier(request):
 
 def _criteria_editor_context(criteria, form_data=None):
 	edit_data = form_data if form_data is not None else criteria.to_storage_dict()
+	# 2026-07-07: Sannsynlighetskategori-kolonner følger redigerbare sannsynlighetstype-slugs.
+	sannsynlighet_keys = [
+		(item['slug'], item['label'])
+		for item in edit_data.get('sannsynlighetstyper') or criteria.sannsynlighetstyper
+	]
 	return {
 		'criteria': criteria,
 		'edit_data': edit_data,
 		'risk_levels': ('Lav', 'Middels', 'Høy'),
 		'levels_desc': list(range(5, 0, -1)),
-		'sannsynlighet_keys': [
-			('forventning', 'Forventning'),
-			('estimert', 'Estimert sannsynlighet'),
-			('sarbarhet', 'Sårbarhet'),
-			('kapasitet', 'Kapasitet og evne'),
-			('intensjon', 'Intensjon'),
-		],
+		'sannsynlighet_keys': sannsynlighet_keys,
 	}
 
 
@@ -645,38 +645,39 @@ def risiko_akseptkriterier_eksporter(request):
 
 @require_http_methods(['POST'])
 def risiko_akseptkriterier_importer(request):
+	# 2026-07-07: Redirect to editor page after import (export/import UI lives there).
 	# 2026-06-30: Superuser JSON upload – replaces active akseptkriterier after validation.
 	_require_superuser_criteria(request)
 	if not request.POST.get('confirm_import'):
 		messages.error(request, 'Bekreft at du vil erstatte aktive akseptkriterier.')
-		return redirect('risiko_akseptkriterier')
+		return redirect('risiko_akseptkriterier_rediger')
 
 	upload = request.FILES.get('kriteriefil')
 	if not upload:
 		messages.error(request, 'Velg en JSON-fil å laste opp.')
-		return redirect('risiko_akseptkriterier')
+		return redirect('risiko_akseptkriterier_rediger')
 
 	try:
 		raw_text = upload.read().decode('utf-8')
 		raw_dict = json.loads(raw_text)
 	except (UnicodeDecodeError, json.JSONDecodeError) as exc:
 		messages.error(request, 'Ugyldig JSON-fil: %s' % exc)
-		return redirect('risiko_akseptkriterier')
+		return redirect('risiko_akseptkriterier_rediger')
 
 	try:
 		title, criteria_dict = parse_import_payload(raw_dict)
 	except ValueError as exc:
 		messages.error(request, str(exc))
-		return redirect('risiko_akseptkriterier')
+		return redirect('risiko_akseptkriterier_rediger')
 
 	errors = apply_imported_criteria(criteria_dict, request.user, title=title)
 	if errors:
 		for err in errors:
 			messages.error(request, err)
-		return redirect('risiko_akseptkriterier')
+		return redirect('risiko_akseptkriterier_rediger')
 
 	messages.success(request, 'Akseptkriterier er importert. Endringene gjelder alle risikosamlinger.')
-	return redirect('risiko_akseptkriterier')
+	return redirect('risiko_akseptkriterier_rediger')
 
 
 @require_http_methods(['GET', 'POST'])

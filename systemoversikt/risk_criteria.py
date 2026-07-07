@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: Sannsynlighetstyper in CriteriaBundle – editable scenario tags (parity with konsekvenstyper).
 # 2026-06-30: Sannsynlighetstype slugs + parse helpers – fixed five probability dimensions per scenario.
 # 2026-06-30: Global DB-backed CriteriaBundle + get_active_criteria() – editable akseptkriterier.
 # 2026-06-30: Konsekvenstype slugs + parse helpers for scenario tagging.
@@ -183,6 +184,34 @@ LEVELS = (1, 2, 3, 4, 5)
 CRITERIA_CACHE_KEY = 'risk_criteria_active_v1'
 
 
+def _default_sannsynlighetstyper():
+	return [{'slug': slug, 'label': label} for slug, label in SANNSYNLIGHETSTYPE_VALG]
+
+
+def _sannsynlighetstype_slugs_from_data(data):
+	st = data.get('sannsynlighetstyper') if isinstance(data, dict) else None
+	if isinstance(st, list) and len(st) == 5:
+		slugs = []
+		for item in st:
+			if isinstance(item, dict):
+				slug = str(item.get('slug') or '').strip()
+				if slug:
+					slugs.append(slug)
+		if len(slugs) == 5:
+			return slugs
+	return list(SANNSYNLIGHET_KEYS)
+
+
+def normalize_criteria_dict(data):
+	"""Fill missing keys for backward compatibility with older stored/imported criteria."""
+	if not isinstance(data, dict):
+		return data
+	normalized = dict(data)
+	if not normalized.get('sannsynlighetstyper'):
+		normalized['sannsynlighetstyper'] = _default_sannsynlighetstyper()
+	return normalized
+
+
 def _int_key_dict(raw, label):
 	if not isinstance(raw, dict):
 		raise ValueError('%s må være et objekt.' % label)
@@ -214,6 +243,9 @@ def build_default_criteria_dict():
 		},
 		'konsekvenstyper': [
 			{'slug': slug, 'label': label} for slug, label in KONSEKVENSTYPE_VALG
+		],
+		'sannsynlighetstyper': [
+			{'slug': slug, 'label': label} for slug, label in SANNSYNLIGHETSTYPE_VALG
 		],
 	}
 
@@ -285,12 +317,13 @@ def validate_criteria(data):
 			errors.append('Sannsynlighetsbeskrivelser mangler.')
 		else:
 			sb_int = _int_key_dict(sb, 'Sannsynlighetsbeskrivelser')
+			sannsynlighet_keys = _sannsynlighetstype_slugs_from_data(data)
 			for level in LEVELS:
 				desc = sb_int.get(level)
 				if not isinstance(desc, dict):
 					errors.append('Sannsynlighetsbeskrivelser nivå %d mangler.' % level)
 					continue
-				for key in SANNSYNLIGHET_KEYS:
+				for key in sannsynlighet_keys:
 					if not str(desc.get(key) or '').strip():
 						errors.append('Sannsynlighet nivå %d: %s kan ikke være tom.' % (level, key))
 
@@ -312,6 +345,25 @@ def validate_criteria(data):
 				slugs.append(slug)
 			if len(set(slugs)) != len(slugs):
 				errors.append('Konsekvenstype-slugs må være unike.')
+
+		st = data.get('sannsynlighetstyper')
+		if not isinstance(st, list) or len(st) != 5:
+			errors.append('Sannsynlighetstyper må være en liste med 5 elementer.')
+		else:
+			slugs = []
+			for index, item in enumerate(st):
+				if not isinstance(item, dict):
+					errors.append('Sannsynlighetstype %d er ugyldig.' % (index + 1))
+					continue
+				slug = str(item.get('slug') or '').strip()
+				label = str(item.get('label') or '').strip()
+				if not slug or not re.match(r'^[a-z][a-z0-9_]*$', slug):
+					errors.append('Sannsynlighetstype %d har ugyldig slug.' % (index + 1))
+				if not label:
+					errors.append('Sannsynlighetstype %d mangler etikett.' % (index + 1))
+				slugs.append(slug)
+			if len(set(slugs)) != len(slugs):
+				errors.append('Sannsynlighetstype-slugs må være unike.')
 	except ValueError as exc:
 		errors.append(str(exc))
 
@@ -343,6 +395,10 @@ class CriteriaBundle:
 		self.konsekvenstype_slugs = {item['slug'] for item in self.konsekvenstyper}
 		self.konsekvenstype_labels = {item['slug']: item['label'] for item in self.konsekvenstyper}
 		self.konsekvenstype_order = [item['slug'] for item in self.konsekvenstyper]
+		self.sannsynlighetstyper = list(data['sannsynlighetstyper'])
+		self.sannsynlighetstype_slugs = {item['slug'] for item in self.sannsynlighetstyper}
+		self.sannsynlighetstype_labels = {item['slug']: item['label'] for item in self.sannsynlighetstyper}
+		self.sannsynlighetstype_order = [item['slug'] for item in self.sannsynlighetstyper]
 		self._label_aliases = self._build_label_aliases()
 
 	@classmethod
@@ -351,7 +407,7 @@ class CriteriaBundle:
 
 	@classmethod
 	def from_dict(cls, data):
-		return cls(data)
+		return cls(normalize_criteria_dict(data))
 
 	def to_storage_dict(self):
 		"""JSON-serializable dict with string keys."""
@@ -371,6 +427,9 @@ class CriteriaBundle:
 			},
 			'konsekvenstyper': [
 				{'slug': item['slug'], 'label': item['label']} for item in self.konsekvenstyper
+			],
+			'sannsynlighetstyper': [
+				{'slug': item['slug'], 'label': item['label']} for item in self.sannsynlighetstyper
 			],
 		}
 
@@ -464,6 +523,34 @@ class CriteriaBundle:
 			for slug in self.parse_konsekvenstyper(raw)
 		]
 
+	def parse_sannsynlighetstyper(self, raw):
+		if raw is None:
+			return []
+		if isinstance(raw, (list, tuple)):
+			parts = [str(item).strip() for item in raw if str(item).strip()]
+		elif isinstance(raw, str):
+			parts = [part.strip() for part in raw.split(',') if part.strip()]
+		else:
+			parts = [str(raw).strip()] if str(raw).strip() else []
+		seen = set()
+		result = []
+		for slug in parts:
+			if slug in self.sannsynlighetstype_slugs and slug not in seen:
+				seen.add(slug)
+				result.append(slug)
+		order = {slug: index for index, slug in enumerate(self.sannsynlighetstype_order)}
+		result.sort(key=lambda slug: order.get(slug, 99))
+		return result
+
+	def sannsynlighetstype_to_storage(self, raw):
+		return ','.join(self.parse_sannsynlighetstyper(raw))
+
+	def sannsynlighetstype_tag_dicts(self, raw):
+		return [
+			{'slug': slug, 'label': self.sannsynlighetstype_labels[slug]}
+			for slug in self.parse_sannsynlighetstyper(raw)
+		]
+
 	def build_akseptkriterier_context(self):
 		konsekvens_rows = []
 		for level in range(5, 0, -1):
@@ -482,7 +569,14 @@ class CriteriaBundle:
 				'level': level,
 				'label': self.sannsynlighet_labels[level],
 				'level_css': level_cell_css_class(level),
-				'beskrivelse': self.sannsynlighet_beskrivelser[level],
+				'beskrivelser': [
+					{
+						'slug': item['slug'],
+						'label': item['label'],
+						'tekst': self.sannsynlighet_beskrivelser[level].get(item['slug'], ''),
+					}
+					for item in self.sannsynlighetstyper
+				],
 			})
 		return {
 			'konsekvens_rows': konsekvens_rows,
@@ -541,7 +635,7 @@ class CriteriaBundle:
 				{'value': item['slug'], 'label': item['label']} for item in self.konsekvenstyper
 			],
 			'sannsynlighetstyper': [
-				{'value': slug, 'label': label} for slug, label in SANNSYNLIGHETSTYPE_VALG
+				{'value': item['slug'], 'label': item['label']} for item in self.sannsynlighetstyper
 			],
 		}
 
@@ -591,6 +685,7 @@ def criteria_from_post(post):
 		'konsekvens_beskrivelser': {},
 		'sannsynlighet_beskrivelser': {},
 		'konsekvenstyper': [],
+		'sannsynlighetstyper': [],
 	}
 	for s in LEVELS:
 		row = {}
@@ -607,10 +702,15 @@ def criteria_from_post(post):
 			(post.get('konsekvens_besk_%d_%d' % (level, dim)) or '').strip()
 			for dim in range(5)
 		]
+	for index in range(5):
+		data['sannsynlighetstyper'].append({
+			'slug': (post.get('sannsynlighetstype_slug_%d' % index) or '').strip(),
+			'label': (post.get('sannsynlighetstype_label_%d' % index) or '').strip(),
+		})
 	for level in LEVELS:
 		data['sannsynlighet_beskrivelser'][str(level)] = {
-			key: (post.get('sannsynlighet_%d_%s' % (level, key)) or '').strip()
-			for key in SANNSYNLIGHET_KEYS
+			item['slug']: (post.get('sannsynlighet_%d_%s' % (level, item['slug'])) or '').strip()
+			for item in data['sannsynlighetstyper']
 		}
 	for index in range(5):
 		data['konsekvenstyper'].append({
@@ -621,26 +721,40 @@ def criteria_from_post(post):
 
 
 def validate_slug_changes(old_bundle, new_data):
-	"""Block removal/rename of konsekvenstype slugs still referenced in scenarios."""
+	"""Block removal/rename of konsekvenstype/sannsynlighetstype slugs still referenced in scenarios."""
 	errors = []
 	try:
 		new_bundle = CriteriaBundle.from_dict(new_data)
 	except ValueError as exc:
 		return [str(exc)]
-	old_slugs = old_bundle.konsekvenstype_slugs
-	new_slugs = new_bundle.konsekvenstype_slugs
-	removed = old_slugs - new_slugs
-	if not removed:
-		return errors
 	from systemoversikt.models import RiskScenario
-	used = set()
-	for raw in RiskScenario.objects.exclude(konsekvenstyper='').values_list('konsekvenstyper', flat=True):
-		used.update(old_bundle.parse_konsekvenstyper(raw))
-	blocked = sorted(removed & used)
-	if blocked:
-		errors.append(
-			'Kan ikke fjerne konsekvenstyper som er i bruk: %s' % ', '.join(blocked)
-		)
+
+	def _blocked_removed(old_slugs, new_slugs, parse_fn, storage_field, label):
+		removed = old_slugs - new_slugs
+		if not removed:
+			return []
+		used = set()
+		for raw in RiskScenario.objects.exclude(**{storage_field: ''}).values_list(storage_field, flat=True):
+			used.update(parse_fn(raw))
+		blocked = sorted(removed & used)
+		if blocked:
+			return ['Kan ikke fjerne %s som er i bruk: %s' % (label, ', '.join(blocked))]
+		return []
+
+	errors.extend(_blocked_removed(
+		old_bundle.konsekvenstype_slugs,
+		new_bundle.konsekvenstype_slugs,
+		old_bundle.parse_konsekvenstyper,
+		'konsekvenstyper',
+		'konsekvenstyper',
+	))
+	errors.extend(_blocked_removed(
+		old_bundle.sannsynlighetstype_slugs,
+		new_bundle.sannsynlighetstype_slugs,
+		old_bundle.parse_sannsynlighetstyper,
+		'sannsynlighetstyper',
+		'sannsynlighetstyper',
+	))
 	return errors
 
 
@@ -756,34 +870,15 @@ def konsekvenstype_tag_dicts(raw):
 
 
 def parse_sannsynlighetstyper(raw):
-	if raw is None:
-		return []
-	if isinstance(raw, (list, tuple)):
-		parts = [str(item).strip() for item in raw if str(item).strip()]
-	elif isinstance(raw, str):
-		parts = [part.strip() for part in raw.split(',') if part.strip()]
-	else:
-		parts = [str(raw).strip()] if str(raw).strip() else []
-	seen = set()
-	result = []
-	for slug in parts:
-		if slug in SANNSYNLIGHETSTYPE_SLUGS and slug not in seen:
-			seen.add(slug)
-			result.append(slug)
-	order = {slug: index for index, slug in enumerate(SANNSYNLIGHETSTYPE_ORDER)}
-	result.sort(key=lambda slug: order.get(slug, 99))
-	return result
+	return get_active_criteria().parse_sannsynlighetstyper(raw)
 
 
 def sannsynlighetstype_to_storage(raw):
-	return ','.join(parse_sannsynlighetstyper(raw))
+	return get_active_criteria().sannsynlighetstype_to_storage(raw)
 
 
 def sannsynlighetstype_tag_dicts(raw):
-	return [
-		{'slug': slug, 'label': SANNSYNLIGHETSTYPE_LABELS[slug]}
-		for slug in parse_sannsynlighetstyper(raw)
-	]
+	return get_active_criteria().sannsynlighetstype_tag_dicts(raw)
 
 
 def effective_residual_levels(scenario):

@@ -1,4 +1,6 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-07: JSON export/import at top of editor – export left, import right. #}
+{# 2026-07-07: JSON export/import on editor page (moved from read-only akseptkriterier view). #}
 {# 2026-06-30: Superuser editor for global akseptkriterier. #}
 
 {% block overskrift %}
@@ -21,8 +23,32 @@
 </p>
 
 <p class="alert alert-warning">
-	Endringer gjelder <strong>alle</strong> risikosamlinger. Konsekvenstype-slugs som er i bruk kan ikke fjernes.
+	Endringer gjelder <strong>alle</strong> risikosamlinger. Konsekvenstype- og sannsynlighetstype-slugs som er i bruk kan ikke fjernes.
 </p>
+
+<div class="row mb-4">
+	<div class="col-md-4">
+		<h5 class="mb-2">JSON-eksport</h5>
+		<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_akseptkriterier_eksporter' %}">Eksporter JSON</a>
+	</div>
+	<div class="col-md-8">
+		<h5 class="mb-2">JSON-import</h5>
+		<form method="post" action="{% url 'risiko_akseptkriterier_importer' %}" enctype="multipart/form-data">
+			{% csrf_token %}
+			<div class="form-group mb-2">
+				<label for="kriteriefil">Velg fil</label>
+				<input type="file" name="kriteriefil" id="kriteriefil" class="form-control-file" accept=".json,application/json" required>
+			</div>
+			<div class="form-check mb-2">
+				<input class="form-check-input" type="checkbox" name="confirm_import" id="confirm_import" value="1" required>
+				<label class="form-check-label" for="confirm_import">
+					Jeg forstår at dette erstatter aktive akseptkriterier for alle risikosamlinger
+				</label>
+			</div>
+			<button type="submit" class="btn btn-warning btn-sm">Importer</button>
+		</form>
+	</div>
+</div>
 
 <form method="post" action="">
 {% csrf_token %}
@@ -114,6 +140,30 @@
 			name="konsekvens_besk_{{ level }}_{{ dim }}"></textarea>
 	</td>
 	{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<h5 class="mt-4">Sannsynlighetstyper (scenario-tagger)</h5>
+<table class="table table-sm table-bordered">
+<thead>
+<tr>
+	<th>Slug</th>
+	<th>Etikett</th>
+</tr>
+</thead>
+<tbody>
+{% for index in "01234" %}
+<tr>
+	<td>
+		<input class="form-control form-control-sm" type="text"
+			name="sannsynlighetstype_slug_{{ index }}" value="">
+	</td>
+	<td>
+		<input class="form-control form-control-sm" type="text"
+			name="sannsynlighetstype_label_{{ index }}" value="">
+	</td>
 </tr>
 {% endfor %}
 </tbody>
@@ -221,6 +271,12 @@
 		Object.keys(desc).forEach(function (key) {
 			setVal('sannsynlighet_' + level + '_' + key, desc[key]);
 		});
+	});
+
+	var st = data.sannsynlighetstyper || [];
+	st.forEach(function (item, index) {
+		setVal('sannsynlighetstype_slug_' + index, item.slug);
+		setVal('sannsynlighetstype_label_' + index, item.label);
 	});
 
 	var kt = data.konsekvenstyper || [];

@@ -34,22 +34,18 @@
 <thead>
 <tr>
 	<th>Nivå</th>
-	<th>Forventning</th>
-	<th>Estimert sannsynlighet</th>
-	<th>Sårbarhet</th>
-	<th>Kapasitet og evne</th>
-	<th>Intensjon</th>
+	{% for col in sannsynlighet_rows.0.beskrivelser %}
+	<th>{{ col.label }}</th>
+	{% endfor %}
 </tr>
 </thead>
 <tbody>
 {% for row in sannsynlighet_rows %}
 <tr class="{{ row.level_css }}">
 	<th>{{ row.label }} ({{ row.level }})</th>
-	<td>{{ row.beskrivelse.forventning }}</td>
-	<td>{{ row.beskrivelse.estimert }}</td>
-	<td>{{ row.beskrivelse.sarbarhet }}</td>
-	<td>{{ row.beskrivelse.kapasitet }}</td>
-	<td>{{ row.beskrivelse.intensjon }}</td>
+	{% for col in row.beskrivelser %}
+	<td>{{ col.tekst }}</td>
+	{% endfor %}
 </tr>
 {% endfor %}
 </tbody>

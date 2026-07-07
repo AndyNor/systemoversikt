@@ -1,5 +1,5 @@
 {% extends "sikkerhet_index.html" %}
-{# 2026-06-30: Superuser export/import buttons for moving akseptkriterier between environments. #}
+{# 2026-07-07: Export/import moved to rediger page – read-only view links to editor only. #}
 {# 2026-06-30: Global read-only akseptkriterier – shared by all risikosamlinger. #}
 
 {% block overskrift %}
@@ -34,28 +34,8 @@
 	{% if can_edit_criteria %}
 	&nbsp;|&nbsp;
 	<a href="{% url 'risiko_akseptkriterier_rediger' %}">Rediger akseptkriterier</a>
-	&nbsp;|&nbsp;
-	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_akseptkriterier_eksporter' %}">Eksporter JSON</a>
 	{% endif %}
 </p>
-
-{% if can_edit_criteria %}
-<p class="mb-3">
-	<form class="form-inline" method="post" action="{% url 'risiko_akseptkriterier_importer' %}" enctype="multipart/form-data">
-		{% csrf_token %}
-		<label class="mr-2" for="kriteriefil">Importer JSON:</label>
-		<input type="file" name="kriteriefil" id="kriteriefil" class="form-control-file mr-2" accept=".json,application/json" required>
-		<div class="form-check mr-2">
-			<input class="form-check-input" type="checkbox" name="confirm_import" id="confirm_import" value="1" required>
-			<label class="form-check-label" for="confirm_import">
-				Jeg forstår at dette erstatter aktive akseptkriterier for alle risikosamlinger
-			</label>
-		</div>
-		<button type="submit" class="btn btn-warning btn-sm">Importer</button>
-	</form>
-	<small class="text-muted d-block mt-1">Eksporter fra test, importer på produksjon.</small>
-</p>
-{% endif %}
 
 <p class="text-muted">
 	Disse kriteriene gjelder for alle risikosamlinger. Endringer i risikomatrisen påvirker klassifisering (Lav/Middels/Høy) for alle scenarioer.
