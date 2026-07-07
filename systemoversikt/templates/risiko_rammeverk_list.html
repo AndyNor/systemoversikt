@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-07-07: Superuser create-mal-from-file on rammeverk list. #}
 {# 2026-07-07: Outline button for back navigation. #}
 {# 2026-07-06: Removed excel class – no table export on rammeverk list. #}
 {# 2026-07-06: Templates (maler) + group-owned sammenstillinger list. #}
@@ -54,6 +55,32 @@
 		{% endfor %}
 	</tbody>
 </table>
+
+{% if can_edit_template %}
+<div class="mb-4" style="background-color: #f8f9fa; padding: 1rem 1.25rem; border-radius: 4px;">
+	<h5 class="mt-0">Opprett mal fra fil</h5>
+	<p class="small text-muted mb-2">Last opp en JSON-fil eksportert fra et annet miljø. Slug i filen brukes med mindre du overstyrer den nedenfor.</p>
+	<form method="post" action="{% url 'risiko_mal_opprett_fra_fil' %}" enctype="multipart/form-data">
+		{% csrf_token %}
+		<div class="form-group mb-2">
+			<label for="mal-create-fil">JSON-fil</label>
+			<input type="file" name="malfil" id="mal-create-fil" class="form-control-file" accept=".json,application/json" required>
+		</div>
+		<div class="form-group mb-2">
+			<label for="mal-create-slug">Slug (valgfri)</label>
+			<input type="text" name="slug" id="mal-create-slug" class="form-control form-control-sm" maxlength="80" pattern="[-a-z0-9]+" placeholder="f.eks. it-plattform">
+			<small class="form-text text-muted">Bare små bokstaver, tall og bindestrek.</small>
+		</div>
+		<div class="form-check mb-2">
+			<input class="form-check-input" type="checkbox" name="confirm_create" id="mal-create-confirm" value="1" required>
+			<label class="form-check-label" for="mal-create-confirm">
+				Jeg vil opprette en ny mal fra filen
+			</label>
+		</div>
+		<button type="submit" class="btn btn-success btn-sm">Opprett mal</button>
+	</form>
+</div>
+{% endif %}
 
 <h5 class="mt-4">Maler</h5>
 <table class="table table-sm table-striped">

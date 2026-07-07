@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# 2026-07-07: Mal JSON export/import – superuser-only transfer between environments.
 # 2026-07-06: Kartlegging view passes risk matrix for client-side label fallback.
 # 2026-07-06: Enrich rollup with subcategory scenario/tiltak breakdown for detail view.
 # 2026-07-06: Category-level matrix on sammenstilling detail – nåværende risiko only.
@@ -13,10 +14,12 @@
 
 import json
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
-from django.shortcuts import render
+from django.http import Http404, HttpResponse
+from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.views.decorators.http import require_GET, require_http_methods
 
 from systemoversikt.risk_criteria import get_active_criteria
 from systemoversikt.risk_framework import (
@@ -24,6 +27,12 @@ from systemoversikt.risk_framework import (
 	build_sammenstilling_category_matrix,
 	enrich_rollup_tree_detail,
 	get_active_framework,
+)
+from systemoversikt.risk_framework_transfer import (
+	apply_mal_import_to_framework,
+	build_mal_export_payload,
+	create_mal_from_import,
+	parse_mal_import_payload,
 )
 from systemoversikt.risk_sammenstilling import (
 	active_templates_queryset,
@@ -34,6 +43,19 @@ from systemoversikt.risk_sammenstilling import (
 	user_can_view_sammenstilling,
 )
 from systemoversikt.views_risiko import _render_risk_access_denied
+
+
+def _require_template_edit(user):
+	if not user_can_edit_template(user):
+		raise Http404
+
+
+def _read_json_upload(upload):
+	try:
+		raw_text = upload.read().decode('utf-8')
+		return json.loads(raw_text)
+	except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+		raise ValueError('Ugyldig JSON-fil: %s' % exc)
 
 
 def _mal_api_urls(slug):
@@ -81,6 +103,100 @@ def risiko_rammeverk_list(request):
 		'can_edit_template': user_can_edit_template(request.user),
 		'can_create_sammenstilling': owner_groups.exists(),
 	})
+
+
+@login_required
+@require_GET
+def risiko_mal_eksporter(request, slug):
+	# 2026-07-07: Superuser JSON download for moving mal taxonomy between environments.
+	_require_template_edit(request.user)
+	framework = get_active_framework(slug)
+	if framework is None:
+		raise Http404('Malen finnes ikke eller er deaktivert.')
+	payload = build_mal_export_payload(framework, request.user)
+	filename = 'risiko-mal-%s.json' % framework.slug
+	response = HttpResponse(
+		json.dumps(payload, ensure_ascii=False, indent=2),
+		content_type='application/json; charset=utf-8',
+	)
+	response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+	return response
+
+
+@login_required
+@require_http_methods(['POST'])
+def risiko_mal_importer(request, slug):
+	# 2026-07-07: Superuser JSON upload – replaces mal taxonomy when no kartlegging data exists.
+	_require_template_edit(request.user)
+	framework = get_active_framework(slug)
+	if framework is None:
+		raise Http404('Malen finnes ikke eller er deaktivert.')
+	if not request.POST.get('confirm_import'):
+		messages.error(request, 'Bekreft at du vil erstatte taksonomien for denne malen.')
+		return redirect('risiko_mal_rediger', slug=slug)
+
+	upload = request.FILES.get('malfil')
+	if not upload:
+		messages.error(request, 'Velg en JSON-fil å laste opp.')
+		return redirect('risiko_mal_rediger', slug=slug)
+
+	try:
+		raw_dict = _read_json_upload(upload)
+	except ValueError as exc:
+		messages.error(request, str(exc))
+		return redirect('risiko_mal_rediger', slug=slug)
+
+	try:
+		framework_meta, taxonomy = parse_mal_import_payload(raw_dict)
+	except ValueError as exc:
+		messages.error(request, str(exc))
+		return redirect('risiko_mal_rediger', slug=slug)
+
+	errors = apply_mal_import_to_framework(framework, framework_meta, taxonomy)
+	if errors:
+		for err in errors:
+			messages.error(request, err)
+		return redirect('risiko_mal_rediger', slug=slug)
+
+	messages.success(request, 'Malen «%s» er oppdatert fra fil.' % framework.title)
+	return redirect('risiko_mal_rediger', slug=slug)
+
+
+@login_required
+@require_http_methods(['POST'])
+def risiko_mal_opprett_fra_fil(request):
+	# 2026-07-07: Superuser creates a new mal from exported JSON file.
+	_require_template_edit(request.user)
+	if not request.POST.get('confirm_create'):
+		messages.error(request, 'Bekreft at du vil opprette en ny mal fra filen.')
+		return redirect('risiko_rammeverk_list')
+
+	upload = request.FILES.get('malfil')
+	if not upload:
+		messages.error(request, 'Velg en JSON-fil å laste opp.')
+		return redirect('risiko_rammeverk_list')
+
+	try:
+		raw_dict = _read_json_upload(upload)
+	except ValueError as exc:
+		messages.error(request, str(exc))
+		return redirect('risiko_rammeverk_list')
+
+	try:
+		framework_meta, taxonomy = parse_mal_import_payload(raw_dict)
+	except ValueError as exc:
+		messages.error(request, str(exc))
+		return redirect('risiko_rammeverk_list')
+
+	slug_override = (request.POST.get('slug') or '').strip() or None
+	framework, errors = create_mal_from_import(framework_meta, taxonomy, slug_override=slug_override)
+	if errors:
+		for err in errors:
+			messages.error(request, err)
+		return redirect('risiko_rammeverk_list')
+
+	messages.success(request, 'Ny mal «%s» er opprettet.' % framework.title)
+	return redirect('risiko_mal_rediger', slug=framework.slug)
 
 
 @login_required

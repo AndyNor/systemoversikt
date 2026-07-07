@@ -11,6 +11,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 # 2026-06-30: Membership and virksomhet API routes for risikosamling access control.
 # 2026-06-24: Security risk module URLs under /sikkerhet/risiko/.
 # 2026-07-06: Sammenstilling URLs – group-owned instances on shared templates.
+# 2026-07-07: Mal JSON export/import URLs – superuser transfer between environments.
 # 2026-07-06: Risk framework aggregation URLs under /sikkerhet/risiko/rammeverk/.
 # 2026-06-24: CA rules detail URL – /rules/<pk>/ for single Azure policy; list stays at /rules/.
 # 2026-06-23: BloodHound upload API and status page.
@@ -140,6 +141,9 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/akseptkriterier/rediger/$', views_risiko.risiko_akseptkriterier_rediger, name='risiko_akseptkriterier_rediger'),
 	re_path(r'^sikkerhet/risiko/akseptkriterier/$', views_risiko.risiko_akseptkriterier, name='risiko_akseptkriterier'),
 	re_path(r'^sikkerhet/risiko/rammeverk/$', views_risiko_rammeverk.risiko_rammeverk_list, name='risiko_rammeverk_list'),
+	re_path(r'^sikkerhet/risiko/rammeverk/mal/ny-fra-fil/$', views_risiko_rammeverk.risiko_mal_opprett_fra_fil, name='risiko_mal_opprett_fra_fil'),
+	re_path(r'^sikkerhet/risiko/rammeverk/mal/(?P<slug>[-a-z0-9]+)/eksporter/$', views_risiko_rammeverk.risiko_mal_eksporter, name='risiko_mal_eksporter'),
+	re_path(r'^sikkerhet/risiko/rammeverk/mal/(?P<slug>[-a-z0-9]+)/importer/$', views_risiko_rammeverk.risiko_mal_importer, name='risiko_mal_importer'),
 	re_path(r'^sikkerhet/risiko/rammeverk/mal/(?P<slug>[-a-z0-9]+)/rediger/$', views_risiko_rammeverk.risiko_mal_rediger, name='risiko_mal_rediger'),
 	re_path(r'^sikkerhet/risiko/rammeverk/mal/(?P<slug>[-a-z0-9]+)/api/taxonomy/$', api_risiko_rammeverk.api_risiko_mal_taxonomy, name='api_risiko_mal_taxonomy'),
 	re_path(r'^sikkerhet/risiko/rammeverk/mal/(?P<slug>[-a-z0-9]+)/api/nodes/active/$', api_risiko_rammeverk.api_risiko_mal_active_nodes, name='api_risiko_mal_active_nodes'),
