@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: alle_nettverk – only parse / as CIDR when term is valid IPv4/prefix (not text like DMZ Ekstern/Internett).
+# 2026-07-07: alle_nettverk – top_by_ip_devices stats use .values() so dict access works.
 # 2026-07-07: alle_nettverk – pagination, stats (lokasjon, IP-enheter, sone) and exclude filter.
 # 2026-07-07: alle_dns – exclude box for IP addresses and alias mot (CNAME targets).
 # 2026-07-07: alle_dns – top 20 alias mot only; IP and TTL remain top 10.
@@ -4200,6 +4202,31 @@ def nettverk_detaljer(request, pk):
 NETTVERK_EXCLUDE_MAX_TERMS = 100
 
 
+def _network_try_parse_cidr(term):
+	"""Return (ip_address, prefix_len) when term is IPv4/CIDR, else None."""
+	term = (term or '').strip()
+	if not term or '/' not in term:
+		return None
+	ip_part, mask_part = term.split('/', 1)
+	ip_part = ip_part.strip()
+	mask_part = mask_part.strip()
+	if not ip_part or not mask_part:
+		return None
+	try:
+		ip = ipaddress.ip_address(ip_part)
+		if not isinstance(ip, ipaddress.IPv4Address):
+			return None
+	except ValueError:
+		return None
+	try:
+		prefix = int(mask_part)
+	except ValueError:
+		return None
+	if not (0 <= prefix <= 32):
+		return None
+	return str(ip), prefix
+
+
 def _network_parse_exclude_terms(exclude_raw):
 	"""Split exclude box input into unique network search terms."""
 	if not exclude_raw or not exclude_raw.strip():
@@ -4234,11 +4261,12 @@ def _network_exclude_q_for_term(term):
 		Q(location_name__icontains=term) |
 		Q(netcategory__icontains=term)
 	)
-	if '/' in term:
-		ip_part, mask_part = term.split('/', 1)
-		term_q |= Q(ip_address=ip_part.strip(), subnet_mask=mask_part.strip())
+	parsed_cidr = _network_try_parse_cidr(term)
+	if parsed_cidr:
+		ip_str, prefix = parsed_cidr
+		term_q |= Q(ip_address=ip_str, subnet_mask=prefix)
 	try:
-		search_ip = ipaddress.ip_address(term.split('/')[0])
+		search_ip = ipaddress.ip_address(parsed_cidr[0] if parsed_cidr else term)
 		term_q |= Q(ip_address=str(search_ip))
 	except ValueError:
 		pass
@@ -4301,6 +4329,7 @@ def _network_overview_stats(exclude_terms=None):
 		),
 		'top_by_ip_devices': list(
 			base.annotate(ip_device_count=Count('network_ip_address'))
+			.values('ip_address', 'subnet_mask', 'ip_device_count')
 			.order_by('-ip_device_count', 'ip_address')[:10]
 		),
 		'zones': list(
@@ -4319,7 +4348,8 @@ def _network_search_queryset(search_term):
 	if not term or term == '__ALL__':
 		return NetworkContainer.objects.all()
 
-	term_ip = term.split('/')[0]
+	parsed_cidr = _network_try_parse_cidr(term)
+	term_ip = parsed_cidr[0] if parsed_cidr else term
 	text_filters = (
 		Q(ip_address__icontains=term_ip) |
 		Q(orgname__icontains=term) |
@@ -4332,9 +4362,9 @@ def _network_search_queryset(search_term):
 		Q(network_zone__icontains=term) |
 		Q(vlanid__icontains=term)
 	)
-	if '/' in term:
-		ip_part, mask_part = term.split('/', 1)
-		text_filters |= Q(ip_address=ip_part.strip(), subnet_mask=mask_part.strip())
+	if parsed_cidr:
+		ip_str, prefix = parsed_cidr
+		text_filters |= Q(ip_address=ip_str, subnet_mask=prefix)
 
 	qs = NetworkContainer.objects.filter(text_filters)
 	if qs.exists() or len(term) <= 1:
