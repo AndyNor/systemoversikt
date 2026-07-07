@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-07-07: DNS stale cleanup scoped to zone import sources only – Infoblox A/PTR owned by vlan updater.
 from django.utils import timezone
 from datetime import timedelta
 from datetime import datetime
@@ -195,11 +197,14 @@ class Command(BaseCommand):
 							source=filename_str,
 						)
 
-				# slette alle innslag som ikke ble oppdatert
+				# slette innslag som ikke ble oppdatert (kun zone-import kilder – ikke Infoblox)
 				from django.utils import timezone
 				from datetime import timedelta
 				tidligere = timezone.now() - timedelta(hours=IMPORT_CLEANUP_MIN_AGE_HOURS)
-				gamle_dnsinnslag = DNSrecord.objects.filter(sist_oppdatert__lte=tidligere)
+				gamle_dnsinnslag = DNSrecord.objects.filter(
+					sist_oppdatert__lte=tidligere,
+					source__in=["Ekstern DNS", "Intern DNS"],
+				)
 				antall_slettet = len(gamle_dnsinnslag)
 				for entry in gamle_dnsinnslag:
 					entry.delete()

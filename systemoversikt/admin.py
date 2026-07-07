@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: InfobloxHost admin; NetworkContainer vlan_name/location_name/ip_helper in list/search.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup admin classes.
 # 2026-07-02: virksomhet_read_only on group admin; participant_groups on RiskScope admin.
 # 2026-06-30: RiskCriteriaConfig oppdatert_av autocomplete – avoid loading all users in admin dropdown.
@@ -263,9 +264,16 @@ class VirtualIPPoolAdmin(admin.ModelAdmin):
 
 @admin.register(NetworkContainer)
 class NetworkContainerAdmin(admin.ModelAdmin):
-	list_display = ('ip_address', 'subnet_mask', 'sist_oppdatert', 'disabled', 'network_zone', 'network_zone_description', 'comment', 'locationid', 'orgname', 'vlanid', 'vrfname', 'netcategory')
-	search_fields = ('ip_address', 'comment', 'orgname', 'locationid', )
+	list_display = ('ip_address', 'subnet_mask', 'sist_oppdatert', 'disabled', 'network_zone', 'network_zone_description', 'comment', 'locationid', 'location_name', 'orgname', 'vlanid', 'vlan_name', 'vrfname', 'netcategory', 'ip_helper')
+	search_fields = ('ip_address', 'comment', 'orgname', 'locationid', 'vlan_name', 'location_name', )
 	list_filter = ('disabled', 'netcategory', 'network_zone',)
+
+
+@admin.register(InfobloxHost)
+class InfobloxHostAdmin(admin.ModelAdmin):
+	list_display = ('network_ip', 'record_type', 'fqdn', 'mac_address', 'orgname', 'locationid', 'disabled', 'sist_oppdatert')
+	search_fields = ('fqdn', 'mac_address', 'network_ip__ip_address', 'orgname', 'comment')
+	list_filter = ('record_type', 'disabled',)
 
 
 @admin.register(NetworkIPAddress)

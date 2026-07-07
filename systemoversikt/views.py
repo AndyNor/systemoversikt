@@ -3908,6 +3908,7 @@ def nettverk_detaljer(request, pk):
 
 
 def alle_nettverk(request):
+	# 2026-07-07: Search vlan_name, location_name, netcategory – extra Infoblox EA fields.
 	#Vise alle nettverk
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -3919,7 +3920,10 @@ def alle_nettverk(request):
 				Q(orgname__icontains=search_term) |
 				Q(comment__icontains=search_term) |
 				Q(vrfname__icontains=search_term) |
-				Q(locationid__icontains=search_term)
+				Q(locationid__icontains=search_term) |
+				Q(vlan_name__icontains=search_term) |
+				Q(location_name__icontains=search_term) |
+				Q(netcategory__icontains=search_term)
 			)
 
 	search_term_raw = request.GET.get('search_term', '')
@@ -9891,6 +9895,7 @@ def _extract_ipv4_cidr_tokens(text):
 
 def alle_ip(request):
 	# 2026-07-07: Include /16 VLANs in host-IP containment lookup (threshold lowered from /17 to /16).
+	# 2026-07-07: Prefetch infoblox_hosts for Infoblox host/fixed metadata on IP lookup.
 	# Søke opp IPv4-adresser mot CMDB (host-IP, DNS-koblinger i CMDB) og VLAN-/nettverksdata.
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -9988,6 +9993,7 @@ def alle_ip(request):
 							'vlan',
 							'viper',
 							'vip_pools',
+							'infoblox_hosts',
 						)
 					)
 					matched_host_norms = {str(h.ip_address) for h in host_matches}

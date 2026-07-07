@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-07: InfobloxHost + NetworkContainer vlan_name/location_name/ip_helper – Infoblox IP search enrichment.
 # 2026-07-07: RiskScopeOmfangFil – scope figure/original bytes in DB for archive-friendly rapport.
 # 2026-07-06: RiskSammenstilling + group-owned links/assessments – templates independent of virksomhet.
 # 2026-07-06: RiskFramework.virksomhet + M2M on RiskVirksomhetGroup – reuse virksomhet tilgangsgrupper for rammeverk.
@@ -3130,6 +3131,21 @@ class NetworkContainer(models.Model):
 			null=True,
 			verbose_name="Nettverkssonebeskrivelse",
 			)
+	vlan_name = models.CharField(
+			max_length=200,
+			null=True,
+			verbose_name="VLAN-navn",
+			)
+	location_name = models.CharField(
+			max_length=200,
+			null=True,
+			verbose_name="Lokasjon",
+			)
+	ip_helper = models.CharField(
+			max_length=200,
+			null=True,
+			verbose_name="IP-helper",
+			)
 
 	def __str__(self):
 		return u'%s/%s' % (self.ip_address, self.subnet_mask)
@@ -3138,6 +3154,92 @@ class NetworkContainer(models.Model):
 		unique_together = ("ip_address", "subnet_mask")
 		verbose_name_plural = "CMDB: VLAN"
 		verbose_name = "network container"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+# Infoblox host/fixed-address registrations (imported from infoblox.csv via sharepoint_vlan_updater).
+class InfobloxHost(models.Model):
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	network_ip = models.ForeignKey(
+			to='NetworkIPAddress',
+			on_delete=models.CASCADE,
+			related_name='infoblox_hosts',
+			verbose_name="IP-adresse",
+			)
+	record_type = models.CharField(
+			max_length=50,
+			verbose_name="Infoblox record type",
+			)
+	fqdn = models.CharField(
+			max_length=500,
+			blank=True,
+			default='',
+			verbose_name="FQDN / navn",
+			)
+	mac_address = models.CharField(
+			max_length=50,
+			null=True,
+			blank=True,
+			verbose_name="MAC-adresse",
+			)
+	comment = models.CharField(
+			max_length=500,
+			null=True,
+			blank=True,
+			verbose_name="Kommentar",
+			)
+	disabled = models.BooleanField(
+			verbose_name="Deaktivert",
+			default=False,
+			)
+	locationid = models.CharField(
+			max_length=50,
+			null=True,
+			blank=True,
+			verbose_name="Location ID",
+			)
+	orgname = models.CharField(
+			max_length=200,
+			null=True,
+			blank=True,
+			verbose_name="Org name",
+			)
+	equipment_label = models.CharField(
+			max_length=200,
+			null=True,
+			blank=True,
+			verbose_name="Utstyrsbetegnelse",
+			)
+	vrfname = models.CharField(
+			max_length=200,
+			null=True,
+			blank=True,
+			verbose_name="VRF name",
+			)
+	netcategory = models.CharField(
+			max_length=200,
+			null=True,
+			blank=True,
+			verbose_name="Nettverkskategori",
+			)
+	interface_label = models.CharField(
+			max_length=200,
+			null=True,
+			blank=True,
+			verbose_name="Interface",
+			)
+
+	def __str__(self):
+		label = self.fqdn or self.record_type
+		return u'%s (%s)' % (self.network_ip.ip_address, label)
+
+	class Meta:
+		unique_together = ("network_ip", "record_type", "fqdn")
+		verbose_name_plural = "CMDB: Infoblox hosts"
+		verbose_name = "Infoblox host"
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

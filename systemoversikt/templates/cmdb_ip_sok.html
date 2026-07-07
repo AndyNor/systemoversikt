@@ -24,7 +24,7 @@
 		</div>
 		<div class="form-group" style="margin-top: 8px;">
 			<label class="checkbox-inline" style="margin-right: 16px;">
-				<input type="checkbox" name="show_hosts" {% if show_hosts %}checked{% endif %}> Vis host-treff (servere, DNS-koblinger i CMDB, VIP)
+				<input type="checkbox" name="show_hosts" {% if show_hosts %}checked{% endif %}> Vis host-treff (servere, DNS, Infoblox, VIP)
 			</label>
 			<label class="checkbox-inline" style="margin-right: 16px;">
 				<input type="checkbox" name="show_networks" {% if show_networks %}checked{% endif %}> Vis nettverkstreff (VLAN / subnet)
@@ -54,6 +54,7 @@
 			<th>IP-adresse</th>
 			<th>Server</th>
 			<th>DNS</th>
+			<th>Infoblox</th>
 			<th>Nettverk / VLAN</th>
 			<th>Lastbalanserte tjenester (vip)</th>
 			<th>Lastbalanserte tjenester (pools)</th>
@@ -76,12 +77,25 @@
 				</td>
 				<td>
 					{% for name in ip.dns.all %}
-						{{ name.dns_name }}<br>
+						{{ name.dns_name }}{% if name.dns_domain %}.{{ name.dns_domain }}{% endif %}{% if name.source == "Infoblox" %} <small>(Infoblox)</small>{% endif %}<br>
+					{% endfor %}
+				</td>
+				<td>
+					{% for host in ip.infoblox_hosts.all %}
+						<b>{{ host.fqdn|default:host.record_type }}</b>
+						{% if host.mac_address %}<br>MAC: {{ host.mac_address }}{% endif %}
+						{% if host.comment %}<br>{{ host.comment }}{% endif %}
+						{% if host.orgname or host.locationid %}
+							<br>{% if host.orgname %}{{ host.orgname }}{% endif %}{% if host.locationid %} ({{ host.locationid }}){% endif %}
+						{% endif %}
+						{% if host.vrfname %}<br>VRF: {{ host.vrfname }}{% endif %}
+						{% if host.disabled %}<br><em>deaktivert</em>{% endif %}
+						<br>
 					{% endfor %}
 				</td>
 				<td>
 					{% for vlan in ip.vlan.all %}
-						<li>{{ vlan.comment }} ({{ vlan }}) {% if vlan.disabled %} (deaktivert) {% endif %}</li>
+						<li>{{ vlan.comment }}{% if vlan.vlan_name %} ({{ vlan.vlan_name }}){% endif %} ({{ vlan }}){% if vlan.location_name %} — {{ vlan.location_name }}{% endif %}{% if vlan.disabled %} (deaktivert){% endif %}</li>
 					{% endfor %}
 				</td>
 				<td>
@@ -106,7 +120,7 @@
 	{% for network in network_matches %}
 		{{ network.term }} gav treff i
 		{% for n in network.matches %}
-			<li>{{ n.ip_address }}/{{ n.subnet_mask }} som er <b>{{n.comment}}</b> ({{n.network_zone|default:"ukjent sone"}})</li>
+			<li>{{ n.ip_address }}/{{ n.subnet_mask }} som er <b>{{ n.comment }}</b>{% if n.vlan_name %} ({{ n.vlan_name }}){% endif %} ({{ n.network_zone|default:"ukjent sone" }}){% if n.location_name %} — {{ n.location_name }}{% endif %}</li>
 		{% endfor%}
 	{% endfor %}
 	{% endif %}
@@ -118,7 +132,7 @@
 		<ul>
 			{% for row in unique_vlan_networks %}
 				{% with n=row.vlan %}
-				<li>{{ n.ip_address }}/{{ n.subnet_mask }} — <b>{{ n.comment }}</b> ({{ n.network_zone|default:"ukjent sone" }}){% if n.disabled %} <em>(deaktivert)</em>{% endif %} — {% if row.unique_ip_count == 1 %}<strong>1</strong> unik søkeoppføring{% else %}<strong>{{ row.unique_ip_count }}</strong> unike søkeoppføringer{% endif %} i søket</li>
+				<li>{{ n.ip_address }}/{{ n.subnet_mask }} — <b>{{ n.comment }}</b>{% if n.vlan_name %} ({{ n.vlan_name }}){% endif %} ({{ n.network_zone|default:"ukjent sone" }}){% if n.location_name %} — {{ n.location_name }}{% endif %}{% if n.disabled %} <em>(deaktivert)</em>{% endif %} — {% if row.unique_ip_count == 1 %}<strong>1</strong> unik søkeoppføring{% else %}<strong>{{ row.unique_ip_count }}</strong> unike søkeoppføringer{% endif %} i søket</li>
 				{% endwith %}
 			{% endfor %}
 		</ul>

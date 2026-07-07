@@ -33,6 +33,8 @@
 		<th>Lokasjons ID</th>
 		<th>Orgtilhørighet</th>
 		<th>VLAN ID</th>
+		<th>VLAN-navn</th>
+		<th>Lokasjon</th>
 		<th>VRF</th>
 		<th>Sone</th>
 	</thead>
@@ -46,6 +48,8 @@
 			<td>{{ nettverk.locationid }}</td>
 			<td>{{ nettverk.orgname }}</td>
 			<td>{{ nettverk.vlanid }}</td>
+			<td>{{ nettverk.vlan_name }}</td>
+			<td>{{ nettverk.location_name|default:nettverk.locationid }}</td>
 			<td>{{ nettverk.vrfname }}</td>
 			<td>{{ nettverk.network_zone|default:"ingen data" }}</td>
 		</tr>
