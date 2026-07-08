@@ -1,0 +1,241 @@
+{# 2026-07-08: Snapshot v1 – collection rapport from precomputed JSON (no live model methods). #}
+{% extends "document_minimal.html" %}
+{% load static %}
+{% load templatetags %}
+
+{% block title %}Arkivert rapport: {{ scope.title }}{% endblock title %}
+
+{% block content %}
+
+<div class="risiko-rapport no-print mb-3">
+	<p>
+		<a class="btn btn-back btn-sm" href="{% url snapshot_list_url_name pk=scope.pk %}">&larr; Historikk</a>
+		<a class="btn btn-outline-secondary btn-sm ml-2" href="{% url 'risiko_scope_detail' pk=scope.pk %}">Live samling</a>
+		<button type="button" id="risiko-rapport-print-btn" class="btn btn-primary btn-sm ml-2">Skriv ut / Lagre som PDF</button>
+	</p>
+</div>
+
+<article class="risiko-rapport">
+
+<div class="alert alert-secondary py-2" role="status">
+	<strong>Arkivert snapshot</strong> tatt {{ snapshot.captured_at|date:"Y-m-d H:i" }}.
+	Omfangsfigur hentes fra live samling hvis tilgjengelig.
+</div>
+
+<h1 class="risiko-rapport-title h3 mb-4">Risikovurderingsrapport: {{ scope.title }}</h1>
+
+{% if scope.status != 'godkjent' %}
+<div class="risiko-rapport-status-banner" role="status">
+	<p class="risiko-rapport-status-banner-title mb-1">Ikke godkjent utkast</p>
+	<p class="mb-0">Denne rapporten viser arkivert arbeidsversjon. Status var <strong>{% risiko_scope_status scope.status scope.status_display %}</strong> ved snapshot.</p>
+</div>
+{% endif %}
+
+<section class="risiko-rapport-section">
+	<h2>1. Vurderingsdetaljer</h2>
+	<table class="table table-sm table-borderless risiko-rapport-meta mb-0">
+		<tbody>
+			<tr><th scope="row">Tittel</th><td>{{ scope.title }}</td></tr>
+			<tr><th scope="row">Virksomhet</th><td>{% if scope.virksomhet_code %}{{ scope.virksomhet_code }} – {{ scope.virksomhet_name }}{% else %}–{% endif %}</td></tr>
+			<tr><th scope="row">Status</th><td>{% if scope.status != 'godkjent' %}<span class="risiko-rapport-status-cell risiko-rapport-status-cell--draft">{% endif %}{% risiko_scope_status scope.status scope.status_display %}{% if scope.status != 'godkjent' %}</span>{% endif %}</td></tr>
+			<tr><th scope="row">Sist revidert</th><td>{{ scope.sist_revidert }}</td></tr>
+			<tr><th scope="row">Eiere</th><td>{% for name in owners_display %}{% if not forloop.first %}, {% endif %}{{ name }}{% empty %}–{% endfor %}</td></tr>
+			<tr><th scope="row">Deltakere</th><td>{% for name in participants_display %}{% if not forloop.first %}, {% endif %}{{ name }}{% endfor %}{% for name in participant_groups_display %}{% if participants_display or not forloop.first %}, {% endif %}{{ name }}{% endfor %}{% if not participants_display and not participant_groups_display %}–{% endif %}</td></tr>
+			<tr><th scope="row">Snapshot tatt</th><td>{{ snapshot.captured_at|date:"Y-m-d H:i" }}</td></tr>
+		</tbody>
+	</table>
+</section>
+
+<section class="risiko-rapport-section">
+	<h2>2. Omfangsfigur</h2>
+	{% if omfang_fil.has_figur %}
+	<p class="mb-1 text-muted small">{% if omfang_fil.figur_filnavn %}{{ omfang_fil.figur_filnavn }}{% endif %} (live)</p>
+	<img class="risiko-rapport-figur img-fluid" src="{% url 'risiko_scope_fil_omfang' pk=scope.pk %}" alt="Omfangsfigur for {{ scope.title }}">
+	{% else %}
+	<p class="text-muted mb-0">Ingen omfangsfigur var lastet opp ved snapshot.</p>
+	{% endif %}
+</section>
+
+<section class="risiko-rapport-section">
+	<h2>3. Omfangsbeskrivelse</h2>
+	{% if scope.beskrivelse %}
+	<div class="risiko-rapport-prose">{{ scope.beskrivelse|linebreaks_bullets }}</div>
+	{% else %}
+	<p class="text-muted mb-0">Ingen omfangsbeskrivelse er registrert.</p>
+	{% endif %}
+</section>
+
+<section class="risiko-rapport-section">
+	<h2>4. Systemer i omfanget</h2>
+	{% if scope_systems %}
+	<ul class="mb-0">
+		{% for system in scope_systems %}
+		<li><span class="screen-only"><a href="{% url 'systemdetaljer' pk=system.pk %}">{{ system.systemnavn }}</a></span><span class="print-only">{{ system.systemnavn }}</span></li>
+		{% endfor %}
+	</ul>
+	{% else %}
+	<p class="text-muted mb-0">Ingen systemer er knyttet til scenarioer i denne samlingen.</p>
+	{% endif %}
+</section>
+
+<section class="risiko-rapport-section risiko-rapport-section--matriser">
+	<div class="risiko-rapport-matriser-row">
+		<div class="risiko-rapport-matrise-col">
+			<h2 class="risiko-rapport-matrise-title">5. Dagens risikobilde</h2>
+			{% include "risiko_matrise_grid.html" with matrix=matrix_current scope=scope konsekvens_labels=konsekvens_labels report_mode=True %}
+		</div>
+		<div class="risiko-rapport-matrise-col">
+			<h2 class="risiko-rapport-matrise-title">Risiko etter planlagte tiltak</h2>
+			{% include "risiko_matrise_grid.html" with matrix=matrix_residual scope=scope konsekvens_labels=konsekvens_labels report_mode=True %}
+		</div>
+	</div>
+</section>
+
+<section class="risiko-rapport-section">
+	<h2>6. Oppsummering besluttede tiltak</h2>
+	{% if besluttede_tiltak_rows %}
+	<table class="table table-sm table-bordered risiko-rapport-table">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>Tiltak</th>
+				<th>RiskID</th>
+				<th>Ansvarlig</th>
+				<th>Frist</th>
+				<th>Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for row in besluttede_tiltak_rows %}
+			<tr>
+				<td>{{ row.display_tiltak_id }}</td>
+				<td>{{ row.action.beskrivelse|linebreaks_bullets }}</td>
+				<td>
+					{% for link in row.risk_links %}
+						<span class="risiko-level-tag risiko-risk-id-tag {{ link.risiko_css }}">{{ link.risk_id }}</span>{% if not forloop.last %} {% endif %}
+					{% empty %}–{% endfor %}
+				</td>
+				<td>{% if row.action.ansvarlig_display %}{{ row.action.ansvarlig_display }}{% else %}–{% endif %}</td>
+				<td>{{ row.action.frist|default:"–" }}</td>
+				<td>{% risiko_tiltak_status_tag row.action.status row.action.status_display %}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	{% else %}
+	<p class="text-muted mb-0">Ingen tiltak under arbeid eller besluttet er registrert.</p>
+	{% endif %}
+</section>
+
+<section class="risiko-rapport-section risiko-rapport-section--scenarios">
+	<h2>7. Risikoscenarier</h2>
+	{% for section in scenario_sections %}
+	{% with scenario=section.scenario %}
+	<div class="risiko-rapport-scenario">
+		<h3>{{ scenario.display_risk_id }} – {{ scenario.uonsket_hendelse|default:"(uten beskrivelse)" }}</h3>
+		<div class="risiko-rapport-scenario-grid">
+			{% if scenario.arsaker_svakheter %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>Årsaker/svakheter:</strong>
+				{{ scenario.arsaker_svakheter|linebreaks_bullets }}
+			</div>
+			{% endif %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>KIT:</strong> {% risiko_kit_tags scenario.kit_dimensjoner %}
+			</div>
+			{% if section.tiltak_utfort_entries %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full risiko-rapport-tiltak-block">
+				<strong>Utførte tiltak:</strong>
+				<ul class="mb-0">
+					{% for entry in section.tiltak_utfort_entries %}
+					<li>
+						<strong>{{ entry.display_tiltak_id }}</strong>
+						{{ entry.action.beskrivelse|linebreaks_bullets }}
+						– {% risiko_tiltak_status_tag entry.action.status entry.action.status_display %}
+						{% if entry.action.ansvarlig_display %} ({{ entry.action.ansvarlig_display }}){% endif %}
+						{% if entry.action.frist %} – frist {{ entry.action.frist }}{% endif %}
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full risiko-rapport-scenario-pairs">
+				<div class="risiko-rapport-scenario-pair">
+					<div class="risiko-rapport-scenario-field">
+						<strong>Konsekvenstype:</strong> {% risiko_konsekvenstype_tags scenario.konsekvenstyper %}
+					</div>
+					<div class="risiko-rapport-scenario-field">
+						<strong>Konsekvens:</strong> {% risiko_level_tag scenario.konsekvens_label scenario.konsekvens_css %}
+						{% if scenario.konsekvens_begrunnelse %}
+						<div class="text-muted small">{{ scenario.konsekvens_begrunnelse|linebreaks_bullets }}</div>
+						{% endif %}
+					</div>
+				</div>
+				<div class="risiko-rapport-scenario-pair">
+					<div class="risiko-rapport-scenario-field">
+						<strong>Sannsynlighetstype:</strong> {% risiko_sannsynlighetstype_tags scenario.sannsynlighetstyper %}
+					</div>
+					<div class="risiko-rapport-scenario-field">
+						<strong>Sannsynlighet:</strong> {% risiko_level_tag scenario.sannsynlighet_label scenario.sannsynlighet_css %}
+						{% if scenario.sannsynlighetsbegrunnelse %}
+						<div class="text-muted small">{{ scenario.sannsynlighetsbegrunnelse|linebreaks_bullets }}</div>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>Risiko nå:</strong> <span class="{{ scenario.risiko_css }}">{{ scenario.risiko_etikett|default:"–" }}</span>
+			</div>
+			{% if scenario.risikobehandling %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>Risikobehandling:</strong> {{ scenario.risikobehandling_display }}
+			</div>
+			{% endif %}
+			{% if section.tiltak_pending_entries %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full risiko-rapport-tiltak-block">
+				<strong>Tiltak (besluttet / pågår):</strong>
+				<ul class="mb-0">
+					{% for entry in section.tiltak_pending_entries %}
+					<li>
+						<strong>{{ entry.display_tiltak_id }}</strong>
+						{{ entry.action.beskrivelse|linebreaks_bullets }}
+						– {% risiko_tiltak_status_tag entry.action.status entry.action.status_display %}
+						{% if entry.action.ansvarlig_display %} ({{ entry.action.ansvarlig_display }}){% endif %}
+						{% if entry.action.frist %} – frist {{ entry.action.frist }}{% endif %}
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>Risiko etter tiltak:</strong> <span class="{{ scenario.restrisiko_css }}">{{ scenario.restrisiko_etikett|default:"–" }}</span>
+			</div>
+			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
+				<strong>Tilknyttede systemer:</strong>
+				{% for system in scenario.systemer %}
+					<span class="screen-only"><a href="{% url 'systemdetaljer' pk=system.pk %}">{{ system.systemnavn }}</a>{% if not forloop.last %}, {% endif %}</span><span class="print-only">{{ system.systemnavn }}{% if not forloop.last %}, {% endif %}</span>
+				{% empty %}–{% endfor %}
+			</div>
+		</div>
+	</div>
+	{% endwith %}
+	{% empty %}
+	<p class="text-muted mb-0">Ingen scenarioer registrert.</p>
+	{% endfor %}
+</section>
+
+</article>
+
+{% endblock content %}
+
+{% block ekstrajavascript %}
+{% include "risk_snapshots/v1/_risiko_rapport_styles.html" %}
+{% endblock ekstrajavascript %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+document.getElementById('risiko-rapport-print-btn').addEventListener('click', function () {
+	window.print();
+});
+</script>
+{% endblock script_append %}

@@ -1,0 +1,46 @@
+{# 2026-07-08: List archived JSON snapshots for a collection or sammenstilling. #}
+{% extends "sikkerhet_index.html" %}
+{% load templatetags %}
+
+{% block overskrift %}
+	Historikk: {{ source.title }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p class="mb-3">
+	<a class="btn btn-back btn-sm" href="{% url live_url_name pk=live_pk %}">&larr; Tilbake til live versjon</a>
+</p>
+
+<p class="text-muted">{{ source_label }}: <strong>{{ source.title }}</strong></p>
+
+{% if snapshots %}
+<table class="table table-sm table-bordered">
+	<thead>
+		<tr>
+			<th>Tatt</th>
+			<th>SHA-256</th>
+			<th></th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for snap in snapshots %}
+		<tr>
+			<td>{{ snap.captured_at|date:"Y-m-d H:i" }}</td>
+			<td class="small text-muted"><code>{{ snap.payload_sha256|slice:":12" }}…</code></td>
+			<td class="text-nowrap">
+				{% if source_type == 'collection' %}
+				<a href="{% url 'risiko_scope_snapshot_rapport' pk=live_pk snapshot_id=snap.snapshot_id %}">Vis rapport</a>
+				{% else %}
+				<a href="{% url 'risiko_sammenstilling_snapshot_detail' pk=live_pk snapshot_id=snap.snapshot_id %}">Vis versjon</a>
+				{% endif %}
+			</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% else %}
+<p class="text-muted">Ingen lagrede snapshots ennå.</p>
+{% endif %}
+
+{% endblock hovedinnhold %}

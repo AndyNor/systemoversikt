@@ -9,6 +9,7 @@
 {# 2026-07-07: Shorter draft banner text – removed archive disclaimer sentence. #}
 {# 2026-07-07: Draft status banner when not godkjent – report available for all statuses. #}
 {# 2026-07-07: Print-friendly godkjent risikovurderingsrapport – 7 sections for archive. #}
+{# 2026-07-08: Link to archived JSON snapshot history (Historikk / versjoner). #}
 {% extends "document_minimal.html" %}
 {% load static %}
 {% load templatetags %}
@@ -20,6 +21,7 @@
 <div class="risiko-rapport no-print mb-3">
 	<p>
 		<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_detail' pk=scope.pk %}">&larr; Tilbake til samling</a>
+		<a class="btn btn-outline-secondary btn-sm ml-2" href="{% url 'risiko_scope_snapshot_list' pk=scope.pk %}">Historikk / versjoner</a>
 		<button type="button" id="risiko-rapport-print-btn" class="btn btn-primary btn-sm ml-2">Skriv ut / Lagre som PDF</button>
 	</p>
 </div>

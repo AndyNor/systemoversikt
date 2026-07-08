@@ -8,6 +8,7 @@
 {# 2026-07-06: Category cards show manual risk only; matrix uses full category titles. #}
 {# 2026-07-06: Subcategory scenario/tiltak breakdown + per-category risk matrix. #}
 {# 2026-07-06: Category-level manual assessment + nåværende-risiko matrix at top. #}
+{# 2026-07-08: Link to archived JSON snapshot history (Historikk / versjoner). #}
 
 {% block overskrift %}
 	{{ sammenstilling.title }}
@@ -57,6 +58,7 @@
 
 <p class="mb-3">
 	<a class="btn btn-back btn-sm" href="{% url 'risiko_rammeverk_list' %}">&larr; Risikosammenstilling</a>
+	<a class="btn btn-outline-secondary btn-sm ml-2" href="{% url 'risiko_sammenstilling_snapshot_list' pk=sammenstilling.pk %}">Historikk / versjoner</a>
 	{% if can_map %}
 	| <a href="{% url 'risiko_sammenstilling_kartlegging' pk=sammenstilling.pk %}">Kartlegging</a>
 	{% endif %}

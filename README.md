@@ -82,4 +82,7 @@ pip list --format=freeze > requirements.txt
 python manage.py makemigrations
 python manage.py migrate
 python manage.py get_all_permissions
+python manage.py risk_snapshot_capture --dry-run
 ```
+
+Risk snapshot archives (collection rapport + sammenstilling): see [systemoversikt/risk_snapshot_MAINTENANCE.md](systemoversikt/risk_snapshot_MAINTENANCE.md) for how to maintain serializers and versioned templates when the risk model or UI changes.

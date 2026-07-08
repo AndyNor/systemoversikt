@@ -1,0 +1,49 @@
+{# 2026-07-08: Shared rapport CSS for snapshot v1 collection templates. #}
+.document-minimal-content { max-width: 1200px; }
+.risk-matrix { border-collapse: collapse; width: 100%; max-width: 520px; margin-bottom: 1rem; border: 2px solid #5a6268; }
+.risiko-rapport-matriser-row .risk-matrix { max-width: 100%; }
+.risiko-rapport-matriser-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 2rem; align-items: start; }
+.risiko-rapport-matrise-title { font-size: 1.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid #ced4da; padding-bottom: 0.35rem; }
+.risiko-rapport-section--matriser { margin-bottom: 2rem; }
+.risk-matrix th, .risk-matrix td { border: 1px solid #5a6268; text-align: center; vertical-align: middle; padding: 4px; min-width: 48px; font-size: 0.85rem; }
+.risk-matrix .axis-label { background: #f8f9fa; font-weight: 600; font-size: 0.8rem; }
+.risk-cell-lav { background-color: #c0eb96; }
+.risk-cell-middels { background-color: #ffecb2; }
+.risk-cell-hoy { background-color: #ffc8cd; }
+.risk-cell-empty { background-color: #fff; }
+.risk-badge { display: inline-block; margin: 1px; padding: 1px 4px; font-size: 0.75rem; background: rgba(0,0,0,0.08); border-radius: 3px; }
+.risiko-level-tag { display: inline-block; font-size: 0.68rem; font-weight: 600; line-height: 1.2; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+.risiko-level-tag.risk-cell-lav { background-color: #c0eb96; }
+.risiko-level-tag.risk-cell-middels { background-color: #ffecb2; }
+.risiko-level-tag.risk-cell-hoy { background-color: #ffc8cd; }
+.risiko-tiltak-status-tag { display: inline-block; font-size: 0.68rem; font-weight: 600; line-height: 1.2; padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+.risiko-tiltak-status-utfort { background-color: #c0eb96; }
+.risiko-tiltak-status-under-arbeid { background-color: #ffecb2; }
+.risiko-tiltak-status-forslag { background-color: #e9ecef; }
+.risiko-tiltak-status-besluttet { background-color: #ffc8cd; }
+.risiko-tiltak-status-unknown { background-color: #e9ecef; }
+.risiko-kit-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 0.68rem; font-weight: 600; line-height: 1.2; margin: 1px 2px 1px 0; padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
+.risiko-konsekvenstype-tag, .risiko-sannsynlighetstype-tag { display: inline-block; font-size: 0.68rem; font-weight: 600; line-height: 1.2; margin: 1px 2px 1px 0; padding: 2px 5px; border-radius: 3px; white-space: nowrap; background-color: #dee2e6; color: #343a40; }
+.risiko-scope-status { display: inline-flex; align-items: center; gap: 0.35rem; white-space: nowrap; }
+.risiko-rapport-status-banner { border: 2px solid #ffc107; background: #fff3cd; color: #664d03; padding: 0.85rem 1rem; margin-bottom: 1.5rem; border-radius: 4px; page-break-inside: avoid; }
+.risiko-rapport-status-banner-title { font-size: 1.1rem; font-weight: 700; margin: 0; }
+.risiko-rapport-status-cell--draft { display: inline-flex; padding: 0.35rem 0.65rem; border-radius: 4px; background: #fff3cd; border: 1px solid #ffc107; }
+.risiko-rapport-section { margin-bottom: 2rem; page-break-inside: avoid; }
+.risiko-rapport-section h2 { font-size: 1.5rem; margin-bottom: 0.75rem; border-bottom: 2px solid #ced4da; padding-bottom: 0.35rem; }
+.risiko-rapport-scenario { margin-bottom: 1.5rem; padding: 1rem 1.25rem; border: 1px solid #ced4da; border-radius: 4px; background: #f8f9fa; page-break-inside: avoid; }
+.risiko-rapport-scenario h3 { font-size: 1.1rem; margin-bottom: 0.75rem; padding-bottom: 0.35rem; border-bottom: 1px solid #dee2e6; }
+.risiko-rapport-scenario-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem 2rem; }
+.risiko-rapport-scenario-field--full { grid-column: 1 / -1; }
+.risiko-rapport-scenario-pairs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem 2rem; }
+.risiko-rapport-meta th { width: 11rem; font-weight: 600; vertical-align: top; }
+.risiko-rapport-figur { max-height: 480px; width: auto; }
+.risiko-rapport-prose { background: #f8f9fa; padding: 0.75rem 1rem; }
+.print-only { display: none; }
+@media print {
+	.no-print { display: none !important; }
+	.screen-only { display: none !important; }
+	.print-only { display: inline !important; }
+	body.document-minimal { padding: 0; }
+	body { font-size: 11pt; }
+	a[href]::after { content: none !important; }
+}

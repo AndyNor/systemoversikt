@@ -14,7 +14,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 # 2026-07-07: Sammenstilling reader_groups admin APIs – superuser assign lesergrupper from list.
 # 2026-07-07: Sammenstilling owner-group admin APIs – superuser reassign eiergruppe from list.
 # 2026-07-07: Mal JSON export/import URLs – superuser transfer between environments.
-# 2026-07-06: Risk framework aggregation URLs under /sikkerhet/risiko/rammeverk/.
+# 2026-07-08: Risk snapshot list/detail URLs – read-only archived JSON views.
 # 2026-06-24: CA rules detail URL – /rules/<pk>/ for single Azure policy; list stays at /rules/.
 # 2026-06-23: BloodHound upload API and status page.
 # 2026-06-23: Developer docs URL for Tjeneste- og systemoversikt API.
@@ -35,6 +35,7 @@ import systemoversikt.api_bloodhound as api_bloodhound
 import systemoversikt.views_bloodhound as views_bloodhound
 import systemoversikt.views_risiko as views_risiko
 import systemoversikt.views_risiko_rammeverk as views_risiko_rammeverk
+import systemoversikt.views_risk_snapshot as views_risk_snapshot
 import systemoversikt.api_risiko as api_risiko
 import systemoversikt.api_risiko_rammeverk as api_risiko_rammeverk
 import systemoversikt.api_risiko_sammenstilling as api_risiko_sammenstilling
@@ -159,6 +160,8 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/owner-group/$', api_risiko_sammenstilling.api_risiko_sammenstilling_owner_group_update, name='api_risiko_sammenstilling_owner_group_update'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/reader-groups/$', api_risiko_sammenstilling.api_risiko_sammenstilling_reader_groups, name='api_risiko_sammenstilling_reader_groups'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/reader-groups/update/$', api_risiko_sammenstilling.api_risiko_sammenstilling_reader_groups_update, name='api_risiko_sammenstilling_reader_groups_update'),
+	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/snapshot/$', views_risk_snapshot.risiko_sammenstilling_snapshot_list, name='risiko_sammenstilling_snapshot_list'),
+	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/snapshot/(?P<snapshot_id>[0-9a-f-]{36})/$', views_risk_snapshot.risiko_sammenstilling_snapshot_detail, name='risiko_sammenstilling_snapshot_detail'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/$', views_risiko_rammeverk.risiko_sammenstilling_detail, name='risiko_sammenstilling_detail'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/kartlegging/$', views_risiko_rammeverk.risiko_sammenstilling_kartlegging, name='risiko_sammenstilling_kartlegging'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/taxonomy/$', api_risiko_sammenstilling.api_risiko_sammenstilling_taxonomy, name='api_risiko_sammenstilling_taxonomy'),
@@ -208,6 +211,8 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/omfang-figur-original/$', api_risiko.api_risiko_omfang_figur_original, name='api_risiko_omfang_figur_original'),
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/fil/omfang/$', views_risiko.risiko_scope_fil_omfang, name='risiko_scope_fil_omfang'),
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/fil/omfang-original/$', views_risiko.risiko_scope_fil_omfang_original, name='risiko_scope_fil_omfang_original'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/snapshot/$', views_risk_snapshot.risiko_scope_snapshot_list, name='risiko_scope_snapshot_list'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/snapshot/(?P<snapshot_id>[0-9a-f-]{36})/rapport/$', views_risk_snapshot.risiko_scope_snapshot_rapport, name='risiko_scope_snapshot_rapport'),
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/rapport/$', views_risiko.risiko_scope_rapport, name='risiko_scope_rapport'),
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/delete/$', views_risiko.risiko_scope_delete, name='risiko_scope_delete'),
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/matrise/$', views_risiko.risiko_matrise, name='risiko_matrise'),

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-08: RiskSnapshot – versioned JSON snapshots for collection rapport and sammenstilling.
 # 2026-07-07: RiskSammenstilling.reader_groups M2M – optional read-only tilgangsgrupper per sammenstilling.
 # 2026-07-07: InfobloxHost + NetworkContainer vlan_name/location_name/ip_helper – Infoblox IP search enrichment.
 # 2026-07-07: RiskScopeOmfangFil – scope figure/original bytes in DB for archive-friendly rapport.
@@ -8674,3 +8675,96 @@ class RiskSammenstillingNodeAssessment(models.Model):
 		verbose_name_plural = "Risiko: sammenstilling-nodevurderinger"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		unique_together = ('sammenstilling', 'framework_node')
+
+
+RISK_SNAPSHOT_SOURCE_VALG = (
+	('collection', 'Risikosamling'),
+	('sammenstilling', 'Risikosammenstilling'),
+)
+RISK_SNAPSHOT_SOURCE_COLLECTION = 'collection'
+RISK_SNAPSHOT_SOURCE_SAMMENSTILLING = 'sammenstilling'
+
+RISK_SNAPSHOT_TIME_BIN_VALG = (
+	('daily', 'Daglig'),
+	('weekly', 'Ukentlig'),
+	('monthly', 'Månedlig'),
+	('yearly', 'Årlig'),
+)
+RISK_SNAPSHOT_BIN_DAILY = 'daily'
+RISK_SNAPSHOT_BIN_WEEKLY = 'weekly'
+RISK_SNAPSHOT_BIN_MONTHLY = 'monthly'
+RISK_SNAPSHOT_BIN_YEARLY = 'yearly'
+
+RISK_SNAPSHOT_TEMPLATE_VERSION = 1
+RISK_SNAPSHOT_JSON_SCHEMA_VERSION = 1
+
+
+class RiskSnapshot(models.Model):
+	# 2026-07-08: Immutable JSON archive of collection rapport / sammenstilling detail views.
+	snapshot_id = models.UUIDField(
+		verbose_name="Snapshot-ID",
+		unique=True,
+		db_index=True,
+		editable=False,
+	)
+	source_type = models.CharField(
+		verbose_name="Kildetype",
+		max_length=20,
+		choices=RISK_SNAPSHOT_SOURCE_VALG,
+		db_index=True,
+	)
+	source_pk = models.PositiveIntegerField(
+		verbose_name="Kilde-ID",
+		db_index=True,
+	)
+	captured_at = models.DateTimeField(
+		verbose_name="Tatt",
+		db_index=True,
+	)
+	time_bin = models.CharField(
+		verbose_name="Tidsbin",
+		max_length=10,
+		choices=RISK_SNAPSHOT_TIME_BIN_VALG,
+		default=RISK_SNAPSHOT_BIN_DAILY,
+		db_index=True,
+	)
+	template_version = models.PositiveSmallIntegerField(
+		verbose_name="Malversjon",
+		default=RISK_SNAPSHOT_TEMPLATE_VERSION,
+	)
+	json_schema_version = models.PositiveSmallIntegerField(
+		verbose_name="JSON-skjemaversjon",
+		default=RISK_SNAPSHOT_JSON_SCHEMA_VERSION,
+	)
+	payload = models.JSONField(
+		verbose_name="Innhold",
+	)
+	payload_sha256 = models.CharField(
+		verbose_name="SHA-256",
+		max_length=64,
+		db_index=True,
+	)
+	title = models.CharField(
+		verbose_name="Tittel",
+		max_length=300,
+		blank=True,
+		default='',
+		help_text="Denormalisert tittel for lister (samling/sammenstilling).",
+	)
+
+	def __str__(self):
+		return '%s %s #%s @ %s' % (
+			self.get_source_type_display(),
+			self.source_pk,
+			self.snapshot_id,
+			self.captured_at,
+		)
+
+	class Meta:
+		verbose_name = "risiko-snapshot"
+		verbose_name_plural = "Risiko: snapshots"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['-captured_at']
+		indexes = [
+			models.Index(fields=['source_type', 'source_pk', '-captured_at']),
+		]
