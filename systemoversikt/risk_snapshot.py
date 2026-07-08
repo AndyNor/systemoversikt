@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-08: Keep all risk snapshot versions (disable age-bin pruning) and dedup ignoring `snapshot_generated_at` so nightly captures only save real changes.
 # 2026-07-08: Maintenance guide – see risk_snapshot_MAINTENANCE.md when model/UI changes affect snapshots.
 # 2026-07-08: Risk snapshot capture, serialization, retention pruning, and render helpers.
 
@@ -63,7 +64,11 @@ def normalize_payload_json(payload):
 
 
 def payload_sha256(payload):
-	return hashlib.sha256(normalize_payload_json(payload).encode('utf-8')).hexdigest()
+	# Deduplication should ignore the capture timestamp; callers may still keep
+	# `snapshot_generated_at` in the payload for rendering/context.
+	payload_for_hash = dict(payload or {})
+	payload_for_hash.pop('snapshot_generated_at', None)
+	return hashlib.sha256(normalize_payload_json(payload_for_hash).encode('utf-8')).hexdigest()
 
 
 def _json_default(value):
@@ -383,23 +388,9 @@ def _bin_key_for_snapshot(snapshot, now):
 
 
 def prune_snapshots_for_source(source_type, source_pk, now=None):
-	# 2026-07-08: Keep one snapshot per retention bin; delete older duplicates.
-	if now is None:
-		now = timezone.now()
-	qs = RiskSnapshot.objects.filter(source_type=source_type, source_pk=source_pk).order_by('-captured_at')
-	keep_ids = set()
-	best_per_bin = {}
-	for snapshot in qs:
-		bin_kind, bin_key = _bin_key_for_snapshot(snapshot, now)
-		key = (bin_kind, bin_key)
-		if key not in best_per_bin:
-			best_per_bin[key] = snapshot.pk
-			keep_ids.add(snapshot.pk)
-	to_delete = qs.exclude(pk__in=keep_ids)
-	count = to_delete.count()
-	if count:
-		to_delete.delete()
-	return count
+	# 2026-07-08: Keep all snapshot versions indefinitely (no age-based pruning).
+	# Returning 0 keeps capture logic stable while preventing deletes.
+	return 0
 
 
 def capture_snapshot(source_type, source_pk, payload, title='', captured_at=None, dry_run=False):
@@ -407,7 +398,10 @@ def capture_snapshot(source_type, source_pk, payload, title='', captured_at=None
 		captured_at = timezone.now()
 	digest = payload_sha256(payload)
 	latest = latest_snapshot(source_type, source_pk)
-	if latest and latest.payload_sha256 == digest:
+	# Compare semantic hash against latest snapshot payload. We compute the hash
+	# from `latest.payload` (not `latest.payload_sha256`) so older rows created
+	# before this change still dedup correctly.
+	if latest and payload_sha256(latest.payload) == digest:
 		return None, 'unchanged'
 	if dry_run:
 		return None, 'would_save'

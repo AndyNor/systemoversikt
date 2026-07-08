@@ -147,8 +147,8 @@ Template path helper: `snapshot_template_name(version, 'risiko_scope_rapport.htm
 
 ## Retention and deduplication (usually no maintenance)
 
-- **Dedup:** A new row is skipped if SHA-256 of normalized JSON matches the latest snapshot for the same `source_type` + `source_pk`.
-- **Retention:** After each save, `prune_snapshots_for_source()` keeps one snapshot per time bin (daily ×7, weekly ×3 months, monthly ×1 year, yearly older). Constants: `_RETENTION_*_DAYS` in `risk_snapshot.py`.
+- **Dedup:** A new row is skipped if the *semantic* SHA-256 of normalized JSON matches the latest snapshot for the same `source_type` + `source_pk`. Semantic hashing ignores the top-level `snapshot_generated_at` capture timestamp (kept in the payload for rendering/context).
+- **Retention:** Snapshots are kept indefinitely. `prune_snapshots_for_source()` is disabled (no age-based pruning).
 
 Change retention only if product owners ask; it affects storage, not rendering.
 
