@@ -4,6 +4,7 @@
 {# 2026-07-02: Tilgangsgruppe filter bar above virksomhet collection table. #}
 {# 2026-07-01: Virksomhet-specific risk collection viewpoint. #}
 {# 2026-07-08: Archive scopes instead of hard delete; archived items hidden in list by default. #}
+{# 2026-07-08: Server-side search (q=) within virksomhet collections. #}
 {# 2026-07-08: Dempet arkiver-knappens rødfarge (gray med rød undertone) for bedre kontrast. #}
 
 {% block overskrift %}
@@ -36,26 +37,31 @@
 
 {% include "risiko_virksomhet_nav.html" %}
 
+{% if search_query %}
+<h5 class="mt-4">Søkeresultater for {{ virksomhet.virksomhetsforkortelse }}</h5>
+<p class="text-muted mb-2">Fant {{ search_results.count }} treff for «{{ search_query }}».</p>
+{% else %}
 <h5 class="mt-4">Risikosamlinger for {{ virksomhet.virksomhetsforkortelse }}</h5>
+{% endif %}
 
 {% if not include_archived %}
 <p class="mt-2 mb-3">
-	<a class="btn btn-outline-secondary btn-sm" href="?include_archived=1">Vis arkiverte</a>
+	<a class="btn btn-outline-secondary btn-sm" href="{{ archived_toggle_query }}">Vis arkiverte</a>
 </p>
 {% else %}
 <p class="mt-2 mb-3">
-	<a class="btn btn-outline-secondary btn-sm" href="?include_archived=0">Skjul arkiverte</a>
+	<a class="btn btn-outline-secondary btn-sm" href="{{ archived_toggle_query }}">Skjul arkiverte</a>
 </p>
 {% endif %}
 
 <div class="risiko-scope-table-block" data-risiko-scope-table>
-{% if virksomhet_tilgangsgrupper %}
-{% risiko_tilgangsgruppe_filter_buttons virksomhet_tilgangsgrupper %}
-{% endif %}
+{% include "risiko_scope_list_filters.html" with tilgangsgrupper=virksomhet_tilgangsgrupper search_query=search_query include_archived=include_archived search_scope_hint=search_scope_hint search_reset_url=search_reset_url %}
 {% include "risiko_scope_list_table.html" with scopes=scopes %}
 </div>
 
-{% if not scopes %}
+{% if search_query and not search_results %}
+<p class="text-muted mt-2">Ingen risikosamlinger matchet søket.</p>
+{% elif not search_query and not scopes %}
 <p class="mt-2">Ingen risikosamlinger for denne virksomheten ennå.</p>
 {% endif %}
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-08: search_scopes – server-side title/beskrivelse search across all collections (existence is open).
 # 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator may change/delete any group in profile virksomhet.
 # 2026-07-07: Granular tilgangsgruppe helpers – view_riskscope create, member-gated edit, change_riskvirksomhetgroup for virksomhet_read_only.
 # 2026-07-07: user_member_display_name – disambiguate same-name users with virksomhetsforkortelse on collection pages.
@@ -358,6 +359,26 @@ def scopes_for_user_membership(user, exclude_virksomhet_id=None):
 	if exclude_virksomhet_id is not None:
 		qs = qs.exclude(virksomhet_id=exclude_virksomhet_id)
 	return qs
+
+
+def search_scopes(user, query):
+	"""Match title/beskrivelse across all collections; annotate per-user read access for the list UI."""
+	query = (query or '').strip()
+	if not query:
+		return RiskScope.objects.none()
+	return scope_list_base_queryset(user).filter(
+		Q(title__icontains=query) | Q(beskrivelse__icontains=query),
+	)
+
+
+def search_scopes_for_virksomhet(user, virksomhet_id, query):
+	"""Match title/beskrivelse within one virksomhet's collections."""
+	query = (query or '').strip()
+	if not query:
+		return RiskScope.objects.none()
+	return scopes_for_virksomhet(user, virksomhet_id).filter(
+		Q(title__icontains=query) | Q(beskrivelse__icontains=query),
+	)
 
 
 def nav_ordinary_virksomheter():

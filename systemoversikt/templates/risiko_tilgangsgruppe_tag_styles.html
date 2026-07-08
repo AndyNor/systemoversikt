@@ -1,3 +1,4 @@
+{# 2026-07-08: Search bar styling for risk collection list filters. #}
 {# 2026-07-02: Structural CSS for tilgangsgruppe tags on collection list tables. #}
 .risiko-tilgangsgruppe-cell {
 	white-space: normal;
@@ -37,4 +38,20 @@ button.risiko-tilgangsgruppe-tag {
 	font-size: 0.85rem;
 	color: #6c757d;
 	margin-right: 0.15rem;
+}
+.risiko-scope-search-bar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem;
+}
+.risiko-scope-search-bar-label {
+	font-size: 0.85rem;
+	color: #6c757d;
+	margin-right: 0.15rem;
+	flex-shrink: 0;
+}
+.risiko-scope-search-input {
+	max-width: 22rem;
+	min-width: 12rem;
 }

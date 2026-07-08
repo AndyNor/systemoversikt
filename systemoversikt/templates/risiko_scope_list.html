@@ -13,6 +13,8 @@
 {# 2026-06-30: Bootstrap confirm modal before deleting a risikosamling. #}
 
 {# 2026-07-08: Archive scopes instead of hard delete; archived items hidden in list by default. #}
+{# 2026-07-08: Server-side search (q=) across all virksomheter; browse mode unchanged below. #}
+{# 2026-07-08: Client-side search on title/beskrivelse below tilgangsgruppe filter bar. #}
 {# 2026-07-08: Dempet arkiver-knappens rødfarge (gray med rød undertone) for bedre kontrast. #}
 
 {# 2026-06-30: Eiere + virksomhet columns; members can edit, owners manage access. #}
@@ -99,6 +101,33 @@
 
 
 
+{% if search_query %}
+
+<h5 class="mt-4">Søkeresultater</h5>
+
+<p class="text-muted mb-2">Fant {{ search_results.count }} treff for «{{ search_query }}».</p>
+
+{% if not include_archived %}
+<p class="mt-2 mb-3">
+	<a class="btn btn-outline-secondary btn-sm" href="{{ archived_toggle_query }}">Vis arkiverte</a>
+</p>
+{% else %}
+<p class="mt-2 mb-3">
+	<a class="btn btn-outline-secondary btn-sm" href="{{ archived_toggle_query }}">Skjul arkiverte</a>
+</p>
+{% endif %}
+
+<div class="risiko-scope-table-block" data-risiko-scope-table>
+{% include "risiko_scope_list_filters.html" with tilgangsgrupper=virksomhet_tilgangsgrupper search_query=search_query include_archived=include_archived search_scope_hint=search_scope_hint search_reset_url=search_reset_url %}
+{% include "risiko_scope_list_table.html" with scopes=search_results %}
+</div>
+
+{% if not search_results %}
+<p class="text-muted">Ingen risikosamlinger matchet søket.</p>
+{% endif %}
+
+{% else %}
+
 <h5 class="mt-4">
 
 	Risikosamlinger
@@ -111,18 +140,16 @@
 
 {% if not include_archived %}
 <p class="mt-2 mb-3">
-	<a class="btn btn-outline-secondary btn-sm" href="?include_archived=1">Vis arkiverte</a>
+	<a class="btn btn-outline-secondary btn-sm" href="{{ archived_toggle_query }}">Vis arkiverte</a>
 </p>
 {% else %}
 <p class="mt-2 mb-3">
-	<a class="btn btn-outline-secondary btn-sm" href="?include_archived=0">Skjul arkiverte</a>
+	<a class="btn btn-outline-secondary btn-sm" href="{{ archived_toggle_query }}">Skjul arkiverte</a>
 </p>
 {% endif %}
 
 <div class="risiko-scope-table-block" data-risiko-scope-table>
-{% if virksomhet_tilgangsgrupper %}
-{% risiko_tilgangsgruppe_filter_buttons virksomhet_tilgangsgrupper %}
-{% endif %}
+{% include "risiko_scope_list_filters.html" with tilgangsgrupper=virksomhet_tilgangsgrupper search_query=search_query include_archived=include_archived search_scope_hint=search_scope_hint search_reset_url=search_reset_url %}
 {% include "risiko_scope_list_table.html" with scopes=virksomhet_scopes %}
 </div>
 
@@ -141,6 +168,8 @@
 {% if not virksomhet_scopes and not my_scopes %}
 
 <p>Ingen risikosamlinger ennå.{% if can_create %} <a href="{% url 'risiko_scope_create' %}">Opprett en ny samling</a>{% elif can_import %} <a href="{% url 'risiko_import' %}">Importer en Excel-fil</a>{% endif %} for å komme i gang.</p>
+
+{% endif %}
 
 {% endif %}
 

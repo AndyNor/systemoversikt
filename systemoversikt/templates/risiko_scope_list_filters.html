@@ -1,0 +1,29 @@
+{# 2026-07-08: Server-side GET search (q=) plus optional client-side tilgangsgruppe filter bar. #}
+{% load templatetags %}
+<div class="risiko-scope-list-filters mb-2">
+{% if tilgangsgrupper and not search_query %}
+{% risiko_tilgangsgruppe_filter_buttons tilgangsgrupper %}
+{% endif %}
+<form method="get" class="risiko-scope-search-form{% if tilgangsgrupper and not search_query %} mt-1{% endif %}">
+	<div class="risiko-scope-search-bar">
+		<span class="risiko-scope-search-bar-label">Søk:</span>
+		<input type="search"
+			name="q"
+			value="{{ search_query }}"
+			class="form-control form-control-sm risiko-scope-search-input"
+			placeholder="Tittel eller beskrivelse…"
+			autocomplete="off"
+			aria-label="Søk i risikosamlinger etter tittel eller beskrivelse">
+		{% if include_archived %}
+		<input type="hidden" name="include_archived" value="1">
+		{% endif %}
+		<button type="submit" class="btn btn-primary btn-sm">Søk</button>
+		{% if search_query %}
+		<a class="btn btn-outline-secondary btn-sm" href="{{ search_reset_url }}">Nullstill</a>
+		{% endif %}
+	</div>
+	{% if search_scope_hint %}
+	<p class="small text-muted mb-0 mt-1">{{ search_scope_hint }}</p>
+	{% endif %}
+</form>
+</div>

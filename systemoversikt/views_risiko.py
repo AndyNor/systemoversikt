@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-08: Server-side scope search (q=) across all virksomheter on root list.
 # 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator scoped to profile virksomhet on tilgangsgrupper page.
 # 2026-07-07: view_riskscope gates collection create/import; tilgangsgrupper page uses granular membership helpers.
 # 2026-07-07: Editor context sannsynlighet_keys from editable sannsynlighetstyper; import redirects to rediger.
@@ -39,6 +40,7 @@
 
 from datetime import date, datetime
 import json
+from urllib.parse import quote
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -96,6 +98,8 @@ from systemoversikt.risk_membership import (
 	RISK_CREATE_PERMISSION,
 	scopes_for_user_membership,
 	scopes_for_virksomhet,
+	search_scopes,
+	search_scopes_for_virksomhet,
 	user_can_access_risk_virksomhet_groups_page,
 	user_can_create_risk_virksomhet_group,
 	user_can_set_virksomhet_read_only_flag,
@@ -108,6 +112,29 @@ from systemoversikt.views import formater_permissions
 
 # Create/import gated by view_riskscope only; collection detail restricted to scope members.
 RISK_CREATE_PERMISSIONS = [RISK_CREATE_PERMISSION]
+
+RISK_SCOPE_SEARCH_MAX_LEN = 200
+
+
+def _risiko_scope_search_query(request):
+	return (request.GET.get('q') or '').strip()[:RISK_SCOPE_SEARCH_MAX_LEN]
+
+
+def _filter_scopes_archived(qs, include_archived):
+	if include_archived:
+		return qs.filter(archived_at__isnull=False)
+	return qs.filter(archived_at__isnull=True)
+
+
+def _risiko_scope_archived_toggle_query(include_archived, search_query=''):
+	parts = []
+	if include_archived:
+		parts.append('include_archived=0')
+	else:
+		parts.append('include_archived=1')
+	if search_query:
+		parts.append('q=%s' % quote(search_query))
+	return '?' + '&'.join(parts)
 
 
 def _scope_membership(request, scope):
@@ -306,7 +333,32 @@ def _risiko_list_context(request, scopes, list_virksomhet=None):
 def risiko_scope_list(request):
 	# 2026-07-01: Root list – profile virksomhet collections plus cross-virksomhet memberships.
 	include_archived = request.GET.get('include_archived') == '1'
+	search_query = _risiko_scope_search_query(request)
 	profile_v = profile_virksomhet(request.user)
+	archived_toggle_query = _risiko_scope_archived_toggle_query(include_archived, search_query)
+	search_reset_url = reverse('risiko_scope_list')
+	if include_archived:
+		search_reset_url += '?include_archived=1'
+
+	if search_query:
+		# 2026-07-08: Server search across all virksomheter – existence is open, read flags per row.
+		search_results = _filter_scopes_archived(
+			search_scopes(request.user, search_query),
+			include_archived,
+		)
+		return render(request, 'risiko_scope_list.html', {
+			**_risiko_list_context(request, search_results, list_virksomhet=profile_v),
+			'search_query': search_query,
+			'search_results': search_results,
+			'search_scope_hint': 'Søker i tittel og beskrivelse på tvers av alle virksomheter.',
+			'search_reset_url': search_reset_url,
+			'virksomhet_scopes': [],
+			'my_scopes': [],
+			'is_root_list': True,
+			'include_archived': include_archived,
+			'archived_toggle_query': archived_toggle_query,
+		})
+
 	virksomhet_scopes = scopes_for_virksomhet(
 		request.user,
 		profile_v.pk if profile_v else None,
@@ -316,34 +368,49 @@ def risiko_scope_list(request):
 		exclude_virksomhet_id=profile_v.pk if profile_v else None,
 	)
 	# 2026-07-08: `include_archived=1` should show archived scopes only (not active + archived).
-	if include_archived:
-		virksomhet_scopes = virksomhet_scopes.filter(archived_at__isnull=False)
-		my_scopes = my_scopes.filter(archived_at__isnull=False)
-	else:
-		virksomhet_scopes = virksomhet_scopes.filter(archived_at__isnull=True)
-		my_scopes = my_scopes.filter(archived_at__isnull=True)
+	virksomhet_scopes = _filter_scopes_archived(virksomhet_scopes, include_archived)
+	my_scopes = _filter_scopes_archived(my_scopes, include_archived)
 	return render(request, 'risiko_scope_list.html', {
 		**_risiko_list_context(request, virksomhet_scopes, list_virksomhet=profile_v),
+		'search_query': '',
+		'search_results': None,
+		'search_scope_hint': 'Søker i tittel og beskrivelse på tvers av alle virksomheter.',
+		'search_reset_url': search_reset_url,
 		'virksomhet_scopes': virksomhet_scopes,
 		'my_scopes': my_scopes,
 		'is_root_list': True,
 		'include_archived': include_archived,
+		'archived_toggle_query': archived_toggle_query,
 	})
 
 
 def risiko_virksomhet_list(request, vid):
 	include_archived = request.GET.get('include_archived') == '1'
+	search_query = _risiko_scope_search_query(request)
 	virksomhet = get_object_or_404(Virksomhet, pk=vid)
-	scopes = scopes_for_virksomhet(request.user, virksomhet.pk)
-	# 2026-07-08: `include_archived=1` should show archived scopes only.
+	archived_toggle_query = _risiko_scope_archived_toggle_query(include_archived, search_query)
+	search_reset_url = reverse('risiko_virksomhet_list', kwargs={'vid': vid})
 	if include_archived:
-		scopes = scopes.filter(archived_at__isnull=False)
+		search_reset_url += '?include_archived=1'
+
+	if search_query:
+		scopes = _filter_scopes_archived(
+			search_scopes_for_virksomhet(request.user, virksomhet.pk, search_query),
+			include_archived,
+		)
 	else:
-		scopes = scopes.filter(archived_at__isnull=True)
+		scopes = scopes_for_virksomhet(request.user, virksomhet.pk)
+		scopes = _filter_scopes_archived(scopes, include_archived)
+
 	return render(request, 'risiko_virksomhet_list.html', {
 		**_risiko_list_context(request, scopes, list_virksomhet=virksomhet),
 		'virksomhet': virksomhet,
+		'search_query': search_query,
+		'search_results': scopes if search_query else None,
+		'search_scope_hint': 'Søker i tittel og beskrivelse for denne virksomheten.',
+		'search_reset_url': search_reset_url,
 		'include_archived': include_archived,
+		'archived_toggle_query': archived_toggle_query,
 	})
 
 
