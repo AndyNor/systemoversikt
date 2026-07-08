@@ -6436,6 +6436,11 @@ def systemdetaljer(request, pk):
 		else:
 			bruk.automatisk_ad_antall_for_virksomhet = None
 
+	# 2026-07-08: Summary card – count Azure graph permissions for compact facts panel.
+	graph_permissions_count = 0
+	for ea in system.enterprise_applicatons.prefetch_related('requiredResourceAccess').all():
+		graph_permissions_count += ea.requiredResourceAccess.count()
+
 	return render(request, 'system_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -6460,6 +6465,7 @@ def systemdetaljer(request, pk):
 		'vulnerabilities': sorted_unique_vulns,
 		'total_number_vulns': total_number_vulns,
 		'automatisk_brukere_antall_fra_ad': automatisk_brukere_antall_fra_ad,
+		'graph_permissions_count': graph_permissions_count,
 		**system_risk_context,
 	})
 
