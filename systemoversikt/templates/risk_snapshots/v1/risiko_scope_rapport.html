@@ -1,4 +1,6 @@
 {# 2026-07-08: Snapshot v1 – collection rapport from precomputed JSON (no live model methods). #}
+{# 2026-07-08: Fix CSS visible text – wrap shared CSS include in <style> tag. #}
+{# 2026-07-08: Explain omfangsfigur is fetched from latest live report, not snapshot-time file. #}
 {% extends "document_minimal.html" %}
 {% load static %}
 {% load templatetags %}
@@ -19,7 +21,8 @@
 
 <div class="alert alert-secondary py-2" role="status">
 	<strong>Arkivert snapshot</strong> tatt {{ snapshot.captured_at|date:"Y-m-d H:i" }}.
-	Omfangsfigur hentes fra live samling hvis tilgjengelig.
+	Omfangsfigur hentes alltid fra live samling (nyeste risikovurderingsrapport) hvis tilgjengelig.
+	Bildet kan derfor avvike fra figuren slik den var ved snapshot-tidspunktet.
 </div>
 
 <h1 class="risiko-rapport-title h3 mb-4">Risikovurderingsrapport: {{ scope.title }}</h1>
@@ -49,7 +52,13 @@
 <section class="risiko-rapport-section">
 	<h2>2. Omfangsfigur</h2>
 	{% if omfang_fil.has_figur %}
-	<p class="mb-1 text-muted small">{% if omfang_fil.figur_filnavn %}{{ omfang_fil.figur_filnavn }}{% endif %} (live)</p>
+	<p class="mb-1 text-muted small">
+		{% if omfang_fil.figur_filnavn %}{{ omfang_fil.figur_filnavn }}{% endif %}
+		(hentes fra live – nyeste risikovurderingsrapport)
+	</p>
+	<p class="text-muted mb-0 small">
+		Snapshot lagrer ikke egen filkopi av omfangsfiguren. Derfor kan bildet som vises avvike fra det som var lastet opp ved snapshot-tidspunktet.
+	</p>
 	<img class="risiko-rapport-figur img-fluid" src="{% url 'risiko_scope_fil_omfang' pk=scope.pk %}" alt="Omfangsfigur for {{ scope.title }}">
 	{% else %}
 	<p class="text-muted mb-0">Ingen omfangsfigur var lastet opp ved snapshot.</p>
@@ -229,7 +238,9 @@
 {% endblock content %}
 
 {% block ekstrajavascript %}
-{% include "risk_snapshots/v1/_risiko_rapport_styles.html" %}
+<style nonce="{{ request.csp_nonce }}">
+	{% include "risk_snapshots/v1/_risiko_rapport_styles.html" %}
+</style>
 {% endblock ekstrajavascript %}
 
 {% block script_append %}
