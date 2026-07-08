@@ -315,7 +315,11 @@ def risiko_scope_list(request):
 		request.user,
 		exclude_virksomhet_id=profile_v.pk if profile_v else None,
 	)
-	if not include_archived:
+	# 2026-07-08: `include_archived=1` should show archived scopes only (not active + archived).
+	if include_archived:
+		virksomhet_scopes = virksomhet_scopes.filter(archived_at__isnull=False)
+		my_scopes = my_scopes.filter(archived_at__isnull=False)
+	else:
 		virksomhet_scopes = virksomhet_scopes.filter(archived_at__isnull=True)
 		my_scopes = my_scopes.filter(archived_at__isnull=True)
 	return render(request, 'risiko_scope_list.html', {
@@ -331,7 +335,10 @@ def risiko_virksomhet_list(request, vid):
 	include_archived = request.GET.get('include_archived') == '1'
 	virksomhet = get_object_or_404(Virksomhet, pk=vid)
 	scopes = scopes_for_virksomhet(request.user, virksomhet.pk)
-	if not include_archived:
+	# 2026-07-08: `include_archived=1` should show archived scopes only.
+	if include_archived:
+		scopes = scopes.filter(archived_at__isnull=False)
+	else:
 		scopes = scopes.filter(archived_at__isnull=True)
 	return render(request, 'risiko_virksomhet_list.html', {
 		**_risiko_list_context(request, scopes, list_virksomhet=virksomhet),

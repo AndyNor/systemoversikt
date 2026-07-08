@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-08: `include_archived=1` shows archived sammenstillinger only on list pages.
 # 2026-07-07: reader_groups M2M – view access for group members; map still owner-group only.
 # 2026-07-07: Superuser can reassign sammenstilling owner_group from rammeverk list UI.
 # 2026-07-06: user_can_edit_template – Django superuser only (mal editor + mal APIs).
@@ -89,7 +90,10 @@ def sammenstillinger_visible_to_user(user, include_archived=False):
 		'owner_group',
 		'owner_group__virksomhet',
 	)
-	if not include_archived:
+	# 2026-07-08: `include_archived=1` should show archived sammenstillinger only (not active + archived).
+	if include_archived:
+		qs = qs.filter(archived_at__isnull=False)
+	else:
 		qs = qs.filter(archived_at__isnull=True)
 	if not user.is_authenticated:
 		return qs.none()
