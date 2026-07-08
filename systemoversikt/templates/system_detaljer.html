@@ -1,11 +1,99 @@
+{# 2026-07-08: Read-only risk overview section (Risikomatriser, scenarioer, tiltak) for linked scenarios. #}
+{# 2026-07-08: Summary card refinements – gray tags, edit outside box, categories back below. #}
+{# 2026-07-08: Professional summary card – name, platform, ownership, classification at top of page. #}
 {% extends "system_index.html" %}
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
 
 {% block overskrift %}
-	{{ systemdetaljer }}
+	<span class="system-detalj-tittel">
+		<img class="system-detalj-ikon" src="{% if systemdetaljer.er_infrastruktur %}{% static 'infra.png' %}{% elif systemdetaljer.er_integrasjon %}{% static 'integrasjon.png' %}{% elif systemdetaljer.er_saas %}{% static 'system.png' %}{% elif systemdetaljer.driftsmodell_foreignkey.type_plattform == 2 %}{% static 'sky.png' %}{% else %}{% static 'system.png' %}{% endif %}" alt="">
+		{{ systemdetaljer.systemnavn }}
+	</span>
 {% endblock overskrift %}
+
+{% block ekstrastyle %}
+<style nonce="{{ request.csp_nonce }}">
+.system-detalj-tittel {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.65rem;
+}
+.system-detalj-ikon {
+	height: 42px;
+	width: 42px;
+	flex-shrink: 0;
+}
+.system-detalj-kort {
+	background: #fff;
+	border: 1px solid #e4e2ef;
+	border-radius: 12px;
+	padding: 1.25rem 1.35rem;
+	margin-bottom: 1.25rem;
+	box-shadow: 0 1px 3px rgba(42, 40, 89, 0.06);
+}
+.system-detalj-rediger {
+	margin: 0.35rem 0 0.85rem;
+}
+.system-detalj-badges {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem 0.5rem;
+	margin-bottom: 1rem;
+}
+.system-detalj-badge {
+	display: inline-block;
+	font-size: 0.78rem;
+	font-weight: 500;
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	background: #f8f9fa;
+	color: #6c757d;
+	border: 1px solid #dee2e6;
+}
+.system-detalj-badge a {
+	color: inherit;
+	text-decoration: none;
+}
+.system-detalj-badge a:hover {
+	text-decoration: underline;
+}
+.system-detalj-beskrivelse {
+	color: #444;
+	font-size: 1rem;
+	line-height: 1.55;
+	margin: 0 0 1.15rem;
+	max-width: 960px;
+}
+.system-detalj-eierskap {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 1rem 1.25rem;
+	padding-top: 1rem;
+	border-top: 1px solid #eceaf4;
+}
+.system-detalj-eierskap-panel h6 {
+	font-size: 0.68rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #888;
+	margin-bottom: 0.25rem;
+	font-weight: 600;
+}
+.system-detalj-eierskap-panel .virksomhet-lenke {
+	font-size: 0.85rem;
+	font-weight: 600;
+	margin-bottom: 0.35rem;
+	display: block;
+}
+.system-detalj-eierskap-panel .kontaktliste {
+	font-size: 0.8rem;
+	line-height: 1.4;
+}
+</style>
+{% endblock ekstrastyle %}
 
 {% block ekstrajavascript %}
 	<script src="{% static 'cytoscape/cytoscape.min.js@3.9.4' %}" nonce="{{request.csp_nonce}}"></script>
@@ -21,39 +109,98 @@
 
 {% block hovedinnhold %}
 
-
-	<div style="margin: 10px;">
-		<a href="{{ url_systemdetaljer }}" style="float: left; margin: 10px;">
-			{% if systemdetaljer.er_infrastruktur %}
-			<img src="{% static 'infra.png' %}">
-			{% elif systemdetaljer.er_integrasjon %}
-			<img src="{% static 'integrasjon.png' %}">
-			{% elif systemdetaljer.er_saas %}
-			<img src="{% static 'system.png' %}">
-			{% elif systemdetaljer.driftsmodell_foreignkey.type_plattform == 2 %}
-			<img src="{% static 'sky.png' %}">
-			{% else %}
-			<img src="{% static 'system.png' %}">
-			{% endif %}
-		</a>
-
-			{% if systemdetaljer.driftsmodell_foreignkey %}{{ systemdetaljer.driftsmodell_foreignkey }}{% endif %}
-			{% if systemdetaljer.livslop_status == 1 %}<span style="color:green;">Under innføring</span>{% endif %}
-			{% if systemdetaljer.livslop_status == 5 %}<span style="color:red;">Skal byttes ut</span>{% endif %}
-			{% if systemdetaljer.livslop_status == 6 %}<span style="color:red;">Under avvikling</span>{% endif %}
-			{% if systemdetaljer.livslop_status == 7 %}<span style="color:red;">Er avviklet</span>{% endif %}
-	</div>
-
-	<hr>
-
 	{% if user.is_authenticated %}
-		<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/"
-		class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Endre informasjon om {{systemdetaljer.systemnavn}}</a><br>
+		<div class="system-detalj-rediger">
+			<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/" class="btn btn-sm btn-link">
+				{% include 'site_edit_button.html' %} Endre informasjon om {{ systemdetaljer.systemnavn }}
+			</a>
+		</div>
 	{% endif %}
 
-	<hr>
+	<div class="system-detalj-kort">
+		<div class="system-detalj-badges">
+			{% if systemdetaljer.driftsmodell_foreignkey %}
+				{% url 'detaljer_driftsmodell' systemdetaljer.driftsmodell_foreignkey.pk as url_driftsplattform %}
+				<span class="system-detalj-badge">
+					<a href="{{ url_driftsplattform }}">{{ systemdetaljer.driftsmodell_foreignkey }}</a>
+				</span>
+			{% endif %}
+			{% if systemdetaljer.livslop_status %}
+				<span class="system-detalj-badge">{{ systemdetaljer.get_livslop_status_display|livslop_status_label }}</span>
+			{% endif %}
+			{% if systemdetaljer.systemeierskapsmodell %}
+				{% url 'systemklassifisering_detaljer' kriterie=systemdetaljer.systemeierskapsmodell as url_systemklassifisering %}
+				<span class="system-detalj-badge">
+					<a href="{{ url_systemklassifisering }}">{{ systemdetaljer.get_systemeierskapsmodell_display }}</a>
+				</span>
+			{% endif %}
+		</div>
 
-	<h6>{{ systemdetaljer.systembeskrivelse|default:"Ingen beskrivelse oppgitt"|linebreaks }}</h6>
+		<p class="system-detalj-beskrivelse">{{ systemdetaljer.systembeskrivelse|default:"Ingen beskrivelse oppgitt"|linebreaksbr }}</p>
+
+		<div class="system-detalj-eierskap">
+			<div class="system-detalj-eierskap-panel">
+				<h6>Systemeier</h6>
+				{% if systemdetaljer.systemeier %}
+					{% url "virksomhet" systemdetaljer.systemeier.pk as url_systemeier %}
+					<a class="virksomhet-lenke" href="{{ url_systemeier }}">{{ systemdetaljer.systemeier }}</a>
+				{% else %}
+					<span class="text-muted">Ikke angitt</span>
+				{% endif %}
+				<div class="kontaktliste">
+					{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemeier_kontaktpersoner_referanse.all %}
+				</div>
+			</div>
+
+			<div class="system-detalj-eierskap-panel">
+				<h6>Systemforvalter</h6>
+				{% if systemdetaljer.systemforvalter %}
+					{% url "virksomhet" systemdetaljer.systemforvalter.pk as url_systemforvalter %}
+					<a class="virksomhet-lenke" href="{{ url_systemforvalter }}">{{ systemdetaljer.systemforvalter }}</a>
+				{% else %}
+					<span class="text-muted">Ikke angitt</span>
+				{% endif %}
+				{% if systemdetaljer.systemforvalter_avdeling_referanse %}
+					{% url "enhet_detaljer" systemdetaljer.systemforvalter_avdeling_referanse.pk as url_enhet_detaljer %}
+					<div class="small text-muted mb-1">
+						Seksjon: <a href="{{ url_enhet_detaljer }}">{{ systemdetaljer.systemforvalter_avdeling_referanse }}</a>
+					</div>
+				{% endif %}
+				<div class="kontaktliste">
+					{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
+				</div>
+				{% if systemdetaljer.forvaltning_epost %}
+					<div class="small mt-1">
+						{% get_verbose_field_name systemdetaljer "forvaltning_epost" %}: {{ systemdetaljer.forvaltning_epost }}
+					</div>
+				{% endif %}
+			</div>
+		</div>
+
+	</div>
+
+	{% if systemdetaljer.alias %}
+		Alias {% for alias in systemdetaljer.alias_oppdelt %} <span class="badge badge-light">{{ alias }}</span> {% endfor %}
+	{% endif %}
+
+	<br>
+	{% get_verbose_field_name systemdetaljer "systemkategorier" %}
+	{% for kategori in systemdetaljer.systemkategorier.all %}
+		{% url "systemkategori" kategori.pk as url_systemkategori %}
+		<a class="badge badge-light" href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a>
+	{% endfor %}
+
+	{% if systemdetaljer.er_arkiv %}
+		og <span class="badge badge-light">🗁 Arkivsystem</span>
+	{% endif %}
+
+	<br>
+	{% if systemdetaljer.systemtyper %}
+		{% get_verbose_field_name systemdetaljer "systemtyper" %}:
+		{% for systemtype in systemdetaljer.systemtyper.all %}
+			<span class="badge badge-light">{{ systemtype }}</span>
+		{% endfor %}
+	{% endif %}
 
 	{% if systemdetaljer.programvarer.count > 0 %}
 		<hr>
@@ -96,31 +243,6 @@
 	{% endif %}
 
 	<hr>
-
-	{% if systemdetaljer.alias %}
-		Alias {% for alias in systemdetaljer.alias_oppdelt %} <span class="badge badge-light">{{ alias }}</span> {% endfor %}</li>
-	{% endif %}
-
-	<br>
-	{% get_verbose_field_name systemdetaljer "systemkategorier" %}
-	{% for kategori in systemdetaljer.systemkategorier.all %}
-		{% url "systemkategori" kategori.pk as url_systemkategori %}
-		<a class="badge badge-light" href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a>
-	{% endfor %}
-
-	{% if systemdetaljer.er_arkiv %}
-		og <span class="badge badge-light">🗁 Arkivsystem</span>
-	{% endif %}
-
-	<br>
-	{% if systemdetaljer.systemtyper %}
-		{% get_verbose_field_name systemdetaljer "systemtyper" %}:
-		{% for systemtype in systemdetaljer.systemtyper.all %}
-			<span class="badge badge-light">{{ systemtype }}</span>
-		{% endfor %}
-	{% endif %}
-
-	<br><hr>
 	Hopp til
 	{% if systemdetaljer.inv_konklusjon %}
 	<a href="#anchor_inv" class="btn btn-sm btn-link">Innrulleringsvurderinger</a>
@@ -131,6 +253,7 @@
 	<a href="#anchor_systemav" class="btn btn-sm btn-link">Figur og systemavhengigheter</a>
 	<a href="#anchor_livslop" class="btn btn-sm btn-link">Livsløpsvurderinger</a>
 	<a href="#anchor_sikkerhet" class="btn btn-sm btn-link">Sikkerhet og personvern</a>
+	<a href="#anchor_risiko" class="btn btn-sm btn-link">Risikovurderinger</a>
 	<a href="#anchor_citrix" class="btn btn-sm btn-link">Citrix-publiseringer</a>
 	<a href="#anchor_servere_database" class="btn btn-sm btn-link">Servere og databaser</a>
 	<a href="#anchor_leverandor" class="btn btn-sm btn-link">Leverandører</a>
@@ -660,6 +783,19 @@
 		</div>
 	</div>
 
+
+	<br><hr>
+	<h3 style="scroll-margin-top: 150px;" id="anchor_risiko">Risikovurderinger</h3>
+	<div class="row">
+		<div class="col-12">
+		{% if can_view_system_risk %}
+			{% include "includes/system_risk_overview.html" %}
+			<br><i>(Denne oversikten vises kun for eiere, forvaltere og sikkerhetsanalytiker)</i>
+		{% else %}
+			<i>Risikovurderinger vises kun for systemeier, systemforvalter og sikkerhetsanalytiker</i>
+		{% endif %}
+		</div>
+	</div>
 
 	<br><hr>
 	<h3 style="scroll-margin-top: 150px;" id="anchor_leverandor">Leverandører</h3>

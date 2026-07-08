@@ -1,4 +1,5 @@
 # Change log:
+# 2026-07-08: livslop_status_label – strip leading number from LIVSLOEP_VALG display in summary badges.
 # 2026-07-07: linebreaks_bullets – compact bullet list for multiline report text (skip blank lines).
 # 2026-07-07: risiko_member_display – show virksomhetsforkortelse with member names on collection pages.
 # 2026-07-07: group_from_permission – always return list; handle AD group names (403 page bullet-per-char bug).
@@ -317,6 +318,14 @@ def quarter(value):
 		elif month in [10, 11, 12]:
 			return "Q4"
 	return ""
+
+
+@register.filter
+def livslop_status_label(value):
+	# 2026-07-08: LIVSLOEP_VALG labels include a leading digit (e.g. "3 👌 Moderne…").
+	if not value:
+		return value
+	return re.sub(r'^\d+\s+', '', str(value))
 
 
 ### get_odata_type

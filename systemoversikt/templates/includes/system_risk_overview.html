@@ -1,0 +1,195 @@
+{# 2026-07-08: KIT tag CSS – match risiko_scope_detail so icons are not full-size SVGs.
+   2026-07-08: Read-only risk overview on system details – linked scenarios from non-archived collections. #}
+{% load templatetags %}
+
+<style nonce="{{ request.csp_nonce }}">
+.system-risk-overview .risk-matrix { border-collapse: collapse; width: 100%; max-width: 520px; margin-bottom: 1rem; border: 2px solid #5a6268; }
+.system-risk-overview .risk-matrix th, .system-risk-overview .risk-matrix td { border: 1px solid #5a6268; text-align: center; vertical-align: middle; padding: 4px; min-width: 48px; min-height: 40px; font-size: 0.85rem; }
+.system-risk-overview .risk-matrix .axis-label { background: #f8f9fa; font-weight: 600; font-size: 0.8rem; }
+.system-risk-overview .risk-matrix .corner { background: #f8f9fa; }
+.system-risk-overview .risk-cell-lav { background-color: #c0eb96; }
+.system-risk-overview .risk-cell-middels { background-color: #ffecb2; }
+.system-risk-overview .risk-cell-hoy { background-color: #ffc8cd; }
+.system-risk-overview .risk-cell-empty { background-color: #fff; }
+.system-risk-overview .risk-badge { display: inline-block; margin: 1px; padding: 1px 4px; font-size: 0.75rem; background: rgba(0,0,0,0.08); border-radius: 3px; text-decoration: none; color: inherit; }
+.system-risk-overview .risk-badge:hover { background: rgba(0,0,0,0.15); text-decoration: none; }
+.system-risk-overview #system-risk-scenarios-table td.risk-cell-lav { background-color: #c0eb96; }
+.system-risk-overview #system-risk-scenarios-table td.risk-cell-middels { background-color: #ffecb2; }
+.system-risk-overview #system-risk-scenarios-table td.risk-cell-hoy { background-color: #ffc8cd; }
+.system-risk-overview .risiko-level-cell { text-align: center; white-space: normal; }
+.system-risk-overview .risiko-level-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 2px 6px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+.system-risk-overview .risiko-level-tag.risk-level-1 { background-color: #c0eb96; }
+.system-risk-overview .risiko-level-tag.risk-level-2 { background-color: #e4f5ad; }
+.system-risk-overview .risiko-level-tag.risk-level-3 { background-color: #ffecb2; }
+.system-risk-overview .risiko-level-tag.risk-level-4 { background-color: #ffd997; }
+.system-risk-overview .risiko-level-tag.risk-level-5 { background-color: #ffc8cd; }
+.system-risk-overview .risiko-level-tag.risk-cell-lav { background-color: #c0eb96; }
+.system-risk-overview .risiko-level-tag.risk-cell-middels { background-color: #ffecb2; }
+.system-risk-overview .risiko-level-tag.risk-cell-hoy { background-color: #ffc8cd; }
+.system-risk-overview a.risiko-risk-id-tag { color: inherit; text-decoration: none; }
+.system-risk-overview a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
+.system-risk-overview .risiko-tiltak-status-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	padding: 2px 6px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+.system-risk-overview .risiko-tiltak-status-utfort { background-color: #c0eb96; }
+.system-risk-overview .risiko-tiltak-status-under-arbeid { background-color: #ffecb2; }
+.system-risk-overview .risiko-tiltak-status-forslag { background-color: #e9ecef; }
+.system-risk-overview .risiko-tiltak-status-besluttet { background-color: #ffc8cd; }
+.system-risk-overview .risiko-tiltak-status-unknown { background-color: #e9ecef; }
+.system-risk-overview .risiko-kit-cell { min-width: 8rem; white-space: normal; }
+.system-risk-overview .risiko-kit-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	margin: 1px 2px 1px 0;
+	padding: 2px 5px;
+	border-radius: 3px;
+	white-space: nowrap;
+}
+.system-risk-overview .risiko-kit-icon { width: 11px; height: 11px; flex-shrink: 0; }
+.system-risk-overview .risiko-kit-k { background-color: #ede7f6; color: #5e35b1; }
+.system-risk-overview .risiko-kit-i { background-color: #efebe9; color: #6d4c41; }
+.system-risk-overview .risiko-kit-t { background-color: #eceff1; color: #546e7a; }
+.system-risk-overview .risiko-konsekvenstype-cell { min-width: 8rem; max-width: 12rem; white-space: normal; }
+.system-risk-overview .risiko-konsekvenstype-tag,
+.system-risk-overview .risiko-sannsynlighetstype-tag {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 600;
+	line-height: 1.2;
+	margin: 1px 2px 1px 0;
+	padding: 2px 5px;
+	border-radius: 3px;
+	white-space: nowrap;
+	max-width: 7.5rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: top;
+	background-color: #dee2e6;
+	color: #343a40;
+}
+.system-risk-overview .risiko-sannsynlighetstype-cell { min-width: 8rem; max-width: 12rem; white-space: normal; }
+</style>
+
+<div class="system-risk-overview">
+
+{% if not system_risk_has_data %}
+<p class="text-muted mb-0">Ingen risikoscenarioer er knyttet til dette systemet i aktive risikosamlinger.</p>
+{% else %}
+
+<div class="row mb-4" id="system-risikomatriser">
+	<div class="col-12">
+		<h5 class="mt-0">Risikomatriser</h5>
+		<div class="row">
+			<div class="col-md-6">
+				<h6>Nåværende risiko</h6>
+				<p class="text-muted small">Etter eksisterende tiltak</p>
+				{% include "risiko_matrise_grid.html" with matrix=system_risk_matrix_current konsekvens_labels=system_risk_konsekvens_labels %}
+			</div>
+			<div class="col-md-6">
+				<h6>Risiko etter tiltak</h6>
+				<p class="text-muted small">Etter foreslåtte tiltak er implementert</p>
+				{% include "risiko_matrise_grid.html" with matrix=system_risk_matrix_residual konsekvens_labels=system_risk_konsekvens_labels %}
+			</div>
+		</div>
+	</div>
+</div>
+
+<h5 class="mb-2">Uønskede hendelser</h5>
+<table class="table table-sm" id="system-risk-scenarios-table">
+<thead>
+<tr>
+	<th>ID</th>
+	<th>Risikosamling</th>
+	<th>Uønsket hendelse</th>
+	<th>KIT</th>
+	<th>Konsekvenstype</th>
+	<th>Konsekvens</th>
+	<th>Sannsynlighetstype</th>
+	<th>Sannsynlighet</th>
+	<th>Risiko nå</th>
+	<th>Tiltak</th>
+	<th>Risiko etter tiltak</th>
+</tr>
+</thead>
+<tbody>
+{% for scenario in system_risk_scenarios %}
+<tr>
+	<td>
+		<a href="{% url 'risiko_scope_detail' pk=scenario.scope_id %}?edit={{ scenario.pk }}" class="risiko-level-tag {{ scenario.risiko_css }}" title="{{ scenario.risiko_etikett|default:'-' }}">{{ scenario.display_risk_id }}</a>
+	</td>
+	<td class="small">
+		<a href="{% url 'risiko_scope_detail' pk=scenario.scope_id %}">{% if scenario.scope.virksomhet %}{{ scenario.scope.virksomhet.virksomhetsforkortelse }} – {% endif %}{{ scenario.scope.title }}</a>
+	</td>
+	<td>{{ scenario.uonsket_hendelse|truncatechars:80 }}</td>
+	<td class="risiko-kit-cell">{% risiko_kit_tags scenario.kit_dimensjoner %}</td>
+	<td class="risiko-konsekvenstype-cell">{% risiko_konsekvenstype_tags scenario.konsekvenstyper %}</td>
+	<td class="risiko-level-cell">{% risiko_level_tag scenario.konsekvens_label scenario.konsekvens_css %}</td>
+	<td class="risiko-sannsynlighetstype-cell">{% risiko_sannsynlighetstype_tags scenario.sannsynlighetstyper %}</td>
+	<td class="risiko-level-cell">{% risiko_level_tag scenario.sannsynlighet_label scenario.sannsynlighet_css %}</td>
+	<td class="{{ scenario.risiko_css }}">{{ scenario.risiko_etikett|default:"-" }}</td>
+	<td>{{ scenario.display_tiltak_ids|default:"–" }}</td>
+	<td class="{{ scenario.restrisiko_css }}">{{ scenario.restrisiko_etikett|default:"-" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<div id="system-risk-tiltak-section" class="mt-4">
+<h5 class="mb-2">Tiltak</h5>
+{% if system_risk_tiltak_rows %}
+<table class="table table-sm table-bordered mb-0" id="system-risk-tiltak-table">
+<thead>
+<tr>
+	<th style="width:3rem">ID</th>
+	<th style="width:10rem">Samling</th>
+	<th>Tiltak</th>
+	<th style="width:8rem">RiskID</th>
+	<th style="width:8rem">Ansvarlig</th>
+	<th style="width:7rem">Frist</th>
+	<th style="width:8rem">Status</th>
+</tr>
+</thead>
+<tbody>
+{% for row in system_risk_tiltak_rows %}
+<tr>
+	<td>{{ row.display_tiltak_id }}</td>
+	<td class="small"><a href="{% url 'risiko_scope_detail' pk=row.scope_pk %}">{{ row.scope_title }}</a></td>
+	<td>{{ row.beskrivelse|linebreaksbr }}</td>
+	<td>
+		{% for link in row.risk_links %}
+			<a href="{% url 'risiko_scope_detail' pk=row.scope_pk %}?edit={{ link.scenario_pk }}" class="risiko-level-tag risiko-risk-id-tag {{ link.risiko_css }}" title="{{ link.risiko_etikett }}">{{ link.risk_id }}</a>{% if not forloop.last %} {% endif %}
+		{% empty %}-{% endfor %}
+	</td>
+	<td>{% if row.ansvarlig %}{{ row.ansvarlig }}{% else %}-{% endif %}</td>
+	<td>{{ row.frist|date:"Y-m-d"|default:"-" }}</td>
+	<td>{% risiko_tiltak_status_tag row.status row.status_display %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p class="text-muted mb-0">Ingen tiltak registrert.</p>
+{% endif %}
+</div>
+
+{% endif %}
+
+</div>

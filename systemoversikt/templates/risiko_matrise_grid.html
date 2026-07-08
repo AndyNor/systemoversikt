@@ -1,3 +1,4 @@
+{# 2026-07-08: Matrix badge links use scenario.scope_id for multi-collection matrices. #}
 {# 2026-07-07: report_mode – static R# badges without edit links for archive rapport. #}
 {# 2026-06-26: SANNS. rowspan once; drop level numbers from axis labels. #}
 <table class="risk-matrix">
@@ -26,7 +27,7 @@
 			{% if report_mode %}
 			<span class="risk-badge" title="{{ scenario.uonsket_hendelse|truncatechars:120 }}">{{ scenario.display_risk_id }}</span>
 			{% else %}
-			<a class="risk-badge" href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ scenario.pk }}" title="{{ scenario.uonsket_hendelse|truncatechars:120 }}">{{ scenario.display_risk_id }}</a>
+			<a class="risk-badge" href="{% url 'risiko_scope_detail' pk=scenario.scope_id %}?edit={{ scenario.pk }}" title="{{ scenario.uonsket_hendelse|truncatechars:120 }}">{{ scenario.display_risk_id }}</a>
 			{% endif %}
 		{% endfor %}
 	</td>

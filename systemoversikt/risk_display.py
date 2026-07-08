@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-08: annotate_scenario_risk_display – shared scenario table/matrix CSS labels for risk views.
 # 2026-07-01: Ansvarlig display resolution – map email/UPN to Profile displayName for tiltak UI.
 # 2026-06-30: Tiltak risk_links include nåværende risiko CSS for colored Risk ID tags.
 # 2026-06-26: Scenario Tiltak column lists all linked actions (all statuses).
@@ -74,6 +75,18 @@ def resolve_ansvarlig_display(value, lookup=None):
 	if lookup is not None:
 		return lookup.get(val, lookup.get(val.lower(), val))
 	return build_ansvarlig_display_map([val]).get(val, val)
+
+
+def annotate_scenario_risk_display(scenario, criteria):
+	from systemoversikt.risk_criteria import level_cell_css_class, risk_cell_css_class
+
+	scenario.konsekvens_css = level_cell_css_class(scenario.konsekvens_nivaa)
+	scenario.sannsynlighet_css = level_cell_css_class(scenario.sannsynlighet_nivaa)
+	scenario.konsekvens_label = criteria.konsekvens_lookup_label(scenario.konsekvens_nivaa)
+	scenario.sannsynlighet_label = criteria.sannsynlighet_lookup_label(scenario.sannsynlighet_nivaa)
+	scenario.risiko_css = risk_cell_css_class(scenario.risiko_etikett)
+	scenario.restrisiko_css = risk_cell_css_class(scenario.restrisiko_etikett)
+	return scenario
 
 
 def annotate_scenario_display_ids(scenarios):

@@ -70,13 +70,12 @@ from systemoversikt.risk_criteria import (
 	get_active_criteria,
 	get_or_create_active_config,
 	invalidate_criteria_cache,
-	level_cell_css_class,
-	risk_cell_css_class,
 	validate_criteria,
 	validate_slug_changes,
 )
 from systemoversikt.risk_display import (
 	annotate_scenario_display_ids,
+	annotate_scenario_risk_display,
 	annotate_scenarios_tiltak_ids,
 	build_scope_tiltak_rows,
 	tiltak_display_id_map,
@@ -536,16 +535,6 @@ def risiko_scope_create(request):
 	})
 
 
-def _annotate_scenario_display(scenario, criteria):
-	scenario.konsekvens_css = level_cell_css_class(scenario.konsekvens_nivaa)
-	scenario.sannsynlighet_css = level_cell_css_class(scenario.sannsynlighet_nivaa)
-	scenario.konsekvens_label = criteria.konsekvens_lookup_label(scenario.konsekvens_nivaa)
-	scenario.sannsynlighet_label = criteria.sannsynlighet_lookup_label(scenario.sannsynlighet_nivaa)
-	scenario.risiko_css = risk_cell_css_class(scenario.risiko_etikett)
-	scenario.restrisiko_css = risk_cell_css_class(scenario.restrisiko_etikett)
-	return scenario
-
-
 def _build_tiltak_rows(scope, scenarios):
 	actions = list(scope.actions.prefetch_related('scenarios').order_by('pk'))
 	risk_id_by_pk = annotate_scenario_display_ids(scenarios)
@@ -578,7 +567,7 @@ def _build_rapport_context(scope, criteria):
 	actions = list(scope.actions.prefetch_related('scenarios').order_by('pk'))
 	annotate_scenarios_tiltak_ids(scenarios, actions)
 	for scenario in scenarios:
-		_annotate_scenario_display(scenario, criteria)
+		annotate_scenario_risk_display(scenario, criteria)
 
 	owner_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_OWNER]
 	participant_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]
@@ -638,7 +627,7 @@ def risiko_scope_detail(request, pk):
 	annotate_scenario_display_ids(scenarios)
 	annotate_scenarios_tiltak_ids(scenarios, list(scope.actions.order_by('pk')))
 	for scenario in scenarios:
-		_annotate_scenario_display(scenario, criteria)
+		annotate_scenario_risk_display(scenario, criteria)
 
 	edit_scenario_id = None
 	raw = request.GET.get('edit', '').strip()

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-08: System details risk overview – scenarios linked via M2M, exclude archived collections.
 # 2026-07-07: alle_nettverk – only parse / as CIDR when term is valid IPv4/prefix (not text like DMZ Ekstern/Internett).
 # 2026-07-07: alle_nettverk – top_by_ip_devices stats use .values() so dict access works.
 # 2026-07-07: alle_nettverk – pagination, stats (lokasjon, IP-enheter, sone) and exclude filter.
@@ -6401,6 +6402,14 @@ def systemdetaljer(request, pk):
 	if request.user.groups.filter(name='/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER').exists():
 		current_user_is_owner = True
 
+	# 2026-07-08: Read-only risk overview for system-linked scenarios (non-archived collections).
+	from systemoversikt.risk_system import (
+		build_system_risk_context,
+		user_can_view_system_restricted_security,
+	)
+	can_view_system_risk = user_can_view_system_restricted_security(request.user, system)
+	system_risk_context = build_system_risk_context(system) if can_view_system_risk else {}
+
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
 	vulnerabilities = list(system.vulnerabilities_old())
@@ -6446,10 +6455,12 @@ def systemdetaljer(request, pk):
 		'save_rettigheter': save_rettigheter,
 		'citrix_apps': citrix_apps,
 		'current_user_is_owner': current_user_is_owner,
+		'can_view_system_risk': can_view_system_risk,
 		'integrasjonsstatus': integrasjonsstatus,
 		'vulnerabilities': sorted_unique_vulns,
 		'total_number_vulns': total_number_vulns,
 		'automatisk_brukere_antall_fra_ad': automatisk_brukere_antall_fra_ad,
+		**system_risk_context,
 	})
 
 
