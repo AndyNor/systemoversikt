@@ -1,159 +1,318 @@
-{% extends "cmdb_index.html" %}
-{% load humanize %}
-{% load static %}
-
-{% block ekstrameny_business_service %}
-{% endblock ekstrameny_business_service %}
-
-{% block overskrift %}
-	Nettverkssegmenter (VLAN)
-{% endblock overskrift %}
-
-{% block hovedinnhold %}
-
-{% include "includes/integrasjon_freshness_banner.html" with label="Nettverksdata ble sist synkronisert" %}
-
-	<p>
-		Nettverksdata fra Infoblox. Her kan du finne detaljer på nettverkssegmenter. Dataene oppdateres ved manuell import.
-		{% if has_filters %}
-			Fant {{ total_count|intcomma }} nettverk som passer med valgt filter.
-		{% else %}
-			Det er {{ total_count|intcomma }} nettverk i databasen.
-		{% endif %}
-		{% if page_obj.paginator.num_pages > 1 %}
-			Viser {{ page_obj.start_index }}–{{ page_obj.end_index }}.
-		{% endif %}
-	</p>
-
-	<div class="row mb-3">
-		<div class="col-xl-4 col-lg-6 col-md-6 mb-2">
-			<div class="card h-100">
-				<div class="card-header py-1"><small><b>Top 20 lokasjonsID</b></small></div>
-				<div class="card-body py-2 small">
-					{% for row in network_stats.top_locationids %}
-						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Søk på denne lokasjonsID-en">
-							{{ row.locationid }} ({{ row.count|intcomma }})
-						</a>
-					{% empty %}
-						<i>Ingen lokasjonsID-er</i>
-					{% endfor %}
-				</div>
-			</div>
-		</div>
-		<div class="col-xl-4 col-lg-6 col-md-6 mb-2">
-			<div class="card h-100">
-				<div class="card-header py-1"><small><b>Top 10 nettverk (tilknyttede IP-enheter)</b></small></div>
-				<div class="card-body py-2 small">
-					{% for row in network_stats.top_by_ip_devices %}
-						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Søk på dette nettverket">
-							{{ row.cidr }} ({{ row.ip_device_count|intcomma }})
-						</a>
-					{% empty %}
-						<i>Ingen nettverk</i>
-					{% endfor %}
-				</div>
-			</div>
-		</div>
-		<div class="col-xl-4 col-lg-6 col-md-6 mb-2">
-			<div class="card h-100">
-				<div class="card-header py-1"><small><b>Sone</b></small></div>
-				<div class="card-body py-2 small">
-					{% for row in network_stats.zones %}
-						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Søk på denne sonen">
-							{{ row.network_zone }} ({{ row.count|intcomma }})
-						</a>
-					{% empty %}
-						<i>Ingen soner</i>
-					{% endfor %}
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<div class="card mb-3">
-		<div class="card-header py-2"><small><b>Filtrer nettverk</b></small></div>
-		<div class="card-body py-3">
-			<form action="{% url 'alle_nettverk' %}" autocomplete="off">
-				<div class="row">
-					<div class="col-lg-7 mb-3 mb-lg-0">
-						<label class="small mb-1" for="vlan_search"><b>Inkluder</b> – søk i IP, nettverk, beskrivelse, lokasjon, sone eller tilhørighet</label>
-						<input id="vlan_search" type="search" value="{{ vlan_search_term }}" name="search_term"
-						placeholder="Søkeord…" class="form-control form-control-sm">
-					</div>
-					<div class="col-lg-5">
-						<label class="small mb-1" for="vlan_exclude"><b>Ekskluder</b> – IP, CIDR, lokasjonsID, sone eller annet felt (skjult fra resultat og statistikk)</label>
-						<textarea id="vlan_exclude" rows="2" name="exclude"
-						placeholder="Én eller flere verdier, separert med mellomrom, komma, semikolon eller linjeskift"
-						class="form-control form-control-sm">{{ exclude }}</textarea>
-					</div>
-				</div>
-				<div class="d-flex flex-wrap align-items-center mt-2">
-					<input type="submit" value="Søk" class="btn btn-primary btn-sm mr-2 mb-1">
-					{% if has_filters %}
-					<a class="btn btn-sm btn-outline-secondary mr-3 mb-1" href="{% url 'alle_nettverk' %}">Tøm filter</a>
-					{% endif %}
-				</div>
-			</form>
-			{% if exclude_term_count %}
-			<div class="small text-muted mt-2 mb-0">
-				<span>Ekskluderer {{ exclude_term_count }} verdi{{ exclude_term_count|pluralize:"er" }}.</span>
-			</div>
-			{% endif %}
-		</div>
-	</div>
-
-	<hr>
-
-	{% if total_count == 0 %}
-		<p><i>Ingen nettverk{% if has_filters %} som passer med valgt filter{% endif %}.</i></p>
-	{% else %}
-	<table class="table table-sm tablesorter excel">
-	<thead>
-		<tr>
-			<th>Nettverk</th>
-			<th>Tilknyttede IP-enheter</th>
-			<th>Beskrivelse</th>
-			<th>Lokasjons ID</th>
-			<th>Orgtilhørighet</th>
-			<th>VLAN ID</th>
-			<th>VLAN-navn</th>
-			<th>Lokasjon</th>
-			<th>VRF</th>
-			<th>Sone</th>
-		</tr>
-	</thead>
-	<tbody>
-	{% for nettverk in alle_nettverk %}
-		<tr>
-			<td>{{ nettverk.ip_address }}/{{ nettverk.subnet_mask }}{% if nettverk.disabled %} (deaktivert){% endif %}</td>
-			<td>{{ nettverk.ip_device_count|intcomma }}</td>
-			{% url 'nettverk_detaljer' pk=nettverk.pk as url_nettverk %}
-			<td><a href="{{ url_nettverk }}">{{ nettverk.comment }}</a></td>
-			<td>{{ nettverk.locationid }}</td>
-			<td>{{ nettverk.orgname }}</td>
-			<td>{{ nettverk.vlanid }}</td>
-			<td>{{ nettverk.vlan_name }}</td>
-			<td>{{ nettverk.location_name|default:nettverk.locationid }}</td>
-			<td>{{ nettverk.vrfname }}</td>
-			<td>{{ nettverk.network_zone|default:"ingen data" }}</td>
-		</tr>
-	{% endfor %}
-	</tbody>
-	</table>
-
-	{% if page_obj.paginator.num_pages > 1 %}
-	<nav>
-		<ul class="pagination pagination-sm">
-			{% if page_obj.has_previous %}
-			<li class="page-item"><a class="page-link" href="?{{ filter_query }}{% if filter_query %}&{% endif %}page={{ page_obj.previous_page_number }}">Forrige</a></li>
-			{% endif %}
-			<li class="page-item disabled"><span class="page-link">Side {{ page_obj.number }} av {{ page_obj.paginator.num_pages }}</span></li>
-			{% if page_obj.has_next %}
-			<li class="page-item"><a class="page-link" href="?{{ filter_query }}{% if filter_query %}&{% endif %}page={{ page_obj.next_page_number }}">Neste</a></li>
-			{% endif %}
-		</ul>
-	</nav>
-	{% endif %}
-	{% endif %}
-
-{% endblock hovedinnhold %}
+{% extends "cmdb_index.html" %}
+
+{% load humanize %}
+
+{% load static %}
+
+
+
+{% block ekstrameny_business_service %}
+
+{% endblock ekstrameny_business_service %}
+
+
+
+{% block overskrift %}
+
+	Nettverkssegmenter (VLAN)
+
+{% endblock overskrift %}
+
+
+
+{% block hovedinnhold %}
+
+
+
+{% include "includes/integrasjon_freshness_banner.html" with label="Nettverksdata ble sist synkronisert" %}
+
+
+
+	<p>
+
+		Nettverksdata fra Infoblox. Her kan du finne detaljer på nettverkssegmenter. Dataene oppdateres ved manuell import.
+
+		{% if has_filters %}
+
+			Fant {{ total_count|intcomma }} nettverk som passer med valgt filter.
+
+		{% else %}
+
+			Det er {{ total_count|intcomma }} nettverk i databasen.
+
+		{% endif %}
+
+		{% if page_obj.paginator.num_pages > 1 %}
+
+			Viser {{ page_obj.start_index }}–{{ page_obj.end_index }}.
+
+		{% endif %}
+
+	</p>
+
+
+
+	<div class="row mb-3">
+
+		<div class="col-xl-4 col-lg-6 col-md-6 mb-2">
+
+			<div class="card h-100">
+
+				<div class="card-header py-1"><small><b>Top 20 lokasjonsID</b></small></div>
+
+				<div class="card-body py-2 small">
+
+					{% for row in network_stats.top_locationids %}
+
+						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Søk på denne lokasjonsID-en">
+
+							{{ row.locationid }} ({{ row.count|intcomma }})
+
+						</a>
+
+					{% empty %}
+
+						<i>Ingen lokasjonsID-er</i>
+
+					{% endfor %}
+
+				</div>
+
+			</div>
+
+		</div>
+
+		<div class="col-xl-4 col-lg-6 col-md-6 mb-2">
+
+			<div class="card h-100">
+
+				<div class="card-header py-1"><small><b>Top 10 nettverk (tilknyttede IP-enheter)</b></small></div>
+
+				<div class="card-body py-2 small">
+
+					{% for row in network_stats.top_by_ip_devices %}
+
+						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Søk på dette nettverket">
+
+							{{ row.cidr }} ({{ row.ip_device_count|intcomma }})
+
+						</a>
+
+					{% empty %}
+
+						<i>Ingen nettverk</i>
+
+					{% endfor %}
+
+				</div>
+
+			</div>
+
+		</div>
+
+		<div class="col-xl-4 col-lg-6 col-md-6 mb-2">
+
+			<div class="card h-100">
+
+				<div class="card-header py-1"><small><b>Sone</b></small></div>
+
+				<div class="card-body py-2 small">
+
+					{% for row in network_stats.zones %}
+
+						<a href="{{ row.search_href }}" class="badge badge-{% if row.active %}primary{% else %}light{% endif %} border mb-1 mr-1" title="Søk på denne sonen">
+
+							{{ row.network_zone }} ({{ row.count|intcomma }})
+
+						</a>
+
+					{% empty %}
+
+						<i>Ingen soner</i>
+
+					{% endfor %}
+
+				</div>
+
+			</div>
+
+		</div>
+
+	</div>
+
+
+
+	<div class="card mb-3">
+
+		<div class="card-header py-2"><small><b>Filtrer nettverk</b></small></div>
+
+		<div class="card-body py-3">
+
+			<form action="{% url 'alle_nettverk' %}" autocomplete="off">
+
+				<div class="row">
+
+					<div class="col-lg-7 mb-3 mb-lg-0">
+
+						<label class="small mb-1" for="vlan_search"><b>Inkluder</b> – søk i IP, nettverk, beskrivelse, lokasjon, sone eller tilhørighet</label>
+
+						<input id="vlan_search" type="search" value="{{ vlan_search_term }}" name="search_term"
+
+						placeholder="Søkeord…" class="form-control form-control-sm">
+
+					</div>
+
+					<div class="col-lg-5">
+
+						<label class="small mb-1" for="vlan_exclude"><b>Ekskluder</b> – IP, CIDR, lokasjonsID, sone eller annet felt (skjult fra resultat og statistikk)</label>
+
+						<textarea id="vlan_exclude" rows="2" name="exclude"
+
+						placeholder="Én eller flere verdier, separert med mellomrom, komma, semikolon eller linjeskift"
+
+						class="form-control form-control-sm">{{ exclude }}</textarea>
+
+					</div>
+
+				</div>
+
+				<div class="d-flex flex-wrap align-items-center mt-2">
+
+					<input type="submit" value="Søk" class="btn btn-primary btn-sm mr-2 mb-1">
+
+					{% if has_filters %}
+
+					<a class="btn btn-sm btn-outline-secondary mr-3 mb-1" href="{% url 'alle_nettverk' %}">Tøm filter</a>
+
+					{% endif %}
+
+				</div>
+
+			</form>
+
+			{% if exclude_term_count %}
+
+			<div class="small text-muted mt-2 mb-0">
+
+				<span>Ekskluderer {{ exclude_term_count }} verdi{{ exclude_term_count|pluralize:"er" }}.</span>
+
+			</div>
+
+			{% endif %}
+
+		</div>
+
+	</div>
+
+
+
+	<hr>
+
+
+
+	{% if total_count == 0 %}
+
+		<p><i>Ingen nettverk{% if has_filters %} som passer med valgt filter{% endif %}.</i></p>
+
+	{% else %}
+
+	<table class="table table-sm tablesorter excel">
+
+	<thead>
+
+		<tr>
+
+			<th>Nettverk</th>
+
+			<th>Tilknyttede IP-enheter</th>
+
+			<th>Beskrivelse</th>
+
+			<th>Lokasjons ID</th>
+
+			<th>Orgtilhørighet</th>
+
+			<th>VLAN ID</th>
+
+			<th>VLAN-navn</th>
+
+			<th>Lokasjon</th>
+
+			<th>VRF</th>
+
+			<th>Sone</th>
+
+		</tr>
+
+	</thead>
+
+	<tbody>
+
+	{% for nettverk in alle_nettverk %}
+
+		<tr>
+
+			<td>{{ nettverk.ip_address }}/{{ nettverk.subnet_mask }}{% if nettverk.disabled %} (deaktivert){% endif %}</td>
+
+			<td>{{ nettverk.ip_device_count|intcomma }}</td>
+
+			{% url 'nettverk_detaljer' pk=nettverk.pk as url_nettverk %}
+
+			<td><a href="{{ url_nettverk }}">{{ nettverk.comment }}</a></td>
+
+			<td>{{ nettverk.locationid }}</td>
+
+			<td>{{ nettverk.orgname }}</td>
+
+			<td>{{ nettverk.vlanid }}</td>
+
+			<td>{{ nettverk.vlan_name }}</td>
+
+			<td>{{ nettverk.location_name|default:nettverk.locationid }}</td>
+
+			<td>{{ nettverk.vrfname }}</td>
+
+			<td>{{ nettverk.network_zone|default:"ingen data" }}</td>
+
+		</tr>
+
+	{% endfor %}
+
+	</tbody>
+
+	</table>
+
+
+
+	{% if page_obj.paginator.num_pages > 1 %}
+
+	<nav>
+
+		<ul class="pagination pagination-sm">
+
+			{% if page_obj.has_previous %}
+
+			<li class="page-item"><a class="page-link" href="?{{ filter_query }}{% if filter_query %}&{% endif %}page={{ page_obj.previous_page_number }}">Forrige</a></li>
+
+			{% endif %}
+
+			<li class="page-item disabled"><span class="page-link">Side {{ page_obj.number }} av {{ page_obj.paginator.num_pages }}</span></li>
+
+			{% if page_obj.has_next %}
+
+			<li class="page-item"><a class="page-link" href="?{{ filter_query }}{% if filter_query %}&{% endif %}page={{ page_obj.next_page_number }}">Neste</a></li>
+
+			{% endif %}
+
+		</ul>
+
+	</nav>
+
+	{% endif %}
+
+	{% endif %}
+
+
+
+{% endblock hovedinnhold %}
+
