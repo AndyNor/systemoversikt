@@ -63,6 +63,9 @@ python /var/kartoteket/source/systemoversikt/manage.py azure_graph_conditional_a
 python /var/kartoteket/source/systemoversikt/manage.py azure_authentication_methods_v2
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_vulnerabilities
 
+# 2026-07-08: Capture risk snapshots for daily risk UI history.
+python /var/kartoteket/source/systemoversikt/manage.py risk_snapshot_capture
+
 # run batch e-mail
 python /var/kartoteket/source/systemoversikt/manage.py azure_graph_nokkelvarsel
 python /var/kartoteket/source/systemoversikt/manage.py epost_avtaleutlop

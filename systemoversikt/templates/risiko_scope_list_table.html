@@ -5,6 +5,7 @@
 {# 2026-07-02: Tilgangsgrupper column replaces beskrivelse on scope list tables. #}
 {# 2026-07-01: Shared scope table for root and virksomhet risk list pages. #}
 {# 2026-07-08: Archive scopes instead of hard delete (immutable while archived). #}
+{# 2026-07-08: Dempet arkiver-knappens rødfarge (gray med rød undertone) for bedre kontrast. #}
 {% if scopes %}
 <table class="table tablesorter">
 <thead>
@@ -38,7 +39,7 @@
 	<td class="text-nowrap">
 		{% if scope.current_user_is_owner and not scope.archived_at %}
 		<button type="button"
-			class="btn btn-outline-danger btn-sm risiko-scope-delete-btn"
+			class="btn btn-outline-secondary btn-sm risiko-scope-delete-btn"
 			data-delete-url="{% url 'risiko_scope_delete' pk=scope.pk %}"
 			data-scope-title="{{ scope.title }}">Arkiver</button>
 		{% endif %}

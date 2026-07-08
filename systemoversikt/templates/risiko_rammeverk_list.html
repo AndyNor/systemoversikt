@@ -6,6 +6,7 @@
 {# 2026-07-06: Removed excel class – no table export on rammeverk list. #}
 {# 2026-07-06: Templates (maler) + group-owned sammenstillinger list. #}
 {# 2026-07-08: Hide archived sammenstillinger in list by default (toggle include_archived). #}
+{# 2026-07-08: Gjorde “Endre eiergruppe” bedre lesbar (mørkere gul bakgrunn uten hover). #}
 
 {% block overskrift %}
 	Risikosammenstilling
@@ -220,6 +221,20 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
+<style nonce="{{ request.csp_nonce }}">
+/* Better contrast for the warning action on rammeverk list pages. */
+.js-change-owner-group.btn-outline-warning{
+	background-color: #b8860b; /* dark goldenrod */
+	border-color: #b8860b;
+	color: #ffc107;
+}
+.js-change-owner-group.btn-outline-warning:hover,
+.js-change-owner-group.btn-outline-warning:focus{
+	background-color: #925900; /* darker */
+	border-color: #925900;
+	color: #ffffff;
+}
+</style>
 {% if can_change_sammenstilling_owner_group or can_change_sammenstilling_reader_groups %}
 <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
