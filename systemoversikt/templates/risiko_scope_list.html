@@ -12,7 +12,7 @@
 
 {# 2026-06-30: Bootstrap confirm modal before deleting a risikosamling. #}
 
-{# 2026-06-30: Slett button per row – owners only. #}
+{# 2026-07-08: Archive scopes instead of hard delete; archived items hidden in list by default. #}
 
 {# 2026-06-30: Eiere + virksomhet columns; members can edit, owners manage access. #}
 
@@ -108,6 +108,16 @@
 
 
 
+{% if not include_archived %}
+<p class="mt-2 mb-3">
+	<a class="btn btn-outline-secondary btn-sm" href="?include_archived=1">Vis arkiverte</a>
+</p>
+{% else %}
+<p class="mt-2 mb-3">
+	<a class="btn btn-outline-secondary btn-sm" href="?include_archived=0">Skjul arkiverte</a>
+</p>
+{% endif %}
+
 <div class="risiko-scope-table-block" data-risiko-scope-table>
 {% if virksomhet_tilgangsgrupper %}
 {% risiko_tilgangsgruppe_filter_buttons virksomhet_tilgangsgrupper %}
@@ -151,7 +161,7 @@
 
 			<div class="modal-header">
 
-				<h5 class="modal-title" id="risiko-scope-delete-modal-title">Slett risikosamling</h5>
+				<h5 class="modal-title" id="risiko-scope-delete-modal-title">Arkiver risikosamling</h5>
 
 				<button type="button" class="close" data-dismiss="modal" aria-label="Lukk">
 
@@ -163,15 +173,15 @@
 
 			<div class="modal-body">
 
-				<p class="mb-2">Er du sikker på at du vil slette risikosamlingen <strong id="risiko-scope-delete-title"></strong>?</p>
-
-				<p class="text-muted mb-0">Dette kan ikke angres. Alle scenarioer og tiltak i samlingen slettes.</p>
+				<p class="mb-2">Er du sikker på at du vil arkivere risikosamlingen <strong id="risiko-scope-delete-title"></strong>?</p>
+ 
+				<p class="text-muted mb-0">Dette kan ikke angres. Scenarioer og tiltak i samlingen slettes ikke, men samlingen blir arkivert og skrivebeskyttet.</p>
 
 			</div>
 
 			<div class="modal-footer justify-content-between w-100">
 
-				<button type="button" class="btn btn-danger btn-sm" id="risiko-scope-delete-confirm">Slett</button>
+				<button type="button" class="btn btn-danger btn-sm" id="risiko-scope-delete-confirm">Arkiver</button>
 
 				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
 

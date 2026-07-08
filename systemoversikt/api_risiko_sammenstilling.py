@@ -112,6 +112,9 @@ def api_risiko_sammenstilling_owner_group_update(request, pk):
 	if denied:
 		return denied
 	sammenstilling = _sammenstilling_or_404(pk)
+	# 2026-07-08: Archived sammenstillinger are immutable (no owner/reader group changes).
+	if sammenstilling.archived_at is not None:
+		return _json_error('Sammenstillingen er arkivert og kan ikke endres.', status=403)
 	body = _parse_json_body(request)
 	if body is None:
 		return _json_error('Ugyldig JSON.')
@@ -180,6 +183,9 @@ def api_risiko_sammenstilling_reader_groups_update(request, pk):
 	if denied:
 		return denied
 	sammenstilling = _sammenstilling_or_404(pk)
+	# 2026-07-08: Archived sammenstillinger are immutable (no owner/reader group changes).
+	if sammenstilling.archived_at is not None:
+		return _json_error('Sammenstillingen er arkivert og kan ikke endres.', status=403)
 	body = _parse_json_body(request)
 	if body is None:
 		return _json_error('Ugyldig JSON.')

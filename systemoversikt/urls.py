@@ -163,6 +163,7 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/snapshot/$', views_risk_snapshot.risiko_sammenstilling_snapshot_list, name='risiko_sammenstilling_snapshot_list'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/snapshot/(?P<snapshot_id>[0-9a-f-]{36})/$', views_risk_snapshot.risiko_sammenstilling_snapshot_detail, name='risiko_sammenstilling_snapshot_detail'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/$', views_risiko_rammeverk.risiko_sammenstilling_detail, name='risiko_sammenstilling_detail'),
+	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/archive/$', views_risiko_rammeverk.risiko_sammenstilling_archive, name='risiko_sammenstilling_archive'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/kartlegging/$', views_risiko_rammeverk.risiko_sammenstilling_kartlegging, name='risiko_sammenstilling_kartlegging'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/taxonomy/$', api_risiko_sammenstilling.api_risiko_sammenstilling_taxonomy, name='api_risiko_sammenstilling_taxonomy'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/nodes/active/$', api_risiko_sammenstilling.api_risiko_sammenstilling_active_nodes, name='api_risiko_sammenstilling_active_nodes'),

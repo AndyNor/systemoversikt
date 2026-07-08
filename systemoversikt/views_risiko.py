@@ -305,6 +305,7 @@ def _risiko_list_context(request, scopes, list_virksomhet=None):
 @login_required
 def risiko_scope_list(request):
 	# 2026-07-01: Root list – profile virksomhet collections plus cross-virksomhet memberships.
+	include_archived = request.GET.get('include_archived') == '1'
 	profile_v = profile_virksomhet(request.user)
 	virksomhet_scopes = scopes_for_virksomhet(
 		request.user,
@@ -314,20 +315,28 @@ def risiko_scope_list(request):
 		request.user,
 		exclude_virksomhet_id=profile_v.pk if profile_v else None,
 	)
+	if not include_archived:
+		virksomhet_scopes = virksomhet_scopes.filter(archived_at__isnull=True)
+		my_scopes = my_scopes.filter(archived_at__isnull=True)
 	return render(request, 'risiko_scope_list.html', {
 		**_risiko_list_context(request, virksomhet_scopes, list_virksomhet=profile_v),
 		'virksomhet_scopes': virksomhet_scopes,
 		'my_scopes': my_scopes,
 		'is_root_list': True,
+		'include_archived': include_archived,
 	})
 
 
 def risiko_virksomhet_list(request, vid):
+	include_archived = request.GET.get('include_archived') == '1'
 	virksomhet = get_object_or_404(Virksomhet, pk=vid)
 	scopes = scopes_for_virksomhet(request.user, virksomhet.pk)
+	if not include_archived:
+		scopes = scopes.filter(archived_at__isnull=True)
 	return render(request, 'risiko_virksomhet_list.html', {
 		**_risiko_list_context(request, scopes, list_virksomhet=virksomhet),
 		'virksomhet': virksomhet,
+		'include_archived': include_archived,
 	})
 
 
@@ -365,13 +374,12 @@ def risiko_scope_delete(request, pk):
 		if scope and user_has_scope_read_access(request.user, scope):
 			return _render_risk_access_denied(request, 'collection_owner', scope=scope)
 		return _deny_scope_access(request, scope=scope)
-	# 2026-07-01: Godkjent collections cannot be deleted until status is changed.
-	if scope.is_content_locked():
-		messages.error(request, 'Godkjente risikosamlinger kan ikke slettes. Endre status først.')
+	if scope.archived_at is not None:
+		messages.info(request, 'Risikosamlingen «%s» er allerede arkivert.' % scope.title)
 		return redirect('risiko_scope_list')
 	title = scope.title
-	scope.delete()
-	messages.success(request, 'Risikosamling «%s» er slettet.' % title)
+	scope.archive()
+	messages.success(request, 'Risikosamling «%s» er arkivert.' % title)
 	return redirect('risiko_scope_list')
 
 
@@ -544,7 +552,7 @@ def risiko_scope_detail(request, pk):
 	can_write = user_has_scope_write_access(request.user, scope)
 	can_edit_scope = can_write and not scope_is_locked
 	can_manage_scope = is_owner and not scope_is_locked
-	can_change_locked_status = is_owner and scope_is_locked
+	can_change_locked_status = is_owner and scope_is_locked and scope.archived_at is None
 	is_read_only_viewer = not is_member and _has_scope_read_access(request, scope)
 	criteria = get_active_criteria()
 

@@ -199,6 +199,9 @@ def user_has_scope_read_access(user, scope):
 
 
 def user_has_scope_write_access(user, scope):
+	# 2026-07-08: Archived scopes are read-only (no edits/deletes via scope APIs).
+	if scope is not None and getattr(scope, 'archived_at', None) is not None:
+		return False
 	return user_is_scope_member(user, scope)
 
 

@@ -97,8 +97,10 @@ def _sammenstilling_or_404(pk):
 
 @login_required
 def risiko_rammeverk_list(request):
+	# 2026-07-08: Hide archived sammenstillinger in list unless explicitly requested.
+	include_archived = request.GET.get('include_archived') == '1'
 	templates = active_templates_queryset()
-	sammenstillinger = sammenstillinger_visible_to_user(request.user).prefetch_related(
+	sammenstillinger = sammenstillinger_visible_to_user(request.user, include_archived=include_archived).prefetch_related(
 		'reader_groups',
 		'reader_groups__virksomhet',
 	)
@@ -120,6 +122,7 @@ def risiko_rammeverk_list(request):
 		'can_create_sammenstilling': owner_groups.exists(),
 		'can_change_sammenstilling_owner_group': can_admin_access,
 		'can_change_sammenstilling_reader_groups': user_can_change_sammenstilling_reader_groups(request.user),
+		'include_archived': include_archived,
 	}
 	if can_admin_access:
 		context['owner_group_options'] = list(all_owner_groups_queryset())
@@ -283,6 +286,21 @@ def risiko_sammenstilling_detail(request, pk):
 		'konsekvens_labels': criteria.konsekvens_labels,
 		'api_urls_json': json.dumps(_sammenstilling_api_urls(pk)),
 	})
+
+
+@login_required
+@require_http_methods(['POST'])
+def risiko_sammenstilling_archive(request, pk):
+	# 2026-07-08: Replace hard delete with immutable archive for sammenstillinger.
+	sammenstilling = _sammenstilling_or_404(pk)
+	if not user_can_map_sammenstilling(request.user, sammenstilling):
+		return _render_risk_access_denied(request, 'sammenstilling_archive', sammenstilling=sammenstilling)
+	if sammenstilling.archived_at is None:
+		sammenstilling.archive()
+		messages.success(request, 'Risikosammenstillingen «%s» er arkivert.' % sammenstilling.title)
+	else:
+		messages.info(request, 'Risikosammenstillingen «%s» er allerede arkivert.' % sammenstilling.title)
+	return redirect('risiko_sammenstilling_detail', pk=sammenstilling.pk)
 
 
 @login_required

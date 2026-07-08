@@ -9,6 +9,7 @@
 {# 2026-07-06: Subcategory scenario/tiltak breakdown + per-category risk matrix. #}
 {# 2026-07-06: Category-level manual assessment + nåværende-risiko matrix at top. #}
 {# 2026-07-08: Link to archived JSON snapshot history (Historikk / versjoner). #}
+{# 2026-07-08: Replace hard delete with immutable archive for sammenstilling. #}
 
 {% block overskrift %}
 	{{ sammenstilling.title }}
@@ -63,6 +64,39 @@
 	| <a href="{% url 'risiko_sammenstilling_kartlegging' pk=sammenstilling.pk %}">Kartlegging</a>
 	{% endif %}
 </p>
+
+{% if can_map and sammenstilling.archived_at is None %}
+<form id="risiko-sammenstilling-archive-form" method="post" action="{% url 'risiko_sammenstilling_archive' pk=sammenstilling.pk %}" class="d-none">
+	{% csrf_token %}
+</form>
+
+<div class="modal fade" id="risiko-sammenstilling-archive-modal" tabindex="-1" role="dialog" aria-labelledby="risiko-sammenstilling-archive-modal-title" aria-hidden="true">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title" id="risiko-sammenstilling-archive-modal-title">Arkiver sammenstilling</h5>
+				<button type="button" class="close" data-dismiss="modal" aria-label="Lukk">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<p class="mb-2">Er du sikker på at du vil arkivere sammenstillingen <strong id="risiko-sammenstilling-archive-title"></strong>?</p>
+				<p class="text-muted mb-0">Dette kan ikke angres. Samlingen blir skrivebeskyttet og vil ikke endres videre.</p>
+			</div>
+			<div class="modal-footer justify-content-between w-100">
+				<button type="button" class="btn btn-warning btn-sm" id="risiko-sammenstilling-archive-confirm">Arkiver</button>
+				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<p class="mb-4">
+	<button type="button" class="btn btn-outline-warning btn-sm" id="risiko-sammenstilling-archive-btn" data-sammenstilling-title="{{ sammenstilling.title|escape }}">
+		Arkiver sammenstilling
+	</button>
+</p>
+{% endif %}
 
 <p class="text-muted">
 	Mal: <strong>{{ framework.title }}</strong>.
@@ -245,6 +279,27 @@ document.addEventListener('DOMContentLoaded', function () {
 	if (window.RisikoRammeverk) {
 		window.RisikoRammeverk.initRollup(document.getElementById('risiko-rammeverk-rollup'));
 	}
+});
+</script>
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+$(function () {
+	var form = document.getElementById('risiko-sammenstilling-archive-form');
+	var modal = $('#risiko-sammenstilling-archive-modal');
+	var titleEl = document.getElementById('risiko-sammenstilling-archive-title');
+	var confirmBtn = document.getElementById('risiko-sammenstilling-archive-confirm');
+	var archiveBtn = document.getElementById('risiko-sammenstilling-archive-btn');
+	if (!form || !modal.length || !titleEl || !confirmBtn || !archiveBtn) {
+		return;
+	}
+
+	$(document).on('click', '#risiko-sammenstilling-archive-btn', function () {
+		titleEl.textContent = this.getAttribute('data-sammenstilling-title') || '';
+		modal.modal('show');
+	});
+
+	confirmBtn.addEventListener('click', function () {
+		form.submit();
+	});
 });
 </script>
 {% endblock script_append %}

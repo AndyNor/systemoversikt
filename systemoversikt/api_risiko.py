@@ -723,6 +723,10 @@ def api_risiko_scope_update(request, pk):
 	if data is None:
 		return _json_error('invalid_json')
 
+	# 2026-07-08: Archived scopes are read-only (archive replaces delete).
+	if scope.archived_at is not None:
+		return _json_error('Risikosamlingen er arkivert og kan ikke redigeres.', status=403)
+
 	title = (data.get('title') or '').strip()
 	if not title:
 		return _json_error('Navn kan ikke være tomt.')

@@ -7919,6 +7919,12 @@ class RiskScope(models.Model):
 	sist_revidert = models.DateField(
 		verbose_name="Sist revidert",
 	)
+	archived_at = models.DateTimeField(
+		verbose_name="Arkivert",
+		null=True,
+		blank=True,
+		db_index=True,
+	)
 	status = models.CharField(
 		verbose_name="Status",
 		max_length=30,
@@ -7955,8 +7961,18 @@ class RiskScope(models.Model):
 	def is_member(self, user):
 		return self.membership_for(user) is not None
 
+	def is_archived(self):
+		return self.archived_at is not None
+
 	def is_content_locked(self):
-		return self.status == RISK_SCOPE_STATUS_CONTENT_LOCKED
+		# 2026-07-08: Archived scopes are immutable (no edits/deletes) while archived.
+		return self.archived_at is not None or self.status == RISK_SCOPE_STATUS_CONTENT_LOCKED
+
+	def archive(self):
+		# 2026-07-08: Soft-archive instead of hard-delete – preserves history/snapshots.
+		if self.archived_at is None:
+			self.archived_at = timezone.now()
+			self.save(update_fields=['archived_at'])
 
 	def owner_memberships(self):
 		return self.memberships.filter(role=RISK_SCOPE_MEMBER_ROLE_OWNER).select_related('user')
@@ -8518,6 +8534,12 @@ class RiskSammenstilling(models.Model):
 		default=True,
 		db_index=True,
 	)
+	archived_at = models.DateTimeField(
+		verbose_name="Arkivert",
+		null=True,
+		blank=True,
+		db_index=True,
+	)
 	framework = models.ForeignKey(
 		to=RiskFramework,
 		on_delete=models.PROTECT,
@@ -8548,6 +8570,15 @@ class RiskSammenstilling(models.Model):
 
 	def __str__(self):
 		return self.title
+
+	def is_archived(self):
+		return self.archived_at is not None
+
+	def archive(self):
+		# 2026-07-08: Soft-archive instead of hard-delete – preserves mapping history/snapshots.
+		if self.archived_at is None:
+			self.archived_at = timezone.now()
+			self.save(update_fields=['archived_at'])
 
 	class Meta:
 		verbose_name = "risikosammenstilling"

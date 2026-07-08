@@ -76,15 +76,21 @@ def user_can_view_sammenstilling(user, sammenstilling):
 def user_can_map_sammenstilling(user, sammenstilling):
 	if not user.is_authenticated or sammenstilling is None or not sammenstilling.is_active:
 		return False
+	# 2026-07-08: Archived sammenstillinger are read-only.
+	if sammenstilling.archived_at is not None:
+		return False
 	return user_is_group_member(user, sammenstilling.owner_group)
 
 
-def sammenstillinger_visible_to_user(user):
+def sammenstillinger_visible_to_user(user, include_archived=False):
+	# 2026-07-08: Archived sammenstillinger are hidden from list pages unless explicitly requested.
 	qs = RiskSammenstilling.objects.filter(is_active=True).select_related(
 		'framework',
 		'owner_group',
 		'owner_group__virksomhet',
 	)
+	if not include_archived:
+		qs = qs.filter(archived_at__isnull=True)
 	if not user.is_authenticated:
 		return qs.none()
 	if user.is_superuser:

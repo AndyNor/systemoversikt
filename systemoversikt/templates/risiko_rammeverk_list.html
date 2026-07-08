@@ -5,6 +5,7 @@
 {# 2026-07-07: Outline button for back navigation. #}
 {# 2026-07-06: Removed excel class – no table export on rammeverk list. #}
 {# 2026-07-06: Templates (maler) + group-owned sammenstillinger list. #}
+{# 2026-07-08: Hide archived sammenstillinger in list by default (toggle include_archived). #}
 
 {% block overskrift %}
 	Risikosammenstilling
@@ -33,6 +34,15 @@
 {% endif %}
 
 <h5 class="mt-4">Dine sammenstillinger</h5>
+{% if not include_archived %}
+<p class="mt-2 mb-3">
+	<a class="btn btn-outline-secondary btn-sm" href="?include_archived=1">Vis arkiverte</a>
+</p>
+{% else %}
+<p class="mt-2 mb-3">
+	<a class="btn btn-outline-secondary btn-sm" href="?include_archived=0">Skjul arkiverte</a>
+</p>
+{% endif %}
 <table class="table table-sm table-striped">
 	<thead>
 		<tr>
@@ -62,14 +72,14 @@
 				{% if row.can_map %}
 				<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_sammenstilling_kartlegging' pk=sam.pk %}">Kartlegg</a>
 				{% endif %}
-				{% if can_change_sammenstilling_owner_group %}
+				{% if can_change_sammenstilling_owner_group and sam.archived_at is None %}
 				<button type="button" class="btn btn-outline-warning btn-sm js-change-owner-group"
 					data-pk="{{ sam.pk }}"
 					data-title="{{ sam.title|escape }}"
 					data-owner-group-id="{{ sam.owner_group_id }}"
 					data-owner-group-title="{{ sam.owner_group.display_title|escape }}">Endre eiergruppe</button>
 				{% endif %}
-				{% if can_change_sammenstilling_reader_groups %}
+				{% if can_change_sammenstilling_reader_groups and sam.archived_at is None %}
 				<button type="button" class="btn btn-outline-info btn-sm js-change-reader-groups"
 					data-pk="{{ sam.pk }}"
 					data-title="{{ sam.title|escape }}">Lesergrupper</button>

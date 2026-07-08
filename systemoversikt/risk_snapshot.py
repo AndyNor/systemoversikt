@@ -499,11 +499,13 @@ def sammenstilling_render_context(payload):
 
 
 def iter_collection_sources():
-	return RiskScope.objects.all().order_by('pk')
+	# 2026-07-08: Archived scopes are immutable – no new collection snapshots needed.
+	return RiskScope.objects.filter(archived_at__isnull=True).order_by('pk')
 
 
 def iter_sammenstilling_sources():
-	return RiskSammenstilling.objects.filter(is_active=True).select_related(
+	# 2026-07-08: Archived sammenstillinger are immutable – no new sammenstilling snapshots needed.
+	return RiskSammenstilling.objects.filter(is_active=True, archived_at__isnull=True).select_related(
 		'framework',
 		'owner_group',
 		'owner_group__virksomhet',
