@@ -10,7 +10,7 @@
 {# 2026-07-06: Category-level manual assessment + nåværende-risiko matrix at top. #}
 {# 2026-07-08: Link to archived JSON snapshot history (Historikk / versjoner). #}
 {# 2026-07-08: Replace hard delete with immutable archive for sammenstilling. #}
-{# 2026-07-08: Styled “Kartlegging” + moved “Arkiver sammenstilling” onto the same action row. #}
+{# 2026-07-08: Arkiver sammenstilling outline-secondary like Historikk / versjoner. #}
 
 {% block overskrift %}
 	{{ sammenstilling.title }}
@@ -60,12 +60,12 @@
 
 <p class="mb-3">
 	<a class="btn btn-back btn-sm" href="{% url 'risiko_rammeverk_list' %}">&larr; Risikosammenstilling</a>
-	<a class="btn btn-outline-secondary btn-sm ml-2" href="{% url 'risiko_sammenstilling_snapshot_list' pk=sammenstilling.pk %}">Historikk / versjoner</a>
 	{% if can_map %}
-	<a class="btn btn-outline-secondary btn-sm ml-2" href="{% url 'risiko_sammenstilling_kartlegging' pk=sammenstilling.pk %}">Kartlegging</a>
+	<a class="btn btn-success btn-sm ml-2" href="{% url 'risiko_sammenstilling_kartlegging' pk=sammenstilling.pk %}">Kartlegging</a>
 	{% endif %}
+	<a class="btn btn-outline-secondary btn-sm ml-2" href="{% url 'risiko_sammenstilling_snapshot_list' pk=sammenstilling.pk %}">Historikk / versjoner</a>
 	{% if can_map and sammenstilling.archived_at is None %}
-	<button type="button" class="btn btn-outline-warning btn-sm ml-2" id="risiko-sammenstilling-archive-btn" data-sammenstilling-title="{{ sammenstilling.title|escape }}">
+	<button type="button" class="btn btn-outline-secondary btn-sm ml-2" id="risiko-sammenstilling-archive-btn" data-sammenstilling-title="{{ sammenstilling.title|escape }}">
 		Arkiver sammenstilling
 	</button>
 	{% endif %}
