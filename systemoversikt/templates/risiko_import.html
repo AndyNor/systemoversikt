@@ -6,7 +6,7 @@
 
 {% block hovedinnhold %}
 
-<p>Last opp en Excel-fil med arkene <em>Risikoanalyse</em> og eventuelt <em>Tiltak</em>. Tittel hentes fra filnavnet og sist revidert settes til dagens dato.</p>
+<p>Last opp en Excel-fil (.xlsx). Støttede maler: <strong>enkel</strong> (<em>Risikoanalyse</em> og valgfritt <em>Tiltak</em>) eller <strong>stor</strong> (<em>Risikovurdering</em> med tilhørende ark). Format velges automatisk. Tittel hentes fra filnavnet og sist revidert settes til dagens dato.</p>
 
 <form method="post" enctype="multipart/form-data">
 	{% csrf_token %}

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-08: Auto-detect minimal vs large Excel template; dispatch import paths.
 # 2026-06-30: Header normalize – collapse whitespace around hyphens (Risiko-\nbehandling).
 # 2026-06-30: Import Foreslåtte tiltak (forslag) and Tiltak sheet; skip placeholder rows on Tiltak sheet.
 # 2026-06-30: create_risk_scope helper – membership + virksomhet instead of eier FK.
@@ -28,6 +29,7 @@ class ImportResult:
 	scenario_count: int = 0
 	action_count: int = 0
 	warnings: list = field(default_factory=list)
+	format: str = 'minimal'
 
 
 def _normalize_header(value):
@@ -182,7 +184,31 @@ def _title_from_filename(filename):
 	return name.strip() or 'Risikovurdering'
 
 
+def detect_import_format(workbook):
+	"""Return 'minimal' or 'large' based on workbook sheet names."""
+	names = workbook.sheetnames
+	if 'Risikoanalyse' in names:
+		return 'minimal'
+	if 'Risikovurdering' in names:
+		return 'large'
+	raise ValueError(
+		'Ukjent Excel-mal: mangler ark «Risikoanalyse» (enkel mal) eller «Risikovurdering» (stor mal).'
+	)
+
+
 def import_risk_workbook(workbook, user, source_filename):
+	"""
+	Import Excel risk workbook into a new RiskScope (minimal or large template).
+	Rolls back on error (atomic transaction).
+	"""
+	fmt = detect_import_format(workbook)
+	if fmt == 'large':
+		from systemoversikt.risk_import_large import import_large_risk_workbook
+		return import_large_risk_workbook(workbook, user, source_filename)
+	return import_minimal_risk_workbook(workbook, user, source_filename)
+
+
+def import_minimal_risk_workbook(workbook, user, source_filename):
 	"""
 	Import Risikoanalyse (+ optional Tiltak) into a new RiskScope.
 	Rolls back on error (atomic transaction).
@@ -291,4 +317,5 @@ def import_risk_workbook(workbook, user, source_filename):
 		scenario_count=scenario_count,
 		action_count=action_count,
 		warnings=warnings,
+		format='minimal',
 	)

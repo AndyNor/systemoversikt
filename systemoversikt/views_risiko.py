@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-08: Import success message shows detected Excel template (enkel/stor mal).
 # 2026-07-08: Server-side scope search (q=) across all virksomheter on root list.
 # 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator scoped to profile virksomhet on tilgangsgrupper page.
 # 2026-07-07: view_riskscope gates collection create/import; tilgangsgrupper page uses granular membership helpers.
@@ -474,9 +475,12 @@ def risiko_import(request):
 				result = import_risk_workbook(workbook, request.user, upload.name)
 				for warning in result.warnings:
 					messages.warning(request, warning)
+				fmt_label = 'stor mal' if result.format == 'large' else 'enkel mal'
 				messages.success(
 					request,
-					'Importert %d scenarioer og %d tiltak.' % (result.scenario_count, result.action_count),
+					'Importert (%s) %d scenarioer og %d tiltak.' % (
+						fmt_label, result.scenario_count, result.action_count,
+					),
 				)
 				return redirect('risiko_scope_detail', pk=result.scope.pk)
 			except Exception as exc:
