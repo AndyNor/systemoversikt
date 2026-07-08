@@ -1,8 +1,11 @@
+{# 2026-07-08: Optional two_columns – wrap each contact for multi-column grid layouts. #}
 {% for ansvarlig in ansvarlige %}
+	{% if two_columns %}<div class="ansvarlig-kontakt-item">{% endif %}
 	{% url 'bruker_detaljer' pk=ansvarlig.brukernavn.pk as url_ansvarlig %}
 	👤 <a href="{{ url_ansvarlig }}" style="{% if ansvarlig.brukernavn.profile.accountdisable %}text-decoration: line-through;{% endif %}">
 	{{ ansvarlig }}</a><br>
 	{{ ansvarlig.brukernavn.email }}<br>
+	{% if two_columns %}</div>{% endif %}
 {% empty %}
 	<span style="background-color: #ffacac">Mangler</span><br>
 {% endfor %}

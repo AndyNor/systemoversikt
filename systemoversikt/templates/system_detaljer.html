@@ -1,3 +1,6 @@
+{# 2026-07-08: 50/50 summary – description left, facts (URLs, bruk, LOS, BS) right. #}
+{# 2026-07-08: Edit pill beside title (light green); smaller description text. #}
+{# 2026-07-08: Classic hover on summary badges – subtle lift for linked and static tags. #}
 {# 2026-07-08: Read-only risk overview section (Risikomatriser, scenarioer, tiltak) for linked scenarios. #}
 {# 2026-07-08: Summary card refinements – gray tags, edit outside box, categories back below. #}
 {# 2026-07-08: Professional summary card – name, platform, ownership, classification at top of page. #}
@@ -7,18 +10,57 @@
 {% load templatetags %}
 
 {% block overskrift %}
-	<span class="system-detalj-tittel">
-		<img class="system-detalj-ikon" src="{% if systemdetaljer.er_infrastruktur %}{% static 'infra.png' %}{% elif systemdetaljer.er_integrasjon %}{% static 'integrasjon.png' %}{% elif systemdetaljer.er_saas %}{% static 'system.png' %}{% elif systemdetaljer.driftsmodell_foreignkey.type_plattform == 2 %}{% static 'sky.png' %}{% else %}{% static 'system.png' %}{% endif %}" alt="">
-		{{ systemdetaljer.systemnavn }}
-	</span>
+	<div class="system-detalj-tittel-rad">
+		<span class="system-detalj-tittel">
+			<img class="system-detalj-ikon" src="{% if systemdetaljer.er_infrastruktur %}{% static 'infra.png' %}{% elif systemdetaljer.er_integrasjon %}{% static 'integrasjon.png' %}{% elif systemdetaljer.er_saas %}{% static 'system.png' %}{% elif systemdetaljer.driftsmodell_foreignkey.type_plattform == 2 %}{% static 'sky.png' %}{% else %}{% static 'system.png' %}{% endif %}" alt="">
+			{{ systemdetaljer.systemnavn }}
+		</span>
+		{% if user.is_authenticated %}
+			<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/" class="system-detalj-rediger-btn">
+				{% include 'site_edit_button.html' %} Endre informasjon om {{ systemdetaljer.systemnavn }}
+			</a>
+		{% endif %}
+	</div>
 {% endblock overskrift %}
 
 {% block ekstrastyle %}
 <style nonce="{{ request.csp_nonce }}">
+.system-detalj-tittel-rad {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.65rem 1rem;
+}
 .system-detalj-tittel {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.65rem;
+}
+.system-detalj-rediger-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.9rem;
+	font-weight: 500;
+	padding: 0.38rem 0.9rem;
+	border-radius: 999px;
+	background: #e8f5e9;
+	color: #2d6a4f;
+	border: 1px solid #b7dfc0;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+.system-detalj-rediger-btn:hover {
+	background: #d4edda;
+	border-color: #9fd4ad;
+	color: #1b4332;
+	box-shadow: 0 1px 3px rgba(45, 106, 79, 0.12);
+	text-decoration: none;
+}
+.system-detalj-rediger-btn .edit_button {
+	color: inherit;
+	font-size: 1.05em;
 }
 .system-detalj-ikon {
 	height: 42px;
@@ -32,9 +74,6 @@
 	padding: 1.25rem 1.35rem;
 	margin-bottom: 1.25rem;
 	box-shadow: 0 1px 3px rgba(42, 40, 89, 0.06);
-}
-.system-detalj-rediger {
-	margin: 0.35rem 0 0.85rem;
 }
 .system-detalj-badges {
 	display: flex;
@@ -52,27 +91,112 @@
 	background: #f8f9fa;
 	color: #6c757d;
 	border: 1px solid #dee2e6;
+	transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.system-detalj-badge:hover {
+	background: #eef0f2;
+	border-color: #c8cdd2;
+	box-shadow: 0 1px 2px rgba(42, 40, 89, 0.08);
+}
+.system-detalj-badge:has(a) {
+	cursor: pointer;
+}
+.system-detalj-badge:has(a):hover {
+	background: #e2e6ea;
+	border-color: #adb5bd;
+	color: #495057;
 }
 .system-detalj-badge a {
 	color: inherit;
 	text-decoration: none;
 }
 .system-detalj-badge a:hover {
-	text-decoration: underline;
+	text-decoration: none;
 }
 .system-detalj-beskrivelse {
+	color: #555;
+	font-size: 0.875rem;
+	line-height: 1.5;
+	margin: 0;
+}
+.system-detalj-innhold {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1.25rem 1.5rem;
+	margin-bottom: 1.15rem;
+}
+.system-detalj-fakta {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+.system-detalj-fakta-item h6 {
+	font-size: 0.68rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #888;
+	margin-bottom: 0.25rem;
+	font-weight: 600;
+}
+.system-detalj-fakta-verdi {
+	font-size: 0.85rem;
+	line-height: 1.45;
 	color: #444;
-	font-size: 1rem;
-	line-height: 1.55;
-	margin: 0 0 1.15rem;
-	max-width: 960px;
+}
+.system-detalj-fakta-verdi a {
+	word-break: break-word;
+}
+.system-detalj-url-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+.system-detalj-url-list li {
+	margin-bottom: 0.35rem;
+}
+.system-detalj-url-list img {
+	height: 16px;
+	width: 16px;
+	margin-right: 0.3rem;
+	vertical-align: text-bottom;
+}
+.system-detalj-fakta-badges {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem 0.4rem;
+}
+.system-detalj-fakta-badges .badge {
+	font-size: 0.75rem;
+	font-weight: 500;
+}
+@media (max-width: 767px) {
+	.system-detalj-innhold {
+		grid-template-columns: 1fr;
+	}
 }
 .system-detalj-eierskap {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	grid-template-columns: 1fr 2fr;
 	gap: 1rem 1.25rem;
 	padding-top: 1rem;
 	border-top: 1px solid #eceaf4;
+}
+.system-detalj-eierskap-panel .kontaktliste--cols-2 {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.45rem 1rem;
+	align-items: start;
+}
+.system-detalj-eierskap-panel .kontaktliste--cols-2 .ansvarlig-kontakt-item {
+	min-width: 0;
+}
+@media (max-width: 767px) {
+	.system-detalj-eierskap {
+		grid-template-columns: 1fr;
+	}
+	.system-detalj-eierskap-panel .kontaktliste--cols-2 {
+		grid-template-columns: 1fr;
+	}
 }
 .system-detalj-eierskap-panel h6 {
 	font-size: 0.68rem;
@@ -109,14 +233,6 @@
 
 {% block hovedinnhold %}
 
-	{% if user.is_authenticated %}
-		<div class="system-detalj-rediger">
-			<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/" class="btn btn-sm btn-link">
-				{% include 'site_edit_button.html' %} Endre informasjon om {{ systemdetaljer.systemnavn }}
-			</a>
-		</div>
-	{% endif %}
-
 	<div class="system-detalj-kort">
 		<div class="system-detalj-badges">
 			{% if systemdetaljer.driftsmodell_foreignkey %}
@@ -136,7 +252,101 @@
 			{% endif %}
 		</div>
 
-		<p class="system-detalj-beskrivelse">{{ systemdetaljer.systembeskrivelse|default:"Ingen beskrivelse oppgitt"|linebreaksbr }}</p>
+		<div class="system-detalj-innhold">
+			<div class="system-detalj-innhold-venstre">
+				<p class="system-detalj-beskrivelse">{{ systemdetaljer.systembeskrivelse|default:"Ingen beskrivelse oppgitt"|linebreaksbr }}</p>
+			</div>
+			<div class="system-detalj-fakta">
+				<div class="system-detalj-fakta-item">
+					<h6>Webpubliseringer</h6>
+					<div class="system-detalj-fakta-verdi">
+						{% if systemdetaljer.systemurl.count > 0 %}
+							<ul class="system-detalj-url-list">
+								{% for url in systemdetaljer.systemurl.all %}
+									<li>
+										<a target="_blank" rel="noopener noreferrer" href="{{ url.domene }}">
+											<img src="{% static 'url.png' %}" alt="">{{ url.domene }}
+										</a>
+									</li>
+								{% endfor %}
+							</ul>
+						{% else %}
+							<span class="text-muted">Ingen</span>
+						{% endif %}
+					</div>
+				</div>
+
+				<div class="system-detalj-fakta-item">
+					<h6>Virksomheter bruker systemet</h6>
+					<div class="system-detalj-fakta-verdi">
+						{% if systembruk %}
+							<a href="#anchor_bruk">{{ systembruk|length }}</a>
+						{% else %}
+							<span class="text-muted">0</span>
+						{% endif %}
+					</div>
+				</div>
+
+				<div class="system-detalj-fakta-item">
+					<h6>Automatisk beregnet antall brukere</h6>
+					<div class="system-detalj-fakta-verdi">
+						{% if automatisk_brukere_antall_fra_ad is not None %}
+							{{ automatisk_brukere_antall_fra_ad }}
+						{% else %}
+							<span class="text-muted">–</span>
+						{% endif %}
+					</div>
+				</div>
+
+				<div class="system-detalj-fakta-item">
+					<h6>LOS-klassifisering</h6>
+					<div class="system-detalj-fakta-verdi">
+						{% if systemdetaljer.LOSref.count > 0 %}
+							<div class="system-detalj-fakta-badges">
+								{% for b in systemdetaljer.LOSref.all %}
+									{% if b.kategori_ref.verdi == 'Tema' %}
+										<a href="{{ b.unik_id }}.html" class="badge badge-light">{{ b.verdi }}</a>
+									{% endif %}
+								{% endfor %}
+								{% for b in systemdetaljer.LOSref.all %}
+									{% if b.kategori_ref.verdi == 'Ord' %}
+										<a href="{{ b.unik_id }}.html" class="badge badge-light">{{ b.verdi }}</a>
+									{% endif %}
+								{% endfor %}
+							</div>
+						{% else %}
+							<span class="text-muted">Ingen</span>
+						{% endif %}
+					</div>
+				</div>
+
+				<div class="system-detalj-fakta-item">
+					<h6>{% get_verbose_field_name systemdetaljer "kritisk_kapabilitet" %}</h6>
+					<div class="system-detalj-fakta-verdi">
+						{% if systemdetaljer.kritisk_kapabilitet.all %}
+							<div class="system-detalj-fakta-badges">
+								{% for kapabilitet in systemdetaljer.kritisk_kapabilitet.all %}
+									<span class="badge badge-light">{{ kapabilitet }}</span>
+								{% endfor %}
+							</div>
+						{% else %}
+							<span class="text-muted">Ikke kritisk</span>
+						{% endif %}
+					</div>
+				</div>
+
+				<div class="system-detalj-fakta-item">
+					<h6>Business services</h6>
+					<div class="system-detalj-fakta-verdi">
+						{% if systemdetaljer.service_offerings.all|length > 0 %}
+							<a href="#anchor_servere_database">{{ systemdetaljer.service_offerings.all|length }}</a>
+						{% else %}
+							<span class="text-muted">0</span>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
 
 		<div class="system-detalj-eierskap">
 			<div class="system-detalj-eierskap-panel">
@@ -152,7 +362,7 @@
 				</div>
 			</div>
 
-			<div class="system-detalj-eierskap-panel">
+			<div class="system-detalj-eierskap-panel system-detalj-eierskap-panel--forvalter">
 				<h6>Systemforvalter</h6>
 				{% if systemdetaljer.systemforvalter %}
 					{% url "virksomhet" systemdetaljer.systemforvalter.pk as url_systemforvalter %}
@@ -166,8 +376,8 @@
 						Seksjon: <a href="{{ url_enhet_detaljer }}">{{ systemdetaljer.systemforvalter_avdeling_referanse }}</a>
 					</div>
 				{% endif %}
-				<div class="kontaktliste">
-					{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all %}
+				<div class="kontaktliste kontaktliste--cols-2">
+					{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all two_columns=True %}
 				</div>
 				{% if systemdetaljer.forvaltning_epost %}
 					<div class="small mt-1">
@@ -225,21 +435,6 @@
 			</div>
 		{% endfor %}
 		</div>
-	{% endif %}
-
-	{% if systemdetaljer.systemurl.count > 0 %}
-	<hr>Webpubliseringer
-	<div class="row">
-		<div class="col-12">
-			{% for url in systemdetaljer.systemurl.all %}
-				<span style="margin: 10px; overflow-wrap: break-word;">
-					<a target="_blank" href="{{url.domene}}"><img style="height: 35px;" src="{% static 'url.png' %}">{{url.domene}}</a><br>
-				</span>
-			{% empty %}
-				<p>Ingen ting å vise</p>
-			{% endfor %}
-		</div>
-	</div>
 	{% endif %}
 
 	<hr>
@@ -657,28 +852,6 @@
 			{% for klasse in systemdetaljer.informasjonsklassifisering.all %}
 				<span class="badge badge-light">{{ klasse }}</span><br>
 			{% endfor %}
-
-			<hr>
-			LOS-klassifisering - kommunale tema
-			{% for b in systemdetaljer.LOSref.all %}
-					{% comment %}
-					{% if b.kategori_ref.verdi == 'Ord' %}
-							{% for p in b.parent_id.all %}
-									<a href="{{ p.unik_id }}.html" class="badge badge-light">{{ p.verdi }}</a>
-							{% endfor %}
-					{% endif %}
-					{% endcomment %}
-					{% if b.kategori_ref.verdi == 'Tema' %}
-							<a href="{{ b.unik_id }}.html" class="badge badge-light">{{ b.verdi }}</a>
-					{% endif %}
-			{% endfor %}
-
-			<br>LOS-klassifisering - kommunale ord
-			{% for b in systemdetaljer.LOSref.all %}
-					{% if b.kategori_ref.verdi == 'Ord' %}
-							<a href="{{ b.unik_id }}.html" class="badge badge-light">{{ b.verdi }}</a>
-					{% endif %}
-			{% endfor %}
 		</div>
 
 
@@ -691,19 +864,6 @@
 				<span class="badge badge-dark">Alltid</span>
 			{% endif %}
 
-			<hr>
-			Kritiske funksjoner
-			{% for k in systemdetaljer.kritisk_kapabilitet.all %}
-				<span class="badge badge-light">{{ k.navn }}</span>
-			{% empty %}
-				Ikke kritisk
-			{% endfor %}
-
-			<hr>
-			{% get_verbose_field_name systemdetaljer "kritisk_kapabilitet" %}<br>
-			{% for kapabilitet in systemdetaljer.kritisk_kapabilitet.all %}
-				<span class="badge badge-light">{{ kapabilitet }}</span>
-			{% endfor %}
 			{% if systemdetaljer.tilgjengelighet_timer_til_kritisk %}
 				<hr>
 				Nedetid før kritisk <span class="badge badge-light">{{ systemdetaljer.tilgjengelighet_timer_til_kritisk }} timer</span>
