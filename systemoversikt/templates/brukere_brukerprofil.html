@@ -90,7 +90,7 @@
 	<a class="btn btn-link" href="{{ url_ad_exact }}">🔍 slå opp direkte i AD</a>
 
 	{% url 'entra_id_oppslag' as url_ad_exact %}
-	<a class="btn btn-link" href="{{ url_ad_exact }}?inndata={{user.email}}">🔍 slå opp direkte i Entra ID</a>
+	<a class="btn btn-link" href="{{ url_ad_exact }}?search_term_user_entraId={{ user.email|urlencode }}">🔍 slå opp direkte i Entra ID</a>
 
 	<hr>
 

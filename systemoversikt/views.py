@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-09: entra_id_oppslag – GET search_term_user_entraId from brukerprofil direct links.
+# 2026-07-09: virksomhet_enhetsok – legacy search_term GET alias for enhet_detaljer form.
 # 2026-07-08: System details risk overview – scenarios linked via M2M, exclude archived collections.
 # 2026-07-07: alle_nettverk – only parse / as CIDR when term is valid IPv4/prefix (not text like DMZ Ekstern/Internett).
 # 2026-07-07: alle_nettverk – top_by_ip_devices stats use .values() so dict access works.
@@ -4823,12 +4825,15 @@ def auth_kartoteket_group_lookup(username):
 
 
 def entra_id_oppslag(request):
+	# 2026-07-09: Accept GET search_term_user_entraId for direct links from brukerprofil – prefill and run lookup.
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	import re
 	inndata = request.POST.get('search_term_user_entraId', '')
+	if inndata == '':
+		inndata = request.GET.get('search_term_user_entraId', '')
 	#message = f"{request.user} søkte på: {inndata}."
 	inndata = re.sub(r'[^A-Za-z0-9\.\@]', '', inndata) # sørge for at det kun er lovlige tegn
 
@@ -4852,8 +4857,6 @@ def entra_id_oppslag(request):
 			metadata = None
 			groups = None
 
-	if inndata == '':
-		inndata = request.GET.get('search_term_user_entraId', '')
 	metadata = metadata if 'metadata' in locals() else None
 	groups = groups if 'groups' in locals() else None
 
@@ -7488,6 +7491,7 @@ def ikke_byttet_passord_annet(request):
 
 def enhet_detaljer(request, pk):
 	#Vise informasjon om en konkret organisatorisk enhet
+	# 2026-07-09: Pass search_term_org for org search form (matches virksomhet_enhetsok).
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -7504,6 +7508,7 @@ def enhet_detaljer(request, pk):
 		'sideenheter': sideenheter,
 		'brukere': personer,
 		'systemer_ansvarfor': systemer_ansvarfor,
+		'search_term_org': request.GET.get('search_term_org', '').strip(),
 	})
 
 
@@ -7511,11 +7516,14 @@ def enhet_detaljer(request, pk):
 
 def virksomhet_enhetsok(request):
 	#Vise informasjon om organisatorisk struktur
+	# 2026-07-09: Accept legacy search_term GET param from enhet_detaljer (was wrong form name).
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
 
 	search_term = request.GET.get('search_term_org', "").strip()
+	if not search_term:
+		search_term = request.GET.get('search_term', "").strip()
 	if len(search_term) > 1:
 		units = HRorg.objects.filter(ou__icontains=search_term).filter(active=True).order_by('virksomhet_mor')
 	else:

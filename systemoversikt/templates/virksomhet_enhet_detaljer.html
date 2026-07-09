@@ -8,9 +8,10 @@
 
 {% block hovedinnhold %}
 
+	{# 2026-07-09: search_term_org matches virksomhet_enhetsok GET param (was search_term). #}
 	<form style="float: right;" action="{% url 'virksomhet_enhetsok' %}" autocomplete="off">
 		<div class="form-group form-inline">
-			<input size="35" style="width: 350px;" type="search" value="{{ search_term }}" name="search_term"
+			<input size="35" style="width: 350px;" type="search" value="{{ search_term_org }}" name="search_term_org"
 			placeholder="Søk på avdeling, seksjon eller team" class="form-control form-control-sm">
 			<input type="submit" value="Søk" class="btn btn-primary btn-sm">
 		</div>

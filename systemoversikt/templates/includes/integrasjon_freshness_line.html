@@ -1,8 +1,15 @@
 {# 2026-06-21: Reusable import freshness line for drill-down / detail pages. #}
+{# 2026-07-09: Default label uses informasjon/kilde from IntegrasjonKonfigurasjon when set. #}
 {% load humanize %}
 {% if integrasjonsstatus %}
 <p class="small text-muted mb-2">
-	{% if label %}{{ label }}{% else %}Sist synkronisert{% endif %}
+	{% if label %}
+		{{ label }}
+	{% elif integrasjonsstatus.informasjon %}
+		{{ integrasjonsstatus.informasjon }}{% if integrasjonsstatus.kilde %} ({{ integrasjonsstatus.kilde }}){% endif %} ble sist synkronisert
+	{% else %}
+		Sist synkronisert
+	{% endif %}
 	{{ integrasjonsstatus.dato_sist_oppdatert|date:"d.M Y"|default:"ukjent" }}
 	({{ integrasjonsstatus.dato_sist_oppdatert|timesince }})
 </p>
