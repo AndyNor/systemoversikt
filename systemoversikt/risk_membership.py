@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-09: create_risk_scope – log scope_created to RiskActivityLog.
 # 2026-07-08: search_scopes – server-side title/beskrivelse search across all collections (existence is open).
 # 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator may change/delete any group in profile virksomhet.
 # 2026-07-07: Granular tilgangsgruppe helpers – view_riskscope create, member-gated edit, change_riskvirksomhetgroup for virksomhet_read_only.
@@ -29,6 +30,7 @@ from systemoversikt.models import (
 	RiskVirksomhetGroupMember,
 	Virksomhet,
 )
+from systemoversikt.risk_activity_log import RISK_ACTIVITY_SCOPE_CREATED, log_risk_activity
 
 RISK_CREATE_PERMISSION = 'systemoversikt.view_riskscope'
 RISK_VIRKSOMHET_GROUP_CHANGE_PERMISSION = 'systemoversikt.change_riskvirksomhetgroup'
@@ -399,4 +401,17 @@ def create_risk_scope(user, **scope_kwargs):
 			role=RISK_SCOPE_MEMBER_ROLE_OWNER,
 			added_by=user,
 		)
+	vlabel = ''
+	if scope.virksomhet_id:
+		vlabel = scope.virksomhet.virksomhetsforkortelse
+	log_risk_activity(
+		RISK_ACTIVITY_SCOPE_CREATED,
+		'%s opprettet risikosamling «%s»%s.' % (
+			user.get_username(),
+			scope.title,
+			(' (%s)' % vlabel) if vlabel else '',
+		),
+		user=user,
+		scope=scope,
+	)
 	return scope

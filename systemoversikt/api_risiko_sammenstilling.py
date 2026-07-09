@@ -8,6 +8,7 @@
 # 2026-07-06: Kartlegging scenario search – eskaleres_only filter parameter.
 # 2026-07-06: Kartlegging scenario search includes nåværende and etter-tiltak risk labels.
 # 2026-07-06: Group-owned sammenstilling APIs – mapping, rollup, assessments with scope-level access.
+# 2026-07-09: api_risiko_sammenstilling_create – log sammenstilling_created to RiskActivityLog.
 
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
@@ -32,6 +33,7 @@ from systemoversikt.risk_framework import (
 )
 from systemoversikt.api_risiko_rammeverk import _taxonomy_tree as mal_taxonomy_tree
 from systemoversikt.api_risiko import _json_error, _parse_json_body
+from systemoversikt.risk_activity_log import RISK_ACTIVITY_SAMMENSTILLING_CREATED, log_risk_activity
 from systemoversikt.risk_sammenstilling import (
 	all_owner_groups_queryset,
 	get_active_sammenstilling,
@@ -229,6 +231,16 @@ def api_risiko_sammenstilling_create(request):
 		framework=framework,
 		owner_group=group,
 		created_by=request.user,
+	)
+	log_risk_activity(
+		RISK_ACTIVITY_SAMMENSTILLING_CREATED,
+		'%s opprettet sammenstilling «%s» (mal: %s).' % (
+			request.user.get_username(),
+			sammenstilling.title,
+			framework.title,
+		),
+		user=request.user,
+		sammenstilling=sammenstilling,
 	)
 	return _json_ok({'pk': sammenstilling.pk})
 

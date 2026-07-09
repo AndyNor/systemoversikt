@@ -1,0 +1,18 @@
+{# 2026-07-09: Per-sammenstilling workflow activity log page. #}
+{% extends "sikkerhet_index.html" %}
+
+{% block overskrift %}
+	Aktivitet – {{ sammenstilling.title }}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>
+	<a class="btn btn-back btn-sm" href="{% url 'risiko_sammenstilling_detail' pk=sammenstilling.pk %}">&larr; Tilbake til sammenstilling</a>
+</p>
+
+<p class="text-muted">Viser opprettelse og arkivering for denne sammenstillingen (siste {{ activity_logs.count }} hendelser).</p>
+
+{% include "includes/risiko_activity_log_table.html" %}
+
+{% endblock hovedinnhold %}

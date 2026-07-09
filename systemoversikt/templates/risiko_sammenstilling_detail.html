@@ -64,6 +64,7 @@
 	<a class="btn btn-success btn-sm ml-2" href="{% url 'risiko_sammenstilling_kartlegging' pk=sammenstilling.pk %}">Kartlegging</a>
 	{% endif %}
 	<a class="btn btn-outline-secondary btn-sm ml-2" href="{% url 'risiko_sammenstilling_snapshot_list' pk=sammenstilling.pk %}">Historikk / versjoner</a>
+	<a class="btn btn-outline-secondary btn-sm ml-2" href="{% url 'risiko_sammenstilling_activity' pk=sammenstilling.pk %}">Aktivitet</a>
 	{% if can_map and sammenstilling.archived_at is None %}
 	<button type="button" class="btn btn-outline-secondary btn-sm ml-2" id="risiko-sammenstilling-archive-btn" data-sammenstilling-title="{{ sammenstilling.title|escape }}">
 		Arkiver sammenstilling

@@ -1,4 +1,4 @@
-# Change log:
+# 2026-07-09: risk_activity_event_label – human label for RiskActivityLog event_type codes.
 # 2026-07-08: livslop_status_label – strip leading number from LIVSLOEP_VALG display in summary badges.
 # 2026-07-07: linebreaks_bullets – compact bullet list for multiline report text (skip blank lines).
 # 2026-07-07: risiko_member_display – show virksomhetsforkortelse with member names on collection pages.
@@ -679,4 +679,10 @@ def risiko_sannsynlighetstype_tags(sannsynlighetstyper):
 			tag['label'],
 		))
 	return mark_safe(' '.join(str(part) for part in parts))
+
+
+@register.filter
+def risk_activity_event_label(event_type):
+	from systemoversikt.risk_activity_log import display_label
+	return display_label(event_type)
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-09: RiskActivityLog – dedicated audit log for risk module workflow events.
 # 2026-07-08: RiskSnapshot – versioned JSON snapshots for collection rapport and sammenstilling.
 # 2026-07-07: RiskSammenstilling.reader_groups M2M – optional read-only tilgangsgrupper per sammenstilling.
 # 2026-07-07: InfobloxHost + NetworkContainer vlan_name/location_name/ip_helper – Infoblox IP search enrichment.
@@ -1131,6 +1132,69 @@ class UserChangeLog(models.Model):
 	class Meta:
 		verbose_name_plural = "System: Brukerendringer"
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+# Dedicated audit log for risk module workflow events (separate from ApplicationLog).
+class RiskActivityLog(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	event_type = models.CharField(
+		verbose_name="Hendelsestype",
+		max_length=50,
+		blank=False,
+		null=False,
+	)
+	message = models.TextField(
+		verbose_name="Melding",
+		blank=False,
+		null=False,
+	)
+	user = models.ForeignKey(
+		to=User,
+		on_delete=models.SET_NULL,
+		related_name='risk_activity_logs',
+		verbose_name="Bruker",
+		blank=True,
+		null=True,
+	)
+	scope = models.ForeignKey(
+		to='RiskScope',
+		on_delete=models.SET_NULL,
+		related_name='activity_logs',
+		verbose_name="Risikosamling",
+		blank=True,
+		null=True,
+	)
+	sammenstilling = models.ForeignKey(
+		to='RiskSammenstilling',
+		on_delete=models.SET_NULL,
+		related_name='activity_logs',
+		verbose_name="Sammenstilling",
+		blank=True,
+		null=True,
+	)
+	framework = models.ForeignKey(
+		to='RiskFramework',
+		on_delete=models.SET_NULL,
+		related_name='activity_logs',
+		verbose_name="Mal",
+		blank=True,
+		null=True,
+	)
+
+	def __str__(self):
+		return '%s %s' % (self.event_type, self.message)
+
+	class Meta:
+		verbose_name_plural = "System: Risikoaktivitet"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		indexes = [
+			models.Index(fields=['scope', 'opprettet']),
+			models.Index(fields=['sammenstilling', 'opprettet']),
+		]
 
 
 # Informasjon om hva som er nytt i Kartoteket

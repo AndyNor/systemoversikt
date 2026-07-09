@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-09: risiko_scope_delete / akseptkriterier – log workflow events to RiskActivityLog.
 # 2026-07-08: Import success message shows detected Excel template (enkel/stor mal).
 # 2026-07-08: Server-side scope search (q=) across all virksomheter on root list.
 # 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator scoped to profile virksomhet on tilgangsgrupper page.
@@ -57,6 +58,7 @@ from openpyxl import load_workbook
 from systemoversikt.models import (
 	RISK_SCOPE_MEMBER_ROLE_OWNER,
 	RISK_SCOPE_MEMBER_ROLE_PARTICIPANT,
+	RiskActivityLog,
 	RiskCriteriaConfig,
 	RiskScope,
 	RiskScopeMember,
@@ -89,6 +91,12 @@ from systemoversikt.risk_criteria_transfer import (
 	apply_imported_criteria,
 	build_export_payload,
 	parse_import_payload,
+)
+from systemoversikt.risk_activity_log import (
+	RISK_ACTIVITY_CRITERIA_IMPORTED,
+	RISK_ACTIVITY_CRITERIA_UPDATED,
+	RISK_ACTIVITY_SCOPE_ARCHIVED,
+	log_risk_activity,
 )
 from systemoversikt.risk_import import import_risk_workbook
 from systemoversikt.risk_membership import (
@@ -453,6 +461,12 @@ def risiko_scope_delete(request, pk):
 		return redirect('risiko_scope_list')
 	title = scope.title
 	scope.archive()
+	log_risk_activity(
+		RISK_ACTIVITY_SCOPE_ARCHIVED,
+		'%s arkivert risikosamling «%s».' % (request.user.get_username(), title),
+		user=request.user,
+		scope=scope,
+	)
 	messages.success(request, 'Risikosamling «%s» er arkivert.' % title)
 	return redirect('risiko_scope_list')
 
@@ -758,6 +772,11 @@ def risiko_akseptkriterier_importer(request):
 			messages.error(request, err)
 		return redirect('risiko_akseptkriterier_rediger')
 
+	log_risk_activity(
+		RISK_ACTIVITY_CRITERIA_IMPORTED,
+		'%s importerte akseptkriterier fra fil (%s).' % (request.user.get_username(), title),
+		user=request.user,
+	)
 	messages.success(request, 'Akseptkriterier er importert. Endringene gjelder alle risikosamlinger.')
 	return redirect('risiko_akseptkriterier_rediger')
 
@@ -790,6 +809,11 @@ def risiko_akseptkriterier_rediger(request):
 		row.is_active = True
 		row.save()
 		invalidate_criteria_cache()
+		log_risk_activity(
+			RISK_ACTIVITY_CRITERIA_UPDATED,
+			'%s oppdaterte akseptkriterier.' % request.user.get_username(),
+			user=request.user,
+		)
 		messages.success(request, 'Akseptkriterier er oppdatert. Endringene gjelder alle risikosamlinger.')
 		return redirect('risiko_akseptkriterier')
 
@@ -874,5 +898,20 @@ def risiko_scope_rapport(request, pk):
 		'request': request,
 		'required_permissions': [],
 		**_build_rapport_context(scope, criteria),
+	})
+
+
+@login_required
+def risiko_scope_activity(request, pk):
+	# 2026-07-09: Per-collection workflow activity log (create, status, archive).
+	scope = get_object_or_404(RiskScope.objects.select_related('virksomhet'), pk=pk)
+	if not _has_scope_read_access(request, scope):
+		return _deny_scope_access(request, scope=scope)
+	activity_logs = RiskActivityLog.objects.filter(scope_id=pk).select_related('user').order_by('-opprettet')[:500]
+	return render(request, 'risiko_scope_activity.html', {
+		'request': request,
+		'required_permissions': [],
+		'scope': scope,
+		'activity_logs': activity_logs,
 	})
 

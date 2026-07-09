@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-09: Sammenstilling archive and mal import/create – log to RiskActivityLog.
 # 2026-07-07: List rows expose can_map; superuser modal for reader_groups on sammenstilling.
 # 2026-07-07: Superuser owner-group modal on rammeverk list – reassign sammenstilling eiergruppe.
 # 2026-07-07: Mal JSON export/import – superuser-only transfer between environments.
@@ -23,6 +24,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_http_methods
 
+from systemoversikt.models import RiskActivityLog
 from systemoversikt.risk_criteria import get_active_criteria
 from systemoversikt.risk_framework import (
 	build_rollup_tree,
@@ -35,6 +37,12 @@ from systemoversikt.risk_framework_transfer import (
 	build_mal_export_payload,
 	create_mal_from_import,
 	parse_mal_import_payload,
+)
+from systemoversikt.risk_activity_log import (
+	RISK_ACTIVITY_MAL_CREATED,
+	RISK_ACTIVITY_MAL_IMPORTED,
+	RISK_ACTIVITY_SAMMENSTILLING_ARCHIVED,
+	log_risk_activity,
 )
 from systemoversikt.risk_sammenstilling import (
 	active_templates_queryset,
@@ -187,6 +195,12 @@ def risiko_mal_importer(request, slug):
 			messages.error(request, err)
 		return redirect('risiko_mal_rediger', slug=slug)
 
+	log_risk_activity(
+		RISK_ACTIVITY_MAL_IMPORTED,
+		'%s importerte mal «%s» fra fil.' % (request.user.get_username(), framework.title),
+		user=request.user,
+		framework=framework,
+	)
 	messages.success(request, 'Malen «%s» er oppdatert fra fil.' % framework.title)
 	return redirect('risiko_mal_rediger', slug=slug)
 
@@ -224,6 +238,12 @@ def risiko_mal_opprett_fra_fil(request):
 			messages.error(request, err)
 		return redirect('risiko_rammeverk_list')
 
+	log_risk_activity(
+		RISK_ACTIVITY_MAL_CREATED,
+		'%s opprettet mal «%s» fra fil.' % (request.user.get_username(), framework.title),
+		user=request.user,
+		framework=framework,
+	)
 	messages.success(request, 'Ny mal «%s» er opprettet.' % framework.title)
 	return redirect('risiko_mal_rediger', slug=framework.slug)
 
@@ -297,6 +317,15 @@ def risiko_sammenstilling_archive(request, pk):
 		return _render_risk_access_denied(request, 'sammenstilling_archive', sammenstilling=sammenstilling)
 	if sammenstilling.archived_at is None:
 		sammenstilling.archive()
+		log_risk_activity(
+			RISK_ACTIVITY_SAMMENSTILLING_ARCHIVED,
+			'%s arkivert sammenstilling «%s».' % (
+				request.user.get_username(),
+				sammenstilling.title,
+			),
+			user=request.user,
+			sammenstilling=sammenstilling,
+		)
 		messages.success(request, 'Risikosammenstillingen «%s» er arkivert.' % sammenstilling.title)
 	else:
 		messages.info(request, 'Risikosammenstillingen «%s» er allerede arkivert.' % sammenstilling.title)
@@ -317,4 +346,21 @@ def risiko_sammenstilling_kartlegging(request, pk):
 		'risk_meta_json': json.dumps({
 			'risk_matrix': get_active_criteria().risk_matrix,
 		}),
+	})
+
+
+@login_required
+def risiko_sammenstilling_activity(request, pk):
+	# 2026-07-09: Per-sammenstilling workflow activity log (create, archive).
+	sammenstilling = _sammenstilling_or_404(pk)
+	if not user_can_view_sammenstilling(request.user, sammenstilling):
+		return _render_risk_access_denied(request, 'sammenstilling_view', sammenstilling=sammenstilling)
+	activity_logs = RiskActivityLog.objects.filter(
+		sammenstilling_id=pk,
+	).select_related('user').order_by('-opprettet')[:500]
+	return render(request, 'risiko_sammenstilling_activity.html', {
+		'request': request,
+		'required_permissions': [],
+		'sammenstilling': sammenstilling,
+		'activity_logs': activity_logs,
 	})

@@ -32,6 +32,7 @@
 <p>
 	<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_list' %}">&larr; Tilbake til oversikt</a>
 	<a class="btn btn-outline-primary btn-sm ml-2" href="{% url 'risiko_scope_rapport' pk=scope.pk %}">Åpne rapport</a>
+	<a class="btn btn-outline-secondary btn-sm ml-2" href="{% url 'risiko_scope_activity' pk=scope.pk %}">Aktivitet</a>
 </p>
 
 {% if is_read_only_viewer %}

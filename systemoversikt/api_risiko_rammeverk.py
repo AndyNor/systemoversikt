@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-09: Mal node APIs – log taxonomy changes to RiskActivityLog.
 # 2026-07-06: Active nodes API – parent display code for kartlegging dropdown grouping.
 # 2026-07-06: Mal taxonomy APIs require superuser for all methods – editor-only endpoints.
 # 2026-07-06: Automatic category numbering – create always assigns next nummer; update ignores nummer.
@@ -19,6 +20,12 @@ from systemoversikt.risk_framework import (
 	framework_nodes_queryset,
 	get_active_framework,
 	move_framework_node,
+)
+from systemoversikt.risk_activity_log import (
+	RISK_ACTIVITY_MAL_NODE_CREATED,
+	RISK_ACTIVITY_MAL_NODE_MOVED,
+	RISK_ACTIVITY_MAL_NODE_UPDATED,
+	log_risk_activity,
 )
 from systemoversikt.risk_sammenstilling import user_can_edit_template
 from systemoversikt.api_risiko import _json_error, _parse_json_body
@@ -151,6 +158,16 @@ def api_risiko_mal_node_create(request, slug):
 		title=(body.get('title') or 'Ny kategori').strip(),
 		forklaring=(body.get('forklaring') or '').strip(),
 	)
+	log_risk_activity(
+		RISK_ACTIVITY_MAL_NODE_CREATED,
+		'%s opprettet node «%s» i mal «%s».' % (
+			request.user.get_username(),
+			node.title,
+			framework.title,
+		),
+		user=request.user,
+		framework=framework,
+	)
 	return _json_ok({'node': _node_payload(node)})
 
 
@@ -171,6 +188,16 @@ def api_risiko_mal_node_update(request, slug, nid):
 	if 'forklaring' in body:
 		node.forklaring = (body.get('forklaring') or '').strip()
 	node.save()
+	log_risk_activity(
+		RISK_ACTIVITY_MAL_NODE_UPDATED,
+		'%s endret node «%s» i mal «%s».' % (
+			request.user.get_username(),
+			node.title,
+			framework.title,
+		),
+		user=request.user,
+		framework=framework,
+	)
 	return _json_ok({'node': _node_payload(node)})
 
 
@@ -198,4 +225,15 @@ def api_risiko_mal_node_move(request, slug, nid):
 		move_framework_node(node, new_parent)
 	except ValueError as exc:
 		return _json_error(str(exc))
+	log_risk_activity(
+		RISK_ACTIVITY_MAL_NODE_MOVED,
+		'%s flyttet node «%s» til %s i mal «%s».' % (
+			request.user.get_username(),
+			node.title,
+			new_parent.title,
+			framework.title,
+		),
+		user=request.user,
+		framework=framework,
+	)
 	return _json_ok({'node': _node_payload(node)})

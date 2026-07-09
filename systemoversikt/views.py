@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-09: logger_risiko – dedicated risk module workflow activity log at /admin/logger/risiko/.
 # 2026-07-09: entra_id_oppslag – GET search_term_user_entraId from brukerprofil direct links.
 # 2026-07-09: virksomhet_enhetsok – legacy search_term GET alias for enhet_detaljer form.
 # 2026-07-08: System details risk overview – scenarios linked via M2M, exclude archived collections.
@@ -5656,6 +5657,39 @@ def logger_autentisering(request):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'recent_loggs': recent_loggs,
+	})
+
+
+
+def logger_risiko(request):
+	# 2026-07-09: Dedicated risk module workflow activity log (separate from ApplicationLog).
+	from systemoversikt.risk_activity_log import RISK_ACTIVITY_EVENT_LABELS
+
+	required_permissions = ['systemoversikt.view_riskactivitylog']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+
+	qs = RiskActivityLog.objects.select_related(
+		'user', 'scope', 'sammenstilling', 'framework',
+	).order_by('-opprettet')
+	event_type_filter = (request.GET.get('event_type') or '').strip()
+	framework_slug = (request.GET.get('framework') or '').strip()
+	if event_type_filter:
+		qs = qs.filter(event_type=event_type_filter)
+	if framework_slug:
+		qs = qs.filter(framework__slug=framework_slug)
+	recent_loggs = qs[:1500]
+	framework_choices = RiskFramework.objects.filter(
+		pk__in=RiskActivityLog.objects.filter(framework__isnull=False).values_list('framework_id', flat=True).distinct(),
+	).order_by('title')
+	return render(request, 'site_logger_risiko.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'recent_loggs': recent_loggs,
+		'event_type_choices': sorted(RISK_ACTIVITY_EVENT_LABELS.items()),
+		'event_type_filter': event_type_filter,
+		'framework_slug': framework_slug,
+		'framework_choices': framework_choices,
 	})
 
 

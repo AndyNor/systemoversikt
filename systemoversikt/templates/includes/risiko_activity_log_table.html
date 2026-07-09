@@ -1,0 +1,24 @@
+{# 2026-07-09: Shared table for RiskActivityLog entries on activity pages. #}
+{% load templatetags %}
+<table class="tablesorter excel">
+<thead>
+<tr>
+	<th>Tidspunkt</th>
+	<th>Bruker</th>
+	<th>Hendelse</th>
+	<th>Melding</th>
+</tr>
+</thead>
+<tbody>
+{% for entry in activity_logs %}
+<tr>
+	<td width="160">{{ entry.opprettet|date:"Y-m-d H:i" }}</td>
+	<td width="120">{% if entry.user %}{{ entry.user.username }}{% else %}–{% endif %}</td>
+	<td width="180">{{ entry.event_type|risk_activity_event_label }}</td>
+	<td>{{ entry.message }}</td>
+</tr>
+{% empty %}
+<tr><td colspan="4" class="text-muted">Ingen hendelser registrert ennå.</td></tr>
+{% endfor %}
+</tbody>
+</table>

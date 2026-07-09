@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-09: RiskActivityLog admin – read-only append-only risk workflow log.
 # 2026-07-07: InfobloxHost admin; NetworkContainer vlan_name/location_name/ip_helper in list/search.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup admin classes.
 # 2026-07-02: virksomhet_read_only on group admin; participant_groups on RiskScope admin.
@@ -212,6 +213,23 @@ class UserChangeLogAdmin(admin.ModelAdmin):
 	list_display = ('event_type', 'message', 'opprettet',)
 	search_fields = ('message',)
 	list_filter = ('opprettet',)
+
+
+@admin.register(RiskActivityLog)
+class RiskActivityLogAdmin(admin.ModelAdmin):
+	list_display = ('opprettet', 'event_type', 'user', 'scope', 'sammenstilling', 'framework', 'message')
+	search_fields = ('message', 'event_type', 'user__username')
+	list_filter = ('event_type', 'opprettet')
+	readonly_fields = [f.name for f in RiskActivityLog._meta.get_fields() if f.name != 'id']
+
+	def has_add_permission(self, request):
+		return False
+
+	def has_change_permission(self, request, obj=None):
+		return False
+
+	def has_delete_permission(self, request, obj=None):
+		return request.user.is_superuser
 
 
 @admin.register(Database)

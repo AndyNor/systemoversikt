@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-09: api_risiko_scope_update – log scope_status_changed to RiskActivityLog.
 # 2026-07-07: Scenario sannsynlighetstyper validated against active criteria slugs (editable in akseptkriterier).
 # 2026-07-07: Member and bruker search labels include virksomhetsforkortelse – disambiguate same-name users.
 # 2026-07-07: Omfang figur/original multipart upload APIs – bytes stored on RiskScopeOmfangFil.
@@ -84,6 +85,7 @@ from systemoversikt.risk_display import (
 	tiltak_display_id_map,
 	user_ansvarlig_display_name,
 )
+from systemoversikt.risk_activity_log import RISK_ACTIVITY_SCOPE_STATUS_CHANGED, log_risk_activity
 from systemoversikt.risk_membership import (
 	normalize_risk_group_title,
 	user_display_name,
@@ -767,11 +769,26 @@ def api_risiko_scope_update(request, pk):
 					return _json_error('Kun eiere kan sette denne statusen.', status=403)
 		new_status = status
 
+	old_status = scope.status
+	status_labels = dict(RISK_SCOPE_STATUS_VALG)
 	scope.title = title
 	scope.beskrivelse = beskrivelse
 	scope.sist_revidert = sist_revidert
 	scope.status = new_status
 	scope.save()
+
+	if new_status != old_status:
+		log_risk_activity(
+			RISK_ACTIVITY_SCOPE_STATUS_CHANGED,
+			'%s endret status på «%s» fra %s til %s.' % (
+				request.user.get_username(),
+				scope.title,
+				status_labels.get(old_status, old_status),
+				status_labels.get(new_status, new_status),
+			),
+			user=request.user,
+			scope=scope,
+		)
 
 	return JsonResponse({
 		'ok': True,
