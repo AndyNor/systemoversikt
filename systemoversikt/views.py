@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-07-09: logger – object search matches verbose ContentType label shown in table.
+# 2026-07-09: logger – pagination (500/page) and search on user, object, instance, beskrivelse.
 # 2026-07-09: logger_risiko – dedicated risk module workflow activity log at /admin/logger/risiko/.
 # 2026-07-09: entra_id_oppslag – GET search_term_user_entraId from brukerprofil direct links.
 # 2026-07-09: virksomhet_enhetsok – legacy search_term GET alias for enhet_detaljer form.
@@ -5483,8 +5485,32 @@ def roller(request):
 
 
 
+def _logger_matching_content_type_ids(term):
+	"""Match ContentType the same way as the Objekt column (app_label | verbose_name)."""
+	term_lower = term.lower()
+	matching_ids = []
+	for ct in ContentType.objects.all().only('pk', 'app_label', 'model'):
+		if term_lower in ct.app_label.lower() or term_lower in ct.model.lower():
+			matching_ids.append(ct.pk)
+			continue
+		model = ct.model_class()
+		if model is None:
+			continue
+		meta = model._meta
+		labeled_name = '%s | %s' % (meta.app_label, meta.verbose_name)
+		if (
+			term_lower in str(meta.verbose_name).lower()
+			or term_lower in str(meta.verbose_name_plural).lower()
+			or term_lower in labeled_name.lower()
+		):
+			matching_ids.append(ct.pk)
+	return matching_ids
+
+
+
 def logger(request):
 	#viser alle endringer på objekter i løsningen
+	# 2026-07-09: Pagination (500 per page) and search by user, object, instance, beskrivelse.
 	required_permissions = ['admin.view_logentry']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
@@ -5497,14 +5523,66 @@ def logger(request):
 	for user in top_users:
 		user["user"] = User.objects.get(pk=user["user_id"])
 
-	antall_vist = 500
-	recent_admin_loggs = LogEntry.objects.order_by('-action_time')[:antall_vist]
+	LOGGER_PAGE_SIZE = 500
+	search_user_raw = request.GET.get('search_user', '')
+	search_objekt_raw = request.GET.get('search_objekt', '')
+	search_instans_raw = request.GET.get('search_instans', '')
+	search_beskrivelse_raw = request.GET.get('search_beskrivelse', '')
+	search_user = search_user_raw.strip()
+	search_objekt = search_objekt_raw.strip()
+	search_instans = search_instans_raw.strip()
+	search_beskrivelse = search_beskrivelse_raw.strip()
+	has_filters = bool(search_user or search_objekt or search_instans or search_beskrivelse)
+
+	qs = LogEntry.objects.select_related('user', 'content_type', 'user__profile').order_by('-action_time')
+	if search_user:
+		qs = qs.filter(
+			Q(user__username__icontains=search_user) |
+			Q(user__first_name__icontains=search_user) |
+			Q(user__last_name__icontains=search_user) |
+			Q(user__profile__displayName__icontains=search_user)
+		)
+	if search_objekt:
+		matching_content_type_ids = _logger_matching_content_type_ids(search_objekt)
+		if matching_content_type_ids:
+			qs = qs.filter(content_type_id__in=matching_content_type_ids)
+		else:
+			qs = qs.none()
+	if search_instans:
+		qs = qs.filter(
+			Q(object_repr__icontains=search_instans) |
+			Q(object_id__icontains=search_instans)
+		)
+	if search_beskrivelse:
+		qs = qs.filter(change_message__icontains=search_beskrivelse)
+
+	paginator = Paginator(qs, LOGGER_PAGE_SIZE)
+	page_number = request.GET.get('page', '1')
+	page_obj = paginator.get_page(page_number)
+
+	filter_parts = {}
+	if search_user_raw:
+		filter_parts['search_user'] = search_user_raw
+	if search_objekt_raw:
+		filter_parts['search_objekt'] = search_objekt_raw
+	if search_instans_raw:
+		filter_parts['search_instans'] = search_instans_raw
+	if search_beskrivelse_raw:
+		filter_parts['search_beskrivelse'] = search_beskrivelse_raw
+	filter_query = urlencode(filter_parts)
 
 	return render(request, 'site_audit_logger.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
-		'recent_admin_loggs': recent_admin_loggs,
-		'antall_vist': antall_vist,
+		'page_obj': page_obj,
+		'total_count': paginator.count,
+		'antall_vist': LOGGER_PAGE_SIZE,
+		'has_filters': has_filters,
+		'search_user': search_user_raw,
+		'search_objekt': search_objekt_raw,
+		'search_instans': search_instans_raw,
+		'search_beskrivelse': search_beskrivelse_raw,
+		'filter_query': filter_query,
 		#'top_endringer': top_endringer,
 		'aktive_antall_uker': aktive_antall_uker,
 		'aktive_antall_personer': aktive_antall_personer,
