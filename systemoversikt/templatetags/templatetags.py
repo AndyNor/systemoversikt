@@ -1,3 +1,4 @@
+# 2026-08-07: url_hostname / url_source_label – compact external-resource link labels on system details.
 # 2026-07-09: risk_activity_event_label – human label for RiskActivityLog event_type codes.
 # 2026-07-08: livslop_status_label – strip leading number from LIVSLOEP_VALG display in summary badges.
 # 2026-07-07: linebreaks_bullets – compact bullet list for multiline report text (skip blank lines).
@@ -28,9 +29,54 @@ from systemoversikt.models import *
 from django.contrib.auth.models import Permission
 import datetime
 import re
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 register = template.Library()
+
+# Known host fragments → short source labels for external resource links.
+_URL_SOURCE_LABELS = (
+	('confluence', 'Confluence'),
+	('sharepoint', 'SharePoint'),
+	('github', 'GitHub'),
+	('dev.azure', 'Azure DevOps'),
+	('visualstudio.com', 'Azure DevOps'),
+	('gitlab', 'GitLab'),
+	('bitbucket', 'Bitbucket'),
+	('yammer', 'Viva Engage'),
+	('engage.cloud.microsoft', 'Viva Engage'),
+	('teams.microsoft', 'Teams'),
+	('notion.', 'Notion'),
+	('figma.com', 'Figma'),
+	('miro.com', 'Miro'),
+	('jira', 'Jira'),
+	('atlassian', 'Atlassian'),
+)
+
+
+@register.filter
+def url_hostname(url):
+	"""Return hostname without leading www., or empty string if unparseable."""
+	if not url:
+		return ''
+	try:
+		host = (urlparse(str(url)).hostname or '').lower()
+	except Exception:
+		return ''
+	if host.startswith('www.'):
+		host = host[4:]
+	return host
+
+
+@register.filter
+def url_source_label(url):
+	"""Friendly source name (Confluence, SharePoint, …) or hostname fallback."""
+	host = url_hostname(url)
+	if not host:
+		return ''
+	for fragment, label in _URL_SOURCE_LABELS:
+		if fragment in host:
+			return label
+	return host
 
 _TJENESTE_IKON_FARGER = ('#2A2859', '#28277e', '#5c5a8a', '#925900', '#c45c52')
 
