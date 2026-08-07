@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-07: Pass subcategory matrix (score-weighted aggregation) to sammenstilling detail.
 # 2026-07-09: Sammenstilling archive and mal import/create – log to RiskActivityLog.
 # 2026-07-07: List rows expose can_map; superuser modal for reader_groups on sammenstilling.
 # 2026-07-07: Superuser owner-group modal on rammeverk list – reassign sammenstilling eiergruppe.
@@ -29,6 +30,7 @@ from systemoversikt.risk_criteria import get_active_criteria
 from systemoversikt.risk_framework import (
 	build_rollup_tree,
 	build_sammenstilling_category_matrix,
+	build_sammenstilling_subcategory_matrix,
 	enrich_rollup_tree_detail,
 	get_active_framework,
 )
@@ -303,6 +305,8 @@ def risiko_sammenstilling_detail(request, pk):
 		),
 		'rollup_tree': rollup_tree,
 		'matrix_current': build_sammenstilling_category_matrix(rollup_tree, criteria),
+		# 2026-08-07: Underkategorier from linked scenarios (score-weighted), not manual.
+		'matrix_subcategories': build_sammenstilling_subcategory_matrix(rollup_tree, criteria),
 		'konsekvens_labels': criteria.konsekvens_labels,
 		'api_urls_json': json.dumps(_sammenstilling_api_urls(pk)),
 	})

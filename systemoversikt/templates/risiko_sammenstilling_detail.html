@@ -107,9 +107,37 @@
 </p>
 
 <div class="mb-4" id="risikomatriser">
+	{# 2026-08-07: Explain how hovedkategori (manual) and underkategori (score-weighted) matrices are placed. #}
 	<h5 class="mt-0">Nåværende risiko</h5>
-	<p class="text-muted small">Hovedkategorier plassert etter manuelt satt nivå</p>
+	<h6 class="mb-1">Hovedkategorier</h6>
+	<p class="text-muted small mb-2">
+		Hver hovedkategori plasseres etter manuelt satt sannsynlighet og konsekvens («Sett nivå»).
+		Nivået er uavhengig av underliggende scenarioer; kun kategorier med begge verdier satt vises i matrisen.
+	</p>
 	{% include "risiko_sammenstilling_matrise_grid.html" with matrix=matrix_current konsekvens_labels=konsekvens_labels %}
+	<h6 class="mt-4 mb-1">Underkategorier</h6>
+	<p class="text-muted small mb-1">
+		Hver underkategori plasseres automatisk ut fra kartlagte scenarioer som har satt både sannsynlighet (S) og konsekvens (K) på skala 1–5. Scenarioer uten begge verdier ignoreres. Underkategorier uten vurderte scenarioer vises ikke.
+	</p>
+	<p class="text-muted small mb-1">
+		<strong>Vektet gjennomsnitt:</strong>
+		For hvert scenario beregnes risikoscore <code>score = S × K</code> (f.eks. S=4 og K=3 gir score 12).
+		Denne scoren brukes som vekt, slik at høyere risiko trekker underkategorien mer opp enn lave risikoer.
+	</p>
+	<p class="text-muted small mb-1">
+		Aggregert sannsynlighet og konsekvens beregnes hver for seg:
+	</p>
+	<ul class="text-muted small mb-1 pl-3">
+		<li>S<sub>aggregert</sub> = Σ(score × S) / Σ(score), deretter avrundet til nærmeste heltall i intervallet 1–5</li>
+		<li>K<sub>aggregert</sub> = Σ(score × K) / Σ(score), deretter avrundet til nærmeste heltall i intervallet 1–5</li>
+	</ul>
+	<p class="text-muted small mb-2">
+		<strong>Eksempel:</strong> to scenarioer – (S=2, K=2, score=4) og (S=5, K=5, score=25).
+		S<sub>aggregert</sub> = (4×2 + 25×5) / (4+25) = 133/29 ≈ 4,6 → 5;
+		K<sub>aggregert</sub> tilsvarende ≈ 4,6 → 5.
+		Et enkelt vurdert scenario plasseres på sitt eget (S, K)-punkt.
+	</p>
+	{% include "risiko_sammenstilling_underkategori_matrise_grid.html" with matrix=matrix_subcategories konsekvens_labels=konsekvens_labels %}
 </div>
 
 <div id="risiko-rammeverk-rollup" data-api-urls="{{ api_urls_json|escape }}">
@@ -145,7 +173,8 @@
 				</div>
 
 				{% for child in cat.children %}
-				<div class="risiko-rammeverk-subsection mb-4">
+				{# 2026-08-07: Anchor for subcategory matrix badge links. #}
+				<div class="risiko-rammeverk-subsection mb-4" id="rammeverk-node-{{ child.pk }}">
 					<h6 class="mb-1">{{ child.display_code }}. {{ child.title }}</h6>
 					{% if child.forklaring %}
 					<p class="small text-muted mb-2">{{ child.forklaring }}</p>
@@ -252,6 +281,13 @@
 					<label class="small">Begrunnelse</label>
 					<textarea class="form-control form-control-sm" id="rammeverk-rating-begrunnelse" rows="3"></textarea>
 				</div>
+				{# 2026-08-07: Category veiledende uses score-weighted S×K aggregation (same as underkategori matrix). #}
+				<p class="text-muted small mt-3 mb-0">
+					<strong>Bruk veiledende</strong> beregner forslag fra alle kartlagte scenarioer under denne hovedkategorien
+					med samme metode som underkategori-matrisen: vektet gjennomsnitt av sannsynlighet og konsekvens
+					der hvert scenario veier med risikoscore S×K (høyere risiko teller mer), avrundet til nivå 1–5.
+					Resultatet lagres som manuelt nivå med begrunnelse om at det er overført fra veiledende.
+				</p>
 			</div>
 			<div class="modal-footer justify-content-between w-100 py-2">
 				<div>

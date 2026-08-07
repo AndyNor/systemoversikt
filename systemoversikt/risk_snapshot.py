@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-07: Sammenstilling snapshots include subcategory matrix (score-weighted aggregation).
 # 2026-07-08: Keep all risk snapshot versions (disable age-bin pruning) and dedup ignoring `snapshot_generated_at` so nightly captures only save real changes.
 # 2026-07-08: Maintenance guide – see risk_snapshot_MAINTENANCE.md when model/UI changes affect snapshots.
 # 2026-07-08: Risk snapshot capture, serialization, retention pruning, and render helpers.
@@ -37,6 +38,7 @@ from systemoversikt.risk_display import (
 from systemoversikt.risk_framework import (
 	build_rollup_tree,
 	build_sammenstilling_category_matrix,
+	build_sammenstilling_subcategory_matrix,
 	enrich_rollup_tree_detail,
 )
 from systemoversikt.risk_membership import user_member_display_name as member_display_name
@@ -324,13 +326,33 @@ def _serialize_sammenstilling_matrix(matrix):
 						'display_code': cat.display_code(),
 						'title': cat.title,
 					})
-			cells.append({
+			# 2026-08-07: Subcategory matrix cells use subcategories instead of categories.
+			subcategories = []
+			for sub in cell.get('subcategories') or []:
+				if isinstance(sub, dict):
+					subcategories.append({
+						'pk': sub.get('pk'),
+						'display_code': sub.get('display_code', ''),
+						'title': sub.get('title', ''),
+						'parent_pk': sub.get('parent_pk'),
+					})
+				else:
+					subcategories.append({
+						'pk': sub.pk,
+						'display_code': sub.display_code(),
+						'title': sub.title,
+						'parent_pk': getattr(sub, 'parent_id', None),
+					})
+			cell_payload = {
 				'sannsynlighet': cell['sannsynlighet'],
 				'konsekvens': cell['konsekvens'],
 				'label': cell.get('label', ''),
 				'css_class': cell.get('css_class', ''),
 				'categories': categories,
-			})
+			}
+			if 'subcategories' in cell or subcategories:
+				cell_payload['subcategories'] = subcategories
+			cells.append(cell_payload)
 		rows.append({
 			'sannsynlighet': row['sannsynlighet'],
 			'sannsynlighet_label': row['sannsynlighet_label'],
@@ -349,6 +371,7 @@ def build_sammenstilling_snapshot_payload(sammenstilling, captured_at=None):
 		criteria=criteria,
 	)
 	matrix_current = build_sammenstilling_category_matrix(rollup_tree, criteria)
+	matrix_subcategories = build_sammenstilling_subcategory_matrix(rollup_tree, criteria)
 
 	return {
 		'template_version': RISK_SNAPSHOT_TEMPLATE_VERSION,
@@ -361,6 +384,8 @@ def build_sammenstilling_snapshot_payload(sammenstilling, captured_at=None):
 		'owner_group_display_title': sammenstilling.owner_group.display_title,
 		'rollup_tree': _serialize_rollup_tree(rollup_tree),
 		'matrix_current': _serialize_sammenstilling_matrix(matrix_current),
+		# 2026-08-07: Persist underkategori matrix for historical sammenstilling views.
+		'matrix_subcategories': _serialize_sammenstilling_matrix(matrix_subcategories),
 		'konsekvens_labels': _labels_dict_to_json(criteria.konsekvens_labels),
 	}
 
@@ -484,6 +509,8 @@ def sammenstilling_render_context(payload):
 		'owner_group_display_title': payload.get('owner_group_display_title', ''),
 		'rollup_tree': payload.get('rollup_tree') or [],
 		'matrix_current': payload.get('matrix_current') or [],
+		# 2026-08-07: Older snapshots omit this key; template hides the second matrix then.
+		'matrix_subcategories': payload.get('matrix_subcategories') or [],
 		'konsekvens_labels': konsekvens_labels,
 		'is_snapshot': True,
 		'snapshot_generated_at': payload.get('snapshot_generated_at', ''),

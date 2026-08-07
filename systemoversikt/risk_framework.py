@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-07: Category veiledende (Sett nivå) uses same score-weighted S×K aggregation as underkategori matrix.
+# 2026-08-07: Subcategory matrix – score-weighted S/K aggregation from linked scenarios (separate from veiledende worst-label).
 # 2026-07-06: Scenario rows on detail view include link_pk for unlink from sammenstilling page.
 # 2026-07-06: Sammenstilling category matrix uses manual assessment only (no suggested fallback).
 # 2026-07-06: Subcategory scenario/tiltak breakdown and per-category scenario matrix on detail view.
@@ -115,8 +117,7 @@ def level_counts_for_scenarios(scenarios):
 	return {'current': current, 'residual': residual}
 
 
-def suggested_level_for_node(sammenstilling, node):
-	scenarios = list(scenarios_for_node(sammenstilling, node))
+def _suggested_from_scenarios(scenarios):
 	if not scenarios:
 		return {
 			'label': '',
@@ -137,7 +138,12 @@ def suggested_level_for_node(sammenstilling, node):
 	}
 
 
+def suggested_level_for_node(sammenstilling, node):
+	return _suggested_from_scenarios(list(scenarios_for_node(sammenstilling, node)))
+
+
 def suggested_level_for_category(sammenstilling, children):
+	# 2026-08-07: Same score-weighted S×K aggregation as underkategori matrix, over all linked scenarios in the category.
 	scenario_pks = set()
 	scenarios = []
 	for child in children:
@@ -146,23 +152,49 @@ def suggested_level_for_category(sammenstilling, children):
 				continue
 			scenario_pks.add(scenario.pk)
 			scenarios.append(scenario)
-	if not scenarios:
-		return {
-			'label': '',
-			'sannsynlighet': None,
-			'konsekvens': None,
-			'scenario_count': 0,
-			'level_counts': level_counts_for_scenarios([]),
-		}
-	labels = [_scenario_current_label(s) for s in scenarios]
-	worst = _worst_label(labels)
-	s, k = _levels_from_label(worst)
+	aggregated = aggregate_levels_from_scenarios(scenarios)
 	return {
-		'label': worst,
-		'sannsynlighet': s,
-		'konsekvens': k,
+		'label': aggregated['label'],
+		'sannsynlighet': aggregated['sannsynlighet'],
+		'konsekvens': aggregated['konsekvens'],
 		'scenario_count': len(scenarios),
 		'level_counts': level_counts_for_scenarios(scenarios),
+	}
+
+
+def aggregate_levels_from_scenarios(scenarios):
+	# 2026-08-07: Weight by S×K so high risks pull subcategory matrix placement upward.
+	weighted_s = 0.0
+	weighted_k = 0.0
+	total_weight = 0.0
+	rated_count = 0
+	for scenario in scenarios:
+		s = scenario.sannsynlighet_nivaa
+		k = scenario.konsekvens_nivaa
+		if s is None or k is None:
+			continue
+		s = int(s)
+		k = int(k)
+		weight = max(1, s * k)
+		weighted_s += weight * s
+		weighted_k += weight * k
+		total_weight += weight
+		rated_count += 1
+	if rated_count == 0 or total_weight <= 0:
+		return {
+			'sannsynlighet': None,
+			'konsekvens': None,
+			'label': '',
+			'scenario_count': 0,
+		}
+	s_agg = max(1, min(5, int(round(weighted_s / total_weight))))
+	k_agg = max(1, min(5, int(round(weighted_k / total_weight))))
+	label = risk_label(s_agg, k_agg) or ''
+	return {
+		'sannsynlighet': s_agg,
+		'konsekvens': k_agg,
+		'label': label,
+		'scenario_count': rated_count,
 	}
 
 
@@ -211,9 +243,17 @@ def effective_category_level(sammenstilling, category, children, assessments_by_
 
 
 def build_node_payload(sammenstilling, node, assessments_by_node=None):
-	suggested = suggested_level_for_node(sammenstilling, node)
+	# 2026-08-07: Load scenarios once for veiledende + score-weighted aggregated matrix placement.
+	scenarios = list(scenarios_for_node(sammenstilling, node))
+	suggested = _suggested_from_scenarios(scenarios)
+	aggregated = aggregate_levels_from_scenarios(scenarios)
 	manual = assessment_for_node(sammenstilling, node, assessments_by_node)
-	effective_label, effective_source = effective_node_level(sammenstilling, node, assessments_by_node)
+	if manual and manual['manual_label']:
+		effective_label, effective_source = manual['manual_label'], 'manual'
+	elif suggested['label']:
+		effective_label, effective_source = suggested['label'], 'suggested'
+	else:
+		effective_label, effective_source = '', 'none'
 	return {
 		'pk': node.pk,
 		'nummer': node.nummer,
@@ -222,8 +262,11 @@ def build_node_payload(sammenstilling, node, assessments_by_node=None):
 		'forklaring': node.forklaring,
 		'status': node.status,
 		'is_leaf': node.is_leaf(),
+		'parent_pk': node.parent_id,
 		'suggested': suggested,
 		'suggested_css': risk_cell_css_class(suggested['label']),
+		'aggregated': aggregated,
+		'aggregated_css': risk_cell_css_class(aggregated['label']),
 		'manual': manual,
 		'effective_label': effective_label,
 		'effective_css': risk_cell_css_class(effective_label),
@@ -310,6 +353,49 @@ def build_sammenstilling_category_matrix(rollup_tree, criteria=None):
 				'label': label,
 				'css_class': risk_cell_css_class(label),
 				'categories': placements.get((sannsynlighet, konsekvens), []),
+			})
+		grid.append({
+			'sannsynlighet': sannsynlighet,
+			'sannsynlighet_label': criteria.sannsynlighet_labels[sannsynlighet],
+			'cells': row_cells,
+		})
+	return grid
+
+
+def build_sammenstilling_subcategory_matrix(rollup_tree, criteria=None):
+	# 2026-08-07: Place underkategorier by score-weighted aggregated S/K from linked scenarios.
+	from systemoversikt.risk_criteria import get_active_criteria
+
+	if criteria is None:
+		criteria = get_active_criteria()
+	placements = {}
+	for cat in rollup_tree:
+		for child in cat.get('children', []):
+			aggregated = child.get('aggregated') or {}
+			s = aggregated.get('sannsynlighet')
+			k = aggregated.get('konsekvens')
+			if not s or not k:
+				continue
+			badge = {
+				'pk': child['pk'],
+				'display_code': child.get('display_code', ''),
+				'title': child.get('title', ''),
+				'parent_pk': child.get('parent_pk') or cat.get('pk'),
+			}
+			placements.setdefault((int(s), int(k)), []).append(badge)
+	grid = []
+	for sannsynlighet in range(5, 0, -1):
+		row_cells = []
+		for konsekvens in range(1, 6):
+			label = criteria.risk_label(sannsynlighet, konsekvens)
+			subcategories = placements.get((sannsynlighet, konsekvens), [])
+			subcategories.sort(key=lambda item: (item.get('display_code', ''), item.get('title', '')))
+			row_cells.append({
+				'sannsynlighet': sannsynlighet,
+				'konsekvens': konsekvens,
+				'label': label,
+				'css_class': risk_cell_css_class(label),
+				'subcategories': subcategories,
 			})
 		grid.append({
 			'sannsynlighet': sannsynlighet,

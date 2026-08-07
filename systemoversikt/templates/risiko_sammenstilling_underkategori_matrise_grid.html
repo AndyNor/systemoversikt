@@ -1,7 +1,6 @@
-{# 2026-08-07: Badge text includes truncated uonsket_hendelse so duplicate R-ids stay distinguishable. #}
-{# 2026-07-06: axis-label-level class for equal-width wrapping axis labels. #}
-{# 2026-07-06: Per-category scenario matrix for sammenstilling (nåværende risiko). #}
-<table class="risk-matrix">
+{# 2026-08-07: Underkategori matrix – badges from score-weighted scenario aggregation. #}
+{# 2026-08-07: axis-label-level class for equal-width wrapping axis labels. #}
+<table class="risk-matrix risk-matrix-sammenstilling">
 <colgroup>
 	<col class="risk-matrix-corner-col">
 	<col class="risk-matrix-axis-col">
@@ -27,9 +26,9 @@
 	{% endif %}
 	<th class="axis-label axis-label-level">{{ row.sannsynlighet_label }}</th>
 	{% for cell in row.cells %}
-	<td class="{{ cell.css_class }}{% if not cell.scenarios %} risk-matrix-cell-empty{% endif %}">
-		{% for scenario in cell.scenarios %}
-			<a class="risk-badge" href="{% url 'risiko_scope_detail' pk=scenario.scope_pk %}?edit={{ scenario.pk }}" title="{{ scenario.uonsket_hendelse }}">{{ scenario.display_id }}: {{ scenario.uonsket_hendelse|truncatechars:40 }}</a>
+	<td class="{{ cell.css_class }}{% if not cell.subcategories %} risk-matrix-cell-empty{% endif %}">
+		{% for sub in cell.subcategories %}
+			<a class="risk-badge" href="#rammeverk-node-{{ sub.pk }}" title="{{ sub.display_code }}. {{ sub.title }}">{{ sub.display_code }} {{ sub.title|truncatechars:50 }}</a>
 		{% endfor %}
 	</td>
 	{% endfor %}
