@@ -1,7 +1,8 @@
+{# 2026-08-07: Full-width badges with truncatechars:60 and smaller risk text. #}
 {# 2026-08-07: Badge text includes truncated uonsket_hendelse so duplicate R-ids stay distinguishable. #}
 {# 2026-07-06: axis-label-level class for equal-width wrapping axis labels. #}
 {# 2026-07-06: Per-category scenario matrix for sammenstilling (nåværende risiko). #}
-<table class="risk-matrix">
+<table class="risk-matrix risk-matrix-scenario">
 <colgroup>
 	<col class="risk-matrix-corner-col">
 	<col class="risk-matrix-axis-col">
@@ -29,7 +30,7 @@
 	{% for cell in row.cells %}
 	<td class="{{ cell.css_class }}{% if not cell.scenarios %} risk-matrix-cell-empty{% endif %}">
 		{% for scenario in cell.scenarios %}
-			<a class="risk-badge" href="{% url 'risiko_scope_detail' pk=scenario.scope_pk %}?edit={{ scenario.pk }}" title="{{ scenario.uonsket_hendelse }}">{{ scenario.display_id }}: {{ scenario.uonsket_hendelse|truncatechars:40 }}</a>
+			<a class="risk-badge" href="{% url 'risiko_scope_detail' pk=scenario.scope_pk %}?edit={{ scenario.pk }}" title="{{ scenario.uonsket_hendelse }}"><strong>{{ scenario.display_id }}:</strong> <span class="risk-badge-text">{{ scenario.uonsket_hendelse|truncatechars:60 }}</span></a>
 		{% endfor %}
 	</td>
 	{% endfor %}

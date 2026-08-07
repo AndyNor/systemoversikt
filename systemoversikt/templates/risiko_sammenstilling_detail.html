@@ -30,6 +30,9 @@
 .risk-matrix .axis-label-sanns { writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap; padding: 0.5rem 0.15rem; font-size: 0.75rem; letter-spacing: 0.05em; overflow: hidden; line-height: 1; vertical-align: middle; }
 .risk-matrix .axis-label-level { white-space: normal; overflow-wrap: break-word; word-break: break-word; hyphens: auto; line-height: 1.25; font-size: 0.8rem; padding: 6px 4px; }
 .risk-matrix .risk-badge { display: block; margin: 4px 0; padding: 6px 10px; font-size: 0.8rem; white-space: normal; text-align: left; border: 1px solid transparent; border-radius: 4px; text-decoration: none; color: inherit; background: rgba(255, 255, 255, 0.2); }
+/* 2026-08-07: Per-category scenario badges – slightly smaller risk text in full-width matrix. */
+.risk-matrix.risk-matrix-scenario .risk-badge { padding: 4px 8px; font-size: 0.75rem; }
+.risk-matrix.risk-matrix-scenario .risk-badge-text { font-size: 0.7rem; }
 .risk-matrix td.risk-cell-lav .risk-badge { border-color: #8fb866; }
 .risk-matrix td.risk-cell-middels .risk-badge { border-color: #ddb870; }
 .risk-matrix td.risk-cell-hoy .risk-badge { border-color: #d99aa2; }
@@ -164,12 +167,11 @@
 			<div class="card-body py-2">
 				<p class="small text-muted mb-3">{{ cat.forklaring }}</p>
 
-				<div class="row mb-3">
-					<div class="col-lg-6">
-						<h6 class="mb-1">Nåværende risiko – kartlagte scenarioer</h6>
-						<p class="text-muted small mb-2">Scenarioer knyttet til underkategorier i denne hovedkategorien</p>
-						{% include "risiko_sammenstilling_scenario_matrise_grid.html" with matrix=cat.scenario_matrix konsekvens_labels=konsekvens_labels %}
-					</div>
+				{# 2026-08-07: Full-width scenario matrix so longer risk text fits. #}
+				<div class="mb-3">
+					<h6 class="mb-1">Nåværende risiko – kartlagte scenarioer</h6>
+					<p class="text-muted small mb-2">Scenarioer knyttet til underkategorier i denne hovedkategorien</p>
+					{% include "risiko_sammenstilling_scenario_matrise_grid.html" with matrix=cat.scenario_matrix konsekvens_labels=konsekvens_labels %}
 				</div>
 
 				{% for child in cat.children %}
