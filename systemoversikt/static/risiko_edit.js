@@ -1,4 +1,5 @@
 // Change log:
+// 2026-08-10: Omfangsfigur preview full width; click opens file URL in new tab.
 // 2026-07-07: Bootstrap confirm modal for scenario/tiltak/omfang delete – shared module helper.
 // 2026-07-07: Omfang card – beskrivelse save, multipart figur/original upload via FormData.
 // 2026-07-06: Tiltak «Må eskaleres» toggle per action card in scenario modal.
@@ -208,12 +209,18 @@
     if (!preview) return;
     preview.innerHTML = '';
     if (omfangFil && omfangFil.has_figur) {
+      const src = getConfig().urls.omfangFigurFile + '?v=' + (cacheBust || Date.now());
+      const link = document.createElement('a');
+      link.href = src;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.className = 'risiko-omfang-figur-link d-block';
       const img = document.createElement('img');
-      img.className = 'img-fluid risiko-omfang-figur-preview';
-      img.style.maxHeight = '240px';
+      img.className = 'img-fluid w-100 risiko-omfang-figur-preview';
       img.alt = 'Omfangsfigur';
-      img.src = getConfig().urls.omfangFigurFile + '?v=' + (cacheBust || Date.now());
-      preview.appendChild(img);
+      img.src = src;
+      link.appendChild(img);
+      preview.appendChild(link);
       if (omfangFil.figur_filnavn) {
         const name = document.createElement('p');
         name.className = 'small text-muted mb-0';

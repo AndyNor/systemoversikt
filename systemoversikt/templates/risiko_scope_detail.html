@@ -1,3 +1,4 @@
+{# 2026-08-10: Omfangsfigur uses full card width; click opens image in new tab. #}
 {# 2026-07-07: Report link always visible – no longer limited to godkjent status. #}
 {# 2026-07-07: Bootstrap confirm modal before deleting scenarios/tiltak/omfang files on collection detail. #}
 {# 2026-07-07: Member names include virksomhetsforkortelse – disambiguate duplicate names. #}
@@ -195,7 +196,9 @@
 			<p class="text-muted small mb-2">Visningsfigur som inngår i rapporten (PNG, JPG, WebP, SVG).</p>
 			<div id="risiko-omfang-figur-preview" class="mb-2">
 				{% if omfang_fil and omfang_fil.has_figur %}
-				<img src="{% url 'risiko_scope_fil_omfang' pk=scope.pk %}?v={{ scope.sist_oppdatert|date:'U' }}" alt="Omfangsfigur" class="img-fluid risiko-omfang-figur-preview" style="max-height: 240px;">
+				<a href="{% url 'risiko_scope_fil_omfang' pk=scope.pk %}?v={{ scope.sist_oppdatert|date:'U' }}" target="_blank" rel="noopener noreferrer" class="risiko-omfang-figur-link d-block">
+					<img src="{% url 'risiko_scope_fil_omfang' pk=scope.pk %}?v={{ scope.sist_oppdatert|date:'U' }}" alt="Omfangsfigur" class="img-fluid w-100 risiko-omfang-figur-preview">
+				</a>
 				<p class="small text-muted mb-0" id="risiko-omfang-figur-filnavn">{{ omfang_fil.figur_filnavn }}</p>
 				{% else %}
 				<p class="text-muted small mb-0" id="risiko-omfang-figur-empty">Ingen figur lastet opp.</p>
@@ -886,6 +889,8 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 	background-color: #f8f9fa;
 	padding: 0.75rem 1rem;
 }
+.risiko-omfang-figur-link { cursor: zoom-in; }
+.risiko-omfang-figur-preview { width: 100%; height: auto; }
 </style>
 {% if can_edit_scope or can_change_locked_status %}
 <script src="{% static 'risiko_edit.js' %}" nonce="{{request.csp_nonce}}"></script>
