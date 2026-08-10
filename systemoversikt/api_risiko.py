@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-10: Log scenario/tiltak/member activity to RiskActivityLog (create/delete/status/levels).
 # 2026-07-09: api_risiko_scope_update – log scope_status_changed to RiskActivityLog.
 # 2026-07-07: Scenario sannsynlighetstyper validated against active criteria slugs (editable in akseptkriterier).
 # 2026-07-07: Member and bruker search labels include virksomhetsforkortelse – disambiguate same-name users.
@@ -85,7 +86,19 @@ from systemoversikt.risk_display import (
 	tiltak_display_id_map,
 	user_ansvarlig_display_name,
 )
-from systemoversikt.risk_activity_log import RISK_ACTIVITY_SCOPE_STATUS_CHANGED, log_risk_activity
+from systemoversikt.risk_activity_log import (
+	RISK_ACTIVITY_ACTION_CREATED,
+	RISK_ACTIVITY_ACTION_DELETED,
+	RISK_ACTIVITY_ACTION_STATUS_CHANGED,
+	RISK_ACTIVITY_MEMBER_ADDED,
+	RISK_ACTIVITY_MEMBER_REMOVED,
+	RISK_ACTIVITY_SCENARIO_CREATED,
+	RISK_ACTIVITY_SCENARIO_DELETED,
+	RISK_ACTIVITY_SCENARIO_RISK_LEVEL_CHANGED,
+	RISK_ACTIVITY_SCENARIO_TREATMENT_CHANGED,
+	RISK_ACTIVITY_SCOPE_STATUS_CHANGED,
+	log_risk_activity,
+)
 from systemoversikt.risk_membership import (
 	normalize_risk_group_title,
 	user_display_name,
@@ -500,6 +513,157 @@ def _apply_scenario_fields(scenario, fields):
 		scenario.systemer.set(fields['system_ids'])
 
 
+def _log_snippet(text, limit=60):
+	text = (text or '').strip().replace('\n', ' ')
+	if len(text) <= limit:
+		return text
+	return text[:limit].rstrip() + '…'
+
+
+def _level_pair_label(sannsynlighet, konsekvens):
+	s_label = str(sannsynlighet) if sannsynlighet is not None else '–'
+	k_label = str(konsekvens) if konsekvens is not None else '–'
+	return 'S%s/K%s' % (s_label, k_label)
+
+
+def _scenario_log_label(scenario):
+	snippet = _log_snippet(scenario.uonsket_hendelse)
+	risk_id = scenario.risk_id or ('#%s' % scenario.pk)
+	if snippet:
+		return '%s «%s»' % (risk_id, snippet)
+	return risk_id
+
+
+def _action_log_label(action, display_id=None):
+	prefix = display_id or ('#%s' % action.pk)
+	snippet = _log_snippet(action.beskrivelse)
+	if snippet:
+		return '%s «%s»' % (prefix, snippet)
+	return prefix
+
+
+def _log_scenario_create(request, scope, scenario):
+	# 2026-08-10: Log scenario create for risk activity overview.
+	log_risk_activity(
+		RISK_ACTIVITY_SCENARIO_CREATED,
+		'%s opprettet risiko %s.' % (
+			request.user.get_username(),
+			_scenario_log_label(scenario),
+		),
+		user=request.user,
+		scope=scope,
+	)
+
+
+def _log_scenario_delete(request, scope, scenario):
+	# 2026-08-10: Log scenario delete for risk activity overview.
+	log_risk_activity(
+		RISK_ACTIVITY_SCENARIO_DELETED,
+		'%s slettet risiko %s.' % (
+			request.user.get_username(),
+			_scenario_log_label(scenario),
+		),
+		user=request.user,
+		scope=scope,
+	)
+
+
+def _log_scenario_field_changes(request, scope, scenario, old_levels, old_treatment, fields):
+	# 2026-08-10: Log risk-level and treatment changes when values actually change.
+	username = request.user.get_username()
+	label = _scenario_log_label(scenario)
+	treatment_labels = dict(RISIKOBEHANDLING_VALG)
+
+	current_changed = (
+		old_levels['sannsynlighet_nivaa'] != fields['sannsynlighet_nivaa']
+		or old_levels['konsekvens_nivaa'] != fields['konsekvens_nivaa']
+	)
+	residual_changed = (
+		old_levels['sannsynlighet_etter'] != fields['sannsynlighet_etter']
+		or old_levels['konsekvens_etter'] != fields['konsekvens_etter']
+	)
+	if current_changed or residual_changed:
+		parts = []
+		if current_changed:
+			parts.append(
+				'nåværende fra %s til %s' % (
+					_level_pair_label(old_levels['sannsynlighet_nivaa'], old_levels['konsekvens_nivaa']),
+					_level_pair_label(fields['sannsynlighet_nivaa'], fields['konsekvens_nivaa']),
+				)
+			)
+		if residual_changed:
+			parts.append(
+				'restrisiko fra %s til %s' % (
+					_level_pair_label(old_levels['sannsynlighet_etter'], old_levels['konsekvens_etter']),
+					_level_pair_label(fields['sannsynlighet_etter'], fields['konsekvens_etter']),
+				)
+			)
+		log_risk_activity(
+			RISK_ACTIVITY_SCENARIO_RISK_LEVEL_CHANGED,
+			'%s endret risiknivå på %s (%s).' % (username, label, '; '.join(parts)),
+			user=request.user,
+			scope=scope,
+		)
+
+	new_treatment = fields['risikobehandling']
+	if old_treatment != new_treatment:
+		log_risk_activity(
+			RISK_ACTIVITY_SCENARIO_TREATMENT_CHANGED,
+			'%s endret risikobehandling på %s fra %s til %s.' % (
+				username,
+				label,
+				treatment_labels.get(old_treatment, old_treatment or '–'),
+				treatment_labels.get(new_treatment, new_treatment or '–'),
+			),
+			user=request.user,
+			scope=scope,
+		)
+
+
+def _log_action_create(request, scope, action, display_id=None):
+	# 2026-08-10: Log tiltak create for risk activity overview.
+	log_risk_activity(
+		RISK_ACTIVITY_ACTION_CREATED,
+		'%s opprettet tiltak %s.' % (
+			request.user.get_username(),
+			_action_log_label(action, display_id),
+		),
+		user=request.user,
+		scope=scope,
+	)
+
+
+def _log_action_delete(request, scope, action, display_id=None):
+	# 2026-08-10: Log tiltak delete for risk activity overview.
+	log_risk_activity(
+		RISK_ACTIVITY_ACTION_DELETED,
+		'%s slettet tiltak %s.' % (
+			request.user.get_username(),
+			_action_log_label(action, display_id),
+		),
+		user=request.user,
+		scope=scope,
+	)
+
+
+def _log_action_status_change(request, scope, action, old_status, new_status, display_id=None):
+	# 2026-08-10: Log tiltak status change when status actually changes.
+	if old_status == new_status:
+		return
+	status_labels = dict(RISK_ACTION_STATUS_VALG)
+	log_risk_activity(
+		RISK_ACTIVITY_ACTION_STATUS_CHANGED,
+		'%s endret tiltakstatus på %s fra %s til %s.' % (
+			request.user.get_username(),
+			_action_log_label(action, display_id),
+			status_labels.get(old_status, old_status),
+			status_labels.get(new_status, new_status),
+		),
+		user=request.user,
+		scope=scope,
+	)
+
+
 def _require_member_json(request, scope_id):
 	try:
 		return _get_member_scope(request, scope_id), None
@@ -647,6 +811,8 @@ def api_risiko_scenario_create(request, pk):
 	except ValueError as exc:
 		return _json_error(str(exc))
 
+	_log_scenario_create(request, scope, scenario)
+
 	resp = _scenario_response(scope, scenario)
 	return JsonResponse({'ok': True, **resp}, status=201)
 
@@ -670,11 +836,21 @@ def api_risiko_scenario_update(request, pk, sid):
 	if errors:
 		return _json_error('; '.join(errors))
 
+	old_levels = {
+		'sannsynlighet_nivaa': scenario.sannsynlighet_nivaa,
+		'konsekvens_nivaa': scenario.konsekvens_nivaa,
+		'sannsynlighet_etter': scenario.sannsynlighet_etter,
+		'konsekvens_etter': scenario.konsekvens_etter,
+	}
+	old_treatment = scenario.risikobehandling
+
 	try:
 		with transaction.atomic():
 			_apply_scenario_fields(scenario, fields)
 	except ValueError as exc:
 		return _json_error(str(exc))
+
+	_log_scenario_field_changes(request, scope, scenario, old_levels, old_treatment, fields)
 
 	resp = _scenario_response(scope, scenario)
 	return JsonResponse({'ok': True, **resp})
@@ -696,6 +872,7 @@ def api_risiko_scenario_delete(request, pk, sid):
 		if data.get('_method') != 'DELETE':
 			return _json_error('invalid_method', status=405)
 
+	_log_scenario_delete(request, scope, scenario)
 	scenario.delete()
 	_cleanup_orphan_actions(scope)
 	scenarios = _load_scope_scenarios(scope)
@@ -858,6 +1035,7 @@ def api_risiko_action_create(request, pk, sid):
 	scenarios = _load_scope_scenarios(scope)
 	actions = _load_scope_actions(scope)
 	tiltak_map = tiltak_display_id_map(actions)
+	_log_action_create(request, scope, action, tiltak_map.get(action.pk))
 	return JsonResponse({
 		'ok': True,
 		'action': _action_to_dict(action, tiltak_map.get(action.pk, '')),
@@ -885,6 +1063,7 @@ def api_risiko_action_update(request, pk, sid, aid):
 	if errors:
 		return _json_error('; '.join(errors))
 
+	old_status = action.status
 	action.beskrivelse = parsed['beskrivelse']
 	action.ansvarlig = parsed['ansvarlig']
 	action.frist = parsed['frist']
@@ -895,6 +1074,9 @@ def api_risiko_action_update(request, pk, sid, aid):
 	scenarios = _load_scope_scenarios(scope)
 	actions = _load_scope_actions(scope)
 	tiltak_map = tiltak_display_id_map(actions)
+	_log_action_status_change(
+		request, scope, action, old_status, action.status, tiltak_map.get(action.pk)
+	)
 	risk_map = annotate_scenario_display_ids(scenarios)
 	risk_ids = [
 		risk_map.get(sc.pk, '')
@@ -925,6 +1107,8 @@ def api_risiko_action_delete(request, pk, sid, aid):
 		if data.get('_method') != 'DELETE':
 			return _json_error('invalid_method', status=405)
 
+	tiltak_map = tiltak_display_id_map(_load_scope_actions(scope))
+	_log_action_delete(request, scope, action, tiltak_map.get(action.pk))
 	action.delete()
 	return JsonResponse({'ok': True})
 
@@ -967,6 +1151,7 @@ def api_risiko_scope_action_create(request, pk):
 
 	payload = _tiltak_refresh_payload(scope)
 	tiltak_map = tiltak_display_id_map(_load_scope_actions(scope))
+	_log_action_create(request, scope, action, tiltak_map.get(action.pk))
 	return JsonResponse({
 		'ok': True,
 		'action': _action_to_dict(
@@ -1003,6 +1188,7 @@ def api_risiko_scope_action_update(request, pk, aid):
 		if scenario_ids == 'invalid':
 			return _json_error('Ugyldige scenario-IDer.')
 
+	old_status = action.status
 	try:
 		with transaction.atomic():
 			action.beskrivelse = parsed['beskrivelse']
@@ -1017,6 +1203,9 @@ def api_risiko_scope_action_update(request, pk, aid):
 
 	payload = _tiltak_refresh_payload(scope)
 	tiltak_map = tiltak_display_id_map(_load_scope_actions(scope))
+	_log_action_status_change(
+		request, scope, action, old_status, action.status, tiltak_map.get(action.pk)
+	)
 	risk_map = annotate_scenario_display_ids(_load_scope_scenarios(scope))
 	risk_ids = [
 		risk_map.get(sc.pk, '')
@@ -1051,6 +1240,8 @@ def api_risiko_scope_action_delete(request, pk, aid):
 		if data.get('_method') != 'DELETE':
 			return _json_error('invalid_method', status=405)
 
+	tiltak_map = tiltak_display_id_map(_load_scope_actions(scope))
+	_log_action_delete(request, scope, action, tiltak_map.get(action.pk))
 	action.delete()
 	payload = _tiltak_refresh_payload(scope)
 	return JsonResponse({'ok': True, **payload})
@@ -1185,6 +1376,7 @@ def api_risiko_member_add(request, pk):
 
 	target_user = get_object_or_404(User, pk=user_id, is_active=True)
 	existing = RiskScopeMember.objects.filter(scope=scope, user=target_user).first()
+	created = False
 	if existing:
 		if existing.role == role:
 			return JsonResponse({'ok': True, **_members_payload(scope)})
@@ -1200,6 +1392,23 @@ def api_risiko_member_add(request, pk):
 			user=target_user,
 			role=role,
 			added_by=request.user,
+		)
+		created = True
+
+	# 2026-08-10: Log member add for risk activity overview.
+	if created:
+		role_label = 'eier' if role == RISK_SCOPE_MEMBER_ROLE_OWNER else 'deltaker'
+		log_risk_activity(
+			RISK_ACTIVITY_MEMBER_ADDED,
+			'%s la til %s (%s) som %s i «%s».' % (
+				request.user.get_username(),
+				user_member_display_name(target_user),
+				target_user.username,
+				role_label,
+				scope.title,
+			),
+			user=request.user,
+			scope=scope,
 		)
 
 	return JsonResponse({'ok': True, **_members_payload(scope)}, status=201)
@@ -1225,7 +1434,22 @@ def api_risiko_member_remove(request, pk, user_id):
 		if owner_count <= 1:
 			return _json_error('Kan ikke fjerne siste eier.')
 
+	target_user = membership.user
+	role_label = 'eier' if membership.role == RISK_SCOPE_MEMBER_ROLE_OWNER else 'deltaker'
 	membership.delete()
+	# 2026-08-10: Log member remove for risk activity overview.
+	log_risk_activity(
+		RISK_ACTIVITY_MEMBER_REMOVED,
+		'%s fjernet %s (%s) som %s fra «%s».' % (
+			request.user.get_username(),
+			user_member_display_name(target_user),
+			target_user.username,
+			role_label,
+			scope.title,
+		),
+		user=request.user,
+		scope=scope,
+	)
 	return JsonResponse({'ok': True, **_members_payload(scope)})
 
 

@@ -1,3 +1,4 @@
+{# 2026-08-10: Activity blurb covers scenario/tiltak/member events, not only scope workflow. #}
 {# 2026-07-09: Per-collection workflow activity log page. #}
 {% extends "sikkerhet_index.html" %}
 
@@ -11,7 +12,11 @@
 	<a class="btn btn-back btn-sm" href="{% url 'risiko_scope_detail' pk=scope.pk %}">&larr; Tilbake til samling</a>
 </p>
 
-<p class="text-muted">Viser opprettelse, statusendringer og arkivering for denne risikosamlingen (siste {{ activity_logs.count }} hendelser).</p>
+<p class="text-muted">
+	Viser aktivitet for denne risikosamlingen: opprettelse, statusendring og arkivering;
+	medlem lagt til/fjernet; risiko opprettet/slettet og endring av risiknivå eller risikobehandling;
+	tiltak opprettet/slettet og statusendring (siste {{ activity_logs.count }} hendelser).
+</p>
 
 {% include "includes/risiko_activity_log_table.html" %}
 
