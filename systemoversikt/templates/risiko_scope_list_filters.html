@@ -1,4 +1,5 @@
 {# 2026-07-08: Server-side GET search (q=) plus optional client-side tilgangsgruppe filter bar. #}
+{# 2026-08-13: Placeholder/aria – search also covers scenario and tiltak fields. #}
 {% load templatetags %}
 <div class="risiko-scope-list-filters mb-2">
 {% if tilgangsgrupper and not search_query %}
@@ -11,9 +12,9 @@
 			name="q"
 			value="{{ search_query }}"
 			class="form-control form-control-sm risiko-scope-search-input"
-			placeholder="Tittel eller beskrivelse…"
+			placeholder="Tittel, beskrivelse, scenario eller tiltak…"
 			autocomplete="off"
-			aria-label="Søk i risikosamlinger etter tittel eller beskrivelse">
+			aria-label="Søk i risikosamlinger etter tittel, beskrivelse, scenario eller tiltak">
 		{% if include_archived %}
 		<input type="hidden" name="include_archived" value="1">
 		{% endif %}

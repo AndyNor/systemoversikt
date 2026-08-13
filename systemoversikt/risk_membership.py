@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: search_scopes – also match scenario and tiltak text so collections are findable by content.
 # 2026-08-13: readable_scope_ids_for_user / actions_visible_to_user / unntak_visible_to_user for global lists.
 # 2026-07-09: create_risk_scope – log scope_created to RiskActivityLog.
 # 2026-07-08: search_scopes – server-side title/beskrivelse search across all collections (existence is open).
@@ -404,24 +405,35 @@ def scopes_for_user_membership(user, exclude_virksomhet_id=None):
 	return qs
 
 
-def search_scopes(user, query):
-	"""Match title/beskrivelse across all collections; annotate per-user read access for the list UI."""
-	query = (query or '').strip()
-	if not query:
-		return RiskScope.objects.none()
-	return scope_list_base_queryset(user).filter(
-		Q(title__icontains=query) | Q(beskrivelse__icontains=query),
+def _scope_text_search_q(query):
+	"""Match collection, scenario, or tiltak free-text fields (icontains)."""
+	return (
+		Q(title__icontains=query)
+		| Q(beskrivelse__icontains=query)
+		| Q(scenarios__risk_id__icontains=query)
+		| Q(scenarios__uonsket_hendelse__icontains=query)
+		| Q(scenarios__arsaker_svakheter__icontains=query)
+		| Q(actions__beskrivelse__icontains=query)
+		| Q(actions__ansvarlig__icontains=query)
 	)
 
 
+def search_scopes(user, query):
+	"""Match title/beskrivelse/scenario/tiltak across all collections; annotate per-user read access."""
+	query = (query or '').strip()
+	if not query:
+		return RiskScope.objects.none()
+	return scope_list_base_queryset(user).filter(_scope_text_search_q(query)).distinct()
+
+
 def search_scopes_for_virksomhet(user, virksomhet_id, query):
-	"""Match title/beskrivelse within one virksomhet's collections."""
+	"""Match title/beskrivelse/scenario/tiltak within one virksomhet's collections."""
 	query = (query or '').strip()
 	if not query:
 		return RiskScope.objects.none()
 	return scopes_for_virksomhet(user, virksomhet_id).filter(
-		Q(title__icontains=query) | Q(beskrivelse__icontains=query),
-	)
+		_scope_text_search_q(query),
+	).distinct()
 
 
 def nav_ordinary_virksomheter():

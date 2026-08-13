@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: Scope list search hint – also covers scenario and tiltak fields.
 # 2026-08-13: Global tiltak/unntak overviews with server-side filters; editor unntak URLs.
 # 2026-07-09: risiko_scope_delete / akseptkriterier – log workflow events to RiskActivityLog.
 # 2026-07-08: Import success message shows detected Excel template (enkel/stor mal).
@@ -483,7 +484,7 @@ def risiko_scope_list(request):
 			**_risiko_list_context(request, search_results, list_virksomhet=profile_v),
 			'search_query': search_query,
 			'search_results': search_results,
-			'search_scope_hint': 'Søker i tittel og beskrivelse på tvers av alle virksomheter.',
+			'search_scope_hint': 'Søker i tittel, beskrivelse, scenario og tiltak på tvers av alle virksomheter.',
 			'search_reset_url': search_reset_url,
 			'virksomhet_scopes': [],
 			'my_scopes': [],
@@ -507,7 +508,7 @@ def risiko_scope_list(request):
 		**_risiko_list_context(request, virksomhet_scopes, list_virksomhet=profile_v),
 		'search_query': '',
 		'search_results': None,
-		'search_scope_hint': 'Søker i tittel og beskrivelse på tvers av alle virksomheter.',
+		'search_scope_hint': 'Søker i tittel, beskrivelse, scenario og tiltak på tvers av alle virksomheter.',
 		'search_reset_url': search_reset_url,
 		'virksomhet_scopes': virksomhet_scopes,
 		'my_scopes': my_scopes,
@@ -540,7 +541,7 @@ def risiko_virksomhet_list(request, vid):
 		'virksomhet': virksomhet,
 		'search_query': search_query,
 		'search_results': scopes if search_query else None,
-		'search_scope_hint': 'Søker i tittel og beskrivelse for denne virksomheten.',
+		'search_scope_hint': 'Søker i tittel, beskrivelse, scenario og tiltak for denne virksomheten.',
 		'search_reset_url': search_reset_url,
 		'include_archived': include_archived,
 		'archived_toggle_query': archived_toggle_query,
