@@ -6,6 +6,7 @@
 # 2026-07-07: group_from_permission – always return list; handle AD group names (403 page bullet-per-char bug).
 # 2026-07-02: risiko_tilgangsgruppe_filter_buttons – filter bar for collection list tables.
 # 2026-07-02: risiko_tilgangsgruppe_tags – colored tags for assigned groups on collection list tables.
+# 2026-08-13: risiko_tiltak_status_tag – kontinuerlig_oppfolging badge color.
 # 2026-07-01: risiko_ansvarlig_display – show Profile displayName for tiltak ansvarlig email/UPN.
 # 2026-06-30: under_revurdering status – arrow-clockwise-circle icon (repeat/review).
 # 2026-06-30: access_denied_icon – red 🛇 for missing read permission.
@@ -541,6 +542,7 @@ _TILTAK_STATUS_TAG_CSS = {
 	'besluttet': 'risiko-tiltak-status-besluttet',
 	'ikke_startet': 'risiko-tiltak-status-besluttet',
 	'under_arbeid': 'risiko-tiltak-status-under-arbeid',
+	'kontinuerlig_oppfolging': 'risiko-tiltak-status-kontinuerlig',
 	'utfort': 'risiko-tiltak-status-utfort',
 }
 

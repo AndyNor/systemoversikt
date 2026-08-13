@@ -1,0 +1,138 @@
+{% extends "sikkerhet_index.html" %}
+{% load templatetags %}
+{# 2026-08-13: Global tiltak overview – server-side search and filters for readable scopes. #}
+
+{% block overskrift %}
+Tiltaksoversikt
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p class="mb-3">
+	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_scope_list' %}">Risikosamlinger</a>
+	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_unntak_oversikt' %}">Unntak</a>
+</p>
+
+<form method="get" class="mb-3 p-3 border rounded bg-light">
+	<div class="form-row align-items-end">
+		<div class="form-group col-md-4 mb-2">
+			<label class="small mb-1" for="risiko-tiltak-q">Søk</label>
+			<input type="search" class="form-control form-control-sm" id="risiko-tiltak-q" name="q"
+				value="{{ search_query }}" placeholder="Tiltak, ansvarlig, samling, risk…" autocomplete="off">
+		</div>
+		<div class="form-group col-md-2 mb-2">
+			<label class="small mb-1" for="risiko-tiltak-status">Status</label>
+			<select class="form-control form-control-sm" id="risiko-tiltak-status" name="status">
+				<option value="">Alle</option>
+				{% for value, label in status_choices %}
+				<option value="{{ value }}" {% if filter_status == value %}selected{% endif %}>{{ label }}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div class="form-group col-md-2 mb-2">
+			<label class="small mb-1" for="risiko-tiltak-risikonivaa">Risikonivå</label>
+			<select class="form-control form-control-sm" id="risiko-tiltak-risikonivaa" name="risikonivaa">
+				<option value="">Alle</option>
+				{% for label in risikonivaa_choices %}
+				<option value="{{ label }}" {% if filter_risikonivaa == label %}selected{% endif %}>{{ label }}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div class="form-group col-md-2 mb-2">
+			<label class="small mb-1" for="risiko-tiltak-eskaleres">Eskaleres</label>
+			<select class="form-control form-control-sm" id="risiko-tiltak-eskaleres" name="eskaleres">
+				<option value="">Alle</option>
+				<option value="1" {% if filter_eskaleres == "1" %}selected{% endif %}>Ja</option>
+				<option value="0" {% if filter_eskaleres == "0" %}selected{% endif %}>Nei</option>
+			</select>
+		</div>
+		<div class="form-group col-md-2 mb-2">
+			<label class="small mb-1" for="risiko-tiltak-har-unntak">Har unntak</label>
+			<select class="form-control form-control-sm" id="risiko-tiltak-har-unntak" name="har_unntak">
+				<option value="">Alle</option>
+				<option value="1" {% if filter_har_unntak == "1" %}selected{% endif %}>Ja</option>
+				<option value="0" {% if filter_har_unntak == "0" %}selected{% endif %}>Nei</option>
+			</select>
+		</div>
+	</div>
+	<div class="form-row align-items-end">
+		<div class="form-group col-md-3 mb-2">
+			<label class="small mb-1" for="risiko-tiltak-virksomhet">Virksomhet</label>
+			<select class="form-control form-control-sm" id="risiko-tiltak-virksomhet" name="virksomhet">
+				<option value="">Alle</option>
+				{% for v in virksomheter %}
+				<option value="{{ v.pk }}" {% if filter_virksomhet == v.pk|stringformat:"s" %}selected{% endif %}>
+					{{ v.virksomhetsforkortelse }}
+				</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div class="form-group col-md-3 mb-2">
+			<div class="form-check mt-4">
+				<input class="form-check-input" type="checkbox" name="include_archived" value="1"
+					id="risiko-tiltak-archived" {% if include_archived %}checked{% endif %}>
+				<label class="form-check-label small" for="risiko-tiltak-archived">Inkluder arkiverte samlinger</label>
+			</div>
+		</div>
+		<div class="form-group col-md-3 mb-2">
+			<button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
+			<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_tiltak_oversikt' %}">Nullstill</a>
+		</div>
+	</div>
+</form>
+
+<p class="text-muted small">{% if page.paginator.count %}Viser {{ page.start_index }}–{{ page.end_index }} av {{ page.paginator.count }} tiltak du har tilgang til.{% else %}Ingen tiltak å vise.{% endif %}</p>
+
+{% if rows %}
+<table class="table table-sm table-bordered">
+<thead>
+<tr>
+	<th>ID</th>
+	<th>Tiltak</th>
+	<th>Status</th>
+	<th>Eskaleres</th>
+	<th>Risikonivå</th>
+	<th>Unntak</th>
+	<th>Samling</th>
+	<th>Ansvarlig</th>
+	<th>Frist</th>
+</tr>
+</thead>
+<tbody>
+{% for row in rows %}
+<tr>
+	<td>{{ row.display_tiltak_id }}</td>
+	<td>{{ row.action.beskrivelse|linebreaksbr }}</td>
+	<td>{% risiko_tiltak_status_tag row.action.status row.action.get_status_display %}</td>
+	<td>{% if row.action.eskaleres %}<span class="badge badge-warning">Ja</span>{% else %}–{% endif %}</td>
+	<td>{% for label in row.risk_labels %}<span class="badge badge-light border">{{ label }}</span> {% empty %}–{% endfor %}</td>
+	<td>{% if row.unntak_count %}<a href="{% url 'risiko_unntak_oversikt' %}?q={{ row.display_tiltak_id|urlencode }}">{{ row.unntak_count }}</a>{% else %}–{% endif %}</td>
+	<td><a href="{% url 'risiko_scope_detail' pk=row.action.scope_id %}">{{ row.action.scope.title }}</a>
+		{% if row.action.scope.virksomhet %}<br><span class="text-muted small">{{ row.action.scope.virksomhet.virksomhetsforkortelse }}</span>{% endif %}
+	</td>
+	<td>{% if row.action.ansvarlig %}{{ row.action.ansvarlig|risiko_ansvarlig_display }}{% else %}–{% endif %}</td>
+	<td>{{ row.action.frist|date:"Y-m-d"|default:"–" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% if page.has_other_pages %}
+<nav aria-label="Sidetall">
+	<ul class="pagination pagination-sm">
+		{% if page.has_previous %}
+		<li class="page-item"><a class="page-link" href="?page={{ page.previous_page_number }}&amp;q={{ search_query|urlencode }}&amp;status={{ filter_status|urlencode }}&amp;eskaleres={{ filter_eskaleres|urlencode }}&amp;risikonivaa={{ filter_risikonivaa|urlencode }}&amp;har_unntak={{ filter_har_unntak|urlencode }}&amp;virksomhet={{ filter_virksomhet|urlencode }}{% if include_archived %}&amp;include_archived=1{% endif %}">Forrige</a></li>
+		{% endif %}
+		<li class="page-item disabled"><span class="page-link">Side {{ page.number }} / {{ page.paginator.num_pages }}</span></li>
+		{% if page.has_next %}
+		<li class="page-item"><a class="page-link" href="?page={{ page.next_page_number }}&amp;q={{ search_query|urlencode }}&amp;status={{ filter_status|urlencode }}&amp;eskaleres={{ filter_eskaleres|urlencode }}&amp;risikonivaa={{ filter_risikonivaa|urlencode }}&amp;har_unntak={{ filter_har_unntak|urlencode }}&amp;virksomhet={{ filter_virksomhet|urlencode }}{% if include_archived %}&amp;include_archived=1{% endif %}">Neste</a></li>
+		{% endif %}
+	</ul>
+</nav>
+{% endif %}
+
+{% else %}
+<p class="text-muted">Ingen tiltak matcher filtrene, eller du har ikke tilgang til noen risikosamlinger.</p>
+{% endif %}
+
+{% endblock hovedinnhold %}

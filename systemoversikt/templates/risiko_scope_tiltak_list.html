@@ -28,7 +28,7 @@
 {% for row in tiltak_rows %}
 <tr>
 	<td>{{ row.display_tiltak_id }}</td>
-	<td>{{ row.action.beskrivelse|linebreaksbr }}</td>
+	<td>{{ row.action.beskrivelse|linebreaksbr }}{% with uc=row.action.unntak.all|length %}{% if uc %} <span class="badge badge-light border">{{ uc }} unntak</span>{% endif %}{% endwith %}</td>
 	<td>
 		{% for link in row.risk_links %}
 			<a href="{% url 'risiko_scope_detail' pk=scope.pk %}?edit={{ link.scenario_pk }}" class="risiko-level-tag risiko-risk-id-tag {{ link.risiko_css }}" title="{{ link.risiko_etikett }}">{{ link.risk_id }}</a>{% if not forloop.last %} {% endif %}

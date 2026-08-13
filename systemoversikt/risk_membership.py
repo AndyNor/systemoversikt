@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: readable_scope_ids_for_user / actions_visible_to_user / unntak_visible_to_user for global lists.
 # 2026-07-09: create_risk_scope – log scope_created to RiskActivityLog.
 # 2026-07-08: search_scopes – server-side title/beskrivelse search across all collections (existence is open).
 # 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator may change/delete any group in profile virksomhet.
@@ -24,6 +25,8 @@ from django.db.models import BooleanField, Case, Count, Exists, OuterRef, Prefet
 
 from systemoversikt.models import (
 	RISK_SCOPE_MEMBER_ROLE_OWNER,
+	RiskAction,
+	RiskActionUnntak,
 	RiskScope,
 	RiskScopeMember,
 	RiskVirksomhetGroup,
@@ -199,6 +202,44 @@ def user_has_scope_read_access(user, scope):
 	if scope.virksomhet_id is None:
 		return False
 	return user_has_virksomhet_read_group_access(user, scope.virksomhet_id)
+
+
+def readable_scope_ids_for_user(user, include_archived=False):
+	"""Scope PKs the user may read (membership or virksomhet_read_only group)."""
+	if not user.is_authenticated:
+		return []
+	qs = RiskScope.objects.all()
+	if not include_archived:
+		qs = qs.filter(archived_at__isnull=True)
+	if user.is_superuser:
+		return list(qs.values_list('pk', flat=True))
+	qs = qs.filter(
+		Q(memberships__user_id=user.pk)
+		| Q(participant_groups__memberships__user_id=user.pk)
+		| Q(
+			virksomhet_id__in=RiskVirksomhetGroupMember.objects.filter(
+				user_id=user.pk,
+				group__virksomhet_read_only=True,
+			).values_list('group__virksomhet_id', flat=True)
+		),
+	).distinct()
+	return list(qs.values_list('pk', flat=True))
+
+
+def actions_visible_to_user(user, include_archived=False):
+	"""RiskAction queryset limited to scopes the user can read."""
+	if not user.is_authenticated:
+		return RiskAction.objects.none()
+	scope_ids = readable_scope_ids_for_user(user, include_archived=include_archived)
+	return RiskAction.objects.filter(scope_id__in=scope_ids)
+
+
+def unntak_visible_to_user(user, include_archived=False):
+	"""RiskActionUnntak queryset limited to actions in scopes the user can read."""
+	if not user.is_authenticated:
+		return RiskActionUnntak.objects.none()
+	scope_ids = readable_scope_ids_for_user(user, include_archived=include_archived)
+	return RiskActionUnntak.objects.filter(action__scope_id__in=scope_ids)
 
 
 def user_has_scope_write_access(user, scope):

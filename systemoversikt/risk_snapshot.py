@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: Collection snapshots include tiltak unntak (json_schema_version 2).
 # 2026-08-07: Sammenstilling snapshots include subcategory matrix (score-weighted aggregation).
 # 2026-07-08: Keep all risk snapshot versions (disable age-bin pruning) and dedup ignoring `snapshot_generated_at` so nightly captures only save real changes.
 # 2026-07-08: Maintenance guide – see risk_snapshot_MAINTENANCE.md when model/UI changes affect snapshots.
@@ -135,7 +136,20 @@ def _serialize_scenario(scenario, ansvarlig_lookup=None):
 	}
 
 
+def _serialize_unntak(unntak):
+	return {
+		'pk': unntak.pk,
+		'beskrivelse': unntak.beskrivelse or '',
+		'begrunnelse': unntak.begrunnelse or '',
+		'gyldig_til': _iso_date(unntak.gyldig_til),
+		'aktiv': bool(unntak.aktiv),
+		'systemer': [_serialize_system(s) for s in unntak.systemer.all()],
+	}
+
+
 def _serialize_action(action, ansvarlig_lookup):
+	# 2026-08-13: Include coverage-gap unntak on tiltak for collection archives.
+	unntak_list = list(action.unntak.all()) if action.pk else []
 	return {
 		'pk': action.pk,
 		'beskrivelse': action.beskrivelse or '',
@@ -144,6 +158,9 @@ def _serialize_action(action, ansvarlig_lookup):
 		'frist': _iso_date(action.frist),
 		'status': action.status,
 		'status_display': action.get_status_display(),
+		'eskaleres': bool(getattr(action, 'eskaleres', False)),
+		'unntak': [_serialize_unntak(u) for u in unntak_list],
+		'unntak_count': len(unntak_list),
 	}
 
 
@@ -230,7 +247,7 @@ def build_collection_snapshot_payload(scope, captured_at=None):
 
 	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
 	annotate_scenario_display_ids(scenarios)
-	actions = list(scope.actions.prefetch_related('scenarios').order_by('pk'))
+	actions = list(scope.actions.prefetch_related('scenarios', 'unntak', 'unntak__systemer').order_by('pk'))
 	annotate_scenarios_tiltak_ids(scenarios, actions)
 	for scenario in scenarios:
 		_annotate_scenario_display(scenario, criteria)
@@ -283,6 +300,16 @@ def build_collection_snapshot_payload(scope, captured_at=None):
 		'konsekvens_labels': _labels_dict_to_json(criteria.konsekvens_labels),
 		'besluttede_tiltak_rows': [
 			_serialize_tiltak_row(row, ansvarlig_lookup) for row in besluttede_rows
+		],
+		'unntak_rows': [
+			{
+				'display_tiltak_id': tiltak_map.get(action.pk, ''),
+				'action_beskrivelse': action.beskrivelse or '',
+				'unntak': _serialize_unntak(unntak),
+			}
+			for action in actions
+			for unntak in action.unntak.all()
+			if unntak.aktiv
 		],
 		'scenario_sections': [
 			{
@@ -483,6 +510,7 @@ def collection_render_context(payload, live_scope=None):
 		'scenario_sections': payload.get('scenario_sections') or [],
 		'scope_systems': payload.get('scope_systems') or [],
 		'besluttede_tiltak_rows': payload.get('besluttede_tiltak_rows') or [],
+		'unntak_rows': payload.get('unntak_rows') or [],
 		'matrix_current': payload.get('matrix_current') or [],
 		'matrix_residual': payload.get('matrix_residual') or [],
 		'konsekvens_labels': konsekvens_labels,

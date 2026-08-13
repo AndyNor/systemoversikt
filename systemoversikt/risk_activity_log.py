@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: Unntak create/update/delete event types for tiltak coverage gaps.
 # 2026-08-10: Scenario/tiltak/member event types for extended risk activity logging.
 # 2026-07-09: Dedicated risk module activity log – helper and event-type constants.
 
@@ -27,6 +28,9 @@ RISK_ACTIVITY_SCENARIO_TREATMENT_CHANGED = 'scenario_treatment_changed'
 RISK_ACTIVITY_ACTION_CREATED = 'action_created'
 RISK_ACTIVITY_ACTION_DELETED = 'action_deleted'
 RISK_ACTIVITY_ACTION_STATUS_CHANGED = 'action_status_changed'
+RISK_ACTIVITY_UNNTAK_CREATED = 'unntak_created'
+RISK_ACTIVITY_UNNTAK_UPDATED = 'unntak_updated'
+RISK_ACTIVITY_UNNTAK_DELETED = 'unntak_deleted'
 RISK_ACTIVITY_MEMBER_ADDED = 'member_added'
 RISK_ACTIVITY_MEMBER_REMOVED = 'member_removed'
 
@@ -50,6 +54,9 @@ RISK_ACTIVITY_EVENT_LABELS = {
 	RISK_ACTIVITY_ACTION_CREATED: 'Tiltak opprettet',
 	RISK_ACTIVITY_ACTION_DELETED: 'Tiltak slettet',
 	RISK_ACTIVITY_ACTION_STATUS_CHANGED: 'Tiltakstatus endret',
+	RISK_ACTIVITY_UNNTAK_CREATED: 'Unntak opprettet',
+	RISK_ACTIVITY_UNNTAK_UPDATED: 'Unntak endret',
+	RISK_ACTIVITY_UNNTAK_DELETED: 'Unntak slettet',
 	RISK_ACTIVITY_MEMBER_ADDED: 'Medlem lagt til',
 	RISK_ACTIVITY_MEMBER_REMOVED: 'Medlem fjernet',
 }

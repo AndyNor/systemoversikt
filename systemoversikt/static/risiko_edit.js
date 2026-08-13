@@ -2,6 +2,8 @@
 // 2026-08-10: Omfangsfigur preview full width; click opens file URL in new tab.
 // 2026-07-07: Bootstrap confirm modal for scenario/tiltak/omfang delete – shared module helper.
 // 2026-07-07: Omfang card – beskrivelse save, multipart figur/original upload via FormData.
+// 2026-08-13: Compact unntak rows with button actions; gyldig_til on create form.
+// 2026-08-13: Unntak CRUD on action cards; kontinuerlig_oppfolging status badge.
 // 2026-07-06: Tiltak «Må eskaleres» toggle per action card in scenario modal.
 // 2026-07-02: Deltakergruppe search shows first 5 groups on focus before typing.
 // 2026-07-02: Deltakergrupper in Tilgang card – add/remove/search participant groups on collection.
@@ -1186,7 +1188,101 @@
           '<div class="col-auto risiko-action-btn-col">' +
             removeBtn +
           '</div>' +
-        '</div>';
+        '</div>' +
+        buildActionUnntakHtml(action);
+    }
+
+    function buildActionUnntakHtml(action) {
+      if (!action.id) {
+        return '<div class="risiko-action-unntak mt-1 small text-muted">Lagre tiltaket for å legge til unntak.</div>';
+      }
+      const items = action.unntak || [];
+      const count = action.unntak_count != null ? action.unntak_count : items.length;
+      let listHtml = '';
+      if (items.length) {
+        listHtml = '<ul class="list-unstyled mb-1 risiko-action-unntak-list">' +
+          items.map(function (u) {
+            const aktivBadge = u.aktiv
+              ? '<span class="badge badge-success">Aktiv</span>'
+              : '<span class="badge badge-secondary">Lukket</span>';
+            const gyldig = u.gyldig_til
+              ? '<span class="text-muted risiko-unntak-gyldig" title="Gyldig til">til ' +
+                escapeHtml(u.gyldig_til) + '</span>'
+              : '';
+            const begrunnelse = u.begrunnelse
+              ? '<span class="text-muted risiko-unntak-begrunnelse-inline" title="' +
+                escapeHtml(u.begrunnelse) + '"> – ' + escapeHtml(u.begrunnelse) + '</span>'
+              : '';
+            return '<li class="risiko-unntak-row" data-unntak-id="' + u.id + '"' +
+              ' data-beskrivelse="' + escapeHtml(u.beskrivelse || '') + '"' +
+              ' data-begrunnelse="' + escapeHtml(u.begrunnelse || '') + '"' +
+              ' data-gyldig-til="' + escapeHtml(u.gyldig_til || '') + '"' +
+              ' data-aktiv="' + (u.aktiv ? '1' : '0') + '">' +
+              '<div class="risiko-unntak-row-main">' +
+              aktivBadge +
+              '<span class="risiko-unntak-text">' +
+              '<strong>' + escapeHtml(u.beskrivelse || '') + '</strong>' +
+              begrunnelse +
+              '</span>' +
+              gyldig +
+              '</div>' +
+              '<div class="risiko-unntak-row-actions">' +
+              '<button type="button" class="btn btn-outline-secondary btn-sm risiko-unntak-toggle-aktiv">' +
+              (u.aktiv ? 'Lukk' : 'Aktiver') + '</button>' +
+              '<button type="button" class="btn btn-outline-danger btn-sm risiko-unntak-delete">Slett</button>' +
+              '</div></li>';
+          }).join('') +
+          '</ul>';
+      } else {
+        listHtml = '<p class="text-muted small mb-1">Ingen unntak registrert.</p>';
+      }
+      return '<div class="risiko-action-unntak mt-1" data-action-id="' + action.id + '">' +
+        '<div class="d-flex align-items-center mb-1">' +
+        '<strong class="small mb-0">Unntak' +
+        (count ? ' <span class="badge badge-light border">' + count + '</span>' : '') +
+        '</strong>' +
+        '<button type="button" class="btn btn-outline-secondary btn-sm ml-auto risiko-unntak-toggle-form">Legg til</button>' +
+        '</div>' +
+        listHtml +
+        '<div class="risiko-unntak-form d-none border rounded p-2 bg-light">' +
+        '<label class="small mb-0">Hvor gjelder unntaket?</label>' +
+        '<textarea class="form-control form-control-sm risiko-unntak-beskrivelse mb-1" rows="2"></textarea>' +
+        '<label class="small mb-0">Begrunnelse</label>' +
+        '<textarea class="form-control form-control-sm risiko-unntak-begrunnelse mb-1" rows="2"></textarea>' +
+        '<label class="small mb-0">Gyldig til</label>' +
+        '<input type="date" class="form-control form-control-sm risiko-unntak-gyldig-til mb-1" style="max-width:11rem">' +
+        '<button type="button" class="btn btn-primary btn-sm risiko-unntak-save">Lagre unntak</button>' +
+        '</div></div>';
+    }
+
+    function unntakListCreateUrl(actionId) {
+      return (config.urls.unntakListCreate || '').replace('{id}', String(actionId));
+    }
+
+    function unntakDetailUrl(actionId, unntakId) {
+      return (config.urls.unntakDetail || '')
+        .replace('{id}', String(actionId))
+        .replace('{uid}', String(unntakId));
+    }
+
+    function refreshActionUnntakBlock(card, actionId) {
+      if (!config.urls.unntakListCreate) return Promise.resolve();
+      return fetchJson(unntakListCreateUrl(actionId)).then(function (data) {
+        const block = card.querySelector('.risiko-action-unntak');
+        if (!block) return;
+        const action = {
+          id: actionId,
+          unntak: data.unntak || [],
+          unntak_count: (data.unntak || []).length,
+        };
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = buildActionUnntakHtml(action);
+        block.replaceWith(wrapper.firstChild);
+        if (data.tiltak) {
+          scopeTiltak = data.tiltak;
+          renderTiltakSection(data.tiltak);
+        }
+      });
     }
 
     function setCardScenarioIds(card, scenarioIds) {
@@ -1578,6 +1674,7 @@
         besluttet: 'risiko-tiltak-status-besluttet',
         ikke_startet: 'risiko-tiltak-status-besluttet',
         under_arbeid: 'risiko-tiltak-status-under-arbeid',
+        kontinuerlig_oppfolging: 'risiko-tiltak-status-kontinuerlig',
         utfort: 'risiko-tiltak-status-utfort',
       };
       const cls = cssByStatus[status] || 'risiko-tiltak-status-unknown';
@@ -1606,7 +1703,10 @@
         ansvarligHtml = '<span title="' + escapeHtml(ansvarligRaw) + '">' + escapeHtml(ansvarligShow) + '</span>';
       }
       return '<td>' + displayId + '</td>' +
-        '<td>' + escapeHtml(action.beskrivelse || '').replace(/\n/g, '<br>') + '</td>' +
+        '<td>' + escapeHtml(action.beskrivelse || '').replace(/\n/g, '<br>') +
+        (action.unntak_count ? ' <span class="badge badge-light border" title="Aktive/registrerte unntak">' +
+          action.unntak_count + ' unntak</span>' : '') +
+        '</td>' +
         '<td>' + riskHtml + '</td>' +
         '<td>' + ansvarligHtml + '</td>' +
         '<td>' + escapeHtml(action.frist || '-') + '</td>' +
@@ -2010,6 +2110,7 @@
       actionsList.addEventListener('input', function (e) {
         const card = e.target.closest('.risiko-action-card');
         if (!card) return;
+        if (e.target.closest('.risiko-action-unntak')) return;
         if (e.target.classList.contains('risiko-action-ansvarlig-input')) {
           syncAnsvarligStoredValue(e.target);
           scheduleAnsvarligSearch(e.target);
@@ -2017,6 +2118,7 @@
         scheduleActionAutosave(card);
       });
       actionsList.addEventListener('change', function (e) {
+        if (e.target.closest('.risiko-action-unntak')) return;
         const card = e.target.closest('.risiko-action-card');
         if (card) scheduleActionAutosave(card);
       });
@@ -2040,6 +2142,79 @@
           return;
         }
         if (!card) return;
+        if (e.target.classList.contains('risiko-unntak-toggle-form')) {
+          const form = card.querySelector('.risiko-unntak-form');
+          if (form) form.classList.toggle('d-none');
+          return;
+        }
+        if (e.target.classList.contains('risiko-unntak-save')) {
+          const actionId = parseInt(card.getAttribute('data-action-id'), 10);
+          if (!actionId || !config.urls.unntakListCreate) return;
+          const beskrivelse = (card.querySelector('.risiko-unntak-beskrivelse') || {}).value || '';
+          const begrunnelse = (card.querySelector('.risiko-unntak-begrunnelse') || {}).value || '';
+          const gyldigTil = (card.querySelector('.risiko-unntak-gyldig-til') || {}).value || '';
+          setModalStatus('Lagrer unntak…');
+          fetchJson(unntakListCreateUrl(actionId), {
+            method: 'POST',
+            body: JSON.stringify({
+              beskrivelse: beskrivelse.trim(),
+              begrunnelse: begrunnelse.trim(),
+              gyldig_til: gyldigTil || null,
+              aktiv: true,
+            }),
+          }).then(function (data) {
+            setModalStatus('Unntak lagret.');
+            if (data.tiltak) {
+              scopeTiltak = data.tiltak;
+              renderTiltakSection(data.tiltak);
+            }
+            return refreshActionUnntakBlock(card, actionId);
+          }).catch(function (err) {
+            setModalStatus(err.message || 'Kunne ikke lagre unntak.', true);
+          });
+          return;
+        }
+        if (e.target.classList.contains('risiko-unntak-delete') || e.target.classList.contains('risiko-unntak-toggle-aktiv')) {
+          const actionId = parseInt(card.getAttribute('data-action-id'), 10);
+          const item = e.target.closest('[data-unntak-id]');
+          if (!actionId || !item || !config.urls.unntakDetail) return;
+          const unntakId = parseInt(item.getAttribute('data-unntak-id'), 10);
+          if (e.target.classList.contains('risiko-unntak-delete')) {
+            if (!window.confirm('Slette dette unntaket?')) return;
+            fetchJson(unntakDetailUrl(actionId, unntakId), {
+              method: 'POST',
+              body: JSON.stringify({ _method: 'DELETE' }),
+            }).then(function (data) {
+              if (data.tiltak) {
+                scopeTiltak = data.tiltak;
+                renderTiltakSection(data.tiltak);
+              }
+              return refreshActionUnntakBlock(card, actionId);
+            }).catch(function (err) {
+              setModalStatus(err.message || 'Kunne ikke slette unntak.', true);
+            });
+            return;
+          }
+          const currentlyAktiv = item.getAttribute('data-aktiv') === '1';
+          fetchJson(unntakDetailUrl(actionId, unntakId), {
+            method: 'PATCH',
+            body: JSON.stringify({
+              beskrivelse: item.getAttribute('data-beskrivelse') || '',
+              begrunnelse: item.getAttribute('data-begrunnelse') || '',
+              gyldig_til: item.getAttribute('data-gyldig-til') || null,
+              aktiv: !currentlyAktiv,
+            }),
+          }).then(function (data) {
+            if (data.tiltak) {
+              scopeTiltak = data.tiltak;
+              renderTiltakSection(data.tiltak);
+            }
+            return refreshActionUnntakBlock(card, actionId);
+          }).catch(function (err) {
+            setModalStatus(err.message || 'Kunne ikke oppdatere unntak.', true);
+          });
+          return;
+        }
         if (e.target.classList.contains('risiko-action-unlink')) {
           unlinkModalActionCard(card);
         } else if (e.target.classList.contains('risiko-action-delete')) {

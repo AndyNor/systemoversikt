@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: RiskActionUnntak – coverage-gap exceptions on tiltak; status kontinuerlig_oppfolging.
 # 2026-07-09: RiskActivityLog – dedicated audit log for risk module workflow events.
 # 2026-07-08: RiskSnapshot – versioned JSON snapshots for collection rapport and sammenstilling.
 # 2026-07-07: RiskSammenstilling.reader_groups M2M – optional read-only tilgangsgrupper per sammenstilling.
@@ -7880,6 +7881,7 @@ RISK_ACTION_STATUS_VALG = (
 	('forslag', 'Forslag'),
 	('besluttet', 'Besluttet'),
 	('under_arbeid', 'Under arbeid'),
+	('kontinuerlig_oppfolging', 'Kontinuerlig oppfølging'),
 	('utfort', 'Utført'),
 )
 
@@ -8427,7 +8429,7 @@ class RiskAction(models.Model):
 	)
 	status = models.CharField(
 		verbose_name="Status",
-		max_length=20,
+		max_length=30,
 		choices=RISK_ACTION_STATUS_VALG,
 		default='forslag',
 	)
@@ -8452,6 +8454,69 @@ class RiskAction(models.Model):
 		verbose_name_plural = "Risiko: tiltak"
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['pk']
+
+
+class RiskActionUnntak(models.Model):
+	# 2026-08-13: Documents where a tiltak could not be implemented (coverage gap).
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	action = models.ForeignKey(
+		to=RiskAction,
+		on_delete=models.CASCADE,
+		related_name='unntak',
+		verbose_name="Tiltak",
+	)
+	beskrivelse = models.TextField(
+		verbose_name="Unntak",
+		help_text="Hvor / hva unntaket gjelder.",
+	)
+	begrunnelse = models.TextField(
+		verbose_name="Begrunnelse",
+		blank=True,
+		default='',
+		help_text="Hvorfor tiltaket ikke kunne implementeres her.",
+	)
+	systemer = models.ManyToManyField(
+		to='System',
+		related_name='risk_action_unntak',
+		verbose_name="Systemer",
+		blank=True,
+	)
+	gyldig_til = models.DateField(
+		verbose_name="Gyldig til",
+		null=True,
+		blank=True,
+	)
+	aktiv = models.BooleanField(
+		verbose_name="Aktiv",
+		default=True,
+		db_index=True,
+	)
+	opprettet_av = models.ForeignKey(
+		to=User,
+		on_delete=models.SET_NULL,
+		related_name='risk_action_unntak_created',
+		verbose_name="Opprettet av",
+		blank=True,
+		null=True,
+	)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return self.beskrivelse[:60]
+
+	class Meta:
+		verbose_name = "risikotiltak-unntak"
+		verbose_name_plural = "Risiko: tiltak-unntak"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['-aktiv', '-opprettet', 'pk']
 
 
 RISK_FRAMEWORK_NODE_STATUS_VALG = (
@@ -8790,8 +8855,9 @@ RISK_SNAPSHOT_BIN_WEEKLY = 'weekly'
 RISK_SNAPSHOT_BIN_MONTHLY = 'monthly'
 RISK_SNAPSHOT_BIN_YEARLY = 'yearly'
 
+# 2026-08-13: Schema v2 adds unntak on collection rapport tiltak; template stays v1 (extra keys ignored by old HTML).
 RISK_SNAPSHOT_TEMPLATE_VERSION = 1
-RISK_SNAPSHOT_JSON_SCHEMA_VERSION = 1
+RISK_SNAPSHOT_JSON_SCHEMA_VERSION = 2
 
 
 class RiskSnapshot(models.Model):

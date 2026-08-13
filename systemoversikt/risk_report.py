@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: kontinuerlig_oppfolging treated as active (not utført) in report buckets.
 # 2026-07-07: Split scenario tiltak by status; exclude forslag; summary only under_arbeid+besluttet.
 # 2026-07-07: Report helpers – scenario/tiltak sorting and scope system aggregation for godkjent rapport.
 
 from systemoversikt.risk_display import tiltak_display_id_map
 
-TILTAK_STATUS_ORDER = ('utfort', 'under_arbeid', 'besluttet', 'forslag')
-BESLUTTET_TILTAK_STATUSES = frozenset(('besluttet', 'under_arbeid'))
-REPORT_TILTAK_STATUSES = frozenset(('utfort', 'under_arbeid', 'besluttet'))
+TILTAK_STATUS_ORDER = (
+	'utfort',
+	'kontinuerlig_oppfolging',
+	'under_arbeid',
+	'besluttet',
+	'forslag',
+)
+BESLUTTET_TILTAK_STATUSES = frozenset(('besluttet', 'under_arbeid', 'kontinuerlig_oppfolging'))
+REPORT_TILTAK_STATUSES = frozenset(('utfort', 'under_arbeid', 'besluttet', 'kontinuerlig_oppfolging'))
 TILTAK_STATUS_RANK = {status: index for index, status in enumerate(TILTAK_STATUS_ORDER)}
 
 

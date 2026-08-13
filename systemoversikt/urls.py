@@ -4,6 +4,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 """
 # 2026-07-02: BloodHound – single /sikkerhet/bloodhound/ page; legacy status/findings URLs redirect.
 # 2026-07-02: sikkerhet/sarbarheter/ – landing page for Qualys, Defender and compare reports.
+# 2026-08-13: Global tiltak/unntak list routes; unntak CRUD under collection actions.
 # 2026-07-01: Removed legacy /sikkerhet/risiko/<pk>/ routes – collection/ prefix only.
 # 2026-07-01: Virksomhet viewpoints, collection URL prefix, read-access API gates.
 # 2026-06-30: risikosamling delete URL – owner-only POST from list page.
@@ -138,6 +139,8 @@ urlpatterns = [
 	re_path(r'^sikkerhet/sikkerhetsavvik/$', views.o365_avvik, name='o365_avvik'),
 	re_path(r'^sikkerhet/sikkerhetstester/$', views.rapport_sikkerhetstester, name="rapport_sikkerhetstester"),
 	re_path(r'^sikkerhet/risiko/$', views_risiko.risiko_scope_list, name='risiko_scope_list'),
+	re_path(r'^sikkerhet/risiko/tiltak/$', views_risiko.risiko_tiltak_oversikt, name='risiko_tiltak_oversikt'),
+	re_path(r'^sikkerhet/risiko/unntak/$', views_risiko.risiko_unntak_oversikt, name='risiko_unntak_oversikt'),
 	re_path(r'^sikkerhet/risiko/ny/$', views_risiko.risiko_scope_create, name='risiko_scope_create'),
 	re_path(r'^sikkerhet/risiko/import/$', views_risiko.risiko_import, name='risiko_import'),
 	re_path(r'^sikkerhet/risiko/akseptkriterier/eksporter/$', views_risiko.risiko_akseptkriterier_eksporter, name='risiko_akseptkriterier_eksporter'),
@@ -199,6 +202,8 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/actions/create/$', api_risiko.api_risiko_scope_action_create, name='api_risiko_scope_action_create'),
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/actions/(?P<aid>\d{1,8})/update/$', api_risiko.api_risiko_scope_action_update, name='api_risiko_scope_action_update'),
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/actions/(?P<aid>\d{1,8})/delete/$', api_risiko.api_risiko_scope_action_delete, name='api_risiko_scope_action_delete'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/actions/(?P<aid>\d{1,8})/unntak/$', api_risiko.api_risiko_action_unntak_list_create, name='api_risiko_action_unntak_list_create'),
+	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/actions/(?P<aid>\d{1,8})/unntak/(?P<uid>\d{1,8})/$', api_risiko.api_risiko_action_unntak_detail, name='api_risiko_action_unntak_detail'),
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/scope/virksomhet/$', api_risiko.api_risiko_scope_virksomhet, name='api_risiko_scope_virksomhet'),
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/members/add/$', api_risiko.api_risiko_member_add, name='api_risiko_member_add'),
 	re_path(r'^sikkerhet/risiko/collection/(?P<pk>\d{1,8})/api/members/(?P<user_id>\d{1,8})/remove/$', api_risiko.api_risiko_member_remove, name='api_risiko_member_remove'),

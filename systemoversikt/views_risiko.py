@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: Global tiltak/unntak overviews with server-side filters; editor unntak URLs.
 # 2026-07-09: risiko_scope_delete / akseptkriterier – log workflow events to RiskActivityLog.
 # 2026-07-08: Import success message shows detected Excel template (enkel/stor mal).
 # 2026-07-08: Server-side scope search (q=) across all virksomheter on root list.
@@ -115,6 +116,13 @@ from systemoversikt.risk_membership import (
 	user_has_scope_read_access,
 	user_has_scope_write_access,
 	user_is_scope_member,
+	virksomheter_with_risk_read_access,
+)
+from systemoversikt.risk_tiltak_lists import (
+	filter_context_from_params,
+	paginate_queryset,
+	tiltak_overview_queryset,
+	unntak_overview_queryset,
 )
 from systemoversikt.views import formater_permissions
 
@@ -288,6 +296,8 @@ def _risiko_editor_urls(scope_pk):
 		'actionCreate': reverse('api_risiko_scope_action_create', kwargs={'pk': pk}),
 		'actionUpdate': reverse('api_risiko_scope_action_update', kwargs={'pk': pk, 'aid': 0}).replace('/0/', '/{id}/'),
 		'actionDelete': reverse('api_risiko_scope_action_delete', kwargs={'pk': pk, 'aid': 0}).replace('/0/', '/{id}/'),
+		'unntakListCreate': reverse('api_risiko_action_unntak_list_create', kwargs={'pk': pk, 'aid': 0}).replace('/actions/0/', '/actions/{id}/'),
+		'unntakDetail': reverse('api_risiko_action_unntak_detail', kwargs={'pk': pk, 'aid': 0, 'uid': 0}).replace('/actions/0/', '/actions/{id}/').replace('/unntak/0/', '/unntak/{uid}/'),
 		'scopeUpdate': reverse('api_risiko_scope_update', kwargs={'pk': pk}),
 		'systemSearch': reverse('api_risiko_systemer_sok'),
 		'members': reverse('api_risiko_members_list', kwargs={'pk': pk}),
@@ -335,6 +345,121 @@ def _risiko_list_context(request, scopes, list_virksomhet=None):
 	else:
 		ctx['virksomhet_tilgangsgrupper'] = []
 	return ctx
+
+
+def _tiltak_overview_rows(actions):
+	"""Attach display T# ids (per scope) and linked risk labels for overview table."""
+	by_scope = {}
+	for action in actions:
+		by_scope.setdefault(action.scope_id, []).append(action)
+	tiltak_maps = {
+		scope_id: tiltak_display_id_map(scope_actions)
+		for scope_id, scope_actions in by_scope.items()
+	}
+	criteria = get_active_criteria()
+	rows = []
+	for action in actions:
+		risk_labels = []
+		for scenario in action.scenarios.all():
+			label = criteria.risk_label(scenario.sannsynlighet_nivaa, scenario.konsekvens_nivaa)
+			if label and label not in risk_labels:
+				risk_labels.append(label)
+		rows.append({
+			'action': action,
+			'display_tiltak_id': tiltak_maps.get(action.scope_id, {}).get(action.pk, ''),
+			'risk_labels': risk_labels,
+			'unntak_count': getattr(action, 'unntak_aktiv_count', action.unntak.filter(aktiv=True).count()),
+		})
+	return rows
+
+
+@login_required
+def risiko_tiltak_oversikt(request):
+	# 2026-08-13: Cross-collection tiltak list limited to scopes the user can read.
+	qs = tiltak_overview_queryset(request.user, request.GET)
+	page = paginate_queryset(qs, request.GET)
+	filter_ctx = filter_context_from_params(request.GET)
+	virksomheter = virksomheter_with_risk_read_access(request.user)
+	return render(request, 'risiko_tiltak_oversikt.html', {
+		'request': request,
+		'page': page,
+		'rows': _tiltak_overview_rows(page.object_list),
+		'virksomheter': virksomheter,
+		'profile_virksomhet': profile_virksomhet(request.user),
+		**filter_ctx,
+	})
+
+
+@login_required
+def risiko_unntak_oversikt(request):
+	# 2026-08-13: Cross-collection unntak list limited to scopes the user can read.
+	# 2026-08-13: Rows include linked scenarios (display R#) and inherent risk levels.
+	qs = unntak_overview_queryset(request.user, request.GET)
+	page = paginate_queryset(qs, request.GET)
+	filter_ctx = filter_context_from_params(request.GET)
+	actions = [u.action for u in page.object_list]
+	by_scope = {}
+	for action in actions:
+		by_scope.setdefault(action.scope_id, []).append(action)
+	# Display ids need all scope actions ordered by pk – load siblings for listed scopes.
+	from systemoversikt.models import RiskAction, RiskScenario
+	from systemoversikt.risk_criteria import risk_cell_css_class
+
+	scope_ids = list(by_scope.keys())
+	all_scope_actions = list(
+		RiskAction.objects.filter(scope_id__in=scope_ids).order_by('scope_id', 'pk')
+	)
+	tiltak_maps = {}
+	for action in all_scope_actions:
+		tiltak_maps.setdefault(action.scope_id, []).append(action)
+	tiltak_maps = {
+		scope_id: tiltak_display_id_map(scope_actions)
+		for scope_id, scope_actions in tiltak_maps.items()
+	}
+	# Display R# requires full scenario order per scope (same as collection detail).
+	risk_id_by_scope = {}
+	for scope_id in scope_ids:
+		scope_scenarios = list(
+			RiskScenario.objects.filter(scope_id=scope_id).order_by('rekkefolge', 'risk_id')
+		)
+		risk_id_by_scope[scope_id] = annotate_scenario_display_ids(scope_scenarios)
+
+	rows = []
+	for unntak in page.object_list:
+		action = unntak.action
+		risk_map = risk_id_by_scope.get(action.scope_id, {})
+		scenario_links = []
+		seen_labels = []
+		for scenario in action.scenarios.all():
+			etikett = scenario.risiko_etikett or ''
+			if etikett and etikett not in seen_labels:
+				seen_labels.append(etikett)
+			scenario_links.append({
+				'scenario_pk': scenario.pk,
+				'risk_id': risk_map.get(scenario.pk, scenario.risk_id),
+				'uonsket_hendelse': scenario.uonsket_hendelse or '',
+				'risiko_etikett': etikett,
+				'risiko_css': risk_cell_css_class(etikett),
+			})
+		scenario_links.sort(key=lambda link: (
+			int(link['risk_id'][1:]) if str(link['risk_id']).startswith('R') and str(link['risk_id'])[1:].isdigit() else 9999,
+			link['risk_id'],
+		))
+		rows.append({
+			'unntak': unntak,
+			'action': action,
+			'display_tiltak_id': tiltak_maps.get(action.scope_id, {}).get(action.pk, ''),
+			'scenario_links': scenario_links,
+			'risk_labels': seen_labels,
+		})
+	return render(request, 'risiko_unntak_oversikt.html', {
+		'request': request,
+		'page': page,
+		'rows': rows,
+		'virksomheter': virksomheter_with_risk_read_access(request.user),
+		'profile_virksomhet': profile_virksomhet(request.user),
+		**filter_ctx,
+	})
 
 
 @login_required
@@ -550,7 +675,8 @@ def risiko_scope_create(request):
 
 
 def _build_tiltak_rows(scope, scenarios):
-	actions = list(scope.actions.prefetch_related('scenarios').order_by('pk'))
+	# 2026-08-13: Prefetch unntak so tiltak table can show exception counts without N+1.
+	actions = list(scope.actions.prefetch_related('scenarios', 'unntak').order_by('pk'))
 	risk_id_by_pk = annotate_scenario_display_ids(scenarios)
 	return build_scope_tiltak_rows(scenarios, actions, risk_id_by_pk)
 
@@ -576,9 +702,10 @@ def _besluttede_rapport_tiltak_rows(scenarios, actions):
 
 
 def _build_rapport_context(scope, criteria):
+	# 2026-08-13: Include active unntak rows for collection rapport section.
 	scenarios = list(scope.scenarios.prefetch_related('systemer', 'actions').order_by('rekkefolge', 'risk_id'))
 	annotate_scenario_display_ids(scenarios)
-	actions = list(scope.actions.prefetch_related('scenarios').order_by('pk'))
+	actions = list(scope.actions.prefetch_related('scenarios', 'unntak', 'unntak__systemer').order_by('pk'))
 	annotate_scenarios_tiltak_ids(scenarios, actions)
 	for scenario in scenarios:
 		annotate_scenario_risk_display(scenario, criteria)
@@ -587,6 +714,16 @@ def _build_rapport_context(scope, criteria):
 	participant_memberships = [m for m in scope.memberships.all() if m.role == RISK_SCOPE_MEMBER_ROLE_PARTICIPANT]
 	participant_groups = list(scope.participant_groups.all())
 	tiltak_map = tiltak_display_id_map(actions)
+	unntak_rows = []
+	for action in actions:
+		for unntak in action.unntak.all():
+			if not unntak.aktiv:
+				continue
+			unntak_rows.append({
+				'display_tiltak_id': tiltak_map.get(action.pk, ''),
+				'action': action,
+				'unntak': unntak,
+			})
 
 	return {
 		'scope': scope,
@@ -595,6 +732,7 @@ def _build_rapport_context(scope, criteria):
 		'scenario_sections': build_scenario_report_sections(scenarios, tiltak_map),
 		'scope_systems': collect_scope_systems(scenarios),
 		'besluttede_tiltak_rows': _besluttede_rapport_tiltak_rows(scenarios, actions),
+		'unntak_rows': unntak_rows,
 		'matrix_current': criteria.build_matrix_context(scenarios, use_residual=False),
 		'matrix_residual': criteria.build_matrix_context(scenarios, use_residual=True),
 		'konsekvens_labels': criteria.konsekvens_labels,

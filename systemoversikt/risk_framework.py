@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: kontinuerlig_oppfolging included in SAMMENSTILLING_ACTIVE_TILTAK_STATUSES for status display.
 # 2026-08-07: Category veiledende (Sett nivå) uses same score-weighted S×K aggregation as underkategori matrix.
 # 2026-08-07: Subcategory matrix – score-weighted S/K aggregation from linked scenarios (separate from veiledende worst-label).
 # 2026-07-06: Scenario rows on detail view include link_pk for unlink from sammenstilling page.
@@ -35,7 +36,7 @@ from systemoversikt.risk_criteria import (
 	risk_label,
 )
 
-SAMMENSTILLING_ACTIVE_TILTAK_STATUSES = frozenset(('besluttet', 'under_arbeid'))
+SAMMENSTILLING_ACTIVE_TILTAK_STATUSES = frozenset(('besluttet', 'under_arbeid', 'kontinuerlig_oppfolging'))
 
 RISK_LABEL_RANK = {
 	'': 0,

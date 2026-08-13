@@ -639,6 +639,50 @@
 	margin-bottom: 0.4rem;
 	background: #fafbfc;
 }
+/* 2026-08-13: Compact unntak rows – status, text and actions on one line. */
+.risiko-unntak-row {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.2rem 0.35rem;
+	margin-bottom: 0.2rem;
+	border: 1px solid #e9ecef;
+	border-radius: 0.2rem;
+	background: #fff;
+	font-size: 0.8125rem;
+}
+.risiko-unntak-row-main {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.risiko-unntak-text {
+	flex: 1 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.risiko-unntak-begrunnelse-inline {
+	font-weight: normal;
+}
+.risiko-unntak-gyldig {
+	flex: 0 0 auto;
+	white-space: nowrap;
+	font-size: 0.75rem;
+}
+.risiko-unntak-row-actions {
+	display: flex;
+	flex: 0 0 auto;
+	gap: 0.25rem;
+}
+.risiko-unntak-row-actions .btn {
+	padding: 0.1rem 0.4rem;
+	font-size: 0.75rem;
+	line-height: 1.3;
+}
 .risiko-action-desc-row {
 	display: flex;
 	align-items: flex-start;
@@ -728,6 +772,7 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 	white-space: nowrap;
 }
 .risiko-tiltak-status-utfort { background-color: #c0eb96; }
+.risiko-tiltak-status-kontinuerlig { background-color: #b8daff; }
 .risiko-tiltak-status-under-arbeid { background-color: #ffecb2; }
 .risiko-tiltak-status-forslag { background-color: #e9ecef; }
 .risiko-tiltak-status-besluttet { background-color: #ffc8cd; }

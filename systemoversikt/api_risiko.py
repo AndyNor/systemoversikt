@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: Unntak CRUD APIs on collection tiltak; unntak_count in action payloads.
 # 2026-08-10: Log scenario/tiltak/member activity to RiskActivityLog (create/delete/status/levels).
 # 2026-07-09: api_risiko_scope_update – log scope_status_changed to RiskActivityLog.
 # 2026-07-07: Scenario sannsynlighetstyper validated against active criteria slugs (editable in akseptkriterier).
@@ -47,6 +48,7 @@ from systemoversikt.models import (
 	RISK_SCOPE_STATUS_OWNER_ONLY,
 	RISK_SCOPE_STATUS_VALG,
 	RiskAction,
+	RiskActionUnntak,
 	RiskScenario,
 	RiskScope,
 	RiskScopeMember,
@@ -97,6 +99,9 @@ from systemoversikt.risk_activity_log import (
 	RISK_ACTIVITY_SCENARIO_RISK_LEVEL_CHANGED,
 	RISK_ACTIVITY_SCENARIO_TREATMENT_CHANGED,
 	RISK_ACTIVITY_SCOPE_STATUS_CHANGED,
+	RISK_ACTIVITY_UNNTAK_CREATED,
+	RISK_ACTIVITY_UNNTAK_DELETED,
+	RISK_ACTIVITY_UNNTAK_UPDATED,
 	log_risk_activity,
 )
 from systemoversikt.risk_membership import (
@@ -173,6 +178,13 @@ def _action_to_dict(action, display_tiltak_id=None, risk_ids=None, scenario_ids=
 	ansvarlig_display = ''
 	if action.ansvarlig:
 		ansvarlig_display = resolve_ansvarlig_display(action.ansvarlig, ansvarlig_display_map)
+	unntak_list = getattr(action, '_prefetched_objects_cache', {}).get('unntak')
+	if unntak_list is not None:
+		unntak_count = len(unntak_list)
+		unntak_payload = [_unntak_to_dict(u) for u in unntak_list]
+	else:
+		unntak_count = action.unntak.count() if action.pk else 0
+		unntak_payload = None
 	data = {
 		'id': action.pk,
 		'display_tiltak_id': display_tiltak_id or '',
@@ -184,7 +196,10 @@ def _action_to_dict(action, display_tiltak_id=None, risk_ids=None, scenario_ids=
 		'status_display': action.get_status_display(),
 		'kilde': action.kilde,
 		'eskaleres': action.eskaleres,
+		'unntak_count': unntak_count,
 	}
+	if unntak_payload is not None:
+		data['unntak'] = unntak_payload
 	if risk_ids is not None:
 		data['risk_ids'] = risk_ids
 	if scenario_ids is not None:
@@ -192,16 +207,38 @@ def _action_to_dict(action, display_tiltak_id=None, risk_ids=None, scenario_ids=
 	return data
 
 
+def _unntak_to_dict(unntak):
+	systems = []
+	# Prefer prefetched M2M when available.
+	try:
+		systems = [_system_to_dict(s) for s in unntak.systemer.all()]
+	except Exception:
+		systems = []
+	return {
+		'id': unntak.pk,
+		'beskrivelse': unntak.beskrivelse or '',
+		'begrunnelse': unntak.begrunnelse or '',
+		'gyldig_til': unntak.gyldig_til.isoformat() if unntak.gyldig_til else None,
+		'aktiv': bool(unntak.aktiv),
+		'systemer': systems,
+	}
+
+
 def _load_scope_scenarios(scope):
 	return list(
-		scope.scenarios.prefetch_related('systemer', 'actions')
+		scope.scenarios.prefetch_related(
+			'systemer',
+			'actions',
+			'actions__unntak',
+			'actions__unntak__systemer',
+		)
 		.order_by('rekkefolge', 'risk_id')
 	)
 
 
 def _load_scope_actions(scope):
 	return list(
-		scope.actions.prefetch_related('scenarios')
+		scope.actions.prefetch_related('scenarios', 'unntak', 'unntak__systemer')
 		.order_by('pk')
 	)
 
@@ -700,7 +737,12 @@ def _reject_if_content_locked(scope):
 
 
 def _reload_scenario(scenario_id):
-	return RiskScenario.objects.prefetch_related('systemer', 'actions').get(pk=scenario_id)
+	return RiskScenario.objects.prefetch_related(
+		'systemer',
+		'actions',
+		'actions__unntak',
+		'actions__unntak__systemer',
+	).get(pk=scenario_id)
 
 
 def _scenario_response(scope, scenario):
@@ -1725,4 +1767,200 @@ def api_risiko_omfang_figur_original(request, pk):
 	omfang_fil.original_filnavn = filename[:300]
 	omfang_fil.save(update_fields=['original_data', 'original_content_type', 'original_filnavn'])
 	return JsonResponse({'ok': True, 'omfang_fil': _omfang_fil_payload(omfang_fil)})
+
+
+def _parse_unntak_fields(data):
+	errors = []
+	beskrivelse = (data.get('beskrivelse') or '').strip()
+	if not beskrivelse:
+		errors.append('Unntaksbeskrivelse er påkrevd.')
+	begrunnelse = (data.get('begrunnelse') or '').strip()
+	gyldig_til = _parse_date(data.get('gyldig_til'))
+	if gyldig_til == 'invalid':
+		errors.append('Ugyldig gyldig-til-dato.')
+		gyldig_til = None
+	aktiv = data.get('aktiv')
+	if aktiv is None:
+		aktiv = True
+	else:
+		aktiv = bool(aktiv)
+	system_ids = data.get('system_ids')
+	if system_ids is None:
+		system_ids = None
+	elif not isinstance(system_ids, (list, tuple)):
+		errors.append('Ugyldige system-IDer.')
+		system_ids = None
+	else:
+		parsed_ids = []
+		for value in system_ids:
+			try:
+				parsed_ids.append(int(value))
+			except (TypeError, ValueError):
+				errors.append('Ugyldige system-IDer.')
+				parsed_ids = None
+				break
+		system_ids = parsed_ids
+	if errors:
+		return None, errors
+	return {
+		'beskrivelse': beskrivelse,
+		'begrunnelse': begrunnelse,
+		'gyldig_til': gyldig_til,
+		'aktiv': aktiv,
+		'system_ids': system_ids,
+	}, []
+
+
+def _apply_unntak_systems(unntak, system_ids):
+	if system_ids is None:
+		return
+	if not system_ids:
+		unntak.systemer.clear()
+		return
+	found = list(System.objects.filter(pk__in=system_ids))
+	if len(found) != len(set(system_ids)):
+		raise ValueError('Ukjente system-IDer.')
+	unntak.systemer.set(found)
+
+
+def _log_unntak_event(request, scope, action, event_type, message):
+	log_risk_activity(
+		event_type,
+		message,
+		user=request.user,
+		scope=scope,
+	)
+
+
+@require_http_methods(['GET', 'POST'])
+def api_risiko_action_unntak_list_create(request, pk, aid):
+	# 2026-08-13: List/create coverage-gap exceptions for a tiltak.
+	if request.method == 'GET':
+		scope, err = _require_read_json(request, pk)
+		if err:
+			return err
+		action = get_object_or_404(RiskAction, pk=aid, scope=scope)
+		unntak_qs = action.unntak.prefetch_related('systemer').order_by('-aktiv', '-opprettet', 'pk')
+		return JsonResponse({
+			'ok': True,
+			'unntak': [_unntak_to_dict(u) for u in unntak_qs],
+		})
+
+	scope, err = _require_owner_json(request, pk)
+	if err:
+		return err
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
+	action = get_object_or_404(RiskAction, pk=aid, scope=scope)
+	data = _parse_json_body(request)
+	if data is None:
+		return _json_error('invalid_json')
+	parsed, errors = _parse_unntak_fields(data)
+	if errors:
+		return _json_error('; '.join(errors))
+	try:
+		with transaction.atomic():
+			unntak = RiskActionUnntak.objects.create(
+				action=action,
+				beskrivelse=parsed['beskrivelse'],
+				begrunnelse=parsed['begrunnelse'],
+				gyldig_til=parsed['gyldig_til'],
+				aktiv=parsed['aktiv'],
+				opprettet_av=request.user,
+			)
+			_apply_unntak_systems(unntak, parsed['system_ids'] if parsed['system_ids'] is not None else [])
+	except ValueError as exc:
+		return _json_error(str(exc))
+
+	tiltak_map = tiltak_display_id_map(_load_scope_actions(scope))
+	display_id = tiltak_map.get(action.pk, 'T?')
+	_log_unntak_event(
+		request,
+		scope,
+		action,
+		RISK_ACTIVITY_UNNTAK_CREATED,
+		'%s opprettet unntak på %s.' % (
+			user_member_display_name(request.user),
+			display_id,
+		),
+	)
+	return JsonResponse({
+		'ok': True,
+		'unntak': _unntak_to_dict(unntak),
+		**_tiltak_refresh_payload(scope),
+	}, status=201)
+
+
+@require_http_methods(['PATCH', 'POST', 'DELETE'])
+def api_risiko_action_unntak_detail(request, pk, aid, uid):
+	# 2026-08-13: Update/delete a tiltak unntak.
+	scope, err = _require_owner_json(request, pk)
+	if err:
+		return err
+	err = _reject_if_content_locked(scope)
+	if err:
+		return err
+	action = get_object_or_404(RiskAction, pk=aid, scope=scope)
+	unntak = get_object_or_404(RiskActionUnntak, pk=uid, action=action)
+
+	method = request.method
+	data = None
+	if method == 'POST':
+		data = _parse_json_body(request) or {}
+		if data.get('_method') == 'DELETE':
+			method = 'DELETE'
+		else:
+			method = 'PATCH'
+
+	tiltak_map = tiltak_display_id_map(_load_scope_actions(scope))
+	display_id = tiltak_map.get(action.pk, 'T?')
+
+	if method == 'DELETE':
+		unntak.delete()
+		_log_unntak_event(
+			request,
+			scope,
+			action,
+			RISK_ACTIVITY_UNNTAK_DELETED,
+			'%s slettet unntak på %s.' % (
+				user_member_display_name(request.user),
+				display_id,
+			),
+		)
+		return JsonResponse({'ok': True, **_tiltak_refresh_payload(scope)})
+
+	if data is None:
+		data = _parse_json_body(request)
+	if data is None:
+		return _json_error('invalid_json')
+	parsed, errors = _parse_unntak_fields(data)
+	if errors:
+		return _json_error('; '.join(errors))
+	try:
+		with transaction.atomic():
+			unntak.beskrivelse = parsed['beskrivelse']
+			unntak.begrunnelse = parsed['begrunnelse']
+			unntak.gyldig_til = parsed['gyldig_til']
+			unntak.aktiv = parsed['aktiv']
+			unntak.save()
+			_apply_unntak_systems(unntak, parsed['system_ids'])
+	except ValueError as exc:
+		return _json_error(str(exc))
+
+	_log_unntak_event(
+		request,
+		scope,
+		action,
+		RISK_ACTIVITY_UNNTAK_UPDATED,
+		'%s endret unntak på %s.' % (
+			user_member_display_name(request.user),
+			display_id,
+		),
+	)
+	return JsonResponse({
+		'ok': True,
+		'unntak': _unntak_to_dict(unntak),
+		**_tiltak_refresh_payload(scope),
+	})
 
