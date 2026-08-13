@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: Person search uses shared risk_user_search (AND terms, email + virksomhet rank).
 # 2026-08-13: Unntak CRUD APIs on collection tiltak; unntak_count in action payloads.
 # 2026-08-10: Log scenario/tiltak/member activity to RiskActivityLog (create/delete/status/levels).
 # 2026-07-09: api_risiko_scope_update – log scope_status_changed to RiskActivityLog.
@@ -27,9 +28,6 @@
 
 import json
 from datetime import datetime
-
-from functools import reduce
-from operator import or_
 
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
@@ -109,6 +107,10 @@ from systemoversikt.risk_membership import (
 	user_display_name,
 	user_member_display_name,
 	user_virksomhetsforkortelse,
+)
+from systemoversikt.risk_user_search import (
+	preferred_virksomhet_for_scope,
+	search_active_users,
 )
 from systemoversikt.views_risiko import (
 	_get_managed_scope,
@@ -1337,55 +1339,6 @@ def _members_payload(scope):
 	}
 
 
-def _bruker_sok_queryset(q):
-	terms = q.split()
-	if not terms:
-		return User.objects.none()
-	field_queries = []
-	for term in terms:
-		field_queries.append(
-			Q(username__icontains=term)
-			| Q(first_name__icontains=term)
-			| Q(last_name__icontains=term)
-			| Q(email__icontains=term)
-			| Q(profile__displayName__icontains=term)
-		)
-	query = reduce(or_, field_queries)
-	return (
-		User.objects.filter(query)
-		.filter(is_active=True)
-		.select_related('profile', 'profile__virksomhet')
-		.distinct()
-		.order_by('first_name', 'last_name', 'username')[:15]
-	)
-
-
-def _tiltak_ansvarlig_sok_queryset(q, virksomhet):
-	if virksomhet is None:
-		return User.objects.none()
-	terms = q.split()
-	if not terms:
-		return User.objects.none()
-	field_queries = []
-	for term in terms:
-		field_queries.append(
-			Q(username__icontains=term)
-			| Q(first_name__icontains=term)
-			| Q(last_name__icontains=term)
-			| Q(email__icontains=term)
-			| Q(profile__displayName__icontains=term)
-		)
-	query = reduce(or_, field_queries)
-	return (
-		User.objects.filter(query)
-		.filter(is_active=True)
-		.filter(profile__virksomhet=virksomhet)
-		.select_related('profile')
-		.distinct()
-		.order_by('first_name', 'last_name', 'username')[:15]
-	)
-
-
 @require_GET
 def api_risiko_members_list(request, pk):
 	scope, err = _require_read_json(request, pk)
@@ -1621,7 +1574,8 @@ def api_risiko_scope_virksomhet(request, pk):
 
 @require_GET
 def api_risiko_brukere_sok(request, pk):
-	_, err = _require_managed_json(request, pk)
+	# 2026-08-13: Rank by exact email and scope/user virksomhet; multi-word AND via shared search.
+	scope, err = _require_managed_json(request, pk)
 	if err:
 		return err
 
@@ -1629,8 +1583,9 @@ def api_risiko_brukere_sok(request, pk):
 	if len(q) < 2:
 		return JsonResponse({'ok': True, 'results': []})
 
+	prefer = preferred_virksomhet_for_scope(scope, request.user)
 	results = []
-	for user in _bruker_sok_queryset(q):
+	for user in search_active_users(q, prefer_virksomhet=prefer):
 		fork = user_virksomhetsforkortelse(user)
 		suffix = fork or user.username
 		results.append({
@@ -1642,6 +1597,7 @@ def api_risiko_brukere_sok(request, pk):
 
 @require_GET
 def api_risiko_tiltak_ansvarlig_sok(request, pk):
+	# 2026-08-13: Shared search with virksomhet hard-filter; AND terms + exact email rank.
 	scope, err = _require_member_json(request, pk)
 	if err:
 		return err
@@ -1651,8 +1607,11 @@ def api_risiko_tiltak_ansvarlig_sok(request, pk):
 	if len(q) < 2:
 		return JsonResponse({'ok': True, 'results': []})
 
+	if scope.virksomhet is None:
+		return JsonResponse({'ok': True, 'results': []})
+
 	results = []
-	for user in _tiltak_ansvarlig_sok_queryset(q, scope.virksomhet):
+	for user in search_active_users(q, restrict_virksomhet=scope.virksomhet):
 		email = (user.email or '').strip() or user.username
 		display = user_ansvarlig_display_name(user)
 		results.append({

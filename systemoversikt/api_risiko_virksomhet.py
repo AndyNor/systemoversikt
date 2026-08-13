@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-13: Person search uses shared risk_user_search (AND terms, email + page virksomhet rank).
 # 2026-07-07: Member API names use user_member_display_name – show virksomhetsforkortelse like collection pages.
 # 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator may mutate any group in profile virksomhet.
 # 2026-07-07: Granular tilgangsgruppe API – open list, member-gated mutations, creator auto-join, change_riskvirksomhetgroup for virksomhet_read_only.
@@ -12,7 +13,7 @@
 import json
 
 from django.contrib.auth.models import User
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, Prefetch
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_GET, require_http_methods
@@ -29,6 +30,7 @@ from systemoversikt.risk_membership import (
 	user_display_name,
 	user_member_display_name,
 )
+from systemoversikt.risk_user_search import search_active_users
 
 
 def _json_error(message, status=400):
@@ -141,29 +143,6 @@ def _validate_virksomhet_read_only_change(user, group, new_value):
 	if not user_can_set_virksomhet_read_only_flag(user, group.virksomhet):
 		return _json_error('forbidden', status=403)
 	return None
-
-
-def _bruker_sok_queryset(q):
-	terms = q.split()
-	if not terms:
-		return User.objects.none()
-	field_queries = []
-	for term in terms:
-		field_queries.append(
-			Q(username__icontains=term)
-			| Q(first_name__icontains=term)
-			| Q(last_name__icontains=term)
-			| Q(email__icontains=term)
-		)
-	query = field_queries[0]
-	for extra in field_queries[1:]:
-		query &= extra
-	return (
-		User.objects.filter(query)
-		.filter(is_active=True)
-		.distinct()
-		.order_by('first_name', 'last_name', 'username')[:15]
-	)
 
 
 @require_GET
@@ -329,6 +308,7 @@ def api_risiko_read_group_member_remove(request, vid, gid, user_id):
 
 @require_GET
 def api_risiko_read_group_brukere_sok(request, vid, gid):
+	# 2026-08-13: Shared search – AND terms, exact email first, page virksomhet preferred.
 	virksomhet, err = _require_page_access_json(request, vid)
 	if err:
 		return err
@@ -342,7 +322,7 @@ def api_risiko_read_group_brukere_sok(request, vid, gid):
 		return JsonResponse({'ok': True, 'results': []})
 
 	results = []
-	for user in _bruker_sok_queryset(q):
+	for user in search_active_users(q, prefer_virksomhet=virksomhet):
 		results.append({
 			'id': user.pk,
 			'label': '%s (%s)' % (user_display_name(user), user.username),
