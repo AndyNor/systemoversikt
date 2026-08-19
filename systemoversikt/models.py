@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-19: AzureApplication.appRoleAssignmentRequired – Entra Assignment required flag for the applications report.
 # 2026-08-13: RiskActionUnntak – coverage-gap exceptions on tiltak; status kontinuerlig_oppfolging.
 # 2026-07-09: RiskActivityLog – dedicated audit log for risk module workflow events.
 # 2026-07-08: RiskSnapshot – versioned JSON snapshots for collection rapport and sammenstilling.
@@ -7239,6 +7240,13 @@ class AzureApplication(models.Model):
 		null=True,
 		blank=True,
 		help_text=u"Tildelt",
+		)
+	# 2026-08-19: Entra ID Assignment required – when false, assigned users/groups do not restrict access.
+	appRoleAssignmentRequired = models.BooleanField(
+		verbose_name="Tildeling påkrevd",
+		null=True,
+		blank=True,
+		help_text="Entra ID Assignment required (appRoleAssignmentRequired). When false, assigned users/groups do not restrict access.",
 		)
 
 

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-19: Collect appRoleAssignmentRequired from Graph – show Assignment required on the applications report.
 # 2026-06-19: Pushover only for new SP with medium/high autofill risk – skip low.
 # 2026-06-19: elementer tracks service-principal count only – matches validate_import_volume input.
 # 2026-06-11: Skip Azure SP cleanup when Graph import volume is suspiciously low.
@@ -251,6 +252,9 @@ class Command(BaseCommand):
 					a.tags = app.get('tags')
 					a.notes = app.get('notes')
 					a.publisherName = app.get('publisherName')
+					# 2026-08-19: Assignment required from Graph; leave unset if the property is missing.
+					if 'appRoleAssignmentRequired' in app:
+						a.appRoleAssignmentRequired = True if app.get('appRoleAssignmentRequired') == True else False
 					a.save()
 
 
@@ -417,7 +421,7 @@ class Command(BaseCommand):
 
 			# henter inn alle service principals
 			APPLICATIONS_FOUND_ALL = 0
-			initial_query = '/servicePrincipals?$select=appId,id,notes,publisherName,displayName,accountEnabled,createdDateTime,tags,servicePrincipalType,keyCredentials,passwordCredentials'
+			initial_query = '/servicePrincipals?$select=appId,id,notes,publisherName,displayName,accountEnabled,createdDateTime,tags,servicePrincipalType,keyCredentials,passwordCredentials,appRoleAssignmentRequired'
 
 			print("Laster inn azure apps via /servicePrincipals")
 			next_page = load_next_response_servicePrincipals(initial_query)

@@ -1,3 +1,4 @@
+{# 2026-08-19: Show Entra Assignment required next to Publisert til – groups only restrict access when true. #}
 {% for a in applikasjoner %}
 	<tr>
 		<td>{{a.active|yesno:"Aktiv,Deaktiv"}}</td>
@@ -33,6 +34,13 @@
 			{% for item in a.assigned_to_json.value %}
 				{{item.principalDisplayName}}<br>
 			{% endfor %}
+		</td>
+
+		<td>
+			{{ a.appRoleAssignmentRequired|yesno:"Ja,Nei,—" }}
+			{% if a.appRoleAssignmentRequired == False %}
+				<br><small>Tildelte brukere/grupper begrenser ikke tilgang</small>
+			{% endif %}
 		</td>
 
 		<td>

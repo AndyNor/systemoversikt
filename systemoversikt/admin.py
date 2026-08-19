@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-19: AzureApplication admin filter on appRoleAssignmentRequired (Assignment required).
 # 2026-07-09: RiskActivityLog admin – read-only append-only risk workflow log.
 # 2026-07-07: InfobloxHost admin; NetworkContainer vlan_name/location_name/ip_helper in list/search.
 # 2026-07-02: Rename RiskVirksomhetReadGroup → RiskVirksomhetGroup admin classes.
@@ -187,7 +188,7 @@ class CitrixPublicationAdmin(admin.ModelAdmin):
 class AzureApplicationAdmin(admin.ModelAdmin):
 	list_display = ('displayName', 'servicePrincipalType', 'assigned_to', 'owner', 'tags','risikonivaa', 'createdDateTime', 'appId', 'objectId', 'sist_oppdatert',)
 	search_fields = ('displayName', 'appId',)
-	list_filter = ('risikonivaa', 'servicePrincipalType')
+	list_filter = ('risikonivaa', 'servicePrincipalType', 'appRoleAssignmentRequired')
 	autocomplete_fields = ('requiredResourceAccess',)
 	readonly_fields = [field.name for field in AzureApplication._meta.fields]
 
