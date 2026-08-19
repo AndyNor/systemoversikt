@@ -1,3 +1,4 @@
+{# 2026-08-19: Graph-rettigheter summary links to Azure graph section; show Assignment required and Publisert til. #}
 {# 2026-08-07: Surface egenutviklet, vedlikehold/DBA, RoS-behov, autentisering on system detail. #}
 {# 2026-08-07: Merge KIT into Sikkerhet og personvern (KIT first, then innsyn/risiko/tester). #}
 {# 2026-08-07: Merge personvern into Sikkerhet og personvern (3 cols); avtaler under Leverandører; sist oppdatert under title. #}
@@ -876,7 +877,7 @@
 						<h6>Graph-rettigheter</h6>
 						<div class="system-detalj-fakta-verdi">
 							{% if graph_permissions_count > 0 %}
-								<a href="#anchor_systemav">{{ graph_permissions_count }}</a>
+								<a href="#anchor_azure_graph">{{ graph_permissions_count }}</a>
 							{% else %}
 								<span class="text-muted">0</span>
 							{% endif %}
@@ -1294,6 +1295,8 @@
 							<tr>
 								<th>Applikasjonsnavn (Enterprise application)</th>
 								<th>App ID</th>
+								<th>Tildeling påkrevd</th>
+								<th>Publisert til</th>
 								<th>Rettigheter</th>
 								<th>Nøkler</th>
 							</tr>
@@ -1303,6 +1306,17 @@
 							<tr>
 								<td>{{ ea.displayName }}</td>
 								<td>{{ ea.appId }}</td>
+								<td>
+									{{ ea.appRoleAssignmentRequired|yesno:"Ja,Nei,—" }}
+									{% if ea.appRoleAssignmentRequired == False %}
+										<br><small>Tildelte brukere/grupper begrenser ikke tilgang</small>
+									{% endif %}
+								</td>
+								<td>
+									{% for item in ea.assigned_to_json.value %}
+										{{ item.principalDisplayName }}<br>
+									{% endfor %}
+								</td>
 								<td>
 									{% for perm in ea.requiredResourceAccess.all %}
 									<li>
