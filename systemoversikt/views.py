@@ -8727,7 +8727,7 @@ SENTRALE_ROLLER_EDITABLE = (
 	('personvernkoordinator', 'Personvernkoordinator'),
 	('informasjonssikkerhetskoordinator', 'Informasjonvernkoordinator'),
 	('varslingsmottak_sikkerhet_ref', 'Sikkerhetsrelaterte varsler sendes til'),
-	('uke_kam_referanse', 'Kundekontakt i DIG'),
+	('uke_kam_referanse', 'Kundekontakt i DIG/OKF'),
 	('autoriserte_bestillere_tjenester', 'Infotorg autorisert bestiller'),
 	('ks_fiks_admin_ref', 'Folkeregisteradministrator i KS Fiks'),
 	('autoriserte_bestillere_tjenester_uke', 'Autorisert for bestilling av tjenester fra DIG'),
@@ -8754,33 +8754,31 @@ def _sentrale_roller_redigerbare(virksomhet):
 
 
 SENTRALE_ROLLER_DIG_KAM_FIELD = 'uke_kam_referanse'
-DIG_KUNDEKONTAKT_VIRKSOMHET_FORKORTELSE = 'DIG'
+# 2026-08-21: Kundekontakt i DIG/OKF – allow staff from both DIG and OKF (was DIG only).
+KUNDEKONTAKT_VIRKSOMHET_FORKORTELSER = ('DIG', 'OKF')
 
 
-def _dig_kundekontakt_virksomhet():
-	try:
-		return Virksomhet.objects.get(virksomhetsforkortelse=DIG_KUNDEKONTAKT_VIRKSOMHET_FORKORTELSE)
-	except Virksomhet.DoesNotExist:
-		return None
+def _kundekontakt_virksomheter():
+	return Virksomhet.objects.filter(virksomhetsforkortelse__in=KUNDEKONTAKT_VIRKSOMHET_FORKORTELSER)
 
 
-def _sentrale_roller_ansvarlig_virksomhet(field, edited_virksomhet):
-	# 2026-06-08: Kundekontakt i DIG uses DIG staff only; other roles use the edited virksomhet.
+def _sentrale_roller_ansvarlig_virksomheter(field, edited_virksomhet):
+	# 2026-08-21: Returns queryset of virksomheter allowed when selecting people for a role.
 	if field == SENTRALE_ROLLER_DIG_KAM_FIELD:
-		return _dig_kundekontakt_virksomhet()
-	return edited_virksomhet
+		return _kundekontakt_virksomheter()
+	return Virksomhet.objects.filter(pk=edited_virksomhet.pk)
 
 
-def _ansvarlig_q_for_virksomhet(virksomhet):
-	if virksomhet is None:
+def _ansvarlig_q_for_virksomheter(virksomheter):
+	if virksomheter is None or not virksomheter.exists():
 		return Q(pk__in=[])
-	return Q(brukernavn__profile__virksomhet=virksomhet)
+	return Q(brukernavn__profile__virksomhet__in=virksomheter)
 
 
-def _virksomhet_ansvarlig_sok_queryset(q, scope_virksomhet):
+def _virksomhet_ansvarlig_sok_queryset(q, scope_virksomheter):
 	from functools import reduce
 	from operator import or_
-	if scope_virksomhet is None:
+	if scope_virksomheter is None or not scope_virksomheter.exists():
 		return Ansvarlig.objects.none()
 	terms = q.split()
 	if not terms:
@@ -8797,7 +8795,7 @@ def _virksomhet_ansvarlig_sok_queryset(q, scope_virksomhet):
 	query = reduce(or_, field_queries)
 	return (
 		Ansvarlig.objects.filter(query)
-		.filter(_ansvarlig_q_for_virksomhet(scope_virksomhet))
+		.filter(_ansvarlig_q_for_virksomheter(scope_virksomheter))
 		.select_related('brukernavn', 'brukernavn__profile')
 		.distinct()
 		.order_by('brukernavn__first_name', 'brukernavn__last_name')[:15]
@@ -8908,21 +8906,21 @@ def virksomhet_ansvarlig_sok(request, pk):
 	exclude_ids = set()
 	if role_field in SENTRALE_ROLLER_FIELD_NAMES:
 		exclude_ids.update(getattr(virksomhet, role_field).values_list('pk', flat=True))
-		scope_virksomhet = _sentrale_roller_ansvarlig_virksomhet(role_field, virksomhet)
+		scope_virksomheter = _sentrale_roller_ansvarlig_virksomheter(role_field, virksomhet)
 	else:
-		scope_virksomhet = virksomhet
+		scope_virksomheter = Virksomhet.objects.filter(pk=virksomhet.pk)
 	for raw in request.GET.get('exclude_ids', '').split(','):
 		raw = raw.strip()
 		if raw.isdigit():
 			exclude_ids.add(int(raw))
 
 	results = []
-	for ansvarlig in _virksomhet_ansvarlig_sok_queryset(q, scope_virksomhet):
+	for ansvarlig in _virksomhet_ansvarlig_sok_queryset(q, scope_virksomheter):
 		if ansvarlig.pk not in exclude_ids:
 			results.append(_ansvarlig_display_list(ansvarlig))
 
 	user_terms = q.split()
-	if user_terms and scope_virksomhet is not None:
+	if user_terms and scope_virksomheter.exists():
 		from functools import reduce
 		from operator import or_
 		user_parts = []
@@ -8937,7 +8935,7 @@ def virksomhet_ansvarlig_sok(request, pk):
 		user_q = reduce(or_, user_parts)
 		users = (
 			User.objects.filter(user_q)
-			.filter(profile__virksomhet=scope_virksomhet)
+			.filter(profile__virksomhet__in=scope_virksomheter)
 			.filter(ansvarlig_brukernavn__isnull=True)
 			.select_related('profile')
 			.distinct()
@@ -8975,9 +8973,10 @@ def virksomhet_ansvarlig_opprett(request, pk):
 	if field not in SENTRALE_ROLLER_FIELD_NAMES:
 		return JsonResponse({'error': 'invalid_field'}, status=400)
 
-	scope_virksomhet = _sentrale_roller_ansvarlig_virksomhet(field, virksomhet)
+	scope_virksomheter = _sentrale_roller_ansvarlig_virksomheter(field, virksomhet)
 	user = get_object_or_404(User, pk=user_pk)
-	if scope_virksomhet is None or getattr(user.profile, 'virksomhet_id', None) != scope_virksomhet.pk:
+	user_virksomhet_id = getattr(user.profile, 'virksomhet_id', None)
+	if user_virksomhet_id is None or not scope_virksomheter.filter(pk=user_virksomhet_id).exists():
 		return JsonResponse({'error': 'wrong_virksomhet'}, status=400)
 	ansvarlig, _created = Ansvarlig.objects.get_or_create(brukernavn=user)
 	return JsonResponse(_ansvarlig_display_list(ansvarlig))
@@ -9011,10 +9010,10 @@ def virksomhet_lagre_roller(request, pk):
 		except (TypeError, ValueError):
 			return JsonResponse({'error': 'invalid_ids', 'field': field_name}, status=400)
 
-		scope_virksomhet = _sentrale_roller_ansvarlig_virksomhet(field_name, virksomhet)
+		scope_virksomheter = _sentrale_roller_ansvarlig_virksomheter(field_name, virksomhet)
 		valid_ids = set(
 			Ansvarlig.objects.filter(pk__in=field_ids)
-			.filter(_ansvarlig_q_for_virksomhet(scope_virksomhet))
+			.filter(_ansvarlig_q_for_virksomheter(scope_virksomheter))
 			.values_list('pk', flat=True)
 		)
 		if set(field_ids) - valid_ids:

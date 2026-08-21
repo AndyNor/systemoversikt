@@ -387,7 +387,8 @@
 
 					{% csrf_token %}
 
-					<p class="small text-muted">Søk på navn, brukernavn eller e-post. De fleste roller: kun personer fra {{ virksomhet.virksomhetsforkortelse }}. Kundekontakt i DIG: kun personer fra DIG. Etatsdirektør hentes fra HR. Sertifikatfullmakter redigeres via <a href="{% url 'sertifikatmyndighet' %}">sertifikatmyndighet</a>.</p>
+					{# 2026-08-21: Kundekontakt i DIG/OKF – allow DIG and OKF staff. #}
+					<p class="small text-muted">Søk på navn, brukernavn eller e-post. De fleste roller: kun personer fra {{ virksomhet.virksomhetsforkortelse }}. Kundekontakt i DIG/OKF: kun personer fra DIG eller OKF. Etatsdirektør hentes fra HR. Sertifikatfullmakter redigeres via <a href="{% url 'sertifikatmyndighet' %}">sertifikatmyndighet</a>.</p>
 
 					<table class="table table-sm sentrale-roller-table">
 

@@ -62,6 +62,7 @@
 # 2026-06-22: Removed obsolete Driftsmodell security/location fields and Region model – unused in production.
 # 2026-06-22: chart_programvare – dark black leaf nodes in system/tjeneste dependency graphs.
 # 2026-06-21: chart_url, chart_cmdb_bss, chart_cmdb_bs colors for system dependency graph.
+# 2026-08-21: Virksomhet.uke_kam_referanse help text – kundekontakt may be DIG or OKF.
 # 2026-06-08: User-facing UKE labels on Virksomhet/System fields renamed to DIG.
 # 2026-06-08: VirksomhetRollerForm – edit sentrale roller from virksomhet detail page.
 # 2026-06-08: Swapped ukjent (light red) and infrastruktur_chart (light gray) in SYSTEM_COLORS.
@@ -1577,7 +1578,8 @@ class Virksomhet(models.Model):
 			related_name='virksomhet_uke_kam',
 			verbose_name='Kundeansvarlig fra intern tjenesteleverandør',
 			blank=True,
-			help_text=u"Dette er deres kundeansvarlig i DIG. Feltet bør oppdateres av DIG.",
+			# 2026-08-21: Help text – kundekontakt may be from DIG or OKF.
+			help_text=u"Dette er deres kundeansvarlig i DIG/OKF. Feltet bør oppdateres av DIG/OKF.",
 			)
 	intranett_url = models.URLField(
 			verbose_name="På intranett (internt)",

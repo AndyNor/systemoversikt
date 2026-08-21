@@ -178,7 +178,8 @@
 		{% endif %}
 
 		{% if user.ansvarlig_brukernavn.virksomhet_uke_kam.all %}
-			<b>Kundekontakt fra DIG for:</b>
+			{# 2026-08-21: Label matches DIG/OKF kundekontakt role. #}
+			<b>Kundekontakt fra DIG/OKF for:</b>
 			{% for vir in user.ansvarlig_brukernavn.virksomhet_uke_kam.all %}
 				{% url 'virksomhet' pk=vir.pk as url_virksomhet %}
 				<li><a target="_blank" href="{{ url_virksomhet }}">{{ vir.virksomhetsnavn }}</a></li>
