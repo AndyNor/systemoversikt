@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Session ping JSON endpoint + RiskApiUnauthorized for unauthenticated AJAX.
 # 2026-08-13: Scope list search hint – also covers scenario and tiltak fields.
 # 2026-08-13: Global tiltak/unntak overviews with server-side filters; editor unntak URLs.
 # 2026-07-09: risiko_scope_delete / akseptkriterier – log workflow events to RiskActivityLog.
@@ -50,7 +51,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Prefetch
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.http import content_disposition_header
@@ -133,6 +134,19 @@ RISK_CREATE_PERMISSIONS = [RISK_CREATE_PERMISSION]
 RISK_SCOPE_SEARCH_MAX_LEN = 200
 
 
+class RiskApiUnauthorized(Exception):
+	"""Raised when a risk JSON API is called without an authenticated session."""
+
+
+@require_GET
+def api_risiko_session_ping(request):
+	# 2026-08-23: Lightweight heartbeat for AJAX editors – keep WAP/Django session warm.
+	# No @login_required: return 401 JSON instead of OIDC redirect so fetch clients can detect expiry.
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'session_expired'}, status=401)
+	return JsonResponse({'ok': True})
+
+
 def _risiko_scope_search_query(request):
 	return (request.GET.get('q') or '').strip()[:RISK_SCOPE_SEARCH_MAX_LEN]
 
@@ -180,6 +194,9 @@ def _has_scope_read_access(request, scope):
 
 
 def _get_readable_scope(request, scope_id):
+	# 2026-08-23: Distinguish unauthenticated (401) from missing access (404→403 JSON).
+	if not request.user.is_authenticated:
+		raise RiskApiUnauthorized
 	scope = get_object_or_404(
 		RiskScope.objects.select_related('virksomhet').prefetch_related(
 			Prefetch(

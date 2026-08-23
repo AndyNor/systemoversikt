@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # 2026-07-06: Manual assessment restricted to main categories (hovedkategori).
 # Change log:
+# 2026-08-23: JSON APIs return 401 session_expired instead of OIDC redirect via login_required.
 # 2026-07-07: Superuser API to get/set reader_groups on sammenstilling.
 # 2026-07-07: Superuser API to list owner groups and reassign sammenstilling eiergruppe.
 # 2026-07-06: Active nodes API – parent display code for kartlegging dropdown grouping.
@@ -10,7 +11,6 @@
 # 2026-07-06: Group-owned sammenstilling APIs – mapping, rollup, assessments with scope-level access.
 # 2026-07-09: api_risiko_sammenstilling_create – log sammenstilling_created to RiskActivityLog.
 
-from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -61,25 +61,44 @@ def _sammenstilling_or_404(pk):
 	return sammenstilling
 
 
+def _require_authenticated_json(request):
+	# 2026-08-23: Prefer 401 JSON over @login_required redirect for AJAX clients.
+	if not request.user.is_authenticated:
+		return _json_error('session_expired', status=401)
+	return None
+
+
 def _require_sammenstilling_view(request, sammenstilling):
+	denied = _require_authenticated_json(request)
+	if denied:
+		return denied
 	if not user_can_view_sammenstilling(request.user, sammenstilling):
 		return _json_error('Ingen tilgang.', status=403)
 	return None
 
 
 def _require_sammenstilling_map(request, sammenstilling):
+	denied = _require_authenticated_json(request)
+	if denied:
+		return denied
 	if not user_can_map_sammenstilling(request.user, sammenstilling):
 		return _json_error('Ingen tilgang.', status=403)
 	return None
 
 
 def _require_owner_group_admin(request):
+	denied = _require_authenticated_json(request)
+	if denied:
+		return denied
 	if not user_can_change_sammenstilling_owner_group(request.user):
 		return _json_error('Ingen tilgang.', status=403)
 	return None
 
 
 def _require_reader_groups_admin(request):
+	denied = _require_authenticated_json(request)
+	if denied:
+		return denied
 	if not user_can_change_sammenstilling_reader_groups(request.user):
 		return _json_error('Ingen tilgang.', status=403)
 	return None
@@ -93,7 +112,6 @@ def _owner_group_option_payload(group):
 	}
 
 
-@login_required
 @require_GET
 def api_risiko_sammenstilling_owner_group_options(request):
 	denied = _require_owner_group_admin(request)
@@ -107,7 +125,6 @@ def api_risiko_sammenstilling_owner_group_options(request):
 	})
 
 
-@login_required
 @require_http_methods(['POST'])
 def api_risiko_sammenstilling_owner_group_update(request, pk):
 	denied = _require_owner_group_admin(request)
@@ -166,7 +183,6 @@ def _parse_reader_group_ids(body):
 	return parsed
 
 
-@login_required
 @require_GET
 def api_risiko_sammenstilling_reader_groups(request, pk):
 	denied = _require_reader_groups_admin(request)
@@ -178,7 +194,6 @@ def api_risiko_sammenstilling_reader_groups(request, pk):
 	})
 
 
-@login_required
 @require_http_methods(['POST'])
 def api_risiko_sammenstilling_reader_groups_update(request, pk):
 	denied = _require_reader_groups_admin(request)
@@ -210,6 +225,9 @@ def api_risiko_sammenstilling_reader_groups_update(request, pk):
 
 @require_http_methods(['POST'])
 def api_risiko_sammenstilling_create(request):
+	denied = _require_authenticated_json(request)
+	if denied:
+		return denied
 	body = _parse_json_body(request)
 	if body is None:
 		return _json_error('Ugyldig JSON.')
@@ -247,6 +265,9 @@ def api_risiko_sammenstilling_create(request):
 
 @require_GET
 def api_risiko_sammenstilling_create_options(request):
+	denied = _require_authenticated_json(request)
+	if denied:
+		return denied
 	groups = groups_user_can_own_sammenstilling(request.user)
 	from systemoversikt.risk_sammenstilling import active_templates_queryset
 	frameworks = active_templates_queryset()

@@ -1,4 +1,6 @@
 {% extends "sikkerhet_index.html" %}
+{% load static %}
+{# 2026-08-23: Shared RisikoApi for AJAX session handling and heartbeat. #}
 {# 2026-07-07: Conditional create/edit/delete and virksomhet_read_only checkbox from permission flags. #}
 {# 2026-07-07: Outline button for back navigation. #}
 {# 2026-07-06: Clearer group-type badges – «Lese alt for virksomheten» / «Kun enkeltsamlinger». #}
@@ -90,19 +92,22 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
+<script src="{% static 'risiko_api.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 $(function () {
 	var apiUrls = {{ api_urls_json|safe }};
 	var canCreateGroup = {{ can_create_group|yesno:"true,false" }};
 	var canSetVirksomhetReadOnly = {{ can_set_virksomhet_read_only|yesno:"true,false" }};
-	var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-	csrfToken = csrfToken ? csrfToken.value : '';
 	var groupsListEl = document.getElementById('risiko-read-groups-list');
 	var editorModal = $('#risiko-read-group-editor-modal');
 	var membersModal = $('#risiko-read-group-members-modal');
 	var editingGroupId = null;
 	var selectedGroupId = null;
 	var loadedGroups = [];
+
+	if (window.RisikoApi) {
+		window.RisikoApi.startSessionPing();
+	}
 
 	function groupTypeBadge(group) {
 		if (group.virksomhet_read_only) {
@@ -122,15 +127,7 @@ $(function () {
 	}
 
 	function apiFetch(url, options) {
-		options = options || {};
-		options.headers = options.headers || {};
-		if (options.body && !options.headers['Content-Type']) {
-			options.headers['Content-Type'] = 'application/json';
-		}
-		if (csrfToken && options.method && options.method !== 'GET') {
-			options.headers['X-CSRFToken'] = csrfToken;
-		}
-		return fetch(url, options).then(function (r) { return r.json(); });
+		return window.RisikoApi.fetchJson(url, options || {});
 	}
 
 	function renderGroups(groups) {

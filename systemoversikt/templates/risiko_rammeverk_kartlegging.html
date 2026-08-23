@@ -1,4 +1,6 @@
 {% extends "sikkerhet_index.html" %}
+{% load static %}
+{# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
 {# 2026-07-06: Removed excel class – no table export on kartlegging. #}
 {# 2026-07-06: Cross-collection mapping workspace for security analysts. #}
 
@@ -77,7 +79,8 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
-<script src="/static/risiko_rammeverk.js" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'risiko_api.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'risiko_rammeverk.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script nonce="{{ request.csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 	if (window.RisikoRammeverk) {

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Mal JSON APIs return 401 session_expired instead of OIDC redirect via login_required.
 # 2026-07-09: Mal node APIs – log taxonomy changes to RiskActivityLog.
 # 2026-07-06: Active nodes API – parent display code for kartlegging dropdown grouping.
 # 2026-07-06: Mal taxonomy APIs require superuser for all methods – editor-only endpoints.
 # 2026-07-06: Automatic category numbering – create always assigns next nummer; update ignores nummer.
 # 2026-07-06: Superuser-only template taxonomy APIs – maler independent of virksomhet.
 
-from django.contrib.auth.decorators import login_required
 from django.db.models import Max
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -46,6 +46,9 @@ def _framework_or_404(slug):
 
 
 def _require_template_edit(request):
+	# 2026-08-23: Prefer 401 JSON over @login_required redirect for AJAX clients.
+	if not request.user.is_authenticated:
+		return _json_error('session_expired', status=401)
 	if not user_can_edit_template(request.user):
 		return _json_error('Ingen tilgang.', status=403)
 	return None
@@ -86,7 +89,6 @@ def _taxonomy_tree(framework, include_archived=False):
 	]
 
 
-@login_required
 @require_GET
 def api_risiko_mal_taxonomy(request, slug):
 	framework = _framework_or_404(slug)
@@ -97,7 +99,6 @@ def api_risiko_mal_taxonomy(request, slug):
 	return _json_ok({'tree': _taxonomy_tree(framework, include_archived=include_archived)})
 
 
-@login_required
 @require_GET
 def api_risiko_mal_active_nodes(request, slug):
 	framework = _framework_or_404(slug)
@@ -132,7 +133,6 @@ def api_risiko_mal_active_nodes(request, slug):
 	})
 
 
-@login_required
 @require_http_methods(['POST'])
 def api_risiko_mal_node_create(request, slug):
 	framework = _framework_or_404(slug)
@@ -171,7 +171,6 @@ def api_risiko_mal_node_create(request, slug):
 	return _json_ok({'node': _node_payload(node)})
 
 
-@login_required
 @require_http_methods(['POST'])
 def api_risiko_mal_node_update(request, slug, nid):
 	framework = _framework_or_404(slug)
@@ -201,7 +200,6 @@ def api_risiko_mal_node_update(request, slug, nid):
 	return _json_ok({'node': _node_payload(node)})
 
 
-@login_required
 @require_http_methods(['POST'])
 def api_risiko_mal_node_move(request, slug, nid):
 	framework = _framework_or_404(slug)

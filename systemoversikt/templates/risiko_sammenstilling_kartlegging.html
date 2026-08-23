@@ -1,4 +1,6 @@
 {% extends "sikkerhet_index.html" %}
+{% load static %}
+{# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
 {# 2026-07-06: Hide R# column – not useful when mapping scenarios to subcategories. #}
 {# 2026-07-06: Eskaleres-filter checkbox – default off for kartlegging scenario search. #}
 {# 2026-07-06: risiko-level-tag styles – colored Lav/Middels/Høy tags in scenario table. #}
@@ -102,7 +104,8 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
-<script src="/static/risiko_rammeverk.js" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'risiko_api.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'risiko_rammeverk.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script nonce="{{ request.csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 	if (window.RisikoRammeverk) {

@@ -1,4 +1,6 @@
 {% extends "sikkerhet_index.html" %}
+{% load static %}
+{# 2026-08-23: Shared RisikoApi for AJAX session expiry handling. #}
 {# 2026-07-06: Create sammenstilling – pick template and owner tilgangsgruppe. #}
 
 {% block overskrift %}
@@ -52,11 +54,10 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
+<script src="{% static 'risiko_api.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 $(function () {
 	var apiUrls = {{ api_urls_json|safe }};
-	var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-	csrfToken = csrfToken ? csrfToken.value : '';
 
 	document.getElementById('sammenstilling-save').addEventListener('click', function () {
 		var title = document.getElementById('sammenstilling-title').value.trim();
@@ -65,25 +66,22 @@ $(function () {
 			statusEl.textContent = 'Tittel er påkrevd.';
 			return;
 		}
-		fetch(apiUrls.create, {
-			method: 'POST',
-			credentials: 'same-origin',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-CSRFToken': csrfToken,
-			},
-			body: JSON.stringify({
-				title: title,
-				beskrivelse: document.getElementById('sammenstilling-beskrivelse').value.trim(),
-				framework_id: parseInt(document.getElementById('sammenstilling-framework').value, 10),
-				owner_group_id: parseInt(document.getElementById('sammenstilling-owner-group').value, 10),
-			}),
-		}).then(function (r) { return r.json(); }).then(function (data) {
+		window.RisikoApi.postJson(apiUrls.create, {
+			title: title,
+			beskrivelse: document.getElementById('sammenstilling-beskrivelse').value.trim(),
+			framework_id: parseInt(document.getElementById('sammenstilling-framework').value, 10),
+			owner_group_id: parseInt(document.getElementById('sammenstilling-owner-group').value, 10),
+		}).then(function (data) {
 			if (data.ok && data.pk) {
 				window.location.href = '/sikkerhet/risiko/rammeverk/sammenstilling/' + data.pk + '/';
 				return;
 			}
 			statusEl.textContent = data.error || 'Kunne ikke opprette.';
+		}).catch(function (err) {
+			if (err && err.isSessionExpired) {
+				return;
+			}
+			statusEl.textContent = (err && err.message) || 'Kunne ikke opprette.';
 		});
 	});
 });

@@ -136,6 +136,8 @@ MIDDLEWARE = [
 	'django.middleware.common.CommonMiddleware',
 	'django.middleware.csrf.CsrfViewMiddleware',
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
+	# 2026-08-23: OIDC SessionRefresh must run after AuthenticationMiddleware (was dead in MIDDLEWARE_CLASSES).
+	'mozilla_django_oidc.middleware.SessionRefresh',
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'simple_history.middleware.HistoryRequestMiddleware',
@@ -322,12 +324,6 @@ if THIS_ENVIRONMENT == "TEST":
 	SESSION_COOKIE_SECURE = False
 	CSRF_COOKIE_SECURE = False
 
-
-
-MIDDLEWARE_CLASSES = [
-	# middleware involving session and authentication must come first
-	'mozilla_django_oidc.middleware.SessionRefresh',
-]
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/

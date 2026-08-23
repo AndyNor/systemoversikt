@@ -1,5 +1,7 @@
 {% extends "sikkerhet_index.html" %}
+{% load static %}
 {% load templatetags %}
+{# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
 {# 2026-07-06: Per-virksomhet rollup of framework nodes with manual ratings and guidance. #}
 
 {% block overskrift %}
@@ -148,7 +150,8 @@
 .risk-cell-hoy { background-color: #ffc8cd; }
 .risk-cell-empty { background-color: #f1f3f5; color: #6c757d; }
 </style>
-<script src="/static/risiko_rammeverk.js" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'risiko_api.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'risiko_rammeverk.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script nonce="{{ request.csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 	if (window.RisikoRammeverk) {

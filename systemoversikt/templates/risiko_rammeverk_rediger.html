@@ -1,4 +1,6 @@
 {% extends "sikkerhet_index.html" %}
+{% load static %}
+{# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
 {# 2026-07-06: Automatic category numbering – manual nummer field removed from editor. #}
 {# 2026-07-06: Framework taxonomy editor with archive and reallocation. #}
 
@@ -78,7 +80,8 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
-<script src="/static/risiko_rammeverk.js" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'risiko_api.js' %}" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'risiko_rammeverk.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script nonce="{{ request.csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 	if (window.RisikoRammeverk) {

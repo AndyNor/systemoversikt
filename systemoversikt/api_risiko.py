@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Unauthenticated risk JSON APIs return 401 session_expired (not 403).
 # 2026-08-13: Person search uses shared risk_user_search (AND terms, email + virksomhet rank).
 # 2026-08-13: Unntak CRUD APIs on collection tiltak; unntak_count in action payloads.
 # 2026-08-10: Log scenario/tiltak/member activity to RiskActivityLog (create/delete/status/levels).
@@ -113,6 +114,7 @@ from systemoversikt.risk_user_search import (
 	search_active_users,
 )
 from systemoversikt.views_risiko import (
+	RiskApiUnauthorized,
 	_get_managed_scope,
 	_get_member_scope,
 	_get_member_scenario,
@@ -128,6 +130,34 @@ RISK_SCOPE_STATUS_VALUES = {v for v, _ in RISK_SCOPE_STATUS_VALG}
 
 def _json_error(message, status=400):
 	return JsonResponse({'ok': False, 'error': message}, status=status)
+
+
+def _access_denied_json(exc):
+	# 2026-08-23: Map RiskApiUnauthorized → 401 so AJAX clients can prompt re-login.
+	if isinstance(exc, RiskApiUnauthorized):
+		return _json_error('session_expired', status=401)
+	return _json_error('forbidden', status=403)
+
+
+def _require_member_json(request, scope_id):
+	try:
+		return _get_member_scope(request, scope_id), None
+	except (Http404, RiskApiUnauthorized) as exc:
+		return None, _access_denied_json(exc)
+
+
+def _require_read_json(request, scope_id):
+	try:
+		return _get_readable_scope(request, scope_id), None
+	except (Http404, RiskApiUnauthorized) as exc:
+		return None, _access_denied_json(exc)
+
+
+def _require_managed_json(request, scope_id):
+	try:
+		return _get_managed_scope(request, scope_id), None
+	except (Http404, RiskApiUnauthorized) as exc:
+		return None, _access_denied_json(exc)
 
 
 def _parse_json_body(request):
@@ -703,27 +733,6 @@ def _log_action_status_change(request, scope, action, old_status, new_status, di
 	)
 
 
-def _require_member_json(request, scope_id):
-	try:
-		return _get_member_scope(request, scope_id), None
-	except Http404:
-		return None, _json_error('forbidden', status=403)
-
-
-def _require_read_json(request, scope_id):
-	try:
-		return _get_readable_scope(request, scope_id), None
-	except Http404:
-		return None, _json_error('forbidden', status=403)
-
-
-def _require_managed_json(request, scope_id):
-	try:
-		return _get_managed_scope(request, scope_id), None
-	except Http404:
-		return None, _json_error('forbidden', status=403)
-
-
 def _require_owner_json(request, scope_id):
 	# Legacy name – content APIs use member access.
 	return _require_member_json(request, scope_id)
@@ -800,8 +809,8 @@ def api_risiko_scenarios_list(request, pk):
 def api_risiko_scenario_detail(request, pk, sid):
 	try:
 		scope, scenario = _get_member_scenario(request, pk, sid)
-	except Http404:
-		return _json_error('forbidden', status=403)
+	except (Http404, RiskApiUnauthorized) as exc:
+		return _access_denied_json(exc)
 	scenario = _reload_scenario(scenario.pk)
 	scenarios = _load_scope_scenarios(scope)
 	actions = _load_scope_actions(scope)
@@ -865,8 +874,8 @@ def api_risiko_scenario_create(request, pk):
 def api_risiko_scenario_update(request, pk, sid):
 	try:
 		scope, scenario = _get_writable_scenario(request, pk, sid)
-	except Http404:
-		return _json_error('forbidden', status=403)
+	except (Http404, RiskApiUnauthorized) as exc:
+		return _access_denied_json(exc)
 
 	err = _reject_if_content_locked(scope)
 	if err:
@@ -904,8 +913,8 @@ def api_risiko_scenario_update(request, pk, sid):
 def api_risiko_scenario_delete(request, pk, sid):
 	try:
 		scope, scenario = _get_writable_scenario(request, pk, sid)
-	except Http404:
-		return _json_error('forbidden', status=403)
+	except (Http404, RiskApiUnauthorized) as exc:
+		return _access_denied_json(exc)
 
 	err = _reject_if_content_locked(scope)
 	if err:
@@ -1030,6 +1039,8 @@ def api_risiko_scope_update(request, pk):
 
 @require_GET
 def api_risiko_systemer_sok(request):
+	if not request.user.is_authenticated:
+		return _json_error('session_expired', status=401)
 	if not request.user.has_perm('systemoversikt.view_system'):
 		return _json_error('forbidden', status=403)
 
@@ -1051,8 +1062,8 @@ def api_risiko_systemer_sok(request):
 def api_risiko_action_create(request, pk, sid):
 	try:
 		scope, scenario = _get_writable_scenario(request, pk, sid)
-	except Http404:
-		return _json_error('forbidden', status=403)
+	except (Http404, RiskApiUnauthorized) as exc:
+		return _access_denied_json(exc)
 
 	err = _reject_if_content_locked(scope)
 	if err:
@@ -1090,8 +1101,8 @@ def api_risiko_action_create(request, pk, sid):
 def api_risiko_action_update(request, pk, sid, aid):
 	try:
 		scope, scenario = _get_writable_scenario(request, pk, sid)
-	except Http404:
-		return _json_error('forbidden', status=403)
+	except (Http404, RiskApiUnauthorized) as exc:
+		return _access_denied_json(exc)
 
 	err = _reject_if_content_locked(scope)
 	if err:
@@ -1137,8 +1148,8 @@ def api_risiko_action_update(request, pk, sid, aid):
 def api_risiko_action_delete(request, pk, sid, aid):
 	try:
 		scope, scenario = _get_writable_scenario(request, pk, sid)
-	except Http404:
-		return _json_error('forbidden', status=403)
+	except (Http404, RiskApiUnauthorized) as exc:
+		return _access_denied_json(exc)
 
 	err = _reject_if_content_locked(scope)
 	if err:

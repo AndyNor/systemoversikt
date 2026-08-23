@@ -1,3 +1,5 @@
+// Change log:
+// 2026-08-23: Use shared RisikoApi for fetch/session expiry; start session heartbeat on init.
 // 2026-07-06: Kartlegging node select – optgroup per hovedkategori for easier navigation.
 // 2026-07-06: Sammenstilling kartlegging – optional hide R# column via data-hide-risk-id.
 // 2026-07-06: Detail page – unlink scenario from subcategory via linkDelete API.
@@ -12,11 +14,14 @@
 (function (window) {
   'use strict';
 
-  function getCsrfToken() {
-    var el = document.querySelector('[name=csrfmiddlewaretoken]');
-    if (el) return el.value;
-    var match = document.cookie.match(/csrftoken=([^;]+)/);
-    return match ? match[1] : '';
+  var sessionPingStarted = false;
+
+  function ensureSessionPing() {
+    if (sessionPingStarted || !window.RisikoApi) {
+      return;
+    }
+    sessionPingStarted = true;
+    window.RisikoApi.startSessionPing();
   }
 
   function parseUrls(root) {
@@ -28,19 +33,11 @@
   }
 
   function postJson(url, body) {
-    return fetch(url, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCsrfToken(),
-      },
-      body: JSON.stringify(body || {}),
-    }).then(function (r) { return r.json(); });
+    return window.RisikoApi.postJson(url, body || {}, 'POST');
   }
 
   function getJson(url) {
-    return fetch(url, { credentials: 'same-origin' }).then(function (r) { return r.json(); });
+    return window.RisikoApi.getJson(url);
   }
 
   function escapeHtml(text) {
@@ -51,6 +48,7 @@
 
   function initRollup(root) {
     if (!root) return;
+    ensureSessionPing();
     var urls = parseUrls(root);
     var currentNodePk = null;
     var modal = document.getElementById('rammeverk-rating-modal');
@@ -150,6 +148,7 @@
 
   function initKartlegging(root) {
     if (!root) return;
+    ensureSessionPing();
     var urls = parseUrls(root);
     var riskMeta = {};
     try {
@@ -301,6 +300,7 @@
 
   function initEditor(root) {
     if (!root) return;
+    ensureSessionPing();
     var urls = parseUrls(root);
     var treeRoot = document.getElementById('rammeverk-tree-root');
     var cachedTree = [];

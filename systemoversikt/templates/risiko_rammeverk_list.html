@@ -1,4 +1,6 @@
 {% extends "sikkerhet_index.html" %}
+{% load static %}
+{# 2026-08-23: Shared RisikoApi for AJAX session handling and heartbeat. #}
 {# 2026-07-07: Superuser modal for lesergrupper (0..n tilgangsgrupper with read access). #}
 {# 2026-07-07: Superuser modal to change sammenstilling eiergruppe from list. #}
 {# 2026-07-07: Superuser create-mal-from-file on rammeverk list. #}
@@ -222,11 +224,14 @@
 
 {% block script_append %}
 {% if can_change_sammenstilling_owner_group or can_change_sammenstilling_reader_groups %}
+<script src="{% static 'risiko_api.js' %}" nonce="{{ request.csp_nonce }}"></script>
 <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 document.addEventListener('DOMContentLoaded', function () {
 	var apiUrls = {{ sammenstilling_admin_api_urls_json|safe }};
-	var csrfTokenEl = document.querySelector('[name=csrfmiddlewaretoken]');
-	var csrfToken = csrfTokenEl ? csrfTokenEl.value : '';
+
+	if (window.RisikoApi) {
+		window.RisikoApi.startSessionPing();
+	}
 
 	function formatReaderGroups(groups) {
 		if (!groups || !groups.length) {
@@ -276,15 +281,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			return;
 		}
 		ownerStatusEl.textContent = 'Lagrer…';
-		fetch(apiUrls.ownerGroupUpdate.replace('{id}', activeOwnerPk), {
+		window.RisikoApi.fetchJson(apiUrls.ownerGroupUpdate.replace('{id}', activeOwnerPk), {
 			method: 'POST',
-			credentials: 'same-origin',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-CSRFToken': csrfToken,
-			},
 			body: JSON.stringify({ owner_group_id: ownerGroupId }),
-		}).then(function (r) { return r.json(); }).then(function (data) {
+		}).then(function (data) {
 			if (!data.ok) {
 				ownerStatusEl.textContent = data.error || 'Kunne ikke lagre.';
 				return;
@@ -304,8 +304,11 @@ document.addEventListener('DOMContentLoaded', function () {
 			if (window.jQuery) {
 				window.jQuery(ownerModalEl).modal('hide');
 			}
-		}).catch(function () {
-			ownerStatusEl.textContent = 'Kunne ikke lagre.';
+		}).catch(function (err) {
+			if (err && err.isSessionExpired) {
+				return;
+			}
+			ownerStatusEl.textContent = (err && err.message) || 'Kunne ikke lagre.';
 		});
 	});
 	{% endif %}
@@ -334,17 +337,20 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (window.jQuery) {
 			window.jQuery(readerModalEl).modal('show');
 		}
-		fetch(apiUrls.readerGroupsGet.replace('{id}', pk), {
-			credentials: 'same-origin',
-		}).then(function (r) { return r.json(); }).then(function (data) {
+		window.RisikoApi.fetchJson(apiUrls.readerGroupsGet.replace('{id}', pk), {
+			method: 'GET',
+		}).then(function (data) {
 			if (!data.ok) {
 				readerStatusEl.textContent = data.error || 'Kunne ikke hente lesergrupper.';
 				return;
 			}
 			setReaderCheckboxes((data.reader_groups || []).map(function (g) { return g.id; }));
 			readerStatusEl.textContent = '';
-		}).catch(function () {
-			readerStatusEl.textContent = 'Kunne ikke hente lesergrupper.';
+		}).catch(function (err) {
+			if (err && err.isSessionExpired) {
+				return;
+			}
+			readerStatusEl.textContent = (err && err.message) || 'Kunne ikke hente lesergrupper.';
 		});
 	}
 
@@ -365,15 +371,10 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 		});
 		readerStatusEl.textContent = 'Lagrer…';
-		fetch(apiUrls.readerGroupsUpdate.replace('{id}', activeReaderPk), {
+		window.RisikoApi.fetchJson(apiUrls.readerGroupsUpdate.replace('{id}', activeReaderPk), {
 			method: 'POST',
-			credentials: 'same-origin',
-			headers: {
-				'Content-Type': 'application/json',
-				'X-CSRFToken': csrfToken,
-			},
 			body: JSON.stringify({ reader_group_ids: readerGroupIds }),
-		}).then(function (r) { return r.json(); }).then(function (data) {
+		}).then(function (data) {
 			if (!data.ok) {
 				readerStatusEl.textContent = data.error || 'Kunne ikke lagre.';
 				return;
@@ -389,8 +390,11 @@ document.addEventListener('DOMContentLoaded', function () {
 			if (window.jQuery) {
 				window.jQuery(readerModalEl).modal('hide');
 			}
-		}).catch(function () {
-			readerStatusEl.textContent = 'Kunne ikke lagre.';
+		}).catch(function (err) {
+			if (err && err.isSessionExpired) {
+				return;
+			}
+			readerStatusEl.textContent = (err && err.message) || 'Kunne ikke lagre.';
 		});
 	});
 	{% endif %}
@@ -398,3 +402,4 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 {% endif %}
 {% endblock script_append %}
+

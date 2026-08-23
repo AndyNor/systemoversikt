@@ -1,4 +1,5 @@
 // Change log:
+// 2026-08-23: Use shared RisikoApi for fetch/session expiry; start session heartbeat on editor init.
 // 2026-08-10: Omfangsfigur preview full width; click opens file URL in new tab.
 // 2026-07-07: Bootstrap confirm modal for scenario/tiltak/omfang delete – shared module helper.
 // 2026-07-07: Omfang card – beskrivelse save, multipart figur/original upload via FormData.
@@ -67,46 +68,21 @@
 
   function fetchJson(url, options) {
     const config = getConfig();
-    const opts = options || {};
-    opts.credentials = 'same-origin';
-    opts.headers = opts.headers || {};
-    if (opts.body && !opts.headers['Content-Type']) {
-      opts.headers['Content-Type'] = 'application/json';
+    const opts = Object.assign({}, options || {});
+    if (config && config.csrf) {
+      opts.csrfToken = config.csrf;
     }
-    if (opts.method && opts.method !== 'GET') {
-      opts.headers['X-CSRFToken'] = config ? config.csrf : '';
-    }
-    return fetch(url, opts).then(function (response) {
-      return response.json().then(function (data) {
-        if (!response.ok) {
-          const err = new Error((data && data.error) || 'Forespørsel feilet');
-          err.data = data;
-          err.status = response.status;
-          throw err;
-        }
-        return data;
-      });
-    });
+    return window.RisikoApi.fetchJson(url, opts);
   }
 
   function fetchFormData(url, formData, method) {
     const config = getConfig();
-    return fetch(url, {
-      method: method || 'POST',
-      credentials: 'same-origin',
-      headers: { 'X-CSRFToken': config ? config.csrf : '' },
-      body: formData,
-    }).then(function (response) {
-      return response.json().then(function (data) {
-        if (!response.ok) {
-          const err = new Error((data && data.error) || 'Forespørsel feilet');
-          err.data = data;
-          err.status = response.status;
-          throw err;
-        }
-        return data;
-      });
-    });
+    return window.RisikoApi.fetchFormData(
+      url,
+      formData,
+      method || 'POST',
+      config ? config.csrf : undefined
+    );
   }
 
   let confirmModalResolve = null;
@@ -587,6 +563,9 @@
     }
 
     function handleModalSaveError(err) {
+      if (err && err.isSessionExpired) {
+        return;
+      }
       if (isContentLockedError(err)) {
         markModalContentLocked(err.message);
       } else {
@@ -2045,6 +2024,9 @@
           showScopeMetaView();
         })
         .catch(function (err) {
+          if (err && err.isSessionExpired) {
+            return;
+          }
           setScopeStatus(err.message, true);
         });
     }
@@ -2595,6 +2577,9 @@
     initRisikoConfirmModal();
     initRisikoStatusUnlock();
     initRisikoEditor();
+    if (window.RisikoApi) {
+      window.RisikoApi.startSessionPing();
+    }
   }
 
   if (document.readyState === 'loading') {

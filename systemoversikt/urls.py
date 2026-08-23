@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-08-23: Risk AJAX session ping – GET /sikkerhet/risiko/api/session/.
 # 2026-07-02: BloodHound – single /sikkerhet/bloodhound/ page; legacy status/findings URLs redirect.
 # 2026-07-02: sikkerhet/sarbarheter/ – landing page for Qualys, Defender and compare reports.
 # 2026-08-13: Global tiltak/unntak list routes; unntak CRUD under collection actions.
@@ -139,6 +140,7 @@ urlpatterns = [
 	re_path(r'^sikkerhet/sikkerhetsavvik/$', views.o365_avvik, name='o365_avvik'),
 	re_path(r'^sikkerhet/sikkerhetstester/$', views.rapport_sikkerhetstester, name="rapport_sikkerhetstester"),
 	re_path(r'^sikkerhet/risiko/$', views_risiko.risiko_scope_list, name='risiko_scope_list'),
+	re_path(r'^sikkerhet/risiko/api/session/$', views_risiko.api_risiko_session_ping, name='api_risiko_session_ping'),
 	re_path(r'^sikkerhet/risiko/tiltak/$', views_risiko.risiko_tiltak_oversikt, name='risiko_tiltak_oversikt'),
 	re_path(r'^sikkerhet/risiko/unntak/$', views_risiko.risiko_unntak_oversikt, name='risiko_unntak_oversikt'),
 	re_path(r'^sikkerhet/risiko/ny/$', views_risiko.risiko_scope_create, name='risiko_scope_create'),

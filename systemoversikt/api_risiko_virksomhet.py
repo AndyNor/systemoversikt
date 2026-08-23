@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Unauthenticated tilgangsgruppe APIs return 401 session_expired.
 # 2026-08-13: Person search uses shared risk_user_search (AND terms, email + page virksomhet rank).
 # 2026-07-07: Member API names use user_member_display_name – show virksomhetsforkortelse like collection pages.
 # 2026-07-07: change_riskvirksomhetgroup – virksomhetsadministrator may mutate any group in profile virksomhet.
@@ -47,6 +48,9 @@ def _parse_json_body(request):
 
 
 def _require_page_access_json(request, vid):
+	# 2026-08-23: 401 for expired session; 403 when authenticated but no page access.
+	if not request.user.is_authenticated:
+		return None, _json_error('session_expired', status=401)
 	virksomhet = get_object_or_404(Virksomhet, pk=vid)
 	if not user_can_access_risk_virksomhet_groups_page(request.user, virksomhet):
 		return None, _json_error('forbidden', status=403)
@@ -54,6 +58,8 @@ def _require_page_access_json(request, vid):
 
 
 def _require_group_mutation_json(request, virksomhet, gid):
+	if not request.user.is_authenticated:
+		return None, _json_error('session_expired', status=401)
 	group = get_object_or_404(RiskVirksomhetGroup, pk=gid, virksomhet=virksomhet)
 	if not user_can_mutate_risk_virksomhet_group(request.user, group):
 		return None, _json_error('forbidden', status=403)
