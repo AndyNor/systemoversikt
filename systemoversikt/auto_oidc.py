@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Set attempted flag only on OIDC failure; avoid blocking successful deep-link login.
 # 2026-08-23: Auto-start OIDC for anonymous users on home/access-denied; restore next on failure.
 """Helpers for automatic OIDC login with anonymous fallback after a failed attempt."""
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -15,12 +16,14 @@ SESSION_NEXT = "kartotek_oidc_next"
 
 def clear_auto_oidc_session_flags(request):
 	"""Clear auto-login bookkeeping after a successful OIDC login."""
+	if not hasattr(request, "session"):
+		return
 	request.session.pop(SESSION_AUTO_ATTEMPTED, None)
 	request.session.pop(SESSION_NEXT, None)
 
 
 def should_attempt_auto_oidc(request):
-	"""True when we should redirect an anonymous user into OIDC once per session."""
+	"""True when we should redirect an anonymous user into OIDC once per failed cycle."""
 	if request.user.is_authenticated:
 		return False
 	if request.method != "GET":
@@ -29,6 +32,7 @@ def should_attempt_auto_oidc(request):
 		return False
 	if request.path.startswith("/oidc-login-failed"):
 		return False
+	# 2026-08-23: Only suppress retry after an explicit failure (flag set in oidc_login_failure).
 	if request.GET.get("login") == "failed":
 		return False
 	if request.session.get(SESSION_AUTO_ATTEMPTED):
@@ -39,10 +43,11 @@ def should_attempt_auto_oidc(request):
 def redirect_to_oidc_login(request, next_path=None):
 	"""
 	Start OIDC authenticate, remembering next for success (via mozilla) and failure restore.
+	Does not set SESSION_AUTO_ATTEMPTED – that is set only when login fails, so a successful
+	deep-link login is never blocked by a premature flag.
 	"""
 	if next_path is None:
 		next_path = request.get_full_path()
-	request.session[SESSION_AUTO_ATTEMPTED] = True
 	request.session[SESSION_NEXT] = next_path
 	oidc_url = reverse("oidc_authentication_init")
 	return redirect("%s?%s" % (oidc_url, urlencode({"next": next_path})))
@@ -57,7 +62,7 @@ def maybe_redirect_anonymous_to_oidc(request):
 
 def render_access_denied(request, required_permissions):
 	"""
-	For anonymous users who have not yet tried OIDC: redirect to login.
+	For anonymous users who have not yet failed OIDC: redirect to login.
 	Otherwise render the standard 403 page (authenticated missing perms, or after failed auto-login).
 	"""
 	oidc_redirect = maybe_redirect_anonymous_to_oidc(request)
@@ -84,9 +89,10 @@ def _append_login_failed(path):
 def oidc_login_failure(request):
 	"""
 	LOGIN_REDIRECT_URL_FAILURE target: send anonymous user back to the original URL.
-	Keeps SESSION_AUTO_ATTEMPTED so we do not loop into OIDC again.
+	Sets SESSION_AUTO_ATTEMPTED so we do not loop into OIDC again.
 	"""
-	# 2026-08-23: Restore deep-link after OIDC failure instead of always landing on "/?login=failed".
+	# 2026-08-23: Mark attempt failed only here – successful logins must not inherit a blocking flag.
+	request.session[SESSION_AUTO_ATTEMPTED] = True
 	next_path = request.session.get(SESSION_NEXT) or "/"
 	if not url_has_allowed_host_and_scheme(
 		next_path,

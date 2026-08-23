@@ -136,6 +136,8 @@ MIDDLEWARE = [
 	'django.middleware.common.CommonMiddleware',
 	'django.middleware.csrf.CsrfViewMiddleware',
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
+	# 2026-08-23: Seed missing oidc_id_token_expiration before SessionRefresh (avoids prompt=none logout).
+	'systemoversikt.middleware.oidc_session.EnsureOIDCTokenExpirationMiddleware',
 	# 2026-08-23: OIDC SessionRefresh must run after AuthenticationMiddleware (was dead in MIDDLEWARE_CLASSES).
 	'mozilla_django_oidc.middleware.SessionRefresh',
 	'django.contrib.messages.middleware.MessageMiddleware',

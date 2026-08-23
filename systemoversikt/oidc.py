@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Do not wipe groups when AD/Entra lookup fails; clear auto-OIDC flags after successful update_user.
 # 2026-08-23: Clear auto-OIDC session flags after successful login so a later logout can auto-login again.
 # 2026-06-21: Removed @vav.oslo email rewrite and oidc-token session storage – legacy debug paths retired.
 # 2026-06-21: Removed OKONOMI_FULLTILGANG from OIDC group mapping – UBW module retired.
@@ -229,10 +230,6 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 
 		def update_user(self, user, claims):
-			# 2026-08-23: Clear auto-OIDC attempt flags after successful authentication.
-			from systemoversikt.auto_oidc import clear_auto_oidc_session_flags
-			clear_auto_oidc_session_flags(self.request)
-
 			user.is_active = True
 			#user.first_name = claims.get('given_name', '')
 			#user.last_name = claims.get('family_name', '')
@@ -275,6 +272,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 
 			claim_groups = []
+			# 2026-08-23: Do not wipe Django groups when AD/Entra lookup fails (SessionRefresh / re-login).
+			group_lookup_ok = False
 
 			if settings.AD_DIRECT_ACCESS == True:
 				try:
@@ -283,6 +282,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					for g in ad_groups:
 						kartotek_kompatibelt = "/" + g.split(',')[0].split('CN=')[1]
 						claim_groups.append(kartotek_kompatibelt)
+					group_lookup_ok = True
 				except:
 					logger.error("Auth: update_user: Ingen kontakt med AD. Kan ikke oppdatere tilganger.")
 
@@ -293,116 +293,123 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					for g in aad_groups:
 						kartotek_kompatibelt = "/" + g
 						claim_groups.append(kartotek_kompatibelt)
+					group_lookup_ok = True
 				except:
 					messages.info(self.request, 'Kunne ikke hente grupper fra Entra ID')
 
-			# Slette alle eksisterende rettigheter
-			current_memberships = user.groups.values_list('name', flat=True)
-			for existing_group in current_memberships:
-				g = Group.objects.get(name=existing_group)
-				g.user_set.remove(user)
-			user.is_superuser = False
+			if not group_lookup_ok:
+				messages.warning(
+					self.request,
+					'Kunne ikke oppdatere tilganger fra katalog. Eksisterende tilganger er beholdt.',
+				)
+			else:
+				# Slette alle eksisterende rettigheter
+				current_memberships = user.groups.values_list('name', flat=True)
+				for existing_group in current_memberships:
+					g = Group.objects.get(name=existing_group)
+					g.user_set.remove(user)
+				user.is_superuser = False
 
 
-			lokal_rettighetstest = False  # denne skal normalt stå til False når testing ikke pågår lokalt
-			lokal_rolle = "lese" # velg mellom "ingen", "lese", "systemforvalter", "virksomhetsforvalter", "superbruker", "sikkerhetsanalytiker" og "root"
-			if os.environ['THIS_ENV'] == "TEST" and lokal_rettighetstest:
-				messages.warning(self.request, 'Rettigheter er manuelt styrt for testformål')
+				lokal_rettighetstest = False  # denne skal normalt stå til False når testing ikke pågår lokalt
+				lokal_rolle = "lese" # velg mellom "ingen", "lese", "systemforvalter", "virksomhetsforvalter", "superbruker", "sikkerhetsanalytiker" og "root"
+				if os.environ['THIS_ENV'] == "TEST" and lokal_rettighetstest:
+					messages.warning(self.request, 'Rettigheter er manuelt styrt for testformål')
 
-				if lokal_rolle == "ingen":
-					pass # ingen behov for endringer
+					if lokal_rolle == "ingen":
+						pass # ingen behov for endringer
 
-				if lokal_rolle == "lese":
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
+					if lokal_rolle == "lese":
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
 
-				if lokal_rolle == "systemforvalter":
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
+					if lokal_rolle == "systemforvalter":
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
 
-				if lokal_rolle == "virksomhetsforvalter":
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER").user_set.add(user)
+					if lokal_rolle == "virksomhetsforvalter":
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER").user_set.add(user)
 
-				if lokal_rolle == "superbruker":
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR").user_set.add(user)
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER").user_set.add(user)
+					if lokal_rolle == "superbruker":
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR").user_set.add(user)
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER").user_set.add(user)
 
-				if lokal_rolle == "sikkerhetsanalytiker":
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER").user_set.add(user)
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
-					Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER").user_set.add(user)
+					if lokal_rolle == "sikkerhetsanalytiker":
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER").user_set.add(user)
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
+						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER").user_set.add(user)
 
-				if lokal_rolle == "root":
-					user.is_superuser = True
+					if lokal_rolle == "root":
+						user.is_superuser = True
 
-			else: # normal flyt som alltid skjer i produksjon
+				else: # normal flyt som alltid skjer i produksjon
 
-				superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
-				if superuser_group in claim_groups:
-					user.is_superuser = True
-					messages.warning(self.request, 'Du ble logget på som systemadministrator')
-					from systemoversikt.views import push_pushover
-					#push_pushover(f"Bruker {user} logget inn som systemadministrator")
-					claim_groups.remove(superuser_group)
-				else:
-					user.is_superuser = False
+					superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
+					if superuser_group in claim_groups:
+						user.is_superuser = True
+						messages.warning(self.request, 'Du ble logget på som systemadministrator')
+						from systemoversikt.views import push_pushover
+						#push_pushover(f"Bruker {user} logget inn som systemadministrator")
+						claim_groups.remove(superuser_group)
+					else:
+						user.is_superuser = False
 
 
-				# Legge til nye bekreftede rettigheter
-				# først alle tilgangsgrupper som kommer fra AD
-				directly_assignable_groups = [
-					"/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE",
-					"/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER",
-					"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR",
-					"/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER",
-					"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR",
-					"/DS-SYSTEMOVERSIKT_FORVALTER_BEHANDLINGSANSVARLIG", #midlertidig frem til modulen avvikles helt
-				]
+					# Legge til nye bekreftede rettigheter
+					# først alle tilgangsgrupper som kommer fra AD
+					directly_assignable_groups = [
+						"/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE",
+						"/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER",
+						"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR",
+						"/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER",
+						"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR",
+						"/DS-SYSTEMOVERSIKT_FORVALTER_BEHANDLINGSANSVARLIG", #midlertidig frem til modulen avvikles helt
+					]
 
-				for group in claim_groups:
-					if group in directly_assignable_groups:
-						try:
-							g = Group.objects.get(name=group)
-							#messages.info(self.request, 'Rettighet: %s' % g)
-							g.user_set.add(user)
-							if group == "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR" or group == "/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER":
-								# da legger vi også til rettigheter på "lavere" roller
-								ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
-								ansvarlig_group.user_set.add(user)
-								virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
-								virksomhetsrolle_group.user_set.add(user)
-								systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
-								systemforvalter_group.user_set.add(user)
+					for group in claim_groups:
+						if group in directly_assignable_groups:
+							try:
+								g = Group.objects.get(name=group)
+								#messages.info(self.request, 'Rettighet: %s' % g)
+								g.user_set.add(user)
+								if group == "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR" or group == "/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER":
+									# da legger vi også til rettigheter på "lavere" roller
+									ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
+									ansvarlig_group.user_set.add(user)
+									virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
+									virksomhetsrolle_group.user_set.add(user)
+									systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+									systemforvalter_group.user_set.add(user)
 
-							if group == "/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER":
-								systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
-								systemforvalter_group.user_set.add(user)
-						except:
-							#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
-							pass
+								if group == "/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER":
+									systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+									systemforvalter_group.user_set.add(user)
+							except:
+								#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
+								pass
 
-				# så grupper sluttbruker skal tildeles automatisk
-				from systemoversikt.views import auth_er_ansvarlig, auth_er_systemforvalter, auth_er_virksomhetsrolle
-				if auth_er_ansvarlig(user) or ("/DS-ROLLEGRUPPER_UKEAOS_ANSATTELLERKONSULENT" in claim_groups) or ("/24055" in claim_groups): # Utviklere og driftlev
-					ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
-					ansvarlig_group.user_set.add(user)
-					messages.info(self.request, 'Du ble automatisk tildelt leserettigheter')
+					# så grupper sluttbruker skal tildeles automatisk
+					from systemoversikt.views import auth_er_ansvarlig, auth_er_systemforvalter, auth_er_virksomhetsrolle
+					if auth_er_ansvarlig(user) or ("/DS-ROLLEGRUPPER_UKEAOS_ANSATTELLERKONSULENT" in claim_groups) or ("/24055" in claim_groups): # Utviklere og driftlev
+						ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
+						ansvarlig_group.user_set.add(user)
+						messages.info(self.request, 'Du ble automatisk tildelt leserettigheter')
 
-				if auth_er_systemforvalter(user):
-					systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
-					systemforvalter_group.user_set.add(user)
-					messages.info(self.request, 'Du ble automatisk tildelt systemforvalter-tilgang')
+					if auth_er_systemforvalter(user):
+						systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+						systemforvalter_group.user_set.add(user)
+						messages.info(self.request, 'Du ble automatisk tildelt systemforvalter-tilgang')
 
-				if auth_er_virksomhetsrolle(user):
-					virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
-					virksomhetsrolle_group.user_set.add(user)
-					systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
-					systemforvalter_group.user_set.add(user)
-					messages.info(self.request, 'Du ble automatisk tildelt virksomhetstilganger')
+					if auth_er_virksomhetsrolle(user):
+						virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
+						virksomhetsrolle_group.user_set.add(user)
+						systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+						systemforvalter_group.user_set.add(user)
+						messages.info(self.request, 'Du ble automatisk tildelt virksomhetstilganger')
 
 
 
@@ -421,6 +428,10 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			#user.last_login = timezone.now()
 			user.save()
 			messages.success(self.request, 'Du er nå logget på. Trykk på navnet ditt for å få opp detaljer om dine tilganger.')
+
+			# 2026-08-23: Clear auto-OIDC flags after groups/profile are updated (successful login path).
+			from systemoversikt.auto_oidc import clear_auto_oidc_session_flags
+			clear_auto_oidc_session_flags(self.request)
 
 			return user
 
