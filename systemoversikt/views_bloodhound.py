@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Access denied uses render_access_denied so anonymous users auto-start OIDC.
 # 2026-07-02: Merge status + findings into one Bloodhound page; legacy URLs redirect here.
 # 2026-06-23: BloodHound views require systemoversikt.view_qualysvuln (same as vulnstats).
 # 2026-06-23: Findings page – check catalog with looks_for/risk descriptions.
@@ -12,6 +13,7 @@ from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import redirect, render
 
+from systemoversikt.auto_oidc import render_access_denied
 from systemoversikt.bloodhound.constants import BH_CHECK_META, bh_check_catalog
 from systemoversikt.models import BloodHoundFinding, BloodHoundSnapshot
 from systemoversikt.views import _integrasjonsstatus, formater_permissions
@@ -27,10 +29,7 @@ def _bloodhound_required_permissions():
 
 
 def _bloodhound_permission_denied(request, required_permissions):
-	return render(request, '403.html', {
-		'required_permissions': required_permissions,
-		'groups': request.user.groups,
-	})
+	return render_access_denied(request, required_permissions)
 
 
 def _selected_bloodhound_snapshot(request, snapshots):

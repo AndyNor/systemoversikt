@@ -1,6 +1,7 @@
 ﻿{% extends "system_index.html" %}
 {% load static %}
 {% load templatetags %}
+{# 2026-08-23: Home copy – auto OIDC login; Logg inn button is fallback only. #}
 
 {% block ekstrajavascript %}
 	{# 2026-06-21: Chart.js for home page system statistics (static bundle, not CDN). #}
@@ -29,7 +30,7 @@
 
 	<p>Det pågår nå et arbeid med å modernisere både IKT-instruksen og systemoversikten i en ny løsning som heter Yggdrasil. For mer informasjon om fremdriften, kan du følge med på <a target="_blank" href="https://engage.cloud.microsoft/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiI2NTU0NzAwMTg1NyJ9/all">VI/SAM/System og tjenesteoversikt</a>. Inntil til den nye løsningen formelt er lansert er det her i Kartoteket vi fører systemoversikt.</p>
 
-	<p><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M8 1a3 3 0 0 0-3 3v3h6V4a3 3 0 0 0-3-3M4 7V4a4 4 0 1 1 8 0v3h.5A1.5 1.5 0 0 1 14 8.5v5A1.5 1.5 0 0 1 12.5 15h-9A1.5 1.5 0 0 1 2 13.5v-5A1.5 1.5 0 0 1 3.5 7z"/></svg></span> Kartoteket er tilgangsstyrt. Du må logge inn med "logg inn"-knappen ved siden av søkefeltet for å aktivere rollene dine. Se <a href="{% url 'roller' %}">rolleoversikt</a> for nærmere beskrivelser av hvordan tilgangsstyringen fungerer.</p>
+	<p><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M8 1a3 3 0 0 0-3 3v3h6V4a3 3 0 0 0-3-3M4 7V4a4 4 0 1 1 8 0v3h.5A1.5 1.5 0 0 1 14 8.5v5A1.5 1.5 0 0 1 12.5 15h-9A1.5 1.5 0 0 1 2 13.5v-5A1.5 1.5 0 0 1 3.5 7z"/></svg></span> Kartoteket er tilgangsstyrt. Innlogging skjer automatisk når du åpner forsiden eller en beskyttet side. Hvis den ikke fullføres, kan du bruke «Logg inn»-knappen ved siden av søkefeltet. Se <a href="{% url 'roller' %}">rolleoversikt</a> for nærmere beskrivelser av hvordan tilgangsstyringen fungerer.</p>
 	
 	<hr>
 

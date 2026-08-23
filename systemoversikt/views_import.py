@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Access denied uses render_access_denied so anonymous users auto-start OIDC.
 # 2026-06-21: Removed import_organisatorisk_forkortelser – Definisjon feature retired.
 from django.shortcuts import render, redirect
 from django.core.exceptions import ObjectDoesNotExist
 from django.core import serializers
 from systemoversikt.models import *
+from systemoversikt.auto_oidc import render_access_denied
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.views.decorators.cache import never_cache
 from django.contrib import messages
@@ -28,7 +30,7 @@ def import_group_permissions(request):
 
 	required_permissions = ['auth.change_group']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 
 	if request.POST:

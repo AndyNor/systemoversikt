@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Access denied auto-starts OIDC for anonymous users before showing risk 403 page.
 # 2026-08-23: Session ping JSON endpoint + RiskApiUnauthorized for unauthenticated AJAX.
 # 2026-08-13: Scope list search hint – also covers scenario and tiltak fields.
 # 2026-08-13: Global tiltak/unntak overviews with server-side filters; editor unntak URLs.
@@ -58,6 +59,7 @@ from django.utils.http import content_disposition_header
 from django.views.decorators.http import require_GET, require_http_methods
 from openpyxl import load_workbook
 
+from systemoversikt.auto_oidc import maybe_redirect_anonymous_to_oidc
 from systemoversikt.models import (
 	RISK_SCOPE_MEMBER_ROLE_OWNER,
 	RISK_SCOPE_MEMBER_ROLE_PARTICIPANT,
@@ -277,6 +279,10 @@ def _scope_for_access_message(pk):
 def _render_risk_access_denied(request, reason, scope=None, virksomhet=None, framework=None, sammenstilling=None):
 	# 2026-07-06: sammenstilling context for group-owned risikosammenstilling access denied pages.
 	# 2026-07-01: Risk-specific 403 – module uses owner/participant/read-group, not Django model perms.
+	# 2026-08-23: Anonymous users get one auto OIDC attempt before the access-denied page.
+	oidc_redirect = maybe_redirect_anonymous_to_oidc(request)
+	if oidc_redirect is not None:
+		return oidc_redirect
 	return render(request, 'risiko_access_denied.html', {
 		'request': request,
 		'required_permissions': [],

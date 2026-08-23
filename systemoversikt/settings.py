@@ -239,6 +239,7 @@ USE_TZ = True
 
 
 #Authentication
+# 2026-08-23: LOGIN_REDIRECT_URL_FAILURE → /oidc-login-failed/ restores deep-link after failed auto OIDC.
 if THIS_ENVIRONMENT == "PROD":
 	IDP_PROVIDER = "AZUREAD"
 	AD_DIRECT_ACCESS = True
@@ -249,7 +250,7 @@ if THIS_ENVIRONMENT == "PROD":
 	#OIDC_PROXY = {'https': os.environ['PROXY_HTTPS'],}
 	LOGIN_URL = "/oidc/authenticate/"
 	LOGIN_REDIRECT_URL = "/?login=ok"
-	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
+	LOGIN_REDIRECT_URL_FAILURE = "/oidc-login-failed/"
 	LOGOUT_REDIRECT_URL = "/"
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
@@ -281,7 +282,7 @@ if THIS_ENVIRONMENT == "TEST":
 	)
 	LOGIN_URL = "/oidc/authenticate/"
 	LOGIN_REDIRECT_URL = "/?login=ok"
-	LOGIN_REDIRECT_URL_FAILURE = "/?login=failed"
+	LOGIN_REDIRECT_URL_FAILURE = "/oidc-login-failed/"
 	LOGOUT_REDIRECT_URL = "/"
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"

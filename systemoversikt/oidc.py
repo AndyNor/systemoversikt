@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Clear auto-OIDC session flags after successful login so a later logout can auto-login again.
 # 2026-06-21: Removed @vav.oslo email rewrite and oidc-token session storage – legacy debug paths retired.
 # 2026-06-21: Removed OKONOMI_FULLTILGANG from OIDC group mapping – UBW module retired.
 import unicodedata
@@ -228,6 +229,10 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 
 		def update_user(self, user, claims):
+			# 2026-08-23: Clear auto-OIDC attempt flags after successful authentication.
+			from systemoversikt.auto_oidc import clear_auto_oidc_session_flags
+			clear_auto_oidc_session_flags(self.request)
+
 			user.is_active = True
 			#user.first_name = claims.get('given_name', '')
 			#user.last_name = claims.get('family_name', '')

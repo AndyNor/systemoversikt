@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-23: Access denied uses render_access_denied; home auto-starts OIDC for anonymous users.
 # 2026-07-09: logger – object search matches verbose ContentType label shown in table.
 # 2026-07-09: logger – pagination (500/page) and search on user, object, instance, beskrivelse.
 # 2026-07-09: logger_risiko – dedicated risk module workflow activity log at /admin/logger/risiko/.
@@ -57,6 +58,11 @@ from django.core.paginator import Paginator
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.core import serializers
 from systemoversikt.models import *
+from systemoversikt.auto_oidc import (
+	render_access_denied,
+	should_attempt_auto_oidc,
+	redirect_to_oidc_login,
+)
 from systemoversikt.hostname_utils import (
 	azure_device_q_for_comp_name,
 	cmdb_pk_lookup_for_hostnames,
@@ -289,7 +295,7 @@ def _sort_cve_ids_newest_first(cve_ids):
 def recent_errors(request):
 	required_permissions = ['systemoversikt.view_qualysvuln'] # en rettighet veldig få har
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	# Query params
 	try:
@@ -341,7 +347,7 @@ def recent_errors(request):
 def top_slow_pages(request: HttpRequest):
 	required_permissions = ['systemoversikt.view_qualysvuln'] # en rettighet veldig få har
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 	"""
 	Prioritize endpoints that consume the most total time in the last 7 days.
 	Supports:
@@ -930,6 +936,12 @@ def get_ipaddr_instance(address):
 		n.save()
 		return n
 
+def oidc_login_failure_view(request):
+	# 2026-08-23: Thin URL wrapper – restore deep-link after failed OIDC (see auto_oidc.oidc_login_failure).
+	from systemoversikt.auto_oidc import oidc_login_failure
+	return oidc_login_failure(request)
+
+
 def login(request):
 	"""
 	støttefunksjon for å logge inn
@@ -1102,7 +1114,7 @@ def human_readable_members_optimized(items, onlygroups=False):
 def mal(request):
 	required_permissions = ['systemoversikt.XYZ']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	return render(request, 'mal.html', {
 		'request': request,
@@ -1125,14 +1137,7 @@ def debug_info(request):
 	"""
 	required_permissions = ['auth.view_logentry']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(
-			request,
-			'403.html',
-			{
-				'required_permissions': required_permissions,
-				'groups': request.user.groups
-			}
-		)
+		return render_access_denied(request, required_permissions)
 
 
 	# --- PostgreSQL / database info ---
@@ -1252,7 +1257,7 @@ def tool_word_count(request):
 def vulnstats_nettverk(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -1271,7 +1276,7 @@ def vulnstats_nettverk(request):
 def vulnstats_datakvalitet(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -1374,7 +1379,7 @@ def sikkerhet_sarbarheter(request):
 	# 2026-07-02: Landing page for Qualys, Defender and compare reports; Qualys import chart from audit log.
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	return render(request, 'sikkerhet_sarbarheter.html', {
 		'request': request,
@@ -1387,7 +1392,7 @@ def sikkerhet_sarbarheter(request):
 def vulnstats(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
@@ -1541,7 +1546,7 @@ def azure_vulnstats_qualys_compare(request):
 	# 2026-06-07: Qualys vs Defender CVE comparison on dedicated URL (moved off overview).
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("azure_vulnerabilities")
 
@@ -1570,7 +1575,7 @@ def azure_vulnstats(request):
 	# 2026-06-07: Exclude Windows 11 client OS from overview aggregates – faster page, easy to revert.
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("azure_vulnerabilities")
 
@@ -1673,7 +1678,7 @@ def azure_vulnstats(request):
 def azure_vulnstats_product(request, vendor, product):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("azure_vulnerabilities")
 
@@ -1815,7 +1820,7 @@ def azure_vulnstats_product(request, vendor, product):
 def azure_vulnstats_os(request, os):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("azure_vulnerabilities")
 
@@ -1904,7 +1909,7 @@ def azure_vulnstats_os(request, os):
 def vulnstats_servere_uten_vuln(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -1923,7 +1928,7 @@ def vulnstats_servere_uten_vuln(request):
 def vulnstats_all(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -1941,7 +1946,7 @@ def vulnstats_all(request):
 def vulnstats_search(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -1966,7 +1971,7 @@ def vulnstats_search(request):
 def vulnstats_offerings(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -1999,7 +2004,7 @@ def vulnstats_offerings(request):
 def vulnstats_virksomhet(request, pk=None):
 	required_permissions = ['systemoversikt.change_virksomhet', 'systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -2075,7 +2080,7 @@ def vulnstats_virksomhet(request, pk=None):
 def vulnstats_offering(request, pk=None):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	if pk == "None":
 		pk = None
@@ -2102,7 +2107,7 @@ def vulnstats_offering(request, pk=None):
 def vulnstats_severity_eol(request, severity):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -2122,7 +2127,7 @@ def vulnstats_severity_eol(request, severity):
 def vulnstats_ukjente_servere(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -2142,7 +2147,7 @@ def vulnstats_ukjente_servere(request):
 def vulnstats_severity_known_exploited_public(request, severity):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -2163,7 +2168,7 @@ def vulnstats_severity_known_exploited_public(request, severity):
 def vulnstats_severity_known_exploited_public_not_current(request, severity):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -2186,7 +2191,7 @@ def vulnstats_severity_known_exploited_public_not_current(request, severity):
 def vulnstats_severity_known_exploited(request, severity):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -2207,7 +2212,7 @@ def vulnstats_severity_known_exploited(request, severity):
 def vulnstats_severity_known_exploited_not_current(request, severity):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -2232,7 +2237,7 @@ def vulnstats_severity_known_exploited_not_current(request, severity):
 def vulnstats_severity(request, severity):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -2256,7 +2261,7 @@ def vulnstats_severity(request, severity):
 def vulnstats_severity_not_current(request, severity):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -2281,7 +2286,7 @@ def vulnstats_severity_not_current(request, severity):
 def vulnstats_whereis(request, vuln):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
@@ -2302,7 +2307,7 @@ def vulnstats_whereis(request, vuln):
 def tool_systemimport(request):
 	required_permissions = ['systemoversikt.change_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	import json
 	innlogget_som = request.user.profile.virksomhet_innlogget_som
@@ -2593,7 +2598,7 @@ def tool_unique_items(request):
 def cmdb_adcs_index(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	from os import path, listdir
 	from os.path import isfile, join
@@ -2650,7 +2655,7 @@ def cmdb_adcs_index(request):
 def cmdb_per_virksomhet(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	template_data = list()
 	bs_alle = list(CMDBbs.objects.filter(operational_status=True, eksponert_for_bruker=True))
@@ -2693,7 +2698,7 @@ def o365_avvik(request):
 	#Viser alle avvik per virksomhet (cisco, bigip..)
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	innhentingsbehov = []
 	for i in RapportGruppemedlemskaper.objects.all().order_by('kategori'):
@@ -2737,7 +2742,7 @@ def azure_user_consents(request):
 	#Vise liste over alle Azure enterprise applications med rettigheter de har fått tildelt
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	userconsents = AzureUserConsents.objects.all()
 	integrasjonsstatus = _integrasjonsstatus("azure_enterprise_applications")
@@ -2754,7 +2759,7 @@ def azure_user_consents(request):
 def rapport_conditional_access_rules(request, pk=None):
 	required_permissions = ['systemoversikt.view_entraidconditionalaccesspolicies']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	# 2026-06-23: Batch GUID/displayName lookups – show IP ranges for named locations in conditions.
 	ca_regler_nyeste = EntraIDConditionalAccessPolicies.objects.latest()
@@ -2789,7 +2794,7 @@ def rapport_conditional_access_rules(request, pk=None):
 def rapport_conditional_access_overview(request):
 	required_permissions = ['systemoversikt.view_entraidconditionalaccesspolicies']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	ca_regler_nyeste = EntraIDConditionalAccessPolicies.objects.latest()
 	guids = set(conditional_access_guids_in_text(ca_regler_nyeste.json_policy))
@@ -2827,7 +2832,7 @@ def rapport_conditional_access_overview(request):
 def rapport_conditional_access_changes(request):
 	required_permissions = ['systemoversikt.view_entraidconditionalaccesspolicies']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	antall_siste_endringer = 15
 	ca_regler_endringer = list(
@@ -2856,7 +2861,7 @@ def rapport_conditional_access_changes(request):
 def admin_visitors(request): # brukerstatisikk
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 
 	from collections import Counter
@@ -2959,7 +2964,7 @@ def azure_applications(request):
 	#Vise liste over alle Azure enterprise applications med rettigheter de har fått tildelt
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	term = request.GET.get("term", None)
 	search_term = request.GET.get("search_term", None)
@@ -3009,7 +3014,7 @@ def rapport_sikkerhetstester(request):
 	#Vise liste over alle Azure enterprise application keys etter utløpsdato
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	sikkerhetstester = Sikkerhetstester.objects.all().order_by("-dato_rapport")
 
@@ -3035,7 +3040,7 @@ def azure_application_keys_expired(request):
 	#Vise liste over alle Azure enterprise application keys etter utløpsdato
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	keys = AzureApplicationKeys.objects.filter(end_date_time__lt=timezone.now()).filter(~Q(key_type="AsymmetricX509Cert", key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('-end_date_time')
 	#denne brukes også for utsending av e-post. Husk å bytte begge!!
@@ -3056,7 +3061,7 @@ def azure_application_keys_soon(request):
 	#Vise liste over alle Azure enterprise application keys etter utløpsdato
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	warning = (timezone.now() + datetime.timedelta(AZUREAPP_KEY_EXPIRE_WARNING))
 	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=timezone.now()).filter(end_date_time__lte=warning).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
@@ -3074,7 +3079,7 @@ def azure_application_keys_active(request):
 	#Vise liste over alle Azure enterprise application keys etter utløpsdato
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	warning = (timezone.now() + datetime.timedelta(AZUREAPP_KEY_EXPIRE_WARNING))
 	keys = AzureApplicationKeys.objects.filter(end_date_time__gte=warning).filter(~Q(key_type="AsymmetricX509Cert",key_usage="Verify")).exclude(AZUREAPP_KEY_EXPIRE_WARNING_EXCLUDE_PREFIXES).order_by('end_date_time')
@@ -3114,7 +3119,7 @@ def _systemer_forsomt_queryset(oppdatert_siden=730):
 def rapport_systemer_forsomt(request):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 
 	oppdatert_siden = 730 # dager (2 år)
@@ -3133,7 +3138,7 @@ def rapport_systemer_forsomt(request):
 def systemer_vis_alle(request):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	systemer = System.objects.all()
 
@@ -3149,10 +3154,7 @@ def systemer_vis_alle(request):
 def systemer_vis_alle_optimized(request):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {
-			'required_permissions': required_permissions,
-			'groups': request.user.groups
-		})
+		return render_access_denied(request, required_permissions)
 
 	systemer = (
 		System.objects.all()
@@ -3182,7 +3184,7 @@ def systemer_vis_alle_optimized(request):
 def isk_ansvarlig_for_system(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	aktuelle_systemer = list()
 	systemer = System.objects.all()
@@ -3208,7 +3210,7 @@ def isk_ansvarlig_for_system(request):
 def rapport_kit_vurderinger_samlet(request):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	aktuelle_systemer = System.objects.filter(ibruk=True)
 
@@ -3223,7 +3225,7 @@ def rapport_kit_vurderinger_samlet(request):
 def rapport_entra_id_auth(request):
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 
 	antall_med_lisens = len(User.objects.filter(profile__accountdisable=False).filter(~Q(profile__ny365lisens=None)))
@@ -3361,7 +3363,7 @@ def rapport_entra_id_auth(request):
 def o365_lisenser(request):
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	data = []
 	data.append({"tekst": "Totalt med lisens", "antall": len(User.objects.filter(profile__ny365lisens__icontains="G", profile__accountdisable=False))})
@@ -3400,7 +3402,7 @@ def systemer_citrix(request):
 	#Viser alle systemer som er knyttet til Citrix med metadata
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	systemer_på_citrix = System.objects.filter(~Q(citrix_publications=None))
 
@@ -3451,7 +3453,7 @@ def system_kritisk_funksjon(request):
 	#Viser alle kritiske funksjoner og hvilke systemer som understøtter dem
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	kritiske_funksjoner = KritiskFunksjon.objects.all()
 	kritiske_kapabiliteter = KritiskKapabilitet.objects.all()
@@ -3471,7 +3473,7 @@ def system_informasjonsbehandling(request):
 	#Vise alle LOS-begreper og systemer som er knyttet til
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	los_hovedtema = LOS.objects.filter(kategori_ref__verdi="Tema", active=True, parent_id=None)
 
@@ -3534,7 +3536,7 @@ def system_los_struktur(request, pk=None):
 def citrix_desktop_group(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	group_name = request.GET.get("gruppe", "")
 	citrix_desktop_group_members = CMDBdevice.objects.filter(citrix_desktop_group=group_name)
@@ -3551,7 +3553,7 @@ def citrix_desktop_group(request):
 def citrix_mappings(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	citrix_mappings = (System.objects.filter(~Q(citrix_publications=None))
 			.values('systemnavn', 'pk', 'citrix_publications__publikasjon_UUID')
@@ -3606,7 +3608,7 @@ def _citrixpub_stats(citrixapps):
 def alle_citrixpub_bruk(request, pk=None):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	citrixapps = _citrixpub_queryset(pk=pk, order_by_bruk=True)
 
@@ -3623,7 +3625,7 @@ def alle_citrixpub_bruk(request, pk=None):
 def alle_citrixpub(request, pk=None):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	citrixapps = _citrixpub_queryset(pk=pk)
 	unike_siloer = CMDBdevice.objects.order_by().values('citrix_desktop_group').distinct()
@@ -3642,7 +3644,7 @@ def alle_nettverksenheter(request):
 	#Viser alle nettverksenheter (cisco, bigip..)
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	nettverksenehter = CMDBdevice.objects.filter(device_type="NETWORK")
 
@@ -3657,7 +3659,7 @@ def alle_nettverksenheter(request):
 def rapport_cmdb_status(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	integrasjoner = IntegrasjonKonfigurasjon.objects.all()
 
@@ -3671,7 +3673,7 @@ def rapport_cmdb_status(request):
 def rapport_ad_identer(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	ad_brukere_per_virksomhet = []
 	for virksomhet in Virksomhet.objects.all():
@@ -3703,7 +3705,7 @@ def cmdb_statistikk(request):
 	#Vise alle statistikk over alt i CMDB
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	count_office_ea = AzureApplication.objects.all().count()
 	count_office_ea_keys = AzureApplicationKeys.objects.all().count()
@@ -3775,7 +3777,7 @@ def detaljer_vip(request, pk):
 	#Vise detaljer for lastbalanserte URL-er med deres pool-medlemmer
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	vip = virtualIP.objects.get(pk=pk)
 
@@ -3792,7 +3794,7 @@ def cmdb_devicedetails(request, pk):
 	#Vise detaljer for server/klient (ting med IP)
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	device = get_object_or_404(CMDBdevice, pk=pk)
 
@@ -4037,7 +4039,7 @@ def alle_dns(request):
 	# 2026-07-07: Search, exclude list, alias filter and pagination for large DNS tables.
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	DNS_PAGE_SIZE = 100
 
@@ -4135,7 +4137,7 @@ def dns_txt(request):
 	#Vise alle DNS navn og alias
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	txt_records = DNSrecord.objects.filter(dns_type="TXT")
 
@@ -4152,7 +4154,7 @@ def alle_vip(request):
 	#Vise alle lastbalanserte URL-er med deres pool-medlemmer
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	def vip_loopup(term):
 		return virtualIP.objects.filter(
@@ -4187,7 +4189,7 @@ def nettverk_detaljer(request, pk):
 	#Vise brannmuråpninger koblet til et nettverk
 	required_permissions = ['systemoversikt.view_brannmurregel']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	nettverk = NetworkContainer.objects.get(pk=pk)
 	network_ip_addresses = nettverk.network_ip_address.all().order_by('ip_address_integer')
@@ -4398,7 +4400,7 @@ def alle_nettverk(request):
 	# 2026-07-07: Pagination, stats, exclude filter and default list (like alle_dns).
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	NETTVERK_PAGE_SIZE = 100
 
@@ -4473,7 +4475,7 @@ def alle_nettverk(request):
 def cmdb_uten_backup(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	uten_backup = CMDBdevice.objects.filter(backup=None, device_type="SERVER").order_by('service_offerings__parent_ref')
 
@@ -4489,7 +4491,7 @@ def cmdb_uten_backup(request):
 def cmdb_backup_index(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	count_backup = CMDBbackup.objects.all().aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
 	count_backup_ukjent = CMDBbackup.objects.filter(source_type="OTHER").aggregate(Sum('backup_size_bytes'))["backup_size_bytes__sum"]
@@ -4616,7 +4618,7 @@ def cmdb_backup_index(request):
 def cmdb_lagring_index(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	count_san_allocated = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_allocation'))["vm_disk_allocation__sum"]
 	count_san_used = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('vm_disk_usage'))["vm_disk_usage__sum"]
@@ -4644,7 +4646,7 @@ def cmdb_lagring_index(request):
 def cmdb_minne_index(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	try:
 		count_ram_allocated = CMDBdevice.objects.filter(device_type="SERVER").aggregate(Sum('comp_ram'))["comp_ram__sum"] * 1000**2 #MB->bytes
@@ -4673,7 +4675,7 @@ def cmdb_ad_flere_brukeridenter(request):
 	#Viser informasjon om personer med mer enn 1 brukerident
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	import collections
 	ansattnr = []
@@ -4720,7 +4722,7 @@ def ad_brukerlistesok(request):
 	#Denne funksjonen er for å søke opp mange brukernavn og se informasjon om de det er treff på
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	search_raw = request.POST.get('user_search_term', '').strip()  # strip removes trailing and leading space
 	search_term = search_raw
@@ -4831,7 +4833,7 @@ def entra_id_oppslag(request):
 	# 2026-07-09: Accept GET search_term_user_entraId for direct links from brukerprofil – prefill and run lookup.
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	import re
 	inndata = request.POST.get('search_term_user_entraId', '')
@@ -4878,7 +4880,7 @@ def bruker_sok(request):
 	#Denne funksjonen utfører søk etter brukere basert på e-post, brukernavn og displayname
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	from functools import reduce
 	from operator import or_, and_
@@ -4920,7 +4922,7 @@ def passwdneverexpire(request, pk):
 	#Denne funksjonen viser alle personer som har satt passord utløper aldri
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	users = User.objects.filter(profile__virksomhet=virksomhet.pk).filter(profile__usertype__in=["Ansatt", "Ekstern"]).filter(profile__dont_expire_password=True).order_by('profile__displayName')
@@ -4938,7 +4940,7 @@ def ansatte_virksomhet(request, pk):
 	#Denne funksjonen viser alle personer i en virksomhet
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	from datetime import datetime
 	dato = datetime.today().strftime('%Y-%m-%d')
@@ -4960,7 +4962,7 @@ def tom_epost(request, pk):
 	#Denne funksjonen viser alle personer som har passordutløp kommende periode
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	count_brukere_i_virksomhet = User.objects.filter(profile__virksomhet=virksomhet, profile__accountdisable=False, profile__account_type__in=['Ekstern', 'Intern']).count()
@@ -4979,7 +4981,7 @@ def cmdb_uten_epost_stat(request):
 	#Denne funksjonen viser alle personer som har passordutløp kommende periode
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	stats = []
 	totalt_uten_epost = 0
@@ -5023,7 +5025,7 @@ def bruker_detaljer(request, pk):
 	#Denne funksjonen viser detaljer om en bruker lastet inn i kartoteket
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	user = User.objects.get(pk=pk)
 	if not user.is_active:
@@ -5041,7 +5043,7 @@ def bruker_detaljer(request, pk):
 def lokasjoner_hos_virksomhet(request, pk):
 	required_permissions = ['systemoversikt.view_virksomhet']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	lokasjoner = WANLokasjon.objects.filter(virksomhet=virksomhet)
@@ -5057,7 +5059,7 @@ def lokasjoner_hos_virksomhet(request, pk):
 def klienter_hos_virksomhet(request, pk):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	alle_klienter_hos_virksomhet = CMDBdevice.objects.filter(client_virksomhet=virksomhet).filter(~Q(client_last_loggedin_user=None))
@@ -5074,7 +5076,7 @@ def klienter_hos_virksomhet(request, pk):
 def virksomhet_leverandortilgang(request, pk=None):
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	if pk == None:
 		raise Http404
@@ -5108,7 +5110,7 @@ def virksomhet_leverandortilgang(request, pk=None):
 def virksomhet_sikkerhetsavvik(request, pk=None):
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	if pk == None:
 		try:
@@ -5319,7 +5321,7 @@ def minside(request):
 def ansvarlig_bytte(request):
 	required_permissions = ['systemoversikt.change_ansvarlig']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	str_ansvarlig_fra = request.POST.get('ansvarlig_fra', '')
 	str_ansvarlig_til = request.POST.get('ansvarlig_til', '')
@@ -5407,7 +5409,7 @@ def user_clean_up(request):
 	#Denne funksjonen er laget for å slette/anonymisere data i testmiljøet.
 	required_permissions = ['auth.change_permission']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	if settings.DEBUG == True:  # Testmiljø
 		from django.contrib.auth.models import User
@@ -5437,7 +5439,7 @@ def permissions(request):
 	#viser informasjon om alle ansvarliges aktive rettigheter
 	required_permissions = ['systemoversikt.change_ansvarlig']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	ansvarlige = Ansvarlig.objects.all()
 	return render(request, 'site_permissions.html', {
@@ -5513,7 +5515,7 @@ def logger(request):
 	# 2026-07-09: Pagination (500 per page) and search by user, object, instance, beskrivelse.
 	required_permissions = ['admin.view_logentry']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	aktive_antall_uker = 4
 	aktive_antall_personer = 10
@@ -5598,7 +5600,7 @@ def logger_audit(request):
 	#viser alle endringer på objekter i løsningen
 	required_permissions = ['systemoversikt.view_applicationlog']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	recent_loggs = ApplicationLog.objects.filter(~Q(event_type__icontains="api")).filter(~Q(event_type__icontains="Brukerpålogging")).order_by('-opprettet')[:1500]
 	return render(request, 'site_logger_audit.html', {
@@ -5614,7 +5616,7 @@ def databasestatistikk(request):
 
 	required_permissions = ['systemoversikt.view_applicationlog']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 
 	from django.db import connection
@@ -5713,7 +5715,7 @@ def logger_api(request):
 	#viser alle endringer på objekter i løsningen
 	required_permissions = ['systemoversikt.view_applicationlog']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	recent_loggs = ApplicationLog.objects.filter(event_type__icontains="api").order_by('-opprettet')[:5000]
 	return render(request, 'site_logger_audit.html', {
@@ -5728,7 +5730,7 @@ def logger_autentisering(request):
 	#viser alle endringer på objekter i løsningen
 	required_permissions = ['systemoversikt.view_applicationlog']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	recent_loggs = ApplicationLog.objects.filter(event_type__icontains="Brukerpålogging").order_by('-opprettet')[:1500]
 	return render(request, 'site_logger_audit.html', {
@@ -5745,7 +5747,7 @@ def logger_risiko(request):
 
 	required_permissions = ['systemoversikt.view_riskactivitylog']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	qs = RiskActivityLog.objects.select_related(
 		'user', 'scope', 'sammenstilling', 'framework',
@@ -5776,7 +5778,7 @@ def logger_users(request):
 	#viser selektive endringer på brukere/ansvarlige i løsningen
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	recent_loggs = UserChangeLog.objects.order_by('-opprettet')[:800]
 	return render(request, 'site_logger_users.html', {
@@ -5800,6 +5802,9 @@ def alle_nyheter(request):
 
 def home(request):
 	#Startsiden med oversikt over systemer per kategori
+	# 2026-08-23: Anonymous visitors auto-start OIDC once; after failure they stay anonymous with Logg inn.
+	if should_attempt_auto_oidc(request):
+		return redirect_to_oidc_login(request, next_path="/")
 	required_permissions = None
 	antall_systemer = System.objects.filter(~Q(ibruk=False)).count()
 	nyeste_systemer = System.objects.filter(~Q(ibruk=False)).order_by('-pk')[:10]
@@ -5925,7 +5930,7 @@ def home_chart(request):
 	#Startsiden med oversikt over systemer per kategori
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	nodes = []
 	parents = []
@@ -6106,7 +6111,7 @@ def alle_ansvarlige(request):
 	#Viser informasjon om alle ansvarlige
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	ansvarlige = Ansvarlig.objects.all().order_by('brukernavn__first_name')
 
@@ -6123,7 +6128,7 @@ def alle_ansvarlige_eksport(request):
 	#Viser informasjon om alle ansvarlige
 	required_permissions = ['systemoversikt.change_ansvarlig']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	ansvarlige = Ansvarlig.objects.filter(brukernavn__is_active=True)
 
@@ -6139,7 +6144,7 @@ def systemkvalitet_virksomhet(request, pk):
 	#Viser informasjon om datakvalitet per system
 	required_permissions = ['systemoversikt.view_virksomhet']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_ansvarlig_for = System.objects.filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
@@ -6157,7 +6162,7 @@ def systemer_vurderinger(request):
 	#Vise alle systemvurderinger
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	systemer = System.objects.all()
 
@@ -6172,7 +6177,7 @@ def systemer_EOL(request):
 	#EOS-visning for felles IKT-plattform
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=163)
 	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet)
@@ -6199,7 +6204,7 @@ def tjenester_oversikt(request):
 	# 2026-06-21: Tile overview – prefetch and counts for tjeneste cards without N+1 queries.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	tjenester = (
 		Tjeneste.objects
@@ -6223,7 +6228,7 @@ def tjeneste_detaljer(request, pk):
 	# 2026-06-21: Tjeneste detail with ecosystem chart – separate code path from systemdetaljer.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	tjeneste = get_object_or_404(
 		Tjeneste.objects.prefetch_related(
@@ -6469,7 +6474,7 @@ def systemdetaljer(request, pk):
 	#Tilgangsstyring: Merk at noen informasjonselementer er begrenset i template
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	system = System.objects.get(pk=pk)
 
@@ -6590,7 +6595,7 @@ def systemer_pakket(request):
 	#Uferdig: vising av hvordan applikasjoner er pakket
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
 	programvarer = Programvare.objects.all()
@@ -6607,7 +6612,7 @@ def systemklassifisering_detaljer(request, kriterie=None):
 	#Vise systemer filtrert basert på systemeierskapsmodell (felles, sektor, virksomhet)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	if kriterie == None:
 		kriterie = "FELLESSYSTEM_OBLIGATORISK"
@@ -6636,7 +6641,7 @@ def systemtype_detaljer(request, pk=None):
 	#Vise systemer filtrert basert på systemtype (web/app/infrastruktur osv.)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	if pk:
 		utvalg_systemer = System.objects.filter(systemtyper=pk)
@@ -6664,7 +6669,7 @@ def systemtype_detaljer(request, pk=None):
 def alle_systemer_forvaltere(request):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	# 2026-06-21: Prefetch contact persons – avoids N+1 on forvalteroversikt table.
 	def _ansvarlig_prefetch_qs():
@@ -6693,7 +6698,7 @@ def alle_systemer(request):
 	#Vise alle systemer
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	search_term = request.GET.get('vis', 'fellessystem').strip()  # strip removes trailing and leading space
 	aktuelle_systemer = System.objects.filter()
@@ -6717,7 +6722,7 @@ def search(request):
 	#Vise alle systemer
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 	navigasjonstreff = []
@@ -6819,7 +6824,7 @@ def bruksdetaljer(request, pk):
 	#Vise detaljer om systembruk
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	bruk = SystemBruk.objects.get(pk=pk)
 
@@ -6849,7 +6854,7 @@ def all_bruk_for_virksomhet(request, pk):
 	#Vise detaljer om en valgt virksomhets systembruk
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet_pk = pk
 	all_systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet_pk, ibruk=True).exclude(system__livslop_status__in=[6,7]).order_by(Lower('system__systemnavn'))  # sortering er ellers case-sensitiv
@@ -6891,7 +6896,7 @@ def registrer_bruk(request, system):
 	#Forenklet metode for å legge til bruk av system ved avkryssing
 	required_permissions = ['systemoversikt.add_systembruk']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	from django.core.exceptions import ObjectDoesNotExist
 	system_instans = System.objects.get(pk=system)
@@ -6988,7 +6993,7 @@ def systembruk_bydeler_oversikt(request):
 	# 2026-06-19: Added programvare section – bruk only, separate table, shared vis filter.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	bydeler = list(bydel_virksomheter())
 	bydel_ids = {b.pk for b in bydeler}
@@ -7097,7 +7102,7 @@ def systembruk_bydeler_ekskludert(request):
 	# 2026-06-19: Moved from /systemer/bydelsbruk/ – gap report for systems bydeler use that we do not.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	din_virksomhet = request.user.profile.virksomhet
 
@@ -7117,7 +7122,7 @@ def registrer_bruk_programvare(request, programvare):
 	#Forenklet metode for å legge til bruk av programvare ved avkryssing
 	required_permissions = ['systemoversikt.add_programvarebruk']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	from django.core.exceptions import ObjectDoesNotExist
 	programvare_instans = Programvare.objects.get(pk=programvare)
@@ -7209,7 +7214,7 @@ def programvaredetaljer(request, pk):
 	#Vise detaljer for programvare
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	siste_endringer_antall = 10
 	content_type = ContentType.objects.get_for_model(Programvare)
@@ -7232,7 +7237,7 @@ def alle_programvarer(request):
 	#Vise alle programvarer
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
@@ -7264,10 +7269,7 @@ def alle_programvarer(request):
 def alle_programvarer_optimized(request):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {
-			'required_permissions': required_permissions,
-			'groups': request.user.groups
-		})
+		return render_access_denied(request, required_permissions)
 
 	search_term = request.GET.get('search_term', '').strip()
 
@@ -7318,7 +7320,7 @@ def programvarebruksdetaljer(request, pk):
 	#Vise detaljer for bruk av programvare
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	bruksdetaljer = ProgramvareBruk.objects.get(pk=pk)
 
@@ -7366,7 +7368,7 @@ def virksomhet_ansvarlige(request, pk=None):
 	#Vise alle ansvarlige knyttet til valgt virksomhet
 	required_permissions = ['systemoversikt.view_ansvarlig']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	ansvarlige = Ansvarlig.objects.filter(brukernavn__profile__virksomhet=pk).order_by('brukernavn__first_name')
@@ -7381,7 +7383,7 @@ def virksomhet_ansvarlige(request, pk=None):
 def brukere_startside(request):
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	antall_aktive_brukere = User.objects.filter(profile__accountdisable=False).count()
 	antall_deaktive_brukere = User.objects.filter(profile__accountdisable=True).count()
@@ -7533,7 +7535,7 @@ OU_STR_VANLIGE_VIRKSOMHETER = [
 def ikke_byttet_passord_normal_users(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	from functools import reduce
 	from operator import or_
@@ -7569,7 +7571,7 @@ def ikke_byttet_passord_normal_users(request):
 def ikke_byttet_passord_annet(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	from functools import reduce
 	from operator import or_
@@ -7606,7 +7608,7 @@ def enhet_detaljer(request, pk):
 	# 2026-07-09: Pass search_term_org for org search form (matches virksomhet_enhetsok).
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	unit = HRorg.objects.get(pk=pk)
 	sideenheter = HRorg.objects.filter(direkte_mor=unit).order_by('ou')
@@ -7631,7 +7633,7 @@ def virksomhet_enhetsok(request):
 	# 2026-07-09: Accept legacy search_term GET param from enhet_detaljer (was wrong form name).
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	search_term = request.GET.get('search_term_org', "").strip()
 	if not search_term:
@@ -7666,7 +7668,7 @@ def virksomhet_enheter(request, pk):
 	#Vise informasjon om organisatorisk struktur
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	import math
 	virksomhet = Virksomhet.objects.get(pk=pk)
@@ -7739,7 +7741,7 @@ def api_overview(request):
 	#Vise informasjon brukere som har leverandørtilgang
 	required_permissions = ['auth.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 
 	return render(request, 'rapport_api_overview.html', {
@@ -7815,7 +7817,7 @@ def leverandortilgang(request, valgt_gruppe=None):
 	#Vise informasjon brukere som har leverandørtilgang
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	if valgt_gruppe == None:
 
@@ -7852,7 +7854,7 @@ def rapport_trusted_delegation(request):
 	# 2026-07-07: Restrict to view_qualysvuln – same audience as other sikkerhetsanalytiker AD reports.
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	brukere = User.objects.filter(profile__trusted_for_delegation=True).order_by("username")
 
@@ -7877,7 +7879,7 @@ def alle_spn(request):
 	# 2026-07-07: Restrict to view_qualysvuln – same audience as other sikkerhetsanalytiker AD reports.
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	brukere = User.objects.filter(~Q(profile__service_principal_name=None)).order_by("username")
 
@@ -7900,7 +7902,7 @@ def tbrukere(request):
 	#Vise informasjon brukere som er opprettet for å teste noe (og ikke har blitt slettet i etterkant)
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	brukere = User.objects.filter(
 			Q(username__istartswith="t-") |
@@ -7931,7 +7933,7 @@ def rapport_servicekontoer(request):
 	#Vise informasjon om brukere som har drifttilgang
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	# 2026-06-21: select_related on profile relations – avoids N+1 on servicebrukere table.
 	brukere = (
@@ -7955,7 +7957,7 @@ def rapport_ad_testbrukere(request):
 	#Vise informasjon testkontoer IDA oppretter
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	brukere = User.objects.filter(Q(profile__distinguishedname__icontains="OU=Testkontoer,OU=OK")).filter(profile__accountdisable=False)
 
@@ -7973,7 +7975,7 @@ def rapport_ad_driftbrukere(request):
 	#Vise informasjon brukere som har drifttilgang
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	brukere = User.objects.filter(Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") | Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere")).filter(profile__accountdisable=False)
 
@@ -7989,7 +7991,7 @@ def rapport_ad_ukjente_brukere(request):
 	# 2026-07-07: Restrict to view_qualysvuln – same audience as other sikkerhetsanalytiker AD reports.
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	brukere = excluded_users = User.objects.exclude(
 			Q(profile__distinguishedname__icontains="OU=Brukere,OU=OK") |
@@ -8150,7 +8152,7 @@ def prk_userlookup(request):
 	#Vise informasjon om vilkårlige brukere
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	if request.POST:
 		query = request.POST.get('query', '').strip()
@@ -8195,7 +8197,7 @@ def systemer_virksomhet_ansvarlig_for(request, pk=None):
 
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
@@ -8233,7 +8235,7 @@ def virksomhet_forvalter_isk(request, pk=None):
 
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
@@ -8250,7 +8252,7 @@ def virksomhet_forvalter_isk(request, pk=None):
 def systemer_virksomhet_ansvarlig_for_fip(request, pk):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
@@ -8484,7 +8486,7 @@ def _collect_systembruk_graph_data_by_forvalter(pk):
 def virksomhet_figur_system_seksjon(request, pk):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	kilde = request.GET.get('kilde', 'alle')
@@ -8504,7 +8506,7 @@ def virksomhet_figur_system_plattform(request, pk):
 	# 2026-06-21: Dedicated plattform grouping chart for forvalter-systemer.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	kilde = request.GET.get('kilde', 'alle')
@@ -8524,7 +8526,7 @@ def virksomhet_figur_systembruk_forvalter(request, pk):
 	# 2026-06-21: Active systembruk grouped by organisatorisk systemforvalter.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	from systemoversikt.models import SYSTEM_COLORS
@@ -8555,7 +8557,7 @@ def virksomhet_figur_system_avhengigheter(request, pk):
 	# 2026-06-08: Dedicated dependency graph page – keeps /virksomhet/<pk>/ fast to load.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	avhengigheter_graf_ny = generer_graf_virksomhet(pk)
@@ -8825,7 +8827,7 @@ def virksomhet(request, pk):
 	#Vise detaljer om en valgt virksomhet
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	ansvarlig_qs = Ansvarlig.objects.select_related('brukernavn', 'brukernavn__profile')
 	virksomhet = Virksomhet.objects.prefetch_related(*[
@@ -9336,7 +9338,7 @@ def sertifikatmyndighet(request):
 	#Vise informasjon om delegeringer knyttet til sertifikater
 	required_permissions = ['systemoversikt.view_virksomhet']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomheter = Virksomhet.objects.all().order_by('-sertifikatfullmakt_avgitt_web')
 
@@ -9466,7 +9468,7 @@ def alle_virksomheter_kontaktinfo(request):
 	#Vise oversikt over alle virksomheter
 	required_permissions = []
 	#if not any(map(request.user.has_perm, required_permissions)):
-	#   return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+	#   return render_access_denied(request, required_permissions)
 
 	virksomheter = Virksomhet.objects.all().order_by('-ordinar_virksomhet', 'virksomhetsnavn')
 
@@ -9480,7 +9482,7 @@ def alle_virksomheter_kontaktinfo(request):
 def virksomhet_arkivplan(request, pk):
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer = System.objects.filter(Q(systemeier=virksomhet) | Q(systemforvalter=virksomhet))
@@ -9498,7 +9500,7 @@ def leverandor(request, pk):
 	#Vise detaljer for en valgt leverandør
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	leverandor = Leverandor.objects.get(pk=pk)
 	systemleverandor_for = System.objects.filter(systemleverandor=pk)
@@ -9532,7 +9534,7 @@ def alle_leverandorer(request):
 	# 2026-06-21: Leverandør reference statistics table at top of overview page.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	from django.db.models.functions import Lower
 	search_term = request.GET.get('search_term', "").strip()
@@ -9565,7 +9567,7 @@ def alle_driftsmodeller(request):
 	# 2026-06-22: Dropped lokasjon_lagring_valgmeny prefetch – field removed from model.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	driftsmodeller = Driftsmodell.objects.annotate(
 		antall_systemer=Count('systemer', filter=~Q(systemer__livslop_status=7)),
@@ -9592,7 +9594,7 @@ def driftsmodell_virksomhet_klassifisering(request, pk):
 	#Vise informasjon om sikkerhethetsklassifisering for systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
 	required_permissions = ['systemoversikt.change_systemkategori']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet)
@@ -9611,7 +9613,7 @@ def rapport_systemer_leverandor_land(request):
 	# 2026-06-07: Country summary with system counts per observed country.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	land_codes = [code for code, _ in LEVERANDOR_LAND_VALG]
 	land_navn = dict(LEVERANDOR_LAND_VALG)
@@ -9667,7 +9669,7 @@ def rapport_prioriteringer(request):
 	#Vise indeks over systemprioritering
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomheter = Virksomhet.objects.filter(ordinar_virksomhet=True).filter(~Q(driftsmodell_ansvarlig_virksomhet=None))
 	intern_tjenesteleverandorer = Virksomhet.objects.filter(
@@ -9685,7 +9687,7 @@ def rapport_ukjente_identer(request):
 	# 2026-07-07: Restrict to view_qualysvuln – same audience as other sikkerhetsanalytiker AD reports.
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	identer = User.objects.filter(profile__accountdisable=False, profile__virksomhet=None)
 
@@ -9710,7 +9712,7 @@ def drift_beredskap(request, pk):
 	#Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer_drifter = System.objects.filter(
@@ -9769,7 +9771,7 @@ def driftsmodell_virksomhet(request, pk=None):
 	#Vise systemer driftet av en virksomhet (alle systemer koblet til driftsmodeller som forvaltes av valgt virksomhet)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet).order_by("navn")
@@ -9789,7 +9791,7 @@ def detaljer_driftsmodell(request, pk):
 	#Vise detaljer om en valgt driftsmodell (inkl. systemer tilknyttet)
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	driftsmodell = Driftsmodell.objects.get(pk=pk)
 	systemer = System.objects.filter(driftsmodell_foreignkey=pk).filter(~Q(livslop_status=7))
@@ -9810,7 +9812,7 @@ def systemer_uten_driftsmodell(request):
 	required_permissions = ['systemoversikt.view_system']
 
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	mangler = System.objects.filter(Q(driftsmodell_foreignkey=None) & ~Q(systemtyper=1))
 
@@ -9825,7 +9827,7 @@ def systemer_utfaset(request):
 	#Vise liste over systemer satt til "ikke i bruk"
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	systemer = System.objects.filter(livslop_status__in=[6,7]).order_by("-sist_oppdatert")
 
@@ -9841,7 +9843,7 @@ def systemkategori(request, pk):
 	#Vise detaljer om en kategori
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	kategori = SystemKategori.objects.get(pk=pk)
 	systemer = System.objects.filter(~Q(livslop_status=7)).filter(systemkategorier=pk).order_by(Lower('systemnavn'))
@@ -9861,7 +9863,7 @@ def alle_hovedkategorier(request):
 	#Vise liste over alle hovedkategorier
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	hovedkategorier = SystemHovedKategori.objects.order_by('hovedkategorinavn')
 	for kategori in hovedkategorier:
@@ -9891,7 +9893,7 @@ def alle_systemkategorier(request):
 	#Vise liste over alle (under)kategorier
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	kategorier = SystemKategori.objects.order_by('kategorinavn')
 
@@ -9906,7 +9908,7 @@ def uten_systemkategori(request):
 	#Vise liste over alle systemer uten (under)kategori
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	antall_systemer = System.objects.all().count()
 	antall_programvarer = Programvare.objects.all().count()
@@ -9928,7 +9930,7 @@ def alle_systemurler(request):
 	#Vise liste over alle URLer
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	urler = SystemUrl.objects.order_by('domene')
 
@@ -9944,7 +9946,7 @@ def virksomhet_urler(request, pk):
 	#Vise liste over alle URLer
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	urler = SystemUrl.objects.filter(eier=virksomhet.pk).order_by('domene')
@@ -9962,7 +9964,7 @@ def bytt_kategori(request, fra, til):
 	#Funksjon for å bytte all bruk av én kategori til en annen kategori
 	required_permissions = ['systemoversikt.change_systemkategori']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	try:
 		kategori_fra = SystemKategori.objects.get(pk=fra)
@@ -9995,7 +9997,7 @@ def system_til_programvare(request, system_id=None):
 	#Funksjon for å opprette en instans av programvare basert på system (systemet må slettes manuelt etterpå)
 	required_permissions = ['systemoversikt.change_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	if system_id:
 		try:
@@ -10061,7 +10063,7 @@ def adorgunit_detaljer(request, pk=None):
 	#Vise informasjon om en konkret AD-OU
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	import os
 
@@ -10097,7 +10099,7 @@ def adorgunit_detaljer(request, pk=None):
 def ad_gruppeanalyse(request):
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	brukernavn_str = request.POST.get('brukernavn', "").strip().lower()
 
@@ -10159,7 +10161,7 @@ def adgruppe_graf(request, pk):
 	#Vise en graf over hvordan grupper er nøstet nedover fra en gitt gruppe
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	import math
 	morgruppe = ADgroup.objects.get(pk=pk)
@@ -10253,7 +10255,7 @@ def adgruppe_detaljer(request, pk):
 	#Vise informasjon om en konkret AD-gruppe
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	render_anyway = True if (request.GET.get('alt') == "ja") else False
 	render_limit = 300
@@ -10287,10 +10289,7 @@ def adgruppe_detaljer(request, pk):
 def adgruppe_detaljer_optimized(request, pk):
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {
-			'required_permissions': required_permissions,
-			'groups': request.user.groups
-		})
+		return render_access_denied(request, required_permissions)
 
 	render_anyway = (request.GET.get('alt') == "ja")
 	render_limit = 600
@@ -10346,7 +10345,7 @@ def virksomhet_adgruppe_detaljer(request):
 	#Vise informasjon om en konkret AD-gruppe for en enkelt virksomhet
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	try:
 		virksomhetsforkotelse = request.user.profile.virksomhet_innlogget_som.virksomhetsforkortelse
@@ -10399,7 +10398,7 @@ def ad_analyse(request):
 	#Vise informasjon om tomme ADgrupper, AD-grupper ikke fra PRK osv.
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	antall_alle_grupper = ADgroup.objects.all().count()
 	maks = int(request.GET.get('antall', 1))
@@ -10419,7 +10418,7 @@ def ad_analyse(request):
 def rapport_ad_adgrupper(request):
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	antall_adgr_tid = []
 	logs = ApplicationLog.objects.filter(event_type="AD group-import", message__startswith="Det tok")
@@ -10440,7 +10439,7 @@ def alle_adgrupper(request):
 	#Vise informasjon om AD-grupper
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	search_term = request.GET.get('search_term_adgrp', '').strip()  # strip removes trailing and leading space
 	if len(search_term) > 1:
@@ -10471,7 +10470,7 @@ def maskin_sok(request):
 	#Søke opp hostnavn
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	# 2026-06-21: Also match exact IP addresses (comp_ip_address and linked NetworkIPAddress).
 	hits = []
@@ -10575,7 +10574,7 @@ def alle_ip(request):
 	# Søke opp IPv4-adresser mot CMDB (host-IP, DNS-koblinger i CMDB) og VLAN-/nettverksdata.
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	MAX_IP_LOOKUPS = 1000
 
@@ -10795,7 +10794,7 @@ def alle_klienter(request):
 	#Søke og vise alle klienter
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
 
@@ -10845,7 +10844,7 @@ def alle_klienter(request):
 def cmdb_installert_programvare(request):
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	import requests as api_requests
 	from azure.identity import ClientSecretCredential
@@ -10924,7 +10923,7 @@ def sikkerhet_device_code_logins(request):
 
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	internal_ip_prefixes = device_code_internal_ip_prefixes()
 
@@ -10956,7 +10955,7 @@ def sikkerhet_device_code_logins_sanntid(request):
 
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	dager = DEVICE_CODE_LIVE_SEARCH_DAYS
 	try:
@@ -11007,10 +11006,7 @@ def sikkerhet_varsling_virksomheter(request):
 	)
 
 	if not user_is_sikkerhetsanalytiker(request.user):
-		return render(request, '403.html', {
-			'required_permissions': [SIKKERHETSANALYTIKER_GROUP],
-			'groups': request.user.groups,
-		})
+		return render_access_denied(request, [SIKKERHETSANALYTIKER_GROUP])
 
 	virksomheter = (
 		Virksomhet.objects
@@ -11143,7 +11139,7 @@ def cmdb_internetteksponerte_servere(request):
 	#Søke og vise alle maskiner
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	dager_gamle = 30
 	tidsgrense = datetime.date.today() - datetime.timedelta(days=dager_gamle)
@@ -11162,7 +11158,7 @@ def alle_servere(request):
 	#Søke og vise alle maskiner
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	search_term = request.GET.get('device_search_term', '').strip()  # strip removes trailing and leading space
 
@@ -11225,7 +11221,7 @@ def alle_databaser(request):
 	#Søke og vise alle databaser
 	required_permissions = ['systemoversikt.view_cmdbdatabase']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	search_term = request.GET.get('search_term', '').strip()  # strip removes trailing and leading space
 
@@ -11284,7 +11280,7 @@ def alle_cmdbref(request):
 	#Søke og vise alle business services (bs)
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	cmdbref = CMDBRef.objects.filter(operational_status=True, parent_ref__eksponert_for_bruker=True).order_by("service_classification", "parent_ref__navn", Lower("navn"))
 
@@ -11299,7 +11295,7 @@ def alle_cmdbref(request):
 def cmdb_bs_detaljer(request):
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	search_term = request.GET.get('search_term', "").strip()
 
@@ -11348,7 +11344,7 @@ def cmdb_bs_detaljer(request):
 def cmdb_servere_flere_offerings(request):
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	# telle servere med flere service offerings-koblinger
 	from django.db.models import Count
@@ -11367,7 +11363,7 @@ def cmdb_servere_flere_offerings(request):
 def cmdb_bs_aktuelle_ikke_koblet(request):
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
 	system_uten_bs = (System.objects
@@ -11390,7 +11386,7 @@ def cmdb_bs_aktuelle_ikke_koblet(request):
 def cmdb_bs_skjult_relevant(request):
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	skjult_server_db = []
 	skjult_server_db_candidates = (CMDBbs.objects
@@ -11413,7 +11409,7 @@ def cmdb_bs_skjult_relevant(request):
 def cmdb_bs_mangler_kobling(request):
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	bs_uten_system = CMDBRef.objects.filter(operational_status=True).filter(Q(system=None)).order_by("-parent_ref__eksponert_for_bruker", "service_classification")
 
@@ -11429,7 +11425,7 @@ def cmdb_bs_mangler_kobling(request):
 def cmdb_bs_koblet_ukjent_plattform(request):
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomhet_uke = Virksomhet.objects.get(virksomhetsforkortelse="UKE")
 
@@ -11452,7 +11448,7 @@ def cmdb_bs_koblet_ukjent_plattform(request):
 def cmdb_bskobling_utfaset(request):
 	required_permissions = ['systemoversikt.view_cmdbref', 'auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	utfasede_bs = CMDBRef.objects.filter(operational_status=False).filter(~Q(system=None))
 
@@ -11468,7 +11464,7 @@ def cmdb_bss(request, pk):
 	#Søke og vise maskiner og databaser tilknyttet en business service for et system
 	required_permissions = ['systemoversikt.view_cmdbref']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	cmdbref = CMDBRef.objects.get(pk=pk)
 	cmdbdevices = CMDBdevice.objects.filter(service_offerings=cmdbref)
@@ -11556,7 +11552,7 @@ def cmdb_bs_disconnect(request):
 	# frikoble alle system - business service-koblinger
 	required_permissions = ['systemoversikt.delete_system'] # kun administrator-rollen
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	#for service in CMDBbs.objects.all():
 	#   service.systemreferanse = None
@@ -11570,7 +11566,7 @@ def alle_avtaler(request, virksomhet=None):
 	#Vise alle avtaler
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	avtaler = Avtale.objects.all()
 	if virksomhet:
@@ -11590,7 +11586,7 @@ def avtaledetaljer(request, pk):
 	#Vise detaljer for en avtale
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	avtale = Avtale.objects.get(pk=pk)
 
@@ -11606,7 +11602,7 @@ def databehandleravtaler_virksomhet(request, pk):
 	#Vise alle databehandleravtaler for en valgt virksomhet
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	virksomet = Virksomhet.objects.get(pk=pk)
 	utdypende_beskrivelse = ("Viser databehandleravtaler for %s" % virksomet)
@@ -11625,7 +11621,7 @@ def ad(request):
 	#Startside for LDAP/AD-spørringer
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	return render(request, 'ad_index.html', {
 		'request': request,
@@ -11638,7 +11634,7 @@ def ad_details(request, name):
 	#Søke opp en eksakt CN i AD
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	runtime_t0 = time.time()
 	ldap_filter = ('(cn=%s)' % name)
@@ -11659,7 +11655,7 @@ def ad_exact(request, name):
 	#Søke opp et eksakt DN i AD
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	runtime_t0 = time.time()
 	ldap_filter = ('(distinguishedName=%s)' % name)
@@ -11680,7 +11676,7 @@ def recursive_group_members(request, group):
 	#Søke opp alle brukere rekursivt med tilgang til et DN i AD
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	runtime_t0 = time.time()
 	result = ldap_get_recursive_group_members(group)
@@ -13140,7 +13136,7 @@ def cmdb_api_kompass(request): #API
 def cmdb_firewall(request):
 	required_permissions = ['systemoversikt.view_brannmurregel']
 	if not any(map(request.user.has_perm, required_permissions)):
-		return render(request, '403.html', {'required_permissions': required_permissions, 'groups': request.user.groups })
+		return render_access_denied(request, required_permissions)
 
 	def firewall_loopup(term):
 		return Brannmurregel.objects.filter(

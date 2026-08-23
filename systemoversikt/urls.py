@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-08-23: OIDC failure restores deep-link via oidc_login_failure (was /?login=failed).
 # 2026-08-23: Risk AJAX session ping – GET /sikkerhet/risiko/api/session/.
 # 2026-07-02: BloodHound – single /sikkerhet/bloodhound/ page; legacy status/findings URLs redirect.
 # 2026-07-02: sikkerhet/sarbarheter/ – landing page for Qualys, Defender and compare reports.
@@ -51,6 +52,7 @@ urlpatterns = [
 	re_path(r'^$', views.home, name='home'),
 	re_path(r'^chart/', views.home_chart, name='home_chart'),
 	re_path(r'^oidc/', include('mozilla_django_oidc.urls')),
+	re_path(r'^oidc-login-failed/$', views.oidc_login_failure_view, name='oidc_login_failure'),
 	re_path(r'^login/$', admin.site.login, name='login'),
 	re_path(r'^logout/$', admin.site.logout, name='logout'),
 	re_path(r'^sok/$', views.search, name='search'),
