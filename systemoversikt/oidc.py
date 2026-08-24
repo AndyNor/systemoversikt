@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-24: Do not gate OIDC on nightly LDAP accountdisable; Entra decides who can log in.
 # 2026-08-23: Do not wipe groups when AD/Entra lookup fails; clear auto-OIDC flags after successful update_user.
 # 2026-08-23: Clear auto-OIDC session flags after successful login so a later logout can auto-login again.
 # 2026-06-21: Removed @vav.oslo email rewrite and oidc-token session storage – legacy debug paths retired.
@@ -230,6 +231,7 @@ if settings.IDP_PROVIDER == "AZUREAD":
 
 
 		def update_user(self, user, claims):
+			# 2026-08-24: is_active is set here at OIDC login; Entra already admitted the user.
 			user.is_active = True
 			#user.first_name = claims.get('given_name', '')
 			#user.last_name = claims.get('family_name', '')

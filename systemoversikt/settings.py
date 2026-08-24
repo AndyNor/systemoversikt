@@ -136,10 +136,9 @@ MIDDLEWARE = [
 	'django.middleware.common.CommonMiddleware',
 	'django.middleware.csrf.CsrfViewMiddleware',
 	'django.contrib.auth.middleware.AuthenticationMiddleware',
-	# 2026-08-23: Seed missing oidc_id_token_expiration before SessionRefresh (avoids prompt=none logout).
-	'systemoversikt.middleware.oidc_session.EnsureOIDCTokenExpirationMiddleware',
-	# 2026-08-23: OIDC SessionRefresh must run after AuthenticationMiddleware (was dead in MIDDLEWARE_CLASSES).
-	'mozilla_django_oidc.middleware.SessionRefresh',
+	# 2026-08-24: SessionRefresh removed – prompt=none every 15 min forced Entra account picker
+	# and is not real token revocation. Auth lifetime follows SESSION_COOKIE_AGE (10 hours).
+	# Access is Entra/WAP at login plus live group lookup in OIDC; not nightly LDAP catalog.
 	'django.contrib.messages.middleware.MessageMiddleware',
 	'django.middleware.clickjacking.XFrameOptionsMiddleware',
 	'simple_history.middleware.HistoryRequestMiddleware',
@@ -254,6 +253,7 @@ if THIS_ENVIRONMENT == "PROD":
 	LOGIN_REDIRECT_URL = "/?login=ok"
 	LOGIN_REDIRECT_URL_FAILURE = "/oidc-login-failed/"
 	LOGOUT_REDIRECT_URL = "/"
+	# 2026-08-24: Unused while SessionRefresh is off; kept as mozilla's default (900s / 15 min).
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
 	OIDC_RP_SCOPES = "openid"
@@ -286,6 +286,7 @@ if THIS_ENVIRONMENT == "TEST":
 	LOGIN_REDIRECT_URL = "/?login=ok"
 	LOGIN_REDIRECT_URL_FAILURE = "/oidc-login-failed/"
 	LOGOUT_REDIRECT_URL = "/"
+	# 2026-08-24: Unused while SessionRefresh is off; kept as mozilla's default (900s / 15 min).
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
 	OIDC_RP_SCOPES = "openid"

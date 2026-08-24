@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-08-24: Removed accountdisable logout middleware – access must not depend on nightly LDAP sync.
+# 2026-08-24: SessionRefresh removed; EnsureOIDCTokenExpirationMiddleware is unused.
 # 2026-08-23: If oidc_id_token_expiration is missing, seed it so SessionRefresh does not
 #             treat the session as expired and force prompt=none (which can log users out).
-"""Middleware helpers for OIDC session behaviour."""
+"""Middleware helpers for OIDC session behaviour. Unused while SessionRefresh is off."""
 import time
 
 from django.conf import settings
@@ -11,9 +13,10 @@ from django.utils.deprecation import MiddlewareMixin
 
 class EnsureOIDCTokenExpirationMiddleware(MiddlewareMixin):
 	"""
-	SessionRefresh defaults missing oidc_id_token_expiration to 0 and then forces a
-	silent re-auth. Seed a fresh expiry for authenticated users so deep-link logins are
-	not immediately bounced through prompt=none.
+	Unused while SessionRefresh is off. SessionRefresh defaults missing
+	oidc_id_token_expiration to 0 and then forces a silent re-auth. Seed a fresh expiry
+	for authenticated users so deep-link logins are not immediately bounced through
+	prompt=none.
 	"""
 
 	def process_request(self, request):
