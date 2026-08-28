@@ -1,3 +1,4 @@
+{# 2026-08-28: Unntak row edit form – column layout when Rediger is open. #}
 {# 2026-08-10: Omfangsfigur uses full card width; click opens image in new tab. #}
 {# 2026-08-23: Load risiko_api.js before editor for shared session handling. #}
 {# 2026-07-07: Report link always visible – no longer limited to godkjent status. #}
@@ -683,6 +684,25 @@
 	padding: 0.1rem 0.4rem;
 	font-size: 0.75rem;
 	line-height: 1.3;
+}
+.risiko-unntak-row-display {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.risiko-unntak-row.risiko-unntak-row-editing {
+	flex-direction: column;
+	align-items: stretch;
+}
+.risiko-unntak-edit-form {
+	width: 100%;
+	padding-top: 0.35rem;
+}
+.risiko-unntak-edit-form-actions {
+	display: flex;
+	gap: 0.25rem;
 }
 .risiko-action-desc-row {
 	display: flex;
