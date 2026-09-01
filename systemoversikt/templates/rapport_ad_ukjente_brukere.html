@@ -1,6 +1,8 @@
 {% extends "sikkerhet_index.html" %}
 {% load humanize %}
 {% load static %}
+{# Change log: #}
+{# 2026-09-01: Describe the actual exclusion query (standard OUs, enabled AD accounts only). #}
 
 {% block ekstrameny_business_service %}
 {% endblock ekstrameny_business_service %}
@@ -13,7 +15,30 @@
 
 {% include "includes/integrasjon_freshness_banner.html" with label="AD-brukere ble sist synkronisert" %}
 
-<p>Her vises alle kontoer som ikke er plassert i OU-er for vanlige brukere, eksterne brukere og servicekontoer.</p>
+<p>
+	Rapporten viser <strong>aktive</strong> AD-kontoer som fortsatt synkroniseres hit
+	og som <em>ikke</em> ligger i de vanlige, automatisk styrte OU-ene under <code>OU=OK</code>.
+	Formålet er å fange opp kontoer som sannsynligvis er opprettet manuelt, utenom
+	standard brukerprovisjonering — for eksempel i <code>CN=Users</code> eller i andre OU-er.
+</p>
+<p>
+	En konto utelates hvis distinguished name inneholder én av disse stiene
+	(underliggende OU-er telles også med, for eksempel DRIFT under Brukere):
+</p>
+<ul>
+	<li><code>OU=Brukere,OU=OK</code> — interne brukere</li>
+	<li><code>OU=Eksterne brukere,OU=OK</code> — eksterne brukere</li>
+	<li><code>OU=Servicekontoer,OU=OK</code> — servicekontoer</li>
+	<li><code>OU=Testkontoer,OU=OK</code> — testkontoer</li>
+	<li><code>OU=Ressurser,OU=OK</code> — ressurskontoer</li>
+	<li><code>OU=Kontakt,OU=OK</code> — kontaktkontoer</li>
+	<li><code>CN=Monitoring Mailboxes</code> — overvåkningspostbokser</li>
+</ul>
+<p>
+	Deaktiverte kontoer og kontoer som ikke lenger finnes i AD vises ikke.
+	Dette er ikke det samme som <a href="{% url 'rapport_ukjente_identer' %}">kontoer uten virksomhetsknytning</a>,
+	som filtrerer på manglende virksomhet i stedet for OU-plassering.
+</p>
 
 <hr>
 
