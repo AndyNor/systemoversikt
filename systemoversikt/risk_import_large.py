@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-09-01: Begrunnelse only for Q/U rows with R/V evaluation; set konsekvenstype/sannsynlighetstype from those.
+# 2026-09-01: Append verdier to konsekvensbegrunnelse and trussel to sannsynlighetsbegrunnelse (not uønsket hendelse).
 # 2026-09-01: Map Excel KIT paragraph (Konfidensialitet/Integritet/Tilgjengelighet) to K, I, T tags (varchar 50).
 # 2026-09-01: Detect first numeric RiskID row; skip empty/header blocks (newer xlsm mal starts at row 6).
 # 2026-09-01: Resolve Risikovurdering columns from headers (Y=tiltak, S/W levels) with letter fallback for old xlsx.
@@ -405,13 +405,7 @@ def _extract_forside_beskrivelse(workbook):
 	return '\n'.join(lines).strip()
 
 
-def _compose_uonsket_hendelse(scenario_text, verdier, trussel, trussel_level_text,
-		verdi_lookup, trussel_lookup, warnings, risk_id):
-	parts = []
-	base = _str_val(scenario_text)
-	if base:
-		parts.append(base)
-
+def _format_verdier_line(verdier, verdi_lookup, warnings, risk_id):
 	verdi_bits = []
 	for name in verdier:
 		level = verdi_lookup.get(name)
@@ -422,20 +416,31 @@ def _compose_uonsket_hendelse(scenario_text, verdier, trussel, trussel_level_tex
 			verdi_bits.append(name)
 			if name not in verdi_lookup:
 				warnings.append('%s: ukjent verdi %r i Verdivurdering' % (risk_id, name))
-	if verdi_bits:
-		parts.append('Berører verdi(er): %s.' % ', '.join(verdi_bits))
+	if not verdi_bits:
+		return ''
+	return 'Berører verdi(er): %s.' % ', '.join(verdi_bits)
 
+
+def _format_trussel_line(trussel, trussel_level_text, trussel_lookup):
 	trussel_name = _str_val(trussel)
-	if trussel_name:
-		level_text = _str_val(trussel_level_text)
-		if not level_text:
-			level_text = trussel_lookup.get(trussel_name, '')
-		if level_text:
-			parts.append('Trussel: %s (%s).' % (trussel_name, level_text.lower()))
-		else:
-			parts.append('Trussel: %s.' % trussel_name)
+	if not trussel_name:
+		return ''
+	level_text = _str_val(trussel_level_text)
+	if not level_text:
+		level_text = trussel_lookup.get(trussel_name, '')
+	if level_text:
+		return 'Trussel: %s (%s).' % (trussel_name, level_text.lower())
+	return 'Trussel: %s.' % trussel_name
 
-	return ' '.join(parts).strip()
+
+def _append_begrunnelse(base, extra):
+	base = (base or '').strip()
+	extra = (extra or '').strip()
+	if not extra:
+		return base
+	if not base:
+		return extra
+	return '%s\n%s' % (base, extra)
 
 
 def _risk_id_from_block(risk_num):
@@ -517,25 +522,25 @@ def import_large_risk_workbook(workbook, user, source_filename):
 					risk_id, _cell_val(ws, start_row, 'sannsynlighet', colmap)))
 
 			verdier = _collect_verdier(ws, start_row, colmap)
-
-			uonsket_hendelse = _compose_uonsket_hendelse(
-				scenario_text,
-				verdier,
-				_cell_val(ws, start_row, 'trussel', colmap),
-				_cell_val(ws, start_row, 'trusselnivaa', colmap),
-				verdi_lookup,
-				trussel_lookup,
-				warnings,
-				risk_id,
-			)
-
 			sarbarheter = _collect_sarbarheter(ws, start_row, colmap)
 			kons_begrunnelse, kons_dims = _collect_konsekvens_begrunnelse(ws, start_row, colmap)
 			sanns_begrunnelse, sanns_dims = _collect_sanns_begrunnelse(ws, start_row, colmap)
+			kons_begrunnelse = _append_begrunnelse(
+				kons_begrunnelse,
+				_format_verdier_line(verdier, verdi_lookup, warnings, risk_id),
+			)
+			sanns_begrunnelse = _append_begrunnelse(
+				sanns_begrunnelse,
+				_format_trussel_line(
+					_cell_val(ws, start_row, 'trussel', colmap),
+					_cell_val(ws, start_row, 'trusselnivaa', colmap),
+					trussel_lookup,
+				),
+			)
 			scenario = RiskScenario.objects.create(
 				scope=scope,
 				risk_id=risk_id,
-				uonsket_hendelse=uonsket_hendelse,
+				uonsket_hendelse=scenario_text,
 				kit_dimensjoner=_kit_dimensjoner_from_excel(
 					_cell_val(ws, start_row, 'kit', colmap)),
 				arsaker_svakheter='\n'.join(sarbarheter),
