@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-01: Sannsynlighetsbegrunnelse from U/V pairs (not T question labels), same pattern as Q/R.
 # 2026-09-01: Map Excel KIT paragraph (Konfidensialitet/Integritet/Tilgjengelighet) to K, I, T tags (varchar 50).
 # 2026-09-01: Detect first numeric RiskID row; skip empty/header blocks (newer xlsm mal starts at row 6).
 # 2026-09-01: Resolve Risikovurdering columns from headers (Y=tiltak, S/W levels) with letter fallback for old xlsx.
-# 2026-09-01: Collect Q/R consequence and T sannsynlighet begrunnelser across each 10-row block.
+# 2026-09-01: Collect Q/R consequence and U/V sannsynlighet begrunnelser across each 10-row block.
 # 2026-07-08: Forside values may appear on rows below header (not only same row).
 # 2026-07-08: Forside scan bounded to rows 1–33 and columns C–P.
 # 2026-07-08: Collect verdi(er) from all 10 block rows (D may be on any line).
@@ -176,6 +177,20 @@ def _resolve_columns(ws):
 	q_col = colmap.get('kons_begrunnelse')
 	if q_col and colmap.get('konsekvens') != q_col + 1:
 		colmap['kons_detalj'] = q_col + 1
+	# Newer mal: T/U/V share sannsynlighet-description header; T is question labels, U/V are dimension+text.
+	s_col = colmap.get('sanns_begrunnelse')
+	if s_col:
+		dim_col = s_col + 1
+		detalj_col = s_col + 2
+		level_col = colmap.get('sannsynlighet')
+		other_cols = {col for key, col in colmap.items() if key != 'sanns_begrunnelse'}
+		if (
+			level_col not in (s_col, dim_col, detalj_col)
+			and dim_col not in other_cols
+			and detalj_col not in other_cols
+		):
+			colmap['sanns_begrunnelse'] = dim_col
+			colmap['sanns_detalj'] = detalj_col
 	return colmap
 
 
@@ -214,15 +229,15 @@ def _collect_verdier(ws, start_row, colmap):
 	return names
 
 
-def _collect_konsekvens_begrunnelse(ws, start_row, colmap):
-	"""Join Q (dimension) and optional R (text) across the 10-row block."""
+def _collect_paired_begrunnelse(ws, start_row, colmap, dim_key, detalj_key):
+	"""Join dimension + optional detail text across the 10-row block (Q/R or U/V)."""
 	lines = []
-	has_detalj = 'kons_detalj' in colmap
+	has_detalj = detalj_key in colmap
 	for offset in range(BLOCK_SIZE):
-		dim = _str_val(_cell_val(ws, start_row + offset, 'kons_begrunnelse', colmap))
+		dim = _str_val(_cell_val(ws, start_row + offset, dim_key, colmap))
 		detalj = ''
 		if has_detalj:
-			detalj = _str_val(_cell_val(ws, start_row + offset, 'kons_detalj', colmap))
+			detalj = _str_val(_cell_val(ws, start_row + offset, detalj_key, colmap))
 		if dim and detalj:
 			lines.append('%s: %s' % (dim, detalj))
 		elif dim:
@@ -232,14 +247,14 @@ def _collect_konsekvens_begrunnelse(ws, start_row, colmap):
 	return '\n'.join(lines)
 
 
+def _collect_konsekvens_begrunnelse(ws, start_row, colmap):
+	"""Join Q (dimension) and optional R (text) across the 10-row block."""
+	return _collect_paired_begrunnelse(ws, start_row, colmap, 'kons_begrunnelse', 'kons_detalj')
+
+
 def _collect_sanns_begrunnelse(ws, start_row, colmap):
-	"""All non-empty sannsynlighetsbegrunnelse cells in the block."""
-	lines = []
-	for offset in range(BLOCK_SIZE):
-		text = _str_val(_cell_val(ws, start_row + offset, 'sanns_begrunnelse', colmap))
-		if text:
-			lines.append(text)
-	return '\n'.join(lines)
+	"""Join U (dimension) and optional V (text); T question labels are skipped via column map."""
+	return _collect_paired_begrunnelse(ws, start_row, colmap, 'sanns_begrunnelse', 'sanns_detalj')
 
 
 def _coerce_frist(value):
