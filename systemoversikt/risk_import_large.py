@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-01: Map Excel KIT paragraph (Konfidensialitet/Integritet/Tilgjengelighet) to K, I, T tags (varchar 50).
 # 2026-09-01: Detect first numeric RiskID row; skip empty/header blocks (newer xlsm mal starts at row 6).
 # 2026-09-01: Resolve Risikovurdering columns from headers (Y=tiltak, S/W levels) with letter fallback for old xlsx.
 # 2026-09-01: Collect Q/R consequence and T sannsynlighet begrunnelser across each 10-row block.
@@ -29,6 +30,12 @@ DATA_START_ROW = 5
 BLOCK_SIZE = 10
 _HEADER_ROWS = (4, 5)
 _HEADER_SKIP = frozenset({'riskid', 'scenariobeskrivelse'})
+_KIT_WORD_TO_CODE = (
+	('konfidensialitet', 'K'),
+	('integritet', 'I'),
+	('tilgjengelighet', 'T'),
+)
+_KIT_FIELD_MAX_LENGTH = 50
 
 _COL = {
 	'risk_id': column_index_from_string('B'),
@@ -79,6 +86,23 @@ def _str_val(value):
 	if value is None:
 		return ''
 	return str(value).strip()
+
+
+def _kit_dimensjoner_from_excel(text):
+	"""Fit stor-mal KIT prose into RiskScenario.kit_dimensjoner (K, I, T; max 50)."""
+	raw = _str_val(text)
+	if not raw:
+		return ''
+	folded = _fold_header(raw)
+	codes = []
+	for word, code in _KIT_WORD_TO_CODE:
+		if word in folded and code not in codes:
+			codes.append(code)
+	if codes:
+		return ', '.join(codes)
+	if len(raw) <= _KIT_FIELD_MAX_LENGTH:
+		return raw
+	return raw[:_KIT_FIELD_MAX_LENGTH]
 
 
 def _is_placeholder_tiltak_cell(text):
@@ -466,7 +490,8 @@ def import_large_risk_workbook(workbook, user, source_filename):
 				scope=scope,
 				risk_id=risk_id,
 				uonsket_hendelse=uonsket_hendelse,
-				kit_dimensjoner=_str_val(_cell_val(ws, start_row, 'kit', colmap)),
+				kit_dimensjoner=_kit_dimensjoner_from_excel(
+					_cell_val(ws, start_row, 'kit', colmap)),
 				arsaker_svakheter='\n'.join(sarbarheter),
 				konsekvens_nivaa=konsekvens,
 				sannsynlighet_nivaa=sannsynlighet,
