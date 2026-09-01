@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-01: Rename ukjente_identer search label to "Kontoer uten virksomhet" – matches the virksomhet=None query.
 # 2026-07-07: Risiko create/import nav search – view_riskscope only (no qualys fallback).
 # 2026-07-07: AD sikkerhetsrapporter nav search – view_qualysvuln (matches view access).
 # 2026-07-06: Risikosammenstilling nav search – framework aggregation layer.
@@ -93,7 +94,7 @@ NAV_PAGES = [
 	_entry('Device code-innlogginger', 'sikkerhet_device_code_logins', 'Sikkerhet', ['device code', 'devicecode'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Device code-innlogginger (sanntid)', 'sikkerhet_device_code_logins_sanntid', 'Sikkerhet', ['device code sanntid', 'devicecode live'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Varsling til virksomheter', 'sikkerhet_varsling_virksomheter', 'Sikkerhet', ['varsling virksomheter', 'csirt varsling']),
-	_entry('Kontoer utenfor OK', 'rapport_ukjente_identer', 'Sikkerhet', ['utenfor ok', 'ukjente identer'], permissions=['systemoversikt.view_qualysvuln']),
+	_entry('Kontoer uten virksomhet', 'rapport_ukjente_identer', 'Sikkerhet', ['uten virksomhet', 'ukjente identer', 'utenfor ok'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Kontoer med SPN', 'alle_spn', 'Sikkerhet', ['spn', 'service principal name'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Delegerte kontoer', 'rapport_trusted_delegation', 'Sikkerhet', ['delegerte kontoer', 'trusted delegation'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Manuelt opprettede brukere', 'rapport_ad_ukjente_brukere', 'Sikkerhet', ['manuelt opprettede', 'ukjente brukere'], permissions=['systemoversikt.view_qualysvuln']),
