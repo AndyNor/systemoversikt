@@ -1,6 +1,8 @@
 {% extends "sikkerhet_index.html" %}
 {% load humanize %}
 {% load static %}
+{# Change log: #}
+{# 2026-09-01: Describe the actual query (enabled accounts whose parent OU did not match a virksomhetsforkortelse). #}
 
 {% block ekstrameny_business_service %}
 {% endblock ekstrameny_business_service %}
@@ -13,9 +15,28 @@
 
 {% include "includes/integrasjon_freshness_banner.html" with label="AD-brukere ble sist synkronisert" %}
 
-<p>Dette er en rapport med oversikt over alle kontoer som ikke er knyttet til en virksomhet. Dette er kontoer som per design ikke skal opprettes, men som trolig henger igjen fra da domenet ble opprettet.</p>
+<p>
+	Rapporten viser <strong>aktive</strong> AD-kontoer (ikke deaktivert) der
+	profilen mangler virksomhet. Virksomhet settes automatisk ved AD-synkronisering
+	ut fra nærmeste OU i distinguished name — det andre leddet etter
+	<code>CN=...</code>. Navnet på den OU-en sammenlignes mot virksomhetenes
+	forkortelse. Matcher det, knyttes kontoen til virksomheten.
+</p>
+<p>
+	En typisk intern bruker har DN på formen
+	<code>CN=...,OU=&lt;forkortelse&gt;,OU=Brukere,OU=OK,...</code>
+	og får derfor virksomhet. Kontoer havner her når nærmeste OU
+	<em>ikke</em> matcher noen virksomhetsforkortelse — for eksempel kontoer
+	som ligger direkte i <code>OU=Brukere</code>, <code>CN=Users</code> eller
+	i andre OU-er som ikke er navngitt med en forkortelse.
+</p>
+<p>
+	Deaktiverte kontoer vises ikke. Dette filtrerer <em>ikke</em> på om kontoen
+	ligger utenfor <code>OU=OK</code>; det gjør
+	<a href="{% url 'rapport_ad_ukjente_brukere' %}">manuelt opprettede brukere</a>.
+</p>
 
-Det er {{ identer|length }} slike kontoer i domenet.
+<p>Det er {{ identer|length }} slike kontoer i domenet.</p>
 
 <table class="tablesorter excel">
 <thead>
