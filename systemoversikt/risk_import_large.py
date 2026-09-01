@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-09-01: Sannsynlighetsbegrunnelse from U/V pairs (not T question labels), same pattern as Q/R.
+# 2026-09-01: Begrunnelse only for Q/U rows with R/V evaluation; set konsekvenstype/sannsynlighetstype from those.
 # 2026-09-01: Map Excel KIT paragraph (Konfidensialitet/Integritet/Tilgjengelighet) to K, I, T tags (varchar 50).
 # 2026-09-01: Detect first numeric RiskID row; skip empty/header blocks (newer xlsm mal starts at row 6).
 # 2026-09-01: Resolve Risikovurdering columns from headers (Y=tiltak, S/W levels) with letter fallback for old xlsx.
@@ -230,30 +230,59 @@ def _collect_verdier(ws, start_row, colmap):
 
 
 def _collect_paired_begrunnelse(ws, start_row, colmap, dim_key, detalj_key):
-	"""Join dimension + optional detail text across the 10-row block (Q/R or U/V)."""
+	"""Join dimension + evaluation text. Skip dim-only rows when a detail column exists (R/V)."""
 	lines = []
+	filled_dims = []
 	has_detalj = detalj_key in colmap
 	for offset in range(BLOCK_SIZE):
 		dim = _str_val(_cell_val(ws, start_row + offset, dim_key, colmap))
 		detalj = ''
 		if has_detalj:
 			detalj = _str_val(_cell_val(ws, start_row + offset, detalj_key, colmap))
-		if dim and detalj:
-			lines.append('%s: %s' % (dim, detalj))
+		if has_detalj:
+			if not detalj:
+				continue
+			if dim:
+				lines.append('%s: %s' % (dim, detalj))
+				filled_dims.append(dim)
+			else:
+				lines.append(detalj)
 		elif dim:
 			lines.append(dim)
-		elif detalj:
-			lines.append(detalj)
-	return '\n'.join(lines)
+	return '\n'.join(lines), filled_dims
+
+
+def _slugs_from_excel_labels(labels, kind):
+	"""Map Excel dimension names to stored konsekvenstype/sannsynlighetstype slugs."""
+	criteria = get_active_criteria()
+	if kind == 'konsekvens':
+		items = criteria.konsekvenstyper
+		to_storage = criteria.konsekvenstype_to_storage
+	else:
+		items = criteria.sannsynlighetstyper
+		to_storage = criteria.sannsynlighetstype_to_storage
+	label_to_slug = {_fold_header(item['label']): item['slug'] for item in items}
+	slug_set = {item['slug'] for item in items}
+	slugs = []
+	seen = set()
+	for label in labels:
+		folded = _fold_header(label)
+		slug = label_to_slug.get(folded)
+		if slug is None and label in slug_set:
+			slug = label
+		if slug and slug not in seen:
+			seen.add(slug)
+			slugs.append(slug)
+	return to_storage(slugs)
 
 
 def _collect_konsekvens_begrunnelse(ws, start_row, colmap):
-	"""Join Q (dimension) and optional R (text) across the 10-row block."""
+	"""Join Q (dimension) and R (evaluation) for rows that have R text."""
 	return _collect_paired_begrunnelse(ws, start_row, colmap, 'kons_begrunnelse', 'kons_detalj')
 
 
 def _collect_sanns_begrunnelse(ws, start_row, colmap):
-	"""Join U (dimension) and optional V (text); T question labels are skipped via column map."""
+	"""Join U (dimension) and V (evaluation) for rows that have V text."""
 	return _collect_paired_begrunnelse(ws, start_row, colmap, 'sanns_begrunnelse', 'sanns_detalj')
 
 
@@ -501,6 +530,8 @@ def import_large_risk_workbook(workbook, user, source_filename):
 			)
 
 			sarbarheter = _collect_sarbarheter(ws, start_row, colmap)
+			kons_begrunnelse, kons_dims = _collect_konsekvens_begrunnelse(ws, start_row, colmap)
+			sanns_begrunnelse, sanns_dims = _collect_sanns_begrunnelse(ws, start_row, colmap)
 			scenario = RiskScenario.objects.create(
 				scope=scope,
 				risk_id=risk_id,
@@ -510,8 +541,10 @@ def import_large_risk_workbook(workbook, user, source_filename):
 				arsaker_svakheter='\n'.join(sarbarheter),
 				konsekvens_nivaa=konsekvens,
 				sannsynlighet_nivaa=sannsynlighet,
-				konsekvens_begrunnelse=_collect_konsekvens_begrunnelse(ws, start_row, colmap),
-				sannsynlighetsbegrunnelse=_collect_sanns_begrunnelse(ws, start_row, colmap),
+				konsekvens_begrunnelse=kons_begrunnelse,
+				sannsynlighetsbegrunnelse=sanns_begrunnelse,
+				konsekvenstyper=_slugs_from_excel_labels(kons_dims, 'konsekvens'),
+				sannsynlighetstyper=_slugs_from_excel_labels(sanns_dims, 'sannsynlighet'),
 				risikobehandling='',
 				konsekvens_etter=konsekvens_etter,
 				sannsynlighet_etter=sannsynlighet_etter,
