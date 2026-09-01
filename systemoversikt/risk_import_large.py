@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-01: Detect first numeric RiskID row; skip empty/header blocks (newer xlsm mal starts at row 6).
+# 2026-09-01: Resolve Risikovurdering columns from headers (Y=tiltak, S/W levels) with letter fallback for old xlsx.
+# 2026-09-01: Collect Q/R consequence and T sannsynlighet begrunnelser across each 10-row block.
 # 2026-07-08: Forside values may appear on rows below header (not only same row).
 # 2026-07-08: Forside scan bounded to rows 1–33 and columns C–P.
 # 2026-07-08: Collect verdi(er) from all 10 block rows (D may be on any line).
 # 2026-07-08: Large «risikovurderingsverktøy» Excel import – Risikovurdering 10-row blocks.
 
+import unicodedata
 from datetime import date, datetime
 
 from django.db import transaction
@@ -16,12 +20,15 @@ from systemoversikt.risk_import import (
 	ImportResult,
 	_coerce_level,
 	_is_placeholder_tiltak,
+	_normalize_header,
 	_title_from_filename,
 )
 from systemoversikt.risk_membership import create_risk_scope
 
 DATA_START_ROW = 5
 BLOCK_SIZE = 10
+_HEADER_ROWS = (4, 5)
+_HEADER_SKIP = frozenset({'riskid', 'scenariobeskrivelse'})
 
 _COL = {
 	'risk_id': column_index_from_string('B'),
@@ -57,8 +64,15 @@ _FORSIDE_VALUE_COL_END = column_index_from_string('P')
 _FORSIDE_VALUE_COLS = range(_FORSIDE_VALUE_COL_START, _FORSIDE_VALUE_COL_END + 1)
 
 
-def _cell_val(ws, row, col_key):
-	return ws.cell(row, _COL[col_key]).value
+def _fold_header(text):
+	normalized = unicodedata.normalize('NFKD', text)
+	ascii_text = normalized.encode('ascii', 'ignore').decode('ascii')
+	return ascii_text.lower().strip()
+
+
+def _cell_val(ws, row, col_key, colmap=None):
+	cols = colmap if colmap is not None else _COL
+	return ws.cell(row, cols[col_key]).value
 
 
 def _str_val(value):
@@ -68,28 +82,140 @@ def _str_val(value):
 
 
 def _is_placeholder_tiltak_cell(text):
-	"""Skip empty/xx-style stubs in O/W tiltak columns only."""
+	"""Skip empty/xx-style stubs in eksisterende/planlagte tiltak columns only."""
 	return _is_placeholder_tiltak(text)
 
 
-def _collect_sarbarheter(ws, start_row):
+def _parse_risk_num(value):
+	"""Return 1-based risk id integer, or None for headers/empty/non-numeric."""
+	if value is None or isinstance(value, bool):
+		return None
+	if isinstance(value, (int, float)):
+		n = int(value)
+		if n == value and n >= 1:
+			return n
+		return None
+	text = _str_val(value)
+	if not text or _fold_header(text) in _HEADER_SKIP:
+		return None
+	try:
+		n = int(float(text.replace(',', '.')))
+	except (TypeError, ValueError):
+		return None
+	if n >= 1:
+		return n
+	return None
+
+
+def _resolve_columns(ws):
+	"""Overlay header-based column indexes on the legacy letter map (old .xlsx fallback)."""
+	colmap = dict(_COL)
+	assigned = set()
+	max_col = max(ws.max_column or 1, 40)
+	for col in range(1, max_col + 1):
+		parts = []
+		for header_row in _HEADER_ROWS:
+			part = _normalize_header(ws.cell(header_row, col).value)
+			if part:
+				parts.append(part)
+		if not parts:
+			continue
+		folded = _fold_header(' '.join(parts))
+		if 'dummy' in folded:
+			continue
+		key = None
+		if 'risikoreduserende tiltak' in folded:
+			key = 'tiltak'
+		elif 'konsekvens etter' in folded:
+			key = 'konsekvens_etter'
+		elif 'sannsynlighet etter' in folded:
+			key = 'sannsynlighet_etter'
+		elif 'beskrivelse av konsekvens' in folded:
+			key = 'kons_begrunnelse'
+		elif 'beskrivelse av sannsynlighet' in folded:
+			key = 'sanns_begrunnelse'
+		elif folded.startswith('konsekvensniva'):
+			key = 'konsekvens'
+		elif 'sannsynlighetsniva' in folded:
+			key = 'sannsynlighet'
+		elif folded == 'ansvarlig':
+			key = 'ansvarlig'
+		elif folded.startswith('frist'):
+			key = 'frist'
+		elif 'eksisterende tiltak' in folded:
+			key = 'eks_tiltak'
+		if key and key not in assigned:
+			colmap[key] = col
+			assigned.add(key)
+
+	# Newer mal: Q/R share the consequence-description header; R is dimension text, not the level.
+	q_col = colmap.get('kons_begrunnelse')
+	if q_col and colmap.get('konsekvens') != q_col + 1:
+		colmap['kons_detalj'] = q_col + 1
+	return colmap
+
+
+def _find_data_start_row(ws, colmap):
+	"""First row with a numeric RiskID (row 6 on newer xlsm; row 5 on older xlsx)."""
+	risk_col = colmap['risk_id']
+	scenario_col = colmap['scenario']
+	scan_end = min(ws.max_row, DATA_START_ROW + BLOCK_SIZE * 2)
+	for row in range(DATA_START_ROW, scan_end + 1):
+		if _parse_risk_num(ws.cell(row, risk_col).value) is None:
+			continue
+		scenario = _fold_header(_str_val(ws.cell(row, scenario_col).value))
+		if scenario in _HEADER_SKIP:
+			continue
+		return row
+	return DATA_START_ROW
+
+
+def _collect_sarbarheter(ws, start_row, colmap):
 	"""All non-empty I-column strings in the block, one per line."""
 	lines = []
 	for offset in range(BLOCK_SIZE):
-		text = _str_val(_cell_val(ws, start_row + offset, 'sarbarhet'))
+		text = _str_val(_cell_val(ws, start_row + offset, 'sarbarhet', colmap))
 		if text:
 			lines.append(text)
 	return lines
 
 
-def _collect_verdier(ws, start_row):
+def _collect_verdier(ws, start_row, colmap):
 	"""All non-empty D-column verdi names in the block (any of the 10 rows)."""
 	names = []
 	for offset in range(BLOCK_SIZE):
-		name = _str_val(_cell_val(ws, start_row + offset, 'verdi'))
+		name = _str_val(_cell_val(ws, start_row + offset, 'verdi', colmap))
 		if name:
 			names.append(name)
 	return names
+
+
+def _collect_konsekvens_begrunnelse(ws, start_row, colmap):
+	"""Join Q (dimension) and optional R (text) across the 10-row block."""
+	lines = []
+	has_detalj = 'kons_detalj' in colmap
+	for offset in range(BLOCK_SIZE):
+		dim = _str_val(_cell_val(ws, start_row + offset, 'kons_begrunnelse', colmap))
+		detalj = ''
+		if has_detalj:
+			detalj = _str_val(_cell_val(ws, start_row + offset, 'kons_detalj', colmap))
+		if dim and detalj:
+			lines.append('%s: %s' % (dim, detalj))
+		elif dim:
+			lines.append(dim)
+		elif detalj:
+			lines.append(detalj)
+	return '\n'.join(lines)
+
+
+def _collect_sanns_begrunnelse(ws, start_row, colmap):
+	"""All non-empty sannsynlighetsbegrunnelse cells in the block."""
+	lines = []
+	for offset in range(BLOCK_SIZE):
+		text = _str_val(_cell_val(ws, start_row + offset, 'sanns_begrunnelse', colmap))
+		if text:
+			lines.append(text)
+	return '\n'.join(lines)
 
 
 def _coerce_frist(value):
@@ -262,6 +388,8 @@ def import_large_risk_workbook(workbook, user, source_filename):
 
 	warnings = []
 	ws = workbook['Risikovurdering']
+	colmap = _resolve_columns(ws)
+	data_start_row = _find_data_start_row(ws, colmap)
 	verdi_lookup = _build_verdi_lookup(workbook)
 	trussel_lookup = _build_trussel_lookup(workbook)
 	data_by_block = _parse_risikovurdering_data(workbook)
@@ -281,74 +409,69 @@ def import_large_risk_workbook(workbook, user, source_filename):
 		action_count = 0
 		rekkefolge = 0
 
-		for start_row in range(DATA_START_ROW, ws.max_row + 1, BLOCK_SIZE):
-			risk_num = _cell_val(ws, start_row, 'risk_id')
-			if risk_num is None or _str_val(risk_num) == '':
-				break
-			scenario_text = _str_val(_cell_val(ws, start_row, 'scenario'))
-			if not scenario_text:
-				break
+		for start_row in range(data_start_row, ws.max_row + 1, BLOCK_SIZE):
+			risk_num = _parse_risk_num(_cell_val(ws, start_row, 'risk_id', colmap))
+			if risk_num is None:
+				continue
+			scenario_text = _str_val(_cell_val(ws, start_row, 'scenario', colmap))
+			if not scenario_text or _fold_header(scenario_text) in _HEADER_SKIP:
+				continue
 			rekkefolge += 1
 			risk_id = _risk_id_from_block(risk_num)
-
-			try:
-				block_num = int(risk_num)
-			except (TypeError, ValueError):
-				block_num = rekkefolge
-			data_row = data_by_block.get(block_num, {})
+			data_row = data_by_block.get(risk_num, {})
 
 			konsekvens = _coerce_level(
-				_cell_val(ws, start_row, 'konsekvens'),
+				_cell_val(ws, start_row, 'konsekvens', colmap),
 				data_row.get('konsekvens'),
 				'konsekvens',
 			)
 			sannsynlighet = _coerce_level(
-				_cell_val(ws, start_row, 'sannsynlighet'),
+				_cell_val(ws, start_row, 'sannsynlighet', colmap),
 				data_row.get('sannsynlighet'),
 				'sannsynlighet',
 			)
 			konsekvens_etter = _coerce_level(
-				_cell_val(ws, start_row, 'konsekvens_etter'),
+				_cell_val(ws, start_row, 'konsekvens_etter', colmap),
 				data_row.get('konsekvens_etter'),
 				'konsekvens',
 			)
 			sannsynlighet_etter = _coerce_level(
-				_cell_val(ws, start_row, 'sannsynlighet_etter'),
+				_cell_val(ws, start_row, 'sannsynlighet_etter', colmap),
 				data_row.get('sannsynlighet_etter'),
 				'sannsynlighet',
 			)
 
-			if konsekvens is None and _str_val(_cell_val(ws, start_row, 'konsekvens')):
+			if konsekvens is None and _str_val(_cell_val(ws, start_row, 'konsekvens', colmap)):
 				warnings.append('%s: ukjent konsekvens %r' % (
-					risk_id, _cell_val(ws, start_row, 'konsekvens')))
-			if sannsynlighet is None and _str_val(_cell_val(ws, start_row, 'sannsynlighet')):
+					risk_id, _cell_val(ws, start_row, 'konsekvens', colmap)))
+			if sannsynlighet is None and _str_val(_cell_val(ws, start_row, 'sannsynlighet', colmap)):
 				warnings.append('%s: ukjent sannsynlighet %r' % (
-					risk_id, _cell_val(ws, start_row, 'sannsynlighet')))
+					risk_id, _cell_val(ws, start_row, 'sannsynlighet', colmap)))
 
-			verdier = _collect_verdier(ws, start_row)
+			verdier = _collect_verdier(ws, start_row, colmap)
 
 			uonsket_hendelse = _compose_uonsket_hendelse(
 				scenario_text,
 				verdier,
-				_cell_val(ws, start_row, 'trussel'),
-				_cell_val(ws, start_row, 'trusselnivaa'),
+				_cell_val(ws, start_row, 'trussel', colmap),
+				_cell_val(ws, start_row, 'trusselnivaa', colmap),
 				verdi_lookup,
 				trussel_lookup,
 				warnings,
 				risk_id,
 			)
 
-			sarbarheter = _collect_sarbarheter(ws, start_row)
+			sarbarheter = _collect_sarbarheter(ws, start_row, colmap)
 			scenario = RiskScenario.objects.create(
 				scope=scope,
 				risk_id=risk_id,
 				uonsket_hendelse=uonsket_hendelse,
-				kit_dimensjoner=_str_val(_cell_val(ws, start_row, 'kit')),
+				kit_dimensjoner=_str_val(_cell_val(ws, start_row, 'kit', colmap)),
 				arsaker_svakheter='\n'.join(sarbarheter),
 				konsekvens_nivaa=konsekvens,
 				sannsynlighet_nivaa=sannsynlighet,
-				konsekvens_begrunnelse=_str_val(_cell_val(ws, start_row, 'kons_begrunnelse')),
-				sannsynlighetsbegrunnelse=_str_val(_cell_val(ws, start_row, 'sanns_begrunnelse')),
+				konsekvens_begrunnelse=_collect_konsekvens_begrunnelse(ws, start_row, colmap),
+				sannsynlighetsbegrunnelse=_collect_sanns_begrunnelse(ws, start_row, colmap),
 				risikobehandling='',
 				konsekvens_etter=konsekvens_etter,
 				sannsynlighet_etter=sannsynlighet_etter,
@@ -358,7 +481,7 @@ def import_large_risk_workbook(workbook, user, source_filename):
 
 			for offset in range(BLOCK_SIZE):
 				row = start_row + offset
-				eks = _cell_val(ws, row, 'eks_tiltak')
+				eks = _cell_val(ws, row, 'eks_tiltak', colmap)
 				if not _is_placeholder_tiltak_cell(eks):
 					text = _str_val(eks)
 					if text:
@@ -371,15 +494,15 @@ def import_large_risk_workbook(workbook, user, source_filename):
 						action.scenarios.add(scenario)
 						action_count += 1
 
-				plan = _cell_val(ws, row, 'tiltak')
+				plan = _cell_val(ws, row, 'tiltak', colmap)
 				if not _is_placeholder_tiltak_cell(plan):
 					text = _str_val(plan)
 					if text:
 						action = RiskAction.objects.create(
 							scope=scope,
 							beskrivelse=text,
-							ansvarlig=_str_val(_cell_val(ws, row, 'ansvarlig')),
-							frist=_coerce_frist(_cell_val(ws, row, 'frist')),
+							ansvarlig=_str_val(_cell_val(ws, row, 'ansvarlig', colmap)),
+							frist=_coerce_frist(_cell_val(ws, row, 'frist', colmap)),
 							kilde='parsed',
 							status='besluttet',
 						)
