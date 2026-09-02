@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-02: Reuse identical tiltak within an import (link scenarios) instead of creating duplicates.
 # 2026-09-01: Append verdier to konsekvensbegrunnelse and trussel to sannsynlighetsbegrunnelse (not uønsket hendelse).
 # 2026-09-01: Map Excel KIT paragraph (Konfidensialitet/Integritet/Tilgjengelighet) to K, I, T tags (varchar 50).
 # 2026-09-01: Detect first numeric RiskID row; skip empty/header blocks (newer xlsm mal starts at row 6).
@@ -451,6 +452,57 @@ def _risk_id_from_block(risk_num):
 	return 'R%s' % n
 
 
+def _tiltak_identity_key(beskrivelse, status):
+	"""Normalize tiltak text so copy-pasted duplicates match within one import."""
+	return (' '.join(_str_val(beskrivelse).split()).casefold(), status)
+
+
+def _get_or_link_tiltak(scope, cache, scenario, text, status, warnings, risk_id, ansvarlig='', frist=None):
+	"""
+	Create a scope tiltak, or link this scenario to one already imported with the same text+status.
+	First occurrence wins for beskrivelse; empty ansvarlig/frist may be filled from later rows.
+	Returns (action, created).
+	"""
+	key = _tiltak_identity_key(text, status)
+	action = cache.get(key)
+	if action is None:
+		action = RiskAction.objects.create(
+			scope=scope,
+			beskrivelse=text,
+			ansvarlig=ansvarlig or '',
+			frist=frist,
+			kilde='parsed',
+			status=status,
+		)
+		cache[key] = action
+		action.scenarios.add(scenario)
+		return action, True
+
+	action.scenarios.add(scenario)
+	updates = {}
+	if ansvarlig:
+		if not action.ansvarlig:
+			updates['ansvarlig'] = ansvarlig
+		elif action.ansvarlig != ansvarlig:
+			warnings.append(
+				'%s: identisk tiltak %r gjenbrukt; avvikende ansvarlig %r ignorert (beholder %r).'
+				% (risk_id, text[:80], ansvarlig, action.ansvarlig)
+			)
+	if frist:
+		if not action.frist:
+			updates['frist'] = frist
+		elif action.frist != frist:
+			warnings.append(
+				'%s: identisk tiltak %r gjenbrukt; avvikende frist %s ignorert (beholder %s).'
+				% (risk_id, text[:80], frist, action.frist)
+			)
+	if updates:
+		for field, value in updates.items():
+			setattr(action, field, value)
+		action.save(update_fields=list(updates.keys()))
+	return action, False
+
+
 def import_large_risk_workbook(workbook, user, source_filename):
 	"""
 	Import large «risikovurderingsverktøy» template (Risikovurdering sheet).
@@ -481,6 +533,7 @@ def import_large_risk_workbook(workbook, user, source_filename):
 		scenario_count = 0
 		action_count = 0
 		rekkefolge = 0
+		tiltak_cache = {}
 
 		for start_row in range(data_start_row, ws.max_row + 1, BLOCK_SIZE):
 			risk_num = _parse_risk_num(_cell_val(ws, start_row, 'risk_id', colmap))
@@ -563,29 +616,25 @@ def import_large_risk_workbook(workbook, user, source_filename):
 				if not _is_placeholder_tiltak_cell(eks):
 					text = _str_val(eks)
 					if text:
-						action = RiskAction.objects.create(
-							scope=scope,
-							beskrivelse=text,
-							kilde='parsed',
-							status='utfort',
+						_, created = _get_or_link_tiltak(
+							scope, tiltak_cache, scenario, text, 'utfort',
+							warnings, risk_id,
 						)
-						action.scenarios.add(scenario)
-						action_count += 1
+						if created:
+							action_count += 1
 
 				plan = _cell_val(ws, row, 'tiltak', colmap)
 				if not _is_placeholder_tiltak_cell(plan):
 					text = _str_val(plan)
 					if text:
-						action = RiskAction.objects.create(
-							scope=scope,
-							beskrivelse=text,
+						_, created = _get_or_link_tiltak(
+							scope, tiltak_cache, scenario, text, 'besluttet',
+							warnings, risk_id,
 							ansvarlig=_str_val(_cell_val(ws, row, 'ansvarlig', colmap)),
 							frist=_coerce_frist(_cell_val(ws, row, 'frist', colmap)),
-							kilde='parsed',
-							status='besluttet',
 						)
-						action.scenarios.add(scenario)
-						action_count += 1
+						if created:
+							action_count += 1
 
 	return ImportResult(
 		scope=scope,
