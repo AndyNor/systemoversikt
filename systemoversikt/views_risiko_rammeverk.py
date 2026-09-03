@@ -288,6 +288,7 @@ def risiko_sammenstilling_create(request):
 
 @login_required
 def risiko_sammenstilling_detail(request, pk):
+	# 2026-09-03: Live rollup omits scenarios from archived risk collections (history lives in snapshots).
 	sammenstilling = _sammenstilling_or_404(pk)
 	if not user_can_view_sammenstilling(request.user, sammenstilling):
 		return _render_risk_access_denied(request, 'sammenstilling_view', sammenstilling=sammenstilling)

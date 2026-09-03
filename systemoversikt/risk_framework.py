@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
-# 2026-09-03: Kartlegging and rollup omit scenarios from archived risk collections (history).
+# 2026-09-03: Live sammenstilling/kartlegging omit archived-collection scenarios; stored snapshots keep historical JSON.
 # 2026-08-13: kontinuerlig_oppfolging included in SAMMENSTILLING_ACTIVE_TILTAK_STATUSES for status display.
 # 2026-08-07: Category veiledende (Sett nivå) uses same score-weighted S×K aggregation as underkategori matrix.
 # 2026-08-07: Subcategory matrix – score-weighted S/K aggregation from linked scenarios (separate from veiledende worst-label).
@@ -99,13 +99,15 @@ def _worst_label(labels):
 	return best
 
 
-def scenarios_for_node(sammenstilling, node):
-	# 2026-09-03: Archived collections are history – do not count or display their scenarios.
-	return RiskScenario.objects.filter(
+def scenarios_for_node(sammenstilling, node, include_archived_collections=False):
+	# 2026-09-03: Archived collections are history on live views; stored snapshot JSON is unchanged.
+	qs = RiskScenario.objects.filter(
 		sammenstilling_links__sammenstilling=sammenstilling,
 		sammenstilling_links__framework_node=node,
-		scope__archived_at__isnull=True,
-	).select_related('scope', 'scope__virksomhet').distinct()
+	)
+	if not include_archived_collections:
+		qs = qs.filter(scope__archived_at__isnull=True)
+	return qs.select_related('scope', 'scope__virksomhet').distinct()
 
 
 def level_counts_for_scenarios(scenarios):
@@ -142,16 +144,20 @@ def _suggested_from_scenarios(scenarios):
 	}
 
 
-def suggested_level_for_node(sammenstilling, node):
-	return _suggested_from_scenarios(list(scenarios_for_node(sammenstilling, node)))
+def suggested_level_for_node(sammenstilling, node, include_archived_collections=False):
+	return _suggested_from_scenarios(list(
+		scenarios_for_node(sammenstilling, node, include_archived_collections=include_archived_collections),
+	))
 
 
-def suggested_level_for_category(sammenstilling, children):
+def suggested_level_for_category(sammenstilling, children, include_archived_collections=False):
 	# 2026-08-07: Same score-weighted S×K aggregation as underkategori matrix, over all linked scenarios in the category.
 	scenario_pks = set()
 	scenarios = []
 	for child in children:
-		for scenario in scenarios_for_node(sammenstilling, child):
+		for scenario in scenarios_for_node(
+			sammenstilling, child, include_archived_collections=include_archived_collections,
+		):
 			if scenario.pk in scenario_pks:
 				continue
 			scenario_pks.add(scenario.pk)
@@ -226,29 +232,37 @@ def assessment_for_node(sammenstilling, node, assessments_by_node=None):
 	}
 
 
-def effective_node_level(sammenstilling, node, assessments_by_node=None):
+def effective_node_level(sammenstilling, node, assessments_by_node=None, include_archived_collections=False):
 	manual = assessment_for_node(sammenstilling, node, assessments_by_node)
 	if manual and manual['manual_label']:
 		return manual['manual_label'], 'manual'
-	suggested = suggested_level_for_node(sammenstilling, node)
+	suggested = suggested_level_for_node(
+		sammenstilling, node, include_archived_collections=include_archived_collections,
+	)
 	if suggested['label']:
 		return suggested['label'], 'suggested'
 	return '', 'none'
 
 
-def effective_category_level(sammenstilling, category, children, assessments_by_node=None):
+def effective_category_level(
+	sammenstilling, category, children, assessments_by_node=None, include_archived_collections=False,
+):
 	manual = assessment_for_node(sammenstilling, category, assessments_by_node)
 	if manual and manual['manual_label']:
 		return manual['manual_label'], 'manual'
-	suggested = suggested_level_for_category(sammenstilling, children)
+	suggested = suggested_level_for_category(
+		sammenstilling, children, include_archived_collections=include_archived_collections,
+	)
 	if suggested['label']:
 		return suggested['label'], 'suggested'
 	return '', 'none'
 
 
-def build_node_payload(sammenstilling, node, assessments_by_node=None):
+def build_node_payload(sammenstilling, node, assessments_by_node=None, include_archived_collections=False):
 	# 2026-08-07: Load scenarios once for veiledende + score-weighted aggregated matrix placement.
-	scenarios = list(scenarios_for_node(sammenstilling, node))
+	scenarios = list(scenarios_for_node(
+		sammenstilling, node, include_archived_collections=include_archived_collections,
+	))
 	suggested = _suggested_from_scenarios(scenarios)
 	aggregated = aggregate_levels_from_scenarios(scenarios)
 	manual = assessment_for_node(sammenstilling, node, assessments_by_node)
@@ -282,7 +296,7 @@ def build_node_payload(sammenstilling, node, assessments_by_node=None):
 	}
 
 
-def build_rollup_tree(sammenstilling, include_archived=False):
+def build_rollup_tree(sammenstilling, include_archived=False, include_archived_collections=False):
 	framework = sammenstilling.framework
 	assessments = RiskSammenstillingNodeAssessment.objects.filter(
 		sammenstilling=sammenstilling,
@@ -301,13 +315,19 @@ def build_rollup_tree(sammenstilling, include_archived=False):
 	for category in categories:
 		children = children_by_parent.get(category.pk, [])
 		child_payloads = [
-			build_node_payload(sammenstilling, child, assessments_by_node)
+			build_node_payload(
+				sammenstilling, child, assessments_by_node,
+				include_archived_collections=include_archived_collections,
+			)
 			for child in children
 		]
-		cat_suggested = suggested_level_for_category(sammenstilling, children)
+		cat_suggested = suggested_level_for_category(
+			sammenstilling, children, include_archived_collections=include_archived_collections,
+		)
 		cat_manual = assessment_for_node(sammenstilling, category, assessments_by_node)
 		cat_effective_label, cat_effective_source = effective_category_level(
 			sammenstilling, category, children, assessments_by_node,
+			include_archived_collections=include_archived_collections,
 		)
 		mapped_count = sum(c['suggested']['scenario_count'] for c in child_payloads)
 		tree.append({
@@ -521,7 +541,9 @@ def build_scenario_matrix_for_scenarios(scenarios, risk_id_by_pk, criteria=None)
 	return grid
 
 
-def enrich_rollup_tree_detail(sammenstilling, rollup_tree, criteria=None):
+def enrich_rollup_tree_detail(
+	sammenstilling, rollup_tree, criteria=None, include_archived_collections=False,
+):
 	from collections import defaultdict
 
 	from systemoversikt.models import RiskAction, RiskSammenstillingScenarioLink
@@ -537,12 +559,14 @@ def enrich_rollup_tree_detail(sammenstilling, rollup_tree, criteria=None):
 			cat['scenario_matrix'] = build_scenario_matrix_for_scenarios([], {}, criteria)
 		return rollup_tree
 
-	# 2026-09-03: Skip links whose scenario belongs to an archived risk collection.
+	# 2026-09-03: Live sammenstilling drops archived collections; stored snapshot JSON keeps the mapped history.
 	links = RiskSammenstillingScenarioLink.objects.filter(
 		sammenstilling=sammenstilling,
 		framework_node_id__in=child_pks,
-		scenario__scope__archived_at__isnull=True,
-	).select_related(
+	)
+	if not include_archived_collections:
+		links = links.filter(scenario__scope__archived_at__isnull=True)
+	links = links.select_related(
 		'scenario', 'scenario__scope', 'scenario__scope__virksomhet',
 	)
 
@@ -550,6 +574,8 @@ def enrich_rollup_tree_detail(sammenstilling, rollup_tree, criteria=None):
 	all_scenarios = {}
 	for link in links:
 		scenario = link.scenario
+		if not include_archived_collections and scenario.scope.is_archived():
+			continue
 		all_scenarios.setdefault(scenario.pk, scenario)
 		scenarios_by_node[link.framework_node_id].append((link.pk, scenario))
 
@@ -558,12 +584,14 @@ def enrich_rollup_tree_detail(sammenstilling, rollup_tree, criteria=None):
 
 	actions = []
 	if all_scenarios:
+		action_qs = RiskAction.objects.filter(
+			scenarios__pk__in=all_scenarios.keys(),
+			status__in=SAMMENSTILLING_ACTIVE_TILTAK_STATUSES,
+		)
+		if not include_archived_collections:
+			action_qs = action_qs.filter(scope__archived_at__isnull=True)
 		actions = list(
-			RiskAction.objects.filter(
-				scenarios__pk__in=all_scenarios.keys(),
-				status__in=SAMMENSTILLING_ACTIVE_TILTAK_STATUSES,
-				scope__archived_at__isnull=True,
-			).select_related('scope').prefetch_related('scenarios').order_by('scope_id', 'pk').distinct(),
+			action_qs.select_related('scope').prefetch_related('scenarios').order_by('scope_id', 'pk').distinct(),
 		)
 	ansvarlig_lookup = build_ansvarlig_display_map([a.ansvarlig for a in actions if a.ansvarlig])
 
@@ -752,10 +780,12 @@ def kartlegging_scenario_rows(sammenstilling, scenarios):
 	return rows
 
 
-def mapped_scenarios_detail(sammenstilling, node):
+def mapped_scenarios_detail(sammenstilling, node, include_archived_collections=False):
 	from systemoversikt.risk_display import annotate_scenario_display_ids
 
-	scenarios = list(scenarios_for_node(sammenstilling, node))
+	scenarios = list(scenarios_for_node(
+		sammenstilling, node, include_archived_collections=include_archived_collections,
+	))
 	annotate_scenario_display_ids(scenarios)
 	rows = []
 	for scenario in scenarios:

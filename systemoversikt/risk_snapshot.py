@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-03: New sammenstilling captures follow live detail (omit archived-collection scenarios); stored JSON is unchanged.
 # 2026-08-13: Collection snapshots include tiltak unntak (json_schema_version 2).
 # 2026-08-07: Sammenstilling snapshots include subcategory matrix (score-weighted aggregation).
 # 2026-07-08: Keep all risk snapshot versions (disable age-bin pruning) and dedup ignoring `snapshot_generated_at` so nightly captures only save real changes.
@@ -392,6 +393,8 @@ def build_sammenstilling_snapshot_payload(sammenstilling, captured_at=None):
 	if captured_at is None:
 		captured_at = timezone.now()
 	criteria = get_active_criteria()
+	# 2026-09-03: New captures match live detail (archived collections omitted).
+	# Already stored snapshot JSON is never rewritten, so older versions keep the historical mapping.
 	rollup_tree = enrich_rollup_tree_detail(
 		sammenstilling,
 		build_rollup_tree(sammenstilling),

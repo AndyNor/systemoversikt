@@ -1,6 +1,7 @@
 {% extends "sikkerhet_index.html" %}
 {% load static %}
 {% load templatetags %}
+{# 2026-09-03: Live page omits scenarios from archived risk collections; snapshots keep historical mapping. #}
 {# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
 {# 2026-07-07: Reader-only banner when user has lesergruppe access but is not in eiergruppe. #}
 {# 2026-07-06: Unlink scenario from subcategory on detail page (kartlegging still creates links). #}
