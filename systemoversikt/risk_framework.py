@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-03: Kartlegging and rollup omit scenarios from archived risk collections (history).
 # 2026-08-13: kontinuerlig_oppfolging included in SAMMENSTILLING_ACTIVE_TILTAK_STATUSES for status display.
 # 2026-08-07: Category veiledende (Sett nivå) uses same score-weighted S×K aggregation as underkategori matrix.
 # 2026-08-07: Subcategory matrix – score-weighted S/K aggregation from linked scenarios (separate from veiledende worst-label).
@@ -99,9 +100,11 @@ def _worst_label(labels):
 
 
 def scenarios_for_node(sammenstilling, node):
+	# 2026-09-03: Archived collections are history – do not count or display their scenarios.
 	return RiskScenario.objects.filter(
 		sammenstilling_links__sammenstilling=sammenstilling,
 		sammenstilling_links__framework_node=node,
+		scope__archived_at__isnull=True,
 	).select_related('scope', 'scope__virksomhet').distinct()
 
 
@@ -534,9 +537,11 @@ def enrich_rollup_tree_detail(sammenstilling, rollup_tree, criteria=None):
 			cat['scenario_matrix'] = build_scenario_matrix_for_scenarios([], {}, criteria)
 		return rollup_tree
 
+	# 2026-09-03: Skip links whose scenario belongs to an archived risk collection.
 	links = RiskSammenstillingScenarioLink.objects.filter(
 		sammenstilling=sammenstilling,
 		framework_node_id__in=child_pks,
+		scenario__scope__archived_at__isnull=True,
 	).select_related(
 		'scenario', 'scenario__scope', 'scenario__scope__virksomhet',
 	)
@@ -557,6 +562,7 @@ def enrich_rollup_tree_detail(sammenstilling, rollup_tree, criteria=None):
 			RiskAction.objects.filter(
 				scenarios__pk__in=all_scenarios.keys(),
 				status__in=SAMMENSTILLING_ACTIVE_TILTAK_STATUSES,
+				scope__archived_at__isnull=True,
 			).select_related('scope').prefetch_related('scenarios').order_by('scope_id', 'pk').distinct(),
 		)
 	ansvarlig_lookup = build_ansvarlig_display_map([a.ansvarlig for a in actions if a.ansvarlig])
@@ -669,7 +675,10 @@ def _scenarios_with_scope_read_access_qs(user):
 
 
 def search_scenarios_for_mapping(sammenstilling, user, virksomhet_id=None, scope_id=None, unmapped_only=False, eskaleres_only=False, q=''):
-	qs = _scenarios_with_scope_read_access_qs(user).select_related(
+	# 2026-09-03: Kartlegging search excludes archived risk collections.
+	qs = _scenarios_with_scope_read_access_qs(user).filter(
+		scope__archived_at__isnull=True,
+	).select_related(
 		'scope', 'scope__virksomhet',
 	).order_by(
 		'scope__virksomhet__virksomhetsforkortelse',

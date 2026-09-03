@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-03: user_can_map_scenario – archived risk collections cannot be mapped (history).
 # 2026-07-08: `include_archived=1` shows archived sammenstillinger only on list pages.
 # 2026-07-07: reader_groups M2M – view access for group members; map still owner-group only.
 # 2026-07-07: Superuser can reassign sammenstilling owner_group from rammeverk list UI.
@@ -119,7 +120,11 @@ def groups_user_can_own_sammenstilling(user):
 def user_can_map_scenario(user, scenario):
 	if scenario is None or scenario.scope_id is None:
 		return False
-	return user_has_scope_read_access(user, scenario.scope)
+	scope = scenario.scope
+	# 2026-09-03: Archived collections are history – do not map their scenarios.
+	if scope.is_archived():
+		return False
+	return user_has_scope_read_access(user, scope)
 
 
 def get_active_sammenstilling(pk):
