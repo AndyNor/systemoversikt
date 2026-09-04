@@ -3797,6 +3797,14 @@ def cmdb_devicedetails(request, pk):
 		return render_access_denied(request, required_permissions)
 
 	device = get_object_or_404(CMDBdevice, pk=pk)
+	# 2026-09-04: Databases on this server – FK plus hostname match if the CMDB ref is missing.
+	if device.comp_name:
+		databaser = CMDBdatabase.objects.filter(
+			Q(db_server_modelref=device) | Q(db_server__iexact=device.comp_name)
+		).distinct()
+	else:
+		databaser = CMDBdatabase.objects.filter(db_server_modelref=device)
+	databaser = databaser.select_related("sub_name").order_by("db_database")
 
 	may_view_vulnerabilities = request.user.groups.filter(
 		name="/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER"
@@ -3828,6 +3836,7 @@ def cmdb_devicedetails(request, pk):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'device': device,
+		'databaser': databaser,
 		'may_view_vulnerabilities': may_view_vulnerabilities,
 		'integrasjonsstatus_qualys': integrasjonsstatus_qualys,
 		'integrasjonsstatus_azure': integrasjonsstatus_azure,
@@ -11471,7 +11480,7 @@ def cmdb_bss(request, pk):
 	cmdbdevices = CMDBdevice.objects.filter(service_offerings=cmdbref)
 	# 2026-09-04: Group databases by name so redundant copies on several servers are one row.
 	databaser = list(
-		CMDBdatabase.objects.filter(sub_name=cmdbref).select_related("db_server_modelref")
+		CMDBdatabase.objects.filter(sub_name=cmdbref).select_related("db_server_modelref", "sub_name")
 	)
 	databaser_gruppert = CMDBdatabase.grupper_etter_navn(databaser)
 

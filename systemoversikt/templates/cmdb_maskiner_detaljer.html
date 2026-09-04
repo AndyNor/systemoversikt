@@ -4,6 +4,7 @@
 {% load templatetags %}
 {# Change log: #}
 {# 2026-09-04: Database table merges same name across servers; count is unique names. #}
+{# 2026-09-04: Tjenestenavn column from comments (servicename @ servername). #}
 
 {% block ekstrameny_business_service %}
 {% endblock ekstrameny_business_service %}
@@ -222,6 +223,7 @@
 		<thead>
 		<tr>
 			<th width="25%">Database</th>
+			<th>Tjenestenavn</th>
 			<th>Used for</th>
 			<th>Version</th>
 			<th>File size (kb)</th>
@@ -237,6 +239,7 @@
 				<br><span class="small text-muted">{{ db.instance_count }} instanser</span>
 				{% endif %}
 			</td>
+			<td>{{ db.service_name|default:"-" }}</td>
 			<td>{{ db.db_used_for }}</td>
 			<td>{{ db.db_version }}</td>
 			<td>{{ db.db_u_datafilessizekb }} ({{ db.db_u_datafilessizekb|filesizeformat }})</td>

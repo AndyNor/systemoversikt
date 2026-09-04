@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-04: runtime_service_name from comments ("servicename @ servername") for database tables.
 # 2026-09-04: Unique database counts and grouped listing – HA copies of the same name on several servers count as one.
 # 2026-08-19: AzureApplication.appRoleAssignmentRequired – Entra Assignment required flag for the applications report.
 # 2026-08-13: RiskActionUnntak – coverage-gap exceptions on tiltak; status kontinuerlig_oppfolging.
@@ -3618,6 +3619,15 @@ class CMDBdatabase(models.Model):
 			return parts[1].strip()
 		return ""
 
+	def runtime_service_name(self):
+		# 2026-09-04: Service name from comments ("servicename @ servername").
+		if not self.db_comments:
+			return ""
+		parts = self.db_comments.split("@", 1)
+		if len(parts) == 2:
+			return parts[0].strip()
+		return ""
+
 	@staticmethod
 	def grupper_etter_navn(databaser):
 		# 2026-09-04: Merge rows that share a database name (redundant runtime copies).
@@ -3631,6 +3641,7 @@ class CMDBdatabase(models.Model):
 					"used_for": [],
 					"versions": [],
 					"sizes": [],
+					"service_names": [],
 					"servers": [],
 					"seen_servers": set(),
 					"db_operational_status": False,
@@ -3645,6 +3656,9 @@ class CMDBdatabase(models.Model):
 				g["used_for"].append(db.db_used_for)
 			if db.db_version and db.db_version not in g["versions"]:
 				g["versions"].append(db.db_version)
+			service_name = db.runtime_service_name()
+			if service_name and service_name not in g["service_names"]:
+				g["service_names"].append(service_name)
 			size = db.db_u_datafilessizekb or 0
 			if size not in g["sizes"]:
 				g["sizes"].append(size)
@@ -3665,6 +3679,7 @@ class CMDBdatabase(models.Model):
 				"db_used_for": ", ".join(g["used_for"]),
 				"db_version": ", ".join(g["versions"]),
 				"db_u_datafilessizekb": max(g["sizes"]) if g["sizes"] else 0,
+				"service_name": ", ".join(g["service_names"]),
 				"servers": sorted(g["servers"], key=lambda s: (s["name"] or "").lower()),
 				"db_operational_status": g["db_operational_status"],
 				"instance_count": g["instance_count"],

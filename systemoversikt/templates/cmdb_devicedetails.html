@@ -1,6 +1,8 @@
 {% extends "cmdb_index.html" %}
 {% load humanize %}
 {% load static %}
+{# Change log: #}
+{# 2026-09-04: Show databases installed on the server, including service name from comments. #}
 
 {% block ekstrameny_business_service %}
 {% endblock ekstrameny_business_service %}
@@ -130,6 +132,50 @@
 	</tr>
 </tbody>
 </table>
+{% endif %}
+
+{% if device.device_type == "SERVER" %}
+<h5>Databaser</h5>
+{# 2026-09-04: Installed databases for this host; tjenestenavn from comments (name @ server). #}
+{% if databaser %}
+<table class="table">
+<thead>
+	<tr>
+		<th>Database</th>
+		<th>Tjenestenavn</th>
+		<th>Service offering</th>
+		<th>Used for</th>
+		<th>Version</th>
+		<th>Størrelse</th>
+		<th>Status</th>
+	</tr>
+</thead>
+<tbody>
+	{% for db in databaser %}
+	<tr {% if not db.db_operational_status %} style="color: #d6d6d6;" {% endif %}>
+		<td>
+			<a href="{% url 'alle_databaser' %}?search_term={{ db.db_database }}">{{ db.db_database }}</a>
+		</td>
+		<td>{{ db.runtime_service_name|default:"-" }}</td>
+		<td>
+			{% if db.sub_name %}
+				{% url 'cmdb_bss' pk=db.sub_name.pk as url_db_bss %}
+				<a href="{{ url_db_bss }}">{{ db.sub_name.navn }}</a>
+			{% else %}
+				-
+			{% endif %}
+		</td>
+		<td>{{ db.db_used_for|default:"-" }}</td>
+		<td>{{ db.db_version|default:"-" }}</td>
+		<td>{{ db.db_u_datafilessizekb|filesizeformat }}</td>
+		<td>{{ db.db_status|default:"-" }}</td>
+	</tr>
+	{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>Ingen databaser registrert på denne serveren.</p>
+{% endif %}
 {% endif %}
 
 {% if device.device_type == "KLIENT" %}
