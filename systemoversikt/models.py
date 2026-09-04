@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-04: Unique database counts and grouped listing – HA copies of the same name on several servers count as one.
 # 2026-08-19: AzureApplication.appRoleAssignmentRequired – Entra Assignment required flag for the applications report.
 # 2026-08-13: RiskActionUnntak – coverage-gap exceptions on tiltak; status kontinuerlig_oppfolging.
 # 2026-07-09: RiskActivityLog – dedicated audit log for risk module workflow events.
@@ -2750,6 +2751,7 @@ class CMDBbs(models.Model):
 		return counter
 
 	def ant_databaser(self):
+		# 2026-09-04: Sums unique names per offering (CMDBRef.ant_databaser).
 		counter = 0
 		for bss in self.cmdb_bss_to_bs.all():
 			counter += bss.ant_databaser()
@@ -3004,7 +3006,13 @@ class CMDBRef(models.Model): # BSS
 		return CMDBdevice.objects.filter(service_offerings=self.pk).count()
 
 	def ant_databaser(self):
-		return CMDBdatabase.objects.filter(sub_name=self.pk, db_operational_status=True).count()
+		# 2026-09-04: Distinct names so redundant copies on several servers count as one database.
+		return (
+			CMDBdatabase.objects.filter(sub_name=self.pk, db_operational_status=True)
+			.values("db_database")
+			.distinct()
+			.count()
+		)
 
 	def is_bss(self):
 		if self.service_classification == "Business Service":
@@ -3598,6 +3606,70 @@ class CMDBdatabase(models.Model):
 
 	def __str__(self):
 		return u'%s' % (self.db_database)
+
+	def runtime_server_name(self):
+		# 2026-09-04: Hostname from db_server, else comments ("servicename @ servername").
+		if self.db_server:
+			return self.db_server.strip()
+		if not self.db_comments:
+			return ""
+		parts = self.db_comments.split("@", 1)
+		if len(parts) == 2:
+			return parts[1].strip()
+		return ""
+
+	@staticmethod
+	def grupper_etter_navn(databaser):
+		# 2026-09-04: Merge rows that share a database name (redundant runtime copies).
+		grouped = {}
+		order = []
+		for db in databaser:
+			name = db.db_database or ""
+			if name not in grouped:
+				grouped[name] = {
+					"db_database": name,
+					"used_for": [],
+					"versions": [],
+					"sizes": [],
+					"servers": [],
+					"seen_servers": set(),
+					"db_operational_status": False,
+					"instance_count": 0,
+				}
+				order.append(name)
+			g = grouped[name]
+			g["instance_count"] += 1
+			if db.db_operational_status:
+				g["db_operational_status"] = True
+			if db.db_used_for and db.db_used_for not in g["used_for"]:
+				g["used_for"].append(db.db_used_for)
+			if db.db_version and db.db_version not in g["versions"]:
+				g["versions"].append(db.db_version)
+			size = db.db_u_datafilessizekb or 0
+			if size not in g["sizes"]:
+				g["sizes"].append(size)
+			server_name = db.runtime_server_name()
+			server_key = server_name.lower() if server_name else "pk:%s" % db.pk
+			if server_key not in g["seen_servers"]:
+				g["seen_servers"].add(server_key)
+				device = db.db_server_modelref
+				g["servers"].append({
+					"name": server_name or "Ukjent server",
+					"pk": device.pk if device else None,
+				})
+		result = []
+		for name in order:
+			g = grouped[name]
+			result.append({
+				"db_database": g["db_database"],
+				"db_used_for": ", ".join(g["used_for"]),
+				"db_version": ", ".join(g["versions"]),
+				"db_u_datafilessizekb": max(g["sizes"]) if g["sizes"] else 0,
+				"servers": sorted(g["servers"], key=lambda s: (s["name"] or "").lower()),
+				"db_operational_status": g["db_operational_status"],
+				"instance_count": g["instance_count"],
+			})
+		return sorted(result, key=lambda row: (row["db_database"] or "").lower())
 
 	class Meta:
 		verbose_name_plural = "CMDB: Databaser"

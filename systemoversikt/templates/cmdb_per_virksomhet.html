@@ -53,7 +53,7 @@
 	<ul>
 		<li>{{ bs }} {% if bs.systemreferanse %}({{ bs.systemreferanse }}){% endif %}</li>
 		<ul>
-			<li>Ram: {{ bs.ram_allocated|filesizeformat }}, Disk: {{ bs.san_used|filesizeformat }}, Backup: {{ bs.backup_size|filesizeformat }} Servere: {{ bs.ant_devices }}, Databaser: {{ bs.ant_databaser }}</li>
+			<li>Ram: {{ bs.ram_allocated|filesizeformat }}, Disk: {{ bs.san_used|filesizeformat }}, Backup: {{ bs.backup_size|filesizeformat }} Servere: {{ bs.ant_devices }}, Databaser: {{ bs.ant_databaser }}{# 2026-09-04: Unique names #}</li>
 		</ul>
 	</ul>
 {% endfor %}

@@ -2,6 +2,8 @@
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
+{# Change log: #}
+{# 2026-09-04: Database table merges same name across servers; count is unique names. #}
 
 {% block ekstrameny_business_service %}
 {% endblock ekstrameny_business_service %}
@@ -61,7 +63,11 @@
 			</div>
 			<div class="col-sm">
 				<h6>Antall databaser</h6>
-				<h3>{{ databaser|length }}</h3>
+				{# 2026-09-04: Unique names; HA copies on several servers count as one. #}
+				<h3>{{ databaser_gruppert|length }}</h3>
+				{% if database_instans_antall > databaser_gruppert|length %}
+				<p class="small text-muted mb-0">{{ database_instans_antall }} instanser (redundans slått sammen)</p>
+				{% endif %}
 			</div>
 			<div class="col-sm">
 				<h6>Totalt allokert minne</h6>
@@ -210,6 +216,8 @@
 
 
 	<h6>Databaser</h6>
+	{# 2026-09-04: Same database name on several servers is one row; servers come from comments. #}
+	<p class="small text-muted">Samme databasenavn på flere servere (redundans) vises som én rad. Servernavn leses fra kommentarfeltet (tjenestenavn @ servernavn).</p>
 	<table class="table table-sm tablesorter">
 		<thead>
 		<tr>
@@ -217,15 +225,34 @@
 			<th>Used for</th>
 			<th>Version</th>
 			<th>File size (kb)</th>
+			<th>Kjører på</th>
 		</tr>
 		</thead>
 		<tbody>
-		{% for db in databaser %}
+		{% for db in databaser_gruppert %}
 		<tr {% if not db.db_operational_status %} style="color: #d6d6d6;" {% endif %}>
-			<td>{{ db.db_database }}</td>
+			<td>
+				{{ db.db_database }}
+				{% if db.instance_count > 1 %}
+				<br><span class="small text-muted">{{ db.instance_count }} instanser</span>
+				{% endif %}
+			</td>
 			<td>{{ db.db_used_for }}</td>
 			<td>{{ db.db_version }}</td>
 			<td>{{ db.db_u_datafilessizekb }} ({{ db.db_u_datafilessizekb|filesizeformat }})</td>
+			<td>
+				{% for server in db.servers %}
+					{% if server.pk %}
+						{% url 'cmdb_devicedetails' pk=server.pk as url_db_server %}
+						<a href="{{ url_db_server }}">{{ server.name }}</a>
+					{% else %}
+						{{ server.name }}
+					{% endif %}
+					{% if not forloop.last %}<br>{% endif %}
+				{% empty %}
+					-
+				{% endfor %}
+			</td>
 		</tr>
 		{% endfor %}
 		</tbody>

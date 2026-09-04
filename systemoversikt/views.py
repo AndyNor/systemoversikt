@@ -11314,8 +11314,9 @@ def cmdb_bs_detaljer(request):
 		),
 	).annotate(
 		server_count=Count("servers", distinct=True),
+		# 2026-09-04: Distinct database names so HA copies on several servers count as one.
 		database_count=Count(
-			"cmdbdatabase_sub_name",
+			"cmdbdatabase_sub_name__db_database",
 			filter=Q(cmdbdatabase_sub_name__db_operational_status=True),
 			distinct=True,
 		),
@@ -11468,7 +11469,11 @@ def cmdb_bss(request, pk):
 
 	cmdbref = CMDBRef.objects.get(pk=pk)
 	cmdbdevices = CMDBdevice.objects.filter(service_offerings=cmdbref)
-	databaser = CMDBdatabase.objects.filter(sub_name=cmdbref)
+	# 2026-09-04: Group databases by name so redundant copies on several servers are one row.
+	databaser = list(
+		CMDBdatabase.objects.filter(sub_name=cmdbref).select_related("db_server_modelref")
+	)
+	databaser_gruppert = CMDBdatabase.grupper_etter_navn(databaser)
 
 	vlan_lagt_til = []
 	def identifiser_vlan(network_ip_addresses):
@@ -11542,6 +11547,8 @@ def cmdb_bss(request, pk):
 		'cmdbref': [cmdbref],
 		'cmdbdevices': cmdbdevices,
 		'databaser': databaser,
+		'databaser_gruppert': databaser_gruppert,
+		'database_instans_antall': len(databaser),
 		'graf_data': graf_data,
 		'backup_inst': backup_inst,
 		'integrasjonsstatus': _integrasjonsstatus("sp_business_services"),
@@ -13065,7 +13072,8 @@ def cmdb_api(request): #API
 			serverliste.append(s)
 
 		line["servere"] = serverliste
-		line["antall_databaser"] = bss.ant_databaser()
+		# 2026-09-04: Instance count (not unique names) so billing API stays unchanged.
+		line["antall_databaser"] = bss.cmdbdatabase_sub_name.filter(db_operational_status=True).count()
 		databaseliste = []
 		for database in bss.cmdbdatabase_sub_name.filter(db_operational_status=True):
 			s = dict()
