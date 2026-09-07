@@ -1,4 +1,5 @@
 {% load static %}
+{# 2026-09-07: Dropped unused web app manifest – App Proxy redirected it to login.microsoftonline.com and CSP blocked it. #}
 
 	<!-- Favicon -->
 	<link rel="apple-touch-icon" sizes="57x57" href="{% static 'favicon/apple-icon-57x57.png' %}">
@@ -14,7 +15,6 @@
 	<link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon/favicon-32x32.png' %}">
 	<link rel="icon" type="image/png" sizes="96x96" href="{% static 'favicon/favicon-96x96.png' %}">
 	<link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon/favicon-16x16.png' %}">
-	<link rel="manifest" href="{% static 'favicon/manifest.json' %}">
 	<meta name="msapplication-TileColor" content="#ffffff">
 	<meta name="msapplication-TileImage" content="{% static 'favicon/ms-icon-144x144.png' %}">
 	<meta name="theme-color" content="#ffffff">
