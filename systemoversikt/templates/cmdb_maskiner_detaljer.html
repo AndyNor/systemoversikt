@@ -3,6 +3,7 @@
 {% load static %}
 {% load templatetags %}
 {# Change log: #}
+{# 2026-09-07: Billable instance marked with a cash icon beside the server link. #}
 {# 2026-09-04: Database table merges same name across servers; count is unique names. #}
 {# 2026-09-04: Tjenestenavn column from comments (servicename @ servername). #}
 
@@ -218,7 +219,7 @@
 
 	<h6>Databaser</h6>
 	{# 2026-09-04: Same database name on several servers is one row; servers come from comments. #}
-	<p class="small text-muted">Samme databasenavn på flere servere (redundans) vises som én rad. Servernavn leses fra kommentarfeltet (tjenestenavn @ servernavn).</p>
+	<p class="small text-muted">Samme databasenavn på flere servere (redundans) vises som én rad. Servernavn leses fra kommentarfeltet (tjenestenavn @ servernavn). {% bootstrap_icon 'cash' width='12px' height='12px' %} ved servernavn betyr at instansen er billable.</p>
 	<table class="table table-sm tablesorter">
 		<thead>
 		<tr>
@@ -250,6 +251,9 @@
 						<a href="{{ url_db_server }}">{{ server.name }}</a>
 					{% else %}
 						{{ server.name }}
+					{% endif %}
+					{% if server.billable %}
+						<span class="text-muted" title="Billable" aria-label="Billable">{% bootstrap_icon 'cash' width='12px' height='12px' %}</span>
 					{% endif %}
 					{% if not forloop.last %}<br>{% endif %}
 				{% empty %}

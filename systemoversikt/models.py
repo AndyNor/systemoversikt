@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-07: Grouped database server list includes per-instance billable for the CMDB offering table.
 # 2026-09-04: runtime_service_name from comments ("servicename @ servername") for database tables.
 # 2026-09-04: Unique database counts and grouped listing – HA copies of the same name on several servers count as one.
 # 2026-08-19: AzureApplication.appRoleAssignmentRequired – Entra Assignment required flag for the applications report.
@@ -3670,7 +3671,14 @@ class CMDBdatabase(models.Model):
 				g["servers"].append({
 					"name": server_name or "Ukjent server",
 					"pk": device.pk if device else None,
+					# 2026-09-07: Per-instance billable – shown next to the server link after grouping.
+					"billable": bool(db.billable),
 				})
+			elif db.billable:
+				for server in g["servers"]:
+					if (server["name"] or "").lower() == (server_name or "ukjent server").lower():
+						server["billable"] = True
+						break
 		result = []
 		for name in order:
 			g = grouped[name]

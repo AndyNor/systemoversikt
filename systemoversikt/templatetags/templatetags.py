@@ -1,3 +1,4 @@
+# 2026-09-07: cash icon – billable marker next to grouped database server instances.
 # 2026-08-07: url_hostname / url_source_label – compact external-resource link labels on system details.
 # 2026-07-09: risk_activity_event_label – human label for RiskActivityLog event_type codes.
 # 2026-07-08: livslop_status_label – strip leading number from LIVSLOEP_VALG display in summary badges.
@@ -259,6 +260,10 @@ _BOOTSTRAP_ICON_PATHS = {
 	),
 	'x-circle': (
 		'<path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M5.354 4.646a.5.5 0 0 0-.708.708L7.293 8l-2.647 2.646a.5.5 0 0 0 .708.708L8 8.707l2.646 2.647a.5.5 0 0 0 .708-.708L8.707 8l2.647-2.646a.5.5 0 0 0-.708-.708L8 7.293z"/>'
+	),
+	'cash': (
+		'<path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4"/>'
+		'<path d="M0 4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1zm3 0a2 2 0 0 1-2 2v4a2 2 0 0 1 2 2h10a2 2 0 0 1 2-2V6a2 2 0 0 1-2-2z"/>'
 	),
 }
 # CA overview icons share the same SVG helper (keys prefixed with ca-).
