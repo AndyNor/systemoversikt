@@ -1,9 +1,11 @@
+{# 2026-09-07: Load Chart.js 4 from static – drop jsDelivr CDN (CSP blocked source maps). #}
 {# 2026-07-02: Landing page for Qualys, Defender and compare reports. #}
 {# 2026-07-02: Qualys import chart – severities, total vulns, CMDB server count from audit log. #}
 {% extends "sikkerhet_index.html" %}
+{% load static %}
 
 {% block ekstrajavascript %}
-	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'chart.js@4.5.1' %}" nonce="{{request.csp_nonce}}"></script>
 {% endblock ekstrajavascript %}
 
 {% block overskrift %}

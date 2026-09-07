@@ -7,8 +7,9 @@
 {% endblock overskrift %}
 
 {% block ekstrajavascript %}
-	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
-	<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels" nonce="{{request.csp_nonce}}"></script>
+	{# 2026-09-07: Load Chart.js 4 and datalabels from static – drop jsDelivr CDN (CSP blocked source maps). #}
+	<script src="{% static 'chart.js@4.5.1' %}" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'chartjs-plugin-datalabels@2.2.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script type="text/javascript" nonce="{{request.csp_nonce}}">
 		Chart.register(ChartDataLabels);
 	</script>
