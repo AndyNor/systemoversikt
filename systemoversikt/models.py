@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-07: Profile.virksomhet_forkortelse is a property so /virksomhet/min/ (and similar redirects) can resolve the user's virksomhet.
 # 2026-09-07: Grouped database server list includes per-instance billable for the CMDB offering table.
 # 2026-09-04: runtime_service_name from comments ("servicename @ servername") for database tables.
 # 2026-09-04: Unique database counts and grouped listing – HA copies of the same name on several servers count as one.
@@ -2168,7 +2169,9 @@ class Profile(models.Model):
 		)
 	# med vilje er det ikke HistoricalRecords() på denne
 
+	@property
 	def virksomhet_forkortelse(self):
+		# 2026-09-07: Property (not method) – views read this as an attribute; without @property every lookup failed.
 		try:
 			return self.virksomhet.virksomhetsforkortelse
 		except:
