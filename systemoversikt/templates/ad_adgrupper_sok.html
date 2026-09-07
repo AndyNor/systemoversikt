@@ -1,15 +1,11 @@
+{# 2026-09-07: Drop unused Chart.js CDN – DevTools source-map fetch was blocked by CSP. #}
 {% extends "brukere_index.html" %}
 {% load humanize %}
-{% load static %}
 {% load l10n %}
 
 {% block overskrift %}
 	Tilgangsgrupper i Active Directory
 {% endblock overskrift %}
-
-{% block ekstrajavascript %}
-	<script src="https://cdn.jsdelivr.net/npm/chart.js" nonce="{{request.csp_nonce}}"></script>
-{% endblock ekstrajavascript %}
 
 
 {% block hovedinnhold %}
