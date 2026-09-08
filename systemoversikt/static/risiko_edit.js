@@ -1,4 +1,5 @@
 // Change log:
+// 2026-09-08: Guard captureScopeMetaSnapshot when title field missing; cache-bust via template.
 // 2026-09-08: Unused systems (livsløp 6–7) – status in search labels; strikethrough in chips/table.
 // 2026-09-08: Drop client sist_revidert on scope save – date is set server-side on status change.
 // 2026-08-28: Edit unntak beskrivelse/begrunnelse/gyldig_til in scenario modal (explicit save).
@@ -2011,9 +2012,13 @@
     }
 
     function captureScopeMetaSnapshot() {
+      const titleEl = document.getElementById('risiko-scope-title');
       const statusEl = document.getElementById('risiko-scope-status-select');
+      if (!titleEl) {
+        return;
+      }
       scopeMetaSnapshot = {
-        title: document.getElementById('risiko-scope-title').value,
+        title: titleEl.value,
         beskrivelse: currentOmfangBeskrivelse(),
         status: statusEl ? statusEl.value : (config.scopeStatus || 'forsteutkast'),
       };
@@ -2021,7 +2026,10 @@
 
     function restoreScopeMetaSnapshot() {
       if (!scopeMetaSnapshot) return;
-      document.getElementById('risiko-scope-title').value = scopeMetaSnapshot.title;
+      const titleEl = document.getElementById('risiko-scope-title');
+      if (titleEl) {
+        titleEl.value = scopeMetaSnapshot.title;
+      }
       syncOmfangBeskrivelseFields(scopeMetaSnapshot.beskrivelse);
       const statusEl = document.getElementById('risiko-scope-status-select');
       if (statusEl && scopeMetaSnapshot.status) {

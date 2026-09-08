@@ -957,6 +957,7 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 </style>
 {% if can_edit_scope or can_change_locked_status %}
 <script src="{% static 'risiko_api.js' %}" nonce="{{request.csp_nonce}}"></script>
-<script src="{% static 'risiko_edit.js' %}" nonce="{{request.csp_nonce}}"></script>
+{# 2026-09-08: Cache-bust risiko_edit.js after removing sist_revidert input. #}
+<script src="{% static 'risiko_edit.js' %}?v=20260908-sist-revidert" nonce="{{request.csp_nonce}}"></script>
 {% endif %}
 {% endblock ekstrajavascript %}
