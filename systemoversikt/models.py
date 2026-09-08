@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-08: System.er_ute_av_bruk – livsløp 6–7 (unused / decommissioned) for risk UI labels and strikethrough.
 # 2026-09-07: Profile.virksomhet_forkortelse is a property so /virksomhet/min/ (and similar redirects) can resolve the user's virksomhet.
 # 2026-09-07: Grouped database server list includes per-instance billable for the CMDB offering table.
 # 2026-09-04: runtime_service_name from comments ("servicename @ servername") for database tables.
@@ -4710,6 +4711,9 @@ LIVSLOEP_VALG = (
 	(8, '8 ❓ Ukjent'),
 )
 
+# Livsløp 6–7: no longer in use (still selectable). Status 1 is "not yet in use" (see er_ibruk).
+LIVSLOP_UTE_AV_BRUK = (6, 7)
+
 SELVBETJENING_VALG = (
 	(1, 'Ja'),
 	(2, 'Nei'),
@@ -6262,6 +6266,10 @@ class System(models.Model):
 		if self.livslop_status in [1,6,7]:
 			return False
 		return True
+
+	def er_ute_av_bruk(self):
+		# 2026-09-08: Livsløp 6 (available but unused) and 7 (fully decommissioned).
+		return self.livslop_status in LIVSLOP_UTE_AV_BRUK
 
 	def color(self):
 		return SYSTEM_COLORS[self.drift_color_segment()]

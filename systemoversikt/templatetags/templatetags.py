@@ -1,3 +1,4 @@
+# 2026-09-08: risiko_system_link – strikethrough unused systems (livsløp 6–7) on risk pages.
 # 2026-09-07: cash icon – billable marker next to grouped database server instances.
 # 2026-08-07: url_hostname / url_source_label – compact external-resource link labels on system details.
 # 2026-07-09: risk_activity_event_label – human label for RiskActivityLog event_type codes.
@@ -732,6 +733,58 @@ def risiko_sannsynlighetstype_tags(sannsynlighetstyper):
 			tag['label'],
 		))
 	return mark_safe(' '.join(str(part) for part in parts))
+
+
+def _risiko_system_ute_av_bruk(system):
+	from systemoversikt.models import LIVSLOP_UTE_AV_BRUK
+	if system is None:
+		return False
+	if isinstance(system, dict):
+		if 'ute_av_bruk' in system:
+			return bool(system.get('ute_av_bruk'))
+		return system.get('livslop_status') in LIVSLOP_UTE_AV_BRUK
+	if hasattr(system, 'er_ute_av_bruk'):
+		return bool(system.er_ute_av_bruk())
+	return getattr(system, 'livslop_status', None) in LIVSLOP_UTE_AV_BRUK
+
+
+def _risiko_system_name(system):
+	if isinstance(system, dict):
+		return system.get('systemnavn') or system.get('label') or ''
+	return getattr(system, 'systemnavn', None) or str(system)
+
+
+def _risiko_system_pk(system):
+	if isinstance(system, dict):
+		return system.get('pk') or system.get('id')
+	return getattr(system, 'pk', None)
+
+
+@register.simple_tag
+def risiko_system_link(system, stop_propagation=False, as_text=False):
+	# 2026-09-08: Line-through when livsløp is 6 or 7 (no longer in use).
+	from django.urls import reverse
+	name = _risiko_system_name(system)
+	ute = _risiko_system_ute_av_bruk(system)
+	style = 'text-decoration: line-through;' if ute else ''
+	if as_text or not _risiko_system_pk(system):
+		if style:
+			return format_html('<span style="{}">{}</span>', style, name)
+		return format_html('{}', name)
+	url = reverse('systemdetaljer', kwargs={'pk': _risiko_system_pk(system)})
+	if stop_propagation and style:
+		return format_html(
+			'<a href="{}" onclick="event.stopPropagation();" style="{}">{}</a>',
+			url, style, name,
+		)
+	if stop_propagation:
+		return format_html(
+			'<a href="{}" onclick="event.stopPropagation();">{}</a>',
+			url, name,
+		)
+	if style:
+		return format_html('<a href="{}" style="{}">{}</a>', url, style, name)
+	return format_html('<a href="{}">{}</a>', url, name)
 
 
 @register.filter

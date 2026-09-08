@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-08: Serialized systems include livsløp status so unused names can be struck through.
 # 2026-09-03: New sammenstilling captures follow live detail (omit archived-collection scenarios); stored JSON is unchanged.
 # 2026-08-13: Collection snapshots include tiltak unntak (json_schema_version 2).
 # 2026-08-07: Sammenstilling snapshots include subcategory matrix (score-weighted aggregation).
@@ -98,9 +99,12 @@ def _labels_dict_to_json(labels):
 
 
 def _serialize_system(system):
+	# 2026-09-08: livsløp 6–7 (ute_av_bruk) so snapshot reports can strikethrough unused names.
 	return {
 		'pk': system.pk,
 		'systemnavn': system.systemnavn or '',
+		'livslop_status': system.livslop_status,
+		'ute_av_bruk': system.er_ute_av_bruk(),
 	}
 
 

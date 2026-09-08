@@ -1,4 +1,5 @@
 {% extends "sikkerhet_index.html" %}
+{# 2026-09-08: Unused systems (livsløp 6–7) shown with strikethrough. #}
 {# 2026-07-06: Removed excel class – no table export on scenario detail. #}
 {% load templatetags %}
 
@@ -94,7 +95,7 @@
 {% if scenario.systemer.all %}
 <ul>
 {% for system in scenario.systemer.all %}
-	<li><a href="{% url 'systemdetaljer' pk=system.pk %}">{{ system }}</a></li>
+	<li>{% risiko_system_link system %}</li>
 {% endfor %}
 </ul>
 {% else %}

@@ -1,4 +1,5 @@
 // Change log:
+// 2026-09-08: Unused systems (livsløp 6–7) – status in search labels; strikethrough in chips/table.
 // 2026-09-08: Drop client sist_revidert on scope save – date is set server-side on status change.
 // 2026-08-28: Edit unntak beskrivelse/begrunnelse/gyldig_til in scenario modal (explicit save).
 // 2026-08-23: Use shared RisikoApi for fetch/session expiry; start session heartbeat on editor init.
@@ -62,6 +63,18 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function systemUteAvBruk(sys) {
+    return !!(sys && sys.ute_av_bruk);
+  }
+
+  function systemNameStyleAttr(sys) {
+    return systemUteAvBruk(sys) ? ' style="text-decoration: line-through;"' : '';
+  }
+
+  function systemSelectLabel(sys) {
+    return (sys && (sys.select_label || sys.label)) || '';
   }
 
   function urlWithId(template, id) {
@@ -868,7 +881,8 @@
       draftSystems.forEach(function (sys) {
         container.insertAdjacentHTML('beforeend',
           '<span class="badge badge-light mr-1 mb-1" data-id="' + sys.id + '">' +
-          '<a href="' + escapeHtml(sys.url) + '">' + escapeHtml(sys.label) + '</a> ' +
+          '<a href="' + escapeHtml(sys.url) + '"' + systemNameStyleAttr(sys) + '>' +
+          escapeHtml(sys.label) + '</a> ' +
           '<button type="button" class="btn btn-link btn-sm p-0 ml-1 risiko-system-fjern">&times;</button></span>'
         );
       });
@@ -1871,8 +1885,8 @@
         let systemsHtml = '-';
         if (scenario.systemer && scenario.systemer.length) {
           systemsHtml = scenario.systemer.map(function (sys) {
-            return '<a href="' + escapeHtml(sys.url) + '" onclick="event.stopPropagation();">' +
-              escapeHtml(sys.label) + '</a>';
+            return '<a href="' + escapeHtml(sys.url) + '" onclick="event.stopPropagation();"' +
+              systemNameStyleAttr(sys) + '>' + escapeHtml(sys.label) + '</a>';
           }).join(', ');
         }
         const kCss = scenario.konsekvens_css || levelCellClass(scenario.konsekvens_nivaa);
@@ -2348,7 +2362,7 @@
               const btn = document.createElement('button');
               btn.type = 'button';
               btn.className = 'btn btn-link btn-sm d-block text-left p-0';
-              btn.textContent = sys.label;
+              btn.textContent = systemSelectLabel(sys);
               btn.addEventListener('click', function () {
                 draftSystems.push(sys);
                 renderSystemChips();

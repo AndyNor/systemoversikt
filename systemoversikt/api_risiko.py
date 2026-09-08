@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-08: System payloads include ute_av_bruk and select_label (livsløp 6–7) for unused-system UI.
 # 2026-09-08: api_risiko_scope_update – set sist_revidert to today when status changes (no client override).
 # 2026-08-23: Unauthenticated risk JSON APIs return 401 session_expired (not 403).
 # 2026-08-13: Person search uses shared risk_user_search (AND terms, email + virksomhet rank).
@@ -29,6 +30,7 @@
 # 2026-06-24: JSON API for risk scenario/tiltak AJAX editor (owner-only).
 
 import json
+import re
 from datetime import date, datetime
 
 from django.core.exceptions import ValidationError
@@ -194,10 +196,22 @@ def _parse_date(value):
 
 
 def _system_to_dict(system):
+	# 2026-09-08: Unused livsløp (6–7) stay selectable; select_label appends status for search lists.
+	label = str(system)
+	ute_av_bruk = system.er_ute_av_bruk()
+	select_label = label
+	if ute_av_bruk:
+		status = system.get_livslop_status_display() or ''
+		status = re.sub(r'^\d+\s+', '', str(status)).strip()
+		if status:
+			select_label = '%s (%s)' % (label, status)
 	return {
 		'id': system.pk,
-		'label': str(system),
+		'label': label,
+		'select_label': select_label,
 		'url': reverse('systemdetaljer', kwargs={'pk': system.pk}),
+		'ute_av_bruk': ute_av_bruk,
+		'livslop_status': system.livslop_status,
 	}
 
 

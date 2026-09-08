@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
 {% load templatetags %}
+{# 2026-09-08: Unused systems (livsløp 6–7) shown with strikethrough. #}
 {# 2026-08-13: Unntak overview also shows linked scenarios and risk levels. #}
 {# 2026-08-13: Global unntak overview – coverage gaps on tiltak the user can read. #}
 
@@ -156,7 +157,7 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 	</td>
 	<td>
 		{% for system in row.unntak.systemer.all %}
-			<a href="{% url 'systemdetaljer' pk=system.pk %}">{{ system }}</a>{% if not forloop.last %}, {% endif %}
+			{% risiko_system_link system %}{% if not forloop.last %}, {% endif %}
 		{% empty %}–{% endfor %}
 	</td>
 </tr>

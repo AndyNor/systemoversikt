@@ -1,3 +1,4 @@
+{# 2026-09-08: Unused systems (livsløp 6–7) shown with strikethrough when snapshot has status. #}
 {# 2026-07-08: Snapshot v1 – collection rapport from precomputed JSON (no live model methods). #}
 {# 2026-07-08: Fix CSS visible text – wrap shared CSS include in <style> tag. #}
 {# 2026-07-08: Explain omfangsfigur is fetched from latest live report, not snapshot-time file. #}
@@ -79,7 +80,7 @@
 	{% if scope_systems %}
 	<ul class="mb-0">
 		{% for system in scope_systems %}
-		<li><span class="screen-only"><a href="{% url 'systemdetaljer' pk=system.pk %}">{{ system.systemnavn }}</a></span><span class="print-only">{{ system.systemnavn }}</span></li>
+		<li><span class="screen-only">{% risiko_system_link system %}</span><span class="print-only">{% risiko_system_link system as_text=True %}</span></li>
 		{% endfor %}
 	</ul>
 	{% else %}
@@ -252,7 +253,7 @@
 			<div class="risiko-rapport-scenario-field risiko-rapport-scenario-field--full">
 				<strong>Tilknyttede systemer:</strong>
 				{% for system in scenario.systemer %}
-					<span class="screen-only"><a href="{% url 'systemdetaljer' pk=system.pk %}">{{ system.systemnavn }}</a>{% if not forloop.last %}, {% endif %}</span><span class="print-only">{{ system.systemnavn }}{% if not forloop.last %}, {% endif %}</span>
+					<span class="screen-only">{% risiko_system_link system %}{% if not forloop.last %}, {% endif %}</span><span class="print-only">{% risiko_system_link system as_text=True %}{% if not forloop.last %}, {% endif %}</span>
 				{% empty %}–{% endfor %}
 			</div>
 		</div>

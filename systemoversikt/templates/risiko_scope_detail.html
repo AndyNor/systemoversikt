@@ -1,3 +1,4 @@
+{# 2026-09-08: Unused systems (livsløp 6–7) shown with strikethrough on collection and rapport. #}
 {# 2026-09-08: Removed editable Sist revidert – set automatically when status changes. #}
 {# 2026-08-28: Unntak row edit form – column layout when Rediger is open. #}
 {# 2026-08-10: Omfangsfigur uses full card width; click opens image in new tab. #}
@@ -278,7 +279,7 @@
 	<td>{{ scenario.uonsket_hendelse|truncatechars:80 }}</td>
 	<td class="risiko-systemer-cell">
 		{% for system in scenario.systemer.all %}
-			<a href="{% url 'systemdetaljer' pk=system.pk %}" onclick="event.stopPropagation();">{{ system.systemnavn }}</a>{% if not forloop.last %}, {% endif %}
+			{% risiko_system_link system stop_propagation=True %}{% if not forloop.last %}, {% endif %}
 		{% empty %}-{% endfor %}
 	</td>
 	<td class="risiko-kit-cell">{% risiko_kit_tags scenario.kit_dimensjoner %}</td>
