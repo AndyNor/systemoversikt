@@ -1,4 +1,5 @@
 // Change log:
+// 2026-09-08: Drop client sist_revidert on scope save – date is set server-side on status change.
 // 2026-08-28: Edit unntak beskrivelse/begrunnelse/gyldig_til in scenario modal (explicit save).
 // 2026-08-23: Use shared RisikoApi for fetch/session expiry; start session heartbeat on editor init.
 // 2026-08-10: Omfangsfigur preview full width; click opens file URL in new tab.
@@ -251,9 +252,6 @@
             ? document.getElementById('risiko-scope-title').value.trim()
             : document.getElementById('risiko-page-title').textContent.trim(),
           beskrivelse: currentOmfangBeskrivelse(),
-          sist_revidert: document.getElementById('risiko-scope-revidert')
-            ? document.getElementById('risiko-scope-revidert').value
-            : document.getElementById('risiko-scope-revidert-view').textContent.trim(),
           status: statusSelect ? statusSelect.value : (getConfig().scopeStatus || 'forsteutkast'),
         };
         if (statusEl) statusEl.textContent = 'Lagrer…';
@@ -422,7 +420,6 @@
     const msgEl = document.getElementById('risiko-unlock-status-msg');
     const titleEl = document.getElementById('risiko-unlock-title');
     const beskEl = document.getElementById('risiko-unlock-beskrivelse');
-    const revEl = document.getElementById('risiko-unlock-revidert');
     if (!saveBtn || !statusSelect) {
       return;
     }
@@ -444,7 +441,6 @@
       const payload = {
         title: titleEl ? titleEl.value.trim() : '',
         beskrivelse: beskEl ? beskEl.value : '',
-        sist_revidert: revEl ? revEl.value : '',
         status: newStatus,
       };
       setMsg('Lagrer…');
@@ -2005,7 +2001,6 @@
       scopeMetaSnapshot = {
         title: document.getElementById('risiko-scope-title').value,
         beskrivelse: currentOmfangBeskrivelse(),
-        sist_revidert: document.getElementById('risiko-scope-revidert').value,
         status: statusEl ? statusEl.value : (config.scopeStatus || 'forsteutkast'),
       };
     }
@@ -2014,7 +2009,6 @@
       if (!scopeMetaSnapshot) return;
       document.getElementById('risiko-scope-title').value = scopeMetaSnapshot.title;
       syncOmfangBeskrivelseFields(scopeMetaSnapshot.beskrivelse);
-      document.getElementById('risiko-scope-revidert').value = scopeMetaSnapshot.sist_revidert;
       const statusEl = document.getElementById('risiko-scope-status-select');
       if (statusEl && scopeMetaSnapshot.status) {
         statusEl.value = scopeMetaSnapshot.status;
@@ -2074,7 +2068,6 @@
       const payload = {
         title: document.getElementById('risiko-scope-title').value.trim(),
         beskrivelse: currentOmfangBeskrivelse(),
-        sist_revidert: document.getElementById('risiko-scope-revidert').value,
         status: statusEl ? statusEl.value : (config.scopeStatus || 'forsteutkast'),
       };
       setScopeStatus('Lagrer…');

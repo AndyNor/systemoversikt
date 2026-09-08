@@ -1,3 +1,4 @@
+{# 2026-09-08: Removed editable Sist revidert – set automatically when status changes. #}
 {# 2026-08-28: Unntak row edit form – column layout when Rediger is open. #}
 {# 2026-08-10: Omfangsfigur uses full card width; click opens image in new tab. #}
 {# 2026-08-23: Load risiko_api.js before editor for shared session handling. #}
@@ -107,7 +108,6 @@
 					<p class="small text-muted mb-2 mb-md-1">Samlingen er godkjent og skrivebeskyttet. Endre status for å åpne for redigering.</p>
 					<input type="hidden" id="risiko-unlock-title" value="{{ scope.title }}">
 					<input type="hidden" id="risiko-unlock-beskrivelse" value="{{ scope.beskrivelse }}">
-					<input type="hidden" id="risiko-unlock-revidert" value="{{ scope.sist_revidert|date:'Y-m-d' }}">
 					<div class="d-flex flex-wrap align-items-center">
 						<label for="risiko-unlock-status-select" class="small mb-0 mr-2">Ny status</label>
 						<select id="risiko-unlock-status-select" class="form-control form-control-sm mr-2" style="max-width: 14rem;">
@@ -161,10 +161,6 @@
 						{% if scope.status == 'godkjent' %}<option value="godkjent" selected>Godkjent</option>{% endif %}
 						{% endif %}
 					</select>
-				</div>
-				<div class="form-group risiko-scope-meta-field risiko-scope-meta-field-date">
-					<label for="risiko-scope-revidert">Sist revidert</label>
-					<input type="date" id="risiko-scope-revidert" class="form-control form-control-sm risiko-scope-date-input" value="{{ scope.sist_revidert|date:'Y-m-d' }}">
 				</div>
 				<div class="risiko-scope-meta-actions">
 					<button type="button" class="btn btn-outline-primary btn-sm" id="risiko-scope-save">Lagre samling</button>

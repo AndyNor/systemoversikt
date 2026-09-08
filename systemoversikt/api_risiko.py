@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-08: api_risiko_scope_update – set sist_revidert to today when status changes (no client override).
 # 2026-08-23: Unauthenticated risk JSON APIs return 401 session_expired (not 403).
 # 2026-08-13: Person search uses shared risk_user_search (AND terms, email + virksomhet rank).
 # 2026-08-13: Unntak CRUD APIs on collection tiltak; unntak_count in action payloads.
@@ -28,7 +29,7 @@
 # 2026-06-24: JSON API for risk scenario/tiltak AJAX editor (owner-only).
 
 import json
-from datetime import datetime
+from datetime import date, datetime
 
 from django.core.exceptions import ValidationError
 from django.contrib.auth.models import User
@@ -964,13 +965,6 @@ def api_risiko_scope_update(request, pk):
 		return _json_error('Navn kan ikke være tomt.')
 
 	beskrivelse = (data.get('beskrivelse') or '').strip()
-	sist_revidert_raw = (data.get('sist_revidert') or '').strip()
-	sist_revidert = scope.sist_revidert
-	if sist_revidert_raw:
-		parsed = _parse_date(sist_revidert_raw)
-		if parsed == 'invalid':
-			return _json_error('Ugyldig dato – bruk format ÅÅÅÅ-MM-DD.')
-		sist_revidert = parsed
 
 	# 2026-07-01: Godkjent – only owners may change status; other fields must stay unchanged.
 	if scope.is_content_locked():
@@ -979,11 +973,7 @@ def api_risiko_scope_update(request, pk):
 				'Risikosamlingen er godkjent og kan ikke redigeres. En eier må endre status for å åpne for redigering.',
 				status=403,
 			)
-		if (
-			title != scope.title
-			or beskrivelse != scope.beskrivelse
-			or sist_revidert != scope.sist_revidert
-		):
+		if title != scope.title or beskrivelse != scope.beskrivelse:
 			return _json_error('Godkjente samlinger kan kun ha status endret.', status=403)
 
 	new_status = scope.status
@@ -1003,7 +993,9 @@ def api_risiko_scope_update(request, pk):
 	status_labels = dict(RISK_SCOPE_STATUS_VALG)
 	scope.title = title
 	scope.beskrivelse = beskrivelse
-	scope.sist_revidert = sist_revidert
+	# 2026-09-08: Sist revidert is server-owned – bump to today when status changes.
+	if new_status != old_status:
+		scope.sist_revidert = date.today()
 	scope.status = new_status
 	scope.save()
 
