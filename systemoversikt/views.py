@@ -3223,6 +3223,7 @@ def rapport_kit_vurderinger_samlet(request):
 
 
 def rapport_entra_id_auth(request):
+	# 2026-09-08: Add "Aktive brukere med kun SMS" – count licensed users whose only MFA method is SMS.
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
@@ -3234,11 +3235,27 @@ def rapport_entra_id_auth(request):
 						Q(profile__auth_methods__icontains="fido2AuthenticationMethod") |
 						Q(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod")
 					))
+	# SMS only: has phoneAuthenticationMethod and none of the other persistent MFA methods (TAP is ignored as temporary).
+	andre_mfa_metoder = (
+		Q(profile__auth_methods__icontains="voiceAuthenticationMethod") |
+		Q(profile__auth_methods__icontains="certificateBasedAuthentication") |
+		Q(profile__auth_methods__icontains="fido2AuthenticationMethod") |
+		Q(profile__auth_methods__icontains="microsoftAuthenticatorAuthenticationMethod") |
+		Q(profile__auth_methods__icontains="oathSoftwareTokenAuthenticationMethod") |
+		Q(profile__auth_methods__icontains="oathHardwareTokenAuthenticationMethod")
+	)
+	antall_kun_sms = len(
+		User.objects.filter(profile__accountdisable=False)
+		.filter(~Q(profile__ny365lisens=None))
+		.filter(profile__auth_methods__icontains="phoneAuthenticationMethod")
+		.exclude(andre_mfa_metoder)
+	)
 
 	data = []
 	data.append({"tekst": "Aktive brukere med lisens", "antall": antall_med_lisens})
 	data.append({"tekst": "Telefonoppringing", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="voiceAuthenticationMethod"))})
 	data.append({"tekst": "SMS", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="phoneAuthenticationMethod"))})
+	data.append({"tekst": "Aktive brukere med kun SMS", "antall": antall_kun_sms})
 	data.append({"tekst": "Sertifikat", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="certificateBasedAuthentication"))})
 	data.append({"tekst": "Temporary Access Pass", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="temporaryAccessPassAuthenticationMethod"))})
 	data.append({"tekst": "FIDO2", "antall": len(User.objects.filter(profile__accountdisable=False).filter(profile__auth_methods__icontains="fido2AuthenticationMethod"))})
