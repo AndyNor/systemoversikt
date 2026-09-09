@@ -91,6 +91,7 @@ from collections import Counter, defaultdict
 from django.utils import timezone
 from django.core.cache import cache
 from systemoversikt.leverandor_referanser import leverandor_referanse_statistikk
+from systemoversikt.object_change_log import format_m2m_diff, log_object_change
 
 
 ##########################
@@ -9047,12 +9048,40 @@ def virksomhet_lagre_roller(request, pk):
 		if set(field_ids) - valid_ids:
 			return JsonResponse({'error': 'unknown_ansvarlig', 'field': field_name}, status=400)
 
+	# 2026-09-09: Log sentrale roller M2M diffs to LogEntry (Redigeringslogg).
+	ansvarlig_qs = Ansvarlig.objects.select_related('brukernavn', 'brukernavn__profile')
+	old_by_field = {
+		field_name: list(getattr(virksomhet, field_name).select_related('brukernavn', 'brukernavn__profile'))
+		for field_name in roles
+	}
+	new_ids_by_field = {field_name: [int(i) for i in ids] for field_name, ids in roles.items()}
+
 	with transaction.atomic():
-		for field_name, ids in roles.items():
-			getattr(virksomhet, field_name).set([int(i) for i in ids])
+		for field_name, ids in new_ids_by_field.items():
+			getattr(virksomhet, field_name).set(ids)
+
+	new_pks = {pk for ids in new_ids_by_field.values() for pk in ids}
+	new_by_pk = {a.pk: a for a in ansvarlig_qs.filter(pk__in=new_pks)}
+	diff_parts = []
+	for field_name, label in SENTRALE_ROLLER_EDITABLE:
+		if field_name not in new_ids_by_field:
+			continue
+		part = format_m2m_diff(
+			label,
+			old_by_field[field_name],
+			[new_by_pk[pk] for pk in new_ids_by_field[field_name]],
+		)
+		if part:
+			diff_parts.append(part)
+	if diff_parts:
+		log_object_change(
+			request.user,
+			virksomhet,
+			'Sentrale roller: %s' % '; '.join(diff_parts),
+		)
 
 	virksomhet = Virksomhet.objects.prefetch_related(*[
-		Prefetch(field, queryset=Ansvarlig.objects.select_related('brukernavn', 'brukernavn__profile'))
+		Prefetch(field, queryset=ansvarlig_qs)
 		for field in SENTRALE_ROLLER_FIELD_NAMES
 	]).get(pk=pk)
 
