@@ -6919,6 +6919,14 @@ def all_bruk_for_virksomhet(request, pk):
 
 
 
+def _virksomheter_ibruk(bruk_qs):
+	# 2026-09-09: Snapshot virksomheter with ibruk=True for register-bruk LogEntry diffs.
+	return [
+		b.brukergruppe
+		for b in bruk_qs.filter(ibruk=True).select_related('brukergruppe')
+	]
+
+
 def registrer_bruk(request, system):
 	#Forenklet metode for å legge til bruk av system ved avkryssing
 	required_permissions = ['systemoversikt.add_systembruk']
@@ -6930,6 +6938,10 @@ def registrer_bruk(request, system):
 	alle_virksomheter = list(Virksomhet.objects.all())
 
 	if request.POST:
+		# 2026-09-09: Log active-bruk virksomhet diffs to LogEntry (Redigeringslogg).
+		old_virksomheter = _virksomheter_ibruk(
+			SystemBruk.objects.filter(system=system_instans)
+		)
 		virksomheter = request.POST.getlist("virksomheter", "")
 		for str_virksomhet in virksomheter:
 			virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
@@ -6956,6 +6968,13 @@ def registrer_bruk(request, system):
 					#print("Satt %s deaktiv" % bruk)
 			except ObjectDoesNotExist:
 				pass # trenger ikke sette et ikke-eksisterende objekt
+		part = format_m2m_diff(
+			'Bruk',
+			old_virksomheter,
+			_virksomheter_ibruk(SystemBruk.objects.filter(system=system_instans)),
+		)
+		if part:
+			log_object_change(request.user, system_instans, part)
 		return redirect('systemdetaljer', system_instans.pk)
 
 	virksomheter_template = list()
@@ -7156,6 +7175,10 @@ def registrer_bruk_programvare(request, programvare):
 	alle_virksomheter = list(Virksomhet.objects.all())
 
 	if request.POST:
+		# 2026-09-09: Log active-bruk virksomhet diffs to LogEntry (Redigeringslogg).
+		old_virksomheter = _virksomheter_ibruk(
+			ProgramvareBruk.objects.filter(programvare=programvare_instans)
+		)
 		virksomheter = request.POST.getlist("virksomheter", "")
 		for str_virksomhet in virksomheter:
 			virksomhet = Virksomhet.objects.get(pk=int(str_virksomhet))
@@ -7182,6 +7205,13 @@ def registrer_bruk_programvare(request, programvare):
 					#print("Satt %s deaktiv" % bruk)
 			except ObjectDoesNotExist:
 				pass # trenger ikke sette et ikke-eksisterende objekt
+		part = format_m2m_diff(
+			'Bruk',
+			old_virksomheter,
+			_virksomheter_ibruk(ProgramvareBruk.objects.filter(programvare=programvare_instans)),
+		)
+		if part:
+			log_object_change(request.user, programvare_instans, part)
 		return redirect('programvaredetaljer', programvare_instans.pk)
 
 	virksomheter_template = list()
