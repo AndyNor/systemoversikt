@@ -1,0 +1,35 @@
+---
+description: Decide logging before implementing inline (non-admin) object edits
+alwaysApply: true
+---
+
+# Inline edit logging
+
+Django admin writes `LogEntry` automatically. **Inline / page editors do not.** Before implementing a user mutation outside admin, decide which log applies and implement it in the same change. Do not ship the save path and defer logging.
+
+## Choose one
+
+| Kind of change | Log |
+|---------------|-----|
+| User edits a domain object (`Virksomhet`, `System`, `Programvare`, …) | `log_object_change` in [`systemoversikt/object_change_log.py`](systemoversikt/object_change_log.py) → Redigeringslogg |
+| Selected risk workflow events (create, archive, status, member) | `log_risk_activity` — do **not** also write `LogEntry` |
+| Jobs, imports, API traffic | `ApplicationLog` |
+| UI chrome (graph lock/layout), search, create-if-missing that is not the real assignment | Skip `LogEntry` |
+
+If none of these fit, ask which log to use before writing the save view.
+
+## How to log object edits
+
+- Call `log_object_change` after a successful mutation. One `LogEntry` per user action (one Lagre), not one per field unless fields are saved separately.
+- Message: Norwegian, searchable, **fields + before/after** (use `format_m2m_diff` for M2M). Skip the row on no-op.
+- Do not rely on django-simple-history for this: it misses M2M unless `m2m_fields` is set, and `.set()` without `.save()` writes no history.
+
+```python
+# ❌ BAD – inline save with no audit
+getattr(virksomhet, field_name).set(ids)
+
+# ✅ GOOD – snapshot, mutate, log if anything changed
+part = format_m2m_diff(label, old_items, new_items)
+if part:
+    log_object_change(request.user, virksomhet, 'Sentrale roller: %s' % part)
+```
