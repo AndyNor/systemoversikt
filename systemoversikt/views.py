@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-14: systemdetaljer – approved archive systems (er_arkiv) reached via SystemIntegration.
 # 2026-09-14: virksomhet_arkivplan includes SystemBruk dates/innhold; /api/systembruk/ exposes tatt_i_bruk and avsluttet.
 # 2026-08-23: Access denied uses render_access_denied; home auto-starts OIDC for anonymous users.
 # 2026-07-09: logger – object search matches verbose ContentType label shown in table.
@@ -6514,6 +6515,24 @@ def systemdetaljer(request, pk):
 
 	systembruk = SystemBruk.objects.filter(system=pk).filter(ibruk=True).order_by("brukergruppe")
 
+	# 2026-09-14: Approved archive systems (er_arkiv / 🗁 Arkivsystem) linked via SystemIntegration.
+	arkiv_ids = set(
+		SystemIntegration.objects.filter(
+			source_system=system,
+			destination_system__er_arkiv=True,
+		).values_list('destination_system_id', flat=True)
+	)
+	arkiv_ids.update(
+		SystemIntegration.objects.filter(
+			destination_system=system,
+			source_system__er_arkiv=True,
+		).values_list('source_system_id', flat=True)
+	)
+	arkiv_ids.discard(system.pk)
+	arkiv_integrasjon_systemer = list(
+		System.objects.filter(pk__in=arkiv_ids).order_by('systemnavn')
+	)
+
 	# "avleverer til" fra et annet system tilsvarer "mottar fra" dette systemet
 	datautveksling_mottar_fra = [i.source_system for i in SystemIntegration.objects.filter(personopplysninger=True,destination_system=system.pk).all()]
 	datautveksling_avleverer_til = [i.destination_system for i in SystemIntegration.objects.filter(personopplysninger=True,source_system=system.pk).all()]
@@ -6594,6 +6613,7 @@ def systemdetaljer(request, pk):
 		'required_permissions': formater_permissions(required_permissions),
 		'systemdetaljer': system,
 		'systembruk': systembruk,
+		'arkiv_integrasjon_systemer': arkiv_integrasjon_systemer,
 		'datautveksling_mottar_fra': datautveksling_mottar_fra,
 		'datautveksling_avleverer_til': datautveksling_avleverer_til,
 		'avhengigheter_reverse_systemer': avhengigheter_reverse_systemer,

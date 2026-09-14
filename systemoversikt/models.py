@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-14: System.er_arkiv label “Godkjent som elektronisk arkiv?”; dato_godkjent_elektronisk_arkiv.
 # 2026-09-14: SystemBruk tatt_i_bruk/avsluttet dates and kommentar verbose_name Innhold – archive metadata per virksomhet usage.
 # 2026-09-08: System.er_ute_av_bruk – livsløp 6–7 (unused / decommissioned) for risk UI labels and strikethrough.
 # 2026-09-07: Profile.virksomhet_forkortelse is a property so /virksomhet/min/ (and similar redirects) can resolve the user's virksomhet.
@@ -5992,9 +5993,17 @@ class System(models.Model):
 			help_text=u"Forvaltere er autorisert til å bestille endringer på systemet i Kompass. Her kan du gjerne legge inn hele forvalterteamet rundt systemet. Hvis du ikke finner personen du leter etter, kan du legge til med +-tegnet.",
 			)
 	er_arkiv = models.BooleanField(
-			verbose_name="Er systemet et arkiv?",
+			# 2026-09-14: Label is approval as electronic archive, not a generic archive flag.
+			verbose_name="Godkjent som elektronisk arkiv?",
 			default=False,
-			help_text=u"Krysses av dersom systemet er et arkivsystem i henhold til arkivlovverk.",
+			help_text=u"Krysses av dersom systemet er godkjent som elektronisk arkiv i henhold til arkivlovverk.",
+			)
+	dato_godkjent_elektronisk_arkiv = models.DateField(
+			# 2026-09-14: Date the system was approved as an electronic archive.
+			verbose_name="Dato godkjent som elektronisk arkiv",
+			null=True,
+			blank=True,
+			help_text=u"Datoen systemet ble godkjent som elektronisk arkiv.",
 			)
 	antall_brukere = models.BigIntegerField(
 			verbose_name="Antall brukere",

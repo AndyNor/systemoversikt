@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-14: Electronic-archive fields on their own admin rows so the approval date is visible.
+# 2026-09-14: System.er_arkiv label and dato_godkjent_elektronisk_arkiv next to archive comment.
 # 2026-09-14: SystemBruk tatt_i_bruk/avsluttet in fieldsets and list display for archive usage dates.
 # 2026-08-19: AzureApplication admin filter on appRoleAssignmentRequired (Assignment required).
 # 2026-07-09: RiskActivityLog admin – read-only append-only risk workflow log.
@@ -543,7 +545,9 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'informasjonsklassifisering',
 				'kritisk_kapabilitet',
 				'LOSref',
-				('er_arkiv', 'arkivkommentar'),
+				'er_arkiv',
+				'dato_godkjent_elektronisk_arkiv',
+				'arkivkommentar',
 				('innsyn_innbygger', 'innsyn_ansatt'),
 				'kontaktperson_innsyn',
 				('risikovurdering_behovsvurdering', 'dato_sist_ros'),

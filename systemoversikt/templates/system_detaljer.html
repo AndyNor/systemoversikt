@@ -1,3 +1,9 @@
+{# 2026-09-14: Note missing electronic-archive approval date when er_arkiv is set. #}
+{# 2026-09-14: Wording – no integration against *another* approved archive system. #}
+{# 2026-09-14: Archive approval status/date under dokumentasjonsforvaltning, not in kategorier. #}
+{# 2026-09-14: Hopp til links styled as site links (override global nav a black/bold). #}
+{# 2026-09-14: Hopp til under Alias; bruk-section renamed; arkivsystem integration indicator. #}
+{# 2026-09-14: Systembruk table – compact columns, nowrap headers/dates, more room for Innhold. #}
 {# 2026-09-14: Systembruk table – Innhold header; tatt_i_bruk/avsluttet usage dates. #}
 {# 2026-08-19: Graph-rettigheter summary links to Azure graph section; show Assignment required and Publisert til. #}
 {# 2026-08-07: Surface egenutviklet, vedlikehold/DBA, RoS-behov, autentisering on system detail. #}
@@ -138,31 +144,42 @@
 	padding: 0.12rem 0.38rem;
 }
 .system-detalj-hopp-til {
-	margin: 0.75rem 0 1rem;
+	margin: 0 0 1rem;
+	padding-bottom: 0.85rem;
+	border-bottom: 1px solid #eceaf4;
 }
 .system-detalj-hopp-til-tittel {
-	font-size: 0.85rem;
+	font-size: 0.78rem;
 	font-weight: 600;
-	color: #444;
+	color: #888;
 	margin-bottom: 0.45rem;
 }
 .system-detalj-hopp-til-liste {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
-	gap: 0.2rem 1rem;
+	gap: 0.25rem 1rem;
 	list-style: none;
 	padding: 0;
 	margin: 0;
-	font-size: 0.82rem;
+	font-size: 0.85rem;
 	line-height: 1.45;
 }
-.system-detalj-hopp-til-liste a {
-	display: block;
-	padding: 0.1rem 0;
-	text-decoration: none;
-}
-.system-detalj-hopp-til-liste a:hover {
+/* 2026-09-14: Beat global nav a { color:#000; font-weight:bold } so these read as links. */
+.system-detalj-hopp-til a:link,
+.system-detalj-hopp-til a:visited {
+	display: inline;
+	color: #28277e;
+	font-weight: 500;
 	text-decoration: underline;
+	padding: 0.1rem 0;
+	background-color: transparent;
+}
+.system-detalj-hopp-til a:hover,
+.system-detalj-hopp-til a:focus {
+	color: #FF8274;
+	font-weight: 500;
+	text-decoration: underline;
+	background-color: transparent;
 }
 @media (max-width: 767px) {
 	.system-detalj-hopp-til-liste {
@@ -591,6 +608,83 @@
 	font-size: 0.8rem;
 	line-height: 1.4;
 }
+/* 2026-09-14: Shrink-wrap short columns so Innhold can use remaining width. */
+.system-detalj-bruk-wrap {
+	overflow-x: auto;
+}
+.system-detalj-bruk-tabell {
+	width: 100%;
+	font-size: 12px;
+	margin-bottom: 0;
+}
+.system-detalj-bruk-tabell th,
+.system-detalj-bruk-tabell td {
+	padding: 0.5rem 0.75rem;
+	vertical-align: top;
+	line-height: 1.35;
+}
+.system-detalj-bruk-tabell thead th {
+	white-space: nowrap;
+	vertical-align: bottom;
+	padding-bottom: 0.55rem;
+}
+.system-detalj-bruk-tabell .bruk-col-virksomhet,
+.system-detalj-bruk-tabell .bruk-col-kit,
+.system-detalj-bruk-tabell .bruk-col-dato {
+	white-space: nowrap;
+	width: 1%;
+}
+.system-detalj-bruk-tabell .bruk-col-ros {
+	min-width: 5.75rem;
+	width: 1%;
+}
+.system-detalj-bruk-tabell .bruk-col-antall {
+	min-width: 7.5rem;
+	max-width: 9.5rem;
+}
+.system-detalj-bruk-tabell .bruk-col-kontakt {
+	min-width: 8.5rem;
+	max-width: 11rem;
+	overflow-wrap: anywhere;
+}
+.system-detalj-bruk-tabell .bruk-col-vurderinger {
+	min-width: 9.5rem;
+	max-width: 12.5rem;
+}
+.system-detalj-bruk-tabell .bruk-col-innhold {
+	min-width: 14rem;
+	overflow-wrap: break-word;
+}
+.system-detalj-arkiv-status {
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+	margin: 0.2rem 0 0.9rem;
+}
+.system-detalj-arkiv-integrasjon {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.45rem;
+	font-size: 0.88rem;
+	line-height: 1.4;
+	margin: 0;
+	padding: 0.5rem 0.75rem;
+	border-radius: 6px;
+}
+.system-detalj-arkiv-integrasjon-symbol {
+	flex-shrink: 0;
+	line-height: 1.3;
+}
+.system-detalj-arkiv-integrasjon--ja {
+	background: #e8f5e9;
+	border: 1px solid #b7dfc0;
+	color: #2d6a4f;
+}
+.system-detalj-arkiv-integrasjon--nei {
+	background: #fff8e6;
+	border: 1px solid #f0d78c;
+	color: #6b5a20;
+}
 </style>
 {% endblock ekstrastyle %}
 
@@ -629,6 +723,22 @@
 			Alias{% for alias in systemdetaljer.alias_oppdelt %} <span class="badge badge-light">{{ alias }}</span>{% endfor %}
 		</div>
 	{% endif %}
+
+	{# 2026-09-14: Jump menu under Alias so section links are available before the summary card. #}
+	<nav class="system-detalj-hopp-til" aria-label="Hopp til seksjon">
+		<div class="system-detalj-hopp-til-tittel">Hopp til</div>
+		<ul class="system-detalj-hopp-til-liste">
+			<li><a href="#anchor_sikkerhet_personvern">Sikkerhet og personvern</a></li>
+			<li><a href="#anchor_systemav">Figur og systemavhengigheter</a></li>
+			<li><a href="#anchor_azure_graph">Azure graph-integrasjoner</a></li>
+			<li><a href="#anchor_risiko">Risikovurderinger</a></li>
+			<li><a href="#anchor_bruk">Virksomhetsbruk og dokumentasjonsforvaltning</a></li>
+			<li><a href="#anchor_servere_database">Servere og databaser</a></li>
+			<li><a href="#anchor_citrix">Citrix-publiseringer</a></li>
+			<li><a href="#anchor_vuln">Sårbarheter</a></li>
+			<li><a href="#anchor_leverandortilgang">3.parts leverandørtilgang</a></li>
+		</ul>
+	</nav>
 
 	<div class="system-detalj-kort">
 		<div class="system-detalj-badges">
@@ -669,7 +779,7 @@
 			</div>
 		{% endif %}
 
-		{% if systemdetaljer.systemkategorier.count or systemdetaljer.er_arkiv %}
+		{% if systemdetaljer.systemkategorier.count %}
 			<hr class="system-detalj-innhold-sep">
 			<div class="system-detalj-kategorier">
 				<span class="system-detalj-kategorier-label">{% get_verbose_field_name systemdetaljer "systemkategorier" %}</span>
@@ -677,9 +787,6 @@
 					{% url "systemkategori" kategori.pk as url_systemkategori %}
 					<a class="badge badge-light" href="{{ url_systemkategori }}">{{ kategori.kategorinavn }}</a>
 				{% endfor %}
-				{% if systemdetaljer.er_arkiv %}
-					<span class="badge badge-light">🗁 Arkivsystem</span>
-				{% endif %}
 			</div>
 		{% endif %}
 
@@ -1091,22 +1198,6 @@
 
 	</div>
 
-	<hr>
-	<nav class="system-detalj-hopp-til" aria-label="Hopp til seksjon">
-		<div class="system-detalj-hopp-til-tittel">Hopp til</div>
-		<ul class="system-detalj-hopp-til-liste">
-			<li><a href="#anchor_sikkerhet_personvern">Sikkerhet og personvern</a></li>
-			<li><a href="#anchor_systemav">Figur og systemavhengigheter</a></li>
-			<li><a href="#anchor_azure_graph">Azure graph-integrasjoner</a></li>
-			<li><a href="#anchor_risiko">Risikovurderinger</a></li>
-			<li><a href="#anchor_bruk">Virksomheters bruk av systemet</a></li>
-			<li><a href="#anchor_servere_database">Servere og databaser</a></li>
-			<li><a href="#anchor_citrix">Citrix-publiseringer</a></li>
-			<li><a href="#anchor_vuln">Sårbarheter</a></li>
-			<li><a href="#anchor_leverandortilgang">3.parts leverandørtilgang</a></li>
-		</ul>
-	</nav>
-
 	<br><hr>
 	<h3 style="scroll-margin-top: 150px;" id="anchor_sikkerhet_personvern">Sikkerhet og personvern</h3>
 	<div class="system-detalj-kompakt-seksjon">
@@ -1358,7 +1449,44 @@
 	</div>
 
 	<br><hr>
-	<h3 style="scroll-margin-top: 150px;" id="anchor_bruk">Virksomheters bruk av systemet</h3>
+	<h3 style="scroll-margin-top: 150px;" id="anchor_bruk">Virksomhetsbruk og dokumentasjonsforvaltning</h3>
+	{# 2026-09-14: Own archive approval (er_arkiv + date) and integrations to approved archive systems. #}
+	<div class="system-detalj-arkiv-status">
+		{% if systemdetaljer.er_arkiv %}
+			<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--ja">
+				<span class="system-detalj-arkiv-integrasjon-symbol" aria-hidden="true">🗁</span>
+				<span>
+					Godkjent som elektronisk arkiv{% if systemdetaljer.dato_godkjent_elektronisk_arkiv %}
+						({{ systemdetaljer.dato_godkjent_elektronisk_arkiv|date:"Y-m-d" }})
+					{% else %}
+						(dato for godkjenning er ikke registrert)
+					{% endif %}
+				</span>
+			</div>
+		{% else %}
+			<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--nei">
+				<span class="system-detalj-arkiv-integrasjon-symbol" aria-hidden="true">⚠</span>
+				<span>Ikke godkjent som elektronisk arkiv</span>
+			</div>
+		{% endif %}
+		{% if arkiv_integrasjon_systemer %}
+			<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--ja">
+				<span class="system-detalj-arkiv-integrasjon-symbol" aria-hidden="true">🗁</span>
+				<span>
+					Integrert med godkjent arkivsystem:
+					{% for arkivsystem in arkiv_integrasjon_systemer %}
+						{% url "systemdetaljer" pk=arkivsystem.pk as url_arkivsystem %}
+						<a href="{{ url_arkivsystem }}">{{ arkivsystem.systemnavn }}</a>{% if not forloop.last %}, {% endif %}
+					{% endfor %}
+				</span>
+			</div>
+		{% else %}
+			<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--nei">
+				<span class="system-detalj-arkiv-integrasjon-symbol" aria-hidden="true">⚠</span>
+				<span>Ingen integrasjon mot annet godkjent arkivsystem er registrert.</span>
+			</div>
+		{% endif %}
+	</div>
 	<div class="row">
 		<div class="col-12">
 			<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer og endre bruk</a></p>
@@ -1376,26 +1504,28 @@
 			</div>
 			{% endif %}
 			{% if systembruk %}
-				<table class="table table-sm" style="font-size: 10px;">
+				{# 2026-09-14: Column widths + padding so headers/dates stay on one line. #}
+				<div class="system-detalj-bruk-wrap">
+				<table class="table table-sm system-detalj-bruk-tabell">
 					<thead>
 						<tr>
-							<th>Virksomhet</th>
-							<th>Antall brukere</th>
+							<th class="bruk-col-virksomhet">Virksomhet</th>
+							<th class="bruk-col-antall">Antall brukere</th>
 							{% if perms.systemoversikt.view_system %}
-							<th>Lokal KIT-vurdering</th>
+							<th class="bruk-col-kit">Lokal KIT-vurdering</th>
 							{% endif %}
-							<th>Lokalt kontaktpunkt</th>
-							<th>Lokale vurderinger</th>
-							<th>Lokal RoS</th>
-							<th>Tatt i bruk</th>
-							<th>Avsluttet</th>
-							<th>Innhold</th>
+							<th class="bruk-col-kontakt">Lokalt kontaktpunkt</th>
+							<th class="bruk-col-vurderinger">Lokale vurderinger</th>
+							<th class="bruk-col-ros">Lokal RoS</th>
+							<th class="bruk-col-dato">Tatt i bruk</th>
+							<th class="bruk-col-dato">Avsluttet</th>
+							<th class="bruk-col-innhold">Innhold</th>
 						</tr>
 					</thead>
 					<tbody>
 						{% for bruk in systembruk %}
 						<tr>
-							<td style="width: 20%;">
+							<td class="bruk-col-virksomhet">
 								{% if user.is_authenticated %}
 									<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
 									{% include 'site_edit_button.html' %}</a>
@@ -1404,7 +1534,7 @@
 								<a href="{{ url_bruk }}">{{ bruk.brukergruppe.virksomhetsforkortelse }}</a>
 							</td>
 
-							<td>
+							<td class="bruk-col-antall">
 								{% if bruk.automatisk_ad_antall_for_virksomhet is not None %}
 									{{ bruk.automatisk_ad_antall_for_virksomhet }} automatisk beregnet{% if bruk.antall_brukere is not None %} ({{ bruk.antall_brukere }} manuelt angitt){% endif %}
 								{% elif bruk.antall_brukere is not None %}
@@ -1415,7 +1545,7 @@
 							</td>
 
 							{% if perms.systemoversikt.view_system %}
-							<td>
+							<td class="bruk-col-kit">
 								{% if bruk.konfidensialitetsvurdering is not None %}
 									K: {{ bruk.get_konfidensialitetsvurdering_display }}<br>
 								{% endif %}
@@ -1428,9 +1558,9 @@
 							</td>
 							{% endif %}
 
-							<td>{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}</td>
+							<td class="bruk-col-kontakt">{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}</td>
 
-							<td>
+							<td class="bruk-col-vurderinger">
 								{% if bruk.funksjonell_egnethet is not None %}
 									Funksjonelt: {{ bruk.get_funksjonell_egnethet_display }}<br>
 								{% endif %}
@@ -1441,7 +1571,7 @@
 									Teknisk vurdering: {{ bruk.get_teknisk_egnethet_display }}
 								{% endif %}
 							</td>
-							<td>
+							<td class="bruk-col-ros">
 								{% if bruk.url_risikovurdering %}
 									<a href="{{ bruk.url_risikovurdering }}">Link</a><br>
 								{% endif %}
@@ -1450,13 +1580,14 @@
 									{{ bruk.risikovurdering_tekst }}
 								{% endif %}
 							</td>
-							<td>{{ bruk.tatt_i_bruk|date:"Y-m-d"|default:"" }}</td>
-							<td>{{ bruk.avsluttet|date:"Y-m-d"|default:"" }}</td>
-							<td>{{ bruk.kommentar|default:"" }}</td>
+							<td class="bruk-col-dato">{{ bruk.tatt_i_bruk|date:"Y-m-d"|default:"" }}</td>
+							<td class="bruk-col-dato">{{ bruk.avsluttet|date:"Y-m-d"|default:"" }}</td>
+							<td class="bruk-col-innhold">{{ bruk.kommentar|default:"" }}</td>
 						</tr>
 						{% endfor %}
 					</tbody>
 				</table>
+				</div>
 			{% else %}
 				<p>Ingen virksomheter registrert</p>
 			{% endif %}
