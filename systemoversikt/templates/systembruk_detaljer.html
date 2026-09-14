@@ -1,3 +1,4 @@
+{# 2026-09-14: Show tatt_i_bruk/avsluttet – archive usage period for this virksomhet. #}
 {% extends "index.html" %}
 {% load humanize %}
 {% load static %}
@@ -67,6 +68,16 @@
 			<tr>
 				<td width="40%">Sist oppdatert</td>
 				<td>{{ bruk.sist_oppdatert|date:"Y-m-d" }} ({{ bruk.sist_oppdatert|naturaltime }})</td>
+			</tr>
+
+			<tr>
+				<td>{% get_verbose_field_name bruk "tatt_i_bruk" %}</td>
+				<td>{{ bruk.tatt_i_bruk|date:"Y-m-d"|default:"-" }}</td>
+			</tr>
+
+			<tr>
+				<td>{% get_verbose_field_name bruk "avsluttet" %}</td>
+				<td>{{ bruk.avsluttet|date:"Y-m-d"|default:"-" }}</td>
 			</tr>
 
 			<tr>

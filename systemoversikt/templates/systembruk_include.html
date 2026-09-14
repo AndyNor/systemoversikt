@@ -1,4 +1,5 @@
 {% load static %}
+{# 2026-09-14: Show tatt_i_bruk/avsluttet in bruksinformasjon for archive usage period. #}
 
 	<table class="tablesorter excel">
 	<thead>
@@ -29,6 +30,8 @@
 		<td>
 			Lokale forvaltere: {% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}
 			Antall brukere: {{ bruk.antall_brukere|default:"-" }}<br>
+			Tatt i bruk: {{ bruk.tatt_i_bruk|date:"Y-m-d"|default:"-" }}<br>
+			Avsluttet: {{ bruk.avsluttet|date:"Y-m-d"|default:"-" }}<br>
 				{% url "bruksdetaljer" bruk.pk as url_bruksdetaljer %}
 			<a href="{{ url_bruksdetaljer }}">Flere detaljer</a>
 		</td>

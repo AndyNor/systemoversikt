@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-14: SystemBruk tatt_i_bruk/avsluttet in fieldsets and list display for archive usage dates.
 # 2026-08-19: AzureApplication admin filter on appRoleAssignmentRequired (Assignment required).
 # 2026-07-09: RiskActivityLog admin – read-only append-only risk workflow log.
 # 2026-07-07: InfobloxHost admin; NetworkContainer vlan_name/location_name/ip_helper in list/search.
@@ -750,7 +751,7 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 @admin.register(SystemBruk)
 class SystemBrukAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
-	list_display = ('system', 'brukergruppe', 'kommentar', 'avtaletype', 'systemeierskap', 'kostnadersystem')
+	list_display = ('system', 'brukergruppe', 'tatt_i_bruk', 'avsluttet', 'kommentar', 'avtaletype', 'systemeierskap', 'kostnadersystem')
 	search_fields = ('system__systemnavn', 'system__systembeskrivelse', 'kommentar', 'systemforvalter')
 	list_filter = ('avtalestatus', 'avtale_kan_avropes', 'systemeierskapsmodell', 'brukergruppe')
 	autocomplete_fields = ('brukergruppe', 'system', 'systemforvalter', 'systemeier_kontaktpersoner_referanse', 'systemforvalter_kontaktpersoner_referanse', 'avhengigheter_referanser')
@@ -772,6 +773,7 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 				('brukergruppe', 'system'),
 				('systemeier_kontaktpersoner_referanse'),
 				('systemforvalter_kontaktpersoner_referanse', 'ibruk'),
+				('tatt_i_bruk', 'avsluttet'),
 				('kommentar', 'antall_brukere'), #reintrodusert 31.08.2020
 				('url_risikovurdering', 'risikovurdering_tekst'),
 				'dato_sist_ros',

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-14: SystemBruk tatt_i_bruk/avsluttet dates and kommentar verbose_name Innhold – archive metadata per virksomhet usage.
 # 2026-09-08: System.er_ute_av_bruk – livsløp 6–7 (unused / decommissioned) for risk UI labels and strikethrough.
 # 2026-09-07: Profile.virksomhet_forkortelse is a property so /virksomhet/min/ (and similar redirects) can resolve the user's virksomhet.
 # 2026-09-07: Grouped database server list includes per-instance billable for the CMDB offering table.
@@ -6746,6 +6747,19 @@ class SystemBruk(models.Model):
 			default=True,
 			help_text=u"Er i bruk ved kryss, og 'ikke i bruk' når kryss fjernes. Kan fjernes i stedet for å slette koblingen og lokale vurderinger.",
 			)
+	# 2026-09-14: Usage period for archive metadata – when the virksomhet introduced and retired this system.
+	tatt_i_bruk = models.DateField(
+			verbose_name="Tatt i bruk",
+			blank=True,
+			null=True,
+			help_text=u"Datoen systemet ble tatt i bruk i virksomheten.",
+			)
+	avsluttet = models.DateField(
+			verbose_name="Avsluttet",
+			blank=True,
+			null=True,
+			help_text=u"Datoen systemet ble tatt ut av bruk i virksomheten.",
+			)
 	systemforvalter = models.ForeignKey(
 			to=Virksomhet,
 			related_name='systembruk_systemforvalter',
@@ -6789,8 +6803,9 @@ class SystemBruk(models.Model):
 			null=True,
 			help_text=u"Avvikles: Moduler og eksterne/interne integrasjoner som er i bruk",
 			)
+	# 2026-09-14: verbose_name Innhold only – keep field name kommentar for existing APIs.
 	kommentar = models.TextField(
-			verbose_name="Kommentarer til denne bruken",
+			verbose_name="Innhold",
 			blank=True,
 			null=True,
 			help_text=u"Utdyp hva systemet brukes til hos din virksomhet.",

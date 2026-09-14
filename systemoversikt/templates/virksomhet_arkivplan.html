@@ -1,6 +1,7 @@
 {% extends "virksomhet_index.html" %}
 {% load humanize %}
 {% load static %}
+{# 2026-09-14: Systembruk table with tatt_i_bruk, avsluttet and innhold for archive usage metadata. #}
 
 {% block ekstrameny %}
 
@@ -32,13 +33,46 @@
 		<tbody>
 		{% for system in systemer %}
 			<tr>
-				<td><a href="/admin/systemoversikt/system/{{bruk.system.pk}}/change/">{% include 'site_edit_button.html' %}</a></td>
+				{# 2026-09-14: Edit link used bruk.system.pk which is undefined in this loop – use system.pk. #}
+				<td><a href="/admin/systemoversikt/system/{{ system.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
 				<td>{{ system }}</td>
 				<td>{{ system.er_arkiv|yesno:"Ja, Nei" }}</td>
 				<td>{{ system.dato_etablert|default:"-" }}</td>
 				<td>{{ system.get_livslop_status_display }}</td>
 				<td>{{ system.dato_end_of_life|default:"-" }}</td>
 				<td>{{ system.arkivkommentar|default:"-" }}</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+
+	<hr>
+
+	<p>Systemer {{ virksomhet }} har registrert bruk av, med periode og innhold for arkivformål.</p>
+
+	<table class="tablesorter excel">
+		<thead>
+		<tr>
+			<th class="filter-false">Endre</th>
+			<th>Systemnavn</th>
+			<th>I bruk?</th>
+			<th>Tatt i bruk</th>
+			<th>Avsluttet</th>
+			<th>Innhold</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for bruk in systembruk %}
+			<tr {% if bruk.ibruk == False %} style="text-decoration: line-through;" {% endif %}>
+				<td><a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
+				<td>
+					{% url "bruksdetaljer" bruk.pk as url_bruk %}
+					<a href="{{ url_bruk }}">{{ bruk.system }}</a>
+				</td>
+				<td>{{ bruk.ibruk|yesno:"Ja, Nei" }}</td>
+				<td>{{ bruk.tatt_i_bruk|date:"Y-m-d"|default:"-" }}</td>
+				<td>{{ bruk.avsluttet|date:"Y-m-d"|default:"-" }}</td>
+				<td>{{ bruk.kommentar|default:"-" }}</td>
 			</tr>
 		{% endfor %}
 		</tbody>

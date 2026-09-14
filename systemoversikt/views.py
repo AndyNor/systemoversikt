@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-14: virksomhet_arkivplan includes SystemBruk dates/innhold; /api/systembruk/ exposes tatt_i_bruk and avsluttet.
 # 2026-08-23: Access denied uses render_access_denied; home auto-starts OIDC for anonymous users.
 # 2026-07-09: logger – object search matches verbose ContentType label shown in table.
 # 2026-07-09: logger – pagination (500/page) and search on user, object, instance, beskrivelse.
@@ -9565,18 +9566,21 @@ def alle_virksomheter_kontaktinfo(request):
 
 
 def virksomhet_arkivplan(request, pk):
+	# 2026-09-14: Include SystemBruk usage period and innhold for archive metadata per virksomhet.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
 	systemer = System.objects.filter(Q(systemeier=virksomhet) | Q(systemforvalter=virksomhet))
+	systembruk = SystemBruk.objects.filter(brukergruppe=virksomhet).select_related('system').order_by(Lower('system__systemnavn'))
 
 	return render(request, 'virksomhet_arkivplan.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'virksomhet': virksomhet,
 		'systemer': systemer,
+		'systembruk': systembruk,
 	})
 
 
@@ -12583,6 +12587,7 @@ def api_virksomheter(request): #tjeneste- og systemoversikt
 
 
 def api_systembruk_optimized(request):  # tjeneste- og systemoversikt
+	# 2026-09-14: tatt_i_bruk and avsluttet added to JSON; kommentar key unchanged (verbose_name Innhold).
 	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/systembruk/ or SystemBruk JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if request.method != "GET":
 		raise Http404
@@ -12610,6 +12615,8 @@ def api_systembruk_optimized(request):  # tjeneste- og systemoversikt
 			"class": "SystemBruk",
 			"id": systembruk.pk,
 			"kommentar": systembruk.kommentar,
+			"tatt_i_bruk": systembruk.tatt_i_bruk,
+			"avsluttet": systembruk.avsluttet,
 			"antall_brukere": systembruk.antall_brukere,
 			"system": {"class": "System", "id": systembruk.system.pk},
 			"virksomhet": {"class": "Virksomhet", "id": systembruk.brukergruppe.pk},
