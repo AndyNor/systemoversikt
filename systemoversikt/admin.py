@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-14: SystemAdmin Arkiv fieldset; produksjonsformater multi-select (PDF, JPG, DOCX).
 # 2026-09-14: Electronic-archive fields on their own admin rows so the approval date is visible.
 # 2026-09-14: System.er_arkiv label and dato_godkjent_elektronisk_arkiv next to archive comment.
 # 2026-09-14: SystemBruk tatt_i_bruk/avsluttet in fieldsets and list display for archive usage dates.
@@ -35,6 +36,7 @@
 from __future__ import unicode_literals
 from django.contrib import admin
 from django.contrib.admin.widgets import FilteredSelectMultiple
+from django import forms
 from django.db import models
 from django.contrib import messages
 from django.shortcuts import redirect
@@ -441,8 +443,34 @@ class TjenesteAdmin(SimpleHistoryAdmin):
 	autocomplete_fields = ('systemer',)
 
 
+class SystemAdminForm(forms.ModelForm):
+	# 2026-09-14: Checkbox multi-select for produksjonsformater instead of a JSON textarea.
+	produksjonsformater = forms.MultipleChoiceField(
+		choices=VALG_PRODUKSJONSFORMAT,
+		required=False,
+		widget=forms.CheckboxSelectMultiple,
+		label="Produksjonsformater",
+		help_text="Velg ett eller flere produksjonsformater systemet benytter.",
+	)
+
+	class Meta:
+		model = System
+		fields = '__all__'
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		if self.instance and getattr(self.instance, 'produksjonsformater', None) is None:
+			self.initial['produksjonsformater'] = []
+
+	def clean_produksjonsformater(self):
+		selected = self.cleaned_data.get('produksjonsformater') or []
+		allowed_order = [kode for kode, _navn in VALG_PRODUKSJONSFORMAT]
+		return [kode for kode in allowed_order if kode in selected]
+
+
 @admin.register(System)
 class SystemAdmin(SimpleHistoryAdmin):
+	form = SystemAdminForm
 
 	def formfield_for_foreignkey(self, db_field, request, **kwargs):
 		if db_field.name == "driftsmodell_foreignkey":
@@ -545,9 +573,6 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'informasjonsklassifisering',
 				'kritisk_kapabilitet',
 				'LOSref',
-				'er_arkiv',
-				'dato_godkjent_elektronisk_arkiv',
-				'arkivkommentar',
 				('innsyn_innbygger', 'innsyn_ansatt'),
 				'kontaktperson_innsyn',
 				('risikovurdering_behovsvurdering', 'dato_sist_ros'),
@@ -555,6 +580,15 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('teknisk_egnethet', 'funksjonell_egnethet'),
 				'systemkategorier',
 			)
+		}),
+		('Arkiv', {
+			'description': 'Opplysninger om systemet som elektronisk arkiv.',
+			'fields': (
+				'er_arkiv',
+				'dato_godkjent_elektronisk_arkiv',
+				'produksjonsformater',
+				'arkivkommentar',
+			),
 		}),
 		('Brukerperspektivet og tilgangsstyring', {
 			'fields': (

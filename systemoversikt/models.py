@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-14: System.produksjonsformater – multi-select archive production formats (PDF, JPG, DOCX).
 # 2026-09-14: System.er_arkiv label “Godkjent som elektronisk arkiv?”; dato_godkjent_elektronisk_arkiv.
 # 2026-09-14: SystemBruk tatt_i_bruk/avsluttet dates and kommentar verbose_name Innhold – archive metadata per virksomhet usage.
 # 2026-09-08: System.er_ute_av_bruk – livsløp 6–7 (unused / decommissioned) for risk UI labels and strikethrough.
@@ -76,6 +77,7 @@
 # 2026-06-08: Added infrastruktur_chart color for combined seksjon chart legend.
 # 2026-06-07: Added land field to Leverandor – country of operation for supplier overview.
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.contrib.auth.models import User
 from django.dispatch import receiver
@@ -5443,6 +5445,25 @@ class Tjeneste(models.Model):
 		return kommunale_ord
 
 
+# 2026-09-14: Closed list of archive production formats – extend here when adding more.
+VALG_PRODUKSJONSFORMAT = (
+	('PDF', 'PDF'),
+	('JPG', 'JPG'),
+	('DOCX', 'DOCX'),
+)
+
+
+def validate_produksjonsformater(value):
+	if value in (None, []):
+		return
+	if not isinstance(value, list):
+		raise ValidationError('Produksjonsformater må være en liste.')
+	allowed = {kode for kode, _navn in VALG_PRODUKSJONSFORMAT}
+	ukjente = [v for v in value if v not in allowed]
+	if ukjente:
+		raise ValidationError('Ugyldige produksjonsformater: %s.' % ', '.join(str(v) for v in ukjente))
+
+
 # 2026-06-23: Exposed via /api/systemer/ – update api_tjeneste_systemoversikt_docs.py when changing relevant API output (url name: api_tjeneste_systemoversikt_docs).
 class System(models.Model):
 	opprettet = models.DateTimeField(
@@ -6005,6 +6026,14 @@ class System(models.Model):
 			blank=True,
 			help_text=u"Datoen systemet ble godkjent som elektronisk arkiv.",
 			)
+	produksjonsformater = models.JSONField(
+			# 2026-09-14: Multi-select production formats for archive metadata; extend VALG_PRODUKSJONSFORMAT to add more.
+			verbose_name="Produksjonsformater",
+			default=list,
+			blank=True,
+			validators=[validate_produksjonsformater],
+			help_text=u"Velg ett eller flere produksjonsformater systemet benytter.",
+			)
 	antall_brukere = models.BigIntegerField(
 			verbose_name="Antall brukere",
 			blank=True,
@@ -6120,6 +6149,11 @@ class System(models.Model):
 			if not word.er_tema():
 				words.append(word)
 		return words
+
+	def get_produksjonsformater_display(self):
+		# 2026-09-14: Human-readable labels for selected archive production formats.
+		labels = dict(VALG_PRODUKSJONSFORMAT)
+		return ', '.join(labels.get(kode, kode) for kode in (self.produksjonsformater or []))
 
 	def alias_oppdelt(self):
 		if self.alias == None:
