@@ -2,6 +2,8 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-09-15: Last inn OKA – systemadministrator Excel upload.
+# 2026-09-15: Informasjonskategori (OKA) search/save APIs on system and systembruk.
 # 2026-09-15: Arkivoverføring mottakersystem search API.
 # 2026-09-15: Arkivoverføring bulk/edit/delete under systemer/.
 # 2026-08-23: OIDC failure restores deep-link via oidc_login_failure (was /?login=failed).
@@ -36,6 +38,7 @@ from django.views.generic.base import RedirectView
 
 import systemoversikt.views as views
 import systemoversikt.views_import as views_import
+import systemoversikt.views_informasjonskategori as views_informasjonskategori
 import systemoversikt.api_bloodhound as api_bloodhound
 import systemoversikt.views_bloodhound as views_bloodhound
 import systemoversikt.views_risiko as views_risiko
@@ -75,6 +78,7 @@ urlpatterns = [
 	re_path(r'^admin/rettigheter/$', views.permissions, name='permissions'),
 	re_path(r'^admin/erstattansvarlig/$', views.ansvarlig_bytte, name='ansvarlig_bytte'),
 	re_path(r'^admin/valgbarekategorier/$', views.valgbarekategorier, name='valgbarekategorier'),
+	re_path(r'^admin/oka/last-inn/$', views_informasjonskategori.oka_last_inn, name='oka_last_inn'),
 	re_path(r'^admin/bytt_virksomhet/$', views.bytt_virksomhet, name='bytt_virksomhet'),
 	re_path(r'^admin/databasestatistikk/$', views.databasestatistikk, name='databasestatistikk'),
 	re_path(r'^admin/system_til_programvare/$', views.system_til_programvare, name='system_til_programvare_indeks'),
@@ -305,8 +309,10 @@ urlpatterns = [
 	re_path(r'^systemer/graph_layout/(?P<pk>\d{1,8})/$', views.system_save_graph_layout, name='system_save_graph_layout'),
 	re_path(r'^systemer/graph_lock/(?P<pk>\d{1,8})/$', views.system_toggle_graph_lock, name='system_toggle_graph_lock'),
 	re_path(r'^systemer/detaljer/(?P<pk>\d{1,8})/$', views.systemdetaljer, name='systemdetaljer'),
+	re_path(r'^systemer/detaljer/(?P<pk>\d{1,8})/informasjonskategorier/$', views_informasjonskategori.system_lagre_informasjonskategorier, name='system_lagre_informasjonskategorier'),
 	re_path(r'^systemer/bruk/$', views.mine_systembruk, name='mine_systembruk'),
 	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/$', views.bruksdetaljer, name='bruksdetaljer'),
+	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/informasjonskategorier/$', views_informasjonskategori.systembruk_lagre_informasjonskategorier, name='systembruk_lagre_informasjonskategorier'),
 	re_path(r'^systemer/bruk/registrer_bruk/(?P<system>\d{1,8})/$', views.registrer_bruk, name='registrer_bruk'),
 	# 2026-09-15: Arkivoverføring – bulk from system details; edit/delete single row.
 	re_path(r'^systemer/arkivoverforing/ny/(?P<system>\d{1,8})/$', views.arkivoverforing_bulk_create, name='arkivoverforing_bulk_create'),
@@ -314,6 +320,7 @@ urlpatterns = [
 	re_path(r'^systemer/arkivoverforing/(?P<pk>\d{1,8})/slett/$', views.arkivoverforing_delete, name='arkivoverforing_delete'),
 	# 2026-09-15: Dynamic mottakersystem search for arkivoverføring forms.
 	re_path(r'^systemer/arkivoverforing/api/systemer/sok/$', views.api_arkivoverforing_systemer_sok, name='api_arkivoverforing_systemer_sok'),
+	re_path(r'^systemer/informasjonskategorier/sok/$', views_informasjonskategori.api_informasjonskategorier_sok, name='api_informasjonskategorier_sok'),
 	re_path(r'^systemer/systemklassifisering/$', views.systemklassifisering_detaljer, name='systemklassifisering_tom'),
 	re_path(r'^systemer/systemklassifisering/(?P<kriterie>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	re_path(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),

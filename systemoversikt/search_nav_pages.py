@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: Last inn OKA – superuser-only admin sidemeny (Excel import of classification).
 # 2026-09-01: Rename ukjente_identer search label to "Kontoer uten virksomhet" – matches the virksomhet=None query.
 # 2026-07-07: Risiko create/import nav search – view_riskscope only (no qualys fallback).
 # 2026-07-07: AD sikkerhetsrapporter nav search – view_qualysvuln (matches view access).
@@ -18,7 +19,7 @@
 # 2026-06-23: Navigation page registry for global search – theme/report links before entity hits.
 #
 # Keep in sync with sidemeny templates: system_index, sikkerhet_index, brukere_index,
-# cmdb_index, virksomhet_index, rapport_index.
+# cmdb_index, virksomhet_index, rapport_index, admin_index.
 
 from django.urls import NoReverseMatch, reverse
 
@@ -32,6 +33,12 @@ def _url_kwargs_var_systembruk(user):
 			return {'pk': virksomhet.pk}
 	except Exception:
 		pass
+	return None
+
+
+def _url_kwargs_superuser_only(user):
+	if user.is_authenticated and user.is_superuser:
+		return {}
 	return None
 
 
@@ -169,6 +176,14 @@ NAV_PAGES = [
 	_entry('CA-regler', 'rapport_conditional_access_rules', 'Rapport', ['ca-regler', 'conditional access'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
 	_entry('CA-oversikt', 'rapport_conditional_access_overview', 'Rapport', ['ca-oversikt', 'conditional access oversikt', 'ca fliser'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
 	_entry('CA-endringer', 'rapport_conditional_access_changes', 'Rapport', ['ca-endringer', 'conditional access endringer'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
+
+	# --- Administrasjon (admin_index.html) ---
+	_entry(
+		'Last inn OKA', 'oka_last_inn', 'Administrasjon',
+		['oka', 'last inn oka', 'informasjonskategorier import', 'klassifikasjon excel'],
+		permissions=[],
+		url_for_user=_url_kwargs_superuser_only,
+	),
 ]
 
 

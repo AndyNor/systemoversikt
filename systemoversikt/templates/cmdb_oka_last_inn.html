@@ -1,0 +1,30 @@
+{# 2026-09-15: Systemadministrator upload of OKA Excel (InformasjonsKategori). #}
+{% extends "admin_index.html" %}
+{% load static %}
+
+{% block overskrift %}
+	Last inn OKA
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Last opp Oslo kommunes funksjonsbaserte klassifikasjon (OKA) som Excel-fil. Koder med både kode og tittel oppdateres. Koder som ikke lenger finnes i filen deaktiveres, de slettes ikke.</p>
+
+<p>
+	Aktive koder nå: <strong>{{ antall_aktive }}</strong>
+	(underfunksjoner som kan velges på system: <strong>{{ antall_underfunksjon }}</strong>).
+</p>
+{% if siste_import %}
+	<p class="text-muted">Siste import: {{ siste_import.opprettet|date:"Y-m-d H:i" }} — {{ siste_import.message }}</p>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data">
+	{% csrf_token %}
+	<div class="form-group">
+		<label for="okafil">Excel-fil (.xlsx)</label>
+		<input type="file" name="okafil" id="okafil" class="form-control-file" accept=".xlsx,.xlsm" required>
+	</div>
+	<button type="submit" class="btn btn-primary btn-sm">Last inn</button>
+</form>
+
+{% endblock hovedinnhold %}

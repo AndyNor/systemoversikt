@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: InformasjonsKategori (OKA) admin; System/SystemBruk assignment of leaf codes.
 # 2026-09-15: ArkivOverforingAdmin – archive transfer SystemBruk → System (fallback to app UI).
 # 2026-09-14: SystemAdmin Arkiv fieldset; produksjonsformater multi-select (PDF, JPG, DOCX).
 # 2026-09-14: Electronic-archive fields on their own admin rows so the approval date is visible.
@@ -583,6 +584,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 		'godkjente_bestillere',
 		'enterprise_applicatons',
 		'tilgangsgrupper_ad',
+		'informasjonskategorier',
 	)
 
 	fieldsets = (
@@ -631,6 +633,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'er_arkiv',
 				'dato_godkjent_elektronisk_arkiv',
 				'produksjonsformater',
+				'informasjonskategorier',
 				'arkivkommentar',
 			),
 		}),
@@ -830,6 +833,13 @@ class VirksomhetAdmin(SimpleHistoryAdmin):
 			return False
 
 
+class SystemBrukInformasjonsKategoriInline(admin.TabularInline):
+	model = SystemBrukInformasjonsKategori
+	extra = 0
+	autocomplete_fields = ('kategori',)
+	fields = ('kategori', 'status', 'begrunnelse')
+
+
 @admin.register(SystemBruk)
 class SystemBrukAdmin(SimpleHistoryAdmin):
 	actions = [export_as_csv_action("CSV Eksport")]
@@ -837,6 +847,7 @@ class SystemBrukAdmin(SimpleHistoryAdmin):
 	search_fields = ('system__systemnavn', 'system__systembeskrivelse', 'kommentar', 'systemforvalter')
 	list_filter = ('avtalestatus', 'avtale_kan_avropes', 'systemeierskapsmodell', 'brukergruppe')
 	autocomplete_fields = ('brukergruppe', 'system', 'systemforvalter', 'systemeier_kontaktpersoner_referanse', 'systemforvalter_kontaktpersoner_referanse', 'avhengigheter_referanser')
+	inlines = [SystemBrukInformasjonsKategoriInline]
 
 	def response_add(self, request, obj, post_url_continue=None):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
@@ -1502,6 +1513,26 @@ class InformasjonsKlasseAdmin(admin.ModelAdmin):
 
 	def get_ordering(self, request):
 		return ['navn']
+
+
+@admin.register(InformasjonsKategori)
+class InformasjonsKategoriAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Eksport")]
+	list_display = ('kode', 'tittel', 'nivaa', 'parent', 'aktiv', 'bk_vurdering')
+	search_fields = ('kode', 'kode_normalisert', 'tittel', 'her_legges', 'bk_vurdering')
+	list_filter = ('nivaa', 'aktiv')
+	autocomplete_fields = ('parent',)
+
+	def get_ordering(self, request):
+		return ['rekkefolge', 'kode_normalisert']
+
+	def get_search_results(self, request, queryset, search_term):
+		queryset, may_have_duplicates = super().get_search_results(request, queryset, search_term)
+		# 2026-09-15: System/SystemBruk assignment pickers should only list active leaves.
+		related = (request.GET.get('model_name') or '').lower()
+		if related in ('system', 'systembrukinformasjonskategori'):
+			queryset = queryset.filter(nivaa='underfunksjon', aktiv=True)
+		return queryset, may_have_duplicates
 
 
 @admin.register(ApplicationLog)

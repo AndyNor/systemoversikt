@@ -1,0 +1,23 @@
+{# 2026-09-15: Shared OKA category metadata (kode, path, BK, lovverk). #}
+<div class="oka-kat{% if not kategori.aktiv %} oka-kat--inaktiv{% endif %}">
+	<div class="oka-kat-hode">
+		<strong class="oka-kat-kode">{{ kategori.kode }}</strong>
+		<span class="oka-kat-tittel">{{ kategori.tittel }}</span>
+		{% if not kategori.aktiv %}
+			<span class="badge badge-warning">Utfaset i OKA</span>
+		{% endif %}
+	</div>
+	<div class="oka-kat-sti text-muted">{{ kategori.sti }}</div>
+	{% if kategori.her_legges %}
+		<div class="oka-kat-felt"><span class="oka-kat-felt-navn">Her legges</span> {{ kategori.her_legges }}</div>
+	{% endif %}
+	{% if kategori.bk_vurdering %}
+		<div class="oka-kat-felt"><span class="oka-kat-felt-navn">BK-vurdering</span> {{ kategori.bk_vurdering }}</div>
+	{% endif %}
+	{% if kategori.aktuelt_lovverk %}
+		<div class="oka-kat-felt"><span class="oka-kat-felt-navn">Lovverk</span> {{ kategori.aktuelt_lovverk }}</div>
+	{% endif %}
+	{% if kategori.kommentar %}
+		<div class="oka-kat-felt"><span class="oka-kat-felt-navn">Kommentar</span> {{ kategori.kommentar }}</div>
+	{% endif %}
+</div>

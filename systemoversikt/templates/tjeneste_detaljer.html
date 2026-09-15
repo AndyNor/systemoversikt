@@ -1,3 +1,4 @@
+{# 2026-09-15: Aggregated OKA informasjonskategorier from component systems (not systembruk). #}
 {# 2026-06-21: Chart grouped by systemforvalter virksomhet; draggable compound boxes. #}
 {# 2026-06-21: Direct dependencies only; draggable chart without level expansion. #}
 {# 2026-06-21: Tjeneste detail page with ecosystem chart – separate from system_detaljer.html. #}
@@ -27,6 +28,7 @@
 {% endblock ekstrajavascript %}
 
 {% block ekstrastyle %}
+<link rel="stylesheet" href="{% static 'informasjonskategori.css' %}?v=20260915">
 <style nonce="{{ request.csp_nonce }}">
 .tjeneste-detalj-ikon {
 	display: inline-flex;
@@ -158,6 +160,21 @@
 				<dd>
 					{% for o in tjeneste.los_kommunale_ord %}
 						<span class="badge badge-light">{{ o }}</span>
+					{% empty %}–{% endfor %}
+				</dd>
+				<dt>Informasjonskategorier (OKA)</dt>
+				<dd>
+					{% for gruppe in tjeneste.informasjonskategorier_gruppert %}
+						<div class="mb-2">
+							{% if gruppe.hoved %}
+								<strong>{{ gruppe.hoved.kode }} {{ gruppe.hoved.tittel }}</strong>
+							{% endif %}
+							<ul class="mb-0 pl-3">
+							{% for k in gruppe.kategorier %}
+								<li><span class="oka-kat-kode">{{ k.kode }}</span> {{ k.tittel }}</li>
+							{% endfor %}
+							</ul>
+						</div>
 					{% empty %}–{% endfor %}
 				</dd>
 			</dl>

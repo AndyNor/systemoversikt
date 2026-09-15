@@ -1,3 +1,4 @@
+{# 2026-09-15: OKA informasjonskategorier – standard on system, compact per virksomhet, metadata. #}
 {# 2026-09-15: Systembruk table – informasjonseier and lokal forvalter in the same contact cell. #}
 {# 2026-09-15: Archive transfer headings – mottatt først, then overlevert; wording from/to. #}
 {# 2026-09-15: Bruk/arkivoverføring actions as buttons on one line (registrer bruk first). #}
@@ -60,6 +61,7 @@
 {% endblock overskrift %}
 
 {% block ekstrastyle %}
+<link rel="stylesheet" href="{% static 'informasjonskategori.css' %}?v=20260915">
 <style nonce="{{ request.csp_nonce }}">
 .system-detalj-tittel-rad {
 	display: flex;
@@ -659,6 +661,10 @@
 	min-width: 14rem;
 	overflow-wrap: break-word;
 }
+.system-detalj-bruk-tabell .bruk-col-oka {
+	min-width: 9rem;
+	white-space: nowrap;
+}
 .system-detalj-arkiv-status {
 	display: flex;
 	flex-direction: column;
@@ -701,6 +707,7 @@
 	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-svg.js@0.4.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'system_systemavhengigheter_graph.js' %}?v=20260622-programvare-round" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'informasjonskategori_edit.js' %}?v=20260915" nonce="{{request.csp_nonce}}"></script>
 
 {% endblock ekstrajavascript %}
 
@@ -1454,6 +1461,36 @@
 
 	<br><hr>
 	<h3 style="scroll-margin-top: 150px;" id="anchor_bruk">Virksomhetsbruk og dokumentasjonsforvaltning</h3>
+	{# 2026-09-15: Standard OKA categories for the system; virksomhet extras/opt-outs on systembruk. #}
+	<div class="oka-panel" id="oka-system-panel">
+		<h5>Standard informasjonskategorier</h5>
+		{% if perms.systemoversikt.change_system %}
+		<p>
+			<button type="button" class="btn btn-sm btn-secondary" id="oka-system-toggle">Endre kategorier</button>
+		</p>
+		{% endif %}
+		<div id="oka-system-view">
+			{% for kategori in oka_standardkategorier %}
+				{% include "informasjonskategori_include.html" with kategori=kategori %}
+			{% empty %}
+				<p class="text-muted">Ingen standard informasjonskategorier er registrert for systemet.</p>
+			{% endfor %}
+		</div>
+		{% if perms.systemoversikt.change_system %}
+		<div id="oka-system-edit" hidden>
+			{% csrf_token %}
+			<div id="oka-system-edit-list"></div>
+			<label class="small d-block mt-2" for="oka-system-sok">Legg til kategori</label>
+			<input type="search" id="oka-system-sok" class="form-control form-control-sm" placeholder="Søk kode eller tittel…" autocomplete="off">
+			<div id="oka-system-sok-treff" class="oka-sok-treff"></div>
+			<p class="mt-2">
+				<button type="button" id="oka-system-lagre" class="btn btn-primary btn-sm">Lagre</button>
+				<button type="button" id="oka-system-avbryt" class="btn btn-secondary btn-sm">Avbryt</button>
+			</p>
+			<p id="oka-system-status" class="oka-status small text-muted"></p>
+		</div>
+		{% endif %}
+	</div>
 	{# 2026-09-14: Own archive approval (er_arkiv + date) and integrations to approved archive systems. #}
 	<div class="system-detalj-arkiv-status">
 		{% if systemdetaljer.er_arkiv %}
@@ -1627,6 +1664,7 @@
 							<th class="bruk-col-dato">Tatt i bruk</th>
 							<th class="bruk-col-dato">Avsluttet</th>
 							<th class="bruk-col-innhold">Innhold</th>
+							<th class="bruk-col-oka">Informasjonskategorier</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -1695,6 +1733,12 @@
 							<td class="bruk-col-dato">{{ bruk.tatt_i_bruk|date:"Y-m-d"|default:"" }}</td>
 							<td class="bruk-col-dato">{{ bruk.avsluttet|date:"Y-m-d"|default:"" }}</td>
 							<td class="bruk-col-innhold">{{ bruk.kommentar|default:"" }}</td>
+							<td class="bruk-col-oka">
+								{% url "bruksdetaljer" bruk.pk as url_bruk_oka %}
+								<a href="{{ url_bruk_oka }}" class="oka-sammendrag">
+									{{ bruk.oka_sammendrag.standard_antall }} standard{% if bruk.oka_sammendrag.tillegg_antall %} · +{{ bruk.oka_sammendrag.tillegg_antall }} tillegg{% endif %}{% if bruk.oka_sammendrag.unntak_antall %} · −{{ bruk.oka_sammendrag.unntak_antall }} unntak{% endif %}
+								</a>
+							</td>
 						</tr>
 						{% endfor %}
 					</tbody>
@@ -1921,6 +1965,7 @@
 
 {% block script_append %}
 {{ avhengigheter_graf_ny|json_script:"systemdetaljer_graphElements" }}
+{{ oka_standardkategorier_json|json_script:"okaStandardKategorier" }}
 {% if saved_layout_json %}{{ saved_layout_json|json_script:"systemdetaljer_savedLayoutData" }}{% endif %}
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
@@ -1943,6 +1988,15 @@ document.addEventListener('DOMContentLoaded', function () {
 		},
 		savedLayout: savedLayout,
 	});
+
+	{% if perms.systemoversikt.change_system %}
+	window.initOkaSystemEditor({
+		csrf: "{{ csrf_js_token|default:'' }}",
+		searchUrl: "{% url 'api_informasjonskategorier_sok' %}",
+		urlSave: "{% url 'system_lagre_informasjonskategorier' systemdetaljer.pk %}",
+		kategorier: JSON.parse(document.getElementById('okaStandardKategorier').textContent),
+	});
+	{% endif %}
 
 	const vulnToggleBtn = document.getElementById('btn-toggle-vuln-servere-detaljer');
 	if (vulnToggleBtn) {

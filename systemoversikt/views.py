@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: Informasjonskategorier (OKA) on systemdetaljer, bruksdetaljer and tjeneste_detaljer.
 # 2026-09-15: ArkivOverforing – bulk create / edit / delete; lists on systemdetaljer and bruksdetaljer.
 # 2026-09-14: systemdetaljer – approved archive systems (er_arkiv) reached via SystemIntegration.
 # 2026-09-14: virksomhet_arkivplan includes SystemBruk dates/innhold; /api/systembruk/ exposes tatt_i_bruk and avsluttet.
@@ -6270,6 +6271,10 @@ def tjeneste_detaljer(request, pk):
 			'systemer__systemeier_kontaktpersoner_referanse',
 			'systemer__kritisk_kapabilitet',
 			'systemer__LOSref',
+			Prefetch(
+				'systemer__informasjonskategorier',
+				queryset=InformasjonsKategori.objects.select_related('parent', 'parent__parent'),
+			),
 			'systemer__system_integration_source',
 			'systemer__system_integration_source__destination_system',
 			'systemer__system_integration_destination',
@@ -6507,7 +6512,16 @@ def systemdetaljer(request, pk):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
-	system = System.objects.get(pk=pk)
+	system = (
+		System.objects
+		.prefetch_related(
+			Prefetch(
+				'informasjonskategorier',
+				queryset=InformasjonsKategori.objects.select_related('parent', 'parent__parent'),
+			),
+		)
+		.get(pk=pk)
+	)
 
 	follow_count = int(request.GET.get("follow_count", 0))
 
@@ -6515,7 +6529,7 @@ def systemdetaljer(request, pk):
 	system_content_type = ContentType.objects.get_for_model(system)
 	siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
 
-	# 2026-09-15: Prefetch local informasjonseier and forvalter for the virksomhetsbruk table.
+	# 2026-09-15: Prefetch local informasjonseier, forvalter and OKA extras/opt-outs for the virksomhetsbruk table.
 	systembruk = (
 		SystemBruk.objects.filter(system=pk)
 		.filter(ibruk=True)
@@ -6523,6 +6537,7 @@ def systemdetaljer(request, pk):
 		.prefetch_related(
 			'systemeier_kontaktpersoner_referanse__brukernavn__profile',
 			'systemforvalter_kontaktpersoner_referanse__brukernavn__profile',
+			'informasjonskategori_koblinger',
 		)
 		.order_by("brukergruppe")
 	)
@@ -6631,11 +6646,21 @@ def systemdetaljer(request, pk):
 	sorted_unique_vulns = sorted(unique_vulns_list, key=lambda x: (not x["known_exploited"], -x["severity"]))
 
 	systembruk = list(systembruk)
+	oka_standardkategorier = list(system.informasjonskategorier.all())
+	standard_ids = {k.pk for k in oka_standardkategorier}
 	for bruk in systembruk:
 		if vir_telling_ad_brukere is not None:
 			bruk.automatisk_ad_antall_for_virksomhet = vir_telling_ad_brukere.get(bruk.brukergruppe_id, 0)
 		else:
 			bruk.automatisk_ad_antall_for_virksomhet = None
+		koblinger = list(bruk.informasjonskategori_koblinger.all())
+		unntak_ids = {k.kategori_id for k in koblinger if k.status == SYSTEMBRUK_KATEGORI_UNNTAK}
+		tillegg_ids = {k.kategori_id for k in koblinger if k.status == SYSTEMBRUK_KATEGORI_TILLEGG}
+		bruk.oka_sammendrag = {
+			'standard_antall': len(standard_ids),
+			'tillegg_antall': len(tillegg_ids),
+			'unntak_antall': len(unntak_ids & standard_ids),
+		}
 
 	# 2026-07-08: Summary card – count Azure graph permissions for compact facts panel.
 	graph_permissions_count = 0
@@ -6647,6 +6672,8 @@ def systemdetaljer(request, pk):
 		'required_permissions': formater_permissions(required_permissions),
 		'systemdetaljer': system,
 		'systembruk': systembruk,
+		'oka_standardkategorier': oka_standardkategorier,
+		'oka_standardkategorier_json': [k.as_api_dict() for k in oka_standardkategorier],
 		'arkivoverforinger_som_avsender': arkivoverforinger_som_avsender,
 		'arkivoverforinger_som_mottaker': arkivoverforinger_som_mottaker,
 		'arkiv_integrasjon_systemer': arkiv_integrasjon_systemer,
@@ -6910,7 +6937,23 @@ def bruksdetaljer(request, pk):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
-	bruk = SystemBruk.objects.select_related('system', 'brukergruppe').get(pk=pk)
+	bruk = (
+		SystemBruk.objects
+		.select_related('system', 'brukergruppe')
+		.prefetch_related(
+			Prefetch(
+				'system__informasjonskategorier',
+				queryset=InformasjonsKategori.objects.select_related('parent', 'parent__parent'),
+			),
+			Prefetch(
+				'informasjonskategori_koblinger',
+				queryset=SystemBrukInformasjonsKategori.objects.select_related(
+					'kategori', 'kategori__parent', 'kategori__parent__parent'
+				),
+			),
+		)
+		.get(pk=pk)
+	)
 	# 2026-09-15: Read-only archive transfers for this virksomhet usage.
 	arkivoverforinger = (
 		ArkivOverforing.objects.filter(avsender_bruk=bruk)
@@ -6918,11 +6961,47 @@ def bruksdetaljer(request, pk):
 		.order_by('mottaker_system__systemnavn')
 	)
 
+	standard = list(bruk.system.informasjonskategorier.all())
+	kobling_by_id = {k.kategori_id: k for k in bruk.informasjonskategori_koblinger.all()}
+	oka_standard = []
+	for kategori in standard:
+		kobling = kobling_by_id.get(kategori.pk)
+		oka_standard.append({
+			'kategori': kategori,
+			'unntatt': bool(kobling and kobling.status == SYSTEMBRUK_KATEGORI_UNNTAK),
+			'begrunnelse': kobling.begrunnelse if kobling and kobling.status == SYSTEMBRUK_KATEGORI_UNNTAK else '',
+		})
+	oka_tillegg = [
+		{
+			'kategori': kobling.kategori,
+			'begrunnelse': kobling.begrunnelse or '',
+		}
+		for kobling in bruk.informasjonskategori_koblinger.all()
+		if kobling.status == SYSTEMBRUK_KATEGORI_TILLEGG
+	]
+
 	return render(request, 'systembruk_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'bruk': bruk,
 		'arkivoverforinger': arkivoverforinger,
+		'oka_standard': oka_standard,
+		'oka_tillegg': oka_tillegg,
+		'oka_standard_json': [
+			{
+				**row['kategori'].as_api_dict(),
+				'unntatt': row['unntatt'],
+				'begrunnelse': row['begrunnelse'],
+			}
+			for row in oka_standard
+		],
+		'oka_tillegg_json': [
+			{
+				**row['kategori'].as_api_dict(),
+				'begrunnelse': row['begrunnelse'],
+			}
+			for row in oka_tillegg
+		],
 	})
 
 

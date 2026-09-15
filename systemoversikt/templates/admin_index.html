@@ -1,4 +1,5 @@
 {% extends "index.html" %}
+{# 2026-09-15: Last inn OKA – systemadministrator-only menu item under Kategorier. #}
 
 {% block sidemeny %}
 
@@ -60,6 +61,10 @@
 	<h6>Kategorier</h6>
 	{% url 'valgbarekategorier' as url_valgbarekategorier %}
 	<a href="{{ url_valgbarekategorier }}" class="btn btn-sm btn-link {% if url_valgbarekategorier in request.path %}fremhev{% endif %}">✎ Valgbare kategorier</a><br>
+	{% if user.is_superuser %}
+	{% url 'oka_last_inn' as url_oka_last_inn %}
+	<a href="{{ url_oka_last_inn }}" class="btn btn-sm btn-link {% if url_oka_last_inn in request.path %}fremhev{% endif %}">✎ Last inn OKA</a><br>
+	{% endif %}
 
 
 	<hr>

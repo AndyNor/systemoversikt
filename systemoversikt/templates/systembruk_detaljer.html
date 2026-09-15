@@ -1,3 +1,4 @@
+{# 2026-09-15: Informasjonskategorier (OKA) – show system defaults, extras and optional opt-out. #}
 {# 2026-09-15: Read-only arkivoverføring list for this SystemBruk. #}
 {# 2026-09-14: Show tatt_i_bruk/avsluttet – archive usage period for this virksomhet. #}
 {% extends "index.html" %}
@@ -12,6 +13,14 @@
 	<a href="{{ url_virksomhet }}">{{ bruk.brukergruppe }}</a> sin bruk av <a href="{{ url_systemdetaljer }}">{{ bruk.system }}</a>
 
 {% endblock underoverskrift %}
+
+{% block ekstrastyle %}
+<link rel="stylesheet" href="{% static 'informasjonskategori.css' %}?v=20260915">
+{% endblock %}
+
+{% block ekstrajavascript %}
+<script src="{% static 'informasjonskategori_edit.js' %}?v=20260915" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
 
 {% block main_content %}
 
@@ -216,6 +225,51 @@
 {# 2026-09-15: Read-only list; create/edit on systemdetaljer. #}
 <br>
 <hr>
+<h6 id="anchor_informasjonskategorier">Informasjonskategorier</h6>
+<div class="oka-panel" id="oka-bruk-panel">
+	{% if perms.systemoversikt.change_systembruk %}
+	<p>
+		<button type="button" class="btn btn-sm btn-secondary" id="oka-bruk-toggle">Endre kategorier</button>
+	</p>
+	{% endif %}
+	<div id="oka-bruk-view">
+		<h6 class="h6">Fra systemet (standard)</h6>
+		{% for row in oka_standard %}
+			<div class="{% if row.unntatt %}oka-unntatt{% endif %}">
+				{% include "informasjonskategori_include.html" with kategori=row.kategori %}
+				{% if row.unntatt %}
+					<p class="small text-danger mb-2">Virksomheten bruker ikke denne standardkategorien{% if row.begrunnelse %}: {{ row.begrunnelse }}{% endif %}</p>
+				{% endif %}
+			</div>
+		{% empty %}
+			<p class="text-muted">Systemet har ingen standard informasjonskategorier.</p>
+		{% endfor %}
+		<h6 class="h6 mt-3">Tillegg for denne virksomheten</h6>
+		{% for row in oka_tillegg %}
+			{% include "informasjonskategori_include.html" with kategori=row.kategori %}
+		{% empty %}
+			<p class="text-muted">Ingen tilleggskategorier er registrert.</p>
+		{% endfor %}
+	</div>
+	{% if perms.systemoversikt.change_systembruk %}
+	<div id="oka-bruk-edit" hidden>
+		{% csrf_token %}
+		<h6 class="h6">Fra systemet (standard)</h6>
+		<div id="oka-bruk-standard-edit"></div>
+		<h6 class="h6 mt-3">Tillegg for denne virksomheten</h6>
+		<div id="oka-bruk-tillegg-edit"></div>
+		<label class="small d-block mt-2" for="oka-bruk-sok">Legg til kategori</label>
+		<input type="search" id="oka-bruk-sok" class="form-control form-control-sm" placeholder="Søk kode eller tittel…" autocomplete="off">
+		<div id="oka-bruk-sok-treff" class="oka-sok-treff"></div>
+		<p class="mt-2">
+			<button type="button" id="oka-bruk-lagre" class="btn btn-primary btn-sm">Lagre</button>
+			<button type="button" id="oka-bruk-avbryt" class="btn btn-secondary btn-sm">Avbryt</button>
+		</p>
+		<p id="oka-bruk-status" class="oka-status small text-muted"></p>
+	</div>
+	{% endif %}
+</div>
+
 <h6 id="anchor_arkivoverforing">Arkivoverføringer</h6>
 {% if arkivoverforinger %}
 <table class="table table-sm">
@@ -250,3 +304,20 @@
 </p>
 
 {% endblock main_content %}
+
+{% block script_append %}
+{{ oka_standard_json|json_script:"okaBrukStandard" }}
+{{ oka_tillegg_json|json_script:"okaBrukTillegg" }}
+{% if perms.systemoversikt.change_systembruk %}
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+document.addEventListener('DOMContentLoaded', function () {
+	window.initOkaSystembrukEditor({
+		searchUrl: "{% url 'api_informasjonskategorier_sok' %}",
+		urlSave: "{% url 'systembruk_lagre_informasjonskategorier' bruk.pk %}",
+		standard: JSON.parse(document.getElementById('okaBrukStandard').textContent),
+		tillegg: JSON.parse(document.getElementById('okaBrukTillegg').textContent),
+	});
+});
+</script>
+{% endif %}
+{% endblock script_append %}

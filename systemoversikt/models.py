@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: InformasjonsKategori (OKA) lookup + System defaults + SystemBruk tillegg/unntak.
 # 2026-09-15: SystemBruk.kommentar (Innhold) help text – virksomhet-specific use beyond systemeier approval.
 # 2026-09-15: SystemBruk.systemeier_kontaktpersoner_referanse display “Lokal informasjonseier (person)” (field name unchanged).
 # 2026-09-15: ArkivOverforing – archive transfer from SystemBruk to destination System (per virksomhet usage).
@@ -86,6 +87,7 @@ from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save
 from simple_history.models import HistoricalRecords
+from systemoversikt.oka_kode import NIVAA_FUNKSJON, NIVAA_HOVED, NIVAA_UNDER, normalize_kode
 from django import forms
 import json
 import re
@@ -2453,6 +2455,147 @@ class InformasjonsKlasse(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 		ordering = ['navn']
 
+
+INFORMASJONSKATEGORI_NIVAA_VALG = (
+	(NIVAA_HOVED, 'Hovedfunksjon'),
+	(NIVAA_FUNKSJON, 'Funksjon'),
+	(NIVAA_UNDER, 'Underfunksjon'),
+)
+
+SYSTEMBRUK_KATEGORI_TILLEGG = 'tillegg'
+SYSTEMBRUK_KATEGORI_UNNTAK = 'unntak'
+SYSTEMBRUK_KATEGORI_STATUS_VALG = (
+	(SYSTEMBRUK_KATEGORI_TILLEGG, 'Tillegg'),
+	(SYSTEMBRUK_KATEGORI_UNNTAK, 'Unntak (brukes ikke)'),
+)
+
+
+class InformasjonsKategori(models.Model):
+	# 2026-09-15: OKA 2024 classification tree. Assignments use underfunksjon (leaf) only.
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	kode = models.CharField(
+			verbose_name="Kode",
+			max_length=30,
+			help_text=u"Visningskode fra OKA, f.eks. A1 - 01.",
+			)
+	kode_normalisert = models.CharField(
+			verbose_name="Normalisert kode",
+			max_length=30,
+			unique=True,
+			help_text=u"Unik nøkkel for import (mellomrom rundt bindestrek normalisert).",
+			)
+	tittel = models.CharField(
+			verbose_name="Tittel",
+			max_length=400,
+			)
+	nivaa = models.CharField(
+			verbose_name="Nivå",
+			max_length=20,
+			choices=INFORMASJONSKATEGORI_NIVAA_VALG,
+			db_index=True,
+			)
+	parent = models.ForeignKey(
+			to='self',
+			on_delete=models.PROTECT,
+			related_name='barn',
+			verbose_name="Overordnet kategori",
+			blank=True,
+			null=True,
+			)
+	her_legges = models.TextField(
+			verbose_name="Her legges",
+			blank=True,
+			default='',
+			)
+	bk_vurdering = models.TextField(
+			verbose_name="Bevarings- og kassasjonsvurdering",
+			blank=True,
+			default='',
+			)
+	tidligere_arkivnokkel = models.TextField(
+			verbose_name="Tidligere arkivnøkkel",
+			blank=True,
+			default='',
+			)
+	aktuelt_lovverk = models.TextField(
+			verbose_name="Aktuelt lovverk",
+			blank=True,
+			default='',
+			)
+	kommentar = models.TextField(
+			verbose_name="Kommentar",
+			blank=True,
+			default='',
+			)
+	aktiv = models.BooleanField(
+			verbose_name="Aktiv",
+			default=True,
+			db_index=True,
+			help_text=u"Deaktiveres ved re-import hvis koden ikke lenger finnes i OKA-filen.",
+			)
+	rekkefolge = models.PositiveIntegerField(
+			verbose_name="Rekkefølge",
+			default=0,
+			)
+	history = HistoricalRecords()
+
+	def er_blad(self):
+		return self.nivaa == NIVAA_UNDER
+
+	def sti(self):
+		deler = [self.kode]
+		node = self.parent
+		seen = {self.pk}
+		while node is not None and node.pk not in seen:
+			deler.append(node.kode)
+			seen.add(node.pk)
+			node = node.parent
+		return ' > '.join(reversed(deler))
+
+	def hovedfunksjon(self):
+		node = self
+		seen = set()
+		while node is not None and node.pk not in seen:
+			if node.nivaa == NIVAA_HOVED:
+				return node
+			seen.add(node.pk)
+			node = node.parent
+		return None
+
+	def as_api_dict(self):
+		hoved = self.hovedfunksjon()
+		return {
+			'id': self.pk,
+			'kode': self.kode,
+			'tittel': self.tittel,
+			'label': '%s %s' % (self.kode, self.tittel),
+			'sti': self.sti(),
+			'her_legges': self.her_legges or '',
+			'bk_vurdering': self.bk_vurdering or '',
+			'tidligere_arkivnokkel': self.tidligere_arkivnokkel or '',
+			'aktuelt_lovverk': self.aktuelt_lovverk or '',
+			'kommentar': self.kommentar or '',
+			'aktiv': self.aktiv,
+			'nivaa': self.nivaa,
+			'hovedfunksjon': ('%s %s' % (hoved.kode, hoved.tittel)) if hoved else '',
+		}
+
+	def save(self, *args, **kwargs):
+		self.kode = (self.kode or '').strip()
+		self.kode_normalisert = normalize_kode(self.kode)
+		super().save(*args, **kwargs)
+
+	def __str__(self):
+		return '%s %s' % (self.kode, self.tittel)
+
+	class Meta:
+		verbose_name = "informasjonskategori"
+		verbose_name_plural = "Dokumentasjon: Informasjonskategorier (OKA)"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		ordering = ['rekkefolge', 'kode_normalisert']
 
 
 # Dynamisk valgmeny for å klassifisere systemer i kommune-spesifikke kategorier
@@ -5507,6 +5650,26 @@ class Tjeneste(models.Model):
 			kommunale_ord.extend(systemkomponent.LOSref.all())
 		return kommunale_ord
 
+	def informasjonskategorier(self):
+		# 2026-09-15: Union of system-level OKA categories; does not include SystemBruk extras/opt-outs.
+		sett = {}
+		for systemkomponent in self.systemer.all():
+			for kategori in systemkomponent.informasjonskategorier.all():
+				sett[kategori.pk] = kategori
+		return sorted(sett.values(), key=lambda k: (k.rekkefolge, k.kode_normalisert))
+
+	def informasjonskategorier_gruppert(self):
+		grupper = []
+		indeks = {}
+		for kategori in self.informasjonskategorier():
+			hoved = kategori.hovedfunksjon()
+			nokkel = hoved.pk if hoved else 0
+			if nokkel not in indeks:
+				indeks[nokkel] = {'hoved': hoved, 'kategorier': []}
+				grupper.append(indeks[nokkel])
+			indeks[nokkel]['kategorier'].append(kategori)
+		return grupper
+
 
 # 2026-09-14: Closed list of archive production formats – extend here when adding more.
 VALG_PRODUKSJONSFORMAT = (
@@ -6049,6 +6212,15 @@ class System(models.Model):
 			verbose_name="Informasjonsklassifisering",
 			blank=True,
 			help_text=u"Velg de kategorier som er aktuelle.",
+			)
+	informasjonskategorier = models.ManyToManyField(
+			# 2026-09-15: OKA leaf codes – system standard set; virksomhet may add/opt out on SystemBruk.
+			to='InformasjonsKategori',
+			related_name='systemer_informasjonskategori',
+			verbose_name="Informasjonskategorier (OKA)",
+			blank=True,
+			limit_choices_to={'nivaa': NIVAA_UNDER, 'aktiv': True},
+			help_text=u"Standard informasjonskategorier (mest detaljerte OKA-nivå) systemet behandler. Virksomheter kan legge til eller unnta kategorier på systembruk.",
 			)
 	isolert_drift = models.BooleanField(
 			verbose_name="På Tilpasset drift (felles IKT-plattform)",
@@ -7047,10 +7219,65 @@ class SystemBruk(models.Model):
 	def __str__(self):
 		return u'%s - %s' % (self.system, self.brukergruppe)
 
+	def informasjonskategori_sammendrag(self):
+		# 2026-09-15: Compact counts for the system detail virksomhetsbruk table.
+		standard_ids = {k.pk for k in self.system.informasjonskategorier.all()}
+		koblinger = list(self.informasjonskategori_koblinger.all())
+		unntak_ids = {k.kategori_id for k in koblinger if k.status == SYSTEMBRUK_KATEGORI_UNNTAK}
+		tillegg_ids = {k.kategori_id for k in koblinger if k.status == SYSTEMBRUK_KATEGORI_TILLEGG}
+		return {
+			'standard_antall': len(standard_ids),
+			'tillegg_antall': len(tillegg_ids),
+			'unntak_antall': len(unntak_ids & standard_ids),
+		}
+
 	class Meta:
 		verbose_name_plural = "Organisasjon: Systembruk"
 		unique_together = ('system', 'brukergruppe')
 		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+class SystemBrukInformasjonsKategori(models.Model):
+	# 2026-09-15: Per-virksomhet extra OKA codes or opt-out of a system default (optional reason).
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	systembruk = models.ForeignKey(
+			to=SystemBruk,
+			related_name='informasjonskategori_koblinger',
+			on_delete=models.CASCADE,
+			verbose_name="Systembruk",
+			)
+	kategori = models.ForeignKey(
+			to=InformasjonsKategori,
+			related_name='systembruk_koblinger',
+			on_delete=models.PROTECT,
+			verbose_name="Informasjonskategori",
+			limit_choices_to={'nivaa': NIVAA_UNDER},
+			)
+	status = models.CharField(
+			verbose_name="Status",
+			max_length=20,
+			choices=SYSTEMBRUK_KATEGORI_STATUS_VALG,
+			)
+	begrunnelse = models.TextField(
+			verbose_name="Begrunnelse",
+			blank=True,
+			default='',
+			help_text=u"Valgfri begrunnelse, særlig ved unntak fra en standardkategori.",
+			)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return '%s: %s (%s)' % (self.systembruk, self.kategori, self.get_status_display())
+
+	class Meta:
+		verbose_name = "systembruk-informasjonskategori"
+		verbose_name_plural = "Organisasjon: Systembruk informasjonskategorier"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		unique_together = ('systembruk', 'kategori')
+		ordering = ['status', 'kategori__rekkefolge', 'kategori__kode_normalisert']
 
 
 class WANLokasjon(models.Model):
