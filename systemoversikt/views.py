@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: Dokumentasjonsforvaltning information page for archivists.
 # 2026-09-15: Informasjonskategorier (OKA) on systemdetaljer, bruksdetaljer and tjeneste_detaljer.
 # 2026-09-15: ArkivOverforing – bulk create / edit / delete; lists on systemdetaljer and bruksdetaljer.
 # 2026-09-14: systemdetaljer – approved archive systems (er_arkiv) reached via SystemIntegration.
@@ -5515,6 +5516,25 @@ def roller(request):
 			'required_permissions': formater_permissions(required_permissions),
 			'header': header,
 			'matrise': matrise,
+	})
+
+
+def dokumentasjonsforvaltning(request):
+	# 2026-09-15: Information page – archive/OKA model for full-time archivists; not a data editor.
+	required_permissions = ['systemoversikt.view_system']
+	if not request.user.is_authenticated or not request.user.has_perm('systemoversikt.view_system'):
+		return render_access_denied(request, required_permissions)
+
+	min_virksomhet = None
+	try:
+		min_virksomhet = request.user.profile.virksomhet
+	except Exception:
+		pass
+
+	return render(request, 'dokumentasjonsforvaltning.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'min_virksomhet': min_virksomhet,
 	})
 
 

@@ -1,4 +1,5 @@
 {% extends "index.html" %}
+{# 2026-09-15: Sidemeny link to dokumentasjonsforvaltning information page. #}
 {# 2026-09-15: Sidemeny link to OKA-klassifikasjon overview. #}
 
 {% block sidemeny %}
@@ -81,6 +82,9 @@
 
 		{% url 'system_informasjonsbehandling' as url_system_informasjonsbehandling %}
 		<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'system_informasjonsbehandling' %}fremhev{% endif %}">Informasjonsklassifisering</a><br>
+
+		{% url 'dokumentasjonsforvaltning' as url_dokumentasjonsforvaltning %}
+		<a href="{{ url_dokumentasjonsforvaltning }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'dokumentasjonsforvaltning' %}fremhev{% endif %}">Dokumentasjonsforvaltning</a><br>
 
 		{% url 'oka_oversikt' as url_oka_oversikt %}
 		<a href="{{ url_oka_oversikt }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'oka_oversikt' %}fremhev{% endif %}">OKA-klassifikasjon</a><br>

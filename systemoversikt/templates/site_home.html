@@ -1,6 +1,7 @@
 ﻿{% extends "system_index.html" %}
 {% load static %}
 {% load templatetags %}
+{# 2026-09-15: Relaterte oversikter – link to dokumentasjonsforvaltning information page. #}
 {# 2026-09-15: Home charts on one row, no legend, three-color palette. #}
 {# 2026-09-15: Home intro as cards – documentation and key actions easier to scan. #}
 {# 2026-08-23: Home copy – auto OIDC login; Logg inn button is fallback only. #}
@@ -143,6 +144,10 @@
 				</div>
 				<div class="card-body py-3">
 					<ul class="home-intro-list">
+						<li>
+							<span class="text-primary home-intro-list-icon" aria-hidden="true">{% bootstrap_icon 'file' width='1.1em' height='1.1em' %}</span>
+							<span><a href="{% url 'dokumentasjonsforvaltning' %}">Dokumentasjonsforvaltning</a> for arkiv, OKA og systembruk</span>
+						</li>
 						<li>
 							<span class="text-primary home-intro-list-icon" aria-hidden="true">{% bootstrap_icon 'box-arrow-up-right' width='1.1em' height='1.1em' %}</span>
 							<span><a target="_blank" rel="noopener noreferrer" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a> for personopplysninger</span>

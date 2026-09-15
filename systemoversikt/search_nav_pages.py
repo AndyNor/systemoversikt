@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: Dokumentasjonsforvaltning information page – system sidemeny.
 # 2026-09-15: OKA-klassifikasjon overview – system sidemeny (full classification tree).
 # 2026-09-15: Last inn OKA – superuser-only admin sidemeny (Excel import of classification).
 # 2026-09-01: Rename ukjente_identer search label to "Kontoer uten virksomhet" – matches the virksomhet=None query.
@@ -88,6 +89,10 @@ NAV_PAGES = [
 	_entry('Systemkategorier', 'alle_hovedkategorier', 'System', ['systemkategorier', 'hovedkategorier']),
 	_entry('Samlede kontaktpersoner', 'alle_systemer_forvaltere', 'System', ['kontaktpersoner', 'forvaltere', 'systemforvaltere']),
 	_entry('Informasjonsklassifisering', 'system_informasjonsbehandling', 'System', ['informasjonsklassifisering', 'informasjonsbehandling']),
+	_entry(
+		'Dokumentasjonsforvaltning', 'dokumentasjonsforvaltning', 'System',
+		['dokumentasjonsforvaltning', 'arkiv', 'arkivoverføring', 'oka', 'informasjonseier'],
+	),
 	_entry(
 		'OKA-klassifikasjon', 'oka_oversikt', 'System',
 		['oka', 'oka-klassifikasjon', 'informasjonskategorier', 'arkivnøkkel', 'arkivnokkel'],

@@ -1,0 +1,365 @@
+{# 2026-09-15: Plain-language copy for non-technical readers; tjenesteområde vs Yggdrasil process chain. #}
+{# 2026-09-15: TOC contrast – override global nav { color:#F8F0DD } so heading and bullets stay readable. #}
+{# 2026-09-15: Information page for archivists – current archive/OKA model and remaining wishlist gaps. #}
+{% extends "system_index.html" %}
+{% load static %}
+
+{% block overskrift %}
+	Dokumentasjonsforvaltning i Kartoteket
+{% endblock overskrift %}
+
+{% block ekstrastyle %}
+<style nonce="{{ request.csp_nonce }}">
+.dokforv-toc {
+	background: #f8f9fa;
+	border: 1px solid #dee2e6;
+	border-radius: 0.25rem;
+	padding: 1rem 1.25rem;
+	margin-bottom: 1.5rem;
+	color: #212529;
+}
+.dokforv-toc ul {
+	margin-bottom: 0;
+	color: #212529;
+}
+.dokforv-toc a:link,
+.dokforv-toc a:visited {
+	color: #28277e;
+	font-weight: 500;
+	text-decoration: underline;
+	background-color: transparent;
+}
+.dokforv-toc a:hover,
+.dokforv-toc a:focus {
+	color: #FF8274;
+	font-weight: 500;
+	text-decoration: underline;
+	background-color: transparent;
+}
+.dokforv-section {
+	scroll-margin-top: 150px;
+	margin-bottom: 2rem;
+}
+.dokforv-section h5 {
+	border-bottom: 1px solid #dee2e6;
+	padding-bottom: 0.35rem;
+	margin-bottom: 1rem;
+}
+.dokforv-begrep {
+	margin-bottom: 0.85rem;
+}
+.dokforv-begrep dt {
+	font-weight: 600;
+}
+.dokforv-begrep dd {
+	margin-left: 0;
+	margin-bottom: 0;
+}
+.dokforv-skille {
+	background: #fff8e6;
+	border: 1px solid #f0d78c;
+	border-radius: 0.25rem;
+	padding: 0.85rem 1rem;
+	margin: 1rem 0;
+}
+table.dokforv-tabell th {
+	white-space: nowrap;
+}
+</style>
+{% endblock ekstrastyle %}
+
+{% block hovedinnhold %}
+
+<p>
+	Kartoteket er systemoversikten for Oslo kommune. Den er ikke et arkivsystem, og den erstatter ikke Byarkivets egne løsninger for uttrekk, deponering eller langtidsbevaring. Det som er lagt inn her, er støtte for å <em>beskrive</em> systemer og virksomheters bruk av dem på en måte arkivarer kan bruke — blant annet periode, innhold, klassifikasjon (OKA), godkjenning som elektronisk arkiv og overføring av arkivmateriale mellom systemer.
+</p>
+<p>
+	Ønskene kom fra et arbeidsark som blandet nye opplysninger, opplysninger som allerede fantes, og ting som hører hjemme i Yggdrasil eller i en egen løsning for dokumentasjonsforvaltning. Vi har ikke fulgt arket linje for linje. Denne siden forklarer hvordan det henger sammen i Kartoteket, hva som dekker ønskene, og hva som bevisst ikke er tatt inn ennå.
+</p>
+
+<nav class="dokforv-toc" aria-label="Innhold">
+	<strong>På denne siden</strong>
+	<ul class="mt-2 mb-0">
+		<li><a href="#modell">Hvordan opplysningene henger sammen</a></li>
+		<li><a href="#hvor">Hvor du jobber i Kartoteket</a></li>
+		<li><a href="#nytt">Det som er nytt</a></li>
+		<li><a href="#fantes">Felt ønskelisten omtaler, som allerede fantes</a></li>
+		<li><a href="#ikke">Det vi ikke har tatt inn ennå</a></li>
+	</ul>
+</nav>
+
+<div class="dokforv-section" id="modell">
+	<h5>Hvordan opplysningene henger sammen</h5>
+
+	<p>
+		Det viktigste skillet er mellom <strong>løsningen</strong> og <strong>virksomhetens bruk av løsningen</strong>. Mange av ønskene i arbeidsarket handlet egentlig om det skillet: når Oslo kommune anskaffet et system, er ikke det samme som når en gitt virksomhet begynte å føre innhold i det.
+	</p>
+
+	<dl>
+		<div class="dokforv-begrep">
+			<dt>System</dt>
+			<dd>
+				Selve IKT-løsningen, slik den er registrert én gang for kommunen. Systemeier og systemforvalter beskriver hva systemet er ment å dekke, teknisk oppsett, leverandør og felles føringer. Datoene <em>Dato systemet ble tatt i bruk</em> og <em>Dato systemet skal fases ut eller ble faset ut</em> gjelder løsningen i kommunen — ikke den enkelte virksomhetens innholdsperiode.
+			</dd>
+		</div>
+		<div class="dokforv-begrep">
+			<dt>Systembruk</dt>
+			<dd>
+				Én virksomhets bruk av ett system. Her ligger det informasjonseier skal fylle ut: når <em>denne</em> virksomheten tok systemet i bruk, når bruken opphørte, hva innholdet faktisk har vært lokalt, lokal informasjonseier og lokal forvalter, og eventuelle tillegg eller unntak mot OKA-kodene som er satt på systemet.
+			</dd>
+		</div>
+		<div class="dokforv-begrep">
+			<dt>Tjenesteområde</dt>
+			<dd>
+				I Kartoteket er en tjeneste et <em>overbygg</em> over systemer: den har navn og beskrivelse, og den peker på systemene tjenesten består av (kalt systemkomponenter). Det finnes ikke et prosessledd imellom. Tjenesteeier og tjenesteforvalter vises på tjenestesiden, men de er hentet fra systemene under — systemeier og systemforvalter der. De lagres ikke som egne opplysninger på tjenesten. Informasjonskategoriene som vises på tjenesten er alle OKA-kodene som er satt på disse systemene, samlet uten gjentakelser. Tillegg og unntak en virksomhet har gjort på sin systembruk, vises ikke på tjenesten.
+			</dd>
+		</div>
+		<div class="dokforv-begrep">
+			<dt>Systemavhengighet (integrasjon)</dt>
+			<dd>
+				At to systemer utveksler data eller henger sammen i drift, for eksempel at opplysninger sendes videre, at brukere logger på via et annet system, eller at ett system er en del av et annet. Dette er ikke det samme som at arkivmateriale er flyttet. «Sakarkiv-integrasjon» er ikke et eget ja/nei-felt. På systemdetaljer vises det i stedet om systemet har en registrert avhengighet mot et annet system som er merket <em>godkjent som elektronisk arkiv</em>.
+			</dd>
+		</div>
+		<div class="dokforv-begrep">
+			<dt>Arkivoverføring</dt>
+			<dd>
+				En avgrenset overføring av arkivmateriale fra en virksomhets bruk av et kildesystem til et mottakersystem. Den har startdato, sluttdato og kommentar om hva som er overført. Hver virksomhet kan registrere én overføring til hvert mottakersystem. Slik dokumenteres migrering og arvtaker: du står på kildesystemet og registrerer overføring til det nye systemet, for hver virksomhet som avga materiale. På mottakersystemet ser du innkommende overføringer («mottatt arkiverte data fra»).
+			</dd>
+		</div>
+		<div class="dokforv-begrep">
+			<dt>OKA — informasjonskategorier</dt>
+			<dd>
+				Oslo kommunes funksjonsbaserte klassifikasjon, bygd opp i tre nivåer som henger sammen: hovedfunksjon, funksjon og underfunksjon. Bare <strong>underfunksjon</strong> (det mest detaljerte nivået) kan knyttes til system og systembruk. På systemet settes kodene som gjelder løsningen som helhet. En virksomhet kan legge til koder som bare gjelder dem, eller si at en av systemets koder ikke brukes hos dem (valgfri begrunnelse). Bevarings- og kassasjonsvurdering, tidligere arkivnøkkel og aktuelt lovverk ligger på selve OKA-koden. De følger klassifikasjonen, og er ikke egne opplysninger per system.
+			</dd>
+		</div>
+	</dl>
+
+	<div class="dokforv-skille">
+		<strong>Ikke det samme som OKA:</strong>
+		<ul class="mb-0 mt-2">
+			<li><em>Informasjonsklassifisering</em> er sikkerhetsklasser (for eksempel personopplysninger eller gradert informasjon), ikke funksjonsbasert arkivnøkkel.</li>
+			<li><em>Systemkategorier</em> er DIG/IM sine kategorier for systemporteføljen.</li>
+			<li><em>LOS-begrepstagging</em> er Digdirs kommunale emneord.</li>
+		</ul>
+	</div>
+
+	<h6 class="mt-4">Roller slik vi bruker dem her</h6>
+	<p>
+		Arbeidsarket hadde Byarkivets forståelse av rollene. Kartoteket har knyttet eksisterende opplysninger til den forståelsen:
+	</p>
+	<ul>
+		<li><strong>Systemeier</strong> (på systemet) — ansvar for funksjonsområdet løsningen er ment å dekke, og for felles føringer. Begrepet er på vei ut i nytt IKT-reglement, men opplysningen finnes og brukes fortsatt.</li>
+		<li><strong>Systemforvalter</strong> (på systemet) — teknisk informasjon om løsningen, inkludert godkjenning som elektronisk arkiv, produksjonsformater og OKA-kodene som gjelder systemet.</li>
+		<li><strong>Lokal informasjonseier</strong> (på systembruk) — de som legger informasjon inn i systemet og er ansvarlig for innholdet lokalt. Skal fylle inn hva systemet er blitt brukt til, og i hvilken periode.</li>
+		<li><strong>Lokal forvalter</strong> (på systembruk) — lokal kontakt for virksomhetens bruk.</li>
+		<li><strong>Tjenesteeier</strong> (på tjenesteområdet) — vises som virksomhet og personer, men er hentet fra systemeier på systemene tjenesten består av. Det er ikke en egen registrering på tjenesten.</li>
+	</ul>
+	<p class="text-muted mb-0">
+		Prosesseier finnes ikke. I Kartoteket går det fra tjenesteområde rett til systemene. Målbildet i Yggdrasil, der tjeneste peker på prosess som igjen peker på system, er et annet oppsett — med et prosessledd Kartoteket ikke har.
+	</p>
+</div>
+
+<div class="dokforv-section" id="hvor">
+	<h5>Hvor du jobber i Kartoteket</h5>
+	<ul>
+		<li>
+			<a href="{% url 'oka_oversikt' %}">OKA-klassifikasjon</a>
+			— hele klassifikasjonen med søk, filter på nivå og bevarings-/kassasjonstekst på kodene.
+		</li>
+		<li>
+			<a href="{% url 'tjenester_oversikt' %}">Alle tjenesteområder</a>
+			— overbygget over systemene, med tjenesteeier hentet fra systemene og samlede OKA-koder.
+		</li>
+		<li>
+			Systemdetaljer — OKA-kodene for systemet, godkjenning som elektronisk arkiv, om systemet henger sammen med et godkjent arkivsystem, og administrasjon av arkivoverføringer.
+		</li>
+		<li>
+			Systembruk (bruksdetaljer) — tatt i bruk, avsluttet, innhold, lokal informasjonseier, tillegg og unntak mot OKA. Arkivoverføringer vises, men opprettes fra systemdetaljer.
+		</li>
+		<li>
+			{% if min_virksomhet %}
+				{% url 'virksomhet_arkivplan' pk=min_virksomhet.pk as url_arkivplan %}
+				<a href="{{ url_arkivplan }}">Vår arkivoversikt</a>
+			{% else %}
+				Vår arkivoversikt
+			{% endif %}
+			— på virksomhetssiden: systemer virksomheten eier eller forvalter, og all systembruk med periode og innhold.
+		</li>
+		<li>
+			Når du redigerer et system — gruppen <em>Arkiv</em> samler godkjenning, dato, produksjonsformater, OKA og arkivars kommentar.
+		</li>
+		<li>
+			Når du redigerer en systembruk — tatt i bruk og avsluttet står sammen, og det tidligere kommentarfeltet heter nå <em>Innhold</em>.
+		</li>
+	</ul>
+</div>
+
+<div class="dokforv-section" id="nytt">
+	<h5>Det som er nytt</h5>
+	<p>
+		Dette er funksjonalitet som er lagt inn for dokumentasjonsforvaltning, utover det Kartoteket allerede hadde.
+	</p>
+
+	<h6>Periode og innhold per virksomhet</h6>
+	<p>
+		På systembruk finnes nå <em>Tatt i bruk</em> og <em>Avsluttet</em>. Det er virksomhetens innholdsperiode — ikke det samme som når løsningen ble tatt i bruk i kommunen eller når den skal fases ut. Det som tidligere het kommentar, vises som <em>Innhold</em>: hva virksomheten faktisk har brukt systemet til, utover det systemeier har beskrevet. Opplysningene vises på bruksdetaljer og i virksomhetens arkivoversikt.
+	</p>
+
+	<h6>Godkjent som elektronisk arkiv</h6>
+	<p>
+		Avkrysningen på systemet er presisert til <em>Godkjent som elektronisk arkiv?</em> (ikke «er dette et arkiv» i løs forstand). Dato for godkjenningen er eget felt. Systemdetaljer viser status og dato, og om systemet har registrert avhengighet mot et annet godkjent arkivsystem. Henvisning til hvor selve godkjenningsdokumentet ligger, er ikke lagt inn.
+	</p>
+
+	<h6>Produksjonsformater</h6>
+	<p>
+		På systemet kan systemforvalter velge ett eller flere produksjonsformater (foreløpig PDF, JPG og DOCX). Listen kan utvides. Dette er formatet innholdet produseres i, ikke arkivformat eller uttrekksformat.
+	</p>
+
+	<h6>OKA på system, systembruk og tjeneste</h6>
+	<p>
+		Klassifikasjonen lastes inn fra et regneark av systemadministrator. Kodene som gjelder løsningen settes på systemet. Virksomheten kan legge til eller unnta underfunksjoner på sin systembruk. På tjenesteområdet vises alle OKA-kodene fra systemene tjenesten består av, samlet. Bevaring, kassasjon og hjemmel leses fra koden, ikke som fritekst per system.
+	</p>
+
+	<h6>Arkivoverføringer</h6>
+	<p>
+		Fra systemdetaljer kan du registrere overføring fra én eller flere virksomheters bruk av dette systemet til et valgt mottakersystem, med periode og kommentar. Endring og sletting skjer derfra. Dette dekker ønsket om å vite om innhold er overført fra eldre løsninger, uten en egen «arvtaker»-oppføring.
+	</p>
+</div>
+
+<div class="dokforv-section" id="fantes">
+	<h5>Felt ønskelisten omtaler, som allerede fantes</h5>
+	<p>
+		Flere linjer i arbeidsarket beskriver ting Kartoteket allerede hadde. Vi har ikke duplisert dem. Der merkelappen var misvisende for arkivformål, er den justert.
+	</p>
+
+	<table class="table table-sm tablesorter dokforv-tabell">
+		<thead>
+			<tr>
+				<th>Ønske i arket</th>
+				<th>Hvor det ligger i Kartoteket</th>
+				<th>Merknad</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td>Tatt i bruk (systemnivå)</td>
+				<td>System: <em>Dato systemet ble tatt i bruk</em></td>
+				<td>Gjelder løsningen i kommunen. Virksomhetens dato er det nye feltet på systembruk.</td>
+			</tr>
+			<tr>
+				<td>Avsluttet (systemnivå)</td>
+				<td>System: <em>Dato systemet skal fases ut eller ble faset ut</em>, pluss livsløpstatus</td>
+				<td>Virksomhetens avslutning er det nye feltet på systembruk.</td>
+			</tr>
+			<tr>
+				<td>Innhold / systembeskrivelse</td>
+				<td>System: systembeskrivelse. Systembruk: <em>Innhold</em> (samme felt som før, ny merkelapp)</td>
+				<td>Innhold fylles ikke automatisk fra OKA. Det er virksomhetens fritekst.</td>
+			</tr>
+			<tr>
+				<td>Funksjonsområde</td>
+				<td>Nå: OKA-underfunksjoner. Fra før: systemkategorier og LOS</td>
+				<td>KF oppgavekoder og mapping mot OKA er ikke innført (Yggdrasil på sikt).</td>
+			</tr>
+			<tr>
+				<td>Sakarkiv-integrasjon</td>
+				<td>Systemavhengighet mot system merket godkjent som elektronisk arkiv</td>
+				<td>Vises automatisk ut fra systemavhengigheter, ikke som eget ja/nei.</td>
+			</tr>
+			<tr>
+				<td>Logg eller journal</td>
+				<td>System: <em>Etablerte logger i systemet</em> (under utfases i admin)</td>
+				<td>Dette er teknisk logging, ikke journalføring etter arkivforskriften. Eget ja/nei for journal er ikke lagt inn.</td>
+			</tr>
+			<tr>
+				<td>Rutiner / brukerdokumentasjon</td>
+				<td>System: <em>Brukerdokumentasjon</em> (lenke), pluss lenker til systemdokumentasjon, driftsdokumentasjon og datamodell</td>
+				<td>Arket ønsket EQS-nummer eller saksnummer fremfor lenke til et område som kan flyttes. Det er ikke eget saksnummerfelt.</td>
+			</tr>
+			<tr>
+				<td>Systemeier, systemforvalter, leverandør</td>
+				<td>På systemet, som før</td>
+				<td>Informasjonseier er den lokale personen på systembruk, ikke en ny rolle ved siden av systemeier.</td>
+			</tr>
+			<tr>
+				<td>Utveksling av data med andre systemer</td>
+				<td>Systemavhengigheter (integrasjoner)</td>
+				<td>Løpende utveksling. Arkivoverføring er noe annet.</td>
+			</tr>
+			<tr>
+				<td>Datamodell / skjermbilder / datasammenhenger</td>
+				<td>Lenke til datamodell og datasett på systemet</td>
+				<td>Ikke et ja/nei for «finnes referanse», og ikke en egen løsning for å tolke uttrekk.</td>
+			</tr>
+			<tr>
+				<td>Arkivars kommentarer</td>
+				<td>System: <em>Arkivars kommentarer til systemet</em></td>
+				<td>Fritekst som fantes fra før, nå samlet under Arkiv når du redigerer systemet.</td>
+			</tr>
+		</tbody>
+	</table>
+</div>
+
+<div class="dokforv-section" id="ikke">
+	<h5>Det vi ikke har tatt inn ennå</h5>
+	<p>
+		Dette er ønsker fra arket som ikke er tatt inn som egne opplysninger i Kartoteket, eller som bare er dekket delvis. En del av dem er merket for Yggdrasil eller for en egen løsning for dokumentasjonsforvaltning.
+	</p>
+
+	<h6>Klassifikasjon og bevaring utover OKA</h6>
+	<ul>
+		<li>KF oppgavekoder, og samstilling mellom K-koder og OKA.</li>
+		<li>Bevarings- eller kassasjonsvurdering som eget valg på systemet, løsrevet fra OKA. I dag følger vurderingen koden.</li>
+		<li>Hjemmel for kassasjon som eget felt. Aktuelt lovverk ligger på OKA-koden.</li>
+		<li>Innhold fylt ut automatisk fra valgte OKA-koder. Innhold er fremdeles fritekst på systembruk.</li>
+	</ul>
+
+	<h6>Formater og deponering</h6>
+	<ul>
+		<li><strong>Arkivformat</strong> som egen kodeliste (skilt fra produksjonsformat).</li>
+		<li><strong>Uttrekksformat</strong>.</li>
+		<li><strong>Langtidsoppbevaring</strong> som eget felt (arket viser til Yggdrasil).</li>
+		<li>Overføringstidspunkt spesifikt for uttrekk fra virksomhet til Byarkivet (BAR). Arkivoverføring kan peke på et mottakersystem, men BAR er ikke en egen mottakertype med eget løp.</li>
+	</ul>
+
+	<h6>Journal, godkjenning og rutiner</h6>
+	<ul>
+		<li>Eget ja/nei for om systemet er logg eller journal i arkivrettslig forstand.</li>
+		<li>Henvisning til hvor godkjenningen som elektronisk arkiv ligger (saksnummer, EQS eller tilsvarende).</li>
+		<li>Rutinehenvisning som EQS-nummer eller saksnummer i stedet for en nettlenke.</li>
+		<li>Ferdig liste over brukergrupper. I dag: antall brukere og tilgangsgrupper, ikke en arkivfaglig oversikt over hvem som bruker systemet.</li>
+	</ul>
+
+	<h6>Personvern og taushetsplikt</h6>
+	<ul>
+		<li>Taushetsplikt på innholdet som eget ja/nei. Arket peker selv på behandlingsoversikten. Kartoteket har informasjonsklassifisering og personvernopplysninger, men ikke taushetsplikt som egen arkivopplysning.</li>
+	</ul>
+
+	<h6>Arkivforskriften og «dedikert DD-løsning»</h6>
+	<p>
+		Arket slutter med tre krav som i praksis er egenklæring mot arkivforskriften, pluss tre ja/nei om referanser som er viktige når uttrekk skal tolkes senere:
+	</p>
+	<ul>
+		<li>Referanse til bilder av de mest brukte vinduene i brukergrensesnittet.</li>
+		<li>Referanse til datasammenhenger ved uttrekk.</li>
+		<li>Referanse til skisser av datamodell for originalbasen (utover lenken som allerede finnes).</li>
+		<li>At systemet registrerer entydige identifikatorer og metadata om prosesskontekst, relasjoner, innhold, aktører og tidspunkter (arkivforskriften § 5 bokstav a, og for journalføringspliktige saksdokumenter også § 15).</li>
+		<li>At systemet sikrer dokumentasjonens kontekst, integritet, sporbarhet og tilgjengelighet (§ 5).</li>
+		<li>At systembeskrivelsen dokumenterer dokumentasjonstyper, opphav og historikk, og beskyttelse mot utilsiktede eller udokumenterte endringer (§ 6).</li>
+	</ul>
+	<p>
+		Disse er ikke tatt inn. De peker mot en egen løsning for dokumentasjonsforvaltning eller et egenklæringsskjema, ikke mot tre nye avkrysninger på systemet i Kartoteket.
+	</p>
+
+	<h6>Roller og målbilde som ligger utenfor Kartoteket</h6>
+	<ul>
+		<li>Prosesseier. Tjenesteeier vises allerede, men bare som sammendrag av systemeier på systemene under tjenesteområdet.</li>
+		<li>Et prosessledd mellom tjeneste og system, slik Yggdrasil skisserer (tjeneste, så prosess, så system). I Kartoteket peker tjenesteområdet rett på systemene.</li>
+	</ul>
+</div>
+
+<p class="text-muted">
+	Siden beskriver Kartoteket slik det er nå. Den er ikke en kravspesifikasjon for neste løsning.
+</p>
+
+{% endblock hovedinnhold %}
