@@ -1,7 +1,85 @@
 ﻿{% extends "system_index.html" %}
 {% load static %}
 {% load templatetags %}
+{# 2026-09-15: Home charts on one row, no legend, three-color palette. #}
+{# 2026-09-15: Home intro as cards – documentation and key actions easier to scan. #}
 {# 2026-08-23: Home copy – auto OIDC login; Logg inn button is fallback only. #}
+
+{% block ekstrastyle %}
+<style nonce="{{ request.csp_nonce }}">
+.home-intro-docs {
+	background-color: #d1ecf1;
+	border-color: #afd3d9;
+}
+.home-intro-docs .card-body {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+.home-intro-docs-icon {
+	flex: 0 0 auto;
+	color: #28277e;
+}
+.home-intro-docs-link {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	background: #fff;
+	border: 1px solid #28277e;
+	color: #28277e;
+	border-radius: 999px;
+	padding: 0.35rem 0.9rem;
+	text-decoration: none;
+	font-weight: 600;
+}
+.home-intro-docs-link:hover {
+	background: #28277e;
+	color: #fff;
+	text-decoration: none;
+}
+.home-intro-card .card-header {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+}
+.home-intro-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.home-intro-list li {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.45rem;
+	margin-bottom: 0.5rem;
+}
+.home-intro-list li:last-child {
+	margin-bottom: 0;
+}
+.home-intro-list .home-intro-list-icon {
+	flex: 0 0 auto;
+	margin-top: 0.1rem;
+}
+.home-charts-row {
+	margin-left: -0.35rem;
+	margin-right: -0.35rem;
+}
+.home-charts-row > [class*="col"] {
+	padding-left: 0.35rem;
+	padding-right: 0.35rem;
+	min-width: 0;
+}
+.home-chart-title {
+	font-size: 0.8rem;
+	text-align: center;
+	margin-bottom: 0.35rem;
+}
+.home-chart-wrap {
+	position: relative;
+	height: 160px;
+}
+</style>
+{% endblock ekstrastyle %}
 
 {% block ekstrajavascript %}
 	{# 2026-06-21: Chart.js for home page system statistics (static bundle, not CDN). #}
@@ -14,57 +92,125 @@
 
 {% block hovedinnhold %}
 
-	<p>Kartoteket inneholder Oslo kommunes systemoversikt. I tillegg finner du en del rapporter basert på data fra driftsmiljøet (CMDB) og fra Microsoft 365. I systemoversikten registrerer vi driftsplattformer, systemer og programvare. For oversikt over behandlinger av personopplysninger må du gå til <a target="_blank" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a> og oversikt over tjenester finner du i <a href="https://tjenestekatalog.k8s.oslo.kommune.no/katalog" target="_blank">Oslo kommunes interne tjenestekatalog</a>.</p>
-
-	<div class="alert alert-primary py-2" role="note" style="display:flex; align-items:center; gap:0.5rem;">
-		<span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em; flex:0 0 auto;"><path d="M2 2.5A1.5 1.5 0 0 1 3.5 1h8A1.5 1.5 0 0 1 13 2.5v11a.5.5 0 0 1-.757.429L8 11.5l-4.243 2.429A.5.5 0 0 1 3 13.5v-11z"/></svg></span>
-		<div><a target="_blank" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx"><b>Brukerdokumentasjonen</b></a> finner du på SharePoint.</div>
-	</div>
+	<p>Kartoteket er Oslo kommunes systemoversikt. Her registreres driftsplattformer, systemer og programvare. Du finner også rapporter basert på data fra driftsmiljøet (CMDB) og Microsoft 365.</p>
 
 	{% url 'min_virksomhet' as url_min_virksomhet %}
-	<p>
-		For å finne et system kan du enten <b><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg></span> søke</b>
-		eller gå til <a href="{{url_min_virksomhet}}" class="btn btn-sm {% if url_min_virksomhet in request.path %}fremhev{% endif %}" style="padding-left:0.4rem; padding-right:0.4rem; vertical-align:baseline;"><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/><path d="M14 14s-1-4-6-4-6 4-6 4 1 1 6 1 6-1 6-1"/></svg></span> min virksomhet</a>
-		<br>Du kan også se <a href="{% url 'home_chart' %}"><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M0 0h1v15h15v1H0z"/><path d="M2 13h1V6H2zm3 0h1V2H5zm3 0h1V9H8zm3 0h1V4h-1z"/></svg></span> oversikt over alle systemer fordelt på virksomhet</a>.
-	</p>
 
-	<p>Det pågår nå et arbeid med å modernisere både IKT-instruksen og systemoversikten i en ny løsning som heter Yggdrasil. For mer informasjon om fremdriften, kan du følge med på <a target="_blank" href="https://engage.cloud.microsoft/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiI2NTU0NzAwMTg1NyJ9/all">VI/SAM/System og tjenesteoversikt</a>. Inntil til den nye løsningen formelt er lansert er det her i Kartoteket vi fører systemoversikt.</p>
+	<div class="card mb-3 home-intro-docs">
+		<div class="card-body py-3">
+			<span class="home-intro-docs-icon" aria-hidden="true">{% bootstrap_icon 'bookmark' width='2em' height='2em' %}</span>
+			<div>
+				<h6 class="mb-1">Brukerdokumentasjon</h6>
+				<p class="mb-1">Veiledning til hvordan du bruker Kartoteket ligger på SharePoint.</p>
+				<a class="home-intro-docs-link" target="_blank" rel="noopener noreferrer" href="https://oslokommune.sharepoint.com/sites/abcff/SitePages/Systemoversikt-p%C3%A5-felles-IKT-plattform.aspx">
+					Åpne brukerdokumentasjonen
+					<span aria-hidden="true">{% bootstrap_icon 'box-arrow-up-right' width='0.95em' height='0.95em' %}</span>
+				</a>
+			</div>
+		</div>
+	</div>
 
-	<p><span class="text-primary" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 16 16" fill="currentColor" focusable="false" style="vertical-align:-0.15em;"><path d="M8 1a3 3 0 0 0-3 3v3h6V4a3 3 0 0 0-3-3M4 7V4a4 4 0 1 1 8 0v3h.5A1.5 1.5 0 0 1 14 8.5v5A1.5 1.5 0 0 1 12.5 15h-9A1.5 1.5 0 0 1 2 13.5v-5A1.5 1.5 0 0 1 3.5 7z"/></svg></span> Kartoteket er tilgangsstyrt. Innlogging skjer automatisk når du åpner forsiden eller en beskyttet side. Hvis den ikke fullføres, kan du bruke «Logg inn»-knappen ved siden av søkefeltet. Se <a href="{% url 'roller' %}">rolleoversikt</a> for nærmere beskrivelser av hvordan tilgangsstyringen fungerer.</p>
-	
+	<div class="row">
+		<div class="col-lg-4 col-md-6 mb-3">
+			<div class="card h-100 home-intro-card">
+				<div class="card-header py-2">
+					<span class="text-primary" aria-hidden="true">{% bootstrap_icon 'search' width='1.2em' height='1.2em' %}</span>
+					<small><b>Finn et system</b></small>
+				</div>
+				<div class="card-body py-3">
+					<ul class="home-intro-list">
+						<li>
+							<span class="text-primary home-intro-list-icon" aria-hidden="true">{% bootstrap_icon 'search' width='1.1em' height='1.1em' %}</span>
+							<span>Bruk <b>søkefeltet</b> øverst på siden</span>
+						</li>
+						<li>
+							<span class="text-primary home-intro-list-icon" aria-hidden="true">{% bootstrap_icon 'person' width='1.1em' height='1.1em' %}</span>
+							<a href="{{ url_min_virksomhet }}">Min virksomhet</a>
+						</li>
+						<li>
+							<span class="text-primary home-intro-list-icon" aria-hidden="true">{% bootstrap_icon 'bar-chart' width='1.1em' height='1.1em' %}</span>
+							<a href="{% url 'home_chart' %}">Alle systemer fordelt på virksomhet</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-4 col-md-6 mb-3">
+			<div class="card h-100 home-intro-card">
+				<div class="card-header py-2">
+					<span class="text-primary" aria-hidden="true">{% bootstrap_icon 'collection' width='1.2em' height='1.2em' %}</span>
+					<small><b>Relaterte oversikter</b></small>
+				</div>
+				<div class="card-body py-3">
+					<ul class="home-intro-list">
+						<li>
+							<span class="text-primary home-intro-list-icon" aria-hidden="true">{% bootstrap_icon 'box-arrow-up-right' width='1.1em' height='1.1em' %}</span>
+							<span><a target="_blank" rel="noopener noreferrer" href="https://behandlingsoversikt.k8s.oslo.kommune.no">Behandlingsoversikten</a> for personopplysninger</span>
+						</li>
+						<li>
+							<span class="text-primary home-intro-list-icon" aria-hidden="true">{% bootstrap_icon 'box-arrow-up-right' width='1.1em' height='1.1em' %}</span>
+							<span><a target="_blank" rel="noopener noreferrer" href="https://tjenestekatalog.k8s.oslo.kommune.no/katalog">Intern tjenestekatalog</a> for tjenester</span>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="col-lg-4 col-md-6 mb-3">
+			<div class="card h-100 home-intro-card">
+				<div class="card-header py-2">
+					<span class="text-primary" aria-hidden="true">{% bootstrap_icon 'lock' width='1.2em' height='1.2em' %}</span>
+					<small><b>Tilgang</b></small>
+				</div>
+				<div class="card-body py-3">
+					<p class="mb-2">Kartoteket er tilgangsstyrt. Innlogging skjer automatisk når du åpner forsiden eller en beskyttet side. Hvis den ikke fullføres, kan du bruke «Logg inn»-knappen ved siden av søkefeltet.</p>
+					<p class="mb-0">Se <a href="{% url 'roller' %}">rolleoversikt</a> for hvordan tilgangsstyringen fungerer.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="card mb-3 home-intro-card">
+		<div class="card-header py-2">
+			<span class="text-primary" aria-hidden="true">{% bootstrap_icon 'info-circle' width='1.2em' height='1.2em' %}</span>
+			<small><b>Ny løsning på vei</b></small>
+		</div>
+		<div class="card-body py-3">
+			<p class="mb-0">Det pågår et arbeid med å modernisere både IKT-instruksen og systemoversikten i en ny løsning som heter Yggdrasil. Følg fremdriften i <a target="_blank" rel="noopener noreferrer" href="https://engage.cloud.microsoft/main/groups/eyJfdHlwZSI6Ikdyb3VwIiwiaWQiOiI2NTU0NzAwMTg1NyJ9/all">VI/SAM/System og tjenesteoversikt</a>. Inntil den nye løsningen formelt er lansert er det her i Kartoteket vi fører systemoversikt.</p>
+		</div>
+	</div>
+
 	<hr>
 
-	<div class="container-fluid">
-		{# 2026-06-24: Home charts 3 per row on large screens (3+2 layout) instead of 5 in one row. #}
-		<div class="row mb-4">
-			<div class="col-lg-4 col-md-6 mb-3">
-				<h6 class="text-center">Livsløpstatus</h6>
-				<div style="position: relative; height: 220px;">
+	<div class="container-fluid px-0">
+		{# 2026-09-15: Five home charts on one row; legend removed, tooltip kept. #}
+		<div class="row mb-4 home-charts-row">
+			<div class="col">
+				<h6 class="home-chart-title">Livsløpstatus</h6>
+				<div class="home-chart-wrap">
 					<canvas id="home_chart_livslop"></canvas>
 				</div>
 			</div>
-			<div class="col-lg-4 col-md-6 mb-3">
-				<h6 class="text-center">Systemklassifisering</h6>
-				<div style="position: relative; height: 220px;">
+			<div class="col">
+				<h6 class="home-chart-title">Systemklassifisering</h6>
+				<div class="home-chart-wrap">
 					<canvas id="home_chart_systemklassifisering"></canvas>
 				</div>
 			</div>
-			<div class="col-lg-4 col-md-6 mb-3">
-				<h6 class="text-center">Vedlikehold</h6>
-				{# 2026-06-21: No forsømt criteria text under chart – full explanation on rapport page. #}
-				<div style="position: relative; height: 220px;">
+			<div class="col">
+				<h6 class="home-chart-title">Vedlikehold</h6>
+				<div class="home-chart-wrap">
 					<canvas id="home_chart_vedlikehold"></canvas>
 				</div>
 			</div>
-			<div class="col-lg-4 col-md-6 mb-3">
-				<h6 class="text-center">Driftsplattform</h6>
-				<div style="position: relative; height: 220px;">
+			<div class="col">
+				<h6 class="home-chart-title">Driftsplattform</h6>
+				<div class="home-chart-wrap">
 					<canvas id="home_chart_driftsplattform"></canvas>
 				</div>
 			</div>
-			<div class="col-lg-4 col-md-6 mb-3">
-				<h6 class="text-center">Egenutviklet</h6>
-				<div style="position: relative; height: 220px;">
+			<div class="col">
+				<h6 class="home-chart-title">Egenutviklet</h6>
+				<div class="home-chart-wrap">
 					<canvas id="home_chart_egenutviklet"></canvas>
 				</div>
 			</div>
@@ -73,7 +219,7 @@
 		<div class="row">
 			<div class="col-sm-6">
 
-				<h6>Antall systemer i Kartoteket</h6>
+				<h6>Antall aktive systemer i Kartoteket</h6>
 				<h1>{{ antall_systemer }}</h1>
 				<p>De {{nyeste_systemer.count}} nyeste:</p>
 				<ol style="column-count: 2;">
@@ -149,24 +295,6 @@
 	const vedlikehold = JSON.parse(document.getElementById('home-chart-vedlikehold').textContent);
 	const driftsplattform = JSON.parse(document.getElementById('home-chart-driftsplattform').textContent);
 	const egenutviklet = JSON.parse(document.getElementById('home-chart-egenutviklet').textContent);
-	const chartColors = [
-		'rgb(103, 103, 103)',
-		'rgb(206, 119, 107)',
-		'rgb(218, 209, 119)',
-		'rgb(185, 218, 119)',
-		'rgb(195, 218, 119)',
-		'rgb(255, 159, 64)',
-		'rgb(255, 99, 132)',
-		'rgb(201, 203, 207)',
-		'rgb(153, 102, 255)',
-		'rgb(54, 162, 235)',
-		'rgb(75, 192, 192)',
-		'rgb(255, 205, 86)',
-		'rgb(151, 187, 205)',
-		'rgb(220, 220, 220)',
-		'rgb(255, 99, 71)',
-		'rgb(100, 149, 237)',
-	];
 
 	function chartSegmentIndex(elements) {
 		if (!elements || !elements.length) {
@@ -176,16 +304,15 @@
 		return element._index !== undefined ? element._index : element.index;
 	}
 
-	function homeDoughnutChart(canvasId, chartData, colors) {
-		// Chart.js 2.8 syntax (chart.js@2.8.0 from static)
+	function homeDoughnutChart(canvasId, chartData) {
+		// 2026-09-15: Legend hidden; Chart.js tooltip (mouseover) kept. Chart.js 2.8 syntax.
 		var options = {
 			maintainAspectRatio: false,
 			legend: {
-				position: 'bottom',
-				labels: {
-					fontSize: 10,
-					boxWidth: 12,
-				},
+				display: false,
+			},
+			tooltips: {
+				enabled: true,
 			},
 		};
 		if (chartData.urls) {
@@ -210,7 +337,7 @@
 				labels: chartData.labels,
 				datasets: [{
 					data: chartData.data,
-					backgroundColor: colors || chartData.colors || chartColors.slice(0, chartData.labels.length),
+					backgroundColor: chartData.colors,
 				}],
 			},
 			options: options,

@@ -1,3 +1,4 @@
+# 2026-09-15: Home intro cards – bookmark, person, bar-chart, collection, info-circle, box-arrow-up-right.
 # 2026-09-08: risiko_system_link – strikethrough unused systems (livsløp 6–7) on risk pages.
 # 2026-09-07: cash icon – billable marker next to grouped database server instances.
 # 2026-08-07: url_hostname / url_source_label – compact external-resource link labels on system details.
@@ -238,6 +239,28 @@ def _ca_condition_label_icon_html(kind):
 _BOOTSTRAP_ICON_PATHS = {
 	'search': (
 		'<path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001l3.85 3.85a1 1 0 0 0 1.415-1.414zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>'
+	),
+	'bookmark': (
+		'<path d="M2 2.5A1.5 1.5 0 0 1 3.5 1h8A1.5 1.5 0 0 1 13 2.5v11a.5.5 0 0 1-.757.429L8 11.5l-4.243 2.429A.5.5 0 0 1 3 13.5v-11z"/>'
+	),
+	'person': (
+		'<path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6"/>'
+		'<path d="M14 14s-1-4-6-4-6 4-6 4 1 1 6 1 6-1 6-1"/>'
+	),
+	'bar-chart': (
+		'<path d="M0 0h1v15h15v1H0z"/>'
+		'<path d="M2 13h1V6H2zm3 0h1V2H5zm3 0h1V9H8zm3 0h1V4h-1z"/>'
+	),
+	'collection': (
+		'<path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5z"/>'
+	),
+	'info-circle': (
+		'<path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>'
+		'<path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM8 5.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/>'
+	),
+	'box-arrow-up-right': (
+		'<path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/>'
+		'<path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/>'
 	),
 	'lock': (
 		'<path d="M8 1a2 2 0 0 0-2 2v4H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2V3a2 2 0 0 0-2-2z"/>'

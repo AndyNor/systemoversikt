@@ -1,6 +1,7 @@
 {% extends "sikkerhet_index.html" %}
 {% load static %}
 {% load templatetags %}
+{# 2026-09-15: Renamed dead_… – unused (no URL/view render); soft-delete pending verification. #}
 {# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
 {# 2026-07-06: Per-virksomhet rollup of framework nodes with manual ratings and guidance. #}
 
@@ -25,7 +26,7 @@
 	Manuelt nivå settes per underkategori; veiledende nivå beregnes fra kartlagte operative scenarioer.
 </p>
 
-{% include "risiko_rammeverk_virksomhet_nav.html" with list_virksomhet=virksomhet %}
+{% include "dead_risiko_rammeverk_virksomhet_nav.html" with list_virksomhet=virksomhet %}
 
 <div id="risiko-rammeverk-rollup" data-api-urls="{{ api_urls_json|escape }}">
 	{% for cat in rollup_tree %}

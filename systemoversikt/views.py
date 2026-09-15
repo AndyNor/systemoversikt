@@ -5838,17 +5838,23 @@ def home(request):
 	if should_attempt_auto_oidc(request):
 		return redirect_to_oidc_login(request, next_path="/")
 	required_permissions = None
-	antall_systemer = System.objects.filter(~Q(ibruk=False)).count()
-	nyeste_systemer = System.objects.filter(~Q(ibruk=False)).order_by('-pk')[:10]
+	# 2026-09-15: Count active systems via livsløp (not 1/6/7), same rule as System.er_ibruk().
+	aktive_systemer = System.objects.exclude(livslop_status__in=[1, 6, 7])
+	antall_systemer = aktive_systemer.count()
+	nyeste_systemer = aktive_systemer.select_related('systemeier').order_by('-pk')[:10]
 	antall_programvarer = Programvare.objects.count()
 	nyeste_programvarer = Programvare.objects.order_by('-pk')[:10]
 	kategorier = SystemKategori.objects.all()
 	nyheter = NyeFunksjoner.objects.all().order_by('-tidspunkt')[:3]
 
+	# 2026-09-15: Three-color home charts (light red/green/gray); livsløp includes all systems.
 	# 2026-06-21: Home page charts – all systems (incl. disabled), grouped by livsløp and systemklassifisering.
 	# 2026-06-21: Short livsløp labels for chart legend; vedlikehold chart reuses forsømt-report logic.
 	# 2026-06-21: Custom light palette for livsløp chart segments.
 	# 2026-06-21: Clickable chart segments link to detail pages (forsømt, systemklassifisering).
+	HOME_CHART_RED = 'rgb(248, 165, 165)'
+	HOME_CHART_GREEN = 'rgb(140, 210, 140)'
+	HOME_CHART_GRAY = 'rgb(220, 220, 220)'
 	HOME_LIVSLOEP_CHART_LABELS = {
 		None: 'Ikke vurdert',
 		1: 'Under anskaffelse/utvikling',
@@ -5861,15 +5867,15 @@ def home(request):
 		8: 'Ukjent',
 	}
 	HOME_LIVSLOEP_CHART_COLORS = {
-		None: 'rgb(103, 103, 103)',
-		1: 'rgb(225, 225, 225)',
-		2: 'rgb(215, 235, 175)',
-		3: 'rgb(140, 210, 140)',
-		4: 'rgb(165, 208, 135)',
-		5: 'rgb(255, 159, 64)',
-		6: 'rgb(200, 200, 200)',
-		7: 'rgb(175, 175, 175)',
-		8: 'rgb(200, 175, 255)',
+		None: HOME_CHART_RED,
+		1: HOME_CHART_GRAY,
+		2: HOME_CHART_GREEN,
+		3: HOME_CHART_GREEN,
+		4: HOME_CHART_GREEN,
+		5: HOME_CHART_GREEN,
+		6: HOME_CHART_GREEN,
+		7: HOME_CHART_GREEN,
+		8: HOME_CHART_RED,
 	}
 	alle_systemer = System.objects.all()
 	# 2026-06-21: Klassifisering/vedlikehold charts exclude systems no longer in use (livsløp 6–7).
@@ -5895,6 +5901,7 @@ def home(request):
 			[klassifisering_count_by_value.get(value, 0) for value, _label in SYSTEMEIERSKAPSMODELL_VALG]
 			+ [klassifisering_count_by_value.get(None, 0)]
 		),
+		'colors': [HOME_CHART_GREEN] * len(SYSTEMEIERSKAPSMODELL_VALG) + [HOME_CHART_RED],
 		'urls': [
 			reverse('systemklassifisering_detaljer', kwargs={'kriterie': value})
 			for value, _label in SYSTEMEIERSKAPSMODELL_VALG
@@ -5906,7 +5913,7 @@ def home(request):
 		'labels': ['Forsømt', 'Vedlikeholdt'],
 		'data': [antall_forsomt, antall_vedlikehold_grunnlag - antall_forsomt],
 		'urls': [reverse('rapport_systemer_forsomt'), None],
-		'colors': ['rgb(248, 165, 165)', 'rgb(140, 210, 140)'],
+		'colors': [HOME_CHART_RED, HOME_CHART_GREEN],
 	}
 
 	HOME_DRIFT_CHART_SEGMENTS = (
@@ -5926,7 +5933,10 @@ def home(request):
 	chart_driftsplattform = {
 		"labels": [label for _key, label in HOME_DRIFT_CHART_SEGMENTS],
 		"data": [drift_segment_counts[key] for key, _label in HOME_DRIFT_CHART_SEGMENTS],
-		"colors": [SYSTEM_COLORS[key] for key, _label in HOME_DRIFT_CHART_SEGMENTS],
+		"colors": [
+			HOME_CHART_RED if key == "ukjent" else HOME_CHART_GREEN
+			for key, _label in HOME_DRIFT_CHART_SEGMENTS
+		],
 	}
 	antall_egenutviklet = systemer_for_status_charts.filter(er_egenutviklet=True).count()
 	antall_generisk = systemer_for_status_charts.filter(er_egenutviklet=False).count()
@@ -5937,7 +5947,7 @@ def home(request):
 			"/admin/systemoversikt/system/?er_egenutviklet__exact=1",
 			"/admin/systemoversikt/system/?er_egenutviklet__exact=0",
 		],
-		"colors": [SYSTEM_COLORS["egenutviklet"], "rgb(201, 203, 207)"],
+		"colors": [HOME_CHART_GREEN, HOME_CHART_GRAY],
 	}
 
 	return render(request, 'site_home.html', {
@@ -10867,6 +10877,7 @@ def adgruppe_detaljer_optimized(request, pk):
 
 
 def virksomhet_adgruppe_detaljer(request):
+	# 2026-09-15: Template renamed dead_… – URL commented out; soft-delete pending verification.
 	#Vise informasjon om en konkret AD-gruppe for en enkelt virksomhet
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -10907,7 +10918,7 @@ def virksomhet_adgruppe_detaljer(request):
 		valgt_gruppe_medlemmer = members
 		search_term = gruppe
 
-	return render(request, 'virksomhet_adgruppe_detaljer.html', {
+	return render(request, 'dead_virksomhet_adgruppe_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		"valg_grupper": valg_grupper,
