@@ -1,3 +1,5 @@
+{# 2026-09-15: Systembruk table – informasjonseier and lokal forvalter in the same contact cell. #}
+{# 2026-09-15: Archive transfer headings – mottatt først, then overlevert; wording from/to. #}
 {# 2026-09-15: Bruk/arkivoverføring actions as buttons on one line (registrer bruk first). #}
 {# 2026-09-15: Arkivoverføring lists (sender/receiver) and bulk-create link. #}
 {# 2026-09-14: Note missing electronic-archive approval date when er_arkiv is set. #}
@@ -645,8 +647,8 @@
 	max-width: 9.5rem;
 }
 .system-detalj-bruk-tabell .bruk-col-kontakt {
-	min-width: 8.5rem;
-	max-width: 11rem;
+	min-width: 10rem;
+	max-width: 14rem;
 	overflow-wrap: anywhere;
 }
 .system-detalj-bruk-tabell .bruk-col-vurderinger {
@@ -1490,55 +1492,11 @@
 		{% endif %}
 	</div>
 
-	{# 2026-09-15: Archive transfers – create/edit on system details; per SystemBruk. #}
+	{# 2026-09-15: Incoming transfers first; headings “mottatt … fra” / “overlevert … til”. #}
 	<div id="anchor_arkivoverforing" style="scroll-margin-top: 150px;">
 		<h5>Arkivoverføringer</h5>
-		{% if arkivoverforinger_som_avsender %}
-		<p><strong>Som avsender</strong></p>
-		<table class="table table-sm">
-			<thead>
-				<tr>
-					<th class="filter-false"></th>
-					<th>Virksomhet</th>
-					<th>Mottakersystem</th>
-					<th>Dato start</th>
-					<th>Dato avsluttet</th>
-					<th>Kommentar</th>
-					<th class="filter-false"></th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for o in arkivoverforinger_som_avsender %}
-				<tr>
-					<td>
-						{% if perms.systemoversikt.change_arkivoverforing %}
-						<a href="{% url 'arkivoverforing_edit' o.pk %}?return_system={{ systemdetaljer.pk }}">✎</a>
-						{% endif %}
-					</td>
-					<td>
-						{% url "bruksdetaljer" o.avsender_bruk.pk as url_bruk %}
-						<a href="{{ url_bruk }}">{{ o.avsender_bruk.brukergruppe.virksomhetsforkortelse }}</a>
-					</td>
-					<td>
-						{% url "systemdetaljer" o.mottaker_system.pk as url_mottaker %}
-						<a href="{{ url_mottaker }}">{{ o.mottaker_system.systemnavn }}</a>
-					</td>
-					<td>{{ o.dato_start|date:"Y-m-d"|default:"-" }}</td>
-					<td>{{ o.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
-					<td>{{ o.kommentar|default:"-" }}</td>
-					<td>
-						{% if perms.systemoversikt.delete_arkivoverforing %}
-						<a href="{% url 'arkivoverforing_delete' o.pk %}?return_system={{ systemdetaljer.pk }}">❌</a>
-						{% endif %}
-					</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-		{% endif %}
-
 		{% if arkivoverforinger_som_mottaker %}
-		<p><strong>Som mottaker</strong></p>
+		<p><strong>Mottatt arkiverte data fra</strong></p>
 		<table class="table table-sm">
 			<thead>
 				<tr>
@@ -1566,6 +1524,50 @@
 					<td>
 						{% url "bruksdetaljer" o.avsender_bruk.pk as url_bruk %}
 						<a href="{{ url_bruk }}">{{ o.avsender_bruk.brukergruppe.virksomhetsforkortelse }}</a>
+					</td>
+					<td>{{ o.dato_start|date:"Y-m-d"|default:"-" }}</td>
+					<td>{{ o.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
+					<td>{{ o.kommentar|default:"-" }}</td>
+					<td>
+						{% if perms.systemoversikt.delete_arkivoverforing %}
+						<a href="{% url 'arkivoverforing_delete' o.pk %}?return_system={{ systemdetaljer.pk }}">❌</a>
+						{% endif %}
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endif %}
+
+		{% if arkivoverforinger_som_avsender %}
+		<p><strong>Overlevert arkiverte data til</strong></p>
+		<table class="table table-sm">
+			<thead>
+				<tr>
+					<th class="filter-false"></th>
+					<th>Virksomhet</th>
+					<th>Mottakersystem</th>
+					<th>Dato start</th>
+					<th>Dato avsluttet</th>
+					<th>Kommentar</th>
+					<th class="filter-false"></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for o in arkivoverforinger_som_avsender %}
+				<tr>
+					<td>
+						{% if perms.systemoversikt.change_arkivoverforing %}
+						<a href="{% url 'arkivoverforing_edit' o.pk %}?return_system={{ systemdetaljer.pk }}">✎</a>
+						{% endif %}
+					</td>
+					<td>
+						{% url "bruksdetaljer" o.avsender_bruk.pk as url_bruk %}
+						<a href="{{ url_bruk }}">{{ o.avsender_bruk.brukergruppe.virksomhetsforkortelse }}</a>
+					</td>
+					<td>
+						{% url "systemdetaljer" o.mottaker_system.pk as url_mottaker %}
+						<a href="{{ url_mottaker }}">{{ o.mottaker_system.systemnavn }}</a>
 					</td>
 					<td>{{ o.dato_start|date:"Y-m-d"|default:"-" }}</td>
 					<td>{{ o.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
@@ -1619,7 +1621,7 @@
 							{% if perms.systemoversikt.view_system %}
 							<th class="bruk-col-kit">Lokal KIT-vurdering</th>
 							{% endif %}
-							<th class="bruk-col-kontakt">Lokalt kontaktpunkt</th>
+							<th class="bruk-col-kontakt">Informasjonseier / lokal forvalter</th>
 							<th class="bruk-col-vurderinger">Lokale vurderinger</th>
 							<th class="bruk-col-ros">Lokal RoS</th>
 							<th class="bruk-col-dato">Tatt i bruk</th>
@@ -1663,7 +1665,12 @@
 							</td>
 							{% endif %}
 
-							<td class="bruk-col-kontakt">{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}</td>
+							<td class="bruk-col-kontakt">
+								Informasjonseier:<br>
+								{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemeier_kontaktpersoner_referanse.all %}
+								Lokal forvalter:<br>
+								{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}
+							</td>
 
 							<td class="bruk-col-vurderinger">
 								{% if bruk.funksjonell_egnethet is not None %}

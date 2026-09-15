@@ -6515,7 +6515,17 @@ def systemdetaljer(request, pk):
 	system_content_type = ContentType.objects.get_for_model(system)
 	siste_endringer = LogEntry.objects.filter(content_type=system_content_type).filter(object_id=pk).order_by('-action_time')[:siste_endringer_antall]
 
-	systembruk = SystemBruk.objects.filter(system=pk).filter(ibruk=True).order_by("brukergruppe")
+	# 2026-09-15: Prefetch local informasjonseier and forvalter for the virksomhetsbruk table.
+	systembruk = (
+		SystemBruk.objects.filter(system=pk)
+		.filter(ibruk=True)
+		.select_related('brukergruppe')
+		.prefetch_related(
+			'systemeier_kontaktpersoner_referanse__brukernavn__profile',
+			'systemforvalter_kontaktpersoner_referanse__brukernavn__profile',
+		)
+		.order_by("brukergruppe")
+	)
 
 	# 2026-09-15: Archive transfers involving this system as sender (via SystemBruk) or receiver.
 	arkivoverforinger_som_avsender = (

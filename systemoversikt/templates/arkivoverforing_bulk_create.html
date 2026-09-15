@@ -1,4 +1,5 @@
-{# 2026-09-15: Bulk-create ArkivOverforing; mottakersystem via dynamic search. #}
+{# 2026-09-15: Place start and end dates on one row for a compact form.
+# 2026-09-15: Bulk-create ArkivOverforing; mottakersystem via dynamic search. #}
 {% extends "index.html" %}
 {% load templatetags %}
 
@@ -17,13 +18,15 @@
 <form action="" method="post">
 	{% csrf_token %}
 	{% include "arkivoverforing_mottaker_sok.html" %}
-	<div class="form-group">
-		<label for="dato_start">Dato start overføring</label>
-		<input type="date" name="dato_start" id="dato_start" class="form-control">
-	</div>
-	<div class="form-group">
-		<label for="dato_avsluttet">Dato overføring avsluttet</label>
-		<input type="date" name="dato_avsluttet" id="dato_avsluttet" class="form-control">
+	<div class="form-row">
+		<div class="form-group col-md-6">
+			<label for="dato_start">Dato start overføring</label>
+			<input type="date" name="dato_start" id="dato_start" class="form-control">
+		</div>
+		<div class="form-group col-md-6">
+			<label for="dato_avsluttet">Dato overføring avsluttet</label>
+			<input type="date" name="dato_avsluttet" id="dato_avsluttet" class="form-control">
+		</div>
 	</div>
 	<div class="form-group">
 		<label for="kommentar">Kommentar (hva er overført)</label>
