@@ -1,3 +1,4 @@
+{# 2026-09-15: Arkivoverføring lists (sender/receiver) and bulk-create link. #}
 {# 2026-09-14: Note missing electronic-archive approval date when er_arkiv is set. #}
 {# 2026-09-14: Wording – no integration against *another* approved archive system. #}
 {# 2026-09-14: Archive approval status/date under dokumentasjonsforvaltning, not in kategorier. #}
@@ -1487,6 +1488,111 @@
 			</div>
 		{% endif %}
 	</div>
+
+	{# 2026-09-15: Archive transfers – create/edit on system details; per SystemBruk. #}
+	<div id="anchor_arkivoverforing" style="scroll-margin-top: 150px;">
+		<h5>Arkivoverføringer</h5>
+		{% if arkivoverforinger_som_avsender %}
+		<p><strong>Som avsender</strong></p>
+		<table class="table table-sm">
+			<thead>
+				<tr>
+					<th class="filter-false"></th>
+					<th>Virksomhet</th>
+					<th>Mottakersystem</th>
+					<th>Dato start</th>
+					<th>Dato avsluttet</th>
+					<th>Kommentar</th>
+					<th class="filter-false"></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for o in arkivoverforinger_som_avsender %}
+				<tr>
+					<td>
+						{% if perms.systemoversikt.change_arkivoverforing %}
+						<a href="{% url 'arkivoverforing_edit' o.pk %}?return_system={{ systemdetaljer.pk }}">✎</a>
+						{% endif %}
+					</td>
+					<td>
+						{% url "bruksdetaljer" o.avsender_bruk.pk as url_bruk %}
+						<a href="{{ url_bruk }}">{{ o.avsender_bruk.brukergruppe.virksomhetsforkortelse }}</a>
+					</td>
+					<td>
+						{% url "systemdetaljer" o.mottaker_system.pk as url_mottaker %}
+						<a href="{{ url_mottaker }}">{{ o.mottaker_system.systemnavn }}</a>
+					</td>
+					<td>{{ o.dato_start|date:"Y-m-d"|default:"-" }}</td>
+					<td>{{ o.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
+					<td>{{ o.kommentar|default:"-" }}</td>
+					<td>
+						{% if perms.systemoversikt.delete_arkivoverforing %}
+						<a href="{% url 'arkivoverforing_delete' o.pk %}?return_system={{ systemdetaljer.pk }}">❌</a>
+						{% endif %}
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endif %}
+
+		{% if arkivoverforinger_som_mottaker %}
+		<p><strong>Som mottaker</strong></p>
+		<table class="table table-sm">
+			<thead>
+				<tr>
+					<th class="filter-false"></th>
+					<th>Avsendersystem</th>
+					<th>Virksomhet</th>
+					<th>Dato start</th>
+					<th>Dato avsluttet</th>
+					<th>Kommentar</th>
+					<th class="filter-false"></th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for o in arkivoverforinger_som_mottaker %}
+				<tr>
+					<td>
+						{% if perms.systemoversikt.change_arkivoverforing %}
+						<a href="{% url 'arkivoverforing_edit' o.pk %}?return_system={{ systemdetaljer.pk }}">✎</a>
+						{% endif %}
+					</td>
+					<td>
+						{% url "systemdetaljer" o.avsender_bruk.system.pk as url_avsender %}
+						<a href="{{ url_avsender }}">{{ o.avsender_bruk.system.systemnavn }}</a>
+					</td>
+					<td>
+						{% url "bruksdetaljer" o.avsender_bruk.pk as url_bruk %}
+						<a href="{{ url_bruk }}">{{ o.avsender_bruk.brukergruppe.virksomhetsforkortelse }}</a>
+					</td>
+					<td>{{ o.dato_start|date:"Y-m-d"|default:"-" }}</td>
+					<td>{{ o.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
+					<td>{{ o.kommentar|default:"-" }}</td>
+					<td>
+						{% if perms.systemoversikt.delete_arkivoverforing %}
+						<a href="{% url 'arkivoverforing_delete' o.pk %}?return_system={{ systemdetaljer.pk }}">❌</a>
+						{% endif %}
+					</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+		{% endif %}
+
+		{% if not arkivoverforinger_som_avsender and not arkivoverforinger_som_mottaker %}
+		<p class="text-muted">Ingen arkivoverføringer er registrert for dette systemet.</p>
+		{% endif %}
+
+		{% if perms.systemoversikt.add_arkivoverforing %}
+		<p>
+			<a class="btn btn-sm btn-link" href="{% url 'arkivoverforing_bulk_create' systemdetaljer.pk %}">
+				Arkivoverføring til nytt system
+			</a>
+		</p>
+		{% endif %}
+	</div>
+
 	<div class="row">
 		<div class="col-12">
 			<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer og endre bruk</a></p>

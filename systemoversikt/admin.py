@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: ArkivOverforingAdmin – archive transfer SystemBruk → System (fallback to app UI).
 # 2026-09-14: SystemAdmin Arkiv fieldset; produksjonsformater multi-select (PDF, JPG, DOCX).
 # 2026-09-14: Electronic-archive fields on their own admin rows so the approval date is visible.
 # 2026-09-14: System.er_arkiv label and dato_godkjent_elektronisk_arkiv next to archive comment.
@@ -432,6 +433,49 @@ class SystemIntegrationAdmin(SimpleHistoryAdmin):
 	def response_change(self, request, obj):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.source_system.pk}))
+		return super().response_change(request, obj)
+
+
+# 2026-09-15: Fallback admin; primary create/edit UI is on systemdetaljer.
+@admin.register(ArkivOverforing)
+class ArkivOverforingAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Eksport")]
+	list_display = (
+		'pk',
+		'avsender_virksomhet',
+		'avsender_system',
+		'mottaker_system',
+		'dato_start',
+		'dato_avsluttet',
+		'kommentar',
+	)
+	search_fields = (
+		'avsender_bruk__system__systemnavn',
+		'avsender_bruk__brukergruppe__virksomhetsnavn',
+		'avsender_bruk__brukergruppe__virksomhetsforkortelse',
+		'mottaker_system__systemnavn',
+		'kommentar',
+	)
+	list_filter = ('dato_start', 'dato_avsluttet')
+	autocomplete_fields = ('avsender_bruk', 'mottaker_system')
+	date_hierarchy = 'dato_start'
+
+	@admin.display(description='Avsender virksomhet', ordering='avsender_bruk__brukergruppe')
+	def avsender_virksomhet(self, obj):
+		return obj.avsender_bruk.brukergruppe if obj.avsender_bruk_id else None
+
+	@admin.display(description='Avsendersystem', ordering='avsender_bruk__system')
+	def avsender_system(self, obj):
+		return obj.avsender_bruk.system if obj.avsender_bruk_id else None
+
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.avsender_bruk.system_id}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.avsender_bruk.system_id}))
 		return super().response_change(request, obj)
 
 

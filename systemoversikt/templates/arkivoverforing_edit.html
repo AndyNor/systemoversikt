@@ -1,0 +1,45 @@
+{# 2026-09-15: Edit single ArkivOverforing (dates, comment, destination). #}
+{% extends "index.html" %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Endre arkivoverføring
+{% endblock underoverskrift %}
+
+{% block main_content %}
+<p>
+	Fra
+	<strong>{{ overforing.avsender_bruk.brukergruppe }}</strong>
+	sin bruk av
+	<strong>{{ overforing.avsender_bruk.system }}</strong>
+</p>
+<p><a href="{{ back_link }}">Tilbake til systemdetaljer</a></p>
+<hr>
+
+<form action="" method="post">
+	{% csrf_token %}
+	<input type="hidden" name="return_system" value="{{ return_system_pk }}">
+	<div class="form-group">
+		<label for="mottaker_system">Mottakersystem</label>
+		<select name="mottaker_system" id="mottaker_system" class="form-control" required>
+			{% for s in mottaker_valg %}
+			<option value="{{ s.pk }}" {% if s.pk == overforing.mottaker_system_id %}selected{% endif %}>{{ s.systemnavn }}</option>
+			{% endfor %}
+		</select>
+	</div>
+	<div class="form-group">
+		<label for="dato_start">Dato start overføring</label>
+		<input type="date" name="dato_start" id="dato_start" class="form-control" value="{{ overforing.dato_start|date:'Y-m-d' }}">
+	</div>
+	<div class="form-group">
+		<label for="dato_avsluttet">Dato overføring avsluttet</label>
+		<input type="date" name="dato_avsluttet" id="dato_avsluttet" class="form-control" value="{{ overforing.dato_avsluttet|date:'Y-m-d' }}">
+	</div>
+	<div class="form-group">
+		<label for="kommentar">Kommentar (hva er overført)</label>
+		<textarea name="kommentar" id="kommentar" class="form-control" rows="4">{{ overforing.kommentar|default_if_none:'' }}</textarea>
+	</div>
+	<button type="submit" class="btn btn-primary btn-sm">Lagre</button>
+	<a href="{{ back_link }}" class="btn btn-link btn-sm">Avbryt</a>
+</form>
+{% endblock %}

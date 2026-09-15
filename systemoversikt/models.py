@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: ArkivOverforing – archive transfer from SystemBruk to destination System (per virksomhet usage).
 # 2026-09-14: System.produksjonsformater – multi-select archive production formats (PDF, JPG, DOCX).
 # 2026-09-14: System.er_arkiv label “Godkjent som elektronisk arkiv?”; dato_godkjent_elektronisk_arkiv.
 # 2026-09-14: SystemBruk tatt_i_bruk/avsluttet dates and kommentar verbose_name Innhold – archive metadata per virksomhet usage.
@@ -5354,6 +5355,66 @@ class SystemIntegration(models.Model):
 			return SYSTEM_COLORS["chart_component"]
 
 		return "black"
+
+
+# 2026-09-15: Per-virksomhet archive transfer (SystemBruk → System), managed from systemdetaljer.
+class ArkivOverforing(models.Model):
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	avsender_bruk = models.ForeignKey(
+			to='SystemBruk',
+			related_name='arkivoverforinger_som_avsender',
+			on_delete=models.CASCADE,
+			verbose_name="Avsender (systembruk)",
+			blank=False,
+			null=False,
+			)
+	mottaker_system = models.ForeignKey(
+			to='System',
+			related_name='arkivoverforinger_som_mottaker',
+			on_delete=models.CASCADE,
+			verbose_name="Mottakersystem",
+			blank=False,
+			null=False,
+			)
+	dato_start = models.DateField(
+			verbose_name="Dato start overføring",
+			blank=True,
+			null=True,
+			)
+	dato_avsluttet = models.DateField(
+			verbose_name="Dato overføring avsluttet",
+			blank=True,
+			null=True,
+			)
+	kommentar = models.TextField(
+			verbose_name="Kommentar",
+			blank=True,
+			null=True,
+			help_text="Beskrivelse av hva som er overført.",
+			)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		return f'Arkivoverføring fra {self.avsender_bruk} til {self.mottaker_system}'
+
+	class Meta:
+		verbose_name_plural = "Systemoversikt: Arkivoverføringer"
+		verbose_name = "arkivoverføring"
+		default_permissions = ('add', 'change', 'delete', 'view')
+		constraints = [
+			models.UniqueConstraint(
+				fields=['avsender_bruk', 'mottaker_system'],
+				name='unique_arkivoverforing_bruk_mottaker',
+			),
+		]
 
 
 class Tjeneste(models.Model):

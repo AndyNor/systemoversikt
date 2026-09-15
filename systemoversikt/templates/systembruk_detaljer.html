@@ -1,3 +1,4 @@
+{# 2026-09-15: Read-only arkivoverføring list for this SystemBruk. #}
 {# 2026-09-14: Show tatt_i_bruk/avsluttet – archive usage period for this virksomhet. #}
 {% extends "index.html" %}
 {% load humanize %}
@@ -210,5 +211,42 @@
 		{% endif %}
 	</div>
 </div>
+
+
+{# 2026-09-15: Read-only list; create/edit on systemdetaljer. #}
+<br>
+<hr>
+<h6 id="anchor_arkivoverforing">Arkivoverføringer</h6>
+{% if arkivoverforinger %}
+<table class="table table-sm">
+	<thead>
+		<tr>
+			<th>Mottakersystem</th>
+			<th>Dato start</th>
+			<th>Dato avsluttet</th>
+			<th>Kommentar</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for o in arkivoverforinger %}
+		<tr>
+			<td>
+				{% url "systemdetaljer" o.mottaker_system.pk as url_mottaker %}
+				<a href="{{ url_mottaker }}">{{ o.mottaker_system.systemnavn }}</a>
+			</td>
+			<td>{{ o.dato_start|date:"Y-m-d"|default:"-" }}</td>
+			<td>{{ o.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
+			<td>{{ o.kommentar|linebreaks|default:"-" }}</td>
+		</tr>
+		{% endfor %}
+	</tbody>
+</table>
+{% else %}
+<p class="text-muted">Ingen arkivoverføringer er registrert for denne systembruken.</p>
+{% endif %}
+<p>
+	{% url "systemdetaljer" bruk.system.pk as url_system %}
+	<a href="{{ url_system }}#anchor_arkivoverforing">Administrer på systemdetaljer</a>
+</p>
 
 {% endblock main_content %}

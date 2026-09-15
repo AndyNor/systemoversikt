@@ -1,0 +1,96 @@
+{# 2026-09-15: Bulk-create ArkivOverforing rows for selected SystemBruk on a source system. #}
+{% extends "index.html" %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Arkivoverføring til nytt system – {{ system.systemnavn }}
+{% endblock underoverskrift %}
+
+{% block main_content %}
+<p>
+	Registrer arkivoverføring fra virksomhetsbruk av <strong>{{ system.systemnavn }}</strong>
+	til et mottakersystem. Velg felles datoer og kommentar; du kan justere hver overføring etterpå.
+</p>
+<p><a href="{{ back_link }}">Tilbake til systemdetaljer</a></p>
+<hr>
+
+<form action="" method="post">
+	{% csrf_token %}
+	<div class="form-group">
+		<label for="mottaker_system">Mottakersystem</label>
+		<select name="mottaker_system" id="mottaker_system" class="form-control" required>
+			<option value="">– Velg system –</option>
+			{% for s in mottaker_valg %}
+			<option value="{{ s.pk }}">{{ s.systemnavn }}</option>
+			{% endfor %}
+		</select>
+	</div>
+	<div class="form-group">
+		<label for="dato_start">Dato start overføring</label>
+		<input type="date" name="dato_start" id="dato_start" class="form-control">
+	</div>
+	<div class="form-group">
+		<label for="dato_avsluttet">Dato overføring avsluttet</label>
+		<input type="date" name="dato_avsluttet" id="dato_avsluttet" class="form-control">
+	</div>
+	<div class="form-group">
+		<label for="kommentar">Kommentar (hva er overført)</label>
+		<textarea name="kommentar" id="kommentar" class="form-control" rows="3"></textarea>
+	</div>
+
+	<hr>
+	<p><strong>Virksomhetsbruk som skal få overføring</strong></p>
+	<input type="button" class="btn btn-sm" value="Inverter valgte" id="trigger">
+	<input type="button" class="btn btn-sm" value="Fjern alle" id="trigger_none">
+	<input type="button" class="btn btn-sm" value="Kun aktive" id="trigger_aktive">
+	<hr>
+	{% for bruk in systembruk_liste %}
+		<input
+			id="bruk_{{ bruk.pk }}"
+			type="checkbox"
+			name="systembruk"
+			value="{{ bruk.pk }}"
+			{% if bruk.ibruk %}checked{% endif %}
+			data-ibruk="{% if bruk.ibruk %}1{% else %}0{% endif %}"
+		>
+		<label for="bruk_{{ bruk.pk }}">
+			{{ bruk.brukergruppe.virksomhetsnavn }}
+			({{ bruk.brukergruppe.virksomhetsforkortelse }})
+			{% if not bruk.ibruk %}<span class="text-muted">– ikke aktiv</span>{% endif %}
+		</label>
+		<br>
+	{% empty %}
+		<p class="text-muted">Ingen systembruk er registrert for dette systemet.</p>
+	{% endfor %}
+
+	<hr>
+	<button type="submit" class="btn btn-primary btn-sm">Opprett arkivoverføringer</button>
+	<a href="{{ back_link }}" class="btn btn-link btn-sm">Avbryt</a>
+</form>
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	function changeCheckboxes(list, value){
+		for(var i = list.length - 1 ; i >=0 ; i--){
+			list[i].checked = (typeof value === 'boolean') ? value : !list[i].checked ;
+		}
+	}
+	function resetCheckboxes(list){
+		for(var i = list.length - 1 ; i >=0 ; i--){
+			list[i].checked = false ;
+		}
+	}
+	function onlyAktive(){
+		var inputs = document.querySelectorAll('input[name="systembruk"]');
+		for (var i = 0; i < inputs.length; i++){
+			inputs[i].checked = inputs[i].getAttribute('data-ibruk') === '1';
+		}
+	}
+	document.getElementById("trigger").onclick = function() {
+		changeCheckboxes(document.querySelectorAll('input[name="systembruk"]'));
+	};
+	document.getElementById("trigger_none").onclick = function() {
+		resetCheckboxes(document.querySelectorAll('input[name="systembruk"]'));
+	};
+	document.getElementById("trigger_aktive").onclick = onlyAktive;
+</script>
+{% endblock %}

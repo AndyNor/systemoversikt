@@ -1,0 +1,44 @@
+{# 2026-09-15: Confirm delete of one ArkivOverforing. #}
+{% extends "index.html" %}
+{% load templatetags %}
+
+{% block underoverskrift %}
+	Slett arkivoverføring
+{% endblock underoverskrift %}
+
+{% block main_content %}
+<p>Er du sikker på at du vil slette denne arkivoverføringen?</p>
+<table class="table table-sm">
+	<tr>
+		<th>Virksomhet</th>
+		<td>{{ overforing.avsender_bruk.brukergruppe }}</td>
+	</tr>
+	<tr>
+		<th>Avsendersystem</th>
+		<td>{{ overforing.avsender_bruk.system }}</td>
+	</tr>
+	<tr>
+		<th>Mottakersystem</th>
+		<td>{{ overforing.mottaker_system }}</td>
+	</tr>
+	<tr>
+		<th>Dato start</th>
+		<td>{{ overforing.dato_start|date:"Y-m-d"|default:"-" }}</td>
+	</tr>
+	<tr>
+		<th>Dato avsluttet</th>
+		<td>{{ overforing.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
+	</tr>
+	<tr>
+		<th>Kommentar</th>
+		<td>{{ overforing.kommentar|linebreaks|default:"-" }}</td>
+	</tr>
+</table>
+
+<form action="" method="post">
+	{% csrf_token %}
+	<input type="hidden" name="return_system" value="{{ return_system_pk }}">
+	<button type="submit" class="btn btn-danger btn-sm">Slett</button>
+	<a href="{{ back_link }}" class="btn btn-link btn-sm">Avbryt</a>
+</form>
+{% endblock %}
