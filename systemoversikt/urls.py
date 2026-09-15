@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-09-15: OKA overview page at /systemer/informasjonskategorier/.
 # 2026-09-15: Last inn OKA – systemadministrator Excel upload.
 # 2026-09-15: Informasjonskategori (OKA) search/save APIs on system and systembruk.
 # 2026-09-15: Arkivoverføring mottakersystem search API.
@@ -320,6 +321,7 @@ urlpatterns = [
 	re_path(r'^systemer/arkivoverforing/(?P<pk>\d{1,8})/slett/$', views.arkivoverforing_delete, name='arkivoverforing_delete'),
 	# 2026-09-15: Dynamic mottakersystem search for arkivoverføring forms.
 	re_path(r'^systemer/arkivoverforing/api/systemer/sok/$', views.api_arkivoverforing_systemer_sok, name='api_arkivoverforing_systemer_sok'),
+	re_path(r'^systemer/informasjonskategorier/$', views_informasjonskategori.oka_oversikt, name='oka_oversikt'),
 	re_path(r'^systemer/informasjonskategorier/sok/$', views_informasjonskategori.api_informasjonskategorier_sok, name='api_informasjonskategorier_sok'),
 	re_path(r'^systemer/systemklassifisering/$', views.systemklassifisering_detaljer, name='systemklassifisering_tom'),
 	re_path(r'^systemer/systemklassifisering/(?P<kriterie>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),

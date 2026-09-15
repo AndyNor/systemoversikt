@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: OKA-klassifikasjon overview – system sidemeny (full classification tree).
 # 2026-09-15: Last inn OKA – superuser-only admin sidemeny (Excel import of classification).
 # 2026-09-01: Rename ukjente_identer search label to "Kontoer uten virksomhet" – matches the virksomhet=None query.
 # 2026-07-07: Risiko create/import nav search – view_riskscope only (no qualys fallback).
@@ -87,6 +88,10 @@ NAV_PAGES = [
 	_entry('Systemkategorier', 'alle_hovedkategorier', 'System', ['systemkategorier', 'hovedkategorier']),
 	_entry('Samlede kontaktpersoner', 'alle_systemer_forvaltere', 'System', ['kontaktpersoner', 'forvaltere', 'systemforvaltere']),
 	_entry('Informasjonsklassifisering', 'system_informasjonsbehandling', 'System', ['informasjonsklassifisering', 'informasjonsbehandling']),
+	_entry(
+		'OKA-klassifikasjon', 'oka_oversikt', 'System',
+		['oka', 'oka-klassifikasjon', 'informasjonskategorier', 'arkivnøkkel', 'arkivnokkel'],
+	),
 	_entry('Samlede systemvurderinger', 'systemer_vurderinger', 'System', ['systemvurderinger', 'vurderinger samlet']),
 
 	# --- Sikkerhet (sikkerhet_index.html) ---

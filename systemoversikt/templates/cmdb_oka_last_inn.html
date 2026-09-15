@@ -1,3 +1,4 @@
+{# 2026-09-15: Link to OKA overview so import can be verified in a new tab. #}
 {# 2026-09-15: Systemadministrator upload of OKA Excel (InformasjonsKategori). #}
 {% extends "admin_index.html" %}
 {% load static %}
@@ -13,6 +14,7 @@
 <p>
 	Aktive koder nå: <strong>{{ antall_aktive }}</strong>
 	(underfunksjoner som kan velges på system: <strong>{{ antall_underfunksjon }}</strong>).
+	{% include "oka_oversikt_lenke.html" %}
 </p>
 {% if siste_import %}
 	<p class="text-muted">Siste import: {{ siste_import.opprettet|date:"Y-m-d H:i" }} — {{ siste_import.message }}</p>

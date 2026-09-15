@@ -1,4 +1,5 @@
 {% extends "index.html" %}
+{# 2026-09-15: Sidemeny link to OKA-klassifikasjon overview. #}
 
 {% block sidemeny %}
 
@@ -80,6 +81,9 @@
 
 		{% url 'system_informasjonsbehandling' as url_system_informasjonsbehandling %}
 		<a href="{{url_system_informasjonsbehandling}}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'system_informasjonsbehandling' %}fremhev{% endif %}">Informasjonsklassifisering</a><br>
+
+		{% url 'oka_oversikt' as url_oka_oversikt %}
+		<a href="{{ url_oka_oversikt }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'oka_oversikt' %}fremhev{% endif %}">OKA-klassifikasjon</a><br>
 
 		{% url 'systemer_vurderinger' as url_systemer_vurderinger %}
 		<a href="{{ url_systemer_vurderinger }}" class="btn btn-sm btn-link {% if rn and rn.url_name == 'systemer_vurderinger' %}fremhev{% endif %}">Samlede systemvurderinger</a><br>

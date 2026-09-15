@@ -1,4 +1,5 @@
 /* Change log:
+ * 2026-09-15: Expand/collapse tree styles for the full OKA overview page.
  * 2026-09-15: Shared styles for OKA informasjonskategori lists and inline editors.
  */
 .oka-panel {
@@ -84,4 +85,68 @@
 .oka-sammendrag {
 	font-size: 0.85rem;
 	white-space: nowrap;
+}
+/* 2026-09-15: Expand/collapse tree on the full OKA overview page. */
+.oka-oversikt-verktoy {
+	align-items: center;
+}
+.oka-tree {
+	margin-top: 0.5rem;
+}
+.oka-node {
+	margin: 0.15rem 0 0.15rem 0.85rem;
+	border-left: 2px solid #e4e2ef;
+	padding-left: 0.45rem;
+	scroll-margin-top: 150px;
+}
+.oka-tree > .oka-node {
+	margin-left: 0;
+	border-left: 0;
+	padding-left: 0;
+}
+.oka-node--hidden {
+	display: none;
+}
+.oka-node--inaktiv {
+	opacity: 0.75;
+}
+.oka-node > summary,
+.oka-node-hode {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.35rem 0.65rem;
+	padding: 0.28rem 0.4rem;
+	border-radius: 4px;
+}
+.oka-node > summary {
+	cursor: pointer;
+	list-style: none;
+}
+.oka-node > summary::-webkit-details-marker {
+	display: none;
+}
+.oka-node > summary::before {
+	content: "▸";
+	color: #2A2859;
+	font-size: 0.75rem;
+	width: 0.9rem;
+	flex: 0 0 auto;
+}
+.oka-node[open] > summary::before {
+	content: "▾";
+}
+.oka-node > summary:hover,
+.oka-node--blad .oka-node-hode {
+	background: #f8f7fc;
+}
+.oka-node--blad .oka-node-hode {
+	background: transparent;
+}
+.oka-node--treff > summary,
+.oka-node--treff > .oka-node-hode {
+	background: #f4f2fb;
+}
+.oka-node-kropp {
+	padding: 0.15rem 0 0.35rem 0.4rem;
 }

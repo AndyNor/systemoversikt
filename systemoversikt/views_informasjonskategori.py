@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: Full OKA overview page – searchable tree with expand/collapse.
 # 2026-09-15: Superuser-only Last inn OKA page – upload Excel instead of manage.py.
 # 2026-09-15: Search and save APIs for OKA informasjonskategorier on System and SystemBruk.
 
@@ -28,7 +29,7 @@ from systemoversikt.oka_import import (
 	OkaImportError,
 	import_oka_workbook,
 )
-from systemoversikt.oka_kode import NIVAA_UNDER
+from systemoversikt.oka_kode import NIVAA_FUNKSJON, NIVAA_HOVED, NIVAA_UNDER
 
 
 def _kategori_qs():
@@ -233,6 +234,67 @@ def systembruk_lagre_informasjonskategorier(request, pk):
 
 def _user_is_systemadministrator(user):
 	return user.is_authenticated and user.is_superuser
+
+
+def _parent_chain_has(child, parent, by_id):
+	node = parent
+	seen = set()
+	while node is not None and node.pk not in seen:
+		if node.pk == child.pk:
+			return True
+		seen.add(node.pk)
+		node = by_id.get(node.parent_id)
+	return False
+
+
+def _oka_tre():
+	# 2026-09-15: Build parent/child lists in memory so the overview template needs no extra queries.
+	kategorier = list(
+		InformasjonsKategori.objects.order_by('rekkefolge', 'kode_normalisert')
+	)
+	by_id = {}
+	for kat in kategorier:
+		kat.barn_liste = []
+		by_id[kat.pk] = kat
+	rotnoder = []
+	for kat in kategorier:
+		parent = by_id.get(kat.parent_id)
+		if parent is None or _parent_chain_has(kat, parent, by_id):
+			rotnoder.append(kat)
+		else:
+			parent.barn_liste.append(kat)
+	hovedfunksjoner = [k for k in rotnoder if k.nivaa == NIVAA_HOVED]
+	andre_rotnoder = [k for k in rotnoder if k.nivaa != NIVAA_HOVED]
+	return kategorier, hovedfunksjoner, andre_rotnoder
+
+
+def oka_oversikt(request):
+	# 2026-09-15: Read-only OKA tree for assignment helpers (system/systembruk open this in a new tab).
+	required_permissions = ['systemoversikt.view_system']
+	if not request.user.is_authenticated or not request.user.has_perm('systemoversikt.view_system'):
+		return render_access_denied(request, required_permissions)
+
+	kategorier, hovedfunksjoner, andre_rotnoder = _oka_tre()
+	siste_import = (
+		ApplicationLog.objects
+		.filter(event_type=LOG_EVENT_TYPE)
+		.exclude(message__startswith='starter')
+		.order_by('-opprettet')
+		.first()
+	)
+	return render(request, 'oka_oversikt.html', {
+		'request': request,
+		'required_permissions': [p.replace('.', ': ').replace('_', ' ') for p in required_permissions],
+		'hovedfunksjoner': hovedfunksjoner,
+		'andre_rotnoder': andre_rotnoder,
+		'antall_totalt': len(kategorier),
+		'antall_aktive': sum(1 for k in kategorier if k.aktiv),
+		'antall_hovedfunksjon': sum(1 for k in kategorier if k.nivaa == NIVAA_HOVED),
+		'antall_funksjon': sum(1 for k in kategorier if k.nivaa == NIVAA_FUNKSJON),
+		'antall_underfunksjon': sum(1 for k in kategorier if k.nivaa == NIVAA_UNDER),
+		'siste_import': siste_import,
+		'forhandsutfylt_sok': (request.GET.get('q') or '').strip(),
+	})
 
 
 def oka_last_inn(request):

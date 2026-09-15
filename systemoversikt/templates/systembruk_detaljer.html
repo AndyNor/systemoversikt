@@ -1,3 +1,4 @@
+{# 2026-09-15: Helper link to full OKA overview (new tab) next to category assignment. #}
 {# 2026-09-15: Informasjonskategorier (OKA) – show system defaults, extras and optional opt-out. #}
 {# 2026-09-15: Read-only arkivoverføring list for this SystemBruk. #}
 {# 2026-09-14: Show tatt_i_bruk/avsluttet – archive usage period for this virksomhet. #}
@@ -227,6 +228,10 @@
 <hr>
 <h6 id="anchor_informasjonskategorier">Informasjonskategorier</h6>
 <div class="oka-panel" id="oka-bruk-panel">
+	<p class="small text-muted mb-2">
+		Kun underfunksjoner (mest detaljerte OKA-nivå) kan velges som tillegg. Standardkategorier styres på systemet.
+		{% include "oka_oversikt_lenke.html" %}
+	</p>
 	{% if perms.systemoversikt.change_systembruk %}
 	<p>
 		<button type="button" class="btn btn-sm btn-secondary" id="oka-bruk-toggle">Endre kategorier</button>
@@ -261,6 +266,7 @@
 		<label class="small d-block mt-2" for="oka-bruk-sok">Legg til kategori</label>
 		<input type="search" id="oka-bruk-sok" class="form-control form-control-sm" placeholder="Søk kode eller tittel…" autocomplete="off">
 		<div id="oka-bruk-sok-treff" class="oka-sok-treff"></div>
+		<p class="small text-muted mt-1 mb-0">Hjelp til å finne riktig kode: {% include "oka_oversikt_lenke.html" %}</p>
 		<p class="mt-2">
 			<button type="button" id="oka-bruk-lagre" class="btn btn-primary btn-sm">Lagre</button>
 			<button type="button" id="oka-bruk-avbryt" class="btn btn-secondary btn-sm">Avbryt</button>

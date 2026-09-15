@@ -1,0 +1,61 @@
+{# 2026-09-15: One OKA tree node; recursive include for children. #}
+{% if node.barn_liste or node.her_legges or node.bk_vurdering or node.tidligere_arkivnokkel or node.aktuelt_lovverk or node.kommentar %}
+<details class="oka-node{% if not node.aktiv %} oka-node--inaktiv{% endif %}"
+	id="oka-{{ node.pk }}"
+	data-nivaa="{{ node.nivaa }}"
+	data-aktiv="{% if node.aktiv %}1{% else %}0{% endif %}"
+	data-text="{{ node.kode }} {{ node.kode_normalisert }} {{ node.tittel }} {{ node.her_legges }} {{ node.bk_vurdering }} {{ node.tidligere_arkivnokkel }} {{ node.aktuelt_lovverk }} {{ node.kommentar }}">
+	<summary>
+		<strong class="oka-kat-kode">{{ node.kode }}</strong>
+		<span class="oka-kat-tittel">{{ node.tittel }}</span>
+		<span class="badge badge-light">{{ node.get_nivaa_display }}</span>
+		{% if node.nivaa == 'underfunksjon' %}
+			<span class="badge badge-info">Kan velges</span>
+		{% endif %}
+		{% if not node.aktiv %}
+			<span class="badge badge-warning">Utfaset</span>
+		{% endif %}
+		{% if node.barn_liste %}
+			<span class="text-muted small">({{ node.barn_liste|length }})</span>
+		{% endif %}
+	</summary>
+	<div class="oka-node-kropp">
+		{% if node.her_legges %}
+			<div class="oka-kat-felt"><span class="oka-kat-felt-navn">Her legges</span> {{ node.her_legges }}</div>
+		{% endif %}
+		{% if node.bk_vurdering %}
+			<div class="oka-kat-felt"><span class="oka-kat-felt-navn">BK-vurdering</span> {{ node.bk_vurdering }}</div>
+		{% endif %}
+		{% if node.tidligere_arkivnokkel %}
+			<div class="oka-kat-felt"><span class="oka-kat-felt-navn">Tidligere arkivnøkkel</span> {{ node.tidligere_arkivnokkel }}</div>
+		{% endif %}
+		{% if node.aktuelt_lovverk %}
+			<div class="oka-kat-felt"><span class="oka-kat-felt-navn">Lovverk</span> {{ node.aktuelt_lovverk }}</div>
+		{% endif %}
+		{% if node.kommentar %}
+			<div class="oka-kat-felt"><span class="oka-kat-felt-navn">Kommentar</span> {{ node.kommentar }}</div>
+		{% endif %}
+		{% for barn in node.barn_liste %}
+			{% include "oka_oversikt_node.html" with node=barn only %}
+		{% endfor %}
+	</div>
+</details>
+{% else %}
+<div class="oka-node oka-node--blad{% if not node.aktiv %} oka-node--inaktiv{% endif %}"
+	id="oka-{{ node.pk }}"
+	data-nivaa="{{ node.nivaa }}"
+	data-aktiv="{% if node.aktiv %}1{% else %}0{% endif %}"
+	data-text="{{ node.kode }} {{ node.kode_normalisert }} {{ node.tittel }}">
+	<div class="oka-node-hode">
+		<strong class="oka-kat-kode">{{ node.kode }}</strong>
+		<span class="oka-kat-tittel">{{ node.tittel }}</span>
+		<span class="badge badge-light">{{ node.get_nivaa_display }}</span>
+		{% if node.nivaa == 'underfunksjon' %}
+			<span class="badge badge-info">Kan velges</span>
+		{% endif %}
+		{% if not node.aktiv %}
+			<span class="badge badge-warning">Utfaset</span>
+		{% endif %}
+	</div>
+</div>
+{% endif %}

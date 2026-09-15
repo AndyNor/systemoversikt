@@ -1,0 +1,73 @@
+{# 2026-09-15: Full OKA classification tree with search, nivå filter and expand/collapse. #}
+{% extends "system_index.html" %}
+{% load static %}
+
+{% block overskrift %}
+	OKA-klassifikasjon
+{% endblock overskrift %}
+
+{% block ekstrastyle %}
+<link rel="stylesheet" href="{% static 'informasjonskategori.css' %}?v=20260915-oversikt">
+{% endblock ekstrastyle %}
+
+{% block ekstrajavascript %}
+<script src="{% static 'oka_oversikt.js' %}?v=20260915" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block hovedinnhold %}
+
+<p>
+	Oslo kommunes funksjonsbaserte klassifikasjon (OKA).
+	<strong>Underfunksjoner</strong> er det mest detaljerte nivået og det som kan knyttes til system og systembruk.
+</p>
+
+<p>
+	{{ antall_hovedfunksjon }} hovedfunksjoner,
+	{{ antall_funksjon }} funksjoner,
+	{{ antall_underfunksjon }} underfunksjoner
+	({{ antall_aktive }} aktive av {{ antall_totalt }} totalt).
+</p>
+{% if siste_import %}
+	<p class="text-muted">Sist lastet inn: {{ siste_import.opprettet|date:"Y-m-d H:i" }} — {{ siste_import.message }}</p>
+{% endif %}
+
+<div class="oka-oversikt-verktoy form-inline">
+	<label class="sr-only" for="oka-oversikt-sok">Søk i OKA</label>
+	<input type="search" id="oka-oversikt-sok" class="form-control form-control-sm mr-2 mb-2" placeholder="Søk i kode, tittel, her legges, BK, lovverk…" value="{{ forhandsutfylt_sok }}" autocomplete="off" style="min-width: 22rem;">
+
+	<label class="sr-only" for="oka-oversikt-nivaa">Filtrer på nivå</label>
+	<select id="oka-oversikt-nivaa" class="form-control form-control-sm mr-2 mb-2">
+		<option value="">Alle nivåer</option>
+		<option value="hovedfunksjon">Hovedfunksjon</option>
+		<option value="funksjon">Funksjon</option>
+		<option value="underfunksjon">Underfunksjon (kan velges)</option>
+	</select>
+
+	<div class="form-check mr-3 mb-2">
+		<input class="form-check-input" type="checkbox" id="oka-oversikt-utfaset">
+		<label class="form-check-label" for="oka-oversikt-utfaset">Vis utfasede</label>
+	</div>
+
+	<button type="button" id="oka-oversikt-utvid" class="btn btn-sm btn-secondary mr-1 mb-2">Utvid alle</button>
+	<button type="button" id="oka-oversikt-skjul" class="btn btn-sm btn-secondary mb-2">Skjul alle</button>
+</div>
+<p id="oka-oversikt-status" class="small text-muted mb-2"></p>
+<p id="oka-oversikt-ingen" class="text-muted" hidden>Ingen koder matcher søket eller filteret.</p>
+
+{% if hovedfunksjoner or andre_rotnoder %}
+<div class="oka-tree" id="oka-tree">
+	{% for kat in hovedfunksjoner %}
+		{% include "oka_oversikt_node.html" with node=kat only %}
+	{% endfor %}
+	{% if andre_rotnoder %}
+		<h6 class="mt-4">Koder uten overordnet</h6>
+		{% for kat in andre_rotnoder %}
+			{% include "oka_oversikt_node.html" with node=kat only %}
+		{% endfor %}
+	{% endif %}
+</div>
+{% else %}
+<p class="text-muted">Ingen OKA-koder er lastet inn ennå.</p>
+{% endif %}
+
+{% endblock hovedinnhold %}
