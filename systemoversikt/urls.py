@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-09-15: Arkivoverføring mottakersystem search API.
 # 2026-09-15: Arkivoverføring bulk/edit/delete under systemer/.
 # 2026-08-23: OIDC failure restores deep-link via oidc_login_failure (was /?login=failed).
 # 2026-08-23: Risk AJAX session ping – GET /sikkerhet/risiko/api/session/.
@@ -311,6 +312,8 @@ urlpatterns = [
 	re_path(r'^systemer/arkivoverforing/ny/(?P<system>\d{1,8})/$', views.arkivoverforing_bulk_create, name='arkivoverforing_bulk_create'),
 	re_path(r'^systemer/arkivoverforing/(?P<pk>\d{1,8})/endre/$', views.arkivoverforing_edit, name='arkivoverforing_edit'),
 	re_path(r'^systemer/arkivoverforing/(?P<pk>\d{1,8})/slett/$', views.arkivoverforing_delete, name='arkivoverforing_delete'),
+	# 2026-09-15: Dynamic mottakersystem search for arkivoverføring forms.
+	re_path(r'^systemer/arkivoverforing/api/systemer/sok/$', views.api_arkivoverforing_systemer_sok, name='api_arkivoverforing_systemer_sok'),
 	re_path(r'^systemer/systemklassifisering/$', views.systemklassifisering_detaljer, name='systemklassifisering_tom'),
 	re_path(r'^systemer/systemklassifisering/(?P<kriterie>[A-Z-_]{1,30})/$', views.systemklassifisering_detaljer, name='systemklassifisering_detaljer'),
 	re_path(r'^systemer/systemtype/(?P<pk>\d{1,8})/$', views.systemtype_detaljer, name='systemtype_detaljer'),

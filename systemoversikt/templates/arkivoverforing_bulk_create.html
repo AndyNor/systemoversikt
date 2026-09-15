@@ -1,4 +1,4 @@
-{# 2026-09-15: Bulk-create ArkivOverforing rows for selected SystemBruk on a source system. #}
+{# 2026-09-15: Bulk-create ArkivOverforing; mottakersystem via dynamic search. #}
 {% extends "index.html" %}
 {% load templatetags %}
 
@@ -16,15 +16,7 @@
 
 <form action="" method="post">
 	{% csrf_token %}
-	<div class="form-group">
-		<label for="mottaker_system">Mottakersystem</label>
-		<select name="mottaker_system" id="mottaker_system" class="form-control" required>
-			<option value="">– Velg system –</option>
-			{% for s in mottaker_valg %}
-			<option value="{{ s.pk }}">{{ s.systemnavn }}</option>
-			{% endfor %}
-		</select>
-	</div>
+	{% include "arkivoverforing_mottaker_sok.html" %}
 	<div class="form-group">
 		<label for="dato_start">Dato start overføring</label>
 		<input type="date" name="dato_start" id="dato_start" class="form-control">

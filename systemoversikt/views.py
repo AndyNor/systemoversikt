@@ -6923,6 +6923,52 @@ def _parse_optional_date(value):
 	return parse_date(value)
 
 
+def _arkivoverforing_system_label(system):
+	# 2026-09-15: Search label – systemnavn (forvalter) (livsløp), e.g. Foo (UKE) (Under anskaffelse/utvikling).
+	base = str(system)
+	status = system.get_livslop_status_display()
+	if not status:
+		return base
+	cleaned = re.sub(r'^\d+\s+', '', str(status)).strip()
+	cleaned = re.sub(r'^[^\wÆØÅæøåA-Za-z]+', '', cleaned).strip()
+	if cleaned:
+		return '%s (%s)' % (base, cleaned)
+	return base
+
+
+def api_arkivoverforing_systemer_sok(request):
+	# 2026-09-15: Dynamic mottakersystem search for arkivoverføring create/edit forms.
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'session_expired'}, status=401)
+	if not (
+		request.user.has_perm('systemoversikt.view_system')
+		or request.user.has_perm('systemoversikt.add_arkivoverforing')
+		or request.user.has_perm('systemoversikt.change_arkivoverforing')
+	):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+
+	q = (request.GET.get('q') or '').strip()
+	if len(q) < 2:
+		return JsonResponse({'ok': True, 'results': []})
+
+	qs = (
+		System.objects.filter(systemnavn__icontains=q)
+		.select_related('systemforvalter')
+		.order_by(Lower('systemnavn'))
+	)
+	exclude_raw = (request.GET.get('exclude') or '').strip()
+	if exclude_raw.isdigit():
+		qs = qs.exclude(pk=int(exclude_raw))
+
+	results = []
+	for system in qs[:20]:
+		results.append({
+			'id': system.pk,
+			'label': _arkivoverforing_system_label(system),
+		})
+	return JsonResponse({'ok': True, 'results': results})
+
+
 def _arkivoverforing_return_system_pk(request, overforing):
 	"""Prefer ?return_system=; else redirect to avsender system details."""
 	raw = request.GET.get('return_system') or request.POST.get('return_system')
@@ -6942,6 +6988,7 @@ def _format_date_for_log(value):
 
 def arkivoverforing_bulk_create(request, system):
 	# 2026-09-15: Create one ArkivOverforing per selected SystemBruk for this source system.
+	# 2026-09-15: Mottakersystem via dynamic search (no full system dropdown).
 	required_permissions = ['systemoversikt.add_arkivoverforing']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
@@ -6952,7 +6999,8 @@ def arkivoverforing_bulk_create(request, system):
 		.select_related('brukergruppe')
 		.order_by('brukergruppe__virksomhetsnavn')
 	)
-	mottaker_valg = System.objects.exclude(pk=system_instans.pk).order_by(Lower('systemnavn'))
+	mottaker_initial_id = ''
+	mottaker_initial_label = ''
 
 	if request.POST:
 		mottaker_pk = request.POST.get('mottaker_system')
@@ -6960,6 +7008,12 @@ def arkivoverforing_bulk_create(request, system):
 		dato_avsluttet = _parse_optional_date(request.POST.get('dato_avsluttet'))
 		kommentar = (request.POST.get('kommentar') or '').strip() or None
 		bruk_pks = [int(pk) for pk in request.POST.getlist('systembruk') if str(pk).isdigit()]
+
+		if mottaker_pk and str(mottaker_pk).isdigit():
+			mottaker_preview = System.objects.filter(pk=int(mottaker_pk)).select_related('systemforvalter').first()
+			if mottaker_preview:
+				mottaker_initial_id = mottaker_preview.pk
+				mottaker_initial_label = _arkivoverforing_system_label(mottaker_preview)
 
 		if not mottaker_pk:
 			messages.warning(request, 'Du må velge mottakersystem.')
@@ -7016,13 +7070,17 @@ def arkivoverforing_bulk_create(request, system):
 		'required_permissions': formater_permissions(required_permissions),
 		'system': system_instans,
 		'systembruk_liste': systembruk_liste,
-		'mottaker_valg': mottaker_valg,
+		'mottaker_sok_url': reverse('api_arkivoverforing_systemer_sok'),
+		'mottaker_exclude_pk': system_instans.pk,
+		'mottaker_initial_id': mottaker_initial_id,
+		'mottaker_initial_label': mottaker_initial_label,
 		'back_link': reverse('systemdetaljer', args=[system_instans.pk]) + '#anchor_arkivoverforing',
 	})
 
 
 def arkivoverforing_edit(request, pk):
 	# 2026-09-15: Edit dates, comment and destination for one archive transfer.
+	# 2026-09-15: Mottakersystem via dynamic search (no full system dropdown).
 	required_permissions = ['systemoversikt.change_arkivoverforing']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
@@ -7033,11 +7091,11 @@ def arkivoverforing_edit(request, pk):
 			'avsender_bruk__system',
 			'avsender_bruk__brukergruppe',
 			'mottaker_system',
+			'mottaker_system__systemforvalter',
 		),
 		pk=pk,
 	)
 	return_system_pk = _arkivoverforing_return_system_pk(request, overforing)
-	mottaker_valg = System.objects.order_by(Lower('systemnavn'))
 	back_link = reverse('systemdetaljer', args=[return_system_pk]) + '#anchor_arkivoverforing'
 
 	if request.POST:
@@ -7100,7 +7158,10 @@ def arkivoverforing_edit(request, pk):
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'overforing': overforing,
-		'mottaker_valg': mottaker_valg,
+		'mottaker_sok_url': reverse('api_arkivoverforing_systemer_sok'),
+		'mottaker_exclude_pk': '',
+		'mottaker_initial_id': overforing.mottaker_system_id,
+		'mottaker_initial_label': _arkivoverforing_system_label(overforing.mottaker_system),
 		'return_system_pk': return_system_pk,
 		'back_link': back_link,
 	})

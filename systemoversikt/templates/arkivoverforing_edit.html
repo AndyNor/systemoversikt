@@ -1,4 +1,4 @@
-{# 2026-09-15: Edit single ArkivOverforing (dates, comment, destination). #}
+{# 2026-09-15: Edit ArkivOverforing; mottakersystem via dynamic search. #}
 {% extends "index.html" %}
 {% load templatetags %}
 
@@ -19,14 +19,7 @@
 <form action="" method="post">
 	{% csrf_token %}
 	<input type="hidden" name="return_system" value="{{ return_system_pk }}">
-	<div class="form-group">
-		<label for="mottaker_system">Mottakersystem</label>
-		<select name="mottaker_system" id="mottaker_system" class="form-control" required>
-			{% for s in mottaker_valg %}
-			<option value="{{ s.pk }}" {% if s.pk == overforing.mottaker_system_id %}selected{% endif %}>{{ s.systemnavn }}</option>
-			{% endfor %}
-		</select>
-	</div>
+	{% include "arkivoverforing_mottaker_sok.html" %}
 	<div class="form-group">
 		<label for="dato_start">Dato start overføring</label>
 		<input type="date" name="dato_start" id="dato_start" class="form-control" value="{{ overforing.dato_start|date:'Y-m-d' }}">

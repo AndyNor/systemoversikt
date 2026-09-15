@@ -1,0 +1,101 @@
+{# 2026-09-15: Dynamic mottakersystem search; label includes forvalter + livsløp. #}
+<div class="form-group" id="mottaker-system-sok-wrap">
+	<label for="mottaker_system_sok">Mottakersystem</label>
+	<input type="hidden" name="mottaker_system" id="mottaker_system" value="{{ mottaker_initial_id }}">
+	<input
+		type="search"
+		id="mottaker_system_sok"
+		class="form-control"
+		placeholder="Søk etter systemnavn…"
+		autocomplete="off"
+		value="{{ mottaker_initial_label }}"
+	>
+	<div id="mottaker_system_sok_treff" class="small mt-1"></div>
+	<small class="form-text text-muted">Skriv minst to tegn for å søke. Treff viser forvaltervirksomhet og livsløp.</small>
+</div>
+{{ mottaker_sok_url|json_script:"mottaker-sok-url" }}
+{{ mottaker_exclude_pk|default_if_none:""|json_script:"mottaker-sok-exclude" }}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+(function () {
+	var searchUrl = JSON.parse(document.getElementById('mottaker-sok-url').textContent);
+	var excludePk = JSON.parse(document.getElementById('mottaker-sok-exclude').textContent);
+	var hidden = document.getElementById('mottaker_system');
+	var input = document.getElementById('mottaker_system_sok');
+	var treff = document.getElementById('mottaker_system_sok_treff');
+	var timer = null;
+	var selectedLabel = input.value || '';
+
+	function clearSelectionIfEdited() {
+		if (input.value !== selectedLabel) {
+			hidden.value = '';
+			selectedLabel = '';
+		}
+	}
+
+	function selectSystem(id, label) {
+		hidden.value = String(id);
+		selectedLabel = label;
+		input.value = label;
+		treff.innerHTML = '';
+	}
+
+	function renderResults(results) {
+		treff.innerHTML = '';
+		if (!results.length) {
+			treff.innerHTML = '<span class="text-muted">Ingen treff</span>';
+			return;
+		}
+		results.forEach(function (sys) {
+			var btn = document.createElement('button');
+			btn.type = 'button';
+			btn.className = 'btn btn-link btn-sm d-block text-left p-0';
+			btn.textContent = sys.label;
+			btn.addEventListener('click', function () {
+				selectSystem(sys.id, sys.label);
+			});
+			treff.appendChild(btn);
+		});
+	}
+
+	input.addEventListener('input', function () {
+		clearSelectionIfEdited();
+		var q = input.value.trim();
+		clearTimeout(timer);
+		if (q.length < 2) {
+			treff.innerHTML = '';
+			return;
+		}
+		timer = setTimeout(function () {
+			var url = searchUrl + '?q=' + encodeURIComponent(q);
+			if (excludePk) {
+				url += '&exclude=' + encodeURIComponent(excludePk);
+			}
+			fetch(url, { credentials: 'same-origin' })
+				.then(function (r) { return r.json(); })
+				.then(function (data) {
+					renderResults((data && data.results) || []);
+				})
+				.catch(function () {
+					treff.innerHTML = '<span class="text-danger">Søk feilet</span>';
+				});
+		}, 250);
+	});
+
+	input.addEventListener('focus', function () {
+		if (hidden.value && input.value === selectedLabel) {
+			input.select();
+		}
+	});
+
+	var form = input.closest('form');
+	if (form) {
+		form.addEventListener('submit', function (e) {
+			if (!hidden.value) {
+				e.preventDefault();
+				treff.innerHTML = '<span class="text-danger">Du må velge mottakersystem fra søketreffene.</span>';
+				input.focus();
+			}
+		});
+	}
+})();
+</script>

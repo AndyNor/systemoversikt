@@ -1,3 +1,4 @@
+{# 2026-09-15: Bruk/arkivoverføring actions as buttons on one line (registrer bruk first). #}
 {# 2026-09-15: Arkivoverføring lists (sender/receiver) and bulk-create link. #}
 {# 2026-09-14: Note missing electronic-archive approval date when er_arkiv is set. #}
 {# 2026-09-14: Wording – no integration against *another* approved archive system. #}
@@ -1583,19 +1584,17 @@
 		{% if not arkivoverforinger_som_avsender and not arkivoverforinger_som_mottaker %}
 		<p class="text-muted">Ingen arkivoverføringer er registrert for dette systemet.</p>
 		{% endif %}
-
-		{% if perms.systemoversikt.add_arkivoverforing %}
-		<p>
-			<a class="btn btn-sm btn-link" href="{% url 'arkivoverforing_bulk_create' systemdetaljer.pk %}">
-				Arkivoverføring til nytt system
-			</a>
-		</p>
-		{% endif %}
 	</div>
 
 	<div class="row">
 		<div class="col-12">
-			<p><a class="btn btn-sm btn-link" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer og endre bruk</a></p>
+			{# 2026-09-15: Action links on one line as buttons; registrer bruk first. #}
+			<p>
+				<a class="btn btn-sm btn-primary" href="{% url 'registrer_bruk' systemdetaljer.pk %}">Registrer og endre bruk</a>
+				{% if perms.systemoversikt.add_arkivoverforing %}
+				<a class="btn btn-sm btn-secondary" href="{% url 'arkivoverforing_bulk_create' systemdetaljer.pk %}">Arkivoverføring til nytt system</a>
+				{% endif %}
+			</p>
 			{% if systemdetaljer.tilgangsgrupper_ad.all %}
 			<div class="system-detalj-tilgangsgrupper" id="anchor_tilgang">
 				<strong>Bekreftede tilgangsgrupper</strong>

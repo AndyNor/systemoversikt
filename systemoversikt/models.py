@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: SystemBruk.kommentar (Innhold) help text – virksomhet-specific use beyond systemeier approval.
+# 2026-09-15: SystemBruk.systemeier_kontaktpersoner_referanse display “Lokal informasjonseier (person)” (field name unchanged).
 # 2026-09-15: ArkivOverforing – archive transfer from SystemBruk to destination System (per virksomhet usage).
 # 2026-09-14: System.produksjonsformater – multi-select archive production formats (PDF, JPG, DOCX).
 # 2026-09-14: System.er_arkiv label “Godkjent som elektronisk arkiv?”; dato_godkjent_elektronisk_arkiv.
@@ -6883,7 +6885,8 @@ class SystemBruk(models.Model):
 	systemeier_kontaktpersoner_referanse = models.ManyToManyField(
 			to=Ansvarlig,
 			related_name='systembruk_systemeier_kontaktpersoner',
-			verbose_name="Lokal eier (person)",
+			# 2026-09-15: Display “Lokal informasjonseier (person)” – field name unchanged.
+			verbose_name="Lokal informasjonseier (person)",
 			blank=True,
 			help_text=u"Dersom fellesløsning på applikasjonshotell, hvilke roller/personer fyller rollen som lokal eier?",
 			)
@@ -6908,11 +6911,12 @@ class SystemBruk(models.Model):
 			help_text=u"Avvikles: Moduler og eksterne/interne integrasjoner som er i bruk",
 			)
 	# 2026-09-14: verbose_name Innhold only – keep field name kommentar for existing APIs.
+	# 2026-09-15: Help text for virksomhet-specific use (beyond systemeier approval, customizations).
 	kommentar = models.TextField(
 			verbose_name="Innhold",
 			blank=True,
 			null=True,
-			help_text=u"Utdyp hva systemet brukes til hos din virksomhet.",
+			help_text=u"Beskriv om virksomheten bruker systemet til noe mer enn det systemeier har godkjent, om det er spesialtilpasninger for virksomheten, og annen relevant informasjon om bruken som er virksomhetsspesifikk.",
 			)
 	systemeierskap = models.TextField(
 			verbose_name="Systemeierskap (fritekst)",
