@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-15: InformasjonsKategori.tittel max_length 800 – OKA titles exceed 400 (Postgres).
 # 2026-09-15: InformasjonsKategori (OKA) lookup + System defaults + SystemBruk tillegg/unntak.
 # 2026-09-15: SystemBruk.kommentar (Innhold) help text – virksomhet-specific use beyond systemeier approval.
 # 2026-09-15: SystemBruk.systemeier_kontaktpersoner_referanse display “Lokal informasjonseier (person)” (field name unchanged).
@@ -2488,8 +2489,9 @@ class InformasjonsKategori(models.Model):
 			help_text=u"Unik nøkkel for import (mellomrom rundt bindestrek normalisert).",
 			)
 	tittel = models.CharField(
+			# 2026-09-15: OKA sheet has titles >400 (e.g. N5-05 ~431); 800 leaves room for revisions.
 			verbose_name="Tittel",
-			max_length=400,
+			max_length=800,
 			)
 	nivaa = models.CharField(
 			verbose_name="Nivå",
