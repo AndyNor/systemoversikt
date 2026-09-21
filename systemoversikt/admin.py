@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-21: Move System.service_offerings under kritisk_kapabilitet in Informasjonsbehandling fieldset.
 # 2026-09-15: InformasjonsKategori (OKA) admin; System/SystemBruk assignment of leaf codes.
 # 2026-09-15: ArkivOverforingAdmin – archive transfer SystemBruk → System (fallback to app UI).
 # 2026-09-14: SystemAdmin Arkiv fieldset; produksjonsformater multi-select (PDF, JPG, DOCX).
@@ -607,17 +608,18 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
 				'forvaltning_epost',
 				'enterprise_applicatons',
-				'service_offerings',
 				'citrix_publications',
 			),
 		}),
 		('Informasjonsbehandling og andre vurderinger', {
 			'description': '',
 			'fields': (
+				# 2026-09-21: service_offerings directly under kritisk_kapabilitet (both feed systemprioritering).
 				('tilgjengelighetsvurdering', 'tilgjengelighet_periodisk_kritisk', 'tilgjengelighet_timer_til_kritisk', 'tilgjengelighet_kritiske_perioder'),
 				('sikkerhetsnivaa', 'integritetsvurdering'),
 				'informasjonsklassifisering',
 				'kritisk_kapabilitet',
+				'service_offerings',
 				'LOSref',
 				('innsyn_innbygger', 'innsyn_ansatt'),
 				'kontaktperson_innsyn',

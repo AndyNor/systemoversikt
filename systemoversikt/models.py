@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-21: System tilgjengelighetsvurdering/kritisk_kapabilitet/service_offerings help text – systemprioritering and consequence examples.
 # 2026-09-15: InformasjonsKategori.tittel max_length 800 – OKA titles exceed 400 (Postgres).
 # 2026-09-15: InformasjonsKategori (OKA) lookup + System defaults + SystemBruk tillegg/unntak.
 # 2026-09-15: SystemBruk.kommentar (Innhold) help text – virksomhet-specific use beyond systemeier approval.
@@ -5838,7 +5839,8 @@ class System(models.Model):
 			related_name='system',
 			verbose_name="Service offerings fra Sopra Steria CMDB",
 			blank=True,
-			help_text=u"Her velger du alle service offerings knyttet til dette systemet. Ta kontakt med DIG om du trenger hjelp med denne koblingen.",
+			# 2026-09-21: Clarify auto-import of tjenestenivå/driftskritikalitet for systemprioritering when linked correctly.
+			help_text=u"Feltet brukes for å beregne systemprioritering. Når systemet er koblet til riktig tjenesteleveranse hos driftsleverandør, vil systemets tjenestenivå og driftskritikalitet automatisk hentes inn. Her velger du alle service offerings knyttet til dette systemet. Ta kontakt med DIG om du trenger hjelp med denne koblingen.",
 			)
 	sikkerhetsnivaa = models.BigIntegerField(
 			choices=SIKKERHETSNIVAA_VALG,
@@ -6073,7 +6075,16 @@ class System(models.Model):
 			blank=True,
 			null=True,
 			default=6,
-			help_text=u"Hvor kritisk er det at systemet virker?",
+			# 2026-09-21: Explain use in systemprioritering; examples from liv og helse / måloppnåelse consequence matrix.
+			help_text=(
+				u"Hvor kritisk er det at systemet virker? Feltet brukes for å beregne systemprioritering.<br>"
+				u"Eksempler basert på liv og helse / måloppnåelse:<br>"
+				u"• 5 Svært alvorlig: Dødsfall eller flere personer rammes av alvorlig varig funksjonsnedsettelse eller skade. / Manglende oppnåelse av kritiske mål i virksomheten.<br>"
+				u"• 4 Alvorlig: Alvorlig personskade eller varig funksjonsnedsettelse. / Manglende oppnåelse av mindre kritiske mål i virksomheten.<br>"
+				u"• 3 Moderat: Mindre alvorlig personskade. / Moderat innvirkning på oppnåelse av virksomhetens mål.<br>"
+				u"• 2 Lav: Småskader. / Liten innvirkning på oppnåelse av virksomhetens mål.<br>"
+				u"• 1 Ubetydelig: Ingen skade. / Ubetydelig innvirkning på oppnåelse av virksomhetens mål."
+			),
 			)
 	tilgjengelighet_kritiske_perioder = models.TextField(
 			verbose_name="Kritiske perioder og konsekvenser ved nedetid",
@@ -6335,7 +6346,8 @@ class System(models.Model):
 			related_name="systemer",
 			verbose_name="Kritisk kapabilitet",
 			blank=True,
-			help_text=u"Understøtter systemet en kritisk funksjon? Kategorier basert på rammeverket fra DSB."
+			# 2026-09-21: Note that the field feeds systemprioritering scoring.
+			help_text=u"Understøtter systemet en kritisk funksjon? Kategorier basert på rammeverket fra DSB. Feltet brukes for å beregne systemprioritering.",
 			)
 	inv_konklusjon = models.CharField(
 			verbose_name="Konklusjon modernisering",
