@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-21: System admin – Integrasjoner fieldset; dates under Arkiv; klassifisering+grensesnitt row; URL alone.
+# 2026-09-21: System admin layout – alias beside systemnavn; compact alias widget; forvalter e-post/personer regrouped.
 # 2026-09-21: Move System.service_offerings under kritisk_kapabilitet in Informasjonsbehandling fieldset.
 # 2026-09-15: InformasjonsKategori (OKA) admin; System/SystemBruk assignment of leaf codes.
 # 2026-09-15: ArkivOverforingAdmin – archive transfer SystemBruk → System (fallback to app UI).
@@ -502,6 +504,10 @@ class SystemAdminForm(forms.ModelForm):
 	class Meta:
 		model = System
 		fields = '__all__'
+		# 2026-09-21: Compact alias next to systemnavn – avoid default admin textarea (vLargeTextField 140px).
+		widgets = {
+			'alias': forms.Textarea(attrs={'rows': 2, 'cols': 40, 'class': 'vTextField'}),
+		}
 
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -592,23 +598,22 @@ class SystemAdmin(SimpleHistoryAdmin):
 		('Initiell registrering - informasjon alle systemer må ha utfylt', {
 			'description': '',
 			'fields': (
-				('systemnavn', 'programvarer'),
-				'systemforvalter',
-				('systemforvalter_kontaktpersoner_referanse', 'systemforvalter_avdeling_referanse'),
+				# 2026-09-21: Alias beside systemnavn; programvarer on its own row; forvalter personer/e-post regrouped.
+				('systemnavn', 'alias'),
+				'programvarer',
+				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
+				('systemforvalter_avdeling_referanse', 'forvaltning_epost'),
 				'godkjente_bestillere',
 				'livslop_status',
 				'systembeskrivelse',
-				('driftsmodell_foreignkey', 'er_egenutviklet', 'systemeierskapsmodell'),
+				('driftsmodell_foreignkey', 'er_egenutviklet'),
 				('systemleverandor', 'systemleverandor_vedlikeholdsavtale',),
 				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
 				'basisdriftleverandor',
-				('dato_etablert', 'dato_end_of_life'),
-				'alias',
-				('systemtyper', 'systemurl'),
+				# 2026-09-21: Systemklassifisering on its own row with Grensesnitt; URL alone; dates/citrix/EA moved.
+				('systemeierskapsmodell', 'systemtyper'),
+				'systemurl',
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
-				'forvaltning_epost',
-				'enterprise_applicatons',
-				'citrix_publications',
 			),
 		}),
 		('Informasjonsbehandling og andre vurderinger', {
@@ -629,9 +634,19 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'systemkategorier',
 			)
 		}),
+		('Integrasjoner', {
+			'description': '',
+			'fields': (
+				# 2026-09-21: Citrix and Microsoft service principals grouped before Arkiv.
+				'citrix_publications',
+				'enterprise_applicatons',
+			),
+		}),
 		('Arkiv', {
 			'description': 'Opplysninger om systemet som elektronisk arkiv.',
 			'fields': (
+				# 2026-09-21: Lifecycle dates first in Arkiv – taken i bruk / utfasing before archive-specific fields.
+				('dato_etablert', 'dato_end_of_life'),
 				'er_arkiv',
 				'dato_godkjent_elektronisk_arkiv',
 				'produksjonsformater',
