@@ -8724,11 +8724,13 @@ def systemer_virksomhet_ansvarlig_for(request, pk=None):
 		return render_access_denied(request, required_permissions)
 
 	virksomhet = Virksomhet.objects.get(pk=pk)
-	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).order_by(Lower('systemnavn'))
+	# 2026-09-21: Prefetch data used by systemprioritet; attach score for the Prioritet column (same as drift_beredskap).
+	systemer_ansvarlig_for = System.objects.filter(~Q(ibruk=False)).filter(Q(systemeier=pk) | Q(systemforvalter=pk)).prefetch_related('service_offerings', 'kritisk_kapabilitet', 'systemforvalter_kontaktpersoner_referanse', 'systemeier_kontaktpersoner_referanse').order_by(Lower('systemnavn'))
 
 	unike_ansvarlige_eiere = set()
 	unike_ansvarlige_forvaltere = set()
 	for system in systemer_ansvarlig_for:
+		system.prioritet_poeng = system.systemprioritet_poeng()
 		for ansvarlig in system.systemforvalter_kontaktpersoner_referanse.all():
 			unike_ansvarlige_forvaltere.add(ansvarlig)
 		for ansvarlig in system.systemeier_kontaktpersoner_referanse.all():

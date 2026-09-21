@@ -1,4 +1,5 @@
 {% extends "virksomhet_index.html" %}
+{# 2026-09-21: Prioritet column – same calculated recovery score as /virksomhet/drift/prioriteringer/. #}
 {% load static %}
 {% load templatetags %}
 {% load humanize %}
@@ -14,7 +15,7 @@
 
 {% block hovedinnhold %}
 
-	<p>Systemer {{ virksomhet }} er systemeier eller systemforvalter for. Her vises basisinformasjon på tabellform samlet slik at IKT-hovedkontakt får komplett oversikt.</p>
+	<p>Systemer {{ virksomhet }} er systemeier eller systemforvalter for. Her vises basisinformasjon på tabellform samlet slik at IKT-hovedkontakt får komplett oversikt. Kolonnen <em>Prioritet</em> viser samme beregning som på siden for systemgjenoppretting: <strong>lavest poengsum betyr høyest prioritet</strong>.</p>
 
 		{% url 'virksomhet_forvalter_isk' pk=virksomhet.pk as url_virksomhet_forvalter_isk %}
 		<a href="{{ url_virksomhet_forvalter_isk }}" class="btn btn-sm btn-link {% if url_virksomhet_forvalter_isk in request.path %}fremhev{% endif %}">Se detaljerte sikkerhetsvurderinger samlet</a><br>
@@ -56,6 +57,7 @@
 				<th class="filter-false"></th>
 				<th class="filter-false"></th>
 				<th>Systemnavn</th>
+				<th class="filter-false" data-sorter="digit">Prioritet</th>
 				<th>Driftsplattform</th>
 				<th>Forvaltning</th>
 				<th>Livsløp</th>
@@ -77,6 +79,10 @@
 		{% else %}
 			<span style="background-color: #ffacac">Systemeierskapsmodell mangler</span>
 		{% endif %}
+		</td>
+
+		<td data-text="{{ system.prioritet_poeng }}">
+			{{ system.systemprioritet }}
 		</td>
 
 		<td>
