@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-21: Systemforvalter (personer) help text – monthly e-mail reminder (epost_generisk_varsling, day 10).
 # 2026-09-21: System tilgjengelighetsvurdering/kritisk_kapabilitet/service_offerings help text – systemprioritering and consequence examples.
 # 2026-09-15: InformasjonsKategori.tittel max_length 800 – OKA titles exceed 400 (Postgres).
 # 2026-09-15: InformasjonsKategori (OKA) lookup + System defaults + SystemBruk tillegg/unntak.
@@ -5774,7 +5775,8 @@ class System(models.Model):
 			related_name='system_forvalter_for',
 			verbose_name="Systemforvalter (personer)",
 			blank=True,
-			help_text=u"Person(er) med operativt forvalteransvar. Hvis du ikke finner personen du leter etter, kan du legge til med det grønne +-tegnet.",
+			# 2026-09-21: Mention monthly reminder so admins know listed people get epost_generisk_varsling (UTSENDINGSDAG=10).
+			help_text=u"Person(er) med operativt forvalteransvar. Alle som er listet her får en e-postpåminnelse den 10. i hver måned. Hvis du ikke finner personen du leter etter, kan du legge til med det grønne +-tegnet.",
 			)
 	systemforvalter_avdeling_referanse = models.ForeignKey(
 			to='HRorg',
