@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-21: System admin – service_offerings back under basisdriftleverandor in Initiell registrering.
 # 2026-09-21: System admin – Integrasjoner fieldset; dates under Arkiv; klassifisering+grensesnitt row; URL alone.
 # 2026-09-21: System admin layout – alias beside systemnavn; compact alias widget; forvalter e-post/personer regrouped.
 # 2026-09-21: Move System.service_offerings under kritisk_kapabilitet in Informasjonsbehandling fieldset.
@@ -610,6 +611,8 @@ class SystemAdmin(SimpleHistoryAdmin):
 				('systemleverandor', 'systemleverandor_vedlikeholdsavtale',),
 				('applikasjonsdriftleverandor', 'applikasjonsdrift_behov_databehandleravtale'),
 				'basisdriftleverandor',
+				# 2026-09-21: service_offerings next to basisdriftleverandor (CMDB link for systemprioritering).
+				'service_offerings',
 				# 2026-09-21: Systemklassifisering on its own row with Grensesnitt; URL alone; dates/citrix/EA moved.
 				('systemeierskapsmodell', 'systemtyper'),
 				'systemurl',
@@ -619,12 +622,10 @@ class SystemAdmin(SimpleHistoryAdmin):
 		('Informasjonsbehandling og andre vurderinger', {
 			'description': '',
 			'fields': (
-				# 2026-09-21: service_offerings directly under kritisk_kapabilitet (both feed systemprioritering).
 				('tilgjengelighetsvurdering', 'tilgjengelighet_periodisk_kritisk', 'tilgjengelighet_timer_til_kritisk', 'tilgjengelighet_kritiske_perioder'),
 				('sikkerhetsnivaa', 'integritetsvurdering'),
 				'informasjonsklassifisering',
 				'kritisk_kapabilitet',
-				'service_offerings',
 				'LOSref',
 				('innsyn_innbygger', 'innsyn_ansatt'),
 				'kontaktperson_innsyn',
