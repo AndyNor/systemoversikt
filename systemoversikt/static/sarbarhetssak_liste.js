@@ -1,12 +1,12 @@
 // Change log:
-// 2026-09-25: Owner is a radio group. The label shows the checked choice even before the save returns.
-// 2026-09-25: Owner choices are labels in the card. Keyboard activates them the same way as a click.
-// 2026-09-25: Cases are cards on two lines. Owner is a button group, not a select.
+// 2026-09-25: A save already in flight must not mark a newer tiltakseier as saved before it is sent.
+// 2026-09-25: The closed-cases checkbox shows only closed cases.
+// 2026-09-25: Cases are cards on two lines. Owner is a select, not a button group.
 // 2026-09-25: Free-text status field, and Qualys hit summary after a CVE is saved.
 // 2026-09-25: Clear "Lagrer…" when the request finishes. A second save starts only if the user edited again.
 // 2026-09-25: Keep relative "sist endret" and the exact timestamp tooltip after autosave.
 // 2026-09-25: A new row is saved when the title is filled; owner and CVE may be empty.
-// 2026-09-25: Show or hide closed cases when the checkbox changes, without reloading.
+// 2026-09-25: Toggle between open and closed cases when the checkbox changes, without reloading.
 // 2026-09-25: Inline edit on the vulnerability-case list with debounced autosave.
 
 (function () {
@@ -39,7 +39,11 @@
   }
 
   function fieldValue(el, name) {
-    var value = el ? el.value : '';
+    // 2026-09-25: Same read for every control. A select's value is the chosen option key.
+    if (el && el.tagName === 'OPTION') {
+      el = el.closest('select');
+    }
+    var value = el && el.value != null ? String(el.value) : '';
     if (TEXT_FIELDS.indexOf(name) !== -1) {
       value = value.trim();
     }
@@ -49,18 +53,9 @@
     return value;
   }
 
-  function ownerValue(tr) {
-    var checked = tr.querySelector('.sak-owner-input:checked');
-    return checked ? checked.value : '';
-  }
-
   function payloadOf(tr) {
     var data = {};
     FIELDS.forEach(function (name) {
-      if (name === 'tiltakseier') {
-        data[name] = ownerValue(tr);
-        return;
-      }
       data[name] = fieldValue(tr.querySelector('[data-field="' + name + '"]'), name);
     });
     return data;
@@ -81,31 +76,6 @@
     if (row) {
       row.setAttribute('data-status', select.value || '');
     }
-  }
-
-  function syncOwnerButtons(row) {
-    row.querySelectorAll('.sak-owner-btn').forEach(function (label) {
-      var input = label.querySelector('.sak-owner-input');
-      var on = !!(input && input.checked);
-      label.classList.toggle('is-selected', on);
-    });
-  }
-
-  function setOwnerValue(tr, value) {
-    var next = value || '';
-    tr.querySelectorAll('.sak-owner-input').forEach(function (input) {
-      input.checked = input.value === next;
-    });
-    syncOwnerButtons(tr);
-  }
-
-  function renameOwnerGroup(tr) {
-    var pk = tr.getAttribute('data-pk');
-    if (!pk) return;
-    var name = 'tiltakseier-' + pk;
-    tr.querySelectorAll('.sak-owner-input').forEach(function (input) {
-      input.name = name;
-    });
   }
 
   function qualysMeta(text) {
@@ -245,7 +215,6 @@
 
   function applySaved(tr, sent, data) {
     FIELDS.forEach(function (name) {
-      if (name === 'tiltakseier') return;
       var el = tr.querySelector('[data-field="' + name + '"]');
       if (!el || document.activeElement === el) {
         return;
@@ -254,15 +223,6 @@
         el.value = data[name];
       }
     });
-    if (Object.prototype.hasOwnProperty.call(data, 'tiltakseier')) {
-      var currentOwner = ownerValue(tr);
-      var sentOwner = sent.tiltakseier || '';
-      if (currentOwner === sentOwner && currentOwner !== (data.tiltakseier || '')) {
-        setOwnerValue(tr, data.tiltakseier);
-      } else {
-        syncOwnerButtons(tr);
-      }
-    }
     var status = tr.querySelector('[data-field="saksstatus"]');
     if (status) {
       syncStatusClass(status);
@@ -279,10 +239,8 @@
     if (Object.prototype.hasOwnProperty.call(data, 'qualys')) {
       renderQualys(tr, data.qualys);
     }
-    syncOwnerButtons(tr);
     tr.setAttribute('data-pk', String(data.pk));
     tr.removeAttribute('data-new');
-    renameOwnerGroup(tr);
   }
 
   function missingRequired(payload) {
@@ -304,7 +262,8 @@
       tr.hidden = false;
       return;
     }
-    tr.hidden = !visLukkede() && rowErLukket(tr);
+    var lukket = rowErLukket(tr);
+    tr.hidden = visLukkede() ? !lukket : lukket;
   }
 
   function syncFilterUrl(showClosed) {
@@ -338,7 +297,7 @@
         el.hidden = true;
       } else {
         var suffix = showClosed
-          ? (el.getAttribute('data-suffix-alle') || 'saker')
+          ? (el.getAttribute('data-suffix-lukkede') || 'lukkede saker')
           : (el.getAttribute('data-suffix-aktive') || 'aktive saker');
         el.textContent = savedVisible + ' ' + suffix + '.';
         el.hidden = false;
@@ -348,7 +307,7 @@
       empty.hidden = anyVisible;
       if (!anyVisible) {
         empty.textContent = showClosed
-          ? (empty.getAttribute('data-tom-alle') || 'Ingen saker.')
+          ? (empty.getAttribute('data-tom-lukkede') || 'Ingen lukkede saker.')
           : (empty.getAttribute('data-tom-aktive') || 'Ingen aktive saker.');
       }
     }
@@ -409,12 +368,12 @@
       },
       body: json,
     }).then(readJson).then(function (data) {
-      var editedSinceSend = payloadJson(tr) !== requestJson;
       applySaved(tr, sent, data);
-      rowState.snapshot = payloadJson(tr);
+      // 2026-09-25: Remember what was sent. A newer owner choice must still be posted.
+      rowState.snapshot = requestJson;
       applyRowVisibility(tr);
       refreshCount(tr.parentNode);
-      if (editedSinceSend) {
+      if (payloadJson(tr) !== requestJson) {
         rowState.queued = true;
       }
       outcome = 'ok';
@@ -454,11 +413,17 @@
     }, AUTOSAVE_DELAY_MS);
   }
 
+  function fieldFromEvent(event) {
+    if (!event.target || !event.target.closest) return null;
+    var field = event.target.closest('[data-field]');
+    if (!field || field.disabled) return null;
+    return field;
+  }
+
   function rowFromEvent(event) {
-    if (!event.target.matches || !event.target.matches('[data-field]')) {
-      return null;
-    }
-    return event.target.closest('[data-sak-row]');
+    var field = fieldFromEvent(event);
+    if (!field) return null;
+    return field.closest('[data-sak-row]');
   }
 
   function init() {
@@ -472,7 +437,6 @@
       if (status) {
         syncStatusClass(status);
       }
-      syncOwnerButtons(tr);
     });
 
     tbody.addEventListener('input', function (event) {
@@ -481,50 +445,22 @@
     });
 
     tbody.addEventListener('change', function (event) {
-      var ownerInput = event.target.closest && event.target.closest('.sak-owner-input');
-      if (ownerInput && tbody.contains(ownerInput)) {
-        var ownerRow = ownerInput.closest('[data-sak-row]');
-        if (!ownerRow) return;
-        syncOwnerButtons(ownerRow);
-        flush(table, ownerRow, false);
-        return;
+      var field = fieldFromEvent(event);
+      var tr = field && field.closest('[data-sak-row]');
+      if (!field || !tr || !tbody.contains(tr)) return;
+      if (field.getAttribute('data-field') === 'saksstatus') {
+        syncStatusClass(field);
       }
-      var tr = rowFromEvent(event);
-      if (!tr) return;
-      if (event.target.getAttribute('data-field') === 'saksstatus') {
-        syncStatusClass(event.target);
-      }
-      flush(table, tr, false);
-    });
-
-    // 2026-09-25: A second click on the chosen owner clears it. The first click only checks the radio.
-    tbody.addEventListener('mousedown', function (event) {
-      var label = event.target.closest && event.target.closest('.sak-owner-btn');
-      if (!label || !tbody.contains(label)) return;
-      var input = label.querySelector('.sak-owner-input');
-      if (!input) return;
-      input.setAttribute('data-was-checked', input.checked ? '1' : '0');
-    });
-
-    tbody.addEventListener('click', function (event) {
-      var label = event.target.closest && event.target.closest('.sak-owner-btn');
-      if (!label || !tbody.contains(label)) return;
-      var input = label.querySelector('.sak-owner-input');
-      if (!input || input.getAttribute('data-was-checked') !== '1') return;
-      event.preventDefault();
-      input.checked = false;
-      var tr = label.closest('[data-sak-row]');
-      if (!tr) return;
-      syncOwnerButtons(tr);
       flush(table, tr, false);
     });
 
     tbody.addEventListener('focusout', function (event) {
-      var tr = rowFromEvent(event);
-      if (!tr) return;
-      var name = event.target.getAttribute('data-field');
+      var field = fieldFromEvent(event);
+      var tr = field && field.closest('[data-sak-row]');
+      if (!field || !tr || !tbody.contains(tr)) return;
+      var name = field.getAttribute('data-field');
       if (TEXT_FIELDS.indexOf(name) !== -1) {
-        event.target.value = fieldValue(event.target, name);
+        field.value = fieldValue(field, name);
       }
       if (event.relatedTarget && tr.contains(event.relatedTarget)) return;
       flush(table, tr, false);

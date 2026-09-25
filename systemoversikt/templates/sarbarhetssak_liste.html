@@ -1,16 +1,16 @@
 {% extends "sikkerhet_index.html" %}
 {% load static %}
-{# 2026-09-25: Owner choices are clickable labels in the card. Buttons did not show up. #}
-{# 2026-09-25: Two lines per case so the title has room. Owner is buttons, not a select. #}
+{# 2026-09-25: Tiltakseier options are written in the template. The choice loop rendered no options. #}
+{# 2026-09-25: "Vis lukkede saker" shows only closed cases. List is newest created first. #}
 {# 2026-09-25: Clearer list layout, free-text status, and Qualys hit summary under CVE. #}
 {# 2026-09-25: Autosave status is cleared when the request finishes. #}
 {# 2026-09-25: "Sist endret" as relative time; exact timestamp on hover. #}
 {# 2026-09-25: Page title Sårbarhetsoppfølging; year/week column; title is the only required field. #}
 {# 2026-09-25: Inline edit with autosave; status labels red/yellow/green. #}
-{# 2026-09-25: Active vulnerability cases; checkbox includes closed cases. #}
+{# 2026-09-25: Active cases by default; the checkbox shows only closed cases. #}
 
 {% block css_append %}
-	<link rel="stylesheet" href="{% static 'sarbarhetssak.css' %}?v=20260925-eier2">
+	<link rel="stylesheet" href="{% static 'sarbarhetssak.css' %}?v=20260925-eier">
 {% endblock css_append %}
 
 {% block overskrift %}
@@ -24,14 +24,14 @@
 		<div class="sak-hero-copy">
 			<p class="sak-lead">Følg opp sårbarheter, tiltakseier og status. Endringer lagres automatisk.</p>
 			<p id="sarbarhetssak-antall" class="sak-count"
-				data-suffix-aktive="aktive saker" data-suffix-alle="saker"
+				data-suffix-aktive="aktive saker" data-suffix-lukkede="lukkede saker"
 				{% if not synlige_antall %}hidden{% endif %}>
-				{% if synlige_antall %}{{ synlige_antall }} {% if vis_lukkede %}saker{% else %}aktive saker{% endif %}.{% endif %}
+				{% if synlige_antall %}{{ synlige_antall }} {% if vis_lukkede %}lukkede saker{% else %}aktive saker{% endif %}.{% endif %}
 			</p>
 			<p id="sarbarhetssak-tom" class="sak-empty"
-				data-tom-aktive="Ingen aktive saker." data-tom-alle="Ingen saker."
+				data-tom-aktive="Ingen aktive saker." data-tom-lukkede="Ingen lukkede saker."
 				{% if synlige_antall %}hidden{% endif %}>
-				{% if vis_lukkede %}Ingen saker.{% else %}Ingen aktive saker.{% endif %}
+				{% if vis_lukkede %}Ingen lukkede saker.{% else %}Ingen aktive saker.{% endif %}
 			</p>
 		</div>
 		<div class="sak-hero-actions">
@@ -54,7 +54,7 @@
 		data-create-url="{{ url_opprett_lagre }}" data-update-url="{{ url_lagre_mal }}">
 		<div id="sarbarhetssak-rader">
 		{% for sak in saker %}
-		<article class="sak-card" data-sak-row data-pk="{{ sak.pk }}" data-status="{{ sak.saksstatus }}" {% if not vis_lukkede and sak.saksstatus == 'lukket' %}hidden{% endif %}>
+		<article class="sak-card" data-sak-row data-pk="{{ sak.pk }}" data-status="{{ sak.saksstatus }}" {% if vis_lukkede and sak.saksstatus != 'lukket' or not vis_lukkede and sak.saksstatus == 'lukket' %}hidden{% endif %}>
 			<div class="sak-line sak-line-top">
 				<div class="sak-field sak-field-uke">
 					<span class="sak-label">År/uke</span>
@@ -75,7 +75,12 @@
 				</div>
 				<div class="sak-field sak-field-owner">
 					<span class="sak-label">Tiltakseier</span>
-					{% include "includes/sarbarhetssak_tiltakseier.html" with valgt=sak.tiltakseier row_id=sak.pk %}
+					<select class="sak-owner-select" data-field="tiltakseier" aria-label="Tiltakseier">
+						<option value=""{% if not sak.tiltakseier %} selected{% endif %}>Velg tiltakseier</option>
+						<option value="driftsleverandor"{% if sak.tiltakseier == 'driftsleverandor' %} selected{% endif %}>Driftsleverandør</option>
+						<option value="digitaliseringsetaten"{% if sak.tiltakseier == 'digitaliseringsetaten' %} selected{% endif %}>Digitaliseringsetaten</option>
+						<option value="systemeier"{% if sak.tiltakseier == 'systemeier' %} selected{% endif %}>Systemeier</option>
+					</select>
 				</div>
 			</div>
 			<div class="sak-line sak-line-bottom">
@@ -131,7 +136,12 @@
 		</div>
 		<div class="sak-field sak-field-owner">
 			<span class="sak-label">Tiltakseier</span>
-			{% include "includes/sarbarhetssak_tiltakseier.html" with valgt="" row_id="ny" %}
+			<select class="sak-owner-select" data-field="tiltakseier" aria-label="Tiltakseier">
+				<option value="" selected>Velg tiltakseier</option>
+				<option value="driftsleverandor">Driftsleverandør</option>
+				<option value="digitaliseringsetaten">Digitaliseringsetaten</option>
+				<option value="systemeier">Systemeier</option>
+			</select>
 		</div>
 	</div>
 	<div class="sak-line sak-line-bottom">
@@ -163,5 +173,5 @@
 {% endblock hovedinnhold %}
 
 {% block script_append %}
-<script src="{% static 'sarbarhetssak_liste.js' %}?v=20260925-eier2" nonce="{{ request.csp_nonce }}"></script>
+<script src="{% static 'sarbarhetssak_liste.js' %}?v=20260925-eier-lagre" nonce="{{ request.csp_nonce }}"></script>
 {% endblock script_append %}

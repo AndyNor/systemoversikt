@@ -1,7 +1,7 @@
 /* Change log:
- * 2026-09-25: Owner choice is a radio inside the label so the mark does not depend on a script toggle.
- * 2026-09-25: Owner choices stay inside the column – title field can no longer cover them.
- * 2026-09-25: Two lines per case; owner choices are buttons so they stay visible.
+ * 2026-09-25: Tiltakseier select shows the chosen label; same control shape as saksstatus, without status colors.
+ * 2026-09-25: Owner column fits the select; title field can no longer cover it.
+ * 2026-09-25: Two lines per case; owner is a select so the choice is saved with the case.
  * 2026-09-25: List layout – hero, card table, readable owner select, Qualys chips.
  * 2026-09-25: Year/week column width.
  * 2026-09-25: Status labels – red new, yellow in progress, green closed.
@@ -123,7 +123,7 @@
 }
 
 .sak-line-top {
-	grid-template-columns: 5.2rem max-content minmax(0, 1fr) minmax(16rem, 24rem);
+	grid-template-columns: 5.2rem max-content minmax(0, 1fr) minmax(14rem, 18rem);
 }
 
 .sak-line > .sak-field {
@@ -194,49 +194,40 @@
 	z-index: 2;
 }
 
-.sak-owner {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.35rem;
+.sak-owner-select {
+	display: block;
+	width: 100%;
+	max-width: 100%;
 	min-height: 2rem;
-}
-
-.sak-owner-btn {
-	position: relative;
-	display: inline-block;
-	margin: 0;
-	border: 1px solid #2a2859;
-	background: #f4f2fb;
-	color: #2a2859;
+	box-sizing: border-box;
+	border: 1px solid #cfc9dc;
 	border-radius: 999px;
-	padding: 0.38rem 0.7rem;
-	font-size: 0.78rem;
+	background-color: #fff;
+	color: #2a2859;
+	font-size: 0.75rem;
 	font-weight: 700;
 	line-height: 1.2;
+	padding: 0.45em 1.7em 0.45em 0.75em;
 	cursor: pointer;
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	background-image: linear-gradient(45deg, transparent 50%, #2a2859 50%), linear-gradient(135deg, #2a2859 50%, transparent 50%);
+	background-position: right 0.9em center, right 0.55em center;
+	background-size: 0.35em 0.35em, 0.35em 0.35em;
+	background-repeat: no-repeat;
 }
 
-.sak-owner-input {
-	position: absolute;
-	opacity: 0;
-	width: 1px;
-	height: 1px;
-	margin: 0;
-	pointer-events: none;
+.sak-owner-select option {
+	background-color: #fff;
+	color: #2a2859;
+	font-weight: 600;
 }
 
-.sak-owner-btn:hover,
-.sak-owner-btn:focus-within {
+.sak-owner-select:focus {
+	outline: 2px solid rgba(42, 40, 89, 0.22);
 	border-color: #2a2859;
-	outline: 2px solid rgba(42, 40, 89, 0.18);
-	outline-offset: 1px;
-}
-
-.sak-owner-btn.is-selected,
-.sak-owner-btn:has(.sak-owner-input:checked) {
-	background: #2a2859;
-	border-color: #2a2859;
-	color: #fff;
+	background-color: #fff;
 }
 
 .sak-note {

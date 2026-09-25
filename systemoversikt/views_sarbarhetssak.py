@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-25: Tiltakseier is an explicit optional choice on the form, saved with the other case fields.
+# 2026-09-25: List is newest by opprettet; vis_lukkede shows only closed cases.
 # 2026-09-25: Free-text oppgavestatus, and Qualys hit counts when a CVE matches cve_info.
 # 2026-09-25: Relative "sist endret" (for x minutter/dager/uker siden) on the list and in autosave JSON.
 # 2026-09-25: Display name Sårbarhetsoppfølging; only title is required on save.
@@ -46,13 +48,20 @@ _LOG_FIELDS = (
 
 
 class SarbarhetssakForm(forms.ModelForm):
+	# 2026-09-25: Plain optional choice. Empty stays empty; a chosen key is stored as-is.
+	tiltakseier = forms.ChoiceField(
+		label='Tiltakseier',
+		required=False,
+		choices=[('', 'Velg tiltakseier')] + list(SARBARHETSSAK_TILTAKSEIER_VALG),
+		widget=forms.Select(attrs={'class': 'form-control'}),
+	)
+
 	class Meta:
 		model = Sarbarhetssak
 		fields = ('cve', 'tittel', 'tiltakseier', 'saksreferanse', 'saksstatus', 'oppgavestatus')
 		widgets = {
 			'cve': forms.TextInput(attrs={'class': 'form-control', 'maxlength': '40'}),
 			'tittel': forms.TextInput(attrs={'class': 'form-control'}),
-			'tilakseier': forms.Select(attrs={'class': 'form-control'}),
 			'saksreferanse': forms.TextInput(attrs={'class': 'form-control'}),
 			'saksstatus': forms.Select(attrs={'class': 'form-control'}),
 			'oppgavestatus': forms.Textarea(attrs={
@@ -67,9 +76,7 @@ class SarbarhetssakForm(forms.ModelForm):
 		super().__init__(*args, **kwargs)
 		# 2026-09-25: Title is the only required field. Owner may stay empty.
 		self.fields['cve'].required = False
-		self.fields['tiltakseier'].required = False
 		self.fields['tittel'].required = True
-		self.fields['tiltakseier'].choices = [('', 'Velg tiltakseier')] + list(SARBARHETSSAK_TILTAKSEIER_VALG)
 
 	def clean_cve(self):
 		return (self.cleaned_data.get('cve') or '').strip().upper()
@@ -206,21 +213,21 @@ def _attach_qualys(saker):
 
 
 def sarbarhetssak_liste(request):
-	# 2026-09-25: All cases are rendered; closed rows start hidden unless vis_lukkede=1.
-	# 2026-09-25: Owner and status choices for inline editing in the list.
+	# 2026-09-25: Newest created first. Checkbox shows only closed cases; otherwise only open ones.
+	# 2026-09-25: Status choices for the list. Owner options are fixed in the template.
 	denied = _deny_unless_vuln_permission(request)
 	if denied:
 		return denied
 
 	vis_lukkede = request.GET.get('vis_lukkede') == '1'
-	saker = list(Sarbarhetssak.objects.all())
+	saker = list(Sarbarhetssak.objects.order_by('-opprettet', '-pk'))
 	# 2026-09-25: Relative "sist endret" in the list; exact time stays on the cell tooltip.
 	for sak in saker:
 		sak.sist_oppdatert_tekst = _format_timestamp(sak.sist_oppdatert)
 		sak.sist_oppdatert_tidspunkt = _format_timestamp_abs(sak.sist_oppdatert)
 	_attach_qualys(saker)
 	if vis_lukkede:
-		synlige_antall = len(saker)
+		synlige_antall = sum(1 for sak in saker if sak.saksstatus == SARBARHETSSAK_STATUS_LUKKET)
 	else:
 		synlige_antall = sum(1 for sak in saker if sak.saksstatus != SARBARHETSSAK_STATUS_LUKKET)
 
@@ -229,7 +236,6 @@ def sarbarhetssak_liste(request):
 		'saker': saker,
 		'vis_lukkede': vis_lukkede,
 		'synlige_antall': synlige_antall,
-		'tilakseier_valg': SARBARHETSSAK_TILTAKSEIER_VALG,
 		'status_valg': SARBARHETSSAK_STATUS_VALG,
 	})
 	return render(request, 'sarbarhetssak_liste.html', context)
