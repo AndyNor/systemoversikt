@@ -2,6 +2,8 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-09-25: Sårbarhetssaker inline save – POST ny/lagre and <pk>/lagre for list autosave.
+# 2026-09-25: Sårbarhetssaker – list, detail, create and edit under /sikkerhet/sarbarhetssaker/.
 # 2026-09-15: Dokumentasjonsforvaltning information page at /systemer/dokumentasjonsforvaltning/.
 # 2026-09-15: OKA overview page at /systemer/informasjonskategorier/.
 # 2026-09-15: Last inn OKA – systemadministrator Excel upload.
@@ -46,6 +48,7 @@ import systemoversikt.views_bloodhound as views_bloodhound
 import systemoversikt.views_risiko as views_risiko
 import systemoversikt.views_risiko_rammeverk as views_risiko_rammeverk
 import systemoversikt.views_risk_snapshot as views_risk_snapshot
+import systemoversikt.views_sarbarhetssak as views_sarbarhetssak
 import systemoversikt.api_risiko as api_risiko
 import systemoversikt.api_risiko_rammeverk as api_risiko_rammeverk
 import systemoversikt.api_risiko_sammenstilling as api_risiko_sammenstilling
@@ -126,6 +129,12 @@ urlpatterns = [
 
 
 	re_path(r'^sikkerhet/sarbarheter/$', views.sikkerhet_sarbarheter, name="sikkerhet_sarbarheter"),
+	re_path(r'^sikkerhet/sarbarhetssaker/$', views_sarbarhetssak.sarbarhetssak_liste, name='sarbarhetssak_liste'),
+	re_path(r'^sikkerhet/sarbarhetssaker/ny/lagre/$', views_sarbarhetssak.sarbarhetssak_opprett_lagre, name='sarbarhetssak_opprett_lagre'),
+	re_path(r'^sikkerhet/sarbarhetssaker/ny/$', views_sarbarhetssak.sarbarhetssak_opprett, name='sarbarhetssak_opprett'),
+	re_path(r'^sikkerhet/sarbarhetssaker/(?P<pk>\d+)/lagre/$', views_sarbarhetssak.sarbarhetssak_endre_lagre, name='sarbarhetssak_lagre'),
+	re_path(r'^sikkerhet/sarbarhetssaker/(?P<pk>\d+)/endre/$', views_sarbarhetssak.sarbarhetssak_endre, name='sarbarhetssak_endre'),
+	re_path(r'^sikkerhet/sarbarhetssaker/(?P<pk>\d+)/$', views_sarbarhetssak.sarbarhetssak_detaljer, name='sarbarhetssak_detaljer'),
 	re_path(r'^sikkerhet/vulnstats/overview/$', views.vulnstats, name="vulnstats"),
 	re_path(r'^sikkerhet/azure_vulnstats/overview/$', views.azure_vulnstats, name="azure_vulnstats"),
 	re_path(r'^sikkerhet/azure_vulnstats/qualys_compare/$', views.azure_vulnstats_qualys_compare, name="azure_vulnstats_qualys_compare"),

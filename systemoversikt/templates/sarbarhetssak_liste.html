@@ -1,0 +1,167 @@
+{% extends "sikkerhet_index.html" %}
+{% load static %}
+{# 2026-09-25: Owner choices are clickable labels in the card. Buttons did not show up. #}
+{# 2026-09-25: Two lines per case so the title has room. Owner is buttons, not a select. #}
+{# 2026-09-25: Clearer list layout, free-text status, and Qualys hit summary under CVE. #}
+{# 2026-09-25: Autosave status is cleared when the request finishes. #}
+{# 2026-09-25: "Sist endret" as relative time; exact timestamp on hover. #}
+{# 2026-09-25: Page title Sårbarhetsoppfølging; year/week column; title is the only required field. #}
+{# 2026-09-25: Inline edit with autosave; status labels red/yellow/green. #}
+{# 2026-09-25: Active vulnerability cases; checkbox includes closed cases. #}
+
+{% block css_append %}
+	<link rel="stylesheet" href="{% static 'sarbarhetssak.css' %}?v=20260925-eier2">
+{% endblock css_append %}
+
+{% block overskrift %}
+	Sårbarhetsoppfølging
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<div class="sak-page">
+	<div class="sak-hero">
+		<div class="sak-hero-copy">
+			<p class="sak-lead">Følg opp sårbarheter, tiltakseier og status. Endringer lagres automatisk.</p>
+			<p id="sarbarhetssak-antall" class="sak-count"
+				data-suffix-aktive="aktive saker" data-suffix-alle="saker"
+				{% if not synlige_antall %}hidden{% endif %}>
+				{% if synlige_antall %}{{ synlige_antall }} {% if vis_lukkede %}saker{% else %}aktive saker{% endif %}.{% endif %}
+			</p>
+			<p id="sarbarhetssak-tom" class="sak-empty"
+				data-tom-aktive="Ingen aktive saker." data-tom-alle="Ingen saker."
+				{% if synlige_antall %}hidden{% endif %}>
+				{% if vis_lukkede %}Ingen saker.{% else %}Ingen aktive saker.{% endif %}
+			</p>
+		</div>
+		<div class="sak-hero-actions">
+			<button type="button" class="sak-btn-new" id="sarbarhetssak-ny">Ny sak</button>
+			<form method="get" id="sarbarhetssak-filter">
+				<label class="sak-filter" for="sarbarhetssak-vis-lukkede">
+					<input type="checkbox" name="vis_lukkede" value="1"
+						id="sarbarhetssak-vis-lukkede" {% if vis_lukkede %}checked{% endif %}>
+					Vis lukkede saker
+				</label>
+			</form>
+		</div>
+	</div>
+
+	<form id="sarbarhetssak-csrf" hidden>{% csrf_token %}</form>
+
+	{% url 'sarbarhetssak_opprett_lagre' as url_opprett_lagre %}
+	{% url 'sarbarhetssak_lagre' pk=0 as url_lagre_mal %}
+	<div class="sak-board" id="sarbarhetssak-tabell"
+		data-create-url="{{ url_opprett_lagre }}" data-update-url="{{ url_lagre_mal }}">
+		<div id="sarbarhetssak-rader">
+		{% for sak in saker %}
+		<article class="sak-card" data-sak-row data-pk="{{ sak.pk }}" data-status="{{ sak.saksstatus }}" {% if not vis_lukkede and sak.saksstatus == 'lukket' %}hidden{% endif %}>
+			<div class="sak-line sak-line-top">
+				<div class="sak-field sak-field-uke">
+					<span class="sak-label">År/uke</span>
+					<span class="sak-uke">{{ sak.lagt_til_uke }}</span>
+				</div>
+				<div class="sak-field sak-field-saksstatus">
+					<span class="sak-label">Saksstatus</span>
+					<select class="sak-status-select sak-status-{{ sak.saksstatus }}" data-field="saksstatus" aria-label="Saksstatus">
+						{% for value, label in status_valg %}
+						<option value="{{ value }}" {% if sak.saksstatus == value %}selected{% endif %}>{{ label }}</option>
+						{% endfor %}
+					</select>
+				</div>
+				<div class="sak-field sak-field-tittel">
+					<span class="sak-label">Tittel</span>
+					<input class="sak-input" data-field="tittel" aria-label="Tittel"
+						maxlength="300" value="{{ sak.tittel }}">
+				</div>
+				<div class="sak-field sak-field-owner">
+					<span class="sak-label">Tiltakseier</span>
+					{% include "includes/sarbarhetssak_tiltakseier.html" with valgt=sak.tiltakseier row_id=sak.pk %}
+				</div>
+			</div>
+			<div class="sak-line sak-line-bottom">
+				<div class="sak-field sak-field-cve">
+					<span class="sak-label">CVE</span>
+					<input class="sak-input" data-field="cve" aria-label="CVE"
+						maxlength="40" spellcheck="false" value="{{ sak.cve }}">
+					<div class="sak-qualys" data-qualys>
+						{% include "includes/sarbarhetssak_qualys.html" with qualys=sak.qualys %}
+					</div>
+				</div>
+				<div class="sak-field sak-field-ref">
+					<span class="sak-label">Saksreferanse</span>
+					<input class="sak-input" data-field="saksreferanse" aria-label="Saksreferanse"
+						maxlength="500" placeholder="Saksnummer eller URL" value="{{ sak.saksreferanse }}">
+				</div>
+				<div class="sak-field sak-field-note">
+					<span class="sak-label">Status</span>
+					<textarea class="sak-input sak-note" data-field="oppgavestatus" aria-label="Status"
+						maxlength="2000" rows="2" placeholder="Status på oppgaven">{{ sak.oppgavestatus }}</textarea>
+				</div>
+				<div class="sak-field sak-field-updated">
+					<span class="sak-label">Sist endret</span>
+					<div class="sak-updated" title="{{ sak.sist_oppdatert_tidspunkt }}">{{ sak.sist_oppdatert_tekst }}</div>
+					<div class="sak-save-status small" aria-live="polite"></div>
+				</div>
+			</div>
+		</article>
+		{% endfor %}
+		</div>
+	</div>
+</div>
+
+<template id="sarbarhetssak-ny-mal">
+<article class="sak-card" data-sak-row data-pk="" data-new="1" data-status="ny">
+	<div class="sak-line sak-line-top">
+		<div class="sak-field sak-field-uke">
+			<span class="sak-label">År/uke</span>
+			<span class="sak-uke"></span>
+		</div>
+		<div class="sak-field sak-field-saksstatus">
+			<span class="sak-label">Saksstatus</span>
+			<select class="sak-status-select sak-status-ny" data-field="saksstatus" aria-label="Saksstatus">
+				{% for value, label in status_valg %}
+				<option value="{{ value }}" {% if value == 'ny' %}selected{% endif %}>{{ label }}</option>
+				{% endfor %}
+			</select>
+		</div>
+		<div class="sak-field sak-field-tittel">
+			<span class="sak-label">Tittel</span>
+			<input class="sak-input" data-field="tittel" aria-label="Tittel"
+				maxlength="300" value="">
+		</div>
+		<div class="sak-field sak-field-owner">
+			<span class="sak-label">Tiltakseier</span>
+			{% include "includes/sarbarhetssak_tiltakseier.html" with valgt="" row_id="ny" %}
+		</div>
+	</div>
+	<div class="sak-line sak-line-bottom">
+		<div class="sak-field sak-field-cve">
+			<span class="sak-label">CVE</span>
+			<input class="sak-input" data-field="cve" aria-label="CVE"
+				maxlength="40" spellcheck="false" value="">
+			<div class="sak-qualys" data-qualys></div>
+		</div>
+		<div class="sak-field sak-field-ref">
+			<span class="sak-label">Saksreferanse</span>
+			<input class="sak-input" data-field="saksreferanse" aria-label="Saksreferanse"
+				maxlength="500" placeholder="Saksnummer eller URL" value="">
+		</div>
+		<div class="sak-field sak-field-note">
+			<span class="sak-label">Status</span>
+			<textarea class="sak-input sak-note" data-field="oppgavestatus" aria-label="Status"
+				maxlength="2000" rows="2" placeholder="Status på oppgaven"></textarea>
+		</div>
+		<div class="sak-field sak-field-updated">
+			<span class="sak-label">Sist endret</span>
+			<div class="sak-updated"></div>
+			<div class="sak-save-status small" aria-live="polite"></div>
+		</div>
+	</div>
+</article>
+</template>
+
+{% endblock hovedinnhold %}
+
+{% block script_append %}
+<script src="{% static 'sarbarhetssak_liste.js' %}?v=20260925-eier2" nonce="{{ request.csp_nonce }}"></script>
+{% endblock script_append %}

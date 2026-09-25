@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-25: Sarbarhetssak – title is the only required field; year/ISO week from opprettet.
+# 2026-09-25: Sarbarhetssak – CVE cases with tiltakseier, case reference and saksstatus.
 # 2026-09-21: Systemforvalter (personer) help text – monthly e-mail reminder (epost_generisk_varsling, day 10).
 # 2026-09-21: System tilgjengelighetsvurdering/kritisk_kapabilitet/service_offerings help text – systemprioritering and consequence examples.
 # 2026-09-15: InformasjonsKategori.tittel max_length 800 – OKA titles exceed 400 (Postgres).
@@ -3953,6 +3955,113 @@ class QualysVuln(models.Model):
 	class Meta:
 		verbose_name_plural = "Qualys: Sårbarheter"
 		verbose_name = "sårbarhet"
+		default_permissions = ('add', 'change', 'delete', 'view')
+
+
+# 2026-09-25: Manual vulnerability cases – separate from Qualys/Defender import rows.
+SARBARHETSSAK_TILTAKSEIER_VALG = (
+	('driftsleverandor', 'Driftsleverandør'),
+	('digitaliseringsetaten', 'Digitaliseringsetaten'),
+	('systemeier', 'Systemeier'),
+)
+
+SARBARHETSSAK_STATUS_NY = 'ny'
+SARBARHETSSAK_STATUS_UNDER_ARBEID = 'under_arbeid'
+SARBARHETSSAK_STATUS_LUKKET = 'lukket'
+SARBARHETSSAK_STATUS_VALG = (
+	(SARBARHETSSAK_STATUS_NY, 'Ny'),
+	(SARBARHETSSAK_STATUS_UNDER_ARBEID, 'Under arbeid'),
+	(SARBARHETSSAK_STATUS_LUKKET, 'Lukket'),
+)
+
+
+class Sarbarhetssak(models.Model):
+	opprettet = models.DateTimeField(
+		verbose_name="Opprettet",
+		auto_now_add=True,
+		null=True,
+	)
+	sist_oppdatert = models.DateTimeField(
+		verbose_name="Sist oppdatert",
+		auto_now=True,
+	)
+	cve = models.CharField(
+		verbose_name="CVE-nummer",
+		max_length=40,
+		blank=True,
+		default='',
+		help_text="For eksempel CVE-2024-12345.",
+	)
+	tittel = models.CharField(
+		verbose_name="Tittel",
+		max_length=300,
+	)
+	tiltakseier = models.CharField(
+		verbose_name="Tiltakseier",
+		max_length=32,
+		choices=SARBARHETSSAK_TILTAKSEIER_VALG,
+		blank=True,
+		default='',
+	)
+	saksreferanse = models.CharField(
+		verbose_name="Referanse til saksbehandlingssystem",
+		max_length=500,
+		blank=True,
+		default='',
+		help_text="Saksnummer eller URL.",
+	)
+	saksstatus = models.CharField(
+		verbose_name="Saksstatus",
+		max_length=32,
+		choices=SARBARHETSSAK_STATUS_VALG,
+		default=SARBARHETSSAK_STATUS_NY,
+	)
+	# 2026-09-25: Free-text task status, separate from the saksstatus workflow choice.
+	oppgavestatus = models.TextField(
+		verbose_name="Status",
+		blank=True,
+		default='',
+		max_length=2000,
+		help_text="Fritekst om status på oppgaven.",
+	)
+
+	def save(self, *args, **kwargs):
+		# 2026-09-25: Normalize CVE casing so list and search stay consistent.
+		self.cve = (self.cve or '').strip().upper()
+		self.tittel = (self.tittel or '').strip()
+		self.tiltakseier = (self.tiltakseier or '').strip()
+		self.saksreferanse = (self.saksreferanse or '').strip()
+		self.oppgavestatus = (self.oppgavestatus or '').strip()
+		super().save(*args, **kwargs)
+
+	def lagt_til_uke(self):
+		# 2026-09-25: Year and ISO week the case was added, in the project timezone.
+		if not self.opprettet:
+			return ''
+		from django.utils import timezone
+		value = self.opprettet
+		if timezone.is_aware(value):
+			value = timezone.localtime(value)
+		iso_year, iso_week, _day = value.isocalendar()
+		return '%d-%02d' % (iso_year, iso_week)
+
+	@property
+	def saksreferanse_er_lenke(self):
+		ref = (self.saksreferanse or '').strip()
+		if not ref or any(ch.isspace() for ch in ref):
+			return False
+		lower = ref.lower()
+		return lower.startswith('http://') or lower.startswith('https://')
+
+	def __str__(self):
+		if self.cve:
+			return '%s: %s' % (self.cve, self.tittel)
+		return self.tittel or ''
+
+	class Meta:
+		verbose_name = "sårbarhetsoppfølging"
+		verbose_name_plural = "Sårbarhetsoppfølging"
+		ordering = ['-sist_oppdatert', '-pk']
 		default_permissions = ('add', 'change', 'delete', 'view')
 
 

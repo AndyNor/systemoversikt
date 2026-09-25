@@ -1,0 +1,14 @@
+---
+description: Do not open the local app in a browser — the user verifies visually
+alwaysApply: true
+---
+
+# No local browser preview
+
+The user verifies pages visually. Do not open this app in a browser.
+
+- Do not start the local dev server (`runserver` or similar) in order to look at pages.
+- Do not open localhost, the dev server, or a local file server in Cursor's browser, a system browser, or other browser tools.
+- Do not take screenshots of the running app for visual checks.
+
+Server-side checks that do not open a browser are still fine when they fit the task, such as `manage.py check` or `migrate`.

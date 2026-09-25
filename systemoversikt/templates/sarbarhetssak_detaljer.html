@@ -1,0 +1,74 @@
+{% extends "sikkerhet_index.html" %}
+{% load static %}
+{# 2026-09-25: Free-text status and Qualys hit summary on the case. #}
+{# 2026-09-25: Status label – red new, yellow in progress, green closed. #}
+{# 2026-09-25: One vulnerability case. #}
+
+{% block css_append %}
+	<link rel="stylesheet" href="{% static 'sarbarhetssak.css' %}?v=20260925-qualys">
+{% endblock css_append %}
+
+{% block overskrift %}
+	{% if sak.cve %}{{ sak.cve }}{% else %}{{ sak.tittel }}{% endif %}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p class="mb-3">
+	<a class="sak-btn-new" href="{% url 'sarbarhetssak_endre' pk=sak.pk %}">Rediger</a>
+	<a class="btn btn-link btn-sm" href="{% url 'sarbarhetssak_liste' %}">Tilbake til listen</a>
+</p>
+
+<table class="table table-sm sak-detail">
+<tbody>
+<tr>
+	<th scope="row">CVE-nummer</th>
+	<td>
+		{{ sak.cve|default:"–" }}
+		<div class="sak-qualys">
+			{% include "includes/sarbarhetssak_qualys.html" with qualys=sak.qualys %}
+		</div>
+	</td>
+</tr>
+<tr>
+	<th scope="row">Tittel</th>
+	<td>{{ sak.tittel }}</td>
+</tr>
+<tr>
+	<th scope="row">Tiltakseier</th>
+	<td>{{ sak.get_tiltakseier_display|default:"–" }}</td>
+</tr>
+<tr>
+	<th scope="row">Referanse til saksbehandlingssystem</th>
+	<td>
+		{% if sak.saksreferanse %}
+			{% if sak.saksreferanse_er_lenke %}
+				<a href="{{ sak.saksreferanse }}" rel="noopener noreferrer">{{ sak.saksreferanse }}</a>
+			{% else %}
+				{{ sak.saksreferanse }}
+			{% endif %}
+		{% else %}
+			–
+		{% endif %}
+	</td>
+</tr>
+<tr>
+	<th scope="row">Saksstatus</th>
+	<td><span class="sak-status-badge sak-status-{{ sak.saksstatus }}">{{ sak.get_saksstatus_display }}</span></td>
+</tr>
+<tr>
+	<th scope="row">Status</th>
+	<td class="sak-status-tekst">{% if sak.oppgavestatus %}{{ sak.oppgavestatus }}{% else %}–{% endif %}</td>
+</tr>
+<tr>
+	<th scope="row">Opprettet</th>
+	<td>{{ sak.opprettet|date:"Y-m-d H:i" }}</td>
+</tr>
+<tr>
+	<th scope="row">Sist endret</th>
+	<td>{{ sak.sist_oppdatert|date:"Y-m-d H:i" }}</td>
+</tr>
+</tbody>
+</table>
+
+{% endblock hovedinnhold %}

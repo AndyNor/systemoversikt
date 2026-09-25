@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-25: Sarbarhetssak admin – free-text oppgavestatus is searchable.
+# 2026-09-25: Sarbarhetssak admin – vulnerability cases edited primarily in the sikkerhet UI.
 # 2026-09-21: System admin – service_offerings back under basisdriftleverandor in Initiell registrering.
 # 2026-09-21: System admin – Integrasjoner fieldset; dates under Arkiv; klassifisering+grensesnitt row; URL alone.
 # 2026-09-21: System admin layout – alias beside systemnavn; compact alias widget; forvalter e-post/personer regrouped.
@@ -143,6 +145,14 @@ class QualysVulnBasisPatchingAdmin(admin.ModelAdmin):
 class QualysVulnRiskAcceptanceAdmin(admin.ModelAdmin):
 	list_display = ('title', 'opprettet', 'sist_oppdatert')
 	search_fields = ('title',)
+	readonly_fields = ('opprettet', 'sist_oppdatert')
+
+
+@admin.register(Sarbarhetssak)
+class SarbarhetssakAdmin(admin.ModelAdmin):
+	list_display = ('cve', 'tittel', 'tiltakseier', 'saksstatus', 'opprettet', 'sist_oppdatert')
+	list_filter = ('saksstatus', 'tiltakseier')
+	search_fields = ('cve', 'tittel', 'saksreferanse', 'oppgavestatus')
 	readonly_fields = ('opprettet', 'sist_oppdatert')
 
 

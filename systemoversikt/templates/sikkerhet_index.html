@@ -1,5 +1,6 @@
 {% extends "index.html" %}
 {# Change log: #}
+{# 2026-09-25: Sidemenu label Sårbarhetsoppfølging – same audience as Sårbarheter (view_qualysvuln). #}
 {# 2026-09-01: Rename ukjente_identer sidemeny from "Kontoer utenfor OK" – that label described OU placement, not the virksomhet query. #}
 
 {% block sidemeny %}
@@ -32,6 +33,9 @@
 <h6>For sikkerhetsanalytikere</h6>
 	{% url 'sikkerhet_sarbarheter' as url_sikkerhet_sarbarheter %}
 	<a href="{{ url_sikkerhet_sarbarheter }}" class="btn btn-sm btn-link {% if '/sikkerhet/sarbarheter/' in request.path or '/sikkerhet/vulnstats/' in request.path or '/sikkerhet/azure_vulnstats/' in request.path %}fremhev{% endif %}">Sårbarheter</a><br>
+
+	{% url 'sarbarhetssak_liste' as url_sarbarhetssak_liste %}
+	<a href="{{ url_sarbarhetssak_liste }}" class="btn btn-sm btn-link {% if '/sikkerhet/sarbarhetssaker/' in request.path %}fremhev{% endif %}">Sårbarhetsoppfølging</a><br>
 
 	{% url 'rapport_sikkerhetstester' as url_sikkerhetstester %}
 	<a href="{{ url_sikkerhetstester }}" class="btn btn-sm btn-link {% if url_sikkerhetstester in request.path %}fremhev{% endif %}">Gjennomførte pentester</a><br>

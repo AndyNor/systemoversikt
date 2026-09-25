@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-25: Nav search label Sårbarhetsoppfølging – view_qualysvuln (same as sårbarheter).
 # 2026-09-15: Dokumentasjonsforvaltning information page – system sidemeny.
 # 2026-09-15: OKA-klassifikasjon overview – system sidemeny (full classification tree).
 # 2026-09-15: Last inn OKA – superuser-only admin sidemeny (Excel import of classification).
@@ -101,6 +102,7 @@ NAV_PAGES = [
 
 	# --- Sikkerhet (sikkerhet_index.html) ---
 	_entry('Sårbarheter', 'sikkerhet_sarbarheter', 'Sikkerhet', ['qualys', 'sårbarheter', 'sarbarheter', 'cve', 'defender', 'azure sårbarheter', 'qualys vs defender'], permissions=['systemoversikt.view_qualysvuln']),
+	_entry('Sårbarhetsoppfølging', 'sarbarhetssak_liste', 'Sikkerhet', ['sårbarhetsoppfølging', 'sårbarhetssak', 'sarbarhetssak', 'cve sak', 'tiltakseier'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Gjennomførte pentester', 'rapport_sikkerhetstester', 'Sikkerhet', ['pentester', 'pentest', 'sikkerhetstester']),
 	_entry('Risikovurderinger', 'risiko_scope_list', 'Sikkerhet', ['risiko', 'risikovurdering', 'risikomatrise'], permissions=[]),
 	_entry('Risikosammenstilling', 'risiko_rammeverk_list', 'Sikkerhet', ['risikosammenstilling', 'risikorammeverk', 'it-plattform', 'høynivå risiko'], permissions=[]),

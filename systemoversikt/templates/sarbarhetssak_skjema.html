@@ -1,0 +1,31 @@
+{% extends "sikkerhet_index.html" %}
+{# 2026-09-25: Shared create and edit form for a vulnerability case. #}
+
+{% block overskrift %}
+	{% if creating %}Ny sårbarhetsoppfølging{% else %}Rediger {{ sak.tittel }}{% endif %}
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<form method="post">
+	{% csrf_token %}
+	{% if form.non_field_errors %}
+		<div class="alert alert-danger">{{ form.non_field_errors }}</div>
+	{% endif %}
+	{% for field in form %}
+	<div class="form-group">
+		<label for="{{ field.id_for_label }}">{{ field.label }}</label>
+		{{ field }}
+		{% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+		{% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
+	</div>
+	{% endfor %}
+	<button type="submit" class="btn btn-primary">{% if creating %}Opprett{% else %}Lagre{% endif %}</button>
+	{% if creating %}
+		<a href="{% url 'sarbarhetssak_liste' %}" class="btn btn-link">Avbryt</a>
+	{% else %}
+		<a href="{% url 'sarbarhetssak_detaljer' pk=sak.pk %}" class="btn btn-link">Avbryt</a>
+	{% endif %}
+</form>
+
+{% endblock hovedinnhold %}

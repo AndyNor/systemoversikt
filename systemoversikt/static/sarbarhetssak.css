@@ -1,0 +1,402 @@
+/* Change log:
+ * 2026-09-25: Owner choice is a radio inside the label so the mark does not depend on a script toggle.
+ * 2026-09-25: Owner choices stay inside the column – title field can no longer cover them.
+ * 2026-09-25: Two lines per case; owner choices are buttons so they stay visible.
+ * 2026-09-25: List layout – hero, card table, readable owner select, Qualys chips.
+ * 2026-09-25: Year/week column width.
+ * 2026-09-25: Status labels – red new, yellow in progress, green closed.
+ */
+
+.sak-page {
+	margin-top: 0.25rem;
+}
+
+.sak-hero {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 1rem 1.5rem;
+	margin-bottom: 1rem;
+	padding: 1rem 1.15rem;
+	background: linear-gradient(135deg, #f8f0dd 0%, #f4f2fb 55%, #eef7f8 100%);
+	border: 1px solid #e6e1d4;
+	border-radius: 14px;
+}
+
+.sak-lead {
+	margin: 0;
+	max-width: 40rem;
+	color: #2a2859;
+	font-size: 0.95rem;
+}
+
+.sak-count,
+.sak-empty {
+	margin: 0.35rem 0 0;
+	color: #5c5878;
+	font-size: 0.8125rem;
+}
+
+.sak-hero-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.sak-btn-new {
+	display: inline-block;
+	border: 0;
+	border-radius: 999px;
+	background: #2a2859;
+	color: #fff;
+	font-weight: 700;
+	font-size: 0.875rem;
+	line-height: 1.2;
+	padding: 0.55rem 1rem;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+.sak-btn-new:hover,
+.sak-btn-new:focus {
+	background: #28277e;
+	color: #fff;
+	outline: 2px solid rgba(42, 40, 89, 0.25);
+	outline-offset: 2px;
+}
+
+.sak-filter {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin: 0;
+	padding: 0.4rem 0.75rem;
+	background: #fff;
+	border: 1px solid #e1deea;
+	border-radius: 999px;
+	color: #2a2859;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.sak-board {
+	background: #fff;
+	border: 1px solid #e4e1ef;
+	border-radius: 14px;
+	box-shadow: 0 10px 28px rgba(42, 40, 89, 0.06);
+	overflow: visible;
+}
+
+.sak-card {
+	padding: 0.9rem 1rem 1rem;
+	background: #fff;
+	border-top: 1px solid #eeeaf4;
+}
+
+.sak-card:first-child {
+	border-top: 0;
+}
+
+.sak-card:hover {
+	background: #fbfafe;
+}
+
+.sak-card[data-status="ny"] {
+	box-shadow: inset 4px 0 0 #dc3545;
+}
+
+.sak-card[data-status="under_arbeid"] {
+	box-shadow: inset 4px 0 0 #e0a800;
+}
+
+.sak-card[data-status="lukket"] {
+	box-shadow: inset 4px 0 0 #28a745;
+}
+
+.sak-line {
+	display: grid;
+	gap: 0.7rem 0.9rem;
+	align-items: start;
+}
+
+.sak-line-top {
+	grid-template-columns: 5.2rem max-content minmax(0, 1fr) minmax(16rem, 24rem);
+}
+
+.sak-line > .sak-field {
+	min-width: 0;
+}
+
+.sak-line-bottom {
+	grid-template-columns: 13.5rem minmax(8rem, 0.8fr) minmax(12rem, 1.2fr) auto;
+	margin-top: 0.75rem;
+}
+
+.sak-label {
+	display: block;
+	margin-bottom: 0.28rem;
+	color: #8a869c;
+	font-size: 0.68rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.sak-uke {
+	display: block;
+	padding-top: 0.35rem;
+	color: #2a2859;
+	font-variant-numeric: tabular-nums;
+	font-weight: 700;
+}
+
+.sak-field-updated {
+	min-width: 8.5rem;
+}
+
+.sak-input {
+	display: block;
+	width: 100%;
+	min-width: 0;
+	max-width: 100%;
+	box-sizing: border-box;
+	border: 1px solid #e1deea;
+	background: #fbfbfe;
+	border-radius: 8px;
+	padding: 0.4rem 0.55rem;
+	font-size: 0.875rem;
+	line-height: 1.35;
+	color: #2a2859;
+}
+
+.sak-input:focus {
+	outline: 2px solid rgba(42, 40, 89, 0.22);
+	border-color: #2a2859;
+	background-color: #fff;
+}
+
+.sak-field-cve input[data-field="cve"] {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+}
+
+.sak-field-tittel {
+	overflow: hidden;
+}
+
+.sak-field-owner {
+	position: relative;
+	z-index: 2;
+}
+
+.sak-owner {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	min-height: 2rem;
+}
+
+.sak-owner-btn {
+	position: relative;
+	display: inline-block;
+	margin: 0;
+	border: 1px solid #2a2859;
+	background: #f4f2fb;
+	color: #2a2859;
+	border-radius: 999px;
+	padding: 0.38rem 0.7rem;
+	font-size: 0.78rem;
+	font-weight: 700;
+	line-height: 1.2;
+	cursor: pointer;
+}
+
+.sak-owner-input {
+	position: absolute;
+	opacity: 0;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	pointer-events: none;
+}
+
+.sak-owner-btn:hover,
+.sak-owner-btn:focus-within {
+	border-color: #2a2859;
+	outline: 2px solid rgba(42, 40, 89, 0.18);
+	outline-offset: 1px;
+}
+
+.sak-owner-btn.is-selected,
+.sak-owner-btn:has(.sak-owner-input:checked) {
+	background: #2a2859;
+	border-color: #2a2859;
+	color: #fff;
+}
+
+.sak-note {
+	min-height: 2.7rem;
+	resize: vertical;
+}
+
+.sak-qualys {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3rem 0.45rem;
+	margin-top: 0.4rem;
+}
+
+.sak-qualys:empty {
+	display: none;
+}
+
+.sak-qualys-link {
+	display: inline-flex;
+	align-items: center;
+	border-radius: 999px;
+	background: #2a2859;
+	color: #fff;
+	font-size: 0.72rem;
+	font-weight: 700;
+	line-height: 1.2;
+	padding: 0.2rem 0.55rem;
+	text-decoration: none;
+}
+
+.sak-qualys-link:hover,
+.sak-qualys-link:focus {
+	background: #ff8274;
+	color: #2a2859;
+	text-decoration: none;
+}
+
+.sak-qualys-count {
+	color: #2a2859;
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+
+.sak-qualys-meta,
+.sak-qualys-ingen {
+	color: #6d6984;
+	font-size: 0.75rem;
+}
+
+.sak-qualys-flag {
+	display: inline-flex;
+	border-radius: 999px;
+	background: #ff8274;
+	color: #2a2859;
+	font-size: 0.68rem;
+	font-weight: 700;
+	line-height: 1.2;
+	padding: 0.15rem 0.45rem;
+}
+
+.sak-updated {
+	padding-top: 0.35rem;
+	color: #2a2859;
+	font-size: 0.8125rem;
+}
+
+.sak-save-status {
+	min-height: 1.1rem;
+	margin-top: 0.2rem;
+}
+
+.sak-status-badge,
+.sak-status-select {
+	display: inline-block;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 700;
+	line-height: 1.2;
+	padding: 0.45em 0.75em;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.sak-status-select {
+	border: 0;
+	cursor: pointer;
+	padding-right: 1.7em;
+	appearance: none;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	background-repeat: no-repeat;
+	background-position: right 0.45em center;
+	background-size: 0.7em;
+}
+
+.sak-status-ny {
+	background-color: #dc3545;
+	color: #fff;
+}
+
+.sak-status-under_arbeid {
+	background-color: #ffc107;
+	color: #212529;
+}
+
+.sak-status-lukket {
+	background-color: #28a745;
+	color: #fff;
+}
+
+.sak-status-select.sak-status-ny,
+.sak-status-select.sak-status-lukket {
+	background-image: linear-gradient(45deg, transparent 50%, #fff 50%), linear-gradient(135deg, #fff 50%, transparent 50%);
+	background-position: right 0.9em center, right 0.55em center;
+	background-size: 0.35em 0.35em, 0.35em 0.35em;
+	background-repeat: no-repeat;
+}
+
+.sak-status-select.sak-status-under_arbeid {
+	background-image: linear-gradient(45deg, transparent 50%, #212529 50%), linear-gradient(135deg, #212529 50%, transparent 50%);
+	background-position: right 0.9em center, right 0.55em center;
+	background-size: 0.35em 0.35em, 0.35em 0.35em;
+	background-repeat: no-repeat;
+}
+
+.sak-status-select option {
+	background-color: #fff;
+	color: #212529;
+	font-weight: 400;
+}
+
+.sak-detail {
+	max-width: 46rem;
+	background: #fff;
+	border: 1px solid #e4e1ef;
+	border-radius: 14px;
+	box-shadow: 0 10px 28px rgba(42, 40, 89, 0.06);
+	overflow: hidden;
+}
+
+.sak-detail th {
+	width: 14rem;
+	background: #f7f6fb;
+	color: #2a2859;
+	font-weight: 700;
+}
+
+.sak-detail td,
+.sak-detail th {
+	padding: 0.7rem 0.9rem;
+	border-top: 1px solid #eeeaf4;
+}
+
+.sak-detail tr:first-child td,
+.sak-detail tr:first-child th {
+	border-top: 0;
+}
+
+.sak-status-tekst {
+	white-space: pre-wrap;
+}

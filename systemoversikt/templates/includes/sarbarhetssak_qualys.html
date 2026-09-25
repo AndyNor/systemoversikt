@@ -1,0 +1,12 @@
+{# 2026-09-25: Qualys hit summary when the case CVE matches cve_info. #}
+{% if qualys %}
+	{% if qualys.treff %}
+		<a class="sak-qualys-link" href="{{ qualys.url }}">Vis i Qualys</a>
+		<span class="sak-qualys-count">{{ qualys.treff }} treff</span>
+		{% if qualys.enheter %}<span class="sak-qualys-meta">{{ qualys.enheter }} enhet{{ qualys.enheter|pluralize:"er" }}</span>{% endif %}
+		{% if qualys.alvorlighet %}<span class="sak-qualys-meta">alvorlighet {{ qualys.alvorlighet }}</span>{% endif %}
+		{% if qualys.kjent_utnyttet %}<span class="sak-qualys-flag">Kjent utnyttet</span>{% endif %}
+	{% else %}
+		<span class="sak-qualys-ingen">Ingen treff i Qualys</span>
+	{% endif %}
+{% endif %}
