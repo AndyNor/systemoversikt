@@ -1,4 +1,5 @@
 // Change log:
+// 2026-09-25: Kartlegging search table shows 200 chars of hendelse so rows stay readable.
 // 2026-08-23: Use shared RisikoApi for fetch/session expiry; start session heartbeat on init.
 // 2026-07-06: Kartlegging node select – optgroup per hovedkategori for easier navigation.
 // 2026-07-06: Sammenstilling kartlegging – optional hide R# column via data-hide-risk-id.
@@ -256,7 +257,7 @@
             '<td><input type="checkbox" class="kartlegging-scenario-cb" value="' + s.pk + '"></td>' +
             (hideRiskId ? '' : '<td>' + escapeHtml(s.display_id) + '</td>') +
             '<td>' + escapeHtml((s.virksomhet ? s.virksomhet + ' – ' : '') + s.scope_title) + '</td>' +
-            '<td>' + escapeHtml(s.uonsket_hendelse.substring(0, 100)) + '</td>' +
+            '<td>' + escapeHtml(s.uonsket_hendelse.substring(0, 200)) + '</td>' +
             '<td class="kartlegging-risk-cell">' + riskLevelTag(curLabel, s.current_css || s.risiko_css) + '</td>' +
             '<td class="kartlegging-risk-cell">' + riskLevelTag(resLabel, s.residual_css || s.restrisiko_css) + '</td>' +
             '<td>' + escapeHtml(mapped) + '</td>';
