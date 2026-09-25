@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-25: Fixed "tilakseier" typo in autosave input/JSON – inline owner choice was never saved.
 # 2026-09-25: Tiltakseier is an explicit optional choice on the form, saved with the other case fields.
 # 2026-09-25: List is newest by opprettet; vis_lukkede shows only closed cases.
 # 2026-09-25: Free-text oppgavestatus, and Qualys hit counts when a CVE matches cve_info.
@@ -365,7 +366,7 @@ def _sak_json(sak, qualys=None, include_qualys=False):
 		'pk': sak.pk,
 		'cve': sak.cve,
 		'tittel': sak.tittel,
-		'tilakseier': sak.tiltakseier,
+		'tiltakseier': sak.tiltakseier,
 		'saksreferanse': sak.saksreferanse,
 		'saksstatus': sak.saksstatus,
 		'oppgavestatus': sak.oppgavestatus,
@@ -396,7 +397,7 @@ def _apply_sarbarhetssak_save(request, sak):
 	data = {
 		'cve': _text(payload.get('cve')),
 		'tittel': _text(payload.get('tittel')),
-		'tilakseier': _text(payload.get('tiltakseier')),
+		'tiltakseier': _text(payload.get('tiltakseier')),
 		'saksreferanse': _text(payload.get('saksreferanse')),
 		'saksstatus': _text(payload.get('saksstatus')),
 		'oppgavestatus': _text(payload.get('oppgavestatus')),
