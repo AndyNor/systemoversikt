@@ -2626,6 +2626,37 @@ def tool_drift_users_not_in_list(request):
 	})
 
 
+def tool_users_by_email(request):
+	# 2026-09-29: New tool – look up active AD users by a pasted list of e-mail addresses.
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render_access_denied(request, required_permissions)
+
+	epostliste_raw = request.POST.get('epostliste', '')
+	oppgitte_eposter = unique_splitted_items(epostliste_raw)
+
+	brukere = None
+	uten_treff = None
+	if request.method == 'POST':
+		brukere = list(
+			User.objects.annotate(email_lower=Lower('email')).filter(
+				email_lower__in=list(oppgitte_eposter),
+				profile__accountdisable=False,
+			).exclude(email='').select_related('profile').order_by('email')
+		)
+		traffede = {b.email.lower() for b in brukere if b.email}
+		uten_treff = sorted(oppgitte_eposter - traffede)
+
+	return render(request, 'tool_users_by_email.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		"epostliste_raw": epostliste_raw,
+		"antall_oppgitte": len(oppgitte_eposter),
+		"brukere": brukere,
+		"uten_treff": uten_treff,
+	})
+
+
 # def tool_longest_substring
 # def tool_item_count
 

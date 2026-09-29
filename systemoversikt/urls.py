@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-09-29: Tool looking up active AD users by e-mail list at /tools/users_by_email.
 # 2026-09-29: Tool listing DRIFT AD users not in a supplied list at /tools/drift_users_not_in_list.
 # 2026-09-25: Sårbarhetssaker inline save – POST ny/lagre and <pk>/lagre for list autosave.
 # 2026-09-25: Sårbarhetssaker – list, detail, create and edit under /sikkerhet/sarbarhetssaker/.
@@ -445,6 +446,7 @@ urlpatterns = [
 	re_path(r'^tools/unique$', views.tool_unique_items, name='tool_unique_items'),
 	re_path(r'^tools/compare$', views.tool_compare_items, name='tool_compare_items'),
 	re_path(r'^tools/drift_users_not_in_list$', views.tool_drift_users_not_in_list, name='tool_drift_users_not_in_list'),
+	re_path(r'^tools/users_by_email$', views.tool_users_by_email, name='tool_users_by_email'),
 	re_path(r'^tools/docx2html$', views.tool_docx2html, name='tool_docx2html'),
 	re_path(r'^tools/word_count$', views.tool_word_count, name='tool_word_count'),
 	re_path(r'^tools/systemimport$', views.tool_systemimport, name='tool_systemimport'),

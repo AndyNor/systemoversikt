@@ -1,0 +1,63 @@
+{% extends "tools_index.html" %}
+{# 2026-09-29: New tool – look up active AD users by pasted e-mail addresses. #}
+{% load humanize %}
+{% load static %}
+
+{% block overskrift %}
+	Brukere etter e-post
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Lim inn en liste med e-postadresser. Du får se aktive AD-brukere som har en av disse e-postadressene. Funksjonen bryr seg ikke om det er små eller store bokstaver. Tegn som fjernes: <li>|,:;"'</li></p>
+
+	<form action="{% url 'tool_users_by_email' %}" method="POST" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group form-inline">
+			<textarea style="width: 500px; height: 250px;" name="epostliste"
+			placeholder="E-postadresser" class="form-control form-control-sm">{{ epostliste_raw }}</textarea>
+			<input style="margin-left: 10px;" type="submit" value="Søk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+{% if brukere is not None %}
+	<hr>
+	<p>Du oppga {{ antall_oppgitte }} unike e-postadresser. Fant {{ brukere|length }} aktive brukere med treff.</p>
+
+	<table class="tablesorter excel">
+	<thead>
+		<tr>
+			<th>E-post</th>
+			<th>Brukernavn</th>
+			<th>Navn</th>
+			<th>OU-sti</th>
+			<th>Sist pålogget</th>
+			<th>Beskrivelse</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for m in brukere %}
+		<tr>
+			<td>{{ m.email }}</td>
+			<td><a href="{% url 'bruker_detaljer' pk=m.pk %}">{{ m.username }}</a></td>
+			<td>{{ m.first_name }} {{ m.last_name }}</td>
+			<td>{% for n in m.profile.ou_lesbar %}{{ n }}<br>{% endfor %}</td>
+			<td>{{ m.profile.lastLogonTimestamp|date:"Ymd" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
+			<td>{{ m.profile.description }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+
+	{% if uten_treff %}
+	<hr>
+	<p>{{ uten_treff|length }} e-postadresser uten treff blant aktive AD-brukere:</p>
+	<ul>
+	{% for epost in uten_treff %}
+		<li>{{ epost }}</li>
+	{% endfor %}
+	</ul>
+	{% endif %}
+{% endif %}
+
+{% endblock hovedinnhold %}
