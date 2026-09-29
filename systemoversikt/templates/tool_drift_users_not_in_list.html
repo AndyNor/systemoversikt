@@ -1,4 +1,5 @@
 {% extends "tools_index.html" %}
+{# 2026-09-29: Narrowed help text to OU=DRIFT,OU=Eksterne brukere and OU=DRIFT,OU=Brukere. #}
 {# 2026-09-29: New tool – DRIFT AD users not in a supplied list. #}
 {% load humanize %}
 {% load static %}
@@ -9,7 +10,7 @@
 
 {% block hovedinnhold %}
 
-<p>Lim inn en liste med brukernavn. Du får se aktive AD-brukere med ",OU=DRIFT," i OU-stien som <b>ikke</b> er med i listen. Funksjonen bryr seg ikke om det er små eller store bokstaver. Tegn som fjernes: <li>|,:;"'</li></p>
+<p>Lim inn en liste med brukernavn. Du får se aktive AD-brukere under "OU=DRIFT,OU=Eksterne brukere" og "OU=DRIFT,OU=Brukere" som <b>ikke</b> er med i listen. Funksjonen bryr seg ikke om det er små eller store bokstaver. Tegn som fjernes: <li>|,:;"'</li></p>
 
 	<form action="{% url 'tool_drift_users_not_in_list' %}" method="POST" autocomplete="off">
 		{% csrf_token %}

@@ -2599,7 +2599,8 @@ def tool_unique_items(request):
 
 
 def tool_drift_users_not_in_list(request):
-	# 2026-09-29: New tool – list active AD users under ",OU=DRIFT," whose username is not in the supplied list.
+	# 2026-09-29: Narrowed to OU=DRIFT,OU=Eksterne brukere and OU=DRIFT,OU=Brukere – same as rapport_ad_driftbrukere.
+	# 2026-09-29: New tool – list active AD DRIFT users whose username is not in the supplied list.
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
@@ -2610,7 +2611,8 @@ def tool_drift_users_not_in_list(request):
 	brukere = None
 	if request.method == 'POST':
 		brukere = User.objects.filter(
-				profile__distinguishedname__icontains=",OU=DRIFT,",
+				Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Eksterne brukere") |
+				Q(profile__distinguishedname__icontains="OU=DRIFT,OU=Brukere"),
 				profile__accountdisable=False,
 			).select_related('profile').order_by('username')
 		brukere = [b for b in brukere if b.username.lower() not in oppgitte_brukere]
