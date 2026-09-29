@@ -1,4 +1,5 @@
 {% extends "index.html" %}
+{# 2026-09-29: Sidemeny link to DRIFT users not in list tool. #}
 
 {% block sidemeny %}
 
@@ -10,6 +11,9 @@
 
 	{% url 'tool_compare_items' as url_tool_compare_items %}
 	<a href="{{url_tool_compare_items}}" class="btn btn-sm btn-link {% if url_tool_compare_items in request.path %}fremhev{% endif %}">Union og snitt</a><br>
+
+	{% url 'tool_drift_users_not_in_list' as url_tool_drift_users_not_in_list %}
+	<a href="{{url_tool_drift_users_not_in_list}}" class="btn btn-sm btn-link {% if url_tool_drift_users_not_in_list in request.path %}fremhev{% endif %}">DRIFT-brukere utenfor liste</a><br>
 
 	{% url 'tool_docx2html' as url_tool_docx2html %}
 	<a href="{{url_tool_docx2html}}" class="btn btn-sm btn-link {% if url_tool_docx2html in request.path %}fremhev{% endif %}">Word til HTML</a><br>

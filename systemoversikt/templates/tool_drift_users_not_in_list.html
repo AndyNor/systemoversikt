@@ -1,0 +1,51 @@
+{% extends "tools_index.html" %}
+{# 2026-09-29: New tool – DRIFT AD users not in a supplied list. #}
+{% load humanize %}
+{% load static %}
+
+{% block overskrift %}
+	DRIFT-brukere utenfor liste
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>Lim inn en liste med brukernavn. Du får se aktive AD-brukere med ",OU=DRIFT," i OU-stien som <b>ikke</b> er med i listen. Funksjonen bryr seg ikke om det er små eller store bokstaver. Tegn som fjernes: <li>|,:;"'</li></p>
+
+	<form action="{% url 'tool_drift_users_not_in_list' %}" method="POST" autocomplete="off">
+		{% csrf_token %}
+		<div class="form-group form-inline">
+			<textarea style="width: 500px; height: 250px;" name="brukerliste"
+			placeholder="Brukernavn" class="form-control form-control-sm">{{ brukerliste_raw }}</textarea>
+			<input style="margin-left: 10px;" type="submit" value="Sjekk" class="btn btn-primary btn-sm">
+		</div>
+	</form>
+
+{% if brukere is not None %}
+	<hr>
+	<p>Du oppga {{ antall_oppgitte }} unike brukernavn. Fant {{ brukere|length }} DRIFT-brukere som ikke er i listen.</p>
+
+	<table class="tablesorter excel">
+	<thead>
+		<tr>
+			<th>Brukernavn</th>
+			<th>Navn</th>
+			<th>OU-sti</th>
+			<th>Sist pålogget</th>
+			<th>Beskrivelse</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for m in brukere %}
+		<tr>
+			<td><a href="{% url 'bruker_detaljer' pk=m.pk %}">{{ m.username }}</a></td>
+			<td>{{ m.first_name }} {{ m.last_name }}</td>
+			<td>{% for n in m.profile.ou_lesbar %}{{ n }}<br>{% endfor %}</td>
+			<td>{{ m.profile.lastLogonTimestamp|date:"Ymd" }} ({{ m.profile.lastLogonTimestamp|timesince }})</td>
+			<td>{{ m.profile.description }}</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+{% endif %}
+
+{% endblock hovedinnhold %}

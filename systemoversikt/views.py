@@ -2598,6 +2598,32 @@ def tool_unique_items(request):
 	})
 
 
+def tool_drift_users_not_in_list(request):
+	# 2026-09-29: New tool – list active AD users under ",OU=DRIFT," whose username is not in the supplied list.
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render_access_denied(request, required_permissions)
+
+	brukerliste_raw = request.POST.get('brukerliste', '')
+	oppgitte_brukere = unique_splitted_items(brukerliste_raw)
+
+	brukere = None
+	if request.method == 'POST':
+		brukere = User.objects.filter(
+				profile__distinguishedname__icontains=",OU=DRIFT,",
+				profile__accountdisable=False,
+			).select_related('profile').order_by('username')
+		brukere = [b for b in brukere if b.username.lower() not in oppgitte_brukere]
+
+	return render(request, 'tool_drift_users_not_in_list.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		"brukerliste_raw": brukerliste_raw,
+		"antall_oppgitte": len(oppgitte_brukere),
+		"brukere": brukere,
+	})
+
+
 # def tool_longest_substring
 # def tool_item_count
 
