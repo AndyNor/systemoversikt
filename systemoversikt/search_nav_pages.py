@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-29: Rename ukjente_identer search label to "Avvikende brukernavn i OK" – report now filters on OU=OK and username format.
 # 2026-09-25: Nav search label Sårbarhetsoppfølging – view_qualysvuln (same as sårbarheter).
 # 2026-09-15: Dokumentasjonsforvaltning information page – system sidemeny.
 # 2026-09-15: OKA-klassifikasjon overview – system sidemeny (full classification tree).
@@ -113,7 +114,7 @@ NAV_PAGES = [
 	_entry('Device code-innlogginger', 'sikkerhet_device_code_logins', 'Sikkerhet', ['device code', 'devicecode'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Device code-innlogginger (sanntid)', 'sikkerhet_device_code_logins_sanntid', 'Sikkerhet', ['device code sanntid', 'devicecode live'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Varsling til virksomheter', 'sikkerhet_varsling_virksomheter', 'Sikkerhet', ['varsling virksomheter', 'csirt varsling']),
-	_entry('Kontoer uten virksomhet', 'rapport_ukjente_identer', 'Sikkerhet', ['uten virksomhet', 'ukjente identer', 'utenfor ok'], permissions=['systemoversikt.view_qualysvuln']),
+	_entry('Avvikende brukernavn i OK', 'rapport_ukjente_identer', 'Sikkerhet', ['avvikende brukernavn', 'ukjente identer', 'brukernavnformat'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Kontoer med SPN', 'alle_spn', 'Sikkerhet', ['spn', 'service principal name'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Delegerte kontoer', 'rapport_trusted_delegation', 'Sikkerhet', ['delegerte kontoer', 'trusted delegation'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Manuelt opprettede brukere', 'rapport_ad_ukjente_brukere', 'Sikkerhet', ['manuelt opprettede', 'ukjente brukere'], permissions=['systemoversikt.view_qualysvuln']),

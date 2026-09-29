@@ -10246,7 +10246,13 @@ def rapport_ukjente_identer(request):
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
-	identer = User.objects.filter(profile__accountdisable=False, profile__virksomhet=None)
+	# 2026-09-29: List active accounts under OU=OK whose username is not three letters followed by 4-6 digits – the virksomhet=None query was not useful.
+	identer = User.objects.filter(
+		profile__accountdisable=False,
+		profile__distinguishedname__icontains=",OU=OK,",
+	).exclude(
+		username__iregex=r'^[a-z]{3}[0-9]{4,6}$',
+	).order_by('username')
 
 	return render(request, 'rapport_ukjente_identer.html', {
 		'request': request,

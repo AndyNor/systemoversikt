@@ -2,6 +2,7 @@
 {% load humanize %}
 {% load static %}
 {# Change log: #}
+{# 2026-09-29: Update cross-link text – ukjente_identer now lists OU=OK accounts with non-standard usernames. #}
 {# 2026-09-01: Describe the actual exclusion query (standard OUs, enabled AD accounts only). #}
 
 {% block ekstrameny_business_service %}
@@ -36,8 +37,8 @@
 </ul>
 <p>
 	Deaktiverte kontoer og kontoer som ikke lenger finnes i AD vises ikke.
-	Dette er ikke det samme som <a href="{% url 'rapport_ukjente_identer' %}">kontoer uten virksomhetsknytning</a>,
-	som filtrerer på manglende virksomhet i stedet for OU-plassering.
+	Dette er ikke det samme som <a href="{% url 'rapport_ukjente_identer' %}">kontoer i OU=OK med avvikende brukernavn</a>,
+	som ser på kontoer <em>innenfor</em> <code>OU=OK</code> med et annet brukernavnformat enn tre bokstaver og 4–6 tall.
 </p>
 
 <hr>

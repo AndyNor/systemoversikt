@@ -2,13 +2,14 @@
 {% load humanize %}
 {% load static %}
 {# Change log: #}
+{# 2026-09-29: Report now lists accounts under OU=OK whose username is not three letters + 4-6 digits; description updated. #}
 {# 2026-09-01: Describe the actual query (enabled accounts whose parent OU did not match a virksomhetsforkortelse). #}
 
 {% block ekstrameny_business_service %}
 {% endblock ekstrameny_business_service %}
 
 {% block overskrift %}
-	Brukerkontoer uten knytning til virksomhet
+	Kontoer i OU=OK med avvikende brukernavn
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -16,23 +17,15 @@
 {% include "includes/integrasjon_freshness_banner.html" with label="AD-brukere ble sist synkronisert" %}
 
 <p>
-	Rapporten viser <strong>aktive</strong> AD-kontoer (ikke deaktivert) der
-	profilen mangler virksomhet. Virksomhet settes automatisk ved AD-synkronisering
-	ut fra nærmeste OU i distinguished name — det andre leddet etter
-	<code>CN=...</code>. Navnet på den OU-en sammenlignes mot virksomhetenes
-	forkortelse. Matcher det, knyttes kontoen til virksomheten.
+	Rapporten viser <strong>aktive</strong> AD-kontoer (ikke deaktivert) som ligger
+	innenfor <code>OU=OK</code>, men der brukernavnet <em>ikke</em> følger standardformatet
+	for personlige kontoer: tre bokstaver etterfulgt av 4 til 6 tall
+	(for eksempel <code>ABC123456</code>). Det skilles ikke mellom store og små bokstaver.
 </p>
 <p>
-	En typisk intern bruker har DN på formen
-	<code>CN=...,OU=&lt;forkortelse&gt;,OU=Brukere,OU=OK,...</code>
-	og får derfor virksomhet. Kontoer havner her når nærmeste OU
-	<em>ikke</em> matcher noen virksomhetsforkortelse — for eksempel kontoer
-	som ligger direkte i <code>OU=Brukere</code>, <code>CN=Users</code> eller
-	i andre OU-er som ikke er navngitt med en forkortelse.
-</p>
-<p>
-	Deaktiverte kontoer vises ikke. Dette filtrerer <em>ikke</em> på om kontoen
-	ligger utenfor <code>OU=OK</code>; det gjør
+	Typiske treff er servicekontoer, ressurskontoer, testkontoer, kontaktobjekter og
+	kontoer som er opprettet manuelt med et annet navneformat. Kontoer utenfor
+	<code>OU=OK</code> vises ikke her; se
 	<a href="{% url 'rapport_ad_ukjente_brukere' %}">manuelt opprettede brukere</a>.
 </p>
 

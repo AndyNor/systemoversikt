@@ -1,5 +1,6 @@
 {% extends "index.html" %}
 {# Change log: #}
+{# 2026-09-29: Rename ukjente_identer sidemeny to "Avvikende brukernavn i OK" – report now filters on OU=OK and username format. #}
 {# 2026-09-25: Sidemenu label Sårbarhetsoppfølging – same audience as Sårbarheter (view_qualysvuln). #}
 {# 2026-09-01: Rename ukjente_identer sidemeny from "Kontoer utenfor OK" – that label described OU placement, not the virksomhet query. #}
 
@@ -53,7 +54,7 @@
 	<a href="{{ url_sikkerhet_varsling_virksomheter }}" class="btn btn-sm btn-link {% if url_sikkerhet_varsling_virksomheter in request.path %}fremhev{% endif %}">Varsling til virksomheter</a><br>
 
 	{% url 'rapport_ukjente_identer' as url_rapport_ukjente_identer %}
-	<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Kontoer uten virksomhet</a><br>
+	<a href="{{ url_rapport_ukjente_identer }}" class="btn btn-sm btn-link {% if url_rapport_ukjente_identer in request.path %}fremhev{% endif %}">Avvikende brukernavn i OK</a><br>
 
 	{% url 'alle_spn' as url_alle_spn %}
 	<a href="{{ url_alle_spn }}" class="btn btn-sm btn-link {% if url_alle_spn in request.path %}fremhev{% endif %}">Kontoer med SPN</a><br>
