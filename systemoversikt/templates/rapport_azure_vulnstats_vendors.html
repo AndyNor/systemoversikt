@@ -1,0 +1,47 @@
+{# 2026-09-29: Vendor/product summary moved here from rapport_azure_vulnstats.html – overview too slow to render. #}
+{% extends "sikkerhet_index.html" %}
+{% load humanize %}
+{% load templatetags %}
+
+{% block overskrift %}
+	Azure: sårbarheter per leverandør
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+{% include "includes/integrasjon_freshness_banner.html" with label="Sårbarheter ble sist synkronisert" %}
+
+<a class="btn btn-sm btn-primary" href="{% url 'azure_vulnstats' %}">Tilbake til oversikt</a>
+
+<hr>
+
+<h4>Aktive sårbarheter per leverandør</h4>
+<p class="small text-muted"><i>Windows 10- og 11-klienter er utelatt fra tallene på denne siden.</i></p>
+<table class="table tablesorter">
+<thead>
+<tr>
+	<th>Leverandør / produkt</th>
+	<th>Critical</th>
+	<th>High</th>
+	<th>Medium</th>
+	<th>Low</th>
+</tr>
+</thead>
+<tbody>
+{% for row in data.vendor_summary %}
+<tr>
+	<td>
+		<a href="{% url 'azure_vulnstats_product' vendor=row.product_vendor|url_path_segment product=row.product_name|url_path_segment %}">
+			{{ row.product_vendor|default:"(Tom)" }} / {{ row.product_name|default:"(Tom)" }}
+		</a>
+	</td>
+	<td>{{ row.critical|intcomma }}</td>
+	<td>{{ row.high|intcomma }}</td>
+	<td>{{ row.medium|intcomma }}</td>
+	<td>{{ row.low|intcomma }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% endblock hovedinnhold %}

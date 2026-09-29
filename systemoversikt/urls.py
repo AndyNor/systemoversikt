@@ -131,6 +131,7 @@ urlpatterns = [
 
 
 	re_path(r'^sikkerhet/sarbarheter/$', views.sikkerhet_sarbarheter, name="sikkerhet_sarbarheter"),
+	re_path(r'^sikkerhet/sarbarheter/sok/$', views.sikkerhet_sarbarheter_sok, name="sikkerhet_sarbarheter_sok"),  # 2026-09-29: CVE/title/description search from landing page.
 	re_path(r'^sikkerhet/sarbarhetssaker/$', views_sarbarhetssak.sarbarhetssak_liste, name='sarbarhetssak_liste'),
 	re_path(r'^sikkerhet/sarbarhetssaker/ny/lagre/$', views_sarbarhetssak.sarbarhetssak_opprett_lagre, name='sarbarhetssak_opprett_lagre'),
 	re_path(r'^sikkerhet/sarbarhetssaker/ny/$', views_sarbarhetssak.sarbarhetssak_opprett, name='sarbarhetssak_opprett'),
@@ -139,6 +140,7 @@ urlpatterns = [
 	re_path(r'^sikkerhet/sarbarhetssaker/(?P<pk>\d+)/$', views_sarbarhetssak.sarbarhetssak_detaljer, name='sarbarhetssak_detaljer'),
 	re_path(r'^sikkerhet/vulnstats/overview/$', views.vulnstats, name="vulnstats"),
 	re_path(r'^sikkerhet/azure_vulnstats/overview/$', views.azure_vulnstats, name="azure_vulnstats"),
+	re_path(r'^sikkerhet/azure_vulnstats/vendors/$', views.azure_vulnstats_vendors, name="azure_vulnstats_vendors"),  # 2026-09-29: Vendor table moved off overview (performance).
 	re_path(r'^sikkerhet/azure_vulnstats/qualys_compare/$', views.azure_vulnstats_qualys_compare, name="azure_vulnstats_qualys_compare"),
 	re_path(r'^sikkerhet/azure_vulnstats/product/(?P<vendor>[^/]+)/(?P<product>[^/]+)/$', views.azure_vulnstats_product, name="azure_vulnstats_product"),
 	re_path(r'^sikkerhet/azure_vulnstats/os/(?P<os>[^/]+)/$', views.azure_vulnstats_os, name="azure_vulnstats_os"),

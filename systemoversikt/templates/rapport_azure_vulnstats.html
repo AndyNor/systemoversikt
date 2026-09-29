@@ -73,37 +73,10 @@ new Chart(
 
 <hr>
 
-<div class="row">
-	<div class="col-md-6">
-		<h4>Aktive sårbarheter per leverandør</h4>
-		<table class="table tablesorter">
-		<thead>
-		<tr>
-			<th>Leverandør / produkt</th>
-			<th>Critical</th>
-			<th>High</th>
-			<th>Medium</th>
-			<th>Low</th>
-		</tr>
-		</thead>
-		<tbody>
-		{% for row in data.vendor_summary %}
-		<tr>
-			<td>
-				<a href="{% url 'azure_vulnstats_product' vendor=row.product_vendor|url_path_segment product=row.product_name|url_path_segment %}">
-					{{ row.product_vendor|default:"(Tom)" }} / {{ row.product_name|default:"(Tom)" }}
-				</a>
-			</td>
-			<td>{{ row.critical|intcomma }}</td>
-			<td>{{ row.high|intcomma }}</td>
-			<td>{{ row.medium|intcomma }}</td>
-			<td>{{ row.low|intcomma }}</td>
-		</tr>
-		{% endfor %}
-		</tbody>
-		</table>
-	</div>
+{# 2026-09-29: Vendor table moved to azure_vulnstats_vendors – overview too slow to render. #}
+<p><a class="btn btn-sm btn-primary" href="{% url 'azure_vulnstats_vendors' %}">Aktive sårbarheter per leverandør</a></p>
 
+<div class="row">
 	<div class="col-md-6">
 		<h4>Enheter per operativsystem og sårbarheter per enhet (aktive)</h4>
 		<table class="table tablesorter">

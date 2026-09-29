@@ -1,0 +1,270 @@
+{# 2026-09-29: Search result page for CVE id, title or description across Defender, Qualys, CISA KEV and Sårbarhetsoppfølging. #}
+{% extends "sikkerhet_index.html" %}
+{% load humanize %}
+
+{% block overskrift %}
+	Søk i sårbarheter
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<a class="btn btn-sm btn-primary mb-3" href="{% url 'sikkerhet_sarbarheter' %}">Tilbake til sårbarheter</a>
+
+{% include "includes/sarbarheter_sok_skjema.html" %}
+
+{% if too_short %}
+<p class="text-muted">Skriv minst {{ min_length }} tegn.</p>
+{% elif result %}
+
+{% if integrasjonsstatus %}
+{% include "includes/integrasjon_freshness_banner.html" with label="Defender sist synkronisert" %}
+{% endif %}
+{% if integrasjonsstatus_qualys %}
+{% include "includes/integrasjon_freshness_banner.html" with integrasjonsstatus=integrasjonsstatus_qualys label="Qualys sist synkronisert" %}
+{% endif %}
+
+<p>
+	Søk etter <strong>{{ query }}</strong>:
+	{{ result.defender_cves|length }} CVE-er i Defender,
+	{{ result.qualys|length }} Qualys-sårbarheter,
+	{{ result.kev|length }} i CISA KEV,
+	{{ result.saker|length }} i sårbarhetsoppfølging.
+	{% if exact_cve %}<a href="https://nvd.nist.gov/vuln/detail/{{ exact_cve|urlencode }}" target="_blank" rel="noopener noreferrer">{{ exact_cve }} hos NVD</a>{% endif %}
+</p>
+<p class="small text-muted"><i>Maks {{ limit }} treff vises per kilde.</i></p>
+
+<hr>
+
+<h4>Defender: CVE-er</h4>
+{% if result.defender_cves %}
+<table class="table table-sm tablesorter excel">
+<thead>
+<tr>
+	<th>CVE</th>
+	<th>Alvorlighet</th>
+	<th>CVSS</th>
+	<th>Publisert</th>
+	<th>Kjent utnyttet</th>
+	<th>Enheter totalt</th>
+	<th>Servere o.l.</th>
+	<th>Windows 10/11-klienter</th>
+	<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody>
+{% for row in result.defender_cves %}
+<tr>
+	<td><a href="{% url 'sikkerhet_sarbarheter_sok' %}?q={{ row.cve_id|urlencode }}">{{ row.cve_id }}</a></td>
+	<td>{{ row.severity }}</td>
+	<td>{{ row.cvss_score|default_if_none:"-" }}</td>
+	<td>{{ row.published_at|date:"Y-m-d"|default:"-" }}</td>
+	<td>{{ row.known_exploited|yesno:"Ja,Nei" }}</td>
+	<td>{{ row.device_count|intcomma }}</td>
+	<td>{{ row.other_count|intcomma }}</td>
+	<td>{{ row.client_count|intcomma }}</td>
+	<td class="small">{{ row.description|default:""|truncatechars:300 }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if result.defender_cves_truncated %}<p class="small text-muted">Flere treff finnes – gjør søket mer spesifikt.</p>{% endif %}
+{% else %}
+<p class="text-muted">Ingen treff.</p>
+{% endif %}
+
+<hr>
+
+<h4>Qualys: sårbarheter</h4>
+{% if result.qualys %}
+<table class="table table-sm tablesorter excel">
+<thead>
+<tr>
+	<th>Tittel</th>
+	<th>Alvorlighet</th>
+	<th>Forekomster</th>
+	<th>Kjent utnyttet</th>
+	<th>Eksponert</th>
+	<th>Akseptert</th>
+	<th>CVE-er</th>
+</tr>
+</thead>
+<tbody>
+{% for row in result.qualys %}
+<tr>
+	<td><a href="{% url 'vulnstats_whereis' vuln=row.title %}">{{ row.title }}</a></td>
+	<td>{{ row.severity }}</td>
+	<td>{{ row.count|intcomma }}</td>
+	<td>{{ row.known_exploited_count|intcomma }}</td>
+	<td>{{ row.public_facing_count|intcomma }}</td>
+	<td>{{ row.akseptert_count|intcomma }}</td>
+	<td class="small">{{ row.cve_info|default:""|truncatechars:200 }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if result.qualys_truncated %}<p class="small text-muted">Flere treff finnes – gjør søket mer spesifikt.</p>{% endif %}
+{% else %}
+<p class="text-muted">Ingen treff.</p>
+{% endif %}
+
+<hr>
+
+<h4>CISA: kjent utnyttede sårbarheter (KEV)</h4>
+{% if result.kev %}
+<table class="table table-sm tablesorter excel">
+<thead>
+<tr>
+	<th>CVE</th>
+	<th>Leverandør / produkt</th>
+	<th>Navn</th>
+	<th>Lagt til</th>
+	<th>Frist</th>
+	<th>Løsepengevirus</th>
+	<th>Beskrivelse</th>
+	<th>Påkrevd tiltak</th>
+</tr>
+</thead>
+<tbody>
+{% for kev in result.kev %}
+<tr>
+	<td><a href="{% url 'sikkerhet_sarbarheter_sok' %}?q={{ kev.cve_id|urlencode }}">{{ kev.cve_id }}</a></td>
+	<td>{{ kev.vendor_project }} / {{ kev.product }}</td>
+	<td>{{ kev.vulnerability_name }}</td>
+	<td>{{ kev.date_added|date:"Y-m-d" }}</td>
+	<td>{{ kev.due_date|date:"Y-m-d" }}</td>
+	<td>{{ kev.known_ransomware_campaign_use }}</td>
+	<td class="small">{{ kev.short_description|truncatechars:300 }}</td>
+	<td class="small">{{ kev.required_action|truncatechars:200 }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if result.kev_truncated %}<p class="small text-muted">Flere treff finnes – gjør søket mer spesifikt.</p>{% endif %}
+{% else %}
+<p class="text-muted">Ingen treff.</p>
+{% endif %}
+
+<hr>
+
+<h4>Sårbarhetsoppfølging</h4>
+{% if result.saker %}
+<table class="table table-sm tablesorter">
+<thead>
+<tr>
+	<th>Tittel</th>
+	<th>CVE</th>
+	<th>Tiltakseier</th>
+	<th>Saksstatus</th>
+	<th>Lagt til (uke)</th>
+</tr>
+</thead>
+<tbody>
+{% for sak in result.saker %}
+<tr>
+	<td><a href="{% url 'sarbarhetssak_detaljer' sak.pk %}">{{ sak.tittel }}</a></td>
+	<td>{{ sak.cve|default:"-" }}</td>
+	<td>{{ sak.get_tiltakseier_display|default:"-" }}</td>
+	<td>{{ sak.get_saksstatus_display }}</td>
+	<td>{{ sak.lagt_til_uke }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if result.saker_truncated %}<p class="small text-muted">Flere treff finnes – gjør søket mer spesifikt.</p>{% endif %}
+{% else %}
+<p class="text-muted">Ingen treff.</p>
+{% endif %}
+
+{% if exact_cve %}
+<hr>
+
+<h4>Defender: enheter med {{ exact_cve }}</h4>
+{% if result.defender_devices %}
+<table class="table table-sm tablesorter excel">
+<thead>
+<tr>
+	<th>Enhet</th>
+	<th>Operativsystem</th>
+	<th>Produkt</th>
+	<th>Versjon</th>
+	<th>Fiks (KB)</th>
+	<th>Alvorlighet</th>
+	<th>Først sett</th>
+	<th>Sist sett</th>
+</tr>
+</thead>
+<tbody>
+{% for device in result.defender_devices %}
+<tr>
+	<td>
+		{% if device.cmdb_pk %}
+			<a href="{% url 'cmdb_devicedetails' device.cmdb_pk %}">{{ device.device__hostname }}</a>
+		{% else %}
+			{{ device.device__hostname }}
+		{% endif %}
+	</td>
+	<td>{{ device.device__os_platform }}</td>
+	<td>{{ device.product_vendor }} / {{ device.product_name }}</td>
+	<td>{{ device.product_version }}</td>
+	<td>{{ device.fixing_kb|default:"-" }}</td>
+	<td>{{ device.severity }}</td>
+	<td>{{ device.first_seen|date:"Y-m-d" }}</td>
+	<td>{{ device.last_seen|date:"Y-m-d" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if result.defender_devices_truncated %}<p class="small text-muted">Viser de første {{ device_limit }} enhetene.</p>{% endif %}
+{% else %}
+<p class="text-muted">Ingen enheter i Defender.</p>
+{% endif %}
+
+<hr>
+
+<h4>Qualys: servere med {{ exact_cve }}</h4>
+{% if result.qualys_servers %}
+<table class="table table-sm tablesorter excel">
+<thead>
+<tr>
+	<th>Enhet</th>
+	<th>CMDB</th>
+	<th>Operativsystem</th>
+	<th>Tittel</th>
+	<th>Alvorlighet</th>
+	<th>Kjent utnyttet</th>
+	<th>Eksponert</th>
+	<th>Akseptert</th>
+	<th>Først sett</th>
+</tr>
+</thead>
+<tbody>
+{% for vuln in result.qualys_servers %}
+<tr>
+	<td>{{ vuln.source }}</td>
+	<td>
+		{% if vuln.server %}
+			<a href="{% url 'cmdb_devicedetails' vuln.server.pk %}">{{ vuln.server }}</a>
+		{% else %}
+			ingen
+		{% endif %}
+	</td>
+	<td>{{ vuln.os }}</td>
+	<td>{{ vuln.title }}</td>
+	<td>{{ vuln.severity }}</td>
+	<td>{{ vuln.known_exploited|yesno:"Ja,Nei" }}</td>
+	<td>{{ vuln.public_facing|yesno:"Ja,Nei" }}</td>
+	<td>{{ vuln.akseptert|yesno:"Ja,Nei" }}</td>
+	<td>{{ vuln.first_seen|date:"Y-m-d" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% if result.qualys_servers_truncated %}<p class="small text-muted">Viser de første {{ device_limit }} funnene.</p>{% endif %}
+{% else %}
+<p class="text-muted">Ingen servere i Qualys.</p>
+{% endif %}
+{% endif %}
+
+{% endif %}
+
+{% endblock hovedinnhold %}

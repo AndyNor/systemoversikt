@@ -18,12 +18,19 @@
 	Sårbarhetsdata fra Qualys og Microsoft Defender for Endpoint.
 </p>
 
+{# 2026-09-29: Search CVE id, title or description across all vulnerability sources. #}
+{% include "includes/sarbarheter_sok_skjema.html" %}
+
 <ul class="list-unstyled mb-0">
 	<li class="mb-2">
 		<a href="{% url 'vulnstats' %}" class="btn btn-sm btn-primary">Qualys: sårbarheter</a>
 	</li>
 	<li class="mb-2">
 		<a href="{% url 'azure_vulnstats' %}" class="btn btn-sm btn-primary">Azure Defender: sårbarheter</a>
+	</li>
+	<li class="mb-2">
+		{# 2026-09-29: Link to vendor summary subpage (moved off Defender overview). #}
+		<a href="{% url 'azure_vulnstats_vendors' %}" class="btn btn-sm btn-primary">Azure Defender: sårbarheter per leverandør</a>
 	</li>
 	<li class="mb-2">
 		<a href="{% url 'azure_vulnstats_qualys_compare' %}" class="btn btn-sm btn-primary">Qualys vs Defender</a>

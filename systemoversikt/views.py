@@ -1396,6 +1396,149 @@ def sikkerhet_sarbarheter(request):
 	})
 
 
+_SARBARHETER_SOK_MIN_LENGTH = 3
+_SARBARHETER_SOK_MAX_LENGTH = 200
+_SARBARHETER_SOK_LIMIT = 200
+_SARBARHETER_SOK_DEVICE_LIMIT = 500
+_CVE_ID_EXACT = re.compile(r"^CVE-\d{4}-\d+$", re.IGNORECASE)
+
+
+def _sarbarheter_sok_limited(qs, limit):
+	rows = list(qs[:limit + 1])
+	return rows[:limit], len(rows) > limit
+
+
+def _sarbarheter_sok(query, exact_cve):
+	# 2026-09-29: Search CVE id / title / description across Defender, Qualys, CISA KEV and Sårbarhetssaker.
+	limit = _SARBARHETER_SOK_LIMIT
+	result = {}
+
+	defender_cves, result["defender_cves_truncated"] = _sarbarheter_sok_limited(
+		CVE.objects.filter(Q(cve_id__icontains=query) | Q(description__icontains=query))
+		.order_by(F("cvss_score").desc(nulls_last=True), "-cve_id")
+		.values("cve_id", "severity", "cvss_score", "description", "published_at"),
+		limit,
+	)
+	cve_ids = [row["cve_id"] for row in defender_cves]
+	client_q = Q()
+	for os_platform in _AZURE_VULNSTATS_OVERVIEW_EXCLUDED_OS:
+		client_q |= Q(device__os_platform__iexact=os_platform)
+	counts_by_cve = {
+		row["cve_id"]: row
+		for row in AzureDeviceVulnerability.objects.filter(cve_id__in=cve_ids)
+		.values("cve_id")
+		.annotate(
+			device_count=Count("id"),
+			client_count=Count("id", filter=client_q),
+		)
+	}
+	kev_ids = set(ExploitedVulnerability.objects.filter(cve_id__in=cve_ids).values_list("cve_id", flat=True))
+	for row in defender_cves:
+		counts = counts_by_cve.get(row["cve_id"], {})
+		row["device_count"] = counts.get("device_count", 0)
+		row["client_count"] = counts.get("client_count", 0)
+		row["other_count"] = row["device_count"] - row["client_count"]
+		row["known_exploited"] = row["cve_id"] in kev_ids
+	result["defender_cves"] = defender_cves
+
+	qualys_rows, result["qualys_truncated"] = _sarbarheter_sok_limited(
+		QualysVuln.objects.filter(Q(title__icontains=query) | Q(cve_info__icontains=query))
+		.values("title", "severity")
+		.annotate(
+			cve_info=Max("cve_info"),
+			count=Count("id"),
+			known_exploited_count=Count("id", filter=Q(known_exploited=True)),
+			public_facing_count=Count("id", filter=Q(public_facing=True)),
+			akseptert_count=Count("id", filter=Q(akseptert=True)),
+		)
+		.order_by("-severity", "-count", "title"),
+		limit,
+	)
+	if exact_cve:
+		qualys_rows = [
+			row for row in qualys_rows
+			if exact_cve in _cves_from_qualys_cve_info(row["cve_info"]) or query.lower() in (row["title"] or "").lower()
+		]
+	result["qualys"] = qualys_rows
+
+	result["kev"], result["kev_truncated"] = _sarbarheter_sok_limited(
+		ExploitedVulnerability.objects.filter(
+			Q(cve_id__icontains=query)
+			| Q(vulnerability_name__icontains=query)
+			| Q(short_description__icontains=query)
+			| Q(vendor_project__icontains=query)
+			| Q(product__icontains=query)
+		).order_by("-date_added", "-cve_id"),
+		limit,
+	)
+
+	result["saker"], result["saker_truncated"] = _sarbarheter_sok_limited(
+		Sarbarhetssak.objects.filter(Q(cve__icontains=query) | Q(tittel__icontains=query)).order_by("-opprettet"),
+		limit,
+	)
+
+	result["defender_devices"] = []
+	result["defender_devices_truncated"] = False
+	result["qualys_servers"] = []
+	result["qualys_servers_truncated"] = False
+	if exact_cve:
+		devices, result["defender_devices_truncated"] = _sarbarheter_sok_limited(
+			AzureDeviceVulnerability.objects.filter(cve_id=exact_cve)
+			.order_by("device__hostname")
+			.values(
+				"device__hostname", "device__os_platform", "product_vendor", "product_name",
+				"product_version", "fixing_kb", "severity", "first_seen", "last_seen",
+			),
+			_SARBARHETER_SOK_DEVICE_LIMIT,
+		)
+		pk_by_hostname = cmdb_pk_lookup_for_hostnames({d["device__hostname"] for d in devices if d["device__hostname"]})
+		for device in devices:
+			device["cmdb_pk"] = pk_by_hostname.get(device["device__hostname"])
+		result["defender_devices"] = devices
+
+		qualys_servers = [
+			vuln for vuln in QualysVuln.objects.filter(cve_info__icontains=exact_cve)
+			.select_related("server")
+			.order_by("-severity", "source")
+			if exact_cve in _cves_from_qualys_cve_info(vuln.cve_info)
+		]
+		result["qualys_servers"] = qualys_servers[:_SARBARHETER_SOK_DEVICE_LIMIT]
+		result["qualys_servers_truncated"] = len(qualys_servers) > _SARBARHETER_SOK_DEVICE_LIMIT
+
+	result["total"] = (
+		len(result["defender_cves"]) + len(result["qualys"]) + len(result["kev"]) + len(result["saker"])
+	)
+	return result
+
+
+def sikkerhet_sarbarheter_sok(request):
+	# 2026-09-29: Search box on landing page – CVE id, title or description across all vulnerability sources.
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render_access_denied(request, required_permissions)
+
+	query = (request.GET.get("q") or "").strip()[:_SARBARHETER_SOK_MAX_LENGTH]
+	exact_cve = query.upper() if _CVE_ID_EXACT.match(query) else None
+	too_short = bool(query) and len(query) < _SARBARHETER_SOK_MIN_LENGTH
+	result = None
+	if query and not too_short:
+		result = _sarbarheter_sok(query, exact_cve)
+
+	return render(request, 'sikkerhet_sarbarheter_sok.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'query': query,
+		'exact_cve': exact_cve,
+		'too_short': too_short,
+		'min_length': _SARBARHETER_SOK_MIN_LENGTH,
+		'limit': _SARBARHETER_SOK_LIMIT,
+		'device_limit': _SARBARHETER_SOK_DEVICE_LIMIT,
+		'result': result,
+		'integrasjonsstatus': _integrasjonsstatus("azure_vulnerabilities"),
+		'integrasjonsstatus_qualys': _integrasjonsstatus("sp_qualys"),
+	})
+
+
 def vulnstats(request):
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -1579,6 +1722,7 @@ def azure_vulnstats_qualys_compare(request):
 
 
 def azure_vulnstats(request):
+	# 2026-09-29: Moved "Aktive sårbarheter per leverandør" to azure_vulnstats_vendors – overview too slow to render.
 	# 2026-06-07: Exclude Windows 11 client OS from overview aggregates – faster page, easy to revert.
 	required_permissions = ['systemoversikt.view_qualysvuln']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -1586,7 +1730,7 @@ def azure_vulnstats(request):
 
 	integrasjonsstatus = _integrasjonsstatus("azure_vulnerabilities")
 
-	cache_version = "v16"
+	cache_version = "v17"
 	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
 	cache_key = f"azure_vulnstats:overview:{cache_version}:{cache_ts}"
 	data = cache.get(cache_key)
@@ -1657,6 +1801,37 @@ def azure_vulnstats(request):
 			"count_active": active.count(),
 			"count_devices_with_vuln": distinct_counts["devices_with_vuln"] or 0,
 			"count_distinct_cves": distinct_counts["distinct_cves"] or 0,
+			"os_device_summary": os_device_summary,
+			"cve_year_chart": cve_year_chart,
+		}
+
+		# Aggregeringene over stor tabell er dyre – cache for å avlaste.
+		cache.set(cache_key, data, timeout=60 * 60 * 24)
+
+	return render(request, 'rapport_azure_vulnstats.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'integrasjonsstatus': integrasjonsstatus,
+		'data': data,
+	})
+
+
+def azure_vulnstats_vendors(request):
+	# 2026-09-29: Vendor/product summary on dedicated URL (moved off overview) – overview too slow to render.
+	required_permissions = ['systemoversikt.view_qualysvuln']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render_access_denied(request, required_permissions)
+
+	integrasjonsstatus = _integrasjonsstatus("azure_vulnerabilities")
+
+	cache_version = "v1"
+	cache_ts = _azure_vulnstats_cache_ts_token(integrasjonsstatus)
+	cache_key = f"azure_vulnstats:vendors:{cache_version}:{cache_ts}"
+	data = cache.get(cache_key)
+
+	if data is None:
+		active = _azure_vulnstats_overview_active()
+		data = {
 			"vendor_summary": list(
 				active.values("product_vendor", "product_name")
 				.annotate(
@@ -1667,14 +1842,10 @@ def azure_vulnstats(request):
 				)
 				.order_by("-critical", "-high", "-medium", "-low", "product_vendor", "product_name")
 			),
-			"os_device_summary": os_device_summary,
-			"cve_year_chart": cve_year_chart,
 		}
-
-		# Aggregeringene over stor tabell er dyre – cache for å avlaste.
 		cache.set(cache_key, data, timeout=60 * 60 * 24)
 
-	return render(request, 'rapport_azure_vulnstats.html', {
+	return render(request, 'rapport_azure_vulnstats_vendors.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'integrasjonsstatus': integrasjonsstatus,

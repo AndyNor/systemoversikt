@@ -1,0 +1,5 @@
+{# 2026-09-29: Vulnerability search form – shared by landing page and result page. #}
+<form method="get" action="{% url 'sikkerhet_sarbarheter_sok' %}" class="form-inline mb-3">
+	<input type="search" name="q" value="{{ query|default:'' }}" class="form-control mr-2" style="min-width: 350px;" maxlength="200" placeholder="CVE-nummer, tittel eller beskrivelse" aria-label="Søk i sårbarheter">
+	<button type="submit" class="btn btn-primary">Søk</button>
+</form>
