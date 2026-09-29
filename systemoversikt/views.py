@@ -2627,6 +2627,7 @@ def tool_drift_users_not_in_list(request):
 
 
 def tool_users_by_email(request):
+	# 2026-09-29: Histogram of virksomhet affiliation before the match table.
 	# 2026-09-29: New tool – look up active AD users by a pasted list of e-mail addresses.
 	required_permissions = ['auth.view_user']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -2637,15 +2638,27 @@ def tool_users_by_email(request):
 
 	brukere = None
 	uten_treff = None
+	virksomhet_histogram = None
 	if request.method == 'POST':
 		brukere = list(
 			User.objects.annotate(email_lower=Lower('email')).filter(
 				email_lower__in=list(oppgitte_eposter),
 				profile__accountdisable=False,
-			).exclude(email='').select_related('profile').order_by('email')
+			).exclude(email='').select_related('profile', 'profile__virksomhet').order_by('email')
 		)
 		traffede = {b.email.lower() for b in brukere if b.email}
 		uten_treff = sorted(oppgitte_eposter - traffede)
+
+		telling = Counter()
+		for b in brukere:
+			vir = b.profile.virksomhet
+			label = vir.virksomhetsforkortelse if vir else 'Ukjent'
+			telling[label] += 1
+		sortert = telling.most_common()
+		virksomhet_histogram = {
+			'labels': [label for label, _ in sortert],
+			'data': [count for _, count in sortert],
+		}
 
 	return render(request, 'tool_users_by_email.html', {
 		'request': request,
@@ -2654,6 +2667,7 @@ def tool_users_by_email(request):
 		"antall_oppgitte": len(oppgitte_eposter),
 		"brukere": brukere,
 		"uten_treff": uten_treff,
+		"virksomhet_histogram": virksomhet_histogram,
 	})
 
 

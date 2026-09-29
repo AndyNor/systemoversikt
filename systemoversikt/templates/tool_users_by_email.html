@@ -1,7 +1,12 @@
 {% extends "tools_index.html" %}
+{# 2026-09-29: Histogram of virksomhet affiliation before the match table. #}
 {# 2026-09-29: New tool – look up active AD users by pasted e-mail addresses. #}
 {% load humanize %}
 {% load static %}
+
+{% block ekstrajavascript %}
+	<script src="{% static 'chart.js@4.5.1' %}" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
 
 {% block overskrift %}
 	Brukere etter e-post
@@ -23,6 +28,53 @@
 {% if brukere is not None %}
 	<hr>
 	<p>Du oppga {{ antall_oppgitte }} unike e-postadresser. Fant {{ brukere|length }} aktive brukere med treff.</p>
+
+	{% if virksomhet_histogram and virksomhet_histogram.labels %}
+	<p>Fordeling på virksomhet</p>
+	<div style="max-width: 960px;">
+		<canvas id="virksomhet_histogram_chart" height="100"></canvas>
+	</div>
+	{{ virksomhet_histogram|json_script:"virksomhet-histogram-data" }}
+	<script type="text/javascript" nonce="{{request.csp_nonce}}">
+	(function() {
+		const chartData = JSON.parse(document.getElementById('virksomhet-histogram-data').textContent);
+		new Chart(document.getElementById('virksomhet_histogram_chart'), {
+			type: 'bar',
+			data: {
+				labels: chartData.labels,
+				datasets: [{
+					label: 'Antall brukere',
+					data: chartData.data,
+					backgroundColor: '#5B8DB8',
+				}],
+			},
+			options: {
+				responsive: true,
+				plugins: {
+					legend: { display: false },
+				},
+				scales: {
+					y: {
+						beginAtZero: true,
+						ticks: { precision: 0 },
+						title: {
+							display: true,
+							text: 'Antall brukere',
+						},
+					},
+					x: {
+						title: {
+							display: true,
+							text: 'Virksomhet',
+						},
+					},
+				},
+			},
+		});
+	})();
+	</script>
+	<hr>
+	{% endif %}
 
 	<table class="tablesorter excel">
 	<thead>
