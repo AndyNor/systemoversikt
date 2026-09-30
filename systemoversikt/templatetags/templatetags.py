@@ -1,3 +1,4 @@
+# 2026-09-30: risiko_child_scenario_matrix – per-underkategori scenario matrix on sammenstilling (live + snapshots).
 # 2026-09-15: Home intro cards – bookmark, person, bar-chart, collection, info-circle, box-arrow-up-right.
 # 2026-09-08: risiko_system_link – strikethrough unused systems (livsløp 6–7) on risk pages.
 # 2026-09-07: cash icon – billable marker next to grouped database server instances.
@@ -598,6 +599,28 @@ def risiko_level_tag(label, css_class):
 		cls,
 		label,
 	))
+
+
+@register.simple_tag
+def risiko_child_scenario_matrix(category_matrix, child_scenarios):
+	# Derived at render time so stored snapshot JSON (and its hash) stays unchanged.
+	pks = {row.get('pk') for row in (child_scenarios or [])}
+	if not pks:
+		return []
+	rows = []
+	for row in category_matrix or []:
+		cells = []
+		for cell in row.get('cells') or []:
+			cell_copy = dict(cell)
+			cell_copy['scenarios'] = [
+				scenario for scenario in (cell.get('scenarios') or [])
+				if scenario.get('pk') in pks
+			]
+			cells.append(cell_copy)
+		row_copy = dict(row)
+		row_copy['cells'] = cells
+		rows.append(row_copy)
+	return rows
 
 
 @register.filter

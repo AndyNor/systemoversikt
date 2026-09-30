@@ -1,6 +1,7 @@
 {% extends "sikkerhet_index.html" %}
 {% load static %}
 {% load templatetags %}
+{# 2026-09-30: Scenario matrix per underkategori (only scenarios linked to that subcategory). #}
 {# 2026-09-03: Live page omits scenarios from archived risk collections; snapshots keep historical mapping. #}
 {# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
 {# 2026-07-07: Reader-only banner when user has lesergruppe access but is not in eiergruppe. #}
@@ -184,6 +185,14 @@
 					<h6 class="mb-1">{{ child.display_code }}. {{ child.title }}</h6>
 					{% if child.forklaring %}
 					<p class="small text-muted mb-2">{{ child.forklaring }}</p>
+					{% endif %}
+
+					{% if child.scenarios %}
+					<div class="mb-2">
+						<strong class="small d-block mb-1">Nåværende risiko – scenarioer i underkategorien</strong>
+						{% risiko_child_scenario_matrix cat.scenario_matrix child.scenarios as child_matrix %}
+						{% include "risiko_sammenstilling_scenario_matrise_grid.html" with matrix=child_matrix konsekvens_labels=konsekvens_labels %}
+					</div>
 					{% endif %}
 
 					<strong class="small d-block mb-1">Kartlagte scenarioer</strong>

@@ -1,3 +1,4 @@
+{# 2026-09-30: Scenario matrix per underkategori, derived from stored category matrix (works for older snapshots). #}
 {# 2026-09-03: Snapshot JSON may include scenarios from collections later archived; live page omits those. #}
 {# 2026-07-08: Snapshot v1 – read-only sammenstilling detail from precomputed JSON. #}
 {% extends "sikkerhet_index.html" %}
@@ -110,6 +111,14 @@
 				<h6 class="mb-1">{{ child.display_code }}. {{ child.title }}</h6>
 				{% if child.forklaring %}
 				<p class="small text-muted mb-2">{{ child.forklaring }}</p>
+				{% endif %}
+
+				{% if child.scenarios %}
+				<div class="mb-2">
+					<strong class="small d-block mb-1">Nåværende risiko – scenarioer i underkategorien</strong>
+					{% risiko_child_scenario_matrix cat.scenario_matrix child.scenarios as child_matrix %}
+					{% include "risiko_sammenstilling_scenario_matrise_grid.html" with matrix=child_matrix konsekvens_labels=konsekvens_labels %}
+				</div>
 				{% endif %}
 
 				<strong class="small d-block mb-1">Kartlagte scenarioer</strong>
