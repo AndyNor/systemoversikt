@@ -1,4 +1,5 @@
 // Change log:
+// 2026-09-30: Tiltak status select in scenario modal gets light background color per status.
 // 2026-09-08: Guard captureScopeMetaSnapshot when title field missing; cache-bust via template.
 // 2026-09-08: Unused systems (livsløp 6–7) – status in search labels; strikethrough in chips/table.
 // 2026-09-08: Drop client sist_revidert on scope save – date is set server-side on status change.
@@ -898,6 +899,27 @@
       return html;
     }
 
+    const ACTION_STATUS_SELECT_CLASSES = {
+      forslag: 'risiko-action-status-forslag',
+      besluttet: 'risiko-action-status-besluttet',
+      ikke_startet: 'risiko-action-status-besluttet',
+      under_arbeid: 'risiko-action-status-under-arbeid',
+      kontinuerlig_oppfolging: 'risiko-action-status-kontinuerlig',
+      utfort: 'risiko-action-status-utfort',
+    };
+
+    function actionStatusSelectClass(status) {
+      return ACTION_STATUS_SELECT_CLASSES[status] || '';
+    }
+
+    function applyActionStatusSelectClass(select) {
+      Object.keys(ACTION_STATUS_SELECT_CLASSES).forEach(function (key) {
+        select.classList.remove(ACTION_STATUS_SELECT_CLASSES[key]);
+      });
+      const cls = actionStatusSelectClass(select.value);
+      if (cls) select.classList.add(cls);
+    }
+
     function collectScenarioPayload() {
       function levelVal(id) {
         const v = document.getElementById(id).value;
@@ -1173,7 +1195,8 @@
           '</div>' +
           '<div class="col risiko-action-meta-col">' +
             '<label class="risiko-action-label">Status</label>' +
-            '<select class="form-control form-control-sm risiko-action-status">' +
+            '<select class="form-control form-control-sm risiko-action-status ' +
+            escapeHtml(actionStatusSelectClass(action.status || 'forslag')) + '">' +
             statusOptionsHtml(action.status || 'forslag') + '</select>' +
           '</div>' +
           '<div class="col-auto risiko-action-btn-col">' +
@@ -2189,6 +2212,9 @@
       });
       actionsList.addEventListener('change', function (e) {
         if (e.target.closest('.risiko-action-unntak')) return;
+        if (e.target.classList.contains('risiko-action-status')) {
+          applyActionStatusSelectClass(e.target);
+        }
         const card = e.target.closest('.risiko-action-card');
         if (card) scheduleActionAutosave(card);
       });

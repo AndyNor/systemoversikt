@@ -1,3 +1,4 @@
+{# 2026-09-30: Tiltak status select in scenario modal – light background color per status. #}
 {# 2026-09-08: Unused systems (livsløp 6–7) shown with strikethrough on collection and rapport. #}
 {# 2026-09-08: Removed editable Sist revidert – set automatically when status changes. #}
 {# 2026-08-28: Unntak row edit form – column layout when Rediger is open. #}
@@ -743,6 +744,11 @@
 	font-weight: 600;
 	margin-bottom: 0.1rem;
 }
+.risiko-action-status.risiko-action-status-forslag { background-color: #fdecee; }
+.risiko-action-status.risiko-action-status-besluttet { background-color: #fff0e0; }
+.risiko-action-status.risiko-action-status-under-arbeid,
+.risiko-action-status.risiko-action-status-kontinuerlig { background-color: #fff8db; }
+.risiko-action-status.risiko-action-status-utfort { background-color: #e8f5e3; }
 .risiko-link-action-picker { flex-shrink: 0; }
 .risiko-action-toolbar { flex-shrink: 0; margin-top: 0.15rem; }
 .risiko-modal-half-tiltak > .risiko-residual-fields { flex-shrink: 0; }
@@ -957,7 +963,7 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 </style>
 {% if can_edit_scope or can_change_locked_status %}
 <script src="{% static 'risiko_api.js' %}" nonce="{{request.csp_nonce}}"></script>
-{# 2026-09-08: Cache-bust risiko_edit.js after removing sist_revidert input. #}
-<script src="{% static 'risiko_edit.js' %}?v=20260908-sist-revidert" nonce="{{request.csp_nonce}}"></script>
+{# 2026-09-30: Cache-bust risiko_edit.js for tiltak status select colors. #}
+<script src="{% static 'risiko_edit.js' %}?v=20260930-tiltak-status-farge" nonce="{{request.csp_nonce}}"></script>
 {% endif %}
 {% endblock ekstrajavascript %}
