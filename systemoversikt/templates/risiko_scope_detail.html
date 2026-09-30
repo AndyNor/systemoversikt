@@ -1,3 +1,4 @@
+{# 2026-09-30: Scenario modal – compact read-only Risikosammenstilling mappings between Uønsket hendelse and Årsaker/svakheter. #}
 {# 2026-09-30: Tiltak status select in scenario modal – light background color per status. #}
 {# 2026-09-08: Unused systems (livsløp 6–7) shown with strikethrough on collection and rapport. #}
 {# 2026-09-08: Removed editable Sist revidert – set automatically when status changes. #}
@@ -324,6 +325,10 @@
 							<label for="risiko-f-uonsket">Uønsket hendelse</label>
 							<textarea class="form-control form-control-sm risiko-modal-stretch-textarea" id="risiko-f-uonsket" rows="3"></textarea>
 						</div>
+						<div id="risiko-sammenstilling-mappings" class="risiko-sammenstilling-mappings" style="display:none;">
+							<span class="risiko-sammenstilling-mappings-label">Risikosammenstilling</span>
+							<div id="risiko-sammenstilling-mappings-list"></div>
+						</div>
 						<div class="form-group risiko-modal-textarea-field">
 							<label for="risiko-f-arsaker">Årsaker/svakheter</label>
 							<textarea class="form-control form-control-sm risiko-modal-stretch-textarea" id="risiko-f-arsaker" rows="3"></textarea>
@@ -615,6 +620,18 @@
 	resize: vertical;
 }
 .risiko-modal-col-footer { flex-shrink: 0; }
+.risiko-sammenstilling-mappings {
+	flex-shrink: 0;
+	max-height: 5.5rem;
+	overflow-y: auto;
+	margin-bottom: 0.45rem;
+	font-size: 0.8rem;
+	line-height: 1.35;
+}
+.risiko-sammenstilling-mappings-label { font-weight: 500; }
+.risiko-sammenstilling-mapping-row { margin-top: 0.1rem; }
+.risiko-sammenstilling-mapping-row .badge { font-weight: normal; margin-right: 0.2rem; }
+.risiko-sammenstilling-mapping-node-archived { text-decoration: line-through; opacity: 0.7; }
 .risiko-modal-risk-top,
 .risiko-konsekvenstype-block,
 .risiko-sannsynlighetstype-block,
@@ -963,7 +980,7 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 </style>
 {% if can_edit_scope or can_change_locked_status %}
 <script src="{% static 'risiko_api.js' %}" nonce="{{request.csp_nonce}}"></script>
-{# 2026-09-30: Cache-bust risiko_edit.js for tiltak status select colors. #}
-<script src="{% static 'risiko_edit.js' %}?v=20260930-tiltak-status-farge" nonce="{{request.csp_nonce}}"></script>
+{# 2026-09-30: Cache-bust risiko_edit.js for sammenstilling mappings in scenario modal. #}
+<script src="{% static 'risiko_edit.js' %}?v=20260930-sammenstilling-mappings" nonce="{{request.csp_nonce}}"></script>
 {% endif %}
 {% endblock ekstrajavascript %}

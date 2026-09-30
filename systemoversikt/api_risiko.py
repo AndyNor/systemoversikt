@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-09-30: Scenario detail includes sammenstilling_mappings (visible sammenstillinger only) for modal display.
 # 2026-09-08: System payloads include ute_av_bruk and select_label (livsløp 6–7) for unused-system UI.
 # 2026-09-08: api_risiko_scope_update – set sist_revidert to today when status changes (no client override).
 # 2026-08-23: Unauthenticated risk JSON APIs return 401 session_expired (not 403).
@@ -51,6 +52,7 @@ from systemoversikt.models import (
 	RISK_SCOPE_STATUS_VALG,
 	RiskAction,
 	RiskActionUnntak,
+	RiskSammenstillingScenarioLink,
 	RiskScenario,
 	RiskScope,
 	RiskScopeMember,
@@ -59,6 +61,7 @@ from systemoversikt.models import (
 	System,
 	Virksomhet,
 )
+from systemoversikt.risk_sammenstilling import sammenstillinger_visible_to_user
 from systemoversikt.risk_criteria import (
 	get_active_criteria,
 	konsekvens_lookup_label,
@@ -348,6 +351,45 @@ def _scenario_to_dict(scenario, tiltak_id_map=None, risk_id_by_pk=None, ansvarli
 		'rekkefolge': scenario.rekkefolge,
 	})
 	return data
+
+
+def _scenario_sammenstilling_mappings(user, scenario):
+	"""Reverse kartlegging: sammenstillinger (readable by user) where scenario is mapped to underkategorier."""
+	links = RiskSammenstillingScenarioLink.objects.filter(
+		scenario=scenario,
+		sammenstilling__in=sammenstillinger_visible_to_user(user),
+	).select_related(
+		'sammenstilling',
+		'framework_node',
+		'framework_node__parent',
+	).order_by(
+		'sammenstilling__title',
+		'framework_node__parent__rekkefolge',
+		'framework_node__parent__nummer',
+		'framework_node__rekkefolge',
+		'framework_node__nummer',
+	)
+	result = []
+	by_pk = {}
+	for link in links:
+		entry = by_pk.get(link.sammenstilling_id)
+		if entry is None:
+			entry = {
+				'pk': link.sammenstilling_id,
+				'title': link.sammenstilling.title,
+				'url': reverse('risiko_sammenstilling_detail', kwargs={'pk': link.sammenstilling_id}),
+				'nodes': [],
+			}
+			by_pk[link.sammenstilling_id] = entry
+			result.append(entry)
+		node = link.framework_node
+		entry['nodes'].append({
+			'display_code': node.display_code(),
+			'title': node.title,
+			'parent_title': node.parent.title if node.parent_id else '',
+			'status': node.status,
+		})
+	return result
 
 
 def _tiltak_list_dict(scope, scenarios, actions, ansvarlig_display_map=None):
@@ -831,9 +873,11 @@ def api_risiko_scenario_detail(request, pk, sid):
 	actions = _load_scope_actions(scope)
 	ansvarlig_display_map = _ansvarlig_display_map_for_actions(actions)
 	_, tiltak_map, risk_map = _tiltak_list_dict(scope, scenarios, actions, ansvarlig_display_map)
+	scenario_data = _scenario_to_dict(scenario, tiltak_map, risk_map, ansvarlig_display_map)
+	scenario_data['sammenstilling_mappings'] = _scenario_sammenstilling_mappings(request.user, scenario)
 	return JsonResponse({
 		'ok': True,
-		'scenario': _scenario_to_dict(scenario, tiltak_map, risk_map, ansvarlig_display_map),
+		'scenario': scenario_data,
 	})
 
 

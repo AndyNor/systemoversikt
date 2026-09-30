@@ -1,4 +1,5 @@
 // Change log:
+// 2026-09-30: Scenario modal shows compact read-only Risikosammenstilling mappings (reverse kartlegging).
 // 2026-09-30: Tiltak status select in scenario modal gets light background color per status.
 // 2026-09-08: Guard captureScopeMetaSnapshot when title field missing; cache-bust via template.
 // 2026-09-08: Unused systems (livsløp 6–7) – status in search labels; strikethrough in chips/table.
@@ -890,6 +891,32 @@
       });
     }
 
+    function renderSammenstillingMappings(mappings) {
+      const block = document.getElementById('risiko-sammenstilling-mappings');
+      const list = document.getElementById('risiko-sammenstilling-mappings-list');
+      if (!block || !list) return;
+      list.innerHTML = '';
+      if (!mappings || !mappings.length) {
+        block.style.display = 'none';
+        return;
+      }
+      mappings.forEach(function (m) {
+        let html = '<div class="risiko-sammenstilling-mapping-row">' +
+          '<a href="' + escapeHtml(m.url) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(m.title) + '</a>: ';
+        (m.nodes || []).forEach(function (node) {
+          const tooltip = (node.parent_title ? node.parent_title + ' › ' : '') + node.title +
+            (node.status === 'archived' ? ' (arkivert)' : '');
+          html += '<span class="badge badge-light' +
+            (node.status === 'archived' ? ' risiko-sammenstilling-mapping-node-archived' : '') +
+            '" title="' + escapeHtml(tooltip) + '">' +
+            escapeHtml(node.display_code) + ' ' + escapeHtml(node.title) + '</span>';
+        });
+        html += '</div>';
+        list.insertAdjacentHTML('beforeend', html);
+      });
+      block.style.display = '';
+    }
+
     function statusOptionsHtml(selected) {
       let html = '';
       (meta.tiltak_status || []).forEach(function (item) {
@@ -971,6 +998,7 @@
       });
       draftSystems = scenario ? (scenario.systemer || []).slice() : [];
       renderSystemChips();
+      renderSammenstillingMappings(scenario ? scenario.sammenstilling_mappings : []);
       setModalStatus('');
       renderModalActionCards(scenario ? (scenario.actions || []) : []);
       updateModalTiltakToolbar(!!scenario);
