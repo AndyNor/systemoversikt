@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-01: Mal node delete event type – subcategory deletion in mal editor (duplicates).
 # 2026-08-13: Unntak create/update/delete event types for tiltak coverage gaps.
 # 2026-08-10: Scenario/tiltak/member event types for extended risk activity logging.
 # 2026-07-09: Dedicated risk module activity log – helper and event-type constants.
@@ -19,6 +20,7 @@ RISK_ACTIVITY_CRITERIA_IMPORTED = 'criteria_imported'
 RISK_ACTIVITY_MAL_NODE_CREATED = 'mal_node_created'
 RISK_ACTIVITY_MAL_NODE_UPDATED = 'mal_node_updated'
 RISK_ACTIVITY_MAL_NODE_MOVED = 'mal_node_moved'
+RISK_ACTIVITY_MAL_NODE_DELETED = 'mal_node_deleted'
 RISK_ACTIVITY_MAL_IMPORTED = 'mal_imported'
 RISK_ACTIVITY_MAL_CREATED = 'mal_created'
 RISK_ACTIVITY_SCENARIO_CREATED = 'scenario_created'
@@ -45,6 +47,7 @@ RISK_ACTIVITY_EVENT_LABELS = {
 	RISK_ACTIVITY_MAL_NODE_CREATED: 'Mal: node opprettet',
 	RISK_ACTIVITY_MAL_NODE_UPDATED: 'Mal: node endret',
 	RISK_ACTIVITY_MAL_NODE_MOVED: 'Mal: node flyttet',
+	RISK_ACTIVITY_MAL_NODE_DELETED: 'Mal: node slettet',
 	RISK_ACTIVITY_MAL_IMPORTED: 'Mal importert fra fil',
 	RISK_ACTIVITY_MAL_CREATED: 'Mal opprettet fra fil',
 	RISK_ACTIVITY_SCENARIO_CREATED: 'Risiko opprettet',

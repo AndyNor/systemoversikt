@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-01: Mal node delete API – remove duplicate subcategories; requires confirm when linked to sammenstillinger.
 # 2026-08-23: Mal JSON APIs return 401 session_expired instead of OIDC redirect via login_required.
 # 2026-07-09: Mal node APIs – log taxonomy changes to RiskActivityLog.
 # 2026-07-06: Active nodes API – parent display code for kartlegging dropdown grouping.
@@ -7,6 +8,7 @@
 # 2026-07-06: Automatic category numbering – create always assigns next nummer; update ignores nummer.
 # 2026-07-06: Superuser-only template taxonomy APIs – maler independent of virksomhet.
 
+from django.db import transaction
 from django.db.models import Max
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -23,6 +25,7 @@ from systemoversikt.risk_framework import (
 )
 from systemoversikt.risk_activity_log import (
 	RISK_ACTIVITY_MAL_NODE_CREATED,
+	RISK_ACTIVITY_MAL_NODE_DELETED,
 	RISK_ACTIVITY_MAL_NODE_MOVED,
 	RISK_ACTIVITY_MAL_NODE_UPDATED,
 	log_risk_activity,
@@ -235,3 +238,52 @@ def api_risiko_mal_node_move(request, slug, nid):
 		framework=framework,
 	)
 	return _json_ok({'node': _node_payload(node)})
+
+
+@require_http_methods(['POST'])
+def api_risiko_mal_node_delete(request, slug, nid):
+	framework = _framework_or_404(slug)
+	denied = _require_template_edit(request)
+	if denied:
+		return denied
+	node = get_object_or_404(RiskFrameworkNode, pk=nid, framework=framework)
+	body = _parse_json_body(request)
+	if body is None:
+		return _json_error('Ugyldig JSON.')
+	if node.parent_id is None:
+		return _json_error('Bare underkategorier kan slettes.')
+
+	link_count = node.sammenstilling_links.count()
+	assessment_count = node.sammenstilling_assessments.count()
+	if (link_count or assessment_count) and body.get('confirm') is not True:
+		sammenstilling_titles = sorted(set(
+			list(node.sammenstilling_links.values_list('sammenstilling__title', flat=True))
+			+ list(node.sammenstilling_assessments.values_list('sammenstilling__title', flat=True))
+		))
+		return JsonResponse({
+			'ok': False,
+			'error': 'Underkategorien har koblinger.',
+			'requires_confirm': True,
+			'link_count': link_count,
+			'assessment_count': assessment_count,
+			'sammenstillinger': sammenstilling_titles,
+		}, status=409)
+
+	display_code = node.display_code()
+	title = node.title
+	with transaction.atomic():
+		node.delete()
+	log_risk_activity(
+		RISK_ACTIVITY_MAL_NODE_DELETED,
+		'%s slettet underkategori %s «%s» i mal «%s» (%d kartleggingskoblinger, %d vurderinger slettet).' % (
+			request.user.get_username(),
+			display_code,
+			title,
+			framework.title,
+			link_count,
+			assessment_count,
+		),
+		user=request.user,
+		framework=framework,
+	)
+	return _json_ok()

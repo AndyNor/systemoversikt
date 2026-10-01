@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
 {% load static %}
+{# 2026-10-01: Delete button for subcategories in node modal – remove duplicates; warns when linked. #}
 {# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
 {# 2026-07-07: JSON export/import on mal editor – update this template from file. #}
 {# 2026-07-06: Automatic category numbering – manual nummer field removed from editor. #}
@@ -43,7 +44,7 @@
 </div>
 
 <div id="risiko-rammeverk-editor" data-api-urls="{{ api_urls_json|escape }}">
-	<p class="text-muted">Endre ordlyd, legg til hovedkategorier og underkategorier, eller flytt underkategorier mellom kategorier.</p>
+	<p class="text-muted">Endre ordlyd, legg til hovedkategorier og underkategorier, flytt underkategorier mellom kategorier, eller slett underkategorier.</p>
 	<div class="mb-2">
 		<button type="button" class="btn btn-outline-success btn-sm" id="rammeverk-add-category">Ny hovedkategori</button>
 	</div>
@@ -74,6 +75,7 @@
 				</div>
 			</div>
 			<div class="modal-footer py-2">
+				<button type="button" class="btn btn-outline-danger btn-sm mr-auto" id="rammeverk-node-delete" style="display:none">Slett underkategori</button>
 				<button type="button" class="btn btn-primary btn-sm" id="rammeverk-node-save">Lagre</button>
 				<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
 			</div>

@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-10-01: Mal editor – POST api/nodes/<nid>/delete/ for removing duplicate subcategories.
 # 2026-10-01: On-demand AD phone lookup for user profile at /brukere/ad/<pk>/telefon/.
 # 2026-09-29: Tool looking up active AD users by e-mail list at /tools/users_by_email.
 # 2026-09-29: Tool listing DRIFT AD users not in a supplied list at /tools/drift_users_not_in_list.
@@ -184,6 +185,7 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/rammeverk/mal/(?P<slug>[-a-z0-9]+)/api/nodes/create/$', api_risiko_rammeverk.api_risiko_mal_node_create, name='api_risiko_mal_node_create'),
 	re_path(r'^sikkerhet/risiko/rammeverk/mal/(?P<slug>[-a-z0-9]+)/api/nodes/(?P<nid>\d{1,8})/update/$', api_risiko_rammeverk.api_risiko_mal_node_update, name='api_risiko_mal_node_update'),
 	re_path(r'^sikkerhet/risiko/rammeverk/mal/(?P<slug>[-a-z0-9]+)/api/nodes/(?P<nid>\d{1,8})/move/$', api_risiko_rammeverk.api_risiko_mal_node_move, name='api_risiko_mal_node_move'),
+	re_path(r'^sikkerhet/risiko/rammeverk/mal/(?P<slug>[-a-z0-9]+)/api/nodes/(?P<nid>\d{1,8})/delete/$', api_risiko_rammeverk.api_risiko_mal_node_delete, name='api_risiko_mal_node_delete'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/ny/$', views_risiko_rammeverk.risiko_sammenstilling_create, name='risiko_sammenstilling_create'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/api/create/$', api_risiko_sammenstilling.api_risiko_sammenstilling_create, name='api_risiko_sammenstilling_create'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/api/create-options/$', api_risiko_sammenstilling.api_risiko_sammenstilling_create_options, name='api_risiko_sammenstilling_create_options'),

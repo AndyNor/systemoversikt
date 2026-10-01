@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-01: Mal editor API URLs include nodeDelete – subcategory deletion.
 # 2026-08-07: Pass subcategory matrix (score-weighted aggregation) to sammenstilling detail.
 # 2026-07-09: Sammenstilling archive and mal import/create – log to RiskActivityLog.
 # 2026-07-07: List rows expose can_map; superuser modal for reader_groups on sammenstilling.
@@ -79,6 +80,7 @@ def _mal_api_urls(slug):
 		'nodeCreate': reverse('api_risiko_mal_node_create', kwargs={'slug': slug}),
 		'nodeUpdate': reverse('api_risiko_mal_node_update', kwargs={'slug': slug, 'nid': 0}).replace('/0/', '/{id}/'),
 		'nodeMove': reverse('api_risiko_mal_node_move', kwargs={'slug': slug, 'nid': 0}).replace('/0/', '/{id}/'),
+		'nodeDelete': reverse('api_risiko_mal_node_delete', kwargs={'slug': slug, 'nid': 0}).replace('/0/', '/{id}/'),
 		'activeNodes': reverse('api_risiko_mal_active_nodes', kwargs={'slug': slug}),
 	}
 

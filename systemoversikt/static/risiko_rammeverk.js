@@ -1,4 +1,5 @@
 // Change log:
+// 2026-10-01: Mal editor – delete subcategory; server returns 409 with link counts and user must confirm again.
 // 2026-10-01: Kartlegging scenario search runs on input (debounced) and checkbox change; stale responses ignored.
 // 2026-10-01: Kartlegging node filter – narrow underkategori options by code, title, forklaring and hovedkategori.
 // 2026-09-25: Kartlegging search table shows 200 chars of hendelse so rows stay readable.
@@ -448,6 +449,10 @@
           moveSection.style.display = 'none';
         }
       }
+      var deleteBtn = document.getElementById('rammeverk-node-delete');
+      if (deleteBtn) {
+        deleteBtn.style.display = (node && node.parent_pk && urls.nodeDelete) ? '' : 'none';
+      }
       window.jQuery('#rammeverk-node-modal').modal('show');
     }
 
@@ -500,6 +505,47 @@
           window.jQuery('#rammeverk-node-modal').modal('hide');
           loadCategories().then(loadTree);
         });
+      });
+    }
+
+    function linkedWarningText(data) {
+      var lines = ['Underkategorien er i bruk:'];
+      if (data.link_count) lines.push('- ' + data.link_count + ' kartleggingskobling(er) til risikoscenarioer');
+      if (data.assessment_count) lines.push('- ' + data.assessment_count + ' vurdering(er)');
+      if (data.sammenstillinger && data.sammenstillinger.length) {
+        lines.push('', 'Sammenstillinger: ' + data.sammenstillinger.join(', '));
+      }
+      lines.push('', 'Koblinger og vurderinger slettes sammen med underkategorien og kan ikke gjenopprettes.',
+        'Vil du likevel slette?');
+      return lines.join('\n');
+    }
+
+    function deleteNode(pk, confirmLinked) {
+      return postJson(urls.nodeDelete.replace('{id}', pk), { confirm: !!confirmLinked }).then(function () {
+        window.jQuery('#rammeverk-node-modal').modal('hide');
+        loadCategories().then(loadTree);
+      }).catch(function (err) {
+        if (err && err.isSessionExpired) return;
+        var data = (err && err.data) || {};
+        if (data.requires_confirm && !confirmLinked) {
+          if (window.confirm(linkedWarningText(data))) {
+            return deleteNode(pk, true);
+          }
+          return;
+        }
+        alert(data.error || 'Kunne ikke slette');
+      });
+    }
+
+    var deleteBtn = document.getElementById('rammeverk-node-delete');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', function () {
+        var pk = document.getElementById('rammeverk-node-pk').value;
+        if (!pk || !urls.nodeDelete) return;
+        var node = findNode(pk, cachedTree);
+        var label = node ? node.display_code + ' ' + node.title : 'underkategorien';
+        if (!window.confirm('Slette underkategori «' + label + '»?')) return;
+        deleteNode(pk, false);
       });
     }
 
