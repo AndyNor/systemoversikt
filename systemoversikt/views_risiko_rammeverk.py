@@ -86,6 +86,7 @@ def _mal_api_urls(slug):
 
 
 def _sammenstilling_api_urls(pk):
+	# 2026-10-01: Assessment save/apply endpoints removed – hovedkategori level is computed from mapped scenarios.
 	return {
 		'taxonomy': reverse('api_risiko_sammenstilling_taxonomy', kwargs={'pk': pk}),
 		'activeNodes': reverse('api_risiko_sammenstilling_active_nodes', kwargs={'pk': pk}),
@@ -94,8 +95,6 @@ def _sammenstilling_api_urls(pk):
 		'linkDelete': reverse('api_risiko_sammenstilling_link_delete', kwargs={'pk': pk, 'lid': 0}).replace('/0/', '/{id}/'),
 		'rollup': reverse('api_risiko_sammenstilling_rollup', kwargs={'pk': pk}),
 		'nodeScenarios': reverse('api_risiko_sammenstilling_node_scenarios', kwargs={'pk': pk, 'nid': 0}).replace('/nodes/0/', '/nodes/{id}/'),
-		'assessmentSave': reverse('api_risiko_sammenstilling_assessment_save', kwargs={'pk': pk, 'nid': 0}).replace('/nodes/0/', '/nodes/{id}/'),
-		'assessmentApply': reverse('api_risiko_sammenstilling_assessment_apply', kwargs={'pk': pk, 'nid': 0}).replace('/nodes/0/', '/nodes/{id}/'),
 	}
 
 

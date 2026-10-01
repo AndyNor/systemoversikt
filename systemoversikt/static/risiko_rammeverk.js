@@ -1,4 +1,5 @@
 // Change log:
+// 2026-10-01: Hovedkategori level is computed server-side – manual rating modal (set/apply level) removed.
 // 2026-10-01: Mal editor – delete subcategory; server returns 409 with link counts and user must confirm again.
 // 2026-10-01: Kartlegging scenario search runs on input (debounced) and checkbox change; stale responses ignored.
 // 2026-10-01: Kartlegging node filter – narrow underkategori options by code, title, forklaring and hovedkategori.
@@ -54,8 +55,6 @@
     if (!root) return;
     ensureSessionPing();
     var urls = parseUrls(root);
-    var currentNodePk = null;
-    var modal = document.getElementById('rammeverk-rating-modal');
     var drillModal = document.getElementById('rammeverk-drilldown-modal');
 
     root.addEventListener('click', function (ev) {
@@ -71,18 +70,6 @@
           }
           window.location.reload();
         });
-        return;
-      }
-      var editBtn = ev.target.closest('.js-edit-rating');
-      if (editBtn) {
-        currentNodePk = editBtn.getAttribute('data-node-pk');
-        var sEl = document.getElementById('rammeverk-rating-s');
-        var kEl = document.getElementById('rammeverk-rating-k');
-        var bEl = document.getElementById('rammeverk-rating-begrunnelse');
-        if (sEl) sEl.value = editBtn.getAttribute('data-s') || '';
-        if (kEl) kEl.value = editBtn.getAttribute('data-k') || '';
-        if (bEl) bEl.value = editBtn.getAttribute('data-begrunnelse') || '';
-        if (modal) window.jQuery(modal).modal('show');
         return;
       }
       var drillBtn = ev.target.closest('.js-drilldown');
@@ -113,41 +100,6 @@
         });
       }
     });
-
-    var saveBtn = document.getElementById('rammeverk-save-rating');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', function () {
-        if (!currentNodePk || !urls.assessmentSave) return;
-        var s = parseInt(document.getElementById('rammeverk-rating-s').value, 10);
-        var k = parseInt(document.getElementById('rammeverk-rating-k').value, 10);
-        var begrunnelse = document.getElementById('rammeverk-rating-begrunnelse').value;
-        postJson(urls.assessmentSave.replace('{id}', currentNodePk), {
-          sannsynlighet_nivaa: s,
-          konsekvens_nivaa: k,
-          begrunnelse: begrunnelse,
-        }).then(function (data) {
-          if (!data.ok) {
-            alert(data.error || 'Kunne ikke lagre');
-            return;
-          }
-          window.location.reload();
-        });
-      });
-    }
-
-    var applyBtn = document.getElementById('rammeverk-apply-suggestion');
-    if (applyBtn) {
-      applyBtn.addEventListener('click', function () {
-        if (!currentNodePk || !urls.assessmentApply) return;
-        postJson(urls.assessmentApply.replace('{id}', currentNodePk), {}).then(function (data) {
-          if (!data.ok) {
-            alert(data.error || 'Kunne ikke overføre');
-            return;
-          }
-          window.location.reload();
-        });
-      });
-    }
   }
 
   function initKartlegging(root) {

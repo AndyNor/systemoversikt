@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-01: Hovedkategori level is computed (score-weighted S×K) – manual «Sett nivå» removed from rollup/matrix.
 # 2026-09-03: Live sammenstilling/kartlegging omit archived-collection scenarios; stored snapshots keep historical JSON.
 # 2026-08-13: kontinuerlig_oppfolging included in SAMMENSTILLING_ACTIVE_TILTAK_STATUSES for status display.
 # 2026-08-07: Category veiledende (Sett nivå) uses same score-weighted S×K aggregation as underkategori matrix.
@@ -324,11 +325,9 @@ def build_rollup_tree(sammenstilling, include_archived=False, include_archived_c
 		cat_suggested = suggested_level_for_category(
 			sammenstilling, children, include_archived_collections=include_archived_collections,
 		)
-		cat_manual = assessment_for_node(sammenstilling, category, assessments_by_node)
-		cat_effective_label, cat_effective_source = effective_category_level(
-			sammenstilling, category, children, assessments_by_node,
-			include_archived_collections=include_archived_collections,
-		)
+		# 2026-10-01: Category level is computed from mapped scenarios – manual assessments no longer displayed.
+		cat_effective_label = cat_suggested['label']
+		cat_effective_source = 'computed' if cat_suggested['label'] else 'none'
 		mapped_count = sum(c['suggested']['scenario_count'] for c in child_payloads)
 		tree.append({
 			'pk': category.pk,
@@ -340,14 +339,9 @@ def build_rollup_tree(sammenstilling, include_archived=False, include_archived_c
 			'suggested': cat_suggested,
 			'suggested_label': cat_suggested['label'],
 			'suggested_css': risk_cell_css_class(cat_suggested['label']),
-			'manual': cat_manual,
 			'effective_label': cat_effective_label,
 			'effective_css': risk_cell_css_class(cat_effective_label),
 			'effective_source': cat_effective_source,
-			'differs_from_suggested': bool(
-				cat_manual and cat_manual['manual_label'] and cat_suggested['label']
-				and cat_manual['manual_label'] != cat_suggested['label']
-			),
 			'mapped_scenario_count': mapped_count,
 			'children': child_payloads,
 		})
@@ -355,16 +349,18 @@ def build_rollup_tree(sammenstilling, include_archived=False, include_archived_c
 
 
 def build_sammenstilling_category_matrix(rollup_tree, criteria=None):
+	# 2026-10-01: Place hovedkategorier by computed score-weighted S×K instead of manual assessment.
 	from systemoversikt.risk_criteria import get_active_criteria
 
 	if criteria is None:
 		criteria = get_active_criteria()
 	placements = {}
 	for cat in rollup_tree:
-		manual = cat.get('manual')
-		if not manual or not manual.get('sannsynlighet_nivaa') or not manual.get('konsekvens_nivaa'):
+		suggested = cat.get('suggested') or {}
+		s = suggested.get('sannsynlighet')
+		k = suggested.get('konsekvens')
+		if not s or not k:
 			continue
-		s, k = manual['sannsynlighet_nivaa'], manual['konsekvens_nivaa']
 		placements.setdefault((int(s), int(k)), []).append(cat)
 	grid = []
 	for sannsynlighet in range(5, 0, -1):

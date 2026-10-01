@@ -128,7 +128,7 @@ Snapshot views always check access against the **live** `RiskScope` / `RiskSamme
 | Read-only views | `systemoversikt/views_risk_snapshot.py` |
 | URLs | `systemoversikt/urls.py` |
 | Snapshot list (unversioned) | `templates/risk_snapshots/risiko_snapshot_list.html` |
-| Versioned detail templates | `templates/risk_snapshots/v1/risiko_scope_rapport.html`, `…/risiko_sammenstilling_detail.html`, `…/_risiko_rapport_styles.html` |
+| Versioned detail templates | `templates/risk_snapshots/v2/risiko_scope_rapport.html`, `…/risiko_sammenstilling_detail.html`, `…/_risiko_rapport_styles.html` (current). `v1/` is frozen and renders snapshots captured before the hovedkategori level became computed. |
 | Live pages (entry links) | `templates/risiko_scope_rapport.html`, `templates/risiko_sammenstilling_detail.html` |
 | Live rapport logic to mirror | `views_risiko._build_rapport_context`, `risk_report.py`, `risk_framework.py` |
 

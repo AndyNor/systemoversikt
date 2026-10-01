@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-10-01: Removed sammenstilling assessment save/apply routes – hovedkategori level is computed automatically.
 # 2026-10-01: Mal editor – POST api/nodes/<nid>/delete/ for removing duplicate subcategories.
 # 2026-10-01: On-demand AD phone lookup for user profile at /brukere/ad/<pk>/telefon/.
 # 2026-09-29: Tool looking up active AD users by e-mail list at /tools/users_by_email.
@@ -206,8 +207,6 @@ urlpatterns = [
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/links/(?P<lid>\d{1,8})/delete/$', api_risiko_sammenstilling.api_risiko_sammenstilling_link_delete, name='api_risiko_sammenstilling_link_delete'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/rollup/$', api_risiko_sammenstilling.api_risiko_sammenstilling_rollup, name='api_risiko_sammenstilling_rollup'),
 	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/nodes/(?P<nid>\d{1,8})/scenarios/$', api_risiko_sammenstilling.api_risiko_sammenstilling_node_scenarios, name='api_risiko_sammenstilling_node_scenarios'),
-	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/nodes/(?P<nid>\d{1,8})/assessment/$', api_risiko_sammenstilling.api_risiko_sammenstilling_assessment_save, name='api_risiko_sammenstilling_assessment_save'),
-	re_path(r'^sikkerhet/risiko/rammeverk/sammenstilling/(?P<pk>\d{1,8})/api/nodes/(?P<nid>\d{1,8})/assessment/apply/$', api_risiko_sammenstilling.api_risiko_sammenstilling_assessment_apply, name='api_risiko_sammenstilling_assessment_apply'),
 	re_path(r'^sikkerhet/risiko/api/systemer/sok/$', api_risiko.api_risiko_systemer_sok, name='api_risiko_systemer_sok'),
 	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/$', api_risiko_virksomhet.api_risiko_read_groups_list, name='api_risiko_read_groups_list'),
 	re_path(r'^sikkerhet/risiko/virksomhet/(?P<vid>\d{1,8})/tilgangsgrupper/api/groups/create/$', api_risiko_virksomhet.api_risiko_read_group_create, name='api_risiko_read_group_create'),

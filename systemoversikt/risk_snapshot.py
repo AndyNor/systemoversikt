@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-01: Sammenstilling captures store computed hovedkategori levels (schema v3, template v2); older rows keep manual history.
 # 2026-09-08: Serialized systems include livsløp status so unused names can be struck through.
 # 2026-09-03: New sammenstilling captures follow live detail (omit archived-collection scenarios); stored JSON is unchanged.
 # 2026-08-13: Collection snapshots include tiltak unntak (json_schema_version 2).

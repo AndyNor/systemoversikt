@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-# 2026-07-06: Manual assessment restricted to main categories (hovedkategori).
 # Change log:
+# 2026-10-01: Hovedkategori level is computed automatically – manual assessment save/apply APIs removed.
 # 2026-10-01: Active nodes API – include forklaring so kartlegging dropdown can be searched by description.
 # 2026-08-23: JSON APIs return 401 session_expired instead of OIDC redirect via login_required.
 # 2026-07-07: Superuser API to get/set reader_groups on sammenstilling.
@@ -25,11 +25,9 @@ from systemoversikt.models import (
 	RiskScenario,
 )
 from systemoversikt.risk_framework import (
-	apply_suggestion_to_assessment,
 	build_rollup_tree,
 	kartlegging_scenario_rows,
 	mapped_scenarios_detail,
-	save_node_assessment,
 	search_scenarios_for_mapping,
 )
 from systemoversikt.api_risiko_rammeverk import _taxonomy_tree as mal_taxonomy_tree
@@ -425,48 +423,3 @@ def api_risiko_sammenstilling_node_scenarios(request, pk, nid):
 		return denied
 	node = get_object_or_404(RiskFrameworkNode, pk=nid, framework=sammenstilling.framework)
 	return _json_ok({'scenarios': mapped_scenarios_detail(sammenstilling, node)})
-
-
-@require_http_methods(['POST'])
-def api_risiko_sammenstilling_assessment_save(request, pk, nid):
-	sammenstilling = _sammenstilling_or_404(pk)
-	denied = _require_sammenstilling_map(request, sammenstilling)
-	if denied:
-		return denied
-	node = get_object_or_404(RiskFrameworkNode, pk=nid, framework=sammenstilling.framework)
-	if node.parent_id is not None:
-		return _json_error('Risikonivå settes kun på hovedkategori.')
-	body = _parse_json_body(request)
-	if body is None:
-		return _json_error('Ugyldig JSON.')
-	try:
-		k = int(body['konsekvens_nivaa'])
-		s = int(body['sannsynlighet_nivaa'])
-	except (KeyError, TypeError, ValueError):
-		return _json_error('Konsekvens og sannsynlighet må være tall 1–5.')
-	if not (1 <= k <= 5 and 1 <= s <= 5):
-		return _json_error('Konsekvens og sannsynlighet må være mellom 1 og 5.')
-	assessment = save_node_assessment(
-		sammenstilling,
-		node,
-		request.user,
-		k,
-		s,
-		begrunnelse=(body.get('begrunnelse') or '').strip(),
-	)
-	return _json_ok({'assessment_pk': assessment.pk})
-
-
-@require_http_methods(['POST'])
-def api_risiko_sammenstilling_assessment_apply(request, pk, nid):
-	sammenstilling = _sammenstilling_or_404(pk)
-	denied = _require_sammenstilling_map(request, sammenstilling)
-	if denied:
-		return denied
-	node = get_object_or_404(RiskFrameworkNode, pk=nid, framework=sammenstilling.framework)
-	if node.parent_id is not None:
-		return _json_error('Risikonivå settes kun på hovedkategori.')
-	assessment = apply_suggestion_to_assessment(sammenstilling, node, request.user)
-	if assessment is None:
-		return _json_error('Ingen veiledende nivå å overføre.')
-	return _json_ok({'assessment_pk': assessment.pk})

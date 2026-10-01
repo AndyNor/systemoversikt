@@ -1,6 +1,7 @@
 {% extends "sikkerhet_index.html" %}
 {% load static %}
 {% load templatetags %}
+{# 2026-10-01: Hovedkategori level is computed from mapped scenarios – manual «Sett nivå» removed. #}
 {# 2026-09-30: Scenario matrix per underkategori (only scenarios linked to that subcategory). #}
 {# 2026-09-03: Live page omits scenarios from archived risk collections; snapshots keep historical mapping. #}
 {# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
@@ -63,7 +64,7 @@
 {% csrf_token %}
 
 {% if is_reader_only %}
-<div class="alert alert-secondary py-2" role="status">Du har lesetilgang til denne sammenstillingen via lesergruppe. Kartlegging og endring av vurderinger krever medlemskap i eiergruppen.</div>
+<div class="alert alert-secondary py-2" role="status">Du har lesetilgang til denne sammenstillingen via lesergruppe. Kartlegging krever medlemskap i eiergruppen.</div>
 {% endif %}
 
 <p class="mb-3">
@@ -111,16 +112,17 @@
 <p class="text-muted">
 	Mal: <strong>{{ framework.title }}</strong>.
 	Eiergruppe: <strong>{{ sammenstilling.owner_group.display_title }}</strong>.
-	Manuelt nivå settes per hovedkategori. Kartlagte operative scenarioer vises under hver kategori.
+	Risikonivået beregnes automatisk fra kartlagte scenarioer. Kartlagte operative scenarioer vises under hver kategori.
 </p>
 
 <div class="mb-4" id="risikomatriser">
-	{# 2026-08-07: Explain how hovedkategori (manual) and underkategori (score-weighted) matrices are placed. #}
+	{# 2026-10-01: Hovedkategori matrix is computed (score-weighted S×K) like the underkategori matrix. #}
 	<h5 class="mt-0">Nåværende risiko</h5>
 	<h6 class="mb-1">Hovedkategorier</h6>
 	<p class="text-muted small mb-2">
-		Hver hovedkategori plasseres etter manuelt satt sannsynlighet og konsekvens («Sett nivå»).
-		Nivået er uavhengig av underliggende scenarioer; kun kategorier med begge verdier satt vises i matrisen.
+		Hver hovedkategori plasseres automatisk ut fra alle scenarioer som er kartlagt til underkategoriene i kategorien,
+		med samme vektede beregning som underkategori-matrisen nedenfor (hvert scenario veier med risikoscore S×K).
+		Hovedkategorier uten vurderte scenarioer vises ikke i matrisen.
 	</p>
 	{% include "risiko_sammenstilling_matrise_grid.html" with matrix=matrix_current konsekvens_labels=konsekvens_labels %}
 	<h6 class="mt-4 mb-1">Underkategorier</h6>
@@ -151,21 +153,14 @@
 <div id="risiko-rammeverk-rollup" data-api-urls="{{ api_urls_json|escape }}">
 	{% for cat in rollup_tree %}
 	<div class="card mb-3" id="rammeverk-cat-wrap-{{ cat.pk }}">
-		<div class="card-header d-flex justify-content-between align-items-center py-2 {% if cat.differs_from_suggested %}table-warning{% endif %}">
+		<div class="card-header d-flex justify-content-between align-items-center py-2">
 			<button type="button" class="btn btn-link btn-sm p-0 text-left font-weight-bold" data-toggle="collapse" data-target="#rammeverk-cat-{{ cat.pk }}">
 				{{ cat.display_code }}. {{ cat.title }}
 			</button>
 			<div class="text-nowrap">
-				<span class="badge {{ cat.manual.manual_css|default:'risk-cell-empty' }} px-2 py-1 mr-1 js-category-effective-label" title="Manuelt satt risikonivå">
-					{% if cat.manual and cat.manual.manual_label %}{{ cat.manual.manual_label }}{% else %}—{% endif %}
+				<span class="badge {{ cat.effective_css|default:'risk-cell-empty' }} px-2 py-1 mr-1 js-category-effective-label" title="Beregnet risikonivå fra kartlagte scenarioer">
+					{% if cat.effective_label %}{{ cat.effective_label }}{% else %}—{% endif %}
 				</span>
-				{% if can_map %}
-				<button type="button" class="btn btn-outline-primary btn-sm js-edit-rating"
-					data-node-pk="{{ cat.pk }}"
-					data-s="{% if cat.manual and cat.manual.sannsynlighet_nivaa %}{{ cat.manual.sannsynlighet_nivaa }}{% endif %}"
-					data-k="{% if cat.manual and cat.manual.konsekvens_nivaa %}{{ cat.manual.konsekvens_nivaa }}{% endif %}"
-					data-begrunnelse="{% if cat.manual %}{{ cat.manual.begrunnelse }}{% endif %}">Sett nivå</button>
-				{% endif %}
 			</div>
 		</div>
 		<div id="rammeverk-cat-{{ cat.pk }}" class="collapse show">
@@ -272,49 +267,6 @@
 		</div>
 	</div>
 	{% endfor %}
-</div>
-
-<div class="modal fade" id="rammeverk-rating-modal" tabindex="-1" role="dialog" aria-hidden="true">
-	<div class="modal-dialog" role="document">
-		<div class="modal-content">
-			<div class="modal-header py-2">
-				<h5 class="modal-title">Sett manuelt risikonivå for hovedkategori</h5>
-				<button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-			</div>
-			<div class="modal-body">
-				<div class="form-row">
-					<div class="col">
-						<label class="small">Sannsynlighet (1–5)</label>
-						<input type="number" min="1" max="5" class="form-control form-control-sm" id="rammeverk-rating-s">
-					</div>
-					<div class="col">
-						<label class="small">Konsekvens (1–5)</label>
-						<input type="number" min="1" max="5" class="form-control form-control-sm" id="rammeverk-rating-k">
-					</div>
-				</div>
-				<div class="mt-2">
-					<label class="small">Begrunnelse</label>
-					<textarea class="form-control form-control-sm" id="rammeverk-rating-begrunnelse" rows="3"></textarea>
-				</div>
-				{# 2026-08-07: Category veiledende uses score-weighted S×K aggregation (same as underkategori matrix). #}
-				<p class="text-muted small mt-3 mb-0">
-					<strong>Bruk veiledende</strong> beregner forslag fra alle kartlagte scenarioer under denne hovedkategorien
-					med samme metode som underkategori-matrisen: vektet gjennomsnitt av sannsynlighet og konsekvens
-					der hvert scenario veier med risikoscore S×K (høyere risiko teller mer), avrundet til nivå 1–5.
-					Resultatet lagres som manuelt nivå med begrunnelse om at det er overført fra veiledende.
-				</p>
-			</div>
-			<div class="modal-footer justify-content-between w-100 py-2">
-				<div>
-					<button type="button" class="btn btn-outline-secondary btn-sm" id="rammeverk-apply-suggestion">Bruk veiledende</button>
-				</div>
-				<div>
-					<button type="button" class="btn btn-primary btn-sm" id="rammeverk-save-rating">Lagre</button>
-					<button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Avbryt</button>
-				</div>
-			</div>
-		</div>
-	</div>
 </div>
 
 {% endblock hovedinnhold %}
