@@ -10203,6 +10203,7 @@ def _virksomhet_alle_row_counts(virksomhet_ids):
 def alle_virksomheter(request):
 	#Vise oversikt over alle virksomheter
 	# 2026-06-08: Batch counts, prefetch M2M, batch leder_hr – avoids N+1 without join-heavy annotate.
+	# 2026-10-01: Pass WAN location integration status – intro text shows when locations were last updated.
 	required_permissions = None
 
 	search_term = request.GET.get('search_term', "").strip()
@@ -10258,6 +10259,7 @@ def alle_virksomheter(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'virksomheter': virksomheter_list,
 		'virksomheter_count': virksomheter_count,
+		'integrasjonsstatus_wan': _integrasjonsstatus("sp_wan"),
 	})
 
 

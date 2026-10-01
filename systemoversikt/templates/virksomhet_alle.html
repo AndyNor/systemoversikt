@@ -13,7 +13,41 @@
 	<a href="/admin/systemoversikt/virksomhet/add/" class="btn btn-sm">{% include 'site_edit_button.html' %} Ny virksomhet</a>
 	<hr>
 
-	<p>Virksomheter er her definert som organisatoriske enheter fra Active Directory, og kan derfor ha noen flere registreringer enn i offisielle organisasjonskart. Det er {{ virksomheter_count }} virksomheter registrert.</p>
+	{# 2026-10-01: Rewrote intro – explains technical registrations, data sources per column and WAN sync status. #}
+	<div class="virksomhet-alle-intro">
+		<p>
+			Det er <strong>{{ virksomheter_count }}</strong> registreringer i oversikten. I tillegg til kommunens formelle virksomheter
+			finnes det også registreringer av teknisk art, som <em>DRIFT</em>, «ukjent virksomhet» og «utenfor kommunen». Disse vises nedtonet nederst i tabellen.
+			Oversikten vedlikeholdes manuelt i Kartoteket.
+		</p>
+		<ul>
+			<li><strong>Nettverkslokasjoner</strong> importeres via integrasjon.
+				{% if integrasjonsstatus_wan.dato_sist_oppdatert %}
+					<span class="virksomhet-alle-status">
+						<span class="virksomhet-alle-status-dot" style="background-color: {{ integrasjonsstatus_wan.color }};"></span>
+						Sist oppdatert {{ integrasjonsstatus_wan.dato_sist_oppdatert|date:"d.m.Y" }} ({{ integrasjonsstatus_wan.dato_sist_oppdatert|timesince }} siden)
+					</span>
+				{% else %}
+					<span class="text-muted">Sist oppdatert: ukjent</span>
+				{% endif %}
+			</li>
+			<li><strong>Brukeridenter</strong> er aktive identer fra brukerkatalogen (AD).</li>
+			<li><strong>Klienter</strong> er antall Windows-klienter. Mobile enheter er ikke med.</li>
+			<li><strong>Leder</strong> hentes i utgangspunktet fra grunndatabasen, med data fra HR.</li>
+			<li><strong>Øvrige roller</strong> registreres manuelt her i Kartoteket.
+				Merk at <a href="https://behandlingsoversikt.k8s.oslo.kommune.no/koordinatorer" target="_blank" rel="noopener noreferrer">Behandlingsoversikten</a>
+				(krever pålogging) har en egen, manuell oversikt over PKO- og ISK-rollene. Disse synkroniseres ikke automatisk med Kartoteket.
+			</li>
+		</ul>
+	</div>
+	<style>
+		.virksomhet-alle-intro { max-width: 60rem; padding: .75rem 1rem; margin-bottom: 1rem; border-left: 3px solid #dee2e6; background-color: #f8f9fa; }
+		.virksomhet-alle-intro p { margin-bottom: .5rem; }
+		.virksomhet-alle-intro ul { margin-bottom: 0; padding-left: 1.25rem; }
+		.virksomhet-alle-intro li { margin-bottom: .15rem; }
+		.virksomhet-alle-status { margin-left: .25rem; font-size: .875em; color: #6c757d; white-space: nowrap; }
+		.virksomhet-alle-status-dot { display: inline-block; width: .6em; height: .6em; border-radius: 50%; margin-right: .2em; vertical-align: middle; }
+	</style>
 
 	<table id="alle_virksomheter" class="tablesorter excel">
 	<thead>
