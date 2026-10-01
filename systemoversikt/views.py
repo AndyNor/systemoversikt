@@ -5842,15 +5842,19 @@ def _logger_matching_content_type_ids(term):
 
 def logger(request):
 	#viser alle endringer på objekter i løsningen
+	# 2026-10-01: Exclude Sårbarhetsoppfølging (Sarbarhetssak) entries from list and top users – not wanted in this log view.
 	# 2026-07-09: Pagination (500 per page) and search by user, object, instance, beskrivelse.
 	required_permissions = ['admin.view_logentry']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
+	sarbarhetssak_content_type = ContentType.objects.get_for_model(Sarbarhetssak)
+	base_logentries = LogEntry.objects.exclude(content_type=sarbarhetssak_content_type)
+
 	aktive_antall_uker = 4
 	aktive_antall_personer = 10
 	period = datetime.datetime.now() - datetime.timedelta(weeks=aktive_antall_uker)
-	top_users = LogEntry.objects.filter(action_time__gte=period).values('user_id').annotate(count=Count('user_id')).order_by('-count')[:aktive_antall_personer]
+	top_users = base_logentries.filter(action_time__gte=period).values('user_id').annotate(count=Count('user_id')).order_by('-count')[:aktive_antall_personer]
 	#print(top_users)
 	for user in top_users:
 		user["user"] = User.objects.get(pk=user["user_id"])
@@ -5866,7 +5870,7 @@ def logger(request):
 	search_beskrivelse = search_beskrivelse_raw.strip()
 	has_filters = bool(search_user or search_objekt or search_instans or search_beskrivelse)
 
-	qs = LogEntry.objects.select_related('user', 'content_type', 'user__profile').order_by('-action_time')
+	qs = base_logentries.select_related('user', 'content_type', 'user__profile').order_by('-action_time')
 	if search_user:
 		qs = qs.filter(
 			Q(user__username__icontains=search_user) |

@@ -1,6 +1,10 @@
 {% extends "admin_index.html" %}
 {% load static %}
 {% load humanize %}
+{% comment %}
+Change log:
+2026-10-01: Note that Sårbarhetsoppfølging entries are excluded from this view.
+{% endcomment %}
 
 {% block overskrift %}
 	Logg over endringer i databasen
@@ -39,6 +43,7 @@ De {{aktive_antall_personer}} mest aktive personene siste {{aktive_antall_uker}}
 			Viser opp til {{ antall_vist }} per side.
 		{% endif %}
 	</p>
+	<p class="small text-muted">Endringer på sårbarhetsoppfølging er filtrert bort fra denne loggen og fra oversikten over mest aktive personer.</p>
 
 	<form action="{% url 'logger' %}" autocomplete="off" class="mb-3">
 		<div class="row">
