@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
 {% load static %}
+{# 2026-10-01: Removed Søk button – scenario search runs automatically on input and checkbox change. #}
 {# 2026-10-01: Filter field for underkategori dropdown – narrows options by title and forklaring. #}
 {# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
 {# 2026-07-06: Hide R# column – not useful when mapping scenarios to subcategories. #}
@@ -60,9 +61,6 @@
 				<div class="col-md-4">
 					<label class="small mb-0 d-block">&nbsp;</label>
 					<label class="mb-0 small"><input type="checkbox" id="kartlegging-eskaleres"> Kun scenarioer med tiltak som må eskaleres</label>
-				</div>
-				<div class="col-md-2">
-					<button type="button" class="btn btn-primary btn-sm btn-block" id="kartlegging-search">Søk</button>
 				</div>
 			</div>
 		</div>

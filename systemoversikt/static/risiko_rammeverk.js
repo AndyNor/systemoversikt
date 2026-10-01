@@ -1,4 +1,5 @@
 // Change log:
+// 2026-10-01: Kartlegging scenario search runs on input (debounced) and checkbox change; stale responses ignored.
 // 2026-10-01: Kartlegging node filter – narrow underkategori options by code, title, forklaring and hovedkategori.
 // 2026-09-25: Kartlegging search table shows 200 chars of hendelse so rows stay readable.
 // 2026-08-23: Use shared RisikoApi for fetch/session expiry; start session heartbeat on init.
@@ -261,8 +262,12 @@
       nodeFilter.addEventListener('input', renderNodeOptions);
     }
 
+    var searchSeq = 0;
+    var searchTimer = null;
+
     function search() {
       if (!urls.scenarioSearch || !tbody) return;
+      var seq = ++searchSeq;
       var params = new URLSearchParams();
       var virksomhetEl = document.getElementById('kartlegging-virksomhet');
       var q = document.getElementById('kartlegging-q').value;
@@ -273,6 +278,7 @@
       if (eskaleresEl && eskaleresEl.checked) params.set('eskaleres_only', '1');
       tbody.innerHTML = '<tr><td colspan="' + colCount + '" class="text-muted">Laster…</td></tr>';
       getJson(urls.scenarioSearch + '?' + params.toString()).then(function (data) {
+        if (seq !== searchSeq) return;
         if (!data.ok) {
           tbody.innerHTML = '<tr><td colspan="' + colCount + '" class="text-danger">' + (data.error || 'Feil') + '</td></tr>';
           return;
@@ -300,7 +306,15 @@
       });
     }
 
-    document.getElementById('kartlegging-search').addEventListener('click', search);
+    function scheduleSearch() {
+      if (searchTimer) clearTimeout(searchTimer);
+      searchTimer = setTimeout(search, 300);
+    }
+
+    document.getElementById('kartlegging-q').addEventListener('input', scheduleSearch);
+    document.getElementById('kartlegging-unmapped').addEventListener('change', search);
+    var eskaleresFilter = document.getElementById('kartlegging-eskaleres');
+    if (eskaleresFilter) eskaleresFilter.addEventListener('change', search);
     document.getElementById('kartlegging-link-btn').addEventListener('click', function () {
       var nodePk = nodeSelect.value;
       var ids = Array.prototype.map.call(
