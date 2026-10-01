@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
 {% load static %}
+{# 2026-10-01: Filter field for underkategori dropdown – narrows options by title and forklaring. #}
 {# 2026-08-23: Load risiko_api.js before rammeverk JS for shared session handling. #}
 {# 2026-07-06: Hide R# column – not useful when mapping scenarios to subcategories. #}
 {# 2026-07-06: Eskaleres-filter checkbox – default off for kartlegging scenario search. #}
@@ -70,6 +71,9 @@
 	<div class="mb-3">
 		<h5>Knytt til underkategori</h5>
 		<div class="form-row align-items-end">
+			<div class="col-md-4 col-lg-3 mb-2 mb-md-0">
+				<input type="search" class="form-control form-control-sm" id="kartlegging-node-filter" placeholder="Filtrer underkategorier (tittel, beskrivelse)…" autocomplete="off">
+			</div>
 			<div class="col-md-6 col-lg-5">
 				<select class="form-control form-control-sm" id="kartlegging-target-node">
 					<option value="">Velg underkategori…</option>

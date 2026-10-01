@@ -1,4 +1,5 @@
 // Change log:
+// 2026-10-01: Kartlegging node filter – narrow underkategori options by code, title, forklaring and hovedkategori.
 // 2026-09-25: Kartlegging search table shows 200 chars of hendelse so rows stay readable.
 // 2026-08-23: Use shared RisikoApi for fetch/session expiry; start session heartbeat on init.
 // 2026-07-06: Kartlegging node select – optgroup per hovedkategori for easier navigation.
@@ -204,27 +205,60 @@
       return title || code || 'Kategori';
     }
 
+    var allNodes = [];
+    var nodeFilter = document.getElementById('kartlegging-node-filter');
+
+    function nodeMatchesFilter(node, terms) {
+      if (!terms.length) return true;
+      var haystack = [
+        node.display_code, node.title, node.forklaring, node.parent_title,
+      ].join(' ').toLowerCase();
+      return terms.every(function (t) { return haystack.indexOf(t) !== -1; });
+    }
+
+    function renderNodeOptions() {
+      if (!nodeSelect) return;
+      var previous = nodeSelect.value;
+      var terms = (nodeFilter ? nodeFilter.value : '').toLowerCase().split(/\s+/).filter(Boolean);
+      var matches = allNodes.filter(function (n) { return nodeMatchesFilter(n, terms); });
+      nodeSelect.innerHTML = '';
+      var placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = terms.length
+        ? (matches.length ? 'Velg underkategori (' + matches.length + ' treff)…' : 'Ingen treff')
+        : 'Velg underkategori…';
+      nodeSelect.appendChild(placeholder);
+      var currentGroup = null;
+      var currentParentPk = null;
+      matches.forEach(function (n) {
+        var parentPk = n.parent_pk != null ? String(n.parent_pk) : '';
+        if (parentPk !== currentParentPk) {
+          currentParentPk = parentPk;
+          currentGroup = document.createElement('optgroup');
+          currentGroup.label = kartleggingParentLabel(n);
+          nodeSelect.appendChild(currentGroup);
+        }
+        var opt = document.createElement('option');
+        opt.value = n.pk;
+        opt.textContent = n.display_code + ' ' + n.title;
+        if (n.forklaring) opt.title = n.forklaring;
+        currentGroup.appendChild(opt);
+      });
+      var stillVisible = matches.some(function (n) { return String(n.pk) === previous; });
+      nodeSelect.value = stillVisible ? previous : '';
+    }
+
     function loadNodes() {
       if (!urls.activeNodes || !nodeSelect) return;
       getJson(urls.activeNodes).then(function (data) {
         if (!data.ok) return;
-        nodeSelect.innerHTML = '<option value="">Velg underkategori…</option>';
-        var currentGroup = null;
-        var currentParentPk = null;
-        data.nodes.forEach(function (n) {
-          var parentPk = n.parent_pk != null ? String(n.parent_pk) : '';
-          if (parentPk !== currentParentPk) {
-            currentParentPk = parentPk;
-            currentGroup = document.createElement('optgroup');
-            currentGroup.label = kartleggingParentLabel(n);
-            nodeSelect.appendChild(currentGroup);
-          }
-          var opt = document.createElement('option');
-          opt.value = n.pk;
-          opt.textContent = n.display_code + ' ' + n.title;
-          currentGroup.appendChild(opt);
-        });
+        allNodes = data.nodes || [];
+        renderNodeOptions();
       });
+    }
+
+    if (nodeFilter) {
+      nodeFilter.addEventListener('input', renderNodeOptions);
     }
 
     function search() {

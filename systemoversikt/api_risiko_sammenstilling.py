@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # 2026-07-06: Manual assessment restricted to main categories (hovedkategori).
 # Change log:
+# 2026-10-01: Active nodes API – include forklaring so kartlegging dropdown can be searched by description.
 # 2026-08-23: JSON APIs return 401 session_expired instead of OIDC redirect via login_required.
 # 2026-07-07: Superuser API to get/set reader_groups on sammenstilling.
 # 2026-07-07: Superuser API to list owner groups and reassign sammenstilling eiergruppe.
@@ -314,6 +315,7 @@ def api_risiko_sammenstilling_active_nodes(request, pk):
 				'pk': n.pk,
 				'display_code': n.display_code(),
 				'title': n.title,
+				'forklaring': n.forklaring,
 				'parent_pk': n.parent_id,
 				'parent_display_code': n.parent.display_code() if n.parent_id else '',
 				'parent_title': n.parent.title if n.parent_id else '',
