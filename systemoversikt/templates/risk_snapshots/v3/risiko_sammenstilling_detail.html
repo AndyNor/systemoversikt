@@ -1,0 +1,198 @@
+{# 2026-10-01: Snapshot v2 – hovedkategori level is computed from mapped scenarios (no manual «Sett nivå»). #}
+{# 2026-09-30: Scenario matrix per underkategori, derived from stored category matrix (works for older snapshots). #}
+{# 2026-09-03: Snapshot JSON may include scenarios from collections later archived; live page omits those. #}
+{# 2026-07-08: Snapshot v1 – read-only sammenstilling detail from precomputed JSON. #}
+{% extends "sikkerhet_index.html" %}
+{% load templatetags %}
+
+{% block overskrift %}
+	{{ sammenstilling.title }} (arkivert)
+{% endblock overskrift %}
+
+{% block ekstrajavascript %}
+<style nonce="{{ request.csp_nonce }}">
+.risk-matrix { border-collapse: collapse; width: 100%; margin-bottom: 1rem; border: 2px solid #5a6268; table-layout: fixed; }
+.risk-matrix th, .risk-matrix td { border: 1px solid #5a6268; text-align: center; vertical-align: middle; padding: 4px; min-width: 0; }
+.risk-matrix tbody tr { height: 3.25rem; }
+.risk-matrix .axis-label { background: #f8f9fa; font-weight: 600; font-size: 0.85rem; }
+.risk-matrix .axis-label-sanns { writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap; padding: 0.5rem 0.15rem; font-size: 0.75rem; }
+.risk-matrix .axis-label-level { white-space: normal; overflow-wrap: break-word; line-height: 1.25; font-size: 0.8rem; padding: 6px 4px; }
+.risk-matrix .risk-badge { display: block; margin: 4px 0; padding: 6px 10px; font-size: 0.8rem; white-space: normal; text-align: left; border: 1px solid transparent; border-radius: 4px; color: inherit; background: rgba(255, 255, 255, 0.2); }
+/* 2026-08-07: Per-category scenario badges – slightly smaller risk text in full-width matrix. */
+.risk-matrix.risk-matrix-scenario .risk-badge { padding: 4px 8px; font-size: 0.75rem; }
+.risk-matrix.risk-matrix-scenario .risk-badge-text { font-size: 0.7rem; }
+.risk-cell-lav { background-color: #c0eb96; }
+.risk-cell-middels { background-color: #ffecb2; }
+.risk-cell-hoy { background-color: #ffc8cd; }
+.risk-cell-empty { background-color: #fff; }
+.risiko-rammeverk-subsection { border-left: 3px solid #dee2e6; padding-left: 0.75rem; }
+.risiko-tiltak-status-forslag { background-color: #e9ecef; }
+.risiko-tiltak-status-besluttet { background-color: #f8d7da; }
+.risiko-tiltak-status-under-arbeid { background-color: #fff3cd; }
+.risiko-tiltak-status-utfort { background-color: #d4edda; }
+.risiko-tiltak-status-kontinuerlig { background-color: #b8daff; }
+.risiko-tiltak-status-tag { display: inline-block; padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.75rem; }
+</style>
+{% endblock ekstrajavascript %}
+
+{% block hovedinnhold %}
+
+<div class="alert alert-secondary py-2" role="status">
+	<strong>Arkivert snapshot</strong> tatt {{ snapshot.captured_at|date:"Y-m-d H:i" }}.
+	Lesemodus – ingen redigering.
+</div>
+
+<p class="mb-3">
+	<a class="btn btn-back btn-sm" href="{% url snapshot_list_url_name pk=sammenstilling.pk %}">&larr; Historikk</a>
+	<a class="btn btn-outline-secondary btn-sm ml-2" href="{% url 'risiko_sammenstilling_detail' pk=sammenstilling.pk %}">Live versjon</a>
+</p>
+
+<p class="text-muted">
+	Mal: <strong>{{ framework.title }}</strong>.
+	Eiergruppe: <strong>{{ owner_group_display_title }}</strong>.
+</p>
+
+<div class="mb-4" id="risikomatriser">
+	{# 2026-10-01: Template v3 – both matrices use worst-case floor (v2 keeps the score-weighted mean used by older snapshots). #}
+	<h5 class="mt-0">Nåværende risiko</h5>
+	<h6 class="mb-1">Hovedkategorier</h6>
+	<p class="text-muted small mb-2">
+		Hver hovedkategori er plassert automatisk ut fra alle scenarioer som var kartlagt til underkategoriene i kategorien
+		da snapshotet ble tatt, med samme beregning som underkategori-matrisen nedenfor.
+		Hovedkategorier uten vurderte scenarioer vises ikke i matrisen.
+	</p>
+	{% include "risiko_sammenstilling_matrise_grid.html" with matrix=matrix_current konsekvens_labels=konsekvens_labels %}
+	{% if matrix_subcategories %}
+	<h6 class="mt-4 mb-1">Underkategorier</h6>
+	<p class="text-muted small mb-1">
+		Hver underkategori plasseres automatisk ut fra kartlagte scenarioer som har satt både sannsynlighet (S) og konsekvens (K) på skala 1–5. Scenarioer uten begge verdier ignoreres. Underkategorier uten vurderte scenarioer vises ikke.
+	</p>
+	<p class="text-muted small mb-1">
+		<strong>Verste scenario bestemmer nivået:</strong>
+		en underkategori har aldri lavere risikonivå enn det mest alvorlige scenarioet som var kartlagt til den.
+		Var ett scenario Høy, er underkategorien Høy – uansett hvor mange scenarioer på lavere nivå som lå i samme underkategori.
+	</p>
+	<p class="text-muted small mb-1">
+		Plasseringen i matrisen er avgjort bare av scenarioene som hadde dette nivået:
+	</p>
+	<ul class="text-muted small mb-1 pl-3">
+		<li>For hvert av disse scenarioene beregnes risikoscore <code>score = S × K</code>, som brukes som vekt.</li>
+		<li>S<sub>aggregert</sub> = Σ(score × S) / Σ(score) og K<sub>aggregert</sub> = Σ(score × K) / Σ(score).</li>
+		<li>Resultatet er flyttet til den nærmeste cellen der et faktisk scenario lå, slik at kategorien aldri havner på et nivå ingen scenarioer faktisk hadde.</li>
+	</ul>
+	<p class="text-muted small mb-2">
+		<strong>Eksempel:</strong> tre scenarioer – (S=5, K=5) som er Høy, (S=3, K=3) som er Middels og (S=2, K=2) som er Lav.
+		Høy er verste nivå, så bare (5, 5) teller, og underkategorien plasseres på (S=5, K=5) = Høy.
+		Et enkelt vurdert scenario plasseres på sitt eget (S, K)-punkt.
+	</p>
+	{% include "risiko_sammenstilling_underkategori_matrise_grid.html" with matrix=matrix_subcategories konsekvens_labels=konsekvens_labels %}
+	{% endif %}
+</div>
+
+<div id="risiko-rammeverk-rollup">
+	{% for cat in rollup_tree %}
+	<div class="card mb-3" id="rammeverk-cat-wrap-{{ cat.pk }}">
+		<div class="card-header d-flex justify-content-between align-items-center py-2">
+			<span class="font-weight-bold">{{ cat.display_code }}. {{ cat.title }}</span>
+			<span class="badge {{ cat.effective_css|default:'risk-cell-empty' }} px-2 py-1" title="Beregnet risikonivå fra kartlagte scenarioer">
+				{% if cat.effective_label %}{{ cat.effective_label }}{% else %}—{% endif %}
+			</span>
+		</div>
+		<div class="card-body py-2">
+			<p class="small text-muted mb-3">{{ cat.forklaring }}</p>
+
+			{# 2026-08-07: Full-width scenario matrix so longer risk text fits. #}
+			<div class="mb-3">
+				<h6 class="mb-1">Nåværende risiko – kartlagte scenarioer</h6>
+				{% include "risiko_sammenstilling_scenario_matrise_grid.html" with matrix=cat.scenario_matrix konsekvens_labels=konsekvens_labels %}
+			</div>
+
+			{% for child in cat.children %}
+			{# 2026-08-07: Anchor for subcategory matrix badge links in snapshot view. #}
+			<div class="risiko-rammeverk-subsection mb-4" id="rammeverk-node-{{ child.pk }}">
+				<h6 class="mb-1">{{ child.display_code }}. {{ child.title }}</h6>
+				{% if child.forklaring %}
+				<p class="small text-muted mb-2">{{ child.forklaring }}</p>
+				{% endif %}
+
+				{% if child.scenarios %}
+				<div class="mb-2">
+					<strong class="small d-block mb-1">Nåværende risiko – scenarioer i underkategorien</strong>
+					{% risiko_child_scenario_matrix cat.scenario_matrix child.scenarios as child_matrix %}
+					{% include "risiko_sammenstilling_scenario_matrise_grid.html" with matrix=child_matrix konsekvens_labels=konsekvens_labels %}
+				</div>
+				{% endif %}
+
+				<strong class="small d-block mb-1">Kartlagte scenarioer</strong>
+				{% if child.scenarios %}
+				<table class="table table-sm table-bordered mb-2">
+					<thead>
+						<tr>
+							<th style="width:4rem">ID</th>
+							<th style="width:12rem">Samling</th>
+							<th>Uønsket hendelse</th>
+							<th style="width:6rem">Nå</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for scenario in child.scenarios %}
+						<tr>
+							<td>
+								<a href="{% url 'risiko_scope_detail' pk=scenario.scope_pk %}?edit={{ scenario.pk }}" class="risiko-level-tag {{ scenario.current_css }}" title="{{ scenario.current_label }}">{{ scenario.display_id }}</a>
+							</td>
+							<td class="small">
+								<a href="{% url 'risiko_scope_detail' pk=scenario.scope_pk %}">{% if scenario.virksomhet %}{{ scenario.virksomhet }} – {% endif %}{{ scenario.scope_title }}</a>
+							</td>
+							<td>{{ scenario.uonsket_hendelse|truncatewords:30 }}</td>
+							<td>{% risiko_level_tag scenario.current_label scenario.current_css %}</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+				{% else %}
+				<p class="text-muted small mb-2">Ingen kartlagte scenarioer.</p>
+				{% endif %}
+
+				<strong class="small d-block mb-1">Tiltak (besluttet og under arbeid)</strong>
+				{% if child.actions %}
+				<table class="table table-sm table-bordered mb-0">
+					<thead>
+						<tr>
+							<th style="width:3rem">ID</th>
+							<th style="width:10rem">Samling</th>
+							<th>Tiltak</th>
+							<th style="width:6rem">RiskID</th>
+							<th style="width:8rem">Ansvarlig</th>
+							<th style="width:7rem">Frist</th>
+							<th style="width:8rem">Status</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for row in child.actions %}
+						<tr>
+							<td>{{ row.display_tiltak_id }}</td>
+							<td class="small"><a href="{% url 'risiko_scope_detail' pk=row.scope_pk %}">{{ row.scope_title }}</a></td>
+							<td>{{ row.beskrivelse|linebreaksbr }}</td>
+							<td>
+								{% for link in row.risk_links %}
+									<a href="{% url 'risiko_scope_detail' pk=row.scope_pk %}?edit={{ link.scenario_pk }}" class="risiko-level-tag risiko-risk-id-tag {{ link.risiko_css }}" title="{{ link.risiko_etikett }}">{{ link.risk_id }}</a>{% if not forloop.last %} {% endif %}
+								{% empty %}-{% endfor %}
+							</td>
+							<td>{% if row.ansvarlig %}{{ row.ansvarlig }}{% else %}-{% endif %}</td>
+							<td>{{ row.frist|default:"-" }}</td>
+							<td>{% risiko_tiltak_status_tag row.status row.status_display %}</td>
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+				{% else %}
+				<p class="text-muted small mb-0">Ingen aktive tiltak.</p>
+				{% endif %}
+			</div>
+			{% endfor %}
+		</div>
+	</div>
+	{% endfor %}
+</div>
+
+{% endblock hovedinnhold %}

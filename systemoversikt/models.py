@@ -9446,9 +9446,10 @@ RISK_SNAPSHOT_BIN_WEEKLY = 'weekly'
 RISK_SNAPSHOT_BIN_MONTHLY = 'monthly'
 RISK_SNAPSHOT_BIN_YEARLY = 'yearly'
 
+# 2026-10-01: Template v3 describes the worst-case floor aggregation; v2 keeps the score-weighted mean text for older snapshots.
 # 2026-10-01: Schema v3 drops manual assessment on hovedkategori (computed level); template v2 renders it (v1 keeps manual history).
 # 2026-08-13: Schema v2 adds unntak on collection rapport tiltak; template stays v1 (extra keys ignored by old HTML).
-RISK_SNAPSHOT_TEMPLATE_VERSION = 2
+RISK_SNAPSHOT_TEMPLATE_VERSION = 3
 RISK_SNAPSHOT_JSON_SCHEMA_VERSION = 3
 
 

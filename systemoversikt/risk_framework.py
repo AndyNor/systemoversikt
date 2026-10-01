@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-01: Aggregation uses worst-case floor – many moderate scenarios no longer mask a Høy risk.
 # 2026-10-01: Hovedkategori level is computed (score-weighted S×K) – manual «Sett nivå» removed from rollup/matrix.
 # 2026-09-03: Live sammenstilling/kartlegging omit archived-collection scenarios; stored snapshots keep historical JSON.
 # 2026-08-13: kontinuerlig_oppfolging included in SAMMENSTILLING_ACTIVE_TILTAK_STATUSES for status display.
@@ -152,6 +153,7 @@ def suggested_level_for_node(sammenstilling, node, include_archived_collections=
 
 
 def suggested_level_for_category(sammenstilling, children, include_archived_collections=False):
+	# 2026-10-01: Aggregation is now worst-case floored, so a category follows its most severe scenario.
 	# 2026-08-07: Same score-weighted S×K aggregation as underkategori matrix, over all linked scenarios in the category.
 	scenario_pks = set()
 	scenarios = []
@@ -174,38 +176,44 @@ def suggested_level_for_category(sammenstilling, children, include_archived_coll
 
 
 def aggregate_levels_from_scenarios(scenarios):
-	# 2026-08-07: Weight by S×K so high risks pull subcategory matrix placement upward.
-	weighted_s = 0.0
-	weighted_k = 0.0
-	total_weight = 0.0
-	rated_count = 0
+	# 2026-10-01: Worst case sets the band – a weighted mean over all scenarios is bounded by its
+	# inputs, so nine Middels scenarios could pull a single (5,5) Høy risk down to Middels. Only the
+	# scenarios carrying the worst label present decide the placement, and the S×K-weighted mean just
+	# positions within that band, snapped to a cell an actual scenario occupies.
+	rated = []
 	for scenario in scenarios:
 		s = scenario.sannsynlighet_nivaa
 		k = scenario.konsekvens_nivaa
 		if s is None or k is None:
 			continue
-		s = int(s)
-		k = int(k)
-		weight = max(1, s * k)
-		weighted_s += weight * s
-		weighted_k += weight * k
-		total_weight += weight
-		rated_count += 1
-	if rated_count == 0 or total_weight <= 0:
+		rated.append((int(s), int(k)))
+	if not rated:
 		return {
 			'sannsynlighet': None,
 			'konsekvens': None,
 			'label': '',
 			'scenario_count': 0,
 		}
-	s_agg = max(1, min(5, int(round(weighted_s / total_weight))))
-	k_agg = max(1, min(5, int(round(weighted_k / total_weight))))
+	top_rank = max(RISK_LABEL_RANK.get(risk_label(s, k) or '', 0) for s, k in rated)
+	band = [(s, k) for s, k in rated if RISK_LABEL_RANK.get(risk_label(s, k) or '', 0) == top_rank]
+	total_weight = sum(max(1, s * k) for s, k in band)
+	s_mean = sum(max(1, s * k) * s for s, k in band) / total_weight
+	k_mean = sum(max(1, s * k) * k for s, k in band) / total_weight
+	s_agg, k_agg = min(
+		set(band),
+		key=lambda cell: (
+			(cell[0] - s_mean) ** 2 + (cell[1] - k_mean) ** 2,
+			-(cell[0] * cell[1]),
+			-cell[0],
+			-cell[1],
+		),
+	)
 	label = risk_label(s_agg, k_agg) or ''
 	return {
 		'sannsynlighet': s_agg,
 		'konsekvens': k_agg,
 		'label': label,
-		'scenario_count': rated_count,
+		'scenario_count': len(rated),
 	}
 
 

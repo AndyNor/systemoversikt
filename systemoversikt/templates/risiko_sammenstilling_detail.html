@@ -116,12 +116,12 @@
 </p>
 
 <div class="mb-4" id="risikomatriser">
-	{# 2026-10-01: Hovedkategori matrix is computed (score-weighted S×K) like the underkategori matrix. #}
+	{# 2026-10-01: Both matrices use worst-case floor – lower scenarios can no longer mask a Høy risk. #}
 	<h5 class="mt-0">Nåværende risiko</h5>
 	<h6 class="mb-1">Hovedkategorier</h6>
 	<p class="text-muted small mb-2">
 		Hver hovedkategori plasseres automatisk ut fra alle scenarioer som er kartlagt til underkategoriene i kategorien,
-		med samme vektede beregning som underkategori-matrisen nedenfor (hvert scenario veier med risikoscore S×K).
+		med samme beregning som underkategori-matrisen nedenfor.
 		Hovedkategorier uten vurderte scenarioer vises ikke i matrisen.
 	</p>
 	{% include "risiko_sammenstilling_matrise_grid.html" with matrix=matrix_current konsekvens_labels=konsekvens_labels %}
@@ -130,21 +130,21 @@
 		Hver underkategori plasseres automatisk ut fra kartlagte scenarioer som har satt både sannsynlighet (S) og konsekvens (K) på skala 1–5. Scenarioer uten begge verdier ignoreres. Underkategorier uten vurderte scenarioer vises ikke.
 	</p>
 	<p class="text-muted small mb-1">
-		<strong>Vektet gjennomsnitt:</strong>
-		For hvert scenario beregnes risikoscore <code>score = S × K</code> (f.eks. S=4 og K=3 gir score 12).
-		Denne scoren brukes som vekt, slik at høyere risiko trekker underkategorien mer opp enn lave risikoer.
+		<strong>Verste scenario bestemmer nivået:</strong>
+		en underkategori får aldri lavere risikonivå enn det mest alvorlige scenarioet som er kartlagt til den.
+		Er ett scenario Høy, blir underkategorien Høy – uansett hvor mange scenarioer på lavere nivå som ligger i samme underkategori.
 	</p>
 	<p class="text-muted small mb-1">
-		Aggregert sannsynlighet og konsekvens beregnes hver for seg:
+		Plasseringen i matrisen avgjøres bare av scenarioene som har dette nivået:
 	</p>
 	<ul class="text-muted small mb-1 pl-3">
-		<li>S<sub>aggregert</sub> = Σ(score × S) / Σ(score), deretter avrundet til nærmeste heltall i intervallet 1–5</li>
-		<li>K<sub>aggregert</sub> = Σ(score × K) / Σ(score), deretter avrundet til nærmeste heltall i intervallet 1–5</li>
+		<li>For hvert av disse scenarioene beregnes risikoscore <code>score = S × K</code>, som brukes som vekt.</li>
+		<li>S<sub>aggregert</sub> = Σ(score × S) / Σ(score) og K<sub>aggregert</sub> = Σ(score × K) / Σ(score).</li>
+		<li>Resultatet flyttes til den nærmeste cellen der et faktisk scenario ligger, slik at kategorien aldri havner på et nivå ingen scenarioer faktisk har.</li>
 	</ul>
 	<p class="text-muted small mb-2">
-		<strong>Eksempel:</strong> to scenarioer – (S=2, K=2, score=4) og (S=5, K=5, score=25).
-		S<sub>aggregert</sub> = (4×2 + 25×5) / (4+25) = 133/29 ≈ 4,6 → 5;
-		K<sub>aggregert</sub> tilsvarende ≈ 4,6 → 5.
+		<strong>Eksempel:</strong> tre scenarioer – (S=5, K=5) som er Høy, (S=3, K=3) som er Middels og (S=2, K=2) som er Lav.
+		Høy er verste nivå, så bare (5, 5) teller, og underkategorien plasseres på (S=5, K=5) = Høy.
 		Et enkelt vurdert scenario plasseres på sitt eget (S, K)-punkt.
 	</p>
 	{% include "risiko_sammenstilling_underkategori_matrise_grid.html" with matrix=matrix_subcategories konsekvens_labels=konsekvens_labels %}
