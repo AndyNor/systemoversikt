@@ -5316,6 +5316,40 @@ def bruker_detaljer(request, pk):
 	})
 
 
+def bruker_telefon(request, pk):
+	# 2026-10-01: On-demand phone lookup (AD mobile/otherMobile/telephoneNumber) for the user profile page – phone numbers are not synced to the database.
+	required_permissions = ['auth.view_user']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return JsonResponse({"error": "Du mangler tilgang til å slå opp telefonnummer."}, status=403)
+	if request.method != "GET":
+		return JsonResponse({"error": "Kun GET er støttet."}, status=405)
+
+	user = get_object_or_404(User, pk=pk)
+	distinguishedname = user.profile.distinguishedname
+	if not distinguishedname:
+		return JsonResponse({"error": "Brukeren mangler distinguishedName fra AD."}, status=404)
+
+	import ldap.filter
+	ldap_filter = '(distinguishedName=%s)' % ldap.filter.escape_filter_chars(distinguishedname)
+	try:
+		result = ldap_query(
+				ldap_path="DC=oslofelles,DC=oslo,DC=kommune,DC=no",
+				ldap_filter=ldap_filter,
+				ldap_properties=['mobile', 'otherMobile', 'telephoneNumber'],
+				timeout=10,
+		)
+	except Exception:
+		return JsonResponse({"error": "Oppslag mot AD feilet."}, status=502)
+
+	telefon = {"mobile": [], "otherMobile": [], "telephoneNumber": []}
+	for cn, attrs in result:
+		if not cn:
+			continue
+		for key in telefon:
+			telefon[key].extend(value.decode() for value in attrs.get(key, []))
+	return JsonResponse(telefon)
+
+
 
 def lokasjoner_hos_virksomhet(request, pk):
 	required_permissions = ['systemoversikt.view_virksomhet']

@@ -1,3 +1,6 @@
+{# 2026-10-01: Profile header as cards instead of a single-row table – better use of width and overview. #}
+{# 2026-10-01: On-demand AD phone lookup button (bruker_telefon) – phone numbers are not synced to the database. #}
+{# 2026-10-01: Fixed Nærmeste leder never showing – url_leder was checked before it was defined. #}
 {% extends "brukere_index.html" %}
 {% load humanize %}
 {% load static %}
@@ -10,87 +13,211 @@
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
-	<b>Virksomhet:</b>
-	{% if user.profile.usertype %} {{ user.profile.usertype }} i {% endif %}
-
 	{% url 'virksomhet' pk=user.profile.virksomhet.pk as url_virksomhet %}
-	{% if user.profile.virksomhet %}
-		<a target="_blank" href="{{url_virksomhet}}">{{user.profile.virksomhet}}</a>
-	{% else %}
-		Ukjent
-	{% endif %}
-
 	{% url 'enhet_detaljer' pk=user.profile.org_unit.pk as url_enhet %}
-	{% if url_enhet %}
-		under <a target="_blank" href="{{url_enhet}}">{{ user.profile.org_unit|default:"Ukjent" }}</a>
-	{% endif %}<br>
-
-	<b>Beskrivelse</b>:{{ user.profile.description|default:"Ingen beskrivelse" }}<br>
-
-	{% if url_leder%}
 	{% url 'bruker_detaljer' pk=user.profile.org_unit.leder.pk as url_leder %}
-		<b>Nærmeste leder:</b> <a target="_blank" href="{{url_leder}}">{{ user.profile.org_unit.leder.profile.displayName|default:"Ukjent" }}</a><br>
+	{% url 'bruker_detaljer' pk=user.profile.min_leder.pk as url_min_leder %}
+
+	<div class="card mb-3">
+		<div class="card-body">
+			<div class="row">
+				<div class="col-lg-7 mb-2 mb-lg-0">
+					<div class="h5 mb-1">{{ user.profile.job_title|default:"Ingen stillingstittel" }}</div>
+					<div class="mb-2">
+						{% if user.profile.org_unit %}
+							{% if url_enhet %}<a target="_blank" href="{{ url_enhet }}">{{ user.profile.org_unit }}</a>{% else %}{{ user.profile.org_unit }}{% endif %},
+						{% endif %}
+						{% if user.profile.virksomhet %}
+							<a target="_blank" href="{{ url_virksomhet }}">{{ user.profile.virksomhet }}</a>
+						{% else %}
+							Ukjent virksomhet
+						{% endif %}
+					</div>
+					<div>
+						{% if user.profile.account_type %}<span class="badge badge-secondary">{{ user.profile.account_type }}</span>{% endif %}
+						{% if user.profile.usertype %}<span class="badge badge-secondary">{{ user.profile.usertype }}</span>{% endif %}
+						{% if user.profile.ekstern_ressurs %}<span class="badge badge-warning">Ekstern ressurs</span>{% endif %}
+						{% if user.profile.accountdisable or not user.is_active %}<span class="badge badge-danger">Deaktivert</span>{% endif %}
+						{% if user.profile.lockout %}<span class="badge badge-danger">Låst</span>{% endif %}
+						{% if user.profile.password_expired %}<span class="badge badge-warning">Passord utløpt</span>{% endif %}
+					</div>
+				</div>
+				<div class="col-lg-5">
+					<dl class="row mb-0">
+						<dt class="col-4">E-post</dt>
+						<dd class="col-8 text-break">{% if user.email %}<a href="mailto:{{ user.email }}">{{ user.email }}</a>{% else %}<span class="text-muted">Ingen</span>{% endif %}</dd>
+
+						<dt class="col-4">Telefon</dt>
+						<dd class="col-8" id="bruker-telefon">
+							{% if user.profile.distinguishedname %}
+								<button type="button" class="btn btn-outline-primary btn-sm py-0" id="bruker-telefon-knapp">📞 Vis telefon (fra AD)</button>
+							{% else %}
+								<span class="text-muted">Mangler AD-kobling</span>
+							{% endif %}
+						</dd>
+
+						<dt class="col-4">Brukernavn</dt>
+						<dd class="col-8 mb-0">{{ user.username }}</dd>
+					</dl>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-lg-4 mb-3">
+			<div class="card h-100">
+				<div class="card-body">
+					<h6 class="card-title">Organisasjon</h6>
+					<dl class="row small mb-0">
+						<dt class="col-5">Virksomhet</dt>
+						<dd class="col-7">{% if user.profile.virksomhet %}<a target="_blank" href="{{ url_virksomhet }}">{{ user.profile.virksomhet }}</a>{% else %}Ukjent{% endif %}</dd>
+
+						<dt class="col-5">Seksjon</dt>
+						<dd class="col-7">{% if user.profile.org_unit and url_enhet %}<a target="_blank" href="{{ url_enhet }}">{{ user.profile.org_unit }}</a>{% else %}{{ user.profile.org_unit|default:"-" }}{% endif %}</dd>
+
+						<dt class="col-5">Nærmeste leder</dt>
+						<dd class="col-7">{% if user.profile.org_unit.leder %}<a target="_blank" href="{{ url_leder }}">{{ user.profile.org_unit.leder.profile.displayName|default:user.profile.org_unit.leder.username }}</a>{% else %}-{% endif %}</dd>
+
+						<dt class="col-5">Min leder</dt>
+						<dd class="col-7">{% if user.profile.min_leder %}<a target="_blank" href="{{ url_min_leder }}">{{ user.profile.min_leder.profile.displayName|default:user.profile.min_leder.username }}</a>{% else %}-{% endif %}</dd>
+
+						<dt class="col-5">Beskrivelse</dt>
+						<dd class="col-7 mb-0">{{ user.profile.description|default:"Ingen beskrivelse" }}</dd>
+					</dl>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-lg-4 mb-3">
+			<div class="card h-100">
+				<div class="card-body">
+					<h6 class="card-title">Konto (AD)</h6>
+					<dl class="row small mb-0">
+						<dt class="col-5">Opprettet</dt>
+						<dd class="col-7">{% if user.profile.whenCreated %}{{ user.profile.whenCreated|date:"Y-m-d" }} ({{ user.profile.whenCreated|timesince }} siden){% else %}Ukjent{% endif %}</dd>
+
+						<dt class="col-5">Sist innlogget</dt>
+						<dd class="col-7">{% if user.profile.lastLogonTimestamp %}{{ user.profile.lastLogonTimestamp|date:"Y-m-d" }} ({{ user.profile.lastLogonTimestamp|naturaltime }}){% else %}Ukjent{% endif %}</dd>
+
+						<dt class="col-5">Passord endret</dt>
+						<dd class="col-7">{{ user.profile.pwdLastSet|date:"Y-m-d"|default:"Ukjent" }}</dd>
+
+						<dt class="col-5">Neste passordbytte</dt>
+						<dd class="col-7">{% if user.profile.dont_expire_password %}Utløper aldri{% else %}{{ user.profile.userPasswordExpiry|date:"Y-m-d"|default:"Ukjent" }}{% endif %}</dd>
+
+						<dt class="col-5">O365-lisens</dt>
+						<dd class="col-7">{{ user.profile.ny365lisens|default:"Ingen" }}</dd>
+
+						<dt class="col-5">Sist synkronisert</dt>
+						<dd class="col-7 mb-0">{{ user.profile.ad_sist_oppdatert|date:"Y-m-d H:i"|default:"Ukjent" }}</dd>
+					</dl>
+				</div>
+			</div>
+		</div>
+
+		<div class="col-lg-4 mb-3">
+			<div class="card h-100">
+				<div class="card-body">
+					<h6 class="card-title">Pålogging (Entra ID)</h6>
+					<dl class="row small mb-0">
+						<dt class="col-5">SMS</dt>
+						<dd class="col-7">{{ user.profile.auth_sms|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</dd>
+
+						<dt class="col-5">FIDO2</dt>
+						<dd class="col-7">{{ user.profile.auth_fido2|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</dd>
+
+						<dt class="col-5">Authenticator</dt>
+						<dd class="col-7">{{ user.profile.auth_authenticator|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</dd>
+
+						<dt class="col-5">Alle metoder</dt>
+						<dd class="col-7">{% for method in user.profile.entra_id_auth %}{{ method }}{% if not forloop.last %}, {% endif %}{% empty %}-{% endfor %}</dd>
+
+						<dt class="col-5">Sist oppdatert</dt>
+						<dd class="col-7 mb-0">{{ user.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}</dd>
+					</dl>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	{% with mail_grupper=user.profile.mail_enabled_groups.all %}
+	{% if mail_grupper %}
+	<div class="card mb-3">
+		<div class="card-body">
+			<h6 class="card-title">Mail enabled groups ({{ mail_grupper|length }})</h6>
+			<ul class="small mb-0 pl-3" style="column-width: 18rem;">
+				{% for gruppe in mail_grupper %}<li>{{ gruppe }}</li>{% endfor %}
+			</ul>
+		</div>
+	</div>
 	{% endif %}
+	{% endwith %}
 
-	<b>E-post:</b> {{ user.email }}<br>
+	<p>
+		<span class="small text-muted mr-2">Direkteoppslag:</span>
+		{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
+		<a class="btn btn-outline-secondary btn-sm" href="{{ url_ad_exact }}">🔍 AD</a>
 
-	<b>On-prem brukernavn:</b> {{ user.username }}. Opprettet {{ user.profile.whenCreated|date:"Y-m-d" }}. {{ user.profile.whenCreated|timesince }} siden<br>
+		{% url 'entra_id_oppslag' as url_entra_id_oppslag %}
+		<a class="btn btn-outline-secondary btn-sm ml-1" href="{{ url_entra_id_oppslag }}?search_term_user_entraId={{ user.email|urlencode }}">🔍 Entra ID</a>
+	</p>
 
-	<hr>
+	{% if user.profile.distinguishedname %}
+	{% url 'bruker_telefon' pk=user.pk as url_bruker_telefon %}
+	{{ url_bruker_telefon|json_script:"bruker-telefon-url" }}
+	<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+	(function () {
+		var url = JSON.parse(document.getElementById('bruker-telefon-url').textContent);
+		var target = document.getElementById('bruker-telefon');
+		var knapp = document.getElementById('bruker-telefon-knapp');
+		var etiketter = {mobile: 'Mobil', otherMobile: 'Annen mobil', telephoneNumber: 'Telefon'};
 
-	<table class="table table-sm tablesorter excel">
-		<thead>
-		<tr>
-			<th>Type bruker</th>
-			<th>Brukernavn</th>
-			<th>Navn</th>
-			<th>Stilling</th>
-			<th>O365-lisens</th>
-			<th>2-faktor sist oppdatert</th>
-			<th>SMS</th>
-			<th>FIDO2</th>
-			<th>Authenticator</th>
-			<th>E-post</th>
-			{% comment %}<th>Avdeling</th>{% endcomment %}
-			<th>Seksjon</th>
-			<th>Mail enabled groups</th>
-			<th>Min leder</th>
-		</tr>
-		</thead>
-		<tbody>
-		<tr>
-			<td>{{ user.profile.account_type }}</td>
-			<td>{{ user.username }}</td>
-			<td>{{ user.profile.displayName }}</td>
-			<td>{{ user.profile.job_title|default:"-" }}</td>
-			<td>{{ user.profile.ny365lisens|default:"Ingen" }}</td>
-			<td>
-				{{ user.profile.auth_methods_last_update|date:"Y-m-d"|default:"Aldri" }}<br>
-				{% for method in user.profile.entra_id_auth %}{{ method }}{% if not forloop.last%}, {% endif%}{% endfor %}
-			</td>
-			<td>{{ user.profile.auth_sms|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
-			<td>{{ user.profile.auth_fido2|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
-			<td>{{ user.profile.auth_authenticator|yesno:"🟢 Ja, 🔴 Nei, Ukjent" }}</td>
-			<td>{{ user.email }}</td>
-			{% comment %}<td>{{ user.profile.avdeling|default:"-" }}</td>{% endcomment %}
-			<td>{{ user.profile.org_unit|default:"-" }}</td>
-			<td>
-				{% for gruppe in user.profile.mail_enabled_groups.all %}<li>{{ gruppe }}</li>{% endfor %}
-			</td>
-			<td>{{ user.profile.min_leder|default:"-" }}</td>
-		</tr>
-	</tbody>
-	</table>
+		function visMelding(tekst) {
+			target.innerHTML = '';
+			var span = document.createElement('span');
+			span.className = 'text-muted';
+			span.textContent = tekst;
+			target.appendChild(span);
+		}
 
-	<hr>
-
-	<h6>Direkteoppslag mot brukerkataloger</h6>
-
-	{% url 'ad_exact' user.profile.distinguishedname as url_ad_exact %}
-	<a class="btn btn-link" href="{{ url_ad_exact }}">🔍 slå opp direkte i AD</a>
-
-	{% url 'entra_id_oppslag' as url_ad_exact %}
-	<a class="btn btn-link" href="{{ url_ad_exact }}?search_term_user_entraId={{ user.email|urlencode }}">🔍 slå opp direkte i Entra ID</a>
+		knapp.addEventListener('click', function () {
+			knapp.disabled = true;
+			knapp.textContent = 'Slår opp i AD…';
+			fetch(url, { credentials: 'same-origin' })
+				.then(function (response) {
+					return response.json().then(function (data) { return {ok: response.ok, data: data}; });
+				})
+				.then(function (res) {
+					if (!res.ok) {
+						visMelding(res.data.error || 'Oppslag feilet');
+						return;
+					}
+					target.innerHTML = '';
+					var antall = 0;
+					Object.keys(etiketter).forEach(function (key) {
+						(res.data[key] || []).forEach(function (nummer) {
+							var linje = document.createElement('div');
+							var lenke = document.createElement('a');
+							lenke.href = 'tel:' + nummer.replace(/[^0-9+]/g, '');
+							lenke.textContent = nummer;
+							linje.appendChild(lenke);
+							linje.appendChild(document.createTextNode(' (' + etiketter[key] + ')'));
+							target.appendChild(linje);
+							antall++;
+						});
+					});
+					if (!antall) {
+						visMelding('Ingen telefonnummer registrert i AD');
+					}
+				})
+				.catch(function () {
+					visMelding('Oppslag mot AD feilet');
+				});
+		});
+	})();
+	</script>
+	{% endif %}
 
 	<hr>
 

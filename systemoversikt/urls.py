@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-10-01: On-demand AD phone lookup for user profile at /brukere/ad/<pk>/telefon/.
 # 2026-09-29: Tool looking up active AD users by e-mail list at /tools/users_by_email.
 # 2026-09-29: Tool listing DRIFT AD users not in a supplied list at /tools/drift_users_not_in_list.
 # 2026-09-25: Sårbarhetssaker inline save – POST ny/lagre and <pk>/lagre for list autosave.
@@ -107,6 +108,7 @@ urlpatterns = [
 	re_path(r'^brukere/ad_logger/$', views.logger_users, name='logger_users'),
 	re_path(r'^brukere/entraidbruker/$', views.entra_id_oppslag, name='entra_id_oppslag'),
 	re_path(r'^brukere/ad/(?P<pk>\d{1,8})/$', views.bruker_detaljer, name='bruker_detaljer'),
+	re_path(r'^brukere/ad/(?P<pk>\d{1,8})/telefon/$', views.bruker_telefon, name='bruker_telefon'),
 	re_path(r'^brukere/ad/$', views.bruker_sok, name='bruker_sok'),
 	re_path(r'^brukere/ad_brukerlistesok/$', views.ad_brukerlistesok, name='cmdb_ad_brukerlistesok'),
 	re_path(r'^brukere/adgruppe/$', views.alle_adgrupper, name='alle_adgrupper'),
