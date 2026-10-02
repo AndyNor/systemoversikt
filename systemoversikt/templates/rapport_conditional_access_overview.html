@@ -3,7 +3,8 @@
 {% load static %}
 {% load templatetags %}
 {# Change log:
-   2026-10-02: Widescreen layout – filters left (~25%), rules right.
+   2026-10-02: Filter bar fixed 366px, not sticky; apps/locations/groups stacked one-per-line.
+   2026-10-02: Widescreen layout – filters left, rules right.
    2026-06-24: User tag black text; role brown palette.
 #}
 
@@ -21,14 +22,12 @@
 }
 
 .ca-overview-layout--with-filters {
-	grid-template-columns: minmax(13rem, 25%) minmax(0, 1fr);
+	grid-template-columns: 366px minmax(0, 1fr);
 }
 
 .ca-overview-filters {
-	position: sticky;
-	top: 0.75rem;
-	max-height: calc(100vh - 1.5rem);
-	overflow-y: auto;
+	width: 366px;
+	box-sizing: border-box;
 	margin-bottom: 0;
 	padding: 0.75rem;
 	border: 1px solid #e4e2ef;
@@ -61,6 +60,23 @@
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.35rem;
+}
+
+.ca-overview-filters__group[data-filter-group="apps"] .ca-overview-filters__chips,
+.ca-overview-filters__group[data-filter-group="locations"] .ca-overview-filters__chips,
+.ca-overview-filters__group[data-filter-group="groups"] .ca-overview-filters__chips {
+	flex-direction: column;
+	flex-wrap: nowrap;
+	align-items: stretch;
+}
+
+.ca-overview-filters__group[data-filter-group="apps"] .ca-overview-filter-chip,
+.ca-overview-filters__group[data-filter-group="locations"] .ca-overview-filter-chip,
+.ca-overview-filters__group[data-filter-group="groups"] .ca-overview-filter-chip {
+	width: 100%;
+	text-align: left;
+	white-space: normal;
+	border-radius: 0.35rem;
 }
 
 .ca-overview-filter-chip {

@@ -323,16 +323,17 @@ _CA_CLIENT_APP_LABELS = {
 	'other': 'Other',
 }
 
+# 2026-10-02: Apps, Locations, Groups last – long lists; stacked one-per-line in UI.
 _CA_FILTER_GROUPS = (
 	('grant_mode', 'Grant'),
 	('grant_control', 'Grant controls'),
 	('scope', 'Scope'),
-	('groups', 'Groups'),
-	('apps', 'Apps'),
-	('locations', 'Locations'),
 	('platform', 'Platforms'),
 	('client', 'Client apps'),
 	('risk', 'Risk'),
+	('apps', 'Apps'),
+	('locations', 'Locations'),
+	('groups', 'Groups'),
 )
 
 # Splits «ID - description» rule names; accepts hyphen, en-dash and em-dash with surrounding spaces.
