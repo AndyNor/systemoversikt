@@ -294,6 +294,8 @@ urlpatterns = [
 	re_path(r'^rapport/azure/conditional_access/rules/$', views.rapport_conditional_access_rules, name="rapport_conditional_access_rules"),
 	re_path(r'^rapport/azure/conditional_access/overview/$', views.rapport_conditional_access_overview, name="rapport_conditional_access_overview"),
 	re_path(r'^rapport/azure/conditional_access/changes/$', views.rapport_conditional_access_changes, name="rapport_conditional_access_changes"),
+	# 2026-10-02: Generic named locations detail list (distinct from public country colour map).
+	re_path(r'^rapport/azure/named_locations/$', views.rapport_azure_named_locations, name="rapport_azure_named_locations"),
 
 
 

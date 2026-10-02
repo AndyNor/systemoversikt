@@ -39,6 +39,9 @@
 		{% url 'rapport_conditional_access_changes' as url_rapport_conditional_access_changes %}
 		<a href="{{ url_rapport_conditional_access_changes }}" class="btn btn-sm btn-link {% if url_rapport_conditional_access_changes in request.path %}fremhev{% endif %}">CA-endringer</a><br>
 
+		{% url 'rapport_azure_named_locations' as url_rapport_azure_named_locations %}
+		<a href="{{ url_rapport_azure_named_locations }}" class="btn btn-sm btn-link {% if url_rapport_azure_named_locations in request.path %}fremhev{% endif %}">Named locations</a><br>
+
 
 
 

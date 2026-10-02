@@ -1,6 +1,8 @@
 {% extends "rapport_index.html" %}
 {% load humanize %}
-{% load static %}
+{# Change log: #}
+{# 2026-10-02: Make GeoCharts responsive (fluid width + redraw on resize). #}
+{# 2026-10-02: Removed unused d3-geomap.css link (404); maps use Google Charts GeoChart. #}
 
 {% block ekstrameny_business_service %}
 {% endblock ekstrameny_business_service %}
@@ -8,10 +10,6 @@
 {% block overskrift %}
 	Oversikt over tilkobling fra land
 {% endblock overskrift %}
-
-{% block css_append %}
-	<link rel="stylesheet" href="{% static '/d3-geomap/d3-geomap.css' %}">
-{% endblock %}
 
 {% block ekstrajavascript %}
 	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js" nonce="{{request.csp_nonce}}"></script>
@@ -26,15 +24,15 @@
 <!-- https://developers.google.com/chart/interactive/docs/gallery/geochart -->
 
 <h5>Hele verden</h5><hr>
-<div id="world_div" style="width: 1500px; height: 700px;"></div>
+<div id="world_div" style="width: 100%; height: 500px;"></div>
 <br><br>
 
 <h5>Europa</h5><hr>
-<div id="europa_div" style="width: 1500px; height: 800px;"></div>
+<div id="europa_div" style="width: 100%; height: 550px;"></div>
 <br><br>
 
 <h5>Asia</h5><hr>
-<div id="oceania_div" style="width: 1500px; height: 800px;"></div>
+<div id="oceania_div" style="width: 100%; height: 550px;"></div>
 <br><br>
 
 
@@ -59,71 +57,37 @@
 
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
-      google.charts.load('current', {
-        'packages': ['geochart'],
-      });
-      google.charts.setOnLoadCallback(drawRegionsMap);
+	google.charts.load('current', {
+		'packages': ['geochart'],
+	});
+	google.charts.setOnLoadCallback(drawAllMaps);
 
-      function drawRegionsMap() {
-        var data = google.visualization.arrayToDataTable({{color_table|safe}});
+	var sharedOptions = {
+		colorAxis: {colors: ['#66ff66', '#ffcc00', '#ff4d4d', '#000000']},
+		backgroundColor: '#e6f7ff',
+		legend: 'none',
+		datalessRegionColor: '#adad85',
+		width: '100%',
+	};
 
-        var options = {
-        	colorAxis: {colors: ['#66ff66', '#ffcc00', '#ff4d4d', '#000000']},
-        	backgroundColor: '#e6f7ff',
-        	legend: 'none',
-        	datalessRegionColor: '#adad85',
-        };
+	function drawAllMaps() {
+		var data = google.visualization.arrayToDataTable({{color_table|safe}});
 
-        var chart = new google.visualization.GeoChart(document.getElementById('world_div'));
+		new google.visualization.GeoChart(document.getElementById('world_div'))
+			.draw(data, sharedOptions);
 
-        chart.draw(data, options);
-      }
-</script>
+		new google.visualization.GeoChart(document.getElementById('europa_div'))
+			.draw(data, Object.assign({}, sharedOptions, {region: '150'})); // Western Europe
 
-<script type="text/javascript" nonce="{{request.csp_nonce}}">
-      google.charts.load('current', {
-        'packages': ['geochart'],
-      });
-      google.charts.setOnLoadCallback(drawRegionsMap);
+		new google.visualization.GeoChart(document.getElementById('oceania_div'))
+			.draw(data, Object.assign({}, sharedOptions, {region: '035'})); // South-Eastern Asia
+	}
 
-      function drawRegionsMap() {
-        var data = google.visualization.arrayToDataTable({{color_table|safe}});
-
-        var options = {
-        	colorAxis: {colors: ['#66ff66', '#ffcc00', '#ff4d4d', '#000000']},
-        	backgroundColor: '#e6f7ff',
-        	legend: 'none',
-        	datalessRegionColor: '#adad85',
-        	region: '150', // Western Europe
-        };
-
-        var chart = new google.visualization.GeoChart(document.getElementById('europa_div'));
-
-        chart.draw(data, options);
-      }
-</script>
-
-<script type="text/javascript" nonce="{{request.csp_nonce}}">
-      google.charts.load('current', {
-        'packages': ['geochart'],
-      });
-      google.charts.setOnLoadCallback(drawRegionsMap);
-
-      function drawRegionsMap() {
-        var data = google.visualization.arrayToDataTable({{color_table|safe}});
-
-        var options = {
-          colorAxis: {colors: ['#66ff66', '#ffcc00', '#ff4d4d', '#000000']},
-          backgroundColor: '#e6f7ff',
-          legend: 'none',
-          datalessRegionColor: '#adad85',
-          region: '035', // South-Eastern Asia
-        };
-
-        var chart = new google.visualization.GeoChart(document.getElementById('oceania_div'));
-
-        chart.draw(data, options);
-      }
+	var resizeTimer;
+	window.addEventListener('resize', function () {
+		clearTimeout(resizeTimer);
+		resizeTimer = setTimeout(drawAllMaps, 150);
+	});
 </script>
 
 {% endblock hovedinnhold %}

@@ -3109,6 +3109,44 @@ def rapport_conditional_access_changes(request):
 	})
 
 
+def rapport_azure_named_locations(request):
+	# 2026-10-02: Generic named locations detail view under Conditional Access (permission-gated).
+	required_permissions = ['systemoversikt.view_entraidconditionalaccesspolicies']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render_access_denied(request, required_permissions)
+
+	def _parse_json_list(raw):
+		if not raw:
+			return []
+		try:
+			parsed = json.loads(raw)
+		except (TypeError, ValueError):
+			return []
+		return parsed if isinstance(parsed, list) else []
+
+	named_locations = []
+	for nl in AzureNamedLocations.objects.order_by('displayName', 'ipNamedLocation_id'):
+		named_locations.append({
+			'displayName': nl.displayName,
+			'active': nl.active,
+			'isTrusted': nl.isTrusted,
+			'sist_endret': nl.sist_endret,
+			'sist_oppdatert': nl.sist_oppdatert,
+			'ipNamedLocation_id': nl.ipNamedLocation_id,
+			'ipRanges': _parse_json_list(nl.ipRanges),
+			'countriesAndRegions': _parse_json_list(nl.countriesAndRegions),
+		})
+
+	integrasjonsstatus = _integrasjonsstatus("azure_named_locations")
+
+	return render(request, 'rapport_azure_named_locations.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'named_locations': named_locations,
+		'integrasjonsstatus': integrasjonsstatus,
+	})
+
+
 def admin_visitors(request): # brukerstatisikk
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):

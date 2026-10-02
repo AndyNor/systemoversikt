@@ -189,6 +189,8 @@ NAV_PAGES = [
 	_entry('CA-regler', 'rapport_conditional_access_rules', 'Rapport', ['ca-regler', 'conditional access'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
 	_entry('CA-oversikt', 'rapport_conditional_access_overview', 'Rapport', ['ca-oversikt', 'conditional access oversikt', 'ca fliser'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
 	_entry('CA-endringer', 'rapport_conditional_access_changes', 'Rapport', ['ca-endringer', 'conditional access endringer'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
+	# 2026-10-02: Named locations detail list under Conditional Access.
+	_entry('Named locations', 'rapport_azure_named_locations', 'Rapport', ['named locations', 'navngitte lokasjoner', 'ip ranges'], permissions=['systemoversikt.view_entraidconditionalaccesspolicies']),
 
 	# --- Administrasjon (admin_index.html) ---
 	_entry(
