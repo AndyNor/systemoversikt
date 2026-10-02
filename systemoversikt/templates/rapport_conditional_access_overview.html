@@ -3,6 +3,7 @@
 {% load static %}
 {% load templatetags %}
 {# Change log:
+   2026-10-02: Filter group headers – larger title, light bg, left accent bar like CA tiles.
    2026-10-02: Filter bar fixed 366px, not sticky; apps/locations/groups stacked one-per-line.
    2026-10-02: Widescreen layout – filters left, rules right.
    2026-06-24: User tag black text; role brown palette.
@@ -40,20 +41,25 @@
 }
 
 .ca-overview-filters__group {
-	margin-bottom: 0.55rem;
+	margin-top: 0.85rem;
+	margin-bottom: 0;
+	padding: 0.55rem 0.65rem 0.65rem;
+	border: 1px solid #e4e2ef;
+	border-left: 4px solid #5c6bc0;
+	border-radius: 0.35rem;
+	background: #f3f4fb;
 }
 
-.ca-overview-filters__group:last-child {
-	margin-bottom: 0;
+.ca-overview-filters__group:first-child {
+	margin-top: 0;
 }
 
 .ca-overview-filters__title {
-	margin: 0 0 0.3rem;
-	font-size: 0.7rem;
+	margin: 0 0 0.45rem;
+	font-size: 0.82rem;
 	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.03em;
-	color: #666;
+	letter-spacing: 0.02em;
+	color: #2A2859;
 }
 
 .ca-overview-filters__chips {
