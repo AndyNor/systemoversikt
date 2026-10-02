@@ -1,6 +1,7 @@
 {% extends "rapport_index.html" %}
 {% load humanize %}
 {# Change log: #}
+{# 2026-10-02: Aktiv/Trusted as light green/red tags; ID under Navn; expandable IP/country lists. #}
 {# 2026-10-02: Generic named locations detail view for Conditional Access. #}
 
 {% block overskrift %}
@@ -8,6 +9,35 @@
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
+
+<style>
+	/* 2026-10-02: Light green/red status tags for trusted and active. */
+	.nl-tag {
+		display: inline-block;
+		font-size: 0.75rem;
+		font-weight: 600;
+		line-height: 1.2;
+		padding: 0.2rem 0.45rem;
+		border-radius: 3px;
+		white-space: nowrap;
+	}
+	.nl-tag-yes {
+		background-color: #d4edda;
+		color: #155724;
+	}
+	.nl-tag-no {
+		background-color: #f8d7da;
+		color: #721c24;
+	}
+	.nl-id {
+		font-size: 0.8rem;
+		color: #6c757d;
+	}
+	.nl-expand-btn {
+		padding: 0;
+		font-size: 0.85rem;
+	}
+</style>
 
 {% include "includes/integrasjon_freshness_banner.html" with label="Named locations ble sist synkronisert" %}
 
@@ -22,43 +52,68 @@
 	<th>IP-ranges</th>
 	<th>Land og regioner</th>
 	<th>Sist endret</th>
-	<th>ID</th>
 </tr>
 </thead>
 <tbody>
 {% for nl in named_locations %}
 <tr{% if not nl.active %} class="table-secondary"{% endif %}>
-	<td>{% if nl.active %}Ja{% else %}Nei{% endif %}</td>
-	<td>{{ nl.displayName|default:"—" }}</td>
-	<td>{% if nl.isTrusted %}Ja{% else %}Nei{% endif %}</td>
+	<td>
+		{% if nl.active %}
+			<span class="nl-tag nl-tag-yes">Ja</span>
+		{% else %}
+			<span class="nl-tag nl-tag-no">Nei</span>
+		{% endif %}
+	</td>
+	<td>
+		{{ nl.displayName|default:"—" }}
+		{% if nl.ipNamedLocation_id %}
+			<br><code class="nl-id">{{ nl.ipNamedLocation_id }}</code>
+		{% endif %}
+	</td>
+	<td>
+		{% if nl.isTrusted %}
+			<span class="nl-tag nl-tag-yes">Ja</span>
+		{% else %}
+			<span class="nl-tag nl-tag-no">Nei</span>
+		{% endif %}
+	</td>
 	<td>
 		{% if nl.ipRanges %}
-			<ul class="mb-0 pl-3">
-			{% for iprange in nl.ipRanges %}
-				<li><code>{{ iprange }}</code></li>
-			{% endfor %}
-			</ul>
+			<button class="btn btn-link nl-expand-btn" type="button" data-toggle="collapse" data-target="#nl-ip-{{ forloop.counter }}" aria-expanded="false" aria-controls="nl-ip-{{ forloop.counter }}">
+				Vis {{ nl.ipRanges|length }} IP-range{{ nl.ipRanges|length|pluralize:"r" }}
+			</button>
+			<div class="collapse" id="nl-ip-{{ forloop.counter }}">
+				<ul class="mb-0 pl-3">
+				{% for iprange in nl.ipRanges %}
+					<li><code>{{ iprange }}</code></li>
+				{% endfor %}
+				</ul>
+			</div>
 		{% else %}
 			—
 		{% endif %}
 	</td>
 	<td>
 		{% if nl.countriesAndRegions %}
-			<ul class="mb-0 pl-3">
-			{% for country in nl.countriesAndRegions %}
-				<li>{{ country.name|default:country.code }}{% if country.code and country.name %} ({{ country.code }}){% endif %}</li>
-			{% endfor %}
-			</ul>
+			<button class="btn btn-link nl-expand-btn" type="button" data-toggle="collapse" data-target="#nl-land-{{ forloop.counter }}" aria-expanded="false" aria-controls="nl-land-{{ forloop.counter }}">
+				Vis {{ nl.countriesAndRegions|length }} land
+			</button>
+			<div class="collapse" id="nl-land-{{ forloop.counter }}">
+				<ul class="mb-0 pl-3">
+				{% for country in nl.countriesAndRegions %}
+					<li>{{ country.name|default:country.code }}{% if country.code and country.name %} ({{ country.code }}){% endif %}</li>
+				{% endfor %}
+				</ul>
+			</div>
 		{% else %}
 			—
 		{% endif %}
 	</td>
 	<td>{{ nl.sist_endret|date:"d.M Y H:i"|default:"—" }}</td>
-	<td><code>{{ nl.ipNamedLocation_id }}</code></td>
 </tr>
 {% empty %}
 <tr>
-	<td colspan="7">Ingen named locations funnet.</td>
+	<td colspan="6">Ingen named locations funnet.</td>
 </tr>
 {% endfor %}
 </tbody>
