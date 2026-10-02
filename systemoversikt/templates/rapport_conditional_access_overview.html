@@ -3,6 +3,7 @@
 {% load static %}
 {% load templatetags %}
 {# Change log:
+   2026-10-02: Filter bar sticky again – own scroll within viewport height.
    2026-10-02: State filter (Active default) – include Reporting/Disabled tiles.
    2026-10-02: Filter group headers – larger title, light bg, left accent bar like CA tiles.
    2026-10-02: Filter bar fixed 366px, not sticky; apps/locations/groups stacked one-per-line.
@@ -28,7 +29,11 @@
 }
 
 .ca-overview-filters {
+	position: sticky;
+	top: 0.75rem;
 	width: 366px;
+	max-height: calc(100vh - 1.5rem);
+	overflow-y: auto;
 	box-sizing: border-box;
 	margin-bottom: 0;
 	padding: 0.75rem;
