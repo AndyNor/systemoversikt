@@ -1,7 +1,8 @@
 {% extends "rapport_index.html" %}
 {% load humanize %}
 {# Change log: #}
-{# 2026-10-02: Aktiv/Trusted as light green/red tags; ID under Navn; expandable IP/country lists. #}
+{# 2026-10-02: Only countries expandable (IP ranges always shown – usually short). #}
+{# 2026-10-02: Aktiv/Trusted as light green/red tags; ID under Navn; expandable country lists. #}
 {# 2026-10-02: Generic named locations detail view for Conditional Access. #}
 
 {% block overskrift %}
@@ -79,16 +80,11 @@
 	</td>
 	<td>
 		{% if nl.ipRanges %}
-			<button class="btn btn-link nl-expand-btn" type="button" data-toggle="collapse" data-target="#nl-ip-{{ forloop.counter }}" aria-expanded="false" aria-controls="nl-ip-{{ forloop.counter }}">
-				Vis {{ nl.ipRanges|length }} IP-range{{ nl.ipRanges|length|pluralize:"r" }}
-			</button>
-			<div class="collapse" id="nl-ip-{{ forloop.counter }}">
-				<ul class="mb-0 pl-3">
-				{% for iprange in nl.ipRanges %}
-					<li><code>{{ iprange }}</code></li>
-				{% endfor %}
-				</ul>
-			</div>
+			<ul class="mb-0 pl-3">
+			{% for iprange in nl.ipRanges %}
+				<li><code>{{ iprange }}</code></li>
+			{% endfor %}
+			</ul>
 		{% else %}
 			—
 		{% endif %}
