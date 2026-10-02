@@ -30,11 +30,12 @@
 
 	<hr><h6>Conditional access</h6>
 
-		{% url 'rapport_conditional_access_rules' as url_rapport_conditional_access_rules %}
-		<a href="{{ url_rapport_conditional_access_rules }}" class="btn btn-sm btn-link {% if url_rapport_conditional_access_rules in request.path %}fremhev{% endif %}">CA-regler</a><br>
-
+		{# 2026-10-02: CA-oversikt before CA-regler – overview is the primary entry point. #}
 		{% url 'rapport_conditional_access_overview' as url_rapport_conditional_access_overview %}
 		<a href="{{ url_rapport_conditional_access_overview }}" class="btn btn-sm btn-link {% if url_rapport_conditional_access_overview in request.path %}fremhev{% endif %}">CA-oversikt</a><br>
+
+		{% url 'rapport_conditional_access_rules' as url_rapport_conditional_access_rules %}
+		<a href="{{ url_rapport_conditional_access_rules }}" class="btn btn-sm btn-link {% if url_rapport_conditional_access_rules in request.path %}fremhev{% endif %}">CA-regler</a><br>
 
 		{% url 'rapport_conditional_access_changes' as url_rapport_conditional_access_changes %}
 		<a href="{{ url_rapport_conditional_access_changes }}" class="btn btn-sm btn-link {% if url_rapport_conditional_access_changes in request.path %}fremhev{% endif %}">CA-endringer</a><br>

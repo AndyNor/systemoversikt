@@ -2,7 +2,10 @@
 {% load humanize %}
 {% load static %}
 {% load templatetags %}
-{# 2026-06-24: User tag black text; role brown palette. #}
+{# Change log:
+   2026-10-02: Widescreen layout – filters left (~25%), rules right.
+   2026-06-24: User tag black text; role brown palette.
+#}
 
 {% block overskrift %}
 	Azure felles: Conditional Access-oversikt
@@ -10,12 +13,31 @@
 
 {% block ekstrastyle %}
 <style nonce="{{ request.csp_nonce }}">
+.ca-overview-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 1.25rem;
+	align-items: start;
+}
+
+.ca-overview-layout--with-filters {
+	grid-template-columns: minmax(13rem, 25%) minmax(0, 1fr);
+}
+
 .ca-overview-filters {
-	margin-bottom: 1rem;
+	position: sticky;
+	top: 0.75rem;
+	max-height: calc(100vh - 1.5rem);
+	overflow-y: auto;
+	margin-bottom: 0;
 	padding: 0.75rem;
 	border: 1px solid #e4e2ef;
 	border-radius: 0.35rem;
 	background: #fafafa;
+}
+
+.ca-overview-main {
+	min-width: 0;
 }
 
 .ca-overview-filters__group {
@@ -291,109 +313,113 @@
 	<a href="{{ rules_detail_url }}">Se full regeltabell med JSON-detaljer</a>.
 </p>
 
-{% if ca_filters %}
-<div class="ca-overview-filters" id="ca-overview-filters">
-	{% for group in ca_filters %}
-	<div class="ca-overview-filters__group" data-filter-group="{{ group.id }}">
-		<p class="ca-overview-filters__title">{{ group.title }}</p>
-		<div class="ca-overview-filters__chips">
-			{% for option in group.options %}
-			<button type="button"
-				class="ca-overview-filter-chip"
-				data-filter-group="{{ group.id }}"
-				data-filter-tag="{{ option.tag }}">
-				{{ option.label }}
-			</button>
-			{% endfor %}
+<div class="ca-overview-layout{% if ca_filters %} ca-overview-layout--with-filters{% endif %}">
+	{% if ca_filters %}
+	<div class="ca-overview-filters" id="ca-overview-filters">
+		{% for group in ca_filters %}
+		<div class="ca-overview-filters__group" data-filter-group="{{ group.id }}">
+			<p class="ca-overview-filters__title">{{ group.title }}</p>
+			<div class="ca-overview-filters__chips">
+				{% for option in group.options %}
+				<button type="button"
+					class="ca-overview-filter-chip"
+					data-filter-group="{{ group.id }}"
+					data-filter-tag="{{ option.tag }}">
+					{{ option.label }}
+				</button>
+				{% endfor %}
+			</div>
 		</div>
+		{% endfor %}
 	</div>
-	{% endfor %}
-</div>
-{% endif %}
+	{% endif %}
 
-<p class="ca-overview-count">
-	<span id="ca-overview-visible-count">{{ ca_tiles|length }}</span> av {{ ca_tiles|length }} regler vises
-</p>
+	<div class="ca-overview-main">
+		<p class="ca-overview-count">
+			<span id="ca-overview-visible-count">{{ ca_tiles|length }}</span> av {{ ca_tiles|length }} regler vises
+		</p>
 
-<div class="ca-overview-legend" aria-label="Fargeforklaring for betingelser">
-	<p class="ca-overview-legend__title">Legend</p>
-	<div class="ca-overview-legend__items">
-		<span class="ca-overview-label ca-overview-label--grant">Allow</span>
-		<span class="ca-overview-label ca-overview-label--grant-block">Block</span>
-		<span class="ca-overview-label ca-overview-label--user">{% ca_condition_label_icon 'user' %}User</span>
-		<span class="ca-overview-label ca-overview-label--group">{% ca_condition_label_icon 'group' %}Group</span>
-		<span class="ca-overview-label ca-overview-label--role">{% ca_condition_label_icon 'role' %}Role</span>
-		<span class="ca-overview-label ca-overview-label--location">{% ca_condition_label_icon 'location' %}Location</span>
-		<span class="ca-overview-label ca-overview-label--app">{% ca_condition_label_icon 'app' %}App</span>
-		<span class="ca-overview-label ca-overview-label--platform">Platform</span>
-		<span class="ca-overview-label ca-overview-label--client">Client app</span>
-		<span class="ca-overview-label ca-overview-label--device">Device</span>
-		<span class="ca-overview-label ca-overview-label--risk">Risk</span>
-	</div>
-</div>
-
-<ul class="ca-overview-grid" id="ca-overview-grid">
-{% for tile in ca_tiles %}
-	<li class="ca-overview-tile{% if tile.grant.mode == 'block' %} ca-overview-tile--block{% endif %}"
-		data-filter-tags="{{ tile.filter_tags|join:' ' }}">
-		<h6>
-			<a href="{{ tile.detail_url }}" title="{{ tile.full_name }}">{{ tile.short_name }}</a>{% if tile.title_suffix %}<span class="ca-overview-tile__title-suffix"> {{ tile.title_suffix }}</span>{% endif %}
-		</h6>
-
-		<div class="ca-overview-tile__section">
-			<p class="ca-overview-tile__section-title">Grant</p>
-			<div class="ca-overview-tile__labels">
-				{% if tile.grant.mode == 'block' or tile.grant.mode == 'allow' %}
-					{% for label in tile.grant.labels %}
-						{% ca_overview_label label %}
-					{% endfor %}
-				{% else %}
-					<span class="ca-overview-tile__empty">{{ tile.grant.summary }}</span>
-				{% endif %}
+		<div class="ca-overview-legend" aria-label="Fargeforklaring for betingelser">
+			<p class="ca-overview-legend__title">Legend</p>
+			<div class="ca-overview-legend__items">
+				<span class="ca-overview-label ca-overview-label--grant">Allow</span>
+				<span class="ca-overview-label ca-overview-label--grant-block">Block</span>
+				<span class="ca-overview-label ca-overview-label--user">{% ca_condition_label_icon 'user' %}User</span>
+				<span class="ca-overview-label ca-overview-label--group">{% ca_condition_label_icon 'group' %}Group</span>
+				<span class="ca-overview-label ca-overview-label--role">{% ca_condition_label_icon 'role' %}Role</span>
+				<span class="ca-overview-label ca-overview-label--location">{% ca_condition_label_icon 'location' %}Location</span>
+				<span class="ca-overview-label ca-overview-label--app">{% ca_condition_label_icon 'app' %}App</span>
+				<span class="ca-overview-label ca-overview-label--platform">Platform</span>
+				<span class="ca-overview-label ca-overview-label--client">Client app</span>
+				<span class="ca-overview-label ca-overview-label--device">Device</span>
+				<span class="ca-overview-label ca-overview-label--risk">Risk</span>
 			</div>
 		</div>
 
-		<div class="ca-overview-tile__section">
-			<p class="ca-overview-tile__section-title">Session</p>
-			{% if tile.session_lines %}
-				<ul>
-					{% for line in tile.session_lines %}
-						<li>{{ line }}</li>
-					{% endfor %}
-				</ul>
-			{% else %}
-				<p class="ca-overview-tile__empty mb-0">None</p>
-			{% endif %}
-		</div>
+		<ul class="ca-overview-grid" id="ca-overview-grid">
+		{% for tile in ca_tiles %}
+			<li class="ca-overview-tile{% if tile.grant.mode == 'block' %} ca-overview-tile--block{% endif %}"
+				data-filter-tags="{{ tile.filter_tags|join:' ' }}">
+				<h6>
+					<a href="{{ tile.detail_url }}" title="{{ tile.full_name }}">{{ tile.short_name }}</a>{% if tile.title_suffix %}<span class="ca-overview-tile__title-suffix"> {{ tile.title_suffix }}</span>{% endif %}
+				</h6>
 
-		<div class="ca-overview-tile__section">
-			<p class="ca-overview-tile__section-title">Conditions included</p>
-			{% if tile.conditions_included %}
-				<div class="ca-overview-tile__labels">
-					{% for label in tile.conditions_included %}
-						{% ca_overview_label label %}
-					{% endfor %}
+				<div class="ca-overview-tile__section">
+					<p class="ca-overview-tile__section-title">Grant</p>
+					<div class="ca-overview-tile__labels">
+						{% if tile.grant.mode == 'block' or tile.grant.mode == 'allow' %}
+							{% for label in tile.grant.labels %}
+								{% ca_overview_label label %}
+							{% endfor %}
+						{% else %}
+							<span class="ca-overview-tile__empty">{{ tile.grant.summary }}</span>
+						{% endif %}
+					</div>
 				</div>
-			{% else %}
-				<p class="ca-overview-tile__empty mb-0">None</p>
-			{% endif %}
-		</div>
 
-		<div class="ca-overview-tile__section ca-overview-tile__section--excluded">
-			<p class="ca-overview-tile__section-title">Conditions excluded</p>
-			{% if tile.conditions_excluded %}
-				<div class="ca-overview-tile__labels">
-					{% for label in tile.conditions_excluded %}
-						{% ca_overview_label label %}
-					{% endfor %}
+				<div class="ca-overview-tile__section">
+					<p class="ca-overview-tile__section-title">Session</p>
+					{% if tile.session_lines %}
+						<ul>
+							{% for line in tile.session_lines %}
+								<li>{{ line }}</li>
+							{% endfor %}
+						</ul>
+					{% else %}
+						<p class="ca-overview-tile__empty mb-0">None</p>
+					{% endif %}
 				</div>
-			{% else %}
-				<p class="ca-overview-tile__empty mb-0">None</p>
-			{% endif %}
-		</div>
-	</li>
-{% endfor %}
-</ul>
+
+				<div class="ca-overview-tile__section">
+					<p class="ca-overview-tile__section-title">Conditions included</p>
+					{% if tile.conditions_included %}
+						<div class="ca-overview-tile__labels">
+							{% for label in tile.conditions_included %}
+								{% ca_overview_label label %}
+							{% endfor %}
+						</div>
+					{% else %}
+						<p class="ca-overview-tile__empty mb-0">None</p>
+					{% endif %}
+				</div>
+
+				<div class="ca-overview-tile__section ca-overview-tile__section--excluded">
+					<p class="ca-overview-tile__section-title">Conditions excluded</p>
+					{% if tile.conditions_excluded %}
+						<div class="ca-overview-tile__labels">
+							{% for label in tile.conditions_excluded %}
+								{% ca_overview_label label %}
+							{% endfor %}
+						</div>
+					{% else %}
+						<p class="ca-overview-tile__empty mb-0">None</p>
+					{% endif %}
+				</div>
+			</li>
+		{% endfor %}
+		</ul>
+	</div>
+</div>
 
 {% endblock hovedinnhold %}
 
