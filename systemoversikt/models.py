@@ -323,8 +323,10 @@ _CA_CLIENT_APP_LABELS = {
 	'other': 'Other',
 }
 
+# 2026-10-02: State filter group first – Active / Reporting / Disabled (overview).
 # 2026-10-02: Apps, Locations, Groups last – long lists; stacked one-per-line in UI.
 _CA_FILTER_GROUPS = (
+	('state', 'State'),
 	('grant_mode', 'Grant'),
 	('grant_control', 'Grant controls'),
 	('scope', 'Scope'),
@@ -335,6 +337,13 @@ _CA_FILTER_GROUPS = (
 	('locations', 'Locations'),
 	('groups', 'Groups'),
 )
+
+# Azure CA policy.state → overview filter tag + label.
+_CA_POLICY_STATE_FILTER = {
+	'enabled': ('active', 'Active'),
+	'enabledForReportingButNotEnforced': ('reporting', 'Reporting'),
+	'disabled': ('disabled', 'Disabled'),
+}
 
 # Splits «ID - description» rule names; accepts hyphen, en-dash and em-dash with surrounding spaces.
 _CA_RULE_NAME_SPLIT_RE = re.compile(r'\s+[-–—]\s+')
@@ -746,6 +755,8 @@ def conditional_access_tile_conditions(enriched_conditions, raw_conditions=None,
 
 
 def _ca_filter_group_for_tag(tag):
+	if tag in ('active', 'reporting', 'disabled'):
+		return 'state'
 	if tag in ('block', 'allow'):
 		return 'grant_mode'
 	if tag in ('mfa', 'compliant', 'domain-joined'):
@@ -767,10 +778,20 @@ def _ca_filter_group_for_tag(tag):
 	return None
 
 
+def _ca_policy_state_filter(state):
+	"""Return (filter_tag, label) for a CA policy state, or None if unknown."""
+	return _CA_POLICY_STATE_FILTER.get(state)
+
+
 def conditional_access_collect_overview_filters(tiles):
 	"""Build filter chip definitions from tile tags, grouped for the overview UI."""
 	seen = {group_id: {} for group_id, _ in _CA_FILTER_GROUPS}
 	static_filters = {
+		'state': [
+			('active', 'Active'),
+			('reporting', 'Reporting'),
+			('disabled', 'Disabled'),
+		],
 		'grant_mode': [
 			('allow', 'Allow'),
 			('block', 'Block'),
@@ -852,7 +873,8 @@ def conditional_access_collect_overview_filters(tiles):
 
 
 def conditional_access_build_overview_tiles(policies, guid_lookup=None, raw_policies_by_id=None):
-	"""Build overview tile data for active CA policies (state == enabled, not terms of use)."""
+	"""Build overview tile data for CA policies (any state except terms of use)."""
+	# 2026-10-02: Include Reporting/Disabled; State filter defaults to Active in the UI.
 	guid_lookup = guid_lookup or {}
 	raw_policies_by_id = raw_policies_by_id or {}
 	tiles = []
@@ -860,7 +882,8 @@ def conditional_access_build_overview_tiles(policies, guid_lookup=None, raw_poli
 		return tiles
 
 	for policy in policies:
-		if policy.get('state') != 'enabled':
+		state_info = _ca_policy_state_filter(policy.get('state'))
+		if not state_info:
 			continue
 		if conditional_access_is_terms_of_use_policy(policy):
 			continue
@@ -869,6 +892,7 @@ def conditional_access_build_overview_tiles(policies, guid_lookup=None, raw_poli
 		if not policy_id:
 			continue
 
+		state_tag, state_label = state_info
 		raw_policy = raw_policies_by_id.get(policy_id) or policy
 		display_name = policy.get('displayName') or policy_id
 		grant = conditional_access_summarize_grant(policy.get('grantControls'))
@@ -879,7 +903,7 @@ def conditional_access_build_overview_tiles(policies, guid_lookup=None, raw_poli
 			guid_lookup=guid_lookup,
 		)
 		filter_tags = list(dict.fromkeys(
-			(grant.get('filter_tags') or []) + (conditions.get('filter_tags') or [])
+			[state_tag] + (grant.get('filter_tags') or []) + (conditions.get('filter_tags') or [])
 		))
 
 		tiles.append({
@@ -888,6 +912,9 @@ def conditional_access_build_overview_tiles(policies, guid_lookup=None, raw_poli
 			'title_suffix': conditional_access_rule_title_suffix(display_name),
 			'full_name': display_name,
 			'detail_url': reverse('rapport_conditional_access_rule', kwargs={'pk': policy_id}),
+			'state': policy.get('state'),
+			'state_tag': state_tag,
+			'state_label': state_label,
 			'grant': grant,
 			'session_lines': conditional_access_summarize_session(policy.get('sessionControls')),
 			'conditions_included': _ca_prepare_overview_labels(conditions['included_labels']),

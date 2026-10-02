@@ -3,6 +3,7 @@
 {% load static %}
 {% load templatetags %}
 {# Change log:
+   2026-10-02: State filter (Active default) – include Reporting/Disabled tiles.
    2026-10-02: Filter group headers – larger title, light bg, left accent bar like CA tiles.
    2026-10-02: Filter bar fixed 366px, not sticky; apps/locations/groups stacked one-per-line.
    2026-10-02: Widescreen layout – filters left, rules right.
@@ -162,6 +163,51 @@
 
 .ca-overview-tile--block {
 	border-left-color: #c62828;
+}
+
+.ca-overview-tile--reporting {
+	border-left-color: #f9a825;
+	box-shadow: 0 2px 8px rgba(249, 168, 37, 0.12);
+	background: #fffdf7;
+}
+
+.ca-overview-tile--disabled {
+	border-left-color: #9e9e9e;
+	box-shadow: none;
+	background: #f5f5f5;
+}
+
+.ca-overview-tile__state {
+	display: inline-block;
+	margin: 0 0 0.45rem;
+	font-size: 0.68rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	padding: 0.1rem 0.4rem;
+	border-radius: 0.25rem;
+	background: #e8f5e9;
+	color: #2e7d32;
+}
+
+.ca-overview-tile--reporting .ca-overview-tile__state {
+	background: #fff8e1;
+	color: #f57f17;
+}
+
+.ca-overview-tile--disabled .ca-overview-tile__state {
+	background: #eeeeee;
+	color: #616161;
+}
+
+.ca-overview-label--reporting {
+	background: #fff8e1;
+	color: #f57f17;
+}
+
+.ca-overview-label--disabled-state {
+	background: #eeeeee;
+	color: #616161;
 }
 
 .ca-overview-tile h6 {
@@ -330,7 +376,8 @@
 {% include "includes/integrasjon_freshness_banner.html" with label="Conditional Access-regler ble sist synkronisert" %}
 
 <p>
-	Denne siden viser <strong>aktive</strong> Conditional Access-regler som fliser (terms of use og inaktive regler er utelatt).
+	Denne siden viser Conditional Access-regler som fliser (terms of use er utelatt).
+	Som standard filtreres det på <strong>aktive</strong> regler; bruk State-filteret for Reporting eller Disabled.
 	Hoveddelen av regelnavnet (ID) vises som tittel; resten av navnet vises etterpå i mindre grå skrift.
 	<a href="{{ rules_detail_url }}">Se full regeltabell med JSON-detaljer</a>.
 </p>
@@ -366,6 +413,8 @@
 			<div class="ca-overview-legend__items">
 				<span class="ca-overview-label ca-overview-label--grant">Allow</span>
 				<span class="ca-overview-label ca-overview-label--grant-block">Block</span>
+				<span class="ca-overview-label ca-overview-label--reporting">Reporting</span>
+				<span class="ca-overview-label ca-overview-label--disabled-state">Disabled</span>
 				<span class="ca-overview-label ca-overview-label--user">{% ca_condition_label_icon 'user' %}User</span>
 				<span class="ca-overview-label ca-overview-label--group">{% ca_condition_label_icon 'group' %}Group</span>
 				<span class="ca-overview-label ca-overview-label--role">{% ca_condition_label_icon 'role' %}Role</span>
@@ -380,8 +429,11 @@
 
 		<ul class="ca-overview-grid" id="ca-overview-grid">
 		{% for tile in ca_tiles %}
-			<li class="ca-overview-tile{% if tile.grant.mode == 'block' %} ca-overview-tile--block{% endif %}"
+			<li class="ca-overview-tile{% if tile.state_tag == 'reporting' %} ca-overview-tile--reporting{% elif tile.state_tag == 'disabled' %} ca-overview-tile--disabled{% elif tile.grant.mode == 'block' %} ca-overview-tile--block{% endif %}"
 				data-filter-tags="{{ tile.filter_tags|join:' ' }}">
+				{% if tile.state_tag != 'active' %}
+				<span class="ca-overview-tile__state">{{ tile.state_label }}</span>
+				{% endif %}
 				<h6>
 					<a href="{{ tile.detail_url }}" title="{{ tile.full_name }}">{{ tile.short_name }}</a>{% if tile.title_suffix %}<span class="ca-overview-tile__title-suffix"> {{ tile.title_suffix }}</span>{% endif %}
 				</h6>
@@ -457,6 +509,17 @@
 
 	var tiles = Array.prototype.slice.call(grid.querySelectorAll('.ca-overview-tile'));
 	var activeByGroup = {};
+
+	// 2026-10-02: Default State=Active so overview starts with enforced rules only.
+	activeByGroup.state = ['active'];
+	if (filterRoot) {
+		var defaultActiveChip = filterRoot.querySelector(
+			'.ca-overview-filter-chip[data-filter-group="state"][data-filter-tag="active"]'
+		);
+		if (defaultActiveChip) {
+			defaultActiveChip.classList.add('is-active');
+		}
+	}
 
 	function parseTileTags(tile) {
 		return (tile.getAttribute('data-filter-tags') || '').split(/\s+/).filter(Boolean);
