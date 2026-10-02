@@ -1,6 +1,7 @@
 {% extends "rapport_index.html" %}
 {% load humanize %}
 {# Change log: #}
+{# 2026-10-02: Size GeoChart height from width (aspect ratio) to avoid vertical letterboxing. #}
 {# 2026-10-02: Make GeoCharts responsive (fluid width + redraw on resize). #}
 {# 2026-10-02: Removed unused d3-geomap.css link (404); maps use Google Charts GeoChart. #}
 
@@ -24,15 +25,15 @@
 <!-- https://developers.google.com/chart/interactive/docs/gallery/geochart -->
 
 <h5>Hele verden</h5><hr>
-<div id="world_div" style="width: 100%; height: 500px;"></div>
+<div id="world_div" style="width: 100%;"></div>
 <br><br>
 
 <h5>Europa</h5><hr>
-<div id="europa_div" style="width: 100%; height: 550px;"></div>
+<div id="europa_div" style="width: 100%;"></div>
 <br><br>
 
 <h5>Asia</h5><hr>
-<div id="oceania_div" style="width: 100%; height: 550px;"></div>
+<div id="oceania_div" style="width: 100%;"></div>
 <br><br>
 
 
@@ -67,20 +68,25 @@
 		backgroundColor: '#e6f7ff',
 		legend: 'none',
 		datalessRegionColor: '#adad85',
-		width: '100%',
+		keepAspectRatio: true,
 	};
+
+	// Width/height ratios close to each GeoChart region's natural projection.
+	function drawMap(el, data, options, widthOverHeight) {
+		var width = el.clientWidth;
+		var height = Math.max(180, Math.round(width / widthOverHeight));
+		el.style.height = height + 'px';
+		new google.visualization.GeoChart(el).draw(data, Object.assign({}, sharedOptions, options, {
+			width: width,
+			height: height,
+		}));
+	}
 
 	function drawAllMaps() {
 		var data = google.visualization.arrayToDataTable({{color_table|safe}});
-
-		new google.visualization.GeoChart(document.getElementById('world_div'))
-			.draw(data, sharedOptions);
-
-		new google.visualization.GeoChart(document.getElementById('europa_div'))
-			.draw(data, Object.assign({}, sharedOptions, {region: '150'})); // Western Europe
-
-		new google.visualization.GeoChart(document.getElementById('oceania_div'))
-			.draw(data, Object.assign({}, sharedOptions, {region: '035'})); // South-Eastern Asia
+		drawMap(document.getElementById('world_div'), data, {}, 2.0);
+		drawMap(document.getElementById('europa_div'), data, {region: '150'}, 1.25); // Western Europe
+		drawMap(document.getElementById('oceania_div'), data, {region: '035'}, 1.4); // South-Eastern Asia
 	}
 
 	var resizeTimer;
