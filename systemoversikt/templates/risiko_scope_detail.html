@@ -1,3 +1,4 @@
+{# 2026-10-12: Cache-bust risiko_api.js – stop mislabeling HTML 500 as session expiry. #}
 {# 2026-09-30: Scenario modal – compact read-only Risikosammenstilling mappings between Uønsket hendelse and Årsaker/svakheter. #}
 {# 2026-09-30: Tiltak status select in scenario modal – light background color per status. #}
 {# 2026-09-08: Unused systems (livsløp 6–7) shown with strikethrough on collection and rapport. #}
@@ -979,7 +980,8 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 .risiko-omfang-figur-preview { width: 100%; height: auto; }
 </style>
 {% if can_edit_scope or can_change_locked_status %}
-<script src="{% static 'risiko_api.js' %}" nonce="{{request.csp_nonce}}"></script>
+{# 2026-10-12: Cache-bust risiko_api.js after session-expiry false-positive fix. #}
+<script src="{% static 'risiko_api.js' %}?v=20261012-session-error" nonce="{{request.csp_nonce}}"></script>
 {# 2026-09-30: Cache-bust risiko_edit.js for sammenstilling mappings in scenario modal. #}
 <script src="{% static 'risiko_edit.js' %}?v=20260930-sammenstilling-mappings" nonce="{{request.csp_nonce}}"></script>
 {% endif %}

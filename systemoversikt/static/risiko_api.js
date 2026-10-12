@@ -1,4 +1,5 @@
 // Change log:
+// 2026-10-12: Only treat 401/redirect/session_expired as login expiry – not HTML 500/CSRF pages.
 // 2026-08-23: Shared fetch wrapper – session expiry detection, CSRF, and heartbeat for risk AJAX pages.
 
 (function (window) {
@@ -42,14 +43,24 @@
     if (response.status === 401) {
       return true;
     }
-    var ct = (response.headers.get('content-type') || '').toLowerCase();
-    if (ct.indexOf('text/html') >= 0) {
-      return true;
-    }
     if (data && data.error === 'session_expired') {
       return true;
     }
     return false;
+  }
+
+  function unexpectedResponseError(response) {
+    var status = response ? response.status : 0;
+    var message =
+      status === 403
+        ? 'Forespørselen ble avvist. Last siden på nytt og prøv igjen.'
+        : status
+          ? 'Uventet svar fra serveren (HTTP ' + status + '). Prøv å laste siden på nytt.'
+          : 'Uventet svar fra serveren. Prøv å laste siden på nytt.';
+    var err = new Error(message);
+    err.status = status;
+    err.data = null;
+    return err;
   }
 
   function handleSessionExpired() {
@@ -74,9 +85,8 @@
       return Promise.reject(sessionExpiredError('Sesjonen er utløpt', response, null));
     }
     if (ct.indexOf('application/json') === -1 && ct.indexOf('+json') === -1) {
-      // Non-JSON body (often HTML login page via proxy) – treat as session loss.
-      handleSessionExpired();
-      return Promise.reject(sessionExpiredError('Sesjonen er utløpt', response, null));
+      // Non-JSON (HTML 500/CSRF/proxy) – not necessarily a lost login session.
+      return Promise.reject(unexpectedResponseError(response));
     }
     return response.text().then(function (text) {
       var data = null;
@@ -84,8 +94,7 @@
         try {
           data = JSON.parse(text);
         } catch (e) {
-          handleSessionExpired();
-          return Promise.reject(sessionExpiredError('Sesjonen er utløpt', response, null));
+          return Promise.reject(unexpectedResponseError(response));
         }
       } else {
         data = {};

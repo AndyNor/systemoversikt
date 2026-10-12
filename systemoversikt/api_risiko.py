@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-12: _auto_risk_id uses next free R# (not count+1) – avoid unique_together collision after deletes.
 # 2026-09-30: Scenario detail includes sammenstilling_mappings (visible sammenstillinger only) for modal display.
 # 2026-09-08: System payloads include ute_av_bruk and select_label (livsløp 6–7) for unused-system UI.
 # 2026-09-08: api_risiko_scope_update – set sist_revidert to today when status changes (no client override).
@@ -427,9 +428,16 @@ def _level_counts(scenarios):
 
 
 def _auto_risk_id(scope):
+	# 2026-10-12: Next free R# from existing IDs – count+1 collided when scenarios were deleted.
 	"""Internal uniquifier for DB; display uses position-based R# instead."""
-	count = scope.scenarios.count()
-	return 'R%d' % (count + 1)
+	used = set()
+	for rid in scope.scenarios.values_list('risk_id', flat=True):
+		if isinstance(rid, str) and rid.startswith('R') and rid[1:].isdigit():
+			used.add(int(rid[1:]))
+	n = 1
+	while n in used:
+		n += 1
+	return 'R%d' % n
 
 
 def _validate_scenario_fields(data, scope, scenario=None):
