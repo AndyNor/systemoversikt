@@ -1,3 +1,4 @@
+{# 2026-10-12: Inline editor for GodkjentElektroniskArkiv (separate change permission). #}
 {# 2026-10-12: Full-height section/sub accent bars; OKA sub-heading class; «Registrert bruk» heading. #}
 {# 2026-09-15: Helper link to full OKA overview (new tab) next to category assignment. #}
 {# 2026-09-15: OKA informasjonskategorier – standard on system, compact per virksomhet, metadata. #}
@@ -780,6 +781,7 @@
 	<script src="{% static 'cytoscape/cytoscape-svg.js@0.4.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'system_systemavhengigheter_graph.js' %}?v=20260622-programvare-round" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'informasjonskategori_edit.js' %}?v=20260915" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'godkjent_elektronisk_arkiv_edit.js' %}?v=20261012" nonce="{{request.csp_nonce}}"></script>
 
 {% endblock ekstrajavascript %}
 
@@ -1581,28 +1583,64 @@
 			</div>
 			{% endif %}
 		</div>
-		{# 2026-10-12: Clearer archive-approval wording + Byarkivet routines info when approved. #}
-		{# 2026-09-14: Own archive approval (er_arkiv + date) and integrations to approved archive systems. #}
-		<div class="system-detalj-arkiv-status">
-			{% if systemdetaljer.er_arkiv %}
-				<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--ja">
-					<span class="system-detalj-arkiv-integrasjon-symbol" aria-hidden="true">🗁</span>
-					<span>
-						Systemet er godkjent som elektronisk arkiv{% if systemdetaljer.dato_godkjent_elektronisk_arkiv %}
-							({{ systemdetaljer.dato_godkjent_elektronisk_arkiv|date:"Y-m-d" }})
-						{% else %}
-							(dato for godkjenning er ikke registrert)
-						{% endif %}
-					</span>
-				</div>
-				<p class="system-detalj-arkiv-info">
-					Selv om systemet er godkjent som elektronisk arkiv, må den enkelte virksomhet som bruker systemet få godkjent sine manuelle rutiner av Byarkivet før systemet kan erstatte papirarkiv
+		{# 2026-10-12: Read/edit GodkjentElektroniskArkiv (System.er_arkiv kept until migration). #}
+		{# 2026-09-14: Own archive approval and integrations to approved archive systems. #}
+		<div class="system-detalj-arkiv-status" id="gea-panel">
+			{% if perms.systemoversikt.change_godkjentelektroniskarkiv %}
+			<p class="mb-2">
+				<button type="button" class="btn btn-sm btn-secondary" data-gea-toggle>Endre godkjenning</button>
+			</p>
+			{% endif %}
+			<div data-gea-view>
+				{% if godkjenning_elektronisk_arkiv.godkjent %}
+					<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--ja" data-gea-status>
+						<span class="system-detalj-arkiv-integrasjon-symbol" aria-hidden="true">🗁</span>
+						<span>
+							Systemet er godkjent som elektronisk arkiv{% if godkjenning_elektronisk_arkiv.dato_godkjent_elektronisk_arkiv %}
+								({{ godkjenning_elektronisk_arkiv.dato_godkjent_elektronisk_arkiv|date:"Y-m-d" }})
+							{% else %}
+								(dato for godkjenning er ikke registrert)
+							{% endif %}
+						</span>
+					</div>
+					<p class="system-detalj-arkiv-info" data-gea-info>
+						Selv om systemet er godkjent som elektronisk arkiv, må den enkelte virksomhet som bruker systemet få godkjent sine manuelle rutiner av Byarkivet før systemet kan erstatte papirarkiv
+					</p>
+				{% else %}
+					<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--nei" data-gea-status>
+						<span class="system-detalj-arkiv-integrasjon-symbol" aria-hidden="true">⚠</span>
+						<span>Systemet er ikke godkjent som elektronisk arkiv</span>
+					</div>
+					<p class="system-detalj-arkiv-info" data-gea-info hidden>
+						Selv om systemet er godkjent som elektronisk arkiv, må den enkelte virksomhet som bruker systemet få godkjent sine manuelle rutiner av Byarkivet før systemet kan erstatte papirarkiv
+					</p>
+				{% endif %}
+				<p class="small text-muted mb-0" data-gea-henvisning-view {% if not godkjenning_elektronisk_arkiv.henvisning %}hidden{% endif %}>
+					{% if godkjenning_elektronisk_arkiv.henvisning %}Henvisning: {{ godkjenning_elektronisk_arkiv.henvisning }}{% endif %}
 				</p>
-			{% else %}
-				<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--nei">
-					<span class="system-detalj-arkiv-integrasjon-symbol" aria-hidden="true">⚠</span>
-					<span>Systemet er ikke godkjent som elektronisk arkiv</span>
+			</div>
+			{% if perms.systemoversikt.change_godkjentelektroniskarkiv %}
+			<div data-gea-edit hidden>
+				<div class="form-group mb-2">
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" id="gea-godkjent" data-gea-input-godkjent {% if godkjenning_elektronisk_arkiv.godkjent %}checked{% endif %}>
+						<label class="form-check-label" for="gea-godkjent">Godkjent som elektronisk arkiv?</label>
+					</div>
 				</div>
+				<div class="form-group mb-2">
+					<label class="small mb-1" for="gea-dato">Dato godkjent som elektronisk arkiv</label>
+					<input type="date" class="form-control form-control-sm" id="gea-dato" data-gea-input-dato value="{{ godkjenning_elektronisk_arkiv.dato_godkjent_elektronisk_arkiv|date:'Y-m-d' }}">
+				</div>
+				<div class="form-group mb-2">
+					<label class="small mb-1" for="gea-henvisning">Henvisning til hvor denne godkjenningen ligger</label>
+					<textarea class="form-control form-control-sm" id="gea-henvisning" data-gea-input-henvisning rows="3">{{ godkjenning_elektronisk_arkiv.henvisning }}</textarea>
+				</div>
+				<p class="mt-2 mb-1">
+					<button type="button" class="btn btn-primary btn-sm" data-gea-save>Lagre</button>
+					<button type="button" class="btn btn-secondary btn-sm" data-gea-cancel>Avbryt</button>
+				</p>
+				<p class="small text-muted mb-0" data-gea-save-status></p>
+			</div>
 			{% endif %}
 			{% if arkiv_integrasjon_systemer %}
 				<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--ja">
@@ -2106,6 +2144,16 @@ document.addEventListener('DOMContentLoaded', function () {
 		searchUrl: "{% url 'api_informasjonskategorier_sok' %}",
 		urlSave: "{% url 'system_lagre_informasjonskategorier' systemdetaljer.pk %}",
 		kategorier: JSON.parse(document.getElementById('okaStandardKategorier').textContent),
+	});
+	{% endif %}
+
+	{% if perms.systemoversikt.change_godkjentelektroniskarkiv %}
+	window.initGodkjentElektroniskArkivEditor({
+		csrf: "{{ csrf_js_token|default:'' }}",
+		urlSave: "{% url 'system_lagre_godkjent_elektronisk_arkiv' systemdetaljer.pk %}",
+		godkjent: {{ godkjenning_elektronisk_arkiv.godkjent|yesno:"true,false" }},
+		dato_godkjent_elektronisk_arkiv: "{{ godkjenning_elektronisk_arkiv.dato_godkjent_elektronisk_arkiv|date:'Y-m-d'|default:'' }}",
+		henvisning: "{{ godkjenning_elektronisk_arkiv.henvisning|default:''|escapejs }}"
 	});
 	{% endif %}
 

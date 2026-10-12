@@ -1,0 +1,82 @@
+{% extends "tools_index.html" %}
+{# 2026-10-12: Migration checklist – systems with old System electronic-archive fields set. #}
+
+{% block overskrift %}
+	Elektronisk arkiv – gamle godkjenninger
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+
+<p>
+	Systemer der de <em>gamle</em> feltene på System er satt
+	(<code>er_arkiv</code> og/eller <code>dato_godkjent_elektronisk_arkiv</code>).
+	Brukes for å se hvor mye som må overføres til den nye klassen
+	<code>GodkjentElektroniskArkiv</code>.
+</p>
+
+<p>
+	<strong>{{ antall }}</strong> system{{ antall|pluralize:"er" }} med gammel verdi.
+	<strong>{{ antall_med_ny }}</strong> av disse har allerede en rad i den nye klassen.
+</p>
+
+{% if systemer %}
+<table class="table table-sm excel tablesorter">
+	<thead>
+		<tr>
+			<th>System</th>
+			<th>Forvalter</th>
+			<th>Godkjent (gammelt)</th>
+			<th>Dato (gammelt)</th>
+			<th>Ny klasse</th>
+			<th>Godkjent (nytt)</th>
+			<th>Dato (nytt)</th>
+			<th>Henvisning (nytt)</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for s in systemer %}
+		<tr>
+			<td>
+				{% url "systemdetaljer" pk=s.pk as url_system %}
+				<a href="{{ url_system }}">{{ s.systemnavn }}</a>
+			</td>
+			<td>{{ s.systemforvalter.virksomhetsforkortelse|default:"–" }}</td>
+			<td>{{ s.er_arkiv|yesno:"Ja,Nei" }}</td>
+			<td>{{ s.dato_godkjent_elektronisk_arkiv|date:"Y-m-d"|default:"–" }}</td>
+			<td>
+				{% if s.godkjent_elektronisk_arkiv %}
+					Ja
+				{% else %}
+					Nei
+				{% endif %}
+			</td>
+			<td>
+				{% if s.godkjent_elektronisk_arkiv %}
+					{{ s.godkjent_elektronisk_arkiv.godkjent|yesno:"Ja,Nei" }}
+				{% else %}
+					–
+				{% endif %}
+			</td>
+			<td>
+				{% if s.godkjent_elektronisk_arkiv %}
+					{{ s.godkjent_elektronisk_arkiv.dato_godkjent_elektronisk_arkiv|date:"Y-m-d"|default:"–" }}
+				{% else %}
+					–
+				{% endif %}
+			</td>
+			<td>
+				{% if s.godkjent_elektronisk_arkiv %}
+					{{ s.godkjent_elektronisk_arkiv.henvisning|default:"–" }}
+				{% else %}
+					–
+				{% endif %}
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% else %}
+<p class="text-muted">Ingen systemer har verdier i de gamle feltene.</p>
+{% endif %}
+
+{% endblock hovedinnhold %}

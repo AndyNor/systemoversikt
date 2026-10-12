@@ -7,6 +7,7 @@
 # 2026-09-21: System admin layout – alias beside systemnavn; compact alias widget; forvalter e-post/personer regrouped.
 # 2026-09-21: Move System.service_offerings under kritisk_kapabilitet in Informasjonsbehandling fieldset.
 # 2026-09-15: InformasjonsKategori (OKA) admin; System/SystemBruk assignment of leaf codes.
+# 2026-10-12: GodkjentElektroniskArkivAdmin – electronic-archive approval (inline on systemdetaljer).
 # 2026-09-15: ArkivOverforingAdmin – archive transfer SystemBruk → System (fallback to app UI).
 # 2026-09-14: SystemAdmin Arkiv fieldset; produksjonsformater multi-select (PDF, JPG, DOCX).
 # 2026-09-14: Electronic-archive fields on their own admin rows so the approval date is visible.
@@ -448,6 +449,43 @@ class SystemIntegrationAdmin(SimpleHistoryAdmin):
 	def response_change(self, request, obj):
 		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
 			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.source_system.pk}))
+		return super().response_change(request, obj)
+
+
+# 2026-10-12: Fallback admin; primary edit UI is inline on systemdetaljer.
+@admin.register(GodkjentElektroniskArkiv)
+class GodkjentElektroniskArkivAdmin(SimpleHistoryAdmin):
+	actions = [export_as_csv_action("CSV Eksport")]
+	list_display = (
+		'system',
+		'godkjent',
+		'dato_godkjent_elektronisk_arkiv',
+		'henvisning_kort',
+		'sist_oppdatert',
+	)
+	search_fields = (
+		'system__systemnavn',
+		'henvisning',
+	)
+	list_filter = ('godkjent',)
+	autocomplete_fields = ('system',)
+	date_hierarchy = 'dato_godkjent_elektronisk_arkiv'
+
+	@admin.display(description='Henvisning')
+	def henvisning_kort(self, obj):
+		tekst = (obj.henvisning or '').strip()
+		if len(tekst) > 60:
+			return tekst[:57] + '…'
+		return tekst or '—'
+
+	def response_add(self, request, obj, post_url_continue=None):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.system_id}))
+		return super().response_add(request, obj, post_url_continue)
+
+	def response_change(self, request, obj):
+		if not any(header in ('_addanother', '_continue', '_popup') for header in request.POST):
+			return redirect(reverse('systemdetaljer', kwargs={'pk': obj.system_id}))
 		return super().response_change(request, obj)
 
 

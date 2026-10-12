@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-12: Tools page listing systems with old er_arkiv / dato (migration checklist to GodkjentElektroniskArkiv).
+# 2026-10-12: Inline save for GodkjentElektroniskArkiv on systemdetaljer (change_godkjentelektroniskarkiv).
 # 2026-09-15: Dokumentasjonsforvaltning information page for archivists.
 # 2026-09-15: Informasjonskategorier (OKA) on systemdetaljer, bruksdetaljer and tjeneste_detaljer.
 # 2026-09-15: ArkivOverforing – bulk create / edit / delete; lists on systemdetaljer and bruksdetaljer.
@@ -1237,6 +1239,36 @@ def tool_service_announcements(request):
 		'messages': messages,
 		'messages_json': json.dumps(messages, indent=2, ensure_ascii=False),
 		'error': error,
+	})
+
+
+def tool_elektronisk_arkiv_godkjenninger(request):
+	# 2026-10-12: Checklist of systems with values on System.er_arkiv / dato (pre-migration).
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render_access_denied(request, required_permissions)
+
+	systemer = list(
+		System.objects.filter(
+			Q(er_arkiv=True) | Q(dato_godkjent_elektronisk_arkiv__isnull=False)
+		)
+		.select_related('systemforvalter', 'godkjent_elektronisk_arkiv')
+		.order_by('systemnavn')
+	)
+	antall_med_ny = 0
+	for system in systemer:
+		try:
+			system.godkjent_elektronisk_arkiv
+			antall_med_ny += 1
+		except GodkjentElektroniskArkiv.DoesNotExist:
+			pass
+
+	return render(request, 'tool_elektronisk_arkiv_godkjenninger.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'systemer': systemer,
+		'antall': len(systemer),
+		'antall_med_ny': antall_med_ny,
 	})
 
 
@@ -6978,6 +7010,9 @@ def systemdetaljer(request, pk):
 
 	integrasjonsstatus = _integrasjonsstatus("sp_qualys")
 
+	# 2026-10-12: New ACL-separated archive approval (System.er_arkiv kept until data migration).
+	godkjenning_elektronisk_arkiv = getattr(system, 'godkjent_elektronisk_arkiv', None)
+
 	vulnerabilities = list(system.vulnerabilities_old())
 	total_number_vulns = len(vulnerabilities)
 	unique_vulns = {}
@@ -7027,6 +7062,7 @@ def systemdetaljer(request, pk):
 		'arkivoverforinger_som_avsender': arkivoverforinger_som_avsender,
 		'arkivoverforinger_som_mottaker': arkivoverforinger_som_mottaker,
 		'arkiv_integrasjon_systemer': arkiv_integrasjon_systemer,
+		'godkjenning_elektronisk_arkiv': godkjenning_elektronisk_arkiv,
 		'datautveksling_mottar_fra': datautveksling_mottar_fra,
 		'datautveksling_avleverer_til': datautveksling_avleverer_til,
 		'avhengigheter_reverse_systemer': avhengigheter_reverse_systemer,
@@ -7373,6 +7409,71 @@ def _arkivoverforing_system_label(system):
 	if cleaned:
 		return '%s (%s)' % (base, cleaned)
 	return base
+
+
+@require_POST
+def system_lagre_godkjent_elektronisk_arkiv(request, pk):
+	# 2026-10-12: Inline save of GodkjentElektroniskArkiv from systemdetaljer.
+	system = get_object_or_404(System, pk=pk)
+	if not request.user.has_perm('systemoversikt.change_godkjentelektroniskarkiv'):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+	except (ValueError, UnicodeDecodeError):
+		return JsonResponse({'ok': False, 'error': 'invalid_json'}, status=400)
+
+	godkjent = bool(data.get('godkjent'))
+	dato_raw = data.get('dato_godkjent_elektronisk_arkiv')
+	if dato_raw in (None, ''):
+		dato = None
+	else:
+		dato = parse_date(str(dato_raw).strip())
+		if dato is None:
+			return JsonResponse({'ok': False, 'error': 'invalid_date'}, status=400)
+	henvisning = (data.get('henvisning') or '').strip()
+
+	with transaction.atomic():
+		obj, _created = GodkjentElektroniskArkiv.objects.get_or_create(system=system)
+		old_godkjent = obj.godkjent
+		old_dato = obj.dato_godkjent_elektronisk_arkiv
+		old_henvisning = obj.henvisning or ''
+		obj.godkjent = godkjent
+		obj.dato_godkjent_elektronisk_arkiv = dato
+		obj.henvisning = henvisning
+		obj.save()
+
+	parts = []
+	if old_godkjent != godkjent:
+		parts.append(
+			'Godkjent som elektronisk arkiv: %s → %s' % (
+				'Ja' if old_godkjent else 'Nei',
+				'Ja' if godkjent else 'Nei',
+			)
+		)
+	if old_dato != dato:
+		parts.append(
+			'Dato godkjent: %s → %s' % (
+				old_dato.isoformat() if old_dato else '–',
+				dato.isoformat() if dato else '–',
+			)
+		)
+	if old_henvisning != henvisning:
+		parts.append(
+			'Henvisning: «%s» → «%s»' % (old_henvisning or '–', henvisning or '–')
+		)
+	if parts:
+		log_object_change(request.user, obj, '; '.join(parts))
+
+	return JsonResponse({
+		'ok': True,
+		'godkjent': obj.godkjent,
+		'dato_godkjent_elektronisk_arkiv': (
+			obj.dato_godkjent_elektronisk_arkiv.isoformat()
+			if obj.dato_godkjent_elektronisk_arkiv else ''
+		),
+		'henvisning': obj.henvisning or '',
+	})
 
 
 def api_arkivoverforing_systemer_sok(request):

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-12: GodkjentElektroniskArkiv – separate ACL for electronic-archive approval (System fields kept for now).
 # 2026-09-25: Sarbarhetssak – title is the only required field; year/ISO week from opprettet.
 # 2026-09-25: Sarbarhetssak – CVE cases with tiltakseier, case reference and saksstatus.
 # 2026-09-21: Systemforvalter (personer) help text – monthly e-mail reminder (epost_generisk_varsling, day 10).
@@ -5701,6 +5702,53 @@ class ArkivOverforing(models.Model):
 				name='unique_arkivoverforing_bruk_mottaker',
 			),
 		]
+
+
+class GodkjentElektroniskArkiv(models.Model):
+	# 2026-10-12: Own model so Byarkivet can edit approval without change_system.
+	# System.er_arkiv / System.dato_godkjent_elektronisk_arkiv remain until data is migrated.
+	opprettet = models.DateTimeField(
+			verbose_name="Opprettet",
+			auto_now_add=True,
+			null=True,
+			)
+	sist_oppdatert = models.DateTimeField(
+			verbose_name="Sist oppdatert",
+			auto_now=True,
+			)
+	system = models.OneToOneField(
+			# 2026-10-12: PROTECT – do not cascade-delete archive approval when System is removed.
+			to='System',
+			related_name='godkjent_elektronisk_arkiv',
+			on_delete=models.PROTECT,
+			verbose_name="System",
+			)
+	godkjent = models.BooleanField(
+			verbose_name="Godkjent som elektronisk arkiv?",
+			default=False,
+			help_text=u"Krysses av dersom systemet er godkjent som elektronisk arkiv i henhold til arkivlovverk.",
+			)
+	dato_godkjent_elektronisk_arkiv = models.DateField(
+			verbose_name="Dato godkjent som elektronisk arkiv",
+			null=True,
+			blank=True,
+			help_text=u"Datoen systemet ble godkjent som elektronisk arkiv.",
+			)
+	henvisning = models.TextField(
+			verbose_name="Henvisning til hvor denne godkjenningen ligger",
+			blank=True,
+			help_text=u"Referanse til godkjenningsdokument eller annen lagring (URL, saksnummer, mappe, mv.).",
+			)
+	history = HistoricalRecords()
+
+	def __str__(self):
+		status = 'godkjent' if self.godkjent else 'ikke godkjent'
+		return f'Elektronisk arkiv ({status}) – {self.system}'
+
+	class Meta:
+		verbose_name_plural = "Systemoversikt: Godkjent elektronisk arkiv"
+		verbose_name = "godkjent elektronisk arkiv"
+		default_permissions = ('add', 'change', 'delete', 'view')
 
 
 class Tjeneste(models.Model):
