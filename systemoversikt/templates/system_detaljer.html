@@ -668,11 +668,12 @@
 	min-width: 9rem;
 	white-space: nowrap;
 }
+/* 2026-10-12: No top margin – lives in own underblokk under heading/help text. */
 .system-detalj-arkiv-status {
 	display: flex;
 	flex-direction: column;
 	gap: 0.45rem;
-	margin: 0.85rem 0 0;
+	margin: 0;
 }
 .system-detalj-arkiv-integrasjon {
 	display: flex;
@@ -699,10 +700,11 @@
 	color: #6b5a20;
 }
 /* 2026-10-12: Info box when system is approved as electronic archive (Byarkivet routines). */
+/* 2026-10-12: Extra top margin so Henvisning sits closer under status; space before Byarkivet note. */
 .system-detalj-arkiv-info {
 	font-size: 0.88rem;
 	line-height: 1.45;
-	margin: 0;
+	margin: 0.55rem 0 0;
 	padding: 0.65rem 0.85rem;
 	border-radius: 6px;
 	background: #eef5fb;
@@ -1583,14 +1585,21 @@
 			</div>
 			{% endif %}
 		</div>
-		{# 2026-10-12: Read/edit GodkjentElektroniskArkiv (System.er_arkiv kept until migration). #}
-		{# 2026-09-14: Own archive approval and integrations to approved archive systems. #}
+	</div>
+
+	{# 2026-10-12: Own underblokk for digital archive approval (was nested under OKA). #}
+	{# 2026-10-12: Read/edit GodkjentElektroniskArkiv (System.er_arkiv kept until migration). #}
+	{# 2026-09-14: Own archive approval and integrations to approved archive systems. #}
+	<div class="system-detalj-underblokk system-detalj-underblokk--godkjenning" id="anchor_godkjenning_arkiv">
+		<h5 class="system-detalj-underblokk-tittel">Godkjenning som digitalt arkiv</h5>
+		<p class="small text-muted mb-2">Kan kun fylles ut av Byarkivet</p>
 		<div class="system-detalj-arkiv-status" id="gea-panel">
 			{% if perms.systemoversikt.change_godkjentelektroniskarkiv %}
 			<p class="mb-2">
 				<button type="button" class="btn btn-sm btn-secondary" data-gea-toggle>Endre godkjenning</button>
 			</p>
 			{% endif %}
+			{# 2026-10-12: Order status → Henvisning → Byarkivet note; space before the note via CSS. #}
 			<div data-gea-view>
 				{% if godkjenning_elektronisk_arkiv.godkjent %}
 					<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--ja" data-gea-status>
@@ -1603,20 +1612,17 @@
 							{% endif %}
 						</span>
 					</div>
-					<p class="system-detalj-arkiv-info" data-gea-info>
-						Selv om systemet er godkjent som elektronisk arkiv, må den enkelte virksomhet som bruker systemet få godkjent sine manuelle rutiner av Byarkivet før systemet kan erstatte papirarkiv
-					</p>
 				{% else %}
 					<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--nei" data-gea-status>
 						<span class="system-detalj-arkiv-integrasjon-symbol" aria-hidden="true">⚠</span>
 						<span>Systemet er ikke godkjent som elektronisk arkiv</span>
 					</div>
-					<p class="system-detalj-arkiv-info" data-gea-info hidden>
-						Selv om systemet er godkjent som elektronisk arkiv, må den enkelte virksomhet som bruker systemet få godkjent sine manuelle rutiner av Byarkivet før systemet kan erstatte papirarkiv
-					</p>
 				{% endif %}
-				<p class="small text-muted mb-0" data-gea-henvisning-view {% if not godkjenning_elektronisk_arkiv.henvisning %}hidden{% endif %}>
+				<p class="small text-muted mb-0 mt-1" data-gea-henvisning-view {% if not godkjenning_elektronisk_arkiv.henvisning %}hidden{% endif %}>
 					{% if godkjenning_elektronisk_arkiv.henvisning %}Henvisning: {{ godkjenning_elektronisk_arkiv.henvisning }}{% endif %}
+				</p>
+				<p class="system-detalj-arkiv-info" data-gea-info {% if not godkjenning_elektronisk_arkiv.godkjent %}hidden{% endif %}>
+					Selv om systemet er godkjent som elektronisk arkiv, må den enkelte virksomhet som bruker systemet få godkjent sine manuelle rutiner av Byarkivet før systemet kan erstatte papirarkiv
 				</p>
 			</div>
 			{% if perms.systemoversikt.change_godkjentelektroniskarkiv %}
