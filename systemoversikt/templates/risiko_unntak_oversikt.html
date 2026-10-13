@@ -1,5 +1,7 @@
 {% extends "sikkerhet_index.html" %}
 {% load templatetags %}
+{# Change log: #}
+{# 2026-10-13: Auto-apply filters on change/type (no Filtrer button); keep select dropdowns. #}
 {# 2026-09-08: Unused systems (livsløp 6–7) shown with strikethrough. #}
 {# 2026-08-13: Unntak overview also shows linked scenarios and risk levels. #}
 {# 2026-08-13: Global unntak overview – coverage gaps on tiltak the user can read. #}
@@ -39,7 +41,7 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 
 <p class="text-muted">Unntak dokumenterer hvor et tiltak gjelder generelt, men ikke har kunnet bli implementert (f.eks. brukeropplevelse eller teknologibegrensning).</p>
 
-<form method="get" class="mb-3 p-3 border rounded bg-light">
+<form method="get" id="risiko-unntak-filter-form" class="mb-3 p-3 border rounded bg-light">
 	<div class="form-row align-items-end">
 		<div class="form-group col-md-4 mb-2">
 			<label class="small mb-1" for="risiko-unntak-q">Søk</label>
@@ -101,7 +103,6 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 			</div>
 		</div>
 		<div class="form-group col-md-3 mb-2">
-			<button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
 			<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_unntak_oversikt' %}">Nullstill</a>
 		</div>
 	</div>
@@ -185,3 +186,32 @@ a.risiko-risk-id-tag:hover { color: inherit; text-decoration: underline; }
 {% endif %}
 
 {% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+(function () {
+	var form = document.getElementById('risiko-unntak-filter-form');
+	if (!form) {
+		return;
+	}
+	var applyTimer = null;
+	var APPLY_DEBOUNCE_MS = 450;
+
+	function scheduleApply() {
+		clearTimeout(applyTimer);
+		applyTimer = setTimeout(function () {
+			form.submit();
+		}, APPLY_DEBOUNCE_MS);
+	}
+
+	form.querySelectorAll('select, input[type="checkbox"]').forEach(function (el) {
+		el.addEventListener('change', scheduleApply);
+	});
+
+	var searchInput = document.getElementById('risiko-unntak-q');
+	if (searchInput) {
+		searchInput.addEventListener('input', scheduleApply);
+	}
+})();
+</script>
+{% endblock script_append %}
