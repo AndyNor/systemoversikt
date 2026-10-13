@@ -1,5 +1,6 @@
 {% extends "index.html" %}
 {# Change log: #}
+{# 2026-10-13: Rename sidemeny Tiltak to Risikotiltak. #}
 {# 2026-10-13: Sidemeny Tiltak and Tiltaksunntak between Risikovurderinger and Risikosammenstilling. #}
 {# 2026-09-29: Rename ukjente_identer sidemeny to "Avvikende brukernavn i OK" – report now filters on OU=OK and username format. #}
 {# 2026-09-25: Sidemenu label Sårbarhetsoppfølging – same audience as Sårbarheter (view_qualysvuln). #}
@@ -29,7 +30,7 @@
 	<a href="{{ url_risiko_scope_list }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/' in request.path and '/sikkerhet/risiko/rammeverk/' not in request.path and '/sikkerhet/risiko/tiltak/' not in request.path and '/sikkerhet/risiko/unntak/' not in request.path %}fremhev{% endif %}">Risikovurderinger</a><br>
 
 	{% url 'risiko_tiltak_oversikt' as url_risiko_tiltak_oversikt %}
-	<a href="{{ url_risiko_tiltak_oversikt }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/tiltak/' in request.path %}fremhev{% endif %}">Tiltak</a><br>
+	<a href="{{ url_risiko_tiltak_oversikt }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/tiltak/' in request.path %}fremhev{% endif %}">Risikotiltak</a><br>
 
 	{% url 'risiko_unntak_oversikt' as url_risiko_unntak_oversikt %}
 	<a href="{{ url_risiko_unntak_oversikt }}" class="btn btn-sm btn-link {% if '/sikkerhet/risiko/unntak/' in request.path %}fremhev{% endif %}">Tiltaksunntak</a><br>

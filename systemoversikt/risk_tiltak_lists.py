@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-13: Multi-status via getlist/checkboxes for tiltak overview filters.
 # 2026-08-13: Server-side filters for global tiltak and unntak overviews.
 
 from django.core.paginator import Paginator
@@ -23,6 +24,27 @@ def _sk_pairs_for_label(label):
 	return pairs
 
 
+def _status_filter_values(params):
+	"""Unique valid status codes from repeated status= params and/or comma-separated values."""
+	raw = []
+	if hasattr(params, 'getlist'):
+		raw.extend(params.getlist('status'))
+	else:
+		single = params.get('status')
+		if single:
+			raw.append(single)
+	valid = {v for v, _ in RISK_ACTION_STATUS_VALG}
+	seen = set()
+	statuses = []
+	for part in raw:
+		for status in str(part).split(','):
+			status = status.strip()
+			if status in valid and status not in seen:
+				seen.add(status)
+				statuses.append(status)
+	return statuses
+
+
 def filter_actions_queryset(qs, params):
 	q = (params.get('q') or '').strip()
 	if q:
@@ -34,13 +56,9 @@ def filter_actions_queryset(qs, params):
 			| Q(scenarios__uonsket_hendelse__icontains=q)
 		).distinct()
 
-	status = (params.get('status') or '').strip()
-	if status:
-		statuses = [part.strip() for part in status.split(',') if part.strip()]
-		valid = {v for v, _ in RISK_ACTION_STATUS_VALG}
-		statuses = [s for s in statuses if s in valid]
-		if statuses:
-			qs = qs.filter(status__in=statuses)
+	statuses = _status_filter_values(params)
+	if statuses:
+		qs = qs.filter(status__in=statuses)
 
 	eskaleres = (params.get('eskaleres') or '').strip().lower()
 	if eskaleres in ('1', 'true', 'yes', 'ja'):
@@ -95,13 +113,9 @@ def filter_unntak_queryset(qs, params):
 	if virksomhet_id.isdigit():
 		qs = qs.filter(action__scope__virksomhet_id=int(virksomhet_id))
 
-	status = (params.get('status') or '').strip()
-	if status:
-		statuses = [part.strip() for part in status.split(',') if part.strip()]
-		valid = {v for v, _ in RISK_ACTION_STATUS_VALG}
-		statuses = [s for s in statuses if s in valid]
-		if statuses:
-			qs = qs.filter(action__status__in=statuses)
+	statuses = _status_filter_values(params)
+	if statuses:
+		qs = qs.filter(action__status__in=statuses)
 
 	eskaleres = (params.get('eskaleres') or '').strip().lower()
 	if eskaleres in ('1', 'true', 'yes', 'ja'):
@@ -160,9 +174,12 @@ def unntak_overview_queryset(user, params):
 
 
 def filter_context_from_params(params):
+	# 2026-10-13: filter_statuses list for checkboxes; filter_status kept as comma-joined for links/selects.
+	statuses = _status_filter_values(params)
 	return {
 		'search_query': (params.get('q') or '').strip(),
-		'filter_status': (params.get('status') or '').strip(),
+		'filter_status': ','.join(statuses),
+		'filter_statuses': statuses,
 		'filter_eskaleres': (params.get('eskaleres') or '').strip(),
 		'filter_risikonivaa': (params.get('risikonivaa') or '').strip(),
 		'filter_har_unntak': (params.get('har_unntak') or '').strip(),

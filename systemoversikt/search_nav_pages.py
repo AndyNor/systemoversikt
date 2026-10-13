@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-13: Rename Tiltak nav search label to Risikotiltak.
 # 2026-10-13: Tiltak and Tiltaksunntak nav search – matches sikkerhet sidemeny under Risikovurderinger.
 # 2026-09-29: Rename ukjente_identer search label to "Avvikende brukernavn i OK" – report now filters on OU=OK and username format.
 # 2026-09-25: Nav search label Sårbarhetsoppfølging – view_qualysvuln (same as sårbarheter).
@@ -107,7 +108,7 @@ NAV_PAGES = [
 	_entry('Sårbarhetsoppfølging', 'sarbarhetssak_liste', 'Sikkerhet', ['sårbarhetsoppfølging', 'sårbarhetssak', 'sarbarhetssak', 'cve sak', 'tiltakseier'], permissions=['systemoversikt.view_qualysvuln']),
 	_entry('Gjennomførte pentester', 'rapport_sikkerhetstester', 'Sikkerhet', ['pentester', 'pentest', 'sikkerhetstester']),
 	_entry('Risikovurderinger', 'risiko_scope_list', 'Sikkerhet', ['risiko', 'risikovurdering', 'risikomatrise'], permissions=[]),
-	_entry('Tiltak', 'risiko_tiltak_oversikt', 'Sikkerhet', ['risiko tiltak', 'tiltaksoversikt'], permissions=[]),
+	_entry('Risikotiltak', 'risiko_tiltak_oversikt', 'Sikkerhet', ['risiko tiltak', 'risikotiltak', 'tiltaksoversikt'], permissions=[]),
 	_entry('Tiltaksunntak', 'risiko_unntak_oversikt', 'Sikkerhet', ['risiko unntak', 'tiltaksunntak', 'unntaksoversikt'], permissions=[]),
 	_entry('Risikosammenstilling', 'risiko_rammeverk_list', 'Sikkerhet', ['risikosammenstilling', 'risikorammeverk', 'it-plattform', 'høynivå risiko'], permissions=[]),
 	_entry('Ny risikosamling', 'risiko_scope_create', 'Sikkerhet', ['ny risikosamling', 'risiko opprett'], permissions=['systemoversikt.view_riskscope']),

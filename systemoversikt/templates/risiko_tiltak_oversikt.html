@@ -1,9 +1,12 @@
 {% extends "sikkerhet_index.html" %}
 {% load templatetags %}
+{# Change log: #}
+{# 2026-10-13: Status as multi-checkboxes; auto-apply filters on change/type (no Filtrer button). #}
+{# 2026-10-13: Page title/nav label Risikotiltak. #}
 {# 2026-08-13: Global tiltak overview – server-side search and filters for readable scopes. #}
 
 {% block overskrift %}
-Tiltaksoversikt
+Risikotiltak
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
@@ -13,21 +16,26 @@ Tiltaksoversikt
 	<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_unntak_oversikt' %}">Unntak</a>
 </p>
 
-<form method="get" class="mb-3 p-3 border rounded bg-light">
+<form method="get" id="risiko-tiltak-filter-form" class="mb-3 p-3 border rounded bg-light">
 	<div class="form-row align-items-end">
 		<div class="form-group col-md-4 mb-2">
 			<label class="small mb-1" for="risiko-tiltak-q">Søk</label>
 			<input type="search" class="form-control form-control-sm" id="risiko-tiltak-q" name="q"
 				value="{{ search_query }}" placeholder="Tiltak, ansvarlig, samling, risk…" autocomplete="off">
 		</div>
-		<div class="form-group col-md-2 mb-2">
-			<label class="small mb-1" for="risiko-tiltak-status">Status</label>
-			<select class="form-control form-control-sm" id="risiko-tiltak-status" name="status">
-				<option value="">Alle</option>
+		<div class="form-group col-md-4 mb-2">
+			<span class="small mb-1 d-block">Status</span>
+			<div class="d-flex flex-wrap">
 				{% for value, label in status_choices %}
-				<option value="{{ value }}" {% if filter_status == value %}selected{% endif %}>{{ label }}</option>
+				<div class="form-check form-check-inline mr-2 mb-1">
+					<input class="form-check-input" type="checkbox" name="status" value="{{ value }}"
+						id="risiko-tiltak-status-{{ value }}"
+						{% if value in filter_statuses %}checked{% endif %}>
+					<label class="form-check-label small" for="risiko-tiltak-status-{{ value }}">{{ label }}</label>
+				</div>
 				{% endfor %}
-			</select>
+			</div>
+			<p class="text-muted small mb-0 mt-1">Ingen valgt = alle. Huk av dem du vil se (f.eks. alle utenom Utført).</p>
 		</div>
 		<div class="form-group col-md-2 mb-2">
 			<label class="small mb-1" for="risiko-tiltak-risikonivaa">Risikonivå</label>
@@ -46,6 +54,8 @@ Tiltaksoversikt
 				<option value="0" {% if filter_eskaleres == "0" %}selected{% endif %}>Nei</option>
 			</select>
 		</div>
+	</div>
+	<div class="form-row align-items-end">
 		<div class="form-group col-md-2 mb-2">
 			<label class="small mb-1" for="risiko-tiltak-har-unntak">Har unntak</label>
 			<select class="form-control form-control-sm" id="risiko-tiltak-har-unntak" name="har_unntak">
@@ -54,8 +64,6 @@ Tiltaksoversikt
 				<option value="0" {% if filter_har_unntak == "0" %}selected{% endif %}>Nei</option>
 			</select>
 		</div>
-	</div>
-	<div class="form-row align-items-end">
 		<div class="form-group col-md-3 mb-2">
 			<label class="small mb-1" for="risiko-tiltak-virksomhet">Virksomhet</label>
 			<select class="form-control form-control-sm" id="risiko-tiltak-virksomhet" name="virksomhet">
@@ -75,7 +83,6 @@ Tiltaksoversikt
 			</div>
 		</div>
 		<div class="form-group col-md-3 mb-2">
-			<button type="submit" class="btn btn-primary btn-sm">Filtrer</button>
 			<a class="btn btn-outline-secondary btn-sm" href="{% url 'risiko_tiltak_oversikt' %}">Nullstill</a>
 		</div>
 	</div>
@@ -121,11 +128,11 @@ Tiltaksoversikt
 <nav aria-label="Sidetall">
 	<ul class="pagination pagination-sm">
 		{% if page.has_previous %}
-		<li class="page-item"><a class="page-link" href="?page={{ page.previous_page_number }}&amp;q={{ search_query|urlencode }}&amp;status={{ filter_status|urlencode }}&amp;eskaleres={{ filter_eskaleres|urlencode }}&amp;risikonivaa={{ filter_risikonivaa|urlencode }}&amp;har_unntak={{ filter_har_unntak|urlencode }}&amp;virksomhet={{ filter_virksomhet|urlencode }}{% if include_archived %}&amp;include_archived=1{% endif %}">Forrige</a></li>
+		<li class="page-item"><a class="page-link" href="?page={{ page.previous_page_number }}&amp;q={{ search_query|urlencode }}{% for s in filter_statuses %}&amp;status={{ s|urlencode }}{% endfor %}&amp;eskaleres={{ filter_eskaleres|urlencode }}&amp;risikonivaa={{ filter_risikonivaa|urlencode }}&amp;har_unntak={{ filter_har_unntak|urlencode }}&amp;virksomhet={{ filter_virksomhet|urlencode }}{% if include_archived %}&amp;include_archived=1{% endif %}">Forrige</a></li>
 		{% endif %}
 		<li class="page-item disabled"><span class="page-link">Side {{ page.number }} / {{ page.paginator.num_pages }}</span></li>
 		{% if page.has_next %}
-		<li class="page-item"><a class="page-link" href="?page={{ page.next_page_number }}&amp;q={{ search_query|urlencode }}&amp;status={{ filter_status|urlencode }}&amp;eskaleres={{ filter_eskaleres|urlencode }}&amp;risikonivaa={{ filter_risikonivaa|urlencode }}&amp;har_unntak={{ filter_har_unntak|urlencode }}&amp;virksomhet={{ filter_virksomhet|urlencode }}{% if include_archived %}&amp;include_archived=1{% endif %}">Neste</a></li>
+		<li class="page-item"><a class="page-link" href="?page={{ page.next_page_number }}&amp;q={{ search_query|urlencode }}{% for s in filter_statuses %}&amp;status={{ s|urlencode }}{% endfor %}&amp;eskaleres={{ filter_eskaleres|urlencode }}&amp;risikonivaa={{ filter_risikonivaa|urlencode }}&amp;har_unntak={{ filter_har_unntak|urlencode }}&amp;virksomhet={{ filter_virksomhet|urlencode }}{% if include_archived %}&amp;include_archived=1{% endif %}">Neste</a></li>
 		{% endif %}
 	</ul>
 </nav>
@@ -136,3 +143,33 @@ Tiltaksoversikt
 {% endif %}
 
 {% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+(function () {
+	var form = document.getElementById('risiko-tiltak-filter-form');
+	if (!form) {
+		return;
+	}
+	var applyTimer = null;
+	// Debounce so several status checkboxes can be toggled before reload.
+	var APPLY_DEBOUNCE_MS = 450;
+
+	function scheduleApply() {
+		clearTimeout(applyTimer);
+		applyTimer = setTimeout(function () {
+			form.submit();
+		}, APPLY_DEBOUNCE_MS);
+	}
+
+	form.querySelectorAll('select, input[type="checkbox"]').forEach(function (el) {
+		el.addEventListener('change', scheduleApply);
+	});
+
+	var searchInput = document.getElementById('risiko-tiltak-q');
+	if (searchInput) {
+		searchInput.addEventListener('input', scheduleApply);
+	}
+})();
+</script>
+{% endblock script_append %}
