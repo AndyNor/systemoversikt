@@ -1621,8 +1621,9 @@
 				<p class="small text-muted mb-0 mt-1" data-gea-henvisning-view {% if not godkjenning_elektronisk_arkiv.henvisning %}hidden{% endif %}>
 					{% if godkjenning_elektronisk_arkiv.henvisning %}Henvisning: {{ godkjenning_elektronisk_arkiv.henvisning }}{% endif %}
 				</p>
+				{# 2026-10-13: Wording updated – “benyttes som elektronisk arkiv” instead of “erstatte papirarkiv”. #}
 				<p class="system-detalj-arkiv-info" data-gea-info {% if not godkjenning_elektronisk_arkiv.godkjent %}hidden{% endif %}>
-					Selv om systemet er godkjent som elektronisk arkiv, må den enkelte virksomhet som bruker systemet få godkjent sine manuelle rutiner av Byarkivet før systemet kan erstatte papirarkiv
+					Selv om systemet er godkjent som elektronisk arkiv, må den enkelte virksomhet som bruker systemet få godkjent sine manuelle rutiner av Byarkivet før systemet kan benyttes som elektronisk arkiv.
 				</p>
 			</div>
 			{% if perms.systemoversikt.change_godkjentelektroniskarkiv %}
