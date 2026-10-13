@@ -1,5 +1,6 @@
 {% extends "sikkerhet_index.html" %}
 {% load templatetags %}
+{# 2026-10-13: Rename create button from «Ny samling» to «Ny risikosamling». #}
 {# 2026-07-07: «Ny fra excelmal» green like Ny samling; outline button for back link. #}
 {# 2026-07-02: Tilgangsgruppe filter bar above virksomhet collection table. #}
 {# 2026-07-01: Virksomhet-specific risk collection viewpoint. #}
@@ -24,7 +25,7 @@
 
 <p>
 	{% if can_create %}
-	<a class="btn btn-success btn-sm" href="{% url 'risiko_scope_create' %}">Ny samling</a>
+	<a class="btn btn-success btn-sm" href="{% url 'risiko_scope_create' %}">Ny risikosamling</a>
 	{% endif %}
 	{% if can_import %}
 	<a class="btn btn-success btn-sm" href="{% url 'risiko_import' %}">Ny fra excelmal</a>

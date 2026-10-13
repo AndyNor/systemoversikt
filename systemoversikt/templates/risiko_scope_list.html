@@ -2,6 +2,7 @@
 
 {% load templatetags %}
 
+{# 2026-10-13: Rename create button from «Ny samling» to «Ny risikosamling». #}
 {# 2026-07-07: «Ny fra excelmal» green like Ny samling; outline buttons for nav links. #}
 {# 2026-07-01: Tilgangsgrupper in action toolbar; virksomhet nav highlights current virksomhet. #}
 {# 2026-07-01: Root list – profile virksomhet filter, cross-virksomhet memberships, virksomhet links. #}
@@ -75,7 +76,7 @@
 
 	{% if can_create %}
 
-	<a class="btn btn-success btn-sm" href="{% url 'risiko_scope_create' %}">Ny samling</a>
+	<a class="btn btn-success btn-sm" href="{% url 'risiko_scope_create' %}">Ny risikosamling</a>
 
 	{% endif %}
 
