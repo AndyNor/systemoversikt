@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-13: Default tiltak status filter – besluttet, under_arbeid, kontinuerlig_oppfolging.
 # 2026-10-13: Multi-status via getlist/checkboxes for tiltak overview filters.
 # 2026-08-13: Server-side filters for global tiltak and unntak overviews.
 
@@ -11,6 +12,13 @@ from systemoversikt.risk_criteria import RISK_LEVEL_VALUES, get_active_criteria
 from systemoversikt.risk_membership import actions_visible_to_user, unntak_visible_to_user
 
 PAGE_SIZE = 50
+
+# Default when no status= is in the query – active follow-up statuses, not forslag/utført.
+DEFAULT_TILTAK_STATUS_FILTER = (
+	'besluttet',
+	'under_arbeid',
+	'kontinuerlig_oppfolging',
+)
 
 
 def _sk_pairs_for_label(label):
@@ -24,7 +32,7 @@ def _sk_pairs_for_label(label):
 	return pairs
 
 
-def _status_filter_values(params):
+def _status_filter_values(params, default=None):
 	"""Unique valid status codes from repeated status= params and/or comma-separated values."""
 	raw = []
 	if hasattr(params, 'getlist'):
@@ -42,6 +50,8 @@ def _status_filter_values(params):
 			if status in valid and status not in seen:
 				seen.add(status)
 				statuses.append(status)
+	if not statuses and default is not None:
+		return list(default)
 	return statuses
 
 
@@ -56,7 +66,7 @@ def filter_actions_queryset(qs, params):
 			| Q(scenarios__uonsket_hendelse__icontains=q)
 		).distinct()
 
-	statuses = _status_filter_values(params)
+	statuses = _status_filter_values(params, default=DEFAULT_TILTAK_STATUS_FILTER)
 	if statuses:
 		qs = qs.filter(status__in=statuses)
 
@@ -173,9 +183,10 @@ def unntak_overview_queryset(user, params):
 	return qs.order_by('-aktiv', '-opprettet', 'pk')
 
 
-def filter_context_from_params(params):
+def filter_context_from_params(params, default_statuses=None):
 	# 2026-10-13: filter_statuses list for checkboxes; filter_status kept as comma-joined for links/selects.
-	statuses = _status_filter_values(params)
+	# 2026-10-13: default_statuses used on tiltak overview when no status= is present.
+	statuses = _status_filter_values(params, default=default_statuses)
 	return {
 		'search_query': (params.get('q') or '').strip(),
 		'filter_status': ','.join(statuses),

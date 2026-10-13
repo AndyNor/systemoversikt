@@ -123,6 +123,7 @@ from systemoversikt.risk_membership import (
 	virksomheter_with_risk_read_access,
 )
 from systemoversikt.risk_tiltak_lists import (
+	DEFAULT_TILTAK_STATUS_FILTER,
 	filter_context_from_params,
 	paginate_queryset,
 	tiltak_overview_queryset,
@@ -400,9 +401,13 @@ def _tiltak_overview_rows(actions):
 @login_required
 def risiko_tiltak_oversikt(request):
 	# 2026-08-13: Cross-collection tiltak list limited to scopes the user can read.
+	# 2026-10-13: Default status checkboxes – besluttet, under arbeid, kontinuerlig oppfølging.
 	qs = tiltak_overview_queryset(request.user, request.GET)
 	page = paginate_queryset(qs, request.GET)
-	filter_ctx = filter_context_from_params(request.GET)
+	filter_ctx = filter_context_from_params(
+		request.GET,
+		default_statuses=DEFAULT_TILTAK_STATUS_FILTER,
+	)
 	virksomheter = virksomheter_with_risk_read_access(request.user)
 	return render(request, 'risiko_tiltak_oversikt.html', {
 		'request': request,
