@@ -8,7 +8,7 @@
 {% endblock overskrift %}
 
 {% block ekstrajavascript %}
-	{# 2026-10-14: Chart.js for Citrix publication totals/active over time (IS and SS). #}
+	{# 2026-10-14: Stacked bar chart – active IS/SS plus inactive gap per zone. #}
 	<script src="{% static 'chart.js@4.5.1' %}" nonce="{{request.csp_nonce}}"></script>
 {% endblock ekstrajavascript %}
 
@@ -16,7 +16,7 @@
 
 {% include "includes/integrasjon_freshness_banner.html" with label="Citrix-apper ble sist synkronisert" %}
 
-<p>Grafen viser antall publikasjoner (totalt og aktive) for intern sone (IS) og sikker sone (SS), basert på importloggen «Citrix publikasjon». Importen kjører daglig, men et nytt punkt plottes bare når tallene endrer seg (typisk når nye kildedata kommer inn).</p>
+<p>Stablet stolpediagram over antall publikasjoner for intern sone (IS) og sikker sone (SS), basert på importloggen «Citrix publikasjon». Bunnen viser aktive apper; toppen viser gapet til inaktive (totalt − aktive). Importen kjører daglig, men et nytt punkt plottes bare når tallene endrer seg.</p>
 
 <hr>
 
@@ -27,40 +27,38 @@ const citrixAppsChartData = {
 	labels: [{% for label in chart_labels %}"{{ label }}",{% endfor %}],
 	datasets: [
 		{
-			label: 'IS totalt',
-			borderColor: 'rgb(54, 162, 235)',
-			backgroundColor: 'rgba(54, 162, 235, 0.1)',
-			data: [{% for v in chart_is_total %}{% if v is None %}null{% else %}{{ v|unlocalize }}{% endif %},{% endfor %}],
-			spanGaps: true,
-		},
-		{
 			label: 'IS aktive',
+			backgroundColor: 'rgba(54, 162, 235, 0.9)',
 			borderColor: 'rgb(54, 162, 235)',
-			backgroundColor: 'rgba(54, 162, 235, 0.1)',
-			borderDash: [6, 4],
+			borderWidth: 1,
 			data: [{% for v in chart_is_active %}{% if v is None %}null{% else %}{{ v|unlocalize }}{% endif %},{% endfor %}],
-			spanGaps: true,
-		},
-		{
-			label: 'SS totalt',
-			borderColor: 'rgb(255, 99, 132)',
-			backgroundColor: 'rgba(255, 99, 132, 0.1)',
-			data: [{% for v in chart_ss_total %}{% if v is None %}null{% else %}{{ v|unlocalize }}{% endif %},{% endfor %}],
-			spanGaps: true,
 		},
 		{
 			label: 'SS aktive',
+			backgroundColor: 'rgba(255, 99, 132, 0.9)',
 			borderColor: 'rgb(255, 99, 132)',
-			backgroundColor: 'rgba(255, 99, 132, 0.1)',
-			borderDash: [6, 4],
+			borderWidth: 1,
 			data: [{% for v in chart_ss_active %}{% if v is None %}null{% else %}{{ v|unlocalize }}{% endif %},{% endfor %}],
-			spanGaps: true,
+		},
+		{
+			label: 'IS inaktive',
+			backgroundColor: 'rgba(54, 162, 235, 0.35)',
+			borderColor: 'rgb(54, 162, 235)',
+			borderWidth: 1,
+			data: [{% for v in chart_is_inactive %}{% if v is None %}null{% else %}{{ v|unlocalize }}{% endif %},{% endfor %}],
+		},
+		{
+			label: 'SS inaktive',
+			backgroundColor: 'rgba(255, 99, 132, 0.35)',
+			borderColor: 'rgb(255, 99, 132)',
+			borderWidth: 1,
+			data: [{% for v in chart_ss_inactive %}{% if v is None %}null{% else %}{{ v|unlocalize }}{% endif %},{% endfor %}],
 		},
 	]
 };
 
 new Chart(document.getElementById('citrix_apps_chart'), {
-	type: 'line',
+	type: 'bar',
 	data: citrixAppsChartData,
 	options: {
 		plugins: {
@@ -69,7 +67,11 @@ new Chart(document.getElementById('citrix_apps_chart'), {
 			},
 		},
 		scales: {
+			x: {
+				stacked: true,
+			},
 			y: {
+				stacked: true,
 				beginAtZero: true,
 				title: {
 					display: true,
