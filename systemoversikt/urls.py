@@ -448,6 +448,8 @@ urlpatterns = [
 	re_path(r'^cmdb/ad/citrix/apps/$', views.alle_citrixpub, name='alle_citrixpub'), # beholdes som redirect
 	re_path(r'^cmdb/citrix/apps/detaljer/$', views.alle_citrixpub, name='alle_citrixpub'),
 	re_path(r'^cmdb/citrix/apps/bruk/$', views.alle_citrixpub_bruk, name='alle_citrixpub_bruk'),
+	# 2026-10-14: Citrix apps over time chart from ApplicationLog.
+	re_path(r'^cmdb/citrix/apps/tid/$', views.rapport_citrix_apps_tid, name='rapport_citrix_apps_tid'),
 	re_path(r'^cmdb/citrix/apps/(?P<pk>\d{1,8})/$', views.alle_citrixpub, name='citrixpub_for_system'),
 	re_path(r'^cmdb/citrix/desktop_group/$', views.citrix_desktop_group, name='citrix_desktop_group'),
 	re_path(r'^cmdb/citrix/mappings/$', views.citrix_mappings, name='citrix_mappings'),

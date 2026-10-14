@@ -1,0 +1,86 @@
+{% extends "cmdb_index.html" %}
+{% load humanize %}
+{% load static %}
+{% load l10n %}
+
+{% block overskrift %}
+	Citrix-apper over tid
+{% endblock overskrift %}
+
+{% block ekstrajavascript %}
+	{# 2026-10-14: Chart.js for Citrix publication totals/active over time (IS and SS). #}
+	<script src="{% static 'chart.js@4.5.1' %}" nonce="{{request.csp_nonce}}"></script>
+{% endblock ekstrajavascript %}
+
+{% block hovedinnhold %}
+
+{% include "includes/integrasjon_freshness_banner.html" with label="Citrix-apper ble sist synkronisert" %}
+
+<p>Grafen viser antall publikasjoner (totalt og aktive) for intern sone (IS) og sikker sone (SS), basert på importloggen «Citrix publikasjon».</p>
+
+<hr>
+
+<div><canvas height="100" id="citrix_apps_chart"></canvas></div>
+
+<script type="text/javascript" nonce="{{request.csp_nonce}}">
+const citrixAppsChartData = {
+	labels: [{% for label in chart_labels %}"{{ label }}",{% endfor %}],
+	datasets: [
+		{
+			label: 'IS totalt',
+			borderColor: 'rgb(54, 162, 235)',
+			backgroundColor: 'rgba(54, 162, 235, 0.1)',
+			data: [{% for v in chart_is_total %}{% if v is None %}null{% else %}{{ v|unlocalize }}{% endif %},{% endfor %}],
+			spanGaps: true,
+		},
+		{
+			label: 'IS aktive',
+			borderColor: 'rgb(54, 162, 235)',
+			backgroundColor: 'rgba(54, 162, 235, 0.1)',
+			borderDash: [6, 4],
+			data: [{% for v in chart_is_active %}{% if v is None %}null{% else %}{{ v|unlocalize }}{% endif %},{% endfor %}],
+			spanGaps: true,
+		},
+		{
+			label: 'SS totalt',
+			borderColor: 'rgb(255, 99, 132)',
+			backgroundColor: 'rgba(255, 99, 132, 0.1)',
+			data: [{% for v in chart_ss_total %}{% if v is None %}null{% else %}{{ v|unlocalize }}{% endif %},{% endfor %}],
+			spanGaps: true,
+		},
+		{
+			label: 'SS aktive',
+			borderColor: 'rgb(255, 99, 132)',
+			backgroundColor: 'rgba(255, 99, 132, 0.1)',
+			borderDash: [6, 4],
+			data: [{% for v in chart_ss_active %}{% if v is None %}null{% else %}{{ v|unlocalize }}{% endif %},{% endfor %}],
+			spanGaps: true,
+		},
+	]
+};
+
+new Chart(document.getElementById('citrix_apps_chart'), {
+	type: 'line',
+	data: citrixAppsChartData,
+	options: {
+		plugins: {
+			legend: {
+				position: 'top',
+			},
+		},
+		scales: {
+			y: {
+				beginAtZero: true,
+				title: {
+					display: true,
+					text: 'Antall publikasjoner',
+				},
+			},
+		},
+	},
+});
+</script>
+
+<hr>
+
+{% endblock hovedinnhold %}

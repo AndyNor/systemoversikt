@@ -170,6 +170,8 @@ NAV_PAGES = [
 	_entry('Lagring', 'cmdb_lagring_index', 'CMDB', ['lagring oversikt', 'cmdb lagring'], permissions=['systemoversikt.view_cmdbdevice']),
 	_entry('Citrix apper', 'alle_citrixpub', 'CMDB', ['citrix apper', 'citrix publisering'], permissions=['systemoversikt.view_cmdbdevice']),
 	_entry('Citrix bruk', 'alle_citrixpub_bruk', 'CMDB', ['citrix bruk'], permissions=['systemoversikt.view_cmdbdevice']),
+	# 2026-10-14: Citrix apps over time chart in CMDB submenu.
+	_entry('Citrix apper over tid', 'rapport_citrix_apps_tid', 'CMDB', ['citrix apper over tid', 'citrix over tid'], permissions=['systemoversikt.view_cmdbdevice']),
 	_entry('Citrix-mappinger', 'citrix_mappings', 'CMDB', ['citrix-mappinger', 'citrix mapping'], permissions=['systemoversikt.view_cmdbdevice']),
 	_entry('BigIP / VIP', 'alle_vip', 'CMDB', ['bigip', 'vip', 'load balancer'], permissions=['systemoversikt.view_cmdbdevice']),
 	_entry('DNS', 'alle_dns', 'CMDB', ['dns oversikt', 'alle dns'], permissions=['systemoversikt.view_cmdbdevice']),

@@ -3978,6 +3978,56 @@ def alle_citrixpub(request, pk=None):
 		**_citrixpub_stats(citrixapps),
 	})
 
+
+def rapport_citrix_apps_tid(request):
+	# 2026-10-14: Chart Citrix publication totals/active over time from ApplicationLog (IS and SS).
+	required_permissions = ['systemoversikt.view_cmdbdevice']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render_access_denied(request, required_permissions)
+
+	# Date is typically "YYYY-MM-DD HH:MM:SS+00:00"; keep it tight so SS cannot capture IS totals.
+	is_pattern = re.compile(
+		r'Fant (\d+) publikasjoner datert \S+(?:\s+\S+)? i citrix_is_AppInfo\.json\. Det er (\d+) aktive',
+		re.I,
+	)
+	ss_pattern = re.compile(
+		r'Fant (\d+) publikasjoner datert \S+(?:\s+\S+)? i citrix_ss_AppInfo\.json\. Det er (\d+) aktive',
+		re.I,
+	)
+
+	labels = []
+	is_total = []
+	is_active = []
+	ss_total = []
+	ss_active = []
+
+	logs = ApplicationLog.objects.filter(
+		event_type="Citrix publikasjon",
+		message__startswith="Fant",
+	).order_by("opprettet")
+
+	for log in logs:
+		is_match = is_pattern.search(log.message)
+		ss_match = ss_pattern.search(log.message)
+		if not is_match and not ss_match:
+			continue
+		labels.append(log.opprettet.strftime("%d.%m.%y"))
+		is_total.append(int(is_match.group(1)) if is_match else None)
+		is_active.append(int(is_match.group(2)) if is_match else None)
+		ss_total.append(int(ss_match.group(1)) if ss_match else None)
+		ss_active.append(int(ss_match.group(2)) if ss_match else None)
+
+	return render(request, 'cmdb_citrix_apps_tid.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'chart_labels': labels,
+		'chart_is_total': is_total,
+		'chart_is_active': is_active,
+		'chart_ss_total': ss_total,
+		'chart_ss_active': ss_active,
+		'integrasjonsstatus': _integrasjonsstatus("sp_citrix"),
+	})
+
 def alle_nettverksenheter(request):
 	#Viser alle nettverksenheter (cisco, bigip..)
 	required_permissions = ['systemoversikt.view_cmdbdevice']

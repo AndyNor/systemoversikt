@@ -79,6 +79,10 @@
 	{% url 'alle_citrixpub_bruk' as url_alle_citrixpub_bruk %}
 	<a href="{{url_alle_citrixpub_bruk}}" class="btn btn-sm btn-link {% if url_alle_citrixpub_bruk in request.path %}fremhev{% endif %}">Citrix bruk</a><br>
 
+	{# 2026-10-14: Chart of Citrix publication totals/active over time (IS and SS). #}
+	{% url 'rapport_citrix_apps_tid' as url_rapport_citrix_apps_tid %}
+	<a href="{{url_rapport_citrix_apps_tid}}" class="btn btn-sm btn-link {% if url_rapport_citrix_apps_tid in request.path %}fremhev{% endif %}">Citrix apper over tid</a><br>
+
 	{% url 'citrix_mappings' as url_citrix_mappings %}
 	<a href="{{url_citrix_mappings}}" class="btn btn-sm btn-link {% if url_citrix_mappings in request.path %}fremhev{% endif %}">Citrix-mappinger</a><br>
 
