@@ -3981,6 +3981,7 @@ def alle_citrixpub(request, pk=None):
 
 def rapport_citrix_apps_tid(request):
 	# 2026-10-14: Chart Citrix publication totals/active over time from ApplicationLog (IS and SS).
+	# 2026-10-14: Only plot when counts change – import runs daily but source files ~monthly.
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
@@ -4000,6 +4001,7 @@ def rapport_citrix_apps_tid(request):
 	is_active = []
 	ss_total = []
 	ss_active = []
+	previous_counts = None
 
 	logs = ApplicationLog.objects.filter(
 		event_type="Citrix publikasjon",
@@ -4011,11 +4013,20 @@ def rapport_citrix_apps_tid(request):
 		ss_match = ss_pattern.search(log.message)
 		if not is_match and not ss_match:
 			continue
+		counts = (
+			int(is_match.group(1)) if is_match else None,
+			int(is_match.group(2)) if is_match else None,
+			int(ss_match.group(1)) if ss_match else None,
+			int(ss_match.group(2)) if ss_match else None,
+		)
+		if counts == previous_counts:
+			continue
+		previous_counts = counts
 		labels.append(log.opprettet.strftime("%d.%m.%y"))
-		is_total.append(int(is_match.group(1)) if is_match else None)
-		is_active.append(int(is_match.group(2)) if is_match else None)
-		ss_total.append(int(ss_match.group(1)) if ss_match else None)
-		ss_active.append(int(ss_match.group(2)) if ss_match else None)
+		is_total.append(counts[0])
+		is_active.append(counts[1])
+		ss_total.append(counts[2])
+		ss_active.append(counts[3])
 
 	return render(request, 'cmdb_citrix_apps_tid.html', {
 		'request': request,
