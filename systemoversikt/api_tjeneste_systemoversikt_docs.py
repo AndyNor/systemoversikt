@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-15: SystemBruk.kommentar docs – «Kommentar til bruken» (JSON key kommentar unchanged).
 # 2026-09-14: SystemBruk tatt_i_bruk/avsluttet; kommentar docs describe Innhold (JSON key unchanged).
 # 2026-06-23: Remove overordnede_virksomheter known-bug note – fixed in api_virksomheter.
 # 2026-06-23: Developer docs reminder – keep ENDPOINTS in sync when API/model output changes (url name: api_tjeneste_systemoversikt_docs).
@@ -587,7 +588,7 @@ ENDPOINTS = [
 		"fields": [
 			_field("class", "string", False, "Alltid «SystemBruk»"),
 			_field("id", "integer", False, "Primærnøkkel"),
-			_field("kommentar", "string", True, "Innhold – hva systemet brukes til hos virksomheten (JSON-nøkkel kommentar)"),
+			_field("kommentar", "string", True, "Kommentar til bruken – hva systemet brukes til hos virksomheten (JSON-nøkkel kommentar)"),
 			_field("tatt_i_bruk", "date", True, "Dato systemet ble tatt i bruk i virksomheten"),
 			_field("avsluttet", "date", True, "Dato systemet ble tatt ut av bruk i virksomheten"),
 			_field("antall_brukere", "integer", True, "Antall brukere"),

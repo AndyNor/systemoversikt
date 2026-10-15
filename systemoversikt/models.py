@@ -7,6 +7,7 @@
 # 2026-09-21: System tilgjengelighetsvurdering/kritisk_kapabilitet/service_offerings help text – systemprioritering and consequence examples.
 # 2026-09-15: InformasjonsKategori.tittel max_length 800 – OKA titles exceed 400 (Postgres).
 # 2026-09-15: InformasjonsKategori (OKA) lookup + System defaults + SystemBruk tillegg/unntak.
+# 2026-10-15: SystemBruk.kommentar verbose_name «Kommentar til bruken» (was Innhold); API key unchanged.
 # 2026-09-15: SystemBruk.kommentar (Innhold) help text – virksomhet-specific use beyond systemeier approval.
 # 2026-09-15: SystemBruk.systemeier_kontaktpersoner_referanse display “Lokal informasjonseier (person)” (field name unchanged).
 # 2026-09-15: ArkivOverforing – archive transfer from SystemBruk to destination System (per virksomhet usage).
@@ -7283,10 +7284,11 @@ class SystemBruk(models.Model):
 			null=True,
 			help_text=u"Avvikles: Moduler og eksterne/interne integrasjoner som er i bruk",
 			)
+	# 2026-10-15: verbose_name «Kommentar til bruken» (was Innhold); field name kommentar unchanged for APIs.
 	# 2026-09-14: verbose_name Innhold only – keep field name kommentar for existing APIs.
 	# 2026-09-15: Help text for virksomhet-specific use (beyond systemeier approval, customizations).
 	kommentar = models.TextField(
-			verbose_name="Innhold",
+			verbose_name="Kommentar til bruken",
 			blank=True,
 			null=True,
 			help_text=u"Beskriv om virksomheten bruker systemet til noe mer enn det systemeier har godkjent, om det er spesialtilpasninger for virksomheten, og annen relevant informasjon om bruken som er virksomhetsspesifikk.",

@@ -1,4 +1,5 @@
 // Change log:
+// 2026-10-15: Toggle labels Rediger/Avbryt for button-style edit controls.
 // 2026-10-15: Inline editors for SystemBruk Initiell registrering and Vurderinger on bruksdetaljer.
 
 (function () {

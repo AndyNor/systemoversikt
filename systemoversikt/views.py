@@ -7711,7 +7711,7 @@ def systembruk_lagre_initiell(request, pk):
 	)
 	if part:
 		diff_parts.append(part)
-	part = _systembruk_format_scalar_diff('Innhold', old['kommentar'], kommentar or '')
+	part = _systembruk_format_scalar_diff('Kommentar til bruken', old['kommentar'], kommentar or '')
 	if part:
 		diff_parts.append(part)
 	part = _systembruk_format_scalar_diff(
@@ -7867,6 +7867,7 @@ def systembruk_lagre_vurderinger(request, pk):
 
 def systembruk_ansvarlig_sok(request, pk):
 	# 2026-10-15: Ansvarlig search scoped to SystemBruk.brukergruppe for inline person pickers.
+	# 2026-10-15: E-mail search – full address as one token; show e-mail in result labels.
 	bruk, err = _systembruk_get_writable(request, pk)
 	if err:
 		return err
@@ -7885,22 +7886,18 @@ def systembruk_ansvarlig_sok(request, pk):
 	results = []
 	for ansvarlig in _virksomhet_ansvarlig_sok_queryset(q, scope):
 		if ansvarlig.pk not in exclude_ids:
-			results.append(_ansvarlig_display_list(ansvarlig))
+			row = _ansvarlig_display_list(ansvarlig)
+			row['label'] = _person_label_with_email(
+				str(ansvarlig),
+				getattr(ansvarlig.brukernavn, 'email', '') or '',
+			)
+			results.append(row)
 
-	user_terms = q.split()
+	user_terms = _ansvarlig_sok_terms(q)
 	if user_terms and scope.exists():
 		from functools import reduce
 		from operator import or_
-		user_parts = []
-		for term in user_terms:
-			user_parts.append(
-				Q(username__icontains=term)
-				| Q(first_name__icontains=term)
-				| Q(last_name__icontains=term)
-				| Q(email__icontains=term)
-				| Q(profile__displayName__icontains=term)
-			)
-		user_q = reduce(or_, user_parts)
+		user_q = reduce(or_, [_ansvarlig_sok_term_q(term) for term in user_terms])
 		users = (
 			User.objects.filter(user_q)
 			.filter(profile__virksomhet__in=scope)
@@ -7913,7 +7910,7 @@ def systembruk_ansvarlig_sok(request, pk):
 			results.append({
 				'id': None,
 				'user_pk': user.pk,
-				'label': str(user),
+				'label': _person_label_with_email(str(user), user.email or ''),
 				'create': True,
 			})
 
@@ -10279,23 +10276,52 @@ def _ansvarlig_q_for_virksomheter(virksomheter):
 	return Q(brukernavn__profile__virksomhet__in=virksomheter)
 
 
+def _ansvarlig_sok_terms(q):
+	# 2026-10-15: Keep e-mail addresses as one token so @-searches match User.email.
+	q = (q or '').strip()
+	if not q:
+		return []
+	if '@' in q:
+		return [q]
+	return q.split()
+
+
+def _ansvarlig_sok_term_q(term, user_prefix=''):
+	# user_prefix '' for User; 'brukernavn__' for Ansvarlig → User.
+	p = user_prefix
+	term_q = (
+		Q(**{'%susername__icontains' % p: term})
+		| Q(**{'%sfirst_name__icontains' % p: term})
+		| Q(**{'%slast_name__icontains' % p: term})
+		| Q(**{'%semail__icontains' % p: term})
+		| Q(**{'%sprofile__displayName__icontains' % p: term})
+	)
+	if '@' in term:
+		term_q |= (
+			Q(**{'%semail__iexact' % p: term})
+			| Q(**{'%susername__iexact' % p: term})
+		)
+	return term_q
+
+
+def _person_label_with_email(name, email):
+	name = (name or '').strip()
+	email = (email or '').strip()
+	if email and email.lower() not in name.lower():
+		return '%s (%s)' % (name, email) if name else email
+	return name or email or '?'
+
+
 def _virksomhet_ansvarlig_sok_queryset(q, scope_virksomheter):
+	# 2026-10-15: E-mail-aware terms (full address as one token + iexact).
 	from functools import reduce
 	from operator import or_
 	if scope_virksomheter is None or not scope_virksomheter.exists():
 		return Ansvarlig.objects.none()
-	terms = q.split()
+	terms = _ansvarlig_sok_terms(q)
 	if not terms:
 		return Ansvarlig.objects.none()
-	field_queries = []
-	for term in terms:
-		field_queries.append(
-			Q(brukernavn__username__icontains=term)
-			| Q(brukernavn__first_name__icontains=term)
-			| Q(brukernavn__last_name__icontains=term)
-			| Q(brukernavn__email__icontains=term)
-			| Q(brukernavn__profile__displayName__icontains=term)
-		)
+	field_queries = [_ansvarlig_sok_term_q(term, 'brukernavn__') for term in terms]
 	query = reduce(or_, field_queries)
 	return (
 		Ansvarlig.objects.filter(query)
@@ -10423,20 +10449,12 @@ def virksomhet_ansvarlig_sok(request, pk):
 		if ansvarlig.pk not in exclude_ids:
 			results.append(_ansvarlig_display_list(ansvarlig))
 
-	user_terms = q.split()
+	# 2026-10-15: Same e-mail-aware term parsing as SystemBruk person search.
+	user_terms = _ansvarlig_sok_terms(q)
 	if user_terms and scope_virksomheter.exists():
 		from functools import reduce
 		from operator import or_
-		user_parts = []
-		for term in user_terms:
-			user_parts.append(
-				Q(username__icontains=term)
-				| Q(first_name__icontains=term)
-				| Q(last_name__icontains=term)
-				| Q(email__icontains=term)
-				| Q(profile__displayName__icontains=term)
-			)
-		user_q = reduce(or_, user_parts)
+		user_q = reduce(or_, [_ansvarlig_sok_term_q(term) for term in user_terms])
 		users = (
 			User.objects.filter(user_q)
 			.filter(profile__virksomhet__in=scope_virksomheter)
@@ -10449,7 +10467,7 @@ def virksomhet_ansvarlig_sok(request, pk):
 			results.append({
 				'id': None,
 				'user_pk': user.pk,
-				'label': str(user),
+				'label': _person_label_with_email(str(user), user.email or ''),
 				'create': True,
 			})
 
@@ -14040,7 +14058,7 @@ def api_virksomheter(request): #tjeneste- og systemoversikt
 
 
 def api_systembruk_optimized(request):  # tjeneste- og systemoversikt
-	# 2026-09-14: tatt_i_bruk and avsluttet added to JSON; kommentar key unchanged (verbose_name Innhold).
+	# 2026-09-14: tatt_i_bruk and avsluttet added to JSON; kommentar key unchanged (verbose_name now «Kommentar til bruken»).
 	# 2026-06-23: Update api_tjeneste_systemoversikt_docs.py when changing /api/systembruk/ or SystemBruk JSON fields (url name: api_tjeneste_systemoversikt_docs).
 	if request.method != "GET":
 		raise Http404
