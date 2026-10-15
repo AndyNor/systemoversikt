@@ -119,11 +119,18 @@
 {% block hovedinnhold %}
 
 {# 2026-10-15: Nav to system details + all bruk; virksomhet shortcut dropped (sidemeny covers it). #}
-<p class="mb-3">
+<p class="mb-2">
 	{% url "systemdetaljer" bruk.system.pk as url_systemdetaljer %}
 	{% url "all_bruk_for_virksomhet" bruk.brukergruppe.pk as url_all_bruk_for_virksomhet %}
 	<a class="btn btn-sm btn-outline-secondary" href="{{ url_systemdetaljer }}">Systemdetaljer for {{ bruk.system }}</a>
 	<a class="btn btn-sm btn-secondary" href="{{ url_all_bruk_for_virksomhet }}">All systembruk for {{ bruk.brukergruppe }}</a>
+</p>
+{# 2026-10-15: Short intro – what SystemBruk is, person picker scope, edit perms, vs. systemdetaljer. #}
+<p class="text-muted small mb-3">
+	Her registrerer {{ bruk.brukergruppe.virksomhetsforkortelse }} egen bruk av systemet: om det er i bruk, lokale kontaktpersoner, vurderinger og informasjonskategorier.
+	Ansvarlige som velges må tilhøre {{ bruk.brukergruppe.virksomhetsforkortelse }}.
+	For å redigere må du ha tillatelse til å endre systembruk for denne virksomheten, eller være superbruker.
+	Sentral systeminformasjon (eier, forvalter, leverandør m.m.) ligger på systemdetaljene, ikke her.
 </p>
 
 <section class="sb-seksjon">
