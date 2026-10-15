@@ -118,13 +118,11 @@
 
 {% block hovedinnhold %}
 
-{# 2026-10-15: Virksomhet/system as buttons; admin edit link removed (inline editors). #}
+{# 2026-10-15: Nav to system details + all bruk; virksomhet shortcut dropped (sidemeny covers it). #}
 <p class="mb-3">
-	{% url "virksomhet" bruk.brukergruppe.pk as url_virksomhet %}
 	{% url "systemdetaljer" bruk.system.pk as url_systemdetaljer %}
 	{% url "all_bruk_for_virksomhet" bruk.brukergruppe.pk as url_all_bruk_for_virksomhet %}
-	<a class="btn btn-sm btn-outline-secondary" href="{{ url_virksomhet }}">{{ bruk.brukergruppe.virksomhetsforkortelse }}</a>
-	<a class="btn btn-sm btn-outline-secondary" href="{{ url_systemdetaljer }}">Systemdetaljer: {{ bruk.system }}</a>
+	<a class="btn btn-sm btn-outline-secondary" href="{{ url_systemdetaljer }}">Systemdetaljer for {{ bruk.system }}</a>
 	<a class="btn btn-sm btn-secondary" href="{{ url_all_bruk_for_virksomhet }}">All systembruk for {{ bruk.brukergruppe }}</a>
 </p>
 
@@ -442,86 +440,7 @@
 			</div>
 		</div>
 	</div>
-
-	<div class="row">
-		<div class="col-lg-6">
-			<div class="sb-underblokk">
-				<div class="sb-underblokk-tittel">
-					<h5 class="sb-heading">Relatert til avtale</h5>
-				</div>
-				{% if perms.systemoversikt.view_systembruk %}
-					<table class="tablesorter table-sm">
-						<tr>
-							<td>{% get_verbose_field_name bruk "avtale_kan_avropes" %}</td>
-							<td>{{ bruk.avtale_kan_avropes|yesno:"Ja,Nei,Ukjent"|default:"-" }}</td>
-						</tr>
-						<tr>
-							<td>{% get_verbose_field_name bruk "avtalestatus" %}</td>
-							<td>{{ bruk.get_avtalestatus_display|default:"-" }}</td>
-						</tr>
-						<tr>
-							<td>{% get_verbose_field_name bruk "avtaletype" %}</td>
-							<td>{{ bruk.avtaletype|default:"-" }}</td>
-						</tr>
-						<tr>
-							<td>{% get_verbose_field_name bruk "kostnadersystem" %}</td>
-							<td>{{ bruk.kostnadersystem|default:"-"|intcomma }}</td>
-						</tr>
-					</table>
-				{% else %}
-					<p class="text-muted mb-0">Du har ikke rettigheter til å se dette</p>
-				{% endif %}
-			</div>
-		</div>
-
-		<div class="col-lg-6">
-			<div class="sb-underblokk">
-				<div class="sb-underblokk-tittel">
-					<h5 class="sb-heading">Øvrige opplysninger</h5>
-				</div>
-				<table class="tablesorter table-sm">
-					<tr>
-						<td>{% get_verbose_field_name bruk "systemeierskap" %}</td>
-						<td>{{ bruk.systemeierskap|default:"-" }}</td>
-					</tr>
-					<tr>
-						<td>{% get_verbose_field_name bruk "systemforvalter" %}</td>
-						<td>
-							{% if bruk.systemforvalter %}
-								{% url "virksomhet" bruk.systemforvalter.pk as url_eier %}
-								<a href="{{ url_eier }}">{{ bruk.systemforvalter }}</a>
-							{% else %}
-								-
-							{% endif %}
-						</td>
-					</tr>
-					<tr>
-						<td>{% get_verbose_field_name bruk "avhengigheter_referanser" %}</td>
-						<td>
-							{% for system in bruk.avhengigheter_referanser.all %}
-								{% url "systemdetaljer" system.pk as url_system %}
-								<a href="{{ url_system }}">{{ system }}</a><br>
-							{% empty %}
-								-
-							{% endfor %}
-						</td>
-					</tr>
-					<tr>
-						<td>{% get_verbose_field_name bruk "avhengigheter" %}</td>
-						<td>{{ bruk.avhengigheter|linebreaks|default:"-" }}</td>
-					</tr>
-					<tr>
-						<td>{% get_verbose_field_name bruk "driftsmodell_foreignkey" %}</td>
-						<td>{{ bruk.driftsmodell_foreignkey|default:"-" }}</td>
-					</tr>
-					<tr>
-						<td>{% get_verbose_field_name bruk "livslop_status" %}</td>
-						<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
-					</tr>
-				</table>
-			</div>
-		</div>
-	</div>
+	{# 2026-10-15: Removed unused “Relatert til avtale” and “Øvrige opplysninger” sections. #}
 </section>
 
 <hr class="sb-seksjon-skille">
