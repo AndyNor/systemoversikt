@@ -7457,10 +7457,12 @@ def bruksdetaljer(request, pk):
 
 	can_change = user_can_change_systembruk(request.user, bruk)
 
+	# 2026-10-15: Pass virksomhet so bruksdetaljer can use virksomhet_index sidemeny.
 	return render(request, 'systembruk_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'bruk': bruk,
+		'virksomhet': bruk.brukergruppe,
 		'can_change_systembruk': can_change,
 		'arkivoverforinger': arkivoverforinger,
 		'valg_strategisk': VURDERINGER_STRATEGISK_VALG,

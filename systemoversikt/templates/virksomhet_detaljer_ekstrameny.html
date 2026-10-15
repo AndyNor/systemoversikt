@@ -13,7 +13,8 @@
 	<hr><p style="color: grey;">Systemrelatert</p>
 
 	{% url 'all_bruk_for_virksomhet' pk=virksomhet.pk as url_all_bruk_for_virksomhet %}
-		<a href="{{ url_all_bruk_for_virksomhet }}" class="btn btn-sm btn-link {% if request.path == url_all_bruk_for_virksomhet %}fremhev{% endif %}">Vår bruk</a><br>
+		{# 2026-10-15: Also highlight on systembruk detail (bruksdetaljer). #}
+		<a href="{{ url_all_bruk_for_virksomhet }}" class="btn btn-sm btn-link {% if request.path == url_all_bruk_for_virksomhet or request.resolver_match.url_name == 'bruksdetaljer' %}fremhev{% endif %}">Vår bruk</a><br>
 	{% url 'systemer_virksomhet_ansvarlig_for' pk=virksomhet.pk as url_systemer_virksomhet_ansvarlig_for %}
 		<a href="{{ url_systemer_virksomhet_ansvarlig_for }}" class="btn btn-sm btn-link {% if request.path == url_systemer_virksomhet_ansvarlig_for %}fremhev{% endif %}">Vi forvalter</a><br>
 	{% url 'driftsmodell_virksomhet' pk=virksomhet.pk as url_detaljer_virksomhet %}
