@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-10-15: SystemBruk inline edit save/search routes on /systemer/bruk/<pk>/.
 # 2026-10-12: Tool listing systems with old electronic-archive fields (migration checklist).
 # 2026-10-12: Inline save for GodkjentElektroniskArkiv on systemdetaljer.
 # 2026-10-01: Removed sammenstilling assessment save/apply routes – hovedkategori level is computed automatically.
@@ -337,6 +338,11 @@ urlpatterns = [
 	re_path(r'^systemer/bruk/$', views.mine_systembruk, name='mine_systembruk'),
 	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/$', views.bruksdetaljer, name='bruksdetaljer'),
 	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/informasjonskategorier/$', views_informasjonskategori.systembruk_lagre_informasjonskategorier, name='systembruk_lagre_informasjonskategorier'),
+	# 2026-10-15: Inline edit save/search for SystemBruk Initiell + Vurderinger on bruksdetaljer.
+	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/lagre-initiell/$', views.systembruk_lagre_initiell, name='systembruk_lagre_initiell'),
+	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/lagre-vurderinger/$', views.systembruk_lagre_vurderinger, name='systembruk_lagre_vurderinger'),
+	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/ansvarlig-sok/$', views.systembruk_ansvarlig_sok, name='systembruk_ansvarlig_sok'),
+	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/ansvarlig-opprett/$', views.systembruk_ansvarlig_opprett, name='systembruk_ansvarlig_opprett'),
 	re_path(r'^systemer/bruk/registrer_bruk/(?P<system>\d{1,8})/$', views.registrer_bruk, name='registrer_bruk'),
 	# 2026-09-15: Arkivoverføring – bulk from system details; edit/delete single row.
 	re_path(r'^systemer/arkivoverforing/ny/(?P<system>\d{1,8})/$', views.arkivoverforing_bulk_create, name='arkivoverforing_bulk_create'),

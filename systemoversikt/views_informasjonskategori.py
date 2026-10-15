@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-15: SystemBruk OKA save uses user_can_change_systembruk (virksomhet-scoped).
 # 2026-09-15: Full OKA overview page – searchable tree with expand/collapse.
 # 2026-09-15: Superuser-only Last inn OKA page – upload Excel instead of manage.py.
 # 2026-09-15: Search and save APIs for OKA informasjonskategorier on System and SystemBruk.
@@ -126,8 +127,10 @@ def _kobling_map(systembruk):
 @require_POST
 def systembruk_lagre_informasjonskategorier(request, pk):
 	# 2026-09-15: Save SystemBruk extras and opt-outs (optional begrunnelse) from bruksdetaljer.
-	bruk = get_object_or_404(SystemBruk.objects.select_related('system'), pk=pk)
-	if not request.user.has_perm('systemoversikt.change_systembruk'):
+	# 2026-10-15: Same virksomhet-scoped check as other SystemBruk inline saves.
+	from systemoversikt.views import user_can_change_systembruk
+	bruk = get_object_or_404(SystemBruk.objects.select_related('system', 'brukergruppe'), pk=pk)
+	if not user_can_change_systembruk(request.user, bruk):
 		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
 
 	try:

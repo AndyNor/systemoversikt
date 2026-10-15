@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-15: SystemBruk inline edit – Initiell/Vurderinger save, ansvarlig search, user_can_change_systembruk.
 # 2026-10-12: Tools page listing systems with old er_arkiv / dato (migration checklist to GodkjentElektroniskArkiv).
 # 2026-10-12: Inline save for GodkjentElektroniskArkiv on systemdetaljer (change_godkjentelektroniskarkiv).
 # 2026-09-15: Dokumentasjonsforvaltning information page for archivists.
@@ -475,6 +476,22 @@ def user_can_change_virksomhet(user, virksomhet):
 	if user.has_perm('systemoversikt.change_virksomhet'):
 		try:
 			return user.profile.virksomhet_id == virksomhet.pk
+		except AttributeError:
+			return False
+	return False
+
+
+def user_can_change_systembruk(user, bruk):
+	# 2026-10-15: change_systembruk plus same-virksomhet (brukergruppe), or admin/superuser.
+	if not user.is_authenticated:
+		return False
+	if user.is_superuser:
+		return True
+	if user.groups.filter(name="/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR").exists():
+		return True
+	if user.has_perm('systemoversikt.change_systembruk'):
+		try:
+			return user.profile.virksomhet_id == bruk.brukergruppe_id
 		except AttributeError:
 			return False
 	return False
@@ -7385,14 +7402,16 @@ def search(request):
 
 
 def bruksdetaljer(request, pk):
+	# 2026-10-15: Inline edit for Initiell registrering + Vurderinger (permission-scoped).
 	#Vise detaljer om systembruk
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
+	ansvarlig_qs = Ansvarlig.objects.select_related('brukernavn', 'brukernavn__profile')
 	bruk = (
 		SystemBruk.objects
-		.select_related('system', 'brukergruppe')
+		.select_related('system', 'brukergruppe', 'systemforvalter', 'driftsmodell_foreignkey')
 		.prefetch_related(
 			Prefetch(
 				'system__informasjonskategorier',
@@ -7404,6 +7423,9 @@ def bruksdetaljer(request, pk):
 					'kategori', 'kategori__parent', 'kategori__parent__parent'
 				),
 			),
+			Prefetch('systemeier_kontaktpersoner_referanse', queryset=ansvarlig_qs),
+			Prefetch('systemforvalter_kontaktpersoner_referanse', queryset=ansvarlig_qs),
+			'avhengigheter_referanser',
 		)
 		.get(pk=pk)
 	)
@@ -7433,11 +7455,20 @@ def bruksdetaljer(request, pk):
 		if kobling.status == SYSTEMBRUK_KATEGORI_TILLEGG
 	]
 
+	can_change = user_can_change_systembruk(request.user, bruk)
+
 	return render(request, 'systembruk_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'bruk': bruk,
+		'can_change_systembruk': can_change,
 		'arkivoverforinger': arkivoverforinger,
+		'valg_strategisk': VURDERINGER_STRATEGISK_VALG,
+		'valg_funksjonell': VURDERINGER_FUNKSJONELL_VALG,
+		'valg_teknisk': VURDERINGER_TEKNISK_VALG,
+		'valg_sikkerhet': VURDERINGER_SIKKERHET_VALG,
+		'systembruk_initiell_json': _systembruk_initiell_payload(bruk),
+		'systembruk_vurderinger_json': _systembruk_vurderinger_payload(bruk),
 		'oka_standard': oka_standard,
 		'oka_tillegg': oka_tillegg,
 		'oka_standard_json': [
@@ -7456,6 +7487,463 @@ def bruksdetaljer(request, pk):
 			for row in oka_tillegg
 		],
 	})
+
+
+SYSTEMBRUK_INITIELL_M2M_FIELDS = (
+	('systemeier_kontaktpersoner_referanse', 'Lokal informasjonseier (person)'),
+	('systemforvalter_kontaktpersoner_referanse', 'Lokal forvalter (person)'),
+)
+SYSTEMBRUK_INITIELL_M2M_FIELD_NAMES = frozenset(f for f, _ in SYSTEMBRUK_INITIELL_M2M_FIELDS)
+
+
+def _systembruk_ansvarlig_list(ansvarlige):
+	return [_ansvarlig_display_list(a) for a in ansvarlige]
+
+
+def _systembruk_initiell_payload(bruk):
+	# 2026-10-15: JSON snapshot for Initiell registrering inline editor.
+	return {
+		'ibruk': bruk.ibruk,
+		'tatt_i_bruk': bruk.tatt_i_bruk.isoformat() if bruk.tatt_i_bruk else '',
+		'avsluttet': bruk.avsluttet.isoformat() if bruk.avsluttet else '',
+		'kommentar': bruk.kommentar or '',
+		'antall_brukere': bruk.antall_brukere,
+		'systemeier_kontaktpersoner_referanse': _systembruk_ansvarlig_list(
+			bruk.systemeier_kontaktpersoner_referanse.all()
+		),
+		'systemforvalter_kontaktpersoner_referanse': _systembruk_ansvarlig_list(
+			bruk.systemforvalter_kontaktpersoner_referanse.all()
+		),
+		'sist_oppdatert': bruk.sist_oppdatert.isoformat() if bruk.sist_oppdatert else '',
+		'sist_oppdatert_display': (
+			bruk.sist_oppdatert.strftime('%Y-%m-%d') if bruk.sist_oppdatert else ''
+		),
+	}
+
+
+def _systembruk_vurderinger_payload(bruk):
+	# 2026-10-15: JSON snapshot for Vurderinger inline editor (incl. ROS fields).
+	dato_ros = bruk.dato_sist_ros
+	if timezone.is_aware(dato_ros) if dato_ros else False:
+		dato_ros_local = timezone.localtime(dato_ros)
+	else:
+		dato_ros_local = dato_ros
+	return {
+		'strategisk_egnethet': bruk.strategisk_egnethet,
+		'funksjonell_egnethet': bruk.funksjonell_egnethet,
+		'teknisk_egnethet': bruk.teknisk_egnethet,
+		'konfidensialitetsvurdering': bruk.konfidensialitetsvurdering,
+		'integritetsvurdering': bruk.integritetsvurdering,
+		'tilgjengelighetsvurdering': bruk.tilgjengelighetsvurdering,
+		'url_risikovurdering': bruk.url_risikovurdering or '',
+		'risikovurdering_tekst': bruk.risikovurdering_tekst or '',
+		'dato_sist_ros': (
+			dato_ros_local.strftime('%Y-%m-%dT%H:%M') if dato_ros_local else ''
+		),
+		'dato_sist_ros_display': (
+			dato_ros_local.strftime('%Y-%m-%d') if dato_ros_local else ''
+		),
+		'strategisk_egnethet_display': bruk.get_strategisk_egnethet_display() or '',
+		'funksjonell_egnethet_display': bruk.get_funksjonell_egnethet_display() or '',
+		'teknisk_egnethet_display': bruk.get_teknisk_egnethet_display() or '',
+		'konfidensialitetsvurdering_display': bruk.get_konfidensialitetsvurdering_display() or '',
+		'integritetsvurdering_display': bruk.get_integritetsvurdering_display() or '',
+		'tilgjengelighetsvurdering_display': bruk.get_tilgjengelighetsvurdering_display() or '',
+	}
+
+
+def _systembruk_choice_display(choices, value):
+	if value is None or value == '':
+		return ''
+	for choice_value, label in choices:
+		if choice_value == value:
+			return label
+	return str(value)
+
+
+def _systembruk_format_scalar_diff(label, old, new):
+	old_s = '–' if old in (None, '') else str(old)
+	new_s = '–' if new in (None, '') else str(new)
+	if old_s == new_s:
+		return ''
+	return '%s: «%s» → «%s»' % (label, old_s, new_s)
+
+
+def _systembruk_parse_optional_int(value):
+	if value is None or value == '':
+		return None
+	return int(value)
+
+
+def _systembruk_parse_choice(value, allowed):
+	if value is None or value == '':
+		return None
+	parsed = int(value)
+	if parsed not in allowed:
+		raise ValueError('invalid_choice')
+	return parsed
+
+
+def _systembruk_parse_datetime_local(value):
+	# 2026-10-15: Parse datetime-local / date strings for SystemBruk.dato_sist_ros.
+	value = (value or '').strip()
+	if not value:
+		return None
+	from django.utils.dateparse import parse_datetime
+	normalized = value.replace(' ', 'T')
+	if len(normalized) == 16:
+		normalized += ':00'
+	dt = parse_datetime(normalized)
+	if dt is None:
+		d = parse_date(normalized[:10])
+		if d is None:
+			raise ValueError('invalid_datetime')
+		dt = datetime.datetime.combine(d, datetime.time.min)
+	if timezone.is_naive(dt):
+		dt = timezone.make_aware(dt, timezone.get_current_timezone())
+	return dt
+
+
+def _systembruk_get_writable(request, pk):
+	bruk = get_object_or_404(
+		SystemBruk.objects.select_related('brukergruppe'),
+		pk=pk,
+	)
+	if not user_can_change_systembruk(request.user, bruk):
+		return None, JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+	return bruk, None
+
+
+@require_POST
+def systembruk_lagre_initiell(request, pk):
+	# 2026-10-15: Save Initiell registrering fields from bruksdetaljer inline editor.
+	bruk, err = _systembruk_get_writable(request, pk)
+	if err:
+		return err
+
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+	except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+		return JsonResponse({'ok': False, 'error': 'invalid_json'}, status=400)
+
+	ibruk = bool(data.get('ibruk'))
+	try:
+		tatt_i_bruk = _parse_optional_date(data.get('tatt_i_bruk'))
+		avsluttet = _parse_optional_date(data.get('avsluttet'))
+	except (TypeError, ValueError):
+		return JsonResponse({'ok': False, 'error': 'invalid_date'}, status=400)
+	# _parse_optional_date returns None for blank; invalid non-blank yields None too – detect
+	for key, parsed in (('tatt_i_bruk', tatt_i_bruk), ('avsluttet', avsluttet)):
+		raw = data.get(key)
+		if raw not in (None, '') and parsed is None:
+			return JsonResponse({'ok': False, 'error': 'invalid_date', 'field': key}, status=400)
+
+	kommentar = (data.get('kommentar') or '').strip() or None
+	try:
+		antall_brukere = _systembruk_parse_optional_int(data.get('antall_brukere'))
+	except (TypeError, ValueError):
+		return JsonResponse({'ok': False, 'error': 'invalid_antall'}, status=400)
+
+	m2m_ids = {}
+	for field_name, _label in SYSTEMBRUK_INITIELL_M2M_FIELDS:
+		ids = data.get(field_name)
+		if not isinstance(ids, list):
+			return JsonResponse({'ok': False, 'error': 'invalid_ids', 'field': field_name}, status=400)
+		try:
+			m2m_ids[field_name] = [int(i) for i in ids]
+		except (TypeError, ValueError):
+			return JsonResponse({'ok': False, 'error': 'invalid_ids', 'field': field_name}, status=400)
+
+	scope = Virksomhet.objects.filter(pk=bruk.brukergruppe_id)
+	ansvarlig_qs = Ansvarlig.objects.select_related('brukernavn', 'brukernavn__profile')
+	for field_name, ids in m2m_ids.items():
+		existing_ids = set(getattr(bruk, field_name).values_list('pk', flat=True))
+		in_scope = set(
+			ansvarlig_qs.filter(pk__in=ids)
+			.filter(_ansvarlig_q_for_virksomheter(scope))
+			.values_list('pk', flat=True)
+		)
+		allowed = in_scope | (existing_ids & set(ids))
+		if set(ids) - allowed:
+			return JsonResponse({'ok': False, 'error': 'unknown_ansvarlig', 'field': field_name}, status=400)
+
+	old = {
+		'ibruk': bruk.ibruk,
+		'tatt_i_bruk': bruk.tatt_i_bruk,
+		'avsluttet': bruk.avsluttet,
+		'kommentar': bruk.kommentar or '',
+		'antall_brukere': bruk.antall_brukere,
+	}
+	old_m2m = {
+		field_name: list(getattr(bruk, field_name).select_related('brukernavn', 'brukernavn__profile'))
+		for field_name, _ in SYSTEMBRUK_INITIELL_M2M_FIELDS
+	}
+
+	with transaction.atomic():
+		bruk.ibruk = ibruk
+		bruk.tatt_i_bruk = tatt_i_bruk
+		bruk.avsluttet = avsluttet
+		bruk.kommentar = kommentar
+		bruk.antall_brukere = antall_brukere
+		bruk.save()
+		for field_name, ids in m2m_ids.items():
+			getattr(bruk, field_name).set(ids)
+
+	diff_parts = []
+	part = _systembruk_format_scalar_diff(
+		'Er systemet i bruk?',
+		'Ja' if old['ibruk'] else 'Nei',
+		'Ja' if ibruk else 'Nei',
+	)
+	if part:
+		diff_parts.append(part)
+	part = _systembruk_format_scalar_diff(
+		'Tatt i bruk',
+		old['tatt_i_bruk'].isoformat() if old['tatt_i_bruk'] else '',
+		tatt_i_bruk.isoformat() if tatt_i_bruk else '',
+	)
+	if part:
+		diff_parts.append(part)
+	part = _systembruk_format_scalar_diff(
+		'Avsluttet',
+		old['avsluttet'].isoformat() if old['avsluttet'] else '',
+		avsluttet.isoformat() if avsluttet else '',
+	)
+	if part:
+		diff_parts.append(part)
+	part = _systembruk_format_scalar_diff('Innhold', old['kommentar'], kommentar or '')
+	if part:
+		diff_parts.append(part)
+	part = _systembruk_format_scalar_diff(
+		'Antall brukere?',
+		old['antall_brukere'] if old['antall_brukere'] is not None else '',
+		antall_brukere if antall_brukere is not None else '',
+	)
+	if part:
+		diff_parts.append(part)
+
+	new_pks = {pk for ids in m2m_ids.values() for pk in ids}
+	new_by_pk = {a.pk: a for a in ansvarlig_qs.filter(pk__in=new_pks)}
+	for field_name, label in SYSTEMBRUK_INITIELL_M2M_FIELDS:
+		part = format_m2m_diff(
+			label,
+			old_m2m[field_name],
+			[new_by_pk[i] for i in m2m_ids[field_name]],
+		)
+		if part:
+			diff_parts.append(part)
+
+	if diff_parts:
+		log_object_change(request.user, bruk, 'Initiell registrering: %s' % '; '.join(diff_parts))
+
+	bruk = (
+		SystemBruk.objects
+		.prefetch_related(
+			Prefetch('systemeier_kontaktpersoner_referanse', queryset=ansvarlig_qs),
+			Prefetch('systemforvalter_kontaktpersoner_referanse', queryset=ansvarlig_qs),
+		)
+		.get(pk=pk)
+	)
+	return JsonResponse({'ok': True, 'initiell': _systembruk_initiell_payload(bruk)})
+
+
+@require_POST
+def systembruk_lagre_vurderinger(request, pk):
+	# 2026-10-15: Save Vurderinger (+ ROS) from bruksdetaljer inline editor.
+	bruk, err = _systembruk_get_writable(request, pk)
+	if err:
+		return err
+
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+	except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+		return JsonResponse({'ok': False, 'error': 'invalid_json'}, status=400)
+
+	choice_fields = {
+		'strategisk_egnethet': set(c[0] for c in VURDERINGER_STRATEGISK_VALG if c[0] is not None),
+		'funksjonell_egnethet': set(c[0] for c in VURDERINGER_FUNKSJONELL_VALG if c[0] is not None),
+		'teknisk_egnethet': set(c[0] for c in VURDERINGER_TEKNISK_VALG if c[0] is not None),
+		'konfidensialitetsvurdering': set(c[0] for c in VURDERINGER_SIKKERHET_VALG if c[0] is not None),
+		'integritetsvurdering': set(c[0] for c in VURDERINGER_SIKKERHET_VALG if c[0] is not None),
+		'tilgjengelighetsvurdering': set(c[0] for c in VURDERINGER_SIKKERHET_VALG if c[0] is not None),
+	}
+	parsed_choices = {}
+	try:
+		for field_name, allowed in choice_fields.items():
+			parsed_choices[field_name] = _systembruk_parse_choice(data.get(field_name), allowed)
+	except (TypeError, ValueError):
+		return JsonResponse({'ok': False, 'error': 'invalid_choice'}, status=400)
+
+	url_risikovurdering = (data.get('url_risikovurdering') or '').strip() or None
+	risikovurdering_tekst = (data.get('risikovurdering_tekst') or '').strip() or None
+	try:
+		dato_sist_ros = _systembruk_parse_datetime_local(data.get('dato_sist_ros'))
+	except ValueError:
+		return JsonResponse({'ok': False, 'error': 'invalid_datetime'}, status=400)
+
+	old = {
+		'strategisk_egnethet': bruk.strategisk_egnethet,
+		'funksjonell_egnethet': bruk.funksjonell_egnethet,
+		'teknisk_egnethet': bruk.teknisk_egnethet,
+		'konfidensialitetsvurdering': bruk.konfidensialitetsvurdering,
+		'integritetsvurdering': bruk.integritetsvurdering,
+		'tilgjengelighetsvurdering': bruk.tilgjengelighetsvurdering,
+		'url_risikovurdering': bruk.url_risikovurdering or '',
+		'risikovurdering_tekst': bruk.risikovurdering_tekst or '',
+		'dato_sist_ros': bruk.dato_sist_ros,
+	}
+	old_displays = {
+		'strategisk_egnethet': bruk.get_strategisk_egnethet_display() or '',
+		'funksjonell_egnethet': bruk.get_funksjonell_egnethet_display() or '',
+		'teknisk_egnethet': bruk.get_teknisk_egnethet_display() or '',
+		'konfidensialitetsvurdering': bruk.get_konfidensialitetsvurdering_display() or '',
+		'integritetsvurdering': bruk.get_integritetsvurdering_display() or '',
+		'tilgjengelighetsvurdering': bruk.get_tilgjengelighetsvurdering_display() or '',
+	}
+
+	with transaction.atomic():
+		for field_name, value in parsed_choices.items():
+			setattr(bruk, field_name, value)
+		bruk.url_risikovurdering = url_risikovurdering
+		bruk.risikovurdering_tekst = risikovurdering_tekst
+		bruk.dato_sist_ros = dato_sist_ros
+		bruk.save()
+
+	diff_parts = []
+	labels = {
+		'strategisk_egnethet': 'Strategisk egnethet',
+		'funksjonell_egnethet': 'Funksjonell egnethet',
+		'teknisk_egnethet': 'Teknisk egnethet',
+		'konfidensialitetsvurdering': 'Konfidensialitetsvurdering',
+		'integritetsvurdering': 'Integritetsvurdering',
+		'tilgjengelighetsvurdering': 'Tilgjengelighetsvurdering',
+	}
+	choice_maps = {
+		'strategisk_egnethet': VURDERINGER_STRATEGISK_VALG,
+		'funksjonell_egnethet': VURDERINGER_FUNKSJONELL_VALG,
+		'teknisk_egnethet': VURDERINGER_TEKNISK_VALG,
+		'konfidensialitetsvurdering': VURDERINGER_SIKKERHET_VALG,
+		'integritetsvurdering': VURDERINGER_SIKKERHET_VALG,
+		'tilgjengelighetsvurdering': VURDERINGER_SIKKERHET_VALG,
+	}
+	for field_name, label in labels.items():
+		new_display = _systembruk_choice_display(choice_maps[field_name], parsed_choices[field_name])
+		part = _systembruk_format_scalar_diff(label, old_displays[field_name], new_display)
+		if part:
+			diff_parts.append(part)
+	part = _systembruk_format_scalar_diff(
+		'Risikovurdering (URL)', old['url_risikovurdering'], url_risikovurdering or ''
+	)
+	if part:
+		diff_parts.append(part)
+	part = _systembruk_format_scalar_diff(
+		'Risikovurdering fritekst', old['risikovurdering_tekst'], risikovurdering_tekst or ''
+	)
+	if part:
+		diff_parts.append(part)
+	old_ros = old['dato_sist_ros']
+	if old_ros and timezone.is_aware(old_ros):
+		old_ros_s = timezone.localtime(old_ros).strftime('%Y-%m-%d %H:%M')
+	elif old_ros:
+		old_ros_s = old_ros.strftime('%Y-%m-%d %H:%M')
+	else:
+		old_ros_s = ''
+	if dato_sist_ros and timezone.is_aware(dato_sist_ros):
+		new_ros_s = timezone.localtime(dato_sist_ros).strftime('%Y-%m-%d %H:%M')
+	elif dato_sist_ros:
+		new_ros_s = dato_sist_ros.strftime('%Y-%m-%d %H:%M')
+	else:
+		new_ros_s = ''
+	part = _systembruk_format_scalar_diff('Dato sist gjennomførte risikovurdering', old_ros_s, new_ros_s)
+	if part:
+		diff_parts.append(part)
+
+	if diff_parts:
+		log_object_change(request.user, bruk, 'Vurderinger: %s' % '; '.join(diff_parts))
+
+	bruk.refresh_from_db()
+	return JsonResponse({'ok': True, 'vurderinger': _systembruk_vurderinger_payload(bruk)})
+
+
+def systembruk_ansvarlig_sok(request, pk):
+	# 2026-10-15: Ansvarlig search scoped to SystemBruk.brukergruppe for inline person pickers.
+	bruk, err = _systembruk_get_writable(request, pk)
+	if err:
+		return err
+
+	q = request.GET.get('q', '').strip()
+	if len(q) < 2:
+		return JsonResponse({'results': []})
+
+	exclude_ids = set()
+	for raw in request.GET.get('exclude_ids', '').split(','):
+		raw = raw.strip()
+		if raw.isdigit():
+			exclude_ids.add(int(raw))
+
+	scope = Virksomhet.objects.filter(pk=bruk.brukergruppe_id)
+	results = []
+	for ansvarlig in _virksomhet_ansvarlig_sok_queryset(q, scope):
+		if ansvarlig.pk not in exclude_ids:
+			results.append(_ansvarlig_display_list(ansvarlig))
+
+	user_terms = q.split()
+	if user_terms and scope.exists():
+		from functools import reduce
+		from operator import or_
+		user_parts = []
+		for term in user_terms:
+			user_parts.append(
+				Q(username__icontains=term)
+				| Q(first_name__icontains=term)
+				| Q(last_name__icontains=term)
+				| Q(email__icontains=term)
+				| Q(profile__displayName__icontains=term)
+			)
+		user_q = reduce(or_, user_parts)
+		users = (
+			User.objects.filter(user_q)
+			.filter(profile__virksomhet__in=scope)
+			.filter(ansvarlig_brukernavn__isnull=True)
+			.select_related('profile')
+			.distinct()
+			.order_by('first_name', 'last_name')[:5]
+		)
+		for user in users:
+			results.append({
+				'id': None,
+				'user_pk': user.pk,
+				'label': str(user),
+				'create': True,
+			})
+
+	return JsonResponse({'results': results})
+
+
+@require_POST
+def systembruk_ansvarlig_opprett(request, pk):
+	# 2026-10-15: Create Ansvarlig from User when adding via systembruk person search.
+	bruk, err = _systembruk_get_writable(request, pk)
+	if err:
+		return err
+	if not request.user.has_perm('systemoversikt.add_ansvarlig'):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+	except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+		return JsonResponse({'ok': False, 'error': 'invalid_json'}, status=400)
+
+	user_pk = data.get('user_pk')
+	if not user_pk:
+		return JsonResponse({'ok': False, 'error': 'missing_user'}, status=400)
+
+	user = get_object_or_404(User, pk=user_pk)
+	user_virksomhet_id = getattr(user.profile, 'virksomhet_id', None)
+	if user_virksomhet_id != bruk.brukergruppe_id:
+		return JsonResponse({'ok': False, 'error': 'wrong_virksomhet'}, status=400)
+	ansvarlig, _created = Ansvarlig.objects.get_or_create(brukernavn=user)
+	return JsonResponse(_ansvarlig_display_list(ansvarlig))
 
 
 def _parse_optional_date(value):

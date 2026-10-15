@@ -1,3 +1,4 @@
+{# 2026-10-15: Inline edit for Initiell registrering + Vurderinger; keep admin link. #}
 {# 2026-09-15: Helper link to full OKA overview (new tab) next to category assignment. #}
 {# 2026-09-15: Informasjonskategorier (OKA) – show system defaults, extras and optional opt-out. #}
 {# 2026-09-15: Read-only arkivoverføring list for this SystemBruk. #}
@@ -17,10 +18,18 @@
 
 {% block ekstrastyle %}
 <link rel="stylesheet" href="{% static 'informasjonskategori.css' %}?v=20260915">
+<style>
+.sb-ansvarlige-list .badge { white-space: normal; }
+.sb-sok-treff { max-height: 12rem; overflow-y: auto; }
+.sb-sok-treff button { display: block; width: 100%; text-align: left; }
+</style>
 {% endblock %}
 
 {% block ekstrajavascript %}
 <script src="{% static 'informasjonskategori_edit.js' %}?v=20260915" nonce="{{request.csp_nonce}}"></script>
+{% if can_change_systembruk %}
+<script src="{% static 'systembruk_edit.js' %}?v=20261015" nonce="{{request.csp_nonce}}"></script>
+{% endif %}
 {% endblock ekstrajavascript %}
 
 {% block main_content %}
@@ -28,16 +37,12 @@
 <p>
 	{% if user.is_authenticated %}
 	<a class="btn btn-sm btn-primary" href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
-	Rediger detaljer</a>
+	Rediger i admin</a>
 	{% endif %}
 
 	{% url "all_bruk_for_virksomhet" bruk.brukergruppe.pk as url_all_bruk_for_virksomhet %}
 	<a class="btn btn-sm btn-secondary" href="{{  url_all_bruk_for_virksomhet }}">All systembruk for {{ bruk.brukergruppe }}</a>
-
-
 </p>
-
-
 
 <br>
 <div class="row">
@@ -71,64 +76,140 @@
 				<td>Systemklassifisering (fra systemet)</td>
 				<td>{{ bruk.system.get_systemeierskapsmodell_display|default:"-" }}</td>
 			</tr>
-
 		</table>
 
-		<h6>Generelt for denne bruken</h6>
+		{# 2026-10-15: Initiell registrering – inline edit (admin fieldset minus ROS fields). #}
+		<div id="sb-initiell-panel">
+			<h6>
+				Initiell registrering
+				{% if can_change_systembruk %}
+				<button type="button" class="btn btn-sm btn-link" id="sb-initiell-toggle">{% include 'site_edit_button.html' %} Rediger</button>
+				{% endif %}
+			</h6>
+			<span id="sb-initiell-status" class="small"></span>
+
+			<div id="sb-initiell-view">
+				<table class="tablesorter">
+					<tr>
+						<td width="40%">Sist oppdatert</td>
+						<td id="sb-view-sist_oppdatert">{{ bruk.sist_oppdatert|date:"Y-m-d" }} ({{ bruk.sist_oppdatert|naturaltime }})</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "ibruk" %}</td>
+						<td id="sb-view-ibruk">{{ bruk.ibruk|yesno:"Ja,Nei" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "tatt_i_bruk" %}</td>
+						<td id="sb-view-tatt_i_bruk">{{ bruk.tatt_i_bruk|date:"Y-m-d"|default:"-" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "avsluttet" %}</td>
+						<td id="sb-view-avsluttet">{{ bruk.avsluttet|date:"Y-m-d"|default:"-" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "kommentar" %}</td>
+						<td id="sb-view-kommentar">{{ bruk.kommentar|linebreaks|default:"-" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "antall_brukere" %}</td>
+						<td id="sb-view-antall_brukere">{{ bruk.antall_brukere|default:"-" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "systemeier_kontaktpersoner_referanse" %}</td>
+						<td id="sb-view-systemeier_kontaktpersoner_referanse">
+							{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemeier_kontaktpersoner_referanse.all %}
+						</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "systemforvalter_kontaktpersoner_referanse" %}</td>
+						<td id="sb-view-systemforvalter_kontaktpersoner_referanse">
+							{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}
+						</td>
+					</tr>
+				</table>
+			</div>
+
+			{% if can_change_systembruk %}
+			<div id="sb-initiell-edit" hidden>
+				{% csrf_token %}
+				<table class="tablesorter">
+					<tr>
+						<td width="40%">{% get_verbose_field_name bruk "ibruk" %}</td>
+						<td>
+							<label class="mb-0">
+								<input type="checkbox" id="sb-edit-ibruk"> Er systemet i bruk?
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "tatt_i_bruk" %}</td>
+						<td><input type="date" class="form-control form-control-sm" id="sb-edit-tatt_i_bruk"></td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "avsluttet" %}</td>
+						<td><input type="date" class="form-control form-control-sm" id="sb-edit-avsluttet"></td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "kommentar" %}</td>
+						<td><textarea class="form-control form-control-sm" id="sb-edit-kommentar" rows="4"></textarea></td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "antall_brukere" %}</td>
+						<td><input type="number" class="form-control form-control-sm" id="sb-edit-antall_brukere" min="0" step="1"></td>
+					</tr>
+					<tr class="sb-m2m-edit" data-field="systemeier_kontaktpersoner_referanse">
+						<td>{% get_verbose_field_name bruk "systemeier_kontaktpersoner_referanse" %}</td>
+						<td>
+							<div class="sb-ansvarlige-list mb-1"></div>
+							<input type="search" class="form-control form-control-sm sb-ansvarlig-sok" placeholder="Søk person…" autocomplete="off">
+							<div class="sb-sok-treff sb-ansvarlig-treff"></div>
+						</td>
+					</tr>
+					<tr class="sb-m2m-edit" data-field="systemforvalter_kontaktpersoner_referanse">
+						<td>{% get_verbose_field_name bruk "systemforvalter_kontaktpersoner_referanse" %}</td>
+						<td>
+							<div class="sb-ansvarlige-list mb-1"></div>
+							<input type="search" class="form-control form-control-sm sb-ansvarlig-sok" placeholder="Søk person…" autocomplete="off">
+							<div class="sb-sok-treff sb-ansvarlig-treff"></div>
+						</td>
+					</tr>
+				</table>
+				<p class="mt-2">
+					<button type="button" id="sb-initiell-lagre" class="btn btn-primary btn-sm">Lagre</button>
+					<button type="button" id="sb-initiell-avbryt" class="btn btn-secondary btn-sm">Avbryt</button>
+				</p>
+			</div>
+			{% endif %}
+		</div>
+
+		<h6 class="mt-3">Øvrige opplysninger</h6>
 		<table class="tablesorter">
 			<tr>
-				<td width="40%">Sist oppdatert</td>
-				<td>{{ bruk.sist_oppdatert|date:"Y-m-d" }} ({{ bruk.sist_oppdatert|naturaltime }})</td>
-			</tr>
-
-			<tr>
-				<td>{% get_verbose_field_name bruk "tatt_i_bruk" %}</td>
-				<td>{{ bruk.tatt_i_bruk|date:"Y-m-d"|default:"-" }}</td>
-			</tr>
-
-			<tr>
-				<td>{% get_verbose_field_name bruk "avsluttet" %}</td>
-				<td>{{ bruk.avsluttet|date:"Y-m-d"|default:"-" }}</td>
-			</tr>
-
-			<tr>
-				<td>{% get_verbose_field_name bruk "kommentar" %}</td>
-				<td>{{ bruk.kommentar|linebreaks|default:"-" }}</td>
-			</tr>
-
-			<tr>
-				<td>{% get_verbose_field_name bruk "systemeierskap" %}</td>
+				<td width="40%">{% get_verbose_field_name bruk "systemeierskap" %}</td>
 				<td>{{ bruk.systemeierskap|default:"-" }}</td>
 			</tr>
-
 			<tr>
 				<td>{% get_verbose_field_name bruk "systemforvalter" %}</td>
-				{% url "virksomhet" bruk.systemforvalter.pk as url_eier %}
-				<td><a href="{{ url_eier }}">{{ bruk.systemforvalter|default:"-" }}</a></td>
-			</tr>
-
-			<tr>
-				<td>{% get_verbose_field_name bruk "systemforvalter_kontaktpersoner_referanse" %}</td>
 				<td>
-					{% include "ansvarlig_include_vis.html" with ansvarlige=bruk.systemforvalter_kontaktpersoner_referanse.all %}
+					{% if bruk.systemforvalter %}
+						{% url "virksomhet" bruk.systemforvalter.pk as url_eier %}
+						<a href="{{ url_eier }}">{{ bruk.systemforvalter }}</a>
+					{% else %}
+						-
+					{% endif %}
 				</td>
 			</tr>
-
 			<tr>
 				<td>{% get_verbose_field_name bruk "avhengigheter_referanser" %}</td>
 				<td>
 					{% for system in bruk.avhengigheter_referanser.all %}
 						{% url "systemdetaljer" system.pk as url_system %}
 						<a href="{{ url_system }}">{{ system }}</a><br>
+					{% empty %}
+						-
 					{% endfor %}
 				</td>
 			</tr>
-
-			<tr>
-				<td>{% get_verbose_field_name bruk "antall_brukere" %}</td>
-				<td>{{ bruk.antall_brukere|default:"-" }}</td>
-			</tr>
-
 			<tr>
 				<td>{% get_verbose_field_name bruk "avhengigheter" %}</td>
 				<td>{{ bruk.avhengigheter|linebreaks|default:"-" }}</td>
@@ -137,7 +218,10 @@
 				<td>{% get_verbose_field_name bruk "driftsmodell_foreignkey" %}</td>
 				<td>{{ bruk.driftsmodell_foreignkey|default:"-" }}</td>
 			</tr>
-
+			<tr>
+				<td>{% get_verbose_field_name bruk "livslop_status" %}</td>
+				<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
+			</tr>
 		</table>
 	</div>
 	<div class="col-sm-6">
@@ -166,59 +250,157 @@
 			<p>Du har ikke rettigheter til å se dette</p>
 		{% endif %}
 
-		<h6>Lokale vurderinger</h6>
-		<table class="tablesorter">
-			<tr>
-				<td width="40%">{% get_verbose_field_name bruk "livslop_status" %}</td>
-				<td>{{ bruk.get_livslop_status_display|default:"-" }}</td>
-			</tr>
-			<tr>
-				<td>{% get_verbose_field_name bruk "teknisk_egnethet" %}</td>
-				<td>{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
-			</tr>
-			<tr>
-				<td>{% get_verbose_field_name bruk "strategisk_egnethet" %}</td>
-				<td>{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
-			</tr>
-			<tr>
-				<td>{% get_verbose_field_name bruk "funksjonell_egnethet" %}</td>
-				<td>{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
-			</tr>
-		</table>
+		{# 2026-10-15: Vurderinger – egnethet, sikkerhet, ROS; own save path. #}
+		<div id="sb-vurderinger-panel">
+			<h6>
+				Vurderinger
+				{% if can_change_systembruk %}
+				<button type="button" class="btn btn-sm btn-link" id="sb-vurderinger-toggle">{% include 'site_edit_button.html' %} Rediger</button>
+				{% endif %}
+			</h6>
+			<span id="sb-vurderinger-status" class="small"></span>
 
-		<h6>Lokale sikkerhetsvurderinger</h6>
-		{% if perms.systemoversikt.view_systembruk %}
-			<table class="tablesorter">
-				<tr>
-					<td width="40%">{% get_verbose_field_name bruk "konfidensialitetsvurdering" %}</td>
-					<td>{{ bruk.get_konfidensialitetsvurdering_display|default:"-" }}</td>
-				</tr>
-				<tr>
-					<td>{% get_verbose_field_name bruk "integritetsvurdering" %}</td>
-					<td>{{ bruk.get_integritetsvurdering_display|default:"-" }}</td>
-				</tr>
-				<tr>
-					<td>{% get_verbose_field_name bruk "tilgjengelighetsvurdering" %}</td>
-					<td>{{ bruk.get_tilgjengelighetsvurdering_display|default:"-" }}</td>
-				</tr>
-			<tr>
-				<td>{% get_verbose_field_name bruk "risikovurdering_tekst" %}</td>
-				<td>{{ bruk.risikovurdering_tekst|default:"-" }}</td>
-			</tr>
-			<tr>
-				<td>{% get_verbose_field_name bruk "url_risikovurdering" %}</td>
-				<td>{% if bruk.url_risikovurdering %}
-				<a href="{{ bruk.url_risikovurdering}}">Link til risikovurdering</a>
-				{% endif %}</td>
-			</tr>
-			<tr>
-				<td>{% get_verbose_field_name bruk "dato_sist_ros" %}</td>
-				<td>{{ bruk.dato_sist_ros|date:'Y-m-d'|default:'-' }} ({{ bruk.dato_sist_ros|naturaltime|default:'aldri' }})</td>
-			</tr>
-			</table>
-		{% else %}
-			<p>Du har ikke rettigheter til å se dette</p>
-		{% endif %}
+			<div id="sb-vurderinger-view">
+				<table class="tablesorter">
+					<tr>
+						<td width="40%">{% get_verbose_field_name bruk "strategisk_egnethet" %}</td>
+						<td id="sb-view-strategisk_egnethet">{{ bruk.get_strategisk_egnethet_display|default:"-" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "teknisk_egnethet" %}</td>
+						<td id="sb-view-teknisk_egnethet">{{ bruk.get_teknisk_egnethet_display|default:"-" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "funksjonell_egnethet" %}</td>
+						<td id="sb-view-funksjonell_egnethet">{{ bruk.get_funksjonell_egnethet_display|default:"-" }}</td>
+					</tr>
+					{% if perms.systemoversikt.view_systembruk %}
+					<tr>
+						<td>{% get_verbose_field_name bruk "konfidensialitetsvurdering" %}</td>
+						<td id="sb-view-konfidensialitetsvurdering">{{ bruk.get_konfidensialitetsvurdering_display|default:"-" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "integritetsvurdering" %}</td>
+						<td id="sb-view-integritetsvurdering">{{ bruk.get_integritetsvurdering_display|default:"-" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "tilgjengelighetsvurdering" %}</td>
+						<td id="sb-view-tilgjengelighetsvurdering">{{ bruk.get_tilgjengelighetsvurdering_display|default:"-" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "risikovurdering_tekst" %}</td>
+						<td id="sb-view-risikovurdering_tekst">{{ bruk.risikovurdering_tekst|default:"-" }}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "url_risikovurdering" %}</td>
+						<td id="sb-view-url_risikovurdering">{% if bruk.url_risikovurdering %}<a href="{{ bruk.url_risikovurdering }}">Link til risikovurdering</a>{% else %}-{% endif %}</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "dato_sist_ros" %}</td>
+						<td id="sb-view-dato_sist_ros">{{ bruk.dato_sist_ros|date:'Y-m-d'|default:'-' }} ({{ bruk.dato_sist_ros|naturaltime|default:'aldri' }})</td>
+					</tr>
+					{% else %}
+					<tr>
+						<td colspan="2">Du har ikke rettigheter til å se sikkerhetsvurderinger</td>
+					</tr>
+					{% endif %}
+				</table>
+			</div>
+
+			{% if can_change_systembruk %}
+			<div id="sb-vurderinger-edit" hidden>
+				<table class="tablesorter">
+					<tr>
+						<td width="40%">{% get_verbose_field_name bruk "strategisk_egnethet" %}</td>
+						<td>
+							<select class="form-control form-control-sm" id="sb-edit-strategisk_egnethet">
+								<option value="">–</option>
+								{% for value, label in valg_strategisk %}
+								{% if value != None %}<option value="{{ value }}">{{ label }}</option>{% endif %}
+								{% endfor %}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "teknisk_egnethet" %}</td>
+						<td>
+							<select class="form-control form-control-sm" id="sb-edit-teknisk_egnethet">
+								<option value="">–</option>
+								{% for value, label in valg_teknisk %}
+								{% if value != None %}<option value="{{ value }}">{{ label }}</option>{% endif %}
+								{% endfor %}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "funksjonell_egnethet" %}</td>
+						<td>
+							<select class="form-control form-control-sm" id="sb-edit-funksjonell_egnethet">
+								<option value="">–</option>
+								{% for value, label in valg_funksjonell %}
+								{% if value != None %}<option value="{{ value }}">{{ label }}</option>{% endif %}
+								{% endfor %}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "konfidensialitetsvurdering" %}</td>
+						<td>
+							<select class="form-control form-control-sm" id="sb-edit-konfidensialitetsvurdering">
+								<option value="">–</option>
+								{% for value, label in valg_sikkerhet %}
+								{% if value != None %}<option value="{{ value }}">{{ label }}</option>{% endif %}
+								{% endfor %}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "integritetsvurdering" %}</td>
+						<td>
+							<select class="form-control form-control-sm" id="sb-edit-integritetsvurdering">
+								<option value="">–</option>
+								{% for value, label in valg_sikkerhet %}
+								{% if value != None %}<option value="{{ value }}">{{ label }}</option>{% endif %}
+								{% endfor %}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "tilgjengelighetsvurdering" %}</td>
+						<td>
+							<select class="form-control form-control-sm" id="sb-edit-tilgjengelighetsvurdering">
+								<option value="">–</option>
+								{% for value, label in valg_sikkerhet %}
+								{% if value != None %}<option value="{{ value }}">{{ label }}</option>{% endif %}
+								{% endfor %}
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "risikovurdering_tekst" %}</td>
+						<td><textarea class="form-control form-control-sm" id="sb-edit-risikovurdering_tekst" rows="3"></textarea></td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "url_risikovurdering" %}</td>
+						<td><input type="url" class="form-control form-control-sm" id="sb-edit-url_risikovurdering" placeholder="https://…"></td>
+					</tr>
+					<tr>
+						<td>{% get_verbose_field_name bruk "dato_sist_ros" %}</td>
+						<td>
+							<div class="d-flex align-items-center">
+								<input type="datetime-local" class="form-control form-control-sm" id="sb-edit-dato_sist_ros">
+								<button type="button" class="btn btn-sm btn-outline-secondary ml-2" id="sb-edit-dato_sist_ros-now">Sett nå</button>
+							</div>
+						</td>
+					</tr>
+				</table>
+				<p class="mt-2">
+					<button type="button" id="sb-vurderinger-lagre" class="btn btn-primary btn-sm">Lagre</button>
+					<button type="button" id="sb-vurderinger-avbryt" class="btn btn-secondary btn-sm">Avbryt</button>
+				</p>
+			</div>
+			{% endif %}
+		</div>
 	</div>
 </div>
 
@@ -232,7 +414,7 @@
 		Kun underfunksjoner (mest detaljerte OKA-nivå) kan velges som tillegg. Standardkategorier styres på systemet.
 		{% include "oka_oversikt_lenke.html" %}
 	</p>
-	{% if perms.systemoversikt.change_systembruk %}
+	{% if can_change_systembruk %}
 	<p>
 		<button type="button" class="btn btn-sm btn-secondary" id="oka-bruk-toggle">Endre kategorier</button>
 	</p>
@@ -256,7 +438,7 @@
 			<p class="text-muted">Ingen tilleggskategorier er registrert.</p>
 		{% endfor %}
 	</div>
-	{% if perms.systemoversikt.change_systembruk %}
+	{% if can_change_systembruk %}
 	<div id="oka-bruk-edit" hidden>
 		{% csrf_token %}
 		<h6 class="h6">Fra systemet (standard)</h6>
@@ -314,7 +496,9 @@
 {% block script_append %}
 {{ oka_standard_json|json_script:"okaBrukStandard" }}
 {{ oka_tillegg_json|json_script:"okaBrukTillegg" }}
-{% if perms.systemoversikt.change_systembruk %}
+{{ systembruk_initiell_json|json_script:"sbInitiellData" }}
+{{ systembruk_vurderinger_json|json_script:"sbVurderingerData" }}
+{% if can_change_systembruk %}
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 document.addEventListener('DOMContentLoaded', function () {
 	window.initOkaSystembrukEditor({
@@ -322,6 +506,16 @@ document.addEventListener('DOMContentLoaded', function () {
 		urlSave: "{% url 'systembruk_lagre_informasjonskategorier' bruk.pk %}",
 		standard: JSON.parse(document.getElementById('okaBrukStandard').textContent),
 		tillegg: JSON.parse(document.getElementById('okaBrukTillegg').textContent),
+	});
+	window.initSystembrukEditor({
+		csrf: '{{ csrf_token }}',
+		urlSaveInitiell: "{% url 'systembruk_lagre_initiell' bruk.pk %}",
+		urlSaveVurderinger: "{% url 'systembruk_lagre_vurderinger' bruk.pk %}",
+		urlSearch: "{% url 'systembruk_ansvarlig_sok' bruk.pk %}",
+		urlCreate: "{% url 'systembruk_ansvarlig_opprett' bruk.pk %}",
+		canAddAnsvarlig: {{ perms.systemoversikt.add_ansvarlig|yesno:"true,false" }},
+		initiell: JSON.parse(document.getElementById('sbInitiellData').textContent),
+		vurderinger: JSON.parse(document.getElementById('sbVurderingerData').textContent),
 	});
 });
 </script>
