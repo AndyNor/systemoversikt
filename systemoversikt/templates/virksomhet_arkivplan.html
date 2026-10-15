@@ -64,9 +64,12 @@
 		<tbody>
 		{% for bruk in systembruk %}
 			<tr {% if bruk.ibruk == False %} style="text-decoration: line-through;" {% endif %}>
-				<td><a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">{% include 'site_edit_button.html' %}</a></td>
+				{# 2026-10-15: Edit button → bruksdetaljer (inline edit), not admin. #}
 				<td>
 					{% url "bruksdetaljer" bruk.pk as url_bruk %}
+					<a href="{{ url_bruk }}">{% include 'site_edit_button.html' %}</a>
+				</td>
+				<td>
 					<a href="{{ url_bruk }}">{{ bruk.system }}</a>
 				</td>
 				<td>{{ bruk.ibruk|yesno:"Ja, Nei" }}</td>

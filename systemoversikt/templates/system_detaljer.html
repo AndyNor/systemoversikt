@@ -1791,11 +1791,11 @@
 						{% for bruk in systembruk %}
 						<tr>
 							<td class="bruk-col-virksomhet">
-								{% if user.is_authenticated %}
-									<a href="/admin/systemoversikt/systembruk/{{ bruk.pk }}/change/">
-									{% include 'site_edit_button.html' %}</a>
-								{% endif %}
+								{# 2026-10-15: Edit symbol → bruksdetaljer (inline edit), not admin. #}
 								{% url "bruksdetaljer" bruk.pk as url_bruk %}
+								{% if user.is_authenticated %}
+									<a href="{{ url_bruk }}">{% include 'site_edit_button.html' %}</a>
+								{% endif %}
 								<a href="{{ url_bruk }}">{{ bruk.brukergruppe.virksomhetsforkortelse }}</a>
 							</td>
 
