@@ -1,3 +1,4 @@
+{# 2026-10-20: Restored admin “Endre informasjon” on systemdetaljer – System is not fully inline yet. #}
 {# 2026-10-12: Inline editor for GodkjentElektroniskArkiv (separate change permission). #}
 {# 2026-10-12: Full-height section/sub accent bars; OKA sub-heading class; «Registrert bruk» heading. #}
 {# 2026-09-15: Helper link to full OKA overview (new tab) next to category assignment. #}
@@ -45,12 +46,17 @@
 {% load templatetags %}
 
 {% block overskrift %}
-	{# 2026-10-15: Removed admin “Endre informasjon” – inline editors cover edits. #}
+	{# 2026-10-20: Admin edit link restored – needed until System has full inline editing. #}
 	<div class="system-detalj-tittel-rad">
 		<span class="system-detalj-tittel">
 			<img class="system-detalj-ikon" src="{% if systemdetaljer.er_infrastruktur %}{% static 'infra.png' %}{% elif systemdetaljer.er_integrasjon %}{% static 'integrasjon.png' %}{% elif systemdetaljer.er_saas %}{% static 'system.png' %}{% elif systemdetaljer.driftsmodell_foreignkey.type_plattform == 2 %}{% static 'sky.png' %}{% else %}{% static 'system.png' %}{% endif %}" alt="">
 			{{ systemdetaljer.systemnavn }}
 		</span>
+		{% if user.is_authenticated %}
+			<a href="/admin/systemoversikt/system/{{ systemdetaljer.pk }}/change/" class="system-detalj-rediger-btn">
+				{% include 'site_edit_button.html' %} Endre informasjon om {{ systemdetaljer.systemnavn }}
+			</a>
+		{% endif %}
 	</div>
 	{% if systemdetaljer.isolert_drift %}
 		<div class="system-detalj-isolert-varsel alert alert-warning py-2 px-3 mt-2 mb-0" role="alert">
@@ -72,6 +78,32 @@
 	display: inline-flex;
 	align-items: center;
 	gap: 0.65rem;
+}
+.system-detalj-rediger-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.9rem;
+	font-weight: 500;
+	padding: 0.38rem 0.9rem;
+	border-radius: 999px;
+	background: #e8f5e9;
+	color: #2d6a4f;
+	border: 1px solid #b7dfc0;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+.system-detalj-rediger-btn:hover {
+	background: #d4edda;
+	border-color: #9fd4ad;
+	color: #1b4332;
+	box-shadow: 0 1px 3px rgba(45, 106, 79, 0.12);
+	text-decoration: none;
+}
+.system-detalj-rediger-btn .edit_button {
+	color: inherit;
+	font-size: 1.05em;
 }
 .system-detalj-ikon {
 	height: 42px;
