@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Change log:
+# 2026-10-21: Use KARTOTEKET_LDAPSERVER instead of hardcoded LDAPS URL.
 from django.core.management.base import BaseCommand
 import os
 import ldap, os
@@ -9,8 +11,8 @@ class Command(BaseCommand):
 	def handle(self, **options):
 
 
-		cn = "CN=UKE232914,OU=UKE,OU=Brukere,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
-		server = 'ldaps://ldaps.oslofelles.oslo.kommune.no:636'
+		cn = "CN=XXXXX,OU=XXX,OU=Brukere,OU=OK,DC=oslofelles,DC=oslo,DC=kommune,DC=no"
+		server = os.environ["KARTOTEKET_LDAPSERVER"]
 		user = os.environ["KARTOTEKET_LDAPUSER"]
 		password = os.environ["KARTOTEKET_LDAPPASSWORD"]
 
