@@ -1161,7 +1161,8 @@ def debug_info(request):
 	Denne funksjonen viser debug-informasjon ifm. feilsøking av bibliotek og moduler
 	Tilgjengelig for personer som kan se logger
 	"""
-	required_permissions = ['auth.view_logentry']
+	# 2026-10-21: Fix permission auth.view_logentry → admin.view_logentry (LogEntry lives in admin).
+	required_permissions = ['admin.view_logentry']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
@@ -9237,8 +9238,9 @@ def virksomhet_enheter(request, pk):
 
 
 def api_overview(request):
+	# 2026-10-21: Fix permission auth.view_system → systemoversikt.view_system (auth has no System model).
 	#Vise informasjon brukere som har leverandørtilgang
-	required_permissions = ['auth.view_system']
+	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
