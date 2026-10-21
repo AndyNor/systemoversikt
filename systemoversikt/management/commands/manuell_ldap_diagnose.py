@@ -1,44 +1,74 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-21: Probe TLS modes, sample multiple binds for DC mix, print summary only.
 # 2026-10-21: Diagnostic LDAP connect – verbose env, options, bind, and rootDSE identity.
 from django.core.management.base import BaseCommand
 import ldap
 import os
 import socket
+from collections import Counter
 from urllib.parse import urlparse
 
 
-# Friendly names for common python-ldap option values we set/read.
-_TLS_REQUIRE_CERT_NAMES = {
-	ldap.OPT_X_TLS_NEVER: 'OPT_X_TLS_NEVER',
-	ldap.OPT_X_TLS_HARD: 'OPT_X_TLS_HARD',
-	ldap.OPT_X_TLS_DEMAND: 'OPT_X_TLS_DEMAND',
-	ldap.OPT_X_TLS_ALLOW: 'OPT_X_TLS_ALLOW',
-	ldap.OPT_X_TLS_TRY: 'OPT_X_TLS_TRY',
-}
+# Strictest first – used both for probing and for picking the sample mode.
+_TLS_MODES = [
+	('OPT_X_TLS_HARD', ldap.OPT_X_TLS_HARD),
+	('OPT_X_TLS_DEMAND', ldap.OPT_X_TLS_DEMAND),
+	('OPT_X_TLS_TRY', ldap.OPT_X_TLS_TRY),
+	('OPT_X_TLS_ALLOW', ldap.OPT_X_TLS_ALLOW),
+	('OPT_X_TLS_NEVER', ldap.OPT_X_TLS_NEVER),
+]
+
+
+def _decode_attr(attrs, name):
+	vals = attrs.get(name) or []
+	out = []
+	for v in vals:
+		if isinstance(v, bytes):
+			try:
+				out.append(v.decode('utf-8'))
+			except UnicodeDecodeError:
+				out.append(repr(v))
+		else:
+			out.append(str(v))
+	return ', '.join(out) if out else None
+
+
+def _short_ldap_error(exc):
+	text = str(exc).replace('\n', ' ').strip()
+	if len(text) > 160:
+		text = text[:157] + '...'
+	return text
 
 
 class Command(BaseCommand):
-	help = 'Establish an LDAP connection to AD and print verbose connection details (no password).'
+	help = (
+		'Probe LDAP/AD TLS modes and sample multiple connections to see which DCs '
+		'answer behind the VIP. Prints a summary only (no password).'
+	)
+
+	def add_arguments(self, parser):
+		parser.add_argument(
+			'--samples',
+			type=int,
+			default=20,
+			help='Number of reconnects when sampling DCs (default: 20).',
+		)
 
 	def handle(self, **options):
+		samples = max(1, options['samples'])
+
 		def section(title):
 			self.stdout.write('')
 			self.stdout.write('=== %s ===' % title)
 
 		def line(label, value):
-			self.stdout.write('  %-32s %s' % (label + ':', value))
+			self.stdout.write('  %-28s %s' % (label + ':', value))
 
-		section('Environment')
 		server = os.environ.get('KARTOTEKET_LDAPSERVER')
 		user = os.environ.get('KARTOTEKET_LDAPUSER')
 		password = os.environ.get('KARTOTEKET_LDAPPASSWORD')
 		ldap_root = os.environ.get('KARTOTEKET_LDAPROOT')
-
-		line('KARTOTEKET_LDAPSERVER', server or '(missing)')
-		line('KARTOTEKET_LDAPUSER', user or '(missing)')
-		line('KARTOTEKET_LDAPPASSWORD', '(set, %d chars)' % len(password) if password else '(missing)')
-		line('KARTOTEKET_LDAPROOT', ldap_root or '(missing)')
 
 		missing = [n for n, v in [
 			('KARTOTEKET_LDAPSERVER', server),
@@ -48,128 +78,160 @@ class Command(BaseCommand):
 		if missing:
 			raise SystemExit('Missing required env: %s' % ', '.join(missing))
 
-		section('python-ldap')
-		line('ldap.__version__', ldap.__version__)
-		line('ldap.__file__', getattr(ldap, '__file__', '(unknown)'))
-
-		section('URL / DNS')
 		parsed = urlparse(server)
 		hostname = parsed.hostname or server
 		port = parsed.port
 		if port is None:
 			port = 636 if (parsed.scheme or '').lower() == 'ldaps' else 389
-		line('scheme', parsed.scheme or '(none – bare host?)')
-		line('hostname', hostname)
-		line('port', port)
 		try:
 			addrs = sorted({ai[4][0] for ai in socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)})
-			line('resolved addresses', ', '.join(addrs) if addrs else '(none)')
+			resolved = ', '.join(addrs) if addrs else '(none)'
 		except socket.gaierror as e:
-			line('resolved addresses', 'DNS failed: %s' % e)
+			resolved = 'DNS failed: %s' % e
 
-		section('Options set (same pattern as imports)')
-		line('OPT_X_TLS_REQUIRE_CERT', 'OPT_X_TLS_NEVER (%s)' % ldap.OPT_X_TLS_NEVER)
-		line('OPT_PROTOCOL_VERSION', '3')
-		line('OPT_REFERRALS', '0 (do not chase)')
-		line('bind method', 'simple_bind_s (simple bind)')
+		section('Target')
+		line('server', server)
+		line('VIP / DNS', '%s -> %s' % (hostname, resolved))
+		line('user', user)
+		line('password', '(set, %d chars)' % len(password))
+		line('LDAP root', ldap_root or '(not set)')
+		line('python-ldap', ldap.__version__)
+		line('bind', 'simple_bind_s')
+		line('referrals', 'off (OPT_REFERRALS=0)')
 
-		ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-		ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
-
-		section('Connect + bind')
-		ldap_client = None
-		try:
-			line('initialize()', server)
-			ldap_client = ldap.initialize(server)
-			ldap_client.set_option(ldap.OPT_REFERRALS, 0)
-
-			# Reflect options back after set (where readable).
+		def try_connect(tls_mode_value, fetch_identity=False):
+			"""Bind with a given TLS require-cert mode. Returns (ok, detail_or_error)."""
+			ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, tls_mode_value)
+			# Force a new TLS context so the require-cert change takes effect.
 			try:
-				req = ldap_client.get_option(ldap.OPT_X_TLS_REQUIRE_CERT)
-				line('get OPT_X_TLS_REQUIRE_CERT', '%s (%s)' % (
-					_TLS_REQUIRE_CERT_NAMES.get(req, 'unknown'), req))
-			except ldap.LDAPError as e:
-				line('get OPT_X_TLS_REQUIRE_CERT', 'unavailable: %s' % e)
+				ldap.set_option(ldap.OPT_X_TLS_NEWCTX, 0)
+			except ldap.LDAPError:
+				pass
+			ldap.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+
+			client = None
 			try:
-				line('get OPT_PROTOCOL_VERSION', ldap_client.get_option(ldap.OPT_PROTOCOL_VERSION))
-			except ldap.LDAPError as e:
-				line('get OPT_PROTOCOL_VERSION', 'unavailable: %s' % e)
-			try:
-				line('get OPT_REFERRALS', ldap_client.get_option(ldap.OPT_REFERRALS))
-			except ldap.LDAPError as e:
-				line('get OPT_REFERRALS', 'unavailable: %s' % e)
+				client = ldap.initialize(server)
+				client.set_option(ldap.OPT_REFERRALS, 0)
+				client.simple_bind_s(user, password)
 
-			line('simple_bind_s()', user)
-			ldap_client.simple_bind_s(user, password)
-			line('bind', 'OK')
-
-			section('rootDSE (who answered – useful behind VIP/BigIP)')
-			# Empty DN + BASE scope = rootDSE
-			result = ldap_client.search_s(
-				'',
-				ldap.SCOPE_BASE,
-				'(objectClass=*)',
-				[
-					'dnsHostName',
-					'serverName',
-					'defaultNamingContext',
-					'rootDomainNamingContext',
-					'ldapServiceName',
-					'supportedLDAPVersion',
-					'supportedSASLMechanisms',
-					'highestCommittedUSN',
-					'isGlobalCatalogReady',
-					'forestFunctionality',
-					'domainFunctionality',
-					'domainControllerFunctionality',
-				],
-			)
-			for dn, attrs in result:
-				line('rootDSE DN', repr(dn))
-				for key in sorted(attrs.keys()):
-					vals = attrs[key]
-					decoded = []
-					for v in vals:
-						if isinstance(v, bytes):
-							try:
-								decoded.append(v.decode('utf-8'))
-							except UnicodeDecodeError:
-								decoded.append(repr(v))
-						else:
-							decoded.append(str(v))
-					line(key, ', '.join(decoded))
-
-			if ldap_root:
-				section('Base DN check (KARTOTEKET_LDAPROOT)')
-				try:
-					base_result = ldap_client.search_s(
-						ldap_root,
+				identity = {}
+				if fetch_identity:
+					result = client.search_s(
+						'',
 						ldap.SCOPE_BASE,
 						'(objectClass=*)',
-						['distinguishedName', 'objectClass'],
+						[
+							'dnsHostName',
+							'serverName',
+							'defaultNamingContext',
+							'supportedSASLMechanisms',
+							'isGlobalCatalogReady',
+						],
 					)
-					for dn, attrs in base_result:
-						line('base search DN', dn)
-						ocs = attrs.get('objectClass', [])
-						line('objectClass', ', '.join(
-							v.decode('utf-8') if isinstance(v, bytes) else str(v) for v in ocs
-						))
-					line('base DN', 'reachable')
-				except ldap.LDAPError as e:
-					line('base DN', 'failed: %s' % e)
+					attrs = result[0][1] if result else {}
+					identity = {
+						'dnsHostName': _decode_attr(attrs, 'dnsHostName'),
+						'serverName': _decode_attr(attrs, 'serverName'),
+						'defaultNamingContext': _decode_attr(attrs, 'defaultNamingContext'),
+						'supportedSASLMechanisms': _decode_attr(attrs, 'supportedSASLMechanisms'),
+						'isGlobalCatalogReady': _decode_attr(attrs, 'isGlobalCatalogReady'),
+					}
+					if ldap_root:
+						try:
+							client.search_s(
+								ldap_root,
+								ldap.SCOPE_BASE,
+								'(objectClass=*)',
+								['distinguishedName'],
+							)
+							identity['base_dn'] = 'reachable'
+						except ldap.LDAPError as e:
+							identity['base_dn'] = 'failed: %s' % _short_ldap_error(e)
 
-		except ldap.LDAPError as e:
-			line('error', e)
+				return True, identity
+			except ldap.LDAPError as e:
+				return False, _short_ldap_error(e)
+			finally:
+				if client is not None:
+					try:
+						client.unbind_s()
+					except ldap.LDAPError:
+						pass
+
+		section('TLS mode probe (strictest first)')
+		working_modes = []
+		first_identity = None
+		for name, value in _TLS_MODES:
+			ok, detail = try_connect(value, fetch_identity=False)
+			if ok:
+				working_modes.append((name, value))
+				line(name, 'OK')
+			else:
+				line(name, 'FAIL – %s' % detail)
+
+		if not working_modes:
+			self.stdout.write('')
+			self.stdout.write(self.style.ERROR('No TLS mode succeeded. Stopping.'))
 			raise SystemExit(1)
-		finally:
-			if ldap_client is not None:
-				try:
-					ldap_client.unbind_s()
-					section('Cleanup')
-					line('unbind_s()', 'OK')
-				except ldap.LDAPError as e:
-					section('Cleanup')
-					line('unbind_s()', 'failed: %s' % e)
+
+		# Prefer the strictest mode that worked.
+		best_name, best_value = working_modes[0]
+		line('chosen for sampling', best_name)
+		if best_name == 'OPT_X_TLS_NEVER':
+			self.stdout.write(self.style.WARNING(
+				'  Only OPT_X_TLS_NEVER works – cert verification is disabled (current import behaviour).'
+			))
+		elif best_name in ('OPT_X_TLS_HARD', 'OPT_X_TLS_DEMAND'):
+			self.stdout.write(self.style.SUCCESS(
+				'  Strict cert verification works – imports could move off OPT_X_TLS_NEVER.'
+			))
+
+		# One richer identity snapshot with the chosen mode.
+		ok, first_identity = try_connect(best_value, fetch_identity=True)
+		if ok and first_identity:
+			section('Identity (one sample, %s)' % best_name)
+			line('dnsHostName', first_identity.get('dnsHostName') or '(n/a)')
+			line('serverName', first_identity.get('serverName') or '(n/a)')
+			line('naming context', first_identity.get('defaultNamingContext') or '(n/a)')
+			line('SASL mechanisms', first_identity.get('supportedSASLMechanisms') or '(n/a)')
+			line('GC ready', first_identity.get('isGlobalCatalogReady') or '(n/a)')
+			if 'base_dn' in first_identity:
+				line('LDAP root', first_identity['base_dn'])
+
+		section('DC sampling (%d reconnects, %s)' % (samples, best_name))
+		dc_counts = Counter()
+		failures = 0
+		for _ in range(samples):
+			ok, detail = try_connect(best_value, fetch_identity=True)
+			if not ok:
+				failures += 1
+				continue
+			dc = (detail or {}).get('dnsHostName') or '(unknown)'
+			dc_counts[dc] += 1
+
+		unique = len(dc_counts)
+		line('success / fail', '%d / %d' % (samples - failures, failures))
+		line('distinct DCs', unique)
+		if dc_counts:
+			self.stdout.write('  DCs hit:')
+			for dc, count in dc_counts.most_common():
+				pct = 100.0 * count / max(1, samples - failures)
+				self.stdout.write('    %-48s %3d  (%.0f%%)' % (dc, count, pct))
+		else:
+			line('DCs hit', '(none)')
+
+		section('Summary')
+		tls_ok = ', '.join(n for n, _ in working_modes)
+		tls_fail = ', '.join(n for n, v in _TLS_MODES if (n, v) not in working_modes)
+		line('TLS OK', tls_ok or '(none)')
+		line('TLS FAIL', tls_fail or '(none)')
+		line('Recommended TLS', best_name)
+		line('VIP', resolved)
+		if unique <= 1:
+			line('load balance', 'same DC every time (or single pool member)')
+		else:
+			line('load balance', '%d different DCs across %d connects' % (unique, samples - failures))
 
 		self.stdout.write('')
 		self.stdout.write('Done.')
