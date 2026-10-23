@@ -338,6 +338,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 20480
 
 # DNS suffixes stripped for display and CMDB hostname matching (longest match wins).
+# Override via env CMDB_HOSTNAME_DOMAIN_SUFFIXES (comma-separated) without code changes.
+# First DNS label is always tried as well, so unknown domains still match short comp_name.
 CMDB_HOSTNAME_DOMAIN_SUFFIXES = [
 	".oslofelles.oslo.kommune.no",
 ]

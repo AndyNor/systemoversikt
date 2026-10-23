@@ -11,14 +11,16 @@
 
 {% block hovedinnhold %}
 
+	{# 2026-10-21: Clarify free-text / FQDN paste support for massesøk. #}
 	<form action="{% url 'maskin_sok' %}" method="POST" autocomplete="off">
 		{% csrf_token %}
 		<div class="form-group form-inline">
 			<textarea rows="3" cols="50" style="width: 500px; height: 250px;" name="search_term"
-			placeholder="Liste med server eller IP-adresse, en per linje" class="form-control form-control-sm">{{ query }}</textarea>
+			placeholder="Hostnavn, FQDN eller IP – én per linje, kommaseparert, eller lim inn fri tekst" class="form-control form-control-sm">{{ query }}</textarea>
 			<input style="margin-left: 10px;" type="submit" value="Slå opp" class="btn btn-primary btn-sm">
 		</div>
 	</form>
+	<p class="small text-muted">FQDN (f.eks. med domenesuffix) treffer kort hostnavn i CMDB. Vanlige ord i fri tekst ignoreres; treff og sannsynlige manglende hostnavn/IP vises under.</p>
 
 	<hr>
 

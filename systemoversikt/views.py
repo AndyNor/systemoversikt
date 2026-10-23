@@ -75,6 +75,7 @@ from systemoversikt.hostname_utils import (
 	azure_device_q_for_comp_name,
 	cmdb_pk_lookup_for_hostnames,
 	device_name_rows_for_hostnames,
+	lookup_cmdb_devices_from_paste,
 )
 from django.contrib.auth.decorators import login_required, user_passes_test, permission_required
 from django.views.decorators.cache import never_cache
@@ -12031,44 +12032,17 @@ def alle_adgrupper(request):
 
 
 def maskin_sok(request):
-	#Søke opp hostnavn
+	# Søke opp hostnavn / IP fra fri tekst (én per linje, CSV eller lim inn fra e-post/ticket).
 	required_permissions = ['systemoversikt.view_cmdbdevice']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
+	# 2026-10-21: Free-text token extract + FQDN→comp_name via hostname_utils (no hardcoded domain).
 	# 2026-06-21: Also match exact IP addresses (comp_ip_address and linked NetworkIPAddress).
-	hits = []
-	seen_hit_pks = set()
-	misses = []
 	query = request.POST.get('search_term', '').strip()
-	if query != "":
-		servers = query.split("\n")
-		for server in servers:
-			term = server.strip()
-			if term == "":
-				continue
-			matched = False
-			for m in CMDBdevice.objects.filter(comp_name__iexact=term):
-				if m.pk not in seen_hit_pks:
-					seen_hit_pks.add(m.pk)
-					hits.append(m)
-				matched = True
-			try:
-				ip_str = str(ipaddress.ip_address(term))
-			except ValueError:
-				ip_str = None
-			if ip_str is not None:
-				ip_matches = CMDBdevice.objects.filter(
-					Q(comp_ip_address__iexact=ip_str)
-					| Q(network_ip_address__ip_address=ip_str)
-				).distinct()
-				for m in ip_matches:
-					if m.pk not in seen_hit_pks:
-						seen_hit_pks.add(m.pk)
-						hits.append(m)
-					matched = True
-			if not matched:
-				misses.append(term)
+	hits, misses = ([], [])
+	if query:
+		hits, misses = lookup_cmdb_devices_from_paste(query)
 
 	return render(request, 'cmdb_maskin_sok.html', {
 		'request': request,
