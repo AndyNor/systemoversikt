@@ -1,3 +1,4 @@
+{# 2026-10-28: Access explanation for virksomhet vulnstats – who can see the list and how tilgang is given. #}
 {% extends "virksomhet_index.html" %}
 {% load humanize %}
 {% load static %}
@@ -15,6 +16,15 @@
 
 <a href="{% url 'vulnstats_offerings' %}" class="btn btn-sm btn-primary">Tilbake</a>
 <hr>
+
+<p>
+	Her ser du serversårbarheter knyttet til systemer denne virksomheten forvalter.
+	Listen er synlig for virksomhetsadministrator for <em>egen</em> virksomhet, og for sårbarhetsanalytiker (alle virksomheter).
+</p>
+<p>
+	Rollen <strong>sårbarhetsanalytiker</strong> tildeles i IDA.
+	Rollen <strong>virksomhetsadministrator</strong> kan også tildeles i IDA, eller gis automatisk ved innlogging hvis du er registrert som IKT-hovedkontakt, ISK eller PKO for virksomheten i Kartoteket.
+</p>
 
 {% include "includes/integrasjon_freshness_banner.html" with label="Sårbarheter ble sist synkronisert" %}
 
