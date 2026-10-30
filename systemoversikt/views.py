@@ -7365,6 +7365,7 @@ def alle_systemer_forvaltere(request):
 		)
 
 	# 2026-10-30: Prefetch systemtyper – used in forvalteroversikt Grensesnitt column.
+	# 2026-10-30: Prefetch virksomhet IKT-hovedkontakt – fallback when eier/forvalter contacts are empty.
 	systemer = (
 		System.objects.all()
 		.select_related("systemeier", "systemforvalter", "driftsmodell_foreignkey")
@@ -7372,6 +7373,8 @@ def alle_systemer_forvaltere(request):
 			"systemtyper",
 			Prefetch("systemeier_kontaktpersoner_referanse", queryset=_ansvarlig_prefetch_qs()),
 			Prefetch("systemforvalter_kontaktpersoner_referanse", queryset=_ansvarlig_prefetch_qs()),
+			Prefetch("systemeier__ikt_kontakt", queryset=_ansvarlig_prefetch_qs()),
+			Prefetch("systemforvalter__ikt_kontakt", queryset=_ansvarlig_prefetch_qs()),
 		)
 	)
 
@@ -7410,19 +7413,38 @@ def alle_systemer_forvaltere(request):
 
 	systemer = list(systemer)
 	leder_cache = {}
+
+	def _attach_utledet_leder(ansvarlig):
+		utledet = None
+		user = getattr(ansvarlig, 'brukernavn', None)
+		try:
+			disabled = bool(user and user.profile.accountdisable)
+		except Exception:
+			disabled = False
+		if disabled:
+			utledet = _nearest_active_leder_for(user, leder_cache)
+		ansvarlig.utledet_leder = utledet
+
 	for system in systemer:
-		for ansvarlig in list(system.systemeier_kontaktpersoner_referanse.all()) + list(
-			system.systemforvalter_kontaktpersoner_referanse.all()
-		):
-			utledet = None
-			user = getattr(ansvarlig, 'brukernavn', None)
-			try:
-				disabled = bool(user and user.profile.accountdisable)
-			except Exception:
-				disabled = False
-			if disabled:
-				utledet = _nearest_active_leder_for(user, leder_cache)
-			ansvarlig.utledet_leder = utledet
+		eiere = list(system.systemeier_kontaktpersoner_referanse.all())
+		forvaltere = list(system.systemforvalter_kontaktpersoner_referanse.all())
+		for ansvarlig in eiere + forvaltere:
+			_attach_utledet_leder(ansvarlig)
+
+		# Empty contact field → show virksomhetens IKT-hovedkontakt as derived fallback.
+		fallback_eier_ikt = []
+		if not eiere and system.systemeier_id:
+			fallback_eier_ikt = list(system.systemeier.ikt_kontakt.all())
+			for ansvarlig in fallback_eier_ikt:
+				_attach_utledet_leder(ansvarlig)
+		system.fallback_eier_ikt = fallback_eier_ikt
+
+		fallback_forvalter_ikt = []
+		if not forvaltere and system.systemforvalter_id:
+			fallback_forvalter_ikt = list(system.systemforvalter.ikt_kontakt.all())
+			for ansvarlig in fallback_forvalter_ikt:
+				_attach_utledet_leder(ansvarlig)
+		system.fallback_forvalter_ikt = fallback_forvalter_ikt
 
 	return render(request, 'system_forvalteroversikt.html', {
 		'request': request,

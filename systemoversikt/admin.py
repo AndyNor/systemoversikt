@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-10-30: System admin – Systemklassifisering and Grensesnitt directly under systemnavn/alias.
 # 2026-09-25: Sarbarhetssak admin – free-text oppgavestatus is searchable.
 # 2026-09-25: Sarbarhetssak admin – vulnerability cases edited primarily in the sikkerhet UI.
 # 2026-09-21: System admin – service_offerings back under basisdriftleverandor in Initiell registrering.
@@ -649,6 +650,8 @@ class SystemAdmin(SimpleHistoryAdmin):
 			'fields': (
 				# 2026-09-21: Alias beside systemnavn; programvarer on its own row; forvalter personer/e-post regrouped.
 				('systemnavn', 'alias'),
+				# 2026-10-30: Systemklassifisering + Grensesnitt directly under systemnavn/alias for quicker initial fill-in.
+				('systemeierskapsmodell', 'systemtyper'),
 				'programvarer',
 				('systemforvalter', 'systemforvalter_kontaktpersoner_referanse'),
 				('systemforvalter_avdeling_referanse', 'forvaltning_epost'),
@@ -661,8 +664,7 @@ class SystemAdmin(SimpleHistoryAdmin):
 				'basisdriftleverandor',
 				# 2026-09-21: service_offerings next to basisdriftleverandor (CMDB link for systemprioritering).
 				'service_offerings',
-				# 2026-09-21: Systemklassifisering on its own row with Grensesnitt; URL alone; dates/citrix/EA moved.
-				('systemeierskapsmodell', 'systemtyper'),
+				# 2026-09-21: URL alone; dates/citrix/EA moved.
 				'systemurl',
 				('systemeier', 'systemeier_kontaktpersoner_referanse'),
 			),

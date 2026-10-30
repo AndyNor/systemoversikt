@@ -1,6 +1,7 @@
 {% extends "system_index.html" %}
 {% load static %}
 {# Change log: #}
+{# 2026-10-30: Empty eier/forvalter contacts fall back to virksomhet IKT-hovedkontakt (derived style). #}
 {# 2026-10-30: Show Systemklassifisering and Grensesnitt columns in the results table. #}
 {# 2026-10-30: Systemklassifisering + Grensesnitt filters; derived active leder for disabled contacts. #}
 {# 2026-10-30: Explicit empty livsløp selection shows 0 rows; default includes status 8 (Ukjent). #}
@@ -121,7 +122,26 @@
 					(utledet)
 				</li>
 				{% endif %}
-			{% endfor%}
+			{% empty %}
+				{% for ansvarlig in s.fallback_eier_ikt %}
+				<li style="color: #8B0000;{% if ansvarlig.brukernavn.profile.accountdisable %} text-decoration: line-through;{% endif %}">
+					{{ ansvarlig }}
+					{% if ansvarlig.brukernavn.email %}
+						({{ ansvarlig.brukernavn.email }})
+					{% endif %}
+					(IKT-hovedkontakt)
+				</li>
+				{% if ansvarlig.utledet_leder %}
+				<li style="color: #8B0000;">
+					{{ ansvarlig.utledet_leder.profile.displayName|default:ansvarlig.utledet_leder.get_full_name|default:ansvarlig.utledet_leder.username }}
+					{% if ansvarlig.utledet_leder.email %}
+						({{ ansvarlig.utledet_leder.email }})
+					{% endif %}
+					(utledet)
+				</li>
+				{% endif %}
+				{% endfor %}
+			{% endfor %}
 		</td>
 
 		<td>
@@ -141,7 +161,26 @@
 					(utledet)
 				</li>
 				{% endif %}
-			{% endfor%}
+			{% empty %}
+				{% for ansvarlig in s.fallback_forvalter_ikt %}
+				<li style="color: #8B0000;{% if ansvarlig.brukernavn.profile.accountdisable %} text-decoration: line-through;{% endif %}">
+					{{ ansvarlig }}
+					{% if ansvarlig.brukernavn.email %}
+						({{ ansvarlig.brukernavn.email }})
+					{% endif %}
+					(IKT-hovedkontakt)
+				</li>
+				{% if ansvarlig.utledet_leder %}
+				<li style="color: #8B0000;">
+					{{ ansvarlig.utledet_leder.profile.displayName|default:ansvarlig.utledet_leder.get_full_name|default:ansvarlig.utledet_leder.username }}
+					{% if ansvarlig.utledet_leder.email %}
+						({{ ansvarlig.utledet_leder.email }})
+					{% endif %}
+					(utledet)
+				</li>
+				{% endif %}
+				{% endfor %}
+			{% endfor %}
 		</td>
 	</tr>
 	{% endfor %}
