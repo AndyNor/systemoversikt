@@ -7414,16 +7414,22 @@ def alle_systemer_forvaltere(request):
 	systemer = list(systemer)
 	leder_cache = {}
 
-	def _attach_utledet_leder(ansvarlig):
-		utledet = None
+	def _ansvarlig_is_disabled(ansvarlig):
 		user = getattr(ansvarlig, 'brukernavn', None)
 		try:
-			disabled = bool(user and user.profile.accountdisable)
+			return bool(user and user.profile.accountdisable)
 		except Exception:
-			disabled = False
-		if disabled:
-			utledet = _nearest_active_leder_for(user, leder_cache)
+			return False
+
+	def _attach_utledet_leder(ansvarlig):
+		utledet = None
+		if _ansvarlig_is_disabled(ansvarlig):
+			utledet = _nearest_active_leder_for(ansvarlig.brukernavn, leder_cache)
 		ansvarlig.utledet_leder = utledet
+
+	def _has_active_ansvarlig(ansvarlige):
+		# 2026-10-30: "Empty" means no active contacts – all disabled still counts as empty.
+		return any(not _ansvarlig_is_disabled(a) for a in ansvarlige)
 
 	for system in systemer:
 		eiere = list(system.systemeier_kontaktpersoner_referanse.all())
@@ -7431,16 +7437,16 @@ def alle_systemer_forvaltere(request):
 		for ansvarlig in eiere + forvaltere:
 			_attach_utledet_leder(ansvarlig)
 
-		# Empty contact field → show virksomhetens IKT-hovedkontakt as derived fallback.
+		# No active contacts → show virksomhetens IKT-hovedkontakt as derived fallback.
 		fallback_eier_ikt = []
-		if not eiere and system.systemeier_id:
+		if not _has_active_ansvarlig(eiere) and system.systemeier_id:
 			fallback_eier_ikt = list(system.systemeier.ikt_kontakt.all())
 			for ansvarlig in fallback_eier_ikt:
 				_attach_utledet_leder(ansvarlig)
 		system.fallback_eier_ikt = fallback_eier_ikt
 
 		fallback_forvalter_ikt = []
-		if not forvaltere and system.systemforvalter_id:
+		if not _has_active_ansvarlig(forvaltere) and system.systemforvalter_id:
 			fallback_forvalter_ikt = list(system.systemforvalter.ikt_kontakt.all())
 			for ansvarlig in fallback_forvalter_ikt:
 				_attach_utledet_leder(ansvarlig)

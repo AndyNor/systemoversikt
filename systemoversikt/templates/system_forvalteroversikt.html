@@ -1,6 +1,7 @@
 {% extends "system_index.html" %}
 {% load static %}
 {# Change log: #}
+{# 2026-10-30: IKT-fallback when no active contacts (disabled-only counts as empty); intro on derivation. #}
 {# 2026-10-30: Empty eier/forvalter contacts fall back to virksomhet IKT-hovedkontakt (derived style). #}
 {# 2026-10-30: Show Systemklassifisering and Grensesnitt columns in the results table. #}
 {# 2026-10-30: Systemklassifisering + Grensesnitt filters; derived active leder for disabled contacts. #}
@@ -12,6 +13,31 @@
 {% endblock underoverskrift %}
 
 {% block main_content %}
+
+	<div class="mb-3">
+		<p class="mb-2">
+			Oversikten viser registrerte systemeiere og forvaltere per system. Personer med deaktivert brukerkonto
+			vises overstreket.
+		</p>
+		<p class="mb-2">
+			<span style="color: #8B0000;">Utledning av personer</span> (mørkerød tekst):
+		</p>
+		<ul class="mb-2">
+			<li>
+				<strong>(utledet)</strong> – når en ansvarlig er deaktivert, vises nærmeste leder med aktiv konto
+				(via lederkjeden i HR/AD: <em>min leder</em>, ellers enhetens leder).
+			</li>
+			<li>
+				<strong>(IKT-hovedkontakt)</strong> – når det ikke finnes noen <em>aktive</em> systemeiere eller
+				forvaltere (feltet er tomt, eller alle oppførte er deaktivert), fylles feltet med IKT-hovedkontakt(er)
+				fra henholdsvis systemeier- eller forvaltervirksomheten.
+			</li>
+		</ul>
+		<p class="text-muted small mb-0">
+			Utledede personer er forslag til kontakt når den registrerte ansvarlige ikke lenger er aktiv;
+			de erstatter ikke den formelle rollefordelingen i systemet.
+		</p>
+	</div>
 
 	<form method="get" id="forvalter-filter-form" class="mb-3 p-3 border rounded bg-light">
 		{# Marks an explicit filter submit so unchecking all livsløp can yield 0 rows (vs first visit / Nullstill). #}
@@ -122,8 +148,8 @@
 					(utledet)
 				</li>
 				{% endif %}
-			{% empty %}
-				{% for ansvarlig in s.fallback_eier_ikt %}
+			{% endfor %}
+			{% for ansvarlig in s.fallback_eier_ikt %}
 				<li style="color: #8B0000;{% if ansvarlig.brukernavn.profile.accountdisable %} text-decoration: line-through;{% endif %}">
 					{{ ansvarlig }}
 					{% if ansvarlig.brukernavn.email %}
@@ -140,7 +166,6 @@
 					(utledet)
 				</li>
 				{% endif %}
-				{% endfor %}
 			{% endfor %}
 		</td>
 
@@ -161,8 +186,8 @@
 					(utledet)
 				</li>
 				{% endif %}
-			{% empty %}
-				{% for ansvarlig in s.fallback_forvalter_ikt %}
+			{% endfor %}
+			{% for ansvarlig in s.fallback_forvalter_ikt %}
 				<li style="color: #8B0000;{% if ansvarlig.brukernavn.profile.accountdisable %} text-decoration: line-through;{% endif %}">
 					{{ ansvarlig }}
 					{% if ansvarlig.brukernavn.email %}
@@ -179,7 +204,6 @@
 					(utledet)
 				</li>
 				{% endif %}
-				{% endfor %}
 			{% endfor %}
 		</td>
 	</tr>
