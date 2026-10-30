@@ -7250,9 +7250,29 @@ def systemtype_detaljer(request, pk=None):
 
 
 def alle_systemer_forvaltere(request):
+	# 2026-10-30: Livsløp multi-checkbox filter (same pattern as risiko tiltak); default 1–5.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
+
+	# Default: in-lifecycle systems (same cut as systemer overview), not ute av bruk / avviklet / ukjent.
+	default_livslop = (1, 2, 3, 4, 5)
+	# Param "0" maps to null livslop_status ("Ikke vurdert"); 1–8 are explicit values.
+	valid_livslop = {0, 1, 2, 3, 4, 5, 6, 7, 8}
+	raw_livslop = []
+	for part in request.GET.getlist('livslop'):
+		for token in str(part).split(','):
+			token = token.strip()
+			if token.isdigit():
+				raw_livslop.append(int(token))
+	seen = set()
+	filter_livslop = []
+	for value in raw_livslop:
+		if value in valid_livslop and value not in seen:
+			seen.add(value)
+			filter_livslop.append(value)
+	if not filter_livslop:
+		filter_livslop = list(default_livslop)
 
 	# 2026-06-21: Prefetch contact persons – avoids N+1 on forvalteroversikt table.
 	def _ansvarlig_prefetch_qs():
@@ -7269,10 +7289,25 @@ def alle_systemer_forvaltere(request):
 		)
 	)
 
+	livslop_q = Q()
+	int_statuses = [v for v in filter_livslop if v != 0]
+	if int_statuses:
+		livslop_q |= Q(livslop_status__in=int_statuses)
+	if 0 in filter_livslop:
+		livslop_q |= Q(livslop_status__isnull=True)
+	systemer = systemer.filter(livslop_q)
+
+	livslop_choices = []
+	for value, label in LIVSLOEP_VALG:
+		param_value = 0 if value is None else value
+		livslop_choices.append((param_value, label))
+
 	return render(request, 'system_forvalteroversikt.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
+		'livslop_choices': livslop_choices,
+		'filter_livslop': filter_livslop,
 	})
 
 

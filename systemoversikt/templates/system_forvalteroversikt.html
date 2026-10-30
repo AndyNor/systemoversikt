@@ -1,6 +1,7 @@
 {% extends "system_index.html" %}
 {% load static %}
-
+{# Change log: #}
+{# 2026-10-30: Livsløp checkbox filter with auto-apply (same pattern as risiko tiltak). #}
 
 {% block underoverskrift %}
 	Detaljer om systemers eier og forvalter
@@ -8,10 +9,34 @@
 
 {% block main_content %}
 
+	<form method="get" id="forvalter-livslop-filter-form" class="mb-3 p-3 border rounded bg-light">
+		<div class="form-group mb-2">
+			<span class="small mb-1 d-block">Livsløpstatus</span>
+			<div class="d-flex flex-wrap">
+				{% for value, label in livslop_choices %}
+				<div class="form-check form-check-inline mr-2 mb-1">
+					<input class="form-check-input" type="checkbox" name="livslop" value="{{ value }}"
+						id="forvalter-livslop-{{ value }}"
+						{% if value in filter_livslop %}checked{% endif %}>
+					<label class="form-check-label small" for="forvalter-livslop-{{ value }}">{{ label }}</label>
+				</div>
+				{% endfor %}
+			</div>
+			<p class="text-muted small mb-0 mt-1">Standard: status 1–5 (aktive i livsløpet). Huk av for å endre utvalget.</p>
+		</div>
+		<div>
+			<a class="btn btn-outline-secondary btn-sm" href="{% url 'alle_systemer_forvaltere' %}">Nullstill</a>
+		</div>
+	</form>
+
+	<p class="text-muted small">{% if systemer %}Viser {{ systemer|length }} systemer.{% else %}Ingen systemer matcher filtrene.{% endif %}</p>
+
+	{% if systemer %}
 	<table class="table table-sm tablesorter excel">
 	<thead>
 	<tr>
 		<th>Systemnavn</th>
+		<th>Livsløpstatus</th>
 		<th>Driftsplattform</th>
 		<td>BS/BSS</td>
 		<th>Organisatorisk systemeier</th>
@@ -24,6 +49,7 @@
 	{% for s in systemer %}
 	<tr>
 		<td><a target="_blank" href="/admin/systemoversikt/system/{{s.pk}}/change/">{{ s.systemnavn }}</a></td>
+		<td>{{ s.get_livslop_status_display|default:"0 Ikke vurdert" }}</td>
 		<td>{{ s.driftsmodell_foreignkey|default:"Ukjent" }}</td>
 		<td>{{ s.bs_system_referanse|default:"Ikke koblet" }}</td>
 		<td>{{ s.systemeier|default:"Ukjent" }}</td>
@@ -54,6 +80,31 @@
 	{% endfor %}
 	</tbody>
 	</table>
-
+	{% endif %}
 
 {% endblock main_content %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+(function () {
+	var form = document.getElementById('forvalter-livslop-filter-form');
+	if (!form) {
+		return;
+	}
+	var applyTimer = null;
+	// Debounce so several livsløp checkboxes can be toggled before reload.
+	var APPLY_DEBOUNCE_MS = 450;
+
+	function scheduleApply() {
+		clearTimeout(applyTimer);
+		applyTimer = setTimeout(function () {
+			form.submit();
+		}, APPLY_DEBOUNCE_MS);
+	}
+
+	form.querySelectorAll('input[type="checkbox"]').forEach(function (el) {
+		el.addEventListener('change', scheduleApply);
+	});
+})();
+</script>
+{% endblock script_append %}
