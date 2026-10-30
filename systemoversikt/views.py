@@ -7289,7 +7289,7 @@ def _nearest_active_leder_for(user, cache, max_depth=8):
 
 
 def alle_systemer_forvaltere(request):
-	# 2026-10-30: Livsløp multi-checkbox filter (same pattern as risiko tiltak); default 1–5 + 8.
+	# 2026-10-30: Livsløp multi-checkbox filter (same pattern as risiko tiltak); default 0–5 + 8.
 	# 2026-10-30: Explicit empty selection (filter=1, no livslop) shows 0 rows; first visit uses default.
 	# 2026-10-30: Optional Systemklassifisering + Grensesnitt filters; empty = no restriction.
 	# 2026-10-30: For disabled contacts, show nearest active leder (derived).
@@ -7298,7 +7298,8 @@ def alle_systemer_forvaltere(request):
 		return render_access_denied(request, required_permissions)
 
 	# Default: potentially active systems; exclude ute av bruk (6) and fullstendig avviklet (7).
-	default_livslop = (1, 2, 3, 4, 5, 8)
+	# 0 = Ikke vurdert (null livslop_status).
+	default_livslop = (0, 1, 2, 3, 4, 5, 8)
 	# Param "0" maps to null livslop_status ("Ikke vurdert"); 1–8 are explicit values.
 	valid_livslop = {0, 1, 2, 3, 4, 5, 6, 7, 8}
 	raw_livslop = []
