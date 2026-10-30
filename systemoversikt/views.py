@@ -7364,10 +7364,12 @@ def alle_systemer_forvaltere(request):
 			"brukernavn__profile__org_unit__leder__profile__virksomhet",
 		)
 
+	# 2026-10-30: Prefetch systemtyper – used in forvalteroversikt Grensesnitt column.
 	systemer = (
 		System.objects.all()
 		.select_related("systemeier", "systemforvalter", "driftsmodell_foreignkey")
 		.prefetch_related(
+			"systemtyper",
 			Prefetch("systemeier_kontaktpersoner_referanse", queryset=_ansvarlig_prefetch_qs()),
 			Prefetch("systemforvalter_kontaktpersoner_referanse", queryset=_ansvarlig_prefetch_qs()),
 		)

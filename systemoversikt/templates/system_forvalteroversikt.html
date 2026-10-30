@@ -1,6 +1,7 @@
 {% extends "system_index.html" %}
 {% load static %}
 {# Change log: #}
+{# 2026-10-30: Show Systemklassifisering and Grensesnitt columns in the results table. #}
 {# 2026-10-30: Systemklassifisering + Grensesnitt filters; derived active leder for disabled contacts. #}
 {# 2026-10-30: Explicit empty livsløp selection shows 0 rows; default includes status 8 (Ukjent). #}
 {# 2026-10-30: Livsløp checkbox filter with auto-apply (same pattern as risiko tiltak). #}
@@ -81,6 +82,8 @@
 	<tr>
 		<th>Systemnavn</th>
 		<th>Livsløpstatus</th>
+		<th>Systemklassifisering</th>
+		<th>Grensesnitt</th>
 		<th>Driftsplattform</th>
 		<td>BS/BSS</td>
 		<th>Organisatorisk systemeier</th>
@@ -94,6 +97,8 @@
 	<tr>
 		<td><a target="_blank" href="/admin/systemoversikt/system/{{s.pk}}/change/">{{ s.systemnavn }}</a></td>
 		<td>{{ s.get_livslop_status_display|default:"0 Ikke vurdert" }}</td>
+		<td>{{ s.get_systemeierskapsmodell_display|default:"Mangler" }}</td>
+		<td>{% for kat in s.systemtyper.all %}{{ kat }}{% if not forloop.last %}<br>{% endif %}{% empty %}Mangler{% endfor %}</td>
 		<td>{{ s.driftsmodell_foreignkey|default:"Ukjent" }}</td>
 		<td>{{ s.bs_system_referanse|default:"Ikke koblet" }}</td>
 		<td>{{ s.systemeier|default:"Ukjent" }}</td>
