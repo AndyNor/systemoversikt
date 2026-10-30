@@ -1,6 +1,8 @@
 {% extends "system_index.html" %}
 {% load static %}
 {# Change log: #}
+{# 2026-10-30: Systemklassifisering + Grensesnitt filters; derived active leder for disabled contacts. #}
+{# 2026-10-30: Explicit empty livsløp selection shows 0 rows; default includes status 8 (Ukjent). #}
 {# 2026-10-30: Livsløp checkbox filter with auto-apply (same pattern as risiko tiltak). #}
 
 {% block underoverskrift %}
@@ -9,7 +11,9 @@
 
 {% block main_content %}
 
-	<form method="get" id="forvalter-livslop-filter-form" class="mb-3 p-3 border rounded bg-light">
+	<form method="get" id="forvalter-filter-form" class="mb-3 p-3 border rounded bg-light">
+		{# Marks an explicit filter submit so unchecking all livsløp can yield 0 rows (vs first visit / Nullstill). #}
+		<input type="hidden" name="filter" value="1">
 		<div class="form-group mb-2">
 			<span class="small mb-1 d-block">Livsløpstatus</span>
 			<div class="d-flex flex-wrap">
@@ -22,7 +26,47 @@
 				</div>
 				{% endfor %}
 			</div>
-			<p class="text-muted small mb-0 mt-1">Standard: status 1–5 (aktive i livsløpet). Huk av for å endre utvalget.</p>
+			<p class="text-muted small mb-0 mt-1">Standard: status 1–5 og 8 (Ukjent). Ingen huket av gir 0 treff.</p>
+		</div>
+		<div class="form-group mb-2">
+			<span class="small mb-1 d-block">Systemklassifisering</span>
+			<div class="d-flex flex-wrap">
+				{% for value, label in klassifisering_choices %}
+				<div class="form-check form-check-inline mr-2 mb-1">
+					<input class="form-check-input" type="checkbox" name="klassifisering" value="{{ value }}"
+						id="forvalter-klass-{{ value }}"
+						{% if value in filter_klassifisering %}checked{% endif %}>
+					<label class="form-check-label small" for="forvalter-klass-{{ value }}">{{ label }}</label>
+				</div>
+				{% endfor %}
+				<div class="form-check form-check-inline mr-2 mb-1">
+					<input class="form-check-input" type="checkbox" name="klassifisering" value="__NONE__"
+						id="forvalter-klass-none"
+						{% if include_klassifisering_mangler %}checked{% endif %}>
+					<label class="form-check-label small" for="forvalter-klass-none">Mangler</label>
+				</div>
+			</div>
+			<p class="text-muted small mb-0 mt-1">Valgfritt. Ingen huket av = alle klassifiseringer.</p>
+		</div>
+		<div class="form-group mb-2">
+			<span class="small mb-1 d-block">Grensesnitt</span>
+			<div class="d-flex flex-wrap">
+				{% for type in grensesnitt_choices %}
+				<div class="form-check form-check-inline mr-2 mb-1">
+					<input class="form-check-input" type="checkbox" name="grensesnitt" value="{{ type.pk }}"
+						id="forvalter-grensesnitt-{{ type.pk }}"
+						{% if type.pk in filter_grensesnitt %}checked{% endif %}>
+					<label class="form-check-label small" for="forvalter-grensesnitt-{{ type.pk }}">{{ type.kategorinavn }}</label>
+				</div>
+				{% endfor %}
+				<div class="form-check form-check-inline mr-2 mb-1">
+					<input class="form-check-input" type="checkbox" name="grensesnitt" value="__NONE__"
+						id="forvalter-grensesnitt-none"
+						{% if include_grensesnitt_mangler %}checked{% endif %}>
+					<label class="form-check-label small" for="forvalter-grensesnitt-none">Mangler</label>
+				</div>
+			</div>
+			<p class="text-muted small mb-0 mt-1">Valgfritt. Ingen huket av = alle grensesnitt.</p>
 		</div>
 		<div>
 			<a class="btn btn-outline-secondary btn-sm" href="{% url 'alle_systemer_forvaltere' %}">Nullstill</a>
@@ -63,6 +107,15 @@
 					({{ ansvarlig.brukernavn.email }})
 				{% endif %}
 				</li>
+				{% if ansvarlig.utledet_leder %}
+				<li style="color: #8B0000;">
+					{{ ansvarlig.utledet_leder.profile.displayName|default:ansvarlig.utledet_leder.get_full_name|default:ansvarlig.utledet_leder.username }}
+					{% if ansvarlig.utledet_leder.email %}
+						({{ ansvarlig.utledet_leder.email }})
+					{% endif %}
+					(utledet)
+				</li>
+				{% endif %}
 			{% endfor%}
 		</td>
 
@@ -74,6 +127,15 @@
 					({{ ansvarlig.brukernavn.email }})
 				{% endif %}
 				</li>
+				{% if ansvarlig.utledet_leder %}
+				<li style="color: #8B0000;">
+					{{ ansvarlig.utledet_leder.profile.displayName|default:ansvarlig.utledet_leder.get_full_name|default:ansvarlig.utledet_leder.username }}
+					{% if ansvarlig.utledet_leder.email %}
+						({{ ansvarlig.utledet_leder.email }})
+					{% endif %}
+					(utledet)
+				</li>
+				{% endif %}
 			{% endfor%}
 		</td>
 	</tr>
@@ -87,12 +149,12 @@
 {% block script_append %}
 <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 (function () {
-	var form = document.getElementById('forvalter-livslop-filter-form');
+	var form = document.getElementById('forvalter-filter-form');
 	if (!form) {
 		return;
 	}
 	var applyTimer = null;
-	// Debounce so several livsløp checkboxes can be toggled before reload.
+	// Debounce so several checkboxes can be toggled before reload.
 	var APPLY_DEBOUNCE_MS = 450;
 
 	function scheduleApply() {

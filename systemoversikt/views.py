@@ -7249,14 +7249,56 @@ def systemtype_detaljer(request, pk=None):
 
 
 
+def _nearest_active_leder_for(user, cache, max_depth=8):
+	# 2026-10-30: Walk min_leder (fallback org_unit.leder) until an active account is found.
+	if not user:
+		return None
+	if user.pk in cache:
+		return cache[user.pk]
+
+	def _next_leder(candidate):
+		try:
+			profile = candidate.profile
+		except Exception:
+			return None
+		if profile.min_leder_id:
+			return profile.min_leder
+		org_unit = getattr(profile, 'org_unit', None)
+		if org_unit is not None and org_unit.leder_id:
+			return org_unit.leder
+		return None
+
+	start = _next_leder(user)
+	current = start
+	seen = set()
+	for _ in range(max_depth):
+		if not current or current.pk in seen:
+			cache[user.pk] = None
+			return None
+		seen.add(current.pk)
+		try:
+			if not current.profile.accountdisable:
+				cache[user.pk] = current
+				return current
+		except Exception:
+			cache[user.pk] = None
+			return None
+		current = _next_leder(current)
+	cache[user.pk] = None
+	return None
+
+
 def alle_systemer_forvaltere(request):
-	# 2026-10-30: Livsløp multi-checkbox filter (same pattern as risiko tiltak); default 1–5.
+	# 2026-10-30: Livsløp multi-checkbox filter (same pattern as risiko tiltak); default 1–5 + 8.
+	# 2026-10-30: Explicit empty selection (filter=1, no livslop) shows 0 rows; first visit uses default.
+	# 2026-10-30: Optional Systemklassifisering + Grensesnitt filters; empty = no restriction.
+	# 2026-10-30: For disabled contacts, show nearest active leder (derived).
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
-	# Default: in-lifecycle systems (same cut as systemer overview), not ute av bruk / avviklet / ukjent.
-	default_livslop = (1, 2, 3, 4, 5)
+	# Default: potentially active systems; exclude ute av bruk (6) and fullstendig avviklet (7).
+	default_livslop = (1, 2, 3, 4, 5, 8)
 	# Param "0" maps to null livslop_status ("Ikke vurdert"); 1–8 are explicit values.
 	valid_livslop = {0, 1, 2, 3, 4, 5, 6, 7, 8}
 	raw_livslop = []
@@ -7271,13 +7313,54 @@ def alle_systemer_forvaltere(request):
 		if value in valid_livslop and value not in seen:
 			seen.add(value)
 			filter_livslop.append(value)
-	if not filter_livslop:
+	# Hidden filter=1 marks an explicit form submit; without it (Nullstill / first visit) use default.
+	explicit_filter = (request.GET.get('filter') or '').strip() == '1'
+	if not filter_livslop and not explicit_filter:
 		filter_livslop = list(default_livslop)
+
+	valid_klassifisering = {code for code, _label in SYSTEMEIERSKAPSMODELL_VALG}
+	filter_klassifisering = []
+	include_klassifisering_mangler = False
+	seen_klass = set()
+	for part in request.GET.getlist('klassifisering'):
+		for token in str(part).split(','):
+			token = token.strip()
+			if not token or token in seen_klass:
+				continue
+			seen_klass.add(token)
+			if token == '__NONE__':
+				include_klassifisering_mangler = True
+			elif token in valid_klassifisering:
+				filter_klassifisering.append(token)
+
+	systemtype_by_pk = {st.pk: st for st in Systemtype.objects.all().order_by('kategorinavn')}
+	filter_grensesnitt = []
+	include_grensesnitt_mangler = False
+	seen_grensesnitt = set()
+	for part in request.GET.getlist('grensesnitt'):
+		for token in str(part).split(','):
+			token = token.strip()
+			if not token or token in seen_grensesnitt:
+				continue
+			seen_grensesnitt.add(token)
+			if token == '__NONE__':
+				include_grensesnitt_mangler = True
+			elif token.isdigit() and int(token) in systemtype_by_pk:
+				filter_grensesnitt.append(int(token))
 
 	# 2026-06-21: Prefetch contact persons – avoids N+1 on forvalteroversikt table.
 	def _ansvarlig_prefetch_qs():
 		return Ansvarlig.objects.select_related(
-			"brukernavn", "brukernavn__profile", "brukernavn__profile__virksomhet"
+			"brukernavn",
+			"brukernavn__profile",
+			"brukernavn__profile__virksomhet",
+			"brukernavn__profile__min_leder",
+			"brukernavn__profile__min_leder__profile",
+			"brukernavn__profile__min_leder__profile__virksomhet",
+			"brukernavn__profile__org_unit",
+			"brukernavn__profile__org_unit__leder",
+			"brukernavn__profile__org_unit__leder__profile",
+			"brukernavn__profile__org_unit__leder__profile__virksomhet",
 		)
 
 	systemer = (
@@ -7289,18 +7372,54 @@ def alle_systemer_forvaltere(request):
 		)
 	)
 
-	livslop_q = Q()
-	int_statuses = [v for v in filter_livslop if v != 0]
-	if int_statuses:
-		livslop_q |= Q(livslop_status__in=int_statuses)
-	if 0 in filter_livslop:
-		livslop_q |= Q(livslop_status__isnull=True)
-	systemer = systemer.filter(livslop_q)
+	if filter_livslop:
+		livslop_q = Q()
+		int_statuses = [v for v in filter_livslop if v != 0]
+		if int_statuses:
+			livslop_q |= Q(livslop_status__in=int_statuses)
+		if 0 in filter_livslop:
+			livslop_q |= Q(livslop_status__isnull=True)
+		systemer = systemer.filter(livslop_q)
+	else:
+		systemer = systemer.none()
+
+	# Optional filters: no selection means no restriction on that dimension.
+	if filter_klassifisering or include_klassifisering_mangler:
+		klass_q = Q()
+		if filter_klassifisering:
+			klass_q |= Q(systemeierskapsmodell__in=filter_klassifisering)
+		if include_klassifisering_mangler:
+			klass_q |= Q(systemeierskapsmodell__isnull=True) | Q(systemeierskapsmodell='')
+		systemer = systemer.filter(klass_q)
+
+	if filter_grensesnitt or include_grensesnitt_mangler:
+		grensesnitt_q = Q()
+		if filter_grensesnitt:
+			grensesnitt_q |= Q(systemtyper__in=filter_grensesnitt)
+		if include_grensesnitt_mangler:
+			grensesnitt_q |= Q(systemtyper__isnull=True)
+		systemer = systemer.filter(grensesnitt_q).distinct()
 
 	livslop_choices = []
 	for value, label in LIVSLOEP_VALG:
 		param_value = 0 if value is None else value
 		livslop_choices.append((param_value, label))
+
+	systemer = list(systemer)
+	leder_cache = {}
+	for system in systemer:
+		for ansvarlig in list(system.systemeier_kontaktpersoner_referanse.all()) + list(
+			system.systemforvalter_kontaktpersoner_referanse.all()
+		):
+			utledet = None
+			user = getattr(ansvarlig, 'brukernavn', None)
+			try:
+				disabled = bool(user and user.profile.accountdisable)
+			except Exception:
+				disabled = False
+			if disabled:
+				utledet = _nearest_active_leder_for(user, leder_cache)
+			ansvarlig.utledet_leder = utledet
 
 	return render(request, 'system_forvalteroversikt.html', {
 		'request': request,
@@ -7308,6 +7427,12 @@ def alle_systemer_forvaltere(request):
 		'systemer': systemer,
 		'livslop_choices': livslop_choices,
 		'filter_livslop': filter_livslop,
+		'klassifisering_choices': SYSTEMEIERSKAPSMODELL_VALG,
+		'filter_klassifisering': filter_klassifisering,
+		'include_klassifisering_mangler': include_klassifisering_mangler,
+		'grensesnitt_choices': list(systemtype_by_pk.values()),
+		'filter_grensesnitt': filter_grensesnitt,
+		'include_grensesnitt_mangler': include_grensesnitt_mangler,
 	})
 
 
