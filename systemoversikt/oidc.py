@@ -327,9 +327,11 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			#messages.success(self.request, 'Du er nå logget på. Trykk på navnet ditt for å få opp detaljer om dine tilganger.')
 
 			# 2026-11-01: One-shot welcome box after real OIDC callback (not SessionRefresh on other paths).
+			# 2026-11-01: Secret-expiry banner stays until user dismisses (True = compute on next request).
 			request_path = getattr(self.request, 'path', '') or ''
 			if 'oidc/callback' in request_path:
 				self.request.session['kartotek_login_welcome'] = True
+				self.request.session['kartotek_secret_expiry_alert'] = True
 
 			# 2026-08-23: Clear auto-OIDC flags after groups/profile are updated (successful login path).
 			from systemoversikt.auto_oidc import clear_auto_oidc_session_flags

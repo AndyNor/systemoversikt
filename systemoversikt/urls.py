@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-11-01: POST dismiss for forvalter Azure key expiry banner (session until X).
 # 2026-10-15: SystemBruk inline edit save/search routes on /systemer/bruk/<pk>/.
 # 2026-10-12: Tool listing systems with old electronic-archive fields (migration checklist).
 # 2026-10-12: Inline save for GodkjentElektroniskArkiv on systemdetaljer.
@@ -73,6 +74,7 @@ urlpatterns = [
 	re_path(r'^oidc-login-failed/$', views.oidc_login_failure_view, name='oidc_login_failure'),
 	re_path(r'^login/$', admin.site.login, name='login'),
 	re_path(r'^logout/$', admin.site.logout, name='logout'),
+	re_path(r'^dismiss-forvalter-secret-alert/$', views.dismiss_forvalter_secret_alert, name='dismiss_forvalter_secret_alert'),
 	re_path(r'^sok/$', views.search, name='search'),
 	re_path(r'^ikke_byttet_passord/$', views.ikke_byttet_passord_annet, name="ikke_byttet_passord_annet"),
 	re_path(r'^ikke_byttet_passord_normal_users/$', views.ikke_byttet_passord_normal_users, name="ikke_byttet_passord_normal_users"),

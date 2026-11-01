@@ -223,6 +223,48 @@
 		</div>
 		{% endif %}
 
+		{# 2026-11-01: Forvalter Azure key expiry – stays until dismiss POST clears session. #}
+		{% if forvalter_secret_alert %}
+		<div id="forvalter-secret-alert" class="alert alert-warning mb-2 py-2 px-3" style="position: relative; font-size: 0.82rem;">
+			{% csrf_token %}
+			<a href="#" aria-label="Lukk" id="forvalter-secret-alert-close"
+				style="position: absolute; top: 0.35rem; right: 0.55rem; line-height: 1; font-size: 1.25rem; color: #6c757d; text-decoration: none; z-index: 1;">×</a>
+			<div style="padding-right: 1.5rem;">
+				<strong>Utløpende Azure-nøkler på systemer du forvalter</strong>
+				<ul class="mb-0 mt-1 pl-3">
+					{% for row in forvalter_secret_alert %}
+					<li>
+						<a href="{% url 'systemdetaljer' pk=row.pk %}#anchor_azure_graph">{{ row.systemnavn }}</a>
+						har
+						{% if row.expired %}{{ row.expired }} {% if row.expired == 1 %}nøkkel{% else %}nøkler{% endif %} som er utgått{% endif %}
+						{% if row.expired and row.soon %}, og {% endif %}
+						{% if row.soon %}{{ row.soon }} som går ut nærmeste 30 dager{% endif %}
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+		<script nonce="{{request.csp_nonce}}">
+		(function () {
+			var closeBtn = document.getElementById('forvalter-secret-alert-close');
+			var box = document.getElementById('forvalter-secret-alert');
+			if (!closeBtn || !box) return;
+			closeBtn.addEventListener('click', function (e) {
+				e.preventDefault();
+				var tokenInput = box.querySelector('[name=csrfmiddlewaretoken]');
+				var headers = { 'X-CSRFToken': tokenInput ? tokenInput.value : '' };
+				fetch('{% url "dismiss_forvalter_secret_alert" %}', {
+					method: 'POST',
+					credentials: 'same-origin',
+					headers: headers
+				}).finally(function () {
+					box.remove();
+				});
+			});
+		})();
+		</script>
+		{% endif %}
+
 		{% if messages %}
 			{% for message in messages %}
 			<div id="div_message" class="alert alert-{{ message.tags }}" style="width: 230px; display: inline-block; margin-right: 25px;">

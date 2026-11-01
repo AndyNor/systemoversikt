@@ -541,6 +541,55 @@ def build_login_welcome_summary(user):
 	}
 
 
+def build_forvalter_secret_expiry_alert(user):
+	"""
+	2026-11-01: Post-login heads-up for system forvaltere with expired/soon Azure keys.
+	Returns list of {'system', 'expired', 'soon'} for systems the user forvalter that have relevant keys.
+	Uses a 30-day window (same as AzureApplicationKeys.expire_soon), not the rapport 14-day window.
+	"""
+	try:
+		ansvarlig = user.ansvarlig_brukernavn
+	except ObjectDoesNotExist:
+		return []
+	except AttributeError:
+		return []
+
+	now = timezone.now()
+	soon_cutoff = now + datetime.timedelta(days=30)
+	hide_prefixes = AZURE_KEYS_HIDE_LIST
+	alerts = []
+	systems = ansvarlig.system_forvalter_for.prefetch_related('enterprise_applicatons__keys')
+	for system in systems:
+		expired = 0
+		soon = 0
+		for app in system.enterprise_applicatons.all():
+			for key in app.keys.all():
+				if key.key_type == "AsymmetricX509Cert" and key.key_usage == "Verify":
+					continue
+				display_name = key.display_name or ""
+				if any(display_name.startswith(prefix) for prefix in hide_prefixes):
+					continue
+				end = key.end_date_time
+				if end is None:
+					continue
+				if end < now:
+					expired += 1
+				elif end <= soon_cutoff:
+					soon += 1
+		if expired or soon:
+			alerts.append({'system': system, 'expired': expired, 'soon': soon})
+	return alerts
+
+
+@login_required
+@require_POST
+def dismiss_forvalter_secret_alert(request):
+	# 2026-11-01: Clear session flag so Azure key expiry banner stays until user clicks X.
+	from systemoversikt.context_processors import KARTOTEK_SECRET_EXPIRY_ALERT_SESSION_KEY
+	request.session.pop(KARTOTEK_SECRET_EXPIRY_ALERT_SESSION_KEY, None)
+	return JsonResponse({'ok': True})
+
+
 def minside_access_rows(user, session_sources=None):
 	"""
 	2026-11-01: Build role/source/description rows for /admin/profil/.
