@@ -6945,27 +6945,47 @@ def systemer_vurderinger(request):
 
 
 def systemer_EOL(request):
-	#EOS-visning for felles IKT-plattform
+	# 2026-11-01: Virksomhet via ?virksomhet=pk (default DIG) – replaces hardcoded pk=163 which differed between test and prod.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
-	virksomhet = Virksomhet.objects.get(pk=163)
-	driftsmodeller = Driftsmodell.objects.filter(ansvarlig_virksomhet=virksomhet)
-	alle_systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet).filter(livslop_status__in=[5,6])
+	virksomheter = (
+		Virksomhet.objects
+		.filter(ordinar_virksomhet=True)
+		.filter(~Q(driftsmodell_ansvarlig_virksomhet=None))
+		.order_by('virksomhetsforkortelse')
+		.distinct()
+	)
+
+	virksomhet = None
+	virksomhet_pk = request.GET.get('virksomhet', '').strip()
+	if virksomhet_pk.isdigit():
+		virksomhet = virksomheter.filter(pk=int(virksomhet_pk)).first()
+	if virksomhet is None:
+		virksomhet = virksomheter.filter(virksomhetsforkortelse='DIG').first()
+	if virksomhet is None:
+		virksomhet = virksomheter.first()
 
 	systemer = []
 	infrastruktur = []
-
-	for s in alle_systemer:
-		if s.er_infrastruktur() == True:
-			infrastruktur.append(s)
-		else:
-			systemer.append(s)
+	if virksomhet is not None:
+		alle_systemer = (
+			System.objects
+			.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet)
+			.filter(livslop_status__in=[5, 6])
+		)
+		for s in alle_systemer:
+			if s.er_infrastruktur():
+				infrastruktur.append(s)
+			else:
+				systemer.append(s)
 
 	return render(request, 'systemer_EOL_vurderinger_FIP.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
+		'virksomheter': virksomheter,
+		'virksomhet': virksomhet,
 		'systemer': systemer,
 		'infrastruktur': infrastruktur,
 	})
@@ -7452,16 +7472,37 @@ def systemdetaljer(request, pk):
 
 
 def systemer_pakket(request):
-	#Uferdig: vising av hvordan applikasjoner er pakket
+	# 2026-11-01: Virksomhet via ?virksomhet=pk (default DIG) – replaces hardcoded pk=163 which differed between test and prod.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
-	systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=163)  # 163=UKE
+	virksomheter = (
+		Virksomhet.objects
+		.filter(ordinar_virksomhet=True)
+		.filter(~Q(driftsmodell_ansvarlig_virksomhet=None))
+		.order_by('virksomhetsforkortelse')
+		.distinct()
+	)
+
+	virksomhet = None
+	virksomhet_pk = request.GET.get('virksomhet', '').strip()
+	if virksomhet_pk.isdigit():
+		virksomhet = virksomheter.filter(pk=int(virksomhet_pk)).first()
+	if virksomhet is None:
+		virksomhet = virksomheter.filter(virksomhetsforkortelse='DIG').first()
+	if virksomhet is None:
+		virksomhet = virksomheter.first()
+
+	systemer = System.objects.none()
+	if virksomhet is not None:
+		systemer = System.objects.filter(driftsmodell_foreignkey__ansvarlig_virksomhet=virksomhet)
 	programvarer = Programvare.objects.all()
 	return render(request, 'system_hvordan_pakket.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
+		'virksomheter': virksomheter,
+		'virksomhet': virksomhet,
 		'systemer': systemer,
 		'programvarer': programvarer,
 	})

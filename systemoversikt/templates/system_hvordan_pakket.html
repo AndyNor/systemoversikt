@@ -8,7 +8,27 @@
 
 {% block main_content %}
 
-<p>Her listes alle systemer på felles IKT-plattform (FIP/FIKTP)</p>
+{# 2026-11-01: Virksomhet selector – systems filtered by selected platform forvalter (default DIG). #}
+{# 2026-11-01: Submit via nonce script – CSP blocks inline onchange handlers. #}
+<form method="get" id="virksomhet-filter-form" class="form-inline mb-3">
+	<label for="virksomhet" class="mr-2">Plattformforvalter:</label>
+	<select name="virksomhet" id="virksomhet" class="form-control form-control-sm mr-2">
+		{% for v in virksomheter %}
+		<option value="{{ v.pk }}" {% if virksomhet and virksomhet.pk == v.pk %}selected{% endif %}>
+			{{ v.virksomhetsforkortelse }} – {{ v.virksomhetsnavn }}
+		</option>
+		{% empty %}
+		<option value="">Ingen virksomheter med plattformansvar</option>
+		{% endfor %}
+	</select>
+	<button type="submit" class="btn btn-sm btn-primary">Vis</button>
+</form>
+
+{% if virksomhet %}
+<p>Her listes alle systemer på plattformer forvaltet av {{ virksomhet.virksomhetsforkortelse }}, samt alle programvarer.</p>
+{% else %}
+<p>Ingen virksomhet med plattformansvar er tilgjengelig for filtrering.</p>
+{% endif %}
 
 	<table class="table table-sm tablesorter">
 	<thead>
@@ -56,3 +76,18 @@
 
 
 {% endblock main_content %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+(function () {
+	var form = document.getElementById('virksomhet-filter-form');
+	var select = document.getElementById('virksomhet');
+	if (!form || !select) {
+		return;
+	}
+	select.addEventListener('change', function () {
+		form.submit();
+	});
+})();
+</script>
+{% endblock script_append %}

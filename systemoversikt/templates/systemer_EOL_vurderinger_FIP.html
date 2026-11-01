@@ -14,8 +14,27 @@
 
 {% block hovedinnhold %}
 
+{# 2026-11-01: Virksomhet selector – platforms are filtered by selected forvalter (default DIG). #}
+{# 2026-11-01: Submit via nonce script – CSP blocks inline onchange handlers. #}
+<form method="get" id="virksomhet-filter-form" class="form-inline mb-3">
+	<label for="virksomhet" class="mr-2">Plattformforvalter:</label>
+	<select name="virksomhet" id="virksomhet" class="form-control form-control-sm mr-2">
+		{% for v in virksomheter %}
+		<option value="{{ v.pk }}" {% if virksomhet and virksomhet.pk == v.pk %}selected{% endif %}>
+			{{ v.virksomhetsforkortelse }} – {{ v.virksomhetsnavn }}
+		</option>
+		{% empty %}
+		<option value="">Ingen virksomheter med plattformansvar</option>
+		{% endfor %}
+	</select>
+	<button type="submit" class="btn btn-sm btn-primary">Vis</button>
+</form>
 
-<p>Kriteriene for å vises et system på denne siden er at systemet 1) er på en plattform DIG er forvalter av, og 2) at livsløpstatus er satt til en av følgende status: "Bør/skal byttes ut" og "Ute av bruk, men tilgjengelig". Merk at det her vil vises systemer som er markert som "ikke i bruk". Riktig måte å registrere når et system er helt ute av drift er livsløpstatus "Fullstendig avviklet".</p>
+{% if virksomhet %}
+<p>Kriteriene for å vise et system på denne siden er at systemet 1) er på en plattform {{ virksomhet.virksomhetsforkortelse }} er forvalter av, og 2) at livsløpstatus er satt til en av følgende status: "Bør/skal byttes ut" og "Ute av bruk, men tilgjengelig". Merk at det her vil vises systemer som er markert som "ikke i bruk". Riktig måte å registrere når et system er helt ute av drift er livsløpstatus "Fullstendig avviklet".</p>
+{% else %}
+<p>Ingen virksomhet med plattformansvar er tilgjengelig for filtrering.</p>
+{% endif %}
 
 
 <p>Kriterier for å sette slik livssløpsstatus er én eller flere av disse kriteriene:</p>
@@ -29,7 +48,7 @@
 	<li>Systemet støtter ikke SAML/OIDC (moderne autentisering) - f.eks. at den krever NTLM eller kerberos-autentisering som krever VPN.</li>
 </ul>
 
-<p>Merk at det ikke er sikkert alle systemene er fullstendig kartlagt på tvers av disse kriteriene. Dette er en kontinuerlig prosess. Per nå er det {{ systemer|length }} systemer som er markert som "end of life". Disse er splittet mellom ordinære systemer og infrastruktur-systemer.</p>
+<p>Merk at det ikke er sikkert alle systemene er fullstendig kartlagt på tvers av disse kriteriene. Dette er en kontinuerlig prosess. Per nå er det {{ systemer|length }} systemer som er markert som "end of life"{% if virksomhet %} for {{ virksomhet.virksomhetsforkortelse }}{% endif %}. Disse er splittet mellom ordinære systemer og infrastruktur-systemer.</p>
 
 
 <h4>Systemer</h4>
@@ -119,3 +138,18 @@
 Ikke implementert enda.
 
 {% endblock hovedinnhold %}
+
+{% block script_append %}
+<script type="text/javascript" nonce="{{ request.csp_nonce }}">
+(function () {
+	var form = document.getElementById('virksomhet-filter-form');
+	var select = document.getElementById('virksomhet');
+	if (!form || !select) {
+		return;
+	}
+	select.addEventListener('change', function () {
+		form.submit();
+	});
+})();
+</script>
+{% endblock script_append %}
