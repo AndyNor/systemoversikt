@@ -159,8 +159,6 @@ if settings.IDP_PROVIDER == "AZUREAD":
 		def update_user(self, user, claims):
 			# 2026-08-24: is_active is set here at OIDC login; Entra already admitted the user.
 			user.is_active = True
-			#user.first_name = claims.get('given_name', '')
-			#user.last_name = claims.get('family_name', '')
 			user.email = claims.get('email', '')
 			user.is_staff = True # kreves for å kunne nå django adminportal som brukes for nesten all redigering.
 
