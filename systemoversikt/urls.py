@@ -347,11 +347,13 @@ urlpatterns = [
 	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/ansvarlig-opprett/$', views.systembruk_ansvarlig_opprett, name='systembruk_ansvarlig_opprett'),
 	re_path(r'^systemer/bruk/registrer_bruk/(?P<system>\d{1,8})/$', views.registrer_bruk, name='registrer_bruk'),
 	# 2026-09-15: Arkivoverføring – bulk from system details; edit/delete single row.
+	# 2026-11-01: Optional systembruk API for mottatt-retning create form.
 	re_path(r'^systemer/arkivoverforing/ny/(?P<system>\d{1,8})/$', views.arkivoverforing_bulk_create, name='arkivoverforing_bulk_create'),
 	re_path(r'^systemer/arkivoverforing/(?P<pk>\d{1,8})/endre/$', views.arkivoverforing_edit, name='arkivoverforing_edit'),
 	re_path(r'^systemer/arkivoverforing/(?P<pk>\d{1,8})/slett/$', views.arkivoverforing_delete, name='arkivoverforing_delete'),
 	# 2026-09-15: Dynamic mottakersystem search for arkivoverføring forms.
 	re_path(r'^systemer/arkivoverforing/api/systemer/sok/$', views.api_arkivoverforing_systemer_sok, name='api_arkivoverforing_systemer_sok'),
+	re_path(r'^systemer/arkivoverforing/api/systembruk/(?P<system>\d{1,8})/$', views.api_arkivoverforing_systembruk, name='api_arkivoverforing_systembruk'),
 	re_path(r'^systemer/dokumentasjonsforvaltning/$', views.dokumentasjonsforvaltning, name='dokumentasjonsforvaltning'),
 	re_path(r'^systemer/informasjonskategorier/$', views_informasjonskategori.oka_oversikt, name='oka_oversikt'),
 	re_path(r'^systemer/informasjonskategorier/sok/$', views_informasjonskategori.api_informasjonskategorier_sok, name='api_informasjonskategorier_sok'),

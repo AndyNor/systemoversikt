@@ -5,6 +5,7 @@
 # 2026-10-12: Inline save for GodkjentElektroniskArkiv on systemdetaljer (change_godkjentelektroniskarkiv).
 # 2026-09-15: Dokumentasjonsforvaltning information page for archivists.
 # 2026-09-15: Informasjonskategorier (OKA) on systemdetaljer, bruksdetaljer and tjeneste_detaljer.
+# 2026-11-01: ArkivOverforing – content period, beskrivelse/henvisning, optional virksomhet, avgitt/mottatt create.
 # 2026-09-15: ArkivOverforing – bulk create / edit / delete; lists on systemdetaljer and bruksdetaljer.
 # 2026-09-14: systemdetaljer – approved archive systems (er_arkiv) reached via SystemIntegration.
 # 2026-09-14: virksomhet_arkivplan includes SystemBruk dates/innhold; /api/systembruk/ exposes tatt_i_bruk and avsluttet.
@@ -7280,13 +7281,13 @@ def systemdetaljer(request, pk):
 		.order_by("brukergruppe")
 	)
 
-	# 2026-09-15: Archive transfers involving this system as sender (via SystemBruk) or receiver.
+	# 2026-11-01: Migrations where this system is source (system-level or per SystemBruk) or receiver.
 	arkivoverforinger_som_avsender = (
-		ArkivOverforing.objects.filter(avsender_bruk__system=system)
+		ArkivOverforing.objects.filter(avsender_system=system)
 		.select_related(
+			'avsender_system',
 			'avsender_bruk',
 			'avsender_bruk__brukergruppe',
-			'avsender_bruk__system',
 			'mottaker_system',
 		)
 		.order_by('avsender_bruk__brukergruppe__virksomhetsforkortelse', 'mottaker_system__systemnavn')
@@ -7294,12 +7295,17 @@ def systemdetaljer(request, pk):
 	arkivoverforinger_som_mottaker = (
 		ArkivOverforing.objects.filter(mottaker_system=system)
 		.select_related(
+			'avsender_system',
 			'avsender_bruk',
 			'avsender_bruk__brukergruppe',
-			'avsender_bruk__system',
 			'mottaker_system',
 		)
-		.order_by('avsender_bruk__system__systemnavn', 'avsender_bruk__brukergruppe__virksomhetsforkortelse')
+		.order_by('avsender_system__systemnavn', 'avsender_bruk__brukergruppe__virksomhetsforkortelse')
+	)
+	# 2026-11-01: Warn when planned/decommissioned and no outbound migration is registered.
+	arkiv_mangler_migrering_advarsel = (
+		system.livslop_status in LIVSLOP_PLANLAGT_ELLER_NEDLAGT
+		and not arkivoverforinger_som_avsender.exists()
 	)
 
 	# 2026-09-14: Approved archive systems (er_arkiv / 🗁 Arkivsystem) linked via SystemIntegration.
@@ -7417,6 +7423,7 @@ def systemdetaljer(request, pk):
 		'oka_standardkategorier_json': [k.as_api_dict() for k in oka_standardkategorier],
 		'arkivoverforinger_som_avsender': arkivoverforinger_som_avsender,
 		'arkivoverforinger_som_mottaker': arkivoverforinger_som_mottaker,
+		'arkiv_mangler_migrering_advarsel': arkiv_mangler_migrering_advarsel,
 		'arkiv_integrasjon_systemer': arkiv_integrasjon_systemer,
 		'godkjenning_elektronisk_arkiv': godkjenning_elektronisk_arkiv,
 		'datautveksling_mottar_fra': datautveksling_mottar_fra,
@@ -7892,10 +7899,13 @@ def bruksdetaljer(request, pk):
 		)
 		.get(pk=pk)
 	)
-	# 2026-09-15: Read-only archive transfers for this virksomhet usage.
+	# 2026-11-01: Bruk-specific migrations plus system-level rows for the same source system.
 	arkivoverforinger = (
-		ArkivOverforing.objects.filter(avsender_bruk=bruk)
-		.select_related('mottaker_system')
+		ArkivOverforing.objects.filter(
+			Q(avsender_bruk=bruk)
+			| Q(avsender_system=bruk.system, avsender_bruk__isnull=True)
+		)
+		.select_related('mottaker_system', 'avsender_bruk', 'avsender_bruk__brukergruppe')
 		.order_by('mottaker_system__systemnavn')
 	)
 
@@ -8494,7 +8504,7 @@ def system_lagre_godkjent_elektronisk_arkiv(request, pk):
 
 
 def api_arkivoverforing_systemer_sok(request):
-	# 2026-09-15: Dynamic mottakersystem search for arkivoverføring create/edit forms.
+	# 2026-09-15: Dynamic system search for arkivoverføring create/edit forms.
 	if not request.user.is_authenticated:
 		return JsonResponse({'ok': False, 'error': 'session_expired'}, status=401)
 	if not (
@@ -8526,6 +8536,34 @@ def api_arkivoverforing_systemer_sok(request):
 	return JsonResponse({'ok': True, 'results': results})
 
 
+def api_arkivoverforing_systembruk(request, system):
+	# 2026-11-01: SystemBruk list for optional virksomhet checkboxes (mottatt-retning after avsender chosen).
+	if not request.user.is_authenticated:
+		return JsonResponse({'ok': False, 'error': 'session_expired'}, status=401)
+	if not (
+		request.user.has_perm('systemoversikt.add_arkivoverforing')
+		or request.user.has_perm('systemoversikt.change_arkivoverforing')
+	):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+
+	system_instans = get_object_or_404(System, pk=system)
+	results = []
+	for bruk in (
+		SystemBruk.objects.filter(system=system_instans)
+		.select_related('brukergruppe')
+		.order_by('brukergruppe__virksomhetsnavn')
+	):
+		results.append({
+			'id': bruk.pk,
+			'label': '%s (%s)' % (
+				bruk.brukergruppe.virksomhetsnavn,
+				bruk.brukergruppe.virksomhetsforkortelse,
+			),
+			'ibruk': bool(bruk.ibruk),
+		})
+	return JsonResponse({'ok': True, 'results': results})
+
+
 def _arkivoverforing_return_system_pk(request, overforing):
 	"""Prefer ?return_system=; else redirect to avsender system details."""
 	raw = request.GET.get('return_system') or request.POST.get('return_system')
@@ -8534,7 +8572,7 @@ def _arkivoverforing_return_system_pk(request, overforing):
 			return int(raw)
 		except (TypeError, ValueError):
 			pass
-	return overforing.avsender_bruk.system_id
+	return overforing.avsender_system_id
 
 
 def _format_date_for_log(value):
@@ -8543,109 +8581,169 @@ def _format_date_for_log(value):
 	return value.isoformat()
 
 
+def _arkivoverforing_retning(request):
+	raw = (request.POST.get('retning') or request.GET.get('retning') or 'avgitt').strip().lower()
+	return 'mottatt' if raw == 'mottatt' else 'avgitt'
+
+
 def arkivoverforing_bulk_create(request, system):
-	# 2026-09-15: Create one ArkivOverforing per selected SystemBruk for this source system.
-	# 2026-09-15: Mottakersystem via dynamic search (no full system dropdown).
+	# 2026-11-01: Create system-level or per-virksomhet migrations; retning avgitt|mottatt.
 	required_permissions = ['systemoversikt.add_arkivoverforing']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
 	system_instans = get_object_or_404(System, pk=system)
-	systembruk_liste = list(
-		SystemBruk.objects.filter(system=system_instans)
-		.select_related('brukergruppe')
-		.order_by('brukergruppe__virksomhetsnavn')
-	)
-	mottaker_initial_id = ''
-	mottaker_initial_label = ''
+	retning = _arkivoverforing_retning(request)
+	motpart_initial_id = ''
+	motpart_initial_label = ''
+	avsender_for_bruk = system_instans if retning == 'avgitt' else None
 
 	if request.POST:
-		mottaker_pk = request.POST.get('mottaker_system')
+		motpart_pk = request.POST.get('motpart_system')
 		dato_start = _parse_optional_date(request.POST.get('dato_start'))
 		dato_avsluttet = _parse_optional_date(request.POST.get('dato_avsluttet'))
-		kommentar = (request.POST.get('kommentar') or '').strip() or None
+		beskrivelse = (request.POST.get('beskrivelse') or '').strip() or None
+		henvisning = (request.POST.get('henvisning_dokumentasjon') or '').strip() or None
 		bruk_pks = [int(pk) for pk in request.POST.getlist('systembruk') if str(pk).isdigit()]
 
-		if mottaker_pk and str(mottaker_pk).isdigit():
-			mottaker_preview = System.objects.filter(pk=int(mottaker_pk)).select_related('systemforvalter').first()
-			if mottaker_preview:
-				mottaker_initial_id = mottaker_preview.pk
-				mottaker_initial_label = _arkivoverforing_system_label(mottaker_preview)
+		if motpart_pk and str(motpart_pk).isdigit():
+			motpart_preview = (
+				System.objects.filter(pk=int(motpart_pk)).select_related('systemforvalter').first()
+			)
+			if motpart_preview:
+				motpart_initial_id = motpart_preview.pk
+				motpart_initial_label = _arkivoverforing_system_label(motpart_preview)
+				if retning == 'mottatt':
+					avsender_for_bruk = motpart_preview
 
-		if not mottaker_pk:
-			messages.warning(request, 'Du må velge mottakersystem.')
-		elif not bruk_pks:
-			messages.warning(request, 'Du må velge minst én virksomhetsbruk.')
+		if not motpart_pk:
+			messages.warning(
+				request,
+				'Du må velge mottakersystem.' if retning == 'avgitt' else 'Du må velge avsendersystem.',
+			)
 		else:
-			mottaker = get_object_or_404(System, pk=int(mottaker_pk))
-			valgte_bruk = SystemBruk.objects.filter(pk__in=bruk_pks, system=system_instans)
+			motpart = get_object_or_404(System, pk=int(motpart_pk))
+			if retning == 'avgitt':
+				avsender_system = system_instans
+				mottaker_system = motpart
+			else:
+				avsender_system = motpart
+				mottaker_system = system_instans
+
 			opprettet = 0
 			hoppet_over = 0
 			virksomheter_opprettet = []
-			for bruk in valgte_bruk:
+
+			if bruk_pks:
+				valgte_bruk = SystemBruk.objects.filter(pk__in=bruk_pks, system=avsender_system)
+				for bruk in valgte_bruk:
+					try:
+						with transaction.atomic():
+							ArkivOverforing.objects.create(
+								avsender_system=avsender_system,
+								avsender_bruk=bruk,
+								mottaker_system=mottaker_system,
+								dato_start=dato_start,
+								dato_avsluttet=dato_avsluttet,
+								beskrivelse=beskrivelse,
+								henvisning_dokumentasjon=henvisning,
+							)
+						opprettet += 1
+						virksomheter_opprettet.append(str(bruk.brukergruppe))
+					except IntegrityError:
+						hoppet_over += 1
+			else:
 				try:
 					with transaction.atomic():
 						ArkivOverforing.objects.create(
-							avsender_bruk=bruk,
-							mottaker_system=mottaker,
+							avsender_system=avsender_system,
+							avsender_bruk=None,
+							mottaker_system=mottaker_system,
 							dato_start=dato_start,
 							dato_avsluttet=dato_avsluttet,
-							kommentar=kommentar,
+							beskrivelse=beskrivelse,
+							henvisning_dokumentasjon=henvisning,
 						)
 					opprettet += 1
-					virksomheter_opprettet.append(str(bruk.brukergruppe))
+					virksomheter_opprettet.append('hele systemet')
 				except IntegrityError:
 					hoppet_over += 1
+
 			if opprettet:
 				virk_txt = ', '.join(virksomheter_opprettet[:20])
 				if len(virksomheter_opprettet) > 20:
 					virk_txt += ', …'
 				log_object_change(
 					request.user,
-					system_instans,
+					avsender_system,
 					'Arkivoverføring: opprettet %s overføring(er) til %s (%s)' % (
-						opprettet, mottaker.systemnavn, virk_txt,
+						opprettet, mottaker_system.systemnavn, virk_txt,
 					),
 					action_flag=ADDITION,
 				)
 				messages.success(
 					request,
-					'Opprettet %s arkivoverføring(er) til %s.' % (opprettet, mottaker.systemnavn),
+					'Opprettet %s migrering(er) fra %s til %s.' % (
+						opprettet, avsender_system.systemnavn, mottaker_system.systemnavn,
+					),
 				)
 			if hoppet_over:
 				messages.warning(
 					request,
-					'%s overføring(er) ble hoppet over (finnes allerede for samme virksomhet og mottaker).' % hoppet_over,
+					'%s overføring(er) ble hoppet over (finnes allerede for samme avsender og mottaker).' % hoppet_over,
 				)
 			if opprettet or hoppet_over:
 				return redirect(
 					reverse('systemdetaljer', args=[system_instans.pk]) + '#anchor_arkivoverforing'
 				)
 
+	systembruk_liste = []
+	if avsender_for_bruk is not None:
+		systembruk_liste = list(
+			SystemBruk.objects.filter(system=avsender_for_bruk)
+			.select_related('brukergruppe')
+			.order_by('brukergruppe__virksomhetsnavn')
+		)
+
+	gammel_navn = system_instans.systemnavn if retning == 'avgitt' else (motpart_initial_label or '…')
+	ny_navn = (motpart_initial_label or '…') if retning == 'avgitt' else system_instans.systemnavn
+
 	return render(request, 'arkivoverforing_bulk_create.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'system': system_instans,
+		'retning': retning,
 		'systembruk_liste': systembruk_liste,
-		'mottaker_sok_url': reverse('api_arkivoverforing_systemer_sok'),
-		'mottaker_exclude_pk': system_instans.pk,
-		'mottaker_initial_id': mottaker_initial_id,
-		'mottaker_initial_label': mottaker_initial_label,
+		'motpart_sok_url': reverse('api_arkivoverforing_systemer_sok'),
+		'motpart_systembruk_url_template': reverse('api_arkivoverforing_systembruk', args=[0]).replace('/0/', '/{id}/'),
+		'motpart_exclude_pk': system_instans.pk,
+		'motpart_initial_id': motpart_initial_id,
+		'motpart_initial_label': motpart_initial_label,
+		'motpart_label': 'Mottakersystem' if retning == 'avgitt' else 'Avsendersystem (gammel løsning)',
+		'motpart_required_msg': (
+			'Du må velge mottakersystem fra søketreffene.'
+			if retning == 'avgitt'
+			else 'Du må velge avsendersystem fra søketreffene.'
+		),
+		'gammel_navn': gammel_navn,
+		'ny_navn': ny_navn,
+		'gammel_navn_fixed': retning == 'avgitt',
+		'ny_navn_fixed': retning == 'mottatt',
+		'system_navn_plain': system_instans.systemnavn,
 		'back_link': reverse('systemdetaljer', args=[system_instans.pk]) + '#anchor_arkivoverforing',
 	})
 
 
 def arkivoverforing_edit(request, pk):
-	# 2026-09-15: Edit dates, comment and destination for one archive transfer.
-	# 2026-09-15: Mottakersystem via dynamic search (no full system dropdown).
+	# 2026-11-01: Edit mottaker, content period and beskrivelse/henvisning.
 	required_permissions = ['systemoversikt.change_arkivoverforing']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
 	overforing = get_object_or_404(
 		ArkivOverforing.objects.select_related(
+			'avsender_system',
 			'avsender_bruk',
-			'avsender_bruk__system',
 			'avsender_bruk__brukergruppe',
 			'mottaker_system',
 			'mottaker_system__systemforvalter',
@@ -8656,10 +8754,11 @@ def arkivoverforing_edit(request, pk):
 	back_link = reverse('systemdetaljer', args=[return_system_pk]) + '#anchor_arkivoverforing'
 
 	if request.POST:
-		mottaker_pk = request.POST.get('mottaker_system')
+		mottaker_pk = request.POST.get('motpart_system') or request.POST.get('mottaker_system')
 		dato_start = _parse_optional_date(request.POST.get('dato_start'))
 		dato_avsluttet = _parse_optional_date(request.POST.get('dato_avsluttet'))
-		kommentar = (request.POST.get('kommentar') or '').strip() or None
+		beskrivelse = (request.POST.get('beskrivelse') or '').strip() or None
+		henvisning = (request.POST.get('henvisning_dokumentasjon') or '').strip() or None
 		if not mottaker_pk:
 			messages.warning(request, 'Du må velge mottakersystem.')
 		else:
@@ -8667,17 +8766,19 @@ def arkivoverforing_edit(request, pk):
 			old_mottaker = overforing.mottaker_system
 			old_start = overforing.dato_start
 			old_slutt = overforing.dato_avsluttet
-			old_kommentar = overforing.kommentar
+			old_beskrivelse = overforing.beskrivelse
+			old_henvisning = overforing.henvisning_dokumentasjon
 			overforing.mottaker_system = mottaker
 			overforing.dato_start = dato_start
 			overforing.dato_avsluttet = dato_avsluttet
-			overforing.kommentar = kommentar
+			overforing.beskrivelse = beskrivelse
+			overforing.henvisning_dokumentasjon = henvisning
 			try:
 				overforing.save()
 			except IntegrityError:
 				messages.warning(
 					request,
-					'Det finnes allerede en arkivoverføring for denne virksomheten til valgt mottakersystem.',
+					'Det finnes allerede en arkivoverføring for denne avsenderen til valgt mottakersystem.',
 				)
 			else:
 				parts = []
@@ -8685,55 +8786,61 @@ def arkivoverforing_edit(request, pk):
 					parts.append('mottaker: %s → %s' % (old_mottaker, mottaker))
 				if old_start != dato_start:
 					parts.append(
-						'dato start: %s → %s' % (
+						'innhold produsert fra: %s → %s' % (
 							_format_date_for_log(old_start),
 							_format_date_for_log(dato_start),
 						)
 					)
 				if old_slutt != dato_avsluttet:
 					parts.append(
-						'dato avsluttet: %s → %s' % (
+						'innhold produsert til: %s → %s' % (
 							_format_date_for_log(old_slutt),
 							_format_date_for_log(dato_avsluttet),
 						)
 					)
-				if (old_kommentar or '') != (kommentar or ''):
+				if (old_beskrivelse or '') != (beskrivelse or ''):
 					parts.append(
-						'kommentar: «%s» → «%s»' % (old_kommentar or '–', kommentar or '–')
+						'beskrivelse: «%s» → «%s»' % (old_beskrivelse or '–', beskrivelse or '–')
+					)
+				if (old_henvisning or '') != (henvisning or ''):
+					parts.append(
+						'henvisning: «%s» → «%s»' % (old_henvisning or '–', henvisning or '–')
 					)
 				if parts:
 					log_object_change(
 						request.user,
-						overforing.avsender_bruk,
+						overforing.avsender_system,
 						'Arkivoverføring: %s' % '; '.join(parts),
 						action_flag=CHANGE,
 					)
-				messages.success(request, 'Arkivoverføring oppdatert.')
+				messages.success(request, 'Migrering oppdatert.')
 				return redirect(back_link)
 
 	return render(request, 'arkivoverforing_edit.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'overforing': overforing,
-		'mottaker_sok_url': reverse('api_arkivoverforing_systemer_sok'),
-		'mottaker_exclude_pk': '',
-		'mottaker_initial_id': overforing.mottaker_system_id,
-		'mottaker_initial_label': _arkivoverforing_system_label(overforing.mottaker_system),
+		'motpart_sok_url': reverse('api_arkivoverforing_systemer_sok'),
+		'motpart_exclude_pk': overforing.avsender_system_id,
+		'motpart_initial_id': overforing.mottaker_system_id,
+		'motpart_initial_label': _arkivoverforing_system_label(overforing.mottaker_system),
+		'motpart_label': 'Mottakersystem',
+		'motpart_required_msg': 'Du må velge mottakersystem fra søketreffene.',
 		'return_system_pk': return_system_pk,
 		'back_link': back_link,
 	})
 
 
 def arkivoverforing_delete(request, pk):
-	# 2026-09-15: Confirm and delete one archive transfer.
+	# 2026-11-01: Confirm and delete; log against avsender_system.
 	required_permissions = ['systemoversikt.delete_arkivoverforing']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
 	overforing = get_object_or_404(
 		ArkivOverforing.objects.select_related(
+			'avsender_system',
 			'avsender_bruk',
-			'avsender_bruk__system',
 			'avsender_bruk__brukergruppe',
 			'mottaker_system',
 		),
@@ -8743,19 +8850,24 @@ def arkivoverforing_delete(request, pk):
 	back_link = reverse('systemdetaljer', args=[return_system_pk]) + '#anchor_arkivoverforing'
 
 	if request.POST:
-		avsender_bruk = overforing.avsender_bruk
-		summary = 'Arkivoverføring slettet: %s → %s' % (
-			avsender_bruk,
+		avsender_system = overforing.avsender_system
+		virk = (
+			str(overforing.avsender_bruk.brukergruppe)
+			if overforing.avsender_bruk_id else 'hele systemet'
+		)
+		summary = 'Arkivoverføring slettet: %s (%s) → %s' % (
+			avsender_system,
+			virk,
 			overforing.mottaker_system,
 		)
 		overforing.delete()
 		log_object_change(
 			request.user,
-			avsender_bruk,
+			avsender_system,
 			summary,
 			action_flag=DELETION,
 		)
-		messages.success(request, 'Arkivoverføring slettet.')
+		messages.success(request, 'Migrering slettet.')
 		return redirect(back_link)
 
 	return render(request, 'arkivoverforing_delete.html', {

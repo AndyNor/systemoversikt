@@ -1,37 +1,48 @@
+{# 2026-11-01: Confirm delete; show content period and beskrivelse/henvisning. #}
 {# 2026-09-15: Confirm delete of one ArkivOverforing. #}
 {% extends "index.html" %}
 {% load templatetags %}
 
 {% block underoverskrift %}
-	Slett arkivoverføring
+	Slett migrering
 {% endblock underoverskrift %}
 
 {% block main_content %}
-<p>Er du sikker på at du vil slette denne arkivoverføringen?</p>
+<p>Er du sikker på at du vil slette denne migreringen?</p>
 <table class="table table-sm">
 	<tr>
 		<th>Virksomhet</th>
-		<td>{{ overforing.avsender_bruk.brukergruppe }}</td>
+		<td>
+			{% if overforing.avsender_bruk_id %}
+			{{ overforing.avsender_bruk.brukergruppe }}
+			{% else %}
+			Hele systemet
+			{% endif %}
+		</td>
 	</tr>
 	<tr>
 		<th>Avsendersystem</th>
-		<td>{{ overforing.avsender_bruk.system }}</td>
+		<td>{{ overforing.avsender_system }}</td>
 	</tr>
 	<tr>
 		<th>Mottakersystem</th>
 		<td>{{ overforing.mottaker_system }}</td>
 	</tr>
 	<tr>
-		<th>Dato start</th>
+		<th>Innhold produsert fra</th>
 		<td>{{ overforing.dato_start|date:"Y-m-d"|default:"-" }}</td>
 	</tr>
 	<tr>
-		<th>Dato avsluttet</th>
+		<th>Innhold produsert til</th>
 		<td>{{ overforing.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
 	</tr>
 	<tr>
-		<th>Kommentar</th>
-		<td>{{ overforing.kommentar|linebreaks|default:"-" }}</td>
+		<th>Beskrivelse</th>
+		<td>{{ overforing.beskrivelse|linebreaks|default:"-" }}</td>
+	</tr>
+	<tr>
+		<th>Henvisning</th>
+		<td>{{ overforing.henvisning_dokumentasjon|linebreaks|default:"-" }}</td>
 	</tr>
 </table>
 

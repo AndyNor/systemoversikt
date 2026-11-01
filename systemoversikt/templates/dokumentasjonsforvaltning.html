@@ -121,9 +121,13 @@ table.dokforv-tabell th {
 			</dd>
 		</div>
 		<div class="dokforv-begrep">
-			<dt>Arkivoverføring</dt>
+			{# 2026-11-01: Updated for content period, optional virksomhet, avgitt/mottatt. #}
+			<dt>Migrert informasjonsinnhold</dt>
 			<dd>
-				En avgrenset overføring av arkivmateriale fra en virksomhets bruk av et kildesystem til et mottakersystem. Den har startdato, sluttdato og kommentar om hva som er overført. Hver virksomhet kan registrere én overføring til hvert mottakersystem. Slik dokumenteres migrering og arvtaker: du står på kildesystemet og registrerer overføring til det nye systemet, for hver virksomhet som avga materiale. På mottakersystemet ser du innkommende overføringer («mottatt arkiverte data fra»).
+				Registrering av at informasjonsinnhold er migrert fra et gammelt system (avsender) til et nytt (mottaker).
+				Angir perioden innholdet er produsert i (fra–til), overordnet beskrivelse, og henvisning til dokumentasjon om mapping og valg.
+				Kan gjelde hele kildesystemet, eller valgfritt knyttes til én eller flere virksomheters bruk.
+				Registreres fra systemdetaljer som «avgitt data til…» eller «mottatt data fra…», og vises på begge systemene.
 			</dd>
 		</div>
 		<div class="dokforv-begrep">
@@ -220,9 +224,11 @@ table.dokforv-tabell th {
 		Klassifikasjonen lastes inn fra et regneark av systemadministrator. Kodene som gjelder løsningen settes på systemet. Virksomheten kan legge til eller unnta underfunksjoner på sin systembruk. På tjenesteområdet vises alle OKA-kodene fra systemene tjenesten består av, samlet. Bevaring, kassasjon og hjemmel leses fra koden, ikke som fritekst per system.
 	</p>
 
-	<h6>Arkivoverføringer</h6>
+	<h6>Migrert informasjonsinnhold</h6>
 	<p>
-		Fra systemdetaljer kan du registrere overføring fra én eller flere virksomheters bruk av dette systemet til et valgt mottakersystem, med periode og kommentar. Endring og sletting skjer derfra. Dette dekker ønsket om å vite om innhold er overført fra eldre løsninger, uten en egen «arvtaker»-oppføring.
+		{# 2026-11-01: Content production period, beskrivelse/henvisning, optional virksomhet. #}
+		Fra systemdetaljer kan du registrere migrering til eller fra et annet system, med periode for når innholdet er produsert, beskrivelse og henvisning til mappingdokumentasjon.
+		Virksomhetskobling er valgfri. Endring og sletting skjer derfra. På systemer som er planlagt nedlagt eller ute av bruk uten registrert utgående migrering vises en advarsel om å kontakte Byarkivet.
 	</p>
 </div>
 

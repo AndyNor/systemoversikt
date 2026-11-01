@@ -1671,23 +1671,30 @@
 		</div>
 	</div>
 
+	{# 2026-11-01: Byarkivet – migrert innhold, avgitt/mottatt, content period, missing-migration warning. #}
 	{# 2026-10-12: Heading renamed per Byarkivet – «Migrering av informasjonsinnhold». #}
 	{# 2026-09-15: Incoming transfers first; headings “mottatt … fra” / “overlevert … til”. #}
 	<div class="system-detalj-underblokk system-detalj-underblokk--migrering" id="anchor_arkivoverforing">
-		{# 2026-10-12: Clarifying who fills in migrering. #}
-		<h5>Migrering av informasjonsinnhold</h5>
+		<h5>Migrert informasjonsinnhold fra gammel til ny løsning</h5>
 		<p class="small text-muted mb-2">Fylles inn av systemeier/-forvalter</p>
+		{% if arkiv_mangler_migrering_advarsel %}
+		<div class="alert alert-warning" role="alert">
+			Systemet er planlagt nedlagt eller ute av bruk, og det er ikke registrert migrering av informasjonsinnhold fra dette systemet.
+			Systemforvalter må ta kontakt med Byarkivet for avklaring om uttrekk.
+		</div>
+		{% endif %}
 		{% if arkivoverforinger_som_mottaker %}
-		<p><strong>Mottatt arkiverte data fra</strong></p>
+		<p><strong>Mottatt data fra… (gammel løsning)</strong></p>
 		<table class="table table-sm">
 			<thead>
 				<tr>
 					<th class="filter-false"></th>
 					<th>Avsendersystem</th>
 					<th>Virksomhet</th>
-					<th>Dato start</th>
-					<th>Dato avsluttet</th>
-					<th>Kommentar</th>
+					<th>Innhold produsert fra</th>
+					<th>Innhold produsert til</th>
+					<th>Beskrivelse</th>
+					<th>Henvisning</th>
 					<th class="filter-false"></th>
 				</tr>
 			</thead>
@@ -1700,16 +1707,21 @@
 						{% endif %}
 					</td>
 					<td>
-						{% url "systemdetaljer" o.avsender_bruk.system.pk as url_avsender %}
-						<a href="{{ url_avsender }}">{{ o.avsender_bruk.system.systemnavn }}</a>
+						{% url "systemdetaljer" o.avsender_system.pk as url_avsender %}
+						<a href="{{ url_avsender }}">{{ o.avsender_system.systemnavn }}</a>
 					</td>
 					<td>
+						{% if o.avsender_bruk_id %}
 						{% url "bruksdetaljer" o.avsender_bruk.pk as url_bruk %}
 						<a href="{{ url_bruk }}">{{ o.avsender_bruk.brukergruppe.virksomhetsforkortelse }}</a>
+						{% else %}
+						Hele systemet
+						{% endif %}
 					</td>
 					<td>{{ o.dato_start|date:"Y-m-d"|default:"-" }}</td>
 					<td>{{ o.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
-					<td>{{ o.kommentar|default:"-" }}</td>
+					<td>{{ o.beskrivelse|default:"-" }}</td>
+					<td>{{ o.henvisning_dokumentasjon|default:"-" }}</td>
 					<td>
 						{% if perms.systemoversikt.delete_arkivoverforing %}
 						<a href="{% url 'arkivoverforing_delete' o.pk %}?return_system={{ systemdetaljer.pk }}">❌</a>
@@ -1722,16 +1734,17 @@
 		{% endif %}
 
 		{% if arkivoverforinger_som_avsender %}
-		<p><strong>Overlevert arkiverte data til</strong></p>
+		<p><strong>Avgitt data til… (ny løsning)</strong></p>
 		<table class="table table-sm">
 			<thead>
 				<tr>
 					<th class="filter-false"></th>
 					<th>Virksomhet</th>
 					<th>Mottakersystem</th>
-					<th>Dato start</th>
-					<th>Dato avsluttet</th>
-					<th>Kommentar</th>
+					<th>Innhold produsert fra</th>
+					<th>Innhold produsert til</th>
+					<th>Beskrivelse</th>
+					<th>Henvisning</th>
 					<th class="filter-false"></th>
 				</tr>
 			</thead>
@@ -1744,8 +1757,12 @@
 						{% endif %}
 					</td>
 					<td>
+						{% if o.avsender_bruk_id %}
 						{% url "bruksdetaljer" o.avsender_bruk.pk as url_bruk %}
 						<a href="{{ url_bruk }}">{{ o.avsender_bruk.brukergruppe.virksomhetsforkortelse }}</a>
+						{% else %}
+						Hele systemet
+						{% endif %}
 					</td>
 					<td>
 						{% url "systemdetaljer" o.mottaker_system.pk as url_mottaker %}
@@ -1753,7 +1770,8 @@
 					</td>
 					<td>{{ o.dato_start|date:"Y-m-d"|default:"-" }}</td>
 					<td>{{ o.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
-					<td>{{ o.kommentar|default:"-" }}</td>
+					<td>{{ o.beskrivelse|default:"-" }}</td>
+					<td>{{ o.henvisning_dokumentasjon|default:"-" }}</td>
 					<td>
 						{% if perms.systemoversikt.delete_arkivoverforing %}
 						<a href="{% url 'arkivoverforing_delete' o.pk %}?return_system={{ systemdetaljer.pk }}">❌</a>
@@ -1766,11 +1784,12 @@
 		{% endif %}
 
 		{% if not arkivoverforinger_som_avsender and not arkivoverforinger_som_mottaker %}
-		<p class="text-muted">Ingen arkivoverføringer er registrert for dette systemet.</p>
+		<p class="text-muted">Ingen migreringer er registrert for dette systemet.</p>
 		{% endif %}
 		{% if perms.systemoversikt.add_arkivoverforing %}
 		<p class="system-detalj-underblokk-handlinger">
-			<a class="btn btn-sm btn-secondary" href="{% url 'arkivoverforing_bulk_create' systemdetaljer.pk %}">Arkivoverføring til nytt system</a>
+			<a class="btn btn-sm btn-secondary" href="{% url 'arkivoverforing_bulk_create' systemdetaljer.pk %}?retning=avgitt">Registrer avgitt data til…</a>
+			<a class="btn btn-sm btn-secondary" href="{% url 'arkivoverforing_bulk_create' systemdetaljer.pk %}?retning=mottatt">Registrer mottatt data fra…</a>
 		</p>
 		{% endif %}
 	</div>

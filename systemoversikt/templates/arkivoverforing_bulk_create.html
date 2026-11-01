@@ -1,51 +1,62 @@
-{# 2026-09-15: Place start and end dates on one row for a compact form.
-# 2026-09-15: Bulk-create ArkivOverforing; mottakersystem via dynamic search. #}
+{# 2026-11-01: Byarkivet – content period, beskrivelse/henvisning, optional virksomhet, avgitt/mottatt. #}
+{# 2026-09-15: Bulk-create ArkivOverforing; mottakersystem via dynamic search. #}
 {% extends "index.html" %}
 {% load templatetags %}
 
 {% block underoverskrift %}
-	Arkivoverføring til nytt system – {{ system.systemnavn }}
+	<span id="arkivoverforing-overskrift">Migrerte data fra {{ gammel_navn }} (gammel løsning) til {{ ny_navn }} (ny løsning)</span>
 {% endblock underoverskrift %}
 
 {% block main_content %}
 <p>
-	Registrer arkivoverføring fra virksomhetsbruk av <strong>{{ system.systemnavn }}</strong>
-	til et mottakersystem. Velg felles datoer og kommentar; du kan justere hver overføring etterpå.
+	For å sikre riktige data over tid, er det viktig å ha oversikt over hvilken informasjon som er overført
+	fra gammel til ny løsning. Fyll inn en overordnet beskrivelse av innholdet som er migrert, legg inn en
+	henvisning til hvor man kan få mer informasjon om mapping og valg (ikke kun en lenke, men en henvisning
+	til sak i virksomhetens sakarkiv) og skriv inn datointervall for når informasjonen som er migrert er fra.
 </p>
 <p><a href="{{ back_link }}">Tilbake til systemdetaljer</a></p>
 <hr>
 
 <form action="" method="post">
 	{% csrf_token %}
+	<input type="hidden" name="retning" value="{{ retning }}">
 	{% include "arkivoverforing_mottaker_sok.html" %}
 	<div class="form-row">
 		<div class="form-group col-md-6">
-			<label for="dato_start">Dato start overføring</label>
+			<label for="dato_start">Dato for når informasjonsinnholdet er produsert (fra)</label>
 			<input type="date" name="dato_start" id="dato_start" class="form-control">
 		</div>
 		<div class="form-group col-md-6">
-			<label for="dato_avsluttet">Dato overføring avsluttet</label>
+			<label for="dato_avsluttet">Dato for når informasjonsinnholdet er produsert (til)</label>
 			<input type="date" name="dato_avsluttet" id="dato_avsluttet" class="form-control">
 		</div>
 	</div>
 	<div class="form-group">
-		<label for="kommentar">Kommentar (hva er overført)</label>
-		<textarea name="kommentar" id="kommentar" class="form-control" rows="3"></textarea>
+		<label for="beskrivelse">Overordnet beskrivelse av innholdet som er migrert (fritekst)</label>
+		<textarea name="beskrivelse" id="beskrivelse" class="form-control" rows="3"></textarea>
+	</div>
+	<div class="form-group">
+		<label for="henvisning_dokumentasjon">Henvisning til hvor man kan finne dokumentasjon på mappingregler og valg man har tatt i forbindelse med migreringen</label>
+		<textarea name="henvisning_dokumentasjon" id="henvisning_dokumentasjon" class="form-control" rows="3"></textarea>
 	</div>
 
 	<hr>
-	<p><strong>Virksomhetsbruk som skal få overføring</strong></p>
+	<p><strong>Virksomhetsbruk (valgfritt)</strong></p>
+	<p class="small text-muted">
+		La alle være uvalgt for at migreringen skal gjelde hele systemet.
+		Velg én eller flere virksomheter hvis bare deler av bruken er migrert.
+	</p>
 	<input type="button" class="btn btn-sm" value="Inverter valgte" id="trigger">
 	<input type="button" class="btn btn-sm" value="Fjern alle" id="trigger_none">
 	<input type="button" class="btn btn-sm" value="Kun aktive" id="trigger_aktive">
 	<hr>
+	<div id="systembruk-liste">
 	{% for bruk in systembruk_liste %}
 		<input
 			id="bruk_{{ bruk.pk }}"
 			type="checkbox"
 			name="systembruk"
 			value="{{ bruk.pk }}"
-			{% if bruk.ibruk %}checked{% endif %}
 			data-ibruk="{% if bruk.ibruk %}1{% else %}0{% endif %}"
 		>
 		<label for="bruk_{{ bruk.pk }}">
@@ -55,13 +66,24 @@
 		</label>
 		<br>
 	{% empty %}
-		<p class="text-muted">Ingen systembruk er registrert for dette systemet.</p>
+		{% if retning == "mottatt" %}
+		<p class="text-muted" id="systembruk-tom">Velg avsendersystem for å se virksomhetsbruk, eller lagre uten valg for hele systemet.</p>
+		{% else %}
+		<p class="text-muted">Ingen systembruk er registrert for dette systemet. Migreringen registreres for hele systemet.</p>
+		{% endif %}
 	{% endfor %}
+	</div>
 
 	<hr>
-	<button type="submit" class="btn btn-primary btn-sm">Opprett arkivoverføringer</button>
+	<button type="submit" class="btn btn-primary btn-sm">Opprett migrering</button>
 	<a href="{{ back_link }}" class="btn btn-link btn-sm">Avbryt</a>
 </form>
+
+{{ gammel_navn_fixed|json_script:"arkiv-gammel-fixed" }}
+{{ ny_navn_fixed|json_script:"arkiv-ny-fixed" }}
+{{ system_navn_plain|json_script:"arkiv-system-navn" }}
+{{ retning|json_script:"arkiv-retning" }}
+{% if motpart_systembruk_url_template %}{{ motpart_systembruk_url_template|json_script:"arkiv-systembruk-url-tpl" }}{% endif %}
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 	function changeCheckboxes(list, value){
@@ -87,5 +109,75 @@
 		resetCheckboxes(document.querySelectorAll('input[name="systembruk"]'));
 	};
 	document.getElementById("trigger_aktive").onclick = onlyAktive;
+
+	(function () {
+		var overskrift = document.getElementById('arkivoverforing-overskrift');
+		var gammelFixed = JSON.parse(document.getElementById('arkiv-gammel-fixed').textContent);
+		var nyFixed = JSON.parse(document.getElementById('arkiv-ny-fixed').textContent);
+		var systemNavn = JSON.parse(document.getElementById('arkiv-system-navn').textContent);
+		var retning = JSON.parse(document.getElementById('arkiv-retning').textContent);
+		var tplEl = document.getElementById('arkiv-systembruk-url-tpl');
+		var systembrukUrlTpl = tplEl ? JSON.parse(tplEl.textContent) : '';
+		var gammel = gammelFixed ? systemNavn : '…';
+		var ny = nyFixed ? systemNavn : '…';
+
+		function updateOverskrift() {
+			if (overskrift) {
+				overskrift.textContent = 'Migrerte data fra ' + gammel + ' (gammel løsning) til ' + ny + ' (ny løsning)';
+			}
+		}
+
+		function renderSystembruk(results) {
+			var wrap = document.getElementById('systembruk-liste');
+			if (!wrap) return;
+			wrap.innerHTML = '';
+			if (!results.length) {
+				wrap.innerHTML = '<p class="text-muted">Ingen systembruk er registrert for avsendersystemet. Migreringen registreres for hele systemet.</p>';
+				return;
+			}
+			results.forEach(function (bruk) {
+				var id = 'bruk_' + bruk.id;
+				var input = document.createElement('input');
+				input.type = 'checkbox';
+				input.name = 'systembruk';
+				input.value = String(bruk.id);
+				input.id = id;
+				input.setAttribute('data-ibruk', bruk.ibruk ? '1' : '0');
+				var label = document.createElement('label');
+				label.setAttribute('for', id);
+				label.textContent = bruk.label + (bruk.ibruk ? '' : ' – ikke aktiv');
+				wrap.appendChild(input);
+				wrap.appendChild(label);
+				wrap.appendChild(document.createElement('br'));
+			});
+		}
+
+		document.addEventListener('arkivoverforing-motpart-selected', function (ev) {
+			var label = (ev.detail && ev.detail.label) || '…';
+			if (retning === 'avgitt') {
+				ny = label;
+			} else {
+				gammel = label;
+				if (systembrukUrlTpl && ev.detail && ev.detail.id) {
+					var url = systembrukUrlTpl.replace('{id}', String(ev.detail.id));
+					fetch(url, { credentials: 'same-origin' })
+						.then(function (r) { return r.json(); })
+						.then(function (data) {
+							renderSystembruk((data && data.results) || []);
+						});
+				}
+			}
+			updateOverskrift();
+		});
+
+		document.addEventListener('arkivoverforing-motpart-cleared', function () {
+			if (retning === 'avgitt') {
+				ny = '…';
+			} else {
+				gammel = '…';
+			}
+			updateOverskrift();
+		});
+	})();
 </script>
 {% endblock %}

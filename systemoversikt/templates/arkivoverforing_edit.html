@@ -1,19 +1,21 @@
-{# 2026-09-15: Place start and end dates on one row to match bulk-create form.
-# 2026-09-15: Edit ArkivOverforing; mottakersystem via dynamic search. #}
+{# 2026-11-01: Edit content period and beskrivelse/henvisning; virksomhet/systemnivå read-only. #}
+{# 2026-09-15: Edit ArkivOverforing; mottakersystem via dynamic search. #}
 {% extends "index.html" %}
 {% load templatetags %}
 
 {% block underoverskrift %}
-	Endre arkivoverføring
+	Migrerte data fra {{ overforing.avsender_system.systemnavn }} (gammel løsning) til {{ overforing.mottaker_system.systemnavn }} (ny løsning)
 {% endblock underoverskrift %}
 
 {% block main_content %}
 <p>
-	Fra
-	<strong>{{ overforing.avsender_bruk.brukergruppe }}</strong>
-	sin bruk av
-	<strong>{{ overforing.avsender_bruk.system }}</strong>
+	{% if overforing.avsender_bruk_id %}
+	Virksomhet: <strong>{{ overforing.avsender_bruk.brukergruppe }}</strong>
+	{% else %}
+	Omfang: <strong>Hele systemet</strong>
+	{% endif %}
 </p>
+<p class="small text-muted">Virksomhetskobling kan ikke endres her. Slett og opprett på nytt ved behov.</p>
 <p><a href="{{ back_link }}">Tilbake til systemdetaljer</a></p>
 <hr>
 
@@ -23,17 +25,21 @@
 	{% include "arkivoverforing_mottaker_sok.html" %}
 	<div class="form-row">
 		<div class="form-group col-md-6">
-			<label for="dato_start">Dato start overføring</label>
+			<label for="dato_start">Dato for når informasjonsinnholdet er produsert (fra)</label>
 			<input type="date" name="dato_start" id="dato_start" class="form-control" value="{{ overforing.dato_start|date:'Y-m-d' }}">
 		</div>
 		<div class="form-group col-md-6">
-			<label for="dato_avsluttet">Dato overføring avsluttet</label>
+			<label for="dato_avsluttet">Dato for når informasjonsinnholdet er produsert (til)</label>
 			<input type="date" name="dato_avsluttet" id="dato_avsluttet" class="form-control" value="{{ overforing.dato_avsluttet|date:'Y-m-d' }}">
 		</div>
 	</div>
 	<div class="form-group">
-		<label for="kommentar">Kommentar (hva er overført)</label>
-		<textarea name="kommentar" id="kommentar" class="form-control" rows="4">{{ overforing.kommentar|default_if_none:'' }}</textarea>
+		<label for="beskrivelse">Overordnet beskrivelse av innholdet som er migrert (fritekst)</label>
+		<textarea name="beskrivelse" id="beskrivelse" class="form-control" rows="4">{{ overforing.beskrivelse|default_if_none:'' }}</textarea>
+	</div>
+	<div class="form-group">
+		<label for="henvisning_dokumentasjon">Henvisning til hvor man kan finne dokumentasjon på mappingregler og valg man har tatt i forbindelse med migreringen</label>
+		<textarea name="henvisning_dokumentasjon" id="henvisning_dokumentasjon" class="form-control" rows="4">{{ overforing.henvisning_dokumentasjon|default_if_none:'' }}</textarea>
 	</div>
 	<button type="submit" class="btn btn-primary btn-sm">Lagre</button>
 	<a href="{{ back_link }}" class="btn btn-link btn-sm">Avbryt</a>

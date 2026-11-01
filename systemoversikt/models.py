@@ -10,6 +10,7 @@
 # 2026-10-15: SystemBruk.kommentar verbose_name «Kommentar til bruken» (was Innhold); API key unchanged.
 # 2026-09-15: SystemBruk.kommentar (Innhold) help text – virksomhet-specific use beyond systemeier approval.
 # 2026-09-15: SystemBruk.systemeier_kontaktpersoner_referanse display “Lokal informasjonseier (person)” (field name unchanged).
+# 2026-11-01: ArkivOverforing – content production period, beskrivelse/henvisning, optional SystemBruk, avsender_system.
 # 2026-09-15: ArkivOverforing – archive transfer from SystemBruk to destination System (per virksomhet usage).
 # 2026-09-14: System.produksjonsformater – multi-select archive production formats (PDF, JPG, DOCX).
 # 2026-09-14: System.er_arkiv label “Godkjent som elektronisk arkiv?”; dato_godkjent_elektronisk_arkiv.
@@ -5006,6 +5007,8 @@ LIVSLOEP_VALG = (
 
 # Livsløp 6–7: no longer in use (still selectable). Status 1 is "not yet in use" (see er_ibruk).
 LIVSLOP_UTE_AV_BRUK = (6, 7)
+# 2026-11-01: Livsløp 5–7 – planned/decommissioned; used for missing-migration warning on systemdetaljer.
+LIVSLOP_PLANLAGT_ELLER_NEDLAGT = (5, 6, 7)
 
 SELVBETJENING_VALG = (
 	(1, 'Ja'),
@@ -5647,6 +5650,7 @@ class SystemIntegration(models.Model):
 
 # 2026-09-15: Per-virksomhet archive transfer (SystemBruk → System), managed from systemdetaljer.
 class ArkivOverforing(models.Model):
+	# 2026-11-01: System-level or optional per-virksomhet migration; content period + two text fields.
 	opprettet = models.DateTimeField(
 			verbose_name="Opprettet",
 			auto_now_add=True,
@@ -5656,13 +5660,22 @@ class ArkivOverforing(models.Model):
 			verbose_name="Sist oppdatert",
 			auto_now=True,
 			)
+	avsender_system = models.ForeignKey(
+			to='System',
+			related_name='arkivoverforinger_som_avsender_system',
+			on_delete=models.CASCADE,
+			verbose_name="Avsendersystem",
+			blank=False,
+			null=False,
+			)
 	avsender_bruk = models.ForeignKey(
 			to='SystemBruk',
 			related_name='arkivoverforinger_som_avsender',
 			on_delete=models.CASCADE,
 			verbose_name="Avsender (systembruk)",
-			blank=False,
-			null=False,
+			blank=True,
+			null=True,
+			help_text="Valgfri. Tom = migreringen gjelder hele systemet.",
 			)
 	mottaker_system = models.ForeignKey(
 			to='System',
@@ -5673,25 +5686,47 @@ class ArkivOverforing(models.Model):
 			null=False,
 			)
 	dato_start = models.DateField(
-			verbose_name="Dato start overføring",
+			verbose_name="Dato for når informasjonsinnholdet er produsert (fra)",
 			blank=True,
 			null=True,
 			)
 	dato_avsluttet = models.DateField(
-			verbose_name="Dato overføring avsluttet",
+			verbose_name="Dato for når informasjonsinnholdet er produsert (til)",
 			blank=True,
 			null=True,
 			)
-	kommentar = models.TextField(
-			verbose_name="Kommentar",
+	beskrivelse = models.TextField(
+			verbose_name="Overordnet beskrivelse av innholdet som er migrert",
 			blank=True,
 			null=True,
-			help_text="Beskrivelse av hva som er overført.",
+			)
+	henvisning_dokumentasjon = models.TextField(
+			verbose_name="Henvisning til dokumentasjon på mappingregler og valg",
+			blank=True,
+			null=True,
+			help_text="Henvisning til sak i virksomhetens sakarkiv (ikke kun en lenke).",
 			)
 	history = HistoricalRecords()
 
+	def clean(self):
+		super().clean()
+		if self.avsender_bruk_id and self.avsender_system_id:
+			if self.avsender_bruk.system_id != self.avsender_system_id:
+				raise ValidationError(
+					{'avsender_bruk': 'Virksomhetsbruken må tilhøre avsendersystemet.'}
+				)
+
+	def save(self, *args, **kwargs):
+		if self.avsender_bruk_id and not self.avsender_system_id:
+			self.avsender_system_id = self.avsender_bruk.system_id
+		super().save(*args, **kwargs)
+
 	def __str__(self):
-		return f'Arkivoverføring fra {self.avsender_bruk} til {self.mottaker_system}'
+		virk = (
+			self.avsender_bruk.brukergruppe.virksomhetsforkortelse
+			if self.avsender_bruk_id else 'hele systemet'
+		)
+		return f'Arkivoverføring fra {self.avsender_system} ({virk}) til {self.mottaker_system}'
 
 	class Meta:
 		verbose_name_plural = "Systemoversikt: Arkivoverføringer"
@@ -5699,7 +5734,13 @@ class ArkivOverforing(models.Model):
 		default_permissions = ('add', 'change', 'delete', 'view')
 		constraints = [
 			models.UniqueConstraint(
+				fields=['avsender_system', 'mottaker_system'],
+				condition=Q(avsender_bruk__isnull=True),
+				name='unique_arkivoverforing_system_mottaker',
+			),
+			models.UniqueConstraint(
 				fields=['avsender_bruk', 'mottaker_system'],
+				condition=Q(avsender_bruk__isnull=False),
 				name='unique_arkivoverforing_bruk_mottaker',
 			),
 		]

@@ -511,7 +511,8 @@
 
 	<div class="col-lg-5">
 		<section class="sb-seksjon">
-			<h3 class="sb-seksjon-tittel" id="anchor_arkivoverforing">Arkivoverføringer</h3>
+			{# 2026-11-01: Show bruk-specific and system-level migrations; content period fields. #}
+			<h3 class="sb-seksjon-tittel" id="anchor_arkivoverforing">Migrert informasjonsinnhold</h3>
 			<div class="sb-underblokk">
 				{% if arkivoverforinger %}
 				<div class="table-responsive">
@@ -519,9 +520,11 @@
 						<thead>
 							<tr>
 								<th>Mottakersystem</th>
-								<th>Dato start</th>
-								<th>Dato avsluttet</th>
-								<th>Kommentar</th>
+								<th>Omfang</th>
+								<th>Innhold produsert fra</th>
+								<th>Innhold produsert til</th>
+								<th>Beskrivelse</th>
+								<th>Henvisning</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -531,16 +534,24 @@
 									{% url "systemdetaljer" o.mottaker_system.pk as url_mottaker %}
 									<a href="{{ url_mottaker }}">{{ o.mottaker_system.systemnavn }}</a>
 								</td>
+								<td>
+									{% if o.avsender_bruk_id %}
+									Denne virksomheten
+									{% else %}
+									Hele systemet
+									{% endif %}
+								</td>
 								<td>{{ o.dato_start|date:"Y-m-d"|default:"-" }}</td>
 								<td>{{ o.dato_avsluttet|date:"Y-m-d"|default:"-" }}</td>
-								<td>{{ o.kommentar|linebreaks|default:"-" }}</td>
+								<td>{{ o.beskrivelse|linebreaks|default:"-" }}</td>
+								<td>{{ o.henvisning_dokumentasjon|linebreaks|default:"-" }}</td>
 							</tr>
 							{% endfor %}
 						</tbody>
 					</table>
 				</div>
 				{% else %}
-				<p class="text-muted">Ingen arkivoverføringer er registrert for denne systembruken.</p>
+				<p class="text-muted">Ingen migreringer er registrert for denne systembruken.</p>
 				{% endif %}
 				<p class="mb-0">
 					{% url "systemdetaljer" bruk.system.pk as url_system %}

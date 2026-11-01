@@ -1,27 +1,30 @@
+{# 2026-11-01: Generic motpart system search (mottaker or avsender depending on retning). #}
 {# 2026-09-15: Dynamic mottakersystem search; label includes forvalter + livsløp. #}
-<div class="form-group" id="mottaker-system-sok-wrap">
-	<label for="mottaker_system_sok">Mottakersystem</label>
-	<input type="hidden" name="mottaker_system" id="mottaker_system" value="{{ mottaker_initial_id }}">
+<div class="form-group" id="motpart-system-sok-wrap">
+	<label for="motpart_system_sok">{{ motpart_label|default:"Mottakersystem" }}</label>
+	<input type="hidden" name="motpart_system" id="motpart_system" value="{{ motpart_initial_id }}">
 	<input
 		type="search"
-		id="mottaker_system_sok"
+		id="motpart_system_sok"
 		class="form-control"
 		placeholder="Søk etter systemnavn…"
 		autocomplete="off"
-		value="{{ mottaker_initial_label }}"
+		value="{{ motpart_initial_label }}"
 	>
-	<div id="mottaker_system_sok_treff" class="small mt-1"></div>
+	<div id="motpart_system_sok_treff" class="small mt-1"></div>
 	<small class="form-text text-muted">Skriv minst to tegn for å søke. Treff viser forvaltervirksomhet og livsløp.</small>
 </div>
-{{ mottaker_sok_url|json_script:"mottaker-sok-url" }}
-{{ mottaker_exclude_pk|default_if_none:""|json_script:"mottaker-sok-exclude" }}
+{{ motpart_sok_url|json_script:"motpart-sok-url" }}
+{{ motpart_exclude_pk|default_if_none:""|json_script:"motpart-sok-exclude" }}
+{{ motpart_required_msg|default:"Du må velge system fra søketreffene."|json_script:"motpart-required-msg" }}
 <script type="text/javascript" nonce="{{ request.csp_nonce }}">
 (function () {
-	var searchUrl = JSON.parse(document.getElementById('mottaker-sok-url').textContent);
-	var excludePk = JSON.parse(document.getElementById('mottaker-sok-exclude').textContent);
-	var hidden = document.getElementById('mottaker_system');
-	var input = document.getElementById('mottaker_system_sok');
-	var treff = document.getElementById('mottaker_system_sok_treff');
+	var searchUrl = JSON.parse(document.getElementById('motpart-sok-url').textContent);
+	var excludePk = JSON.parse(document.getElementById('motpart-sok-exclude').textContent);
+	var requiredMsg = JSON.parse(document.getElementById('motpart-required-msg').textContent);
+	var hidden = document.getElementById('motpart_system');
+	var input = document.getElementById('motpart_system_sok');
+	var treff = document.getElementById('motpart_system_sok_treff');
 	var timer = null;
 	var selectedLabel = input.value || '';
 
@@ -29,6 +32,7 @@
 		if (input.value !== selectedLabel) {
 			hidden.value = '';
 			selectedLabel = '';
+			document.dispatchEvent(new CustomEvent('arkivoverforing-motpart-cleared'));
 		}
 	}
 
@@ -37,6 +41,9 @@
 		selectedLabel = label;
 		input.value = label;
 		treff.innerHTML = '';
+		document.dispatchEvent(new CustomEvent('arkivoverforing-motpart-selected', {
+			detail: { id: id, label: label }
+		}));
 	}
 
 	function renderResults(results) {
@@ -92,7 +99,7 @@
 		form.addEventListener('submit', function (e) {
 			if (!hidden.value) {
 				e.preventDefault();
-				treff.innerHTML = '<span class="text-danger">Du må velge mottakersystem fra søketreffene.</span>';
+				treff.innerHTML = '<span class="text-danger">' + requiredMsg + '</span>';
 				input.focus();
 			}
 		});
