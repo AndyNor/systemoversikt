@@ -1,52 +1,153 @@
 {% extends "index.html" %}
 {% load templatetags %}
+{# 2026-11-01: Card layout aligned with profil/login welcome – clearer roles, IDA hints, links. #}
+
+{% block ekstrastyle %}
+<style nonce="{{ request.csp_nonce }}">
+.access-denied-card {
+	border-color: #f5c6cb;
+	background: #fff8f8;
+}
+.access-denied-card .card-header {
+	font-weight: 600;
+	background: #f8d7da;
+	border-bottom-color: #f5c6cb;
+}
+.access-denied-meta {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.access-denied-meta li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.35rem 0.75rem;
+	padding: 0.4rem 0;
+	border-bottom: 1px solid #f0e0e0;
+}
+.access-denied-meta li:last-child {
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+.access-denied-meta .access-denied-label {
+	flex: 0 0 8rem;
+	color: #6c757d;
+	font-size: 0.9rem;
+}
+.access-denied-meta .access-denied-value {
+	flex: 1 1 12rem;
+	font-weight: 600;
+}
+.access-denied-hint {
+	font-size: 0.92rem;
+	color: #495057;
+}
+.access-denied-list {
+	margin-bottom: 0;
+	padding-left: 1.2rem;
+}
+.access-denied-list li {
+	margin-bottom: 0.25rem;
+}
+.access-denied-badge {
+	font-weight: 600;
+	margin: 0 0.2rem 0.2rem 0;
+}
+</style>
+{% endblock ekstrastyle %}
 
 {% block main_content %}
 
-	<h4>{% access_denied_icon '25px' %} Denne informasjonen er beskyttet</h4>
+	<div class="card mb-3 access-denied-card">
+		<div class="card-header py-2">
+			{% access_denied_icon '1.1em' %} Denne informasjonen er beskyttet
+		</div>
+		<div class="card-body py-3">
+			{% if not request.user.is_authenticated %}
+				<p class="mb-2">Du er ikke logget inn. Logg på for å se om du har tilgang til denne siden.</p>
+				<p class="mb-0 access-denied-hint">Bruk «Logg inn» ved siden av søkefeltet, eller gå til forsiden for automatisk pålogging.</p>
+			{% else %}
+				<p class="mb-3 access-denied-hint">
+					Du mangler nødvendige tilganger for å se denne siden.
+					Tilgang gis via <b>IDA</b>, eller automatisk når du er registrert som forvalter/systemeier
+					eller i en rolle knyttet til IKT, sikkerhet eller personvern.
+				</p>
 
-	{% if not request.user.is_authenticated %}
-		<p>Du er ikke logget inn. Fint om du logger på, så skal vi se om du har tilgang til dette!</p>
+				<ul class="access-denied-meta mb-3">
+					<li>
+						<span class="access-denied-label">Innlogget som</span>
+						<span class="access-denied-value">
+							{{ request.user.first_name }} {{ request.user.last_name }}
+							<span class="text-muted font-weight-normal">({{ request.user.username }})</span>
+						</span>
+					</li>
+					<li>
+						<span class="access-denied-label">Representerer</span>
+						<span class="access-denied-value">
+							{{ request.user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}
+						</span>
+					</li>
+					<li>
+						<span class="access-denied-label">Dine roller</span>
+						<span class="access-denied-value">
+							{% if current_roles %}
+								{% for role in current_roles %}
+									<span class="badge badge-light border access-denied-badge">{{ role }}</span>
+								{% endfor %}
+							{% else %}
+								<span class="text-muted font-weight-normal">Ingen spesielle tilgangsroller</span>
+							{% endif %}
+						</span>
+					</li>
+				</ul>
 
-	{% else %}
+				{% if required_permissions %}
+					<p class="mb-1"><b>Hvilke IDA-/AD-grupper gir tilgang?</b></p>
+					<ul class="access-denied-list mb-3">
+						{% for p in required_permissions %}
+							{% group_from_permission p as needed_groups %}
+							{% for g in needed_groups %}
+								<li>{{ g }}</li>
+							{% empty %}
+								<li class="text-muted">Ingen gruppe funnet for <code>{{ p }}</code></li>
+							{% endfor %}
+						{% endfor %}
+					</ul>
+				{% endif %}
 
-		<p><i>Du mangler nødvendige tilganger for å se denne siden.<br>
-		Tilgangsstyring skjer enten via IDA, eller ved at en virskomhetsadministrator har angitt deg som forvalter på et system eller angitt deg i en rolle knyttet til IKT, sikkerhet eller personvern.</i></p>
+				<p class="mb-0">
+					<a href="{% url 'minside' %}" class="btn btn-sm btn-link pl-0">Min pålogging</a>
+					<span class="text-muted">·</span>
+					<a href="{% url 'roller' %}" class="btn btn-sm btn-link">Tilgangsstyring og roller</a>
+				</p>
+			{% endif %}
+		</div>
+	</div>
 
-		{% for p in required_permissions %}
-			{% group_from_permission p as groups %}
-			{% for g in groups %}
-				<li>{{ g }}</li>
-			{% endfor %}
-		{% endfor %}
+	{% if request.user.is_authenticated %}
+	<div class="card mb-0">
+		<div class="card-header py-2" style="background: #f8f9fa; font-weight: 600;">Tekniske detaljer</div>
+		<div class="card-body py-3">
+			{% if required_permissions %}
+				<p class="mb-1 access-denied-hint"><b>Manglende rettigheter</b></p>
+				<ul class="access-denied-list mb-3">
+					{% for p in required_permissions %}
+						<li><code>{{ p }}</code></li>
+					{% endfor %}
+				</ul>
+			{% endif %}
 
-		<br>
-
-		Se <a href="{% url 'roller' %}">informasjonsside om rettigheter</a> for ytterligere detaljer om hva du trenger av tilganger i IDA.<br>
-
-
-		<hr>
-		{% if required_permissions %}
-			Du manglet følgende rettigheter for å se denne siden:
-				{% for p in required_permissions %}
-				<li>{{ p }}</li>
-				{% endfor %}
-		{% endif %}
-		<hr>
-		{% if groups %}
-			Dette er tilgangene du har:
+			<p class="mb-1 access-denied-hint"><b>Dine gruppemedlemskap</b></p>
+			<ul class="access-denied-list mb-0">
 				{% for group in groups.all %}
-					<li>{{ group }}</li>
+					<li><code>{{ group.name }}</code></li>
 				{% empty %}
-					<li>Ingen</li>
+					<li class="text-muted">Ingen</li>
 				{% endfor %}
-		{% endif %}
-
-
-
+			</ul>
+		</div>
+	</div>
 	{% endif %}
-
-
-
 
 {% endblock %}

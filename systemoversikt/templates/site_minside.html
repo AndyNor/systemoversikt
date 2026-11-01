@@ -1,5 +1,6 @@
 {% extends "admin_index.html" %}
 {# 2026-11-01: Profile layout – cards, Superbruker/Skrivetilgang labels, description column, link to roller. #}
+{# 2026-11-01: Temporary per-role remove for access testing until next login. #}
 
 {% block ekstrastyle %}
 <style nonce="{{ request.csp_nonce }}">
@@ -149,6 +150,10 @@
 				{% if not access_sources_from_login %}
 					<p class="text-muted small mb-2">Kilde er estimert. Logg inn på nytt for eksakt fordeling mellom automatisk tildeling og gruppemedlemskap.</p>
 				{% endif %}
+				<p class="text-muted small mb-2">
+					Du kan fjerne én og én rolle midlertidig for å teste med færre tilganger.
+					Fjerningen gjelder til neste pålogging; du kan ikke legge roller tilbake uten å logge inn på nytt.
+				</p>
 				<div class="table-responsive">
 					<table class="table table-sm table-hover mb-0 minside-table">
 						<thead>
@@ -156,6 +161,7 @@
 								<th>Rolle</th>
 								<th>Beskrivelse</th>
 								<th>Kilde</th>
+								<th>Test</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -169,6 +175,18 @@
 									{% empty %}
 										—
 									{% endfor %}
+								</td>
+								<td>
+									{% if row.can_remove %}
+									<form method="post" action="{% url 'minside' %}" class="mb-0">
+										{% csrf_token %}
+										<input type="hidden" name="action" value="remove_access">
+										<input type="hidden" name="role" value="{{ row.remove_key }}">
+										<button type="submit" class="btn btn-sm btn-outline-secondary">Fjern midlertidig</button>
+									</form>
+									{% else %}
+										—
+									{% endif %}
 								</td>
 							</tr>
 							{% endfor %}

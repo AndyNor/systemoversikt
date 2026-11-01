@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-01: Remove Keycloak backend, lokal_rettighetstest, and dead provider_logout; access testing moves to /admin/profil/.
 # 2026-11-01: Replace per-role login flash messages with one-shot welcome summary (session flag).
 # 2026-11-01: Store access grant sources in session for /admin/profil/ (auto vs gruppemedlemskap, root).
 # 2026-11-01: Commented out login success message about user access details – redundant with other messages.
@@ -8,7 +9,40 @@
 # 2026-08-23: Clear auto-OIDC session flags after successful login so a later logout can auto-login again.
 # 2026-06-21: Removed @vav.oslo email rewrite and oidc-token session storage – legacy debug paths retired.
 # 2026-06-21: Removed OKONOMI_FULLTILGANG from OIDC group mapping – UBW module retired.
-import unicodedata
+#
+# følgende tilgangsstyring skal her implementeres:
+# CN=DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE,ou=Systemoversikt,ou=Felles,...
+# Gir lesetilgang
+# Gis direkte ved pålogging dersom innlogget bruker har en "ansvarlig"-rolle
+# gis til DIG systemutvikling
+# kan tildeles via IDA.
+#
+# CN=DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER,ou=Systemoversikt,ou=Felles,...
+# gir tilgang til å redigere systemer tilhørende din virksomhet
+# Tildeles automatisk dersom du er systemforvalter eller eier
+# kan ikke tildeles via IDA/PRK
+#
+# CN=DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER,ou=Systemoversikt,ou=Felles,...
+# Gir systemforvaltertilgang + virksomhet + plattformer for alt registrert på din virksomhet
+# settes automatisk ved pålogging for hovedkontakt/ISK/PKO.
+# kan tildeles via IDA
+#
+# CN=DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR,ou=Systemoversikt,ou=Felles,...
+# gir superbruker på tvers av virksomheter
+# kan kun tildeles via IDA
+#
+# CN=DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER,ou=Systemoversikt,ou=Felles,...
+# brukes for å kunne se sårbarheter for alle systemer
+# tildeles via IDA begrenset med autorisasjon
+#
+# CN=DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR,ou=Systemoversikt,ou=Felles,...
+# gir root-tilgang til admingrensesnittet
+# kan kun settes via IDA med autorisasjon
+#
+# redigering av system er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
+# redigering av virksomhet er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
+# redigering av plattform er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
+
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 from .models import Virksomhet, ApplicationLog
 from django.contrib.auth.models import Group
@@ -16,120 +50,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.utils import timezone
 import requests
-import os
 import systemoversikt.settings
 from systemoversikt.views import ldap_users_securitygroups
 import logging
-
-
-#if settings.IDP_PROVIDER == "KEYCLOAK":
-
-#	class CustomOIDCAuthenticationBackend(OIDCAuthenticationBackend):
-#		def filter_users_by_claims(self, claims):
-#			"""Return all users matching the specified username."""
-#			# vi tar vare på claims i tilfelle vi trenger den et annet sted senere.
-#			#messages.info(self.request, 'Prøver å logge inn')
-#			self.request.session['oidc-token'] = claims
-#			#messages.info(self.request, '%s' % claims)
-#			username = claims.get('preferred_username').lower()
-#			message = "Prøver å logge inn %s" % username
-#			ApplicationLog.objects.create(event_type="Brukerpålogging", message=message)
-#			if not username:
-#				return self.UserModel.objects.none()
-#				messages.warning(self.request, 'Du ble logget på uten brukernavn. Innlogging feilet.')
-#			return self.UserModel.objects.filter(username__iexact=username)
-
-#		""" Origos nye ooo-brukere kunne ikke logge på. Grunnen var at de ikke har e-postadresse som denne originalkoden
-#		til verify_claims() sjekket etter. Den blir derfor her overskrevet til å bare sjekke brukernavn.
-#		"""
-#		def verify_claims(self, claims):
-#			"""Verify the provided claims to decide if authentication should be allowed."""
-#			#messages.info(self.request, 'Verifiserer claims')
-#			# Verify claims required by default configuration
-#			scopes = self.get_settings('OIDC_RP_SCOPES', 'openid email')
-#			if 'preferred_username' in scopes.split():
-#				return 'preferred_username' in claims
-#
-#			return True
-#
-#		# https://docs.djangoproject.com/en/2.0/ref/contrib/auth/#django.contrib.auth.models.User.username
-#		# https://mozilla-django-oidc.readthedocs.io/en/stable/installation.html#additional-optional-configuration
-#		def update_user(self, user, claims):
-#			#messages.info(self.request, 'Oppdaterer bruker')
-#			user.is_active = True
-#
-#			user.first_name = claims.get('given_name', '')
-#			user.last_name = claims.get('family_name', '')
-#			user.email = claims.get('email', '')
-#			user.is_staff = True
-#
-#			# sjekke om bruker skal være superbruker
-#			claim_groups = claims.get('groups', '')
-#			superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
-#			if superuser_group in claim_groups:
-#				user.is_superuser = True
-#				messages.warning(self.request, 'Du ble logget på som systemadministrator')
-#				claim_groups.remove(superuser_group)
-#			else:
-#				user.is_superuser = False
-#
-#
-#			#synkronisere gruppetilhørighet (slette alle og legge til på nytt)
-#			current_memberships = user.groups.values_list('name',flat=True)
-#			for existing_group in current_memberships:
-#				g = Group.objects.get(name=existing_group)
-#				g.user_set.remove(user)
-#
-#			for group in claim_groups:
-#				try:
-#					g = Group.objects.get(name=group)
-#					g.user_set.add(user)
-#				except:
-#					#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
-#					pass
-#
-#			# prøve å sette virksomhetstilhørighet
-#			try:
-#				virksomhet_tbf = user.username[0:3].upper()
-#				if user.username[0:5].upper() == "DRIFT": # all usernames are prefixed 3 letters by default in Oslo kommune, except DRIFT
-#					virksomhet_tbf = "DRIFT"
-#
-#				virksomhet_obj_ref = Virksomhet.objects.get(virksomhetsforkortelse=virksomhet_tbf)
-#				user.profile.virksomhet = virksomhet_obj_ref
-#				user.profile.virksomhet_innlogget_som = virksomhet_obj_ref
-#			except:
-#				messages.warning(self.request, 'Fant ikke tilhørende virksomhet %s. Du er derfor ikke knyttet til noen virksomhet.' % virksomhet_tbf)
-#
-#			#user.last_login = timezone.now()
-#			user.save()
-#			messages.success(self.request, 'Du er nå logget på. Trykk på navnet ditt for å få opp mer administrativ informasjon.')
-#			return user
-#
-#		def create_user(self, claims):
-#			"""Return object for a newly created user account.
-#			KeyCloak returns username in lower case. AD-LDAP by default in upper case.
-#			In case of error "Multiple users returned" caused by two user objects, one with upper and one
-#			with lower, make sure all import of usernames is in lowercase!
-#			"""
-#			messages.info(self.request, 'Ny bruker opprettes')
-#			username = claims.get('preferred_username', '').lower()
-#			if username == '':
-#				return None
-#			user = self.UserModel.objects.create_user(username, is_staff=True) # må være staff for å kunne bruker adminpanel
-#			user = self.update_user(user, claims)
-#			return user
-#
-#	def provider_logout(request):
-#		# See your provider's documentation for details on if and how this is
-#		# supported
-#
-#		"""
-#		Kalles av mozilla_django_oidc.OIDCLogoutView via ettings.OIDC_OP_LOGOUT_URL_METHOD som peker hit for å generere en identity provider logout URL.
-#		OIDCLogoutView godtar både post og get, men har bare definert metoden post for utlogging. Ved å sette denne til get fungerer utlogging. Bug?
-#		"""
-#		messages.info(request, 'Starter å logge ut')
-#		redirect_url = settings.OIDC_IDP_URL_BASE + '/auth/realms/'+ settings.OIDC_IDP_REALM +'/protocol/openid-connect/logout?redirect_uri='  + settings.LOGOUT_REDIRECT_URL
-#		return redirect_url
 
 
 logger = logging.getLogger(__name__)
@@ -241,41 +164,6 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			user.email = claims.get('email', '')
 			user.is_staff = True # kreves for å kunne nå django adminportal som brukes for nesten all redigering.
 
-			#følgende tilgangsstyring skal her implementeres:
-			#CN=DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE,ou=Systemoversikt,ou=Felles,...
-			# Gir lesetilgang
-			# Gis direkte ved pålogging dersom innlogget bruker har en "ansvarlig"-rolle
-			# gis til DIG systemutvikling
-			# kan tildeles via IDA.
-
-			#CN=DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER,ou=Systemoversikt,ou=Felles,...
-			# gir tilgang til å redigere systemer tilhørende din virksomhet
-			# Tildeles automatisk dersom du er systemforvalter eller eier
-			# kan ikke tildeles via IDA/PRK
-
-			#CN=DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER,ou=Systemoversikt,ou=Felles,...
-			# Gir systemforvaltertilgang + virksomhet + plattformer for alt registrert på din virksomhet
-			# settes automatisk ved pålogging for hovedkontakt/ISK/PKO.
-			# kan tildeles via IDA
-
-			#CN=DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR,ou=Systemoversikt,ou=Felles,...
-			# gir superbruker på tvers av virksomheter
-			# kan kun tildeles via IDA
-
-			#CN=DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER,ou=Systemoversikt,ou=Felles,...
-			# brukes for å kunne se sårbarheter for alle systemer
-			# tildeles via IDA begrenset med autorisasjon
-
-			#CN=DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR,ou=Systemoversikt,ou=Felles,...
-			# gir root-tilgang til admingrensesnittet
-			# kan kun settes via IDA med autorisasjon
-
-
-			# endre slik at redigering av system er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
-			# endre slik at redigering av virksomhet er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
-			# endre slik at redigering av plattform er begrenset til virksomhet utenom for DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR og superuser
-
-
 			claim_groups = []
 			# 2026-08-23: Do not wipe Django groups when AD/Entra lookup fails (SessionRefresh / re-login).
 			group_lookup_ok = False
@@ -322,138 +210,87 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					if reason not in reasons:
 						reasons.append(reason)
 
-				lokal_rettighetstest = False  # denne skal normalt stå til False når testing ikke pågår lokalt
-				lokal_rolle = "lese" # velg mellom "ingen", "lese", "systemforvalter", "virksomhetsforvalter", "superbruker", "sikkerhetsanalytiker" og "root"
-				if os.environ['THIS_ENV'] == "TEST" and lokal_rettighetstest:
-					messages.warning(self.request, 'Rettigheter er manuelt styrt for testformål')
-
-					if lokal_rolle == "ingen":
-						pass # ingen behov for endringer
-
-					if lokal_rolle == "lese":
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
-						_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Manuelt for test")
-
-					if lokal_rolle == "systemforvalter":
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
-						_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Manuelt for test")
-						_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Manuelt for test")
-
-					if lokal_rolle == "virksomhetsforvalter":
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER").user_set.add(user)
-						_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Manuelt for test")
-						_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Manuelt for test")
-						_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER", "Manuelt for test")
-
-					if lokal_rolle == "superbruker":
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR").user_set.add(user)
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER").user_set.add(user)
-						_record_access("/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR", "Manuelt for test")
-						_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Manuelt for test")
-						_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Manuelt for test")
-						_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER", "Manuelt for test")
-
-					if lokal_rolle == "sikkerhetsanalytiker":
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER").user_set.add(user)
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE").user_set.add(user)
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER").user_set.add(user)
-						Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER").user_set.add(user)
-						_record_access("/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER", "Manuelt for test")
-						_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Manuelt for test")
-						_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Manuelt for test")
-						_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER", "Manuelt for test")
-
-					if lokal_rolle == "root":
-						user.is_superuser = True
-
-				else: # normal flyt som alltid skjer i produksjon
-
-					superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
-					if superuser_group in claim_groups:
-						user.is_superuser = True
-						# 2026-11-01: Replaced by login welcome summary on forside/profil.
-						#messages.warning(self.request, 'Du ble logget på som systemadministrator')
-						from systemoversikt.views import push_pushover
-						#push_pushover(f"Bruker {user} logget inn som systemadministrator")
-						claim_groups.remove(superuser_group)
-						_record_access(superuser_group, "Gruppemedlemskap (IDA)")
-					else:
-						user.is_superuser = False
+				superuser_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
+				if superuser_group in claim_groups:
+					user.is_superuser = True
+					# 2026-11-01: Replaced by login welcome summary on forside/profil.
+					#messages.warning(self.request, 'Du ble logget på som systemadministrator')
+					from systemoversikt.views import push_pushover
+					#push_pushover(f"Bruker {user} logget inn som systemadministrator")
+					claim_groups.remove(superuser_group)
+					_record_access(superuser_group, "Gruppemedlemskap (IDA)")
+				else:
+					user.is_superuser = False
 
 
-					# Legge til nye bekreftede rettigheter
-					# først alle tilgangsgrupper som kommer fra AD
-					directly_assignable_groups = [
-						"/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE",
-						"/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER",
-						"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR",
-						"/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER",
-						"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR",
-						"/DS-SYSTEMOVERSIKT_FORVALTER_BEHANDLINGSANSVARLIG", #midlertidig frem til modulen avvikles helt
-					]
+				# Legge til nye bekreftede rettigheter
+				# først alle tilgangsgrupper som kommer fra AD
+				directly_assignable_groups = [
+					"/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE",
+					"/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER",
+					"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR",
+					"/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER",
+					"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR",
+					"/DS-SYSTEMOVERSIKT_FORVALTER_BEHANDLINGSANSVARLIG", #midlertidig frem til modulen avvikles helt
+				]
 
-					for group in claim_groups:
-						if group in directly_assignable_groups:
-							try:
-								g = Group.objects.get(name=group)
-								#messages.info(self.request, 'Rettighet: %s' % g)
-								g.user_set.add(user)
-								_record_access(group, "Gruppemedlemskap (IDA)")
-								if group == "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR" or group == "/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER":
-									# da legger vi også til rettigheter på "lavere" roller
-									ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
-									ansvarlig_group.user_set.add(user)
-									virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
-									virksomhetsrolle_group.user_set.add(user)
-									systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
-									systemforvalter_group.user_set.add(user)
-									_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Via høyere rolle")
-									_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER", "Via høyere rolle")
-									_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Via høyere rolle")
+				for group in claim_groups:
+					if group in directly_assignable_groups:
+						try:
+							g = Group.objects.get(name=group)
+							#messages.info(self.request, 'Rettighet: %s' % g)
+							g.user_set.add(user)
+							_record_access(group, "Gruppemedlemskap (IDA)")
+							if group == "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR" or group == "/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER":
+								# da legger vi også til rettigheter på "lavere" roller
+								ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
+								ansvarlig_group.user_set.add(user)
+								virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
+								virksomhetsrolle_group.user_set.add(user)
+								systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+								systemforvalter_group.user_set.add(user)
+								_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Via høyere rolle")
+								_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER", "Via høyere rolle")
+								_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Via høyere rolle")
 
-								if group == "/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER":
-									systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
-									systemforvalter_group.user_set.add(user)
-									_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Via virksomhetsforvalter-rolle")
-							except:
-								#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
-								pass
+							if group == "/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER":
+								systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+								systemforvalter_group.user_set.add(user)
+								_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Via virksomhetsforvalter-rolle")
+						except:
+							#messages.warning(self.request, 'Gruppen %s finnes ikke i denne databasen.' % group)
+							pass
 
-					# så grupper sluttbruker skal tildeles automatisk
-					from systemoversikt.views import auth_er_ansvarlig, auth_er_systemforvalter, auth_er_virksomhetsrolle
-					er_ansvarlig = auth_er_ansvarlig(user)
-					er_dig = ("/DS-ROLLEGRUPPER_UKEAOS_ANSATTELLERKONSULENT" in claim_groups) or ("/24055" in claim_groups)
-					if er_ansvarlig or er_dig: # Utviklere og driftlev
-						ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
-						ansvarlig_group.user_set.add(user)
-						# 2026-11-01: Replaced by login welcome summary on forside/profil.
-						#messages.info(self.request, 'Du ble automatisk tildelt leserettigheter')
-						if er_ansvarlig:
-							_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Automatisk (registrert som ansvarlig)")
-						if er_dig:
-							_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Automatisk (DIG systemutvikling)")
+				# så grupper sluttbruker skal tildeles automatisk
+				from systemoversikt.views import auth_er_ansvarlig, auth_er_systemforvalter, auth_er_virksomhetsrolle
+				er_ansvarlig = auth_er_ansvarlig(user)
+				er_dig = ("/DS-ROLLEGRUPPER_UKEAOS_ANSATTELLERKONSULENT" in claim_groups) or ("/24055" in claim_groups)
+				if er_ansvarlig or er_dig: # Utviklere og driftlev
+					ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
+					ansvarlig_group.user_set.add(user)
+					# 2026-11-01: Replaced by login welcome summary on forside/profil.
+					#messages.info(self.request, 'Du ble automatisk tildelt leserettigheter')
+					if er_ansvarlig:
+						_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Automatisk (registrert som ansvarlig)")
+					if er_dig:
+						_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Automatisk (DIG systemutvikling)")
 
-					if auth_er_systemforvalter(user):
-						systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
-						systemforvalter_group.user_set.add(user)
-						# 2026-11-01: Replaced by login welcome summary on forside/profil.
-						#messages.info(self.request, 'Du ble automatisk tildelt systemforvalter-tilgang')
-						_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Automatisk (systemforvalter/systemeier)")
+				if auth_er_systemforvalter(user):
+					systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+					systemforvalter_group.user_set.add(user)
+					# 2026-11-01: Replaced by login welcome summary on forside/profil.
+					#messages.info(self.request, 'Du ble automatisk tildelt systemforvalter-tilgang')
+					_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Automatisk (systemforvalter/systemeier)")
 
-					if auth_er_virksomhetsrolle(user):
-						virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
-						virksomhetsrolle_group.user_set.add(user)
-						systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
-						systemforvalter_group.user_set.add(user)
-						# 2026-11-01: Replaced by login welcome summary on forside/profil.
-						#messages.info(self.request, 'Du ble automatisk tildelt virksomhetstilganger')
-						_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER", "Automatisk (IKT-kontakt/ISK/PKO)")
-						_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Via virksomhetsforvalter-rolle")
+				if auth_er_virksomhetsrolle(user):
+					virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
+					virksomhetsrolle_group.user_set.add(user)
+					systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+					systemforvalter_group.user_set.add(user)
+					# 2026-11-01: Replaced by login welcome summary on forside/profil.
+					#messages.info(self.request, 'Du ble automatisk tildelt virksomhetstilganger')
+					_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER", "Automatisk (IKT-kontakt/ISK/PKO)")
+					_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Via virksomhetsforvalter-rolle")
 
 				# 2026-11-01: Persist grant sources for the profile page (lost when group lookup fails above).
 				self.request.session['kartotek_access_sources'] = access_sources
@@ -488,12 +325,3 @@ if settings.IDP_PROVIDER == "AZUREAD":
 			clear_auto_oidc_session_flags(self.request)
 
 			return user
-
-
-
-	def provider_logout(request):
-		# Kan kalles av mozilla_django_oidc.OIDCLogoutView via settings.OIDC_OP_LOGOUT_URL_METHOD
-		#OIDCLogoutView godtar både post og get, men har bare definert metoden post for utlogging. Ved å sette denne til get fungerer utlogging. Bug?
-		messages.info(request, 'Starter å logge ut')
-		redirect_url = settings.OIDC_IDP_URL_BASE + '/auth/realms/'+ settings.OIDC_IDP_REALM +'/protocol/openid-connect/logout?redirect_uri='  + settings.LOGOUT_REDIRECT_URL
-		return redirect_url

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-01: Access denied context includes friendly role labels for redesigned 403 page.
 # 2026-08-23: Set attempted flag only on OIDC failure; avoid blocking successful deep-link login.
 # 2026-08-23: Auto-start OIDC for anonymous users on home/access-denied; restore next on failure.
 """Helpers for automatic OIDC login with anonymous fallback after a failed attempt."""
@@ -68,12 +69,18 @@ def render_access_denied(request, required_permissions):
 	oidc_redirect = maybe_redirect_anonymous_to_oidc(request)
 	if oidc_redirect is not None:
 		return oidc_redirect
+	# 2026-11-01: Friendly role summary for the redesigned 403 page.
+	current_roles = []
+	if request.user.is_authenticated:
+		from systemoversikt.views import build_login_welcome_summary
+		current_roles = build_login_welcome_summary(request.user).get("roles") or []
 	return render(
 		request,
 		"403.html",
 		{
 			"required_permissions": required_permissions,
 			"groups": request.user.groups,
+			"current_roles": current_roles,
 		},
 	)
 

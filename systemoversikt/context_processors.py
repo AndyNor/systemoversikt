@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-01: Removed OIDC_IDP_URL_BASE/REALM from template context (Keycloak leftovers).
 # 2026-11-01: login_welcome – one-shot post-login summary box (replaces per-role flash messages).
 from django.conf import settings
 
 def global_settings(request):
 	# return only necessary values
 	return {
-		'OIDC_IDP_URL_BASE': settings.OIDC_IDP_URL_BASE,
-		'OIDC_IDP_REALM': settings.OIDC_IDP_REALM,
 		'DEBUG': settings.DEBUG,
 		'TEST_ENV_NAME': settings.TEST_ENV_NAME,
 

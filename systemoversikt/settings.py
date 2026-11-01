@@ -259,8 +259,7 @@ if THIS_ENVIRONMENT == "PROD":
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
 	OIDC_RP_SCOPES = "openid"
-	OIDC_IDP_URL_BASE = ""
-	OIDC_IDP_REALM = ""
+	# 2026-11-01: Removed empty OIDC_IDP_URL_BASE/REALM (Keycloak leftovers).
 	OIDC_OP_JWKS_ENDPOINT = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
 	OIDC_RP_CLIENT_ID = os.environ['AZURE_AUTH_CLIENT']
 	OIDC_RP_CLIENT_SECRET = os.environ['AZURE_AUTH_SECRET']
@@ -292,8 +291,7 @@ if THIS_ENVIRONMENT == "TEST":
 	OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS = 900
 	OIDC_RP_SIGN_ALGO = "RS256"
 	OIDC_RP_SCOPES = "openid"
-	OIDC_IDP_URL_BASE = ""
-	OIDC_IDP_REALM = ""
+	# 2026-11-01: Removed empty OIDC_IDP_URL_BASE/REALM (Keycloak leftovers).
 	OIDC_OP_JWKS_ENDPOINT = "https://login.microsoftonline.com/common/discovery/v2.0/keys"
 	OIDC_RP_CLIENT_ID = os.environ['AZURE_AUTH_CLIENT']
 	OIDC_RP_CLIENT_SECRET = os.environ['AZURE_AUTH_SECRET']

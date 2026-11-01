@@ -590,13 +590,74 @@ def minside_access_rows(user, session_sources=None):
 		if not label:
 			label = name[19:] if name.startswith("/DS-SYSTEMOVERSIKT_") else name
 			label = label.replace("_", " ").lower().capitalize()
+		# 2026-11-01: Root posts as "root"; other roles post their Django group name.
+		remove_key = (
+			"root"
+			if name == "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
+			else name
+		)
 		rows.append({
 			"name": name,
 			"label": label,
 			"description": KARTOTEK_ACCESS_GROUP_DESCRIPTIONS.get(name, ""),
 			"sources": sources,
+			"remove_key": remove_key,
+			"can_remove": name in KARTOTEK_ACCESS_GROUP_LABELS,
 		})
 	return rows
+
+
+def _clear_user_perm_cache(user):
+	# 2026-11-01: Drop cached permissions after temporary role strip on /admin/profil/.
+	for attr in ('_perm_cache', '_user_perm_cache', '_group_perm_cache', '_user_permissions_cache'):
+		if hasattr(user, attr):
+			delattr(user, attr)
+
+
+def remove_own_access_role(user, role_key, session=None):
+	"""
+	2026-11-01: Temporarily strip one of the current user's Kartotek roles (privilege reduction only).
+	Restored on next successful OIDC login. Never grants access.
+	Returns (ok, label).
+	"""
+	from django.contrib.auth.models import Group
+
+	root_group = "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"
+
+	def _drop_session_source(group_name):
+		if session is None:
+			return
+		sources = session.get('kartotek_access_sources')
+		if not isinstance(sources, dict) or group_name not in sources:
+			return
+		sources = dict(sources)
+		sources.pop(group_name, None)
+		session['kartotek_access_sources'] = sources
+
+	if role_key in ("root", root_group):
+		changed = False
+		if user.is_superuser:
+			user.is_superuser = False
+			user.save(update_fields=['is_superuser'])
+			changed = True
+		if user.groups.filter(name=root_group).exists():
+			Group.objects.get(name=root_group).user_set.remove(user)
+			changed = True
+		if not changed:
+			return False, None
+		_drop_session_source(root_group)
+		_clear_user_perm_cache(user)
+		return True, KARTOTEK_ACCESS_GROUP_LABELS.get(root_group, "Root")
+
+	if role_key not in KARTOTEK_ACCESS_GROUP_LABELS:
+		return False, None
+	if not user.groups.filter(name=role_key).exists():
+		return False, None
+
+	Group.objects.get(name=role_key).user_set.remove(user)
+	_drop_session_source(role_key)
+	_clear_user_perm_cache(user)
+	return True, KARTOTEK_ACCESS_GROUP_LABELS[role_key]
 
 
 def user_can_change_virksomhet(user, virksomhet):
@@ -5906,20 +5967,41 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 def minside(request):
 	# 2026-06-21: Removed oidc-token session lookup – profile page uses request.user only.
 	# 2026-11-01: Show root (is_superuser) and whether each role came from IDA or automatic grant.
+	# 2026-11-01: POST remove_access – temporarily strip own role until next OIDC login (testing).
 	#Når innlogget, vise informasjon om innlogget bruker
 	required_permissions = None
 
-	if request.user.is_authenticated:
-		session_sources = request.session.get('kartotek_access_sources')
-		return render(request, 'site_minside.html', {
-			'request': request,
-			'required_permissions': formater_permissions(required_permissions),
-			'is_root': request.user.is_superuser,
-			'access_rows': minside_access_rows(request.user, session_sources),
-			'access_sources_from_login': bool(session_sources),
-		})
-	else:
+	if not request.user.is_authenticated:
 		return redirect("/")
+
+	if request.method == "POST" and request.POST.get("action") == "remove_access":
+		role_key = (request.POST.get("role") or "").strip()
+		ok, label = remove_own_access_role(request.user, role_key, session=request.session)
+		if ok:
+			ApplicationLog.objects.create(
+				event_type="Tilgangstest",
+				message="%s fjernet midlertidig rolle %s (%s)" % (
+					request.user.username,
+					label or role_key,
+					role_key,
+				),
+			)
+			messages.success(
+				request,
+				'Rollen «%s» er fjernet midlertidig. Logg inn på nytt for å få den tilbake.' % (label or role_key),
+			)
+		else:
+			messages.warning(request, 'Kunne ikke fjerne rollen. Den mangler eller er ikke tillatt å fjerne.')
+		return redirect(reverse('minside'))
+
+	session_sources = request.session.get('kartotek_access_sources')
+	return render(request, 'site_minside.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'is_root': request.user.is_superuser,
+		'access_rows': minside_access_rows(request.user, session_sources),
+		'access_sources_from_login': bool(session_sources),
+	})
 
 
 
