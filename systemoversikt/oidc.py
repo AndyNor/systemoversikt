@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-01: Sikkerhetsanalytiker cascades to systemforvalter+lese, not virksomhetsforvalter; only wipe Kartotek Django groups on login.
 # 2026-11-01: Remove Keycloak backend, lokal_rettighetstest, and dead provider_logout; access testing moves to /admin/profil/.
 # 2026-11-01: Replace per-role login flash messages with one-shot welcome summary (session flag).
 # 2026-11-01: Store access grant sources in session for /admin/profil/ (auto vs gruppemedlemskap, root).
@@ -33,6 +34,7 @@
 #
 # CN=DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER,ou=Systemoversikt,ou=Felles,...
 # brukes for å kunne se sårbarheter for alle systemer
+# arver lesetilgang + systemforvalter (ikke virksomhetsforvalter)
 # tildeles via IDA begrenset med autorisasjon
 #
 # CN=DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR,ou=Systemoversikt,ou=Felles,...
@@ -194,9 +196,12 @@ if settings.IDP_PROVIDER == "AZUREAD":
 					'Kunne ikke oppdatere tilganger fra katalog. Eksisterende tilganger er beholdt.',
 				)
 			else:
-				# Slette alle eksisterende rettigheter
-				current_memberships = user.groups.values_list('name', flat=True)
+				# 2026-11-01: Only clear Kartotek access groups – leave unrelated Django groups intact.
+				kartotek_prefix = "/DS-SYSTEMOVERSIKT_"
+				current_memberships = list(user.groups.values_list('name', flat=True))
 				for existing_group in current_memberships:
+					if not existing_group.startswith(kartotek_prefix):
+						continue
 					g = Group.objects.get(name=existing_group)
 					g.user_set.remove(user)
 				user.is_superuser = False
@@ -239,8 +244,8 @@ if settings.IDP_PROVIDER == "AZUREAD":
 							#messages.info(self.request, 'Rettighet: %s' % g)
 							g.user_set.add(user)
 							_record_access(group, "Gruppemedlemskap (IDA)")
-							if group == "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR" or group == "/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER":
-								# da legger vi også til rettigheter på "lavere" roller
+							# 2026-11-01: Root cascade includes virksomhetsforvalter; sikkerhetsanalytiker gets systemforvalter only.
+							if group == "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR":
 								ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
 								ansvarlig_group.user_set.add(user)
 								virksomhetsrolle_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER")
@@ -249,6 +254,14 @@ if settings.IDP_PROVIDER == "AZUREAD":
 								systemforvalter_group.user_set.add(user)
 								_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Via høyere rolle")
 								_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER", "Via høyere rolle")
+								_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Via høyere rolle")
+
+							if group == "/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER":
+								ansvarlig_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE")
+								ansvarlig_group.user_set.add(user)
+								systemforvalter_group = Group.objects.get(name="/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER")
+								systemforvalter_group.user_set.add(user)
+								_record_access("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", "Via høyere rolle")
 								_record_access("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", "Via høyere rolle")
 
 							if group == "/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER":

@@ -468,6 +468,7 @@ def auth_er_virksomhetsrolle(user):
 
 # 2026-11-01: Friendly labels/descriptions for Kartotek access groups on /admin/profil/.
 # Superbruker = cross-virksomhet admin; Skrivetilgang = virksomhet-scoped write; Root = is_superuser.
+# 2026-11-01: Sikkerhetsanalytiker description – also systemforvalter, not virksomhetsforvalter (OIDC cascade).
 KARTOTEK_ACCESS_GROUP_LABELS = {
 	"/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE": "Lesetilgang",
 	"/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER": "Skrivetilgang",
@@ -488,7 +489,7 @@ KARTOTEK_ACCESS_GROUP_DESCRIPTIONS = {
 	"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR":
 		"Redigere systemer, plattformer og virksomheter på tvers av alle virksomheter.",
 	"/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER":
-		"Se sårbarheter for alle systemer.",
+		"Se sårbarheter for alle systemer; arver lesetilgang og systemforvalter (ikke virksomhetsforvalter).",
 	"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR":
 		"Full tilgang til alt i Kartoteket, inkludert systemtabeller.",
 	"/DS-SYSTEMOVERSIKT_FORVALTER_BEHANDLINGSANSVARLIG":
