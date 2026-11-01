@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-01: Elektronisk arkiv (gamle felt) – system sidemeny under Rapporter (moved from Verktøy).
 # 2026-10-13: Rename Tiltak nav search label to Risikotiltak.
 # 2026-10-13: Tiltak and Tiltaksunntak nav search – matches sikkerhet sidemeny under Risikovurderinger.
 # 2026-09-29: Rename ukjente_identer search label to "Avvikende brukernavn i OK" – report now filters on OU=OK and username format.
@@ -100,6 +101,10 @@ NAV_PAGES = [
 	_entry(
 		'OKA-klassifikasjon', 'oka_oversikt', 'System',
 		['oka', 'oka-klassifikasjon', 'informasjonskategorier', 'arkivnøkkel', 'arkivnokkel'],
+	),
+	_entry(
+		'Elektronisk arkiv (gamle felt)', 'tool_elektronisk_arkiv_godkjenninger', 'System',
+		['elektronisk arkiv', 'gamle felt', 'godkjent elektronisk arkiv', 'er_arkiv'],
 	),
 	_entry('Samlede systemvurderinger', 'systemer_vurderinger', 'System', ['systemvurderinger', 'vurderinger samlet']),
 
