@@ -1222,9 +1222,10 @@
 			{% if can_change_system %}
 			<div id="system-eierskap-kontakt-edit" hidden>
 				{% csrf_token %}
+				{# 2026-11-01: Help text – person/seksjon search is cross-virksomhet after ACL change. #}
 				<p class="small text-muted mb-2">
-					Søk virksomhet på forkortelse eller navn. Seksjon søkes innen systemforvalters virksomhet.
-					Personer søkes innen valgt virksomhet. Systemforvalter (virksomhet) er påkrevd.
+					Søk virksomhet, seksjon og personer på tvers av virksomheter (egen virksomhet vises først).
+					Systemforvalter (virksomhet) er påkrevd.
 					Bytter du forvalter til en annen virksomhet enn din egen, mister du redigeringsrettigheten.
 				</p>
 				<div class="system-detalj-eierskap" style="border-top: none; padding-top: 0;">
