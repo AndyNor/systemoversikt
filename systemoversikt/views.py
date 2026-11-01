@@ -466,6 +466,139 @@ def auth_er_virksomhetsrolle(user):
 		return False
 
 
+# 2026-11-01: Friendly labels/descriptions for Kartotek access groups on /admin/profil/.
+# Superbruker = cross-virksomhet admin; Skrivetilgang = virksomhet-scoped write; Root = is_superuser.
+KARTOTEK_ACCESS_GROUP_LABELS = {
+	"/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE": "Lesetilgang",
+	"/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER": "Skrivetilgang",
+	"/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER": "Virksomhetsforvalter",
+	"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR": "Superbruker",
+	"/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER": "Sikkerhetsanalytiker",
+	"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR": "Root",
+	"/DS-SYSTEMOVERSIKT_FORVALTER_BEHANDLINGSANSVARLIG": "Behandlingsansvarlig",
+}
+
+KARTOTEK_ACCESS_GROUP_DESCRIPTIONS = {
+	"/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE":
+		"Lese systemdetaljer, søke brukere/grupper og slå opp CMDB.",
+	"/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER":
+		"Skrive/endre systemer begrenset til din virksomhet.",
+	"/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER":
+		"Endre virksomhet, plattformer og systemer for din virksomhet.",
+	"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR":
+		"Redigere systemer, plattformer og virksomheter på tvers av alle virksomheter.",
+	"/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER":
+		"Se sårbarheter for alle systemer.",
+	"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR":
+		"Full tilgang til alt i Kartoteket, inkludert systemtabeller.",
+	"/DS-SYSTEMOVERSIKT_FORVALTER_BEHANDLINGSANSVARLIG":
+		"Tilgang knyttet til behandlingsansvar (eldre modul).",
+}
+
+
+def build_login_welcome_summary(user):
+	"""
+	2026-11-01: Compact post-login summary (name, username, virksomhet, role labels).
+	"""
+	virksomhet = None
+	try:
+		virksomhet = user.profile.virksomhet_innlogget_som or user.profile.virksomhet
+	except Exception:
+		pass
+	role_labels = []
+	seen = set()
+	if user.is_superuser:
+		label = KARTOTEK_ACCESS_GROUP_LABELS["/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"]
+		role_labels.append(label)
+		seen.add(label)
+	for name in user.groups.values_list('name', flat=True):
+		label = KARTOTEK_ACCESS_GROUP_LABELS.get(name)
+		if not label:
+			continue
+		if label in seen:
+			continue
+		seen.add(label)
+		role_labels.append(label)
+	preferred_order = [
+		"Root",
+		"Superbruker",
+		"Sikkerhetsanalytiker",
+		"Virksomhetsforvalter",
+		"Skrivetilgang",
+		"Lesetilgang",
+		"Behandlingsansvarlig",
+	]
+	role_labels.sort(key=lambda label: (
+		preferred_order.index(label) if label in preferred_order else len(preferred_order),
+		label,
+	))
+	return {
+		'full_name': ('%s %s' % (user.first_name or '', user.last_name or '')).strip() or user.username,
+		'username': user.username,
+		'virksomhet': getattr(virksomhet, 'virksomhetsforkortelse', None) or 'Ukjent',
+		'roles': role_labels,
+	}
+
+
+def minside_access_rows(user, session_sources=None):
+	"""
+	2026-11-01: Build role/source/description rows for /admin/profil/.
+	Prefer sources recorded at login; fall back to inferring automatic eligibility from DB.
+	"""
+	session_sources = session_sources or {}
+	group_names = list(user.groups.values_list('name', flat=True))
+	# Root is is_superuser; SYSTEMADMINISTRATOR is often not kept as a Django group membership.
+	if user.is_superuser and "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR" not in group_names:
+		group_names.append("/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR")
+
+	fallback_auto = {}
+	if not session_sources:
+		if auth_er_ansvarlig(user):
+			fallback_auto.setdefault("/DS-SYSTEMOVERSIKT_BRUKER_KUN_LESE", []).append(
+				"Automatisk (registrert som ansvarlig)"
+			)
+		if auth_er_systemforvalter(user):
+			fallback_auto.setdefault("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", []).append(
+				"Automatisk (systemforvalter/systemeier)"
+			)
+		if auth_er_virksomhetsrolle(user):
+			fallback_auto.setdefault("/DS-SYSTEMOVERSIKT_FORVALTER_VIRKSOMHETER", []).append(
+				"Automatisk (IKT-kontakt/ISK/PKO)"
+			)
+			fallback_auto.setdefault("/DS-SYSTEMOVERSIKT_FORVALTER_SYSTEMFORVALTER", []).append(
+				"Via virksomhetsforvalter-rolle"
+			)
+
+	ida_only = {
+		"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR",
+		"/DS-SYSTEMOVERSIKT_SAARBARHETSOVERSIKT_SIKKERHETSANALYTIKER",
+		"/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR",
+		"/DS-SYSTEMOVERSIKT_FORVALTER_BEHANDLINGSANSVARLIG",
+	}
+
+	rows = []
+	for name in group_names:
+		sources = list(session_sources.get(name) or [])
+		if not sources:
+			sources = list(fallback_auto.get(name) or [])
+		if not sources:
+			if name in ida_only or (user.is_superuser and name == "/DS-SYSTEMOVERSIKT_ADMINISTRATOR_SYSTEMADMINISTRATOR"):
+				sources = ["Gruppemedlemskap (IDA)"]
+			else:
+				sources = ["Ukjent (logg inn på nytt for detaljer)"]
+		label = KARTOTEK_ACCESS_GROUP_LABELS.get(name)
+		if not label:
+			label = name[19:] if name.startswith("/DS-SYSTEMOVERSIKT_") else name
+			label = label.replace("_", " ").lower().capitalize()
+		rows.append({
+			"name": name,
+			"label": label,
+			"description": KARTOTEK_ACCESS_GROUP_DESCRIPTIONS.get(name, ""),
+			"sources": sources,
+		})
+	return rows
+
+
 def user_can_change_virksomhet(user, virksomhet):
 	# 2026-06-08: Mirror VirksomhetAdmin.has_change_permission for front-end virksomhet edits.
 	if not user.is_authenticated:
@@ -5772,13 +5905,18 @@ def virksomhet_sikkerhetsavvik(request, pk=None):
 
 def minside(request):
 	# 2026-06-21: Removed oidc-token session lookup – profile page uses request.user only.
+	# 2026-11-01: Show root (is_superuser) and whether each role came from IDA or automatic grant.
 	#Når innlogget, vise informasjon om innlogget bruker
 	required_permissions = None
 
 	if request.user.is_authenticated:
+		session_sources = request.session.get('kartotek_access_sources')
 		return render(request, 'site_minside.html', {
 			'request': request,
 			'required_permissions': formater_permissions(required_permissions),
+			'is_root': request.user.is_superuser,
+			'access_rows': minside_access_rows(request.user, session_sources),
+			'access_sources_from_login': bool(session_sources),
 		})
 	else:
 		return redirect("/")

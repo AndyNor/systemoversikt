@@ -1,49 +1,199 @@
 {% extends "admin_index.html" %}
+{# 2026-11-01: Profile layout – cards, Superbruker/Skrivetilgang labels, description column, link to roller. #}
+
+{% block ekstrastyle %}
+<style nonce="{{ request.csp_nonce }}">
+.minside-card .card-header {
+	font-weight: 600;
+	background: #f8f9fa;
+}
+.minside-meta {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.minside-meta li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.35rem 0.75rem;
+	padding: 0.45rem 0;
+	border-bottom: 1px solid #eef0f2;
+}
+.minside-meta li:last-child {
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+.minside-meta .minside-label {
+	flex: 0 0 9rem;
+	color: #6c757d;
+	font-size: 0.9rem;
+}
+.minside-meta .minside-value {
+	flex: 1 1 12rem;
+	font-weight: 600;
+}
+.minside-root-yes {
+	color: #856404;
+	background: #fff3cd;
+	border: 1px solid #ffeeba;
+	border-radius: 0.25rem;
+	padding: 0.15rem 0.5rem;
+	font-weight: 600;
+}
+.minside-root-no {
+	color: #495057;
+	font-weight: 600;
+}
+.minside-table th {
+	white-space: nowrap;
+}
+.minside-table td {
+	vertical-align: top;
+}
+.minside-role {
+	font-weight: 600;
+	white-space: nowrap;
+}
+.minside-desc {
+	color: #495057;
+	font-size: 0.92rem;
+}
+.minside-source {
+	font-size: 0.9rem;
+}
+.minside-source-item + .minside-source-item {
+	margin-top: 0.2rem;
+}
+.minside-hint {
+	font-size: 0.85rem;
+	color: #6c757d;
+	margin-top: 0.75rem;
+	margin-bottom: 0;
+}
+.minside-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	align-items: center;
+}
+</style>
+{% endblock ekstrastyle %}
 
 {% block overskrift %}
-	Påloggingsøkt
+	Min pålogging
 {% endblock overskrift %}
 
 {% block hovedinnhold %}
 
-	<p>
-		Du er logget inn som <b>{{ request.user.first_name }} {{ request.user.last_name }}</b><br>
+	<div class="card mb-3 minside-card">
+		<div class="card-header py-2">Innlogget bruker</div>
+		<div class="card-body py-3">
+			<ul class="minside-meta">
+				<li>
+					<span class="minside-label">Navn</span>
+					<span class="minside-value">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+				</li>
+				<li>
+					<span class="minside-label">Brukernavn</span>
+					<span class="minside-value">{{ request.user.username|default:"Ukjent" }}</span>
+				</li>
+				<li>
+					<span class="minside-label">Representerer</span>
+					<span class="minside-value">
+						{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}
+						<a href="{% url 'bytt_virksomhet' %}" class="btn btn-sm btn-link p-0 align-baseline">Bytt virksomhet</a>
+					</span>
+				</li>
+				<li>
+					<span class="minside-label">Root</span>
+					<span class="minside-value">
+						{% if is_root %}
+							<span class="minside-root-yes">Ja – full tilgang til alt i Kartoteket</span>
+						{% else %}
+							<span class="minside-root-no">Nei</span>
+						{% endif %}
+					</span>
+				</li>
+			</ul>
 
-		{% if TEST_ENV_NAME == 'test' %}
-			{% url "logout" as url_logout %}
-		{% else %}
-			{% url "oidc_logout" as url_logout %}
-		{% endif %}
+			<div class="minside-actions mt-3">
+				{% if TEST_ENV_NAME == 'test' %}
+					{% url "logout" as url_logout %}
+				{% else %}
+					{% url "oidc_logout" as url_logout %}
+				{% endif %}
+				<form method="post" action="{{ url_logout }}" class="mb-0">
+					{% csrf_token %}
+					<input class="btn btn-sm" style="color: black; background-color: #d1ecf1; padding: 5px 10px;" type="submit" name="Logg av" value="Logg av" />
+				</form>
 
-		<form method="post" action="{{ url_logout }}">
-			{% csrf_token %}
-			<input class="btn btn-sm" style="color: black; background-color: #d1ecf1; padding: 5px 10px 5px 10px;" type="submit" name="Logg av" value="Logg av" />
-		</form>
+				{% url 'bruker_detaljer' pk=request.user.pk as url_ansvarlig %}
+				{% if url_ansvarlig %}
+					<a href="{{ url_ansvarlig }}" class="btn btn-sm btn-link">Mine ansvarsområder</a>
+				{% else %}
+					<a href="/admin/systemoversikt/ansvarlig/add/?brukernavn={{ request.user.pk }}" class="btn btn-sm btn-link">{% include 'site_edit_button.html' %} Opprett som ansvarlig</a>
+				{% endif %}
+			</div>
+		</div>
+	</div>
 
-		<hr>
+	<div class="card mb-3 minside-card">
+		<div class="card-header py-2 d-flex justify-content-between align-items-center flex-wrap">
+			<span>Dine tilganger</span>
+			{% url 'roller' as url_roller %}
+			<a href="{{ url_roller }}" class="btn btn-sm btn-link p-0">Full oversikt over roller og rettigheter</a>
+		</div>
+		<div class="card-body py-3">
+			{% if access_rows %}
+				{% if not access_sources_from_login %}
+					<p class="text-muted small mb-2">Kilde er estimert. Logg inn på nytt for eksakt fordeling mellom automatisk tildeling og gruppemedlemskap.</p>
+				{% endif %}
+				<div class="table-responsive">
+					<table class="table table-sm table-hover mb-0 minside-table">
+						<thead>
+							<tr>
+								<th>Rolle</th>
+								<th>Beskrivelse</th>
+								<th>Kilde</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for row in access_rows %}
+							<tr>
+								<td class="minside-role">{{ row.label }}</td>
+								<td class="minside-desc">{{ row.description|default:"—" }}</td>
+								<td class="minside-source">
+									{% for source in row.sources %}
+										<div class="minside-source-item">{{ source }}</div>
+									{% empty %}
+										—
+									{% endfor %}
+								</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			{% else %}
+				<p class="mb-0">Du har ingen spesielle tilgangsgrupper utover vanlig innlogging.</p>
+			{% endif %}
+			<p class="minside-hint">
+				Les mer om hvordan rollene tildeles (automatisk vs. IDA) på
+				<a href="{% url 'roller' %}">Tilgangsstyring</a>.
+			</p>
+		</div>
+	</div>
 
-		Ditt brukernavn er <b>{{ request.user.username|default:"Ukjent" }}</b><br>
-
-		Du representerer <b>{{ user.profile.virksomhet.virksomhetsforkortelse|default:"Ukjent" }}</b>
-		<a href="{% url 'bytt_virksomhet' %}" class="btn btn-sm btn-link">Bytt virksomhet jeg representerer</a>
-	</p>
-
-
-	<p>Du er medlem i følgende grupper:<br>
-	<ul>{% for group in user.groups.all %} <li>{{ group.name|slice:"19:"|lower|capfirst }}</li> {% endfor %}</ul>
-	</p>
-
-
-	{% url 'bruker_detaljer' pk=request.user.pk as url_ansvarlig %}
-	{% if url_ansvarlig %}
-		<a href="{{ url_ansvarlig }}" class="btn btn-sm btn-link" >Mine ansvarsområder</a>
-	{% else%}
-		<a href="/admin/systemoversikt/ansvarlig/add/?brukernavn={{request.user.pk}}" class="btn btn-sm btn-link" >{% include 'site_edit_button.html' %} Opprett som ansvarlig</a>
-	{% endif %}
-
-
-	<p>Dersom du ønsker å redigere på innhold kan du enten gå direkte til admin-siden eller du kan følge {% include 'site_edit_button.html' %} symbolene rundt omkring på denne portalen.</p>
-
-	<p>Alle endringer utført via administrasjonssidene blir loggført. På systemer vises det hvem som har utført de siste endringene direkte på detaljesiden. For de fleste typer informasjon lages det en ny versjon av informasjonen for hver gang du lagrer. Gamle versjoner kan gjenopprettes dersom du har nødvendige tilganger via knappen "Historikk" på den enkelte redigeringsside.</p>
+	<div class="card mb-0 minside-card">
+		<div class="card-header py-2">Om redigering og historikk</div>
+		<div class="card-body py-3">
+			<p class="mb-2">Redigering gjøres via adminpanelet eller {% include 'site_edit_button.html' %}-symbolene rundt omkring i portalen.</p>
+			<p class="mb-0 text-muted" style="font-size: 0.92rem;">
+				Endringer loggføres. På systemer vises siste endringer på detaljsiden.
+				De fleste objekter får ny versjon ved lagring; gamle versjoner kan gjenopprettes via «Historikk» dersom du har tilgang.
+			</p>
+		</div>
+	</div>
 
 {% endblock hovedinnhold %}

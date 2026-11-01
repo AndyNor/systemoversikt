@@ -177,6 +177,8 @@ TEMPLATES = [
 				'django.template.context_processors.request',
 				'systemoversikt.context_processors.global_settings',
 				'systemoversikt.context_processors.integration_health',
+				# 2026-11-01: One-shot post-login welcome summary (name, virksomhet, roles).
+				'systemoversikt.context_processors.login_welcome',
 			],
 		},
 	},

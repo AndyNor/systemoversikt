@@ -196,6 +196,33 @@
 		</div>
 		{% endif %}
 
+		{# 2026-11-01: Compact full-width post-login welcome – X absolutely top-right (Bootstrap .close float wraps badly). #}
+		{% if login_welcome %}
+		<div class="card mb-2" style="position: relative; border-color: #afd3d9; background: #f4fbfd; font-size: 0.82rem;">
+			<a href="#" aria-label="Lukk" onclick="this.closest('.card').remove(); return false;"
+				style="position: absolute; top: 0.35rem; right: 0.55rem; line-height: 1; font-size: 1.25rem; color: #6c757d; text-decoration: none; z-index: 1;">×</a>
+			<div class="card-body py-2 px-3" style="padding-right: 1.75rem !important;">
+				<div class="d-flex flex-wrap align-items-center" style="gap: 0.35rem 1.1rem;">
+					<strong class="text-nowrap">Du er logget inn</strong>
+					<span class="text-nowrap"><span class="text-muted">Navn</span> <b>{{ login_welcome.full_name }}</b></span>
+					<span class="text-nowrap"><span class="text-muted">Brukernavn</span> <b>{{ login_welcome.username }}</b></span>
+					<span class="text-nowrap"><span class="text-muted">Representerer</span> <b>{{ login_welcome.virksomhet }}</b></span>
+					<span class="d-flex flex-wrap align-items-center" style="gap: 0.25rem;">
+						<span class="text-muted text-nowrap">Roller</span>
+						{% if login_welcome.roles %}
+							{% for role in login_welcome.roles %}
+								<span class="badge badge-light border" style="font-weight: 600; font-size: 0.75rem;">{{ role }}</span>
+							{% endfor %}
+						{% else %}
+							<span class="text-muted">Ingen spesielle</span>
+						{% endif %}
+					</span>
+					<a href="{% url 'minside' %}" class="btn btn-sm btn-link p-0" style="font-size: 0.82rem;">Detaljer om tilganger</a>
+				</div>
+			</div>
+		</div>
+		{% endif %}
+
 		{% if messages %}
 			{% for message in messages %}
 			<div id="div_message" class="alert alert-{{ message.tags }}" style="width: 230px; display: inline-block; margin-right: 25px;">
