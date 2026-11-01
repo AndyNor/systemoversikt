@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-01: Eierskap person/seksjon search – cross-virksomhet, prefer user's virksomhet first.
+# 2026-11-01: System detaljer – inline edit of Systemeier/Systemforvalter (virksomhet + contact persons).
 # 2026-10-15: SystemBruk inline edit – Initiell/Vurderinger save, ansvarlig search, user_can_change_systembruk.
 # 2026-10-12: Tools page listing systems with old er_arkiv / dato (migration checklist to GodkjentElektroniskArkiv).
 # 2026-10-12: Inline save for GodkjentElektroniskArkiv on systemdetaljer (change_godkjentelektroniskarkiv).
@@ -738,6 +740,22 @@ def user_can_change_systembruk(user, bruk):
 	if user.has_perm('systemoversikt.change_systembruk'):
 		try:
 			return user.profile.virksomhet_id == bruk.brukergruppe_id
+		except AttributeError:
+			return False
+	return False
+
+
+def user_can_change_system(user, system):
+	# 2026-11-01: Mirror SystemAdmin.has_change_permission for front-end system edits.
+	if not user.is_authenticated:
+		return False
+	if user.is_superuser:
+		return True
+	if user.groups.filter(name="/DS-SYSTEMOVERSIKT_ADMINISTRATOR_ADMINISTRATOR").exists():
+		return True
+	if user.has_perm('systemoversikt.change_system'):
+		try:
+			return user.profile.virksomhet_id == system.systemforvalter_id
 		except AttributeError:
 			return False
 	return False
@@ -7434,6 +7452,10 @@ def systemdetaljer(request, pk):
 	for ea in system.enterprise_applicatons.prefetch_related('requiredResourceAccess').all():
 		graph_permissions_count += ea.requiredResourceAccess.count()
 
+	# 2026-11-01: Inline edit of Systemeier/Systemforvalter (virksomhet + persons; same ACL as SystemAdmin).
+	can_change_system = user_can_change_system(request.user, system)
+	system_eierskap_json = _system_eierskap_payload(system) if can_change_system else None
+
 	return render(request, 'system_detaljer.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
@@ -7461,6 +7483,8 @@ def systemdetaljer(request, pk):
 		'citrix_apps': citrix_apps,
 		'current_user_is_owner': current_user_is_owner,
 		'can_view_system_risk': can_view_system_risk,
+		'can_change_system': can_change_system,
+		'system_eierskap_json': system_eierskap_json,
 		'integrasjonsstatus': integrasjonsstatus,
 		'vulnerabilities': sorted_unique_vulns,
 		'total_number_vulns': total_number_vulns,
@@ -8542,6 +8566,454 @@ def system_lagre_godkjent_elektronisk_arkiv(request, pk):
 		),
 		'henvisning': obj.henvisning or '',
 	})
+
+
+SYSTEM_KONTAKTPERSONER_M2M_FIELDS = (
+	('systemeier_kontaktpersoner_referanse', 'Systemeier (personer)'),
+	('systemforvalter_kontaktpersoner_referanse', 'Systemforvalter (personer)'),
+)
+SYSTEM_KONTAKTPERSONER_FIELD_NAMES = frozenset(f for f, _ in SYSTEM_KONTAKTPERSONER_M2M_FIELDS)
+
+
+def _system_ansvarlig_display(ansvarlig):
+	# 2026-11-01: Include e-mail for systemdetaljer contact list refresh (matches epost include).
+	row = _ansvarlig_display_list(ansvarlig)
+	row['email'] = getattr(ansvarlig.brukernavn, 'email', '') or ''
+	return row
+
+
+def _system_virksomhet_display(virksomhet):
+	# 2026-11-01: JSON for organizational Systemeier/Systemforvalter pickers.
+	if virksomhet is None:
+		return None
+	return {
+		'id': virksomhet.pk,
+		'label': str(virksomhet),
+		'forkortelse': virksomhet.virksomhetsforkortelse or '',
+		'url': reverse('virksomhet', kwargs={'pk': virksomhet.pk}),
+	}
+
+
+def _system_enhet_display(enhet):
+	# 2026-11-01: JSON for Systemforvalter seksjon (HRorg) picker.
+	if enhet is None:
+		return None
+	return {
+		'id': enhet.pk,
+		'label': str(enhet),
+		'url': reverse('enhet_detaljer', kwargs={'pk': enhet.pk}),
+	}
+
+
+def _system_prefer_virksomhet_ids(request, preferred_id=None):
+	# 2026-11-01: User's virksomhet first, then optional draft/field preferred virksomhet.
+	ids = []
+	user_vid = getattr(getattr(request.user, 'profile', None), 'virksomhet_id', None)
+	if user_vid:
+		ids.append(user_vid)
+	if preferred_id and preferred_id not in ids:
+		ids.append(preferred_id)
+	return ids
+
+
+def _system_virksomhet_priority_annotation(field_path, preferred_ids):
+	# Lower number = higher priority. Unknown/other virksomheter last.
+	whens = [
+		When(**{field_path: vid, 'then': Value(i)})
+		for i, vid in enumerate(preferred_ids)
+	]
+	return Case(*whens, default=Value(len(preferred_ids) if preferred_ids else 0))
+
+
+def _system_person_search_label(name, email, virksomhet=None):
+	base = _person_label_with_email(name, email)
+	fork = getattr(virksomhet, 'virksomhetsforkortelse', None) if virksomhet else None
+	if fork:
+		return '%s [%s]' % (base, fork)
+	return base
+
+
+def _system_eierskap_payload(system):
+	# 2026-11-01: JSON snapshot for Systemeier/Systemforvalter (virksomhet, seksjon, e-post, persons).
+	return {
+		'systemeier': _system_virksomhet_display(system.systemeier),
+		'systemforvalter': _system_virksomhet_display(system.systemforvalter),
+		'systemforvalter_avdeling_referanse': _system_enhet_display(
+			system.systemforvalter_avdeling_referanse
+		),
+		'forvaltning_epost': system.forvaltning_epost or '',
+		'systemeier_kontaktpersoner_referanse': [
+			_system_ansvarlig_display(a)
+			for a in system.systemeier_kontaktpersoner_referanse.all()
+		],
+		'systemforvalter_kontaktpersoner_referanse': [
+			_system_ansvarlig_display(a)
+			for a in system.systemforvalter_kontaktpersoner_referanse.all()
+		],
+	}
+
+
+def _system_format_virksomhet_diff(label, old_v, new_v):
+	old_s = str(old_v) if old_v else '–'
+	new_s = str(new_v) if new_v else '–'
+	if old_s == new_s:
+		return ''
+	return '%s: «%s» → «%s»' % (label, old_s, new_s)
+
+
+def _system_parse_optional_virksomhet_id(value, *, required=False):
+	if value in (None, ''):
+		if required:
+			raise ValueError('missing_virksomhet')
+		return None
+	return int(value)
+
+
+def _system_get_writable(request, pk):
+	system = get_object_or_404(
+		System.objects.select_related(
+			'systemeier',
+			'systemforvalter',
+			'systemforvalter_avdeling_referanse',
+			'systemforvalter_avdeling_referanse__virksomhet_mor',
+		),
+		pk=pk,
+	)
+	if not user_can_change_system(request.user, system):
+		return None, JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+	return system, None
+
+
+@require_POST
+def system_lagre_eierskap(request, pk):
+	# 2026-11-01: Save Systemeier/Systemforvalter (virksomhet, seksjon, e-post, persons) from systemdetaljer.
+	system, err = _system_get_writable(request, pk)
+	if err:
+		return err
+
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+	except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+		return JsonResponse({'ok': False, 'error': 'invalid_json'}, status=400)
+
+	try:
+		systemeier_id = _system_parse_optional_virksomhet_id(data.get('systemeier'), required=False)
+		systemforvalter_id = _system_parse_optional_virksomhet_id(
+			data.get('systemforvalter'), required=True
+		)
+	except (TypeError, ValueError):
+		return JsonResponse({'ok': False, 'error': 'invalid_virksomhet'}, status=400)
+
+	virksomhet_ids = {i for i in (systemeier_id, systemforvalter_id) if i is not None}
+	found = {
+		v.pk: v
+		for v in Virksomhet.objects.filter(pk__in=virksomhet_ids)
+	}
+	if systemeier_id is not None and systemeier_id not in found:
+		return JsonResponse({'ok': False, 'error': 'unknown_virksomhet', 'field': 'systemeier'}, status=400)
+	if systemforvalter_id not in found:
+		return JsonResponse(
+			{'ok': False, 'error': 'unknown_virksomhet', 'field': 'systemforvalter'},
+			status=400,
+		)
+
+	avdeling_raw = data.get('systemforvalter_avdeling_referanse')
+	try:
+		avdeling_id = _system_parse_optional_virksomhet_id(avdeling_raw, required=False)
+	except (TypeError, ValueError):
+		return JsonResponse(
+			{'ok': False, 'error': 'invalid_enhet', 'field': 'systemforvalter_avdeling_referanse'},
+			status=400,
+		)
+	new_avdeling = None
+	if avdeling_id is not None:
+		# 2026-11-01: Allow seksjon from any virksomhet (cross-org forvaltning).
+		new_avdeling = (
+			HRorg.objects.filter(pk=avdeling_id, active=True)
+			.select_related('virksomhet_mor')
+			.first()
+		)
+		if new_avdeling is None:
+			return JsonResponse(
+				{'ok': False, 'error': 'unknown_enhet', 'field': 'systemforvalter_avdeling_referanse'},
+				status=400,
+			)
+
+	forvaltning_epost = (data.get('forvaltning_epost') or '').strip() or None
+	if forvaltning_epost:
+		from django.core.exceptions import ValidationError
+		from django.core.validators import validate_email
+		try:
+			validate_email(forvaltning_epost)
+		except ValidationError:
+			return JsonResponse({'ok': False, 'error': 'invalid_email'}, status=400)
+
+	m2m_ids = {}
+	for field_name, _label in SYSTEM_KONTAKTPERSONER_M2M_FIELDS:
+		ids = data.get(field_name)
+		if not isinstance(ids, list):
+			return JsonResponse({'ok': False, 'error': 'invalid_ids', 'field': field_name}, status=400)
+		try:
+			m2m_ids[field_name] = [int(i) for i in ids]
+		except (TypeError, ValueError):
+			return JsonResponse({'ok': False, 'error': 'invalid_ids', 'field': field_name}, status=400)
+
+	# 2026-11-01: Contact persons may belong to any virksomhet; only require existing Ansvarlig rows.
+	ansvarlig_qs = Ansvarlig.objects.select_related(
+		'brukernavn', 'brukernavn__profile', 'brukernavn__profile__virksomhet'
+	)
+	for field_name, ids in m2m_ids.items():
+		if not ids:
+			continue
+		found_ids = set(ansvarlig_qs.filter(pk__in=ids).values_list('pk', flat=True))
+		if set(ids) - found_ids:
+			return JsonResponse({'ok': False, 'error': 'unknown_ansvarlig', 'field': field_name}, status=400)
+
+	old_systemeier = system.systemeier
+	old_systemforvalter = system.systemforvalter
+	old_avdeling = system.systemforvalter_avdeling_referanse
+	old_epost = system.forvaltning_epost or ''
+	old_m2m = {
+		field_name: list(getattr(system, field_name).select_related('brukernavn', 'brukernavn__profile'))
+		for field_name, _ in SYSTEM_KONTAKTPERSONER_M2M_FIELDS
+	}
+	new_systemeier = found.get(systemeier_id)
+	new_systemforvalter = found[systemforvalter_id]
+
+	with transaction.atomic():
+		system.systemeier = new_systemeier
+		system.systemforvalter = new_systemforvalter
+		system.systemforvalter_avdeling_referanse = new_avdeling
+		system.forvaltning_epost = forvaltning_epost
+		system.save(update_fields=[
+			'systemeier',
+			'systemforvalter',
+			'systemforvalter_avdeling_referanse',
+			'forvaltning_epost',
+		])
+		for field_name, ids in m2m_ids.items():
+			getattr(system, field_name).set(ids)
+
+	diff_parts = []
+	part = _system_format_virksomhet_diff(
+		'Organisatorisk systemeier', old_systemeier, new_systemeier
+	)
+	if part:
+		diff_parts.append(part)
+	part = _system_format_virksomhet_diff(
+		'Organisatorisk systemforvalter', old_systemforvalter, new_systemforvalter
+	)
+	if part:
+		diff_parts.append(part)
+	part = _system_format_virksomhet_diff(
+		'Systemforvalter (avdeling)', old_avdeling, new_avdeling
+	)
+	if part:
+		diff_parts.append(part)
+	part = _systembruk_format_scalar_diff(
+		'E-post til forvaltergruppen', old_epost, forvaltning_epost or ''
+	)
+	if part:
+		diff_parts.append(part)
+
+	new_pks = {pk for ids in m2m_ids.values() for pk in ids}
+	new_by_pk = {a.pk: a for a in ansvarlig_qs.filter(pk__in=new_pks)}
+	for field_name, label in SYSTEM_KONTAKTPERSONER_M2M_FIELDS:
+		part = format_m2m_diff(
+			label,
+			old_m2m[field_name],
+			[new_by_pk[i] for i in m2m_ids[field_name]],
+		)
+		if part:
+			diff_parts.append(part)
+
+	if diff_parts:
+		log_object_change(request.user, system, 'Eierskap: %s' % '; '.join(diff_parts))
+
+	system = (
+		System.objects
+		.select_related(
+			'systemeier',
+			'systemforvalter',
+			'systemforvalter_avdeling_referanse',
+			'systemforvalter_avdeling_referanse__virksomhet_mor',
+		)
+		.prefetch_related(
+			Prefetch('systemeier_kontaktpersoner_referanse', queryset=ansvarlig_qs),
+			Prefetch('systemforvalter_kontaktpersoner_referanse', queryset=ansvarlig_qs),
+		)
+		.get(pk=pk)
+	)
+	return JsonResponse({
+		'ok': True,
+		'eierskap': _system_eierskap_payload(system),
+		'can_still_edit': user_can_change_system(request.user, system),
+	})
+
+
+def system_virksomhet_sok(request, pk):
+	# 2026-11-01: Virksomhet search for Systemeier/Systemforvalter pickers on systemdetaljer.
+	system, err = _system_get_writable(request, pk)
+	if err:
+		return err
+
+	q = request.GET.get('q', '').strip()
+	if len(q) < 2:
+		return JsonResponse({'results': []})
+
+	qs = (
+		Virksomhet.objects.filter(
+			Q(virksomhetsforkortelse__icontains=q) | Q(virksomhetsnavn__icontains=q)
+		)
+		.order_by('virksomhetsforkortelse', 'virksomhetsnavn')[:15]
+	)
+	return JsonResponse({
+		'results': [_system_virksomhet_display(v) for v in qs],
+	})
+
+
+def system_enhet_sok(request, pk):
+	# 2026-11-01: HRorg search across virksomheter; prefer user's (then draft) virksomhet.
+	system, err = _system_get_writable(request, pk)
+	if err:
+		return err
+
+	q = request.GET.get('q', '').strip()
+	if len(q) < 2:
+		return JsonResponse({'results': []})
+
+	override_raw = request.GET.get('virksomhet_id', '').strip()
+	preferred_id = int(override_raw) if override_raw.isdigit() else system.systemforvalter_id
+	preferred_ids = _system_prefer_virksomhet_ids(request, preferred_id)
+
+	qs = (
+		HRorg.objects.filter(active=True)
+		.filter(ou__icontains=q)
+		.select_related('virksomhet_mor')
+		.annotate(
+			virksomhet_prio=_system_virksomhet_priority_annotation(
+				'virksomhet_mor_id', preferred_ids
+			)
+		)
+		.order_by('virksomhet_prio', 'ou')[:15]
+	)
+	return JsonResponse({
+		'results': [_system_enhet_display(enhet) for enhet in qs],
+	})
+
+
+def system_ansvarlig_sok(request, pk):
+	# 2026-11-01: Person search across virksomheter; prefer user's (then draft) virksomhet.
+	system, err = _system_get_writable(request, pk)
+	if err:
+		return err
+
+	q = request.GET.get('q', '').strip()
+	if len(q) < 2:
+		return JsonResponse({'results': []})
+
+	field_name = request.GET.get('field', '').strip()
+	if field_name not in SYSTEM_KONTAKTPERSONER_FIELD_NAMES:
+		return JsonResponse({'ok': False, 'error': 'invalid_field'}, status=400)
+
+	exclude_ids = set()
+	for raw in request.GET.get('exclude_ids', '').split(','):
+		raw = raw.strip()
+		if raw.isdigit():
+			exclude_ids.add(int(raw))
+
+	override_raw = request.GET.get('virksomhet_id', '').strip()
+	preferred_id = int(override_raw) if override_raw.isdigit() else None
+	if preferred_id is None:
+		if field_name == 'systemeier_kontaktpersoner_referanse':
+			preferred_id = system.systemeier_id
+		elif field_name == 'systemforvalter_kontaktpersoner_referanse':
+			preferred_id = system.systemforvalter_id
+	preferred_ids = _system_prefer_virksomhet_ids(request, preferred_id)
+
+	from functools import reduce
+	from operator import or_
+	terms = _ansvarlig_sok_terms(q)
+	if not terms:
+		return JsonResponse({'results': []})
+
+	ansvarlig_q = reduce(or_, [_ansvarlig_sok_term_q(term, 'brukernavn__') for term in terms])
+	results = []
+	ansvarlige = (
+		Ansvarlig.objects.filter(ansvarlig_q)
+		.select_related('brukernavn', 'brukernavn__profile', 'brukernavn__profile__virksomhet')
+		.annotate(
+			virksomhet_prio=_system_virksomhet_priority_annotation(
+				'brukernavn__profile__virksomhet_id', preferred_ids
+			)
+		)
+		.distinct()
+		.order_by('virksomhet_prio', 'brukernavn__first_name', 'brukernavn__last_name')[:15]
+	)
+	for ansvarlig in ansvarlige:
+		if ansvarlig.pk in exclude_ids:
+			continue
+		row = _system_ansvarlig_display(ansvarlig)
+		row['label'] = _system_person_search_label(
+			str(ansvarlig),
+			getattr(ansvarlig.brukernavn, 'email', '') or '',
+			getattr(ansvarlig.brukernavn.profile, 'virksomhet', None),
+		)
+		results.append(row)
+
+	user_q = reduce(or_, [_ansvarlig_sok_term_q(term) for term in terms])
+	users = (
+		User.objects.filter(user_q)
+		.filter(ansvarlig_brukernavn__isnull=True)
+		.select_related('profile', 'profile__virksomhet')
+		.annotate(
+			virksomhet_prio=_system_virksomhet_priority_annotation(
+				'profile__virksomhet_id', preferred_ids
+			)
+		)
+		.distinct()
+		.order_by('virksomhet_prio', 'first_name', 'last_name')[:5]
+	)
+	for user in users:
+		results.append({
+			'id': None,
+			'user_pk': user.pk,
+			'label': _system_person_search_label(
+				str(user),
+				user.email or '',
+				getattr(user.profile, 'virksomhet', None),
+			),
+			'create': True,
+		})
+
+	return JsonResponse({'results': results})
+
+
+@require_POST
+def system_ansvarlig_opprett(request, pk):
+	# 2026-11-01: Create Ansvarlig from User when adding via systemdetaljer person search.
+	system, err = _system_get_writable(request, pk)
+	if err:
+		return err
+	if not request.user.has_perm('systemoversikt.add_ansvarlig'):
+		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
+
+	try:
+		data = json.loads(request.body.decode('utf-8'))
+	except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
+		return JsonResponse({'ok': False, 'error': 'invalid_json'}, status=400)
+
+	user_pk = data.get('user_pk')
+	field_name = (data.get('field') or '').strip()
+	if not user_pk:
+		return JsonResponse({'ok': False, 'error': 'missing_user'}, status=400)
+	if field_name not in SYSTEM_KONTAKTPERSONER_FIELD_NAMES:
+		return JsonResponse({'ok': False, 'error': 'invalid_field'}, status=400)
+
+	# 2026-11-01: Allow creating Ansvarlig for users in any virksomhet.
+	user = get_object_or_404(User, pk=user_pk)
+	ansvarlig, _created = Ansvarlig.objects.get_or_create(brukernavn=user)
+	return JsonResponse(_system_ansvarlig_display(ansvarlig))
 
 
 def api_arkivoverforing_systemer_sok(request):

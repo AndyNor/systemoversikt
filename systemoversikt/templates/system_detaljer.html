@@ -1,3 +1,5 @@
+{# 2026-11-01: Eierskap person/seksjon search across virksomheter (cache-bust JS). #}
+{# 2026-11-01: Inline edit of Systemeier/Systemforvalter (virksomhet + person pickers). #}
 {# 2026-10-20: Restored admin “Endre informasjon” on systemdetaljer – System is not fully inline yet. #}
 {# 2026-10-12: Inline editor for GodkjentElektroniskArkiv (separate change permission). #}
 {# 2026-10-12: Full-height section/sub accent bars; OKA sub-heading class; «Registrert bruk» heading. #}
@@ -577,12 +579,15 @@
 		gap: 0.85rem;
 	}
 }
+/* 2026-11-01: Wrapper keeps Rediger above the eierskap grid. */
+.system-detalj-eierskap-wrap {
+	padding-top: 1rem;
+	border-top: 1px solid #eceaf4;
+}
 .system-detalj-eierskap {
 	display: grid;
 	grid-template-columns: 1fr 2fr;
 	gap: 1rem 1.25rem;
-	padding-top: 1rem;
-	border-top: 1px solid #eceaf4;
 }
 .system-detalj-eierskap-panel .kontaktliste--cols-2 {
 	display: grid;
@@ -786,6 +791,9 @@
 	<script src="{% static 'system_systemavhengigheter_graph.js' %}?v=20260622-programvare-round" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'informasjonskategori_edit.js' %}?v=20260915" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'godkjent_elektronisk_arkiv_edit.js' %}?v=20261012" nonce="{{request.csp_nonce}}"></script>
+	{% if can_change_system %}
+	<script src="{% static 'system_kontaktpersoner_edit.js' %}?v=20261101d" nonce="{{request.csp_nonce}}"></script>
+	{% endif %}
 
 {% endblock ekstrajavascript %}
 
@@ -1157,43 +1165,116 @@
 			</div>
 		</div>
 
-		<div class="system-detalj-eierskap">
-			<div class="system-detalj-eierskap-panel">
-				<h6>Systemeier</h6>
-				{% if systemdetaljer.systemeier %}
-					{% url "virksomhet" systemdetaljer.systemeier.pk as url_systemeier %}
-					<a class="virksomhet-lenke" href="{{ url_systemeier }}">{{ systemdetaljer.systemeier }}</a>
-				{% else %}
-					<span class="text-muted">Ikke angitt</span>
-				{% endif %}
-				<div class="kontaktliste">
-					{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemeier_kontaktpersoner_referanse.all %}
+		{# 2026-11-01: Virksomhet + contact persons editable inline (same ACL as SystemAdmin). #}
+		<div id="system-eierskap-kontakt-panel" class="system-detalj-eierskap-wrap">
+			{% if can_change_system %}
+			<div class="d-flex justify-content-between align-items-center flex-wrap mb-1">
+				<span id="system-eierskap-kontakt-status" class="small"></span>
+				<button type="button" class="btn btn-sm btn-secondary" id="system-eierskap-kontakt-toggle">Rediger</button>
+			</div>
+			{% endif %}
+
+			<div id="system-eierskap-kontakt-view">
+				<div class="system-detalj-eierskap">
+					<div class="system-detalj-eierskap-panel">
+						<h6>Systemeier</h6>
+						<div id="sk-view-systemeier">
+						{% if systemdetaljer.systemeier %}
+							{% url "virksomhet" systemdetaljer.systemeier.pk as url_systemeier %}
+							<a class="virksomhet-lenke" href="{{ url_systemeier }}">{{ systemdetaljer.systemeier }}</a>
+						{% else %}
+							<span class="text-muted">Ikke angitt</span>
+						{% endif %}
+						</div>
+						<div class="kontaktliste" id="sk-view-systemeier_kontaktpersoner_referanse">
+							{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemeier_kontaktpersoner_referanse.all %}
+						</div>
+					</div>
+
+					<div class="system-detalj-eierskap-panel system-detalj-eierskap-panel--forvalter">
+						<h6>Systemforvalter</h6>
+						<div id="sk-view-systemforvalter">
+						{% if systemdetaljer.systemforvalter %}
+							{% url "virksomhet" systemdetaljer.systemforvalter.pk as url_systemforvalter %}
+							<a class="virksomhet-lenke" href="{{ url_systemforvalter }}">{{ systemdetaljer.systemforvalter }}</a>
+						{% else %}
+							<span class="text-muted">Ikke angitt</span>
+						{% endif %}
+						</div>
+						<div id="sk-view-systemforvalter_avdeling" class="small text-muted mb-1"{% if not systemdetaljer.systemforvalter_avdeling_referanse %} hidden{% endif %}>
+							{% if systemdetaljer.systemforvalter_avdeling_referanse %}
+								{% url "enhet_detaljer" systemdetaljer.systemforvalter_avdeling_referanse.pk as url_enhet_detaljer %}
+								Seksjon: <a href="{{ url_enhet_detaljer }}">{{ systemdetaljer.systemforvalter_avdeling_referanse }}</a>
+							{% endif %}
+						</div>
+						<div class="kontaktliste kontaktliste--cols-2" id="sk-view-systemforvalter_kontaktpersoner_referanse">
+							{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all two_columns=True %}
+						</div>
+						<div id="sk-view-forvaltning_epost" class="small mt-1"{% if not systemdetaljer.forvaltning_epost %} hidden{% endif %}>
+							{% if systemdetaljer.forvaltning_epost %}
+								{% get_verbose_field_name systemdetaljer "forvaltning_epost" %}: {{ systemdetaljer.forvaltning_epost }}
+							{% endif %}
+						</div>
+					</div>
 				</div>
 			</div>
 
-			<div class="system-detalj-eierskap-panel system-detalj-eierskap-panel--forvalter">
-				<h6>Systemforvalter</h6>
-				{% if systemdetaljer.systemforvalter %}
-					{% url "virksomhet" systemdetaljer.systemforvalter.pk as url_systemforvalter %}
-					<a class="virksomhet-lenke" href="{{ url_systemforvalter }}">{{ systemdetaljer.systemforvalter }}</a>
-				{% else %}
-					<span class="text-muted">Ikke angitt</span>
-				{% endif %}
-				{% if systemdetaljer.systemforvalter_avdeling_referanse %}
-					{% url "enhet_detaljer" systemdetaljer.systemforvalter_avdeling_referanse.pk as url_enhet_detaljer %}
-					<div class="small text-muted mb-1">
-						Seksjon: <a href="{{ url_enhet_detaljer }}">{{ systemdetaljer.systemforvalter_avdeling_referanse }}</a>
+			{% if can_change_system %}
+			<div id="system-eierskap-kontakt-edit" hidden>
+				{% csrf_token %}
+				<p class="small text-muted mb-2">
+					Søk virksomhet på forkortelse eller navn. Seksjon søkes innen systemforvalters virksomhet.
+					Personer søkes innen valgt virksomhet. Systemforvalter (virksomhet) er påkrevd.
+					Bytter du forvalter til en annen virksomhet enn din egen, mister du redigeringsrettigheten.
+				</p>
+				<div class="system-detalj-eierskap" style="border-top: none; padding-top: 0;">
+					<div class="system-detalj-eierskap-panel">
+						<h6>Systemeier</h6>
+						<div class="sk-virksomhet-edit mb-2" data-field="systemeier">
+							<div class="sk-virksomhet-selected mb-1"></div>
+							<button type="button" class="btn btn-link btn-sm p-0 sk-virksomhet-fjern" hidden>Fjern virksomhet</button>
+							<input type="search" class="form-control form-control-sm sk-virksomhet-sok" placeholder="Søk virksomhet…" autocomplete="off">
+							<div class="sk-virksomhet-treff"></div>
+						</div>
+						<div class="sk-m2m-edit" data-field="systemeier_kontaktpersoner_referanse">
+							<div class="small text-muted mb-1">Personer</div>
+							<div class="sk-ansvarlige-list mb-1"></div>
+							<input type="search" class="form-control form-control-sm sk-ansvarlig-sok" placeholder="Søk navn eller e-post…" autocomplete="off">
+							<div class="sk-ansvarlig-treff"></div>
+						</div>
 					</div>
-				{% endif %}
-				<div class="kontaktliste kontaktliste--cols-2">
-					{% include "ansvarlig_include_vis_epost.html" with ansvarlige=systemdetaljer.systemforvalter_kontaktpersoner_referanse.all two_columns=True %}
+					<div class="system-detalj-eierskap-panel system-detalj-eierskap-panel--forvalter">
+						<h6>Systemforvalter</h6>
+						<div class="sk-virksomhet-edit mb-2" data-field="systemforvalter">
+							<div class="sk-virksomhet-selected mb-1"></div>
+							<input type="search" class="form-control form-control-sm sk-virksomhet-sok" placeholder="Søk virksomhet…" autocomplete="off">
+							<div class="sk-virksomhet-treff"></div>
+						</div>
+						<div class="sk-enhet-edit mb-2" data-field="systemforvalter_avdeling_referanse">
+							<div class="small text-muted mb-1">Seksjon</div>
+							<div class="sk-enhet-selected mb-1"></div>
+							<button type="button" class="btn btn-link btn-sm p-0 sk-enhet-fjern" hidden>Fjern seksjon</button>
+							<input type="search" class="form-control form-control-sm sk-enhet-sok" placeholder="Søk seksjon…" autocomplete="off">
+							<div class="sk-enhet-treff"></div>
+						</div>
+						<div class="mb-2">
+							<label class="small text-muted mb-1 d-block" for="sk-edit-forvaltning_epost">{% get_verbose_field_name systemdetaljer "forvaltning_epost" %}</label>
+							<input type="email" class="form-control form-control-sm" id="sk-edit-forvaltning_epost" placeholder="fellespostboks@…" autocomplete="off">
+						</div>
+						<div class="sk-m2m-edit" data-field="systemforvalter_kontaktpersoner_referanse">
+							<div class="small text-muted mb-1">Personer</div>
+							<div class="sk-ansvarlige-list mb-1"></div>
+							<input type="search" class="form-control form-control-sm sk-ansvarlig-sok" placeholder="Søk navn eller e-post…" autocomplete="off">
+							<div class="sk-ansvarlig-treff"></div>
+						</div>
+					</div>
 				</div>
-				{% if systemdetaljer.forvaltning_epost %}
-					<div class="small mt-1">
-						{% get_verbose_field_name systemdetaljer "forvaltning_epost" %}: {{ systemdetaljer.forvaltning_epost }}
-					</div>
-				{% endif %}
+				<p class="mt-2 mb-0">
+					<button type="button" id="system-eierskap-kontakt-lagre" class="btn btn-primary btn-sm">Lagre</button>
+					<button type="button" id="system-eierskap-kontakt-avbryt" class="btn btn-secondary btn-sm">Avbryt</button>
+				</p>
 			</div>
+			{% endif %}
 		</div>
 
 		{% if systemdetaljer.superbrukere or systemdetaljer.nokkelpersonell %}
@@ -2144,6 +2225,7 @@
 {{ avhengigheter_graf_ny|json_script:"systemdetaljer_graphElements" }}
 {{ oka_standardkategorier_json|json_script:"okaStandardKategorier" }}
 {% if saved_layout_json %}{{ saved_layout_json|json_script:"systemdetaljer_savedLayoutData" }}{% endif %}
+{% if can_change_system and system_eierskap_json %}{{ system_eierskap_json|json_script:"systemEierskapData" }}{% endif %}
 
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 document.addEventListener('DOMContentLoaded', function () {
@@ -2165,6 +2247,19 @@ document.addEventListener('DOMContentLoaded', function () {
 		},
 		savedLayout: savedLayout,
 	});
+
+	{% if can_change_system %}
+	window.initSystemKontaktpersonerEditor({
+		csrf: "{{ csrf_js_token|default:'' }}",
+		urlSave: "{% url 'system_lagre_eierskap' systemdetaljer.pk %}",
+		urlVirksomhetSearch: "{% url 'system_virksomhet_sok' systemdetaljer.pk %}",
+		urlEnhetSearch: "{% url 'system_enhet_sok' systemdetaljer.pk %}",
+		urlSearch: "{% url 'system_ansvarlig_sok' systemdetaljer.pk %}",
+		urlCreate: "{% url 'system_ansvarlig_opprett' systemdetaljer.pk %}",
+		canAddAnsvarlig: {{ perms.systemoversikt.add_ansvarlig|yesno:"true,false" }},
+		eierskap: JSON.parse(document.getElementById('systemEierskapData').textContent),
+	});
+	{% endif %}
 
 	{% if perms.systemoversikt.change_system %}
 	window.initOkaSystemEditor({

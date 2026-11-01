@@ -3,6 +3,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
 # 2026-11-01: POST dismiss for forvalter Azure key expiry banner (session until X).
+# 2026-11-01: System detaljer – inline edit routes for Systemeier/Systemforvalter (virksomhet + persons).
 # 2026-10-15: SystemBruk inline edit save/search routes on /systemer/bruk/<pk>/.
 # 2026-10-12: Tool listing systems with old electronic-archive fields (migration checklist).
 # 2026-10-12: Inline save for GodkjentElektroniskArkiv on systemdetaljer.
@@ -337,6 +338,12 @@ urlpatterns = [
 	re_path(r'^systemer/detaljer/(?P<pk>\d{1,8})/informasjonskategorier/$', views_informasjonskategori.system_lagre_informasjonskategorier, name='system_lagre_informasjonskategorier'),
 	# 2026-10-12: Inline save for GodkjentElektroniskArkiv (separate from change_system).
 	re_path(r'^systemer/detaljer/(?P<pk>\d{1,8})/godkjent-elektronisk-arkiv/$', views.system_lagre_godkjent_elektronisk_arkiv, name='system_lagre_godkjent_elektronisk_arkiv'),
+	# 2026-11-01: Inline edit of Systemeier/Systemforvalter (virksomhet + persons) on systemdetaljer.
+	re_path(r'^systemer/detaljer/(?P<pk>\d{1,8})/lagre-eierskap/$', views.system_lagre_eierskap, name='system_lagre_eierskap'),
+	re_path(r'^systemer/detaljer/(?P<pk>\d{1,8})/virksomhet-sok/$', views.system_virksomhet_sok, name='system_virksomhet_sok'),
+	re_path(r'^systemer/detaljer/(?P<pk>\d{1,8})/enhet-sok/$', views.system_enhet_sok, name='system_enhet_sok'),
+	re_path(r'^systemer/detaljer/(?P<pk>\d{1,8})/ansvarlig-sok/$', views.system_ansvarlig_sok, name='system_ansvarlig_sok'),
+	re_path(r'^systemer/detaljer/(?P<pk>\d{1,8})/ansvarlig-opprett/$', views.system_ansvarlig_opprett, name='system_ansvarlig_opprett'),
 	re_path(r'^systemer/bruk/$', views.mine_systembruk, name='mine_systembruk'),
 	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/$', views.bruksdetaljer, name='bruksdetaljer'),
 	re_path(r'^systemer/bruk/(?P<pk>\d{1,8})/informasjonskategorier/$', views_informasjonskategori.systembruk_lagre_informasjonskategorier, name='systembruk_lagre_informasjonskategorier'),
