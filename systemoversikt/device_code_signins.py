@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-02: Replace datetime.utcnow() with datetime.now(timezone.utc) – utcnow deprecated in Python 3.12+.
 # 2026-06-29: DEVICE_CODE_LIVE_SEARCH_MAX_RESULTS raised to 1000 for sanntid view.
 # 2026-06-29: DEVICE_CODE_LIVE_SEARCH_DAYS – fixed 30-day window for sanntid view (not hourly sync).
 # 2026-06-29: fetch_device_code_signins_from_graph – optional timer (hours) for hourly sync.
@@ -131,11 +132,11 @@ def fetch_device_code_signins_from_graph(dager=30, page_size=100, max_results=20
 	if timer is not None:
 		if timer < 1:
 			return sign_ins, truncated, "timer må være minst 1 time"
-		since_dt = datetime.datetime.utcnow() - datetime.timedelta(hours=timer)
+		since_dt = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(hours=timer)
 	else:
 		if dager < 1:
 			return sign_ins, truncated, "dager må være minst 1"
-		since_dt = datetime.datetime.utcnow() - datetime.timedelta(days=dager)
+		since_dt = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=dager)
 	since = since_dt.strftime("%Y-%m-%dT%H:%M:%SZ")
 	filter_expr = (
 		f"authenticationProtocol eq 'deviceCode' and createdDateTime ge {since} "

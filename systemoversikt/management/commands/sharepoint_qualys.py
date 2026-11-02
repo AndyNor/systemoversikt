@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-02: Use datetime.timezone.utc alias – django.utils.timezone.utc removed in Django 5; models * import shadowed it.
 # 2026-07-02: Log Alvorlighet 1–5 counts on successful Qualys import for landing-page chart.
 # 2026-06-21: Apply basisdrift and risk-acceptance flags from separate rule tables.
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone as dt_timezone, timedelta
 from systemoversikt.views import push_pushover
 from systemoversikt.models import *
 from systemoversikt.qualys_vuln_rules import qualys_vuln_flags
@@ -90,7 +91,7 @@ class Command(BaseCommand):
 				if not s or (isinstance(s, float) and pd.isna(s)):
 					return None
 				s = str(s).strip().strip('"').strip("'")
-				return datetime.strptime(s, "%m/%d/%Y %H:%M:%S").replace(tzinfo=timezone.utc)
+				return datetime.strptime(s, "%m/%d/%Y %H:%M:%S").replace(tzinfo=dt_timezone.utc)
 
 
 			batch_size = 10000
