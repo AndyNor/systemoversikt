@@ -549,6 +549,7 @@ def build_forvalter_secret_expiry_alert(user):
 	2026-11-01: Post-login heads-up for system forvaltere with expired/soon Azure keys.
 	Returns list of {'system', 'expired', 'soon'} for systems the user forvalter that have relevant keys.
 	Uses a 30-day window (same as AzureApplicationKeys.expire_soon), not the rapport 14-day window.
+	2026-11-03: Skip expired keys on an app when a newer non-expired key exists (ops often leave old keys).
 	"""
 	try:
 		ansvarlig = user.ansvarlig_brukernavn
@@ -566,6 +567,8 @@ def build_forvalter_secret_expiry_alert(user):
 		expired = 0
 		soon = 0
 		for app in system.enterprise_applicatons.all():
+			# Relevant keys for this app (same filters as counting below).
+			app_keys = []
 			for key in app.keys.all():
 				if key.key_type == "AsymmetricX509Cert" and key.key_usage == "Verify":
 					continue
@@ -575,8 +578,14 @@ def build_forvalter_secret_expiry_alert(user):
 				end = key.end_date_time
 				if end is None:
 					continue
+				app_keys.append(key)
+			# Same idea as azure_graph_nokkelvarsel: a non-expired key means old expired ones are leftovers.
+			has_valid_key = any(k.end_date_time >= now for k in app_keys)
+			for key in app_keys:
+				end = key.end_date_time
 				if end < now:
-					expired += 1
+					if not has_valid_key:
+						expired += 1
 				elif end <= soon_cutoff:
 					soon += 1
 		if expired or soon:
