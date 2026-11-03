@@ -9415,6 +9415,20 @@ def mine_systembruk(request):
 		return redirect('alle_virksomheter')
 
 
+def alle_virksomheter_systembruk(request):
+	# 2026-11-03: Index of links to each virksomhet's systembruk page (/virksomhet/systembruk/<pk>/).
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render_access_denied(request, required_permissions)
+
+	virksomheter = Virksomhet.objects.all().order_by('-ordinar_virksomhet', 'virksomhetsnavn')
+
+	return render(request, 'systembruk_virksomheter.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'virksomheter': virksomheter,
+	})
+
 
 def all_bruk_for_virksomhet(request, pk):
 	#Vise detaljer om en valgt virksomhets systembruk

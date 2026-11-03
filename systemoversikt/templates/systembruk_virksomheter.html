@@ -1,0 +1,21 @@
+{% extends "virksomhet_index.html" %}
+{% load static %}
+
+{% block ekstrameny %}{% endblock ekstrameny %}
+
+{% block overskrift %}
+	Systembruk per virksomhet
+{% endblock overskrift %}
+
+{% block hovedinnhold %}
+{# 2026-11-03: Index linking to /virksomhet/systembruk/<pk>/ for each virksomhet. #}
+<p>Velg en virksomhet for å se registrert systembruk.</p>
+
+<ol style="column-count: 3;">
+{% for v in virksomheter %}
+	<li {% if not v.ordinar_virksomhet %}style="opacity: 0.45;"{% endif %}>
+		<a href="{% url 'all_bruk_for_virksomhet' pk=v.pk %}">{{ v }}</a>
+	</li>
+{% endfor %}
+</ol>
+{% endblock hovedinnhold %}

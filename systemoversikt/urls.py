@@ -408,6 +408,8 @@ urlpatterns = [
 	re_path(r'^virksomhet/sertifikatmyndighet/$', views.sertifikatmyndighet, name='sertifikatmyndighet'),
 	re_path(r'^virksomhet/systemkvalitet/(?P<pk>\d{1,8})/$', views.systemkvalitet_virksomhet, name='systemkvalitet_virksomhet'),
 	re_path(r'^virksomhet/enhet/graf/(?P<pk>\d{1,8})/$', views.virksomhet_enheter, name='virksomhet_enheter'),
+	# 2026-11-03: Index of all virksomheter' systembruk pages; pk route unchanged.
+	re_path(r'^virksomhet/systembruk/$', views.alle_virksomheter_systembruk, name='alle_virksomheter_systembruk'),
 	re_path(r'^virksomhet/systembruk/(?P<pk>\d{1,8})/$', views.all_bruk_for_virksomhet, name='all_bruk_for_virksomhet'),
 	re_path(r'^virksomhet/systemeforvalter/basis/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
 	re_path(r'^virksomhet/systemeforvalter/basis/(?P<pk>\d{1,8})/$', views.systemer_virksomhet_ansvarlig_for, name='systemer_virksomhet_ansvarlig_for'),
