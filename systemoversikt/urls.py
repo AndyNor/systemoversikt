@@ -2,6 +2,7 @@
 The `urlpatterns` list routes URLs to views. For more information please see:
 	https://docs.djangoproject.com/en/1.11/topics/http/urls/
 """
+# 2026-11-04: Godkjente digitale arkiv moved to /systemer/; new Arkiv-rapport overview.
 # 2026-11-01: POST dismiss for forvalter Azure key expiry banner (session until X).
 # 2026-11-01: System detaljer – inline edit routes for Systemeier/Systemforvalter (virksomhet + persons).
 # 2026-10-15: SystemBruk inline edit save/search routes on /systemer/bruk/<pk>/.
@@ -362,6 +363,10 @@ urlpatterns = [
 	re_path(r'^systemer/arkivoverforing/api/systemer/sok/$', views.api_arkivoverforing_systemer_sok, name='api_arkivoverforing_systemer_sok'),
 	re_path(r'^systemer/arkivoverforing/api/systembruk/(?P<system>\d{1,8})/$', views.api_arkivoverforing_systembruk, name='api_arkivoverforing_systembruk'),
 	re_path(r'^systemer/dokumentasjonsforvaltning/$', views.dokumentasjonsforvaltning, name='dokumentasjonsforvaltning'),
+	# 2026-11-04: Moved from /tools/; rename label «Godkjente digitale arkiv».
+	re_path(r'^systemer/godkjente-digitale-arkiv/$', views.tool_elektronisk_arkiv_godkjenninger, name='godkjente_digitale_arkiv'),
+	# 2026-11-04: Archive report – livsløp, OKA, approval, migrations, virksomhetsbruk.
+	re_path(r'^systemer/arkiv-rapport/$', views.rapport_arkiv, name='rapport_arkiv'),
 	re_path(r'^systemer/informasjonskategorier/$', views_informasjonskategori.oka_oversikt, name='oka_oversikt'),
 	re_path(r'^systemer/informasjonskategorier/sok/$', views_informasjonskategori.api_informasjonskategorier_sok, name='api_informasjonskategorier_sok'),
 	re_path(r'^systemer/systemklassifisering/$', views.systemklassifisering_detaljer, name='systemklassifisering_tom'),
@@ -485,7 +490,6 @@ urlpatterns = [
 	re_path(r'^tools/csv_converter$', views.tool_csv_converter, name='tool_csv_converter'),
 	re_path(r'^tools/ntfs$', views.tool_ntfs, name='tool_ntfs'),
 	re_path(r'^tools/service_announcements$', views.tool_service_announcements, name='tool_service_announcements'),
-	re_path(r'^tools/elektronisk_arkiv_godkjenninger$', views.tool_elektronisk_arkiv_godkjenninger, name='tool_elektronisk_arkiv_godkjenninger'),
 	# Last tool-entry here
 	re_path(r'^tools/', views.tools_index, name="tools_index"),
 

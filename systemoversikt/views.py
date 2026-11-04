@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-04: rapport_arkiv – system archive overview (OKA, approval, migrations, virksomhetsbruk).
+# 2026-11-04: Godkjente digitale arkiv – URL under /systemer/ (was /tools/).
 # 2026-11-01: Eierskap person/seksjon search – cross-virksomhet, prefer user's virksomhet first.
 # 2026-11-01: System detaljer – inline edit of Systemeier/Systemforvalter (virksomhet + contact persons).
 # 2026-10-15: SystemBruk inline edit – Initiell/Vurderinger save, ansvarlig search, user_can_change_systembruk.
@@ -1535,6 +1537,7 @@ def tool_service_announcements(request):
 
 def tool_elektronisk_arkiv_godkjenninger(request):
 	# 2026-10-12: Checklist of systems with values on System.er_arkiv / dato (pre-migration).
+	# 2026-11-04: Served at /systemer/godkjente-digitale-arkiv/ (was /tools/).
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
@@ -1560,6 +1563,110 @@ def tool_elektronisk_arkiv_godkjenninger(request):
 		'systemer': systemer,
 		'antall': len(systemer),
 		'antall_med_ny': antall_med_ny,
+	})
+
+
+def _arkiv_rapport_periode(dato_start, dato_avsluttet):
+	# 2026-11-04: Compact content-period label for arkivoverføring rows in Arkiv-rapport.
+	if dato_start and dato_avsluttet:
+		return '%s–%s' % (dato_start.isoformat(), dato_avsluttet.isoformat())
+	if dato_start:
+		return 'fra %s' % dato_start.isoformat()
+	if dato_avsluttet:
+		return 'til %s' % dato_avsluttet.isoformat()
+	return ''
+
+
+def _arkiv_rapport_migrering_sammendrag(system):
+	# 2026-11-04: One-line migration summary (avgitt/mottatt) for Arkiv-rapport.
+	avgitt = []
+	for o in system.arkivoverforinger_som_avsender_system.all():
+		navn = o.mottaker_system.systemnavn if o.mottaker_system_id else '?'
+		periode = _arkiv_rapport_periode(o.dato_start, o.dato_avsluttet)
+		avgitt.append('%s (%s)' % (navn, periode) if periode else navn)
+	mottatt = []
+	for o in system.arkivoverforinger_som_mottaker.all():
+		navn = o.avsender_system.systemnavn if o.avsender_system_id else '?'
+		periode = _arkiv_rapport_periode(o.dato_start, o.dato_avsluttet)
+		mottatt.append('%s (%s)' % (navn, periode) if periode else navn)
+	parts = []
+	if avgitt:
+		parts.append('Avgitt til %s' % ', '.join(avgitt))
+	if mottatt:
+		parts.append('Mottatt fra %s' % ', '.join(mottatt))
+	return '; '.join(parts)
+
+
+def rapport_arkiv(request):
+	# 2026-11-04: Archive report – livsløp, platform, forvalter, OKA, approval, migrations, usage.
+	required_permissions = ['systemoversikt.view_system']
+	if not any(map(request.user.has_perm, required_permissions)):
+		return render_access_denied(request, required_permissions)
+
+	systemer = list(
+		System.objects.all()
+		.select_related(
+			'systemforvalter',
+			'driftsmodell_foreignkey',
+			'godkjent_elektronisk_arkiv',
+		)
+		.prefetch_related(
+			Prefetch(
+				'informasjonskategorier',
+				queryset=InformasjonsKategori.objects.order_by('rekkefolge', 'kode_normalisert'),
+			),
+			Prefetch(
+				'arkivoverforinger_som_avsender_system',
+				queryset=ArkivOverforing.objects.select_related('mottaker_system'),
+			),
+			Prefetch(
+				'arkivoverforinger_som_mottaker',
+				queryset=ArkivOverforing.objects.select_related('avsender_system'),
+			),
+		)
+		.annotate(
+			antall_virksomheter=Count(
+				'systembruk_system',
+				filter=Q(systembruk_system__ibruk=True),
+				distinct=True,
+			),
+			antall_oka_justert=Count(
+				'systembruk_system',
+				filter=Q(
+					systembruk_system__ibruk=True,
+					systembruk_system__informasjonskategori_koblinger__isnull=False,
+				),
+				distinct=True,
+			),
+		)
+		.order_by('systemnavn')
+	)
+
+	for system in systemer:
+		kategorier = list(system.informasjonskategorier.all())
+		system.oka_koder = ', '.join(k.kode for k in kategorier) if kategorier else ''
+		system.oka_titler = '; '.join('%s %s' % (k.kode, k.tittel) for k in kategorier) if kategorier else ''
+		system.oka_antall = len(kategorier)
+		try:
+			gea = system.godkjent_elektronisk_arkiv
+		except GodkjentElektroniskArkiv.DoesNotExist:
+			gea = None
+		if gea and gea.godkjent:
+			dato = gea.dato_godkjent_elektronisk_arkiv
+			system.arkiv_godkjent_visning = 'Ja (%s)' % dato.isoformat() if dato else 'Ja'
+		elif gea and gea.lagrer_ikke_dokumentasjon:
+			system.arkiv_godkjent_visning = 'Lagrer ikke dokumentasjon'
+		elif gea:
+			system.arkiv_godkjent_visning = 'Nei'
+		else:
+			system.arkiv_godkjent_visning = '–'
+		system.migrering_sammendrag = _arkiv_rapport_migrering_sammendrag(system)
+
+	return render(request, 'rapport_arkiv.html', {
+		'request': request,
+		'required_permissions': formater_permissions(required_permissions),
+		'systemer': systemer,
+		'antall': len(systemer),
 	})
 
 
@@ -8515,6 +8622,7 @@ def _arkivoverforing_system_label(system):
 @require_POST
 def system_lagre_godkjent_elektronisk_arkiv(request, pk):
 	# 2026-10-12: Inline save of GodkjentElektroniskArkiv from systemdetaljer.
+	# 2026-11-04: Also save lagrer_ikke_dokumentasjon (same change_godkjentelektroniskarkiv ACL).
 	system = get_object_or_404(System, pk=pk)
 	if not request.user.has_perm('systemoversikt.change_godkjentelektroniskarkiv'):
 		return JsonResponse({'ok': False, 'error': 'forbidden'}, status=403)
@@ -8533,15 +8641,18 @@ def system_lagre_godkjent_elektronisk_arkiv(request, pk):
 		if dato is None:
 			return JsonResponse({'ok': False, 'error': 'invalid_date'}, status=400)
 	henvisning = (data.get('henvisning') or '').strip()
+	lagrer_ikke_dokumentasjon = bool(data.get('lagrer_ikke_dokumentasjon'))
 
 	with transaction.atomic():
 		obj, _created = GodkjentElektroniskArkiv.objects.get_or_create(system=system)
 		old_godkjent = obj.godkjent
 		old_dato = obj.dato_godkjent_elektronisk_arkiv
 		old_henvisning = obj.henvisning or ''
+		old_lagrer_ikke = obj.lagrer_ikke_dokumentasjon
 		obj.godkjent = godkjent
 		obj.dato_godkjent_elektronisk_arkiv = dato
 		obj.henvisning = henvisning
+		obj.lagrer_ikke_dokumentasjon = lagrer_ikke_dokumentasjon
 		obj.save()
 
 	parts = []
@@ -8563,6 +8674,13 @@ def system_lagre_godkjent_elektronisk_arkiv(request, pk):
 		parts.append(
 			'Henvisning: «%s» → «%s»' % (old_henvisning or '–', henvisning or '–')
 		)
+	if old_lagrer_ikke != lagrer_ikke_dokumentasjon:
+		parts.append(
+			'Systemet lagrer ikke dokumentasjon: %s → %s' % (
+				'Ja' if old_lagrer_ikke else 'Nei',
+				'Ja' if lagrer_ikke_dokumentasjon else 'Nei',
+			)
+		)
 	if parts:
 		log_object_change(request.user, obj, '; '.join(parts))
 
@@ -8574,6 +8692,7 @@ def system_lagre_godkjent_elektronisk_arkiv(request, pk):
 			if obj.dato_godkjent_elektronisk_arkiv else ''
 		),
 		'henvisning': obj.henvisning or '',
+		'lagrer_ikke_dokumentasjon': obj.lagrer_ikke_dokumentasjon,
 	})
 
 

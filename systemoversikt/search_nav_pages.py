@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-04: Godkjente digitale arkiv + Arkiv-rapport – system sidemeny under Rapporter.
 # 2026-11-01: Elektronisk arkiv (gamle felt) – system sidemeny under Rapporter (moved from Verktøy).
 # 2026-10-13: Rename Tiltak nav search label to Risikotiltak.
 # 2026-10-13: Tiltak and Tiltaksunntak nav search – matches sikkerhet sidemeny under Risikovurderinger.
@@ -103,8 +104,12 @@ NAV_PAGES = [
 		['oka', 'oka-klassifikasjon', 'informasjonskategorier', 'arkivnøkkel', 'arkivnokkel'],
 	),
 	_entry(
-		'Elektronisk arkiv (gamle felt)', 'tool_elektronisk_arkiv_godkjenninger', 'System',
-		['elektronisk arkiv', 'gamle felt', 'godkjent elektronisk arkiv', 'er_arkiv'],
+		'Godkjente digitale arkiv', 'godkjente_digitale_arkiv', 'System',
+		['godkjente digitale arkiv', 'elektronisk arkiv', 'godkjent elektronisk arkiv', 'er_arkiv'],
+	),
+	_entry(
+		'Arkiv-rapport', 'rapport_arkiv', 'System',
+		['arkiv-rapport', 'arkivrapport', 'digitalt arkiv', 'oka', 'migrert innhold'],
 	),
 	_entry('Samlede systemvurderinger', 'systemer_vurderinger', 'System', ['systemvurderinger', 'vurderinger samlet']),
 

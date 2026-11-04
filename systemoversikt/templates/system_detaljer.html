@@ -790,7 +790,7 @@
 	<script src="{% static 'cytoscape/cytoscape-svg.js@0.4.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'system_systemavhengigheter_graph.js' %}?v=20260622-programvare-round" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'informasjonskategori_edit.js' %}?v=20260915" nonce="{{request.csp_nonce}}"></script>
-	<script src="{% static 'godkjent_elektronisk_arkiv_edit.js' %}?v=20261012" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'godkjent_elektronisk_arkiv_edit.js' %}?v=20261104" nonce="{{request.csp_nonce}}"></script>
 	{% if can_change_system %}
 	<script src="{% static 'system_kontaktpersoner_edit.js' %}?v=20261101d" nonce="{{request.csp_nonce}}"></script>
 	{% endif %}
@@ -1671,6 +1671,7 @@
 		</div>
 	</div>
 
+	{# 2026-11-04: lagrer_ikke_dokumentasjon checkbox + warning banner in this underblokk. #}
 	{# 2026-10-12: Own underblokk for digital archive approval (was nested under OKA). #}
 	{# 2026-10-12: Read/edit GodkjentElektroniskArkiv (System.er_arkiv kept until migration). #}
 	{# 2026-09-14: Own archive approval and integrations to approved archive systems. #}
@@ -1702,6 +1703,10 @@
 						<span>Systemet er ikke godkjent som elektronisk arkiv</span>
 					</div>
 				{% endif %}
+				<div class="system-detalj-arkiv-integrasjon system-detalj-arkiv-integrasjon--nei mt-1" data-gea-lagrer-ikke {% if not godkjenning_elektronisk_arkiv.lagrer_ikke_dokumentasjon %}hidden{% endif %}>
+					<span class="system-detalj-arkiv-integrasjon-symbol" aria-hidden="true">⚠</span>
+					<span>Systemet lagrer ikke dokumentasjon</span>
+				</div>
 				<p class="small text-muted mb-0 mt-1" data-gea-henvisning-view {% if not godkjenning_elektronisk_arkiv.henvisning %}hidden{% endif %}>
 					{% if godkjenning_elektronisk_arkiv.henvisning %}Henvisning: {{ godkjenning_elektronisk_arkiv.henvisning }}{% endif %}
 				</p>
@@ -1725,6 +1730,13 @@
 				<div class="form-group mb-2">
 					<label class="small mb-1" for="gea-henvisning">Henvisning til hvor denne godkjenningen ligger</label>
 					<textarea class="form-control form-control-sm" id="gea-henvisning" data-gea-input-henvisning rows="3">{{ godkjenning_elektronisk_arkiv.henvisning }}</textarea>
+				</div>
+				<div class="form-group mb-2">
+					<div class="form-check">
+						<input class="form-check-input" type="checkbox" id="gea-lagrer-ikke" data-gea-input-lagrer-ikke {% if godkjenning_elektronisk_arkiv.lagrer_ikke_dokumentasjon %}checked{% endif %}>
+						<label class="form-check-label" for="gea-lagrer-ikke">Systemet lagrer ikke dokumentasjon</label>
+					</div>
+					<p class="small text-muted mb-0 mt-1">Brukes når en teknologikomponent er vurdert, men ikke skal brukes videre til dokumentasjonslagring (f.eks. tegneprogram, Adobe).</p>
 				</div>
 				<p class="mt-2 mb-1">
 					<button type="button" class="btn btn-primary btn-sm" data-gea-save>Lagre</button>
@@ -2277,7 +2289,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		urlSave: "{% url 'system_lagre_godkjent_elektronisk_arkiv' systemdetaljer.pk %}",
 		godkjent: {{ godkjenning_elektronisk_arkiv.godkjent|yesno:"true,false" }},
 		dato_godkjent_elektronisk_arkiv: "{{ godkjenning_elektronisk_arkiv.dato_godkjent_elektronisk_arkiv|date:'Y-m-d'|default:'' }}",
-		henvisning: "{{ godkjenning_elektronisk_arkiv.henvisning|default:''|escapejs }}"
+		henvisning: "{{ godkjenning_elektronisk_arkiv.henvisning|default:''|escapejs }}",
+		lagrer_ikke_dokumentasjon: {{ godkjenning_elektronisk_arkiv.lagrer_ikke_dokumentasjon|yesno:"true,false" }}
 	});
 	{% endif %}
 

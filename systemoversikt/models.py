@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-04: GodkjentElektroniskArkiv.lagrer_ikke_dokumentasjon – assessed component that does not store documentation.
 # 2026-10-12: GodkjentElektroniskArkiv – separate ACL for electronic-archive approval (System fields kept for now).
 # 2026-09-25: Sarbarhetssak – title is the only required field; year/ISO week from opprettet.
 # 2026-09-25: Sarbarhetssak – CVE cases with tiltakseier, case reference and saksstatus.
@@ -5780,6 +5781,12 @@ class GodkjentElektroniskArkiv(models.Model):
 			verbose_name="Henvisning til hvor denne godkjenningen ligger",
 			blank=True,
 			help_text=u"Referanse til godkjenningsdokument eller annen lagring (URL, saksnummer, mappe, mv.).",
+			)
+	# 2026-11-04: Marks tech components assessed but not used for documentation (e.g. drawing tools).
+	lagrer_ikke_dokumentasjon = models.BooleanField(
+			verbose_name="Systemet lagrer ikke dokumentasjon",
+			default=False,
+			help_text=u"Krysses av når en teknologikomponent er vurdert, men ikke skal brukes videre til dokumentasjonslagring (typisk tegneprogram, Adobe ol.).",
 			)
 	history = HistoricalRecords()
 

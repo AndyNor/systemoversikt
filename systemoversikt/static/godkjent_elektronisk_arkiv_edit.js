@@ -1,4 +1,5 @@
 /* Change log:
+ * 2026-11-04: Support lagrer_ikke_dokumentasjon checkbox and warning banner.
  * 2026-10-12: Inline editor for GodkjentElektroniskArkiv on system details.
  */
 (function () {
@@ -25,9 +26,11 @@
     var statusEl = root.querySelector('[data-gea-status]');
     var infoEl = root.querySelector('[data-gea-info]');
     var henvisningEl = root.querySelector('[data-gea-henvisning-view]');
+    var lagrerIkkeEl = root.querySelector('[data-gea-lagrer-ikke]');
     var godkjent = !!data.godkjent;
     var dato = data.dato_godkjent_elektronisk_arkiv || '';
     var henvisning = data.henvisning || '';
+    var lagrerIkke = !!data.lagrer_ikke_dokumentasjon;
 
     if (statusEl) {
       if (godkjent) {
@@ -61,12 +64,16 @@
         henvisningEl.textContent = '';
       }
     }
+    if (lagrerIkkeEl) {
+      lagrerIkkeEl.hidden = !lagrerIkke;
+    }
   }
 
   function fillForm(root, data) {
     var godkjentInput = root.querySelector('[data-gea-input-godkjent]');
     var datoInput = root.querySelector('[data-gea-input-dato]');
     var henvisningInput = root.querySelector('[data-gea-input-henvisning]');
+    var lagrerIkkeInput = root.querySelector('[data-gea-input-lagrer-ikke]');
     if (godkjentInput) {
       godkjentInput.checked = !!data.godkjent;
     }
@@ -76,16 +83,21 @@
     if (henvisningInput) {
       henvisningInput.value = data.henvisning || '';
     }
+    if (lagrerIkkeInput) {
+      lagrerIkkeInput.checked = !!data.lagrer_ikke_dokumentasjon;
+    }
   }
 
   function readForm(root) {
     var godkjentInput = root.querySelector('[data-gea-input-godkjent]');
     var datoInput = root.querySelector('[data-gea-input-dato]');
     var henvisningInput = root.querySelector('[data-gea-input-henvisning]');
+    var lagrerIkkeInput = root.querySelector('[data-gea-input-lagrer-ikke]');
     return {
       godkjent: !!(godkjentInput && godkjentInput.checked),
       dato_godkjent_elektronisk_arkiv: datoInput ? datoInput.value : '',
       henvisning: henvisningInput ? henvisningInput.value : '',
+      lagrer_ikke_dokumentasjon: !!(lagrerIkkeInput && lagrerIkkeInput.checked),
     };
   }
 
@@ -108,6 +120,7 @@
       godkjent: !!config.godkjent,
       dato_godkjent_elektronisk_arkiv: config.dato_godkjent_elektronisk_arkiv || '',
       henvisning: config.henvisning || '',
+      lagrer_ikke_dokumentasjon: !!config.lagrer_ikke_dokumentasjon,
     };
 
     renderView(root, state);
@@ -162,6 +175,7 @@
               dato_godkjent_elektronisk_arkiv:
                 result.body.dato_godkjent_elektronisk_arkiv || '',
               henvisning: result.body.henvisning || '',
+              lagrer_ikke_dokumentasjon: !!result.body.lagrer_ikke_dokumentasjon,
             };
             renderView(root, state);
             fillForm(root, state);

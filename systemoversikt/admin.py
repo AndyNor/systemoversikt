@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # Change log:
+# 2026-11-04: GodkjentElektroniskArkivAdmin – list lagrer_ikke_dokumentasjon.
 # 2026-10-30: System admin – Systemklassifisering and Grensesnitt directly under systemnavn/alias.
 # 2026-09-25: Sarbarhetssak admin – free-text oppgavestatus is searchable.
 # 2026-09-25: Sarbarhetssak admin – vulnerability cases edited primarily in the sikkerhet UI.
@@ -461,6 +462,7 @@ class GodkjentElektroniskArkivAdmin(SimpleHistoryAdmin):
 	list_display = (
 		'system',
 		'godkjent',
+		'lagrer_ikke_dokumentasjon',
 		'dato_godkjent_elektronisk_arkiv',
 		'henvisning_kort',
 		'sist_oppdatert',
@@ -469,7 +471,7 @@ class GodkjentElektroniskArkivAdmin(SimpleHistoryAdmin):
 		'system__systemnavn',
 		'henvisning',
 	)
-	list_filter = ('godkjent',)
+	list_filter = ('godkjent', 'lagrer_ikke_dokumentasjon',)
 	autocomplete_fields = ('system',)
 	date_hierarchy = 'dato_godkjent_elektronisk_arkiv'
 
