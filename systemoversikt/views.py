@@ -1599,11 +1599,43 @@ def _arkiv_rapport_migrering_sammendrag(system):
 
 def rapport_arkiv(request):
 	# 2026-11-04: Archive report – livsløp, platform, forvalter, OKA, approval, migrations, usage.
+	# 2026-11-04: AND-filters – forvaltervirksomhet, livsløpstatus, virksomhet som bruker systemet.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
 		return render_access_denied(request, required_permissions)
 
-	systemer = list(
+	virksomheter = list(
+		Virksomhet.objects.filter(ordinar_virksomhet=True)
+		.order_by('virksomhetsforkortelse')
+	)
+	virksomhet_ids = {v.pk for v in virksomheter}
+
+	forvalter_raw = (request.GET.get('forvalter') or '').strip()
+	filter_forvalter = int(forvalter_raw) if forvalter_raw.isdigit() and int(forvalter_raw) in virksomhet_ids else None
+
+	bruker_raw = (request.GET.get('bruker') or '').strip()
+	filter_bruker = int(bruker_raw) if bruker_raw.isdigit() and int(bruker_raw) in virksomhet_ids else None
+
+	valid_livslop = {0, 1, 2, 3, 4, 5, 6, 7, 8}
+	raw_livslop = []
+	for part in request.GET.getlist('livslop'):
+		for token in str(part).split(','):
+			token = token.strip()
+			if token.isdigit():
+				raw_livslop.append(int(token))
+	seen_livslop = set()
+	filter_livslop = []
+	for value in raw_livslop:
+		if value in valid_livslop and value not in seen_livslop:
+			seen_livslop.add(value)
+			filter_livslop.append(value)
+
+	livslop_choices = []
+	for value, label in LIVSLOEP_VALG:
+		param_value = 0 if value is None else value
+		livslop_choices.append((param_value, label))
+
+	systemer_qs = (
 		System.objects.all()
 		.select_related(
 			'systemforvalter',
@@ -1624,6 +1656,31 @@ def rapport_arkiv(request):
 				queryset=ArkivOverforing.objects.select_related('avsender_system'),
 			),
 		)
+	)
+
+	if filter_forvalter is not None:
+		systemer_qs = systemer_qs.filter(systemforvalter_id=filter_forvalter)
+
+	if filter_livslop:
+		livslop_q = Q()
+		int_statuses = [v for v in filter_livslop if v != 0]
+		if int_statuses:
+			livslop_q |= Q(livslop_status__in=int_statuses)
+		if 0 in filter_livslop:
+			livslop_q |= Q(livslop_status__isnull=True)
+		systemer_qs = systemer_qs.filter(livslop_q)
+
+	# Subquery so Count annotations are not constrained by the bruker join.
+	if filter_bruker is not None:
+		systemer_qs = systemer_qs.filter(
+			pk__in=SystemBruk.objects.filter(
+				brukergruppe_id=filter_bruker,
+				ibruk=True,
+			).values('system_id')
+		)
+
+	systemer = list(
+		systemer_qs
 		.annotate(
 			antall_virksomheter=Count(
 				'systembruk_system',
@@ -1667,6 +1724,11 @@ def rapport_arkiv(request):
 		'required_permissions': formater_permissions(required_permissions),
 		'systemer': systemer,
 		'antall': len(systemer),
+		'virksomheter': virksomheter,
+		'livslop_choices': livslop_choices,
+		'filter_forvalter': filter_forvalter,
+		'filter_bruker': filter_bruker,
+		'filter_livslop': filter_livslop,
 	})
 
 
