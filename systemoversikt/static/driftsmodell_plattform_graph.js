@@ -1,4 +1,9 @@
 // Change log:
+// 2026-11-05: Larger node label font (~2x) to match node size.
+// 2026-11-05: Virksomhet filter on → show lokal drift separately; off → group again.
+// 2026-11-05: Type color as left stripe only (not full node fill).
+// 2026-11-05: Virksomhet filter = single toggle (all vs one org); not multi-checkbox.
+// 2026-11-05: Dual fixed-color badges inside nodes; virksomhet filter; type colors (no heat/badge gradients).
 // 2026-11-05: Badge color gradient by system_count; fcose must include edges (fixes flat grid).
 // 2026-11-05: Heat map from tilgjengelighetsvurdering; count badges beside nodes; no size-by-count scaling.
 // 2026-11-05: Optional toggle collapses platforms named «Lokal drift …» into one graph node.
@@ -10,46 +15,26 @@
 
   const IDEAL_EDGE_LENGTH = 140;
   const LOKAL_DRIFT_GROUP_ID = 'gruppe_lokal_drift';
-  const HEAT_COOL = [168, 213, 229];
-  const HEAT_HOT = [192, 57, 43];
-  const HEAT_NEUTRAL = '#E8E8E8';
-  // 2026-11-05: Count badge: few systems = light blue, many = light red.
-  const BADGE_COOL = [174, 214, 241];
-  const BADGE_HOT = [245, 183, 177];
+  const VIRKSOMHET_NONE = '';
+  // 2026-11-05: Fixed badge colors (no gradient) – system count vs høy tilgjengelighet.
+  const BADGE_SYSTEM_COLOR = '#d6eaf8';
+  const BADGE_HOY_COLOR = '#f5b7b1';
   const BADGE_TEXT_DARK = '#1a1a1a';
+  // 2026-11-05: Node body is neutral; type color only on a left stripe.
+  const NODE_BODY_COLOR = '#F7F7F9';
+  const NODE_STRIPE_WIDTH_PCT = '10%';
+
+  function stripeGradientStops(color) {
+    const c = color || '#E8E8E8';
+    return c + ' ' + c + ' ' + NODE_BODY_COLOR + ' ' + NODE_BODY_COLOR;
+  }
+
+  function stripeGradientPositions() {
+    return '0% ' + NODE_STRIPE_WIDTH_PCT + ' ' + NODE_STRIPE_WIDTH_PCT + ' 100%';
+  }
 
   function cloneElements(elements) {
     return JSON.parse(JSON.stringify(elements || []));
-  }
-
-  function lerpColor(cool, hot, t) {
-    const clamped = Math.max(0, Math.min(1, Number(t) || 0));
-    const rgb = cool.map(function (c, i) {
-      return Math.round(c + (hot[i] - c) * clamped);
-    });
-    return (
-      '#' +
-      rgb
-        .map(function (v) {
-          return ('0' + v.toString(16)).slice(-2);
-        })
-        .join('')
-    );
-  }
-
-  function heatColorFromShare(heat) {
-    if (heat === null || heat === undefined || isNaN(heat)) {
-      return HEAT_NEUTRAL;
-    }
-    return lerpColor(HEAT_COOL, HEAT_HOT, heat);
-  }
-
-  function badgeColorFromCount(count, minCount, maxCount) {
-    if (maxCount <= minCount) {
-      return lerpColor(BADGE_COOL, BADGE_HOT, 0.5);
-    }
-    const t = (Number(count) - minCount) / (maxCount - minCount);
-    return lerpColor(BADGE_COOL, BADGE_HOT, t);
   }
 
   function emptyFordeling() {
@@ -65,6 +50,45 @@
     });
     result.uvurdert = (result.uvurdert || 0) + (src.uvurdert || 0);
     return result;
+  }
+
+  function virksomhetKey(virksomhetId) {
+    if (virksomhetId === null || virksomhetId === undefined || virksomhetId === '') {
+      return VIRKSOMHET_NONE;
+    }
+    return String(virksomhetId);
+  }
+
+  function filterElementsByVirksomhet(baseNodes, baseEdges, selectedKeys) {
+    if (!selectedKeys) {
+      return {
+        nodes: cloneElements(baseNodes),
+        edges: cloneElements(baseEdges),
+      };
+    }
+    const allowed = {};
+    selectedKeys.forEach(function (key) {
+      allowed[key] = true;
+    });
+    const nodes = [];
+    const keepIds = {};
+    (baseNodes || []).forEach(function (node) {
+      const data = node.data || {};
+      const key = virksomhetKey(data.virksomhet_id);
+      if (!allowed[key]) {
+        return;
+      }
+      nodes.push(node);
+      keepIds[data.id] = true;
+    });
+    const edges = [];
+    (baseEdges || []).forEach(function (edge) {
+      const data = edge.data || {};
+      if (keepIds[data.source] && keepIds[data.target]) {
+        edges.push(edge);
+      }
+    });
+    return { nodes: cloneElements(nodes), edges: cloneElements(edges) };
   }
 
   function buildGroupedElements(baseNodes, baseEdges, groupLokalDrift) {
@@ -104,30 +128,23 @@
       };
     }
 
-    const heat = vurdertSum ? hoySum / vurdertSum : null;
-    const heatColor = heatColorFromShare(heat);
-    const groupLabelParts = ['Lokal drift', lokalCount + ' plattformer'];
-    if (hoySum) {
-      groupLabelParts.push(hoySum + ' høy');
-    }
-
     otherNodes.push({
       data: {
         id: LOKAL_DRIFT_GROUP_ID,
-        name: groupLabelParts.join('\n'),
+        name: 'Lokal drift\n' + lokalCount + ' plattformer',
         plattform_navn: 'Lokal drift',
         system_count: systemSum,
         hoy_kritisk_count: hoySum,
         vurdert_count: vurdertSum,
-        heat: heat,
-        heat_color: heatColor,
         tilgjengelighet_fordeling: fordeling,
         is_group: true,
         is_lokal_drift: false,
         is_current: false,
         shape: 'roundrectangle',
-        color: heatColor,
+        color: '#E8E8E8',
         href: null,
+        virksomhet_id: null,
+        virksomhet_forkortelse: null,
       },
     });
 
@@ -180,6 +197,7 @@
     const containerId = config.containerId || 'driftsmodell_cy';
     const resetBtnId = config.resetBtnId || 'btn-driftsmodell-plattform-graph-reset';
     const groupToggleId = config.groupLokalDriftToggleId || null;
+    const virksomhetFilterId = config.virksomhetFilterContainerId || null;
     const showCountBadges = !!config.showCountBadges;
     const container = document.getElementById(containerId);
     if (!container || typeof cytoscape !== 'function') {
@@ -206,53 +224,77 @@
 
     function platformNodes() {
       return cy.nodes().filter(function (node) {
-        return !node.data('is_count_badge');
+        return !node.data('is_count_badge') && !node.data('is_hoy_badge');
       });
     }
 
-    function badgeIdFor(nodeId) {
-      return 'badge_' + nodeId;
+    function isBadgeNode(node) {
+      return !!(node.data('is_count_badge') || node.data('is_hoy_badge'));
+    }
+
+    function systemBadgeIdFor(nodeId) {
+      return 'badge_sys_' + nodeId;
+    }
+
+    function hoyBadgeIdFor(nodeId) {
+      return 'badge_hoy_' + nodeId;
     }
 
     function removeCountBadges() {
-      cy.nodes('[?is_count_badge]').remove();
+      cy.nodes('[?is_count_badge], [?is_hoy_badge]').remove();
     }
 
-    function countRange() {
-      let minCount = null;
-      let maxCount = null;
-      platformNodes().forEach(function (node) {
-        const count = node.data('system_count');
-        if (count === null || count === undefined) {
-          return;
-        }
-        const n = Number(count);
-        if (minCount === null || n < minCount) {
-          minCount = n;
-        }
-        if (maxCount === null || n > maxCount) {
-          maxCount = n;
-        }
-      });
-      if (minCount === null) {
-        return { minCount: 0, maxCount: 0 };
-      }
-      return { minCount: minCount, maxCount: maxCount };
-    }
-
-    function positionBadgeForNode(node) {
-      if (!showCountBadges || node.data('is_count_badge')) {
-        return;
-      }
-      const badge = cy.getElementById(badgeIdFor(node.id()));
-      if (badge.empty()) {
+    function positionBadgesForNode(node) {
+      if (!showCountBadges || isBadgeNode(node)) {
         return;
       }
       const bb = node.boundingBox({ includeLabels: false });
-      badge.position({
-        x: bb.x2 + 14,
-        y: bb.y1 + 10,
-      });
+      const sysBadge = cy.getElementById(systemBadgeIdFor(node.id()));
+      const hoyBadge = cy.getElementById(hoyBadgeIdFor(node.id()));
+      // 2026-11-05: Stack badges inside the node frame (top-right).
+      const badgeX = bb.x2 - 24;
+      if (!sysBadge.empty()) {
+        sysBadge.position({
+          x: badgeX,
+          y: bb.y1 + 20,
+        });
+      }
+      if (!hoyBadge.empty()) {
+        hoyBadge.position({
+          x: badgeX,
+          y: bb.y1 + 54,
+        });
+      }
+    }
+
+    function ensureBadge(id, label, color, platformId, flag) {
+      let badge = cy.getElementById(id);
+      const data = {
+        id: id,
+        name: String(label),
+        is_count_badge: flag === 'system',
+        is_hoy_badge: flag === 'hoy',
+        platform_id: platformId,
+        shape: 'roundrectangle',
+        color: color,
+        href: null,
+      };
+      if (badge.empty()) {
+        cy.add({
+          group: 'nodes',
+          data: data,
+          grabbable: false,
+          selectable: false,
+        });
+        badge = cy.getElementById(id);
+      } else {
+        badge.data('name', data.name);
+        badge.data('color', color);
+        badge.data('platform_id', platformId);
+        badge.data('is_count_badge', data.is_count_badge);
+        badge.data('is_hoy_badge', data.is_hoy_badge);
+      }
+      return badge;
     }
 
     function syncCountBadges() {
@@ -261,41 +303,22 @@
       }
       syncingBadges = true;
       try {
-        const range = countRange();
         const keep = {};
         platformNodes().forEach(function (node) {
-          const count = node.data('system_count');
-          if (count === null || count === undefined) {
+          const systemCount = node.data('system_count');
+          if (systemCount === null || systemCount === undefined) {
             return;
           }
-          const id = badgeIdFor(node.id());
-          keep[id] = true;
-          const color = badgeColorFromCount(count, range.minCount, range.maxCount);
-          let badge = cy.getElementById(id);
-          if (badge.empty()) {
-            cy.add({
-              group: 'nodes',
-              data: {
-                id: id,
-                name: String(count),
-                system_count: count,
-                is_count_badge: true,
-                shape: 'ellipse',
-                color: color,
-                href: null,
-              },
-              grabbable: false,
-              selectable: false,
-            });
-            badge = cy.getElementById(id);
-          } else {
-            badge.data('name', String(count));
-            badge.data('system_count', count);
-            badge.data('color', color);
-          }
-          positionBadgeForNode(node);
+          const hoyCount = node.data('hoy_kritisk_count') || 0;
+          const sysId = systemBadgeIdFor(node.id());
+          const hoyId = hoyBadgeIdFor(node.id());
+          keep[sysId] = true;
+          keep[hoyId] = true;
+          ensureBadge(sysId, systemCount, BADGE_SYSTEM_COLOR, node.id(), 'system');
+          ensureBadge(hoyId, hoyCount, BADGE_HOY_COLOR, node.id(), 'hoy');
+          positionBadgesForNode(node);
         });
-        cy.nodes('[?is_count_badge]').forEach(function (badge) {
+        cy.nodes('[?is_count_badge], [?is_hoy_badge]').forEach(function (badge) {
           if (!keep[badge.id()]) {
             badge.remove();
           }
@@ -303,6 +326,39 @@
       } finally {
         syncingBadges = false;
       }
+    }
+
+    // 2026-11-05: null = show all; otherwise only the one active virksomhet key.
+    function selectedVirksomhetKeys() {
+      if (!virksomhetFilterId) {
+        return null;
+      }
+      const root = document.getElementById(virksomhetFilterId);
+      if (!root) {
+        return null;
+      }
+      const active = root.querySelector(
+        'button[data-virksomhet-filter].active, [data-virksomhet-filter][aria-pressed="true"]'
+      );
+      if (!active) {
+        return null;
+      }
+      return [active.value];
+    }
+
+    function syncVirksomhetFilterUi(activeBtn) {
+      if (!virksomhetFilterId) {
+        return;
+      }
+      const root = document.getElementById(virksomhetFilterId);
+      if (!root) {
+        return;
+      }
+      root.querySelectorAll('[data-virksomhet-filter]').forEach(function (btn) {
+        const isActive = activeBtn != null && btn === activeBtn;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
     }
 
     function buildFcoseLayoutOpts() {
@@ -348,13 +404,31 @@
     }
 
     function loadElements(groupLokal) {
-      const elements = buildGroupedElements(baseNodes, baseEdges, groupLokal && canGroupLokalDrift);
+      const filtered = filterElementsByVirksomhet(
+        baseNodes,
+        baseEdges,
+        selectedVirksomhetKeys()
+      );
+      const elements = buildGroupedElements(
+        filtered.nodes,
+        filtered.edges,
+        groupLokal && canGroupLokalDrift
+      );
       cy.elements().remove();
       cy.add(elements);
       runFcoseLayout(fitAfterLayout);
     }
 
-    const initialElements = buildGroupedElements(baseNodes, baseEdges, groupLokalDrift);
+    const initialFiltered = filterElementsByVirksomhet(
+      baseNodes,
+      baseEdges,
+      selectedVirksomhetKeys()
+    );
+    const initialElements = buildGroupedElements(
+      initialFiltered.nodes,
+      initialFiltered.edges,
+      groupLokalDrift
+    );
 
     const cy = cytoscape({
       container: container,
@@ -371,19 +445,28 @@
           selector: 'node',
           style: {
             shape: 'data(shape)',
-            'background-color': 'data(color)',
+            // 2026-11-05: Type color as left stripe; rest of node is neutral.
+            'background-fill': 'linear-gradient',
+            'background-gradient-direction': 'to-right',
+            'background-gradient-stop-colors': function (ele) {
+              return stripeGradientStops(ele.data('color'));
+            },
+            'background-gradient-stop-positions': stripeGradientPositions(),
+            'background-color': NODE_BODY_COLOR,
             label: 'data(name)',
-            'font-size': '11px',
+            // 2026-11-05: Larger labels; nodes widened to fit.
+            'font-size': '26px',
             color: '#222',
             'text-valign': 'center',
             'text-halign': 'center',
             'text-wrap': 'wrap',
-            'text-max-width': 140,
-            width: 150,
-            height: 56,
+            'text-max-width': showCountBadges ? 200 : 250,
+            width: showCountBadges ? 270 : 250,
+            height: showCountBadges ? 108 : 92,
             'border-width': 1,
             'border-color': '#999',
             padding: '8px',
+            cursor: 'pointer',
           },
         },
         {
@@ -392,8 +475,8 @@
             'border-width': 3,
             'border-color': '#2A2859',
             'font-weight': 'bold',
-            width: 170,
-            height: 64,
+            width: showCountBadges ? 290 : 270,
+            height: showCountBadges ? 120 : 104,
           },
         },
         {
@@ -403,28 +486,30 @@
             'border-style': 'dashed',
             'border-color': '#666',
             'font-weight': 'bold',
-            width: 170,
-            height: 64,
+            width: showCountBadges ? 290 : 270,
+            height: showCountBadges ? 120 : 104,
           },
         },
         {
-          selector: 'node[?is_count_badge]',
+          selector: 'node[?is_count_badge], node[?is_hoy_badge]',
           style: {
-            shape: 'ellipse',
+            shape: 'roundrectangle',
+            'background-fill': 'solid',
             'background-color': 'data(color)',
             label: 'data(name)',
             color: BADGE_TEXT_DARK,
-            'font-size': '10px',
+            'font-size': '16px',
             'font-weight': 'bold',
             'text-valign': 'center',
             'text-halign': 'center',
-            width: 28,
-            height: 28,
+            width: 44,
+            height: 30,
             'border-width': 1,
             'border-color': '#fff',
             padding: 0,
             'z-index': 10,
             'text-max-width': 40,
+            cursor: 'pointer',
           },
         },
         {
@@ -448,30 +533,42 @@
       ],
     });
 
-    cy.on('tap', 'node', function (evt) {
-      const node = evt.target;
-      if (node.data('is_count_badge') || node.data('is_group') || node.data('is_current')) {
+    function navigateFromNode(node) {
+      if (node.data('is_group') || node.data('is_current')) {
         return;
       }
-      const href = node.data('href');
+      let href = node.data('href');
+      if (!href && isBadgeNode(node)) {
+        const platform = cy.getElementById(node.data('platform_id'));
+        if (!platform.empty()) {
+          if (platform.data('is_group') || platform.data('is_current')) {
+            return;
+          }
+          href = platform.data('href');
+        }
+      }
       if (!href) {
         return;
       }
       window.location.href = href;
+    }
+
+    cy.on('tap', 'node', function (evt) {
+      navigateFromNode(evt.target);
     });
 
     cy.on('drag', 'node', function (evt) {
-      if (!showCountBadges || evt.target.data('is_count_badge')) {
+      if (!showCountBadges || isBadgeNode(evt.target)) {
         return;
       }
-      positionBadgeForNode(evt.target);
+      positionBadgesForNode(evt.target);
     });
 
     cy.on('position', 'node', function (evt) {
-      if (!showCountBadges || evt.target.data('is_count_badge') || syncingBadges) {
+      if (!showCountBadges || isBadgeNode(evt.target) || syncingBadges) {
         return;
       }
-      positionBadgeForNode(evt.target);
+      positionBadgesForNode(evt.target);
     });
 
     function syncGroupToggleUi() {
@@ -500,6 +597,26 @@
       });
     }
     syncGroupToggleUi();
+
+    if (virksomhetFilterId) {
+      const filterRoot = document.getElementById(virksomhetFilterId);
+      if (filterRoot) {
+        filterRoot.addEventListener('click', function (evt) {
+          const btn = evt.target.closest('[data-virksomhet-filter]');
+          if (!btn || !filterRoot.contains(btn)) {
+            return;
+          }
+          const turningOff = btn.classList.contains('active');
+          syncVirksomhetFilterUi(turningOff ? null : btn);
+          // 2026-11-05: One virksomhet → expand lokal drift; show-all → group again.
+          if (canGroupLokalDrift) {
+            groupLokalDrift = turningOff;
+            syncGroupToggleUi();
+          }
+          loadElements(groupLokalDrift);
+        });
+      }
+    }
 
     const resetBtn = document.getElementById(resetBtnId);
     if (resetBtn) {

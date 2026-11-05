@@ -12411,6 +12411,7 @@ def alle_leverandorer(request):
 
 def alle_driftsmodeller(request):
 	#Vise liste over alle driftsmodeller
+	# 2026-11-05: Dual in-node badges (system + høy tilgjengelighet); virksomhet filter sidebar; type colors.
 	# 2026-11-05: Overview graph heat = tilgjengelighetsvurdering per platform; count badges; no global doughnut.
 	# 2026-06-22: Prefetch related fields and annotate system count – full model data on alle-page.
 	# 2026-06-22: Dropped lokasjon_lagring_valgmeny prefetch – field removed from model.
@@ -12446,12 +12447,45 @@ def alle_driftsmodeller(request):
 		use_heat=True,
 	)
 
+	# 2026-11-05: Filter buttons sorted by platform count (desc); show count on each button.
+	# 2026-11-05: Unique platform managers for overview filter checkboxes.
+	forvalter_by_pk = {}
+	uten_ansvarlig_antall = 0
+	for p in driftsmodeller:
+		virk = p.ansvarlig_virksomhet
+		if virk is None:
+			uten_ansvarlig_antall += 1
+			continue
+		entry = forvalter_by_pk.get(virk.pk)
+		if entry is None:
+			entry = {
+				'id': virk.pk,
+				'forkortelse': virk.virksomhetsforkortelse or str(virk.pk),
+				'navn': virk.virksomhetsnavn or '',
+				'antall_plattformer': 0,
+			}
+			forvalter_by_pk[virk.pk] = entry
+		entry['antall_plattformer'] += 1
+	plattform_forvaltere = list(forvalter_by_pk.values())
+	if uten_ansvarlig_antall:
+		plattform_forvaltere.append({
+			'id': None,
+			'forkortelse': 'Uten ansvarlig',
+			'navn': '',
+			'antall_plattformer': uten_ansvarlig_antall,
+		})
+	plattform_forvaltere.sort(
+		key=lambda v: (-v['antall_plattformer'], (v['forkortelse'] or '').lower())
+	)
+
 	return render(request, 'driftsmodell_alle.html', {
 		'request': request,
 		'required_permissions': formater_permissions(required_permissions),
 		'driftsmodeller': driftsmodeller,
 		'driftsmodell_felt_referanse': Driftsmodell(),
 		'plattform_graf': plattform_graf,
+		'plattform_forvaltere': plattform_forvaltere,
+		'system_colors': SYSTEM_COLORS,
 	})
 
 
@@ -12826,6 +12860,7 @@ def _driftsmodell_plattform_graf(
 	tilgjengelighet_stats=None,
 	use_heat=False,
 ):
+	# 2026-11-05: Overview: type colors + dual badges (counts); detaljer: neighborhood + type colors.
 	# 2026-11-05: Platform graph for detaljer (neighborhood) and alle (full map + tilgjengelighet heat).
 	nodes = []
 	edges = []
@@ -12837,11 +12872,9 @@ def _driftsmodell_plattform_graf(
 		vurdert = stats.get('vurdert_count', 0)
 		heat = stats.get('heat')
 		heat_color = stats.get('heat_color') or _tilgjengelighet_heat_color(heat)
-		# 2026-11-05: Heat mode = name + optional «N høy»; count shown via badge in JS.
+		# 2026-11-05: Overview badges carry counts; node label is platform name only.
 		if use_heat:
 			label_parts = [plattform.navn]
-			if hoy:
-				label_parts.append(f'{hoy} høy')
 		else:
 			label_parts = [
 				plattform.navn,
@@ -12850,10 +12883,9 @@ def _driftsmodell_plattform_graf(
 		er_valgt = current_pk is not None and plattform.pk == current_pk
 		if er_valgt:
 			node_color = SYSTEM_COLORS['chart_current_system']
-		elif use_heat:
-			node_color = heat_color
 		else:
 			node_color = _driftsmodell_plattform_farge(plattform)
+		virk = plattform.ansvarlig_virksomhet
 		nodes.append({
 			'data': {
 				'id': f'drift_{plattform.pk}',
@@ -12873,6 +12905,11 @@ def _driftsmodell_plattform_graf(
 				'shape': 'roundrectangle',
 				'color': node_color,
 				'href': reverse('detaljer_driftsmodell', kwargs={'pk': plattform.pk}),
+				# 2026-11-05: Platform manager for overview virksomhet filter.
+				'virksomhet_id': virk.pk if virk else None,
+				'virksomhet_forkortelse': (
+					virk.virksomhetsforkortelse if virk else None
+				),
 			}
 		})
 		if plattform.overordnet_plattform_id and plattform.overordnet_plattform_id in plattformer_by_pk:

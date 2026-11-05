@@ -1,3 +1,4 @@
+{# 2026-11-05: Dual in-node badges; virksomhet filter; taller chart; type colors (no gradients). #}
 {# 2026-11-05: Platform graph heat = tilgjengelighetsvurdering; count badges; no global doughnut. #}
 {% extends "system_index.html" %}
 {% load humanize %}
@@ -15,7 +16,7 @@
 	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
-	<script src="{% static 'driftsmodell_plattform_graph.js' %}?v=20261105-badge-grad-layout" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'driftsmodell_plattform_graph.js' %}?v=20261105-font-26" nonce="{{request.csp_nonce}}"></script>
 {% endblock ekstrajavascript %}
 
 {% block ekstrastyle %}
@@ -44,29 +45,35 @@
 	font-size: 0.95rem;
 	color: #2A2859;
 }
+/* 2026-11-05: ~50% taller chart than previous 560px. */
 #driftsmodell_alle_cy {
 	background-color: #FCFCFC;
 	border: 1px solid #d6d4d4;
 	width: 100%;
-	height: 560px;
+	height: 840px;
 }
 .driftsmodell-legend span {
 	margin-right: 1rem;
 	font-size: 0.88rem;
 }
+/* 2026-11-05: Legend matches left-stripe node coloring. */
 .driftsmodell-legend-dot {
 	height: 14px;
-	width: 14px;
+	width: 22px;
 	border-radius: 3px;
 	display: inline-block;
 	vertical-align: middle;
 	margin-right: 0.25rem;
 	border: 1px solid #ccc;
+	background-color: #F7F7F9;
+	background-size: 100% 100%;
+	background-repeat: no-repeat;
 }
 .driftsmodell-legend-badge {
 	height: 18px;
-	width: 18px;
-	border-radius: 50%;
+	min-width: 22px;
+	padding: 0 4px;
+	border-radius: 4px;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -78,25 +85,42 @@
 	border: 1px solid #fff;
 	box-shadow: 0 0 0 1px #ccc;
 }
-.driftsmodell-heat-scale {
-	display: inline-block;
-	width: 88px;
-	height: 12px;
-	vertical-align: middle;
-	margin: 0 0.35rem;
-	border: 1px solid #ccc;
-	border-radius: 2px;
-	background: linear-gradient(to right, #a8d5e5, #c0392b);
+/* 2026-11-05: Single-virksomhet toggle buttons (all shown when none active). */
+.driftsmodell-filter-list {
+	max-height: 680px;
+	overflow-y: auto;
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
-.driftsmodell-badge-scale {
-	display: inline-block;
-	width: 72px;
-	height: 12px;
-	vertical-align: middle;
-	margin: 0 0.35rem;
-	border: 1px solid #ccc;
+.driftsmodell-filter-list li {
+	margin-bottom: 0.4rem;
+}
+.driftsmodell-filter-list .driftsmodell-filter-btn {
+	display: block;
+	width: 100%;
+	text-align: left;
+	font-size: 0.88rem;
+	padding: 0.35rem 0.55rem;
+	border: 1px solid #d6d4d4;
 	border-radius: 6px;
-	background: linear-gradient(to right, #aed6f1, #f5b7b1);
+	background: #fff;
+	color: #333;
+	cursor: pointer;
+}
+.driftsmodell-filter-list .driftsmodell-filter-btn:hover {
+	background: #f3f2f8;
+	border-color: #b8b5c9;
+	text-decoration: none;
+	color: #2A2859;
+}
+.driftsmodell-filter-list .driftsmodell-filter-btn.active {
+	background: #2A2859;
+	border-color: #2A2859;
+	color: #fff;
+}
+.driftsmodell-filter-list .driftsmodell-filter-btn.active .text-muted {
+	color: rgba(255, 255, 255, 0.75) !important;
 }
 </style>
 {% endblock ekstrastyle %}
@@ -108,23 +132,41 @@
 <div class="driftsmodell-panel">
 	<h5>Hvordan plattformene henger sammen</h5>
 	<p class="small text-muted mb-2">
-		Piler viser «kjører på» (underordnet → overordnet). Nodefarge viser andel systemer med høy tilgjengelighetsvurdering (visning 4–5, der 5 er mest kritisk). Den runde badgen viser antall systemer (lyseblå = færrest, lyserød = flest). Klikk en plattform for detaljer.
+		Piler viser «kjører på» (underordnet → overordnet). Farget stripe til venstre viser plattformtype. Inne i noden: blå badge = antall systemer, rosa badge = antall med høy tilgjengelighetsvurdering (visning 4–5). Klikk en plattform for detaljer.
 	</p>
-	<p class="driftsmodell-legend mb-2">
-		<span>
-			<span class="driftsmodell-heat-scale" title="Lav til høy andel med tilgjengelighetsvurdering 4–5"></span>
-			Node: lav → høy andel kritisk tilgjengelighet
-		</span>
-		<span><span class="driftsmodell-legend-dot" style="background-color: #E8E8E8;"></span>Ingen vurdering</span>
-		<span>
-			<span class="driftsmodell-badge-scale" title="Få til mange systemer"></span>
-			Badge: få → mange systemer
-		</span>
+	<p class="driftsmodell-legend mb-3">
+		<span><span class="driftsmodell-legend-dot" style="background-image: linear-gradient(to right, {{ system_colors.drift_uke_privat }} 0 28%, #F7F7F9 28% 100%);"></span>Privat datasenter</span>
+		<span><span class="driftsmodell-legend-dot" style="background-image: linear-gradient(to right, {{ system_colors.drift_uke_sky }} 0 28%, #F7F7F9 28% 100%);"></span>Offentlig sky</span>
+		<span><span class="driftsmodell-legend-dot" style="background-image: linear-gradient(to right, {{ system_colors.saas }} 0 28%, #F7F7F9 28% 100%);"></span>SaaS</span>
+		<span><span class="driftsmodell-legend-dot" style="background-image: linear-gradient(to right, {{ system_colors.samarbeidspartner }} 0 28%, #F7F7F9 28% 100%);"></span>Samarbeidspartner</span>
+		<span><span class="driftsmodell-legend-badge" style="background-color: #d6eaf8;">N</span>Antall systemer</span>
+		<span><span class="driftsmodell-legend-badge" style="background-color: #f5b7b1;">N</span>Høy tilgjengelighet</span>
 	</p>
-	<div id="driftsmodell_alle_cy"></div>
-	{# 2026-11-05: Toggle collapses platforms whose name contains «lokal drift». #}
-	<button id="btn-driftsmodell-alle-group-lokal-drift" type="button" class="btn btn-sm btn-outline-primary mt-2 mr-2" aria-pressed="true">Vis lokal drift separat</button>
-	<button id="btn-driftsmodell-alle-graph-reset" type="button" class="btn btn-sm btn-outline-secondary mt-2">Tilbakestill visning</button>
+	<div class="row">
+		<div class="col-md-8 col-lg-8">
+			<div id="driftsmodell_alle_cy"></div>
+			{# 2026-11-05: Toggle collapses platforms whose name contains «lokal drift». #}
+			<button id="btn-driftsmodell-alle-group-lokal-drift" type="button" class="btn btn-sm btn-outline-primary mt-2 mr-2" aria-pressed="true">Vis lokal drift separat</button>
+			<button id="btn-driftsmodell-alle-graph-reset" type="button" class="btn btn-sm btn-outline-secondary mt-2">Tilbakestill visning</button>
+		</div>
+		{# 2026-11-05: ~1/3 width; single-virksomhet toggle (default = alle). #}
+		<div class="col-md-4 col-lg-4 mt-3 mt-md-0">
+			<div id="driftsmodell_alle_virksomhet_filter">
+				<p class="font-weight-bold mb-2" style="color: #2A2859; font-size: 0.9rem;">Plattformforvalter</p>
+				<p class="small text-muted mb-2">Som standard vises alle. Trykk en virksomhet for kun den – trykk igjen for å vise alle.</p>
+				<ul class="driftsmodell-filter-list">
+					{% for virk in plattform_forvaltere %}
+					<li>
+						<button type="button" class="driftsmodell-filter-btn" data-virksomhet-filter value="{% if virk.id %}{{ virk.id }}{% endif %}" aria-pressed="false" title="Vis kun {{ virk.forkortelse }} ({{ virk.antall_plattformer }} plattform{{ virk.antall_plattformer|pluralize:"er" }})">
+							<strong>{{ virk.forkortelse }}</strong>
+							<span class="text-muted">({{ virk.antall_plattformer }})</span>{% if virk.navn %} <span class="text-muted">– {{ virk.navn }}</span>{% endif %}
+						</button>
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+	</div>
 </div>
 
 <hr>
@@ -235,6 +277,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		containerId: 'driftsmodell_alle_cy',
 		resetBtnId: 'btn-driftsmodell-alle-graph-reset',
 		groupLokalDriftToggleId: 'btn-driftsmodell-alle-group-lokal-drift',
+		virksomhetFilterContainerId: 'driftsmodell_alle_virksomhet_filter',
 		groupLokalDriftDefault: true,
 		showCountBadges: true,
 		idealEdgeLength: 160,
