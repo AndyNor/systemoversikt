@@ -1,4 +1,5 @@
 // Change log:
+// 2026-11-05: Selected platform = thick dark border; keep type stripe color.
 // 2026-11-05: Larger node label font (~2x) to match node size.
 // 2026-11-05: Virksomhet filter on → show lokal drift separately; off → group again.
 // 2026-11-05: Type color as left stripe only (not full node fill).
@@ -470,10 +471,11 @@
           },
         },
         {
+          // 2026-11-05: Selection via border only – type stripe/color stays visible.
           selector: 'node[?is_current]',
           style: {
-            'border-width': 3,
-            'border-color': '#2A2859',
+            'border-width': 5,
+            'border-color': '#1a1840',
             'font-weight': 'bold',
             width: showCountBadges ? 290 : 270,
             height: showCountBadges ? 120 : 104,

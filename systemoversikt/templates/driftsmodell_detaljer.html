@@ -1,3 +1,6 @@
+{# 2026-11-05: Merged system list + forvalter filter; isolert as tag; tilgj. column. #}
+{# 2026-11-05: Generelt merged into info panel; compact system lists. #}
+{# 2026-11-05: Comment first; tilgjengelighet chart; tags; jump nav to system lists. #}
 {# 2026-11-05: Cytoscape platform hierarchy + Chart.js kritikalitet doughnut + virksomhet tags. #}
 {% extends "system_index.html" %}
 {% load humanize %}
@@ -19,8 +22,8 @@
 	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
-	<script src="{% static 'driftsmodell_plattform_graph.js' %}?v=20261105-font-26" nonce="{{request.csp_nonce}}"></script>
-	{% if chart_kritikalitet %}
+	<script src="{% static 'driftsmodell_plattform_graph.js' %}?v=20261105-selected-border" nonce="{{request.csp_nonce}}"></script>
+	{% if chart_tilgjengelighet %}
 	<script src="{% static 'chart.js@2.8.0' %}" nonce="{{request.csp_nonce}}"></script>
 	{% endif %}
 {% endblock ekstrajavascript %}
@@ -59,7 +62,10 @@
 	margin-bottom: 0.15rem;
 }
 .driftsmodell-meta dd {
-	margin: 0 0 0.75rem;
+	margin: 0 0 0.85rem;
+}
+.driftsmodell-meta dd:last-child {
+	margin-bottom: 0;
 }
 #driftsmodell_cy {
 	background-color: #FCFCFC;
@@ -73,17 +79,280 @@
 }
 .driftsmodell-legend-dot {
 	height: 14px;
-	width: 14px;
+	width: 22px;
 	border-radius: 3px;
 	display: inline-block;
 	vertical-align: middle;
 	margin-right: 0.25rem;
 	border: 1px solid #ccc;
+	background-color: #F7F7F9;
 }
 .driftsmodell-chart-wrap {
 	max-width: 320px;
 	margin: 0 auto;
 	height: 240px;
+}
+.driftsmodell-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.3rem;
+	margin: 0.5rem 0 0;
+}
+.driftsmodell-tag {
+	display: inline-block;
+	padding: 0.15rem 0.45rem;
+	border-radius: 4px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: #1a1a1a;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	line-height: 1.3;
+	white-space: nowrap;
+}
+.driftsmodell-tag-saas {
+	background: #efe4fb;
+	color: #5b3a7a;
+}
+.driftsmodell-tag-utvikling {
+	background: #e8f5e0;
+	color: #2d5a1b;
+}
+.driftsmodell-tag-samarbeid {
+	background: #fff3cd;
+	color: #6b5500;
+}
+.driftsmodell-jump {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.45rem;
+	margin-bottom: 1rem;
+}
+.driftsmodell-jump a {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.4rem 0.75rem;
+	border-radius: 8px;
+	border: 1px solid #d8d5e8;
+	background: #fff;
+	color: #2A2859;
+	font-size: 0.88rem;
+	font-weight: 600;
+	text-decoration: none;
+}
+.driftsmodell-jump a:hover {
+	background: #f3f2f8;
+	border-color: #b8b5c9;
+	text-decoration: none;
+	color: #1a1840;
+}
+.driftsmodell-jump .dm-jump-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.5rem;
+	padding: 0.05rem 0.35rem;
+	border-radius: 999px;
+	background: #d6eaf8;
+	color: #1a1a1a;
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+.driftsmodell-section-anchor {
+	scroll-margin-top: 1rem;
+}
+.driftsmodell-avtale-tag {
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 0.12rem 0.45rem;
+	border-radius: 4px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	background: #f3f2f8;
+	border: 1px solid #d8d5e8;
+	color: #2A2859;
+	text-decoration: none;
+	margin: 0 0.25rem 0.25rem 0;
+}
+.driftsmodell-avtale-tag:hover {
+	background: #e9e7f3;
+	color: #1a1840;
+	text-decoration: none;
+}
+.driftsmodell-info-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 0.5rem;
+	align-items: baseline;
+}
+.driftsmodell-info-links a {
+	font-size: 0.9rem;
+}
+.dm-empty {
+	color: #b0aec0;
+}
+.dm-supplier-role {
+	display: block;
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: #8a8799;
+	margin-top: 0.3rem;
+}
+.dm-supplier-role:first-child {
+	margin-top: 0;
+}
+/* 2026-11-05: Compact system tables – same visual language as platform overview. */
+.driftsmodell-table-wrap {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+.driftsmodell-sys-table {
+	width: 100%;
+	margin-bottom: 0;
+	font-size: 0.9rem;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+.driftsmodell-sys-table thead th {
+	background: #f3f2f8;
+	color: #2A2859;
+	font-size: 0.78rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	border-bottom: 2px solid #d8d5e8;
+	border-top: none;
+	white-space: nowrap;
+	padding: 0.65rem 0.75rem;
+	vertical-align: bottom;
+}
+.driftsmodell-sys-table tbody td {
+	padding: 0.7rem 0.75rem;
+	vertical-align: middle;
+	border-top: 1px solid #eceaf3;
+	background: #fff;
+}
+.driftsmodell-sys-table tbody tr:hover td {
+	background: #f8f7fc;
+}
+.dm-sys-name {
+	font-weight: 600;
+	color: #2A2859;
+	text-decoration: none;
+}
+.dm-sys-name:hover {
+	color: #1a1840;
+	text-decoration: underline;
+}
+.dm-sys-name-out {
+	text-decoration: line-through;
+	color: #888;
+}
+.dm-sys-suppliers {
+	min-width: 140px;
+	max-width: 260px;
+	font-size: 0.85rem;
+	line-height: 1.4;
+}
+.dm-sys-tag-ibruk {
+	background: #e8f5e0;
+	color: #2d5a1b;
+}
+.dm-sys-tag-ikke-ibruk {
+	background: #f1f1f4;
+	color: #666;
+}
+.dm-sys-tag-livslop {
+	background: #eef2f8;
+	color: #3a4560;
+}
+.dm-sys-tag-tilgj {
+	background: #fdecea;
+	color: #8a2e2a;
+}
+.dm-sys-tag-isolert {
+	background: #fff3cd;
+	color: #6b5500;
+}
+.dm-avtale-ok {
+	color: #268f26;
+	font-weight: 700;
+}
+.dm-avtale-mangler {
+	color: #c10000;
+	font-weight: 700;
+}
+/* 2026-11-05: Compact forvalter filter under graph (abbrev + count only). */
+.driftsmodell-forvalter-filter {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem;
+	margin: 0;
+}
+.driftsmodell-forvalter-filter .driftsmodell-filter-btn {
+	text-align: center;
+	font-size: 0.82rem;
+	padding: 0.3rem 0.55rem;
+	border: 1px solid #d6d4d4;
+	border-radius: 6px;
+	background: #fff;
+	color: #333;
+	cursor: pointer;
+}
+.driftsmodell-forvalter-filter .driftsmodell-filter-btn:hover {
+	background: #f3f2f8;
+	border-color: #b8b5c9;
+	color: #2A2859;
+}
+.driftsmodell-forvalter-filter .driftsmodell-filter-btn.active {
+	background: #2A2859;
+	border-color: #2A2859;
+	color: #fff;
+}
+.driftsmodell-forvalter-filter .driftsmodell-filter-btn.active .text-muted {
+	color: rgba(255, 255, 255, 0.75) !important;
+}
+.driftsmodell-tilgj-filter-active {
+	display: none;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-top: 0.65rem;
+	font-size: 0.85rem;
+}
+.driftsmodell-tilgj-filter-active.is-visible {
+	display: flex;
+}
+.driftsmodell-tilgj-filter-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	padding: 0.25rem 0.55rem;
+	border-radius: 6px;
+	background: #f3f2f8;
+	border: 1px solid #d8d5e8;
+	color: #2A2859;
+	font-weight: 600;
+}
+.driftsmodell-tilgj-filter-clear {
+	border: none;
+	background: transparent;
+	color: #666;
+	font-size: 1rem;
+	line-height: 1;
+	cursor: pointer;
+	padding: 0 0.15rem;
+}
+.driftsmodell-tilgj-filter-clear:hover {
+	color: #1a1840;
+}
+#driftsmodell_tilgjengelighet_chart {
+	cursor: pointer;
 }
 </style>
 {% endblock ekstrastyle %}
@@ -98,19 +367,39 @@
 	{% endif %}
 </p>
 
+{% if driftsmodell.kommentar %}
+<div class="driftsmodell-panel">
+	<h5>Kommentar</h5>
+	<div>{{ driftsmodell.kommentar|linebreaks }}</div>
+</div>
+{% endif %}
+
+<div class="driftsmodell-panel py-2">
+	<div class="driftsmodell-tags mb-0">
+		<span class="driftsmodell-tag" style="background-color: {{ driftsmodell.plattform_farge }};">{{ driftsmodell.get_type_plattform_display }}</span>
+		{% if driftsmodell.er_saas %}<span class="driftsmodell-tag driftsmodell-tag-saas">SaaS</span>{% endif %}
+		{% if driftsmodell.utviklingsplattform %}<span class="driftsmodell-tag driftsmodell-tag-utvikling">Utvikling</span>{% endif %}
+		{% if driftsmodell.samarbeidspartner %}<span class="driftsmodell-tag driftsmodell-tag-samarbeid">Samarbeidspartner</span>{% endif %}
+	</div>
+</div>
+
+<nav class="driftsmodell-jump" aria-label="Hopp til systemliste">
+	<a href="#driftsmodell-systemer">Systemer <span class="dm-jump-count">{{ systemer|length }}</span></a>
+</nav>
+
 <div class="row">
 	<div class="col-md-8">
 		<div class="driftsmodell-panel">
 			<h5>Hvordan plattformene henger sammen</h5>
 			<p class="small text-muted mb-2">
-				Piler viser «kjører på» (underordnet → overordnet). Valgt plattform er uthevet. Klikk en annen plattform for å åpne den.
+				Piler viser «kjører på» (underordnet → overordnet). Valgt plattform har tykk mørk ramme (typefarge beholdes). Farget stripe viser plattformtype. Klikk en annen plattform for å åpne den.
 			</p>
 			<p class="driftsmodell-legend mb-2">
-				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.chart_current_system }}; border-color: #2A2859;"></span>Valgt plattform</span>
-				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.drift_uke_privat }};"></span>Privat datasenter</span>
-				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.drift_uke_sky }};"></span>Offentlig sky</span>
-				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.saas }};"></span>SaaS</span>
-				<span><span class="driftsmodell-legend-dot" style="background-color: {{ system_colors.samarbeidspartner }};"></span>Samarbeidspartner</span>
+				<span><span class="driftsmodell-legend-dot" style="background-image: linear-gradient(to right, {{ system_colors.drift_uke_privat }} 0 28%, #F7F7F9 28% 100%); border: 3px solid #1a1840; box-sizing: border-box;"></span>Valgt plattform</span>
+				<span><span class="driftsmodell-legend-dot" style="background-image: linear-gradient(to right, {{ system_colors.drift_uke_privat }} 0 28%, #F7F7F9 28% 100%);"></span>Privat datasenter</span>
+				<span><span class="driftsmodell-legend-dot" style="background-image: linear-gradient(to right, {{ system_colors.drift_uke_sky }} 0 28%, #F7F7F9 28% 100%);"></span>Offentlig sky</span>
+				<span><span class="driftsmodell-legend-dot" style="background-image: linear-gradient(to right, {{ system_colors.saas }} 0 28%, #F7F7F9 28% 100%);"></span>SaaS</span>
+				<span><span class="driftsmodell-legend-dot" style="background-image: linear-gradient(to right, {{ system_colors.samarbeidspartner }} 0 28%, #F7F7F9 28% 100%);"></span>Samarbeidspartner</span>
 			</p>
 			<div id="driftsmodell_cy"></div>
 			{% if plattform_graf.nodes|length < 2 %}
@@ -118,21 +407,43 @@
 			{% endif %}
 			<button id="btn-driftsmodell-plattform-graph-reset" type="button" class="btn btn-sm btn-outline-secondary mt-2">Tilbakestill visning</button>
 		</div>
+		{% if system_forvaltere %}
+		{# 2026-11-05: Forvalter filter under graph, left of side panels; abbrev only. #}
+		<div class="driftsmodell-panel">
+			<h5>Filtrer systemer på forvalter</h5>
+			<p class="small text-muted mb-2">Trykk en virksomhet for kun den – trykk igjen for å vise alle. Fullt navn vises ved hover.</p>
+			<div id="driftsmodell_system_forvalter_filter" class="driftsmodell-forvalter-filter">
+				{% for virk in system_forvaltere %}
+				<button type="button" class="driftsmodell-filter-btn" data-forvalter-filter value="{% if virk.id %}{{ virk.id }}{% endif %}" aria-pressed="false" title="{% if virk.navn %}{{ virk.navn }} – {% endif %}{{ virk.antall_systemer }} system{{ virk.antall_systemer|pluralize:"er" }}">
+					<strong>{{ virk.forkortelse }}</strong>
+					<span class="text-muted">({{ virk.antall_systemer }})</span>
+				</button>
+				{% endfor %}
+			</div>
+		</div>
+		{% endif %}
 	</div>
 	<div class="col-md-4">
 		<div class="driftsmodell-panel">
-			<h5>Systemer etter driftskritikalitet</h5>
-			<p class="small text-muted">Antall systemer på denne plattformen fordelt på D1–D5 (laveste D-verdi ved flere koblinger). Samme kilde som systemprioritering.</p>
-			{% if chart_kritikalitet %}
+			<h5>Systemer etter tilgjengelighetsvurdering</h5>
+			<p class="small text-muted">Antall systemer på denne plattformen fordelt på visningsskala 1–5 (5 er mest kritisk). Klikk et segment eller en forklaring for å filtrere listen.</p>
+			{% if chart_tilgjengelighet %}
 			<div class="driftsmodell-chart-wrap">
-				<canvas id="driftsmodell_kritikalitet_chart"></canvas>
+				<canvas id="driftsmodell_tilgjengelighet_chart"></canvas>
+			</div>
+			<div id="driftsmodell-tilgj-filter-active" class="driftsmodell-tilgj-filter-active" aria-live="polite">
+				<span class="driftsmodell-tilgj-filter-chip">
+					<span id="driftsmodell-tilgj-filter-label"></span>
+					<button type="button" class="driftsmodell-tilgj-filter-clear" id="driftsmodell-tilgj-filter-clear" title="Fjern filter" aria-label="Fjern tilgjengelighetsfilter">×</button>
+				</span>
 			</div>
 			{% else %}
 			<p class="mb-0 text-muted">Ingen systemer å fordele.</p>
 			{% endif %}
 		</div>
+		{# 2026-11-05: Hierarchy + leverandører/avtaler from former «Generelt» section. #}
 		<div class="driftsmodell-panel">
-			<h5>Ansvar og hierarki</h5>
+			<h5>Om plattformen</h5>
 			<dl class="driftsmodell-meta mb-0">
 				<dt>Ansvarlig virksomhet</dt>
 				<dd>
@@ -141,7 +452,7 @@
 						<a href="{{ url_ansvarlig }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ driftsmodell.ansvarlig_virksomhet }}">{{ driftsmodell.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
 						<span class="small text-muted">{{ driftsmodell.ansvarlig_virksomhet.virksomhetsnavn }}</span>
 					{% else %}
-						–
+						<span class="dm-empty">–</span>
 					{% endif %}
 				</dd>
 				<dt>Overordnet plattform</dt>
@@ -154,83 +465,85 @@
 							<a href="{{ url_over_virk }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ driftsmodell.overordnet_plattform.ansvarlig_virksomhet }}">{{ driftsmodell.overordnet_plattform.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
 						{% endif %}
 					{% else %}
-						–
+						<span class="dm-empty">–</span>
 					{% endif %}
 				</dd>
 				<dt>Underplattformer</dt>
 				<dd>
-					{% for barn in underplattformer %}
-						{% url 'detaljer_driftsmodell' pk=barn.pk as url_barn %}
-						<div class="mb-1">
-							<a href="{{ url_barn }}">{{ barn.navn }}</a>
-							{% if barn.ansvarlig_virksomhet %}
-								{% url 'driftsmodell_virksomhet' pk=barn.ansvarlig_virksomhet.pk as url_barn_virk %}
-								<a href="{{ url_barn_virk }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ barn.ansvarlig_virksomhet }}">{{ barn.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
-							{% endif %}
+					{% if underplattformer %}
+						<div class="driftsmodell-info-links">
+						{% for barn in underplattformer %}
+							{% url 'detaljer_driftsmodell' pk=barn.pk as url_barn %}
+							<span>
+								<a href="{{ url_barn }}">{{ barn.navn }}</a>
+								{% if barn.ansvarlig_virksomhet %}
+									{% url 'driftsmodell_virksomhet' pk=barn.ansvarlig_virksomhet.pk as url_barn_virk %}
+									<a href="{{ url_barn_virk }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ barn.ansvarlig_virksomhet }}">{{ barn.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
+								{% endif %}{% if not forloop.last %}<span class="text-muted">·</span>{% endif %}
+							</span>
+						{% endfor %}
 						</div>
-					{% empty %}
-						–
-					{% endfor %}
+					{% else %}
+						<span class="dm-empty">–</span>
+					{% endif %}
+				</dd>
+				<dt>{% get_verbose_field_name driftsmodell "leverandor" %}</dt>
+				<dd>
+					{% if driftsmodell.leverandor.all %}
+						<div class="driftsmodell-info-links">
+						{% for leverandor in driftsmodell.leverandor.all %}
+							{% url 'leverandor' leverandor.pk as url_leverandor %}
+							<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}<span class="text-muted">·</span>{% endif %}
+						{% endfor %}
+						</div>
+					{% else %}
+						<span class="dm-empty">–</span>
+					{% endif %}
+				</dd>
+				<dt>{% get_verbose_field_name driftsmodell "underleverandorer" %}</dt>
+				<dd>
+					{% if driftsmodell.underleverandorer.all %}
+						<div class="driftsmodell-info-links">
+						{% for leverandor in driftsmodell.underleverandorer.all %}
+							{% url 'leverandor' leverandor.pk as url_leverandor %}
+							<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}<span class="text-muted">·</span>{% endif %}
+						{% endfor %}
+						</div>
+					{% else %}
+						<span class="dm-empty">–</span>
+					{% endif %}
+				</dd>
+				<dt>{% get_verbose_field_name driftsmodell "avtaler" %}</dt>
+				<dd>
+					{% if driftsmodell.avtaler.all %}
+						{% for avtale in driftsmodell.avtaler.all %}
+							{% url 'avtaledetaljer' avtale.pk as avtale_url %}
+							<a href="{{ avtale_url }}" class="driftsmodell-avtale-tag" title="{{ avtale }}">{{ avtale.kortnavn|default:avtale }}</a>
+						{% endfor %}
+					{% else %}
+						<span class="dm-empty">–</span>
+					{% endif %}
 				</dd>
 			</dl>
 		</div>
 	</div>
 </div>
 
-{% if driftsmodell.kommentar %}
-<div class="driftsmodell-panel">
-	<h5>Kommentar</h5>
-	<div>{{ driftsmodell.kommentar|linebreaks }}</div>
-</div>
-{% endif %}
-
 <hr>
 
-<h6>Systemer registrert på driftsmodellen ({{ systemer.count }})</h6>
-{% include "system_include_hurtigvisning.html" with systemer=systemer %}
-
-<h6>Systemer på isolert drift ({{ isolert_drift.count|default:0 }})</h6>
-{% include "system_include_hurtigvisning.html" with systemer=isolert_drift %}
-
-<hr>
-
-<h6>Generelt</h6>
-<table class="tablesorter">
-	<tr>
-		<td width="30%">{% get_verbose_field_name driftsmodell "leverandor" %}</td>
-		<td>
-			{% for leverandor in driftsmodell.leverandor.all %}
-				{% url 'leverandor' leverandor.pk as url_leverandor %}
-				<a href="{{ url_leverandor }}">{{ leverandor }}</a><br>
-			{% endfor %}
-		</td>
-	</tr>
-	<tr>
-		<td width="30%">{% get_verbose_field_name driftsmodell "underleverandorer" %}</td>
-		<td>
-			{% for leverandor in driftsmodell.underleverandorer.all %}
-				{% url 'leverandor' leverandor.pk as url_leverandor %}
-				<a href="{{ url_leverandor }}">{{ leverandor }}</a><br>
-			{% endfor %}
-		</td>
-	</tr>
-	<tr>
-		<td>{% get_verbose_field_name driftsmodell "avtaler" %}</td>
-		<td>
-			{% for avtale in driftsmodell.avtaler.all %}
-				{% url 'avtaledetaljer' avtale.pk as avtale_url %}
-				<a href="{{ avtale_url }}">{{ avtale }}</a><br>
-			{% endfor %}
-		</td>
-	</tr>
-</table>
+<section id="driftsmodell-systemer" class="driftsmodell-section-anchor">
+	<div class="driftsmodell-panel">
+		<h5>Systemer på plattformen <span class="text-muted font-weight-normal" style="font-size: 0.85rem;">(<span id="driftsmodell-sys-visible-count">{{ systemer|length }}</span>/{{ systemer|length }})</span></h5>
+		{% include "driftsmodell_system_liste.html" with systemer=systemer %}
+	</div>
+</section>
 
 {% endblock hovedinnhold %}
 
 {% block script_append %}
 {{ plattform_graf|json_script:"driftsmodell_plattform_graphElements" }}
-{% if chart_kritikalitet %}
-{{ chart_kritikalitet|json_script:"driftsmodell-kritikalitet-data" }}
+{% if chart_tilgjengelighet %}
+{{ chart_tilgjengelighet|json_script:"driftsmodell-tilgjengelighet-data" }}
 {% endif %}
 <script type="text/javascript" nonce="{{request.csp_nonce}}">
 document.addEventListener('DOMContentLoaded', function () {
@@ -244,11 +557,104 @@ document.addEventListener('DOMContentLoaded', function () {
 		},
 	});
 
-	{% if chart_kritikalitet %}
+	// 2026-11-05: Combined filters – systemforvalter + tilgjengelighet (from chart click).
+	const forvalterFilter = document.getElementById('driftsmodell_system_forvalter_filter');
+	const sysTable = document.getElementById('driftsmodell-sys-table');
+	const visibleCountEl = document.getElementById('driftsmodell-sys-visible-count');
+	const tilgjActiveEl = document.getElementById('driftsmodell-tilgj-filter-active');
+	const tilgjLabelEl = document.getElementById('driftsmodell-tilgj-filter-label');
+	const tilgjClearBtn = document.getElementById('driftsmodell-tilgj-filter-clear');
+	let activeForvalter = null;
+	let activeTilgjengelighet = null;
+
+	function applySystemFilters() {
+		if (!sysTable) {
+			return;
+		}
+		let visible = 0;
+		sysTable.querySelectorAll('tbody tr').forEach(function (row) {
+			const forvKey = row.getAttribute('data-forvalter-filter');
+			const tilgjKey = row.getAttribute('data-tilgjengelighet-filter');
+			const matchForv = activeForvalter === null || forvKey === activeForvalter;
+			const matchTilgj = activeTilgjengelighet === null || tilgjKey === activeTilgjengelighet;
+			const show = matchForv && matchTilgj;
+			row.style.display = show ? '' : 'none';
+			if (show) {
+				visible += 1;
+			}
+		});
+		if (visibleCountEl) {
+			visibleCountEl.textContent = String(visible);
+		}
+	}
+
+	function setTilgjengelighetFilter(key, label) {
+		if (key !== null && key === activeTilgjengelighet) {
+			activeTilgjengelighet = null;
+		} else {
+			activeTilgjengelighet = key;
+		}
+		if (tilgjActiveEl && tilgjLabelEl) {
+			if (activeTilgjengelighet === null) {
+				tilgjActiveEl.classList.remove('is-visible');
+				tilgjLabelEl.textContent = '';
+			} else {
+				tilgjLabelEl.textContent = label || activeTilgjengelighet;
+				tilgjActiveEl.classList.add('is-visible');
+			}
+		}
+		applySystemFilters();
+		const section = document.getElementById('driftsmodell-systemer');
+		if (activeTilgjengelighet !== null && section) {
+			section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		}
+	}
+
+	if (forvalterFilter) {
+		forvalterFilter.addEventListener('click', function (evt) {
+			const btn = evt.target.closest('[data-forvalter-filter]');
+			if (!btn || !forvalterFilter.contains(btn)) {
+				return;
+			}
+			const turningOff = btn.classList.contains('active');
+			forvalterFilter.querySelectorAll('[data-forvalter-filter]').forEach(function (el) {
+				const isActive = !turningOff && el === btn;
+				el.classList.toggle('active', isActive);
+				el.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+			});
+			activeForvalter = turningOff ? null : btn.value;
+			applySystemFilters();
+		});
+	}
+
+	if (tilgjClearBtn) {
+		tilgjClearBtn.addEventListener('click', function () {
+			activeTilgjengelighet = null;
+			if (tilgjActiveEl && tilgjLabelEl) {
+				tilgjActiveEl.classList.remove('is-visible');
+				tilgjLabelEl.textContent = '';
+			}
+			applySystemFilters();
+		});
+	}
+
+	{% if chart_tilgjengelighet %}
 	const chartData = JSON.parse(
-		document.getElementById('driftsmodell-kritikalitet-data').textContent
+		document.getElementById('driftsmodell-tilgjengelighet-data').textContent
 	);
-	new Chart(document.getElementById('driftsmodell_kritikalitet_chart'), {
+	const chartKeys = chartData.keys || [];
+	function toggleTilgjFromIndex(index) {
+		if (index === undefined || index === null || index < 0) {
+			return;
+		}
+		const key = chartKeys[index];
+		const label = (chartData.labels || [])[index];
+		if (!key) {
+			return;
+		}
+		setTilgjengelighetFilter(key, label);
+	}
+	new Chart(document.getElementById('driftsmodell_tilgjengelighet_chart'), {
 		type: 'doughnut',
 		data: {
 			labels: chartData.labels,
@@ -266,6 +672,20 @@ document.addEventListener('DOMContentLoaded', function () {
 					boxWidth: 12,
 					fontSize: 11,
 				},
+				onClick: function (evt, legendItem) {
+					toggleTilgjFromIndex(legendItem.index);
+				},
+			},
+			onClick: function (evt, elements) {
+				if (!elements || !elements.length) {
+					return;
+				}
+				toggleTilgjFromIndex(elements[0]._index);
+			},
+			hover: {
+				onHover: function (evt, elements) {
+					evt.target.style.cursor = elements && elements.length ? 'pointer' : 'default';
+				},
 			},
 			tooltips: {
 				callbacks: {
@@ -273,6 +693,9 @@ document.addEventListener('DOMContentLoaded', function () {
 						var label = data.labels[item.index] || '';
 						var value = data.datasets[0].data[item.index];
 						return label + ': ' + value + ' system' + (value === 1 ? '' : 'er');
+					},
+					afterLabel: function () {
+						return 'Klikk for å filtrere';
 					},
 				},
 			},

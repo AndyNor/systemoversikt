@@ -12855,6 +12855,53 @@ def _driftsmodell_kritikalitet_chart(systemer):
 	}
 
 
+# 2026-11-05: Display scale 5 = most critical (DB inverted); used on driftsmodell detail doughnut.
+TILGJENGELIGHET_CHART_META = [
+	(5, '5 Svært alvorlig', '#c0392b'),
+	(4, '4 Alvorlig', '#e74c3c'),
+	(3, '3 Moderat', '#f39c12'),
+	(2, '2 Lav', '#a8d5e5'),
+	(1, '1 Ubetydelig', '#27ae60'),
+]
+
+
+def _driftsmodell_tilgjengelighet_chart(systemer):
+	# 2026-11-05: Doughnut of tilgjengelighetsvurdering on a platform (replaces D1–D5 chart).
+	# 2026-11-05: Include filter keys so chart segments can filter the system table.
+	fordeling = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 'uvurdert': 0}
+	for system in systemer:
+		visning = _tilgjengelighet_db_til_visning(system.tilgjengelighetsvurdering)
+		if visning is None:
+			fordeling['uvurdert'] += 1
+		else:
+			fordeling[visning] += 1
+
+	chart_labels = []
+	chart_data = []
+	chart_colors = []
+	chart_keys = []
+	for klasse, label, farge in TILGJENGELIGHET_CHART_META:
+		antall = fordeling.get(klasse, 0)
+		if antall:
+			chart_labels.append(label)
+			chart_data.append(antall)
+			chart_colors.append(farge)
+			chart_keys.append(str(klasse))
+	if fordeling['uvurdert']:
+		chart_labels.append('Ikke vurdert')
+		chart_data.append(fordeling['uvurdert'])
+		chart_colors.append('#bdc3c7')
+		chart_keys.append('uvurdert')
+	if not chart_data:
+		return None
+	return {
+		'labels': chart_labels,
+		'data': chart_data,
+		'colors': chart_colors,
+		'keys': chart_keys,
+	}
+
+
 def _driftsmodell_plattform_graf(
 	plattformer_by_pk,
 	systemtall_per_plattform,
@@ -12882,11 +12929,9 @@ def _driftsmodell_plattform_graf(
 				plattform.navn,
 				f'{antall} system{"er" if antall != 1 else ""}',
 			]
+		# 2026-11-05: Selected platform keeps type color; selection shown via thicker border in JS.
 		er_valgt = current_pk is not None and plattform.pk == current_pk
-		if er_valgt:
-			node_color = SYSTEM_COLORS['chart_current_system']
-		else:
-			node_color = _driftsmodell_plattform_farge(plattform)
+		node_color = _driftsmodell_plattform_farge(plattform)
 		virk = plattform.ansvarlig_virksomhet
 		nodes.append({
 			'data': {
@@ -12931,6 +12976,8 @@ def _driftsmodell_plattform_graf(
 
 def detaljer_driftsmodell(request, pk):
 	#Vise detaljer om en valgt driftsmodell (inkl. systemer tilknyttet)
+	# 2026-11-05: Merged systems + forvalter filter; isolert tag; tilgjengelighet column.
+	# 2026-11-05: Tilgjengelighet doughnut; comment first; tags; jump nav; isolert vs vanlige.
 	# 2026-11-05: Cytoscape platform neighborhood + Chart.js D1–D5 counts + virksomhet tags.
 	required_permissions = ['systemoversikt.view_system']
 	if not any(map(request.user.has_perm, required_permissions)):
@@ -12952,14 +12999,55 @@ def detaljer_driftsmodell(request, pk):
 		),
 		pk=pk,
 	)
-	systemer = (
+	# 2026-11-05: Same type color as overview table/graph stripe.
+	driftsmodell.plattform_farge = _driftsmodell_plattform_farge(driftsmodell)
+
+	# 2026-11-05: One merged system list; isolert as tag; forvalter filter buttons with counts.
+	systemer = list(
 		System.objects.filter(driftsmodell_foreignkey=pk)
 		.filter(~Q(livslop_status=7))
-		.prefetch_related('service_offerings')
+		.select_related('systemforvalter')
+		.prefetch_related(
+			'systemleverandor',
+			'applikasjonsdriftleverandor',
+		)
+		.order_by('systemnavn')
 	)
-	isolert_drift = systemer.filter(isolert_drift=True)
+	# 2026-11-05: Display-scale key for chart/table tilgjengelighet filtering.
+	for system in systemer:
+		visning = _tilgjengelighet_db_til_visning(system.tilgjengelighetsvurdering)
+		system.tilgjengelighet_filter_key = str(visning) if visning else 'uvurdert'
 
-	chart_kritikalitet = _driftsmodell_kritikalitet_chart(systemer)
+	chart_tilgjengelighet = _driftsmodell_tilgjengelighet_chart(systemer)
+
+	forvalter_by_pk = {}
+	uten_forvalter_antall = 0
+	for system in systemer:
+		virk = system.systemforvalter
+		if virk is None:
+			uten_forvalter_antall += 1
+			continue
+		entry = forvalter_by_pk.get(virk.pk)
+		if entry is None:
+			entry = {
+				'id': virk.pk,
+				'forkortelse': virk.virksomhetsforkortelse or str(virk.pk),
+				'navn': virk.virksomhetsnavn or '',
+				'antall_systemer': 0,
+			}
+			forvalter_by_pk[virk.pk] = entry
+		entry['antall_systemer'] += 1
+	system_forvaltere = list(forvalter_by_pk.values())
+	if uten_forvalter_antall:
+		system_forvaltere.append({
+			'id': None,
+			'forkortelse': 'Uten forvalter',
+			'navn': '',
+			'antall_systemer': uten_forvalter_antall,
+		})
+	system_forvaltere.sort(
+		key=lambda v: (-v['antall_systemer'], (v['forkortelse'] or '').lower())
+	)
 
 	relaterte_pks = _driftsmodell_relaterte_plattform_pks(driftsmodell)
 	plattformer_by_pk = {
@@ -12989,8 +13077,8 @@ def detaljer_driftsmodell(request, pk):
 		'required_permissions': formater_permissions(required_permissions),
 		'driftsmodell': driftsmodell,
 		'systemer': systemer,
-		'isolert_drift': isolert_drift,
-		'chart_kritikalitet': chart_kritikalitet,
+		'system_forvaltere': system_forvaltere,
+		'chart_tilgjengelighet': chart_tilgjengelighet,
 		'plattform_graf': plattform_graf,
 		'underplattformer': underplattformer,
 		'system_colors': SYSTEM_COLORS,

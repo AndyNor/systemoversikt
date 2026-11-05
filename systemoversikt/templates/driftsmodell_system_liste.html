@@ -1,0 +1,88 @@
+{# 2026-11-05: Merged list; isolert tag; tilgjengelighet column; forvalter filter via data-attrs. #}
+{# 2026-11-05: Compact system list for driftsmodell detail – same principles as platform overview table. #}
+{% load templatetags %}
+{% if systemer %}
+<div class="driftsmodell-table-wrap">
+<table id="driftsmodell-sys-table" class="tablesorter excel driftsmodell-sys-table">
+	<thead>
+		<tr>
+			<th>System</th>
+			<th>Forvalter</th>
+			<th>Status</th>
+			<th>Tilgjengelighet</th>
+			<th>Leverandører</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for system in systemer %}
+		<tr data-forvalter-filter="{% if system.systemforvalter %}{{ system.systemforvalter.pk }}{% endif %}" data-tilgjengelighet-filter="{{ system.tilgjengelighet_filter_key }}">
+			<td class="dm-sys-name-cell">
+				{% url "systemdetaljer" system.pk as url_systemdetaljer %}
+				<a href="{{ url_systemdetaljer }}" class="dm-sys-name{% if system.er_ute_av_bruk %} dm-sys-name-out{% endif %}">
+					{% if system.er_infrastruktur %}<span title="Infrastruktur">🔧</span> {% endif %}{{ system.systemnavn }}
+				</a>
+			</td>
+			<td>
+				{% if system.systemforvalter %}
+					<span class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ system.systemforvalter }}">{{ system.systemforvalter.virksomhetsforkortelse }}</span>
+				{% else %}
+					<span class="dm-empty">–</span>
+				{% endif %}
+			</td>
+			<td>
+				<div class="driftsmodell-tags mb-0">
+					{% if system.er_ibruk %}
+						<span class="driftsmodell-tag dm-sys-tag-ibruk">I bruk</span>
+					{% else %}
+						<span class="driftsmodell-tag dm-sys-tag-ikke-ibruk">Ikke i bruk</span>
+					{% endif %}
+					{% if system.get_livslop_status_display %}
+						<span class="driftsmodell-tag dm-sys-tag-livslop">{{ system.get_livslop_status_display|livslop_status_label }}</span>
+					{% endif %}
+					{% if system.isolert_drift %}
+						<span class="driftsmodell-tag dm-sys-tag-isolert">Isolert drift</span>
+					{% endif %}
+				</div>
+			</td>
+			<td>
+				{% if system.tilgjengelighetsvurdering and system.tilgjengelighetsvurdering != 6 %}
+					<span class="driftsmodell-tag dm-sys-tag-tilgj">{{ system.get_tilgjengelighetsvurdering_display }}</span>
+				{% else %}
+					<span class="dm-empty">Ikke vurdert</span>
+				{% endif %}
+			</td>
+			<td class="dm-sys-suppliers">
+				{% if system.systemleverandor.all or system.applikasjonsdriftleverandor.all %}
+					{% if system.systemleverandor.all %}
+						<span class="dm-supplier-role">
+							Programvare
+							{% if system.systemleverandor_vedlikeholdsavtale %}
+								<span class="dm-avtale-ok" title="Har avtale">✓</span>
+							{% else %}
+								<span class="dm-avtale-mangler" title="Mangler avtale">!</span>
+							{% endif %}
+						</span>
+						{% for lev in system.systemleverandor.all %}
+							{{ lev.leverandor_navn }}{% if not forloop.last %}, {% endif %}
+						{% endfor %}
+					{% endif %}
+					{% if system.applikasjonsdriftleverandor.all %}
+						<span class="dm-supplier-role">App.drift</span>
+						{% for lev in system.applikasjonsdriftleverandor.all %}
+							{{ lev.leverandor_navn }}{% if not forloop.last %}, {% endif %}
+						{% empty %}
+							<span class="dm-avtale-mangler">Mangler</span>
+						{% endfor %}
+					{% endif %}
+				{% else %}
+					<span class="dm-empty">–</span>
+				{% endif %}
+			</td>
+		</tr>
+	{% endfor %}
+	</tbody>
+</table>
+</div>
+{% else %}
+<p class="text-muted mb-0">Ingen systemer i denne listen.</p>
+{% endif %}
