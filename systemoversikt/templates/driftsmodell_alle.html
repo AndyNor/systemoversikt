@@ -17,7 +17,7 @@
 	<script src="{% static 'cytoscape/cose-base.js@1.0.1' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-layout-utilities.js@1.0.0' %}" nonce="{{request.csp_nonce}}"></script>
 	<script src="{% static 'cytoscape/cytoscape-fcose.js' %}" nonce="{{request.csp_nonce}}"></script>
-	<script src="{% static 'driftsmodell_plattform_graph.js' %}?v=20261105-selected-border" nonce="{{request.csp_nonce}}"></script>
+	<script src="{% static 'driftsmodell_plattform_graph.js' %}?v=20261105-ancestor-chain" nonce="{{request.csp_nonce}}"></script>
 {% endblock ekstrajavascript %}
 
 {% block ekstrastyle %}
@@ -310,7 +310,8 @@
 		<div class="col-md-4 col-lg-4 mt-3 mt-md-0">
 			<div id="driftsmodell_alle_virksomhet_filter">
 				<p class="font-weight-bold mb-2" style="color: #2A2859; font-size: 0.9rem;">Plattformforvalter</p>
-				<p class="small text-muted mb-2">Som standard vises alle. Trykk en virksomhet for kun den – trykk igjen for å vise alle.</p>
+				{# 2026-11-05: Filter keeps «kjører på» ancestors to root so hierarchy stays visible. #}
+				<p class="small text-muted mb-2">Som standard vises alle. Trykk en virksomhet for kun den (overordnede plattformer via «kjører på» beholdes opp til roten) – trykk igjen for å vise alle.</p>
 				<ul class="driftsmodell-filter-list">
 					{% for virk in plattform_forvaltere %}
 					<li>

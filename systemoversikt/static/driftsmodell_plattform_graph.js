@@ -1,4 +1,5 @@
 // Change log:
+// 2026-11-05: Virksomhet filter keeps «kjører på» ancestors up to root (other orgs shown muted).
 // 2026-11-05: Selected platform = thick dark border; keep type stripe color.
 // 2026-11-05: Larger node label font (~2x) to match node size.
 // 2026-11-05: Virksomhet filter on → show lokal drift separately; off → group again.
@@ -71,17 +72,66 @@
     selectedKeys.forEach(function (key) {
       allowed[key] = true;
     });
-    const nodes = [];
+
+    // 2026-11-05: Edges are child → parent («kjører på»); walk up to keep chain to root.
+    const parentsBySource = {};
+    (baseEdges || []).forEach(function (edge) {
+      const data = edge.data || {};
+      if (!data.source || !data.target) {
+        return;
+      }
+      if (!parentsBySource[data.source]) {
+        parentsBySource[data.source] = [];
+      }
+      parentsBySource[data.source].push(data.target);
+    });
+
+    const nodesById = {};
+    (baseNodes || []).forEach(function (node) {
+      const data = node.data || {};
+      if (data.id) {
+        nodesById[data.id] = node;
+      }
+    });
+
     const keepIds = {};
+    const matchedIds = {};
     (baseNodes || []).forEach(function (node) {
       const data = node.data || {};
       const key = virksomhetKey(data.virksomhet_id);
       if (!allowed[key]) {
         return;
       }
-      nodes.push(node);
       keepIds[data.id] = true;
+      matchedIds[data.id] = true;
     });
+
+    const queue = Object.keys(keepIds);
+    while (queue.length) {
+      const id = queue.pop();
+      const parents = parentsBySource[id] || [];
+      for (let i = 0; i < parents.length; i += 1) {
+        const parentId = parents[i];
+        if (keepIds[parentId] || !nodesById[parentId]) {
+          continue;
+        }
+        keepIds[parentId] = true;
+        queue.push(parentId);
+      }
+    }
+
+    const nodes = [];
+    Object.keys(keepIds).forEach(function (id) {
+      const node = nodesById[id];
+      if (!node) {
+        return;
+      }
+      const cloned = cloneElements([node])[0];
+      // 2026-11-05: Ancestors outside selected virksomhet kept for context, styled muted.
+      cloned.data.is_ancestor_context = !matchedIds[id];
+      nodes.push(cloned);
+    });
+
     const edges = [];
     (baseEdges || []).forEach(function (edge) {
       const data = edge.data || {};
@@ -89,7 +139,7 @@
         edges.push(edge);
       }
     });
-    return { nodes: cloneElements(nodes), edges: cloneElements(edges) };
+    return { nodes: nodes, edges: cloneElements(edges) };
   }
 
   function buildGroupedElements(baseNodes, baseEdges, groupLokalDrift) {
@@ -479,6 +529,15 @@
             'font-weight': 'bold',
             width: showCountBadges ? 290 : 270,
             height: showCountBadges ? 120 : 104,
+          },
+        },
+        {
+          // 2026-11-05: Parent platforms outside selected virksomhet (chain to root).
+          selector: 'node[?is_ancestor_context]',
+          style: {
+            opacity: 0.55,
+            'border-style': 'dashed',
+            'border-color': '#888',
           },
         },
         {
