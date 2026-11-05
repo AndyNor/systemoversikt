@@ -1,3 +1,4 @@
+{# 2026-11-05: Styled platform table under graph (type stripe, badges, panel). #}
 {# 2026-11-05: Dual in-node badges; virksomhet filter; taller chart; type colors (no gradients). #}
 {# 2026-11-05: Platform graph heat = tilgjengelighetsvurdering; count badges; no global doughnut. #}
 {% extends "system_index.html" %}
@@ -122,6 +123,162 @@
 .driftsmodell-filter-list .driftsmodell-filter-btn.active .text-muted {
 	color: rgba(255, 255, 255, 0.75) !important;
 }
+/* 2026-11-05: Overview platform table – aligned with graph panel and type stripes. */
+.driftsmodell-table-wrap {
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+}
+.driftsmodell-table {
+	width: 100%;
+	margin-bottom: 0;
+	font-size: 0.9rem;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+.driftsmodell-table thead th {
+	background: #f3f2f8;
+	color: #2A2859;
+	font-size: 0.78rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	border-bottom: 2px solid #d8d5e8;
+	border-top: none;
+	white-space: nowrap;
+	padding: 0.65rem 0.75rem;
+	vertical-align: bottom;
+}
+.driftsmodell-table tbody td {
+	padding: 0.7rem 0.75rem;
+	vertical-align: middle;
+	border-top: 1px solid #eceaf3;
+	background: #fff;
+}
+.driftsmodell-table tbody tr:hover td {
+	background: #f8f7fc;
+}
+.driftsmodell-table tbody tr:hover td:first-child {
+	background: #f8f7fc;
+}
+.driftsmodell-table td:first-child,
+.driftsmodell-table th:first-child {
+	border-left: 4px solid transparent;
+	padding-left: 0.85rem;
+}
+.driftsmodell-table .dm-platform-name {
+	font-weight: 600;
+	color: #2A2859;
+	text-decoration: none;
+}
+.driftsmodell-table .dm-platform-name:hover {
+	color: #1a1840;
+	text-decoration: underline;
+}
+.driftsmodell-table .dm-count {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.75rem;
+	padding: 0.15rem 0.45rem;
+	border-radius: 999px;
+	background: #d6eaf8;
+	color: #1a1a1a;
+	font-weight: 700;
+	font-size: 0.8rem;
+}
+.driftsmodell-table .dm-platform-cell {
+	min-width: 220px;
+	max-width: 340px;
+}
+.driftsmodell-table .dm-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	margin-top: 0.35rem;
+}
+.driftsmodell-table .dm-tag {
+	display: inline-block;
+	padding: 0.12rem 0.4rem;
+	border-radius: 4px;
+	font-size: 0.72rem;
+	font-weight: 600;
+	color: #1a1a1a;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	line-height: 1.3;
+	white-space: nowrap;
+}
+.driftsmodell-table .dm-tag-type {
+	border-color: rgba(0, 0, 0, 0.12);
+}
+.driftsmodell-table .dm-tag-saas {
+	background: #efe4fb;
+	color: #5b3a7a;
+}
+.driftsmodell-table .dm-tag-utvikling {
+	background: #e8f5e0;
+	color: #2d5a1b;
+}
+.driftsmodell-table .dm-tag-samarbeid {
+	background: #fff3cd;
+	color: #6b5500;
+}
+.driftsmodell-table .dm-empty {
+	color: #b0aec0;
+}
+.driftsmodell-table .dm-meta {
+	color: #6c6a7c;
+	font-size: 0.85rem;
+}
+.driftsmodell-table .dm-comment {
+	max-width: 260px;
+	color: #555;
+	font-size: 0.85rem;
+	line-height: 1.35;
+}
+.driftsmodell-table .dm-avtaler {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+	max-width: 220px;
+}
+.driftsmodell-table .dm-avtale-tag {
+	display: inline-block;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	padding: 0.12rem 0.45rem;
+	border-radius: 4px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	background: #f3f2f8;
+	border: 1px solid #d8d5e8;
+	color: #2A2859;
+	text-decoration: none;
+}
+.driftsmodell-table .dm-avtale-tag:hover {
+	background: #e9e7f3;
+	color: #1a1840;
+	text-decoration: none;
+}
+.driftsmodell-table .dm-suppliers {
+	min-width: 140px;
+	max-width: 240px;
+	font-size: 0.85rem;
+	line-height: 1.4;
+}
+.driftsmodell-table .dm-supplier-role {
+	display: block;
+	font-size: 0.7rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: #8a8799;
+	margin-top: 0.25rem;
+}
+.driftsmodell-table .dm-supplier-role:first-child {
+	margin-top: 0;
+}
 </style>
 {% endblock ekstrastyle %}
 
@@ -169,100 +326,95 @@
 	</div>
 </div>
 
-<hr>
-
-<table class="tablesorter excel">
-	<thead>
-	<tr>
-		<th>Plattform/tenant</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "sort_order" %}</th>
-		<th>Antall systemer</th>
-		<th>Nivå</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "ansvarlig_virksomhet" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "overordnet_plattform" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "type_plattform" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "er_saas" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "utviklingsplattform" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "samarbeidspartner" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "leverandor" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "underleverandorer" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "applikasjonsdriftleverandor" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "avtaler" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "kommentar" %}</th>
-		<th>{% get_verbose_field_name driftsmodell_felt_referanse "sist_oppdatert" %}</th>
-	</tr>
-	</thead>
-	<tbody>
-	{% for item in driftsmodeller %}
-	<tr>
-		<td>
-			<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
-			{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
-			<a href="{{ url_detaljer_driftsmodell }}">{{ item.navn }}</a>
-			{% if item.ansvarlig_virksomhet %}
-				{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
-				<a href="{{ url_detaljer_virksomhet }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ item.ansvarlig_virksomhet }}">{{ item.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
-			{% endif %}
-		</td>
-		<td>{{ item.sort_order }}</td>
-		<td>{{ item.antall_systemer }}</td>
-		<td>{{ item.plattform_nivaa }}</td>
-		<td>
-			{% if item.ansvarlig_virksomhet %}
-				{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
-				<a href="{{ url_detaljer_virksomhet }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ item.ansvarlig_virksomhet }}">{{ item.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
-			{% else %}
-				-
-			{% endif %}
-		</td>
-		<td>
-			{% if item.overordnet_plattform %}
-				{% url 'detaljer_driftsmodell' pk=item.overordnet_plattform.pk as url_overordnet %}
-				<a href="{{ url_overordnet }}">{{ item.overordnet_plattform.navn }}</a>
-				{% if item.overordnet_plattform.ansvarlig_virksomhet %}
-					{% url 'driftsmodell_virksomhet' pk=item.overordnet_plattform.ansvarlig_virksomhet.pk as url_over_virk %}
-					<a href="{{ url_over_virk }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ item.overordnet_plattform.ansvarlig_virksomhet }}">{{ item.overordnet_plattform.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
+{# 2026-11-05: Compact table – type/flags as tags; suppliers merged; fewer columns. #}
+{# 2026-11-05: Styled platform list – type stripe, badges, panel chrome matching graph. #}
+<div class="driftsmodell-panel">
+	<h5>Alle driftsplattformer <span class="text-muted font-weight-normal" style="font-size: 0.85rem;">({{ driftsmodeller|length }})</span></h5>
+	<p class="small text-muted mb-3">Boolean-egenskaper som egne tagger (kun når aktuelle). Samme typefarger som i grafen.</p>
+	<div class="driftsmodell-table-wrap">
+	<table class="tablesorter excel driftsmodell-table">
+		<thead>
+		<tr>
+			<th>Plattform</th>
+			<th>Systemer</th>
+			<th>Egenskaper</th>
+			<th>Leverandører</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "avtaler" %}</th>
+			<th>{% get_verbose_field_name driftsmodell_felt_referanse "kommentar" %}</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for item in driftsmodeller %}
+		<tr>
+			<td class="dm-platform-cell" style="border-left-color: {{ item.plattform_farge }};">
+				<a href="/admin/systemoversikt/driftsmodell/{{ item.pk }}/change/">{% include 'site_edit_button.html' %}</a>
+				{% url 'detaljer_driftsmodell' pk=item.pk as url_detaljer_driftsmodell %}
+				<a href="{{ url_detaljer_driftsmodell }}" class="dm-platform-name">{{ item.navn }}</a>
+				{% if item.ansvarlig_virksomhet %}
+					{% url 'driftsmodell_virksomhet' pk=item.ansvarlig_virksomhet.pk as url_detaljer_virksomhet %}
+					<a href="{{ url_detaljer_virksomhet }}" class="badge badge-light border driftsmodell-virksomhet-tag" title="{{ item.ansvarlig_virksomhet }}">{{ item.ansvarlig_virksomhet.virksomhetsforkortelse }}</a>
 				{% endif %}
-			{% else %}
-				-
-			{% endif %}
-		</td>
-		<td>{{ item.get_type_plattform_display }}</td>
-		<td>{{ item.er_saas|yesno:"Ja,Nei" }}</td>
-		<td>{{ item.utviklingsplattform|yesno:"Ja,Nei" }}</td>
-		<td>{{ item.samarbeidspartner|yesno:"Ja,Nei" }}</td>
-		<td>
-			{% for leverandor in item.leverandor.all %}
-				{% url 'leverandor' leverandor.pk as url_leverandor %}
-				<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}<br>{% endif %}
-			{% empty %}-{% endfor %}
-		</td>
-		<td>
-			{% for leverandor in item.underleverandorer.all %}
-				{% url 'leverandor' leverandor.pk as url_leverandor %}
-				<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}<br>{% endif %}
-			{% empty %}-{% endfor %}
-		</td>
-		<td>
-			{% if item.applikasjonsdriftleverandor %}
-				{% url 'leverandor' item.applikasjonsdriftleverandor.pk as url_leverandor %}
-				<a href="{{ url_leverandor }}">{{ item.applikasjonsdriftleverandor }}</a>
-			{% else %}
-				-
-			{% endif %}
-		</td>
-		<td>
-			{% for avtale in item.avtaler.all %}
-				{% url 'avtaledetaljer' avtale.pk as avtale_url %}
-				<a href="{{ avtale_url }}">{{ avtale }}</a>{% if not forloop.last %}<br>{% endif %}
-			{% empty %}-{% endfor %}
-		</td>
-		<td>{{ item.kommentar|default:"-"|linebreaksbr }}</td>
-		<td>{{ item.sist_oppdatert|naturaltime }}</td>
-	</tr>
-	{% endfor %}
-	</tbody>
-</table>
+				<span class="dm-meta" title="{% get_verbose_field_name driftsmodell_felt_referanse 'sort_order' %}">#{{ item.sort_order }}</span>
+				<div class="dm-tags">
+					<span class="dm-tag dm-tag-type" style="background-color: {{ item.plattform_farge }};">{{ item.get_type_plattform_display }}</span>
+				</div>
+			</td>
+			<td><span class="dm-count">{{ item.antall_systemer }}</span></td>
+			<td>
+				{% if item.er_saas or item.utviklingsplattform or item.samarbeidspartner %}
+				<div class="dm-tags">
+					{% if item.er_saas %}<span class="dm-tag dm-tag-saas">SaaS</span>{% endif %}
+					{% if item.utviklingsplattform %}<span class="dm-tag dm-tag-utvikling">Utvikling</span>{% endif %}
+					{% if item.samarbeidspartner %}<span class="dm-tag dm-tag-samarbeid">Samarbeidspartner</span>{% endif %}
+				</div>
+				{% else %}
+					<span class="dm-empty">–</span>
+				{% endif %}
+			</td>
+			<td class="dm-suppliers">
+				{% if item.leverandor.all or item.underleverandorer.all or item.applikasjonsdriftleverandor %}
+					{% if item.leverandor.all %}
+						<span class="dm-supplier-role">Leverandør</span>
+						{% for leverandor in item.leverandor.all %}
+							{% url 'leverandor' leverandor.pk as url_leverandor %}
+							<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}, {% endif %}
+						{% endfor %}
+					{% endif %}
+					{% if item.underleverandorer.all %}
+						<span class="dm-supplier-role">Underleverandør</span>
+						{% for leverandor in item.underleverandorer.all %}
+							{% url 'leverandor' leverandor.pk as url_leverandor %}
+							<a href="{{ url_leverandor }}">{{ leverandor }}</a>{% if not forloop.last %}, {% endif %}
+						{% endfor %}
+					{% endif %}
+					{% if item.applikasjonsdriftleverandor %}
+						<span class="dm-supplier-role">App.drift</span>
+						{% url 'leverandor' item.applikasjonsdriftleverandor.pk as url_leverandor %}
+						<a href="{{ url_leverandor }}">{{ item.applikasjonsdriftleverandor }}</a>
+					{% endif %}
+				{% else %}
+					<span class="dm-empty">–</span>
+				{% endif %}
+			</td>
+			<td>
+				{% if item.avtaler.all %}
+				<div class="dm-avtaler">
+					{% for avtale in item.avtaler.all %}
+						{% url 'avtaledetaljer' avtale.pk as avtale_url %}
+						<a href="{{ avtale_url }}" class="dm-avtale-tag" title="{{ avtale }}">{{ avtale.kortnavn|default:avtale }}</a>
+					{% endfor %}
+				</div>
+				{% else %}
+					<span class="dm-empty">–</span>
+				{% endif %}
+			</td>
+			<td class="dm-comment">{% if item.kommentar %}{{ item.kommentar|linebreaksbr }}{% else %}<span class="dm-empty">–</span>{% endif %}</td>
+		</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	</div>
+</div>
 
 {% endblock hovedinnhold %}
 

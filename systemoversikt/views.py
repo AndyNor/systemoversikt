@@ -12452,6 +12452,8 @@ def alle_driftsmodeller(request):
 	forvalter_by_pk = {}
 	uten_ansvarlig_antall = 0
 	for p in driftsmodeller:
+		# 2026-11-05: Same type color as graph left-stripe – used in overview table.
+		p.plattform_farge = _driftsmodell_plattform_farge(p)
 		virk = p.ansvarlig_virksomhet
 		if virk is None:
 			uten_ansvarlig_antall += 1
